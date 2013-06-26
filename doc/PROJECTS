@@ -128,19 +128,6 @@ including interactive shell windows and language-specific modes while
 using minimal CPU, memory, and disk requirements comparable to the vi
 editor.
 
-autogen.sh
-	Part of the build system, autogen.sh is a bootstrap script
-that effectively implements the majority of autoreconf in POSIX shell
-script format while accounting for a variety of common system
-configuration issues, common project configuration issues, and common
-GNU Build System (GBS, i.e. autoconf, automake, and libtool) bugs.
-The autogen.sh bootstrap script automatically works around many of
-those common issues for the user and/or reports the problems in what
-is generally a considerably more human-readable form than that
-normally provided by the GBS toolset output.  Additionally, the script
-will ensure that users have minimum and consistent versions of the GBS
-tools installed.
-
 Example Geometry
 	BRL-CAD geometry database files are platform independent files
 that are used to store solid geometry models.  There are several
