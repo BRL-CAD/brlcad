@@ -106,7 +106,7 @@ main(int, char**)
     polyA.GetNurbForm(*curveA);
     polyB.GetNurbForm(*curveB);
     test_cci(curveA, curveB);
-    bu_log("%lf %lf %lf %lf\n", curveA->Domain().Min(), curveA->Domain().Max(), curveB->Domain().Min(), curveB->Domain().Max());
+
     delete curveA;
     delete curveB;
 
