@@ -33,9 +33,8 @@
 #include "vmath.h"
 #include "dm.h"
 
-#ifdef __cplusplus
-extern "C"
-#endif
+__BEGIN_DECLS
+
 struct dm *
 qt_open(Tcl_Interp *interp, int argc, const char **argv)
 {
@@ -53,6 +52,9 @@ qt_open(Tcl_Interp *interp, int argc, const char **argv)
 
     return dmp;
 }
+
+__END_DECLS
+
 
 HIDDEN int
 qt_close(struct dm *UNUSED(dmp))
