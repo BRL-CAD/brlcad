@@ -10,6 +10,7 @@ set(DM_INCLUDE_DIRS
   ${OPENGL_INCLUDE_DIR_GLX}
   ${TCL_INCLUDE_DIRS}
   ${TK_INCLUDE_PATH}
+  ${Qt5Widgets_INCLUDE_DIRS}
   )
 
 # local includes
@@ -55,7 +56,13 @@ endif(BRLCAD_ENABLE_TK AND NOT WIN32)
 
 if(BRLCAD_ENABLE_QT)
   list(APPEND libdm_DEFINES DM_QT)
-  set(dmqt_srcs dm-qt.c)
+  set(dmqt_srcs dm-qt.cpp)
+  set(CMAKE_AUTOMOC ON)
+  set(CMAKE_INCLUDE_CURRENT_DIR ON)
+  add_definitions(${Qt5Widgets_DEFINITIONS})
+  if (Qt5_POSITION_INDEPENDENT_CODE)
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+  endif(Qt5_POSITION_INDEPENDENT_CODE)
 endif(BRLCAD_ENABLE_QT)
 
 set_property(GLOBAL PROPERTY libdm_DEFINES "${libdm_DEFINES}")
@@ -96,7 +103,7 @@ set(LIBDM_SRCS
   vers.c
   )
 
-BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "libged;librt;libfb;${DM_X_LIBS};${DM_TKLIB};${Carbon_LIBRARIES}")
+BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "libged;librt;libfb;${DM_X_LIBS};${DM_TKLIB};${Carbon_LIBRARIES};${Qt5Widgets_LIBRARIES}")
 set_target_properties(libdm PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 if(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)

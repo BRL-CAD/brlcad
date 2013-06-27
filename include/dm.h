@@ -261,8 +261,8 @@ struct dm {
     int dm_stereo;                /**< @brief stereo flag */
     double dm_bound;		/**< @brief zoom-in limit */
     int dm_boundFlag;
-    char *dm_name;		/**< @brief short name of device */
-    char *dm_lname;		/**< @brief long name of device */
+    const char *dm_name;		/**< @brief short name of device */
+    const char *dm_lname;		/**< @brief long name of device */
     int dm_type;			/**< @brief display manager type */
     int dm_top;                   /**< @brief !0 means toplevel window */
     int dm_width;

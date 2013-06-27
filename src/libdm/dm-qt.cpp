@@ -20,7 +20,6 @@
 /** @file libdm/dm-qt.c
  *
  */
-
 #include "common.h"
 #include "bio.h"
 
@@ -34,6 +33,9 @@
 #include "vmath.h"
 #include "dm.h"
 
+#ifdef __cplusplus
+extern "C"
+#endif
 struct dm *
 qt_open(Tcl_Interp *interp, int argc, const char **argv)
 {
