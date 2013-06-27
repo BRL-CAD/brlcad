@@ -942,15 +942,12 @@ SurfaceTree::subdivideSurfaceByKnots(const ON_Surface *localsurf,
 				     int divDepth,
 				     int depthLimit)
 {
-    const ON_Surface* surf = m_face->SurfaceOf();
-    ON_Interval usurf = surf->Domain(0);
-    ON_Interval vsurf = surf->Domain(1);
     double uq = u.Length()*0.25;
     double vq = v.Length()*0.25;
-    surf->FrameAt(u.Mid() - uq, v.Mid() - vq, frames[5]);
-    surf->FrameAt(u.Mid() - uq, v.Mid() + vq, frames[6]);
-    surf->FrameAt(u.Mid() + uq, v.Mid() - vq, frames[7]);
-    surf->FrameAt(u.Mid() + uq, v.Mid() + vq, frames[8]);
+    localsurf->FrameAt(u.Mid() - uq, v.Mid() - vq, frames[5]);
+    localsurf->FrameAt(u.Mid() - uq, v.Mid() + vq, frames[6]);
+    localsurf->FrameAt(u.Mid() + uq, v.Mid() - vq, frames[7]);
+    localsurf->FrameAt(u.Mid() + uq, v.Mid() + vq, frames[8]);
     BBNode* quads[4];
 
 
@@ -1469,9 +1466,6 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 			      int divDepth,
 			      int depthLimit)
 {
-    const ON_Surface* surf = m_face->SurfaceOf();
-    ON_Interval usurf = surf->Domain(0);
-    ON_Interval vsurf = surf->Domain(1);
     double uq = u.Length()*0.25;
     double vq = v.Length()*0.25;
     localsurf->FrameAt(u.Mid() - uq, v.Mid() - vq, frames[5]);
@@ -1494,8 +1488,6 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 
 	BBNode* parent = (divDepth == 0) ? initialBBox(ctree, localsurf, m_face, u, v) :
 	    surfaceBBox(localsurf, false, frames, u, v);
-	ON_Interval first(0, 0.5);
-	ON_Interval second(0.5, 1.0);
 
 	if ((!isVFlat || (width/height > ratio)) && (!isUFlat || (height/width > ratio))) {
 	    ON_Interval firstu(u.Min(), usplit);
@@ -1757,6 +1749,9 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 
 	    //ON_BoundingBox bbox = q0surf->BoundingBox();
 	    //bu_log("%d - in bbq0 rpp %f %f %f %f %f %f\n", divDepth, bbox.m_min.x, bbox.m_max.x, bbox.m_min.y, bbox.m_max.y, bbox.m_min.z, bbox.m_max.z);
+	    ON_Interval first(0, 0.5);
+	    ON_Interval second(0.5, 1.0);
+
 	    quads[0] = subdivideSurface(east, u.ParameterAt(first), v, newframes, divDepth + 1, depthLimit);
 	    delete east;
 
@@ -1893,6 +1888,9 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	    newframes[2] = sharedframes[1];
 	    newframes[3] = sharedframes[0];
 	    localsurf->FrameAt(u.Mid(), v.Mid() - vq, newframes[4]);
+
+	    ON_Interval first(0, 0.5);
+	    ON_Interval second(0.5, 1.0);
 
 	    //ON_BoundingBox bbox = q0surf->BoundingBox();
 	    //bu_log("%d - in bbq0 rpp %f %f %f %f %f %f\n", divDepth, bbox.m_min.x, bbox.m_max.x, bbox.m_min.y, bbox.m_max.y, bbox.m_min.z, bbox.m_max.z);
