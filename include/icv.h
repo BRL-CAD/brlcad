@@ -120,7 +120,7 @@ typedef struct icv_image_file icv_image_file_t;
  */
 #define ICV_IMAGE_FILE_IS_INITIALIZED(_i) (((struct icv_image_file *)(_i) != ICV_IMAGE_FILE_NULL) && LIKELY((_i)->magic == ICV_IMAGE_FILE_MAGIC))
 
-/** 
+/**
  * Finds the Image format based on heuristics depending on the file name.
  * @param filename Filename of the image whose format is to be know.
  * @param trimmedname Buffer for storing filename after removing extensions
@@ -130,16 +130,16 @@ ICV_EXPORT extern int icv_guess_file_format(const char *filename, char *trimmedn
 
 /**
  * This function opens the file. Allocates memory for ICV Struct and the data part of ICV Struct
- * Image File is opened/created for writting.
- * The file descriptor of the file is added to ICV struct. The size of data is governed by the 
+ * Image File is opened/created for writing.
+ * The file descriptor of the file is added to ICV struct. The size of data is governed by the
  * width, height and depth.
  * @param filename Filename of the image file to be opened.
  * @param format File format to be opened ICV_IMAGE_ . for most cases this is ICV_IMAGE_AUTO
- * @param width Wdith when passed as parameter by calling function
+ * @param width Width when passed as parameter by calling function
  * @param height Height when passed as parameter by calling function
- * @param depth Depth when passed as parameter by calling function 
+ * @param depth Depth when passed as parameter by calling function
  * @return ICV Struct which contains information regarding the geometry of the file
- * filename, file-format, file descriptor of the opened file and allocated data 
+ * filename, file-format, file descriptor of the opened file and allocated data
  * array
  */
 ICV_EXPORT extern struct icv_image_file *icv_image_save_open(const char *filename,
@@ -162,8 +162,8 @@ ICV_EXPORT extern int icv_image_save_writeline(struct icv_image_file *bif,
 /**
  * Writes a pixel to the specified coordinates in the data of ICV struct.
  * @param bif ICV struct where data is to be written
- * @param x x-dir coordinate of the pixel 
- * @param y y-dir coordinate of the pixel. (0,0) cordinate is taken as bottom left
+ * @param x x-dir coordinate of the pixel
+ * @param y y-dir coordinate of the pixel. (0,0) coordinate is taken as bottom left
  * @data Data to be written
  * @return on success 0, on failure -1
  */
@@ -174,7 +174,7 @@ ICV_EXPORT extern int icv_image_save_writepixel(struct icv_image_file *bif,
 
 /**
  * This  function writes the data from the ICV Struct to the respective files.
- * This assumes that the ICV struct contains all the necessary information 
+ * This assumes that the ICV struct contains all the necessary information
  * Geometry information, file descriptor, format and data.
  * @param bif ICV struct to be saved.
  * @return 0.
@@ -182,8 +182,8 @@ ICV_EXPORT extern int icv_image_save_writepixel(struct icv_image_file *bif,
 ICV_EXPORT extern int icv_image_save_close(struct icv_image_file *bif);
 
 /**
- * This function is used to save an image when ICV struct of the image is not available. 
- * This creates the ICV struct for image, adds data to the ICV Struct 
+ * This function is used to save an image when ICV struct of the image is not available.
+ * This creates the ICV struct for image, adds data to the ICV Struct
  * opens/creates file to be saved and finally saves the image by calling icv_image_save_close().
  * @param data Image array to be saved, a one dimensional array with 24Bit rgb pixels.
  * @param width Width of the Image to be saved
@@ -192,7 +192,7 @@ ICV_EXPORT extern int icv_image_save_close(struct icv_image_file *bif);
  * @param filename Filename to be saved
  * @param filetype Format of the file to be saved.
  * @return 0, logs error messages.
- */ 
+ */
 ICV_EXPORT extern int icv_image_save(unsigned char *data,
 				   int width,
 				   int height,
