@@ -1088,7 +1088,7 @@ if(BRLCAD_ENABLE_AQUA)
 endif(BRLCAD_ENABLE_AQUA)
 
 # Enable features requiring Qt
-find_package(Qt5Widgets)
+find_package(Qt5Widgets QUIET)
 option(BRLCAD_ENABLE_QT "Enable features requiring Qt" OFF)
 if(Qt5Widgets_FOUND)
   set(BRLCAD_ENABLE_QT ON)
