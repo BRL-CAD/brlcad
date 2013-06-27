@@ -552,6 +552,19 @@ newton_cci(double& t_a, double& t_b, const ON_Curve* curveA, const ON_Curve* cur
 	t_a -= Delta[0][0];
 	t_b -= Delta[1][0];
     }
+
+    // Make sure the solution is inside the domains
+    t_a = std::min(t_a, curveA->Domain().Max());
+    t_a = std::max(t_a, curveA->Domain().Min());
+    t_b = std::min(t_b, curveB->Domain().Max());
+    t_b = std::max(t_b, curveB->Domain().Min());
+}
+
+
+int
+compare_by_m_a0(const ON_X_EVENT* a, const ON_X_EVENT* b)
+{
+    return a->m_a[0] - b->m_a[0];
 }
 
 
@@ -666,14 +679,26 @@ ON_Intersect(const ON_Curve* curveA,
 	    // Check the validity of the solution
 	    if (distance1 < intersection_tolerance && distance2 < intersection_tolerance) {
 		ON_X_EVENT *Event = new ON_X_EVENT;
-		Event->m_A[0] = pointA1;
-		Event->m_A[1] = pointA2;
-		Event->m_B[0] = pointB1;
-		Event->m_B[1] = pointB2;
-		Event->m_a[0] = t_a1;
-		Event->m_a[1] = t_a2;
-		Event->m_b[0] = t_b1;
-		Event->m_b[1] = t_b2;
+		// We make sure that m_a[0] <= m_a[1]
+		if (t_a1 <= t_a2) {
+		    Event->m_A[0] = pointA1;
+		    Event->m_A[1] = pointA2;
+		    Event->m_B[0] = pointB1;
+		    Event->m_B[1] = pointB2;
+		    Event->m_a[0] = t_a1;
+		    Event->m_a[1] = t_a2;
+		    Event->m_b[0] = t_b1;
+		    Event->m_b[1] = t_b2;
+		} else {
+		    Event->m_A[0] = pointA2;
+		    Event->m_A[1] = pointA1;
+		    Event->m_B[0] = pointB2;
+		    Event->m_B[1] = pointB1;
+		    Event->m_a[0] = t_a2;
+		    Event->m_a[1] = t_a1;
+		    Event->m_b[0] = t_b2;
+		    Event->m_b[1] = t_b1;
+		}
 		int j;
 		for (j = 1; j < CCI_OVERLAP_TEST_POINTS; j++) {
 		    double strike = 1.0/CCI_OVERLAP_TEST_POINTS;
@@ -710,18 +735,66 @@ ON_Intersect(const ON_Curve* curveA,
 	}
     }
 
+    ON_SimpleArray<ON_X_EVENT> points, overlap, pending;
+    // Use an O(n^2) naive approach to eliminate duplications
     for (int i = 0; i < tmp_x.Count(); i++) {
 	int j;
-	for (j = 0; j < x.Count(); j++) {
-	    if (tmp_x[i].m_A[0].DistanceTo(x[j].m_A[0]) < intersection_tolerance
-		&& tmp_x[i].m_A[1].DistanceTo(x[j].m_A[1]) < intersection_tolerance
-		&& tmp_x[i].m_B[0].DistanceTo(x[j].m_B[0]) < intersection_tolerance
-		&& tmp_x[i].m_B[1].DistanceTo(x[j].m_B[1]) < intersection_tolerance)
+	if (tmp_x[i].m_type == ON_X_EVENT::ccx_overlap) {
+	    overlap.Append(tmp_x[i]);
+	    continue;
+	}
+	// ccx_point
+	for (j = 0; j < points.Count(); j++) {
+	    if (tmp_x[i].m_A[0].DistanceTo(points[j].m_A[0]) < intersection_tolerance
+		&& tmp_x[i].m_A[1].DistanceTo(points[j].m_A[1]) < intersection_tolerance
+		&& tmp_x[i].m_B[0].DistanceTo(points[j].m_B[0]) < intersection_tolerance
+		&& tmp_x[i].m_B[1].DistanceTo(points[j].m_B[1]) < intersection_tolerance)
 		break;
 	}
-	if (j == x.Count())
-	    x.Append(tmp_x[i]);
+	if (j == points.Count()) {
+	    points.Append(tmp_x[i]);
+	}	
     }
+
+    // Merge the overlap events that are continuous
+    overlap.QuickSort(compare_by_m_a0);
+    for (int i = 0; i < overlap.Count(); i++) {
+	bool merged = false;
+	for (int j = 0; j < pending.Count(); j++) {
+	    if (pending[j].m_a[1] < overlap[i].m_a[0] - intersection_tolerance) {
+		x.Append(pending[j]);
+		pending.Remove(j);
+		j--;
+		continue;
+	    }
+	    if (overlap[i].m_a[0] < pending[j].m_a[1] + intersection_tolerance
+		&& overlap[i].m_b[0] < pending[j].m_b[1] + intersection_tolerance) {
+		// Need to merge
+		merged = true;
+		pending[j].m_a[1] = std::max(overlap[i].m_a[1], pending[j].m_a[1]);
+		pending[j].m_b[1] = std::max(overlap[i].m_b[1], pending[j].m_b[1]);
+		break;
+	    }
+	}
+	if (merged == false)
+	    pending.Append(overlap[i]);
+    }
+    for (int i = 0; i < pending.Count(); i++)
+	x.Append(pending[i]);
+
+    // The intersection points shouldn't be inside the overlapped parts.
+    int overlap_events = x.Count();
+    for (int i = 0; i < points.Count(); i++) {
+	int j;
+	for (j = 0; j < overlap_events; j++) {
+	    if (points[i].m_a[0] > x[j].m_a[0] - intersection_tolerance
+		&& points[i].m_a[0] < x[j].m_a[1] + intersection_tolerance)
+		break;
+	}
+	if (j == overlap_events)
+	    x.Append(points[i]);
+    }
+
     return x.Count();
 }
 
