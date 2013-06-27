@@ -265,6 +265,8 @@ BRLCAD_CHECK_C_FLAG("std=gnu99" BUILD_TYPES Release VARS C99_FLAG)
 BRLCAD_CHECK_C_FLAG(Qunused-arguments)
 BRLCAD_CHECK_CXX_FLAG(Qunused-arguments)
 
+# Check for position independent code (-fPIC).
+# This flag is required in order to integrate Qt5 in the cmake build.
 BRLCAD_CHECK_C_FLAG(fPIC)
 BRLCAD_CHECK_CXX_FLAG(fPIC)
 
