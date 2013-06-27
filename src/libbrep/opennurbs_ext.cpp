@@ -951,12 +951,12 @@ SurfaceTree::subdivideSurfaceByKnots(const ON_Surface *localsurf,
     surf->FrameAt(u.Mid() - uq, v.Mid() + vq, frames[6]);
     surf->FrameAt(u.Mid() + uq, v.Mid() - vq, frames[7]);
     surf->FrameAt(u.Mid() + uq, v.Mid() + vq, frames[8]);
+    BBNode* quads[4];
 
 
     unsigned int do_u_split = 0;
     unsigned int do_v_split = 0;
     BBNode* parent = NULL;
-    BBNode* quads[4];
     double usplit;
     double vsplit;
 
@@ -1003,13 +1003,12 @@ SurfaceTree::subdivideSurfaceByKnots(const ON_Surface *localsurf,
 	ON_Interval secondv(vsplit, v.Max());
 	ON_BoundingBox box = localsurf->BoundingBox();
 
+	ON_Surface *q0surf = NULL;
+	ON_Surface *q1surf = NULL;
 	ON_Surface *q2surf = NULL;
 	ON_Surface *q3surf = NULL;
-	ON_Surface *q1surf = NULL;
-	ON_Surface *q0surf = NULL;
 
 	bool split = ON_Surface_Quad_Split(localsurf, u, v, usplit, vsplit, &q0surf, &q1surf, &q2surf, &q3surf);
-
 	/* FIXME: this needs to be handled more gracefully */
 	if (!split) {
 	    delete parent;
@@ -1084,6 +1083,8 @@ SurfaceTree::subdivideSurfaceByKnots(const ON_Surface *localsurf,
 	localsurf->FrameAt(u.Min(), vsplit, sharedframes[1]);
 	localsurf->FrameAt(usplit, v.Max(), sharedframes[2]);
 	localsurf->FrameAt(u.Max(), vsplit, sharedframes[3]);
+        // When splitting via knots, we don't know what point frames[4] is until
+        // the knot is selected
 	localsurf->FrameAt(usplit, vsplit, frames[4]);
 
 	ON_Plane *newframes;
@@ -1471,13 +1472,15 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
     const ON_Surface* surf = m_face->SurfaceOf();
     ON_Interval usurf = surf->Domain(0);
     ON_Interval vsurf = surf->Domain(1);
-
     double uq = u.Length()*0.25;
     double vq = v.Length()*0.25;
     localsurf->FrameAt(u.Mid() - uq, v.Mid() - vq, frames[5]);
     localsurf->FrameAt(u.Mid() - uq, v.Mid() + vq, frames[6]);
     localsurf->FrameAt(u.Mid() + uq, v.Mid() - vq, frames[7]);
     localsurf->FrameAt(u.Mid() + uq, v.Mid() + vq, frames[8]);
+    BBNode* quads[4];
+    double usplit = u.Mid();
+    double vsplit = v.Mid();
 
     double width, height;
     double ratio = 5.0;
@@ -1491,15 +1494,14 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 
 	BBNode* parent = (divDepth == 0) ? initialBBox(ctree, localsurf, m_face, u, v) :
 	    surfaceBBox(localsurf, false, frames, u, v);
-	BBNode* quads[4];
 	ON_Interval first(0, 0.5);
 	ON_Interval second(0.5, 1.0);
 
 	if ((!isVFlat || (width/height > ratio)) && (!isUFlat || (height/width > ratio))) {
-	    ON_Interval firstu(u.Min(), u.Mid());
-	    ON_Interval secondu(u.Mid(), u.Max());
-	    ON_Interval firstv(v.Min(), v.Mid());
-	    ON_Interval secondv(v.Mid(), v.Max());
+	    ON_Interval firstu(u.Min(), usplit);
+	    ON_Interval secondu(usplit, u.Max());
+	    ON_Interval firstv(v.Min(), vsplit);
+	    ON_Interval secondv(vsplit, v.Max());
 	    ON_BoundingBox box = localsurf->BoundingBox();
 
 	    ON_Surface *q0surf = NULL;
@@ -1507,7 +1509,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	    ON_Surface *q2surf = NULL;
 	    ON_Surface *q3surf = NULL;
 
-	    bool split = ON_Surface_Quad_Split(localsurf, u, v, localsurf->Domain(0).Mid(), localsurf->Domain(1).Mid(), &q0surf, &q1surf, &q2surf, &q3surf);
+	    bool split = ON_Surface_Quad_Split(localsurf, u, v, usplit, vsplit, &q0surf, &q1surf, &q2surf, &q3surf);
 	    /* FIXME: this needs to be handled more gracefully */
 	    if (!split) {
 		delete parent;
@@ -1578,10 +1580,10 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	     **********************************************************************/
 
 	    ON_Plane sharedframes[4];
-	    localsurf->FrameAt(u.Mid(), v.Min(), sharedframes[0]);
-	    localsurf->FrameAt(u.Min(), v.Mid(), sharedframes[1]);
-	    localsurf->FrameAt(u.Mid(), v.Max(), sharedframes[2]);
-	    localsurf->FrameAt(u.Max(), v.Mid(), sharedframes[3]);
+	    localsurf->FrameAt(usplit, v.Min(), sharedframes[0]);
+	    localsurf->FrameAt(u.Min(), vsplit, sharedframes[1]);
+	    localsurf->FrameAt(usplit, v.Max(), sharedframes[2]);
+	    localsurf->FrameAt(u.Max(), vsplit, sharedframes[3]);
 
 	    ON_Plane *newframes;
 	    newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");
