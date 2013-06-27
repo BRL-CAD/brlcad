@@ -64,6 +64,7 @@ main(int, char**)
     // curve-curve intersection
     bu_log("*** Curve-curve intersection ***\n");
 
+    bu_log("Test 1:\n");
     // circle A is a circle fixed at the origin
     ON_Circle circleA = ON_Circle(plane, origin, radius);
     ON_NurbsCurve *curveA = ON_NurbsCurve::New();
@@ -88,6 +89,26 @@ main(int, char**)
 	delete curveB;
     }
     delete curveA;
+
+    bu_log("Test 2:\n");
+    // Test the merge correctness of overlap events.
+    ON_3dPointArray ptarrayA, ptarrayB;
+    ptarrayA.Append(ON_3dPoint(0.0, -1.0, 0.0));
+    ptarrayA.Append(ON_3dPoint(0.0, 1.0, 0.0));
+    ptarrayA.Append(ON_3dPoint(-1.0, 0.0, 0.0));
+    ptarrayA.Append(ON_3dPoint(1.0, 0.0, 0.0));
+    ptarrayB.Append(ON_3dPoint(0.0, -2.0, 0.0));
+    ptarrayB.Append(ON_3dPoint(0.0, 0.0, 0.0));
+    ptarrayB.Append(ON_3dPoint(2.0, 0.0, 0.0));
+    ON_PolylineCurve polyA(ptarrayA), polyB(ptarrayB);
+    curveA = ON_NurbsCurve::New();
+    ON_NurbsCurve *curveB = ON_NurbsCurve::New();
+    polyA.GetNurbForm(*curveA);
+    polyB.GetNurbForm(*curveB);
+    test_cci(curveA, curveB);
+    bu_log("%lf %lf %lf %lf\n", curveA->Domain().Min(), curveA->Domain().Max(), curveB->Domain().Min(), curveB->Domain().Max());
+    delete curveA;
+    delete curveB;
 
     // curve-surface intersections to be implemented.
 
