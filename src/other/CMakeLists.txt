@@ -66,6 +66,7 @@ endif(NOT BRLCAD_ENABLE_TARGETS)
 # At the start, clear the src/other subdirs list so repeated
 # configures will correctly add the required directories
 set(SRC_OTHER_ADDED_DIRS "" CACHE STRING "initialize 3rd party sub-directories list" FORCE)
+mark_as_advanced(SRC_OTHER_ADDED_DIRS)
 
 #-----------------------------------------------------------------------------
 # Load some CMake macros to handle the special case of third party libraries.
@@ -210,7 +211,8 @@ endif(NOT COMMAND RE2C_TARGET)
 
 # For all BRL-CAD projects, we will use the perplex template in
 # src/other/perplex
-SET(PERPLEX_TEMPLATE "${CMAKE_CURRENT_SOURCE_DIR}/perplex/perplex_template.c" CACHE STRING "Perplex template file" FORCE)
+set(PERPLEX_TEMPLATE "${CMAKE_CURRENT_SOURCE_DIR}/perplex/perplex_template.c" CACHE STRING "Perplex template file" FORCE)
+mark_as_advanced(PERPLEX_TEMPLATE)
 
 set(perplex_ALIASES ENABLE_PERPLEX)
 set(perplex_DESCRIPTION "

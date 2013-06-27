@@ -1093,6 +1093,7 @@ option(BRLCAD_ENABLE_QT "Enable features requiring Qt" OFF)
 if(Qt5Widgets_FOUND)
   set(BRLCAD_ENABLE_QT ON)
 endif(Qt5Widgets_FOUND)
+mark_as_advanced(Qt5Widgets_DIR)
 
 #----------------------------------------------------------------------
 # The following are fine-grained options for enabling/disabling compiler
