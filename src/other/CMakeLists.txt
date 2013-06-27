@@ -798,6 +798,8 @@ Libraries provided with BRL-CAD's source code.  Default is AUTO,
 responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
 first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
+set(IS_SUBBUILD_STASH ${IS_SUBBUILD})
+set(IS_SUBBUILD ON)
 THIRD_PARTY(scl step "LEMON_EXECUTABLE;PERPLEX_EXECUTABLE;BRLCAD_LEVEL3"  scl_ALIASES scl_DESCRIPTION NOSYS)
 if(BRLCAD_SCL_BUILD)
   set(FEDEX_PLUS_EXEC fedex_plus CACHE STRING "Fedex plus executable" FORCE)
@@ -807,6 +809,7 @@ if(BRLCAD_SCL_BUILD)
   DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/step/include/scl_cf.h.in)
   DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/step/scl_version_string.h.txt)
 endif(BRLCAD_SCL_BUILD)
+set(IS_SUBBUILD ${IS_SUBBUILD_STASH})
 mark_as_advanced(SCL_BUILD_TYPE)
 mark_as_advanced(SCL_GENERATE_LEXER_PARSER)
 mark_as_advanced(SCL_BUILD_SHARED_LIBS)

@@ -168,7 +168,7 @@ if(BRLCAD_ROOT)
   endif(NOT BRLCAD_ROOT_OVERRIDE)
 endif(BRLCAD_ROOT)
 if(NOT BRLCAD_ROOT_OVERRIDE)
-  if(BRLCAD_ROOT STREQUAL "/usr" OR ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr")
+  if(BRLCAD_ROOT STREQUAL "/usr" OR "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr")
     message(WARNING "}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}\nIt is STRONGLY recommended that you DO NOT install BRL-CAD into /usr as BRL-CAD provides several libraries that may conflict with other libraries (e.g. librt, libbu, libbn) on certain system configurations.\nSince our libraries predate all those that we're known to conflict with and are at the very core of our geometry services and project heritage, we have no plans to change the names of our libraries at this time.\nINSTALLING INTO /usr CAN MAKE A SYSTEM COMPLETELY UNUSABLE.  If you choose to continue installing into /usr, you do so entirely at your own risk.  You have been warned.\n}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}")
     if(SLEEP_EXEC)
       message("Pausing 15 seconds...")
@@ -177,7 +177,7 @@ if(NOT BRLCAD_ROOT_OVERRIDE)
     if(${CMAKE_INSTALL_PREFIX} STREQUAL "/usr")
       message(FATAL_ERROR "If you wish to proceed using /usr as your prefix, define BRLCAD_ROOT_OVERRIDE=1 for CMake")
     endif(${CMAKE_INSTALL_PREFIX} STREQUAL "/usr")
-  endif(BRLCAD_ROOT STREQUAL "/usr" OR ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr")
+  endif(BRLCAD_ROOT STREQUAL "/usr" OR "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr")
 endif(NOT BRLCAD_ROOT_OVERRIDE)
 
 # While we're at it, complain if BRLCAD_DATA is set
@@ -584,7 +584,7 @@ set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} /usr/local/include)
 
 #---------------------------------------------------------------------
 
-# Normalize the build type capitalization and handle NONE case
+# Normalize the build type capitalization
 if(CMAKE_BUILD_TYPE)
   string(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE_UPPER)
   if ("${BUILD_TYPE_UPPER}" STREQUAL "RELEASE")
@@ -594,6 +594,11 @@ if(CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build Type" FORCE)
   endif ("${BUILD_TYPE_UPPER}" STREQUAL "DEBUG")
 endif(CMAKE_BUILD_TYPE)
+# Stash the build type so we can set up a drop-down menu in the gui
+if(NOT BRLCAD_IS_SUBBUILD)
+  set(CMAKE_BUILD_TYPE "${CMAKE_BUILD_TYPE}" CACHE STRING "BRL-CAD high level build configuration")
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "" Debug Release)
+endif(NOT BRLCAD_IS_SUBBUILD)
 
 #---------------------------------------------------------------------
 # The location in which to install BRL-CAD.  Only do this if
@@ -1090,6 +1095,7 @@ endif(BRLCAD_ENABLE_AQUA)
 # Enable features requiring Qt
 find_package(Qt5Widgets QUIET)
 option(BRLCAD_ENABLE_QT "Enable features requiring Qt" OFF)
+mark_as_advanced(BRLCAD_ENABLE_QT)
 if(Qt5Widgets_FOUND)
   set(BRLCAD_ENABLE_QT ON)
 endif(Qt5Widgets_FOUND)
@@ -2237,6 +2243,8 @@ endif(NOT BRLCAD_IS_SUBBUILD)
 mark_as_advanced(CMAKE_BACKWARDS_COMPATIBILITY)
 mark_as_advanced(EXECUTABLE_OUTPUT_PATH)
 mark_as_advanced(LIBRARY_OUTPUT_PATH)
+mark_as_advanced(CMAKE_CXX_COMPILER)
+mark_as_advanced(CMAKE_C_COMPILER)
 
 # ----------------------------------------------------------------------------
 # If options have been defined that we are going to document, by now they've
