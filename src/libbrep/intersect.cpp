@@ -624,113 +624,160 @@ ON_Intersect(const ON_Curve* curveA,
     // For intersected bounding boxes, we calculate an accurate intersection
     // point.
     for (NodePairs::iterator i = candidates.begin(); i != candidates.end(); i++) {
-	/*
-	// First, use linear approximation to get a starting point
-	ON_Line lineA(curveA->PointAt(i->first->m_t.Min()), curveA->PointAt(i->first->m_t.Max()));
-	ON_Line lineB(curveB->PointAt(i->second->m_t.Min()), curveB->PointAt(i->second->m_t.Max()));
-	double t_lineA, t_lineB;
-	double t_a, t_b;
-	if (ON_IntersectLineLine(lineA, lineB, &t_lineA, &t_lineB, ON_ZERO_TOLERANCE, true)) {
-	// The line segments intersect
-	t_a = i->first->m_t.ParameterAt(t_lineA);
-	t_b = i->second->m_t.ParameterAt(t_lineB);
-	} else {
-	// Sometimes the approximated line segments do not intersect,
-	// but the curves DO intersect. We use the mid-points of the
-	// sub-curves as the starting point.
-	t_a = i->first->m_t.Mid();
-	t_b = i->second->m_t.Mid();
-	}*/
+	if (i->first->m_islinear && i->second->m_islinear) {
+	    // Both of them are linear, we use ON_IntersectLineLine
+	    ON_Line lineA(curveA->PointAt(i->first->m_t.Min()), curveA->PointAt(i->first->m_t.Max()));
+	    ON_Line lineB(curveB->PointAt(i->second->m_t.Min()), curveB->PointAt(i->second->m_t.Max()));
+	    if (lineA.Direction().IsParallelTo(lineB.Direction())) {
+		// They are parallel
+		if (lineA.MinimumDistanceTo(lineB) < intersection_tolerance) {
+		    // we report a ccx_overlap event
+		    double startB_on_A, endB_on_A, startA_on_B, endA_on_B;
+		    lineA.ClosestPointTo(lineB.from, &startB_on_A);
+		    lineA.ClosestPointTo(lineB.to, &endB_on_A);
+		    lineB.ClosestPointTo(lineA.from, &startA_on_B);
+		    lineB.ClosestPointTo(lineA.to, &endA_on_B);
 
-	// Use two different start points - the two end-points of the interval
-	// If they converge to one point, it's considered an intersection
-	// point, otherwise it's considered an overlap event.
-	double t_a1 = i->first->m_t.Min(), t_b1 = i->second->m_t.Min();
-	newton_cci(t_a1, t_b1, curveA, curveB);
-	double t_a2 = i->first->m_t.Max(), t_b2 = i->second->m_t.Max();
-	newton_cci(t_a2, t_b2, curveA, curveB);
+		    if (startB_on_A > 1+intersection_tolerance || endB_on_A < -intersection_tolerance
+			|| startA_on_B > 1+intersection_tolerance || endA_on_B < -intersection_tolerance)
+			continue;
 
-	ON_3dPoint pointA1 = curveA->PointAt(t_a1);
-	ON_3dPoint pointB1 = curveB->PointAt(t_b1);
-	ON_3dPoint pointA2 = curveA->PointAt(t_a2);
-	ON_3dPoint pointB2 = curveB->PointAt(t_b2);
-	if (pointA1.DistanceTo(pointA2) < intersection_tolerance
-	    && pointB1.DistanceTo(pointB2) < intersection_tolerance) {
-	    // it's considered the same point
-	    ON_3dPoint pointA = curveA->PointAt(t_a1);
-	    ON_3dPoint pointB = curveB->PointAt(t_b1);
-	    double distance = pointA.DistanceTo(pointB);
-	    // Check the validity of the solution
-	    if (distance < intersection_tolerance) {
-		ON_X_EVENT *Event = new ON_X_EVENT;
-		Event->m_A[0] = pointA;
-		Event->m_B[0] = pointB;
-		Event->m_a[0] = t_a1;
-		Event->m_b[0] = t_b1;
-		Event->m_type = ON_X_EVENT::ccx_point;
-		tmp_x.Append(*Event);
+		    double t_a1, t_a2, t_b1, t_b2;
+		    if (startB_on_A > 0.0)
+			t_a1 = startB_on_A, t_b1 = 0.0;
+		    else
+			t_a1 = 0.0, t_b1 = startA_on_B;
+		    if (endB_on_A < 1.0)
+			t_a2 = endB_on_A, t_b2 = 1.0;
+		    else
+			t_a2 = 1.0, t_b2 = endA_on_B;
+
+		    ON_X_EVENT* Event = new ON_X_EVENT;
+		    Event->m_A[0] = lineA.PointAt(t_a1);
+		    Event->m_A[1] = lineA.PointAt(t_a2);
+		    Event->m_B[0] = lineB.PointAt(t_b1);
+		    Event->m_B[1] = lineB.PointAt(t_b2);
+		    Event->m_a[0] = i->first->m_t.ParameterAt(t_a1);
+		    Event->m_a[1] = i->first->m_t.ParameterAt(t_a2);
+		    Event->m_b[0] = i->second->m_t.ParameterAt(t_b1);
+		    Event->m_b[1] = i->second->m_t.ParameterAt(t_b2);
+		    Event->m_type = ON_X_EVENT::TYPE::ccx_overlap;
+		    tmp_x.Append(*Event);
+		}
+	    } else {
+		// They are not parallel, check intersection point
+		double t_lineA, t_lineB;
+		double t_a, t_b;
+		if (ON_IntersectLineLine(lineA, lineB, &t_lineA, &t_lineB, ON_ZERO_TOLERANCE, true)) {
+		    // The line segments intersect
+		    t_a = i->first->m_t.ParameterAt(t_lineA);
+		    t_b = i->second->m_t.ParameterAt(t_lineB);
+
+		    ON_X_EVENT* Event = new ON_X_EVENT;
+		    Event->m_A[0] = lineA.PointAt(t_lineA);
+		    Event->m_B[0] = lineB.PointAt(t_lineB);
+		    Event->m_a[0] = t_a;
+		    Event->m_b[0] = t_b;
+		    Event->m_type = ON_X_EVENT::TYPE::ccx_point;
+		    tmp_x.Append(*Event);
+		}
 	    }
 	} else {
-	    // Check overlap
-	    // bu_log("Maybe overlap.\n");
-	    double distance1 = pointA1.DistanceTo(pointB1);
-	    double distance2 = pointA2.DistanceTo(pointB2);
+	    // They are not both linear.
 
-	    // Check the validity of the solution
-	    if (distance1 < intersection_tolerance && distance2 < intersection_tolerance) {
-		ON_X_EVENT *Event = new ON_X_EVENT;
-		// We make sure that m_a[0] <= m_a[1]
-		if (t_a1 <= t_a2) {
-		    Event->m_A[0] = pointA1;
-		    Event->m_A[1] = pointA2;
-		    Event->m_B[0] = pointB1;
-		    Event->m_B[1] = pointB2;
+	    // Use two different start points - the two end-points of the interval
+	    // If they converge to one point, it's considered an intersection
+	    // point, otherwise it's considered an overlap event.
+	    // FIXME: Find a better machanism to check overlapping, because this method
+	    // may miss some overlap cases. (Overlap events can also converge to one
+	    // point)
+	    double t_a1 = i->first->m_t.Min(), t_b1 = i->second->m_t.Min();
+	    newton_cci(t_a1, t_b1, curveA, curveB);
+	    double t_a2 = i->first->m_t.Max(), t_b2 = i->second->m_t.Max();
+	    newton_cci(t_a2, t_b2, curveA, curveB);
+
+	    ON_3dPoint pointA1 = curveA->PointAt(t_a1);
+	    ON_3dPoint pointB1 = curveB->PointAt(t_b1);
+	    ON_3dPoint pointA2 = curveA->PointAt(t_a2);
+	    ON_3dPoint pointB2 = curveB->PointAt(t_b2);
+	    if (pointA1.DistanceTo(pointA2) < intersection_tolerance
+		&& pointB1.DistanceTo(pointB2) < intersection_tolerance) {
+		// it's considered the same point
+		ON_3dPoint pointA = curveA->PointAt(t_a1);
+		ON_3dPoint pointB = curveB->PointAt(t_b1);
+		double distance = pointA.DistanceTo(pointB);
+		// Check the validity of the solution
+		if (distance < intersection_tolerance) {
+		    ON_X_EVENT *Event = new ON_X_EVENT;
+		    Event->m_A[0] = pointA;
+		    Event->m_B[0] = pointB;
 		    Event->m_a[0] = t_a1;
-		    Event->m_a[1] = t_a2;
 		    Event->m_b[0] = t_b1;
-		    Event->m_b[1] = t_b2;
-		} else {
-		    Event->m_A[0] = pointA2;
-		    Event->m_A[1] = pointA1;
-		    Event->m_B[0] = pointB2;
-		    Event->m_B[1] = pointB1;
-		    Event->m_a[0] = t_a2;
-		    Event->m_a[1] = t_a1;
-		    Event->m_b[0] = t_b2;
-		    Event->m_b[1] = t_b1;
-		}
-		int j;
-		for (j = 1; j < CCI_OVERLAP_TEST_POINTS; j++) {
-		    double strike = 1.0/CCI_OVERLAP_TEST_POINTS;
-		    ON_3dPoint test_point = curveA->PointAt(t_a1 + (t_a2-t_a1)*j*strike);
-		    ON_ClassArray<ON_PX_EVENT> pci_x;
-		    // Use point-curve intersection
-		    if (!ON_Intersect(test_point, *curveA, pci_x, overlap_tolerance))
-			break;
-		}
-		if (j != CCI_OVERLAP_TEST_POINTS)
 		    Event->m_type = ON_X_EVENT::ccx_point;
-		else
-		    Event->m_type = ON_X_EVENT::ccx_overlap;
-		tmp_x.Append(*Event);
-	    } else if (distance1 < intersection_tolerance) {
-		// in case that the second one was not correct
-		ON_X_EVENT *Event = new ON_X_EVENT;
-		Event->m_A[0] = pointA1;
-		Event->m_B[0] = pointB1;
-		Event->m_a[0] = t_a1;
-		Event->m_b[0] = t_b1;
-		Event->m_type = ON_X_EVENT::ccx_point;
-		tmp_x.Append(*Event);
-	    } else if (distance2 < intersection_tolerance) {
-		// in case that the first one was not correct
-		ON_X_EVENT *Event = new ON_X_EVENT;
-		Event->m_A[0] = pointA2;
-		Event->m_B[0] = pointB2;
-		Event->m_a[0] = t_a2;
-		Event->m_b[0] = t_b2;
-		Event->m_type = ON_X_EVENT::ccx_point;
-		tmp_x.Append(*Event);
+		    tmp_x.Append(*Event);
+		}
+	    } else {
+		// Check overlap
+		// bu_log("Maybe overlap.\n");
+		double distance1 = pointA1.DistanceTo(pointB1);
+		double distance2 = pointA2.DistanceTo(pointB2);
+
+		// Check the validity of the solution
+		if (distance1 < intersection_tolerance && distance2 < intersection_tolerance) {
+		    ON_X_EVENT *Event = new ON_X_EVENT;
+		    // We make sure that m_a[0] <= m_a[1]
+		    if (t_a1 <= t_a2) {
+			Event->m_A[0] = pointA1;
+			Event->m_A[1] = pointA2;
+			Event->m_B[0] = pointB1;
+			Event->m_B[1] = pointB2;
+			Event->m_a[0] = t_a1;
+			Event->m_a[1] = t_a2;
+			Event->m_b[0] = t_b1;
+			Event->m_b[1] = t_b2;
+		    } else {
+			Event->m_A[0] = pointA2;
+			Event->m_A[1] = pointA1;
+			Event->m_B[0] = pointB2;
+			Event->m_B[1] = pointB1;
+			Event->m_a[0] = t_a2;
+			Event->m_a[1] = t_a1;
+			Event->m_b[0] = t_b2;
+			Event->m_b[1] = t_b1;
+		    }
+		    int j;
+		    for (j = 1; j < CCI_OVERLAP_TEST_POINTS; j++) {
+			double strike = 1.0/CCI_OVERLAP_TEST_POINTS;
+			ON_3dPoint test_point = curveA->PointAt(t_a1 + (t_a2-t_a1)*j*strike);
+			ON_ClassArray<ON_PX_EVENT> pci_x;
+			// Use point-curve intersection
+			if (!ON_Intersect(test_point, *curveA, pci_x, overlap_tolerance))
+			    break;
+		    }
+		    if (j != CCI_OVERLAP_TEST_POINTS)
+			Event->m_type = ON_X_EVENT::ccx_point;
+		    else
+			Event->m_type = ON_X_EVENT::ccx_overlap;
+		    tmp_x.Append(*Event);
+		} else if (distance1 < intersection_tolerance) {
+		    // in case that the second one was not correct
+		    ON_X_EVENT *Event = new ON_X_EVENT;
+		    Event->m_A[0] = pointA1;
+		    Event->m_B[0] = pointB1;
+		    Event->m_a[0] = t_a1;
+		    Event->m_b[0] = t_b1;
+		    Event->m_type = ON_X_EVENT::ccx_point;
+		    tmp_x.Append(*Event);
+		} else if (distance2 < intersection_tolerance) {
+		    // in case that the first one was not correct
+		    ON_X_EVENT *Event = new ON_X_EVENT;
+		    Event->m_A[0] = pointA2;
+		    Event->m_B[0] = pointB2;
+		    Event->m_a[0] = t_a2;
+		    Event->m_b[0] = t_b2;
+		    Event->m_type = ON_X_EVENT::ccx_point;
+		    tmp_x.Append(*Event);
+		}
 	    }
 	}
     }
