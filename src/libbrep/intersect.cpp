@@ -800,7 +800,7 @@ ON_Intersect(const ON_Curve* curveA,
 	}
 	if (j == points.Count()) {
 	    points.Append(tmp_x[i]);
-	}	
+	}
     }
 
     // Merge the overlap events that are continuous
