@@ -661,7 +661,7 @@ ON_Intersect(const ON_Curve* curveA,
 		    Event->m_a[1] = i->first->m_t.ParameterAt(t_a2);
 		    Event->m_b[0] = i->second->m_t.ParameterAt(t_b1);
 		    Event->m_b[1] = i->second->m_t.ParameterAt(t_b2);
-		    Event->m_type = ON_X_EVENT::TYPE::ccx_overlap;
+		    Event->m_type = ON_X_EVENT::ccx_overlap;
 		    tmp_x.Append(*Event);
 		}
 	    } else {
@@ -678,7 +678,7 @@ ON_Intersect(const ON_Curve* curveA,
 		    Event->m_B[0] = lineB.PointAt(t_lineB);
 		    Event->m_a[0] = t_a;
 		    Event->m_b[0] = t_b;
-		    Event->m_type = ON_X_EVENT::TYPE::ccx_point;
+		    Event->m_type = ON_X_EVENT::ccx_point;
 		    tmp_x.Append(*Event);
 		}
 	    }
