@@ -218,6 +218,8 @@ public:
  *   intersect. Thd mid-point of them is the intersection point,
  *   and half of the distance is the uncertainty radius.
  */
+
+
 bool
 ON_Intersect(const ON_3dPoint& pointA,
 	     const ON_3dPoint& pointB,
@@ -243,20 +245,36 @@ ON_Intersect(const ON_3dPoint& pointA,
 
 /**
  * Point-curve intersections (PCI)
+ *
+ * approach:
+ *
+ * - Sub-divide the curve, calculating bounding boxes.
+ *
+ * - If the bounding box intersects with the point, go deeper until
+ *   we reach the maximal depth or the sub-curve is linear.
+ *
+ * - Use linear approximation to get an estimated intersection point.
+ *
+ * - Use Newton-Raphson iterations to calculate an accurate intersection
+ *   point, with the estimated one as a start.
  */
+
 
 // The maximal depth for subdivision - trade-off between accurancy and
 // performance
 #define MAX_PCI_DEPTH 8
 
+
 // We make the default tolerance for PSI the same as that of curve-curve
 // intersections defined by openNURBS (see other/openNURBS/opennurbs_curve.h)
 #define PCI_DEFAULT_TOLERANCE 0.001
+
 
 // Newton-Raphson iteration needs a good start. Although we can almost get
 // a good starting point every time, but in case of some unfortunate cases,
 // we define a maximum iteration, preventing from infinite loop.
 #define PCI_MAX_ITERATIONS 100
+
 
 bool
 ON_Intersect(const ON_3dPoint& pointA,
@@ -382,17 +400,28 @@ ON_Intersect(const ON_3dPoint& pointA,
 
 /**
  * Point-surface intersections (PSI)
+ *
+ * approach:
+ *
+ * - Use brlcad::get_closest_point() to compute the closest point on
+ *   the surface to that point.
+ *
+ * - If the closest point is within the given tolerance, there is an
+ *   intersection.
  */
+
 
 // We make the default tolerance for PSI the same as that of curve-surface
 // intersections defined by openNURBS (see other/openNURBS/opennurbs_curve.h)
 #define PSI_DEFAULT_TOLERANCE 0.001
+
 
 // The default maximal depth for creating a surfacee tree (8) is way too
 // much - killing performance. Since it's only used for getting an
 // estimation, and we use Newton iterations afterwards, it's reasonable
 // to use a smaller depth in this step.
 #define MAX_PSI_DEPTH 4
+
 
 bool
 ON_Intersect(const ON_3dPoint& pointA,
@@ -451,24 +480,42 @@ ON_Intersect(const ON_3dPoint& pointA,
 
 /**
  * Curve-curve intersection (CCI)
+ *
+ * approach:
+ *
+ * - Sub-divide the curves and calculate their bounding boxes.
+ *
+ * - Calculate the intersection of the bounding boxes, and go deeper if
+ *   they intersect, until we reach the maximal depth or they are linear.
+ *
+ * - Use Newton-Raphson iterations to calculate an accurate intersection
+ *   point.
+ *
+ * - Detect overlaps, eliminate duplications, and merge the continuous
+ *   overlap events.
  */
+
 
 // We make the default tolerance for CCI the same as that of curve-curve
 // intersections defined by openNURBS (see other/openNURBS/opennurbs_curve.h)
 #define CCI_DEFAULT_TOLERANCE 0.001
 
+
 // The maximal depth for subdivision - trade-off between accurancy and
 // performance
 #define MAX_CCI_DEPTH 8
+
 
 // Newton-Raphson iteration needs a good start. Although we can almost get
 // a good starting point every time, but in case of some unfortunate cases,
 // we define a maximum iteration, preventing from infinite loop.
 #define CCI_MAX_ITERATIONS 100
 
+
 // We can only test a finite number of points to determine overlap.
 // Here we test 16 points uniformly distributed.
 #define CCI_OVERLAP_TEST_POINTS 16
+
 
 // Build the curve tree root within a given domain
 bool
@@ -901,6 +948,7 @@ ON_Intersect(const ON_Curve*,
  * http://doi.acm.org/10.1145/1364901.1364937
  */
 
+
 struct Triangle {
     ON_3dPoint A, B, C;
     inline void CreateFromPoints(ON_3dPoint &p_A, ON_3dPoint &p_B, ON_3dPoint &p_C) {
@@ -1033,6 +1081,7 @@ struct PointPair {
 // The maximal depth for subdivision - trade-off between accurancy and
 // performance
 #define MAX_SSI_DEPTH 8
+
 
 int
 ON_Intersect(const ON_Surface* surfA,
