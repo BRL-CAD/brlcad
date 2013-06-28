@@ -30,6 +30,7 @@
 #include <vector>
 
 #include "opennurbs.h"
+#include "brep.h"
 
 /* Directions */
 #ifndef NE
@@ -46,15 +47,15 @@
 #endif
 
 
-#ifndef NURBS_EXPORT
-#  if defined(NURBS_DLL_EXPORTS) && defined(NURBS_DLL_IMPORTS)
-#    error "Only NURBS_DLL_EXPORTS or NURBS_DLL_IMPORTS can be defined, not both."
-#  elif defined(NURBS_DLL_EXPORTS)
-#    define NURBS_EXPORT __declspec(dllexport)
-#  elif defined(NURBS_DLL_IMPORTS)
-#    define NURBS_EXPORT __declspec(dllimport)
+#ifndef BREP_EXPORT
+#  if defined(BREP_DLL_EXPORTS) && defined(BREP_DLL_IMPORTS)
+#    error "Only BREP_DLL_EXPORTS or BREP_DLL_IMPORTS can be defined, not both."
+#  elif defined(BREP_DLL_EXPORTS)
+#    define BREP_EXPORT __declspec(dllexport)
+#  elif defined(BREP_DLL_IMPORTS)
+#    define BREP_EXPORT __declspec(dllimport)
 #  else
-#    define NURBS_EXPORT
+#    define BREP_EXPORT
 #  endif
 #endif
 
@@ -67,7 +68,7 @@
 
   @return @c true if the value is within the near-zero interval specified by epsilon, @c false otherwise.
 */
-NURBS_EXPORT
+BREP_EXPORT
 bool ON_NearZero(double val, double epsilon);
 
 
@@ -82,7 +83,7 @@ bool ON_NearZero(double val, double epsilon);
   @return @c 0 if there are no tangent points in the interval, @c 1 if there is a single vertical tangent,
   @c 2 if there is a single horizontal tangent, and @c 3 if multiple tangents are present.
 */
-NURBS_EXPORT
+BREP_EXPORT
 int ON_Curve_Has_Tangent(const ON_Curve* curve, double ct_min, double ct_max, double t_tol);
 
 
@@ -151,7 +152,7 @@ int ON_Curve_Has_Tangent(const ON_Curve* curve, double ct_min, double ct_max, do
   @param frames Array of 9 frenet frames
   @param f_tol Flatness tolerance - 0 always evaluates to flat, 1 would be a perfectly flat surface. Generally something in the range 0.8-0.9 should suffice in raytracing subdivision (per <a href="http://www.uni-koblenz.de/~cg/Diplomarbeiten/DA_Oliver_Abert.pdf">Abert, 2005</a>)
 */
-NURBS_EXPORT
+BREP_EXPORT
 bool ON_Surface_IsFlat(ON_Plane *frames, double f_tol);
 
 /**
@@ -162,7 +163,7 @@ bool ON_Surface_IsFlat(ON_Plane *frames, double f_tol);
   @param frames Array of 9 frenet frames
   @param s_tol Straightness tolerance - 0 always evaluates to straight, 1 requires perfect straightness
 */
-NURBS_EXPORT
+BREP_EXPORT
 bool ON_Surface_IsFlat_U(ON_Plane *frames, double f_tol);
 
 
@@ -174,7 +175,7 @@ bool ON_Surface_IsFlat_U(ON_Plane *frames, double f_tol);
   @param frames Array of 9 frenet frames
   @param s_tol Straightness tolerance - 0 always evaluates to straight, 1 requires perfect straightness
 */
-NURBS_EXPORT
+BREP_EXPORT
 bool ON_Surface_IsFlat_V(ON_Plane *frames, double f_tol);
 
 
@@ -188,7 +189,7 @@ bool ON_Surface_IsFlat_V(ON_Plane *frames, double f_tol);
   @param frames Array of 9 frenet frames
   @param s_tol Straightness tolerance - 0 always evaluates to straight, 1 requires perfect straightness
 */
-NURBS_EXPORT
+BREP_EXPORT
 bool ON_Surface_IsStraight(ON_Plane *frames, double s_tol);
 
 
@@ -216,7 +217,7 @@ bool ON_Surface_IsStraight(ON_Plane *frames, double s_tol);
   is the same as the parent surface, @c false if one or more split
   operations failed.
 */
-NURBS_EXPORT
+BREP_EXPORT
 bool ON_Surface_SubSurface(
 	const ON_Surface *srf,
 	ON_Interval *u_val,
@@ -267,7 +268,7 @@ bool ON_Surface_SubSurface(
   operations failed, the q* containers are not NULL, or the upt,vpt coordinates are
   not contained within the UV interval.
 */
-NURBS_EXPORT
+BREP_EXPORT
 bool ON_Surface_Quad_Split(
 	const ON_Surface *srf,
 	const ON_Interval& u,

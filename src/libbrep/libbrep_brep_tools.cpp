@@ -27,6 +27,7 @@
 
 #include "opennurbs.h"
 #include "bu.h"
+#include "libbrep_brep_tools.h"
 
 bool ON_NearZero(double val, double epsilon) {
     return (val > -epsilon) && (val < epsilon);

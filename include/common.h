@@ -257,7 +257,11 @@ typedef ptrdiff_t ssize_t;
 #else
 #  undef IGNORE
 #  define IGNORE(parameter) (void)(parameter)
-#  warning "IGNORE was previously defined.  Parameter declaration behavior is unknown, see common.h"
+#  if defined(_MSC_VER)
+#    pragma warning("IGNORE was previously defined.  Parameter declaration behavior is unknown, see common.h")
+#  else
+#    warning "IGNORE was previously defined.  Parameter declaration behavior is unknown, see common.h"
+#  endif
 #endif
 
 /**
