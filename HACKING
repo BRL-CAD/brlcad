@@ -762,8 +762,8 @@ the project to have all documentation located along with the source
 code in our Subversion (SVN) repository.
 
 In line with that goal and where beneficial, a large portion of the
-tutorial documentation is being converted to the Docbook XML format.
-Having the tutorial documentation in the Docbook XML format allows for
+tutorial documentation is being converted to the DocBook XML format.
+Having the tutorial documentation in the DocBook XML format allows for
 easier maintenances, better export conversion support, and
 representation in a textual format that may be revision controlled and
 tracked.
@@ -1177,7 +1177,7 @@ required for syncing to STABLE.  Manually test mged and archer.
     cmake .. && make distcheck && rm -rf ../.verify/*
     cmake .. -DBRLCAD_BUNDLED_LIBS=ON -DCMAKE_BUILD_TYPE=Release && make distcheck && make
 
-    # manaully test
+    # manually test
     bin/rt        # should report usage with correct library versions
     bin/benchmark run TIMEFRAME=1            # completes without ERROR
     bin/mged -c test.g "make sph sph ; rt"   # pops up a sphere
@@ -1310,7 +1310,7 @@ audience.  Always notify the following when a release is made:
     BRL-CAD NEWS Mailing List  (anyone can submit, posting moderated)
 	brlcad-news@lists.sourceforge.net
 
-    BRL-CAD Sourceforge NEWS  (authorized can submit)
+    BRL-CAD SourceForge NEWS  (authorized can submit)
 	https://sourceforge.net/news/submit.php?group_id=105292
 
     Freshmeat  (anyone can submit update)
