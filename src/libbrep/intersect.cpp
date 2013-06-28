@@ -674,10 +674,10 @@ ON_Intersect(const ON_Curve* curveA,
 		    t_b = i->second->m_t.ParameterAt(t_lineB);
 
 		    ON_X_EVENT* Event = new ON_X_EVENT;
-		    Event->m_A[0] = lineA.PointAt(t_lineA);
-		    Event->m_B[0] = lineB.PointAt(t_lineB);
-		    Event->m_a[0] = t_a;
-		    Event->m_b[0] = t_b;
+		    Event->m_A[0] = Event->m_A[1] = lineA.PointAt(t_lineA);
+		    Event->m_B[0] = Event->m_B[1] = lineB.PointAt(t_lineB);
+		    Event->m_a[0] = Event->m_a[1] = t_a;
+		    Event->m_b[0] = Event->m_b[1] = t_b;
 		    Event->m_type = ON_X_EVENT::ccx_point;
 		    tmp_x.Append(*Event);
 		}
@@ -709,10 +709,10 @@ ON_Intersect(const ON_Curve* curveA,
 		// Check the validity of the solution
 		if (distance < intersection_tolerance) {
 		    ON_X_EVENT *Event = new ON_X_EVENT;
-		    Event->m_A[0] = pointA;
-		    Event->m_B[0] = pointB;
-		    Event->m_a[0] = t_a1;
-		    Event->m_b[0] = t_b1;
+		    Event->m_A[0] = Event->m_A[1] = pointA;
+		    Event->m_B[0] = Event->m_B[1] = pointB;
+		    Event->m_a[0] = Event->m_a[1] = t_a1;
+		    Event->m_b[0] = Event->m_b[1] = t_b1;
 		    Event->m_type = ON_X_EVENT::ccx_point;
 		    tmp_x.Append(*Event);
 		}
@@ -754,27 +754,31 @@ ON_Intersect(const ON_Curve* curveA,
 			if (!ON_Intersect(test_point, *curveA, pci_x, overlap_tolerance))
 			    break;
 		    }
-		    if (j != CCI_OVERLAP_TEST_POINTS)
-			Event->m_type = ON_X_EVENT::ccx_point;
-		    else
+		    if (j == CCI_OVERLAP_TEST_POINTS) {
 			Event->m_type = ON_X_EVENT::ccx_overlap;
-		    tmp_x.Append(*Event);
-		} else if (distance1 < intersection_tolerance) {
+			tmp_x.Append(*Event);
+			continue;
+		    }
+		    // if j != CCI_OVERLAP_TEST_POINTS, two ccx_point events should
+		    // be generated. Fall through.
+		}
+		if (distance1 < intersection_tolerance) {
 		    // in case that the second one was not correct
 		    ON_X_EVENT *Event = new ON_X_EVENT;
-		    Event->m_A[0] = pointA1;
-		    Event->m_B[0] = pointB1;
-		    Event->m_a[0] = t_a1;
-		    Event->m_b[0] = t_b1;
+		    Event->m_A[0] = Event->m_A[1] = pointA1;
+		    Event->m_B[0] = Event->m_B[1] = pointB1;
+		    Event->m_a[0] = Event->m_a[1] = t_a1;
+		    Event->m_b[0] = Event->m_b[1] = t_b1;
 		    Event->m_type = ON_X_EVENT::ccx_point;
 		    tmp_x.Append(*Event);
-		} else if (distance2 < intersection_tolerance) {
+		}
+		if (distance2 < intersection_tolerance) {
 		    // in case that the first one was not correct
 		    ON_X_EVENT *Event = new ON_X_EVENT;
-		    Event->m_A[0] = pointA2;
-		    Event->m_B[0] = pointB2;
-		    Event->m_a[0] = t_a2;
-		    Event->m_b[0] = t_b2;
+		    Event->m_A[0] = Event->m_A[1] = pointA2;
+		    Event->m_B[0] = Event->m_B[1] = pointB2;
+		    Event->m_a[0] = Event->m_a[1] = t_a2;
+		    Event->m_b[0] = Event->m_b[1] = t_b2;
 		    Event->m_type = ON_X_EVENT::ccx_point;
 		    tmp_x.Append(*Event);
 		}
