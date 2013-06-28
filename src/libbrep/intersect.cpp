@@ -751,7 +751,7 @@ ON_Intersect(const ON_Curve* curveA,
 			ON_3dPoint test_point = curveA->PointAt(t_a1 + (t_a2-t_a1)*j*strike);
 			ON_ClassArray<ON_PX_EVENT> pci_x;
 			// Use point-curve intersection
-			if (!ON_Intersect(test_point, *curveA, pci_x, overlap_tolerance))
+			if (!ON_Intersect(test_point, *curveB, pci_x, overlap_tolerance))
 			    break;
 		    }
 		    if (j == CCI_OVERLAP_TEST_POINTS) {
