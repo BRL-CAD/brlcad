@@ -521,7 +521,7 @@ macro(CHECK_UMASK umask_val status_var)
   endif(UMASK_HAVE_R AND "${umask_x}" STREQUAL "xxx")
 endmacro(CHECK_UMASK)
 # Note - umask is not always an executable, so we can't use find_program
-# to determine whether the umask check is appropriate.  
+# to determine whether the umask check is appropriate.
 IF(NOT WIN32)
   exec_program(umask ARGS -S OUTPUT_VARIABLE umask_curr)
   string(STRIP "${umask_curr}" umask_curr)
