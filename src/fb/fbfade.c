@@ -148,7 +148,7 @@ main(int argc, char **argv)
 		    out_fb_file = bu_optarg;
 		    break;
 
-		case 'H':	/* -h */
+		case 'H':	/* -H */
 		    hires = 1;
 		    break;
 
