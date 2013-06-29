@@ -58,7 +58,7 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 * make sure we can run db_dirbuild() multiple times without creating
   duplicate entries.
 
-* rename all the g_* tools sans "_" [save until 7.22]
+* rename all the g_* tools sans "_" [save until 7.??]
 
 * havoc.g s.nos5g reliably exhibits the grazing edge bug where only
   one hit point is being returned.  to reproduce:
