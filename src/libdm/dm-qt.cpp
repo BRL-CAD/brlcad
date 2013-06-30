@@ -383,6 +383,12 @@ struct dm dm_qt = {
 
 __BEGIN_DECLS
 
+/*
+ * Q T _ O P E N
+ *
+ * Fire up the display manager, and the display processor.
+ *
+ */
 struct dm *
 qt_open(Tcl_Interp *interp, int argc, char **argv)
 {
