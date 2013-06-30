@@ -35,89 +35,6 @@
 #include "dm.h"
 #include "dm_xvars.h"
 
-__BEGIN_DECLS
-
-struct dm *
-qt_open(Tcl_Interp *interp, int argc, char **argv)
-{
-    static int count = 0;
-    struct dm *dmp = (struct dm *)NULL;
-    struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
-    Tk_Window tkwin;
-
-    struct dm_xvars *pubvars = NULL;
-
-    if (argc < 0 || !argv)
-	return DM_NULL;
-
-    if ((tkwin = Tk_MainWindow(interp)) == NULL) {
-	return DM_NULL;
-    }
-
-    BU_ALLOC(dmp, struct dm);
-
-    *dmp = dm_qt; /* struct copy */
-    dmp->dm_interp = interp;
-
-    BU_ALLOC(dmp->dm_vars.pub_vars, struct dm_xvars);
-    pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
-
-    bu_vls_init(&dmp->dm_pathName);
-    bu_vls_init(&dmp->dm_tkName);
-    bu_vls_init(&dmp->dm_dName);
-
-    dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
-
-    if (bu_vls_strlen(&dmp->dm_pathName) == 0) {
-	bu_vls_printf(&dmp->dm_pathName, ".dm_qt%d", count);
-    }
-    ++count;
-
-    if (bu_vls_strlen(&dmp->dm_dName) == 0) {
-	char *dp;
-
-	dp = getenv("DISPLAY");
-	if (dp)
-	    bu_vls_strcpy(&dmp->dm_dName, dp);
-	else
-	    bu_vls_strcpy(&dmp->dm_dName, ":0.0");
-    }
-    if (bu_vls_strlen(&init_proc_vls) == 0)
-	bu_vls_strcpy(&init_proc_vls, "bind_dm");
-
-    if (dmp->dm_top) {
-	/* Make xtkwin a toplevel window */
-	pubvars->xtkwin = Tk_CreateWindowFromPath(interp, tkwin,
-						  bu_vls_addr(&dmp->dm_pathName),
-						  bu_vls_addr(&dmp->dm_dName));
-	pubvars->top = pubvars->xtkwin;
-    } else {
-	char *cp;
-
-	cp = strrchr(bu_vls_addr(&dmp->dm_pathName), (int)'.');
-	if (cp == bu_vls_addr(&dmp->dm_pathName)) {
-	    pubvars->top = tkwin;
-	} else {
-	    struct bu_vls top_vls = BU_VLS_INIT_ZERO;
-
-	    bu_vls_strncpy(&top_vls, (const char *)bu_vls_addr(&dmp->dm_pathName), cp - bu_vls_addr(&dmp->dm_pathName));
-
-	    pubvars->top = Tk_NameToWindow(interp, bu_vls_addr(&top_vls), tkwin);
-	    bu_vls_free(&top_vls);
-	}
-
-	/* Make xtkwin an embedded window */
-	pubvars->xtkwin =
-	    Tk_CreateWindow(interp, pubvars->top,
-			    cp + 1, (char *)NULL);
-    }
-
-    bu_log("qt_open called\n");
-    return dmp;
-}
-
-__END_DECLS
-
 
 HIDDEN int
 qt_close(struct dm *UNUSED(dmp))
@@ -462,6 +379,96 @@ struct dm dm_qt = {
     0,                          /* not overriding the auto font size */
     0				/* Tcl interpreter */
 };
+
+
+__BEGIN_DECLS
+
+struct dm *
+qt_open(Tcl_Interp *interp, int argc, char **argv)
+{
+    static int count = 0;
+    struct dm *dmp = (struct dm *)NULL;
+    struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
+    Tk_Window tkwin;
+
+    struct dm_xvars *pubvars = NULL;
+
+    if (argc < 0 || !argv)
+	return DM_NULL;
+
+    if ((tkwin = Tk_MainWindow(interp)) == NULL) {
+	return DM_NULL;
+    }
+
+    BU_ALLOC(dmp, struct dm);
+
+    *dmp = dm_qt; /* struct copy */
+    dmp->dm_interp = interp;
+
+    BU_ALLOC(dmp->dm_vars.pub_vars, struct dm_xvars);
+    pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
+
+    bu_vls_init(&dmp->dm_pathName);
+    bu_vls_init(&dmp->dm_tkName);
+    bu_vls_init(&dmp->dm_dName);
+
+    dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
+
+    if (bu_vls_strlen(&dmp->dm_pathName) == 0) {
+	bu_vls_printf(&dmp->dm_pathName, ".dm_qt%d", count);
+    }
+    ++count;
+
+    if (bu_vls_strlen(&dmp->dm_dName) == 0) {
+	char *dp;
+
+	dp = getenv("DISPLAY");
+	if (dp)
+	    bu_vls_strcpy(&dmp->dm_dName, dp);
+	else
+	    bu_vls_strcpy(&dmp->dm_dName, ":0.0");
+    }
+    if (bu_vls_strlen(&init_proc_vls) == 0)
+	bu_vls_strcpy(&init_proc_vls, "bind_dm");
+
+    if (dmp->dm_top) {
+	/* Make xtkwin a toplevel window */
+	pubvars->xtkwin = Tk_CreateWindowFromPath(interp, tkwin,
+						  bu_vls_addr(&dmp->dm_pathName),
+						  bu_vls_addr(&dmp->dm_dName));
+	pubvars->top = pubvars->xtkwin;
+    } else {
+	char *cp;
+
+	cp = strrchr(bu_vls_addr(&dmp->dm_pathName), (int)'.');
+	if (cp == bu_vls_addr(&dmp->dm_pathName)) {
+	    pubvars->top = tkwin;
+	} else {
+	    struct bu_vls top_vls = BU_VLS_INIT_ZERO;
+
+	    bu_vls_strncpy(&top_vls, (const char *)bu_vls_addr(&dmp->dm_pathName), cp - bu_vls_addr(&dmp->dm_pathName));
+
+	    pubvars->top = Tk_NameToWindow(interp, bu_vls_addr(&top_vls), tkwin);
+	    bu_vls_free(&top_vls);
+	}
+
+	/* Make xtkwin an embedded window */
+	pubvars->xtkwin =
+	    Tk_CreateWindow(interp, pubvars->top,
+			    cp + 1, (char *)NULL);
+    }
+
+    if (pubvars->xtkwin == NULL) {
+	bu_log("qt_open: Failed to open %s\n", bu_vls_addr(&dmp->dm_pathName));
+	(void)qt_close(dmp);
+	return DM_NULL;
+    }
+
+    bu_log("qt_open called\n");
+    return dmp;
+}
+
+__END_DECLS
 
 
 /*
