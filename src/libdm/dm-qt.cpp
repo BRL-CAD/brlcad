@@ -29,6 +29,7 @@
 #endif
 
 #include "tcl.h"
+#include "tk.h"
 #include "bu.h"
 #include "vmath.h"
 #include "dm.h"
@@ -36,20 +37,37 @@
 __BEGIN_DECLS
 
 struct dm *
-qt_open(Tcl_Interp *interp, int argc, const char **argv)
+qt_open(Tcl_Interp *interp, int argc, char **argv)
 {
-    struct dm *dmp;
+    static int count = 0;
+    struct dm *dmp = (struct dm *)NULL;
+    struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
+    Tk_Window tkwin;
 
     if (argc < 0 || !argv)
 	return DM_NULL;
 
+    if ((tkwin = Tk_MainWindow(interp)) == NULL) {
+	return DM_NULL;
+    }
+
     BU_ALLOC(dmp, struct dm);
 
-    *dmp = dm_qt;
+    *dmp = dm_qt; /* struct copy */
     dmp->dm_interp = interp;
 
-    bu_log("qt_open called\n");
+    bu_vls_init(&dmp->dm_pathName);
+    bu_vls_init(&dmp->dm_tkName);
+    bu_vls_init(&dmp->dm_dName);
 
+    dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
+
+    if (bu_vls_strlen(&dmp->dm_pathName) == 0) {
+	bu_vls_printf(&dmp->dm_pathName, ".dm_qt%d", count);
+    }
+    ++count;
+
+    bu_log("qt_open called\n");
     return dmp;
 }
 
