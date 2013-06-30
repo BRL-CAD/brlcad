@@ -393,8 +393,10 @@ struct dm *
 qt_open(Tcl_Interp *interp, int argc, char **argv)
 {
     static int count = 0;
+    int make_square = -1;
     struct dm *dmp = (struct dm *)NULL;
     struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     Tk_Window tkwin;
 
     struct dm_xvars *pubvars = NULL;
@@ -468,6 +470,51 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
 	bu_log("qt_open: Failed to open %s\n", bu_vls_addr(&dmp->dm_pathName));
 	(void)qt_close(dmp);
 	return DM_NULL;
+    }
+
+    bu_vls_printf(&dmp->dm_tkName, "%s", (char *)Tk_Name(pubvars->xtkwin));
+
+    bu_vls_printf(&str, "_init_dm %V %V\n", &init_proc_vls, &dmp->dm_pathName);
+
+    if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
+	bu_log("qt_open: _init_dm failed\n");
+	bu_vls_free(&init_proc_vls);
+	bu_vls_free(&str);
+	(void)qt_close(dmp);
+	return DM_NULL;
+    }
+
+    bu_vls_free(&init_proc_vls);
+    bu_vls_free(&str);
+
+    pubvars->dpy = Tk_Display(pubvars->top);
+
+    /* make sure there really is a display before proceeding. */
+    if (!pubvars->dpy) {
+	bu_log("qt_open: Unable to attach to display (%s)\n", bu_vls_addr(&dmp->dm_pathName));
+	(void)qt_close(dmp);
+	return DM_NULL;
+    }
+
+    if (dmp->dm_width == 0) {
+	dmp->dm_width =
+	    WidthOfScreen(Tk_Screen(pubvars->xtkwin)) - 30;
+	++make_square;
+    }
+
+    if (dmp->dm_height == 0) {
+	dmp->dm_height =
+	    HeightOfScreen(Tk_Screen(pubvars->xtkwin)) - 30;
+	++make_square;
+    }
+
+    if (make_square > 0) {
+	/* Make window square */
+	if (dmp->dm_height <
+	    dmp->dm_width)
+	    dmp->dm_width = dmp->dm_height;
+	else
+	    dmp->dm_height = dmp->dm_width;
     }
 
     bu_log("qt_open called\n");
