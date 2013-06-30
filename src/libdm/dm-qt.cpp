@@ -351,14 +351,14 @@ struct dm dm_qt = {
     "qt",
     "Qt Display",
     DM_TYPE_QT,
-    0,/* top */
+    1,
     0,/* width */
     0,/* height */
     0,/* bytes per pixel */
     0,/* bits per channel */
     0,
     0,
-    0,
+    1.0,/* aspect ratio */
     0,
     {0, 0},
     BU_VLS_INIT_ZERO,		/* bu_vls path name*/
@@ -366,8 +366,8 @@ struct dm dm_qt = {
     BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
     {0, 0, 0},			/* bg color */
     {0, 0, 0},			/* fg color */
-    {0.0, 0.0, 0.0},		/* clipmin */
-    {0.0, 0.0, 0.0},		/* clipmax */
+    {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
+    {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
     0,				/* no debugging */
     0,				/* no perspective */
     0,				/* no lighting */
@@ -379,6 +379,13 @@ struct dm dm_qt = {
     0,                          /* not overriding the auto font size */
     0				/* Tcl interpreter */
 };
+
+
+HIDDEN int
+qt_configureWin_guts(struct dm *UNUSED(dmp), int UNUSED(force))
+{
+    return 0;
+}
 
 
 __BEGIN_DECLS
@@ -516,6 +523,12 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
 	else
 	    dmp->dm_height = dmp->dm_width;
     }
+
+    Tk_GeometryRequest(pubvars->xtkwin, dmp->dm_width, dmp->dm_height);
+
+    Tk_MakeWindowExist(pubvars->xtkwin);
+    pubvars->win = Tk_WindowId(pubvars->xtkwin);
+    dmp->dm_id = pubvars->win;
 
     bu_log("qt_open called\n");
     return dmp;
