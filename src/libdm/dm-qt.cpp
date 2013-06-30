@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libdm/dm-qt.c
+/** @file libdm/dm-qt.cpp
  *
  */
 #include "common.h"
@@ -466,7 +466,7 @@ struct dm dm_qt = {
 
 /*
  * Local Variables:
- * mode: C
+ * mode: C++
  * tab-width: 8
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
