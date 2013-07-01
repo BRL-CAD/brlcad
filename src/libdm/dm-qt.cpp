@@ -445,7 +445,7 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
     }
     if (bu_vls_strlen(&init_proc_vls) == 0)
 	bu_vls_strcpy(&init_proc_vls, "bind_dm");
-
+    
     if (dmp->dm_top) {
 	/* Make xtkwin a toplevel window */
 	pubvars->xtkwin = Tk_CreateWindowFromPath(interp, tkwin,
@@ -530,6 +530,8 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
     pubvars->win = Tk_WindowId(pubvars->xtkwin);
     dmp->dm_id = pubvars->win;
 
+    Tk_MapWindow(pubvars->xtkwin);
+    
     bu_log("qt_open called\n");
     return dmp;
 }

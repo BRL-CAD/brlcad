@@ -35,14 +35,31 @@
 
 extern void dm_var_init(struct dm_list *initial_dm_list);		/* defined in attach.c */
 
+/*
+  This routine is being called from doEvent() to handle Expose events.
+*/
+static int
+qt_doevent(ClientData UNUSED(clientData), XEvent *UNUSED(eventPtr))
+{
+    /* allow further processing of this event */
+    return TCL_OK;
+}
+
+
 int
 Qt_dm_init(struct dm_list *o_dm_list,
 	  int argc,
 	  const char *argv[])
 {
     dm_var_init(o_dm_list);
+    
+    Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
     if ((dmp = dm_open(INTERP, DM_TYPE_QT, argc-1, argv)) == DM_NULL)
 	return TCL_ERROR;
+    
+    eventHandler = qt_doevent;
+    Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
+    
     return TCL_OK;
 }
 
