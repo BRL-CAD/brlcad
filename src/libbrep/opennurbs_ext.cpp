@@ -960,36 +960,21 @@ SurfaceTree::subdivideSurfaceByKnots(const ON_Surface *localsurf,
     // Knots
     int spanu_cnt = localsurf->SpanCount(0);
     int spanv_cnt = localsurf->SpanCount(1);
-    if ((spanu_cnt > 1) && (spanv_cnt > 1)) {
-	double *spanu = new double[spanu_cnt+1];
-	double *spanv = new double[spanv_cnt+1];
-	localsurf->GetSpanVector(0, spanu);
-	localsurf->GetSpanVector(1, spanv);
-	parent = initialBBox(ctree, localsurf, m_face, u, v);
-	do_u_split = 1;
-	do_v_split = 1;
-	usplit = spanu[(spanu_cnt+1)/2];
-	vsplit = spanv[(spanv_cnt+1)/2];
-	delete [] spanu;
-	delete [] spanv;
-    }
-    if ((spanu_cnt > 1) && (spanv_cnt <= 1)) {
+    parent = initialBBox(ctree, localsurf, m_face, u, v);
+    if (spanu_cnt > 1) {
 	double *spanu = new double[spanu_cnt+1];
 	localsurf->GetSpanVector(0, spanu);
-	parent = initialBBox(ctree, localsurf, m_face, u, v);
 	do_u_split = 1;
 	usplit = spanu[(spanu_cnt+1)/2];
 	delete [] spanu;
     }
-    if ((spanu_cnt <= 1) && (spanv_cnt > 1)) {
+    if (spanv_cnt > 1) {
 	double *spanv = new double[spanv_cnt+1];
 	localsurf->GetSpanVector(1, spanv);
-	parent = initialBBox(ctree, localsurf, m_face, u, v);
 	do_v_split = 1;
 	vsplit = spanv[(spanv_cnt+1)/2];
 	delete [] spanv;
     }
-
 
     ///////////////////////////////////
 
