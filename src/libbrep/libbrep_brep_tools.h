@@ -62,7 +62,6 @@
 /**
   \brief Return truthfully whether a value is within a specified epsilon distance from zero.
 
-
   @param val value to be tested
   @param epsilon distance from zero defining the interval to be treated as "near" zero for the test
 
@@ -70,6 +69,32 @@
 */
 BREP_EXPORT
 bool ON_NearZero(double val, double epsilon);
+
+/**
+  \brief Search for a horizontal tangent on the curve between two curve parameters.
+
+  @param curve curve to be tested
+  @param min minimum curve parameter value
+  @param max maximum curve parameter value
+  @param zero_tol tolerance to use when testing for near-zero values
+
+  @return t parameter corresponding to the point on the curve with the horizontal tangent.
+*/
+BREP_EXPORT
+double ON_Curve_Get_Horizontal_Tangent(const ON_Curve* curve, double min, double max, double zero_tol);
+
+/**
+  \brief Search for a vertical tangent on the curve between two curve parameters.
+
+  @param curve curve to be tested
+  @param min minimum curve parameter value
+  @param max maximum curve parameter value
+  @param zero_tol tolerance to use when testing for near-zero values
+
+  @return t parameter corresponding to the point on the curve with the vertical tangent.
+*/
+BREP_EXPORT
+double ON_Curve_Get_Vertical_Tangent(const ON_Curve* curve, double min, double max, double zero_tol);
 
 
 /**

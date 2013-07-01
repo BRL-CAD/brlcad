@@ -389,71 +389,6 @@ namespace brlcad {
 	    }
 	}
 
-
-    fastf_t
-	CurveTree::getVerticalTangent(const ON_Curve *curve, fastf_t min, fastf_t max)
-	{
-	    fastf_t mid;
-	    ON_3dVector tangent;
-	    bool tanmin;
-
-	    // first lets check end points
-	    tangent = curve->TangentAt(max);
-	    if (NEAR_ZERO(tangent.x, TOL2))
-		return max;
-	    tangent = curve->TangentAt(min);
-	    if (NEAR_ZERO(tangent.x, TOL2))
-		return min;
-
-	    tanmin = (tangent[X] < 0.0);
-	    while ((max-min) > TOL2) {
-		mid = (max + min)/2.0;
-		tangent = curve->TangentAt(mid);
-		if (NEAR_ZERO(tangent[X], TOL2)) {
-		    return mid;
-		}
-		if ((tangent[X] < 0.0) == tanmin) {
-		    min = mid;
-		} else {
-		    max = mid;
-		}
-	    }
-	    return min;
-	}
-
-
-    fastf_t
-	CurveTree::getHorizontalTangent(const ON_Curve *curve, fastf_t min, fastf_t max)
-	{
-	    fastf_t mid;
-	    ON_3dVector tangent;
-	    bool tanmin;
-
-	    // first lets check end points
-	    tangent = curve->TangentAt(max);
-	    if (NEAR_ZERO(tangent.y, TOL2))
-		return max;
-	    tangent = curve->TangentAt(min);
-	    if (NEAR_ZERO(tangent.y, TOL2))
-		return min;
-
-	    tanmin = (tangent[Y] < 0.0);
-	    while ((max-min) > TOL2) {
-		mid = (max + min)/2.0;
-		tangent = curve->TangentAt(mid);
-		if (NEAR_ZERO(tangent[Y], TOL2)) {
-		    return mid;
-		}
-		if ((tangent[Y] < 0.0) == tanmin) {
-		    min = mid;
-		} else {
-		    max = mid;
-		}
-	    }
-	    return min;
-	}
-
-
     bool
 	CurveTree::getHVTangents(const ON_Curve* curve, ON_Interval& t, std::list<fastf_t>& list)
 	{
@@ -466,12 +401,12 @@ namespace brlcad {
 	    switch (status) {
 
 		case 1: /* 1 Vertical tangent */
-		    x = getVerticalTangent(curve, t[0], t[1]);
+		    x = ON_Curve_Get_Vertical_Tangent(curve, t[0], t[1], TOL2);
 		    list.push_back(x);
 		    return true;
 
 		case 2: /* 1 Horizontal tangent */
-		    x = getHorizontalTangent(curve, t[0], t[1]);
+		    x = ON_Curve_Get_Horizontal_Tangent(curve, t[0], t[1], TOL2);
 		    list.push_back(x);
 		    return true;
 

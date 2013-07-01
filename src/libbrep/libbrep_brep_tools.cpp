@@ -33,6 +33,43 @@ bool ON_NearZero(double val, double epsilon) {
     return (val > -epsilon) && (val < epsilon);
 }
 
+double ON_Curve_Get_Tangent(int direction, const ON_Curve* curve, double min, double max, double zero_tol) {
+    double mid;
+    bool tanmin;
+    ON_3dVector tangent;
+
+    // first check end points
+    tangent = curve->TangentAt(max);
+    if (direction == 1 && ON_NearZero(tangent.y, zero_tol)) return max;
+    if (direction == 0 && ON_NearZero(tangent.x, zero_tol)) return max;
+    tangent = curve->TangentAt(min);
+    if (direction == 1 && ON_NearZero(tangent.y, zero_tol)) return min;
+    if (direction == 0 && ON_NearZero(tangent.y, zero_tol)) return min;
+
+    tanmin = (tangent[direction] < 0.0);
+    while ((max-min) > zero_tol) {
+	mid = (max + min)/2.0;
+	tangent = curve->TangentAt(mid);
+	if (ON_NearZero(tangent[direction], zero_tol)) {
+	    return mid;
+	}
+	if ((tangent[direction] < 0.0) == tanmin) {
+	    min = mid;
+	} else {
+	    max = mid;
+	}
+    }
+    return min;
+}
+
+double ON_Curve_Get_Horizontal_Tangent(const ON_Curve* curve, double min, double max, double zero_tol) {
+    return ON_Curve_Get_Tangent(1, curve, min, max, zero_tol);
+}
+
+double ON_Curve_Get_Vertical_Tangent(const ON_Curve* curve, double min, double max, double zero_tol) {
+    return ON_Curve_Get_Tangent(0, curve, min, max, zero_tol);
+}
+
 int ON_Curve_Has_Tangent(const ON_Curve* curve, double ct_min, double ct_max, double t_tol) {
 
     bool tanx1, tanx2, x_changed;

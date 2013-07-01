@@ -861,8 +861,6 @@ public:
     int depth();
 
 private:
-    fastf_t getVerticalTangent(const ON_Curve *curve, fastf_t min, fastf_t max);
-    fastf_t getHorizontalTangent(const ON_Curve *curve, fastf_t min, fastf_t max);
     bool getHVTangents(const ON_Curve* curve, ON_Interval& t, std::list<fastf_t>& list);
     bool isLinear(const ON_Curve* curve, double min, double max);
     BRNode* subdivideCurve(const ON_Curve* curve, int adj_face_index, double min, double max, bool innerTrim, int depth);
