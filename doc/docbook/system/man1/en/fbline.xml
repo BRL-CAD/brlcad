@@ -16,8 +16,11 @@
 <refsynopsisdiv xml:id="synopsis">
 <cmdsynopsis sepchar=" ">
   <command>fbline</command>
-    <arg choice="opt" rep="norepeat">-hc </arg>
+    <arg choice="opt" rep="norepeat">-c </arg>
     <arg choice="opt" rep="norepeat">-F <replaceable>framebuffer</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-S <replaceable>squaresize</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-W <replaceable>screen_width</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-N <replaceable>screen_height</replaceable></arg>
     <arg choice="opt" rep="norepeat">-r <replaceable>red</replaceable></arg>
     <arg choice="opt" rep="norepeat">-g <replaceable>green</replaceable></arg>
     <arg choice="opt" rep="norepeat">-b <replaceable>blue</replaceable></arg>
@@ -47,10 +50,18 @@ by using the
 flag.</para>
 
 <para>By default, the
-requested framebuffer size is typically 512x512 pixels.
-Specifying the
-<option>-h</option>
-flag changes the size to 1024x1024.</para>
+requested framebuffer size is 512x512 pixels.
+</para>
+
+<para>The
+<option>-S</option>
+flag sets the width and height to the same value.
+The
+<option>-W</option>
+and
+<option>-N</option>
+flags sets them individually.
+</para>
 
 <para>The
 <option>-c</option>
