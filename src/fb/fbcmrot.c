@@ -50,7 +50,7 @@ int onestep = 0;
 FBIO *fbp;
 
 static char usage[] = "\
-Usage: fbcmrot [-i increment] steps_per_second\n";
+Usage: fbcmrot [-H -i increment] steps_per_second\n";
 
 int
 get_args(int argc, char **argv)
