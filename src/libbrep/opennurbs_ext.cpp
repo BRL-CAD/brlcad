@@ -944,44 +944,72 @@ namespace brlcad {
 		int prev_knot
 		)
 	{
+	    BBNode* quads[4];
+	    BBNode* parent = NULL;
+	    double usplit, vsplit, width, height;
+	    double ratio = 5.0;
 	    double uq = u.Length()*0.25;
 	    double vq = v.Length()*0.25;
 	    localsurf->FrameAt(u.Mid() - uq, v.Mid() - vq, frames[5]);
 	    localsurf->FrameAt(u.Mid() - uq, v.Mid() + vq, frames[6]);
 	    localsurf->FrameAt(u.Mid() + uq, v.Mid() - vq, frames[7]);
 	    localsurf->FrameAt(u.Mid() + uq, v.Mid() + vq, frames[8]);
-	    BBNode* quads[4];
-
-
 	    unsigned int do_u_split = 0;
 	    unsigned int do_v_split = 0;
 	    unsigned int do_both_splits = 0;
-	    BBNode* parent = NULL;
-	    double usplit;
-	    double vsplit;
+            // The non-knot case where all criteria are satisfied is the
+            // terminating case for the recursion - handle that first
+            if (!prev_knot) {
+               usplit = u.Mid();
+               vsplit = v.Mid();
+               localsurf->GetSurfaceSize(&width, &height);
+	       if (((width/height < ratio) && (width/height > 1.0/ratio) && isFlat(frames) && isStraight(frames))
+		       || (divDepth >= depthLimit)) { //BREP_MAX_FT_DEPTH
+		   return surfaceBBox(localsurf, true, frames, u, v);
+	       }
+	    }
 
 	    // Knots
-	    int spanu_cnt = localsurf->SpanCount(0);
-	    int spanv_cnt = localsurf->SpanCount(1);
-	    parent = initialBBox(ctree, localsurf, m_face, u, v);
-	    if (spanu_cnt > 1) {
-		double *spanu = new double[spanu_cnt+1];
-		localsurf->GetSpanVector(0, spanu);
-		do_u_split = 1;
-		usplit = spanu[(spanu_cnt+1)/2];
-		delete [] spanu;
+	    if (prev_knot) {
+		int spanu_cnt = localsurf->SpanCount(0);
+		int spanv_cnt = localsurf->SpanCount(1);
+		parent = initialBBox(ctree, localsurf, m_face, u, v);
+		if (spanu_cnt > 1) {
+		    double *spanu = new double[spanu_cnt+1];
+		    localsurf->GetSpanVector(0, spanu);
+		    do_u_split = 1;
+		    usplit = spanu[(spanu_cnt+1)/2];
+		    delete [] spanu;
+		}
+		if (spanv_cnt > 1) {
+		    double *spanv = new double[spanv_cnt+1];
+		    localsurf->GetSpanVector(1, spanv);
+		    do_v_split = 1;
+		    vsplit = spanv[(spanv_cnt+1)/2];
+		    delete [] spanv;
+		}
+		if (do_u_split && do_v_split) {
+		    do_both_splits = 1;
+		    do_u_split = 0;
+		    do_v_split = 0;
+		}
 	    }
-	    if (spanv_cnt > 1) {
-		double *spanv = new double[spanv_cnt+1];
-		localsurf->GetSpanVector(1, spanv);
-		do_v_split = 1;
-		vsplit = spanv[(spanv_cnt+1)/2];
-		delete [] spanv;
-	    }
-	    if (do_u_split && do_v_split) {
-		do_both_splits = 1;
-		do_u_split = 0;
-		do_v_split = 0;
+	    // Flatness
+	    if (!prev_knot) {
+		bool isUFlat = isFlatU(frames);
+		bool isVFlat = isFlatV(frames);
+
+		parent = (divDepth == 0) ? initialBBox(ctree, localsurf, m_face, u, v) : surfaceBBox(localsurf, false, frames, u, v);
+
+		if ((!isVFlat || (width/height > ratio)) && (!isUFlat || (height/width > ratio))) {
+		    do_both_splits = 1;
+		}
+		if ((!isUFlat || (width/height > ratio)) && !do_both_splits) {
+		    do_u_split = 1;
+		}
+		if (!do_both_splits && ! do_u_split) {
+		    do_v_split = 1;
+		}
 	    }
 
 	    ///////////////////////////////////
@@ -1075,7 +1103,7 @@ namespace brlcad {
 		localsurf->FrameAt(u.Max(), vsplit, sharedframes[3]);
 		// When splitting via knots, we don't know what point frames[4] is until
 		// the knot is selected
-		localsurf->FrameAt(usplit, vsplit, frames[4]);
+		if (prev_knot) localsurf->FrameAt(usplit, vsplit, frames[4]);
 
 		ON_Plane *newframes;
 		newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");
@@ -1140,21 +1168,26 @@ namespace brlcad {
 		parent->BuildBBox();
 		return parent;
 	    }
+	    //////////////////////////////////////
 	    if (do_u_split) {
+		bool split;
 		ON_Interval firstu(u.Min(), usplit);
 		ON_Interval secondu(usplit, u.Max());
-		//////////////////////////////////////
 		ON_Surface *east = NULL;
 		ON_Surface *west = NULL;
 
 		ON_BoundingBox box = localsurf->BoundingBox();
 
 		int dir = 0;
-		bool split = localsurf->Split(dir, usplit, east, west);
+                if (prev_knot) {
+		    split = localsurf->Split(dir, usplit, east, west);
+		} else {
+		    split = localsurf->Split(dir, localsurf->Domain(dir).Mid(), east, west);
+		}
 
 		/* FIXME: this needs to be handled more gracefully */
 		if (!split || !east || !west) {
-		    bu_log("DEBUG: Split failure (split:%d, surf1:%p, surf2:%p)\n", split, (void *)east, (void *)west);
+		    bu_log("DEBUG: Split failure (split:%d, east:%p, west:%p)\n", split, (void *)east, (void *)west);
 		    delete parent;
 		    return NULL;
 		}
@@ -1250,22 +1283,30 @@ namespace brlcad {
 		newframes[1] = sharedframes[0];
 		newframes[2] = sharedframes[1];
 		newframes[3] = frames[3];
-		localsurf->FrameAt(firstu.Mid(), v.Mid(), newframes[4]);
 
-		//ON_BoundingBox bbox = q0surf->BoundingBox();
-		//bu_log("%d - in bbq0 rpp %f %f %f %f %f %f\n", divDepth, bbox.m_min.x, bbox.m_max.x, bbox.m_min.y, bbox.m_max.y, bbox.m_min.z, bbox.m_max.z);
-		quads[0] = subdivideSurfaceByKnots(east, firstu, v, newframes, divDepth+1, depthLimit, prev_knot);
+		if (prev_knot) {
+		    localsurf->FrameAt(firstu.Mid(), v.Mid(), newframes[4]);
+		    quads[0] = subdivideSurfaceByKnots(east, firstu, v, newframes, divDepth+1, depthLimit, prev_knot);
+		} else {
+		    ON_Interval first(0, 0.5);
+		    localsurf->FrameAt(u.Mid() - uq, v.Mid(), newframes[4]);
+		    quads[0] = subdivideSurfaceByKnots(east, u.ParameterAt(first), v, newframes, divDepth + 1, depthLimit, prev_knot);
+		}
 		delete east;
 
 		newframes[0] = sharedframes[0];
 		newframes[1] = frames[1];
 		newframes[2] = frames[2];
 		newframes[3] = sharedframes[1];
-		localsurf->FrameAt(secondu.Mid(), v.Mid(), newframes[4]);
 
-		//bbox = q1surf->BoundingBox();
-		//bu_log("%d - in bbq1 rpp %f %f %f %f %f %f\n", divDepth, bbox.m_min.x, bbox.m_max.x, bbox.m_min.y, bbox.m_max.y, bbox.m_min.z, bbox.m_max.z);
-		quads[1] = subdivideSurfaceByKnots(west, secondu, v, newframes, divDepth+1, depthLimit, prev_knot);
+		if (prev_knot) {
+		    localsurf->FrameAt(secondu.Mid(), v.Mid(), newframes[4]);
+		    quads[1] = subdivideSurfaceByKnots(west, secondu, v, newframes, divDepth+1, depthLimit, prev_knot);
+		} else {
+		    ON_Interval second(0.5, 1.0);
+		    localsurf->FrameAt(u.Mid() + uq, v.Mid(), newframes[4]);
+		    quads[1] = subdivideSurfaceByKnots(west, u.ParameterAt(second), v, newframes, divDepth + 1, depthLimit, prev_knot);
+		}
 		delete west;
 
 		bu_free(newframes, "free subsurface frames array");
@@ -1301,7 +1342,8 @@ namespace brlcad {
 		parent->BuildBBox();
 		return parent;
 	    }
-	    if (do_v_split) {
+	    if (do_v_split || !prev_knot) {
+		bool split;
 		ON_Interval firstv(v.Min(), vsplit);
 		ON_Interval secondv(vsplit, v.Max());
 
@@ -1312,7 +1354,11 @@ namespace brlcad {
 		ON_BoundingBox box = localsurf->BoundingBox();
 
 		int dir = 1;
-		bool split = localsurf->Split(dir, vsplit, south, north);
+		if (prev_knot) {
+		    split = localsurf->Split(dir, vsplit, south, north);
+		} else {
+		    split = localsurf->Split(dir, localsurf->Domain(dir).Mid(), south, north);
+		}
 
 		/* FIXME: this needs to be handled more gracefully */
 		if (!split || !south || !north) {
@@ -1395,22 +1441,29 @@ namespace brlcad {
 		newframes[1] = frames[1];
 		newframes[2] = sharedframes[1];
 		newframes[3] = sharedframes[0];
-		localsurf->FrameAt(u.Mid(), firstv.Mid(), newframes[4]);
-
-		//ON_BoundingBox bbox = q0surf->BoundingBox();
-		//bu_log("%d - in bbq0 rpp %f %f %f %f %f %f\n", divDepth, bbox.m_min.x, bbox.m_max.x, bbox.m_min.y, bbox.m_max.y, bbox.m_min.z, bbox.m_max.z);
-		quads[0] = subdivideSurfaceByKnots(south, u, firstv, newframes, divDepth+1, depthLimit, prev_knot);
+		if (prev_knot) {
+		    localsurf->FrameAt(u.Mid(), firstv.Mid(), newframes[4]);
+		    quads[0] = subdivideSurfaceByKnots(south, u, firstv, newframes, divDepth+1, depthLimit, prev_knot);
+		} else {
+		    ON_Interval first(0, 0.5);
+		    localsurf->FrameAt(u.Mid(), v.Mid() - vq, newframes[4]);
+		    quads[0] = subdivideSurfaceByKnots(south, u, v.ParameterAt(first), newframes, divDepth + 1, depthLimit, prev_knot);
+		}
 		delete south;
 
 		newframes[0] = sharedframes[0];
 		newframes[1] = sharedframes[1];
 		newframes[2] = frames[2];
 		newframes[3] = frames[3];
-		localsurf->FrameAt(u.Mid(), secondv.Mid(), newframes[4]);
 
-		//bbox = q1surf->BoundingBox();
-		//bu_log("%d - in bbq1 rpp %f %f %f %f %f %f\n", divDepth, bbox.m_min.x, bbox.m_max.x, bbox.m_min.y, bbox.m_max.y, bbox.m_min.z, bbox.m_max.z);
-		quads[1] = subdivideSurfaceByKnots(north, u, secondv, newframes, divDepth+1, depthLimit, prev_knot);
+		if (prev_knot) {
+		    localsurf->FrameAt(u.Mid(), secondv.Mid(), newframes[4]);
+		    quads[1] = subdivideSurfaceByKnots(north, u, secondv, newframes, divDepth+1, depthLimit, prev_knot);
+		} else {
+		    ON_Interval second(0.5, 1.0);
+		    localsurf->FrameAt(u.Mid(), v.Mid() + vq, newframes[4]);
+		    quads[1] = subdivideSurfaceByKnots(north, u, v.ParameterAt(second), newframes, divDepth + 1, depthLimit, prev_knot);
+		}
 		delete north;
 
 		bu_free(newframes, "free subsurface frames array");
@@ -1448,10 +1501,11 @@ namespace brlcad {
 		return parent;
 	    }
 
-	    ((ON_Surface *)localsurf)->ClearBoundingBox();
-	    delete parent;
-	    return subdivideSurface(localsurf, u, v, frames, 0, depthLimit);
-
+	    if (!do_both_splits && !do_u_split && !do_v_split) {
+		((ON_Surface *)localsurf)->ClearBoundingBox();
+		delete parent;
+		return subdivideSurface(localsurf, u, v, frames, 0, depthLimit);
+	    }
 	}
 
 
