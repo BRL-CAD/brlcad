@@ -1631,7 +1631,7 @@ private:
     bool isStraight(ON_Plane frames[]);
     bool isFlatU(ON_Plane frames[]);
     bool isFlatV(ON_Plane frames[]);
-    BBNode* subdivideSurfaceByKnots(const ON_Surface *localsurf, const ON_Interval& u, const ON_Interval& v, ON_Plane frames[], int depth, int depthLimit);
+    BBNode* subdivideSurfaceByKnots(const ON_Surface *localsurf, const ON_Interval& u, const ON_Interval& v, ON_Plane frames[], int depth, int depthLimit, int prev_knot);
     BBNode* subdivideSurface(const ON_Surface *localsurf, const ON_Interval& u, const ON_Interval& v, ON_Plane frames[], int depth, int depthLimit);
     BBNode* surfaceBBox(const ON_Surface *localsurf, bool leaf, ON_Plane frames[], const ON_Interval& u, const ON_Interval& v);
 
