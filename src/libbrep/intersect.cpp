@@ -41,7 +41,8 @@
  * method is called, the curve is splitted into two parts, whose bounding
  * boxes become the children of the original curve's bbox.
  */
-struct Subcurve {
+class Subcurve {
+    friend class Subsurface;
 private:
     ON_BoundingBox m_node;
 public:
@@ -117,15 +118,16 @@ public:
  * method is called, the surface is splitted into two parts, whose bounding
  * boxes become the children of the original surface's bbox.
  */
-struct Subsurface {
+class Subsurface {
 private:
     ON_BoundingBox m_node;
 public:
     ON_Surface *m_surf;
     ON_Interval m_u, m_v;
     Subsurface *m_children[4];
+    ON_BOOL32 m_isplanar;
 
-    Subsurface() : m_surf(NULL)
+    Subsurface() : m_surf(NULL), m_isplanar(false)
     {
 	m_children[0] = m_children[1] = m_children[2] = m_children[3] = NULL;
     }
@@ -134,6 +136,7 @@ public:
 	m_surf = _ssurf.m_surf->Duplicate();
 	m_u = _ssurf.m_u;
 	m_v = _ssurf.m_v;
+	m_isplanar = _ssurf.m_isplanar;
 	m_children[0] = m_children[1] = m_children[2] = m_children[3] = NULL;
 	SetBBox(_ssurf.m_node);
     }
@@ -167,9 +170,11 @@ public:
 	m_children[0]->m_u = ON_Interval(m_u.Min(), m_u.Mid());
 	m_children[0]->m_v = ON_Interval(m_v.Min(), m_v.Mid());
 	m_children[0]->SetBBox(m_children[0]->m_surf->BoundingBox());
+	m_children[0]->m_isplanar = m_children[0]->m_surf->IsPlanar();
 	m_children[1]->m_u = ON_Interval(m_u.Min(), m_u.Mid());
 	m_children[1]->m_v = ON_Interval(m_v.Mid(), m_v.Max());
 	m_children[1]->SetBBox(m_children[1]->m_surf->BoundingBox());
+	m_children[1]->m_isplanar = m_children[1]->m_surf->IsPlanar();
 
 	ret = temp_surf2->Split(1, m_v.Mid(), m_children[2]->m_surf, m_children[3]->m_surf);
 	delete temp_surf2;
@@ -178,9 +183,11 @@ public:
 	m_children[2]->m_u = ON_Interval(m_u.Mid(), m_u.Max());
 	m_children[2]->m_v = ON_Interval(m_v.Min(), m_v.Mid());
 	m_children[2]->SetBBox(m_children[2]->m_surf->BoundingBox());
+	m_children[2]->m_isplanar = m_children[2]->m_surf->IsPlanar();
 	m_children[3]->m_u = ON_Interval(m_u.Mid(), m_u.Max());
 	m_children[3]->m_v = ON_Interval(m_v.Mid(), m_v.Max());
 	m_children[3]->SetBBox(m_children[3]->m_surf->BoundingBox());
+	m_children[3]->m_isplanar = m_children[3]->m_surf->IsPlanar();
 
 	return 0;
     }
@@ -203,6 +210,13 @@ public:
 		m_node.m_max[i] += 0.001;
 	    }
 	}
+    }
+    bool Intersect(const Subcurve& curve, double tolerance = 0.0) const
+    {
+	ON_3dVector vtol(tolerance, tolerance, tolerance);
+	ON_BoundingBox new_bbox(m_node.m_min-vtol, m_node.m_max+vtol);
+	ON_BoundingBox intersection;
+	return intersection.Intersection(new_bbox, curve.m_node);
     }
 };
 
@@ -519,7 +533,7 @@ ON_Intersect(const ON_3dPoint& pointA,
 
 // Build the curve tree root within a given domain
 bool
-build_root(const ON_Curve* curve, const ON_Interval* domain, Subcurve& root)
+build_curve_root(const ON_Curve* curve, const ON_Interval* domain, Subcurve& root)
 {
     if (domain == NULL || *domain == curve->Domain()) {
 	root.m_curve = curve->Duplicate();
@@ -630,9 +644,9 @@ ON_Intersect(const ON_Curve* curveA,
 	overlap_tolerance = 2*intersection_tolerance;
 
     Subcurve rootA, rootB;
-    if (!build_root(curveA, curveA_domain, rootA))
+    if (!build_curve_root(curveA, curveA_domain, rootA))
 	return 0;
-    if (!build_root(curveB, curveB_domain, rootB))
+    if (!build_curve_root(curveB, curveB_domain, rootB))
 	return 0;
 
     typedef std::vector<std::pair<Subcurve*, Subcurve*> > NodePairs;
@@ -899,19 +913,485 @@ ON_Intersect(const ON_Curve* curveA,
 
 /**
  * Curve-surface intersection (CSI)
+ *
+ * approach:
+ *
+ * - Sub-divide the curve and the surface, calculate bounding boxes.
+ *
+ * - If their bounding boxes intersect, go deeper until we reach the maximal
+ *   depth, or the sub-curve is linear and the sub-surface is planar.
+ *
+ * - Use two starting points within the bounding boxes, and perform Newton-
+ *   Raphson iterations to get an accurate result.
+ *
+ * - Detect overlaps, eliminate duplications, and merge the continuous
+ *   overlap events.
  */
-int
-ON_Intersect(const ON_Curve*,
-	     const ON_Surface*,
-	     ON_SimpleArray<ON_X_EVENT>&,
-	     double,
-	     double,
-	     const ON_Interval*,
-	     const ON_Interval*,
-	     const ON_Interval*)
+
+
+// We make the default tolerance for CSI the same as that of curve-surface
+// intersections defined by openNURBS (see other/openNURBS/opennurbs_curve.h)
+#define CSI_DEFAULT_TOLERANCE 0.001
+
+
+// The maximal depth for subdivision - trade-off between accurancy and
+// performance
+#define MAX_CSI_DEPTH 8
+
+
+// Newton-Raphson iteration needs a good start. Although we can almost get
+// a good starting point every time, but in case of some unfortunate cases,
+// we define a maximum iteration, preventing from infinite loop.
+#define CSI_MAX_ITERATIONS 100
+
+
+// We can only test a finite number of points to determine overlap.
+// Here we test 16 points uniformly distributed.
+#define CSI_OVERLAP_TEST_POINTS 16
+
+
+// Build the surface tree root within a given domain
+bool
+build_surface_root(const ON_Surface* surf, const ON_Interval* u_domain, const ON_Interval* v_domain, Subsurface& root)
 {
-    // Implement later.
-    return 0;
+    // First, do u split
+    const ON_Surface* u_splitted_surf; // the surface after u-split
+    if (u_domain == NULL || *u_domain == surf->Domain(0)) {
+	u_splitted_surf = surf;
+	root.m_u = surf->Domain(0);
+    } else {
+	// Use ON_Surface::Split() to get the sub-surface inside the domain
+	ON_Surface *temp_surf1 = NULL, *temp_surf2 = NULL, *temp_surf3 = NULL;
+	if (!surf->Split(0, u_domain->Min(), temp_surf1, temp_surf2))
+	    return false;
+	delete temp_surf1;
+	temp_surf1 = NULL;
+	if (!temp_surf2->Split(0, u_domain->Max(), temp_surf1, temp_surf3))
+	    return false;
+	delete temp_surf1;
+	delete temp_surf2;
+	u_splitted_surf = temp_surf3;
+	root.m_u = *u_domain;
+    }
+
+    // Then v split
+    if (v_domain == NULL || *v_domain == surf->Domain(1)) {
+	root.m_surf = u_splitted_surf->Duplicate();
+	root.m_v = surf->Domain(1);
+    } else {
+	// Use ON_Surface::Split() to get the sub-surface inside the domain
+	ON_Surface *temp_surf1 = NULL, *temp_surf2 = NULL, *temp_surf3 = NULL;
+	if (!surf->Split(1, v_domain->Min(), temp_surf1, temp_surf2))
+	    return false;
+	delete temp_surf1;
+	temp_surf1 = NULL;
+	if (!temp_surf2->Split(1, v_domain->Max(), temp_surf1, temp_surf3))
+	    return false;
+	delete temp_surf1;
+	delete temp_surf2;
+	root.m_surf = temp_surf3;
+	root.m_v = *v_domain;
+    }
+
+    root.SetBBox(root.m_surf->BoundingBox());
+    root.m_isplanar = root.m_surf->IsPlanar();
+    return true;
+}
+
+
+void
+newton_csi(double& t, double& u, double& v, const ON_Curve* curveA, const ON_Surface* surfB)
+{
+    // Equations:
+    //   x_a(t) - x_b(u,v) = 0
+    //   y_a(t) - y_b(u,v) = 0
+    //   z_a(t) - z_b(u,v) = 0
+    // We use Newton-Raphson iterations to solve these equations.
+    double last_t = DBL_MAX/3, last_u = DBL_MAX/3, last_v = DBL_MAX/3;
+    ON_3dPoint pointA = curveA->PointAt(t);
+    ON_3dPoint pointB = surfB->PointAt(u, v);
+    int iteration = 0;
+    while (fabs(last_t - t) + fabs(last_u - u) + fabs(last_v - v) > ON_ZERO_TOLERANCE
+	   && iteration++ < CCI_MAX_ITERATIONS) {
+	last_t = t, last_u = u, last_v = v;
+	ON_3dVector derivA, derivBu, derivBv;
+	curveA->Ev1Der(t, pointA, derivA);
+	surfB->Ev1Der(u, v, pointB, derivBu, derivBv);
+	ON_Matrix J(3, 3), F(3, 1);
+	for (int i = 0; i < 3; i++) {
+	    J[i][0] = derivA[i];
+	    J[i][1] = -derivBu[i];
+	    J[i][2] = -derivBv[i];
+	    F[i][0] = pointA[i] - pointB[i];
+	}
+	if (!J.Invert(0.0)) {
+	    bu_log("Inverse failed.\n");
+	    break;
+	}
+	ON_Matrix Delta;
+	Delta.Multiply(J, F);
+	t -= Delta[0][0];
+	u -= Delta[1][0];
+	v -= Delta[2][0];
+    }
+
+    // Make sure the solution is inside the domains
+    t = std::min(t, curveA->Domain().Max());
+    t = std::max(t, curveA->Domain().Min());
+    u = std::min(u, surfB->Domain(0).Max());
+    u = std::max(u, surfB->Domain(0).Min());
+    v = std::min(v, surfB->Domain(1).Max());
+    v = std::max(v, surfB->Domain(1).Min());
+}
+
+
+int
+ON_Intersect(const ON_Curve* curveA,
+	     const ON_Surface* surfaceB,
+	     ON_SimpleArray<ON_X_EVENT>& x,
+	     double intersection_tolerance,
+	     double overlap_tolerance,
+	     const ON_Interval* curveA_domain,
+	     const ON_Interval* surfaceB_udomain,
+	     const ON_Interval* surfaceB_vdomain)
+{
+    if (intersection_tolerance <= 0.0)
+	intersection_tolerance = 0.001;
+    if (overlap_tolerance <= 0.0)
+	overlap_tolerance = 2*intersection_tolerance;
+
+    Subcurve rootA;
+    Subsurface rootB;
+    if (!build_curve_root(curveA, curveA_domain, rootA))
+	return 0;
+    if (!build_surface_root(surfaceB, surfaceB_udomain, surfaceB_vdomain, rootB))
+	return 0;
+
+    typedef std::vector<std::pair<Subcurve*, Subsurface*> > NodePairs;
+    NodePairs candidates, next_candidates;
+    if (rootB.Intersect(rootA, intersection_tolerance))
+	candidates.push_back(std::make_pair(&rootA, &rootB));
+
+    // Use sub-division and bounding box intersections first.
+    for (int h = 0; h <= MAX_CSI_DEPTH; h++) {
+	if (candidates.empty())
+	    break;
+	next_candidates.clear();
+	for (NodePairs::iterator i = candidates.begin(); i != candidates.end(); i++) {
+	    std::vector<Subcurve*> splittedA;
+	    std::vector<Subsurface*> splittedB;
+	    if ((*i).first->m_islinear || (*i).first->Split() != 0) {
+		splittedA.push_back((*i).first);
+	    } else {
+		splittedA.push_back((*i).first->m_children[0]);
+		splittedA.push_back((*i).first->m_children[1]);
+	    }
+	    if ((*i).second->m_isplanar || (*i).second->Split() != 0) {
+		splittedB.push_back((*i).second);
+	    } else {
+		for (int j = 0; j < 4; j++)
+		    splittedB.push_back((*i).second->m_children[j]);
+	    }
+	    for (unsigned int j = 0; j < splittedA.size(); j++)
+		for (unsigned int k = 0; k < splittedB.size(); k++)
+		    if (splittedB[k]->Intersect(*splittedA[j], intersection_tolerance))
+			next_candidates.push_back(std::make_pair(splittedA[j], splittedB[k]));
+	}
+	candidates = next_candidates;
+    }
+
+    ON_SimpleArray<ON_X_EVENT> tmp_x;
+    // For intersected bounding boxes, we calculate an accurate intersection
+    // point.
+    for (NodePairs::iterator i = candidates.begin(); i != candidates.end(); i++) {
+	if (i->first->m_islinear && i->second->m_isplanar) {
+	    // Intersections of a line and a plane
+	    ON_Line line(curveA->PointAt(i->first->m_t.Min()), curveA->PointAt(i->first->m_t.Max()));
+	    ON_Plane plane;
+	    bool success = true;
+	    ON_3dPoint point1 = surfaceB->PointAt(i->second->m_u.Min(), i->second->m_v.Min());
+	    ON_3dPoint point2 = surfaceB->PointAt(i->second->m_u.Min(), i->second->m_v.Max());
+	    ON_3dPoint point3 = surfaceB->PointAt(i->second->m_u.Max(), i->second->m_v.Max());
+	    ON_3dPoint point4 = surfaceB->PointAt(i->second->m_u.Max(), i->second->m_v.Min());
+	    if (!plane.CreateFromPoints(point1, point2, point3))
+		if (!plane.CreateFromPoints(point1, point2, point4))
+		    if (!plane.CreateFromPoints(point1, point3, point4))
+			if (!plane.CreateFromPoints(point2, point3, point4))
+			    success = false;
+	    
+	    if (success && !ON_NearZero(line.Length())) {
+		if (line.Direction().IsPerpendicularTo(plane.Normal())) {
+		    // They are parallel
+		    if (line.InPlane(plane, intersection_tolerance)) {
+			// we report a csx_overlap event
+			ON_Line boundary[4];
+			ON_SimpleArray<double> line_t, boundary_t;
+			ON_SimpleArray<int> boundary_index;
+			boundary[0] = ON_Line(point1, point2);
+			boundary[1] = ON_Line(point2, point3);
+			boundary[2] = ON_Line(point4, point3);
+			boundary[3] = ON_Line(point1, point4);
+			for (int j = 0; j < 4; j++) {
+			    double t1, t2;
+			    if (ON_IntersectLineLine(line, boundary[j], &t1, &t2, ON_ZERO_TOLERANCE, true)) {
+				int k;
+				for (k = 0; k < line_t.Count(); k++) {
+				    // Check duplication
+				    if (ON_NearZero(t1 - line_t[k]))
+					break;
+				}
+				if (k == line_t.Count()) {
+				    line_t.Append(t1);
+				    boundary_t.Append(t2);
+				    boundary_index.Append(j);
+				}
+			    }
+			}
+			int count = line_t.Count();
+			if (count == 0)
+			    continue; // no intersection
+			if (count == 1) {
+			    line_t.Append(line_t[0]); // csx_point, m_a[0] == m_a[1]
+			    boundary_index.Append(boundary_index[0]);
+			    boundary_t.Append(boundary_t[0]);
+			}
+			ON_X_EVENT *Event = new ON_X_EVENT;
+			for (int j = 0; j < 2; j++) {
+			    double surf_u = 0.0, surf_v = 0.0;
+			    switch (boundary_index[j]) {
+			    case 0:
+				surf_u = i->second->m_u.Min();
+				surf_v = i->second->m_v.ParameterAt(boundary_t[j]);
+				break;
+			    case 1:
+				surf_u = i->second->m_u.ParameterAt(boundary_t[j]);
+				surf_v = i->second->m_v.Max();
+				break;
+			    case 2:
+				surf_u = i->second->m_u.Max();
+				surf_v = i->second->m_v.ParameterAt(boundary_t[j]);
+				break;
+			    case 3:
+				surf_u = i->second->m_u.ParameterAt(boundary_t[j]);
+				surf_v = i->second->m_v.Min();
+				break;
+			    }
+			    Event->m_A[j] = line.PointAt(line_t[j]);
+			    Event->m_B[j] = surfaceB->PointAt(surf_u, surf_v);
+			    Event->m_a[j] = i->first->m_t.ParameterAt(line_t[j]);
+			    Event->m_b[2*j] = surf_u;
+			    Event->m_b[2*j+1] = surf_v;
+			}
+			if (count == 1)
+			    Event->m_type = ON_X_EVENT::csx_point;
+			else
+			    Event->m_type = ON_X_EVENT::csx_overlap;
+			if (Event->m_a[0] > Event->m_a[1]) {
+			    std::swap(Event->m_A[0], Event->m_A[1]);
+			    std::swap(Event->m_B[0], Event->m_B[1]);
+			    std::swap(Event->m_a[0], Event->m_a[1]);
+			    std::swap(Event->m_b[0], Event->m_b[2]);
+			    std::swap(Event->m_b[1], Event->m_b[3]);
+			}
+			tmp_x.Append(*Event);
+			continue;
+		    } else
+			continue;
+		} else {
+		    // They are not parallel, check intersection point
+		    double cos_angle = ON_DotProduct(plane.Normal(), line.Direction())/(plane.Normal().Length()*line.Direction().Length());
+		    double distance = plane.DistanceTo(line.from);
+		    double line_t = distance/cos_angle/line.Length();
+		    if (line_t > 1.0 + intersection_tolerance || line_t < -intersection_tolerance)
+			continue;
+		    ON_3dPoint intersection = line.from + line.Direction()*line_t;
+		    ON_2dPoint uv;
+		    ON_ClassArray<ON_PX_EVENT> px_event;
+		    if (!ON_Intersect(intersection, *(i->second->m_surf), px_event))
+			continue;
+		    
+		    ON_X_EVENT* Event = new ON_X_EVENT;
+		    Event->m_A[0] = Event->m_A[1] = intersection;
+		    Event->m_B[0] = Event->m_B[1] = px_event[0].m_B;
+		    Event->m_a[0] = Event->m_a[1] = i->first->m_t.ParameterAt(line_t);
+		    Event->m_b[0] = Event->m_b[2] = px_event[0].m_b.x;
+		    Event->m_b[1] = Event->m_b[3] = px_event[0].m_b.y;
+		    tmp_x.Append(*Event);
+		}
+	    }
+	}
+
+	// They are not both linear or planar, or the above try failed.
+
+	// Use two different start points - the two end-points of the interval
+	// of the Subcurve's m_t.
+	// If they converge to one point, it's considered an intersection
+	// point, otherwise it's considered an overlap event.
+	// FIXME: Find a better machanism to check overlapping, because this method
+	// may miss some overlap cases. (Overlap events can also converge to one
+	// point)
+	double u1 = i->second->m_u.Mid(), v1 = i->second->m_v.Mid();
+	double t1 = i->first->m_t.Min();
+	newton_csi(t1, u1, v1, curveA, surfaceB);
+	double u2 = i->second->m_u.Mid(), v2 = i->second->m_v.Mid();
+	double t2 = i->first->m_t.Max();
+	newton_csi(t2, u2, v2, curveA, surfaceB);
+
+	ON_3dPoint pointA1 = curveA->PointAt(t1);
+	ON_3dPoint pointB1 = surfaceB->PointAt(u1, v1);
+	ON_3dPoint pointA2 = curveA->PointAt(t2);
+	ON_3dPoint pointB2 = surfaceB->PointAt(u2, v2);
+	if (pointA1.DistanceTo(pointA2) < intersection_tolerance
+	    && pointB1.DistanceTo(pointB2) < intersection_tolerance) {
+	    // it's considered the same point (both converge)
+	    double distance = pointA1.DistanceTo(pointB1);
+	    // Check the validity of the solution
+	    if (distance < intersection_tolerance) {
+		ON_X_EVENT *Event = new ON_X_EVENT;
+		Event->m_A[0] = Event->m_A[1] = pointA1;
+		Event->m_B[0] = Event->m_B[1] = pointB1;
+		Event->m_a[0] = Event->m_a[1] = t1;
+		Event->m_b[0] = Event->m_b[2] = u1;
+		Event->m_b[1] = Event->m_b[3] = v1;
+		Event->m_type = ON_X_EVENT::csx_point;
+		tmp_x.Append(*Event);
+	    }
+	} else {
+	    // Check overlap
+	    // bu_log("Maybe overlap.\n");
+	    double distance1 = pointA1.DistanceTo(pointB1);
+	    double distance2 = pointA2.DistanceTo(pointB2);
+
+	    // Check the validity of the solution
+	    if (distance1 < intersection_tolerance && distance2 < intersection_tolerance) {
+		ON_X_EVENT *Event = new ON_X_EVENT;
+		// We make sure that m_a[0] <= m_a[1]
+		if (t1 <= t2) {
+		    Event->m_A[0] = pointA1;
+		    Event->m_A[1] = pointA2;
+		    Event->m_B[0] = pointB1;
+		    Event->m_B[1] = pointB2;
+		    Event->m_a[0] = t1;
+		    Event->m_a[1] = t2;
+		    Event->m_b[0] = u1;
+		    Event->m_b[1] = v1;
+		    Event->m_b[2] = u2;
+		    Event->m_b[3] = v2;
+		} else {
+		    Event->m_A[0] = pointA2;
+		    Event->m_A[1] = pointA1;
+		    Event->m_B[0] = pointB2;
+		    Event->m_B[1] = pointB1;
+		    Event->m_a[0] = t2;
+		    Event->m_a[1] = t1;
+		    Event->m_b[0] = u2;
+		    Event->m_b[1] = v2;
+		    Event->m_b[2] = u1;
+		    Event->m_b[3] = v1;
+		}
+		int j;
+		for (j = 1; j < CSI_OVERLAP_TEST_POINTS; j++) {
+		    double strike = 1.0/CSI_OVERLAP_TEST_POINTS;
+		    ON_3dPoint test_point = curveA->PointAt(t1 + (t2-t1)*j*strike);
+		    ON_ClassArray<ON_PX_EVENT> psi_x;
+		    // Use point-surface intersection
+		    if (!ON_Intersect(test_point, *surfaceB, psi_x, overlap_tolerance))
+			break;
+		}
+		if (j == CSI_OVERLAP_TEST_POINTS) {
+		    Event->m_type = ON_X_EVENT::csx_overlap;
+		    tmp_x.Append(*Event);
+		    continue;
+		}
+		// if j != CSI_OVERLAP_TEST_POINTS, two csx_point events may
+		// be generated. Fall through.
+	    }
+	    if (distance1 < intersection_tolerance) {
+		// in case that the second one was not correct
+		ON_X_EVENT *Event = new ON_X_EVENT;
+		Event->m_A[0] = Event->m_A[1] = pointA1;
+		Event->m_B[0] = Event->m_B[1] = pointB1;
+		Event->m_a[0] = Event->m_a[1] = t1;
+		Event->m_b[0] = Event->m_b[2] = u1;
+		Event->m_b[1] = Event->m_b[3] = v1;
+		Event->m_type = ON_X_EVENT::csx_point;
+		tmp_x.Append(*Event);
+	    }
+	    if (distance2 < intersection_tolerance) {
+		// in case that the first one was not correct
+		ON_X_EVENT *Event = new ON_X_EVENT;
+		Event->m_A[0] = Event->m_A[1] = pointA2;
+		Event->m_B[0] = Event->m_B[1] = pointB2;
+		Event->m_a[0] = Event->m_a[1] = t2;
+		Event->m_b[0] = Event->m_b[2] = u2;
+		Event->m_b[1] = Event->m_b[3] = v2;
+		Event->m_type = ON_X_EVENT::csx_point;
+		tmp_x.Append(*Event);
+	    }
+	}
+    }
+
+    ON_SimpleArray<ON_X_EVENT> points, overlap, pending;
+    // Use an O(n^2) naive approach to eliminate duplications
+    for (int i = 0; i < tmp_x.Count(); i++) {
+	int j;
+	if (tmp_x[i].m_type == ON_X_EVENT::csx_overlap) {
+	    overlap.Append(tmp_x[i]);
+	    continue;
+	}
+	// csx_point
+	for (j = 0; j < points.Count(); j++) {
+	    if (tmp_x[i].m_A[0].DistanceTo(points[j].m_A[0]) < intersection_tolerance
+		&& tmp_x[i].m_A[1].DistanceTo(points[j].m_A[1]) < intersection_tolerance
+		&& tmp_x[i].m_B[0].DistanceTo(points[j].m_B[0]) < intersection_tolerance
+		&& tmp_x[i].m_B[1].DistanceTo(points[j].m_B[1]) < intersection_tolerance)
+		break;
+	}
+	if (j == points.Count()) {
+	    points.Append(tmp_x[i]);
+	}
+    }
+
+    // Merge the overlap events that are continuous
+    overlap.QuickSort(compare_by_m_a0);
+    for (int i = 0; i < overlap.Count(); i++) {
+	bool merged = false;
+	for (int j = 0; j < pending.Count(); j++) {
+	    if (pending[j].m_a[1] < overlap[i].m_a[0] - intersection_tolerance) {
+		x.Append(pending[j]);
+		pending.Remove(j);
+		j--;
+		continue;
+	    }
+	    if (overlap[i].m_a[0] < pending[j].m_a[1] + intersection_tolerance
+		&& overlap[i].m_b[0] < pending[j].m_b[1] + intersection_tolerance) {
+		// Need to merge
+		merged = true;
+		pending[j].m_a[1] = std::max(overlap[i].m_a[1], pending[j].m_a[1]);
+		pending[j].m_b[1] = std::max(overlap[i].m_b[1], pending[j].m_b[1]);
+		break;
+	    }
+	}
+	if (merged == false)
+	    pending.Append(overlap[i]);
+    }
+    for (int i = 0; i < pending.Count(); i++)
+	x.Append(pending[i]);
+
+    // The intersection points shouldn't be inside the overlapped parts.
+    int overlap_events = x.Count();
+    for (int i = 0; i < points.Count(); i++) {
+	int j;
+	for (j = 0; j < overlap_events; j++) {
+	    if (points[i].m_a[0] > x[j].m_a[0] - intersection_tolerance
+		&& points[i].m_a[0] < x[j].m_a[1] + intersection_tolerance)
+		break;
+	}
+	if (j == overlap_events)
+	    x.Append(points[i]);
+    }
+
+    return x.Count();
 }
 
 
