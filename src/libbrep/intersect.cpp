@@ -1216,6 +1216,7 @@ ON_Intersect(const ON_Curve* curveA,
 		    Event->m_a[0] = Event->m_a[1] = i->first->m_t.ParameterAt(line_t);
 		    Event->m_b[0] = Event->m_b[2] = px_event[0].m_b.x;
 		    Event->m_b[1] = Event->m_b[3] = px_event[0].m_b.y;
+		    Event->m_type = ON_X_EVENT::csx_point;
 		    tmp_x.Append(*Event);
 		}
 	    }
