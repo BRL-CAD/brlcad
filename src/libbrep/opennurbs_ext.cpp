@@ -616,6 +616,10 @@ namespace brlcad {
 	TRACE("u: [" << u[0] << ", " << u[1] << "]");
 	TRACE("v: [" << v[0] << ", " << v[1] << "]");
 	TRACE("m_root: " << m_root);
+	while (!f_queue.empty()) {
+	    bu_free(f_queue.front(), "free subsurface frames array");
+	    f_queue.pop();
+	}
     }
 
 
@@ -1041,7 +1045,7 @@ namespace brlcad {
 		if (prev_knot) localsurf->FrameAt(usplit, vsplit, frames[4]);
 
 		ON_Plane *newframes;
-		newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");
+		if (!f_queue.empty()) {newframes = f_queue.front(); f_queue.pop();} else {newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");}
 		newframes[0] = frames[0];
 		newframes[1] = sharedframes[0];
 		newframes[2] = frames[4];
@@ -1070,7 +1074,8 @@ namespace brlcad {
 		newframes[4] = frames[6];
 		quads[3] = subdivideSurface(q3surf, firstu, secondv, newframes, divDepth+1, depthLimit, prev_knot);
 		delete q3surf;
-		bu_free(newframes, "free subsurface frames array");
+		memset(newframes, 0, 9 * sizeof(ON_Plane *));
+		f_queue.push(newframes);
 
 		parent->m_trimmed = true;
 		parent->m_checkTrim = false;
@@ -1212,8 +1217,7 @@ namespace brlcad {
 		localsurf->FrameAt(usplit, v.Max(), sharedframes[1]);
 
 		ON_Plane *newframes;
-		newframes = (ON_Plane *) bu_malloc(9 * sizeof(ON_Plane),
-			"new frames");
+                if (!f_queue.empty()) {newframes = f_queue.front(); f_queue.pop();} else {newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");}
 		newframes[0] = frames[0];
 		newframes[1] = sharedframes[0];
 		newframes[2] = sharedframes[1];
@@ -1244,7 +1248,8 @@ namespace brlcad {
 		}
 		delete west;
 
-		bu_free(newframes, "free subsurface frames array");
+		memset(newframes, 0, 9 * sizeof(ON_Plane *));
+		f_queue.push(newframes);
 
 		parent->m_trimmed = true;
 		parent->m_checkTrim = false;
@@ -1370,8 +1375,7 @@ namespace brlcad {
 		localsurf->FrameAt(u.Max(), vsplit, sharedframes[1]);
 
 		ON_Plane *newframes;
-		newframes = (ON_Plane *) bu_malloc(9 * sizeof(ON_Plane),
-			"new frames");
+                if (!f_queue.empty()) {newframes = f_queue.front(); f_queue.pop();} else {newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");}
 		newframes[0] = frames[0];
 		newframes[1] = frames[1];
 		newframes[2] = sharedframes[1];
@@ -1401,7 +1405,8 @@ namespace brlcad {
 		}
 		delete north;
 
-		bu_free(newframes, "free subsurface frames array");
+		memset(newframes, 0, 9 * sizeof(ON_Plane *));
+                f_queue.push(newframes);
 
 		parent->m_trimmed = true;
 		parent->m_checkTrim = false;

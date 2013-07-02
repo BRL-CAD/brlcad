@@ -36,6 +36,7 @@ extern "C++" {
 #include <vector>
 #include <list>
 #include <iostream>
+#include <queue>
 #include <assert.h>
 
 
@@ -1634,6 +1635,7 @@ private:
 
     const ON_BrepFace* m_face;
     BBNode* m_root;
+    std::queue<ON_Plane *> f_queue;
 };
 
 
