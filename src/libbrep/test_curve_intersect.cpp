@@ -30,6 +30,7 @@
 
 #include "brep.h"
 
+
 void
 test_cci(ON_Curve *c1, ON_Curve *c2)
 {
@@ -38,6 +39,27 @@ test_cci(ON_Curve *c1, ON_Curve *c2)
     ON_SimpleArray<ON_X_EVENT> x;
     // Use default tolerance
     ON_Intersect(c1, c2, x);
+
+    if (x.Count() == 0) {
+	bu_log("No intersection.\n");
+    } else {
+	for (int i = 0; i < x.Count(); i++)
+	    x[i].Dump(textlog);
+	ON_String str(wstr);
+	bu_log(str.Array());
+    }
+    bu_log("\n\n");
+}
+
+
+void
+test_csi(ON_Curve *c1, ON_Surface *s2)
+{
+    ON_wString wstr;
+    ON_TextLog textlog(wstr);
+    ON_SimpleArray<ON_X_EVENT> x;
+    // Use default tolerance
+    ON_Intersect(c1, s2, x);
 
     if (x.Count() == 0) {
 	bu_log("No intersection.\n");
@@ -110,7 +132,56 @@ main(int, char**)
     delete curveA;
     delete curveB;
 
-    // curve-surface intersections to be implemented.
+    // curve-surface intersection
+    bu_log("*** Curve-surface intersection ***\n");
+
+    bu_log("Test 1:\n");
+    // sphere A is a circle fixed at the origin
+    ON_Sphere sphereA = ON_Sphere(origin, radius);
+    ON_NurbsSurface* surfA = ON_NurbsSurface::New();
+    sphereA.GetNurbForm(*surfA);
+
+    // We start circle B from somewhere that it doesn't intersect with
+    // surfA, and move it closer and closer (along the x-axis). Then
+    // it should first circumscribe with circleA (one intersection point),
+    // then intersect (two points), overlap, intersect (two points),
+    // circumscribe again, and finally depart from circleA.
+    /*
+    for (int i = 0; i <= 50.0; i++) {
+	ON_3dPoint centerB = start + move_dir*((double)i/50.0);
+	ON_Circle circleB(plane, centerB, radius);
+	ON_NurbsCurve *curveB = ON_NurbsCurve::New();
+	circleB.GetNurbForm(*curveB);
+	bu_log("Center of circleB: (%lf,%lf,%lf):\n", centerB.x, centerB.y, centerB.z);
+	test_csi(curveB, surfA);
+	delete curveB;
+    }*/
+    delete surfA;
+
+    bu_log("Test 2:\n");
+    // Test the optimization for linear curve and planar surface intersections
+    ON_PlaneSurface planesurf(plane);
+    planesurf.SetDomain(0, -1.0, 1.0);
+    planesurf.SetDomain(1, -1.0, 1.0);
+    planesurf.SetExtents(0, planesurf.Domain(0));
+    planesurf.SetExtents(1, planesurf.Domain(1));
+
+    // csx_point
+    ON_LineCurve line1(ON_3dPoint(0.0, 0.0, -1.0), ON_3dPoint(0.0, 0.0, 1.0));
+    test_csi(&line1, &planesurf);
+
+    // csx_overlap
+    ON_LineCurve line2(ON_3dPoint(-2.0, 0.0, 0.0), ON_3dPoint(2.0, 0.0, 0.0));
+    test_csi(&line2, &planesurf);
+
+    // csx_overlap
+    ON_3dPointArray ptarrayC;
+    ptarrayC.Append(ON_3dPoint(0.0, 0.0, 1.0));
+    ptarrayC.Append(ON_3dPoint(0.0, 0.0, 0.0));
+    ptarrayC.Append(ON_3dPoint(1.0, 0.0, 0.0));
+    ptarrayC.Append(ON_3dPoint(1.0, 0.0, 1.0));
+    ON_PolylineCurve polyC(ptarrayC);
+    test_csi(&polyC, &planesurf);
 
     bu_log("All finished.\n");
     return 0;
