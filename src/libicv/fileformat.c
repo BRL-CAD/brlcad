@@ -254,7 +254,7 @@ pix_load(const char* filename, int width, int height)
 
     size = height*width*3;
     bif->data = (unsigned char*)bu_malloc(size, "icv_image data");
-    if (read(fd, bif->data, size) < 0) {
+    if (read(bif->fd, bif->data, size) < 0) {
 	bu_log("load_pix: short Read\n");
 	return 0;
     }
@@ -265,7 +265,7 @@ pix_load(const char* filename, int width, int height)
     bif->height = height;
     bif->width = width;
     bif->depth = 3;
-    close(fd);
+    close(bif->fd);
     return bif;
 }
 
