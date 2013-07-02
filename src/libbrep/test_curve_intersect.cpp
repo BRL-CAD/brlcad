@@ -146,7 +146,7 @@ main(int, char**)
     // it should first circumscribe with circleA (one intersection point),
     // then intersect (two points), overlap, intersect (two points),
     // circumscribe again, and finally depart from circleA.
-    /*
+
     for (int i = 0; i <= 50.0; i++) {
 	ON_3dPoint centerB = start + move_dir*((double)i/50.0);
 	ON_Circle circleB(plane, centerB, radius);
@@ -155,7 +155,7 @@ main(int, char**)
 	bu_log("Center of circleB: (%lf,%lf,%lf):\n", centerB.x, centerB.y, centerB.z);
 	test_csi(curveB, surfA);
 	delete curveB;
-    }*/
+    }
     delete surfA;
 
     bu_log("Test 2:\n");
