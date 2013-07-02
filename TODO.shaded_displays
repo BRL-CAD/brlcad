@@ -1,0 +1,122 @@
+Consolidated from an e-mail thread and several e-mail messages by Sean
+to the BRL-CAD developers list in Jun 2013 which includes this message:
+
+https://sourceforge.net/mailarchive/forum.php?thread_name=02c584af-d1ad-4d23-9837-1412eed14350%40me.com&forum_name=brlcad-devel
+
+> 4. Finally we will get rid of wireframes. However, we will be able
+>    to easily enable or disable shaded geometry or vice versa.
+
+We're not getting rid of wireframes.  Shaded display geometry becoming
+the default, however, is already planned and in the works.  NURBS
+surface-surface intersections (Wu's project) are required for that to
+happen.
+
+...
+
+Making wireframes not be the default is one of several reasons why
+we've been working on NURBS infrastructure.  Not understanding why
+this is required given our representation format is usually an
+indication that someone does not yet understand the fundamental
+problem... which is not meant to be taken in a negative way.  MOST
+people don't have experience with our particular problem domain which
+is specific to having mathematically-based implicit geometry
+representations along with boolean operations.
+
+When most people say shaded display, they usually think of OpenGL,
+Direct3D, games, other modeling systems, etc.  Those systems are
+driven by polygons (triangles).  To have that style of shaded display,
+you have to have polygons.  We do not have polygons.  We do not have a
+robust method for getting polygons.  NURBS gives us a robust method.
+
+When we can 1) convert any geometry to NURBS, 2) evaluate any
+booleans, and 3) tessellate NURBS robustly, it will be possible to
+have robust shaded displays for all geometry.  #1 was finished last
+year primarily thanks to Cliff and Wu.  #3 was finished just this year
+primarily due to Keith.  Work on #2 is underway and is scheduled to be
+finished this year..
+
+It's been a while since I've had to succinctly describe the problem
+and solution, so hopefully that is all understandable to everyone.
+There are several independent tasks that will need to be completed is
+anyone wants to help us get there more quickly.  ;)
+
+...
+
+> Sean, are those tasks grouped somewhere in the TODO list, or?
+
+Not in such a succinct form because there is a lot of interrelation
+with other tasks/projects.  E.g., one can frame reliable STEP NURBS
+import is just as important for shaded displays because users usually
+want to view their own existing data.  Or once we have robust boolean
+evaluation of NURBS, most of our converters will need to be updated to
+use the new method ... that's a lot of work. :)
+
+Some tasks that come to mind related to shaded displays are:
+
+* library routine for boolean evaluation of NURBS
+
+* library routine for non-solid NURBS tessellation (capability exists,
+  but not as formal API)
+
+* library routine for solid NURBS tessellation (capability exists, but
+  not as formal API)
+
+* libgcv routine to perform NURBS boolean evaluation and tessellation
+
+* connecting "facetize" command to use libgcv (solid tessellation)
+
+* migrate current converter polygonal mesh boolean evaluation method
+  of NMG-based converters to libgcv
+
+* updating all NMG-based exporters to use new libgcv routine, retain
+  old method as legacy option
+
+* updating mged/archer to utilize boolean evaluated NURBS as a
+  visualization mode
+
+Other useful but maybe not strictly necessary tasks:
+
+* optimize NURBS prep
+
+* connecting "E" and "ev" commands to use libgcv (non-solid or solid)
+
+* implement support for plate-mode NURBS
+
+* update STEP and 3DM converters to support non-solid NURBS import via
+  plate-mode
+ 
+* libgcv routine to perform NURBS healing (close near-solid NURBS
+  geometries)
+
+* update NURBS importers to with option to perform healing on import
+
+* update NURBS ray tracing to perform reparameterization/healing
+  during prep
+
+* update IGES importer to import NURBS directly
+
+* implement OBJ NURBS import support
+
+* parallelize single-object NURBS prep (particularly the surface tree
+  building)
+
+* parallelize boolean evaluation of NURBS
+
+* parallelize NURBS tessellation
+
+* refactor libdm API to better support (polygonal,curve,point) display
+  lists
+
+* refactor libdm implementation to re-encapsulate platform-specific
+  logic (no #ifdefs in public headers)
+
+* review old bspline NURBS logic, integrate useful portions, then
+  remove the rest
+
+* formally document our BREP/NURBS primitive, capabilities and
+  limitations
+
+That's just off the top of my head.  There are undoubtedly other tasks
+involved but that's a partial list.  Some/many of them are already in
+the TODO file, but many are not yet.  Feel free to
+expand/incorporate/ignore. ;)
