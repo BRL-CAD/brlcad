@@ -218,7 +218,7 @@ ICV_EXPORT extern int icv_image_save(unsigned char *data,
  * @param hint_depth Default depth field, 0 for default.
  * @return A newly allocated struct holding the loaded image info.
  */
-ICV_EXPORT struct icv_image_file *icv_image_load(const char *filename, int hint_format, int hint_width, int hint_height, int hint_depth);
+ICV_EXPORT icv_image_file_t *icv_image_load(const char *filename, int format, int hint_width, int hint_height, int hint_depth);
 
 /** @} */
 /* end image utilities */

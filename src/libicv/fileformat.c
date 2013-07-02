@@ -235,27 +235,55 @@ ppm_save(int fd, unsigned char *rgb, int width, int height)
     return 2;
 }
 
-/* end if private functions */
+HIDDEN icv_image_file_t*
+pix_load(const char* filename, int width, int height)
+{
+    size_t size;
+    icv_image_file_t* bif;
+
+    bif = (icv_image_file_t*) bu_malloc(sizeof(icv_image_file_t), "icv_image_file");
+    if ((bif->fd = open( filename, O_RDONLY, WRMODE))<0) {
+	    bu_log("icv_image_load: Cannot open file for reading\n");
+            return 0;
+    }
+    /* This allocates  */
+    if(height == 0 && width == 0) {
+	height = 512;
+	width = 512;
+    }
+
+    size = height*width*3;
+    bif->data = (unsigned char*)bu_malloc(size, "icv_image data");
+    if (read(fd, bif->data, size) < 0) {
+	bu_log("load_pix: short Read\n");
+        return 0;
+    }
+
+    bif->filename = bu_strdup(filename);
+    bif->magic = ICV_IMAGE_FILE_MAGIC;
+    bif->format = ICV_IMAGE_PIX;
+    bif->height = height;
+    bif->width = width;
+    bif->depth = 3;
+    close(fd);
+    return bif;
+}
+
+/* end of private functions */
 
 /* begin public functions */
 
-struct icv_image_file *
-icv_image_load(const char *UNUSED(filename), int hint_format, int UNUSED(hint_width), int UNUSED(hint_height), int UNUSED(hint_depth))
+icv_image_file_t *
+icv_image_load(const char *filename, int format, int hint_width, int hint_height, int UNUSED(hint_depth))
 {
-    if(hint_format == ICV_IMAGE_AUTO) {
+    if(format == ICV_IMAGE_AUTO) {
 	/* do some voodoo with the file magic or something... */
-	hint_format = ICV_IMAGE_PIX;
+	format = ICV_IMAGE_PIX;
     }
-
-    switch(hint_format) {
-	/*
+    
+    switch(format) {
 	case ICV_IMAGE_PIX:
-	    return load_pix(filename, hint_width, hint_height);
-	case ICV_IMAGE_BW:
-	    return load_bw(filename, hint_width, hint_height);
-	case ICV_IMAGE_PNG:
-	    return load_png(filename);
-	*/
+	    return pix_load(filename, hint_width, hint_height);
 	default:
 	    bu_log("icv_image_load not implemented for this format\n");
 	    return NULL;
