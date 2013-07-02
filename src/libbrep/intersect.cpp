@@ -956,8 +956,8 @@ ON_Intersect(const ON_Curve* curveA,
 
 
 // We can only test a finite number of points to determine overlap.
-// Here we test 16 points uniformly distributed.
-#define CSI_OVERLAP_TEST_POINTS 16
+// Here we test 2 points uniformly distributed.
+#define CSI_OVERLAP_TEST_POINTS 2
 
 
 // Build the surface tree root within a given domain
@@ -1035,7 +1035,6 @@ newton_csi(double& t, double& u, double& v, const ON_Curve* curveA, const ON_Sur
 	    F[i][0] = pointA[i] - pointB[i];
 	}
 	if (!J.Invert(0.0)) {
-	    bu_log("Inverse failed.\n");
 	    break;
 	}
 	ON_Matrix Delta;
@@ -1116,6 +1115,7 @@ ON_Intersect(const ON_Curve* curveA,
     for (NodePairs::iterator i = candidates.begin(); i != candidates.end(); i++) {
 	if (i->first->m_islinear && i->second->m_isplanar) {
 	    // Intersections of a line and a plane
+	    // We can have some optimizations
 	    ON_Line line(curveA->PointAt(i->first->m_t.Min()), curveA->PointAt(i->first->m_t.Max()));
 	    ON_Plane plane;
 	    bool success = true;
@@ -1128,12 +1128,36 @@ ON_Intersect(const ON_Curve* curveA,
 		    if (!plane.CreateFromPoints(point1, point3, point4))
 			if (!plane.CreateFromPoints(point2, point3, point4))
 			    success = false;
-
+	    
 	    if (success && !ON_NearZero(line.Length())) {
 		if (line.Direction().IsPerpendicularTo(plane.Normal())) {
 		    // They are parallel
 		    if (line.InPlane(plane, intersection_tolerance)) {
 			// we report a csx_overlap event
+			ON_X_EVENT *Event = new ON_X_EVENT;
+
+			// First, we check the endpoints of the line segment
+			ON_ClassArray<ON_PX_EVENT> px_event1, px_event2;
+			int intersections = 0;
+			if (ON_Intersect(line.from, *surfaceB, px_event1)) {
+			    Event->m_A[intersections] = line.from;
+			    Event->m_B[intersections] = px_event1[0].m_B;
+			    Event->m_a[intersections] = i->first->m_t.Min();
+			    Event->m_b[2*intersections] = px_event1[0].m_b[0];
+			    Event->m_b[2*intersections+1] = px_event1[0].m_b[1];
+			    intersections++;
+			}
+			if (ON_Intersect(line.to, *surfaceB, px_event2)) {
+			    Event->m_A[intersections] = line.to;
+			    Event->m_B[intersections] = px_event2[0].m_B;
+			    Event->m_a[intersections] = i->first->m_t.Max();
+			    Event->m_b[2*intersections] = px_event2[0].m_b[0];
+			    Event->m_b[2*intersections+1] = px_event2[0].m_b[1];
+			    intersections++;
+			}
+
+			// Then, we check the intersection of the line segment
+			// and the boundaries of the surface
 			ON_Line boundary[4];
 			ON_SimpleArray<double> line_t, boundary_t;
 			ON_SimpleArray<int> boundary_index;
@@ -1157,16 +1181,10 @@ ON_Intersect(const ON_Curve* curveA,
 				}
 			    }
 			}
-			int count = line_t.Count();
-			if (count == 0)
-			    continue; // no intersection
-			if (count == 1) {
-			    line_t.Append(line_t[0]); // csx_point, m_a[0] == m_a[1]
-			    boundary_index.Append(boundary_index[0]);
-			    boundary_t.Append(boundary_t[0]);
-			}
-			ON_X_EVENT *Event = new ON_X_EVENT;
-			for (int j = 0; j < 2; j++) {
+			int count = line_t.Count();			
+			
+			for (int j = 0; j < count; j++) {
+			    if (intersections >= 2) break;
 			    double surf_u = 0.0, surf_v = 0.0;
 			    switch (boundary_index[j]) {
 			    case 0:
@@ -1186,22 +1204,31 @@ ON_Intersect(const ON_Curve* curveA,
 				surf_v = i->second->m_v.Min();
 				break;
 			    }
-			    Event->m_A[j] = line.PointAt(line_t[j]);
-			    Event->m_B[j] = surfaceB->PointAt(surf_u, surf_v);
-			    Event->m_a[j] = i->first->m_t.ParameterAt(line_t[j]);
-			    Event->m_b[2*j] = surf_u;
-			    Event->m_b[2*j+1] = surf_v;
+			    Event->m_A[intersections] = line.PointAt(line_t[j]);
+			    Event->m_B[intersections] = surfaceB->PointAt(surf_u, surf_v);
+			    Event->m_a[intersections] = i->first->m_t.ParameterAt(line_t[j]);
+			    Event->m_b[2*intersections] = surf_u;
+			    Event->m_b[2*intersections+1] = surf_v;
+			    intersections++;
 			}
-			if (count == 1)
+
+			// Generate an ON_X_EVENT
+			if (intersections == 1) {
 			    Event->m_type = ON_X_EVENT::csx_point;
-			else
+			    Event->m_A[1] = Event->m_A[0];
+			    Event->m_B[1] = Event->m_B[0];
+			    Event->m_a[1] = Event->m_a[0];
+			    Event->m_b[2] = Event->m_b[0];
+			    Event->m_b[3] = Event->m_b[1];
+			} else {
 			    Event->m_type = ON_X_EVENT::csx_overlap;
-			if (Event->m_a[0] > Event->m_a[1]) {
-			    std::swap(Event->m_A[0], Event->m_A[1]);
-			    std::swap(Event->m_B[0], Event->m_B[1]);
-			    std::swap(Event->m_a[0], Event->m_a[1]);
-			    std::swap(Event->m_b[0], Event->m_b[2]);
-			    std::swap(Event->m_b[1], Event->m_b[3]);
+			    if (Event->m_a[0] > Event->m_a[1]) {
+				std::swap(Event->m_A[0], Event->m_A[1]);
+				std::swap(Event->m_B[0], Event->m_B[1]);
+				std::swap(Event->m_a[0], Event->m_a[1]);
+				std::swap(Event->m_b[0], Event->m_b[2]);
+				std::swap(Event->m_b[1], Event->m_b[3]);
+			    }
 			}
 			tmp_x.Append(*Event);
 			continue;
@@ -1209,17 +1236,18 @@ ON_Intersect(const ON_Curve* curveA,
 			continue;
 		} else {
 		    // They are not parallel, check intersection point
-		    double cos_angle = ON_DotProduct(plane.Normal(), line.Direction())/(plane.Normal().Length()*line.Direction().Length());
+		    double cos_angle = fabs(ON_DotProduct(plane.Normal(), line.Direction()))/(plane.Normal().Length()*line.Direction().Length());
+		    // cos_angle != 0, otherwise the curve and the plane are parallel.
 		    double distance = plane.DistanceTo(line.from);
 		    double line_t = distance/cos_angle/line.Length();
-		    if (line_t > 1.0 + intersection_tolerance || line_t < -intersection_tolerance)
+		    if (line_t > 1.0 + intersection_tolerance)
 			continue;
 		    ON_3dPoint intersection = line.from + line.Direction()*line_t;
 		    ON_2dPoint uv;
 		    ON_ClassArray<ON_PX_EVENT> px_event;
 		    if (!ON_Intersect(intersection, *(i->second->m_surf), px_event))
 			continue;
-
+		    
 		    ON_X_EVENT* Event = new ON_X_EVENT;
 		    Event->m_A[0] = Event->m_A[1] = intersection;
 		    Event->m_B[0] = Event->m_B[1] = px_event[0].m_B;
@@ -1247,6 +1275,13 @@ ON_Intersect(const ON_Curve* curveA,
 	double u2 = i->second->m_u.Mid(), v2 = i->second->m_v.Mid();
 	double t2 = i->first->m_t.Max();
 	newton_csi(t2, u2, v2, curveA, surfaceB);
+
+	if (isnan(u1) || isnan(v1) || isnan(t1)) {
+	    u1 = u2; v1 = v2; t1 = t2;
+	}
+
+	if (isnan(u1) || isnan(v1) || isnan(t1))
+	    continue;
 
 	ON_3dPoint pointA1 = curveA->PointAt(t1);
 	ON_3dPoint pointB1 = surfaceB->PointAt(u1, v1);
