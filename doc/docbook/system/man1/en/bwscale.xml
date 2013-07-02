@@ -27,7 +27,6 @@
     <arg choice="opt" rep="norepeat">-S <replaceable>squareoutsize</replaceable></arg>
     <arg choice="opt" rep="norepeat">-W <replaceable>out_width</replaceable></arg>
     <arg choice="opt" rep="norepeat">-N <replaceable>out_height</replaceable></arg>
-    <arg choice="opt" rep="norepeat">-h </arg>
     <arg choice="opt" rep="norepeat"><replaceable>infile.bw</replaceable></arg>
     <arg choice='plain'><replaceable>&gt;</replaceable></arg>
     <arg choice="plain" rep="norepeat"><replaceable>outfile.bw</replaceable></arg>
@@ -78,15 +77,6 @@
   flag changes from bilinear interpolation to
   nearest neighbor interpolation, i.e., it enlarges the image by
   pixel replication.</para>
-
-  <para>The
-  <option>-h</option>
-  flag causes the frame buffer to be
-  used in high-resolution mode (1024 x 1024).
-  This is important for frame buffers such as the Adage which operate
-  differently depending on the display size.  Without this flag,
-  the default size for the selected device will be used (usually
-  the entire screen).</para>
 </refsection>
 
 <refsection xml:id="see_also"><title>SEE ALSO</title>
