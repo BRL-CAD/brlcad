@@ -874,16 +874,21 @@ ON_Intersect(const ON_Curve* curveA,
 	bool merged = false;
 	for (int j = 0; j < pending.Count(); j++) {
 	    if (pending[j].m_a[1] < overlap[i].m_a[0] - intersection_tolerance) {
+		pending[j].m_A[0] = curveA->PointAt(pending[j].m_a[0]);
+		pending[j].m_A[1] = curveA->PointAt(pending[j].m_a[1]);
+		pending[j].m_B[0] = curveB->PointAt(pending[j].m_b[0]);
+		pending[j].m_B[1] = curveB->PointAt(pending[j].m_b[1]);
 		x.Append(pending[j]);
 		pending.Remove(j);
 		j--;
 		continue;
 	    }
 	    if (overlap[i].m_a[0] < pending[j].m_a[1] + intersection_tolerance
-		&& overlap[i].m_b[0] < pending[j].m_b[1] + intersection_tolerance) {
+		&& (ON_Interval(overlap[i].m_b[0], overlap[i].m_b[1]).Intersection(ON_Interval(pending[j].m_b[0], pending[j].m_b[1])))) {
 		// Need to merge
 		merged = true;
 		pending[j].m_a[1] = std::max(overlap[i].m_a[1], pending[j].m_a[1]);
+		pending[j].m_b[0] = std::min(overlap[i].m_b[0], pending[j].m_b[0]);
 		pending[j].m_b[1] = std::max(overlap[i].m_b[1], pending[j].m_b[1]);
 		break;
 	    }
@@ -891,8 +896,13 @@ ON_Intersect(const ON_Curve* curveA,
 	if (merged == false)
 	    pending.Append(overlap[i]);
     }
-    for (int i = 0; i < pending.Count(); i++)
+    for (int i = 0; i < pending.Count(); i++) {
+	pending[i].m_A[0] = curveA->PointAt(pending[i].m_a[0]);
+	pending[i].m_A[1] = curveA->PointAt(pending[i].m_a[1]);
+	pending[i].m_B[0] = curveB->PointAt(pending[i].m_b[0]);
+	pending[i].m_B[1] = curveB->PointAt(pending[i].m_b[1]);
 	x.Append(pending[i]);
+    }
 
     // The intersection points shouldn't be inside the overlapped parts.
     int overlap_events = x.Count();
@@ -1118,7 +1128,7 @@ ON_Intersect(const ON_Curve* curveA,
 		    if (!plane.CreateFromPoints(point1, point3, point4))
 			if (!plane.CreateFromPoints(point2, point3, point4))
 			    success = false;
-	    
+
 	    if (success && !ON_NearZero(line.Length())) {
 		if (line.Direction().IsPerpendicularTo(plane.Normal())) {
 		    // They are parallel
@@ -1209,7 +1219,7 @@ ON_Intersect(const ON_Curve* curveA,
 		    ON_ClassArray<ON_PX_EVENT> px_event;
 		    if (!ON_Intersect(intersection, *(i->second->m_surf), px_event))
 			continue;
-		    
+
 		    ON_X_EVENT* Event = new ON_X_EVENT;
 		    Event->m_A[0] = Event->m_A[1] = intersection;
 		    Event->m_B[0] = Event->m_B[1] = px_event[0].m_B;
@@ -1359,25 +1369,36 @@ ON_Intersect(const ON_Curve* curveA,
 	bool merged = false;
 	for (int j = 0; j < pending.Count(); j++) {
 	    if (pending[j].m_a[1] < overlap[i].m_a[0] - intersection_tolerance) {
+		pending[j].m_A[0] = curveA->PointAt(pending[j].m_a[0]);
+		pending[j].m_A[1] = curveA->PointAt(pending[j].m_a[1]);
+		pending[j].m_B[0] = surfaceB->PointAt(pending[j].m_b[0], pending[j].m_b[1]);
+		pending[j].m_B[1] = surfaceB->PointAt(pending[j].m_b[2], pending[j].m_b[3]);
 		x.Append(pending[j]);
 		pending.Remove(j);
 		j--;
 		continue;
 	    }
-	    if (overlap[i].m_a[0] < pending[j].m_a[1] + intersection_tolerance
-		&& overlap[i].m_b[0] < pending[j].m_b[1] + intersection_tolerance) {
-		// Need to merge
+	    if (overlap[i].m_a[0] < pending[j].m_a[1] + intersection_tolerance) {
+		// Need to merge (TODO: need some consideration for surfaceB)
 		merged = true;
 		pending[j].m_a[1] = std::max(overlap[i].m_a[1], pending[j].m_a[1]);
-		pending[j].m_b[1] = std::max(overlap[i].m_b[1], pending[j].m_b[1]);
+		pending[j].m_b[0] = std::min(overlap[i].m_b[0], pending[j].m_b[0]);
+		pending[j].m_b[1] = std::min(overlap[i].m_b[1], pending[j].m_b[1]);
+		pending[j].m_b[2] = std::max(overlap[i].m_b[2], pending[j].m_b[2]);
+		pending[j].m_b[3] = std::max(overlap[i].m_b[3], pending[j].m_b[3]);
 		break;
 	    }
 	}
 	if (merged == false)
 	    pending.Append(overlap[i]);
     }
-    for (int i = 0; i < pending.Count(); i++)
+    for (int i = 0; i < pending.Count(); i++) {
+	pending[i].m_A[0] = curveA->PointAt(pending[i].m_a[0]);
+	pending[i].m_A[1] = curveA->PointAt(pending[i].m_a[1]);
+	pending[i].m_B[0] = surfaceB->PointAt(pending[i].m_b[0], pending[i].m_b[1]);
+	pending[i].m_B[1] = surfaceB->PointAt(pending[i].m_b[2], pending[i].m_b[3]);
 	x.Append(pending[i]);
+    }
 
     // The intersection points shouldn't be inside the overlapped parts.
     int overlap_events = x.Count();
