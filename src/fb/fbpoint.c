@@ -143,7 +143,7 @@ main(int argc, char **argv)
     int width, height;
 
     setbuf(stderr, malloc(BUFSIZ));
-    width = height = 0;
+    width = height = 512;
     curX = curY = -1;
 
     while (argc > 1) {
@@ -162,6 +162,8 @@ main(int argc, char **argv)
 	argc--;
 	argv++;
     }
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
+	bu_exit(1, "%s", usage);
     /*
      * Check for optional starting coordinate.
      * Test for bad flags while we're at it.
