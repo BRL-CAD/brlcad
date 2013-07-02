@@ -123,14 +123,14 @@ main(int, char**)
     ptarrayB.Append(ON_3dPoint(0.0, 0.0, 0.0));
     ptarrayB.Append(ON_3dPoint(2.0, 0.0, 0.0));
     ON_PolylineCurve polyA(ptarrayA), polyB(ptarrayB);
-    curveA = ON_NurbsCurve::New();
-    ON_NurbsCurve *curveB = ON_NurbsCurve::New();
-    polyA.GetNurbForm(*curveA);
-    polyB.GetNurbForm(*curveB);
-    test_cci(curveA, curveB);
+    ON_NurbsCurve* polycurveA = ON_NurbsCurve::New();
+    ON_NurbsCurve* polycurveB = ON_NurbsCurve::New();
+    polyA.GetNurbForm(*polycurveA);
+    polyB.GetNurbForm(*polycurveB);
+    test_cci(polycurveA, polycurveB);
 
-    delete curveA;
-    delete curveB;
+    delete polycurveA;
+    delete polycurveB;
 
     // curve-surface intersection
     bu_log("*** Curve-surface intersection ***\n");
