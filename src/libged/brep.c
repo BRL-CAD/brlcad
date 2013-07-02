@@ -158,7 +158,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	    brep_intersect_point_surface(&intern, &intern2, i, j);
 	} else if (BU_STR_EQUAL(argv[6], "CC")) {
 	    brep_intersect_curve_curve(&intern, &intern2, i, j);
-	} else if (BU_STR_EQUAL(argv[6], "PC")) {
+	} else if (BU_STR_EQUAL(argv[6], "CS")) {
 	    brep_intersect_curve_surface(&intern, &intern2, i, j);
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "Invalid intersection type %s.\n", argv[6]);
