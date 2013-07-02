@@ -243,8 +243,8 @@ pix_load(const char* filename, int width, int height)
 
     bif = (icv_image_file_t*) bu_malloc(sizeof(icv_image_file_t), "icv_image_file");
     if ((bif->fd = open( filename, O_RDONLY, WRMODE))<0) {
-	    bu_log("icv_image_load: Cannot open file for reading\n");
-            return 0;
+	bu_log("icv_image_load: Cannot open file for reading\n");
+	return 0;
     }
     /* This allocates  */
     if(height == 0 && width == 0) {
@@ -256,7 +256,7 @@ pix_load(const char* filename, int width, int height)
     bif->data = (unsigned char*)bu_malloc(size, "icv_image data");
     if (read(fd, bif->data, size) < 0) {
 	bu_log("load_pix: short Read\n");
-        return 0;
+	return 0;
     }
 
     bif->filename = bu_strdup(filename);
@@ -280,7 +280,7 @@ icv_image_load(const char *filename, int format, int hint_width, int hint_height
 	/* do some voodoo with the file magic or something... */
 	format = ICV_IMAGE_PIX;
     }
-    
+
     switch(format) {
 	case ICV_IMAGE_PIX:
 	    return pix_load(filename, hint_width, hint_height);
