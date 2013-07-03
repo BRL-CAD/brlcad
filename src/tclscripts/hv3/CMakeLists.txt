@@ -18,8 +18,6 @@ set(hv3_ignore_files
   license.txt
   license_snit.txt
   tkhtml.n
-  pkgIndex.tcl
-  tclIndex
   )
 CMAKEFILES(${hv3_ignore_files})
 

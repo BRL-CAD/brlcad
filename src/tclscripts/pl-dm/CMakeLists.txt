@@ -7,8 +7,6 @@ BRLCAD_ADDDATA(pl-dm_TCLSCRIPTS tclscripts/pl-dm)
 pkgIndex_BUILD(tclscripts/pl-dm)
 tclIndex_BUILD(tclscripts/pl-dm)
 
-CMAKEFILES(pkgIndex.tcl tclIndex)
-
 # Local Variables:
 # tab-width: 8
 # mode: cmake

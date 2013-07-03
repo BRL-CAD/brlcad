@@ -4,8 +4,6 @@ set(lod_TCLSCRIPTS
 BRLCAD_ADDDATA(lod_TCLSCRIPTS tclscripts/lod)
 tclIndex_BUILD(tclscripts/lod)
 
-CMAKEFILES(tclIndex)
-
 # Local Variables:
 # tab-width: 8
 # mode: cmake

@@ -113,7 +113,7 @@ tclIndex_BUILD(tclscripts)
 # that relies on the other tclscripts being set up.
 add_subdirectory(rtwizard)
 
-CMAKEFILES(README pkgIndex.tcl tclIndex hv3_man_browser_test.tcl)
+CMAKEFILES(README hv3_man_browser_test.tcl)
 
 # Local Variables:
 # tab-width: 8

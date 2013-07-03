@@ -6,8 +6,6 @@ BRLCAD_ADDDATA(igraph_TCLSCRIPTS tclscripts/igraph)
 pkgIndex_BUILD(tclscripts/igraph)
 tclIndex_BUILD(tclscripts/igraph)
 
-CMAKEFILES(pkgIndex.tcl tclIndex)
-
 # Local Variables:
 # tab-width: 8
 # mode: cmake

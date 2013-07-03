@@ -82,8 +82,7 @@ foreach(item ${tclIndex_target_list})
   add_dependencies(rtwizard ${item})
 endforeach(item ${tclIndex_target_list})
 
-
-CMAKEFILES(examples pkgIndex.tcl tclIndex)
+CMAKEFILES(examples)
 
 # Local Variables:
 # tab-width: 8

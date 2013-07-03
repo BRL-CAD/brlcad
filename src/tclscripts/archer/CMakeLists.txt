@@ -46,8 +46,6 @@ BRLCAD_ADDDATA(archer_TCLSCRIPTS tclscripts/archer)
 pkgIndex_BUILD(tclscripts/archer)
 tclIndex_BUILD(tclscripts/archer)
 
-CMAKEFILES(pkgIndex.tcl tclIndex)
-
 # Local Variables:
 # tab-width: 8
 # mode: cmake
