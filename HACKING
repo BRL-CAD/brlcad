@@ -901,6 +901,21 @@ involved with the other contributors and making patches will generally
 result in automatic consideration for commit access.  If you have to
 ask for it, you probably won't get it.
 
+That said, the following steps represent a minimum that needs to occur
+in order for commit access to be granted:
+
+1) Read this file completely.
+
+2) Be able to compile BRL-CAD successfully from an SVN trunk checkout.
+
+3) Join the brlcad-devel developer mailing list, introduce yourself.
+
+4) Create a Sourceforge account, submit two or more patches that
+demonstrate competency with our coding style, apply flawlessly, and
+provide significant improvements to the existing code.
+
+5) Be a nice person.  We're here to have fun and do cool things.  ;)
+
 Those with commit access have a responsibility to ensure that other
 developers are following the guidelines that have been described in
 this developer's guide within reasonable expectations.  A basic rule
