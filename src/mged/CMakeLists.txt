@@ -137,12 +137,9 @@ endif(LEX_EXECUTABLE AND YACC_EXECUTABLE)
 
 # mged depends on the creation/installation of all the
 # tclscripts.
-foreach(item ${pkgIndex_target_list})
+foreach(item ${tclindex_target_list})
   ADD_DEPENDENCIES(mged ${item})
-endforeach(item ${pkgIndex_target_list})
-foreach(item ${tclIndex_target_list})
-  ADD_DEPENDENCIES(mged ${item})
-endforeach(item ${tclIndex_target_list})
+endforeach(item ${tclindex_target_list})
 
 BRLCAD_ADDEXEC(cad_boundp cad_boundp.c "libbu;${M_LIBRARY}")
 

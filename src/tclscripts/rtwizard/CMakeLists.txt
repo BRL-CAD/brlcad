@@ -75,12 +75,9 @@ add_dependencies(rtwizard bwish rt rtedge fbserv fb-png fb-pix fbclear fblabel f
 if(TARGET tkpng)
   add_dependencies(rtwizard tkpng)
 endif(TARGET tkpng)
-foreach(item ${pkgIndex_target_list})
+foreach(item ${tclindex_target_list})
   add_dependencies(rtwizard ${item})
-endforeach(item ${pkgIndex_target_list})
-foreach(item ${tclIndex_target_list})
-  add_dependencies(rtwizard ${item})
-endforeach(item ${tclIndex_target_list})
+endforeach(item ${tclindex_target_list})
 
 CMAKEFILES(examples)
 
