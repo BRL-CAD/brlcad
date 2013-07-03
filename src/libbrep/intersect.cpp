@@ -896,14 +896,17 @@ ON_Intersect(const ON_Curve* curveA,
 		j--;
 		continue;
 	    }
-	    if (overlap[i].m_a[0] < pending[j].m_a[1] + intersection_tolerance
-		&& (ON_Interval(overlap[i].m_b[0], overlap[i].m_b[1]).Intersection(ON_Interval(pending[j].m_b[0], pending[j].m_b[1])))) {
-		// Need to merge
-		merged = true;
-		pending[j].m_a[1] = std::max(overlap[i].m_a[1], pending[j].m_a[1]);
-		pending[j].m_b[0] = std::min(overlap[i].m_b[0], pending[j].m_b[0]);
-		pending[j].m_b[1] = std::max(overlap[i].m_b[1], pending[j].m_b[1]);
-		break;
+	    if (overlap[i].m_a[0] < pending[j].m_a[1] + intersection_tolerance) {
+		ON_Interval interval_1(overlap[i].m_b[0], overlap[i].m_b[1]);
+		ON_Interval interval_2(pending[j].m_b[0], pending[j].m_b[1]);
+		if (interval_1.Intersection(interval_2)) {
+		    // Need to merge
+		    merged = true;
+		    pending[j].m_a[1] = std::max(overlap[i].m_a[1], pending[j].m_a[1]);
+		    pending[j].m_b[0] = std::min(overlap[i].m_b[0], pending[j].m_b[0]);
+		    pending[j].m_b[1] = std::max(overlap[i].m_b[1], pending[j].m_b[1]);
+		    break;
+		}
 	    }
 	}
 	if (merged == false)
@@ -1442,16 +1445,22 @@ ON_Intersect(const ON_Curve* curveA,
 		continue;
 	    }
 	    if (overlap[i].m_a[0] < pending[j].m_a[1] + intersection_tolerance) {
-		// Need to merge (TODO: need some consideration for surfaceB)
-		merged = true;
-		if (overlap[i].m_a[1] > pending[j].m_a[1]) {
-		    pending[j].m_a[1] = overlap[i].m_a[1];
-		    pending[j].m_b[2] = overlap[i].m_b[2];
-		    pending[j].m_b[3] = overlap[i].m_b[3];
-		    pending[j].m_A[1] = overlap[i].m_A[1];
-		    pending[j].m_B[1] = overlap[i].m_B[1];
+		ON_Interval interval_u1(overlap[i].m_b[0], overlap[i].m_b[2]);
+		ON_Interval interval_u2(pending[j].m_b[0], pending[j].m_b[2]);
+		ON_Interval interval_v1(overlap[i].m_b[1], overlap[i].m_b[3]);
+		ON_Interval interval_v2(pending[j].m_b[1], pending[j].m_b[3]);
+		if (interval_u1.Intersection(interval_u2) && interval_v1.Intersection(interval_v2)) {
+		// if the uv rectangle of them intersects, it's consider overlap.
+		    merged = true;
+		    if (overlap[i].m_a[1] > pending[j].m_a[1]) {
+			pending[j].m_a[1] = overlap[i].m_a[1];
+			pending[j].m_b[2] = overlap[i].m_b[2];
+			pending[j].m_b[3] = overlap[i].m_b[3];
+			pending[j].m_A[1] = overlap[i].m_A[1];
+			pending[j].m_B[1] = overlap[i].m_B[1];
+		    }
+		    break;
 		}
-		break;
 	    }
 	}
 	if (merged == false)
