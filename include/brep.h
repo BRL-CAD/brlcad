@@ -1948,6 +1948,9 @@ ON_Intersect(const ON_3dPoint& pointA,
  *   surfaceB_vdomain - [in]
  *     optional restriction on surfaceB v domain
  *
+ *   tree - [in]
+ *     optional surface tree for surfaceB, to avoid re-computation
+ *
  * Returns:
  *    True for an intersection. False for no intersection.
  */
@@ -1957,7 +1960,8 @@ ON_Intersect(const ON_3dPoint& pointA,
 	     ON_ClassArray<ON_PX_EVENT>& x,
 	     double tolerance = 0.0,
 	     const ON_Interval* surfaceB_udomain = 0,
-	     const ON_Interval* surfaceB_vdomain = 0);
+	     const ON_Interval* surfaceB_vdomain = 0,
+	     brlcad::SurfaceTree* tree = 0);
 
 /**
  * An overload of ON_Intersect for curve-curve intersection.

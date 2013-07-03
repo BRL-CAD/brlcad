@@ -75,14 +75,18 @@ public:
     {
 	for (int i = 0; i < 2; i++)
 	    m_children[i] = new Subcurve();
-
-	if (m_curve->Split(m_t.Mid(), m_children[0]->m_curve, m_children[1]->m_curve) == false)
+	ON_SimpleArray<double> pline_t;
+	double split_t = m_t.Mid();
+	if (m_curve->IsPolyline(NULL, &pline_t) && pline_t.Count() > 2) {
+	    split_t = pline_t[pline_t.Count()/2];
+	}
+	if (m_curve->Split(split_t, m_children[0]->m_curve, m_children[1]->m_curve) == false)
 	    return -1;
 
-	m_children[0]->m_t = ON_Interval(m_t.Min(), m_t.Mid());
+	m_children[0]->m_t = m_children[0]->m_curve->Domain();
 	m_children[0]->SetBBox(m_children[0]->m_curve->BoundingBox());
 	m_children[0]->m_islinear = m_children[0]->m_curve->IsLinear();
-	m_children[1]->m_t = ON_Interval(m_t.Mid(), m_t.Max());
+	m_children[1]->m_t = m_children[1]->m_curve->Domain();
 	m_children[1]->SetBBox(m_children[1]->m_curve->BoundingBox());
 	m_children[1]->m_islinear = m_children[1]->m_curve->IsLinear();
 
@@ -154,14 +158,14 @@ public:
 	    m_children[i] = new Subsurface();
 	ON_Surface *temp_surf1 = NULL, *temp_surf2 = NULL;
 	ON_BOOL32 ret = true;
-	ret = m_surf->Split(0, m_u.Mid(), temp_surf1, temp_surf2);
+	ret = m_surf->Split(0, m_surf->Domain(0).Mid(), temp_surf1, temp_surf2);
 	if (!ret) {
 	    delete temp_surf1;
 	    delete temp_surf2;
 	    return -1;
 	}
 
-	ret = temp_surf1->Split(1, m_v.Mid(), m_children[0]->m_surf, m_children[1]->m_surf);
+	ret = temp_surf1->Split(1, m_surf->Domain(1).Mid(), m_children[0]->m_surf, m_children[1]->m_surf);
 	delete temp_surf1;
 	if (!ret) {
 	    delete temp_surf2;
@@ -443,7 +447,8 @@ ON_Intersect(const ON_3dPoint& pointA,
 	     ON_ClassArray<ON_PX_EVENT>& x,
 	     double tolerance,
 	     const ON_Interval* surfaceB_udomain,
-	     const ON_Interval* surfaceB_vdomain)
+	     const ON_Interval* surfaceB_vdomain,
+	     brlcad::SurfaceTree* tree)
 {
     if (tolerance <= 0.0)
 	tolerance = PSI_DEFAULT_TOLERANCE;
@@ -464,15 +469,19 @@ ON_Intersect(const ON_3dPoint& pointA,
     brep->AddSurface(surfaceB.Duplicate());
     brep->NewFace(0);
     ON_2dPoint closest_point_uv;
-    brlcad::SurfaceTree *tree = new brlcad::SurfaceTree(brep->Face(0), false, MAX_PSI_DEPTH);
+    bool delete_tree = false;
+    if (!tree) {
+	tree = new brlcad::SurfaceTree(brep->Face(0), false, MAX_PSI_DEPTH);
+	delete_tree = true;
+    }
     if (brlcad::get_closest_point(closest_point_uv, brep->Face(0), pointA, tree) == false) {
 	delete brep;
-	delete tree;
+	if (delete_tree) delete tree;
 	return false;
     }
 
     delete brep;
-    delete tree;
+    if (delete_tree) delete tree;
 
     ON_3dPoint closest_point_3d = surfaceB.PointAt(closest_point_uv.x, closest_point_uv.y);
     if (pointA.DistanceTo(closest_point_3d) <= tolerance
@@ -560,7 +569,7 @@ build_curve_root(const ON_Curve* curve, const ON_Interval* domain, Subcurve& roo
 
 
 void
-newton_cci(double& t_a, double& t_b, const ON_Curve* curveA, const ON_Curve* curveB)
+newton_cci(double& t_a, double& t_b, const ON_Curve* curveA, const ON_Curve* curveB, double intersection_tolerance)
 {
     // Equations:
     //   x_a(t_a) - x_b(t_b) = 0
@@ -572,6 +581,9 @@ newton_cci(double& t_a, double& t_b, const ON_Curve* curveA, const ON_Curve* cur
     double last_t_a = DBL_MAX*.5, last_t_b = DBL_MAX*.5;
     ON_3dPoint pointA = curveA->PointAt(t_a);
     ON_3dPoint pointB = curveB->PointAt(t_b);
+    if (pointA.DistanceTo(pointB) < intersection_tolerance)
+	return;
+
     int iteration = 0;
     while (fabs(last_t_a - t_a) + fabs(last_t_b - t_b) > ON_ZERO_TOLERANCE
 	   && iteration++ < CCI_MAX_ITERATIONS) {
@@ -753,9 +765,9 @@ ON_Intersect(const ON_Curve* curveA,
 	    // may miss some overlap cases. (Overlap events can also converge to one
 	    // point)
 	    double t_a1 = i->first->m_t.Min(), t_b1 = i->second->m_t.Min();
-	    newton_cci(t_a1, t_b1, curveA, curveB);
+	    newton_cci(t_a1, t_b1, curveA, curveB, intersection_tolerance);
 	    double t_a2 = i->first->m_t.Max(), t_b2 = i->second->m_t.Max();
-	    newton_cci(t_a2, t_b2, curveA, curveB);
+	    newton_cci(t_a2, t_b2, curveA, curveB, intersection_tolerance);
 
 	    ON_3dPoint pointA1 = curveA->PointAt(t_a1);
 	    ON_3dPoint pointB1 = curveB->PointAt(t_b1);
@@ -1010,7 +1022,7 @@ build_surface_root(const ON_Surface* surf, const ON_Interval* u_domain, const ON
 
 
 void
-newton_csi(double& t, double& u, double& v, const ON_Curve* curveA, const ON_Surface* surfB)
+newton_csi(double& t, double& u, double& v, const ON_Curve* curveA, const ON_Surface* surfB, double intersection_tolerance, brlcad::SurfaceTree* UNUSED(tree))
 {
     // Equations:
     //   x_a(t) - x_b(u,v) = 0
@@ -1020,6 +1032,9 @@ newton_csi(double& t, double& u, double& v, const ON_Curve* curveA, const ON_Sur
     double last_t = DBL_MAX/3, last_u = DBL_MAX/3, last_v = DBL_MAX/3;
     ON_3dPoint pointA = curveA->PointAt(t);
     ON_3dPoint pointB = surfB->PointAt(u, v);
+    if (pointA.DistanceTo(pointB) < intersection_tolerance)
+	return;
+
     int iteration = 0;
     while (fabs(last_t - t) + fabs(last_u - u) + fabs(last_v - v) > ON_ZERO_TOLERANCE
 	   && iteration++ < CCI_MAX_ITERATIONS) {
@@ -1068,6 +1083,15 @@ ON_Intersect(const ON_Curve* curveA,
 	intersection_tolerance = 0.001;
     if (overlap_tolerance <= 0.0)
 	overlap_tolerance = 2*intersection_tolerance;
+
+    // We need ON_BrepFace for get_closest_point().
+    // This is used in point-surface intersections, in case we build the
+    // tree again and again.
+    ON_Brep *brep = ON_Brep::New();
+    brep->AddSurface(surfaceB->Duplicate());
+    brep->NewFace(0);
+    ON_2dPoint closest_point_uv;
+    brlcad::SurfaceTree *tree = new brlcad::SurfaceTree(brep->Face(0), false, MAX_PSI_DEPTH);
 
     Subcurve rootA;
     Subsurface rootB;
@@ -1139,7 +1163,7 @@ ON_Intersect(const ON_Curve* curveA,
 			// First, we check the endpoints of the line segment
 			ON_ClassArray<ON_PX_EVENT> px_event1, px_event2;
 			int intersections = 0;
-			if (ON_Intersect(line.from, *surfaceB, px_event1)) {
+			if (ON_Intersect(line.from, *surfaceB, px_event1, intersection_tolerance, 0, 0, tree)) {
 			    Event->m_A[intersections] = line.from;
 			    Event->m_B[intersections] = px_event1[0].m_B;
 			    Event->m_a[intersections] = i->first->m_t.Min();
@@ -1147,7 +1171,7 @@ ON_Intersect(const ON_Curve* curveA,
 			    Event->m_b[2*intersections+1] = px_event1[0].m_b[1];
 			    intersections++;
 			}
-			if (ON_Intersect(line.to, *surfaceB, px_event2)) {
+			if (ON_Intersect(line.to, *surfaceB, px_event2, intersection_tolerance, 0, 0, tree)) {
 			    Event->m_A[intersections] = line.to;
 			    Event->m_B[intersections] = px_event2[0].m_B;
 			    Event->m_a[intersections] = i->first->m_t.Max();
@@ -1245,7 +1269,7 @@ ON_Intersect(const ON_Curve* curveA,
 		    ON_3dPoint intersection = line.from + line.Direction()*line_t;
 		    ON_2dPoint uv;
 		    ON_ClassArray<ON_PX_EVENT> px_event;
-		    if (!ON_Intersect(intersection, *(i->second->m_surf), px_event))
+		    if (!ON_Intersect(intersection, *(i->second->m_surf), px_event, intersection_tolerance, 0, 0, tree))
 			continue;
 		    
 		    ON_X_EVENT* Event = new ON_X_EVENT;
@@ -1271,10 +1295,10 @@ ON_Intersect(const ON_Curve* curveA,
 	// point)
 	double u1 = i->second->m_u.Mid(), v1 = i->second->m_v.Mid();
 	double t1 = i->first->m_t.Min();
-	newton_csi(t1, u1, v1, curveA, surfaceB);
+	newton_csi(t1, u1, v1, curveA, surfaceB, intersection_tolerance, tree);
 	double u2 = i->second->m_u.Mid(), v2 = i->second->m_v.Mid();
 	double t2 = i->first->m_t.Max();
-	newton_csi(t2, u2, v2, curveA, surfaceB);
+	newton_csi(t2, u2, v2, curveA, surfaceB, intersection_tolerance, tree);
 
 	if (isnan(u1) || isnan(v1) || isnan(t1)) {
 	    u1 = u2; v1 = v2; t1 = t2;
@@ -1341,7 +1365,7 @@ ON_Intersect(const ON_Curve* curveA,
 		    ON_3dPoint test_point = curveA->PointAt(t1 + (t2-t1)*j*strike);
 		    ON_ClassArray<ON_PX_EVENT> psi_x;
 		    // Use point-surface intersection
-		    if (!ON_Intersect(test_point, *surfaceB, psi_x, overlap_tolerance))
+		    if (!ON_Intersect(test_point, *surfaceB, psi_x, overlap_tolerance, 0, 0, tree))
 			break;
 		}
 		if (j == CSI_OVERLAP_TEST_POINTS) {
