@@ -465,9 +465,8 @@ ON_Intersect(const ON_3dPoint& pointA,
 
     // We need ON_BrepFace for get_closest_point().
     // TODO: Use routines like SubSurface in SSI to reduce computation.
-    ON_Brep *brep = ON_Brep::New();
-    brep->AddSurface(surfaceB.Duplicate());
-    brep->NewFace(0);
+    ON_Brep *brep = surfaceB.BrepForm();
+    if (!brep) return false;
     ON_2dPoint closest_point_uv;
     bool delete_tree = false;
     if (!tree) {
@@ -1116,10 +1115,8 @@ ON_Intersect(const ON_Curve* curveA,
     // We need ON_BrepFace for get_closest_point().
     // This is used in point-surface intersections, in case we build the
     // tree again and again.
-    ON_Brep *brep = ON_Brep::New();
-    brep->AddSurface(surfaceB->Duplicate());
-    brep->NewFace(0);
-    ON_2dPoint closest_point_uv;
+    ON_Brep *brep = surfaceB->BrepForm();
+    if (!brep) return false;
     brlcad::SurfaceTree *tree = new brlcad::SurfaceTree(brep->Face(0), false, MAX_PSI_DEPTH);
 
     Subcurve rootA;
