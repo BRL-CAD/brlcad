@@ -183,6 +183,14 @@ main(int, char**)
     ON_PolylineCurve polyC(ptarrayC);
     test_csi(&polyC, &planesurf);
 
+    bu_log("Test 3:\n");
+    // A line and a torus
+    ON_Torus torus(circleA, radius*0.5);
+    ON_LineCurve ray(ON_3dPoint(-20.0, -2.0, -1.0), ON_3dPoint(20.0, 2.0, 1.0));
+    ON_NurbsSurface* torus_surface = ON_NurbsSurface::New();
+    torus.GetNurbForm(*torus_surface);
+    test_csi(&ray, torus_surface);
+
     bu_log("All finished.\n");
     return 0;
 }
