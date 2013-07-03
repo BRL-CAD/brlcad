@@ -1023,7 +1023,7 @@ build_surface_root(const ON_Surface* surf, const ON_Interval* u_domain, const ON
 
 
 void
-newton_csi(double& t, double& u, double& v, const ON_Curve* curveA, const ON_Surface* surfB, double intersection_tolerance, brlcad::SurfaceTree* UNUSED(tree))
+newton_csi(double& t, double& u, double& v, const ON_Curve* curveA, const ON_Surface* surfB, double intersection_tolerance, brlcad::SurfaceTree* tree)
 {
     // Equations:
     //   x_a(t) - x_b(u,v) = 0
