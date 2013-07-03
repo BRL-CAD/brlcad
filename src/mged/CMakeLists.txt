@@ -48,6 +48,10 @@ if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
   set(MGED_DM_SOURCES "${MGED_DM_SOURCES};dm-X.c")
 endif(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
 
+if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_TK)
+  set(MGED_DM_SOURCES "${MGED_DM_SOURCES};dm-qt.c")
+endif(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_TK)
+
 #if(BRLCAD_ENABLE_TK)
 #  set(MGED_DM_SOURCES "${MGED_DM_SOURCES};dm-tk.c")
 #endif(BRLCAD_ENABLE_TK)
@@ -80,7 +84,6 @@ set(MGED_SOURCES
   dm-plot.c
   dm-ps.c
   dm-txt.c
-  dm-qt.c
   dodraw.c
   doevent.c
   dozoom.c
@@ -162,6 +165,7 @@ set(mged_ignore_files
   comb_bool_parse.y
   comb_bool_scan.l
   dm-ogl.c
+  dm-qt.c
   dm-rtgl.c
   dm-tk.c
   dm-wgl.c
