@@ -637,7 +637,8 @@ newton_cci(double& t_a, double& t_b, const ON_Curve* curveA, const ON_Curve* cur
 int
 compare_by_m_a0(const ON_X_EVENT* a, const ON_X_EVENT* b)
 {
-    return a->m_a[0] - b->m_a[0];
+    // We don't care whether they are equal
+    return a->m_a[0] < b->m_a[0] ? -1 : 1;
 }
 
 
@@ -1035,6 +1036,13 @@ newton_csi(double& t, double& u, double& v, const ON_Curve* curveA, const ON_Sur
     if (pointA.DistanceTo(pointB) < intersection_tolerance)
 	return;
 
+    ON_ClassArray<ON_PX_EVENT> px_event;
+    if (ON_Intersect(pointA, *surfB, px_event, intersection_tolerance, 0, 0, tree)) {
+	u = px_event[0].m_b.x;
+	v = px_event[0].m_b.y;
+	return;
+    }
+
     int iteration = 0;
     while (fabs(last_t - t) + fabs(last_u - u) + fabs(last_v - v) > ON_ZERO_TOLERANCE
 	   && iteration++ < CCI_MAX_ITERATIONS) {
@@ -1428,10 +1436,6 @@ ON_Intersect(const ON_Curve* curveA,
 	bool merged = false;
 	for (int j = 0; j < pending.Count(); j++) {
 	    if (pending[j].m_a[1] < overlap[i].m_a[0] - intersection_tolerance) {
-		pending[j].m_A[0] = curveA->PointAt(pending[j].m_a[0]);
-		pending[j].m_A[1] = curveA->PointAt(pending[j].m_a[1]);
-		pending[j].m_B[0] = surfaceB->PointAt(pending[j].m_b[0], pending[j].m_b[1]);
-		pending[j].m_B[1] = surfaceB->PointAt(pending[j].m_b[2], pending[j].m_b[3]);
 		x.Append(pending[j]);
 		pending.Remove(j);
 		j--;
@@ -1440,11 +1444,13 @@ ON_Intersect(const ON_Curve* curveA,
 	    if (overlap[i].m_a[0] < pending[j].m_a[1] + intersection_tolerance) {
 		// Need to merge (TODO: need some consideration for surfaceB)
 		merged = true;
-		pending[j].m_a[1] = std::max(overlap[i].m_a[1], pending[j].m_a[1]);
-		pending[j].m_b[0] = std::min(overlap[i].m_b[0], pending[j].m_b[0]);
-		pending[j].m_b[1] = std::min(overlap[i].m_b[1], pending[j].m_b[1]);
-		pending[j].m_b[2] = std::max(overlap[i].m_b[2], pending[j].m_b[2]);
-		pending[j].m_b[3] = std::max(overlap[i].m_b[3], pending[j].m_b[3]);
+		if (overlap[i].m_a[1] > pending[j].m_a[1]) {
+		    pending[j].m_a[1] = overlap[i].m_a[1];
+		    pending[j].m_b[2] = overlap[i].m_b[2];
+		    pending[j].m_b[3] = overlap[i].m_b[3];
+		    pending[j].m_A[1] = overlap[i].m_A[1];
+		    pending[j].m_B[1] = overlap[i].m_B[1];
+		}
 		break;
 	    }
 	}
@@ -1452,10 +1458,6 @@ ON_Intersect(const ON_Curve* curveA,
 	    pending.Append(overlap[i]);
     }
     for (int i = 0; i < pending.Count(); i++) {
-	pending[i].m_A[0] = curveA->PointAt(pending[i].m_a[0]);
-	pending[i].m_A[1] = curveA->PointAt(pending[i].m_a[1]);
-	pending[i].m_B[0] = surfaceB->PointAt(pending[i].m_b[0], pending[i].m_b[1]);
-	pending[i].m_B[1] = surfaceB->PointAt(pending[i].m_b[2], pending[i].m_b[3]);
 	x.Append(pending[i]);
     }
 
