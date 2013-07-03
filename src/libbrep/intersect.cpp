@@ -1152,7 +1152,7 @@ ON_Intersect(const ON_Curve* curveA,
 		    if (!plane.CreateFromPoints(point1, point3, point4))
 			if (!plane.CreateFromPoints(point2, point3, point4))
 			    success = false;
-	    
+
 	    if (success && !ON_NearZero(line.Length())) {
 		if (line.Direction().IsPerpendicularTo(plane.Normal())) {
 		    // They are parallel
@@ -1205,8 +1205,8 @@ ON_Intersect(const ON_Curve* curveA,
 				}
 			    }
 			}
-			int count = line_t.Count();			
-			
+			int count = line_t.Count();
+
 			for (int j = 0; j < count; j++) {
 			    if (intersections >= 2) break;
 			    double surf_u = 0.0, surf_v = 0.0;
@@ -1271,7 +1271,7 @@ ON_Intersect(const ON_Curve* curveA,
 		    ON_ClassArray<ON_PX_EVENT> px_event;
 		    if (!ON_Intersect(intersection, *(i->second->m_surf), px_event, intersection_tolerance, 0, 0, tree))
 			continue;
-		    
+
 		    ON_X_EVENT* Event = new ON_X_EVENT;
 		    Event->m_A[0] = Event->m_A[1] = intersection;
 		    Event->m_B[0] = Event->m_B[1] = px_event[0].m_B;
