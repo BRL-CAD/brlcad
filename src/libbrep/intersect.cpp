@@ -73,6 +73,9 @@ public:
     }
     int Split()
     {
+	if (m_children[0] && m_children[1])
+	    return 0;
+
 	for (int i = 0; i < 2; i++)
 	    m_children[i] = new Subcurve();
 	ON_SimpleArray<double> pline_t;
@@ -154,6 +157,9 @@ public:
     }
     int Split()
     {
+	if (m_children[0] && m_children[1] && m_children[2] && m_children[3])
+	    return 0;
+
 	for (int i = 0; i < 4; i++)
 	    m_children[i] = new Subsurface();
 	ON_Surface *temp_surf1 = NULL, *temp_surf2 = NULL;
@@ -221,6 +227,16 @@ public:
 	ON_BoundingBox new_bbox(m_node.m_min-vtol, m_node.m_max+vtol);
 	ON_BoundingBox intersection;
 	return intersection.Intersection(new_bbox, curve.m_node);
+    }
+    bool Intersect(const Subsurface& surf, double tolerance = 0.0, ON_BoundingBox* intersection = NULL) const
+    {
+	ON_3dVector vtol(tolerance, tolerance, tolerance);
+	ON_BoundingBox new_bbox(m_node.m_min-vtol, m_node.m_max+vtol);
+	ON_BoundingBox box;
+	bool ret = box.Intersection(new_bbox, surf.m_node);
+	if (intersection != NULL)
+	    *intersection = box;
+	return ret;
     }
 };
 
@@ -650,6 +666,9 @@ ON_Intersect(const ON_Curve* curveA,
 	     const ON_Interval* curveA_domain,
 	     const ON_Interval* curveB_domain)
 {
+    if (curveA == NULL || curveB == NULL)
+	return 0;
+
     if (intersection_tolerance <= 0.0)
 	intersection_tolerance = CCI_DEFAULT_TOLERANCE;
     if (overlap_tolerance <= 0.0)
@@ -1104,6 +1123,9 @@ ON_Intersect(const ON_Curve* curveA,
 	     const ON_Interval* surfaceB_udomain,
 	     const ON_Interval* surfaceB_vdomain)
 {
+    if (curveA == NULL || surfaceB == NULL)
+	return 0;
+
     if (intersection_tolerance <= 0.0)
 	intersection_tolerance = CSI_DEFAULT_TOLERANCE;
     if (overlap_tolerance <= 0.0)
@@ -1689,17 +1711,22 @@ struct PointPair {
 #define MAX_SSI_DEPTH 8
 
 
+// We make the default tolerance for SSI the same as that of surface-surface
+// intersections defined by openNURBS (see other/openNURBS/opennurbs_surface.h)
+#define SSI_DEFAULT_TOLERANCE 0.001
+
+
 int
 ON_Intersect(const ON_Surface* surfA,
 	     const ON_Surface* surfB,
 	     ON_ClassArray<ON_SSX_EVENT>& x,
-	     double,
-	     double,
-	     double,
-	     const ON_Interval*,
-	     const ON_Interval*,
-	     const ON_Interval*,
-	     const ON_Interval*)
+	     double intersection_tolerance,
+	     double UNUSED(overlap_tolerance),
+	     double UNUSED(fitting_tolerance),
+	     const ON_Interval* surfaceA_udomain,
+	     const ON_Interval* surfaceA_vdomain,
+	     const ON_Interval* surfaceB_udomain,
+	     const ON_Interval* surfaceB_vdomain)
 {
     if (surfA == NULL || surfB == NULL) {
 	return -1;
@@ -1711,14 +1738,8 @@ ON_Intersect(const ON_Surface* surfA,
     typedef std::vector<std::pair<Subsurface*, Subsurface*> > NodePairs;
     NodePairs nodepairs;
     Subsurface *rootA = new Subsurface(), *rootB = new Subsurface();
-    rootA->SetBBox(surfA->BoundingBox());
-    rootA->m_u = surfA->Domain(0);
-    rootA->m_v = surfA->Domain(1);
-    rootA->m_surf = surfA->Duplicate();
-    rootB->SetBBox(surfB->BoundingBox());
-    rootB->m_u = surfB->Domain(0);
-    rootB->m_v = surfB->Domain(1);
-    rootB->m_surf = surfB->Duplicate();
+    build_surface_root(surfA, surfaceA_udomain, surfaceA_vdomain, *rootA);
+    build_surface_root(surfB, surfaceB_udomain, surfaceB_vdomain, *rootB);
     nodepairs.push_back(std::make_pair(rootA, rootB));
     ON_3dPointArray curvept;
     ON_2dPointArray curveuv, curvest;
@@ -1737,12 +1758,8 @@ ON_Intersect(const ON_Surface* surfA,
 	NodePairs tmp_pairs;
 	if (h) {
 	    for (NodePairs::iterator i = nodepairs.begin(); i != nodepairs.end(); i++) {
-		int ret1 = 0;
-		if ((*i).first->m_children[0] == NULL)
-		    ret1 = (*i).first->Split();
-		int ret2 = 0;
-		if ((*i).second->m_children[0] == NULL)
-		    ret2 = (*i).second->Split();
+		int ret1 = (*i).first->Split();
+		int ret2 = (*i).second->Split();
 		if (ret1) {
 		    if (ret2) {
 			/* both splits failed */
@@ -1771,10 +1788,8 @@ ON_Intersect(const ON_Surface* surfA,
 	}
 	nodepairs.clear();
 	for (NodePairs::iterator i = tmp_pairs.begin(); i != tmp_pairs.end(); i++) {
-	    ON_BoundingBox box_a, box_b, box_intersect;
-	    (*i).first->GetBBox(box_a.m_min, box_a.m_max);
-	    (*i).second->GetBBox(box_b.m_min, box_b.m_max);
-	    if (box_intersect.Intersection(box_a, box_b)) {
+	    ON_BoundingBox box_intersect;
+	    if (i->first->Intersect(*(i->second), intersection_tolerance, &box_intersect)) {
 		if (h == MAX_SSI_DEPTH) {
 		    // We have arrived at the bottom of the trees.
 		    // Get an estimate of the intersection point lying on the intersection curve
