@@ -677,7 +677,7 @@ ON_Intersect(const ON_Curve* curveA,
 
     if (intersection_tolerance <= 0.0)
 	intersection_tolerance = CCI_DEFAULT_TOLERANCE;
-    if (overlap_tolerance <= 0.0)
+    if (overlap_tolerance < intersection_tolerance)
 	overlap_tolerance = 2*intersection_tolerance;
     double t1_tolerance = intersection_tolerance;
     double t2_tolerance = intersection_tolerance;
@@ -1134,7 +1134,7 @@ ON_Intersect(const ON_Curve* curveA,
 
     if (intersection_tolerance <= 0.0)
 	intersection_tolerance = CSI_DEFAULT_TOLERANCE;
-    if (overlap_tolerance <= 0.0)
+    if (overlap_tolerance < intersection_tolerance)
 	overlap_tolerance = 2*intersection_tolerance;
     double t_tolerance = intersection_tolerance;
     double u_tolerance = intersection_tolerance;
@@ -1727,8 +1727,8 @@ ON_Intersect(const ON_Surface* surfA,
 	     const ON_Surface* surfB,
 	     ON_ClassArray<ON_SSX_EVENT>& x,
 	     double intersection_tolerance,
-	     double UNUSED(overlap_tolerance),
-	     double UNUSED(fitting_tolerance),
+	     double overlap_tolerance,
+	     double fitting_tolerance,
 	     const ON_Interval* surfaceA_udomain,
 	     const ON_Interval* surfaceA_vdomain,
 	     const ON_Interval* surfaceB_udomain,
@@ -1738,176 +1738,166 @@ ON_Intersect(const ON_Surface* surfA,
 	return -1;
     }
 
+    if (intersection_tolerance <= 0.0)
+	intersection_tolerance = SSI_DEFAULT_TOLERANCE;
+    if (overlap_tolerance < intersection_tolerance)
+	overlap_tolerance = 2*intersection_tolerance;
+    if (fitting_tolerance < intersection_tolerance)
+	fitting_tolerance = intersection_tolerance;
+
     /* First step: Initialize the first two Subsurface.
      * It's just like getting the root of the surface tree.
      */
     typedef std::vector<std::pair<Subsurface*, Subsurface*> > NodePairs;
-    NodePairs nodepairs;
-    Subsurface *rootA = new Subsurface(), *rootB = new Subsurface();
-    build_surface_root(surfA, surfaceA_udomain, surfaceA_vdomain, *rootA);
-    build_surface_root(surfB, surfaceB_udomain, surfaceB_vdomain, *rootB);
-    nodepairs.push_back(std::make_pair(rootA, rootB));
+    NodePairs candidates, next_candidates;
+    Subsurface rootA, rootB;
+    build_surface_root(surfA, surfaceA_udomain, surfaceA_vdomain, rootA);
+    build_surface_root(surfB, surfaceB_udomain, surfaceB_vdomain, rootB);
+    if (rootA.Intersect(rootB, intersection_tolerance))
+	candidates.push_back(std::make_pair(&rootA, &rootB));
+
     ON_3dPointArray curvept;
     ON_2dPointArray curveuv, curvest;
-    int bbox_count = 0;
 
-    /* Second step: calculate the intersection of the bounding boxes, using
-     * trigonal approximation.
+    /* Second step: calculate the intersection of the bounding boxes.
      * Only the children of intersecting b-box pairs need to be considered.
      * The children will be generated only when they are needed, using the
      * method of splitting a NURBS surface.
      * So finally only a small subset of the surface tree is created.
      */
     for (int h = 0; h <= MAX_SSI_DEPTH; h++) {
-	if (nodepairs.empty())
+	if (candidates.empty())
 	    break;
-	NodePairs tmp_pairs;
-	if (h) {
-	    for (NodePairs::iterator i = nodepairs.begin(); i != nodepairs.end(); i++) {
-		int ret1 = (*i).first->Split();
-		int ret2 = (*i).second->Split();
-		if (ret1) {
-		    if (ret2) {
-			/* both splits failed */
-			tmp_pairs.push_back(*i);
-			h = MAX_SSI_DEPTH;
-		    } else {
-			/* the first failed */
-			for (int j = 0; j < 4; j++)
-			    tmp_pairs.push_back(std::make_pair((*i).first, (*i).second->m_children[j]));
-		    }
-		} else {
-		    if (ret2) {
-			/* the second failed */
-			for (int j = 0; j < 4; j++)
-			    tmp_pairs.push_back(std::make_pair((*i).first->m_children[j], (*i).second));
-		    } else {
-			/* both success */
-			for (int j = 0; j < 4; j++)
-			    for (int k = 0; k < 4; k++)
-				tmp_pairs.push_back(std::make_pair((*i).first->m_children[j], (*i).second->m_children[k]));
-		    }
-		}
+	next_candidates.clear();
+	for (NodePairs::iterator i = candidates.begin(); i != candidates.end(); i++) {
+	    std::vector<Subsurface*> splittedA, splittedB;
+	    if ((*i).first->m_isplanar || (*i).first->Split() != 0) {
+		splittedA.push_back((*i).first);
+	    } else {
+		for (int j = 0; j < 4; j++)
+		    splittedA.push_back((*i).first->m_children[j]);
 	    }
-	} else {
-	    tmp_pairs = nodepairs;
+	    if ((*i).second->m_isplanar || (*i).second->Split() != 0) {
+		splittedB.push_back((*i).second);
+	    } else {
+		for (int j = 0; j < 4; j++)
+		    splittedB.push_back((*i).second->m_children[j]);
+	    }
+	    for (unsigned int j = 0; j < splittedA.size(); j++)
+		for (unsigned int k = 0; k < splittedB.size(); k++)
+		    if (splittedB[k]->Intersect(*splittedA[j], intersection_tolerance))
+			next_candidates.push_back(std::make_pair(splittedA[j], splittedB[k]));
 	}
-	nodepairs.clear();
-	for (NodePairs::iterator i = tmp_pairs.begin(); i != tmp_pairs.end(); i++) {
-	    ON_BoundingBox box_intersect;
-	    if (i->first->Intersect(*(i->second), intersection_tolerance, &box_intersect)) {
-		if (h == MAX_SSI_DEPTH) {
-		    // We have arrived at the bottom of the trees.
-		    // Get an estimate of the intersection point lying on the intersection curve
+	candidates = next_candidates;
+    }
+    bu_log("We get %d intersection bounding boxes.\n", candidates.size());
 
-		    // Get the corners of each surface sub-patch inside the bounding-box.
-		    ON_3dPoint cornerA[4], cornerB[4];
-		    double u_min = (*i).first->m_u.Min(), u_max = (*i).first->m_u.Max();
-		    double v_min = (*i).first->m_v.Min(), v_max = (*i).first->m_v.Max();
-		    double s_min = (*i).second->m_u.Min(), s_max = (*i).second->m_u.Max();
-		    double t_min = (*i).second->m_v.Min(), t_max = (*i).second->m_v.Max();
-		    cornerA[0] = surfA->PointAt(u_min, v_min);
-		    cornerA[1] = surfA->PointAt(u_min, v_max);
-		    cornerA[2] = surfA->PointAt(u_max, v_min);
-		    cornerA[3] = surfA->PointAt(u_max, v_max);
-		    cornerB[0] = surfB->PointAt(s_min, t_min);
-		    cornerB[1] = surfB->PointAt(s_min, t_max);
-		    cornerB[2] = surfB->PointAt(s_max, t_min);
-		    cornerB[3] = surfB->PointAt(s_max, t_max);
+    /* Third step: get the intersection points using trangonal approximation. */
+    for (NodePairs::iterator i = candidates.begin(); i != candidates.end(); i++) {
+	// We have arrived at the bottom of the trees.
+	// Get an estimate of the intersection point lying on the intersection curve
 
-		    /* We approximate each surface sub-patch inside the bounding-box with two
-		     * triangles that share an edge.
-		     * The intersection of the surface sub-patches is approximated as the
-		     * intersection of triangles.
-		     */
-		    struct Triangle triangle[4];
-		    triangle[0].CreateFromPoints(cornerA[0], cornerA[1], cornerA[2]);
-		    triangle[1].CreateFromPoints(cornerA[1], cornerA[2], cornerA[3]);
-		    triangle[2].CreateFromPoints(cornerB[0], cornerB[1], cornerB[2]);
-		    triangle[3].CreateFromPoints(cornerB[1], cornerB[2], cornerB[3]);
-		    bool is_intersect[4];
-		    ON_3dPoint intersect_center[4];
-		    is_intersect[0] = triangle_intersection(triangle[0], triangle[2], intersect_center[0]);
-		    is_intersect[1] = triangle_intersection(triangle[0], triangle[3], intersect_center[1]);
-		    is_intersect[2] = triangle_intersection(triangle[1], triangle[2], intersect_center[2]);
-		    is_intersect[3] = triangle_intersection(triangle[1], triangle[3], intersect_center[3]);
+	// Get the corners of each surface sub-patch inside the bounding-box.
+	ON_BoundingBox box_intersect;
+	i->first->Intersect(*(i->second), intersection_tolerance, &box_intersect);
+	ON_3dPoint cornerA[4], cornerB[4];
+	double u_min = (*i).first->m_u.Min(), u_max = (*i).first->m_u.Max();
+	double v_min = (*i).first->m_v.Min(), v_max = (*i).first->m_v.Max();
+	double s_min = (*i).second->m_u.Min(), s_max = (*i).second->m_u.Max();
+	double t_min = (*i).second->m_v.Min(), t_max = (*i).second->m_v.Max();
+	cornerA[0] = surfA->PointAt(u_min, v_min);
+	cornerA[1] = surfA->PointAt(u_min, v_max);
+	cornerA[2] = surfA->PointAt(u_max, v_min);
+	cornerA[3] = surfA->PointAt(u_max, v_max);
+	cornerB[0] = surfB->PointAt(s_min, t_min);
+	cornerB[1] = surfB->PointAt(s_min, t_max);
+	cornerB[2] = surfB->PointAt(s_max, t_min);
+	cornerB[3] = surfB->PointAt(s_max, t_max);
 
-		    // Calculate the intersection centers' uv (st) coordinates.
-		    ON_3dPoint bcoor[8];
-		    ON_2dPoint uv[4]/*surfA*/, st[4]/*surfB*/;
-		    if (is_intersect[0]) {
-			bcoor[0] = triangle[0].BarycentricCoordinate(intersect_center[0]);
-			bcoor[1] = triangle[2].BarycentricCoordinate(intersect_center[0]);
-			uv[0].x = bcoor[0].x*u_min + bcoor[0].y*u_min + bcoor[0].z*u_max;
-			uv[0].y = bcoor[0].x*v_min + bcoor[0].y*v_max + bcoor[0].z*v_min;
-			st[0].x = bcoor[1].x*s_min + bcoor[1].y*s_min + bcoor[1].z*s_max;
-			st[0].y = bcoor[1].x*t_min + bcoor[1].y*t_max + bcoor[1].z*t_min;
-		    }
-		    if (is_intersect[1]) {
-			bcoor[2] = triangle[0].BarycentricCoordinate(intersect_center[1]);
-			bcoor[3] = triangle[3].BarycentricCoordinate(intersect_center[1]);
-			uv[1].x = bcoor[2].x*u_min + bcoor[2].y*u_min + bcoor[2].z*u_max;
-			uv[1].y = bcoor[2].x*v_min + bcoor[2].y*v_max + bcoor[2].z*v_min;
-			st[1].x = bcoor[3].x*s_min + bcoor[3].y*s_max + bcoor[3].z*s_max;
-			st[1].y = bcoor[3].x*t_max + bcoor[3].y*t_min + bcoor[3].z*t_max;
-		    }
-		    if (is_intersect[2]) {
-			bcoor[4] = triangle[1].BarycentricCoordinate(intersect_center[2]);
-			bcoor[5] = triangle[2].BarycentricCoordinate(intersect_center[2]);
-			uv[2].x = bcoor[4].x*u_min + bcoor[4].y*u_max + bcoor[4].z*u_max;
-			uv[2].y = bcoor[4].x*v_max + bcoor[4].y*v_min + bcoor[4].z*v_max;
-			st[2].x = bcoor[5].x*s_min + bcoor[5].y*s_min + bcoor[5].z*s_max;
-			st[2].y = bcoor[5].x*t_min + bcoor[5].y*t_max + bcoor[5].z*t_min;
-		    }
-		    if (is_intersect[3]) {
-			bcoor[6] = triangle[1].BarycentricCoordinate(intersect_center[3]);
-			bcoor[7] = triangle[3].BarycentricCoordinate(intersect_center[3]);
-			uv[3].x = bcoor[6].x*u_min + bcoor[6].y*u_max + bcoor[6].z*u_max;
-			uv[3].y = bcoor[6].x*v_max + bcoor[6].y*v_min + bcoor[6].z*v_max;
-			st[3].x = bcoor[7].x*s_min + bcoor[7].y*s_max + bcoor[7].z*s_max;
-			st[3].y = bcoor[7].x*t_max + bcoor[7].y*t_min + bcoor[7].z*t_max;
-		    }
+	/* We approximate each surface sub-patch inside the bounding-box with two
+	    * triangles that share an edge.
+	    * The intersection of the surface sub-patches is approximated as the
+	    * intersection of triangles.
+	    */
+	struct Triangle triangle[4];
+	triangle[0].CreateFromPoints(cornerA[0], cornerA[1], cornerA[2]);
+	triangle[1].CreateFromPoints(cornerA[1], cornerA[2], cornerA[3]);
+	triangle[2].CreateFromPoints(cornerB[0], cornerB[1], cornerB[2]);
+	triangle[3].CreateFromPoints(cornerB[1], cornerB[2], cornerB[3]);
+	bool is_intersect[4];
+	ON_3dPoint intersect_center[4];
+	is_intersect[0] = triangle_intersection(triangle[0], triangle[2], intersect_center[0]);
+	is_intersect[1] = triangle_intersection(triangle[0], triangle[3], intersect_center[1]);
+	is_intersect[2] = triangle_intersection(triangle[1], triangle[2], intersect_center[2]);
+	is_intersect[3] = triangle_intersection(triangle[1], triangle[3], intersect_center[3]);
 
-		    // The centroid of these intersection centers is the
-		    // intersection point we want.
-		    int num_intersects = 0;
-		    ON_3dPoint average(0.0, 0.0, 0.0);
-		    ON_2dPoint avguv(0.0, 0.0), avgst(0.0, 0.0);
-		    for (int j = 0; j < 4; j++) {
-			if (is_intersect[j]) {
-			    average += intersect_center[j];
-			    avguv += uv[j];
-			    avgst += st[j];
-			    num_intersects++;
-			}
-		    }
-		    if (num_intersects) {
-			average /= num_intersects;
-			avguv /= num_intersects;
-			avgst /= num_intersects;
-			if (box_intersect.IsPointIn(average)) {
-			    curvept.Append(average);
-			    curveuv.Append(avguv);
-			    curvest.Append(avgst);
-			}
-		    }
-		    bbox_count++;
-		} else {
-		    nodepairs.push_back(*i);
-		}
+	// Calculate the intersection centers' uv (st) coordinates.
+	ON_3dPoint bcoor[8];
+	ON_2dPoint uv[4]/*surfA*/, st[4]/*surfB*/;
+	if (is_intersect[0]) {
+	    bcoor[0] = triangle[0].BarycentricCoordinate(intersect_center[0]);
+	    bcoor[1] = triangle[2].BarycentricCoordinate(intersect_center[0]);
+	    uv[0].x = bcoor[0].x*u_min + bcoor[0].y*u_min + bcoor[0].z*u_max;
+	    uv[0].y = bcoor[0].x*v_min + bcoor[0].y*v_max + bcoor[0].z*v_min;
+	    st[0].x = bcoor[1].x*s_min + bcoor[1].y*s_min + bcoor[1].z*s_max;
+	    st[0].y = bcoor[1].x*t_min + bcoor[1].y*t_max + bcoor[1].z*t_min;
+	}
+	if (is_intersect[1]) {
+	    bcoor[2] = triangle[0].BarycentricCoordinate(intersect_center[1]);
+	    bcoor[3] = triangle[3].BarycentricCoordinate(intersect_center[1]);
+	    uv[1].x = bcoor[2].x*u_min + bcoor[2].y*u_min + bcoor[2].z*u_max;
+	    uv[1].y = bcoor[2].x*v_min + bcoor[2].y*v_max + bcoor[2].z*v_min;
+	    st[1].x = bcoor[3].x*s_min + bcoor[3].y*s_max + bcoor[3].z*s_max;
+	    st[1].y = bcoor[3].x*t_max + bcoor[3].y*t_min + bcoor[3].z*t_max;
+	}
+	if (is_intersect[2]) {
+	    bcoor[4] = triangle[1].BarycentricCoordinate(intersect_center[2]);
+	    bcoor[5] = triangle[2].BarycentricCoordinate(intersect_center[2]);
+	    uv[2].x = bcoor[4].x*u_min + bcoor[4].y*u_max + bcoor[4].z*u_max;
+	    uv[2].y = bcoor[4].x*v_max + bcoor[4].y*v_min + bcoor[4].z*v_max;
+	    st[2].x = bcoor[5].x*s_min + bcoor[5].y*s_min + bcoor[5].z*s_max;
+	    st[2].y = bcoor[5].x*t_min + bcoor[5].y*t_max + bcoor[5].z*t_min;
+	}
+	if (is_intersect[3]) {
+	    bcoor[6] = triangle[1].BarycentricCoordinate(intersect_center[3]);
+	    bcoor[7] = triangle[3].BarycentricCoordinate(intersect_center[3]);
+	    uv[3].x = bcoor[6].x*u_min + bcoor[6].y*u_max + bcoor[6].z*u_max;
+	    uv[3].y = bcoor[6].x*v_max + bcoor[6].y*v_min + bcoor[6].z*v_max;
+	    st[3].x = bcoor[7].x*s_min + bcoor[7].y*s_max + bcoor[7].z*s_max;
+	    st[3].y = bcoor[7].x*t_max + bcoor[7].y*t_min + bcoor[7].z*t_max;
+	}
+
+	// The centroid of these intersection centers is the
+	// intersection point we want.
+	int num_intersects = 0;
+	ON_3dPoint average(0.0, 0.0, 0.0);
+	ON_2dPoint avguv(0.0, 0.0), avgst(0.0, 0.0);
+	for (int j = 0; j < 4; j++) {
+	    if (is_intersect[j]) {
+		average += intersect_center[j];
+		avguv += uv[j];
+		avgst += st[j];
+		num_intersects++;
+	    }
+	}
+	if (num_intersects) {
+	    average /= num_intersects;
+	    avguv /= num_intersects;
+	    avgst /= num_intersects;
+	    if (box_intersect.IsPointIn(average)) {
+		curvept.Append(average);
+		curveuv.Append(avguv);
+		curvest.Append(avgst);
 	    }
 	}
     }
-    bu_log("We get %d intersection bounding boxes.\n", bbox_count);
     bu_log("%d points on the intersection curves.\n", curvept.Count());
 
     if (!curvept.Count()) {
-	delete rootA;
-	delete rootB;
 	return 0;
     }
 
-    // Third step: Fit the points in curvept into NURBS curves.
+    // Fourth step: Fit the points in curvept into NURBS curves.
     // Here we use polyline approximation.
     // TODO: Find a better fitting algorithm unless this is good enough.
 
@@ -2081,8 +2071,6 @@ ON_Intersect(const ON_Surface* surfA,
     bu_free(index, "int");
     bu_free(startpt, "int");
     bu_free(endpt, "int");
-    delete rootA;
-    delete rootB;
 
     // Generate ON_SSX_EVENTs
     if (intersect3d.Count()) {
