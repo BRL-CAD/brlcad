@@ -1792,7 +1792,7 @@ ON_Intersect(const ON_Surface* surfA,
     }
     bu_log("We get %d intersection bounding boxes.\n", candidates.size());
 
-    /* Third step: get the intersection points using trangonal approximation. */
+    /* Third step: get the intersection points using triangular approximation. */
     for (NodePairs::iterator i = candidates.begin(); i != candidates.end(); i++) {
 	// We have arrived at the bottom of the trees.
 	// Get an estimate of the intersection point lying on the intersection curve
@@ -1885,9 +1885,16 @@ ON_Intersect(const ON_Surface* surfA,
 	    avguv /= num_intersects;
 	    avgst /= num_intersects;
 	    if (box_intersect.IsPointIn(average)) {
-		curvept.Append(average);
-		curveuv.Append(avguv);
-		curvest.Append(avgst);
+		// Check the validity of the solution
+		ON_3dPoint pointA = surfA->PointAt(avguv.x, avguv.y);
+		ON_3dPoint pointB = surfB->PointAt(avgst.x, avgst.y);
+		if (pointA.DistanceTo(pointB) < intersection_tolerance
+		    && pointA.DistanceTo(average) < intersection_tolerance
+		    && pointB.DistanceTo(average) < intersection_tolerance) {
+		    curvept.Append(average);
+		    curveuv.Append(avguv);
+		    curvest.Append(avgst);
+		}
 	    }
 	}
     }
@@ -1900,6 +1907,8 @@ ON_Intersect(const ON_Surface* surfA,
     // Fourth step: Fit the points in curvept into NURBS curves.
     // Here we use polyline approximation.
     // TODO: Find a better fitting algorithm unless this is good enough.
+    // Time complexity: O(n^2*log(n)), really slow when n is large.
+    // (n is the number of points generated above)
 
     // We need to automatically generate a threshold.
     double max_dis;
@@ -1925,7 +1934,7 @@ ON_Intersect(const ON_Surface* surfA,
 	    ppair.distance3d = curvept[i].DistanceTo(curvept[j]);
 	    ppair.distanceA = curveuv[i].DistanceTo(curveuv[j]);
 	    ppair.distanceB = curvest[i].DistanceTo(curvest[j]);
-	    if (ppair.distanceA < max_dis_2dA && ppair.distanceB < max_dis_2dB) {
+	    if (ppair.distanceA < max_dis_2dA && ppair.distanceB < max_dis_2dB && ppair.distance3d < max_dis) {
 		ppair.indexA = i;
 		ppair.indexB = j;
 		ptpairs.push_back(ppair);
@@ -2008,10 +2017,17 @@ ON_Intersect(const ON_Surface* surfA,
 
     // Generate NURBS curves from the polylines.
     ON_SimpleArray<ON_NurbsCurve *> intersect3d, intersect_uv2d, intersect_st2d;
+    ON_SimpleArray<int> single_pts;
     for (unsigned int i = 0; i < polylines.size(); i++) {
 	if (polylines[i] != NULL) {
 	    int startpoint = (*polylines[i])[0];
 	    int endpoint = (*polylines[i])[polylines[i]->Count() - 1];
+
+	    if (polylines[i]->Count() == 1) {
+		// It's a single point
+		single_pts.Append(startpoint);
+		continue;
+	    }
 
 	    // The intersection curves in the 3d space
 	    ON_3dPointArray ptarray;
@@ -2081,6 +2097,24 @@ ON_Intersect(const ON_Surface* surfA,
 	    ssx->m_curveB = intersect_st2d[i];
 	    // Now we can only have ssx_transverse
 	    ssx->m_type = ON_SSX_EVENT::ssx_transverse;
+	    x.Append(*ssx);
+	}
+    }
+
+    for (int i = 0; i < single_pts.Count(); i++) {
+	// Check duplication (point-curve intersection)
+	int j;
+	for (j = 0; j < intersect3d.Count(); j++) {
+	    ON_ClassArray<ON_PX_EVENT> px_event;
+	    if (ON_Intersect(curvept[single_pts[i]], *intersect3d[j], px_event))
+		break;
+	}
+	if (j == intersect3d.Count()) {
+	    ON_SSX_EVENT *ssx = new ON_SSX_EVENT;
+	    ssx->m_point3d = curvept[single_pts[i]];
+	    ssx->m_pointA = curveuv[single_pts[i]];
+	    ssx->m_pointB = curvest[single_pts[i]];
+	    ssx->m_type = ON_SSX_EVENT::ssx_transverse_point;
 	    x.Append(*ssx);
 	}
     }
