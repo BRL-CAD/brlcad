@@ -110,12 +110,15 @@ public:
 	ON_BoundingBox new_bbox(m_node.m_min-vtol, m_node.m_max+vtol);
 	return new_bbox.IsPointIn(pt);
     }
-    bool Intersect(const Subcurve& other, double tolerance = 0.0) const
+    bool Intersect(const Subcurve& other, double tolerance = 0.0, ON_BoundingBox* intersection = NULL) const
     {
 	ON_3dVector vtol(tolerance, tolerance, tolerance);
 	ON_BoundingBox new_bbox(m_node.m_min-vtol, m_node.m_max+vtol);
-	ON_BoundingBox intersection;
-	return intersection.Intersection(new_bbox, other.m_node);
+	ON_BoundingBox box;
+	bool ret = box.Intersection(new_bbox, other.m_node);
+	if (intersection != NULL)
+	    *intersection = box;
+	return ret;
     }
 };
 
@@ -221,12 +224,15 @@ public:
 	    }
 	}
     }
-    bool Intersect(const Subcurve& curve, double tolerance = 0.0) const
+    bool Intersect(const Subcurve& curve, double tolerance = 0.0, ON_BoundingBox* intersection = NULL) const
     {
 	ON_3dVector vtol(tolerance, tolerance, tolerance);
 	ON_BoundingBox new_bbox(m_node.m_min-vtol, m_node.m_max+vtol);
-	ON_BoundingBox intersection;
-	return intersection.Intersection(new_bbox, curve.m_node);
+	ON_BoundingBox box;
+	bool ret = box.Intersection(new_bbox, curve.m_node);
+	if (intersection != NULL)
+	    *intersection = box;
+	return ret;
     }
     bool Intersect(const Subsurface& surf, double tolerance = 0.0, ON_BoundingBox* intersection = NULL) const
     {
