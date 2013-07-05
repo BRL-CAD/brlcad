@@ -1971,7 +1971,7 @@ ON_Intersect(const ON_Surface* surfA,
 		ON_3dPoint pointB = surfB->PointAt(avgst.x, avgst.y);
 		if (pointA.DistanceTo(pointB) < intersection_tolerance
 		    && pointA.DistanceTo(average) < intersection_tolerance
-		    && pointB.DistanceTo(average) < intersection_tolerance) {		    
+		    && pointB.DistanceTo(average) < intersection_tolerance) {
 		    tmp_curvept.Append(average);
 		    tmp_curveuv.Append(avguv);
 		    tmp_curvest.Append(avgst);
