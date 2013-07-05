@@ -1712,6 +1712,40 @@ struct PointPair {
 };
 
 
+void
+closed_domain(int type, const ON_Surface* surfA, const ON_Surface* surfB, ON_3dPointArray& curvept, ON_2dPointArray& curveuv, ON_2dPointArray& curvest, double intersection_tolerance)
+{
+    // type =
+    // 0: uv.x, 1: uv.y, 2: st.x, 3: st.y
+
+    ON_BOOL32 is_closed = (type < 2 ? surfA : surfB)->IsClosed(type%2);
+    const ON_Interval domain = (type < 2 ? surfA : surfB)->Domain(type%2);
+    if (!is_closed)
+	return;
+
+    int count = curvept.Count();
+    for (int i = 0; i < count; i++) {
+	ON_3dPoint pt3d = ON_3dPoint::UnsetPoint;
+	ON_2dPoint ptuv, ptst;
+	ptuv = curveuv[i];
+	ptst = curvest[i];
+	double& to_compare = (type < 2 ? ptuv : ptst)[type%2];
+	if (ON_NearZero(to_compare - domain.Min())) {
+	    pt3d = curvept[i];
+	    to_compare = domain.Max();
+	} else if (ON_NearZero(to_compare - domain.Max())) {
+	    pt3d = curvept[i];
+	    to_compare = domain.Min();
+	}
+	if (!pt3d.IsUnsetPoint()) {
+	    curvept.Append(pt3d);
+	    curveuv.Append(ptuv);
+	    curvest.Append(ptst);
+	}
+    }
+}
+
+
 // The maximal depth for subdivision - trade-off between accurancy and
 // performance
 #define MAX_SSI_DEPTH 8
@@ -1756,8 +1790,55 @@ ON_Intersect(const ON_Surface* surfA,
     if (rootA.Intersect(rootB, intersection_tolerance))
 	candidates.push_back(std::make_pair(&rootA, &rootB));
 
-    ON_3dPointArray curvept;
-    ON_2dPointArray curveuv, curvest;
+    ON_3dPointArray curvept, tmp_curvept;
+    ON_2dPointArray curveuv, curvest, tmp_curveuv, tmp_curvest;
+
+    // Deal with boundaries with curve-surface intersections.
+    for (int i = 0; i < 4; i++) {
+	const ON_Surface* surf1 = i >= 2 ? surfB : surfA;
+	const ON_Surface* surf2 = i >= 2 ? surfA : surfB;
+	ON_2dPointArray& ptarray1 = i >= 2 ? tmp_curvest : tmp_curveuv;
+	ON_2dPointArray& ptarray2 = i >= 2 ? tmp_curveuv : tmp_curvest;
+	ON_Curve* boundary = surf1->IsoCurve(i%2, surf1->Domain(1-i%2).Min());
+	ON_SimpleArray<ON_X_EVENT> x_event;
+	ON_Intersect(boundary, surf2, x_event, intersection_tolerance);
+	for (int j = 0; j < x_event.Count(); j++) {
+	    tmp_curvept.Append(x_event[j].m_A[0]);
+	    ON_2dPoint iso_pt;
+	    iso_pt.x = i%2 ? surf1->Domain(0).Min() : x_event[j].m_a[0];
+	    iso_pt.y = i%2 ? x_event[j].m_a[0] : surf1->Domain(1).Min();
+	    ptarray1.Append(iso_pt);
+	    ptarray2.Append(ON_2dPoint(x_event[j].m_b[0], x_event[j].m_b[1]));
+	    if (x_event[j].m_type == ON_X_EVENT::csx_overlap) {
+		// Append the other end-point
+		tmp_curvept.Append(x_event[j].m_A[1]);
+		iso_pt.x = i%2 ? surf1->Domain(0).Min() : x_event[j].m_a[1];
+		iso_pt.y = i%2 ? x_event[j].m_a[1] : surf1->Domain(1).Min();
+		ptarray1.Append(iso_pt);
+		ptarray2.Append(ON_2dPoint(x_event[j].m_b[2], x_event[j].m_b[3]));
+	    }
+	}
+	if (!surf1->IsClosed(1-i%2)) {
+	    x_event.Empty();
+	    boundary = surf1->IsoCurve(i%2, surf1->Domain(1-i%2).Max());
+	    ON_Intersect(boundary, surf2, x_event, intersection_tolerance);
+	    for (int j = 0; j < x_event.Count(); j++) {
+		tmp_curvept.Append(x_event[j].m_A[0]);
+		ON_2dPoint iso_pt;
+		iso_pt.x = i%2 ? surf1->Domain(0).Max() : x_event[j].m_a[0];
+		iso_pt.y = i%2 ? x_event[j].m_a[0] : surf1->Domain(1).Max();
+		ptarray1.Append(iso_pt);
+		ptarray2.Append(ON_2dPoint(x_event[j].m_b[0], x_event[j].m_b[1]));
+		if (x_event[j].m_type == ON_X_EVENT::csx_overlap) {
+		    tmp_curvept.Append(x_event[j].m_A[1]);
+		    iso_pt.x = i%2 ? surf1->Domain(0).Max() : x_event[j].m_a[1];
+		    iso_pt.y = i%2 ? x_event[j].m_a[1] : surf1->Domain(1).Max();
+		    ptarray1.Append(iso_pt);
+		    ptarray2.Append(ON_2dPoint(x_event[j].m_b[2], x_event[j].m_b[3]));
+		}
+	    }
+	}
+    }
 
     /* Second step: calculate the intersection of the bounding boxes.
      * Only the children of intersecting b-box pairs need to be considered.
@@ -1890,12 +1971,30 @@ ON_Intersect(const ON_Surface* surfA,
 		ON_3dPoint pointB = surfB->PointAt(avgst.x, avgst.y);
 		if (pointA.DistanceTo(pointB) < intersection_tolerance
 		    && pointA.DistanceTo(average) < intersection_tolerance
-		    && pointB.DistanceTo(average) < intersection_tolerance) {
-		    curvept.Append(average);
-		    curveuv.Append(avguv);
-		    curvest.Append(avgst);
+		    && pointB.DistanceTo(average) < intersection_tolerance) {		    
+		    tmp_curvept.Append(average);
+		    tmp_curveuv.Append(avguv);
+		    tmp_curvest.Append(avgst);
 		}
 	    }
+	}
+    }
+    for (int i = 0; i < 4; i++)
+	closed_domain(i, surfA, surfB, tmp_curvept, tmp_curveuv, tmp_curvest, intersection_tolerance);
+
+    // Use an O(n^2) naive approach to eliminate duplication
+    for (int i = 0; i < tmp_curvept.Count(); i++) {
+	int j;
+	for (j = 0; j < curvept.Count(); j++)
+	    if (tmp_curvept[i].DistanceTo(curvept[j]) < intersection_tolerance
+		&& tmp_curveuv[i].DistanceTo(curveuv[j]) < intersection_tolerance
+		&& tmp_curvest[i].DistanceTo(curvest[j]) < intersection_tolerance)
+		break;
+	// TODO: Use 2D tolerance
+	if (j == curvept.Count()) {
+	    curvept.Append(tmp_curvept[i]);
+	    curveuv.Append(tmp_curveuv[i]);
+	    curvest.Append(tmp_curvest[i]);
 	}
     }
     bu_log("%d points on the intersection curves.\n", curvept.Count());
