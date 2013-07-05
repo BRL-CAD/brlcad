@@ -84,7 +84,7 @@ Other useful but maybe not strictly necessary tasks:
 
 * update STEP and 3DM converters to support non-solid NURBS import via
   plate-mode
- 
+
 * libgcv routine to perform NURBS healing (close near-solid NURBS
   geometries)
 

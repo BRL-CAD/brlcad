@@ -1,4 +1,4 @@
-# The auto_mkindex and pkg_mkIndex commands are called from within Tcl, 
+# The auto_mkindex and pkg_mkIndex commands are called from within Tcl,
 # which means we need script files.
 file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/auto_mkindex.tcl" "
 foreach arg $argv {
