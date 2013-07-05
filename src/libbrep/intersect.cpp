@@ -1713,7 +1713,7 @@ struct PointPair {
 
 
 void
-closed_domain(int type, const ON_Surface* surfA, const ON_Surface* surfB, ON_3dPointArray& curvept, ON_2dPointArray& curveuv, ON_2dPointArray& curvest, double intersection_tolerance)
+closed_domain(int type, const ON_Surface* surfA, const ON_Surface* surfB, ON_3dPointArray& curvept, ON_2dPointArray& curveuv, ON_2dPointArray& curvest)
 {
     // type =
     // 0: uv.x, 1: uv.y, 2: st.x, 3: st.y
@@ -1980,7 +1980,7 @@ ON_Intersect(const ON_Surface* surfA,
 	}
     }
     for (int i = 0; i < 4; i++)
-	closed_domain(i, surfA, surfB, tmp_curvept, tmp_curveuv, tmp_curvest, intersection_tolerance);
+	closed_domain(i, surfA, surfB, tmp_curvept, tmp_curveuv, tmp_curvest);
 
     // Use an O(n^2) naive approach to eliminate duplication
     for (int i = 0; i < tmp_curvept.Count(); i++) {
