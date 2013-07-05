@@ -121,8 +121,8 @@ extern int	fb_server_retain_on_close;   /* !0 => we are holding a reusable FB op
 static char usage[] = "\
 Usage: fbserv port_num\n\
 	  (for a stand-alone daemon)\n\
-   or  fbserv [-v] [-h] [-S squaresize]\n\
-	  [-W width] [-N height] port_num frame_buffer\n\
+   or  fbserv [-v] [-{sS} squaresize]\n\
+	  [-{wW} width] [-{nN} height] port_num frame_buffer\n\
 	  (for a single-frame-buffer server)\n\
 ";
 
@@ -131,14 +131,10 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ( (c = bu_getopt( argc, argv, "hvF:s:w:n:S:W:N:p:" )) != -1 )  {
+    while ( (c = bu_getopt( argc, argv, "vF:s:w:n:S:W:N:p:h?" )) != -1 )  {
 	switch ( c )  {
 	    case 'v':
 		verbose = 1;
-		break;
-	    case 'h':
-		/* high-res */
-		height = width = 1024;
 		break;
 	    case 'F':
 		framebuffer = bu_optarg;
