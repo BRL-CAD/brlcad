@@ -50,7 +50,7 @@ void lazyInstMgr::addLazyInstance( namedLazyInstance inst ) {
     */
     positionAndSection ps = inst.loc.section;
     ps <<= 48;
-    ps |= ( inst.loc.begin & 0xFFFFFFFFFFFF );
+    ps |= ( inst.loc.begin & 0xFFFFFFFFFFFFULL );
     _instanceStreamPos.insert( inst.loc.instance, ps );
 
     if( inst.refs ) {
@@ -103,7 +103,7 @@ SDAI_Application_instance * lazyInstMgr::loadInstance( instanceID id ) {
                 break;
             case 1:
                 ps = cv->at( 0 );
-                off = ps & 0xFFFFFFFFFFFF;
+                off = ps & 0xFFFFFFFFFFFFULL;
                 sid = ps >> 48;
                 assert( _dataSections.size() > sid );
                 inst = _dataSections[sid]->getRealInstance( _mainRegistry, off, id );
