@@ -1329,12 +1329,11 @@ ON_Intersect(const ON_Curve* curveA,
 		    // They are not parallel, check intersection point
 		    double cos_angle = fabs(ON_DotProduct(plane.Normal(), line.Direction()))/(plane.Normal().Length()*line.Direction().Length());
 		    // cos_angle != 0, otherwise the curve and the plane are parallel.
-		    double distance = plane.DistanceTo(line.from);
+		    double distance = fabs(plane.DistanceTo(line.from));
 		    double line_t = distance/cos_angle/line.Length();
 		    if (line_t > 1.0 + t_tolerance)
 			continue;
 		    ON_3dPoint intersection = line.from + line.Direction()*line_t;
-		    ON_2dPoint uv;
 		    ON_ClassArray<ON_PX_EVENT> px_event;
 		    if (!ON_Intersect(intersection, *(i->second->m_surf), px_event, intersection_tolerance, 0, 0, tree))
 			continue;
@@ -1620,14 +1619,15 @@ triangle_intersection(const struct Triangle &TriA, const struct Triangle &TriB, 
     double dp2 = ON_DotProduct(TriA.B - intersect.from, line_normal);
     double dp3 = ON_DotProduct(TriA.C - intersect.from, line_normal);
 
-    int points_on_one_side = (dp1 >= 0) + (dp2 >= 0) + (dp3 >= 0);
+    int points_on_one_side = (dp1 >= -ON_ZERO_TOLERANCE) + (dp2 >= -ON_ZERO_TOLERANCE) + (dp3 >= -ON_ZERO_TOLERANCE);
     if (points_on_one_side == 0 || points_on_one_side == 3)
 	return false;
 
+    line_normal = ON_CrossProduct(plane_b.Normal(), intersect.Direction());
     double dp4 = ON_DotProduct(TriB.A - intersect.from, line_normal);
     double dp5 = ON_DotProduct(TriB.B - intersect.from, line_normal);
     double dp6 = ON_DotProduct(TriB.C - intersect.from, line_normal);
-    points_on_one_side = (dp4 >= 0) + (dp5 >= 0) + (dp6 >= 0);
+    points_on_one_side = (dp4 >= -ON_ZERO_TOLERANCE) + (dp5 >= -ON_ZERO_TOLERANCE) + (dp6 >= -ON_ZERO_TOLERANCE);
     if (points_on_one_side == 0 || points_on_one_side == 3)
 	return false;
 
@@ -1638,7 +1638,7 @@ triangle_intersection(const struct Triangle &TriA, const struct Triangle &TriB, 
     // dpi*dpj < 0 - the corresponding points are on different sides
     // - the line segment between them are intersected by the plane-plane
     // intersection line
-    if (dp1*dp2 < 0) {
+    if (dp1*dp2 < ON_ZERO_TOLERANCE) {
 	intersect.ClosestPointTo(TriA.A, &t1);
 	intersect.ClosestPointTo(TriA.B, &t2);
 	double d1 = TriA.A.DistanceTo(intersect.PointAt(t1));
@@ -1646,7 +1646,7 @@ triangle_intersection(const struct Triangle &TriA, const struct Triangle &TriB, 
 	if (!ZERO(d1 + d2))
 	    t[count++] = t1 + d1/(d1+d2)*(t2-t1);
     }
-    if (dp1*dp3 < 0) {
+    if (dp1*dp3 < ON_ZERO_TOLERANCE) {
 	intersect.ClosestPointTo(TriA.A, &t1);
 	intersect.ClosestPointTo(TriA.C, &t2);
 	double d1 = TriA.A.DistanceTo(intersect.PointAt(t1));
@@ -1654,7 +1654,7 @@ triangle_intersection(const struct Triangle &TriA, const struct Triangle &TriB, 
 	if (!ZERO(d1 + d2))
 	    t[count++] = t1 + d1/(d1+d2)*(t2-t1);
     }
-    if (dp2*dp3 < 0 && count != 2) {
+    if (dp2*dp3 < ON_ZERO_TOLERANCE && count != 2) {
 	intersect.ClosestPointTo(TriA.B, &t1);
 	intersect.ClosestPointTo(TriA.C, &t2);
 	double d1 = TriA.B.DistanceTo(intersect.PointAt(t1));
@@ -1664,7 +1664,7 @@ triangle_intersection(const struct Triangle &TriA, const struct Triangle &TriB, 
     }
     if (count != 2)
 	return false;
-    if (dp4*dp5 < 0) {
+    if (dp4*dp5 < ON_ZERO_TOLERANCE) {
 	intersect.ClosestPointTo(TriB.A, &t1);
 	intersect.ClosestPointTo(TriB.B, &t2);
 	double d1 = TriB.A.DistanceTo(intersect.PointAt(t1));
@@ -1672,7 +1672,7 @@ triangle_intersection(const struct Triangle &TriA, const struct Triangle &TriB, 
 	if (!ZERO(d1 + d2))
 	    t[count++] = t1 + d1/(d1+d2)*(t2-t1);
     }
-    if (dp4*dp6 < 0) {
+    if (dp4*dp6 < ON_ZERO_TOLERANCE) {
 	intersect.ClosestPointTo(TriB.A, &t1);
 	intersect.ClosestPointTo(TriB.C, &t2);
 	double d1 = TriB.A.DistanceTo(intersect.PointAt(t1));
@@ -1680,7 +1680,7 @@ triangle_intersection(const struct Triangle &TriA, const struct Triangle &TriB, 
 	if (!ZERO(d1 + d2))
 	    t[count++] = t1 + d1/(d1+d2)*(t2-t1);
     }
-    if (dp5*dp6 < 0 && count != 4) {
+    if (dp5*dp6 < ON_ZERO_TOLERANCE && count != 4) {
 	intersect.ClosestPointTo(TriB.B, &t1);
 	intersect.ClosestPointTo(TriB.C, &t2);
 	double d1 = TriB.B.DistanceTo(intersect.PointAt(t1));
@@ -1852,13 +1852,13 @@ ON_Intersect(const ON_Surface* surfA,
 	next_candidates.clear();
 	for (NodePairs::iterator i = candidates.begin(); i != candidates.end(); i++) {
 	    std::vector<Subsurface*> splittedA, splittedB;
-	    if ((*i).first->m_isplanar || (*i).first->Split() != 0) {
+	    if ((*i).first->Split() != 0) {
 		splittedA.push_back((*i).first);
 	    } else {
 		for (int j = 0; j < 4; j++)
 		    splittedA.push_back((*i).first->m_children[j]);
 	    }
-	    if ((*i).second->m_isplanar || (*i).second->Split() != 0) {
+	    if ((*i).second->Split() != 0) {
 		splittedB.push_back((*i).second);
 	    } else {
 		for (int j = 0; j < 4; j++)
@@ -2010,14 +2010,7 @@ ON_Intersect(const ON_Surface* surfA,
     // (n is the number of points generated above)
 
     // We need to automatically generate a threshold.
-    double max_dis;
-    if (ZERO(surfA->BoundingBox().Volume())) {
-	max_dis = pow(surfB->BoundingBox().Volume(), 1.0/3.0) * 0.2;
-    } else if (ZERO(surfB->BoundingBox().Volume())) {
-	max_dis = pow(surfA->BoundingBox().Volume(), 1.0/3.0) * 0.2;
-    } else {
-	max_dis = pow(surfA->BoundingBox().Volume()*surfB->BoundingBox().Volume(), 1.0/6.0) * 0.2;
-    }
+    double max_dis = sqrt(rootA.m_surf->BoundingBox().Diagonal().Length()*rootB.m_surf->BoundingBox().Diagonal().Length()) * 0.1;
 
     double max_dis_2dA = ON_2dVector(surfA->Domain(0).Length(), surfA->Domain(1).Length()).Length() * 0.1;
     double max_dis_2dB = ON_2dVector(surfB->Domain(0).Length(), surfB->Domain(1).Length()).Length() * 0.1;
