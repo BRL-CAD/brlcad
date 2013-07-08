@@ -1,8 +1,6 @@
 #ifndef SDAIDAOBJECT_H
 #define SDAIDAOBJECT_H 1
 
-
-
 #include <sdaiObject.h>
 #include <sdaiString.h>
 #include <sdaiEnum.h>
