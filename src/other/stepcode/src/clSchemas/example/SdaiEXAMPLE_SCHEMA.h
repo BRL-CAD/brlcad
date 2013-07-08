@@ -95,7 +95,7 @@ class SdaiPoly_line  :    public SDAI_Application_instance  {
     public:
 
         SdaiPoly_line( );
-        SdaiPoly_line( SDAI_Application_instance  *se, int * addAttrs = 0 );
+        SdaiPoly_line( SDAI_Application_instance * se, int * addAttrs = 0 );
         SdaiPoly_line( SdaiPoly_line & e );
         ~SdaiPoly_line();
 
@@ -131,7 +131,7 @@ class SdaiShape  :    public SDAI_Application_instance  {
     public:
 
         SdaiShape( );
-        SdaiShape( SDAI_Application_instance  *se, int * addAttrs = 0 );
+        SdaiShape( SDAI_Application_instance * se, int * addAttrs = 0 );
         SdaiShape( SdaiShape & e );
         ~SdaiShape();
 
@@ -171,7 +171,7 @@ class SdaiRectangle  :    public SdaiShape  {
     public:
 
         SdaiRectangle( );
-        SdaiRectangle( SDAI_Application_instance  *se, int * addAttrs = 0 );
+        SdaiRectangle( SDAI_Application_instance * se, int * addAttrs = 0 );
         SdaiRectangle( SdaiRectangle & e );
         ~SdaiRectangle();
 
@@ -206,7 +206,7 @@ class SdaiSquare  :    public SdaiRectangle  {
     public:
 
         SdaiSquare( );
-        SdaiSquare( SDAI_Application_instance  *se, int * addAttrs = 0 );
+        SdaiSquare( SDAI_Application_instance * se, int * addAttrs = 0 );
         SdaiSquare( SdaiSquare & e );
         ~SdaiSquare();
 
@@ -241,7 +241,7 @@ class SdaiTriangle  :    public SdaiShape  {
     public:
 
         SdaiTriangle( );
-        SdaiTriangle( SDAI_Application_instance  *se, int * addAttrs = 0 );
+        SdaiTriangle( SDAI_Application_instance * se, int * addAttrs = 0 );
         SdaiTriangle( SdaiTriangle & e );
         ~SdaiTriangle();
 
@@ -281,7 +281,7 @@ class SdaiCircle  :    public SdaiShape  {
     public:
 
         SdaiCircle( );
-        SdaiCircle( SDAI_Application_instance  *se, int * addAttrs = 0 );
+        SdaiCircle( SDAI_Application_instance * se, int * addAttrs = 0 );
         SdaiCircle( SdaiCircle & e );
         ~SdaiCircle();
 
@@ -317,7 +317,7 @@ class SdaiLine  :    public SDAI_Application_instance  {
     public:
 
         SdaiLine( );
-        SdaiLine( SDAI_Application_instance  *se, int * addAttrs = 0 );
+        SdaiLine( SDAI_Application_instance * se, int * addAttrs = 0 );
         SdaiLine( SdaiLine & e );
         ~SdaiLine();
 
@@ -356,7 +356,7 @@ class SdaiCartesian_point  :    public SDAI_Application_instance  {
     public:
 
         SdaiCartesian_point( );
-        SdaiCartesian_point( SDAI_Application_instance  *se, int * addAttrs = 0 );
+        SdaiCartesian_point( SDAI_Application_instance * se, int * addAttrs = 0 );
         SdaiCartesian_point( SdaiCartesian_point & e );
         ~SdaiCartesian_point();
 

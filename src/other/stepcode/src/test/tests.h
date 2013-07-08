@@ -12,7 +12,6 @@
  * (circa version 2.0.x) to test the STEP Class Libraries.
  */
 
-
 /* C++ Stuff */
 #include <iostream>
 
@@ -33,6 +32,3 @@
 #include <needFunc.h>
 
 extern void SchemaInit( Registry & );
-
-/* STEPentity* Iterator class definition */
-#include <SEarritr.h>

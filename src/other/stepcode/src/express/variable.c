@@ -83,11 +83,11 @@
  *
  */
 
-#include <scl_memmgr.h>
+#include <sc_memmgr.h>
 #include <stdlib.h>
 #include "express/variable.h"
 #include "express/object.h"
-char * opcode_print(Op_Code o);
+char * opcode_print( Op_Code o );
 
 struct freelist_head VAR_fl;
 

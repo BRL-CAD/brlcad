@@ -15,7 +15,7 @@
 
 /* $Id: dispnodelist.h,v 3.0.1.2 1997/11/05 22:11:40 sauderd DP3.1 $ */
 
-#include <scl_export.h>
+#include <sc_export.h>
 
 #include <gennode.h>
 //#include <gennode.inline.h>
@@ -29,7 +29,7 @@
 //  This will be used to represent the display state lists.
 //////////////////////////////////////////////////////////////////////////////
 
-class SCL_CORE_EXPORT DisplayNodeList : public GenNodeList {
+class SC_CORE_EXPORT DisplayNodeList : public GenNodeList {
     public:
         DisplayNodeList( displayStateEnum type );
         ~DisplayNodeList() { }

@@ -5,7 +5,7 @@
 // regenerate it.
 
 #include <SdaiHeaderSchema.h>
-#include "scl_memmgr.h"
+#include "sc_memmgr.h"
 
 void HeaderInitSchemasAndEnts( Registry & reg ) {
     Uniqueness_rule_ptr ur;

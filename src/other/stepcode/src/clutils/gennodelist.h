@@ -15,7 +15,7 @@
 
 /* $Id: gennodelist.h,v 3.0.1.2 1997/11/05 22:33:48 sauderd DP3.1 $  */
 
-#include <scl_export.h>
+#include <sc_export.h>
 #include <iostream>
 
 //////////////////////////////////////////////////////////////////////////////
@@ -26,7 +26,7 @@
 // as its head, you need to call DeleteEntries().
 //////////////////////////////////////////////////////////////////////////////
 
-class SCL_UTILS_EXPORT GenNodeList {
+class SC_UTILS_EXPORT GenNodeList {
     public:
         GenNodeList( GenericNode * headNode );
         virtual ~GenNodeList() {

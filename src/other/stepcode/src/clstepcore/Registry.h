@@ -12,10 +12,10 @@
 * and is not subject to copyright.
 */
 
-#include <scl_export.h>
+#include <sc_export.h>
 #include <sdai.h>
 #include <errordesc.h>
-#include <scl_hash.h>
+#include <sc_hash.h>
 #include <Str.h>
 #include <complexSupport.h>
 
@@ -24,7 +24,7 @@ typedef struct Hash_Table * HashTable;
 class Registry;
 typedef void ( * CF_init )( Registry & ); //  pointer to creation initialization
 
-class SCL_CORE_EXPORT Registry {
+class SC_CORE_EXPORT Registry {
     protected:
         HashTable primordialSwamp;    //  dictionary of EntityDescriptors
         HashTable active_schemas;     //  dictionary of Schemas

@@ -29,7 +29,7 @@
  * prettied up interface to print_objects_when_running
  */
 
-#include <scl_memmgr.h>
+#include <sc_memmgr.h>
 #include "express/caseitem.h"
 
 struct freelist_head CASE_IT_fl;

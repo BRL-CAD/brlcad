@@ -13,7 +13,7 @@
 * and is not subject to copyright.
 */
 
-class SCL_DAI_EXPORT SDAI_Binary {
+class SC_DAI_EXPORT SDAI_Binary {
     private:
         std::string content;
     public:
@@ -24,7 +24,7 @@ class SCL_DAI_EXPORT SDAI_Binary {
         ~SDAI_Binary( void );
 
         //  operators
-        SDAI_Binary  & operator= ( const char * s );
+        SDAI_Binary & operator= ( const char * s );
 
         void clear( void );
         bool empty( void ) const;

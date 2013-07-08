@@ -34,7 +34,7 @@
 // void PushPastString (istream& in, std::string &s, ErrorDescriptor *err)
 #include <STEPundefined.h>
 
-#include "scl_memmgr.h"
+#include "sc_memmgr.h"
 
 /**
  * \returns The new file name for the class.
@@ -675,7 +675,6 @@ int STEPfile::ReadData2( istream & in, bool useTechCor ) {
     return valid_insts;
 }
 
-
 int STEPfile::ReadWorkingData2( istream & in, bool useTechCor ) {
     return ReadData2( in, useTechCor );
 }
@@ -943,7 +942,7 @@ Severity STEPfile::CreateScopeInstances( istream & in, SDAI_Application_instance
         if( se != ENTITY_NULL ) {
             //TODO:  apply scope information to se
             //  Add se to scopelist
-            inscope.push_back(se);
+            inscope.push_back( se );
 
             //append the se to the instance manager
             instances().Append( se, newSE );
@@ -961,7 +960,7 @@ Severity STEPfile::CreateScopeInstances( istream & in, SDAI_Application_instance
     }
     in.putback( c );
     *scopelist = new SDAI_Application_instance_ptr [inscope.size()];
-    for (size_t i = 0; i < inscope.size(); ++i) {
+    for( size_t i = 0; i < inscope.size(); ++i ) {
         *scopelist[i] = inscope[i];
     }
 
@@ -1058,7 +1057,7 @@ SDAI_Application_instance * STEPfile::CreateSubSuperInstance( istream & in, int 
     }
 
     enaIndex = 0;
-    while ( entNmArr[enaIndex] != 0) {
+    while( entNmArr[enaIndex] != 0 ) {
         delete entNmArr[enaIndex];
         enaIndex ++;
     }
@@ -1153,11 +1152,11 @@ Severity STEPfile::ReadScopeInstances( istream & in ) {
  the istream.
 
  This function must keeps track of error messages encountered when
- reading the SDAI_Application_instance. It passes SCLP23(Application_instance error information onto
+ reading the SDAI_Application_instance. It passes SDAI_Application_instance error information onto
  the STEPfile ErrorDescriptor.
 */
 SDAI_Application_instance * STEPfile::ReadInstance( istream & in, ostream & out, std::string & cmtStr,
-                        bool useTechCor ) {
+        bool useTechCor ) {
     Severity sev = SEVERITY_NULL;
 
     std::string tmpbuf;
@@ -1390,7 +1389,7 @@ void STEPfile::MakeBackupFile() {
 }
 
 Severity STEPfile::WriteExchangeFile( ostream & out, int validate, int clearError,
-                             int writeComments ) {
+                                      int writeComments ) {
     Severity rval = SEVERITY_NULL;
     SetFileType( VERSION_CURRENT );
     if( clearError ) {
@@ -1415,7 +1414,7 @@ Severity STEPfile::WriteExchangeFile( ostream & out, int validate, int clearErro
 }
 
 Severity STEPfile::WriteExchangeFile( const std::string filename, int validate, int clearError,
-                             int writeComments ) {
+                                      int writeComments ) {
     Severity rval = SEVERITY_NULL;
 
     if( clearError ) {
@@ -1442,7 +1441,7 @@ Severity STEPfile::WriteExchangeFile( const std::string filename, int validate, 
 }
 
 Severity STEPfile::WriteValuePairsFile( ostream & out, int validate, int clearError,
-                               int writeComments, int mixedCase ) {
+                                        int writeComments, int mixedCase ) {
     Severity rval = SEVERITY_NULL;
     SetFileType( VERSION_CURRENT );
     if( clearError ) {
@@ -1788,7 +1787,7 @@ Severity STEPfile::WriteWorkingFile( ostream & out, int clearError, int writeCom
 }
 
 Severity STEPfile::WriteWorkingFile( const std::string filename, int clearError,
-                            int writeComments ) {
+                                     int writeComments ) {
     if( clearError ) {
         _error.ClearErrorMsg();
     }

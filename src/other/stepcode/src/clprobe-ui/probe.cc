@@ -13,8 +13,6 @@
 
 
 
-
-//#define EXCHANGE_FILE_DIR "\0"
 #define EXCHANGE_FILE_DIR "~pdevel/src/probe/data"
 #define WORKING_FILE_DIR "~pdevel/src/probe/data"
 #define MAX_PATH_LEN 80
@@ -1616,7 +1614,9 @@ int Probe::seeSelectMark( StepEntityEditor * see ) {
                 attrVal[0] = 0;
                 strcpy( attrVal, attrRow->GetEditFieldText() );
                 int i = 0;
-                for( i = 0; attrVal[i] != '\0'; i++ ) ;
+                for( i = 0; attrVal[i] != '\0'; i++ ) {
+                    ;
+                }
                 if( i > 0 && !isspace( attrVal[i - 1] ) ) {
                     strcat( attrVal, ", " );
                 }

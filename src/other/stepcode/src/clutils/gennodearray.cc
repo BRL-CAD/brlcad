@@ -10,14 +10,13 @@
 * and is not subject to copyright.
 */
 
-/* $Id: gennodearray.cc,v 3.0.1.4 1997/11/05 22:33:48 sauderd DP3.1 $  */
 
-#include <scl_cf.h>
+#include <sc_cf.h>
 
 #include <gennode.h>
 #include <gennodelist.h>
 #include <gennodearray.h>
-#include <scl_memmgr.h>
+#include <sc_memmgr.h>
 
 #ifndef HAVE_MEMMOVE
 extern "C" {

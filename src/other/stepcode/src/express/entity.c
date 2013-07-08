@@ -111,7 +111,7 @@
  *
  */
 
-#include <scl_memmgr.h>
+#include <sc_memmgr.h>
 #include "express/entity.h"
 #include "express/express.h"
 #include "express/object.h"
@@ -230,7 +230,7 @@ Variable ENTITY_find_inherited_attribute( Entity entity, char * name, int * down
 }
 
 Variable ENTITYfind_inherited_attribute( struct Scope_ *entity, char * name,
-                                struct Symbol_ ** down_sym ) {
+        struct Symbol_ ** down_sym ) {
     extern int __SCOPE_search_id;
     int down_flag = 0;
 
@@ -370,9 +370,9 @@ bool ENTITYhas_supertype( Entity child, Entity parent ) {
     if( entity == parent ) {
         return true;
     }
-        if( ENTITYhas_supertype( entity, parent ) ) {
-            return true;
-        }
+    if( ENTITYhas_supertype( entity, parent ) ) {
+        return true;
+    }
     LISTod;
     return false;
 }
@@ -493,7 +493,6 @@ int ENTITYget_named_attribute_offset( Entity entity, char * name ) {
     LISTdo( entity->u.entity->attributes, attr, Variable )
     if( streq( VARget_simple_name( attr ), name ) )
         return entity->u.entity->inheritance +
-               /*         VARget_offset(SCOPElookup(entity, name, false));*/
                VARget_offset( ENTITY_find_inherited_attribute( entity, name, 0, 0 ) );
     LISTod;
     offset = 0;

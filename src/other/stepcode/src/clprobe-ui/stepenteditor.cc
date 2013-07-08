@@ -11,7 +11,6 @@
 
 /* $Id: stepenteditor.cc,v 3.0.1.1 1998/02/17 19:42:07 sauderd DP3.1 $ */
 
-
 #include <ctype.h>
 #include <stdio.h>
 #include <stream.h>
@@ -475,6 +474,7 @@ char * seeAttrRow::StrAttrAssignVal( const char * s ) {
             } else { // a string value starting with a $ with following chars.
                 return ( char * )s;
             }
+//      return QuotedString(s);
         } else if( *str == '\0' ) {
             // no value will be absence of a string
             return "";
@@ -512,6 +512,7 @@ char * seeAttrRow::StrAttrAssignVal( const char * s ) {
 // If you call this function for an attribute which is not of type string it
 // returns -1 otherwise it returns the string value to be assigned which
 // is 0 if the string is meant to not exist, "" if it is meant to exist but
+// contain no chars, or the char * otherwise.
 other possible way of doing the function
 char * seeAttrRow::StrAttrAssignVal( const char * s ) {
     if( stepAttr->NonRefType() == sdaiSTRING ) {
@@ -718,8 +719,9 @@ int seeAttrRowList::SetCurRow( int index ) {
         currentRow->NameField()->Highlight( false );
         currentRow->TypeField()->Highlight( false );
         for( i = 1, currentRow = head; i < index;
-                i++, currentRow = currentRow->next )
-            ; // happily loop
+                i++, currentRow = currentRow->next ) {
+            ;    // happily loop
+        }
         currentRow->NameField()->Highlight( true );
         currentRow->TypeField()->Highlight( true );
         return ( i );
@@ -738,8 +740,9 @@ seeAttrRow * seeAttrRowList::FindEditField( Interactor * targetStrEd ) {
             seeAttrRow * ptr;
             for( ptr = currentRow->Next();
                     targetStrEd != ptr->EditField() && ptr != currentRow;
-                    ptr = ptr->Next() )
-                ; // continue search
+                    ptr = ptr->Next() ) {
+                ;    // continue search
+            }
             if( targetStrEd == ptr->EditField() ) {
                 return( ptr );
             }
@@ -763,8 +766,9 @@ int seeAttrRowList::Find( seeAttrRow * r ) {
         for( ptr = head->next, i = 2;
                 ptr != r && ptr != head;
                 ptr = ptr->next, i++
-           )
-            ; // loop away
+           ) {
+            ;    // loop away
+        }
         if( ptr == head ) {
             return ( 0 );
         } else {
@@ -2521,9 +2525,9 @@ int HeaderEntityEditor::ExecuteCommand( int v ) {
 
         case SEE_SAVE_COMPLETE :
 
-            if( SaveComplete() )
-                ;//         dp->seeSaveComplete(this);
-            else {
+            if( SaveComplete() ) {
+                ;    //         dp->seeSaveComplete(this);
+            } else {
                 fprintf( stderr, "%c" , RingBell );
                 fflush( stderr );
                 ;//         dp->seeSaveIncomplete(this);

@@ -11,7 +11,7 @@
  *****************************************************************************/
 
 #include "complexSupport.h"
-#include <scl_memmgr.h>
+#include <sc_memmgr.h>
 
 int OrList::hit( const char * nm )
 /*

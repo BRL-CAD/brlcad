@@ -71,7 +71,8 @@
  *
  */
 
-#include <scl_export.h>
+#include <sc_cf.h>
+#include <sc_export.h>
 #include <stdio.h>
 
 /******************************/
@@ -81,7 +82,7 @@
 #ifdef HAVE_STDBOOL_H
 # include <stdbool.h>
 #else
-# include <scl_stdbool.h>
+# include <sc_stdbool.h>
 #endif
 
 /************************/
@@ -142,12 +143,6 @@ typedef int ( *intFuncptr )();
 # endif
 
 # endif
-#endif
-
-
-/* pacify IBM's c89 */
-#if !defined(_POSIX_SOURCE)
-#define _POSIX_SOURCE
 #endif
 
 #endif    /*    */

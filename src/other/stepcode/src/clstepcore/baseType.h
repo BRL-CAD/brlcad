@@ -12,10 +12,7 @@
 * and is not subject to copyright.
 */
 
-/* $Id: baseType.h,v 3.0.1.2 1997/11/05 21:59:29 sauderd DP3.1 $ */
-
-
-//  **************  TYPES of attributes
+//     **************  TYPES of attributes
 
 // IMS, 9 Aug 95: changed values to make these values usable in a bitmask
 

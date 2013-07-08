@@ -105,7 +105,7 @@ const char * StrToConstant( const char * word, std::string & s ) {
  ******************************************************************/
 int StrCmpIns( const char * str1, const char * str2 ) {
     char c1, c2;
-    while ((c1 = tolower(*str1)) == (c2 = tolower(*str2)) && c1 != '\0') {
+    while( ( c1 = tolower( *str1 ) ) == ( c2 = tolower( *str2 ) ) && c1 != '\0' ) {
         str1++;
         str2++;
     }
@@ -115,17 +115,17 @@ int StrCmpIns( const char * str1, const char * str2 ) {
 /**
  * Test if a string ends with the given suffix.
  */
-bool StrEndsWith( const std::string &s, const char * suf ) {
-    if ( suf == NULL ) {
+bool StrEndsWith( const std::string & s, const char * suf ) {
+    if( suf == NULL ) {
         return false;
     }
     std::string suffix = suf;
     size_t sLen = s.length();
     size_t suffixLen = suffix.length();
-    if ( sLen < suffixLen ) {
+    if( sLen < suffixLen ) {
         return false;
     }
-    if ( s.substr( sLen - suffixLen ).compare( suffix ) == 0 ) {
+    if( s.substr( sLen - suffixLen ).compare( suffix ) == 0 ) {
         return true;
     }
     return false;
@@ -138,28 +138,28 @@ std::string GetLiteralStr( istream & in, ErrorDescriptor * err ) {
     std::string s;
     in >> std::ws; // skip whitespace
 
-    if ( in.good() && in.peek() == STRING_DELIM ) {
+    if( in.good() && in.peek() == STRING_DELIM ) {
         s += in.get();
         bool allDelimsEscaped = true;
-        while ( in.good() ) {
-            if ( in.peek() == STRING_DELIM ) {
+        while( in.good() ) {
+            if( in.peek() == STRING_DELIM ) {
                 // A delimiter closes the string unless it's followed by another
                 // delimiter, in which case it's escaped. \S\ starts an ISO
                 // 8859 character escape sequence, so we ignore delimiters
                 // prefixed with \S\.
-                if ( !StrEndsWith( s, "\\S\\" ) ) {
+                if( !StrEndsWith( s, "\\S\\" ) ) {
                     allDelimsEscaped = !allDelimsEscaped;
                 }
-            } else if ( !allDelimsEscaped ) {
+            } else if( !allDelimsEscaped ) {
                 // Found normal char after unescaped delim, so last delim
                 // that was appended terminated the string.
                 break;
             }
-            if ( !in.eof() ) {
+            if( !in.eof() ) {
                 s += in.get();
             }
         }
-        if ( allDelimsEscaped ) {
+        if( allDelimsEscaped ) {
             // Any delimiters found after the opening delimiter were escaped,
             // so the string is unclosed.
             // non-recoverable error

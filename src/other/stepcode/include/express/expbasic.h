@@ -1,5 +1,3 @@
-/* $Id: expbasic.h,v 1.7 1997/01/21 19:17:11 dar Exp $ */
-
 /*
  * This software was developed by U.S. Government employees as part of
  * their official duties and is not subject to copyright.
@@ -72,84 +70,81 @@ typedef char * Binary;
 #define UNRESOLVED      0x0
 #define RESOLVED        0x1
 #define RESOLVE_FAILED      0x2
-#define RESOLVE_IN_PROGRESS 0x4 /* only if actively being resolved */
-/* not if it's just between passes */
+#define RESOLVE_IN_PROGRESS 0x4 /**< only if actively being resolved not if it's just between passes */
 
-/* used during rename resolution to catch recursive USE/REFs */
+/** used during rename resolution to catch recursive USE/REFs */
 #define is_resolve_in_progress_raw(x)   ((x)->resolved & RESOLVE_IN_PROGRESS)
 #define resolve_in_progress_raw(x)  (x)->resolved |= RESOLVE_IN_PROGRESS
 #define resolve_not_in_progress_raw(x)  (x)->resolved &= ~RESOLVE_IN_PROGRESS
 
-/* and type resolution to catch recursive types (A = B and B = A) */
+/** and type resolution to catch recursive types (A = B and B = A) */
 #define resolve_in_progress(x)      (x)->symbol.resolved |= RESOLVE_IN_PROGRESS
 
-/* test/set whether anything has failed resolution */
+/** test/set whether anything has failed resolution */
 #define is_resolve_failed(x)        ((x)->symbol.resolved & RESOLVE_FAILED)
 #define is_resolve_failed_raw(x)    ((x)->resolved & RESOLVE_FAILED)
 #define resolve_failed(x)       (x)->symbol.resolved |= RESOLVE_FAILED
 #define resolve_failed_raw(x)       (x)->resolved |= RESOLVE_FAILED
 
-/* test/set whether anything has succeeded resolution */
+/** test/set whether anything has succeeded resolution */
 #define is_resolved(x)          ((x)->symbol.resolved & RESOLVED)
 
-/* test possibility of future resolution */
+/** test possibility of future resolution */
 #define is_resolvable(x)        (!is_not_resolvable(x))
 #define is_not_resolvable(x)        ((x)->symbol.resolved & (RESOLVE_FAILED|RESOLVED|RESOLVE_IN_PROGRESS))
 
-/* mark something resolved */
+/** mark something resolved */
 #define resolved_all(x)         x->symbol.resolved = RESOLVED
 
 
-/* define the object types that can appear in a symbol table */
-/* basically anything that is usefully named, but that cannot be */
-/* differentiated from another type when handed a generic pointer */
-/* Entity, schema and alg can be differentiated but it is just very */
-/* useful to be able to differentiate this way. */
-#define OBJ_ANY     '*' /* Matches anything - special to DICT funcs */
-#define OBJ_EXPRESS '!' /* I can't figure out the mnemonic either! */
+/** define the object types that can appear in a symbol table
+ * basically anything that is usefully named, but that cannot be
+ * differentiated from another type when handed a generic pointer
+ * Entity, schema and alg can be differentiated but it is just very
+ * useful to be able to differentiate this way. */
+#define OBJ_ANY     '*' /**< Matches anything - special to DICT funcs */
+#define OBJ_EXPRESS '!' /**< I can't figure out the mnemonic either! */
 #define OBJ_PASS    '#'
 
-/* The following are all odd-ball scopes, that aren't ever looked up by */
-/* type - but the data structures might as well be descriptive */
+/** The following are all odd-ball scopes, that aren't ever looked up by
+ * type - but the data structures might as well be descriptive */
 #define OBJ_INCREMENT   '+'
 #define OBJ_ALIAS   'a'
-#define OBJ_QUERY   'q' /* isn't even stored anywhere! */
+#define OBJ_QUERY   'q'     /**< isn't even stored anywhere! */
 
 #define OBJ_PROCEDURE   'p'
 #define OBJ_RENAME  'n'
 #define OBJ_RULE    'r'
 #define OBJ_FUNCTION    'f'
-#define OBJ_TAG     'g' /* a type, but only when used as a type tag */
+#define OBJ_TAG     'g'     /**< a type, but only when used as a type tag */
 #define OBJ_ENTITY  'e'
 #define OBJ_SCHEMA  's'
 #define OBJ_TYPE    't'
-#define OBJ_UNKNOWN 'u' /*things that won't ever be looked up by type*/
+#define OBJ_UNKNOWN 'u'     /**< things that won't ever be looked up by type*/
 #define OBJ_VARIABLE    'v'
 #define OBJ_WHERE   'w'
-#define OBJ_EXPRESSION  'x' /* so far only enums get looked up by name & */
-#define OBJ_ENUM    'x' /* appear this way, perhaps they should be */
-/* variables? */
-#define OBJ_AMBIG_ENUM  'z' /* enumerations of the same name which are */
-/* visible in the same scope when qualified */
-/* z is of no mnemonic significance (so far) */
+#define OBJ_EXPRESSION  'x' /**< so far only enums get looked up by name & */
+#define OBJ_ENUM    'x'     /**< appear this way, perhaps they should be variables? */
+#define OBJ_AMBIG_ENUM  'z' /**< enumerations of the same name which are
+* visible in the same scope when qualified
+* z is of no mnemonic significance (so far) */
 #define IS_ENUM(x)  (((x) == OBJ_ENUM) || ((x) == OBJ_AMBIG_ENUM))
 
-/* these represent a different way of selecting classes of objects */
-/* these are particularly useful when looking for multiple types concurrently */
+/** these represent a different way of selecting classes of objects
+ * these are particularly useful when looking for multiple types concurrently */
 #define OBJ_TYPE_BITS       0x1
 #define OBJ_ENTITY_BITS     0x2
 #define OBJ_FUNCTION_BITS   0x4
 #define OBJ_PROCEDURE_BITS  0x8
-#define OBJ_PASS_BITS       0x10        /* i.e., EXPRESSpass */
+#define OBJ_PASS_BITS       0x10        /**< i.e., EXPRESSpass */
 #define OBJ_RULE_BITS       0x20
-#define OBJ_EXPRESSION_BITS 0x40        /* as above, only used for */
-/* finding enums */
+#define OBJ_EXPRESSION_BITS 0x40        /**< as above, only used for finding enums */
 #define OBJ_SCHEMA_BITS     0x80
 #define OBJ_VARIABLE_BITS   0x100
 #define OBJ_WHERE_BITS      0x200
 
 #define OBJ_ANYTHING_BITS   0x0fffffff
-#define OBJ_UNFINDABLE_BITS 0x10000000  /* should never be found */
+#define OBJ_UNFINDABLE_BITS 0x10000000  /**< should never be found */
 #define OBJ_ALGORITHM_BITS  (OBJ_FUNCTION_BITS | OBJ_PROCEDURE_BITS | \
                  OBJ_RULE_BITS)
 #define OBJ_SCOPE_BITS      (OBJ_ALGORITHM_BITS | OBJ_ENTITY_BITS | \

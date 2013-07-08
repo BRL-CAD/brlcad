@@ -1,4 +1,3 @@
-
 // define this to be the name of the display window object for
 // STEP entity instance editing or define your own.
 

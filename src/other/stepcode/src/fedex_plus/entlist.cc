@@ -14,7 +14,7 @@
  *****************************************************************************/
 
 #include "complexSupport.h"
-#include <scl_memmgr.h>
+#include <sc_memmgr.h>
 
 int EntList::siblings()
 /*
@@ -25,8 +25,9 @@ int EntList::siblings()
     int count;
     EntList * el;
 
-    for( count = 1, el = next; el; count++, el = el->next )
+    for( count = 1, el = next; el; count++, el = el->next ) {
         ;
+    }
     return count;
 }
 

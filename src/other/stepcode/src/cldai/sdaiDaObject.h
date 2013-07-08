@@ -1,7 +1,11 @@
 #ifndef SDAIDAOBJECT_H
 #define SDAIDAOBJECT_H 1
 
-#include <scl_export.h>
+#include <sdaiObject.h>
+#include <sdaiString.h>
+#include <sdaiEnum.h>
+
+#include <sc_export.h>
 
 typedef char * SDAI_DAObjectID;
 
@@ -26,7 +30,7 @@ typedef char * SDAI_DAObjectID;
    SDAI_DAObjectID as follows:
  */
 
-class SCL_DAI_EXPORT SDAI_PID : public SDAI_sdaiObject {
+class SC_DAI_EXPORT SDAI_PID : public SDAI_sdaiObject {
     public:
 
 // These are in the IDL generated code for Part 26. I will have to think about
@@ -85,7 +89,7 @@ typedef SDAI_PID_ptr SDAI_PID_var;
 // interface.
 //
 
-class SCL_DAI_EXPORT SDAI_PID_DA : public SDAI_PID {
+class SC_DAI_EXPORT SDAI_PID_DA: public SDAI_PID {
     public:
 
         SDAI_String _oid;
@@ -121,7 +125,7 @@ typedef SDAI_PID_DA_ptr SDAI_PID_DA_var;
 //    The PID_SDAI class maintains the persistent object identifier for
 // a Model_contents object.
 //
-class SCL_DAI_EXPORT SDAI_PID_SDAI : public SDAI_PID {
+class SC_DAI_EXPORT SDAI_PID_SDAI : public SDAI_PID {
     public:
         SDAI_String _modelid;
 
@@ -162,7 +166,7 @@ class SDAI_DAObject;
 typedef SDAI_DAObject * SDAI_DAObject_ptr;
 typedef SDAI_DAObject_ptr SDAI_DAObject_var;
 
-class SCL_DAI_EXPORT SDAI_DAObject : public SDAI_sdaiObject {
+class SC_DAI_EXPORT SDAI_DAObject : public SDAI_sdaiObject {
     public:
 
         SDAI_String _dado_oid;
@@ -182,7 +186,6 @@ class SCL_DAI_EXPORT SDAI_DAObject : public SDAI_sdaiObject {
         virtual ~SDAI_DAObject();
 
         Logical dado_same( SDAI_DAObject_ptr obj ) {
-	    (void)obj;
             return LUnknown;
         }
 
@@ -262,7 +265,7 @@ class SCL_DAI_EXPORT SDAI_DAObject : public SDAI_sdaiObject {
    5.3.10.1  DAObject_SDAI
 */
 
-class SCL_DAI_EXPORT SDAI_DAObject_SDAI : public SDAI_DAObject {
+class SC_DAI_EXPORT SDAI_DAObject_SDAI : public SDAI_DAObject {
 
     public:
         SDAI_DAObject_SDAI();
@@ -485,7 +488,7 @@ class SCL_DAI_EXPORT SDAI_DAObject_SDAI : public SDAI_DAObject {
 typedef SDAI_DAObject_SDAI * SDAI_DAObject_SDAI_ptr;
 typedef SDAI_DAObject_SDAI_ptr SDAI_DAObject_SDAI_var;
 
-class SCL_DAI_EXPORT SDAI_DAObject__set {
+class SC_DAI_EXPORT SDAI_DAObject__set {
     public:
         SDAI_DAObject__set( int = 16 );
         ~SDAI_DAObject__set();

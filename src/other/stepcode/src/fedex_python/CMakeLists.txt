@@ -1,11 +1,11 @@
-if(SCL_PYTHON_GENERATOR)
+if(SC_PYTHON_GENERATOR)
 
 include_directories(
-    ${SCL_SOURCE_DIR}/include
-    ${SCL_SOURCE_DIR}/include/exppp
-    ${SCL_SOURCE_DIR}/include/express
-    ${SCL_SOURCE_DIR}/src/base
-    ${SCL_SOURCE_DIR}/src/fedex_plus
+    ${SC_SOURCE_DIR}/include
+    ${SC_SOURCE_DIR}/include/exppp
+    ${SC_SOURCE_DIR}/include/express
+    ${SC_SOURCE_DIR}/src/base
+    ${SC_SOURCE_DIR}/src/fedex_plus
 )
 
 add_definitions( -DHAVE_CONFIG_H )
@@ -31,7 +31,7 @@ set(fedex_python_SOURCES
     ../fedex_plus/write.cc 
     ../fedex_plus/print.cc
 )
-SCL_ADDEXEC(fedex_python "${fedex_python_SOURCES}" "libexppp;express;base")
+SC_ADDEXEC(fedex_python "${fedex_python_SOURCES}" "libexppp;express;base")
 
 add_dependencies( fedex_python version_string )
-endif(SCL_PYTHON_GENERATOR)
+endif(SC_PYTHON_GENERATOR)

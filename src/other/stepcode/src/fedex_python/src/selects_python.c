@@ -532,7 +532,7 @@ TYPEselect_inc_print_vars prints the class 'definition', that is, the objects
 ********************/
 void
 TYPEselect_inc_print_vars( const Type type, FILE * f, Linked_List dups ) {
- 
+
 }
 
 /*******************
@@ -541,7 +541,7 @@ class.
 *******************/
 void
 TYPEselect_inc_print( const Type type, FILE * f ) {
-   }
+}
 
 
 /*******************
@@ -644,7 +644,7 @@ class.
 void
 TYPEselect_lib_print_part_four( const Type type, FILE * f, Schema schema,
                                 Linked_List dups, char * n ) {
- }
+}
 
 
 /*******************
@@ -692,33 +692,33 @@ TYPEselect_lib_print( const Type type, FILE * f, Schema schema ) {
     int nbr_select = 0;
     int num = 0;
 
-    fprintf( f, "# SELECT TYPE %s\n", TYPEget_name(type) );
+    fprintf( f, "# SELECT TYPE %s\n", TYPEget_name( type ) );
     // create the SELECT
-    if (is_python_keyword(TYPEget_name(type))) {    
-        fprintf( f, "%s_ = SELECT(",TYPEget_name(type));
+    if( is_python_keyword( TYPEget_name( type ) ) ) {
+        fprintf( f, "%s_ = SELECT(", TYPEget_name( type ) );
+    } else {
+        fprintf( f, "%s = SELECT(", TYPEget_name( type ) );
     }
-    else {
-        fprintf( f, "%s = SELECT(",TYPEget_name(type));
-    }
-    
+
     // first compute the number of types (necessary to insert commas)
     nbr_select = 0;
     LISTdo( SEL_TYPEget_items( type ), t, Type )
-        nbr_select++;
+    nbr_select++;
     LISTod;
     // then write types
     num = 0;
     LISTdo( SEL_TYPEget_items( type ), t, Type )
-        if (is_python_keyword(TYPEget_name(t))) {
-            fprintf( f, "\n\t'%s_'",TYPEget_name(t));
-        }
-        else {
-            fprintf( f, "\n\t'%s'",TYPEget_name(t));
-        }
-        if (num < nbr_select -1 ) fprintf(f,",");
-        num++;
+    if( is_python_keyword( TYPEget_name( t ) ) ) {
+        fprintf( f, "\n\t'%s_'", TYPEget_name( t ) );
+    } else {
+        fprintf( f, "\n\t'%s'", TYPEget_name( t ) );
+    }
+    if( num < nbr_select - 1 ) {
+        fprintf( f, "," );
+    }
+    num++;
     LISTod;
-    fprintf(f,",\n\tscope = schema_scope)\n");
+    fprintf( f, ",\n\tscope = schema_scope)\n" );
 }
 
 void

@@ -14,7 +14,7 @@
 
 #include <gennode.h>
 #include <gennodelist.h>
-#include <scl_memmgr.h>
+#include <sc_memmgr.h>
 
 //////////////////////////////////////////////////////////////////////////////
 // class GenericNode inline functions that depend on other classes

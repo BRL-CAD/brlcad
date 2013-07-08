@@ -55,7 +55,7 @@
  *
  */
 
-#include <scl_memmgr.h>
+#include <sc_memmgr.h>
 #include <stdlib.h>
 #include "express/resolve.h"
 #include "stack.h"
@@ -73,6 +73,9 @@ Error ERROR_unknown_supertype = ERROR_none;
 Error ERROR_circular_reference = ERROR_none;
 Error ERROR_ambiguous_attribute = ERROR_none;
 Error ERROR_ambiguous_group = ERROR_none;
+Error WARNING_fn_skip_branch = ERROR_none;
+Error WARNING_case_skip_label = ERROR_none;
+
 
 static void ENTITYresolve_subtypes PROTO( ( Schema ) );
 static void ENTITYresolve_supertypes PROTO( ( Entity ) );
@@ -212,9 +215,17 @@ void RESOLVEinitialize( void ) {
     ERROR_missing_self = ERRORcreate(
                              "Domain rule %s must refer to SELF or attribute.", SEVERITY_ERROR );
 
+    WARNING_fn_skip_branch = ERRORcreate(
+                                 "IF statement condition is always %s. Ignoring branch that is never taken.", SEVERITY_WARNING );
+
+    WARNING_case_skip_label = ERRORcreate( "CASE label %s cannot be matched. Ignoring its statements.", SEVERITY_WARNING );
+
+
     ERRORcreate_warning( "circular_subtype", ERROR_subsuper_loop );
     ERRORcreate_warning( "circular_select", ERROR_select_loop );
     ERRORcreate_warning( "entity_as_type", ERROR_type_is_entity );
+    ERRORcreate_warning( "invariant_condition", WARNING_fn_skip_branch );
+    ERRORcreate_warning( "invalid_case", WARNING_case_skip_label );
 }
 
 /** Clean up the Fed-X second pass */
@@ -251,6 +262,8 @@ void RESOLVEcleanup( void ) {
     ERRORdestroy( ERROR_redecl_no_such_attribute );
     ERRORdestroy( ERROR_redecl_no_such_supertype );
     ERRORdestroy( ERROR_missing_self );
+    ERRORdestroy( WARNING_case_skip_label );
+    ERRORdestroy( WARNING_fn_skip_branch );
 }
 
 /**
@@ -415,7 +428,7 @@ void EXP_resolve( Expression expr, Scope scope, Type typecheck ) {
             /* if not found as a variable, try as function, etc ... */
             if( !x ) {
                 x = SCOPEfind( scope, expr->symbol.name,
-                                           SCOPE_FIND_ANYTHING );
+                               SCOPE_FIND_ANYTHING );
             }
             /* Not all enums have `typecheck->u.type->body->type` == `enumeration_` - ?! */
             if( !x ) {
@@ -818,21 +831,31 @@ void STMTlist_resolve( Linked_List list, Scope scope ) {
 }
 
 /**
-** \param item case item to resolve
-** \param scope scope in which to resolve
-**
-** Resolve all references in a case item
-*/
-void CASE_ITresolve( Case_Item item, Scope scope, Type type ) {
-    LISTdo( item->labels, e, Expression )
-    EXPresolve( e, scope, type );
+ * \param item case item to resolve
+ * \param scope scope in which to resolve
+ * \param statement the CASE statement (for return type, etc)
+ *
+ * Resolve all references in a case item
+ */
+void CASE_ITresolve( Case_Item item, Scope scope, Statement statement ) {
+    int validLabels = 0;
+    LISTdo( item->labels, e, Expression ) {
+        EXPresolve( e, scope, statement->u.Case->selector->return_type );
+        if( e->return_type != Type_Bad ) {
+            validLabels++;
+        }
+    }
     LISTod;
-    STMTresolve( item->action, scope );
+    if( validLabels ) {
+        STMTresolve( item->action, scope );
+    }
 }
 
 void STMTresolve( Statement statement, Scope scope ) {
-    Type type;
+    //scope is always the function/procedure/rule from SCOPEresolve_expressions_statements();
     Scope proc;
+    Logical eval;
+    bool skipped = false;
 
     if( !statement ) {
         return;    /* could be null statement */
@@ -853,9 +876,9 @@ void STMTresolve( Statement statement, Scope scope ) {
             break;
         case STMT_CASE:
             EXPresolve( statement->u.Case->selector, scope, Type_Dont_Care );
-            type = statement->u.Case->selector->return_type;
-            LISTdo( statement->u.Case->cases, c, Case_Item )
-            CASE_ITresolve( c, scope, type );
+            LISTdo( statement->u.Case->cases, c, Case_Item ) {
+                CASE_ITresolve( c, scope, statement );
+            }
             LISTod;
             break;
         case STMT_COMPOUND:
@@ -912,7 +935,7 @@ void STMTresolve( Statement statement, Scope scope ) {
             break;
         case STMT_SKIP:
         case STMT_ESCAPE:
-            /* do nothing */
+            /* do nothing */ //WARNING should we really *not* do anything for these?
             ;
     }
 }
@@ -1048,11 +1071,12 @@ void ENTITYcheck_missing_supertypes( Entity ent ) {
 void ENTITYcalculate_inheritance( Entity e ) {
     e->u.entity->inheritance = 0;
 
-    LISTdo( e->u.entity->supertypes, super, Entity )
-    if( super->u.entity->inheritance == ENTITY_INHERITANCE_UNINITIALIZED ) {
-        ENTITYcalculate_inheritance( super );
+    LISTdo( e->u.entity->supertypes, super, Entity ) {
+        if( super->u.entity->inheritance == ENTITY_INHERITANCE_UNINITIALIZED ) {
+            ENTITYcalculate_inheritance( super );
+        }
+        e->u.entity->inheritance += ENTITYget_size( super );
     }
-    e->u.entity->inheritance += ENTITYget_size( super );
     LISTod
 }
 
@@ -1114,7 +1138,7 @@ void TYPEcheck_select_cyclicity( Type t ) {
 
 void ENTITYresolve_types( Entity e );
 
-/* also resolves inheritance counts and sub/super consistency */
+/** also resolves inheritance counts and sub/super consistency */
 void SCOPEresolve_types( Scope s ) {
     Variable var;
     DictionaryEntry de;

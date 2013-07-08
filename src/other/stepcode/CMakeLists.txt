@@ -1,6 +1,6 @@
 #       C M A K E L I S T S . T X T   F O R   S C L
 #
-# This file is Copyright (c) 2010 United States Government as 
+# This file is Copyright (c) 2010 United States Government as
 # represented by the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,23 +32,23 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # *******************************************************************
-# ***                   SCL's CMakeLists.txt                      ***
+# ***                   SC's CMakeLists.txt                      ***
 # *******************************************************************
 
-# This file contains the top level CMakeLists.txt logic for the 
-# SCL software package.
+# This file contains the top level CMakeLists.txt logic for the
+# SC software package.
 
-PROJECT(SCL)
+PROJECT(SC)
 
-# SCL version
-SET(SCL_VERSION_MAJOR 0)
-SET(SCL_VERSION_MINOR 5-dev)
-SET(SCL_VERSION ${SCL_VERSION_MAJOR}.${SCL_VERSION_MINOR})
+# SC version
+SET(SC_VERSION_MAJOR 0)
+SET(SC_VERSION_MINOR 7-dev)
+SET(SC_VERSION ${SC_VERSION_MAJOR}.${SC_VERSION_MINOR})
 
-# SCL ABI version. SCL_ABI_SOVERSION should be incremented
+# SC ABI version. SC_ABI_SOVERSION should be incremented
 # for each release introducing API incompatibilities
-SET(SCL_ABI_SOVERSION 2)
-SET(SCL_ABI_VERSION ${SCL_ABI_SOVERSION}.0.0)
+SET(SC_ABI_SOVERSION 2)
+SET(SC_ABI_VERSION ${SC_ABI_SOVERSION}.0.0)
 
 # Minimum required version of CMake
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.7)
@@ -56,12 +56,14 @@ IF(COMMAND CMAKE_POLICY)
   CMAKE_POLICY(SET CMP0003 NEW)
 ENDIF(COMMAND CMAKE_POLICY)
 
-IF( NOT DEFINED SCL_BUILD_TYPE )
-  SET( SCL_BUILD_TYPE "Debug" CACHE STRING "Build type" ) # By default set debug build
-ENDIF( NOT DEFINED SCL_BUILD_TYPE )
-if (NOT IS_SUBBUILD)
-  SET(CMAKE_BUILD_TYPE ${SCL_BUILD_TYPE} CACHE INTERNAL "Build type, immutable" FORCE )
-endif (NOT IS_SUBBUILD)
+IF( NOT DEFINED SC_BUILD_TYPE )
+  SET( SC_BUILD_TYPE "Debug" CACHE STRING "Build type" ) # By default set debug build
+ENDIF( NOT DEFINED SC_BUILD_TYPE )
+IF(NOT SC_IS_SUBBUILD)
+  SET(CMAKE_BUILD_TYPE ${SC_BUILD_TYPE} CACHE INTERNAL "Build type, immutable" FORCE )
+ELSE(NOT SC_IS_SUBBUILD)
+  SET(CMAKE_BUILD_TYPE ${SC_BUILD_TYPE} )
+ENDIF(NOT SC_IS_SUBBUILD)
 
 # Define helper macro OPTION_WITH_DEFAULT
 MACRO( OPTION_WITH_DEFAULT OPTION_NAME OPTION_STRING OPTION_DEFAULT )
@@ -72,24 +74,36 @@ MACRO( OPTION_WITH_DEFAULT OPTION_NAME OPTION_STRING OPTION_DEFAULT )
 ENDMACRO( OPTION_WITH_DEFAULT OPTION_NAME OPTION_STRING OPTION_DEFAULT )
 
 # build shared libs by default
-OPTION_WITH_DEFAULT(SCL_BUILD_SHARED_LIBS "Build shared libs" ON )
+OPTION_WITH_DEFAULT(SC_BUILD_SHARED_LIBS "Build shared libs" ON )
 
-# build static libs by default
-OPTION_WITH_DEFAULT(SCL_BUILD_STATIC_LIBS "Build static libs" OFF)
+# don't build static libs by default
+OPTION_WITH_DEFAULT(SC_BUILD_STATIC_LIBS "Build static libs" OFF)
 
-OPTION_WITH_DEFAULT(SCL_PYTHON_GENERATOR "Compile fedex_plus_python" ON)
-OPTION_WITH_DEFAULT(SCL_CPP_GENERATOR "Compile fedex_plus" ON)
+OPTION_WITH_DEFAULT(SC_PYTHON_GENERATOR "Compile fedex_python" ON)
+OPTION_WITH_DEFAULT(SC_CPP_GENERATOR "Compile fedex_plus" ON)
+
+OPTION_WITH_DEFAULT(SC_MEMMGR_ENABLE_CHECKS "Enable sc_memmgr's memory leak detection" OFF)
+OPTION_WITH_DEFAULT(SC_TRACE_FPRINTF "Enable extra comments in generated code so the code's source in fedex_plus may be located" OFF)
+
+if(NOT DEFINED SC_SDAI_ADDITIONAL_EXES_SRCS )
+  set( SC_SDAI_ADDITIONAL_EXES_SRCS "" CACHE STRING "Source files for additional executables to be linked with SDAI libs" )
+endif(NOT DEFINED SC_SDAI_ADDITIONAL_EXES_SRCS )
+
+#this makes SC_BUILD_SCHEMAS show up in cmake-gui
+if( NOT DEFINED SC_BUILD_SCHEMAS )
+    SET(SC_BUILD_SCHEMAS "ALL" CACHE string "Semicolon-separated list of paths to EXPRESS schemas to be built" )
+endif( NOT DEFINED SC_BUILD_SCHEMAS )
 
 # CMake derives much of its functionality from modules, typically
 # stored in one directory - let CMake know where to find them.
-SET(SCL_CMAKE_DIR "${SCL_SOURCE_DIR}/cmake")
+SET(SC_CMAKE_DIR "${SC_SOURCE_DIR}/cmake")
 if(NOT IS_SUBBUILD)
-  SET(CMAKE_MODULE_PATH "${SCL_CMAKE_DIR};${CMAKE_MODULE_PATH}")
+  SET(CMAKE_MODULE_PATH "${SC_CMAKE_DIR};${CMAKE_MODULE_PATH}")
 else(NOT IS_SUBBUILD)
-  SET(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${SCL_CMAKE_DIR}")
+  SET(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${SC_CMAKE_DIR}")
 endif(NOT IS_SUBBUILD)
 
-INCLUDE(${SCL_CMAKE_DIR}/SCL_Utils.cmake)
+INCLUDE(${SC_CMAKE_DIR}/SC_Utils.cmake)
 
 # Save the current LC_ALL, LC_MESSAGES, and LANG environment variables and set them
 # to "C" so things like date output are as expected
@@ -106,30 +120,32 @@ IF(_orig_lang)
   SET(ENV{LANG}        C)
 ENDIF(_orig_lang)
 
-#---------------------------------------------------------------------
-# Testing option
-OPTION_WITH_DEFAULT( SCL_ENABLE_TESTING "Enable unittesting framework" OFF )
-IF(SCL_ENABLE_TESTING)
-  if( NOT DEFINED SCL_BUILD_SCHEMAS )
-    set( SCL_BUILD_SCHEMAS "ALL" ) #test all schemas, unless otherwise specified
-  endif()
-  INCLUDE(CTest)
-  ENABLE_TESTING()
-ENDIF(SCL_ENABLE_TESTING)
 
 #---------------------------------------------------------------------
 # Coverage option
-OPTION_WITH_DEFAULT( SCL_ENABLE_COVERAGE "Enable code coverage test" OFF )
-IF(SCL_ENABLE_COVERAGE)
-  SET(SCL_ENABLE_TESTING ON CACHE BOOL "Testing enabled by coverage option" FORCE)
+OPTION_WITH_DEFAULT( SC_ENABLE_COVERAGE "Enable code coverage test" OFF )
+IF(SC_ENABLE_COVERAGE)
+  SET(SC_ENABLE_TESTING ON CACHE BOOL "Testing enabled by coverage option" FORCE)
   # build static libs, better coverage report
-  SET(SCL_BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libs" FORCE )
-  SET(SCL_BUILD_STATIC_LIBS ON CACHE BOOL "Build static libs" FORCE )
+  SET(SC_BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libs" FORCE )
+  SET(SC_BUILD_STATIC_LIBS ON CACHE BOOL "Build static libs" FORCE )
   SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -fprofile-arcs -ftest-coverage" CACHE STRING "Extra compile flags required by code coverage" FORCE)
   SET(CMAKE_C_FLAGS_DEBUG "-O0 -g -fprofile-arcs -ftest-coverage" CACHE STRING "Extra compile flags required by code coverage" FORCE)
   SET(CMAKE_MODULE_LINKER_FLAGS_DEBUG "-fprofile-arcs -ftest-coverage" CACHE STRING "Extra linker flags required by code coverage" FORCE)
-  SET(SCL_BUILD_TYPE "Debug" CACHE STRING "Build type required by testing framework" FORCE)
-ENDIF(SCL_ENABLE_COVERAGE)
+  SET(SC_BUILD_TYPE "Debug" CACHE STRING "Build type required by testing framework" FORCE)
+  SET( SC_PYTHON_GENERATOR OFF ) #won't build with static libs
+ENDIF(SC_ENABLE_COVERAGE)
+
+#---------------------------------------------------------------------
+# Testing option
+OPTION_WITH_DEFAULT( SC_ENABLE_TESTING "Enable unittesting framework" OFF )
+IF(SC_ENABLE_TESTING)
+  if( NOT DEFINED SC_BUILD_SCHEMAS )
+    set( SC_BUILD_SCHEMAS "ALL" ) #test all schemas, unless otherwise specified
+  endif()
+  INCLUDE(CTest)
+  ENABLE_TESTING()
+ENDIF(SC_ENABLE_TESTING)
 
 #---------------------------------------------------------------------
 # The following logic is what allows binaries to run successfully in
@@ -159,59 +175,59 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 #-----------------------------------------------------------------------------
 # Output directories.
-IF(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
-  SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${SCL_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all libraries.")
-ENDIF(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
-IF(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
-  SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${SCL_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all archives.")
-ENDIF(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
-IF(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
-  SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${SCL_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all executables.")
-ENDIF(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
+IF(NOT DEFINED CMAKE_LIBRARY_OUTPUT_DIRECTORY)
+  SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${SC_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all libraries.")
+ENDIF(NOT DEFINED CMAKE_LIBRARY_OUTPUT_DIRECTORY)
+IF(NOT DEFINED CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
+  SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${SC_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all archives.")
+ENDIF(NOT DEFINED CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
+IF(NOT DEFINED CMAKE_RUNTIME_OUTPUT_DIRECTORY)
+  SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${SC_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all executables.")
+ENDIF(NOT DEFINED CMAKE_RUNTIME_OUTPUT_DIRECTORY)
 
 FOREACH(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
   STRING(TOUPPER "${CFG_TYPE}" CFG_TYPE)
   IF(NOT "CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE}")
-    SET("CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE}" ${SCL_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all libraries.")
+    SET("CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE}" ${SC_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all libraries.")
   ENDIF(NOT "CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE}")
   IF(NOT "CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE}")
-    SET("CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE}" ${SCL_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all archives.")
+    SET("CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE}" ${SC_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all archives.")
   ENDIF(NOT "CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE}")
   IF(NOT "CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE}")
-    SET("CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE}" ${SCL_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all executables.")
+    SET("CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE}" ${SC_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all executables.")
   ENDIF(NOT "CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE}")
 ENDFOREACH()
 
 
 #-----------------------------------------------------------------------------
-# Configure install locations. 
+# Configure install locations.
 
-# The location in which to install SCL. Need a good Debug location 
+# The location in which to install SC. Need a good Debug location
 # for Windows.  Only do this if CMAKE_INSTALL_PREFIX hasn't been set
 # already, to try and allow parent builds (if any) some control.
-if(NOT SCL_IS_SUBBUILD)
+if(NOT SC_IS_SUBBUILD)
   IF(NOT WIN32)
     IF (${CMAKE_BUILD_TYPE} MATCHES "Debug")
-      SET(SCL_INSTALL_PREFIX "${SCL_SOURCE_DIR}/../scl-install")
+      SET(SC_INSTALL_PREFIX "${SC_SOURCE_DIR}/../sc-install")
     ELSE()
-      SET(SCL_INSTALL_PREFIX "/usr/local")
+      SET(SC_INSTALL_PREFIX "/usr/local")
     ENDIF()
   ENDIF(NOT WIN32)
-  SET( SCL_INSTALL_PREFIX ${SCL_INSTALL_PREFIX} CACHE
+  SET( SC_INSTALL_PREFIX ${SC_INSTALL_PREFIX} CACHE
     PATH "Install prefix prepended to target to create install location" )
-  SET( CMAKE_INSTALL_PREFIX ${SCL_INSTALL_PREFIX} CACHE INTERNAL "Prefix prepended to install directories if target destination is not absolute, immutable" FORCE )
-endif(NOT SCL_IS_SUBBUILD)
+  SET( CMAKE_INSTALL_PREFIX ${SC_INSTALL_PREFIX} CACHE INTERNAL "Prefix prepended to install directories if target destination is not absolute, immutable" FORCE )
+endif(NOT SC_IS_SUBBUILD)
 
-OPTION(SCL_BUILD_EXPRESS_ONLY "Only build express parser." OFF)
-MARK_AS_ADVANCED(SCL_BUILD_EXPRESS_ONLY)
+OPTION(SC_BUILD_EXPRESS_ONLY "Only build express parser." OFF)
+MARK_AS_ADVANCED(SC_BUILD_EXPRESS_ONLY)
 
-# Take the scl config file template as the starting point for 
-# scl_cf.h.in - scripts may need to append to the template, so
+# Take the sc config file template as the starting point for
+# sc_cf.h.in - scripts may need to append to the template, so
 # it is read into memory initially.
-SET(CONFIG_H_FILE ${SCL_BINARY_DIR}/include/scl_cf.h.in)
+SET(CONFIG_H_FILE ${SC_BINARY_DIR}/include/sc_cf.h.in)
 set_source_files_properties(${CONFIG_H_FILE} PROPERTIES GENERATED TRUE)
-set(CMAKE_CURRENT_PROJECT SCL)
-define_property(GLOBAL PROPERTY SCL_CONFIG_H_CONTENTS BRIEF_DOCS "config.h.in contents" FULL_DOCS "config.h.in contents for SCL project")
+set(CMAKE_CURRENT_PROJECT SC)
+define_property(GLOBAL PROPERTY SC_CONFIG_H_CONTENTS BRIEF_DOCS "config.h.in contents" FULL_DOCS "config.h.in contents for SC project")
 if(NOT COMMAND CONFIG_H_APPEND)
   macro(CONFIG_H_APPEND PROJECT_NAME NEW_CONTENTS)
     if(PROJECT_NAME)
@@ -221,35 +237,35 @@ if(NOT COMMAND CONFIG_H_APPEND)
     endif(PROJECT_NAME)
   endmacro(CONFIG_H_APPEND NEW_CONTENTS)
 endif(NOT COMMAND CONFIG_H_APPEND)
-file(READ ${SCL_SOURCE_DIR}/include/scl_cf_cmake.h.in CONFIG_H_FILE_CONTENTS)
-CONFIG_H_APPEND(SCL "${CONFIG_H_FILE_CONTENTS}")
+file(READ ${SC_SOURCE_DIR}/include/sc_cf_cmake.h.in CONFIG_H_FILE_CONTENTS)
+CONFIG_H_APPEND(SC "${CONFIG_H_FILE_CONTENTS}")
 
 # The Express parser uses the tools Perplex, RE2C and Lemon to generate code
 # from higher level inputs.  Depending on available tools and options, the
-# SCL build can either re-generate code as part of the build, or use cached
+# SC build can either re-generate code as part of the build, or use cached
 # files that are ready for compilation.
 #
-# SCL_GENERATE_LEXER_PARSER is the "high level" control a user sets to determine
-# how the SCL build will interact (or not) with these tools.  AUTO (the
+# SC_GENERATE_LEXER_PARSER is the "high level" control a user sets to determine
+# how the SC build will interact (or not) with these tools.  AUTO (the
 # default) means it will search for the necessary tools, and use them only if
 # everything is found.  If not, it will fall back to the cached versions.  If
 # this option is set to ON and the necessary tools are not found, the
-# configure step will fail.  If it is set to OFF, SCL will not even try to use
+# configure step will fail.  If it is set to OFF, SC will not even try to use
 # the generators and will instead use the cached sources.
-if(NOT SCL_GENERATE_LEXER_PARSER)
-  set(SCL_GENERATE_LEXER_PARSER "AUTO" CACHE STRING "Use Perplex, RE2C and Lemon to generate C source code.")
-else(NOT SCL_GENERATE_LEXER_PARSER)
-  string(TOUPPER "${SCL_GENERATE_LEXER_PARSER}" SCL_GENERATE_LEXER_PARSER)
-endif(NOT SCL_GENERATE_LEXER_PARSER)
-set_property(CACHE SCL_GENERATE_LEXER_PARSER PROPERTY STRINGS AUTO ON OFF)
-if (NOT "${SCL_GENERATE_LEXER_PARSER}" STREQUAL "AUTO" AND NOT "${SCL_GENERATE_LEXER_PARSER}" STREQUAL "ON" AND NOT "${SCL_GENERATE_LEXER_PARSER}" STREQUAL "OFF")
-	message(WARNING "Unknown value ${SCL_GENERATE_LEXER_PARSER} supplied for BRLCAD_WORD_SIZE - defaulting to AUTO")
+if(NOT SC_GENERATE_LEXER_PARSER)
+  set(SC_GENERATE_LEXER_PARSER "AUTO" CACHE STRING "Use Perplex, RE2C and Lemon to generate C source code.")
+else(NOT SC_GENERATE_LEXER_PARSER)
+  string(TOUPPER "${SC_GENERATE_LEXER_PARSER}" SC_GENERATE_LEXER_PARSER)
+endif(NOT SC_GENERATE_LEXER_PARSER)
+set_property(CACHE SC_GENERATE_LEXER_PARSER PROPERTY STRINGS AUTO ON OFF)
+if (NOT "${SC_GENERATE_LEXER_PARSER}" STREQUAL "AUTO" AND NOT "${SC_GENERATE_LEXER_PARSER}" STREQUAL "ON" AND NOT "${SC_GENERATE_LEXER_PARSER}" STREQUAL "OFF")
+	message(WARNING "Unknown value ${SC_GENERATE_LEXER_PARSER} supplied for BRLCAD_WORD_SIZE - defaulting to AUTO")
 	message(WARNING "Valid options are AUTO, ON and OFF")
-	set(SCL_GENERATE_LEXER_PARSER "AUTO" CACHE STRING "Use Perplex, RE2C and Lemon to generate C source code.")
-endif (NOT "${SCL_GENERATE_LEXER_PARSER}" STREQUAL "AUTO" AND NOT "${SCL_GENERATE_LEXER_PARSER}" STREQUAL "ON" AND NOT "${SCL_GENERATE_LEXER_PARSER}" STREQUAL "OFF")
+	set(SC_GENERATE_LEXER_PARSER "AUTO" CACHE STRING "Use Perplex, RE2C and Lemon to generate C source code.")
+endif (NOT "${SC_GENERATE_LEXER_PARSER}" STREQUAL "AUTO" AND NOT "${SC_GENERATE_LEXER_PARSER}" STREQUAL "ON" AND NOT "${SC_GENERATE_LEXER_PARSER}" STREQUAL "OFF")
 
 # If the generators have not been turned off, we need to check for them
-if(NOT "${SCL_GENERATE_LEXER_PARSER}" STREQUAL "OFF")
+if(NOT "${SC_GENERATE_LEXER_PARSER}" STREQUAL "OFF")
 	find_package(LEMON)
 	find_package(RE2C)
 	find_package(PERPLEX)
@@ -266,27 +282,29 @@ if(NOT "${SCL_GENERATE_LEXER_PARSER}" STREQUAL "OFF")
 		endif(NOT "${perplex_template_fpath}" STREQUAL "${PERPLEX_TEMPLATE}")
 
 		if(NOT COMMAND LEMON_TARGET)
-			include(${SCL_CMAKE_DIR}/LEMON_Util.cmake)
+			include(${SC_CMAKE_DIR}/LEMON_Util.cmake)
 		endif(NOT COMMAND LEMON_TARGET)
 		if(NOT COMMAND PERPLEX_TARGET)
-			include(${SCL_CMAKE_DIR}/PERPLEX_Util.cmake)
+			include(${SC_CMAKE_DIR}/PERPLEX_Util.cmake)
 		endif(NOT COMMAND PERPLEX_TARGET)
-		set(SCL_GENERATE_LP_SOURCES 1)
+		set(SC_GENERATE_LP_SOURCES 1)
 	else(LEMON_EXECUTABLE AND LEMON_TEMPLATE AND PERPLEX_EXECUTABLE AND PERPLEX_TEMPLATE AND RE2C_EXECUTABLE)
-		if("${SCL_GENERATE_LEXER_PARSER}" STREQUAL "ON")
-			message(FATAL_ERROR "\nSCL_GENERATE_LEXER_PARSER set to ON, but one or more components of the Perplex/RE2C/Lemon toolchain were not found.\n")
-		else("${SCL_GENERATE_LEXER_PARSER}" STREQUAL "ON")
-			set(SCL_GENERATE_LP_SOURCES 0)
-		endif("${SCL_GENERATE_LEXER_PARSER}" STREQUAL "ON")
+		if("${SC_GENERATE_LEXER_PARSER}" STREQUAL "ON")
+			message(FATAL_ERROR "\nSC_GENERATE_LEXER_PARSER set to ON, but one or more components of the Perplex/RE2C/Lemon toolchain were not found.\n")
+		else("${SC_GENERATE_LEXER_PARSER}" STREQUAL "ON")
+			set(SC_GENERATE_LP_SOURCES 0)
+		endif("${SC_GENERATE_LEXER_PARSER}" STREQUAL "ON")
 	endif(LEMON_EXECUTABLE AND LEMON_TEMPLATE AND PERPLEX_EXECUTABLE AND PERPLEX_TEMPLATE AND RE2C_EXECUTABLE)
-else(NOT "${SCL_GENERATE_LEXER_PARSER}" STREQUAL "OFF")
-	set(SCL_GENERATE_LP_SOURCES 0)
-endif(NOT "${SCL_GENERATE_LEXER_PARSER}" STREQUAL "OFF")
+else(NOT "${SC_GENERATE_LEXER_PARSER}" STREQUAL "OFF")
+	set(SC_GENERATE_LP_SOURCES 0)
+endif(NOT "${SC_GENERATE_LEXER_PARSER}" STREQUAL "OFF")
 
 INCLUDE(CheckLibraryExists)
 INCLUDE(CheckIncludeFile)
 INCLUDE(CheckFunctionExists)
 INCLUDE(CheckTypeSize)
+INCLUDE(CMakePushCheckState)
+INCLUDE(CheckCXXSourceRuns)
 
 CHECK_INCLUDE_FILE(ndir.h HAVE_NDIR_H)
 CHECK_INCLUDE_FILE(stdarg.h HAVE_STDARG_H)
@@ -306,24 +324,44 @@ CHECK_FUNCTION_EXISTS(getopt HAVE_GETOPT)
 
 CHECK_TYPE_SIZE("ssize_t" SSIZE_T)
 
-# Now that all the tests are done, configure the scl_cf.h file:
-get_property(CONFIG_H_FILE_CONTENTS GLOBAL PROPERTY SCL_CONFIG_H_CONTENTS)
-file(WRITE ${CONFIG_H_FILE} "${CONFIG_H_FILE_CONTENTS}")
-configure_file(${CONFIG_H_FILE} ${SCL_BINARY_DIR}/include/scl_cf.h)
+set( TEST_STD_THREAD "
+#include <iostream>
+#include <thread>
+void do_work() {
+        std::cout << \"thread\" << std::endl;
+}
+int main() {
+        std::thread t(do_work);
+        t.join();
+}
+" )
+cmake_push_check_state()
+  if( UNIX )
+    set( CMAKE_REQUIRED_FLAGS "-pthread -std=c++0x" )
+  else( UNIX )
+    # vars probably need set for MSVC11, embarcadero, etc
+  endif( UNIX )
+  CHECK_CXX_SOURCE_RUNS( "${TEST_STD_THREAD}" HAVE_STD_THREAD )   #quotes are *required*!
+cmake_pop_check_state()
 
-################ create scl_version_string.h, http://stackoverflow.com/questions/3780667
-# Using 'ver_string' instead of 'scl_version_string.h' is a trick to force the
+# Now that all the tests are done, configure the sc_cf.h file:
+get_property(CONFIG_H_FILE_CONTENTS GLOBAL PROPERTY SC_CONFIG_H_CONTENTS)
+file(WRITE ${CONFIG_H_FILE} "${CONFIG_H_FILE_CONTENTS}")
+configure_file(${CONFIG_H_FILE} ${SC_BINARY_DIR}/include/sc_cf.h)
+
+################ create sc_version_string.h, http://stackoverflow.com/questions/3780667
+# Using 'ver_string' instead of 'sc_version_string.h' is a trick to force the
 # command to always execute when the custom target is built. It works because
 # a file by that name never exists.
-configure_file(${SCL_CMAKE_DIR}/scl_version_string.cmake ${SCL_BINARY_DIR}/scl_version_string.cmake @ONLY)
+configure_file(${SC_CMAKE_DIR}/sc_version_string.cmake ${SC_BINARY_DIR}/sc_version_string.cmake @ONLY)
 add_custom_target(version_string ALL DEPENDS ver_string )
-# creates scl_version_string.h using cmake script
-add_custom_command(OUTPUT ver_string ${CMAKE_CURRENT_BINARY_DIR}/include/scl_version_string.h
-                   COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=${SCL_SOURCE_DIR}
-                                            -DBINARY_DIR=${SCL_BINARY_DIR}
-                                            -P ${SCL_BINARY_DIR}/scl_version_string.cmake)
-# scl_version_string.h is a generated file
-set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/include/scl_version_string.h
+# creates sc_version_string.h using cmake script
+add_custom_command(OUTPUT ver_string ${CMAKE_CURRENT_BINARY_DIR}/include/sc_version_string.h
+                   COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=${SC_SOURCE_DIR}
+                                            -DBINARY_DIR=${SC_BINARY_DIR}
+                                            -P ${SC_BINARY_DIR}/sc_version_string.cmake)
+# sc_version_string.h is a generated file
+set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/include/sc_version_string.h
   PROPERTIES GENERATED TRUE
   HEADER_FILE_ONLY TRUE )
 ################
@@ -340,8 +378,8 @@ else()
 endif()
 
 include_directories(
-  ${SCL_SOURCE_DIR}/include
-  ${SCL_BINARY_DIR}/include
+  ${SC_SOURCE_DIR}/include
+  ${SC_BINARY_DIR}/include
   )
 
 ADD_SUBDIRECTORY(src/base)
@@ -353,31 +391,34 @@ ADD_SUBDIRECTORY(src/clstepcore)
 ADD_SUBDIRECTORY(src/cleditor)
 ADD_SUBDIRECTORY(src/cldai)
 ADD_SUBDIRECTORY(src/clutils)
+if(NOT WIN32)
+  ADD_SUBDIRECTORY(src/cllazyfile)
+endif(NOT WIN32)
 ADD_SUBDIRECTORY(include)
 ADD_SUBDIRECTORY(data)
-IF(ENABLE_TESTING)
+IF(SC_ENABLE_TESTING)
   ADD_SUBDIRECTORY( test )
-ENDIF(ENABLE_TESTING)
+ENDIF(SC_ENABLE_TESTING)
 ADD_SUBDIRECTORY(doc)
 
 # this is for testing - 'make core' builds everything that isn't generated
 add_custom_target( core )
 add_dependencies( core stepdai check-express stepeditor fedex_plus )
 
-if(NOT SCL_IS_SUBBUILD)
+if(NOT SC_IS_SUBBUILD)
   ###############################################################################
-  # SCL Packaging                                                               #
+  # SC Packaging                                                               #
   # $make package                                                               #
   ###############################################################################
 
   SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "STEPcode")
   SET(CPACK_SET_DESTDIR "ON")
 
-  SET(CPACK_PACKAGE_VERSION_MAJOR ${SCL_VERSION_MAJOR})
-  SET(CPACK_PACKAGE_VERSION_MINOR ${SCL_VERSION_MINOR})
-  SET(CPACK_PACKAGE_NAME SCL )
+  SET(CPACK_PACKAGE_VERSION_MAJOR ${SC_VERSION_MAJOR})
+  SET(CPACK_PACKAGE_VERSION_MINOR ${SC_VERSION_MINOR})
+  SET(CPACK_PACKAGE_NAME SC )
 
-  SET(CPACK_PACKAGE_CONTACT "SCL Developers <scl-dev@googlegroups.com>")
+  SET(CPACK_PACKAGE_CONTACT "SC Developers <scl-dev@googlegroups.com>")
   INCLUDE(CPack)
 
   ########################################################################################
@@ -392,4 +433,4 @@ if(NOT SCL_IS_SUBBUILD)
   add_custom_target(uninstall
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 
-endif(NOT SCL_IS_SUBBUILD)
+endif(NOT SC_IS_SUBBUILD)

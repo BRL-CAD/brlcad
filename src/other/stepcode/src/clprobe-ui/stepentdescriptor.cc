@@ -207,9 +207,9 @@ void EntityDescriptorBlock::Update() {
                 ( ( EntityDescriptor * )ed )->Subtypes().GetHead();
 
             const EntityDescriptor * subtypeED;
-            if( !temp ) // set error -- no subtypes found
+            if( !temp ) { // set error -- no subtypes found
                 ;
-            else {
+            } else {
                 subtypeED = ( ( EntityDescLinkNode * )temp ) -> EntityDesc();
             }
 
@@ -221,9 +221,9 @@ void EntityDescriptorBlock::Update() {
                 subtypeED = ( ( EntityDescLinkNode * )temp ) -> EntityDesc();
             }
 
-            if( !temp ) // set error -- subtype not found
+            if( !temp ) { // set error -- subtype not found
                 ;
-            else {
+            } else {
                 subtypeED = ( ( EntityDescLinkNode * )temp ) -> EntityDesc();
             }
 

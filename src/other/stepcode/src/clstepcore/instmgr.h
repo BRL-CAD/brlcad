@@ -20,7 +20,7 @@
 //  start a new undo list and delete the old undo list.
 /////////////////////
 
-#include <scl_export.h>
+#include <sc_export.h>
 
 // IT IS VERY IMPORTANT THAT THE ORDER OF THE FOLLOWING INCLUDE FILES
 // BE PRESERVED
@@ -37,7 +37,7 @@
 
 #include <mgrnodearray.h>
 
-class SCL_CORE_EXPORT InstMgr {
+class SC_CORE_EXPORT InstMgr {
     protected:
         int maxFileId;
         int _ownsInstances; // if true will delete instances inside destructor
@@ -71,7 +71,7 @@ class SCL_CORE_EXPORT InstMgr {
 
         // DAS PORT possible BUG two funct's below may create a temp for the cast
         MgrNode * GetMgrNode( int index ) {
-            return ( MgrNode * ) *GetGenNode( index );
+            return ( MgrNode * ) * GetGenNode( index );
         }
         GenericNode ** GetGenNode( int index ) {
             return &( *master ) [index];
@@ -80,15 +80,15 @@ class SCL_CORE_EXPORT InstMgr {
         MgrNode * FindFileId( int fileId );
         // get the index into display list given a SDAI_Application_instance
         //  called by see initiated functions
-        int GetIndex( SDAI_Application_instance  *se );
+        int GetIndex( SDAI_Application_instance * se );
         int GetIndex( MgrNode * mn );
         int VerifyEntity( int fileId, const char * expectedType );
 
 //    void Append(MgrNode *node);
-        MgrNode * Append( SDAI_Application_instance  *se, stateEnum listState );
+        MgrNode * Append( SDAI_Application_instance * se, stateEnum listState );
         // deletes node from master list structure
         void Delete( MgrNode * node );
-        void Delete( SDAI_Application_instance  *se );
+        void Delete( SDAI_Application_instance * se );
 
         void ChangeState( MgrNode * node, stateEnum listState );
 
@@ -101,7 +101,7 @@ class SCL_CORE_EXPORT InstMgr {
         int EntityKeywordCount( const char * name );
 
         SDAI_Application_instance  * GetApplication_instance( int index );
-        SDAI_Application_instance  *
+        SDAI_Application_instance *
         GetApplication_instance( const char * entityKeyword,
                                  int starting_index = 0 );
         SDAI_Application_instance  * GetApplication_instance( MgrNode * node ) {

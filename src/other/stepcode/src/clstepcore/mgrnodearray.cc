@@ -37,7 +37,7 @@ static int PrintFunctionTrace = 2;
 #include <sdai.h>
 
 #include <string.h> // to get bcopy() - ANSI
-#include "scl_memmgr.h"
+#include "sc_memmgr.h"
 
 //////////////////////////////////////////////////////////////////////////////
 // class MgrNodeArray member functions

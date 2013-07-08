@@ -39,7 +39,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <scl_cf.h>
+#include <sc_cf.h>
 #include <dirobj.h>
 #ifdef HAVE_DIRENT_H
 # include <dirent.h>
@@ -57,7 +57,7 @@
 #include <shlwapi.h>
 #endif
 
-#include <scl_memmgr.h>
+#include <sc_memmgr.h>
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -259,7 +259,9 @@ const char * DirObj::ValidDirectories( const char * path ) {
     int i = strlen( path );
 
     while( !IsADirectory( RealPath( buf ) ) && i >= 0 ) {
-        for( --i; buf[i] != '/' && i >= 0; --i );
+        for( --i; buf[i] != '/' && i >= 0; --i ) {
+            ;
+        }
         buf[i + 1] = '\0';
     }
     return buf;
@@ -319,14 +321,8 @@ void DirObj::InsertFile( const char * f, int index ) {
 
 void DirObj::RemoveFile( int index ) {
     if( index < --fileCount ) {
-//        const char** spot = &fileList[index];
-// Josh L, 5/2/95
         const char ** spot = ( const char ** )&fileList[index];
         delete spot;
-//        bcopy(spot+1, spot, (fileCount - index)*sizeof(char*));
-// Josh L, 5/2/95
-//        memcpy(spot, spot+1, (fileCount - index)*sizeof(char*));
-// Dave memcpy is not working since memory areas overlap
         memmove( spot, spot + 1, ( fileCount - index )*sizeof( char * ) );
     }
 }

@@ -12,12 +12,12 @@
 * and is not subject to copyright.
 */
 
-#include <scl_export.h>
+#include <sc_export.h>
 
 /**
  ** \file sdaiSelect.h class definition for the select superclass SDAI_Select.
  **/
-class SCL_CORE_EXPORT SDAI_Select {
+class SC_CORE_EXPORT SDAI_Select {
     protected:
         const SelectTypeDescriptor * _type;
         const TypeDescriptor    *   underlying_type;
@@ -41,7 +41,7 @@ class SCL_CORE_EXPORT SDAI_Select {
     public:
         Severity severity() const;
         Severity severity( Severity );
-	std::string Error();
+        std::string Error();
         void Error( const char * );
         // clears select's error
         void ClearError();

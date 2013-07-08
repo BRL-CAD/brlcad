@@ -25,10 +25,12 @@ N350 ( August 31, 1993 ) of ISO 10303 TC184/SC4/WG7.
 /* this is used to add new dictionary calls */
 /* #define NEWDICT */
 
-#include <scl_memmgr.h>
+#include <sc_memmgr.h>
 #include <stdlib.h>
 #include <assert.h>
 #include "classes.h"
+
+#include <sc_trace_fprintf.h>
 
 int isAggregateType( const Type t );
 int isAggregate( Variable a );
@@ -61,7 +63,7 @@ static void printEnumCreateBody( FILE *, const Type );
 static void printEnumAggrCrHdr( FILE *, const Type );
 static void printEnumAggrCrBody( FILE *, const Type );
 int TYPEget_RefTypeVarNm( const Type t, char * buf, Schema schema );
-void TypeBody_Description(TypeBody body, char *buf);
+void TypeBody_Description( TypeBody body, char * buf );
 
 /**
  * Turn the string into a new string that will be printed the same as the
@@ -104,9 +106,13 @@ void format_for_std_stringout( FILE * f, const char * orig_buf ) {
     const char * optr  = orig_buf;
     char * s_end = "\\n\" );\n";
     char * s_begin = "    str.append( \"";
-    fprintf(f, "%s", s_begin );
+    fprintf( f, "%s", s_begin );
     while( *optr ) {
         if( *optr == '\n' ) {
+            if( * ( optr + 1 ) == '\n' ) { // skip blank lines
+                optr++;
+                continue;
+            }
             fprintf( f, "%s", s_end );
             fprintf( f, "%s", s_begin );
         } else if( *optr == '\\' ) {
@@ -117,7 +123,7 @@ void format_for_std_stringout( FILE * f, const char * orig_buf ) {
         optr++;
     }
     fprintf( f,  s_end );
-    scl_free( orig_buf );
+    sc_free( orig_buf );
 }
 
 void USEREFout( Schema schema, Dictionary refdict, Linked_List reflist, char * type, FILE * file ) {
@@ -245,7 +251,6 @@ const char * GetAggrElemType( const Type type ) {
 
     if( isAggregateType( type ) ) {
         bt = TYPEget_nonaggregate_base_type( type );
-
         if( isAggregateType( bt ) ) {
             strcpy( retval, "ERROR_aggr_of_aggr" );
         }
@@ -437,7 +442,7 @@ char * generate_attribute_name( Variable a, char * out ) {
         }
     }
     *q = '\0';
-    scl_free( temp );
+    sc_free( temp );
     return out;
 }
 
@@ -495,7 +500,7 @@ char * generate_dict_attr_name( Variable a, char * out ) {
     }
     *q = '\0';
 
-    scl_free( temp );
+    sc_free( temp );
     return out;
 }
 
@@ -588,7 +593,7 @@ char * TYPEget_express_type( const Type t ) {
 
         /*  this will declare extra memory when aggregate is > 1D  */
 
-        permval = ( char * )scl_malloc( strlen( retval ) * sizeof( char ) + 1 );
+        permval = ( char * )sc_malloc( strlen( retval ) * sizeof( char ) + 1 );
         strcpy( permval, retval );
         return permval;
 
@@ -645,7 +650,7 @@ void ATTRsign_access_methods( Variable a, FILE * file ) {
  ** Status:  complete 7/15/93       by DDH
  ******************************************************************/
 void ATTRprint_access_methods_get_head( const char * classnm, Variable a,
-                                   FILE * file ) {
+                                        FILE * file ) {
     Type t = VARget_type( a );
     char ctype [BUFSIZ];   /*  return type of the get function  */
     char funcnm [BUFSIZ];  /*  name of member function  */
@@ -690,12 +695,12 @@ void ATTRprint_access_methods_put_head( CONST char * entnm, Variable a, FILE * f
 }
 
 void AGGRprint_access_methods( CONST char * entnm, Variable a, FILE * file, Type t,
-                          char * ctype, char * attrnm ) {
+                               char * ctype, char * attrnm ) {
     ATTRprint_access_methods_get_head( entnm, a, file );
     fprintf( file, "{\n" );
-    fprintf( file, "    return (%s) %s_%s;\n}\n", ctype,( ( a->type->u.type->body->base ) ? "" : "&"), attrnm );
+    fprintf( file, "    return (%s) %s_%s;\n}\n", ctype, ( ( a->type->u.type->body->base ) ? "" : "&" ), attrnm );
     ATTRprint_access_methods_put_head( entnm, a, file );
-    fprintf( file, "{\n    _%s%sShallowCopy (*x);\n}\n", attrnm, ( ( a->type->u.type->body->base ) ? "->" : ".") );
+    fprintf( file, "{\n    _%s%sShallowCopy (*x);\n}\n", attrnm, ( ( a->type->u.type->body->base ) ? "->" : "." ) );
     return;
 }
 
@@ -746,7 +751,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
 
         fprintf( file, "{\n" );
         if( print_logging ) {
-            fprintf( file, "#ifdef SCL_LOGGING\n" );
+            fprintf( file, "#ifdef SC_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
             fprintf( file, "        logStream->open(SCLLOGFILE,ios::app);\n" );
             fprintf( file, "        if(! (_%s == S_ENTITY_NULL) )\n        {\n", attrnm );
@@ -764,24 +769,24 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
             fprintf( file, "    }\n" );
             fprintf( file, "#endif\n" );
         }
-	fprintf( file, "    return (%s) _%s;\n}\n", ctype, attrnm );
+        fprintf( file, "    return (%s) _%s;\n}\n", ctype, attrnm );
 
         ATTRprint_access_methods_put_head( entnm, a, file );
         fprintf( file, "{\n" );
         if( print_logging ) {
             fprintf( file, "\n" );
-            fprintf( file, "#ifdef SCL_LOGGING\n" );
+            fprintf( file, "#ifdef SC_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
             fprintf( file, "        logStream->open(SCLLOGFILE,ios::app);\n" );
 
-	    fprintf( file, "        if(! (x == S_ENTITY_NULL) )\n        {\n" );
+            fprintf( file, "        if(! (x == S_ENTITY_NULL) )\n        {\n" );
 
             fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() assigned: \";\n",
                      entnm, funcnm );
 
-	    fprintf( file,
-		     "            *logStream << \"reference to Sdai%s entity #\" << x->STEPfile_id << std::endl;\n",
-		     nm );
+            fprintf( file,
+                     "            *logStream << \"reference to Sdai%s entity #\" << x->STEPfile_id << std::endl;\n",
+                     nm );
 
             fprintf( file, "        }\n        else\n        {\n" );
             fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() assigned: \";\n",
@@ -792,7 +797,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
             fprintf( file, "    }\n" );
             fprintf( file, "#endif\n" );
         }
-	fprintf( file, "    _%s = x;\n}\n", attrnm );
+        fprintf( file, "    _%s = x;\n}\n", attrnm );
 
         return;
     }
@@ -801,7 +806,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
 
         fprintf( file, "{\n" );
         if( print_logging ) {
-            fprintf( file, "#ifdef SCL_LOGGING\n" );
+            fprintf( file, "#ifdef SC_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
             fprintf( file, "        logStream->open(SCLLOGFILE,ios::app);\n" );
             fprintf( file, "        if(!_%s.is_null())\n        {\n", attrnm );
@@ -819,12 +824,12 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
             fprintf( file, "    }\n" );
             fprintf( file, "#endif\n" );
         }
-	fprintf( file, "    return (%s) _%s;\n}\n", ctype, attrnm );
+        fprintf( file, "    return (%s) _%s;\n}\n", ctype, attrnm );
 
         ATTRprint_access_methods_put_head( entnm, a, file );
         fprintf( file, "{\n" );
         if( print_logging ) {
-            fprintf( file, "#ifdef SCL_LOGGING\n" );
+            fprintf( file, "#ifdef SC_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
             fprintf( file, "        *logStream << time(NULL) << \" SDAI %s::%s() assigned: \";\n",
                      entnm, funcnm );
@@ -840,7 +845,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
     if( class == enumeration_ )  {
         fprintf( file, "{\n" );
         if( print_logging ) {
-            fprintf( file, "#ifdef SCL_LOGGING\n" );
+            fprintf( file, "#ifdef SC_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
             fprintf( file, "        if(!_%s.is_null())\n        {\n", attrnm );
             fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
@@ -861,7 +866,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
         ATTRprint_access_methods_put_head( entnm, a, file );
         fprintf( file, "{\n" );
         if( print_logging ) {
-            fprintf( file, "#ifdef SCL_LOGGING\n" );
+            fprintf( file, "#ifdef SC_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
             fprintf( file, "        *logStream << time(NULL) << \" SDAI %s::%s() assigned: \";\n",
                      entnm, funcnm );
@@ -889,7 +894,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
     if( ( class == string_ ) || ( class == binary_ ) )  {
         fprintf( file, "{\n" );
         if( print_logging ) {
-            fprintf( file, "#ifdef SCL_LOGGING\n" );
+            fprintf( file, "#ifdef SC_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
             fprintf( file, "        if(!_%s.is_null())\n        {\n", attrnm );
             fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
@@ -904,11 +909,11 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
             fprintf( file, "#endif\n" );
 
         }
-	fprintf( file, "    return (const %s) _%s;\n}\n", ctype, attrnm );
+        fprintf( file, "    return (const %s) _%s;\n}\n", ctype, attrnm );
         ATTRprint_access_methods_put_head( entnm, a, file );
         fprintf( file, "{\n" );
         if( print_logging ) {
-            fprintf( file, "#ifdef SCL_LOGGING\n" );
+            fprintf( file, "#ifdef SC_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
             fprintf( file, "        if(!x)\n        {\n" );
             fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
@@ -929,7 +934,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
     if( class == integer_ ) {
         fprintf( file, "{\n" );
         if( print_logging ) {
-            fprintf( file, "#ifdef SCL_LOGGING\n" );
+            fprintf( file, "#ifdef SC_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
             fprintf( file, "        if(!(_%s == S_INT_NULL) )\n        {\n", attrnm );
             fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
@@ -949,7 +954,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
         ATTRprint_access_methods_put_head( entnm, a, file );
         fprintf( file, "{\n" );
         if( print_logging ) {
-            fprintf( file, "#ifdef SCL_LOGGING\n" );
+            fprintf( file, "#ifdef SC_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
             fprintf( file, "        if(!(x == S_INT_NULL) )\n        {\n" );
             fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
@@ -973,7 +978,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
     if( ( class == number_ ) || ( class == real_ ) ) {
         fprintf( file, "{\n" );
         if( print_logging ) {
-            fprintf( file, "#ifdef SCL_LOGGING\n" );
+            fprintf( file, "#ifdef SC_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
             fprintf( file, "        if(!(_%s == S_REAL_NULL) )\n        {\n", attrnm );
             fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
@@ -991,7 +996,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
         ATTRprint_access_methods_put_head( entnm, a, file );
         fprintf( file, "{\n" );
         if( print_logging ) {
-            fprintf( file, "#ifdef SCL_LOGGING\n" );
+            fprintf( file, "#ifdef SC_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
             fprintf( file, "        if(!(_%s == S_REAL_NULL) )\n        {\n", attrnm );
             fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
@@ -1176,7 +1181,7 @@ static void collectAttributes( Linked_List curList, const Entity curEntity, enum
         if( collect != FIRST_ONLY ) {
             // collect attributes from parents and their supertypes
             LISTdo( parent_list, e, Entity ) {
-                if ( collect == ALL_BUT_FIRST ) {
+                if( collect == ALL_BUT_FIRST ) {
                     // skip first and collect from the rest
                     collect = ALL;
                 } else {
@@ -1524,11 +1529,11 @@ void LIBstructor_print( Entity entity, FILE * file, Schema schema ) {
         fprintf( file, "\n" );
         list = ENTITYget_supertypes( entity );
         if( ! LISTempty( list ) ) {
-	    if( LISTget_length( list ) > 1) {
+            if( LISTget_length( list ) > 1 ) {
                 fprintf( file, "#if 1\n" );
                 fprintf( file, "    int attrFlags[3];\n" );
                 fprintf( file, "#endif\n" );
-	    }
+            }
 
             LISTdo( list, e, Entity )
             /*  if there\'s no super class yet,
@@ -1606,7 +1611,7 @@ void LIBstructor_print( Entity entity, FILE * file, Schema schema ) {
 
             // if type is aggregate, the variable is a pointer and needs initialized
             if( TYPEis_aggregate( t ) ) {
-                fprintf( file, "    _%s = new %s;\n",attrnm,TYPEget_ctype( t ) );
+                fprintf( file, "    _%s = new %s;\n", attrnm, TYPEget_ctype( t ) );
             }
             fprintf( file, "    %sa = new STEPattribute(*%s::%s%d%s%s, %s %s_%s);\n",
                      ( first ? "STEPattribute *" : "" ), //  first time through, declare 'a'
@@ -1745,11 +1750,11 @@ void LIBstructor_print_w_args( Entity entity, FILE * file, Schema schema ) {
         fprintf( file, "\n" );
         list = ENTITYget_supertypes( entity );
         if( ! LISTempty( list ) ) {
-	    if( LISTget_length( list ) > 1) {
+            if( LISTget_length( list ) > 1 ) {
                 fprintf( file, "#if 0\n" );
                 fprintf( file, "    int attrFlags[3];\n" );
                 fprintf( file, "#endif\n" );
-	    }
+            }
 
             LISTdo( list, e, Entity )
             /*  if there\'s no super class yet,
@@ -1812,7 +1817,7 @@ void LIBstructor_print_w_args( Entity entity, FILE * file, Schema schema ) {
 
                 // if type is aggregate, the variable is a pointer and needs initialized
                 if( TYPEis_aggregate( t ) ) {
-                    fprintf( file, "    _%s = new %s;\n",attrnm,TYPEget_ctype( t ) );
+                    fprintf( file, "    _%s = new %s;\n", attrnm, TYPEget_ctype( t ) );
                 }
                 fprintf( file, "    %sa = new STEPattribute(*%s::%s%d%s%s, %s %s_%s);\n",
                          ( first ? "STEPattribute *" : "" ), //  first time through, declare a
@@ -1916,14 +1921,14 @@ bool TYPEis_builtin( const Type t ) {
  * \param t the Type
  * \param var_name the name of the C++ variable, such as t_1 or schema::t_name
  */
-void AGGRprint_init( FILES* files, const Type t, const char* var_name, const char* aggr_name ) {
+void AGGRprint_init( FILES * files, const Type t, const char * var_name, const char * aggr_name ) {
     if( !TYPEget_head( t ) ) {
         //the code for lower and upper is almost identical
         if( TYPEget_body( t )->lower ) {
-            if (TYPEget_body( t )->lower->symbol.resolved ) {
+            if( TYPEget_body( t )->lower->symbol.resolved ) {
                 if( TYPEget_body( t )->lower->type == Type_Funcall ) {
                     fprintf( files->init, "        %s->SetBound1FromExpressFuncall(\"%s\");\n", var_name,
-                             EXPRto_string( TYPEget_body( t )->lower) );
+                             EXPRto_string( TYPEget_body( t )->lower ) );
                 } else {
                     fprintf( files->init, "        %s->SetBound1(%d);\n", var_name, TYPEget_body( t )->lower->u.integer );
                 }
@@ -1931,7 +1936,7 @@ void AGGRprint_init( FILES* files, const Type t, const char* var_name, const cha
                 assert( ( t->superscope ) && ( t->superscope->symbol.name ) && ( TYPEget_body( t )->lower->e.op2 ) &&
                         ( TYPEget_body( t )->lower->e.op2->symbol.name ) );
                 fprintf( files->init, "        %s->SetBound1FromMemberAccessor( &getBound1_%s__%s );\n", var_name,
-                        ClassName( t->superscope->symbol.name ), aggr_name );
+                         ClassName( t->superscope->symbol.name ), aggr_name );
                 fprintf( files->helpers, "inline SDAI_Integer getBound1_%s__%s( SDAI_Application_instance* this_ptr ) {\n",
                          ClassName( t->superscope->symbol.name ), aggr_name );
                 fprintf( files->helpers, "    return ( (%s *) this_ptr)->%s_();\n}\n",
@@ -1939,7 +1944,7 @@ void AGGRprint_init( FILES* files, const Type t, const char* var_name, const cha
             }
         }
         if( TYPEget_body( t )->upper ) {
-            if (TYPEget_body( t )->upper->symbol.resolved ) {
+            if( TYPEget_body( t )->upper->symbol.resolved ) {
                 if( TYPEget_body( t )->upper->type == Type_Funcall ) {
                     fprintf( files->init, "        %s->SetBound2FromExpressFuncall(\"%s\");\n", var_name,
                              EXPRto_string( TYPEget_body( t )->upper ) );
@@ -1993,7 +1998,7 @@ void AGGRprint_init( FILES* files, const Type t, const char* var_name, const cha
         that can be referenced to refer to the type that was created for
     Type t.
 */
-void print_typechain( FILES * files, const Type t, char * buf, Schema schema, const char* type_name ) {
+void print_typechain( FILES * files, const Type t, char * buf, Schema schema, const char * type_name ) {
     /* if we've been called, current type has no name */
     /* nor is it a built-in type */
     /* the type_count variable is there for debugging purposes  */
@@ -2096,7 +2101,7 @@ void ENTITYincode_print( Entity entity, FILES * files, Schema schema ) {
             fprintf( files->init, "        %s::%s%s->AddSupertype_Stmt( str );", schema_name, ENT_PREFIX, entity_name );
         } else {
             fprintf( files->init, "        %s::%s%s->AddSupertype_Stmt( \"ABSTRACT SUPERTYPE\" );\n",
-                                                                schema_name, ENT_PREFIX, entity_name );
+                     schema_name, ENT_PREFIX, entity_name );
         }
     } else {
         if( entity->u.entity->subtype_expression ) {
@@ -2255,15 +2260,15 @@ void ENTITYincode_print( Entity entity, FILES * files, Schema schema ) {
 
     if( VARis_derived( v ) && v->initializer ) {
         tmp = EXPRto_string( v->initializer );
-        tmp2 = ( char * )scl_malloc( sizeof( char ) * ( strlen( tmp ) + BUFSIZ ) );
+        tmp2 = ( char * )sc_malloc( sizeof( char ) * ( strlen( tmp ) + BUFSIZ ) );
         fprintf( files->init, "        %s::%s%d%s%s->initializer_(\"%s\");\n",
                  schema_name, ATTR_PREFIX, attr_count,
                  ( VARis_derived( v ) ? "D" :
                    ( VARis_type_shifter( v ) ? "R" :
                      ( VARget_inverse( v ) ? "I" : "" ) ) ),
                  attrnm, format_for_stringout( tmp, tmp2 ) );
-        scl_free( tmp );
-        scl_free( tmp2 );
+        sc_free( tmp );
+        sc_free( tmp2 );
     }
     if( VARget_inverse( v ) ) {
         fprintf( files->init, "        %s::%s%d%s%s->inverted_attr_id_(\"%s\");\n",
@@ -2321,11 +2326,11 @@ void ENTITYincode_print( Entity entity, FILES * files, Schema schema ) {
 }
 
 static bool listContainsVar( Linked_List l, Variable v ) {
-    const char *vName = VARget_simple_name( v );
+    const char * vName = VARget_simple_name( v );
     LISTdo( l, curr, Variable ) {
-	if ( streq( vName, VARget_simple_name( curr ) ) ) {
-	    return true;
-	}
+        if( streq( vName, VARget_simple_name( curr ) ) ) {
+            return true;
+        }
     }
     LISTod;
     return false;
@@ -2362,8 +2367,7 @@ void ENTITYPrint( Entity entity, FILES * files, Schema schema ) {
         // inherited
         LISTdo( required, attr, Variable ) {
             if( !listContainsVar( existing, attr ) &&
-                !listContainsVar( remaining, attr ) )
-            {
+                    !listContainsVar( remaining, attr ) ) {
                 LISTadd_first( remaining, ( Generic ) attr );
             }
         }
@@ -2461,11 +2465,11 @@ void ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap
 
         if( whereRule_formatted_size == 0 ) {
             whereRule_formatted_size = 3 * BUFSIZ;
-            whereRule_formatted = ( char * )scl_malloc( sizeof( char ) * whereRule_formatted_size );
+            whereRule_formatted = ( char * )sc_malloc( sizeof( char ) * whereRule_formatted_size );
         } else if( ( strlen( whereRule ) + 300 ) > whereRule_formatted_size ) {
-            scl_free( whereRule_formatted );
+            sc_free( whereRule_formatted );
             whereRule_formatted_size = strlen( whereRule ) + BUFSIZ;
-            whereRule_formatted = ( char * )scl_malloc( sizeof( char ) * whereRule_formatted_size );
+            whereRule_formatted = ( char * )sc_malloc( sizeof( char ) * whereRule_formatted_size );
         }
         whereRule_formatted[0] = '\0';
         if( w->label ) {
@@ -2473,9 +2477,9 @@ void ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap
             strcat( whereRule_formatted, ": (" );
             ptr = whereRule_formatted + strlen( whereRule_formatted );
             while( *ptr2 ) {
-                if( *ptr2 == '\n' )
+                if( *ptr2 == '\n' ) {
                     ;
-                else if( *ptr2 == '\\' ) {
+                } else if( *ptr2 == '\\' ) {
                     *ptr = '\\';
                     ptr++;
                     *ptr = '\\';
@@ -2507,9 +2511,9 @@ void ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap
             ptr = whereRule_formatted + strlen( whereRule_formatted );
 
             while( *ptr2 ) {
-                if( *ptr2 == '\n' )
+                if( *ptr2 == '\n' ) {
                     ;
-                else if( *ptr2 == '\\' ) {
+                } else if( *ptr2 == '\\' ) {
                     *ptr = '\\';
                     ptr++;
                     *ptr = '\\';
@@ -2539,7 +2543,7 @@ void ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap
         fprintf( files->create, "        %s::%s%s->_where_rules->Append(wr);\n",
                  SCHEMAget_name( schema ), ENT_PREFIX, ENTITYget_name( entity ) );
 
-        scl_free( whereRule );
+        sc_free( whereRule );
         ptr2 = whereRule = 0;
         LISTod
     }
@@ -2552,7 +2556,7 @@ void ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap
                  SCHEMAget_name( schema ), ENT_PREFIX, ENTITYget_name( entity ) );
 
         if( whereRule_formatted_size == 0 ) {
-            uniqRule_formatted = ( char * )scl_malloc( sizeof( char ) * 2 * BUFSIZ );
+            uniqRule_formatted = ( char * )sc_malloc( sizeof( char ) * 2 * BUFSIZ );
             whereRule_formatted = uniqRule_formatted;
         } else {
             uniqRule_formatted = whereRule_formatted;
@@ -2580,7 +2584,7 @@ void ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap
             }
             uniqRule = EXPRto_string( v->name );
             fprintf( files->create, "%s", uniqRule );
-            scl_free( uniqRule );
+            sc_free( uniqRule );
         }
         LISTod
         fprintf( files->create, ";\\n\");\n" );
@@ -2590,7 +2594,7 @@ void ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap
     }
 
     if( whereRule_formatted_size > 0 ) {
-        scl_free( whereRule_formatted );
+        sc_free( whereRule_formatted );
     }
 
     n = ENTITYget_classname( entity );
@@ -2775,7 +2779,7 @@ void TYPEenum_lib_print( const Type type, FILE * f ) {
     DICTdo_type_init( ENUM_TYPEget_items( type ), &de, OBJ_ENUM );
     while( 0 != ( expr = ( Expression )DICTdo( &de ) ) ) {
         strncpy( c_enum_ele, EnumCElementName( type, expr ), BUFSIZ );
-        fprintf( f, "  case %s        :  return \"%s\";\n",
+        fprintf( f, "  case %s:  return \"%s\";\n",
                  c_enum_ele,
                  StrToUpper( EXPget_name( expr ) ) );
     }
@@ -3006,11 +3010,12 @@ void Type_Description( const Type t, char * buf ) {
  **    Other redefined types and aggregate types may be declared here.
  ** Side Effects:
  ** Status:  16-Mar-1993 kcm; updated 04-Feb-1997 dar
+ ** Dec 2011 - MAP - remove goto
  **************************************************************************/
 void TYPEprint_typedefs( Type t, FILE * classes ) {
     char nm [BUFSIZ];
     Type i;
-    bool aggrNot1d = true;
+    bool aggrNot1d = true;  //added so I can get rid of a goto
 
     /* Print the typedef statement (poss also a forward class def: */
     if( TYPEis_enumeration( t ) ) {
@@ -3204,7 +3209,6 @@ int TYPEget_RefTypeVarNm( const Type t, char * buf, Schema schema ) {
    initialize it in the .init.cc file (DAR - all initialization done in fn
        TYPEprint_init() (below) which is done in fedex_plus's 1st pass only.)
 *****/
-
 void TYPEprint_descriptions( const Type type, FILES * files, Schema schema ) {
     char tdnm [BUFSIZ],
          typename_buf [MAX_LEN],
@@ -3276,16 +3280,14 @@ void TYPEprint_descriptions( const Type type, FILES * files, Schema schema ) {
  * ate_SdaiEnum1()").  Since this is done both for an enum and for "copies"
  * of it (when "TYPE enum2 = enum1"), I placed this code in a separate fn.
  */
-static void printEnumCreateHdr( FILE * inc, const Type type )
-{
+static void printEnumCreateHdr( FILE * inc, const Type type ) {
     const char * nm = TYPEget_ctype( type );
 
     fprintf( inc, "  SDAI_Enum * create_%s ();\n", nm );
 }
 
 /// See header comment above by printEnumCreateHdr.
-static void printEnumCreateBody( FILE * lib, const Type type )
-{
+static void printEnumCreateBody( FILE * lib, const Type type ) {
     const char * nm = TYPEget_ctype( type );
     char tdnm[BUFSIZ];
 
@@ -3296,8 +3298,7 @@ static void printEnumCreateBody( FILE * lib, const Type type )
 }
 
 /// Similar to printEnumCreateHdr above for the enum aggregate.
-static void printEnumAggrCrHdr( FILE * inc, const Type type )
-{
+static void printEnumAggrCrHdr( FILE * inc, const Type type ) {
     const char * n = TYPEget_ctype( type );
     /*    const char *n = ClassName( TYPEget_name(type) ));*/
     fprintf( inc, "  STEPaggregate * create_%s_agg ();\n", n );
@@ -3368,7 +3369,6 @@ void TYPEprint_init( const Type type, FILES * files, Schema schema ) {
 
 /** print name, fundamental type, and description initialization function
    calls */
-
 void TYPEprint_nm_ft_desc( Schema schema, const Type type, FILE * f, char * endChars ) {
 
     fprintf( f, "                  \"%s\",        // Name\n",
@@ -3403,7 +3403,7 @@ void TYPEprint_new( const Type type, FILE * create, Schema schema ) {
                  "        %s = new SelectTypeDescriptor (\n                  ~%s,        //unique elements,\n",
                  TYPEtd_name( type ),
                  temp );
-        scl_free( temp );
+        sc_free( temp );
         TYPEprint_nm_ft_desc( schema, type, create, "," );
 
         fprintf( create,
@@ -3505,11 +3505,11 @@ void TYPEprint_new( const Type type, FILE * create, Schema schema ) {
 
         if( whereRule_formatted_size == 0 ) {
             whereRule_formatted_size = 3 * BUFSIZ;
-            whereRule_formatted = ( char * )scl_malloc( sizeof( char ) * whereRule_formatted_size );
+            whereRule_formatted = ( char * )sc_malloc( sizeof( char ) * whereRule_formatted_size );
         } else if( ( strlen( whereRule ) + 300 ) > whereRule_formatted_size ) {
-            scl_free( whereRule_formatted );
+            sc_free( whereRule_formatted );
             whereRule_formatted_size = strlen( whereRule ) + BUFSIZ;
-            whereRule_formatted = ( char * )scl_malloc( sizeof( char ) * whereRule_formatted_size );
+            whereRule_formatted = ( char * )sc_malloc( sizeof( char ) * whereRule_formatted_size );
         }
         whereRule_formatted[0] = '\0';
         if( w->label ) {
@@ -3567,10 +3567,10 @@ void TYPEprint_new( const Type type, FILE * create, Schema schema ) {
         fprintf( create, "        %s->_where_rules->Append(wr);\n",
                  TYPEtd_name( type ) );
 
-        scl_free( whereRule );
+        sc_free( whereRule );
         ptr2 = whereRule = 0;
         LISTod
-        scl_free( whereRule_formatted );
+        sc_free( whereRule_formatted );
     }
 }
 

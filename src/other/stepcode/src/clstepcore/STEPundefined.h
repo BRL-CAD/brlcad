@@ -12,12 +12,12 @@
 * and is not subject to copyright.
 */
 
-#include <scl_export.h>
+#include <sc_export.h>
 #include <errordesc.h>
 #include <string>
 #include <read_func.h>
 
-class SCL_CORE_EXPORT SCLundefined  {
+class SC_CORE_EXPORT SCLundefined  {
     protected:
         std::string val;
 
@@ -40,7 +40,6 @@ class SCL_CORE_EXPORT SCLundefined  {
         SCLundefined & operator= ( const char * str );
         SCLundefined();
         virtual ~SCLundefined();
-}
-;
+};
 
 #endif

@@ -17,7 +17,7 @@
 #include <sdai.h>
 #include <STEPattribute.h>
 
-#ifdef  SCL_LOGGING
+#ifdef  SC_LOGGING
 #include <fstream.h>
 extern ofstream * logStream;
 #endif
@@ -28,7 +28,7 @@ extern ofstream * logStream;
 SDAI_Select::SDAI_Select( const SelectTypeDescriptor * s,
                           const TypeDescriptor * td )
     : _type( s ), underlying_type( td ) {
-#ifdef SCL_LOGGING
+#ifdef SC_LOGGING
     *logStream << "Exiting SDAI_Select constructor." << endl;
 #endif
 }
@@ -213,7 +213,7 @@ Severity SDAI_Select::STEPread( istream & in, ErrorDescriptor * err,
     char c = '\0';
     std::string tmp;
 
-#ifdef SCL_LOGGING
+#ifdef SC_LOGGING
 //    *logStream << "DAVE ERR Entering SDAI_Select::STEPread." << endl;
 #endif
     // find out what case we have
@@ -324,19 +324,19 @@ Severity SDAI_Select::STEPread( istream & in, ErrorDescriptor * err,
                     "Bad data or missing closing ')' for SELECT type.\n" );
                 err->GreaterSeverity( SEVERITY_WARNING );
                 in.putback( c );
-#ifdef SCL_LOGGING
+#ifdef SC_LOGGING
 //    *logStream << "DAVE ERR Exiting SDAI_Select::STEPread for " << _type->Name() << endl;
 #endif
                 return SEVERITY_WARNING;
             }
-#ifdef SCL_LOGGING
+#ifdef SC_LOGGING
 //    *logStream << "DAVE ERR Exiting SDAI_Select::STEPread for " << _type->Name() << endl;
 #endif
             return err->severity();
         } else { // ERROR  -- the type wasn't one of the choices
             if( !in.good() ) {
                 err->GreaterSeverity( SEVERITY_INPUT_ERROR );
-#ifdef SCL_LOGGING
+#ifdef SC_LOGGING
 //    *logStream << "DAVE ERR Exiting SDAI_Select::STEPread for " << _type->Name() << endl;
 #endif
                 return SEVERITY_INPUT_ERROR;
@@ -344,7 +344,7 @@ Severity SDAI_Select::STEPread( istream & in, ErrorDescriptor * err,
                 err->AppendToDetailMsg(
                     "The type name for the SELECT type is not valid.\n" );
                 err->GreaterSeverity( SEVERITY_WARNING );
-#ifdef SCL_LOGGING
+#ifdef SC_LOGGING
 //    *logStream << "DAVE ERR Exiting SDAI_Select::STEPread for " << _type->Name() << endl;
 #endif
                 return SEVERITY_WARNING;
@@ -364,7 +364,7 @@ Severity SDAI_Select::STEPread( istream & in, ErrorDescriptor * err,
             case '$':
                 nullify();
                 err->GreaterSeverity( SEVERITY_INCOMPLETE );
-#ifdef SCL_LOGGING
+#ifdef SC_LOGGING
 //    *logStream << "DAVE ERR Exiting SDAI_Select::STEPread for " << _type->Name() << endl;
 #endif
                 return SEVERITY_INCOMPLETE;
@@ -375,7 +375,7 @@ Severity SDAI_Select::STEPread( istream & in, ErrorDescriptor * err,
                 in.putback( c );
                 err->AppendToDetailMsg( "No value found for SELECT type.\n" );
                 err->GreaterSeverity( SEVERITY_WARNING );
-#ifdef SCL_LOGGING
+#ifdef SC_LOGGING
 //    *logStream << "DAVE ERR Exiting SDAI_Select::STEPread for " << _type->Name() << endl;
 #endif
                 return SEVERITY_WARNING;
@@ -454,7 +454,7 @@ Severity SDAI_Select::STEPread( istream & in, ErrorDescriptor * err,
                 nullify();
                 in.putback( c );
                 err->GreaterSeverity( SEVERITY_WARNING );
-#ifdef SCL_LOGGING
+#ifdef SC_LOGGING
 //    *logStream << "DAVE ERR Exiting SDAI_Select::STEPread for " << _type->Name() << endl;
 #endif
                 return SEVERITY_WARNING;
@@ -476,7 +476,7 @@ Severity SDAI_Select::STEPread( istream & in, ErrorDescriptor * err,
             STEPentity * tmp =
                 ReadEntityRef( in, err, ",)", instances, addFileId );
             if( tmp && ( tmp != ENTITY_NULL ) && AssignEntity( tmp ) ) {
-#ifdef SCL_LOGGING
+#ifdef SC_LOGGING
 //    *logStream << "DAVE ERR Exiting SDAI_Select::STEPread for " << _type->Name() << endl;
 #endif
                 return SEVERITY_NULL;
@@ -485,7 +485,7 @@ Severity SDAI_Select::STEPread( istream & in, ErrorDescriptor * err,
                     "Reference to entity that is not a valid type for SELECT.\n" );
                 nullify();
                 err->GreaterSeverity( SEVERITY_WARNING );
-#ifdef SCL_LOGGING
+#ifdef SC_LOGGING
 //    *logStream << "DAVE ERR Exiting SDAI_Select::STEPread for " << _type->Name() << endl;
 #endif
                 return SEVERITY_WARNING;
@@ -498,14 +498,14 @@ Severity SDAI_Select::STEPread( istream & in, ErrorDescriptor * err,
             err->AppendToDetailMsg(
                 "The type of the SELECT type is not valid.\n" );
             err->GreaterSeverity( SEVERITY_WARNING );
-#ifdef SCL_LOGGING
+#ifdef SC_LOGGING
 //    *logStream << "DAVE ERR Exiting SDAI_Select::STEPread for " << _type->Name() << endl;
 #endif
             return SEVERITY_WARNING;
         }
     }
 //    if (!in.good())   severity (SEVERITY_INPUT_ERROR);
-#ifdef SCL_LOGGING
+#ifdef SC_LOGGING
 //    *logStream << "DAVE ERR Exiting SDAI_Select::STEPread for " << _type->Name() << endl;
 #endif
     return err->severity();

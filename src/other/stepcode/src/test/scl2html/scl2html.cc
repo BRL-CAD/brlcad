@@ -29,7 +29,10 @@
    function, we don't need to include the schema's header file inside
    tests.h  */
 #define DONT_NEED_HEADER
-#include <tests.h>
+#include "../tests.h"
+
+/* STEPentity* Iterator class definition */
+#include "../SEarritr.h"
 
 // PrintAttrTypeWithAnchor()
 // Given an atribute, print out its immediate type (not fundamental).
@@ -115,7 +118,7 @@ int PrintAttrsHTML( const EntityDescriptor * ent, ofstream & outhtml ) {
         while( attrDesc != 0 ) {
             attrCount++;
             outhtml << "<LI>" << attrDesc->Name() << " : ";
-            if( ( SDAI_Logical  )( attrDesc->Optional() ) == SCLLOG( LTrue ) ) {
+            if( ( attrDesc->Optional() ) == SDAI_LOGICAL( LTrue ) ) {
                 outhtml << "optional ";
             }
             PrintAttrTypeWithAnchor( attrDesc->ReferentType(), outhtml );

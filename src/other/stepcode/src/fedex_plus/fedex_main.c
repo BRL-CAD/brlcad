@@ -72,23 +72,26 @@
  * Added * to typedefs.  Replaced warning kludges with ERRORoption.
  */
 
-#include <scl_memmgr.h>
+#include <sc_memmgr.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include "../express/express.h"
 #include "../express/resolve.h"
 
+#include <sc_trace_fprintf.h>
+
 extern void print_fedex_version( void );
 
 static void fedex_plus_usage( void ) {
-    fprintf( stderr, "usage: %s [-s|-S] [-a|-A] [-c|-C] [-l|-L] [-v] [-d #] [-p <object_type>] {-w|-i <warning>} express_file\n", EXPRESSprogram_name );
+    fprintf( stderr, "usage: %s [-s|-S] [-a|-A] [-c|-C] [-L] [-v] [-d # | -d 9 -l nnn -u nnn] [-n] [-p <object_type>] {-w|-i <warning>} express_file\n", EXPRESSprogram_name );
     fprintf( stderr, "where\t-s or -S uses only single inheritance in the generated C++ classes\n" );
     fprintf( stderr, "\t-a or -A generates the early bound access functions for entity classes the old way (without an underscore)\n" );
     fprintf( stderr, "\t-c or -C generates C++ classes for use with CORBA (Orbix)\n" );
-    fprintf( stderr, "\t-l or -L prints logging code in the generated C++ classes\n" );
+    fprintf( stderr, "\t-L prints logging code in the generated C++ classes\n" );
     fprintf( stderr, "\t-v produces the version description below\n" );
     fprintf( stderr, "\t-d turns on debugging (\"-d 0\" describes this further\n" );
     fprintf( stderr, "\t-p turns on printing when processing certain objects (see below)\n" );
+    fprintf( stderr, "\t-n do not pause for internal errors (useful with delta script)\n" );
     fprintf( stderr, "\t-w warning enable\n" );
     fprintf( stderr, "\t-i warning ignore\n" );
     fprintf( stderr, "and <warning> is one of:\n" );

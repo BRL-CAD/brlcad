@@ -15,7 +15,7 @@
 
 /* $Id: gennode.h,v 3.0.1.3 1997/11/05 22:33:47 sauderd DP3.1 $  */
 
-#include <scl_export.h>
+#include <sc_export.h>
 #include <iostream>
 
 class GenNodeList;
@@ -27,7 +27,7 @@ class DisplayNodeList;
 // If you delete this object it first removes itself from any list it is in.
 //////////////////////////////////////////////////////////////////////////////
 
-class SCL_UTILS_EXPORT GenericNode {
+class SC_UTILS_EXPORT GenericNode {
         friend class GenNodeList;
         friend class MgrNodeList;
         friend class DisplayNodeList;

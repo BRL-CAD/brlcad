@@ -1,6 +1,6 @@
 
 #include <sdai.h>
-#include "scl_memmgr.h"
+#include "sc_memmgr.h"
 
 /*
 * NIST STEP Core Class Library
@@ -19,19 +19,19 @@
 // class Logical
 ///////////////////////////////////////////////////////////////////////////////
 
-SDAI_LOGICAL::SDAI_LOGICAL ( const char * val ) {
+SDAI_LOGICAL::SDAI_LOGICAL( const char * val ) {
     set_value( val );
 }
 
-SDAI_LOGICAL::SDAI_LOGICAL ( Logical state ) {
+SDAI_LOGICAL::SDAI_LOGICAL( Logical state ) {
     set_value( state );
 }
 
-SDAI_LOGICAL::SDAI_LOGICAL ( const SDAI_LOGICAL & source ) {
+SDAI_LOGICAL::SDAI_LOGICAL( const SDAI_LOGICAL & source ) {
     set_value( source.asInt() );
 }
 
-SDAI_LOGICAL::SDAI_LOGICAL ( int i ) {
+SDAI_LOGICAL::SDAI_LOGICAL( int i ) {
     if( i == 0 ) {
         v =  LFalse ;
     } else {
@@ -39,7 +39,7 @@ SDAI_LOGICAL::SDAI_LOGICAL ( int i ) {
     }
 }
 
-SDAI_LOGICAL::~SDAI_LOGICAL () {
+SDAI_LOGICAL::~SDAI_LOGICAL() {
 }
 
 const char * SDAI_LOGICAL::Name() const {
@@ -135,7 +135,7 @@ int SDAI_LOGICAL::set_value( const char * n )  {
 }
 
 Severity SDAI_LOGICAL::ReadEnum( istream & in, ErrorDescriptor * err, int AssignVal,
-                             int needDelims ) {
+                                 int needDelims ) {
     if( AssignVal ) {
         set_null();
     }
@@ -261,26 +261,26 @@ const char * SDAI_BOOLEAN::Name() const {
     return "Bool";
 }
 
-SDAI_BOOLEAN::SDAI_BOOLEAN ( char * val ) {
+SDAI_BOOLEAN::SDAI_BOOLEAN( char * val ) {
     set_value( val );
 }
 
-SDAI_BOOLEAN::SDAI_BOOLEAN ( Boolean state ) {
+SDAI_BOOLEAN::SDAI_BOOLEAN( Boolean state ) {
     set_value( state );
 }
 
-SDAI_BOOLEAN::SDAI_BOOLEAN ( const SDAI_BOOLEAN & source ) {
+SDAI_BOOLEAN::SDAI_BOOLEAN( const SDAI_BOOLEAN & source ) {
     set_value( source.asInt() );
 }
 
-SDAI_BOOLEAN::~SDAI_BOOLEAN () {
+SDAI_BOOLEAN::~SDAI_BOOLEAN() {
 }
 
 int SDAI_BOOLEAN::no_elements() const {
     return 2;
 }
 
-SDAI_BOOLEAN::SDAI_BOOLEAN ( int i ) {
+SDAI_BOOLEAN::SDAI_BOOLEAN( int i ) {
     if( i == 0 ) {
         v =  BFalse ;
     } else {
@@ -288,7 +288,7 @@ SDAI_BOOLEAN::SDAI_BOOLEAN ( int i ) {
     }
 }
 
-SDAI_BOOLEAN::SDAI_BOOLEAN ( const SDAI_LOGICAL & val )  {
+SDAI_BOOLEAN::SDAI_BOOLEAN( const SDAI_LOGICAL & val )  {
     if( val.asInt() == LUnknown ) {
         // this should set error code sdaiVT_NVLD i.e. Invalid value type.
         v = BUnset;
@@ -339,38 +339,42 @@ SDAI_LOGICAL SDAI_BOOLEAN::operator ==( const SDAI_LOGICAL & t ) const {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-SDAI_Enum::SDAI_Enum () {
+SDAI_Enum::SDAI_Enum() {
     v = 0;
 }
 
-SDAI_Enum::~SDAI_Enum () {
+SDAI_Enum::~SDAI_Enum() {
 }
 
+/**
+ * \copydoc set_value( const char * n )
+ */
 int SDAI_Enum::put( int val ) {
     return set_value( val );
 }
 
+/**
+ * \copydoc set_value( const char * n )
+ */
 int SDAI_Enum::put( const char * n ) {
     return set_value( n );
 }
 
-int SDAI_Enum::exists() const { // return 0 if unset otherwise return 1
+/// return 0 if unset otherwise return 1
+int SDAI_Enum::exists() const {
     return !( v > no_elements() );
 }
-
-void SDAI_Enum::nullify() // change the receiver to an unset status
-// unset is generated to be 1 greater than last element
-{
+/**
+ * change the receiver to an unset status
+ * unset is generated to be 1 greater than last element
+ */
+void SDAI_Enum::nullify() {
     set_value( no_elements() + 1 );
 }
 
-/******************************************************************
- ** Procedure:  DebugDisplay
- ** Parameters:  ostream& out
- ** Returns:
- ** Description:  prints out some information on the enumerated
- **               item for debugging purposes
- ** Side Effects:
+/**************************************************************//**
+ ** prints out some information on the enumerated item for
+ ** debugging purposes
  ** Status:  ok 2/1/91
  ******************************************************************/
 void SDAI_Enum::DebugDisplay( ostream & out ) const {
@@ -391,21 +395,23 @@ void SDAI_Enum::DebugDisplay( ostream & out ) const {
     out << "\n";
 }
 
-// Read an Enumeration value
-// ENUMERATION = "." UPPER { UPPER | DIGIT } "."
-// *note* UPPER is defined as alpha or underscore.
-// returns: Severity of the error.
-// error message and error Severity is written to ErrorDescriptor *err.
-// int AssignVal is:
-// true => value is assigned to the SDAI_Enum;
-// true or false => value is read and appropriate error info is set and
-//  returned.
-// int needDelims is:
-// false => absence of the period delimiters is not an error;
-// true => delimiters must be valid;
-// true or false => non-matching delimiters are flagged as an error
+/**
+** Read an Enumeration value
+** ENUMERATION = "." UPPER { UPPER | DIGIT } "."
+** *note* UPPER is defined as alpha or underscore.
+**
+** \returns Severity of the error.
+** \param err error message and error Severity is written to ErrorDescriptor *err.
+** \param AssignVal is:
+**  true => value is assigned to the SDAI_Enum;
+**  true or false => value is read and appropriate error info is set and returned.
+** \param int needDelims is:
+**  false => absence of the period delimiters is not an error;
+**  true => delimiters must be valid;
+**  true or false => non-matching delimiters are flagged as an error
+*/
 Severity SDAI_Enum::ReadEnum( istream & in, ErrorDescriptor * err, int AssignVal,
-                          int needDelims ) {
+                              int needDelims ) {
     if( AssignVal ) {
         set_null();
     }
@@ -534,13 +540,13 @@ Severity SDAI_Enum::StrToVal( const char * s, ErrorDescriptor * err, int optiona
     return err->severity();
 }
 
-// reads an enumerated value in STEP file format
+/// reads an enumerated value in STEP file format
 Severity SDAI_Enum::STEPread( const char * s, ErrorDescriptor * err, int optional ) {
     istringstream in( ( char * )s );
     return STEPread( in, err, optional );
 }
 
-// reads an enumerated value in STEP file format
+/// reads an enumerated value in STEP file format
 Severity SDAI_Enum::STEPread( istream & in, ErrorDescriptor * err, int optional ) {
     ReadEnum( in, err, 1, 1 );
     if( ( err->severity() == SEVERITY_INCOMPLETE ) && optional ) {
@@ -580,8 +586,8 @@ const char * SDAI_Enum::STEPwrite( std::string & s ) const {
 }
 
 Severity SDAI_Enum::EnumValidLevel( istream & in, ErrorDescriptor * err,
-                                int optional, char * tokenList,
-                                int needDelims, int clearError ) {
+                                    int optional, char * tokenList,
+                                    int needDelims, int clearError ) {
     if( clearError ) {
         err->ClearErrorMsg();
     }
@@ -617,24 +623,24 @@ Severity SDAI_Enum::EnumValidLevel( istream & in, ErrorDescriptor * err,
 }
 
 Severity SDAI_Enum::EnumValidLevel( const char * value, ErrorDescriptor * err,
-                                int optional, char * tokenList,
-                                int needDelims, int clearError ) {
+                                    int optional, char * tokenList,
+                                    int needDelims, int clearError ) {
     istringstream in( ( char * )value );
     return EnumValidLevel( in, err, optional, tokenList, needDelims,
                            clearError );
 }
 
-/******************************************************************
- ** Procedure:  set_value
- ** Parameters:  char * n  OR  in i  -- value to be set
- ** Returns:  value set
- ** Description:  sets the value of an enumerated attribute
- **     case is not important in the character based version
- **     if value is not acceptable, a warning is printed and
- **     processing continues
- ** Side Effects:
- ** Status:  ok 2.91
- ******************************************************************/
+/**************************************************************//**
+** sets the value of an enumerated attribute case is not important
+** in the character based version if value is not acceptable, a
+** warning is printed and processing continues
+**
+**  set_value is the same function as put
+**
+** Parameter: value to be set
+** Status:  ok 2.91
+** \returns:  value set
+******************************************************************/
 int SDAI_Enum::set_value( const char * n )  {
     if( !n || ( !strcmp( n, "" ) ) ) {
         nullify();
@@ -655,7 +661,9 @@ int SDAI_Enum::set_value( const char * n )  {
 
 }
 
-//  set_value is the same function as put
+/**
+ * \copydoc set_value( const char * n )
+ */
 int SDAI_Enum::set_value( const int i )  {
     if( i > no_elements() )  {
         v = no_elements() + 1;

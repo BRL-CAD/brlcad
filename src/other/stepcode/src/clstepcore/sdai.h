@@ -18,8 +18,8 @@
 * values for the EXPRESS base types.
 */
 
-#include "scl_cf.h"
-#include <scl_export.h>
+#include "sc_cf.h"
+#include <sc_export.h>
 
 extern const char * SCLversion;
 
@@ -60,10 +60,10 @@ typedef unsigned long  SDAI_ULong;
 typedef double         SDAI_Real;
 
 // C++ from values.h DAS PORT
-extern SCL_CORE_EXPORT const SDAI_Integer SDAI_INT_NULL;
-extern SCL_CORE_EXPORT const SDAI_Real SDAI_REAL_NULL;
+extern SC_CORE_EXPORT const SDAI_Integer SDAI_INT_NULL;
+extern SC_CORE_EXPORT const SDAI_Real SDAI_REAL_NULL;
 // arbitrary choice by me for number DAS
-extern SCL_CORE_EXPORT const SDAI_Real SDAI_NUMBER_NULL;
+extern SC_CORE_EXPORT const SDAI_Real SDAI_NUMBER_NULL;
 
 
 enum SDAI_Access_type {
@@ -211,7 +211,7 @@ typedef SDAI_Model_contents_ptr SDAI_Model_contents_var;
 #include <sdaiModel_contents.h>
 
 //  ENTITY
-extern SCL_CORE_EXPORT SDAI_Application_instance NilSTEPentity;
+extern SC_CORE_EXPORT SDAI_Application_instance NilSTEPentity;
 #define ENTITY_NULL        &NilSTEPentity
 #define NULL_ENTITY        &NilSTEPentity
 #define S_ENTITY_NULL        &NilSTEPentity
@@ -224,7 +224,7 @@ typedef STEPentity_ptr STEPentity_var;
 typedef SDAI_Application_instance * STEPentityPtr;
 typedef SDAI_Application_instance * STEPentityH;
 
-extern SCL_CORE_EXPORT SDAI_Application_instance *
+extern SC_CORE_EXPORT SDAI_Application_instance *
 ReadEntityRef( istream & in, ErrorDescriptor * err, const char * tokenList,
                InstMgr * instances, int addFileId );
 

@@ -33,8 +33,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <scl_cf.h>
-#include <scl_export.h>
+#include <sc_cf.h>
+#include <sc_export.h>
 #include <stdlib.h>
 
 #include <string.h>
@@ -47,7 +47,7 @@
 
 /*****************************************************************************/
 
-class SCL_UTILS_EXPORT DirObj {
+class SC_UTILS_EXPORT DirObj {
     public:
         DirObj( const char * dirName );
         virtual ~DirObj();

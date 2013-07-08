@@ -2,7 +2,7 @@
 #include <cfloat>
 
 #include <sdai.h>
-#include "scl_memmgr.h"
+#include "sc_memmgr.h"
 
 const char * SCLversion = "STEPcode, github.com/stepcode/stepcode";
 

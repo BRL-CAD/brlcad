@@ -61,10 +61,10 @@ SET(LIBSTEPCORE_PRIVATE_HDRS
 
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${SCL_SOURCE_DIR}/src/base
-    ${SCL_SOURCE_DIR}/src/cldai
-    ${SCL_SOURCE_DIR}/src/cleditor
-    ${SCL_SOURCE_DIR}/src/clutils
+    ${SC_SOURCE_DIR}/src/base
+    ${SC_SOURCE_DIR}/src/cldai
+    ${SC_SOURCE_DIR}/src/cleditor
+    ${SC_SOURCE_DIR}/src/clutils
 )
 
-SCL_ADDLIB(stepcore "${LIBSTEPCORE_SRCS}" "express;steputils;stepdai;base")
+SC_ADDLIB(stepcore "${LIBSTEPCORE_SRCS}" "express;steputils;stepdai;base")

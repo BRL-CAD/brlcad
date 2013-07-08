@@ -1,7 +1,7 @@
 #ifndef STEPCOMPLEX_H
 #define STEPCOMPLEX_H
 
-#include <scl_export.h>
+#include <sc_export.h>
 #include <errordesc.h>
 #include <sdai.h>
 #include <baseType.h>
@@ -10,10 +10,10 @@
 
 #include <list>
 
-typedef std::list<void*>            STEPcomplex_attr_data_list;
-typedef std::list<void*>::iterator  STEPcomplex_attr_data;
+typedef std::list<void *>            STEPcomplex_attr_data_list;
+typedef std::list<void *>::iterator  STEPcomplex_attr_data;
 
-class SCL_CORE_EXPORT STEPcomplex : public SDAI_Application_instance  {
+class SC_CORE_EXPORT STEPcomplex : public SDAI_Application_instance {
     public:
         STEPcomplex * sc;
         STEPcomplex * head;
@@ -49,7 +49,7 @@ class SCL_CORE_EXPORT STEPcomplex : public SDAI_Application_instance  {
                                 int writeComment = 1 );
         virtual const char * STEPwrite( std::string & buf, const char * currSch = NULL );
 
-        SDAI_Application_instance  * Replicate();
+        SDAI_Application_instance * Replicate();
 
         virtual void WriteExtMapEntities( ostream & out = cout,
                                           const char * currSch = NULL );
@@ -58,7 +58,7 @@ class SCL_CORE_EXPORT STEPcomplex : public SDAI_Application_instance  {
         virtual void AppendEntity( STEPcomplex * stepc );
 
     protected:
-        virtual void CopyAs( SDAI_Application_instance  * );
+        virtual void CopyAs( SDAI_Application_instance * );
         void BuildAttrs( const char * s );
         void AddEntityPart( const char * name );
         void AssignDerives();

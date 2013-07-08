@@ -14,7 +14,7 @@
  * Date:        5/9/97                                                       *
  *****************************************************************************/
 
-#include <scl_export.h>
+#include <sc_export.h>
 #include <iostream>
 #include <fstream>
 using namespace std;
@@ -72,7 +72,7 @@ class OrList;
 class ComplexList;
 class ComplexCollect;
 
-class SCL_CORE_EXPORT EntNode {
+class SC_CORE_EXPORT EntNode {
         friend class SimpleList;
         friend class AndOrList;
         friend class AndList;
@@ -137,7 +137,7 @@ class SCL_CORE_EXPORT EntNode {
         EntNode * lastSmaller( EntNode * ); ///< used by ::sort()
 };
 
-class SCL_CORE_EXPORT EntList {
+class SC_CORE_EXPORT EntList {
         friend class MultList;
         friend class JoinList;
         friend class OrList;
@@ -206,7 +206,7 @@ class SCL_CORE_EXPORT EntList {
         int level;  ///< How many levels deep are we (main use for printing).
 };
 
-class SCL_CORE_EXPORT SimpleList : public EntList {
+class SC_CORE_EXPORT SimpleList : public EntList {
         friend class ComplexList;
         friend ostream & operator<< ( ostream &, SimpleList & );
 
@@ -245,7 +245,7 @@ class SCL_CORE_EXPORT SimpleList : public EntList {
  * Supports concepts and functionality common to all the compound list
  * types, especially AND and ANDOR.
  */
-class SCL_CORE_EXPORT MultList : public EntList {
+class SC_CORE_EXPORT MultList : public EntList {
 
         friend class ComplexList;
         friend class ComplexCollect;
@@ -291,7 +291,7 @@ class SCL_CORE_EXPORT MultList : public EntList {
  * A specialized MultList, super for subtypes AndOrList and AndList, or
  * ones which join their multiple children.
  */
-class SCL_CORE_EXPORT JoinList : public MultList {
+class SC_CORE_EXPORT JoinList : public MultList {
     public:
         JoinList( JoinType j ) : MultList( j ) {}
         ~JoinList() {}
@@ -299,7 +299,7 @@ class SCL_CORE_EXPORT JoinList : public MultList {
         bool acceptChoice( EntNode * );
 };
 
-class SCL_CORE_EXPORT AndOrList : public JoinList {
+class SC_CORE_EXPORT AndOrList : public JoinList {
         friend class ComplexList;
 
     public:
@@ -309,7 +309,7 @@ class SCL_CORE_EXPORT AndOrList : public JoinList {
         MatchType matchORs( EntNode * );
 };
 
-class SCL_CORE_EXPORT AndList : public JoinList {
+class SC_CORE_EXPORT AndList : public JoinList {
         friend class ComplexList;
         friend ostream & operator<< ( ostream &, ComplexList & );
 
@@ -320,7 +320,7 @@ class SCL_CORE_EXPORT AndList : public JoinList {
         MatchType matchORs( EntNode * );
 };
 
-class SCL_CORE_EXPORT OrList : public MultList {
+class SC_CORE_EXPORT OrList : public MultList {
     public:
         OrList() : MultList( OR ), choice( -1 ), choice1( -1 ), choiceCount( 0 ) {}
         ~OrList() {}
@@ -350,7 +350,7 @@ class SCL_CORE_EXPORT OrList : public MultList {
  * Contains the entire list of EntLists which describe the set of
  * instantiable complex entities defined by an EXPRESS expression.
  */
-class SCL_CORE_EXPORT ComplexList {
+class SC_CORE_EXPORT ComplexList {
         friend class ultList;
         friend class ComplexCollect;
         friend ostream & operator<< ( ostream &, ComplexList & );
@@ -401,7 +401,7 @@ class SCL_CORE_EXPORT ComplexList {
 };
 
 /// The collection of all the ComplexLists defined by the current schema.
-class SCL_CORE_EXPORT ComplexCollect {
+class SC_CORE_EXPORT ComplexCollect {
     public:
         ComplexCollect( ComplexList * c = NULL ) : clists( c ) {
             count = ( c ? 1 : 0 );

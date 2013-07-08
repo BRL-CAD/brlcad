@@ -12,9 +12,9 @@
 * and is not subject to copyright.
 */
 
-#include <scl_export.h>
+#include <sc_export.h>
 
-class SCL_DAI_EXPORT SDAI_Enum {
+class SC_DAI_EXPORT SDAI_Enum {
         friend     ostream & operator<< ( ostream &, const SDAI_Enum & );
     protected:
         int v;  //  integer value of enumeration instance
@@ -86,7 +86,7 @@ class SDAI_BOOLEAN;
 enum Boolean { BFalse, BTrue, BUnset };
 enum Logical { LFalse, LTrue, LUnset, LUnknown };
 
-class SCL_DAI_EXPORT SDAI_LOGICAL :
+class SC_DAI_EXPORT SDAI_LOGICAL :
     public SDAI_Enum  {
     public:
         const char * Name() const;
@@ -118,7 +118,7 @@ class SCL_DAI_EXPORT SDAI_LOGICAL :
 
 };
 
-class SCL_DAI_EXPORT SDAI_BOOLEAN :
+class SC_DAI_EXPORT SDAI_BOOLEAN :
     public SDAI_Enum  {
     public:
         const char * Name() const;

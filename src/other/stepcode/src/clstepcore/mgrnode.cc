@@ -22,7 +22,7 @@
 #include <sdai.h>
 
 #include <iostream>
-#include "scl_memmgr.h"
+#include "sc_memmgr.h"
 
 void * MgrNode::SEE() {
     return ( di ? di->SEE() : 0 );
@@ -148,7 +148,7 @@ int MgrNode::ChangeState( stateEnum s ) {
     return 1;
 }
 
-void MgrNode::Init( SDAI_Application_instance  *s,
+void MgrNode::Init( SDAI_Application_instance * s,
                     stateEnum listState,
                     MgrNodeList * list ) {
 //    if(debug_level >= PrintFunctionTrace)
@@ -171,7 +171,7 @@ MgrNode::MgrNode() {
     Init( 0, noStateSE, 0 );
 }
 
-MgrNode::MgrNode( SDAI_Application_instance  *StepEntPtr ) {
+MgrNode::MgrNode( SDAI_Application_instance * StepEntPtr ) {
 //    if(debug_level >= PrintFunctionTrace)
 //  cout << "MgrNode::MgrNode()\n";
 //    if(debug_level >= PrintValues)
@@ -183,7 +183,7 @@ MgrNode::MgrNode( SDAI_Application_instance  *StepEntPtr ) {
 //  completeSE - if reading valid exchange file
 //  incompleteSE or completeSE - if reading working session file
 //  newSE - if instance is created by user using editor (probe)
-MgrNode::MgrNode( SDAI_Application_instance  *StepEntPtr, stateEnum listState ) {
+MgrNode::MgrNode( SDAI_Application_instance * StepEntPtr, stateEnum listState ) {
 //    if(debug_level >= PrintFunctionTrace)
 //  cout << "MgrNode::MgrNode()\n";
 //    if(debug_level >= PrintValues)
@@ -194,7 +194,7 @@ MgrNode::MgrNode( SDAI_Application_instance  *StepEntPtr, stateEnum listState ) 
 //  completeSE - if reading valid exchange file
 //  incompleteSE or completeSE - if reading working session file
 //  newSE - if instance is created by user using editor (probe)
-MgrNode::MgrNode( SDAI_Application_instance  *StepEntPtr, stateEnum listState, MgrNodeList * list ) {
+MgrNode::MgrNode( SDAI_Application_instance * StepEntPtr, stateEnum listState, MgrNodeList * list ) {
 //    if(debug_level >= PrintFunctionTrace)
 //  cout << "MgrNode::MgrNode()\n";
 //    if(debug_level >= PrintValues)

@@ -2,7 +2,7 @@
 #define SCOPE_H
 
 /** **********************************************************************
-** Module:  Scope
+** Module:  Scope \file scope.h
 ** Description: This module implements a hierarchical (i.e., scoped)
 **  symbol table.  The symbol table can store definitions of entities,
 **  types, algorithms, and variables, as well as containing a list
@@ -49,7 +49,7 @@
 /* modules used */
 /****************/
 
-#include <scl_export.h>
+#include <sc_export.h>
 #include "type.h"
 #include "variable.h"
 #include "entity.h"
@@ -78,14 +78,13 @@
 #define SCOPE_FIND_ANYTHING OBJ_ANYTHING_BITS
 
 struct Scope_ {
-    Symbol      symbol;
-    char        type;       /* see above */
-    ClientData  clientData; /* user may use this for any purpose */
-    int     search_id;  /* key to avoid searching this scope twice */
-    Dictionary      symbol_table,enum_table;
+    Symbol          symbol;
+    char            type;       /* see above */
+    ClientData      clientData; /**< user may use this for any purpose */
+    int             search_id;  /**< key to avoid searching this scope twice */
+    Dictionary      symbol_table, enum_table;
     struct Scope_ * superscope;
     union {
-        /*      struct Constant *constant;*/
         struct Procedure_ * proc;
         struct Function_ * func;
         struct Rule_ * rule;
@@ -94,10 +93,10 @@ struct Scope_ {
         struct Express_ * express;
         struct Increment_ * incr;
         struct TypeHead_ * type;
-        /* no, query owns a scope rather than scope owning a query */
-        /*      struct Query *query;*/
+        /* no, query owns a scope rather than scope owning a query
+         *      struct Query *query;  */
     } u;
-    Linked_List where;      /* optional where clause */
+    Linked_List where;      /**< optional where clause */
 };
 
 /******************************/
@@ -110,9 +109,6 @@ struct Scope_ {
 #define SCOPEget_symbol(scope)      (&(scope)->symbol)
 #define SCOPEput_name(scope,name)   ((scope)->symbol.name = name)
 #define SCOPEget_name(scope)        ((scope)->symbol.name)
-/* get_superscope's' for backward compat */
-#define SCOPEget_superscope(scope)  ((scope)->superscope)
-#define SCOPEget_superscope(scope)  ((scope)->superscope)
 #define SCOPEget_resolved(scope)    ((scope)->symbol.resolved)
 
 #define SCOPEget_clientData(s)      ((s)->clientData)
@@ -138,14 +134,14 @@ struct Scope_ {
 /* function prototypes */
 /***********************/
 
-extern SCL_EXPRESS_EXPORT struct Symbol_ * SCOPE_get_symbol PROTO( ( Generic ) );
-extern SCL_EXPRESS_EXPORT void     SCOPE_get_entities PROTO( ( Scope, Linked_List ) );
-extern SCL_EXPRESS_EXPORT Linked_List  SCOPEget_entities PROTO( ( Scope ) );
-extern SCL_EXPRESS_EXPORT Linked_List  SCOPEget_entities_superclass_order PROTO( ( Scope ) );
-extern SCL_EXPRESS_EXPORT Generic      SCOPEfind PROTO( ( Scope, char *, int ) );
-extern SCL_EXPRESS_EXPORT void     SCOPE_get_functions PROTO( ( Scope, Linked_List ) );
-extern SCL_EXPRESS_EXPORT Linked_List  SCOPEget_functions PROTO( ( Scope ) );
-extern SCL_EXPRESS_EXPORT void     SCOPE_get_rules PROTO( ( Scope, Linked_List ) );
-extern SCL_EXPRESS_EXPORT Linked_List  SCOPEget_rules PROTO( ( Scope ) );
+extern SC_EXPRESS_EXPORT struct Symbol_ * SCOPE_get_symbol PROTO( ( Generic ) );
+extern SC_EXPRESS_EXPORT void     SCOPE_get_entities PROTO( ( Scope, Linked_List ) );
+extern SC_EXPRESS_EXPORT Linked_List  SCOPEget_entities PROTO( ( Scope ) );
+extern SC_EXPRESS_EXPORT Linked_List  SCOPEget_entities_superclass_order PROTO( ( Scope ) );
+extern SC_EXPRESS_EXPORT Generic      SCOPEfind PROTO( ( Scope, char *, int ) );
+extern SC_EXPRESS_EXPORT void     SCOPE_get_functions PROTO( ( Scope, Linked_List ) );
+extern SC_EXPRESS_EXPORT Linked_List  SCOPEget_functions PROTO( ( Scope ) );
+extern SC_EXPRESS_EXPORT void     SCOPE_get_rules PROTO( ( Scope, Linked_List ) );
+extern SC_EXPRESS_EXPORT Linked_List  SCOPEget_rules PROTO( ( Scope ) );
 
 #endif /* SCOPE_H */

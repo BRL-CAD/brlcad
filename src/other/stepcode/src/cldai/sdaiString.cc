@@ -11,27 +11,26 @@
 
 #include <sdai.h>
 #include <sstream>
-#include "scl_memmgr.h"
+#include "sc_memmgr.h"
 
-SDAI_String::SDAI_String( const char * str, size_t max )
-{
-  if (!str)
-    str = "";
+SDAI_String::SDAI_String( const char * str, size_t max ) {
+    if( !str ) {
+        str = "";
+    }
 
-  if (max == std::string::npos)
-    content = std::string(str);
-  else
-    content = std::string(str, max);
+    if( max == std::string::npos ) {
+        content = std::string( str );
+    } else {
+        content = std::string( str, max );
+    }
 }
 
 SDAI_String::SDAI_String( const std::string & s )
-  : content(std::string( s ))
-{
+    : content( std::string( s ) ) {
 }
 
 SDAI_String::SDAI_String( const SDAI_String & s )
-  : content(std::string(s.c_str()))
-{
+    : content( std::string( s.c_str() ) ) {
 }
 
 SDAI_String::~SDAI_String( void ) {
@@ -77,8 +76,8 @@ Severity SDAI_String::StrToVal( const char * s ) {
 }
 
 /**
- *  STEPread reads a string in exchange file format
- *  starting with a single quote
+ * STEPread reads a string in exchange file format
+ * starting with a single quote
  */
 Severity SDAI_String::STEPread( istream & in, ErrorDescriptor * err ) {
     clear();  // clear the old string
@@ -93,18 +92,21 @@ Severity SDAI_String::STEPread( istream & in, ErrorDescriptor * err ) {
     // retrieve current severity
     Severity sev = err -> severity();
 
-    if ( s.empty() ) {
+    if( s.empty() ) {
         // no string was read
         in.flags( flags ); // set the format state back to previous settings
         err -> GreaterSeverity( SEVERITY_INCOMPLETE );
         sev = SEVERITY_INCOMPLETE;
-    } else if ( sev != SEVERITY_INPUT_ERROR ) {
+    } else if( sev != SEVERITY_INPUT_ERROR ) {
         // read valid string
         sev = SEVERITY_NULL;
     }
     return sev;
 }
 
+/**
+ * \copydoc STEPread( istream & in, ErrorDescriptor * err )
+ */
 Severity SDAI_String::STEPread( const char * s, ErrorDescriptor * err ) {
     istringstream in( ( char * )s );
     return STEPread( in, err );

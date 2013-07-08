@@ -72,8 +72,7 @@ class EntNode {
 
     public:
         EntNode( const char * nm = "" ) : next( 0 ), mark( NOMARK ),
-            multSupers( 0 )
-        {
+            multSupers( 0 ) {
             strcpy( name, nm );
         }
         EntNode( char *[] );  // given a list, create a linked list of EntNodes
@@ -394,6 +393,7 @@ class ComplexList {
         int abstract;   // is our supertype abstract?
         int dependent;  // is our supertype also a subtype of other supertype(s)?
         int multSupers; // am I a combo-CList created to test a subtype which has
+        int maxlevel;
 };                  // >1 supertypes?
 
 class ComplexCollect {

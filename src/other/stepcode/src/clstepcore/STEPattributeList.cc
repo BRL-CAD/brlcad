@@ -10,13 +10,9 @@
 * and is not subject to copyright.
 */
 
-/* $Id: STEPattributeList.cc,v 3.0.1.3 1997/11/05 21:59:26 sauderd DP3.1 $ */
-
 #include <STEPattributeList.h>
 #include <STEPattribute.h>
-#include "scl_memmgr.h"
-
-//#include <stdlib.h>
+#include "sc_memmgr.h"
 
 AttrListNode::AttrListNode( STEPattribute * a ) {
     attr = a;
@@ -75,29 +71,3 @@ void STEPattributeList::push( STEPattribute * a ) {
         AppendNode( saln );
     }
 }
-
-
-
-
-
-
-
-
-
-
-/*
-STEPattributeListNode NilSTEPattributeListNode;
-
-class init_NilSTEPattributeListNode
-{
-public:
-  inline init_NilSTEPattributeListNode()
-  {
-    NilSTEPattributeListNode.tl = &NilSTEPattributeListNode;
-    NilSTEPattributeListNode.ref = -1;
-  }
-};
-
-static init_NilSTEPattributeListNode NilSTEPattributeListNode_initializer;
-
-*/

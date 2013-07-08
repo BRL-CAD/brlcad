@@ -1,12 +1,11 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
 #test part 21 files
-#currently, the only tests are for the schema name
 
 set( schema_name_tests_head "
 ISO-10303-21;
 HEADER;
-FILE_DESCRIPTION(('SCL test file'),'2;1');
+FILE_DESCRIPTION(('SC test file'),'2;1');
 FILE_NAME('test.stp','2011-11-29T',('mp'),(''),'0','1','2');
 ")
 set( schema_name_tests_tail "
@@ -52,3 +51,10 @@ set_tests_properties( test_good_schema_name test_good_schema_name_asn test_misma
                       PROPERTIES DEPENDS build_cpp_sdai_AP214E3_2010 LABELS exchange_file )
 
 set_tests_properties( test_mismatch_schema_name test_missing_and_required_strict PROPERTIES WILL_FAIL TRUE )
+
+#check for a segmentation fault with selects. the files are a subset of the 210e3 schema and of SurfaceMountFlasher.stp, respectively
+#p21read will report errors with the file, but they don't matter as long as there isn't a segfault.
+BUILD_A_SCHEMA(${SC_SOURCE_DIR}/test/misc/select_segfault_210e3.exp)
+add_test( test_select_segfault ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/p21read_sdai_select_segfault_210e3
+                               ${CMAKE_CURRENT_SOURCE_DIR}/select_segfault_210e3.stp )
+set_tests_properties( test_select_segfault PROPERTIES DEPENDS build_cpp_sdai_select_segfault_210e3 LABELS exchange_file WILL_FAIL TRUE )

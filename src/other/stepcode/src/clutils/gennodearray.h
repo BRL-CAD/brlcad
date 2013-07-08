@@ -21,7 +21,7 @@
  * Copyright (c) 1990 Stanford University
  */
 
-#include <scl_export.h>
+#include <sc_export.h>
 #include <string.h>
 #include <memory.h>
 #include <stdlib.h> // to get bcopy for CenterLine
@@ -38,7 +38,7 @@
 // DeleteEntries().
 //////////////////////////////////////////////////////////////////////////////
 
-class SCL_UTILS_EXPORT GenNodeArray {
+class SC_UTILS_EXPORT GenNodeArray {
     public:
 
         GenNodeArray( int defaultSize = ARRAY_DEFAULT_SIZE );

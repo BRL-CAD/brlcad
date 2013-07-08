@@ -105,7 +105,7 @@
  *
  */
 
-#include <scl_memmgr.h>
+#include <sc_memmgr.h>
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
@@ -301,7 +301,7 @@ HASHdestroy( Hash_Table table ) {
                         p = q;
                     }
                 }
-                scl_free( table->Directory[i] );
+                sc_free( table->Directory[i] );
             }
         }
         HASH_Table_destroy( table );
@@ -399,7 +399,7 @@ HASHsearch( Hash_Table table, Element item, Action action ) {
             ** table over-full?
             */
             if( ++table->KeyCount / MUL( table->SegmentCount, SEGMENT_SIZE_SHIFT ) > table->MaxLoadFactor ) {
-                HASHexpand_table( table );    /* doesn't affect q	*/
+                HASHexpand_table( table );    /* doesn't affect q   */
             }
     }
     return( ( Element )0 ); /* was return (Element)q */
@@ -427,7 +427,7 @@ HASHhash( char * Key, Hash_Table table ) {
     h %= PRIME2;
     address = MOD( h, table->maxp );
     if( address < table->p ) {
-        address = MOD( h, ( table->maxp << 1 ) );    /* h % (2*table->maxp)	*/
+        address = MOD( h, ( table->maxp << 1 ) );    /* h % (2*table->maxp) */
     }
     return( address );
 }

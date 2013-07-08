@@ -1,0 +1,13 @@
+ISO-10303-21;
+HEADER;
+FILE_DESCRIPTION(('SCL test file'),'2;1');
+FILE_NAME('test_inverse_attr.p21','2012-06-30T',('mp'),(''),'0','1','2');
+FILE_SCHEMA(('test_inverse_attr'));
+ENDSEC;
+DATA;
+#1=OBJECT('one');
+#2=RELDEFINESBYTYPE((#1));
+#3=RELDEFINESBYTYPE((#4));
+#4=WINDOW('two','blah');
+ENDSEC;
+END-ISO-10303-21;

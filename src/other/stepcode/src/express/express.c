@@ -68,7 +68,7 @@
  *
  */
 
-#include "scl_memmgr.h"
+#include "sc_memmgr.h"
 #include "express/basic.h"
 #include <ctype.h>
 #include <stdlib.h>
@@ -241,7 +241,7 @@ static Error ERROR_tilde_expansion_failed;
 static Error ERROR_schema_not_in_own_schema_file;
 
 extern Linked_List PARSEnew_schemas;
-void SCOPEinitialize(void);
+void SCOPEinitialize( void );
 
 static Express PARSERrun PROTO( ( char *, FILE * ) );
 
@@ -275,16 +275,18 @@ Symbol * EXPRESS_get_symbol( Generic e ) {
 
 Express EXPRESScreate() {
     Express model = SCOPEcreate( OBJ_EXPRESS );
-    model->u.express = ( struct Express_ * )scl_calloc( 1, sizeof( struct Express_ ) );
+    model->u.express = ( struct Express_ * )sc_calloc( 1, sizeof( struct Express_ ) );
     return model;
 }
 
 void EXPRESSdestroy( Express model ) {
-    if ( model->u.express->basename )
-        scl_free( model->u.express->basename );
-    if ( model->u.express->filename )
-        scl_free( model->u.express->filename );
-    scl_free( model->u.express );
+    if( model->u.express->basename ) {
+        sc_free( model->u.express->basename );
+    }
+    if( model->u.express->filename ) {
+        sc_free( model->u.express->filename );
+    }
+    sc_free( model->u.express );
     SCOPEdestroy( model );
 }
 
@@ -303,7 +305,7 @@ static void EXPRESS_PATHinit() {
     p = getenv( "EXPRESS_PATH" );
     if( !p ) {
         /* if no EXPRESS_PATH, search current directory anyway */
-        dir = ( Dir * )scl_malloc( sizeof( Dir ) );
+        dir = ( Dir * )sc_malloc( sizeof( Dir ) );
         dir->leaf = dir->full;
         LISTadd( EXPRESS_path, ( Generic )dir );
     } else {
@@ -335,7 +337,7 @@ static void EXPRESS_PATHinit() {
             }
             p++;    /* leave p after terminating null */
 
-            dir = ( Dir * )scl_malloc( sizeof( Dir ) );
+            dir = ( Dir * )sc_malloc( sizeof( Dir ) );
 
             /* if it's just ".", make it as if it was */
             /* just "" to make error messages cleaner */
@@ -367,7 +369,7 @@ static void EXPRESS_PATHinit() {
 
 static void EXPRESS_PATHfree( void ) {
     LISTdo( EXPRESS_path, dir, Dir * )
-        scl_free( dir );
+    sc_free( dir );
     LISTod
     LISTfree( EXPRESS_path );
 }
@@ -489,7 +491,7 @@ void EXPRESSinitialize( void ) {
                                       "Return type or local variable requires type label in `%s'", SEVERITY_ERROR );
     ERROR_file_unreadable = ERRORcreate( "Could not read file %s: %s", SEVERITY_ERROR );
     ERROR_file_unwriteable = ERRORcreate( "Could not write file %s: %s", SEVERITY_ERROR );
-    ERROR_warn_unsupported_lang_feat = ERRORcreate("Unsupported language feature (%s) at %s:%d",SEVERITY_WARNING);
+    ERROR_warn_unsupported_lang_feat = ERRORcreate( "Unsupported language feature (%s) at %s:%d", SEVERITY_WARNING );
 
     OBJcreate( OBJ_EXPRESS, EXPRESS_get_symbol, "express file", OBJ_UNUSED_BITS );
 
@@ -564,7 +566,7 @@ void EXPRESSparse( Express model, FILE * fp, char * filename ) {
             length -= 4;
         }
 
-        model->u.express->basename = ( char * )scl_malloc( length + 1 );
+        model->u.express->basename = ( char * )sc_malloc( length + 1 );
         memcpy( model->u.express->basename, filename, length );
         model->u.express->basename[length] = '\0';
 
@@ -998,4 +1000,3 @@ void EXPRESSresolve( Express model ) {
         }
     }
 }
-

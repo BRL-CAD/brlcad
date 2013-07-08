@@ -8,16 +8,16 @@ SET(EXPPP_SOURCES
 )
 
 include_directories(
-    ${SCL_SOURCE_DIR}/include
-    ${SCL_SOURCE_DIR}/include/exppp
-    ${SCL_SOURCE_DIR}/src/base
+    ${SC_SOURCE_DIR}/include
+    ${SC_SOURCE_DIR}/include/exppp
+    ${SC_SOURCE_DIR}/src/base
 )
 
 if(BORLAND)
     add_definitions( -D__STDC__ )
 endif()
 
-SCL_ADDLIB(libexppp "${LIBEXPPP_SOURCES}" "express;base")
+SC_ADDLIB(libexppp "${LIBEXPPP_SOURCES}" "express;base")
 set_target_properties(libexppp PROPERTIES PREFIX "")
 
-SCL_ADDEXEC(exppp "${EXPPP_SOURCES}" "libexppp;express;base")
+SC_ADDEXEC(exppp "${EXPPP_SOURCES}" "libexppp;express;base")

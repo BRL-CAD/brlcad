@@ -13,7 +13,7 @@
 * and is not subject to copyright.
 */
 
-#include <scl_export.h>
+#include <sc_export.h>
 #include <string>
 #include <instmgr.h>
 #include <Registry.h>
@@ -35,7 +35,7 @@ enum  FileTypeCode {
     WORKING_SESSION =  2
 };
 
-class SCL_EDITOR_EXPORT STEPfile {
+class SC_EDITOR_EXPORT STEPfile {
     protected:
         //data members
 
@@ -85,6 +85,7 @@ class SCL_EDITOR_EXPORT STEPfile {
         int _maxErrorCount;
 
         bool _strict;       ///< If false, "missing and required" attributes are replaced with a generic value when file is read
+        bool _verbose;      ///< Defaults to false; if true, info is always printed to stdout.
 
     protected:
 
@@ -195,7 +196,7 @@ class SCL_EDITOR_EXPORT STEPfile {
         void ReadRestOfFile( istream & in );
 
         /// create instance - used by ReadData1()
-        SDAI_Application_instance   * CreateInstance( istream & in, ostream & out );
+        SDAI_Application_instance  *  CreateInstance( istream & in, ostream & out );
         /// create complex instance - used by CreateInstance()
         SDAI_Application_instance  * CreateSubSuperInstance( istream & in, int fileid,
                 ErrorDescriptor & );
@@ -220,7 +221,7 @@ class SCL_EDITOR_EXPORT STEPfile {
         void CloseOutputFile( ostream * out );
 
         void WriteHeader( ostream & out );
-        void WriteHeaderInstance( SDAI_Application_instance  *obj, ostream & out );
+        void WriteHeaderInstance( SDAI_Application_instance * obj, ostream & out );
         void WriteHeaderInstanceFileName( ostream & out );
         void WriteHeaderInstanceFileDescription( ostream & out );
         void WriteHeaderInstanceFileSchema( ostream & out );

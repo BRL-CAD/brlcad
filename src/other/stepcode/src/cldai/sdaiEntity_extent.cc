@@ -3,9 +3,9 @@
 //#include <EntityExtent.h>
 
 #include <sdai.h>
-#include "scl_memmgr.h"
+#include "sc_memmgr.h"
 
-SDAI_Entity_extent ::SDAI_Entity_extent ( )
+SDAI_Entity_extent::SDAI_Entity_extent( )
     : _definition( 0 ), _definition_name( 0 ), _owned_by( 0 ) {
     /*
         _definition = 0;
@@ -15,7 +15,7 @@ SDAI_Entity_extent ::SDAI_Entity_extent ( )
 }
 
 /*
-SDAI_Entity_extent)::SDAI_Entity_extent)(const SCLP23(Entity_extent& ee
+SDAI_Entity_extent::SDAI_Entity_extent(const SDAI_Entity_extent& ee)
 {
 //  {  CopyAs((STEPentityH) &e);    }
     _definition = 0;
@@ -23,7 +23,7 @@ SDAI_Entity_extent)::SDAI_Entity_extent)(const SCLP23(Entity_extent& ee
 }
 */
 
-SDAI_Entity_extent ::~SDAI_Entity_extent () {
+SDAI_Entity_extent::~SDAI_Entity_extent() {
     delete _definition_name;
 }
 
@@ -34,41 +34,41 @@ SDAI_Entity_extent ::definition_() const {
 
 /*
 const SDAI_Entity_name
-SDAI_Entity_extent)::definition_name_( const
+SDAI_Entity_extent::definition_name_() const
 {
     return _definition_name;
 }
 */
 
 void
-SDAI_Entity_extent ::definition_( const Entity_ptr & ep ) {
+SDAI_Entity_extent::definition_( const Entity_ptr & ep ) {
     _definition = ep;
 }
 
 void
-SDAI_Entity_extent ::definition_name_( const SDAI_Entity_name & en ) {
+SDAI_Entity_extent::definition_name_( const SDAI_Entity_name & en ) {
     _definition_name = new char[strlen( en ) + 1];
     strncpy( _definition_name, en, strlen( en ) + 1 );
 }
 
 void
-SDAI_Entity_extent ::owned_by_( SDAI_Model_contents__list_var & mclv ) {
+SDAI_Entity_extent::owned_by_( SDAI_Model_contents__list_var & mclv ) {
 //    _owned_by = mcp;
 }
 
-SDAI_Model_contents__list_var 
+SDAI_Model_contents__list_var
 SDAI_Entity_extent ::owned_by_() const {
-    return ( const SDAI_Model_contents__list_var  ) &_owned_by;
+    return ( const SDAI_Model_contents__list_var ) &_owned_by;
 }
 
 /*
-SDAI_DAObject__set_var) instances_(
+SDAI_DAObject__set_var instances_()
 {
     return &_instances;
 }
 
 const
-SDAI_DAObject__set_var) instances_( const
+SDAI_DAObject__set_var instances_() const
 {
     return (const SDAI_DAObject__set_var)&_instances;
 }
@@ -93,7 +93,7 @@ SDAI_DAObject__set_var) instances_( const
 */
 
 void
-SDAI_Entity_extent ::AddInstance( const SDAI_DAObject_ptr & appInst ) {
+SDAI_Entity_extent::AddInstance( const SDAI_DAObject_ptr & appInst ) {
     _instances.Append( appInst );
 }
 
@@ -115,7 +115,7 @@ SDAI_Entity_extent ::AddInstance( const SDAI_DAObject_ptr & appInst ) {
 
 
 void
-SDAI_Entity_extent ::RemoveInstance( const SDAI_DAObject_ptr & appInst ) {
+SDAI_Entity_extent::RemoveInstance( const SDAI_DAObject_ptr & appInst ) {
     _instances.Remove( _instances.Index( appInst ) );
 }
 

@@ -3,7 +3,7 @@
 #include <math.h>
 
 #include <sdai.h>
-#include "scl_memmgr.h"
+#include "sc_memmgr.h"
 
 // to help ObjectCenter
 #ifndef HAVE_MEMMOVE
@@ -14,44 +14,41 @@ extern "C"
 #endif
 
 
-SDAI_PID ::SDAI_PID () {
+SDAI_PID::SDAI_PID() {
 }
 
-SDAI_PID ::~SDAI_PID () {
+SDAI_PID::~SDAI_PID() {
 }
 
-SDAI_PID_DA ::SDAI_PID_DA () {
+SDAI_PID_DA::SDAI_PID_DA() {
 }
 
-SDAI_PID_DA ::~SDAI_PID_DA () {
+SDAI_PID_DA::~SDAI_PID_DA() {
 }
 
-SDAI_PID_SDAI ::SDAI_PID_SDAI () {
+SDAI_PID_SDAI::SDAI_PID_SDAI() {
 }
 
-SDAI_PID_SDAI ::~SDAI_PID_SDAI () {
+SDAI_PID_SDAI::~SDAI_PID_SDAI() {
 }
 
-SDAI_DAObject ::SDAI_DAObject () {
+SDAI_DAObject::SDAI_DAObject() {
 }
 
-SDAI_DAObject ::~SDAI_DAObject () {
+SDAI_DAObject::~SDAI_DAObject() {
 }
 
-
-
-SDAI_DAObject_SDAI ::SDAI_DAObject_SDAI () {
+SDAI_DAObject_SDAI::SDAI_DAObject_SDAI() {
 }
 
 /*
-SDAI_DAObject_SDAI)::SDAI_DAObject_SDAI(const DAObject_SDAI&
+SDAI_DAObject_SDAI::SDAI_DAObject_SDAI(const DAObject_SDAI&)
 {
 }
 */
 
-SDAI_DAObject_SDAI ::~SDAI_DAObject_SDAI () {
+SDAI_DAObject_SDAI::~SDAI_DAObject_SDAI() {
 }
-
 
 /*
  * Copyright (c) 1990, 1991 Stanford University
@@ -81,31 +78,31 @@ SDAI_DAObject_SDAI ::~SDAI_DAObject_SDAI () {
 
 /*****************************************************************************/
 
-SDAI_DAObject__set ::SDAI_DAObject__set ( int defaultSize ) {
+SDAI_DAObject__set::SDAI_DAObject__set( int defaultSize ) {
     _bufsize = defaultSize;
-    _buf = new SDAI_DAObject_ptr [_bufsize];
+    _buf = new SDAI_DAObject_ptr[_bufsize];
     _count = 0;
 }
 
-SDAI_DAObject__set ::~SDAI_DAObject__set () {
+SDAI_DAObject__set::~SDAI_DAObject__set() {
     delete _buf;
 }
 
-void SDAI_DAObject__set ::Check( int index ) {
+void SDAI_DAObject__set::Check( int index ) {
 
     SDAI_DAObject_ptr * newbuf;
 
     if( index >= _bufsize ) {
         _bufsize = ( index + 1 ) * 2;
-        newbuf = new SDAI_DAObject_ptr [_bufsize];
-        memmove( newbuf, _buf, _count * sizeof( SDAI_DAObject_ptr  ) );
+        newbuf = new SDAI_DAObject_ptr[_bufsize];
+        memmove( newbuf, _buf, _count * sizeof( SDAI_DAObject_ptr ) );
         delete _buf;
         _buf = newbuf;
     }
 }
 
 void
-SDAI_DAObject__set ::Insert( SDAI_DAObject_ptr  v, int index ) {
+SDAI_DAObject__set::Insert( SDAI_DAObject_ptr v, int index ) {
 
     SDAI_DAObject_ptr * spot;
     index = ( index < 0 ) ? _count : index;
@@ -113,7 +110,7 @@ SDAI_DAObject__set ::Insert( SDAI_DAObject_ptr  v, int index ) {
     if( index < _count ) {
         Check( _count + 1 );
         spot = &_buf[index];
-        memmove( spot + 1, spot, ( _count - index )*sizeof( SDAI_DAObject_ptr  ) );
+        memmove( spot + 1, spot, ( _count - index )*sizeof( SDAI_DAObject_ptr ) );
 
     } else {
         Check( index );
@@ -123,7 +120,7 @@ SDAI_DAObject__set ::Insert( SDAI_DAObject_ptr  v, int index ) {
     ++_count;
 }
 
-void SDAI_DAObject__set ::Append( SDAI_DAObject_ptr  v ) {
+void SDAI_DAObject__set::Append( SDAI_DAObject_ptr v ) {
 
     int index = _count;
     SDAI_DAObject_ptr * spot;
@@ -131,7 +128,7 @@ void SDAI_DAObject__set ::Append( SDAI_DAObject_ptr  v ) {
     if( index < _count ) {
         Check( _count + 1 );
         spot = &_buf[index];
-        memmove( spot + 1, spot, ( _count - index )*sizeof( SDAI_DAObject_ptr  ) );
+        memmove( spot + 1, spot, ( _count - index )*sizeof( SDAI_DAObject_ptr ) );
 
     } else {
         Check( index );
@@ -141,16 +138,16 @@ void SDAI_DAObject__set ::Append( SDAI_DAObject_ptr  v ) {
     ++_count;
 }
 
-void SDAI_DAObject__set ::Remove( int index ) {
+void SDAI_DAObject__set::Remove( int index ) {
 
     if( 0 <= index && index < _count ) {
         --_count;
         SDAI_DAObject_ptr * spot = &_buf[index];
-        memmove( spot, spot + 1, ( _count - index )*sizeof( SDAI_DAObject_ptr  ) );
+        memmove( spot, spot + 1, ( _count - index )*sizeof( SDAI_DAObject_ptr ) );
     }
 }
 
-int SDAI_DAObject__set ::Index( SDAI_DAObject_ptr  v ) {
+int SDAI_DAObject__set::Index( SDAI_DAObject_ptr v ) {
 
     for( int i = 0; i < _count; ++i ) {
         if( _buf[i] == v ) {
@@ -160,12 +157,12 @@ int SDAI_DAObject__set ::Index( SDAI_DAObject_ptr  v ) {
     return -1;
 }
 
-SDAI_DAObject_ptr 
-SDAI_DAObject__set ::retrieve( int index ) {
+SDAI_DAObject_ptr
+SDAI_DAObject__set::retrieve( int index ) {
     return operator[]( index );
 }
 
-SDAI_DAObject_ptr  & SDAI_DAObject__set ::operator[]( int index ) {
+SDAI_DAObject_ptr & SDAI_DAObject__set::operator[]( int index ) {
 
     Check( index );
 //    _count = max(_count, index+1);
@@ -174,16 +171,16 @@ SDAI_DAObject_ptr  & SDAI_DAObject__set ::operator[]( int index ) {
 }
 
 int
-SDAI_DAObject__set ::Count() {
+SDAI_DAObject__set::Count() {
     return _count;
 }
 
 int
-SDAI_DAObject__set ::is_empty() {
+SDAI_DAObject__set::is_empty() {
     return _count;
 }
 
 void
-SDAI_DAObject__set ::Clear() {
+SDAI_DAObject__set::Clear() {
     _count = 0;
 }

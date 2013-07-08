@@ -12,7 +12,7 @@
  *****************************************************************************/
 
 #include "complexSupport.h"
-#include <scl_memmgr.h>
+#include <sc_memmgr.h>
 
 // Local function prototypes:
 static void initEnts( Express );
@@ -116,6 +116,7 @@ ComplexList::ComplexList( Entity ent, ComplexCollect * col )
     ent->search_id = TRUE;
     list = NULL;
     next = NULL;
+    maxlevel = 0;
 
     addSuper( ent );
     if( ( exp = ent->u.entity->subtype_expression ) != NULL ) {
@@ -135,6 +136,7 @@ ComplexList::ComplexList( Entity ent, ComplexCollect * col )
         // Rebuild list in case implicit subs were added (we had to build the
         // first time also so addImplicitSubs() would work).
         buildList();
+        //maxlevel = head->setLevel( 0 );
         head->setLevel( 0 );
     } else {
         // If this List has supertypes, we don't really need it as a List -
@@ -278,7 +280,7 @@ void ComplexList::addImplicitSubs( Linked_List subs, ComplexCollect * col )
  * list.)  If any are found they are ANDORed with the other subtypes.
  */
 {
-    EntNode node;
+    EntNode node( ( char * )"" );
     // Temp var - used to check if this already contains certain values.
     int none_yet = TRUE;
     AndOrList * ao = 0;

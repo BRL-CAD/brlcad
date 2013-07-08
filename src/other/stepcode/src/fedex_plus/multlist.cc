@@ -13,7 +13,7 @@
  *****************************************************************************/
 
 #include "complexSupport.h"
-#include <scl_memmgr.h>
+#include <sc_memmgr.h>
 
 MultList::~MultList()
 /*
@@ -43,15 +43,14 @@ void MultList::setLevel( int l )
     }
 }
 
-int MultList::getMaxLevel()
-{
+int MultList::getMaxLevel() {
     EntList * child = childList;
     int maxLevel, childLevel;
 
     maxLevel = level;
     while( child ) {
         childLevel = child->getMaxLevel();
-        if (childLevel > maxLevel) {
+        if( childLevel > maxLevel ) {
             maxLevel = childLevel;
         }
         child = child->next;
@@ -199,8 +198,9 @@ EntList * MultList::getChild( int num )
         // Check for error situations (shouldn't normally occur):
         return NULL;
     }
-    for( j = 0; j < num; j++, child = child->next )
+    for( j = 0; j < num; j++, child = child->next ) {
         ;
+    }
     return child;
 }
 

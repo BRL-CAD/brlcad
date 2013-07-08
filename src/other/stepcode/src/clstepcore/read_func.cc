@@ -5,7 +5,7 @@
 #include <read_func.h>
 #include <STEPattribute.h>
 #include "Str.h"
-#include "scl_memmgr.h"
+#include "sc_memmgr.h"
 
 const int RealNumPrecision = REAL_NUM_PRECISION;
 
@@ -69,8 +69,8 @@ void IStreamState( istream & in ) {
 //   by any characters other than white space (i.e. EOF must happen)
 //
 ///////////////////////////////////////////////////////////////////////////////
-int ReadInteger( SDAI_Integer  &val, istream & in, ErrorDescriptor * err,
-             const char * tokenList ) {
+int ReadInteger( SDAI_Integer & val, istream & in, ErrorDescriptor * err,
+                 const char * tokenList ) {
     SDAI_Integer  i = 0;
     in >> ws;
     in >> i;
@@ -86,8 +86,8 @@ int ReadInteger( SDAI_Integer  &val, istream & in, ErrorDescriptor * err,
 }
 
 /// same as above but reads from a const char *
-int ReadInteger( SDAI_Integer  &val, const char * s, ErrorDescriptor * err,
-             const char * tokenList ) {
+int ReadInteger( SDAI_Integer & val, const char * s, ErrorDescriptor * err,
+                 const char * tokenList ) {
     istringstream in( ( char * )s );
     return ReadInteger( val, in, err, tokenList );
 }
@@ -112,7 +112,7 @@ int ReadInteger( SDAI_Integer  &val, const char * s, ErrorDescriptor * err,
 //   following.
 ///////////////////////////////////////////////////////////////////////////////
 Severity IntValidLevel( const char * attrValue, ErrorDescriptor * err,
-               int clearError, int optional, const char * tokenList ) {
+                        int clearError, int optional, const char * tokenList ) {
     if( clearError ) {
         err->ClearErrorMsg();
     }
@@ -202,15 +202,15 @@ void WriteReal( SDAI_Real  val, ostream & out ) {
 //   space between the value and the terminating character is not considered
 //   to be invalid.  If tokenList is null then the value must not be followed
 //   by any characters other than white space (i.e. EOF must happen)
-
+//
 //   skip any leading whitespace characters
 //   read: optional sign, at least one decimal digit, required decimal point,
 //   zero or more decimal digits, optional letter e or E (but lower case e is
 //   an error), optional sign, at least one decimal digit if there is an E.
 //
 ///////////////////////////////////////////////////////////////////////////////
-int ReadReal( SDAI_Real  &val, istream & in, ErrorDescriptor * err,
-          const char * tokenList ) {
+int ReadReal( SDAI_Real & val, istream & in, ErrorDescriptor * err,
+              const char * tokenList ) {
     SDAI_Real  d = 0;
 
     // Read the real's value into a string so we can make sure it is properly
@@ -311,8 +311,8 @@ int ReadReal( SDAI_Real  &val, istream & in, ErrorDescriptor * err,
 }
 
 /// same as above but reads from a const char *
-int ReadReal( SDAI_Real  &val, const char * s, ErrorDescriptor * err,
-          const char * tokenList ) {
+int ReadReal( SDAI_Real & val, const char * s, ErrorDescriptor * err,
+              const char * tokenList ) {
     istringstream in( ( char * )s );
     return ReadReal( val, in, err, tokenList );
 }
@@ -337,7 +337,7 @@ int ReadReal( SDAI_Real  &val, const char * s, ErrorDescriptor * err,
 //   following.
 ///////////////////////////////////////////////////////////////////////////////
 Severity RealValidLevel( const char * attrValue, ErrorDescriptor * err,
-                int clearError, int optional, const char * tokenList ) {
+                         int clearError, int optional, const char * tokenList ) {
     if( clearError ) {
         err->ClearErrorMsg();
     }
@@ -386,7 +386,7 @@ Severity RealValidLevel( const char * attrValue, ErrorDescriptor * err,
  *   by any characters other than white space (i.e. EOF must happen)
  */
 int ReadNumber( SDAI_Real & val, istream & in, ErrorDescriptor * err,
-            const char * tokenList ) {
+                const char * tokenList ) {
     SDAI_Real  d = 0;
     in >> ws;
     in >> d;
@@ -401,8 +401,8 @@ int ReadNumber( SDAI_Real & val, istream & in, ErrorDescriptor * err,
 }
 
 /// same as above but reads from a const char *
-int ReadNumber( SDAI_Real  &val, const char * s, ErrorDescriptor * err,
-            const char * tokenList ) {
+int ReadNumber( SDAI_Real & val, const char * s, ErrorDescriptor * err,
+                const char * tokenList ) {
     istringstream in( ( char * )s );
     return ReadNumber( val, in, err, tokenList );
 }
@@ -428,7 +428,7 @@ int ReadNumber( SDAI_Real  &val, const char * s, ErrorDescriptor * err,
 //   following.
 ///////////////////////////////////////////////////////////////////////////////
 Severity NumberValidLevel( const char * attrValue, ErrorDescriptor * err,
-                  int clearError, int optional, const char * tokenList ) {
+                           int clearError, int optional, const char * tokenList ) {
     if( clearError ) {
         err->ClearErrorMsg();
     }

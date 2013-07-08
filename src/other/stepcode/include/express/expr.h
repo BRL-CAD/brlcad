@@ -1,8 +1,8 @@
 #ifndef EXPRESSION_H
 #define EXPRESSION_H
 
-/** **********************************************************************
-** Module:  Expression
+/*********************************************************************//**
+** Module:  Expression \file expr.h
 ** Description: This module implements the Expression abstraction.
 **  Several types of expressions are supported: identifiers,
 **  literals, operations (arithmetic, logical, array indexing,
@@ -60,7 +60,7 @@
 /* packages used */
 /*****************/
 
-#include <scl_export.h>
+#include <sc_export.h>
 #include <math.h>
 #include "expbasic.h"   /* get basic definitions */
 
@@ -84,7 +84,7 @@ typedef enum {
     OP_NOT,         OP_NOT_EQUAL,       OP_OR,
     OP_PLUS,        OP_REAL_DIV,        OP_SUBCOMPONENT,
     OP_TIMES,       OP_XOR,         OP_UNKNOWN,
-    OP_LAST /* must be last - used only to size tables */
+    OP_LAST /**< must be last - used only to size tables */
 } Op_Code;
 
 typedef struct Qualified_Attr   Qualified_Attr;
@@ -116,7 +116,7 @@ typedef Literal         Aggregate_Literal, Integer_Literal,
 /* expression types */
 
 struct Qualified_Attr {
-    struct Expression_ * complex;   /* complex entity instance */
+    struct Expression_ * complex;   /**< complex entity instance */
     Symbol * entity;
     Symbol * attribute;
 };
@@ -130,22 +130,20 @@ struct Op_Subexpression {
 
 struct Query_ {
     Variable local;
-    Expression aggregate;   /* set from which to test */
-    Expression expression;  /* logical expression */
+    Expression aggregate;   /**< set from which to test */
+    Expression expression;  /**< logical expression */
     struct Scope_ * scope;
 };
 
 struct Funcall {
-    struct Scope_ * function; /* can also be an entity because entities */
-    /* can be called as functions */
+    struct Scope_ * function; /**< can also be an entity because entities can be called as functions */
     Linked_List list;
 };
 
 union expr_union {
     int integer;
     float real;
-    /*  char *string;       find string name in symbol in Expression */
-    char * attribute;   /* inverse .... for 'attr' */
+    char * attribute;   /**< inverse .... for 'attr' */
     char * binary;
     int logical;
     bool boolean;
@@ -155,35 +153,31 @@ union expr_union {
     /* if etype == aggregate, list of expressions */
     /* if etype == funcall, 1st element of list is funcall or entity */
     /*  remaining elements are parameters */
-    Linked_List list;   /* aggregates (bags, lists, sets, arrays) */
-    /* or lists for oneof expressions */
-    Expression expression;  /* derived value in derive attrs, or*/
-    /* initializer in local vars, or */
-    /* enumeration tags */
-    /* or oneof value */
-    struct Scope_ * entity; /* used by subtype exp, group expr */
-    /* and self expr, some funcall's and any */
-    /* expr that results in an entity */
-    Variable variable;  /* attribute reference */
+    Linked_List list;   /**< aggregates (bags, lists, sets, arrays) or lists for oneof expressions */
+    Expression expression;  /**< derived value in derive attrs, or
+                             * initializer in local vars, or
+                             * enumeration tags
+                             * or oneof value */
+    struct Scope_ * entity; /**< used by subtype exp, group expr
+                              * and self expr, some funcall's and any
+                              * expr that results in an entity */
+    Variable variable;  /**< attribute reference */
 };
 
+/** The difference between 'type' and 'return_type' is illustrated
+ * by "func(a)".  Here, 'type' is Type_Function while 'return_type'
+ * might be Type_Integer (assuming func returns an integer). */
 struct Expression_ {
-    Symbol symbol;      /* contains things like funcall names */
-    /* string names, binary values, */
-    /* enumeration names */
+    Symbol symbol;      /**< contains things like funcall names, string names, binary values, enumeration names */
     Type type;
-    Type return_type;   /* type of value returned by expression */
-    /* The difference between 'type' and 'return_type' is */
-    /* illustrated by "func(a)".  Here, 'type' is Type_Function */
-    /* while 'return_type'  might be Type_Integer (assuming func */
-    /* returns an integer). */
+    Type return_type;   /**< type of value returned by expression */
     struct Op_Subexpression e;
     union expr_union u;
 };
 
-/* indexed by the op enumeration values */
+/** indexed by the op enumeration values */
 struct EXPop_entry {
-    char * token;       /* literal token, e.g., "<>" */
+    char * token;       /**< literal token, e.g., "<>" */
     Type( *resolve ) PROTO( ( Expression, struct Scope_ * ) );
 };
 
@@ -191,23 +185,23 @@ struct EXPop_entry {
 /* global variables */
 /********************/
 
-extern SCL_EXPRESS_EXPORT struct EXPop_entry EXPop_table[OP_LAST];
+extern SC_EXPRESS_EXPORT struct EXPop_entry EXPop_table[OP_LAST];
 
-extern SCL_EXPRESS_EXPORT Expression  LITERAL_E;
-extern SCL_EXPRESS_EXPORT Expression  LITERAL_INFINITY;
-extern SCL_EXPRESS_EXPORT Expression  LITERAL_PI;
-extern SCL_EXPRESS_EXPORT Expression  LITERAL_ZERO;
-extern SCL_EXPRESS_EXPORT Expression  LITERAL_ONE;
+extern SC_EXPRESS_EXPORT Expression  LITERAL_E;
+extern SC_EXPRESS_EXPORT Expression  LITERAL_INFINITY;
+extern SC_EXPRESS_EXPORT Expression  LITERAL_PI;
+extern SC_EXPRESS_EXPORT Expression  LITERAL_ZERO;
+extern SC_EXPRESS_EXPORT Expression  LITERAL_ONE;
 
-extern SCL_EXPRESS_EXPORT Error ERROR_bad_qualification;
-extern SCL_EXPRESS_EXPORT Error ERROR_integer_expression_expected;
-extern SCL_EXPRESS_EXPORT Error ERROR_implicit_downcast;
-extern SCL_EXPRESS_EXPORT Error ERROR_ambig_implicit_downcast;
+extern SC_EXPRESS_EXPORT Error ERROR_bad_qualification;
+extern SC_EXPRESS_EXPORT Error ERROR_integer_expression_expected;
+extern SC_EXPRESS_EXPORT Error ERROR_implicit_downcast;
+extern SC_EXPRESS_EXPORT Error ERROR_ambig_implicit_downcast;
 
-extern SCL_EXPRESS_EXPORT struct freelist_head EXP_fl;
-extern SCL_EXPRESS_EXPORT struct freelist_head OP_fl;
-extern SCL_EXPRESS_EXPORT struct freelist_head QUERY_fl;
-extern SCL_EXPRESS_EXPORT struct freelist_head QUAL_ATTR_fl;
+extern SC_EXPRESS_EXPORT struct freelist_head EXP_fl;
+extern SC_EXPRESS_EXPORT struct freelist_head OP_fl;
+extern SC_EXPRESS_EXPORT struct freelist_head QUERY_fl;
+extern SC_EXPRESS_EXPORT struct freelist_head QUAL_ATTR_fl;
 
 /******************************/
 /* macro function definitions */
@@ -235,7 +229,7 @@ extern SCL_EXPRESS_EXPORT struct freelist_head QUAL_ATTR_fl;
 #define FCALLget_parameters(e)      ((e)->u.funcall.list)
 #define FCALLput_function(expr,func)    ((e)->u.funcall.function = (func))
 #define FCALLget_function(e)        ((e)->u.funcall.function)
-/* assumes the function is not an entity-function! */
+/** assumes the function is not an entity-function! */
 #define FCALLget_algorithm(e)       ((e)->u.funcall.function->u.function->body)
 
 #define INT_LITget_value(e)     ((e)->u.integer)
@@ -260,16 +254,16 @@ extern SCL_EXPRESS_EXPORT struct freelist_head QUAL_ATTR_fl;
 /* function prototypes */
 /***********************/
 
-extern SCL_EXPRESS_EXPORT Expression   EXPcreate PROTO( ( Type ) );
-extern SCL_EXPRESS_EXPORT Expression   EXPcreate_simple PROTO( ( Type ) );
-extern SCL_EXPRESS_EXPORT Expression   EXPcreate_from_symbol PROTO( ( Type, Symbol * ) );
-extern SCL_EXPRESS_EXPORT Expression   UN_EXPcreate PROTO( ( Op_Code, Expression ) );
-extern SCL_EXPRESS_EXPORT Expression   BIN_EXPcreate PROTO( ( Op_Code, Expression, Expression ) );
-extern SCL_EXPRESS_EXPORT Expression   TERN_EXPcreate PROTO( ( Op_Code, Expression, Expression, Expression ) );
-extern SCL_EXPRESS_EXPORT Expression   QUERYcreate PROTO( ( Symbol *, Expression ) );
-extern SCL_EXPRESS_EXPORT void     EXPinitialize PROTO( ( void ) );
-extern SCL_EXPRESS_EXPORT void     EXPcleanup PROTO( ( void ) );
-extern SCL_EXPRESS_EXPORT Type     EXPtype PROTO( ( Expression, struct Scope_ * ) );
-extern SCL_EXPRESS_EXPORT int      EXPget_integer_value PROTO( ( Expression ) );
+extern SC_EXPRESS_EXPORT Expression   EXPcreate PROTO( ( Type ) );
+extern SC_EXPRESS_EXPORT Expression   EXPcreate_simple PROTO( ( Type ) );
+extern SC_EXPRESS_EXPORT Expression   EXPcreate_from_symbol PROTO( ( Type, Symbol * ) );
+extern SC_EXPRESS_EXPORT Expression   UN_EXPcreate PROTO( ( Op_Code, Expression ) );
+extern SC_EXPRESS_EXPORT Expression   BIN_EXPcreate PROTO( ( Op_Code, Expression, Expression ) );
+extern SC_EXPRESS_EXPORT Expression   TERN_EXPcreate PROTO( ( Op_Code, Expression, Expression, Expression ) );
+extern SC_EXPRESS_EXPORT Expression   QUERYcreate PROTO( ( Symbol *, Expression ) );
+extern SC_EXPRESS_EXPORT void     EXPinitialize PROTO( ( void ) );
+extern SC_EXPRESS_EXPORT void     EXPcleanup PROTO( ( void ) );
+extern SC_EXPRESS_EXPORT Type     EXPtype PROTO( ( Expression, struct Scope_ * ) );
+extern SC_EXPRESS_EXPORT int      EXPget_integer_value PROTO( ( Expression ) );
 
 #endif /*EXPRESSION_H*/

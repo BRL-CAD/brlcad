@@ -20,7 +20,7 @@
 #include <STEPaggregate.h>
 #include <ExpDict.h>
 #include <sdai.h>
-#include "scl_memmgr.h"
+#include "sc_memmgr.h"
 
 // REAL_NUM_PRECISION is defined in STEPattribute.h, and is also used
 // in aggregate real handling (STEPaggregate.cc)  -- IMS 6 Jun 95
@@ -217,11 +217,11 @@ Severity STEPattribute::STEPread( istream & in, InstMgr * instances, int addFile
             _error.severity( SEVERITY_NULL );
         } else {
             _error.severity( SEVERITY_WARNING );
-            _error.AppendToDetailMsg( "  WARNING: attribute " );
+            _error.AppendToDetailMsg( "  WARNING: attribute '" );
             _error.AppendToDetailMsg( aDesc->Name() );
-            _error.AppendToDetailMsg( " of type " );
+            _error.AppendToDetailMsg( "' of type '" );
             _error.AppendToDetailMsg( aDesc->TypeName() );
-            _error.AppendToDetailMsg( "Missing asterisk for derived attribute.\n" );
+            _error.AppendToDetailMsg( "' - missing asterisk for derived attribute.\n" );
         }
         CheckRemainingInput( in, &_error, aDesc->TypeName(), ",)" );
         return _error.severity();
@@ -239,7 +239,7 @@ Severity STEPattribute::STEPread( istream & in, InstMgr * instances, int addFile
             }
             if( Nullable() )  {
                 _error.severity( SEVERITY_NULL );
-            } else if ( !strict ) {
+            } else if( !strict ) {
                 std::string fillerValue;
                 // we aren't in strict mode, so find out the type of the missing attribute and insert a suitable value.
                 ErrorDescriptor err; //this will be discarded
@@ -261,7 +261,7 @@ Severity STEPattribute::STEPread( istream & in, InstMgr * instances, int addFile
                     }
                     case STRING_TYPE: {
                         fillerValue = "'',";
-                        *(ptr.S) = "''";
+                        *( ptr.S ) = "''";
                         break;
                     }
                     default: { //do not know what a good value would be for other types
@@ -278,7 +278,7 @@ Severity STEPattribute::STEPread( istream & in, InstMgr * instances, int addFile
                 //create a warning. SEVERITY_WARNING makes more sense to me, but is considered more severe than SEVERITY_INCOMPLETE
                 _error.severity( SEVERITY_USERMSG );
                 _error.AppendToDetailMsg( " missing and required. For compatibility, replacing with " );
-                _error.AppendToDetailMsg( fillerValue.substr( 0, fillerValue.length()-1 ) );
+                _error.AppendToDetailMsg( fillerValue.substr( 0, fillerValue.length() - 1 ) );
                 _error.AppendToDetailMsg( ".\n" );
             } else {
                 _error.severity( SEVERITY_INCOMPLETE );
@@ -425,6 +425,7 @@ const char * STEPattribute::asStr( std::string & str, const char * currSch ) con
 
         case NUMBER_TYPE:
         case REAL_TYPE:
+
             ss.precision( ( int ) Real_Num_Precision );
             ss << *( ptr.r );
             str += ss.str();
@@ -447,7 +448,6 @@ const char * STEPattribute::asStr( std::string & str, const char * currSch ) con
             break;
 
         case STRING_TYPE:
-
             if( !( ( ptr.S )->empty() ) ) {
                 return ( ptr.S ) -> asStr( str );
             }

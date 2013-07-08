@@ -14,7 +14,7 @@
  *****************************************************************************/
 
 #include "complexSupport.h"
-#include "scl_memmgr.h"
+#include "sc_memmgr.h"
 
 /**
  * Returns the number of EntLists in this's list (EntList->next, next->next

@@ -93,14 +93,14 @@ struct SelectTag_ {
 };
 
 const char   *  GetTypeDescriptorName( Type t );
-char         *  format_for_stringout( char * orig_buf, char * return_buf );
+char      *     format_for_stringout( char * orig_buf, char * return_buf );
 void            format_for_std_stringout( FILE * f, const char * orig_buf );
 const char   *  CheckWord( const char * );
 const char   *  StrToLower( const char * );
 const char   *  StrToUpper( const char * );
 const char   *  FirstToUpper( const char * );
 const char   *  SelectName( const char * );
-FILE         *  FILEcreate( const char * );
+FILE      *     FILEcreate( const char * );
 void            FILEclose( FILE * );
 const char   *  ClassName( const char * );
 const char   *  ENTITYget_classname( Entity );
@@ -115,8 +115,8 @@ void            TYPEprint_new( const Type, FILE *, Schema );
 void            TYPEprint_typedefs( Type, FILE * );
 void            TYPEprint_descriptions( const Type, FILES *, Schema );
 void            TYPEprint_init( const Type type, FILES * files, Schema schema );
-void            AGGRprint_init( FILES* files, const Type t,
-                                const char* var_name, const char* aggr_name );
+void            AGGRprint_init( FILES * files, const Type t,
+                                const char * var_name, const char * aggr_name );
 void            TYPEselect_init_print( const Type, FILE *, Schema );
 void            MODELPrint( Entity, FILES *, Schema, int );
 void            MODELprint_new( Entity, FILES *, Schema );
@@ -124,7 +124,7 @@ void            MODELPrintConstructorBody( Entity, FILES *, Schema/*, int*/ );
 const char   *  PrettyTmpName( const char * oldname );
 const char   *  EnumName( const char * oldname );
 const char   *  TypeDescriptorName( Type );
-char         *  TypeDescription( const Type t );
+char      *     TypeDescription( const Type t );
 const char   *  TypeName( Type t );
 const char   *  AccessType( Type t );
 const char   *  TYPEget_ctype( const Type t );

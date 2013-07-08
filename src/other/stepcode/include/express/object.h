@@ -46,16 +46,16 @@
 /* constants */
 /*************/
 
-/* each object has an index - current the index is a mnemonic character */
-/* hence the array is rather sparse, but the extra slop is only a hundred */
-/* or so bytes, so it's nothing to sweat about */
+/** each object has an index - current the index is a mnemonic character
+ * hence the array is rather sparse, but the extra slop is only a hundred
+ * or so bytes, so it's nothing to sweat about */
 #define MAX_OBJECT_TYPES    127 /* really could be a LOT less */
 
 /*****************/
 /* packages used */
 /*****************/
 
-#include <scl_export.h>
+#include <sc_export.h>
 #include "basic.h"  /* get basic definitions */
 #include "symbol.h"
 
@@ -69,9 +69,8 @@
 
 struct Object {
     struct Symbol_ * ( *get_symbol )();
-    char * type; /* should complete the phrase "X is ..." */
-    /* i.e., "an entity", "a type", "of unknown type" */
-    int bits;   /* a bitwise selector of a type, i.e. OBJ_XX_BITS */
+    char * type; /**< should complete the phrase "X is ..." - i.e., "an entity", "a type", "of unknown type" */
+    int bits;   /**< a bitwise selector of a type, i.e. OBJ_XX_BITS */
 };
 
 /****************/
@@ -82,7 +81,7 @@ struct Object {
 /* global variables */
 /********************/
 
-extern SCL_EXPRESS_EXPORT struct Object * OBJ;
+extern SC_EXPRESS_EXPORT struct Object * OBJ;
 
 /******************************/
 /* macro function definitions */
@@ -98,9 +97,9 @@ extern SCL_EXPRESS_EXPORT struct Object * OBJ;
 /* function prototypes */
 /***********************/
 
-extern SCL_EXPRESS_EXPORT void OBJinitialize PROTO( ( void ) );
-extern SCL_EXPRESS_EXPORT void OBJcleanup PROTO( ( void ) );
-extern SCL_EXPRESS_EXPORT void OBJcreate PROTO( ( char, struct Symbol_ * ( * )( Generic ), char *, int ) );
-extern SCL_EXPRESS_EXPORT Symbol * UNK_get_symbol PROTO( ( Generic x ) );
+extern SC_EXPRESS_EXPORT void OBJinitialize PROTO( ( void ) );
+extern SC_EXPRESS_EXPORT void OBJcleanup PROTO( ( void ) );
+extern SC_EXPRESS_EXPORT void OBJcreate PROTO( ( char, struct Symbol_ * ( * )( Generic ), char *, int ) );
+extern SC_EXPRESS_EXPORT Symbol * UNK_get_symbol PROTO( ( Generic x ) );
 
 #endif /*OBJECT_H*/

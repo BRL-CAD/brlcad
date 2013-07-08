@@ -10,7 +10,7 @@
 * and is not subject to copyright.
 */
 
-#include <scl_cf.h>
+#include <sc_cf.h>
 
 #include <memory.h>
 #include <math.h>
@@ -18,7 +18,7 @@
 
 #include <ExpDict.h>
 #include <STEPaggregate.h>
-#include "scl_memmgr.h"
+#include "sc_memmgr.h"
 
 
 Explicit_item_id__set::Explicit_item_id__set( int defaultSize ) {
@@ -28,7 +28,7 @@ Explicit_item_id__set::Explicit_item_id__set( int defaultSize ) {
 }
 
 Explicit_item_id__set::~Explicit_item_id__set() {
-    delete[] _buf;
+    delete [] _buf;
 }
 
 void Explicit_item_id__set::Check( int index ) {
@@ -38,7 +38,7 @@ void Explicit_item_id__set::Check( int index ) {
         _bufsize = ( index + 1 ) * 2;
         newbuf = new Explicit_item_id_ptr[_bufsize];
         memmove( newbuf, _buf, _count * sizeof( Explicit_item_id_ptr ) );
-        delete[] _buf;
+        delete _buf;
         _buf = newbuf;
     }
 }
@@ -117,7 +117,7 @@ Implicit_item_id__set::Implicit_item_id__set( int defaultSize ) {
 }
 
 Implicit_item_id__set::~Implicit_item_id__set() {
-    delete[] _buf;
+    delete _buf;
 }
 
 void Implicit_item_id__set::Check( int index ) {
@@ -127,7 +127,7 @@ void Implicit_item_id__set::Check( int index ) {
         _bufsize = ( index + 1 ) * 2;
         newbuf = new Implicit_item_id_ptr[_bufsize];
         memmove( newbuf, _buf, _count * sizeof( Implicit_item_id_ptr ) );
-        delete[]_buf;
+        delete _buf;
         _buf = newbuf;
     }
 }
@@ -206,7 +206,7 @@ Interface_spec__set::Interface_spec__set( int defaultSize ) {
 }
 
 Interface_spec__set::~Interface_spec__set() {
-    delete[] _buf;
+    delete [] _buf;
 }
 
 void Interface_spec__set::Check( int index ) {
@@ -216,7 +216,7 @@ void Interface_spec__set::Check( int index ) {
         _bufsize = ( index + 1 ) * 2;
         newbuf = new Interface_spec_ptr[_bufsize];
         memmove( newbuf, _buf, _count * sizeof( Interface_spec_ptr ) );
-        delete[] _buf;
+        delete _buf;
         _buf = newbuf;
     }
 }
@@ -1025,7 +1025,7 @@ Where_rule__list::Where_rule__list( int defaultSize ) {
 Where_rule__list::~Where_rule__list() {
     Clear();
 
-    delete[] _buf;
+    delete _buf;
 }
 
 void Where_rule__list::Check( int index ) {
@@ -1035,7 +1035,7 @@ void Where_rule__list::Check( int index ) {
         _bufsize = ( index + 1 ) * 2;
         newbuf = new Where_rule_ptr[_bufsize];
         memmove( newbuf, _buf, _count * sizeof( Where_rule_ptr ) );
-        delete[] _buf;
+        delete _buf;
         _buf = newbuf;
     }
 }
@@ -1102,7 +1102,7 @@ int Where_rule__list::Count() {
 }
 
 void Where_rule__list::Clear() {
-    for ( int i = 0; i < _count ; i ++ ) {
+    for( int i = 0; i < _count ; i ++ ) {
         delete _buf[i];
     }
     _count = 0;
@@ -1113,8 +1113,6 @@ void Where_rule__list::Clear() {
 Uniqueness_rule::Uniqueness_rule()
     : _parent_entity( 0 ) {
 }
-
-///////////////////////////////////////////////////////////////////////////////
 
 Uniqueness_rule::Uniqueness_rule( const Uniqueness_rule & ur ) {
     _label = ur._label;
@@ -1136,7 +1134,7 @@ Uniqueness_rule__set::Uniqueness_rule__set( int defaultSize ) {
 Uniqueness_rule__set::~Uniqueness_rule__set() {
     Clear();
 
-    delete[] _buf;
+    delete _buf;
 }
 
 void Uniqueness_rule__set::Check( int index ) {
@@ -1146,7 +1144,7 @@ void Uniqueness_rule__set::Check( int index ) {
         _bufsize = ( index + 1 ) * 2;
         newbuf = new Uniqueness_rule_ptr[_bufsize];
         memmove( newbuf, _buf, _count * sizeof( Uniqueness_rule_ptr ) );
-        delete[] _buf;
+        delete _buf;
         _buf = newbuf;
     }
 }
@@ -1213,7 +1211,7 @@ int Uniqueness_rule__set::Count() {
 }
 
 void Uniqueness_rule__set::Clear() {
-    for ( int i = 0; i < _count; i ++ ) {
+    for( int i = 0; i < _count; i ++ ) {
         delete _buf[i];
     }
     _count = 0;
@@ -1257,7 +1255,7 @@ Global_rule__set::Global_rule__set( int defaultSize ) {
 
 Global_rule__set::~Global_rule__set() {
     Clear();
-    delete[] _buf;
+    delete _buf;
 }
 
 void Global_rule__set::Check( int index ) {
@@ -1267,7 +1265,7 @@ void Global_rule__set::Check( int index ) {
         _bufsize = ( index + 1 ) * 2;
         newbuf = new Global_rule_ptr[_bufsize];
         memmove( newbuf, _buf, _count * sizeof( Global_rule_ptr ) );
-        delete[] _buf;
+        delete [] _buf;
         _buf = newbuf;
     }
 }
@@ -1334,7 +1332,7 @@ int Global_rule__set::Count() {
 }
 
 void Global_rule__set::Clear() {
-    for ( int i = 0; i < _count; i ++ ) {
+    for( int i = 0; i < _count; i ++ ) {
         delete _buf[i];
     }
     _count = 0;
@@ -1766,7 +1764,7 @@ STEPaggregate * AggrTypeDescriptor::CreateAggregate() {
     }
 }
 
-void AggrTypeDescriptor::AssignAggrCreator(AggregateCreator f) {
+void AggrTypeDescriptor::AssignAggrCreator( AggregateCreator f ) {
     CreateNewAggr = f;
 }
 

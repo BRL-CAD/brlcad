@@ -27,7 +27,7 @@
  * UArray - dynamic array object.
  */
 
-#include <scl_export.h>
+#include <sc_export.h>
 
 #ifndef SDAIENTITY_EXTENT_SET_h
 #define SDAIENTITY_EXTENT_SET_h
@@ -37,7 +37,7 @@
 //#include <EntityExtent.h>
 */
 
-class SCL_DAI_EXPORT SDAI_Entity_extent__set {
+class SC_DAI_EXPORT SDAI_Entity_extent__set {
     public:
 
         SDAI_Entity_extent__set( int = 16 );

@@ -1,6 +1,6 @@
 
 #ifndef ERRORDESC_H
-#define	ERRORDESC_H
+#define ERRORDESC_H
 
 /*
 * NIST Utils Class Library
@@ -13,12 +13,12 @@
 * and is not subject to copyright.
 */
 
-#include <scl_export.h>
+#include <sc_export.h>
 #include <string>
 #include <iostream>
 using namespace std;
 
-#define _POC_  " report problem to brlcad-devel"
+#define _POC_  " report problem to scl-dev at groups.google.com"
 
 typedef enum Severity {
     SEVERITY_MAX    = -5,
@@ -31,7 +31,6 @@ typedef enum Severity {
     SEVERITY_USERMSG    = 2,    // possibly an error
     SEVERITY_NULL   = 3 // no error or message
 } Severity;
-
 
 #define  DEBUG_OFF  0
 #define  DEBUG_USR  1
@@ -54,7 +53,7 @@ typedef int DebugLevel;
  ** Status:
  ******************************************************************/
 
-class SCL_UTILS_EXPORT ErrorDescriptor {
+class SC_UTILS_EXPORT ErrorDescriptor {
     private:
         std::string _userMsg, _detailMsg;
     protected:
@@ -82,7 +81,7 @@ class SCL_UTILS_EXPORT ErrorDescriptor {
         Severity severity( Severity s ) {
             return ( _severity = s );
         }
-	std::string severityString() const;
+        std::string severityString() const;
         Severity GetCorrSeverity( const char * s );
         Severity GreaterSeverity( Severity s ) {
             return ( ( s < _severity ) ?  _severity = s : _severity );

@@ -16,7 +16,7 @@
 #include <mgrnodelist.h>
 #include <dispnode.h>
 #include <dispnodelist.h>
-#include "scl_memmgr.h"
+#include "sc_memmgr.h"
 
 MgrNodeList::MgrNodeList( stateEnum type ) : GenNodeList( new MgrNode() ) {
 //    if(debug_level >= PrintFunctionTrace)

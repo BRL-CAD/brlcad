@@ -1,13 +1,13 @@
 include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${SCL_SOURCE_DIR}/src/base
+  ${SC_SOURCE_DIR}/src/base
   )
 
 # Set up the information we need to feed the generated source management
 # scripts
 set(BASELINE_INFORMATION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/generated/verification_info.cmake")
-set(PROJECT_CMAKE_DIR "${SCL_SOURCE_DIR}/cmake")
+set(PROJECT_CMAKE_DIR "${SC_SOURCE_DIR}/cmake")
 set(INPUT_FILELIST expscan.l expparse.y)
 set(TEMPLATE_FILELIST ${LEMON_TEMPLATE} ${PERPLEX_TEMPLATE})
 set(BUILD_OUTPUT_FILELIST
@@ -23,7 +23,7 @@ set(SYNC_TARGET_NAME "express_sync_generated_files")
 
 # Depending on whether we're using pre-generated sources or building them on
 # the fly, set up targets and source lists.
-if(SCL_GENERATE_LP_SOURCES)
+if(SC_GENERATE_LP_SOURCES)
   LEMON_TARGET(ExpParser expparse.y expparse.c expparse.h)
   PERPLEX_TARGET(ExpScanner expscan.l ${CMAKE_CURRENT_BINARY_DIR}/expscan.c ${CMAKE_CURRENT_BINARY_DIR}/expscan.h)
   ADD_PERPLEX_LEMON_DEPENDENCY(ExpScanner ExpParser)
@@ -31,7 +31,7 @@ if(SCL_GENERATE_LP_SOURCES)
     ${LEMON_ExpParser_OUTPUT_SOURCE}
     ${PERPLEX_ExpScanner_OUTPUTS}
     )
-  configure_file(${SCL_SOURCE_DIR}/cmake/manage_generated.cmake.in
+  configure_file(${SC_SOURCE_DIR}/cmake/manage_generated.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/express_manage_generated.cmake @ONLY)
   add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/express_manage_generated.sentinel
@@ -41,7 +41,7 @@ if(SCL_GENERATE_LP_SOURCES)
     )
   add_custom_target(express_verify DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/express_manage_generated.sentinel)
 
-  configure_file(${SCL_SOURCE_DIR}/cmake/sync_generated.cmake.in
+  configure_file(${SC_SOURCE_DIR}/cmake/sync_generated.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/express_sync_generated.cmake @ONLY)
   add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/express_sync_generated.sentinel
@@ -51,14 +51,14 @@ if(SCL_GENERATE_LP_SOURCES)
     )
   add_custom_target(express_sync_generated_files DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/express_sync_generated.sentinel)
 
-else(SCL_GENERATE_LP_SOURCES)
+else(SC_GENERATE_LP_SOURCES)
 
   set(EXPRESS_GENERATED_SRCS
     generated/expparse.c
     generated/expscan.c
     )
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/generated)
-  configure_file(${SCL_SOURCE_DIR}/cmake/verify_generated.cmake.in
+  configure_file(${SC_SOURCE_DIR}/cmake/verify_generated.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/express_verify_generated.cmake @ONLY)
   add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/express_verify_generated.sentinel
@@ -68,7 +68,7 @@ else(SCL_GENERATE_LP_SOURCES)
     )
   add_custom_target(express_verify DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/express_verify_generated.sentinel)
 
-endif(SCL_GENERATE_LP_SOURCES)
+endif(SC_GENERATE_LP_SOURCES)
 
 set(EXPRESS_SOURCES
   ${EXPRESS_GENERATED_SRCS}
@@ -112,10 +112,10 @@ SET(EXPRESS_PRIVATE_HDRS
   stack.h
   )
 
-SCL_ADDLIB(express "${EXPRESS_SOURCES}" "base")
+SC_ADDLIB(express "${EXPRESS_SOURCES}" "base")
 add_dependencies(express express_verify)
 add_dependencies(express version_string)
-SCL_ADDEXEC("check-express" "${CHECK_EXPRESS_SOURCES}" "express;base" )
+SC_ADDEXEC("check-express" "${CHECK_EXPRESS_SOURCES}" "express;base" )
 
 # Local Variables:
 # tab-width: 8

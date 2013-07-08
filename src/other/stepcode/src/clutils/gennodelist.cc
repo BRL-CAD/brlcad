@@ -16,7 +16,7 @@
 #include <gennodelist.h>
 //#include <gennode.inline.h>
 #include <gennodearray.h>
-#include <scl_memmgr.h>
+#include <sc_memmgr.h>
 
 // inserts after existNode
 void GenNodeList::InsertAfter( GenericNode * newNode,

@@ -17,7 +17,7 @@
 #include <STEPattribute.h>
 #include <instmgr.h>
 #include <ExpDict.h>
-#include "scl_memmgr.h"
+#include "sc_memmgr.h"
 
 const int Real_Num_Precision = REAL_NUM_PRECISION; // from STEPattribute.h
 
@@ -38,13 +38,13 @@ STEPaggregate::STEPaggregate() {
 }
 
 STEPaggregate::~STEPaggregate() {
-    STEPnode *node;
+    STEPnode * node;
 
-    node = (STEPnode*) head;
-    while ( node ) {
+    node = ( STEPnode * ) head;
+    while( node ) {
         head = node->NextNode();
         delete node;
-        node = (STEPnode*) head;
+        node = ( STEPnode * ) head;
     }
 }
 
@@ -57,9 +57,9 @@ STEPaggregate & STEPaggregate::ShallowCopy( const STEPaggregate & a ) {
 
 /// do not require exchange file format
 Severity STEPaggregate::AggrValidLevel( const char * value, ErrorDescriptor * err,
-                               const TypeDescriptor * elem_type, InstMgr * insts,
-                               int optional, char * tokenList, int addFileId,
-                               int clearError ) {
+                                        const TypeDescriptor * elem_type, InstMgr * insts,
+                                        int optional, char * tokenList, int addFileId,
+                                        int clearError ) {
     std::string buf;
     if( clearError ) {
         err->ClearErrorMsg();
@@ -77,9 +77,9 @@ Severity STEPaggregate::AggrValidLevel( const char * value, ErrorDescriptor * er
 
 /// require exchange file format
 Severity STEPaggregate::AggrValidLevel( istream & in, ErrorDescriptor * err,
-                               const TypeDescriptor * elem_type, InstMgr * insts,
-                               int optional, char * tokenList, int addFileId,
-                               int clearError ) {
+                                        const TypeDescriptor * elem_type, InstMgr * insts,
+                                        int optional, char * tokenList, int addFileId,
+                                        int clearError ) {
     std::string buf;
     if( clearError ) {
         err->ClearErrorMsg();
@@ -96,9 +96,9 @@ Severity STEPaggregate::AggrValidLevel( istream & in, ErrorDescriptor * err,
 /// if exchangeFileFormat == 1 then paren delims are required.
 
 Severity STEPaggregate::ReadValue( istream & in, ErrorDescriptor * err,
-                          const TypeDescriptor * elem_type, InstMgr * insts,
-                          int addFileId, int assignVal, int exchangeFileFormat,
-                          const char * ) {
+                                   const TypeDescriptor * elem_type, InstMgr * insts,
+                                   int addFileId, int assignVal, int exchangeFileFormat,
+                                   const char * ) {
     ErrorDescriptor errdesc;
     char errmsg[BUFSIZ];
     int value_cnt = 0;
@@ -199,8 +199,8 @@ Severity STEPaggregate::ReadValue( istream & in, ErrorDescriptor * err,
 }
 
 Severity STEPaggregate::StrToVal( const char * s, ErrorDescriptor * err,
-                         const TypeDescriptor * elem_type, InstMgr * insts,
-                         int addFileId ) {
+                                  const TypeDescriptor * elem_type, InstMgr * insts,
+                                  int addFileId ) {
     istringstream in( ( char * )s );
     return ReadValue( in, err, elem_type, insts, addFileId, 1, 0 );
 }
@@ -208,8 +208,8 @@ Severity STEPaggregate::StrToVal( const char * s, ErrorDescriptor * err,
 ///////////////////////////////////////////////////////////////////////////////
 
 Severity STEPaggregate::STEPread( istream & in, ErrorDescriptor * err,
-                         const TypeDescriptor * elem_type, InstMgr * insts,
-                         int addFileId, const char * currSch ) {
+                                  const TypeDescriptor * elem_type, InstMgr * insts,
+                                  int addFileId, const char * currSch ) {
     return ReadValue( in, err, elem_type, insts, addFileId, 1, 1, currSch );
 }
 
@@ -463,9 +463,9 @@ EntityAggregate::~EntityAggregate() {
 
 /// if exchangeFileFormat == 1 then delims are required.
 Severity EntityAggregate::ReadValue( istream & in, ErrorDescriptor * err,
-                            const TypeDescriptor * elem_type, InstMgr * insts,
-                            int addFileId, int assignVal,
-                            int exchangeFileFormat, const char * ) {
+                                     const TypeDescriptor * elem_type, InstMgr * insts,
+                                     int addFileId, int assignVal,
+                                     int exchangeFileFormat, const char * ) {
     ErrorDescriptor errdesc;
     char errmsg[BUFSIZ];
     int value_cnt = 0;
@@ -606,10 +606,10 @@ SingleLinkNode * EntityNode::NewNode() {
 ///////////////////////////////////////////////////////////////////////////////
 
 Severity EntityNode::StrToVal( const char * s, ErrorDescriptor * err,
-                      const TypeDescriptor * elem_type,
-                      InstMgr * insts, int addFileId ) {
-    SDAI_Application_instance  *se = ReadEntityRef( s, err, ",)", insts,
-                                         addFileId );
+                               const TypeDescriptor * elem_type,
+                               InstMgr * insts, int addFileId ) {
+    SDAI_Application_instance * se = ReadEntityRef( s, err, ",)", insts,
+                                     addFileId );
     if( se != S_ENTITY_NULL ) {
         ErrorDescriptor error;
         if( EntityValidLevel( se, elem_type, &error ) == SEVERITY_NULL ) {
@@ -627,23 +627,23 @@ Severity EntityNode::StrToVal( const char * s, ErrorDescriptor * err,
 }
 
 Severity EntityNode::StrToVal( istream & in, ErrorDescriptor * err,
-                      const TypeDescriptor * elem_type,
-                      InstMgr * insts, int addFileId ) {
+                               const TypeDescriptor * elem_type,
+                               InstMgr * insts, int addFileId ) {
     return STEPread( in, err, elem_type, insts, addFileId );
 }
 
 Severity EntityNode::STEPread( const char * s, ErrorDescriptor * err,
-                      const TypeDescriptor * elem_type,
-                      InstMgr * insts, int addFileId ) {
+                               const TypeDescriptor * elem_type,
+                               InstMgr * insts, int addFileId ) {
     istringstream in( ( char * )s );
     return STEPread( in, err, elem_type, insts, addFileId );
 }
 
 Severity EntityNode::STEPread( istream & in, ErrorDescriptor * err,
-                      const TypeDescriptor * elem_type,
-                      InstMgr * insts, int addFileId ) {
-    SDAI_Application_instance  *se = ReadEntityRef( in, err, ",)", insts,
-                                         addFileId );
+                               const TypeDescriptor * elem_type,
+                               InstMgr * insts, int addFileId ) {
+    SDAI_Application_instance * se = ReadEntityRef( in, err, ",)", insts,
+                                     addFileId );
     if( se != S_ENTITY_NULL ) {
         ErrorDescriptor error;
         if( EntityValidLevel( se, elem_type, &error ) == SEVERITY_NULL ) {
@@ -703,9 +703,9 @@ SelectAggregate::~SelectAggregate() {
 
 /// if exchangeFileFormat == 1 then delims are required.
 Severity SelectAggregate::ReadValue( istream & in, ErrorDescriptor * err,
-                            const TypeDescriptor * elem_type, InstMgr * insts,
-                            int addFileId, int assignVal,
-                            int exchangeFileFormat, const char * currSch ) {
+                                     const TypeDescriptor * elem_type, InstMgr * insts,
+                                     int addFileId, int assignVal,
+                                     int exchangeFileFormat, const char * currSch ) {
     ErrorDescriptor errdesc;
     char errmsg[BUFSIZ];
     int value_cnt = 0;
@@ -848,8 +848,8 @@ SingleLinkNode * SelectNode::NewNode() {
 ///////////////////////////////////////////////////////////////////////////////
 
 Severity SelectNode::StrToVal( const char * s, ErrorDescriptor * err,
-                      const TypeDescriptor * elem_type,
-                      InstMgr * insts, int addFileId ) {
+                               const TypeDescriptor * elem_type,
+                               InstMgr * insts, int addFileId ) {
     istringstream in( ( char * )s );
     if( err->severity( node->STEPread( in, err, insts ) ) != SEVERITY_NULL ) {
         err->AppendToDetailMsg( node ->Error() );
@@ -858,21 +858,21 @@ Severity SelectNode::StrToVal( const char * s, ErrorDescriptor * err,
 }
 
 Severity SelectNode::StrToVal( istream & in, ErrorDescriptor * err,
-                      const TypeDescriptor * elem_type,
-                      InstMgr * insts, int addFileId, const char * currSch ) {
+                               const TypeDescriptor * elem_type,
+                               InstMgr * insts, int addFileId, const char * currSch ) {
     return STEPread( in, err, elem_type, insts, addFileId, currSch );
 }
 
 Severity SelectNode::STEPread( const char * s, ErrorDescriptor * err,
-                      const TypeDescriptor * elem_type,
-                      InstMgr * insts, int addFileId ) {
+                               const TypeDescriptor * elem_type,
+                               InstMgr * insts, int addFileId ) {
     istringstream in( ( char * )s );
     return STEPread( in, err, elem_type, insts, addFileId );
 }
 
 Severity SelectNode::STEPread( istream & in, ErrorDescriptor * err,
-                      const TypeDescriptor * elem_type,
-                      InstMgr * insts, int addFileId, const char * currSch ) {
+                               const TypeDescriptor * elem_type,
+                               InstMgr * insts, int addFileId, const char * currSch ) {
     if( !node )  {
         cerr << "Internal error:  " << __FILE__ << ": " <<  __LINE__ << "\n"
              << _POC_ "\n";
@@ -962,7 +962,7 @@ StringNode::StringNode( StringNode & sn ) {
 }
 
 StringNode::StringNode( const char * sStr ) {
-    // value is an SDAI_String) (the memory is copied
+    // value is an SDAI_String (the memory is copied)
     value = sStr;
 }
 
@@ -997,7 +997,7 @@ Severity StringNode::STEPread( const char * s, ErrorDescriptor * err ) {
     return err->severity();
 }
 
-/*
+/**
  * this function assumes you will check for garbage following input
  */
 Severity StringNode::STEPread( istream & in, ErrorDescriptor * err ) {
@@ -1199,7 +1199,6 @@ SingleLinkNode * EnumNode::NewNode() {
 Severity EnumNode::StrToVal( const char * s, ErrorDescriptor * err ) {
     return STEPread( s, err );
 }
-
 /**
  * this function assumes you will check for garbage following input
  */
@@ -1254,7 +1253,7 @@ LOGICALS::~LOGICALS() {
 }
 
 SingleLinkNode * LOGICALS::NewNode() {
-    return new EnumNode( new SDAI_LOGICAL  );
+    return new EnumNode( new SDAI_LOGICAL );
 }
 
 LOGICALS * create_LOGICALS() {
@@ -1271,14 +1270,11 @@ BOOLEANS::BOOLEANS() {
 BOOLEANS::~BOOLEANS() {
 }
 
-//EnumNode *
-SingleLinkNode *
-BOOLEANS::NewNode() {
-    return new EnumNode( new SDAI_BOOLEAN  );
+SingleLinkNode * BOOLEANS::NewNode() {
+    return new EnumNode( new SDAI_BOOLEAN );
 }
 
-BOOLEANS *
-create_BOOLEANS() {
+BOOLEANS * create_BOOLEANS() {
     return new BOOLEANS ;
 }
 
@@ -1329,7 +1325,7 @@ SingleLinkNode * IntAggregate::NewNode() {
     return new IntNode();
 }
 
-// COPY
+/// COPY
 STEPaggregate & IntAggregate::ShallowCopy( const STEPaggregate & a ) {
     const IntNode * tmp = ( const IntNode * ) a.GetHead();
     IntNode * to;

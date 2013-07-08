@@ -24,7 +24,7 @@
  * Revision 1.11  1997/10/22 16:10:26  sauderd
  * This would #include stdarg.h if __STDC__ was defined otherwise it would
  * #include vararg.h. I changed it to check the configure generated config file
- * named scl_cf.h (if HAVE_CONFIG_H is defined - it's also defined by
+ * named sc_cf.h (if HAVE_CONFIG_H is defined - it's also defined by
  * configure) to see if HAVE_STDARG_H is defined. If it is it #includes stdarg.h
  * otherwise it #includes vararg.h. If HAVE_CONFIG_H isn't defined then it works
  * like it used to.
@@ -51,7 +51,7 @@
  * prettied up interface to print_objects_when_running
  */
 
-#include <scl_memmgr.h>
+#include <sc_memmgr.h>
 #include <stdlib.h>
 #include <setjmp.h>
 
@@ -95,9 +95,9 @@ void ( *ERRORusage_function )( void );
 #define ERROR_MAX_ERRORS    100 /**< max line-numbered errors */
 #define ERROR_MAX_SPACE     4000 /**< max space for line-numbered errors */
 #define ERROR_MAX_STRLEN    200 /**< assuming all error messages are less than this,
-                                  * if we have less than this much space remaining
-                                  * in the error string buffer, call it a day and
-                                  * dump the buffer */
+* if we have less than this much space remaining
+* in the error string buffer, call it a day and
+* dump the buffer */
 
 static struct heap_element {
     unsigned int line;
@@ -124,7 +124,7 @@ void ERRORinitialize( void ) {
     ERROR_syntax_expecting =
         ERRORcreate( "%s, expecting %s in %s %s", SEVERITY_EXIT );
 
-    ERROR_string_base = ( char * )scl_malloc( ERROR_MAX_SPACE );
+    ERROR_string_base = ( char * )sc_malloc( ERROR_MAX_SPACE );
     ERROR_start_message_buffer();
 
 
@@ -147,7 +147,7 @@ void ERRORcleanup( void ) {
     ERRORdestroy( ERROR_subordinate_failed );
     ERRORdestroy( ERROR_syntax_expecting );
 
-    scl_free( ERROR_string_base );
+    sc_free( ERROR_string_base );
 }
 
 /** Need the LIST routines to complete ERROR initialization */
@@ -265,7 +265,7 @@ va_dcl {
             fputc( '\n', error_file );
             ERRORoccurred = true;
         } else if( what->severity >= SEVERITY_WARNING ) {
-            fprintf( error_file, "WARNING: ");
+            fprintf( error_file, "WARNING: %d", what->severity );
             vfprintf( error_file, what->message, args );
             fputc( '\n', error_file );
         }
@@ -437,7 +437,7 @@ void ERRORnospace() {
 Error ERRORcreate( char * message, Severity severity ) {
     Error n;
 
-    n = ( struct Error_ * )scl_malloc( sizeof( struct Error_ ) );
+    n = ( struct Error_ * )sc_malloc( sizeof( struct Error_ ) );
     n->message = message;
     n->severity = severity;
     n->enabled = true;
@@ -445,7 +445,7 @@ Error ERRORcreate( char * message, Severity severity ) {
 }
 
 void ERRORdestroy( Error error ) {
-    scl_free( error );
+    sc_free( error );
 }
 
 /** \fn ERRORbuffer_messages

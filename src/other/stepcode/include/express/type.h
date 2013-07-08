@@ -2,7 +2,7 @@
 #define TYPE_H
 
 /** **********************************************************************
-** Module:  Type
+** Module:  Type \file type.h
 ** Description: This module implements the type abstraction.  It is
 **  rather unpleasant, since this abstraction is quite well suited
 **  to an object-oriented environment with inheritance.
@@ -53,16 +53,16 @@
 /*************/
 
 #define TYPE_NULL       (Type)0
-/* since we can't evaluate true size of many aggregates, prepare */
-/* to grow them by chunks of this size */
+
+/** since we can't evaluate true size of many aggregates,
+ * prepare to grow them by chunks of this size */
 #define AGGR_CHUNK_SIZE 30
 
-/* these are all orthogonal types */
+/** these are all orthogonal types */
 enum type_enum {
-    unknown_ = 0,   /* 0 catches uninit. errors */
-    special_,   /* placeholder, given meaning by it's owner, */
-    /* such as Type_Dont_Care, Type_Bad, Type_User_Def */
-    runtime_,   /* cannot be further determined until runtime */
+    unknown_ = 0,   /**< 0 catches uninit. errors */
+    special_,   /**< placeholder, given meaning by it's owner, such as Type_Dont_Care, Type_Bad, Type_User_Def */
+    runtime_,   /**< cannot be further determined until runtime */
     integer_,
     real_,
     string_,
@@ -75,32 +75,29 @@ enum type_enum {
     generic_,
 
     /* aggregates */
-    aggregate_, /* as a formal */
+    aggregate_, /**< as a formal */
     array_,
     bag_,
     set_,
     list_,
-    last_aggregate_,/* not real, just for easier computation */
+    last_aggregate_,/**< not real, just for easier computation */
 
     oneof_,
 
-    /* while they are really used for different */
-    /* purposes, it might be worth considering */
-    /* collapsing entity_ and entity_list_ */
-    entity_,    /* single entity */
-    entity_list_,   /* linked list of entities */
+    /** while they are really used for different purposes, it might be worth considering collapsing entity_ and entity_list_ */
+    entity_,    /**< single entity */
+    entity_list_,   /**< linked list of entities */
     enumeration_,
     select_,
-    reference_, /* something only defined by a base type, i.e., a */
-    /* type reference */
+    reference_, /**< something only defined by a base type, i.e., a type reference */
     query_,
-    op_,        /* something with an operand */
-    inverse_,   /* is? an inverse */
+    op_,        /**< something with an operand */
+    inverse_,   /**< is? an inverse */
 
-    identifier_,    /* simple identifier in an expression */
-    attribute_, /* attribute reference (i.e., expr->u.variable) */
-    derived_,/*?*/
-    funcall_,   /* a function call and actual parameters */
+    identifier_,    /**< simple identifier in an expression */
+    attribute_, /**< attribute reference (i.e., expr->u.variable) */
+    derived_,   /**< ?*/
+    funcall_,   /**< a function call and actual parameters */
 
     self_
 };
@@ -109,7 +106,7 @@ enum type_enum {
 /* packages used */
 /*****************/
 
-#include <scl_export.h>
+#include <sc_export.h>
 #include "expbasic.h"   /* get basic definitions */
 #include "symbol.h"
 #include "object.h"
@@ -118,7 +115,6 @@ enum type_enum {
 /* typedefs */
 /************/
 
-/*typedef struct Scope  *Type;*/
 typedef struct TypeHead_ * TypeHead;
 typedef struct TypeBody_ * TypeBody;
 typedef enum type_enum  TypeType;
@@ -143,9 +139,8 @@ typedef enum type_enum  Class;
 /***************************/
 
 struct TypeHead_ {
-    Type head;          /* if we are a defined type */
-    /* this is who we point to */
-    struct TypeBody_ * body;    /* true type, ignoring defined types */
+    Type head;          /**< if we are a defined type this is who we point to */
+    struct TypeBody_ * body;    /**< true type, ignoring defined types */
 #if 0
     /* if we are concerned about memory (over time) uncomment this and */
     /* other references to refcount in parser and TYPEresolve.  It is */
@@ -156,30 +151,25 @@ struct TypeHead_ {
 
 struct TypeBody_ {
 #if 1
-    struct TypeHead_ * head;    /* for debugging only */
+    struct TypeHead_ * head;    /**< for debugging only */
 #endif
-    enum type_enum type;        /* bits describing this type, int, real, etc */
+    enum type_enum type;        /**< bits describing this type, int, real, etc */
     struct {
         unsigned unique     : 1;
         unsigned optional   : 1;
         unsigned fixed      : 1;
-        unsigned shared     : 1; /* type is shared */
-        unsigned repeat     : 1; /* expression is a repeat count*/
-        unsigned encoded    : 1; /* encoded string */
+        unsigned shared     : 1; /**< type is shared */
+        unsigned repeat     : 1; /**< expression is a repeat count*/
+        unsigned encoded    : 1; /**< encoded string */
     } flags;
-    Type base;  /* underlying base type if any */
-    /* can also contain true type if this type */
-    /* is a type reference */
-    Type tag;       /* optional tag */
+    Type base;      /**< underlying base type if any can also contain true type if this type is a type reference */
+    Type tag;       /**< optional tag */
     /* a lot of the stuff below can be unionized */
     Expression precision;
-    Linked_List list;   /* used by select_types */
-    /* and composed types, such as for a */
-    /* list of entities in an instance */
-    /*  Dictionary enumeration; *//* only used by enumerations */
+    Linked_List list;   /**< used by select_types and composed types, such as for a list of entities in an instance */
     Expression upper;
     Expression lower;
-    struct Scope_ * entity;     /* only used by entity types */
+    struct Scope_ * entity;     /**< only used by entity types */
 };
 
 /********************/
@@ -188,41 +178,41 @@ struct TypeBody_ {
 
 /* Very commonly-used read-only types */
 /* non-constant versions probably aren't necessary? */
-extern SCL_EXPRESS_EXPORT Type Type_Bad;
-extern SCL_EXPRESS_EXPORT Type Type_Unknown;
-extern SCL_EXPRESS_EXPORT Type Type_Dont_Care;
-extern SCL_EXPRESS_EXPORT Type Type_Runtime;   /**< indicates that this object can't be
+extern SC_EXPRESS_EXPORT Type Type_Bad;
+extern SC_EXPRESS_EXPORT Type Type_Unknown;
+extern SC_EXPRESS_EXPORT Type Type_Dont_Care;
+extern SC_EXPRESS_EXPORT Type Type_Runtime;   /**< indicates that this object can't be
                                                     calculated now but must be deferred
                                                     until (the mythical) runtime */
-extern SCL_EXPRESS_EXPORT Type Type_Binary;
-extern SCL_EXPRESS_EXPORT Type Type_Boolean;
-extern SCL_EXPRESS_EXPORT Type Type_Enumeration;
-extern SCL_EXPRESS_EXPORT Type Type_Expression;
-extern SCL_EXPRESS_EXPORT Type Type_Aggregate;
-extern SCL_EXPRESS_EXPORT Type Type_Integer;
-extern SCL_EXPRESS_EXPORT Type Type_Integer;
-extern SCL_EXPRESS_EXPORT Type Type_Number;
-extern SCL_EXPRESS_EXPORT Type Type_Real;
-extern SCL_EXPRESS_EXPORT Type Type_String;
-extern SCL_EXPRESS_EXPORT Type Type_String_Encoded;
-extern SCL_EXPRESS_EXPORT Type Type_Logical;
-extern SCL_EXPRESS_EXPORT Type Type_Set;
-extern SCL_EXPRESS_EXPORT Type Type_Attribute;
-extern SCL_EXPRESS_EXPORT Type Type_Entity;
-extern SCL_EXPRESS_EXPORT Type Type_Funcall;
-extern SCL_EXPRESS_EXPORT Type Type_Generic;
-extern SCL_EXPRESS_EXPORT Type Type_Identifier;
-extern SCL_EXPRESS_EXPORT Type Type_Oneof;
-extern SCL_EXPRESS_EXPORT Type Type_Query;
-extern SCL_EXPRESS_EXPORT Type Type_Self;
-extern SCL_EXPRESS_EXPORT Type Type_Set_Of_String;
-extern SCL_EXPRESS_EXPORT Type Type_Set_Of_Generic;
-extern SCL_EXPRESS_EXPORT Type Type_Bag_Of_Generic;
+extern SC_EXPRESS_EXPORT Type Type_Binary;
+extern SC_EXPRESS_EXPORT Type Type_Boolean;
+extern SC_EXPRESS_EXPORT Type Type_Enumeration;
+extern SC_EXPRESS_EXPORT Type Type_Expression;
+extern SC_EXPRESS_EXPORT Type Type_Aggregate;
+extern SC_EXPRESS_EXPORT Type Type_Integer;
+extern SC_EXPRESS_EXPORT Type Type_Integer;
+extern SC_EXPRESS_EXPORT Type Type_Number;
+extern SC_EXPRESS_EXPORT Type Type_Real;
+extern SC_EXPRESS_EXPORT Type Type_String;
+extern SC_EXPRESS_EXPORT Type Type_String_Encoded;
+extern SC_EXPRESS_EXPORT Type Type_Logical;
+extern SC_EXPRESS_EXPORT Type Type_Set;
+extern SC_EXPRESS_EXPORT Type Type_Attribute;
+extern SC_EXPRESS_EXPORT Type Type_Entity;
+extern SC_EXPRESS_EXPORT Type Type_Funcall;
+extern SC_EXPRESS_EXPORT Type Type_Generic;
+extern SC_EXPRESS_EXPORT Type Type_Identifier;
+extern SC_EXPRESS_EXPORT Type Type_Oneof;
+extern SC_EXPRESS_EXPORT Type Type_Query;
+extern SC_EXPRESS_EXPORT Type Type_Self;
+extern SC_EXPRESS_EXPORT Type Type_Set_Of_String;
+extern SC_EXPRESS_EXPORT Type Type_Set_Of_Generic;
+extern SC_EXPRESS_EXPORT Type Type_Bag_Of_Generic;
 
-extern SCL_EXPRESS_EXPORT struct freelist_head TYPEHEAD_fl;
-extern SCL_EXPRESS_EXPORT struct freelist_head TYPEBODY_fl;
+extern SC_EXPRESS_EXPORT struct freelist_head TYPEHEAD_fl;
+extern SC_EXPRESS_EXPORT struct freelist_head TYPEBODY_fl;
 
-extern SCL_EXPRESS_EXPORT Error ERROR_corrupted_type;
+extern SC_EXPRESS_EXPORT Error ERROR_corrupted_type;
 
 /******************************/
 /* macro function definitions */
@@ -244,7 +234,6 @@ extern SCL_EXPRESS_EXPORT Error ERROR_corrupted_type;
 #define TYPEis_oneof(t)     ((t)->u.type->body->type == oneof_)
 #define TYPEis_entity(t)    ((t)->u.type->body->type == entity_)
 #define TYPEis_enumeration(t)   ((t)->u.type->body->type == enumeration_)
-/*#define TYPEis_aggregate(t)   ((t)->u.type->body->type >= aggregate_ && (t)->u.type->body->type < last_aggregate_)*/
 #define TYPEis_aggregate(t) ((t)->u.type->body->base)
 #define TYPEis_aggregate_raw(t) ((t)->u.type->body->type == aggregate_)
 #define TYPEis_array(t)     ((t)->u.type->body->type == array_)
@@ -280,7 +269,6 @@ extern SCL_EXPRESS_EXPORT Error ERROR_corrupted_type;
 #define COMP_TYPEput_items(t,lis)   ((t)->u.type->body->list = (lis))
 #define COMP_TYPEadd_items(t,lis)   LISTadd_all((t)->u.type->body->list, (lis));
 
-/*#define ENUM_TYPEput_items(type,list) COMP_TYPEput_items(type, list)*/
 #define ENUM_TYPEget_items(t)       ((t)->symbol_table)
 #define TYPEget_optional(t)     ((t)->u.type->body->flags.optional)
 #define TYPEget_unique(t)       ((t)->u.type->body->flags.unique)
@@ -293,9 +281,6 @@ extern SCL_EXPRESS_EXPORT Error ERROR_corrupted_type;
 
 #define TYPEget_enum_tags(t)        ((t)->symbol_table)
 
-/* for backwards compatibility */
-#define AGGR_TYPEget_base_type      TYPEget_base_type
-
 #define TYPEget_clientData(t)       ((t)->clientData)
 #define TYPEput_clientData(t,d)     ((t)->clientData = (d))
 
@@ -303,20 +288,20 @@ extern SCL_EXPRESS_EXPORT Error ERROR_corrupted_type;
 /* function prototypes */
 /***********************/
 
-extern SCL_EXPRESS_EXPORT Type TYPEcreate_partial PROTO( ( struct Symbol_ *, Scope ) );
+extern SC_EXPRESS_EXPORT Type TYPEcreate_partial PROTO( ( struct Symbol_ *, Scope ) );
 
-extern SCL_EXPRESS_EXPORT Type TYPEcreate PROTO( ( enum type_enum ) );
-extern SCL_EXPRESS_EXPORT Type TYPEcreate_from_body_anonymously PROTO( ( TypeBody ) );
-extern SCL_EXPRESS_EXPORT Type TYPEcreate_name PROTO( ( struct Symbol_ * ) );
-extern SCL_EXPRESS_EXPORT Type TYPEcreate_nostab PROTO( ( struct Symbol_ *, Scope, char ) );
-extern SCL_EXPRESS_EXPORT TypeBody TYPEBODYcreate PROTO( ( enum type_enum ) );
-extern SCL_EXPRESS_EXPORT void TYPEinitialize PROTO( ( void ) );
-extern SCL_EXPRESS_EXPORT void TYPEcleanup PROTO( ( void ) );
+extern SC_EXPRESS_EXPORT Type TYPEcreate PROTO( ( enum type_enum ) );
+extern SC_EXPRESS_EXPORT Type TYPEcreate_from_body_anonymously PROTO( ( TypeBody ) );
+extern SC_EXPRESS_EXPORT Type TYPEcreate_name PROTO( ( struct Symbol_ * ) );
+extern SC_EXPRESS_EXPORT Type TYPEcreate_nostab PROTO( ( struct Symbol_ *, Scope, char ) );
+extern SC_EXPRESS_EXPORT TypeBody TYPEBODYcreate PROTO( ( enum type_enum ) );
+extern SC_EXPRESS_EXPORT void TYPEinitialize PROTO( ( void ) );
+extern SC_EXPRESS_EXPORT void TYPEcleanup PROTO( ( void ) );
 
-extern SCL_EXPRESS_EXPORT bool TYPEinherits_from PROTO( ( Type, enum type_enum ) );
-extern SCL_EXPRESS_EXPORT Type TYPEget_nonaggregate_base_type PROTO( ( Type ) );
+extern SC_EXPRESS_EXPORT bool TYPEinherits_from PROTO( ( Type, enum type_enum ) );
+extern SC_EXPRESS_EXPORT Type TYPEget_nonaggregate_base_type PROTO( ( Type ) );
 
-extern SCL_EXPRESS_EXPORT Type TYPEcreate_user_defined_type PROTO( ( Type, Scope, struct Symbol_ * ) );
-extern SCL_EXPRESS_EXPORT Type TYPEcreate_user_defined_tag PROTO( ( Type, Scope, struct Symbol_ * ) );
+extern SC_EXPRESS_EXPORT Type TYPEcreate_user_defined_type PROTO( ( Type, Scope, struct Symbol_ * ) );
+extern SC_EXPRESS_EXPORT Type TYPEcreate_user_defined_tag PROTO( ( Type, Scope, struct Symbol_ * ) );
 
 #endif    /*  TYPE_H  */

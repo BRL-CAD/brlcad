@@ -4,11 +4,11 @@
 // it since your modifications will be lost if fedex_plus is used to
 // regenerate it.
 
-#ifdef SCL_LOGGING
+#ifdef SC_LOGGING
 #include <sys/time.h>
 #endif
 
-#include <scl_export.h>
+#include <sc_export.h>
 #include <sdai.h>
 #include <Registry.h>
 #include <STEPaggregate.h>
@@ -20,8 +20,8 @@
 #include <SdaiHeaderSchemaClasses.h>
 #include <SdaiHeaderSchema.h>
 
-SCL_EDITOR_EXPORT void HeaderSchemaInit( Registry & );
-SCL_EDITOR_EXPORT void HeaderInitSchemasAndEnts( Registry & );
-SCL_EDITOR_EXPORT void SdaiHEADER_SECTION_SCHEMAInit( Registry & r );
+SC_EDITOR_EXPORT void HeaderSchemaInit( Registry & );
+SC_EDITOR_EXPORT void HeaderInitSchemasAndEnts( Registry & );
+SC_EDITOR_EXPORT void SdaiHEADER_SECTION_SCHEMAInit( Registry & r );
 
 #endif

@@ -17,7 +17,7 @@
 #include <cmath>
 
 #include <cstring>
-#include "scl_memmgr.h"
+#include "sc_memmgr.h"
 
 extern void HeaderSchemaInit( Registry & reg );
 
@@ -29,10 +29,9 @@ STEPfile::STEPfile( Registry & r, InstMgr & i, const std::string filename, bool 
     _instances( i ), _reg( r ), _fileIdIncr( 0 ), _headerId( 0 ),
     _entsNotCreated( 0 ), _entsInvalid( 0 ), _entsIncomplete( 0 ),
     _entsWarning( 0 ), _errorCount( 0 ), _warningCount( 0 ),
-    _maxErrorCount( 100000 ), _strict( strict ),_iFileSize( 0 ),
+    _maxErrorCount( 100000 ), _strict( strict ), _iFileSize( 0 ),
     _iFileCurrentPosition( 0 ), _oFileInstsWritten( 0 ),
-    _iFileStage1Done( false )
-{
+    _iFileStage1Done( false ) {
     SetFileType( VERSION_CURRENT );
     SetFileIdIncrement();
     _currentDir = new DirObj( "" );
@@ -83,7 +82,10 @@ int STEPfile::SetFileType( FileTypeCode ft ) {
 }
 
 
-/******************************************************/
+/******************************************************
+** remove any slashes, and anything before the slash,
+** from filename
+*/
 std::string STEPfile::TruncFileName( const std::string filename ) const {
 #if defined(__WIN32__) && !defined(__mingw32__)
     char slash = '\\';
@@ -132,6 +134,7 @@ Severity STEPfile::AppendExchangeFile( const std::string filename, bool useTechC
     return rval;
 }
 
+/******************************************************/
 Severity STEPfile::ReadWorkingFile( const std::string filename, bool useTechCor ) {
     _error.ClearErrorMsg();
     _errorCount = 0;
@@ -167,6 +170,7 @@ Severity STEPfile::AppendWorkingFile( const std::string filename, bool useTechCo
     return rval;
 }
 
+/******************************************************/
 istream * STEPfile::OpenInputFile( const std::string filename ) {
     _iFileCurrentPosition = 0;
 
@@ -208,6 +212,7 @@ istream * STEPfile::OpenInputFile( const std::string filename ) {
     return in;
 }
 
+/******************************************************/
 void STEPfile::CloseInputFile( istream * in ) {
     if( in && *in != std::cin ) {
         delete in;
@@ -218,6 +223,8 @@ void STEPfile::CloseInputFile( istream * in ) {
     _iFileCurrentPosition = 0;
 }
 
+
+/******************************************************/
 ofstream * STEPfile::OpenOutputFile( std::string filename ) {
     if( filename.empty() ) {
         if( FileName().empty() ) {
@@ -250,6 +257,7 @@ void STEPfile::CloseOutputFile( ostream * out ) {
     delete out;
 }
 
+/******************************************************/
 int STEPfile::IncrementFileId( int fileid ) {
     return ( fileid + FileIdIncr() );
 }

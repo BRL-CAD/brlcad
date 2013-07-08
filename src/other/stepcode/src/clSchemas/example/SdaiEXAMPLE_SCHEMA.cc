@@ -74,7 +74,7 @@ SdaiColor_var::operator Color() const {
 }
 
 
-SDAI_Enum  *
+SDAI_Enum *
 create_SdaiColor_var() {
     return new SdaiColor_var( "", example_schemat_color );
 }
@@ -117,11 +117,11 @@ SdaiPoly_line::SdaiPoly_line( ) {
     attributes.push( a );
 }
 SdaiPoly_line::SdaiPoly_line( SdaiPoly_line & e ) {
-    CopyAs( ( SDAI_Application_instance_ptr  ) &e );
+    CopyAs( ( SDAI_Application_instance_ptr ) &e );
 }
 SdaiPoly_line::~SdaiPoly_line() {  }
 
-SdaiPoly_line::SdaiPoly_line( SDAI_Application_instance  *se, int * addAttrs ) {
+SdaiPoly_line::SdaiPoly_line( SDAI_Application_instance * se, int * addAttrs ) {
     /* Set this to point to the head entity. */
     HeadEntity( se );
 
@@ -181,11 +181,11 @@ SdaiShape::SdaiShape( ) {
     attributes.push( a );
 }
 SdaiShape::SdaiShape( SdaiShape & e ) {
-    CopyAs( ( SDAI_Application_instance_ptr  ) &e );
+    CopyAs( ( SDAI_Application_instance_ptr ) &e );
 }
 SdaiShape::~SdaiShape() {  }
 
-SdaiShape::SdaiShape( SDAI_Application_instance  *se, int * addAttrs ) {
+SdaiShape::SdaiShape( SDAI_Application_instance * se, int * addAttrs ) {
     /* Set this to point to the head entity. */
     HeadEntity( se );
 
@@ -251,9 +251,9 @@ SdaiShape::item_color_( const SdaiColor_var x )
     _item_color.put( x );
 }
 
-const SDAI_Integer 
+const SDAI_Integer
 SdaiShape::number_of_sides_() const {
-    return ( const SDAI_Integer  ) _number_of_sides;
+    return ( const SDAI_Integer ) _number_of_sides;
 }
 
 void
@@ -288,7 +288,7 @@ SdaiRectangle::SdaiRectangle( ) {
     attributes.push( a );
 }
 SdaiRectangle::SdaiRectangle( SdaiRectangle & e ) {
-    CopyAs( ( SDAI_Application_instance_ptr  ) &e );
+    CopyAs( ( SDAI_Application_instance_ptr ) &e );
 }
 SdaiRectangle::~SdaiRectangle() {  }
 
@@ -311,7 +311,7 @@ SdaiRectangle_access_hook_in( void * object,
     if( debug_access_hooks ) {
         cout << "SdaiRectangle: non-virtual access function." << endl;
     }
-    SDAI_Application_instance  *sent = ( SDAI_Application_instance  * )object;
+    SDAI_Application_instance * sent = ( SDAI_Application_instance * )object;
     if( debug_access_hooks ) {
         cout << "STEPfile_id: " << sent->STEPfile_id << endl;
     }
@@ -324,21 +324,21 @@ SdaiRectangle_access_hook_in( void * object,
     ent->attributes[4].aDesc = a_5width;
 }
 
-SDAI_Application_instance_ptr 
+SDAI_Application_instance_ptr
 create_SdaiRectangle( os_database * db ) {
     if( db ) {
         SDAI_DAObject_ptr  ap = new( db, SdaiRectangle::get_os_typespec() )
         SdaiRectangle;
-        return ( SDAI_Application_instance_ptr  ) ap;
+        return ( SDAI_Application_instance_ptr ) ap;
 //        return (SDAI_Application_instance_ptr)) new (db, SdaiRectangle::get_os_typespec()
 //                                   SdaiRectangle;
     } else {
-        return ( SDAI_Application_instance_ptr  ) new SdaiRectangle;
+        return ( SDAI_Application_instance_ptr ) new SdaiRectangle;
     }
 }
 #endif
 
-SdaiRectangle::SdaiRectangle( SDAI_Application_instance  *se, int * addAttrs ) : SdaiShape( se, ( addAttrs ? &addAttrs[1] : 0 ) ) {
+SdaiRectangle::SdaiRectangle( SDAI_Application_instance * se, int * addAttrs ) : SdaiShape( se, ( addAttrs ? &addAttrs[1] : 0 ) ) {
     /* Set this to point to the head entity. */
     HeadEntity( se );
 
@@ -412,11 +412,11 @@ SdaiSquare::SdaiSquare( ) {
     eDesc = example_schemae_square;
 }
 SdaiSquare::SdaiSquare( SdaiSquare & e ) {
-    CopyAs( ( SDAI_Application_instance_ptr  ) &e );
+    CopyAs( ( SDAI_Application_instance_ptr ) &e );
 }
 SdaiSquare::~SdaiSquare() {  }
 
-SdaiSquare::SdaiSquare( SDAI_Application_instance  *se, int * addAttrs ) : SdaiRectangle( se, ( addAttrs ? &addAttrs[1] : 0 ) ) {
+SdaiSquare::SdaiSquare( SDAI_Application_instance * se, int * addAttrs ) : SdaiRectangle( se, ( addAttrs ? &addAttrs[1] : 0 ) ) {
     /* Set this to point to the head entity. */
     HeadEntity( se );
 
@@ -459,11 +459,11 @@ SdaiTriangle::SdaiTriangle( ) {
     attributes.push( a );
 }
 SdaiTriangle::SdaiTriangle( SdaiTriangle & e ) {
-    CopyAs( ( SDAI_Application_instance_ptr  ) &e );
+    CopyAs( ( SDAI_Application_instance_ptr ) &e );
 }
 SdaiTriangle::~SdaiTriangle() {  }
 
-SdaiTriangle::SdaiTriangle( SDAI_Application_instance  *se, int * addAttrs ) : SdaiShape( se, ( addAttrs ? &addAttrs[1] : 0 ) ) {
+SdaiTriangle::SdaiTriangle( SDAI_Application_instance * se, int * addAttrs ) : SdaiShape( se, ( addAttrs ? &addAttrs[1] : 0 ) ) {
     /* Set this to point to the head entity. */
     HeadEntity( se );
 
@@ -565,11 +565,11 @@ SdaiCircle::SdaiCircle( ) {
     attributes.push( a );
 }
 SdaiCircle::SdaiCircle( SdaiCircle & e ) {
-    CopyAs( ( SDAI_Application_instance_ptr  ) &e );
+    CopyAs( ( SDAI_Application_instance_ptr ) &e );
 }
 SdaiCircle::~SdaiCircle() {  }
 
-SdaiCircle::SdaiCircle( SDAI_Application_instance  *se, int * addAttrs ) : SdaiShape( se, ( addAttrs ? &addAttrs[1] : 0 ) ) {
+SdaiCircle::SdaiCircle( SDAI_Application_instance * se, int * addAttrs ) : SdaiShape( se, ( addAttrs ? &addAttrs[1] : 0 ) ) {
     /* Set this to point to the head entity. */
     HeadEntity( se );
 
@@ -591,9 +591,9 @@ SdaiCircle::SdaiCircle( SDAI_Application_instance  *se, int * addAttrs ) : SdaiS
     }
 }
 
-const SDAI_Real 
+const SDAI_Real
 SdaiCircle::radius_() const {
-    return ( const SDAI_Real  ) _radius;
+    return ( const SDAI_Real ) _radius;
 }
 
 void
@@ -619,20 +619,20 @@ SdaiLine::SdaiLine( ) {
 
     eDesc = example_schemae_line;
 
-    STEPattribute * a = new STEPattribute( *a_10end_point_one, ( SDAI_Application_instance_ptr  * ) &_end_point_one );
+    STEPattribute * a = new STEPattribute( *a_10end_point_one, ( SDAI_Application_instance_ptr * ) &_end_point_one );
     a -> set_null();
     attributes.push( a );
 
-    a = new STEPattribute( *a_11end_point_two, ( SDAI_Application_instance_ptr  * ) &_end_point_two );
+    a = new STEPattribute( *a_11end_point_two, ( SDAI_Application_instance_ptr * ) &_end_point_two );
     a -> set_null();
     attributes.push( a );
 }
 SdaiLine::SdaiLine( SdaiLine & e ) {
-    CopyAs( ( SDAI_Application_instance_ptr  ) &e );
+    CopyAs( ( SDAI_Application_instance_ptr ) &e );
 }
 SdaiLine::~SdaiLine() {  }
 
-SdaiLine::SdaiLine( SDAI_Application_instance  *se, int * addAttrs ) {
+SdaiLine::SdaiLine( SDAI_Application_instance * se, int * addAttrs ) {
     /* Set this to point to the head entity. */
     HeadEntity( se );
 
@@ -640,7 +640,7 @@ SdaiLine::SdaiLine( SDAI_Application_instance  *se, int * addAttrs ) {
 
     eDesc = example_schemae_line;
 
-    STEPattribute * a = new STEPattribute( *a_10end_point_one, ( SDAI_Application_instance_ptr  * ) &_end_point_one );
+    STEPattribute * a = new STEPattribute( *a_10end_point_one, ( SDAI_Application_instance_ptr * ) &_end_point_one );
     a -> set_null();
     /* Put attribute on this class' attributes list so the */
     /*access functions still work. */
@@ -651,7 +651,7 @@ SdaiLine::SdaiLine( SDAI_Application_instance  *se, int * addAttrs ) {
         se->attributes.push( a );
     }
 
-    a = new STEPattribute( *a_11end_point_two, ( SDAI_Application_instance_ptr  * ) &_end_point_two );
+    a = new STEPattribute( *a_11end_point_two, ( SDAI_Application_instance_ptr * ) &_end_point_two );
     a -> set_null();
     /* Put attribute on this class' attributes list so the */
     /*access functions still work. */
@@ -715,11 +715,11 @@ SdaiCartesian_point::SdaiCartesian_point( ) {
     attributes.push( a );
 }
 SdaiCartesian_point::SdaiCartesian_point( SdaiCartesian_point & e ) {
-    CopyAs( ( SDAI_Application_instance_ptr  ) &e );
+    CopyAs( ( SDAI_Application_instance_ptr ) &e );
 }
 SdaiCartesian_point::~SdaiCartesian_point() {  }
 
-SdaiCartesian_point::SdaiCartesian_point( SDAI_Application_instance  *se, int * addAttrs ) {
+SdaiCartesian_point::SdaiCartesian_point( SDAI_Application_instance * se, int * addAttrs ) {
     /* Set this to point to the head entity. */
     HeadEntity( se );
 
@@ -805,7 +805,7 @@ SDAI_Model_contents_ptr  create_SdaiModel_contents_example_schema() {
 }
 
 SdaiModel_contents_example_schema::SdaiModel_contents_example_schema() {
-    SDAI_Entity_extent_ptr  eep = ( SDAI_Entity_extent_ptr  )0;
+    SDAI_Entity_extent_ptr  eep = ( SDAI_Entity_extent_ptr )0;
 
     eep = new SDAI_Entity_extent ;
     eep->definition_( example_schemae_poly_line );

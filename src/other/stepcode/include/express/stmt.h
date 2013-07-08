@@ -2,7 +2,7 @@
 #define STATEMENT_H
 
 /** **********************************************************************
-** Module:  Statement
+** Module:  Statement \file stmt.h
 ** Description: This module implements the Statement abstraction.  A
 **  statement is, in effect, a typeless Expression.  Due to the
 **  existence of complex language constructs, however, it often is
@@ -48,7 +48,7 @@
 /* packages used */
 /*****************/
 
-#include <scl_export.h>
+#include <sc_export.h>
 #include "expbasic.h"   /* get basic definitions */
 #include "scope.h"
 
@@ -93,9 +93,8 @@ typedef struct Scope_ * Increment;
 /* these should probably all be expression types */
 
 struct Statement_ {
-    Symbol symbol;  /* can hold pcall or alias name */
-    /* but otherwise is not used for anything */
-    int type;   /* one of STMT_XXX above */
+    Symbol symbol;  /**< can hold pcall or alias name but otherwise is not used for anything */
+    int type;   /**< one of STMT_XXX above */
     /* hey, is there nothing in common beside symbol and private data?? */
     union u_statement {
         struct Alias_     *     alias;
@@ -113,7 +112,7 @@ struct Statement_ {
 struct Alias_ {
     struct Scope_ * scope;
     struct Variable_ * variable;
-    Linked_List statements;     /* list of statements */
+    Linked_List statements;     /**< list of statements */
 };
 
 struct Assignment_ {
@@ -132,18 +131,18 @@ struct Compound_Statement_ {
 
 struct Conditional_ {
     Expression test;
-    Linked_List code;       /* list of statements */
-    Linked_List otherwise;      /* list of statements */
+    Linked_List code;           /**< list of statements */
+    Linked_List otherwise;      /**< list of statements */
 };
 
 struct Loop_ {
-    struct Scope_ * scope;      /* scope for increment control */
+    struct Scope_ * scope;      /**< scope for increment control */
     Expression while_expr;
     Expression until_expr;
-    Linked_List statements;     /* list of statements */
+    Linked_List statements;     /**< list of statements */
 };
 
-/* this is an element in the optional Loop scope */
+/** this is an element in the optional Loop scope */
 struct Increment_ {
     Expression init;
     Expression end;
@@ -152,7 +151,7 @@ struct Increment_ {
 
 struct Procedure_Call_ {
     struct Scope_ * procedure;
-    Linked_List parameters; /* list of expressions */
+    Linked_List parameters; /**< list of expressions */
 };
 
 struct Return_Statement_ {
@@ -165,20 +164,20 @@ struct Return_Statement_ {
 /* global variables */
 /********************/
 
-extern SCL_EXPRESS_EXPORT struct freelist_head STMT_fl;
+extern SC_EXPRESS_EXPORT struct freelist_head STMT_fl;
 
-extern SCL_EXPRESS_EXPORT struct freelist_head ALIAS_fl;
-extern SCL_EXPRESS_EXPORT struct freelist_head ASSIGN_fl;
-extern SCL_EXPRESS_EXPORT struct freelist_head CASE_fl;
-extern SCL_EXPRESS_EXPORT struct freelist_head COMP_STMT_fl;
-extern SCL_EXPRESS_EXPORT struct freelist_head COND_fl;
-extern SCL_EXPRESS_EXPORT struct freelist_head LOOP_fl;
-extern SCL_EXPRESS_EXPORT struct freelist_head PCALL_fl;
-extern SCL_EXPRESS_EXPORT struct freelist_head RET_fl;
-extern SCL_EXPRESS_EXPORT struct freelist_head INCR_fl;
+extern SC_EXPRESS_EXPORT struct freelist_head ALIAS_fl;
+extern SC_EXPRESS_EXPORT struct freelist_head ASSIGN_fl;
+extern SC_EXPRESS_EXPORT struct freelist_head CASE_fl;
+extern SC_EXPRESS_EXPORT struct freelist_head COMP_STMT_fl;
+extern SC_EXPRESS_EXPORT struct freelist_head COND_fl;
+extern SC_EXPRESS_EXPORT struct freelist_head LOOP_fl;
+extern SC_EXPRESS_EXPORT struct freelist_head PCALL_fl;
+extern SC_EXPRESS_EXPORT struct freelist_head RET_fl;
+extern SC_EXPRESS_EXPORT struct freelist_head INCR_fl;
 
-extern SCL_EXPRESS_EXPORT Statement STATEMENT_ESCAPE;
-extern SCL_EXPRESS_EXPORT Statement STATEMENT_SKIP;
+extern SC_EXPRESS_EXPORT Statement STATEMENT_ESCAPE;
+extern SC_EXPRESS_EXPORT Statement STATEMENT_SKIP;
 
 /******************************/
 /* macro function definitions */
@@ -226,17 +225,17 @@ extern SCL_EXPRESS_EXPORT Statement STATEMENT_SKIP;
 /* function prototypes */
 /***********************/
 
-extern SCL_EXPRESS_EXPORT Statement    STMTcreate PROTO( ( int ) );
-extern SCL_EXPRESS_EXPORT Statement    ALIAScreate PROTO( ( struct Scope_ *, Variable, Linked_List ) );
-extern SCL_EXPRESS_EXPORT Statement    CASEcreate PROTO( ( Expression , Linked_List ) );
-extern SCL_EXPRESS_EXPORT Statement    ASSIGNcreate PROTO( ( Expression , Expression ) );
-extern SCL_EXPRESS_EXPORT Statement    COMP_STMTcreate PROTO( ( Linked_List ) );
-extern SCL_EXPRESS_EXPORT Statement    CONDcreate PROTO( ( Expression, Linked_List, Linked_List ) );
-extern SCL_EXPRESS_EXPORT Statement    LOOPcreate PROTO( ( struct Scope_ *, Expression, Expression, Linked_List ) );
-extern SCL_EXPRESS_EXPORT Statement    PCALLcreate PROTO( ( Linked_List ) );
-extern SCL_EXPRESS_EXPORT Statement    RETcreate PROTO( ( Expression ) );
-extern SCL_EXPRESS_EXPORT void     STMTinitialize PROTO( ( void ) );
-extern SCL_EXPRESS_EXPORT struct Scope_ * INCR_CTLcreate PROTO( ( Symbol *, Expression start,
+extern SC_EXPRESS_EXPORT Statement    STMTcreate PROTO( ( int ) );
+extern SC_EXPRESS_EXPORT Statement    ALIAScreate PROTO( ( struct Scope_ *, Variable, Linked_List ) );
+extern SC_EXPRESS_EXPORT Statement    CASEcreate PROTO( ( Expression , Linked_List ) );
+extern SC_EXPRESS_EXPORT Statement    ASSIGNcreate PROTO( ( Expression , Expression ) );
+extern SC_EXPRESS_EXPORT Statement    COMP_STMTcreate PROTO( ( Linked_List ) );
+extern SC_EXPRESS_EXPORT Statement    CONDcreate PROTO( ( Expression, Linked_List, Linked_List ) );
+extern SC_EXPRESS_EXPORT Statement    LOOPcreate PROTO( ( struct Scope_ *, Expression, Expression, Linked_List ) );
+extern SC_EXPRESS_EXPORT Statement    PCALLcreate PROTO( ( Linked_List ) );
+extern SC_EXPRESS_EXPORT Statement    RETcreate PROTO( ( Expression ) );
+extern SC_EXPRESS_EXPORT void     STMTinitialize PROTO( ( void ) );
+extern SC_EXPRESS_EXPORT struct Scope_ * INCR_CTLcreate PROTO( ( Symbol *, Expression start,
         Expression end, Expression increment ) );
 
 #endif /*STATEMENT_H*/

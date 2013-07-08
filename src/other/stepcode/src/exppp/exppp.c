@@ -1,4 +1,4 @@
-#include <scl_memmgr.h>
+#include <sc_memmgr.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <memory.h>
@@ -142,6 +142,7 @@ exp_output( char * buf, int len ) {
 }
 
 void
+
 wrap( char * fmt, ... ) {
     char * p;
     char buf[10000];
@@ -159,7 +160,7 @@ wrap( char * fmt, ... ) {
     /* I.e., if we still can't fit after indenting, don't bother to */
     /* go to newline, just print a long line */
     if( ( ( curpos + len ) > exppp_linelength ) &&
-    ( ( indent2 + len ) < exppp_linelength ) ) {
+            ( ( indent2 + len ) < exppp_linelength ) ) {
         /* move to new continuation line */
         char line[1000];
         sprintf( line, "\n%*s", indent2, "" );
@@ -1460,7 +1461,7 @@ TYPE_body_out( Type t, int level ) {
             while( 0 != ( expr = ( Expression )DICTdo( &de ) ) ) {
                 count++;
             }
-            names = ( char ** )scl_malloc( count * sizeof( char * ) );
+            names = ( char ** )sc_malloc( count * sizeof( char * ) );
             DICTdo_type_init( t->symbol_table, &de, OBJ_EXPRESSION );
             while( 0 != ( expr = ( Expression )DICTdo( &de ) ) ) {
                 names[expr->u.integer - 1] = expr->symbol.name;
@@ -1484,7 +1485,7 @@ TYPE_body_out( Type t, int level ) {
                 raw( names[i] );
             }
             raw( ")" );
-            scl_free( ( char * )names );
+            sc_free( ( char * )names );
         }
 #else
             wrap( " ENUMERATION OF\n" );
@@ -1858,7 +1859,7 @@ EXPRstring( char * buffer, Expression e ) {
         case self_:
             strcpy( buffer, "SELF" );
             break;
-funcall_:
+        case funcall_:
             sprintf( buffer, "%s(", e->symbol.name );
             i = 0;
             LISTdo( e->u.funcall.list, arg, Expression )
@@ -1874,7 +1875,7 @@ funcall_:
         case op_:
             EXPRop_string( buffer, &e->e );
             break;
-aggregate_:
+        case aggregate_:
             strcpy( buffer, "[" );
             i = 0;
             LISTdo( e->u.list, arg, Expression )
@@ -1901,7 +1902,7 @@ aggregate_:
             strcat( buffer, ")" );
             break;
         default:
-            sprintf( buffer, "EXPRstring: unknown expression, type %d", TYPEis( e->type ));
+            sprintf( buffer, "EXPRstring: unknown expression, type %d", TYPEis( e->type ) );
             fprintf( stderr, "%s", buffer );
     }
 }
@@ -1984,7 +1985,7 @@ prep_string() {
     }
     string_func_in_use = true;
 
-    exppp_buf = exppp_bufp = ( char * )scl_malloc( BIGBUFSIZ );
+    exppp_buf = exppp_bufp = ( char * )sc_malloc( BIGBUFSIZ );
     if( !exppp_buf ) {
         fprintf( stderr, "failed to allocate exppp buffer\n" );
         return 1;
@@ -2003,7 +2004,7 @@ prep_string() {
 
 static char *
 finish_string() {
-    char * b = ( char * )scl_realloc( exppp_buf, 1 + exppp_maxbuflen - exppp_buflen );
+    char * b = ( char * )sc_realloc( exppp_buf, 1 + exppp_maxbuflen - exppp_buflen );
 
     if( b == 0 ) {
         fprintf( stderr, "failed to reallocate exppp buffer\n" );

@@ -15,12 +15,12 @@
 
 class STEPattribute;
 
-#include <scl_export.h>
+#include <sc_export.h>
 #include <SingleLinkList.h>
 
 class STEPattributeList;
 
-class SCL_CORE_EXPORT AttrListNode :  public SingleLinkNode {
+class SC_CORE_EXPORT AttrListNode :  public SingleLinkNode {
         friend class STEPattributeList;
 
     protected:
@@ -32,7 +32,7 @@ class SCL_CORE_EXPORT AttrListNode :  public SingleLinkNode {
 
 };
 
-class SCL_CORE_EXPORT STEPattributeList : public SingleLinkList {
+class SC_CORE_EXPORT STEPattributeList : public SingleLinkList {
     public:
         STEPattributeList();
         virtual ~STEPattributeList();

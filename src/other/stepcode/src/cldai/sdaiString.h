@@ -11,17 +11,17 @@
 * and is not subject to copyright.
 */
 
-#include <scl_export.h>
+#include <sc_export.h>
 #include <limits>
 
 
-class SCL_DAI_EXPORT SDAI_String {
+class SC_DAI_EXPORT SDAI_String {
     private:
         std::string content;
     public:
 
         //constructor(s) & destructor
-        SDAI_String( const char * str = "", size_t max = std::string::npos);
+        SDAI_String( const char * str = "", size_t max = std::string::npos );
         SDAI_String( const std::string & s );
         SDAI_String( const SDAI_String & s );
         ~SDAI_String( void );

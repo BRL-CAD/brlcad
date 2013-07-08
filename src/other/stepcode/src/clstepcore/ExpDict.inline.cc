@@ -11,7 +11,7 @@
 */
 
 #include <ExpDict.h>
-#include "scl_memmgr.h"
+#include "sc_memmgr.h"
 
 Dictionary_instance::~Dictionary_instance() {
 }
@@ -25,7 +25,7 @@ Schema::Schema( const char * schemaName )
 }
 
 Schema::~Schema() {
-    TypeDescLinkNode *node;
+    TypeDescLinkNode * node;
 
     if( _use_interface_list != 0 ) {
         delete _use_interface_list;
@@ -36,10 +36,10 @@ Schema::~Schema() {
     if( _global_rules != 0 ) {
         delete _global_rules;
     }
-    node = (TypeDescLinkNode*) _unnamed_typeList.GetHead();
-    while ( node ) {
+    node = ( TypeDescLinkNode * ) _unnamed_typeList.GetHead();
+    while( node ) {
         delete node->TypeDesc();
-        node = (TypeDescLinkNode*) node->NextNode();
+        node = ( TypeDescLinkNode * ) node->NextNode();
     }
 }
 
@@ -123,7 +123,7 @@ AttrDescLinkNode::AttrDescLinkNode() {
 }
 
 AttrDescLinkNode::~AttrDescLinkNode() {
-    if ( _attrDesc ) {
+    if( _attrDesc ) {
         delete _attrDesc;
     }
 }
@@ -146,12 +146,12 @@ Inverse_attributeList::Inverse_attributeList() {
 }
 
 Inverse_attributeList::~Inverse_attributeList() {
-    Inverse_attributeLinkNode *node;
+    Inverse_attributeLinkNode * node;
 
-    node = ( Inverse_attributeLinkNode* ) head;
-    while ( node ) {
+    node = ( Inverse_attributeLinkNode * ) head;
+    while( node ) {
         delete node->Inverse_attr();
-        node = ( Inverse_attributeLinkNode* ) node->NextNode();
+        node = ( Inverse_attributeLinkNode * ) node->NextNode();
     }
 }
 
@@ -222,7 +222,7 @@ TypeDescriptor::TypeDescriptor
 }
 
 TypeDescriptor::~TypeDescriptor() {
-    if ( _where_rules ) {
+    if( _where_rules ) {
         delete _where_rules;
     }
 }

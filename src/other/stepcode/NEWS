@@ -1,4 +1,37 @@
-STEP Class Library  ------  http://github.com/mpictor/StepClassLibrary
+STEPcode -- http://github.com/stepcode/stepcode -- http://stepcode.org
+************************************************************************
+Release 0.7 (April, 2013)
+
+New since v0.6:
+* Requires CMake 2.8.7 or later
+* Replace *ALL* references to SCL with SC - CMake, source, filenames.
+* Lazy loading code (src/cllazyfile)
+  * greatly reduces memory requirements and loading time when not all
+  instances are needed
+  * doesn't work with complex instances yet
+  * doesn't work on windows or 32-bit platforms yet
+* Merged all BRL-CAD changes; now, we can work on the same repo.
+  * Eliminate compile-time dependency on a lexer and parser
+  * When lexer/parser changes, use LEMON/RE2C/Perplex (in BRL-CAD repo)
+* Fixed several bugs in the class libraries that cause segfaults
+* update AP209, 210e3, 242, IFC2
+* Fixes for MSVC, Embarcadero (there are still problems with both:
+  see comments on #178 & #190, also import/export macros)
+* Fixed NIST test executables
+************************************************************************
+Release 0.6 (May, 2012)
+
+New since v0.5:
+* Renamed from STEP Class Library to STEPcode, moved to github.com/stepcode/stepcode
+* Advances in [Python](http://github.com/stepcode/stepcode/wiki/python-generator) support (#185)
+* ABI versioning
+* Implement memory manager with reporting of memory that isn't freed,
+  fix many memory leaks (#148, #160, #162, #168)
+* MSVC fixes (> 128 nested if...else - #152), etc
+* Add AP219, AP238, PDM schema, AP203a1, syntax highlighting files
+* Improvements to CMake files, mostly from Cliff @ BRL-CAD (#143, #163, #181)
+* Allow runtime bounds for aggregates (discovered with AP209e2) (#166)
+* fedex_plus fprintf's can be traced with -DSCL_TRACE_FPRINTF=ON (#176)
 ************************************************************************
 Release 0.5 (Feb 23, 2012)
 
@@ -8,7 +41,7 @@ New since v0.4:
 * Now handles most features of EXPRESS - all included schemas,
   with the exception of AP209 CD, are parsed without error. Enums are
   now in their own dictionary. Allow indexing on aggregates, generics,
-  and binaries. 
+  and binaries.
 * Changes to fedex_plus that improve the generated c++ - use a
   namespace, break up large static strings, make EXPRESS multiple
   inheritance work by not printing multiple copies of inherited members.
@@ -28,7 +61,7 @@ New since v0.3:
 * Enums and entities are allowed to have the same names
   (affected ap242,210e3,209)
 * Remove the SCLP23 macro
-http://github.com/mpictor/StepClassLibrary/wiki/changelog-v0.4
+http://github.com/stepcode/stepcode/wiki/changelog-v0.4
 ************************************************************************
 
 Release 0.3 (Oct 29, 2011)
@@ -58,10 +91,10 @@ What's new since v0.1?
 * Add BNF files, schemas, and CAX-IF Part 21 files
 
 For a detailed list of changes, see
-https://github.com/mpictor/StepClassLibrary/wiki/changelog-v0.2
+https://github.com/stepcode/stepcode/wiki/changelog-v0.2
 
 For a list of closed issues, see
-https://github.com/mpictor/StepClassLibrary/issues?state=closed&milestone=2
+https://github.com/stepcode/stepcode/issues?state=closed&milestone=2
 
 ************************************************************************
 
@@ -84,10 +117,10 @@ What's new since the SCL 3.2 release in 1998?
   parser debug output to a specified range of lines in the schema.
 
 For a detailed list of changes, see
-https://github.com/mpictor/StepClassLibrary/wiki/changelog-v0.1
+https://github.com/stepcode/stepcode/wiki/changelog-v0.1
 
 For a list of closed issues, see
-https://github.com/mpictor/StepClassLibrary/issues?state=closed&milestone=1
+https://github.com/stepcode/stepcode/issues?state=closed&milestone=1
 
 Pre-BRL-CAD changes:
 * Patches from http://www.statik.tu-cottbus.de/fileadmin/project_dth/scl/

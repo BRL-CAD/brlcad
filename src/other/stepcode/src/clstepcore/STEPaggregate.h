@@ -16,7 +16,7 @@ class InstMgr;
 class STEPaggregate;
 class TypeDescriptor;
 
-#include <scl_export.h>
+#include <sc_export.h>
 #include <errordesc.h>
 #include <SingleLinkList.h>
 #include <baseType.h>
@@ -34,7 +34,7 @@ typedef STEPaggregate * STEPaggregateH;
 typedef STEPaggregate * STEPaggregate_ptr;
 typedef STEPaggregate_ptr STEPaggregate_var;
 
-class SCL_CORE_EXPORT STEPaggregate :  public SingleLinkList {
+class SC_CORE_EXPORT STEPaggregate :  public SingleLinkList {
     protected:
         int _null;
 
@@ -89,7 +89,7 @@ class SCL_CORE_EXPORT STEPaggregate :  public SingleLinkList {
  ** This class supports LIST OF:
  **    SELECT_TYPE, BINARY_TYPE, GENERIC_TYPE, ENUM_TYPE, UNKNOWN_TYPE type
  ******************************************************************/
-class SCL_CORE_EXPORT GenericAggregate  :  public STEPaggregate {
+class SC_CORE_EXPORT GenericAggregate  :  public STEPaggregate {
     public:
         virtual SingleLinkNode * NewNode();
         virtual STEPaggregate & ShallowCopy( const STEPaggregate & );
@@ -105,7 +105,7 @@ typedef  GenericAggregate_ptr GenericAggregate_var;
  **
  *****************************************************************************/
 
-class SCL_CORE_EXPORT EntityAggregate  :  public  STEPaggregate {
+class SC_CORE_EXPORT EntityAggregate  :  public  STEPaggregate {
     public:
         virtual Severity ReadValue( istream & in, ErrorDescriptor * err,
                                     const TypeDescriptor * elem_type,
@@ -127,7 +127,7 @@ typedef   EntityAggregate_ptr EntityAggregate_var;
  ** \class SelectAggregate
  ** This is a minimal represention for a collection of SDAI_Select
  ******************************************************************/
-class SCL_CORE_EXPORT SelectAggregate  :  public STEPaggregate {
+class SC_CORE_EXPORT SelectAggregate  :  public STEPaggregate {
     public:
         virtual Severity ReadValue( istream & in, ErrorDescriptor * err,
                                     const TypeDescriptor * elem_type,
@@ -149,7 +149,7 @@ typedef  SelectAggregate_ptr SelectAggregate_var;
 ** \class StringAggregate
 ** This class supports LIST OF STRING type
 ******************************************************************/
-class SCL_CORE_EXPORT StringAggregate  :  public STEPaggregate {
+class SC_CORE_EXPORT StringAggregate  :  public STEPaggregate {
     public:
         virtual SingleLinkNode * NewNode();
         virtual STEPaggregate & ShallowCopy( const STEPaggregate & );
@@ -166,7 +166,7 @@ typedef  StringAggregate_ptr StringAggregate_var;
 ** \class BinaryAggregate
 ** This class supports LIST OF BINARY type
 ******************************************************************/
-class SCL_CORE_EXPORT BinaryAggregate  :  public STEPaggregate {
+class SC_CORE_EXPORT BinaryAggregate  :  public STEPaggregate {
     public:
         virtual SingleLinkNode * NewNode();
         virtual STEPaggregate & ShallowCopy( const STEPaggregate & );
@@ -182,7 +182,7 @@ typedef  BinaryAggregate_ptr BinaryAggregate_var;
 ** \class EnumAggregate
 ** This is a minimal representions for a collection ofSDAI_Enum
 ******************************************************************/
-class SCL_CORE_EXPORT EnumAggregate  :  public STEPaggregate {
+class SC_CORE_EXPORT EnumAggregate  :  public STEPaggregate {
     public:
         virtual SingleLinkNode * NewNode();
         virtual STEPaggregate & ShallowCopy( const STEPaggregate & );
@@ -194,7 +194,7 @@ typedef  EnumAggregate  * EnumAggregateH;
 typedef  EnumAggregate  * EnumAggregate_ptr;
 typedef  EnumAggregate_ptr EnumAggregate_var;
 
-class SCL_CORE_EXPORT LOGICALS  : public EnumAggregate {
+class SC_CORE_EXPORT LOGICALS  : public EnumAggregate {
     public:
         virtual SingleLinkNode * NewNode();
 
@@ -204,10 +204,10 @@ class SCL_CORE_EXPORT LOGICALS  : public EnumAggregate {
 typedef  LOGICALS  * LogicalsH;
 typedef  LOGICALS  * LOGICALS_ptr;
 typedef  LOGICALS_ptr LOGICALS_var;
-SCL_CORE_EXPORT LOGICALS * create_LOGICALS();
+SC_CORE_EXPORT LOGICALS * create_LOGICALS();
 
 
-class SCL_CORE_EXPORT BOOLEANS  : public EnumAggregate {
+class SC_CORE_EXPORT BOOLEANS  : public EnumAggregate {
     public:
         virtual SingleLinkNode * NewNode();
 
@@ -218,9 +218,9 @@ class SCL_CORE_EXPORT BOOLEANS  : public EnumAggregate {
 typedef  BOOLEANS  * BOOLEANS_ptr;
 typedef  BOOLEANS_ptr BOOLEANS_var;
 
-SCL_CORE_EXPORT BOOLEANS * create_BOOLEANS();
+SC_CORE_EXPORT BOOLEANS * create_BOOLEANS();
 
-class SCL_CORE_EXPORT RealAggregate  : public STEPaggregate  {
+class SC_CORE_EXPORT RealAggregate  : public STEPaggregate  {
 
     public:
         virtual SingleLinkNode * NewNode();
@@ -233,7 +233,7 @@ typedef  RealAggregate  * RealAggregateH;
 typedef  RealAggregate  * RealAggregate_ptr;
 typedef  RealAggregate_ptr RealAggregate_var;
 
-class SCL_CORE_EXPORT IntAggregate  : public STEPaggregate  {
+class SC_CORE_EXPORT IntAggregate  : public STEPaggregate  {
 
     public:
         virtual SingleLinkNode * NewNode();
@@ -248,7 +248,7 @@ typedef  IntAggregate_ptr IntAggregate_var;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-class SCL_CORE_EXPORT STEPnode :  public SingleLinkNode  {
+class SC_CORE_EXPORT STEPnode :  public SingleLinkNode  {
     protected:
         int _null;
 
@@ -278,7 +278,7 @@ class SCL_CORE_EXPORT STEPnode :  public SingleLinkNode  {
 ** This class is for the Nodes of GenericAggregates
 ******************************************************************/
 typedef  STEPnode  * STEPnodeH;
-class SCL_CORE_EXPORT GenericAggrNode  : public STEPnode {
+class SC_CORE_EXPORT GenericAggrNode  : public STEPnode {
     public:
         SCLundefined value;
 //  INPUT
@@ -304,7 +304,7 @@ class SCL_CORE_EXPORT GenericAggrNode  : public STEPnode {
 
 /////////////////////////////////////////////////////////////////////////////
 
-class SCL_CORE_EXPORT EntityNode  : public STEPnode {
+class SC_CORE_EXPORT EntityNode  : public STEPnode {
     public:
         SDAI_Application_instance  * node;
 
@@ -364,7 +364,7 @@ class SCL_CORE_EXPORT EntityNode  : public STEPnode {
 ** \class SelectNode
 ** This is a minimal representions for node in lists of SDAI_Select
 ******************************************************************/
-class SCL_CORE_EXPORT SelectNode  : public STEPnode {
+class SC_CORE_EXPORT SelectNode  : public STEPnode {
     public:
         SDAI_Select  * node;
 //  INPUT
@@ -423,7 +423,7 @@ class SCL_CORE_EXPORT SelectNode  : public STEPnode {
 ** \class StringNode
 ** This class is for the Nodes of StringAggregates
 ******************************************************************/
-class SCL_CORE_EXPORT StringNode  : public STEPnode {
+class SC_CORE_EXPORT StringNode  : public STEPnode {
     public:
         SDAI_String  value;
 //  INPUT
@@ -449,11 +449,11 @@ class SCL_CORE_EXPORT StringNode  : public STEPnode {
 
 ///////////////////////////////////////////////////////////////////////////
 
-/******************************************************************
- ** Class:  BinaryNode
- ** Description:  This class is for the Nodes of BinaryAggregates
- ******************************************************************/
-class SCL_CORE_EXPORT BinaryNode  : public STEPnode {
+/**************************************************************//**
+** \class BinaryNode
+** This class is for the Nodes of BinaryAggregates
+******************************************************************/
+class SC_CORE_EXPORT BinaryNode  : public STEPnode {
     public:
         SDAI_Binary  value;
 //  INPUT
@@ -481,7 +481,7 @@ class SCL_CORE_EXPORT BinaryNode  : public STEPnode {
 ** \class EnumNode
 ** This is a minimal representions for node in lists of SDAI_Enum
 ******************************************************************/
-class SCL_CORE_EXPORT EnumNode  : public STEPnode {
+class SC_CORE_EXPORT EnumNode  : public STEPnode {
     public:
         SDAI_Enum  * node;
 //  INPUT
@@ -504,7 +504,7 @@ class SCL_CORE_EXPORT EnumNode  : public STEPnode {
         virtual SingleLinkNode   *  NewNode();
 };
 
-class SCL_CORE_EXPORT RealNode  : public STEPnode {
+class SC_CORE_EXPORT RealNode  : public STEPnode {
     public:
         SDAI_Real  value; // double
 //  INPUT
@@ -526,7 +526,7 @@ class SCL_CORE_EXPORT RealNode  : public STEPnode {
         virtual SingleLinkNode   *  NewNode();
 };
 
-class SCL_CORE_EXPORT IntNode  : public STEPnode {
+class SC_CORE_EXPORT IntNode  : public STEPnode {
     public:
         SDAI_Integer  value; // long int
 //  INPUT

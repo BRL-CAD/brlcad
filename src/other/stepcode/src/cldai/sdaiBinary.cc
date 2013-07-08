@@ -11,7 +11,7 @@
 
 #include <sstream>
 #include <sdai.h>
-#include "scl_memmgr.h"
+#include "sc_memmgr.h"
 
 SDAI_Binary::SDAI_Binary( const char * str, int max ) {
     content = std::string( str, max );
@@ -73,7 +73,7 @@ const char * SDAI_Binary::STEPwrite( std::string & s ) const {
 }
 
 Severity SDAI_Binary::ReadBinary( istream & in, ErrorDescriptor * err, int AssignVal,
-                              int needDelims ) {
+                                  int needDelims ) {
     if( AssignVal ) {
         clear();
     }
@@ -150,6 +150,7 @@ Severity SDAI_Binary::StrToVal( const char * s, ErrorDescriptor * err ) {
 
 /////////////////////////////////////////////////
 
+/// reads a binary in exchange file format delimited by double quotes
 Severity SDAI_Binary::STEPread( istream & in, ErrorDescriptor * err ) {
     return ReadBinary( in, err, 1, 1 );
 }
@@ -159,28 +160,28 @@ Severity SDAI_Binary::STEPread( const char * s, ErrorDescriptor * err ) {
     return STEPread( in, err );
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// * attrValue is validated.
-// * err is set if there is an error
-// * If optional is 1 then a missing value will be valid otherwise severity
-//   incomplete will be set.
-// * If you don\'t know if the value may be optional then set it false and
-//   check to see if SEVERITY_INCOMPLETE is set. You can change it later to
-//   SEVERITY_NULL if it is valid for the value to be missing.  No error
-//   'message' will be associated with the value being missing so you won\'t
-//   have to worry about undoing an error message.
-// * tokenList contains characters that terminate the expected value.
-// * If tokenList is not zero then the value is expected to terminate before
-//   a character found in tokenlist.  All values read up to the
-//   terminating character (delimiter) must be valid or err will be set with an
-//   appropriate error message.  White space between the value and the
-//   terminating character is not considered to be invalid.  If tokenList is
-//   null then attrValue must only contain a valid value and nothing else
-//   following.
-///////////////////////////////////////////////////////////////////////////////
+/***************************************************************************//**
+** * attrValue is validated.
+** * err is set if there is an error
+** * If optional is 1 then a missing value will be valid otherwise severity
+**   incomplete will be set.
+** * If you don't know if the value may be optional then set it false and
+**   check to see if SEVERITY_INCOMPLETE is set. You can change it later to
+**   SEVERITY_NULL if it is valid for the value to be missing.  No error
+**   'message' will be associated with the value being missing so you won\'t
+**   have to worry about undoing an error message.
+** * tokenList contains characters that terminate the expected value.
+** * If tokenList is not zero then the value is expected to terminate before
+**   a character found in tokenlist.  All values read up to the
+**   terminating character (delimiter) must be valid or err will be set with an
+**   appropriate error message.  White space between the value and the
+**   terminating character is not considered to be invalid.  If tokenList is
+**   null then attrValue must only contain a valid value and nothing else
+**   following.
+******************************************************************************/
 Severity SDAI_Binary::BinaryValidLevel( istream & in, ErrorDescriptor * err,
-                                    int optional, char * tokenList,
-                                    int needDelims, int clearError ) {
+                                        int optional, char * tokenList,
+                                        int needDelims, int clearError ) {
     if( clearError ) {
         err->ClearErrorMsg();
     }
@@ -214,8 +215,8 @@ Severity SDAI_Binary::BinaryValidLevel( istream & in, ErrorDescriptor * err,
 }
 
 Severity SDAI_Binary::BinaryValidLevel( const char * value, ErrorDescriptor * err,
-                                    int optional, char * tokenList,
-                                    int needDelims, int clearError ) {
+                                        int optional, char * tokenList,
+                                        int needDelims, int clearError ) {
     istringstream in( ( char * )value );
     return BinaryValidLevel( in, err, optional, tokenList,
                              needDelims, clearError );

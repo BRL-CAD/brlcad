@@ -32,13 +32,13 @@
  * Initial revision
  */
 
-#include <scl_memmgr.h>
+#include <sc_memmgr.h>
 #include "express/symbol.h"
 
 struct freelist_head SYMBOL_fl;
 
 /** Initialize the Symbol module */
-void SYMBOLinitialize() {
+void SYMBOLinitialize( void ) {
     MEMinitialize( &SYMBOL_fl, sizeof( struct Symbol_ ), 100, 100 );
 }
 

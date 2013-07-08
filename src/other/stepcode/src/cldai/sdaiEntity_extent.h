@@ -1,7 +1,7 @@
 #ifndef ENTITYEXTENT_H
 #define ENTITYEXTENT_H 1
 
-#include <scl_export.h>
+#include <sc_export.h>
 
 /*
 //#include <sdaiDefs.h>
@@ -18,7 +18,7 @@ class SDAI_Entity_extent;
 typedef SDAI_Entity_extent * SDAI_Entity_extent_ptr;
 typedef SDAI_Entity_extent_ptr SDAI_Entity_extent_var;
 
-class SCL_DAI_EXPORT SDAI_Entity_extent : public SDAI_Session_instance {
+class SC_DAI_EXPORT SDAI_Entity_extent : public SDAI_Session_instance {
 
         friend class SDAI_Model_contents;
         /*
@@ -28,17 +28,17 @@ class SCL_DAI_EXPORT SDAI_Entity_extent : public SDAI_Session_instance {
 
     public: //for now
 //  protected:
-        Entity_ptr _definition;
-        SDAI_Entity_name _definition_name;
-        SDAI_DAObject__set _instances; //  of  Application_instance
-//    Entity_instance__set _instances;   //  of entity_instance
-//    EntityAggregate _instances;    //  of entity_instance
+        Entity_ptr _definition ;
+        SDAI_Entity_name _definition_name ;
+        SDAI_DAObject__set _instances ;   //  of  Application_instance
+//    Entity_instance__set _instances ;   //  of  entity_instance
+//    EntityAggregate _instances ;    //  of  entity_instance
 // Express in part 22 - INVERSE owned_by : sdai_model_contents FOR folders;
-        SDAI_Model_contents__list _owned_by; //  ADDED in Part 22
+        SDAI_Model_contents__list _owned_by ;  //  ADDED in Part 22
 
 //  private:
         SDAI_Entity_extent();
-//    SDAI_Entity_extent)(const SCLP23_NAME(Entity_extent& ee);
+//    SDAI_Entity_extent(const SDAI_Entity_extent& ee);
         ~SDAI_Entity_extent(); // not in part 23
 
     public:
@@ -56,16 +56,16 @@ class SCL_DAI_EXPORT SDAI_Entity_extent : public SDAI_Session_instance {
             return &_instances;
         }
         SDAI_DAObject__set_var instances_() const {
-            return ( const SDAI_DAObject__set_var  )&_instances;
+            return ( const SDAI_DAObject__set_var )&_instances;
         }
 
 // need to implement Model_contents__list
         SDAI_Model_contents__list_var owned_by_() const;
 
 //    static SDAI_Entity_extent_ptr
-//          _duplicate(SDAI_Entity_extent_ptr) eep;
-//    static SDAI_Entity_extent_ptr) _narrow(Object_ptr op;
-//    static SDAI_Entity_extent_ptr) _nil(;
+//          _duplicate(SDAI_Entity_extent_ptr eep);
+//    static SDAI_Entity_extent_ptr _narrow(Object_ptr op);
+//    static SDAI_Entity_extent_ptr _nil();
 
 //  private:
         void definition_( const Entity_ptr & ep );

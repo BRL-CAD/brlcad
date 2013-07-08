@@ -21,7 +21,7 @@
  * prettied up interface to print_objects_when_running
  */
 
-#include <scl_memmgr.h>
+#include <sc_memmgr.h>
 #include "express/linklist.h"
 
 Error ERROR_empty_list = ERROR_none;
@@ -229,7 +229,6 @@ LISTget_length( Linked_List list ) {
     }
     return count;
 }
-
 
 bool LISTempty( Linked_List list ) {
     if( !list ) {

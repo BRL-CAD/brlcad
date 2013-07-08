@@ -4,7 +4,7 @@
 // it since your modifications will be lost if fedex_plus is used to
 // regenerate it.
 
-#ifdef  SCL_LOGGING
+#ifdef  SC_LOGGING
 #include <fstream.h>
 extern ofstream * logStream;
 #define SCLLOGFILE "scl.log"
@@ -13,7 +13,7 @@ extern ofstream * logStream;
 #include <ExpDict.h>
 #include <STEPattribute.h>
 #include <SdaiHeaderSchema.h>
-#include "scl_memmgr.h"
+#include "sc_memmgr.h"
 
 Schema * s_header_section_schema = 0;
 

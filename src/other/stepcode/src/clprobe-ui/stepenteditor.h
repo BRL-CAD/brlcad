@@ -282,7 +282,7 @@ class StepEntityEditor : public VBox {
 
         void Insert( STEPattribute * attr, int nameWidth, int editWidth, int typeWidth );
 //DAS    seeAttrRowList *AttrRowList()     { return attrRowList; };
-        seeAttrRowList *& AttrRowList()     {
+        seeAttrRowList * & AttrRowList()     {
             return attrRowList;
         };
 

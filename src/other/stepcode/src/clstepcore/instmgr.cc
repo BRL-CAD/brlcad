@@ -18,7 +18,7 @@
 
 #include <sdai.h>
 #include <instmgr.h>
-#include "scl_memmgr.h"
+#include "sc_memmgr.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 //  debug_level >= 2 => tells when a command is chosen
