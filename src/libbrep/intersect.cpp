@@ -1591,15 +1591,20 @@ struct Triangle {
     }
     ON_3dPoint BarycentricCoordinate(ON_3dPoint &pt)
     {
-	ON_Matrix M(3, 3);
-	M[0][0] = A[0], M[0][1] = B[0], M[0][2] = C[0];
-	M[1][0] = A[1], M[1][1] = B[1], M[1][2] = C[1];
-	M[2][0] = A[2], M[2][1] = B[2], M[2][2] = C[2];
-	M.Invert(0.0);
-	ON_Matrix MX(3, 1);
-	MX[0][0] = pt[0], MX[1][0] = pt[1], MX[2][0] = pt[2];
-	M.Multiply(M, MX);
-	return ON_3dPoint(M[0][0], M[1][0], M[2][0]);
+	double x, y, z, pivot_ratio;
+	if (ON_Solve2x2(A[0]-C[0], B[0]-C[0], A[1]-C[1], B[1]-C[1], pt[0]-C[0], pt[1]-C[1], &x, &y, &pivot_ratio) == 2)
+	    return ON_3dPoint(x, y, 1-x-y);
+	if (ON_Solve2x2(A[0]-C[0], B[0]-C[0], A[2]-C[2], B[2]-C[2], pt[0]-C[0], pt[2]-C[2], &x, &z, &pivot_ratio) == 2)
+	    return ON_3dPoint(x, 1-x-z, z);
+	if (ON_Solve2x2(A[1]-C[1], B[1]-C[1], A[2]-C[2], B[2]-C[2], pt[1]-C[1], pt[2]-C[2], &y, &z, &pivot_ratio) == 2)
+	    return ON_3dPoint(1-y-z, y, z);
+	return ON_3dPoint::UnsetPoint;
+    }
+    void GetLineSegments(ON_Line line[3]) const
+    {
+	line[0] = ON_Line(A, B);
+	line[1] = ON_Line(A, C);
+	line[2] = ON_Line(B, C);
     }
 };
 
@@ -1610,6 +1615,33 @@ triangle_intersection(const struct Triangle &TriA, const struct Triangle &TriB, 
     ON_Plane plane_a(TriA.A, TriA.B, TriA.C);
     ON_Plane plane_b(TriB.A, TriB.B, TriB.C);
     ON_Line intersect;
+    if (plane_a.Normal().IsParallelTo(plane_b.Normal())) {
+	if (!ON_NearZero(plane_a.DistanceTo(plane_b.origin))) {
+	    // parallel
+	    return false;
+	}
+	// The two triangles are in the same plane.
+	ON_3dPoint pt(0.0, 0.0, 0.0);
+	int count = 0;
+	ON_Line lineA[3], lineB[3];
+	TriA.GetLineSegments(lineA);
+	TriB.GetLineSegments(lineB);
+	for (int i = 0; i < 3; i++) {
+	    for (int j = 0; j < 3; j++) {
+		double t_a, t_b;
+		if (ON_IntersectLineLine(lineA[i], lineB[j], &t_a, &t_b, ON_ZERO_TOLERANCE, true)) {
+		    // we don't care if they are parallel or coincident
+		    pt += lineA[i].PointAt(t_a);
+		    count++;
+		}
+	    }
+	}
+	if (!count)
+	    return false;
+	center = pt/count;
+	return true;
+    }
+
     if (!ON_Intersect(plane_a, plane_b, intersect))
 	return false;
     ON_3dVector line_normal = ON_CrossProduct(plane_a.Normal(), intersect.Direction());
@@ -1619,22 +1651,23 @@ triangle_intersection(const struct Triangle &TriA, const struct Triangle &TriB, 
     double dp2 = ON_DotProduct(TriA.B - intersect.from, line_normal);
     double dp3 = ON_DotProduct(TriA.C - intersect.from, line_normal);
 
-    int points_on_one_side = (dp1 >= -ON_ZERO_TOLERANCE) + (dp2 >= -ON_ZERO_TOLERANCE) + (dp3 >= -ON_ZERO_TOLERANCE);
-    if (points_on_one_side == 0 || points_on_one_side == 3)
+    int points_on_line = ON_NearZero(dp1) + ON_NearZero(dp2) + ON_NearZero(dp3);
+    int points_on_one_side = (dp1 >= ON_ZERO_TOLERANCE) + (dp2 >= ON_ZERO_TOLERANCE) + (dp3 >= ON_ZERO_TOLERANCE);
+    if (points_on_one_side == 0 || points_on_one_side == 3-points_on_line)
 	return false;
 
     line_normal = ON_CrossProduct(plane_b.Normal(), intersect.Direction());
     double dp4 = ON_DotProduct(TriB.A - intersect.from, line_normal);
     double dp5 = ON_DotProduct(TriB.B - intersect.from, line_normal);
     double dp6 = ON_DotProduct(TriB.C - intersect.from, line_normal);
-    points_on_one_side = (dp4 >= -ON_ZERO_TOLERANCE) + (dp5 >= -ON_ZERO_TOLERANCE) + (dp6 >= -ON_ZERO_TOLERANCE);
-    if (points_on_one_side == 0 || points_on_one_side == 3)
+    points_on_line = ON_NearZero(dp4) + ON_NearZero(dp5) + ON_NearZero(dp6);
+    points_on_one_side = (dp4 >= ON_ZERO_TOLERANCE) + (dp5 >= ON_ZERO_TOLERANCE) + (dp6 >= ON_ZERO_TOLERANCE);
+    if (points_on_one_side == 0 || points_on_one_side == 3-points_on_line)
 	return false;
 
     double t[4];
     int count = 0;
     double t1, t2;
-
     // dpi*dpj < 0 - the corresponding points are on different sides
     // - the line segment between them are intersected by the plane-plane
     // intersection line
