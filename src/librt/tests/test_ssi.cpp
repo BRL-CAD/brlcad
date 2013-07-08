@@ -212,6 +212,8 @@ main(int argc, char** argv)
 		VSET(sph->c, 0.0, 0.0, radius);
 		break;
 	    }
+	default:
+	    break;
 	}
 
 	bu_vls_init(&name);
@@ -286,6 +288,8 @@ main(int argc, char** argv)
 		VSET(sph->c, 0.0, 0.0, radius);
 		break;
 	    }
+	default:
+	    break;
 	}
 
 	bu_vls_init(&name);

@@ -3026,6 +3026,8 @@ brep_intersect_surface_surface(struct rt_db_internal *intern1, struct rt_db_inte
 	    plotpoint(events[k].m_pointA, vbp, PEACH);
 	    plotpoint(events[k].m_pointB, vbp, DARKVIOLET);
 	    break;
+	default:
+	    break;
 	}
     }
 
