@@ -4,12 +4,8 @@
 #include <sc_cf.h>
 #include "sc_memmgr.h"
 
-#if __APPLE__
-# include <malloc/malloc.h>
-#else
-# include <malloc.h>
-#endif
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <string>
 #include <set>
