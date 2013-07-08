@@ -142,47 +142,75 @@ main(int argc, char** argv)
     }
 
     for (int i = 0; i < events.Count() * 2; i++) {
-	ON_Curve *curve2d = i < events.Count() ? events[i].m_curveA :
-	    events[i - events.Count()].m_curveB;
-	ON_NurbsCurve *nurbscurve2d = ON_NurbsCurve::New();
-	curve2d->GetNurbForm(*nurbscurve2d);
-	// Use a sketch primitive to represent a 2D curve (polyline curve).
-	// The CVs of the curve are used as vertexes of the sketch.
 	struct rt_db_internal intern;
-	struct rt_sketch_internal *sketch;
-	int vert_count = nurbscurve2d->CVCount();
 	RT_DB_INTERNAL_INIT(&intern);
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	intern.idb_type = ID_SKETCH;
-	intern.idb_meth = &rt_functab[ID_SKETCH];
-	BU_ALLOC(intern.idb_ptr, struct rt_sketch_internal);
-	sketch = (struct rt_sketch_internal *)intern.idb_ptr;
-	sketch->magic = RT_SKETCH_INTERNAL_MAGIC;
-	VSET(sketch->V, 0.0, 0.0, 0.0);
-	VSET(sketch->u_vec, 1.0, 0.0, 0.0);
-	VSET(sketch->v_vec, 0.0, 1.0, 0.0);
-	sketch->vert_count = vert_count;
-	sketch->curve.count = vert_count - 1;
+	switch (events[i%events.Count()].m_type) {
+	case ON_SSX_EVENT::ssx_overlap:
+	case ON_SSX_EVENT::ssx_tangent:
+	case ON_SSX_EVENT::ssx_transverse:
+	    {
+		// curves
+		ON_Curve *curve2d = i < events.Count() ? events[i].m_curveA :
+		    events[i - events.Count()].m_curveB;
+		ON_NurbsCurve *nurbscurve2d = ON_NurbsCurve::New();
+		curve2d->GetNurbForm(*nurbscurve2d);
+		// Use a sketch primitive to represent a 2D curve (polyline curve).
+		// The CVs of the curve are used as vertexes of the sketch.
+		struct rt_sketch_internal *sketch;
+		int vert_count = nurbscurve2d->CVCount();
+		intern.idb_type = ID_SKETCH;
+		intern.idb_meth = &rt_functab[ID_SKETCH];
+		BU_ALLOC(intern.idb_ptr, struct rt_sketch_internal);
+		sketch = (struct rt_sketch_internal *)intern.idb_ptr;
+		sketch->magic = RT_SKETCH_INTERNAL_MAGIC;
+		VSET(sketch->V, 0.0, 0.0, 0.0);
+		VSET(sketch->u_vec, 1.0, 0.0, 0.0);
+		VSET(sketch->v_vec, 0.0, 1.0, 0.0);
+		sketch->vert_count = vert_count;
+		sketch->curve.count = vert_count - 1;
 
-	// The memory must be dynamic allocated since they are bu_free'd
-	// in rt_db_free_internal()
-	sketch->verts = (point2d_t *)bu_calloc(vert_count, sizeof(point2d_t), "sketch->verts");
-	sketch->curve.reverse = (int *)bu_calloc(vert_count - 1, sizeof(int), "sketch->crv->reverse");
-	sketch->curve.segment = (genptr_t *)bu_calloc(vert_count - 1, sizeof(genptr_t), "sketch->crv->segments");
+		// The memory must be dynamic allocated since they are bu_free'd
+		// in rt_db_free_internal()
+		sketch->verts = (point2d_t *)bu_calloc(vert_count, sizeof(point2d_t), "sketch->verts");
+		sketch->curve.reverse = (int *)bu_calloc(vert_count - 1, sizeof(int), "sketch->crv->reverse");
+		sketch->curve.segment = (genptr_t *)bu_calloc(vert_count - 1, sizeof(genptr_t), "sketch->crv->segments");
 
-	for (int j = 0; j < vert_count; j++) {
-	    ON_3dPoint CV3d;
-	    nurbscurve2d->GetCV(j, CV3d);
-	    sketch->verts[j][0] = CV3d.x;
-	    sketch->verts[j][1] = CV3d.y;
-	    if (j != 0) {
-		struct line_seg *lsg;
-		BU_ALLOC(lsg, struct line_seg);
-		lsg->magic = CURVE_LSEG_MAGIC;
-		lsg->start = j - 1;
-		lsg->end = j;
-		sketch->curve.segment[j - 1] = (genptr_t)lsg;
-		sketch->curve.reverse[j - 1] = 0;
+		for (int j = 0; j < vert_count; j++) {
+		    ON_3dPoint CV3d;
+		    nurbscurve2d->GetCV(j, CV3d);
+		    sketch->verts[j][0] = CV3d.x;
+		    sketch->verts[j][1] = CV3d.y;
+		    if (j != 0) {
+			struct line_seg *lsg;
+			BU_ALLOC(lsg, struct line_seg);
+			lsg->magic = CURVE_LSEG_MAGIC;
+			lsg->start = j - 1;
+			lsg->end = j;
+			sketch->curve.segment[j - 1] = (genptr_t)lsg;
+			sketch->curve.reverse[j - 1] = 0;
+		    }
+		}
+		break;
+	    }
+	case ON_SSX_EVENT::ssx_tangent_point:
+	case ON_SSX_EVENT::ssx_transverse_point:
+	    {
+		// use a sphere to display points
+		ON_3dPoint center = i < events.Count() ? events[i].m_pointA :
+		    events[i - events.Count()].m_pointB;
+		double radius = 0.1;
+		struct rt_ell_internal* sph;
+		intern.idb_type = ID_SPH;
+		intern.idb_meth = &rt_functab[ID_SPH];
+		BU_ALLOC(intern.idb_ptr, struct rt_ell_internal);
+		sph = (struct rt_ell_internal *)intern.idb_ptr;
+		sph->magic = RT_ELL_INTERNAL_MAGIC;
+		VSET(sph->v, center.x, center.y, center.z);
+		VSET(sph->a, radius, 0.0, 0.0);
+		VSET(sph->b, 0.0, radius, 0.0);
+		VSET(sph->c, 0.0, 0.0, radius);
+		break;
 	    }
 	}
 
@@ -201,37 +229,63 @@ main(int argc, char** argv)
     }
 
     for (int i = 0; i < events.Count(); i++) {
-	// Use a pipe primitive to represent a curve.
-	// The CVs of the curve are used as vertexes of the pipe.
-	ON_Curve *curve3d = events[i].m_curve3d;
-	ON_NurbsCurve *nurbscurve3d = ON_NurbsCurve::New();
-	curve3d->GetNurbForm(*nurbscurve3d);
 	struct rt_db_internal intern;
 	RT_DB_INTERNAL_INIT(&intern);
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	intern.idb_type = ID_PIPE;
-	intern.idb_meth = &rt_functab[ID_PIPE];
-	BU_ALLOC(intern.idb_ptr, struct rt_pipe_internal);
-	struct rt_pipe_internal *pi;
-	pi = (struct rt_pipe_internal *)intern.idb_ptr;
-	pi->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
-	pi->pipe_count = nurbscurve3d->CVCount();
-	BU_LIST_INIT(&(pi->pipe_segs_head));
-	struct wdb_pipept *ps;
+	switch (events[i].m_type) {
+	case ON_SSX_EVENT::ssx_overlap:
+	case ON_SSX_EVENT::ssx_tangent:
+	case ON_SSX_EVENT::ssx_transverse:
+	    {
+		// Use a pipe primitive to represent a curve.
+		// The CVs of the curve are used as vertexes of the pipe.
+		ON_Curve *curve3d = events[i].m_curve3d;
+		ON_NurbsCurve *nurbscurve3d = ON_NurbsCurve::New();
+		curve3d->GetNurbForm(*nurbscurve3d);
+		intern.idb_type = ID_PIPE;
+		intern.idb_meth = &rt_functab[ID_PIPE];
+		BU_ALLOC(intern.idb_ptr, struct rt_pipe_internal);
+		struct rt_pipe_internal *pi;
+		pi = (struct rt_pipe_internal *)intern.idb_ptr;
+		pi->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
+		pi->pipe_count = nurbscurve3d->CVCount();
+		BU_LIST_INIT(&(pi->pipe_segs_head));
+		struct wdb_pipept *ps;
 
-	fastf_t od = nurbscurve3d->BoundingBox().Diagonal().Length() * 0.05;
-	for (int j = 0; j < nurbscurve3d->CVCount(); j++) {
-	    BU_ALLOC(ps, struct wdb_pipept);
-	    ps->l.magic = WDB_PIPESEG_MAGIC;
-	    ps->l.back = NULL;
-	    ps->l.forw = NULL;
-	    ON_3dPoint p;
-	    nurbscurve3d->GetCV(j, p);
-	    VSET(ps->pp_coord, p.x, p.y, p.z);
-	    ps->pp_id = 0.0;
-	    ps->pp_od = od;
-	    ps->pp_bendradius = 0;
-	    BU_LIST_INSERT(&pi->pipe_segs_head, &ps->l);
+		fastf_t od = nurbscurve3d->BoundingBox().Diagonal().Length() * 0.05;
+		for (int j = 0; j < nurbscurve3d->CVCount(); j++) {
+		    BU_ALLOC(ps, struct wdb_pipept);
+		    ps->l.magic = WDB_PIPESEG_MAGIC;
+		    ps->l.back = NULL;
+		    ps->l.forw = NULL;
+		    ON_3dPoint p;
+		    nurbscurve3d->GetCV(j, p);
+		    VSET(ps->pp_coord, p.x, p.y, p.z);
+		    ps->pp_id = 0.0;
+		    ps->pp_od = od;
+		    ps->pp_bendradius = 0;
+		    BU_LIST_INSERT(&pi->pipe_segs_head, &ps->l);
+		}
+		break;
+	    }
+	case ON_SSX_EVENT::ssx_tangent_point:
+	case ON_SSX_EVENT::ssx_transverse_point:
+	    {
+		// use a sphere to display points
+		ON_3dPoint center = events[i].m_point3d;
+		double radius = 0.1;
+		struct rt_ell_internal* sph;
+		intern.idb_type = ID_SPH;
+		intern.idb_meth = &rt_functab[ID_SPH];
+		BU_ALLOC(intern.idb_ptr, struct rt_ell_internal);
+		sph = (struct rt_ell_internal *)intern.idb_ptr;
+		sph->magic = RT_ELL_INTERNAL_MAGIC;
+		VSET(sph->v, center.x, center.y, center.z);
+		VSET(sph->a, radius, 0.0, 0.0);
+		VSET(sph->b, 0.0, radius, 0.0);
+		VSET(sph->c, 0.0, 0.0, radius);
+		break;
+	    }
 	}
 
 	bu_vls_init(&name);

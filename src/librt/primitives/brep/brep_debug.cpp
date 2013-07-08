@@ -747,6 +747,16 @@ plotcurve(ON_Curve &curve, struct bn_vlblock *vbp, int plotres, const int red = 
 }
 
 
+void
+plotpoint(ON_3dPoint &point, struct bn_vlblock *vbp, const int red = 255, const int green = 255, const int blue = 0)
+{
+    register struct bu_list *vhead;
+    vhead = rt_vlblock_find(vbp, red, green, blue);
+    RT_ADD_VLIST(vhead, point, BN_VLIST_POINT_DRAW);
+    return;
+}
+
+
 void plotcurveonsurface(ON_Curve *curve,
 			ON_Surface *surface,
 			struct bn_vlblock *vbp,
@@ -2999,16 +3009,24 @@ brep_intersect_surface_surface(struct rt_db_internal *intern1, struct rt_db_inte
 
     plotsurface(surf1, vbp, 100, 10, PURERED);
     plotsurface(surf2, vbp, 100, 10, BLUE);
-    for (int k = 0; k < events.Count(); k++) {
-	plotcurve(*(events[k].m_curve3d), vbp, 1000, GREEN);
-    }
 
-    /* plot the returned 2d curves in UV parameter spaces */
+    // Plot the intersection curves (or points) (3D and 2D)
     for (int k = 0; k < events.Count(); k++) {
-	plotcurveonsurface(events[k].m_curveA, &surf1, vbp, 1000, PEACH);
-    }
-    for (int k = 0; k < events.Count(); k++) {
-	plotcurveonsurface(events[k].m_curveB, &surf2, vbp, 1000, DARKVIOLET);
+	switch (events[k].m_type) {
+	case ON_SSX_EVENT::ssx_overlap:
+	case ON_SSX_EVENT::ssx_tangent:
+	case ON_SSX_EVENT::ssx_transverse:
+	    plotcurve(*(events[k].m_curve3d), vbp, 1000, GREEN);
+	    plotcurveonsurface(events[k].m_curveA, &surf1, vbp, 1000, PEACH);
+	    plotcurveonsurface(events[k].m_curveB, &surf2, vbp, 1000, DARKVIOLET);
+	    break;
+	case ON_SSX_EVENT::ssx_tangent_point:
+	case ON_SSX_EVENT::ssx_transverse_point:
+	    plotpoint(events[k].m_point3d, vbp, GREEN);
+	    plotpoint(events[k].m_pointA, vbp, PEACH);
+	    plotpoint(events[k].m_pointB, vbp, DARKVIOLET);
+	    break;
+	}
     }
 
     return 0;
