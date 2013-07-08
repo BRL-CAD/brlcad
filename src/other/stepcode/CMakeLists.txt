@@ -89,11 +89,6 @@ if(NOT DEFINED SC_SDAI_ADDITIONAL_EXES_SRCS )
   set( SC_SDAI_ADDITIONAL_EXES_SRCS "" CACHE STRING "Source files for additional executables to be linked with SDAI libs" )
 endif(NOT DEFINED SC_SDAI_ADDITIONAL_EXES_SRCS )
 
-#this makes SC_BUILD_SCHEMAS show up in cmake-gui
-if( NOT DEFINED SC_BUILD_SCHEMAS )
-    SET(SC_BUILD_SCHEMAS "ALL" CACHE string "Semicolon-separated list of paths to EXPRESS schemas to be built" )
-endif( NOT DEFINED SC_BUILD_SCHEMAS )
-
 # CMake derives much of its functionality from modules, typically
 # stored in one directory - let CMake know where to find them.
 SET(SC_CMAKE_DIR "${SC_SOURCE_DIR}/cmake")
@@ -140,9 +135,10 @@ ENDIF(SC_ENABLE_COVERAGE)
 # Testing option
 OPTION_WITH_DEFAULT( SC_ENABLE_TESTING "Enable unittesting framework" OFF )
 IF(SC_ENABLE_TESTING)
+  #this makes SC_BUILD_SCHEMAS show up in cmake-gui
   if( NOT DEFINED SC_BUILD_SCHEMAS )
-    set( SC_BUILD_SCHEMAS "ALL" ) #test all schemas, unless otherwise specified
-  endif()
+    SET(SC_BUILD_SCHEMAS "ALL" CACHE string "Semicolon-separated list of paths to EXPRESS schemas to be built" )
+  endif( NOT DEFINED SC_BUILD_SCHEMAS )
   INCLUDE(CTest)
   ENABLE_TESTING()
 ENDIF(SC_ENABLE_TESTING)
