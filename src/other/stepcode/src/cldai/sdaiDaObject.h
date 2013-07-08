@@ -1,6 +1,8 @@
 #ifndef SDAIDAOBJECT_H
 #define SDAIDAOBJECT_H 1
 
+
+
 #include <sdaiObject.h>
 #include <sdaiString.h>
 #include <sdaiEnum.h>
@@ -186,6 +188,7 @@ class SC_DAI_EXPORT SDAI_DAObject : public SDAI_sdaiObject {
         virtual ~SDAI_DAObject();
 
         Logical dado_same( SDAI_DAObject_ptr obj ) {
+            if (obj == this) return LTrue;
             return LUnknown;
         }
 
