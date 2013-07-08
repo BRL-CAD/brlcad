@@ -55,7 +55,7 @@ const namedLazyInstance p21HeaderSectionReader::nextInstance() {
         assert( strlen( i.name ) > 0 );
 
         std::streampos end = seekInstanceEnd( 0 ); //no references in file header
-        if( ( end == -1 ) || ( end >= _sectionEnd ) ) {
+        if( ( (signed long int)end == -1 ) || ( end >= _sectionEnd ) ) {
             //invalid instance, so clear everything
             i.loc.begin = -1;
             i.name = 0;
