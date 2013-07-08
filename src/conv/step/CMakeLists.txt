@@ -17,19 +17,19 @@ include_directories(${STEP_INCLUDE_DIRS})
 include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${BRLCAD_SOURCE_DIR}/src/other/step/include
-  ${BRLCAD_SOURCE_DIR}/src/other/step/src/base
-  ${BRLCAD_SOURCE_DIR}/src/other/step/src/clstepcore
-  ${BRLCAD_SOURCE_DIR}/src/other/step/src/cleditor
-  ${BRLCAD_SOURCE_DIR}/src/other/step/src/clutils
-  ${BRLCAD_SOURCE_DIR}/src/other/step/src/cldai
-  ${BRLCAD_SOURCE_DIR}/src/other/step/src/test
-  ${CMAKE_BINARY_DIR}/src/other/step/include
+  ${BRLCAD_SOURCE_DIR}/src/other/stepcode/include
+  ${BRLCAD_SOURCE_DIR}/src/other/stepcode/src/base
+  ${BRLCAD_SOURCE_DIR}/src/other/stepcode/src/clstepcore
+  ${BRLCAD_SOURCE_DIR}/src/other/stepcode/src/cleditor
+  ${BRLCAD_SOURCE_DIR}/src/other/stepcode/src/clutils
+  ${BRLCAD_SOURCE_DIR}/src/other/stepcode/src/cldai
+  ${BRLCAD_SOURCE_DIR}/src/other/stepcode/src/test
+  ${CMAKE_BINARY_DIR}/src/other/stepcode/include
   ${TNT_INCLUDE_DIR}
   ${BRLCAD_SOURCE_DIR}/src/libbrep #Temporary until headers reworked
   )
 
-set(SCHEMA_FILE ${BRLCAD_SOURCE_DIR}/src/other/step/data/ap203/ap203.exp)
+set(SCHEMA_FILE ${BRLCAD_SOURCE_DIR}/src/other/stepcode/data/ap203/ap203.exp)
 
 # read the schema name from a line like 'SCHEMA AUTOMOTIVE_DESIGN;'
 file(STRINGS ${SCHEMA_FILE} SCHEMA_STATEMENT LIMIT_COUNT 1 REGEX "SCHEMA .*")
