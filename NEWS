@@ -64,6 +64,7 @@ including the STEP, Patch, and 3DM importers.
 * initial NURBS shaded display and tessellation support - Keith Bowman
 * fixed patch-g -f input file permissions failure - Sean Morrison
 * improved large file support for the patch-g importer - Sean Morrison
+* upgraded libpng to version 1.5.12 - Cliff Yapp
 * openNURBS updated to version 5.0 (2012-10-24) - Richard Weiss
 * improved BoT mesh editing interface in archer - Bob Parker
 * fixed crash when running screengrab in archer - Nick Reed
