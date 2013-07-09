@@ -1822,6 +1822,23 @@ ON_Intersect(const ON_Surface* surfA,
     build_surface_root(surfB, surfaceB_udomain, surfaceB_vdomain, rootB);
     if (rootA.Intersect(rootB, intersection_tolerance))
 	candidates.push_back(std::make_pair(&rootA, &rootB));
+    else
+	return 0;
+
+    // We adjust the tolerance from 3D scale to respective 2D scales.
+    double intersection_tolerance_A = intersection_tolerance;
+    double intersection_tolerance_B = intersection_tolerance;
+    double l = rootA.m_surf->BoundingBox().Diagonal().Length();
+    double ul = surfaceA_udomain ? surfaceA_udomain->Length() : surfA->Domain(0).Length();
+    double vl = surfaceA_vdomain ? surfaceA_vdomain->Length() : surfA->Domain(1).Length();
+    double dl = ON_2dVector(ul, vl).Length();
+    if (!ON_NearZero(l))
+	intersection_tolerance_A = intersection_tolerance/l*dl;
+    ul = surfaceB_udomain ? surfaceB_udomain->Length() : surfB->Domain(0).Length();
+    vl = surfaceB_vdomain ? surfaceB_vdomain->Length() : surfB->Domain(1).Length();
+    dl = ON_2dVector(ul, vl).Length();
+    if (!ON_NearZero(l))
+	intersection_tolerance_B = intersection_tolerance/l*dl;
 
     ON_3dPointArray curvept, tmp_curvept;
     ON_2dPointArray curveuv, curvest, tmp_curveuv, tmp_curvest;
@@ -2020,8 +2037,8 @@ ON_Intersect(const ON_Surface* surfA,
 	int j;
 	for (j = 0; j < curvept.Count(); j++)
 	    if (tmp_curvept[i].DistanceTo(curvept[j]) < intersection_tolerance
-		&& tmp_curveuv[i].DistanceTo(curveuv[j]) < intersection_tolerance
-		&& tmp_curvest[i].DistanceTo(curvest[j]) < intersection_tolerance)
+		&& tmp_curveuv[i].DistanceTo(curveuv[j]) < intersection_tolerance_A
+		&& tmp_curvest[i].DistanceTo(curvest[j]) < intersection_tolerance_B)
 		break;
 	// TODO: Use 2D tolerance
 	if (j == curvept.Count()) {
