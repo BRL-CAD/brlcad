@@ -1,5 +1,5 @@
 
-Libpng 1.5.12 - July 11, 2012
+Libpng 1.6.2 - April 25, 2013
 
 This is a public release of libpng, intended for use in production codes.
 
@@ -8,26 +8,37 @@ Files available for download:
 Source files with LF line endings (for Unix/Linux) and with a
 "configure" script
 
-   libpng-1.5.12.tar.xz (LZMA-compressed, recommended)
-   libpng-1.5.12.tar.gz
-   libpng-1.5.12.tar.bz2
+   libpng-1.6.2.tar.xz (LZMA-compressed, recommended)
+   libpng-1.6.2.tar.gz
 
 Source files with CRLF line endings (for Windows), without the
 "configure" script
 
-   lpng1512.7z  (LZMA-compressed, recommended)
-   lpng1512.zip
+   lpng162.7z  (LZMA-compressed, recommended)
+   lpng162.zip
 
 Other information:
 
-   libpng-1.5.12-README.txt
-   libpng-1.5.12-LICENSE.txt
+   libpng-1.6.2-README.txt
+   libpng-1.6.2-LICENSE.txt
 
-Changes since the last public release (1.5.11):
+Changes since the last public release (1.6.1):
 
-  Removed scripts/makefile.cegcc from the *.zip and *.7z distributions; it
-    depends on configure, which is not included in those archives.
-  Changed "a+w" to "u+w" in Makefile.in to fix CVE-2012-3386.
+  Updated documentation of 1.5.x to 1.6.x changes in iCCP chunk handling.
+  Fixed incorrect warning of excess deflate data. End condition - the
+    warning would be produced if the end of the deflate stream wasn't read
+    in the last row.  The warning is harmless.
+  Corrected the test on user transform changes on read. It was in the
+    png_set of the transform function, but that doesn't matter unless the
+    transform function changes the rowbuf size, and that is only valid if
+    transform_info is called.
+  Corrected a misplaced closing bracket in contrib/libtests/pngvalid.c
+    (Flavio Medeiros).
+  Corrected length written to uncompressed iTXt chunks (Samuli Suominen).
+  Added contrib/tools/fixitxt.c, to repair the erroneous iTXt chunk length
+    written by libpng-1.6.0 and 1.6.1.
+  Disallow storing sRGB information when the sRGB is not supported.
+  Merge pngtest.c with libpng-1.7.0
 
 Send comments/corrections/commendations to png-mng-implement at lists.sf.net
 (subscription required; visit
