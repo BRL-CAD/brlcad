@@ -88,6 +88,8 @@ getopt::init {
 	{line-color		""	{::have_line_color ::RtWizard::wizard_state(e_color)}}
 	{non-line-color 	"" 	{::have_non_line_color ::RtWizard::wizard_state(ne_color)}}
 	{occlusion 		O 	{::have_occlusion_mode ::RtWizard::wizard_state(occmode)}}
+	{benchmark		"" 	{::benchmark_mode}}
+        {cpu-count              ""      {::have_cpu_count ::RtWizard::wizard_state(cpu_count)}}
 	# Image type
 	{type 			t 	{::have_picture_type ::RtWizard::wizard_state(picture_type)}}
 	# View
@@ -463,14 +465,27 @@ if {[info exists ::use_gui]} {
      set eye_pt [lrange [lindex $vdata 2] 1 end]
    }
 
-   ::cadwidgets::rtimage $::RtWizard::wizard_state(dbFile) $::RtWizard::wizard_state(fbserv_port) \
-			$::RtWizard::wizard_state(width) $::RtWizard::wizard_state(scanlines) \
-			$viewsize $orientation $eye_pt $::RtWizard::wizard_state(perspective) \
-			$::RtWizard::wizard_state(bg_color) $::RtWizard::wizard_state(e_color) $::RtWizard::wizard_state(ne_color)\
-			$::RtWizard::wizard_state(occmode) $::RtWizard::wizard_state(ghosting_intensity) \
-			$::RtWizard::wizard_state(color_objlist) \
-			$::RtWizard::wizard_state(ghost_objlist) \
-			$::RtWizard::wizard_state(line_objlist)
+   # populate a dictionary to pass to rtimage
+   set rtimage_dict [dict create \
+       _dbfile $::RtWizard::wizard_state(dbFile) \
+       _port $::RtWizard::wizard_state(fbserv_port) \
+       _w $::RtWizard::wizard_state(width) \
+       _n $::RtWizard::wizard_state(scanlines) \
+       _viewsize $viewsize \
+       _orientation $orientation \
+       _eye_pt $eye_pt \
+       _perspective $::RtWizard::wizard_state(perspective) \
+       _bgcolor $::RtWizard::wizard_state(bg_color) \
+       _ecolor $::RtWizard::wizard_state(e_color) \
+       _necolor $::RtWizard::wizard_state(ne_color)\
+       _occmode $::RtWizard::wizard_state(occmode) \
+       _gamma $::RtWizard::wizard_state(ghosting_intensity) \
+       _color_objects  $::RtWizard::wizard_state(color_objlist) \
+       _ghost_objects  $::RtWizard::wizard_state(ghost_objlist) \
+       _edge_objects  $::RtWizard::wizard_state(line_objlist) ]
+
+
+    ::cadwidgets::rtimage $rtimage_dict
 
    if {[info exists ::RtWizard::wizard_state(output_filename)]} {
       set output_generated 0

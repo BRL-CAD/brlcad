@@ -2090,8 +2090,25 @@ package provide cadwidgets::Ged 1.0
 	return "make_image: no database is open"
     }
 
-    return [cadwidgets::rtimage $dbfile $_port $_w $_n $_viewsize $_orientation $_eye_pt $_perspective \
-		$_bgcolor $_ecolor $_necolor $_occmode $_gamma $_color_objects $_ghost_objects $_edge_objects]
+    set rtimage_dict [dict create \
+        _dbfile $dbFile \
+        _port $_port \
+        _w $_w \
+        _n $_n \
+        _viewsize $_viewsize \
+        _orientation $_orientation \
+        _eye_pt $_eye_pt \
+        _perspective $_perspective \
+        _bgcolor $_bgcolor \
+        _ecolor $_ecolor \
+        _necolor $_necolor \
+        _occmode $_occmode \
+        _gamma $_gamma \
+        _color_objects $_color_objects \
+        _ghost_objects $_ghost_objects \
+        _edge_objects $_edge_objects ]
+
+    return [cadwidgets::rtimage $rtimage_dict]
 }
 
 
