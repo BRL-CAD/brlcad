@@ -53,21 +53,19 @@
  * of the one specified by the FB_FILE environment
  * variable (the default frame buffer, if no FB_FILE)
  *
- * -h		assumes 1024x1024 default input size instead of 512x512
- *
- * -s size		input size (width & height)
+ * -s size	input size (width & height set to same value)
  *
  * -w width	input width
  *
  * -n height	input height
  *
- * -S size		output size (width & height)
+ * -S size	output size (width & height set to same value)
  *
  * -W width	output width
  *
  * -N height	output height
  *
- * out_fb		same as -F out_fb, for convenience
+ * out_fb	same as -F out_fb, for convenience
  *
  */
 
@@ -84,15 +82,14 @@
 #include "fb.h"			/* BRL-CAD package libfb.a interface */
 
 
-#define USAGE1 "fbstretch [ -h ] [ -s size ] [ -w width ] [ -n height ]"
+#define USAGE1 "fbstretch [ -s size ] [ -w width ] [ -n height ]"
 #define USAGE2 "\t[ -f in_fb_file ] [ -a ] [ -v ] [ -x x_sc ] [ -y y_sc ]"
 #define USAGE3 "\t[ -S size ] [ -W width ] [ -N height ] [ [ -F ] out_fb_file ]"
-#define OPTSTR "af:F:hn:N:s:S:vw:W:x:y:"
+#define OPTSTR "af:F:n:N:s:S:vw:W:x:y:h?"
 #define EPSILON 0.0001			/* fudge for converting float to int */
 
 typedef int bool_t;
 
-static bool_t hires = 0;		/* set for 1Kx1K; clear for 512x512 */
 static bool_t sample = 0;		/* set: sampling; clear: averaging */
 static bool_t verbose = 0;		/* set for size info printout */
 static float x_scale = -1.0;		/* horizontal scaling factor */
@@ -103,8 +100,8 @@ static char *src_file = NULL;		/* source frame buffer name */
 static FBIO *src_fbp = FBIO_NULL;	/* source frame buffer handle */
 static char *dst_file = NULL;		/* destination frame buffer name */
 static FBIO *dst_fbp = FBIO_NULL;	/* destination frame buffer handle */
-static int src_width = 0;
-static int src_height = 0;		/* source image size */
+static int src_width = 512;
+static int src_height = 512;		/* source image size */
 static int dst_width = 0;
 static int dst_height = 0;		/* destination image size */
 static unsigned char *src_buf;		/* calloc()ed input scan line buffer */
@@ -196,10 +193,6 @@ main(int argc, char **argv)
 		    dst_file = bu_optarg;
 		    break;
 
-		case 'h':	/* -h */
-		    hires = 1;
-		    break;
-
 		case 'n':	/* -n height */
 		    if ((src_height = atoi(bu_optarg)) <= 0)
 			errors = 1;
@@ -261,6 +254,9 @@ main(int argc, char **argv)
 		    break;
 	    }
 
+	if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
+	    errors = 1;
+
 	if (errors)
 	    bu_exit(1, "Usage: %s\n%s\n%s\n", USAGE1, USAGE2, USAGE3);
     }
@@ -298,12 +294,6 @@ main(int argc, char **argv)
 	Message("Scale factors %gx%g", x_scale, y_scale);
 
     /* Open frame buffer(s) for unbuffered input/output. */
-
-    if (src_width == 0)
-	src_width = hires ? 1024 : 512;		/* starting default */
-
-    if (src_height == 0)
-	src_height = hires ? 1024 : 512;	/* starting default */
 
     if ((src_fbp = fb_open(src_file == NULL ? dst_file : src_file,
 			   src_width, src_height
