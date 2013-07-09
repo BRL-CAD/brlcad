@@ -1828,17 +1828,23 @@ ON_Intersect(const ON_Surface* surfA,
     // We adjust the tolerance from 3D scale to respective 2D scales.
     double intersection_tolerance_A = intersection_tolerance;
     double intersection_tolerance_B = intersection_tolerance;
+    double fitting_tolerance_A = fitting_tolerance;
+    double fitting_tolerance_B = fitting_tolerance;
     double l = rootA.m_surf->BoundingBox().Diagonal().Length();
     double ul = surfaceA_udomain ? surfaceA_udomain->Length() : surfA->Domain(0).Length();
     double vl = surfaceA_vdomain ? surfaceA_vdomain->Length() : surfA->Domain(1).Length();
     double dl = ON_2dVector(ul, vl).Length();
-    if (!ON_NearZero(l))
+    if (!ON_NearZero(l)) {
 	intersection_tolerance_A = intersection_tolerance/l*dl;
+	fitting_tolerance_A = fitting_tolerance/l*dl;
+    }
     ul = surfaceB_udomain ? surfaceB_udomain->Length() : surfB->Domain(0).Length();
     vl = surfaceB_vdomain ? surfaceB_vdomain->Length() : surfB->Domain(1).Length();
     dl = ON_2dVector(ul, vl).Length();
-    if (!ON_NearZero(l))
+    if (!ON_NearZero(l)) {
 	intersection_tolerance_B = intersection_tolerance/l*dl;
+	fitting_tolerance_B = fitting_tolerance/l*dl;
+    }
 
     ON_3dPointArray curvept, tmp_curvept;
     ON_2dPointArray curveuv, curvest, tmp_curveuv, tmp_curvest;
@@ -2158,7 +2164,7 @@ ON_Intersect(const ON_Surface* surfA,
     }
 
     // Generate NURBS curves from the polylines.
-    ON_SimpleArray<ON_NurbsCurve *> intersect3d, intersect_uv2d, intersect_st2d;
+    ON_SimpleArray<ON_Curve *> intersect3d, intersect_uv2d, intersect_st2d;
     ON_SimpleArray<int> single_pts;
     for (unsigned int i = 0; i < polylines.size(); i++) {
 	if (polylines[i] != NULL) {
@@ -2179,11 +2185,8 @@ ON_Intersect(const ON_Surface* surfA,
 	    if (curvept[startpoint].DistanceTo(curvept[endpoint]) < max_dis) {
 		ptarray.Append(curvept[startpoint]);
 	    }
-	    ON_PolylineCurve curve(ptarray);
-	    ON_NurbsCurve *nurbscurve = ON_NurbsCurve::New();
-	    if (curve.GetNurbForm(*nurbscurve)) {
-		intersect3d.Append(nurbscurve);
-	    }
+	    ON_PolylineCurve *curve = new ON_PolylineCurve(ptarray);
+	    intersect3d.Append(curve);
 
 	    // The intersection curves in the 2d UV parameter space (surfA)
 	    ptarray.Empty();
@@ -2196,11 +2199,14 @@ ON_Intersect(const ON_Surface* surfA,
 		ON_2dPoint &pt2d = curveuv[startpoint];
 		ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
 	    }
-	    curve = ON_PolylineCurve(ptarray);
-	    curve.ChangeDimension(2);
-	    nurbscurve = ON_NurbsCurve::New();
-	    if (curve.GetNurbForm(*nurbscurve)) {
-		intersect_uv2d.Append(nurbscurve);
+	    curve = new ON_PolylineCurve(ptarray);
+	    curve->ChangeDimension(2);
+	    if (curve->IsLinear(fitting_tolerance_A)) {
+		ON_LineCurve *linecurve = new ON_LineCurve(curve->PointAtStart(), curve->PointAtEnd());
+		linecurve->ChangeDimension(2);
+		intersect_uv2d.Append(linecurve);
+	    } else {
+		intersect_uv2d.Append(curve);
 	    }
 
 	    // The intersection curves in the 2d UV parameter space (surfB)
@@ -2214,11 +2220,14 @@ ON_Intersect(const ON_Surface* surfA,
 		ON_2dPoint &pt2d = curvest[startpoint];
 		ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
 	    }
-	    curve = ON_PolylineCurve(ptarray);
-	    curve.ChangeDimension(2);
-	    nurbscurve = ON_NurbsCurve::New();
-	    if (curve.GetNurbForm(*nurbscurve)) {
-		intersect_st2d.Append(nurbscurve);
+	    curve = new ON_PolylineCurve(ptarray);
+	    curve->ChangeDimension(2);
+	    if (curve->IsLinear(fitting_tolerance_B)) {
+		ON_LineCurve *linecurve = new ON_LineCurve(curve->PointAtStart(), curve->PointAtEnd());
+		linecurve->ChangeDimension(2);
+		intersect_st2d.Append(linecurve);
+	    } else {
+		intersect_st2d.Append(curve);
 	    }
 
 	    delete polylines[i];
