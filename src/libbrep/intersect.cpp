@@ -1087,7 +1087,7 @@ newton_csi(double& t, double& u, double& v, const ON_Curve* curveA, const ON_Sur
 
     int iteration = 0;
     while (fabs(last_t - t) + fabs(last_u - u) + fabs(last_v - v) > ON_ZERO_TOLERANCE
-	   && iteration++ < CCI_MAX_ITERATIONS) {
+	   && iteration++ < CSI_MAX_ITERATIONS) {
 	last_t = t, last_u = u, last_v = v;
 	ON_3dVector derivA, derivBu, derivBv;
 	curveA->Ev1Der(t, pointA, derivA);
