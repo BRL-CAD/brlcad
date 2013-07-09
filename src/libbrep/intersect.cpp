@@ -2046,7 +2046,6 @@ ON_Intersect(const ON_Surface* surfA,
 		&& tmp_curveuv[i].DistanceTo(curveuv[j]) < intersection_tolerance_A
 		&& tmp_curvest[i].DistanceTo(curvest[j]) < intersection_tolerance_B)
 		break;
-	// TODO: Use 2D tolerance
 	if (j == curvept.Count()) {
 	    curvept.Append(tmp_curvept[i]);
 	    curveuv.Append(tmp_curveuv[i]);
