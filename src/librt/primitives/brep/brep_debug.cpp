@@ -748,7 +748,7 @@ plotcurve(ON_Curve &curve, struct bn_vlblock *vbp, int plotres, const int red = 
 
 
 void
-plotpoint(ON_3dPoint &point, struct bn_vlblock *vbp, const int red = 255, const int green = 255, const int blue = 0)
+plotpoint(const ON_3dPoint &point, struct bn_vlblock *vbp, const int red = 255, const int green = 255, const int blue = 0)
 {
     register struct bu_list *vhead;
     vhead = rt_vlblock_find(vbp, red, green, blue);
@@ -3022,8 +3022,8 @@ brep_intersect_surface_surface(struct rt_db_internal *intern1, struct rt_db_inte
 	    break;
 	case ON_SSX_EVENT::ssx_tangent_point:
 	case ON_SSX_EVENT::ssx_transverse_point:
-	    plotpoint(events[k].m_pointA, vbp, PEACH);
-	    plotpoint(events[k].m_pointB, vbp, DARKVIOLET);
+	    plotpoint(surf1.PointAt(events[k].m_pointA.x, events[k].m_pointB.y), vbp, PEACH);
+	    plotpoint(surf2.PointAt(events[k].m_pointB.x, events[k].m_pointB.y), vbp, DARKVIOLET);
 	    plotpoint(events[k].m_point3d, vbp, GREEN);
 	    break;
 	default:
