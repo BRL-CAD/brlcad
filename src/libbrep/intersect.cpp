@@ -1667,18 +1667,16 @@ triangle_intersection(const struct Triangle &TriA, const struct Triangle &TriB, 
     double dp2 = ON_DotProduct(TriA.B - intersect.from, line_normal);
     double dp3 = ON_DotProduct(TriA.C - intersect.from, line_normal);
 
-    int points_on_line = ON_NearZero(dp1) + ON_NearZero(dp2) + ON_NearZero(dp3);
     int points_on_one_side = (dp1 >= ON_ZERO_TOLERANCE) + (dp2 >= ON_ZERO_TOLERANCE) + (dp3 >= ON_ZERO_TOLERANCE);
-    if (points_on_one_side == 0 || points_on_one_side == 3-points_on_line)
+    if (points_on_one_side == 0 || points_on_one_side == 3)
 	return false;
 
     line_normal = ON_CrossProduct(plane_b.Normal(), intersect.Direction());
     double dp4 = ON_DotProduct(TriB.A - intersect.from, line_normal);
     double dp5 = ON_DotProduct(TriB.B - intersect.from, line_normal);
     double dp6 = ON_DotProduct(TriB.C - intersect.from, line_normal);
-    points_on_line = ON_NearZero(dp4) + ON_NearZero(dp5) + ON_NearZero(dp6);
     points_on_one_side = (dp4 >= ON_ZERO_TOLERANCE) + (dp5 >= ON_ZERO_TOLERANCE) + (dp6 >= ON_ZERO_TOLERANCE);
-    if (points_on_one_side == 0 || points_on_one_side == 3-points_on_line)
+    if (points_on_one_side == 0 || points_on_one_side == 3)
 	return false;
 
     double t[4];
