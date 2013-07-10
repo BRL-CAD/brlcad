@@ -198,7 +198,7 @@ namespace eval RtWizard {
 	    _occmode $occMode \
 	    _color_objects $color_objects \
 	    _edge_objects $line_objects ]
-	
+
 	::cadwidgets::rtimage $rtimage_dict
 
 	# If we're outputting a file, write it out and close down

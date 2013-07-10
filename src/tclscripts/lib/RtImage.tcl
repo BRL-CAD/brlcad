@@ -40,7 +40,7 @@ proc rtimage {rtimage_dict} {
         set $param [dict get $rtimage_dict $param]
     }
 
-    # Anything we don't already have from the dictionary 
+    # Anything we don't already have from the dictionary
     # is assumed empty
     foreach var ${necessary_vars} {
       if {![info exists $var]} { set $var "" }

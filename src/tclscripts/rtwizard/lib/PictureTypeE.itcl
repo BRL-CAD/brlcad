@@ -173,7 +173,7 @@ namespace eval RtWizard {
 	    _gamma $gamma \
 	    _color_objects $color_objects \
 	    _ghost_objects $ghost_objects ]
-	
+
 	::cadwidgets::rtimage $rtimage_dict
 
 	# If we're outputting a file, write it out and close down
