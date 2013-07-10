@@ -1582,6 +1582,22 @@ ON_Intersect(const ON_Curve* curveA,
  */
 
 
+// The maximal depth for subdivision - trade-off between accurancy and
+// performance
+#define MAX_SSI_DEPTH 8
+
+
+// We make the default tolerance for SSI the same as that of surface-surface
+// intersections defined by openNURBS (see other/openNURBS/opennurbs_surface.h)
+#define SSI_DEFAULT_TOLERANCE 0.001
+
+
+// Newton-Raphson iteration needs a good start. Although we can almost get
+// a good starting point every time, but in case of some unfortunate cases,
+// we define a maximum iteration, preventing from infinite loop.
+#define SSI_MAX_ITERATIONS 100
+
+
 struct Triangle {
     ON_3dPoint A, B, C;
     inline void CreateFromPoints(ON_3dPoint &p_A, ON_3dPoint &p_B, ON_3dPoint &p_C) {
@@ -1779,14 +1795,59 @@ closed_domain(int type, const ON_Surface* surfA, const ON_Surface* surfB, ON_3dP
 }
 
 
-// The maximal depth for subdivision - trade-off between accurancy and
-// performance
-#define MAX_SSI_DEPTH 8
+bool
+newton_ssi(double& u, double& v, double& s, double& t, const ON_Surface* surfA, const ON_Surface* surfB, double intersection_tolerance)
+{
+    // Equations:
+    //   x_a(u,v) - x_b(s,t) = 0
+    //   y_a(u,v) - y_b(s,t) = 0
+    //   z_a(u,v) - z_b(s,t) = 0
+    // It's an under-determined system. We fix one variable, and solve the
+    // other three variables.
+    double last_v = DBL_MAX/3, last_s = DBL_MAX/3, last_t = DBL_MAX/3;
+    ON_3dPoint pointA = surfA->PointAt(u, v);
+    ON_3dPoint pointB = surfB->PointAt(s, t);
+    if (pointA.DistanceTo(pointB) < intersection_tolerance)
+	return true;
 
+    ON_ClassArray<ON_PX_EVENT> px_event;
 
-// We make the default tolerance for SSI the same as that of surface-surface
-// intersections defined by openNURBS (see other/openNURBS/opennurbs_surface.h)
-#define SSI_DEFAULT_TOLERANCE 0.001
+    int iteration = 0;
+    while (fabs(last_v - v) + fabs(last_s - s) + fabs(last_t - t) > ON_ZERO_TOLERANCE
+	   && iteration++ < SSI_MAX_ITERATIONS) {
+	last_v = v, last_s = s, last_t = t;
+	ON_3dVector deriv_u, deriv_v, deriv_s, deriv_t;
+	surfA->Ev1Der(u, v, pointA, deriv_u, deriv_v);
+	surfB->Ev1Der(s, t, pointB, deriv_s, deriv_t);
+	ON_Matrix J(3, 3), F(3, 1);
+	for (int i = 0; i < 3; i++) {
+	    J[i][0] = deriv_v[i];
+	    J[i][1] = -deriv_s[i];
+	    J[i][2] = -deriv_t[i];
+	    F[i][0] = pointA[i] - pointB[i];
+	}
+	if (!J.Invert(0.0)) {
+	    break;
+	}
+	ON_Matrix Delta;
+	Delta.Multiply(J, F);
+	v -= Delta[0][0];
+	s -= Delta[1][0];
+	t -= Delta[2][0];
+    }
+
+    // Make sure the solution is inside the domains
+    u = std::min(u, surfA->Domain(0).Max());
+    u = std::max(u, surfA->Domain(0).Min());
+    v = std::min(v, surfA->Domain(1).Max());
+    v = std::max(v, surfA->Domain(1).Min());
+    s = std::min(s, surfB->Domain(0).Max());
+    s = std::max(s, surfB->Domain(0).Min());
+    t = std::min(t, surfB->Domain(1).Max());
+    t = std::max(t, surfB->Domain(1).Min());
+
+    return (pointA.DistanceTo(pointB) < intersection_tolerance) && !isnan(u) && !isnan(v) && !isnan(s) & !isnan(t);
+}
 
 
 int
@@ -2022,12 +2083,9 @@ ON_Intersect(const ON_Surface* surfA,
 	    avguv /= num_intersects;
 	    avgst /= num_intersects;
 	    if (box_intersect.IsPointIn(average)) {
-		// Check the validity of the solution
-		ON_3dPoint pointA = surfA->PointAt(avguv.x, avguv.y);
-		ON_3dPoint pointB = surfB->PointAt(avgst.x, avgst.y);
-		if (pointA.DistanceTo(pointB) < intersection_tolerance
-		    && pointA.DistanceTo(average) < intersection_tolerance
-		    && pointB.DistanceTo(average) < intersection_tolerance) {
+		// Use Newton iterations to get an accurate intersection.
+		if (newton_ssi(avguv.x, avguv.y, avgst.x, avgst.y, surfA, surfB, intersection_tolerance)) {
+		    average = surfA->PointAt(avguv.x, avguv.y);
 		    tmp_curvept.Append(average);
 		    tmp_curveuv.Append(avguv);
 		    tmp_curvest.Append(avgst);
