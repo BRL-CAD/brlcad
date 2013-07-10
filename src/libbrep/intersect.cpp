@@ -2289,7 +2289,7 @@ ON_Intersect(const ON_Surface* surfA,
 	}
     }
 
-    bu_log("Segments: %d\n", intersect3d.Count());
+    bu_log("%d curve segments and %d single points.\n", intersect3d.Count(), single_pts.Count());
     bu_free(index, "int");
     bu_free(startpt, "int");
     bu_free(endpt, "int");
