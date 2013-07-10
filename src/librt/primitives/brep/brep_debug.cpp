@@ -3016,15 +3016,15 @@ brep_intersect_surface_surface(struct rt_db_internal *intern1, struct rt_db_inte
 	case ON_SSX_EVENT::ssx_overlap:
 	case ON_SSX_EVENT::ssx_tangent:
 	case ON_SSX_EVENT::ssx_transverse:
-	    plotcurve(*(events[k].m_curve3d), vbp, 1000, GREEN);
 	    plotcurveonsurface(events[k].m_curveA, &surf1, vbp, 1000, PEACH);
 	    plotcurveonsurface(events[k].m_curveB, &surf2, vbp, 1000, DARKVIOLET);
+	    plotcurve(*(events[k].m_curve3d), vbp, 1000, GREEN);
 	    break;
 	case ON_SSX_EVENT::ssx_tangent_point:
 	case ON_SSX_EVENT::ssx_transverse_point:
-	    plotpoint(events[k].m_point3d, vbp, GREEN);
 	    plotpoint(events[k].m_pointA, vbp, PEACH);
 	    plotpoint(events[k].m_pointB, vbp, DARKVIOLET);
+	    plotpoint(events[k].m_point3d, vbp, GREEN);
 	    break;
 	default:
 	    break;
