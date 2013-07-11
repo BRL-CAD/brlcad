@@ -80,6 +80,7 @@ void
 Usage(char *str)
 {
     fprintf(stderr, "Usage: %s [-emfv] file1.g file2.g\n", str);
+    bu_exit(1, NULL);
 }
 
 
@@ -901,7 +902,7 @@ main(int argc, char **argv)
 
     invoked_as = argv[0];
 
-    while ((c = bu_getopt(argc, argv, "emfv")) != -1) {
+    while ((c = bu_getopt(argc, argv, "emfvh?")) != -1) {
 	switch (c) {
 	    case 'e':
 		evolutionary = 1;
@@ -915,16 +916,16 @@ main(int argc, char **argv)
 	    case 'v':	/* verify region attributes */
 		verify_region_attribs = 1;
 		break;
+	    default:
+		Usage(invoked_as);
 	}
     }
 
     argc -= bu_optind;
     argv+= bu_optind;
 
-    if (argc != 2) {
+    if (argc != 2)
 	Usage(invoked_as);
-	bu_exit(1, NULL);
-    }
 
     file1 = *argv++;
     file2 = *argv;
