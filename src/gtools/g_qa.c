@@ -75,8 +75,6 @@ main(int argc, char *argv[])
 	    case 'U':
 	    case 'u':
 		break;
-	    case '?':
-	    case 'h':
 	    default:
 		bu_exit(1, usage, argv[0]);
 		break;
