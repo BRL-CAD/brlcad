@@ -1851,9 +1851,12 @@ newton_ssi(double& u, double& v, double& s, double& t, const ON_Surface* surfA, 
 ON_Curve*
 curve_fitting(ON_Curve* in, double fitting_tolerance, bool delete_curve = false)
 {
+    // Fit a *2D* curve into line, arc, ellipse or other comic curves.
+
     if (in == NULL)
 	return NULL;
 
+    // Linear fitting
     if (in->IsLinear(fitting_tolerance)) {
 	ON_LineCurve *linecurve = new ON_LineCurve(in->PointAtStart(), in->PointAtEnd());
 	linecurve->ChangeDimension(in->Dimension());
@@ -1861,6 +1864,79 @@ curve_fitting(ON_Curve* in, double fitting_tolerance, bool delete_curve = false)
 	return linecurve;
     }
 
+    // Arc fitting (including circle)
+    ON_Arc arc;
+    if (in->IsArc(&ON_xy_plane, &arc, fitting_tolerance)) {
+	if (delete_curve) delete in;
+	ON_ArcCurve* arccurve = new ON_ArcCurve(arc);
+	arccurve->ChangeDimension(in->Dimension());
+	return arccurve;
+    }
+
+    double conic[6];
+    double sample_pts[12];
+    int plotres = in->IsClosed() ? 6 : 5;
+    for (int i = 0; i < 6; i++) {
+	ON_3dPoint pt3d = in->PointAt(in->Domain().ParameterAt((double)i/plotres));
+	sample_pts[2*i] = pt3d.x;
+	sample_pts[2*i+1] = pt3d.y;
+    }
+    if (ON_GetConicEquationThrough6Points(2, sample_pts, conic, NULL, NULL, NULL)) {
+	// It may be a conic.
+	ON_2dPoint ell_center;
+	ON_2dVector ell_A, ell_B;
+	double ell_a, ell_b;
+	// First, fitting an ellipse. It seems that ON_Curve::IsEllipse()
+	// doesn't work, so we use conic fitting first. If this is not ideal,
+	// an alternative solution is to use least square fitting on all
+	// points.
+	if (ON_IsConicEquationAnEllipse(conic, ell_center, ell_A, ell_B, &ell_a, &ell_b)) {
+	    ON_Plane ell_plane = ON_Plane(ON_3dPoint(ell_center), ON_3dVector(ell_A), ON_3dVector(ell_B));
+	    ON_Ellipse ell(ell_plane, ell_a, ell_b);
+	    int knotcnt = in->SpanCount();
+	    double* knots = new double [knotcnt + 1];
+	    in->GetSpanVector(knots);
+	    int i;
+	    double t_min = DBL_MAX, t_max = -DBL_MAX;
+	    for (i = 0; i <= knotcnt; i++) {
+		// It may not be a complete ellipse.
+		// We find the domain of its parameter.
+		ON_3dPoint pt = in->PointAt(knots[i]);
+		double t;
+		ON_3dPoint ell_pt;
+		if (!ell.ClosestPointTo(pt, &t))
+		    break;
+		ell_pt = ell.PointAt(t);
+		if (ell_pt.DistanceTo(pt) > fitting_tolerance)
+		    break;
+		t_min = std::min(t, t_min);
+		t_max = std::max(t, t_max);
+	    }
+	    if (i == knotcnt+1) {
+		// All points are on the ellipse
+		if (in->IsClosed()) {
+		    t_max = ON_PI*2, t_min = 0;
+		}
+		ON_NurbsCurve nurbscurve;
+		ell.GetNurbForm(nurbscurve);
+		// The params of the nurbscurve is between [0, 2*pi]
+		ON_Curve *left = NULL, *right = NULL;
+		if (!ON_NearZero(t_min))
+		    nurbscurve.Split(t_min, left, right);
+		else
+		    right = &nurbscurve;
+		if (right && !ON_NearZero(t_max - 2*ON_PI))
+		    right->Split(t_max, left, right);
+		else
+		    left = right;
+		if (delete_curve) delete in;
+		return left->Duplicate();
+	    }
+	}
+    }
+
+    // We have tried all fittings, but none of them succeed.
+    // So we just return the original curve.
     return in;
 }
 
