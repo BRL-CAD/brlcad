@@ -1873,11 +1873,25 @@ curve_fitting(ON_Curve* in, double fitting_tolerance, bool delete_curve = false)
 	return arccurve;
     }
 
+    // Conic fitting (ellipse, parabola, hyperbola)
+    // It's only meaningful to fit the curve when it's a complex one
+    // For a polyline curve, the number of points should not be less than 10.
+    const int fit_mininum_knots = 10;
+    int knotcnt = in->SpanCount();
+    if (knotcnt < fit_mininum_knots)
+	return in;
+
+    double* knots = new double [knotcnt + 1];
+    in->GetSpanVector(knots);
+
     double conic[6];
     double sample_pts[12];
     int plotres = in->IsClosed() ? 6 : 5;
+    // The sample points should be knots (which are accurate if the curve
+    // is a polyline curve).
     for (int i = 0; i < 6; i++) {
-	ON_3dPoint pt3d = in->PointAt(in->Domain().ParameterAt((double)i/plotres));
+	double knot_t = knots[ON_Round((double)i/plotres*(knotcnt+1))];
+	ON_3dPoint pt3d = in->PointAt(knot_t);
 	sample_pts[2*i] = pt3d.x;
 	sample_pts[2*i+1] = pt3d.y;
     }
@@ -1893,9 +1907,6 @@ curve_fitting(ON_Curve* in, double fitting_tolerance, bool delete_curve = false)
 	if (ON_IsConicEquationAnEllipse(conic, ell_center, ell_A, ell_B, &ell_a, &ell_b)) {
 	    ON_Plane ell_plane = ON_Plane(ON_3dPoint(ell_center), ON_3dVector(ell_A), ON_3dVector(ell_B));
 	    ON_Ellipse ell(ell_plane, ell_a, ell_b);
-	    int knotcnt = in->SpanCount();
-	    double* knots = new double [knotcnt + 1];
-	    in->GetSpanVector(knots);
 	    int i;
 	    double t_min = DBL_MAX, t_max = -DBL_MAX;
 	    for (i = 0; i <= knotcnt; i++) {
