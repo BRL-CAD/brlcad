@@ -359,8 +359,6 @@ details on subdirectories and authorship not covered here.
 	for more details
   include/
 	Public headers
-  m4/
-	Autoconf compilation resource files
   misc/
 	Anything not categorized or is sufficiently en masse
   pix/
