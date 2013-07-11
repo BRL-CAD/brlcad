@@ -1848,6 +1848,22 @@ newton_ssi(double& u, double& v, double& s, double& t, const ON_Surface* surfA, 
 }
 
 
+ON_Curve*
+curve_fitting(ON_Curve* in, double fitting_tolerance, bool delete_curve = false)
+{
+    if (in == NULL)
+	return NULL;
+
+    if (in->IsLinear(fitting_tolerance)) {
+	ON_LineCurve *linecurve = new ON_LineCurve(in->PointAtStart(), in->PointAtEnd());
+	linecurve->ChangeDimension(in->Dimension());
+	if (delete_curve) delete in;
+	return linecurve;
+    }
+
+    return in;
+}
+
 int
 ON_Intersect(const ON_Surface* surfA,
 	     const ON_Surface* surfB,
@@ -2256,13 +2272,7 @@ ON_Intersect(const ON_Surface* surfA,
 	    }
 	    curve = new ON_PolylineCurve(ptarray);
 	    curve->ChangeDimension(2);
-	    if (curve->IsLinear(fitting_tolerance_A)) {
-		ON_LineCurve *linecurve = new ON_LineCurve(curve->PointAtStart(), curve->PointAtEnd());
-		linecurve->ChangeDimension(2);
-		intersect_uv2d.Append(linecurve);
-	    } else {
-		intersect_uv2d.Append(curve);
-	    }
+	    intersect_uv2d.Append(curve_fitting(curve, fitting_tolerance_A, true));
 
 	    // The intersection curves in the 2d UV parameter space (surfB)
 	    ptarray.Empty();
@@ -2277,13 +2287,7 @@ ON_Intersect(const ON_Surface* surfA,
 	    }
 	    curve = new ON_PolylineCurve(ptarray);
 	    curve->ChangeDimension(2);
-	    if (curve->IsLinear(fitting_tolerance_B)) {
-		ON_LineCurve *linecurve = new ON_LineCurve(curve->PointAtStart(), curve->PointAtEnd());
-		linecurve->ChangeDimension(2);
-		intersect_st2d.Append(linecurve);
-	    } else {
-		intersect_st2d.Append(curve);
-	    }
+	    intersect_st2d.Append(curve_fitting(curve, fitting_tolerance_B, true));
 
 	    delete polylines[i];
 	}
