@@ -44,13 +44,74 @@ Help -> Apropos                     |                     INCOMPLETE, not workin
 Other Issues
 ------------
 
+* need a manual page
+
 * raytrace button won't abort correctly due to using rtwizard rather than rt directly - will probably need fixes to rtwizard and archer
 
 * need proper "raytrace control" panel for easy access to raytracer options
 
+* add an export menu to Archer that connects to auto-detected
+  available exporters (g-* tools).
 
+* fix archer/libdm labels/axes to not use pointer printing
 
-Long Term
----------
+* "archer -h" causes archer to halt with a Tk_Init error.  should
+  display usage/help.
 
-* add ability to undo transaction sets - long term feature that needs libged transactions mechanism
+* reports "ArcherCore::getTreeMembers: faulty tree - " on some .g
+  files, valid ones
+
+* numerous warnings on exit on Mac OS X (10.6):
+   <Error>: kCGErrorIllegalArgument: CGSGetSurfaceBounds
+   <Error>: kCGErrorFailure: Set a breakpoint @ CGErrorBreakpoint() to \
+     catch errors as they are logged.
+   <Error>: kCGErrorIllegalArgument: CGSBindSurface: Invalid window 0x492c
+   ...
+
+* diversion from mged philosophy, prompts whether to save file on exit
+  (file not always in a saved state).  to prevent data loss on crash,
+  data should at least always be written out to the main file, a
+  secondary file, recorded as saved transactions, or some other
+  mechanism.
+
+* numerous core commands missing that have not gone through
+  deprecation (e, d, ...) -- suggest we first release with at least
+  all current commands included (at least those documented in
+  tutorials, quick ref card, html docs), but marked as deprecated
+  then.
+
+* user should fully own ~/.archerrc and be able to specify settings
+  and overrides there (current says do not edit)
+
+* user-manageable scripts and settings (similar to ~/.subversion)
+
+* some usability-related icon issues (only a few of the more egregious)
+  - torus tree-view icon has major aliasing/truncation
+  - framebuffer image buttons need replacement (nuclear, mode?)
+  - halfspace icon needs darkening
+  - no part icon (needs one otherwise misleading label)
+
+* Create menu should list primitive name, not our shorthand
+
+* major GUI components (tree-view, command window, and graphics
+  window) should be dockable and have their layout/docking preference
+  be saved across sessions (so they can restore and retain similar mged
+  appearance if they so choose)
+
+* menu needs rework
+
+* mouse behavior changed, rotates around view origin instead of model
+  origin.  should provide for mouse behavior settings so classic mged
+  defaults are available.
+
+* double-clicking the tree view show-list to display/undisplay
+
+* About Archer is out-of-date, references brlcad.com, survice logo,
+  wrong BRL-CAD logo image, says archer is trademarked,
+  acknowledgements is out of date (should remove or just put AUTHORS
+  file).
+
+* make sure archer behaves properly with relative paths to dbopen.
+  Windows in particular is doing something different in
+  src/librt/db_open.c that should be a problem as it only records the
+  file name (so gui will work, but dbopen + cd + rt will not).

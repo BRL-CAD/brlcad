@@ -138,9 +138,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   database multiple times without running into rt_uniresource
   directory duplication
 
-* add an export menu to Archer that connects to auto-detected
-  available exporters (g-* tools).
-
 * convert teapot to use nurbs surfaces instead of bspline
 
 * add an option to the bb command for calculating a bounding box that
@@ -284,9 +281,6 @@ comp.r4 ID 5678 material code 5 LOS 75
   (even though output is bytes, wtf?).  should probably report pixels
   and/or have a -b option for handling byte/bw input.
 
-* remove old tclscripts MGED objects in favor of the new 'Ged' widget
-  interface being used by Archer's core.
-
 * the new "exists" command is a beautiful corollary to the unix 'test'
   command.  make the usage match, remove options that make no sense
   after you've replaced instances of 'file' with 'object', and add
@@ -395,11 +389,6 @@ comp.r4 ID 5678 material code 5 LOS 75
 * make nreed's new bot cleanup interface update interactively without
   resorting to calls to Tcl_DoOneEvent() down in librt.
 
-* make sure mged/archer behave properly with relative paths to dbopen.
-  Windows in particular is doing something different in
-  src/librt/db_open.c that should be a problem as it only records the
-  file name (so gui will work, but dbopen + cd + rt will not).
-
 * convert all calls to BU_SETJUMP/BU_UNSETJUMP into familiar try/catch
   logic layout using if/else.
 
@@ -411,8 +400,6 @@ comp.r4 ID 5678 material code 5 LOS 75
   vector graphics.
 
 * investigate OpenEXR (BSD licensed HDE image format)
-
-* fix archer/libdm labels/axes to not use pointer printing
 
 * add support for a custom unit conversion factor to the units command
   (e.g. 'units 9.3120223' or 'units metertons 9.3120223')
@@ -984,124 +971,11 @@ comp.r4 ID 5678 material code 5 LOS 75
   project as a possible means of procedurally generating plant models
   in BRL-CAD (libraries are BSD licensed: http://ngplant.sourceforge.net)
 
-* add missing manual pages (jra generated list on 04.2007):
 
-    a-d
-    archer
-    asc2g
-    asc2pix
-    bot-bldxf
-    bottest
-    brep_cube
-    brep_simple
-    brickwall
-    btclsh
-    burst
-    bw-a
-    bw-d
-    bwish
-    c-d
-    chan_add
-    clutter
-    contours
-    d-a
-    damdf
-    dauto
-    dauto2
-    d-bw
-    dconv
-    ddisp
-    d-f
-    dfft
-    d-i
-    dmod
-    double-asc
-    dpeak
-    dsel
-    dsp_add
-    dstat
-    d-u
-    dwin
-    euclid_format
-    euclid_unformat
-    fbgammamod
-    f-d
-    fence
-    fhor
-    f-i
-    g-adrt
-    g-euclid1
-    g-jack
-    globe
-    g-off
-    i-a
-    i-d
-    i-f
-    ihist
-    imod
-    istat
-    jack-g
-    kurt
-    lowp
-    molecule
-    nmgmodel
-    nmg-sgp
-    off-g
-    pipe
-    pipetest
-    pix2g
-    pix3filter
-    pixcount
-    pixelswap
-    pixembed
-    pixfields
-    pixfieldsep
-    pixflip-fb
-    pixpaste
-    pix-spm
-    pix-yuv
-    plstat
-    pyramid
-    rawbot
-    remapid
-    rlesortmap
-    rletovcr
-    room
-    rtcell
-    rtexample
-    rtfrac
-    rtrad
-    rtsil
-    rtsrv
-    script-tab
-    sketch
-    solshoot
-    sphflake
-    spltest
-    spm-fb
-    ssampview
-    syn
-    tea
-    tea_nmg
-    testfree
-    texturescale
-    torii
-    ttcp
-    tube
-    txyz-pl
-    u-a
-    u-bw
-    u-d
-    u-f
-    umod
-    ustat
-    vcrtorle
-    vegitation
-    wall
-    wdb_example
-    xbmtorle
-    xyz-pl
-    yuv-pix
+ARCHER
+------
+
+* See src/archer/TODO.
 
 
 NEW OBJECTS
@@ -1292,7 +1166,6 @@ NEW OBJECTS
 	arc := center point, radius, start angle, end angle
 	spline := degree, control points, knot values
 	text := string, insertion point, size, style, alignment
-
 
 
 WINDOWS
@@ -1529,68 +1402,6 @@ constraints
 * Explore analytic and symbolic solution system
 
 
-ARCHER
-------
-
-* need to write a manual page at least for basic usage
-
-* "archer -h" causes archer to halt with a Tk_Init error.  should
-  display usage/help.
-
-* reports "ArcherCore::getTreeMembers: faulty tree - " on some .g
-  files, valid ones
-
-* numerous warnings on exit on Mac OS X (10.6):
-   <Error>: kCGErrorIllegalArgument: CGSGetSurfaceBounds
-   <Error>: kCGErrorFailure: Set a breakpoint @ CGErrorBreakpoint() to \
-     catch errors as they are logged.
-   <Error>: kCGErrorIllegalArgument: CGSBindSurface: Invalid window 0x492c
-   ...
-
-* diversion from mged philosophy, prompts whether to save file on exit
-  (file not always in a saved state).  to prevent data loss on crash,
-  data should at least always be written out to the main file, a
-  secondary file, recorded as saved transactions, or some other
-  mechanism.
-
-* numerous core commands missing that have not gone through
-  deprecation (e, d, ...) -- suggest we first release with at least
-  all current commands included (at least those documented in
-  tutorials, quick ref card, html docs), but marked as deprecated
-  then.
-
-* user should fully own ~/.archerrc and be able to specify settings
-  and overrides there (current says do not edit)
-
-* user-manageable scripts and settings (similar to ~/.subversion)
-
-* some usability-related icon issues (only a few of the more egregious)
-  - torus tree-view icon has major aliasing/truncation
-  - framebuffer image buttons need replacement (nuclear, mode?)
-  - halfspace icon needs darkening
-  - no part icon (needs one otherwise misleading label)
-
-* Create menu should list primitive name, not our shorthand
-
-* major GUI components (tree-view, command window, and graphics
-  window) should be dockable and have their layout/docking preference
-  be saved across sessions (so they can restore and retain similar mged
-  appearance if they so choose)
-
-* menu needs rework
-
-* mouse behavior changed, rotates around view origin instead of model
-  origin.  should provide for mouse behavior settings so classic mged
-  defaults are available.
-
-* double-clicking the tree view show-list to display/undisplay
-
-* About Archer is out-of-date, references brlcad.com, survice logo,
-  wrong BRL-CAD logo image, says archer is trademarked,
-  acknowledgements is out of date (should remove or just put AUTHORS
-  file).
-
-
 INFRASTRUCTURE
 --------------
 
@@ -1734,6 +1545,125 @@ FUNCTIONALITY NEEDED TO SPEED UP RAYTRACING
 
 DOCUMENTATION
 -------------
+
+* add missing manual pages (jra generated list on 04.2007):
+
+    a-d
+    archer
+    asc2g
+    asc2pix
+    bot-bldxf
+    bottest
+    brep_cube
+    brep_simple
+    brickwall
+    btclsh
+    burst
+    bw-a
+    bw-d
+    bwish
+    c-d
+    chan_add
+    clutter
+    contours
+    d-a
+    damdf
+    dauto
+    dauto2
+    d-bw
+    dconv
+    ddisp
+    d-f
+    dfft
+    d-i
+    dmod
+    double-asc
+    dpeak
+    dsel
+    dsp_add
+    dstat
+    d-u
+    dwin
+    euclid_format
+    euclid_unformat
+    fbgammamod
+    f-d
+    fence
+    fhor
+    f-i
+    g-adrt
+    g-euclid1
+    g-jack
+    globe
+    g-off
+    i-a
+    i-d
+    i-f
+    ihist
+    imod
+    istat
+    jack-g
+    kurt
+    lowp
+    molecule
+    nmgmodel
+    nmg-sgp
+    off-g
+    pipe
+    pipetest
+    pix2g
+    pix3filter
+    pixcount
+    pixelswap
+    pixembed
+    pixfields
+    pixfieldsep
+    pixflip-fb
+    pixpaste
+    pix-spm
+    pix-yuv
+    plstat
+    pyramid
+    rawbot
+    remapid
+    rlesortmap
+    rletovcr
+    room
+    rtcell
+    rtexample
+    rtfrac
+    rtrad
+    rtsil
+    rtsrv
+    script-tab
+    sketch
+    solshoot
+    sphflake
+    spltest
+    spm-fb
+    ssampview
+    syn
+    tea
+    tea_nmg
+    testfree
+    texturescale
+    torii
+    ttcp
+    tube
+    txyz-pl
+    u-a
+    u-bw
+    u-d
+    u-f
+    umod
+    ustat
+    vcrtorle
+    vegitation
+    wall
+    wdb_example
+    xbmtorle
+    xyz-pl
+    yuv-pix
 
 * DocBook: create a DB index.xml to generate a doc listing (with
   hot links) for the html and pdf collection
