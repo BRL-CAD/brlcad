@@ -1,11 +1,15 @@
 TODO List for integrating MGED features into Archer
 
+---- ALPHA ISSUES ---
+capability & features
+=====================
+
 Intended as a "list of work to be done" for porting MGED features to Archer.  The absence of a feature
 does not necessarily mean it is intended that this feature be added, particularly for "minor" features
 or features that are currently not working well in MGED to start with - these are primarily discussion
 points.
 
-Starting with a "walkthrough" of the MGED menu:
+* "Walkthrough" of the MGED menu features:
 
      MGED Feature                   |         Archer Status of Feature or Alternative to Feature
 ------------------------------------------------------------------------------------------------------
@@ -40,18 +44,37 @@ Tools -> Overlap Tool               |                     INCOMPLETE - expose in
 Tools -> Upgrade Database...        |                     INCOMPLETE - need dbupgrade on the command line?
 Help -> Apropos                     |                     INCOMPLETE, not working well in MGED either?
 
+* add an export menu to Archer that connects to auto-detected
+  available exporters (g-* tools).
 
-Other Issues
-------------
+* numerous core commands missing that have not gone through
+  deprecation (e, d, ...) -- suggest we first release with at least
+  all current commands included (at least those documented in
+  tutorials, quick ref card, html docs), but marked as deprecated
+  then.
+
+* user should fully own ~/.archerrc and be able to specify settings
+  and overrides there (current says do not edit)
+
+* user-manageable scripts and settings (similar to ~/.subversion)
+
+* About Archer is out-of-date, references brlcad.com, survice logo,
+  wrong BRL-CAD logo image, says archer is trademarked,
+  acknowledgements is out of date (should remove or just put AUTHORS
+  file).
+
+
+---- BETA ISSUES ----
+stability & usability
+=====================
 
 * need a manual page
 
-* raytrace button won't abort correctly due to using rtwizard rather than rt directly - will probably need fixes to rtwizard and archer
+* raytrace button won't abort correctly due to using rtwizard rather
+  than rt directly - will probably need fixes to rtwizard and archer
 
-* need proper "raytrace control" panel for easy access to raytracer options
-
-* add an export menu to Archer that connects to auto-detected
-  available exporters (g-* tools).
+* need proper "raytrace control" panel for easy access to raytracing
+  options
 
 * fix archer/libdm labels/axes to not use pointer printing
 
@@ -74,17 +97,6 @@ Other Issues
   secondary file, recorded as saved transactions, or some other
   mechanism.
 
-* numerous core commands missing that have not gone through
-  deprecation (e, d, ...) -- suggest we first release with at least
-  all current commands included (at least those documented in
-  tutorials, quick ref card, html docs), but marked as deprecated
-  then.
-
-* user should fully own ~/.archerrc and be able to specify settings
-  and overrides there (current says do not edit)
-
-* user-manageable scripts and settings (similar to ~/.subversion)
-
 * some usability-related icon issues (only a few of the more egregious)
   - torus tree-view icon has major aliasing/truncation
   - framebuffer image buttons need replacement (nuclear, mode?)
@@ -98,18 +110,11 @@ Other Issues
   be saved across sessions (so they can restore and retain similar mged
   appearance if they so choose)
 
-* menu needs rework
-
 * mouse behavior changed, rotates around view origin instead of model
   origin.  should provide for mouse behavior settings so classic mged
   defaults are available.
 
 * double-clicking the tree view show-list to display/undisplay
-
-* About Archer is out-of-date, references brlcad.com, survice logo,
-  wrong BRL-CAD logo image, says archer is trademarked,
-  acknowledgements is out of date (should remove or just put AUTHORS
-  file).
 
 * make sure archer behaves properly with relative paths to dbopen.
   Windows in particular is doing something different in
