@@ -9,106 +9,36 @@ Starting with a "walkthrough" of the MGED menu:
 
      MGED Feature                   |         Archer Status of Feature or Alternative to Feature
 ------------------------------------------------------------------------------------------------------
-Create New Database                 |                             DONE
-Open Existing Database              |                             DONE (command line needs opendb)
-Import Database	                    |    			  DONE (dbconcat available on command line)
-Export Database                     |    			  DONE (keep available on command line)
-Load Script                         |    			  DONE (source available on command line)
-Raytrace Control Panel              |       			  DONE (some options in Preferences dialog, rest can be achieved using command line rt command)
-Render View options                 |            PARTIAL - saveview, not sure about plot and postscript output
-Preferences->Units                  |   			  DONE
-Preferences->Command Line Edit      |                             DONE (in preferences panel)
-Preferences->Special Characters     |    Refers to globbing - per Bob this is currently being handled per
-				    |    command in Archer, so a global setting may not make sense.  A
-				    |    possible alternative is to have two lists of commands - globbing
-				    |    and non-globbing - and the ability to select and move them from
-				    |    one list to the other (kind of like traditional ftp clients) in
-				    |    a Preferences tab
-Preferences->Colors                 |    	                  DONE (Handled in local per-topic preferences)
+Render View options                 |                    UNKNOWN - NEED TO TEST - saveview, not sure about plot and postscript output
 Preferences->Fonts                  |                    INCOMPLETE, lower priority
 Create/Update .mgedrc               |                    INCOMPLETE - .archerrc exists, needs to be expanded as more preferences are implemented in Archer - ONGOING
-Clear Command Window                |                             DONE (clear on command line)
-Exit                                |                             DONE
-Primitive Selection                 |                             DONE
-Matrix Selection                    |                    NEED TO TEST 
+Matrix Selection                    |                    UNKNOWN - NEED TO TEST 
 				    |    Ensure working command line level functionality for direct matrix
 				    |    manipulation if needed.  For items without a matrix show the tab with
 				    |    either no values specified or the identity matrix as the starting
 				    |    template.  Full functionality here will require "limited xpush"
 				    |    abilities - xpushing only to a specified depth, and possibly some
 				    |    awareness of full path targets vs. toplevel targets.
-Primitive Editor                    |                             DONE (functionality covered elsewhere)
-Combination Editor                  |                             DONE (more GUI work would be good, but basic features present)
-Attribute Editor                    |                             DONE (can be done with attr command)
+Attribute Editor                    |                     DONE (can be done with attr command)
                                     |    This is a more general case of what is currently the General tab in
 				    |    Archer for objects - make this into a CAD widget with the layout of
 				    |    the General tab and the functionality of the Attribute editor -
 				    |    General tab will become Attribute tab.  Will need to be able to
 				    |    customize the standard attribute/value display to support things like
 				    |    the color picker for rgb attribute
-Geometry Browser                    |                             DONE (Archer tree view)
-Create Primitives                   |                             DONE (drop-down in toolbar, need better icon) 
-View                                |                             DONE (duplicated elsewhere)
-ViewRing			    |                             DONE (Useful aspects handled by loadview and saveview)
-Settings -> Mouse Behavior          |    Per item breakdown:
-	 Pick Edit Primitive        |                             DONE (Replaced by combination of "component pick" button and tree widget)
-	 Pick Edit Matrix           |                             DONE (Replaced by matrix tab discussed under "Matrix Selection" item)
-	 Pick Edit Combination      |                             DONE (Replaced by combination of "component pick" button and tree widget)
-	 Sweep Raytrace-Rect.       |                             DONE (full raytraced image provides all this data, use image editor to get sub-sections.)
-	 Pick Raytrace Objects      |    			  DONE (removed)
-	 Query Ray                  |                             DONE (should improve GUI) 
-	 Sweep Paint Rectangle      |                             DONE (removed)
-	 Sweep Zoom Rectangle       |                     INCOMPLETE - Need to see if this can be integrated as an option to the scale mode
-Settings -> Transform               |    Angle/Distance Cursor not implemented yet - needs documentation as well
-Settings -> Constraint Coords.      |    This is worth preserving, but needs some though on how to integrate it.
-Settings -> Rotate About            |    Save ability to rotate around view and maybe a specified keypoint to allow
-				    |    for flexibility
-Settings -> Active Pane             |                             DONE
-Settings -> Apply To                |                             DONE (removed)
-Settings -> Query Ray Effects       |    Will be handled elsewhere - nirt/query ray settings panel
-Settings -> Grid                    |                             DONE
-Settings -> Grid Spacing            |                             DONE
-Settings -> Framebuffer             |                             DONE
-Settings -> View Axes Position      |                             DONE (handled in preferences panel)
-Modes -> Draw Grid                  |                             DONE (see Settings -> Grid)
-Modes -> Snap to Grid               |                             DONE
-Modes -> FrameBuffer Active         |                             DONE - Archer toolbar button and raytrace control panel
-Modes -> Listen for Clients         |                             DONE (removed)
-Modes -> Persistend Sweep Rect.     |                             DONE (removed)
-Modes -> Angle/Dist. Cursor         |                             DONE
-Modes -> Faceplate                  |                             DONE
-Modes -> Axes                       |                             DONE
-Modes -> Display Manager            |   Archer is ogl only at the moment need to support other display managers and
-				    |   conditionalize the features that rely on OpenGL to only be active when ogl is.
-Modes -> Multipane                  |                             DONE
-Modes -> Edit Info                  |                             DONE (part of edit panel)
-Modes -> Status Bar                 |                             DONE (in geometry display area, bottom)
-Modes -> Collaborate                |                             DONE (removed)
-Modes -> Rate Knobs                 |                       INCOMPLETE - Low priority
-Modes -> Display Lists              |                             DONE
-Misc -> Z Clipping                  |                             DONE
-Misc -> Perspective                 |                             DONE
-Misc -> Faceplate                   |                             DONE
-Misc -> Faceplate GUI               |                             DONE (Maintain for classic mode, don't expose in Archer GUI)
-Misc -> Keystroke Forwarding        |                             DONE (removed)
-Tools -> ADC Control Panel          |             INCOMPLETE - see if ADC gives us anything not provided by the measurement tool
-Tools -> AnimMate                   |             INCOMPLETE? - talk with Keith to see how he animated in Archer
-Tools -> Grid Control Panel         |                             DONE
-Tools -> Query Ray                  |             INCOMPLETE - convert to preferences tab or tool
-Tools -> Raytrace Control Panel     |                             DONE
-Tools -> Build Pattern Tool         |             INCOMPLETE - convert to Archer wizard
-Tools -> Color Selector             |                            DONE (per-setting as appropriate)
-Tools -> Geometry Browser           |                            DONE (tree widget)
-Tools -> Overlap Tool               |             INCOMPLETE - expose in Archer as a tool
-Tools -> Upgrade Database...        |             INCOMPLETE - need dbupgrade on the command line?
-Tools -> Command Window             |                            DONE
-Tools -> Graphics Window            |                            DONE
-Help -> Dedication                  |                            DONE
-Help -> About MGED                  |                            DONE
-Help -> Command Manual Pages        |                            DONE
-Help -> Shift Grips                 |                            DONE
-Help -> Apropos                     |             INCOMPLETE, not working well in MGED either?
-Help -> Manual                      |                            DONE
+Sweep Zoom Rectangle                |                     INCOMPLETE - Need to see if this can be integrated as an option to the scale mode
+Settings -> Constraint Coords.      |                     INCOMPLETE - This is worth preserving, but needs some though on how to integrate it.
+Settings -> Rotate About            |                     INCOMPLETE - Save ability to rotate around view and maybe a specified keypoint to allow for flexibility
+Settings -> Query Ray Effects       |                     INCOMPLETE - Will be handled elsewhere - nirt/query ray settings panel
+Modes -> Display Manager            |                     INCOMPLETE - Archer is ogl only at the moment need to support other display managers and conditionalize the features that rely on OpenGL to only be active when ogl is.
+Modes -> Rate Knobs                 |                     INCOMPLETE - Low priority
+Tools -> ADC Control Panel          |                     INCOMPLETE - see if ADC gives us anything not provided by the measurement tool
+Tools -> AnimMate                   |                     INCOMPLETE? - talk with Keith to see how he animated in Archer
+Tools -> Query Ray                  |                     INCOMPLETE - convert to preferences tab or tool
+Tools -> Build Pattern Tool         |                     INCOMPLETE - convert to Archer wizard
+Tools -> Overlap Tool               |                     INCOMPLETE - expose in Archer as a tool
+Tools -> Upgrade Database...        |                     INCOMPLETE - need dbupgrade on the command line?
+Help -> Apropos                     |                     INCOMPLETE, not working well in MGED either?
 
 
 Other Issues
