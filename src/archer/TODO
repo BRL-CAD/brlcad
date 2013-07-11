@@ -44,11 +44,13 @@ Help -> Apropos                     |                     INCOMPLETE, not workin
 Other Issues
 ------------
 
+* raytrace button won't abort correctly due to using rtwizard rather than rt directly - will probably need fixes to rtwizard and archer
+
+* need proper "raytrace control" panel for easy access to raytracer options
+
+
+
+Long Term
+---------
+
 * add ability to undo transaction sets - long term feature that needs libged transactions mechanism
-
-Tests to Pass
--------------
-
-* The merged Archer/MGED app needs to be able to pass all the regression
-  tests currently passed by MGED
-
