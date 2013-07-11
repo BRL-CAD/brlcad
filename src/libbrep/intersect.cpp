@@ -1912,6 +1912,7 @@ curve_fitting(ON_Curve* in, double fitting_tolerance, bool delete_curve = false)
 		t_min = std::min(t, t_min);
 		t_max = std::max(t, t_max);
 	    }
+
 	    if (i == knotcnt+1) {
 		// All points are on the ellipse
 		if (in->IsClosed()) {
@@ -1924,12 +1925,12 @@ curve_fitting(ON_Curve* in, double fitting_tolerance, bool delete_curve = false)
 		if (!ON_NearZero(t_min)) {
 		    nurbscurve.Split(t_min, left, right);
 		    delete left;
+		    left = NULL;
 		}
 		else
 		    right = nurbscurve.Duplicate();
 		if (right && !ON_NearZero(t_max - 2*ON_PI)) {
 		    right->Split(t_max, left, right);
-		    delete right;
 		}
 		else
 		    left = right->Duplicate();
