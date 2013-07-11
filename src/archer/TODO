@@ -44,10 +44,6 @@ Help -> Apropos                     |                     INCOMPLETE, not workin
 Other Issues
 ------------
 
-* archer doesn't have the -c option to run command-line or sans Tk -  need to "port"
-  archer to the C code startup that MGED uses - some preliminary work has been done,
-  but needs to be made more robust and tested.
-
 * add ability to undo transaction sets - long term feature that needs libged transactions mechanism
 
 Tests to Pass
