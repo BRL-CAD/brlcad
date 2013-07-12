@@ -9,9 +9,6 @@ set(BENCHMARK_PIX
 
 set(OTHER_PIX
   golf_ball.pix
-  lgt1.pix
-  lgt2.pix
-  lgt3.pix
   mworld.pix
   toilet.pix
   )
