@@ -17,16 +17,11 @@ set(PIX_LOG
   world.log
   )
 
-set(SAVEVIEWS
-  cube.rt
-  )
-
 BRLCAD_ADDDATA(BENCHMARK_PIX pix)
 BRLCAD_ADDDATA(PIX_LOG pix)
 
 CMAKEFILES(${BENCHMARK_PIX})
 CMAKEFILES(${PIX_LOG})
-CMAKEFILES(${SAVEVIEWS})
 
 # Local Variables:
 # tab-width: 8
