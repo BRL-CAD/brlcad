@@ -1752,8 +1752,10 @@ triangle_intersection(const struct Triangle &TriA, const struct Triangle &TriB, 
 
 struct PointPair {
     int indexA, indexB;
-    double distance3d, distanceA, distanceB;
+    double distance3d, distanceU, distanceV, distanceS, distanceT;
     bool operator < (const PointPair &_pp) const {
+	if (ON_NearZero(distance3d-_pp.distance3d))
+	    return distanceU+distanceV+distanceS+distanceT < _pp.distanceU+_pp.distanceV+_pp.distanceS+_pp.distanceT;
 	return distance3d < _pp.distance3d;
     }
 };
@@ -2247,11 +2249,15 @@ ON_Intersect(const ON_Surface* surfA,
     // We need to automatically generate a threshold.
     double max_dis = sqrt(rootA.m_surf->BoundingBox().Diagonal().Length()*rootB.m_surf->BoundingBox().Diagonal().Length()) * 0.1;
 
-    double max_dis_2dA = ON_2dVector(surfA->Domain(0).Length(), surfA->Domain(1).Length()).Length() * 0.1;
-    double max_dis_2dB = ON_2dVector(surfB->Domain(0).Length(), surfB->Domain(1).Length()).Length() * 0.1;
+    double max_dis_u = surfA->Domain(0).Length() * 0.05;
+    double max_dis_v = surfA->Domain(1).Length() * 0.05;
+    double max_dis_s = surfB->Domain(0).Length() * 0.05;
+    double max_dis_t = surfB->Domain(1).Length() * 0.05;
     bu_log("max_dis: %lf\n", max_dis);
-    bu_log("max_dis_2dA: %lf\n", max_dis_2dA);
-    bu_log("max_dis_2dB: %lf\n", max_dis_2dB);
+    bu_log("max_dis_u: %lf\n", max_dis_u);
+    bu_log("max_dis_v: %lf\n", max_dis_v);
+    bu_log("max_dis_s: %lf\n", max_dis_s);
+    bu_log("max_dis_t: %lf\n", max_dis_t);
     // NOTE: More tests are needed to find a better threshold.
 
     std::vector<PointPair> ptpairs;
@@ -2259,9 +2265,11 @@ ON_Intersect(const ON_Surface* surfA,
 	for (int j = i + 1; j < curvept.Count(); j++) {
 	    PointPair ppair;
 	    ppair.distance3d = curvept[i].DistanceTo(curvept[j]);
-	    ppair.distanceA = curveuv[i].DistanceTo(curveuv[j]);
-	    ppair.distanceB = curvest[i].DistanceTo(curvest[j]);
-	    if (ppair.distanceA < max_dis_2dA && ppair.distanceB < max_dis_2dB && ppair.distance3d < max_dis) {
+	    ppair.distanceU = fabs(curveuv[i].x - curveuv[j].x);
+	    ppair.distanceV = fabs(curveuv[i].y - curveuv[j].y);
+	    ppair.distanceS = fabs(curvest[i].x - curvest[j].x);
+	    ppair.distanceT = fabs(curvest[i].y - curvest[j].y);
+	    if (ppair.distanceU < max_dis_u && ppair.distanceV < max_dis_v && ppair.distanceS < max_dis_s && ppair.distanceT < max_dis_t && ppair.distance3d < max_dis) {
 		ppair.indexA = i;
 		ppair.indexB = j;
 		ptpairs.push_back(ppair);
@@ -2374,7 +2382,8 @@ ON_Intersect(const ON_Surface* surfA,
 		ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
 	    }
 	    // If it form a loop in the 2D space (happens rarely compared to 3D)
-	    if (curveuv[startpoint].DistanceTo(curveuv[endpoint]) < max_dis_2dA) {
+	    if (fabs(curveuv[startpoint].x - curveuv[endpoint].x) < max_dis_u
+		&& fabs(curveuv[startpoint].y - curveuv[endpoint].y) < max_dis_v) {
 		ON_2dPoint &pt2d = curveuv[startpoint];
 		ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
 	    }
@@ -2389,7 +2398,8 @@ ON_Intersect(const ON_Surface* surfA,
 		ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
 	    }
 	    // If it form a loop in the 2D space (happens rarely compared to 3D)
-	    if (curvest[startpoint].DistanceTo(curvest[endpoint]) < max_dis_2dB) {
+	    if (fabs(curvest[startpoint].x - curvest[endpoint].x) < max_dis_s
+		&& fabs(curvest[startpoint].y - curvest[endpoint].y) < max_dis_t) {
 		ON_2dPoint &pt2d = curvest[startpoint];
 		ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
 	    }
