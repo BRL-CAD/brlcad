@@ -7,11 +7,6 @@ set(BENCHMARK_PIX
   world.pix
   )
 
-set(OTHER_PIX
-  golf_ball.pix
-  mworld.pix
-  toilet.pix
-  )
 
 set(PIX_LOG
   bldg391.log
@@ -30,7 +25,6 @@ BRLCAD_ADDDATA(BENCHMARK_PIX pix)
 BRLCAD_ADDDATA(PIX_LOG pix)
 
 CMAKEFILES(${BENCHMARK_PIX})
-CMAKEFILES(${OTHER_PIX})
 CMAKEFILES(${PIX_LOG})
 CMAKEFILES(${SAVEVIEWS})
 
