@@ -241,8 +241,8 @@ if test "x$HELP" = "x1" ; then
     echo "Available options:"
     echo "  RT=/path/to/rt_binary (e.g., rt)"
     echo "  DB=/path/to/reference/geometry (e.g. ../db)"
-    echo "  PIX=/path/to/reference/images (e.g., ../pix)"
-    echo "  LOG=/path/to/reference/logs (e.g., ../pix)"
+    echo "  PIX=/path/to/reference/images (e.g., ./ref)"
+    echo "  LOG=/path/to/reference/logs (e.g., ./ref)"
     echo "  CMP=/path/to/pixcmp_tool (e.g., pixcmp)"
     echo "  ELP=/path/to/time_tool (e.g., elapsed.sh)"
     echo "  TIMEFRAME=#seconds (default 32)"
@@ -291,8 +291,8 @@ it may be run in a stand-alone environment:
 
   RT - the rt binary (e.g. ../src/rt/rt or /usr/brlcad/bin/rt)
   DB - the directory containing the reference geometry (e.g. ../db)
-  PIX - the directory containing the reference images (e.g. ../pix)
-  LOG - the directory containing the reference logs (e.g. ../pix)
+  PIX - the directory containing the reference images (e.g. ./ref)
+  LOG - the directory containing the reference logs (e.g. ./ref)
   CMP - the name of a pixcmp tool (e.g. ./pixcmp or cmp)
   ELP - the name of an elapsed time tool (e.g. ../sh/elapsed.sh)
   TIMEFRAME - the minimum number of seconds each trace needs to take
@@ -520,9 +520,8 @@ look_for directory "a benchmark reference image directory" PIX \
     ${PATH_TO_THIS}/share/brlcad/pix \
     ${PATH_TO_THIS}/../share/pix \
     ${PATH_TO_THIS}/share/pix \
-    ${PATH_TO_THIS}/../pix \
-    ${PATH_TO_THIS}/pix \
-    ./pix
+    ${PATH_TO_THIS}/ref \
+    ./ref
 
 look_for directory "a benchmark reference log directory" LOG \
     $PIX \
@@ -532,9 +531,8 @@ look_for directory "a benchmark reference log directory" LOG \
     ${PATH_TO_THIS}/share/brlcad/pix \
     ${PATH_TO_THIS}/../share/pix \
     ${PATH_TO_THIS}/share/pix \
-    ${PATH_TO_THIS}/../pix \
-    ${PATH_TO_THIS}/pix \
-    ./pix
+    ${PATH_TO_THIS}/ref \
+    ./ref
 
 look_for executable "a pixel comparison utility" CMP \
     ${PATH_TO_THIS}/pixcmp \

@@ -1817,12 +1817,11 @@ add_subdirectory(sh)
 add_subdirectory(misc)
 if(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
   add_subdirectory(doc)
-  add_subdirectory(pix)
   add_subdirectory(db)
   add_subdirectory(bench)
   add_subdirectory(regress)
 else(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
-  CMAKEFILES(doc pix bench regress db)
+  CMAKEFILES(doc bench regress db)
 endif(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
 
 # If we're building on Windows, use config_win.h file
