@@ -1844,6 +1844,8 @@ newton_ssi(double& u, double& v, double& s, double& t, const ON_Surface* surfA, 
     t = std::min(t, surfB->Domain(1).Max());
     t = std::max(t, surfB->Domain(1).Min());
 
+    pointA = surfA->PointAt(u, v);
+    pointB = surfB->PointAt(s, t);
     return (pointA.DistanceTo(pointB) < intersection_tolerance) && !isnan(u) && !isnan(v) && !isnan(s) & !isnan(t);
 }
 
@@ -1895,6 +1897,7 @@ curve_fitting(ON_Curve* in, double fitting_tolerance, bool delete_curve = false)
 	sample_pts[2*i] = pt3d.x;
 	sample_pts[2*i+1] = pt3d.y;
     }
+
     if (ON_GetConicEquationThrough6Points(2, sample_pts, conic, NULL, NULL, NULL)) {
 	// It may be a conic.
 	ON_2dPoint ell_center;
@@ -1908,29 +1911,40 @@ curve_fitting(ON_Curve* in, double fitting_tolerance, bool delete_curve = false)
 	    ON_Plane ell_plane = ON_Plane(ON_3dPoint(ell_center), ON_3dVector(ell_A), ON_3dVector(ell_B));
 	    ON_Ellipse ell(ell_plane, ell_a, ell_b);
 	    int i;
-	    double t_min = DBL_MAX, t_max = -DBL_MAX;
 	    for (i = 0; i <= knotcnt; i++) {
 		// It may not be a complete ellipse.
 		// We find the domain of its parameter.
 		ON_3dPoint pt = in->PointAt(knots[i]);
-		double t;
 		ON_3dPoint ell_pt;
-		if (!ell.ClosestPointTo(pt, &t))
+		ell_pt = ell.ClosestPointTo(pt);
+		if (ell_pt.DistanceTo(pt) > fitting_tolerance) {
 		    break;
-		ell_pt = ell.PointAt(t);
-		if (ell_pt.DistanceTo(pt) > fitting_tolerance)
-		    break;
-		t_min = std::min(t, t_min);
-		t_max = std::max(t, t_max);
+		}
 	    }
 
 	    if (i == knotcnt+1) {
-		// All points are on the ellipse
-		if (in->IsClosed()) {
-		    t_max = ON_PI*2, t_min = 0;
-		}
 		ON_NurbsCurve nurbscurve;
 		ell.GetNurbForm(nurbscurve);
+
+		// All points are on the ellipse
+		double t_min, t_max;
+		if (in->IsClosed()) {
+		    t_max = ON_PI*2, t_min = 0;
+		} else {
+		    double t_mid;
+		    ell.ClosestPointTo(in->PointAtStart(), &t_min);
+		    ell.ClosestPointTo(in->PointAtEnd(), &t_max);
+		    ell.ClosestPointTo(in->PointAt(knots[knotcnt/2]), &t_mid);
+		    if (t_min > t_max) std::swap(t_min, t_max);
+		    if (!ON_Interval(t_min, t_max).Includes(t_mid)) {
+			// The arc crosses where t = 0 (2*PI).
+			// We make the curve "two rounds" of the ellipse.
+			t_min += 2*ON_PI;
+			std::swap(t_min, t_max);
+			nurbscurve.Append(nurbscurve);
+		    }
+		}
+
 		// The params of the nurbscurve is between [0, 2*pi]
 		ON_Curve *left = NULL, *right = NULL;
 		if (!ON_NearZero(t_min)) {
