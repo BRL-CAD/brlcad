@@ -1894,15 +1894,6 @@ curve_fitting(ON_Curve* in, double fitting_tolerance, bool delete_curve = false)
 	return linecurve;
     }
 
-    // Arc fitting (including circle)
-    ON_Arc arc;
-    if (in->IsArc(&ON_xy_plane, &arc, fitting_tolerance)) {
-	if (delete_curve) delete in;
-	ON_ArcCurve* arccurve = new ON_ArcCurve(arc);
-	arccurve->ChangeDimension(in->Dimension());
-	return arccurve;
-    }
-
     // Conic fitting (ellipse, parabola, hyperbola)
     // It's only meaningful to fit the curve when it's a complex one
     // For a polyline curve, the number of points should not be less than 10.
