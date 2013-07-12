@@ -655,11 +655,16 @@ newton_cci(double& t_a, double& t_b, const ON_Curve* curveA, const ON_Curve* cur
 }
 
 
-int
+static int
 compare_by_m_a0(const ON_X_EVENT* a, const ON_X_EVENT* b)
 {
+    if (a->m_a[0] < b->m_a[0])
+	return -1;
+    if (a->m_a[0] > b->m_a[0])
+	return 1;
+
     // We don't care whether they are equal
-    return a->m_a[0] < b->m_a[0] ? -1 : 1;
+    return 0;
 }
 
 
