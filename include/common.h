@@ -144,14 +144,14 @@ typedef ptrdiff_t ssize_t;
  * WARNING: THIS MACRO IS CONSIDERED PRIVATE AND SHOULD NOT BE USED
  * OUTSIDE OF THIS HEADER FILE.  DO NOT RELY ON IT.
  */
-#ifndef GCC_PREREQ
-#  if defined __GNUC__
-#    define GCC_PREREQ(major, minor) __GNUC__ > (major) || (__GNUC__ == (major) && __GNUC_MINOR__ >= (minor))
-#  else
-#    define GCC_PREREQ(major, minor) 0
-#  endif
+#ifdef GCC_PREREQ
+#  warning "GCC_PREREQ unexpectedly defined.  Ensure common.h is included first."
+#  undef GCC_PREREQ
+#endif
+#if defined __GNUC__
+#  define GCC_PREREQ(major, minor) __GNUC__ > (major) || (__GNUC__ == (major) && __GNUC_MINOR__ >= (minor))
 #else
-#  warning "GCC_PREREQ is already defined.  See the common.h header."
+#  define GCC_PREREQ(major, minor) 0
 #endif
 
 /* Provide a means to conveniently test the version of the Intel
@@ -165,14 +165,14 @@ typedef ptrdiff_t ssize_t;
  * OUTSIDE OF THIS HEADER FILE.  DO NOT RELY ON IT.
  */
 /* provide a means to conveniently test the version of ICC */
-#ifndef ICC_PREREQ
-#  if defined __INTEL_COMPILER
-#    define ICC_PREREQ(version) (__INTEL_COMPILER >= (version))
-#  else
-#    define ICC_PREREQ(version) 0
-#  endif
+#ifdef ICC_PREREQ
+#  warning "ICC_PREREQ unexpectedly defined.  Ensure common.h is included first."
+#  undef ICC_PREREQ
+#endif
+#if defined __INTEL_COMPILER
+#  define ICC_PREREQ(version) (__INTEL_COMPILER >= (version))
 #else
-#  warning "ICC_PREREQ is already defined.  See the common.h header."
+#  define ICC_PREREQ(version) 0
 #endif
 
 /* This is so we can use gcc's "format string vs arguments"-check for
@@ -211,30 +211,28 @@ typedef ptrdiff_t ssize_t;
  * }
  *
  */
-#ifndef UNUSED
-#  if GCC_PREREQ(2, 5)
-     /* GCC-style */
-#    define UNUSED(parameter) UNUSED_ ## parameter __attribute__((unused))
-#  else
-     /* MSVC/C++ */
-#    ifdef __cplusplus
-#      if defined(NDEBUG)
-#        define UNUSED(parameter) /* parameter */
-#      else /* some of them are asserted */
-#         define UNUSED(parameter) (parameter)
-#      endif
-#    else
-#      if defined(_MSC_VER)
-	 /* disable reporting an "unreferenced formal parameter" */
-#        pragma warning( disable : 4100 )
-#      endif
-#      define UNUSED(parameter) (parameter)
-#    endif
-#  endif
-#else
+#ifdef UNUSED
+#  warning "UNUSED unexpectedly defined.  Ensure common.h is included first."
 #  undef UNUSED
-#  define UNUSED(parameter) (parameter)
-#  warning "UNUSED was previously defined.  Parameter declaration behavior is unknown, see common.h"
+#endif
+#if GCC_PREREQ(2, 5)
+   /* GCC-style */
+#  define UNUSED(parameter) UNUSED_ ## parameter __attribute__((unused))
+#else
+   /* MSVC/C++ */
+#  ifdef __cplusplus
+#    if defined(NDEBUG)
+#      define UNUSED(parameter) /* parameter */
+#    else /* some of them are asserted */
+#       define UNUSED(parameter) (parameter)
+#    endif
+#  else
+#    if defined(_MSC_VER)
+     /* disable reporting an "unreferenced formal parameter" */
+#      pragma warning( disable : 4100 )
+#    endif
+#    define UNUSED(parameter) (parameter)
+#  endif
 #endif
 
 /**
@@ -246,23 +244,17 @@ typedef ptrdiff_t ssize_t;
  * need to be used directly by code.
  *
  * We can't use (void)(sizeof((parameter)) because MSVC2010 will
- * reportedly report a warning about the value being unused.
+ * reportedly issue a warning about the value being unused.
  * (Consequently calls into question (void)(parameter) but untested.)
  *
  * Possible alternative:
  * ((void)(1 ? 0 : sizeof((parameter)) - sizeof((parameter))))
  */
-#ifndef IGNORE
-#  define IGNORE(parameter) (void)(parameter)
-#else
+#ifdef IGNORE
 #  undef IGNORE
-#  define IGNORE(parameter) (void)(parameter)
-#  if defined(_MSC_VER)
-#    pragma warning("IGNORE was previously defined.  Parameter declaration behavior is unknown, see common.h")
-#  else
-#    warning "IGNORE was previously defined.  Parameter declaration behavior is unknown, see common.h"
-#  endif
+#  warning "IGNORE unexpectedly defined.  Ensure common.h is included first."
 #endif
+#define IGNORE(parameter) (void)(parameter)
 
 /**
  * LIKELY provides a common mechanism for providing branch prediction
@@ -275,17 +267,14 @@ typedef ptrdiff_t ssize_t;
  *  }
  *
  */
-#ifndef LIKELY
-#  if GCC_PREREQ(3, 0) || ICC_PREREQ(800)
-
-#    define LIKELY(expression) __builtin_expect((expression), 1)
-#  else
-#    define LIKELY(expression) (expression)
-#  endif
-#else
+#ifdef LIKELY
 #  undef LIKELY
+#  warning "LIKELY unexpectedly defined.  Ensure common.h is included first."
+#endif
+#if GCC_PREREQ(3, 0) || ICC_PREREQ(800)
+#  define LIKELY(expression) __builtin_expect((expression), 1)
+#else
 #  define LIKELY(expression) (expression)
-#  warning "LIKELY was previously defined.  Unable to provide branch hinting."
 #endif
 
 /**
@@ -299,16 +288,14 @@ typedef ptrdiff_t ssize_t;
  *  }
  *
  */
-#ifndef UNLIKELY
-#  if GCC_PREREQ(3, 0) || ICC_PREREQ(800)
-#    define UNLIKELY(expression) __builtin_expect((expression), 0)
-#  else
-#    define UNLIKELY(expression) (expression)
-#  endif
-#else
+#ifdef UNLIKELY
 #  undef UNLIKELY
+#  warning "UNLIKELY unexpectedly defined.  Ensure common.h is included first."
+#endif
+#if GCC_PREREQ(3, 0) || ICC_PREREQ(800)
+#  define UNLIKELY(expression) __builtin_expect((expression), 0)
+#else
 #  define UNLIKELY(expression) (expression)
-#  warning "UNLIKELY was previously defined.  Unable to provide branch hinting."
 #endif
 
 /**
@@ -320,18 +307,16 @@ typedef ptrdiff_t ssize_t;
  *
  * typedef struct karma some_type DEPRECATED;
  */
-#ifndef DEPRECATED
-#  if GCC_PREREQ(3, 1) || ICC_PREREQ(800)
-#    define DEPRECATED __attribute__((deprecated))
-#  elif defined(_WIN32)
-#    define DEPRECATED __declspec(deprecated("This function is DEPRECATED.  Please update code to new API."))
-#  else
-#    define DEPRECATED /* deprecated */
-#  endif
-#else
+#ifdef DEPRECATED
 #  undef DEPRECATED
+#  warning "DEPRECATED unexpectedly defined.  Ensure common.h is included first."
+#endif
+#if GCC_PREREQ(3, 1) || ICC_PREREQ(800)
+#  define DEPRECATED __attribute__((deprecated))
+#elif defined(_WIN32)
+#  define DEPRECATED __declspec(deprecated("This function is DEPRECATED.  Please update code to new API."))
+#else
 #  define DEPRECATED /* deprecated */
-#  warning "DEPRECATED was previously defined.  Disabling the declaration."
 #endif
 
 /* ActiveState Tcl doesn't include this catch in tclPlatDecls.h, so we
