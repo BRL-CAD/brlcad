@@ -2194,7 +2194,6 @@ if(NOT BRLCAD_IS_SUBBUILD)
     BUGS
     ChangeLog
     TODO
-    TODO.shaded_displays
     configure
     CMakeLists.txt
     )

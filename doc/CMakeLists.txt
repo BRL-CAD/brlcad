@@ -19,6 +19,7 @@ set(documentation_DATA
   README.VAX
   README.Windows
   TODO.BREP
+  TODO.shaded_displays
   anim.txt
   archer_ack.txt
   benchmark.tr

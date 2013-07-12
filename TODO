@@ -972,6 +972,12 @@ comp.r4 ID 5678 material code 5 LOS 75
   in BRL-CAD (libraries are BSD licensed: http://ngplant.sourceforge.net)
 
 
+SHADED DISPLAYS
+---------------
+
+* See doc/TODO.shaded_displays
+
+
 ARCHER
 ------
 
