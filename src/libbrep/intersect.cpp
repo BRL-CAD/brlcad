@@ -1860,6 +1860,32 @@ curve_fitting(ON_Curve* in, double fitting_tolerance, bool delete_curve = false)
     if (in == NULL)
 	return NULL;
 
+    // First, eliminate some unnecessary points (if three neighbor points
+    // are collinear, the middle one can be removed (for a polyline))
+    ON_3dPointArray points;
+    if (in->IsPolyline(&points)) {
+	int point_count = points.Count();
+	ON_3dPointArray new_points;
+	ON_3dPoint start = points[0];
+	new_points.Append(start);
+	for (int i = 2; i < point_count; i++) {
+	    ON_3dVector v1 = points[i-1] - start;
+	    ON_3dVector v2 = points[i] - points[i-1];
+	    if (!ON_NearZero(ON_CrossProduct(v1, v2).Length())) {
+		// start, points[i-1], points[i] are not collinear
+		start = points[i-1];
+		new_points.Append(start);
+	    }
+	}
+	new_points.Append(points[point_count-1]);
+	if (new_points.Count() != point_count) {
+	    // Some points have been eliminated
+	    if (delete_curve) delete in;
+	    in = new ON_PolylineCurve(new_points);
+	    bu_log("fitting: %d => %d points.\n", point_count, new_points.Count());
+	}
+    }
+
     // Linear fitting
     if (in->IsLinear(fitting_tolerance)) {
 	ON_LineCurve *linecurve = new ON_LineCurve(in->PointAtStart(), in->PointAtEnd());
