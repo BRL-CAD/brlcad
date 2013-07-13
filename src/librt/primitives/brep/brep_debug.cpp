@@ -1538,7 +1538,7 @@ brep_edge3d_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_in
 
 
 static void
-vhead(struct bn_vlblock *vbp, int ucount, int vcount, ON_NurbsSurface * ns)
+plot_nurbs_cv(struct bn_vlblock *vbp, int ucount, int vcount, ON_NurbsSurface *ns)
 {
     register struct bu_list *vhead;
     vhead = rt_vlblock_find(vbp, PEACH);
@@ -1546,32 +1546,31 @@ vhead(struct bn_vlblock *vbp, int ucount, int vcount, ON_NurbsSurface * ns)
     fastf_t pt1[3], pt2[3];
     int i, j, k, temp;
     for (k = 0; k < 2; k++) {
-        /*< two times i loop */
-        for (i = 0; i < ucount; ++i) {
-            /*< k=0, i<ucount; k=1, i<vcount */
-            if (k == 1)
-                ns->GetCV(0, i, cp);	   /*< i < ucount */
-            else
-                ns->GetCV(i, 0, cp);       /*< i < vcount */
+	/*< two times i loop */
 
-            VMOVE(pt1, cp);
-            for (j = 0; j < vcount; ++j) {
-                /*< k=0, j<vcount; k=1, j<ucount */
-                if (k == 1)
+	for (i = 0; i < ucount; ++i) {
+	    if (k == 1)
+		ns->GetCV(0, i, cp);	   /*< i < ucount */
+	    else
+		ns->GetCV(i, 0, cp);       /*< i < vcount */
+
+	    VMOVE(pt1, cp);
+	    for (j = 0; j < vcount; ++j) {
+		if (k == 1)
 		    ns->GetCV(j, i, cp);
 		else
-                    ns->GetCV(i, j, cp);
+		    ns->GetCV(i, j, cp);
 
-                VMOVE(pt2, cp);
-                RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
-                RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
-                VMOVE(pt1, cp);
-                RT_ADD_VLIST(vhead, cp, BN_VLIST_POINT_DRAW);
-            }
-        }
-        temp  = ucount;     /*< swapping ucount and vcount */
-        ucount = vcount;
-        vcount = temp;
+		VMOVE(pt2, cp);
+		RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+		RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+		VMOVE(pt1, cp);
+		RT_ADD_VLIST(vhead, cp, BN_VLIST_POINT_DRAW);
+	    }
+	}
+	temp  = ucount;
+	ucount = vcount;
+	vcount = temp;
     }
 }
 
@@ -1629,7 +1628,7 @@ brep_surface_cv_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_bre
 	    ucount = ns->m_cv_count[0];
 	    vcount = ns->m_cv_count[1];
 	    surf->Dump(tl);
-	    vhead(vbp, ucount, vcount, ns);     /* calling common function vhead */
+	    plot_nurbs_cv(vbp, ucount, vcount, ns);
 	}
     } else if (index < brep->m_S.Count()) {
 	ON_Surface *surf = brep->m_S[index];
@@ -1638,7 +1637,7 @@ brep_surface_cv_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_bre
 	int ucount, vcount;
 	ucount = ns->m_cv_count[0];
 	vcount = ns->m_cv_count[1];
-	vhead(vbp, ucount, vcount, ns);	    /* calling common function vhead */
+	plot_nurbs_cv(vbp, ucount, vcount, ns);
     }
     bu_vls_printf(vls, ON_String(wstr).Array());
     return 0;
