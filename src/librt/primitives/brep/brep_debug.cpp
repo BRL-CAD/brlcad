@@ -1535,6 +1535,47 @@ brep_edge3d_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_in
 }
 
 
+/*  Making a common vhead to be used in brep_surface_cv_plot when checking
+ *  for index value
+ */
+void vhead(struct bn_vlblock *vbp, int ucount, int vcount, ON_NurbsSurface * ns)
+{
+    register struct bu_list *vhead;
+    vhead = rt_vlblock_find(vbp, PEACH);
+    ON_3dPoint  cp;
+    fastf_t     pt1[3], pt2[3];
+    int i, j, k, temp;
+    for (k = 0; k < 2; k++)            /*< two times i loop */
+    {
+        for (i = 0; i < ucount; ++i)   /*< k=0, i<ucount; k=1, i<vcount */
+        {
+            if (k == 1)
+                ns->GetCV(0, i, cp);	   /*< i < ucount */
+            else
+                ns->GetCV(i, 0, cp);       /*< i < vcount */
+
+            VMOVE(pt1, cp);
+            for (j = 0; j < vcount; ++j)  /*< k=0, j<vcount; k=1, j<ucount */
+            {
+                if (k == 1)
+                   ns->GetCV(j, i, cp);
+ 		 else
+                    ns->GetCV(i, j, cp);
+
+                VMOVE(pt2, cp);
+                RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+                RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+                VMOVE(pt1, cp);
+                RT_ADD_VLIST(vhead, cp, BN_VLIST_POINT_DRAW);
+            }
+        }
+        temp  = ucount;     /*< swapping ucount and vcount */
+        ucount = vcount;
+        vcount = temp;
+    }
+}
+
+
 int
 brep_trim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, int plotres, bool dim3d)
 {
@@ -1579,82 +1620,32 @@ brep_surface_cv_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_bre
 	bu_log("brep is NOT valid");
     }
 
-	if (index == -1) {
-	    for (index = 0; index < brep->m_S.Count(); index++) {
+	if (index == -1) 
+	{
+	    for (index = 0; index < brep->m_S.Count(); index++) 
+	    {
 		ON_Surface *surf = brep->m_S[index];
 		ON_NurbsSurface *ns = ON_NurbsSurface::New();
 		surf->GetNurbForm(*ns, 0.0);
 		int ucount, vcount;
 		ucount = ns->m_cv_count[0];
 		vcount = ns->m_cv_count[1];
-		ON_3dPoint cp;
-		fastf_t pt1[3], pt2[3];
-		register struct bu_list *vhead;
 		surf->Dump(tl);
-		vhead = rt_vlblock_find(vbp, PEACH);
-		for (int i = 0; i < ucount; ++i) {
-		    ns->GetCV(i, 0, cp);
-		    VMOVE(pt1, cp);
-		    for (int j = 0; j < vcount; ++j) {
-			ns->GetCV(i, j, cp);
-			VMOVE(pt2, cp);
-			RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
-			RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
-			VMOVE(pt1, cp);
-			RT_ADD_VLIST(vhead, cp, BN_VLIST_POINT_DRAW);
-		    }
-		}
-		for (int i = 0; i < vcount; ++i) {
-		    ns->GetCV(0, i, cp);
-		    VMOVE(pt1, cp);
-		    for (int j = 0; j < ucount; ++j) {
-			ns->GetCV(j, i, cp);
-			VMOVE(pt2, cp);
-			RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
-			RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
-			VMOVE(pt1, cp);
-			RT_ADD_VLIST(vhead, cp, BN_VLIST_POINT_DRAW);
-		    }
-		}
+		vhead(vbp, ucount, vcount, ns);     /* calling common function vhead */
 	    }
-	} else if (index < brep->m_S.Count()) {
+	} 
+	else if (index < brep->m_S.Count()) 
+	{
 	    ON_Surface *surf = brep->m_S[index];
 	    ON_NurbsSurface *ns = ON_NurbsSurface::New();
 	    surf->GetNurbForm(*ns, 0.0);
 	    int ucount, vcount;
 	    ucount = ns->m_cv_count[0];
 	    vcount = ns->m_cv_count[1];
-	    ON_3dPoint cp;
-	    fastf_t pt1[3], pt2[3];
-	    register struct bu_list *vhead;
-	    vhead = rt_vlblock_find(vbp, PEACH);
-	    for (int i = 0; i < ucount; ++i) {
-		ns->GetCV(i, 0, cp);
-		VMOVE(pt1, cp);
-		for (int j = 0; j < vcount; ++j) {
-		    ns->GetCV(i, j, cp);
-		    VMOVE(pt2, cp);
-		    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
-		    RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
-		    VMOVE(pt1, cp);
-		    RT_ADD_VLIST(vhead, cp, BN_VLIST_POINT_DRAW);
-		}
-	    }
-	    for (int i = 0; i < vcount; ++i) {
-		ns->GetCV(0, i, cp);
-		VMOVE(pt1, cp);
-		for (int j = 0; j < ucount; ++j) {
-		    ns->GetCV(j, i, cp);
-		    VMOVE(pt2, cp);
-		    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
-		    RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
-		    VMOVE(pt1, cp);
-		    RT_ADD_VLIST(vhead, cp, BN_VLIST_POINT_DRAW);
-		}
-	    }
+	    vhead(vbp, ucount, vcount, ns);	    /* calling common function vhead */
 	}
 	bu_vls_printf(vls, ON_String(wstr).Array());
-    return 0;
+	return 0;
 
 }
 
