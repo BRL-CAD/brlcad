@@ -76,16 +76,14 @@ main(int argc, char **argv)
     }
 
     /* Tally up the intensities */
+    havg = 0.0;
     while ((n = fread(buf, sizeof(*buf), 512, fp)) > 0) {
 	bp = &buf[0];
-	for (i = 0; i < n; i++)
+	for (i = 0; i < n; i++) 
 	    bin[ *bp++ ]++;
+        havg += n;
     }
-
-    havg = 0.0;
-    for (i = 0; i < BINSIZE; i++)
-	havg += bin[ i ];
-    havg /= (double)BINSIZE;
+    havg /= (double)BINSIZE;    
 
     r = 0;
     hint = 0;
