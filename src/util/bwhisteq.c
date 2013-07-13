@@ -79,11 +79,11 @@ main(int argc, char **argv)
     havg = 0.0;
     while ((n = fread(buf, sizeof(*buf), 512, fp)) > 0) {
 	bp = &buf[0];
-	for (i = 0; i < n; i++) 
+	for (i = 0; i < n; i++)
 	    bin[ *bp++ ]++;
-        havg += n;
+	havg += n;
     }
-    havg /= (double)BINSIZE;    
+    havg /= (double)BINSIZE;
 
     r = 0;
     hint = 0;
