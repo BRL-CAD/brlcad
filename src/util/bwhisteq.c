@@ -36,30 +36,34 @@
 #include "bu.h"
 
 
-#define BINSIZE 256
-
-long bin[BINSIZE];
-unsigned char new[BINSIZE];
-
 #define rand01()	((random()&0xffff)/65535.0)
 
-FILE *fp;
-
-static const char usage[] = "Usage: bwhisteq [-v] file.bw > file.equalized\n";
-
-int verbose = 0;
 
 int
 main(int argc, char **argv)
 {
-    int n, i;
-    unsigned char buf[512];
-    unsigned char obuf[512];
-    unsigned char *bp;
-    int left[BINSIZE], right[BINSIZE];
-    double hint, havg;
+    static const char usage[] = "Usage: bwhisteq [-v] file.bw > file.equalized\n";
+
+    int verbose = 0;
+    FILE *fp = NULL;
+
+    double havg;
+    double hint;
+    int i;
+    int n;
     long r;
     size_t ret;
+    unsigned char *bp;
+
+#define BUFSIZE 512
+    unsigned char buf[BUFSIZE];
+    unsigned char obuf[BUFSIZE];
+
+#define BINSIZE 256
+    long bin[BINSIZE];
+    unsigned char result[BINSIZE];
+    int left[BINSIZE];
+    int right[BINSIZE];
 
     if (argc > 1 && BU_STR_EQUAL(argv[1], "-v")) {
 	verbose++;
@@ -77,7 +81,7 @@ main(int argc, char **argv)
 
     /* Tally up the intensities */
     havg = 0.0;
-    while ((n = fread(buf, sizeof(*buf), 512, fp)) > 0) {
+    while ((n = fread(buf, sizeof(*buf), BUFSIZE, fp)) > 0) {
 	bp = &buf[0];
 	for (i = 0; i < n; i++)
 	    bin[ *bp++ ]++;
@@ -96,19 +100,19 @@ main(int argc, char **argv)
 	}
 	right[i] = r;
 #ifdef METHOD2
-	new[i] = right[i] - left[i];
+	result[i] = right[i] - left[i];
 #else
-	new[i] = (left[i] + right[i]) / 2;
+	result[i] = (left[i] + right[i]) / 2;
 #endif /* Not METHOD2 */
     }
 
     if (verbose) {
 	for (i = 0; i < BINSIZE; i++)
-	    fprintf(stderr, "new[%d] = %d\n", i, new[i]);
+	    fprintf(stderr, "result[%d] = %d\n", i, result[i]);
     }
 
     bu_fseek(fp, 0, 0);
-    while ((n = fread(buf, 1, 512, fp)) > 0) {
+    while ((n = fread(buf, 1, BUFSIZE, fp)) > 0) {
 	for (i = 0; i < n; i++) {
 	    long idx = buf[i];
 
@@ -121,9 +125,9 @@ main(int argc, char **argv)
 		obuf[i] = left[idx];
 	    else {
 #ifdef METHOD2
-		obuf[i] = left[idx] + new[idx] * rand01();
+		obuf[i] = left[idx] + result[idx] * rand01();
 #else
-		obuf[i] = new[idx];
+		obuf[i] = result[idx];
 #endif /* Not METHOD2 */
 	    }
 	}
