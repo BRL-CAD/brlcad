@@ -280,7 +280,7 @@ struct hit {
 };
 #define HIT_NULL	((struct hit *)0)
 #define RT_CK_HIT(_p) BU_CKMAG(_p, RT_HIT_MAGIC, "struct hit")
-#define RT_HIT_INIT_ZERO { 0, 0.0, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, NULL, 0, NULL }
+#define RT_HIT_INIT_ZERO { RT_HIT_MAGIC, 0.0, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, NULL, 0, NULL }
 
 /**
  * Compute normal into (_hitp)->hit_normal.  Set flip-flag accordingly
