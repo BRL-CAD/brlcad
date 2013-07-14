@@ -37,12 +37,30 @@
 #include "dm.h"
 #include "dm_xvars.h"
 
-
+/*
+ * Q T _ C L O S E
+ * 
+ * Release the display manager
+ */
 HIDDEN int
-qt_close(struct dm *UNUSED(dmp))
+qt_close(struct dm *dmp)
 {
-    bu_log("qt_close not implemented\n");
-    return 0;
+    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
+    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+
+    if (privars->qapp)
+	privars->qapp->quit();
+    if (pubvars->xtkwin)
+	Tk_DestroyWindow(pubvars->xtkwin);
+    
+    bu_vls_free(&dmp->dm_pathName);
+    bu_vls_free(&dmp->dm_tkName);
+    bu_vls_free(&dmp->dm_dName);
+    bu_free((genptr_t)dmp->dm_vars.priv_vars, "qt_close: qt_vars");
+    bu_free((genptr_t)dmp->dm_vars.pub_vars, "qt_close: dm_xvars");
+    bu_free((genptr_t)dmp, "qt_close: dmp");
+
+    return TCL_OK;
 }
 
 
@@ -544,6 +562,7 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
     dmp->dm_id = pubvars->win;
 
     privars->qapp = new QApplication(argc, argv);
+
     QTkMainWindow *w = new QTkMainWindow(pubvars->win);
     w->show();
 
