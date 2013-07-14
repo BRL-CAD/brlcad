@@ -28,14 +28,17 @@
 #  include <sys/time.h>
 #endif
 
+#include <QApplication>
+#include "dm-qt.h"
+
 #include "tcl.h"
 #include "tk.h"
 #include "bu.h"
 #include "vmath.h"
 #include "dm.h"
 #include "dm_xvars.h"
-
-
+/*
+*/
 HIDDEN int
 qt_close(struct dm *UNUSED(dmp))
 {
@@ -388,6 +391,13 @@ qt_configureWin_guts(struct dm *UNUSED(dmp), int UNUSED(force))
 }
 
 
+QTkMainWindow::QTkMainWindow(WId win)
+:QWidget()
+{
+    QWidget::create(win, false, true);
+}
+
+
 __BEGIN_DECLS
 
 /*
@@ -530,6 +540,10 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
     pubvars->win = Tk_WindowId(pubvars->xtkwin);
     dmp->dm_id = pubvars->win;
 
+    QApplication app(argc, argv);
+    QTkMainWindow *w = new QTkMainWindow(pubvars->win);
+    w->show();
+    
     Tk_MapWindow(pubvars->xtkwin);
 
     bu_log("qt_open called\n");

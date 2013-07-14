@@ -30,6 +30,7 @@ set(include_hdrs
   dm-pex.h
   dm-plot.h
   dm-ps.h
+  dm-qt.h
   dm-rtgl.h
   dm-tk.h
   dm-wgl.h
