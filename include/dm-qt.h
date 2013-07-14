@@ -27,13 +27,18 @@
 #define __DM_QT__
 
 #ifdef DM_QT
-#include <QWidget>
+#  include <QApplication>
+#  include <QWidget>
 
-class QTkMainWindow: public QWidget
-{
+class QTkMainWindow: public QWidget {
     public:
 	QTkMainWindow(WId win);
 };
+
+struct qt_vars {
+    QApplication *qapp;
+};
+
 #endif /* DM_QT */
 
 #endif /* __DM_QT__ */

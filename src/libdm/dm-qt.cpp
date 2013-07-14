@@ -28,7 +28,6 @@
 #  include <sys/time.h>
 #endif
 
-#include <QApplication>
 #include "dm-qt.h"
 
 #include "tcl.h"
@@ -417,7 +416,8 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
     Tk_Window tkwin;
 
     struct dm_xvars *pubvars = NULL;
-
+    struct qt_vars *privars = NULL;
+    
     if (argc < 0 || !argv)
 	return DM_NULL;
 
@@ -432,6 +432,9 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
 
     BU_ALLOC(dmp->dm_vars.pub_vars, struct dm_xvars);
     pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
+
+    BU_ALLOC(dmp->dm_vars.priv_vars, struct qt_vars);
+    privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
 
     bu_vls_init(&dmp->dm_pathName);
     bu_vls_init(&dmp->dm_tkName);
@@ -540,7 +543,7 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
     pubvars->win = Tk_WindowId(pubvars->xtkwin);
     dmp->dm_id = pubvars->win;
 
-    QApplication app(argc, argv);
+    privars->qapp = new QApplication(argc, argv);
     QTkMainWindow *w = new QTkMainWindow(pubvars->win);
     w->show();
 
