@@ -55,11 +55,8 @@ if(BRLCAD_ENABLE_TK AND NOT WIN32)
 endif(BRLCAD_ENABLE_TK AND NOT WIN32)
 
 if(BRLCAD_ENABLE_QT)
-  if(BUILD_TYPE)
-    set(CMAKE_CXX_FLAGS_${BUILD_TYPE} "${CMAKE_CXX_FLAGS_${BUILD_TYPE}} -Wno-float-equal")
-  else(BUILD_TYPE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-float-equal")
-  endif(BUILD_TYPE)
+  BRLCAD_CHECK_CXX_FLAG(Wno-float-equal)
+  
   list(APPEND libdm_DEFINES DM_QT)
   set(dmqt_srcs dm-qt.cpp)
   set(CMAKE_AUTOMOC ON)
