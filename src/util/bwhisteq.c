@@ -36,9 +36,6 @@
 #include "bu.h"
 
 
-#define rand01()	((random()&0xffff)/65535.0)
-
-
 int
 main(int argc, char **argv)
 {
@@ -99,11 +96,7 @@ main(int argc, char **argv)
 	    r++;
 	}
 	right[i] = r;
-#ifdef METHOD2
-	result[i] = right[i] - left[i];
-#else
 	result[i] = (left[i] + right[i]) / 2;
-#endif /* Not METHOD2 */
     }
 
     if (verbose) {
@@ -124,11 +117,7 @@ main(int argc, char **argv)
 	    if (left[idx] == right[idx])
 		obuf[i] = left[idx];
 	    else {
-#ifdef METHOD2
-		obuf[i] = left[idx] + result[idx] * rand01();
-#else
 		obuf[i] = result[idx];
-#endif /* Not METHOD2 */
 	    }
 	}
 	ret = fwrite(obuf, 1, n, stdout);
