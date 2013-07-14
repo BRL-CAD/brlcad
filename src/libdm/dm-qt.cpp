@@ -37,8 +37,8 @@
 #include "vmath.h"
 #include "dm.h"
 #include "dm_xvars.h"
-/*
-*/
+
+
 HIDDEN int
 qt_close(struct dm *UNUSED(dmp))
 {
@@ -543,7 +543,7 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
     QApplication app(argc, argv);
     QTkMainWindow *w = new QTkMainWindow(pubvars->win);
     w->show();
-    
+
     Tk_MapWindow(pubvars->xtkwin);
 
     bu_log("qt_open called\n");
