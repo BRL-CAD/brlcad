@@ -48,6 +48,9 @@ qt_close(struct dm *dmp)
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
 
+    privars->win->close();
+    delete privars->win;
+
     if (privars->qapp)
 	privars->qapp->quit();
     if (pubvars->xtkwin)
@@ -210,11 +213,39 @@ qt_setLineAttr(struct dm *UNUSED(dmp), int UNUSED(width), int UNUSED(style))
 }
 
 
-HIDDEN int
-qt_configureWin(struct dm *UNUSED(dmp), int UNUSED(force))
+HIDDEN void
+qt_reshape(struct dm *dmp, int width, int height)
 {
-    bu_log("qt_configureWin not implemented\n");
-    return 0;
+    dmp->dm_height = height;
+    dmp->dm_width = width;
+    dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
+}
+
+
+HIDDEN int
+qt_configureWin(struct dm *dmp, int force)
+{
+     /* struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars; */
+    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+
+    int width = privars->win->width();
+    int height = privars->win->height();
+
+    if (!force &&
+	dmp->dm_height == height &&
+	dmp->dm_width == width)
+	return TCL_OK;
+
+    qt_reshape(dmp, width, height);
+
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_configureWin_guts()\n");
+	bu_log("width = %d, height = %d\n", dmp->dm_width, dmp->dm_height);
+    }
+
+    /* TODO select font */
+
+    return TCL_OK;
 }
 
 
@@ -313,15 +344,6 @@ qt_getDisplayImage(struct dm *UNUSED(dmp), unsigned char **UNUSED(image))
 }
 
 
-HIDDEN void
-qt_reshape(struct dm *dmp, int width, int height)
-{
-    dmp->dm_height = height;
-    dmp->dm_width = width;
-    dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
-}
-
-
 HIDDEN int
 qt_makeCurrent(struct dm *UNUSED(dmp))
 {
@@ -401,33 +423,6 @@ struct dm dm_qt = {
     0,                          /* not overriding the auto font size */
     0				/* Tcl interpreter */
 };
-
-
-HIDDEN int
-qt_configureWin_guts(struct dm *dmp, int force)
-{
-    /* struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars; */
-    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
-    
-    int width = privars->win->width();
-    int height = privars->win->height();
-    
-    if (!force &&
-	dmp->dm_height == height &&
-	dmp->dm_width == width)
-	return TCL_OK;
-    
-    qt_reshape(dmp, width, height);
-    
-    if (dmp->dm_debugLevel) {
-	bu_log("qt_configureWin_guts()\n");
-	bu_log("width = %d, height = %d\n", dmp->dm_width, dmp->dm_height);
-    }
-
-    /* TODO select font */
-    
-    return TCL_OK;
-}
 
 
 QTkMainWindow::QTkMainWindow(WId win)
@@ -587,17 +582,17 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
 
     privars->win = new QTkMainWindow((WId)pubvars->win);
     privars->win->resize(dmp->dm_width, dmp->dm_height);
-    
+
     QPalette *pal = new QPalette();
-    pal->setColor(QPalette::Background, Qt::black);  
+    pal->setColor(QPalette::Background, Qt::black);
     privars->win->setAutoFillBackground(true);
     privars->win->setPalette(*pal);
     delete pal;
-    
+
     privars->win->show();
-    
-    qt_configureWin_guts(dmp, 1);
-    
+
+    qt_configureWin(dmp, 1);
+
     Tk_SetWindowBackground(pubvars->xtkwin,
 			   0);
     Tk_MapWindow(pubvars->xtkwin);
