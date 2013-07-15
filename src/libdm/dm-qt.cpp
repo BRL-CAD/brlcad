@@ -314,9 +314,11 @@ qt_getDisplayImage(struct dm *UNUSED(dmp), unsigned char **UNUSED(image))
 
 
 HIDDEN void
-qt_reshape(struct dm *UNUSED(dmp), int UNUSED(width), int UNUSED(height))
+qt_reshape(struct dm *dmp, int width, int height)
 {
-    bu_log("qt_reshape not implemented\n");
+    dmp->dm_height = height;
+    dmp->dm_width = width;
+    dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
 }
 
 
@@ -563,13 +565,12 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
 
     privars->qapp = new QApplication(argc, argv);
 
-    QTkMainWindow *win = new QTkMainWindow((WId)pubvars->win);
-    win->show();
+    privars->win = new QTkMainWindow((WId)pubvars->win);
+    privars->win->show();
 
     Tk_MapWindow(pubvars->xtkwin);
 
-
-    bu_log("Tk: %ld Qt: %ld\n", pubvars->win, win->winId());
+    bu_log("Tk: %ld Qt: %ld\n", pubvars->win, privars->win->winId());
     bu_log("qt_open called\n");
     return dmp;
 }
