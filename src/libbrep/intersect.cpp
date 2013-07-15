@@ -2404,53 +2404,76 @@ ON_Intersect(const ON_Surface* surfA,
     // so if they need to share one intersection point, this cannot work
     // properly. So we need some "seaming" segments to make sure the inter-
     // section.
-    int num_curves = polylines.size();
-    for (int i = 0; i < num_curves; i++) {
-	for (int j = i + 1; j < num_curves; j++) {
-	    int point_count1 = (*polylines[i]).Count();
-	    int point_count2 = (*polylines[j]).Count();
-	    double min_dis = DBL_MAX;
-	    int min_start = 0, min_end = 0;
+    unsigned int num_curves = polylines.size();
+    for (unsigned int i = 0; i < num_curves; i++) {
+	if (!polylines[i]) continue;
+	for (unsigned int j = i + 1; j < num_curves; j++) {
+	    if (!polylines[j]) continue;
+	    int point_count1 = polylines[i]->Count();
+	    int point_count2 = polylines[j]->Count();
+	    PointPair pair;
+	    pair.distance3d = DBL_MAX;
 	    for (int k = 0; k < point_count1; k++) {
 		for (int m = 0; m < point_count2; m++) {
+		    // We use PointPair for comparison.
+		    PointPair newpair;
 		    int start = (*polylines[i])[k], end = (*polylines[j])[m];
-		    double dis = curvept[start].DistanceTo(curvept[end]);
-		    if (dis < min_dis) {
-			min_dis = dis;
-			min_start = start;
-			min_end = end;
+		    newpair.distance3d = curvept[start].DistanceTo(curvept[end]);
+		    newpair.distanceU = fabs(curveuv[start].x - curveuv[end].x);
+		    newpair.distanceV = fabs(curveuv[start].y - curveuv[end].y);
+		    newpair.distanceS = fabs(curvest[start].x - curvest[end].x);
+		    newpair.distanceT = fabs(curvest[start].y - curvest[end].y);
+		    if (newpair.distanceU < max_dis_u && newpair.distanceV < max_dis_v && newpair.distanceS < max_dis_s && newpair.distanceT < max_dis_t) {
+			if (newpair < pair) {
+			    newpair.indexA = start;
+			    newpair.indexB = end;
+			    pair = newpair;
+			}
 		    }
 		}
 	    }
-	    if (min_dis < max_dis
-		&& fabs(curveuv[min_start].x - curveuv[min_end].x) < max_dis_u
-		&& fabs(curveuv[min_start].y - curveuv[min_end].y) < max_dis_v
-		&& fabs(curvest[min_start].x - curvest[min_end].x) < max_dis_s
-		&& fabs(curvest[min_start].y - curvest[min_end].y) < max_dis_t) {
-		// Generate a seaming curve
+	    if (pair.distance3d < max_dis) {
+		// Generate a seaming curve, if there is currently no intersections.
+		// Use curve-curve intersections (There are too much computations...)
+		// Is this really necessary?
+		ON_3dPointArray ptarray1, ptarray2, ptarray3, ptarray4;
+		for (int k = 0; k < polylines[i]->Count(); k++) {
+		    ptarray1.Append(curveuv[(*polylines[i])[k]]);
+		    ptarray3.Append(curvest[(*polylines[i])[k]]);
+		}
+		for (int k = 0; k < polylines[j]->Count(); k++) {
+		    ptarray2.Append(curveuv[(*polylines[j])[k]]);
+		    ptarray4.Append(curvest[(*polylines[j])[k]]);
+		}
+		ON_PolylineCurve polyA(ptarray1), polyB(ptarray2), polyC(ptarray3), polyD(ptarray4);
+		ON_SimpleArray<ON_X_EVENT> x_event1, x_event2;
+		if (ON_Intersect(&polyA, &polyB, x_event1, intersection_tolerance)
+		    && ON_Intersect(&polyC, &polyD, x_event2, intersection_tolerance))
+		    continue;
+
 		// If the seaming curve is continous to one of polylines[i] and
 		// polylines[j], we don't need to generate a new segment, just
 		// merging them.
-		if (min_start == (*polylines[i])[point_count1 - 1]) {
-		    polylines[i]->Append(min_end);
-		} else if (min_end == (*polylines[i])[point_count1 - 1]) {
-		    polylines[i]->Append(min_start);
-		} else if (min_start == (*polylines[i])[0]) {
-		    polylines[i]->Insert(0, min_end);
-		} else if (min_end == (*polylines[i])[0]) {
-		    polylines[i]->Insert(0, min_start);
-		} else if (min_start == (*polylines[j])[point_count2 - 1]) {
-		    polylines[j]->Append(min_end);
-		} else if (min_end == (*polylines[j])[point_count2 - 1]) {
-		    polylines[j]->Append(min_start);
-		} else if (min_start == (*polylines[j])[0]) {
-		    polylines[j]->Insert(0, min_end);
-		} else if (min_end == (*polylines[j])[0]) {
-		    polylines[j]->Insert(0, min_start);
+		if (pair.indexA == (*polylines[i])[point_count1 - 1]) {
+		    polylines[i]->Append(pair.indexB);
+		} else if (pair.indexB == (*polylines[i])[point_count1 - 1]) {
+		    polylines[i]->Append(pair.indexA);
+		} else if (pair.indexA == (*polylines[i])[0]) {
+		    polylines[i]->Insert(0, pair.indexB);
+		} else if (pair.indexB == (*polylines[i])[0]) {
+		    polylines[i]->Insert(0, pair.indexA);
+		} else if (pair.indexA == (*polylines[j])[point_count2 - 1]) {
+		    polylines[j]->Append(pair.indexB);
+		} else if (pair.indexB == (*polylines[j])[point_count2 - 1]) {
+		    polylines[j]->Append(pair.indexA);
+		} else if (pair.indexA == (*polylines[j])[0]) {
+		    polylines[j]->Insert(0, pair.indexB);
+		} else if (pair.indexB == (*polylines[j])[0]) {
+		    polylines[j]->Insert(0, pair.indexA);
 		} else {
 		    ON_SimpleArray<int>* seam = new ON_SimpleArray<int>;
-		    seam->Append(min_start);
-		    seam->Append(min_end);
+		    seam->Append(pair.indexA);
+		    seam->Append(pair.indexB);
 		    polylines.push_back(seam);
 		}
 	    }
@@ -2475,8 +2498,8 @@ ON_Intersect(const ON_Surface* surfA,
 	    ON_3dPointArray ptarray;
 	    for (int j = 0; j < polylines[i]->Count(); j++)
 		ptarray.Append(curvept[(*polylines[i])[j]]);
-	    // If it form a loop in the 3D space
-	    if (curvept[startpoint].DistanceTo(curvept[endpoint]) < max_dis) {
+	    // If it form a loop in the 3D space (except seaming curves)
+	    if (curvept[startpoint].DistanceTo(curvept[endpoint]) < max_dis && i < num_curves) {
 		ptarray.Append(curvept[startpoint]);
 	    }
 	    ON_PolylineCurve *curve = new ON_PolylineCurve(ptarray);
@@ -2490,7 +2513,8 @@ ON_Intersect(const ON_Surface* surfA,
 	    }
 	    // If it form a loop in the 2D space (happens rarely compared to 3D)
 	    if (fabs(curveuv[startpoint].x - curveuv[endpoint].x) < max_dis_u
-		&& fabs(curveuv[startpoint].y - curveuv[endpoint].y) < max_dis_v) {
+		&& fabs(curveuv[startpoint].y - curveuv[endpoint].y) < max_dis_v
+		&& i < num_curves) {
 		ON_2dPoint &pt2d = curveuv[startpoint];
 		ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
 	    }
@@ -2506,7 +2530,8 @@ ON_Intersect(const ON_Surface* surfA,
 	    }
 	    // If it form a loop in the 2D space (happens rarely compared to 3D)
 	    if (fabs(curvest[startpoint].x - curvest[endpoint].x) < max_dis_s
-		&& fabs(curvest[startpoint].y - curvest[endpoint].y) < max_dis_t) {
+		&& fabs(curvest[startpoint].y - curvest[endpoint].y) < max_dis_t
+		&& i < num_curves) {
 		ON_2dPoint &pt2d = curvest[startpoint];
 		ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
 	    }
