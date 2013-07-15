@@ -2428,10 +2428,31 @@ ON_Intersect(const ON_Surface* surfA,
 		&& fabs(curvest[min_start].x - curvest[min_end].x) < max_dis_s
 		&& fabs(curvest[min_start].y - curvest[min_end].y) < max_dis_t) {
 		// Generate a seaming curve
-		ON_SimpleArray<int>* seam = new ON_SimpleArray<int>;
-		seam->Append(min_start);
-		seam->Append(min_end);
-		polylines.push_back(seam);
+		// If the seaming curve is continous to one of polylines[i] and
+		// polylines[j], we don't need to generate a new segment, just
+		// merging them.
+		if (min_start == (*polylines[i])[point_count1 - 1]) {
+		    polylines[i]->Append(min_end);
+		} else if (min_end == (*polylines[i])[point_count1 - 1]) {
+		    polylines[i]->Append(min_start);
+		} else if (min_start == (*polylines[i])[0]) {
+		    polylines[i]->Insert(0, min_end);
+		} else if (min_end == (*polylines[i])[0]) {
+		    polylines[i]->Insert(0, min_start);
+		} else if (min_start == (*polylines[j])[point_count2 - 1]) {
+		    polylines[j]->Append(min_end);
+		} else if (min_end == (*polylines[j])[point_count2 - 1]) {
+		    polylines[j]->Append(min_start);
+		} else if (min_start == (*polylines[j])[0]) {
+		    polylines[j]->Insert(0, min_end);
+		} else if (min_end == (*polylines[j])[0]) {
+		    polylines[j]->Insert(0, min_start);
+		} else {
+		    ON_SimpleArray<int>* seam = new ON_SimpleArray<int>;
+		    seam->Append(min_start);
+		    seam->Append(min_end);
+		    polylines.push_back(seam);
+		}
 	    }
 	}
     }
