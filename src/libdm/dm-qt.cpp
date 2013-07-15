@@ -352,6 +352,14 @@ qt_makeCurrent(struct dm *UNUSED(dmp))
 }
 
 
+HIDDEN void
+qt_processEvents(struct dm *dmp)
+{
+    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+    privars->qapp->processEvents();
+}
+
+
 struct dm dm_qt = {
     qt_close,
     qt_drawBegin,
@@ -387,6 +395,7 @@ struct dm dm_qt = {
     qt_getDisplayImage,
     qt_reshape,
     qt_makeCurrent,
+    qt_processEvents,
     0,
     0,				/* no displaylist */
     0,				/* no stereo */
