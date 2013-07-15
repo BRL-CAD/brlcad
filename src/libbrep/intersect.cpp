@@ -2445,8 +2445,30 @@ ON_Intersect(const ON_Surface* surfA,
 	    ssx->m_curve3d = intersect3d[i];
 	    ssx->m_curveA = intersect_uv2d[i];
 	    ssx->m_curveB = intersect_st2d[i];
-	    // Now we can only have ssx_transverse
-	    ssx->m_type = ON_SSX_EVENT::ssx_transverse;
+	    // Normalize the curves, so that their domains are the same,
+	    // which is required by ON_SSX_EVENT::IsValid().
+	    ssx->m_curve3d->SetDomain(ON_Interval(0.0, 1.0));
+	    ssx->m_curveA->SetDomain(ON_Interval(0.0, 1.0));
+	    ssx->m_curveB->SetDomain(ON_Interval(0.0, 1.0));
+	    // Check if the intersection is ssx_tangent
+	    // If the at all points on the curves are of the same direction
+	    // or opposite direction, the intersection is considered tangent.
+	    int count = std::min(ssx->m_curveA->SpanCount(), ssx->m_curveB->SpanCount());
+	    int j;
+	    for (j = 0; j <= count; j++) {
+		ON_3dVector normalA, normalB;
+		ON_3dPoint pointA = ssx->m_curveA->PointAt((double)j/count);
+		ON_3dPoint pointB = ssx->m_curveB->PointAt((double)j/count);
+		if (!(surfA->EvNormal(pointA.x, pointA.y, normalA)
+		    && surfB->EvNormal(pointB.x, pointB.y, normalB)
+		    && normalA.IsParallelTo(normalB)))
+		    break;
+	    }
+	    if (j == count + 1)
+		ssx->m_type = ON_SSX_EVENT::ssx_tangent;
+	    else
+		ssx->m_type = ON_SSX_EVENT::ssx_transverse;
+	    // TODO: Check ssx_overlap
 	    x.Append(*ssx);
 	}
     }
@@ -2464,7 +2486,17 @@ ON_Intersect(const ON_Surface* surfA,
 	    ssx->m_point3d = curvept[single_pts[i]];
 	    ssx->m_pointA = curveuv[single_pts[i]];
 	    ssx->m_pointB = curvest[single_pts[i]];
-	    ssx->m_type = ON_SSX_EVENT::ssx_transverse_point;
+	    // Check if the intersection is ssx_tangent_point
+	    // If the tangent planes of them are coincident (the normals
+	    // are of the same direction or opposite direction), the
+	    // intersection is considered tangent.
+	    ON_3dVector normalA, normalB;
+	    if (surfA->EvNormal(ssx->m_pointA.x, ssx->m_pointA.y, normalA)
+		&& surfB->EvNormal(ssx->m_pointB.x, ssx->m_pointB.y, normalB)
+		&& normalA.IsParallelTo(normalB))
+		ssx->m_type = ON_SSX_EVENT::ssx_tangent_point;
+	    else
+		ssx->m_type = ON_SSX_EVENT::ssx_transverse_point;
 	    x.Append(*ssx);
 	}
     }
