@@ -404,9 +404,29 @@ struct dm dm_qt = {
 
 
 HIDDEN int
-qt_configureWin_guts(struct dm *UNUSED(dmp), int UNUSED(force))
+qt_configureWin_guts(struct dm *dmp, int force)
 {
-    return 0;
+    /* struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars; */
+    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+    
+    int width = privars->win->width();
+    int height = privars->win->height();
+    
+    if (!force &&
+	dmp->dm_height == height &&
+	dmp->dm_width == width)
+	return TCL_OK;
+    
+    qt_reshape(dmp, width, height);
+    
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_configureWin_guts()\n");
+	bu_log("width = %d, height = %d\n", dmp->dm_width, dmp->dm_height);
+    }
+
+    /* TODO select font */
+    
+    return TCL_OK;
 }
 
 
@@ -566,8 +586,12 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
     privars->qapp = new QApplication(argc, argv);
 
     privars->win = new QTkMainWindow((WId)pubvars->win);
+    privars->win->resize(dmp->dm_width, dmp->dm_height);
+    
     privars->win->show();
-
+    
+    qt_configureWin_guts(dmp, 1);
+    
     Tk_MapWindow(pubvars->xtkwin);
 
     bu_log("Tk: %ld Qt: %ld\n", pubvars->win, privars->win->winId());
