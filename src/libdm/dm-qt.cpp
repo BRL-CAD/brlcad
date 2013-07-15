@@ -39,7 +39,7 @@
 
 /*
  * Q T _ C L O S E
- * 
+ *
  * Release the display manager
  */
 HIDDEN int
@@ -52,7 +52,7 @@ qt_close(struct dm *dmp)
 	privars->qapp->quit();
     if (pubvars->xtkwin)
 	Tk_DestroyWindow(pubvars->xtkwin);
-    
+
     bu_vls_free(&dmp->dm_pathName);
     bu_vls_free(&dmp->dm_tkName);
     bu_vls_free(&dmp->dm_dName);
@@ -411,7 +411,7 @@ qt_configureWin_guts(struct dm *UNUSED(dmp), int UNUSED(force))
 QTkMainWindow::QTkMainWindow(WId win)
 :QWidget()
 {
-    QWidget::create(win, false, true);
+    create(win, false, true);
 }
 
 
@@ -435,7 +435,7 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
 
     struct dm_xvars *pubvars = NULL;
     struct qt_vars *privars = NULL;
-    
+
     if (argc < 0 || !argv)
 	return DM_NULL;
 
@@ -563,11 +563,13 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
 
     privars->qapp = new QApplication(argc, argv);
 
-    QTkMainWindow *w = new QTkMainWindow(pubvars->win);
-    w->show();
+    QTkMainWindow *win = new QTkMainWindow((WId)pubvars->win);
+    win->show();
 
     Tk_MapWindow(pubvars->xtkwin);
 
+
+    bu_log("Tk: %ld Qt: %ld\n", pubvars->win, win->winId());
     bu_log("qt_open called\n");
     return dmp;
 }
