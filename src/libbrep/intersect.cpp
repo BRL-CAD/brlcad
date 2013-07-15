@@ -247,6 +247,26 @@ public:
 };
 
 
+const ON_Interval
+check_domain(const ON_Interval* in, const ON_Interval& domain, char* name)
+{
+    if (in) {
+	if (!in->IsIncreasing()) {
+	    bu_log("Bogus %s passed in", name);
+	    return domain;
+	}
+	ON_Interval dom;
+	dom.Intersection(*in, domain);
+	if (dom.IsEmptyInterval()) {
+	    bu_log("%s is disjoint from the whole domain.\n", name);
+	} else {
+	    return dom;
+	}
+    }
+    return domain;
+}
+
+
 /**
  * Point-point intersections (PPI)
  *
@@ -325,6 +345,7 @@ ON_Intersect(const ON_3dPoint& pointA,
 {
     if (tolerance <= 0.0)
 	tolerance = PCI_DEFAULT_TOLERANCE;
+    check_domain(curveB_domain, curveB.Domain(), "curveB_domain");
 
     Subcurve root;
     if (curveB_domain == NULL || *curveB_domain == curveB.Domain()) {
@@ -476,14 +497,8 @@ ON_Intersect(const ON_3dPoint& pointA,
 	tolerance = PSI_DEFAULT_TOLERANCE;
 
     ON_Interval u_domain, v_domain;
-    if (surfaceB_udomain == 0)
-	u_domain = surfaceB.Domain(0);
-    else
-	u_domain = *surfaceB_udomain;
-    if (surfaceB_vdomain == 0)
-	v_domain = surfaceB.Domain(1);
-    else
-	v_domain = *surfaceB_vdomain;
+    u_domain = check_domain(surfaceB_udomain, surfaceB.Domain(0), "surfaceB_udomain");
+    v_domain = check_domain(surfaceB_vdomain, surfaceB.Domain(1), "surfaceB_vdomain");
 
     // We need ON_BrepFace for get_closest_point().
     // TODO: Use routines like SubSurface in SSI to reduce computation.
@@ -686,6 +701,9 @@ ON_Intersect(const ON_Curve* curveA,
 	overlap_tolerance = 2*intersection_tolerance;
     double t1_tolerance = intersection_tolerance;
     double t2_tolerance = intersection_tolerance;
+
+    check_domain(curveA_domain, curveA->Domain(), "curveA_domain");
+    check_domain(curveB_domain, curveB->Domain(), "curveB_domain");
 
     Subcurve rootA, rootB;
     if (!build_curve_root(curveA, curveA_domain, rootA))
@@ -1144,6 +1162,10 @@ ON_Intersect(const ON_Curve* curveA,
     double t_tolerance = intersection_tolerance;
     double u_tolerance = intersection_tolerance;
     double v_tolerance = intersection_tolerance;
+
+    check_domain(curveA_domain, curveA->Domain(), "curveA_domain");
+    check_domain(surfaceB_udomain, surfaceB->Domain(0), "surfaceB_udomain");
+    check_domain(surfaceB_vdomain, surfaceB->Domain(1), "surfaceB_vdomain");
 
     // We need ON_BrepFace for get_closest_point().
     // This is used in point-surface intersections, in case we build the
@@ -2018,6 +2040,11 @@ ON_Intersect(const ON_Surface* surfA,
 	overlap_tolerance = 2*intersection_tolerance;
     if (fitting_tolerance < intersection_tolerance)
 	fitting_tolerance = intersection_tolerance;
+
+    check_domain(surfaceA_udomain, surfA->Domain(0), "surfaceA_udomain");
+    check_domain(surfaceA_vdomain, surfA->Domain(1), "surfaceA_vdomain");
+    check_domain(surfaceB_udomain, surfB->Domain(0), "surfaceB_udomain");
+    check_domain(surfaceB_vdomain, surfB->Domain(1), "surfaceB_vdomain");
 
     /* First step: Initialize the first two Subsurface.
      * It's just like getting the root of the surface tree.
