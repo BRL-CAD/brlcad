@@ -746,10 +746,18 @@ do_frame(int framenumber)
 
 	    if (bu_file_exists(framename, NULL)) {
 		/* File exists, maybe with partial results */
+		outfp = NULL;
 		fd = open(framename, O_RDWR);
-		outfp = fdopen(fd, "r+");
+		if (fd < 0) {
+		    perror("open");
+		} else {
+		    outfp = fdopen(fd, "r+");
+		    if (!outfp)
+			perror("fdopen");
+		}
+
 		if (fd < 0 || !outfp) {
-		    perror(framename);
+		    bu_log("ERROR: Unable to open \"%s\" for reading and writing (check file permissions)\n", framename);
 
 		    if (matflag)
 			return 0; /* OK: some undocumented reason */
