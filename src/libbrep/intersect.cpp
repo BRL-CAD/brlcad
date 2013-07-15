@@ -248,7 +248,7 @@ public:
 
 
 const ON_Interval
-check_domain(const ON_Interval* in, const ON_Interval& domain, char* name)
+check_domain(const ON_Interval* in, const ON_Interval& domain, const char* name)
 {
     if (in) {
 	if (!in->IsIncreasing()) {
@@ -2412,8 +2412,8 @@ ON_Intersect(const ON_Surface* surfA,
 	    double min_dis = DBL_MAX;
 	    int min_start = 0, min_end = 0;
 	    for (int k = 0; k < point_count1; k++) {
-		for (int l = 0; l < point_count2; l++) {
-		    int start = (*polylines[i])[k], end = (*polylines[j])[l];
+		for (int m = 0; m < point_count2; m++) {
+		    int start = (*polylines[i])[k], end = (*polylines[j])[m];
 		    double dis = curvept[start].DistanceTo(curvept[end]);
 		    if (dis < min_dis) {
 			min_dis = dis;
