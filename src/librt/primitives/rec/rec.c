@@ -437,17 +437,21 @@ rt_rec_print(const struct soltab *stp)
 int
 rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
-    struct rec_specific *rec =
-	(struct rec_specific *)stp->st_specific;
+    struct rec_specific *rec;
     vect_t dprime;		/* D' */
     vect_t pprime;		/* P' */
     fastf_t k1, k2;		/* distance constants of solution */
     vect_t xlated;		/* translated vector */
-    struct hit hits[4];	/* 4 potential hit points */
-    struct hit *hitp;	/* pointer to hit point */
-    int nhits = 0;	/* Number of hit points */
+    struct hit hits[4] =	/* 4 potential hit points */
+	{RT_HIT_INIT_ZERO, RT_HIT_INIT_ZERO, RT_HIT_INIT_ZERO, RT_HIT_INIT_ZERO};
+    struct hit *hitp = NULL;	/* pointer to hit point */
+    int nhits = 0;		/* Number of hit points */
+    fastf_t tol_dist;
 
-    memset(hits, 0, 4 * sizeof(struct hit));
+    if (UNLIKELY(!stp || !rp || !ap || !seghead))
+	return 0;
+
+    rec = (struct rec_specific *)stp->st_specific;
 
     hitp = &hits[0];
 
@@ -456,54 +460,10 @@ rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     VSUB2(xlated, rp->r_pt, rec->rec_V);
     MAT4X3VEC(pprime, rec->rec_SoR, xlated);
 
-    if (ZERO(dprime[X]) && ZERO(dprime[Y]))
-	goto check_plates;
-
-    /* Find roots of the equation, using formula for quadratic w/ a=1 */
-    {
-	fastf_t b;		/* coeff of polynomial */
-	fastf_t root;		/* root of radical */
-	fastf_t dx2dy2;
-
-	b = 2 * (dprime[X]*pprime[X] + dprime[Y]*pprime[Y]) *
-	    (dx2dy2 = 1 / (dprime[X]*dprime[X] + dprime[Y]*dprime[Y]));
-	root = b*b - 4 * dx2dy2 * (pprime[X]*pprime[X] + pprime[Y]*pprime[Y] - 1);
-
-	if (root < SMALL_FASTF || root > 1.0e10) {
-	    goto check_plates;
-	}
-	root = sqrt(root);
-
-	k1 = (root-b) * 0.5;
-	k2 = (root+b) * (-0.5);
-    }
-
-    /*
-     * k1 and k2 are potential solutions to intersection with side.
-     * See if they fall in range.
-     */
-    VJOIN1(hitp->hit_vpriv, pprime, k1, dprime);		/* hit' */
-    if (hitp->hit_vpriv[Z] > -SMALL_FASTF && hitp->hit_vpriv[Z] < (1.0 + SMALL_FASTF)) {
-	hitp->hit_magic = RT_HIT_MAGIC;
-	hitp->hit_dist = k1;
-	hitp->hit_surfno = REC_NORM_BODY;	/* compute N */
-	hitp++; nhits++;
-    }
-
-    VJOIN1(hitp->hit_vpriv, pprime, k2, dprime);		/* hit' */
-    if (hitp->hit_vpriv[Z] > -SMALL_FASTF && hitp->hit_vpriv[Z] < (1.0 + SMALL_FASTF)) {
-	hitp->hit_magic = RT_HIT_MAGIC;
-	hitp->hit_dist = k2;
-	hitp->hit_surfno = REC_NORM_BODY;	/* compute N */
-	hitp++; nhits++;
-    }
-
     /*
      * Check for hitting the end plates.
      */
- check_plates:
-    if (nhits < 2  &&  !ZERO(dprime[Z])) {
-	/* 0 or 1 hits so far, this is worthwhile */
+    if (!ZERO(dprime[Z])) {
 	k1 = -pprime[Z] / dprime[Z];		/* bottom plate */
 	k2 = (1.0 - pprime[Z]) / dprime[Z];	/* top plate */
 
@@ -525,79 +485,153 @@ rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	    hitp++; nhits++;
 	}
     }
-    if (nhits == 0) return 0;	/* MISS */
-    if (nhits == 2) {
-    hit:
-	if (hits[0].hit_dist < hits[1].hit_dist) {
-	    /* entry is [0], exit is [1] */
-	    struct seg *segp;
 
-	    RT_GET_SEG(segp, ap->a_resource);
-	    segp->seg_stp = stp;
-	    segp->seg_in = hits[0];		/* struct copy */
-	    segp->seg_out = hits[1];	/* struct copy */
-	    BU_LIST_INSERT(&(seghead->l), &(segp->l));
-	} else {
-	    /* entry is [1], exit is [0] */
-	    struct seg *segp;
+    /* Check for hitting the cylinder.  Find roots of the equation,
+     * using formula for quadratic w/ a=1
+     */
+    if (nhits != 2) {
+	fastf_t b;		/* coeff of polynomial */
+	fastf_t descriminant;		/* root of radical, the descriminant */
+	fastf_t dx2dy2;
 
-	    RT_GET_SEG(segp, ap->a_resource);
-	    segp->seg_stp = stp;
-	    segp->seg_in = hits[1];		/* struct copy */
-	    segp->seg_out = hits[0];	/* struct copy */
-	    BU_LIST_INSERT(&(seghead->l), &(segp->l));
+	dx2dy2 = 1 / (dprime[X]*dprime[X] + dprime[Y]*dprime[Y]);
+	b = 2 * (dprime[X]*pprime[X] + dprime[Y]*pprime[Y]) * dx2dy2;
+	descriminant = b*b - 4 * dx2dy2 * (pprime[X]*pprime[X] + pprime[Y]*pprime[Y] - 1);
+
+	/* might want compare against tol_dist here? */
+
+	if (NEAR_ZERO(descriminant, SMALL_FASTF)) {
+	    /* if the descriminant is zero, it's a double-root grazer */
+	    k1 = -b * 0.5;
+	    VJOIN1(hitp->hit_vpriv, pprime, k1, dprime); /* hit' */
+	    if (hitp->hit_vpriv[Z] > -SMALL_FASTF && hitp->hit_vpriv[Z] < (1.0 + SMALL_FASTF)) {
+		hitp->hit_magic = RT_HIT_MAGIC;
+		hitp->hit_dist = k1;
+		hitp->hit_surfno = REC_NORM_BODY; /* compute N */
+		hitp++; nhits++;
+	    }
+
+	} else if (descriminant > SMALL_FASTF) {
+	    /* if the descriminant is positive, there are two roots */
+
+	    descriminant = sqrt(descriminant);
+	    k1 = (-b+descriminant) * 0.5;
+	    k2 = (-b-descriminant) * (-0.5);
+
+	    /*
+	     * k1 and k2 are potential solutions to intersection with side.
+	     * See if they fall in range.
+	     */
+	    VJOIN1(hitp->hit_vpriv, pprime, k1, dprime); /* hit' */
+	    if (hitp->hit_vpriv[Z] > -SMALL_FASTF && hitp->hit_vpriv[Z] < (1.0 + SMALL_FASTF)) {
+		hitp->hit_magic = RT_HIT_MAGIC;
+		hitp->hit_dist = k1;
+		hitp->hit_surfno = REC_NORM_BODY; /* compute N */
+		hitp++; nhits++;
+	    }
+
+	    VJOIN1(hitp->hit_vpriv, pprime, k2, dprime); /* hit' */
+	    if (hitp->hit_vpriv[Z] > -SMALL_FASTF && hitp->hit_vpriv[Z] < (1.0 + SMALL_FASTF)) {
+		hitp->hit_magic = RT_HIT_MAGIC;
+		hitp->hit_dist = k2;
+		hitp->hit_surfno = REC_NORM_BODY; /* compute N */
+		hitp++; nhits++;
+	    }
 	}
-	return 2;			/* HIT */
     }
-    if (nhits == 1) {
-	if (hits[0].hit_surfno != REC_NORM_BODY)
-	    bu_log("rt_rec_shot(%s): 1 intersection with end plate?\n", stp->st_name);
-	/*
-	 * Ray is tangent to body of cylinder,
-	 * or a single hit on on an end plate (??)
-	 * This could be considered a MISS,
-	 * but to signal the condition, return 0-thickness hit.
-	 */
-	hits[1] = hits[0];	/* struct copy */
-	nhits++;
-	goto hit;
+
+    /* missed both ends and side? */
+    if (nhits == 0)
+	return 0;
+
+    /* Prepare to collapse duplicate points.  Check for case where two
+     * or more of the hits have the same distance, e.g. hitting at the
+     * rim or down an edge.
+     */
+
+    tol_dist = ap->a_rt_i->rti_tol.dist;
+
+    if (nhits > 3) {
+	/* collapse just one duplicate (4->3) */
+	if (NEAR_EQUAL(hits[0].hit_dist, hits[3].hit_dist, tol_dist)) {
+	    if (RT_G_DEBUG&DEBUG_ARB8)
+		bu_log("rt_rec_shot(%s): repeat hit, collapsing 0&3\n", stp->st_name);
+	    nhits--; /* discard [3] */
+	} else if (NEAR_EQUAL(hits[1].hit_dist, hits[3].hit_dist, tol_dist)) {
+	    if (RT_G_DEBUG&DEBUG_ARB8)
+		bu_log("rt_rec_shot(%s): repeat hit, collapsing 1&3\n", stp->st_name);
+	    nhits--; /* discard [3] */
+	} else if (NEAR_EQUAL(hits[2].hit_dist, hits[3].hit_dist, tol_dist)) {
+	    if (RT_G_DEBUG&DEBUG_ARB8)
+		bu_log("rt_rec_shot(%s): repeat hit, collapsing 2&3\n", stp->st_name);
+	    nhits--; /* discard [3] */
+	}
     }
-    if (nhits == 3) {
-	fastf_t tol_dist = ap->a_rt_i->rti_tol.dist;
-	/*
-	 * Check for case where two of the three hits
-	 * have the same distance, e.g. hitting at the rim.
-	 */
-	k1 = hits[0].hit_dist - hits[1].hit_dist;
-	if (NEAR_ZERO(k1, tol_dist)) {
-	    if (RT_G_DEBUG&DEBUG_ARB8)bu_log("rt_rec_shot(%s): 3 hits, collapsing 0&1\n", stp->st_name);
+    if (nhits > 2) {
+	/* collapse any other duplicate (3->2) */
+	if (NEAR_EQUAL(hits[0].hit_dist, hits[2].hit_dist, tol_dist)) {
+	    if (RT_G_DEBUG&DEBUG_ARB8)
+		bu_log("rt_rec_shot(%s): repeat hit, collapsing 0&2\n", stp->st_name);
+	    nhits--; /* discard [2] */
+	} else if (NEAR_EQUAL(hits[1].hit_dist, hits[2].hit_dist, tol_dist)) {
+	    if (RT_G_DEBUG&DEBUG_ARB8)
+		bu_log("rt_rec_shot(%s): repeat hit, collapsing 1&2\n", stp->st_name);
+	    nhits--; /* discard [2] */
+	} else if (NEAR_EQUAL(hits[0].hit_dist, hits[1].hit_dist, tol_dist)) {
+	    if (RT_G_DEBUG&DEBUG_ARB8)
+		bu_log("rt_rec_shot(%s): repeat hit, collapsing 0&1\n", stp->st_name);
 	    hits[1] = hits[2];	/* struct copy */
-	    nhits--;
-	    goto hit;
-	}
-	k1 = hits[1].hit_dist - hits[2].hit_dist;
-	if (NEAR_ZERO(k1, tol_dist)) {
-	    if (RT_G_DEBUG&DEBUG_ARB8)bu_log("rt_rec_shot(%s): 3 hits, collapsing 1&2\n", stp->st_name);
-	    nhits--;
-	    goto hit;
-	}
-	k1 = hits[0].hit_dist - hits[2].hit_dist;
-	if (NEAR_ZERO(k1, tol_dist)) {
-	    if (RT_G_DEBUG&DEBUG_ARB8)bu_log("rt_rec_shot(%s): 3 hits, collapsing 1&2\n", stp->st_name);
-	    nhits--;
-	    goto hit;
+	    nhits--; /* moved [2] to [1], discarded [2] */
 	}
     }
-    /* nhits >= 3 */
-    bu_log("rt_rec_shot(%s): %d unique hits?!?  %g, %g, %g, %g\n",
-	   stp->st_name, nhits,
-	   hits[0].hit_dist,
-	   hits[1].hit_dist,
-	   hits[2].hit_dist,
-	   hits[3].hit_dist);
 
-    /* count just the first two, to have something */
-    goto hit;
+    /* sanity check that we don't end up with too many hits */
+    if (nhits > 3) {
+	bu_log("rt_rec_shot(%s): %d unique hits?!?  %g, %g, %g, %g\n",
+	       stp->st_name, nhits,
+	       hits[0].hit_dist,
+	       hits[1].hit_dist,
+	       hits[2].hit_dist,
+	       hits[3].hit_dist);
+	/* count just the first two hits, to have something */
+	nhits-=2;
+    } else if (nhits > 2) {
+	bu_log("rt_rec_shot(%s): %d unique hits?!?  %g, %g, %g\n",
+	       stp->st_name, nhits,
+	       hits[0].hit_dist,
+	       hits[1].hit_dist,
+	       hits[2].hit_dist);
+	/* count just the first two hits, to have something */
+	nhits--;
+    } else if (nhits == 1) {
+	/* Ray is probably tangent to body of cylinder or a single hit
+	 * on only an end plate.  This could be considered a MISS, but
+	 * to signal the condition, return 0-thickness hit.
+	 */
+	hits[1] = hits[0]; /* struct copy */
+	nhits++; /* replicate [0] to [1] */
+    }
+
+    if (hits[0].hit_dist < hits[1].hit_dist) {
+	/* entry is [0], exit is [1] */
+	struct seg *segp;
+
+	RT_GET_SEG(segp, ap->a_resource);
+	segp->seg_stp = stp;
+	segp->seg_in = hits[0]; /* struct copy */
+	segp->seg_out = hits[1]; /* struct copy */
+	BU_LIST_INSERT(&(seghead->l), &(segp->l));
+    } else {
+	/* entry is [1], exit is [0] */
+	struct seg *segp;
+
+	RT_GET_SEG(segp, ap->a_resource);
+	segp->seg_stp = stp;
+	segp->seg_in = hits[1]; /* struct copy */
+	segp->seg_out = hits[0]; /* struct copy */
+	BU_LIST_INSERT(&(seghead->l), &(segp->l));
+    }
+    return 2;			/* HIT */
 }
 
 
