@@ -746,7 +746,7 @@ do_frame(int framenumber)
 
 	    if (bu_file_exists(framename, NULL)) {
 		/* File exists, maybe with partial results */
-		fd = open(framename, 2);
+		fd = open(framename, O_RDWR);
 		outfp = fdopen(fd, "r+");
 		if (fd < 0 || !outfp) {
 		    perror(framename);
