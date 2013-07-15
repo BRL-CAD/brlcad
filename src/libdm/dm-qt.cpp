@@ -588,10 +588,18 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
     privars->win = new QTkMainWindow((WId)pubvars->win);
     privars->win->resize(dmp->dm_width, dmp->dm_height);
     
+    QPalette *pal = new QPalette();
+    pal->setColor(QPalette::Background, Qt::black);  
+    privars->win->setAutoFillBackground(true);
+    privars->win->setPalette(*pal);
+    delete pal;
+    
     privars->win->show();
     
     qt_configureWin_guts(dmp, 1);
     
+    Tk_SetWindowBackground(pubvars->xtkwin,
+			   0);
     Tk_MapWindow(pubvars->xtkwin);
 
     bu_log("Tk: %ld Qt: %ld\n", pubvars->win, privars->win->winId());
