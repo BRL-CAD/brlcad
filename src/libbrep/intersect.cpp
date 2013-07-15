@@ -2296,7 +2296,7 @@ ON_Intersect(const ON_Surface* surfA,
     // (n is the number of points generated above)
 
     // We need to automatically generate a threshold.
-    double max_dis = sqrt(rootA.m_surf->BoundingBox().Diagonal().Length()*rootB.m_surf->BoundingBox().Diagonal().Length()) * 0.1;
+    double max_dis = std::min(rootA.m_surf->BoundingBox().Diagonal().Length(), rootB.m_surf->BoundingBox().Diagonal().Length()) * 0.1;
 
     double max_dis_u = surfA->Domain(0).Length() * 0.05;
     double max_dis_v = surfA->Domain(1).Length() * 0.05;
@@ -2396,6 +2396,43 @@ ON_Intersect(const ON_Surface* surfA,
 	    }
 	    delete line1;
 	    delete line2;
+	}
+    }
+
+    // In some cases, the intersection curves will intersect with each other.
+    // But with our merging machanism, one point can only belong to one curve,
+    // so if they need to share one intersection point, this cannot work
+    // properly. So we need some "seaming" segments to make sure the inter-
+    // section.
+    int num_curves = polylines.size();
+    for (int i = 0; i < num_curves; i++) {
+	for (int j = i + 1; j < num_curves; j++) {
+	    int point_count1 = (*polylines[i]).Count();
+	    int point_count2 = (*polylines[j]).Count();
+	    double min_dis = DBL_MAX;
+	    int min_start = 0, min_end = 0;
+	    for (int k = 0; k < point_count1; k++) {
+		for (int l = 0; l < point_count2; l++) {
+		    int start = (*polylines[i])[k], end = (*polylines[j])[l];
+		    double dis = curvept[start].DistanceTo(curvept[end]);
+		    if (dis < min_dis) {
+			min_dis = dis;
+			min_start = start;
+			min_end = end;
+		    }
+		}
+	    }
+	    if (min_dis < max_dis
+		&& fabs(curveuv[min_start].x - curveuv[min_end].x) < max_dis_u
+		&& fabs(curveuv[min_start].y - curveuv[min_end].y) < max_dis_v
+		&& fabs(curvest[min_start].x - curvest[min_end].x) < max_dis_s
+		&& fabs(curvest[min_start].y - curvest[min_end].y) < max_dis_t) {
+		// Generate a seaming curve
+		ON_SimpleArray<int>* seam = new ON_SimpleArray<int>;
+		seam->Append(min_start);
+		seam->Append(min_end);
+		polylines.push_back(seam);
+	    }
 	}
     }
 
