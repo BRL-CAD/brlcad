@@ -885,7 +885,10 @@ namespace brlcad {
 	{
 	    BBNode* quads[4];
 	    BBNode* parent = NULL;
-	    double usplit, vsplit, width, height;
+	    double usplit = 0.0;
+	    double vsplit = 0.0;
+	    double width = 0.0;
+	    double height = 0.0;
 	    double ratio = 5.0;
 	    double uq = u.Length()*0.25;
 	    double vq = v.Length()*0.25;
@@ -896,11 +899,13 @@ namespace brlcad {
 	    unsigned int do_u_split = 0;
 	    unsigned int do_v_split = 0;
 	    unsigned int do_both_splits = 0;
+
+	    usplit = u.Mid();
+	    vsplit = v.Mid();
+
             // The non-knot case where all criteria are satisfied is the
             // terminating case for the recursion - handle that first
             if (!prev_knot) {
-               usplit = u.Mid();
-               vsplit = v.Mid();
                localsurf->GetSurfaceSize(&width, &height);
 	       if (((width/height < ratio) && (width/height > 1.0/ratio) && isFlat(frames) && isStraight(frames))
 		       || (divDepth >= depthLimit)) { //BREP_MAX_FT_DEPTH
