@@ -771,6 +771,7 @@ do_frame(int framenumber)
 
 		    /* Read existing pix data into the frame buffer */
 		    if (sb.st_size > 0) {
+			bu_log("Reading existing pix data from \"%s\".\n", framename);
 			size_t bytes_read = fread(pixmap, 1, (size_t)sb.st_size, outfp);
 			if (bytes_read < (size_t)sb.st_size)
 			    return -1;
