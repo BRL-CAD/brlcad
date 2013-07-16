@@ -667,7 +667,9 @@ analyze_general(struct ged *gedp, const struct rt_db_internal *ip)
     if (rt_functab[ip->idb_minor_type].ft_centroid != NULL) {
         rt_functab[ip->idb_minor_type].ft_centroid(&centroid, ip);
 	bu_vls_printf(gedp->ged_result_str, "\n    Centroid: (%g, %g, %g)\n",
-		      centroid[X], centroid[Y], centroid[Z]);
+		      centroid[X] * gedp->ged_wdbp->dbip->dbi_base2local,
+		      centroid[Y] * gedp->ged_wdbp->dbip->dbi_base2local,
+		      centroid[Z] * gedp->ged_wdbp->dbip->dbi_base2local);
     }
 
     print_volume_table(gedp,
