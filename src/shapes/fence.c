@@ -645,7 +645,7 @@ char *getPrePostName(char *prefix, char *base, char *suffix)
 
 
 /*
- * generateFence_s() is a simplified version of gererateFence() (this
+ * generateFence_s() is a simplified version of generateFence() (this
  * is the same for all members of the "generate" family).  Its
  * function is to provide a default-value based interface to
  * generating fence.  That is, the function may be called with as few
