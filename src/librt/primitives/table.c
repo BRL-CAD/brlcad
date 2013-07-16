@@ -803,9 +803,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_pipe_params,
 	rt_pipe_bbox,
-	NULL,
-	NULL,
-	NULL,
+	rt_pipe_volume,
+	rt_pipe_surf_area,
+	rt_pipe_centroid,
     },
 
     {

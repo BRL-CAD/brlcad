@@ -659,8 +659,16 @@ HIDDEN void
 analyze_general(struct ged *gedp, const struct rt_db_internal *ip)
 {
     fastf_t vol, area = -1;
+    point_t centroid;
+
     rt_functab[ip->idb_minor_type].ft_volume(&vol, ip);
     rt_functab[ip->idb_minor_type].ft_surf_area(&area, ip);
+
+    if (rt_functab[ip->idb_minor_type].ft_centroid != NULL) {
+        rt_functab[ip->idb_minor_type].ft_centroid(&centroid, ip);
+	bu_vls_printf(gedp->ged_result_str, "\n    Centroid: (%g, %g, %g)\n",
+		      centroid[X], centroid[Y], centroid[Z]);
+    }
 
     print_volume_table(gedp,
 	    vol
@@ -1459,6 +1467,10 @@ analyze_do(struct ged *gedp, const struct rt_db_internal *ip)
 	break;
 
     case ID_HYP:
+	analyze_general(gedp, ip);
+	break;
+
+    case ID_PIPE:
 	analyze_general(gedp, ip);
 	break;
 
