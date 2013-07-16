@@ -47,6 +47,23 @@ BRLCADWrapper::~BRLCADWrapper()
     Close();
 }
 
+bool
+BRLCADWrapper::load(std::string &flnm)
+{
+
+    /* open brlcad instance */
+    if ((dbip = db_open(flnm.c_str(), DB_OPEN_READONLY)) == DBI_NULL) {
+	bu_log("Cannot open input file (%s)\n", flnm.c_str());
+	return false;
+    }
+    if (db_dirbuild(dbip)) {
+	bu_log("ERROR: db_dirbuild failed: (%s)\n", flnm.c_str());
+	return false;
+    }
+
+    return true;
+}
+
 
 bool
 BRLCADWrapper::OpenFile(std::string &flnm)
@@ -122,6 +139,10 @@ BRLCADWrapper::Close()
     if (outfp) {
 	wdb_close(outfp);
 	outfp = NULL;
+    }
+    if (dbip) {
+	db_close(dbip);
+	dbip = NULL;
     }
 
     return true;

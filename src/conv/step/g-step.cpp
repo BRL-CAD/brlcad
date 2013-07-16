@@ -92,6 +92,18 @@ main(int argc, char *argv[])
     std::string iflnm = argv[0];
     std::string oflnm = output_file;
 
+    /* load .g file */
+    BRLCADWrapper *dotg  = new BRLCADWrapper();
+    if (!dotg) {
+	std::cerr << "ERROR: unable to create BRL-CAD instance" << std::endl;
+	return 3;
+    } 
+    if (!dotg->load(iflnm)) {
+	std::cerr << "ERROR: unable to open BRL-CAD input file [" << oflnm << "]" << std::endl;
+        delete dotg;
+        return 2;
+    }
+
 // TODO - Need to create proper load for .g files and OpenFile for .stp files - maybe rework slightly with an
 // eye towards supporting read/write scenarios for both file types...
 #if 0
