@@ -119,7 +119,7 @@ main(int argc, char *argv[])
 	} else {
 
 	    std::cerr << "Writing output file [" << oflnm << "] ...";
-	    if (dotg->OpenFile(oflnm.c_str())) {
+	    if (dotg->OpenFile(oflnm)) {
 		step->convert(dotg);
 		std::cerr << "done!" << std::endl;
 	    } else {

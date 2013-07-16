@@ -49,7 +49,7 @@ private:
 public:
     BRLCADWrapper();
     virtual ~BRLCADWrapper();
-    bool OpenFile(const char *filename);
+    bool OpenFile(std::string &filename);
     bool WriteHeader();
     bool WriteSphere(double *center, double radius);
     bool WriteBrep(std::string name, ON_Brep *brep);

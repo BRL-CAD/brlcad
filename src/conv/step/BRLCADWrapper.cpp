@@ -49,18 +49,18 @@ BRLCADWrapper::~BRLCADWrapper()
 
 
 bool
-BRLCADWrapper::OpenFile(const char *flnm)
+BRLCADWrapper::OpenFile(std::string &flnm)
 {
     //TODO: need to check to make sure we aren't overwriting
 
     /* open brlcad instance */
-    if ((outfp = wdb_fopen(flnm)) == NULL) {
-	bu_log("Cannot open output file (%s)\n", flnm);
+    if ((outfp = wdb_fopen(flnm.c_str())) == NULL) {
+	bu_log("Cannot open output file (%s)\n", flnm.c_str());
 	return false;
     }
 
     // hold on to output filename
-    filename = flnm;
+    filename = flnm.c_str();
 
     mk_id(outfp, "Output from STEP converter step-g.");
 
