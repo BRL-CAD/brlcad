@@ -145,9 +145,9 @@ void argumentHelp(FILE *fp, char *progname, char *message)
     fprintf(fp, "\t-R radius\n\t\tthe radius of the fence poles\n");
     fprintf(fp, "\t-[aA] angle\n\t\tthe primary angle of the wire 'zig-zagging'\n");
     fprintf(fp, "\t-[jJ] distance\n\t\tthe maximum spacing between the poles\n");
-    fprintf(fp, "\t-[tT] 'material'\n\t\tthe material of the fence (t) or \n\t\tthe material of all generated regions (T)\n");
-    fprintf(fp, "\t-[bB] 'parameters'\n\t\tthe parameter string for the fence material(b)\n\t\tor of all region materials (B)\n");
-    fprintf(fp, "\t-[cC] 'rval gval bval'\b\t\tthe RGB color of the fence (c)\n\t\tor of all region materials (C)\n\t\t(0 <= values <= 255)\n");
+    fprintf(fp, "\t-[tT] 'material'\n\t\tthe material of the fence (t)\n\t\tor the material of all generated regions (T)\n");
+    fprintf(fp, "\t-[bB] 'parameters'\n\t\tthe parameter string for the fence material (b)\n\t\tor of all region materials (B)\n");
+    fprintf(fp, "\t-[cC] 'rval gval bval'\n\t\tthe RGB color of the fence (c)\n\t\tor of all region materials (C)\n\t\t(0 <= values <= 255)\n");
     fprintf(fp, "\t-[fF] fencename\n\t\tthe base name of the fence objects in the database\n");
     fprintf(fp, "\t-[pP] polename\n\t\tthe base name of the pole objects in the database\n");
     fprintf(fp, "\t-[mM] meshname\n\t\tthe base name of the mesh objects in the database\n");
