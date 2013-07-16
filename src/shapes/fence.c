@@ -549,22 +549,16 @@ int parseArguments(int argc, char **argv)
 		}
 		break;
 
+	    case 'X' :
+		(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Example assistance");
 	    case 'x' :
 		(void)argumentExamples(DEFAULT_VERBOSE_OUTPUT, progname);
 		bu_exit(1, NULL);
 		break;
-	    case 'X' :
-		(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Example assistance");
-		(void)argumentExamples(DEFAULT_VERBOSE_OUTPUT, progname);
-		bu_exit(1, NULL);
-		break;
 
-	    case 'z' :
-		(void)defaultSettings(DEFAULT_VERBOSE_OUTPUT);
-		bu_exit(1, NULL);
-		break;
 	    case 'Z' :
 		(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Full parameter assistance");
+	    case 'z' :
 		(void)defaultSettings(DEFAULT_VERBOSE_OUTPUT);
 		bu_exit(1, NULL);
 		break;
