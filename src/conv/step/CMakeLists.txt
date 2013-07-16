@@ -466,6 +466,7 @@ set(stepg_HDRS
 CMAKEFILES(${stepg_HDRS})
 
 set(gstep_SOURCES
+  ${fedex_srcs}
   BRLCADWrapper.cpp
   g-step.cpp
   )
