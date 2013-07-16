@@ -112,7 +112,7 @@ proc rtimage {rtimage_dict} {
 		set fgMode [list set fg=[lindex $_ecolor 0],[lindex $_ecolor 1],[lindex $_ecolor 2]]
 
 		set ce_objects {}
-		set cne_objects {}
+		set ne_objects {}
 		foreach cobj $_color_objects {
 		    set i [lsearch $_edge_objects $cobj]
 		    if {$i != -1} {
