@@ -2186,10 +2186,10 @@ ON_Intersect(const ON_Surface* surfA,
 	cornerB[3] = surfB->PointAt(s_max, t_max);
 
 	/* We approximate each surface sub-patch inside the bounding-box with two
-	    * triangles that share an edge.
-	    * The intersection of the surface sub-patches is approximated as the
-	    * intersection of triangles.
-	    */
+	 * triangles that share an edge.
+	 * The intersection of the surface sub-patches is approximated as the
+	 * intersection of triangles.
+	 */
 	struct Triangle triangle[4];
 	triangle[0].CreateFromPoints(cornerA[0], cornerA[1], cornerA[2]);
 	triangle[1].CreateFromPoints(cornerA[1], cornerA[2], cornerA[3]);
