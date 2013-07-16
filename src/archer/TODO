@@ -16,7 +16,7 @@ points.
 Render View options                 |                    UNKNOWN - NEED TO TEST - saveview, not sure about plot and postscript output
 Preferences->Fonts                  |                    INCOMPLETE, lower priority
 Create/Update .mgedrc               |                    INCOMPLETE - .archerrc exists, needs to be expanded as more preferences are implemented in Archer - ONGOING
-Matrix Selection                    |                    UNKNOWN - NEED TO TEST 
+Matrix Selection                    |                    UNKNOWN - NEED TO TEST
 				    |    Ensure working command line level functionality for direct matrix
 				    |    manipulation if needed.  For items without a matrix show the tab with
 				    |    either no values specified or the identity matrix as the starting

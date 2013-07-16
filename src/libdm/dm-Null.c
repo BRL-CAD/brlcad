@@ -274,7 +274,7 @@ null_makeCurrent(struct dm *UNUSED(dmp))
 
 void
 null_processEvents(struct dm *UNUSED(dmp))
-{   
+{
 }
 
 
