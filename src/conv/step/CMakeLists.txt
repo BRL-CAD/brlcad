@@ -465,6 +465,10 @@ set(stepg_HDRS
   )
 CMAKEFILES(${stepg_HDRS})
 
+set(gstep_SOURCES
+  g-step.cpp
+  )
+
 set(stepg_LIBS
   libwdb
   librt
@@ -479,6 +483,7 @@ set(stepg_LIBS
 list(APPEND stepg_LIBS ${stepg_LIBS})
 
 BRLCAD_ADDEXEC(step-g "${stepg_SOURCES}" "${stepg_LIBS}" NOSTRICT)
+BRLCAD_ADDEXEC(g-step "${gstep_SOURCES}" "${stepg_LIBS}" NOSTRICT)
 
 if(MSVC)
   set(stepg_IMPORTS
