@@ -85,7 +85,7 @@ struct aface {
 
 
 /* One of these for each ARB, custom allocated to size */
-struct arb_specific  {
+struct arb_specific {
     int arb_nmfaces;		/* number of faces */
     struct oface *arb_opt;	/* pointer to optional info */
     struct aface arb_face[6];	/* May really be up to [6] faces */
@@ -332,7 +332,8 @@ rt_arb_std_type(const struct rt_db_internal *ip, const struct bn_tol *tol)
 
     /* return rt_arb_get_cgtype(...); causes segfault in bk_mk_plane_3pts() when
      * using analyze command */
-    if (rt_arb_get_cgtype(&cgtype, arb, tol, uvec, svec) == 0) return 0;
+    if (rt_arb_get_cgtype(&cgtype, arb, tol, uvec, svec) == 0)
+	return 0;
 
     return cgtype;
 }
@@ -541,7 +542,7 @@ rt_arb_add_pt(register pointp_t point, const char *title, struct prep_arb *pap, 
  *
  * Returns -
  * 0 OK
- *	<0 failure
+ * <0 failure
  */
 HIDDEN int
 rt_arb_mk_planes(register struct prep_arb *pap, struct rt_arb_internal *aip, const char *name)
@@ -693,7 +694,7 @@ rt_arb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
  *
  * Returns -
  * 0 OK
- *	!0 failure
+ * !0 failure
  */
 HIDDEN int
 rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip, int uv_wanted)
@@ -780,7 +781,7 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
  *
  * Returns -
  * 0 OK
- *	!0 failure
+ * !0 failure
  */
 int
 rt_arb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
@@ -840,7 +841,7 @@ rt_arb_print(register const struct soltab *stp)
  *
  * Returns -
  * 0 MISS
- *	>0 HIT
+ * >0 HIT
  */
 int
 rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
@@ -1764,7 +1765,7 @@ rt_arb_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	    vect_t c_b;
 	    /* Trimming curve describes a triangle ABC on face,
 	     * generate a phantom fourth corner at A + (C-B)
-	     *  [3] = [0] + [2] - [1]
+	     * [3] = [0] + [2] - [1]
 	     */
 	    VSUB2(c_b,
 		  &fg->ctl_points[rt_arb_vert_index_scramble[2]*3],
