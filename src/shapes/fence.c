@@ -38,7 +38,7 @@
 
 /* command-line options are described in the parseArguments function
  */
-char *options="IiDdVvO:o:N:n:U:u:H:h:L:l:R:r:J:j:A:a:T:t:B:b:C:c:F:f:P:p:M:m:W:w:S:s:E:e:G:g:XxZz";
+char *options="IiDdVvO:o:N:n:U:u:K:k:L:l:R:r:J:j:A:a:T:t:B:b:C:c:F:f:P:p:M:m:W:w:S:s:E:e:G:g:XxZz?h";
 
 /*
  * these variables control the "behavior" of this program's output if
@@ -132,14 +132,14 @@ void argumentHelp(FILE *fp, char *progname, char *message)
     fflush(stdout);
 
     fprintf(fp, "Usage: %s %s\n\n", progname, \
-	    "-[ivdonuhHlLrRjatTbBcCfpmwseEgGxXzZ]" \
+	    "-[ivdIVDoOkKuUnNkKlLrRaAjJtTbBcCfFpPmMwWsSeEgGxXzZ]" \
 	);
     fprintf(fp, "\t-[ivd]\n\t\tspecifies interactive, verbose, and debug modes respectively\n");
     fprintf(fp, "\t-[IVD]\n\t\ttoggles interactive, verbose, and debug modes respectively\n");
     fprintf(fp, "\t-[oO] filename\n\t\tspecifies the name of the file to output to\n");
-    fprintf(fp, "\t-[nN] 'string'\n\t\tthe 'string' name of the csg database\n");
+    fprintf(fp, "\t-[kK] 'string'\n\t\tthe 'string' name of the csg database\n");
     fprintf(fp, "\t-[uU] 'units'\n\t\tthe units of the data in the csg database\n");
-    fprintf(fp, "\t-[hH] ['xval yval zval' | val]\n\t\tspecifies the height as either vector or single value (z dir is up)\n");
+    fprintf(fp, "\t-[nN] ['xval yval zval' | val]\n\t\tspecifies the height as either vector or single value (z dir is up)\n");
     fprintf(fp, "\t-[lL] ['xval yval zval' | val]\n\t\tspecifies the length as either vector or single value (x dir is long)\n");
     fprintf(fp, "\t-r radius\n\t\tthe radius of the fence's mesh wires\n");
     fprintf(fp, "\t-R radius\n\t\tthe radius of the fence poles\n");
@@ -275,8 +275,6 @@ int parseArguments(int argc, char **argv)
     }
     fflush(stdout);
 
-    bu_opterr = 0;
-
     while ((c=bu_getopt(argc, argv, options)) != -1) {
 	double scan[3] = VINIT_ZERO;
 
@@ -311,8 +309,8 @@ int parseArguments(int argc, char **argv)
 		bu_strlcpy(outputFilename, bu_optarg, DEFAULT_MAXNAMELENGTH);
 		break;
 
-	    case 'n' :
-	    case 'N' :
+	    case 'k' :
+	    case 'K' :
 		memset(id, 0, DEFAULT_MAXNAMELENGTH);
 		bu_strlcpy(id, bu_optarg, DEFAULT_MAXNAMELENGTH);
 		break;
@@ -323,9 +321,9 @@ int parseArguments(int argc, char **argv)
 		bu_strlcpy(units, bu_optarg, DEFAULT_MAXNAMELENGTH);
 		break;
 
-	    case 'h' :
+	    case 'n' :
 		if ((sscanf(bu_optarg, "%lf %lf %lf", &scan[0], &scan[1], &scan[2]))!=3) {
-		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Invalid number of parameters to height: need x, y, z values");
+		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Invalid number of parameters for height: need x, y, z values");
 		    bu_exit(1, NULL);
 		}
 		VMOVE(fenceHeight, scan); /* double to fastf_t */
@@ -336,7 +334,7 @@ int parseArguments(int argc, char **argv)
 		poleHeight = (double) MAGNITUDE(fenceHeight);
 		meshHeight = (double) poleHeight;
 		break;
-	    case 'H' :
+	    case 'N' :
 		d=(double)atof(bu_optarg);
 		if (ZERO(d)) {
 		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Fence height may not be set to zero");
@@ -351,7 +349,7 @@ int parseArguments(int argc, char **argv)
 
 	    case 'l' :
 		if ((sscanf(bu_optarg, "%lf %lf %lf", &scan[0], &scan[1], &scan[2]))!=3) {
-		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Invalid number of parameters to width: need x, y, z values");
+		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Invalid number of parameters for width: need x, y, z values");
 		    bu_exit(1, NULL);
 		}
 		VMOVE(fenceWidth, scan); /* double to fastf_t */
@@ -565,15 +563,9 @@ int parseArguments(int argc, char **argv)
 		bu_exit(1, NULL);
 		break;
 
-	    case '?' :
+	    default  :
 		fflush(stdout);
 		(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Command-line argument assistance");
-		bu_exit(1, NULL);
-		break;
-
-	    default  : /*shouldn't be reached since getopt throws a ? for args not found*/
-		fflush(stdout);
-		(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Illegal command-line argument");
 		bu_exit(1, NULL);
 		break;
 	}
