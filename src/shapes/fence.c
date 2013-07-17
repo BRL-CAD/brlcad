@@ -272,6 +272,8 @@ int parseArguments(int argc, char **argv)
 	bu_strlcpy(progname, argv[0], (strlen(argv[0])+1>DEFAULT_MAXNAMELENGTH?DEFAULT_MAXNAMELENGTH:strlen(argv[0])+1));
     } else {
 	bu_strlcpy(progname, "fence\0", 6);
+	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Command-line argument assistance");
+	bu_log("       Program continues running:\n");
     }
     fflush(stdout);
 
@@ -2363,6 +2365,8 @@ int main(int argc, char **argv)
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "\n...Fence [%s] Generated.\n", fenceName);
 	}
     }
+
+    bu_log("Writing %s object to file %s\n", fenceName, outputFilename);
 
     bu_free(verboseinput, "verboseinput");
 
