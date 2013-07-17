@@ -16,6 +16,7 @@ changes made.  See document footer for additional details.
 * added centroid reporting to 'analyze' command output - Csaba Nagy
 * added arb8 centroid 'analyze' command reporting - Silviu Ungureanu
 * pipe centroid, volume, & surface area analyze reporting - Csaba Nagy
+* added ebm centroid 'analyze' command reporting - Michael Huang
 * improved help option consistency across numerous tools - Carl Moore
 * upgraded libpng to 1.6.2 - Erik Greenwald
 
