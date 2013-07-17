@@ -131,9 +131,9 @@ rt_ebm_centroid(point_t *cent, const struct rt_db_internal *ip)
     xsum = 0;
     ysum = 0;
     totalcells = 0;
-    for(y = 0; y < eip->ydim; y++) {
-	for(x = 0; x < eip->xdim; x++) {
-	    if(BIT(eip, x, y) == 1){
+    for (y = 0; y < eip->ydim; y++) {
+	for (x = 0; x < eip->xdim; x++) {
+	    if (BIT(eip, x, y) == 1) {
 		xsum += x;
 		ysum += y;
 		totalcells++;
