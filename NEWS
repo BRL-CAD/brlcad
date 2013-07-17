@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2013-0X-XX  Release 7.24.2                                     ---
 ----------------------------------------------------------------------
 
+* added arb8 centroid 'analyze' command reporting - Silviu Ungureanu
 * pipe centroid, volume, & surface area analyze reporting - Csaba Nagy
 * improved help option consistency across numerous tools - Carl Moore
 * upgraded libpng to 1.6.2 - Erik Greenwald
