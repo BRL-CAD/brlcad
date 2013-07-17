@@ -682,7 +682,7 @@ const struct rt_functab rt_functab[] = {
 	rt_ebm_bbox,
 	NULL,
 	NULL,
-	NULL,
+	rt_ebm_centroid,
     },
 
     {
