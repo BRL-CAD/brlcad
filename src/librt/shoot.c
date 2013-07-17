@@ -783,7 +783,7 @@ rt_plot_cell(const union cutter *cutp, const struct rt_shootray_status *ssp, str
     RT_CK_RTI(ssp->ap->a_rt_i);
     ap = ssp->ap;
 
-    sprintf(buf, "cell%d.pl", fnum++);
+    sprintf(buf, "cell%d.plot3", fnum++);
     fp = fopen(buf, "wb");
     if (fp == NULL) {
       perror(buf);

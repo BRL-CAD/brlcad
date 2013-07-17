@@ -135,7 +135,7 @@ nmg_rt_isect_plfu(struct faceuse *fu, fastf_t *pt, fastf_t *plane_pt)
 
     NMG_CK_FACEUSE(fu);
 
-    sprintf(name, "ray%02d.pl", plot_file_number++);
+    sprintf(name, "ray%02d.plot3", plot_file_number++);
     fp=fopen(name, "wb");
     if (fp == (FILE *)NULL) {
 	perror(name);
@@ -175,7 +175,7 @@ pleu(struct edgeuse *eu, fastf_t *pt, fastf_t *plane_pt)
     int i;
     struct model *m;
 
-    sprintf(name, "ray%02d.pl", plot_file_number++);
+    sprintf(name, "ray%02d.plot3", plot_file_number++);
     fp=fopen(name, "wb");
     if (fp == (FILE *)NULL) {
 	perror(name);
@@ -583,7 +583,7 @@ plot_neighborhood(fastf_t *North_Pole, fastf_t *North_pl_pt, fastf_t *North_pca,
     point_t my_pt;
     vect_t ray;
 
-    sprintf(name, "vert%03d.pl", plotnum++);
+    sprintf(name, "vert%03d.plot3", plotnum++);
     pfp=fopen(name, "wb");
     if (pfp == (FILE *)NULL) {
 	bu_log("Error opening %s\n", name);
@@ -2421,7 +2421,7 @@ nmg_pl_hitmiss_list(const char *str, int num, const struct bu_list *hd, const st
     struct hitmiss *hmp;
     int count = 0;
 
-    snprintf(buf, 128, "%s%d.pl", str, num);
+    snprintf(buf, 128, "%s%d.plot3", str, num);
 
     if (bu_list_len(hd) <= 0) {
 	bu_log("nmg_pl_hitmiss_list(): empty list, no %s written\n", buf);

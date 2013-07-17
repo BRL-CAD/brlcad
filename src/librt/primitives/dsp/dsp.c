@@ -346,7 +346,7 @@ draw_dsp_bb(int *plotnum,
     FILE *fp;
     struct dsp_bb bb;
 
-    sprintf(buf, "dsp_bb%03d.pl", (*plotnum)++);
+    sprintf(buf, "dsp_bb%03d.plot3", (*plotnum)++);
     if ((fp=fopen(buf, "wb")) == (FILE *)NULL) {
 	perror(buf);
 	bu_bomb("");
@@ -391,7 +391,7 @@ plot_layers(struct dsp_specific *dsp_sp)
 
     for (l=0; l < dsp_sp->layers; l++) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	sprintf(buf, "Dsp_layer%d.pl", l);
+	sprintf(buf, "Dsp_layer%d.plot3", l);
 	fp=fopen(buf, "wb");
 	bu_semaphore_release(BU_SEM_SYSCALL);
 	if (fp == (FILE *)NULL) {
@@ -458,9 +458,9 @@ plot_cell_top(struct isect_stuff *isect,
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     if (style)
-	sprintf(buf, "dsp_cell_isect%04d.pl", cnt++);
+	sprintf(buf, "dsp_cell_isect%04d.plot3", cnt++);
     else
-	sprintf(buf, "dsp_cell_top%04d.pl", plotcnt++);
+	sprintf(buf, "dsp_cell_top%04d.plot3", plotcnt++);
 
     fp=fopen(buf, "wb");
 
@@ -1126,7 +1126,7 @@ plot_seg(struct isect_stuff *isect,
 
     /* plot the bounding box and the seg */
     bu_semaphore_acquire(BU_SEM_SYSCALL);
-    sprintf(fname, "dsp_seg%04d.pl", segnum++);
+    sprintf(fname, "dsp_seg%04d.plot3", segnum++);
     fp=fopen(fname, "wb");
     bu_semaphore_release(BU_SEM_SYSCALL);
 
@@ -1407,7 +1407,7 @@ isect_ray_triangle(struct isect_stuff *isect,
 	point_t p1, p2;
 
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	sprintf(buf, "dsp_tri%03d.pl", plotnum++);
+	sprintf(buf, "dsp_tri%03d.plot3", plotnum++);
 	fp=fopen(buf, "wb");
 	bu_semaphore_release(BU_SEM_SYSCALL);
 
@@ -2922,7 +2922,7 @@ rt_dsp_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
     if (RT_G_DEBUG & DEBUG_HF) {
 	struct bu_vls str = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&str, "dsp_gourand%02d.pl", plot_file_num++);
+	bu_vls_printf(&str, "dsp_gourand%02d.plot3", plot_file_num++);
 	bu_log("plotting normals in %s", bu_vls_addr(&str));
 	fd = fopen(bu_vls_addr(&str), "w");
 	bu_vls_free(&str);

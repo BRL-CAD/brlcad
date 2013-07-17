@@ -38,7 +38,7 @@
  *			and
  *	3) concatenate the scales and a copy of the original image into a
  *	   a composite that it printed on standard out.  For the moment this
- *	   is achieved by saying " cat scale.pl file.pl >> out.file ".
+ *	   is achieved by saying " cat scale.plot3 file.plot3 >> out.file ".
  *	   The order of the files is very important: if not cat'ed in the
  *	   right order, the scales will be lost when plrot is applied though
  *	   they will still be seen with pl-fb and mged. Later
@@ -66,7 +66,7 @@
 
 
 char usage[] = "\
-Usage:  rtscale (width) (units) (interval) filename [string] >  file.pl\n\
+Usage:  rtscale (width) (units) (interval) filename [string] >  file.plot3\n\
 	(width)		length of scale in model measurements\n\
 	(units)		string denoting the unit type,\n\
 	(interval)	number of intervals on the scale\n\
@@ -248,7 +248,7 @@ layout_n_plot(FILE *outfp, char *label, fastf_t *v2mod, fastf_t *m2view, int int
     v_tick_hgt = 0.05;
 
     if (verbose)  {
-	fprintf(stderr, "plot: nticks=%d,\n", nticks);
+	fprintf(stderr, "plot3: nticks=%d,\n", nticks);
     }
 
     /* Make the starting point (in view-coordinates) of the scale.
@@ -443,7 +443,7 @@ drawticks(FILE *outfp, fastf_t *centerpt, fastf_t *hgtv, fastf_t hgt, fastf_t *i
     if (verbose)  {
 	VPRINT("top", top);
 	VPRINT("bot", bot);
-	fprintf(stderr, "drawticks now using top, bot to plot\n");
+	fprintf(stderr, "drawticks now using top, bot to plot3\n");
     }
 
     pdv_3move(outfp, top);

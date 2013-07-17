@@ -404,7 +404,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
     if ((RT_G_DEBUG&DEBUG_PL_BOX)) {
 	FILE *plotfp;
 
-	plotfp = fopen("rtrpp.plot", "wb");
+	plotfp = fopen("rtrpp.plot3", "wb");
 	if (plotfp != NULL) {
 	    /* Plot solid bounding boxes, in white */
 	    pl_color(plotfp, 255, 255, 255);
@@ -417,7 +417,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
     if ((RT_G_DEBUG&DEBUG_PL_SOLIDS)) {
 	FILE *plotfp;
 
-	plotfp = fopen("rtsolids.pl", "wb");
+	plotfp = fopen("rtsolids.plot3", "wb");
 	if (plotfp != NULL) {
 	    rt_plot_all_solids(plotfp, rtip, resp);
 	    (void)fclose(plotfp);

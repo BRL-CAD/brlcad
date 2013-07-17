@@ -740,7 +740,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     if (nmg_check_closed_shell(sA, tol)) {
 	if (rt_g.NMG_debug & DEBUG_BOOL &&
 	    rt_g.NMG_debug & DEBUG_PLOTEM) {
-	    if ((fp=fopen("Unclosed.pl", "wb")) != (FILE *)NULL) {
+	    if ((fp=fopen("Unclosed.plot3", "wb")) != (FILE *)NULL) {
 		bu_log("Plotting unclosed NMG shell\n");
 		nmg_pl_s(fp, sA);
 		fclose(fp);
@@ -755,7 +755,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     if (nmg_check_closed_shell(sB, tol)) {
 	if (rt_g.NMG_debug & DEBUG_BOOL &&
 	    rt_g.NMG_debug & DEBUG_PLOTEM) {
-	    if ((fp=fopen("Unclosed.pl", "wb")) != (FILE *)NULL) {
+	    if ((fp=fopen("Unclosed.plot3", "wb")) != (FILE *)NULL) {
 		bu_log("Plotting unclosed NMG shell\n");
 		nmg_pl_s(fp, sB);
 		fclose(fp);
@@ -768,19 +768,19 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 
 
     if (rt_g.NMG_debug & DEBUG_BOOL && rt_g.NMG_debug & DEBUG_PLOTEM) {
-	if ((fp=fopen("shellA.pl", "wb")) == (FILE*)NULL) {
-	    (void)perror("shellA.pl");
-	    bu_bomb("unable to open shellA.pl for writing");
+	if ((fp=fopen("shellA.plot3", "wb")) == (FILE*)NULL) {
+	    (void)perror("shellA.plot3");
+	    bu_bomb("unable to open shellA.plot3 for writing");
 	}
-	bu_log("plotting shellA.pl\n");
+	bu_log("plotting shellA.plot3\n");
 	nmg_pl_s(fp, sA);
 	fclose(fp);
 
-	if ((fp=fopen("shellB.pl", "wb")) == (FILE*)NULL) {
-	    (void)perror("shellB.pl");
-	    bu_bomb("unable to open shellB.pl for writing");
+	if ((fp=fopen("shellB.plot3", "wb")) == (FILE*)NULL) {
+	    (void)perror("shellB.plot3");
+	    bu_bomb("unable to open shellB.plot3 for writing");
 	}
-	bu_log("plotting shellB.pl\n");
+	bu_log("plotting shellB.plot3\n");
 	nmg_pl_s(fp, sB);
 	fclose(fp);
     }
@@ -914,18 +914,18 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 
     if (rt_g.NMG_debug & DEBUG_BOOL) {
 	if (rt_g.NMG_debug & DEBUG_PLOTEM) {
-	    if ((fd = fopen("Cracked_Shells.pl", "wb")) == (FILE *)NULL) {
+	    if ((fd = fopen("Cracked_Shells.plot3", "wb")) == (FILE *)NULL) {
 		(void)perror("Cracked_Shells");
-		bu_bomb("unable to open Cracked_Shells.pl for writing");
+		bu_bomb("unable to open Cracked_Shells.plot3 for writing");
 	    }
-	    bu_log("plotting Cracked_Shells.pl\n");
+	    bu_log("plotting Cracked_Shells.plot3\n");
 
 	    nmg_pl_s(fd, sA);
 	    nmg_pl_s(fd, sB);
 	    (void)fclose(fd);
 
-	    nmg_pl_isect("isectA.pl", sA, tol);
-	    nmg_pl_isect("isectB.pl", sB, tol);
+	    nmg_pl_isect("isectA.plot3", sA, tol);
+	    nmg_pl_isect("isectB.plot3", sB, tol);
 	}
 
 	bu_log("check 2\n");

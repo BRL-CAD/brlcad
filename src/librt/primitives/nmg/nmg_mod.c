@@ -2373,7 +2373,7 @@ nmg_cut_loop(struct vertexuse *vu1, struct vertexuse *vu2)
 	    tab = (long *)bu_calloc(m->maxindex, sizeof(long),
 				    "nmg_cut_loop flag[] 1");
 
-	    (void)sprintf(name, "Before_cutloop%d.pl", ++i);
+	    (void)sprintf(name, "Before_cutloop%d.plot3", ++i);
 	    bu_log("nmg_cut_loop() plotting %s\n", name);
 	    if ((fd = fopen(name, "wb")) == (FILE *)NULL) {
 		(void)perror(name);
@@ -2445,7 +2445,7 @@ nmg_cut_loop(struct vertexuse *vu1, struct vertexuse *vu2)
 	tab = (long *)bu_calloc(m->maxindex, sizeof(long),
 				"nmg_cut_loop flag[] 2");
 
-	(void)sprintf(name, "After_cutloop%d.pl", i);
+	(void)sprintf(name, "After_cutloop%d.plot3", i);
 	bu_log("nmg_cut_loop() plotting %s\n", name);
 	if ((fd = fopen(name, "wb")) == (FILE *)NULL) {
 	    (void)perror(name);
@@ -3384,7 +3384,7 @@ nmg_simplify_loop(struct loopuse *lu)
 	    eu = tmpeu;
 
 	    if (rt_g.NMG_debug &(DEBUG_PLOTEM|DEBUG_PL_ANIM) && *lu->up.magic_p == NMG_FACEUSE_MAGIC) {
-		nmg_pl_2fu("After_joinloop%d.pl", lu->up.fu_p, lu->up.fu_p->fumate_p, 0);
+		nmg_pl_2fu("After_joinloop%d.plot3", lu->up.fu_p, lu->up.fu_p->fumate_p, 0);
 	    }
 	}
 	eu = BU_LIST_PNEXT(edgeuse, eu);
@@ -3454,7 +3454,7 @@ nmg_kill_snakes(struct loopuse *lu)
 
 		if (rt_g.NMG_debug &(DEBUG_PLOTEM|DEBUG_PL_ANIM) && *lu->up.magic_p == NMG_FACEUSE_MAGIC) {
 
-		    nmg_pl_2fu("After_joinloop%d.pl", lu->up.fu_p, lu->up.fu_p->fumate_p, 0);
+		    nmg_pl_2fu("After_joinloop%d.plot3", lu->up.fu_p, lu->up.fu_p->fumate_p, 0);
 
 		}
 

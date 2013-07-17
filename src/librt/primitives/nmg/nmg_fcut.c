@@ -1566,7 +1566,7 @@ nmg_special_wedge_processing(struct nmg_vu_stuff *vs, int start, int end, double
 	    lu = nmg_find_lu_of_vu(vs[i].vu);
 	    nmg_pr_lu_briefly(lu, 0);
 	}
-	sprintf(buf, "wedge%d.pl", num++);
+	sprintf(buf, "wedge%d.plot3", num++);
 	fp = fopen(buf, "wb");
 	rt_plot_vlblock(fp, vbp);
 	fclose(fp);

@@ -219,7 +219,7 @@ nmg_tri_plfu(struct faceuse *fu, struct bu_list *tbl2d)
     NMG_CK_TBL2D(tbl2d);
     NMG_CK_FACEUSE(fu);
 
-    sprintf(name, "tri%02d.pl", file_number++);
+    sprintf(name, "tri%02d.plot3", file_number++);
     fp=fopen(name, "wb");
     if (fp == (FILE *)NULL) {
 	perror(name);
@@ -1764,7 +1764,7 @@ cut_mapped_loop(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const i
 		    V3ARGS(p2->vu_p->v_p->vg_p->coord));
 
 	    sprintf(name, "bad_tri_cut%d.g", iter++);
-	    fp=fopen("bad_tri_cut.pl", "wb");
+	    fp=fopen("bad_tri_cut.plot3", "wb");
 	    if (fp == (FILE *)NULL)
 		bu_bomb("cut_mapped_loop() goodnight 2\n");
 
@@ -2449,9 +2449,9 @@ nmg_plot_flat_face(struct faceuse *fu, struct bu_list *tbl2d)
     NMG_CK_FACEUSE(fu);
 
     if (!plot_fp) {
-	plot_fp = fopen("triplot.pl", "wb");
+	plot_fp = fopen("triplot.plot3", "wb");
 	if (plot_fp == (FILE *)NULL) {
-	    bu_bomb("ERROR: cannot open triplot.pl\n");
+	    bu_bomb("ERROR: cannot open triplot.plot3\n");
 	}
     }
 

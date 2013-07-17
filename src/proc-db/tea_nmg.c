@@ -162,7 +162,7 @@ main(int argc, char **argv)
     struct nmgregion *r;
     char *id_name = "BRL-CAD t-NURBS NMG Example";
     char *tea_name = "UtahTeapot";
-    char *uplot_name = "teapot.pl";
+    char *uplot_name = "teapot.plot3";
     struct bu_list vhead;
     FILE *fp;
     int i;
@@ -220,7 +220,7 @@ main(int argc, char **argv)
 
     /* Make a UNIX plot file from this vlist */
     if ((fp=fopen(uplot_name, "w")) == NULL) {
-	bu_log("Cannot open plot file: %s\n", uplot_name);
+	bu_log("Cannot open plot3 file: %s\n", uplot_name);
 	perror("teapot_nmg");
     } else {
 	rt_vlist_to_uplot(fp, &vhead);

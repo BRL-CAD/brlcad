@@ -2199,7 +2199,7 @@ nmg_isect_edge2p_face2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 
     if (fu1 && rt_g.NMG_debug & (DEBUG_POLYSECT|DEBUG_FCUT|DEBUG_MESH)
 	&& rt_g.NMG_debug & DEBUG_PLOTEM) {
-	nmg_pl_2fu("Iface%d.pl", fu2, fu1, 0);
+	nmg_pl_2fu("Iface%d.plot3", fu2, fu1, 0);
     }
 
     vu1 = eu1->vu_p;
@@ -4410,7 +4410,7 @@ re_tabulate:
 		    static int num=0;
 		    char buf[128];
 		    FILE *fp;
-		    sprintf(buf, "Itopo%d.pl", num++);
+		    sprintf(buf, "Itopo%d.plot3", num++);
 		    if ((fp=fopen(buf, "wb")) != NULL) {
 			pl_color(fp, 255, 0, 0);
 			pdv_3ray(fp, is->on_eg->e_pt, is->on_eg->e_dir, 1.0);
@@ -5125,7 +5125,7 @@ nmg_isect_two_face3p(struct nmg_inter_struct *is, struct faceuse *fu1, struct fa
 
     if (rt_g.NMG_debug & (DEBUG_POLYSECT|DEBUG_FCUT|DEBUG_MESH)
 	&& rt_g.NMG_debug & DEBUG_PLOTEM) {
-	nmg_pl_2fu("Iface%d.pl", fu1, fu2, 0);
+	nmg_pl_2fu("Iface%d.plot3", fu1, fu2, 0);
     }
 
     bu_ptbl_init(&vert_list1, 64, "vert_list1 buffer");
@@ -7035,20 +7035,20 @@ nmg_isect_two_generic_faces(struct faceuse *fu1, struct faceuse *fu2, const stru
 	FILE *fp;
 
 	/* Both at once */
-	nmg_pl_2fu("Iface%d.pl", fu2, fu1, 0);
+	nmg_pl_2fu("Iface%d.plot3", fu2, fu1, 0);
 
 	/* Each in its own file */
 	nmg_face_plot(fu1);
 	nmg_face_plot(fu2);
 
-	sprintf(name, "shellA%d.pl", nshell);
+	sprintf(name, "shellA%d.plot3", nshell);
 	if ((fp = fopen(name, "wb")) != NULL) {
 	    bu_log("overlay %s\n", name);
 	    nmg_pl_s(fp, fu1->s_p);
 	    fclose(fp);
 	}
 
-	sprintf(name, "shellB%d.pl", nshell++);
+	sprintf(name, "shellB%d.plot3", nshell++);
 	if ((fp = fopen(name, "wb")) != NULL) {
 	    bu_log("overlay %s\n", name);
 	    nmg_pl_s(fp, fu2->s_p);

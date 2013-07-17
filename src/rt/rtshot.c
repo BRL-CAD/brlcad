@@ -339,8 +339,8 @@ main(int argc, char **argv)
     rt_prep(rtip);
 
     if (R_DEBUG&RDEBUG_RAYPLOT) {
-	if ((plotfp = fopen("rtshot.plot", "w")) == NULL) {
-	    perror("rtshot.plot");
+	if ((plotfp = fopen("rtshot.plot3", "w")) == NULL) {
+	    perror("rtshot.plot3");
 	    bu_exit(1, NULL);
 	}
 	pdv_3space(plotfp, rtip->rti_pmin, rtip->rti_pmax);

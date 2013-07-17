@@ -380,7 +380,7 @@ out:
 	point_t left_pt;
 	fu = eu->up.lu_p->up.fu_p;
 	bits = (long *)bu_calloc(nmg_find_model(&fu->l.magic)->maxindex, sizeof(long), "bits[]");
-	sprintf(buf, "faceclass%d.pl", num++);
+	sprintf(buf, "faceclass%d.plot3", num++);
 	if ((fp = fopen(buf, "wb")) == NULL)
 	    bu_bomb(buf);
 	nmg_pl_fu(fp, fu, bits, 0, 0, 255);	/* blue */
@@ -989,7 +989,7 @@ class_eu_vs_s(struct edgeuse *eu, struct shell *s, char **classlist, const struc
 	char buf[128];
 	FILE *fp;
 
-	sprintf(buf, "class%d.pl", num++);
+	sprintf(buf, "class%d.plot3", num++);
 	if ((fp = fopen(buf, "wb")) == NULL) {
 	    bu_bomb(buf);
 	}
@@ -1648,7 +1648,7 @@ class_lu_vs_s(struct loopuse *lu, struct shell *s, char **classlist, const struc
 		    else
 			nmg_euprint("BAD: edgeuse", eu);
 		}
-		sprintf(buf, "badloop%d.pl", num++);
+		sprintf(buf, "badloop%d.plot3", num++);
 		if ((fp=fopen(buf, "wb")) != NULL) {
 		    nmg_pl_lu(fp, lu, b, 255, 255, 255);
 		    nmg_pl_s(fp, s);

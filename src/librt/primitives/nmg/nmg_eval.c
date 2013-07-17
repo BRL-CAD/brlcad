@@ -249,11 +249,11 @@ nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, char **classlis
     if (rt_g.NMG_debug & DEBUG_BOOLEVAL && rt_g.NMG_debug & DEBUG_PLOTEM) {
 	FILE *fp;
 
-	if ((fp=fopen("bool_ans.pl", "wb")) == (FILE *)NULL) {
-	    (void)perror("bool_ans.pl");
-	    bu_bomb("unable to open bool_ans.pl for writing");
+	if ((fp=fopen("bool_ans.plot3", "wb")) == (FILE *)NULL) {
+	    (void)perror("bool_ans.plot3");
+	    bu_bomb("unable to open bool_ans.plot3 for writing");
 	}
-	bu_log("plotting bool_ans.pl\n");
+	bu_log("plotting bool_ans.plot3\n");
 	nmg_pl_s(fp, sA);
 	(void)fclose(fp);
     }
@@ -620,7 +620,7 @@ nmg_eval_plot(struct nmg_bool_state *bs, int num)
     BN_CK_TOL(bs->bs_tol);
 
     if (do_plot) {
-	sprintf(fname, "nmg_eval%d.pl", num);
+	sprintf(fname, "nmg_eval%d.plot3", num);
 	if ((fp = fopen(fname, "wb")) == NULL) {
 	    perror(fname);
 	    return;

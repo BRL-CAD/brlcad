@@ -1620,7 +1620,7 @@ options_prep(struct rt_i *rtip, vect_t span)
 
     /* if the vol/weight tolerances are not set, pick something */
     if (analysis_flags & ANALYSIS_VOLUME) {
-	char *name = "volume.pl";
+	char *name = "volume.plot3";
 	if (volume_tolerance < 0.0) {
 	    /* using 1/1000th the volume as a default tolerance, no particular reason */
 	    volume_tolerance = span[X] * span[Y] * span[Z] * 0.001;
@@ -1651,7 +1651,7 @@ options_prep(struct rt_i *rtip, vect_t span)
 	}
     }
     if (analysis_flags & ANALYSIS_GAP) {
-	char *name = "gaps.pl";
+	char *name = "gaps.plot3";
 	if (plot_files)
 	    if ((plot_gaps=fopen(name, "wb")) == (FILE *)NULL) {
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
@@ -1662,7 +1662,7 @@ options_prep(struct rt_i *rtip, vect_t span)
 	if (!ZERO(overlap_tolerance))
 	    bu_vls_printf(_ged_current_gedp->ged_result_str, "overlap tolerance to %g\n", overlap_tolerance);
 	if (plot_files) {
-	    char *name = "overlaps.pl";
+	    char *name = "overlaps.plot3";
 	    if ((plot_overlaps=fopen(name, "wb")) == (FILE *)NULL) {
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
 		return GED_ERROR;
@@ -1676,7 +1676,7 @@ options_prep(struct rt_i *rtip, vect_t span)
 
     if (analysis_flags & ANALYSIS_ADJ_AIR)
 	if (plot_files) {
-	    char *name = "adj_air.pl";
+	    char *name = "adj_air.plot3";
 	    if ((plot_adjair=fopen(name, "wb")) == (FILE *)NULL) {
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
 		return GED_ERROR;
@@ -1685,7 +1685,7 @@ options_prep(struct rt_i *rtip, vect_t span)
 
     if (analysis_flags & ANALYSIS_EXP_AIR)
 	if (plot_files) {
-	    char *name = "exp_air.pl";
+	    char *name = "exp_air.plot3";
 	    if ((plot_expair=fopen(name, "wb")) == (FILE *)NULL) {
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "cannot open plot file %s\n", name);
 		return GED_ERROR;

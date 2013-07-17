@@ -178,12 +178,6 @@ reserved attributes and case-sensitivity
 	oshader -> shader [deprecated 7.16]
 genptr_t/GENPTR_NULL
 	genptr_t -> void* [deprecated 7.16]
-.pl file suffix
-	.pl -> .plot3 [deprecated 7.16]
-*-pl
-	*-pl -> *-plot3 [deprecated 7.16]
-pl*
-	pl* -> plot3* [deprecated 7.16]
 any-png.sh
 	use pix tools [deprecated 7.16]
 cadbug.sh
@@ -250,6 +244,15 @@ include/raytrace.h
 ************
 * OBSOLETE *
 ************
+
+7.24.2
+------
+.pl file suffix
+	.pl -> .plot3 [deprecated 7.16]
+*-pl
+	*-pl -> *-plot3 [deprecated 7.16]
+pl*
+	pl* -> plot3* [deprecated 7.16]
 
 7.24.0
 ------

@@ -163,7 +163,7 @@ rt_gen_elliptical_grid(struct xrays *rays, const struct xray *center_ray, const 
 #if 0
 main()
 {
-    FILE *fp = fopen("bundle.pl", "wb");
+    FILE *fp = fopen("bundle.plot3", "wb");
     int rays_per_ring=5;
     int nring=3;
     fastf_t bundle_radius=1000.0;

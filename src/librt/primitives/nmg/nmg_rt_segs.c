@@ -117,7 +117,7 @@ pl_ray(struct ray_data *rd)
     point_t end_point;
     int old_cond = 0;
 
-    sprintf(name, "nmg_ray%02d.pl", plot_file_number++);
+    sprintf(name, "nmg_ray%02d.plot3", plot_file_number++);
     fp=fopen(name, "wb");
     if (fp == (FILE *)NULL) {
 	perror(name);

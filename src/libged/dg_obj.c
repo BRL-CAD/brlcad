@@ -1172,7 +1172,7 @@ dgo_overlay_cmd(struct dg_obj *dgop,
 
 /*
  * Usage:
- * procname overlay file.plot char_size [name]
+ * procname overlay file.plot3 char_size [name]
  */
 static int
 dgo_overlay_tcl(void *clientData, int argc, const char **argv)

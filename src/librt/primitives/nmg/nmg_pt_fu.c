@@ -825,7 +825,7 @@ pl_pt_lu(struct fpi *fpi, const struct loopuse *lu, struct edge_info *ei)
     NMG_CK_LOOPUSE(lu);
     NMG_CK_EI(ei);
 
-    sprintf(name, "pt_lu%02d.pl", plot_file_number++);
+    sprintf(name, "pt_lu%02d.plot3", plot_file_number++);
     fp=fopen(name, "wb");
     if (fp == (FILE *)NULL) {
 	perror(name);
@@ -1150,11 +1150,11 @@ plot_parity_error(const struct faceuse *fu, const fastf_t *pt)
 
     NMG_CK_FACEUSE(fu);
 
-    fp=fopen("pt_fu_parity_error.pl", "wb");
+    fp=fopen("pt_fu_parity_error.plot3", "wb");
     if (!fp)
-	bu_bomb("error opening pt_fu_parity_error.pl\n");
+	bu_bomb("error opening pt_fu_parity_error.plot3\n");
 
-    bu_log("overlay pt_fu_parity_error.pl\n");
+    bu_log("overlay pt_fu_parity_error.plot3\n");
 
     b = (long *)bu_calloc(fu->s_p->r_p->m_p->maxindex,
 			  sizeof(long), "bit vec"),

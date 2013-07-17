@@ -969,7 +969,7 @@ isect_cell(long int *cell, struct grass_ray *r, struct shadework *swp, double ou
 
 
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	sprintf(buf, "g_ray%d, %d_%d_cell%ld, %ld_.pl",
+	sprintf(buf, "g_ray%d, %d_%d_cell%ld, %ld_.plot3",
 		r->ap->a_x, r->ap->a_y, plot_num++, cell[0], cell[1]);
 	r->fd = fopen(buf, "wb");
 	if (r->fd) {

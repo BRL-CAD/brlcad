@@ -362,7 +362,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 	if (debug_plots)  {
 	    FILE	*fp;
 	    bu_vls_vlscat(&file, &file_base);
-	    bu_vls_strcat(&file, ".pl");
+	    bu_vls_strcat(&file, ".plot3");
 
 	    if ((fp = fopen(bu_vls_addr(&file), "wb")) == NULL)
 		perror(bu_vls_addr(&file));

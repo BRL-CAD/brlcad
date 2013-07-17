@@ -42,10 +42,10 @@
  * The most notable implication of this is the location of the
  * "delta" (translation) values in the matrix, i.e.:
  *
- *       x'     (R0   R1   R2   Dx) x
- *       y' =  (R4   R5   R6   Dy)  *  y
- *       z'    (R8   R9   R10  Dz) z
- *       w'     (0    0    0   1/s) w
+ *       x'     (R0   R1   R2   Dx)     (x)
+ *       y' =   (R4   R5   R6   Dy)  X  (y)
+ *       z'     (R8   R9   R10  Dz)     (z)
+ *       w'     (0    0    0   1/s)     (w)
  *
  * This of course requires that the rotation portion be computed
  * using somewhat different formulas (see buildHrot for both kinds).
@@ -109,7 +109,7 @@ extern double mged_rel_tol; /* rel surface tolerance */
 extern double mged_nrm_tol; /* surface normal tolerance */
 
 extern struct bn_tol mged_tol;  /* calculation tolerance */
-extern struct rt_tess_tol mged_ttol; /* XXX needs to replace mged_abs_tol, et.al. */
+extern struct rt_tess_tol mged_ttol; /* XXX needs to replace mged_abs_tol, et al. */
 
 
 /* default region codes defined in mover.c */

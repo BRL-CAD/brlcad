@@ -95,7 +95,7 @@ usage(const char *argv0)
     bu_log(" -a Az		Azimuth in degrees	(conflicts with -M)\n");
     bu_log(" -e Elev	Elevation in degrees	(conflicts with -M)\n");
     bu_log(" -M		Read model2view matrix on stdin (conflicts with -a, -e)\n");
-    bu_log(" -o output.pl	Specify output file (default=stdout)\n");
+    bu_log(" -o output.plot3	Specify output file (default=stdout)\n");
     bu_log(" -U #		Set use_air boolean to # (default=0)\n");
     bu_log(" -x #		Set librt debug flags\n");
 }
