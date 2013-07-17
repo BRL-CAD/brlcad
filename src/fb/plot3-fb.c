@@ -1,4 +1,4 @@
-/*                         P L - F B . C
+/*                      P L O T 3 - F B . C
  * BRL-CAD
  *
  * Copyright (c) 1986-2013 United States Government as represented by
@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file pl-fb.c
+/** @file plot3-fb.c
  *
  * Program to take 3-D UNIX plot data and output on a framebuffer.
  *
@@ -442,7 +442,7 @@ OutBuild(void)				/* returns true if successful */
 	if (over) {
 	    /* Read back the composite image */
 	    if (fb_read(fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel)) <= 0)
-		fprintf(stderr, "pl-fb:  band read error\n");
+		fprintf(stderr, "plot3-fb:  band read error\n");
 	}
 	return true;
     }
@@ -462,7 +462,7 @@ OutBuild(void)				/* returns true if successful */
 	if (over) {
 	    /* Read in current band */
 	    if (fb_read(fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel)) <= 0)
-		fprintf(stderr, "pl-fb:  band read error\n");
+		fprintf(stderr, "plot3-fb:  band read error\n");
 	} else {
 	    /* clear pixels in the band */
 	    memset((char *)buffer, 0, buffersize);
@@ -497,7 +497,7 @@ get_strokes(void)
 	/* Attempt to draw/free some vectors and try again */
 	OutBuild();
 	if ((cp = malloc(bytes)) == (char *)0) {
-	    fprintf(stderr, "pl-fb: malloc failed!\n");
+	    fprintf(stderr, "plot3-fb: malloc failed!\n");
 	    bu_exit(2, NULL);
 	}
     }
@@ -587,21 +587,21 @@ get_args(int argc, char **argv)
 	filename = argv[bu_optind];
 	if ((pfin = fopen(filename, "rb")) == NULL) {
 	    fprintf(stderr,
-		    "pl-fb: Can't open file \"%s\"\n", filename);
+		    "plot3-fb: Can't open file \"%s\"\n", filename);
 	    return 0;
 	}
     }
 
     if (argc > ++bu_optind)
-	fprintf(stderr, "pl-fb: excess argument(s) ignored\n");
+	fprintf(stderr, "plot3-fb: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
 
 
 static char usage[] = "\
-Usage: pl-fb [-h -d -o -i] [-t thickness] [-F framebuffer]\n\
-	[-S squaresize] [-W width] [-N height] [file.plot]\n";
+Usage: plot3-fb [-h -d -o -i] [-t thickness] [-F framebuffer]\n\
+	[-S squaresize] [-W width] [-N height] [file.plot3]\n";
 
 
 /*
@@ -1223,7 +1223,7 @@ DoFile(void)	/* returns vpl status code */
 		    if (deltao2 > delta)
 			delta = deltao2;
 		    if (delta <= 0) {
-			fprintf(stderr, "pl-fb: delta = %g, bad space()\n", delta);
+			fprintf(stderr, "plot3-fb: delta = %g, bad space()\n", delta);
 			return Foo(-42);
 		    }
 		    deltao2 = delta / 2.0;
@@ -1371,7 +1371,7 @@ main(int argc, char **argv)
 
     /* Open frame buffer, adapt to slightly smaller ones */
     if ((fbp = fb_open(framebuffer, Npixels, Nscanlines)) == FBIO_NULL) {
-	fprintf(stderr, "pl-fb: fb_open failed\n");
+	fprintf(stderr, "plot3-fb: fb_open failed\n");
 	bu_exit(1, NULL);
     }
     Npixels = fb_getwidth(fbp);
@@ -1401,13 +1401,13 @@ main(int argc, char **argv)
 
     buffersize = lines_per_band*Npixels*sizeof(RGBpixel);
     if ((buffer = (unsigned char *)malloc(buffersize)) == RGBPIXEL_NULL) {
-	fprintf(stderr, "pl-fb:  malloc error\n");
+	fprintf(stderr, "plot3-fb:  malloc error\n");
 	bu_exit(1, NULL);
     }
     /* Extra band protects against requeueing off the top */
     band = (struct band *)malloc((BANDSLOP)*sizeof(struct band));
     if (band == (struct band *)0) {
-	fprintf(stderr, "pl-fb: malloc error2\n");
+	fprintf(stderr, "plot3-fb: malloc error2\n");
 	bu_exit(1, NULL);
     }
     memset((char *)band, 0, (BANDSLOP)*sizeof(struct band));
@@ -1415,10 +1415,10 @@ main(int argc, char **argv)
     if (single_banded && over) {
 	/* Read in initial screen */
 	if (fb_read(fbp, 0, 0, buffer, buffersize/sizeof(RGBpixel)) <= 0)
-	    fprintf(stderr, "pl-fb: band read error\n");
+	    fprintf(stderr, "plot3-fb: band read error\n");
     }
     if (debug)
-	fprintf(stderr, "pl-fb output of %s\n", filename);
+	fprintf(stderr, "plot3-fb output of %s\n", filename);
 
     SetSigs();			/* set signal catchers */
 
