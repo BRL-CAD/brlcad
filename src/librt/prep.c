@@ -204,6 +204,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
     register int i;
     struct resource *resp;
     vect_t diag;
+    fastf_t dist2;
 
     RT_CK_RTI(rtip);
 
@@ -254,12 +255,13 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
      * Enlarge the model RPP just slightly, to avoid nasty effects
      * with a solid's face being exactly on the edge
      */
-    rtip->mdl_min[X] = floor(rtip->mdl_min[X]);
-    rtip->mdl_min[Y] = floor(rtip->mdl_min[Y]);
-    rtip->mdl_min[Z] = floor(rtip->mdl_min[Z]);
-    rtip->mdl_max[X] = ceil(rtip->mdl_max[X]);
-    rtip->mdl_max[Y] = ceil(rtip->mdl_max[Y]);
-    rtip->mdl_max[Z] = ceil(rtip->mdl_max[Z]);
+    dist2 = 2.0 * rtip->rti_tol.dist;
+    rtip->mdl_min[X] -= dist2;
+    rtip->mdl_min[Y] -= dist2;
+    rtip->mdl_min[Z] -= dist2;
+    rtip->mdl_max[X] += dist2;
+    rtip->mdl_max[Y] += dist2;
+    rtip->mdl_max[Z] += dist2;
 
     /* Compute radius of a model bounding sphere */
     VSUB2(diag, rtip->mdl_max, rtip->mdl_min);
