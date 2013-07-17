@@ -2088,47 +2088,64 @@ ON_Intersect(const ON_Surface* surfA,
     ON_2dPointArray curveuv, curvest, tmp_curveuv, tmp_curvest;
 
     // Deal with boundaries with curve-surface intersections.
+    // Overlap detection:
+    // According to the Theorem 3 in paper:
+    // http://libgen.org/scimag1/10.1016/S0010-4485%252896%252900099-1.pdf
+    // For two Bezier patches, if they overlap over a region, then the overlap
+    // region must be bounded by parts of the boundaries of the two patches.
+    // The Bezier patches for a NURBS surface are always bounded at the knots.
+    // In other words, given two pairs of neighbor knots (in two dimensions),
+    // we can get a Bezier patch between them.
+    // (See ON_NurbsSurface::ConvertSpanToBezier()).
+    // So we actually don't need to generate the Bezier patches explicitly,
+    // and we can get the boundaries of them using IsoCurve() on knots.
+    ON_CurveArray overlaps;
     for (int i = 0; i < 4; i++) {
 	const ON_Surface* surf1 = i >= 2 ? surfB : surfA;
 	const ON_Surface* surf2 = i >= 2 ? surfA : surfB;
 	ON_2dPointArray& ptarray1 = i >= 2 ? tmp_curvest : tmp_curveuv;
 	ON_2dPointArray& ptarray2 = i >= 2 ? tmp_curveuv : tmp_curvest;
-	ON_Curve* boundary = surf1->IsoCurve(i%2, surf1->Domain(1-i%2).Min());
-	ON_SimpleArray<ON_X_EVENT> x_event;
-	ON_Intersect(boundary, surf2, x_event, intersection_tolerance);
-	for (int j = 0; j < x_event.Count(); j++) {
-	    tmp_curvept.Append(x_event[j].m_A[0]);
-	    ON_2dPoint iso_pt;
-	    iso_pt.x = i%2 ? surf1->Domain(0).Min() : x_event[j].m_a[0];
-	    iso_pt.y = i%2 ? x_event[j].m_a[0] : surf1->Domain(1).Min();
-	    ptarray1.Append(iso_pt);
-	    ptarray2.Append(ON_2dPoint(x_event[j].m_b[0], x_event[j].m_b[1]));
-	    if (x_event[j].m_type == ON_X_EVENT::csx_overlap) {
-		// Append the other end-point
-		tmp_curvept.Append(x_event[j].m_A[1]);
-		iso_pt.x = i%2 ? surf1->Domain(0).Min() : x_event[j].m_a[1];
-		iso_pt.y = i%2 ? x_event[j].m_a[1] : surf1->Domain(1).Min();
-		ptarray1.Append(iso_pt);
-		ptarray2.Append(ON_2dPoint(x_event[j].m_b[2], x_event[j].m_b[3]));
-	    }
+	int dir = 1 - i%2;
+	int knotcnt = surf1->SpanCount(1-i%2);
+	double* knots = new double [knotcnt+1];
+	// knots that can be boundaries of Bezier patches
+	ON_SimpleArray<double> b_knots;
+	b_knots.Append(knots[0]);
+	surf1->GetSpanVector(dir, knots);
+	for (int j = 1; j < knotcnt; j++) {
+	    if (knots[j] > *(b_knots.Last()))
+		b_knots.Append(knots[j]);
 	}
-	if (!surf1->IsClosed(1-i%2)) {
-	    x_event.Empty();
-	    boundary = surf1->IsoCurve(i%2, surf1->Domain(1-i%2).Max());
-	    ON_Intersect(boundary, surf2, x_event, intersection_tolerance);
-	    for (int j = 0; j < x_event.Count(); j++) {
-		tmp_curvept.Append(x_event[j].m_A[0]);
+	if (surf1->IsClosed(dir))
+	    b_knots.Remove();
+	delete knots;
+
+	for (int j = 0; j < b_knots.Count(); j++) {
+	    ON_Curve* boundary = surf1->IsoCurve(i%2, b_knots[j]);
+	    ON_SimpleArray<ON_X_EVENT> x_event;
+	    ON_Intersect(boundary, surf2, x_event, intersection_tolerance, overlap_tolerance);
+	    for (int k = 0; k < x_event.Count(); k++) {
+		tmp_curvept.Append(x_event[k].m_A[0]);
 		ON_2dPoint iso_pt;
-		iso_pt.x = i%2 ? surf1->Domain(0).Max() : x_event[j].m_a[0];
-		iso_pt.y = i%2 ? x_event[j].m_a[0] : surf1->Domain(1).Max();
+		iso_pt.x = i%2 ? b_knots[j] : x_event[k].m_a[0];
+		iso_pt.y = i%2 ? x_event[k].m_a[0] : b_knots[j];
 		ptarray1.Append(iso_pt);
-		ptarray2.Append(ON_2dPoint(x_event[j].m_b[0], x_event[j].m_b[1]));
-		if (x_event[j].m_type == ON_X_EVENT::csx_overlap) {
-		    tmp_curvept.Append(x_event[j].m_A[1]);
-		    iso_pt.x = i%2 ? surf1->Domain(0).Max() : x_event[j].m_a[1];
-		    iso_pt.y = i%2 ? x_event[j].m_a[1] : surf1->Domain(1).Max();
+		ptarray2.Append(ON_2dPoint(x_event[k].m_b[0], x_event[k].m_b[1]));
+		if (x_event[k].m_type == ON_X_EVENT::csx_overlap) {
+		    // Append the other end-point
+		    tmp_curvept.Append(x_event[k].m_A[1]);
+		    iso_pt.x = i%2 ? b_knots[j] : x_event[k].m_a[1];
+		    iso_pt.y = i%2 ? x_event[k].m_a[1] : b_knots[j];
 		    ptarray1.Append(iso_pt);
-		    ptarray2.Append(ON_2dPoint(x_event[j].m_b[2], x_event[j].m_b[3]));
+		    ptarray2.Append(ON_2dPoint(x_event[k].m_b[2], x_event[k].m_b[3]));
+		    // Get the overlap curve
+		    if (x_event[k].m_a[0] < x_event[k].m_a[1]) {
+			ON_Curve *left = NULL, *right = NULL;
+			boundary->Split(x_event[k].m_a[0], left, right);
+			right->Split(x_event[k].m_a[1], left, right);
+			delete right;
+			overlaps.Append(left);
+		    }
 		}
 	    }
 	}
