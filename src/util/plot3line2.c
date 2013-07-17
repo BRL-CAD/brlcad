@@ -1,4 +1,4 @@
-/*                       P L L I N E 2 . C
+/*                     P L O T 3 L I N E 2 . C
  * BRL-CAD
  *
  * Copyright (c) 1986-2013 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file util/plline2.c
+/** @file util/plot3line2.c
  *
  * Output a 2-D line with double coordinates in UNIX plot format.
  *
@@ -35,7 +35,7 @@
 #include "plot3.h"
 
 
-static const char usage[] = "Usage: plline2 x1 y1 x2 y2 [r g b]\n";
+static const char usage[] = "Usage: plot3line2 x1 y1 x2 y2 [r g b]\n";
 
 int
 main(int argc, char **argv)

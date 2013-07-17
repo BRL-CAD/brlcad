@@ -1,4 +1,4 @@
-/*                        P L - T E K . C
+/*                     P L O T 3 - T E K . C
  * BRL-CAD
  *
  * Copyright (c) 1991-2013 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file util/pl-tek.c
+/** @file util/plot3-tek.c
  *
  * Convert 3-D color extended UNIX-plot file to Tektronix 4014 plot.
  * Gets rid of (floating point, flush, 3D, color, text).
@@ -133,7 +133,7 @@ int seenscale = 0;
 int expand_it = 0;		/* expand plot to 4k, beyond what will fit on real Tek screen */
 
 static const char usage[] = "\
-Usage: pl-tek [-e] [-v] < file.pl > file.tek\n";
+Usage: plot3-tek [-e] [-v] < file.plot3 > file.tek\n";
 
 
 int
@@ -377,7 +377,7 @@ main(int argc, char **argv)
 	} else if (BU_STR_EQUAL(argv[1], "-e")) {
 	    expand_it = 1;
 	} else {
-	    fprintf(stderr, "pl-tek: argument '%s' ignored\n", argv[1]);
+	    fprintf(stderr, "plot3-tek: argument '%s' ignored\n", argv[1]);
 	    break;
 	}
 
@@ -502,12 +502,12 @@ main(int argc, char **argv)
 
 	    case 'c':	/* circle */
 	    case 'i':	/* d_circle */
-		fprintf(stderr, "pl-tek: circle unimplemented\n");
+		fprintf(stderr, "plot3-tek: circle unimplemented\n");
 		break;
 
 	    case 'a':	/* arc */
 	    case 'r':	/* d_arc */
-		fprintf(stderr, "pl-tek: arc unimplemented\n");
+		fprintf(stderr, "plot3-tek: arc unimplemented\n");
 		break;
 
 	    case 'f':	/* linmod */
@@ -529,12 +529,12 @@ main(int argc, char **argv)
 		break;
 
 	    default:
-		fprintf(stderr, "pl-tek: unknown command byte x%x\n", c);
+		fprintf(stderr, "plot3-tek: unknown command byte x%x\n", c);
 	}
     }
 
     if (!seenscale) {
-	fprintf(stderr, "pl-tek: WARNING no space command in file, defaulting to +/-32k\n");
+	fprintf(stderr, "plot3-tek: WARNING no space command in file, defaulting to +/-32k\n");
     }
 
     return 0;

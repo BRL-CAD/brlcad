@@ -1,4 +1,4 @@
-/*                        P L - A S C . C
+/*                    P L O T 3 - A S C . C
  * BRL-CAD
  *
  * Copyright (c) 1989-2013 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file util/pl-asc.c
+/** @file util/plot3-asc.c
  *
  * Plot3(5) to ASCII converter.  Grew out of pldebug to be more
  * generally useful as an ascii editable plot file format.
@@ -118,7 +118,7 @@ void outshort(int n);
 void outfloat(int n);
 
 static const char usage[] = "\
-Usage: pl-asc [-v] [unix_plot]\n";
+Usage: plot3-asc [-v] [unix_plot]\n";
 
 int
 main(int argc, char **argv)
@@ -138,7 +138,7 @@ main(int argc, char **argv)
     }
     if (argc == 2) {
 	if ((fp = fopen(argv[1], "r")) == NULL) {
-	    perror("pl-asc");
+	    perror("plot3-asc");
 	    return 1;
 	}
     } else {

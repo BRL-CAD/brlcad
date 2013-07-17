@@ -1,4 +1,4 @@
-/*                          P L - X . C
+/*                       P L O T 3 - X . C
  * BRL-CAD
  *
  * Copyright (c) 1988-2013 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file util/pl-X.c
+/** @file util/plot3-X.c
  *
  * Display plot3(5) on an X Window System display (X11R2)
  *
@@ -269,12 +269,12 @@ xsetup(int argc, char **argv)
 
     /* Open the display - XXX see what NULL does now */
     if ((dpy = XOpenDisplay(envp)) == NULL) {
-	bu_exit(2, "pl-X: Can't open X display\n");
+	bu_exit(2, "plot3-X: Can't open X display\n");
     }
 
     /* Load the font to use */
     if ((fontstruct = XLoadQueryFont(dpy, FONT)) == NULL) {
-	bu_exit(4, "pl-X: Can't open font\n");
+	bu_exit(4, "plot3-X: Can't open font\n");
     }
 
     /* Select border, background, foreground colors,
@@ -297,7 +297,7 @@ xsetup(int argc, char **argv)
 			      xsh.x, xsh.y, xsh.width, xsh.height,
 			      bw, bd, bg);
     if (win == 0) {
-	bu_exit(3, "pl-X: Can't create window\n");
+	bu_exit(3, "plot3-X: Can't create window\n");
     }
 
     /* Set standard properties for Window Managers */
@@ -354,7 +354,7 @@ main(int argc, char **argv)
 	argv++;
     }
     if (isatty(fileno(stdin))) {
-	bu_exit(1, "Usage: pl-X [-v] < unix_plot\n");
+	bu_exit(1, "Usage: plot3-X [-v] < unix_plot\n");
     }
     xsetup(argc, argv);
 
@@ -447,7 +447,7 @@ main(int argc, char **argv)
 		break;
 	    case 'e':
 		/* erase might be the last command in the file
-		 * which makes pl-X pointless so don't erase
+		 * which makes plot3-X pointless so don't erase
 		 * unless this isn't the last command (check
 		 * during the next loop iteration)
 		 */

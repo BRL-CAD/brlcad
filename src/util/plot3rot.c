@@ -1,4 +1,4 @@
-/*                         P L R O T . C
+/*                      P L O T 3 R O T . C
  * BRL-CAD
  *
  * Copyright (c) 1986-2013 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file util/plrot.c
+/** @file util/plot3rot.c
  *
  * Rotate, Translate, and Scale a Unixplot file.
  *
@@ -83,7 +83,7 @@ model_rpp(const fastf_t *min, const fastf_t *max)
 {
 
     if (space_set) {
-	bu_log("plrot:  additional SPACE command ignored\n");
+	bu_log("plot3rot:  additional SPACE command ignored\n");
 	bu_log("got: space (%g, %g, %g) (%g, %g, %g)\n",
 	       V3ARGS(min), V3ARGS(max));
 	bu_log("still using: space (%g, %g, %g) (%g, %g, %g)\n",
@@ -324,7 +324,7 @@ main(int argc, char **argv)
    -S#            Space: takes a quoted string of six floats\n";
 
     if (!get_args(argc, argv)) {
-	fputs("Usage: plrot [options] [file1 ... fileN] > file.plot\n", stderr);
+	fputs("Usage: plot3rot [options] [file1 ... fileN] > file.plot3\n", stderr);
 
 	(void)fputs(opts, stderr);
 	bu_exit (1, NULL);
@@ -341,7 +341,7 @@ main(int argc, char **argv)
 	    if (BU_STR_EQUAL(argv[bu_optind], "-"))
 		fp = stdin;
 	    else if ((fp = fopen(argv[bu_optind], "r")) == NULL) {
-		bu_log("plrot: can't open \"%s\"\n", argv[bu_optind]);
+		bu_log("plot3rot: can't open \"%s\"\n", argv[bu_optind]);
 		continue;
 	    }
 	    dofile(fp);
@@ -526,10 +526,10 @@ dofile(FILE *fp)
 		three_dcoord_out(fp, rmat);
 		break;
 	    default:
-		bu_log("plrot: unrecognized command '%c' (0x%x)\n",
+		bu_log("plot3rot: unrecognized command '%c' (0x%x)\n",
 		       (isascii(c) && isprint(c)) ? c : '?',
 		       c);
-		bu_log("plrot: ftell = %ld\n", bu_ftell(fp));
+		bu_log("plot3rot: ftell = %ld\n", bu_ftell(fp));
 		putchar(c);
 		break;
 	}

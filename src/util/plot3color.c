@@ -1,4 +1,4 @@
-/*                       P L C O L O R . C
+/*                    P L O T 3 C O L O R . C
  * BRL-CAD
  *
  * Copyright (c) 1986-2013 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file util/plcolor.c
+/** @file util/plot3color.c
  *
  * Output a color in UNIX plot format, for inclusion in a plot file.
  *
@@ -33,7 +33,7 @@
 #include "plot3.h"
 
 
-static const char usage[] = "Usage: plcolor r g b\n";
+static const char usage[] = "Usage: plot3color r g b\n";
 
 int
 main(int argc, char **argv)

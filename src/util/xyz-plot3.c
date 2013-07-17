@@ -1,4 +1,4 @@
-/*                        X Y Z - P L . C
+/*                     X Y Z - P L O T 3 . C
  * BRL-CAD
  *
  * Copyright (c) 1988-2013 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file util/xyz-pl.c
+/** @file util/xyz-plot3.c
  *
  * Program to take input with up to 3 white-space separated columns,
  * expressed as

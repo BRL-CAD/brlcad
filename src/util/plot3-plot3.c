@@ -1,4 +1,4 @@
-/*                         P L - P L . C
+/*                  P L O T 3 - P L O T 3 . C
  * BRL-CAD
  *
  * Copyright (c) 1988-2013 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file util/pl-pl.c
+/** @file util/plot3-plot3.c
  *
  * Plot smasher.
  *
@@ -134,7 +134,7 @@ int nocolor = 1;
 int no3d = 1;
 
 static const char usage[] = "\
-Usage: pl-pl [-v] [-S] < unix_plot > unix_plot\n";
+Usage: plot3-plot3 [-v] [-S] < unix_plot > unix_plot\n";
 
 int
 main(int argc, char **argv)
@@ -334,9 +334,9 @@ main(int argc, char **argv)
     }
 
     if (scale > 0.0 && !seenscale) {
-	fprintf(stderr, "pl-pl: WARNING no space command in file, defaulting to +/-32k\n");
+	fprintf(stderr, "plot3-plot3: WARNING no space command in file, defaulting to +/-32k\n");
     } else if (!(scale > 0.0) && seenscale) {
-	fprintf(stderr, "pl-pl: WARNING space command(s) ignored, use -S to apply them.\n");
+	fprintf(stderr, "plot3-plot3: WARNING space command(s) ignored, use -S to apply them.\n");
     }
 
     return 0;

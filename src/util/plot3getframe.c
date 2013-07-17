@@ -1,4 +1,4 @@
-/*                    P L G E T F R A M E . C
+/*                 P L O T 3 G E T F R A M E . C
  * BRL-CAD
  *
  * Copyright (c) 1988-2013 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file util/plgetframe.c
+/** @file util/plot3getframe.c
  *
  * Program to separate Plot3(5) file with flush/clear commands into
  * separate files.
@@ -131,7 +131,7 @@ main(int argc, char **argv)
 	argv++;
     }
     if (argc < 2 || isatty(fileno(stdin))) {
-	bu_exit(1, "Usage: plgetframe [-v] desired_frame < unix_plot\n");
+	bu_exit(1, "Usage: plot3getframe [-v] desired_frame < unix_plot\n");
     }
     desired_frame = atoi(argv[1]);
     current_frame = 0;

@@ -1,4 +1,4 @@
-/*                  P I X H I S T 3 D - P L . C
+/*               P I X H I S T 3 D - P L O T 3 . C
  * BRL-CAD
  *
  * Copyright (c) 1986-2013 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file util/pixhist3d-pl.c
+/** @file util/pixhist3d-plot3.c
  *
  * RGB color space utilization to unix plot.
  *
@@ -46,7 +46,7 @@ struct pix_element {
 };
 
 
-static const char *Usage = "Usage: pixhist3d-pl [file.pix] | plot\n";
+static const char *Usage = "Usage: pixhist3d-plot3 [file.pix] | plot\n";
 
 int
 main(int argc, char **argv)
@@ -58,7 +58,7 @@ main(int argc, char **argv)
     if (argc > 1) {
 	if ((fp = fopen(argv[1], "r")) == NULL) {
 	    fprintf(stderr, "%s", Usage);
-	    bu_exit(1, "pixhist3d-pl: can't open \"%s\"\n", argv[1]);
+	    bu_exit(1, "pixhist3d-plot3: can't open \"%s\"\n", argv[1]);
 	}
     } else
 	fp = stdin;

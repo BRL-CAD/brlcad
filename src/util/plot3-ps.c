@@ -1,4 +1,4 @@
-/*                         P L - P S . C
+/*                      P L O T 3 - P S . C
  * BRL-CAD
  *
  * Copyright (c) 1989-2013 United States Government as represented by
@@ -17,10 +17,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file util/pl-ps.c
+/** @file util/plot3-ps.c
  *
  * Display plot3(5) as PostScript.
- * Based on pl-X.c and bw-ps.c
+ * Based on plot3-X.c and bw-ps.c
  *
  */
 
@@ -132,8 +132,8 @@ static char *file_name;
 static FILE *infp;
 
 static char usage[] = "\
-Usage: pl-ps [-e] [-c] [-S inches_square]\n\
-	[-W width_inches] [-N height_inches] [file.pl]\n";
+Usage: plot3-ps [-e] [-c] [-S inches_square]\n\
+	[-W width_inches] [-N height_inches] [file.plot3]\n";
 
 int
 getshort(void)
@@ -291,7 +291,7 @@ prolog(FILE *fp, char *name, int w, int h)
 
     if (encapsulated) {
 	fputs("%!PS-Adobe-2.0 EPSF-1.2\n", fp);
-	fputs("%%Creator: BRL-CAD pl-ps\n", fp);
+	fputs("%%Creator: BRL-CAD plot3-ps\n", fp);
 	fprintf(fp, "%%%%CreationDate: %s", ctime(&ltime));
 	fprintf(fp, "%%%%Title: %s\n", name);
 	fputs("%%Pages: 0\n", fp);
@@ -300,7 +300,7 @@ prolog(FILE *fp, char *name, int w, int h)
 	fputs("%begin(plot)\n", fp);
 	fputs("%%DocumentFonts:  Courier\n", fp);
 	fprintf(fp, "%%%%Title: %s\n", name);
-	fputs("%%Creator: BRL-CAD pl-ps\n", fp);
+	fputs("%%Creator: BRL-CAD plot3-ps\n", fp);
 	fprintf(fp, "%%%%CreationDate: %s", ctime(&ltime));
     }
     fprintf(fp, "%%%%BoundingBox: 0 0 %d %d\n", w, h);
@@ -396,7 +396,7 @@ get_args(int argc, char **argv)
 	file_name = argv[bu_optind];
 	if ((infp = fopen(file_name, "r")) == NULL) {
 	    fprintf(stderr,
-		    "pl-ps: cannot open \"%s\" for reading\n",
+		    "plot3-ps: cannot open \"%s\" for reading\n",
 		    file_name);
 	    return 0;
 	}
@@ -404,7 +404,7 @@ get_args(int argc, char **argv)
     }
 
     if (argc > ++bu_optind)
-	fprintf(stderr, "pl-ps: excess argument(s) ignored\n");
+	fprintf(stderr, "plot3-ps: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }

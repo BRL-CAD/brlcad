@@ -1,4 +1,4 @@
-/*                       P L D E B U G . C
+/*                    P L O T 3 D E B U G . C
  * BRL-CAD
  *
  * Copyright (c) 1988-2013 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file util/pldebug.c
+/** @file util/plot3debug.c
  *
  * Plot3(5) debugger
  *
@@ -120,7 +120,7 @@ FILE *fp;
 /* void outchar(), outstring(), outshort(), outfloat(); */
 
 static const char usage[] = "\
-Usage: pldebug [-v] [unix_plot]\n";
+Usage: plot3debug [-v] [unix_plot]\n";
 
 
 void
@@ -226,7 +226,7 @@ main(int argc, char **argv)
     }
     if (argc == 2) {
 	if ((fp = fopen(argv[1], "r")) == NULL) {
-	    perror("pldebug");
+	    perror("plot3debug");
 	    bu_exit (1, NULL);
 	}
     } else {

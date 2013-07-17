@@ -1,4 +1,4 @@
-/*                         P L - D M . C
+/*                      P L O T 3 - D M . C
  * BRL-CAD
  *
  * Copyright (c) 1999-2013 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file util/pl-dm.c
+/** @file util/plot3-dm.c
  *
  * Example application that shows how to hook into the display
  * manager.
@@ -1139,7 +1139,7 @@ appInit(Tcl_Interp *_interp)
     /* Locate the BRL-CAD-specific Tcl scripts */
     filename = bu_brlcad_data("tclscripts", 0);
 
-    bu_vls_printf(&str2, "%s/pl-dm", filename);
+    bu_vls_printf(&str2, "%s/plot3-dm", filename);
     bu_vls_printf(&str, "wm withdraw .; set auto_path [linsert $auto_path 0 %s %s]",
 		  bu_vls_addr(&str2), filename);
     (void)Tcl_Eval(_interp, bu_vls_addr(&str));
@@ -1163,7 +1163,7 @@ appInit(Tcl_Interp *_interp)
 int
 main(int argc, char *argv[])
 {
-    const char usage[] = "Usage: pl-dm [-t o|X] plot_file(s)\n";
+    const char usage[] = "Usage: plot3-dm [-t o|X] plot_file(s)\n";
 
     if (!get_args(argc, argv))
 	bu_exit (1, "%s", usage);

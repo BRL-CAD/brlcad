@@ -1,4 +1,4 @@
-/*                        P L S T A T . C
+/*                     P L O T 3 S T A T . C
  * BRL-CAD
  *
  * Copyright (c) 1990-2013 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file util/plstat.c
+/** @file util/plot3stat.c
  *
  * Print statistics about a Plot3(5) format file.
  *
@@ -118,7 +118,7 @@ void outshort(int n);
 void outfloat(int n);
 
 static const char usage[] = "\
-Usage: plstat [-v] [unix_plot]\n";
+Usage: plot3stat [-v] [unix_plot]\n";
 
 
 int
@@ -155,7 +155,7 @@ main(int argc, char **argv)
     }
     if (argc == 2) {
 	if ((fp = fopen(argv[1], "r")) == NULL) {
-	    perror("plstat");
+	    perror("plot3stat");
 	    bu_exit (1, NULL);
 	}
     } else {

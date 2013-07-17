@@ -1,4 +1,4 @@
-/*                       P L - H P G L . C
+/*                    P L O T 3 - H P G L . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2013 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file util/pl-hpgl.c
+/** @file util/plot3-hpgl.c
  *
  * Description -
  * Convert a unix-plot file to hpgl codes.
