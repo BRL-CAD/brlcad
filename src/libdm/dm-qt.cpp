@@ -201,10 +201,24 @@ qt_setFGColor(struct dm *UNUSED(dmp), unsigned char UNUSED(r), unsigned char UNU
 
 
 HIDDEN int
-qt_setBGColor(struct dm *UNUSED(dmp), unsigned char UNUSED(r), unsigned char UNUSED(g), unsigned char UNUSED(b))
+qt_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
-    bu_log("qt_setBGColor not implemented\n");
-    return 0;
+    QColor q;
+    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+    
+    q.setRgb(r, g, b);
+
+    dmp->dm_bg[0] = r;
+    dmp->dm_bg[1] = g;
+    dmp->dm_bg[2] = b;
+    
+    privars->bg = q;
+    
+    QPalette pal = privars->win->palette();
+    pal.setColor(QPalette::Background, Qt::black);
+    privars->win->setPalette(pal);
+    
+    return TCL_OK;
 }
 
 
@@ -596,13 +610,8 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
     privars->win->resize(dmp->dm_width, dmp->dm_height);
 
     /* set the background color */
-    privars->bg = Qt::black;
-    privars->fg = Qt::red;
-    QPalette *pal = new QPalette();
-    pal->setColor(QPalette::Background, privars->bg);
     privars->win->setAutoFillBackground(true);
-    privars->win->setPalette(*pal);
-    delete pal;
+    qt_setBGColor(dmp, 0, 0, 0);
 
     privars->win->show();
 
