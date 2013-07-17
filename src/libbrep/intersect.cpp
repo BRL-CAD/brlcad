@@ -241,7 +241,7 @@ public:
 	ON_BoundingBox box;
 	bool ret = box.Intersection(new_bbox, surf.m_node);
 	if (intersection != NULL)
-	    *intersection = box;
+	    *intersection = ON_BoundingBox(box.m_min-vtol, box.m_max+vtol);
 	return ret;
     }
 };
@@ -1780,8 +1780,9 @@ triangle_intersection(const struct Triangle &TriA, const struct Triangle &TriB, 
 struct PointPair {
     int indexA, indexB;
     double distance3d, distanceU, distanceV, distanceS, distanceT;
+    double tol;
     bool operator < (const PointPair &_pp) const {
-	if (ON_NearZero(distance3d-_pp.distance3d))
+	if (ON_NearZero(distance3d-_pp.distance3d, tol))
 	    return distanceU+distanceV+distanceS+distanceT < _pp.distanceU+_pp.distanceV+_pp.distanceS+_pp.distanceT;
 	return distance3d < _pp.distance3d;
     }
@@ -1898,8 +1899,9 @@ curve_fitting(ON_Curve* in, double fitting_tolerance, bool delete_curve = false)
 	for (int i = 2; i < point_count; i++) {
 	    ON_3dVector v1 = points[i-1] - start;
 	    ON_3dVector v2 = points[i] - points[i-1];
-	    if (!ON_NearZero(ON_CrossProduct(v1, v2).Length())) {
-		// start, points[i-1], points[i] are not collinear
+	    if (!ON_NearZero(ON_CrossProduct(v1, v2).Length()) || ON_DotProduct(v1, v2) < -ON_ZERO_TOLERANCE) {
+		// start, points[i-1], points[i] are not collinear,
+		// or v1 and v2 have opposite directions.
 		start = points[i-1];
 		new_points.Append(start);
 	    }
@@ -2318,6 +2320,7 @@ ON_Intersect(const ON_Surface* surfA,
 	    ppair.distanceV = fabs(curveuv[i].y - curveuv[j].y);
 	    ppair.distanceS = fabs(curvest[i].x - curvest[j].x);
 	    ppair.distanceT = fabs(curvest[i].y - curvest[j].y);
+	    ppair.tol = intersection_tolerance;
 	    if (ppair.distanceU < max_dis_u && ppair.distanceV < max_dis_v && ppair.distanceS < max_dis_s && ppair.distanceT < max_dis_t && ppair.distance3d < max_dis) {
 		ppair.indexA = i;
 		ppair.indexB = j;
@@ -2423,6 +2426,7 @@ ON_Intersect(const ON_Surface* surfA,
 		    newpair.distanceV = fabs(curveuv[start].y - curveuv[end].y);
 		    newpair.distanceS = fabs(curvest[start].x - curvest[end].x);
 		    newpair.distanceT = fabs(curvest[start].y - curvest[end].y);
+		    newpair.tol = intersection_tolerance;
 		    if (newpair.distanceU < max_dis_u && newpair.distanceV < max_dis_v && newpair.distanceS < max_dis_s && newpair.distanceT < max_dis_t) {
 			if (newpair < pair) {
 			    newpair.indexA = start;
