@@ -38,6 +38,7 @@ class QTkMainWindow: public QWidget {
 struct qt_vars {
     QApplication *qapp;
     QTkMainWindow *win;
+    QColor fg, bg;
 };
 
 #endif /* DM_QT */

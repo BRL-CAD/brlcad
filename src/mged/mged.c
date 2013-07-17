@@ -2262,6 +2262,8 @@ event_check(int non_blocking)
 	curr_dm_list = save_dm_list;
     }
 
+    DM_PROCESS_EVENTS(dmp);
+
     return non_blocking;
 }
 

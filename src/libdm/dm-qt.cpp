@@ -21,6 +21,9 @@
  *
  */
 #include "common.h"
+
+#ifdef DM_QT
+
 #include "bio.h"
 
 #include <stdio.h>
@@ -592,8 +595,11 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
     privars->win = new QTkMainWindow((WId)pubvars->win);
     privars->win->resize(dmp->dm_width, dmp->dm_height);
 
+    /* set the background color */
+    privars->bg = Qt::black;
+    privars->fg = Qt::red;
     QPalette *pal = new QPalette();
-    pal->setColor(QPalette::Background, Qt::black);
+    pal->setColor(QPalette::Background, privars->bg);
     privars->win->setAutoFillBackground(true);
     privars->win->setPalette(*pal);
     delete pal;
@@ -602,8 +608,7 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
 
     qt_configureWin(dmp, 1);
 
-    Tk_SetWindowBackground(pubvars->xtkwin,
-			   0);
+    Tk_SetWindowBackground(pubvars->xtkwin, 0);
     Tk_MapWindow(pubvars->xtkwin);
 
     bu_log("Tk: %ld Qt: %ld\n", pubvars->win, privars->win->winId());
@@ -613,7 +618,7 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
 
 __END_DECLS
 
-
+#endif /* DM_QT */
 /*
  * Local Variables:
  * mode: C++
