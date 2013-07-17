@@ -1835,7 +1835,7 @@ newton_ssi(double& u, double& v, double& s, double& t, const ON_Surface* surfA, 
     //   x_a(u,v) - x_b(s,t) = 0
     //   y_a(u,v) - y_b(s,t) = 0
     //   z_a(u,v) - z_b(s,t) = 0
-    // It's an under-determined system. We use Moore¨CPenrose pseudoinverse:
+    // It's an under-determined system. We use Moore-Penrose pseudoinverse:
     // pinv(A) = transpose(A) * inv(A * transpose(A)) (A is a 3x4 Jacobian)
     // A * pinv(A) = I_3
     double last_u = DBL_MAX/4, last_v = DBL_MAX/4, last_s = DBL_MAX/4, last_t = DBL_MAX/4;
@@ -2106,13 +2106,13 @@ ON_Intersect(const ON_Surface* surfA,
 	ON_2dPointArray& ptarray1 = i >= 2 ? tmp_curvest : tmp_curveuv;
 	ON_2dPointArray& ptarray2 = i >= 2 ? tmp_curveuv : tmp_curvest;
 	int dir = 1 - i%2;
-	int knotcnt = surf1->SpanCount(1-i%2);
+	int knotcnt = surf1->SpanCount(dir);
 	double* knots = new double [knotcnt+1];
+	surf1->GetSpanVector(dir, knots);
 	// knots that can be boundaries of Bezier patches
 	ON_SimpleArray<double> b_knots;
 	b_knots.Append(knots[0]);
-	surf1->GetSpanVector(dir, knots);
-	for (int j = 1; j < knotcnt; j++) {
+	for (int j = 1; j <= knotcnt; j++) {
 	    if (knots[j] > *(b_knots.Last()))
 		b_knots.Append(knots[j]);
 	}
