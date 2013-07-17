@@ -1,4 +1,4 @@
-/*                        A S C - P L . C
+/*                     A S C - P L O T 3 . C
  * BRL-CAD
  *
  * Copyright (c) 1990-2013 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file util/asc-pl.c
+/** @file util/asc-plot3.c
  *
  * Produce UNIX plot commands in PLOT3(5) format from ASCII
  * representation.
@@ -43,7 +43,7 @@
 static void
 printusage (void)
 {
-    bu_exit(1, "Usage: asc-pl [file.in [file.pl]]\n");
+    bu_exit(1, "Usage: asc-plot3 [file.in [file.plot3]]\n");
 }
 
 
@@ -91,7 +91,7 @@ main (int argc, char **argv)
 	}
     }
     if (isatty(fileno(fp[FP_OUT]))) {
-	bu_log("asc-pl: Will not write to a TTY\n");
+	bu_log("asc-plot3: Will not write to a TTY\n");
 	printusage();
 	return 1;
     }
