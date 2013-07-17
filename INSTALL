@@ -194,7 +194,7 @@ the CMAKE_BUILD_TYPE variable, that are useful for specific purposes:
   debug flags to the compile, and sets the default install directory to
   be /usr/brlcad/dev-X.Y.Z - in order to run the resulting installed
   binaries, the developer should ensure that the dev-X.Y.Z  path is
-  first in their PATH environment variable.
+  first in his or her PATH environment variable.
 
 * Release (-DCMAKE_BUILD_TYPE=Release) - A release build is intended for
   final consumption by end users and as such has optimizations enabled.
