@@ -551,6 +551,7 @@ int parseArguments(int argc, char **argv)
 
 	    case 'X' :
 		(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Example assistance");
+		/* fall through */
 	    case 'x' :
 		(void)argumentExamples(DEFAULT_VERBOSE_OUTPUT, progname);
 		bu_exit(1, NULL);
@@ -558,6 +559,7 @@ int parseArguments(int argc, char **argv)
 
 	    case 'Z' :
 		(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Full parameter assistance");
+		/* fall through */
 	    case 'z' :
 		(void)defaultSettings(DEFAULT_VERBOSE_OUTPUT);
 		bu_exit(1, NULL);
