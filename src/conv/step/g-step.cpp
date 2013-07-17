@@ -97,7 +97,7 @@ main(int argc, char *argv[])
     if (!dotg) {
 	std::cerr << "ERROR: unable to create BRL-CAD instance" << std::endl;
 	return 3;
-    } 
+    }
     if (!dotg->load(iflnm)) {
 	std::cerr << "ERROR: unable to open BRL-CAD input file [" << oflnm << "]" << std::endl;
         delete dotg;
