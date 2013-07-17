@@ -173,6 +173,7 @@ package provide cadwidgets::Ged 1.0
 	method center {args}
 	method clear {args}
 	method clone {args}
+	method coil {args}
 	method color {args}
 	method comb {args}
 	method comb_color {args}
@@ -1403,6 +1404,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::clone {args} {
     eval $mGed clone $args
+}
+
+::itcl::body cadwidgets::Ged::coil {args} {
+    eval $mGed coil $args
 }
 
 ::itcl::body cadwidgets::Ged::color {args} {
@@ -6035,6 +6040,7 @@ package provide cadwidgets::Ged 1.0
     $help add clear		{{} {clear screen}}
     $help add clone		{{[options] object} {clone the specified object}}
     $help add coord		{{[m|v]} {set/get the coordinate system}}
+    $help add coil		{{[options] object} {make a coil shape}}
     $help add color		{{low high r g b str} {make color entry}}
     $help add comb		{{comb_name <operation solid>} {create or extend combination w/booleans}}
     $help add comb_color 	{{comb R G B} {set combination's color}}

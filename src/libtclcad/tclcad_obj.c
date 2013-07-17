@@ -952,6 +952,7 @@ static struct to_cmdtab to_cmds[] = {
     {"center",	"[x y z]", 5, to_view_func_plus, ged_center},
     {"clear",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_zap},
     {"clone",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_clone},
+    {"coil",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_coil},
     {"color",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_color},
     {"comb",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_comb},
     {"comb_color",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_comb_color},

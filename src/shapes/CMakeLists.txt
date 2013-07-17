@@ -6,7 +6,7 @@ LIST(REMOVE_DUPLICATES SHAPES_INCLUDE_DIRS)
 include_directories(${SHAPES_INCLUDE_DIRS})
 
 BRLCAD_ADDEXEC(bolt bolt.c "libwdb;${M_LIBRARY}")
-BRLCAD_ADDEXEC(coil coil.c "libwdb;${M_LIBRARY}")
+BRLCAD_ADDEXEC(coil coil.c "libged;libwdb;${M_LIBRARY}")
 BRLCAD_ADDEXEC(fence fence.c "libwdb;${M_LIBRARY}")
 BRLCAD_ADDEXEC(gastank gastank.c libwdb)
 BRLCAD_ADDEXEC(handle handle.c libwdb)

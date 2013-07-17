@@ -53,6 +53,7 @@ set(LIBGED_SOURCES
   center.c
   clip.c
   clone.c
+  coil.c
   color.c
   columns.c
   comb.c

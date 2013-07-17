@@ -901,6 +901,11 @@ GED_EXPORT extern int ged_center(struct ged *gedp, int argc, const char *argv[])
 GED_EXPORT extern int ged_clone(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Make coil shapes.
+ */
+GED_EXPORT extern int ged_coil(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Make color entry.
  */
 GED_EXPORT extern int ged_color(struct ged *gedp, int argc, const char *argv[]);
