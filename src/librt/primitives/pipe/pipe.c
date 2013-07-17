@@ -4685,6 +4685,7 @@ rt_pipe_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
     return 0;			/* OK */
 }
 
+
 /**
  * R T _ P I P E _ S U R F A C E _ A R E A
  *
@@ -4742,7 +4743,7 @@ rt_pipe_surf_area(fastf_t *area, struct rt_db_internal *ip)
     }
 
     connected = VNEAR_EQUAL(first_start, last_end, RT_LEN_TOL)
-		&& NEAR_EQUAL(fabs(VDOT(*start_normal, *end_normal)), 1.0, RT_DOT_TOL);
+	&& NEAR_EQUAL(fabs(VDOT(*start_normal, *end_normal)), 1.0, RT_DOT_TOL);
 
     *area = 0;
     /* The the total surface area is calculated as a sum of the areas for:
@@ -4756,8 +4757,8 @@ rt_pipe_surf_area(fastf_t *area, struct rt_db_internal *ip)
 	    /* Lateral Surface Area = PI * (r_base + r_top) * sqrt(pipe_len^2 + (r_base-r_top)^2) */
 	    len_sq = lin->pipe_len * lin->pipe_len;
 	    *area += M_PI * (lin->pipe_robase + lin->pipe_rotop)
-		     * (sqrt(len_sq + lin->pipe_rodiff_sq)      /* outer surface */
-			+ sqrt(len_sq + lin->pipe_ridiff_sq));  /* inner surface */
+		* (sqrt(len_sq + lin->pipe_rodiff_sq)      /* outer surface */
+		   + sqrt(len_sq + lin->pipe_ridiff_sq));  /* inner surface */
 	    start_or = lin->pipe_robase;
 	    start_ir = lin->pipe_ribase;
 	    end_or = lin->pipe_rotop;
@@ -4835,6 +4836,7 @@ rt_pipe_surf_area(fastf_t *area, struct rt_db_internal *ip)
 
 }
 
+
 HIDDEN void
 pipe_elem_volume_and_centroid(struct id_pipe *p, fastf_t *vol, point_t *cent)
 {
@@ -4844,10 +4846,10 @@ pipe_elem_volume_and_centroid(struct id_pipe *p, fastf_t *vol, point_t *cent)
     /* Note: the centroid is premultiplied with the corresponding partial volume ! */
     if (!p->pipe_is_bend) {
 	struct lin_pipe *lin = (struct lin_pipe *)p;
-	/* Volume = PI * ( r_base*r_base + r_top*r_top + r_base*r_top) * pipe_len / 3 */
+	/* Volume = PI * (r_base*r_base + r_top*r_top + r_base*r_top) * pipe_len / 3 */
 	crt_vol = M_PI * lin->pipe_len / 3
-		  * (lin->pipe_robase*lin->pipe_robase + lin->pipe_robase*lin->pipe_rotop + lin->pipe_rotop*lin->pipe_rotop
-		     - lin->pipe_ribase*lin->pipe_ribase - lin->pipe_ribase*lin->pipe_ritop - lin->pipe_ritop*lin->pipe_ritop);
+	    * (lin->pipe_robase*lin->pipe_robase + lin->pipe_robase*lin->pipe_rotop + lin->pipe_rotop*lin->pipe_rotop
+	       - lin->pipe_ribase*lin->pipe_ribase - lin->pipe_ribase*lin->pipe_ritop - lin->pipe_ritop*lin->pipe_ritop);
 	*vol += crt_vol;
 
 	if (cent != NULL) {
@@ -4856,9 +4858,9 @@ pipe_elem_volume_and_centroid(struct id_pipe *p, fastf_t *vol, point_t *cent)
 	     * cbase = 1/12 * PI * pipe_len * pipe_len * (3*rtop^2 + 2*rtop*rbase + rbase^2)
 	     */
 	    cs = M_PI * lin->pipe_len * lin->pipe_len / 12.0
-		 * (3*(lin->pipe_rotop + lin->pipe_ritop)*(lin->pipe_rotop - lin->pipe_ritop)
-		    + 2*(lin->pipe_robase*lin->pipe_rotop - lin->pipe_ribase*lin->pipe_ritop)
-		    + (lin->pipe_robase + lin->pipe_ribase)*(lin->pipe_robase - lin->pipe_ribase));
+		* (3*(lin->pipe_rotop + lin->pipe_ritop)*(lin->pipe_rotop - lin->pipe_ritop)
+		   + 2*(lin->pipe_robase*lin->pipe_rotop - lin->pipe_ribase*lin->pipe_ritop)
+		   + (lin->pipe_robase + lin->pipe_ribase)*(lin->pipe_robase - lin->pipe_ribase));
 	    VCOMB2(cp, crt_vol, lin->pipe_V, cs, lin->pipe_H);
 	    VADD2(*cent, *cent, cp);
 	}
@@ -4885,6 +4887,7 @@ pipe_elem_volume_and_centroid(struct id_pipe *p, fastf_t *vol, point_t *cent)
 	}
     }
 }
+
 
 /**
  * R T _ P I P E _ V O L U M E
@@ -4935,6 +4938,7 @@ rt_pipe_centroid(point_t *cent, struct rt_db_internal *ip)
     VSCALE(*cent, *cent, 1/vol);
     pipe_elements_free(&head);
 }
+
 
 /*
  * Local Variables:
