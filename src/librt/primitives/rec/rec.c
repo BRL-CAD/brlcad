@@ -515,8 +515,8 @@ rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	    /* if the descriminant is positive, there are two roots */
 
 	    descriminant = sqrt(descriminant);
-	    k1 = (-b+descriminant) * 0.5;
-	    k2 = (-b-descriminant) * (-0.5);
+	    k1 = (descriminant-b) * 0.5;
+	    k2 = (descriminant+b) * (-0.5);
 
 	    /*
 	     * k1 and k2 are potential solutions to intersection with side.
