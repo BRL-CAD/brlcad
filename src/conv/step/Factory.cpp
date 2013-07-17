@@ -29,6 +29,12 @@
 /* implementation headers */
 #include "STEPEntity.h"
 
+#ifdef AP203e2
+#  define SCHEMA_NAMESPACE ap203_configuration_controlled_3d_design_of_mechanical_parts_and_assemblies_mim_lf
+#else
+#  define SCHEMA_NAMESPACE config_control_design
+#endif
+
 
 #define CLASSNAME "Factory"
 const char *Factory::factoryname = "AP203e2 Object Factory";
@@ -91,13 +97,13 @@ Factory::CreateObject(STEPWrapper *sw, SDAI_Application_instance *sse)
     if (sse->IsComplex()) {
 	//std::cout << "Complex Entity Instance Name:" << sse->EntityName() << " ID:"
 	//		<< sse->STEPfile_id << std::endl;
-	if (sse->IsA(config_control_design::e_b_spline_curve)) {
+	if (sse->IsA(SCHEMA_NAMESPACE::e_b_spline_curve)) {
 	    return (STEPEntity *)CreateCurveObject(sw, sse);
-	} else if (sse->IsA(config_control_design::e_b_spline_surface)) {
+	} else if (sse->IsA(SCHEMA_NAMESPACE::e_b_spline_surface)) {
 	    return (STEPEntity *)CreateSurfaceObject(sw, sse);
-	} else if (sse->IsA(config_control_design::e_named_unit)) {
+	} else if (sse->IsA(SCHEMA_NAMESPACE::e_named_unit)) {
 	    return (STEPEntity *)CreateNamedUnitObject(sw, sse);
-	} else if (sse->IsA(config_control_design::e_surface_curve)) {
+	} else if (sse->IsA(SCHEMA_NAMESPACE::e_surface_curve)) {
 	    /*
 	     * ONEOF (
 	     INTERSECTION_CURVE,
@@ -105,7 +111,7 @@ Factory::CreateObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 	     ANDOR
 	     BOUNDED_SURFACE_CURVE
 	    */
-	} else if (sse->IsA(config_control_design::e_topological_representation_item)) {
+	} else if (sse->IsA(SCHEMA_NAMESPACE::e_topological_representation_item)) {
 	    //loop_path;
 	    /*
 	     * ONEOF (
@@ -121,10 +127,10 @@ Factory::CreateObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 	     ANDOR
 	     PATH))
 	    */
-	} else if (sse->IsA(config_control_design::e_shape_representation_relationship)) {
+	} else if (sse->IsA(SCHEMA_NAMESPACE::e_shape_representation_relationship)) {
 	    // not sure why complex here
 	    return (STEPEntity *)CreateShapeRepresentationRelationshipObject(sw, sse);
-	} else if (sse->IsA(config_control_design::e_representation_context)) {
+	} else if (sse->IsA(SCHEMA_NAMESPACE::e_representation_context)) {
 	    // not sure why complex here
 	    return (STEPEntity *)CreateRepresentationContext(sw, sse);
 	} else {
@@ -166,9 +172,9 @@ Factory::CreateCurveObject(STEPWrapper *sw, SDAI_Application_instance *sse)
     if (sse->IsComplex()) {
 	//std::cout << "Complex Entity Instance Name:" << sse->EntityName() << " ID:"
 	//		<< sse->STEPfile_id << std::endl;
-	if (sse->IsA(config_control_design::e_b_spline_curve)) {
-	    if (sse->IsA(config_control_design::e_rational_b_spline_curve)) {
-		if (sse->IsA(config_control_design::e_uniform_curve)) {
+	if (sse->IsA(SCHEMA_NAMESPACE::e_b_spline_curve)) {
+	    if (sse->IsA(SCHEMA_NAMESPACE::e_rational_b_spline_curve)) {
+		if (sse->IsA(SCHEMA_NAMESPACE::e_uniform_curve)) {
 		    methodname = "Rational_Uniform_Curve";
 		    //std::cout << "   Entity of type:rational_uniform_curve" << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -176,7 +182,7 @@ Factory::CreateCurveObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(config_control_design::e_quasi_uniform_curve)) {
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_quasi_uniform_curve)) {
 		    methodname = "Rational_Quasi_Uniform_Curve";
 		    //std::cout << "   Entity of type:rational_quasi_uniform_curve" << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -184,7 +190,7 @@ Factory::CreateCurveObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(config_control_design::e_bezier_curve)) {
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_bezier_curve)) {
 		    methodname = "Rational_Bezier_Curve";
 		    //std::cout << "   Entity of type:rational_bezier_curve" << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -192,7 +198,7 @@ Factory::CreateCurveObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(config_control_design::e_b_spline_curve_with_knots)) {
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_b_spline_curve_with_knots)) {
 		    methodname = "Rational_B_Spline_Curve_With_Knots";
 		    //std::cout << "   Entity of type:rational_b_spline_curve_with_knots" << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -246,9 +252,9 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
     if (sse->IsComplex()) {
 	//std::cout << "Complex Entity Instance Name:" << sse->EntityName() << " ID:"
 	//		<< sse->STEPfile_id << std::endl;
-	if (sse->IsA(config_control_design::e_named_unit)) {
-	    if (sse->IsA(config_control_design::e_si_unit)) {
-		if (sse->IsA(config_control_design::e_length_unit)) {
+	if (sse->IsA(SCHEMA_NAMESPACE::e_named_unit)) {
+	    if (sse->IsA(SCHEMA_NAMESPACE::e_si_unit)) {
+		if (sse->IsA(SCHEMA_NAMESPACE::e_length_unit)) {
 		    methodname = "Length_Si_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -256,7 +262,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(config_control_design::e_mass_unit)) {
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_mass_unit)) {
 		    methodname = "Mass_Si_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -264,8 +270,8 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-#ifdef AP203e
-		} else if (sse->IsA(config_control_design::e_time_unit)) {
+#ifdef AP203e2
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_time_unit)) {
 		    methodname = "Time_Si_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -273,7 +279,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(config_control_design::e_electric_current_unit)) {
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_electric_current_unit)) {
 		    methodname = "Electric_Current_Si_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -281,7 +287,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(config_control_design::e_thermodynamic_temperature_unit)) {
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_thermodynamic_temperature_unit)) {
 		    methodname = "Thermodynamic_Temperature_Si_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -289,7 +295,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(config_control_design::e_amount_of_substance_unit)) {
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_amount_of_substance_unit)) {
 		    methodname = "Amount_Of_Substance_Si_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -297,7 +303,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(config_control_design::e_luminous_intensity_unit)) {
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_luminous_intensity_unit)) {
 		    methodname = "Luminous_Intensity_Si_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -306,7 +312,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 		    }
 		    f = (*i).second;
 #endif
-		} else if (sse->IsA(config_control_design::e_plane_angle_unit)) {
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_plane_angle_unit)) {
 		    methodname = "Plane_Angle_Si_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -314,7 +320,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(config_control_design::e_solid_angle_unit)) {
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_solid_angle_unit)) {
 		    methodname = "Solid_Angle_Si_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -322,7 +328,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(config_control_design::e_area_unit)) {
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_area_unit)) {
 		    methodname = "Area_Si_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -330,7 +336,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(config_control_design::e_volume_unit)) {
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_volume_unit)) {
 		    methodname = "Volume_Si_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -338,8 +344,8 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-#ifdef AP203e
-		} else if (sse->IsA(config_control_design::e_ratio_unit)) {
+#ifdef AP203e2
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_ratio_unit)) {
 		    methodname = "Ratio_Si_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -352,8 +358,8 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 		    std::cerr << "Unknown complex type for SI_Named_Unit." << std::endl;
 		    return NULL;
 		}
-	    } else if (sse->IsA(config_control_design::e_conversion_based_unit)) {
-		if (sse->IsA(config_control_design::e_length_unit)) {
+	    } else if (sse->IsA(SCHEMA_NAMESPACE::e_conversion_based_unit)) {
+		if (sse->IsA(SCHEMA_NAMESPACE::e_length_unit)) {
 		    methodname = "Length_Conversion_Based_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -361,7 +367,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(config_control_design::e_mass_unit)) {
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_mass_unit)) {
 		    methodname = "Mass_Conversion_Based_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -369,8 +375,8 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-#ifdef AP203e
-		} else if (sse->IsA(config_control_design::e_time_unit)) {
+#ifdef AP203e2
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_time_unit)) {
 		    methodname = "Time_Conversion_Based_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -378,7 +384,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(config_control_design::e_electric_current_unit)) {
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_electric_current_unit)) {
 		    methodname = "Electric_Current_Conversion_Based_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -386,7 +392,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(config_control_design::e_thermodynamic_temperature_unit)) {
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_thermodynamic_temperature_unit)) {
 		    methodname = "Thermodynamic_Temperature_Conversion_Based_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -394,7 +400,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(config_control_design::e_amount_of_substance_unit)) {
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_amount_of_substance_unit)) {
 		    methodname = "Amount_Of_Substance_Conversion_Based_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -402,7 +408,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(config_control_design::e_luminous_intensity_unit)) {
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_luminous_intensity_unit)) {
 		    methodname = "Luminous_Intensity_Conversion_Based_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -411,7 +417,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 		    }
 		    f = (*i).second;
 #endif
-		} else if (sse->IsA(config_control_design::e_plane_angle_unit)) {
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_plane_angle_unit)) {
 		    methodname = "Plane_Angle_Conversion_Based_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -419,7 +425,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(config_control_design::e_solid_angle_unit)) {
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_solid_angle_unit)) {
 		    methodname = "Solid_Angle_Conversion_Based_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -427,7 +433,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(config_control_design::e_area_unit)) {
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_area_unit)) {
 		    methodname = "Area_Conversion_Based_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -435,7 +441,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(config_control_design::e_volume_unit)) {
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_volume_unit)) {
 		    methodname = "Volume_Conversion_Based_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -443,8 +449,8 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-#ifdef AP203e
-		} else if (sse->IsA(config_control_design::e_ratio_unit)) {
+#ifdef AP203e2
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_ratio_unit)) {
 		    methodname = "Ratio_Conversion_Based_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -457,8 +463,8 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 		    std::cerr << "Unknown complex type for Conversion_Based_Named_Unit." << std::endl;
 		    return NULL;
 		}
-	    } else if (sse->IsA(config_control_design::e_context_dependent_unit)) {
-		if (sse->IsA(config_control_design::e_length_unit)) {
+	    } else if (sse->IsA(SCHEMA_NAMESPACE::e_context_dependent_unit)) {
+		if (sse->IsA(SCHEMA_NAMESPACE::e_length_unit)) {
 		    methodname = "Length_Context_Dependent_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -466,7 +472,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(config_control_design::e_mass_unit)) {
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_mass_unit)) {
 		    methodname = "Mass_Context_Dependent_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -474,8 +480,8 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-#ifdef AP203e
-		} else if (sse->IsA(config_control_design::e_time_unit)) {
+#ifdef AP203e2
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_time_unit)) {
 		    methodname = "Time_Context_Dependent_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -483,7 +489,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(config_control_design::e_electric_current_unit)) {
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_electric_current_unit)) {
 		    methodname = "Electric_Current_Context_Dependent_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -491,7 +497,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(config_control_design::e_thermodynamic_temperature_unit)) {
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_thermodynamic_temperature_unit)) {
 		    methodname = "Thermodynamic_Temperature_Context_Dependent_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -499,7 +505,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(config_control_design::e_amount_of_substance_unit)) {
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_amount_of_substance_unit)) {
 		    methodname = "Amount_Of_Substance_Context_Dependent_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -507,7 +513,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(config_control_design::e_luminous_intensity_unit)) {
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_luminous_intensity_unit)) {
 		    methodname = "Luminous_Intensity_Context_Dependent_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -516,7 +522,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 		    }
 		    f = (*i).second;
 #endif
-		} else if (sse->IsA(config_control_design::e_plane_angle_unit)) {
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_plane_angle_unit)) {
 		    methodname = "Plane_Angle_Context_Dependent_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -524,7 +530,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(config_control_design::e_solid_angle_unit)) {
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_solid_angle_unit)) {
 		    methodname = "Solid_Angle_Context_Dependent_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -532,7 +538,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(config_control_design::e_area_unit)) {
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_area_unit)) {
 		    methodname = "Area_Context_Dependent_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -540,7 +546,7 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(config_control_design::e_volume_unit)) {
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_volume_unit)) {
 		    methodname = "Volume_Context_Dependent_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -548,8 +554,8 @@ Factory::CreateNamedUnitObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-#ifdef AP203e
-		} else if (sse->IsA(config_control_design::e_ratio_unit)) {
+#ifdef AP203e2
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_ratio_unit)) {
 		    methodname = "Ratio_Context_Dependent_Unit";
 		    //std::cout << "   Entity of type: " << methodname << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -604,9 +610,9 @@ Factory::CreateSurfaceObject(STEPWrapper *sw, SDAI_Application_instance *sse)
     if (sse->IsComplex()) {
 	//std::cout << "Complex Entity Instance Name:" << sse->EntityName() << " ID:"
 	//		<< sse->STEPfile_id << std::endl;
-	if (sse->IsA(config_control_design::e_b_spline_surface)) {
-	    if (sse->IsA(config_control_design::e_rational_b_spline_surface)) {
-		if (sse->IsA(config_control_design::e_uniform_surface)) {
+	if (sse->IsA(SCHEMA_NAMESPACE::e_b_spline_surface)) {
+	    if (sse->IsA(SCHEMA_NAMESPACE::e_rational_b_spline_surface)) {
+		if (sse->IsA(SCHEMA_NAMESPACE::e_uniform_surface)) {
 		    methodname = "Rational_Uniform_Surface";
 		    //std::cout << "   Entity of type:rational_uniform_surface" << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -614,7 +620,7 @@ Factory::CreateSurfaceObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(config_control_design::e_quasi_uniform_surface)) {
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_quasi_uniform_surface)) {
 		    methodname = "Rational_Quasi_Uniform_Surface";
 		    //std::cout << "   Entity of type:rational_quasi_uniform_surface" << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -622,7 +628,7 @@ Factory::CreateSurfaceObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(config_control_design::e_bezier_surface)) {
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_bezier_surface)) {
 		    methodname = "Rational_Bezier_Surface";
 		    //std::cout << "   Entity of type:rational_bezier_surface" << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -630,7 +636,7 @@ Factory::CreateSurfaceObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 			return NULL;
 		    }
 		    f = (*i).second;
-		} else if (sse->IsA(config_control_design::e_b_spline_surface_with_knots)) {
+		} else if (sse->IsA(SCHEMA_NAMESPACE::e_b_spline_surface_with_knots)) {
 		    methodname = "Rational_B_Spline_Surface_With_Knots";
 		    //std::cout << "   Entity of type:rational_b_spline_surface_with_knots" << std::endl;
 		    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -682,7 +688,7 @@ Factory::CreateShapeRepresentationRelationshipObject(STEPWrapper *sw, SDAI_Appli
     FACTORYMAP::iterator i;
 
     if (sse->IsComplex()) {
-	if (sse->IsA(config_control_design::e_shape_representation_relationship)) {
+	if (sse->IsA(SCHEMA_NAMESPACE::e_shape_representation_relationship)) {
 	    if ((i = methodmap.find(methodname)) == methodmap.end()) {
 		std::cerr << "Factory Method not mapped: " << methodname << std::endl;
 		return NULL;
@@ -690,7 +696,7 @@ Factory::CreateShapeRepresentationRelationshipObject(STEPWrapper *sw, SDAI_Appli
 	    f = (*i).second;
 	} else {
 	    // not sure if/why this would happen so error for now
-	    std::cerr << CLASSNAME << ": Tagged as complex config_control_design::e_shape_representation_relationship but not complex." << std::endl;
+	    std::cerr << CLASSNAME << ": Tagged as complex SCHEMA_NAMESPACE::e_shape_representation_relationship but not complex." << std::endl;
 	    return NULL;
 	}
     } else {
@@ -722,7 +728,7 @@ Factory::CreateRepresentationContext(STEPWrapper *sw, SDAI_Application_instance 
     FACTORYMAP::iterator i;
 
     if (sse->IsComplex()) {
-	if (sse->IsA(config_control_design::e_geometric_representation_context)) {
+	if (sse->IsA(SCHEMA_NAMESPACE::e_geometric_representation_context)) {
 	    methodname = "Geometric_Representation_Context";
 	    //std::cout << "   Entity of type:rational_b_spline_surface_with_knots" << std::endl;
 	    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -730,7 +736,7 @@ Factory::CreateRepresentationContext(STEPWrapper *sw, SDAI_Application_instance 
 		return NULL;
 	    }
 	    f = (*i).second;
-	} else if (sse->IsA(config_control_design::e_global_uncertainty_assigned_context)) {
+	} else if (sse->IsA(SCHEMA_NAMESPACE::e_global_uncertainty_assigned_context)) {
 	    methodname = "Global_Uncertainty_Assigned_Context";
 	    //std::cout << "   Entity of type:rational_b_spline_surface_with_knots" << std::endl;
 	    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -738,7 +744,7 @@ Factory::CreateRepresentationContext(STEPWrapper *sw, SDAI_Application_instance 
 		return NULL;
 	    }
 	    f = (*i).second;
-	} else if (sse->IsA(config_control_design::e_global_unit_assigned_context)) {
+	} else if (sse->IsA(SCHEMA_NAMESPACE::e_global_unit_assigned_context)) {
 	    methodname = "Global_Unit_Assigned_Context";
 	    //std::cout << "   Entity of type:rational_b_spline_surface_with_knots" << std::endl;
 	    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -746,7 +752,7 @@ Factory::CreateRepresentationContext(STEPWrapper *sw, SDAI_Application_instance 
 		return NULL;
 	    }
 	    f = (*i).second;
-	} else if (sse->IsA(config_control_design::e_parametric_representation_context)) {
+	} else if (sse->IsA(SCHEMA_NAMESPACE::e_parametric_representation_context)) {
 	    methodname = "Parametric_Representation_Context";
 	    //std::cout << "   Entity of type:rational_b_spline_surface_with_knots" << std::endl;
 	    if ((i = methodmap.find(methodname)) == methodmap.end()) {
@@ -756,7 +762,7 @@ Factory::CreateRepresentationContext(STEPWrapper *sw, SDAI_Application_instance 
 	    f = (*i).second;
 	} else {
 	    // not sure if/why this would happen so error for now
-	    std::cerr << CLASSNAME << ": Tagged as complex config_control_design::e_shape_representation_relationship but not complex." << std::endl;
+	    std::cerr << CLASSNAME << ": Tagged as complex SCHEMA_NAMESPACE::e_shape_representation_relationship but not complex." << std::endl;
 	    return NULL;
 	}
     } else {

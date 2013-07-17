@@ -24,6 +24,12 @@
  *
  */
 
+#ifdef AP203e2
+#  define SCHEMA_NAMESPACE ap203_configuration_controlled_3d_design_of_mechanical_parts_and_assemblies_mim_lf
+#else
+#  define SCHEMA_NAMESPACE config_control_design
+#endif
+
 #include "STEPWrapper.h"
 #include "Factory.h"
 #include "Surface.h"
@@ -120,8 +126,8 @@ SurfaceCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
 		const TypeDescriptor *underlying_type = p_or_s->CurrentUnderlyingType();
 
-		if (underlying_type == config_control_design::e_pcurve ||
-		    underlying_type == config_control_design::e_surface)
+		if (underlying_type == SCHEMA_NAMESPACE::e_pcurve ||
+		    underlying_type == SCHEMA_NAMESPACE::e_surface)
 		{
 		    PCurveOrSurface *aPCOS = new PCurveOrSurface();
 

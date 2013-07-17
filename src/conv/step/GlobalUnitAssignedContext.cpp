@@ -189,8 +189,8 @@ GlobalUnitAssignedContext::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 #ifdef AP203e2
 	    } else if (unit->IsDerived_unit()) { 		//TODO: derived_unit
 		SdaiDerived_unit *sdu = *unit;
-		NamedUnit *nu = (NamedUnit *)
-				Unit * du = dynamic_cast<Unit *>(Factory::CreateObject(sw, (SDAI_Application_instance *)sdu));
+		//NamedUnit *nu = (NamedUnit *);
+		Unit * du = dynamic_cast<Unit *>(Factory::CreateObject(sw, (SDAI_Application_instance *)sdu));
 		units.push_back(du);
 #endif
 	    } else {

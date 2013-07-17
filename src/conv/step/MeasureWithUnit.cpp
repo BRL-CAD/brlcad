@@ -129,7 +129,7 @@ MeasureWithUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    if (u->IsNamed_unit()) {
 		SdaiNamed_unit *nu = *u;
 		unit_component = dynamic_cast<Unit *>(Factory::CreateObject(sw, (SDAI_Application_instance *)nu));
-#ifdef AP203e
+#ifdef AP203e2
 	    } else if (u->IsDerived_unit()) {
 		SdaiDerived_unit *du = *u;
 		unit_component = dynamic_cast<Unit *>(Factory::CreateObject(sw, (SDAI_Application_instance *)du));
