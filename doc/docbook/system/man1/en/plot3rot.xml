@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!-- lifted from troff+man by doclifter -->
-<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='plrot1'>
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='plot3rot1'>
 <refmeta>
-    <refentrytitle>PLROT
+    <refentrytitle>PLOT3ROT
 </refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
@@ -10,13 +10,13 @@
 </refmeta>
 
 <refnamediv>
-<refname>plrot</refname>
+<refname>plot3rot</refname>
 <refpurpose>rotate, translate, or scale a UnixPlot file</refpurpose>
 </refnamediv>
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>plrot</command>
+  <command>plot3rot</command>
     <arg choice='opt'><arg choice='plain'>-x# </arg><arg choice='plain'>-y# </arg><arg choice='plain'>-z# </arg></arg>
     <arg choice='opt'><arg choice='plain'>-X# </arg><arg choice='plain'>-Y# </arg><arg choice='plain'>-Z# </arg></arg>
     <arg choice='opt'>-s# </arg>
@@ -35,9 +35,9 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Plrot</emphasis>
+<para><emphasis remap='I'>Plot3rot</emphasis>
 will rotate translate or scale a UnixPlot file (see
-<citerefentry><refentrytitle>plot</refentrytitle><manvolnum>5</manvolnum></citerefentry>).
+<citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>).
 Any number of the above options can be given.
 Each operation is performed left to right in the order in which they appear
 on the command line,
@@ -81,7 +81,7 @@ the advantage of keeping the entire model in view from any angle,
 and is invariant with respect to viewing direction.
 It has the disadvantage that the "space" will be enlarged on every
 cascaded pass through
-<citerefentry><refentrytitle>plrot</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+<citerefentry><refentrytitle>plot3rot</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 where the
 <option>-M</option>
 flag is used.</para>
@@ -134,7 +134,7 @@ in the same place.</para>
 <para>The command</para>
 
 <literallayout remap='.nf'>
-plrot -z30 -x20 &lt; file.plot &gt; file2.plot
+plot3rot -z30 -x20 &lt; file.plot3 &gt; file2.plot3
 </literallayout> <!-- .fi -->
 
 <para>performs a 30 degree positive rotation about the Z axis (counter
@@ -148,9 +148,9 @@ be the same.</para>
 ray trace command, you could use:</para>
 
 <literallayout remap='.nf'>
-rthide -a35 -e25 -o file.plot
+rthide -a35 -e25 -o file.plot3
 
-plrot -a35 -e25 -g &lt; file.plot | pl-fb
+plot3rot -a35 -e25 -g &lt; file.plot3 | plot3-fb
 </literallayout> <!-- .fi -->
 
 <para>The final
@@ -160,7 +160,7 @@ conventional UnixPlot (screen) X,Y coordinate system.</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>pl-pl</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pldebug</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pl-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>libplot3</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle>plot3-plot3</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3debug</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>libplot3</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
 
 </refsect1>
 

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!-- lifted from troff+man by doclifter -->
-<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='plcolor1'>
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='plot3color1'>
 <refmeta>
-    <refentrytitle>PLCOLOR
+    <refentrytitle>PLOT3COLOR
 </refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
@@ -10,13 +10,13 @@
 </refmeta>
 
 <refnamediv>
-<refname>plcolor</refname>
+<refname>plot3color</refname>
 <refpurpose>output a UnixPlot color command</refpurpose>
 </refnamediv>
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>color</command>
+  <command>plot3color</command>
     <arg choice='plain'><replaceable>r</replaceable></arg>
     <arg choice='plain'><replaceable>g</replaceable></arg>
     <arg choice='plain'><replaceable>b</replaceable></arg>
@@ -27,7 +27,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Plcolor</emphasis>
+<para><emphasis remap='I'>Plot3color</emphasis>
 outputs a UnixPlot command to set the current drawing color to
 the given
 <emphasis remap='I'>r g</emphasis>
@@ -45,7 +45,7 @@ from shell commands.</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>plline2</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pl-pl</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+<para><citerefentry><refentrytitle>plot3line2</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3-plot3</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
 
 </refsect1>
 

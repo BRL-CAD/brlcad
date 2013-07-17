@@ -22,7 +22,7 @@
     <arg choice='plain' rep='repeat'><replaceable>objects</replaceable></arg>
 
     <arg choice='plain'><replaceable>&gt;</replaceable></arg>
-    <arg choice='plain'><replaceable>model.pl</replaceable></arg>
+    <arg choice='plain'><replaceable>model.plot3</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -131,9 +131,9 @@ to the given value.</para>
   <varlistentry>
   <term><option>-o</option></term>
   <listitem>
-<para><emphasis remap='B'>output.pl</emphasis>
+<para><emphasis remap='B'>output.plot3</emphasis>
 specifies a named file for output.
-By default, the plot is written to hide.pl.</para>
+By default, the plot is written to hide.plot3.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -156,7 +156,7 @@ which is most useful when used with
 <para>This section shows the ordinary usage of <command>rthide</command>.  For example,</para>
 
 <literallayout remap='.nf'>
-rthide -a# -e# -s32 model.g all.g &gt; file.pl
+rthide -a# -e# -s32 model.g all.g &gt; file.plot3
 </literallayout> <!-- .fi -->
 
 <para>results in a 32 by 32 UNIXplot file of the named model at the specified
@@ -165,7 +165,7 @@ of the plot based on surface curvature.  In order to minimize
 this cross-hatching, an angle can be specified:</para>
 
 <literallayout remap='.nf'>
-rthide -a# -e# -s32 -A89.0  model.g all.g &gt; file.pl
+rthide -a# -e# -s32 -A89.0  model.g all.g &gt; file.plot3
 </literallayout> <!-- .fi -->
 
 <para>eliminates cross-hatching due to curvature.  However,
@@ -173,22 +173,22 @@ cross-hatching resulting from sharp
 changes in gradient cannot be eliminated.</para>
 
 <para>The plotfile resulting from an <command>rthide</command> run can be viewed directly
-via <emphasis remap='I'>pl-sgi</emphasis> and may be rotated with <emphasis remap='B'>plrot</emphasis> at the user's option:</para>
+via <emphasis remap='I'>plot3-fb</emphasis> and may be rotated with <emphasis remap='B'>plot3rot</emphasis> at the user's option:</para>
 
 <literallayout remap='.nf'>
-pl-sgi hide.pl
+plot3-fb hide.plot3
 </literallayout> <!-- .fi -->
 
 <para>or</para>
 
 <literallayout remap='.nf'>
-plrot -a# -e# -g hide.pl | pl-sgi
+plot3rot -a# -e# -g hide.plot3 | plot3-fb
 </literallayout> <!-- .fi -->
 
 <para>or it can be overlaid onto a solid model in <emphasis remap='I'>mged</emphasis>:</para>
 
 <literallayout remap='.nf'>
-mged&gt; overlay hide.pl
+mged&gt; overlay hide.plot3
 </literallayout> <!-- .fi -->
 
 <para>This technique can be used to position and plot <command>rthide</command> output.</para>
@@ -202,15 +202,15 @@ which assumes that FB_FILE points to a valid framebuffer:</para>
 	EL=25
 	# Directly to the framebuffer
 	rt -s512 -a$AZ -e$EL moss.g all.g 2&gt; rt.log
-	rthide -A89.9 -s256 -a$AZ -e$EL -o rthide.pl moss.g all.g 2&gt; rthide.log
-	eval `rtregis rthide.log rt.log` &lt; rthide.pl | pl-fb -o -s512
+	rthide -A89.9 -s256 -a$AZ -e$EL -o rthide.plot3 moss.g all.g 2&gt; rthide.log
+	eval `rtregis rthide.log rt.log` &lt; rthide.plot3 | plot3-fb -o -s512
 </literallayout> <!-- .fi -->
 
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
 <para><citerefentry><refentrytitle>cell-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pl-sgi</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plrot</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtray</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtregis</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtscale</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3rot</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtray</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtregis</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtscale</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>libplot3</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>ray</refentrytitle><manvolnum>5V</manvolnum></citerefentry>.</para>
 </refsect1>
 

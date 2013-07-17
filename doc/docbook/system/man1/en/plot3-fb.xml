@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id="plfb1">
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id="plot3fb1">
 <refmeta>
-    <refentrytitle>PL-FB
+    <refentrytitle>PLOT3-FB
     </refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class="source">BRL-CAD</refmiscinfo>
@@ -9,26 +9,26 @@
 </refmeta>
 
 <refnamediv>
-<refname>pl-fb</refname>
+<refname>plot3-fb</refname>
 <refpurpose>display 3-D UNIX plot on a framebuffer</refpurpose>
 </refnamediv>
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
 <cmdsynopsis sepchar=" ">
-  <command>pl-fb</command>
+  <command>plot3-fb</command>
     <arg choice="opt" rep="norepeat">-hoid </arg>
     <arg choice="opt" rep="norepeat">-t <replaceable>line_thickness</replaceable></arg>
     <arg choice="opt" rep="norepeat">-F <replaceable>framebuffer</replaceable></arg>
     <arg choice="opt" rep="norepeat">-S <replaceable>squaresize</replaceable></arg>
     <arg choice="opt" rep="norepeat">-W <replaceable>width</replaceable></arg>
     <arg choice="opt" rep="norepeat">-N <replaceable>height</replaceable></arg>
-    <arg choice="opt" rep="norepeat"><replaceable>file.plot</replaceable></arg>
+    <arg choice="opt" rep="norepeat"><replaceable>file.plot3</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
-<para><emphasis remap="I">Pl-fb</emphasis>
+<para><emphasis remap="I">Plot3-fb</emphasis>
 displays a BRL extended three dimensional UNIX plot file on a framebuffer.
 The environment
 variable
@@ -76,7 +76,7 @@ The thickening will be reduced so that a
 line will never be wider than it is long.</para>
 
 <para>If
-<emphasis remap="I">file.plot</emphasis>
+<emphasis remap="I">file.plot3</emphasis>
 is not specified,
 the plot commands are read from standard in.</para>
 
@@ -85,7 +85,7 @@ format, thus this program can display normal plot files as well.</para>
 </refsection>
 
 <refsection xml:id="see_also"><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>pl-sgi</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plrot</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pldebug</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>libplot3</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+<para><citerefentry><refentrytitle>plot3-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3rot</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3debug</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>libplot3</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
 
 </refsection>
 

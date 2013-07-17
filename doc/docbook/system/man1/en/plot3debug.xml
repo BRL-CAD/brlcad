@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!-- lifted from troff+man by doclifter -->
-<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='pldebug1'>
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='plot3debug1'>
 <refmeta>
-    <refentrytitle>PLDEBUG
+    <refentrytitle>PLOT3DEBUG
 </refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
@@ -10,13 +10,13 @@
 </refmeta>
 
 <refnamediv>
-<refname>pldebug</refname>
+<refname>plot3debug</refname>
 <refpurpose>output a UnixPlot stream in ascii</refpurpose>
 </refnamediv>
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pldebug</command>
+  <command>plot3debug</command>
     <arg choice='opt'>-v </arg>
     <arg choice='opt'><replaceable>unix_plot</replaceable></arg>
 </cmdsynopsis>
@@ -25,7 +25,7 @@
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
 <para>Outputs a UnixPlot (see
-<citerefentry><refentrytitle>plot</refentrytitle><manvolnum>5</manvolnum></citerefentry>)
+<citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>)
 stream in ascii for debugging.  If the
 <option>-v</option>
 option is given, a summary of plot command usage is given at the
@@ -33,7 +33,7 @@ end of the file.  Standard input is read if a file name is not supplied.</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>pl-pl</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plrot</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pl-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>libplot3</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle>plot3-plot3</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3rot</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>libplot3</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
 
 </refsect1>
 

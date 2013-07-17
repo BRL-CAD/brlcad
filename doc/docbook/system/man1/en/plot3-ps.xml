@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!-- lifted from troff+man by doclifter -->
-<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='plps1'>
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='plot3ps1'>
 <refmeta>
-    <refentrytitle>PL-PS
+    <refentrytitle>PLOT3-PS
 </refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
@@ -10,13 +10,13 @@
 </refmeta>
 
 <refnamediv>
-<refname>pl-ps</refname>
+<refname>plot3-ps</refname>
 <refpurpose>convert UnixPlot to PostScript file</refpurpose>
 </refnamediv>
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pl-ps</command>
+  <command>plot3-ps</command>
     <arg choice='opt'>-ec </arg>
     <arg choice='opt'>-s <replaceable>square_output_size</replaceable></arg>
     <arg choice='opt'>-w <replaceable>output_width</replaceable></arg>
@@ -28,7 +28,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Pl-ps</emphasis>
+<para><emphasis remap='I'>Plot3-ps</emphasis>
 converts an extended UnixPlot file to a PostScript file
 suitable for embedding in a larger PostScript document.
 This is especially useful for creating figures for inclusion in TeX
@@ -59,7 +59,7 @@ of this writing.</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>pl-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pl-sgi</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pl-pl</refentrytitle><manvolnum>1</manvolnum></citerefentry>, pl-X(1), <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+<para><citerefentry><refentrytitle>plot3-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3-plot3</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3-X</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
 </refsect1>
 
 <refsect1 xml:id='trademarks'><title>TRADEMARKS</title>

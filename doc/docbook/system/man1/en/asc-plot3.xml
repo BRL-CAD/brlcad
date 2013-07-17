@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!-- lifted from troff+man by doclifter -->
-<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='ascpl1'>
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='ascplot31'>
 <refmeta>
-    <refentrytitle>ASC-PL</refentrytitle>
+    <refentrytitle>ASC-PLOT3</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
 <refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
 </refmeta>
 
 <refnamediv>
-<refname>asc-pl</refname>
+<refname>asc-plot3</refname>
 <refpurpose>produce Plot3 instructions from ASCII representation</refpurpose>
 </refnamediv>
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>asc-pl</command>
+  <command>asc-plot3</command>
     <arg choice='opt'><arg choice='plain'><replaceable>file.asc</replaceable></arg><arg choice='opt'><replaceable>unix_plot</replaceable></arg></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -26,7 +26,7 @@
 and converts it to
 <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 format.
-<emphasis remap='I'>Asc-pl</emphasis>
+<emphasis remap='I'>Asc-plot3</emphasis>
 reads from standard input and writes to standard output
 if file names are not supplied.</para>
 
@@ -46,7 +46,7 @@ Optional white space and lines beginning with the comment character
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>pl-asc</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pl-pl</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plrot</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pl-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>libplot3</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle>plot3-asc</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3-plot3</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3rot</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>libplot3</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
 
 </refsect1>
 

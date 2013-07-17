@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!-- lifted from troff+man by doclifter -->
-<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='plline21'>
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='plot3line21'>
 <refmeta>
-    <refentrytitle>PLLINE2
+    <refentrytitle>PLOT3LINE2
 </refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
@@ -10,13 +10,13 @@
 </refmeta>
 
 <refnamediv>
-<refname>plline2</refname>
+<refname>plot3line2</refname>
 <refpurpose>output a 2D UnixPlot line</refpurpose>
 </refnamediv>
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>plline2</command>    <arg choice='plain'><replaceable>x1</replaceable></arg>
+  <command>plot3line2</command>    <arg choice='plain'><replaceable>x1</replaceable></arg>
     <arg choice='plain'><replaceable>y1</replaceable></arg>
     <arg choice='plain'><replaceable>x2</replaceable></arg>
     <arg choice='plain'><replaceable>y2</replaceable></arg>
@@ -28,7 +28,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Plline2</emphasis>
+<para><emphasis remap='I'>Plot3line2</emphasis>
 outputs a UnixPlot command to draw a line in the XY plane from
 the point
 (<emphasis remap='B'>x1 y1</emphasis>)
@@ -37,7 +37,7 @@ to the point
 These points can be floating point and the output is always written
 as a floating point plotting command.  If you need an integer command
 then feed the output of this through
-<citerefentry><refentrytitle>pl-pl</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+<citerefentry><refentrytitle>plot3-plot3</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 If an optional
 [<emphasis remap='I'>r g b</emphasis>]
 is given, where
@@ -57,7 +57,7 @@ from shell commands.</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>plcolor</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pl-pl</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+<para><citerefentry><refentrytitle>plot3color</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3-plot3</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
 
 </refsect1>
 

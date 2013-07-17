@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!-- lifted from troff+man by doclifter -->
-<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='plpl1'>
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='plot3plot31'>
 <refmeta>
-    <refentrytitle>PL-PL
+    <refentrytitle>PLOT3-PLOT3
 </refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
@@ -10,13 +10,13 @@
 </refmeta>
 
 <refnamediv>
-<refname>pl-pl</refname>
+<refname>plot3-plot3</refname>
 <refpurpose>convert an extended to a simple UnixPlot file</refpurpose>
 </refnamediv>
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>pl-pl</command>
+  <command>plot3-plot3</command>
     <arg choice='opt'>-v </arg>
     <arg choice='opt'>-S </arg>
     <arg choice='plain'><replaceable>&lt;</replaceable></arg>
@@ -34,7 +34,7 @@ that format to include color, three dimensional plotting, machine
 independent floating point coordinates, and a flush command for
 interactive output.</para>
 
-<para><emphasis remap='I'>Pl-pl</emphasis>
+<para><emphasis remap='I'>Plot3-plot3</emphasis>
 converts an extended UnixPlot file to the simpler format for
 use by older, and non-extended, programs.  It drops color and
 flush commands, strips the Z coordinate of 3D commands, and
@@ -56,7 +56,7 @@ a space command since most older UnixPlot programs require them.</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>plot</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plrot</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pl-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pldebug</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>libplot3</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle>plot</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3rot</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3debug</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>libplot3</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
 
 </refsect1>
 
