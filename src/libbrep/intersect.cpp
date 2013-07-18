@@ -2099,7 +2099,6 @@ link_curves(ON_Curve*& c1, ON_Curve*& c2)
 }
 
 
-
 int
 ON_Intersect(const ON_Surface* surfA,
 	     const ON_Surface* surfB,
@@ -2236,7 +2235,7 @@ ON_Intersect(const ON_Surface* surfA,
     for (int i = 0; i < overlaps.Count(); i++) {
 	if (!overlaps[i] || !overlapA[i] || !overlapB[i])
 	    continue;
-	
+
 	for (int j = i + 1; j <= overlaps.Count(); j++) {
 	    if (overlaps[i]->IsClosed() && overlapA[i]->IsClosed() && overlapB[i]->IsClosed()) {
 		// The i-th curve is close loop, we get a complete boundary of
@@ -2312,7 +2311,7 @@ ON_Intersect(const ON_Surface* surfA,
 		    overlapA[i] = link_curves(overlapA[i], overlapA[j]);
 		    overlapB[i] = link_curves(overlapB[i], overlapB[j]);
 		}
-	    } 
+	    }
 	}
     }
 
