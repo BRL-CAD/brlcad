@@ -2080,6 +2080,27 @@ curve_fitting(ON_Curve* in, double fitting_tolerance, bool delete_curve)
     return in;
 }
 
+
+ON_Curve*
+link_curves(ON_Curve*& c1, ON_Curve*& c2)
+{
+    ON_NurbsCurve* nc1 = c1->NurbsCurve();
+    ON_NurbsCurve* nc2 = c2->NurbsCurve();
+    if (nc1 && nc2) {
+	nc1->Append(*nc2);
+	delete c1;
+	delete c2;
+	c1 = NULL;
+	c2 = NULL;
+	delete nc2;
+	bu_log("%lf %lf %lf %lf %lf %lf\n", nc1->PointAtStart().x, nc1->PointAtStart().y, nc1->PointAtStart().z, nc1->PointAtEnd().x, nc1->PointAtEnd().y, nc1->PointAtEnd().z);
+	return nc1;
+    }
+    return NULL;
+}
+
+
+
 int
 ON_Intersect(const ON_Surface* surfA,
 	     const ON_Surface* surfB,
@@ -2212,6 +2233,68 @@ ON_Intersect(const ON_Surface* surfA,
 	    }
 	}
     }
+
+    for (int i = 0; i < overlaps.Count(); i++) {
+	if (!overlaps[i] || !overlapA[i] || !overlapB[i])
+	    continue;
+	
+	for (int j = i + 1; j <= overlaps.Count(); j++) {
+	    if (overlaps[i]->IsClosed() && overlapA[i]->IsClosed() && overlapB[i]->IsClosed()) {
+		// The i-th curve is close loop, we get a complete boundary of
+		// that overlap region.
+		// The overlap region should be to the LEFT of that boundary.
+		ON_SSX_EVENT Event;
+		Event.m_curve3d = overlaps[i];
+		Event.m_curveA = overlapA[i];
+		Event.m_curveB = overlapB[i];
+		Event.m_type = ON_SSX_EVENT::ssx_overlap;
+		x.Append(Event);
+		// Set the curves to NULL in case that they are deleted by
+		// ~ON_SSX_EVENT() or ~ON_CurveArray().
+		Event.m_curve3d = Event.m_curveA = Event.m_curveB = NULL;
+		overlaps[i] = overlapA[i] = overlapB[i] = NULL;
+		break;
+	    }
+	    if (j == overlaps.Count() && !overlaps[j] || !overlapA[j] || !overlapB[j])
+		continue;
+	    // Merge the curves that link together.
+	    if (overlaps[i]->PointAtStart().DistanceTo(overlaps[j]->PointAtEnd()) < intersection_tolerance
+		&& overlapA[i]->PointAtStart().DistanceTo(overlapA[j]->PointAtEnd()) < intersection_tolerance_A
+		&& overlapB[i]->PointAtStart().DistanceTo(overlapB[j]->PointAtEnd()) < intersection_tolerance_B) {
+		// end -- start -- end -- start
+		overlaps[i] = link_curves(overlaps[j], overlaps[i]);
+		overlapA[i] = link_curves(overlapA[j], overlapA[i]);
+		overlapB[i] = link_curves(overlapB[j], overlapB[i]);
+	    } else if (overlaps[i]->PointAtEnd().DistanceTo(overlaps[j]->PointAtStart()) < intersection_tolerance
+		       && overlapA[i]->PointAtEnd().DistanceTo(overlapA[j]->PointAtStart()) < intersection_tolerance_A
+		       && overlapB[i]->PointAtEnd().DistanceTo(overlapB[j]->PointAtStart()) < intersection_tolerance_B) {
+		// start -- end -- start -- end
+		overlaps[i] = link_curves(overlaps[i], overlaps[j]);
+		overlapA[i] = link_curves(overlapA[i], overlapA[j]);
+		overlapB[i] = link_curves(overlapB[i], overlapB[j]);
+	    } else if (overlaps[i]->PointAtStart().DistanceTo(overlaps[j]->PointAtStart()) < intersection_tolerance
+		       && overlapA[i]->PointAtStart().DistanceTo(overlapA[j]->PointAtStart()) < intersection_tolerance_A
+		       && overlapB[i]->PointAtStart().DistanceTo(overlapB[j]->PointAtStart()) < intersection_tolerance_B) {
+		// end -- start -- start -- end
+		if (overlaps[i]->Reverse() && overlapA[i]->Reverse() && overlapB[i]->Reverse()) {
+		    overlaps[i] = link_curves(overlaps[i], overlaps[j]);
+		    overlapA[i] = link_curves(overlapA[i], overlapA[j]);
+		    overlapB[i] = link_curves(overlapB[i], overlapB[j]);
+		}
+	    } else if (overlaps[i]->PointAtEnd().DistanceTo(overlaps[j]->PointAtEnd()) < intersection_tolerance
+		       && overlapA[i]->PointAtEnd().DistanceTo(overlapA[j]->PointAtEnd()) < intersection_tolerance_A
+		       && overlapB[i]->PointAtEnd().DistanceTo(overlapB[j]->PointAtEnd()) < intersection_tolerance_B) {
+		// start -- end -- end -- start
+		if (overlaps[j]->Reverse() && overlapA[j]->Reverse() && overlapB[j]->Reverse()) {
+		    overlaps[i] = link_curves(overlaps[i], overlaps[j]);
+		    overlapA[i] = link_curves(overlapA[i], overlapA[j]);
+		    overlapB[i] = link_curves(overlapB[i], overlapB[j]);
+		}
+	    } 
+	}
+    }
+
+    if (x.Count()) return x.Count();
 
     /* Second step: calculate the intersection of the bounding boxes.
      * Only the children of intersecting b-box pairs need to be considered.
@@ -2663,7 +2746,7 @@ ON_Intersect(const ON_Surface* surfA,
 		ssx->m_type = ON_SSX_EVENT::ssx_tangent;
 	    else
 		ssx->m_type = ON_SSX_EVENT::ssx_transverse;
-	    // TODO: Check ssx_overlap
+	    // ssx_overlap is handled above.
 	    x.Append(*ssx);
 	}
     }
