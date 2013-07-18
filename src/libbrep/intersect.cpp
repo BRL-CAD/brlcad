@@ -2243,9 +2243,7 @@ ON_Intersect(const ON_Surface* surfA,
 		// The overlap region should be to the LEFT of that *m_curveA*.
 		// (See opennurbs/opennurbs_x.h)
 		double midA = overlapA[i]->Domain().Mid();
-		double midB = overlapB[i]->Domain().Mid();
 		ON_3dVector normalA = ON_CrossProduct(ON_zaxis, overlapA[i]->TangentAt(midA));
-		ON_3dVector normalB = ON_CrossProduct(ON_zaxis, overlapB[i]->TangentAt(midB));
 		ON_3dPoint left_ptA, right_ptA, mid_ptA;
 		mid_ptA = overlapA[i]->PointAt(midA);
 		left_ptA = mid_ptA + normalA*overlapA[i]->BoundingBox().Diagonal().Length();
@@ -2276,7 +2274,7 @@ ON_Intersect(const ON_Surface* surfA,
 		overlaps[i] = overlapA[i] = overlapB[i] = NULL;
 		break;
 	    }
-	    if (j == overlaps.Count() && !overlaps[j] || !overlapA[j] || !overlapB[j])
+	    if (j == overlaps.Count() || !overlaps[j] || !overlapA[j] || !overlapB[j])
 		continue;
 	    // Merge the curves that link together.
 	    if (overlaps[i]->PointAtStart().DistanceTo(overlaps[j]->PointAtEnd()) < intersection_tolerance
