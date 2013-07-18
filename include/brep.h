@@ -2044,6 +2044,10 @@ ON_Intersect(const ON_Curve* curveA,
  *   surfaceB_vdomain - [in]
  *     optional restriction on surfaceB v domain
  *
+ *   overlap2d - [out]
+ *     return the 2D overlap curves on surfaceB. overlap2d[i] is the
+ *     curve for event x[i].
+ *
  * Returns:
  *    Number of intersection events appended to x.
  */
@@ -2055,7 +2059,8 @@ ON_Intersect(const ON_Curve* curveA,
 	     double overlap_tolerance = 0.0,
 	     const ON_Interval* curveA_domain = 0,
 	     const ON_Interval* surfaceB_udomain = 0,
-	     const ON_Interval* surfaceB_vdomain = 0);
+	     const ON_Interval* surfaceB_vdomain = 0,
+	     ON_CurveArray* overlap2d = 0);
 
 } /* extern C++ */
 #endif

@@ -267,6 +267,32 @@ check_domain(const ON_Interval* in, const ON_Interval& domain, const char* name)
 }
 
 
+ON_Curve*
+sub_curve(ON_Curve* in, double a, double b)
+{
+    ON_Interval dom = in->Domain();
+    ON_Interval sub(a, b);
+    sub.MakeIncreasing();
+    if (!sub.Intersection(dom))
+	return NULL;
+    ON_Curve *left = NULL, *right = NULL;
+    if (ON_NearZero(sub.m_t[0] - dom.m_t[0]))
+	right = in->Duplicate();
+    else
+	in->Split(sub.m_t[0], left, right);
+    if (left)
+	delete left;
+    if (ON_NearZero(sub.m_t[1] - dom.m_t[1]))
+	left = right->Duplicate();
+    else {
+	right->Split(sub.m_t[1], left, right);
+    }
+    if (right)
+	delete right;
+    return left;
+}
+
+
 /**
  * Point-point intersections (PPI)
  *
@@ -1038,6 +1064,11 @@ ON_Intersect(const ON_Curve* curveA,
 #define CSI_OVERLAP_TEST_POINTS 2
 
 
+// Declaration of the curve fitting function difined below.
+ON_Curve*
+curve_fitting(ON_Curve* in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool delete_curve = false);
+
+
 // Build the surface tree root within a given domain
 bool
 build_surface_root(const ON_Surface* surf, const ON_Interval* u_domain, const ON_Interval* v_domain, Subsurface& root)
@@ -1150,7 +1181,8 @@ ON_Intersect(const ON_Curve* curveA,
 	     double overlap_tolerance,
 	     const ON_Interval* curveA_domain,
 	     const ON_Interval* surfaceB_udomain,
-	     const ON_Interval* surfaceB_vdomain)
+	     const ON_Interval* surfaceB_vdomain,
+	     ON_CurveArray* overlap2d)
 {
     if (curveA == NULL || surfaceB == NULL)
 	return 0;
@@ -1517,16 +1549,26 @@ ON_Intersect(const ON_Curve* curveA,
 
     // Merge the overlap events that are continuous
     overlap.QuickSort(compare_by_m_a0);
+    ON_SimpleArray<ON_3dPointArray*> ptarrayB;
     for (int i = 0; i < overlap.Count(); i++) {
 	bool merged = false;
 	for (int j = 0; j < pending.Count(); j++) {
 	    if (pending[j].m_a[1] < overlap[i].m_a[0] - t_tolerance) {
 		x.Append(pending[j]);
+		if (overlap2d) {
+		    ptarrayB[j]->Append(ON_3dPoint(pending[j].m_b[2], pending[j].m_b[3], 0.0));
+		    ON_PolylineCurve* polyline = new ON_PolylineCurve(*ptarrayB[j]);
+		    polyline->ChangeDimension(2);
+		    overlap2d->Append(curve_fitting(polyline));
+		    ptarrayB.Remove(j);
+		}
 		pending.Remove(j);
 		j--;
 		continue;
 	    }
 	    if (overlap[i].m_a[0] < pending[j].m_a[1] + t_tolerance) {
+		if (overlap2d)
+		    ptarrayB[j]->Append(ON_3dPoint(overlap[i].m_b[0], overlap[i].m_b[1], 0.0));
 		ON_Interval interval_u1(overlap[i].m_b[0], overlap[i].m_b[2]);
 		ON_Interval interval_u2(pending[j].m_b[0], pending[j].m_b[2]);
 		ON_Interval interval_v1(overlap[i].m_b[1], overlap[i].m_b[3]);
@@ -1541,21 +1583,35 @@ ON_Intersect(const ON_Curve* curveA,
 		    // if the uv rectangle of them intersects, it's consider overlap.
 		    merged = true;
 		    if (overlap[i].m_a[1] > pending[j].m_a[1]) {
+			if (overlap2d)
+			    ptarrayB[j]->Append(ON_3dPoint(pending[j].m_b[2], pending[j].m_b[3], 0.0));
 			pending[j].m_a[1] = overlap[i].m_a[1];
 			pending[j].m_b[2] = overlap[i].m_b[2];
 			pending[j].m_b[3] = overlap[i].m_b[3];
 			pending[j].m_A[1] = overlap[i].m_A[1];
 			pending[j].m_B[1] = overlap[i].m_B[1];
-		    }
+		    } else if (overlap2d)
+			ptarrayB[j]->Append(ON_3dPoint(overlap[i].m_b[2], overlap[i].m_b[3], 0.0));
 		    break;
 		}
 	    }
 	}
-	if (merged == false)
+	if (merged == false) {
+	    if (overlap2d) {
+		ptarrayB.Append(new ON_3dPointArray());
+		ptarrayB[ptarrayB.Count()-1]->Append(ON_3dPoint(overlap[i].m_b[0], overlap[i].m_b[1], 0.0));
+	    }
 	    pending.Append(overlap[i]);
+	}
     }
     for (int i = 0; i < pending.Count(); i++) {
 	x.Append(pending[i]);
+	if (overlap2d) {
+	    ptarrayB[i]->Append(ON_3dPoint(pending[i].m_b[2], pending[i].m_b[3], 0.0));
+	    ON_PolylineCurve* polyline = new ON_PolylineCurve(*ptarrayB[i]);
+	    polyline->ChangeDimension(2);
+	    overlap2d->Append(curve_fitting(polyline));
+	}
     }
 
     // The intersection points shouldn't be inside the overlapped parts.
@@ -1567,10 +1623,12 @@ ON_Intersect(const ON_Curve* curveA,
 		&& points[i].m_a[0] < x[j].m_a[1] + t_tolerance)
 		break;
 	}
-	if (j == overlap_events)
+	if (j == overlap_events) {
 	    x.Append(points[i]);
+	    if (overlap2d)
+		overlap2d->Append(NULL);
+	}
     }
-
     return x.Count();
 }
 
@@ -1883,7 +1941,7 @@ newton_ssi(double& u, double& v, double& s, double& t, const ON_Surface* surfA, 
 
 
 ON_Curve*
-curve_fitting(ON_Curve* in, double fitting_tolerance, bool delete_curve = false)
+curve_fitting(ON_Curve* in, double fitting_tolerance, bool delete_curve)
 {
     // Fit a *2D* curve into line, arc, ellipse or other comic curves.
 
@@ -2099,10 +2157,12 @@ ON_Intersect(const ON_Surface* surfA,
     // (See ON_NurbsSurface::ConvertSpanToBezier()).
     // So we actually don't need to generate the Bezier patches explicitly,
     // and we can get the boundaries of them using IsoCurve() on knots.
-    ON_CurveArray overlaps;
+    ON_CurveArray overlaps, overlapA, overlapB;
     for (int i = 0; i < 4; i++) {
 	const ON_Surface* surf1 = i >= 2 ? surfB : surfA;
 	const ON_Surface* surf2 = i >= 2 ? surfA : surfB;
+	ON_CurveArray& overlap1 = i >= 2 ? overlapB : overlapA;
+	ON_CurveArray& overlap2 = i >= 2 ? overlapA : overlapB;
 	ON_2dPointArray& ptarray1 = i >= 2 ? tmp_curvest : tmp_curveuv;
 	ON_2dPointArray& ptarray2 = i >= 2 ? tmp_curveuv : tmp_curvest;
 	int dir = 1 - i%2;
@@ -2123,28 +2183,30 @@ ON_Intersect(const ON_Surface* surfA,
 	for (int j = 0; j < b_knots.Count(); j++) {
 	    ON_Curve* boundary = surf1->IsoCurve(i%2, b_knots[j]);
 	    ON_SimpleArray<ON_X_EVENT> x_event;
-	    ON_Intersect(boundary, surf2, x_event, intersection_tolerance, overlap_tolerance);
+	    ON_CurveArray overlap2d;
+	    ON_Intersect(boundary, surf2, x_event, intersection_tolerance, overlap_tolerance, 0, 0, 0, &overlap2d);
 	    for (int k = 0; k < x_event.Count(); k++) {
 		tmp_curvept.Append(x_event[k].m_A[0]);
-		ON_2dPoint iso_pt;
-		iso_pt.x = i%2 ? b_knots[j] : x_event[k].m_a[0];
-		iso_pt.y = i%2 ? x_event[k].m_a[0] : b_knots[j];
-		ptarray1.Append(iso_pt);
+		ON_2dPoint iso_pt1, iso_pt2;
+		iso_pt1.x = i%2 ? b_knots[j] : x_event[k].m_a[0];
+		iso_pt1.y = i%2 ? x_event[k].m_a[0] : b_knots[j];
+		ptarray1.Append(iso_pt1);
 		ptarray2.Append(ON_2dPoint(x_event[k].m_b[0], x_event[k].m_b[1]));
 		if (x_event[k].m_type == ON_X_EVENT::csx_overlap) {
 		    // Append the other end-point
 		    tmp_curvept.Append(x_event[k].m_A[1]);
-		    iso_pt.x = i%2 ? b_knots[j] : x_event[k].m_a[1];
-		    iso_pt.y = i%2 ? x_event[k].m_a[1] : b_knots[j];
-		    ptarray1.Append(iso_pt);
+		    iso_pt2.x = i%2 ? b_knots[j] : x_event[k].m_a[1];
+		    iso_pt2.y = i%2 ? x_event[k].m_a[1] : b_knots[j];
+		    ptarray1.Append(iso_pt2);
 		    ptarray2.Append(ON_2dPoint(x_event[k].m_b[2], x_event[k].m_b[3]));
 		    // Get the overlap curve
 		    if (x_event[k].m_a[0] < x_event[k].m_a[1]) {
-			ON_Curve *left = NULL, *right = NULL;
-			boundary->Split(x_event[k].m_a[0], left, right);
-			right->Split(x_event[k].m_a[1], left, right);
-			delete right;
-			overlaps.Append(left);
+			overlaps.Append(sub_curve(boundary, x_event[k].m_a[0], x_event[k].m_a[1]));
+			overlap1.Append(new ON_LineCurve(iso_pt1, iso_pt2));
+			overlap2.Append(overlap2d[k]);
+			// We set overlap2d[k] to NULL, is case that the curve
+			// is delete by the destructor of overlap2d. (See ~ON_CurveArray())
+			overlap2d[k] = NULL;
 		    }
 		}
 	    }
