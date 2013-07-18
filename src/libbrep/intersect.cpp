@@ -2093,7 +2093,6 @@ link_curves(ON_Curve*& c1, ON_Curve*& c2)
 	c1 = NULL;
 	c2 = NULL;
 	delete nc2;
-	bu_log("%lf %lf %lf %lf %lf %lf\n", nc1->PointAtStart().x, nc1->PointAtStart().y, nc1->PointAtStart().z, nc1->PointAtEnd().x, nc1->PointAtEnd().y, nc1->PointAtEnd().z);
 	return nc1;
     }
     return NULL;
@@ -2242,7 +2241,30 @@ ON_Intersect(const ON_Surface* surfA,
 	    if (overlaps[i]->IsClosed() && overlapA[i]->IsClosed() && overlapB[i]->IsClosed()) {
 		// The i-th curve is close loop, we get a complete boundary of
 		// that overlap region.
-		// The overlap region should be to the LEFT of that boundary.
+		// The overlap region should be to the LEFT of that *m_curveA*.
+		// (See opennurbs/opennurbs_x.h)
+		double midA = overlapA[i]->Domain().Mid();
+		double midB = overlapB[i]->Domain().Mid();
+		ON_3dVector normalA = ON_CrossProduct(ON_zaxis, overlapA[i]->TangentAt(midA));
+		ON_3dVector normalB = ON_CrossProduct(ON_zaxis, overlapB[i]->TangentAt(midB));
+		ON_3dPoint left_ptA, right_ptA, mid_ptA;
+		mid_ptA = overlapA[i]->PointAt(midA);
+		left_ptA = mid_ptA + normalA*overlapA[i]->BoundingBox().Diagonal().Length();
+		right_ptA = mid_ptA - normalA*overlapA[i]->BoundingBox().Diagonal().Length();
+		// should be outside the closed region
+		ON_LineCurve linecurve1(mid_ptA, left_ptA), linecurve2(mid_ptA, right_ptA);
+		ON_SimpleArray<ON_X_EVENT> x_event1, x_event2;
+		ON_Intersect(&linecurve1, overlapA[i], x_event1, intersection_tolerance);
+		ON_Intersect(&linecurve2, overlapA[i], x_event2, intersection_tolerance);
+		if (x_event1.Count() != 2 && x_event2.Count() == 2) {
+		    // the direction of the curve should be opposite
+		    overlaps[i]->Reverse();
+		    overlapA[i]->Reverse();
+		    overlapB[i]->Reverse();
+		} else if (!(x_event1.Count() == 2 && x_event2.Count() != 2)) {
+		    bu_log("error: Cannot determine the correct direction of overlap event %d\n", x.Count() + 1);
+		}
+
 		ON_SSX_EVENT Event;
 		Event.m_curve3d = overlaps[i];
 		Event.m_curveA = overlapA[i];
@@ -2294,6 +2316,8 @@ ON_Intersect(const ON_Surface* surfA,
 	}
     }
 
+    // Just for debugging use.
+    // After more later work on overlaps, this must be removed.
     if (x.Count()) return x.Count();
 
     /* Second step: calculate the intersection of the bounding boxes.
@@ -2742,8 +2766,23 @@ ON_Intersect(const ON_Surface* surfA,
 		    && normalA.IsParallelTo(normalB)))
 		    break;
 	    }
-	    if (j == count + 1)
+	    if (j == count + 1) {
+		// For ssx_transverse events, the 3d curve direction
+		// agrees with SurfaceNormalB x SurfaceNormalA
+		// For ssx_tangent events, the orientation is random.
+		// (See opennurbs/opennurbs_x.h)
+		ON_3dVector direction = ssx->m_curve3d->TangentAt(0);
+		ON_3dVector SurfaceNormalA = surfA->NormalAt(ssx->m_curveA->PointAtStart().x, ssx->m_curveA->PointAtStart().y);
+		ON_3dVector SurfaceNormalB = surfB->NormalAt(ssx->m_curveB->PointAtStart().x, ssx->m_curveB->PointAtStart().y);
+		if (ON_DotProduct(direction, ON_CrossProduct(SurfaceNormalB, SurfaceNormalA)) < 0) {
+		    if (!(ssx->m_curve3d->Reverse()
+			  && ssx->m_curveA->Reverse()
+			  && ssx->m_curveB->Reverse()))
+			bu_log("warning: reverse failed. The direction of %d might be wrong.\n",
+			    x.Count() - 1);
+		}
 		ssx->m_type = ON_SSX_EVENT::ssx_tangent;
+	    }
 	    else
 		ssx->m_type = ON_SSX_EVENT::ssx_transverse;
 	    // ssx_overlap is handled above.
