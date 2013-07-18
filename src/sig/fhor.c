@@ -20,7 +20,7 @@
 /** @file fhor.c
  * Floating horizon 3D plotting routines.
  *
- * The terminology throughout is X across, Y up, Z toward you.
+ * The terminology throughout is X left to right, Y up, Z toward you.
  *
  * Ref: "Procedural Elements for Computer Graphics, "
  * D. F. Rogers.
@@ -389,16 +389,15 @@ int main(int argc, char **argv)
     int i, x, z;
     int size = 512;
 
+    if (isatty(fileno(stdin)))
+	bu_exit(1, "%s", usage);
+
     if (argc > 1) {
 	size = atoi(argv[1]);
 	if (size < 0)
 	    size = 0;
-	if (size > INT_MAX-1)
+	else if (size > INT_MAX-1)
 	    size = INT_MAX-1;
-    }
-
-    if (isatty(fileno(stdin))) {
-	bu_exit(1, "%s", usage);
     }
 
     fhinit();
