@@ -32,6 +32,7 @@
 #endif
 
 #include "dm-qt.h"
+#include <QPainter>
 
 #include "tcl.h"
 #include "tk.h"
@@ -71,8 +72,12 @@ qt_close(struct dm *dmp)
 
 
 HIDDEN int
-qt_drawBegin(struct dm *UNUSED(dmp))
+qt_drawBegin(struct dm *dmp)
 {
+    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+
+    privars->pix->fill(privars->bg);
+
     bu_log("qt_drawBegin not implemented\n");
     return 0;
 }
@@ -119,9 +124,25 @@ qt_drawString2D(struct dm *UNUSED(dmp), const char *UNUSED(str), fastf_t UNUSED(
 
 
 HIDDEN int
-qt_drawLine2D(struct dm *UNUSED(dmp), fastf_t UNUSED(x_1), fastf_t UNUSED(y_1), fastf_t UNUSED(x_2), fastf_t UNUSED(y_2))
+qt_drawLine2D(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2)
 {
-    bu_log("qt_drawLine2D not implemented\n");
+    int sx1, sy1, sx2, sy2;
+    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+    QPainter * p = new QPainter(privars->pix);
+
+    p->setPen(Qt::white);
+
+    sx1 = dm_Normal2Xx(dmp, x_1);
+    sx2 = dm_Normal2Xx(dmp, x_2);
+    sy1 = dm_Normal2Xy(dmp, y_1, 0);
+    sy2 = dm_Normal2Xy(dmp, y_2, 0);
+
+    p->drawLine(sx1, sy1, sx2, sy2);
+    p->end();
+
+    delete p;
+
+
     return 0;
 }
 
@@ -215,8 +236,10 @@ qt_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
     privars->bg = q;
 
     QPalette pal = privars->win->palette();
-    pal.setColor(QPalette::Background, Qt::black);
+    pal.setColor(QPalette::Background, q);
     privars->win->setPalette(pal);
+
+    privars->pix->fill(q);
 
     return TCL_OK;
 }
@@ -254,6 +277,7 @@ qt_configureWin(struct dm *dmp, int force)
 	return TCL_OK;
 
     qt_reshape(dmp, width, height);
+    *privars->pix = privars->pix->scaled(width, height);
 
     if (dmp->dm_debugLevel) {
 	bu_log("qt_configureWin_guts()\n");
@@ -451,10 +475,17 @@ struct dm dm_qt = {
 };
 
 
-QTkMainWindow::QTkMainWindow(WId win)
+QTkMainWindow::QTkMainWindow(QPixmap *pix, WId win)
 :QWidget()
 {
     create(win, false, true);
+    pixmap = pix;
+}
+
+void QTkMainWindow::paintEvent(QPaintEvent *UNUSED(event))
+{
+    QPainter painter(this);
+    painter.drawPixmap(0, 0, *pixmap);
 }
 
 
@@ -606,16 +637,16 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
 
     privars->qapp = new QApplication(argc, argv);
 
-    privars->win = new QTkMainWindow((WId)pubvars->win);
+    privars->pix = new QPixmap(dmp->dm_width, dmp->dm_height);
+    privars->win = new QTkMainWindow(privars->pix, (WId)pubvars->win);
     privars->win->resize(dmp->dm_width, dmp->dm_height);
 
-    /* set the background color */
     privars->win->setAutoFillBackground(true);
-    qt_setBGColor(dmp, 0, 0, 0);
-
-    privars->win->show();
 
     qt_configureWin(dmp, 1);
+
+    qt_setBGColor(dmp, 0, 0, 0);
+    privars->win->show();
 
     Tk_SetWindowBackground(pubvars->xtkwin, 0);
     Tk_MapWindow(pubvars->xtkwin);

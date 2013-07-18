@@ -31,14 +31,23 @@
 #  include <QWidget>
 
 class QTkMainWindow: public QWidget {
-    public:
-	QTkMainWindow(WId win);
+
+public:
+    QTkMainWindow(QPixmap *pix, WId win);
+
+protected:
+    void paintEvent(QPaintEvent *event);
+    
+private:
+    QPixmap *pixmap;
+    
 };
 
 struct qt_vars {
     QApplication *qapp;
     QTkMainWindow *win;
     QColor fg, bg;
+    QPixmap *pix;
 };
 
 #endif /* DM_QT */
