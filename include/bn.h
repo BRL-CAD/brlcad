@@ -2993,6 +2993,9 @@ BN_EXPORT extern float bn_rand_halftab[BN_RANDHALFTABSIZE];
 /**
  * random numbers between the closed interval -0.5 to 0.5 inclusive,
  * except when benchmark flag is set, when this becomes a constant 0.0
+ *
+ * @param _p float pointer type initialized by bn_rand_init()
+ *
  */
 #define bn_rand_half(_p)	\
     ((++(_p) >= &bn_rand_halftab[bn_randhalftabsize] || \
@@ -3001,6 +3004,11 @@ BN_EXPORT extern float bn_rand_halftab[BN_RANDHALFTABSIZE];
 
 /**
  * initialize the seed for the large random number table (halftab)
+ *
+ * @param _p float pointer to be initialized, used for bn_rand0to1()
+ * and bn_rand_half()
+ * @param _seed Integer SEED for offset in the table.
+ *
  */
 #define bn_rand_init(_p, _seed)	\
     (_p) = &bn_rand_halftab[ \
@@ -3011,6 +3019,9 @@ BN_EXPORT extern float bn_rand_halftab[BN_RANDHALFTABSIZE];
 /**
  * random numbers in the closed interval 0.0 to 1.0 range (inclusive)
  * except when benchmarking, when this is always 0.5
+ *
+ * @param _q float pointer type initialized by bn_rand_init()
+ *
  */
 #define bn_rand0to1(_q)	(bn_rand_half(_q)+0.5)
 
