@@ -2297,7 +2297,7 @@ ON_Intersect(const ON_Surface* surfA,
 	// The overlap region should be to the LEFT of that *m_curveA*.
 	// (See opennurbs/opennurbs_x.h)
 	double midA = x[i].m_curveA->Domain().Mid();
-	ON_3dVector normalA = ON_CrossProduct(ON_zaxis, x[i].m_curveA->TangentAt(midA));
+	ON_3dVector normalA = ON_CrossProduct(ON_3dVector::ZAxis, x[i].m_curveA->TangentAt(midA));
 	ON_3dPoint left_ptA, right_ptA, mid_ptA;
 	mid_ptA = x[i].m_curveA->PointAt(midA);
 	left_ptA = mid_ptA + normalA*x[i].m_curveA->BoundingBox().Diagonal().Length();
