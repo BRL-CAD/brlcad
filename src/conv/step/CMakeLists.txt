@@ -29,8 +29,8 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/src/libbrep #Temporary until headers reworked
   )
 
-#set(SCHEMA_FILE ${BRLCAD_SOURCE_DIR}/src/other/stepcode/data/ap203/ap203.exp)
-set(SCHEMA_FILE ${BRLCAD_SOURCE_DIR}/src/other/stepcode/data/ap203e2/ap203e2_mim_lf.exp)
+set(SCHEMA_FILE ${BRLCAD_SOURCE_DIR}/src/other/stepcode/data/ap203/ap203.exp)
+#set(SCHEMA_FILE ${BRLCAD_SOURCE_DIR}/src/other/stepcode/data/ap203e2/ap203e2_mim_lf.exp)
 
 # read the schema name from a line like 'SCHEMA AUTOMOTIVE_DESIGN;'
 file(STRINGS ${SCHEMA_FILE} SCHEMA_STATEMENT LIMIT_COUNT 1 REGEX "SCHEMA .*")
@@ -485,7 +485,7 @@ set(stepg_LIBS
   )
 list(APPEND stepg_LIBS ${stepg_LIBS})
 
-add_definitions(-DAP203e2)
+#add_definitions(-DAP203e2)
 
 BRLCAD_ADDEXEC(step-g "${stepg_SOURCES}" "${stepg_LIBS}" NOSTRICT)
 BRLCAD_ADDEXEC(g-step "${gstep_SOURCES}" "${stepg_LIBS}" NOSTRICT)
