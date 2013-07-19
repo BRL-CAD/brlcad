@@ -78,17 +78,17 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
     /* Get operation and solid name for each solid */
     for (i = 2; i < argc; i += 2) {
 	if (argv[i][1] != '\0') {
-	    bu_vls_printf(gedp->ged_result_str, "bad operation: %s skip member: %s\n", argv[i], argv[i+1]);
+	    bu_vls_printf(gedp->ged_result_str, "Invalid Operation: %s already exists: %s\n", argv[i], argv[i+1]);
 	    continue;
 	}
 	oper = argv[i][0];
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[i+1], LOOKUP_NOISY)) == RT_DIR_NULL) {
-	    bu_vls_printf(gedp->ged_result_str, "skipping %s\n", argv[i+1]);
+	    bu_vls_printf(gedp->ged_result_str, "Invalid Syntax %s\n", argv[i+1]);
 	    continue;
 	}
 
 	if (oper != WMOP_UNION && oper != WMOP_SUBTRACT && oper != WMOP_INTERSECT) {
-	    bu_vls_printf(gedp->ged_result_str, "bad operation: %c skip member: %s\n",
+	    bu_vls_printf(gedp->ged_result_str, "Invalid Operation: %c already exists: %s\n",
 			  oper, dp->d_namep);
 	    continue;
 	}
