@@ -214,10 +214,20 @@ qt_draw(struct dm *UNUSED(dmp), struct bn_vlist *(*callback_function)(void *), g
 
 
 HIDDEN int
-qt_setFGColor(struct dm *UNUSED(dmp), unsigned char UNUSED(r), unsigned char UNUSED(g), unsigned char UNUSED(b), int UNUSED(strict), fastf_t UNUSED(transparency))
+qt_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int UNUSED(strict), fastf_t transparency)
 {
-    bu_log("qt_setFGColor not implemented\n");
-    return 0;
+    QColor q;
+    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+
+    q.setRgb(r, g, b, transparency);
+
+    dmp->dm_fg[0] = r;
+    dmp->dm_fg[1] = g;
+    dmp->dm_fg[2] = b;
+
+    privars->fg = q;
+
+    return TCL_OK;
 }
 
 
