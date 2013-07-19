@@ -119,10 +119,16 @@ qt_loadPMatrix(struct dm *UNUSED(dmp), fastf_t *UNUSED(mat))
 
 
 HIDDEN int
-qt_drawString2D(struct dm *UNUSED(dmp), const char *UNUSED(str), fastf_t UNUSED(x), fastf_t UNUSED(y), int UNUSED(size), int UNUSED(use_aspect))
+qt_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
 {
-    bu_log("qt_drawString2D not implemented\n");
-    return 0;
+    int sx, sy;
+    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+
+    sx = dm_Normal2Xx(dmp, x);
+    sy = dm_Normal2Xy(dmp, y, use_aspect);
+
+    privars->painter->drawText(sx, sy, str);
+    return TCL_OK;
 }
 
 
