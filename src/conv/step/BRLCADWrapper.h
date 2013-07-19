@@ -56,6 +56,7 @@ public:
     bool WriteHeader();
     bool WriteSphere(double *center, double radius);
     bool WriteBrep(std::string name, ON_Brep *brep);
+    struct db_i * GetDBIP();
     bool Close();
 };
 

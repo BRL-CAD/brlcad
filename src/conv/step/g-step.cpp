@@ -109,6 +109,32 @@ main(int argc, char *argv[])
         return 2;
     }
 
+    struct db_i *dbip = dotg->GetDBIP();
+    if (db_dirbuild(dbip)) {
+	std::cerr << "ERROR: db_dirbuild() failed!\n" << std::endl;
+        delete dotg;
+        return 1;
+    }
+    struct directory *dp = db_lookup(dbip, "brep.s", LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL) {
+	std::cerr << "ERROR: cannot find " << "brep.s" << "\n" << std::endl;
+        delete dotg;
+        return 1;
+    }
+
+    struct rt_db_internal intern;
+    struct rt_brep_internal *bi;
+    rt_db_get_internal(&intern, dp, dbip, bn_mat_identity, &rt_uniresource);
+    RT_CK_DB_INTERNAL(&intern);
+    bi = (struct rt_brep_internal*)intern.idb_ptr;
+    //RT_BREP_TEST_MAGIC(bi);
+    ON_Brep *brep = bi->brep; 
+    ON_wString wstr;
+    ON_TextLog dump(wstr);
+    brep->Dump(dump);
+    ON_String ss = wstr;
+    std::cout << ss.Array() << "\n";
+
 // TODO - Need to create proper load for .g files and OpenFile for .stp files - maybe rework slightly with an
 // eye towards supporting read/write scenarios for both file types...
 #if 0
@@ -119,7 +145,6 @@ main(int argc, char *argv[])
 
 	step->printLoadStatistics();
 
-	BRLCADWrapper *dotg  = new BRLCADWrapper();
 	if (!dotg) {
 	    std::cerr << "ERROR: unable to create BRL-CAD instance" << std::endl;
 	    ret = 3;

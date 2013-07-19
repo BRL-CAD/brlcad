@@ -131,6 +131,12 @@ BRLCADWrapper::WriteBrep(std::string name, ON_Brep *brep)
     return true;
 }
 
+struct db_i *
+BRLCADWrapper::GetDBIP()
+{
+    return dbip;
+}
+
 
 bool
 BRLCADWrapper::Close()
