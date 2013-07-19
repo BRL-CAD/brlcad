@@ -346,7 +346,7 @@ ON_Intersect(const ON_3dPoint& pointA,
  */
 
 
-// The maximal depth for subdivision - trade-off between accurancy and
+// The maximal depth for subdivision - trade-off between accuracy and
 // performance
 #define MAX_PCI_DEPTH 8
 
@@ -503,7 +503,7 @@ ON_Intersect(const ON_3dPoint& pointA,
 #define PSI_DEFAULT_TOLERANCE 0.001
 
 
-// The default maximal depth for creating a surfacee tree (8) is way too
+// The default maximal depth for creating a surface tree (8) is way too
 // much - killing performance. Since it's only used for getting an
 // estimation, and we use Newton iterations afterwards, it's reasonable
 // to use a smaller depth in this step.
@@ -1064,7 +1064,7 @@ ON_Intersect(const ON_Curve* curveA,
 #define CSI_OVERLAP_TEST_POINTS 2
 
 
-// Declaration of the curve fitting function difined below.
+// Declaration of the curve fitting function defined below.
 ON_Curve*
 curve_fitting(ON_Curve* in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool delete_curve = false);
 
@@ -1417,7 +1417,7 @@ ON_Intersect(const ON_Curve* curveA,
 	// of the Subcurve's m_t.
 	// If they converge to one point, it's considered an intersection
 	// point, otherwise it's considered an overlap event.
-	// FIXME: Find a better machanism to check overlapping, because this method
+	// FIXME: Find a better mechanism to check overlapping, because this method
 	// may miss some overlap cases. (Overlap events can also converge to one
 	// point)
 	double u1 = i->second->m_u.Mid(), v1 = i->second->m_v.Mid();
@@ -2237,7 +2237,7 @@ ON_Intersect(const ON_Surface* surfA,
     for (int i = 0; i < overlaps.Count(); i++) {
 	if (!overlaps[i] || !overlapA[i] || !overlapB[i])
 	    continue;
-	
+
 	for (int j = i + 1; j <= overlaps.Count(); j++) {
 	    if (overlaps[i]->IsClosed() && overlapA[i]->IsClosed() && overlapB[i]->IsClosed()) {
 		// The i-th curve is close loop, we get a complete boundary of
@@ -2289,7 +2289,7 @@ ON_Intersect(const ON_Surface* surfA,
 		    overlapA[i] = link_curves(overlapA[i], overlapA[j]);
 		    overlapB[i] = link_curves(overlapB[i], overlapB[j]);
 		}
-	    } 
+	    }
 	}
     }
 
@@ -2687,7 +2687,7 @@ ON_Intersect(const ON_Surface* surfA,
 		    && ON_Intersect(&polyC, &polyD, x_event2, intersection_tolerance))
 		    continue;
 
-		// If the seaming curve is continous to one of polylines[i] and
+		// If the seaming curve is continuous to one of polylines[i] and
 		// polylines[j], we don't need to generate a new segment, just
 		// merging them.
 		if (pair.indexA == (*polylines[i])[point_count1 - 1]) {
