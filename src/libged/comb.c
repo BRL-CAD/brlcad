@@ -77,24 +77,32 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 
     /* Get operation and solid name for each solid */
     for (i = 2; i < argc; i += 2) {
+	/* they come in pairs */
+	if (i+1 >= argc) {
+	    bu_vls_printf(gedp->ged_result_str, "Invalid syntax near '%s', ignored.  Expecting object name after operator.\n", argv[i+1]);
+	    return GED_ERROR;
+	}
+
+	/* ops are 1-char */
 	if (argv[i][1] != '\0') {
-	    bu_vls_printf(gedp->ged_result_str, "Invalid Operation: %s already exists: %s\n", argv[i], argv[i+1]);
+	    bu_vls_printf(gedp->ged_result_str, "Invalid operation '%s' before object '%s'\n", argv[i], argv[i+1]);
 	    continue;
 	}
 	oper = argv[i][0];
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[i+1], LOOKUP_NOISY)) == RT_DIR_NULL) {
-	    bu_vls_printf(gedp->ged_result_str, "Invalid Syntax %s\n", argv[i+1]);
-	    continue;
-	}
-
 	if (oper != WMOP_UNION && oper != WMOP_SUBTRACT && oper != WMOP_INTERSECT) {
-	    bu_vls_printf(gedp->ged_result_str, "Invalid Operation: %c already exists: %s\n",
-			  oper, dp->d_namep);
+	    bu_vls_printf(gedp->ged_result_str, "Unknown operator '%c' encountered, invalid syntax.\n", oper);
 	    continue;
 	}
 
+	/* object name comes after op */
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[i+1], LOOKUP_NOISY)) == RT_DIR_NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "Object '%s'does not exist.\n", argv[i+1]);
+	    continue;
+	}
+
+	/* add it to the comb immediately */
 	if (_ged_combadd(gedp, dp, comb_name, 0, oper, 0, 0) == RT_DIR_NULL) {
-	    bu_vls_printf(gedp->ged_result_str, "error in combadd");
+	    bu_vls_printf(gedp->ged_result_str, "Error adding '%s' (with op '%c') to '%s'\n", dp->d_namep, oper, comb_name);
 	    return GED_ERROR;
 	}
     }
