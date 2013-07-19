@@ -22,7 +22,7 @@
  *
  * The terminology throughout is X left to right, Y up, Z toward you.
  *
- * Ref: "Procedural Elements for Computer Graphics, "
+ * Ref: "Procedural Elements for Computer Graphics",
  * D. F. Rogers.
  */
 
