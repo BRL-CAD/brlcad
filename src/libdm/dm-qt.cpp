@@ -166,10 +166,16 @@ qt_drawLines3D(struct dm *UNUSED(dmp), int UNUSED(npoints), point_t *UNUSED(poin
 
 
 HIDDEN int
-qt_drawPoint2D(struct dm *UNUSED(dmp), fastf_t UNUSED(x), fastf_t UNUSED(y))
+qt_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 {
-    bu_log("qt_drawPoint2D not implemented\n");
-    return 0;
+    int sx, sy;
+    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+
+    sx = dm_Normal2Xx(dmp, x);
+    sy = dm_Normal2Xy(dmp, y, 0);
+
+    privars->painter->drawPoint(sx, sy);
+    return TCL_OK;
 }
 
 
