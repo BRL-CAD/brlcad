@@ -32,7 +32,6 @@
 #endif
 
 #include "dm-qt.h"
-#include <QPainter>
 
 #include "tcl.h"
 #include "tk.h"
@@ -78,16 +77,20 @@ qt_drawBegin(struct dm *dmp)
 
     privars->pix->fill(privars->bg);
 
-    bu_log("qt_drawBegin not implemented\n");
-    return 0;
+    privars->painter = new QPainter(privars->pix);
+    return TCL_OK;
 }
 
 
 HIDDEN int
-qt_drawEnd(struct dm *UNUSED(dmp))
+qt_drawEnd(struct dm *dmp)
 {
-    bu_log("qt_drawEnd not implemented\n");
-    return 0;
+    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+    privars->painter->end();
+    delete privars->painter;
+
+    dmp->dm_processEvents(dmp);
+    return TCL_OK;
 }
 
 
@@ -128,22 +131,15 @@ qt_drawLine2D(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2
 {
     int sx1, sy1, sx2, sy2;
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
-    QPainter * p = new QPainter(privars->pix);
-
-    p->setPen(Qt::white);
 
     sx1 = dm_Normal2Xx(dmp, x_1);
     sx2 = dm_Normal2Xx(dmp, x_2);
     sy1 = dm_Normal2Xy(dmp, y_1, 0);
     sy2 = dm_Normal2Xy(dmp, y_2, 0);
 
-    p->drawLine(sx1, sy1, sx2, sy2);
-    p->end();
+    privars->painter->drawLine(sx1, sy1, sx2, sy2);
 
-    delete p;
-
-
-    return 0;
+    return TCL_OK;
 }
 
 
@@ -214,18 +210,17 @@ qt_draw(struct dm *UNUSED(dmp), struct bn_vlist *(*callback_function)(void *), g
 
 
 HIDDEN int
-qt_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int UNUSED(strict), fastf_t transparency)
+qt_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int UNUSED(strict), fastf_t UNUSED(transparency))
 {
-    QColor q;
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
-
-    q.setRgb(r, g, b, transparency);
 
     dmp->dm_fg[0] = r;
     dmp->dm_fg[1] = g;
     dmp->dm_fg[2] = b;
 
-    privars->fg = q;
+    privars->fg.setRgb(r, g, b);
+
+    privars->painter->setPen(privars->fg);
 
     return TCL_OK;
 }
@@ -234,22 +229,19 @@ qt_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b,
 HIDDEN int
 qt_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
-    QColor q;
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
 
-    q.setRgb(r, g, b);
+    privars->bg.setRgb(r, g, b);
 
     dmp->dm_bg[0] = r;
     dmp->dm_bg[1] = g;
     dmp->dm_bg[2] = b;
 
-    privars->bg = q;
-
     QPalette pal = privars->win->palette();
-    pal.setColor(QPalette::Background, q);
+    pal.setColor(QPalette::Background, privars->bg);
     privars->win->setPalette(pal);
 
-    privars->pix->fill(q);
+    privars->pix->fill(privars->bg);
 
     return TCL_OK;
 }

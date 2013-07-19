@@ -29,6 +29,7 @@
 #ifdef DM_QT
 #  include <QApplication>
 #  include <QWidget>
+#  include <QPainter>
 
 class QTkMainWindow: public QWidget {
 
@@ -48,6 +49,7 @@ struct qt_vars {
     QTkMainWindow *win;
     QColor fg, bg;
     QPixmap *pix;
+    QPainter *painter;
 };
 
 #endif /* DM_QT */
