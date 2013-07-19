@@ -248,10 +248,25 @@ qt_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 
 
 HIDDEN int
-qt_setLineAttr(struct dm *UNUSED(dmp), int UNUSED(width), int UNUSED(style))
+qt_setLineAttr(struct dm *dmp, int width, int style)
 {
-    bu_log("qt_setLineAttr not implemented\n");
-    return 0;
+    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+
+    dmp->dm_lineWidth = width;
+    dmp->dm_lineStyle = style;
+
+    if (width <= 1)
+	width = 0;
+
+    QPen p = privars->painter->pen();
+    p.setWidth(width);
+    if (style == DM_DASHED_LINE)
+	p.setStyle(Qt::DashLine);
+    else
+	p.setStyle(Qt::SolidLine);
+    privars->painter->setPen(p);
+
+    return TCL_OK;
 }
 
 
