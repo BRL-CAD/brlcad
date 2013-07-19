@@ -122,11 +122,10 @@ After
 is used, the global buffer
 <emphasis remap='I'>termName</emphasis>
 will contain the name of the terminal device, or
-``<emphasis remap='B'><?troff ps -2?>UNKNOWN<?troff ps 0?></emphasis>''
+<emphasis remap='B'>UNKNOWN</emphasis>
 in the event of failure
 (<emphasis remap='I'>e.g.</emphasis>,
 the environment variable
-<!-- B elided -->
 <emphasis remap='SM'>$TERM</emphasis>
 was not set or exported (see
 <citerefentry><refentrytitle>sh</refentrytitle><manvolnum>1</manvolnum></citerefentry>));
@@ -137,7 +136,6 @@ and
 will contain the number of lines and columns, respectively, of the
 terminal screen or window layer attached to the specified output stream;
 and the terminal control string pointers will be set, or
-<!-- B elided -->
 <acronym>NULL</acronym>
 if their respective capabilities are not found.
 The terminal control strings are not generally suitable for direct use
@@ -148,7 +146,6 @@ or
 macros from the
 <citerefentry><refentrytitle>termlib</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 library, but they may be checked for being
-<!-- B elided -->
 <acronym>NULL</acronym>
 to test in advance for a capability,
 rather than testing the respective function for
