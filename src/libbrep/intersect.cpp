@@ -1363,6 +1363,8 @@ ON_Intersect(const ON_Curve* curveA,
 			}
 
 			// Generate an ON_X_EVENT
+			if (intersections == 0)
+			    continue;
 			if (intersections == 1) {
 			    Event->m_type = ON_X_EVENT::csx_point;
 			    Event->m_A[1] = Event->m_A[0];
