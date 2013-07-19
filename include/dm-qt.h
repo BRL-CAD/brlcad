@@ -38,10 +38,10 @@ public:
 
 protected:
     void paintEvent(QPaintEvent *event);
-    
+
 private:
     QPixmap *pixmap;
-    
+
 };
 
 struct qt_vars {
