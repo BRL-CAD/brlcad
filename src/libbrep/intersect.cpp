@@ -2235,33 +2235,11 @@ ON_Intersect(const ON_Surface* surfA,
     for (int i = 0; i < overlaps.Count(); i++) {
 	if (!overlaps[i] || !overlapA[i] || !overlapB[i])
 	    continue;
-
+	
 	for (int j = i + 1; j <= overlaps.Count(); j++) {
 	    if (overlaps[i]->IsClosed() && overlapA[i]->IsClosed() && overlapB[i]->IsClosed()) {
 		// The i-th curve is close loop, we get a complete boundary of
 		// that overlap region.
-		// The overlap region should be to the LEFT of that *m_curveA*.
-		// (See opennurbs/opennurbs_x.h)
-		double midA = overlapA[i]->Domain().Mid();
-		ON_3dVector normalA = ON_CrossProduct(ON_zaxis, overlapA[i]->TangentAt(midA));
-		ON_3dPoint left_ptA, right_ptA, mid_ptA;
-		mid_ptA = overlapA[i]->PointAt(midA);
-		left_ptA = mid_ptA + normalA*overlapA[i]->BoundingBox().Diagonal().Length();
-		right_ptA = mid_ptA - normalA*overlapA[i]->BoundingBox().Diagonal().Length();
-		// should be outside the closed region
-		ON_LineCurve linecurve1(mid_ptA, left_ptA), linecurve2(mid_ptA, right_ptA);
-		ON_SimpleArray<ON_X_EVENT> x_event1, x_event2;
-		ON_Intersect(&linecurve1, overlapA[i], x_event1, intersection_tolerance);
-		ON_Intersect(&linecurve2, overlapA[i], x_event2, intersection_tolerance);
-		if (x_event1.Count() != 2 && x_event2.Count() == 2) {
-		    // the direction of the curve should be opposite
-		    overlaps[i]->Reverse();
-		    overlapA[i]->Reverse();
-		    overlapB[i]->Reverse();
-		} else if (!(x_event1.Count() == 2 && x_event2.Count() != 2)) {
-		    bu_log("error: Cannot determine the correct direction of overlap event %d\n", x.Count() + 1);
-		}
-
 		ON_SSX_EVENT Event;
 		Event.m_curve3d = overlaps[i];
 		Event.m_curveA = overlapA[i];
@@ -2309,7 +2287,74 @@ ON_Intersect(const ON_Surface* surfA,
 		    overlapA[i] = link_curves(overlapA[i], overlapA[j]);
 		    overlapB[i] = link_curves(overlapB[i], overlapB[j]);
 		}
+	    } 
+	}
+    }
+
+    for (int i = 0; i < x.Count(); i++) {
+	// The overlap region should be to the LEFT of that *m_curveA*.
+	// (See opennurbs/opennurbs_x.h)
+	double midA = x[i].m_curveA->Domain().Mid();
+	ON_3dVector normalA = ON_CrossProduct(ON_zaxis, x[i].m_curveA->TangentAt(midA));
+	ON_3dPoint left_ptA, right_ptA, mid_ptA;
+	mid_ptA = x[i].m_curveA->PointAt(midA);
+	left_ptA = mid_ptA + normalA*x[i].m_curveA->BoundingBox().Diagonal().Length();
+	right_ptA = mid_ptA - normalA*x[i].m_curveA->BoundingBox().Diagonal().Length();
+	// should be outside the closed region
+	ON_LineCurve linecurve1(mid_ptA, left_ptA), linecurve2(mid_ptA, right_ptA);
+	ON_SimpleArray<ON_X_EVENT> x_event1, x_event2;
+	ON_Intersect(&linecurve1, x[i].m_curveA, x_event1, intersection_tolerance);
+	ON_Intersect(&linecurve2, x[i].m_curveA, x_event2, intersection_tolerance);
+	std::vector<double> line_t;
+	if (x_event1.Count() != 2 && x_event2.Count() == 2) {
+	    // the direction of the curve should be opposite
+	    x[i].m_curve3d->Reverse();
+	    x[i].m_curveA->Reverse();
+	    x[i].m_curveB->Reverse();
+	    linecurve1 = linecurve2;
+	    line_t.push_back(x_event2[0].m_a[0]);
+	    line_t.push_back(x_event2[1].m_a[0]);
+	} else if (x_event1.Count() == 2 && x_event2.Count() != 2) {
+	    line_t.push_back(x_event1[0].m_a[0]);
+	    line_t.push_back(x_event1[1].m_a[0]);
+	} else {
+	    bu_log("error: Cannot determine the correct direction of overlap event %d\n", x.Count() + 1);
+	    continue;
+	}
+
+	// We need to reverse the curve again, if it's an inner loop
+	// (The overlap is outside the closed region)
+	for (int j = 0; j < x.Count(); j++) {
+	    // intersect the line with other curves, in case that it may be
+	    // other loops (inner loops) inside.
+	    if (i == j) continue;
+	    ON_SimpleArray<ON_X_EVENT> x_event;
+	    ON_Intersect(&linecurve1, x[j].m_curveA, x_event, intersection_tolerance);
+	    for (int k = 0; k < x_event.Count(); k++) {
+		line_t.push_back(x_event[k].m_a[0]);
 	    }
+	}
+
+	// Normalize all params in line_t
+	for (unsigned int j = 0; j < line_t.size(); j++) {
+	    line_t[j] = linecurve1.Domain().NormalizedParameterAt(line_t[j]);
+	}
+
+	std::sort(line_t.begin(), line_t.end());
+	if (!ON_NearZero(line_t[0])) {
+	    bu_log("Error: param 0 is not in line_t!\n");
+	    continue;
+	}
+
+	// Get a test point inside the region
+	ON_3dPoint test_pt2d = linecurve1.PointAt(line_t[1]*0.5);
+	ON_3dPoint test_pt = surfA->PointAt(test_pt2d.x, test_pt2d.y);
+	ON_ClassArray<ON_PX_EVENT> px_event;
+	if (!ON_Intersect(test_pt, *surfB, px_event, overlap_tolerance)) {
+	    // The test point is not overlapped.
+	    x[i].m_curve3d->Reverse();
+	    x[i].m_curveA->Reverse();
+	    x[i].m_curveB->Reverse();
 	}
     }
 
