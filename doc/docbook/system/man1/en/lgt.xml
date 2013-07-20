@@ -11,7 +11,7 @@
 
 <refnamediv>
 <refname>lgt</refname>
-<refpurpose>produce a shaded image of an model</refpurpose>
+<refpurpose>produce a shaded image of a BRL-CAD model</refpurpose>
 </refnamediv>
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
@@ -24,6 +24,11 @@
 </cmdsynopsis>
 </refsynopsisdiv>
 
+<refsect1><title>WARNING</title>
+<para><emphasis remap='I'>Lgt</emphasis> is deprecated.  Use
+<citerefentry><refentrytitle>rtedge</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+instead.</para>
+</refsect1>
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
 <para><emphasis remap='I'>Lgt</emphasis>
