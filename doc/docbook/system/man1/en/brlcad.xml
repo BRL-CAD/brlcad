@@ -15,7 +15,7 @@
 <!-- body begins here -->
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para>The BRL-CAD Distribution contains many directories of materials.
+<para>The BRL-CAD Distribution contains many directories of materials (programs, man pages, documents, libraries, etc.).
 The major categories of programs are:</para>
 <variablelist remap='TP'>
   <varlistentry>
