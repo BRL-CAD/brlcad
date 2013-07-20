@@ -46,6 +46,7 @@ BRLCAD_ADDEXEC(wavy wavy.c libwdb)
 BRLCAD_ADDEXEC(torii torii.c libwdb)
 BRLCAD_ADDEXEC(tube tube.c "libwdb;${M_LIBRARY}")
 BRLCAD_ADDEXEC(vegetation vegetation.c "libwdb;${M_LIBRARY}")
+BRLCAD_ADDEXEC(cchannel cchannel.c "libwdb;${M_LIBRARY}")
 BRLCAD_ADDEXEC(wdb_example wdb_example.c libwdb)
 
 set(proc-db_ignore_files
