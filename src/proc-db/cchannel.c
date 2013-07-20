@@ -38,6 +38,7 @@
 #include "wdb.h"
 #include "ged.h"
 
+typedef int bool;
 
 struct channel
 {
@@ -156,9 +157,7 @@ addHoles(struct rt_wdb *db, struct channel parameters)
 static void
 makeArb(struct rt_wdb *db, double a, double b, double c, double width, double height, double sublength, char* name) 
 {
-    unsigned char rgb[3];
     point_t pts[8];
-    VSET(rgb, 64, 180, 96);
     VSET(pts[0], a, b, c);
     VSET(pts[1], a+width, b, c);
     VSET(pts[2], a+width, b+height, c);
@@ -223,7 +222,7 @@ main (int argc, char **argv)
     center = sqrt(pow(parameters.topR,2) - pow(.5*parameters.thickness,2));
 
     makeArb(db, parameters.x, parameters.y, parameters.z, parameters.thickness, parameters.diameter, parameters.length, "arb_1");
-    //first wall
+    /* first wall */
 
     VSET(pts[0], parameters.x+parameters.thickness, parameters.y+parameters.thickness,parameters.z);
     VSET(pts[1], parameters.x+parameters.thickness+parameters.diameter * (1-parameters.slope), parameters.y+parameters.thickness,parameters.z);
@@ -234,25 +233,25 @@ main (int argc, char **argv)
     VSET(pts[6], parameters.x+parameters.thickness, parameters.y+parameters.diameter, parameters.z+parameters.length);
     VSET(pts[7], parameters.x+parameters.thickness, parameters.y+parameters.diameter, parameters.z+parameters.length);
     mk_arb8 (db, "slope_1", &pts[0][0]);
-    //Make the wall sloped
+    /* Make the wall sloped */
 
     VSET(temp1, parameters.x + .5 * parameters.thickness, parameters.y + parameters.diameter - center, parameters.z);
     VSET(temp2, 0, 0, parameters.length);
     makeArb (db, parameters.x, parameters.y + parameters.diameter, parameters.z, parameters.thickness, parameters.topR, parameters.length, "top_1");
     mk_rcc (db, "top_2", temp1, temp2, parameters.topR);
-    //Make top of first wall rounded
+    /* Make top of first wall rounded */
 
     makeArb (db, parameters.x + parameters.thickness, parameters.y + parameters.thickness, parameters.z, parameters.radius, parameters.radius, parameters.length, "corner_1");
     VSET(temp1, parameters.x+parameters.thickness+parameters.radius, parameters.y+parameters.thickness+parameters.radius, parameters.z);
     VSET(temp2, 0, 0, parameters.length);
     mk_rcc (db, "corner_2", temp1, temp2, parameters.radius);
-    //round the corner of the first wall
+    /* round the corner of the first wall */
 
     makeArb (db, parameters.x+parameters.thickness, parameters.y, parameters.z, parameters.diameter, parameters.thickness, parameters.length, "arb_2");
-    //make the bottom of the channel
+    /* make the bottom of the channel */
 
     makeArb (db, parameters.x + parameters.thickness + parameters.diameter, parameters.y, parameters.z, parameters.thickness, parameters.diameter, parameters.length, "arb_3");
-    //make the second wall of the channel
+    /* make the second wall of the channel */
     parameters.x = parameters.x+parameters.thickness+parameters.diameter;
 
     VSET(pts[0], parameters.x, parameters.y+parameters.thickness,parameters.z);
@@ -264,18 +263,18 @@ main (int argc, char **argv)
     VSET(pts[6], parameters.x, parameters.y+parameters.diameter,parameters.z+parameters.length);
     VSET(pts[7], parameters.x, parameters.y+parameters.diameter,parameters.z+parameters.length);
     mk_arb8 (db, "slope_2", &pts[0][0]);
-    //make the second wall sloped
+    /* make the second wall sloped */
 
     VSET(temp1, parameters.x+.5*parameters.thickness, parameters.y+parameters.diameter-center, parameters.z);
     makeArb (db, parameters.x, parameters.y+parameters.diameter, parameters.z, parameters.thickness, parameters.topR, parameters.length, "top_3");
     mk_rcc (db, "top_4", temp1, temp2, parameters.topR);
-    //Make the top of the second wall rounded
+    /* Make the top of the second wall rounded */
 
     makeArb (db, parameters.x, parameters.y + parameters.thickness+parameters.radius, parameters.z, parameters.radius*-1, parameters.radius*-1, parameters.length, "corner_3");
     VSET(temp1, parameters.x-parameters.radius, parameters.y+parameters.thickness+parameters.radius, parameters.z);
     VSET(temp2, 0, 0, parameters.length);
     mk_rcc (db, "corner_4", temp1, temp2, parameters.radius);
-    //round the corner of the first wall
+    /* round the corner of the first wall */
 
     if (parameters.holes == 1){
 	addHoles(db, parameters);
@@ -287,7 +286,7 @@ main (int argc, char **argv)
     (void)mk_addmember("corner_3", &sub1.l, NULL, WMOP_UNION);
     (void)mk_addmember("corner_4", &sub1.l, NULL, WMOP_SUBTRACT);
     mk_lcomb(db,"sub1.c", &sub1, 0, NULL, NULL, NULL, 0);
-    //create comb for rounded corners
+    /* create comb for rounded corners */
 
     BU_LIST_INIT(&sub2a.l);
     (void)mk_addmember("top_2", &sub2a.l, NULL, WMOP_UNION);
@@ -298,13 +297,13 @@ main (int argc, char **argv)
     (void)mk_addmember("top_1", &sub2b.l, NULL, WMOP_UNION);
     (void)mk_addmember("top_3", &sub2b.l, NULL, WMOP_UNION);
     mk_lcomb(db, "sub2b.c", &sub2b, 0, NULL, NULL, NULL, 0);
-    //create comb for rounding top
+    /* create comb for rounding top */
 
     BU_LIST_INIT(&sub2.l);
     (void)mk_addmember("sub2b.c", &sub2.l, NULL, WMOP_UNION);
     (void)mk_addmember("sub2a.c", &sub2.l, NULL, WMOP_INTERSECT);
     mk_lcomb(db, "sub2.c", &sub2, 0, NULL, NULL, NULL, 0);
-    //create comb for rounding top
+    /* create comb for rounding top */
 
     BU_LIST_INIT(&channel.l);
     (void)mk_addmember("arb_1", &channel.l, NULL, WMOP_UNION);
@@ -320,7 +319,7 @@ main (int argc, char **argv)
     if (parameters.holes)
         (void)mk_addmember("holes.c", &channel.l, NULL, WMOP_SUBTRACT);
     mk_lcomb(db, "channel.r", &channel, 1, NULL, NULL, NULL, 1);
-    //make final region
+    /* make final region */
     
     return 0;
 }
