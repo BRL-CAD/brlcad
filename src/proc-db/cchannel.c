@@ -61,10 +61,10 @@ static void
 usage(char *s)
 {
     if (s)
-        bu_log("%s\n", s);
+	bu_log("%s\n", s);
     bu_exit(1, "Usage: %s %s\n%s\n",
-            "cchannel", "-l length -d diameter -x X coordinate -y Y coordinate \n-z Z coordinate -H hole radius",
-            "-t thickness -s slope -r corner-radius -R top-radius \n-u conversion factor from milimeters -f filename");
+	    "cchannel", "-l length -d diameter -x X coordinate -y Y coordinate \n-z Z coordinate -H hole radius",
+	    "-t thickness -s slope -r corner-radius -R top-radius \n-u conversion factor from milimeters -f filename");
 }
 
 static void
@@ -72,7 +72,7 @@ parseArgs(int argc, char **argv, const char* options, struct channel *parameters
 {
     char c;
     while ((c=bu_getopt(argc, argv, options)) != -1) {
-        switch (c) {
+	switch (c) {
 	    case('l'):
 		sscanf(bu_optarg, "%lf", &(parameters->length));
 		break;
@@ -105,7 +105,7 @@ parseArgs(int argc, char **argv, const char* options, struct channel *parameters
 		sscanf(bu_optarg, "%lf", &(parameters->topR));
 		break;
 	    case('f'):
- 		sscanf(bu_optarg, "%s", (parameters->filename));
+		sscanf(bu_optarg, "%s", (parameters->filename));
 		break;
 	    case('u'):
 		sscanf(bu_optarg, "%lf", &(parameters->conversionFactor));
@@ -116,20 +116,20 @@ parseArgs(int argc, char **argv, const char* options, struct channel *parameters
 		break;
 	    default:
 		usage("error: default option reached");
-        }
+	}
     }
     if (parameters->slope<.50 || parameters->slope > 1)
-        usage("error: slope cannot be less than fifty percent or more than one hundred percent");
+	usage("error: slope cannot be less than fifty percent or more than one hundred percent");
     if (parameters->topR < .5*parameters->thickness || EQUAL(parameters->thickness, 0))
-        usage("error: top radius cannot be less than half the thickness");
+	usage("error: top radius cannot be less than half the thickness");
     if (parameters->radius > .5*parameters->diameter)
-        usage("error: corner radius cannot be more than one half the diameter");
+	usage("error: corner radius cannot be more than one half the diameter");
     if (parameters->thickness > .5*parameters->diameter)
-        usage("error: the thickness cannot be more than one half the diameter");
+	usage("error: the thickness cannot be more than one half the diameter");
     if (parameters->length <= 0 || parameters->diameter <= 0 || parameters->thickness <= 0 || parameters->radius < 0 || parameters->topR < 0)
-        usage("error: size parameters cannot be negative");
+	usage("error: size parameters cannot be negative");
     if (parameters->holeR >= parameters->diameter * .5)
-        usage("error: hole radius must be smaller than one half the channel diameter");
+	usage("error: hole radius must be smaller than one half the channel diameter");
 }
 
 static void
@@ -142,20 +142,20 @@ addHoles(struct rt_wdb *db, struct channel parameters)
     char name[64];
     struct wmember holeC;
     BU_LIST_INIT(&holeC.l);
-    
+
     while (i * (dist + .5 * parameters.holeR) < parameters.length){
-        sprintf(name, "hole_%d", i);
-        VSET(pts[0], parameters.x + parameters.thickness, parameters.y + .5 * parameters.diameter - .5 * parameters.thickness, z2 + i * (dist + .5 * parameters.holeR));
-        VSET(pts[1], -1 * parameters.diameter - parameters.thickness * 2, 0, 0);
-        mk_rcc(db, name, pts[0], pts[1], parameters.holeR);
-        (void)mk_addmember(name, &holeC.l, NULL, WMOP_UNION);
-        i++;
+	sprintf(name, "hole_%d", i);
+	VSET(pts[0], parameters.x + parameters.thickness, parameters.y + .5 * parameters.diameter - .5 * parameters.thickness, z2 + i * (dist + .5 * parameters.holeR));
+	VSET(pts[1], -1 * parameters.diameter - parameters.thickness * 2, 0, 0);
+	mk_rcc(db, name, pts[0], pts[1], parameters.holeR);
+	(void)mk_addmember(name, &holeC.l, NULL, WMOP_UNION);
+	i++;
     }
     mk_lcomb(db, "holes.c", &holeC, 0, NULL, NULL, NULL, 0);
 }
 
 static void
-makeArb(struct rt_wdb *db, double a, double b, double c, double width, double height, double sublength, char* name) 
+makeArb(struct rt_wdb *db, double a, double b, double c, double width, double height, double sublength, char* name)
 {
     point_t pts[8];
     VSET(pts[0], a, b, c);
@@ -189,7 +189,7 @@ convert(double a, bool all, struct channel *parameters)
     return a;
 }
 
-int 
+int
 main (int argc, char **argv)
 {
     double center;
@@ -317,10 +317,10 @@ main (int argc, char **argv)
     (void)mk_addmember("sub2.c", &channel.l, NULL, WMOP_UNION);
     (void)mk_addmember("sub1.c", &channel.l, NULL, WMOP_UNION);
     if (parameters.holes)
-        (void)mk_addmember("holes.c", &channel.l, NULL, WMOP_SUBTRACT);
+	(void)mk_addmember("holes.c", &channel.l, NULL, WMOP_SUBTRACT);
     mk_lcomb(db, "channel.r", &channel, 1, NULL, NULL, NULL, 1);
     /* make final region */
-    
+
     return 0;
 }
 
