@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 * new 'cchannel' procedural geometry tool for C-Channel - Emory Huff
+* improved 'comb' command error messages - Talwinder Saini
 * pl -> plot3 rename for utlities and docs - Tom Browder, Cliff Yapp
 * exposed 'coil' command within mged & archer - Alexandrus, Cliff Yapp
 * added centroid reporting to 'analyze' command output - Csaba Nagy
