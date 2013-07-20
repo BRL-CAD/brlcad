@@ -15,68 +15,67 @@
 		</refpurpose>
 	</refnamediv>
 	<!-- body begins here -->
-	<refsection xml:id="libfbgeneric">
-		<info>
-			<title>Generic frame buffer routines</title>
-		</info>
-		<funcsynopsis>
-			<funcprototype>
-				<funcdef><function>FBIO</function> *fb_open</funcdef>
-				<paramdef>* <parameter>fbfile</parameter></paramdef>
-				<paramdef>int fb_close ( fbp ) FBIO * <parameter>fbp</parameter></paramdef>
-				<paramdef>int fb_read ( fbp , x , y , addr , count ) FBIO * <parameter>fbp</parameter></paramdef>
-				<paramdef>RGBpixel <parameter>*addr;</parameter></paramdef>
-				<paramdef>long <parameter>count;</parameter></paramdef>
-			</funcprototype>
-		</funcsynopsis>
-		<funcsynopsis>
-			<funcprototype>
-				<funcdef>int <function>fb_write</function></funcdef>
-				<paramdef>* <parameter>fbp</parameter></paramdef>
-				<paramdef>RGBpixel * <parameter>addr</parameter></paramdef>
-				<paramdef>long <parameter>count</parameter></paramdef>
-				<paramdef>int fb_rmap ( fbp , cmap ) FBIO * <parameter>fbp</parameter></paramdef>
-				<paramdef>ColorMap * <parameter>cmap</parameter></paramdef>
-			</funcprototype>
-		</funcsynopsis>
-		<funcsynopsis>
-			<funcprototype>
-				<funcdef>int <function>fb_wmap</function></funcdef>
-				<paramdef>* <parameter>fbp</parameter></paramdef>
-				<paramdef>ColorMap * <parameter>cmap</parameter></paramdef>
-			</funcprototype>
-		</funcsynopsis>
-		<funcsynopsis>
-			<funcprototype>
-				<funcdef>int <function>fb_clear</function></funcdef>
-				<paramdef>* <parameter>fbp</parameter></paramdef>
-				<paramdef>RGBpixel * <parameter>colorp</parameter></paramdef>
-			</funcprototype>
-		</funcsynopsis>
-		<funcsynopsis>
-			<funcprototype>
-				<funcdef>char *<function>fb_gettype</function></funcdef>
-				<paramdef>* <parameter>fbp</parameter></paramdef>
-			</funcprototype>
-		</funcsynopsis>
-		<funcsynopsis>
-			<funcprototype>
-				<funcdef>int <function>fb_getwidth</function></funcdef>
-				<paramdef>* <parameter>fbp</parameter></paramdef>
-			</funcprototype>
-		</funcsynopsis>
-		<funcsynopsis>
-			<funcprototype>
-				<funcdef>int <function>fb_getheight</function></funcdef>
-				<paramdef>* <parameter>fbp</parameter></paramdef>
-			</funcprototype>
-		</funcsynopsis>
-	</refsection>
-	<refsection xml:id="libfbhardware">
+
+<refsection xml:id="libfbgeneric">
+	<info>
+		<title>Generic frame buffer routines</title>
+	</info>
+	<funcsynopsis>
+
+		<funcprototype>
+			<funcdef><function>FBIO</function> *fb_open</funcdef>
+			<paramdef>* <parameter>fbfile</parameter></paramdef>
+			<paramdef>int fb_close ( fbp ) FBIO * <parameter>fbp</parameter></paramdef>
+			<paramdef>int fb_read ( fbp , x , y , addr , count ) FBIO * <parameter>fbp</parameter></paramdef>
+			<paramdef>RGBpixel <parameter>*addr;</parameter></paramdef>
+			<paramdef>long <parameter>count;</parameter></paramdef>
+		</funcprototype>
+
+		<funcprototype>
+			<funcdef>int <function>fb_write</function></funcdef>
+			<paramdef>* <parameter>fbp</parameter></paramdef>
+			<paramdef>RGBpixel * <parameter>addr</parameter></paramdef>
+			<paramdef>long <parameter>count</parameter></paramdef>
+			<paramdef>int fb_rmap ( fbp , cmap ) FBIO * <parameter>fbp</parameter></paramdef>
+			<paramdef>ColorMap * <parameter>cmap</parameter></paramdef>
+		</funcprototype>
+
+		<funcprototype>
+			<funcdef>int <function>fb_wmap</function></funcdef>
+			<paramdef>* <parameter>fbp</parameter></paramdef>
+			<paramdef>ColorMap * <parameter>cmap</parameter></paramdef>
+		</funcprototype>
+
+		<funcprototype>
+			<funcdef>int <function>fb_clear</function></funcdef>
+			<paramdef>* <parameter>fbp</parameter></paramdef>
+			<paramdef>RGBpixel * <parameter>colorp</parameter></paramdef>
+		</funcprototype>
+
+		<funcprototype>
+			<funcdef>char *<function>fb_gettype</function></funcdef>
+			<paramdef>* <parameter>fbp</parameter></paramdef>
+		</funcprototype>
+
+		<funcprototype>
+			<funcdef>int <function>fb_getwidth</function></funcdef>
+			<paramdef>* <parameter>fbp</parameter></paramdef>
+		</funcprototype>
+
+		<funcprototype>
+			<funcdef>int <function>fb_getheight</function></funcdef>
+			<paramdef>* <parameter>fbp</parameter></paramdef>
+		</funcprototype>
+
+	</funcsynopsis>
+</refsection>
+
+<refsection xml:id="libfbhardware">
 		<info>
 			<title>Hardware specific frame buffer routines</title>
 		</info>
         <funcsynopsis>
+
 		<funcprototype>
 			<funcdef>int <function>fb_cursor</function></funcdef>
 			<paramdef>* <parameter>fbp</parameter></paramdef>
@@ -86,52 +85,48 @@
             <paramdef>int <parameter>xbits</parameter>, <parameter>ybits</parameter>;</paramdef>
             <paramdef>int <parameter>xorig</parameter>, <parameter>yorig</parameter>;</paramdef>
 		</funcprototype>
-    </funcsynopsis>
-    <funcsynopsis>
+
 		<funcprototype>
 			<funcdef>int <function>fb_window</function></funcdef>
 			<paramdef>* <parameter>fbp</parameter></paramdef>
 			<paramdef>int fb_zoom ( fbp , x , y ) FBIO * <parameter>fbp</parameter></paramdef>
 			<paramdef>/ *Buffered frame buffer I/O: */ int fb_ioinit ( fbp ) FBIO * <parameter>fbp</parameter></paramdef>
 		</funcprototype>
-    </funcsynopsis>
-    <funcsynopsis>
+
 		<funcprototype>
 			<funcdef>int <function>fb_seek</function></funcdef>
 			<paramdef>* <parameter>fbp</parameter></paramdef>
 			<paramdef>void fb_tell ( fbp , xp , yp ) FBIO * <parameter>fbp</parameter></paramdef>
 			<paramdef>int *xp , * <parameter>yp</parameter></paramdef>
 		</funcprototype>
-    </funcsynopsis>
-    <funcsynopsis>
+
 		<funcprototype>
 			<funcdef>int <function>fb_rpixel</function></funcdef>
 			<paramdef>* <parameter>fbp</parameter></paramdef>
 			<paramdef>RGBpixel * <parameter>pixelp</parameter></paramdef>
 		</funcprototype>
-    </funcsynopsis>
-    <funcsynopsis>
+
 		<funcprototype>
 			<funcdef>int <function>fb_wpixel</function></funcdef>
 			<paramdef>* <parameter>fbp</parameter></paramdef>
 			<paramdef>RGBpixel * <parameter>pixelp</parameter></paramdef>
 		</funcprototype>
-    </funcsynopsis>
-    <funcsynopsis>
+
 		<funcprototype>
 			<funcdef>int <function>fb_flush</function></funcdef>
 			<paramdef>* <parameter>fbp</parameter></paramdef>
 		</funcprototype>
-    </funcsynopsis>
-    <funcsynopsis>
+
 		<funcprototype>
 			<funcdef>void <function>fb_log</function></funcdef>
 			<paramdef>format [ <parameter/></paramdef>
 			<paramdef>arg ] ... <parameter/></paramdef>
 		</funcprototype>
+
     </funcsynopsis>
-	</refsection>
-	<refsection xml:id="description">
+</refsection>
+
+<refsection xml:id="description">
 		<info>
 			<title>DESCRIPTION</title>
 		</info>
@@ -168,9 +163,7 @@
 			file opened was a real frame buffer by examining the name, and if so
 			will perform whatever initialization actions are necessary.
 			If the value of <emphasis remap="I">fbfile</emphasis> is
-			<!-- B elided -->
 			<acronym>NULL</acronym> and the environment variable
-			<!-- B elided -->
 			<envar>FB_FILE</envar> is set, then the value of <envar>FB_FILE</envar>
 			is used; otherwise the default frame buffer device for the system is used.
 			See below for more details. The <emphasis remap="I">width</emphasis>
@@ -209,7 +202,6 @@
 			into the frame buffer.  If the value of
 			<emphasis remap="I">cmap</emphasis>
 			is
-			<!-- B elided -->
 			<acronym>NULL</acronym>
 			then a linear color map is used as the default.
 		</para>
@@ -343,8 +335,9 @@
 			This function may be supplied by the application if different behavior
 			is desired.
 		</para>
-	</refsection>
-	<refsection xml:id="fb_file_devices">
+</refsection>
+
+<refsection xml:id="fb_file_devices">
 		<info>
 			<title>FB_FILE DEVICES</title>
 		</info>
@@ -398,8 +391,9 @@
 				</listitem>
 			</varlistentry>
 		</variablelist>
-	</refsection>
-	<refsection xml:id="examples">
+</refsection>
+
+<refsection xml:id="examples">
 		<info>
 			<title>EXAMPLES</title>
 		</info>
@@ -415,8 +409,9 @@
 			with networking will require the "-lpkg" option.  Machines which support the
 			X Windows(tm) system will require the "-lX11" option.
 		</para>
-	</refsection>
-	<refsection xml:id="return_values">
+</refsection>
+
+<refsection xml:id="return_values">
 		<info>
 			<title>RETURN VALUES</title>
 		</info>
@@ -448,18 +443,21 @@
 			<emphasis remap="I">fb_gettype</emphasis>
 			returns a pointer to a NULL terminated description string.
 		</para>
-	</refsection>
-	<refsection xml:id="see_also">
+</refsection>
+
+<refsection xml:id="see_also">
 		<info>
 			<title>SEE ALSO</title>
 		</info>
 		<para><citerefentry><refentrytitle>fbhelp</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
-	</refsection>
-	<refsection xml:id="author">
+</refsection>
+
+<refsection xml:id="author">
 		<title>AUTHOR</title>
 		<para>BRL-CAD Team</para>
-	</refsection>
-	<refsection xml:id="bug_reports">
+</refsection>
+
+<refsection xml:id="bug_reports">
 		<info>
 			<title>BUG REPORTS</title>
 		</info>
@@ -467,5 +465,6 @@
 			Reports of bugs or problems should be submitted via electronic
 			mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
 		</para>
-	</refsection>
+</refsection>
+
 </refentry>
