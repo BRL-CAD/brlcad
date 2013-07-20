@@ -78,13 +78,13 @@ to ease construction of network-distributed applications.</para>
   <varlistentry>
   <term><emphasis remap='B'>libfb</emphasis></term>
   <listitem>
+
 <para>A generic frame-buffer library which includes
 support for a number of display devices,
 as well as file, network, and debugging interfaces.
 Most programs which use this library have the letters "fb"
 in their names.  To override your system default frame-buffer,
 the environment variable
-<!-- B elided -->
 <envar>FB_FILE</envar>
 can be set.  In addition, some commands also support a
 <option>-F</option>
@@ -106,6 +106,7 @@ etc.</para>
   <varlistentry>
   <term><emphasis remap='B'>fbserv</emphasis></term>
   <listitem>
+
 <para>TCP-based network server which implements remote frame-buffer services.</para>
   </listitem>
   </varlistentry>
@@ -248,7 +249,6 @@ See
 <para>Whenever a framebuffer is needed, and the
 <option>-F</option>
 option has not been specified, the environment variable
-<!-- B elided -->
 <envar>FB_FILE</envar>
 is checked for the device to use.  The format of this
 variable is either
@@ -272,7 +272,6 @@ Note that for security reasons, it is not permitted to access a
 disk file via the remote interface.</para>
 
 <para>If
-<!-- B elided -->
 <envar>FB_FILE</envar>
 is not set, the default for you system will be used.</para>
 
@@ -421,7 +420,7 @@ a convention for the number of frames/reel exists:</para>
 <para> 1600        1k          12</para>
 
 <para> 1600       512         48</para>
-<!-- B elided -->
+
 </refsect1>
 
 <refsect1 xml:id='author'><title>AUTHOR</title>
