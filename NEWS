@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2013-0X-XX  Release 7.24.2                                     ---
 ----------------------------------------------------------------------
 
+* new 'cchannel' procedural geometry tool for C-Channel - Emory Huff
 * pl -> plot3 rename for utlities and docs - Tom Browder, Cliff Yapp
 * exposed 'coil' command within mged & archer - Alexandrus, Cliff Yapp
 * added centroid reporting to 'analyze' command output - Csaba Nagy
