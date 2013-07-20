@@ -295,7 +295,6 @@ is configured by the frame buffer library (see
 <citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3B</manvolnum></citerefentry>),
 based on available graphics devices.  The default may be overridden more generally
 with the environment variable
-<!-- SM elided -->
 <emphasis remap='B'>FB_FILE</emphasis>
 (see
 <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>).</para>

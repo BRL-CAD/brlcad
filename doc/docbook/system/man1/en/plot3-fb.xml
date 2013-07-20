@@ -32,7 +32,6 @@
 displays a BRL extended three dimensional UNIX plot file on a framebuffer.
 The environment
 variable
-<!-- B elided -->
 <envar>FB_FILE</envar>
 is used to select the display device (see
 <emphasis remap="I">brlcad(1)</emphasis>).
@@ -43,10 +42,10 @@ Specifying the
 <option>-h</option>
 flag, changes the output size to 1024x1024.
 The
-<option>-SÂ </option><replaceable>squaresize</replaceable>
-<option>-WÂ </option><replaceable>width</replaceable>
+<option>-SA </option><replaceable>squaresize</replaceable>
+<option>-WA </option><replaceable>width</replaceable>
 and
-<option>-NÂ </option><replaceable>height</replaceable>
+<option>-NA </option><replaceable>height</replaceable>
 flags allow different screen sizes to be set.  The plotting space
 will fill the given screen dimensions.  No attempt is made at present
 to preserve aspect.</para>

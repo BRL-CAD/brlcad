@@ -34,7 +34,6 @@ option can be used to specify the framebuffer.
 If this option is omitted,
 the environment
 variable
-<!-- B elided -->
 <envar>FB_FILE</envar>
 is used to select the display device (see
 <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>).

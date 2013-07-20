@@ -30,7 +30,6 @@
 displays an extended UnixPlot file on any workstation running the
 X Window System (X11R2).  As with all X programs, the selected
 display is determined from the
-<!-- B elided -->
 <acronym>DISPLAY</acronym>
 environment variable.</para>
 
