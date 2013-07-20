@@ -38,8 +38,6 @@
 #include "wdb.h"
 #include "ged.h"
 
-typedef int bool;
-
 struct channel
 {
     double length;
@@ -52,7 +50,7 @@ struct channel
     double slope;
     double topR;
     double conversionFactor;
-    bool holes;
+    int holes;
     double holeR;
     char filename[64];
 };
@@ -170,7 +168,7 @@ makeArb(struct rt_wdb *db, double a, double b, double c, double width, double he
 }
 
 static double
-convert(double a, bool all, struct channel *parameters)
+convert(double a, int all, struct channel *parameters)
 {
     if (all == 0){
 	a = a * parameters->conversionFactor;
