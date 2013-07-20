@@ -26,17 +26,16 @@
  */
 #include "common.h"
 
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
-#include <math.h>
-#include "bu.h"
-#include "wdb.h"
-#include "vmath.h"
 #include "bn.h"
+#include "bu.h"
+#include "ged.h"
 #include "raytrace.h"
 #include "rtgeom.h"
+#include "vmath.h"
 #include "wdb.h"
-#include "ged.h"
 
 struct channel
 {
