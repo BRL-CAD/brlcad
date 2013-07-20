@@ -28,7 +28,6 @@
 
 #include <math.h>
 #include <stdio.h>
-#include <string.h>
 #include "bn.h"
 #include "bu.h"
 #include "ged.h"
@@ -51,7 +50,7 @@ struct channel
     double conversionFactor;
     int holes;
     double holeR;
-    char filename[64];
+    const char *filename;
 };
 
 static void
@@ -102,7 +101,7 @@ parseArgs(int argc, char **argv, const char* options, struct channel *parameters
 		sscanf(bu_optarg, "%lf", &(parameters->topR));
 		break;
 	    case('f'):
-		sscanf(bu_optarg, "%s", (parameters->filename));
+		parameters->filename = bu_optarg;
 		break;
 	    case('u'):
 		sscanf(bu_optarg, "%lf", &(parameters->conversionFactor));
@@ -212,7 +211,7 @@ main (int argc, char **argv)
     parameters.conversionFactor = 25.4;
     parameters.holes = 0;
     parameters.holeR = .25;
-    strcpy(parameters.filename, "channel.g");
+    parameters.filename = "channel.g";
     parseArgs(argc, argv, options, &parameters);
     convert(0, 1, &parameters);
     db = wdb_fopen(parameters.filename);
