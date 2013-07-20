@@ -808,7 +808,7 @@ struct rt_annotation_internal
 
 struct rt_hrt_internal
 {
-    unint32_t hrt_magic;
+    uint32_t hrt_magic;
     point_t	v;		/**< @brief center point */
     vect_t	a;		/**< @brief axis a radial length */
     vect_t	b;     		/**< @brief axis b radial length */
