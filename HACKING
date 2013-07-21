@@ -468,8 +468,8 @@ scripts use the .sh extension.  Perl files use the .pl (program) or
 Source files go into the src/ directory on the top level, into a
 corresponding directory for the category of binary or library that it
 belongs to.  Documentation files go into the doc/ directory on the top
-level, with the exception of manual pages that should be colocated
-with any corresponding source files.
+level, with the exception of manual (man) pages that should be 
+colocated with any corresponding source files.
 
 Header files private to a library go into that library's directory.
 Public header files go into the include/ directory on the top level.
@@ -527,7 +527,7 @@ Language Compliance:
 
 Features of C that conform to the ISO/IEC 9899-1990 C standard (C90)
 are generally the baseline for strict language conformance.  As
-BRL-CAD used to be K&R syntax conformant, there remains on-going
+BRL-CAD used to be K&R syntax conformant, there remains an on-going
 effort to ensure a full conversion to a standards compliant ISO C
 implementation.
 
@@ -612,9 +612,9 @@ to, if only for the sake of being consistent.
 
 Indents are 4 characters, tabs are 8 characters.  There should be an
 emacs and vi local variables block setting at the end of each file to
-adopt, enforce, and otherwise remind this convention.  The following
-lines should be in all C source and header files at the end of the
-file:
+adopt, enforce, and otherwise remind one of this convention.  The 
+following lines should be in all C and C++ source and header files at
+the end of the file:
 
 /*
  * Local Variables:
@@ -762,7 +762,7 @@ code in our Subversion (SVN) repository.
 In line with that goal and where beneficial, a large portion of the
 tutorial documentation is being converted to the DocBook XML format.
 Having the tutorial documentation in the DocBook XML format allows for
-easier maintenances, better export conversion support, and
+easier maintenance, better export conversion support, and
 representation in a textual format that may be revision controlled and
 tracked.
 
@@ -774,7 +774,7 @@ longevity.  Determining just how much documentation is sufficient and
 how much is too much is generally resolved over time, but it should
 generally be looked at from the perspective of "If I look at this code
 in a couple years from now, what would help me remember or understand
-it better?"  and add documentation accordingly.
+it better?" and add documentation accordingly.
 
 All public library functions and most private or application functions
 should be appropriately documented using Doxygen/Javadoc style
