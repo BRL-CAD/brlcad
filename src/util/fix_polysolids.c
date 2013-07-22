@@ -25,7 +25,7 @@
 
 #include "common.h"
 
-#include <stdio.h>
+#include <bio.h>
 #include <math.h>
 #include <string.h>
 
@@ -68,10 +68,13 @@ main(int argc, char *argv[])
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
+    if ( argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)) )
+	bu_exit(1, usage, argv[0]);
+
     BU_LIST_INIT(&rt_g.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "vx:X:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "vx:X:h?")) != -1) {
 	switch (c) {
 	    unsigned int debug;
 	    case 'v':
