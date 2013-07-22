@@ -53,8 +53,18 @@ if(DOXYGEN_FOUND)
     COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/CMakeTmp/Doxyfile
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
     )
-  add_custom_target(dox DEPENDS ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/index.html)
+  add_custom_target(dox     DEPENDS ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/index.html)
   add_custom_target(doxygen DEPENDS ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/index.html)
+
+  configure_file(DoxyfileLibs.in ${CMAKE_BINARY_DIR}/CMakeTmp/DoxyfileLibs @ONLY)
+  configure_file(DoxyfileLibs-defaults.in ${CMAKE_BINARY_DIR}/CMakeTmp/DoxyfileLibs-defaults @ONLY)
+  add_custom_command(
+    OUTPUT ${CMAKE_BINARY_DIR}/doc/doxygen_output_libs/html/index.html
+    COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/CMakeTmp/DoxyfileLibs
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
+    )
+  add_custom_target(libdox DEPENDS ${CMAKE_BINARY_DIR}/doc/doxygen_output_libs/html/index.html)
+
 endif(DOXYGEN_FOUND)
 
 set(misc_ignore_files
@@ -62,6 +72,9 @@ set(misc_ignore_files
   Description.txt
   Doxyfile
   Doxyfile.in
+
+  DoxyfileLibs.in
+
   Makefile.defs
   archlinux
   astyle.opt
