@@ -2242,6 +2242,15 @@ ON_Intersect(const ON_Surface* surfA,
     else
 	return 0;
 
+    // Generate brlcad::SurfaceTree() for point-surface intersections.
+    ON_Brep *brep = surfA->BrepForm();
+    if (!brep) return 0;
+    brlcad::SurfaceTree *treeA = new brlcad::SurfaceTree(brep->Face(0), false, MAX_PSI_DEPTH);
+    delete brep;
+    brep = surfB->BrepForm();
+    if (!brep) return 0;
+    brlcad::SurfaceTree *treeB = new brlcad::SurfaceTree(brep->Face(0), false, MAX_PSI_DEPTH);
+
     // We adjust the tolerance from 3D scale to respective 2D scales.
     double intersection_tolerance_A = intersection_tolerance;
     double intersection_tolerance_B = intersection_tolerance;
@@ -2282,6 +2291,7 @@ ON_Intersect(const ON_Surface* surfA,
     for (int i = 0; i < 4; i++) {
 	const ON_Surface* surf1 = i >= 2 ? surfB : surfA;
 	const ON_Surface* surf2 = i >= 2 ? surfA : surfB;
+	brlcad::SurfaceTree* tree = i >= 2 ? treeA : treeB;
 	ON_CurveArray& overlap1 = i >= 2 ? overlapB : overlapA;
 	ON_CurveArray& overlap2 = i >= 2 ? overlapA : overlapB;
 	ON_2dPointArray& ptarray1 = i >= 2 ? tmp_curvest : tmp_curveuv;
@@ -2322,12 +2332,36 @@ ON_Intersect(const ON_Surface* surfA,
 		    ptarray2.Append(ON_2dPoint(x_event[k].m_b[2], x_event[k].m_b[3]));
 		    // Get the overlap curve
 		    if (x_event[k].m_a[0] < x_event[k].m_a[1]) {
-			overlaps.Append(sub_curve(boundary, x_event[k].m_a[0], x_event[k].m_a[1]));
-			overlap1.Append(new ON_LineCurve(iso_pt1, iso_pt2));
-			overlap2.Append(overlap2d[k]);
-			// We set overlap2d[k] to NULL, is case that the curve
-			// is delete by the destructor of overlap2d. (See ~ON_CurveArray())
-			overlap2d[k] = NULL;
+			// Check whether it's an inner curve segment, that is,
+			// this curve is completely inside the overlap region,
+			// not part of the boundary curve.
+			// We test whether the two sides of that curve are shared.
+			// For the boundary of whole surface, this test is not needed.
+			bool isvalid = false;
+			if (j == 0 || (j == b_knots.Count() - 1 && !surf1->IsClosed(dir))) {
+			    isvalid = true;
+			} else {
+			    double test_distance = 0.01;
+			    double U1 = i%2 ? b_knots[j]-test_distance : (x_event[k].m_a[0]+x_event[k].m_a[1])*0.5;
+			    double V1 = i%2 ? (x_event[k].m_a[0]+x_event[k].m_a[1])*0.5 : b_knots[j]-0.01;
+			    double U2 = i%2 ? b_knots[j]+test_distance : (x_event[k].m_a[0]+x_event[k].m_a[1])*0.5;
+			    double V2 = i%2 ? (x_event[k].m_a[0]+x_event[k].m_a[1])*0.5 : b_knots[j]+0.01;
+			    bool in1, in2;
+			    ON_ClassArray<ON_PX_EVENT> px_event1, px_event2;
+			    in1 = ON_Intersect(surf1->PointAt(U1, V1), *surf2, px_event1, overlap_tolerance, 0, 0, tree);
+			    in2 = ON_Intersect(surf1->PointAt(U2, V2), *surf2, px_event1, overlap_tolerance, 0, 0, tree);
+			    if ((in1 && !in2) || (!in1 && in2))
+				isvalid = true;
+			}
+			if (isvalid) {
+			    // One side of it is shared and the other side is non-shared.
+			    overlaps.Append(sub_curve(boundary, x_event[k].m_a[0], x_event[k].m_a[1]));
+			    overlap1.Append(new ON_LineCurve(iso_pt1, iso_pt2));
+			    overlap2.Append(overlap2d[k]);
+			    // We set overlap2d[k] to NULL, is case that the curve
+			    // is delete by the destructor of overlap2d. (See ~ON_CurveArray())
+			    overlap2d[k] = NULL;
+			}
 		    }
 		}
 	    }
@@ -2458,7 +2492,7 @@ ON_Intersect(const ON_Surface* surfA,
 	ON_3dPoint test_pt2d = linecurve1.PointAt(line_t[1]*0.5);
 	ON_3dPoint test_pt = surfA->PointAt(test_pt2d.x, test_pt2d.y);
 	ON_ClassArray<ON_PX_EVENT> px_event;
-	if (!ON_Intersect(test_pt, *surfB, px_event, overlap_tolerance)) {
+	if (!ON_Intersect(test_pt, *surfB, px_event, overlap_tolerance, 0, 0, treeB)) {
 	    // The test point is not overlapped.
 	    x[i].m_curve3d->Reverse();
 	    x[i].m_curveA->Reverse();
