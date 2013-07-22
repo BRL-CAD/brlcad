@@ -468,7 +468,7 @@ scripts use the .sh extension.  Perl files use the .pl (program) or
 Source files go into the src/ directory on the top level, into a
 corresponding directory for the category of binary or library that it
 belongs to.  Documentation files go into the doc/ directory on the top
-level, with the exception of manual (man) pages that should be 
+level, with the exception of manual (man) pages that should be
 colocated with any corresponding source files.
 
 Header files private to a library go into that library's directory.
@@ -612,7 +612,7 @@ to, if only for the sake of being consistent.
 
 Indents are 4 characters, tabs are 8 characters.  There should be an
 emacs and vi local variables block setting at the end of each file to
-adopt, enforce, and otherwise remind one of this convention.  The 
+adopt, enforce, and otherwise remind one of this convention.  The
 following lines should be in all C and C++ source and header files at
 the end of the file:
 
@@ -730,7 +730,7 @@ structures.
 "//" style comments are not allowed in C source files for portability.
 Comment blocks should utilize an asterisk at the beginning of each new
 line.  Doxygen comments should start on the second line unless it's a
-succint /** single-line */ comment.
+succinct /** single-line */ comment.
 
 /* This is a
  * comment block.
@@ -908,7 +908,7 @@ in order for commit access to be granted:
 
 3) Join the brlcad-devel developer mailing list, introduce yourself.
 
-4) Create a Sourceforge account, submit two or more patches that
+4) Create a SourceForge account, submit two or more patches that
 demonstrate competency with our coding style, apply flawlessly, and
 provide significant improvements to the existing code.
 

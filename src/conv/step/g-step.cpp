@@ -123,7 +123,7 @@ main(int argc, char *argv[])
     RT_CK_DB_INTERNAL(&intern);
     bi = (struct rt_brep_internal*)intern.idb_ptr;
     //RT_BREP_TEST_MAGIC(bi);
-    ON_Brep *brep = bi->brep; 
+    ON_Brep *brep = bi->brep;
     ON_wString wstr;
     ON_TextLog dump(wstr);
     brep->Dump(dump);
@@ -133,13 +133,13 @@ main(int argc, char *argv[])
     Registry *registry = new Registry( SchemaInit );
     InstMgr instance_list;
     STEPfile *sfile = new STEPfile(*registry, instance_list);
-     
+
     int entities_cnt = brep->m_S.Count() + brep->m_C3.Count() + brep->m_C2.Count() +
                        brep->m_V.Count() + brep->m_E.Count() + brep->m_T.Count() +
-                       brep->m_L.Count() + brep->m_F.Count() + registry->GetEntityCnt(); 
+                       brep->m_L.Count() + brep->m_F.Count() + registry->GetEntityCnt();
     STEPentity ** SEarray = new STEPentity*[entities_cnt];
    // SEarray[0] = registry->ObjCreate("Advanced_Brep_Shape_Representation);
- 
+
    registry->ResetSchemas();
    registry->ResetEntities();
    const SchemaDescriptor * schema = registry->NextSchema();
@@ -151,7 +151,7 @@ main(int argc, char *argv[])
        instance_list.Append( SEarray[i], completeSE );
        std::cout << "  " << ent->Name() << "\n";
        SEarray[i]->ResetAttributes();
-       STEPattribute *attr = SEarray[i]->NextAttribute(); 
+       STEPattribute *attr = SEarray[i]->NextAttribute();
        while (attr != 0) {
           std::cout << "    " << attr->aDesc->Name() << ": " << attr->aDesc->TypeName() << "\n";
           attr = SEarray[i]->NextAttribute();

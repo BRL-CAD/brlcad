@@ -96,7 +96,7 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 
 	/* object name comes after op */
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[i+1], LOOKUP_NOISY)) == RT_DIR_NULL) {
-	    bu_vls_printf(gedp->ged_result_str, "Object '%s'does not exist.\n", argv[i+1]);
+	    bu_vls_printf(gedp->ged_result_str, "Object '%s does not exist.\n", argv[i+1]);
 	    continue;
 	}
 
