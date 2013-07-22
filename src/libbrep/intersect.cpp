@@ -2101,6 +2101,106 @@ link_curves(ON_Curve*& c1, ON_Curve*& c2)
 }
 
 
+struct OverlapEvent {
+    ON_SSX_EVENT* m_event;  // Use pointer to the ON_SSX_EVENT in case that
+			    // ~ON_SSX_EVENT() is called.
+    ON_BoundingBox m_bboxA; // 2D surfA bounding box of the closed region.
+    enum TYPE {
+	undefined = 0,
+	outer = 1,
+	inner = 2
+    } m_type;
+
+    OverlapEvent() {}
+
+    OverlapEvent(ON_SSX_EVENT* _e) : m_event(_e)
+    {
+	m_type = undefined;
+	m_bboxA = _e->m_curveA->BoundingBox();
+    }
+
+    bool IsPointOnBoundary(const ON_2dPoint& _pt) {
+	ON_ClassArray<ON_PX_EVENT> px_event;
+	return ON_Intersect(ON_3dPoint(_pt), *(m_event->m_curveA), px_event);
+    }
+
+    // Test whether a point is inside the closed region (including boundary).
+    // Approach: Use line-curve intersections. If the line between this point
+    // and a point outside the b-box has an odd number of intersections with
+    // the boundary, it's considered inside, otherwise outside. (Tangent
+    // intersection are counted 2.)
+    bool IsPointIn(const ON_2dPoint& _pt) {
+	if (!m_bboxA.IsPointIn(_pt))
+	    return false;
+	if (IsPointOnBoundary(_pt))
+	    return true;
+	ON_ClassArray<ON_PX_EVENT> px_event;
+	// This point must be outside the closed region.
+	ON_2dPoint out = _pt + ON_2dVector(m_bboxA.Diagonal());
+	ON_LineCurve linecurve(_pt, out);
+	ON_SimpleArray<ON_X_EVENT> x_event;
+	ON_Intersect(&linecurve, m_event->m_curveA, x_event);
+	int count = x_event.Count();
+	for (int i = 0; i < x_event.Count(); i++) {
+	    // Find tangent intersections.
+	    // What should we do if it's ccx_overlap?
+	    if (m_event->m_curveA->TangentAt(x_event[i].m_a[0]).IsParallelTo(linecurve.m_line.Direction()))
+		count++;
+	}
+	return count % 2 ? true : false;
+    }
+
+    // Return false if the point is on the boundary.
+    bool IsPointOut(const ON_2dPoint& _pt) {
+	return !IsPointIn(_pt);
+    }
+
+    // Test whether there are intersections between the box boundaries
+    // and the boundary curve.
+    // If there are not intersection, there can be 3 cases:
+    // 1) The box is completely in.
+    // 2) The box is completely out.
+    // 3) The box completely contains the closed region bounded by that curve.
+    bool IsBoxIntersected(const ON_2dPoint& _min, const ON_2dPoint& _max) {
+	ON_2dPoint corner[4] = {
+	    _min,
+	    ON_2dPoint(_max.x, _min.y),
+	    _max,
+	    ON_2dPoint(_min.x, _max.y)
+	};
+	ON_LineCurve linecurve[4] = {
+	    ON_LineCurve(corner[0], corner[1]),
+	    ON_LineCurve(corner[1], corner[2]),
+	    ON_LineCurve(corner[2], corner[3]),
+	    ON_LineCurve(corner[3], corner[0])
+	};
+	ON_SimpleArray<ON_X_EVENT> x_event[4];
+	for (int i = 0; i < 4; i++) {
+	    if (ON_Intersect(&linecurve[i], m_event->m_curveA, x_event[i]))
+		return true;
+	}
+	return false;
+    }
+
+    bool IsBoxCompletelyIn(const ON_2dPoint& _min, const ON_2dPoint& _max) {
+	// There should not be intersections between the box boundaries
+	// and the boundary curve.
+	if (IsBoxIntersected(_min, _max)) {
+	    return false;
+	}
+	ON_2dPoint center = (_min + _max) * 0.5;
+	return m_bboxA.Includes(ON_BoundingBox(_min, _max)) && IsPointIn(center);
+    }
+
+    bool IsBoxCompletelyOut(const ON_2dPoint& _min, const ON_2dPoint& _max) {
+	if (IsBoxIntersected(_min, _max))
+	    return false;
+	ON_2dPoint center = (_min + _max) * 0.5;
+	return !IsPointIn(center) && !ON_BoundingBox(_min, _max).Includes(m_bboxA);
+    }
+};
+
+
 int
 ON_Intersect(const ON_Surface* surfA,
 	     const ON_Surface* surfB,
@@ -2293,6 +2393,12 @@ ON_Intersect(const ON_Surface* surfA,
 	}
     }
 
+    // Generate OverlapEvents.
+    ON_SimpleArray<OverlapEvent> overlapevents;
+    for (int i = 0; i < x.Count(); i++) {
+	overlapevents.Append(OverlapEvent(&x[i]));
+    }
+
     for (int i = 0; i < x.Count(); i++) {
 	// The overlap region should be to the LEFT of that *m_curveA*.
 	// (See opennurbs/opennurbs_x.h)
@@ -2357,13 +2463,14 @@ ON_Intersect(const ON_Surface* surfA,
 	    x[i].m_curve3d->Reverse();
 	    x[i].m_curveA->Reverse();
 	    x[i].m_curveB->Reverse();
+	    overlapevents[i].m_type = OverlapEvent::inner;
+	} else {
+	    // The test point inside that region is an overlap point.
+	    overlapevents[i].m_type = OverlapEvent::outer;
 	}
     }
 
-    // Just for debugging use.
-    // After more later work on overlaps, this must be removed.
-    if (x.Count()) return x.Count();
-
+    bu_log("%d overlap events.\n", overlapevents.Count());
     /* Second step: calculate the intersection of the bounding boxes.
      * Only the children of intersecting b-box pairs need to be considered.
      * The children will be generated only when they are needed, using the
@@ -2375,6 +2482,34 @@ ON_Intersect(const ON_Surface* surfA,
 	    break;
 	next_candidates.clear();
 	for (NodePairs::iterator i = candidates.begin(); i != candidates.end(); i++) {
+	    // If the box is considered already belonging to the overlap
+	    // regions, we don't need to further sub-divide it.
+	    ON_2dPoint min2d(i->first->m_u.Min(), i->first->m_v.Min());
+	    ON_2dPoint max2d(i->first->m_u.Max(), i->first->m_v.Max());
+	    bool out_of_all_inner = true, inside_one_outer = false;
+	    for (int j = 0; j < overlapevents.Count(); j++) {
+		if (overlapevents[j].m_type == OverlapEvent::inner
+		    && !overlapevents[j].IsBoxCompletelyOut(min2d, max2d)) {
+		    out_of_all_inner = false;
+		    break;
+		}
+	    }
+	    if (out_of_all_inner) {
+		// It's completely out of all inner loops.
+		for (int j = 0; j < overlapevents.Count(); j++) {
+		    if (overlapevents[j].m_type == OverlapEvent::outer
+			&& overlapevents[j].IsBoxCompletelyIn(min2d, max2d)) {
+			inside_one_outer = true;
+			break;
+		    }
+		}
+		// We only do this optimization of surfA, because node pairs
+		// need both boxes from surfA and surfB, and eliminate one of
+		// them is enough.
+		if (inside_one_outer) {
+		    continue;
+		}
+	    }
 	    std::vector<Subsurface*> splittedA, splittedB;
 	    if ((*i).first->Split() != 0) {
 		splittedA.push_back((*i).first);
@@ -2512,9 +2647,35 @@ ON_Intersect(const ON_Surface* surfA,
 		&& tmp_curvest[i].DistanceTo(curvest[j]) < intersection_tolerance_B)
 		break;
 	if (j == curvept.Count()) {
-	    curvept.Append(tmp_curvept[i]);
-	    curveuv.Append(tmp_curveuv[i]);
-	    curvest.Append(tmp_curvest[i]);
+	    // Test whether this point belongs to the overlap regions.
+	    bool outside_inner = true, inside_outer = false;
+	    for (int k = 0; k < overlapevents.Count(); k++) {
+		if (overlapevents[k].m_type == OverlapEvent::inner
+		    && overlapevents[k].IsPointIn(tmp_curveuv[i])
+		    && !overlapevents[k].IsPointOnBoundary(tmp_curveuv[i])) {
+		    // This point is strictly inside the inner loop,
+		    // so it doesn't belong to overlap regions.
+		    outside_inner = false;
+		    break;
+		}
+	    }
+	    if (outside_inner) {
+		// This point is out of all inner loops. If it's inside
+		// one outer loop (including on boundaries), it should
+		// belong to overlap regions.
+		for (int k = 0; k < overlapevents.Count(); k++) {
+		    if (overlapevents[k].m_type == OverlapEvent::outer
+			&& overlapevents[k].IsPointIn(tmp_curveuv[i])) {
+			inside_outer = true;
+			break;
+		    }
+		}
+	    }
+	    if (!inside_outer) {
+		curvept.Append(tmp_curvept[i]);
+		curveuv.Append(tmp_curveuv[i]);
+		curvest.Append(tmp_curvest[i]);
+	    }
 	}
     }
     bu_log("%d points on the intersection curves.\n", curvept.Count());
