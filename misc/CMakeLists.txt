@@ -72,9 +72,7 @@ set(misc_ignore_files
   Description.txt
   Doxyfile
   Doxyfile.in
-
   DoxyfileLibs.in
-
   Makefile.defs
   archlinux
   astyle.opt
@@ -83,6 +81,7 @@ set(misc_ignore_files
   brlcad.spec.in
   debian
   doxygen_structure
+  doxygen_structure_libs.txt
   flawfinder
   jove.emacs
   macosx
