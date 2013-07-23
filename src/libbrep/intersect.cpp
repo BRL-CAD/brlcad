@@ -1636,6 +1636,8 @@ ON_Intersect(const ON_Curve* curveA,
 	}
     }
 
+    delete brep;
+    delete tree;
     return x.Count() - original_count;
 }
 
@@ -2758,7 +2760,13 @@ ON_Intersect(const ON_Surface* surfA,
     bu_log("%d points on the intersection curves.\n", curvept.Count());
 
     if (!curvept.Count()) {
-	return 0;
+	delete brepA;
+	delete treeA;
+	delete brepB;
+	delete treeB;
+
+	// Should not return 0 as there might be overlap events.
+	return x.Count() - original_count;
     }
 
     // Fourth step: Fit the points in curvept into NURBS curves.
@@ -3102,6 +3110,10 @@ ON_Intersect(const ON_Surface* surfA,
 	}
     }
 
+    delete brepA;
+    delete treeA;
+    delete brepB;
+    delete treeB;
     return x.Count() - original_count;
 }
 
