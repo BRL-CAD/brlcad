@@ -192,7 +192,7 @@ CMAKEFILES(
 # list of temporary files
 set(regress_outfiles
   .density
-  adj_air.pl
+  adj_air.plot3
   asc2dsp-new.dsp
   asc2dsp-old.bw
   asc2dsp-old.dsp
@@ -300,7 +300,7 @@ set(regress_outfiles
   dsp-3-8.rt.pix
   eagleCAD-512x438.pix
   ebm.bw
-  exp_air.pl
+  exp_air.plot3
   fastgen_box.fast4
   fastgen_dos.g
   fastgen_unix.g
@@ -312,7 +312,7 @@ set(regress_outfiles
   g-nff.m35.asc
   g-nff.m35.g
   g-nff.m35.nff
-  gaps.pl
+  gaps.plot3
   gqa.g
   gqa.log
   gqa.mged
@@ -351,7 +351,7 @@ set(regress_outfiles
   nirt.out
   nirt.ref
   nirt_g.log
-  overlaps.pl
+  overlaps.plot3
   red.air.empty.out
   red.air.empty.out.new
   red.air.safe.out
@@ -490,7 +490,7 @@ set(regress_outfiles
   spdi_ref.pix
   t.g
   vdeck.log
-  volume.pl
+  volume.plot3
   )
 
 foreach(outfile ${regress_outfiles})
