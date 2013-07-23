@@ -2358,6 +2358,19 @@ ON_Intersect(const ON_Surface* surfA,
 			    overlaps.Append(sub_curve(boundary, x_event[k].m_a[0], x_event[k].m_a[1]));
 			    overlap1.Append(new ON_LineCurve(iso_pt1, iso_pt2));
 			    overlap2.Append(overlap2d[k]);
+			    if (j == 0 && surf1->IsClosed(dir)) {
+				// something like close_domain().
+				// If the domain is closed, the iso-curve on the
+				// first knot and the last knot is the same, so
+				// we don't need to compute the intersections twice.
+				overlaps.Append((*overlaps.Last())->Duplicate());
+				iso_pt1.x = i%2 ? knots[knotcnt] : x_event[k].m_a[0];
+				iso_pt1.y = i%2 ? x_event[k].m_a[0] : knots[knotcnt];
+				iso_pt2.x = i%2 ? knots[knotcnt] : x_event[k].m_a[1];
+				iso_pt2.y = i%2 ? x_event[k].m_a[1] : knots[knotcnt];
+				overlap1.Append(new ON_LineCurve(iso_pt1, iso_pt2));
+				overlap2.Append(overlap2d[k]->Duplicate());
+			    }
 			    // We set overlap2d[k] to NULL, is case that the curve
 			    // is delete by the destructor of overlap2d. (See ~ON_CurveArray())
 			    overlap2d[k] = NULL;
