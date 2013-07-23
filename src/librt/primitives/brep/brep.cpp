@@ -622,17 +622,28 @@ utah_pushBack(const ON_Surface* surf, ON_2dPoint &uv)
     double t0, t1;
 
     surf->GetDomain(0, &t0, &t1);
+    if (t1 < t0) {
+	double tmp = t0;
+	t0 = t1;
+	t1 = tmp;
+    }
+
     if (uv.x < t0) {
 	uv.x = t0;
-    } else if (uv.x >= t1) {
-	uv.x = t1 - ROOT_TOL;
+    } else if (uv.x > t1) {
+	uv.x = t1;
     }
 
     surf->GetDomain(1, &t0, &t1);
+    if (t1 < t0) {
+	double tmp = t0;
+	t0 = t1;
+	t1 = tmp;
+    }
     if (uv.y < t0) {
 	uv.y = t0;
-    } else if (uv.y >= t1) {
-	uv.y = t1 - ROOT_TOL;
+    } else if (uv.y > t1) {
+	uv.y = t1;
     }
 }
 
@@ -641,21 +652,22 @@ void
 utah_pushBack(const BBNode* sbv, ON_2dPoint &uv)
 {
     double t0, t1;
+    int i = sbv->m_u.m_t[0] < sbv->m_u.m_t[1] ? 0 : 1;
 
-    t0 = sbv->m_u.m_t[0];
-    t1 = sbv->m_u.m_t[1];
-    if (uv.x < t0 - BREP_EDGE_MISS_TOLERANCE) {
-	uv.x = t0 + ROOT_TOL;;
-    } else if (uv.x >= t1 + BREP_EDGE_MISS_TOLERANCE) {
-	uv.x = t1 - ROOT_TOL;
+    t0 = sbv->m_u.m_t[i];
+    t1 = sbv->m_u.m_t[1-i];
+    if (uv.x < t0) {
+	uv.x = t0;
+    } else if (uv.x > t1) {
+	uv.x = t1;
     }
-
-    t0 = sbv->m_v.m_t[0];
-    t1 = sbv->m_v.m_t[1];
-    if (uv.y < t0 - BREP_EDGE_MISS_TOLERANCE) {
-	uv.y = t0 + ROOT_TOL;;
-    } else if (uv.y >= t1 + BREP_EDGE_MISS_TOLERANCE) {
-	uv.y = t1 - ROOT_TOL;
+    i = sbv->m_v.m_t[0] < sbv->m_v.m_t[1] ? 0 : 1;
+    t0 = sbv->m_v.m_t[i];
+    t1 = sbv->m_v.m_t[1-i];
+    if (uv.y < t0 ) {
+	uv.y = t0;
+    } else if (uv.y > t1) {
+	uv.y = t1;
     }
 }
 
@@ -769,6 +781,8 @@ utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, O
 	    uv.x = (puv.x + uv.x)/2.0;
 	    uv.y = (puv.y + uv.y)/2.0;
 
+	    utah_pushBack(sbv, uv);
+
 	    surf->Ev1Der(uv.x, uv.y, S, Su, Sv);
 	    utah_F(S, p1, p1d, p2, p2d, f, g);
 	    rootdist = fabs(f) + fabs(g);
@@ -791,7 +805,7 @@ utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, O
 	    int ulow = (sbv->m_u.m_t[0] <= sbv->m_u.m_t[1]) ? 0 : 1;
 	    int vlow = (sbv->m_v.m_t[0] <= sbv->m_v.m_t[1]) ? 0 : 1;
 	    if ((sbv->m_u.m_t[ulow]-VUNITIZE_TOL < uv.x && uv.x < sbv->m_u.m_t[1-ulow]+VUNITIZE_TOL) &&
-		    (sbv->m_v.m_t[vlow]-VUNITIZE_TOL < uv.y && uv.y < sbv->m_v.m_t[1-vlow]-VUNITIZE_TOL)) {
+		    (sbv->m_v.m_t[vlow]-VUNITIZE_TOL < uv.y && uv.y < sbv->m_v.m_t[1-vlow]+VUNITIZE_TOL)) {
 		bool new_point = true;
 		for (int j=0;j<count;j++) {
 		    if (NEAR_EQUAL(uv.x, ouv[j].x, VUNITIZE_TOL) && NEAR_EQUAL(uv.y, ouv[j].y, VUNITIZE_TOL)) {
@@ -1382,87 +1396,93 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	    curr++;
 	}
 	//    bu_log("**** After Pass2 Hits: %d\n", hits.size());
-
+#if 0
+// haven't checked for duplicate points so let's not do this yet
 	if ((hits.size() > 0) && ((hits.size() % 2) != 0)) {
 	    brep_hit &curr_hit = hits.back();
 	    if (curr_hit.hit == brep_hit::NEAR_HIT) {
 		hits.pop_back();
 	    }
 	}
+#endif
     }
-    ///////////// near hit end
-    if (false) { //((hits.size() % 2) != 0) {
-	bu_log("**** After Pass3 Hits: %zu\n", hits.size());
 
-	for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
-	    point_t prev;
+#if 0
+    bu_log("**** After Pass3 Hits: %zu\n", hits.size());
 
-	    brep_hit &out = *i;
+    for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
+	point_t prev;
 
-	    if (i != hits.begin()) {
-		bu_log("<%g>", DIST_PT_PT(out.point, prev));
-	    }
-	    bu_log("(");
-	    if (out.hit == brep_hit::CRACK_HIT) bu_log("_CRACK_(%d)", out.face.m_face_index);
-	    if (out.hit == brep_hit::CLEAN_HIT) bu_log("_CH_(%d)", out.face.m_face_index);
-	    if (out.hit == brep_hit::NEAR_HIT) bu_log("_NH_(%d)", out.face.m_face_index);
-	    if (out.hit == brep_hit::NEAR_MISS) bu_log("_NM_(%d)", out.face.m_face_index);
-	    if (out.direction == brep_hit::ENTERING) bu_log("+");
-	    if (out.direction == brep_hit::LEAVING) bu_log("-");
-	    VMOVE(prev, out.point);
-	    bu_log(")");
+	brep_hit &out = *i;
+
+	if (i != hits.begin()) {
+	    bu_log("<%g>", DIST_PT_PT(out.point, prev));
 	}
-	bu_log("\n**** Orig Hits: %zu\n", orig.size());
-
-	for (HitList::iterator i = orig.begin(); i != orig.end(); ++i) {
-	    point_t prev;
-
-	    brep_hit &out = *i;
-
-	    if (i != orig.begin()) {
-		bu_log("<%g>", DIST_PT_PT(out.point, prev));
-	    }
-	    bu_log("(");
-	    if (out.hit == brep_hit::CRACK_HIT) bu_log("_CRACK_(%d)", out.face.m_face_index);
-	    if (out.hit == brep_hit::CLEAN_HIT) bu_log("_CH_(%d)", out.face.m_face_index);
-	    if (out.hit == brep_hit::NEAR_HIT) bu_log("_NH_(%d)", out.face.m_face_index);
-	    if (out.hit == brep_hit::NEAR_MISS) bu_log("_NM_(%d)", out.face.m_face_index);
-	    if (out.direction == brep_hit::ENTERING) bu_log("+");
-	    if (out.direction == brep_hit::LEAVING) bu_log("-");
-	    VMOVE(prev, out.point);
-	    bu_log(")");
-	}
-
-	bu_log("\n**********************\n");
-
+	bu_log("(");
+	if (out.hit == brep_hit::CRACK_HIT) bu_log("_CRACK_(%d)", out.face.m_face_index);
+	if (out.hit == brep_hit::CLEAN_HIT) bu_log("_CH_(%d)", out.face.m_face_index);
+	if (out.hit == brep_hit::NEAR_HIT) bu_log("_NH_(%d)", out.face.m_face_index);
+	if (out.hit == brep_hit::NEAR_MISS) bu_log("_NM_(%d)", out.face.m_face_index);
+	if (out.direction == brep_hit::ENTERING) bu_log("+");
+	if (out.direction == brep_hit::LEAVING) bu_log("-");
+	VMOVE(prev, out.point);
+	bu_log(")");
     }
+    bu_log("\n**** Orig Hits: %zu\n", orig.size());
+
+    for (HitList::iterator i = orig.begin(); i != orig.end(); ++i) {
+	point_t prev;
+
+	brep_hit &out = *i;
+
+	if (i != orig.begin()) {
+	    bu_log("<%g>", DIST_PT_PT(out.point, prev));
+	}
+	bu_log("(");
+	if (out.hit == brep_hit::CRACK_HIT) bu_log("_CRACK_(%d)", out.face.m_face_index);
+	if (out.hit == brep_hit::CLEAN_HIT) bu_log("_CH_(%d)", out.face.m_face_index);
+	if (out.hit == brep_hit::NEAR_HIT) bu_log("_NH_(%d)", out.face.m_face_index);
+	if (out.hit == brep_hit::NEAR_MISS) bu_log("_NM_(%d)", out.face.m_face_index);
+	if (out.direction == brep_hit::ENTERING) bu_log("+");
+	if (out.direction == brep_hit::LEAVING) bu_log("-");
+	VMOVE(prev, out.point);
+	bu_log(")");
+    }
+
+    bu_log("\n**********************\n");
+#endif
 
     all_hits.clear();
     all_hits = hits;
 
-    ////////////////////////
-    TRACE("---");
-    int num = 0;
-    for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
-	if ((i->trimmed && !i->closeToEdge) || i->oob || NEAR_ZERO(VDOT(i->normal, rp->r_dir), RT_DOT_TOL)) {
-	    // remove what we were removing earlier
-	    if (i->oob) {
-		TRACE("\toob u: " << i->uv[0] << ", " << IVAL(i->sbv->m_u));
-		TRACE("\toob v: " << i->uv[1] << ", " << IVAL(i->sbv->m_v));
-	    }
-	    i = hits.erase(i);
-
-	    if (i != hits.begin())
-		--i;
-
-	    continue;
-	}
-	TRACE("hit " << num << ": " << PT(i->point) << " [" << VDOT(i->normal, rp->r_dir) << "]");
-	++num;
-    }
 
     if (hits.size() > 0) {
-	// we should have "valid" points now, remove duplicates or grazes
+	// remove grazing hits with with normal to ray dot less than BREP_GRAZING_DOT_TOL (>= 89.999 degrees obliq)
+	TRACE("-- Remove grazing hits --");
+	int num = 0;
+	for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
+	    brep_hit &curr_hit = *i;
+	    if ((curr_hit.trimmed && !curr_hit.closeToEdge) || curr_hit.oob || NEAR_ZERO(VDOT(curr_hit.normal, rp->r_dir), BREP_GRAZING_DOT_TOL)) {
+		// remove what we were removing earlier
+		if (curr_hit.oob) {
+		    TRACE("\toob u: " << i->uv[0] << ", " << IVAL(i->sbv->m_u));
+		    TRACE("\toob v: " << i->uv[1] << ", " << IVAL(i->sbv->m_v));
+		}
+		i = hits.erase(i);
+
+		if (i != hits.begin())
+		    --i;
+
+		continue;
+	    }
+	    TRACE("hit " << num << ": " << PT(i->point) << " [" << VDOT(i->normal, rp->r_dir) << "]");
+	    ++num;
+	}
+    }
+
+
+    if (hits.size() > 0) {
+	// we should have "valid" points now, remove duplicates or grazes(same point with in/out sign change)
 	HitList::iterator last = hits.begin();
 	HitList::iterator i = hits.begin();
 	++i;
@@ -1489,6 +1509,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	    }
 	}
     }
+
     // remove multiple "INs" in a row assume last "IN" is the actual entering hit, for
     // multiple "OUTs" in a row assume first "OUT" is the actual exiting hit, remove unused
     // "INs/OUTs" from hit list.
@@ -1537,148 +1558,131 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     }
 
 #if 0
-    if (false) {
-	if (hits.size() > 1 && (hits.size() % 2) != 0) {
-	    bu_log("**** ERROR odd number of hits: %d\n", hits.size());
+    if (hits.size() > 1 && (hits.size() % 2) != 0) {
+	bu_log("**** ERROR odd number of hits: %d\n", hits.size());
+	for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
+	    brep_hit&out = *i;
+	    bu_log("(");
+	    if (out.hit == brep_hit::CLEAN_HIT) bu_log("H");
+	    if ((out.hit == brep_hit::NEAR_HIT) || (out.hit == brep_hit::NEAR_MISS)) bu_log("c");
+	    if (out.direction == brep_hit::ENTERING) bu_log("+");
+	    if (out.direction == brep_hit::LEAVING) bu_log("-");
+	    bu_log(")");
+	}
+	bu_log("\n");
+
+	bu_log("xyz %g %g %g \n", rp->r_pt[0], rp->r_pt[1], rp->r_pt[2]);
+	bu_log("dir %g %g %g \n", rp->r_dir[0], rp->r_dir[1], rp->r_dir[2]);
+	if ((hits.size() % 2) != 0) {
+	    bu_log("**** Current Hits: %d\n", hits.size());
+
 	    for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
-		brep_hit&out = *i;
+		point_t prev;
+
+		brep_hit &out = *i;
+
+		if (i != hits.begin()) {
+		    bu_log("<%g>", DIST_PT_PT(out.point, prev));
+		}
 		bu_log("(");
-		if (out.hit == brep_hit::CLEAN_HIT) bu_log("H");
-		if ((out.hit == brep_hit::NEAR_HIT) || (out.hit == brep_hit::NEAR_MISS)) bu_log("c");
+		if (out.hit == brep_hit::CRACK_HIT) bu_log("_CRACK_(%d)", out.face.m_face_index);
+		if (out.hit == brep_hit::CLEAN_HIT) bu_log("_CH_(%d)", out.face.m_face_index);
+		if (out.hit == brep_hit::NEAR_HIT) bu_log("_NH_(%d)", out.face.m_face_index);
+		if (out.hit == brep_hit::NEAR_MISS) bu_log("_NM_(%d)", out.face.m_face_index);
 		if (out.direction == brep_hit::ENTERING) bu_log("+");
 		if (out.direction == brep_hit::LEAVING) bu_log("-");
+		VMOVE(prev, out.point);
 		bu_log(")");
 	    }
-	    bu_log("\n");
+	    bu_log("\n**** Orig Hits: %d\n", orig.size());
 
-	    bu_log("xyz %g %g %g \n", rp->r_pt[0], rp->r_pt[1], rp->r_pt[2]);
-	    bu_log("dir %g %g %g \n", rp->r_dir[0], rp->r_dir[1], rp->r_dir[2]);
-	    if ((hits.size() % 2) != 0) {
-		bu_log("**** Current Hits: %d\n", hits.size());
+	    for (HitList::iterator i = orig.begin(); i != orig.end(); ++i) {
+		point_t prev;
 
-		for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
-		    point_t prev;
+		brep_hit &out = *i;
 
-		    brep_hit &out = *i;
-
-		    if (i != hits.begin()) {
-			bu_log("<%g>", DIST_PT_PT(out.point, prev));
-		    }
-		    bu_log("(");
-		    if (out.hit == brep_hit::CRACK_HIT) bu_log("_CRACK_(%d)", out.face.m_face_index);
-		    if (out.hit == brep_hit::CLEAN_HIT) bu_log("_CH_(%d)", out.face.m_face_index);
-		    if (out.hit == brep_hit::NEAR_HIT) bu_log("_NH_(%d)", out.face.m_face_index);
-		    if (out.hit == brep_hit::NEAR_MISS) bu_log("_NM_(%d)", out.face.m_face_index);
-		    if (out.direction == brep_hit::ENTERING) bu_log("+");
-		    if (out.direction == brep_hit::LEAVING) bu_log("-");
-		    VMOVE(prev, out.point);
-		    bu_log(")");
+		if (i != orig.begin()) {
+		    bu_log("<%g>", DIST_PT_PT(out.point, prev));
 		}
-		bu_log("\n**** Orig Hits: %d\n", orig.size());
-
-		for (HitList::iterator i = orig.begin(); i != orig.end(); ++i) {
-		    point_t prev;
-
-		    brep_hit &out = *i;
-
-		    if (i != orig.begin()) {
-			bu_log("<%g>", DIST_PT_PT(out.point, prev));
-		    }
-		    bu_log("(");
-		    if (out.hit == brep_hit::CRACK_HIT) bu_log("_CRACK_(%d)", out.face.m_face_index);
-		    if (out.hit == brep_hit::CLEAN_HIT) bu_log("_CH_(%d)", out.face.m_face_index);
-		    if (out.hit == brep_hit::NEAR_HIT) bu_log("_NH_(%d)", out.face.m_face_index);
-		    if (out.hit == brep_hit::NEAR_MISS) bu_log("_NM_(%d)", out.face.m_face_index);
-		    if (out.direction == brep_hit::ENTERING) bu_log("+");
-		    if (out.direction == brep_hit::LEAVING) bu_log("-");
-		    //bu_log("<%d>", out.sbv->m_face->m_bRev);
-		    VMOVE(prev, out.point);
-		    bu_log(")");
-		}
-
-		bu_log("\n**********************\n");
-
+		bu_log("(");
+		if (out.hit == brep_hit::CRACK_HIT) bu_log("_CRACK_(%d)", out.face.m_face_index);
+		if (out.hit == brep_hit::CLEAN_HIT) bu_log("_CH_(%d)", out.face.m_face_index);
+		if (out.hit == brep_hit::NEAR_HIT) bu_log("_NH_(%d)", out.face.m_face_index);
+		if (out.hit == brep_hit::NEAR_MISS) bu_log("_NM_(%d)", out.face.m_face_index);
+		if (out.direction == brep_hit::ENTERING) bu_log("+");
+		if (out.direction == brep_hit::LEAVING) bu_log("-");
+		//bu_log("<%d>", out.sbv->m_face->m_bRev);
+		VMOVE(prev, out.point);
+		bu_log(")");
 	    }
+
+	    bu_log("\n**********************\n");
+
 	}
-	point_t last_point;
-	int hitCount = 0;
-	for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
-	    if (hitCount == 0) {
-		TRACE2("point: " << i->point[0] << ", " << i->point[1] << ", " << i->point[2] << " dist_to_ray: " << DIST_PT_PT(i->point, rp->r_pt));
-	    } else {
-		TRACE2("point: " << i->point[0] << ", " << i->point[1] << ", " << i->point[2] << " dist_to_ray: " << DIST_PT_PT(i->point, rp->r_pt) << " dist_to_last_point: " << DIST_PT_PT(i->point, last_point));
-	    }
-	    VMOVE(last_point, i->point);
-	    hitCount += 1;
+    }
+    point_t last_point;
+    int hitCount = 0;
+    for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
+	if (hitCount == 0) {
+	    TRACE2("point: " << i->point[0] << ", " << i->point[1] << ", " << i->point[2] << " dist_to_ray: " << DIST_PT_PT(i->point, rp->r_pt));
+	} else {
+	    TRACE2("point: " << i->point[0] << ", " << i->point[1] << ", " << i->point[2] << " dist_to_ray: " << DIST_PT_PT(i->point, rp->r_pt) << " dist_to_last_point: " << DIST_PT_PT(i->point, last_point));
 	}
+	VMOVE(last_point, i->point);
+	hitCount += 1;
+    }
 #ifdef PLOTTING
-	pcount++;
+    pcount++;
+    if (pcount > -1) {
+	point_t ray;
+	point_t vscaled;
+	VSCALE(vscaled, rp->r_dir, 100);
+	VADD2(ray, rp->r_pt, vscaled);
+	COLOR_PLOT(200, 200, 200);
+	LINE_PLOT(rp->r_pt, ray);
+    }
+#endif
+    all_hits.clear();
+    all_hits = hits;
+
+    num = 0;
+    MissList::iterator m = misses.begin();
+    for (HitList::iterator i = all_hits.begin(); i != all_hits.end(); ++i) {
+
+#ifdef PLOTTING
 	if (pcount > -1) {
-	    point_t ray;
-	    point_t vscaled;
-	    VSCALE(vscaled, rp->r_dir, 100);
-	    VADD2(ray, rp->r_pt, vscaled);
-	    COLOR_PLOT(200, 200, 200);
-	    LINE_PLOT(rp->r_pt, ray);
+	    // set the color of point and normal
+	    if (i->trimmed && i->closeToEdge) {
+		COLOR_PLOT(0, 0, 255); // blue is trimmed but close to edge
+	    } else if (i->trimmed) {
+		COLOR_PLOT(255, 255, 0); // yellow trimmed
+	    } else if (i->oob) {
+		COLOR_PLOT(255, 0, 0); // red is oob
+	    } else if (NEAR_ZERO(VDOT(i->normal, rp->r_dir), RT_DOT_TOL)) {
+		COLOR_PLOT(0, 255, 255); // purple is grazing
+	    } else {
+		COLOR_PLOT(0, 255, 0); // green is regular surface
+	    }
+
+	    // draw normal
+	    point_t v;
+	    VADD2(v, i->point, i->normal);
+	    LINE_PLOT(i->point, v);
+
+	    // draw intersection
+	    PT_PLOT(i->point);
+
+	    // draw bounding box
+	    BB_PLOT(i->sbv->m_node.m_min, i->sbv->m_node.m_max);
 	}
 #endif
-	all_hits.clear();
-	all_hits = hits;
 
-	num = 0;
-	MissList::iterator m = misses.begin();
-	for (HitList::iterator i = all_hits.begin(); i != all_hits.end(); ++i) {
-
-#ifdef PLOTTING
-	    if (pcount > -1) {
-		// set the color of point and normal
-		if (i->trimmed && i->closeToEdge) {
-		    COLOR_PLOT(0, 0, 255); // blue is trimmed but close to edge
-		} else if (i->trimmed) {
-		    COLOR_PLOT(255, 255, 0); // yellow trimmed
-		} else if (i->oob) {
-		    COLOR_PLOT(255, 0, 0); // red is oob
-		} else if (NEAR_ZERO(VDOT(i->normal, rp->r_dir), RT_DOT_TOL)) {
-		    COLOR_PLOT(0, 255, 255); // purple is grazing
-		} else {
-		    COLOR_PLOT(0, 255, 0); // green is regular surface
-		}
-
-		// draw normal
-		point_t v;
-		VADD2(v, i->point, i->normal);
-		LINE_PLOT(i->point, v);
-
-		// draw intersection
-		PT_PLOT(i->point);
-
-		// draw bounding box
-		BB_PLOT(i->sbv->m_node.m_min, i->sbv->m_node.m_max);
-	    }
-#endif
-
-	    TRACE("hit " << num << ": " << ON_PRINT3(i->point) << " [" << dot << "]");
-	    while ((m != misses.end()) && (m->first == num)) {
-		static int reasons = 0;
-		if (reasons < 100) {
-		    reasons++;
-		    TRACE("miss " << num << ": " << BREP_INTERSECT_REASON(m->second));
-		} else {
-		    static int quelled = 0;
-		    if (!quelled) {
-			TRACE("Too many reasons.  Suppressing further output." << std::endl);
-			quelled = 1;
-		    }
-		}
-		++m;
-	    }
-	    num++;
-	}
-	while (m != misses.end()) {
+	TRACE("hit " << num << ": " << ON_PRINT3(i->point) << " [" << dot << "]");
+	while ((m != misses.end()) && (m->first == num)) {
 	    static int reasons = 0;
 	    if (reasons < 100) {
 		reasons++;
-		TRACE("miss " << BREP_INTERSECT_REASON(m->second));
+		TRACE("miss " << num << ": " << BREP_INTERSECT_REASON(m->second));
 	    } else {
 		static int quelled = 0;
 		if (!quelled) {
@@ -1688,6 +1692,21 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	    }
 	    ++m;
 	}
+	num++;
+    }
+    while (m != misses.end()) {
+	static int reasons = 0;
+	if (reasons < 100) {
+	    reasons++;
+	    TRACE("miss " << BREP_INTERSECT_REASON(m->second));
+	} else {
+	    static int quelled = 0;
+	    if (!quelled) {
+		TRACE("Too many reasons.  Suppressing further output." << std::endl);
+		quelled = 1;
+	    }
+	}
+	++m;
     }
 #endif
 

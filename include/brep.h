@@ -77,6 +77,9 @@ typedef struct _on_brep_placeholder {
 #define BREP_INTERSECTION_ROOT_SETTLE 1e-2
 /** Jungle Gym epsilon */
 
+/** tighten BREP grazing tolerance to 0.000017453(0.001 degrees) was using RT_DOT_TOL at 0.001 (0.05 degrees) **/
+#define BREP_GRAZING_DOT_TOL 0.000017453
+
 /* Use vector operations? For debugging */
 #define DO_VECTOR 1
 
