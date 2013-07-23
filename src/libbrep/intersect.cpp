@@ -721,6 +721,8 @@ ON_Intersect(const ON_Curve* curveA,
     if (curveA == NULL || curveB == NULL)
 	return 0;
 
+    int original_count = x.Count();
+
     if (intersection_tolerance <= 0.0)
 	intersection_tolerance = CCI_DEFAULT_TOLERANCE;
     if (overlap_tolerance < intersection_tolerance)
@@ -1021,7 +1023,7 @@ ON_Intersect(const ON_Curve* curveA,
 	    x.Append(points[i]);
     }
 
-    return x.Count();
+    return x.Count() - original_count;
 }
 
 
@@ -1187,6 +1189,8 @@ ON_Intersect(const ON_Curve* curveA,
     if (curveA == NULL || surfaceB == NULL)
 	return 0;
 
+    int original_count = x.Count();
+
     if (intersection_tolerance <= 0.0)
 	intersection_tolerance = CSI_DEFAULT_TOLERANCE;
     if (overlap_tolerance < intersection_tolerance)
@@ -1203,7 +1207,7 @@ ON_Intersect(const ON_Curve* curveA,
     // This is used in point-surface intersections, in case we build the
     // tree again and again.
     ON_Brep *brep = surfaceB->BrepForm();
-    if (!brep) return false;
+    if (!brep) return 0;
     brlcad::SurfaceTree *tree = new brlcad::SurfaceTree(brep->Face(0), false, MAX_PSI_DEPTH);
 
     Subcurve rootA;
@@ -1631,7 +1635,7 @@ ON_Intersect(const ON_Curve* curveA,
 		overlap2d->Append(NULL);
 	}
     }
-    return x.Count();
+    return x.Count() - original_count;
 }
 
 
@@ -2214,8 +2218,10 @@ ON_Intersect(const ON_Surface* surfA,
 	     const ON_Interval* surfaceB_vdomain)
 {
     if (surfA == NULL || surfB == NULL) {
-	return -1;
+	return 0;
     }
+
+    int original_count = x.Count();
 
     if (intersection_tolerance <= 0.0)
 	intersection_tolerance = SSI_DEFAULT_TOLERANCE;
@@ -3070,7 +3076,7 @@ ON_Intersect(const ON_Surface* surfA,
 	}
     }
 
-    return x.Count();
+    return x.Count() - original_count;
 }
 
 
