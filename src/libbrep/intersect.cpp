@@ -1203,19 +1203,19 @@ ON_Intersect(const ON_Curve* curveA,
     check_domain(surfaceB_udomain, surfaceB->Domain(0), "surfaceB_udomain");
     check_domain(surfaceB_vdomain, surfaceB->Domain(1), "surfaceB_vdomain");
 
-    // We need ON_BrepFace for get_closest_point().
-    // This is used in point-surface intersections, in case we build the
-    // tree again and again.
-    ON_Brep *brep = surfaceB->BrepForm();
-    if (!brep) return 0;
-    brlcad::SurfaceTree *tree = new brlcad::SurfaceTree(brep->Face(0), false, MAX_PSI_DEPTH);
-
     Subcurve rootA;
     Subsurface rootB;
     if (!build_curve_root(curveA, curveA_domain, rootA))
 	return 0;
     if (!build_surface_root(surfaceB, surfaceB_udomain, surfaceB_vdomain, rootB))
 	return 0;
+    
+    // We need ON_BrepFace for get_closest_point().
+    // This is used in point-surface intersections, in case we build the
+    // tree again and again.
+    ON_Brep *brep = surfaceB->BrepForm();
+    if (!brep) return 0;
+    brlcad::SurfaceTree *tree = new brlcad::SurfaceTree(brep->Face(0), false, MAX_PSI_DEPTH);
 
     // We adjust the tolerance from 3D scale to respective 2D scales.
     double l = rootA.m_curve->BoundingBox().Diagonal().Length();
@@ -1635,6 +1635,7 @@ ON_Intersect(const ON_Curve* curveA,
 		overlap2d->Append(NULL);
 	}
     }
+
     return x.Count() - original_count;
 }
 
@@ -1660,9 +1661,20 @@ ON_Intersect(const ON_Curve* curveA,
  *   points of the triangles (both in 3d space and two surfaces' UV
  *   space)
  *
+ * - If an intersection point is accurate enough (within the tolerance),
+ *   we append it to the list. Otherwise, we use Newton-Raphson iterations
+ *   to solve an under-determined system to get an more accurate inter-
+ *   section point.
+ *
  * - Fit the intersection points into polyline curves, and then to NURBS
  *   curves. Points with distance less than max_dis are considered in
- *   one curve.
+ *   one curve. Points that cannot be fitted to a curve are regarded as
+ *   single points.
+ *
+ * - Linear fittings and conic fittings are done to simplify the curves'
+ *   representations.
+ *
+ * - Note: the overlap cases are handled at the beginning separately.
  *
  * See: Adarsh Krishnamurthy, Rahul Khardekar, Sara McMains, Kirk Haller,
  * and Gershon Elber. 2008.
@@ -1773,7 +1785,8 @@ triangle_intersection(const struct Triangle &TriA, const struct Triangle &TriB, 
     double t[4];
     int count = 0;
     double t1, t2;
-    // dpi*dpj < 0 - the corresponding points are on different sides
+    // dpi*dpj <= 0 - the corresponding points are on different sides,
+    // or at least one of them are on the intersection line.
     // - the line segment between them are intersected by the plane-plane
     // intersection line
     if (dp1*dp2 < ON_ZERO_TOLERANCE) {
@@ -2249,13 +2262,17 @@ ON_Intersect(const ON_Surface* surfA,
 	return 0;
 
     // Generate brlcad::SurfaceTree() for point-surface intersections.
-    ON_Brep *brep = surfA->BrepForm();
-    if (!brep) return 0;
-    brlcad::SurfaceTree *treeA = new brlcad::SurfaceTree(brep->Face(0), false, MAX_PSI_DEPTH);
-    delete brep;
-    brep = surfB->BrepForm();
-    if (!brep) return 0;
-    brlcad::SurfaceTree *treeB = new brlcad::SurfaceTree(brep->Face(0), false, MAX_PSI_DEPTH);
+    ON_Brep *brepA = surfA->BrepForm();
+    if (!brepA) return 0;
+    brlcad::SurfaceTree *treeA = new brlcad::SurfaceTree(brepA->Face(0), false, MAX_PSI_DEPTH);
+
+    ON_Brep *brepB = surfB->BrepForm();
+    if (!brepB) {
+	delete brepA;
+	delete treeA;
+	return 0;
+    }
+    brlcad::SurfaceTree *treeB = new brlcad::SurfaceTree(brepB->Face(0), false, MAX_PSI_DEPTH);
 
     // We adjust the tolerance from 3D scale to respective 2D scales.
     double intersection_tolerance_A = intersection_tolerance;
@@ -2293,6 +2310,7 @@ ON_Intersect(const ON_Surface* surfA,
     // (See ON_NurbsSurface::ConvertSpanToBezier()).
     // So we actually don't need to generate the Bezier patches explicitly,
     // and we can get the boundaries of them using IsoCurve() on knots.
+
     ON_CurveArray overlaps, overlapA, overlapB;
     for (int i = 0; i < 4; i++) {
 	const ON_Surface* surf1 = i >= 2 ? surfB : surfA;
@@ -2411,8 +2429,10 @@ ON_Intersect(const ON_Surface* surfA,
 		overlaps[i] = overlapA[i] = overlapB[i] = NULL;
 		break;
 	    }
+
 	    if (j == overlaps.Count() || !overlaps[j] || !overlapA[j] || !overlapB[j])
 		continue;
+
 	    // Merge the curves that link together.
 	    if (overlaps[i]->PointAtStart().DistanceTo(overlaps[j]->PointAtEnd()) < intersection_tolerance
 		&& overlapA[i]->PointAtStart().DistanceTo(overlapA[j]->PointAtEnd()) < intersection_tolerance_A
