@@ -17,15 +17,15 @@ WARN_FORMAT            = "$file:$line: $text"
 # configuration options related to the input files
 #---------------------------------------------------------------------------
 
-#INPUT  = @CMAKE_SOURCE_DIR@/misc/doxygen_structure 
-#INPUT += @CMAKE_SOURCE_DIR@/include/ 
-#INPUT += @CMAKE_SOURCE_DIR@/src/libbu/ 
-#INPUT += @CMAKE_SOURCE_DIR@/src/libbn/ 
-#INPUT += @CMAKE_SOURCE_DIR@/src/librt/ 
-#INPUT += @CMAKE_SOURCE_DIR@/src/libpc/ 
+#INPUT  = @CMAKE_SOURCE_DIR@/misc/doxygen_structure
+#INPUT += @CMAKE_SOURCE_DIR@/include/
+#INPUT += @CMAKE_SOURCE_DIR@/src/libbu/
+#INPUT += @CMAKE_SOURCE_DIR@/src/libbn/
+#INPUT += @CMAKE_SOURCE_DIR@/src/librt/
+#INPUT += @CMAKE_SOURCE_DIR@/src/libpc/
 #INPUT += @CMAKE_SOURCE_DIR@/src/libbrep/
 
-INPUT  = @CMAKE_SOURCE_DIR@/misc/doxygen_structure_libs 
+INPUT  = @CMAKE_SOURCE_DIR@/misc/doxygen_structure_libs
 INPUT += @CMAKE_SOURCE_DIR@/include/raytrace.h
 
 FILE_PATTERNS          = *.h
@@ -102,8 +102,8 @@ INCLUDE_PATH           =
 # undefined via #undef or recursively expanded use the := operator
 # instead of the = operator.
 
-PREDEFINED  = "BU_EXTERN(type_and_name,args)=extern type_and_name args" 
-PREDEFINED += "BU_EXPORT=" 
-PREDEFINED += "BN_EXPORT=" 
-PREDEFINED += "BN_EXPORT=" 
+PREDEFINED  = "BU_EXTERN(type_and_name,args)=extern type_and_name args"
+PREDEFINED += "BU_EXPORT="
+PREDEFINED += "BN_EXPORT="
+PREDEFINED += "BN_EXPORT="
 PREDEFINED += "FB_EXPORT="

@@ -282,12 +282,12 @@ TYPEDEF_HIDES_STRUCT   = NO
 # determine which symbols to keep in memory and which to flush to disk.
 # When the cache is full, less often used symbols will be written to disk.
 # For small to medium size projects (<1000 input files) the default value is
-# probably good enough. For larger projects a too small cache size can cause
+# probably good enough. For larger projects a too-small cache size can cause
 # doxygen to be busy swapping symbols to and from disk most of the time
-# causing a significant performance penality.
+# causing a significant performance penalty.
 # If the system has enough physical memory increasing the cache will improve the
 # performance by keeping more symbols in memory. Note that the value works on
-# a logarithmic scale so increasing the size by one will rougly double the
+# a logarithmic scale so increasing the size by one will roughly double the
 # memory usage. The cache size is given by this formula:
 # 2^(16+SYMBOL_CACHE_SIZE). The valid range is 0..9, the default is 0,
 # corresponding to a cache size of 2^16 = 65536 symbols
@@ -548,7 +548,7 @@ WARN_IF_UNDOCUMENTED   = YES
 
 WARN_IF_DOC_ERROR      = YES
 
-# This WARN_NO_PARAMDOC option can be abled to get warnings for
+# This WARN_NO_PARAMDOC option can be enabled to get warnings for
 # functions that are documented, but have no documentation for their parameters
 # or return value. If set to NO (the default) doxygen will only warn about
 # wrong or incomplete parameter documentation, but not about the absence of
@@ -1011,7 +1011,7 @@ FORMULA_FONTSIZE       = 10
 SEARCHENGINE           = YES
 
 # When the SERVER_BASED_SEARCH tag is enabled the search engine will be implemented using a PHP enabled web server instead of at the web client using Javascript. Doxygen will generate the search PHP script and index
-# file to put on the web server. The advantage of the server based approach is that it scales better to large projects and allows full text search. The disadvances is that it is more difficult to setup
+# file to put on the web server. The advantage of the server based approach is that it scales better to large projects and allows full text search. The disadvantage is that it is more difficult to set up
 # and does not have live searching capabilities.
 
 SERVER_BASED_SEARCH    = NO
