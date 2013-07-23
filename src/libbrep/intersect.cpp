@@ -1209,7 +1209,7 @@ ON_Intersect(const ON_Curve* curveA,
 	return 0;
     if (!build_surface_root(surfaceB, surfaceB_udomain, surfaceB_vdomain, rootB))
 	return 0;
-    
+
     // We need ON_BrepFace for get_closest_point().
     // This is used in point-surface intersections, in case we build the
     // tree again and again.
