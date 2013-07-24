@@ -23,7 +23,6 @@
 #include <stdlib.h>
 #include <iostream>
 #include <assert.h>
-#include "common.h"
 #include "vmath.h"
 #include "brep.h"
 #include "raytrace.h"
