@@ -434,6 +434,26 @@ main(int argc, char** argv)
 		    brep->Dump(*dump);
 	    } else if (pGeometry->HasBrepForm()) {
 		dump->Print("Type: HasBrepForm\n");
+
+		ON_Brep *new_brep = pGeometry->BrepForm();
+
+		dump->Print("primitive is %s.\n", geom_name.c_str());
+		dump->Print("region created is %s.\n", region_name.c_str());
+
+		mk_brep(outfp, geom_name.c_str(), new_brep);
+
+		unsigned char rgb[3];
+		rgb[RED] = (unsigned char)r;
+		rgb[GRN] = (unsigned char)g;
+		rgb[BLU] = (unsigned char)b;
+		mk_region1(outfp, region_name.c_str(), geom_name.c_str(), "plastic", "", rgb);
+
+		(void)mk_addmember(region_name.c_str(), &all_regions.l, NULL, WMOP_UNION);
+		if (verbose_mode > 0)
+		    new_brep->Dump(*dump);
+
+		delete new_brep;
+
 	    } else if ((curve = const_cast<ON_Curve * >(ON_Curve::Cast(pGeometry)))) {
 		dump->Print("Type: ON_Curve\n");
 		if (verbose_mode > 1) curve->Dump(*dump);
