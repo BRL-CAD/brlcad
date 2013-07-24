@@ -507,6 +507,8 @@ endif(MSVC)
 
 DISTCLEAN(${SCHEMA_OUT_DIR}/make_schema)
 
+CMAKEFILES(ON_Brep.cpp)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake
