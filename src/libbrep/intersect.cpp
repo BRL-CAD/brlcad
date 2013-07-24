@@ -2335,7 +2335,6 @@ ON_Intersect(const ON_Surface* surfA,
 	}
 	if (surf1->IsClosed(dir))
 	    b_knots.Remove();
-	delete knots;
 
 	for (int j = 0; j < b_knots.Count(); j++) {
 	    ON_Curve* boundary = surf1->IsoCurve(i%2, b_knots[j]);
@@ -2405,6 +2404,7 @@ ON_Intersect(const ON_Surface* surfA,
 		}
 	    }
 	}
+	delete knots;
     }
 
     for (int i = 0; i < overlaps.Count(); i++) {
