@@ -733,6 +733,61 @@ ON_Intersect(const ON_Curve* curveA,
     check_domain(curveA_domain, curveA->Domain(), "curveA_domain");
     check_domain(curveB_domain, curveB->Domain(), "curveB_domain");
 
+    // Handle degenerated cases (one or both of them is a "point")
+    bool ispoint_curveA = curveA->BoundingBox().Diagonal().Length() < ON_ZERO_TOLERANCE;
+    bool ispoint_curveB = curveB->BoundingBox().Diagonal().Length() < ON_ZERO_TOLERANCE;
+    ON_3dPoint pointA = curveA->PointAtStart();
+    ON_3dPoint pointB = curveB->PointAtStart();
+    ON_ClassArray<ON_PX_EVENT> px_event;
+    if (ispoint_curveA && ispoint_curveB) {
+	// Both curves are degenerated (point-point intersection)
+	if (ON_Intersect(pointA, pointB, px_event, intersection_tolerance)) {
+	    ON_X_EVENT Event;
+	    Event.m_A[0] = pointA;
+	    Event.m_A[1] = curveA->PointAtEnd();
+	    Event.m_B[0] = pointB;
+	    Event.m_B[1] = curveB->PointAtEnd();
+	    Event.m_a[0] = curveA->Domain().Min();
+	    Event.m_a[1] = curveA->Domain().Max();
+	    Event.m_b[0] = curveB->Domain().Min();
+	    Event.m_b[1] = curveB->Domain().Max();
+	    Event.m_type = ON_X_EVENT::ccx_overlap;
+	    x.Append(Event);
+	    return 1;
+	} else
+	    return 0;
+    } else if (ispoint_curveA) {
+	// curveA is degenerated (point-curve intersection)
+	if (ON_Intersect(pointA, *curveB, px_event, intersection_tolerance)) {
+	    ON_X_EVENT Event;
+	    Event.m_A[0] = pointA;
+	    Event.m_A[1] = curveA->PointAtEnd();
+	    Event.m_B[0] = Event.m_B[1] = px_event[0].m_B;
+	    Event.m_a[0] = curveA->Domain().Min();
+	    Event.m_a[1] = curveA->Domain().Max();
+	    Event.m_b[0] = Event.m_b[1] = px_event[0].m_b[0];
+	    Event.m_type = ON_X_EVENT::ccx_overlap;
+	    x.Append(Event);
+	    return 1;
+	} else
+	    return 0;
+    } else if (ispoint_curveB) {
+	// curveB is degenerated (point-curve intersection)
+	if (ON_Intersect(pointB, *curveA, px_event, intersection_tolerance)) {
+	    ON_X_EVENT Event;
+	    Event.m_A[0] = Event.m_A[1] = px_event[0].m_B;
+	    Event.m_B[0] = pointB;
+	    Event.m_B[1] = curveB->PointAtEnd();
+	    Event.m_a[0] = Event.m_a[1] = px_event[0].m_b[0];
+	    Event.m_b[0] = curveB->Domain().Min();
+	    Event.m_b[1] = curveB->Domain().Max();
+	    Event.m_type = ON_X_EVENT::ccx_overlap;
+	    x.Append(Event);
+	    return 1;
+	} else
+	    return 0;
+    }
+
     Subcurve rootA, rootB;
     if (!build_curve_root(curveA, curveA_domain, rootA))
 	return 0;
@@ -1202,6 +1257,29 @@ ON_Intersect(const ON_Curve* curveA,
     check_domain(curveA_domain, curveA->Domain(), "curveA_domain");
     check_domain(surfaceB_udomain, surfaceB->Domain(0), "surfaceB_udomain");
     check_domain(surfaceB_vdomain, surfaceB->Domain(1), "surfaceB_vdomain");
+
+    // If the curve is degenerated to a point...
+    if (curveA->BoundingBox().Diagonal().Length() < ON_ZERO_TOLERANCE) {
+	// point-surface intersections
+	ON_3dPoint pointA = curveA->PointAtStart();
+	ON_ClassArray<ON_PX_EVENT> px_event;
+	if (ON_Intersect(pointA, *surfaceB, px_event, intersection_tolerance)) {
+	    ON_X_EVENT Event;
+	    Event.m_A[0] = pointA;
+	    Event.m_A[1] = curveA->PointAtEnd();
+	    Event.m_B[0] = Event.m_B[1] = px_event[0].m_B;
+	    Event.m_a[0] = curveA->Domain().Min();
+	    Event.m_a[1] = curveA->Domain().Max();
+	    Event.m_b[0] = Event.m_b[2] = px_event[0].m_b[0];
+	    Event.m_b[1] = Event.m_b[3] = px_event[0].m_b[1];
+	    Event.m_type = ON_X_EVENT::csx_overlap;
+	    x.Append(Event);
+	    if (overlap2d)
+		overlap2d->Append(new ON_LineCurve(Event.m_B[0], Event.m_B[1]));
+	    return 1;
+	} else
+	    return 0;
+    }
 
     Subcurve rootA;
     Subsurface rootB;
