@@ -40,7 +40,7 @@
 
 #define made_it()	bu_log("Made it to %s:%d\n", __FILE__, __LINE__);
 
-#define OPT_STRING	"a:ce:g:opr:st:ux:?"
+#define OPT_STRING	"a:ce:g:opr:st:ux:?h"
 #define RAND_NUM	((fastf_t)rand()/RAND_MAX)
 #define RAND_OFFSET	((1 - cell_center) * 	\
 			 (RAND_NUM * celsiz - celsiz / 2))
@@ -50,7 +50,7 @@
 /**
  * G _ L I N T _ C T R L
  *
- * Specification of what an how to report results
+ * Specification of what and how to report results
  */
 struct g_lint_ctrl
 {
@@ -152,7 +152,7 @@ int log_2 (unsigned long x)
  */
 static char *usage[] = {
     "Usage: 'g_lint [options] model.g object ...'\n",
-    "Options:\n",
+    "Options (defaults in parentheses):\n",
     "  -a azim      View target from azimuth of azim (0.0 degrees)\n",
     "  -c           Fire rays from center of grid cell (random point)\n",
     "  -e elev      View target from elevation of elev (0.0 degrees)\n",
