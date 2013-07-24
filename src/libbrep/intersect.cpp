@@ -282,6 +282,7 @@ sub_curve(ON_Curve* in, double a, double b)
 	in->Split(sub.m_t[0], left, right);
     if (left)
 	delete left;
+    left = NULL;
     if (ON_NearZero(sub.m_t[1] - dom.m_t[1]))
 	left = right->Duplicate();
     else {
