@@ -50,6 +50,7 @@ struct qt_vars {
     QColor fg, bg;
     QPixmap *pix;
     QPainter *painter;
+    QFont *font;
 };
 
 #endif /* DM_QT */

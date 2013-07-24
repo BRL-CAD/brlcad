@@ -51,6 +51,7 @@ qt_close(struct dm *dmp)
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
 
+    delete privars->font;
     privars->win->close();
     delete privars->win;
 
@@ -78,6 +79,9 @@ qt_drawBegin(struct dm *dmp)
     privars->pix->fill(privars->bg);
 
     privars->painter = new QPainter(privars->pix);
+    privars->painter->setPen(privars->fg);
+    privars->painter->setFont(*privars->font);
+     
     return TCL_OK;
 }
 
@@ -88,8 +92,9 @@ qt_drawEnd(struct dm *dmp)
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
     privars->painter->end();
     delete privars->painter;
-
+    privars->painter = NULL;
     dmp->dm_processEvents(dmp);
+
     return TCL_OK;
 }
 
@@ -144,7 +149,6 @@ qt_drawLine2D(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2
     sy2 = dm_Normal2Xy(dmp, y_2, 0);
 
     privars->painter->drawLine(sx1, sy1, sx2, sy2);
-
     return TCL_OK;
 }
 
@@ -232,8 +236,9 @@ qt_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b,
 
     privars->fg.setRgb(r, g, b);
 
-    privars->painter->setPen(privars->fg);
-
+    if (privars->painter != NULL) {
+	privars->painter->setPen(privars->fg);
+    }
     return TCL_OK;
 }
 
@@ -309,11 +314,36 @@ qt_configureWin(struct dm *dmp, int force)
     *privars->pix = privars->pix->scaled(width, height);
 
     if (dmp->dm_debugLevel) {
-	bu_log("qt_configureWin_guts()\n");
+	bu_log("qt_configureWin()\n");
 	bu_log("width = %d, height = %d\n", dmp->dm_width, dmp->dm_height);
     }
 
-    /* TODO select font */
+    /* set font according to window size */
+    if (privars->font == NULL) {
+	privars->font = new QFont(QString(FONTBACK));
+    }
+
+    if (dmp->dm_width < 582) {
+	if (privars->font->pointSize() != 5) {
+	    privars->font->setPointSize(5);
+	}
+    } else if (dmp->dm_width < 679) {
+	if (privars->font->pointSize() != 6) {
+	    privars->font->setPointSize(6);
+	}
+    } else if (dmp->dm_width < 776) {
+	if (privars->font->pointSize() != 7) {
+	    privars->font->setPointSize(7);
+	}
+    } else if (dmp->dm_width < 874) {
+	if (privars->font->pointSize() != 8) {
+	    privars->font->setPointSize(8);
+	}
+    } else {
+	if (privars->font->pointSize() != 9) {
+	    privars->font->setPointSize(9);
+	}
+    }
 
     return TCL_OK;
 }
@@ -672,15 +702,17 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
 
     privars->win->setAutoFillBackground(true);
 
+    privars->font = NULL;
     qt_configureWin(dmp, 1);
 
+    privars->painter = NULL;
+    qt_setFGColor(dmp, 1, 0, 0, 0, 0);
     qt_setBGColor(dmp, 0, 0, 0);
     privars->win->show();
 
     Tk_SetWindowBackground(pubvars->xtkwin, 0);
     Tk_MapWindow(pubvars->xtkwin);
-
-    bu_log("Tk: %ld Qt: %ld\n", pubvars->win, privars->win->winId());
+    
     bu_log("qt_open called\n");
     return dmp;
 }
