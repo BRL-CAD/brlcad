@@ -736,16 +736,16 @@ ON_Intersect(const ON_Curve* curveA,
     // Handle degenerated cases (one or both of them is a "point")
     bool ispoint_curveA = curveA->BoundingBox().Diagonal().Length() < ON_ZERO_TOLERANCE;
     bool ispoint_curveB = curveB->BoundingBox().Diagonal().Length() < ON_ZERO_TOLERANCE;
-    ON_3dPoint pointA = curveA->PointAtStart();
-    ON_3dPoint pointB = curveB->PointAtStart();
+    ON_3dPoint startpointA = curveA->PointAtStart();
+    ON_3dPoint startpointB = curveB->PointAtStart();
     ON_ClassArray<ON_PX_EVENT> px_event;
     if (ispoint_curveA && ispoint_curveB) {
 	// Both curves are degenerated (point-point intersection)
-	if (ON_Intersect(pointA, pointB, px_event, intersection_tolerance)) {
+	if (ON_Intersect(startpointA, startpointB, px_event, intersection_tolerance)) {
 	    ON_X_EVENT Event;
-	    Event.m_A[0] = pointA;
+	    Event.m_A[0] = startpointA;
 	    Event.m_A[1] = curveA->PointAtEnd();
-	    Event.m_B[0] = pointB;
+	    Event.m_B[0] = startpointB;
 	    Event.m_B[1] = curveB->PointAtEnd();
 	    Event.m_a[0] = curveA->Domain().Min();
 	    Event.m_a[1] = curveA->Domain().Max();
@@ -758,9 +758,9 @@ ON_Intersect(const ON_Curve* curveA,
 	    return 0;
     } else if (ispoint_curveA) {
 	// curveA is degenerated (point-curve intersection)
-	if (ON_Intersect(pointA, *curveB, px_event, intersection_tolerance)) {
+	if (ON_Intersect(startpointA, *curveB, px_event, intersection_tolerance)) {
 	    ON_X_EVENT Event;
-	    Event.m_A[0] = pointA;
+	    Event.m_A[0] = startpointA;
 	    Event.m_A[1] = curveA->PointAtEnd();
 	    Event.m_B[0] = Event.m_B[1] = px_event[0].m_B;
 	    Event.m_a[0] = curveA->Domain().Min();
@@ -773,10 +773,10 @@ ON_Intersect(const ON_Curve* curveA,
 	    return 0;
     } else if (ispoint_curveB) {
 	// curveB is degenerated (point-curve intersection)
-	if (ON_Intersect(pointB, *curveA, px_event, intersection_tolerance)) {
+	if (ON_Intersect(startpointB, *curveA, px_event, intersection_tolerance)) {
 	    ON_X_EVENT Event;
 	    Event.m_A[0] = Event.m_A[1] = px_event[0].m_B;
-	    Event.m_B[0] = pointB;
+	    Event.m_B[0] = startpointB;
 	    Event.m_B[1] = curveB->PointAtEnd();
 	    Event.m_a[0] = Event.m_a[1] = px_event[0].m_b[0];
 	    Event.m_b[0] = curveB->Domain().Min();
