@@ -82,8 +82,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * fix bottie crash on 32b builds
 
-* finish the DSP tutorial on the wiki
-
 * implement a null spatial partitioning method so we can determine
   what other intersection hits are being masked (and what impact a
   given method has on performance)
