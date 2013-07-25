@@ -22,6 +22,8 @@
  * Utility routines for working with geometry.
  */
 
+#include "common.h"
+
 #include <vector>
 #include <iostream>
 
