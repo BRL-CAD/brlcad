@@ -82,6 +82,7 @@ qt_drawBegin(struct dm *dmp)
     privars->painter->setPen(privars->fg);
     privars->painter->setFont(*privars->font);
 
+    bu_log("drawBegin called\n");
     return TCL_OK;
 }
 
@@ -89,7 +90,7 @@ qt_drawBegin(struct dm *dmp)
 HIDDEN int
 qt_drawEnd(struct dm *dmp)
 {
-    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;    
     privars->painter->end();
     delete privars->painter;
     privars->painter = NULL;
@@ -253,10 +254,6 @@ qt_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
     dmp->dm_bg[0] = r;
     dmp->dm_bg[1] = g;
     dmp->dm_bg[2] = b;
-
-    QPalette pal = privars->win->palette();
-    pal.setColor(QPalette::Background, privars->bg);
-    privars->win->setPalette(pal);
 
     privars->pix->fill(privars->bg);
 
@@ -534,19 +531,61 @@ struct dm dm_qt = {
 };
 
 
-QTkMainWindow::QTkMainWindow(QPixmap *pix, WId win)
-:QWidget()
+QTkMainWindow::QTkMainWindow(QPixmap *p, QWindow *win)
+    : QWindow(win)
+    , m_update_pending(false)
 {
-    create(win, false, true);
-    pixmap = pix;
+    m_backingStore = new QBackingStore(this);
+    create();
+    pixmap = p;
+
 }
 
-void QTkMainWindow::paintEvent(QPaintEvent *UNUSED(event))
+void QTkMainWindow::exposeEvent(QExposeEvent *)
 {
-    QPainter painter(this);
-    painter.drawPixmap(0, 0, *pixmap);
+    if (isExposed()) {
+	renderNow();
+    }
 }
 
+void QTkMainWindow::resizeEvent(QResizeEvent *resizeEv)
+{
+    m_backingStore->resize(resizeEv->size());
+    if (isExposed())
+	renderNow();
+}
+
+bool QTkMainWindow::event(QEvent *ev)
+{
+    if (ev->type() == QEvent::UpdateRequest) {
+	m_update_pending = false;
+	renderNow();
+	return true;
+    }
+    return QWindow::event(ev);
+}    
+
+void QTkMainWindow::renderNow()
+{
+    if (!isExposed())
+        return;
+
+    QRect rect(0, 0, width(), height());
+    m_backingStore->beginPaint(rect);
+
+    QPaintDevice *device = m_backingStore->paintDevice();
+    QPainter painter(device);
+
+    render(&painter);
+
+    m_backingStore->endPaint();
+    m_backingStore->flush(rect);
+}
+
+void QTkMainWindow::render(QPainter *painter)
+{
+    painter->drawPixmap(0, 0, *pixmap);
+}
 
 __BEGIN_DECLS
 
@@ -694,13 +733,20 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
     pubvars->win = Tk_WindowId(pubvars->xtkwin);
     dmp->dm_id = pubvars->win;
 
+    Tk_SetWindowBackground(pubvars->xtkwin, 0);
+    Tk_MapWindow(pubvars->xtkwin);
     privars->qapp = new QApplication(argc, argv);
 
+    QWindow *window = QWindow::fromWinId(pubvars->win);
+    
     privars->pix = new QPixmap(dmp->dm_width, dmp->dm_height);
-    privars->win = new QTkMainWindow(privars->pix, (WId)pubvars->win);
-    privars->win->resize(dmp->dm_width, dmp->dm_height);
 
-    privars->win->setAutoFillBackground(true);
+    privars->win = new QTkMainWindow(privars->pix, window);
+    privars->win->create();
+    privars->win->setWidth(dmp->dm_width);
+    privars->win->setHeight(dmp->dm_height);
+    
+    privars->win->show();
 
     privars->font = NULL;
     qt_configureWin(dmp, 1);
@@ -708,10 +754,6 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
     privars->painter = NULL;
     qt_setFGColor(dmp, 1, 0, 0, 0, 0);
     qt_setBGColor(dmp, 0, 0, 0);
-    privars->win->show();
-
-    Tk_SetWindowBackground(pubvars->xtkwin, 0);
-    Tk_MapWindow(pubvars->xtkwin);
 
     bu_log("qt_open called\n");
     return dmp;

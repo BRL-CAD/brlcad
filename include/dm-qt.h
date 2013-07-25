@@ -28,21 +28,32 @@
 
 #ifdef DM_QT
 #  include <QApplication>
-#  include <QWidget>
 #  include <QPainter>
+#  include <QWindow>
+#  include <QBackingStore>
+#  include <QResizeEvent>
 
-class QTkMainWindow: public QWidget {
+class QTkMainWindow: public QWindow {
 
 public:
-    QTkMainWindow(QPixmap *pix, WId win);
+    QTkMainWindow(QPixmap *p, QWindow *parent = 0);
 
+    virtual void render(QPainter *painter);
+public slots:
+    void renderNow();
+    
 protected:
-    void paintEvent(QPaintEvent *event);
+    bool event(QEvent *event);
+
+    void resizeEvent(QResizeEvent *event);
+    void exposeEvent(QExposeEvent *event);
 
 private:
     QPixmap *pixmap;
-
+    QBackingStore *m_backingStore;
+    bool m_update_pending;
 };
+
 
 struct qt_vars {
     QApplication *qapp;
