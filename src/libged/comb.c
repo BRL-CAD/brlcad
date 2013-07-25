@@ -32,6 +32,162 @@
 
 #include "./ged_private.h"
 
+int
+_ged_set_region_flag(struct ged *gedp, struct directory *dp) {
+    struct bu_attribute_value_set avs;
+    bu_avs_init_empty(&avs);
+    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+	bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
+	return GED_ERROR;
+    }
+    db5_standardize_avs(&avs);
+    dp->d_flags |= RT_DIR_REGION;
+    (void)bu_avs_add(&avs, "region", "R");
+    if (db5_update_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
+	bu_vls_printf(gedp->ged_result_str,
+		"Error: failed to update attributes\n");
+	bu_avs_free(&avs);
+	return GED_ERROR;
+    }
+    return GED_OK;
+}
+
+int
+_ged_clear_region_flag(struct ged *gedp, struct directory *dp) {
+    struct bu_attribute_value_set avs;
+    bu_avs_init_empty(&avs);
+    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+	bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
+	return GED_ERROR;
+    }
+    db5_standardize_avs(&avs);
+    dp->d_flags = dp->d_flags & ~(RT_DIR_REGION);
+    (void)bu_avs_remove(&avs, "region");
+    if (db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
+	bu_vls_printf(gedp->ged_result_str,
+		"Error: failed to update attributes\n");
+	bu_avs_free(&avs);
+	return GED_ERROR;
+    }
+    return GED_OK;
+}
+
+int
+_ged_clear_color_shader(struct ged *gedp, struct directory *dp) {
+    struct bu_attribute_value_set avs;
+    bu_avs_init_empty(&avs);
+    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+	bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
+	return GED_ERROR;
+    }
+    db5_standardize_avs(&avs);
+    (void)bu_avs_remove(&avs, "rgb");
+    (void)bu_avs_remove(&avs, "color");
+    (void)bu_avs_remove(&avs, "shader");
+    (void)bu_avs_remove(&avs, "oshader");
+    if (db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
+	bu_vls_printf(gedp->ged_result_str,
+		"Error: failed to update attributes\n");
+	bu_avs_free(&avs);
+	return GED_ERROR;
+    }
+    return GED_OK;
+}
+
+int
+_ged_wrap_comb(struct ged *gedp, struct directory *dp) {
+
+    struct bu_vls orig_name, comb_child_name;
+    struct bu_external external;
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb;
+    struct directory *orig_dp = dp;
+    struct directory *new_dp;
+
+    bu_vls_init(&comb_child_name);
+    bu_vls_init(&orig_name);
+
+    bu_vls_sprintf(&orig_name, "%s", dp->d_namep);
+    bu_vls_sprintf(&comb_child_name, "%s.c", dp->d_namep);
+
+    /* First, make sure the target comb name for wrapping doesn't already exist */
+    if ((new_dp=db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&comb_child_name), LOOKUP_QUIET)) != RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, "ERROR: %s already exists in the database, cannot wrap %s", bu_vls_addr(&comb_child_name), dp->d_namep);
+	bu_vls_free(&comb_child_name);
+	bu_vls_free(&orig_name);
+	return GED_ERROR;
+    }
+
+    /* Create a copy of the comb using a new name */
+    if (db_get_external(&external, dp, gedp->ged_wdbp->dbip)) {
+	bu_vls_printf(gedp->ged_result_str, "Wrapping %s: Database read error retrieving external, aborting\n", dp->d_namep);
+	bu_vls_free(&comb_child_name);
+	bu_vls_free(&orig_name);
+	return GED_ERROR;
+    }
+    if (wdb_export_external(gedp->ged_wdbp, &external, bu_vls_addr(&comb_child_name), dp->d_flags, dp->d_minor_type) < 0) {
+	bu_free_external(&external);
+	bu_vls_printf(gedp->ged_result_str, "Failed to write new object (%s) to database - aborting!!\n", bu_vls_addr(&comb_child_name));
+	bu_vls_free(&comb_child_name);
+	bu_vls_free(&orig_name);
+	return GED_ERROR;
+    }
+    bu_free_external(&external);
+
+    /* Load new obj.c comb and clear its region flag, if any */
+    if ((new_dp=db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&comb_child_name), LOOKUP_QUIET)) == RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, "Wrapping %s: creation of %s failed!", dp->d_namep, bu_vls_addr(&comb_child_name));
+	bu_vls_free(&comb_child_name);
+	bu_vls_free(&orig_name);
+	return GED_ERROR;
+    }
+    if (_ged_clear_region_flag(gedp, new_dp) == GED_ERROR) {
+	bu_vls_free(&comb_child_name);
+	bu_vls_free(&orig_name);
+	return GED_ERROR;
+    }
+    if (_ged_clear_color_shader(gedp, new_dp) == GED_ERROR) {
+	bu_vls_free(&comb_child_name);
+	bu_vls_free(&orig_name);
+	return GED_ERROR;
+    }
+
+    /* Clear the tree from the original object */
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, GED_ERROR);
+    RT_CK_DB_INTERNAL(&intern);
+    comb = (struct rt_comb_internal *)(&intern)->idb_ptr;
+    RT_CK_COMB(comb);
+    db_free_tree(comb->tree, &rt_uniresource);
+    comb->tree = TREE_NULL;
+    db5_sync_comb_to_attr(&((&intern)->idb_avs), comb);
+    db5_standardize_avs(&((&intern)->idb_avs));
+    if (wdb_put_internal(gedp->ged_wdbp, dp->d_namep, &intern, 1.0) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "wdb_export(%s) failure", dp->d_namep);
+	rt_db_free_internal(&intern);
+	bu_vls_free(&comb_child_name);
+	bu_vls_free(&orig_name);
+	return GED_ERROR;
+    }
+    rt_db_free_internal(&intern);
+    if ((orig_dp=db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&orig_name), LOOKUP_QUIET)) == RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, "ERROR: %s tree clearing failed", bu_vls_addr(&orig_name));
+	bu_vls_free(&comb_child_name);
+	bu_vls_free(&orig_name);
+	return GED_ERROR;
+    }
+
+    /* add "child" comb to the newly cleared parent */
+    if (_ged_combadd(gedp, new_dp, orig_dp->d_namep, 0, WMOP_UNION, 0, 0) == RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, "Error adding '%s' (with op '%c') to '%s'\n", bu_vls_addr(&comb_child_name), WMOP_UNION, dp->d_namep);
+	bu_vls_free(&comb_child_name);
+	bu_vls_free(&orig_name);
+	return GED_ERROR;
+    }
+    bu_vls_free(&comb_child_name);
+    bu_vls_free(&orig_name);
+
+    return GED_OK;
+}
 
 int
 ged_comb(struct ged *gedp, int argc, const char *argv[])
@@ -43,8 +199,9 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
     char oper;
     int set_region = 0;
     int set_comb = 0;
-    static const char *usage = "[-c/-r] comb_name [<operation object>]";
-    struct bu_attribute_value_set avs;
+    int standard_comb_build = 1;
+    int wrap_comb = 0;
+    static const char *usage = "[-c/-r] [-w] comb_name [<operation object>]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -70,7 +227,7 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 
     bu_optind = 1;
     /* Grab any arguments off of the argv list */
-    while ((c = bu_getopt(argc, (char **)argv, "cr")) != -1) {
+    while ((c = bu_getopt(argc, (char **)argv, "crw")) != -1) {
         switch (c) {
             case 'c' :
                 set_comb = 1;
@@ -78,7 +235,11 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
             case 'r' :
                 set_region = 1;
                 break;
-            default :
+	    case 'w' :
+		wrap_comb = 1;
+		standard_comb_build = 0;
+		break;
+	    default :
                 break;
         }
     }
@@ -91,14 +252,12 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    /* Now, we're ready to process operation/object pairs, if any */
-    /* Check for odd number of arguments */
-    if (argc & 01) {
-	bu_vls_printf(gedp->ged_result_str, "error in number of args!");
+    if (wrap_comb && argc != 2) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
-    /* Save combination name, for use inside loop */
+    /* Get target combination info */
     comb_name = (char *)argv[1];
     if ((dp=db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_QUIET)) != RT_DIR_NULL) {
 	if (!(dp->d_flags & RT_DIR_COMB)) {
@@ -107,66 +266,74 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    /* Get operation and solid name for each solid */
-    for (i = 2; i < argc; i += 2) {
-	/* they come in pairs */
-	if (i+1 >= argc) {
-	    bu_vls_printf(gedp->ged_result_str, "Invalid syntax near '%s', ignored.  Expecting object name after operator.\n", argv[i+1]);
+    /* If we aren't performing one of the option operations,
+     * proceed with the standard comb build */
+    if (standard_comb_build) {
+
+	/* Now, we're ready to process operation/object pairs, if any */
+	/* Check for odd number of arguments */
+	if (argc & 01) {
+	    bu_vls_printf(gedp->ged_result_str, "error in number of args!");
 	    return GED_ERROR;
 	}
 
-	/* ops are 1-char */
-	if (argv[i][1] != '\0') {
-	    bu_vls_printf(gedp->ged_result_str, "Invalid operation '%s' before object '%s'\n", argv[i], argv[i+1]);
-	    continue;
-	}
-	oper = argv[i][0];
-	if (oper != WMOP_UNION && oper != WMOP_SUBTRACT && oper != WMOP_INTERSECT) {
-	    bu_vls_printf(gedp->ged_result_str, "Unknown operator '%c' encountered, invalid syntax.\n", oper);
-	    continue;
-	}
+	/* Get operation and solid name for each solid */
+	for (i = 2; i < argc; i += 2) {
+	    /* they come in pairs */
+	    if (i+1 >= argc) {
+		bu_vls_printf(gedp->ged_result_str, "Invalid syntax near '%s', ignored.  Expecting object name after operator.\n", argv[i+1]);
+		return GED_ERROR;
+	    }
 
-	/* object name comes after op */
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[i+1], LOOKUP_NOISY)) == RT_DIR_NULL) {
-	    bu_vls_printf(gedp->ged_result_str, "Object '%s does not exist.\n", argv[i+1]);
-	    continue;
-	}
+	    /* ops are 1-char */
+	    if (argv[i][1] != '\0') {
+		bu_vls_printf(gedp->ged_result_str, "Invalid operation '%s' before object '%s'\n", argv[i], argv[i+1]);
+		continue;
+	    }
+	    oper = argv[i][0];
+	    if (oper != WMOP_UNION && oper != WMOP_SUBTRACT && oper != WMOP_INTERSECT) {
+		bu_vls_printf(gedp->ged_result_str, "Unknown operator '%c' encountered, invalid syntax.\n", oper);
+		continue;
+	    }
 
-	/* add it to the comb immediately */
-	if (_ged_combadd(gedp, dp, comb_name, 0, oper, 0, 0) == RT_DIR_NULL) {
-	    bu_vls_printf(gedp->ged_result_str, "Error adding '%s' (with op '%c') to '%s'\n", dp->d_namep, oper, comb_name);
-	    return GED_ERROR;
+	    /* object name comes after op */
+	    if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[i+1], LOOKUP_NOISY)) == RT_DIR_NULL) {
+		bu_vls_printf(gedp->ged_result_str, "Object '%s does not exist.\n", argv[i+1]);
+		continue;
+	    }
+
+	    /* add it to the comb immediately */
+	    if (_ged_combadd(gedp, dp, comb_name, 0, oper, 0, 0) == RT_DIR_NULL) {
+		bu_vls_printf(gedp->ged_result_str, "Error adding '%s' (with op '%c') to '%s'\n", dp->d_namep, oper, comb_name);
+		return GED_ERROR;
+	    }
 	}
     }
 
+    if (wrap_comb) {
+	if (!dp || dp == RT_DIR_NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "Combination '%s does not exist.\n", comb_name);
+	    return GED_ERROR;
+	}
+	if (_ged_wrap_comb(gedp, dp) == GED_ERROR) {
+	    return GED_ERROR;
+	} else {
+	    if ((dp=db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
+		bu_vls_printf(gedp->ged_result_str, "ERROR: wrap of %s failed", comb_name);
+		return GED_ERROR;
+	    }
+	}
+    }
     /* Make sure the region flag is set appropriately */
     if (set_comb || set_region) {
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_NOISY)) != RT_DIR_NULL) {
-	    bu_avs_init_empty(&avs);
-	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
-		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
-		return GED_ERROR;
-	    }
-	    db5_standardize_avs(&avs);
 	    if (set_region) {
-		dp->d_flags |= RT_DIR_REGION;
-		(void)bu_avs_add(&avs, "region", "R");
-		if (db5_update_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
-		    bu_vls_printf(gedp->ged_result_str,
-			    "Error: failed to update attributes\n");
-		    bu_avs_free(&avs);
+		if (_ged_set_region_flag(gedp, dp) == GED_ERROR)
 		    return GED_ERROR;
-		}
 	    }
 	    if (set_comb) {
-		dp->d_flags = dp->d_flags & ~(RT_DIR_REGION);
-		(void)bu_avs_remove(&avs, "region");
-		if (db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
-		    bu_vls_printf(gedp->ged_result_str,
-			    "Error: failed to update attributes\n");
-		    bu_avs_free(&avs);
+		if (_ged_clear_region_flag(gedp, dp) == GED_ERROR)
 		    return GED_ERROR;
-		}
 	    }
 	}
     }
