@@ -140,37 +140,36 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Make sure the region flag is set appropriately */
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_NOISY)) != RT_DIR_NULL) {
-	bu_avs_init_empty(&avs);
-	if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
-	    bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
-	    return GED_ERROR;
-	}
-	db5_standardize_avs(&avs);
-	if (set_region) {
-	    dp->d_flags |= RT_DIR_REGION;
-	    (void)bu_avs_add(&avs, "region", "R");
-	    if (db5_update_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
-		bu_vls_printf(gedp->ged_result_str,
-			"Error: failed to update attributes\n");
-		bu_avs_free(&avs);
+    if (set_comb || set_region) {
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_NOISY)) != RT_DIR_NULL) {
+	    bu_avs_init_empty(&avs);
+	    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+		bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
 		return GED_ERROR;
 	    }
-	}
-	if (set_comb) {
-	    dp->d_flags = dp->d_flags & ~(RT_DIR_REGION);
-	    (void)bu_avs_remove(&avs, "region");
-	    if (db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
-		bu_vls_printf(gedp->ged_result_str,
-			"Error: failed to update attributes\n");
-		bu_avs_free(&avs);
-		return GED_ERROR;
+	    db5_standardize_avs(&avs);
+	    if (set_region) {
+		dp->d_flags |= RT_DIR_REGION;
+		(void)bu_avs_add(&avs, "region", "R");
+		if (db5_update_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
+		    bu_vls_printf(gedp->ged_result_str,
+			    "Error: failed to update attributes\n");
+		    bu_avs_free(&avs);
+		    return GED_ERROR;
+		}
+	    }
+	    if (set_comb) {
+		dp->d_flags = dp->d_flags & ~(RT_DIR_REGION);
+		(void)bu_avs_remove(&avs, "region");
+		if (db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
+		    bu_vls_printf(gedp->ged_result_str,
+			    "Error: failed to update attributes\n");
+		    bu_avs_free(&avs);
+		    return GED_ERROR;
+		}
 	    }
 	}
-
-	if (!set_comb && !set_region)
-	    bu_avs_free(&avs);
-    }    
+    }
 
     return GED_OK;
 }
