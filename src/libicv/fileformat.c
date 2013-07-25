@@ -236,17 +236,51 @@ ppm_save(int fd, unsigned char *rgb, int width, int height)
 }
 
 HIDDEN icv_image_file_t*
+bw_load(const char* filename, int width, int height)
+{
+    size_t size;
+    icv_image_file_t* bif;
+
+    BU_ALLOC(bif, struct icv_image_file);
+    if ((bif->fd = open( filename, O_RDONLY, WRMODE))<0) {
+	bu_log("icv_image_load: Cannot open file for reading\n");
+	return 0;
+    }
+    /* This initializes to default size */
+    if(height == 0 && width == 0) {
+	height = 512;
+	width = 512;
+    }
+
+    size = height*width;
+    bif->data = (unsigned char*)bu_malloc(size, "icv_image data");
+    if (read(bif->fd, bif->data, size) < 0) {
+	bu_log("load_pix: short Read\n");
+	return 0;
+    }
+
+    bif->filename = bu_strdup(filename);
+    bif->magic = ICV_IMAGE_FILE_MAGIC;
+    bif->format = ICV_IMAGE_BW;
+    bif->height = height;
+    bif->width = width;
+    bif->depth = 1;
+    close(bif->fd);
+    return bif;
+}
+
+HIDDEN icv_image_file_t*
 pix_load(const char* filename, int width, int height)
 {
     size_t size;
     icv_image_file_t* bif;
 
-    bif = (icv_image_file_t*) bu_malloc(sizeof(icv_image_file_t), "icv_image_file");
+    BU_ALLOC(bif, struct icv_image_file);
     if ((bif->fd = open( filename, O_RDONLY, WRMODE))<0) {
 	bu_log("icv_image_load: Cannot open file for reading\n");
 	return 0;
     }
-    /* This allocates  */
+    /* This initializes to default size */
     if(height == 0 && width == 0) {
 	height = 512;
 	width = 512;
@@ -284,6 +318,8 @@ icv_image_load(const char *filename, int format, int hint_width, int hint_height
     switch(format) {
 	case ICV_IMAGE_PIX:
 	    return pix_load(filename, hint_width, hint_height);
+	case ICV_IMAGE_BW :
+	    return bw_load(filename, hint_width, hint_height);
 	default:
 	    bu_log("icv_image_load not implemented for this format\n");
 	    return NULL;
