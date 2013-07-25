@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2013-0X-XX  Release 7.24.2                                     ---
 ----------------------------------------------------------------------
 
+* upgraded libpng to 1.6.3 - Erik Greenwald
 * new 'cchannel' procedural geometry tool for C-Channel - Emory Huff
 * improved 'comb' command error messages - Talwinder Saini
 * pl -> plot3 rename for utilities and docs - Tom Browder, Cliff Yapp

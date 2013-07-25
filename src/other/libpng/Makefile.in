@@ -21,6 +21,7 @@
 
 
 
+
 VPATH = @srcdir@
 am__make_dryrun = \
   { \
@@ -58,6 +59,7 @@ build_triplet = @build@
 host_triplet = @host@
 check_PROGRAMS = pngtest$(EXEEXT) pngunknown$(EXEEXT) \
 	pngstest$(EXEEXT) pngvalid$(EXEEXT)
+bin_PROGRAMS = pngfix$(EXEEXT) png-fix-itxt$(EXEEXT)
 @PNG_ARM_NEON_TRUE@am__append_1 = arm/arm_init.c\
 @PNG_ARM_NEON_TRUE@	arm/filter_neon.S
 
@@ -118,9 +120,9 @@ am__uninstall_files_from_dir = { \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
 am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" \
-	"$(DESTDIR)$(man3dir)" "$(DESTDIR)$(man5dir)" \
-	"$(DESTDIR)$(pkgconfigdir)" "$(DESTDIR)$(pkgincludedir)" \
-	"$(DESTDIR)$(pkgincludedir)"
+	"$(DESTDIR)$(bindir)" "$(DESTDIR)$(man3dir)" \
+	"$(DESTDIR)$(man5dir)" "$(DESTDIR)$(pkgconfigdir)" \
+	"$(DESTDIR)$(pkgincludedir)" "$(DESTDIR)$(pkgincludedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_LIBADD =
 am__libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_SOURCES_DIST = png.c \
@@ -147,6 +149,13 @@ libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_LINK = $(LIBTOOL) $(AM_V_lt) \
 	$(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_LDFLAGS) $(LDFLAGS) -o \
 	$@
+PROGRAMS = $(bin_PROGRAMS)
+am_png_fix_itxt_OBJECTS = png-fix-itxt.$(OBJEXT)
+png_fix_itxt_OBJECTS = $(am_png_fix_itxt_OBJECTS)
+png_fix_itxt_LDADD = $(LDADD)
+am_pngfix_OBJECTS = pngfix.$(OBJEXT)
+pngfix_OBJECTS = $(am_pngfix_OBJECTS)
+pngfix_DEPENDENCIES = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
 am_pngstest_OBJECTS = pngstest.$(OBJEXT)
 pngstest_OBJECTS = $(am_pngstest_OBJECTS)
 pngstest_DEPENDENCIES = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
@@ -206,12 +215,12 @@ am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
 SOURCES = $(libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_SOURCES) \
 	$(nodist_libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_SOURCES) \
-	$(pngstest_SOURCES) $(pngtest_SOURCES) $(pngunknown_SOURCES) \
-	$(pngvalid_SOURCES)
+	$(png_fix_itxt_SOURCES) $(pngfix_SOURCES) $(pngstest_SOURCES) \
+	$(pngtest_SOURCES) $(pngunknown_SOURCES) $(pngvalid_SOURCES)
 DIST_SOURCES =  \
 	$(am__libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_SOURCES_DIST) \
-	$(pngstest_SOURCES) $(pngtest_SOURCES) $(pngunknown_SOURCES) \
-	$(pngvalid_SOURCES)
+	$(png_fix_itxt_SOURCES) $(pngfix_SOURCES) $(pngstest_SOURCES) \
+	$(pngtest_SOURCES) $(pngunknown_SOURCES) $(pngvalid_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -443,7 +452,6 @@ distcleancheck_listfiles = find . -type f -print
 pkgincludedir = $(includedir)/$(PNGLIB_BASENAME)
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
-AM_CCASFLAGS = @AM_CCASFLAGS@
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 AR = @AR@
 AS = @AS@
@@ -597,6 +605,9 @@ pngstest_SOURCES = contrib/libtests/pngstest.c
 pngstest_LDADD = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
 pngunknown_SOURCES = contrib/libtests/pngunknown.c
 pngunknown_LDADD = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
+pngfix_SOURCES = contrib/tools/pngfix.c
+pngfix_LDADD = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
+png_fix_itxt_SOURCES = contrib/tools/png-fix-itxt.c
 
 # Generally these are single line shell scripts to run a test with a particular
 # set of parameters:
@@ -772,6 +783,55 @@ clean-libLTLIBRARIES:
 	}
 libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la: $(libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_OBJECTS) $(libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_DEPENDENCIES) $(EXTRA_libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_LINK) -rpath $(libdir) $(libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_OBJECTS) $(libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_LIBADD) $(LIBS)
+install-binPROGRAMS: $(bin_PROGRAMS)
+	@$(NORMAL_INSTALL)
+	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(bindir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(bindir)" || exit 1; \
+	fi; \
+	for p in $$list; do echo "$$p $$p"; done | \
+	sed 's/$(EXEEXT)$$//' | \
+	while read p p1; do if test -f $$p \
+	 || test -f $$p1 \
+	  ; then echo "$$p"; echo "$$p"; else :; fi; \
+	done | \
+	sed -e 'p;s,.*/,,;n;h' \
+	    -e 's|.*|.|' \
+	    -e 'p;x;s,.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/' | \
+	sed 'N;N;N;s,\n, ,g' | \
+	$(AWK) 'BEGIN { files["."] = ""; dirs["."] = 1 } \
+	  { d=$$3; if (dirs[d] != 1) { print "d", d; dirs[d] = 1 } \
+	    if ($$2 == $$4) files[d] = files[d] " " $$1; \
+	    else { print "f", $$3 "/" $$4, $$1; } } \
+	  END { for (d in files) print "f", d, files[d] }' | \
+	while read type dir files; do \
+	    if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
+	    test -z "$$files" || { \
+	    echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files '$(DESTDIR)$(bindir)$$dir'"; \
+	    $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files "$(DESTDIR)$(bindir)$$dir" || exit $$?; \
+	    } \
+	; done
+
+uninstall-binPROGRAMS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
+	files=`for p in $$list; do echo "$$p"; done | \
+	  sed -e 'h;s,^.*/,,;s/$(EXEEXT)$$//;$(transform)' \
+	      -e 's/$$/$(EXEEXT)/' \
+	`; \
+	test -n "$$list" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(bindir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(bindir)" && rm -f $$files
+
+clean-binPROGRAMS:
+	@list='$(bin_PROGRAMS)'; test -n "$$list" || exit 0; \
+	echo " rm -f" $$list; \
+	rm -f $$list || exit $$?; \
+	test -n "$(EXEEXT)" || exit 0; \
+	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
+	echo " rm -f" $$list; \
+	rm -f $$list
 
 clean-checkPROGRAMS:
 	@list='$(check_PROGRAMS)'; test -n "$$list" || exit 0; \
@@ -781,6 +841,12 @@ clean-checkPROGRAMS:
 	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
 	echo " rm -f" $$list; \
 	rm -f $$list
+png-fix-itxt$(EXEEXT): $(png_fix_itxt_OBJECTS) $(png_fix_itxt_DEPENDENCIES) $(EXTRA_png_fix_itxt_DEPENDENCIES) 
+	@rm -f png-fix-itxt$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(png_fix_itxt_OBJECTS) $(png_fix_itxt_LDADD) $(LIBS)
+pngfix$(EXEEXT): $(pngfix_OBJECTS) $(pngfix_DEPENDENCIES) $(EXTRA_pngfix_DEPENDENCIES) 
+	@rm -f pngfix$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(pngfix_OBJECTS) $(pngfix_LDADD) $(LIBS)
 pngstest$(EXEEXT): $(pngstest_OBJECTS) $(pngstest_DEPENDENCIES) $(EXTRA_pngstest_DEPENDENCIES) 
 	@rm -f pngstest$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(pngstest_OBJECTS) $(pngstest_LDADD) $(LIBS)
@@ -837,8 +903,10 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/arm_init.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/filter_neon.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/png-fix-itxt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/png.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pngerror.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pngfix.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pngget.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pngmem.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pngpread.Plo@am__quote@
@@ -912,6 +980,34 @@ arm_init.lo: arm/arm_init.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='arm/arm_init.c' object='arm_init.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o arm_init.lo `test -f 'arm/arm_init.c' || echo '$(srcdir)/'`arm/arm_init.c
+
+png-fix-itxt.o: contrib/tools/png-fix-itxt.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT png-fix-itxt.o -MD -MP -MF $(DEPDIR)/png-fix-itxt.Tpo -c -o png-fix-itxt.o `test -f 'contrib/tools/png-fix-itxt.c' || echo '$(srcdir)/'`contrib/tools/png-fix-itxt.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/png-fix-itxt.Tpo $(DEPDIR)/png-fix-itxt.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='contrib/tools/png-fix-itxt.c' object='png-fix-itxt.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o png-fix-itxt.o `test -f 'contrib/tools/png-fix-itxt.c' || echo '$(srcdir)/'`contrib/tools/png-fix-itxt.c
+
+png-fix-itxt.obj: contrib/tools/png-fix-itxt.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT png-fix-itxt.obj -MD -MP -MF $(DEPDIR)/png-fix-itxt.Tpo -c -o png-fix-itxt.obj `if test -f 'contrib/tools/png-fix-itxt.c'; then $(CYGPATH_W) 'contrib/tools/png-fix-itxt.c'; else $(CYGPATH_W) '$(srcdir)/contrib/tools/png-fix-itxt.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/png-fix-itxt.Tpo $(DEPDIR)/png-fix-itxt.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='contrib/tools/png-fix-itxt.c' object='png-fix-itxt.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o png-fix-itxt.obj `if test -f 'contrib/tools/png-fix-itxt.c'; then $(CYGPATH_W) 'contrib/tools/png-fix-itxt.c'; else $(CYGPATH_W) '$(srcdir)/contrib/tools/png-fix-itxt.c'; fi`
+
+pngfix.o: contrib/tools/pngfix.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT pngfix.o -MD -MP -MF $(DEPDIR)/pngfix.Tpo -c -o pngfix.o `test -f 'contrib/tools/pngfix.c' || echo '$(srcdir)/'`contrib/tools/pngfix.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/pngfix.Tpo $(DEPDIR)/pngfix.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='contrib/tools/pngfix.c' object='pngfix.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o pngfix.o `test -f 'contrib/tools/pngfix.c' || echo '$(srcdir)/'`contrib/tools/pngfix.c
+
+pngfix.obj: contrib/tools/pngfix.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT pngfix.obj -MD -MP -MF $(DEPDIR)/pngfix.Tpo -c -o pngfix.obj `if test -f 'contrib/tools/pngfix.c'; then $(CYGPATH_W) 'contrib/tools/pngfix.c'; else $(CYGPATH_W) '$(srcdir)/contrib/tools/pngfix.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/pngfix.Tpo $(DEPDIR)/pngfix.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='contrib/tools/pngfix.c' object='pngfix.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o pngfix.obj `if test -f 'contrib/tools/pngfix.c'; then $(CYGPATH_W) 'contrib/tools/pngfix.c'; else $(CYGPATH_W) '$(srcdir)/contrib/tools/pngfix.c'; fi`
 
 pngstest.o: contrib/libtests/pngstest.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT pngstest.o -MD -MP -MF $(DEPDIR)/pngstest.Tpo -c -o pngstest.o `test -f 'contrib/libtests/pngstest.c' || echo '$(srcdir)/'`contrib/libtests/pngstest.c
@@ -1756,10 +1852,12 @@ check-am: all-am
 	$(MAKE) $(AM_MAKEFLAGS) $(check_PROGRAMS)
 	$(MAKE) $(AM_MAKEFLAGS) check-TESTS
 check: check-am
-all-am: Makefile $(LTLIBRARIES) $(SCRIPTS) $(MANS) $(DATA) $(HEADERS) \
-		config.h
+all-am: Makefile $(LTLIBRARIES) $(PROGRAMS) $(SCRIPTS) $(MANS) $(DATA) \
+		$(HEADERS) config.h
+install-binPROGRAMS: install-libLTLIBRARIES
+
 installdirs:
-	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man3dir)" "$(DESTDIR)$(man5dir)" "$(DESTDIR)$(pkgconfigdir)" "$(DESTDIR)$(pkgincludedir)" "$(DESTDIR)$(pkgincludedir)"; do \
+	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man3dir)" "$(DESTDIR)$(man5dir)" "$(DESTDIR)$(pkgconfigdir)" "$(DESTDIR)$(pkgincludedir)" "$(DESTDIR)$(pkgincludedir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -1799,8 +1897,8 @@ maintainer-clean-generic:
 	-test -z "$(MAINTAINERCLEANFILES)" || rm -f $(MAINTAINERCLEANFILES)
 clean: clean-am
 
-clean-am: clean-checkPROGRAMS clean-generic clean-libLTLIBRARIES \
-	clean-libtool mostlyclean-am
+clean-am: clean-binPROGRAMS clean-checkPROGRAMS clean-generic \
+	clean-libLTLIBRARIES clean-libtool mostlyclean-am
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
@@ -1829,7 +1927,8 @@ install-dvi: install-dvi-am
 
 install-dvi-am:
 
-install-exec-am: install-binSCRIPTS install-libLTLIBRARIES
+install-exec-am: install-binPROGRAMS install-binSCRIPTS \
+	install-libLTLIBRARIES
 	@$(NORMAL_INSTALL)
 	$(MAKE) $(AM_MAKEFLAGS) install-exec-hook
 install-html: install-html-am
@@ -1872,9 +1971,10 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-binSCRIPTS uninstall-libLTLIBRARIES \
-	uninstall-man uninstall-nodist_pkgincludeHEADERS \
-	uninstall-pkgconfigDATA uninstall-pkgincludeHEADERS
+uninstall-am: uninstall-binPROGRAMS uninstall-binSCRIPTS \
+	uninstall-libLTLIBRARIES uninstall-man \
+	uninstall-nodist_pkgincludeHEADERS uninstall-pkgconfigDATA \
+	uninstall-pkgincludeHEADERS
 	@$(NORMAL_INSTALL)
 	$(MAKE) $(AM_MAKEFLAGS) uninstall-hook
 uninstall-man: uninstall-man3 uninstall-man5
@@ -1883,14 +1983,15 @@ uninstall-man: uninstall-man3 uninstall-man5
 	install-strip uninstall-am
 
 .PHONY: CTAGS GTAGS TAGS all all-am am--refresh check check-TESTS \
-	check-am clean clean-checkPROGRAMS clean-cscope clean-generic \
-	clean-libLTLIBRARIES clean-libtool cscope cscopelist-am ctags \
-	ctags-am dist dist-all dist-bzip2 dist-gzip dist-hook \
-	dist-lzip dist-shar dist-tarZ dist-xz dist-zip distcheck \
-	distclean distclean-compile distclean-generic distclean-hdr \
-	distclean-libtool distclean-tags distcleancheck distdir \
-	distuninstallcheck dvi dvi-am html html-am info info-am \
-	install install-am install-binSCRIPTS install-data \
+	check-am clean clean-binPROGRAMS clean-checkPROGRAMS \
+	clean-cscope clean-generic clean-libLTLIBRARIES clean-libtool \
+	cscope cscopelist-am ctags ctags-am dist dist-all dist-bzip2 \
+	dist-gzip dist-hook dist-lzip dist-shar dist-tarZ dist-xz \
+	dist-zip distcheck distclean distclean-compile \
+	distclean-generic distclean-hdr distclean-libtool \
+	distclean-tags distcleancheck distdir distuninstallcheck dvi \
+	dvi-am html html-am info info-am install install-am \
+	install-binPROGRAMS install-binSCRIPTS install-data \
 	install-data-am install-data-hook install-dvi install-dvi-am \
 	install-exec install-exec-am install-exec-hook install-html \
 	install-html-am install-info install-info-am \
@@ -1901,10 +2002,11 @@ uninstall-man: uninstall-man3 uninstall-man5
 	installdirs maintainer-clean maintainer-clean-generic \
 	mostlyclean mostlyclean-compile mostlyclean-generic \
 	mostlyclean-libtool pdf pdf-am ps ps-am recheck tags tags-am \
-	uninstall uninstall-am uninstall-binSCRIPTS uninstall-hook \
-	uninstall-libLTLIBRARIES uninstall-man uninstall-man3 \
-	uninstall-man5 uninstall-nodist_pkgincludeHEADERS \
-	uninstall-pkgconfigDATA uninstall-pkgincludeHEADERS
+	uninstall uninstall-am uninstall-binPROGRAMS \
+	uninstall-binSCRIPTS uninstall-hook uninstall-libLTLIBRARIES \
+	uninstall-man uninstall-man3 uninstall-man5 \
+	uninstall-nodist_pkgincludeHEADERS uninstall-pkgconfigDATA \
+	uninstall-pkgincludeHEADERS
 
 
 $(PNGLIB_BASENAME).pc: libpng.pc
@@ -1952,14 +2054,15 @@ libpng.vers: scripts/vers.out
 $(srcdir)/scripts/pnglibconf.h.prebuilt:
 	@echo "Attempting to build $@" >&2
 	@echo "This is a machine generated file, but if you want to make" >&2
-	@echo "a new one simply make 'scripts/pnglibconf.out' and copy that" >&2
+	@echo "a new one simply make 'scripts/pnglibconf.out', copy that" >&2
+	@echo "AND set PNG_ZLIB_VERNUM to 0 (you MUST do this)" >&2
 	@exit 1
 
 # The following is necessary to ensure that the local pnglibconf.h is used, not
 # an installed one (this can happen immediately after on a clean system if
 # 'make test' is the first thing the user does.)
-contrib/libtests/pngstest.o contrib/libtests/pngvalid.o pngtest.o: pnglibconf.h
-contrib/libtests/pngunknown.o: pnglibconf.h
+pngstest.o pngvalid.o pngtest.o pngunknown.o timepng.o: pnglibconf.h
+pngfix.o png-fix-itxt.o: pnglibconf.h
 
 .dfn.out:
 	rm -f $@ $*.c $*.tf[12]
