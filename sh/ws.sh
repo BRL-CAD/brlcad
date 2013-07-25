@@ -44,7 +44,7 @@
 #
 #   b) removes whitespace at the end of any line.
 #
-#   c) removes successive blanks lines so there are no more than two
+#   c) removes successive blank lines so there are no more than two
 #      in a row anywhere in a given file.  WS_SUCCESSIVE=2
 #
 #   d) removes all blank lines at the end of a file.
