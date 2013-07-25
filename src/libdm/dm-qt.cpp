@@ -90,7 +90,7 @@ qt_drawBegin(struct dm *dmp)
 HIDDEN int
 qt_drawEnd(struct dm *dmp)
 {
-    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;    
+    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
     privars->painter->end();
     delete privars->painter;
     privars->painter = NULL;
@@ -563,12 +563,12 @@ bool QTkMainWindow::event(QEvent *ev)
 	return true;
     }
     return QWindow::event(ev);
-}    
+}
 
 void QTkMainWindow::renderNow()
 {
     if (!isExposed())
-        return;
+	return;
 
     QRect rect(0, 0, width(), height());
     m_backingStore->beginPaint(rect);
@@ -738,14 +738,14 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
     privars->qapp = new QApplication(argc, argv);
 
     QWindow *window = QWindow::fromWinId(pubvars->win);
-    
+
     privars->pix = new QPixmap(dmp->dm_width, dmp->dm_height);
 
     privars->win = new QTkMainWindow(privars->pix, window);
     privars->win->create();
     privars->win->setWidth(dmp->dm_width);
     privars->win->setHeight(dmp->dm_height);
-    
+
     privars->win->show();
 
     privars->font = NULL;
