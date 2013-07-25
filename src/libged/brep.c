@@ -64,9 +64,11 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     struct rt_brep_internal* bi;
     struct brep_specific* bs;
     struct soltab *stp;
-    int real_flag;
     char commtag[64];
     char namebuf[64];
+    int i, j, real_flag, valid_command;
+    const char *commands[] = {"info", "plot", "translate"};
+    int num_commands = (int)(sizeof(commands) / sizeof(const char *));
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -88,10 +90,11 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "\tintersect obj2 i j [PP|PC|PS|CC|CS|SS] - BREP intersections\n");
 	bu_vls_printf(gedp->ged_result_str, "\t[brepname] - convert the non-BREP object to BREP form\n");
 	bu_vls_printf(gedp->ged_result_str, "\t[suffix] - convert non-BREP comb to unevaluated BREP form\n");
+	bu_vls_printf(gedp->ged_result_str, "\ttranslate SCV index i j dx dy dz - translate a surface control vertex\n");
 	return GED_HELP;
     }
 
-    if (argc < 2 || argc > 7) {
+    if (argc < 2 || argc > 10) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -119,7 +122,6 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     if (BU_STR_EQUAL(argv[2], "intersect")) {
 	/* handle surface-surface intersection */
 	struct rt_db_internal intern2;
-	int i, j;
 
 	/* we need exactly 6 or 7 arguments */
 	if (argc != 6 && argc != 7) {
@@ -270,7 +272,15 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (!BU_STR_EQUAL(argv[2], "info") && !BU_STR_EQUAL(argv[2], "plot")) {
+    valid_command = 0;
+    for (i = 0; i < num_commands; ++i) {
+	if (BU_STR_EQUAL(argv[2], commands[i])) {
+	    valid_command = 1;
+	    break;
+	}
+    }
+
+    if (!valid_command) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n", argv[0], usage);
 	bu_vls_printf(gedp->ged_result_str, "\t%s is in brep form, please input a command.", solid_name);
 	return GED_HELP;
@@ -286,6 +296,11 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     vbp = rt_vlblock_init();
 
     brep_command(gedp->ged_result_str, solid_name, (const struct rt_tess_tol *)&gedp->ged_wdbp->wdb_ttol, &gedp->ged_wdbp->wdb_tol, bs, bi, vbp, argc, argv, commtag);
+
+    if (BU_STR_EQUAL(argv[2], "translate")) {
+	bi->brep = bs->brep;
+	GED_DB_PUT_INTERNAL(gedp, ndp, &intern, &rt_uniresource, GED_ERROR);
+    }
 
     snprintf(namebuf, 64, "%s%s_", commtag, solid_name);
     _ged_cvt_vlblock_to_solids(gedp, vbp, namebuf, 0);

@@ -2489,6 +2489,58 @@ brep_conversion_comb(struct rt_db_internal *old_internal, char *name, char *suff
     return ret;
 }
 
+int
+translate_command(
+	struct bu_vls *result,
+	struct brep_specific *bs,
+	int argc,
+	const char *argv[])
+{
+    //  0         1          2      3    4   5 6 7  8  9
+    // brep <solid_name> translate SCV index i j dx dy dz
+    if (argc != 10) {
+	return -1;
+    }
+    ON_Brep *brep = bs->brep;
+
+    if (BU_STR_EQUAL(argv[3], "SCV")) {
+	int surface_index = atoi(argv[4]);
+	int i = atoi(argv[5]);
+	int j = atoi(argv[6]);
+
+	ON_NurbsSurface *nurbsSurface = NULL;
+	ON_Surface *surface = brep->m_S[surface_index];
+	if (surface) {
+	    nurbsSurface = dynamic_cast<ON_NurbsSurface *>(surface);
+	} else {
+	    bu_vls_printf(result, "No surface %d.\n", surface_index);
+	    return -1;
+	}
+
+	double *cv = NULL;
+	if (nurbsSurface) {
+	    cv = nurbsSurface->CV(i, j);
+	} else {
+	    bu_vls_printf(result, "Surface %d is not a NURBS surface.\n", surface_index);
+	    return -1;
+	}
+
+	if (cv) {
+	    ON_3dPoint newPt;
+	    newPt.x = cv[X] + atof(argv[7]);
+	    newPt.y = cv[Y] + atof(argv[8]);
+	    newPt.z = cv[Z] + atof(argv[9]);
+	    nurbsSurface->SetCV(i, j, newPt);
+	} else {
+	    bu_vls_printf(result, "No control vertex (%d, %d).\n", i, j);
+	    return -1;
+	}
+    } else {
+	return -1;
+    }
+
+    return 0;
+}
 
 int
 brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_tol *ttol, const struct bn_tol *tol, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag)
@@ -2767,6 +2819,8 @@ brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_to
 		}
 	    }
 	}
+    } else if (BU_STR_EQUAL(command, "translate")) {
+	ret = translate_command(vls, bs, argc, argv);
     }
     return ret;
 }
