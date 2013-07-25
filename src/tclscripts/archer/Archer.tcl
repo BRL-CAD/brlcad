@@ -9204,6 +9204,11 @@ proc title_node_handler {node} {
 	}
     }
 
+    if {[info exists env(LIBRT_BOT_MINTIE)]} {
+	# triggers a set of librt's global tcl variable (i.e., rt_bot_mintie) via ArcherCore::watchVar{}
+	set mRtBotMintie $env(LIBRT_BOT_MINTIE)
+    }
+
     # This feature has been disabled.
     set mTreeAttrColumns ""
 

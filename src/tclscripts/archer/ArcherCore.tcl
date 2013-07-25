@@ -7201,6 +7201,7 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::watchVar {_name1 _name2 _op} {
     global rt_bot_mintie
+    global env
 
     if {![info exists itk_component(ged)]} {
 	return
@@ -7264,6 +7265,7 @@ namespace eval ArcherCore {
 	}
 	mRtBotMintie {
 	    set rt_bot_mintie $mRtBotMintie
+	    set env(LIBRT_BOT_MINTIE) $mRtBotMintie
 	}
     }
 }
