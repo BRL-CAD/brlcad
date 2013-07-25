@@ -2490,7 +2490,7 @@ ON_Intersect(const ON_Surface* surfA,
 	if (!overlaps[i] || !overlapA[i] || !overlapB[i])
 	    continue;
 
-	for (int j = i + 1; j <= overlaps.Count(); j++) {
+	for (int j = 0; j <= overlaps.Count(); j++) {
 	    if (overlaps[i]->IsClosed() && overlapA[i]->IsClosed() && overlapB[i]->IsClosed()) {
 		// The i-th curve is close loop, we get a complete boundary of
 		// that overlap region.
@@ -2511,7 +2511,7 @@ ON_Intersect(const ON_Surface* surfA,
 		break;
 	    }
 
-	    if (j == overlaps.Count() || !overlaps[j] || !overlapA[j] || !overlapB[j])
+	    if (j == overlaps.Count() || j == i || !overlaps[j] || !overlapA[j] || !overlapB[j])
 		continue;
 
 	    // Merge the curves that link together.
