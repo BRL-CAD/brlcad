@@ -1322,17 +1322,22 @@ ON_Intersect(const ON_Curve* curveA,
 	for (NodePairs::iterator i = candidates.begin(); i != candidates.end(); i++) {
 	    std::vector<Subcurve*> splittedA;
 	    std::vector<Subsurface*> splittedB;
-	    if ((*i).first->m_islinear || (*i).first->Split() != 0) {
+	    if (i->first->m_islinear && i->second->m_isplanar) {
 		splittedA.push_back((*i).first);
-	    } else {
-		splittedA.push_back((*i).first->m_children[0]);
-		splittedA.push_back((*i).first->m_children[1]);
-	    }
-	    if ((*i).second->m_isplanar || (*i).second->Split() != 0) {
 		splittedB.push_back((*i).second);
 	    } else {
-		for (int j = 0; j < 4; j++)
-		    splittedB.push_back((*i).second->m_children[j]);
+		if ((*i).first->Split() != 0) {
+		    splittedA.push_back((*i).first);
+		} else {
+		    splittedA.push_back((*i).first->m_children[0]);
+		    splittedA.push_back((*i).first->m_children[1]);
+		}
+		if ((*i).second->Split() != 0) {
+		    splittedB.push_back((*i).second);
+		} else {
+		    for (int j = 0; j < 4; j++)
+			splittedB.push_back((*i).second->m_children[j]);
+		}
 	    }
 	    for (unsigned int j = 0; j < splittedA.size(); j++)
 		for (unsigned int k = 0; k < splittedB.size(); k++)
@@ -2446,14 +2451,17 @@ ON_Intersect(const ON_Surface* surfA,
 			    isvalid = true;
 			} else {
 			    double test_distance = 0.01;
+			    // TODO: more sample points
 			    double U1 = i%2 ? b_knots[j]-test_distance : (x_event[k].m_a[0]+x_event[k].m_a[1])*0.5;
-			    double V1 = i%2 ? (x_event[k].m_a[0]+x_event[k].m_a[1])*0.5 : b_knots[j]-0.01;
+			    double V1 = i%2 ? (x_event[k].m_a[0]+x_event[k].m_a[1])*0.5 : b_knots[j]-test_distance;
 			    double U2 = i%2 ? b_knots[j]+test_distance : (x_event[k].m_a[0]+x_event[k].m_a[1])*0.5;
-			    double V2 = i%2 ? (x_event[k].m_a[0]+x_event[k].m_a[1])*0.5 : b_knots[j]+0.01;
+			    double V2 = i%2 ? (x_event[k].m_a[0]+x_event[k].m_a[1])*0.5 : b_knots[j]+test_distance;
 			    bool in1, in2;
 			    ON_ClassArray<ON_PX_EVENT> px_event1, px_event2;
 			    in1 = ON_Intersect(surf1->PointAt(U1, V1), *surf2, px_event1, overlap_tolerance, 0, 0, tree);
-			    in2 = ON_Intersect(surf1->PointAt(U2, V2), *surf2, px_event1, overlap_tolerance, 0, 0, tree);
+			    if (in1) in1 &= surf1->NormalAt(U1, V1).IsParallelTo(surf2->NormalAt(px_event1[0].m_b[0], px_event1[0].m_b[1]));
+			    in2 = ON_Intersect(surf1->PointAt(U2, V2), *surf2, px_event2, overlap_tolerance, 0, 0, tree);
+			    if (in2) in2 &= surf1->NormalAt(U2, V2).IsParallelTo(surf2->NormalAt(px_event2[0].m_b[0], px_event2[0].m_b[1]));
 			    if ((in1 && !in2) || (!in1 && in2))
 				isvalid = true;
 			}
@@ -2629,6 +2637,7 @@ ON_Intersect(const ON_Surface* surfA,
     }
 
     bu_log("%d overlap events.\n", overlapevents.Count());
+
     /* Second step: calculate the intersection of the bounding boxes.
      * Only the children of intersecting b-box pairs need to be considered.
      * The children will be generated only when they are needed, using the
