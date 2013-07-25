@@ -37,11 +37,12 @@ int
 ged_comb(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
-    const char *prog_name;
+    const char *cmd_name;
     char *comb_name;
     int i,c;
     char oper;
     int set_region = 0;
+    int set_comb = 0;
     static const char *usage = "[-c/-r] comb_name [<operation object>]";
     struct bu_attribute_value_set avs;
 
@@ -52,7 +53,7 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    prog_name = argv[0];
+    cmd_name = argv[0];
 
     /* must be wanting help */
     if (argc == 1) {
@@ -72,7 +73,7 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
     while ((c = bu_getopt(argc, (char **)argv, "cr")) != -1) {
         switch (c) {
             case 'c' :
-                set_region = 0;
+                set_comb = 1;
                 break;
             case 'r' :
                 set_region = 1;
@@ -84,6 +85,11 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 
     argc -= bu_optind - 1;
     argv += bu_optind - 1;
+
+    if (set_comb && set_region) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], cmd_name);
+	return GED_ERROR;
+    }
 
     /* Now, we're ready to process operation/object pairs, if any */
     /* Check for odd number of arguments */
@@ -134,34 +140,37 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Make sure the region flag is set appropriately */
-    dp=db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_QUIET);
-    bu_avs_init_empty(&avs);
-    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
-	bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
-	return GED_ERROR;
-    }
-    db5_standardize_avs(&avs);
-    if (set_region) {
-	dp->d_flags |= RT_DIR_REGION;
-	(void)bu_avs_add(&avs, "region", "R");
-	if (db5_update_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
-	    bu_vls_printf(gedp->ged_result_str,
-		    "Error: failed to update attributes\n");
-	    bu_avs_free(&avs);
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_NOISY)) != RT_DIR_NULL) {
+	bu_avs_init_empty(&avs);
+	if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+	    bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
 	    return GED_ERROR;
 	}
-    } else {
-	dp->d_flags = dp->d_flags & ~(RT_DIR_REGION);
-	(void)bu_avs_remove(&avs, "region");
-	if (db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
-	    bu_vls_printf(gedp->ged_result_str,
-		    "Error: failed to update attributes\n");
-	    bu_avs_free(&avs);
-	    return GED_ERROR;
+	db5_standardize_avs(&avs);
+	if (set_region) {
+	    dp->d_flags |= RT_DIR_REGION;
+	    (void)bu_avs_add(&avs, "region", "R");
+	    if (db5_update_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
+		bu_vls_printf(gedp->ged_result_str,
+			"Error: failed to update attributes\n");
+		bu_avs_free(&avs);
+		return GED_ERROR;
+	    }
 	}
-    }
-    
-    /* avs is freed by either db5_update_attributes() or db5_replace_attributes() */
+	if (set_comb) {
+	    dp->d_flags = dp->d_flags & ~(RT_DIR_REGION);
+	    (void)bu_avs_remove(&avs, "region");
+	    if (db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
+		bu_vls_printf(gedp->ged_result_str,
+			"Error: failed to update attributes\n");
+		bu_avs_free(&avs);
+		return GED_ERROR;
+	    }
+	}
+
+	if (!set_comb && !set_region)
+	    bu_avs_free(&avs);
+    }    
 
     return GED_OK;
 }
