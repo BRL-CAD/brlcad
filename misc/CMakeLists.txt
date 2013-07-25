@@ -10,7 +10,7 @@ set(datarootdir "\${prefix}/share")
 set(datadir "\${datarootdir}")
 
 add_subdirectory(pkgconfig)
-add_subdirectory(perl)
+#add_subdirectory(perl)
 
 if(NOT CMAKE_CONFIGURATION_TYPES)
   configure_file(brlcad-config.in ${CMAKE_BINARY_DIR}/misc/brlcad-config @ONLY)
