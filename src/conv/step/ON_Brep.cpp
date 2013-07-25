@@ -27,7 +27,7 @@
 // Make entity arrays for each of the m_V, m_S, etc arrays and create step instances of them,
 // starting with the basic ones.
 //
-// The array indicies in the ON_Brep will correspond to the step entity array locations that 
+// The array indices in the ON_Brep will correspond to the step entity array locations that
 // hold the step version of each entity.
 //
 // then, need to map the ON_Brep hierarchy to the corresponding STEP hierarchy
@@ -36,7 +36,7 @@
 //         manifold_solid_brep
 // faces-> closed_shell
 //         advanced_face
-//         
+//
 // surface-> bspline_surface_with_knots
 //           cartesian_point
 //
@@ -47,7 +47,7 @@
 //                        bspline_curve_with_knots
 //                        vertex_point
 //                        cartesian_point
-// 
+//
 // 2d points -> point_on_surface
 // 1d points to bound curve -> point_on_curve
 //

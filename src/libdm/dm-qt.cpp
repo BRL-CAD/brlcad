@@ -81,7 +81,7 @@ qt_drawBegin(struct dm *dmp)
     privars->painter = new QPainter(privars->pix);
     privars->painter->setPen(privars->fg);
     privars->painter->setFont(*privars->font);
-     
+
     return TCL_OK;
 }
 
@@ -712,7 +712,7 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
 
     Tk_SetWindowBackground(pubvars->xtkwin, 0);
     Tk_MapWindow(pubvars->xtkwin);
-    
+
     bu_log("qt_open called\n");
     return dmp;
 }
