@@ -1015,7 +1015,7 @@ main(int argc, char **argv)
     /*
      * Do the actual gridding
      */
-    bu_log("Firing rays... ");
+    bu_log("Firing rays...\n");
     VSCALE(ap.a_ray.r_dir, unit_D, -1.0);
     cell[2] = 0.0;
     for (cell[1] = g_max[2]; cell[1] >= g_min[2]; cell[1] -= celsiz) {
