@@ -128,7 +128,7 @@
 #define RT_VOL_INTERNAL_MAGIC		0x987ba1d0 /**< ?{?? */
 #define RT_PNTS_INTERNAL_MAGIC          0x706e7473 /**< pnts */
 #define RT_ANNOTATION_INTERNAL_MAGIC    0x616e6e6f /**< anno */
-
+#define RT_HRT_INTERNAL_MAGIC		0x6872743f /**< hrt? */
 /* n-manifold geometry */
 
 #define NMG_EDGEUSE2_MAGIC		0x91919191 /**< ???? => used in eu->l2.magic */
