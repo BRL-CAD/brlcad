@@ -70,7 +70,7 @@
 #   # only remove blank lines and whitespace at end of lines
 #   WS=abd ./ws.sh some_file
 #
-#   # reduce collections of blank lines to no more than 4 in a row
+#   # reduce collections of blank lines to no more than 2 in a row
 #   WS_SUCCESSIVE=2 WS=ac ./ws.sh some_file
 #
 #   # run all tasks on all files in current directory without backups
