@@ -37,10 +37,13 @@ int
 ged_comb(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
+    const char *prog_name;
     char *comb_name;
-    int i;
+    int i,c;
     char oper;
-    static const char *usage = "comb_name <operation solid>";
+    int set_region = 0;
+    static const char *usage = "[-c/-r] comb_name [<operation object>]";
+    struct bu_attribute_value_set avs;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -49,17 +52,40 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
+    prog_name = argv[0];
+
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
-    if (argc < 4) {
+    if (argc < 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
+    /* First, handle options, if any */
+
+    bu_optind = 1;
+    /* Grab any arguments off of the argv list */
+    while ((c = bu_getopt(argc, (char **)argv, "cr")) != -1) {
+        switch (c) {
+            case 'c' :
+                set_region = 0;
+                break;
+            case 'r' :
+                set_region = 1;
+                break;
+            default :
+                break;
+        }
+    }
+
+    argc -= bu_optind - 1;
+    argv += bu_optind - 1;
+
+    /* Now, we're ready to process operation/object pairs, if any */
     /* Check for odd number of arguments */
     if (argc & 01) {
 	bu_vls_printf(gedp->ged_result_str, "error in number of args!");
@@ -106,6 +132,36 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
     }
+
+    /* Make sure the region flag is set appropriately */
+    dp=db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_QUIET);
+    bu_avs_init_empty(&avs);
+    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+	bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
+	return GED_ERROR;
+    }
+    db5_standardize_avs(&avs);
+    if (set_region) {
+	dp->d_flags |= RT_DIR_REGION;
+	(void)bu_avs_add(&avs, "region", "R");
+	if (db5_update_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
+	    bu_vls_printf(gedp->ged_result_str,
+		    "Error: failed to update attributes\n");
+	    bu_avs_free(&avs);
+	    return GED_ERROR;
+	}
+    } else {
+	dp->d_flags = dp->d_flags & ~(RT_DIR_REGION);
+	(void)bu_avs_remove(&avs, "region");
+	if (db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
+	    bu_vls_printf(gedp->ged_result_str,
+		    "Error: failed to update attributes\n");
+	    bu_avs_free(&avs);
+	    return GED_ERROR;
+	}
+    }
+    
+    /* avs is freed by either db5_update_attributes() or db5_replace_attributes() */
 
     return GED_OK;
 }
