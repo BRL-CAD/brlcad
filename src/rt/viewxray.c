@@ -175,7 +175,7 @@ view_eol(struct application *ap)
 	    if (rt_g.rtg_parallel) {
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
 	    }
-	    icv_image_save_writeline(bif, ap->a_y, scanbuf);
+	    icv_image_writeline(bif, ap->a_y, scanbuf, ICV_DATA_UCHAR);
 	    if (rt_g.rtg_parallel) {
 		bu_semaphore_release( BU_SEM_SYSCALL );
 	    }

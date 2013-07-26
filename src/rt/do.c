@@ -82,7 +82,7 @@ void do_ae(double azim, double elev);
 void res_pr(void);
 void memory_summary(void);
 
-extern struct icv_image_file *bif;
+extern struct icv_image *bif;
 
 
 /**
@@ -788,7 +788,8 @@ do_frame(int framenumber)
 	    /* FIXME: in the case of rtxray, this is wrong.  it writes
 	     * out a bw image so depth should be just 1, not 3.
 	     */
-	    bif = icv_image_save_open(framename, ICV_IMAGE_AUTO_NO_PIX, width, height, 3);
+	    bif = icv_image_create(width, height, ICV_COLOR_SPACE_RGB);
+
 	    if (bif == NULL && (outfp = fopen(framename, "w+b")) == NULL) {
 		perror(framename);
 		if (matflag) return 0;	/* OK */
@@ -919,7 +920,8 @@ do_frame(int framenumber)
 	       wallclock, ((double)(rtip->rti_nrays))/wallclock);
     }
     if (bif != NULL)
-	icv_image_save_close(bif);
+	icv_image_save(bif, framename, ICV_IMAGE_AUTO_NO_PIX);
+	icv_image_free(bif);
     bif = NULL;
     if (outfp != NULL) {
 	/* Protect finished product */

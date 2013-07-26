@@ -97,7 +97,7 @@ extern int do_kut_plane;           /* from opt.c */
 extern plane_t kut_plane;              /* from opt.c */
 vect_t kut_norm;
 struct soltab *kut_soltab = NULL;
-extern struct icv_image_file *bif;
+extern struct icv_image *bif;
 
 extern struct floatpixel *curr_float_frame;	/* buffer of full frame */
 
@@ -316,7 +316,7 @@ view_pixel(struct application *ap)
 
 		if (bif != NULL) {
 		    bu_semaphore_acquire(BU_SEM_SYSCALL);
-		    icv_image_save_writepixel(bif, ap->a_x, ap->a_y, p);
+		    icv_image_writepixel(bif, ap->a_x, ap->a_y, ap->a_color);
 		    bu_semaphore_release(BU_SEM_SYSCALL);
 		} else if (outfp != NULL) {
 		    bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -568,7 +568,7 @@ view_pixel(struct application *ap)
 	    }
 	    if (bif != NULL) {
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
-		icv_image_save_writeline(bif, ap->a_y, (unsigned char *)scanline[ap->a_y].sl_buf);
+		icv_image_writeline(bif, ap->a_y, (unsigned char *)scanline[ap->a_y].sl_buf, ICV_DATA_UCHAR);
 		bu_semaphore_release(BU_SEM_SYSCALL);
 	    } else if (outfp != NULL) {
 		size_t count;

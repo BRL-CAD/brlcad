@@ -817,7 +817,7 @@ view_eol(struct application *ap)
 	 * Write to a file.
 	 */
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	icv_image_save_writeline(bif, ap->a_y, scanline[cpu]);
+	icv_image_writeline(bif, ap->a_y, scanline[cpu],  ICV_DATA_UCHAR);
 	bu_semaphore_release(BU_SEM_SYSCALL);
     }
     if (fbp == FBIO_NULL && outputfile == NULL)
@@ -844,10 +844,8 @@ void view_cleanup(struct rt_i *UNUSED(rtip))
 /**
  * end of each frame
  */
-void view_end(struct application *UNUSED(ap)) {
-    if (bif)
-	icv_image_save_close(bif);
-    bif = NULL;
+void view_end(struct application *UNUSED(ap))
+{
 }
 
 

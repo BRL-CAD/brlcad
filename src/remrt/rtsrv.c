@@ -112,7 +112,7 @@ static int	avail_cpus;		/* # of cpus avail on this system */
 
 int	save_overlaps=0;
 
-struct icv_image_file *bif = NULL;
+struct icv_image *bif = NULL;
 
 /*
  * Package Handlers.
