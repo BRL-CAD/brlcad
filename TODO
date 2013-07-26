@@ -18,6 +18,8 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* document the new comb -w option
+
 * re-do the sh/enumerate.sh script for CMake
 
 * audit src/other for removable auto* stuff
