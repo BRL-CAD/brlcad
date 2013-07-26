@@ -19,7 +19,7 @@
  */
 /** @file icv.h
  *
- * Functions provided by the LIBICV image conversion library.
+ * Functions provided by the LIBICV image processing library.
  *
  */
 
