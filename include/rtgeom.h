@@ -812,16 +812,14 @@ struct rt_annotation_internal
  */
 #define RT_ANNOTATION_CK_MAGIC(_p) BU_CKMAG(_p, RT_ANNOTATION_INTERNAL_MAGIC, "rt_annotation_internal")
 
-
 struct rt_hrt_internal
 {
     uint32_t hrt_magic;
     point_t v;		/**< @brief center point */
-    vect_t a;		/**< @brief axis a radial length */
-    vect_t b;     	/**< @brief axis b radial length */
-    vect_t c;      	/**< @brief axis c radial length */
-    fastf_t nscurv;     /**< @brief north-south curvature */
-    fastf_t ewcurv;     /**< @brief east-west curvature */
+    vect_t xdir;	/**< @brief unit vector in x direction */
+    vect_t ydir;     	/**< @brief unit vector in y direction */
+    vect_t zdir;      	/**< @brief unit vector in z direction */
+    fastf_t d;          /**< @brief distance to cusps */
 };
 #define RT_HRT_CK_MAGIC(_p) BU_CKMAG(_p, RT_HRT_INTERNAL_MAGIC, "rt_hrt_internal")
 

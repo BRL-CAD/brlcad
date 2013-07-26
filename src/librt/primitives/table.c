@@ -113,6 +113,7 @@ RT_DECLARE_INTERFACE(revolve);
 RT_DECLARE_INTERFACE(constraint);
 /* RT_DECLARE_INTERFACE(binunif); */
 RT_DECLARE_INTERFACE(pnts);
+RT_DECLARE_INTERFACE(hrt);
 
 #if OBJ_BREP
 RT_DECLARE_INTERFACE(brep);
@@ -1961,6 +1962,47 @@ const struct rt_functab rt_functab[] = {
 	NULL,
     },
 
+    {
+	/* 43 */
+	RT_FUNCTAB_MAGIC, "ID_HRT", "hrt",
+	1,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	rt_generic_xform,
+	NULL,
+	sizeof(struct rt_hrt_internal),
+	RT_HRT_INTERNAL_MAGIC,	
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+        NULL,
+    },
+     
     {
 	/* this entry for sanity only */
 	0L, ">ID_MAXIMUM", ">id_max",
