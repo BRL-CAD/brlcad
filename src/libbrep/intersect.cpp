@@ -275,7 +275,7 @@ sub_curve(ON_Curve* in, double a, double b)
     sub.MakeIncreasing();
     if (!sub.Intersection(dom))
 	return NULL;
-    ON_Curve *left = NULL, *right = NULL;
+    ON_Curve *left = NULL, *right = NULL, *three = NULL;
     if (ON_NearZero(sub.m_t[0] - dom.m_t[0]))
 	right = in->Duplicate();
     else
@@ -283,13 +283,19 @@ sub_curve(ON_Curve* in, double a, double b)
     if (left)
 	delete left;
     left = NULL;
+    if (!right) {
+	bu_log("Error: sub_curve(): a = %lf, b = %lf\n", a, b);
+	return NULL;
+    }
     if (ON_NearZero(sub.m_t[1] - dom.m_t[1]))
 	left = right->Duplicate();
     else {
-	right->Split(sub.m_t[1], left, right);
+	right->Split(sub.m_t[1], left, three);
     }
     if (right)
 	delete right;
+    if (three)
+	delete three;
     return left;
 }
 
