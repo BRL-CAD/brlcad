@@ -2204,6 +2204,41 @@ link_curves(ON_Curve*& c1, ON_Curve*& c2)
 }
 
 
+struct OverlapSegment {
+    ON_Curve *m_curve3d, *m_curveA, *m_curveB;
+
+    int m_from;	    // 0: iso-curve from A, 1: from B
+    int m_dir;	    // 0: u iso-curve, 1: v iso-curve
+    double m_fix;   // the param fixed in the iso-curve
+		    // m_dir==0: m_fix==u; m_dir==1: m_fix==v
+    double m_min;   // minimum of the variable param in the iso-curve
+    double m_max;   // maximum of the variable param in the iso-curve
+
+    ON_2dPoint Get2DParam(double t)
+    {
+	return m_dir ? ON_2dPoint(t, m_fix) : ON_2dPoint(m_fix, t);
+    }
+
+    void SetCurvesToNull()
+    {
+	m_curve3d = m_curveA = m_curveB = NULL;
+    }
+
+    ~OverlapSegment()
+    {
+	if (m_curve3d)
+	    delete m_curve3d;
+	m_curve3d = NULL;
+	if (m_curveA)
+	    delete m_curveA;
+	m_curveA = NULL;
+	if (m_curveB)
+	    delete m_curveB;
+	m_curveB = NULL;
+    }
+};
+
+
 struct OverlapEvent {
     ON_SSX_EVENT* m_event;  // Use pointer to the ON_SSX_EVENT in case that
 			    // ~ON_SSX_EVENT() is called.
@@ -2397,13 +2432,11 @@ ON_Intersect(const ON_Surface* surfA,
     // So we actually don't need to generate the Bezier patches explicitly,
     // and we can get the boundaries of them using IsoCurve() on knots.
 
-    ON_CurveArray overlaps, overlapA, overlapB;
+    ON_SimpleArray<OverlapSegment*> overlaps;
     for (int i = 0; i < 4; i++) {
 	const ON_Surface* surf1 = i >= 2 ? surfB : surfA;
 	const ON_Surface* surf2 = i >= 2 ? surfA : surfB;
 	brlcad::SurfaceTree* tree = i >= 2 ? treeA : treeB;
-	ON_CurveArray& overlap1 = i >= 2 ? overlapB : overlapA;
-	ON_CurveArray& overlap2 = i >= 2 ? overlapA : overlapB;
 	ON_2dPointArray& ptarray1 = i >= 2 ? tmp_curvest : tmp_curveuv;
 	ON_2dPointArray& ptarray2 = i >= 2 ? tmp_curveuv : tmp_curvest;
 	int dir = 1 - i%2;
@@ -2458,33 +2491,41 @@ ON_Intersect(const ON_Surface* surfA,
 			    double V2 = i%2 ? (x_event[k].m_a[0]+x_event[k].m_a[1])*0.5 : b_knots[j]+test_distance;
 			    bool in1, in2;
 			    ON_ClassArray<ON_PX_EVENT> px_event1, px_event2;
-			    in1 = ON_Intersect(surf1->PointAt(U1, V1), *surf2, px_event1, overlap_tolerance, 0, 0, tree);
+			    in1 = ON_Intersect(surf1->PointAt(U1, V1), *surf2, px_event1, 1e-5, 0, 0, tree);
 			    if (in1) in1 &= surf1->NormalAt(U1, V1).IsParallelTo(surf2->NormalAt(px_event1[0].m_b[0], px_event1[0].m_b[1]));
-			    in2 = ON_Intersect(surf1->PointAt(U2, V2), *surf2, px_event2, overlap_tolerance, 0, 0, tree);
+			    in2 = ON_Intersect(surf1->PointAt(U2, V2), *surf2, px_event2, 1e-5, 0, 0, tree);
 			    if (in2) in2 &= surf1->NormalAt(U2, V2).IsParallelTo(surf2->NormalAt(px_event2[0].m_b[0], px_event2[0].m_b[1]));
 			    if ((in1 && !in2) || (!in1 && in2))
 				isvalid = true;
 			}
 			if (isvalid) {
 			    // One side of it is shared and the other side is non-shared.
-			    overlaps.Append(sub_curve(boundary, x_event[k].m_a[0], x_event[k].m_a[1]));
-			    overlap1.Append(new ON_LineCurve(iso_pt1, iso_pt2));
-			    overlap2.Append(overlap2d[k]);
+			    OverlapSegment *seg = new OverlapSegment;
+			    seg->m_curve3d = sub_curve(boundary, x_event[k].m_a[0], x_event[k].m_a[1]);
+			    seg->m_curveA = new ON_LineCurve(iso_pt1, iso_pt2);
+			    seg->m_curveB = overlap2d[k];
+			    seg->m_dir = dir;
+			    seg->m_fix = b_knots[j];
+			    overlaps.Append(seg);
 			    if (j == 0 && surf1->IsClosed(dir)) {
 				// something like close_domain().
 				// If the domain is closed, the iso-curve on the
 				// first knot and the last knot is the same, so
 				// we don't need to compute the intersections twice.
-				overlaps.Append((*overlaps.Last())->Duplicate());
 				iso_pt1.x = i%2 ? knots[knotcnt] : x_event[k].m_a[0];
 				iso_pt1.y = i%2 ? x_event[k].m_a[0] : knots[knotcnt];
 				iso_pt2.x = i%2 ? knots[knotcnt] : x_event[k].m_a[1];
 				iso_pt2.y = i%2 ? x_event[k].m_a[1] : knots[knotcnt];
-				overlap1.Append(new ON_LineCurve(iso_pt1, iso_pt2));
-				overlap2.Append(overlap2d[k]->Duplicate());
+				seg->m_curve3d = (*overlaps.Last())->m_curve3d->Duplicate();
+				seg->m_curveA = new ON_LineCurve(iso_pt1, iso_pt2);
+				seg->m_curveB = overlap2d[k]->Duplicate();
+				// seg.m_dir = dir;
+				seg->m_fix = knots[knotcnt];
+				overlaps.Append(seg);
 			    }
 			    // We set overlap2d[k] to NULL, is case that the curve
 			    // is delete by the destructor of overlap2d. (See ~ON_CurveArray())
+			    // Also the curves in seg. (See ~OverlapSegment())
 			    overlap2d[k] = NULL;
 			}
 		    }
@@ -2494,18 +2535,150 @@ ON_Intersect(const ON_Surface* surfA,
 	delete knots;
     }
 
+    int count_before = overlaps.Count();
+    // Not points, but a bundle of params:
+    // params[i] - the seperating params on overlaps[i]
+    // x - curve3d, y - curveA, z - curveB
+
+    ON_ClassArray<ON_3dPointArray> params(count_before);
+    for (int i = 0; i < count_before; i++) {
+	// Split the curves from the intersection points between them.
+	int count = params[i].Count();
+	for (int j = i + 1; j < count_before; j++) {
+	    ON_SimpleArray<ON_X_EVENT> x_event;
+	    ON_Intersect(overlaps[i]->m_curve3d, overlaps[j]->m_curve3d, x_event, intersection_tolerance);
+	    count += x_event.Count();
+	    for (int k = 0; k < x_event.Count(); k++) {
+		bu_log("intersections = %d\n", x_event.Count());
+		ON_3dPoint param;
+		ON_ClassArray<ON_PX_EVENT> e1, e2, e3, e4;
+		ON_2dPoint uv;
+		ON_2dPoint st;
+		if (brlcad::get_closest_point(uv, brepA->Face(0), x_event[k].m_A[0], treeA)
+		    && brlcad::get_closest_point(st, brepB->Face(0), x_event[k].m_B[0], treeB)) {
+		    // get_closest_point() have bugs. Before fixing it, we use this to detect an error and "fix" it.
+		    if (surfA->PointAt(uv.x, uv.y).DistanceTo(x_event[k].m_A[0]) > surfA->PointAt(st.x, st.y).DistanceTo(x_event[k].m_A[0]))
+			uv = st;
+		    if (surfB->PointAt(st.x, st.y).DistanceTo(x_event[k].m_B[0]) > surfB->PointAt(uv.x, uv.y).DistanceTo(x_event[k].m_B[0]))
+			st = uv;
+		    bu_log("lalaala %lf %lf %lf %lf\n", uv.x, uv.y, st.x, st.y);
+		    // Pull the 3D curve bace to the 2D space
+		    if (ON_Intersect(uv, *(overlaps[i]->m_curveA), e1, intersection_tolerance_A)
+			&& ON_Intersect(st, *(overlaps[i]->m_curveB), e2, intersection_tolerance_B)) {
+			param.x = x_event[k].m_a[0];
+			param.y = e1[0].m_b[0];
+			param.z = e2[0].m_b[0];
+			params[i].Append(param);
+		    }
+		    if (ON_Intersect(uv, *(overlaps[j]->m_curveA), e3, intersection_tolerance_A)
+			&& ON_Intersect(st, *(overlaps[j]->m_curveB), e4, intersection_tolerance_B)) {
+			// The same routine for overlaps[j]
+			param.x = x_event[k].m_b[0];
+			param.y = e3[0].m_b[0];
+			param.z = e4[0].m_b[0];
+			params[j].Append(param);
+		    }
+		}
+		if (x_event[k].m_type == ON_X_EVENT::ccx_overlap) {
+		    ON_ClassArray<ON_PX_EVENT> psx3, psx4, e5, e6, e7, e8;
+		    if (ON_Intersect(x_event[k].m_A[0], *surfA, psx3, intersection_tolerance, 0, 0, treeA)
+			&& ON_Intersect(x_event[k].m_B[0], *surfB, psx4, intersection_tolerance, 0, 0, treeB)) {
+			// Pull the 3D curve bace to the 2D space
+			uv = psx3[0].m_b;
+			st = psx4[0].m_b;
+			if (ON_Intersect(x_event[k].m_A[1], *(overlaps[i]->m_curveA), e5, intersection_tolerance_A)
+			    && ON_Intersect(x_event[k].m_A[1], *(overlaps[i]->m_curveB), e6, intersection_tolerance_B)) {
+			    param.x = x_event[k].m_a[1];
+			    param.y = e5[0].m_b[0];
+			    param.z = e6[0].m_b[0];
+			    params[i].Append(param);
+			}
+			if (ON_Intersect(x_event[k].m_B[1], *(overlaps[j]->m_curveA), e7, intersection_tolerance_A)
+			    && ON_Intersect(x_event[k].m_B[1], *(overlaps[j]->m_curveB), e8, intersection_tolerance_B)) {
+			    // The same routine for overlaps[j]
+			    param.x = x_event[k].m_b[1];
+			    param.y = e7[0].m_b[0];
+			    param.z = e8[0].m_b[0];
+			    params[j].Append(param);
+			}
+		    }
+		}
+	    }
+	}
+	bu_log("\nparams[%d]=%d: ", i, params[i].Count());
+	for (int j = 0; j < params[i].Count(); j++) bu_log("%lf ", params[i][j].x);
+	if (count != params[i].Count()) {bu_log("count = %d\n", count); x.Empty(); return 0;}
+    }
+
+    for (int i = 0; i < count_before; i++) {
+	params[i].QuickSort(ON_CompareIncreasing);
+	int start = 0;
+	bool splitted = false;
+	for (int j = 1; j < params[i].Count(); j++) {
+	    if (params[i][j].x - params[i][start].x < intersection_tolerance)
+		continue;
+	    ON_Curve* subcurveA = sub_curve(overlaps[i]->m_curveA, params[i][start].y, params[i][j].y);
+	    bool isvalid = false, isreversed = false;
+	    double test_distance = 0.01;
+	    // TODO: more sample points
+	    ON_2dPoint UV1, UV2;
+	    UV1 = UV2 = subcurveA->PointAt(subcurveA->Domain().Mid());
+	    ON_3dVector normal = ON_CrossProduct(subcurveA->TangentAt(subcurveA->Domain().Mid()), ON_zaxis);
+	    normal.Unitize();
+	    UV1 -= normal*test_distance;	// left
+	    UV2 += normal*test_distance;	// right
+	    bool in1, in2;
+	    ON_ClassArray<ON_PX_EVENT> px_event1, px_event2;
+	    in1 = surfA->Domain(0).Includes(UV1.x)
+		&& surfA->Domain(1).Includes(UV1.y)
+		&& ON_Intersect(surfA->PointAt(UV1.x, UV1.y), *surfB, px_event1, 1e-5, 0, 0, treeB)
+		&& surfA->NormalAt(UV1.x, UV1.y).IsParallelTo(surfB->NormalAt(px_event1[0].m_b[0], px_event1[0].m_b[1]));
+	    in2 = surfA->Domain(0).Includes(UV2.x)
+		&& surfA->Domain(1).Includes(UV2.y)
+		&& ON_Intersect(surfA->PointAt(UV2.x, UV2.y), *surfB, px_event2, 1e-5, 0, 0, treeB)
+		&& surfA->NormalAt(UV2.x, UV2.y).IsParallelTo(surfB->NormalAt(px_event2[0].m_b[0], px_event2[0].m_b[1]));
+	    if (in1 && !in2)
+		isvalid = true;
+	    else if (!in1 && in2) {
+		// the right side is overlapped.
+		isvalid = true;
+		isreversed = true;
+	    }
+	    if (isvalid) {
+		OverlapSegment *seg = new OverlapSegment;
+		seg->m_curve3d = sub_curve(overlaps[i]->m_curve3d, params[i][start].x, params[i][j].x);
+		seg->m_curveA = subcurveA;
+		seg->m_curveB = sub_curve(overlaps[i]->m_curveB, params[i][start].z, params[i][j].z);
+		if (isreversed) {
+		    seg->m_curve3d->Reverse();
+		    seg->m_curveA->Reverse();
+		    seg->m_curveB->Reverse();
+		}
+		seg->m_dir = overlaps[i]->m_dir;
+		seg->m_fix = overlaps[i]->m_fix;
+		overlaps.Append(seg);
+	    }
+	    start = j;
+	    splitted = true;
+	}
+	if (splitted) {
+	    delete overlaps[i];
+	    overlaps[i] = NULL;
+	}
+    }
+
     for (int i = 0; i < overlaps.Count(); i++) {
-	if (!overlaps[i] || !overlapA[i] || !overlapB[i])
+	if (!overlaps[i] || !overlaps[i]->m_curveA || !overlaps[i]->m_curveB || !overlaps[i]->m_curve3d)
 	    continue;
 
 	for (int j = 0; j <= overlaps.Count(); j++) {
-	    if (overlaps[i]->IsClosed() && overlapA[i]->IsClosed() && overlapB[i]->IsClosed()) {
+	    if (overlaps[i]->m_curve3d->IsClosed() && overlaps[i]->m_curveA->IsClosed() && overlaps[i]->m_curveB->IsClosed()) {
 		// The i-th curve is close loop, we get a complete boundary of
 		// that overlap region.
 		ON_SSX_EVENT Event;
-		Event.m_curve3d = overlaps[i];
-		Event.m_curveA = overlapA[i];
-		Event.m_curveB = overlapB[i];
+		Event.m_curve3d = overlaps[i]->m_curve3d;
+		Event.m_curveA = overlaps[i]->m_curveA;
+		Event.m_curveB = overlaps[i]->m_curveB;
 		Event.m_type = ON_SSX_EVENT::ssx_overlap;
 		// Normalize the curves
 		Event.m_curve3d->SetDomain(ON_Interval(0.0, 1.0));
@@ -2515,45 +2688,46 @@ ON_Intersect(const ON_Surface* surfA,
 		// Set the curves to NULL in case that they are deleted by
 		// ~ON_SSX_EVENT() or ~ON_CurveArray().
 		Event.m_curve3d = Event.m_curveA = Event.m_curveB = NULL;
-		overlaps[i] = overlapA[i] = overlapB[i] = NULL;
+		overlaps[i]->SetCurvesToNull();
+		overlaps[i] = NULL;
 		break;
 	    }
 
-	    if (j == overlaps.Count() || j == i || !overlaps[j] || !overlapA[j] || !overlapB[j])
+	    if (j == overlaps.Count() || j == i || !overlaps[j] || !overlaps[j]->m_curveA || !overlaps[j]->m_curveB || !overlaps[j]->m_curve3d)
 		continue;
 
 	    // Merge the curves that link together.
-	    if (overlaps[i]->PointAtStart().DistanceTo(overlaps[j]->PointAtEnd()) < intersection_tolerance
-		&& overlapA[i]->PointAtStart().DistanceTo(overlapA[j]->PointAtEnd()) < intersection_tolerance_A
-		&& overlapB[i]->PointAtStart().DistanceTo(overlapB[j]->PointAtEnd()) < intersection_tolerance_B) {
+	    if (overlaps[i]->m_curve3d->PointAtStart().DistanceTo(overlaps[j]->m_curve3d->PointAtEnd()) < intersection_tolerance
+		&& overlaps[i]->m_curveA->PointAtStart().DistanceTo(overlaps[j]->m_curveA->PointAtEnd()) < intersection_tolerance_A
+		&& overlaps[i]->m_curveB->PointAtStart().DistanceTo(overlaps[j]->m_curveB->PointAtEnd()) < intersection_tolerance_B) {
 		// end -- start -- end -- start
-		overlaps[i] = link_curves(overlaps[j], overlaps[i]);
-		overlapA[i] = link_curves(overlapA[j], overlapA[i]);
-		overlapB[i] = link_curves(overlapB[j], overlapB[i]);
-	    } else if (overlaps[i]->PointAtEnd().DistanceTo(overlaps[j]->PointAtStart()) < intersection_tolerance
-		       && overlapA[i]->PointAtEnd().DistanceTo(overlapA[j]->PointAtStart()) < intersection_tolerance_A
-		       && overlapB[i]->PointAtEnd().DistanceTo(overlapB[j]->PointAtStart()) < intersection_tolerance_B) {
+		overlaps[i]->m_curve3d = link_curves(overlaps[j]->m_curve3d, overlaps[i]->m_curve3d);
+		overlaps[i]->m_curveA = link_curves(overlaps[j]->m_curveA, overlaps[i]->m_curveA);
+		overlaps[i]->m_curveB = link_curves(overlaps[j]->m_curveB, overlaps[i]->m_curveB);
+	    } else if (overlaps[i]->m_curve3d->PointAtEnd().DistanceTo(overlaps[j]->m_curve3d->PointAtStart()) < intersection_tolerance
+		       && overlaps[i]->m_curveA->PointAtEnd().DistanceTo(overlaps[j]->m_curveA->PointAtStart()) < intersection_tolerance_A
+		       && overlaps[i]->m_curveB->PointAtEnd().DistanceTo(overlaps[j]->m_curveB->PointAtStart()) < intersection_tolerance_B) {
 		// start -- end -- start -- end
-		overlaps[i] = link_curves(overlaps[i], overlaps[j]);
-		overlapA[i] = link_curves(overlapA[i], overlapA[j]);
-		overlapB[i] = link_curves(overlapB[i], overlapB[j]);
-	    } else if (overlaps[i]->PointAtStart().DistanceTo(overlaps[j]->PointAtStart()) < intersection_tolerance
-		       && overlapA[i]->PointAtStart().DistanceTo(overlapA[j]->PointAtStart()) < intersection_tolerance_A
-		       && overlapB[i]->PointAtStart().DistanceTo(overlapB[j]->PointAtStart()) < intersection_tolerance_B) {
+		overlaps[i]->m_curve3d = link_curves(overlaps[i]->m_curve3d, overlaps[j]->m_curve3d);
+		overlaps[i]->m_curveA = link_curves(overlaps[i]->m_curveA, overlaps[j]->m_curveA);
+		overlaps[i]->m_curveB = link_curves(overlaps[i]->m_curveB, overlaps[j]->m_curveB);
+	    } else if (overlaps[i]->m_curve3d->PointAtStart().DistanceTo(overlaps[j]->m_curve3d->PointAtStart()) < intersection_tolerance
+		       && overlaps[i]->m_curveA->PointAtStart().DistanceTo(overlaps[j]->m_curveA->PointAtStart()) < intersection_tolerance_A
+		       && overlaps[i]->m_curveB->PointAtStart().DistanceTo(overlaps[j]->m_curveB->PointAtStart()) < intersection_tolerance_B) {
 		// end -- start -- start -- end
-		if (overlaps[i]->Reverse() && overlapA[i]->Reverse() && overlapB[i]->Reverse()) {
-		    overlaps[i] = link_curves(overlaps[i], overlaps[j]);
-		    overlapA[i] = link_curves(overlapA[i], overlapA[j]);
-		    overlapB[i] = link_curves(overlapB[i], overlapB[j]);
+		if (overlaps[i]->m_curve3d->Reverse() && overlaps[i]->m_curveA->Reverse() && overlaps[i]->m_curveB->Reverse()) {
+		    overlaps[i]->m_curve3d = link_curves(overlaps[i]->m_curve3d, overlaps[j]->m_curve3d);
+		    overlaps[i]->m_curveA = link_curves(overlaps[i]->m_curveA, overlaps[j]->m_curveA);
+		    overlaps[i]->m_curveB = link_curves(overlaps[i]->m_curveB, overlaps[j]->m_curveB);
 		}
-	    } else if (overlaps[i]->PointAtEnd().DistanceTo(overlaps[j]->PointAtEnd()) < intersection_tolerance
-		       && overlapA[i]->PointAtEnd().DistanceTo(overlapA[j]->PointAtEnd()) < intersection_tolerance_A
-		       && overlapB[i]->PointAtEnd().DistanceTo(overlapB[j]->PointAtEnd()) < intersection_tolerance_B) {
+	    } else if (overlaps[i]->m_curve3d->PointAtEnd().DistanceTo(overlaps[j]->m_curve3d->PointAtEnd()) < intersection_tolerance
+		       && overlaps[i]->m_curveA->PointAtEnd().DistanceTo(overlaps[j]->m_curveA->PointAtEnd()) < intersection_tolerance_A
+		       && overlaps[i]->m_curveB->PointAtEnd().DistanceTo(overlaps[j]->m_curveB->PointAtEnd()) < intersection_tolerance_B) {
 		// start -- end -- end -- start
-		if (overlaps[j]->Reverse() && overlapA[j]->Reverse() && overlapB[j]->Reverse()) {
-		    overlaps[i] = link_curves(overlaps[i], overlaps[j]);
-		    overlapA[i] = link_curves(overlapA[i], overlapA[j]);
-		    overlapB[i] = link_curves(overlapB[i], overlapB[j]);
+		if (overlaps[j]->m_curve3d->Reverse() && overlaps[j]->m_curveA->Reverse() && overlaps[j]->m_curveB->Reverse()) {
+		    overlaps[i]->m_curve3d = link_curves(overlaps[i]->m_curve3d, overlaps[j]->m_curve3d);
+		    overlaps[i]->m_curveA = link_curves(overlaps[i]->m_curveA, overlaps[j]->m_curveA);
+		    overlaps[i]->m_curveB = link_curves(overlaps[i]->m_curveB, overlaps[j]->m_curveB);
 		}
 	    }
 	}
