@@ -82,7 +82,7 @@ qt_drawBegin(struct dm *dmp)
     privars->painter->setPen(privars->fg);
     privars->painter->setFont(*privars->font);
 
-    bu_log("drawBegin called\n");
+    bu_log("qt_drawBegin called\n");
     return TCL_OK;
 }
 
@@ -91,11 +91,13 @@ HIDDEN int
 qt_drawEnd(struct dm *dmp)
 {
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+
     privars->painter->end();
     delete privars->painter;
     privars->painter = NULL;
     dmp->dm_processEvents(dmp);
 
+    bu_log("qt_drawEnd called\n");
     return TCL_OK;
 }
 
@@ -133,7 +135,11 @@ qt_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUSE
     sx = dm_Normal2Xx(dmp, x);
     sy = dm_Normal2Xy(dmp, y, use_aspect);
 
+    if (privars->painter == NULL)
+	return TCL_ERROR;
     privars->painter->drawText(sx, sy, str);
+
+    bu_log("qt_drawString2D called\n");
     return TCL_OK;
 }
 
@@ -149,7 +155,11 @@ qt_drawLine2D(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2
     sy1 = dm_Normal2Xy(dmp, y_1, 0);
     sy2 = dm_Normal2Xy(dmp, y_2, 0);
 
+    if (privars->painter == NULL)
+	return TCL_ERROR;
     privars->painter->drawLine(sx1, sy1, sx2, sy2);
+
+    bu_log("qt_drawLine2D called\n");
     return TCL_OK;
 }
 
@@ -179,7 +189,11 @@ qt_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
     sx = dm_Normal2Xx(dmp, x);
     sy = dm_Normal2Xy(dmp, y, 0);
 
+    if (privars->painter == NULL)
+	return TCL_ERROR;
     privars->painter->drawPoint(sx, sy);
+
+    bu_log("qt_drawPoint2D called\n");
     return TCL_OK;
 }
 
@@ -238,8 +252,12 @@ qt_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b,
     privars->fg.setRgb(r, g, b);
 
     if (privars->painter != NULL) {
-	privars->painter->setPen(privars->fg);
+	QPen p = privars->painter->pen();
+	p.setColor(privars->fg);
+	privars->painter->setPen(p);
     }
+
+    bu_log("qt_setFGColor called\n");
     return TCL_OK;
 }
 
@@ -255,8 +273,11 @@ qt_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
     dmp->dm_bg[1] = g;
     dmp->dm_bg[2] = b;
 
+    if(privars->pix == NULL)
+	return TCL_ERROR;
     privars->pix->fill(privars->bg);
 
+    bu_log("qt_setBGColor called\n");
     return TCL_OK;
 }
 
@@ -272,6 +293,8 @@ qt_setLineAttr(struct dm *dmp, int width, int style)
     if (width <= 1)
 	width = 0;
 
+    if (privars->painter == NULL)
+	return TCL_ERROR;
     QPen p = privars->painter->pen();
     p.setWidth(width);
     if (style == DM_DASHED_LINE)
@@ -280,6 +303,7 @@ qt_setLineAttr(struct dm *dmp, int width, int style)
 	p.setStyle(Qt::SolidLine);
     privars->painter->setPen(p);
 
+    bu_log("qt_setLineAttr called\n");
     return TCL_OK;
 }
 
@@ -290,6 +314,8 @@ qt_reshape(struct dm *dmp, int width, int height)
     dmp->dm_height = height;
     dmp->dm_width = width;
     dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
+
+    bu_log("qt_reshape called\n");
 }
 
 
@@ -342,6 +368,7 @@ qt_configureWin(struct dm *dmp, int force)
 	}
     }
 
+    bu_log("qt_configureWin called\n");
     return TCL_OK;
 }
 
@@ -742,13 +769,12 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
     privars->pix = new QPixmap(dmp->dm_width, dmp->dm_height);
 
     privars->win = new QTkMainWindow(privars->pix, window);
-    privars->win->create();
     privars->win->setWidth(dmp->dm_width);
     privars->win->setHeight(dmp->dm_height);
-
     privars->win->show();
 
     privars->font = NULL;
+
     qt_configureWin(dmp, 1);
 
     privars->painter = NULL;
