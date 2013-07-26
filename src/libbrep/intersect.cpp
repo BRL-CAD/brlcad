@@ -2629,7 +2629,7 @@ ON_Intersect(const ON_Surface* surfA,
 	    // TODO: more sample points
 	    ON_2dPoint UV1, UV2;
 	    UV1 = UV2 = subcurveA->PointAt(subcurveA->Domain().Mid());
-	    ON_3dVector normal = ON_CrossProduct(subcurveA->TangentAt(subcurveA->Domain().Mid()), ON_zaxis);
+	    ON_3dVector normal = ON_CrossProduct(subcurveA->TangentAt(subcurveA->Domain().Mid()), ON_3dVector::ZAxis);
 	    normal.Unitize();
 	    UV1 -= normal*test_distance;	// left
 	    UV2 += normal*test_distance;	// right
