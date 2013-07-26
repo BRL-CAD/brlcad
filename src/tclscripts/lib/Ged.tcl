@@ -6175,7 +6175,7 @@ package provide cadwidgets::Ged 1.0
     $help add orotate		{{x y z} {rotate object}}
     $help add oscale		{{sf} {scale object}}
     $help add otranslate 	{{x y z} {translate object}}
-    $help add overlay		{{file.pl [name]} {overlay the specified 2D/3D UNIX plot file}}
+    $help add overlay		{{file.plot3 [name]} {overlay the specified 2D/3D UNIX plot file}}
     $help add pathlist		{{name(s)}	{list all paths from name(s) to leaves}}
     $help add paths		{{pattern} {lists all paths matching input path}}
     $help add perspective	{{[angle]} {set/get the perspective angle}}
