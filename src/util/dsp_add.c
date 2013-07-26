@@ -178,9 +178,9 @@ main(int ac, char *av[])
     size_t ret;
 
     if (ac < 2) {
-      (void)fprintf(stderr, "Usage: %s dsp_1 dsp_2 > dsp_3\n",
-		   av[0]);
-      bu_exit (1, NULL);
+	(void)fprintf(stderr, "Usage: %s dsp_1 dsp_2 > dsp_3\n",
+		      av[0]);
+	bu_exit (1, NULL);
     }
 
     if (isatty(fileno(stdout))) usage("Must redirect standard output\n");
