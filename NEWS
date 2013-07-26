@@ -14,7 +14,6 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 * archer respects LIBRT_BOT_MINTIE environment variable - Bob Parker
-* upgraded libpng to 1.6.3 - Erik Greenwald
 * new 'cchannel' procedural geometry tool for C-Channel - Emory Huff
 * improved 'comb' command error messages - Talwinder Saini
 * pl -> plot3 rename for utilities and docs - Tom Browder, Cliff Yapp
@@ -24,7 +23,7 @@ changes made.  See document footer for additional details.
 * pipe centroid, volume, & surface area analyze reporting - Csaba Nagy
 * added ebm centroid 'analyze' command reporting - Michael Huang
 * improved help option consistency across numerous tools - Carl Moore
-* upgraded libpng to 1.6.2 - Erik Greenwald
+* upgraded libpng to 1.6.3 - Erik Greenwald
 
 
 ----------------------------------------------------------------------
