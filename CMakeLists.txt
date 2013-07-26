@@ -1096,9 +1096,9 @@ endif(BRLCAD_ENABLE_AQUA)
 find_package(Qt5Widgets QUIET)
 option(BRLCAD_ENABLE_QT "Enable features requiring Qt" OFF)
 mark_as_advanced(BRLCAD_ENABLE_QT)
-if(Qt5Widgets_FOUND)
-  set(BRLCAD_ENABLE_QT ON)
-endif(Qt5Widgets_FOUND)
+if(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
+  set(BRLCAD_ENABLE_QT OFF)
+endif(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
 mark_as_advanced(Qt5Widgets_DIR)
 
 #----------------------------------------------------------------------
