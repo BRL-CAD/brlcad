@@ -242,7 +242,7 @@ pix_save(icv_image_t* bif, const char* filename)
 {
     unsigned char *data;
     int fd;
-    long int ret, size;
+    size_t ret, size;
 
     if (bif->color_space == ICV_COLOR_SPACE_GRAY) {
 	icv_image_gray2rgb(bif);
@@ -251,9 +251,9 @@ pix_save(icv_image_t* bif, const char* filename)
         return -1;
     }
     data =  data2uchar(bif);
-    size = bif->width*bif->height*3;
+    size = (size_t) bif->width*bif->height*3;
     fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, WRMODE);
-    ret = write(fd, data, (unsigned)size);
+    ret = write(fd, data, size);
     close(fd);
     if (ret != size) {
 	bu_log("pix_save : Short Write");
@@ -267,8 +267,7 @@ bw_save(icv_image_t* bif, const char* filename)
 
     unsigned char *data;
     int fd;
-    long int ret;
-    long int size;
+    size_t ret, size;
 
     if (bif->color_space == ICV_COLOR_SPACE_RGB) {
 	icv_image_rgb2gray(bif, 0, 0, 0, 0, 0);
@@ -277,7 +276,7 @@ bw_save(icv_image_t* bif, const char* filename)
         return -1;
     }
     data =  data2uchar(bif);
-    size = bif->height*bif->width;
+    size = (size_t) bif->height*bif->width;
     fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, WRMODE);
     if (fd < 0) {
 	bu_log("Unable to open the file\n");
@@ -310,7 +309,7 @@ ppm_save(icv_image_t* bif, const char* filename)
         return -1;
     }
     data =  data2uchar(bif);
-    size = bif->width*bif->height*3;
+    size = (size_t) bif->width*bif->height*3;
     fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, WRMODE);
     image_flip(data, bif->width, bif->height);
     snprintf(buf, BUFSIZ, "P6 %d %d 255\n", bif->width, bif->height);
@@ -339,14 +338,14 @@ pix_load(const char* filename, int width, int height)
 	width = 512;
     }
 
-    size = height*width*3;
+    size = (size_t) height*width*3;
 
     if ((fd = open( filename, O_RDONLY, WRMODE))<0) {
 	    bu_log("pix_load: Cannot open file for reading\n");
 	    return NULL;
     }
     data = (unsigned char *)bu_malloc(size, "pix_load : unsigned char data");
-    if (read(fd, data, size) < 0) {
+    if (read(fd, data, size) !=0) {
 	bu_log("pix_load: Error Occured while Reading\n");
 	bu_free(data,"icv_image data");
 	return NULL;
@@ -371,21 +370,21 @@ bw_load(const char* filename, int width, int height)
     unsigned char* data = 0;
     icv_image_t* bif;
 
-    int size;
+    size_t size;
 
     if(width == 0 || height == 0 ) {
 	height = 512;
 	width = 512;
     }
 
-    size = height*width;
+    size = (size_t) height*width;
 
     if ((fd = open( filename, O_RDONLY, WRMODE))<0) {
 	    bu_log("bw_load: Cannot open file for reading\n");
 	    return NULL;
     }
     data = (unsigned char *)bu_malloc(size, "bw_load : unsigned char data");
-    if (read(fd, data, size) != size) {
+    if (read(fd, data, size) !=0) {
 	bu_log("bw_load: Error Occured while Reading\n");
 	bu_free(data,"icv_image data");
 	return NULL;
@@ -477,7 +476,7 @@ icv_image_writeline(icv_image_t *bif, int y, void *data, ICV_DATA type)
     else
 	p = data;
 
-    width_size = bif->width*bif->channels;
+    width_size = (size_t) bif->width*bif->channels;
     dst = bif->data + width_size*y;
 
     memcpy(dst, p, width_size*sizeof(double));
