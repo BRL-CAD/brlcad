@@ -261,10 +261,11 @@ bw_save(icv_image_t* bif, const char* filename)
     long int ret;
     long int size;
 
-    /* TODO :: ADD functions which converts RGB to GRAY Color Space */
-    if (bif->color_space != ICV_COLOR_SPACE_GRAY) {
-	bu_log("bw_save : Color Space conflict");
-	return -1;
+    if (bif->color_space == ICV_COLOR_SPACE_RGB) {
+	icv_image_rgb2gray(bif, 0, 0, 0, 0, 0);
+    } else if (bif->color_space != ICV_COLOR_SPACE_GRAY) {
+        bu_log("bw_save : Color Space conflict");
+        return -1;
     }
     data =  data2uchar(bif);
     size = bif->height*bif->width;
