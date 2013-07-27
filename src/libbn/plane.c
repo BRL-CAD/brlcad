@@ -2295,11 +2295,10 @@ bn_does_ray_isect_tri(
 }
 
 
-#if 0
 /*
  * B N _ I S E C T _ R A Y _ T R I
  *
- * Intersect a infinite ray with a triangle specified by 3 points.
+ * Intersect an infinite ray with a triangle specified by 3 points.
  * From: "Graphics Gems" ed Andrew S. Glassner:
  *		"An Efficient Ray-Polygon Intersection"  P 390
  *
@@ -2338,16 +2337,15 @@ bn_does_ray_isect_tri(
  * set.
  */
 int
-bn_isect_ray_tri(dist_p, N_p, Alpha_p, Beta_p, pt, dir, V, A, B)
-    fastf_t *dist_p;
-    fastf_t *N_p;
-    fastf_t *Alpha_p;
-    fastf_t *Beta_p;
-    const point_t pt;
-    const vect_t dir;
-    const point_t V;
-    const point_t A;
-    const point_t B;
+bn_isect_ray_tri(fastf_t *dist_p,
+		 fastf_t *N_p,
+		 fastf_t *Alpha_p,
+		 fastf_t *Beta_p,
+		 const point_t pt,
+		 const vect_t dir,
+		 const point_t V,
+		 const point_t A,
+		 const point_t B)
 {
     vect_t VA;	/* V -> A vector */
     vect_t VB;	/* V -> B vector */
@@ -2401,7 +2399,6 @@ bn_isect_ray_tri(dist_p, N_p, Alpha_p, Beta_p, pt, dir, V, A, B)
 
     return entleave;
 }
-#endif
 
 
 int
