@@ -1,7 +1,4 @@
 
-enable_testing()
-add_test(bottess_test ${CMAKE_BINARY_DIR}/bin/test_bottess)
-
 # Include directories needed by libgcv users
 set(GCV_INCLUDE_DIRS
   ${BRLCAD_BINARY_DIR}/include
@@ -23,10 +20,12 @@ SET_TARGET_PROPERTIES(libgcv PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 add_subdirectory(wfobj)
 
-BRLCAD_ADDEXEC(test_bottess test_bottess.c libgcv NO_INSTALL)
+enable_testing()
+BRLCAD_ADDEXEC(test_bottess test_bottess.c libgcv NO_INSTALL LOCAL)
 if(CPP_DLL_DEFINES)
   SET_PROPERTY(TARGET test_bottess APPEND PROPERTY COMPILE_DEFINITIONS "BOTTESS_DLL_IMPORTS")
 endif(CPP_DLL_DEFINES)
+add_test(bottess_test ${CMAKE_BINARY_DIR}/bin/test_bottess)
 
 CMAKEFILES(NOTES soup.h tri_intersect.h)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake)
