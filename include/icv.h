@@ -215,11 +215,74 @@ ICV_EXPORT extern void icv_image_free(icv_image_t* bif);
  * Converts a single channel image to three channel image.
  * Replicates the pixel as done by bw-pix utility
  * returns a three channel image.
- * If a three channel image is passed, this function returns the same image.           
+ * If a three channel image is passed, this function returns the same image.
  */
 
 
 ICV_EXPORT int icv_image_gray2rgb(icv_image_t *img);
+
+typedef enum {
+    ICV_PIX_NTSC,
+    ICV_PIX_CRT,
+    ICV_PIX_SET_EQUAL,
+    ICV_PIX_SELECT_CHANNEL
+}ICV_DEPTH_METHOD;
+
+typedef enum {
+    ICV_COLOR_RGB,
+    ICV_COLOR_R,
+    ICV_COLOR_G,
+    ICV_COLOR_B,
+    ICV_COLOR_RG,
+    ICV_COLOR_RB,
+    ICV_COLOR_BG
+}ICV_COLOR;
+
+/**
+ * converts a three plane image to single plane image.
+ * This function will combine or select planes of the image based on
+ * the input arguments
+ *
+ * A normal calling of this functions is as follows :
+ * icv_image_rgb2gray(bif, 0 ,0 ,0 ,0 ,0); where bif is the rgb
+ * image to be converted.
+ *
+ * @param img Image to be converted
+ * @param method Conversion Method
+ * ICV_PIX_NTSC:  converts to single plan image by combining three
+ *                planes using weights based on NTSC primaries and
+ *                D6500 white.
+ * ICV_PIX_CRT :   converts to single plane image by combining three
+ *                planes using weights based on CRT phosphor
+ *                chrmaticities and D6500 white.
+ * ICV_PIX_SET_EQUAL: Combines the three planes using equal weights.
+ * ICV_PIX_SELECT_CHANNEL: lets to select the channels
+ * @param color Choses color planes to be selected for combination
+ *    This function will need color to be specified from
+ *              ICV_COLOR_R
+ *              ICV_COLOR_G
+ *              ICV_COLOR_B
+ *              ICV_COLOR_RG
+ *              ICV_COLOR_RB
+ *              ICV_COLOR_BG
+ *              ICV_COLOR_RGB
+ * @param rweight Weight for r-plane
+ * @param gweight Weight for g-plane
+ * @param bweight Weight for b-plane
+ * @retunr 0 on success on failure return 1
+ *
+ *  User can specify weights in the arguments, for the selected
+ *    color planes. If 0 weight is chosen this utility assigns equal
+ *    weights.
+ *
+ */
+
+ICV_EXPORT int icv_image_rgb2gray(icv_image_t *img,
+				  ICV_DEPTH_METHOD method,
+				  ICV_COLOR color,
+				  double rweight,
+				  double gweight,
+				  double bweight);
 
 
 /** @} */
