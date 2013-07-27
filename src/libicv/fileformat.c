@@ -163,7 +163,6 @@ data2uchar(const icv_image_t* bif)
     double *double_p;
 
     size = bif->height*bif->width*bif->channels;
-    printf("data2uchar: Size = %ld\n",size);
     char_p = uchar_data = (unsigned char*) bu_malloc((size_t)size, "data2uchar : unsigned char data");
 
     double_p = bif->data;
@@ -247,7 +246,7 @@ pix_save(icv_image_t* bif, const char* filename)
     if (bif->color_space == ICV_COLOR_SPACE_GRAY) {
 	icv_image_gray2rgb(bif);
     } else if (bif->color_space != ICV_COLOR_SPACE_RGB) {
-        bu_log("bw_save : Color Space conflict");
+        bu_log("pix_save : Color Space conflict");
         return -1;
     }
     data =  data2uchar(bif);
