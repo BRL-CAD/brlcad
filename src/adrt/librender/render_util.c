@@ -48,11 +48,9 @@ struct render_shotline_s {
 /* Generate vector list for a spall cone given a reference angle */
 void
 render_util_spall_vec(vect_t UNUSED(dir), fastf_t UNUSED(angle), int UNUSED(vec_num), vect_t *UNUSED(vec_list)) {
-#if 0
     TIE_3 vec;
     tfloat radius, t;
     int i;
-
 
     /* Otherwise the cone would be twice the angle */
     angle *= 0.5;
@@ -62,8 +60,10 @@ render_util_spall_vec(vect_t UNUSED(dir), fastf_t UNUSED(angle), int UNUSED(vec_
     vec.v[2] = 0;
 
     radius = sqrt(vec.v[0]*vec.v[0] + vec.v[1]*vec.v[1]);
-    vec.v[0] /= radius;
-    vec.v[1] /= radius;
+    if (!ZERO(radius)) {
+	vec.v[0] /= radius;
+	vec.v[1] /= radius;
+    }
 
     vec.v[0] = vec.v[1] < 0 ? 360.0 - acos(vec.v[0])*MATH_RAD2DEG : acos(vec.v[0])*MATH_RAD2DEG;
 
@@ -76,7 +76,6 @@ render_util_spall_vec(vect_t UNUSED(dir), fastf_t UNUSED(angle), int UNUSED(vec_
 	t = angle * cos((i * 360 / vec_num) * MATH_DEG2RAD);
 	vec_list[i].v[2] = cos(acos(dir.v[2]) + t * MATH_DEG2RAD);
     }
-#endif
 }
 
 
