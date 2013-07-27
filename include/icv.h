@@ -204,6 +204,24 @@ ICV_EXPORT extern icv_image_t* icv_image_zero(icv_image_t* bif);
  */
 ICV_EXPORT extern void icv_image_free(icv_image_t* bif);
 
+/** @file libicv/color_space.c
+ *
+ * This file contains routines to change the icv image from one
+ * colorspace to other.
+ *
+ */
+
+/**
+ * Converts a single channel image to three channel image.
+ * Replicates the pixel as done by bw-pix utility
+ * returns a three channel image.
+ * If a three channel image is passed, this function returns the same image.           
+ */
+
+
+ICV_EXPORT int icv_image_gray2rgb(icv_image_t *img);
+
+
 /** @} */
 /* end image utilities */
 

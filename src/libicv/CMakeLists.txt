@@ -10,6 +10,7 @@ BRLCAD_LIB_INCLUDE_DIRS(icv ICV_INCLUDE_DIRS "")
 set(LIBICV_SOURCES
   fileformat.c
   rot.c
+  color_space.c
   )
 
 BRLCAD_ADDLIB(libicv "${LIBICV_SOURCES}" "libbu;libbn;${PNG_LIBRARY}")
