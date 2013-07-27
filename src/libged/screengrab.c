@@ -111,10 +111,11 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
 	icv_image_writeline(bif, i, rows[i], ICV_DATA_UCHAR);
     }
 
-    if (bif != NULL)
+    if (bif != NULL) {
 	icv_image_save(bif, argv[1], ICV_IMAGE_AUTO);
-
-    icv_image_free(bif);
+	icv_image_free(bif);
+	bif = NULL;
+    }
 
     bu_free(rows, "rows");
     bu_free(idata, "image data");
