@@ -63,7 +63,7 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   windows, reconsider providing compile-time header constants.
 
   FIXME: one solution for compile-time header constant is on the trunk
-         in CMakeLists.txt--will it be approved??
+	 in CMakeLists.txt--will it be approved??
 
 * windows smp support
 
