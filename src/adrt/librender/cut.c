@@ -61,6 +61,7 @@ render_cut_hit_cutline(struct tie_ray_s *UNUSED(ray), struct tie_id_s *UNUSED(id
     return NULL;
 }
 
+
 extern struct tie_s *tie;
 
 void
@@ -146,7 +147,7 @@ render_cut_work(render_t *render, struct tie_s *tiep, struct tie_ray_s *ray, vec
      */
 
     /* flipped normal */
-    dot = fabs(VDOT( ray->dir,  hit.id.norm));
+    dot = fabs(VDOT(ray->dir,  hit.id.norm));
 
     if (hit.mesh->flags & (ADRT_MESH_SELECT|ADRT_MESH_HIT)) {
 	VSET(color, hit.mesh->flags & ADRT_MESH_HIT ? (tfloat)0.9 : (tfloat)0.2, (tfloat)0.2, hit.mesh->flags & ADRT_MESH_SELECT ? (tfloat)0.9 : (tfloat)0.2);
@@ -184,13 +185,14 @@ render_cut_work(render_t *render, struct tie_s *tiep, struct tie_ray_s *ray, vec
     *pixel[2] += (tfloat)0.1;
 }
 
+
 int
 render_cut_init(render_t *render, const char *buf)
 {
     int i;
     render_cut_t *d;
     static TIE_3 list[6];
-	TIE_3 **tlist;
+    TIE_3 **tlist;
     vect_t up, ray_pos, ray_dir;
     fastf_t shot_len = 100, shot_width = .02;
     struct tie_id_s id;
@@ -198,13 +200,13 @@ render_cut_init(render_t *render, const char *buf)
     double step, f[6];
 
     if(buf == NULL)
-	    return -1;
+	return -1;
 
     sscanf(buf, "#(%lf %lf %lf) #(%lf %lf %lf)",
-	    f, f+1, f+2,
-	    f+3, f+3+1, f+3+2);
-	VMOVE(ray_pos, f);
-	VMOVE(ray_dir, f);
+	   f, f+1, f+2,
+	   f+3, f+3+1, f+3+2);
+    VMOVE(ray_pos, f);
+    VMOVE(ray_dir, f);
     VUNITIZE(ray_dir);
 
     shot_width = 0.01 * render->tie->radius;
@@ -242,7 +244,7 @@ render_cut_init(render_t *render, const char *buf)
     VUNITIZE(d->plane);
 
     /* Construct the plane */
-    d->plane[3] = -VDOT( d->plane,  ray_pos); /* up is really new ray_pos */
+    d->plane[3] = -VDOT(d->plane,  ray_pos); /* up is really new ray_pos */
 
     /* generate the shtuff for the blue line */
     tie_init(&d->tie, 2, TIE_KDTREE_FAST);
