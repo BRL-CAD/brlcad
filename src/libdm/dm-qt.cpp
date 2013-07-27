@@ -322,11 +322,11 @@ qt_reshape(struct dm *dmp, int width, int height)
 HIDDEN int
 qt_configureWin(struct dm *dmp, int force)
 {
-     /* struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars; */
+    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
 
-    int width = privars->win->width();
-    int height = privars->win->height();
+    int width = Tk_Width(pubvars->xtkwin);
+    int height = Tk_Height(pubvars->xtkwin);
 
     if (!force &&
 	dmp->dm_height == height &&
@@ -334,6 +334,7 @@ qt_configureWin(struct dm *dmp, int force)
 	return TCL_OK;
 
     qt_reshape(dmp, width, height);
+    privars->win->resize(width, height);
     *privars->pix = privars->pix->scaled(width, height);
 
     if (dmp->dm_debugLevel) {
@@ -769,8 +770,7 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
     privars->pix = new QPixmap(dmp->dm_width, dmp->dm_height);
 
     privars->win = new QTkMainWindow(privars->pix, window);
-    privars->win->setWidth(dmp->dm_width);
-    privars->win->setHeight(dmp->dm_height);
+    privars->win->resize(dmp->dm_width, dmp->dm_height);
     privars->win->show();
 
     privars->font = NULL;
