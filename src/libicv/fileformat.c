@@ -146,12 +146,12 @@ uchar2double(unsigned char* data, long int size)
 }
 /**
  * Converts double data of icv_image to unsigned char data.
- * This function also does gamma correction using the gamma_corr 
+ * This function also does gamma correction using the gamma_corr
  * parameter of the image structure.
  *
  * This is mainly used for saving pix, bw and ppm type images.
  * Gamma correction prevents bad color aliasing.
- * 
+ *
  */
 
 HIDDEN unsigned char*
@@ -246,8 +246,8 @@ pix_save(icv_image_t* bif, const char* filename)
     if (bif->color_space == ICV_COLOR_SPACE_GRAY) {
 	icv_image_gray2rgb(bif);
     } else if (bif->color_space != ICV_COLOR_SPACE_RGB) {
-        bu_log("pix_save : Color Space conflict");
-        return -1;
+	bu_log("pix_save : Color Space conflict");
+	return -1;
     }
     data =  data2uchar(bif);
     size = (size_t) bif->width*bif->height*3;
@@ -271,8 +271,8 @@ bw_save(icv_image_t* bif, const char* filename)
     if (bif->color_space == ICV_COLOR_SPACE_RGB) {
 	icv_image_rgb2gray(bif, 0, 0, 0, 0, 0);
     } else if (bif->color_space != ICV_COLOR_SPACE_GRAY) {
-        bu_log("bw_save : Color Space conflict");
-        return -1;
+	bu_log("bw_save : Color Space conflict");
+	return -1;
     }
     data =  data2uchar(bif);
     size = (size_t) bif->height*bif->width;
@@ -304,8 +304,8 @@ ppm_save(icv_image_t* bif, const char* filename)
     if (bif->color_space == ICV_COLOR_SPACE_GRAY) {
 	icv_image_gray2rgb(bif);
     } else if (bif->color_space != ICV_COLOR_SPACE_RGB) {
-        bu_log("ppm_save : Color Space conflict");
-        return -1;
+	bu_log("ppm_save : Color Space conflict");
+	return -1;
     }
     data =  data2uchar(bif);
     size = (size_t) bif->width*bif->height*3;
