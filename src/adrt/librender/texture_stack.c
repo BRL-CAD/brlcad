@@ -19,8 +19,8 @@
  */
 /** @file librender/texture_stack.c
  *
- *  Comments -
- *      Texture Library - Stack textures to pipe output of one into another
+ * Comments -
+ * Texture Library - Stack textures to pipe output of one into another
  *
  */
 
@@ -43,6 +43,7 @@ texture_stack_init(struct texture_s *texture) {
     td->list = NULL;
 }
 
+
 void
 texture_stack_free(struct texture_s *texture) {
     struct texture_stack_s *td;
@@ -51,6 +52,7 @@ texture_stack_free(struct texture_s *texture) {
     bu_free(td->list, "texture stack");
     bu_free(texture->data, "texture data");
 }
+
 
 void
 texture_stack_work(struct texture_s *texture, void *mesh, struct tie_ray_s *ray, struct tie_id_s *id, vect_t *pixel) {
@@ -63,6 +65,7 @@ texture_stack_work(struct texture_s *texture, void *mesh, struct tie_ray_s *ray,
 	td->list[i]->work(td->list[i], mesh, ray, id, pixel);
 }
 
+
 void
 texture_stack_push(struct texture_s *texture, struct texture_s *texture_new) {
     struct texture_stack_s *td;
@@ -72,6 +75,7 @@ texture_stack_push(struct texture_s *texture, struct texture_s *texture_new) {
     td->list = (struct texture_s **)bu_realloc(td->list, sizeof(struct texture_s *)*(td->num+1), "texture data");
     td->list[td->num++] = texture_new;
 }
+
 
 /*
  * Local Variables:

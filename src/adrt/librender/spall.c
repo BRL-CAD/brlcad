@@ -43,6 +43,7 @@ struct render_spall_s {
     struct tie_s tie;
 };
 
+
 void* render_spall_hit(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *tri, void *ptr);
 void render_plane(struct tie_s *tie, struct tie_ray_s *ray, TIE_3 *pixel);
 
@@ -60,11 +61,13 @@ render_spall_free(render_t *render)
     bu_free(render->data, "render data");
 }
 
+
 static void *
 render_arrow_hit(struct tie_ray_s *UNUSED(ray), struct tie_id_s *UNUSED(id), struct tie_tri_s *tri, void *UNUSED(ptr))
 {
     return tri;
 }
+
 
 void *
 render_spall_hit(struct tie_ray_s *UNUSED(ray), struct tie_id_s *id, struct tie_tri_s *tri, void *ptr)
@@ -75,6 +78,7 @@ render_spall_hit(struct tie_ray_s *UNUSED(ray), struct tie_id_s *id, struct tie_
     hit->mesh = (adrt_mesh_t *)(tri->ptr);
     return hit;
 }
+
 
 void
 render_spall_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vect_t *pixel)
@@ -138,7 +142,7 @@ render_spall_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, ve
      * If the point after the splitting plane is an inhit, then just shade as usual.
      */
 
-    dot = VDOT( ray->dir,  hit.id.norm);
+    dot = VDOT(ray->dir,  hit.id.norm);
     /* flip normal */
     dot = fabs(dot);
 
@@ -174,6 +178,7 @@ render_spall_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, ve
     *pixel[2] += (tfloat)0.1;
 }
 
+
 int
 render_spall_init(render_t *render, const char *buf)
 {
@@ -193,9 +198,9 @@ render_spall_init(render_t *render, const char *buf)
     render->free = render_spall_free;
 
     sscanf(buf, "(%lg %lg %lg) (%lg %lg %lg) %lg",
-		    &ray_pos[0], &ray_pos[1], &ray_pos[2],
-		    &ray_dir[0], &ray_dir[1], &ray_dir[2],
-		    &scan);
+	   &ray_pos[0], &ray_pos[1], &ray_pos[2],
+	   &ray_dir[0], &ray_dir[1], &ray_dir[2],
+	   &scan);
     angle = scan; /* double to fastf_t */
 
     BU_ALLOC(render->data, struct render_spall_s);
@@ -218,7 +223,7 @@ render_spall_init(render_t *render, const char *buf)
     d->plane[0] = normal[0];
     d->plane[1] = normal[1];
     d->plane[2] = normal[2];
-    plane[3] = VDOT( normal,  ray_pos); /* up is really new ray_pos */
+    plane[3] = VDOT(normal,  ray_pos); /* up is really new ray_pos */
     d->plane[3] = -plane[3];
 
     /******************/
@@ -252,6 +257,7 @@ render_spall_init(render_t *render, const char *buf)
     bu_free(tri_list, "tri_list");
     return 0;
 }
+
 
 /*
  * Local Variables:

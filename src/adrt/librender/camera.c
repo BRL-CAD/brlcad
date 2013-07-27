@@ -40,11 +40,12 @@
 
 
 struct render_shader_s {
-	const char *name;
-	int (*init)(render_t *, const char *);
-	void *dlh;	/* dynamic library handle */
-	struct render_shader_s *next;
+    const char *name;
+    int (*init)(render_t *, const char *);
+    void *dlh;	/* dynamic library handle */
+    struct render_shader_s *next;
 };
+
 
 static struct render_shader_s *shaders = NULL;
 
@@ -110,48 +111,49 @@ render_camera_prep_ortho(render_camera_t *camera)
     up[2] = 1;
 
     /* Generate unitized lookector */
-    VSUB2(look,  camera->focus,  camera->pos);
+    VSUB2(look, camera->focus, camera->pos);
     VUNITIZE(look);
 
     /* Make unitized up vector perpendicular to lookector */
     VMOVE(temp, look);
-    angle = VDOT( up,  temp);
-    VSCALE(temp,  temp,  angle);
-    VSUB2(up,  up,  temp);
+    angle = VDOT(up, temp);
+    VSCALE(temp, temp, angle);
+    VSUB2(up, up, temp);
     VUNITIZE(up);
 
     /* Generate a temporary side vector */
-    VCROSS(side,  up,  look);
+    VCROSS(side, up, look);
 
     /* Apply tilt to up vector - negate angle to make positive angles clockwise */
     s = sin(-camera->tilt * DEG2RAD);
     c = cos(-camera->tilt * DEG2RAD);
-    VSCALE(up,  up,  c);
-    VSCALE(side,  side,  s);
-    VADD2(up,  up,  side);
+    VSCALE(up, up, c);
+    VSCALE(side, side, s);
+    VADD2(up, up, side);
 
     /* Create final side vector */
-    VCROSS(side,  up,  look);
+    VCROSS(side, up, look);
 
     /* look direction */
     VMOVE(camera->view_list[0].top_l, look);
 
     /* gridsize is millimeters along the horizontal axis to display */
     /* left (side) */
-    VSCALE(temp,  side,  (camera->aspect * camera->gridsize * 0.5));
-    VADD2(camera->view_list[0].pos,  camera->pos,  temp);
+    VSCALE(temp, side, (camera->aspect * camera->gridsize * 0.5));
+    VADD2(camera->view_list[0].pos, camera->pos, temp);
     /* and (up) */
-    VSCALE(temp,  up,  (camera->gridsize * 0.5));
-    VADD2(camera->view_list[0].pos,  camera->view_list[0].pos,  temp);
+    VSCALE(temp, up, (camera->gridsize * 0.5));
+    VADD2(camera->view_list[0].pos, camera->view_list[0].pos, temp);
 
     /* compute step vectors for camera position */
 
     /* X */
-    VSCALE(camera->view_list[0].step_x,  side,  (-camera->gridsize * camera->aspect / (tfloat)camera->w));
+    VSCALE(camera->view_list[0].step_x, side, (-camera->gridsize * camera->aspect / (tfloat)camera->w));
 
     /* Y */
-    VSCALE(camera->view_list[0].step_y,  up,  (-camera->gridsize / (tfloat)camera->h));
+    VSCALE(camera->view_list[0].step_y, up, (-camera->gridsize / (tfloat)camera->h));
 }
+
 
 static void
 render_camera_prep_persp(render_camera_t *camera)
@@ -161,7 +163,7 @@ render_camera_prep_persp(render_camera_t *camera)
 
 
     /* Generate unitized lookector */
-    VSUB2(look,  camera->focus,  camera->pos);
+    VSUB2(look, camera->focus, camera->pos);
     VUNITIZE(look);
 
     /* Generate standard up vector */
@@ -171,23 +173,23 @@ render_camera_prep_persp(render_camera_t *camera)
 
     /* Make unitized up vector perpendicular to lookector */
     VMOVE(temp, look);
-    angle = VDOT(up,  temp);
-    VSCALE(temp,  temp,  angle);
-    VSUB2(up,  up,  temp);
+    angle = VDOT(up, temp);
+    VSCALE(temp, temp, angle);
+    VSUB2(up, up, temp);
     VUNITIZE(up);
 
     /* Generate a temporary side vector */
-    VCROSS(side,  up,  look);
+    VCROSS(side, up, look);
 
     /* Apply tilt to up vector - negate angle to make positive angles clockwise */
     s = sin(-camera->tilt * DEG2RAD);
     c = cos(-camera->tilt * DEG2RAD);
-    VSCALE(up,  up,  c);
-    VSCALE(side,  side,  s);
-    VADD2(up,  up,  side);
+    VSCALE(up, up, c);
+    VSCALE(side, side, s);
+    VADD2(up, up, side);
 
     /* Create final side vector */
-    VCROSS(side,  up,  look);
+    VCROSS(side, up, look);
 
     /* Compute sine and cosine terms for field of view */
     s = sin(camera->fov*DEG2RAD);
@@ -217,14 +219,15 @@ render_camera_prep_persp(render_camera_t *camera)
     VMOVE(camera->view_list[0].top_l, topl);
 
     /* Generate stepx and stepy vectors for sampling each pixel */
-    VSUB2(camera->view_list[0].step_x,  topr,  topl);
-    VSUB2(camera->view_list[0].step_y,  botl,  topl);
+    VSUB2(camera->view_list[0].step_x, topr, topl);
+    VSUB2(camera->view_list[0].step_y, botl, topl);
 
     /* Divide stepx and stepy by the number of pixels */
-    VSCALE(camera->view_list[0].step_x,  camera->view_list[0].step_x,  1.0 / camera->w);
-    VSCALE(camera->view_list[0].step_y,  camera->view_list[0].step_y,  1.0 / camera->h);
+    VSCALE(camera->view_list[0].step_x, camera->view_list[0].step_x, 1.0 / camera->w);
+    VSCALE(camera->view_list[0].step_y, camera->view_list[0].step_y, 1.0 / camera->h);
     return;
 }
+
 
 static void
 render_camera_prep_persp_dof(render_camera_t *camera)
@@ -235,7 +238,7 @@ render_camera_prep_persp_dof(render_camera_t *camera)
 
 
     /* Generate unitized lookector */
-    VSUB2(dof_look,  camera->focus,  camera->pos);
+    VSUB2(dof_look, camera->focus, camera->pos);
     VUNITIZE(dof_look);
 
     /* Generate standard up vector */
@@ -245,30 +248,30 @@ render_camera_prep_persp_dof(render_camera_t *camera)
 
     /* Make unitized up vector perpendicular to lookector */
     VMOVE(temp, dof_look);
-    angle = VDOT( dof_up,  temp);
-    VSCALE(temp,  temp,  angle);
-    VSUB2(dof_up,  dof_up,  temp);
+    angle = VDOT(dof_up, temp);
+    VSCALE(temp, temp, angle);
+    VSUB2(dof_up, dof_up, temp);
     VUNITIZE(dof_up);
 
     /* Generate a temporary side vector */
-    VCROSS(dof_side,  dof_up,  dof_look);
+    VCROSS(dof_side, dof_up, dof_look);
 
     /* Apply tilt to up vector - negate angle to make positive angles clockwise */
     sdof = sin(-camera->tilt * DEG2RAD);
     cdof = cos(-camera->tilt * DEG2RAD);
-    VSCALE(dof_up,  dof_up,  cdof);
-    VSCALE(dof_side,  dof_side,  sdof);
-    VADD2(dof_up,  dof_up,  dof_side);
+    VSCALE(dof_up, dof_up, cdof);
+    VSCALE(dof_side, dof_side, sdof);
+    VADD2(dof_up, dof_up, dof_side);
 
     /* Create final side vector */
-    VCROSS(dof_side,  dof_up,  dof_look);
+    VCROSS(dof_side, dof_up, dof_look);
 
     /*
      * Generate a camera position, top left vector, and step vectors for each DOF sample
      */
 
     /* Obtain magnitude of reverse lookector */
-    VSUB2(dof_look,  camera->pos,  camera->focus);
+    VSUB2(dof_look, camera->pos, camera->focus);
     mag = MAGNITUDE(dof_look);
     VUNITIZE(dof_look);
 
@@ -295,24 +298,22 @@ render_camera_prep_persp_dof(render_camera_t *camera)
     VUNITIZE(dof_botl);
     VUNITIZE(dof_topr);
 
-    VSUB2(step_x,  dof_topr,  dof_topl);
-    VSUB2(step_y,  dof_botl,  dof_topl);
+    VSUB2(step_x, dof_topr, dof_topl);
+    VSUB2(step_y, dof_botl, dof_topl);
 
-    for (i = 0; i < RENDER_CAMERA_DOF_SAMPLES; i++)
-    {
-	for (n = 0; n < RENDER_CAMERA_DOF_SAMPLES; n++)
-	{
+    for (i = 0; i < RENDER_CAMERA_DOF_SAMPLES; i++) {
+	for (n = 0; n < RENDER_CAMERA_DOF_SAMPLES; n++) {
 	    /* Generate virtual camera position for this depth of field sample */
-	    VSCALE(temp,  step_x,  ((tfloat)i/(tfloat)(RENDER_CAMERA_DOF_SAMPLES-1)));
-	    VADD2(camera->view_list[i*RENDER_CAMERA_DOF_SAMPLES+n].pos,  dof_topl,  temp);
-	    VSCALE(temp,  step_y,  ((tfloat)n/(tfloat)(RENDER_CAMERA_DOF_SAMPLES-1)));
-	    VADD2(camera->view_list[i*RENDER_CAMERA_DOF_SAMPLES+n].pos,  camera->view_list[i*RENDER_CAMERA_DOF_SAMPLES+n].pos,  temp);
+	    VSCALE(temp, step_x, ((tfloat)i/(tfloat)(RENDER_CAMERA_DOF_SAMPLES-1)));
+	    VADD2(camera->view_list[i*RENDER_CAMERA_DOF_SAMPLES+n].pos, dof_topl, temp);
+	    VSCALE(temp, step_y, ((tfloat)n/(tfloat)(RENDER_CAMERA_DOF_SAMPLES-1)));
+	    VADD2(camera->view_list[i*RENDER_CAMERA_DOF_SAMPLES+n].pos, camera->view_list[i*RENDER_CAMERA_DOF_SAMPLES+n].pos, temp);
 	    VUNITIZE(camera->view_list[i*RENDER_CAMERA_DOF_SAMPLES+n].pos);
-	    VSCALE(camera->view_list[i*RENDER_CAMERA_DOF_SAMPLES+n].pos,  camera->view_list[i*RENDER_CAMERA_DOF_SAMPLES+n].pos,  mag);
-	    VADD2(camera->view_list[i*RENDER_CAMERA_DOF_SAMPLES+n].pos,  camera->view_list[i*RENDER_CAMERA_DOF_SAMPLES+n].pos,  camera->focus);
+	    VSCALE(camera->view_list[i*RENDER_CAMERA_DOF_SAMPLES+n].pos, camera->view_list[i*RENDER_CAMERA_DOF_SAMPLES+n].pos, mag);
+	    VADD2(camera->view_list[i*RENDER_CAMERA_DOF_SAMPLES+n].pos, camera->view_list[i*RENDER_CAMERA_DOF_SAMPLES+n].pos, camera->focus);
 
 	    /* Generate unitized lookector */
-	    VSUB2(look,  camera->focus,  camera->view_list[i*RENDER_CAMERA_DOF_SAMPLES+n].pos);
+	    VSUB2(look, camera->focus, camera->view_list[i*RENDER_CAMERA_DOF_SAMPLES+n].pos);
 	    VUNITIZE(look);
 
 	    /* Generate standard up vector */
@@ -322,23 +323,23 @@ render_camera_prep_persp_dof(render_camera_t *camera)
 
 	    /* Make unitized up vector perpendicular to lookector */
 	    VMOVE(temp, look);
-	    angle = VDOT( up,  temp);
-	    VSCALE(temp,  temp,  angle);
-	    VSUB2(up,  up,  temp);
+	    angle = VDOT(up, temp);
+	    VSCALE(temp, temp, angle);
+	    VSUB2(up, up, temp);
 	    VUNITIZE(up);
 
 	    /* Generate a temporary side vector */
-	    VCROSS(side,  up,  look);
+	    VCROSS(side, up, look);
 
 	    /* Apply tilt to up vector - negate angle to make positive angles clockwise */
 	    sfov = sin(-camera->tilt * DEG2RAD);
 	    cfov = cos(-camera->tilt * DEG2RAD);
-	    VSCALE(up,  up,  cfov);
-	    VSCALE(side,  side,  sfov);
-	    VADD2(up,  up,  side);
+	    VSCALE(up, up, cfov);
+	    VSCALE(side, side, sfov);
+	    VADD2(up, up, side);
 
 	    /* Create final side vector */
-	    VCROSS(side,  up,  look);
+	    VCROSS(side, up, look);
 
 	    /* Compute sine and cosine terms for field of view */
 	    sfov = sin(camera->fov*DEG2RAD);
@@ -366,15 +367,16 @@ render_camera_prep_persp_dof(render_camera_t *camera)
 	    VMOVE(camera->view_list[i*RENDER_CAMERA_DOF_SAMPLES+n].top_l, topl);
 
 	    /* Generate stepx and stepy vectors for sampling each pixel */
-	    VSUB2(camera->view_list[i*RENDER_CAMERA_DOF_SAMPLES+n].step_x,  topr,  topl);
-	    VSUB2(camera->view_list[i*RENDER_CAMERA_DOF_SAMPLES+n].step_y,  botl,  topl);
+	    VSUB2(camera->view_list[i*RENDER_CAMERA_DOF_SAMPLES+n].step_x, topr, topl);
+	    VSUB2(camera->view_list[i*RENDER_CAMERA_DOF_SAMPLES+n].step_y, botl, topl);
 
 	    /* Divide stepx and stepy by the number of pixels */
-	    VSCALE(camera->view_list[i*RENDER_CAMERA_DOF_SAMPLES+n].step_x,  camera->view_list[i*RENDER_CAMERA_DOF_SAMPLES+n].step_x,  1.0 / camera->w);
-	    VSCALE(camera->view_list[i*RENDER_CAMERA_DOF_SAMPLES+n].step_y,  camera->view_list[i*RENDER_CAMERA_DOF_SAMPLES+n].step_y,  1.0 / camera->h);
+	    VSCALE(camera->view_list[i*RENDER_CAMERA_DOF_SAMPLES+n].step_x, camera->view_list[i*RENDER_CAMERA_DOF_SAMPLES+n].step_x, 1.0 / camera->w);
+	    VSCALE(camera->view_list[i*RENDER_CAMERA_DOF_SAMPLES+n].step_y, camera->view_list[i*RENDER_CAMERA_DOF_SAMPLES+n].step_y, 1.0 / camera->h);
 	}
     }
 }
+
 
 void
 render_camera_prep(render_camera_t *camera)
@@ -385,14 +387,10 @@ render_camera_prep(render_camera_t *camera)
     if (camera->type == RENDER_CAMERA_ORTHOGRAPHIC)
 	render_camera_prep_ortho(camera);
 
-    if (camera->type == RENDER_CAMERA_PERSPECTIVE)
-    {
-	if (camera->dof <= 0.0)
-	{
+    if (camera->type == RENDER_CAMERA_PERSPECTIVE) {
+	if (camera->dof <= 0.0) {
 	    render_camera_prep_persp(camera);
-	}
-	else
-	{
+	} else {
 	    /* Generate camera positions for depth of field - Handle this better */
 	    camera->view_num = RENDER_CAMERA_DOF_SAMPLES*RENDER_CAMERA_DOF_SAMPLES;
 	    camera->view_list = (render_camera_view_t *)bu_malloc(sizeof(render_camera_view_t) * camera->view_num, "camera view");
@@ -422,58 +420,46 @@ render_camera_render_thread(int UNUSED(cpu), genptr_t ptr)
     res_ind = 0;
 /* row, vertical */
 /*
-  for (i = td->tile->orig_y; i < td->tile->orig_y + td->tile->size_y; i++)
-  {
+  for (i = td->tile->orig_y; i < td->tile->orig_y + td->tile->size_y; i++) {
 */
-    while (1)
-    {
+    while (1) {
 	/* Determine if this scanline should be computed by this thread */
 	bu_semaphore_acquire(TIE_SEM_WORKER);
-	if (*td->scanline == td->tile->size_y)
-	{
+	if (*td->scanline == td->tile->size_y) {
 	    bu_semaphore_release(TIE_SEM_WORKER);
 	    return;
-	}
-	else
-	{
+	} else {
 	    scanline = *td->scanline;
 	    (*td->scanline)++;
 	}
 	bu_semaphore_release(TIE_SEM_WORKER);
 
 	v_scanline = scanline + td->tile->orig_y;
-	if (td->tile->format == RENDER_CAMERA_BIT_DEPTH_24)
-	{
+	if (td->tile->format == RENDER_CAMERA_BIT_DEPTH_24) {
 	    res_ind = 3*scanline*td->tile->size_x;
-	}
-	else if (td->tile->format == RENDER_CAMERA_BIT_DEPTH_128)
-	{
+	} else if (td->tile->format == RENDER_CAMERA_BIT_DEPTH_128) {
 	    res_ind = 4*scanline*td->tile->size_x;
 	}
 
 
 	/* optimization if there is no depth of field being applied */
-	if (td->camera->view_num == 1)
-	{
-	    VSCALE(v1,  td->camera->view_list[0].step_y,  v_scanline);
-	    VADD2(v1,  v1,  td->camera->view_list[0].top_l);
+	if (td->camera->view_num == 1) {
+	    VSCALE(v1, td->camera->view_list[0].step_y, v_scanline);
+	    VADD2(v1, v1, td->camera->view_list[0].top_l);
 	}
 
 
 	/* scanline, horizontal, each pixel */
-	for (n = td->tile->orig_x; n < td->tile->orig_x + td->tile->size_x; n++)
-	{
+	for (n = td->tile->orig_x; n < td->tile->orig_x + td->tile->size_x; n++) {
 	    /* depth of view samples */
-	    if (td->camera->view_num > 1)
-	    {
+	    if (td->camera->view_num > 1) {
 		VSET(accum, 0, 0, 0);
 
-		for (d = 0; d < td->camera->view_num; d++)
-		{
-		    VSCALE(ray.dir,  td->camera->view_list[d].step_y,  v_scanline);
-		    VADD2(ray.dir,  ray.dir,  td->camera->view_list[d].top_l);
-		    VSCALE(v1,  td->camera->view_list[d].step_x,  n);
-		    VADD2(ray.dir,  ray.dir,  v1);
+		for (d = 0; d < td->camera->view_num; d++) {
+		    VSCALE(ray.dir, td->camera->view_list[d].step_y, v_scanline);
+		    VADD2(ray.dir, ray.dir, td->camera->view_list[d].top_l);
+		    VSCALE(v1, td->camera->view_list[d].step_x, n);
+		    VADD2(ray.dir, ray.dir, v1);
 
 		    VSET(pixel, (tfloat)RENDER_CAMERA_BGR, (tfloat)RENDER_CAMERA_BGG, (tfloat)RENDER_CAMERA_BGB);
 
@@ -484,18 +470,15 @@ render_camera_render_thread(int UNUSED(cpu), genptr_t ptr)
 		    /* Compute pixel value using this ray */
 		    td->camera->render.work(&td->camera->render, td->tie, &ray, &pixel);
 
-		    VADD2(accum,  accum,  pixel);
+		    VADD2(accum, accum, pixel);
 		}
 
 		/* Find Mean value of all views */
-		VSCALE(pixel,  accum,  view_inv);
-	    }
-	    else
-	    {
-		if (td->camera->type == RENDER_CAMERA_PERSPECTIVE)
-		{
-		    VSCALE(v2,  td->camera->view_list[0].step_x,  n);
-		    VADD2(ray.dir,  v1,  v2);
+		VSCALE(pixel, accum, view_inv);
+	    } else {
+		if (td->camera->type == RENDER_CAMERA_PERSPECTIVE) {
+		    VSCALE(v2, td->camera->view_list[0].step_x, n);
+		    VADD2(ray.dir, v1, v2);
 
 		    VSET(pixel, (tfloat)RENDER_CAMERA_BGR, (tfloat)RENDER_CAMERA_BGG, (tfloat)RENDER_CAMERA_BGB);
 
@@ -509,10 +492,10 @@ render_camera_render_thread(int UNUSED(cpu), genptr_t ptr)
 		    VMOVE(ray.pos, td->camera->view_list[0].pos);
 		    VMOVE(ray.dir, td->camera->view_list[0].top_l);
 
-		    VSCALE(v1,  td->camera->view_list[0].step_x,  n);
-		    VSCALE(v2,  td->camera->view_list[0].step_y,  v_scanline);
-		    VADD2(ray.pos,  ray.pos,  v1);
-		    VADD2(ray.pos,  ray.pos,  v2);
+		    VSCALE(v1, td->camera->view_list[0].step_x, n);
+		    VSCALE(v2, td->camera->view_list[0].step_y, v_scanline);
+		    VADD2(ray.pos, ray.pos, v1);
+		    VADD2(ray.pos, ray.pos, v2);
 
 		    VSET(pixel, (tfloat)RENDER_CAMERA_BGR, (tfloat)RENDER_CAMERA_BGG, (tfloat)RENDER_CAMERA_BGB);
 		    ray.depth = 0;
@@ -523,8 +506,7 @@ render_camera_render_thread(int UNUSED(cpu), genptr_t ptr)
 	    }
 
 
-	    if (td->tile->format == RENDER_CAMERA_BIT_DEPTH_24)
-	    {
+	    if (td->tile->format == RENDER_CAMERA_BIT_DEPTH_24) {
 		if (pixel[0] > 1) pixel[0] = 1;
 		if (pixel[1] > 1) pixel[1] = 1;
 		if (pixel[2] > 1) pixel[2] = 1;
@@ -532,9 +514,7 @@ render_camera_render_thread(int UNUSED(cpu), genptr_t ptr)
 		((char *)(td->res_buf))[res_ind+1] = (unsigned char)(255 * pixel[1]);
 		((char *)(td->res_buf))[res_ind+2] = (unsigned char)(255 * pixel[2]);
 		res_ind += 3;
-	    }
-	    else if (td->tile->format == RENDER_CAMERA_BIT_DEPTH_128)
-	    {
+	    } else if (td->tile->format == RENDER_CAMERA_BIT_DEPTH_128) {
 		tfloat alpha;
 
 		alpha = 1.0;
@@ -562,12 +542,9 @@ render_camera_render(render_camera_t *camera, struct tie_s *tie, camera_tile_t *
     ind = result->ind;
 
     /* Allocate storage for results */
-    if (tile->format == RENDER_CAMERA_BIT_DEPTH_24)
-    {
+    if (tile->format == RENDER_CAMERA_BIT_DEPTH_24) {
 	ind += 3 * (unsigned int)tile->size_x * (unsigned int)tile->size_y + sizeof(camera_tile_t);
-    }
-    else if (tile->format == RENDER_CAMERA_BIT_DEPTH_128)
-    {
+    } else if (tile->format == RENDER_CAMERA_BIT_DEPTH_128) {
 	ind += 4 * sizeof(tfloat) * (unsigned int)tile->size_x * (unsigned int)tile->size_y + sizeof(camera_tile_t);
     }
 
@@ -590,6 +567,7 @@ render_camera_render(render_camera_t *camera, struct tie_s *tie, camera_tile_t *
     return;
 }
 
+
 struct render_shader_s *
 render_shader_register(const char *name, int (*init)(render_t *, const char *))
 {
@@ -604,6 +582,7 @@ render_shader_register(const char *name, int (*init)(render_t *, const char *))
     shaders = shader;
     return shader;
 }
+
 
 const char *
 render_shader_load_plugin(const char *filename) {
@@ -630,6 +609,7 @@ render_shader_load_plugin(const char *filename) {
 #endif
 }
 
+
 int
 render_shader_unload_plugin(render_t *r, const char *name)
 {
@@ -639,14 +619,14 @@ render_shader_unload_plugin(render_t *r, const char *name)
 	t = s->next;
 	if(r && r->shader && !bu_strncmp(r->shader, name, 8)) {
 	    meh = s->next;
-	    while( meh ) {
+	    while(meh) {
 		if(render_shader_init(r, meh->name, NULL) != -1)
 		    goto LOADED;
 		meh = meh->next;
 	    }
 	    bu_exit(-1, "Unable to find suitable shader\n");
 	}
-LOADED:
+    LOADED:
 
 	if(s->dlh)
 	    bu_dlclose(s->dlh);
@@ -675,6 +655,7 @@ LOADED:
     return -1;
 }
 
+
 int
 render_shader_init(render_t *r, const char *name, const char *buf)
 {
@@ -690,6 +671,7 @@ render_shader_init(render_t *r, const char *name, const char *buf)
     bu_log("Shader \"%s\" not found\n", name);
     return -1;
 }
+
 
 /*
  * Local Variables:
