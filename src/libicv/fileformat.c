@@ -182,6 +182,53 @@ data2uchar(const icv_image_t* bif)
 }
 
 HIDDEN int
+png_save(icv_image_t* bif, const char* filename)
+{
+    png_structp png_ptr = NULL;
+    png_infop info_ptr = NULL;
+    int i = 0;
+    int png_color_type = PNG_COLOR_TYPE_RGB;
+    unsigned char *data;
+    FILE *fh;
+
+    fh = fopen(filename, "w");
+    if (UNLIKELY(fh==NULL)) {
+	perror("fdopen");
+	bu_log("ERROR: png_save failed to get a FILE pointer\n");
+	return 0;
+    }
+
+    data = data2uchar(bif);
+
+    png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    if (UNLIKELY(png_ptr == NULL)) {
+	fclose(fh);
+	return 0;
+    }
+
+    info_ptr = png_create_info_struct(png_ptr);
+    if (info_ptr == NULL || setjmp(png_jmpbuf(png_ptr))) {
+	png_destroy_read_struct(&png_ptr, info_ptr ? &info_ptr : NULL, NULL);
+	bu_log("ERROR: Unable to create png header\n");
+	fclose(fh);
+	return 0;
+    }
+
+    png_init_io(png_ptr, fh);
+    png_set_IHDR(png_ptr, info_ptr, (unsigned)bif->width, (unsigned)bif->height, 8, png_color_type,
+		  PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT,
+		  PNG_FILTER_TYPE_DEFAULT);
+    png_write_info(png_ptr, info_ptr);
+    for (i = bif->height-1; i >= 0; --i)
+	png_write_row(png_ptr, (png_bytep) (data + bif->width*bif->channels*i));
+    png_write_end(png_ptr, info_ptr);
+
+    png_destroy_write_struct(&png_ptr, &info_ptr);
+    fclose(fh);
+    return 1;
+}
+
+HIDDEN int
 pix_save(icv_image_t* bif, const char* filename)
 {
     unsigned char *data;
@@ -360,10 +407,10 @@ icv_image_save(icv_image_t* bif, const char* filename, ICV_IMAGE_FORMAT format)
     switch(format) {
 	/* case ICV_IMAGE_BMP:
 	    return bmp_save(bif, filename);
-	case ICV_IMAGE_PNG:
-	    return png_save(bif, filename);
 	case ICV_IMAGE_PPM:
 	    return ppm_save(bif, filename);*/
+	case ICV_IMAGE_PNG:
+	    return png_save(bif, filename);
 	case ICV_IMAGE_PIX :
 	    return pix_save(bif, filename);
 	case ICV_IMAGE_BW :
