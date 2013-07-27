@@ -107,6 +107,7 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
 
     for (i = 0; i < height; ++i) {
 	rows[i] = (unsigned char *)(idata + ((height-i-1)*bytes_per_line));
+	/* TODO : Add double type data to maintain resolution */
 	icv_image_writeline(bif, i, rows[i], ICV_DATA_UCHAR);
     }
 

@@ -817,6 +817,7 @@ view_eol(struct application *ap)
 	 * Write to a file.
 	 */
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
+	/* TODO : Add double type data to maintain resolution */
 	icv_image_writeline(bif, ap->a_y, scanline[cpu],  ICV_DATA_UCHAR);
 	bu_semaphore_release(BU_SEM_SYSCALL);
     }
