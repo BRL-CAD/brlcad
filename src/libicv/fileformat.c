@@ -295,6 +295,36 @@ bw_save(icv_image_t* bif, const char* filename)
     return 0;
 }
 
+HIDDEN int
+ppm_save(icv_image_t* bif, const char* filename)
+{
+    unsigned char *data;
+    int fd;
+    size_t ret, size;
+    char buf[BUFSIZ] = {0};
+
+    if (bif->color_space == ICV_COLOR_SPACE_GRAY) {
+	icv_image_gray2rgb(bif);
+    } else if (bif->color_space != ICV_COLOR_SPACE_RGB) {
+        bu_log("ppm_save : Color Space conflict");
+        return -1;
+    }
+    data =  data2uchar(bif);
+    size = bif->width*bif->height*3;
+    fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, WRMODE);
+    image_flip(data, bif->width, bif->height);
+    snprintf(buf, BUFSIZ, "P6 %d %d 255\n", bif->width, bif->height);
+    ret = write(fd, buf, strlen(buf));
+    ret = write(fd, data, size);
+    close(fd);
+    if (ret != size) {
+	bu_log("ppm_save : Short Write");
+	return -1;
+    }
+    return 0;
+}
+
+
 HIDDEN icv_image_t *
 pix_load(const char* filename, int width, int height)
 {
@@ -417,9 +447,9 @@ icv_image_save(icv_image_t* bif, const char* filename, ICV_IMAGE_FORMAT format)
 
     switch(format) {
 	/* case ICV_IMAGE_BMP:
-	    return bmp_save(bif, filename);
+	    return bmp_save(bif, filename);*/
 	case ICV_IMAGE_PPM:
-	    return ppm_save(bif, filename);*/
+	    return ppm_save(bif, filename);
 	case ICV_IMAGE_PNG:
 	    return png_save(bif, filename);
 	case ICV_IMAGE_PIX :
