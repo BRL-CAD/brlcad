@@ -152,33 +152,11 @@ render_cut_work(render_t *render, struct tie_s *tiep, struct tie_ray_s *ray, vec
     if (hit.mesh->flags & (ADRT_MESH_SELECT|ADRT_MESH_HIT)) {
 	VSET(color, hit.mesh->flags & ADRT_MESH_HIT ? (tfloat)0.9 : (tfloat)0.2, (tfloat)0.2, hit.mesh->flags & ADRT_MESH_SELECT ? (tfloat)0.9 : (tfloat)0.2);
     } else {
-	/* Mix actual color with white 4:1, shade 50% darker */
-#if 0
-	VSET(color, 1.0, 1.0, 1.0);
-	VSCALE(color, color, 3.0);
-	VADD2(color, color, hit.mesh->attributes->color);
-	VSCALE(color, color, 0.125);
-#else
 	VSET(color, (tfloat)0.8, (tfloat)0.8, (tfloat)0.7);
-#endif
     }
 
-#if 0
-    if (dot < 0) {
-#endif
-	/* Shade using inhit */
-	VSCALE((*pixel), color, (dot*0.90));
-#if 0
-    } else {
-	TIE_3 vec;
-	fastf_t angle;
-	/* shade solid */
-	VSUB2(vec, ray->pos, hit.id.pos);
-	VUNITIZE(vec);
-	angle = vec[0]*hit.mod*-hit.plane[0] + vec[1]*-hit.mod*hit.plane[1] + vec[2]*-hit.mod*hit.plane[2];
-	VSCALE((*pixel), color, (angle*0.90));
-    }
-#endif
+    /* Shade using inhit */
+    VSCALE((*pixel), color, (dot*0.90));
 
     *pixel[0] += (tfloat)0.1;
     *pixel[1] += (tfloat)0.1;
