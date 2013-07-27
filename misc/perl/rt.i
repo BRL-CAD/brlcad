@@ -24,62 +24,19 @@
  *
  */
 
-%module rt
+/* TB: these are hacks for now */
+#define __x86_64__
+/*
+#include <math.h>
+*/
+/* end hacks */
 
+%module RT
 %{
-#include "brlcad/common.h"
-#include "brlcad/bu.h"
-#include "brlcad/vmath.h"
-#include "brlcad/nmg.h"
-#include "brlcad/bn.h"
-#include "brlcad/db.h"
-#include "brlcad/raytrace.h"
-#include "brlcad/nurb.h"
-#include "brlcad/wdb.h"
-#include "brlcad/rtgeom.h"
-#include "brlcad/rtfunc.h"
-#include "brlcad/tie.h"
-#include "brlcad/gcv.h"
-#include "brlcad/icv.h"
-#include "brlcad/dm.h"
-#include "brlcad/fbio.h"
-#include "brlcad/fb.h"
-#include "brlcad/analyze.h"
-#include "tie/adrt.h"
-#include "tie/adrt_struct.h"
-#include "tie/camera.h"
-#include "tie/render.h"
-#include "tie/render_internal.h"
-#include "tie/render_util.h"
-#include "tie/texture.h"
-#include "tie/texture_internal.h"
+#include "raytrace.h"
 %}
 
-%include "brlcad/common.h"
-%include "brlcad/bu.h"
-%include "brlcad/vmath.h"
-%include "brlcad/nmg.h"
-%include "brlcad/bn.h"
-%include "brlcad/db.h"
-%include "brlcad/raytrace.h"
-%include "brlcad/nurb.h"
-%include "brlcad/wdb.h"
-%include "brlcad/rtgeom.h"
-%include "brlcad/rtfunc.h"
-%include "brlcad/tie.h"
-%include "brlcad/gcv.h"
-%include "brlcad/icv.h"
-%include "brlcad/dm.h"
-%include "brlcad/fbio.h"
-%include "brlcad/fb.h"
-%include "brlcad/analyze.h"
-%include "tie/adrt.h"
-%include "tie/adrt_struct.h"
-%include "tie/camera.h"
-%include "tie/render.h"
-%include "tie/render_internal.h"
-%include "tie/render_util.h"
-%include "tie/texture.h"
+%include "raytrace.h"
 
 /*
  * Local Variables:
