@@ -1898,7 +1898,6 @@ GED_EXPORT extern int ged_tra(struct ged *gedp, int argc, const char *argv[]);
  */
 GED_EXPORT extern int ged_track(struct ged *gedp, int argc, const char *argv[]);
 
-#if 0
 /**
  *
  *
@@ -1906,7 +1905,6 @@ GED_EXPORT extern int ged_track(struct ged *gedp, int argc, const char *argv[]);
  *     tracker [-fh] [# links] [increment] [spline.iges] [link...]
  */
 GED_EXPORT extern int ged_tracker(struct ged *gedp, int argc, const char *argv[]);
-#endif
 
 /**
  * Return the object hierarchy for all object(s) specified or for all currently displayed
