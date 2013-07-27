@@ -144,8 +144,17 @@ uchar2double(unsigned char* data, long int size)
 
     return double_data;
 }
+/**
+ * Converts double data of icv_image to unsigned char data.
+ * This function also does gamma correction using the gamma_corr 
+ * parameter of the image structure.
+ *
+ * This is mainly used for saving pix, bw and ppm type images.
+ * Gamma correction prevents bad color aliasing.
+ * 
+ */
 
-unsigned char*
+HIDDEN unsigned char*
 data2uchar(const icv_image_t* bif)
 {
     long int size;
