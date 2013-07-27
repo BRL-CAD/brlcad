@@ -236,6 +236,12 @@ add_test(bu_escape_roundtrip_2  tester_bu_escape 3 2) # "abc\\cba", "b"
 add_test(bu_escape_roundtrip_3  tester_bu_escape 3 3) # "abc\\\\cba", "b"
 add_test(bu_escape_roundtrip_4  tester_bu_escape 3 4) # "abc\\\\\\c\\ba\\"
 
+###
+# bu_heap memory allocation testing
+###
+BRLCAD_ADDEXEC(tester_bu_heap bu_heap.c libbu NO_INSTALL LOCAL)
+add_test(bu_heap_test_1 tester_bu_heap)
+
 #
 #  ************ progname.c tests *************
 #

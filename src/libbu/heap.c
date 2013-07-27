@@ -208,63 +208,6 @@ bu_heap_put(void *ptr, size_t sz)
 }
 
 
-/* test driver application, intended to become part of unit test */
-#if 0
-
-int main (int ac, char *av[])
-{
-    int i;
-    void *ptr;
-    size_t allocalls = 0;
-    size_t freecalls = 0;
-
-    srand(time(0));
-
-    for (i=0; i<1024*1024*50; i++) {
-	size_t sz = (((double)rand() / (double)(RAND_MAX-1)) * (double)HEAP_BINS) + 1;
-	bu_log("allocating %d: %zd\n", i, sz);
-#ifdef USE_MALLOC
-	ptr = malloc(sz);
-#else
-	ptr = bu_fastalloc(sz);
-#endif
-	allocalls++;
-
-	if (i%3==0) {
-	    bu_log("freeing sz=%zd allocation\n", sz);
-#ifdef USE_MALLOC
-	    free(ptr);
-#else
-	    bu_fastfree(ptr);
-#endif
-	    freecalls++;
-	}
-	if (i % (1024 * 1024) == 0) {
-#ifdef USE_MALLOC
-	    free(NULL);
-#else
-	    bu_fastfree(NULL);
-#endif
-	    freecalls++;
-	}
-
-    }
-
-#ifdef USE_MALLOC
-    free(NULL);
-#else
-    bu_fastfree(NULL);
-#endif
-    freecalls++;
-
-    bu_log("calls: %zd, free: %zd\n", allocalls, freecalls);
-
-    return 0;
-}
-
-#endif
-
-
 /* sanity */
 #if HEAP_PAGESIZE < HEAP_BINS
 #  error "ERROR: heap page size cannot be smaller than bin range"
