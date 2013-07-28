@@ -35,11 +35,9 @@
 #include "nmg.h"
 #include "gcv.h"
 
-#include "soup.h"
-#include "tri_intersect.h"
+#include "./soup.h"
+#include "./tri_intersect.h"
 
-#define NOISY 0	/* for debugging */
-#define NOISYSTL 1	/* for debugging */
 
 struct gcv_data {
     void (*func)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
@@ -99,9 +97,6 @@ soup_add_face_precomputed(struct soup_s *s, point_t a, point_t b , point_t c, pl
 
     f->foo = foo;
 
-#if NOISY
-    printf("Addadd! % 2.2g,% 2.2g,% 2.2g | % 2.2g,% 2.2g,% 2.2g | % 2.2g,% 2.2g,% 2.2g foo %s\n", V3ARGS(f->vert[0]), V3ARGS(f->vert[1]), V3ARGS(f->vert[2]), f->foo==INSIDE?"INSIDE":(f->foo==OUTSIDE?"OUTSIDE":"???"));
-#endif
     s->nfaces++;
     return 0;
 }
@@ -131,15 +126,6 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
 #define LINE_INT 0x20
 #define FACE_INT 0x40
 #define ALL_INT  (VERT_INT|LINE_INT|FACE_INT)
-
-#if NOISY
-    printf("Cutting % 2.2g,% 2.2g,% 2.2g | % 2.2g,% 2.2g,% 2.2g | % 2.2g,% 2.2g,% 2.2g along % 2.2g,% 2.2g,% 2.2g <-> % 2.2g,% 2.2g,% 2.2g\n",
-	    V3ARGS(s->faces[fid].vert[0]),
-	    V3ARGS(s->faces[fid].vert[1]),
-	    V3ARGS(s->faces[fid].vert[2]),
-	    V3ARGS(isectpt[0]),
-	    V3ARGS(isectpt[1]));
-#endif
 
     /****** START hoistable ******/
     for(i=0;i<2;i++) for(j=0;j<3;j++) {
@@ -198,10 +184,6 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
 	vect_t muh;
 	int meh;
 
-#if NOISY
-	printf("VERT+LINE\n");
-#endif
-
 	VSUB2(muh, isectpt[1], f->vert[a==2?0:a+1]);
 	meh = VDOT(opp_face->plane, muh) > 0;
 	soup_add_face_precomputed(s, f->vert[a], isectpt[1], f->vert[a==2?0:a+1], f->plane, meh == 1 ? OUTSIDE : INSIDE);
@@ -213,17 +195,11 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
 
     /* if LINE+LINE, break into 3, figure out which side has two verts and cut * that */
     if(isv[0]&LINE_INT && isv[1]&LINE_INT) {
-#if NOISY
-	bu_log("Splitting into 3 %x %x (LINE/LINE)\n", isv[0], isv[1]);
-#endif
 	return 1;
     }
 
     /* if VERT+FACE, break into 3, intersect is one line, other two to the * opposing verts */
     if(isv[0]&VERT_INT ) {
-#if NOISY
-	printf("VERT+FACE\n");
-#endif
 	soup_add_face_precomputed(s, f->vert[0], f->vert[1], isectpt[1], f->plane, 0);
 	soup_add_face_precomputed(s, f->vert[1], f->vert[2], isectpt[1], f->plane, 0);
 	soup_add_face_precomputed(s, f->vert[2], f->vert[0], isectpt[1], f->plane, 0);
@@ -233,9 +209,6 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
 
     /* if LINE+FACE, break into 4 */
     if(isv[0]&LINE_INT ) {
-#if NOISY
-	printf("LINE+FACE\n");
-#endif
 	soup_add_face_precomputed(s, f->vert[a], isectpt[0], isectpt[1], f->plane, 0);
 	soup_add_face_precomputed(s, f->vert[a==2?0:a+1], isectpt[1], isectpt[0], f->plane, 0);
 	soup_add_face_precomputed(s, f->vert[a==2?0:a+1], f->vert[a==0?2:a-1], isectpt[1], f->plane, 0);
@@ -247,9 +220,6 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
     /* if FACE+FACE, break into 3 */
     if(isv[0]&FACE_INT ) {
 	/* extend intersect line to triangle edges, could be 2 or 3? */
-#if NOISY
-	printf("FACE+FACE\n");
-#endif
 
 	/* make sure isectpt[0] is closest to vert[0] */
 	if(DIST_PT_PT_SQ(f->vert[0], isectpt[0]) > DIST_PT_PT_SQ(f->vert[0], isectpt[1])) {
@@ -295,10 +265,6 @@ split_face(struct soup_s *left, unsigned long int left_face, struct soup_s *righ
 	if(split_face_single(left, left_face, isectpt, &right->faces[right_face], tol) > 1) r|=0x1;
 	if(split_face_single(right, right_face, isectpt, &left->faces[left_face], tol) > 1) r|=0x2;
     }
-#if NOISY
-    if(r)
-	    printf("Face split: %lu %lu -> %x\n", left_face, right_face, r);
-#endif
 
     return r;
 }
@@ -325,64 +291,6 @@ bot2soup(struct rt_bot_internal *bot, const struct bn_tol *tol)
 	soup_add_face(s, bot->vertices+3*bot->faces[i*3+0], bot->vertices+3*bot->faces[i*3+1], bot->vertices+3*bot->faces[i*3+2], tol);
 
     return s;
-}
-
-
-struct nmgregion *
-soup2nmg(struct soup_s *soup, const struct bn_tol *UNUSED(tol))
-{
-    unsigned int i;
-    struct nmgregion *r = NULL;
-#if 0
-    struct model *m;
-    struct shell *s;
-    struct vertex *vert[3], **f_vert[3];
-#endif
-
-    SOUP_CKMAG(soup);
-    printf("%ld faces\n", soup->nfaces);
-
-#if NOISYSTL
-    for(i=0; i < soup->nfaces; i++) {
-	bu_log("  facet normal %f %f %f\n", V3ARGS(soup->faces[i].plane));
-	bu_log("    outer loop\n");
-	bu_log("      vertex %f %f %f\n", V3ARGS(soup->faces[i].vert[0]));
-	bu_log("      vertex %f %f %f\n", V3ARGS(soup->faces[i].vert[1]));
-	bu_log("      vertex %f %f %f\n", V3ARGS(soup->faces[i].vert[2]));
-	bu_log("    endloop\n");
-	bu_log("  endfacet\n");
-    }
-#endif
-
-#if 0
-    m = nmg_mmr();
-    r = nmg_mrsv(m);
-    s = BU_LIST_FIRST(shell, &r->s_hd);
-
-    f_vert[0] = &vert[0];
-    f_vert[1] = &vert[1];
-    f_vert[2] = &vert[2];
-
-    for(i=0; i < soup->nfaces; i++) {
-	struct faceuse *fu;
-
-	memset((char *)vert, 0, sizeof(vert));
-	fu = nmg_cmface(s, f_vert, 3);
-	nmg_vertex_gv(vert[0], soup->faces[i].vert[0]);
-	nmg_vertex_gv(vert[1], soup->faces[i].vert[1]);
-	nmg_vertex_gv(vert[2], soup->faces[i].vert[2]);
-	nmg_calc_face_g(fu);
-
-	if(nmg_fu_planeeqn(fu, tol))
-	    bu_log("Tiny tri!\n");
-    }
-
-    if(nmg_kill_cracks(s))
-	if(nmg_ks(s))
-	    return NULL;
-#endif
-
-    return r;
 }
 
 
@@ -499,29 +407,6 @@ compose(union tree *left_tree, union tree *right_tree, unsigned long int UNUSED(
     bu_log("endsolid /right\n");
     return left_tree;
 
-#if 0
-    /* FIXME: group component stuff?
-     * obj1, vert, ind, col, facestatus1, facestatus2
-     * obj2, vert, ind, col, facestatus3, facestatus3 ??
-     */
-
-    /* remove unnecessary faces and compose a single new internal */
-    for(i=l->nfaces-1;i>=0;i--) {
-	if(l->faces[i].foo != face_status1)
-	    soup_rm_face(l, i);
-    }
-    for(i=r->nfaces-1;i>=0;i--) {
-	if(r->faces[i].foo != face_status3)
-	    soup_rm_face(r, i);
-    }
-
-    for(i=0;i<(int)r->nfaces;i++)
-	soup_add_face_precomputed(l, V3ARGS(r->faces[i].vert), r->faces[i].plane, r->faces[i].foo);
-
-    free_soup(r);
-    bu_free(right_tree, "union tree");
-    return left_tree;
-#endif
 }
 
 
@@ -635,27 +520,13 @@ gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     if (curtree->tr_op == OP_NOP)
 	return curtree;
 
-#if 0
-    bu_log("solid %s\n", db_path_to_string(pathp));
-#endif
     ret_tree = evaluate(curtree, tsp->ts_ttol, tsp->ts_tol);
-#if 0
-    soup2nmg((struct soup_s *)ret_tree->tr_d.td_r->m_p, tsp->ts_tol);
-    bu_log("endsolid %s\n", db_path_to_string(pathp));
-#endif
 
     lsplitz+=splitz;
     lsplitz+=splitz;
     lsplitty+=splitty;
     splitz=0;
     splitty=0;
-
-#if 0
-    curtree->tr_d.td_r = soup2nmg((struct soup_s *)ret_tree->tr_d.td_r->m_p, tsp->ts_tol);
-    curtree->tr_op = OP_NMG_TESS;
-
-    write_region(curtree->tr_d.td_r, pathp, tsp->ts_regionid, tsp->ts_gmater, tsp->ts_mater.ma_color);
-#endif
 
     return ret_tree;
 }
