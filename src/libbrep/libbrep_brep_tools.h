@@ -112,22 +112,21 @@ BREP_EXPORT
 int ON_Curve_Has_Tangent(const ON_Curve* curve, double ct_min, double ct_max, double t_tol);
 
 
-#if 0
-/*
-  \verbatim
-    3-------------------2
-    |                   |
-    |    6         8    |
-    |                   |
-   V|         4         |
-    |                   |
-    |    5         7    |
-    |                   |
-    0-------------------1
-	      U
-  \endverbatim
-*/
-#endif
+/**
+ * \verbatim
+ *   3-------------------2
+ *   |                   |
+ *   |    6         8    |
+ *   |                   |
+ *  V|         4         |
+ *   |                   |
+ *   |    5         7    |
+ *   |                   |
+ *   0-------------------1
+ *      U
+ * \endverbatim
+ */
+
 
 /**
   \brief Perform flatness test of surface
