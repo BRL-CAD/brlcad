@@ -174,15 +174,11 @@ pipe_seg_scale_od(struct wdb_pipept *ps, fastf_t scale)
      * of any affected segment.
      */
     if (ps->pp_id > tmp_od) {
-#if 0
-	Tcl_AppendResult(INTERP, "Cannot make OD smaller than ID\n", (char *)NULL);
-#endif
+	bu_log("Cannot make OD smaller than ID\n");
 	return;
     }
     if (tmp_od > 2.0*ps->pp_bendradius) {
-#if 0
-	Tcl_AppendResult(INTERP, "Cannot make outer radius greater than bend radius\n", (char *)NULL);
-#endif
+	bu_log("Cannot make outer radius greater than bend radius\n");
 	return;
     }
 
@@ -201,15 +197,11 @@ pipe_seg_scale_id(struct wdb_pipept *ps, fastf_t scale)
 
     /* need to check that the new ID is not greater than OD */
     if (ps->pp_od < tmp_id) {
-#if 0
-	Tcl_AppendResult(INTERP, "Cannot make ID greater than OD\n", (char *)NULL);
-#endif
+	bu_log( "Cannot make ID greater than OD\n");
 	return;
     }
     if (tmp_id > 2.0*ps->pp_bendradius) {
-#if 0
-	Tcl_AppendResult(INTERP, "Cannot make inner radius greater than bend radius\n", (char *)NULL);
-#endif
+	bu_log("Cannot make inner radius greater than bend radius\n");
 	return;
     }
 
@@ -235,9 +227,7 @@ pipe_seg_scale_radius(struct wdb_pipept *ps, fastf_t scale)
     ps->pp_bendradius = edpipe_scale(ps->pp_bendradius, scale);
 
     if (ps->pp_bendradius < ps->pp_od * 0.5) {
-#if 0
-	Tcl_AppendResult(INTERP, "Cannot make bend radius less than pipe outer radius\n", (char *)NULL);
-#endif
+	bu_log("Cannot make bend radius less than pipe outer radius\n");
 	ps->pp_bendradius = old_radius;
 	return;
     }
@@ -262,16 +252,12 @@ pipe_scale_radius(struct rt_pipe_internal *pipeip, fastf_t scale)
     for (BU_LIST_FOR(old_ps, wdb_pipept, &pipeip->pipe_segs_head)) {
 	if (scale < 0.0) {
 	    if ((-scale) < old_ps->pp_od * 0.5) {
-#if 0
-		Tcl_AppendResult(INTERP, "Cannot make bend radius less than pipe outer radius\n", (char *)NULL);
-#endif
+		bu_log("Cannot make bend radius less than pipe outer radius\n");
 		return;
 	    }
 	} else {
 	    if (old_ps->pp_bendradius * scale < old_ps->pp_od * 0.5) {
-#if 0
-		Tcl_AppendResult(INTERP, "Cannot make bend radius less than pipe outer radius\n", (char *)NULL);
-#endif
+		bu_log("Cannot make bend radius less than pipe outer radius\n");
 		return;
 	    }
 	}
@@ -478,18 +464,14 @@ _ged_delete_pipept(struct wdb_pipept *ps)
 	prev = (struct wdb_pipept *)NULL;
 
     if (!prev && !next) {
-#if 0
-	Tcl_AppendResult(INTERP, "Cannot delete last point in pipe\n", (char *)NULL);
-#endif
+	bu_log("Cannot delete last point in pipe\n");
 	return ps;
     }
 
     BU_LIST_DEQUEUE(&ps->l);
 
     if (rt_pipe_ck(&head->l)) {
-#if 0
-	Tcl_AppendResult(INTERP, "Cannot delete this point, it will result in an illegal pipe\n", (char *)NULL);
-#endif
+	bu_log("Cannot delete this point, it will result in an illegal pipe\n");
 	if (next) {
 	    BU_LIST_INSERT(&next->l, &ps->l);
 	} else if (prev) {
@@ -523,9 +505,7 @@ _ged_move_pipept(struct rt_pipe_internal *pipeip, struct wdb_pipept *ps, const p
 
     VMOVE(ps->pp_coord, new_pt);
     if (rt_pipe_ck(&pipeip->pipe_segs_head)) {
-#if 0
-	Tcl_AppendResult(INTERP, "Cannot move point there\n", (char *)NULL);
-#endif
+	bu_log("Cannot move point there\n");
 	VMOVE(ps->pp_coord, old_pt);
 	return 1;
     }
