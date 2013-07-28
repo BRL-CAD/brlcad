@@ -79,7 +79,7 @@ bev_facetize_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_
 int
 ged_bev(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char *usage = "[P|t] new_obj obj1 op obj2 op obj3 ...";
+    static const char *usage = "[-t] new_obj obj1 op obj2 op obj3 ...";
 
     int i;
     int c;
@@ -127,14 +127,8 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 
     /* Parse options. */
     bu_optind = 1;		/* re-init bu_getopt() */
-    while ((c=bu_getopt(argc, (char * const *)argv, "tP:")) != -1) {
+    while ((c=bu_getopt(argc, (char * const *)argv, "t")) != -1) {
 	switch (c) {
-	    case 'P':
-#if 0
-		/* not yet supported */
-		ncpu = atoi(bu_optarg);
-#endif
-		break;
 	    case 't':
 		triangulate = 1;
 		break;
