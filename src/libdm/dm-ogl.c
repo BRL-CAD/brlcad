@@ -1302,11 +1302,6 @@ ogl_drawEnd(struct dm *dmp)
 	bu_vls_free(&tmp_vls);
     }
 
-/*XXX Keep this off unless testing */
-#if 0
-    glFinish();
-#endif
-
     return TCL_OK;
 }
 

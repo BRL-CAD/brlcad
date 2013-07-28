@@ -794,11 +794,6 @@ wgl_drawEnd(struct dm *dmp)
 	bu_vls_free(&tmp_vls);
     }
 
-/*XXX Keep this off unless testing */
-#if 0
-    glFinish();
-#endif
-
     wgl_actively_drawing = 0;
     return TCL_OK;
 }
