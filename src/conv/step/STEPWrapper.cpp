@@ -124,7 +124,7 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 		bu_exit(1, "ERROR: failure loading advanced boundary representation from %s\n", stepfile.c_str());
 	    }
 	}
-#if 0
+#ifdef NOT_YET_TESTED
 	else if ((sse->STEPfile_id > 0) && (sse->IsA(SCHEMA_NAMESPACE::e_product_definition))) {
 	    ProductDefinition *pd = new ProductDefinition();
 
@@ -156,7 +156,7 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 	}
 #endif
 #endif
-#if 0
+#ifdef NOT_YET_TESTED
 	// ContextDependentShapeRepresentation
 	else if ((sse->STEPfile_id > 0) && (sse->IsA(SCHEMA_NAMESPACE::e_context_dependent_shape_representation))) {
 	    ContextDependentShapeRepresentation *cdsr = new ContextDependentShapeRepresentation();
