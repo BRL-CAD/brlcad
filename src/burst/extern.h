@@ -73,7 +73,8 @@ extern void paintSpallFb();
 extern void plotGrid();
 extern void plotInit();
 extern void plotPartition();
-extern void plotRay();
+extern void plotRayLine();
+extern void plotRayPoint();
 extern void prntAspectInit();
 extern void prntBurstHdr();
 extern void prntCellIdent();
@@ -140,6 +141,7 @@ extern unsigned char pixmiss[3];
 extern unsigned char pixtarg[3];
 extern Trie *cmdtrie;
 
+extern int plotline;
 extern int batchmode;
 extern int cantwarhead;
 extern int deflectcone;

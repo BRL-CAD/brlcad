@@ -121,10 +121,16 @@ parsArgv(int argc, char **argv)
 {
     int c;
 /* Parse options.						*/
-    while ((c = bu_getopt(argc, argv, "bh?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "bpPh?")) != -1) {
 	switch (c) {
 	    case 'b' :
 		tty = 0;
+		break;
+	    case 'p' :
+		plotline = 0;
+		break;
+	    case 'P' :
+		plotline = 1;
 		break;
 	    default:
 		return 0;

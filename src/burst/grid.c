@@ -1611,7 +1611,12 @@ burstRay()
 	    int	ncrit;
 	    spallVec(a_burst.a_ray.r_dir, a_spall.a_ray.r_dir,
 		     phi, gammaval);
-	    plotRay(&a_spall.a_ray);
+
+	    if (plotline)
+		plotRayPoint(&a_spall.a_ray);
+	    else
+		plotRayLine(&a_spall.a_ray);
+
 	    bu_semaphore_acquire(RT_SEM_WORKER);
 	    a_spall.a_user = a_burst.a_user++;
 	    bu_semaphore_release(RT_SEM_WORKER);
