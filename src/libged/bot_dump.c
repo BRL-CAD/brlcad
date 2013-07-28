@@ -1523,24 +1523,12 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 		continue;
 	    }
 
-	    /* Write out materials */
+	    /* Write out object color */
 	    if (output_type == OTYPE_OBJ) {
-#if 0
-		struct _ged_obj_material *gomp;
-
-		gomp = get_obj_material(sp->s_color[0],
-					    sp->s_color[1],
-					    sp->s_color[2],
-					    sp->s_transparency);
-
-		/* Write out usemtl to obj file */
-		fprintf(fp, "usemtl %s\n", bu_vls_addr(&gomp->name));
-#else
 		curr_obj_red = sp->s_color[0];
 		curr_obj_green = sp->s_color[1];
 		curr_obj_blue = sp->s_color[2];
 		curr_obj_alpha = sp->s_transparency;
-#endif
 	    }
 
 	    bot = (struct rt_bot_internal *)intern.idb_ptr;
