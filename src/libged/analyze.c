@@ -44,7 +44,6 @@
  * ehy
  * metaball
  * nmg
- * pipe
  * rhc
  */
 
@@ -203,7 +202,10 @@ void print_volume_table(struct ged *gedp
 		maxwidth[1], maxwidth[1], table.rows[i].fields[1].buf);
 	bu_vls_printf(gedp->ged_result_str, "%s", tbuf);
 #else
-	/* bu_vls_printf can't handle this at the moment */
+	/* FIXME: is this still true?
+	 * was:
+	 * bu_vls_printf can't handle this at the moment
+	 */
 	bu_vls_printf(gedp->ged_result_str, "%-*.*s| %-*.*s = %*.*s |\n",
 		      indent, indent, " ",
 		      maxwidth[0], maxwidth[0], table.rows[i].fields[0].buf,
@@ -1337,53 +1339,6 @@ print_results:
 	    vol/GALLONS_TO_MM3
 	    );
 }
-
-
-/* analyze rhc */
-/* XXX: this is completely incorrect, better to have nothing instead? */
-#if 0
-HIDDEN void
-analyze_rhc(struct ged *gedp, const struct rt_db_internal *ip)
-{
-    fastf_t area_hyperb, area_body, b, c, h, r, vol_hyperb,	work1;
-    struct rt_rhc_internal *rhc = (struct rt_rhc_internal *)ip->idb_ptr;
-
-    RT_RHC_CK_MAGIC(rhc);
-
-    b = MAGNITUDE(rhc->rhc_B);
-    h = MAGNITUDE(rhc->rhc_H);
-    r = rhc->rhc_r;
-    c = rhc->rhc_c;
-
-    /* area of one hyperbolic side (from macsyma) WRONG!!!! */
-    work1 = sqrt(b*(b + 2.*c));
-    area_hyperb = -2.*r*work1*(.5*(b+c) + c*c*log(c/(work1 + b + c)));
-
-    /* volume of rhc */
-    vol_hyperb = area_hyperb*h;
-
-    /* surface area of hyperbolic body */
-    area_body=0.0;
-#if 0
-    k = (b+c)*(b+c) - c*c;
-#define X_eval(y) sqrt(1.0 + (4.*k)/(r*r*k*k*(y)*(y) + r*r*c*c))
-#define L_eval(y) .5*k*(y)*X_eval(y) \
-	+ r*k*(r*r*c*c + 4.*k - r*r*c*c/k)*arcsinh((y)*sqrt(k)/c)
-    area_body = 2.*(L_eval(r) - L_eval(0.0));
-#endif
-
-    bu_vls_printf(gedp->ged_result_str, "\n");
-
-    bu_vls_printf(gedp->ged_result_str, "Surface Areas:  front(BxR)=%.8f  top(RxH)=%.8f  body=%.8f\n",
-		  area_hyperb*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
-		  2*r*h*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
-		  area_body*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
-    bu_vls_printf(gedp->ged_result_str, "Total Surface Area=%.8f    Volume=%.8f (%.8f gal)\n",
-		  (2*area_hyperb+2*r*h+2*area_body)*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
-		  vol_hyperb*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
-		  vol_hyperb/GALLONS_TO_MM3);
-}
-#endif
 
 
 /**
