@@ -757,18 +757,6 @@ rpcin(struct ged *UNUSED(gedp), struct rt_db_internal *ip, fastf_t thick[4])
     VJOIN2(rpc->rpc_V, rpc->rpc_V, thick[0], Hu, thick[2], Bu);
     VSCALE(rpc->rpc_H, Hu, MAGNITUDE(rpc->rpc_H) - thick[0] - thick[1]);
     VSCALE(rpc->rpc_B, Bu, b - thick[2] - thick[3]);
-#if 0
-    bp = b - thick[2] - thick[3];
-    rp = rpc->rpc_r - thick[3];	/* !!! ESTIMATE !!! */
-    yp = rp * sqrt((bp - thick[2])/bp);
-    VSET(Norm,
-	 0.,
-	 2 * bp * yp/(rp * rp),
-	 -1.0);
-    VUNITIZE(Norm)
-	th = thick[3] / Norm[Y];
-    rpc->rpc_r -= th;
-#endif
     rpc->rpc_r -= thick[3];
 
     return GED_OK;
