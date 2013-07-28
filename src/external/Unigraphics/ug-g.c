@@ -150,34 +150,7 @@ struct obj_list {
 };
 
 static struct obj_list *brlcad_objs_root=NULL;
-#if 0
-/* structure to make vertex searching fast
- * Each leaf represents a vertex, and has an index into the
- * part_verts array.
- * Each node is a cutting plane at the "cut_val" on the "coord" (0, 1, or 2) axis.
- * All vertices with "coord" value less than the "cut_val" are in the "lower"
- * subtree, others are in the "higher".
- */
-union vert_tree {
-    char type;
-    struct vert_leaf {
-	char type;
-	int index;
-    } vleaf;
-    struct vert_node {
-	char type;
-	double cut_val;
-	int coord;
-	union vert_tree *higher, *lower;
-    } vnode;
-} *vert_root=NULL;
-
-/* types for the above "vert_tree" */
-#define VERT_LEAF	'l'
-#define VERT_NODE	'n'
-#else
 static struct vert_root *vert_tree_root;
-#endif
 static struct vert_root *norm_tree_root;
 
 static int indent_delta=4;
@@ -324,135 +297,6 @@ bad_triangle( int v1, int v2, int v3 )
     return 0;
 }
 
-#if 0
-/* routine to free the "vert_tree"
- * called after each part is output
- */
-void
-free_vert_tree( union vert_tree *ptr )
-{
-    if ( !ptr )
-	return;
-
-    if ( ptr->type == VERT_NODE ) {
-	free_vert_tree( ptr->vnode.higher );
-	free_vert_tree( ptr->vnode.lower );
-    }
-
-    free( (char *)ptr );
-}
-
-/* routine to add a vertex to the current list of part vertices */
-int
-Add_vert( fastf_t *vertex )
-{
-    union vert_tree *ptr, *prev=NULL, *new_leaf, *new_node;
-    point_t diff;
-
-    /* look for this vertex already in the list */
-    ptr = vert_tree_root;
-    while ( ptr ) {
-	if ( ptr->type == VERT_NODE ) {
-	    prev = ptr;
-	    if ( vertex[ptr->vnode.coord] >= ptr->vnode.cut_val ) {
-		ptr = ptr->vnode.higher;
-	    } else {
-		ptr = ptr->vnode.lower;
-	    }
-	} else {
-	    diff[0] = fabs( vertex[0] - part_verts[ptr->vleaf.index*3 + 0] );
-	    diff[1] = fabs( vertex[1] - part_verts[ptr->vleaf.index*3 + 1] );
-	    diff[2] = fabs( vertex[2] - part_verts[ptr->vleaf.index*3 + 2] );
-	    if ( (diff[0]*diff[0] + diff[1]*diff[1] + diff[2]*diff[2]) <= tol_dist_sq ) {
-		/* close enough, use this vertex again */
-		return ptr->vleaf.index;
-	    }
-	    break;
-	}
-    }
-
-    /* add this vertex to the list */
-    if ( curr_vert >= max_vert ) {
-	/* allocate more memory for vertices */
-	max_vert += VERT_BLOCK;
-
-	part_verts = (fastf_t *)realloc( part_verts, sizeof( fastf_t ) * max_vert * 3 );
-	if ( !part_verts ) {
-	    bu_exit(1, "ERROR: Failed to allocate memory for part vertices\n" );
-	}
-    }
-
-    part_verts[curr_vert*3 + 0] = vertex[0];
-    part_verts[curr_vert*3 + 1] = vertex[1];
-    part_verts[curr_vert*3 + 2] = vertex[2];
-
-    /* add to the tree also */
-    new_leaf = (union vert_tree *)malloc( sizeof( union vert_tree ) );
-    new_leaf->vleaf.type = VERT_LEAF;
-    new_leaf->vleaf.index = curr_vert++;
-    if ( !vert_tree_root ) {
-	/* first vertex, it becomes the root */
-	vert_tree_root = new_leaf;
-    } else if ( ptr && ptr->type == VERT_LEAF ) {
-	/* search above ended at a leaf, need to add a node above this leaf and the new leaf */
-	new_node = (union vert_tree *)malloc( sizeof( union vert_tree ) );
-	new_node->vnode.type = VERT_NODE;
-
-	/* select the cutting coord based on the biggest difference */
-	if ( diff[0] >= diff[1] && diff[0] >= diff[2] ) {
-	    new_node->vnode.coord = 0;
-	} else if ( diff[1] >= diff[2] && diff[1] >= diff[0] ) {
-	    new_node->vnode.coord = 1;
-	} else if ( diff[2] >= diff[1] && diff[2] >= diff[0] ) {
-	    new_node->vnode.coord = 2;
-	}
-
-	/* set the cut value to the mid value between the two vertices */
-	new_node->vnode.cut_val = (vertex[new_node->vnode.coord] +
-				   part_verts[ptr->vleaf.index*3 + new_node->vnode.coord]) * 0.5;
-
-	/* set the node "lower" and "higher" pointers */
-	if ( vertex[new_node->vnode.coord] >= part_verts[ptr->vleaf.index*3 + new_node->vnode.coord] ) {
-	    new_node->vnode.higher = new_leaf;
-	    new_node->vnode.lower = ptr;
-	} else {
-	    new_node->vnode.higher = ptr;
-	    new_node->vnode.lower = new_leaf;
-	}
-
-	if ( ptr == vert_tree_root ) {
-	    /* if the above search ended at the root, redefine the root */
-	    vert_tree_root =  new_node;
-	} else {
-	    /* set the previous node to point to our new one */
-	    if ( prev->vnode.higher == ptr ) {
-		prev->vnode.higher = new_node;
-	    } else {
-		prev->vnode.lower = new_node;
-	    }
-	}
-    } else if ( ptr && ptr->type == VERT_NODE ) {
-	/* above search ended at a node, just add the new leaf */
-	prev = ptr;
-	if ( vertex[prev->vnode.coord] >= prev->vnode.cut_val ) {
-	    if ( prev->vnode.higher ) {
-		bu_exit(1, NULL);
-	    }
-	    prev->vnode.higher = new_leaf;
-	} else {
-	    if ( prev->vnode.lower ) {
-		bu_exit(1, NULL);
-	    }
-	    prev->vnode.lower = new_leaf;
-	}
-    } else {
-	fprintf( stderr, "*********ERROR********\n" );
-    }
-
-    /* return the index into the vertex array */
-    return new_leaf->vleaf.index;
-}
-#endif
 
 /* routine to add a new triangle to the current part */
 void
@@ -1812,12 +1656,8 @@ convert_sweep( tag_t feat_tag, char *part_name, char *refset_name, char *inst_na
 				 num_exp, exps, n_guide_curves, guide_curves);
     } else if ( n_guide_curves == 0 ) {
 	/* this may be a linear extrusion */
-#if 0
-	solid_name = (char *)NULL;
-#else
 	solid_name = conv_extrusion( feat_tag, part_name, refset_name, inst_name, rgb, curr_xform, units_conv, make_region,
 				     num_exp, exps, descs, n_guide_curves, guide_curves, n_profile_curves, profile_curves, tol_dist );
-#endif
     }
 
     UF_free( exps );
@@ -4093,14 +3933,7 @@ convert_a_feature( tag_t feat_tag,
     DO_INDENT;
     bu_log( "Feature %s is type %s, sign is %s, starting prim number is %d\n",
 	    feat_name, feat_type, feat_sign[sign], prim_no );
-#if 0
-    if ( !bu_strncmp( feat_name, "UNITE", 5 ) ) {
-	bu_log( "Cannot handle UNITE features yet!\n" );
-	UF_free( feat_name );
-	UF_free( feat_type );
-	return 1;
-    }
-#endif
+
     if ( debug ) {
 	int i;
 
@@ -4673,12 +4506,6 @@ facetize( tag_t solid_tag, char *part_name, char *refset_name, char *inst_name, 
 	bu_log( "blank_status = %d\n", disp_props.blank_status );
     }
 
-#if 0
-    DO_INDENT;
-    bu_log( "units_conv = %g\n", units_conv );
-    DO_INDENT;
-    bn_mat_print( "Facetizer using matrix", curr_xform );
-#endif
     UF_func(UF_OBJ_ask_type_and_subtype(solid_tag, &type, &subtype));
 
     if ( type == UF_faceted_model_type ) {
@@ -4898,29 +4725,12 @@ process_instance( tag_t comp_obj_tag, const mat_t curr_xform, double units_conv,
 	bu_log( "component is suppressed\n" );
 	return (char *)NULL;
     }
-#if 0
-    /* this gives an error */
-    UF_func( UF_OBJ_ask_display_properties( comp_obj_tag, &disp_props ) );
-    if ( disp_props.blank_status == UF_OBJ_BLANKED ) {
-	bu_log( "Found a blanked instance\n" );
-	return (char *)NULL;
-    }
-#endif
 
     child_tag = UF_ASSEM_ask_child_of_instance(comp_obj_tag);
     if ( child_tag == NULL_TAG ) {
 	bu_log( "WARNING: The child tag of an instance tag from part %s has a NULL tag!\n", part_name );
 	return (char *)NULL;
     }
-
-#if 0
-    /* this gives an error */
-    UF_func( UF_OBJ_ask_display_properties( child_tag, &disp_props ) );
-    if ( disp_props.blank_status == UF_OBJ_BLANKED ) {
-	bu_log( "Found a blanked child of instance\n" );
-	return (char *)NULL;
-    }
-#endif
 
     UF_func(UF_OBJ_ask_type_and_subtype(comp_obj_tag, &type, &subtype));
     DO_INDENT;
@@ -4989,10 +4799,6 @@ process_instance( tag_t comp_obj_tag, const mat_t curr_xform, double units_conv,
 	    tmp_xform[i*4+j] = transform[i][j];
 	}
     }
-#if 0
-    DO_INDENT;
-    bn_mat_print( "Applying from instance", tmp_xform );
-#endif
     bn_mat_mul( new_xform, curr_xform, tmp_xform );
 
     if ( child_tag == NULL_TAG ) {
@@ -5074,14 +4880,7 @@ convert_entire_part( tag_t node, char *p_name, char *refset_name, char *inst_nam
 
 	DO_INDENT;
 	bu_log( "Checking instances in %s instance tag = %d\n", p_name, comp_obj_tag );
-#if 0
-	/* this gives an error */
-	UF_func( UF_OBJ_ask_display_properties( comp_obj_tag, &disp_props ) );
-	if ( disp_props.blank_status == UF_OBJ_BLANKED ) {
-	    bu_log( "Found a blanked instance\n" );
-	    continue;
-	}
-#endif
+
 	member_name = process_instance( comp_obj_tag, curr_xform, units_conv, p_name );
 	if ( member_name ) {
 	    (void)mk_addmember( member_name, &head.l, NULL, WMOP_UNION );
@@ -5328,15 +5127,6 @@ convert_reference_set( tag_t node, char *p_name, char *refset_name, char *inst_n
 char *
 convert_geom( tag_t node, char *p_name, char *refset_name, char *inst_name, const mat_t curr_xform, double units_conv )
 {
-#if 0
-    /* this gives an error */
-    UF_func( UF_OBJ_ask_display_properties( node, &disp_props ) );
-    if ( disp_props.blank_status == UF_OBJ_BLANKED ) {
-	bu_log( "Found a blanked object in convert_geom\n" );
-	return (char *)NULL;
-    }
-#endif
-
     DO_INDENT;
     bu_log( "Converting part %s (refset=%s)\n", p_name, refset_name );
     if ( use_refset_name ) {
@@ -5389,15 +5179,6 @@ process_part( tag_t node, const mat_t curr_xform, char *p_name, char *ref_set, c
 		bu_log("Loading %s\n", part_name);
 	    break;
     }
-
-#if 0
-    /* this gives an error */
-    UF_func( UF_OBJ_ask_display_properties( node, &disp_props ) );
-    if ( disp_props.blank_status == UF_OBJ_BLANKED ) {
-	bu_log( "Found a blanked instance\n" );
-	return (char *)NULL;
-    }
-#endif
 
     /* ensure that the part we are working on is the current part,
      * this eliminates some confusion about units.
