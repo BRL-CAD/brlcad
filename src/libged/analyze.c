@@ -194,23 +194,10 @@ void print_volume_table(struct ged *gedp
 
     /* the three data rows */
     for (i = 0; i < table.nrows; ++i) {
-#if 1
-	char tbuf[FBUFSIZ];
-	sprintf(tbuf, "%-*.*s| %-*.*s = %*.*s |\n",
-		indent, indent, " ",
-		maxwidth[0], maxwidth[0], table.rows[i].fields[0].buf,
-		maxwidth[1], maxwidth[1], table.rows[i].fields[1].buf);
-	bu_vls_printf(gedp->ged_result_str, "%s", tbuf);
-#else
-	/* FIXME: is this still true?
-	 * was:
-	 * bu_vls_printf can't handle this at the moment
-	 */
 	bu_vls_printf(gedp->ged_result_str, "%-*.*s| %-*.*s = %*.*s |\n",
 		      indent, indent, " ",
 		      maxwidth[0], maxwidth[0], table.rows[i].fields[0].buf,
 		      maxwidth[1], maxwidth[1], table.rows[i].fields[1].buf);
-#endif
     }
 
     /* closing table row */
@@ -292,30 +279,6 @@ void print_edges_table(struct ged *gedp, table_t *table)
     /* header row 2 */
     /* print titles in 4 sets */
 
-#if 1
-    /* FIXME: using sprintf because bu_vls_printf is broken for complex formats */
-    sprintf(buf, "%-*.*s| %-*.*s %*.*s ",
-	    indent, indent, " ",
-	    maxwidth[0], maxwidth[0], EDGE,
-	    maxwidth[1], maxwidth[1], LEN);
-    bu_vls_printf(gedp->ged_result_str, "%s", buf);
-
-    sprintf(buf, "| %-*.*s %*.*s ",
-	    maxwidth[2], maxwidth[2], EDGE,
-	    maxwidth[3], maxwidth[3], LEN);
-    bu_vls_printf(gedp->ged_result_str, "%s", buf);
-
-    sprintf(buf, "| %-*.*s %*.*s ",
-	    maxwidth[4], maxwidth[4], EDGE,
-	    maxwidth[5], maxwidth[5], LEN);
-    bu_vls_printf(gedp->ged_result_str, "%s", buf);
-
-    sprintf(buf, "| %-*.*s %*.*s |\n",
-	    maxwidth[6], maxwidth[6], EDGE,
-	    maxwidth[7], maxwidth[7], LEN);
-    bu_vls_printf(gedp->ged_result_str, "%s", buf);
-
-#elif 0
     /* bu_vls_printf can't handle this at the moment */
     bu_vls_printf(gedp->ged_result_str, "%-*.*s| %-*.*s %*.*s ",
 		  indent, indent, " ",
@@ -330,7 +293,6 @@ void print_edges_table(struct ged *gedp, table_t *table)
     bu_vls_printf(gedp->ged_result_str, "| %-*.*s %*.*s |\n",
 		  maxwidth[6], maxwidth[6], EDGE,
 		  maxwidth[7], maxwidth[7], LEN);
-#endif
 
     /* header row 3 */
     /* print dashes in 4 sets */
