@@ -1016,11 +1016,6 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 		: thou == 7 ? fprintf(fp_out, "\t\t\tmaterial USE Material_7999\n")
 		: thou == 8 ? fprintf(fp_out, "\t\t\tmaterial USE Material_8999\n")
 		: fprintf(fp_out, "\t\t\tmaterial USE Material_9999\n");
-#if 0
-	    fprintf(fp, "\t\t\t\tmaterial Material {\n");
-	    fprintf(fp, "\t\t\t\t\tdiffuseColor %g %g %g \n", r, g, b);
-	    fprintf(fp, "\t\t\t\t\tspecularColor %g %g %g \n\t\t\t\t}\n", 1.0, 1.0, 1.0);
-#endif
 	}
     }
 
