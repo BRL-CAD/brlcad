@@ -1248,13 +1248,7 @@ analyze_superell(struct ged *gedp, const struct rt_db_internal *ip)
 {
     struct rt_superell_internal *superell = (struct rt_superell_internal *)ip->idb_ptr;
     fastf_t ma, mb, mc;
-#ifdef major		/* Some systems have these defined as macros!!! */
-#undef major
-#endif
-#ifdef minor
-#undef minor
-#endif
-    fastf_t ecc, major, minor;
+    fastf_t ecc, major_mag, minor_mag;
     fastf_t vol, sur_area;
     int type;
 
@@ -1278,13 +1272,13 @@ analyze_superell(struct ged *gedp, const struct rt_db_internal *ip)
 	if (mc > ma) {
 	    /* oblate spheroid */
 	    type = OBLATE;
-	    major = mc;
-	    minor = ma;
+	    major_mag = mc;
+	    minor_mag = ma;
 	} else {
 	    /* prolate spheroid */
 	    type = PROLATE;
-	    major = ma;
-	    minor = mc;
+	    major_mag = ma;
+	    minor_mag = mc;
 	}
     } else
 	if (fabs(ma-mc) < .00001) {
@@ -1292,13 +1286,13 @@ analyze_superell(struct ged *gedp, const struct rt_db_internal *ip)
 	    if (mb > ma) {
 		/* oblate spheroid */
 		type = OBLATE;
-		major = mb;
-		minor = ma;
+		major_mag = mb;
+		minor_mag = ma;
 	    } else {
 		/* prolate spheroid */
 		type = PROLATE;
-		major = ma;
-		minor = mb;
+		major_mag = ma;
+		minor_mag = mb;
 	    }
 	} else
 	    if (fabs(mb-mc) < .00001) {
@@ -1306,25 +1300,25 @@ analyze_superell(struct ged *gedp, const struct rt_db_internal *ip)
 		if (ma > mb) {
 		    /* oblate spheroid */
 		    type = OBLATE;
-		    major = ma;
-		    minor = mb;
+		    major_mag = ma;
+		    minor_mag = mb;
 		} else {
 		    /* prolate spheroid */
 		    type = PROLATE;
-		    major = mb;
-		    minor = ma;
+		    major_mag = mb;
+		    minor_mag = ma;
 		}
 	    } else {
 		bu_vls_printf(gedp->ged_result_str, "   Cannot find surface area\n");
 		return;
 	    }
-    ecc = sqrt(major*major - minor*minor) / major;
+    ecc = sqrt(major_mag*major_mag - minor_mag*minor_mag) / major_mag;
     if (type == PROLATE) {
-	sur_area = 2.0 * M_PI * minor * minor +
-	    (2.0 * M_PI * (major*minor/ecc) * asin(ecc));
+	sur_area = 2.0 * M_PI * minor_mag * minor_mag +
+	    (2.0 * M_PI * (major_mag*minor_mag/ecc) * asin(ecc));
     } else { /* type == OBLATE */
-	sur_area = 2.0 * M_PI * major * major +
-	    (M_PI * (minor*minor/ecc) * log((1.0+ecc)/(1.0-ecc)));
+	sur_area = 2.0 * M_PI * major_mag * major_mag +
+	    (M_PI * (minor_mag*minor_mag/ecc) * log((1.0+ecc)/(1.0-ecc)));
     }
 
 print_results:
