@@ -268,27 +268,6 @@ dm_label_primitive(struct rt_wdb *wdbp,
 
 	    break;
 	case DB5_MINORTYPE_BRLCAD_NMG:
-	    /*XXX Needs work */
-#if 0
-	    /* New way only */
-	    {
-		struct model *m =
-		    (struct model *) ip->idb_ptr;
-		NMG_CK_MODEL(m);
-
-		if (es_eu) {
-		    point_t cent;
-		    NMG_CK_EDGEUSE(es_eu);
-		    VADD2SCALE(cent,
-			       es_eu->vu_p->v_p->vg_p->coord,
-			       es_eu->eumate_p->vu_p->v_p->vg_p->coord,
-			       0.5);
-		    MAT4X3PNT(pos_view, xform, cent);
-		    POINT_LABEL_STR(pos_view, " eu");
-		}
-	    }
-#endif
-
 	    break;
 	case DB5_MINORTYPE_BRLCAD_EBM:
 	    break;
@@ -296,22 +275,7 @@ dm_label_primitive(struct rt_wdb *wdbp,
 	    break;
 	case DB5_MINORTYPE_BRLCAD_ARBN:
 	    break;
-	case DB5_MINORTYPE_BRLCAD_PIPE: {
-#if 0
-		struct rt_pipe_internal *pipe =
-		    (struct rt_pipe_internal *)ip->idb_ptr;
-
-		RT_PIPE_CK_MAGIC(pipe);
-
-		if (es_pipept) {
-		    BU_CKMAG(es_pipept, WDB_PIPESEG_MAGIC, "wdb_pipept");
-
-		    MAT4X3PNT(pos_view, xform, es_pipept->pp_coord);
-		    POINT_LABEL_STR(pos_view, "pt");
-		}
-#endif
-	    }
-
+	case DB5_MINORTYPE_BRLCAD_PIPE:
 	    break;
 	case DB5_MINORTYPE_BRLCAD_PARTICLE: {
 	    struct rt_part_internal *part =
