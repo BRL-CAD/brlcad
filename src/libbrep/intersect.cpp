@@ -2555,7 +2555,6 @@ ON_Intersect(const ON_Surface* surfA,
 	    ON_Intersect(overlaps[i]->m_curve3d, overlaps[j]->m_curve3d, x_event, intersection_tolerance);
 	    count += x_event.Count();
 	    for (int k = 0; k < x_event.Count(); k++) {
-		bu_log("intersections = %d\n", x_event.Count());
 		ON_3dPoint param;
 		ON_ClassArray<ON_PX_EVENT> e1, e2, e3, e4;
 		ON_2dPoint uv;
@@ -2567,7 +2566,6 @@ ON_Intersect(const ON_Surface* surfA,
 			uv = st;
 		    if (surfB->PointAt(st.x, st.y).DistanceTo(x_event[k].m_B[0]) > surfB->PointAt(uv.x, uv.y).DistanceTo(x_event[k].m_B[0]))
 			st = uv;
-		    bu_log("lalaala %lf %lf %lf %lf\n", uv.x, uv.y, st.x, st.y);
 		    // Pull the 3D curve bace to the 2D space
 		    if (ON_Intersect(uv, *(overlaps[i]->m_curveA), e1, intersection_tolerance_A)
 			&& ON_Intersect(st, *(overlaps[i]->m_curveB), e2, intersection_tolerance_B)) {
@@ -2611,9 +2609,6 @@ ON_Intersect(const ON_Surface* surfA,
 		}
 	    }
 	}
-	bu_log("\nparams[%d]=%d: ", i, params[i].Count());
-	for (int j = 0; j < params[i].Count(); j++) bu_log("%lf ", params[i][j].x);
-	if (count != params[i].Count()) {bu_log("count = %d\n", count); x.Empty(); return 0;}
     }
 
     for (int i = 0; i < count_before; i++) {
