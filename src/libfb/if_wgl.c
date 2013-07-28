@@ -541,16 +541,7 @@ MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    WGL(saveifp)->alive = 0;
 	    break;
 	case WM_SIZE:
-	    {
-		/* WIP */
-#if 0
-		if (conf->width == WGL(ifp)->win_width &&
-		    conf->height == WGL(ifp)->win_height)
-		    return;
-
-		wgl_configureWindow(ifp, conf->width, conf->height);
-#endif
-	    }
+	    /* WIP: unimplemented, intentional fall through */
 	default:
 	    return DefWindowProc (hWnd, uMsg, wParam, lParam);
     }
