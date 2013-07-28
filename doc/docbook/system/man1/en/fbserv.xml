@@ -22,6 +22,7 @@
     <group choice='opt'><arg choice='plain'>-n </arg><arg choice='plain'><replaceable>N</replaceable></arg><arg choice='plain'><replaceable>height</replaceable></arg></group>
     <arg choice='opt'>-p <replaceable>port_number</replaceable></arg>
     <arg choice='opt'>-F <replaceable>frame_buffer</replaceable></arg>
+    <arg choice='opt'>-v</arg>
     <arg choice='opt'><replaceable>port_number</replaceable></arg>
     <arg choice='opt'><replaceable>frame_buffer</replaceable></arg>
 </cmdsynopsis>
@@ -39,6 +40,9 @@ option indicates the framebuffer height.
 The
 <option>-w or -W</option>
 option indicates the framebuffer width.
+The
+<option>-v</option>
+option (verbosity) yields more information about the current process.
 The
 <option>-p</option>
 option supplies a port number and the
