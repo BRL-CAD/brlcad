@@ -3378,27 +3378,6 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	}
 	return;
     }
-#if 0
-    /* skeleton models have no solid parts, but Pro/E will not let you recognize skeletons unless you buy the module */
-    status = ProMdlIsSkeleton( model, &is_skeleton );
-    if ( status != PRO_TK_NO_ERROR ) {
-	(void)ProMessageDisplay(MSGFIL, "USER_ERROR", "Failed to determine if model is a skeleton" );
-	ProMessageClear();
-	fprintf( stderr, "Failed to determine if model is a skeleton, error = %d\n", status );
-	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	ProUIDialogDestroy( "proe_brl" );
-	return;
-    }
-
-    if ( is_skeleton ) {
-	(void)ProMessageDisplay(MSGFIL, "USER_SKELETON" );
-	ProMessageClear();
-	fprintf( stderr, "current model is a skeleton, cannot convert skeletons\n" );
-	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	ProUIDialogDestroy( "proe_brl" );
-	return;
-    }
-#endif
     /* get units, and adjust conversion factor */
     if ( prodb_get_model_units( model, LENGTH_UNIT, &unit_subtype,
 				unit_name, &proe_conv ) ) {
