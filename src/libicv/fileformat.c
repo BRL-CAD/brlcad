@@ -353,7 +353,7 @@ pix_load(const char* filename, int width, int height)
     ICV_IMAGE_INIT(bif);
     bif->data = uchar2double(data,size);
     bu_free(data, "pix_load : unsigned char data");
-    bif->magic = ICV_IMAGE_FILE_MAGIC;
+    bif->magic = ICV_IMAGE_MAGIC;
     bif->height = height;
     bif->width = width;
     bif->channels = 3;
@@ -392,7 +392,7 @@ bw_load(const char* filename, int width, int height)
     ICV_IMAGE_INIT(bif);
     bif->data = uchar2double(data,size);
     bu_free(data, "bw_load : unsigned char data");
-    bif->magic = ICV_IMAGE_FILE_MAGIC;
+    bif->magic = ICV_IMAGE_MAGIC;
     bif->height = height;
     bif->width = width;
     bif->channels = 1;
@@ -507,6 +507,7 @@ icv_image_create(int width, int height, ICV_COLOR_SPACE color_space)
     bif->height = height;
     bif->color_space = color_space;
     bif->alpha_channel = 0;
+    bif->magic = ICV_IMAGE_MAGIC;
     switch(color_space) {
 	case ICV_COLOR_SPACE_RGB :
 	/* Add all the other three channel images here (eg. HSV, YCbCr etc.) */

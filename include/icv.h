@@ -106,13 +106,13 @@ typedef struct icv_image icv_image_t;
 /**
  * asserts the integrity of a icv_image_file struct.
  */
-#define ICV_CK_IMAGE(_i) ICV_CKMAG(_i, ICV_IMAGE_FILE_MAGIC, "icv_image")
+#define ICV_CK_IMAGE(_i) ICV_CKMAG(_i, ICV_IMAGE_MAGIC, "icv_image")
 
 /**
  * initializes a icv_image_file struct without allocating any memory.
  */
 #define ICV_IMAGE_INIT(_i) { \
-	    (_i)->magic = ICV_IMAGE_FILE_MAGIC; \
+	    (_i)->magic = ICV_IMAGE_MAGIC; \
 	    (_i)->width = (_i)->height = (_i)->channels = (_i)->alpha_channel = 0; \
 	    (_i)->gamma_corr = 0.0; \
 	    (_i)->data = NULL; \
@@ -122,7 +122,7 @@ typedef struct icv_image icv_image_t;
 /**
  * returns truthfully whether a icv_image_file has been initialized.
  */
-#define ICV_IMAGE_IS_INITIALIZED(_i) (((struct icv_image *)(_i) != ICV_IMAGE_NULL) && LIKELY((_i)->magic == ICV_IMAGE_FILE_MAGIC))
+#define ICV_IMAGE_IS_INITIALIZED(_i) (((struct icv_image *)(_i) != ICV_IMAGE_NULL) && LIKELY((_i)->magic == ICV_IMAGE_MAGIC))
 
 /**
  * Finds the Image format based on heuristics depending on the file name.

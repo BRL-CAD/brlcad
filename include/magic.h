@@ -213,7 +213,7 @@
 #define WDB_METABALLPT_MAGIC		0x6d627074 /**< mbpt */
 #define WDB_PIPESEG_MAGIC		0x9723ffef /**< ?#?? */
 #define WMEMBER_MAGIC			0x43128912 /**< C??? */
-#define ICV_IMAGE_FILE_MAGIC		0x6269666d /**< bifm */
+#define ICV_IMAGE_MAGIC		0x6269666d /**< bifm */
 
 
 #endif /* __MAGIC_H__ */
