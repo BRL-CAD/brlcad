@@ -96,6 +96,7 @@ set(docbook_man1_EN
   g-nff.xml
   g-nmg.xml
   g-obj.xml
+  g-raw.xml
   g-shell-rect.xml
   g-stl.xml
   g-tankill.xml
