@@ -567,10 +567,8 @@ view_pixel(struct application *ap)
 		}
 	    }
 	    if (bif != NULL) {
-		bu_semaphore_acquire(BU_SEM_SYSCALL);
 		/* TODO : Add double type data to maintain resolution */
 		icv_image_writeline(bif, ap->a_y, (unsigned char *)scanline[ap->a_y].sl_buf, ICV_DATA_UCHAR);
-		bu_semaphore_release(BU_SEM_SYSCALL);
 	    } else if (outfp != NULL) {
 		size_t count;
 
