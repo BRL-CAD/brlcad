@@ -465,21 +465,26 @@ icv_image_writeline(icv_image_t *bif, int y, void *data, ICV_DATA type)
 {
     double *dst, *p;
     size_t width_size;
+    int flag=0;
     if (bif == NULL) {
 	bu_log("ERROR: trying to write a line to null bif\n");
 	return -1;
     }
 
-    if (type == ICV_DATA_UCHAR)
+    if (type == ICV_DATA_UCHAR) {
 	p = uchar2double(data, bif->width*bif->channels);
-    else
+	flag= 1;
+    } else
 	p = data;
 
     width_size = (size_t) bif->width*bif->channels;
     dst = bif->data + width_size*y;
 
     memcpy(dst, p, width_size*sizeof(double));
-
+    
+    if(flag)
+        bu_free(p, "icv_image_writeline : double data");
+    
     return 0;
 }
 
