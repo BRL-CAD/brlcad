@@ -122,6 +122,12 @@ int main()
     S1.cdisplay();
 
     pc_free_pcset(&pcs);
+
+    /* NOTE: THE BELOW TESTS ARE VOLATILE.
+     *
+     * This is why they are disabled, kept as an example of PC solving
+     * in use and for development continuation.
+     */
 #if 0
     /** Testing PCSolver Methods */
 
