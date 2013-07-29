@@ -2666,6 +2666,36 @@ ON_Intersect(const ON_Surface* surfA,
     }
 
     for (int i = 0; i < overlaps.Count(); i++) {
+	for (int j = i + 1; j < overlaps.Count(); j++) {
+	    if (!overlaps[i] || !overlaps[i]->m_curve3d || !overlaps[i]->m_curveA || !overlaps[i]->m_curveB || !overlaps[j] || !overlaps[j]->m_curve3d || !overlaps[i]->m_curveA || !overlaps[i]->m_curveB)
+		continue;
+	    // Eliminate duplications.
+	    ON_SimpleArray<ON_X_EVENT> x_event1, x_event2;
+	    if (ON_Intersect(overlaps[i]->m_curveA, overlaps[j]->m_curveA, x_event1, intersection_tolerance_A)
+		&& ON_Intersect(overlaps[i]->m_curveB, overlaps[j]->m_curveB, x_event2, intersection_tolerance_B)) {
+		if (x_event1[0].m_type == ON_X_EVENT::ccx_overlap
+		    && x_event2[0].m_type == ON_X_EVENT::ccx_overlap) {
+		    if (ON_NearZero(x_event1[0].m_a[0] - overlaps[i]->m_curveA->Domain().Min())
+			&& ON_NearZero(x_event1[0].m_a[1] - overlaps[i]->m_curveA->Domain().Max())
+			&& ON_NearZero(x_event2[0].m_b[0] - overlaps[i]->m_curveB->Domain().Min())
+			&& ON_NearZero(x_event2[0].m_b[1] - overlaps[i]->m_curveB->Domain().Max())) {
+			// overlaps[i] is completely inside overlaps[j]
+			delete overlaps[i];
+			overlaps[i] = NULL;
+		    } else if (ON_NearZero(x_event1[0].m_a[0] - overlaps[j]->m_curveA->Domain().Min())
+			       && ON_NearZero(x_event1[0].m_a[1] - overlaps[j]->m_curveA->Domain().Max())
+			       && ON_NearZero(x_event2[0].m_b[0] - overlaps[j]->m_curveB->Domain().Min())
+			       && ON_NearZero(x_event2[0].m_b[1] - overlaps[j]->m_curveB->Domain().Max())) {
+			// overlaps[j] is completely inside overlaps[i]
+			delete overlaps[j];
+			overlaps[j] = NULL;
+		    }
+		}
+	    }
+	}
+    }
+
+    for (int i = 0; i < overlaps.Count(); i++) {
 	if (!overlaps[i] || !overlaps[i]->m_curveA || !overlaps[i]->m_curveB || !overlaps[i]->m_curve3d)
 	    continue;
 
