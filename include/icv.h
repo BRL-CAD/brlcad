@@ -145,6 +145,10 @@ ICV_EXPORT extern icv_image_t* icv_image_create(int width, int height, ICV_COLOR
 
 /**
  * Write an image line to the data of ICV struct. Can handle unsinged char buffers.
+ *
+ * Note : This function require memory allocation for ICV_UCHAR_DATA, which inturn aquires 
+ * BU_SEM_SYSCALL semaphore.   
+ *
  * @param bif ICV struct where data is to be written
  * @param y Index of the line at which data is to be written. 0 for the first line
  * @data Line Data to be written
