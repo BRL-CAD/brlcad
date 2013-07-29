@@ -1,3 +1,7 @@
+BRLCAD_ADDEXEC(test_bundle test_bundle.c "librt" NO_INSTALL LOCAL)
+add_test(test_bundle test_bundle)
+set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES bundle.plot3)
+
 BRLCAD_ADDEXEC(test_dvec test_dvec.cpp "librt" NOSTRICT NO_INSTALL LOCAL)
 add_test(test_dvec test_dvec)
 
