@@ -1679,15 +1679,12 @@ ON_Intersect(const ON_Curve* curveA,
 		    // if the uv rectangle of them intersects, it's consider overlap.
 		    merged = true;
 		    if (overlap[i].m_a[1] > pending[j].m_a[1]) {
-			if (overlap2d)
-			    ptarrayB[j]->Append(ON_3dPoint(pending[j].m_b[2], pending[j].m_b[3], 0.0));
 			pending[j].m_a[1] = overlap[i].m_a[1];
 			pending[j].m_b[2] = overlap[i].m_b[2];
 			pending[j].m_b[3] = overlap[i].m_b[3];
 			pending[j].m_A[1] = overlap[i].m_A[1];
 			pending[j].m_B[1] = overlap[i].m_B[1];
-		    } else if (overlap2d)
-			ptarrayB[j]->Append(ON_3dPoint(overlap[i].m_b[2], overlap[i].m_b[3], 0.0));
+		    }
 		    break;
 		}
 	    }
@@ -2677,9 +2674,9 @@ ON_Intersect(const ON_Surface* surfA,
 		// The i-th curve is close loop, we get a complete boundary of
 		// that overlap region.
 		ON_SSX_EVENT Event;
-		Event.m_curve3d = overlaps[i]->m_curve3d;
-		Event.m_curveA = overlaps[i]->m_curveA;
-		Event.m_curveB = overlaps[i]->m_curveB;
+		Event.m_curve3d = curve_fitting(overlaps[i]->m_curve3d, fitting_tolerance, true);
+		Event.m_curveA = curve_fitting(overlaps[i]->m_curveA, fitting_tolerance_A, true);
+		Event.m_curveB = curve_fitting(overlaps[i]->m_curveB, fitting_tolerance_B, true);
 		Event.m_type = ON_SSX_EVENT::ssx_overlap;
 		// Normalize the curves
 		Event.m_curve3d->SetDomain(ON_Interval(0.0, 1.0));
