@@ -281,11 +281,9 @@ ged_export_polygon(struct ged *gedp, ged_data_polygon_state *gdpsp, size_t polyg
     VSET(view, 0.0, 1.0, 0.0);
     MAT4X3PNT(sketch_ip->v_vec, invRot, view);
 
-#if 0
     /* should already be unit vectors */
     VUNITIZE(sketch_ip->u_vec);
     VUNITIZE(sketch_ip->V_vec);
-#endif
 
     /* Project the origin onto the front of the viewing cube */
     MAT4X3PNT(vorigin, gdpsp->gdps_model2view, gdpsp->gdps_origin);
