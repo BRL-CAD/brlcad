@@ -319,11 +319,9 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 	nu_ncells = rtip->rti_nugrid_dimlimit;
     nu_sol_per_cell = (fromp->bn_len + nu_ncells - 1) / nu_ncells;
     nu_max_ncells = 2*nu_ncells + 8;
-#if 0
-    pseudo_depth = depth+(int)log((double)(nu_ncells*nu_ncells*nu_ncells));
-#else
+
+    /* pseudo_depth = depth+(int)log((double)(nu_ncells*nu_ncells*nu_ncells)); */
     pseudo_depth = depth;
-#endif
 
     if (RT_G_DEBUG&DEBUG_CUT)
 	bu_log(
@@ -648,26 +646,7 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 		       sizeof(struct soltab *));
 
 		if (rtip->rti_nugrid_dimlimit > 0) {
-#if 1
 		    rt_ct_optim(rtip, cutp, pseudo_depth);
-#else
-		    /* Recurse, but only if we're cutting down on
-		       the cellsize. */
-		    if (cutp->bn.bn_len > 5 &&
-			cutp->bn.bn_len < fromp->bn_len>>1) {
-
-			/* Make a little NUGRID node here
-			   to clean things up */
-			union cutter temp;
-
-			temp = *cutp;  /* union copy */
-			cutp->cut_type = CUT_NUGRIDNODE;
-			/* recursive call! */
-			rt_nugrid_cut(&cutp->nugn,
-				      &temp.bn, rtip, 0,
-				      depth+1);
-		    }
-#endif
 		}
 	    }
 	}
