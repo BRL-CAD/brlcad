@@ -2914,13 +2914,6 @@ vo_cmd(ClientData clientData,
 	{"viewDir",		vo_viewDir_tcl},
 	{"vrot",		vo_vrot_tcl},
 	{"zoom",		vo_zoom_tcl},
-#if 0
-	{"knob",		vo_knob_tcl},
-	{"qorot",		vo_qorot_tcl},
-	{"qvrot",		vo_qvrot_tcl},
-	{"status",		vo_status_tcl},
-	{"",			vo__tcl},
-#endif
 	{(char *)0,		(int (*)())0}
     };
 

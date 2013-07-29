@@ -449,14 +449,6 @@ ged_import_polygon(struct ged *gedp, const char *sname)
 	    ++k;
 	}
 
-#if 0
-	if (curr_lsg) {
-	    VJOIN2(gpp->gp_contour[j].gpc_point[k], sketch_ip->V,
-		   sketch_ip->verts[curr_lsg->end][0], sketch_ip->u_vec,
-		   sketch_ip->verts[curr_lsg->end][1], sketch_ip->v_vec);
-	}
-#endif
-
 	/* free contour node */
 	bu_free((genptr_t)curr_cnode, "curr_cnode");
 

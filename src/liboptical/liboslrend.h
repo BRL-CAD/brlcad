@@ -125,15 +125,6 @@ class OSLRenderer {
     SimpleRenderer rend;
     void *handle;
 
-    /* Information about each shader of the renderer */
-#if 0
-    struct OSLShader{
-	std::string name;
-	ShadingAttribStateRef state;
-    };
-    std::vector<OSLShader> shaders;
-#endif
-
     const ClosureColor
 	*ExecuteShaders(ShaderGlobals &globals, RenderInfo *info) const;
 
