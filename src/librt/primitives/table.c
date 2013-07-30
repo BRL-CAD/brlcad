@@ -2000,7 +2000,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
-        NULL,
+	NULL,
     },
 
     {
@@ -2133,7 +2133,7 @@ rt_id_solid(struct bu_external *ep)
 		break;
 	    }
 	    bu_log("rt_id_solid(%s):  String solid type '%s' unknown\n",
-		   rec->ss.ss_name, rec->ss.ss_keyword);
+		    rec->ss.ss_name, rec->ss.ss_keyword);
 	    id = ID_NULL;		/* BAD */
 	    break;
 	case DBID_ARBN:
