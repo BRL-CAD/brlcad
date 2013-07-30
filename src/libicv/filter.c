@@ -275,3 +275,24 @@ icv_image_t* icv_filter3(icv_image_t* old_img, icv_image_t* curr_img, icv_image_
     }
     return 0;
 }
+
+int icv_fade(icv_image_t* img, double fraction)
+{
+    size_t size;
+    double *data;
+
+    size= img->height*img->width*img->channels;
+
+    data = img->data;
+
+    if (fraction<0)
+	bu_exit(1,"Multiplier invalid. Image not Faded.");
+
+    for (;size>0; size--) {
+	*data = *data*fraction;
+	if(*data > 1)
+	    *data= 1.0;
+	data++;
+    }
+    return 0;
+}
