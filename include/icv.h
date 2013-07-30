@@ -360,8 +360,8 @@ ICV_EXPORT extern icv_image_t* icv_filter3(icv_image_t* old_img,
 					       icv_image_t* curr_img,
 					       icv_image_t* new_img,
 					       ICV_FILTER filter_type);
-					       
-					       
+
+
 ICV_EXPORT extern int icv_fade(icv_image_t* img, double fraction);
 
 /** @} */
