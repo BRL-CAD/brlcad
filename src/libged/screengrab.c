@@ -96,8 +96,8 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
 
     /* create image file */
 
-   if ((bif = icv_image_create(width, height, ICV_COLOR_SPACE_RGB)) == NULL) {
-	bu_vls_printf(gedp->ged_result_str, "%s: could not create icv_image_ write structure.", argv[1]);
+   if ((bif = icv_create(width, height, ICV_COLOR_SPACE_RGB)) == NULL) {
+	bu_vls_printf(gedp->ged_result_str, "%s: could not create icv_image write structure.", argv[1]);
 	return GED_ERROR;
     }
 
@@ -108,12 +108,12 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
     for (i = 0; i < height; ++i) {
 	rows[i] = (unsigned char *)(idata + ((height-i-1)*bytes_per_line));
 	/* TODO : Add double type data to maintain resolution */
-	icv_image_writeline(bif, i, rows[i], ICV_DATA_UCHAR);
+	icv_writeline(bif, i, rows[i], ICV_DATA_UCHAR);
     }
 
     if (bif != NULL) {
-	icv_image_save(bif, argv[1], ICV_IMAGE_AUTO);
-	icv_image_free(bif);
+	icv_save(bif, argv[1], ICV_IMAGE_AUTO);
+	icv_free(bif);
 	bif = NULL;
     }
 

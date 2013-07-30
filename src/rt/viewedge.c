@@ -817,7 +817,7 @@ view_eol(struct application *ap)
 	 * Write to a file.
 	 */
 	/* TODO : Add double type data to maintain resolution */
-	icv_image_writeline(bif, ap->a_y, scanline[cpu],  ICV_DATA_UCHAR);
+	icv_writeline(bif, ap->a_y, scanline[cpu],  ICV_DATA_UCHAR);
     }
     if (fbp == FBIO_NULL && outputfile == NULL)
 	bu_log("rtedge: strange, no end of line actions taken.\n");

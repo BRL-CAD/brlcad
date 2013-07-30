@@ -140,7 +140,7 @@ ICV_EXPORT extern int icv_guess_file_format(const char *filename, char *trimmedn
  * created
  * @return Image structure with allocated space and zeroed data array
  */
-ICV_EXPORT extern icv_image_t *icv_image_create(int width, int height, ICV_COLOR_SPACE color_space);
+ICV_EXPORT extern icv_image_t *icv_create(int width, int height, ICV_COLOR_SPACE color_space);
 
 /**
  * Write an image line to the data of ICV struct. Can handle unsigned char buffers.
@@ -154,7 +154,7 @@ ICV_EXPORT extern icv_image_t *icv_image_create(int width, int height, ICV_COLOR
  * @type Type of data, for unsigned char data specify ICV_DATA_UCHAR or 1
  * @return on success 0, on failure -1
  */
-ICV_EXPORT int icv_image_writeline(icv_image_t *bif, int y, void *data, ICV_DATA type);
+ICV_EXPORT int icv_writeline(icv_image_t *bif, int y, void *data, ICV_DATA type);
 
 /**
  * Writes a pixel to the specified coordinates in the data of ICV struct.
@@ -164,7 +164,7 @@ ICV_EXPORT int icv_image_writeline(icv_image_t *bif, int y, void *data, ICV_DATA
  * @data Data to be written
  * @return on success 0, on failure -1
  */
-ICV_EXPORT int icv_image_writepixel(icv_image_t *bif, int x, int y, double *data);
+ICV_EXPORT int icv_writepixel(icv_image_t *bif, int x, int y, double *data);
 
 /**
  * Saves Image to a file of respective format
@@ -173,7 +173,7 @@ ICV_EXPORT int icv_image_writepixel(icv_image_t *bif, int x, int y, double *data
  * @param format Specific format of the file to be saved.
  * @return on success 0, on failure -1 with log messages.
  */
-ICV_EXPORT extern int icv_image_save(icv_image_t *bif, const char*filename, ICV_IMAGE_FORMAT format);
+ICV_EXPORT extern int icv_save(icv_image_t *bif, const char*filename, ICV_IMAGE_FORMAT format);
 
 /**
  * Load a file into an ICV struct. For most formats, this will be called with
@@ -193,19 +193,19 @@ ICV_EXPORT extern int icv_image_save(icv_image_t *bif, const char*filename, ICV_
  * @param hint_depth Default depth field, 0 for default.
  * @return A newly allocated struct holding the loaded image info.
  */
-ICV_EXPORT extern icv_image_t *icv_image_load(const char *filename, int format, int width, int height);
+ICV_EXPORT extern icv_image_t *icv_load(const char *filename, int format, int width, int height);
 
 /**
  * This function zeroes all the data entries of an image
  * @param img Image Structure
  */
-ICV_EXPORT extern icv_image_t *icv_image_zero(icv_image_t *bif);
+ICV_EXPORT extern icv_image_t *icv_zero(icv_image_t *bif);
 
 /**
  * This function frees the allocated memory for a ICV Structure and
  * data.
  */
-ICV_EXPORT extern void icv_image_free(icv_image_t *bif);
+ICV_EXPORT extern void icv_free(icv_image_t *bif);
 
 /** @file libicv/color_space.c
  *
@@ -220,7 +220,7 @@ ICV_EXPORT extern void icv_image_free(icv_image_t *bif);
  * returns a three channel image.
  * If a three channel image is passed, this function returns the same image.
  */
-ICV_EXPORT int icv_image_gray2rgb(icv_image_t *img);
+ICV_EXPORT int icv_gray2rgb(icv_image_t *img);
 
 typedef enum {
     ICV_PIX_NTSC,
@@ -277,7 +277,7 @@ typedef enum {
  *  weights.
  *
  */
-ICV_EXPORT int icv_image_rgb2gray(icv_image_t *img,
+ICV_EXPORT int icv_rgb2gray(icv_image_t *img,
 				  ICV_DEPTH_METHOD method,
 				  ICV_COLOR color,
 				  double rweight,

@@ -241,7 +241,7 @@ pix_save(icv_image_t *bif, const char *filename)
     size_t ret, size;
 
     if (bif->color_space == ICV_COLOR_SPACE_GRAY) {
-	icv_image_gray2rgb(bif);
+	icv_gray2rgb(bif);
     } else if (bif->color_space != ICV_COLOR_SPACE_RGB) {
 	bu_log("pix_save : Color Space conflict");
 	return -1;
@@ -266,7 +266,7 @@ bw_save(icv_image_t *bif, const char *filename)
     size_t ret, size;
 
     if (bif->color_space == ICV_COLOR_SPACE_RGB) {
-	icv_image_rgb2gray(bif, 0, 0, 0, 0, 0);
+	icv_rgb2gray(bif, 0, 0, 0, 0, 0);
     } else if (bif->color_space != ICV_COLOR_SPACE_GRAY) {
 	bu_log("bw_save : Color Space conflict");
 	return -1;
@@ -302,7 +302,7 @@ ppm_save(icv_image_t *bif, const char *filename)
     char buf[BUFSIZ] = {0};
 
     if (bif->color_space == ICV_COLOR_SPACE_GRAY) {
-	icv_image_gray2rgb(bif);
+	icv_gray2rgb(bif);
     } else if (bif->color_space != ICV_COLOR_SPACE_RGB) {
 	bu_log("ppm_save : Color Space conflict");
 	return -1;
@@ -409,7 +409,7 @@ bw_load(const char *filename, int width, int height)
 /* begin public functions */
 
 icv_image_t *
-icv_image_load(const char *filename, int format, int width, int height)
+icv_load(const char *filename, int format, int width, int height)
 {
     if (format == ICV_IMAGE_AUTO) {
 	/* do some voodoo with the file magic or something... */
@@ -422,14 +422,14 @@ icv_image_load(const char *filename, int format, int width, int height)
 	case ICV_IMAGE_BW :
 	    return bw_load(filename, width, height);
 	default:
-	    bu_log("icv_image_load not implemented for this format\n");
+	    bu_log("icv_load not implemented for this format\n");
 	    return NULL;
     }
 }
 
 
 int
-icv_image_save(icv_image_t *bif, const char *filename, ICV_IMAGE_FORMAT format)
+icv_save(icv_image_t *bif, const char *filename, ICV_IMAGE_FORMAT format)
 {
     /* FIXME: should not be introducing fixed size buffers */
     char buf[BUFSIZ] = {0};
@@ -458,7 +458,7 @@ icv_image_save(icv_image_t *bif, const char *filename, ICV_IMAGE_FORMAT format)
 
 
 int
-icv_image_writeline(icv_image_t *bif, int y, void *data, ICV_DATA type)
+icv_writeline(icv_image_t *bif, int y, void *data, ICV_DATA type)
 {
     double *dst, *p;
     size_t width_size;
@@ -480,14 +480,14 @@ icv_image_writeline(icv_image_t *bif, int y, void *data, ICV_DATA type)
     memcpy(dst, p, width_size*sizeof(double));
 
     if (flag)
-	bu_free(p, "icv_image_writeline : double data");
+	bu_free(p, "icv__writeline : double data");
 
     return 0;
 }
 
 
 int
-icv_image_writepixel(icv_image_t *bif, int x, int y, double *data)
+icv_writepixel(icv_image_t *bif, int x, int y, double *data)
 {
     double *dst;
     if (bif == NULL) {
@@ -503,7 +503,7 @@ icv_image_writepixel(icv_image_t *bif, int x, int y, double *data)
 
 
 icv_image_t *
-icv_image_create(int width, int height, ICV_COLOR_SPACE color_space)
+icv_create(int width, int height, ICV_COLOR_SPACE color_space)
 {
     icv_image_t *bif;
     BU_ALLOC(bif, struct icv_image);
@@ -526,12 +526,12 @@ icv_image_create(int width, int height, ICV_COLOR_SPACE color_space)
 	    bu_exit(1, "icv_create_image : Color Space Not Defined");
 	    break;
     }
-    return icv_image_zero(bif);
+    return icv_zero(bif);
 }
 
 
 icv_image_t *
-icv_image_zero(icv_image_t *bif)
+icv_zero(icv_image_t *bif)
 {
     double *data;
     long size, i;
@@ -546,7 +546,7 @@ icv_image_zero(icv_image_t *bif)
 
 
 void
-icv_image_free(icv_image_t *bif)
+icv_free(icv_image_t *bif)
 {
     bu_free(bif->data, "Image Data");
     bu_free(bif, "ICV IMAGE Structure");

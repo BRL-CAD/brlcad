@@ -788,7 +788,7 @@ do_frame(int framenumber)
 	    /* FIXME: in the case of rtxray, this is wrong.  it writes
 	     * out a bw image so depth should be just 1, not 3.
 	     */
-	    bif = icv_image_create(width, height, ICV_COLOR_SPACE_RGB);
+	    bif = icv_create(width, height, ICV_COLOR_SPACE_RGB);
 
 	    if (bif == NULL && (outfp = fopen(framename, "w+b")) == NULL) {
 		perror(framename);
@@ -920,8 +920,8 @@ do_frame(int framenumber)
 	       wallclock, ((double)(rtip->rti_nrays))/wallclock);
     }
     if (bif != NULL) {
-	icv_image_save(bif, framename, ICV_IMAGE_AUTO);
-	icv_image_free(bif);
+	icv_save(bif, framename, ICV_IMAGE_AUTO);
+	icv_free(bif);
 	bif = NULL;
     }
 

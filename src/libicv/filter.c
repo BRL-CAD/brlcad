@@ -240,7 +240,7 @@ icv_image_t *icv_filter3(icv_image_t *old_img, icv_image_t *curr_img, icv_image_
 
     size = old_img->height*old_img->width*old_img->channels;
 
-    out_img = icv_image_create(old_img->width, old_img->height, old_img->color_space);
+    out_img = icv_create(old_img->width, old_img->height, old_img->color_space);
 
     out_data = out_img->data;
 

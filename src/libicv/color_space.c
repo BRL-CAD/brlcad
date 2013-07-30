@@ -33,7 +33,7 @@
 #include "icv.h"
 
 int
-icv_image_gray2rgb(icv_image_t *img)
+icv_gray2rgb(icv_image_t *img)
 {
     double *out_data,*op;
     double *in_data;
@@ -72,7 +72,7 @@ icv_image_gray2rgb(icv_image_t *img)
 }
 
 int
-icv_image_rgb2gray(icv_image_t *img, ICV_DEPTH_METHOD method, ICV_COLOR color, double rweight, double gweight, double bweight)
+icv_rgb2gray(icv_image_t *img, ICV_DEPTH_METHOD method, ICV_COLOR color, double rweight, double gweight, double bweight)
 {
     double *out_data, *in_data;
     size_t in, out, size;
