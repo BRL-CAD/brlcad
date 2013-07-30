@@ -67,18 +67,6 @@ image_flip(unsigned char *buf, int width, int height)
     return 0;
 }
 
-
-/* Save functions use the return value not only for success/failure,
- * but also to note if further action is needed.
- *
- * 0 - failure.
- * 1 - success, no further action needed.
- * 2 - success, close() required on fd.
- *
- * This might be better just using the f* functions instead of
- * mixing...
- */
-
 /*
  * Attempt to guess the file type. Understands ImageMagick style
  * FMT:filename as being preferred, but will attempt to guess based on
