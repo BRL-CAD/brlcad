@@ -156,7 +156,7 @@ db_fullpath_traverse_subtree(union tree *tp,
 			     struct db_i *dbip,
 			     struct rt_wdb *wdbp,
 			     struct db_full_path_list *results,
-			     struct db_node_t *dfp,
+			     struct db_node_t *db_node,
 			     void (*comb_func) (struct db_i *, struct rt_wdb *, struct db_full_path_list *, struct db_node_t *, genptr_t),
 			     void (*leaf_func) (struct db_i *, struct rt_wdb *, struct db_full_path_list *, struct db_node_t *, genptr_t),
 			     struct resource *resp,
@@ -167,7 +167,7 @@ db_fullpath_traverse_subtree(union tree *tp,
     if (!tp)
 	return;
 
-    RT_CK_FULL_PATH(dfp->entry);
+    RT_CK_FULL_PATH(db_node->path);
     RT_CHECK_DBI(dbip);
     RT_CK_TREE(tp);
     RT_CK_RESOURCE(resp);
@@ -178,32 +178,32 @@ db_fullpath_traverse_subtree(union tree *tp,
 	    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
 		return;
 	    } else {
-		db_add_node_to_full_path(dfp->entry, dp);
-		traverse_func(dbip, wdbp, results, dfp, comb_func, leaf_func, resp, client_data);
-		DB_FULL_PATH_POP(dfp->entry);
+		db_add_node_to_full_path(db_node->path, dp);
+		traverse_func(dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
+		DB_FULL_PATH_POP(db_node->path);
 		break;
 	    }
 	case OP_UNION:
-            dfp->bool_type = 2;
-	    db_fullpath_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, dfp, comb_func, leaf_func, resp, client_data);
-            dfp->bool_type = 2;
-	    db_fullpath_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, dfp, comb_func, leaf_func, resp, client_data);
+            db_node->bool_type = 2;
+	    db_fullpath_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
+            db_node->bool_type = 2;
+	    db_fullpath_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
 	    break;
 	case OP_INTERSECT:
-            dfp->bool_type = 2;
-	    db_fullpath_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, dfp, comb_func, leaf_func, resp, client_data);
-            dfp->bool_type = 3;
-	    db_fullpath_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, dfp, comb_func, leaf_func, resp, client_data);
+            db_node->bool_type = 2;
+	    db_fullpath_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
+            db_node->bool_type = 3;
+	    db_fullpath_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
 	    break;
 	case OP_SUBTRACT:
-            dfp->bool_type = 2;
-	    db_fullpath_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, dfp, comb_func, leaf_func, resp, client_data);
-            dfp->bool_type = 4;
-	    db_fullpath_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, dfp, comb_func, leaf_func, resp, client_data);
+            db_node->bool_type = 2;
+	    db_fullpath_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
+            db_node->bool_type = 4;
+	    db_fullpath_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
 	    break;
 	case OP_XOR:
-	    db_fullpath_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, dfp, comb_func, leaf_func, resp, client_data);
-	    db_fullpath_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, dfp, comb_func, leaf_func, resp, client_data);
+	    db_fullpath_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
+	    db_fullpath_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
 	    break;
 	default:
 	    bu_log("db_functree_subtree: unrecognized operator %d\n", tp->tr_op);
@@ -226,7 +226,7 @@ void
 db_fullpath_traverse(struct db_i *dbip,
 		     struct rt_wdb *wdbp,
 		     struct db_full_path_list *results,
-		     struct db_node_t *dfp,
+		     struct db_node_t *db_node,
 		     void (*comb_func) (struct db_i *, struct rt_wdb *, struct db_full_path_list *, struct db_node_t *, genptr_t),
 		     void (*leaf_func) (struct db_i *, struct rt_wdb *, struct db_full_path_list *, struct db_node_t *, genptr_t),
 		     struct resource *resp,
@@ -234,17 +234,17 @@ db_fullpath_traverse(struct db_i *dbip,
 {
     struct directory *dp;
     size_t i;
-    RT_CK_FULL_PATH(dfp->entry);
+    RT_CK_FULL_PATH(db_node->path);
     RT_CK_DBI(dbip);
 
-    dp = DB_FULL_PATH_CUR_DIR(dfp->entry);
+    dp = DB_FULL_PATH_CUR_DIR(db_node->path);
     if (!dp)
 	return;
 
     if (dp->d_flags & RT_DIR_COMB) {
 	/* entering region */
 	if (comb_func)
-	    comb_func(dbip, wdbp, results, dfp, client_data);
+	    comb_func(dbip, wdbp, results, db_node, client_data);
 	if (db_version(dbip) < 5) {
 	    union record *rp;
 	    struct directory *mdp;
@@ -260,9 +260,9 @@ db_fullpath_traverse(struct db_i *dbip,
 				     LOOKUP_QUIET)) == RT_DIR_NULL) {
 		    continue;
 		} else {
-		    db_add_node_to_full_path(dfp->entry, mdp);
-		    db_fullpath_traverse(dbip, wdbp, results, dfp, comb_func, leaf_func, resp, client_data);
-		    DB_FULL_PATH_POP(dfp->entry);
+		    db_add_node_to_full_path(db_node->path, mdp);
+		    db_fullpath_traverse(dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
+		    DB_FULL_PATH_POP(db_node->path);
 		}
 	    }
 	    bu_free((char *)rp, "db_preorder_traverse[]");
@@ -275,7 +275,7 @@ db_fullpath_traverse(struct db_i *dbip,
 
 	    comb = (struct rt_comb_internal *)in.idb_ptr;
 
-	    db_fullpath_traverse_subtree(comb->tree, db_fullpath_traverse, dbip, wdbp, results, dfp, comb_func, leaf_func, resp, client_data);
+	    db_fullpath_traverse_subtree(comb->tree, db_fullpath_traverse, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
 
 	    rt_db_free_internal(&in);
 	}
@@ -283,7 +283,7 @@ db_fullpath_traverse(struct db_i *dbip,
     if (dp->d_flags & RT_DIR_SOLID || dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK) {
 	/* at leaf */
 	if (leaf_func)
-	    leaf_func(dbip, wdbp, results, dfp, client_data);
+	    leaf_func(dbip, wdbp, results, db_node, client_data);
     }
 }
 
@@ -306,12 +306,12 @@ palloc(enum db_search_ntype t, int (*f)(struct db_plan_t *, struct db_node_t *, 
  * True if expression is true.
  */
 HIDDEN int
-f_expr(struct db_plan_t *plan, struct db_node_t *entry, struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results)
+f_expr(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results)
 {
     struct db_plan_t *p = NULL;
     int state = 0;
 
-    for (p = plan->p_data[0]; p && (state = (p->eval)(p, entry, dbip, wdbp, results)); p = p->next)
+    for (p = plan->p_data[0]; p && (state = (p->eval)(p, db_node, dbip, wdbp, results)); p = p->next)
 	; /* do nothing */
 
     return state;
@@ -345,12 +345,12 @@ c_closeparen(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), 
  * Negation of a primary; the unary NOT operator.
  */
 HIDDEN int
-f_not(struct db_plan_t *plan, struct db_node_t *entry, struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results)
+f_not(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results)
 {
     struct db_plan_t *p = NULL;
     int state = 0;
 
-    for (p = plan->p_data[0]; p && (state = (p->eval)(p, entry, dbip, wdbp, results)); p = p->next)
+    for (p = plan->p_data[0]; p && (state = (p->eval)(p, db_node, dbip, wdbp, results)); p = p->next)
 	; /* do nothing */
 
     return !state;
@@ -366,12 +366,12 @@ c_not(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct 
 
 
 HIDDEN int
-find_execute_nested_plans(struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results, struct db_node_t *entry, genptr_t inputplan) {
+find_execute_nested_plans(struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results, struct db_node_t *db_node, genptr_t inputplan) {
     struct db_plan_t *p = NULL;
     struct db_plan_t *plan = (struct db_plan_t *)inputplan;
     int state = 0;
 
-    for (p = plan; p && (state = (p->eval)(p, entry, dbip, wdbp, results)); p = p->next)
+    for (p = plan; p && (state = (p->eval)(p, db_node, dbip, wdbp, results)); p = p->next)
 	; /* do nothing */
 
     return state;
@@ -387,15 +387,15 @@ find_execute_nested_plans(struct db_i *dbip, struct rt_wdb *wdbp, struct db_full
  * objects at any level above the current object depth.
  */
 HIDDEN int
-f_above(struct db_plan_t *plan, struct db_node_t *entry, struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results)
+f_above(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results)
 {
     int state = 0;
     struct db_node_t curr_node;
     struct db_full_path abovepath;
     db_full_path_init(&abovepath);
-    db_dup_full_path(&abovepath, entry->entry);
+    db_dup_full_path(&abovepath, db_node->path);
     DB_FULL_PATH_POP(&abovepath);
-    curr_node.entry = &abovepath;
+    curr_node.path = &abovepath;
     while ((abovepath.fp_len > 0) && (state == 0)) {
 	state = find_execute_nested_plans(dbip, wdbp, results, &curr_node, plan->ab_data[0]);
 	DB_FULL_PATH_POP(&abovepath);
@@ -428,7 +428,7 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
 							    struct resource *,
 							    genptr_t),
 				      struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results,
-				      struct db_node_t *dfp,
+				      struct db_node_t *db_node,
 				      int (*comb_func) (struct db_i *, struct rt_wdb *, struct db_full_path_list *, struct db_node_t *, genptr_t),
 				      int (*leaf_func) (struct db_i *, struct rt_wdb *, struct db_full_path_list *, struct db_node_t *, genptr_t),
 				      struct resource *resp,
@@ -439,7 +439,7 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
     if (!tp)
 	return 0;
 
-    RT_CK_FULL_PATH(dfp->entry);
+    RT_CK_FULL_PATH(db_node->path);
     RT_CHECK_DBI(dbip);
     RT_CK_TREE(tp);
     RT_CK_RESOURCE(resp);
@@ -450,9 +450,9 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
 	    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
 		return 0;
 	    } else {
-		db_add_node_to_full_path(dfp->entry, dp);
-		state = traverse_func(dbip, wdbp, results, dfp, comb_func, leaf_func, resp, client_data);
-		DB_FULL_PATH_POP(dfp->entry);
+		db_add_node_to_full_path(db_node->path, dp);
+		state = traverse_func(dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
+		DB_FULL_PATH_POP(db_node->path);
 		if (state == 1) {
 		    return 1;
 		} else {
@@ -461,11 +461,11 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
 	    }
 	    break;
 	case OP_UNION:
-            dfp->bool_type = 2;
-	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, dfp, comb_func, leaf_func, resp, client_data);
+            db_node->bool_type = 2;
+	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
 	    if (state == 1) return 1;
-            dfp->bool_type = 2;
-	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, dfp, comb_func, leaf_func, resp, client_data);
+            db_node->bool_type = 2;
+	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
 	    if (state == 1) {
 		return 1;
 	    } else {
@@ -474,11 +474,11 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
 	    break;
 
 	case OP_INTERSECT:
-            dfp->bool_type = 2;
-	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, dfp, comb_func, leaf_func, resp, client_data);
+            db_node->bool_type = 2;
+	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
 	    if (state == 1) return 1;
-            dfp->bool_type = 3;
-	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, dfp, comb_func, leaf_func, resp, client_data);
+            db_node->bool_type = 3;
+	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
 	    if (state == 1) {
 		return 1;
 	    } else {
@@ -487,11 +487,11 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
 	    break;
 
 	case OP_SUBTRACT:
-            dfp->bool_type = 2;
-	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, dfp, comb_func, leaf_func, resp, client_data);
+            db_node->bool_type = 2;
+	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
 	    if (state == 1) return 1;
-            dfp->bool_type = 4;
-	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, dfp, comb_func, leaf_func, resp, client_data);
+            db_node->bool_type = 4;
+	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
 	    if (state == 1) {
 		return 1;
 	    } else {
@@ -500,9 +500,9 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
 	    break;
 
 	case OP_XOR:
-	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, dfp, comb_func, leaf_func, resp, client_data);
+	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
 	    if (state == 1) return 1;
-	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, dfp, comb_func, leaf_func, resp, client_data);
+	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
 	    if (state == 1) {
 		return 1;
 	    } else {
@@ -534,7 +534,7 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
  */
 HIDDEN int
 db_fullpath_stateful_traverse(struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results,
-			      struct db_node_t *dfp,
+			      struct db_node_t *db_node,
 			      int (*comb_func) (struct db_i *, struct rt_wdb *, struct db_full_path_list *, struct db_node_t *, genptr_t),
 			      int (*leaf_func) (struct db_i *, struct rt_wdb *, struct db_full_path_list *, struct db_node_t *, genptr_t),
 			      struct resource *resp,
@@ -543,17 +543,17 @@ db_fullpath_stateful_traverse(struct db_i *dbip, struct rt_wdb *wdbp, struct db_
     struct directory *dp;
     size_t i;
     int state = 0;
-    RT_CK_FULL_PATH(dfp->entry);
+    RT_CK_FULL_PATH(db_node->path);
     RT_CK_DBI(dbip);
 
-    dp = DB_FULL_PATH_CUR_DIR(dfp->entry);
+    dp = DB_FULL_PATH_CUR_DIR(db_node->path);
     if (!dp)
 	return 0;
 
     if (dp->d_flags & RT_DIR_COMB) {
 	/* entering region */
 	if (comb_func)
-	    if (comb_func(dbip, wdbp, results, dfp, client_data)) return 1;
+	    if (comb_func(dbip, wdbp, results, db_node, client_data)) return 1;
 	if (db_version(dbip) < 5) {
 	    union record *rp;
 	    struct directory *mdp;
@@ -569,9 +569,9 @@ db_fullpath_stateful_traverse(struct db_i *dbip, struct rt_wdb *wdbp, struct db_
 				     LOOKUP_QUIET)) == RT_DIR_NULL) {
 		    continue;
 		} else {
-		    db_add_node_to_full_path(dfp->entry, mdp);
-		    state = db_fullpath_stateful_traverse(dbip, wdbp, results, dfp, comb_func, leaf_func, resp, client_data);
-		    DB_FULL_PATH_POP(dfp->entry);
+		    db_add_node_to_full_path(db_node->path, mdp);
+		    state = db_fullpath_stateful_traverse(dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
+		    DB_FULL_PATH_POP(db_node->path);
 		    if (state == 1) {
 			return 1;
 		    } else {
@@ -589,7 +589,7 @@ db_fullpath_stateful_traverse(struct db_i *dbip, struct rt_wdb *wdbp, struct db_
 
 	    comb = (struct rt_comb_internal *)in.idb_ptr;
 
-	    state = db_fullpath_stateful_traverse_subtree(comb->tree, db_fullpath_stateful_traverse, dbip, wdbp, results, dfp, comb_func, leaf_func, resp, client_data);
+	    state = db_fullpath_stateful_traverse_subtree(comb->tree, db_fullpath_stateful_traverse, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
 
 	    rt_db_free_internal(&in);
 	    if (state == 1) {
@@ -602,7 +602,7 @@ db_fullpath_stateful_traverse(struct db_i *dbip, struct rt_wdb *wdbp, struct db_
     if (dp->d_flags & RT_DIR_SOLID || dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK) {
 	/* at leaf */
 	if (leaf_func) {
-	    if (leaf_func(dbip, wdbp, results, dfp, client_data)) {
+	    if (leaf_func(dbip, wdbp, results, db_node, client_data)) {
 		return 1;
 	    } else {
 		return 0;
@@ -621,7 +621,7 @@ db_fullpath_stateful_traverse(struct db_i *dbip, struct rt_wdb *wdbp, struct db_
  * below the current object in the tree.
  */
 HIDDEN int
-f_below(struct db_plan_t *plan, struct db_node_t *entry, struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results)
+f_below(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results)
 {
     struct db_node_t curr_node;
     struct db_full_path belowpath;
@@ -631,9 +631,9 @@ f_below(struct db_plan_t *plan, struct db_node_t *entry, struct db_i *dbip, stru
     int state = 0;
 
     db_full_path_init(&belowpath);
-    db_dup_full_path(&belowpath, entry->entry);
+    db_dup_full_path(&belowpath, db_node->path);
 
-    dp = DB_FULL_PATH_CUR_DIR(entry->entry);
+    dp = DB_FULL_PATH_CUR_DIR(db_node->path);
     if (!dp)
 	return 0;
 
@@ -643,7 +643,7 @@ f_below(struct db_plan_t *plan, struct db_node_t *entry, struct db_i *dbip, stru
 
 	comb = (struct rt_comb_internal *)in.idb_ptr;
         
-        curr_node.entry = &belowpath;
+        curr_node.path = &belowpath;
 	state = db_fullpath_stateful_traverse_subtree(comb->tree, db_fullpath_stateful_traverse, dbip, wdbp, results, &curr_node, find_execute_nested_plans, find_execute_nested_plans, wdbp->wdb_resp, plan->bl_data[0]);
 
 	rt_db_free_internal(&in);
@@ -673,18 +673,18 @@ c_below(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struc
  * not evaluated if the first expression is true.
  */
 HIDDEN int
-f_or(struct db_plan_t *plan, struct db_node_t *entry, struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results)
+f_or(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results)
 {
     struct db_plan_t *p = NULL;
     int state = 0;
 
-    for (p = plan->p_data[0]; p && (state = (p->eval)(p, entry, dbip, wdbp, results)); p = p->next)
+    for (p = plan->p_data[0]; p && (state = (p->eval)(p, db_node, dbip, wdbp, results)); p = p->next)
 	; /* do nothing */
 
     if (state)
 	return 1;
 
-    for (p = plan->p_data[1]; p && (state = (p->eval)(p, entry, dbip, wdbp, results)); p = p->next)
+    for (p = plan->p_data[1]; p && (state = (p->eval)(p, db_node, dbip, wdbp, results)); p = p->next)
 	; /* do nothing */
 
     return state;
@@ -706,10 +706,10 @@ c_or(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct d
  * matches pattern using Pattern Matching Notation S3.14
  */
 HIDDEN int
-f_name(struct db_plan_t *plan, struct db_node_t *entry, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
+f_name(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
 {
     struct directory *dp;
-    dp = DB_FULL_PATH_CUR_DIR(entry->entry);
+    dp = DB_FULL_PATH_CUR_DIR(db_node->path);
     if (!dp)
 	return 0;
     return !bu_fnmatch(plan->c_data, dp->d_namep, 0);
@@ -735,10 +735,10 @@ c_name(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
  * matches pattern using case insensitive Pattern Matching Notation S3.14
  */
 HIDDEN int
-f_iname(struct db_plan_t *plan, struct db_node_t *entry, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
+f_iname(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
 {
     struct directory *dp;
-    dp = DB_FULL_PATH_CUR_DIR(entry->entry);
+    dp = DB_FULL_PATH_CUR_DIR(db_node->path);
     if (!dp)
 	return 0;
     return !bu_fnmatch(plan->c_data, dp->d_namep, BU_FNMATCH_CASEFOLD);
@@ -765,9 +765,9 @@ c_iname(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pl
  * For -iregex, regexp is a case-insensitive (basic) regular expression.
  */
 HIDDEN int
-f_regex(struct db_plan_t *plan, struct db_node_t *entry, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
+f_regex(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
 {
-    return !(regexec(&plan->regexp_data, db_path_to_string(entry->entry), 0, NULL, 0));
+    return !(regexec(&plan->regexp_data, db_path_to_string(db_node->path), 0, NULL, 0));
 }
 
 
@@ -817,7 +817,7 @@ c_iregex(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_p
  * supplied to the attr option
  */
 HIDDEN int
-f_attr(struct db_plan_t *plan, struct db_node_t *entry, struct db_i *dbip, struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
+f_attr(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
 {
     struct bu_vls attribname = BU_VLS_INIT_ZERO;
     struct bu_vls value = BU_VLS_INIT_ZERO;
@@ -880,7 +880,7 @@ f_attr(struct db_plan_t *plan, struct db_node_t *entry, struct db_i *dbip, struc
     /* Get attributes for object.
      */
 
-    dp = DB_FULL_PATH_CUR_DIR(entry->entry);
+    dp = DB_FULL_PATH_CUR_DIR(db_node->path);
     if (!dp)
 	return 0;
 
@@ -1075,7 +1075,7 @@ c_attr(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
  * associated with an object.
  */
 HIDDEN int
-f_stdattr(struct db_plan_t *UNUSED(plan), struct db_node_t *entry, struct db_i *dbip, struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
+f_stdattr(struct db_plan_t *UNUSED(plan), struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
 {
     struct bu_attribute_value_pair *avpp;
     struct bu_attribute_value_set avs;
@@ -1090,7 +1090,7 @@ f_stdattr(struct db_plan_t *UNUSED(plan), struct db_node_t *entry, struct db_i *
      * return failure, otherwise success.
      */
 
-    dp = DB_FULL_PATH_CUR_DIR(entry->entry);
+    dp = DB_FULL_PATH_CUR_DIR(db_node->path);
     if (!dp)
 	return 0;
 
@@ -1144,14 +1144,14 @@ c_stdattr(char *UNUSED(pattern), char ***UNUSED(ignored), int UNUSED(unused), st
  * region.
  */
 HIDDEN int
-f_type(struct db_plan_t *plan, struct db_node_t *entry, struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *UNUSED(results))
+f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *UNUSED(results))
 {
     struct rt_db_internal intern;
     struct directory *dp;
     int type_match = 0;
     int type;
 
-    dp = DB_FULL_PATH_CUR_DIR(entry->entry);
+    dp = DB_FULL_PATH_CUR_DIR(db_node->path);
     if (!dp)
 	return 0;
 
@@ -1318,10 +1318,10 @@ c_type(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
  *
  */
 HIDDEN int
-f_bool(struct db_plan_t *plan, struct db_node_t *entry, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
+f_bool(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
 {
    int bool_match = 0;
-   if (plan->bool_data == entry->bool_type) bool_match = 1;
+   if (plan->bool_data == db_node->bool_type) bool_match = 1;
    return bool_match;
 }
 
@@ -1349,12 +1349,12 @@ c_bool(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
  *
  */
 HIDDEN int
-f_maxdepth(struct db_plan_t *plan, struct db_node_t *entry, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
+f_maxdepth(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
 {
     struct db_full_path depthtest;
     int depthcount = -1;
     db_full_path_init(&depthtest);
-    db_dup_full_path(&depthtest, entry->entry);
+    db_dup_full_path(&depthtest, db_node->path);
     while (depthtest.fp_len > 0) {
 	depthcount++;
 	DB_FULL_PATH_POP(&depthtest);
@@ -1384,12 +1384,12 @@ c_maxdepth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db
  *
  */
 HIDDEN int
-f_mindepth(struct db_plan_t *plan, struct db_node_t *entry, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
+f_mindepth(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
 {
     struct db_full_path depthtest;
     int depthcount = -1;
     db_full_path_init(&depthtest);
-    db_dup_full_path(&depthtest, entry->entry);
+    db_dup_full_path(&depthtest, db_node->path);
     while (depthtest.fp_len > 0) {
 	depthcount++;
 	DB_FULL_PATH_POP(&depthtest);
@@ -1422,7 +1422,7 @@ c_mindepth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db
  *
  */
 HIDDEN int
-f_nnodes(struct db_plan_t *plan, struct db_node_t *entry, struct db_i *dbip, struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
+f_nnodes(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
 {
     int dogreaterthan = 0;
     int dolessthan = 0;
@@ -1469,7 +1469,7 @@ f_nnodes(struct db_plan_t *plan, struct db_node_t *entry, struct db_i *dbip, str
      * argument string.
      */
 
-    dp = DB_FULL_PATH_CUR_DIR(entry->entry);
+    dp = DB_FULL_PATH_CUR_DIR(db_node->path);
     if (!dp)
 	return 0;
 
@@ -1525,9 +1525,9 @@ c_nnodes(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_p
  * with this option.
  */
 HIDDEN int
-f_path(struct db_plan_t *plan, struct db_node_t *entry, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
+f_path(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
 {
-    return !bu_fnmatch(plan->path_data, db_path_to_string(entry->entry), 0);
+    return !bu_fnmatch(plan->path_data, db_path_to_string(db_node->path), 0);
 }
 
 
@@ -1550,7 +1550,7 @@ c_path(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
  * list.
  */
 HIDDEN int
-f_print(struct db_plan_t *UNUSED(plan), struct db_node_t *entry, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *results)
+f_print(struct db_plan_t *UNUSED(plan), struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *results)
 {
     struct db_full_path_list *new_entry;
 
@@ -1558,7 +1558,7 @@ f_print(struct db_plan_t *UNUSED(plan), struct db_node_t *entry, struct db_i *UN
     BU_ALLOC(new_entry->path, struct db_full_path);
 
     db_full_path_init(new_entry->path);
-    db_dup_full_path(new_entry->path, (const struct db_full_path *)(entry->entry));
+    db_dup_full_path(new_entry->path, (const struct db_full_path *)(db_node->path));
     BU_LIST_PUSH(&(results->l), &(new_entry->l));
     return 1;
 }
@@ -2096,10 +2096,10 @@ db_search_formplan(char **argv, struct db_i *dbip, struct rt_wdb *wdbp) {
 
 
 HIDDEN void
-find_execute_plans(struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results, struct db_node_t *dfp, genptr_t inputplan) {
+find_execute_plans(struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results, struct db_node_t *db_node, genptr_t inputplan) {
     struct db_plan_t *p;
     struct db_plan_t *plan = (struct db_plan_t *)inputplan;
-    for (p = plan; p && (p->eval)(p, dfp, dbip, wdbp, results); p = p->next)
+    for (p = plan; p && (p->eval)(p, db_node, dbip, wdbp, results); p = p->next)
 	;
 
 }
@@ -2155,7 +2155,7 @@ db_search_full_paths(void *searchplan,        /* search plan */
     }
     for (BU_LIST_FOR(currentpath, db_full_path_list, &(pathnames->l))) {
         struct db_node_t curr_node;
-	curr_node.entry = currentpath->path; 
+	curr_node.path = currentpath->path; 
         curr_node.bool_type = 2; /* by convention, the top level node is "unioned" into the global database */
 	db_fullpath_traverse(dbip, wdbp, searchresults, &curr_node, find_execute_plans, find_execute_plans, wdbp->wdb_resp, (struct db_plan_t *)searchplan);
     }
