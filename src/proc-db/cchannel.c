@@ -66,7 +66,7 @@ usage(char *s)
 static void
 parseArgs(int argc, char **argv, const char* options, struct channel *parameters)
 {
-    char c;
+    int c;
     while ((c=bu_getopt(argc, argv, options)) != -1) {
 	switch (c) {
 	    case('l'):
