@@ -140,7 +140,7 @@ ICV_EXPORT extern int icv_guess_file_format(const char *filename, char *trimmedn
  * created
  * @return Image structure with allocated space and zeroed data array
  */
-ICV_EXPORT extern icv_image_t* icv_image_create(int width, int height, ICV_COLOR_SPACE color_space);
+ICV_EXPORT extern icv_image_t *icv_image_create(int width, int height, ICV_COLOR_SPACE color_space);
 
 /**
  * Write an image line to the data of ICV struct. Can handle unsigned char buffers.
@@ -173,7 +173,7 @@ ICV_EXPORT int icv_image_writepixel(icv_image_t *bif, int x, int y, double *data
  * @param format Specific format of the file to be saved.
  * @return on success 0, on failure -1 with log messages.
  */
-ICV_EXPORT extern int icv_image_save(icv_image_t* bif, const char*filename, ICV_IMAGE_FORMAT format);
+ICV_EXPORT extern int icv_image_save(icv_image_t *bif, const char*filename, ICV_IMAGE_FORMAT format);
 
 /**
  * Load a file into an ICV struct. For most formats, this will be called with
@@ -193,19 +193,19 @@ ICV_EXPORT extern int icv_image_save(icv_image_t* bif, const char*filename, ICV_
  * @param hint_depth Default depth field, 0 for default.
  * @return A newly allocated struct holding the loaded image info.
  */
-ICV_EXPORT extern icv_image_t* icv_image_load(const char *filename, int format, int width, int height);
+ICV_EXPORT extern icv_image_t *icv_image_load(const char *filename, int format, int width, int height);
 
 /**
  * This function zeroes all the data entries of an image
  * @param img Image Structure
  */
-ICV_EXPORT extern icv_image_t* icv_image_zero(icv_image_t* bif);
+ICV_EXPORT extern icv_image_t *icv_image_zero(icv_image_t *bif);
 
 /**
  * This function frees the allocated memory for a ICV Structure and
  * data.
  */
-ICV_EXPORT extern void icv_image_free(icv_image_t* bif);
+ICV_EXPORT extern void icv_image_free(icv_image_t *bif);
 
 /** @file libicv/color_space.c
  *
@@ -227,7 +227,7 @@ typedef enum {
     ICV_PIX_CRT,
     ICV_PIX_SET_EQUAL,
     ICV_PIX_SELECT_CHANNEL
-}ICV_DEPTH_METHOD;
+} ICV_DEPTH_METHOD;
 
 typedef enum {
     ICV_COLOR_RGB,
@@ -237,7 +237,7 @@ typedef enum {
     ICV_COLOR_RG,
     ICV_COLOR_RB,
     ICV_COLOR_BG
-}ICV_COLOR;
+} ICV_COLOR;
 
 /**
  * converts a three plane image to single plane image.
@@ -352,7 +352,7 @@ typedef enum {
     ICV_FILTER_3_BOXCAR_AVERAGE,
     ICV_FILTER_3_ANIMATION_SMEAR,
     ICV_FILTER_3_NULL
-}ICV_FILTER;
+} ICV_FILTER;
 
 /**
  * Filters an image with the specified filter type. Basically convolves
@@ -363,7 +363,7 @@ typedef enum {
  * @param filter_type Type of filter to be used.
  *
  */
-ICV_EXPORT extern int icv_filter(icv_image_t* img, ICV_FILTER filter_type);
+ICV_EXPORT extern int icv_filter(icv_image_t *img, ICV_FILTER filter_type);
 
 /**
  * Filters a set of three image with the specified filter type.
@@ -374,9 +374,9 @@ ICV_EXPORT extern int icv_filter(icv_image_t* img, ICV_FILTER filter_type);
  * @return Resultant image.
  *
  */
-ICV_EXPORT extern icv_image_t* icv_filter3(icv_image_t* old_img,
-					       icv_image_t* curr_img,
-					       icv_image_t* new_img,
+ICV_EXPORT extern icv_image_t *icv_filter3(icv_image_t *old_img,
+					       icv_image_t *curr_img,
+					       icv_image_t *new_img,
 					       ICV_FILTER filter_type);
 
 /**
@@ -388,7 +388,7 @@ ICV_EXPORT extern icv_image_t* icv_filter3(icv_image_t* old_img,
  * @param fraction should be between 0 to 1. Amount by which the image
  * is needed to faded.
  */
-ICV_EXPORT extern int icv_fade(icv_image_t* img, double fraction);
+ICV_EXPORT extern int icv_fade(icv_image_t *img, double fraction);
 
 /** @} */
 /* end image utilities */
