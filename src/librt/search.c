@@ -2156,6 +2156,7 @@ db_search_full_paths(void *searchplan,        /* search plan */
     for (BU_LIST_FOR(currentpath, db_full_path_list, &(pathnames->l))) {
         struct db_node_t curr_node;
 	curr_node.entry = currentpath->path; 
+        curr_node.bool_type = 2; /* by convention, the top level node is "unioned" into the global database */
 	db_fullpath_traverse(dbip, wdbp, searchresults, &curr_node, find_execute_plans, find_execute_plans, wdbp->wdb_resp, (struct db_plan_t *)searchplan);
     }
     return searchresults;
