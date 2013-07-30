@@ -354,8 +354,26 @@ typedef enum {
     ICV_FILTER_3_NULL
 }ICV_FILTER;
 
+/**
+ * Filters an image with the specified filter type. Basically convolves
+ * kernel with the image.
+ * Does zero_padding for outbound pixels.
+ *
+ * @param img Image to be filtered.
+ * @param filter_type Type of filter to be used.
+ *
+ */
 ICV_EXPORT extern int icv_filter(icv_image_t* img, ICV_FILTER filter_type);
 
+/**
+ * Filters a set of three image with the specified filter type.
+ * Does zero_padding for outbound pixels.
+ * Finds the resultant pixel with the help of neighbouring pixels in
+ * all the three images.
+ *
+ * @return Resultant image.
+ *
+ */
 ICV_EXPORT extern icv_image_t* icv_filter3(icv_image_t* old_img,
 					       icv_image_t* curr_img,
 					       icv_image_t* new_img,
