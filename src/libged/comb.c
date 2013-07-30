@@ -189,6 +189,39 @@ _ged_wrap_comb(struct ged *gedp, struct directory *dp) {
     return GED_OK;
 }
 
+
+/* Approach - define a search string that searches for all solid objects
+ * in the tree, and returns the bu_ptbl list of unique solids.  Do the
+ * same for combs.  
+ *
+ * Need to make sure that all objects in the tree are unioned in - 
+ * it's not clear what it would mean to at the moment "flatten" a 
+ * tree with intersections or subtractions.  
+ * Once boolean evaluations are ready, we could probably
+ * evaluate such objects to get a single representation that can be unioned
+ * into a flat tree...
+ *
+ * Clear the tree of the comb, and add all the solids in the bu_ptbl.
+ *
+ * Because it's a hard flatten, kill all the comb trees in the comb
+ * list.  For a "soft" kill, a third search is needed for all objects
+ * outside the comb tree - hopefully, that bu_ptbl can then be searched
+ * for the candidate deletion pointers and only those *not* found will
+ * be deleted - i.e only delete objects uniquely in this comb tree.
+ *
+ * bu_ptbl_locate is how to check for a given pointer in the table - -1 returned if not found
+ */
+/*
+int
+_ged_flatten_comb(struct ged *gedp, struct directory *dp) {
+}
+
+int
+_ged_hard_flatten_comb(struct ged *gedp, struct directory *dp) {
+
+}
+*/
+
 int
 ged_comb(struct ged *gedp, int argc, const char *argv[])
 {
@@ -201,7 +234,9 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
     int set_comb = 0;
     int standard_comb_build = 1;
     int wrap_comb = 0;
-    static const char *usage = "[-c/-r] [-w] comb_name [<operation object>]";
+    int flatten_comb = 0;
+    int alter_existing = 1;
+    static const char *usage = "[-c/-r] [-w/-f] [-S] comb_name [<operation object>]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -227,7 +262,7 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 
     bu_optind = 1;
     /* Grab any arguments off of the argv list */
-    while ((c = bu_getopt(argc, (char **)argv, "crw")) != -1) {
+    while ((c = bu_getopt(argc, (char **)argv, "crwfS")) != -1) {
         switch (c) {
             case 'c' :
                 set_comb = 1;
@@ -238,6 +273,13 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 	    case 'w' :
 		wrap_comb = 1;
 		standard_comb_build = 0;
+		break;
+	    case 'f' :
+		flatten_comb = 1;
+		standard_comb_build = 0;
+		break;
+            case 'S' :
+		alter_existing = 0;
 		break;
 	    default :
                 break;
@@ -252,7 +294,7 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (wrap_comb && argc != 2) {
+    if ((wrap_comb || flatten_comb) && argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -264,6 +306,9 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "ERROR: %s is not a combination", comb_name);
 	    return GED_ERROR;
 	}
+        if ((dp != RT_DIR_NULL) && !alter_existing) {
+	    bu_vls_printf(gedp->ged_result_str, "ERROR: %s already exists.", comb_name);
+        }
     }
 
     /* If we aren't performing one of the option operations,
@@ -310,6 +355,7 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
+    /* Handle the -w option for "wrapping" the contents of the comb */
     if (wrap_comb) {
 	if (!dp || dp == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "Combination '%s does not exist.\n", comb_name);
@@ -324,6 +370,23 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
     }
+
+    if (flatten_comb) {
+	if (!dp || dp == RT_DIR_NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "Combination '%s does not exist.\n", comb_name);
+	    return GED_ERROR;
+	}
+/*	if (_ged_hard_flatten_comb(gedp, dp) == GED_ERROR) {
+	    return GED_ERROR;
+	} else {
+	    if ((dp=db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
+		bu_vls_printf(gedp->ged_result_str, "ERROR: flattening of %s failed", comb_name);
+		return GED_ERROR;
+	    }
+	}
+*/
+    }
+
     /* Make sure the region flag is set appropriately */
     if (set_comb || set_region) {
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_NOISY)) != RT_DIR_NULL) {
