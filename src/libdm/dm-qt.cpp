@@ -1,4 +1,4 @@
-/*                       D M - Q T . C
+/*                       D M - Q T . C P P
  * BRL-CAD
  *
  * Copyright (c) 2013 United States Government as represented by
@@ -36,7 +36,6 @@
 #include "tcl.h"
 #include "tk.h"
 #include "bu.h"
-#include "vmath.h"
 #include "dm.h"
 #include "dm_xvars.h"
 
@@ -111,9 +110,13 @@ qt_normal(struct dm *UNUSED(dmp))
 
 
 HIDDEN int
-qt_loadMatrix(struct dm *UNUSED(dmp), fastf_t *UNUSED(mat), int UNUSED(which_eye))
+qt_loadMatrix(struct dm *dmp, fastf_t *mat, int UNUSED(which_eye))
 {
-    bu_log("qt_loadMatrix not implemented\n");
+    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+
+    MAT_COPY(privars->qmat, mat);
+
+    bu_log("qt_loadMatrix called\n");
     return 0;
 }
 
@@ -375,10 +378,17 @@ qt_configureWin(struct dm *dmp, int force)
 
 
 HIDDEN int
-qt_setWinBounds(struct dm *UNUSED(dmp), fastf_t *UNUSED(w))
+qt_setWinBounds(struct dm *dmp, fastf_t *w)
 {
-    bu_log("qt_setWinBounds not implemented\n");
-    return 0;
+    dmp->dm_clipmin[0] = w[0];
+    dmp->dm_clipmin[1] = w[2];
+    dmp->dm_clipmin[2] = w[4];
+    dmp->dm_clipmax[0] = w[1];
+    dmp->dm_clipmax[1] = w[3];
+    dmp->dm_clipmax[2] = w[5];
+
+    bu_log("qt_setWinBounds called\n");
+    return TCL_OK;
 }
 
 
@@ -780,6 +790,8 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
     privars->painter = NULL;
     qt_setFGColor(dmp, 1, 0, 0, 0, 0);
     qt_setBGColor(dmp, 0, 0, 0);
+
+    MAT_IDN(privars->qmat);
 
     bu_log("qt_open called\n");
     return dmp;

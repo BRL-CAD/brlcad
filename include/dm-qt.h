@@ -26,6 +26,8 @@
 #ifndef __DM_QT__
 #define __DM_QT__
 
+#include "vmath.h"
+
 #ifdef DM_QT
 #  include <QApplication>
 #  include <QPainter>
@@ -62,6 +64,7 @@ struct qt_vars {
     QPixmap *pix;
     QPainter *painter;
     QFont *font;
+    mat_t qmat;
 };
 
 #endif /* DM_QT */
