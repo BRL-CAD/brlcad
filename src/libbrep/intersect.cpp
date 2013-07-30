@@ -2252,6 +2252,8 @@ struct OverlapEvent {
 	inner = 2
     } m_type;
 
+    std::vector<OverlapEvent*> m_inside;
+
     OverlapEvent() {}
 
     OverlapEvent(ON_SSX_EVENT* _e) : m_event(_e)
@@ -2338,6 +2340,11 @@ struct OverlapEvent {
 	    return false;
 	ON_2dPoint center = (_min + _max) * 0.5;
 	return !IsPointIn(center) && !ON_BoundingBox(_min, _max).Includes(m_bboxA);
+    }
+
+    bool IsCurveCompletelyIn(const ON_Curve* _curve) {
+	ON_SimpleArray<ON_X_EVENT> x_event;
+	return !ON_Intersect(m_event->m_curve3d, _curve, x_event) && IsPointIn(_curve->PointAtStart());
     }
 };
 
@@ -2838,6 +2845,16 @@ ON_Intersect(const ON_Surface* surfA,
 	}
     }
 
+    // Find the inner events inside each outer event.
+    for (int i = 0; i < overlapevents.Count(); i++) {
+	for (int j = 0; j < overlapevents.Count(); j++) {
+	    if (i == j || overlapevents[i].m_type != OverlapEvent::outer || overlapevents[j].m_type != OverlapEvent::inner) continue;
+	    if (overlapevents[i].IsCurveCompletelyIn(overlapevents[j].m_event->m_curve3d)) {
+		overlapevents[i].m_inside.push_back(&(overlapevents[j]));
+	    }
+	}
+    }
+
     bu_log("%d overlap events.\n", overlapevents.Count());
 
     /* Second step: calculate the intersection of the bounding boxes.
@@ -2855,29 +2872,33 @@ ON_Intersect(const ON_Surface* surfA,
 	    // regions, we don't need to further sub-divide it.
 	    ON_2dPoint min2d(i->first->m_u.Min(), i->first->m_v.Min());
 	    ON_2dPoint max2d(i->first->m_u.Max(), i->first->m_v.Max());
-	    bool out_of_all_inner = true, inside_one_outer = false;
+	    // A box is inside the overlap region, if and only if it is completely
+	    // inside an outer loop, and outside all inner loops within the outer
+	    // loop.
+	    bool inside_overlap = false;
 	    for (int j = 0; j < overlapevents.Count(); j++) {
-		if (overlapevents[j].m_type == OverlapEvent::inner
-		    && !overlapevents[j].IsBoxCompletelyOut(min2d, max2d)) {
-		    out_of_all_inner = false;
-		    break;
-		}
-	    }
-	    if (out_of_all_inner) {
-		// It's completely out of all inner loops.
-		for (int j = 0; j < overlapevents.Count(); j++) {
-		    if (overlapevents[j].m_type == OverlapEvent::outer
-			&& overlapevents[j].IsBoxCompletelyIn(min2d, max2d)) {
-			inside_one_outer = true;
+		if (overlapevents[j].m_type == OverlapEvent::outer
+		    && overlapevents[j].IsBoxCompletelyIn(min2d, max2d)) {
+		    bool out_of_all_inner = true;
+		    for (unsigned int k = 0; k < overlapevents[j].m_inside.size(); k++) {
+			OverlapEvent* event = overlapevents[j].m_inside[k];
+			if (event->m_type == OverlapEvent::inner
+			    && !event->IsBoxCompletelyOut(min2d, max2d)) {
+			    out_of_all_inner = false;
+			    break;
+			}
+		    }
+		    if (out_of_all_inner) {
+			inside_overlap = true;
 			break;
 		    }
 		}
+	    }
+	    if (inside_overlap) {
 		// We only do this optimization of surfA, because node pairs
 		// need both boxes from surfA and surfB, and eliminate one of
 		// them is enough.
-		if (inside_one_outer) {
-		    continue;
-		}
+		continue;
 	    }
 	    std::vector<Subsurface*> splittedA, splittedB;
 	    if ((*i).first->Split() != 0) {
@@ -3017,30 +3038,27 @@ ON_Intersect(const ON_Surface* surfA,
 		break;
 	if (j == curvept.Count()) {
 	    // Test whether this point belongs to the overlap regions.
-	    bool outside_inner = true, inside_outer = false;
+	    bool inside_overlap = false;
 	    for (int k = 0; k < overlapevents.Count(); k++) {
-		if (overlapevents[k].m_type == OverlapEvent::inner
+		if (overlapevents[k].m_type == OverlapEvent::outer
 		    && overlapevents[k].IsPointIn(tmp_curveuv[i])
 		    && !overlapevents[k].IsPointOnBoundary(tmp_curveuv[i])) {
-		    // This point is strictly inside the inner loop,
-		    // so it doesn't belong to overlap regions.
-		    outside_inner = false;
-		    break;
-		}
-	    }
-	    if (outside_inner) {
-		// This point is out of all inner loops. If it's inside
-		// one outer loop (including on boundaries), it should
-		// belong to overlap regions.
-		for (int k = 0; k < overlapevents.Count(); k++) {
-		    if (overlapevents[k].m_type == OverlapEvent::outer
-			&& overlapevents[k].IsPointIn(tmp_curveuv[i])) {
-			inside_outer = true;
+		    bool out_of_all_inner = true;
+		    for (unsigned int m = 0; m < overlapevents[k].m_inside.size(); m++) {
+			OverlapEvent* event = overlapevents[k].m_inside[m];
+			if (event->m_type == OverlapEvent::inner
+			    && event->IsPointIn(tmp_curveuv[i])) {
+			    out_of_all_inner = false;
+			    break;
+			}
+		    }
+		    if (out_of_all_inner) {
+			inside_overlap = true;
 			break;
 		    }
 		}
 	    }
-	    if (!inside_outer) {
+	    if (!inside_overlap) {
 		curvept.Append(tmp_curvept[i]);
 		curveuv.Append(tmp_curveuv[i]);
 		curvest.Append(tmp_curvest[i]);
