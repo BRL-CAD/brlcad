@@ -84,6 +84,11 @@ image_flip(unsigned char *buf, int width, int height)
  * extension as well.
  *
  * I suck. I'll fix this later. Honest.
+ *
+ * FIXME: assuming trimmedname is BUFSIZ is a crash waiting to bite
+ * someone down the road.  should pass a size or use a vls or have it
+ * return the string as as return type (making the int type be an int*
+ * argument instead that gets set).
  */
 int
 icv_guess_file_format(const char *filename, char *trimmedname)
@@ -428,20 +433,11 @@ icv_image_load(const char *filename, int format, int width, int height)
 int
 icv_image_save(icv_image_t* bif, const char* filename, ICV_IMAGE_FORMAT format)
 {
-    char buf[BUFSIZ];
-    ICV_IMAGE_FORMAT guess_format; /**< Needed to guess the image format */
+    char buf[BUFSIZ] = {0};
 
-    if (format == ICV_IMAGE_AUTO || ICV_IMAGE_AUTO_NO_PIX) {
-	    guess_format = icv_guess_file_format(filename, buf);
-	    if(guess_format == ICV_IMAGE_UNKNOWN) {
-		if (format == ICV_IMAGE_AUTO_NO_PIX) {
-		bu_log("icv_image_save : Error Recognizing ICV format\n");
-		return 0;
-		} else
-		    format = ICV_IMAGE_PIX;
-	    } else
-	    format =  guess_format;
-	}
+    if (format == ICV_IMAGE_AUTO || format == ICV_IMAGE_AUTO_NO_PIX) {
+	format = icv_guess_file_format(filename, buf);
+    }
 
     switch(format) {
 	/* case ICV_IMAGE_BMP:
@@ -450,15 +446,14 @@ icv_image_save(icv_image_t* bif, const char* filename, ICV_IMAGE_FORMAT format)
 	    return ppm_save(bif, filename);
 	case ICV_IMAGE_PNG:
 	    return png_save(bif, filename);
-	case ICV_IMAGE_PIX :
+	case ICV_IMAGE_PIX:
 	    return pix_save(bif, filename);
-	case ICV_IMAGE_BW :
+	case ICV_IMAGE_BW:
 	    return bw_save(bif, filename);
-	default :
-	    bu_log("icv_image_save : Format not implemented\n");
-	    return 0;
+	default:
+	    bu_log("Unrecognized format.  Outputting in PIX format.\n");
+	    return pix_save(bif, filename);
     }
-
 }
 int
 icv_image_writeline(icv_image_t *bif, int y, void *data, ICV_DATA type)
