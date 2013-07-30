@@ -359,6 +359,8 @@ typedef enum {
     ICV_FILTER_3_NULL
 }ICV_FILTER;
 
+ICV_EXPORT extern int icv_filter(icv_image_t* img, ICV_FILTER filter_type);
+
 
 /** @} */
 /* end image utilities */

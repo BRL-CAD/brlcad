@@ -24,6 +24,7 @@
  * images are taken care.
  */
 
+#include "bu.h"
 #include "icv.h"
 
 #define KERN_DEFAULT 3
@@ -79,4 +80,55 @@ icv_get_kernel(ICV_FILTER filter_type, double *kern, double *offset) {
 	    kern = NULL;
     }
     return;
+}
+
+int icv_filter(icv_image_t* img, ICV_FILTER filter_type)
+{
+    double *kern=NULL, *kern_p=NULL;
+    double c_val;
+    double *out_data, *in_data, *data_p;
+    double offset = 0;
+    int k_dim = KERN_DEFAULT;
+    long int size;
+    long int s,k,i;
+    long int widthstep;
+    long int index, n_index; /**< index is the index of the pixel in
+    out image and n_index corresponds to the nearby pixel in input
+    image*/
+
+    kern = bu_malloc(k_dim*k_dim*sizeof(double), "icv_filter : Kernel Allocation");
+    icv_get_kernel(filter_type, kern, &offset);
+
+    widthstep = img->width*img->channels;
+
+    in_data = img->data;
+    size = img->height*img->width*img->channels;
+    /* Replaces data pointer in place */
+    img->data = out_data = (double* )bu_malloc(size*sizeof(double),"icv_filter : out_image_data");
+
+    index = -1;
+
+    for (s = 0; s <= size; s++ ) {
+	index++;
+	c_val = 0;
+	kern_p = kern;
+
+	for (k = -k_dim/2; k<=k_dim/2; k++ ) {
+	    n_index = index + k*widthstep;
+	    data_p = in_data + n_index;
+	    for (i = 0; i<=k_dim; i++ ) {
+	   /*Ensures that the arguments are given a zero value for
+	   out of bound pixels. Thus behaves similar to zero padding*/
+		if (n_index >= 0 && n_index < size) {
+		    c_val  += (*kern_p++)*(*data_p);
+		    data_p += img->channels;
+		    /* Ensures out bound in image */
+		    n_index += img->channels;
+		}
+	    }
+	}
+	*out_data++ = c_val + offset;
+    }
+    bu_free(in_data, "icv:filter Input Image Data");
+    return 0;
 }
