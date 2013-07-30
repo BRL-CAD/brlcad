@@ -78,18 +78,18 @@ typedef enum {
     ICV_IMAGE_SUN,
     ICV_IMAGE_YUV,
     ICV_IMAGE_UNKNOWN
-}ICV_IMAGE_FORMAT;
+} ICV_IMAGE_FORMAT;
 
 typedef enum {
     ICV_COLOR_SPACE_RGB,
     ICV_COLOR_SPACE_GRAY
     /* Add here for format addition like CMYKA, HSV, others  */
-}ICV_COLOR_SPACE;
+} ICV_COLOR_SPACE;
 
 typedef enum {
     ICV_DATA_DOUBLE,
     ICV_DATA_UCHAR
-}ICV_DATA;
+} ICV_DATA;
 
 struct icv_image {
     uint32_t magic;
