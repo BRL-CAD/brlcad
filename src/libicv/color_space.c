@@ -40,7 +40,7 @@ icv_image_gray2rgb(icv_image_t *img)
     long int size;
     long int i = 0;
      if (!ICV_IMAGE_IS_INITIALIZED(img)) {
-	bu_log("icv_image_gray2rgb : Unitialized Image argument\n");
+	bu_log("icv_image_gray2rgb : Uninitialized Image argument\n");
 	return -1;
     }
 
@@ -84,7 +84,7 @@ icv_image_rgb2gray(icv_image_t *img, ICV_DEPTH_METHOD method, ICV_COLOR color, d
     red = green = blue = 0;
 
      if (!ICV_IMAGE_IS_INITIALIZED(img)) {
-	bu_log("icv_image_rgb2gray : Unitialized Image argument\n");
+	bu_log("icv_image_rgb2gray : Uninitialized Image argument\n");
 	return -1;
     }
 
@@ -173,7 +173,7 @@ icv_image_rgb2gray(icv_image_t *img, ICV_DEPTH_METHOD method, ICV_COLOR color, d
 
 
     /* If function is called with zero for weight of respective plane
-       then devides the weight equally among all the planes */
+       then divide the weight equally among all the planes */
     if (red != 0 && ZERO(rweight))
 	rweight = 1.0 / (double)num_color_planes;
     if (green != 0 && ZERO(gweight))

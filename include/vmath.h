@@ -81,7 +81,7 @@
  *
  * #define ABC() do { register double _f; do stuff; } while (0)
  *
- * All of the macros that introduce a scope like the preceeding
+ * All of the macros that introduce a scope like the preceding
  * example are written as do { } while (0) loops in order to require
  * callers provide a trailing semicolon (e.g., ABC();).  This helps
  * preserve source code formatting.

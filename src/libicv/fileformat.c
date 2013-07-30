@@ -114,7 +114,7 @@ icv_guess_file_format(const char *filename, char *trimmedname)
  * Used to convert data from pix, bw, ppm type images for icv_image
  * struct.
  *
- * This doesnot free the char data.
+ * This does not free the char data.
  *
  * @param data pointer to the array to be converted.
  * @param size Size of the array.
@@ -345,7 +345,7 @@ pix_load(const char* filename, int width, int height)
     }
     data = (unsigned char *)bu_malloc(size, "pix_load : unsigned char data");
     if (read(fd, data, size) !=0) {
-	bu_log("pix_load: Error Occured while Reading\n");
+	bu_log("pix_load: Error Occurred while Reading\n");
 	bu_free(data, "icv_image data");
 	return NULL;
     }
@@ -385,7 +385,7 @@ bw_load(const char* filename, int width, int height)
     }
     data = (unsigned char *)bu_malloc(size, "bw_load : unsigned char data");
     if (read(fd, data, size) !=0) {
-	bu_log("bw_load: Error Occured while Reading\n");
+	bu_log("bw_load: Error Occurred while Reading\n");
 	bu_free(data, "icv_image data");
 	return NULL;
     }

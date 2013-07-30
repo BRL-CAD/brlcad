@@ -792,7 +792,7 @@ utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, O
 
 	    /* FIXME: all constants should be documented. why this
 	     * value? must it coincide with the constant in the
-	     * preceeding loop?
+	     * preceding loop?
 	     */
 	    if (errantcount > 3) {
 		return intersects;
@@ -3345,7 +3345,7 @@ rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info
 	    RT_ADD_VLIST(info->vhead, pt1, BN_VLIST_LINE_MOVE);
 
 	    // add segments until the minimum segment count is
-	    // acheived and the distance between the end of the last
+	    // achieved and the distance between the end of the last
 	    // segment and the endpoint is within point spacing
 	    for (int nsegs = 0; (nsegs < min_linear_seg_count) ||
 		(DIST_PT_PT(pt1, endpt) > info->point_spacing); ++nsegs)
@@ -3354,7 +3354,7 @@ rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info
 		VMOVE(pt2, p);
 
 		// bring t2 increasingly closer to t1 until target
-		// point spacing is acheived
+		// point spacing is achieved
 		double step = t2 - t1;
 		while (DIST_PT_PT(pt1, pt2) > info->point_spacing) {
 		    step /= 2.0;

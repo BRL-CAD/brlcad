@@ -143,9 +143,9 @@ ICV_EXPORT extern int icv_guess_file_format(const char *filename, char *trimmedn
 ICV_EXPORT extern icv_image_t* icv_image_create(int width, int height, ICV_COLOR_SPACE color_space);
 
 /**
- * Write an image line to the data of ICV struct. Can handle unsinged char buffers.
+ * Write an image line to the data of ICV struct. Can handle unsigned char buffers.
  *
- * Note : This function require memory allocation for ICV_UCHAR_DATA, which inturn aquires
+ * Note : This function requires memory allocation for ICV_UCHAR_DATA, which in turn acquires
  * BU_SEM_SYSCALL semaphore.
  *
  * @param bif ICV struct where data is to be written
@@ -196,8 +196,8 @@ ICV_EXPORT extern int icv_image_save(icv_image_t* bif, const char*filename, ICV_
 ICV_EXPORT extern icv_image_t* icv_image_load(const char *filename, int format, int width, int height);
 
 /**
- * This function zeroes all the data enteries of an image
- * @param img Image Strucure
+ * This function zeroes all the data entries of an image
+ * @param img Image Structure
  */
 ICV_EXPORT extern icv_image_t* icv_image_zero(icv_image_t* bif);
 
@@ -257,10 +257,10 @@ typedef enum {
  *                D6500 white.
  * ICV_PIX_CRT :   converts to single plane image by combining three
  *                planes using weights based on CRT phosphor
- *                chrmaticities and D6500 white.
+ *                chromaticities and D6500 white.
  * ICV_PIX_SET_EQUAL: Combines the three planes using equal weights.
- * ICV_PIX_SELECT_CHANNEL: lets to select the channels
- * @param color Choses color planes to be selected for combination
+ * ICV_PIX_SELECT_CHANNEL: lets us select the channels
+ * @param color Chooses color planes to be selected for combination
  *    This function will need color to be specified from
  *              ICV_COLOR_R
  *              ICV_COLOR_G
@@ -272,7 +272,7 @@ typedef enum {
  * @param rweight Weight for r-plane
  * @param gweight Weight for g-plane
  * @param bweight Weight for b-plane
- * @retunr 0 on success on failure return 1
+ * @return 0 on success; on failure return 1
  *
  *  User can specify weights in the arguments, for the selected
  *    color planes. If 0 weight is chosen this utility assigns equal
@@ -311,7 +311,7 @@ ICV_EXPORT extern int icv_rect(icv_image_t *img, int xorig, int yorig, int xnum,
 
 /**
  * This function crops an input image.
- * This can do a screwed cropping i.e given any four points of
+ * This can do a screwed cropping, i.e. given any four points of
  * quadrilateral in an image, Maps it to a rectangle of xnumXynum
  * dimension
  *
@@ -325,7 +325,7 @@ ICV_EXPORT extern int icv_rect(icv_image_t *img, int xorig, int yorig, int xnum,
  *       /______________________|
  *     (llx,lly)             (lrx,lry)
  *
- * @return 0 on success on failure -1 and logs the error message.
+ * @return 0 on success; on failure -1; and logs the error message.
  */
 
 ICV_EXPORT extern int icv_crop(icv_image_t *img,

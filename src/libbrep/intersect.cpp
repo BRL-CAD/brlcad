@@ -593,7 +593,7 @@ ON_Intersect(const ON_3dPoint& pointA,
 #define CCI_DEFAULT_TOLERANCE 0.001
 
 
-// The maximal depth for subdivision - trade-off between accurancy and
+// The maximal depth for subdivision - trade-off between accuracy and
 // performance
 #define MAX_CCI_DEPTH 8
 
@@ -1112,7 +1112,7 @@ ON_Intersect(const ON_Curve* curveA,
 #define CSI_DEFAULT_TOLERANCE 0.001
 
 
-// The maximal depth for subdivision - trade-off between accurancy and
+// The maximal depth for subdivision - trade-off between accuracy and
 // performance
 #define MAX_CSI_DEPTH 8
 
@@ -1774,7 +1774,7 @@ ON_Intersect(const ON_Curve* curveA,
  */
 
 
-// The maximal depth for subdivision - trade-off between accurancy and
+// The maximal depth for subdivision - trade-off between accuracy and
 // performance
 #define MAX_SSI_DEPTH 8
 
@@ -2547,7 +2547,7 @@ ON_Intersect(const ON_Surface* surfA,
 
     int count_before = overlaps.Count();
     // Not points, but a bundle of params:
-    // params[i] - the seperating params on overlaps[i]
+    // params[i] - the separating params on overlaps[i]
     // x - curve3d, y - curveA, z - curveB
 
     ON_ClassArray<ON_3dPointArray> params(count_before);
@@ -2570,7 +2570,7 @@ ON_Intersect(const ON_Surface* surfA,
 			uv = st;
 		    if (surfB->PointAt(st.x, st.y).DistanceTo(x_event[k].m_B[0]) > surfB->PointAt(uv.x, uv.y).DistanceTo(x_event[k].m_B[0]))
 			st = uv;
-		    // Pull the 3D curve bace to the 2D space
+		    // Pull the 3D curve back to the 2D space
 		    if (ON_Intersect(uv, *(overlaps[i]->m_curveA), e1, intersection_tolerance_A)
 			&& ON_Intersect(st, *(overlaps[i]->m_curveB), e2, intersection_tolerance_B)) {
 			param.x = x_event[k].m_a[0];
@@ -2591,7 +2591,7 @@ ON_Intersect(const ON_Surface* surfA,
 		    ON_ClassArray<ON_PX_EVENT> psx3, psx4, e5, e6, e7, e8;
 		    if (ON_Intersect(x_event[k].m_A[0], *surfA, psx3, intersection_tolerance, 0, 0, treeA)
 			&& ON_Intersect(x_event[k].m_B[0], *surfB, psx4, intersection_tolerance, 0, 0, treeB)) {
-			// Pull the 3D curve bace to the 2D space
+			// Pull the 3D curve back to the 2D space
 			uv = psx3[0].m_b;
 			st = psx4[0].m_b;
 			if (ON_Intersect(x_event[k].m_A[1], *(overlaps[i]->m_curveA), e5, intersection_tolerance_A)

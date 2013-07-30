@@ -1991,7 +1991,7 @@ const struct rt_functab rt_functab[] = {
 	rt_generic_xform,
 	NULL,
 	sizeof(struct rt_hrt_internal),
-	RT_HRT_INTERNAL_MAGIC,	
+	RT_HRT_INTERNAL_MAGIC,
 	NULL,
 	NULL,
 	NULL,
@@ -2002,7 +2002,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
         NULL,
     },
-     
+
     {
 	/* this entry for sanity only */
 	0L, ">ID_MAXIMUM", ">id_max",
