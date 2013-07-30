@@ -220,8 +220,6 @@ ICV_EXPORT extern void icv_image_free(icv_image_t* bif);
  * returns a three channel image.
  * If a three channel image is passed, this function returns the same image.
  */
-
-
 ICV_EXPORT int icv_image_gray2rgb(icv_image_t *img);
 
 typedef enum {
@@ -275,11 +273,10 @@ typedef enum {
  * @return 0 on success; on failure return 1
  *
  *  User can specify weights in the arguments, for the selected
- *    color planes. If 0 weight is chosen this utility assigns equal
- *    weights.
+ *  color planes. If 0 weight is chosen this utility assigns equal
+ *  weights.
  *
  */
-
 ICV_EXPORT int icv_image_rgb2gray(icv_image_t *img,
 				  ICV_DEPTH_METHOD method,
 				  ICV_COLOR color,
@@ -306,7 +303,6 @@ ICV_EXPORT int icv_image_rgb2gray(icv_image_t *img,
  * data in vertical direction.
  * @return 0 on success.
  */
-
 ICV_EXPORT extern int icv_rect(icv_image_t *img, int xorig, int yorig, int xnum, int ynum);
 
 /**
@@ -327,7 +323,6 @@ ICV_EXPORT extern int icv_rect(icv_image_t *img, int xorig, int yorig, int xnum,
  *
  * @return 0 on success; on failure -1; and logs the error message.
  */
-
 ICV_EXPORT extern int icv_crop(icv_image_t *img,
 			       int ulx, int uly,
 			       int urx, int ury,
