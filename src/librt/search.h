@@ -55,6 +55,12 @@
 #include "regex.h"
 #include "raytrace.h"
 
+/* node struct - holds data specific to each node under consideration */
+struct db_node_t {
+    struct db_full_path *entry;
+    int bool_type;
+};
+
 /* search node type */
 enum db_search_ntype {
     N_ABOVE = 1,                        /* must start > 0 */
@@ -62,13 +68,13 @@ enum db_search_ntype {
     N_CLOSEPAREN, N_DEPTH, N_EXEC, N_EXECDIR, N_EXPR,
     N_FLAGS, N_INAME, N_IREGEX, N_LS, N_MAXDEPTH,
     N_MINDEPTH, N_NAME, N_NNODES, N_NOT, N_OK, N_OPENPAREN, N_OR, N_PATH,
-    N_PRINT, N_PRUNE, N_REGEX, N_STDATTR, N_TYPE
+    N_PRINT, N_PRUNE, N_REGEX, N_STDATTR, N_TYPE, N_BOOL
 };
 
 
 struct db_plan_t {
     struct db_plan_t *next;			/* next node */
-    int (*eval)(struct db_plan_t *, struct db_full_path *, struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results);
+    int (*eval)(struct db_plan_t *, struct db_node_t *, struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results);
     /* node evaluation function */
 #define F_EQUAL 1 /* [acm]time inum links size */
 #define F_LESSTHAN 2
@@ -101,6 +107,7 @@ struct db_plan_t {
 	char *_node_data;		/* char pointer */
 	char *_type_data;
 	regex_t _regex_data;	/* compiled regexp */
+	int _bool_data;
 	int _max_data;			/* tree depth */
 	int _min_data;			/* tree depth */
     } p_un;
@@ -123,6 +130,7 @@ struct db_plan_t {
 #define ab_data		p_un._ab_data
 #define bl_data		p_un._bl_data
 #define type_data	p_un._type_data
+#define bool_data	p_un._bool_data
 #define e_argv		p_un.ex._e_argv
 #define e_orig		p_un.ex._e_orig
 #define e_len		p_un.ex._e_len
@@ -153,6 +161,7 @@ static int c_path(char *, char ***, int, struct db_plan_t **, int *);
 static int c_print(char *, char ***, int, struct db_plan_t **, int *);
 static int c_stdattr(char *, char ***, int, struct db_plan_t **, int *);
 static int c_type(char *, char ***, int, struct db_plan_t **, int *);
+static int c_bool(char *, char ***, int, struct db_plan_t **, int *);
 static int c_openparen(char *, char ***, int, struct db_plan_t **, int *);
 static int c_closeparen(char *, char ***, int, struct db_plan_t **, int *);
 static int c_not(char *, char ***, int, struct db_plan_t **, int *);
