@@ -133,7 +133,6 @@ icv_guess_file_format(const char *filename, char *trimmedname)
  * @return double array.
  *
  */
-
 HIDDEN double*
 uchar2double(unsigned char* data, long int size)
 {
@@ -151,6 +150,8 @@ uchar2double(unsigned char* data, long int size)
 
     return double_data;
 }
+
+
 /**
  * Converts double data of icv_image to unsigned char data.
  * This function also does gamma correction using the gamma_corr
@@ -160,7 +161,6 @@ uchar2double(unsigned char* data, long int size)
  * Gamma correction prevents bad color aliasing.
  *
  */
-
 HIDDEN unsigned char*
 data2uchar(const icv_image_t* bif)
 {
@@ -460,9 +460,12 @@ icv_image_save(icv_image_t* bif, const char* filename, ICV_IMAGE_FORMAT format)
 	    return bw_save(bif, filename);
 	default:
 	    bu_log("Unrecognized format.  Outputting in PIX format.\n");
-	    return pix_save(bif, filename);
     }
+
+    return pix_save(bif, filename);
 }
+
+
 int
 icv_image_writeline(icv_image_t *bif, int y, void *data, ICV_DATA type)
 {
