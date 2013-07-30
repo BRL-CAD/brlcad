@@ -67,12 +67,13 @@ image_flip(unsigned char *buf, int width, int height)
     return 0;
 }
 
+
 /* Save functions use the return value not only for success/failure,
  * but also to note if further action is needed.
  *
- *   0 - failure.
- *   1 - success, no further action needed.
- *   2 - success, close() required on fd.
+ * 0 - failure.
+ * 1 - success, no further action needed.
+ * 2 - success, close() required on fd.
  *
  * This might be better just using the f* functions instead of
  * mixing...
@@ -117,11 +118,12 @@ icv_guess_file_format(const char *filename, char *trimmedname)
     return ICV_IMAGE_UNKNOWN;
 }
 
+
 /**
  * converts unsigned char array to double array.
  * This function returns array of double data.
  *
- * Used to convert data from pix,bw,ppm type images for icv_image
+ * Used to convert data from pix, bw, ppm type images for icv_image
  * struct.
  *
  * This doesnot free the char data.
@@ -142,9 +144,9 @@ uchar2double(unsigned char* data, long int size)
     char_p = data;
     double_p = double_data = (double*) bu_malloc(size*sizeof(double), "uchar2data : double data");
     for (i=0; i<size; i++) {
-	 *double_p = ((double)(*char_p))/255.0;
-	 double_p++;
-	 char_p++;
+	*double_p = ((double)(*char_p))/255.0;
+	double_p++;
+	char_p++;
     }
 
     return double_data;
@@ -194,6 +196,7 @@ data2uchar(const icv_image_t* bif)
     return uchar_data;
 }
 
+
 HIDDEN int
 png_save(icv_image_t* bif, const char* filename)
 {
@@ -229,8 +232,8 @@ png_save(icv_image_t* bif, const char* filename)
 
     png_init_io(png_ptr, fh);
     png_set_IHDR(png_ptr, info_ptr, (unsigned)bif->width, (unsigned)bif->height, 8, png_color_type,
-		  PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT,
-		  PNG_FILTER_TYPE_DEFAULT);
+		 PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT,
+		 PNG_FILTER_TYPE_DEFAULT);
     png_write_info(png_ptr, info_ptr);
     for (i = bif->height-1; i >= 0; --i)
 	png_write_row(png_ptr, (png_bytep) (data + bif->width*bif->channels*i));
@@ -240,6 +243,7 @@ png_save(icv_image_t* bif, const char* filename)
     fclose(fh);
     return 1;
 }
+
 
 HIDDEN int
 pix_save(icv_image_t* bif, const char* filename)
@@ -287,7 +291,7 @@ bw_save(icv_image_t* bif, const char* filename)
 	return -1;
     }
 
-    ret = write(fd, data, size );
+    ret = write(fd, data, size);
     close(fd);
     bu_free(data, "bw_save : Unsigned Char data");
     if (ret != size) {
@@ -297,6 +301,7 @@ bw_save(icv_image_t* bif, const char* filename)
 
     return 0;
 }
+
 
 HIDDEN int
 ppm_save(icv_image_t* bif, const char* filename)
@@ -337,26 +342,26 @@ pix_load(const char* filename, int width, int height)
 
     size_t size;
 
-    if(width == 0 || height == 0 ) {
+    if (width == 0 || height == 0) {
 	height = 512;
 	width = 512;
     }
 
     size = (size_t) height*width*3;
 
-    if ((fd = open( filename, O_RDONLY, WRMODE))<0) {
-	    bu_log("pix_load: Cannot open file for reading\n");
-	    return NULL;
+    if ((fd = open(filename, O_RDONLY, WRMODE))<0) {
+	bu_log("pix_load: Cannot open file for reading\n");
+	return NULL;
     }
     data = (unsigned char *)bu_malloc(size, "pix_load : unsigned char data");
     if (read(fd, data, size) !=0) {
 	bu_log("pix_load: Error Occured while Reading\n");
-	bu_free(data,"icv_image data");
+	bu_free(data, "icv_image data");
 	return NULL;
     }
     BU_ALLOC(bif, struct icv_image);
     ICV_IMAGE_INIT(bif);
-    bif->data = uchar2double(data,size);
+    bif->data = uchar2double(data, size);
     bu_free(data, "pix_load : unsigned char data");
     bif->magic = ICV_IMAGE_MAGIC;
     bif->height = height;
@@ -367,6 +372,7 @@ pix_load(const char* filename, int width, int height)
     return bif;
 }
 
+
 HIDDEN icv_image_t *
 bw_load(const char* filename, int width, int height)
 {
@@ -376,26 +382,26 @@ bw_load(const char* filename, int width, int height)
 
     size_t size;
 
-    if(width == 0 || height == 0 ) {
+    if (width == 0 || height == 0) {
 	height = 512;
 	width = 512;
     }
 
     size = (size_t) height*width;
 
-    if ((fd = open( filename, O_RDONLY, WRMODE))<0) {
-	    bu_log("bw_load: Cannot open file for reading\n");
-	    return NULL;
+    if ((fd = open(filename, O_RDONLY, WRMODE))<0) {
+	bu_log("bw_load: Cannot open file for reading\n");
+	return NULL;
     }
     data = (unsigned char *)bu_malloc(size, "bw_load : unsigned char data");
     if (read(fd, data, size) !=0) {
 	bu_log("bw_load: Error Occured while Reading\n");
-	bu_free(data,"icv_image data");
+	bu_free(data, "icv_image data");
 	return NULL;
     }
     BU_ALLOC(bif, struct icv_image);
     ICV_IMAGE_INIT(bif);
-    bif->data = uchar2double(data,size);
+    bif->data = uchar2double(data, size);
     bu_free(data, "bw_load : unsigned char data");
     bif->magic = ICV_IMAGE_MAGIC;
     bif->height = height;
@@ -407,6 +413,7 @@ bw_load(const char* filename, int width, int height)
     return bif;
 }
 
+
 /* end of private functions */
 
 /* begin public functions */
@@ -414,7 +421,7 @@ bw_load(const char* filename, int width, int height)
 icv_image_t *
 icv_image_load(const char *filename, int format, int width, int height)
 {
-    if(format == ICV_IMAGE_AUTO) {
+    if (format == ICV_IMAGE_AUTO) {
 	/* do some voodoo with the file magic or something... */
 	format = ICV_IMAGE_PIX;
     }
@@ -430,6 +437,7 @@ icv_image_load(const char *filename, int format, int width, int height)
     }
 }
 
+
 int
 icv_image_save(icv_image_t* bif, const char* filename, ICV_IMAGE_FORMAT format)
 {
@@ -441,7 +449,7 @@ icv_image_save(icv_image_t* bif, const char* filename, ICV_IMAGE_FORMAT format)
 
     switch(format) {
 	/* case ICV_IMAGE_BMP:
-	    return bmp_save(bif, filename);*/
+	   return bmp_save(bif, filename);*/
 	case ICV_IMAGE_PPM:
 	    return ppm_save(bif, filename);
 	case ICV_IMAGE_PNG:
@@ -476,12 +484,13 @@ icv_image_writeline(icv_image_t *bif, int y, void *data, ICV_DATA type)
     dst = bif->data + width_size*y;
 
     memcpy(dst, p, width_size*sizeof(double));
-    
-    if(flag)
-        bu_free(p, "icv_image_writeline : double data");
-    
+
+    if (flag)
+	bu_free(p, "icv_image_writeline : double data");
+
     return 0;
 }
+
 
 int
 icv_image_writepixel(icv_image_t *bif, int x, int y, double *data)
@@ -498,6 +507,7 @@ icv_image_writepixel(icv_image_t *bif, int x, int y, double *data)
     return 0;
 }
 
+
 icv_image_t*
 icv_image_create(int width, int height, ICV_COLOR_SPACE color_space)
 {
@@ -510,34 +520,36 @@ icv_image_create(int width, int height, ICV_COLOR_SPACE color_space)
     bif->magic = ICV_IMAGE_MAGIC;
     switch(color_space) {
 	case ICV_COLOR_SPACE_RGB :
-	/* Add all the other three channel images here (eg. HSV, YCbCr etc.) */
+	    /* Add all the other three channel images here (eg. HSV, YCbCr etc.) */
 	    bif->data = (double*) bu_malloc(bif->height*bif->width*3*sizeof(double), "Image Data");
 	    bif->channels = 3;
-	break;
+	    break;
 	case ICV_COLOR_SPACE_GRAY :
 	    bif->data = (double*) bu_malloc(bif->height*bif->width*1*sizeof(double), "Image Data");
 	    bif->channels = 1;
-	break;
+	    break;
 	default :
-	    bu_exit(1,"icv_create_image : Color Space Not Defined");
-	break;
+	    bu_exit(1, "icv_create_image : Color Space Not Defined");
+	    break;
     }
     return icv_image_zero(bif);
 }
+
 
 icv_image_t*
 icv_image_zero(icv_image_t* bif)
 {
     double* data;
-    long size,i;
+    long size, i;
 
     data = bif->data;
     size = bif->width * bif->height * bif->channels;
-    for (i=0; i< size; i++ )
+    for (i=0; i< size; i++)
 	*data++ = 0;
 
     return bif;
 }
+
 
 void
 icv_image_free(icv_image_t* bif)
@@ -546,6 +558,7 @@ icv_image_free(icv_image_t* bif)
     bu_free(bif, "ICV IMAGE Structure");
     return;
 }
+
 /*
  * Local Variables:
  * mode: C
