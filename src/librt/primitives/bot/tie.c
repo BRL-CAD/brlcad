@@ -405,7 +405,7 @@ void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_
  * @param tnum is the number of triangles (tlist = 3 * tnum of TIE_3's).
  * @param plist is a list of pointer data that gets assigned to the ptr of each triangle.
  * This will typically be 4-byte (32-bit architecture) spaced array of pointers that
- * associate the triangle pointer with your arbitrary structure, i.e a mesh.
+ * associate the triangle pointer with your arbitrary structure, i.e. a mesh.
  * @param pstride is the number of bytes to increment the pointer list as it assigns
  * a pointer to each mesh, typically a value of 4 (for 32-bit machines).  If you have
  * a single pointer that groups all triangles to a common structure then you can use

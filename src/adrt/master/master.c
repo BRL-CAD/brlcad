@@ -440,7 +440,7 @@ master_networking (void *ptr)
 		continue;
 	    }
 
-	    /* remove socket from pool if there's an error, i.e slave disconnected */
+	    /* remove socket from pool if there's an error, i.e. slave disconnected */
 	    op = 255;
 	    error = tienet_recv (sock->num, &op, 1);
 	    if (error || op == ADRT_NETOP_QUIT || !sock->active)

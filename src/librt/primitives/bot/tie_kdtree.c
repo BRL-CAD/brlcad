@@ -499,7 +499,7 @@ find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TI
 	 * to prevent marching in order to determine a desirable splitting point.  If this section of code
 	 * is being executed it's typically because most 'empty space' has now been eliminated
 	 * and/or the resulting geometry is now losing structure as the smaller cells are being
-	 * created, i.e dividing a fraction of a wing-nut instead of an engine-block.
+	 * created, i.e. dividing a fraction of a wing-nut instead of an engine-block.
 	 */
 	for (d = 0; d < 3; d++)
 	    for (k = 0; k < slice_num; k++)
