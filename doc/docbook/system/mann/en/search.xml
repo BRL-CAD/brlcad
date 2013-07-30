@@ -284,7 +284,7 @@
 	<para>
 	  The above operator applies the expression to every object above the current
 	  object in the full path to that object, and returns TRUE if one or more of
-	  them satisfies the expression - e.g -above -name s\* applied to
+	  them satisfies the expression - e.g. -above -name s\* applied to
 	  /component/region.r/start_comb.c/prim1.s would return TRUE for /component and
 	  /component/region.r as both being "above" start_comb.c, but would return FALSE
 	  the deeper objects.
