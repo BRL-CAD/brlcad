@@ -145,8 +145,8 @@ ICV_EXPORT extern icv_image_t* icv_image_create(int width, int height, ICV_COLOR
 /**
  * Write an image line to the data of ICV struct. Can handle unsinged char buffers.
  *
- * Note : This function require memory allocation for ICV_UCHAR_DATA, which inturn aquires 
- * BU_SEM_SYSCALL semaphore.   
+ * Note : This function require memory allocation for ICV_UCHAR_DATA, which inturn aquires
+ * BU_SEM_SYSCALL semaphore.
  *
  * @param bif ICV struct where data is to be written
  * @param y Index of the line at which data is to be written. 0 for the first line
@@ -286,6 +286,28 @@ ICV_EXPORT int icv_image_rgb2gray(icv_image_t *img,
 				  double rweight,
 				  double gweight,
 				  double bweight);
+
+/** @file libicv/crop.c
+ *
+ * This file contains functions for cropping images.
+ * There are two types of cropping rectangular and skeyed.
+ */
+
+/**
+ * This function crops an input image.
+ * Note : (0,0) corresponds to the Bottom Left of an Image.
+ *
+ * @param img Input image struct to be cropped.
+ * @param xorig X-Cordinate of offset of image to be extracted from.
+ * @param yorig Y-Cordinate of offset of image to be extracted from.
+ * @param xnum Legnth of the output image to be extracted from input
+ * data in horizontal direction.
+ * @param ynum Legnth of the output image to be extracted from input
+ * data in vertical direction.
+ * @return 0 on success.
+ */
+
+ICV_EXPORT extern int icv_rect(icv_image_t *img, int xorig, int yorig, int xnum, int ynum);
 
 
 /** @} */
