@@ -227,7 +227,7 @@ qt_drawPoints3D(struct dm *UNUSED(dmp), int UNUSED(npoints), point_t *UNUSED(poi
 
 HIDDEN int
 qt_drawVList(struct dm *dmp, struct bn_vlist *vp)
-{   
+{
     static vect_t spnt, lpnt, pnt;
     struct bn_vlist *tvp;
     QLine lines[1024];
@@ -365,7 +365,7 @@ qt_drawVList(struct dm *dmp, struct bn_vlist *vp)
 			(short)GED_TO_Xx(dmp, pnt[0]),
 			(short)GED_TO_Xy(dmp, pnt[1])
 			);
-		    
+
 		    nseg++;
 		    linep++;
 		    VMOVE(lpnt, spnt);
