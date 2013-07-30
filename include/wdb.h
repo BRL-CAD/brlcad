@@ -783,6 +783,9 @@ WDB_EXPORT WDB_EXTERN(int mk_dsp, (struct rt_wdb *fp, const char *name, const ch
 WDB_EXPORT WDB_EXTERN(int mk_ebm, (struct rt_wdb *fp, const char *name, const char *file,
 				   size_t xdim, size_t ydim, fastf_t tallness, const matp_t mat));
 
+WDB_EXPORT WDB_EXTERN(int mk_hrt, (struct rt_wdb *fp, const char *name, const point_t center,
+				   const vect_t x, const vect_t y, const vect_t z, const fastf_t dist));
+
 /**
  * M K _ V O L
  */

@@ -573,6 +573,23 @@ static char *p_pnts[] = {
 };
 
 
+static char *p_hrt[] = {
+    "Enter X, Y, Z of the heart vertex: ",
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter X, Y, Z of vector xdir: ",
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter X, Y, Z of vector ydir: ",
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter X, Y, Z of vector zdir: ",
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter distance to cusps: "
+};
+    
+    
 /**
  * helper function that infers a boolean value from a given string
  * returning 0 or 1 for false and true respectively.
@@ -2773,6 +2790,37 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     return GED_OK;
 }
 
+/* H R T _ I N () :   	reads heart parameters from keyboard
+ * returns 0 if successfully read
+ * returns 1 if unsuccessful read
+ */
+static int
+hrt_in(struct ged *gedp, char *cmd_argv[], struct rt_db_internal *intern)
+{
+    fastf_t vals[13];
+    int i, n;
+    struct rt_hrt_internal *hip;
+    n = 13;
+    
+    intern->idb_type = ID_HRT;
+    intern->idb_meth = &rt_functab[ID_HRT];
+    intern->idb_type = (int)bu_malloc(sizeof(struct rt_hrt_internal), "rt_hrt_internal");
+    hip = (struct rt_hrt_internal *)intern->idb_ptr;
+    hip->hrt_magic = RT_HRT_INTERNAL_MAGIC;
+
+    for(i = 0; i < n - 1; i++) {
+	vals[i] = atof(cmd_argv[3 + i]) * gedp->ged_wdbp->dbip->dbi_local2base;
+    }
+    vals[12] = atof(cmd_argv[3 + 12]);
+
+    VMOVE(hip->v, &vals[0]);
+    VMOVE(hip->xdir, &vals[3]);
+    VMOVE(hip->ydir, &vals[6]);
+    VMOVE(hip->zdir, &vals[9]);
+    hip->d = vals[12];    
+
+    return GED_OK;
+}
 
 int
 ged_in(struct ged *gedp, int argc, const char *argv[])
@@ -2817,7 +2865,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
     /*
      * Decide which solid to make and get the rest of the args
      * make name <half|arb[4-8]|sph|ell|ellg|ell1|tor|tgc|tec|
-     rec|trc|rcc|box|raw|rpp|rpc|rhc|epa|ehy|hyp|eto|superell>
+     rec|trc|rcc|box|raw|rpp|rpc|rhc|epa|ehy|hyp|eto|superell|hrt>
     */
     if (BU_STR_EQUAL(argv[2], "ebm")) {
 	nvals = 4;
@@ -3031,6 +3079,10 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	nvals = 3*4 + 2;
 	menu = p_superell;
 	fn_in = superell_in;
+    } else if (BU_STR_EQUAL(argv[2], "hrt")) {
+	nvals = 3*4 + 1;
+	menu = p_hrt;
+	fn_in = hrt_in;
     } else if (BU_STR_EQUAL(argv[2], "pnts")) {
 	switch (pnts_in(gedp, argc, argv, &internal, p_pnts)) {
 	    case GED_ERROR:
