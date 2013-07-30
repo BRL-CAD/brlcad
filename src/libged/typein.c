@@ -588,8 +588,8 @@ static char *p_hrt[] = {
     "Enter Z: ",
     "Enter distance to cusps: "
 };
-    
-    
+
+
 /**
  * helper function that infers a boolean value from a given string
  * returning 0 or 1 for false and true respectively.
@@ -2801,7 +2801,7 @@ hrt_in(struct ged *gedp, char *cmd_argv[], struct rt_db_internal *intern)
     int i, n;
     struct rt_hrt_internal *hip;
     n = 13;
-    
+
     intern->idb_type = ID_HRT;
     intern->idb_meth = &rt_functab[ID_HRT];
     intern->idb_ptr = bu_malloc(sizeof(struct rt_hrt_internal), "rt_hrt_internal");
@@ -2817,7 +2817,7 @@ hrt_in(struct ged *gedp, char *cmd_argv[], struct rt_db_internal *intern)
     VMOVE(hip->xdir, &vals[3]);
     VMOVE(hip->ydir, &vals[6]);
     VMOVE(hip->zdir, &vals[9]);
-    hip->d = vals[12];    
+    hip->d = vals[12];
 
     return GED_OK;
 }
