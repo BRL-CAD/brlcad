@@ -309,6 +309,33 @@ ICV_EXPORT int icv_image_rgb2gray(icv_image_t *img,
 
 ICV_EXPORT extern int icv_rect(icv_image_t *img, int xorig, int yorig, int xnum, int ynum);
 
+/**
+ * This function crops an input image.
+ * This can do a screwed cropping i.e given any four points of
+ * quadrilateral in an image, Maps it to a rectangle of xnumXynum
+ * dimension
+ *
+ *        (ulx,uly)         (urx,ury)
+ *             __________________
+ *            /                 |
+ *           /                  |
+ *          /                   |
+ *         /                    |
+ *        /                     |
+ *       /______________________|
+ *     (llx,lly)             (lrx,lry)
+ *
+ * @return 0 on success on failure -1 and logs the error message.
+ */
+
+ICV_EXPORT extern int icv_crop(icv_image_t *img,
+			       int ulx, int uly,
+			       int urx, int ury,
+			       int lrx, int lry,
+			       int llx, int lly,
+			       unsigned int ynum,
+			       unsigned int xnum);
+
 
 /** @} */
 /* end image utilities */

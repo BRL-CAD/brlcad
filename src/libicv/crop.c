@@ -78,3 +78,40 @@ icv_rect(icv_image_t *img, int xorig, int yorig, int xnum, int ynum)
     img->data = out_data;
     return 0;
 }
+
+int
+icv_crop(icv_image_t *img, int ulx, int uly, int urx, int ury, int lrx, int lry, int llx, int lly, unsigned int ynum, unsigned int xnum)
+{
+    float x_1, y_1, x_2, y_2;
+    size_t row, col;
+    int  x, y;
+    double *data, *p, *q;
+
+    /* Allocates output data and assigns to image*/
+    data = img->data;
+    img->data = p = bu_malloc(ynum*xnum*img->channels*sizeof(double), "icv_crop: Out Image");
+
+    for (row = 0; row < ynum; row++) {
+	/* calculate left point of row */
+	x_1 = ((ulx-llx)/(fastf_t)(ynum-1)) * (fastf_t)row + llx;
+	y_1 = ((uly-lly)/(fastf_t)(ynum-1)) * (fastf_t)row + lly;
+	/* calculate right point of row */
+	x_2 = ((urx-lrx)/(fastf_t)(ynum-1)) * (fastf_t)row + lrx;
+	y_2 = ((ury-lry)/(fastf_t)(ynum-1)) * (fastf_t)row + lry;
+	for (col = 0; col < xnum; col++) {
+	    /* calculate point along row */
+	    x = (int)((x_2-x_1)/(fastf_t)(xnum-1)) * (fastf_t)col + x_1;
+	    y = (int)((y_2-y_1)/(fastf_t)(xnum-1)) * (fastf_t)col + y_1;
+	    /* Calculates the pointer to the data which has to be copied */
+	    q = data + (img->width*y+x)*img->channels;
+	    /* Moves pixel to the prescribed location */
+	    VMOVEN(p,q,img->channels);
+	    /* points to the next pointer where data is to be copied */
+	    p += img->channels;
+	}
+    }
+    bu_free(data, "icv_crop : frees input image buffer");
+    img->width = xnum;
+    img->height = ynum;
+    return 0;
+}
