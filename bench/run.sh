@@ -911,7 +911,7 @@ clean_obstacles ( ) {
     fi
 
     # look for an image file
-    if test -f ${base}.pix; then
+    if test -f ${base}.pix ; then
 	if test -f ${base}-$$.pix ; then
 	    # backup already exists, just delete obstacle
 	    rm -f ${base}.pix
@@ -922,7 +922,7 @@ clean_obstacles ( ) {
     fi
 
     # look for a log file
-    if test -f ${base}.log; then
+    if test -f ${base}.log ; then
 	if test -f ${base}-$$.log ; then
 	    # backup already exists, just delete obstacle
 	    rm -f ${base}.log
@@ -989,7 +989,13 @@ end;
 EOF
 	    retval=$?
 
-	    if test -f ${bench_testname}.pix.$bench_frame ; then mv -f ${bench_testname}.pix.$bench_frame ${bench_testname}.pix ; fi
+	    if test $bench_frame -ne 0 ; then
+		if test -f ${bench_testname}.pix.$bench_frame ; then
+		    mv -f ${bench_testname}.pix.$bench_frame ${bench_testname}.pix
+		else
+		    $ECHO "WARNING: ${bench_testname}.pix.$bench_frame does not exist"
+		fi
+	    fi
 
 	    # compute how long we took, rounding up to at least one
 	    # second to prevent division by zero.
@@ -1105,9 +1111,21 @@ EOF
 	bench_hypersample="`expr \( \( $bench_hypersample + 1 \) / 2 \) - 1`"
     done
 
+    # clear out any profile output files
+    if test -f gmon.out ; then
+	mv -f gmon.out gmon.${bench_testname}.out
+    fi
+
     # the last run should be a relatively stable representative of the performance
 
-    if test -f gmon.out; then mv -f gmon.out gmon.${bench_testname}.out; fi
+    if ! test -f "${PIX}/${bench_testname}.pix" ; then
+	$ECHO "ERROR: reference image ${PIX}/${bench_testname}.pix not found"
+    fi
+    if ! test -f "${bench_testname}.pix" ; then
+	$ECHO "ERROR: computed image ${bench_testname}.pix disappeared?!"
+	ls -la *.pix*
+    fi
+    $VERBOSE_ECHO "DEBUG: $CMP $PIX/${bench_testname}.pix ${bench_testname}.pix"
     cmp_result="`${CMP} ${PIX}/${bench_testname}.pix ${bench_testname}.pix 2>&1`"
     ret=$?
 
