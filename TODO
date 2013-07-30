@@ -18,6 +18,10 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* address the ctest failure of bu_progname_tests (seen on ia64 linux)
+
+* address the ctest failure of bu_heap_test_1 (seen on ia32 fbsd)
+
 * document the new comb -w option
 
 * re-do the sh/enumerate.sh script for CMake
