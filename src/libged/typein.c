@@ -2804,7 +2804,7 @@ hrt_in(struct ged *gedp, char *cmd_argv[], struct rt_db_internal *intern)
     
     intern->idb_type = ID_HRT;
     intern->idb_meth = &rt_functab[ID_HRT];
-    intern->idb_type = (int)bu_malloc(sizeof(struct rt_hrt_internal), "rt_hrt_internal");
+    intern->idb_ptr = bu_malloc(sizeof(struct rt_hrt_internal), "rt_hrt_internal");
     hip = (struct rt_hrt_internal *)intern->idb_ptr;
     hip->hrt_magic = RT_HRT_INTERNAL_MAGIC;
 
