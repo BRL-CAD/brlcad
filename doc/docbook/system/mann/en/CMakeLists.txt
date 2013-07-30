@@ -44,6 +44,7 @@ set(docbook_mann_EN
   cat.xml
   center.xml
   color.xml
+  comb.xml
   comb_color.xml
   copyeval.xml
   copymat.xml
