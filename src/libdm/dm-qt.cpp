@@ -226,10 +226,168 @@ qt_drawPoints3D(struct dm *UNUSED(dmp), int UNUSED(npoints), point_t *UNUSED(poi
 
 
 HIDDEN int
-qt_drawVList(struct dm *UNUSED(dmp), struct bn_vlist *UNUSED(vp))
-{
-    bu_log("qt_drawVList not implemented\n");
-    return 0;
+qt_drawVList(struct dm *dmp, struct bn_vlist *vp)
+{   
+    static vect_t spnt, lpnt, pnt;
+    struct bn_vlist *tvp;
+    QLine lines[1024];
+    QLine *linep;
+    int nseg;
+    fastf_t delta;
+    point_t *pt_prev = NULL;
+    fastf_t dist_prev=1.0;
+    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+
+    /* delta is used in clipping to insure clipped endpoint is
+     * slightly in front of eye plane (perspective mode only).  This
+     * value is a SWAG that seems to work OK.
+     */
+    delta = privars->qmat[15]*0.0001;
+    if (delta < 0.0)
+	delta = -delta;
+    if (delta < SQRT_SMALL_FASTF)
+	delta = SQRT_SMALL_FASTF;
+
+    nseg = 0;
+    linep = lines;
+    for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
+	int i;
+	int nused = tvp->nused;
+	int *cmd = tvp->cmd;
+	point_t *pt = tvp->pt;
+	fastf_t dist;
+
+	for (i = 0; i < nused; i++, cmd++, pt++) {
+	    switch (*cmd) {
+		case BN_VLIST_POLY_START:
+		case BN_VLIST_POLY_VERTNORM:
+		case BN_VLIST_TRI_START:
+		case BN_VLIST_TRI_VERTNORM:
+		    continue;
+		case BN_VLIST_POLY_MOVE:
+		case BN_VLIST_LINE_MOVE:
+		case BN_VLIST_TRI_MOVE:
+		    /* Move, not draw */
+		    if (dmp->dm_perspective > 0) {
+			/* cannot apply perspective transformation to
+			 * points behind eye plane!!!!
+			 */
+			dist = VDOT(*pt, &privars->qmat[12]) + privars->qmat[15];
+			if (dist <= 0.0) {
+			    pt_prev = pt;
+			    dist_prev = dist;
+			    continue;
+			} else {
+			    MAT4X3PNT(lpnt, privars->qmat, *pt);
+			    dist_prev = dist;
+			    pt_prev = pt;
+			}
+		    } else {
+			MAT4X3PNT(lpnt, privars->qmat, *pt);
+		    }
+
+		    lpnt[0] *= 2047;
+		    lpnt[1] *= 2047 * dmp->dm_aspect;
+		    lpnt[2] *= 2047;
+		    continue;
+		case BN_VLIST_POLY_DRAW:
+		case BN_VLIST_POLY_END:
+		case BN_VLIST_LINE_DRAW:
+		case BN_VLIST_TRI_DRAW:
+		case BN_VLIST_TRI_END:
+		    /* draw */
+		    if (dmp->dm_perspective > 0) {
+			dist = VDOT(*pt, &privars->qmat[12]) + privars->qmat[15];
+			if (dist <= 0.0) {
+			    if (dist_prev <= 0.0) {
+				/* nothing to plot */
+				dist_prev = dist;
+				pt_prev = pt;
+				continue;
+			    } else {
+				if (pt_prev) {
+				fastf_t alpha;
+				vect_t diff;
+				point_t tmp_pt;
+
+				/* clip this end */
+				VSUB2(diff, *pt, *pt_prev);
+				alpha = (dist_prev - delta) / (dist_prev - dist);
+				VJOIN1(tmp_pt, *pt_prev, alpha, diff);
+				MAT4X3PNT(pnt, privars->qmat, tmp_pt);
+				}
+			    }
+			} else {
+			    if (dist_prev <= 0.0) {
+				if (pt_prev) {
+				fastf_t alpha;
+				vect_t diff;
+				point_t tmp_pt;
+
+				/* clip other end */
+				VSUB2(diff, *pt, *pt_prev);
+				alpha = (-dist_prev + delta) / (dist - dist_prev);
+				VJOIN1(tmp_pt, *pt_prev, alpha, diff);
+				MAT4X3PNT(lpnt, privars->qmat, tmp_pt);
+				lpnt[0] *= 2047;
+				lpnt[1] *= 2047 * dmp->dm_aspect;
+				lpnt[2] *= 2047;
+				MAT4X3PNT(pnt, privars->qmat, *pt);
+				}
+			    } else {
+				MAT4X3PNT(pnt, privars->qmat, *pt);
+			    }
+			}
+			dist_prev = dist;
+		    } else {
+			MAT4X3PNT(pnt, privars->qmat, *pt);
+		    }
+
+		    pnt[0] *= 2047;
+		    pnt[1] *= 2047 * dmp->dm_aspect;
+		    pnt[2] *= 2047;
+
+		    /* save pnt --- it might get changed by clip() */
+		    VMOVE(spnt, pnt);
+		    pt_prev = pt;
+
+		    if (dmp->dm_zclip) {
+			if (vclip(lpnt, pnt,
+				  dmp->dm_clipmin,
+				  dmp->dm_clipmax) == 0) {
+			    VMOVE(lpnt, spnt);
+			    continue;
+			}
+		    }
+		    /* convert to Qt window coordinates */
+		    linep->setLine ((short)GED_TO_Xx(dmp, lpnt[0]),
+			(short)GED_TO_Xy(dmp, lpnt[1]),
+			(short)GED_TO_Xx(dmp, pnt[0]),
+			(short)GED_TO_Xy(dmp, pnt[1])
+			);
+		    
+		    nseg++;
+		    linep++;
+		    VMOVE(lpnt, spnt);
+
+		    if (nseg == 1024) {
+			privars->painter->drawLines(lines, nseg);
+			nseg = 0;
+			linep = lines;
+		    }
+		    break;
+		case BN_VLIST_POINT_DRAW:
+		    break;
+	    }
+	}
+    }
+
+    if (nseg) {
+	privars->painter->drawLines(lines, nseg);
+    }
+
+    bu_log("qt_drawVList called\n");
+    return TCL_OK;
 }
 
 
