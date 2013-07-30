@@ -39,6 +39,13 @@
 #include "dm.h"
 #include "dm_xvars.h"
 
+HIDDEN bool
+qt_sendRepaintEvent(struct dm *dmp)
+{
+    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+    QEvent e(QEvent::UpdateRequest);
+    return privars->qapp->sendEvent(privars->win, &e);
+}
 /*
  * Q T _ C L O S E
  *
@@ -94,6 +101,7 @@ qt_drawEnd(struct dm *dmp)
     privars->painter->end();
     delete privars->painter;
     privars->painter = NULL;
+    qt_sendRepaintEvent(dmp);
     dmp->dm_processEvents(dmp);
 
     bu_log("qt_drawEnd called\n");
