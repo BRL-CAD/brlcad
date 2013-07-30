@@ -148,7 +148,7 @@ icv_get_kernel(ICV_FILTER filter_type, double *kern, double *offset) {
 
 /* begin public functions */
 
-int icv_filter(icv_image_t* img, ICV_FILTER filter_type)
+int icv_filter(icv_image_t *img, ICV_FILTER filter_type)
 {
     double *kern=NULL, *kern_p=NULL;
     double c_val;
@@ -178,17 +178,17 @@ int icv_filter(icv_image_t* img, ICV_FILTER filter_type)
 
     index = -1;
 
-    for (s = 0; s <= size; s++ ) {
+    for (s = 0; s <= size; s++) {
 	index++;
 	c_val = 0;
 	kern_p = kern;
 
-	for (k = -k_dim/2; k<=k_dim/2; k++ ) {
+	for (k = -k_dim/2; k<=k_dim/2; k++) {
 	    n_index = index + k*widthstep;
 	    data_p = in_data + n_index;
 	    for (i = 0; i<=k_dim; i++ ) {
-	   /*Ensures that the arguments are given a zero value for
-	   out of bound pixels. Thus behaves similar to zero padding*/
+	   /* Ensures that the arguments are given a zero value for
+	   out of bound pixels. Thus behaves similar to zero padding */
 		if (n_index >= 0 && n_index < size) {
 		    c_val  += (*kern_p++)*(*data_p);
 		    data_p += img->channels;
@@ -203,9 +203,9 @@ int icv_filter(icv_image_t* img, ICV_FILTER filter_type)
     return 0;
 }
 
-icv_image_t* icv_filter3(icv_image_t* old_img, icv_image_t* curr_img, icv_image_t* new_img, ICV_FILTER filter_type)
+icv_image_t *icv_filter3(icv_image_t *old_img, icv_image_t *curr_img, icv_image_t *new_img, ICV_FILTER filter_type)
 {
-    icv_image_t* out_img;
+    icv_image_t *out_img;
     double *kern=NULL;
     double *kern_old,*kern_curr,*kern_new;
     double c_val;
@@ -258,8 +258,8 @@ icv_image_t* icv_filter3(icv_image_t* old_img, icv_image_t* curr_img, icv_image_
 	    curr_data_p = curr_data + n_index;
 	    new_data_p = new_data + n_index;
 	    for (i = 0; i<=k_dim; i++ ) {
-	   /*Ensures that the arguments are given a zero value for
-	   out of bound pixels. Thus behaves similar to zero padding*/
+	   /* Ensures that the arguments are given a zero value for
+	   out of bound pixels. Thus behaves similar to zero padding */
 		if (n_index >= 0 && n_index < size) {
 		    c_val  += (*kern_old++)*(*old_data_p);
 		    c_val  += (*kern_curr++)*(*curr_data_p);
@@ -276,7 +276,7 @@ icv_image_t* icv_filter3(icv_image_t* old_img, icv_image_t* curr_img, icv_image_
     return 0;
 }
 
-int icv_fade(icv_image_t* img, double fraction)
+int icv_fade(icv_image_t *img, double fraction)
 {
     size_t size;
     double *data;
