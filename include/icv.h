@@ -361,7 +361,15 @@ ICV_EXPORT extern icv_image_t* icv_filter3(icv_image_t* old_img,
 					       icv_image_t* new_img,
 					       ICV_FILTER filter_type);
 
-
+/**
+ * icv_fade will darken a pix by a certain fraction.
+ *
+ * Fades an image in place.
+ *
+ * @param img ICV Image to be faded.
+ * @param fraction should be between 0 to 1. Amount by which the image
+ * is needed to faded.
+ */
 ICV_EXPORT extern int icv_fade(icv_image_t* img, double fraction);
 
 /** @} */
