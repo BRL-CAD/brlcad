@@ -443,7 +443,7 @@ icv_image_save(icv_image_t* bif, const char* filename, ICV_IMAGE_FORMAT format)
 {
     char buf[BUFSIZ] = {0};
 
-    if (format == ICV_IMAGE_AUTO || format == ICV_IMAGE_AUTO_NO_PIX) {
+    if (format == ICV_IMAGE_AUTO) {
 	format = icv_guess_file_format(filename, buf);
     }
 

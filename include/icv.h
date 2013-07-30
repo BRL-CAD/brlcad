@@ -63,7 +63,6 @@ ICV_EXPORT extern int icv_rot(int argv, char **argc);
 
 typedef enum {
     ICV_IMAGE_AUTO,
-    ICV_IMAGE_AUTO_NO_PIX,
     ICV_IMAGE_PIX,
     ICV_IMAGE_BW,
     ICV_IMAGE_ALIAS,
