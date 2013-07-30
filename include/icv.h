@@ -336,6 +336,29 @@ ICV_EXPORT extern int icv_crop(icv_image_t *img,
 			       unsigned int ynum,
 			       unsigned int xnum);
 
+/** @file libicv/filter.c
+ *
+ * This file contains routines for image filtering. This is done
+ * mainly using the convolution of images. Both Gray Scale and RGB
+ * images are taken care.
+ *
+ */
+
+typedef enum {
+    ICV_FILTER_LOW_PASS,
+    ICV_FILTER_LAPLACIAN,
+    ICV_FILTER_HORIZONTAL_GRAD,
+    ICV_FILTER_VERTICAL_GRAD,
+    ICV_FILTER_HIGH_PASS,
+    ICV_FILTER_NULL,
+    ICV_FILTER_BOXCAR_AVERAGE,
+    ICV_FILTER_3_LOW_PASS,
+    ICV_FILTER_3_HIGH_PASS,
+    ICV_FILTER_3_BOXCAR_AVERAGE,
+    ICV_FILTER_3_ANIMATION_SMEAR,
+    ICV_FILTER_3_NULL
+}ICV_FILTER;
+
 
 /** @} */
 /* end image utilities */
