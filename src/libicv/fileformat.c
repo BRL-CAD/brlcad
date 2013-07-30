@@ -309,6 +309,8 @@ ppm_save(icv_image_t* bif, const char* filename)
     unsigned char *data;
     int fd;
     size_t ret, size;
+
+    /* FIXME: should not be introducing fixed size buffers */
     char buf[BUFSIZ] = {0};
 
     if (bif->color_space == ICV_COLOR_SPACE_GRAY) {
@@ -441,6 +443,7 @@ icv_image_load(const char *filename, int format, int width, int height)
 int
 icv_image_save(icv_image_t* bif, const char* filename, ICV_IMAGE_FORMAT format)
 {
+    /* FIXME: should not be introducing fixed size buffers */
     char buf[BUFSIZ] = {0};
 
     if (format == ICV_IMAGE_AUTO) {
