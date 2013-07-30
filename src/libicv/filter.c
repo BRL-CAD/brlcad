@@ -29,6 +29,8 @@
 
 #define KERN_DEFAULT 3
 
+/* private functions */
+
 HIDDEN void
 icv_get_kernel(ICV_FILTER filter_type, double *kern, double *offset) {
     switch(filter_type) {
@@ -81,6 +83,10 @@ icv_get_kernel(ICV_FILTER filter_type, double *kern, double *offset) {
     }
     return;
 }
+
+/* end of private functions */
+
+/* begin public functions */
 
 int icv_filter(icv_image_t* img, ICV_FILTER filter_type)
 {
