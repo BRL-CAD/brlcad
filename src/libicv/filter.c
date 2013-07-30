@@ -76,6 +76,66 @@ icv_get_kernel(ICV_FILTER filter_type, double *kern, double *offset) {
 	    kern[6] = 0; kern[7] = 0; kern[8] = 0;
 	    *offset = 0;
 	    break;
+    case ICV_FILTER_3_LOW_PASS :
+	kern[0] = 1.0/84; kern[1] = 3.0/84; kern[2] = 1.0/84;
+	kern[3] = 3.0/84; kern[4] = 5.0/84; kern[5] = 3.0/84;
+	kern[6] = 1.0/84; kern[7] = 3.0/84; kern[8] = 1.0/84;
+	kern[9] = 3.0/84; kern[10] = 5.0/84; kern[11] = 3.0/84;
+	kern[12] = 5.0/84; kern[13] = 10.0/84; kern[14] = 5.0/84;
+	kern[15] = 3.0/84; kern[16] = 5.0/84; kern[17] = 3.0/84;
+	kern[18] = 1.0/84; kern[19] = 3.0/84; kern[20] = 1.0/84;
+	kern[21] = 3.0/84; kern[22] = 5.0/84; kern[23] = 3.0/84;
+	kern[24] = 1.0/84; kern[25] = 3.0/84; kern[26] = 1.0/84;
+	*offset = 0;
+	break;
+    case ICV_FILTER_3_HIGH_PASS :
+	kern[0] = -1.0; kern[1] = -2.0; kern[2] = -1.0;
+	kern[3] = -2.0; kern[4] = -4.0; kern[5] = -2.0;
+	kern[6] = -1.0; kern[7] = -2.0; kern[8] = -1.0;
+	kern[9] = -2.0; kern[10] = -4.0; kern[11] = -2.0;
+	kern[12] = -4.0; kern[13] = 56.0; kern[14] = -4.0;
+	kern[15] = -2.0; kern[16] = -4.0; kern[17] = -2.0;
+	kern[18] = -1.0; kern[19] = -2.0; kern[20] = -1.0;
+	kern[21] = -2.0; kern[22] = -4.0; kern[23] = -2.0;
+	kern[24] = -1.0; kern[25] = -2.0; kern[26] = -1.0;
+	*offset = 0;
+	break;
+    case ICV_FILTER_3_BOXCAR_AVERAGE :
+	kern[0] = 1.0/53; kern[1] = 1.0/53; kern[2] = 1.0/53;
+	kern[3] = 1.0/53; kern[4] = 1.0/53; kern[5] = 1.0/53;
+	kern[6] = 1.0/53; kern[7] = 1.0/53; kern[8] = 1.0/53;
+	kern[9] = 1.0/53; kern[10] = 1.0/53; kern[11] = 1.0/53;
+	kern[12] = 1.0/53; kern[13] = 27.0/53; kern[14] = 1.0/53;
+	kern[15] = 1.0/53; kern[16] = 1.0/53; kern[17] = 1.0/53;
+	kern[18] = 1.0/53; kern[19] = 1.0/53; kern[20] = 1.0/53;
+	kern[21] = 1.0/53; kern[22] = 1.0/53; kern[23] = 1.0/53;
+	kern[24] = 1.0/53; kern[25] = 1.0/53; kern[26] = 1.0/53;
+	*offset = 0;
+	break;
+    case ICV_FILTER_3_ANIMATION_SMEAR :
+	kern[0] = 1.0/69; kern[1] = 1.0/69; kern[2] = 1.0/69;
+	kern[3] = 1.0/69; kern[4] = 1.0/69; kern[5] = 1.0/69;
+	kern[6] = 1.0/69; kern[7] = 1.0/69; kern[8] = 1.0/69;
+	kern[9] = 1.0/69; kern[10] = 1.0/69; kern[11] = 1.0/69;
+	kern[12] = 1.0/69; kern[13] = 1.0/69; kern[14] = 1.0/69;
+	kern[15] = 1.0/69; kern[16] = 1.0/69; kern[17] = 1.0/69;
+	kern[18] = 2.0/69; kern[19] = 2.0/69; kern[20] = 2.0/69;
+	kern[21] = 2.0/69; kern[22] = 35.0/69; kern[23] = 2.0/69;
+	kern[24] = 2.0/69; kern[25] = 2.0/69; kern[26] = 2.0/69;
+	*offset = 0;
+	break;
+    case ICV_FILTER_3_NULL :
+	kern[0] = 0; kern[1] = 0; kern[2] = 0;
+	kern[3] = 0; kern[4] = 0; kern[5] = 0;
+	kern[6] = 0; kern[7] = 0; kern[8] = 0;
+	kern[9] = 0; kern[10] = 0; kern[11] = 0;
+	kern[12] = 0; kern[13] = 0; kern[14] = 0;
+	kern[15] = 0; kern[16] = 0; kern[17] = 0;
+	kern[18] = 0; kern[19] = 0; kern[20] = 0;
+	kern[21] = 0; kern[22] = 0; kern[23] = 0;
+	kern[24] = 0; kern[25] = 0; kern[26] = 0;
+	*offset = 0;
+	break;
 	default :
 	    bu_log("Filter Type not Implemented.\n");
 	    bu_free(kern, "Freeing Kernel, Wrong filter");
