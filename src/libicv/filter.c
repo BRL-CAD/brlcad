@@ -202,3 +202,76 @@ int icv_filter(icv_image_t* img, ICV_FILTER filter_type)
     bu_free(in_data, "icv:filter Input Image Data");
     return 0;
 }
+
+icv_image_t* icv_filter3(icv_image_t* old_img, icv_image_t* curr_img, icv_image_t* new_img, ICV_FILTER filter_type)
+{
+    icv_image_t* out_img;
+    double *kern=NULL;
+    double *kern_old,*kern_curr,*kern_new;
+    double c_val;
+    double *out_data;
+    double *old_data, *curr_data, *new_data;
+    double *old_data_p, *curr_data_p, *new_data_p;
+    double offset = 0;
+    int k_dim = KERN_DEFAULT;
+    long int size;
+    long int s,k,i;
+    long int widthstep;
+    long int index, n_index; /**< index is the index of the pixel in
+    out image and n_index corresponds to the nearby pixel in input
+    image*/
+
+
+    if ((old_img->width == curr_img->width && curr_img->width == new_img->width) && \
+	(old_img->height == curr_img->height && curr_img->height == new_img->height) && \
+	(old_img->channels == curr_img->channels && curr_img->channels == new_img->channels)) {
+	bu_log("icv_filter3 : Image Parameters not Equal");
+	return NULL;
+    }
+
+    kern = bu_malloc(k_dim*k_dim*3*sizeof(double), "icv_filter3 : Kernel Allocation");
+    icv_get_kernel(filter_type, kern, &offset);
+
+    widthstep = old_img->width*old_img->channels;
+
+    old_data = old_img->data;
+    curr_data = curr_img->data;
+    new_data = new_img->data;
+
+    size = old_img->height*old_img->width*old_img->channels;
+
+    out_img = icv_image_create(old_img->width, old_img->height, old_img->color_space);
+
+    out_data = out_img->data;
+
+    index = -1;
+
+    for (s = 0; s <= size; s++ ) {
+	index++;
+	c_val = 0;
+	kern_old = kern;
+	kern_curr = kern + k_dim*k_dim-1;
+	kern_new = kern + 2*k_dim*k_dim-1;
+	for (k = -k_dim/2; k<=k_dim/2; k++ ) {
+	    n_index = index + k*widthstep;
+	    old_data_p = old_data + n_index;
+	    curr_data_p = curr_data + n_index;
+	    new_data_p = new_data + n_index;
+	    for (i = 0; i<=k_dim; i++ ) {
+	   /*Ensures that the arguments are given a zero value for
+	   out of bound pixels. Thus behaves similar to zero padding*/
+		if (n_index >= 0 && n_index < size) {
+		    c_val  += (*kern_old++)*(*old_data_p);
+		    c_val  += (*kern_curr++)*(*curr_data_p);
+		    c_val  += (*kern_new++)*(*new_data_p);
+		    old_data_p += old_img->channels;
+		    curr_data_p += old_img->channels;
+		    new_data_p += old_img->channels;
+		    n_index += old_img->channels;
+		}
+	    }
+	}
+	*out_data++ = c_val + offset;
+    }
+    return 0;
+}
