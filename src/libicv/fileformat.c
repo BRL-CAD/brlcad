@@ -121,15 +121,15 @@ icv_guess_file_format(const char *filename, char *trimmedname)
  * @return double array.
  *
  */
-HIDDEN double*
-uchar2double(unsigned char* data, long int size)
+HIDDEN double *
+uchar2double(unsigned char *data, long int size)
 {
     double *double_data, *double_p;
     unsigned char *char_p;
     long int i;
 
     char_p = data;
-    double_p = double_data = (double*) bu_malloc(size*sizeof(double), "uchar2data : double data");
+    double_p = double_data = (double *) bu_malloc(size*sizeof(double), "uchar2data : double data");
     for (i=0; i<size; i++) {
 	*double_p = ((double)(*char_p))/255.0;
 	double_p++;
@@ -149,8 +149,8 @@ uchar2double(unsigned char* data, long int size)
  * Gamma correction prevents bad color aliasing.
  *
  */
-HIDDEN unsigned char*
-data2uchar(const icv_image_t* bif)
+HIDDEN unsigned char *
+data2uchar(const icv_image_t *bif)
 {
     long int size;
     long int i;
@@ -158,7 +158,7 @@ data2uchar(const icv_image_t* bif)
     double *double_p;
 
     size = bif->height*bif->width*bif->channels;
-    char_p = uchar_data = (unsigned char*) bu_malloc((size_t)size, "data2uchar : unsigned char data");
+    char_p = uchar_data = (unsigned char *) bu_malloc((size_t)size, "data2uchar : unsigned char data");
 
     double_p = bif->data;
 
@@ -186,7 +186,7 @@ data2uchar(const icv_image_t* bif)
 
 
 HIDDEN int
-png_save(icv_image_t* bif, const char* filename)
+png_save(icv_image_t *bif, const char *filename)
 {
     png_structp png_ptr = NULL;
     png_infop info_ptr = NULL;
@@ -234,7 +234,7 @@ png_save(icv_image_t* bif, const char* filename)
 
 
 HIDDEN int
-pix_save(icv_image_t* bif, const char* filename)
+pix_save(icv_image_t *bif, const char *filename)
 {
     unsigned char *data;
     int fd;
@@ -258,7 +258,7 @@ pix_save(icv_image_t* bif, const char* filename)
     return 0;
 }
 HIDDEN int
-bw_save(icv_image_t* bif, const char* filename)
+bw_save(icv_image_t *bif, const char *filename)
 {
 
     unsigned char *data;
@@ -292,7 +292,7 @@ bw_save(icv_image_t* bif, const char* filename)
 
 
 HIDDEN int
-ppm_save(icv_image_t* bif, const char* filename)
+ppm_save(icv_image_t *bif, const char *filename)
 {
     unsigned char *data;
     int fd;
@@ -327,8 +327,8 @@ HIDDEN icv_image_t *
 pix_load(const char* filename, int width, int height)
 {
     int fd;
-    unsigned char* data = 0;
-    icv_image_t* bif;
+    unsigned char *data = 0;
+    icv_image_t *bif;
 
     size_t size;
 
@@ -364,11 +364,11 @@ pix_load(const char* filename, int width, int height)
 
 
 HIDDEN icv_image_t *
-bw_load(const char* filename, int width, int height)
+bw_load(const char *filename, int width, int height)
 {
     int fd;
-    unsigned char* data = 0;
-    icv_image_t* bif;
+    unsigned char *data = 0;
+    icv_image_t *bif;
 
     size_t size;
 
@@ -429,7 +429,7 @@ icv_image_load(const char *filename, int format, int width, int height)
 
 
 int
-icv_image_save(icv_image_t* bif, const char* filename, ICV_IMAGE_FORMAT format)
+icv_image_save(icv_image_t *bif, const char *filename, ICV_IMAGE_FORMAT format)
 {
     /* FIXME: should not be introducing fixed size buffers */
     char buf[BUFSIZ] = {0};
@@ -440,7 +440,7 @@ icv_image_save(icv_image_t* bif, const char* filename, ICV_IMAGE_FORMAT format)
 
     switch(format) {
 	/* case ICV_IMAGE_BMP:
-	   return bmp_save(bif, filename);*/
+	   return bmp_save(bif, filename); */
 	case ICV_IMAGE_PPM:
 	    return ppm_save(bif, filename);
 	case ICV_IMAGE_PNG:
@@ -496,16 +496,16 @@ icv_image_writepixel(icv_image_t *bif, int x, int y, double *data)
     }
     dst = bif->data + (y*bif->width + x)*bif->channels;
 
-    /* can copy float to double also double to double*/
+    /* can copy float to double also double to double */
     VMOVEN(dst, data, bif->channels);
     return 0;
 }
 
 
-icv_image_t*
+icv_image_t *
 icv_image_create(int width, int height, ICV_COLOR_SPACE color_space)
 {
-    icv_image_t* bif;
+    icv_image_t *bif;
     BU_ALLOC(bif, struct icv_image);
     bif->width = width;
     bif->height = height;
@@ -515,11 +515,11 @@ icv_image_create(int width, int height, ICV_COLOR_SPACE color_space)
     switch(color_space) {
 	case ICV_COLOR_SPACE_RGB :
 	    /* Add all the other three channel images here (eg. HSV, YCbCr etc.) */
-	    bif->data = (double*) bu_malloc(bif->height*bif->width*3*sizeof(double), "Image Data");
+	    bif->data = (double *) bu_malloc(bif->height*bif->width*3*sizeof(double), "Image Data");
 	    bif->channels = 3;
 	    break;
 	case ICV_COLOR_SPACE_GRAY :
-	    bif->data = (double*) bu_malloc(bif->height*bif->width*1*sizeof(double), "Image Data");
+	    bif->data = (double *) bu_malloc(bif->height*bif->width*1*sizeof(double), "Image Data");
 	    bif->channels = 1;
 	    break;
 	default :
@@ -530,10 +530,10 @@ icv_image_create(int width, int height, ICV_COLOR_SPACE color_space)
 }
 
 
-icv_image_t*
-icv_image_zero(icv_image_t* bif)
+icv_image_t *
+icv_image_zero(icv_image_t *bif)
 {
-    double* data;
+    double *data;
     long size, i;
 
     data = bif->data;
@@ -546,7 +546,7 @@ icv_image_zero(icv_image_t* bif)
 
 
 void
-icv_image_free(icv_image_t* bif)
+icv_image_free(icv_image_t *bif)
 {
     bu_free(bif->data, "Image Data");
     bu_free(bif, "ICV IMAGE Structure");
