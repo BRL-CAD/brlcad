@@ -50,7 +50,9 @@ _path_scrub(struct bu_vls *path)
     if (bu_vls_addr(path)[0] == '/') islocal = 0;
     normalized = db_normalize(bu_vls_addr(path));
     if (normalized && !BU_STR_EQUAL(normalized, "/")) {
-	bu_vls_sprintf(&tmp, "%s", bu_basename(normalized));
+	char *basename = bu_basename(normalized);
+	bu_vls_sprintf(&tmp, "%s", basename);
+	bu_free(basename, "free bu_basename string (caller's responsibility per bu.h)");
 	bu_vls_sprintf(path, "%s", bu_vls_addr(&tmp));
     } else {
 	bu_vls_sprintf(path, "%s", "/");
