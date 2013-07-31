@@ -334,15 +334,14 @@ _ged_flatten_comb(struct ged *gedp, struct directory *dp) {
     db_search_freeplan(&dbplan);
     db_free_full_path_list(toplevel_list);
 
-    /* Done searching - now we can clear the original tree */
+    /* Done searching - now we can free search structures and clear the original tree */
+    bu_vls_free(&plan_string);
+    db_free_full_path_list(path_list);
     if (_ged_clear_comb_tree(gedp, dp) == GED_ERROR) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: %s tree clearing failed", dp->d_namep);
-	db_free_full_path_list(path_list);
-	bu_ptbl_free(non_union_objects);
 	bu_ptbl_free(solids);
 	bu_ptbl_free(combs);
 	bu_ptbl_free(combs_outside_of_tree);
-	bu_vls_free(&plan_string);
 	return GED_ERROR;
     }
 
@@ -353,11 +352,9 @@ _ged_flatten_comb(struct ged *gedp, struct directory *dp) {
 	    /* add "child" comb to the newly cleared parent */
 	    if (_ged_combadd(gedp, (*dp_curr), dp->d_namep, 0, WMOP_UNION, 0, 0) == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "Error adding '%s' to '%s'\n", (*dp_curr)->d_namep, dp->d_namep);
-		db_free_full_path_list(path_list);
 		bu_ptbl_free(solids);
 		bu_ptbl_free(combs);
 		bu_ptbl_free(combs_outside_of_tree);
-		bu_vls_free(&plan_string);
 		return GED_ERROR;
 	    }
 	}
@@ -373,19 +370,15 @@ _ged_flatten_comb(struct ged *gedp, struct directory *dp) {
 	    if (db_delete(gedp->ged_wdbp->dbip, (*dp_curr)) != 0 || db_dirdelete(gedp->ged_wdbp->dbip, (*dp_curr)) == 0) {
 		bu_vls_trunc(gedp->ged_result_str, 0);
 	    } else {
-		db_free_full_path_list(path_list);
 		bu_ptbl_free(combs);
 		bu_ptbl_free(combs_outside_of_tree);
-		bu_vls_free(&plan_string);
 		return GED_ERROR;
 	    }
 	}
     }
 
-    db_free_full_path_list(path_list);
     bu_ptbl_free(combs);
     bu_ptbl_free(combs_outside_of_tree);
-    bu_vls_free(&plan_string);
     return GED_OK;
 }
 
