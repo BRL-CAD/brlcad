@@ -277,12 +277,15 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		    } else {
 			search_results = db_search_full_paths(dbplan, dispatch_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
 			for (BU_LIST_FOR_BACKWARDS(result, db_full_path_list, &(search_results->l))) {
-			    bu_vls_printf(gedp->ged_result_str, "%s\n", db_path_to_string(result->path));
+			    char *path_string = db_path_to_string(result->path);
+			    bu_vls_printf(gedp->ged_result_str, "%s\n", path_string);
+			    bu_free(path_string, "free db_path_to_string output, per raytrace.h");
 			}
 			db_free_full_path_list(search_results);
 		    }
 		    db_free_full_path(new_entry->path);
 		    BU_LIST_DEQUEUE(&(new_entry->l));
+		    bu_free(new_entry->path, "free new_entry path");
 		    bu_free(new_entry, "free new_entry");
 		}
 	    }
@@ -294,6 +297,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
      * just assemble the full path list and return it */
     db_free_full_path(&dfp);
     db_free_full_path_list(path_list);
+    db_free_full_path_list(dispatch_list);
     bu_vls_free(&argvls);
     bu_free_argv(argc, argv);
     return TCL_OK;
