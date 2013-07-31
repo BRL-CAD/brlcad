@@ -315,7 +315,9 @@ view_pixel(struct application *ap)
 		p[2] = b;
 
 		if (bif != NULL) {
+		    bu_semaphore_acquire(BU_SEM_SYSCALL);
 		    icv_writepixel(bif, ap->a_x, ap->a_y, ap->a_color);
+		    bu_semaphore_release(BU_SEM_SYSCALL);
 		} else if (outfp != NULL) {
 		    bu_semaphore_acquire(BU_SEM_SYSCALL);
 		    if (bu_fseek(outfp, (ap->a_y*width*pwidth) + (ap->a_x*pwidth), 0) != 0)
@@ -566,7 +568,9 @@ view_pixel(struct application *ap)
 	    }
 	    if (bif != NULL) {
 		/* TODO : Add double type data to maintain resolution */
+		bu_semaphore_acquire(BU_SEM_SYSCALL);
 		icv_writeline(bif, ap->a_y, (unsigned char *)scanline[ap->a_y].sl_buf, ICV_DATA_UCHAR);
+		bu_semaphore_release(BU_SEM_SYSCALL);
 	    } else if (outfp != NULL) {
 		size_t count;
 
