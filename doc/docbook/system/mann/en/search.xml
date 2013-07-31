@@ -493,8 +493,10 @@
       <userinput>search -bool +</userinput>
     </para>
     <para>
-      Find all objects that are combined into one or more trees using the Intersect boolean operation somewhere in the .g file. This
-      approach only identifies which objects are intersected somewhere in the tree, not where specifically they are intersected.
+      Find all objects that are combined into one or more trees using the
+      Intersect boolean operation somewhere in the .g file. This
+      approach only identifies which objects are intersected somewhere in
+      the tree, not where specifically they are intersected.
     </para>
   </example>
 
@@ -504,8 +506,10 @@
       <userinput>search / -bool +</userinput>
     </para>
     <para>
-      Find all boolean operations that use the Intersect boolean operation and report the full paths to those objects. This approach
-      reports all individual cases where an object has been combined into a hierarchy by intersection, not just which objects have
+      Find all boolean operations that use the Intersect boolean operation
+      and report the full paths to those objects. This approach
+      reports all individual cases where an object has been combined into a
+      hierarchy by intersection, not just which objects have
       been included with the intersection operator.
     </para>
   </example>
@@ -526,9 +530,11 @@
       <userinput>search / -type region -above -type region ! -bool -</userinput>
     </para>
     <para>
-      A more nuanced variation on finding nested regions that adds a check to make sure that the regions aren't being
-      subtracted.  While not ideal, using a subtraction does avoid the modeling error of two volumes claiming the three
-      dimensional space is arguably acceptable - the above command finds nested region instances that are definite errors.
+      A more nuanced variation on finding nested regions that adds a check to
+      make sure that the regions aren't being subtracted.  While not ideal,
+      using a subtraction does avoid the modeling error of two volumes
+      claiming the three dimensional space and is arguably acceptable - the
+      above command finds nested region instances that are definite errors.
     </para>
   </example>
 
