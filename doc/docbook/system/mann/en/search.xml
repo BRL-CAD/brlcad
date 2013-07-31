@@ -75,6 +75,21 @@
       </listitem>
     </varlistentry>
     <varlistentry>
+      <term><emphasis remap="B" role="bold">-bool</emphasis> <emphasis remap="I">u/+/-</emphasis></term>
+      <listitem>
+	<para>
+	  True if the object in question is being combined into the local hierarchy with the
+	  specified boolean operation.  Recognized types are Union (u), Intersection (+), and
+	  Subtraction (-).
+	</para>
+	<para>
+	  Note that by convention, top level objects are implicitly "unioned" into the database. To
+	  see only objects that have been unioned into a comb tree without returning the top level
+	  comb object as well, use the <option>-mindepth</option> option to filter for returns deeper in the tree.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
       <term><emphasis remap="B" role="bold">-iname</emphasis> <emphasis remap="I">pattern</emphasis></term>
       <listitem>
 	<para>
@@ -473,6 +488,54 @@
       Find all combinations with 10 or more nodes.
     </para>
   </example>
+
+  <example><title>Finding all Intersected Objects</title>
+
+    <para>
+      <userinput>search -bool +</userinput>
+    </para>
+    <para>
+      Find all objects that are combined into one or more trees using the Intersect boolean operation somewhere in the .g file. This
+      approach only identifies which objects are intersected somewhere in the tree, not where specifically they are intersected.
+    </para>
+  </example>
+
+  <example><title>Finding all Instances of Object Intersection</title>
+
+    <para>
+      <userinput>search / -bool +</userinput>
+    </para>
+    <para>
+      Find all boolean operations that use the Intersect boolean operation and report the full paths to those objects. This approach
+      reports all individual cases where an object has been combined into a hierarchy by intersection, not just which objects have
+      been included with the intersection operator.
+    </para>
+  </example>
+
+  <example><title>Finding all Unions Within a Comb's Tree</title>
+
+    <para>
+      <userinput>search /all.g -mindepth 1 -bool u</userinput>
+    </para>
+    <para>
+      Find all unions within the all.g tree hierarchy, excluding all.g itself.
+    </para>
+  </example>
+
+  <example><title>Finding all Non-Subtracted Regions below Regions</title>
+
+    <para>
+      <userinput>search / -type region -above -type region ! -bool -</userinput>
+    </para>
+    <para>
+      A more nuanced variation on finding nested regions that adds a check to make sure that the regions aren't being
+      subtracted.  While not ideal, using a subtraction does avoid the modeling error of two volumes claiming the three 
+      dimensional space is arguably acceptable - the above command finds nested region instances that are definite errors.
+    </para>
+  </example>
+
+
+
 
 
 </refsection>
