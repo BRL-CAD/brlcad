@@ -3686,6 +3686,11 @@ struct db_full_path_list {
 };
 
 /**
+ * Add an object to the db_full_path_list based on its database object name
+ */
+RT_EXPORT extern int db_full_path_list_add(const char *path, int local, struct db_i *dbip, struct db_full_path_list *path_list);
+
+/**
  * Free all entries and the list of a db_full_path_list
  */
 RT_EXPORT extern void db_free_full_path_list(struct db_full_path_list *path_list);

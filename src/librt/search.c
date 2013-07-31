@@ -124,6 +124,27 @@ static OPTION options[] = {
     { "-type",      N_TYPE,         c_type,	    O_ARGV },
 };
 
+int
+db_full_path_list_add(const char *path, int local, struct db_i *dbip, struct db_full_path_list *path_list)
+{
+    struct db_full_path dfp;
+    struct db_full_path_list *new_entry;
+    db_full_path_init(&dfp);
+    /* Turn string path into a full path structure */
+    if (db_string_to_path(&dfp, dbip, path) == -1) {
+	db_free_full_path(&dfp);
+	return 1;
+    }
+    /* Make a search list and add the entry from the directory name full path */
+    BU_ALLOC(new_entry, struct db_full_path_list);
+    BU_ALLOC(new_entry->path, struct db_full_path);
+    db_full_path_init(new_entry->path);
+    db_dup_full_path(new_entry->path, (const struct db_full_path *)&dfp);
+    new_entry->local = local;
+    BU_LIST_PUSH(&(path_list->l), &(new_entry->l));
+    db_free_full_path(&dfp);
+    return 0;
+}
 
 void
 db_free_full_path_list(struct db_full_path_list *path_list)

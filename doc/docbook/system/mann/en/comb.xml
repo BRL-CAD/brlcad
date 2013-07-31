@@ -22,7 +22,10 @@
         <arg choice="opt" rep="norepeat">-c</arg>
         <arg choice="opt" rep="norepeat">-r</arg>
       </group>
-      <arg choice="opt" rep="norepeat">-w</arg>
+      <group choice="opt" rep="norepeat">
+        <arg choice="opt" rep="norepeat">-w</arg>
+        <arg choice="opt" rep="norepeat">-f</arg>
+      </group>
       <arg choice="req" rep="norepeat"><replaceable>combination_name</replaceable> </arg>
       <arg choice="opt" rep="repeat"><replaceable>&lt;operator object_name&gt;</replaceable> </arg>
     </cmdsynopsis>
@@ -37,9 +40,16 @@
     a region. The <emphasis>operator/object_name</emphasis> pairs are combinations of boolean
     operators and object names to be added to the comb.
     </para>
-    <para>The <option>w</option> moves the contentions of a combination to a new combination
+    <para>The <option>w</option> moves the contents of a combination to a new combination
     and makes that combination the sole child of the original combination.  See the "fixing
     nested regions" example below for an illustration of how this option is used.
+    </para>
+    <para>The <option>f</option> will flatten a combination that contains only unions into
+    a single top level combination with all of the solids unioned into it, and remove all
+    combinations that were below the input combination that are not used elsewhere in the
+    .g file.  (In essense, the latter behavior prevents "orphaned" combinations that are no longer used
+    from showing up as new top level objects in the database.)  The <option>f</option> option
+    will not work on any combination containing non-union boolean operations.
     </para>
   </refsection>
 
@@ -66,13 +76,19 @@
 
       <variablelist>
 	<varlistentry>
-	  <term>
-         Suppose we have a situation where region2.r is unioned into region1.r, and both
-         region1.r and region2.r have the region flag set, as seen in the tree below.
-          </term>
+		<term>
+			Nested regions (a region containing another region in its tree) are generally 
+			viewed as poor modelling practice.  This example shows how to fix an instance of this nesting with minimal disruption to the model.
+		</term>
 
-<listitem>
-      <literallayout>
+	 <listitem>
+	 <para></para>
+	 <para>
+           Suppose we have a situation where region2.r is unioned into region1.r, and both
+           region1.r and region2.r have the region flag set, as seen in the tree below.
+	 </para>
+
+	<literallayout>
       <computeroutput>
 <prompt>mged&gt;</prompt> <userinput>tree region1.r</userinput>
 region1.r/R
@@ -96,7 +112,7 @@ region1.r/R
 
       <literallayout>
       <computeroutput>
-<prompt>mged&gt;</prompt> <userinput>c -w region2.r</userinput>
+<prompt>mged&gt;</prompt> <userinput>comb -w region2.r</userinput>
 <prompt>mged&gt;</prompt> <userinput>tree region2.r</userinput>
 region2.r/R
         u region2.r.c/
@@ -156,6 +172,79 @@ region2.r/R
       </variablelist>
 
     </example>
+
+    <example><title>Flattening a Combination.</title>
+
+      <variablelist>
+	<varlistentry>
+	  <term>
+		  When a combination contains only unioned objects, it can be flattened with the <option>f</option> option.
+          </term>
+
+	  <listitem>
+		  <para></para>
+		  <para>First, create an appropriate example to properly illustrate the option's behavior:</para>
+		  <literallayout>
+			  <computeroutput>
+<prompt>mged&gt;</prompt> <userinput>make sph1.s sph</userinput>
+<prompt>mged&gt;</prompt> <userinput>make sph2.s sph</userinput>
+<prompt>mged&gt;</prompt> <userinput>comb sph1.c u sph1.s</userinput>
+<prompt>mged&gt;</prompt> <userinput>comb sph2.c u sph2.s</userinput>
+<prompt>mged&gt;</prompt> <userinput>comb spheres.c u sph1.c u sph2.c</userinput>
+<prompt>mged&gt;</prompt> <userinput>comb misc.c u sph2.c</userinput>
+<prompt>mged&gt;</prompt> <userinput>tree spheres.c</userinput>
+spheres.c/
+         u sph1.c/
+                 u sph1.s
+         u sph2.c/
+                 u sph2.s
+
+<prompt>mged&gt;</prompt> <userinput>tree misc.c</userinput>
+misc.c/
+         u sph2.c/
+                 u sph2.s
+
+<prompt>mged&gt;</prompt> <userinput>tops</userinput>
+misc.c/               spheres.c
+      </computeroutput>
+      </literallayout>
+
+      <para>
+	      Note that sph2.c is used in both spheres.c and misc.c, but sph1.c is only used in spheres.c
+	      In the <command>tops</command> command output, misc.c and spheres.c are the only top level objects.  Targeting spheres.c with the <option>f</option> option:
+      </para>
+
+      <literallayout>
+      <computeroutput>
+<prompt>mged&gt;</prompt> <userinput>comb -f spheres.c</userinput>
+<prompt>mged&gt;</prompt> <userinput>tree spheres.c</userinput>
+spheres.c/
+        u sph1.s
+        u sph2.s
+
+<prompt>mged&gt;</prompt> <userinput>tree misc.c</userinput>
+misc.c/
+         u sph2.c/
+                 u sph2.s
+
+<prompt>mged&gt;</prompt> <userinput>tops</userinput>
+misc.c/               spheres.c
+      </computeroutput>
+      </literallayout>
+
+      <para>
+	      Notice that while spheres.c has indeed been flattened and no longer has the intermediate combinations over its solids,
+	      misc.c is still intact.  Notice also that while sph2.c was preserved, since it is used by misc.c, sph1.c was removed
+	      and does not show up in the <command>tops</command> command's output since it was no longer used by any object in the
+	      database.
+      </para>
+	  </listitem>
+	</varlistentry>
+      </variablelist>
+
+    </example>
+
+
   </refsection>
 
   <refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
