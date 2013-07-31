@@ -460,27 +460,27 @@ icv_save(icv_image_t *bif, const char *filename, ICV_IMAGE_FORMAT format)
 int
 icv_writeline(icv_image_t *bif, int y, void *data, ICV_DATA type)
 {
-    double *dst, *p;
+    double *dst;
     size_t width_size;
-    int flag=0;
+    unsigned char *p=NULL;
     if (bif == NULL) {
 	bu_log("ERROR: trying to write a line to null bif\n");
 	return -1;
     }
 
-    if (type == ICV_DATA_UCHAR) {
-	p = uchar2double(data, bif->width*bif->channels);
-	flag= 1;
-    } else
-	p = data;
-
     width_size = (size_t) bif->width*bif->channels;
     dst = bif->data + width_size*y;
 
-    memcpy(dst, p, width_size*sizeof(double));
+    if (type == ICV_DATA_UCHAR) {
+	p = data;
+	for (; width_size > 0; width_size--) {
+		*dst = (*p)/255.0;
+		p++;
+		dst++;
+	}
+    } else
+	memcpy(dst, data, width_size*sizeof(double));
 
-    if (flag)
-	bu_free(p, "icv__writeline : double data");
 
     return 0;
 }
