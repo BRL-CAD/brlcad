@@ -476,14 +476,14 @@ ON_Intersect(const ON_3dPoint& pointA,
 	closest_point = curveB.PointAt(closest_point_t);
 
 	if (dis <= tolerance) {
-	    ON_PX_EVENT *Event = new ON_PX_EVENT;
-	    Event->m_type = ON_PX_EVENT::pcx_point;
-	    Event->m_A = pointA;
-	    Event->m_B = closest_point;
-	    Event->m_b[0] = closest_point_t;
-	    Event->m_Mid = (pointA + Event->m_B) * 0.5;
-	    Event->m_radius = closest_point.DistanceTo(pointA) * 0.5;
-	    x.Append(*Event);
+	    ON_PX_EVENT Event;
+	    Event.m_type = ON_PX_EVENT::pcx_point;
+	    Event.m_A = pointA;
+	    Event.m_B = closest_point;
+	    Event.m_b[0] = closest_point_t;
+	    Event.m_Mid = (pointA + Event.m_B) * 0.5;
+	    Event.m_radius = closest_point.DistanceTo(pointA) * 0.5;
+	    x.Append(Event);
 	    return true;
 	}
     }
@@ -875,17 +875,17 @@ ON_Intersect(const ON_Curve* curveA,
 		    else
 			t_a2 = 1.0, t_b2 = endA_on_B;
 
-		    ON_X_EVENT* Event = new ON_X_EVENT;
-		    Event->m_A[0] = lineA.PointAt(t_a1);
-		    Event->m_A[1] = lineA.PointAt(t_a2);
-		    Event->m_B[0] = lineB.PointAt(t_b1);
-		    Event->m_B[1] = lineB.PointAt(t_b2);
-		    Event->m_a[0] = i->first->m_t.ParameterAt(t_a1);
-		    Event->m_a[1] = i->first->m_t.ParameterAt(t_a2);
-		    Event->m_b[0] = i->second->m_t.ParameterAt(t_b1);
-		    Event->m_b[1] = i->second->m_t.ParameterAt(t_b2);
-		    Event->m_type = ON_X_EVENT::ccx_overlap;
-		    tmp_x.Append(*Event);
+		    ON_X_EVENT Event;
+		    Event.m_A[0] = lineA.PointAt(t_a1);
+		    Event.m_A[1] = lineA.PointAt(t_a2);
+		    Event.m_B[0] = lineB.PointAt(t_b1);
+		    Event.m_B[1] = lineB.PointAt(t_b2);
+		    Event.m_a[0] = i->first->m_t.ParameterAt(t_a1);
+		    Event.m_a[1] = i->first->m_t.ParameterAt(t_a2);
+		    Event.m_b[0] = i->second->m_t.ParameterAt(t_b1);
+		    Event.m_b[1] = i->second->m_t.ParameterAt(t_b2);
+		    Event.m_type = ON_X_EVENT::ccx_overlap;
+		    tmp_x.Append(Event);
 		}
 	    } else {
 		// They are not parallel, check intersection point
@@ -896,13 +896,13 @@ ON_Intersect(const ON_Curve* curveA,
 		    t_a = i->first->m_t.ParameterAt(t_lineA);
 		    t_b = i->second->m_t.ParameterAt(t_lineB);
 
-		    ON_X_EVENT* Event = new ON_X_EVENT;
-		    Event->m_A[0] = Event->m_A[1] = lineA.PointAt(t_lineA);
-		    Event->m_B[0] = Event->m_B[1] = lineB.PointAt(t_lineB);
-		    Event->m_a[0] = Event->m_a[1] = t_a;
-		    Event->m_b[0] = Event->m_b[1] = t_b;
-		    Event->m_type = ON_X_EVENT::ccx_point;
-		    tmp_x.Append(*Event);
+		    ON_X_EVENT Event;
+		    Event.m_A[0] = Event.m_A[1] = lineA.PointAt(t_lineA);
+		    Event.m_B[0] = Event.m_B[1] = lineB.PointAt(t_lineB);
+		    Event.m_a[0] = Event.m_a[1] = t_a;
+		    Event.m_b[0] = Event.m_b[1] = t_b;
+		    Event.m_type = ON_X_EVENT::ccx_point;
+		    tmp_x.Append(Event);
 		}
 	    }
 	} else {
@@ -931,13 +931,13 @@ ON_Intersect(const ON_Curve* curveA,
 		double distance = pointA.DistanceTo(pointB);
 		// Check the validity of the solution
 		if (distance < intersection_tolerance) {
-		    ON_X_EVENT *Event = new ON_X_EVENT;
-		    Event->m_A[0] = Event->m_A[1] = pointA;
-		    Event->m_B[0] = Event->m_B[1] = pointB;
-		    Event->m_a[0] = Event->m_a[1] = t_a1;
-		    Event->m_b[0] = Event->m_b[1] = t_b1;
-		    Event->m_type = ON_X_EVENT::ccx_point;
-		    tmp_x.Append(*Event);
+		    ON_X_EVENT Event;
+		    Event.m_A[0] = Event.m_A[1] = pointA;
+		    Event.m_B[0] = Event.m_B[1] = pointB;
+		    Event.m_a[0] = Event.m_a[1] = t_a1;
+		    Event.m_b[0] = Event.m_b[1] = t_b1;
+		    Event.m_type = ON_X_EVENT::ccx_point;
+		    tmp_x.Append(Event);
 		}
 	    } else {
 		// Check overlap
@@ -947,26 +947,26 @@ ON_Intersect(const ON_Curve* curveA,
 
 		// Check the validity of the solution
 		if (distance1 < intersection_tolerance && distance2 < intersection_tolerance) {
-		    ON_X_EVENT *Event = new ON_X_EVENT;
+		    ON_X_EVENT Event;
 		    // We make sure that m_a[0] <= m_a[1]
 		    if (t_a1 <= t_a2) {
-			Event->m_A[0] = pointA1;
-			Event->m_A[1] = pointA2;
-			Event->m_B[0] = pointB1;
-			Event->m_B[1] = pointB2;
-			Event->m_a[0] = t_a1;
-			Event->m_a[1] = t_a2;
-			Event->m_b[0] = t_b1;
-			Event->m_b[1] = t_b2;
+			Event.m_A[0] = pointA1;
+			Event.m_A[1] = pointA2;
+			Event.m_B[0] = pointB1;
+			Event.m_B[1] = pointB2;
+			Event.m_a[0] = t_a1;
+			Event.m_a[1] = t_a2;
+			Event.m_b[0] = t_b1;
+			Event.m_b[1] = t_b2;
 		    } else {
-			Event->m_A[0] = pointA2;
-			Event->m_A[1] = pointA1;
-			Event->m_B[0] = pointB2;
-			Event->m_B[1] = pointB1;
-			Event->m_a[0] = t_a2;
-			Event->m_a[1] = t_a1;
-			Event->m_b[0] = t_b2;
-			Event->m_b[1] = t_b1;
+			Event.m_A[0] = pointA2;
+			Event.m_A[1] = pointA1;
+			Event.m_B[0] = pointB2;
+			Event.m_B[1] = pointB1;
+			Event.m_a[0] = t_a2;
+			Event.m_a[1] = t_a1;
+			Event.m_b[0] = t_b2;
+			Event.m_b[1] = t_b1;
 		    }
 		    int j;
 		    for (j = 1; j < CCI_OVERLAP_TEST_POINTS; j++) {
@@ -978,8 +978,8 @@ ON_Intersect(const ON_Curve* curveA,
 			    break;
 		    }
 		    if (j == CCI_OVERLAP_TEST_POINTS) {
-			Event->m_type = ON_X_EVENT::ccx_overlap;
-			tmp_x.Append(*Event);
+			Event.m_type = ON_X_EVENT::ccx_overlap;
+			tmp_x.Append(Event);
 			continue;
 		    }
 		    // if j != CCI_OVERLAP_TEST_POINTS, two ccx_point events should
@@ -987,23 +987,23 @@ ON_Intersect(const ON_Curve* curveA,
 		}
 		if (distance1 < intersection_tolerance) {
 		    // in case that the second one was not correct
-		    ON_X_EVENT *Event = new ON_X_EVENT;
-		    Event->m_A[0] = Event->m_A[1] = pointA1;
-		    Event->m_B[0] = Event->m_B[1] = pointB1;
-		    Event->m_a[0] = Event->m_a[1] = t_a1;
-		    Event->m_b[0] = Event->m_b[1] = t_b1;
-		    Event->m_type = ON_X_EVENT::ccx_point;
-		    tmp_x.Append(*Event);
+		    ON_X_EVENT Event;
+		    Event.m_A[0] = Event.m_A[1] = pointA1;
+		    Event.m_B[0] = Event.m_B[1] = pointB1;
+		    Event.m_a[0] = Event.m_a[1] = t_a1;
+		    Event.m_b[0] = Event.m_b[1] = t_b1;
+		    Event.m_type = ON_X_EVENT::ccx_point;
+		    tmp_x.Append(Event);
 		}
 		if (distance2 < intersection_tolerance) {
 		    // in case that the first one was not correct
-		    ON_X_EVENT *Event = new ON_X_EVENT;
-		    Event->m_A[0] = Event->m_A[1] = pointA2;
-		    Event->m_B[0] = Event->m_B[1] = pointB2;
-		    Event->m_a[0] = Event->m_a[1] = t_a2;
-		    Event->m_b[0] = Event->m_b[1] = t_b2;
-		    Event->m_type = ON_X_EVENT::ccx_point;
-		    tmp_x.Append(*Event);
+		    ON_X_EVENT Event;
+		    Event.m_A[0] = Event.m_A[1] = pointA2;
+		    Event.m_B[0] = Event.m_B[1] = pointB2;
+		    Event.m_a[0] = Event.m_a[1] = t_a2;
+		    Event.m_b[0] = Event.m_b[1] = t_b2;
+		    Event.m_type = ON_X_EVENT::ccx_point;
+		    tmp_x.Append(Event);
 		}
 	    }
 	}
@@ -1378,25 +1378,25 @@ ON_Intersect(const ON_Curve* curveA,
 		    // They are parallel
 		    if (line.InPlane(plane, intersection_tolerance)) {
 			// we report a csx_overlap event
-			ON_X_EVENT *Event = new ON_X_EVENT;
+			ON_X_EVENT Event;
 
 			// First, we check the endpoints of the line segment
 			ON_ClassArray<ON_PX_EVENT> px_event1, px_event2;
 			int intersections = 0;
 			if (ON_Intersect(line.from, *surfaceB, px_event1, intersection_tolerance, 0, 0, tree)) {
-			    Event->m_A[intersections] = line.from;
-			    Event->m_B[intersections] = px_event1[0].m_B;
-			    Event->m_a[intersections] = i->first->m_t.Min();
-			    Event->m_b[2*intersections] = px_event1[0].m_b[0];
-			    Event->m_b[2*intersections+1] = px_event1[0].m_b[1];
+			    Event.m_A[intersections] = line.from;
+			    Event.m_B[intersections] = px_event1[0].m_B;
+			    Event.m_a[intersections] = i->first->m_t.Min();
+			    Event.m_b[2*intersections] = px_event1[0].m_b[0];
+			    Event.m_b[2*intersections+1] = px_event1[0].m_b[1];
 			    intersections++;
 			}
 			if (ON_Intersect(line.to, *surfaceB, px_event2, intersection_tolerance, 0, 0, tree)) {
-			    Event->m_A[intersections] = line.to;
-			    Event->m_B[intersections] = px_event2[0].m_B;
-			    Event->m_a[intersections] = i->first->m_t.Max();
-			    Event->m_b[2*intersections] = px_event2[0].m_b[0];
-			    Event->m_b[2*intersections+1] = px_event2[0].m_b[1];
+			    Event.m_A[intersections] = line.to;
+			    Event.m_B[intersections] = px_event2[0].m_B;
+			    Event.m_a[intersections] = i->first->m_t.Max();
+			    Event.m_b[2*intersections] = px_event2[0].m_b[0];
+			    Event.m_b[2*intersections+1] = px_event2[0].m_b[1];
 			    intersections++;
 			}
 
@@ -1448,11 +1448,11 @@ ON_Intersect(const ON_Curve* curveA,
 				surf_v = i->second->m_v.Min();
 				break;
 			    }
-			    Event->m_A[intersections] = line.PointAt(line_t[j]);
-			    Event->m_B[intersections] = surfaceB->PointAt(surf_u, surf_v);
-			    Event->m_a[intersections] = i->first->m_t.ParameterAt(line_t[j]);
-			    Event->m_b[2*intersections] = surf_u;
-			    Event->m_b[2*intersections+1] = surf_v;
+			    Event.m_A[intersections] = line.PointAt(line_t[j]);
+			    Event.m_B[intersections] = surfaceB->PointAt(surf_u, surf_v);
+			    Event.m_a[intersections] = i->first->m_t.ParameterAt(line_t[j]);
+			    Event.m_b[2*intersections] = surf_u;
+			    Event.m_b[2*intersections+1] = surf_v;
 			    intersections++;
 			}
 
@@ -1460,23 +1460,23 @@ ON_Intersect(const ON_Curve* curveA,
 			if (intersections == 0)
 			    continue;
 			if (intersections == 1) {
-			    Event->m_type = ON_X_EVENT::csx_point;
-			    Event->m_A[1] = Event->m_A[0];
-			    Event->m_B[1] = Event->m_B[0];
-			    Event->m_a[1] = Event->m_a[0];
-			    Event->m_b[2] = Event->m_b[0];
-			    Event->m_b[3] = Event->m_b[1];
+			    Event.m_type = ON_X_EVENT::csx_point;
+			    Event.m_A[1] = Event.m_A[0];
+			    Event.m_B[1] = Event.m_B[0];
+			    Event.m_a[1] = Event.m_a[0];
+			    Event.m_b[2] = Event.m_b[0];
+			    Event.m_b[3] = Event.m_b[1];
 			} else {
-			    Event->m_type = ON_X_EVENT::csx_overlap;
-			    if (Event->m_a[0] > Event->m_a[1]) {
-				std::swap(Event->m_A[0], Event->m_A[1]);
-				std::swap(Event->m_B[0], Event->m_B[1]);
-				std::swap(Event->m_a[0], Event->m_a[1]);
-				std::swap(Event->m_b[0], Event->m_b[2]);
-				std::swap(Event->m_b[1], Event->m_b[3]);
+			    Event.m_type = ON_X_EVENT::csx_overlap;
+			    if (Event.m_a[0] > Event.m_a[1]) {
+				std::swap(Event.m_A[0], Event.m_A[1]);
+				std::swap(Event.m_B[0], Event.m_B[1]);
+				std::swap(Event.m_a[0], Event.m_a[1]);
+				std::swap(Event.m_b[0], Event.m_b[2]);
+				std::swap(Event.m_b[1], Event.m_b[3]);
 			    }
 			}
-			tmp_x.Append(*Event);
+			tmp_x.Append(Event);
 			continue;
 		    } else
 			continue;
@@ -1493,14 +1493,14 @@ ON_Intersect(const ON_Curve* curveA,
 		    if (!ON_Intersect(intersection, *(i->second->m_surf), px_event, intersection_tolerance, 0, 0, tree))
 			continue;
 
-		    ON_X_EVENT* Event = new ON_X_EVENT;
-		    Event->m_A[0] = Event->m_A[1] = intersection;
-		    Event->m_B[0] = Event->m_B[1] = px_event[0].m_B;
-		    Event->m_a[0] = Event->m_a[1] = i->first->m_t.ParameterAt(line_t);
-		    Event->m_b[0] = Event->m_b[2] = px_event[0].m_b.x;
-		    Event->m_b[1] = Event->m_b[3] = px_event[0].m_b.y;
-		    Event->m_type = ON_X_EVENT::csx_point;
-		    tmp_x.Append(*Event);
+		    ON_X_EVENT Event;
+		    Event.m_A[0] = Event.m_A[1] = intersection;
+		    Event.m_B[0] = Event.m_B[1] = px_event[0].m_B;
+		    Event.m_a[0] = Event.m_a[1] = i->first->m_t.ParameterAt(line_t);
+		    Event.m_b[0] = Event.m_b[2] = px_event[0].m_b.x;
+		    Event.m_b[1] = Event.m_b[3] = px_event[0].m_b.y;
+		    Event.m_type = ON_X_EVENT::csx_point;
+		    tmp_x.Append(Event);
 		}
 	    }
 	}
@@ -1538,14 +1538,14 @@ ON_Intersect(const ON_Curve* curveA,
 	    double distance = pointA1.DistanceTo(pointB1);
 	    // Check the validity of the solution
 	    if (distance < intersection_tolerance) {
-		ON_X_EVENT *Event = new ON_X_EVENT;
-		Event->m_A[0] = Event->m_A[1] = pointA1;
-		Event->m_B[0] = Event->m_B[1] = pointB1;
-		Event->m_a[0] = Event->m_a[1] = t1;
-		Event->m_b[0] = Event->m_b[2] = u1;
-		Event->m_b[1] = Event->m_b[3] = v1;
-		Event->m_type = ON_X_EVENT::csx_point;
-		tmp_x.Append(*Event);
+		ON_X_EVENT Event;
+		Event.m_A[0] = Event.m_A[1] = pointA1;
+		Event.m_B[0] = Event.m_B[1] = pointB1;
+		Event.m_a[0] = Event.m_a[1] = t1;
+		Event.m_b[0] = Event.m_b[2] = u1;
+		Event.m_b[1] = Event.m_b[3] = v1;
+		Event.m_type = ON_X_EVENT::csx_point;
+		tmp_x.Append(Event);
 	    }
 	} else {
 	    // Check overlap
@@ -1555,30 +1555,30 @@ ON_Intersect(const ON_Curve* curveA,
 
 	    // Check the validity of the solution
 	    if (distance1 < intersection_tolerance && distance2 < intersection_tolerance) {
-		ON_X_EVENT *Event = new ON_X_EVENT;
+		ON_X_EVENT Event;
 		// We make sure that m_a[0] <= m_a[1]
 		if (t1 <= t2) {
-		    Event->m_A[0] = pointA1;
-		    Event->m_A[1] = pointA2;
-		    Event->m_B[0] = pointB1;
-		    Event->m_B[1] = pointB2;
-		    Event->m_a[0] = t1;
-		    Event->m_a[1] = t2;
-		    Event->m_b[0] = u1;
-		    Event->m_b[1] = v1;
-		    Event->m_b[2] = u2;
-		    Event->m_b[3] = v2;
+		    Event.m_A[0] = pointA1;
+		    Event.m_A[1] = pointA2;
+		    Event.m_B[0] = pointB1;
+		    Event.m_B[1] = pointB2;
+		    Event.m_a[0] = t1;
+		    Event.m_a[1] = t2;
+		    Event.m_b[0] = u1;
+		    Event.m_b[1] = v1;
+		    Event.m_b[2] = u2;
+		    Event.m_b[3] = v2;
 		} else {
-		    Event->m_A[0] = pointA2;
-		    Event->m_A[1] = pointA1;
-		    Event->m_B[0] = pointB2;
-		    Event->m_B[1] = pointB1;
-		    Event->m_a[0] = t2;
-		    Event->m_a[1] = t1;
-		    Event->m_b[0] = u2;
-		    Event->m_b[1] = v2;
-		    Event->m_b[2] = u1;
-		    Event->m_b[3] = v1;
+		    Event.m_A[0] = pointA2;
+		    Event.m_A[1] = pointA1;
+		    Event.m_B[0] = pointB2;
+		    Event.m_B[1] = pointB1;
+		    Event.m_a[0] = t2;
+		    Event.m_a[1] = t1;
+		    Event.m_b[0] = u2;
+		    Event.m_b[1] = v2;
+		    Event.m_b[2] = u1;
+		    Event.m_b[3] = v1;
 		}
 		int j;
 		for (j = 1; j < CSI_OVERLAP_TEST_POINTS; j++) {
@@ -1590,8 +1590,8 @@ ON_Intersect(const ON_Curve* curveA,
 			break;
 		}
 		if (j == CSI_OVERLAP_TEST_POINTS) {
-		    Event->m_type = ON_X_EVENT::csx_overlap;
-		    tmp_x.Append(*Event);
+		    Event.m_type = ON_X_EVENT::csx_overlap;
+		    tmp_x.Append(Event);
 		    continue;
 		}
 		// if j != CSI_OVERLAP_TEST_POINTS, two csx_point events may
@@ -1599,25 +1599,25 @@ ON_Intersect(const ON_Curve* curveA,
 	    }
 	    if (distance1 < intersection_tolerance) {
 		// in case that the second one was not correct
-		ON_X_EVENT *Event = new ON_X_EVENT;
-		Event->m_A[0] = Event->m_A[1] = pointA1;
-		Event->m_B[0] = Event->m_B[1] = pointB1;
-		Event->m_a[0] = Event->m_a[1] = t1;
-		Event->m_b[0] = Event->m_b[2] = u1;
-		Event->m_b[1] = Event->m_b[3] = v1;
-		Event->m_type = ON_X_EVENT::csx_point;
-		tmp_x.Append(*Event);
+		ON_X_EVENT Event;
+		Event.m_A[0] = Event.m_A[1] = pointA1;
+		Event.m_B[0] = Event.m_B[1] = pointB1;
+		Event.m_a[0] = Event.m_a[1] = t1;
+		Event.m_b[0] = Event.m_b[2] = u1;
+		Event.m_b[1] = Event.m_b[3] = v1;
+		Event.m_type = ON_X_EVENT::csx_point;
+		tmp_x.Append(Event);
 	    }
 	    if (distance2 < intersection_tolerance) {
 		// in case that the first one was not correct
-		ON_X_EVENT *Event = new ON_X_EVENT;
-		Event->m_A[0] = Event->m_A[1] = pointA2;
-		Event->m_B[0] = Event->m_B[1] = pointB2;
-		Event->m_a[0] = Event->m_a[1] = t2;
-		Event->m_b[0] = Event->m_b[2] = u2;
-		Event->m_b[1] = Event->m_b[3] = v2;
-		Event->m_type = ON_X_EVENT::csx_point;
-		tmp_x.Append(*Event);
+		ON_X_EVENT Event;
+		Event.m_A[0] = Event.m_A[1] = pointA2;
+		Event.m_B[0] = Event.m_B[1] = pointB2;
+		Event.m_a[0] = Event.m_a[1] = t2;
+		Event.m_b[0] = Event.m_b[2] = u2;
+		Event.m_b[1] = Event.m_b[3] = v2;
+		Event.m_type = ON_X_EVENT::csx_point;
+		tmp_x.Append(Event);
 	    }
 	}
     }
