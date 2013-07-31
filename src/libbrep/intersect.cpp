@@ -2501,10 +2501,10 @@ ON_Intersect(const ON_Surface* surfA,
 			    double V2 = i%2 ? (x_event[k].m_a[0]+x_event[k].m_a[1])*0.5 : b_knots[j]+test_distance;
 			    bool in1, in2;
 			    ON_ClassArray<ON_PX_EVENT> px_event1, px_event2;
-			    in1 = ON_Intersect(surf1->PointAt(U1, V1), *surf2, px_event1, 1e-5, 0, 0, tree);
-			    if (in1) in1 &= surf1->NormalAt(U1, V1).IsParallelTo(surf2->NormalAt(px_event1[0].m_b[0], px_event1[0].m_b[1]));
-			    in2 = ON_Intersect(surf1->PointAt(U2, V2), *surf2, px_event2, 1e-5, 0, 0, tree);
-			    if (in2) in2 &= surf1->NormalAt(U2, V2).IsParallelTo(surf2->NormalAt(px_event2[0].m_b[0], px_event2[0].m_b[1]));
+			    in1 = ON_Intersect(surf1->PointAt(U1, V1), *surf2, px_event1, 1e-5, 0, 0, tree)
+					  && surf1->NormalAt(U1, V1).IsParallelTo(surf2->NormalAt(px_event1[0].m_b[0], px_event1[0].m_b[1]));
+			    in2 = ON_Intersect(surf1->PointAt(U2, V2), *surf2, px_event2, 1e-5, 0, 0, tree)
+					  && surf1->NormalAt(U2, V2).IsParallelTo(surf2->NormalAt(px_event2[0].m_b[0], px_event2[0].m_b[1]));
 			    if ((in1 && !in2) || (!in1 && in2))
 				isvalid = true;
 			}
