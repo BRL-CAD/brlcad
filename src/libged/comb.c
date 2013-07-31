@@ -258,7 +258,7 @@ _ged_flatten_comb(struct ged *gedp, struct directory *dp) {
     char *solids_in_tree_plan = "! -type comb";
     char *combs_in_tree_plan = "-type comb";
     void *dbplan;
-    char *plan_argv[8];
+    char *plan_argv[9];
     struct bu_ptbl *non_union_objects = BU_PTBL_NULL;
     struct bu_ptbl *solids = BU_PTBL_NULL;
     struct bu_ptbl *combs = BU_PTBL_NULL;
@@ -279,7 +279,10 @@ _ged_flatten_comb(struct ged *gedp, struct directory *dp) {
 	return GED_ERROR;
     }
 
+
+    /* bu_argv_from_string needs a writable string, so re-use one vls for the plans */
     bu_vls_init(&plan_string);
+
 
     /* if there are non-union booleans in this comb's tree, error out */
     bu_vls_sprintf(&plan_string, "%s", only_unions_in_tree_plan);
