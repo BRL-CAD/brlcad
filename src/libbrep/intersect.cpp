@@ -2143,23 +2143,7 @@ curve_fitting(ON_Curve* in, double fitting_tolerance, bool delete_curve)
 		}
 
 		// The params of the nurbscurve is between [0, 2*pi]
-		ON_Curve *left = NULL, *right = NULL;
-		if (!ON_NearZero(t_min)) {
-		    nurbscurve.Split(t_min, left, right);
-		    delete left;
-		    left = NULL;
-		}
-		else
-		    right = nurbscurve.Duplicate();
-		if (right && !ON_NearZero(t_max - 2*ON_PI)) {
-		    right->Split(t_max, left, right);
-		}
-		else
-		    left = right->Duplicate();
-		left->ChangeDimension(in->Dimension());
-		if (delete_curve) delete in;
-		delete right;
-		return left;
+		return sub_curve(&nurbscurve, t_min, t_max);
 	    }
 	}
     }
