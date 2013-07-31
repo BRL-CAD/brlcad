@@ -15,6 +15,7 @@ changes made.  See document footer for additional details.
 
 * added new g-raw geometry converter - Jon Engbert, Daniel Roßberg
 * improved g-stl usage and documentation - Jon Engbert
+* added -c and -r region flag options to the comb command - Cliff Yapp
 * added -p/-P point/line plot options to 'burst' tool - Sean Morrison
 * added -w wrapping option to the 'comb' command - Cliff Yapp
 * archer respects LIBRT_BOT_MINTIE environment variable - Bob Parker
