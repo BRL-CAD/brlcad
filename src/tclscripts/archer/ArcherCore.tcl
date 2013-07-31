@@ -1581,7 +1581,11 @@ namespace eval ArcherCore {
 
     foreach item [gedCmd report 0] {
 	if {[lsearch [split $item /] $obj] != -1} {
-	    gedCmd draw -m$rmode -x$rtrans $item
+	    if { $rmode == $DISPLAY_MODE_HIDDEN } {
+		gedCmd draw -h $item
+	    } else {
+		gedCmd draw -m$rmode -x$rtrans $item
+	    }
 	}
     }
 }
@@ -1593,7 +1597,12 @@ namespace eval ArcherCore {
 	set rdata [gedCmd how -b $obj]
 	set rmode [lindex $rdata 0]
 	set rtrans [lindex $rdata 1]
-	gedCmd draw -m$rmode -x$rtrans $obj
+
+	if [ $rmode == $DISPLAY_MODE_HIDDEN ] {
+	    gedCmd draw -h $obj
+	} else {
+	    gedCmd draw -m$rmode -x$rtrans $obj
+	}
     }
 
     $itk_component(ged) refresh_on
