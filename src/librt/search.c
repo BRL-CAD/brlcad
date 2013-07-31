@@ -134,6 +134,7 @@ db_free_full_path_list(struct db_full_path_list *path_list)
 	    while (BU_LIST_WHILE(currentpath, db_full_path_list, &(path_list->l))) {
 		db_free_full_path(currentpath->path);
 		BU_LIST_DEQUEUE((struct bu_list *)currentpath);
+		bu_free(currentpath->path, "free db_full_path_list path entry");
 		bu_free(currentpath, "free db_full_path_list entry");
 	    }
 	}
