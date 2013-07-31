@@ -262,7 +262,9 @@ db_fullpath_traverse(struct db_i *dbip,
 				     LOOKUP_QUIET)) == RT_DIR_NULL) {
 		    continue;
 		} else {
+		    int curr_bool = DB_FULL_PATH_CUR_BOOL(db_node->path);
 		    db_add_node_to_full_path(db_node->path, mdp);
+		    DB_FULL_PATH_SET_CUR_BOOL(db_node->path, curr_bool);
 		    db_fullpath_traverse(dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
 		    DB_FULL_PATH_POP(db_node->path);
 		}
@@ -452,7 +454,9 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
 	    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
 		return 0;
 	    } else {
+		int curr_bool = DB_FULL_PATH_CUR_BOOL(db_node->path);
 		db_add_node_to_full_path(db_node->path, dp);
+		DB_FULL_PATH_SET_CUR_BOOL(db_node->path, curr_bool);
 		state = traverse_func(dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
 		DB_FULL_PATH_POP(db_node->path);
 		if (state == 1) {
