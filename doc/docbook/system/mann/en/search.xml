@@ -529,14 +529,10 @@
     </para>
     <para>
       A more nuanced variation on finding nested regions that adds a check to make sure that the regions aren't being
-      subtracted.  While not ideal, using a subtraction does avoid the modeling error of two volumes claiming the three 
+      subtracted.  While not ideal, using a subtraction does avoid the modeling error of two volumes claiming the three
       dimensional space is arguably acceptable - the above command finds nested region instances that are definite errors.
     </para>
   </example>
-
-
-
-
 
 </refsection>
 
