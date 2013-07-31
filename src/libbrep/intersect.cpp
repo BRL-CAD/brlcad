@@ -2870,8 +2870,8 @@ ON_Intersect(const ON_Surface* surfA,
 	for (NodePairs::iterator i = candidates.begin(); i != candidates.end(); i++) {
 	    // If the box is considered already belonging to the overlap
 	    // regions, we don't need to further sub-divide it.
-	    ON_2dPoint min2d(i->first->m_u.Min(), i->first->m_v.Min());
-	    ON_2dPoint max2d(i->first->m_u.Max(), i->first->m_v.Max());
+	    ON_2dPoint min2d(i->first->m_u.Min() + intersection_tolerance_A, i->first->m_v.Min() + intersection_tolerance_A);
+	    ON_2dPoint max2d(i->first->m_u.Max() - intersection_tolerance_A, i->first->m_v.Max() - intersection_tolerance_A);
 	    // A box is inside the overlap region, if and only if it is completely
 	    // inside an outer loop, and outside all inner loops within the outer
 	    // loop.
