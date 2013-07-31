@@ -300,6 +300,34 @@ sub_curve(ON_Curve* in, double a, double b)
 }
 
 
+// Build the curve tree root within a given domain
+bool
+build_curve_root(const ON_Curve* curve, const ON_Interval* domain, Subcurve& root)
+{
+    if (domain == NULL || *domain == curve->Domain()) {
+	root.m_curve = curve->Duplicate();
+	root.m_t = curve->Domain();
+    } else {
+	// Use ON_Curve::Split() to get the sub-curve inside the domain
+	ON_Curve *temp_curve1 = NULL, *temp_curve2 = NULL, *temp_curve3 = NULL;
+	if (!curve->Split(domain->Min(), temp_curve1, temp_curve2))
+	    return false;
+	delete temp_curve1;
+	temp_curve1 = NULL;
+	if (!temp_curve2->Split(domain->Max(), temp_curve1, temp_curve3))
+	    return false;
+	delete temp_curve1;
+	delete temp_curve2;
+	root.m_curve = temp_curve3;
+	root.m_t = *domain;
+    }
+
+    root.SetBBox(root.m_curve->BoundingBox());
+    root.m_islinear = root.m_curve->IsLinear();
+    return true;
+}
+
+
 /**
  * Point-point intersections (PPI)
  *
@@ -381,27 +409,8 @@ ON_Intersect(const ON_3dPoint& pointA,
     check_domain(curveB_domain, curveB.Domain(), "curveB_domain");
 
     Subcurve root;
-    if (curveB_domain == NULL || *curveB_domain == curveB.Domain()) {
-	root.m_curve = curveB.Duplicate();
-	root.m_t = curveB.Domain();
-    }
-    else {
-	// Use ON_Curve::Split() to get the sub-curve inside curveB_domain
-	ON_Curve *temp_curve1 = NULL, *temp_curve2 = NULL, *temp_curve3 = NULL;
-	if (!curveB.Split(curveB_domain->Min(), temp_curve1, temp_curve2))
-	    return false;
-	delete temp_curve1;
-	temp_curve1 = NULL;
-	if (!temp_curve2->Split(curveB_domain->Max(), temp_curve1, temp_curve3))
-	    return false;
-	delete temp_curve1;
-	delete temp_curve2;
-	root.m_curve = temp_curve3;
-	root.m_t = *curveB_domain;
-    }
-
-    root.SetBBox(root.m_curve->BoundingBox());
-    root.m_islinear = root.m_curve->IsLinear();
+    if (!build_curve_root(&curveB, curveB_domain, root))
+	return false;
 
     if (!root.IsPointIn(pointA, tolerance))
 	return false;
@@ -607,34 +616,6 @@ ON_Intersect(const ON_3dPoint& pointA,
 // We can only test a finite number of points to determine overlap.
 // Here we test 16 points uniformly distributed.
 #define CCI_OVERLAP_TEST_POINTS 16
-
-
-// Build the curve tree root within a given domain
-bool
-build_curve_root(const ON_Curve* curve, const ON_Interval* domain, Subcurve& root)
-{
-    if (domain == NULL || *domain == curve->Domain()) {
-	root.m_curve = curve->Duplicate();
-	root.m_t = curve->Domain();
-    } else {
-	// Use ON_Curve::Split() to get the sub-curve inside the domain
-	ON_Curve *temp_curve1 = NULL, *temp_curve2 = NULL, *temp_curve3 = NULL;
-	if (!curve->Split(domain->Min(), temp_curve1, temp_curve2))
-	    return false;
-	delete temp_curve1;
-	temp_curve1 = NULL;
-	if (!temp_curve2->Split(domain->Max(), temp_curve1, temp_curve3))
-	    return false;
-	delete temp_curve1;
-	delete temp_curve2;
-	root.m_curve = temp_curve3;
-	root.m_t = *domain;
-    }
-
-    root.SetBBox(root.m_curve->BoundingBox());
-    root.m_islinear = root.m_curve->IsLinear();
-    return true;
-}
 
 
 void
