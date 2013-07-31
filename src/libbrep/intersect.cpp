@@ -2202,6 +2202,10 @@ link_curves(ON_Curve*& c1, ON_Curve*& c2)
 	c2 = NULL;
 	delete nc2;
 	return nc1;
+    } else if (nc1) {
+	delete nc1;
+    } else if (nc2) {
+	delete nc2;
     }
     return NULL;
 }
@@ -2724,6 +2728,7 @@ ON_Intersect(const ON_Surface* surfA,
 		// ~ON_SSX_EVENT() or ~ON_CurveArray().
 		Event.m_curve3d = Event.m_curveA = Event.m_curveB = NULL;
 		overlaps[i]->SetCurvesToNull();
+		delete overlaps[i];
 		overlaps[i] = NULL;
 		break;
 	    }
@@ -2764,6 +2769,10 @@ ON_Intersect(const ON_Surface* surfA,
 		    overlaps[i]->m_curveA = link_curves(overlaps[i]->m_curveA, overlaps[j]->m_curveA);
 		    overlaps[i]->m_curveB = link_curves(overlaps[i]->m_curveB, overlaps[j]->m_curveB);
 		}
+	    }
+	    if (!overlaps[j]->m_curve3d || !overlaps[j]->m_curveA || !overlaps[j]->m_curveB) {
+		delete overlaps[j];
+		overlaps[j] = NULL;
 	    }
 	}
     }
