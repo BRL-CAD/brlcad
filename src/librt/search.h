@@ -58,7 +58,6 @@
 /* node struct - holds data specific to each node under consideration */
 struct db_node_t {
     struct db_full_path *path;
-    int bool_type;
 };
 
 /* search node type */

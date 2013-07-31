@@ -178,27 +178,29 @@ db_fullpath_traverse_subtree(union tree *tp,
 	    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
 		return;
 	    } else {
+		int curr_bool = DB_FULL_PATH_CUR_BOOL(db_node->path);
 		db_add_node_to_full_path(db_node->path, dp);
+		DB_FULL_PATH_SET_CUR_BOOL(db_node->path, curr_bool);
 		traverse_func(dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
 		DB_FULL_PATH_POP(db_node->path);
 		break;
 	    }
 	case OP_UNION:
-            db_node->bool_type = 2;
+            DB_FULL_PATH_SET_CUR_BOOL(db_node->path, 2);
 	    db_fullpath_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
-            db_node->bool_type = 2;
+            DB_FULL_PATH_SET_CUR_BOOL(db_node->path, 2);
 	    db_fullpath_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
 	    break;
 	case OP_INTERSECT:
-            db_node->bool_type = 2;
+            DB_FULL_PATH_SET_CUR_BOOL(db_node->path, 2);
 	    db_fullpath_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
-            db_node->bool_type = 3;
+            DB_FULL_PATH_SET_CUR_BOOL(db_node->path, 3);
 	    db_fullpath_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
 	    break;
 	case OP_SUBTRACT:
-            db_node->bool_type = 2;
+            DB_FULL_PATH_SET_CUR_BOOL(db_node->path, 2);
 	    db_fullpath_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
-            db_node->bool_type = 4;
+            DB_FULL_PATH_SET_CUR_BOOL(db_node->path, 4);
 	    db_fullpath_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
 	    break;
 	case OP_XOR:
@@ -461,10 +463,10 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
 	    }
 	    break;
 	case OP_UNION:
-            db_node->bool_type = 2;
+	    DB_FULL_PATH_SET_CUR_BOOL(db_node->path, 2);
 	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
 	    if (state == 1) return 1;
-            db_node->bool_type = 2;
+	    DB_FULL_PATH_SET_CUR_BOOL(db_node->path, 2);
 	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
 	    if (state == 1) {
 		return 1;
@@ -474,10 +476,10 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
 	    break;
 
 	case OP_INTERSECT:
-            db_node->bool_type = 2;
+	    DB_FULL_PATH_SET_CUR_BOOL(db_node->path, 2);
 	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
 	    if (state == 1) return 1;
-            db_node->bool_type = 3;
+	    DB_FULL_PATH_SET_CUR_BOOL(db_node->path, 3);
 	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
 	    if (state == 1) {
 		return 1;
@@ -487,10 +489,10 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
 	    break;
 
 	case OP_SUBTRACT:
-            db_node->bool_type = 2;
+	    DB_FULL_PATH_SET_CUR_BOOL(db_node->path, 2);
 	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
 	    if (state == 1) return 1;
-            db_node->bool_type = 4;
+	    DB_FULL_PATH_SET_CUR_BOOL(db_node->path, 4);
 	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
 	    if (state == 1) {
 		return 1;
@@ -1321,7 +1323,8 @@ HIDDEN int
 f_bool(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
 {
    int bool_match = 0;
-   if (plan->bool_data == db_node->bool_type) bool_match = 1;
+   int bool_type = DB_FULL_PATH_CUR_BOOL(db_node->path);
+   if (plan->bool_data == bool_type) bool_match = 1;
    return bool_match;
 }
 
@@ -2155,8 +2158,9 @@ db_search_full_paths(void *searchplan,        /* search plan */
     }
     for (BU_LIST_FOR(currentpath, db_full_path_list, &(pathnames->l))) {
         struct db_node_t curr_node;
-	curr_node.path = currentpath->path; 
-        curr_node.bool_type = 2; /* by convention, the top level node is "unioned" into the global database */
+	curr_node.path = currentpath->path;
+	/* by convention, the top level node is "unioned" into the global database */
+	DB_FULL_PATH_SET_CUR_BOOL(curr_node.path, 2);
 	db_fullpath_traverse(dbip, wdbp, searchresults, &curr_node, find_execute_plans, find_execute_plans, wdbp->wdb_resp, (struct db_plan_t *)searchplan);
     }
     return searchresults;

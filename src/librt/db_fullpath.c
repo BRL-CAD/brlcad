@@ -42,6 +42,7 @@ db_full_path_init(struct db_full_path *pathp)
     pathp->fp_len = 0;
     pathp->fp_maxlen = 0;
     pathp->fp_names = (struct directory **)NULL;
+    pathp->fp_bool = (int *)NULL;
     pathp->magic = DB_FULL_PATH_MAGIC;
 }
 
@@ -56,12 +57,19 @@ db_add_node_to_full_path(struct db_full_path *pp, struct directory *dp)
 	pp->fp_names = (struct directory **)bu_malloc(
 	    pp->fp_maxlen * sizeof(struct directory *),
 	    "db_full_path array");
+	pp->fp_bool = (int *)bu_calloc(
+	    pp->fp_maxlen, sizeof(int),
+	    "db_full_path bool array");
     } else if (pp->fp_len >= pp->fp_maxlen) {
 	pp->fp_maxlen *= 4;
 	pp->fp_names = (struct directory **)bu_realloc(
 	    (char *)pp->fp_names,
 	    pp->fp_maxlen * sizeof(struct directory *),
 	    "enlarged db_full_path array");
+	pp->fp_bool = (int *)bu_realloc(
+	    (char *)pp->fp_bool,
+	    pp->fp_maxlen * sizeof(int),
+	    "enlarged db_full_path bool array");
     }
     pp->fp_names[pp->fp_len++] = dp;
 }
@@ -76,12 +84,17 @@ db_dup_full_path(struct db_full_path *newp, const struct db_full_path *oldp)
     newp->fp_len = oldp->fp_len;
     if (oldp->fp_len <= 0) {
 	newp->fp_names = (struct directory **)0;
+	newp->fp_bool = (int *)0;
 	return;
     }
     newp->fp_names = (struct directory **)bu_malloc(
 	newp->fp_maxlen * sizeof(struct directory *),
 	"db_full_path array (duplicate)");
     memcpy((char *)newp->fp_names, (char *)oldp->fp_names, newp->fp_len * sizeof(struct directory *));
+    newp->fp_bool = (int *)bu_malloc(
+	newp->fp_maxlen * sizeof(int),
+	"db_full_path bool array (duplicate)");
+    memcpy((char *)newp->fp_bool, (char *)oldp->fp_bool, newp->fp_len * sizeof(int));
 }
 
 void
@@ -97,6 +110,9 @@ db_extend_full_path(struct db_full_path *pathp, size_t incr)
 	pathp->fp_names = (struct directory **)bu_malloc(
 	    pathp->fp_maxlen * sizeof(struct directory *),
 	    "empty fp_names extension");
+	pathp->fp_bool = (int *)bu_malloc(
+	    pathp->fp_maxlen * sizeof(int),
+	    "empty fp_bool bool extension");
 	return;
     }
 
@@ -107,6 +123,10 @@ db_extend_full_path(struct db_full_path *pathp, size_t incr)
 	    (char *)pathp->fp_names,
 	    pathp->fp_maxlen * sizeof(struct directory *),
 	    "fp_names extension");
+	pathp->fp_bool = (int *)bu_realloc(
+	    (char *)pathp->fp_bool,
+	    pathp->fp_maxlen * sizeof(int),
+	    "fp_names bool extension");
     }
 }
 
@@ -120,6 +140,9 @@ db_append_full_path(struct db_full_path *dest, const struct db_full_path *src)
     memcpy((char *)&dest->fp_names[dest->fp_len],
 	   (char *)&src->fp_names[0],
 	   src->fp_len * sizeof(struct directory *));
+    memcpy((char *)&dest->fp_bool[dest->fp_len],
+	   (char *)&src->fp_bool[0],
+	   src->fp_len * sizeof(int));
     dest->fp_len += src->fp_len;
 }
 
@@ -135,12 +158,17 @@ db_dup_path_tail(struct db_full_path *newp, const struct db_full_path *oldp, off
     newp->fp_maxlen = newp->fp_len = oldp->fp_len - start;
     if (newp->fp_len <= 0) {
 	newp->fp_names = (struct directory **)0;
+	newp->fp_bool = (int *)0;
 	return;
     }
     newp->fp_names = (struct directory **)bu_malloc(
 	newp->fp_maxlen * sizeof(struct directory *),
 	"db_full_path array (duplicate)");
     memcpy((char *)newp->fp_names, (char *)&oldp->fp_names[start], newp->fp_len * sizeof(struct directory *));
+    newp->fp_bool = (int *)bu_malloc(
+	newp->fp_maxlen * sizeof(int),
+	"db_full_path bool array (duplicate)");
+    memcpy((char *)newp->fp_bool, (char *)&oldp->fp_bool[start], newp->fp_len * sizeof(int));
 }
 
 char *
@@ -258,6 +286,9 @@ db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *
     pp->fp_names = (struct directory **)bu_malloc(
 	pp->fp_maxlen * sizeof(struct directory *),
 	"db_string_to_path path array");
+    pp->fp_bool = (int *)bu_calloc(
+	pp->fp_maxlen, sizeof(int),
+	"db_string_to_path bool array");
 
     /* Build up path array */
     cp = copy;
@@ -298,6 +329,10 @@ db_argv_to_path(struct db_full_path *pp, struct db_i *dbip, int argc, const char
     pp->fp_names = (struct directory **)bu_malloc(
 	pp->fp_maxlen * sizeof(struct directory *),
 	"db_argv_to_path path array");
+    pp->fp_bool = (int *)bu_calloc(
+	pp->fp_maxlen, sizeof(int),
+	"db_argv_to_path bool array");
+
 
     for (i=0; i<argc; i++) {
 	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
@@ -318,6 +353,7 @@ db_free_full_path(struct db_full_path *pp)
 
     if (pp->fp_maxlen > 0) {
 	bu_free((char *)pp->fp_names, "db_full_path array");
+	bu_free((char *)pp->fp_bool, "db_full_path bool array");
 	pp->fp_maxlen = pp->fp_len = 0;
 	pp->fp_names = (struct directory **)0;
     }

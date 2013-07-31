@@ -208,20 +208,31 @@ struct rt_db_internal {
 /**
  * D B _ F U L L _ P A T H
  *
- * For collecting paths through the database tree
+ * For collecting paths through the database tree.
+ * The fp_bool array can optionally hold a boolean flag
+ * associated with each corresponding dp in fp_names.  This
+ * array must be manually maintained by the client code in
+ * order for it to have valid data - many functions using
+ * full paths (for example, conversion from strings) don't
+ * have knowledge of a specific boolean tree.
  */
 struct db_full_path {
     uint32_t		magic;
     size_t		fp_len;
     size_t		fp_maxlen;
     struct directory **	fp_names;	/**< @brief array of dir pointers */
+    int	              * fp_bool;	/**< @brief array of boolean flags */
 };
 #define DB_FULL_PATH_POP(_pp) { \
 	(_pp)->fp_len--; \
     }
 #define DB_FULL_PATH_CUR_DIR(_pp) ((_pp)->fp_names[(_pp)->fp_len-1])
+#define DB_FULL_PATH_CUR_BOOL(_pp) ((_pp)->fp_bool[(_pp)->fp_len-1])
+#define DB_FULL_PATH_SET_CUR_BOOL(_pp, _i) ((_pp)->fp_bool[(_pp)->fp_len-1] = _i)
 #define DB_FULL_PATH_ROOT_DIR(_pp) ((_pp)->fp_names[0])
 #define DB_FULL_PATH_GET(_pp, _i) ((_pp)->fp_names[(_i)])
+#define DB_FULL_PATH_GET_BOOL(_pp, _i) ((_pp)->fp_bool[(_i)])
+#define DB_FULL_PATH_SET_BOOL(_pp, _i, _j) ((_pp)->fp_bool[(_i)] = _j)
 #define RT_CK_FULL_PATH(_p) BU_CKMAG(_p, DB_FULL_PATH_MAGIC, "db_full_path")
 
 /**
