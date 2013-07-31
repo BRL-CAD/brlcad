@@ -182,6 +182,8 @@ bottie_shot_double(struct soltab *stp, struct xray *rp, struct application *ap, 
     int i;
     fastf_t dirlen;
 
+    memset((void *)&hitdata, 0, sizeof(hitdata));
+
     bot = (struct bot_specific *)stp->st_specific;
     tie = (struct tie_s *)bot->tie;
 
