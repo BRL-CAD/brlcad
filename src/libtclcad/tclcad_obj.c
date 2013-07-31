@@ -12421,24 +12421,29 @@ to_edit_redraw(struct ged *gedp,
 
 		FOR_ALL_SOLIDS(curr_sp, &gdlp->gdl_headSolid) {
 		    if (db_full_path_search(&curr_sp->s_fullpath, subpath.fp_names[i])) {
-			register struct ged_display_list *last_gdlp;
-			register struct solid *sp;
-			char mflag[8];
-			char xflag[8];
-			char *av[5];
+			struct ged_display_list *last_gdlp;
+			struct solid *sp = BU_LIST_NEXT(solid, &gdlp->gdl_headSolid);
+			struct bu_vls mflag = BU_VLS_INIT_ZERO;
+			struct bu_vls xflag = BU_VLS_INIT_ZERO;
+			char *av[5] = {0};
+			int arg = 0;
 
-			av[0] = (char *)argv[0];
-			av[1] = mflag;
-			av[2] = xflag;
-			av[3] = bu_vls_strdup(&gdlp->gdl_path);
-			av[4] = (char *)0;
+			av[arg++] = (char *)argv[0];
+			if (sp->s_hiddenLine) {
+			    av[arg++] = "-h";
+			} else {
+			    bu_vls_printf(&mflag, "-m%d", sp->s_dmode);
+			    bu_vls_printf(&xflag, "-x%f", sp->s_transparency);
+			    av[arg++] = bu_vls_addr(&mflag);
+			    av[arg++] = bu_vls_addr(&xflag);
+			}
+			av[arg] = bu_vls_strdup(&gdlp->gdl_path);
 
-			sp = BU_LIST_NEXT(solid, &gdlp->gdl_headSolid);
-			snprintf(mflag, 7, "-m%d", sp->s_dmode);
-			snprintf(xflag, 7, "-x%.2g", sp->s_transparency);
+			ret = ged_draw(gedp, arg + 1, (const char **)av);
 
-			ret = ged_draw(gedp, 4, (const char **)av);
-			bu_free((genptr_t)av[3], "to_edit_redraw");
+			bu_free(av[arg], "to_edit_redraw");
+			bu_vls_free(&mflag);
+			bu_vls_free(&xflag);
 
 			/* The function call above causes gdlp to be
 			 * removed from the display list. A new one is
