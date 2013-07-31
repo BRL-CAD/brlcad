@@ -164,7 +164,7 @@ data2uchar(const icv_image_t *bif)
 
     if (ZERO(bif->gamma_corr)) {
 	for (i=0; i<size; i++) {
-	    *char_p = (unsigned char)floor((*double_p)*255.0);
+	    *char_p = (unsigned char)((*double_p)*255.0 +0.5) ;
 	    char_p++;
 	    double_p++;
 	}
