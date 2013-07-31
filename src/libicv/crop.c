@@ -20,7 +20,7 @@
 /** @file libicv/crop.c
  *
  * This file contains functions for cropping images.
- * There are two types of cropping rectangular and skeyed.
+ * There are two types of cropping: rectangular and skeyed.
  *
  */
 #include "bu.h"

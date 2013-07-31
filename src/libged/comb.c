@@ -192,11 +192,11 @@ _ged_wrap_comb(struct ged *gedp, struct directory *dp) {
 
 /* Approach - define a search string that searches for all solid objects
  * in the tree, and returns the bu_ptbl list of unique solids.  Do the
- * same for combs.  
+ * same for combs.
  *
- * Need to make sure that all objects in the tree are unioned in - 
- * it's not clear what it would mean to at the moment "flatten" a 
- * tree with intersections or subtractions.  
+ * Need to make sure that all objects in the tree are unioned in -
+ * it's not clear what it would mean to at the moment "flatten" a
+ * tree with intersections or subtractions.
  * Once boolean evaluations are ready, we could probably
  * evaluate such objects to get a single representation that can be unioned
  * into a flat tree...

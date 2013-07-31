@@ -163,7 +163,7 @@ int icv_filter(icv_image_t *img, ICV_FILTER filter_type)
     image*/
 
     /* TODO A new Functionality. Update the get_kernel function to
-    accomodate the    generalized kernel length. This can be based
+    accommodate the generalized kernel length. This can be based
     upon a library of filters or closed form definitions. */
 
     kern = bu_malloc(k_dim*k_dim*sizeof(double), "icv_filter : Kernel Allocation");

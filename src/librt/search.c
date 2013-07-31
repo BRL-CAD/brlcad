@@ -164,7 +164,7 @@ db_fullpath_traverse_subtree(union tree *tp,
 			     genptr_t client_data)
 {
     struct directory *dp;
- 
+
     if (!tp)
 	return;
 
@@ -649,7 +649,7 @@ f_below(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, st
 	    return 0;
 
 	comb = (struct rt_comb_internal *)in.idb_ptr;
-        
+
         curr_node.path = &belowpath;
 	state = db_fullpath_stateful_traverse_subtree(comb->tree, db_fullpath_stateful_traverse, dbip, wdbp, results, &curr_node, find_execute_nested_plans, find_execute_nested_plans, wdbp->wdb_resp, plan->bl_data[0]);
 

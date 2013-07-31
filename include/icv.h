@@ -287,7 +287,7 @@ ICV_EXPORT int icv_rgb2gray(icv_image_t *img,
 /** @file libicv/crop.c
  *
  * This file contains functions for cropping images.
- * There are two types of cropping rectangular and skeyed.
+ * There are two types of cropping: rectangular and skeyed.
  */
 
 /**
@@ -295,11 +295,11 @@ ICV_EXPORT int icv_rgb2gray(icv_image_t *img,
  * Note : (0,0) corresponds to the Bottom Left of an Image.
  *
  * @param img Input image struct to be cropped.
- * @param xorig X-Cordinate of offset of image to be extracted from.
- * @param yorig Y-Cordinate of offset of image to be extracted from.
- * @param xnum Legnth of the output image to be extracted from input
+ * @param xorig X-Coordinate of offset of image to be extracted from.
+ * @param yorig Y-Coordinate of offset of image to be extracted from.
+ * @param xnum Length of the output image to be extracted from input
  * data in horizontal direction.
- * @param ynum Legnth of the output image to be extracted from input
+ * @param ynum Length of the output image to be extracted from input
  * data in vertical direction.
  * @return 0 on success.
  */
@@ -308,8 +308,8 @@ ICV_EXPORT extern int icv_rect(icv_image_t *img, int xorig, int yorig, int xnum,
 /**
  * This function crops an input image.
  * This can do a screwed cropping, i.e. given any four points of
- * quadrilateral in an image, Maps it to a rectangle of xnumXynum
- * dimension
+ * quadrilateral in an image, map it to a rectangle of xnumXynum
+ * dimension.
  *
  *        (ulx,uly)         (urx,ury)
  *             __________________

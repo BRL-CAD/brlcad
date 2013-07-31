@@ -68,10 +68,10 @@
 	<varlistentry>
 	  <term>
          Suppose we have a situation where region2.r is unioned into region1.r, and both
-         region1.r and region2.r have the region flag set, as seen in the tree below.  
+         region1.r and region2.r have the region flag set, as seen in the tree below.
           </term>
 
-<listitem>	
+<listitem>
       <literallayout>
       <computeroutput>
 <prompt>mged&gt;</prompt> <userinput>tree region1.r</userinput>
@@ -88,9 +88,9 @@ region1.r/R
       region is not supposed to be combined into another using boolean operations.
       Further, suppose that one or
       more assemblies use region2.r and expect it to be a region - i.e., region2.r needs
-      to remain a region with the same contents.  
+      to remain a region with the same contents.
 
-      To fix this problem without disturbing other geometry using region2.r, first 
+      To fix this problem without disturbing other geometry using region2.r, first
       make a combination below region2.r using the <option>w</option> flag to <command>comb</command>:
       </para>
 
@@ -124,7 +124,7 @@ region1.r/R
                 u arb.s
       </computeroutput>
       </literallayout>
-      
+
       <para>
         Because the tree is manipulated as a Tcl list, we need glob compatibility mode to be
         off on the MGED command line.  Once the tree is re-defined, region1.r no longer has
@@ -132,8 +132,8 @@ region1.r/R
       </para>
 
       <para>
-        Optionally, the name region2.r.c can be changed to the name region2.c with 
-        the <command>mvall</command> command: 
+        Optionally, the name region2.r.c can be changed to the name region2.c with
+        the <command>mvall</command> command:
       </para>
 
       <literallayout>
