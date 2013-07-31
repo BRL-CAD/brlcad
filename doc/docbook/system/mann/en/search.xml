@@ -50,7 +50,7 @@
     Something to bear in mind is that all search routines perform a full path tree
     search "under the hood."  A prefix "/" character changes the <emphasis remap="I">way</emphasis> the output is
     reported, but does not change the underlying search <emphasis remap="I">method</emphasis> - for example, depth
-    and patch search criteria will still match even if no "/" character is appended to the input path.
+    and path search criteria will still match even if no "/" character is appended to the input path.
   </para>
 </refsection>
 
