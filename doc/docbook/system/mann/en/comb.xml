@@ -88,8 +88,17 @@
             elsewhere in the .g file.  (In essence, the latter behavior prevents
             "orphaned" combinations that are no longer used from showing up as new
             top level objects in the database.)  This feature will not work on any
-            combination containing non-union boolean operations.
-            Conflicts with <option>-w</option> and <option>-l</option>.
+	    combination containing non-union boolean operations.  The following
+	    <command>search</command> command can be used to find combs
+	    that are candidates for flattening:
+	    <literallayout>
+		    <computeroutput>
+<prompt>mged&gt;</prompt> <userinput>search -type comb ! -below ( -bool + -or -bool - )</userinput>
+		    </computeroutput>
+	    </literallayout>
+          </para>
+          <para>
+             Conflicts with <option>-w</option> and <option>-l</option>.
           </para>
         </listitem>
       </varlistentry>
