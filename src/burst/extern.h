@@ -90,7 +90,6 @@ extern void prntTimer();
 extern void prompt();
 extern void readCmdFile();
 extern void warning();
-extern void prntUsage();
 extern void clr_Tabs();
 extern void prntShieldComp();
 extern void qFree();

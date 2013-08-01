@@ -177,6 +177,11 @@ readBatchInput(FILE *fp)
     return;
 }
 
+static const char usage[] =
+    "Usage: burst [-b] [-p|-P]\n"
+    "\tThe -b option suppresses the screen display (for batch jobs).\n"
+    "\tThe -p/-P options specifies whether to plot points or lines."
+;
 
 /*
   int main(int argc, char *argv[])
@@ -190,8 +195,8 @@ main(int argc, char *argv[])
     if (!tmpfp) {
 	bu_exit(EXIT_FAILURE, "ERROR: Unable to create temporary file.\n");
     }
-    if (! parsArgv(argc, argv)) {
-	prntUsage();
+    if (!parsArgv(argc, argv)) {
+        (void)fprintf(stderr, "%s\n", usage);
 	return EXIT_FAILURE;
     }
 

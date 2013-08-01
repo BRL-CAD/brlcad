@@ -889,22 +889,6 @@ prntTitle(char *title_str)
 }
 
 
-static char *usage[] =
-{
-    "Usage: burst [-b] [-p|-P]",
-    "\tThe -b option suppresses the screen display (for batch jobs).",
-    "\tThe -p/-P options specifies whether to plot points or lines.",
-    NULL
-};
-void
-prntUsage()
-{
-    char **p = usage;
-    while (*p != NULL)
-	(void) fprintf(stderr, "%s\n", *p++);
-}
-
-
 void
 prompt(char *str)
 {
