@@ -65,7 +65,7 @@ icv_hist(icv_image_t* img, int n_bins)
     return bins;
 }
 
-double *icv_image_max(icv_image_t* img)
+double *icv_max(icv_image_t* img)
 {
     double *data = NULL;
     size_t size;
@@ -87,7 +87,7 @@ double *icv_image_max(icv_image_t* img)
     return max;
 }
 
-double *icv_image_sum(icv_image_t* img)
+double *icv_sum(icv_image_t* img)
 {
     double *data = NULL;
    
@@ -109,7 +109,7 @@ double *icv_image_sum(icv_image_t* img)
     return sum;
 }
 
-double *icv_image_mean(icv_image_t* img)
+double *icv_mean(icv_image_t* img)
 {
     double *mean; 
     size_t size;
