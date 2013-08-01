@@ -50,10 +50,14 @@ extern FILE *fdopen(int, const char *);
 #define WRMODE S_IRUSR|S_IRGRP|S_IROTH
 
 /* defined in bw.c */
-extern double *uchar2double(unsigned char *data, long int size);
-extern unsigned char *data2uchar(const icv_image_t *bif);
-extern int bw_save(icv_image_t *bif, const char *filename);
-extern icv_image_t *bw_load(const char *filename, int width, int height);
+extern HIDDEN double *uchar2double(unsigned char *data, long int size);
+extern HIDDEN unsigned char *data2uchar(const icv_image_t *bif);
+extern HIDDEN int bw_save(icv_image_t *bif, const char *filename);
+extern HIDDEN icv_image_t *bw_load(const char *filename, int width, int height);
+
+/* defined in pix.c */
+extern HIDDEN int pix_save(icv_image_t *bif, const char *filename);
+extern HIDDEN icv_image_t *pix_load(const char* filename, int width, int height);
 
 /* private functions */
 
@@ -159,32 +163,6 @@ png_save(icv_image_t *bif, const char *filename)
     return 1;
 }
 
-
-HIDDEN int
-pix_save(icv_image_t *bif, const char *filename)
-{
-    unsigned char *data;
-    int fd;
-    size_t ret, size;
-
-    if (bif->color_space == ICV_COLOR_SPACE_GRAY) {
-	icv_gray2rgb(bif);
-    } else if (bif->color_space != ICV_COLOR_SPACE_RGB) {
-	bu_log("pix_save : Color Space conflict");
-	return -1;
-    }
-    data =  data2uchar(bif);
-    size = (size_t) bif->width*bif->height*3;
-    fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, WRMODE);
-    ret = write(fd, data, size);
-    close(fd);
-    if (ret != size) {
-	bu_log("pix_save : Short Write");
-	return -1;
-    }
-    return 0;
-}
-
 HIDDEN int
 ppm_save(icv_image_t *bif, const char *filename)
 {
@@ -215,47 +193,6 @@ ppm_save(icv_image_t *bif, const char *filename)
     }
     return 0;
 }
-
-
-HIDDEN icv_image_t *
-pix_load(const char* filename, int width, int height)
-{
-    int fd;
-    unsigned char *data = 0;
-    icv_image_t *bif;
-
-    size_t size;
-
-    if (width == 0 || height == 0) {
-	height = 512;
-	width = 512;
-    }
-
-    size = (size_t) height*width*3;
-
-    if ((fd = open(filename, O_RDONLY, WRMODE))<0) {
-	bu_log("pix_load: Cannot open file for reading\n");
-	return NULL;
-    }
-    data = (unsigned char *)bu_malloc(size, "pix_load : unsigned char data");
-    if (read(fd, data, size) !=0) {
-	bu_log("pix_load: Error Occurred while Reading\n");
-	bu_free(data, "icv_image data");
-	return NULL;
-    }
-    BU_ALLOC(bif, struct icv_image);
-    ICV_IMAGE_INIT(bif);
-    bif->data = uchar2double(data, size);
-    bu_free(data, "pix_load : unsigned char data");
-    bif->magic = ICV_IMAGE_MAGIC;
-    bif->height = height;
-    bif->width = width;
-    bif->channels = 3;
-    bif->color_space = ICV_COLOR_SPACE_RGB;
-    close(fd);
-    return bif;
-}
-
 
 /* end of private functions */
 
