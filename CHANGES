@@ -894,3 +894,5 @@ s/bu_set_realtime([[:space:]]);//g
         didn't do anything [7.23]
 s/.*bu_cpulimit_[sg]et([[:space:]]);//g
         didn't do anything [7.23]
+s/rt_g\./RTG\./g
+        renamed rt_g global to not be same as struct name [7.24]
