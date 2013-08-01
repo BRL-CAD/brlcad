@@ -75,14 +75,14 @@ double *icv_max(icv_image_t* img)
     max = bu_malloc(sizeof(double)*img->channels, "max values");
 
     for(i=0; i<img->channels; i++)
-        max[i] = 0.0;
+	max[i] = 0.0;
 
     data = img->data;
 
     for (size = img->width*img->height; size>0; size--)
-        for (i=0; i<img->channels; i++)
-            if (max[i] > *data++)
-                max[i] = *(data-1);
+	for (i=0; i<img->channels; i++)
+	    if (max[i] > *data++)
+		max[i] = *(data-1);
 
     return max;
 }
@@ -90,37 +90,37 @@ double *icv_max(icv_image_t* img)
 double *icv_sum(icv_image_t* img)
 {
     double *data = NULL;
-   
+
     double *sum; /**< An array of size channels. */
     int i;
     size_t size,j;
     sum = bu_malloc(sizeof(double)*img->channels, "sum values");
 
     for(i=0; i<img->channels; i++)
-        sum[i] = 0.0;
+	sum[i] = 0.0;
 
     data = img->data;
     size = (size_t)img->width*img->height;
-    
+
     for (j=0; j<size; j++)
-        for (i=0; i<img->channels; i++)
-            sum[i] += *data++;
-            
+	for (i=0; i<img->channels; i++)
+	    sum[i] += *data++;
+
     return sum;
 }
 
 double *icv_mean(icv_image_t* img)
 {
-    double *mean; 
+    double *mean;
     size_t size;
     int i;
 
     mean = icv_sum(img); /**< recieves sum from icv_image_sum*/
-    size = (size_t)img->width*img->height;  
-           
+    size = (size_t)img->width*img->height;
+
     for(i=0; i<img->channels; i++)
-        mean[i]/=size;
-    
+	mean[i]/=size;
+
     return mean;
 }
 
@@ -134,14 +134,14 @@ double *icv_min(icv_image_t* img)
     min = bu_malloc(sizeof(double)*img->channels, "min values");
 
     for(i=0; i<img->channels; i++)
-        min[i] = 1.0;
+	min[i] = 1.0;
 
     data = img->data;
 
     for (size = (size_t)img->width*img->height; size>0; size--) {
-        for (i=0; i<img->channels; i++)
-            if (min[i] < *data++)
-                min[i] = *(data-1);
+	for (i=0; i<img->channels; i++)
+	    if (min[i] < *data++)
+		min[i] = *(data-1);
     }
 
     return min;
