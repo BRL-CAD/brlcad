@@ -524,12 +524,13 @@ open_dm(ClientData UNUSED(cdata), Tcl_Interp *interp, int UNUSED(objc), Tcl_Obj 
     char *av[] = { "Ogl_open", "-t", "0", "-n", ".w0", "-W", "800", "-N", "600", NULL };
 
     dmp = DM_OPEN(interp, DM_TYPE_ISST, sizeof(av)/sizeof(void*)-1, (const char **)av);
-    DM_SET_BGCOLOR(dmp, 0, 0, 0x30);
 
     if(dmp == DM_NULL) {
 	printf("dm failed?\n");
 	return TCL_ERROR;
     }
+
+    DM_SET_BGCOLOR(dmp, 0, 0, 0x30);
 
     return TCL_OK;
 
