@@ -497,6 +497,10 @@ int main(int argc, const char **argv)
 	fb_close(fbp);
     }
 
+    /* Release the ray-tracer instance */
+    rt_free_rti(rtip);
+    rtip = NULL;
+
     return 0;
 }
 
