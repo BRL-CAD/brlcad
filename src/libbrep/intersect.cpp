@@ -768,7 +768,7 @@ ON_Intersect(const ON_3dPoint& pointA,
 	     double tolerance,
 	     const ON_Interval* surfaceB_udomain,
 	     const ON_Interval* surfaceB_vdomain,
-	     brlcad::SurfaceTree* tree)
+	     brlcad::SurfaceTree* UNUSED(tree))
 {
     if (tolerance <= 0.0)
 	tolerance = PCI_DEFAULT_TOLERANCE;
