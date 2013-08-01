@@ -224,6 +224,12 @@ public:
 	    }
 	}
     }
+    bool IsPointIn(const ON_3dPoint &pt, double tolerance = 0.0)
+    {
+	ON_3dVector vtol(tolerance, tolerance, tolerance);
+	ON_BoundingBox new_bbox(m_node.m_min-vtol, m_node.m_max+vtol);
+	return new_bbox.IsPointIn(pt);
+    }
     bool Intersect(const Subcurve& curve, double tolerance = 0.0, ON_BoundingBox* intersection = NULL) const
     {
 	ON_3dVector vtol(tolerance, tolerance, tolerance);
@@ -592,8 +598,8 @@ newton_pci(double& t, const ON_3dPoint& pointA, const ON_Curve& curveB, double t
     double last_t = DBL_MAX;
     int iterations = 0;
     while (!ON_NearZero(last_t-t)
-	    && dis > tolerance
-	    && iterations++ < PCI_MAX_ITERATIONS) {
+	   && dis > tolerance
+	   && iterations++ < PCI_MAX_ITERATIONS) {
 	ON_3dVector tangent, s_deriv;
 	last_t = t;
 	curveB.Ev2Der(t, closest_point, tangent, s_deriv);
@@ -608,6 +614,7 @@ newton_pci(double& t, const ON_3dPoint& pointA, const ON_Curve& curveB, double t
     dis = closest_point.DistanceTo(pointA);
     return dis <= tolerance;
 }
+
 
 bool
 ON_Intersect(const ON_3dPoint& pointA,
@@ -705,7 +712,53 @@ ON_Intersect(const ON_3dPoint& pointA,
 // much - killing performance. Since it's only used for getting an
 // estimation, and we use Newton iterations afterwards, it's reasonable
 // to use a smaller depth in this step.
-#define MAX_PSI_DEPTH 4
+#define MAX_PSI_DEPTH 8
+
+
+// Newton-Raphson iteration needs a good start. Although we can almost get
+// a good starting point every time, but in case of some unfortunate cases,
+// we define a maximum iteration, preventing from infinite loop.
+#define PSI_MAX_ITERATIONS 100
+
+
+bool
+newton_psi(double& u, double& v, const ON_3dPoint& pointA, const ON_Surface& surfB, double tolerance)
+{
+    ON_3dPoint closest_point = surfB.PointAt(u, v);
+    double dis = closest_point.DistanceTo(pointA);
+
+    // Use Newton-Raphson method to get an accruate point of PSI.
+    // We actually calculates the closest point on the surface to that point.
+    //       (surface(u, v) - pointA) \dot deriv_u(u, v) = 0 (1)
+    //	     (surface(u, v) - pointA) \dot deriv_v(u, v) = 0 (2)
+    // Then surface(u, v) may be the closest point on the surface to pointA.
+
+    double last_u = DBL_MAX*.5, last_v = DBL_MAX*.5;
+    int iterations = 0;
+    while (fabs(last_u - u) + fabs(last_v - v) > ON_ZERO_TOLERANCE
+	   && iterations++ < PSI_MAX_ITERATIONS) {
+	ON_3dVector du, dv, duu, duv, dvv;
+	last_u = u;
+	last_v = v;
+	surfB.Ev2Der(u, v, closest_point, du, dv, duu, duv, dvv);
+	ON_Matrix F(2, 1), J(2, 2);
+	F[0][0] = ON_DotProduct(closest_point-pointA, du);
+	F[1][0] = ON_DotProduct(closest_point-pointA, dv);
+	J[0][0] = ON_DotProduct(du, du) + ON_DotProduct(closest_point-pointA, duu);
+	J[0][1] = J[1][0] = ON_DotProduct(du, dv) + ON_DotProduct(closest_point-pointA, duv);
+	J[1][1] = ON_DotProduct(dv, dv) + ON_DotProduct(closest_point-pointA, dvv);
+	if (!J.Invert(0.0))
+	    break;
+	ON_Matrix Delta;
+	Delta.Multiply(J, F);
+	u -= Delta[0][0];
+	v -= Delta[1][0];
+	dis = closest_point.DistanceTo(pointA);
+    }
+    closest_point = surfB.PointAt(u, v);
+    dis = closest_point.DistanceTo(pointA);
+    return dis <= tolerance;
+}
 
 
 bool
@@ -718,45 +771,59 @@ ON_Intersect(const ON_3dPoint& pointA,
 	     brlcad::SurfaceTree* tree)
 {
     if (tolerance <= 0.0)
-	tolerance = PSI_DEFAULT_TOLERANCE;
+	tolerance = PCI_DEFAULT_TOLERANCE;
 
     ON_Interval u_domain, v_domain;
     u_domain = check_domain(surfaceB_udomain, surfaceB.Domain(0), "surfaceB_udomain");
     v_domain = check_domain(surfaceB_vdomain, surfaceB.Domain(1), "surfaceB_vdomain");
 
-    // We need ON_BrepFace for get_closest_point().
-    // TODO: Use routines like SubSurface in SSI to reduce computation.
-    ON_Brep *brep = surfaceB.BrepForm();
-    if (!brep) return false;
-    ON_2dPoint closest_point_uv;
-    bool delete_tree = false;
-    if (!tree) {
-	tree = new brlcad::SurfaceTree(brep->Face(0), false, MAX_PSI_DEPTH);
-	delete_tree = true;
-    }
-    if (brlcad::get_closest_point(closest_point_uv, brep->Face(0), pointA, tree) == false) {
-	delete brep;
-	if (delete_tree) delete tree;
+    Subsurface root;
+    if (!build_surface_root(&surfaceB, &u_domain, &v_domain, root))
 	return false;
+
+    if (!root.IsPointIn(pointA, tolerance))
+	return false;
+
+    std::vector<Subsurface*> candidates, next_candidates;
+    candidates.push_back(&root);
+
+    // Find the sub-curves that are possibly intersected with the point.
+    for (int i = 0; i < MAX_PSI_DEPTH; i++) {
+	next_candidates.clear();
+	for (unsigned int j = 0; j < candidates.size(); j++) {
+	    if (candidates[j]->m_isplanar) {
+		next_candidates.push_back(candidates[j]);
+	    } else {
+		if (candidates[j]->Split() == 0) {
+		    for (int k = 0; k < 4; k++) {
+			if (candidates[j]->m_children[k] && candidates[j]->m_children[k]->IsPointIn(pointA, tolerance))
+			    next_candidates.push_back(candidates[j]->m_children[k]);
+		    }
+		} else
+		    next_candidates.push_back(candidates[j]);
+	    }
+	}
+	candidates = next_candidates;
     }
 
-    delete brep;
-    if (delete_tree) delete tree;
-
-    ON_3dPoint closest_point_3d = surfaceB.PointAt(closest_point_uv.x, closest_point_uv.y);
-    if (pointA.DistanceTo(closest_point_3d) <= tolerance
-	&& u_domain.Includes(closest_point_uv.x)
-	&& v_domain.Includes(closest_point_uv.y)) {
-	ON_PX_EVENT Event;
-	Event.m_type = ON_PX_EVENT::psx_point;
-	Event.m_A = pointA;
-	Event.m_b = closest_point_uv;
-	Event.m_B = closest_point_3d;
-	Event.m_Mid = (pointA + Event.m_B) * 0.5;
-	Event.m_radius = pointA.DistanceTo(Event.m_B) * 0.5;
-	x.Append(Event);
-	return true;
+    for (unsigned int i = 0; i < candidates.size(); i++) {
+	// Use the mid point of the bounding box as the starting point
+	double u = candidates[i]->m_u.Mid(), v = candidates[i]->m_v.Mid();
+	if (newton_psi(u, v, pointA, surfaceB, tolerance)) {
+	    ON_PX_EVENT Event;
+	    Event.m_type = ON_PX_EVENT::psx_point;
+	    Event.m_A = pointA;
+	    Event.m_B = surfaceB.PointAt(u, v);
+	    Event.m_b[0] = u;
+	    Event.m_b[1] = v;
+	    Event.m_Mid = (pointA + Event.m_B) * 0.5;
+	    Event.m_radius = Event.m_B.DistanceTo(pointA) * 0.5;
+	    x.Append(Event);
+	    return true;
+	}
     }
+
+    // All candidates have no intersection
     return false;
 }
 
