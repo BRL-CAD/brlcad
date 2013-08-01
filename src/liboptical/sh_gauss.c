@@ -176,7 +176,7 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 	    /* Get the internal form of this solid & add it to the list */
 	    ret = rt_db_get_internal(&dbint->ip, tp->tr_a.tu_stp->st_dp, tb->dbip, mp, resp);
 	    if (ret < 0) {
-		bu_log("Failure reading %s object from database.\n", rt_functab[sol_id].ft_name);
+		bu_log("Failure reading %s object from database.\n", OBJ[sol_id].ft_name);
 		return;
 	    }
 
@@ -199,7 +199,7 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 
 		if (rdebug&RDEBUG_SHADE)
 		    bu_log(" got a primitive type %ld \"%s\".  This primitive ain't no ellipse bucko!\n",
-			   sol_id, rt_functab[sol_id].ft_name);
+			   sol_id, OBJ[sol_id].ft_name);
 
 		break;
 	    }
@@ -210,7 +210,7 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 	    if (rdebug&RDEBUG_SHADE)
 		bu_log(" got a primitive type %ld \"%s\"\n",
 		       sol_id,
-		       rt_functab[sol_id].ft_name);
+		       OBJ[sol_id].ft_name);
 
 	    RT_ELL_CK_MAGIC(ell_p);
 

@@ -66,7 +66,7 @@ rt_revolve_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_REVOLVE;
-    BU_ASSERT(&rt_functab[intern->idb_type] == ftp);
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
 
     intern->idb_meth = ftp;
     BU_ALLOC(rev, struct rt_revolve_internal);
@@ -229,7 +229,7 @@ rt_revolve_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
     }
 
     stp->st_id = ID_REVOLVE;
-    stp->st_meth = &rt_functab[ID_REVOLVE];
+    stp->st_meth = &OBJ[ID_REVOLVE];
 
     BU_GET(rev, struct revolve_specific);
     stp->st_specific = (genptr_t)rev;
@@ -1514,7 +1514,7 @@ rt_revolve_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
     /* set up the internal structure */
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_REVOLVE;
-    ip->idb_meth = &rt_functab[ID_REVOLVE];
+    ip->idb_meth = &OBJ[ID_REVOLVE];
     BU_ALLOC(ip->idb_ptr, struct rt_revolve_internal);
 
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
@@ -1597,7 +1597,7 @@ rt_revolve_xform(
 	bu_vls_init(&rop->sketch_name);
 	bu_vls_vlscat(&rop->sketch_name, &rip->sketch_name);
 	op->idb_ptr = (genptr_t)rop;
-	op->idb_meth = &rt_functab[ID_REVOLVE];
+	op->idb_meth = &OBJ[ID_REVOLVE];
 	op->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	op->idb_type = ID_REVOLVE;
 	if (ip->idb_avs.magic == BU_AVS_MAGIC) {

@@ -152,7 +152,7 @@ extern int rt_cline_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 extern int rt_extrude_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 
 
-const struct rt_functab rt_functab[] = {
+const struct rt_functab OBJ[] = {
     {
 	/* 0: unused, for sanity checking. */
 	RT_FUNCTAB_MAGIC, "ID_NULL", "NULL",
@@ -2177,14 +2177,14 @@ rt_id_solid(struct bu_external *ep)
  * R T _ G E T _ F U N C T A B _ B Y _ L A B E L
  *
  * Given the Tcl 'label' for a given solid type, find the appropriate
- * entry in rt_functab[].
+ * entry in OBJ[].
  */
 const struct rt_functab *
 rt_get_functab_by_label(const char *label)
 {
     register const struct rt_functab *ftp;
 
-    for (ftp = rt_functab; ftp->magic != 0; ftp++) {
+    for (ftp = OBJ; ftp->magic != 0; ftp++) {
 	if (bu_strncmp(label, ftp->ft_label, 8) == 0)
 	    return ftp;
     }

@@ -169,7 +169,7 @@ rt_ars_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_ARS;
-    ip->idb_meth = &rt_functab[ID_ARS];
+    ip->idb_meth = &OBJ[ID_ARS];
     BU_ALLOC(ip->idb_ptr, struct rt_ars_internal);
 
     ari = (struct rt_ars_internal *)ip->idb_ptr;
@@ -326,7 +326,7 @@ rt_ars_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_ARS;
-    ip->idb_meth = &rt_functab[ID_ARS];
+    ip->idb_meth = &OBJ[ID_ARS];
     BU_ALLOC(ip->idb_ptr, struct rt_ars_internal);
 
     ari = (struct rt_ars_internal *)ip->idb_ptr;
@@ -752,7 +752,7 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     intern.idb_magic = RT_DB_INTERNAL_MAGIC;
     intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern.idb_minor_type = ID_BOT;
-    intern.idb_meth = &rt_functab[ID_BOT];
+    intern.idb_meth = &OBJ[ID_BOT];
     intern.idb_ptr = (genptr_t)bot;
     bu_avs_init(&intern.idb_avs, 0, "ARS to a BOT for prep");
 

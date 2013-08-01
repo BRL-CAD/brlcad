@@ -87,8 +87,8 @@ _ged_do_list(struct ged *gedp, struct directory *dp, int verbose)
 
 	bu_vls_printf(gedp->ged_result_str, "%s:  ", dp->d_namep);
 
-	if (!rt_functab[id].ft_describe ||
-	    rt_functab[id].ft_describe(gedp->ged_result_str,
+	if (!OBJ[id].ft_describe ||
+	    OBJ[id].ft_describe(gedp->ged_result_str,
 				       &intern,
 				       verbose,
 				       gedp->ged_wdbp->dbip->dbi_base2local,
@@ -182,7 +182,7 @@ ged_list(struct ged *gedp, int argc, const char *argv[])
 
 	    bu_vls_printf(gedp->ged_result_str, "%s:  ", argv[arg]);
 
-	    if (!rt_functab[id].ft_describe || rt_functab[id].ft_describe(gedp->ged_result_str, &intern, verbose, gedp->ged_wdbp->dbip->dbi_base2local, &rt_uniresource, gedp->ged_wdbp->dbip) < 0)
+	    if (!OBJ[id].ft_describe || OBJ[id].ft_describe(gedp->ged_result_str, &intern, verbose, gedp->ged_wdbp->dbip->dbi_base2local, &rt_uniresource, gedp->ged_wdbp->dbip) < 0)
 		bu_vls_printf(gedp->ged_result_str, "%s: describe error", dp->d_namep);
 
 	    rt_db_free_internal(&intern);

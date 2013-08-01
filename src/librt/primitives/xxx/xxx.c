@@ -308,7 +308,7 @@ rt_xxx_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
     /* set up the internal structure */
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_XXX;
-    ip->idb_meth = &rt_functab[ID_XXX];
+    ip->idb_meth = &OBJ[ID_XXX];
     BU_ALLOC(ip->idb_ptr, struct rt_xxx_internal);
 
     xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;

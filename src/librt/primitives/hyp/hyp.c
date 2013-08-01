@@ -197,7 +197,7 @@ rt_hyp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     /* set soltab ID */
     stp->st_id = ID_HYP;
-    stp->st_meth = &rt_functab[ID_HYP];
+    stp->st_meth = &OBJ[ID_HYP];
 
     hyp =  hyp_internal_to_specific(hyp_ip);
     stp->st_specific = (genptr_t)hyp;
@@ -1224,7 +1224,7 @@ rt_hyp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
     /* set up the internal structure */
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_HYP;
-    ip->idb_meth = &rt_functab[ID_HYP];
+    ip->idb_meth = &OBJ[ID_HYP];
     BU_ALLOC(ip->idb_ptr, struct rt_hyp_internal);
 
     hyp_ip = (struct rt_hyp_internal *)ip->idb_ptr;

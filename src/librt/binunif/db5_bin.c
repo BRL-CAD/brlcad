@@ -138,7 +138,7 @@ rt_binunif_import5_minor_type(struct rt_db_internal *ip,
     RT_CK_DB_INTERNAL( ip );
     ip->idb_major_type = DB5_MAJORTYPE_BINARY_UNIF;
     ip->idb_minor_type = minor_type;
-    ip->idb_meth = &rt_functab[ID_BINUNIF];
+    ip->idb_meth = &OBJ[ID_BINUNIF];
     BU_ALLOC(ip->idb_ptr, struct rt_binunif_internal);
 
     bip = (struct rt_binunif_internal *)ip->idb_ptr;
@@ -507,7 +507,7 @@ rt_binunif_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 
     intern->idb_type = DB5_MINORTYPE_BINU_8BITINT;
     intern->idb_major_type = DB5_MAJORTYPE_BINARY_UNIF;
-    BU_ASSERT(&rt_functab[ID_BINUNIF] == ftp);
+    BU_ASSERT(&OBJ[ID_BINUNIF] == ftp);
 
     intern->idb_meth = ftp;
     BU_ALLOC(bip, struct rt_binunif_internal);

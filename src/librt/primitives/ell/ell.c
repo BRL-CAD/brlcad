@@ -1293,7 +1293,7 @@ rt_ell_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_ELL;
-    ip->idb_meth = &rt_functab[ID_ELL];
+    ip->idb_meth = &OBJ[ID_ELL];
     BU_ALLOC(ip->idb_ptr, struct rt_ell_internal);
 
     eip = (struct rt_ell_internal *)ip->idb_ptr;
@@ -1369,7 +1369,7 @@ rt_ell_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_ELL;
-    ip->idb_meth = &rt_functab[ID_ELL];
+    ip->idb_meth = &OBJ[ID_ELL];
     BU_ALLOC(ip->idb_ptr, struct rt_ell_internal);
 
     eip = (struct rt_ell_internal *)ip->idb_ptr;

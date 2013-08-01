@@ -4283,7 +4283,7 @@ rt_dsp_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_DSP;
-    ip->idb_meth = &rt_functab[ID_DSP];
+    ip->idb_meth = &OBJ[ID_DSP];
     BU_ALLOC(ip->idb_ptr, struct rt_dsp_internal);
 
     dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
@@ -4410,7 +4410,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_DSP;
-    ip->idb_meth = &rt_functab[ID_DSP];
+    ip->idb_meth = &OBJ[ID_DSP];
     BU_ALLOC(ip->idb_ptr, struct rt_dsp_internal);
 
     dsp_ip = ip->idb_ptr;
@@ -4747,7 +4747,7 @@ const struct bu_structparse fake_dsp_printab[] = {
 /**
  * R T _ D S P _ G E T
  *
- * This is the generic routine to be listed in rt_functab[].ft_get for
+ * This is the generic routine to be listed in OBJ[].ft_get for
  * those solid types which are fully described by their ft_parsetab
  * entry.
  *
@@ -4819,7 +4819,7 @@ rt_dsp_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
  * R T _ P A R S E T A B _ T C L A D J U S T
  *
  * For those solids entirely defined by their parsetab.  Invoked via
- * rt_functab[].ft_adjust()
+ * OBJ[].ft_adjust()
  */
 int
 rt_dsp_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
@@ -4856,7 +4856,7 @@ rt_dsp_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_DSP;
 
-    BU_ASSERT(&rt_functab[intern->idb_type] == ftp);
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
     intern->idb_meth = ftp;
 
     BU_ALLOC(dsp, struct rt_dsp_internal);

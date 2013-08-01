@@ -723,7 +723,7 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_METABALL;
-    ip->idb_meth = &rt_functab[ID_METABALL];
+    ip->idb_meth = &OBJ[ID_METABALL];
     BU_ALLOC(ip->idb_ptr, struct rt_metaball_internal);
 
     mb = (struct rt_metaball_internal *)ip->idb_ptr;

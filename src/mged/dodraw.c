@@ -1007,7 +1007,7 @@ replot_modified_solid(
 
     transform_editing_solid(&intern, mat, ip, 0);
 
-    if (rt_functab[ip->idb_type].ft_plot(&vhead, &intern, &mged_ttol, &mged_tol, NULL) < 0) {
+    if (OBJ[ip->idb_type].ft_plot(&vhead, &intern, &mged_ttol, &mged_tol, NULL) < 0) {
 	Tcl_AppendResult(INTERP, LAST_SOLID(sp)->d_namep,
 			 ": re-plot failure\n", (char *)NULL);
 	return -1;

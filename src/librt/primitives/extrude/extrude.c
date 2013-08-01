@@ -2333,7 +2333,7 @@ rt_extrude_import4(struct rt_db_internal *ip, const struct bu_external *ep, cons
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_EXTRUDE;
-    ip->idb_meth = &rt_functab[ID_EXTRUDE];
+    ip->idb_meth = &OBJ[ID_EXTRUDE];
     BU_ALLOC(ip->idb_ptr, struct rt_extrude_internal);
 
     extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
@@ -2500,7 +2500,7 @@ rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_EXTRUDE;
-    ip->idb_meth = &rt_functab[ID_EXTRUDE];
+    ip->idb_meth = &OBJ[ID_EXTRUDE];
     BU_ALLOC(ip->idb_ptr, struct rt_extrude_internal);
 
     extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
@@ -2601,7 +2601,7 @@ rt_extrude_ifree(struct rt_db_internal *ip)
 	tmp_ip.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	tmp_ip.idb_type = ID_SKETCH;
 	tmp_ip.idb_ptr = (genptr_t)extrude_ip->skt;
-	tmp_ip.idb_meth = &rt_functab[ID_SKETCH];
+	tmp_ip.idb_meth = &OBJ[ID_SKETCH];
 	tmp_ip.idb_meth->ft_ifree(&tmp_ip);
     }
     extrude_ip->magic = 0;	/* sanity */
@@ -2641,7 +2641,7 @@ rt_extrude_xform(
 	eop->magic = RT_EXTRUDE_INTERNAL_MAGIC;
 	eop->sketch_name = bu_strdup(eip->sketch_name);
 	op->idb_ptr = (genptr_t)eop;
-	op->idb_meth = &rt_functab[ID_EXTRUDE];
+	op->idb_meth = &OBJ[ID_EXTRUDE];
 	op->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	op->idb_type = ID_EXTRUDE;
 	if (ip->idb_avs.magic == BU_AVS_MAGIC) {

@@ -2143,7 +2143,7 @@ struct rt_functab {
 };
 
 
-RT_EXPORT extern const struct rt_functab rt_functab[];
+RT_EXPORT extern const struct rt_functab OBJ[];
 
 #define RT_CK_FUNCTAB(_p) BU_CKMAG(_p, RT_FUNCTAB_MAGIC, "functab");
 
@@ -4306,7 +4306,7 @@ RT_EXPORT extern void db_comb_describe(struct bu_vls	*str,
 /**
  * R T _ C O M B _ D E S C R I B E
  *
- * rt_functab[ID_COMBINATION].ft_describe() method
+ * OBJ[ID_COMBINATION].ft_describe() method
  */
 RT_EXPORT extern int rt_comb_describe(struct bu_vls	*str,
 				      const struct rt_db_internal *ip,

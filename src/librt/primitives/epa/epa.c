@@ -284,7 +284,7 @@ rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
      * EPA is ok
      */
     stp->st_id = ID_EPA;	/* set soltab ID */
-    stp->st_meth = &rt_functab[ID_EPA];
+    stp->st_meth = &OBJ[ID_EPA];
 
     BU_GET(epa, struct epa_specific);
     stp->st_specific = (genptr_t)epa;
@@ -1641,7 +1641,7 @@ rt_epa_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_EPA;
-    ip->idb_meth = &rt_functab[ID_EPA];
+    ip->idb_meth = &OBJ[ID_EPA];
     BU_ALLOC(ip->idb_ptr, struct rt_epa_internal);
 
     xip = (struct rt_epa_internal *)ip->idb_ptr;
@@ -1771,7 +1771,7 @@ rt_epa_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_EPA;
-    ip->idb_meth = &rt_functab[ID_EPA];
+    ip->idb_meth = &OBJ[ID_EPA];
     BU_ALLOC(ip->idb_ptr, struct rt_epa_internal);
 
     xip = (struct rt_epa_internal *)ip->idb_ptr;

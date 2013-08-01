@@ -105,7 +105,7 @@ ged_shells(struct ged *gedp, int argc, const char *argv[])
 	    RT_DB_INTERNAL_INIT(&new_intern);
 	    new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    new_intern.idb_type = ID_NMG;
-	    new_intern.idb_meth = &rt_functab[ID_NMG];
+	    new_intern.idb_meth = &OBJ[ID_NMG];
 	    new_intern.idb_ptr = (genptr_t)m_tmp;
 
 	    new_dp=db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&shell_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);

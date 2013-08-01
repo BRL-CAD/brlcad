@@ -441,7 +441,7 @@ evaluate(union tree *tr, const struct rt_tess_tol *ttol, const struct bn_tol *to
 		RT_DB_INTERNAL_INIT(&ip);
 		ip.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		ip.idb_minor_type = ID_BOT;
-		ip.idb_meth = &rt_functab[ID_BOT];
+		ip.idb_meth = &OBJ[ID_BOT];
 		ip.idb_ptr = bot;
 		ip.idb_meth->ft_ifree(&ip);
 	    }

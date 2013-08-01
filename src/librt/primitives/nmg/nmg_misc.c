@@ -4581,7 +4581,7 @@ nmg_stash_model_to_file(const char *filename, const struct model *m, const char 
     RT_DB_INTERNAL_INIT(&intern);
     intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern.idb_type = ID_NMG;
-    intern.idb_meth = &rt_functab[ID_NMG];
+    intern.idb_meth = &OBJ[ID_NMG];
     intern.idb_ptr = (genptr_t)m;
 
     if (db_version(fp->dbip) < 5) {

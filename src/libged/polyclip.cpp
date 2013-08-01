@@ -263,7 +263,7 @@ ged_export_polygon(struct ged *gedp, ged_data_polygon_state *gdpsp, size_t polyg
 
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     internal.idb_type = ID_SKETCH;
-    internal.idb_meth = &rt_functab[ID_SKETCH];
+    internal.idb_meth = &OBJ[ID_SKETCH];
 
     BU_ALLOC(internal.idb_ptr, struct rt_sketch_internal);
     sketch_ip = (struct rt_sketch_internal *)internal.idb_ptr;

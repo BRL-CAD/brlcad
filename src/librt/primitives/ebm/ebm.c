@@ -569,7 +569,7 @@ rt_ebm_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_EBM;
-    ip->idb_meth = &rt_functab[ID_EBM];
+    ip->idb_meth = &OBJ[ID_EBM];
     BU_ALLOC(ip->idb_ptr, struct rt_ebm_internal);
 
     eip = (struct rt_ebm_internal *)ip->idb_ptr;
@@ -715,7 +715,7 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_EBM;
-    ip->idb_meth = &rt_functab[ID_EBM];
+    ip->idb_meth = &OBJ[ID_EBM];
     BU_ALLOC(ip->idb_ptr, struct rt_ebm_internal);
 
     eip = (struct rt_ebm_internal *)ip->idb_ptr;
@@ -1748,7 +1748,7 @@ rt_ebm_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_EBM;
-    BU_ASSERT(&rt_functab[intern->idb_type] == ftp);
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
 
     intern->idb_meth = ftp;
     BU_ALLOC(ebm, struct rt_ebm_internal);

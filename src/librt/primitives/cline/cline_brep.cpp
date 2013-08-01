@@ -55,7 +55,7 @@ rt_cline_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol 
     tmp_internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     tmp_internal.idb_ptr = (genptr_t)pip;
     tmp_internal.idb_minor_type = ID_PIPE;
-    tmp_internal.idb_meth = &rt_functab[ID_PIPE];
+    tmp_internal.idb_meth = &OBJ[ID_PIPE];
     rt_pipe_brep(b, &tmp_internal, tol);
 
     bu_free(pip, "pipe internal");

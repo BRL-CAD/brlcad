@@ -178,7 +178,7 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
 	RT_DB_INTERNAL_INIT(&new_intern);
 	new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	new_intern.idb_type = ID_ARB8;
-	new_intern.idb_meth = &rt_functab[ID_ARB8];
+	new_intern.idb_meth = &OBJ[ID_ARB8];
 	new_intern.idb_ptr = (genptr_t)arb;
 
 	if ((dp=db_diradd(gedp->ged_wdbp->dbip, bbname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type)) == RT_DIR_NULL) {

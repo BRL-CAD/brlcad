@@ -280,7 +280,7 @@ arbin(struct ged *gedp,
 	m = nmg_mm();
 
 	/* get an NMG version of this arb7 */
-	if (!rt_functab[ip->idb_type].ft_tessellate || rt_functab[ip->idb_type].ft_tessellate(&r, m, ip, &ttol, &gedp->ged_wdbp->wdb_tol)) {
+	if (!OBJ[ip->idb_type].ft_tessellate || OBJ[ip->idb_type].ft_tessellate(&r, m, ip, &ttol, &gedp->ged_wdbp->wdb_tol)) {
 	    bu_vls_printf(gedp->ged_result_str, "Cannot tessellate arb7\n");
 	    rt_db_free_internal(ip);
 	    return GED_ERROR;
@@ -358,7 +358,7 @@ arbin(struct ged *gedp,
 	/* put new solid in "ip" */
 	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	ip->idb_type = ID_BOT;
-	ip->idb_meth = &rt_functab[ID_BOT];
+	ip->idb_meth = &OBJ[ID_BOT];
 	ip->idb_ptr = (genptr_t)bot;
     }
 
@@ -1141,7 +1141,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	    if (ip->idb_type < 0) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot find inside of uninitialized object.\n");
 	    } else {
-		bu_vls_printf(gedp->ged_result_str, "Cannot find inside for '%s' solid\n", rt_functab[ip->idb_type].ft_name);
+		bu_vls_printf(gedp->ged_result_str, "Cannot find inside for '%s' solid\n", OBJ[ip->idb_type].ft_name);
 	    }
 	    return GED_ERROR;
     }

@@ -159,7 +159,7 @@ main(int argc, char** argv)
 		struct rt_sketch_internal *sketch;
 		int vert_count = nurbscurve2d->CVCount();
 		intern.idb_type = ID_SKETCH;
-		intern.idb_meth = &rt_functab[ID_SKETCH];
+		intern.idb_meth = &OBJ[ID_SKETCH];
 		BU_ALLOC(intern.idb_ptr, struct rt_sketch_internal);
 		sketch = (struct rt_sketch_internal *)intern.idb_ptr;
 		sketch->magic = RT_SKETCH_INTERNAL_MAGIC;
@@ -201,7 +201,7 @@ main(int argc, char** argv)
 		double radius = 0.1;
 		struct rt_ell_internal* sph;
 		intern.idb_type = ID_SPH;
-		intern.idb_meth = &rt_functab[ID_SPH];
+		intern.idb_meth = &OBJ[ID_SPH];
 		BU_ALLOC(intern.idb_ptr, struct rt_ell_internal);
 		sph = (struct rt_ell_internal *)intern.idb_ptr;
 		sph->magic = RT_ELL_INTERNAL_MAGIC;
@@ -244,7 +244,7 @@ main(int argc, char** argv)
 		ON_NurbsCurve *nurbscurve3d = ON_NurbsCurve::New();
 		curve3d->GetNurbForm(*nurbscurve3d);
 		intern.idb_type = ID_PIPE;
-		intern.idb_meth = &rt_functab[ID_PIPE];
+		intern.idb_meth = &OBJ[ID_PIPE];
 		BU_ALLOC(intern.idb_ptr, struct rt_pipe_internal);
 		struct rt_pipe_internal *pi;
 		pi = (struct rt_pipe_internal *)intern.idb_ptr;
@@ -277,7 +277,7 @@ main(int argc, char** argv)
 		double radius = 0.1;
 		struct rt_ell_internal* sph;
 		intern.idb_type = ID_SPH;
-		intern.idb_meth = &rt_functab[ID_SPH];
+		intern.idb_meth = &OBJ[ID_SPH];
 		BU_ALLOC(intern.idb_ptr, struct rt_ell_internal);
 		sph = (struct rt_ell_internal *)intern.idb_ptr;
 		sph->magic = RT_ELL_INTERNAL_MAGIC;

@@ -643,7 +643,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 	RT_DB_INTERNAL_INIT(&intern);
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_COMBINATION;
-	intern.idb_meth = &rt_functab[ID_COMBINATION];
+	intern.idb_meth = &OBJ[ID_COMBINATION];
 	intern.idb_ptr = (genptr_t)comb;
 
 	GED_DB_DIRADD(gedp, dp, comb_name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type, GED_ERROR);

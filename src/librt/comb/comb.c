@@ -479,7 +479,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_COMBINATION;
-    ip->idb_meth = &rt_functab[ID_COMBINATION];
+    ip->idb_meth = &OBJ[ID_COMBINATION];
 
     BU_ALLOC(comb, struct rt_comb_internal);
     RT_COMB_INTERNAL_INIT(comb);
@@ -795,7 +795,7 @@ finish:
  * R T _ C O M B _ G E T
  *
  * Sets the result string to a description of the given combination.
- * Entered via rt_functab[].ft_get().
+ * Entered via OBJ[].ft_get().
  */
 int
 rt_comb_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *item)
@@ -911,7 +911,7 @@ rt_comb_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
  * Example -
  * rgb "1 2 3" ...
  *
- * Invoked via rt_functab[ID_COMBINATION].ft_adjust()
+ * Invoked via OBJ[ID_COMBINATION].ft_adjust()
  */
 int
 rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
@@ -1093,7 +1093,7 @@ rt_comb_form(struct bu_vls *logstr, const struct rt_functab *ftp)
  * R T _ C O M B _ M A K E
  *
  * Create a blank combination with appropriate values.  Called via
- * rt_functab[ID_COMBINATION].ft_make().
+ * OBJ[ID_COMBINATION].ft_make().
  */
 void
 rt_comb_make(const struct rt_functab *UNUSED(ftp), struct rt_db_internal *intern)
@@ -1102,7 +1102,7 @@ rt_comb_make(const struct rt_functab *UNUSED(ftp), struct rt_db_internal *intern
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_COMBINATION;
-    intern->idb_meth = &rt_functab[ID_COMBINATION];
+    intern->idb_meth = &OBJ[ID_COMBINATION];
     BU_ALLOC(intern->idb_ptr, struct rt_comb_internal);
 
     comb = (struct rt_comb_internal *)intern->idb_ptr;

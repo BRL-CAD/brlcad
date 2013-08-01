@@ -355,7 +355,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 	for (i=1; i <= ID_MAX_SOLID; i++) {
 	    bu_log("%5d %s (%d)\n",
 		   rtip->rti_nsol_by_type[i],
-		   rt_functab[i].ft_name,
+		   OBJ[i].ft_name,
 		   i);
 	}
     }
@@ -518,8 +518,8 @@ rt_vlist_solid(
     RT_CK_DB_INTERNAL(&intern);
 
     ret = -1;
-    if (rt_functab[intern.idb_type].ft_plot) {
-	ret = rt_functab[intern.idb_type].ft_plot(vhead, &intern, &rtip->rti_ttol, &rtip->rti_tol, NULL);
+    if (OBJ[intern.idb_type].ft_plot) {
+	ret = OBJ[intern.idb_type].ft_plot(vhead, &intern, &rtip->rti_ttol, &rtip->rti_tol, NULL);
     }
     if (ret < 0) {
 	bu_log("rt_vlist_solid(%s): ft_plot() failure\n", stp->st_name);

@@ -929,7 +929,7 @@ rt_bot_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_BOT;
-    ip->idb_meth = &rt_functab[ID_BOT];
+    ip->idb_meth = &OBJ[ID_BOT];
     BU_ALLOC(ip->idb_ptr, struct rt_bot_internal);
 
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
@@ -1102,7 +1102,7 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_BOT;
-    ip->idb_meth = &rt_functab[ID_BOT];
+    ip->idb_meth = &OBJ[ID_BOT];
     BU_ALLOC(ip->idb_ptr, struct rt_bot_internal);
 
     bip = (struct rt_bot_internal *)ip->idb_ptr;
@@ -1613,7 +1613,7 @@ rt_bot_xform(struct rt_db_internal *op, const fastf_t *mat, struct rt_db_interna
 	op->idb_ptr = (genptr_t)botop;
 	op->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	op->idb_type = ID_BOT;
-	op->idb_meth = &rt_functab[ID_BOT];
+	op->idb_meth = &OBJ[ID_BOT];
     } else
 	botop = botip;
 

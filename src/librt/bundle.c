@@ -335,7 +335,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 		VJOIN1(ss2_newray.r_pt, rays[ray].r_pt, ss.dist_corr, ss2_newray.r_dir);
 
 		/* Check against bounding RPP, if desired by solid */
-		if (rt_functab[stp->st_id].ft_use_rpp) {
+		if (OBJ[stp->st_id].ft_use_rpp) {
 		    if (!rt_in_rpp(&ss2_newray, ss.inv_dir,
 				   stp->st_min, stp->st_max)) {
 			if (debug_shoot)bu_log("rpp miss %s by ray %d\n", stp->st_name, ray);
@@ -355,8 +355,8 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 		BU_LIST_INIT(&(new_segs.l));
 
 		ret = -1;
-		if (rt_functab[stp->st_id].ft_shot) {
-		    ret = rt_functab[stp->st_id].ft_shot(stp, &ss2_newray, ap, &new_segs);
+		if (OBJ[stp->st_id].ft_shot) {
+		    ret = OBJ[stp->st_id].ft_shot(stp, &ss2_newray, ap, &new_segs);
 		}
 		if (ret <= 0) {
 		    resp->re_shot_miss++;

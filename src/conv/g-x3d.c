@@ -162,7 +162,7 @@ clean_pmp( struct plate_mode *pmp )
 	    intern.idb_ptr = (genptr_t) pmp->bots[i];
 	    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    intern.idb_type = ID_BOT;
-	    intern.idb_meth = &rt_functab[ID_BOT];
+	    intern.idb_meth = &OBJ[ID_BOT];
 	    intern.idb_magic = RT_DB_INTERNAL_MAGIC;
 	    intern.idb_meth->ft_ifree( &intern );
 	    pmp->bots[i] = NULL;

@@ -1479,7 +1479,7 @@ rt_part_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_PARTICLE;
-    ip->idb_meth = &rt_functab[ID_PARTICLE];
+    ip->idb_meth = &OBJ[ID_PARTICLE];
     BU_ALLOC(ip->idb_ptr, struct rt_part_internal);
 
     part = (struct rt_part_internal *)ip->idb_ptr;
@@ -1601,7 +1601,7 @@ rt_part_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_PARTICLE;
-    ip->idb_meth = &rt_functab[ID_PARTICLE];
+    ip->idb_meth = &OBJ[ID_PARTICLE];
     BU_ALLOC(ip->idb_ptr, struct rt_part_internal);
 
     part = (struct rt_part_internal *)ip->idb_ptr;

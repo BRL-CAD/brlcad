@@ -182,7 +182,7 @@ cmd_import_body(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, con
 	}
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = minor_code;
-	intern.idb_meth = &rt_functab[ID_BINUNIF];
+	intern.idb_meth = &OBJ[ID_BINUNIF];
 	intern.idb_ptr = (genptr_t)bip;
 	rt_binunif_dump(bip);
 	rt_db_put_internal5(dp, dbip, &intern, &rt_uniresource, DB5_MAJORTYPE_BINARY_UNIF);

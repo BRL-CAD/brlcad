@@ -2600,7 +2600,7 @@ nmg_to_iges(struct rt_db_internal *ip,
 	    }
 	}
 	model = nmg_mm();
-	if (rt_functab[ip->idb_type].ft_tessellate(&r, model, ip, &ttol, &tol)) {
+	if (OBJ[ip->idb_type].ft_tessellate(&r, model, ip, &ttol, &tol)) {
 	    nmg_km(model);
 	    return 0;
 	} else {

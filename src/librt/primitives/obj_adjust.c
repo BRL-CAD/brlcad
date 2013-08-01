@@ -39,7 +39,7 @@ rt_obj_adjust(struct bu_vls *logstr, struct rt_db_internal *ip, int argc, const 
     if (id < 0)
 	return -2;
 
-    ft = &rt_functab[id];
+    ft = &OBJ[id];
     if (!ft)
 	return -3;
     if (!ft->ft_adjust)

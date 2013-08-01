@@ -43,7 +43,7 @@ rt_obj_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     if (id < 0)
 	return -2;
 
-    ft = &rt_functab[id];
+    ft = &OBJ[id];
     if (!ft)
 	return -3;
     if (!ft->ft_plot)

@@ -847,7 +847,7 @@ rt_arbn_import4(struct rt_db_internal *ip, const struct bu_external *ep, const f
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_ARBN;
-    ip->idb_meth = &rt_functab[ID_ARBN];
+    ip->idb_meth = &OBJ[ID_ARBN];
     BU_ALLOC(ip->idb_ptr, struct rt_arbn_internal);
 
     aip = (struct rt_arbn_internal *)ip->idb_ptr;
@@ -986,7 +986,7 @@ rt_arbn_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_ARBN;
-    ip->idb_meth = &rt_functab[ID_ARBN];
+    ip->idb_meth = &OBJ[ID_ARBN];
     BU_ALLOC(ip->idb_ptr, struct rt_arbn_internal);
 
     aip = (struct rt_arbn_internal *)ip->idb_ptr;

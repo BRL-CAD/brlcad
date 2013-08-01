@@ -2214,7 +2214,7 @@ rt_nmg_import4_internal(struct rt_db_internal *ip, const struct bu_external *ep,
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_NMG;
-    ip->idb_meth = &rt_functab[ID_NMG];
+    ip->idb_meth = &OBJ[ID_NMG];
     ip->idb_ptr = (genptr_t)m;
 
     bu_free((char *)ecnt, "ecnt[]");
@@ -2573,7 +2573,7 @@ rt_nmg_import5(struct rt_db_internal *ip,
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_NMG;
-    ip->idb_meth = &rt_functab[ ID_NMG ];
+    ip->idb_meth = &OBJ[ ID_NMG ];
     ip->idb_ptr = (genptr_t)m;
     NMG_CK_MODEL(m);
     bu_free((char *)ecnt, "ecnt[]");

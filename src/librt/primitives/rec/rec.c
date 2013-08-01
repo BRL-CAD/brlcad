@@ -340,7 +340,7 @@ rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
      * This TGC is really an REC
      */
     stp->st_id = ID_REC;		/* "fix" soltab ID */
-    stp->st_meth = &rt_functab[ID_REC];
+    stp->st_meth = &OBJ[ID_REC];
 
     BU_GET(rec, struct rec_specific);
     stp->st_specific = (genptr_t)rec;

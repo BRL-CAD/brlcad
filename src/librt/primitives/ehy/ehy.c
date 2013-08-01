@@ -295,7 +295,7 @@ rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
      * EHY is ok
      */
     stp->st_id = ID_EHY;		/* set soltab ID */
-    stp->st_meth = &rt_functab[ID_EHY];
+    stp->st_meth = &OBJ[ID_EHY];
 
     BU_GET(ehy, struct ehy_specific);
     stp->st_specific = (genptr_t)ehy;
@@ -1665,7 +1665,7 @@ rt_ehy_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_EHY;
-    ip->idb_meth = &rt_functab[ID_EHY];
+    ip->idb_meth = &OBJ[ID_EHY];
     BU_ALLOC(ip->idb_ptr, struct rt_ehy_internal);
 
     xip = (struct rt_ehy_internal *)ip->idb_ptr;
@@ -1798,7 +1798,7 @@ rt_ehy_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_EHY;
-    ip->idb_meth = &rt_functab[ID_EHY];
+    ip->idb_meth = &OBJ[ID_EHY];
     BU_ALLOC(ip->idb_ptr, struct rt_ehy_internal);
 
     xip = (struct rt_ehy_internal *)ip->idb_ptr;

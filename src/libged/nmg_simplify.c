@@ -169,7 +169,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	new_intern.idb_ptr = (genptr_t)(arb_int);
 	new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	new_intern.idb_type = ID_ARB8;
-	new_intern.idb_meth = &rt_functab[ID_ARB8];
+	new_intern.idb_meth = &OBJ[ID_ARB8];
 
 	r = BU_LIST_FIRST(nmgregion, &m->r_hd);
 	s = BU_LIST_FIRST(shell, &r->s_hd);
@@ -199,7 +199,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	new_intern.idb_ptr = (genptr_t)(tgc_int);
 	new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	new_intern.idb_type = ID_TGC;
-	new_intern.idb_meth = &rt_functab[ID_TGC];
+	new_intern.idb_meth = &OBJ[ID_TGC];
 
 	if (nmg_to_tgc(m, tgc_int, &gedp->ged_wdbp->wdb_tol)) {
 	    success = 1;
@@ -224,7 +224,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	new_intern.idb_ptr = (genptr_t)(poly_int);
 	new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	new_intern.idb_type = ID_POLY;
-	new_intern.idb_meth = &rt_functab[ID_POLY];
+	new_intern.idb_meth = &OBJ[ID_POLY];
 
 	if (nmg_to_poly(m, poly_int, &gedp->ged_wdbp->wdb_tol)) {
 	    success = 1;

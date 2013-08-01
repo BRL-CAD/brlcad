@@ -3827,7 +3827,7 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_BREP;
-    ip->idb_meth = &rt_functab[ID_BREP];
+    ip->idb_meth = &OBJ[ID_BREP];
     BU_ALLOC(ip->idb_ptr, struct rt_brep_internal);
 
     bi = (struct rt_brep_internal*)ip->idb_ptr;
@@ -4492,7 +4492,7 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
     RT_DB_INTERNAL_INIT(out);
     out->idb_ptr = (genptr_t)bip_out;
     out->idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    out->idb_meth = &rt_functab[ID_BREP];
+    out->idb_meth = &OBJ[ID_BREP];
     out->idb_minor_type = ID_BREP;
 
     // WIP

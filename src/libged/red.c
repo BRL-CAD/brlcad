@@ -885,7 +885,7 @@ ged_red(struct ged *gedp, int argc, const char **argv)
 	    RT_DB_INTERNAL_INIT(&intern);
 	    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    intern.idb_type = ID_COMBINATION;
-	    intern.idb_meth = &rt_functab[ID_COMBINATION];
+	    intern.idb_meth = &OBJ[ID_COMBINATION];
 
 	    GED_DB_DIRADD(gedp, tmp_dp, bu_vls_addr(&temp_name), -1, 0, RT_DIR_COMB, (genptr_t)&intern.idb_type, 0);
 

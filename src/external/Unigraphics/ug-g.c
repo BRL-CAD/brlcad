@@ -1268,7 +1268,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 	    intern.idb_magic = RT_DB_INTERNAL_MAGIC;
 	    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    intern.idb_minor_type = DB5_MINORTYPE_BRLCAD_SKETCH;
-	    intern.idb_meth = &rt_functab[ID_SKETCH];
+	    intern.idb_meth = &OBJ[ID_SKETCH];
 	    intern.idb_ptr = (genptr_t)skt;
 	    bu_avs_init_empty( &intern.idb_avs );
 	    intern.idb_meth->ft_ifree( &intern, NULL );
@@ -1307,7 +1307,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		    intern.idb_magic = RT_DB_INTERNAL_MAGIC;
 		    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		    intern.idb_minor_type = DB5_MINORTYPE_BRLCAD_SKETCH;
-		    intern.idb_meth = &rt_functab[ID_SKETCH];
+		    intern.idb_meth = &OBJ[ID_SKETCH];
 		    intern.idb_ptr = (genptr_t)skt;
 		    bu_avs_init_empty( &intern.idb_avs );
 		    intern.idb_meth->ft_ifree( &intern, NULL );
@@ -1380,7 +1380,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		    intern.idb_magic = RT_DB_INTERNAL_MAGIC;
 		    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		    intern.idb_minor_type = DB5_MINORTYPE_BRLCAD_SKETCH;
-		    intern.idb_meth = &rt_functab[ID_SKETCH];
+		    intern.idb_meth = &OBJ[ID_SKETCH];
 		    intern.idb_ptr = (genptr_t)skt;
 		    bu_avs_init_empty( &intern.idb_avs );
 		    intern.idb_meth->ft_ifree( &intern, NULL );
@@ -1402,7 +1402,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		intern.idb_magic = RT_DB_INTERNAL_MAGIC;
 		intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		intern.idb_minor_type = DB5_MINORTYPE_BRLCAD_SKETCH;
-		intern.idb_meth = &rt_functab[ID_SKETCH];
+		intern.idb_meth = &OBJ[ID_SKETCH];
 		intern.idb_ptr = (genptr_t)skt;
 		bu_avs_init_empty( &intern.idb_avs );
 		intern.idb_meth->ft_ifree( &intern, NULL );
@@ -1434,7 +1434,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 	    intern.idb_magic = RT_DB_INTERNAL_MAGIC;
 	    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    intern.idb_minor_type = DB5_MINORTYPE_BRLCAD_SKETCH;
-	    intern.idb_meth = &rt_functab[ID_SKETCH];
+	    intern.idb_meth = &OBJ[ID_SKETCH];
 	    intern.idb_ptr = (genptr_t)skt;
 	    bu_avs_init_empty( &intern.idb_avs );
 	    intern.idb_meth->ft_ifree( &intern, NULL );
@@ -1475,7 +1475,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 	intern.idb_magic = RT_DB_INTERNAL_MAGIC;
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_minor_type = DB5_MINORTYPE_BRLCAD_SKETCH;
-	intern.idb_meth = &rt_functab[ID_SKETCH];
+	intern.idb_meth = &OBJ[ID_SKETCH];
 	intern.idb_ptr = (genptr_t)skt;
 	bu_avs_init_empty( &intern.idb_avs );
 	intern.idb_meth->ft_ifree( &intern, NULL );
