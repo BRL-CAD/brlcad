@@ -4400,6 +4400,19 @@ RT_EXPORT extern void rt_ell_16pts(fastf_t *ov,
 				   fastf_t *B);
 
 
+/**
+ * d b _ c o m b _ m v a l l
+ *
+ * change all matching object names in the comb tree from old_name to new_name
+ *
+ * calling function must supply an initialized bu_ptbl, and free it once done.
+ */
+RT_EXPORT extern int db_comb_mvall(struct directory *dp,
+				   struct db_i *dbip,
+				   const char *old_name,
+				   const char *new_name,
+				   struct bu_ptbl *stack);
+
 /* roots.c */
 /** @addtogroup librt */
 /** @{ */
