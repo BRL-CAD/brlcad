@@ -492,6 +492,14 @@ ICV_EXPORT extern icv_image_t *icv_filter3(icv_image_t *old_img,
  */
 ICV_EXPORT extern int icv_fade(icv_image_t *img, double fraction);
 
+/** @file libicv/stat.c
+ *
+ * This file contains image statistics and histogram routines.
+ *
+ */
+
+ICV_EXPORT size_t **icv_hist(icv_image_t* img, int n_bins);
+
 
 /** @} */
 /* end image utilities */
