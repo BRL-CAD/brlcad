@@ -242,7 +242,7 @@ int icv_saturate(icv_image_t* img, double sat)
 	bu_log("icv_saturate : Saturates only RGB Images");
 	return -1;
     }
-    fprintf(stderr, "saturation value is %lf\n", sat);
+
     data = img->data;
     size = img->width*img->height;
     rwgt = 0.31*(1.0-sat);
