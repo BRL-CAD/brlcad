@@ -572,6 +572,44 @@ ON_Intersect(const ON_3dPoint& pointA,
 
 
 bool
+newton_pci(double& t, const ON_3dPoint& pointA, const ON_Curve& curveB, double tolerance)
+{
+    ON_3dPoint closest_point = curveB.PointAt(t);
+    double dis = closest_point.DistanceTo(pointA);
+
+    // Use Newton-Raphson method with the starting point from linear
+    // approximation.
+    // It's similar to point projection (or point inversion, or get
+    // closest point on curve). We calculate the root of:
+    //       (curve(t) - pointA) \dot tangent(t) = 0 (*)
+    // Then curve(t) may be the closest point on the curve to pointA.
+    //
+    // In some cases, the closest point (intersection point) is the
+    // endpoints of the curve, it does not satisfy (*), but that's
+    // OK because it already comes out with the linear approximation
+    // above.
+
+    double last_t = DBL_MAX;
+    int iterations = 0;
+    while (!ON_NearZero(last_t-t)
+	    && dis > tolerance
+	    && iterations++ < PCI_MAX_ITERATIONS) {
+	ON_3dVector tangent, s_deriv;
+	last_t = t;
+	curveB.Ev2Der(t, closest_point, tangent, s_deriv);
+	double F = ON_DotProduct(closest_point-pointA, tangent);
+	double derivF = ON_DotProduct(closest_point-pointA, s_deriv) + ON_DotProduct(tangent, tangent);
+	if (!ON_NearZero(derivF))
+	    t -= F/derivF;
+	dis = closest_point.DistanceTo(pointA);
+    }
+
+    closest_point = curveB.PointAt(t);
+    dis = closest_point.DistanceTo(pointA);
+    return dis <= tolerance;
+}
+
+bool
 ON_Intersect(const ON_3dPoint& pointA,
 	     const ON_Curve& curveB,
 	     ON_ClassArray<ON_PX_EVENT>& x,
@@ -614,7 +652,7 @@ ON_Intersect(const ON_3dPoint& pointA,
     for (unsigned int i = 0; i < candidates.size(); i++) {
 	// Use linear approximation to get an estimated intersection point
 	ON_Line line(candidates[i]->m_curve->PointAtStart(), candidates[i]->m_curve->PointAtEnd());
-	double t, dis;
+	double t;
 	line.ClosestPointTo(pointA, &t);
 
 	// Make sure line_t belongs to [0, 1]
@@ -627,45 +665,15 @@ ON_Intersect(const ON_3dPoint& pointA,
 	    line_t = t;
 
 	double closest_point_t = candidates[i]->m_t.Min() + candidates[i]->m_t.Length()*line_t;
-	ON_3dPoint closest_point = curveB.PointAt(closest_point_t);
-	dis = closest_point.DistanceTo(pointA);
 
-	// Use Newton-Raphson method with the starting point from linear
-	// approximation.
-	// It's similar to point projection (or point inversion, or get
-	// closest point on curve). We calculate the root of:
-	//       (curve(t) - pointA) \dot tangent(t) = 0 (*)
-	// Then curve(t) may be the closest point on the curve to pointA.
-	//
-	// In some cases, the closest point (intersection point) is the
-	// endpoints of the curve, it does not satisfy (*), but that's
-	// OK because it already comes out with the linear approximation
-	// above.
-
-	double last_t = DBL_MAX;
-	int iterations = 0;
-	while (!ON_NearZero(last_t-closest_point_t)
-	       && dis > tolerance
-	       && iterations++ < PCI_MAX_ITERATIONS) {
-	    ON_3dVector tangent, s_deriv;
-	    last_t = closest_point_t;
-	    curveB.Ev2Der(closest_point_t, closest_point, tangent, s_deriv);
-	    double F = ON_DotProduct(closest_point-pointA, tangent);
-	    double derivF = ON_DotProduct(closest_point-pointA, s_deriv) + ON_DotProduct(tangent, tangent);
-	    if (!ON_NearZero(derivF))
-		closest_point_t -= F/derivF;
-	    dis = closest_point.DistanceTo(pointA);
-	}
-	closest_point = curveB.PointAt(closest_point_t);
-
-	if (dis <= tolerance) {
+	if (newton_pci(closest_point_t, pointA, curveB, tolerance)) {
 	    ON_PX_EVENT Event;
 	    Event.m_type = ON_PX_EVENT::pcx_point;
 	    Event.m_A = pointA;
-	    Event.m_B = closest_point;
+	    Event.m_B = curveB.PointAt(closest_point_t);
 	    Event.m_b[0] = closest_point_t;
 	    Event.m_Mid = (pointA + Event.m_B) * 0.5;
-	    Event.m_radius = closest_point.DistanceTo(pointA) * 0.5;
+	    Event.m_radius = Event.m_B.DistanceTo(pointA) * 0.5;
 	    x.Append(Event);
 	    return true;
 	}
