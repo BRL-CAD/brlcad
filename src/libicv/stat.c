@@ -124,6 +124,29 @@ double *icv_mean(icv_image_t* img)
     return mean;
 }
 
+double *icv_min(icv_image_t* img)
+{
+    double *data = NULL;
+    size_t size;
+    double *min; /**< An array of size channels. */
+    int i;
+
+    min = bu_malloc(sizeof(double)*img->channels, "min values");
+
+    for(i=0; i<img->channels; i++)
+        min[i] = 1.0;
+
+    data = img->data;
+
+    for (size = (size_t)img->width*img->height; size>0; size--) {
+        for (i=0; i<img->channels; i++)
+            if (min[i] < *data++)
+                min[i] = *(data-1);
+    }
+
+    return min;
+}
+
 /*
  * Local Variables:
  * tab-width: 8
