@@ -500,6 +500,15 @@ ICV_EXPORT extern int icv_fade(icv_image_t *img, double fraction);
 
 ICV_EXPORT size_t **icv_hist(icv_image_t* img, int n_bins);
 
+ICV_EXPORT double *icv_min(icv_image_t* img);
+
+ICV_EXPORT double *icv_mean(icv_image_t* img);
+
+ICV_EXPORT double *icv_sum(icv_image_t* img);
+
+ICV_EXPORT double *icv_max(icv_image_t* img);
+
+
 /** @} */
 /* end image utilities */
 
