@@ -120,6 +120,111 @@ void icv_pow_val(icv_image_t* img, double val)
 	icv_sanitize(img);
 }
 
+icv_image_t *icv_add(icv_image_t *img1, icv_image_t *img2)
+{
+    double *data1, *data2, *out_data;
+    size_t size;
+    icv_image_t *out_img;
+
+    if ((img1->width == img2->width) && (img1->height == img2->height) && (img1->channels == img2->channels)) {
+	bu_log("icv_add : Image Parameters not Equal");
+	return NULL;
+    }
+
+    data1 =img1->data;
+    data2 =img2->data;
+
+    out_img = icv_create(img1->width, img1->height, img1->color_space);
+
+    out_data = out_img->data;
+
+    for (size = img1->width*img1->height*img1->channels; size>0; size--)
+	*out_data++ = *data1++ + *data2++;
+
+    icv_sanitize(out_img);
+
+    return out_img;
+}
+
+icv_image_t *icv_sub(icv_image_t *img1, icv_image_t *img2)
+{
+    double *data1, *data2, *out_data;
+    size_t size;
+    icv_image_t *out_img;
+
+    if ((img1->width == img2->width) && (img1->height == img2->height) && (img1->channels == img2->channels)) {
+	bu_log("icv_add : Image Parameters not Equal");
+	return NULL;
+    }
+
+    data1 =img1->data;
+    data2 =img2->data;
+
+    out_img = icv_create(img1->width, img1->height, img1->color_space);
+
+    out_data = out_img->data;
+
+    for (size = img1->width*img1->height*img1->channels; size>0; size--)
+	*out_data++ = *data1++ - *data2++;
+
+    icv_sanitize(out_img);
+
+    return out_img;
+}
+
+icv_image_t *icv_multiply(icv_image_t *img1, icv_image_t *img2)
+{
+    double *data1, *data2, *out_data;
+    size_t size;
+    icv_image_t *out_img;
+
+    if ((img1->width == img2->width) && (img1->height == img2->height) && (img1->channels == img2->channels)) {
+	bu_log("icv_add : Image Parameters not Equal");
+	return NULL;
+    }
+
+    data1 =img1->data;
+    data2 =img2->data;
+
+    out_img = icv_create(img1->width, img1->height, img1->color_space);
+
+    out_data = out_img->data;
+
+    for (size = img1->width*img1->height*img1->channels; size>0; size--)
+	*out_data++ = *data1++ * *data2++;
+
+    icv_sanitize(out_img);
+
+    return out_img;
+}
+
+
+icv_image_t *icv_divide(icv_image_t *img1, icv_image_t *img2)
+{
+    double *data1, *data2, *out_data;
+    size_t size;
+    icv_image_t *out_img;
+
+    if ((img1->width == img2->width) && (img1->height == img2->height) && (img1->channels == img2->channels)) {
+	bu_log("icv_add : Image Parameters not Equal");
+	return NULL;
+    }
+
+    data1 =img1->data;
+    data2 =img2->data;
+
+    out_img = icv_create(img1->width, img1->height, img1->color_space);
+
+    out_data = out_img->data;
+
+    for (size = img1->width*img1->height*img1->channels; size>0; size--)
+	*out_data++ = *data1++ / *data2++;
+
+    icv_sanitize(out_img);
+
+    return out_img;
+}
+
 /*
  * Local Variables:
  * tab-width: 8

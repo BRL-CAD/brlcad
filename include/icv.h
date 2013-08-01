@@ -393,6 +393,41 @@ void icv_divide_val(icv_image_t* img, double val);
  */
 void icv_pow_val(icv_image_t* img, double val);
 
+/**
+ * This routine adds pixel value of one image to pixel value of
+ * other pixel and inserts in the same index of the output image.
+ *
+ * Also it sanitizes the image.
+ */
+icv_image_t *icv_add(icv_image_t *img1, icv_image_t *img2);
+
+/**
+ * This routine substracts pixel value of one image from pixel value
+ * of other pixel and inserts the result at the same index of the
+ * output image.
+ *
+ * Also it sanitizes the image.
+ */
+icv_image_t *icv_sub(icv_image_t *img1, icv_image_t *img2);
+
+/**
+ * This routine multiplies pixel value of one image to pixel value of
+ * other pixel and inserts the result at the same index of the
+ * output image.
+ *
+ * Also it sanitizes the image.
+ */
+icv_image_t *icv_multiply(icv_image_t *img1, icv_image_t *img2);
+
+/**
+ * This routine divides pixel value of one image from pixel value of
+ * other pixel and inserts the result at the same index of the
+ * output image.
+ *
+ * Also it sanitizes the image.
+ */
+icv_image_t *icv_divides(icv_image_t *img1, icv_image_t *img2);
+
 
 typedef enum {
     ICV_FILTER_LOW_PASS,
