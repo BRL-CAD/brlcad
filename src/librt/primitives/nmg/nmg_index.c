@@ -461,7 +461,7 @@ nmg_m_reindex(struct model *m, register long int newindex)
     }
 #undef ASSIGN_VU
 
-    if (rt_g.NMG_debug & DEBUG_BASIC) {
+    if (RTG.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_m_reindex() oldmax=%ld, new%ld=>%ld\n",
 	       m->maxindex, m->index, newindex);
     }

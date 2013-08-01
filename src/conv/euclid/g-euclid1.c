@@ -435,7 +435,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before before bombing out.
 	 */
-	rt_g.NMG_debug = NMG_debug;/* restore mode */
+	RTG.NMG_debug = NMG_debug;/* restore mode */
 
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();
@@ -614,7 +614,7 @@ main(int argc, char **argv)
     tree_state.ts_tol = &tol;
     tree_state.ts_ttol = &ttol;
 
-    BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
+    BU_LIST_INIT( &RTG.rtg_vlfree );	/* for vlist macros */
 
     rt_init_resource( &rt_uniresource, 0, NULL );
 
@@ -640,14 +640,14 @@ main(int argc, char **argv)
 		break;
 	    case 'P':
 /*			ncpu = atoi( bu_optarg ); */
-		rt_g.debug = 1;	/* NOTE: enabling DEBUG_ALLRAYS to get core dumps */
+		RTG.debug = 1;	/* NOTE: enabling DEBUG_ALLRAYS to get core dumps */
 		break;
 	    case 'x':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
+		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.debug );
 		break;
 	    case 'X':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
-		NMG_debug = rt_g.NMG_debug;
+		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug );
+		NMG_debug = RTG.NMG_debug;
 		break;
 	    default:
 		bu_exit(1, usage, argv[0]);

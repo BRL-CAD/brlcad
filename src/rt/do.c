@@ -599,7 +599,7 @@ do_frame(int framenumber)
     if (Query_one_pixel) {
 	query_rdebug = R_DEBUG;
 	query_debug = RT_G_DEBUG;
-	rt_g.debug = rdebug = 0;
+	RTG.debug = rdebug = 0;
     }
 
     if (rtip->nsolids <= 0)

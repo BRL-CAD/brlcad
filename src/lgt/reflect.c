@@ -366,7 +366,7 @@ render_Model(int frame)
 	SCROLL_DL_MOVE();
 	(void) fflush(stdout);
     }
-    if (! rt_g.rtg_parallel) {
+    if (! RTG.rtg_parallel) {
 	/*
 	 * SERIAL case -- one CPU does all the work.
 	 */

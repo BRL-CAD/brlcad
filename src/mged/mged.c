@@ -1082,7 +1082,7 @@ main(int argc, char *argv[])
      * Do not use bu_log() or bu_malloc() before here.
      */
     if (bu_avail_cpus() > 1) {
-	rt_g.rtg_parallel = 1;
+	RTG.rtg_parallel = 1;
 	bu_semaphore_init(RT_SEM_LAST);
     }
 
@@ -1105,7 +1105,7 @@ main(int argc, char *argv[])
 		classic_mged = 1;
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
 		break;
 	    case 'X':
 		sscanf(bu_optarg, "%x", (unsigned int *)&bu_debug);
@@ -1266,8 +1266,8 @@ main(int argc, char *argv[])
 
     /* Set up linked lists */
     BU_LIST_INIT(&MGED_FreeSolid.l);
-    BU_LIST_INIT(&rt_g.rtg_vlfree);
-    BU_LIST_INIT(&rt_g.rtg_headwdb.l);
+    BU_LIST_INIT(&RTG.rtg_vlfree);
+    BU_LIST_INIT(&RTG.rtg_headwdb.l);
 
     memset((void *)&head_cmd_list, 0, sizeof(struct cmd_list));
     BU_LIST_INIT(&head_cmd_list.l);

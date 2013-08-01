@@ -1287,7 +1287,7 @@ nmg_check_radial(const struct edgeuse *eu, const struct bn_tol *tol)
 #if 1
     return 0;
 #else
-    if (rt_g.NMG_debug & DEBUG_BASIC) {
+    if (RTG.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_check_radial(eu=x%x, tol)\n", eu);
     }
 
@@ -1348,7 +1348,7 @@ nmg_check_radial(const struct edgeuse *eu, const struct bn_tol *tol)
 		   nmg_orientation(curr_orient));
 
 	    /* Plot the edge in yellow, & the loops */
-	    rt_g.NMG_debug |= DEBUG_PLOTEM;
+	    RTG.NMG_debug |= DEBUG_PLOTEM;
 	    nmg_face_lu_plot(eu1->up.lu_p, eu1->vu_p,
 			     eu1->eumate_p->vu_p);
 	    nmg_face_lu_plot(eur->up.lu_p, eur->vu_p,
@@ -1490,7 +1490,7 @@ nmg_eu_2s_orient_bad(const struct edgeuse *eu, const struct shell *s1, const str
     } while (eur != eurstart);
     /* All is well, the whole way 'round */
  out:
-    if (rt_g.NMG_debug & DEBUG_BASIC) {
+    if (RTG.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_eu_2s_orient_bad(eu=x%x, s1=x%x, s2=x%x) ret=%d\n",
 	       eu_orig, s1, s2, ret);
     }

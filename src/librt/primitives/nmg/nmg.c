@@ -160,7 +160,7 @@ rt_nmg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     struct nmg_specific *nmg =
 	(struct nmg_specific *)stp->st_specific;
 
-    if (rt_g.NMG_debug & DEBUG_NMGRT) {
+    if (RTG.NMG_debug & DEBUG_NMGRT) {
 	bu_log("rt_nmg_shot()\n\t");
 	rt_pr_tol(&ap->a_rt_i->rti_tol);
     }
@@ -2482,7 +2482,7 @@ rt_nmg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     m = (struct model *)ip->idb_ptr;
     NMG_CK_MODEL(m);
 
-    if (RT_G_DEBUG || rt_g.NMG_debug)
+    if (RT_G_DEBUG || RTG.NMG_debug)
 	nmg_vmodel(m);
 
     return 0;			/* OK */
@@ -2579,7 +2579,7 @@ rt_nmg_import5(struct rt_db_internal *ip,
     bu_free((char *)ecnt, "ecnt[]");
     bu_free((char *)real_ptrs, "ptrs[]");
 
-    if (RT_G_DEBUG || rt_g.NMG_debug) {
+    if (RT_G_DEBUG || RTG.NMG_debug) {
 	nmg_vmodel(m);
     }
     return 0;		/* OK */

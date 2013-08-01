@@ -298,7 +298,7 @@ process_region(const struct db_full_path *pathp, union tree *curtree, struct db_
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before bombing out.
 	 */
-	rt_g.NMG_debug = NMG_debug;	/* restore mode */
+	RTG.NMG_debug = NMG_debug;	/* restore mode */
 
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();
@@ -424,7 +424,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 		/* Sometimes the NMG library adds debugging bits when
 		 * it detects an internal error, before bombing out.
 		 */
-		rt_g.NMG_debug = NMG_debug;	/* restore mode */
+		RTG.NMG_debug = NMG_debug;	/* restore mode */
 
 		/* Release any intersector 2d tables */
 		nmg_isect2d_final_cleanup();
@@ -508,7 +508,7 @@ main(int argc, char **argv)
     rt_init_resource(&rt_uniresource, 0, NULL);
 
     the_model = nmg_mm();
-    BU_LIST_INIT(&rt_g.rtg_vlfree);	/* for vlist macros */
+    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "a:n:o:r:vx:D:P:X:e:i")) != -1) {
@@ -532,10 +532,10 @@ main(int argc, char **argv)
 		break;
 	    case 'P':
 		ncpu = atoi(bu_optarg);
-		rt_g.debug = 1;	/* NOTE: enabling DEBUG_ALLRAYS to get core dumps */
+		RTG.debug = 1;	/* NOTE: enabling DEBUG_ALLRAYS to get core dumps */
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
 		break;
 	    case 'D':
 		tol.dist = atof(bu_optarg);
@@ -543,8 +543,8 @@ main(int argc, char **argv)
 		rt_pr_tol(&tol);
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug);
-		NMG_debug = rt_g.NMG_debug;
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
+		NMG_debug = RTG.NMG_debug;
 		break;
 	    case 'e':		/* Error file name. */
 		error_file = bu_optarg;

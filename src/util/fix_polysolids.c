@@ -71,7 +71,7 @@ main(int argc, char *argv[])
     if ( argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)) )
 	bu_exit(1, usage, argv[0]);
 
-    BU_LIST_INIT(&rt_g.rtg_vlfree);	/* for vlist macros */
+    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "vx:X:h?")) != -1) {
@@ -82,11 +82,11 @@ main(int argc, char *argv[])
 		break;
 	    case 'x':
 		sscanf(bu_optarg, "%x", &debug);
-		rt_g.debug = debug;
+		RTG.debug = debug;
 		break;
 	    case 'X':
 		sscanf(bu_optarg, "%x", &debug);
-		rt_g.NMG_debug = debug;
+		RTG.NMG_debug = debug;
 		break;
 	    default:
 		bu_exit(1, usage, argv[0]);

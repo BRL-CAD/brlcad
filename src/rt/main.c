@@ -284,11 +284,11 @@ int main(int argc, const char **argv)
     }
 
     if (npsw > 1) {
-	rt_g.rtg_parallel = 1;
+	RTG.rtg_parallel = 1;
 	if (rt_verbosity & VERBOSE_MULTICPU)
 	    fprintf(stderr, "Planning to run with %d processors\n", npsw );
     } else {
-	rt_g.rtg_parallel = 0;
+	RTG.rtg_parallel = 0;
     }
 
     /* Initialize parallel processor support */
@@ -304,7 +304,7 @@ int main(int argc, const char **argv)
     }
 
     if (RT_G_DEBUG) {
-	bu_printb("librt rt_g.debug", rt_g.debug, DEBUG_FORMAT);
+	bu_printb("librt RTG.debug", RTG.debug, DEBUG_FORMAT);
 	bu_log("\n");
     }
     if (rdebug) {

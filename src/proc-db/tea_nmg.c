@@ -174,15 +174,15 @@ main(int argc, char **argv)
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    BU_LIST_INIT(&rt_g.rtg_vlfree);
+    BU_LIST_INIT(&RTG.rtg_vlfree);
 
     outfp = wdb_fopen("tea_nmg.g");
 
-    rt_g.debug |= DEBUG_ALLRAYS;	/* Cause core dumps on bu_bomb(), but no extra messages */
+    RTG.debug |= DEBUG_ALLRAYS;	/* Cause core dumps on bu_bomb(), but no extra messages */
 
     while ((i=bu_getopt(argc, argv, "d")) != -1) {
 	switch (i) {
-	    case 'd' : rt_g.debug |= DEBUG_MEM | DEBUG_MEM_FULL; break;
+	    case 'd' : RTG.debug |= DEBUG_MEM | DEBUG_MEM_FULL; break;
 	    default	:
 		fprintf(stderr,
 			"Usage: %s [-d] > database.g\n", *argv);

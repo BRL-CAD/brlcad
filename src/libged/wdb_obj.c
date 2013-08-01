@@ -6715,7 +6715,7 @@ wdb_push_cmd(struct rt_wdb *wdbp,
 		if (ncpu<1) ncpu = 1;
 		break;
 	    case 'd':
-		rt_g.debug |= DEBUG_TREEWALK;
+		RTG.debug |= DEBUG_TREEWALK;
 		break;
 	    case '?':
 	    default:
@@ -6751,7 +6751,7 @@ wdb_push_cmd(struct rt_wdb *wdbp,
 	    pip->back->forw = pip->forw;
 	    bu_free((genptr_t)pip, "Push ident");
 	}
-	rt_g.debug = old_debug;
+	RTG.debug = old_debug;
 	bu_free((genptr_t)wpdp, "wdb_push_tcl: wpdp");
 	Tcl_AppendResult(wdbp->wdb_interp,
 			 "push:\tdb_walk_tree failed or there was a solid moving\n\tin two or more directions",
@@ -6806,7 +6806,7 @@ wdb_push_cmd(struct rt_wdb *wdbp,
 	bu_free((genptr_t)pip, "Push ident");
     }
 
-    rt_g.debug = old_debug;
+    RTG.debug = old_debug;
     push_error = wpdp->push_error;
     bu_free((genptr_t)wpdp, "wdb_push_tcl: wpdp");
 
@@ -9773,7 +9773,7 @@ wdb_init_obj(Tcl_Interp *interp,
     wdbp->wdb_interp = interp;
 
     /* append to list of rt_wdb's */
-    BU_LIST_APPEND(&rt_g.rtg_headwdb.l, &wdbp->l);
+    BU_LIST_APPEND(&RTG.rtg_headwdb.l, &wdbp->l);
 
     return TCL_OK;
 }
@@ -9812,7 +9812,7 @@ wdb_open_tcl(ClientData UNUSED(clientData),
 
     if (argc == 1) {
 	/* get list of database objects */
-	for (BU_LIST_FOR (wdbp, rt_wdb, &rt_g.rtg_headwdb.l))
+	for (BU_LIST_FOR (wdbp, rt_wdb, &RTG.rtg_headwdb.l))
 	    Tcl_AppendResult(interp, bu_vls_addr(&wdbp->wdb_name), " ", (char *)NULL);
 
 	return TCL_OK;

@@ -55,7 +55,7 @@ ged_debuglib(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "\n");
     } else {
 	/* set librt's debug bit vector */
-	if (sscanf(argv[1], "%x", (unsigned int *)&rt_g.debug) != 1) {
+	if (sscanf(argv[1], "%x", (unsigned int *)&RTG.debug) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return GED_ERROR;
 	}

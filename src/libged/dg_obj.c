@@ -2746,12 +2746,12 @@ dgo_assoc_tcl(void *clientData, int argc, const char **argv)
     /* Set associated database object */
     if (argc == 3) {
 	/* search for database object */
-	for (BU_LIST_FOR (wdbp, rt_wdb, &rt_g.rtg_headwdb.l)) {
+	for (BU_LIST_FOR (wdbp, rt_wdb, &RTG.rtg_headwdb.l)) {
 	    if (BU_STR_EQUAL(bu_vls_addr(&wdbp->wdb_name), argv[2]))
 		break;
 	}
 
-	if (BU_LIST_IS_HEAD(wdbp, &rt_g.rtg_headwdb.l))
+	if (BU_LIST_IS_HEAD(wdbp, &RTG.rtg_headwdb.l))
 	    wdbp = RT_WDB_NULL;
 
 	if (dgop->dgo_wdbp != RT_WDB_NULL)
@@ -4580,12 +4580,12 @@ dgo_open_tcl(ClientData UNUSED(clientData),
     }
 
     /* search for database object */
-    for (BU_LIST_FOR (wdbp, rt_wdb, &rt_g.rtg_headwdb.l)) {
+    for (BU_LIST_FOR (wdbp, rt_wdb, &RTG.rtg_headwdb.l)) {
 	if (BU_STR_EQUAL(bu_vls_addr(&wdbp->wdb_name), argv[2]))
 	    break;
     }
 
-    if (BU_LIST_IS_HEAD(wdbp, &rt_g.rtg_headwdb.l))
+    if (BU_LIST_IS_HEAD(wdbp, &RTG.rtg_headwdb.l))
 	wdbp = RT_WDB_NULL;
 
     /* first, delete any commands by this name */

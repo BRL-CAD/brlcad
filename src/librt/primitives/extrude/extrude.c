@@ -2151,8 +2151,8 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     }
 
     BU_LIST_INIT(&vhead);
-    if (!BU_LIST_IS_INITIALIZED(&rt_g.rtg_vlfree)) {
-	BU_LIST_INIT(&rt_g.rtg_vlfree);
+    if (!BU_LIST_IS_INITIALIZED(&RTG.rtg_vlfree)) {
+	BU_LIST_INIT(&RTG.rtg_vlfree);
     }
     for (i=0; outer_loop && i<(size_t)BU_PTBL_END(outer_loop); i++) {
 	genptr_t seg;
@@ -2190,7 +2190,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 	    }
 	}
     }
-    BN_FREE_VLIST(&rt_g.rtg_vlfree, &vhead);
+    BN_FREE_VLIST(&RTG.rtg_vlfree, &vhead);
 
     /* make sure face normal is in correct direction */
     bu_free((char *)verts, "verts");

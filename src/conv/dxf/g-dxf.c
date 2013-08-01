@@ -415,7 +415,7 @@ main(int argc, char *argv[])
     /* init resources we might need */
     rt_init_resource(&rt_uniresource, 0, NULL);
 
-    BU_LIST_INIT(&rt_g.rtg_vlfree);	/* for vlist macros */
+    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "a:n:o:pr:vx:D:P:X:i")) != -1) {
@@ -442,10 +442,10 @@ main(int argc, char *argv[])
 		break;
 	    case 'P':
 		ncpu = atoi(bu_optarg);
-		rt_g.debug = 1;	/* NOTE: enabling DEBUG_ALLRAYS to get core dumps */
+		RTG.debug = 1;	/* NOTE: enabling DEBUG_ALLRAYS to get core dumps */
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
 		break;
 	    case 'D':
 		tol.dist = atof(bu_optarg);
@@ -453,8 +453,8 @@ main(int argc, char *argv[])
 		rt_pr_tol(&tol);
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug);
-		NMG_debug = rt_g.NMG_debug;
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
+		NMG_debug = RTG.NMG_debug;
 		break;
 	    case 'i':
 		inches = 1;

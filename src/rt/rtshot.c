@@ -222,8 +222,8 @@ main(int argc, char **argv)
 		argv += 2;
 		break;
 	    case 'x':
-		sscanf(argv[1], "%x", (unsigned int *)&rt_g.debug);
-		fprintf(stderr, "librt rt_g.debug=x%x\n", rt_g.debug);
+		sscanf(argv[1], "%x", (unsigned int *)&RTG.debug);
+		fprintf(stderr, "librt RTG.debug=x%x\n", RTG.debug);
 		argc -= 2;
 		argv += 2;
 		break;
@@ -234,8 +234,8 @@ main(int argc, char **argv)
 		argv += 2;
 		break;
 	    case 'N':
-		sscanf(argv[1], "%x", (unsigned int *)&rt_g.NMG_debug);
-		fprintf(stderr, "librt rt_g.NMG_debug=x%x\n", rt_g.NMG_debug);
+		sscanf(argv[1], "%x", (unsigned int *)&RTG.NMG_debug);
+		fprintf(stderr, "librt RTG.NMG_debug=x%x\n", RTG.NMG_debug);
 		argc -= 2;
 		argv += 2;
 		break;

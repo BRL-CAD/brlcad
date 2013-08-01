@@ -104,7 +104,7 @@ main(int argc, char **argv)
     while ((i=bu_getopt(argc, argv, "d")) != -1) {
 	switch (i) {
 	    case 'd':
-		rt_g.debug |= DEBUG_MEM | DEBUG_MEM_FULL;
+		RTG.debug |= DEBUG_MEM | DEBUG_MEM_FULL;
 		break;
 	    default:
 		bu_exit(-1, "Usage: %s [-d]\n", *argv);

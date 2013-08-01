@@ -552,7 +552,7 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 	 * Output is to a file stream.  Do not allow parallel
 	 * processing since we can't seek to the rows.
 	 */
-	rt_g.rtg_parallel = 0;
+	RTG.rtg_parallel = 0;
 	bu_log("view_init: deactivating parallelism due to -o option.\n");
 	/*
 	 * The overlay and blend cannot be used in -o mode.  Note that

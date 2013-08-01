@@ -1776,7 +1776,7 @@ struct rt_g {
 /**
  * global ray-trace geometry state
  */
-RT_EXPORT extern struct rt_g rt_g;
+RT_EXPORT extern struct rt_g RTG;
 
 /* Normally set when in production mode, setting the RT_G_DEBUG define
  * to 0 will allow chucks of code to poof away at compile time (since
@@ -1786,7 +1786,7 @@ RT_EXPORT extern struct rt_g rt_g;
 #ifdef NO_DEBUG_CHECKING
 #  define RT_G_DEBUG 0
 #else
-#  define RT_G_DEBUG rt_g.debug
+#  define RT_G_DEBUG RTG.debug
 #endif
 
 /**
@@ -1928,16 +1928,16 @@ struct rt_i {
  * Applications that are going to use RT_ADD_VLIST and RT_GET_VLIST
  * are required to execute this macro once, first:
  *
- * BU_LIST_INIT(&rt_g.rtg_vlfree);
+ * BU_LIST_INIT(&RTG.rtg_vlfree);
  *
  * Note that RT_GET_VLIST and RT_FREE_VLIST are non-PARALLEL.
  */
-#define RT_GET_VLIST(p) BN_GET_VLIST(&rt_g.rtg_vlfree, p)
+#define RT_GET_VLIST(p) BN_GET_VLIST(&RTG.rtg_vlfree, p)
 
 /** Place an entire chain of bn_vlist structs on the freelist */
-#define RT_FREE_VLIST(hd) BN_FREE_VLIST(&rt_g.rtg_vlfree, hd)
+#define RT_FREE_VLIST(hd) BN_FREE_VLIST(&RTG.rtg_vlfree, hd)
 
-#define RT_ADD_VLIST(hd, pnt, draw) BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, pnt, draw)
+#define RT_ADD_VLIST(hd, pnt, draw) BN_ADD_VLIST(&RTG.rtg_vlfree, hd, pnt, draw)
 
 
 /*
@@ -2201,7 +2201,7 @@ struct rt_shootray_status {
 /*********************************************************************************
  *	The following section is an exact copy of what was previously "nmg_rt.h" *
  *      (with minor changes to NMG_GET_HITMISS and NMG_FREE_HITLIST              *
- *	moved here to use rt_g.rtg_nmgfree freelist for hitmiss structs.         *
+ *	moved here to use RTG.rtg_nmgfree freelist for hitmiss structs.         *
  ******************************************************************************* */
 
 #define NMG_HIT_LIST	0
@@ -2394,10 +2394,10 @@ struct ray_data {
 #else
 #  define nmg_bu_bomb(rd, str) { \
 	bu_log("%s", str); \
-	if (rt_g.NMG_debug & DEBUG_NMGRT) bu_bomb("End of diagnostics"); \
+	if (RTG.NMG_debug & DEBUG_NMGRT) bu_bomb("End of diagnostics"); \
 	BU_LIST_INIT(&rd->rd_hit); \
 	BU_LIST_INIT(&rd->rd_miss); \
-	rt_g.NMG_debug |= DEBUG_NMGRT; \
+	RTG.NMG_debug |= DEBUG_NMGRT; \
 	nmg_isect_ray_model(rd); \
 	(void) nmg_ray_segs(rd); \
 	bu_bomb("Should have bombed before this\n"); \
@@ -5306,7 +5306,7 @@ RT_EXPORT extern int db_tally_subtree_regions(union tree	*tp,
  * must be 1.
  *
  * If ncpu > 1, the caller is responsible for making sure that
- * rt_g.rtg_parallel is non-zero, and that the bu_semaphore_init()
+ * RTG.rtg_parallel is non-zero, and that the bu_semaphore_init()
  * functions has been performed, first.
  *
  * Plucks per-cpu resources out of rtip->rti_resources[].  They need
@@ -6022,7 +6022,7 @@ RT_EXPORT extern void rt_vlist_copy(struct bu_list *dest,
 
 /**
  * The macro RT_FREE_VLIST() simply appends to the list
- * &rt_g.rtg_vlfree.  Now, give those structures back to bu_free().
+ * &RTG.rtg_vlfree.  Now, give those structures back to bu_free().
  */
 RT_EXPORT extern void bn_vlist_cleanup(struct bu_list *hd);
 
