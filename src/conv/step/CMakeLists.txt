@@ -487,8 +487,8 @@ list(APPEND stepg_LIBS ${stepg_LIBS})
 
 #add_definitions(-DAP203e2)
 
-BRLCAD_ADDEXEC(step-g "${stepg_SOURCES}" "${stepg_LIBS}" NOSTRICT)
-BRLCAD_ADDEXEC(g-step "${gstep_SOURCES}" "${stepg_LIBS}" NOSTRICT)
+BRLCAD_ADDEXEC(step-g "${stepg_SOURCES}" "${stepg_LIBS}" NO_STRICT)
+BRLCAD_ADDEXEC(g-step "${gstep_SOURCES}" "${stepg_LIBS}" NO_STRICT)
 
 if(MSVC)
   set(stepg_IMPORTS

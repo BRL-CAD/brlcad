@@ -1178,9 +1178,9 @@ mark_as_advanced(BRLCAD_ENABLE_COMPILER_WARNINGS)
 
 # Enable/disable strict compiler settings - these are used for building
 # BRL-CAD by default, but not src/other code.  Always used for BRL-CAD
-# code unless the NOSTRICT option is specified when defining a target
+# code unless the NO_STRICT option is specified when defining a target
 # with BRLCAD_ADDEXEC or BRLCAD_ADDLIB.  If only C++ files in a target
-# are not compatible with strict, the NOSTRICTCXX option can be used.
+# are not compatible with strict, the NO_STRICT_CXX option can be used.
 set(BRLCAD_ENABLE_STRICT_ALIASES
   ENABLE_STRICT
   ENABLE_STRICT_COMPILE

@@ -48,13 +48,13 @@ if(CPP_DLL_DEFINES)
 endif(CPP_DLL_DEFINES)
 set_property(GLOBAL PROPERTY libbrep_DEFINES "${libbrep_DEFINES}")
 
-BRLCAD_ADDLIB(libbrep "${LIBBREP_SOURCES}" "libbn;libbu;${OPENNURBS_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NOSTRICTCXX)
+BRLCAD_ADDLIB(libbrep "${LIBBREP_SOURCES}" "libbn;libbu;${OPENNURBS_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NO_STRICT_CXX)
 
 set_target_properties(libbrep PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
-BRLCAD_ADDEXEC(test_point_intersect test_point_intersect.cpp "libbrep" NOSTRICT NO_INSTALL)
+BRLCAD_ADDEXEC(test_point_intersect test_point_intersect.cpp "libbrep" NO_STRICT NO_INSTALL)
 
-BRLCAD_ADDEXEC(test_curve_intersect test_curve_intersect.cpp "libbrep" NOSTRICT NO_INSTALL)
+BRLCAD_ADDEXEC(test_curve_intersect test_curve_intersect.cpp "libbrep" NO_STRICT NO_INSTALL)
 
 # Local Variables:
 # tab-width: 8
