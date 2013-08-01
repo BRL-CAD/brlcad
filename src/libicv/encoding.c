@@ -19,10 +19,10 @@
  */
 /** @file encoding.c
  *
- * Brief description
+ * Contains encoding conversion supports for various file formats.
  *
  */
- 
+
 #include "bu.h"
 #include "icv.h"
 #include "vmath.h"

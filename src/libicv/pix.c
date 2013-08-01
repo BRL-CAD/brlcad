@@ -19,7 +19,7 @@
  */
 /** @file pix.c
  *
- * Brief description
+ * Contains routines related to pix format.
  *
  */
 
