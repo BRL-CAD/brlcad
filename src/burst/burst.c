@@ -116,12 +116,15 @@ setupSigs(void)
 
   Parse program command line.
 */
+
+static const char optstring[] = "bpPh?";
+
 static int
 parsArgv(int argc, char **argv)
 {
     int c;
 /* Parse options.						*/
-    while ((c = bu_getopt(argc, argv, "bpPh?")) != -1) {
+    while ((c = bu_getopt(argc, argv, optstring)) != -1) {
 	switch (c) {
 	    case 'b' :
 		tty = 0;
@@ -196,7 +199,7 @@ main(int argc, char *argv[])
 	bu_exit(EXIT_FAILURE, "ERROR: Unable to create temporary file.\n");
     }
     if (!parsArgv(argc, argv)) {
-        (void)fprintf(stderr, "%s\n", usage);
+	(void)fprintf(stderr, "%s\n", usage);
 	return EXIT_FAILURE;
     }
 
