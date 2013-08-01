@@ -1782,7 +1782,7 @@ typedef struct bu_mapped_file bu_mapped_file_t;
 /** @} */
 /*----------------------------------------------------------------------*/
 
-/* formerly rt_g.rtg_logindent, now use bu_log_indent_delta() */
+/** log indentation hook */
 typedef int (*bu_hook_t)(genptr_t, genptr_t);
 
 struct bu_hook_list {
