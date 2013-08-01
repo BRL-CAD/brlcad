@@ -69,55 +69,55 @@ void icv_multiply_val(icv_image_t* img, double val)
 {
     double *data = NULL;
     size_t size;
-    
+
     data = img->data;
-    
+
     for (size = img->width*img->height*img->channels; size>0; size--) {
-        *data *= val;
-         data++;
+	*data *= val;
+	 data++;
     }
     if((img->flags && ICV_OPERATIONS_MODE))
-        img->flags&=(!ICV_SANITIZED);
+	img->flags&=(!ICV_SANITIZED);
     else
-        icv_sanitize(img);
+	icv_sanitize(img);
 }
 
 void icv_divide_val(icv_image_t* img, double val)
 {
     double *data = NULL;
     size_t size;
-    
+
     data = img->data;
-    
+
     /* Since data is double dividing by 0 will result in INF and -INF */
-    
+
     for (size = img->width*img->height*img->channels; size>0; size--) {
-        *data /= val;
-         data++;
+	*data /= val;
+	 data++;
      }
 
     if((img->flags && ICV_OPERATIONS_MODE))
-        img->flags&=(!ICV_SANITIZED);
+	img->flags&=(!ICV_SANITIZED);
     else
-        icv_sanitize(img);
+	icv_sanitize(img);
 }
 
 void icv_pow_val(icv_image_t* img, double val)
 {
     double *data = NULL;
     size_t size;
-    
+
     data = img->data;
-    
+
     for (size = img->width*img->height*img->channels; size>0; size--) {
-        *data = pow(*data,val);
-         data++;
+	*data = pow(*data,val);
+	 data++;
     }
-    
+
     if((img->flags && ICV_OPERATIONS_MODE))
-        img->flags&=(!ICV_SANITIZED);
+	img->flags&=(!ICV_SANITIZED);
     else
-        icv_sanitize(img);
+	icv_sanitize(img);
 }
 
 /*
