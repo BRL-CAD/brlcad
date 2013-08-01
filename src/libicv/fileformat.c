@@ -40,12 +40,6 @@ extern FILE *fdopen(int, const char *);
 #endif
 
 
-/*** bif flags ***/
-/* streaming output (like pix and bw) vs buffer output (like png) */
-#define BIF_STREAM 0x0
-#define BIF_BUFFER 0x1
-/*** end bif flags ***/
-
 /* this might be a little better than saying 0444 */
 #define WRMODE S_IRUSR|S_IRGRP|S_IROTH
 
