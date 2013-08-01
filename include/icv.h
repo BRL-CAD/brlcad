@@ -342,7 +342,7 @@ ICV_EXPORT extern int icv_crop(icv_image_t *img,
  *
  */
 
-void icv_sanitize(icv_image_t* img);
+ICV_EXPORT void icv_sanitize(icv_image_t* img);
 
 /** @file libicv/filter.c
  *
@@ -360,7 +360,7 @@ void icv_sanitize(icv_image_t* img);
  * Note to check if an image(bif) is sanitized
  *  (bif->flags&&ICV_SANITIZED)
  */
-void icv_sanitize(icv_image_t* img);
+ICV_EXPORT void icv_sanitize(icv_image_t* img);
 
 /**
  * This adds a double value to all the pixels of the image.
@@ -370,28 +370,28 @@ void icv_sanitize(icv_image_t* img);
  * Note to set the flag for a bif (icv_image struct);
  * bif->flags |= ICV_OPERATIONS_MODE;
  */
-void icv_add_val(icv_image_t* img, double val);
+ICV_EXPORT void icv_add_val(icv_image_t* img, double val);
 
 /**
  * This multiplies a double value to all the pixels of the image.
  * Also if the flag ICV_OPERATIONS_MODE is set this doesnt santizes
  * the image.
  */
-void icv_multiply_val(icv_image_t* img, double val);
+ICV_EXPORT void icv_multiply_val(icv_image_t* img, double val);
 
 /**
  * This divides a double value to all the pixels of the image.
  * Also if the flag ICV_OPERATIONS_MODE is set this doesnt santizes
  * the image.
  */
-void icv_divide_val(icv_image_t* img, double val);
+ICV_EXPORT void icv_divide_val(icv_image_t* img, double val);
 
 /**
  * This raises all the pixels of the image to an exponential power.
  * Also if the flag ICV_OPERATIONS_MODE is set this doesnt santizes
  * the image.
  */
-void icv_pow_val(icv_image_t* img, double val);
+ICV_EXPORT void icv_pow_val(icv_image_t* img, double val);
 
 /**
  * This routine adds pixel value of one image to pixel value of
@@ -399,7 +399,7 @@ void icv_pow_val(icv_image_t* img, double val);
  *
  * Also it sanitizes the image.
  */
-icv_image_t *icv_add(icv_image_t *img1, icv_image_t *img2);
+ICV_EXPORT icv_image_t *icv_add(icv_image_t *img1, icv_image_t *img2);
 
 /**
  * This routine substracts pixel value of one image from pixel value
@@ -408,7 +408,7 @@ icv_image_t *icv_add(icv_image_t *img1, icv_image_t *img2);
  *
  * Also it sanitizes the image.
  */
-icv_image_t *icv_sub(icv_image_t *img1, icv_image_t *img2);
+ICV_EXPORT icv_image_t *icv_sub(icv_image_t *img1, icv_image_t *img2);
 
 /**
  * This routine multiplies pixel value of one image to pixel value of
@@ -417,7 +417,7 @@ icv_image_t *icv_sub(icv_image_t *img1, icv_image_t *img2);
  *
  * Also it sanitizes the image.
  */
-icv_image_t *icv_multiply(icv_image_t *img1, icv_image_t *img2);
+ICV_EXPORT icv_image_t *icv_multiply(icv_image_t *img1, icv_image_t *img2);
 
 /**
  * This routine divides pixel value of one image from pixel value of
@@ -426,7 +426,7 @@ icv_image_t *icv_multiply(icv_image_t *img1, icv_image_t *img2);
  *
  * Also it sanitizes the image.
  */
-icv_image_t *icv_divides(icv_image_t *img1, icv_image_t *img2);
+ICV_EXPORT icv_image_t *icv_divides(icv_image_t *img1, icv_image_t *img2);
 
 /**
  * Change the saturation of image pixels.  If sat is
@@ -437,7 +437,7 @@ icv_image_t *icv_divides(icv_image_t *img1, icv_image_t *img2);
  * @param img RGB Image to be saturated.
  * @param sat Saturation value.
  */
-int icv_saturate(icv_image_t* img, double sat);
+ICV_EXPORT int icv_saturate(icv_image_t* img, double sat);
 
 
 typedef enum {
