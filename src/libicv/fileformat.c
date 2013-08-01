@@ -49,9 +49,11 @@ extern FILE *fdopen(int, const char *);
 /* this might be a little better than saying 0444 */
 #define WRMODE S_IRUSR|S_IRGRP|S_IROTH
 
-/* defined in bw.c */
+/* defined in encoding.c */
 extern HIDDEN double *uchar2double(unsigned char *data, long int size);
 extern HIDDEN unsigned char *data2uchar(const icv_image_t *bif);
+
+/* defined in bw.c */
 extern HIDDEN int bw_save(icv_image_t *bif, const char *filename);
 extern HIDDEN icv_image_t *bw_load(const char *filename, int width, int height);
 
