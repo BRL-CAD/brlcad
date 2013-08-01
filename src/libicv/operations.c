@@ -47,6 +47,24 @@ void icv_sanitize(icv_image_t* img)
     img->flags |= ICV_SANITIZED;
 }
 
+void icv_add_val(icv_image_t* img, double val)
+{
+    double *data = NULL;
+    size_t size;
+
+    data = img->data;
+
+    for (size = img->width*img->height*img->channels; size>0; size--) {
+	*data += val;
+	data++;
+    }
+
+    if(img->flags && ICV_OPERATIONS_MODE)
+	img->flags&=(!ICV_SANITIZED);
+    else
+	icv_sanitize(img);
+}
+
 /*
  * Local Variables:
  * tab-width: 8

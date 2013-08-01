@@ -362,6 +362,16 @@ void icv_sanitize(icv_image_t* img);
  */
 void icv_sanitize(icv_image_t* img);
 
+/**
+ * This adds a double value to all the pixels of the image.
+ * Also if the flag ICV_OPERATIONS_MODE is set this doesnt santizes
+ * the image.
+ *
+ * Note to set the flag for a bif (icv_image struct);
+ * bif->flags |= ICV_OPERATIONS_MODE;
+ */
+void icv_add_val(icv_image_t* img, double val);
+
 typedef enum {
     ICV_FILTER_LOW_PASS,
     ICV_FILTER_LAPLACIAN,
