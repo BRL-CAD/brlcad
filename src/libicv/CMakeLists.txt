@@ -13,6 +13,7 @@ set(LIBICV_SOURCES
   color_space.c
   crop.c
   filter.c
+  encoding.c
   pix.c
   bw.c
   )

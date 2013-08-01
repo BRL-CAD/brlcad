@@ -35,85 +35,11 @@
 #include "bn.h"
 #include "icv.h"
 
+ /* defined in encoding.c */
+extern HIDDEN double *uchar2double(unsigned char *data, long int size);
+extern HIDDEN unsigned char *data2uchar(const icv_image_t *bif);
 
 #define WRMODE S_IRUSR|S_IRGRP|S_IROTH
-
-/**
- * converts unsigned char array to double array.
- * This function returns array of double data.
- *
- * Used to convert data from pix, bw, ppm type images for icv_image
- * struct.
- *
- * This does not free the char data.
- *
- * @param data pointer to the array to be converted.
- * @param size Size of the array.
- * @return double array.
- *
- */
-HIDDEN double *
-uchar2double(unsigned char *data, long int size)
-{
-    double *double_data, *double_p;
-    unsigned char *char_p;
-    long int i;
-
-    char_p = data;
-    double_p = double_data = (double *) bu_malloc(size*sizeof(double), "uchar2data : double data");
-    for (i=0; i<size; i++) {
-	    *double_p = ((double)(*char_p))/255.0;
-	    double_p++;
-	    char_p++;
-    }
-
-    return double_data;
-}
-
-
-/**
- * Converts double data of icv_image to unsigned char data.
- * This function also does gamma correction using the gamma_corr
- * parameter of the image structure.
- *
- * This is mainly used for saving pix, bw and ppm type images.
- * Gamma correction prevents bad color aliasing.
- *
- */
-HIDDEN unsigned char *
-data2uchar(const icv_image_t *bif)
-{
-    long int size;
-    long int i;
-    unsigned char *uchar_data, *char_p;
-    double *double_p;
-
-    size = bif->height*bif->width*bif->channels;
-    char_p = uchar_data = (unsigned char *) bu_malloc((size_t)size, "data2uchar : unsigned char data");
-
-    double_p = bif->data;
-
-    if (ZERO(bif->gamma_corr)) {
-	    for (i=0; i<size; i++) {
-		*char_p = (unsigned char)((*double_p)*255.0 +0.5) ;
-		char_p++;
-		double_p++;
-	    }
-
-    } else {
-	    float *rand_p;
-	    double ex = 1.0/bif->gamma_corr;
-	    bn_rand_init(rand_p, 0);
-
-	    for (i=0; i<size; i++) {
-		*char_p = floor(pow(*double_p, ex)*255.0 + (double) bn_rand0to1(rand_p) + 0.5);
-		char_p++;
-		double_p++;
-	    }
-    }
-
-    return uchar_data;
-}
 
 HIDDEN int
 bw_save(icv_image_t *bif, const char *filename)
