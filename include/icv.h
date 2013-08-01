@@ -105,7 +105,6 @@ struct icv_image {
 };
 
 
-
 typedef struct icv_image icv_image_t;
 #define ICV_IMAGE_NULL ((struct icv_image *)0)
 
@@ -337,6 +336,14 @@ ICV_EXPORT extern int icv_crop(icv_image_t *img,
 			       unsigned int ynum,
 			       unsigned int xnum);
 
+/** @file libicv/operations.c
+ *
+ * This file contains routines for operations.
+ *
+ */
+
+void icv_sanitize(icv_image_t* img);
+
 /** @file libicv/filter.c
  *
  * This file contains routines for image filtering. This is done
@@ -344,6 +351,16 @@ ICV_EXPORT extern int icv_crop(icv_image_t *img,
  * images are taken care.
  *
  */
+
+/**
+ * This function sanitizes the image.
+ * That is it makes the ranges between 0.0 to 1.0 for the data part.
+ * Also it adds ICV_SANITIZED flag.
+ *
+ * Note to check if an image(bif) is sanitized
+ *  (bif->flags&&ICV_SANITIZED)
+ */
+void icv_sanitize(icv_image_t* img);
 
 typedef enum {
     ICV_FILTER_LOW_PASS,
@@ -395,6 +412,7 @@ ICV_EXPORT extern icv_image_t *icv_filter3(icv_image_t *old_img,
  * is needed to faded.
  */
 ICV_EXPORT extern int icv_fade(icv_image_t *img, double fraction);
+
 
 /** @} */
 /* end image utilities */

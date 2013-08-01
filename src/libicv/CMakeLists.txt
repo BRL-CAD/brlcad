@@ -14,6 +14,7 @@ set(LIBICV_SOURCES
   crop.c
   filter.c
   encoding.c
+  operations.c
   pix.c
   bw.c
   )
