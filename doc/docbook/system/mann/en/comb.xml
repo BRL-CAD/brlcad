@@ -34,7 +34,7 @@
   <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
-       The <command>comb</command> command creates and manipulates <emphasis>BRL-CAD</emphasis> 
+       The <command>comb</command> command creates and manipulates <emphasis>BRL-CAD</emphasis>
        combination objects.  For combination creation or appending, <emphasis>operator/object_name</emphasis> pairs
        of boolean operators and object names are parsed into comb tree entries.  (TODO - integrate full
        expression evaluation like that in <command>c</command>.)
@@ -45,7 +45,7 @@
     </para>
 
     <variablelist remap="TP">
- 
+
       <varlistentry>
         <term><option>-c</option></term>
         <listitem>
@@ -82,12 +82,12 @@
         <term><option>-f</option></term>
         <listitem>
           <para>
-            Flattens a combination that contains only unions into a single top level 
+            Flattens a combination that contains only unions into a single top level
             combination with all of the solids unioned into it, and remove all
-            combinations that were below the input combination that are not used 
-            elsewhere in the .g file.  (In essense, the latter behavior prevents 
-            "orphaned" combinations that are no longer used from showing up as new 
-            top level objects in the database.)  This feature will not work on any 
+            combinations that were below the input combination that are not used
+            elsewhere in the .g file.  (In essence, the latter behavior prevents
+            "orphaned" combinations that are no longer used from showing up as new
+            top level objects in the database.)  This feature will not work on any
             combination containing non-union boolean operations.
             Conflicts with <option>-w</option> and <option>-l</option>.
           </para>
@@ -121,7 +121,7 @@
       <variablelist>
 	<varlistentry>
 		<term>
-			Nested regions (a region containing another region in its tree) are generally 
+			Nested regions (a region containing another region in its tree) are generally
 			viewed as poor modelling practice.  This example shows how to fix an instance of this nesting with minimal disruption to the model.
 		</term>
 

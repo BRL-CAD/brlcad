@@ -3697,7 +3697,7 @@ RT_EXPORT extern void db_free_full_path_list(struct db_full_path_list *path_list
 
 /**
  * Low level command to process the command line and create a "plan" corresponding to the
- * command arguments. 
+ * command arguments.
  */
 RT_EXPORT extern void *db_search_formplan(char **argv,
 					  struct db_i *dbip,
