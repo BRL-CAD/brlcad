@@ -90,13 +90,21 @@ typedef enum {
     ICV_DATA_UCHAR
 } ICV_DATA;
 
+/* Define Various Flags */
+#define ICV_NULL_IMAGE 0X01
+#define ICV_SANITIZED 0X02
+#define ICV_OPERATIONS_MODE 0x03
+
 struct icv_image {
     uint32_t magic;
     ICV_COLOR_SPACE color_space;
     double *data;
     float gamma_corr;
     int width, height, channels, alpha_channel;
+    uint16_t flags;
 };
+
+
 
 typedef struct icv_image icv_image_t;
 #define ICV_IMAGE_NULL ((struct icv_image *)0)
