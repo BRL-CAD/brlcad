@@ -1,4 +1,4 @@
-BRLCAD_ADDEXEC(tester_density density.c "libanalyze;libbu" NO_INSTALL LOCAL)
+BRLCAD_ADDEXEC(tester_density density.c "libanalyze;libbu" NO_INSTALL)
 
 # Local Variables:
 # tab-width: 8

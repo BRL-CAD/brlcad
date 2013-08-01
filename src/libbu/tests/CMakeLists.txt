@@ -1,5 +1,5 @@
-BRLCAD_ADDEXEC(tester_bu_sscanf bu_sscanf.c libbu NO_INSTALL LOCAL)
-BRLCAD_ADDEXEC(tester_bu_gethostname bu_gethostname.c libbu NO_INSTALL LOCAL)
+BRLCAD_ADDEXEC(tester_bu_sscanf bu_sscanf.c libbu NO_INSTALL)
+BRLCAD_ADDEXEC(tester_bu_gethostname bu_gethostname.c libbu NO_INSTALL)
 
 #
 #  ************ basename.c tests *************
@@ -8,7 +8,7 @@ BRLCAD_ADDEXEC(tester_bu_gethostname bu_gethostname.c libbu NO_INSTALL LOCAL)
 ###############################
 #      bu_basename testing    #
 ###############################
-BRLCAD_ADDEXEC(tester_bu_basename    bu_basename.c    libbu NO_INSTALL LOCAL)
+BRLCAD_ADDEXEC(tester_bu_basename    bu_basename.c    libbu NO_INSTALL)
 add_test(bu_basename_null                                   tester_bu_basename) # tests NULL
 add_test(bu_basename_empty                                  tester_bu_basename "")
 add_test(bu_basename_sl_usr_sl_dir_sl_file                  tester_bu_basename "/usr/dir/file")
@@ -40,41 +40,41 @@ if(ENABLE_BITV_TESTS)
 ###############################
 #      bu_bitv_and testing    #
 ###############################
-BRLCAD_ADDEXEC(tester_bu_bitv_and    bu_bitv_and.c    libbu NO_INSTALL LOCAL)
+BRLCAD_ADDEXEC(tester_bu_bitv_and    bu_bitv_and.c    libbu NO_INSTALL)
 add_test(bu_bitv_and_test1 tester_bu_bitv_and "ffffffff" "00000000" "00000000")
 add_test(bu_bitv_and_test2 tester_bu_bitv_and "ab00" "1200" "0200")
 
 ###############################
 #      bu_bitv_or testing     #
 ###############################
-BRLCAD_ADDEXEC(tester_bu_bitv_or     bu_bitv_or.c     libbu NO_INSTALL LOCAL)
+BRLCAD_ADDEXEC(tester_bu_bitv_or     bu_bitv_or.c     libbu NO_INSTALL)
 add_test(bu_bitv_or_test1 tester_bu_bitv_or "ffffffff" "00000000" "ffffffff")
 add_test(bu_bitv_or_test2 tester_bu_bitv_or "ab00" "1200" "bb00")
 
 ##################################
 #      bu_bitv_shift testing     #
 ##################################
-BRLCAD_ADDEXEC(tester_bu_bitv_shift  bu_bitv_shift.c  libbu NO_INSTALL LOCAL)
+BRLCAD_ADDEXEC(tester_bu_bitv_shift  bu_bitv_shift.c  libbu NO_INSTALL)
 add_test(bu_bitv_shift tester_bu_bitv_shift)
 
 ##################################
 #      bu_bitv_to_hex testing    #
 ##################################
-BRLCAD_ADDEXEC(tester_bu_bitv_to_hex bu_bitv_to_hex.c libbu NO_INSTALL LOCAL)
+BRLCAD_ADDEXEC(tester_bu_bitv_to_hex bu_bitv_to_hex.c libbu NO_INSTALL)
 add_test(bu_bitv_to_hex_test1 tester_bu_bitv_to_hex "0123" "33323130" 32)
 add_test(bu_bitv_to_hex_test2 tester_bu_bitv_to_hex "12" "3231" 16)
 
 ################################
 #      bu_bitv_vls testing     #
 ################################
-BRLCAD_ADDEXEC(tester_bu_bitv_vls    bu_bitv_vls.c    libbu NO_INSTALL LOCAL)
+BRLCAD_ADDEXEC(tester_bu_bitv_vls    bu_bitv_vls.c    libbu NO_INSTALL)
 add_test(bu_bitv_vls_test1 tester_bu_bitv_vls "00000000" "() ")
 add_test(bu_bitv_vls_test2 tester_bu_bitv_vls "f0f0f0f0" "(4, 5, 6, 7, 12, 13, 14, 15, 20, 21, 22, 23, 28, 29, 30, 31) ")
 
 ##################################
 #      bu_hex_to_bitv testing    #
 ##################################
-BRLCAD_ADDEXEC(tester_bu_hex_to_bitv bu_hex_to_bitv.c libbu NO_INSTALL LOCAL)
+BRLCAD_ADDEXEC(tester_bu_hex_to_bitv bu_hex_to_bitv.c libbu NO_INSTALL)
 add_test(bu_hex_to_bitv_test1 tester_bu_hex_to_bitv "33323130" "0123" 0)
 add_test(bu_hex_to_bitv_test2 tester_bu_hex_to_bitv "30" "0" 0)
 add_test(bu_hex_to_bitv_error tester_bu_hex_to_bitv "303" "" 1)
@@ -90,7 +90,7 @@ endif(ENABLE_BITV_TESTS)
 #################################
 #      bu_booleanize testing    #
 #################################
-BRLCAD_ADDEXEC(tester_bu_booleanize bu_booleanize.c libbu NO_INSTALL LOCAL)
+BRLCAD_ADDEXEC(tester_bu_booleanize bu_booleanize.c libbu NO_INSTALL)
 add_test(bu_booleanize_null         tester_bu_booleanize) # tests NULL
 add_test(bu_booleanize_empty        tester_bu_booleanize "")
 add_test(bu_booleanize_n            tester_bu_booleanize "n")
@@ -118,7 +118,7 @@ add_test(bu_booleanize_abcd         tester_bu_booleanize "abcd")
 ##################################
 # Note - because of the special characters needed in these tests, the strings
 # don't work well when fed in from the command line.
-BRLCAD_ADDEXEC(tester_bu_str_isprint bu_str_isprint.c libbu NO_INSTALL LOCAL)
+BRLCAD_ADDEXEC(tester_bu_str_isprint bu_str_isprint.c libbu NO_INSTALL)
 add_test(bu_str_isprint_basic                tester_bu_str_isprint 1)
 add_test(bu_str_isprint_eol                  tester_bu_str_isprint 2)
 add_test(bu_str_isprint_double_slash         tester_bu_str_isprint 3)
@@ -134,7 +134,7 @@ add_test(bu_str_isprint_carriage_return      tester_bu_str_isprint 7)
 ##############################
 #      bu_dirname testing    #
 ##############################
-BRLCAD_ADDEXEC(tester_bu_dirname bu_dirname.c libbu NO_INSTALL LOCAL)
+BRLCAD_ADDEXEC(tester_bu_dirname bu_dirname.c libbu NO_INSTALL)
 add_test(bu_dirname__usr_dir_file tester_bu_dirname "/usr/dir/file")
 add_test(bu_dirname__usr_dir_ tester_bu_dirname "/usr/dir/")
 add_test(bu_dirname__usr__bsl__dir tester_bu_dirname "/usr\\\\/dir")
@@ -164,7 +164,7 @@ add_test(bu_dirname_null tester_bu_dirname)
 # Note - because of the quoting needed in these tests, it is simpler
 # to leave the input strings in the C code.  Individual tests are triggered
 # by number
-BRLCAD_ADDEXEC(tester_bu_escape bu_escape.c libbu NO_INSTALL LOCAL)
+BRLCAD_ADDEXEC(tester_bu_escape bu_escape.c libbu NO_INSTALL)
 
 ###################################
 #      bu_str_unescape testing    #
@@ -239,7 +239,7 @@ add_test(bu_escape_roundtrip_4  tester_bu_escape 3 4) # "abc\\\\\\c\\ba\\"
 ###
 # bu_heap memory allocation testing
 ###
-BRLCAD_ADDEXEC(tester_bu_heap bu_heap.c libbu NO_INSTALL LOCAL)
+BRLCAD_ADDEXEC(tester_bu_heap bu_heap.c libbu NO_INSTALL)
 add_test(bu_heap_test_1 tester_bu_heap)
 
 #
@@ -252,7 +252,7 @@ add_test(bu_heap_test_1 tester_bu_heap)
 ###############################
 #      bu_progname testing    #
 ###############################
-BRLCAD_ADDEXEC(tester_bu_progname bu_progname.c libbu NO_INSTALL LOCAL)
+BRLCAD_ADDEXEC(tester_bu_progname bu_progname.c libbu NO_INSTALL)
 add_test(bu_progname_tests tester_bu_progname)
 
 #
@@ -262,7 +262,7 @@ add_test(bu_progname_tests tester_bu_progname)
 # approach - the tests below all test both bu_vls_encode and bu_vls_decode.
 # Like many string functions using escaped characters the input strings are
 # left in C to minimize pass-through errors.
-BRLCAD_ADDEXEC(tester_bu_quote bu_quote.c libbu NO_INSTALL LOCAL)
+BRLCAD_ADDEXEC(tester_bu_quote bu_quote.c libbu NO_INSTALL)
 add_test(bu_quote_test_1  tester_bu_quote 1)   # NULL
 add_test(bu_quote_test_2  tester_bu_quote 2)   # ""
 add_test(bu_quote_test_3  tester_bu_quote 3)   # " "
@@ -290,19 +290,19 @@ add_test(bu_quote_test_23 tester_bu_quote 23)  # "\"\"\"hello\"\"\""
 #
 #  ************ rb_*.c tests *************
 #
-BRLCAD_ADDEXEC(tester_bu_redblack bu_redblack.c libbu NO_INSTALL LOCAL)
+BRLCAD_ADDEXEC(tester_bu_redblack bu_redblack.c libbu NO_INSTALL)
 add_test(bu_redblack_test tester_bu_redblack)
 
 #
 #  ************ timer.c tests *************
 #
-BRLCAD_ADDEXEC(tester_bu_timer bu_timer.c libbu NO_INSTALL LOCAL)
+BRLCAD_ADDEXEC(tester_bu_timer bu_timer.c libbu NO_INSTALL)
 add_test(bu_gettime_test tester_bu_timer)
 
 #
 #  ************ vls_vprintf.c tests *************
 #
-BRLCAD_ADDEXEC(tester_bu_vls_vprintf bu_vls_vprintf.c libbu NO_INSTALL LOCAL)
+BRLCAD_ADDEXEC(tester_bu_vls_vprintf bu_vls_vprintf.c libbu NO_INSTALL)
 add_test(bu_vls_vprintf_test_1  tester_bu_vls_vprintf 1)
 add_test(bu_vls_vprintf_test_2  tester_bu_vls_vprintf 2)
 add_test(bu_vls_vprintf_test_3  tester_bu_vls_vprintf 3)

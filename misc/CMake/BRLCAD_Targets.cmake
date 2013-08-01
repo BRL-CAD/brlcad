@@ -163,21 +163,15 @@ macro(BRLCAD_ADDEXEC execname srcslist libslist)
   target_link_libraries(${execname} ${libslist})
 
 
+  # In some situations (usually test executables) we want to be able
+  # to force the executable to remain in the local compilation
+  # directory regardless of the global CMAKE_RUNTIME_OUTPUT_DIRECTORY
+  # setting.  The NO_INSTALL flag is used to denote such executables.
   # If an executable isn't to be installed or needs to be installed
   # somewhere other than the default location, the NO_INSTALL argument
-  # bypasses the standard install command call.  Otherwise, call install
-  # with standard arguments.
+  # bypasses the standard install command call.
   CHECK_OPT("NO_INSTALL" NO_EXEC_INSTALL "${ARGN}")
-  if(NOT NO_EXEC_INSTALL)
-    install(TARGETS ${execname} DESTINATION ${BIN_DIR})
-  endif(NOT NO_EXEC_INSTALL)
-
-  # In some situations (usually testing executables) we want to
-  # be able to force the executable to remain in the local directory
-  # regardless of the global CMAKE_RUNTIME_OUTPUT_DIRECTORY setting.
-  # The LOCAL flag is used to denote such executables.
-  CHECK_OPT("LOCAL" LOCAL_EXEC "${ARGN}")
-  if(LOCAL_EXEC)
+  if(NO_EXEC_INSTALL)
     if(NOT CMAKE_CONFIGURATION_TYPES)
       set_target_properties(${execname} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
     else(NOT CMAKE_CONFIGURATION_TYPES)
@@ -186,7 +180,9 @@ macro(BRLCAD_ADDEXEC execname srcslist libslist)
 	set_target_properties(${execname} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER} ${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE})
       endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
     endif(NOT CMAKE_CONFIGURATION_TYPES)
-  endif(LOCAL_EXEC)
+  else(NO_EXEC_INSTALL)
+    install(TARGETS ${execname} DESTINATION ${BIN_DIR})
+  endif(NO_EXEC_INSTALL)
 
   # Use the list of libraries to be linked into this target to
   # accumulate the necessary definitions and compilation flags.
