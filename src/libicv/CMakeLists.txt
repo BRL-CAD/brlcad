@@ -13,6 +13,7 @@ set(LIBICV_SOURCES
   color_space.c
   crop.c
   filter.c
+  bw.c
   )
 
 BRLCAD_ADDLIB(libicv "${LIBICV_SOURCES}" "libbu;libbn;${PNG_LIBRARY}")
