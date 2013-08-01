@@ -428,6 +428,17 @@ icv_image_t *icv_multiply(icv_image_t *img1, icv_image_t *img2);
  */
 icv_image_t *icv_divides(icv_image_t *img1, icv_image_t *img2);
 
+/**
+ * Change the saturation of image pixels.  If sat is
+ * set to 0.0 the result will be monochromatic, if sat is made
+ * 1.0, the color will not change, if sat is made greater than 1.0,
+ * the amount of color is increased.
+ *
+ * @param img RGB Image to be saturated.
+ * @param sat Saturation value.
+ */
+int icv_saturate(icv_image_t* img, double sat);
+
 
 typedef enum {
     ICV_FILTER_LOW_PASS,

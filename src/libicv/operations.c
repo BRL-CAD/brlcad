@@ -225,6 +225,45 @@ icv_image_t *icv_divide(icv_image_t *img1, icv_image_t *img2)
     return out_img;
 }
 
+int icv_saturate(icv_image_t* img, double sat)
+{
+    double *data;
+    double bw;			/* monochrome intensity */
+    double rwgt, gwgt, bwgt;
+    double rt, gt, bt;
+    long size;
+
+    if (img == NULL) {
+	bu_log("icv_saturate : Trying to Saturate a Null img");
+	return -1;
+    }
+
+    if (img->color_space != ICV_COLOR_SPACE_RGB) {
+	bu_log("icv_saturate : Saturates only RGB Images");
+	return -1;
+    }
+    fprintf(stderr, "saturation value is %lf\n", sat);
+    data = img->data;
+    size = img->width*img->height;
+    rwgt = 0.31*(1.0-sat);
+    gwgt = 0.61*(1.0-sat);
+    bwgt = 0.08*(1.0-sat);
+    while(size-- > 0) {
+	rt = *data;
+	gt = *(data+1);
+	bt = *(data+2);
+	bw = (rwgt*rt + gwgt*gt + bwgt*bt);
+	rt = bw + sat*rt;
+	gt = bw + sat*gt;
+	bt = bw + sat*bt;
+	*data++ = rt;
+	*data++ = gt;
+	*data++ = bt;
+    }
+    icv_sanitize(img);
+    return 0;
+}
+
 /*
  * Local Variables:
  * tab-width: 8
