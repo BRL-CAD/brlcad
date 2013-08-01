@@ -328,6 +328,180 @@ build_curve_root(const ON_Curve* curve, const ON_Interval* domain, Subcurve& roo
 }
 
 
+// Build the surface tree root within a given domain
+bool
+build_surface_root(const ON_Surface* surf, const ON_Interval* u_domain, const ON_Interval* v_domain, Subsurface& root)
+{
+    // First, do u split
+    const ON_Surface* u_splitted_surf; // the surface after u-split
+    if (u_domain == NULL || *u_domain == surf->Domain(0)) {
+	u_splitted_surf = surf;
+	root.m_u = surf->Domain(0);
+    } else {
+	// Use ON_Surface::Split() to get the sub-surface inside the domain
+	ON_Surface *temp_surf1 = NULL, *temp_surf2 = NULL, *temp_surf3 = NULL;
+	if (!surf->Split(0, u_domain->Min(), temp_surf1, temp_surf2))
+	    return false;
+	delete temp_surf1;
+	temp_surf1 = NULL;
+	if (!temp_surf2->Split(0, u_domain->Max(), temp_surf1, temp_surf3))
+	    return false;
+	delete temp_surf1;
+	delete temp_surf2;
+	u_splitted_surf = temp_surf3;
+	root.m_u = *u_domain;
+    }
+
+    // Then v split
+    if (v_domain == NULL || *v_domain == surf->Domain(1)) {
+	root.m_surf = u_splitted_surf->Duplicate();
+	root.m_v = surf->Domain(1);
+    } else {
+	// Use ON_Surface::Split() to get the sub-surface inside the domain
+	ON_Surface *temp_surf1 = NULL, *temp_surf2 = NULL, *temp_surf3 = NULL;
+	if (!surf->Split(1, v_domain->Min(), temp_surf1, temp_surf2))
+	    return false;
+	delete temp_surf1;
+	temp_surf1 = NULL;
+	if (!temp_surf2->Split(1, v_domain->Max(), temp_surf1, temp_surf3))
+	    return false;
+	delete temp_surf1;
+	delete temp_surf2;
+	root.m_surf = temp_surf3;
+	root.m_v = *v_domain;
+    }
+
+    root.SetBBox(root.m_surf->BoundingBox());
+    root.m_isplanar = root.m_surf->IsPlanar();
+    return true;
+}
+
+
+ON_Curve*
+curve_fitting(ON_Curve* in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool delete_curve = NULL)
+{
+    // Fit a *2D* curve into line, arc, ellipse or other comic curves.
+
+    if (in == NULL)
+	return NULL;
+
+    // First, eliminate some unnecessary points (if three neighbor points
+    // are collinear, the middle one can be removed (for a polyline))
+    ON_3dPointArray points;
+    if (in->IsPolyline(&points)) {
+	int point_count = points.Count();
+	ON_3dPointArray new_points;
+	ON_3dPoint start = points[0];
+	new_points.Append(start);
+	for (int i = 2; i < point_count; i++) {
+	    ON_3dVector v1 = points[i-1] - start;
+	    ON_3dVector v2 = points[i] - points[i-1];
+	    if (!ON_NearZero(ON_CrossProduct(v1, v2).Length()) || ON_DotProduct(v1, v2) < -ON_ZERO_TOLERANCE) {
+		// start, points[i-1], points[i] are not collinear,
+		// or v1 and v2 have opposite directions.
+		start = points[i-1];
+		new_points.Append(start);
+	    }
+	}
+	new_points.Append(points[point_count-1]);
+	if (new_points.Count() != point_count) {
+	    // Some points have been eliminated
+	    if (delete_curve) delete in;
+	    in = new ON_PolylineCurve(new_points);
+	    bu_log("fitting: %d => %d points.\n", point_count, new_points.Count());
+	}
+    }
+
+    // Linear fitting
+    if (in->IsLinear(fitting_tolerance)) {
+	ON_LineCurve *linecurve = new ON_LineCurve(in->PointAtStart(), in->PointAtEnd());
+	linecurve->ChangeDimension(in->Dimension());
+	if (delete_curve) delete in;
+	return linecurve;
+    }
+
+    // Conic fitting (ellipse, parabola, hyperbola)
+    // It's only meaningful to fit the curve when it's a complex one
+    // For a polyline curve, the number of points should not be less than 10.
+    const int fit_mininum_knots = 10;
+    int knotcnt = in->SpanCount();
+    if (knotcnt < fit_mininum_knots)
+	return in;
+
+    double* knots = new double [knotcnt + 1];
+    in->GetSpanVector(knots);
+
+    double conic[6];
+    double sample_pts[12];
+    int plotres = in->IsClosed() ? 6 : 5;
+    // The sample points should be knots (which are accurate if the curve
+    // is a polyline curve).
+    for (int i = 0; i < 6; i++) {
+	double knot_t = knots[ON_Round((double)i/plotres*(knotcnt+1))];
+	ON_3dPoint pt3d = in->PointAt(knot_t);
+	sample_pts[2*i] = pt3d.x;
+	sample_pts[2*i+1] = pt3d.y;
+    }
+
+    if (ON_GetConicEquationThrough6Points(2, sample_pts, conic, NULL, NULL, NULL)) {
+	// It may be a conic.
+	ON_2dPoint ell_center;
+	ON_2dVector ell_A, ell_B;
+	double ell_a, ell_b;
+	// First, fitting an ellipse. It seems that ON_Curve::IsEllipse()
+	// doesn't work, so we use conic fitting first. If this is not ideal,
+	// an alternative solution is to use least square fitting on all
+	// points.
+	if (ON_IsConicEquationAnEllipse(conic, ell_center, ell_A, ell_B, &ell_a, &ell_b)) {
+	    ON_Plane ell_plane = ON_Plane(ON_3dPoint(ell_center), ON_3dVector(ell_A), ON_3dVector(ell_B));
+	    ON_Ellipse ell(ell_plane, ell_a, ell_b);
+	    int i;
+	    for (i = 0; i <= knotcnt; i++) {
+		// It may not be a complete ellipse.
+		// We find the domain of its parameter.
+		ON_3dPoint pt = in->PointAt(knots[i]);
+		ON_3dPoint ell_pt;
+		ell_pt = ell.ClosestPointTo(pt);
+		if (ell_pt.DistanceTo(pt) > fitting_tolerance) {
+		    break;
+		}
+	    }
+
+	    if (i == knotcnt+1) {
+		ON_NurbsCurve nurbscurve;
+		ell.GetNurbForm(nurbscurve);
+
+		// All points are on the ellipse
+		double t_min, t_max;
+		if (in->IsClosed()) {
+		    t_max = ON_PI*2, t_min = 0;
+		} else {
+		    double t_mid;
+		    ell.ClosestPointTo(in->PointAtStart(), &t_min);
+		    ell.ClosestPointTo(in->PointAtEnd(), &t_max);
+		    ell.ClosestPointTo(in->PointAt(knots[knotcnt/2]), &t_mid);
+		    if (t_min > t_max) std::swap(t_min, t_max);
+		    if (!ON_Interval(t_min, t_max).Includes(t_mid)) {
+			// The arc crosses where t = 0 (2*PI).
+			// We make the curve "two rounds" of the ellipse.
+			t_min += 2*ON_PI;
+			std::swap(t_min, t_max);
+			nurbscurve.Append(nurbscurve);
+		    }
+		}
+
+		// The params of the nurbscurve is between [0, 2*pi]
+		return sub_curve(&nurbscurve, t_min, t_max);
+	    }
+	}
+    }
+
+    // We have tried all fittings, but none of them succeed.
+    // So we just return the original curve.
+    return in;
+}
+
+
 /**
  * Point-point intersections (PPI)
  *
@@ -1107,60 +1281,6 @@ ON_Intersect(const ON_Curve* curveA,
 // We can only test a finite number of points to determine overlap.
 // Here we test 2 points uniformly distributed.
 #define CSI_OVERLAP_TEST_POINTS 2
-
-
-// Declaration of the curve fitting function defined below.
-ON_Curve*
-curve_fitting(ON_Curve* in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool delete_curve = false);
-
-
-// Build the surface tree root within a given domain
-bool
-build_surface_root(const ON_Surface* surf, const ON_Interval* u_domain, const ON_Interval* v_domain, Subsurface& root)
-{
-    // First, do u split
-    const ON_Surface* u_splitted_surf; // the surface after u-split
-    if (u_domain == NULL || *u_domain == surf->Domain(0)) {
-	u_splitted_surf = surf;
-	root.m_u = surf->Domain(0);
-    } else {
-	// Use ON_Surface::Split() to get the sub-surface inside the domain
-	ON_Surface *temp_surf1 = NULL, *temp_surf2 = NULL, *temp_surf3 = NULL;
-	if (!surf->Split(0, u_domain->Min(), temp_surf1, temp_surf2))
-	    return false;
-	delete temp_surf1;
-	temp_surf1 = NULL;
-	if (!temp_surf2->Split(0, u_domain->Max(), temp_surf1, temp_surf3))
-	    return false;
-	delete temp_surf1;
-	delete temp_surf2;
-	u_splitted_surf = temp_surf3;
-	root.m_u = *u_domain;
-    }
-
-    // Then v split
-    if (v_domain == NULL || *v_domain == surf->Domain(1)) {
-	root.m_surf = u_splitted_surf->Duplicate();
-	root.m_v = surf->Domain(1);
-    } else {
-	// Use ON_Surface::Split() to get the sub-surface inside the domain
-	ON_Surface *temp_surf1 = NULL, *temp_surf2 = NULL, *temp_surf3 = NULL;
-	if (!surf->Split(1, v_domain->Min(), temp_surf1, temp_surf2))
-	    return false;
-	delete temp_surf1;
-	temp_surf1 = NULL;
-	if (!temp_surf2->Split(1, v_domain->Max(), temp_surf1, temp_surf3))
-	    return false;
-	delete temp_surf1;
-	delete temp_surf2;
-	root.m_surf = temp_surf3;
-	root.m_v = *v_domain;
-    }
-
-    root.SetBBox(root.m_surf->BoundingBox());
-    root.m_isplanar = root.m_surf->IsPlanar();
-    return true;
-}
 
 
 void
@@ -2032,131 +2152,6 @@ newton_ssi(double& u, double& v, double& s, double& t, const ON_Surface* surfA, 
     pointA = surfA->PointAt(u, v);
     pointB = surfB->PointAt(s, t);
     return (pointA.DistanceTo(pointB) < intersection_tolerance) && !isnan(u) && !isnan(v) && !isnan(s) & !isnan(t);
-}
-
-
-ON_Curve*
-curve_fitting(ON_Curve* in, double fitting_tolerance, bool delete_curve)
-{
-    // Fit a *2D* curve into line, arc, ellipse or other comic curves.
-
-    if (in == NULL)
-	return NULL;
-
-    // First, eliminate some unnecessary points (if three neighbor points
-    // are collinear, the middle one can be removed (for a polyline))
-    ON_3dPointArray points;
-    if (in->IsPolyline(&points)) {
-	int point_count = points.Count();
-	ON_3dPointArray new_points;
-	ON_3dPoint start = points[0];
-	new_points.Append(start);
-	for (int i = 2; i < point_count; i++) {
-	    ON_3dVector v1 = points[i-1] - start;
-	    ON_3dVector v2 = points[i] - points[i-1];
-	    if (!ON_NearZero(ON_CrossProduct(v1, v2).Length()) || ON_DotProduct(v1, v2) < -ON_ZERO_TOLERANCE) {
-		// start, points[i-1], points[i] are not collinear,
-		// or v1 and v2 have opposite directions.
-		start = points[i-1];
-		new_points.Append(start);
-	    }
-	}
-	new_points.Append(points[point_count-1]);
-	if (new_points.Count() != point_count) {
-	    // Some points have been eliminated
-	    if (delete_curve) delete in;
-	    in = new ON_PolylineCurve(new_points);
-	    bu_log("fitting: %d => %d points.\n", point_count, new_points.Count());
-	}
-    }
-
-    // Linear fitting
-    if (in->IsLinear(fitting_tolerance)) {
-	ON_LineCurve *linecurve = new ON_LineCurve(in->PointAtStart(), in->PointAtEnd());
-	linecurve->ChangeDimension(in->Dimension());
-	if (delete_curve) delete in;
-	return linecurve;
-    }
-
-    // Conic fitting (ellipse, parabola, hyperbola)
-    // It's only meaningful to fit the curve when it's a complex one
-    // For a polyline curve, the number of points should not be less than 10.
-    const int fit_mininum_knots = 10;
-    int knotcnt = in->SpanCount();
-    if (knotcnt < fit_mininum_knots)
-	return in;
-
-    double* knots = new double [knotcnt + 1];
-    in->GetSpanVector(knots);
-
-    double conic[6];
-    double sample_pts[12];
-    int plotres = in->IsClosed() ? 6 : 5;
-    // The sample points should be knots (which are accurate if the curve
-    // is a polyline curve).
-    for (int i = 0; i < 6; i++) {
-	double knot_t = knots[ON_Round((double)i/plotres*(knotcnt+1))];
-	ON_3dPoint pt3d = in->PointAt(knot_t);
-	sample_pts[2*i] = pt3d.x;
-	sample_pts[2*i+1] = pt3d.y;
-    }
-
-    if (ON_GetConicEquationThrough6Points(2, sample_pts, conic, NULL, NULL, NULL)) {
-	// It may be a conic.
-	ON_2dPoint ell_center;
-	ON_2dVector ell_A, ell_B;
-	double ell_a, ell_b;
-	// First, fitting an ellipse. It seems that ON_Curve::IsEllipse()
-	// doesn't work, so we use conic fitting first. If this is not ideal,
-	// an alternative solution is to use least square fitting on all
-	// points.
-	if (ON_IsConicEquationAnEllipse(conic, ell_center, ell_A, ell_B, &ell_a, &ell_b)) {
-	    ON_Plane ell_plane = ON_Plane(ON_3dPoint(ell_center), ON_3dVector(ell_A), ON_3dVector(ell_B));
-	    ON_Ellipse ell(ell_plane, ell_a, ell_b);
-	    int i;
-	    for (i = 0; i <= knotcnt; i++) {
-		// It may not be a complete ellipse.
-		// We find the domain of its parameter.
-		ON_3dPoint pt = in->PointAt(knots[i]);
-		ON_3dPoint ell_pt;
-		ell_pt = ell.ClosestPointTo(pt);
-		if (ell_pt.DistanceTo(pt) > fitting_tolerance) {
-		    break;
-		}
-	    }
-
-	    if (i == knotcnt+1) {
-		ON_NurbsCurve nurbscurve;
-		ell.GetNurbForm(nurbscurve);
-
-		// All points are on the ellipse
-		double t_min, t_max;
-		if (in->IsClosed()) {
-		    t_max = ON_PI*2, t_min = 0;
-		} else {
-		    double t_mid;
-		    ell.ClosestPointTo(in->PointAtStart(), &t_min);
-		    ell.ClosestPointTo(in->PointAtEnd(), &t_max);
-		    ell.ClosestPointTo(in->PointAt(knots[knotcnt/2]), &t_mid);
-		    if (t_min > t_max) std::swap(t_min, t_max);
-		    if (!ON_Interval(t_min, t_max).Includes(t_mid)) {
-			// The arc crosses where t = 0 (2*PI).
-			// We make the curve "two rounds" of the ellipse.
-			t_min += 2*ON_PI;
-			std::swap(t_min, t_max);
-			nurbscurve.Append(nurbscurve);
-		    }
-		}
-
-		// The params of the nurbscurve is between [0, 2*pi]
-		return sub_curve(&nurbscurve, t_min, t_max);
-	    }
-	}
-    }
-
-    // We have tried all fittings, but none of them succeed.
-    // So we just return the original curve.
-    return in;
 }
 
 
