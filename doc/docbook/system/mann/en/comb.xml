@@ -9,7 +9,7 @@
 
   <refnamediv xml:id="name">
     <refname>comb</refname>
-    <refpurpose>Creates a BRL-CAD combination with the name
+    <refpurpose>Create and manipulate BRL-CAD combination with the name
     <emphasis>combination_name</emphasis>.
     </refpurpose>
   </refnamediv>
@@ -33,24 +33,68 @@
 
   <refsection xml:id="description"><title>DESCRIPTION</title>
 
-    <para>The <command>comb</command> command creates a <emphasis>BRL-CAD</emphasis> combination
-    with the name <emphasis>combination_name</emphasis>. The <option>r</option> option
-    indicates that the combination is a <emphasis>BRL-CAD </emphasis>region. The
-    <option>c</option> option is the default and indicates that the combination is not
-    a region. The <emphasis>operator/object_name</emphasis> pairs are combinations of boolean
-    operators and object names to be added to the comb.
+    <para>
+       The <command>comb</command> command creates and manipulates <emphasis>BRL-CAD</emphasis> 
+       combination objects.  For combination creation or appending, <emphasis>operator/object_name</emphasis> pairs
+       of boolean operators and object names are parsed into comb tree entries.  (TODO - integrate full
+       expression evaluation like that in <command>c</command>.)
     </para>
-    <para>The <option>w</option> moves the contents of a combination to a new combination
-    and makes that combination the sole child of the original combination.  See the "fixing
-    nested regions" example below for an illustration of how this option is used.
+
+    <para>
+       The following options are recognized:
     </para>
-    <para>The <option>f</option> will flatten a combination that contains only unions into
-    a single top level combination with all of the solids unioned into it, and remove all
-    combinations that were below the input combination that are not used elsewhere in the
-    .g file.  (In essense, the latter behavior prevents "orphaned" combinations that are no longer used
-    from showing up as new top level objects in the database.)  The <option>f</option> option
-    will not work on any combination containing non-union boolean operations.
-    </para>
+
+    <variablelist remap="TP">
+ 
+      <varlistentry>
+        <term><option>-c</option></term>
+        <listitem>
+          <para>
+            Ensures that the combination does not have the region flag set.
+            Conflicts with <option>-r</option>.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-r</option></term>
+        <listitem>
+          <para>
+            Ensures that the combination does have the region flag set.
+            Conflicts with <option>-c</option>.
+          </para>
+        </listitem>
+      </varlistentry>
+
+     <varlistentry>
+        <term><option>-w</option></term>
+        <listitem>
+          <para>
+            Moves the contents of a combination to a new combination
+            and makes that combination the sole child of the original combination.  See the "fixing
+            nested regions" example below for an illustration of how this option is used.
+            Conflicts with <option>-f</option> and <option>-l</option>.
+          </para>
+        </listitem>
+      </varlistentry>
+
+     <varlistentry>
+        <term><option>-f</option></term>
+        <listitem>
+          <para>
+            Flattens a combination that contains only unions into a single top level 
+            combination with all of the solids unioned into it, and remove all
+            combinations that were below the input combination that are not used 
+            elsewhere in the .g file.  (In essense, the latter behavior prevents 
+            "orphaned" combinations that are no longer used from showing up as new 
+            top level objects in the database.)  This feature will not work on any 
+            combination containing non-union boolean operations.
+            Conflicts with <option>-w</option> and <option>-l</option>.
+          </para>
+        </listitem>
+      </varlistentry>
+
+     </variablelist>
   </refsection>
 
   <refsection xml:id="examples"><title>EXAMPLES</title>
