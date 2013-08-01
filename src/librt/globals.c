@@ -36,7 +36,7 @@
 #include "db.h"
 
 
-struct rt_g rt_g;
+struct rt_g RTG;
 
 struct resource rt_uniresource;
 
