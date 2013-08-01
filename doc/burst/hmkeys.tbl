@@ -1,0 +1,12 @@
+.TS
+center,allbox;
+cb cb
+_ _
+ci c.
+KEY	FUNCTION
+u or ^P	move cursor to item above the current item
+d or ^N	move cursor to item below the current item
+h or ?	print help message about the current item
+q	exit the current menu without making a selection
+space	select the current item
+.TE
