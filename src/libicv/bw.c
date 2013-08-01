@@ -26,6 +26,7 @@
 #include "common.h"
 
 #include <stdlib.h>
+#include <sys/stat.h>	/* for file mode info in WRMODE */
 #include <fcntl.h>
 
 #include "bio.h"
