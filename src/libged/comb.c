@@ -477,30 +477,23 @@ _ged_lift_region_comb(struct ged *gedp, struct directory *dp) {
 	struct bu_vls new_comb_name;
 	bu_vls_init(&new_comb_name);
 	struct bu_ptbl stack;
+	struct directory *new_comb;
 	bu_ptbl_init(&stack, 64, "comb mvall working stack");
-
+	combs_in_tree = db_search_unique_objects_strplan(combs_in_tree_plan, path_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
+        bu_ptbl_ins(combs_in_tree, (long *)dp);
 	for (BU_PTBL_FOR(dp_curr, (struct directory **), &regions_to_wrap)) {
 	    if ((*dp_curr) != dp) {
 		struct directory **dp_comb_from_tree;
-		if (combs_in_tree) bu_ptbl_free(combs_in_tree);
 		if (_ged_wrap_comb(gedp, (*dp_curr)) == GED_ERROR) {
 		    db_free_full_path_list(path_list);
 		    bu_ptbl_free(&regions_to_wrap);
 		    bu_vls_free(&new_comb_name);
 		    bu_ptbl_free(&stack);
 		    return GED_ERROR;
+		} else {
+		    bu_vls_sprintf(&new_comb_name, "%s.c", (*dp_curr)->d_namep);
+		    new_comb = db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&new_comb_name), LOOKUP_QUIET);
 		}
-		bu_vls_sprintf(&new_comb_name, "%s.c", (*dp_curr)->d_namep);
-		/* Find the combs in the current tree */
-		if (db_comb_mvall(dp, gedp->ged_wdbp->dbip, (*dp_curr)->d_namep, bu_vls_addr(&new_comb_name), &stack) == 2) {
-		    db_free_full_path_list(path_list);
-		    bu_ptbl_free(&regions_to_wrap);
-		    bu_vls_free(&new_comb_name);
-		    bu_ptbl_free(combs_in_tree);
-		    bu_ptbl_free(&stack);
-		    return GED_ERROR;
-		}
-		combs_in_tree = db_search_unique_objects_strplan(combs_in_tree_plan, path_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
 		for (BU_PTBL_FOR(dp_comb_from_tree, (struct directory **), combs_in_tree)) {
 		    bu_ptbl_reset(&stack);
 		    if (db_comb_mvall((*dp_comb_from_tree), gedp->ged_wdbp->dbip, (*dp_curr)->d_namep, bu_vls_addr(&new_comb_name), &stack) == 2) {
@@ -512,6 +505,8 @@ _ged_lift_region_comb(struct ged *gedp, struct directory *dp) {
 			return GED_ERROR;
 		    }
 		}
+		bu_ptbl_ins(combs_in_tree, (long *)new_comb);
+		bu_ptbl_rm(combs_in_tree, (long *)(*dp_curr));
 	    }
 	}
 	bu_ptbl_free(&stack);
