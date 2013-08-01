@@ -315,6 +315,7 @@ package provide Archer 1.0
 	method buildArb7EditView {}
 	method buildArb8EditView {}
 	method buildBotEditView {}
+	method buildBrepEditView {}
 	method buildCombEditView {}
 	method buildDbAttrView {}
 	method buildEhyEditView {}
@@ -6206,6 +6207,13 @@ proc title_node_handler {node} {
 
 	    return $itk_component(botView)
 	}
+	"brep" {
+	    if {![info exists itk_component(brepView)]} {
+		buildBrepEditView
+	    }
+
+	    return $itk_component(brepView)
+	}
 	"comb" {
 	    if {![info exists itk_component(combView)]} {
 		buildCombEditView
@@ -6707,6 +6715,13 @@ proc title_node_handler {node} {
     } {}
 }
 
+::itcl::body Archer::buildBrepEditView {} {
+    set parent $itk_component(objEditView)
+    itk_component add brepView {
+	BrepEditFrame $parent.brepview \
+	    -units "mm"
+    } {}
+}
 
 ::itcl::body Archer::buildCombEditView {} {
     set parent $itk_component(objEditView)
