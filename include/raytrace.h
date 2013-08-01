@@ -3696,8 +3696,8 @@ RT_EXPORT extern int db_full_path_list_add(const char *path, int local, struct d
 RT_EXPORT extern void db_free_full_path_list(struct db_full_path_list *path_list);
 
 /**
- * process the command line and create a "plan" corresponding to the
- * command arguments.
+ * Low level command to process the command line and create a "plan" corresponding to the
+ * command arguments. 
  */
 RT_EXPORT extern void *db_search_formplan(char **argv,
 					  struct db_i *dbip,
@@ -3709,6 +3709,9 @@ RT_EXPORT extern void *db_search_formplan(char **argv,
  */
 RT_EXPORT extern void db_search_freeplan(void **plan);
 
+/**
+ * Low level routines for invocation of search plans
+ */
 RT_EXPORT extern struct db_full_path_list *db_search_full_paths(void *searchplan,
 								struct db_full_path_list *path_list,
 								struct db_i *dbip,
@@ -3718,6 +3721,21 @@ RT_EXPORT extern struct bu_ptbl *db_search_unique_objects(void *searchplan,
 							  struct db_full_path_list *path_list,
 							  struct db_i *dbip,
 							  struct rt_wdb *wdbp);
+
+/**
+ * Use the string form of a search plan to build and execute a search
+ */
+RT_EXPORT extern struct db_full_path_list *db_search_full_paths_strplan(const char *plan_string,
+								struct db_full_path_list *path_list,
+								struct db_i *dbip,
+								struct rt_wdb *wdbp);
+
+RT_EXPORT extern struct bu_ptbl *db_search_unique_objects_strplan(const char *plan_string,
+							  struct db_full_path_list *path_list,
+							  struct db_i *dbip,
+							  struct rt_wdb *wdbp);
+
+
 
 /* db_open.c */
 /**

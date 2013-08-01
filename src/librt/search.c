@@ -2218,6 +2218,53 @@ db_search_unique_objects(void *searchplan,        /* search plan */
     return uniq_db_objs;
 }
 
+struct db_full_path_list *
+db_search_full_paths_strplan(const char *plan_string,        /* search plan */
+		     struct db_full_path_list *pathnames,      /* list of pathnames to traverse */
+		     struct db_i *dbip,
+		     struct rt_wdb *wdbp)
+{
+    struct db_full_path_list *results = NULL;
+    struct bu_vls plan_string_vls;
+    void *dbplan;
+    char **plan_argv = (char **)bu_calloc(strlen(plan_string) + 1, sizeof(char *), "plan argv");
+    bu_vls_init(&plan_string_vls);
+    bu_vls_sprintf(&plan_string_vls, "%s", plan_string);
+    bu_argv_from_string(&plan_argv[0], strlen(plan_string), bu_vls_addr(&plan_string_vls));
+    dbplan = db_search_formplan(plan_argv, dbip, wdbp);
+    results = db_search_full_paths(dbplan, pathnames, dbip, wdbp);
+    bu_vls_free(&plan_string_vls);
+    bu_free((char *)plan_argv, "free plan argv");
+    db_search_freeplan(&dbplan);
+    return results;
+}
+
+
+/**
+ *
+ */
+struct bu_ptbl *
+db_search_unique_objects_strplan(const char *plan_string,        /* search plan */
+			 struct db_full_path_list *pathnames,      /* list of pathnames to traverse */
+			 struct db_i *dbip,
+			 struct rt_wdb *wdbp)
+{
+    struct bu_ptbl *results = NULL;
+    struct bu_vls plan_string_vls;
+    void *dbplan;
+    char **plan_argv = (char **)bu_calloc(strlen(plan_string) + 1, sizeof(char *), "plan argv");
+    bu_vls_init(&plan_string_vls);
+    bu_vls_sprintf(&plan_string_vls, "%s", plan_string);
+    bu_argv_from_string(&plan_argv[0], strlen(plan_string), bu_vls_addr(&plan_string_vls));
+    dbplan = db_search_formplan(plan_argv, dbip, wdbp);
+    results = db_search_unique_objects(dbplan, pathnames, dbip, wdbp);
+    bu_vls_free(&plan_string_vls);
+    bu_free((char *)plan_argv, "free plan argv");
+    db_search_freeplan(&dbplan);
+    return results;
+}
+
+
 
 /*
  * Local Variables:

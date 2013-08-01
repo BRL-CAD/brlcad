@@ -257,8 +257,6 @@ _ged_flatten_comb(struct ged *gedp, struct directory *dp) {
     char *only_unions_in_tree_plan = "! -bool u";
     char *solids_in_tree_plan = "! -type comb";
     char *combs_in_tree_plan = "-type comb";
-    void *dbplan;
-    char *plan_argv[9];
     struct bu_ptbl *non_union_objects = BU_PTBL_NULL;
     struct bu_ptbl *solids = BU_PTBL_NULL;
     struct bu_ptbl *combs = BU_PTBL_NULL;
@@ -274,28 +272,18 @@ _ged_flatten_comb(struct ged *gedp, struct directory *dp) {
     /* Turn directory's name into a full path structure */
     if (db_full_path_list_add(dp->d_namep, 0, gedp->ged_wdbp->dbip, path_list) == -1) {
 	bu_vls_printf(gedp->ged_result_str,  "Failed to add path %s to search list.\n", dp->d_namep);
-	bu_free((char *)plan_argv, "free plan argv");
 	db_free_full_path_list(path_list);
 	return GED_ERROR;
     }
 
 
-    /* bu_argv_from_string needs a writable string, so re-use one vls for the plans */
-    bu_vls_init(&plan_string);
-
-
     /* if there are non-union booleans in this comb's tree, error out */
-    bu_vls_sprintf(&plan_string, "%s", only_unions_in_tree_plan);
-    bu_argv_from_string(&plan_argv[0], 8, bu_vls_addr(&plan_string));
-    dbplan = db_search_formplan(plan_argv, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
-    non_union_objects = db_search_unique_objects(dbplan, path_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
-    db_search_freeplan(&dbplan);
+    non_union_objects = db_search_unique_objects_strplan(only_unions_in_tree_plan, path_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
     /* if non_union_objects isn't empty, error out */
     if (BU_PTBL_LEN(non_union_objects)) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: %s tree contains non-union booleans", dp->d_namep);
 	db_free_full_path_list(path_list);
 	bu_ptbl_free(non_union_objects);
-	bu_vls_free(&plan_string);
 	return GED_ERROR;
     }
     /* Done with non_union_objects */
@@ -303,25 +291,16 @@ _ged_flatten_comb(struct ged *gedp, struct directory *dp) {
 
 
     /* Find the solids */
-    bu_vls_sprintf(&plan_string, "%s", solids_in_tree_plan);
-    bu_argv_from_string(&plan_argv[0], 8, bu_vls_addr(&plan_string));
-    dbplan = db_search_formplan(plan_argv, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
-    solids = db_search_unique_objects(dbplan, path_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
-    db_search_freeplan(&dbplan);
+    solids = db_search_unique_objects_strplan(solids_in_tree_plan, path_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
 
 
     /* Find the combs in the tree */
-    bu_vls_sprintf(&plan_string, "%s", combs_in_tree_plan);
-    bu_argv_from_string(&plan_argv[0], 8, bu_vls_addr(&plan_string));
-    dbplan = db_search_formplan(plan_argv, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
-    combs = db_search_unique_objects(dbplan, path_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
-    db_search_freeplan(&dbplan);
+    combs = db_search_unique_objects_strplan(combs_in_tree_plan, path_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
     /* If it's all solids already, nothing to do */
     if (!BU_PTBL_LEN(combs)) {
 	db_free_full_path_list(path_list);
 	bu_ptbl_free(solids);
 	bu_ptbl_free(combs);
-	bu_vls_free(&plan_string);
 	return GED_OK;
     }
 
@@ -330,15 +309,13 @@ _ged_flatten_comb(struct ged *gedp, struct directory *dp) {
     BU_ALLOC(toplevel_list, struct db_full_path_list);
     BU_LIST_INIT(&(toplevel_list->l));
     db_full_path_list_add_toplevel(gedp->ged_wdbp->dbip, toplevel_list, 0);
+    bu_vls_init(&plan_string);
     bu_vls_sprintf(&plan_string, "-mindepth 1 ! -above -name %s -type comb", dp->d_namep);
-    bu_argv_from_string(&plan_argv[0], 8, bu_vls_addr(&plan_string));
-    dbplan = db_search_formplan(plan_argv, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
-    combs_outside_of_tree = db_search_unique_objects(dbplan, toplevel_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
-    db_search_freeplan(&dbplan);
+    combs_outside_of_tree = db_search_unique_objects_strplan(bu_vls_addr(&plan_string), toplevel_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
+    bu_vls_free(&plan_string);
     db_free_full_path_list(toplevel_list);
 
-    /* Done searching - now we can free search structures and clear the original tree */
-    bu_vls_free(&plan_string);
+    /* Done searching - now we can free the path list and clear the original tree */
     db_free_full_path_list(path_list);
     if (_ged_clear_comb_tree(gedp, dp) == GED_ERROR) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: %s tree clearing failed", dp->d_namep);
