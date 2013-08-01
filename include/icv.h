@@ -372,6 +372,28 @@ void icv_sanitize(icv_image_t* img);
  */
 void icv_add_val(icv_image_t* img, double val);
 
+/**
+ * This multiplies a double value to all the pixels of the image.
+ * Also if the flag ICV_OPERATIONS_MODE is set this doesnt santizes
+ * the image.
+ */
+void icv_multiply_val(icv_image_t* img, double val);
+
+/**
+ * This divides a double value to all the pixels of the image.
+ * Also if the flag ICV_OPERATIONS_MODE is set this doesnt santizes
+ * the image.
+ */
+void icv_divide_val(icv_image_t* img, double val);
+
+/**
+ * This raises all the pixels of the image to an exponential power.
+ * Also if the flag ICV_OPERATIONS_MODE is set this doesnt santizes
+ * the image.
+ */
+void icv_pow_val(icv_image_t* img, double val);
+
+
 typedef enum {
     ICV_FILTER_LOW_PASS,
     ICV_FILTER_LAPLACIAN,
