@@ -362,21 +362,188 @@ _ged_flatten_comb(struct ged *gedp, struct directory *dp) {
     return GED_OK;
 }
 
+
+/* "Lift a region flag to the specified comb, removing all region
+ * flags below in the tree if practical.
+ */
+HIDDEN int
+_ged_lift_region_comb(struct ged *gedp, struct directory *dp) {
+    char *combs_in_tree_plan = "-type comb";
+    char *regions_in_tree_plan = "-type region";
+    struct bu_ptbl *combs_in_tree = BU_PTBL_NULL;
+    struct bu_ptbl *combs_outside_of_tree = BU_PTBL_NULL;
+    struct bu_ptbl regions_to_clear;
+    struct bu_ptbl regions_to_wrap;
+    struct bu_vls plan_string;
+    struct db_full_path_list *toplevel_list = NULL;
+    struct db_full_path_list *path_list = NULL;
+    struct db_full_path_list *regions = NULL;
+    struct db_full_path_list *entry = NULL;
+    struct directory **dp_curr;
+    int failure_case = 0;
+    BU_ALLOC(path_list, struct db_full_path_list);
+    BU_LIST_INIT(&(path_list->l));
+
+
+    /* Turn directory's name into a full path structure */
+    if (db_full_path_list_add(dp->d_namep, 0, gedp->ged_wdbp->dbip, path_list) == -1) {
+	bu_vls_printf(gedp->ged_result_str,  "Failed to add path %s to search list.\n", dp->d_namep);
+	db_free_full_path_list(path_list);
+	return GED_ERROR;
+    }
+
+    /* Find the regions - need full paths here, because we'll be checking parents */
+    regions = db_search_full_paths_strplan(regions_in_tree_plan, path_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
+
+    /* If it's all non-region combs and solids already, nothing to do except possibly set the region flag*/
+    if (BU_LIST_IS_EMPTY(&(regions->l))) {
+	db_free_full_path_list(path_list);
+	db_free_full_path_list(regions);
+	if (!(dp->d_flags & RT_DIR_REGION)) {
+	    if (_ged_set_region_flag(gedp, dp) == GED_ERROR)
+		return GED_OK;
+	}
+	return GED_OK;
+    }
+
+    /* Find the combs NOT in the tree */
+    BU_ALLOC(toplevel_list, struct db_full_path_list);
+    BU_LIST_INIT(&(toplevel_list->l));
+    db_full_path_list_add_toplevel(gedp->ged_wdbp->dbip, toplevel_list, 0);
+    bu_vls_init(&plan_string);
+    bu_vls_sprintf(&plan_string, "-mindepth 1 ! -above -name %s -type comb", dp->d_namep);
+    combs_outside_of_tree = db_search_unique_objects_strplan(bu_vls_addr(&plan_string), toplevel_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
+    bu_vls_free(&plan_string);
+    db_free_full_path_list(toplevel_list);
+
+    /* check for entry->path last node in combs_outside of tree
+     *    - if NO, add to quash region flag bu_ptbl list (uniq insert).  If yes, continue.
+     * get parent of entry->path last node
+     * check for parent node in combs_outside_of_tree
+     * if problem found, append specifics to ged_result_str, set fail flag
+     * if no problem found, add to bu_ptbl list of regions to wrap (uniq insert)
+     * no point in storing the speciifc parent, since we'll in-tree mvall in any case to update */
+    bu_ptbl_init(&regions_to_clear, 64, "regions to clear");
+    bu_ptbl_init(&regions_to_wrap, 64, "regions to wrap");
+    for (BU_LIST_FOR_BACKWARDS(entry, db_full_path_list, &(regions->l))) {
+	struct directory *dp_curr_dir =  DB_FULL_PATH_CUR_DIR(entry->path);
+	struct directory *dp_parent = DB_FULL_PATH_GET(entry->path, entry->path->fp_len-2);
+	if (dp_curr_dir != dp) {
+	    if (bu_ptbl_locate(combs_outside_of_tree, (const long *)(dp_curr_dir)) == -1) {
+		bu_ptbl_ins_unique(&regions_to_clear, (long *)(dp_curr_dir));
+	    } else {
+		if (bu_ptbl_locate(combs_outside_of_tree, (const long *)(dp_parent)) == -1 || (dp_parent == dp)) {
+		    bu_ptbl_ins_unique(&regions_to_wrap, (long *)(dp_curr_dir));
+		} else {
+		    if (!failure_case) {
+			bu_vls_sprintf(gedp->ged_result_str,  "Comb region lift failed - the following combs in the tree contain regions and are also used outside the tree of %s:\n\n", dp->d_namep);
+			failure_case = 1;
+		    }
+		    bu_vls_printf(gedp->ged_result_str,  "%s, containing region %s\n", dp_parent->d_namep, dp_curr_dir->d_namep);
+		}
+	    }
+	}
+    }
+    db_free_full_path_list(regions);
+    bu_ptbl_free(combs_outside_of_tree);
+
+    if (failure_case) {
+	bu_vls_printf(gedp->ged_result_str,  "The above combs must be reworked before region lifting the tree of %s can succeed.\n", dp->d_namep);
+	db_free_full_path_list(path_list);
+	bu_ptbl_free(&regions_to_clear);
+	bu_ptbl_free(&regions_to_wrap);
+	return GED_ERROR;
+    }
+
+    /* Easy case first - if we can just clear the region flag, do it. */
+    for (BU_PTBL_FOR(dp_curr, (struct directory **), &regions_to_clear)) {
+	if ((*dp_curr) != dp) {
+	    if (_ged_clear_region_flag(gedp, (*dp_curr)) == GED_ERROR) {
+		db_free_full_path_list(path_list);
+		bu_ptbl_free(&regions_to_clear);
+		bu_ptbl_free(&regions_to_wrap);
+		return GED_ERROR;
+	    }
+	}
+    }
+    bu_ptbl_free(&regions_to_clear);
+
+    /* Now the tricky case.  We need to wrap regions, then insert their
+     * comb definitions into the tree of dp->d_namep and its children.
+     * Because we're doing that, the combs *in* the tree will be changing
+     * as we go.
+     */
+    {
+	struct bu_vls new_comb_name;
+	bu_vls_init(&new_comb_name);
+	struct bu_ptbl stack;
+	bu_ptbl_init(&stack, 64, "comb mvall working stack");
+
+	for (BU_PTBL_FOR(dp_curr, (struct directory **), &regions_to_wrap)) {
+	    if ((*dp_curr) != dp) {
+		struct directory **dp_comb_from_tree;
+		if (combs_in_tree) bu_ptbl_free(combs_in_tree);
+		if (_ged_wrap_comb(gedp, (*dp_curr)) == GED_ERROR) {
+		    db_free_full_path_list(path_list);
+		    bu_ptbl_free(&regions_to_wrap);
+		    bu_vls_free(&new_comb_name);
+		    bu_ptbl_free(&stack);
+		    return GED_ERROR;
+		}
+		bu_vls_sprintf(&new_comb_name, "%s.c", (*dp_curr)->d_namep);
+		/* Find the combs in the current tree */
+		if (db_comb_mvall(dp, gedp->ged_wdbp->dbip, (*dp_curr)->d_namep, bu_vls_addr(&new_comb_name), &stack) == 2) {
+		    db_free_full_path_list(path_list);
+		    bu_ptbl_free(&regions_to_wrap);
+		    bu_vls_free(&new_comb_name);
+		    bu_ptbl_free(combs_in_tree);
+		    bu_ptbl_free(&stack);
+		    return GED_ERROR;
+		}
+		combs_in_tree = db_search_unique_objects_strplan(combs_in_tree_plan, path_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
+		for (BU_PTBL_FOR(dp_comb_from_tree, (struct directory **), combs_in_tree)) {
+		    bu_ptbl_reset(&stack);
+		    if (db_comb_mvall((*dp_comb_from_tree), gedp->ged_wdbp->dbip, (*dp_curr)->d_namep, bu_vls_addr(&new_comb_name), &stack) == 2) {
+			db_free_full_path_list(path_list);
+			bu_ptbl_free(&regions_to_wrap);
+			bu_vls_free(&new_comb_name);
+			bu_ptbl_free(combs_in_tree);
+			bu_ptbl_free(&stack);
+			return GED_ERROR;
+		    }
+		}
+	    }
+	}
+	bu_ptbl_free(&stack);
+	bu_vls_free(&new_comb_name);
+    }
+    bu_ptbl_free(&regions_to_wrap);
+    db_free_full_path_list(path_list);
+
+    /* Finally, set the region flag on the toplevel comb */
+    if (_ged_set_region_flag(gedp, dp) == GED_ERROR)
+	return GED_ERROR;
+
+    return GED_OK;
+}
+
+
 int
 ged_comb(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     const char *cmd_name;
     char *comb_name;
-    int i,c;
+    int i,c, sum;
     char oper;
     int set_region = 0;
     int set_comb = 0;
     int standard_comb_build = 1;
     int wrap_comb = 0;
     int flatten_comb = 0;
+    int lift_region_comb = 0;
     int alter_existing = 1;
-    static const char *usage = "[-c/-r] [-w/-f] [-S] comb_name [<operation object>]";
+    static const char *usage = "[-c/-r] [-w/-f/-l] [-S] comb_name [<operation object>]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -402,7 +569,7 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 
     bu_optind = 1;
     /* Grab any arguments off of the argv list */
-    while ((c = bu_getopt(argc, (char **)argv, "crwfS")) != -1) {
+    while ((c = bu_getopt(argc, (char **)argv, "crwflS")) != -1) {
         switch (c) {
             case 'c' :
                 set_comb = 1;
@@ -416,6 +583,10 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    case 'f' :
 		flatten_comb = 1;
+		standard_comb_build = 0;
+		break;
+	    case 'l' :
+		lift_region_comb = 1;
 		standard_comb_build = 0;
 		break;
             case 'S' :
@@ -434,10 +605,17 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ((wrap_comb || flatten_comb) && argc != 2) {
+    sum = wrap_comb + flatten_comb + lift_region_comb;
+    if (sum > 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
+
+    if ((wrap_comb || flatten_comb || lift_region_comb) && argc != 2) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
 
     /* Get target combination info */
     comb_name = (char *)argv[1];
@@ -525,6 +703,22 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
     }
+
+    if (lift_region_comb) {
+	if (!dp || dp == RT_DIR_NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "Combination '%s does not exist.\n", comb_name);
+	    return GED_ERROR;
+	}
+	if (_ged_lift_region_comb(gedp, dp) == GED_ERROR) {
+	    return GED_ERROR;
+	} else {
+	    if ((dp=db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
+		bu_vls_printf(gedp->ged_result_str, "ERROR: region lift to %s failed", comb_name);
+		return GED_ERROR;
+	    }
+	}
+    }
+
 
     /* Make sure the region flag is set appropriately */
     if (set_comb || set_region) {
