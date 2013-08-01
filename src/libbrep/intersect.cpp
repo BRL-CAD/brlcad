@@ -2002,11 +2002,17 @@ newton_ssi(double& u, double& v, double& s, double& t, const ON_Surface* surfA, 
 	    J[i][3] = -deriv_t[i];
 	    F[i][0] = pointA[i] - pointB[i];
 	}
-	if (!J.Invert(0.0)) {
+	ON_Matrix tranJ = J;
+	tranJ.Transpose();
+	ON_Matrix JotranJ;
+	JotranJ.Multiply(J, tranJ);
+	if (!JotranJ.Invert(0.0)) {
 	    break;
 	}
+	ON_Matrix pinvJ;
+	pinvJ.Multiply(tranJ, JotranJ);
 	ON_Matrix Delta;
-	Delta.Multiply(J, F);
+	Delta.Multiply(pinvJ, F);
 	u -= Delta[0][0];
 	v -= Delta[1][0];
 	s -= Delta[2][0];
