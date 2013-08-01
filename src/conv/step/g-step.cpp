@@ -132,7 +132,6 @@ main(int argc, char *argv[])
 
     Registry *registry = new Registry( SchemaInit );
     InstMgr instance_list;
-    STEPfile *sfile = new STEPfile(*registry, instance_list);
 
     int entities_cnt = brep->m_S.Count() + brep->m_C3.Count() + brep->m_C2.Count() +
                        brep->m_V.Count() + brep->m_E.Count() + brep->m_T.Count() +
