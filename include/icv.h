@@ -501,14 +501,68 @@ ICV_EXPORT extern int icv_fade(icv_image_t *img, double fraction);
  *
  */
 
+/**
+ * This function calculates the histogram of different channels
+ * seperately.
+ *
+ * @param img Image of which histogram is to found.
+ * @param n_bins number of bins required.
+ * @return Histogram of size_t type array. This 2-dimension array
+ * is of size c X n_bins where c is the channels in the image.
+ *
+ */
 ICV_EXPORT size_t **icv_hist(icv_image_t* img, int n_bins);
 
+/**
+ * Finds the minimum value in each channel of the image.
+ *
+ * @return a double array of size channels. Each element contains min
+ * value of the channel.
+ *
+ * For eg. min = icv_min(bif);
+ * min[0] gives the minimum value of all the pixels in first bin.
+ * and so on.
+ *
+ */
 ICV_EXPORT double *icv_min(icv_image_t* img);
 
+/**
+ * Finds the average value in each channel of the image.
+ *
+ * @return a double array of size channels. Each elements contains
+ * average value of the channel.
+ *
+ * For eg. mean = icv_mean(bif);
+ * mean[0] gives the average value of all the pixels in first channel
+ * and so on.
+ *
+ */
 ICV_EXPORT double *icv_mean(icv_image_t* img);
 
+/**
+ * Finds the sum of all the pixel values for each channel of the image
+ *
+ * @return a double array of size channels. Each element contains sum
+ * value of the channel.
+ *
+ * For eg. sum = icv_sum(bif);
+ * sum[0] gives the sum of all the pixels in first channel
+ * and so on.
+ *
+ */
 ICV_EXPORT double *icv_sum(icv_image_t* img);
 
+/**
+ * Finds the max value in each channel of the image.
+ *
+ * @return a double array of size channels. Each element contains max
+ * value of the channel.
+ *
+ * For eg. max = icv_max(bif);
+ * max[0] gives the maximum value of all the pixels in first bin.
+ * and so on.
+ *
+ */
 ICV_EXPORT double *icv_max(icv_image_t* img);
 
 
