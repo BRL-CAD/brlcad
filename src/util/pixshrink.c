@@ -99,12 +99,13 @@ void write_image(int Width, int Height, unsigned char *buffer)
 void
 shrink_image(int scanlen, int Width, int Height, unsigned char *buffer, int Factor)
 {
-    UCHAR *pixelp, *finalpixel;
+    UCHAR *pixelp, *out_buf;
     unsigned int p[3];
     int facsq, x, y, px, py;
 
     facsq = Factor * Factor;
-    finalpixel = buffer;
+
+    out_buf = buffer;	
 
     for (y=0; y < Height; y += Factor)
 	for (x=0; x < Width; x += Factor) {
@@ -117,8 +118,8 @@ shrink_image(int scanlen, int Width, int Height, unsigned char *buffer, int Fact
 	    for (py = 0; py < Factor; py++) {
 
 		/* get first pixel in scanline */
-		pixelp = &buffer[y*scanlen+x*3];
-
+		pixelp = &buffer[(y+py)*scanlen+x*3];
+		 	
 		/* add pixels from scanline to average */
 		for (px = 0; px < Factor; px++) {
 		    p[0] += *pixelp++;
@@ -128,8 +129,9 @@ shrink_image(int scanlen, int Width, int Height, unsigned char *buffer, int Fact
 	    }
 
 	    /* store resultant pixel back in buffer */
-	    for (py = 0; py < 3; ++py)
-		*finalpixel++ = p[py] / facsq;
+	    for (py = 0; py < 3; ++py) 
+		*out_buf++ = p[py] / facsq;
+           				    
 	}
 }
 
