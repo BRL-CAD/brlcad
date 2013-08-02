@@ -2167,7 +2167,7 @@ db_search_full_paths(void *searchplan,        /* search plan */
 	db_full_path_init(&dfp);
 	for (i = 0; i < RT_DBNHASH; i++) {
 	    for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-		if (dp->d_nref == 0 && !(dp->d_flags & RT_DIR_HIDDEN) && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
+		if (dp->d_nref == 0 && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
 		    if (db_string_to_path(&dfp, dbip, dp->d_namep) < 0)
 			continue; /* skip */
 
