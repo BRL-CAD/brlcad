@@ -176,8 +176,8 @@
 	 <listitem>
 	 <para></para>
 	 <para>
-           Suppose we have a situation where region2.r is unioned into region1.r, and both
-           region1.r and region2.r have the region flag set, as seen in the tree below.
+		 Suppose we have a situation where <emphasis>region2.r</emphasis> is unioned into <emphasis>region1.r</emphasis>, and both
+		 <emphasis>region1.r</emphasis> and <emphasis>region2.r</emphasis> have the region flag set, as seen in the tree below.
 	 </para>
 
 	<literallayout>
@@ -195,11 +195,11 @@ region1.r/R
       This geometry has an error in that one
       region is not supposed to be combined into another using boolean operations.
       Further, suppose that one or
-      more assemblies use region2.r and expect it to be a region - i.e., region2.r needs
+      more assemblies use <emphasis>region2.r</emphasis> and expect it to be a region - i.e., <emphasis>region2.r</emphasis> needs
       to remain a region with the same contents.
 
-      To fix this problem without disturbing other geometry using region2.r, first
-      make a combination below region2.r using the <option>w</option> flag to <command>comb</command>:
+      To fix this problem without disturbing other geometry using <emphasis>region2.r</emphasis>, first
+      make a combination below <emphasis>region2.r</emphasis> using the <option>w</option> flag to <command>comb</command>:
       </para>
 
       <literallayout>
@@ -213,8 +213,8 @@ region2.r/R
       </literallayout>
 
       <para>
-        The next step is to adjust the region1.r tree definition to reference the
-        non-region combination instead of region2.r:
+	      The next step is to adjust the <emphasis>region1.r</emphasis> tree definition to reference the
+	      non-region combination instead of <emphasis>region2.r</emphasis>:
       </para>
 
       <literallayout>
@@ -235,12 +235,12 @@ region1.r/R
 
       <para>
         Because the tree is manipulated as a Tcl list, we need glob compatibility mode to be
-        off on the MGED command line.  Once the tree is re-defined, region1.r no longer has
-        region2.r below it, but still defines the same physical volume via region2.r.c.
+	off on the MGED command line.  Once the tree is re-defined, <emphasis>region1.r</emphasis> no longer has
+	<emphasis>region2.r</emphasis> below it, but still defines the same physical volume via <emphasis>region2.r.c</emphasis>.
       </para>
 
       <para>
-        Optionally, the name region2.r.c can be changed to the name region2.c with
+         Optionally, the name <emphasis>region2.r.c</emphasis> can be changed to the name <emphasis>region2.c</emphasis> with
         the <command>mvall</command> command:
       </para>
 
@@ -302,8 +302,8 @@ misc.c/               spheres.c
       </literallayout>
 
       <para>
-	      Note that sph2.c is used in both spheres.c and misc.c, but sph1.c is only used in spheres.c
-	      In the <command>tops</command> command output, misc.c and spheres.c are the only top level objects.  Targeting spheres.c with the <option>f</option> option:
+	      Note that <emphasis>sph2.c</emphasis> is used in both <emphasis>spheres.c</emphasis> and <emphasis>misc.c</emphasis>, but <emphasis>sph1.c</emphasis> is only used in <emphasis>spheres.c</emphasis>
+	      In the <command>tops</command> command output, <emphasis>misc.c</emphasis> and <emphasis>spheres.c</emphasis> are the only top level objects.  Targeting <emphasis>spheres.c</emphasis> with the <option>f</option> option reworks the tree as follows:
       </para>
 
       <literallayout>
@@ -325,8 +325,8 @@ misc.c/               spheres.c
       </literallayout>
 
       <para>
-	      Notice that while spheres.c has indeed been flattened and no longer has the intermediate combinations over its solids,
-	      misc.c is still intact.  Notice also that while sph2.c was preserved, since it is used by misc.c, sph1.c was removed
+	      Notice that while <emphasis>spheres.c</emphasis> has indeed been flattened and no longer has the intermediate combinations over its solids,
+	      <emphasis>misc.c</emphasis> is still intact.  Notice also that while <emphasis>sph2.c</emphasis> was preserved, since it is used by <emphasis>misc.c</emphasis>, <emphasis>sph1.c</emphasis> was removed
 	      and does not show up in the <command>tops</command> command's output since it was no longer used by any object in the
 	      database.
       </para>
@@ -335,6 +335,157 @@ misc.c/               spheres.c
       </variablelist>
 
     </example>
+
+    <example><title>Example Of Comb Region Lifting.</title>
+
+      <variablelist>
+	<varlistentry>
+	  <term>
+		  The <option>l</option> option is useful in cases where many <option>w</option>
+		  type operations are needed. 
+          </term>
+
+	  <listitem>
+		  <para></para>
+		  <para>Suppose a geometry has the following structure:</para>
+		  <literallayout>
+			  <computeroutput>
+<prompt>mged&gt;</prompt> <userinput>make sph1.s sph</userinput>
+<prompt>mged&gt;</prompt> <userinput>make sph2.s sph</userinput>
+<prompt>mged&gt;</prompt> <userinput>r r1 u sph1.s</userinput>
+<prompt>mged&gt;</prompt> <userinput>r r2 u sph2.s</userinput>
+<prompt>mged&gt;</prompt> <userinput>comb assembly u r1 u r2</userinput>
+<prompt>mged&gt;</prompt> <userinput>r r3 u r1 - r2</userinput>
+<prompt>mged&gt;</prompt> <userinput>tops</userinput>
+assembly/           r3/R
+
+<prompt>mged&gt;</prompt> <userinput>tree assembly</userinput>
+assembly/
+        u r1/R
+                u sph1.s
+        u r2/R
+                u sph2.s
+<prompt>mged&gt;</prompt> <userinput>tree r3</userinput>
+r3/R
+        u r1/R
+                u sph1.s
+        - r2/R
+                u sph2.s
+      </computeroutput>
+      </literallayout>
+
+      <para>
+	      There are regions below region <emphasis>r3</emphasis>, which is not good modeling practice.
+	      The <option>l</option> option applied to <emphasis>r3</emphasis> makes <emphasis>r3</emphasis>
+	      a region that no longer has regions below it, while at the same time preserving the
+	      geometric volumes defined by all existing combs and preserving the meaning of
+	      the <emphasis>assembly</emphasis> region definitions:
+      </para>
+
+      <literallayout>
+      <computeroutput>
+<prompt>mged&gt;</prompt> <userinput>comb -l r3</userinput>
+<prompt>mged&gt;</prompt> <userinput>tree assembly</userinput>
+assembly/
+        u r1/R
+                u r1.c/
+                         u sph1.s
+        u r2/R
+                u r1.c/
+                         u sph1.s
+<prompt>mged&gt;</prompt> <userinput>tree r3</userinput>
+r3/R
+        u r1.c/
+                u sph1.s
+        - r2.c/
+                u sph2.s
+
+      </computeroutput>
+      </literallayout>
+	  </listitem>
+	</varlistentry>
+      </variablelist>
+
+    </example>
+
+
+    <example><title>Example Tree Structure That Will Prevent Successful Region Lifting.</title>
+
+      <variablelist>
+	<varlistentry>
+	  <term>
+		  While the <option>l</option> option can handle many tree configurations, there are
+		  some situations where manual intervention is required.  This example illustrates
+		  one such case.
+          </term>
+
+	  <listitem>
+		  <para></para>
+		  <para>Suppose a geometry has the following structure:</para>
+		  <literallayout>
+			  <computeroutput>
+<prompt>mged&gt;</prompt> <userinput>make sph1.s sph</userinput>
+<prompt>mged&gt;</prompt> <userinput>make sph2.s sph</userinput>
+<prompt>mged&gt;</prompt> <userinput>make sph3.s sph</userinput>
+<prompt>mged&gt;</prompt> <userinput>r r1 u sph1.s</userinput>
+<prompt>mged&gt;</prompt> <userinput>r r2 u sph2.s</userinput>
+<prompt>mged&gt;</prompt> <userinput>comb subassembly u r1 u r2</userinput>
+<prompt>mged&gt;</prompt> <userinput>r r3 u sph3.s - subassembly</userinput>
+<prompt>mged&gt;</prompt> <userinput>comb assembly u subassembly</userinput>
+<prompt>mged&gt;</prompt> <userinput>tops</userinput>
+assembly/           r3/R
+
+<prompt>mged&gt;</prompt> <userinput>tree assembly</userinput>
+assembly/
+        u subassembly/
+                u r1/R
+                        u sph1.s
+                u r2/R
+                        u sph2.s
+<prompt>mged&gt;</prompt> <userinput>tree r3</userinput>
+r3/R
+        u sph3.s
+        - subassembly/
+                u r1/R
+                        u sph1.s
+                u r2/R
+                        u sph2.s
+
+      </computeroutput>
+      </literallayout>
+
+      <para>
+	      This geometry has regions below region <emphasis>r3</emphasis>, which is not ideal.  However, attempting to
+	      use the <option>l</option> option on <emphasis>r3</emphasis> will produce the following error:
+      </para>
+
+      <literallayout>
+      <computeroutput>
+<prompt>mged&gt;</prompt> <userinput>comb -l spheres.c</userinput>
+Comb region lift failed - the following combs in the tree contain
+regions and are also used outside the tree of r3:
+
+subassembly, containing region r1
+subassembly, containing region r2
+
+The above combs must be reworked before region lifting the tree
+of r3 can succeed.
+      </computeroutput>
+      </literallayout>
+
+      <para>
+	      While <emphasis>r3</emphasis> has problems, the geometry tree under <emphasis>assembly</emphasis> is entirely correct.  For
+	      <emphasis>r3</emphasis> to become a toplevel region with no regions under it, the definition of <emphasis>subassembly</emphasis>
+	      would have to change too.  Because <emphasis>subassembly</emphasis> is used in the definition of <emphasis>assembly</emphasis>,
+	      as well as the definition of <emphasis>r3</emphasis>, changing <emphasis>subassembly</emphasis>'s contents would destroy the meaning of
+	      the (valid) <emphasis>assembly</emphasis> comb.  Hence, the command fails and does not change the geometry.
+      </para>
+	  </listitem>
+	</varlistentry>
+      </variablelist>
+
+    </example>
+
 
 
   </refsection>
