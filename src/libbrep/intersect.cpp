@@ -2855,6 +2855,58 @@ ON_Intersect(const ON_Surface* surfA,
 	}
     }
 
+    // Find the neighbors for every overlap segment.
+    ON_SimpleArray<bool> start_linked(overlaps.Count()), end_linked(overlaps.Count());
+    for (int i = 0; i < overlaps.Count(); i++) {
+	// Initialization
+	start_linked[i] = end_linked[i] = false;
+    }
+    for (int i = 0; i < overlaps.Count(); i++) {
+	if (!overlaps[i] || !overlaps[i]->m_curveA || !overlaps[i]->m_curveB || !overlaps[i]->m_curve3d)
+	    continue;
+	
+	if (overlaps[i]->m_curve3d->IsClosed() && overlaps[i]->m_curveA->IsClosed() && overlaps[i]->m_curveB->IsClosed()) {
+	    start_linked[i] = end_linked[i] = true;
+	}
+	
+	for (int j = i + 1; j < overlaps.Count(); j++) {
+	    if (!overlaps[j] || !overlaps[j]->m_curveA || !overlaps[j]->m_curveB || !overlaps[j]->m_curve3d)
+		continue;
+
+	    // Merge the curves that link together.
+	    if (overlaps[i]->m_curve3d->PointAtStart().DistanceTo(overlaps[j]->m_curve3d->PointAtEnd()) < intersection_tolerance
+		&& overlaps[i]->m_curveA->PointAtStart().DistanceTo(overlaps[j]->m_curveA->PointAtEnd()) < intersection_tolerance_A
+		&& overlaps[i]->m_curveB->PointAtStart().DistanceTo(overlaps[j]->m_curveB->PointAtEnd()) < intersection_tolerance_B) {
+		// end -- start -- end -- start
+		start_linked[i] = end_linked[j] = true;
+	    } else if (overlaps[i]->m_curve3d->PointAtEnd().DistanceTo(overlaps[j]->m_curve3d->PointAtStart()) < intersection_tolerance
+		       && overlaps[i]->m_curveA->PointAtEnd().DistanceTo(overlaps[j]->m_curveA->PointAtStart()) < intersection_tolerance_A
+		       && overlaps[i]->m_curveB->PointAtEnd().DistanceTo(overlaps[j]->m_curveB->PointAtStart()) < intersection_tolerance_B) {
+		// start -- end -- start -- end
+		start_linked[j] = end_linked[i] = true;
+	    } else if (overlaps[i]->m_curve3d->PointAtStart().DistanceTo(overlaps[j]->m_curve3d->PointAtStart()) < intersection_tolerance
+		       && overlaps[i]->m_curveA->PointAtStart().DistanceTo(overlaps[j]->m_curveA->PointAtStart()) < intersection_tolerance_A
+		       && overlaps[i]->m_curveB->PointAtStart().DistanceTo(overlaps[j]->m_curveB->PointAtStart()) < intersection_tolerance_B) {
+		// end -- start -- start -- end
+		start_linked[i] = start_linked[j] = true;
+	    } else if (overlaps[i]->m_curve3d->PointAtEnd().DistanceTo(overlaps[j]->m_curve3d->PointAtEnd()) < intersection_tolerance
+		       && overlaps[i]->m_curveA->PointAtEnd().DistanceTo(overlaps[j]->m_curveA->PointAtEnd()) < intersection_tolerance_A
+		       && overlaps[i]->m_curveB->PointAtEnd().DistanceTo(overlaps[j]->m_curveB->PointAtEnd()) < intersection_tolerance_B) {
+		// start -- end -- end -- start
+		end_linked[i] = end_linked[j] = true;
+	    }
+	}
+    }
+
+    for (int i = 0; i < overlaps.Count(); i++) {
+	if (!overlaps[i] || !overlaps[i]->m_curveA || !overlaps[i]->m_curveB || !overlaps[i]->m_curve3d)
+	    continue;
+	if (!start_linked[i] || !end_linked[i]) {
+	    delete overlaps[i];
+	    overlaps[i] = NULL;
+	}
+    }
+
     for (int i = 0; i < overlaps.Count(); i++) {
 	if (!overlaps[i] || !overlaps[i]->m_curveA || !overlaps[i]->m_curveB || !overlaps[i]->m_curve3d)
 	    continue;
