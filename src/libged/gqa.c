@@ -1921,7 +1921,7 @@ terminate_check(struct cstate *state)
 	    /* since we've found an overlap, we can quit */
 	    return 0;
 	} else {
-	    bu_vls_printf(_ged_current_gedp->ged_result_str, "overlaps list is empty\n");
+	    bu_vls_printf(_ged_current_gedp->ged_result_str, "overlaps list at %gmm is empty\n", gridSpacing);
 	}
     }
     if ((analysis_flags & ANALYSIS_GAP)) {
@@ -2016,9 +2016,9 @@ summary_reports(struct cstate *state)
     struct region *regp;
 
     if (multiple_analyses)
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "Summaries:\n");
+	bu_vls_printf(_ged_current_gedp->ged_result_str, "Summaries (%gmm grid spacing):\n", gridSpacing*2);
     else
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "Summary:\n");
+	bu_vls_printf(_ged_current_gedp->ged_result_str, "Summary (%gmm grid spacing):\n", gridSpacing*2);
 
     if (analysis_flags & ANALYSIS_WEIGHT) {
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "Weight:\n");

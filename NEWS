@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2013-0X-XX  Release 7.24.2                                     ---
 ----------------------------------------------------------------------
 
+* print current grid information in gqa output - Cliff Yapp
 * added -f option for flattening combs to 'comb' command - Cliff Yapp
 * added support for boolean op filtering in search - Cliff Yapp
 * added new g-raw geometry converter - Jon Engbert, Daniel Roßberg
