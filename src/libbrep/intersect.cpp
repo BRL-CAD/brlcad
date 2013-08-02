@@ -621,21 +621,36 @@ ON_Intersect(const ON_3dPoint& pointA,
 	     const ON_Curve& curveB,
 	     ON_ClassArray<ON_PX_EVENT>& x,
 	     double tolerance,
-	     const ON_Interval* curveB_domain)
+	     const ON_Interval* curveB_domain,
+	     Subcurve* treeB)
 {
     if (tolerance <= 0.0)
 	tolerance = PCI_DEFAULT_TOLERANCE;
     check_domain(curveB_domain, curveB.Domain(), "curveB_domain");
 
-    Subcurve root;
-    if (!build_curve_root(&curveB, curveB_domain, root))
-	return false;
+    Subcurve* root;
+    if (treeB != NULL)
+	root = treeB;
+    else {
+	root = new Subcurve;
+	if (root == NULL)
+	    return false;
+    }
 
-    if (!root.IsPointIn(pointA, tolerance))
+    if (!build_curve_root(&curveB, curveB_domain, *root)) {
+	if (treeB == NULL)
+	    delete root;
 	return false;
+    }
+
+    if (!root->IsPointIn(pointA, tolerance)) {
+	if (treeB == NULL)
+	    delete root;
+	return false;
+    }
 
     std::vector<Subcurve*> candidates, next_candidates;
-    candidates.push_back(&root);
+    candidates.push_back(root);
 
     // Find the sub-curves that are possibly intersected with the point.
     for (int i = 0; i < MAX_PCI_DEPTH; i++) {
@@ -682,10 +697,14 @@ ON_Intersect(const ON_3dPoint& pointA,
 	    Event.m_Mid = (pointA + Event.m_B) * 0.5;
 	    Event.m_radius = Event.m_B.DistanceTo(pointA) * 0.5;
 	    x.Append(Event);
+	    if (treeB == NULL)
+		delete root;
 	    return true;
 	}
     }
     // All candidates have no intersection
+    if (treeB == NULL)
+	delete root;
     return false;
 }
 
@@ -695,7 +714,12 @@ ON_Intersect(const ON_3dPoint& pointA,
  *
  * approach:
  *
- * - Use brlcad::get_closest_point() to compute the closest point on
+ * - Sub-divide the surface, calculating bounding boxes.
+ *
+ * - If the bounding box intersects with the point, go deeper until
+ *   we reach the maximal depth or the sub-surface is planar
+ *
+ * - Use Newton-Raphson iterations to compute the closest point on
  *   the surface to that point.
  *
  * - If the closest point is within the given tolerance, there is an
@@ -768,7 +792,7 @@ ON_Intersect(const ON_3dPoint& pointA,
 	     double tolerance,
 	     const ON_Interval* surfaceB_udomain,
 	     const ON_Interval* surfaceB_vdomain,
-	     brlcad::SurfaceTree* UNUSED(tree))
+	     Subsurface* treeB)
 {
     if (tolerance <= 0.0)
 	tolerance = PCI_DEFAULT_TOLERANCE;
@@ -777,15 +801,29 @@ ON_Intersect(const ON_3dPoint& pointA,
     u_domain = check_domain(surfaceB_udomain, surfaceB.Domain(0), "surfaceB_udomain");
     v_domain = check_domain(surfaceB_vdomain, surfaceB.Domain(1), "surfaceB_vdomain");
 
-    Subsurface root;
-    if (!build_surface_root(&surfaceB, &u_domain, &v_domain, root))
-	return false;
+    Subsurface* root;
+    if (treeB != NULL)
+	root = treeB;
+    else {
+	root = new Subsurface;
+	if (root == NULL)
+	    return false;
+    }
 
-    if (!root.IsPointIn(pointA, tolerance))
+    if (!build_surface_root(&surfaceB, &u_domain, &v_domain, *root)) {
+	if (treeB == NULL)
+	    delete root;
 	return false;
+    }
+
+    if (!root->IsPointIn(pointA, tolerance)) {
+	if (treeB == NULL)
+	    delete root;
+	return false;
+    }
 
     std::vector<Subsurface*> candidates, next_candidates;
-    candidates.push_back(&root);
+    candidates.push_back(root);
 
     // Find the sub-curves that are possibly intersected with the point.
     for (int i = 0; i < MAX_PSI_DEPTH; i++) {
@@ -819,11 +857,15 @@ ON_Intersect(const ON_3dPoint& pointA,
 	    Event.m_Mid = (pointA + Event.m_B) * 0.5;
 	    Event.m_radius = Event.m_B.DistanceTo(pointA) * 0.5;
 	    x.Append(Event);
+	    if (treeB == NULL)
+		delete root;
 	    return true;
 	}
     }
 
     // All candidates have no intersection
+    if (treeB == NULL)
+	delete root;
     return false;
 }
 
@@ -953,7 +995,9 @@ ON_Intersect(const ON_Curve* curveA,
 	     double intersection_tolerance,
 	     double overlap_tolerance,
 	     const ON_Interval* curveA_domain,
-	     const ON_Interval* curveB_domain)
+	     const ON_Interval* curveB_domain,
+	     Subcurve* treeA,
+	     Subcurve* treeB)
 {
     if (curveA == NULL || curveB == NULL)
 	return 0;
@@ -1025,26 +1069,47 @@ ON_Intersect(const ON_Curve* curveA,
 	    return 0;
     }
 
-    Subcurve rootA, rootB;
-    if (!build_curve_root(curveA, curveA_domain, rootA))
+    Subcurve *rootA, *rootB;
+    if (treeA == NULL) {
+	rootA = new Subcurve;
+	if (rootA == NULL)
+	    return 0;
+    } else
+	rootA = treeA;
+    if (treeB == NULL) {
+	rootB = new Subcurve;
+	if (rootB == NULL) {
+	    if (treeA == NULL) delete rootA;
+	    return 0;
+	}
+    } else
+	rootB = treeB;
+
+    if (!build_curve_root(curveA, curveA_domain, *rootA)) {
+	if (treeA == NULL) delete rootA;
+	if (treeB == NULL) delete rootB;
 	return 0;
-    if (!build_curve_root(curveB, curveB_domain, rootB))
+    }
+    if (!build_curve_root(curveB, curveB_domain, *rootB)) {
+	if (treeA == NULL) delete rootA;
+	if (treeB == NULL) delete rootB;
 	return 0;
+    }
 
     // We adjust the tolerance from 3D scale to respective 2D scales.
-    double l = rootA.m_curve->BoundingBox().Diagonal().Length();
+    double l = rootA->m_curve->BoundingBox().Diagonal().Length();
     double dl = curveA_domain ? curveA_domain->Length() : curveA->Domain().Length();
     if (!ON_NearZero(l))
 	t1_tolerance = intersection_tolerance/l*dl;
-    l = rootB.m_curve->BoundingBox().Diagonal().Length();
+    l = rootB->m_curve->BoundingBox().Diagonal().Length();
     dl = curveB_domain ? curveB_domain->Length() : curveB->Domain().Length();
     if (!ON_NearZero(l))
 	t2_tolerance = intersection_tolerance/l*dl;
 
     typedef std::vector<std::pair<Subcurve*, Subcurve*> > NodePairs;
     NodePairs candidates, next_candidates;
-    if (rootA.Intersect(rootB, intersection_tolerance))
-	candidates.push_back(std::make_pair(&rootA, &rootB));
+    if (rootA->Intersect(*rootB, intersection_tolerance))
+	candidates.push_back(std::make_pair(rootA, rootB));
 
     // Use sub-division and bounding box intersections first.
     for (int h = 0; h <= MAX_CCI_DEPTH; h++) {
@@ -1315,6 +1380,8 @@ ON_Intersect(const ON_Curve* curveA,
 	    x.Append(points[i]);
     }
 
+    if (treeA == NULL) delete rootA;
+    if (treeB == NULL) delete rootB;
     return x.Count() - original_count;
 }
 
@@ -1359,7 +1426,7 @@ ON_Intersect(const ON_Curve* curveA,
 
 
 void
-newton_csi(double& t, double& u, double& v, const ON_Curve* curveA, const ON_Surface* surfB, double intersection_tolerance, brlcad::SurfaceTree* tree)
+newton_csi(double& t, double& u, double& v, const ON_Curve* curveA, const ON_Surface* surfB, double intersection_tolerance, Subsurface* tree)
 {
     // Equations:
     //   x_a(t) - x_b(u,v) = 0
@@ -1422,7 +1489,9 @@ ON_Intersect(const ON_Curve* curveA,
 	     const ON_Interval* curveA_domain,
 	     const ON_Interval* surfaceB_udomain,
 	     const ON_Interval* surfaceB_vdomain,
-	     ON_CurveArray* overlap2d)
+	     ON_CurveArray* overlap2d,
+	     Subcurve* treeA,
+	     Subsurface* treeB)
 {
     if (curveA == NULL || surfaceB == NULL)
 	return 0;
@@ -1464,26 +1533,40 @@ ON_Intersect(const ON_Curve* curveA,
 	    return 0;
     }
 
-    Subcurve rootA;
-    Subsurface rootB;
-    if (!build_curve_root(curveA, curveA_domain, rootA))
-	return 0;
-    if (!build_surface_root(surfaceB, surfaceB_udomain, surfaceB_vdomain, rootB))
-	return 0;
+    Subcurve* rootA;
+    Subsurface* rootB;
+    if (treeA == NULL) {
+	rootA = new Subcurve;
+	if (rootA == NULL)
+	    return 0;
+    } else
+	rootA = treeA;
+    if (treeB == NULL) {
+	rootB = new Subsurface;
+	if (rootB == NULL) {
+	    if (treeA == NULL) delete rootA;
+	    return 0;
+	}
+    } else
+	rootB = treeB;
 
-    // We need ON_BrepFace for get_closest_point().
-    // This is used in point-surface intersections, in case we build the
-    // tree again and again.
-    ON_Brep *brep = surfaceB->BrepForm();
-    if (!brep) return 0;
-    brlcad::SurfaceTree *tree = new brlcad::SurfaceTree(brep->Face(0), false, MAX_PSI_DEPTH);
+    if (!build_curve_root(curveA, curveA_domain, *rootA)) {
+	if (treeA == NULL) delete rootA;
+	if (treeB == NULL) delete rootB;
+	return 0;
+    }
+    if (!build_surface_root(surfaceB, surfaceB_udomain, surfaceB_vdomain, *rootB)) {
+	if (treeA == NULL) delete rootA;
+	if (treeB == NULL) delete rootB;
+	return 0;
+    }
 
     // We adjust the tolerance from 3D scale to respective 2D scales.
-    double l = rootA.m_curve->BoundingBox().Diagonal().Length();
+    double l = rootA->m_curve->BoundingBox().Diagonal().Length();
     double dl = curveA_domain ? curveA_domain->Length() : curveA->Domain().Length();
     if (!ON_NearZero(l))
 	t_tolerance = intersection_tolerance/l*dl;
-    l = rootB.m_surf->BoundingBox().Diagonal().Length();
+    l = rootB->m_surf->BoundingBox().Diagonal().Length();
     dl = surfaceB_udomain ? surfaceB_udomain->Length() : surfaceB->Domain(0).Length();
     if (!ON_NearZero(l))
 	u_tolerance = intersection_tolerance/l*dl;
@@ -1493,8 +1576,8 @@ ON_Intersect(const ON_Curve* curveA,
 
     typedef std::vector<std::pair<Subcurve*, Subsurface*> > NodePairs;
     NodePairs candidates, next_candidates;
-    if (rootB.Intersect(rootA, intersection_tolerance))
-	candidates.push_back(std::make_pair(&rootA, &rootB));
+    if (rootB->Intersect(*rootA, intersection_tolerance))
+	candidates.push_back(std::make_pair(rootA, rootB));
 
     // Use sub-division and bounding box intersections first.
     for (int h = 0; h <= MAX_CSI_DEPTH; h++) {
@@ -1559,7 +1642,7 @@ ON_Intersect(const ON_Curve* curveA,
 			// First, we check the endpoints of the line segment
 			ON_ClassArray<ON_PX_EVENT> px_event1, px_event2;
 			int intersections = 0;
-			if (ON_Intersect(line.from, *surfaceB, px_event1, intersection_tolerance, 0, 0, tree)) {
+			if (ON_Intersect(line.from, *surfaceB, px_event1, intersection_tolerance, 0, 0, treeB)) {
 			    Event.m_A[intersections] = line.from;
 			    Event.m_B[intersections] = px_event1[0].m_B;
 			    Event.m_a[intersections] = i->first->m_t.Min();
@@ -1567,7 +1650,7 @@ ON_Intersect(const ON_Curve* curveA,
 			    Event.m_b[2*intersections+1] = px_event1[0].m_b[1];
 			    intersections++;
 			}
-			if (ON_Intersect(line.to, *surfaceB, px_event2, intersection_tolerance, 0, 0, tree)) {
+			if (ON_Intersect(line.to, *surfaceB, px_event2, intersection_tolerance, 0, 0, treeB)) {
 			    Event.m_A[intersections] = line.to;
 			    Event.m_B[intersections] = px_event2[0].m_B;
 			    Event.m_a[intersections] = i->first->m_t.Max();
@@ -1666,7 +1749,7 @@ ON_Intersect(const ON_Curve* curveA,
 			continue;
 		    ON_3dPoint intersection = line.from + line.Direction()*line_t;
 		    ON_ClassArray<ON_PX_EVENT> px_event;
-		    if (!ON_Intersect(intersection, *(i->second->m_surf), px_event, intersection_tolerance, 0, 0, tree))
+		    if (!ON_Intersect(intersection, *(i->second->m_surf), px_event, intersection_tolerance, 0, 0, treeB))
 			continue;
 
 		    ON_X_EVENT Event;
@@ -1692,10 +1775,10 @@ ON_Intersect(const ON_Curve* curveA,
 	// point)
 	double u1 = i->second->m_u.Mid(), v1 = i->second->m_v.Mid();
 	double t1 = i->first->m_t.Min();
-	newton_csi(t1, u1, v1, curveA, surfaceB, intersection_tolerance, tree);
+	newton_csi(t1, u1, v1, curveA, surfaceB, intersection_tolerance, treeB);
 	double u2 = i->second->m_u.Mid(), v2 = i->second->m_v.Mid();
 	double t2 = i->first->m_t.Max();
-	newton_csi(t2, u2, v2, curveA, surfaceB, intersection_tolerance, tree);
+	newton_csi(t2, u2, v2, curveA, surfaceB, intersection_tolerance, treeB);
 
 	if (isnan(u1) || isnan(v1) || isnan(t1)) {
 	    u1 = u2; v1 = v2; t1 = t2;
@@ -1762,7 +1845,7 @@ ON_Intersect(const ON_Curve* curveA,
 		    ON_3dPoint test_point = curveA->PointAt(t1 + (t2-t1)*j*strike);
 		    ON_ClassArray<ON_PX_EVENT> psi_x;
 		    // Use point-surface intersection
-		    if (!ON_Intersect(test_point, *surfaceB, psi_x, overlap_tolerance, 0, 0, tree))
+		    if (!ON_Intersect(test_point, *surfaceB, psi_x, overlap_tolerance, 0, 0, treeB))
 			break;
 		}
 		if (j == CSI_OVERLAP_TEST_POINTS) {
@@ -1899,8 +1982,8 @@ ON_Intersect(const ON_Curve* curveA,
 	}
     }
 
-    delete brep;
-    delete tree;
+    if (treeA == NULL) delete rootA;
+    if (treeB == NULL) delete rootB;
     return x.Count() - original_count;
 }
 
@@ -2404,7 +2487,9 @@ ON_Intersect(const ON_Surface* surfA,
 	     const ON_Interval* surfaceA_udomain,
 	     const ON_Interval* surfaceA_vdomain,
 	     const ON_Interval* surfaceB_udomain,
-	     const ON_Interval* surfaceB_vdomain)
+	     const ON_Interval* surfaceB_vdomain,
+	     Subsurface* treeA,
+	     Subsurface* treeB)
 {
     if (surfA == NULL || surfB == NULL) {
 	return 0;
@@ -2429,33 +2514,41 @@ ON_Intersect(const ON_Surface* surfA,
      */
     typedef std::vector<std::pair<Subsurface*, Subsurface*> > NodePairs;
     NodePairs candidates, next_candidates;
-    Subsurface rootA, rootB;
-    build_surface_root(surfA, surfaceA_udomain, surfaceA_vdomain, rootA);
-    build_surface_root(surfB, surfaceB_udomain, surfaceB_vdomain, rootB);
-    if (rootA.Intersect(rootB, intersection_tolerance))
-	candidates.push_back(std::make_pair(&rootA, &rootB));
-    else
-	return 0;
+    Subsurface *rootA, *rootB;
+    if (treeA == NULL) {
+	rootA = new Subsurface;
+	if (rootA == NULL)
+	    return 0;
+    } else
+	rootA = treeA;
+    if (treeB == NULL) {
+	rootB = new Subsurface;
+	if (rootB == NULL) {
+	    if (treeA == NULL) delete rootA;
+	    return 0;
+	}
+    } else
+	rootB = treeB;
 
-    // Generate brlcad::SurfaceTree() for point-surface intersections.
-    ON_Brep *brepA = surfA->BrepForm();
-    if (!brepA) return 0;
-    brlcad::SurfaceTree *treeA = new brlcad::SurfaceTree(brepA->Face(0), false, MAX_PSI_DEPTH);
-
-    ON_Brep *brepB = surfB->BrepForm();
-    if (!brepB) {
-	delete brepA;
-	delete treeA;
+    if (!build_surface_root(surfA, surfaceA_udomain, surfaceA_vdomain, *rootA)
+	|| !build_surface_root(surfB, surfaceB_udomain, surfaceB_vdomain, *rootB)) {
+	if (treeA == NULL) delete rootA;
+	if (treeB == NULL) delete rootB;
+    }
+    if (rootA->Intersect(*rootB, intersection_tolerance))
+	candidates.push_back(std::make_pair(rootA, rootB));
+    else {
+	if (treeA == NULL) delete rootA;
+	if (treeB == NULL) delete rootB;
 	return 0;
     }
-    brlcad::SurfaceTree *treeB = new brlcad::SurfaceTree(brepB->Face(0), false, MAX_PSI_DEPTH);
 
     // We adjust the tolerance from 3D scale to respective 2D scales.
     double intersection_tolerance_A = intersection_tolerance;
     double intersection_tolerance_B = intersection_tolerance;
     double fitting_tolerance_A = fitting_tolerance;
     double fitting_tolerance_B = fitting_tolerance;
-    double l = rootA.m_surf->BoundingBox().Diagonal().Length();
+    double l = rootA->m_surf->BoundingBox().Diagonal().Length();
     double ul = surfaceA_udomain ? surfaceA_udomain->Length() : surfA->Domain(0).Length();
     double vl = surfaceA_vdomain ? surfaceA_vdomain->Length() : surfA->Domain(1).Length();
     double dl = ON_2dVector(ul, vl).Length();
@@ -2491,7 +2584,7 @@ ON_Intersect(const ON_Surface* surfA,
     for (int i = 0; i < 4; i++) {
 	const ON_Surface* surf1 = i >= 2 ? surfB : surfA;
 	const ON_Surface* surf2 = i >= 2 ? surfA : surfB;
-	brlcad::SurfaceTree* tree = i >= 2 ? treeA : treeB;
+	Subsurface* tree = i >= 2 ? treeA : treeB;
 	ON_2dPointArray& ptarray1 = i >= 2 ? tmp_curvest : tmp_curveuv;
 	ON_2dPointArray& ptarray2 = i >= 2 ? tmp_curveuv : tmp_curvest;
 	int dir = 1 - i%2;
@@ -2608,14 +2701,12 @@ ON_Intersect(const ON_Surface* surfA,
 		ON_ClassArray<ON_PX_EVENT> e1, e2, e3, e4;
 		ON_2dPoint uv;
 		ON_2dPoint st;
-		if (brlcad::get_closest_point(uv, brepA->Face(0), x_event[k].m_A[0], treeA)
-		    && brlcad::get_closest_point(st, brepB->Face(0), x_event[k].m_B[0], treeB)) {
-		    // get_closest_point() have bugs. Before fixing it, we use this to detect an error and "fix" it.
-		    if (surfA->PointAt(uv.x, uv.y).DistanceTo(x_event[k].m_A[0]) > surfA->PointAt(st.x, st.y).DistanceTo(x_event[k].m_A[0]))
-			uv = st;
-		    if (surfB->PointAt(st.x, st.y).DistanceTo(x_event[k].m_B[0]) > surfB->PointAt(uv.x, uv.y).DistanceTo(x_event[k].m_B[0]))
-			st = uv;
+		ON_ClassArray<ON_PX_EVENT> pe1, pe2;
+		if (ON_Intersect(x_event[k].m_A[0], *surfA, pe1, intersection_tolerance_A, 0, 0, treeA)
+		    && ON_Intersect(x_event[k].m_B[0], *surfB, pe2, intersection_tolerance_B, 0, 0, treeB)) {
 		    // Pull the 3D curve back to the 2D space
+		    uv = pe1[0].m_b;
+		    st = pe2[0].m_b;
 		    if (ON_Intersect(uv, *(overlaps[i]->m_curveA), e1, intersection_tolerance_A)
 			&& ON_Intersect(st, *(overlaps[i]->m_curveB), e2, intersection_tolerance_B)) {
 			param.x = x_event[k].m_a[0];
@@ -3118,10 +3209,8 @@ ON_Intersect(const ON_Surface* surfA,
     bu_log("%d points on the intersection curves.\n", curvept.Count());
 
     if (!curvept.Count()) {
-	delete brepA;
-	delete treeA;
-	delete brepB;
-	delete treeB;
+	if (treeA == NULL) delete rootA;
+	if (treeB == NULL) delete rootB;
 
 	// Should not return 0 as there might be overlap events.
 	return x.Count() - original_count;
@@ -3134,7 +3223,7 @@ ON_Intersect(const ON_Surface* surfA,
     // (n is the number of points generated above)
 
     // We need to automatically generate a threshold.
-    double max_dis = std::min(rootA.m_surf->BoundingBox().Diagonal().Length(), rootB.m_surf->BoundingBox().Diagonal().Length()) * 0.1;
+    double max_dis = std::min(rootA->m_surf->BoundingBox().Diagonal().Length(), rootB->m_surf->BoundingBox().Diagonal().Length()) * 0.1;
 
     double max_dis_u = surfA->Domain(0).Length() * 0.05;
     double max_dis_v = surfA->Domain(1).Length() * 0.05;
@@ -3468,10 +3557,8 @@ ON_Intersect(const ON_Surface* surfA,
 	}
     }
 
-    delete brepA;
-    delete treeA;
-    delete brepB;
-    delete treeB;
+    if (treeA == NULL) delete rootA;
+    if (treeB == NULL) delete rootB;
     return x.Count() - original_count;
 }
 

@@ -1733,60 +1733,10 @@ extern BREP_EXPORT void
 DumpSSXEvent(ON_SSX_EVENT &x, ON_TextLog &text_log);
 
 /**
- * An overload of ON_Intersect for surface-surface intersection.
- *
- * Description:
- *   Intersect surfaceA with surfaceB.
- *
- * Parameters:
- *   surfaceA - [in]
- *
- *   surfaceB - [in]
- *
- *   x - [out]
- *     Intersection events are appended to this array.
- *
- *   intersection_tolerance - [in]
- *     If the input intersection_tolerance <= 0.0, then 0.001 is used.
- *
- *   overlap_tolerance - [in]
- *     If positive, then overlap_tolerance must be
- *     >= intersection_tolerance and is used to test for
- *     overlapping regions. If the input
- *     overlap_tolerance <= 0.0, then 2*intersection_tolerance
- *     is used.
- *
- *   fitting_tolerance - [in]
- *     If fitting_tolerance is > 0 and >= intersection_tolerance,
- *     then the intersection curves are fit to this tolerance.
- *     If input fitting_tolerance <= 0.0 or < intersection_tolerance,
- *     then intersection_tolerance is used.
- *
- *   surfaceA_udomain - [in]
- *     optional restriction on surfaceA u domain
- *   surfaceA_vdomain - [in]
- *     optional restriction on surfaceA v domain
- *
- *   surfaceB_udomain - [in]
- *     optional restriction on surfaceB u domain
- *   surfaceB_vdomain - [in]
- *     optional restriction on surfaceB v domain
- *
- * Returns:
- *    Number of intersection events appended to x. -1 for error.
+ * Sub-division support for curves and surfaces
  */
-
-extern BREP_EXPORT int
-ON_Intersect(const ON_Surface* surfA,
-	     const ON_Surface* surfB,
-	     ON_ClassArray<ON_SSX_EVENT>& x,
-	     double intersection_tolerance = 0.0,
-	     double overlap_tolerance = 0.0,
-	     double fitting_tolerance = 0.0,
-	     const ON_Interval* surfaceA_udomain = 0,
-	     const ON_Interval* surfaceA_vdomain = 0,
-	     const ON_Interval* surfaceB_udomain = 0,
-	     const ON_Interval* surfaceB_vdomain = 0);
+class BREP_EXPORT Subcurve;
+class BREP_EXPORT Subsurface;
 
 /* The ON_PX_EVENT class is used to report point-point, point-curve
  * and point-surface intersection events.
@@ -1918,6 +1868,9 @@ ON_Intersect(const ON_3dPoint& pointA,
  *   curveB_domain - [in]
  *     optional restriction on curveB t domain
  *
+ *   treeB - [in]
+ *     optional curve tree for curveB, to avoid re-computation
+ *
  * Returns:
  *    True for an intersection. False for no intersection.
  */
@@ -1926,7 +1879,8 @@ ON_Intersect(const ON_3dPoint& pointA,
 	     const ON_Curve& curveB,
 	     ON_ClassArray<ON_PX_EVENT>& x,
 	     double tolerance = 0.0,
-	     const ON_Interval* curveB_domain = 0);
+	     const ON_Interval* curveB_domain = 0,
+	     Subcurve* treeB = 0);
 
 /**
  * An overload of ON_Intersect for point-surface intersection.
@@ -1951,7 +1905,7 @@ ON_Intersect(const ON_3dPoint& pointA,
  *   surfaceB_vdomain - [in]
  *     optional restriction on surfaceB v domain
  *
- *   tree - [in]
+ *   treeB - [in]
  *     optional surface tree for surfaceB, to avoid re-computation
  *
  * Returns:
@@ -1964,7 +1918,7 @@ ON_Intersect(const ON_3dPoint& pointA,
 	     double tolerance = 0.0,
 	     const ON_Interval* surfaceB_udomain = 0,
 	     const ON_Interval* surfaceB_vdomain = 0,
-	     brlcad::SurfaceTree* tree = 0);
+	     Subsurface* treeB = 0);
 
 /**
  * An overload of ON_Intersect for curve-curve intersection.
@@ -1995,6 +1949,12 @@ ON_Intersect(const ON_3dPoint& pointA,
  *
  *   curveB_domain - [in] optional restriction on curveB domain
  *
+ *   treeA - [in]
+ *     optional curve tree for curveA, to avoid re-computation
+ *
+ *   treeB - [in]
+ *     optional curve tree for curveB, to avoid re-computation
+ *
  * Returns:
  *    Number of intersection events appended to x.
  */
@@ -2005,7 +1965,9 @@ ON_Intersect(const ON_Curve* curveA,
 	     double intersection_tolerance = 0.0,
 	     double overlap_tolerance = 0.0,
 	     const ON_Interval* curveA_domain = 0,
-	     const ON_Interval* curveB_domain = 0);
+	     const ON_Interval* curveB_domain = 0,
+	     Subcurve* treeA = 0,
+	     Subcurve* treeB = 0);
 
 /**
  * An overload of ON_Intersect for curve-surface intersection.
@@ -2051,6 +2013,12 @@ ON_Intersect(const ON_Curve* curveA,
  *     return the 2D overlap curves on surfaceB. overlap2d[i] is the
  *     curve for event x[i].
  *
+ *   treeA - [in]
+ *     optional curve tree for curveA, to avoid re-computation
+ *
+ *   treeB - [in]
+ *     optional surface tree for surfaceB, to avoid re-computation
+ *
  * Returns:
  *    Number of intersection events appended to x.
  */
@@ -2063,7 +2031,75 @@ ON_Intersect(const ON_Curve* curveA,
 	     const ON_Interval* curveA_domain = 0,
 	     const ON_Interval* surfaceB_udomain = 0,
 	     const ON_Interval* surfaceB_vdomain = 0,
-	     ON_CurveArray* overlap2d = 0);
+	     ON_CurveArray* overlap2d = 0,
+	     Subcurve* treeA = 0,
+	     Subsurface* treeB = 0);
+
+/**
+ * An overload of ON_Intersect for surface-surface intersection.
+ *
+ * Description:
+ *   Intersect surfaceA with surfaceB.
+ *
+ * Parameters:
+ *   surfaceA - [in]
+ *
+ *   surfaceB - [in]
+ *
+ *   x - [out]
+ *     Intersection events are appended to this array.
+ *
+ *   intersection_tolerance - [in]
+ *     If the input intersection_tolerance <= 0.0, then 0.001 is used.
+ *
+ *   overlap_tolerance - [in]
+ *     If positive, then overlap_tolerance must be
+ *     >= intersection_tolerance and is used to test for
+ *     overlapping regions. If the input
+ *     overlap_tolerance <= 0.0, then 2*intersection_tolerance
+ *     is used.
+ *
+ *   fitting_tolerance - [in]
+ *     If fitting_tolerance is > 0 and >= intersection_tolerance,
+ *     then the intersection curves are fit to this tolerance.
+ *     If input fitting_tolerance <= 0.0 or < intersection_tolerance,
+ *     then intersection_tolerance is used.
+ *
+ *   surfaceA_udomain - [in]
+ *     optional restriction on surfaceA u domain
+ *
+ *   surfaceA_vdomain - [in]
+ *     optional restriction on surfaceA v domain
+ *
+ *   surfaceB_udomain - [in]
+ *     optional restriction on surfaceB u domain
+ *
+ *   surfaceB_vdomain - [in]
+ *     optional restriction on surfaceB v domain
+ *
+ *   treeA - [in]
+ *     optional surface tree for surfaceA, to avoid re-computation
+ *
+ *   treeB - [in]
+ *     optional surface tree for surfaceB, to avoid re-computation
+ *
+ * Returns:
+ *    Number of intersection events appended to x. -1 for error.
+ */
+
+extern BREP_EXPORT int
+ON_Intersect(const ON_Surface* surfA,
+	     const ON_Surface* surfB,
+	     ON_ClassArray<ON_SSX_EVENT>& x,
+	     double intersection_tolerance = 0.0,
+	     double overlap_tolerance = 0.0,
+	     double fitting_tolerance = 0.0,
+	     const ON_Interval* surfaceA_udomain = 0,
+	     const ON_Interval* surfaceA_vdomain = 0,
+	     const ON_Interval* surfaceB_udomain = 0,
+	     const ON_Interval* surfaceB_vdomain = 0,
+	     Subsurface* treeA = 0,
+	     Subsurface* treeB = 0);
 
 } /* extern C++ */
 #endif
