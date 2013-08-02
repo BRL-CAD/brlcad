@@ -23,4 +23,4 @@ paper:
 clean: distclean
 
 distclean:
-	-rm $(TABLE_MM) $(PRODS) *~
+	-rm $(TABLE_MM) $(PRODS) *~ t tt
