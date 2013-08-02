@@ -216,39 +216,11 @@ set(documentation_mged_old_DATA
   )
 ADD_DOC(documentation_mged_old_DATA mged_old)
 
-set(burst_DOCS
-  burst/Funcs
-  burst/Makefile
-  burst/Make-docs.sh
-  burst/Make-tables.sh
-  burst/README
-  burst/abstract.mm
-  burst/bpl.tbl
-  burst/cmap.tbl
-  burst/commands.tbl
-  burst/defs.mm
-  burst/fb.tbl
-  burst/hmkeys.tbl
-  burst/ids.tbl
-  burst/introduction.mm
-  burst/macros.mm
-  burst/outline.mm
-  burst/overlap.tbl
-  burst/paper.mm
-  burst/plot.tbl
-  burst/screen.tbl
-  burst/scrollmenu.tbl
-  burst/shotlines.tbl
-  burst/submenu.tbl
-  burst/title.mm
-  burst/topmenu.tbl
-  )
-
 configure_file(pad_file.xml.in ${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml @ONLY)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml DESTINATION ${DOC_DIR})
 
 CMAKEFILES(pad_file.xml.in STARTERS)
-CMAKEFILES(${burst_DOCS})
+CMAKEFILES(burst)
 
 # Local Variables:
 # tab-width: 8
