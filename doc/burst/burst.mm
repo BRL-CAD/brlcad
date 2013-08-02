@@ -6,7 +6,6 @@
 .so macros.mm
 .H 1 "User Interface"
 .H 2 "Program Invocation"
-.P
 In the examples below,
 the `$' symbol represents the \*(U)
 shell prompt.
@@ -48,7 +47,6 @@ The more advanced user can circumvent the menu system by using a
 text editor to prepare input files.
 .sp
 .H 2 "Command Input"
-.P
 All commands to \*(b) are composed of one or more words connected by hyphens
 and each command may require one or more arguments that must be separated by
 either spaces or tabs.
@@ -74,7 +72,6 @@ refer to sections 2 through 7.
 .sp
 .DE
 .H 2 "Screen Layout"
-.P
 In interactive mode,
 the screen is divided into sections of one or more rows (lines) of text.
 .DF
@@ -122,7 +119,6 @@ but uses the terminal capabilities information database to control the
 manipulation of text characters.
 .sp
 .H 2 "Hierarchical Menus"
-.P
 Table 2 shows the key strokes used to manipulate the menus.
 .DF
 .sp
@@ -169,7 +165,6 @@ the \fIcurrent\fR item to be the same as it was when that menu was last exited.
 If a menu has never been used,
 the top item will initially be \fIcurrent\fR.
 .H 2 "Scrolling Region"
-.P
 When running the \*(b) program interactively,
 all diagnostic output is, by default, printed in a scrolling text window
 at the bottom of the display.
@@ -923,7 +918,6 @@ for instance,
 how many rays hit zero, one, two, three, etc. components.
 .Ce
 .H 1 Conclusion
-.P
 There is a large, and rapidly growing, collection of highly detailed \*(m)
 models due to the widespread use of the highly portable \*(B) package.
 The \*(b) program gives the \*(F) community the option of analyzing \*(m)
@@ -937,7 +931,6 @@ will increase dramatically.
 Another benefit will be increased accuracy of results due to the superior
 detail and accuracy afforded by a true combinatorial solid geometry modeler.
 .H 1 Acknowledgements
-.P
 The author would like to thank Leonard E. Bruenning, Jr. of Sverdrup
 Technology, Inc. for his thorough, concise and well-illustrated
 documentation\*F of the requirements to be met by the \*(b) program
@@ -953,7 +946,6 @@ FL 32542-5000,
 14 December 1988.
 .FE
 .H 1 Appendices
-.P
 Both burst point library files and shotline files are composed
 of single-line records.
 Each line begins with a digit that identifies the type of record it represents.
@@ -974,7 +966,6 @@ Each \fIburst ray header\fR records will be immediately followed by
 one for each ray that strikes a \fIcritical component\fR.
 .bp
 .H 2 "Appendix A:  Burst Point Library File Format"
-.P
 Below is a description of the format of the burst point library files that
 are generated if the
 .Co burst-file
@@ -984,7 +975,6 @@ command is used.
 .DE
 .bp
 .H 2 "Appendix B:  Shotline File Format"
-.P
 Below is a description of the format of the shotline files that are
 generated if the
 .Co shotline-file
