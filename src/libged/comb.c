@@ -235,7 +235,7 @@ name_compare(const void *d1, const void *d2)
 {
     struct directory *dp1 = *(struct directory **)d1;
     struct directory *dp2 = *(struct directory **)d2;
-    return strcmp((const char *)dp2->d_namep, (const char *)dp1->d_namep);
+    return bu_strcmp((const char *)dp2->d_namep, (const char *)dp1->d_namep);
 }
 
 /* Define search strings that describe plans for finding:
