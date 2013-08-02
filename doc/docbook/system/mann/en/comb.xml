@@ -128,7 +128,7 @@
                      their parent comb (if that comb is not the original comb supplied
                      to the command) is also used elsewhere in the .g file.  If not, the
                      <option>w</option> wrapping behavior is used to produce a non-region
-                     equalivent comb, and the parent comb is updated to use that new comb
+                     equivalent comb, and the parent comb is updated to use that new comb
                      instead of the region.  If one or more parent combs <emphasis>are</emphasis> used elsewhere (i.e. the
                      parent comb cannot be altered without altering other geometry) the
                      command will fail - manual intervention is required to resolve the situation.
@@ -342,7 +342,7 @@ misc.c/               spheres.c
 	<varlistentry>
 	  <term>
 		  The <option>l</option> option is useful in cases where many <option>w</option>
-		  type operations are needed. 
+		  type operations are needed.
           </term>
 
 	  <listitem>

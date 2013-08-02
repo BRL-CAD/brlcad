@@ -241,7 +241,7 @@ the
 .Co execute
 command will start a \fIrun\fR.
 Many \fIruns\fR may occur during an instance of the \*(b) program.
-One such instance is refered to as a \fIsession\fR.
+One such instance is referred to as a \fIsession\fR.
 Below are descriptions of commands for configuring the behavior of the
 \*(b) program.
 .Ce
@@ -326,7 +326,7 @@ No matter what shotlining method is used,
 a grid always exists as a frame of reference for specifying 2-dimensional
 coordinates in the plane normal to the direction of attack.
 This 2-dimensional coordinate system is a projection of the shotline
-coordinate system (also refered to as the \fIprimed\fR coordinate system).
+coordinate system (also referred to as the \fIprimed\fR coordinate system).
 For the simple case of a zero azimuth, zero elevation attack,
 the
 .Ax \*(x) \*(y) \*(z)
@@ -438,7 +438,7 @@ system.
 Since the \*(x) location of the shot is irrelevant (the shotline is
 parallel to the \*(x)\*(A)) a shot may be specified as a
 \*(y) and \*(z) coordinate.
-These coordinates can also be refered to as horizontal and vertical grid
+These coordinates can also be referred to as horizontal and vertical grid
 offsets.
 .Ce
 .Cs "/shotlines/shotline location/discrete shots/shotline coordinate system/input-2d-shot"
@@ -907,7 +907,7 @@ but the commands read in by the latter \fIwill\fR.
 This command is useful to save errors in a log file and prevent copious
 ray tracer diagnostics from scrolling by on the screen.
 This option is especially useful if using the batch mode of execution
-so that the terminal is not tied up by program output. 
+so that the terminal is not tied up by program output.
 If no error log is specified,
 diagnostic messages will appear in the scrolling window or,
 if in batch mode,
