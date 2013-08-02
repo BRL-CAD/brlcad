@@ -14,11 +14,11 @@ TABLE_MM += submenu.mm
 TABLE_MM += topmenu.mm
 
 PRODS := burst.ps burst.pdf burst.html
-PRODS += paper.ps paper.pdf paper.html
 
-paper:
+docs:
 	./Make-tables.sh
 	./Make-docs.sh
+	ps2pdf burst.ps
 
 clean: distclean
 
