@@ -103,7 +103,7 @@ int
 ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 {
     void *dbplan;
-    int i, c, islocal;
+    int i, c, islocal, optcnt;
     int aflag = 0; /* flag controlling whether hidden objects are examined */
     int want_help = 0;
     int plan_argv = 1;
@@ -129,8 +129,28 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 	return TCL_OK;
     }
 
+    /* Find how many possible options we have */
+
     bu_optind = 1;
+    optcnt = 0;
     while ((c = bu_getopt(argc, (char * const *)argv_orig, "ah?")) != -1) {
+	switch(c) {
+	    case 'a':
+		optcnt++;
+		break;
+	    case 'h':
+	    case '?':
+		optcnt++;
+		break;
+	    default:
+		break;
+	}
+    }
+
+    /* Options have to come before paths and search expressions, so don't look
+     * any further than the max possible option count */
+    bu_optind = 1;
+    while ((bu_optind < (optcnt + 1)) && ((c = bu_getopt(argc, (char * const *)argv_orig, "ah?")) != -1)) {
 	switch(c) {
 	    case 'a':
 		aflag = 1;
