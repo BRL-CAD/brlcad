@@ -5,18 +5,9 @@ set(GTOOLS_INCLUDE_DIRS
   ${TCLCAD_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
   ${PKG_INCLUDE_DIRS}
-  ${BRLCAD_SOURCE_DIR}/src/gtools/beset
   )
-LIST(REMOVE_DUPLICATES GTOOLS_INCLUDE_DIRS)
+list(REMOVE_DUPLICATES GTOOLS_INCLUDE_DIRS)
 include_directories(${GTOOLS_INCLUDE_DIRS})
-
-set(beset_SRCS
-  beset/beset.c
-  beset/fitness.c
-  beset/population.c
-  )
-
-BRLCAD_ADDEXEC(beset "${beset_SRCS}"  "libbu;librt;libwdb" NO_INSTALL)
 
 BRLCAD_ADDEXEC(g_diff g_diff.c "libtclcad;librt")
 BRLCAD_ADDEXEC(g_lint g_lint.c "librt;${M_LIBRARY}")
@@ -26,12 +17,7 @@ BRLCAD_ADDEXEC(remapid remapid.c "librt;libbu")
 BRLCAD_ADDEXEC(g_transfer g_transfer.c "librt;libpkg" NO_INSTALL)
 BRLCAD_ADDDATA(g_transfer.c sample_applications)
 
-set(gtools_ignore_files
-  beset/beset.h
-  beset/fitness.h
-  beset/population.h
-  )
-CMAKEFILES(${gtools_ignore_files})
+add_subdirectory(beset)
 
 # Local Variables:
 # tab-width: 8
