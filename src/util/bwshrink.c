@@ -46,7 +46,7 @@ char *filename = "(stdin)";
 void
 shrink_image(int w, int h, unsigned char *buffer, int Factor)
 {
-    unsigned char *finalpixel;	/* output pixel pointer */
+    unsigned char *finalpixel, *pixelp;	/* output pixel pointer */
     unsigned int p;		/* pixel sum/average */
     int facsq, x, y, px, py;
 
@@ -57,13 +57,13 @@ shrink_image(int w, int h, unsigned char *buffer, int Factor)
 	for (x=0; x < w; x += Factor) {
 
 	    /* average factor by factor grid of pixels */
-
 	    p = 0;
 	    for (py = 0; py < Factor; py++) {
 
+		pixelp = &buffer[(y+py)*w+x];
 		/* add pixels from scanline to average */
 		for (px = 0; px < Factor; px++) {
-		    p += buffer[y*w + x+px];
+		    p += *pixelp++;
 		}
 	    }
 
