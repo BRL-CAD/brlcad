@@ -218,7 +218,8 @@ ADD_DOC(documentation_mged_old_DATA mged_old)
 
 set(burst_DOCS
   burst/Funcs
-  burst/Make-paper.sh
+  burst/Makefile
+  burst/Make-docs.sh
   burst/Make-tables.sh
   burst/README
   burst/abstract.mm
