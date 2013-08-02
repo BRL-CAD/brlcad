@@ -200,7 +200,6 @@ int main(int ac, char **av)
 	/* do nothing */;
     }
 
-    bu_free(buffer, "buffer alloc from malloc");
 
     if (c < 0) {
 	perror (filename);
