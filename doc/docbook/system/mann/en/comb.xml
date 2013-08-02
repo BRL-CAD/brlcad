@@ -112,7 +112,7 @@
             "Lift" a region flag to the top comb, and clear all region flags below
             the comb in the tree.  Like the <option>f</option> option this option
             will work to respect the integrity of other geometry in the database, but
-            it is more agressive in the steps it will take and it will operate on trees
+            it is more aggressive in the steps it will take and it will operate on trees
             that contain non-union booleans.   The decision logic is as follows:
 
             <orderedlist>

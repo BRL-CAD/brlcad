@@ -348,7 +348,7 @@ ICV_EXPORT extern int icv_crop(icv_image_t *img,
  *
  * It forces the image pixels to be in the prescribed range.
  *
- * All the pixels higer than the max range are set to MAX (1.0).
+ * All the pixels higher than the max range are set to MAX (1.0).
  * All the pixels lower than the min range are set to MIN (0.0).
  *
  * Note if an image(bif) is sanitized then,  (bif->flags&&ICV_SANITIZED)
@@ -359,7 +359,7 @@ ICV_EXPORT void icv_sanitize(icv_image_t* img);
 
 /**
  * This adds a constant value to all the pixels of the image.
- * Also if the flag ICV_OPERATIONS_MODE is set this doesnt santizes
+ * Also if the flag ICV_OPERATIONS_MODE is set this doesn't sanitize
  * the image.
  *
  * Note to set the flag for a bif (icv_image struct);
@@ -368,15 +368,15 @@ ICV_EXPORT void icv_sanitize(icv_image_t* img);
 ICV_EXPORT void icv_add_val(icv_image_t* img, double val);
 
 /**
- * This multiplies all the pixels of the image with a contant Value.
- * Also if the flag ICV_OPERATIONS_MODE is set this doesnt santizes
+ * This multiplies all the pixels of the image with a constant Value.
+ * Also if the flag ICV_OPERATIONS_MODE is set this doesn't sanitize
  * the image.
  */
 ICV_EXPORT void icv_multiply_val(icv_image_t* img, double val);
 
 /**
  * This divides all the pixels of the image with a constant Value.
- * Also if the flag ICV_OPERATIONS_MODE is set this doesnt santizes
+ * Also if the flag ICV_OPERATIONS_MODE is set this doesn't sanitize
  * the image.
  */
 ICV_EXPORT void icv_divide_val(icv_image_t* img, double val);
@@ -384,7 +384,7 @@ ICV_EXPORT void icv_divide_val(icv_image_t* img, double val);
 /**
  * This raises all the pixels of the image to a constant exponential
  *  power.
- * Also if the flag ICV_OPERATIONS_MODE is set this doesnt santizes
+ * Also if the flag ICV_OPERATIONS_MODE is set this doesn't sanitize
  * the image.
  */
 ICV_EXPORT void icv_pow_val(icv_image_t* img, double val);
@@ -398,7 +398,7 @@ ICV_EXPORT void icv_pow_val(icv_image_t* img, double val);
 ICV_EXPORT icv_image_t *icv_add(icv_image_t *img1, icv_image_t *img2);
 
 /**
- * This routine substracts pixel value of one image from pixel value
+ * This routine subtracts pixel value of one image from pixel value
  * of other pixel and inserts the result at the same index of the
  * output image.
  *
@@ -503,7 +503,7 @@ ICV_EXPORT extern int icv_fade(icv_image_t *img, double fraction);
 
 /**
  * This function calculates the histogram of different channels
- * seperately.
+ * separately.
  *
  * @param img Image of which histogram is to found.
  * @param n_bins number of bins required.
@@ -519,7 +519,7 @@ ICV_EXPORT size_t **icv_hist(icv_image_t* img, int n_bins);
  * @return a double array of size channels. Each element contains min
  * value of the channel.
  *
- * For eg. min = icv_min(bif);
+ * e.g. min = icv_min(bif);
  * min[0] gives the minimum value of all the pixels in first bin.
  * and so on.
  *
@@ -532,7 +532,7 @@ ICV_EXPORT double *icv_min(icv_image_t* img);
  * @return a double array of size channels. Each elements contains
  * average value of the channel.
  *
- * For eg. mean = icv_mean(bif);
+ * e.g. mean = icv_mean(bif);
  * mean[0] gives the average value of all the pixels in first channel
  * and so on.
  *
@@ -545,7 +545,7 @@ ICV_EXPORT double *icv_mean(icv_image_t* img);
  * @return a double array of size channels. Each element contains sum
  * value of the channel.
  *
- * For eg. sum = icv_sum(bif);
+ * e.g. sum = icv_sum(bif);
  * sum[0] gives the sum of all the pixels in first channel
  * and so on.
  *
@@ -558,7 +558,7 @@ ICV_EXPORT double *icv_sum(icv_image_t* img);
  * @return a double array of size channels. Each element contains max
  * value of the channel.
  *
- * For eg. max = icv_max(bif);
+ * e.g. max = icv_max(bif);
  * max[0] gives the maximum value of all the pixels in first bin.
  * and so on.
  *

@@ -11,5 +11,5 @@ lt grey@200@200@200@shot missed target
 white@255@255@255@shot hit target
 lt green@200@255@200@burst occurred but hit no critical components
 pink@255@200@200@burst occurred and hit some critical components
-purple@255@0@255@a ground burst occured
+purple@255@0@255@a ground burst occurred
 .TE

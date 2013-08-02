@@ -38,7 +38,7 @@
 
 /* Sub-division support for a curve.
  * It's similar to generating the bounding box tree, when the Split()
- * method is called, the curve is splitted into two parts, whose bounding
+ * method is called, the curve is split into two parts, whose bounding
  * boxes become the children of the original curve's bbox.
  */
 class Subcurve {
@@ -125,7 +125,7 @@ public:
 
 /* Sub-division support for a surface.
  * It's similar to generating the bounding box tree, when the Split()
- * method is called, the surface is splitted into two parts, whose bounding
+ * method is called, the surface is split into two parts, whose bounding
  * boxes become the children of the original surface's bbox.
  */
 class Subsurface {
@@ -1213,7 +1213,7 @@ ON_Intersect(const ON_Curve* curveA,
 	    // Use two different start points - the two end-points of the interval
 	    // If they converge to one point, it's considered an intersection
 	    // point, otherwise it's considered an overlap event.
-	    // FIXME: Find a better machanism to check overlapping, because this method
+	    // FIXME: Find a better mechanism to check overlapping, because this method
 	    // may miss some overlap cases. (Overlap events can also converge to one
 	    // point)
 	    double t_a1 = i->first->m_t.Min(), t_b1 = i->second->m_t.Min();
@@ -3106,7 +3106,7 @@ ON_Intersect(const ON_Surface* surfA,
 	    }
 	    if (inside_overlap) {
 		// We only do this optimization of surfA, because node pairs
-		// need both boxes from surfA and surfB, and eliminate one of
+		// need both boxes from surfA and surfB, and eliminating one of
 		// them is enough.
 		continue;
 	    }
@@ -3397,7 +3397,7 @@ ON_Intersect(const ON_Surface* surfA,
     }
 
     // In some cases, the intersection curves will intersect with each other.
-    // But with our merging machanism, one point can only belong to one curve,
+    // But with our merging mechanism, one point can only belong to one curve,
     // so if they need to share one intersection point, this cannot work
     // properly. So we need some "seaming" segments to make sure the inter-
     // section.

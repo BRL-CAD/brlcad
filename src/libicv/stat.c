@@ -115,7 +115,7 @@ double *icv_mean(icv_image_t* img)
     size_t size;
     int i;
 
-    mean = icv_sum(img); /**< recieves sum from icv_image_sum*/
+    mean = icv_sum(img); /**< receives sum from icv_image_sum*/
     size = (size_t)img->width*img->height;
 
     for(i=0; i<img->channels; i++)

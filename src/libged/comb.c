@@ -422,7 +422,7 @@ _ged_lift_region_comb(struct ged *gedp, struct directory *dp) {
      * check for parent node in combs_outside_of_tree
      * if problem found, append specifics to ged_result_str, set fail flag
      * if no problem found, add to bu_ptbl list of regions to wrap (uniq insert)
-     * no point in storing the speciifc parent, since we'll in-tree mvall in any case to update */
+     * no point in storing the specific parent, since we'll in-tree mvall in any case to update */
     bu_ptbl_init(&regions_to_clear, 64, "regions to clear");
     bu_ptbl_init(&regions_to_wrap, 64, "regions to wrap");
     for (BU_LIST_FOR_BACKWARDS(entry, db_full_path_list, &(regions->l))) {
