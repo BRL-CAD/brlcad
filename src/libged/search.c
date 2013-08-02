@@ -129,21 +129,14 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 	return TCL_OK;
     }
 
-    /* Find how many possible options we have */
+    /* Find how many options we have */
 
-    bu_optind = 1;
     optcnt = 0;
-    while ((c = bu_getopt(argc, (char * const *)argv_orig, "ah?")) != -1) {
-	switch(c) {
-	    case 'a':
-		optcnt++;
-		break;
-	    case 'h':
-	    case '?':
-		optcnt++;
-		break;
-	    default:
-		break;
+    for (i = 1; i < argc; i++) {
+        if ((argv_orig[i][0] == '-') && (strlen(argv_orig[i]) == 2)) {
+	    optcnt++;
+	} else {
+	    break;
 	}
     }
 
