@@ -1,3 +1,5 @@
 #!/bin/sh
 
-groff -mm -Tps paper.mm > paper.ps
+groff -mm -Tps burst.mm   > burst.ps
+
+groff -mm -Thtml burst.mm > burst.html
