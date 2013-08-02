@@ -154,7 +154,6 @@ usample_image(int scanlen, int Width, int Height, unsigned char *buffer, int Fac
 	    p[2] = buffer[t+2];
 	}
 
-    bu_free(p, "p");
 }
 
 
@@ -262,6 +261,7 @@ int main(int ac, char **av)
     }
 
     write_image(width/factor, height/factor, buffer);
+    bu_free(buffer, "pixshrink: buffer");	
     return 0;
 }
 
