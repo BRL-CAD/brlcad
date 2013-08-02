@@ -343,28 +343,22 @@ ICV_EXPORT extern int icv_crop(icv_image_t *img,
  *
  */
 
-ICV_EXPORT void icv_sanitize(icv_image_t* img);
-
-/** @file libicv/filter.c
- *
- * This file contains routines for image filtering. This is done
- * mainly using the convolution of images. Both Gray Scale and RGB
- * images are taken care.
- *
- */
-
 /**
  * This function sanitizes the image.
- * That is it makes the ranges between 0.0 to 1.0 for the data part.
- * Also it adds ICV_SANITIZED flag.
  *
- * Note to check if an image(bif) is sanitized
- *  (bif->flags&&ICV_SANITIZED)
+ * It forces the image pixels to be in the prescribed range.
+ *
+ * All the pixels higer than the max range are set to MAX (1.0).
+ * All the pixels lower than the min range are set to MIN (0.0).
+ *
+ * Note if an image(bif) is sanitized then,  (bif->flags&&ICV_SANITIZED)
+ * is true.
+ *
  */
 ICV_EXPORT void icv_sanitize(icv_image_t* img);
 
 /**
- * This adds a double value to all the pixels of the image.
+ * This adds a constant value to all the pixels of the image.
  * Also if the flag ICV_OPERATIONS_MODE is set this doesnt santizes
  * the image.
  *
@@ -374,21 +368,22 @@ ICV_EXPORT void icv_sanitize(icv_image_t* img);
 ICV_EXPORT void icv_add_val(icv_image_t* img, double val);
 
 /**
- * This multiplies a double value to all the pixels of the image.
+ * This multiplies all the pixels of the image with a contant Value.
  * Also if the flag ICV_OPERATIONS_MODE is set this doesnt santizes
  * the image.
  */
 ICV_EXPORT void icv_multiply_val(icv_image_t* img, double val);
 
 /**
- * This divides a double value to all the pixels of the image.
+ * This divides all the pixels of the image with a constant Value.
  * Also if the flag ICV_OPERATIONS_MODE is set this doesnt santizes
  * the image.
  */
 ICV_EXPORT void icv_divide_val(icv_image_t* img, double val);
 
 /**
- * This raises all the pixels of the image to an exponential power.
+ * This raises all the pixels of the image to a constant exponential
+ *  power.
  * Also if the flag ICV_OPERATIONS_MODE is set this doesnt santizes
  * the image.
  */
@@ -439,6 +434,14 @@ ICV_EXPORT icv_image_t *icv_divides(icv_image_t *img1, icv_image_t *img2);
  * @param sat Saturation value.
  */
 ICV_EXPORT int icv_saturate(icv_image_t* img, double sat);
+
+/** @file libicv/filter.c
+ *
+ * This file contains routines for image filtering. This is done
+ * mainly using the convolution of images. Both Gray Scale and RGB
+ * images are taken care.
+ *
+ */
 
 
 typedef enum {
