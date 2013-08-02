@@ -247,14 +247,19 @@ usage() {
 static int
 get_line(void)
 {
-    int len;
+    int len, done;
     struct bu_vls buffer = BU_VLS_INIT_ZERO;
 
-    len = bu_vls_gets(&buffer, fpin);
-
-    /* eof? */
-    if (len < 0)
-	return 0;
+    done = 0;
+    while (!done) {
+	len = bu_vls_gets(&buffer, fpin);
+	if (len < 0) goto out; /* eof or error */
+	if (len == 0) continue;
+	bu_vls_trimspace(&buffer);
+	len = bu_vls_strlen(&buffer);
+	if (len == 0) continue;
+	done = 1;
+    }
 
     if (len > MAX_LINE_SIZE)
 	bu_log("WARNING: long line truncated\n");
@@ -262,6 +267,7 @@ get_line(void)
     memset((void *)line, 0, MAX_LINE_SIZE);
     snprintf(line, MAX_LINE_SIZE, "%s", bu_vls_addr(&buffer));
 
+out:
     bu_vls_free(&buffer);
 
     return len >= 0;
