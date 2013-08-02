@@ -2837,13 +2837,13 @@ ON_Intersect(const ON_Surface* surfA,
 		    && x_event2[0].m_type == ON_X_EVENT::ccx_overlap) {
 		    if (ON_NearZero(x_event1[0].m_a[0] - overlaps[i]->m_curveA->Domain().Min())
 			&& ON_NearZero(x_event1[0].m_a[1] - overlaps[i]->m_curveA->Domain().Max())
-			&& ON_NearZero(x_event2[0].m_b[0] - overlaps[i]->m_curveB->Domain().Min())
-			&& ON_NearZero(x_event2[0].m_b[1] - overlaps[i]->m_curveB->Domain().Max())) {
+			&& ON_NearZero(x_event2[0].m_a[0] - overlaps[i]->m_curveB->Domain().Min())
+			&& ON_NearZero(x_event2[0].m_a[1] - overlaps[i]->m_curveB->Domain().Max())) {
 			// overlaps[i] is completely inside overlaps[j]
 			delete overlaps[i];
 			overlaps[i] = NULL;
-		    } else if (ON_NearZero(x_event1[0].m_a[0] - overlaps[j]->m_curveA->Domain().Min())
-			       && ON_NearZero(x_event1[0].m_a[1] - overlaps[j]->m_curveA->Domain().Max())
+		    } else if (ON_NearZero(x_event1[0].m_b[0] - overlaps[j]->m_curveA->Domain().Min())
+			       && ON_NearZero(x_event1[0].m_b[1] - overlaps[j]->m_curveA->Domain().Max())
 			       && ON_NearZero(x_event2[0].m_b[0] - overlaps[j]->m_curveB->Domain().Min())
 			       && ON_NearZero(x_event2[0].m_b[1] - overlaps[j]->m_curveB->Domain().Max())) {
 			// overlaps[j] is completely inside overlaps[i]
