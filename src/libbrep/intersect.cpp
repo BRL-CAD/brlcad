@@ -3251,13 +3251,13 @@ ON_Intersect(const ON_Surface* surfA,
 	    bool inside_overlap = false;
 	    for (int k = 0; k < overlapevents.Count(); k++) {
 		if (overlapevents[k].m_type == OverlapEvent::outer
-		    && overlapevents[k].IsPointIn(tmp_curveuv[i])
-		    && !overlapevents[k].IsPointOnBoundary(tmp_curveuv[i])) {
+		    && overlapevents[k].IsPointIn(tmp_curveuv[i])) {
 		    bool out_of_all_inner = true;
 		    for (unsigned int m = 0; m < overlapevents[k].m_inside.size(); m++) {
 			OverlapEvent* event = overlapevents[k].m_inside[m];
 			if (event->m_type == OverlapEvent::inner
-			    && event->IsPointIn(tmp_curveuv[i])) {
+			    && event->IsPointIn(tmp_curveuv[i])
+                            && !event->IsPointOnBoundary(tmp_curveuv[i])) {
 			    out_of_all_inner = false;
 			    break;
 			}
