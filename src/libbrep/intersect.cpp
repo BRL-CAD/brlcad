@@ -610,9 +610,11 @@ newton_pci(double& t, const ON_3dPoint& pointA, const ON_Curve& curveB, double t
 	dis = closest_point.DistanceTo(pointA);
     }
 
+    t = std::min(curveB.Domain().Max(), t);
+    t = std::max(curveB.Domain().Min(), t);
     closest_point = curveB.PointAt(t);
     dis = closest_point.DistanceTo(pointA);
-    return dis <= tolerance;
+    return dis <= tolerance && !isnan(t);
 }
 
 
@@ -779,9 +781,14 @@ newton_psi(double& u, double& v, const ON_3dPoint& pointA, const ON_Surface& sur
 	v -= Delta[1][0];
 	dis = closest_point.DistanceTo(pointA);
     }
+
+    u = std::min(u, surfB.Domain(0).Max());
+    u = std::max(u, surfB.Domain(0).Min());
+    v = std::min(v, surfB.Domain(1).Max());
+    v = std::max(v, surfB.Domain(1).Min());
     closest_point = surfB.PointAt(u, v);
     dis = closest_point.DistanceTo(pointA);
-    return dis <= tolerance;
+    return dis <= tolerance && !isnan(u) && !isnan(v);
 }
 
 
