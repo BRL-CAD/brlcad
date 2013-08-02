@@ -2657,8 +2657,13 @@ ON_Intersect(const ON_Surface* surfA,
 			    // One side of it is shared and the other side is non-shared.
 			    OverlapSegment *seg = new OverlapSegment;
 			    seg->m_curve3d = sub_curve(boundary, x_event[k].m_a[0], x_event[k].m_a[1]);
-			    seg->m_curveA = new ON_LineCurve(iso_pt1, iso_pt2);
-			    seg->m_curveB = overlap2d[k];
+			    if (i < 2) {
+				seg->m_curveA = new ON_LineCurve(iso_pt1, iso_pt2);
+				seg->m_curveB = overlap2d[k];
+			    } else {
+				seg->m_curveB = new ON_LineCurve(iso_pt1, iso_pt2);
+				seg->m_curveA = overlap2d[k];
+			    }
 			    seg->m_dir = dir;
 			    seg->m_fix = b_knots[j];
 			    overlaps.Append(seg);
@@ -2667,20 +2672,25 @@ ON_Intersect(const ON_Surface* surfA,
 				// If the domain is closed, the iso-curve on the
 				// first knot and the last knot is the same, so
 				// we don't need to compute the intersections twice.
+				seg = new OverlapSegment;
 				iso_pt1.x = i%2 ? knots[knotcnt] : x_event[k].m_a[0];
 				iso_pt1.y = i%2 ? x_event[k].m_a[0] : knots[knotcnt];
 				iso_pt2.x = i%2 ? knots[knotcnt] : x_event[k].m_a[1];
 				iso_pt2.y = i%2 ? x_event[k].m_a[1] : knots[knotcnt];
 				seg->m_curve3d = (*overlaps.Last())->m_curve3d->Duplicate();
-				seg->m_curveA = new ON_LineCurve(iso_pt1, iso_pt2);
-				seg->m_curveB = overlap2d[k]->Duplicate();
-				// seg.m_dir = dir;
+				if (i < 2) {
+				    seg->m_curveA = new ON_LineCurve(iso_pt1, iso_pt2);
+				    seg->m_curveB = overlap2d[k]->Duplicate();
+				} else {
+				    seg->m_curveB = new ON_LineCurve(iso_pt1, iso_pt2);
+				    seg->m_curveA = overlap2d[k]->Duplicate();
+				}
+				seg->m_dir = dir;
 				seg->m_fix = knots[knotcnt];
 				overlaps.Append(seg);
 			    }
 			    // We set overlap2d[k] to NULL, is case that the curve
 			    // is delete by the destructor of overlap2d. (See ~ON_CurveArray())
-			    // Also the curves in seg. (See ~OverlapSegment())
 			    overlap2d[k] = NULL;
 			}
 		    }
