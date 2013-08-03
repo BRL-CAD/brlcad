@@ -1,6 +1,7 @@
 BRLCAD_ADDEXEC(tester_bn_tri_tri_isect_coplanar bn_tri_tri_isect_coplanar.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_tri_tri_isect bn_tri_tri_isect.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_list bn_list.c "libbu;libbn" NO_INSTALL)
+BRLCAD_ADDEXEC(tester_bn_poly_multiply bn_poly_multiply.c "libbu;libbn" NO_INSTALL)
 
 # For tester_bn_tri_tri_isect_coplanar, the input format is as follows:
 #
@@ -57,6 +58,14 @@ add_test(bn_list_3d_1                   tester_bn_list  3  0,0,0)
 add_test(bn_list_3d_2                   tester_bn_list  3  0,0,3 1.64,1,4)
 add_test(bn_list_3d_3                   tester_bn_list  3  3,7,8 1,-5,8)
 add_test(bn_list_3d_4                   tester_bn_list  3  3,7,8 1,-5.321,3 67,0,67 0,100,23)
+
+
+#
+#  *********** poly.c tests *************
+#
+#Format is:
+# tester_bn_poly      <  void      >         void
+add_test(bn_poly_multiply                 tester_bn_poly_multiply)
 
 # Local Variables:
 # tab-width: 8
