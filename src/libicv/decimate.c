@@ -173,7 +173,7 @@ HIDDEN void binterp(icv_image_t *bif, int out_width, int out_height)
     }
     bu_free(bif->data, "binterep : Input Data");
     bif->data = out_data;
-    bif->widht = out_width;
+    bif->width = out_width;
     bif->height = bif->height;
 }
 
