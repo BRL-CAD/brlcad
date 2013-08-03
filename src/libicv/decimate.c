@@ -129,6 +129,53 @@ HIDDEN void nintrep(icv_image_t* bif, int out_width, int out_height)
     return;
 
 }
+HIDDEN void binterp(icv_image_t *bif, int out_width, int out_height)
+{
+    int i, j, c;
+    double x, y, dx, dy, mid1, mid2;
+    double xstep, ystep;
+    double *out_data, *out_p;
+    double *upp_r, *low_r; /*<< upper and lower row */
+    double *upp_c, *low_c;
+    int widthstep;
+
+    xstep = (double) (bif->width - 1) / (double)out_width - 1.0e-6;
+    ystep = (double) (bif->height -1) / (double)out_height - 1.0e-6;
+
+    out_p = out_data = bu_malloc(out_width*out_height*bif->channels, "binterp : out data");
+
+    widthstep = bif->width*bif->channels;
+
+    for (j = 0; j < out_height; j++) {
+        y = j*ystep;
+        dy = y - (int)y;
+
+        low_r = bif->data + widthstep* (int)y;
+        upp_r = bif->data + widthstep* (int) (y+1);
+
+        for (i = 0; i < out_width; i++) {
+            x = i*xstep;
+            dx = x - (int)x;
+
+            upp_c = upp_r + (int)x*bif->channels;
+            low_c = low_r + (int)x*bif->channels;
+
+            for(c=0; c<bif->channels; c++) {
+                mid1 = low_c[0] + dx * ((double) low_c[bif->channels] - (double) low_c[0] );
+                mid2 = upp_c[0] + dx * ((double) upp_c[bif->channels] - (double) upp_c[0] );
+                *out_p = mid1 + dy * (mid2 - mid1);
+
+                out_p++;
+                upp_c++;
+                low_c++;
+            }
+        }
+    }
+    bu_free(bif->data, "binterep : Input Data");
+    bif->data = out_data;
+    bif->widht = out_width;
+    bif->height = bif->height;
+}
 
 /*
  * Local Variables:
