@@ -61,7 +61,7 @@ HIDDEN void shrink_image(icv_image_t* bif, int factor)
 
     bif->width = (int) bif->width/factor;
     bif->height = (int) bif->height/factor;
-    bif->data = bu_realloc(bif->data, (size_t) (bif->width*bif->height*bif->channels), "shrink_image : Reallocation");
+    bif->data = bu_realloc(bif->data, (size_t) (bif->width*bif->height*bif->channels)*sizeof(double), "shrink_image : Reallocation");
 
     return;
 
@@ -100,7 +100,7 @@ HIDDEN void nintrep(icv_image_t* bif, int out_width, int out_height)
     xstep = (double) (bif->width-1) / (double) (out_width) - 1.0e-06;
     ystep = (double) (bif->height-1) / (double) (out_height) - 1.0e-06;
 
-    out_p = out_data = bu_malloc(out_width*out_height*sizeof(double), "intrep : out_data");
+    out_p = out_data = bu_malloc(out_width*out_height*bif->channels*sizeof(double), "intrep : out_data");
 
     widthstep= bif->width*bif->channels;
 
@@ -142,7 +142,7 @@ HIDDEN void binterp(icv_image_t *bif, int out_width, int out_height)
     xstep = (double) (bif->width - 1) / (double)out_width - 1.0e-6;
     ystep = (double) (bif->height -1) / (double)out_height - 1.0e-6;
 
-    out_p = out_data = bu_malloc(out_width*out_height*bif->channels, "binterp : out data");
+    out_p = out_data = bu_malloc(out_width*out_height*bif->channels*sizeof(double), "binterp : out data");
 
     widthstep = bif->width*bif->channels;
 
@@ -174,7 +174,7 @@ HIDDEN void binterp(icv_image_t *bif, int out_width, int out_height)
     bu_free(bif->data, "binterep : Input Data");
     bif->data = out_data;
     bif->width = out_width;
-    bif->height = bif->height;
+    bif->height = out_height;
 }
 
 /*
