@@ -2988,11 +2988,18 @@ ON_Intersect(const ON_Surface* surfA,
 	// The overlap region should be to the LEFT of that *m_curveA*.
 	// (See opennurbs/opennurbs_x.h)
 	double midA = x[i].m_curveA->Domain().Mid();
+	if (!x[i].m_curveA->IsContinuous(ON::G1_continuous, midA)) {
+	    // using the middle point is not suffient, we try another options.
+	    midA = x[i].m_curveA->Domain().NormalizedParameterAt(1.0/3.0);
+	    if (!x[i].m_curveA->IsContinuous(ON::G1_continuous, midA)) {
+		midA = x[i].m_curveA->Domain().NormalizedParameterAt(2.0/3.0);
+	    }
+	}
 	ON_3dVector normalA = ON_CrossProduct(ON_3dVector::ZAxis, x[i].m_curveA->TangentAt(midA));
 	ON_3dPoint left_ptA, right_ptA, mid_ptA;
 	mid_ptA = x[i].m_curveA->PointAt(midA);
-	left_ptA = mid_ptA + normalA*x[i].m_curveA->BoundingBox().Diagonal().Length();
-	right_ptA = mid_ptA - normalA*x[i].m_curveA->BoundingBox().Diagonal().Length();
+	left_ptA = mid_ptA + normalA*(1+x[i].m_curveA->BoundingBox().Diagonal().Length());
+	right_ptA = mid_ptA - normalA*(1+x[i].m_curveA->BoundingBox().Diagonal().Length());
 	// should be outside the closed region
 	ON_LineCurve linecurve1(mid_ptA, left_ptA), linecurve2(mid_ptA, right_ptA);
 	ON_SimpleArray<ON_X_EVENT> x_event1, x_event2;
