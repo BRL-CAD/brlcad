@@ -326,7 +326,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap="B" role="bold">-not</emphasis> <emphasis remap="I">expression</emphasis> (a.k.a -!)</term>
+      <term><emphasis remap="B" role="bold">-not</emphasis> <emphasis remap="I">expression</emphasis> (a.k.a !)</term>
       <listitem>
 	<para>
 	  The logical NOT operator - returns the opposite of the evaluation result of
