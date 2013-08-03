@@ -16,6 +16,7 @@ set(LIBICV_SOURCES
   encoding.c
   operations.c
   stat.c
+  decimate.c
   pix.c
   bw.c
   )
