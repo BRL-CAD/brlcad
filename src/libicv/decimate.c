@@ -89,6 +89,47 @@ HIDDEN void under_sample(icv_image_t* bif, int factor)
     return;
 }
 
+HIDDEN void nintrep(icv_image_t* bif, int out_width, int out_height)
+{
+    double xstep, ystep;
+    int i,j;
+    int x,y;
+    int widthstep;
+    double *in_r, *in_c; /*<< Pointer to row and col of input buffers*/
+    double *out_data, *out_p;
+    xstep = (double) (bif->width-1) / (double) (out_width) - 1.0e-06;
+    ystep = (double) (bif->height-1) / (double) (out_height) - 1.0e-06;
+
+    out_p = out_data = bu_malloc(out_width*out_height*sizeof(double), "intrep : out_data");
+
+    widthstep= bif->width*bif->channels;
+
+    for (j=0; j<out_height; j++) {
+        y = (int) (j*ystep);
+
+        in_r = bif->data + y*widthstep;
+
+        for (i = 0; i < out_width; i++) {
+            x =  (int) (i*xstep);
+
+            in_c = in_r + x*bif->channels;
+
+            VMOVEN(out_p, in_c, bif->channels);
+            out_p += bif->channels;
+        }
+    }
+
+    bu_free(bif->data, "intrep : in_data");
+
+    bif->data = out_data;
+
+    bif->width = out_width;
+    bif->height = out_height;
+
+    return;
+
+}
+
 /*
  * Local Variables:
  * tab-width: 8
