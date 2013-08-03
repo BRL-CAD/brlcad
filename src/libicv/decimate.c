@@ -26,6 +26,7 @@
 
 #include "bu.h"
 #include "icv.h"
+#include "vmath.h"
 
 HIDDEN void shrink_image(icv_image_t* bif, int factor)
 {
@@ -64,6 +65,28 @@ HIDDEN void shrink_image(icv_image_t* bif, int factor)
 
     return;
 
+}
+
+HIDDEN void under_sample(icv_image_t* bif, int factor)
+{
+    double *data_p, *res_p;
+    int x,y,widthstep;
+
+    widthstep = bif->width*bif->channels;
+
+    res_p = data_p = bif->data;
+
+    for (y=0; y<bif->height; y+=factor) {
+        data_p = bif->data + widthstep*y;
+        for (x=0; x<bif->width; x+=factor, res_p+=bif->channels, data_p+=factor*bif->channels)
+            VMOVEN(res_p,data_p, bif->channels);
+    }
+
+    bif->width = (int) bif->width/factor;
+    bif->height = (int) bif->height/factor;
+    bif->data = bu_realloc(bif->data, (size_t) (bif->width*bif->height*bif->channels), "under_sample : Reallocation");
+
+    return;
 }
 
 /*
