@@ -664,7 +664,7 @@ bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, co
 		    fprintf(fp, "400 0 1 0\n");
 
 		    time(&now);
-		    fprintf(fp, "37 SolidWorks(2008000)-Sat-Convertor-2.0 11 ACIS 8.0 NT %ld %s", sizeof(ctime(&now)), ctime(&now));
+		    fprintf(fp, "37 SolidWorks(2008000)-Sat-Convertor-2.0 11 ACIS 8.0 NT %ld %s", strlen(ctime(&now)) - 1, ctime(&now));
 
 		    /* FIXME: this looks like tolerance info, should probably output ours */
 		    fprintf(fp, "1 9.9999999999999995e-007 1e-010\n");
