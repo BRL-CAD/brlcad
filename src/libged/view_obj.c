@@ -795,13 +795,9 @@ vo_perspective_cmd(struct view_obj *vop,
 
 	vop->vo_perspective = perspective;
 
-#if 1
 	/* This way works, with reasonable Z-clipping */
 	vo_persp_mat(vop->vo_pmat, vop->vo_perspective,
 		     1.0, 0.01, 1.0e10, 1.0);
-#else
-	vo_mike_persp_mat(vop->vo_pmat, vop->vo_eye_pos);
-#endif
 	vo_update(vop, 1);
 
 	return TCL_OK;
