@@ -1056,11 +1056,6 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     if (ch == 'y') {
 	struct clone_state state;
 	struct directory **dps = (struct directory **)NULL;
-	char *vargs[3];
-
-	for (i = 0; i < 2; i++)
-	    vargs[i] = (char *)bu_calloc(CLONE_BUFSIZE, sizeof(char), "alloc vargs[i]");
-	vargs[0][0] = 'e';
 
 	state.interp = interp;
 	state.incr = inc;
@@ -1096,10 +1091,9 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 		state.src = dps[j];
 		/* global dbip */
 		dps[j] = copy_object(dbip, &rt_uniresource, &state);
-		bu_strlcpy(vargs[1], dps[j]->d_namep, CLONE_BUFSIZE);
 
 		if (!no_draw || !is_dm_null()) {
-		    cmd_redraw_vlist(NULL, interp, 2, (const char **)vargs);
+		    redraw_visible_objects();
 		    size_reset();
 		    new_mats();
 		    color_soltab();
@@ -1111,9 +1105,6 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	}
 	fprintf(stdout, "\n");
 	bu_free(dps, "free dps array");
-
-	for (i = 0; i < 2; i++)
-	    bu_free(vargs[i], "free vargs[i]");
     }
 
     free(s.t);
