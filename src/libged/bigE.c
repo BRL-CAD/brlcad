@@ -2056,11 +2056,7 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
     dgcdp->do_polysolids = 0;
     dgcdp->wireframe_color_override = 0;
     dgcdp->transparency = 0;
-#if 1
     dgcdp->dmode = _GED_BOOL_EVAL;
-#else
-    dgcdp->dmode = _GED_WIREFRAME;
-#endif
 
     /* Parse options. */
     bu_optind = 1;          /* re-init bu_getopt() */
