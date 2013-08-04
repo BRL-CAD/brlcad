@@ -76,6 +76,13 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* Extract bounding box code from both autoview.c and get_autoview.c
+  into a general bounding rpp function in libged (or perhaps librt if
+  it generalizes sufficiently), and use accordingly.  Should combin
+  autoview.c with get_autoview.c (perhaps as a flag) and utilize the
+  general function in lots of libged places (e.g., the ged_arb()
+  function).
+
 * the scale structure in bn_cmd_noise_slice (bn_tcl.c) was never
   initialized. it looks like somebody has planned to extend the
   function but never carried out
