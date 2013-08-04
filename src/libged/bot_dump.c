@@ -40,6 +40,8 @@
 #include "raytrace.h"
 #include "wdb.h"
 
+#include "brlcad_version.h"
+
 #include "mater.h"
 #include "solid.h"
 #include "obj.h"
@@ -673,7 +675,8 @@ bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, co
 		    fprintf(fp, "400 0 1 0\n");
 
 		    time(&now);
-		    fprintf(fp, "37 SolidWorks(2008000)-Sat-Convertor-2.0 16 ACIS 8.0 Unknown %ld %s", strlen(ctime(&now)) - 1, ctime(&now));
+		    fprintf(fp, "%ld BRL-CAD(%s)-bot_dump 16 ACIS 8.0 Unknown %ld %s",
+			    (long)strlen(brlcad_version())+18, brlcad_version(), (long)strlen(ctime(&now)) - 1, ctime(&now));
 
 		    /* FIXME: this includes abs tolerance info, should probably output ours */
 		    fprintf(fp, "1 9.9999999999999995e-007 1e-010\n");
