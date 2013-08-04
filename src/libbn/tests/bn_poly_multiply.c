@@ -17,14 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/**
- *@Brief
- *The known values used for these tests are generated from Octave
- *GNU Octave, version 3.4.3
- *Copyright (C) 2011 John W. Eaton and others.
- *Octave was configured for "i386-redhat-linux-gnu".
- */
-
 
 #include "common.h"
 
@@ -70,6 +62,11 @@ poly_init(void)
   input[1].cf[0] = -4;
   input[1].cf[1] = -3;
   input[1].cf[2] = -2;
+
+  /**
+   * The known output values used for these tests were generated from
+   * GNU Octave, version 3.4.3
+   */
 
   output[1].cf[0] = 16;
   output[1].cf[1] = 24;
