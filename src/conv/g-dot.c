@@ -167,33 +167,7 @@ dot_header(FILE *outfp, const char *label)
 
     fprintf(outfp, "\ndigraph \"BRL-CAD\" {\n");
 
-#if 1
     fprintf(outfp, "\tlabel=%s\n", bu_vls_encode(&vp, label));
-#else
-    /* starting with empty vls */
-    fprintf(outfp, "\tBEFORE(1): [%s]\n", bu_vls_addr(&vp));
-
-    /* add a chunk */
-    bu_vls_printf(&vp, "test1");
-
-    /* show it */
-    fprintf(outfp, "\tBEFORE(2): [%s]\n", bu_vls_addr(&vp));
-
-    fprintf(outfp, "\tlabel=[%s]\n", bu_vls_encode(&vp, label));
-
-    bu_vls_printf(&vp, "test2");
-    fprintf(outfp, "\tBEFORE(3): [%s]\n", bu_vls_addr(&vp));
-
-    /* FIXME: investigate bu_vls_dcode */
-    /*
-    fprintf(outfp, "\tAFTER(1): [%s]\n", bu_vls_decode(&vp, bu_vls_addr(&vp)));
-    */
-
-    bu_vls_printf(&vp, "test3");
-    fprintf(outfp, "\tAFTER(2): [%s]\n", bu_vls_addr(&vp));
-    bu_vls_free(&vp);
-#endif
-
     fprintf(outfp, "\tgraph [ rankdir=LR ];\n");
     fprintf(outfp, "\tnode [ style=filled ];\n");
     fprintf(outfp, "\tnode [ shape=box ];\n"); /* try Mrecord */
