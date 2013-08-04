@@ -146,11 +146,9 @@ wgl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b
 	    backDiffuseColorDark[2] = wireColor[2] * 0.9;
 	    backDiffuseColorDark[3] = wireColor[3];
 
-#if 1
 	    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientColor);
 	    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specularColor);
 	    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseColor);
-#endif
 	} else {
 	    glColor3ub((GLubyte)r,  (GLubyte)g,  (GLubyte)b);
 	}
@@ -290,7 +288,6 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
 
     if (dmp->dm_top) {
 	/* Make xtkwin a toplevel window */
-#if 1
 	Tcl_DString ds;
 
 	Tcl_DStringInit(&ds);
@@ -305,13 +302,6 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
 	((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin =
 	    Tk_NameToWindow(interp, bu_vls_addr(&dmp->dm_pathName), tkwin);
 	Tcl_DStringFree(&ds);
-#else
-	((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin =
-	    Tk_CreateWindowFromPath(interp,
-				    tkwin,
-				    bu_vls_addr(&dmp->dm_pathName),
-				    bu_vls_addr(&dmp->dm_dName));
-#endif
 	((struct dm_xvars *)dmp->dm_vars.pub_vars)->top = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin;
     } else {
 	char *cp;

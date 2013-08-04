@@ -1977,12 +1977,9 @@ ogl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b
 	    backDiffuseColorLight[2] = wireColor[2] * 0.9;
 	    backDiffuseColorLight[3] = wireColor[3];
 
-#if 1
 	    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientColor);
 	    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specularColor);
 	    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseColor);
-#endif
-
 	} else {
 	    glColor3ub((GLubyte)r,  (GLubyte)g,  (GLubyte)b);
 	}

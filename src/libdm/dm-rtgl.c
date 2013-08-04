@@ -1549,7 +1549,6 @@ drawPoints(float *view, int pointSize)
 	for (BU_LIST_FOR (rtgljob.currItem, ptInfoList, head)) {
 	    used = rtgljob.currItem->used;
 
-#if 1
 	    glBegin(GL_POINTS);
 	    for (i = 0; i < used; i += 3) {
 
@@ -1565,11 +1564,6 @@ drawPoints(float *view, int pointSize)
 		}
 	    }
 	    glEnd();
-#else
-	    glNormalPointer(GL_FLOAT, 0, &(rtgljob.currItem->norms));
-	    glVertexPointer(3, GL_FLOAT, 0, &(rtgljob.currItem->points));
-	    glDrawArrays(GL_POINTS, 0, (used / 3));
-#endif
 	}
     } while ((entry = bu_hash_tbl_next(&record)) != NULL);
 
