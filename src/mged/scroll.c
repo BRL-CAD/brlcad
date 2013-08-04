@@ -302,11 +302,7 @@ scroll_display(int y_top)
     scroll_top = y_top;
     y = y_top;
 
-#if 1
     DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, 0);
-#else
-    DM_SET_LINE_ATTR(dmp, 1, 0);  /* linewidth - 1, not dashed */
-#endif
 
     for (m = &scroll_array[0]; *m != SCROLL_NULL; m++) {
 	++second_menu;
