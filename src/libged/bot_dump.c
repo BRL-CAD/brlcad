@@ -935,11 +935,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 		case OTYPE_SAT:
 		    fprintf(fp, "400 0 1 0\n");
 		    /*XXX Temporarily hardwired */
-#if 1
 		    fprintf(fp, "37 SolidWorks(2008000)-Sat-Convertor-2.0 11 ACIS 8.0 NT 24 Wed Dec 03 09:26:53 2003\n");
-#else
-		    fprintf(fp, "08 BRL-CAD-bot_dump-4.0 11 ACIS 4.0 NT 24 Thur Sep 25 15:00:00 2008\n");
-#endif
 		    fprintf(fp, "1 9.9999999999999995e-007 1e-010\n");
 		    break;
 		default:
@@ -1414,11 +1410,7 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 		case OTYPE_SAT:
 		    fprintf(fp, "400 0 1 0\n");
 		    /*XXX Temporarily hardwired */
-#if 1
 		    fprintf(fp, "37 SolidWorks(2008000)-Sat-Convertor-2.0 11 ACIS 8.0 NT 24 Wed Dec 03 09:26:53 2003\n");
-#else
-		    fprintf(fp, "08 BRL-CAD-bot_dump-4.0 11 ACIS 4.0 NT 24 Thur Sep 25 15:00:00 2008\n");
-#endif
 		    fprintf(fp, "1 9.9999999999999995e-007 1e-010\n");
 		    break;
 		default:
