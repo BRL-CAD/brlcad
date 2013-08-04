@@ -1099,7 +1099,7 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 		bu_strlcpy(vargs[1], dps[j]->d_namep, CLONE_BUFSIZE);
 
 		if (!no_draw || !is_dm_null()) {
-		    drawtrees(2, (const char **)vargs, 1);
+		    cmd_redraw_vlist(NULL, interp, 2, (const char **)vargs);
 		    size_reset();
 		    new_mats();
 		    color_soltab();
