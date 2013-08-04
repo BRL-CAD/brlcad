@@ -461,17 +461,13 @@ eval_seg(struct application *ap, struct reg_db_internals *dbint, struct seg *seg
 	       span, step_dist, steps);
 
     }
-#if 1
+
     for (dist=seg_p->seg_in.hit_dist; dist < seg_p->seg_out.hit_dist; dist += step_dist) {
 	VJOIN1(pt, ap->a_ray.r_pt, dist, ap->a_ray.r_dir);
 	optical_density += gauss_eval(pt, ell_p->v, dbint->one_sigma);
     }
 
-
     return optical_density;
-#else
-    return gauss_eval(ell_p->v, ell_p->v, dbint->one_sigma);
-#endif
 }
 
 

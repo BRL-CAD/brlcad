@@ -1095,7 +1095,6 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
     }
 
     /* if the region we hit is a light source be generous */
-#if 1
     {
 	struct light_specific *lspi;
 	for (BU_LIST_FOR(lspi, light_specific, &(LightHead.l))) {
@@ -1112,7 +1111,7 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
 	    }
 	}
     }
-#endif
+
     /* or something further away than a finite invisible light */
     if (lsp->lt_invisible && !(lsp->lt_infinite)) {
 	vect_t tolight;

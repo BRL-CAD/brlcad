@@ -419,16 +419,9 @@ make_proto(struct grass_specific *grass_sp)
 	    /* pick a length for the blade */
 	    tmp = (double)seg / (double)BLADE_SEGS_MAX;
 
-
-	    grass_sp->proto.b[blade].leaf[seg].len =
-#if 1
-		seg_len * .25 + tmp * (seg_len*1.75);
-#else
-	    (grass_sp->t*.8) + seg * (grass_sp->t*.5);
-#endif
-	    grass_sp->proto.b[blade].tot_len +=
-		grass_sp->proto.b[blade].leaf[seg].len;
-
+	    /* magic */
+	    grass_sp->proto.b[blade].leaf[seg].len = seg_len * .25 + tmp * (seg_len*1.75);
+	    grass_sp->proto.b[blade].tot_len += grass_sp->proto.b[blade].leaf[seg].len;
 
 	    VUNITIZE(grass_sp->proto.b[blade].leaf[seg].blade);
 	    VCROSS(left, grass_sp->proto.b[blade].leaf[seg].blade, z_axis);
@@ -594,7 +587,6 @@ plot_bush(struct plant *pl, struct grass_ray *r)
 	}
     }
 
-#if 1
     /* plot bounding Box */
     pl_color(r->fd, 100, 200, 100);
     pdv_3move(r->fd, pl->pmin);
@@ -610,7 +602,6 @@ plot_bush(struct plant *pl, struct grass_ray *r)
     pd_3cont(r->fd, pl->pmin[X], pl->pmax[Y], pl->pmax[Z]);
     pd_3cont(r->fd, pl->pmin[X], pl->pmin[Y], pl->pmax[Z]);
 
-#endif
     pl_color(r->fd, 255, 255, 255);
     bu_semaphore_release(BU_SEM_SYSCALL);
 }
