@@ -636,6 +636,8 @@ bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, co
 
 	    close(fd);
 	} else {
+	    time_t now;
+
 	    if ((fp=fopen(bu_vls_addr(&file_name), "wb+")) == NULL) {
 		perror(bu_vls_addr(&file_name));
 		bu_log("Cannot open ASCII output file (%s) for writing\n", bu_vls_addr(&file_name));
@@ -661,8 +663,10 @@ bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, co
 
 		    fprintf(fp, "400 0 1 0\n");
 
-		    fprintf(fp, "37 SolidWorks(2008000)-Sat-Convertor-2.0 11 ACIS 8.0 NT 24 Wed Dec 03 09:26:53 2003\n");
+		    time(&now);
+		    fprintf(fp, "37 SolidWorks(2008000)-Sat-Convertor-2.0 11 ACIS 8.0 NT %ld %s", sizeof(ctime(&now)), ctime(&now));
 
+		    /* FIXME: this looks like tolerance info, should probably output ours */
 		    fprintf(fp, "1 9.9999999999999995e-007 1e-010\n");
 
 		    write_bot_sat(bot, fp, dp->d_namep);
