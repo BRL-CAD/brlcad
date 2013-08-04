@@ -923,12 +923,13 @@ combdump(void)	/* Print out Combination record information */
     fprintf(ofp, "%.16s ", encode_name(record.c.c_name));	/* unique name */
     fprintf(ofp, "%d ", record.c.c_regionid);	/* region ID code */
     fprintf(ofp, "%d ", record.c.c_aircode);	/* air space code */
-    fprintf(ofp, "%d ", mcount);       		/* DEPRECATED: # of members */
-#if 1
-    fprintf(ofp, "%d ", 0);			/* DEPRECATED: COMGEOM region # */
-#else
-    (void)fprintf(ofp, "%d ", record.c.c_num);           /* DEPRECATED: COMGEOM region # */
-#endif
+
+    /* DEPRECATED: # of members */
+    fprintf(ofp, "%d ", mcount);
+
+    /* DEPRECATED: COMGEOM region # */
+    fprintf(ofp, "%d ", 0 /* was record.c.c_num */);
+
     fprintf(ofp, "%d ", record.c.c_material);	/* material code */
     fprintf(ofp, "%d ", record.c.c_los);		/* equiv. LOS est. */
     fprintf(ofp, "%d %d %d %d ",
