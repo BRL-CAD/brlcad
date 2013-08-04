@@ -131,8 +131,6 @@ int ufusr_ask_unload ( void )
 }
 
 
-jmp_buf my_env;
-
 /*	R E P O R T
  *
  */
@@ -151,11 +149,8 @@ int report(char *call, char *file, int line, int code)
 	fprintf(stderr, "%s Error in %s:%d\ncall: %s\nmessage:%s\n",
 		progname, file, line, call, message);
     }
-#if 1
+
     bu_exit( 1, NULL );
-#else
-    longjmp(my_env, 1);
-#endif
 
     return 0; /* NOTREACHED */
 }

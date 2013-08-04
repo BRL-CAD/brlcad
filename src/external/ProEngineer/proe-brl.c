@@ -1971,7 +1971,6 @@ output_part( ProMdl model )
 	fprintf( logger, "Tessellate part (%s)\n", curr_part_name );
     }
 
-#if 1
     /* Going from coarse to fine tessellation */
     for (i = 0; i <= max_to_min_steps; ++i) {
 	curr_error = max_error - (i * error_increment);
@@ -1994,10 +1993,7 @@ output_part( ProMdl model )
 	    fprintf(logger, "Failed to tessellate %s using:  tessellation error - %g, angle - %g\n", curr_part_name, curr_error, curr_angle);
 	}
     }
-#else
-    status = ProPartTessellate( ProMdlToPart(model), max_error/proe_to_brl_conv,
-				max_angle_cntrl, PRO_B_TRUE, &tess  );
-#endif
+
     if ( status != PRO_TK_NO_ERROR ) {
 	/* Failed!!! */
 
@@ -2828,7 +2824,7 @@ create_temp_directory()
     int ret_status;
 
     empty_parts_root = NULL;
-#if 1
+
     /* use UI dialog */
     status = ProUIDialogCreate( "proe_brl", "proe_brl" );
     if ( status != PRO_TK_NO_ERROR ) {
@@ -2857,21 +2853,6 @@ create_temp_directory()
 	fprintf( stderr, "\t dialog returned %d\n", ret_status );
     }
 
-#else
-    /* default output file name */
-    bu_strlcpy( output_file, "proe.asc", sizeof(output_file) );
-
-    /* get the angle control */
-    (void) ProMessageDisplay( MSGFIL, "USER_PROMPT_DOUBLE",
-			      "Enter a value for angle control: ",
-			      &max_angle_cntrl );
-    range[0] = 0.0;
-    range[1] = 1.0;
-    status = ProMessageDoubleRead( range, &max_angle_cntrl );
-    if ( status == PRO_TK_MSG_USER_QUIT ) {
-	return 0;
-    }
-#endif
     return 0;
 }
 
@@ -3005,7 +2986,6 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	fprintf( stderr, "\t dialog returned %d\n", ret_status );
     }
 
-#if 1
     /* get logger type */
     status = ProUIRadiogroupSelectednamesGet( "proe_brl", "log_file_type_rg", &n_selected_names, &selected_names );
     if ( status != PRO_TK_NO_ERROR ) {
@@ -3015,9 +2995,6 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     }
     sprintf(logger_type_str,"%s", selected_names[0]);
     ProStringarrayFree(selected_names, n_selected_names);
-#else
-    sprintf(logger_type_str, "Failure");
-#endif
 
     /* get the name of the log file */
     status = ProUIInputpanelValueGet( "proe_brl", "log_file", &tmp_str );
@@ -3530,9 +3507,8 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
     ProError status;
     int ret_status=0;
 
-
     empty_parts_root = NULL;
-#if 1
+
     ProMessageDisplay(MSGFIL, "USER_INFO", "Launching proe_brl...");
 
     /* use UI dialog */
@@ -3589,214 +3565,9 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 	bu_vls_free(&vls);
     }
 
-#else
-    /* get the currently displayed model in Pro/E */
-    status = ProMdlCurrentGet( &model );
-    if ( status == PRO_TK_BAD_CONTEXT ) {
-	ProName dialog_label;
-	ProLine w_answer;
-	char answer[PRO_LINE_SIZE];
-	char *ptr;
-
-	ProStringToWstring( dialog_label, "Select an Object for Conversion" );
-	ProStringToWstring( dialog_filter, "*.prt,*.asm" );
-	status = ProFileOpen( dialog_label, dialog_filter, (ProPath *)NULL,
-			      (ProName *)NULL, NULL,
-			      NULL, file_to_open );
-	if ( status != PRO_TK_NO_ERROR )
-	    return status;
-
-	(void)ProWstringToString( file_name, file_to_open );
-    }
-
-    /* default output file name */
-    bu_strlcpy( output_file, "proe.asc", sizeof(output_file) );
-
-    /* get the output file name */
-    (void)ProMessageDisplay( MSGFIL, "USER_PROMPT_STRING",
-			     "Enter name of file to receive output: ",
-			     output_file );
-    status = ProMessageStringRead( 127, w_output_file );
-    if ( status == PRO_TK_NO_ERROR ) {
-	(void)ProWstringToString( output_file, w_output_file );
-    } else if ( status == PRO_TK_MSG_USER_QUIT) {
-	return 0;
-    }
-
-    /* get starting ident number */
-    (void)ProMessageDisplay( MSGFIL, "USER_PROMPT_INT",
-			     "Enter starting ident number: ",
-			     &reg_id );
-    status = ProMessageIntegerRead( NULL, &reg_id );
-    if ( status == PRO_TK_MSG_USER_QUIT ) {
-	return 0;
-    }
-
-    /* get the maximum allowed error */
-    (void)ProMessageDisplay( MSGFIL, "USER_PROMPT_DOUBLE",
-			     "Enter maximum allowable error for tessellation (mm): ",
-			     &max_error );
-    range[0] = 0.0;
-    range[1] = 500.0;
-    status = ProMessageDoubleRead( range, &max_error );
-    if ( status == PRO_TK_MSG_USER_QUIT ) {
-	return 0;
-    }
-
-    /* get the angle control */
-    (void) ProMessageDisplay( MSGFIL, "USER_PROMPT_DOUBLE",
-			      "Enter a value for angle control: ",
-			      &max_angle_cntrl );
-    range[0] = 0.0;
-    range[1] = 1.0;
-    status = ProMessageDoubleRead( range, &max_angle_cntrl );
-    if ( status == PRO_TK_MSG_USER_QUIT ) {
-	return 0;
-    }
-
-    /* get the minimum hole diameter */
-    (void) ProMessageDisplay( MSGFIL, "USER_PROMPT_DOUBLE",
-			      "Enter the minimum allowed hole diameter (smaller holes will be deleted): ",
-			      &min_hole_diameter );
-    status = ProMessageDoubleRead( NULL, &min_hole_diameter );
-    if ( status == PRO_TK_MSG_USER_QUIT ) {
-	return 0;
-    }
-    if ( min_hole_diameter < 0.0 ) {
-	min_hole_diameter = 0.0;
-    }
-
-    /* get the minimum round radius */
-    (void) ProMessageDisplay( MSGFIL, "USER_PROMPT_DOUBLE",
-			      "Enter the minimum allowed round radius (smaller rounds will be deleted): ",
-			      &min_round_radius );
-    status = ProMessageDoubleRead( NULL, &min_round_radius );
-    if ( status == PRO_TK_MSG_USER_QUIT ) {
-	return 0;
-    }
-    if ( min_round_radius < 0.0 ) {
-	min_round_radius = 0.0;
-    }
-
-    /* get the minimum chamfer dimension */
-    (void) ProMessageDisplay( MSGFIL, "USER_PROMPT_DOUBLE",
-			      "Enter the minimum allowed chamfer dimension (smaller chamfers will be deleted): ",
-			      &min_chamfer_dim );
-    status = ProMessageDoubleRead( NULL, &min_chamfer_dim );
-    if ( status == PRO_TK_MSG_USER_QUIT ) {
-	return 0;
-    }
-    if ( min_chamfer_dim < 0.0 ) {
-	min_chamfer_dim = 0.0;
-    }
-
-    /* initialize */
-    do_initialize();
-
-    /* open output file */
-    mode = create_for_writing;
-    if ( (outfp=fopen( output_file, mode ) ) == NULL ) {
-	(void)ProMessageDisplay(MSGFIL, "USER_ERROR", "Cannot open output file" );
-	ProMessageClear();
-	fprintf( stderr, "Cannot open output file\n" );
-	perror( "\t" );
-	return PRO_TK_GENERAL_ERROR;
-    }
-
-    /* get model type */
-    status = ProMdlTypeGet( model, &type );
-    if ( status == PRO_TK_BAD_INPUTS ) {
-	(void)ProMessageDisplay(MSGFIL, "USER_NO_TYPE" );
-	ProMessageClear();
-	fprintf( stderr, "Cannot get type of current model\n" );
-	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	return PRO_TK_NO_ERROR;
-    }
-
-    /* can only do parts and assemblies, no drawings, etc. */
-    if ( type != PRO_MDL_ASSEMBLY && type != PRO_MDL_PART ) {
-	(void)ProMessageDisplay(MSGFIL, "USER_TYPE_NOT_SOLID" );
-	ProMessageClear();
-	fprintf( stderr, "Current model is not a solid object\n" );
-	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	return PRO_TK_NO_ERROR;
-    }
-
-    /* get units, and adjust conversion factor */
-    model_units( model );
-
-    vert_tree_root = create_vert_tree();
-
-    /* output the top level object
-     * this will recurse through the entire model
-     */
-    output_top_level_object( model, type );
-
-    free_vert_tree( vert_tree_root );
-
-    /* kill any references to empty parts */
-    kill_empty_parts();
-
-    /* let user know we are done */
-    ProMessageDisplay(MSGFIL, "USER_INFO", "Conversion complete" );
-
-    /* let user know we are done */
-    ProStringToWstring( tmp_line, "Conversion complete" );
-    ProUILabelTextSet( "proe_brl", "curr_proc", tmp_line );
-
-    /* free a bunch of stuff */
-    if ( done_list_part ) {
-	bu_rb_free( done_list_part, free_rb_data );
-	done_list_part = NULL;
-    }
-
-    if ( done_list_asm ) {
-	bu_rb_free( done_list_asm, free_rb_data );
-	done_list_asm = NULL;
-    }
-
-    /* free a bunch of stuff */
-    if ( done ) {
-	bu_free( (char *)done, "done" );
-    }
-    done = NULL;
-    max_done = 0;
-    curr_done = 0;
-
-    for ( i=0; i<BU_PTBL_LEN( &search_path_list ); i++ ) {
-	bu_free( (char *)BU_PTBL_GET( &search_path_list, i ), "search_path entry" );
-    }
-    bu_ptbl_free( &search_path_list );
-
-    if ( part_tris ) {
-	bu_free( (char *)part_tris, "part triangles" );
-    }
-    part_tris = NULL;
-
-    free_vert_tree( vert_tree_root );
-
-    max_tri = 0;
-
-    free_empty_parts();
-
-    fclose( outfp );
-
-    /* list summary of objects and feature type seen */
-    fprintf( stderr, "Object types encountered:\n" );
-    for ( i=0; i<NUM_OBJ_TYPES; i++ ) {
-	if ( !obj_type_count[i] )
-	    continue;
-	fprintf( stderr, "\t%s\t%d\n", obj_type[i], obj_type_count[i] );
-    }
-    fprintf( stderr, "Feature types encountered:\n" );
-    for ( i=0; i<NUM_FEAT_TYPES; i++ ) {
-	if ( !feat_type_count[i] )
-	    continue;
-	fprintf( stderr, "\t%s\t%d\n", feat_type[i], feat_type_count[i] );
-    }
-#endif
     return 0;
 }
+
 
 /* this routine determines whether the "proe-brl" menu item in Pro/E
  * should be displayed as available or greyed out
@@ -3804,27 +3575,10 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 static uiCmdAccessState
 proe_brl_access( uiCmdAccessMode access_mode )
 {
-
-#if 1
     /* doing the correct checks appears to be unreliable */
     return ACCESS_AVAILABLE;
-#else
-    ProMode mode;
-    ProError status;
-
-    status = ProModeCurrentGet( &mode );
-    if ( status != PRO_TK_NO_ERROR ) {
-	return ACCESS_UNAVAILABLE;
-    }
-
-    /* only allow our menu item to be used when parts or assemblies are displayed */
-    if ( mode == PRO_MODE_ASSEMBLY || mode == PRO_MODE_PART ) {
-	return ACCESS_AVAILABLE;
-    } else {
-	return ACCESS_UNAVAILABLE;
-    }
-#endif
 }
+
 
 /* routine to add our menu item */
 int

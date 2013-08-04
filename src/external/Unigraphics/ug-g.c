@@ -4111,8 +4111,6 @@ convert_a_feature( tag_t feat_tag,
 	    failed = 1;
 	}
     } else if ( BU_STR_EQUAL( feat_type, "MIRROR" ) ) {
-#if 1
-
 	int i;
 	tag_t source_body, body_xform, datum_plane, datum_xform;
 
@@ -4125,122 +4123,6 @@ convert_a_feature( tag_t feat_tag,
 	bu_log( "UF_WAVE_ask_link_mirror_data says: source_body = %d, body_xform = %d, datum_plane = %d, datum_xform = %d\n",
 		source_body, body_xform, datum_plane, datum_xform );
 	failed = 1;
-#else
-	char *solid_name;
-	tag_t *parents, *children;
-	int num_parents, num_children;
-	int num_datum_planes=0;
-	int type, subtype;
-	double plane_pt[3], plane_norm[3];
-	double mirror_mtx[16];
-	mat_t mirror_mat;
-	int i, j;
-	struct wmember mirror_head;
-
-	UF_func( UF_MODL_ask_feat_relatives( feat_tag, &num_parents, &parents, &num_children, &children ) );
-
-	DO_INDENT;
-	bu_log( "Mirror has %d children and %d parents\n", num_children, num_parents );
-	for ( i=0; i<num_parents; i++ ) {
-	    char *ftype1;
-
-	    UF_func( UF_OBJ_ask_type_and_subtype( parents[i], &type, &subtype));
-	    UF_func( UF_MODL_ask_feat_type( parents[i], &ftype1 ) );
-	    DO_INDENT;
-	    bu_log( "parent[%d] is feature %s, type %s\n", i, feat_name, ftype1 );
-	    if ( BU_STR_EQUAL( ftype1, "DATUM_PLANE" ) ) {
-		char *offset, *angle;
-		UF_func( UF_MODL_ask_datum_plane_parms( parents[i], plane_pt, plane_norm, &offset, &angle ) );
-		DO_INDENT;
-		bu_log( "plane is at (%g %g %g), normal is (%g %g %g)\n", V3ARGS( plane_pt ), V3ARGS( plane_norm ) );
-		UF_free( offset );
-		UF_free( angle );
-		UF_func( UF_MTX4_mirror( plane_pt, plane_norm, mirror_mtx ) );
-		MAT_COPY( mirror_mat, mirror_mtx );
-		num_datum_planes++;
-	    }
-	    UF_free( ftype1 );
-	}
-
-	if ( num_datum_planes != 1 ) {
-	    UF_free( parents );
-	    UF_free( children );
-
-	    DO_INDENT;
-	    bu_log( "Failed to convert MIRROR BODY (%s) in part %s\n", feat_name, part_name );
-	    failed = 1;
-	    goto out;
-	}
-
-	BU_LIST_INIT( &mirror_head.l );
-	for ( i=0; i<num_parents; i++ ) {
-	    char *ftype1;
-
-	    UF_func( UF_OBJ_ask_type_and_subtype( parents[i], &type, &subtype));
-	    UF_func( UF_MODL_ask_feat_type( parents[i], &ftype1 ) );
-	    if ( !BU_STR_EQUAL( ftype1, "DATUM_PLANE" ) ) {
-		uf_list_p_t feat_list;
-		int feat_count=0;
-		tag_t body_tag;
-		tag_t body_feat;
-
-		UF_func( UF_MODL_ask_feat_body( parents[i], &body_tag ) );
-		UF_func( UF_MODL_ask_body_feats( body_tag, &feat_list ) );
-		UF_func( UF_MODL_ask_list_count( feat_list, &feat_count ) );
-		DO_INDENT;
-		bu_log( "parent feature %s has %d features\n", ftype1, feat_count );
-		for ( j=0; j<feat_count; j++ ) {
-		    UF_free( ftype1 );
-		    UF_func( UF_MODL_ask_list_item( feat_list, j, &body_feat ) );
-		    UF_func( UF_MODL_ask_feat_type( body_feat, &ftype1 ) );
-		    DO_INDENT;
-		    bu_log( "\t%s\n", ftype1 );
-		}
-
-		if ( only_facetize ) {
-		    solid_name = (char *)NULL;
-		} else {
-		    solid_name = conv_features( body_tag, part_name, NULL, NULL, curr_xform, units_conv, 0 );
-		}
-
-		if ( !solid_name ) {
-		    parts_facetized++;
-		    if ( !only_facetize ) {
-			DO_INDENT;
-			bu_log( "\tfailed to convert features for feature %s part %s, facetizing\n",
-				feat_name, part_name );
-		    }
-		    solid_name = facetize( body_tag, part_name, NULL, NULL, curr_xform, units_conv, 0 );
-		} else {
-		    parts_bool++;
-		}
-		if ( solid_name ) {
-		    add_to_obj_list( solid_name );
-		    (void)mk_addmember( solid_name, &mirror_head.l, mirror_mat, brlcad_op );
-		}
-	    }
-	    UF_free( ftype1 );
-	}
-
-	UF_free( parents );
-	UF_free( children );
-
-	if ( BU_LIST_NON_EMPTY( &mirror_head.l ) ) {
-	    if ( BU_LIST_IS_HEAD( BU_LIST_PNEXT_PNEXT( bu_list, &mirror_head.l ), &mirror_head.l ) ) {
-		/* only one member in list, we don't need to build a combination */
-		(void)mk_addmember( bu_strdup( solid_name ), &head->l, mirror_mat, brlcad_op );
-		mk_freemembers( &mirror_head.l );
-	    } else {
-		char *comb_name;
-
-		/* we need to build a combination */
-		comb_name = create_unique_brlcad_combination_name();
-		(void)mk_comb( wdb_fd, comb_name, &mirror_head.l, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0 );
-		add_to_obj_list( comb_name );
-		(void)mk_addmember( comb_name, &head->l, NULL, brlcad_op );
-	    }
-	}
-#endif
     } else if ( BU_STR_EQUAL( feat_type, "MIRROR_SET" ) ) {
 	tag_t plane_tag;
 	tag_t *mirror_features;
@@ -5600,15 +5482,10 @@ main(int ac, char *av[])
 	return 0;
     }
 
-#if 1
     if ( !only_facetize ) {
 	curr_level = 0;
 	get_it_all_loaded( displayed_part );
     }
-#else
-    cset = load_sub_parts(displayed_part);
-    bu_log( "loaded sub_parts\n" );
-#endif
 
 #if DO_SUPPRESSIONS
     if ( min_chamfer > 0.0 || min_round > 0.0 ) {
