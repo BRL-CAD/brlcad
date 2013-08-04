@@ -77,7 +77,6 @@ extern int cmd_overlay(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_parse_points(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_pov(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_put(ClientData, Tcl_Interp *, int, const char *[]);
-extern int cmd_redraw_vlist(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_rot(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_rrt(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_rt(ClientData, Tcl_Interp *, int, const char *[]);

@@ -283,7 +283,6 @@ static struct cmdtab mged_cmdtab[] = {
     {"read_muves", f_read_muves, GED_FUNC_PTR_NULL},
     {"rear", f_bv_rear, GED_FUNC_PTR_NULL},
     {"red", f_red, GED_FUNC_PTR_NULL},
-    {"redraw_vlist", cmd_redraw_vlist, GED_FUNC_PTR_NULL},
     {"refresh", f_refresh, GED_FUNC_PTR_NULL},
     {"regdebug", f_regdebug, GED_FUNC_PTR_NULL},
     {"regdef", cmd_ged_plain_wrapper, ged_regdef},

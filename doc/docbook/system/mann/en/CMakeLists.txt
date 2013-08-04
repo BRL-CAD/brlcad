@@ -176,7 +176,6 @@ set(docbook_mann_EN
   rcodes.xml
   read_muves.xml
   red.xml
-  redraw_vlist.xml
   refresh.xml
   regdebug.xml
   regdef.xml

@@ -472,57 +472,6 @@ add_solid_path_to_result(
     bu_vls_free(&str);
 }
 
-
-/*
- * Given the name(s) of database objects, re-generate the vlist
- * associated with every solid in view which references the
- * named object(s), either solids or regions.
- * Particularly useful with outboard .inmem database modifications.
- */
-int
-cmd_redraw_vlist(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
-{
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
-    struct directory *dp;
-    int i;
-
-    CHECK_DBI_NULL;
-
-    if (argc < 2) {
-	struct bu_vls vls = BU_VLS_INIT_ZERO;
-
-	bu_vls_printf(&vls, "help redraw_vlist");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
-    for (i = 1; i < argc; i++) {
-	struct solid *sp;
-
-	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) == NULL)
-	    continue;
-
-	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
-
-	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-		if (db_full_path_search(&sp->s_fullpath, dp)) {
-		    (void)replot_original_solid(sp);
-		    sp->s_iflag = DOWN;	/* It won't be drawn otherwise */
-		}
-	    }
-
-	    gdlp = next_gdlp;
-	}
-    }
-
-    update_views = 1;
-    return TCL_OK;
-}
-
 int
 redraw_visible_objects(void)
 {

@@ -898,3 +898,5 @@ s/rt_g\./RTG\./g
         renamed rt_g global to RTG so it doesn't match the struct name [7.24]
 s/rt_functab\[/OBJ\[/g
         renamed rt_functab global to OBJ so it doesn't match the struct name [7.24]
+s/redraw_vlist/draw/g
+        removed redraw_vlist mged command, just call draw or refresh [7.24]
