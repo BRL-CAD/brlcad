@@ -327,15 +327,11 @@ draw_png(struct ged *gedp, FILE *fp)
     png_structp png_p;
     png_infop info_p;
     double out_gamma = 1.0;
-#if 1
+
+    /* TODO: explain why this is size+1 */
     size_t num_bytes_per_row = (size+1) * 3;
     size_t num_bytes = num_bytes_per_row * (size+1);
     unsigned char **image = (unsigned char **)bu_malloc(sizeof(unsigned char *) * (size+1), "draw_png, image");
-#else
-    size_t num_bytes_per_row = size * 3;
-    size_t num_bytes = num_bytes_per_row * size;
-    unsigned char **image = (unsigned char **)bu_malloc(sizeof(unsigned char *) * size, "draw_png, image");
-#endif
     unsigned char *bytes = (unsigned char *)bu_malloc(num_bytes, "draw_png, bytes");
 
     /* Initialize bytes using the background color */
