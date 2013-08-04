@@ -168,6 +168,30 @@ free_obj_materials() {
 
 
 static void
+write_sat_header(FILE *fp)
+{
+    time_t now;
+
+    /* SAT header consists of three lines:
+     *
+     * 1: SAT_version num_records num_objects history_boolean
+     * 2: strlen product_id_str strlen version_str strlen date_str
+     * 3: cnv_to_mm resabs_value resnor_value
+     *
+     * When num_records is zero, it looks for an end marker.
+     */
+    fprintf(fp, "400 0 1 0\n");
+
+    time(&now);
+    fprintf(fp, "%ld BRL-CAD(%s)-bot_dump 16 ACIS 8.0 Unknown %ld %s",
+	    (long)strlen(brlcad_version())+18, brlcad_version(), (long)strlen(ctime(&now)) - 1, ctime(&now));
+
+    /* FIXME: this includes abs tolerance info, should probably output ours */
+    fprintf(fp, "1 9.9999999999999995e-007 1e-010\n");
+}
+
+
+static void
 write_bot_sat(struct rt_bot_internal *bot, FILE *fp, char *UNUSED(name))
 {
     int i, j;
@@ -638,8 +662,6 @@ bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, co
 
 	    close(fd);
 	} else {
-	    time_t now;
-
 	    if ((fp=fopen(bu_vls_addr(&file_name), "wb+")) == NULL) {
 		perror(bu_vls_addr(&file_name));
 		bu_log("Cannot open ASCII output file (%s) for writing\n", bu_vls_addr(&file_name));
@@ -663,23 +685,7 @@ bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, co
 		case OTYPE_SAT:
 		    curr_line_num = 0;
 
-		    /* SAT header is three lines:
-		     *
-		     * 1: VER num_records num_objects history_boolean
-		     * 2: strlen product_id_str strlen version_str strlen date_str
-		     * 3: cnv_to_mm resabs_value resnor_value
-		     *
-		     * When num_records is zero, it looks for an end
-		     * marker.
-		     */
-		    fprintf(fp, "400 0 1 0\n");
-
-		    time(&now);
-		    fprintf(fp, "%ld BRL-CAD(%s)-bot_dump 16 ACIS 8.0 Unknown %ld %s",
-			    (long)strlen(brlcad_version())+18, brlcad_version(), (long)strlen(ctime(&now)) - 1, ctime(&now));
-
-		    /* FIXME: this includes abs tolerance info, should probably output ours */
-		    fprintf(fp, "1 9.9999999999999995e-007 1e-010\n");
+		    write_sat_header(fp);
 
 		    write_bot_sat(bot, fp, dp->d_namep);
 		    fprintf(fp, "End-of-ACIS-data\n");
@@ -933,10 +939,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 			    argv[argc-1]);
 		    break;
 		case OTYPE_SAT:
-		    fprintf(fp, "400 0 1 0\n");
-		    /*XXX Temporarily hardwired */
-		    fprintf(fp, "37 SolidWorks(2008000)-Sat-Convertor-2.0 11 ACIS 8.0 NT 24 Wed Dec 03 09:26:53 2003\n");
-		    fprintf(fp, "1 9.9999999999999995e-007 1e-010\n");
+		    write_sat_header(fp);
 		    break;
 		default:
 		    break;
@@ -1408,10 +1411,7 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 			    argv[argc-1]);
 		    break;
 		case OTYPE_SAT:
-		    fprintf(fp, "400 0 1 0\n");
-		    /*XXX Temporarily hardwired */
-		    fprintf(fp, "37 SolidWorks(2008000)-Sat-Convertor-2.0 11 ACIS 8.0 NT 24 Wed Dec 03 09:26:53 2003\n");
-		    fprintf(fp, "1 9.9999999999999995e-007 1e-010\n");
+		    write_sat_header(fp);
 		    break;
 		default:
 		    break;
