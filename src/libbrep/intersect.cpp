@@ -384,7 +384,7 @@ build_surface_root(const ON_Surface* surf, const ON_Interval* u_domain, const ON
 
 
 ON_Curve*
-curve_fitting(ON_Curve* in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool delete_curve = NULL)
+curve_fitting(ON_Curve* in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool delete_curve = false)
 {
     // Fit a *2D* curve into line, arc, ellipse or other comic curves.
 
