@@ -69,7 +69,6 @@ set(MGED_SOURCES
   arbs.c
   attach.c
   axes.c
-  bodyio.c
   buttons.c
   chgmodel.c
   chgtree.c

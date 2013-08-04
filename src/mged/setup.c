@@ -83,10 +83,6 @@ static struct cmdtab mged_cmdtab[] = {
     {"bb", cmd_ged_plain_wrapper, ged_bb},
     {"bev", cmd_ged_plain_wrapper, ged_bev},
     {"bo", cmd_ged_plain_wrapper, ged_bo},
-#if 0
-    {"import_body", cmd_import_body, GED_FUNC_PTR_NULL},
-    {"export_body", cmd_export_body, GED_FUNC_PTR_NULL},
-#endif
     {"bomb", f_bomb, GED_FUNC_PTR_NULL},
     {"bot", cmd_ged_plain_wrapper, ged_bot},
     {"bot_condense", cmd_ged_plain_wrapper, ged_bot_condense},
