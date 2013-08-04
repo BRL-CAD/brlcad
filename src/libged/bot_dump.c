@@ -661,12 +661,21 @@ bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, co
 		case OTYPE_SAT:
 		    curr_line_num = 0;
 
+		    /* SAT header is three lines:
+		     *
+		     * 1: VER num_records num_objects history_boolean
+		     * 2: strlen product_id_str strlen version_str strlen date_str
+		     * 3: cnv_to_mm resabs_value resnor_value
+		     *
+		     * When num_records is zero, it looks for an end
+		     * marker.
+		     */
 		    fprintf(fp, "400 0 1 0\n");
 
 		    time(&now);
 		    fprintf(fp, "37 SolidWorks(2008000)-Sat-Convertor-2.0 16 ACIS 8.0 Unknown %ld %s", strlen(ctime(&now)) - 1, ctime(&now));
 
-		    /* FIXME: this looks like tolerance info, should probably output ours */
+		    /* FIXME: this includes abs tolerance info, should probably output ours */
 		    fprintf(fp, "1 9.9999999999999995e-007 1e-010\n");
 
 		    write_bot_sat(bot, fp, dp->d_namep);
