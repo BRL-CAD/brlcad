@@ -1829,33 +1829,7 @@ nmg_sphere_face_snurb(struct faceuse *fu, const matp_t m)
 int
 rt_ell_params(struct pc_pc_set *UNUSED(pcs), const struct rt_db_internal *UNUSED(ip))
 {
-#if 0
-    struct rt_ell_internal *eip;
-    eip = (struct rt_ell_internal *)ip->idb_ptr;
-
-    if (!pcs) return 0;
-
-    pcs->ps = bu_calloc(pcs->n_params, sizeof (struct pc_param), "pc_param");
-    pcs->cs = bu_calloc(pcs->n_constraints, sizeof (struct pc_constrnt), "pc_constrnt");
-
-    bu_vls_strcpy(&(pcs->ps[0].name), "V");
-    pcs->ps[0].ptype = pc_point;
-    pcs->ps[0].pval.pointp = (pointp_t) &(eip->v);
-
-    bu_vls_strcpy(&(pcs->ps[1].name), "A");
-    pcs->ps[1].ptype = pc_vector;
-    pcs->ps[1].pval.vectorp = (vectp_t) &(eip->a);
-
-    bu_vls_strcpy(&(pcs->ps[2].name), "B");
-    pcs->ps[2].ptype = pc_vector;
-    pcs->ps[2].pval.vectorp = (vectp_t)  &(eip->b);
-
-    bu_vls_strcpy(&(pcs->ps[3].name), "C");
-    pcs->ps[3].ptype = pc_value;
-    pcs->ps[3].pval.vectorp = (vectp_t) &(eip->c);
-#endif
-
-    return 0;			/* OK */
+    return -1;			/* FAIL */
 }
 
 

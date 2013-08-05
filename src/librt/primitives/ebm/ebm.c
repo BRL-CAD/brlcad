@@ -370,20 +370,6 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
 		rp->r_pt[Y]) * invdir[Y];
 	delta[Y] = ebmp->ebm_cellsize[Y] * fabs(invdir[Y]);
     }
-#if 0
-    /* Z setup */
-    if (ZERO(rp->r_dir[Z])) {
-	t[Z] = INFINITY;
-    } else {
-	/* Consider igrid[Z] to be either 0 or 1 */
-	if (rp->r_dir[Z] < 0) {
-	    t[Z] = (ebmp->ebm_origin[Z] + ebmp->ebm_cellsize[Z] -
-		    rp->r_pt[Z]) * invdir[Z];
-	} else {
-	    t[Z] = (ebmp->ebm_origin[Z] - rp->r_pt[Z]) * invdir[Z];
-	}
-    }
-#endif
 
     /* The delta[] elements *must* be positive, as t must increase */
     if (RT_G_DEBUG&DEBUG_EBM)bu_log("t[X] = %g, delta[X] = %g\n", t[X], delta[X]);
