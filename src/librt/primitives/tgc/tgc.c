@@ -927,7 +927,6 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	    bu_log("tgc(%s):  too many grazing intersections encountered.  further reporting suppressed.\n");
 	    tgc_msgs++;
 	}
-    }
 
 	return 0;			/* No hit */
     }
