@@ -37,6 +37,16 @@
 #include "bn.h"
 #include "bu.h"
 
+static const char usage[] =
+  "Usage: %s [-v] [-xX DEBUG_FLAG] < brlcad_db.g > new_db.g\n"
+  "\n"
+  "Options:\n"
+  "  v - verbose\n"
+  "  x - librt debug flag\n"
+  "  X - nmg debug flag\n"
+  ;
+
+static char optstring[] = "vx:X:h?";
 
 /*
  * M A I N
@@ -47,11 +57,6 @@ main(int argc, char *argv[])
     static int verbose;
     static struct bn_tol tol;
 
-    static const char usage[] = "Usage: %s [-v] [-xX lvl] < brlcad_db.g > new db.g\n\
-	options:\n\
-		v - verbose\n\
-		x - librt debug flag\n\
-		X - nmg debug flag\n";
 
     union record rec;
     int c;
@@ -74,7 +79,7 @@ main(int argc, char *argv[])
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "vx:X:h?")) != -1) {
+    while ((c = bu_getopt(argc, argv, optstring)) != -1) {
 	switch (c) {
 	    unsigned int debug;
 	    case 'v':

@@ -117,9 +117,7 @@ void outstring(int n);
 void outshort(int n);
 void outfloat(int n);
 
-static const char usage[] = "\
-Usage: plot3stat [-v] [unix_plot]\n";
-
+static const char usage[] = "Usage: plot3stat [-v] [unix_plot]\n";
 
 int
 getshort(void)

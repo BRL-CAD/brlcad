@@ -44,10 +44,9 @@ struct peaks {
     double	value;
 } peaks[BSIZE];
 
-static const char usage[] = "\
-Usage: dpeak [window_size (512)] < doubles\n";
+static const char usage[] = "Usage: dpeak [window_size (512)] < doubles\n";
 
-void	dumpmax(void);
+void dumpmax(void);
 
 int main(int argc, char **argv)
 {
