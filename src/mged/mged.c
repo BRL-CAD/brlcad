@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <locale.h>
 #include <ctype.h>
 #include <signal.h>
 #include <time.h>
@@ -1069,6 +1070,9 @@ main(int argc, char *argv[])
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
     setmode(fileno(stderr), O_BINARY);
+
+    /* mged inputs and outputs assume POSIX/C locale settings */
+    setlocale(LC_ALL, "POSIX");
 
     timeout.tv_sec = 0;
     timeout.tv_usec = 1;
