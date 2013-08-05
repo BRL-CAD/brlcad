@@ -260,7 +260,7 @@ icv_writeline(icv_image_t *bif, int y, void *data, ICV_DATA type)
     if (type == ICV_DATA_UCHAR) {
 	p = data;
 	for (; width_size > 0; width_size--) {
-		*dst = (*p)/255.0;
+		*dst = ICV_CONV_8BIT(*p);
 		p++;
 		dst++;
 	}

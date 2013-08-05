@@ -129,6 +129,14 @@ typedef struct icv_image icv_image_t;
  */
 #define ICV_IMAGE_IS_INITIALIZED(_i) (((struct icv_image *)(_i) != ICV_IMAGE_NULL) && LIKELY((_i)->magic == ICV_IMAGE_MAGIC))
 
+
+/* Data conversion MACROS  */
+
+/**
+ * Converts to double (icv data) type from unsigned char(8bit).
+ */
+#define ICV_CONV_8BIT(data) ((double)(data))/255.0
+
 /**
  * Finds the Image format based on heuristics depending on the file name.
  * @param filename Filename of the image whose format is to be know.

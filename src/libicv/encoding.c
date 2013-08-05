@@ -52,7 +52,7 @@ uchar2double(unsigned char *data, long int size)
     char_p = data;
     double_p = double_data = (double *) bu_malloc(size*sizeof(double), "uchar2data : double data");
     for (i=0; i<size; i++) {
-	    *double_p = ((double)(*char_p))/255.0;
+	    *double_p = ICV_CONV_8BIT(*char_p);
 	    double_p++;
 	    char_p++;
     }
