@@ -72,7 +72,7 @@ STEPattribute * getAttribute(STEPentity *ent, const char *name)
 	return attr_result;
 }
 
-bool ON_BRep_to_STEP(ON_Brep *brep, , Registry *registry)
+bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry)
 {
 	STEPentity ** vertex_cartesian_pt_array = new STEPentity*[brep->m_V.Count()];
 	STEPentity ** vertex_pt_array = new STEPentity*[brep->m_V.Count()];
