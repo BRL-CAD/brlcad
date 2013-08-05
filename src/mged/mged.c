@@ -1071,9 +1071,6 @@ main(int argc, char *argv[])
     setmode(fileno(stdout), O_BINARY);
     setmode(fileno(stderr), O_BINARY);
 
-    /* mged inputs and outputs assume POSIX/C locale settings */
-    setlocale(LC_ALL, "POSIX");
-
     timeout.tv_sec = 0;
     timeout.tv_usec = 1;
 
@@ -1692,6 +1689,9 @@ main(int argc, char *argv[])
 	}
 #endif
     }
+
+    /* mged inputs and outputs assume POSIX/C locale settings */
+    setlocale(LC_ALL, "POSIX");
 
     mged_init_flag = 0;	/* all done with initialization */
 
