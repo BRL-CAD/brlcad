@@ -254,10 +254,8 @@ static cl_program clt_program;
 static cl_kernel kernel;
 
 
+/* just spheres for now  */
 const char * const clt_program_code = "\
-#define MAX_SPHERES 10\
-\
-\
 typedef struct\
 {\
     float3 position;\
@@ -266,18 +264,18 @@ typedef struct\
 } Sphere;\
 \
 \
-__kernel void ray_trace(__global float *output, __constant Sphere *gspheres)\
+__kernel void ell_shot(__global float *output, __constant Sphere sphere, Sphere vlight, float3 E, float3 V)\
 {\
-    __local Sphere spheres[MAX_SPHERES];\
+    float3 EO = sphere.position-(E+V);\
+    float v = dot(EO, V);\
+    float disc = 0; //TODO\
 \
-    spheres[get_global_id(0)] = gspheres[get_global_id(0)];\
-    barrier(CLK_LOCAL_MEM_FENCE);\
-\
-    if (get_global_id(0) == 0) {\
-	for (int i = 0; i < MAX_SPHERES; ++i)\
-	printf(\"is_light: %d\n\", spheres[i].is_light);\
-	printf(\"%d\n\", get_local_size(0));\
+    if (disc < 0) {\
+	output = 0;\
+	return;\
     }\
+\
+    float d = sqrt(disc);\
 }\
 \
 ";
