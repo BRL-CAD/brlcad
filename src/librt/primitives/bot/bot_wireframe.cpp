@@ -162,27 +162,6 @@ rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     }
     bu_free(face_normals, "face_normals");
 
-#if 0
-    // Each face will have 3 edges
-    unsigned int *faces = (unsigned int *)bu_calloc(bot->num_faces * 3, sizeof(unsigned int), "face definitions via edge ids");
-    // Max possible need for this array is 3 edges for each face, 2 vertex indices per edge
-    unsigned int *edges = (unsigned int *)bu_calloc(bot->num_faces * 3 * 2, sizeof(unsigned int), "2d array of edge id to vert index mappings");
-
-    unsigned int cnt = edge_mappings(bot, &faces, &edges);
-
-    // Each edge will have at most 2 faces, and hence a maximum of 2 patches
-    unsigned int *edges_to_faces = (unsigned int *)bu_calloc(cnt * 2, sizeof(unsigned int), "face definitions via edge ids");
-
-    for (unsigned int i = 0; i < bot->num_faces; i++) {
-	unsigned int id = 2 * faces[i*3+0];
-	if (!edges_to_faces[id]) {
-	    edges_to_faces[id] = i + 1;
-	} else {
-	    edges_to_faces[id + 1] = i + 1;
-	}
-    }
-#endif
-
     /* Determine the maximun number of faces associated with any one vertex */
     unsigned int *vert_face_cnt = (unsigned int *)bu_calloc(bot->num_vertices, sizeof(unsigned int), "vert face cnt");
     for (unsigned int i = 0; i < bot->num_faces; i++) {
