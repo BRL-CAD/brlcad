@@ -2662,7 +2662,6 @@ nmg_split_touchingloops(struct loopuse *lu, const struct bn_tol *tol)
 	vu = eu->vu_p;
 	NMG_CK_VERTEXUSE(vu);
 
-#if 1
 	if (!nmg_find_repeated_v_in_lu(vu)) continue;
 
 	/* avoid splitting a crack if possible */
@@ -2715,47 +2714,6 @@ nmg_split_touchingloops(struct loopuse *lu, const struct bn_tol *tol)
 	 */
 	goto top;
     }
-
-#else
-    v = vu->v_p;
-    NMG_CK_VERTEX(v);
-
-    /*
-     * For each vertexuse on vertex list, check to see if it points up
-     * to the this loop.  If so, then there is a duplicated vertex.
-     * Ordinarily, the vertex list will be *very* short, so this
-     * strategy is likely to be faster than a table-based approach,
-     * for most cases.
-     */
-    for (BU_LIST_FOR(tvu, vertexuse, &v->vu_hd)) {
-	struct edgeuse *teu;
-	struct loopuse *tlu;
-
-	if (tvu == vu) continue;
-	if (*tvu->up.magic_p != NMG_EDGEUSE_MAGIC) continue;
-	teu = tvu->up.eu_p;
-	NMG_CK_EDGEUSE(teu);
-	if (*teu->up.magic_p != NMG_LOOPUSE_MAGIC) continue;
-	tlu = teu->up.lu_p;
-	NMG_CK_LOOPUSE(tlu);
-	if (tlu != lu) continue;
-	/*
-	 * Repeated vertex exists, Split loop into two loops
-	 */
-	newlu = nmg_split_lu_at_vu(lu, vu);
-	NMG_CK_LOOPUSE(newlu);
-	NMG_CK_LOOP(newlu->l_p);
-	nmg_loop_g(newlu->l_p, tol);
-
-	/* Ensure there are no duplications in new loop */
-	nmg_split_touchingloops(newlu, tol);
-
-	/* There is no telling where we will be in the remainder of
-	 * original loop, check 'em all.
-	 */
-	goto top;
-    }
-#endif
 }
 
 
