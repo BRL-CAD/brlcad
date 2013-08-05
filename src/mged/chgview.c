@@ -2882,36 +2882,6 @@ f_svbase(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 
 
 /*
- * F _ V R O T _ C E N T E R
- *
- * Set the center of rotation, either in model coordinates, or
- * in view (+/-1) coordinates.
- * The default is to rotate around the view center: v=(0, 0, 0).
- */
-int
-f_vrot_center(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
-{
-    if (argc < 5 || 5 < argc) {
-	struct bu_vls vls = BU_VLS_INIT_ZERO;
-
-	if (argv && argc > 5) {
-	    bu_log("Unexpected parameter [%s]\n", argv[5]);
-	}
-
-	bu_vls_printf(&vls, "help vrot_center");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-
-	return TCL_ERROR;
-    }
-
-    /* XXXX Actually, this is now available in LIBRT's view_obj.c */
-    Tcl_AppendResult(interp, "Not ready until tomorrow.\n", (char *)NULL);
-    return TCL_OK;
-}
-
-
-/*
  * U S E J O Y
  *
  * Apply the "joystick" delta rotation to the viewing direction,

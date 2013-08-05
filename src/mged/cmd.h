@@ -92,8 +92,6 @@ extern int cmd_tk(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_tol(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_tra(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_units(ClientData, Tcl_Interp *, int, const char *[]);
-extern int cmd_viewget(ClientData, Tcl_Interp *, int, const char *[]);
-extern int cmd_viewset(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_vrot(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_zap(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_zoom(ClientData, Tcl_Interp *, int, const char *[]);
@@ -186,7 +184,6 @@ extern int f_view2model_lu(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_view2model_vec(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_view_ring(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_vnirt(ClientData, Tcl_Interp *, int, const char *[]);
-extern int f_vrot_center(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_wait(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_winset(ClientData, Tcl_Interp *, int, const char *[]);
 

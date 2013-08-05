@@ -357,10 +357,6 @@ static struct cmdtab mged_cmdtab[] = {
     {"vdraw", cmd_ged_plain_wrapper, ged_vdraw},
     {"view", cmd_ged_view_wrapper, ged_view_func},
     {"view_ring", f_view_ring, GED_FUNC_PTR_NULL},
-#if 0
-    {"viewget", cmd_viewget, GED_FUNC_PTR_NULL},
-    {"viewset", cmd_viewset, GED_FUNC_PTR_NULL},
-#endif
     {"view2grid_lu", cmd_ged_plain_wrapper, ged_view2grid_lu},
     {"view2model", cmd_ged_plain_wrapper, ged_view2model},
     {"view2model_lu", cmd_ged_plain_wrapper, ged_view2model_lu},
@@ -371,9 +367,6 @@ static struct cmdtab mged_cmdtab[] = {
     {"voxelize", cmd_ged_plain_wrapper, ged_voxelize},
     {"vquery_ray", f_vnirt, GED_FUNC_PTR_NULL},
     {"vrot", cmd_vrot, GED_FUNC_PTR_NULL},
-#if 0
-    {"vrot_center", f_vrot_center, GED_FUNC_PTR_NULL},
-#endif
     {"wcodes", cmd_ged_plain_wrapper, ged_wcodes},
     {"whatid", cmd_ged_plain_wrapper, ged_whatid},
     {"which_shader", cmd_ged_plain_wrapper, ged_which_shader},
