@@ -667,31 +667,31 @@ public:
 
 };
 
-GPointPair   gdiam_approx_diam( gdiam_point  * start, int  size,
+GDIAM_EXPORT GPointPair   gdiam_approx_diam( gdiam_point  * start, int  size,
                                     gdiam_real  eps );
-GPointPair   gdiam_approx_diam( gdiam_point  * start, int  size,
+GDIAM_EXPORT GPointPair   gdiam_approx_diam( gdiam_point  * start, int  size,
                                 gdiam_real  eps );
-gdiam_real   gdiam_approx_diam( gdiam_real  * start, int  size,
+GDIAM_EXPORT gdiam_real   gdiam_approx_diam( gdiam_real  * start, int  size,
                                 gdiam_real  eps );
-GPointPair   gdiam_approx_diam_pair( gdiam_real  * start, int  size,
+GDIAM_EXPORT GPointPair   gdiam_approx_diam_pair( gdiam_real  * start, int  size,
                                      gdiam_real  eps );
-GPointPair   gdiam_approx_diam_pair_UDM( gdiam_real  * start, int  size,
+GDIAM_EXPORT GPointPair   gdiam_approx_diam_pair_UDM( gdiam_real  * start, int  size,
                                          gdiam_real  eps );
-gdiam_bbox   gdiam_approx_const_mvbb( gdiam_point  * start, int  size,
+GDIAM_EXPORT gdiam_bbox   gdiam_approx_const_mvbb( gdiam_point  * start, int  size,
                                       gdiam_real  eps, 
                                       GBBox  * p_ap_bbox );    
-gdiam_point  * gdiam_convert( gdiam_real  * start, int  size );
-gdiam_bbox   gdiam_approx_mvbb( gdiam_point  * start, int  size,
+GDIAM_EXPORT gdiam_point  * gdiam_convert( gdiam_real  * start, int  size );
+GDIAM_EXPORT gdiam_bbox   gdiam_approx_mvbb( gdiam_point  * start, int  size,
                                 gdiam_real  eps ) ;
-gdiam_bbox   gdiam_approx_mvbb_grid( gdiam_point  * start, int  size,
+GDIAM_EXPORT gdiam_bbox   gdiam_approx_mvbb_grid( gdiam_point  * start, int  size,
                                      int  grid_size );
 GDIAM_EXPORT gdiam_bbox   gdiam_approx_mvbb_grid_sample( gdiam_point  * start, int  size,
                                             int  grid_size, int  sample_size );
-gdiam_bbox   gdiam_approx_mvbb_grid_sample( gdiam_real  * start, int  size,
+GDIAM_EXPORT gdiam_bbox   gdiam_approx_mvbb_grid_sample( gdiam_real  * start, int  size,
                                             int  grid_size, int  sample_size );
 
 
-void  gdiam_generate_orthonormal_base( gdiam_point  in,
+GDIAM_EXPORT void  gdiam_generate_orthonormal_base( gdiam_point  in,
                                        gdiam_point  out1,
                                        gdiam_point  out2 );
 

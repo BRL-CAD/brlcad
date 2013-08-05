@@ -1439,26 +1439,11 @@ public:
             return  false;
         }
 
-        //printf( "before: %p %p...\n", a, b );
-        //fflush( stdout );
-        /*
-        if  ( a->equal( base ) )
-            return  true;
-        if  ( b->equal( base ) )
-            return  false;
-        */
-        //printf( "a: (%g, %g)\n", a->x, a->y );
-        //printf( "b: (%g, %g)\n", b->x, b->y );
-        //fflush( stdout );
-
 	sgn = AreaSign( base, *a, *b );
         if  ( sgn != 0 )
             return  (sgn > 0);
         len1 = base.dist( *a );
         len2 = base.dist( *b );
-        
-        //printf( "bogi!\n" );
-        //fflush( stdout );
 
         return (len1 > len2);
     }
@@ -2452,7 +2437,7 @@ gdiam_point  * gdiam_convex_sample( gdiam_point  * start, int  size,
     // we want the grid to be on the two minor dimensions.
     bb.set_third_dim_longest();
 
-    grid_size = (int)sqrt( sample_size / 2 );
+    grid_size = (int)sqrt((double)(sample_size / 2) );
 
     grid_entries = grid_size * grid_size;
     mem_size = (int)( sizeof( gdiam_point ) * grid_size * grid_size );
