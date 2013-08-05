@@ -481,7 +481,7 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
 		events[k].m_curveA->GetNurbForm(*nurbscurve);
 		curve_uv.Append(nurbscurve);
 		nurbscurve = ON_NurbsCurve::New();
-		events[k].m_curveA->GetNurbForm(*nurbscurve);
+		events[k].m_curveB->GetNurbForm(*nurbscurve);
 		curve_st.Append(nurbscurve);
 	    }
 	    curvesarray[i].Append(curve_uv.Count(), curve_uv.Array());
