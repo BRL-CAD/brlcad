@@ -393,13 +393,10 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 	    nstart += shp->hg_bins[hindex];
 	    nend += ehp->hg_bins[hindex];
 	    pos += shp->hg_clumpsize;
-#if 1
-	    if (nstart < nu_sol_per_cell &&
-		nend < nu_sol_per_cell) continue;
-#else
-	    if (nstart + nend < 2 * nu_sol_per_cell)
+
+	    if (nstart < nu_sol_per_cell && nend < nu_sol_per_cell)
 		continue;
-#endif
+
 	    /* End current interval, start new one */
 	    nugnp->nu_axis[i][axi].nu_epos = pos;
 	    nugnp->nu_axis[i][axi].nu_width =
@@ -465,28 +462,19 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 		    ++nend;
 		}
 
-#if 1
-		if (nstart < nu_sol_per_cell &&
-		    nend < nu_sol_per_cell)
-#else
-		    if (nstart + nend < nu_sol_per_cell)
-#endif
-			continue;
+		if (nstart < nu_sol_per_cell && nend < nu_sol_per_cell)
+		    continue;
 
 		/* Don't make really teeny intervals. */
 		if (pos <= nugnp->nu_axis[i][axi].nu_spos
-#if 1
 		    + 1.0
-#endif
 		    + rtip->rti_tol.dist)
 		    continue;
 
 		/* don't make any more cuts if we've gone
 		   past the end. */
 		if (pos >= fromp->bn_max[i]
-#if 1
 		    - 1.0
-#endif
 		    - rtip->rti_tol.dist)
 		    continue;
 
@@ -1465,7 +1453,6 @@ rt_ct_optim(struct rt_i *rtip, register union cutter *cutp, size_t depth)
 	 * terms, each box must be at least 1mm wide after cut.
 	 */
 	axis = AXIS(depth);
-#if 1
 	did_a_cut = 0;
 	for (i=0; i<3; i++, axis += 1) {
 	    if (axis > Z) {
@@ -1488,18 +1475,6 @@ rt_ct_optim(struct rt_i *rtip, register union cutter *cutp, size_t depth)
 	if (!did_a_cut) {
 	    return;
 	}
-#else
-	if (cutp->bn.bn_max[axis]-cutp->bn.bn_min[axis] < 2.0)
-	    return;
-	if (rt_ct_old_assess(cutp, axis, &where, &offcenter) <= 0)
-	    return;			/* not practical */
-	if (rt_ct_box(rtip, cutp, axis, where, 0) == 0) {
-	    if (rt_ct_old_assess(cutp, AXIS(depth+1), &where, &offcenter) <= 0)
-		return;			/* not practical */
-	    if (rt_ct_box(rtip, cutp, AXIS(depth+1), where, 0) == 0)
-		return;	/* hopeless */
-	}
-#endif
 	if (rt_ct_piececount(cutp->cn.cn_l) >= oldlen &&
 	    rt_ct_piececount(cutp->cn.cn_r) >= oldlen) {
 	    if (RT_G_DEBUG&DEBUG_CUTDETAIL)

@@ -1585,14 +1585,8 @@ rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* Associate face geometry */
     for (i=0; i < pa.pa_faces; i++) {
-#if 1
 	/* We already know the plane equations, this is fast */
 	nmg_face_g(fu[i], pa.pa_face[i].peqn);
-#else
-	/* For the cautious, ensure topology and geometry match */
-	if (nmg_fu_planeeqn(fu[i], tol) < 0)
-	    return -1;		/* FAIL */
-#endif
     }
 
     /* Mark edges as real */
