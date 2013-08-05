@@ -1285,7 +1285,9 @@ nmg_check_radial(const struct edgeuse *eu, const struct bn_tol *tol)
      * correctly, XXX the caller should pass in a table of dangling
      * faces.  -Mike
      */
-#ifdef NEW_DANGLING_FACE_CHECKING_METHOD
+#ifndef NEW_DANGLING_FACE_CHECKING_METHOD
+    return 0;
+#else
     if (RTG.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_check_radial(eu=x%x, tol)\n", eu);
     }
