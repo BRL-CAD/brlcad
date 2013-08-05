@@ -2677,6 +2677,8 @@ mged_zoom(double val)
 int
 cmd_zoom(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
+    double zval;
+
     if (argc != 2) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
@@ -2687,7 +2689,12 @@ cmd_zoom(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	return TCL_ERROR;
     }
 
-    return mged_zoom(atof(argv[1]));
+    /* sanity check the zoom value */
+    zval = atof(argv([1]));
+    if (zval > 0.0)
+	return mged_zoom(zval);
+
+    return TCL_ERROR;
 }
 
 
