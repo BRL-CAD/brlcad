@@ -33,11 +33,10 @@
  * R T _ B O T _ O R I E N T E D _ B B O X
  */
 extern "C" int
-rt_bot_oriented_bbox(struct rt_arb_internal *bbox, struct rt_db_internal *ip, const fastf_t tol)
+rt_bot_oriented_bbox(struct rt_arb_internal *bbox, struct rt_db_internal *ip, const fastf_t UNUSED(tol))
 {
 
     struct rt_bot_internal *bot_ip;
-    size_t i;
     gdiam_point *pnt_arr = NULL;
     gdiam_bbox bb;
 
