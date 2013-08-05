@@ -19,6 +19,7 @@ set(BREP_LOCAL_INCLUDE_DIRS
 BRLCAD_LIB_INCLUDE_DIRS(brep BREP_INCLUDE_DIRS BREP_LOCAL_INCLUDE_DIRS)
 
 set(LIBBREP_SOURCES
+  boolean.cpp
   intersect.cpp
   libbrep_brep_tools.cpp
   opennurbs_ext.cpp

@@ -1733,9 +1733,12 @@ extern BREP_EXPORT void
 DumpSSXEvent(ON_SSX_EVENT &x, ON_TextLog &text_log);
 
 /**
- * Sub-division support for curves and surfaces
+ * Sub-division support for curves
  */
 class BREP_EXPORT Subcurve;
+/*
+ * Sub-division support for surfaces
+ */
 class BREP_EXPORT Subsurface;
 
 /* The ON_PX_EVENT class is used to report point-point, point-curve
@@ -2084,9 +2087,8 @@ ON_Intersect(const ON_Curve* curveA,
  *     optional surface tree for surfaceB, to avoid re-computation
  *
  * Returns:
- *    Number of intersection events appended to x. -1 for error.
+ *    Number of intersection events appended to x.
  */
-
 extern BREP_EXPORT int
 ON_Intersect(const ON_Surface* surfA,
 	     const ON_Surface* surfB,
@@ -2100,6 +2102,23 @@ ON_Intersect(const ON_Surface* surfA,
 	     const ON_Interval* surfaceB_vdomain = 0,
 	     Subsurface* treeA = 0,
 	     Subsurface* treeB = 0);
+
+
+/**
+ * Evaluate NURBS boolean operations.
+ *
+ * Parameters:
+ *
+ *   brepO - [out]
+ *
+ *   brepA - [in]
+ *
+ *   brepB - [in]
+ *
+ *   operation - [in]
+ */
+extern BREP_EXPORT int
+ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int operation);
 
 } /* extern C++ */
 #endif

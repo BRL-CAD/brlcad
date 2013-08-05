@@ -4073,7 +4073,7 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, ON_SimpleArray<ON_NurbsCurve*> &l
 
 
 int
-rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, const int UNUSED(operation))
+rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, const int operation)
 {
     RT_CK_DB_INTERNAL(ip1);
     RT_CK_DB_INTERNAL(ip2);
@@ -4088,97 +4088,9 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
     brep2 = bip2->brep;
     brep_out = ON_Brep::New();
 
-    int facecount1 = brep1->m_F.Count();
-    int facecount2 = brep2->m_F.Count();
-    ON_SimpleArray<ON_NurbsCurve *> *curvesarray = new ON_SimpleArray<ON_NurbsCurve *> [facecount1 + facecount2];
-
-    // calculate intersection curves
-    for (int i = 0; i < facecount1; i++) {
-	for (int j = 0; j < facecount2; j++) {
-	    ON_ClassArray<ON_SSX_EVENT> events;
-	    if (ON_Intersect(brep1->m_S[brep1->m_F[i].m_si],
-			     brep2->m_S[brep2->m_F[j].m_si],
-			     events) <= 0)
-		continue;
-	    ON_SimpleArray<ON_NurbsCurve *> curve_uv, curve_st;
-	    for (int k = 0; k < events.Count(); k++) {
-		ON_NurbsCurve *nurbscurve = ON_NurbsCurve::New();
-		events[k].m_curveA->GetNurbForm(*nurbscurve);
-		curve_uv.Append(nurbscurve);
-		nurbscurve = ON_NurbsCurve::New();
-		events[k].m_curveA->GetNurbForm(*nurbscurve);
-		curve_st.Append(nurbscurve);
-	    }
-	    curvesarray[i].Append(curve_uv.Count(), curve_uv.Array());
-	    curvesarray[facecount1 + j].Append(curve_st.Count(), curve_st.Array());
-	}
-    }
-
-    // split the surfaces with the intersection curves
-    for (int i = 0; i < facecount1 + facecount2; i++) {
-	ON_SimpleArray<ON_NurbsCurve*> innercurves, outercurves;
-	ON_BrepFace &face = i < facecount1 ? brep1->m_F[i] : brep2->m_F[i - facecount1];
-	ON_Brep *brep = i < facecount1 ? brep1 : brep2;
-	ON_SimpleArray<int> &loopindex = face.m_li;
-	for (int j = 0; j < loopindex.Count(); j++) {
-	    ON_BrepLoop &loop = brep->m_L[loopindex[j]];
-	    ON_SimpleArray<int> &trimindex = loop.m_ti;
-	    for (int k = 0; k < trimindex.Count(); k++) {
-		ON_Curve *curve2d = brep1->m_C2[brep->m_T[trimindex[k]].m_c2i];
-		ON_NurbsCurve *nurbscurve = ON_NurbsCurve::New();
-		if (!curve2d->GetNurbForm(*nurbscurve))
-		    continue;
-		if (j == 0) {
-		    outercurves.Append(nurbscurve);
-		} else {
-		    innercurves.Append(nurbscurve);
-		}
-	    }
-	}
-	ON_SimpleArray<TrimmedFace*> trimmedfaces;
-	TrimmedFace *first = new TrimmedFace();
-	first->face = &face;
-	first->innerloop = innercurves;
-	first->outerloop = outercurves;
-	split_trimmed_face(trimmedfaces, first, curvesarray[i]);
-
-	/* TODO: Perform inside-outside test to decide whether the trimmed face
-	 * should be used in the final b-rep structure or not.
-	 * Different operations should be dealt with accordingly.
-	 * Another solution is to use connectivity graphs which represents the
-	 * topological structure of the b-rep. This can reduce time-consuming
-	 * inside-outside tests.
-	 * Here we just use all of these trimmed faces.
-	 */
-	for (int j = 0; j < trimmedfaces.Count(); j++) {
-	    // Add the surfaces, faces, loops, trims, vertices, edges, etc.
-	    // to the brep structure.
-	    ON_Surface *new_surf = face.SurfaceOf()->Duplicate();
-	    int surfindex = brep_out->AddSurface(new_surf);
-	    ON_BrepFace& new_face = brep_out->NewFace(surfindex);
-
-	    add_elements(brep_out, new_face, trimmedfaces[j]->outerloop, ON_BrepLoop::outer);
-	    ON_BrepLoop &loop = brep_out->m_L[brep_out->m_L.Count() - 1];
-	    add_elements(brep_out, new_face, trimmedfaces[j]->innerloop, ON_BrepLoop::inner);
-
-	    new_surf->SetDomain(0, loop.m_pbox.m_min.x, loop.m_pbox.m_max.x);
-	    new_surf->SetDomain(1, loop.m_pbox.m_min.y, loop.m_pbox.m_max.y);
-	    brep_out->SetTrimIsoFlags(new_face);
-	    brep_out->FlipFace(new_face);
-	}
-    }
-
-    // Check IsValid() and output the message.
-    ON_wString ws;
-    ON_TextLog log(ws);
-    brep_out->IsValid(&log);
-    char *s = new char [ws.Length() + 1];
-    for (int k = 0; k < ws.Length(); k++) {
-	s[k] = ws[k];
-    }
-    s[ws.Length()] = 0;
-    bu_log("%s", s);
-    delete s;
+    int ret;
+    if ((ret = ON_Boolean(brep_out, brep1, brep2, operation)) < 0)
+	return ret;
 
     // make the final rt_db_internal
     struct rt_brep_internal *bip_out;
@@ -4191,8 +4103,6 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
     out->idb_meth = &OBJ[ID_BREP];
     out->idb_minor_type = ID_BREP;
 
-    // WIP
-    delete [] curvesarray;
     return 0;
 }
 
