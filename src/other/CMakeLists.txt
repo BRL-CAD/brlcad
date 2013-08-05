@@ -851,6 +851,19 @@ AUTO.
 THIRD_PARTY(libvds libvds "" libvds_ALIASES libvds_DESCRIPTION NOSYS)
 set(LIBVDS_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libvds" CACHE STRING "Directory containing libvds headers." FORCE)
 
+# gdiam
+
+set(libgdiam_ALIASES ENABLE_GDIAM)
+set(libgdiam_DESCRIPTION "
+Option for enabling and disabling compilation of the libgdiam approximate
+tight bounding box library provided with BRL-CAD's source code.  Default
+is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
+testing first for a system version if BRLCAD_BUNDLED_LIBS is also
+AUTO.
+")
+THIRD_PARTY(libgdiam libgdiam "" libgdiam_ALIASES libgdiam_DESCRIPTION NOSYS)
+set(LIBGDIAM_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libgdiam" CACHE STRING "Directory containing libgdiam headers." FORCE)
+
 # Bullet is not yet integrated as a src/other subbuild, but there is
 # code that will make use of it if it is available.  If that code
 # becomes sufficiently useful, Bullet will be integrated.  In the

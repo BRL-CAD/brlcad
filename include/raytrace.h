@@ -2140,6 +2140,10 @@ struct rt_functab {
     void (*ft_volume)(fastf_t * /*vol*/, const struct rt_db_internal * /*ip*/);
     void (*ft_surf_area)(fastf_t * /*area*/, const struct rt_db_internal * /*ip*/);
     void (*ft_centroid)(point_t * /*cent*/, const struct rt_db_internal * /*ip*/);
+    int (*ft_oriented_bbox)(struct rt_arb_internal * /* bounding arb8 */,
+		   struct rt_db_internal * /*ip*/,
+		   const fastf_t);
+
 };
 
 

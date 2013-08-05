@@ -15,6 +15,7 @@ set(RT_LOCAL_INCLUDE_DIRS
   ${REGEX_INCLUDE_DIR}
   ${TNT_INCLUDE_DIR}
   ${LIBVDS_INCLUDE_DIR}
+  ${LIBGDIAM_INCLUDE_DIR}
   )
 
 BRLCAD_LIB_INCLUDE_DIRS(rt RT_INCLUDE_DIRS RT_LOCAL_INCLUDE_DIRS)
@@ -77,6 +78,7 @@ set(LIBRT_SOURCES
   primitives/bot/bot.c
   primitives/bot/bot_brep.cpp
   primitives/bot/bot_mirror.c
+  primitives/bot/bot_oriented_bbox.cpp
   primitives/bot/btg.c
   primitives/bot/btgf.c
   primitives/brep/brep.cpp
@@ -287,7 +289,7 @@ else(MSVC)
   set(LIBRT_SOURCES ${LIBRT_SOURCES} timer42.c)
 endif(MSVC)
 
-BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${LIBVDS_LIBRARY};libbn;libbu;${OPENNURBS_LIBRARY};${P2T_LIBRARY};libbrep;${REGEX_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NO_STRICT_CXX)
+BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${LIBGDIAM_LIBRARY};${LIBVDS_LIBRARY};libbn;libbu;${OPENNURBS_LIBRARY};${P2T_LIBRARY};libbrep;${REGEX_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NO_STRICT_CXX)
 
 SET_TARGET_PROPERTIES(librt PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(CPP_DLL_DEFINES)

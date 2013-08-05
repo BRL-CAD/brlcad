@@ -74,8 +74,8 @@
     extern const struct bu_structparse rt_##name##_parse[]; \
     extern void rt_##name##_volume(fastf_t *vol, const struct rt_db_internal *ip); \
     extern void rt_##name##_surf_area(fastf_t *area, const struct rt_db_internal *ip); \
-    extern void rt_##name##_centroid(point_t *cent, const struct rt_db_internal *ip)
-
+    extern void rt_##name##_centroid(point_t *cent, const struct rt_db_internal *ip); \
+    extern int rt_##name##_oriented_bbox(struct rt_arb_internal *bbox, struct rt_db_internal *ip, const fastf_t tol)
 
 RT_DECLARE_INTERFACE(tor);
 RT_DECLARE_INTERFACE(tgc);
@@ -192,6 +192,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
     },
 
     {
@@ -233,6 +234,7 @@ const struct rt_functab OBJ[] = {
 	rt_tor_volume,
 	rt_tor_surf_area,
 	rt_tor_centroid,
+	NULL,
     },
 
     {
@@ -274,6 +276,7 @@ const struct rt_functab OBJ[] = {
 	rt_tgc_volume,
 	rt_tgc_surf_area,
 	rt_tgc_centroid,
+	NULL,
     },
 
     {
@@ -315,6 +318,7 @@ const struct rt_functab OBJ[] = {
 	rt_ell_volume,
 	rt_ell_surf_area,
 	rt_ell_centroid,
+	NULL,
     },
 
     {
@@ -356,6 +360,7 @@ const struct rt_functab OBJ[] = {
 	rt_arb_volume,
 	NULL,
 	rt_arb_centroid,
+	NULL,
     },
 
     {
@@ -394,6 +399,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	rt_ars_params,
 	rt_ars_bbox,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -437,7 +443,8 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
-	NULL
+	NULL,
+	NULL,
     },
 
     {
@@ -479,6 +486,7 @@ const struct rt_functab OBJ[] = {
 	rt_tgc_volume,
 	rt_tgc_surf_area,
 	rt_tgc_centroid,
+	NULL,
     },
 
     {
@@ -517,6 +525,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	rt_pg_params,
 	rt_pg_bbox,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -561,6 +570,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
     },
 
     {
@@ -602,6 +612,7 @@ const struct rt_functab OBJ[] = {
 	rt_ell_volume,
 	rt_ell_surf_area,
 	rt_ell_centroid,
+	NULL,
     },
 
     {
@@ -640,6 +651,7 @@ const struct rt_functab OBJ[] = {
 	rt_nmg_make,
 	rt_nmg_params,
 	rt_nmg_bbox,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -684,6 +696,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	rt_ebm_centroid,
+	NULL,
     },
 
     {
@@ -722,6 +735,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	rt_vol_params,
 	rt_vol_bbox,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -766,6 +780,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
     },
 
     {
@@ -807,6 +822,7 @@ const struct rt_functab OBJ[] = {
 	rt_pipe_volume,
 	rt_pipe_surf_area,
 	rt_pipe_centroid,
+	NULL,
     },
 
     {
@@ -847,6 +863,7 @@ const struct rt_functab OBJ[] = {
 	rt_part_bbox,
 	rt_part_volume,
 	rt_part_surf_area,
+	NULL,
 	NULL,
     },
 
@@ -889,6 +906,7 @@ const struct rt_functab OBJ[] = {
 	rt_rpc_volume,
 	rt_rpc_surf_area,
 	rt_rpc_centroid,
+	NULL,
     },
 
     {
@@ -929,6 +947,7 @@ const struct rt_functab OBJ[] = {
 	rt_rhc_bbox,
 	NULL,
 	rt_rhc_surf_area,
+	NULL,
 	NULL,
     },
 
@@ -971,6 +990,7 @@ const struct rt_functab OBJ[] = {
 	rt_epa_volume,
 	rt_epa_surf_area,
 	rt_epa_centroid,
+	NULL,
     },
 
     {
@@ -1009,6 +1029,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	rt_ehy_params,
 	rt_ehy_bbox,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -1053,6 +1074,7 @@ const struct rt_functab OBJ[] = {
 	rt_eto_volume,
 	rt_eto_surf_area,
 	rt_eto_centroid,
+	NULL,
     },
 
     {
@@ -1094,6 +1116,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
     },
 
     {
@@ -1126,6 +1149,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	0,
 	0,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -1176,6 +1200,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
     },
 
     {
@@ -1214,6 +1239,7 @@ const struct rt_functab OBJ[] = {
 	rt_dsp_make,
 	rt_dsp_params,
 	rt_dsp_bbox,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -1258,6 +1284,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	rt_sketch_surf_area,
 	NULL,
+	NULL,
     },
 
     {
@@ -1299,6 +1326,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
     },
 
     {
@@ -1336,6 +1364,7 @@ const struct rt_functab OBJ[] = {
 	rt_generic_form,
 	NULL,
 	rt_submodel_params,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -1381,6 +1410,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
     },
 
     {
@@ -1422,6 +1452,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	rt_bot_centroid,
+	rt_bot_oriented_bbox,
     },
 
     {
@@ -1463,6 +1494,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
     },
 
     {
@@ -1497,6 +1529,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	0,
 	0,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -1547,6 +1580,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
     },
 
     {
@@ -1581,6 +1615,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	0,
 	0,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -1631,6 +1666,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
     },
 
     {
@@ -1669,6 +1705,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	rt_metaball_params,
 	rt_metaball_bbox,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -1714,6 +1751,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
     },
 #else
     {
@@ -1746,6 +1784,7 @@ const struct rt_functab OBJ[] = {
 	0,
 	0,
 	0,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -1796,6 +1835,7 @@ const struct rt_functab OBJ[] = {
 	rt_hyp_volume,
 	rt_hyp_surf_area,
 	rt_hyp_centroid,
+	NULL,
     },
 
     {
@@ -1828,6 +1868,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	0,
 	0,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -1878,6 +1919,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
     },
 
     {
@@ -1919,6 +1961,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
     },
 
     {
@@ -1951,6 +1994,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	sizeof(struct rt_annotation_internal),
 	RT_ANNOTATION_INTERNAL_MAGIC,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -2001,6 +2045,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
     },
 
     {
@@ -2033,6 +2078,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	0,
 	0,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
