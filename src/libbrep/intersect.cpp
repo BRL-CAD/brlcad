@@ -2864,11 +2864,11 @@ ON_Intersect(const ON_Surface* surfA,
     for (int i = 0; i < overlaps.Count(); i++) {
 	if (!overlaps[i] || !overlaps[i]->m_curveA || !overlaps[i]->m_curveB || !overlaps[i]->m_curve3d)
 	    continue;
-	
+
 	if (overlaps[i]->m_curve3d->IsClosed() && overlaps[i]->m_curveA->IsClosed() && overlaps[i]->m_curveB->IsClosed()) {
 	    start_linked[i] = end_linked[i] = true;
 	}
-	
+
 	for (int j = i + 1; j < overlaps.Count(); j++) {
 	    if (!overlaps[j] || !overlaps[j]->m_curveA || !overlaps[j]->m_curveB || !overlaps[j]->m_curve3d)
 		continue;
@@ -3264,7 +3264,7 @@ ON_Intersect(const ON_Surface* surfA,
 			OverlapEvent* event = overlapevents[k].m_inside[m];
 			if (event->m_type == OverlapEvent::inner
 			    && event->IsPointIn(tmp_curveuv[i])
-                            && !event->IsPointOnBoundary(tmp_curveuv[i])) {
+			    && !event->IsPointOnBoundary(tmp_curveuv[i])) {
 			    out_of_all_inner = false;
 			    break;
 			}
