@@ -195,7 +195,13 @@ view_pixel(struct application *ap)
     int do_eol = 0;
     unsigned char dist[8];	/* pixel distance (in IEEE format) */
 
-#if 0
+#ifdef DRAW_INDICATOR_LINE
+    /* this draws a nice indicator line to let you know where you are
+     * currently rendering into the frame, but testing demonstrated
+     * that this utterly kills performance for some framebuffer types.
+     * need to revisit and test making this be runtime requestable.
+     */
+
     RGBpixel white = {255, 255, 255};
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
