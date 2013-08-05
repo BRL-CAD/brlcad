@@ -182,24 +182,24 @@ int main(int ac, char **av)
     int t;
 
     (void)parse_args(ac, av);
-    if (isatty(fileno(stdin))) usage();
+    if (isatty(fileno(stdin)))
+	usage();
 
     /* process stdin */
 
     /* get buffer for image */
     size = width * height;
-    if ((buffer = (unsigned char *)malloc(width*height)) == (unsigned char *)NULL) {
-	fprintf(stderr, "%s: cannot allocate input buffer\n",
-		progname);
-	bu_free(buffer, "buffer alloc from malloc");
-	bu_exit (-1, NULL);
+    if (size > 0) {
+	buffer = (unsigned char *)bu_malloc(size, "alloc buffer");
+    } else {
+	bu_log("ERROR: zero dimension image\n");
+	usage();
     }
 
     /* read in entire image */
     for (t=0; t < size && (c=read(0, (char *)&buffer[t], size-t)) >= 0; t += c) {
 	/* do nothing */;
     }
-
 
     if (c < 0) {
 	perror (filename);
