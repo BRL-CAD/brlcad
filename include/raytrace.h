@@ -3739,7 +3739,63 @@ RT_EXPORT extern struct bu_ptbl *db_search_unique_objects_strplan(const char *pl
 							  struct db_i *dbip,
 							  struct rt_wdb *wdbp);
 
+/**
+ * TODO:  PROPOSED API for search functionality
+ *
+ * This is the proposed replacment to all of the preceeding search functionality -
+ * the previous API calls will .
+ *
+ * Design notes:
+ *
+ * * As long as struct db_i retains its pointer back to its parent rt_wdb
+ *   structure, and dbip is a parameter in rt_wdb, only one of the two is
+ *   needed as a parameter and either will work.  Probably go with rt_wdb,
+ *   since it isn't tagged as private within the data structure definition.
+ *
+ * * Plan strings are the most intuitive way for humans to spell out a search
+ *   pattern - db_search_formplan becomes a behind-the-scenes function that
+ *   the user then doesn't have to worry about.  Only counterargument would
+ *   be re-using plans already built from a string, and the slight overhead
+ *   of rebuilding the plan from a string for repeated search calls isn't
+ *   sufficient justification for the added API complexity without hard
+ *   evidence that complexity is needed.
+ *
+ * * Instead of having the user go through the trouble of generating full
+ *   path structures from string inputs, just accept char pointers to
+ *   object or path names and build the necessary additional data structures
+ *   in the backend.  Again, minor possible performance gain from path list
+ *   re-use doesn't justify more API complexity without compelling evidence
+ *   it is needed.
+ *
+ * * instead of having multiple search function calls, add a search type
+ *   parameter that toggles between various search types.  All of them can
+ *   return a bu_ptbl of pointers to db full paths, and the search type
+ *   will control how the search is done and what the expectations/guarantees
+ *   are for the results.
+ *
+ * * Need a flag to know what to do about hidden geometry during the search,
+ *   unless we make that one of the plan options - maybe -nohide or something
+ *   like that...
+ *
+ * * One possible option to the enums for search types is to rely fully on the
+ *   first character of the path strings (which are currently fully informative in the
+ *   libged search command line interface) but the difficulty there is if more
+ *   seach styles are added initial path string characters are a very constraining
+ *   selection mechanism.  For future proofing I think the input conventions on the
+ *   path strings should be handled above this level.
+ */
 
+/* Available search types */
+enum {
+    DB_SEARCH_STANDARD = 0, /* Full path tree search starting with the set of objects having no parents */
+    DB_SEARCH_UNIQ_OBJ,     /* Like DB_SEARCH_STANDARD, but returns only unique object list without paths */
+    DB_SEARCH_FLAT          /* Instead of only starting with objects that don't have a parent, all objects are starting points for a full path tree search*/
+};
+
+RT_EXPORT extern struct bu_ptbl *db_search(const char *plan_string,
+	                                   const char *path_strings[],
+	                                   struct rt_wdb *wdbp,
+	                                   int search_type);
 
 /* db_open.c */
 /**
