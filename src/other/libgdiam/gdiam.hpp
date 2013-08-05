@@ -23,6 +23,18 @@
 #ifndef  __GDIAM__H
 #define  __GDIAM__H
 
+#ifndef GDIAM_EXPORT
+#  if defined(GDIAM_DLL_EXPORTS) && defined(GDIAM_DLL_IMPORTS)
+#    error "Only GDIAM_DLL_EXPORTS or GDIAM_DLL_IMPORTS can be defined, not both."
+#  elif defined(GDIAM_DLL_EXPORTS)
+#    define GDIAM_EXPORT __declspec(dllexport)
+#  elif defined(GDIAM_DLL_IMPORTS)
+#    define GDIAM_EXPORT __declspec(dllimport)
+#  else
+#    define GDIAM_EXPORT
+#  endif
+#endif
+
 #define  GDIAM_DIM   3
 typedef  double  gdiam_real;
 typedef  gdiam_real    gdiam_point_t[ GDIAM_DIM ];
@@ -691,7 +703,7 @@ gdiam_bbox   gdiam_approx_mvbb( gdiam_point  * start, int  size,
                                 gdiam_real  eps ) ;
 gdiam_bbox   gdiam_approx_mvbb_grid( gdiam_point  * start, int  size,
                                      int  grid_size );
-gdiam_bbox   gdiam_approx_mvbb_grid_sample( gdiam_point  * start, int  size,
+GDIAM_EXPORT gdiam_bbox   gdiam_approx_mvbb_grid_sample( gdiam_point  * start, int  size,
                                             int  grid_size, int  sample_size );
 gdiam_bbox   gdiam_approx_mvbb_grid_sample( gdiam_real  * start, int  size,
                                             int  grid_size, int  sample_size );

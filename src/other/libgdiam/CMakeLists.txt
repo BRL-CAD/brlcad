@@ -24,6 +24,18 @@ install(TARGETS libgdiam
   LIBRARY DESTINATION ${LIB_DIR}
   ARCHIVE DESTINATION ${LIB_DIR})
 
+if(MSVC)
+   set_property(TARGET libgdiam APPEND PROPERTY COMPILE_DEFINITIONS "VDS_DLL_EXPORTS")
+endif(MSVC)
+
+if(BUILD_STATIC_LIBS)
+  add_library(libgdiam-static STATIC ${CORE_SRCS})
+  if(CMAKE_CL_64)
+    set_target_properties(libgdiam-static PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x64")
+  endif(CMAKE_CL_64)
+endif(BUILD_STATIC_LIBS)
+
+
 if(ENABLE_GDIAM_TESTING)
   # Enable ctest
   ENABLE_TESTING()
