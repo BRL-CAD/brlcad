@@ -738,11 +738,11 @@ axis_plane_isect(int plane, fastf_t inout, struct xray *rp, struct hf_specific *
 	    xx = loc[X] - CellX* xWidth;
 	    break;
     }
-#if 1 /* What does this indicate that it generates so much noise? */
+
+    /* What does this indicate that it generates so much noise? */
     if (xx < 0) {
 	bu_log("hf: xx < 0, plane = %d\n", plane);
     }
-#endif
 
     if (hf->hf_shorts) {
 	unsigned short *sp;
