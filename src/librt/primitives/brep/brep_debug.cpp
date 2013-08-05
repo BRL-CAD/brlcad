@@ -2098,8 +2098,6 @@ drawBBNode(SurfaceTree* st, struct bn_vlblock *vbp, BBNode * node) {
 	if (node->m_trimmed) {
 	    return; // nothing to do node is trimmed
 	} else if (node->m_checkTrim) { // node may contain trim check all corners
-
-#if 1
 	    fastf_t u =  node->m_u[0];
 	    fastf_t v = node->m_v[0];
 	    fastf_t from = u;
@@ -2114,7 +2112,7 @@ drawBBNode(SurfaceTree* st, struct bn_vlblock *vbp, BBNode * node) {
 	    drawisoVCheckForTrim(st, vbp, from, to, u, 3); //left
 	    u = node->m_u[1];
 	    drawisoVCheckForTrim(st, vbp, from, to, u, 3); //right
-#endif
+
 	    return;
 	} else { // fully untrimmed just draw bottom and right edges
 	    fastf_t u =  node->m_u[0];
@@ -2162,12 +2160,8 @@ brep_isosurface_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_bre
 	for (index = 0; index < brep->m_F.Count(); index++) {
 	    ON_BrepFace& face = brep->m_F[index];
 	    SurfaceTree* st = new SurfaceTree(&face, true, 0);
-#if 0
-	    plotFace(st, vbp, plotres, plotres);
-#else
 	    plottrim(face, vbp, plotres, true);
 	    plotFaceFromSurfaceTree(st, vbp, plotres, plotres);
-#endif
 	    delete st;
 	}
     } else if (index < brep->m_F.Count()) {
@@ -2175,12 +2169,8 @@ brep_isosurface_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_bre
 	if (index < faces.Count()) {
 	    ON_BrepFace& face = faces[index];
 	    SurfaceTree* st = new SurfaceTree(&face, true, 0);
-#if 0
-	    plotFace(st, vbp, plotres, plotres);
-#else
 	    plottrim(face, vbp, plotres, true);
 	    plotFaceFromSurfaceTree(st, vbp, plotres, plotres);
-#endif
 	    delete st;
 	}
     }
