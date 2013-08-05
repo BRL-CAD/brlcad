@@ -942,7 +942,6 @@ brick(struct rt_wdb *fd)
 {
     struct wmember wm_hd;
     int horiz_bricks;
-    int vert_bricks;
     double mortar_height;
     double mortar_width;
     point_t pts[8];
@@ -957,9 +956,7 @@ brick(struct rt_wdb *fd)
     mortar_width = WALL_WIDTH - horiz_bricks * brick_width;
     mortar_width /= horiz_bricks;
 
-    vert_bricks = WALL_HEIGHT / brick_height;
     mortar_height = 0.0;
-
 
     /* make prototype brick */
 
