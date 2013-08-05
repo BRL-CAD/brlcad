@@ -72,7 +72,7 @@ static void
 usage(const char *argv0)
 {
     bu_log("Usage: %s [-v][-i][-xX lvl][-a abs_tess_tol][-r rel_tess_tol][-n norm_tess_tol]\n", argv0);
-    bu_log("[-e error_file ][-D dist_calc_tol] -o output_file_name brlcad_db.g object(s)\n");
+    bu_log("[-e error_file ][-D dist_calc_tol][-P #_of_CPUs] -o output_file_name brlcad_db.g object(s)\n");
     bu_exit(1, NULL);
 }
 
@@ -486,6 +486,8 @@ main(int argc, char **argv)
 
     bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
+
+    RTG.debug = 0;
 
     tree_state = rt_initial_tree_state;	/* struct copy */
     tree_state.ts_tol = &tol;
