@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2013-0X-XX  Release 7.24.2                                     ---
 ----------------------------------------------------------------------
 
+* add -o flag to bb command for oriented bounding box - Cliff Yapp
 * allow search to see hidden combs with the -a flag - Cliff Yapp
 * added comb -l option - 'lifts' R flag to top of comb tree - C. Yapp
 * print current grid information in gqa output - Cliff Yapp
