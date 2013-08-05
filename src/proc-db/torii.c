@@ -57,14 +57,18 @@ typedef struct torusLevels {
     unsigned short int levels;
 } torusLevels_t;
 
-void usage(char *progname)
+
+void
+usage(char *progname)
 {
     fprintf(stderr, "Usage: %s db_file.g\n", progname);
     bu_exit(-1, NULL);
 }
 
 
-int create_torii(int level, int currentLevel, torusLevels_t *torii, point_t position, const int dirArray[6][6], int dir) {
+int
+create_torii(int level, int currentLevel, torusLevels_t *torii, point_t position, const int dirArray[6][6], int dir)
+{
     point_t newPosition;
 
     VMOVE(newPosition, position);
@@ -104,11 +108,9 @@ int create_torii(int level, int currentLevel, torusLevels_t *torii, point_t posi
 	}
 
     } else {
-
-#if 0
 	/* TESTING DYNAMIC RECURSION */
 
-	torusArray_t *ta = &torii->level[currentLevel];
+	torusArray_t *ta = &torii->level[currentLevel-1];
 	/* base case */
 	printf("base case (%d levels deep)\n", currentLevel);
 
@@ -127,7 +129,6 @@ int create_torii(int level, int currentLevel, torusLevels_t *torii, point_t posi
 	ta->torus[ta->count].minorRadius = 2.0;
 	ta->torus[ta->count].direction = dir;
 	ta->count++;
-#endif
     }
     bu_log("returning from create_torii\n");
 
@@ -135,13 +136,17 @@ int create_torii(int level, int currentLevel, torusLevels_t *torii, point_t posi
 }
 
 
-int output_torii(const char *fileName, int levels, const torusLevels_t UNUSED(torii), const char *name) {
+int
+output_torii(const char *fileName, int levels, const torusLevels_t UNUSED(torii), const char *name)
+{
     char scratch[256];
 
     bu_strlcpy(scratch, name, sizeof(scratch));
     bu_strlcat(scratch, "_0", sizeof(scratch));
 
     bu_log("output_torii to file \"%s\" for %d levels using \"%s.c\" as the combination name", fileName, levels, name);
+
+    /* TODO: actually write out the torii here. */
 
     return 0;
 }
