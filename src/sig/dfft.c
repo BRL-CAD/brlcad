@@ -184,14 +184,6 @@ fftdisp(double *dat, int N)
 	    printf("%g %g\n", i/(double)N, mags[i]);
 	}
     } else {
-
-#if 0
-	/* normalize dB range from 0 to 1 */
-	value = (dB/mindB) + 1.0;
-	if (value < 0) value = 0;
-	else if (value > 1.0) value = 1.0;
-#endif
-
 	ret = fwrite(mags, sizeof(*mags), N/2, stdout);
 	if (ret != (size_t)(N/2))
 	    perror("fwrite");
