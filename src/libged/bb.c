@@ -204,6 +204,9 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
 	struct db_full_path path;
 	struct directory *obj_dp;
 	struct rt_db_internal intern;
+	struct rt_arb_internal *arb;
+	struct rt_db_internal new_intern;
+
 	db_full_path_init(&path);
 	if (db_string_to_path(&path, gedp->ged_wdbp->dbip, argv[0])) {
 	    bu_vls_printf(gedp->ged_result_str, "db_string_to_path failed for %s\n", argv[0]);
@@ -226,10 +229,6 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
 	    db_free_full_path(&path);
 	    return GED_ERROR;
 	}
-
-	struct rt_arb_internal *arb;
-
-	struct rt_db_internal new_intern;
 
 	BU_ALLOC(arb, struct rt_arb_internal);
 	arb->magic = RT_ARB_INTERNAL_MAGIC;

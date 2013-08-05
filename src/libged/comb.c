@@ -475,9 +475,9 @@ _ged_lift_region_comb(struct ged *gedp, struct directory *dp) {
      */
     {
 	struct bu_vls new_comb_name;
-	bu_vls_init(&new_comb_name);
 	struct bu_ptbl stack;
 	struct directory *new_comb;
+	bu_vls_init(&new_comb_name);
 	bu_ptbl_init(&stack, 64, "comb mvall working stack");
 	combs_in_tree = db_search_unique_objects_strplan(combs_in_tree_plan, path_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
         bu_ptbl_ins(combs_in_tree, (long *)dp);
