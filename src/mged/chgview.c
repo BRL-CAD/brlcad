@@ -2693,7 +2693,7 @@ cmd_zoom(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
     }
 
     /* sanity check the zoom value */
-    zval = atof(argv([1]));
+    zval = atof(argv[1]);
     if (zval > 0.0)
 	return mged_zoom(zval);
 
