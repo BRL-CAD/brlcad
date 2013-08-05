@@ -300,6 +300,12 @@ BRLCAD_ADDEXEC(tester_bu_timer bu_timer.c libbu NO_INSTALL)
 add_test(bu_gettime_test tester_bu_timer)
 
 #
+#  ************ bu_semaphore.c tests *************
+#
+BRLCAD_ADDEXEC(tester_bu_semaphore bu_semaphore.c libbu NO_INSTALL LOCAL)
+add_test(bu_semaphore_test tester_bu_semaphore)
+
+#
 #  ************ vls_vprintf.c tests *************
 #
 BRLCAD_ADDEXEC(tester_bu_vls_vprintf bu_vls_vprintf.c libbu NO_INSTALL)
