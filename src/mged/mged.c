@@ -1700,7 +1700,11 @@ main(int argc, char *argv[])
 	/* This test stops optimizers from complaining about an
 	 * infinite loop.
 	 */
+#ifdef DM_QT
+	if ((rateflag = event_check(1)) < 0) break;
+#else
 	if ((rateflag = event_check(rateflag)) < 0) break;
+#endif /* DM_QT */
 
 	/*
 	 * Cause the control portion of the displaylist to be updated
