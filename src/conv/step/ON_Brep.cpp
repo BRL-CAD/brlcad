@@ -53,6 +53,9 @@
 //
 // 2d trimming curves -> pcurve using point_on_surface? almost doesn't look as if there is a good AP203 way to represent 2d trimming curves...
 //
+//
+// Note that STEPentity is the same thing as SDAI_Application_instance... see src/clstepcore/sdai.h line 220
+//
 
 STEPattribute * getAttribute(STEPentity *ent, const char *name)
 {
@@ -69,7 +72,7 @@ STEPattribute * getAttribute(STEPentity *ent, const char *name)
 	return attr_result;
 }
 
-bool ON_BRep_to_STEP(ON_Brep *brep)
+bool ON_BRep_to_STEP(ON_Brep *brep, , Registry *registry)
 {
 	STEPentity ** vertex_cartesian_pt_array = new STEPentity*[brep->m_V.Count()];
 	STEPentity ** vertex_pt_array = new STEPentity*[brep->m_V.Count()];
@@ -88,8 +91,7 @@ bool ON_BRep_to_STEP(ON_Brep *brep)
 	for (int i = 0; i < brep->m_V.Count(); ++i) {
                 // Cartesian points (actual 3D geometry)
 		vertex_cartesian_pt_array[i] = registry->ObjCreate("CARTESIAN_POINT");
-		STEPentity *ent = vertex_cartesian_pt_array[i];
-		STEPattribute *coords = getAttribute(ent, "coordinates");
+		STEPattribute *coords = getAttribute(vertex_cartesian_pt_array[i], "coordinates");
 		RealAggregate_ptr coord_vals = coords->coordinates_();
                 RealNode *xnode = new RealNode();
                 xnode->value = brep->m_V[i].x;
@@ -102,5 +104,6 @@ bool ON_BRep_to_STEP(ON_Brep *brep)
 		coord_vals.AddNode(znode);
                 // Vertex points (topological, references actual 3D geometry)
 		vertex_pt_array[i] = registry->ObjCreate("VERTEX_POINT");
+		vertex_pt_array[i]->vertex_geometry_((const SdaiPoint_ptr)cartesian_pt_array[i]);
 	}
 }

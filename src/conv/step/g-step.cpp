@@ -129,9 +129,10 @@ main(int argc, char *argv[])
     brep->Dump(dump);
     ON_String ss = wstr;
     //std::cout << ss.Array() << "\n";
-
+    //
     Registry *registry = new Registry( SchemaInit );
     InstMgr instance_list;
+    STEPfile *sfile = new STEPfile(*registry, instance_list);
 
     int entities_cnt = brep->m_S.Count() + brep->m_C3.Count() + brep->m_C2.Count() +
                        brep->m_V.Count() + brep->m_E.Count() + brep->m_T.Count() +
@@ -141,6 +142,9 @@ main(int argc, char *argv[])
 
    registry->ResetSchemas();
    registry->ResetEntities();
+
+//   ON_BRep_to_STEP(brep, registry);
+
    const SchemaDescriptor * schema = registry->NextSchema();
    cout << "Printing entities in schema " << schema->Name() << endl;
    const EntityDescriptor * ent;  // needs to be declared const...
