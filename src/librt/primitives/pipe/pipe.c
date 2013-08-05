@@ -4284,8 +4284,6 @@ rt_pipe_describe(
 	return 0;
     }
 
-#if 1
-    /* Too much for the MGED Display!!!! */
     for (BU_LIST_FOR(ptp, wdb_pipept, &pip->pipe_segs_head)) {
 	sprintf(buf, "\t%d ", segno++);
 	bu_vls_strcat(str, buf);
@@ -4306,7 +4304,7 @@ rt_pipe_describe(
 	bu_vls_strcat(str, buf);
 
     }
-#endif
+
     return 0;
 }
 
