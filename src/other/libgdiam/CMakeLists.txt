@@ -29,7 +29,7 @@ if(MSVC)
 endif(MSVC)
 
 if(BUILD_STATIC_LIBS)
-  add_library(libgdiam-static STATIC ${CORE_SRCS})
+  add_library(libgdiam-static STATIC gdiam.cpp)
   if(CMAKE_CL_64)
     set_target_properties(libgdiam-static PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x64")
   endif(CMAKE_CL_64)
