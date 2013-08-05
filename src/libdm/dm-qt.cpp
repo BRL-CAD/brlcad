@@ -779,7 +779,6 @@ bool QTkMainWindow::event(QEvent *ev)
 	if (Tcl_Eval(dmp->dm_interp, bu_vls_addr(&str)) == TCL_ERROR) {
 	    bu_log("error generate event\n");
 	}
-	bu_log("AICI\n");
 	return true;
     }
     return QWindow::event(ev);
