@@ -242,6 +242,9 @@ rt_ell_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 }
 
 
+#define OPENCL
+
+
 #ifdef OPENCL
 static int clt_initialized = 0;
 static cl_device_id clt_device;
@@ -251,10 +254,37 @@ static cl_program clt_program;
 static cl_kernel kernel;
 
 
-const char * const clt_program_code = "";
+const char * const clt_program_code = "\
+#define MAX_SPHERES 10\
+\
+\
+typedef struct\
+{\
+    float3 position;\
+    float radius;\
+    int is_light;\
+} Sphere;\
+\
+\
+__kernel void ray_trace(__global float *output, __constant Sphere *gspheres)\
+{\
+    __local Sphere spheres[MAX_SPHERES];\
+\
+    spheres[get_global_id(0)] = gspheres[get_global_id(0)];\
+    barrier(CLK_LOCAL_MEM_FENCE);\
+\
+    if (get_global_id(0) == 0) {\
+	for (int i = 0; i < MAX_SPHERES; ++i)\
+	printf(\"is_light: %d\n\", spheres[i].is_light);\
+	printf(\"%d\n\", get_local_size(0));\
+    }\
+}\
+\
+";
 
 
-static cl_device_id clt_get_cl_device()
+static cl_device_id
+clt_get_cl_device()
 {
     cl_int error;
     cl_platform_id platform;
@@ -266,17 +296,18 @@ static cl_device_id clt_get_cl_device()
     error = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
     if (error == CL_DEVICE_NOT_FOUND)
 	error = clGetDeviceIDs(platform, CL_DEVICE_TYPE_CPU, 1, &device, NULL);
-    if (error != CL_SUCCESS) bu_bomb("failed to find an OpenCL device (in this way)");
+    if (error != CL_SUCCESS) bu_bomb("failed to find an OpenCL device (using this method)");
 
     return device;
 }
 
 
-static cl_program clt_get_program(cl_context context, cl_device_id device, const char *code)
+static cl_program
+clt_get_program(cl_context context, cl_device_id device, const char *code)
 {
     cl_int error;
     cl_program program;
-    size_t code_size  = strnlen(code, 2<<20);
+    size_t code_size = strnlen(code, 2<<20);
 
     cl_program program = clCreateProgramWithSource(context, 1, &code, &code_size, &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL program");
@@ -295,7 +326,8 @@ static cl_program clt_get_program(cl_context context, cl_device_id device, const
 }
 
 
-static void clt_init()
+static void
+clt_init()
 {
     if (clt_initialized) return;
     clt_initialized = 1;
@@ -313,11 +345,12 @@ static void clt_init()
     clt_program = clt_get_program();
 
     clt_kernel = clCreateKernel(program, "ell_shot", &error);
-    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL kernel");
+    if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
 }
 
 
-static void clt_cleanup()
+static void
+clt_cleanup()
 {
     clReleaseKernel(clt_kernel);
     clReleaseCommandQueue(clt_queue);
@@ -326,7 +359,8 @@ static void clt_cleanup()
 }
 
 
-fastf_t clt_shot()
+fastf_t
+clt_shot()
 {
     return -1;
 }
