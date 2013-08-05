@@ -2627,7 +2627,10 @@ mged_zoom(double val)
 	return TCL_OK;
     }
 
-    snprintf(buf, 32, "%f", val);
+    if (val > 0.0)
+	snprintf(buf, 32, "%f", val);
+    else
+	snprintf(buf, 32, "%f", 1.0); /* do nothing */
 
     av[0] = "zoom";
     av[1] = buf;
