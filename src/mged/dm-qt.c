@@ -39,12 +39,18 @@ extern void dm_var_init(struct dm_list *initial_dm_list);		/* defined in attach.
   This routine is being called from doEvent() to handle Expose events.
 */
 static int
-qt_doevent(ClientData UNUSED(clientData), XEvent *UNUSED(eventPtr))
-{
+qt_doevent(ClientData UNUSED(clientData), XEvent *eventPtr)
+{ 
+    if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
+	dirty = 1;
+
+	/* no further processing of this event */
+	return TCL_RETURN;
+    }
+    
     /* allow further processing of this event */
     return TCL_OK;
 }
-
 
 int
 Qt_dm_init(struct dm_list *o_dm_list,
@@ -52,13 +58,18 @@ Qt_dm_init(struct dm_list *o_dm_list,
 	  const char *argv[])
 {
     dm_var_init(o_dm_list);
-
+    
     Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
     if ((dmp = dm_open(INTERP, DM_TYPE_QT, argc-1, argv)) == DM_NULL)
 	return TCL_ERROR;
 
+    /* keep display manager in sync */
+    dmp->dm_perspective = mged_variables->mv_perspective_mode;
+
     eventHandler = qt_doevent;
     Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
+
+    (void)DM_CONFIGURE_WIN(dmp, 0);
 
     return TCL_OK;
 }
