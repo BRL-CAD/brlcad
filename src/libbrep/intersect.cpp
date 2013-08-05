@@ -429,9 +429,9 @@ curve_fitting(ON_Curve* in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool d
     // Conic fitting (ellipse, parabola, hyperbola)
     // It's only meaningful to fit the curve when it's a complex one
     // For a polyline curve, the number of points should not be less than 10.
-    const int fit_mininum_knots = 10;
+    const int fit_minimum_knots = 10;
     int knotcnt = in->SpanCount();
-    if (knotcnt < fit_mininum_knots)
+    if (knotcnt < fit_minimum_knots)
 	return in;
 
     double* knots = new double [knotcnt + 1];
