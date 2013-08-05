@@ -146,7 +146,6 @@ generate_brep(int count, ON_3dPoint *points)
     brep->m_C3.Append(segment30prime);
 
     // SURFACES
-#if 1
     ON_NurbsSurface* surf0123 = new ON_NurbsSurface(3 /*dimension*/, 0 /*nonrational*/, 2 /*u*/, 2 /*v*/, 2 /*#u*/, 2 /*#v*/);
     surf0123->SetKnot(0, 0, 0.0); surf0123->SetKnot(0, 1, 1.0); surf0123->SetKnot(1, 0, 0.0); surf0123->SetKnot(1, 1, 1.0);
     surf0123->SetCV(0, 0, points[0]);
@@ -154,16 +153,6 @@ generate_brep(int count, ON_3dPoint *points)
     surf0123->SetCV(1, 1, points[2]);
     surf0123->SetCV(0, 1, points[3]);
     brep->m_S.Append(surf0123); /* 0 */
-#else
-    /* XXX */
-    ON_NurbsSurface* surf0123prime = new ON_NurbsSurface(3 /*dimension*/, 0 /*nonrational*/, 2 /*u*/, 2 /*v*/, 2 /*#u*/, 2 /*#v*/);
-    surf0123prime->SetKnot(0, 0, 0.0); surf0123prime->SetKnot(0, 1, 1.0); surf0123prime->SetKnot(1, 0, 0.0); surf0123prime->SetKnot(1, 1, 1.0);
-    surf0123prime->SetCV(0, 0, p8);
-    surf0123prime->SetCV(1, 0, p9);
-    surf0123prime->SetCV(1, 1, p10);
-    surf0123prime->SetCV(0, 1, p11);
-    brep->m_S.Append(surf0123prime); /* 0 */
-#endif
 
     ON_NurbsSurface* surf4765 = new ON_NurbsSurface(3 /*dimension*/, 0 /*nonrational*/, 2 /*u*/, 2 /*v*/, 2 /*#u*/, 2 /*#v*/);
     surf4765->SetKnot(0, 0, 0.0); surf4765->SetKnot(0, 1, 1.0); surf4765->SetKnot(1, 0, 0.0); surf4765->SetKnot(1, 1, 1.0);
@@ -253,7 +242,6 @@ generate_brep(int count, ON_3dPoint *points)
 
     // FACES
 
-#if 1
     ON_BrepFace& face0123 = brep->NewFace(0);
     ON_BrepLoop& loop0123 = brep->NewLoop(ON_BrepLoop::outer, face0123); /* 0 */
     ON_BrepTrim& trim01 = brep->NewTrim(brep->m_E[0], false, loop0123, 0 /* trim */); /* m_T[0] */
@@ -276,32 +264,7 @@ generate_brep(int count, ON_3dPoint *points)
     trim30.m_type = ON_BrepTrim::mated;
     trim30.m_tolerance[0] = SMALL_FASTF;
     trim30.m_tolerance[1] = SMALL_FASTF;
-#else
-    ON_BrepFace& face0123 = brep->NewFace(0 /* surfaceID */);
-    ON_BrepLoop& loop0123 = brep->NewLoop(ON_BrepLoop::outer, face0123); /* 0 */
-    ON_BrepTrim& trim01 = brep->NewTrim(brep->m_E[0], false, loop0123, 0 /* trim */); /* 0 */
-    trim01.m_iso = ON_Surface::S_iso;
-    trim01.m_type = ON_BrepTrim::boundary;
-    trim01.m_tolerance[0] = SMALL_FASTF;
-    trim01.m_tolerance[1] = SMALL_FASTF;
-    ON_BrepTrim& trim12 = brep->NewTrim(brep->m_E[1], false, loop0123, 1 /* trim */); /* 1 */
-    trim12.m_iso = ON_Surface::E_iso;
-    trim12.m_type = ON_BrepTrim::boundary;
-    trim12.m_tolerance[0] = SMALL_FASTF;
-    trim12.m_tolerance[1] = SMALL_FASTF;
-    ON_BrepTrim& trim23 = brep->NewTrim(brep->m_E[2], false, loop0123, 2 /* trim */); /* 2 */
-    trim23.m_iso = ON_Surface::N_iso;
-    trim23.m_type = ON_BrepTrim::boundary;
-    trim23.m_tolerance[0] = SMALL_FASTF;
-    trim23.m_tolerance[1] = SMALL_FASTF;
-    ON_BrepTrim& trim30 = brep->NewTrim(brep->m_E[3], false, loop0123, 3 /* trim */); /* 3 */
-    trim30.m_iso = ON_Surface::W_iso;
-    trim30.m_type = ON_BrepTrim::boundary;
-    trim30.m_tolerance[0] = SMALL_FASTF;
-    trim30.m_tolerance[1] = SMALL_FASTF;
-#endif
 
-#if 1
     ON_BrepFace& face4765 = brep->NewFace(1 /* surfaceID */);
     ON_BrepLoop& loop4765 = brep->NewLoop(ON_BrepLoop::outer, face4765); /* 1 */
     ON_BrepTrim& trim47 = brep->NewTrim(brep->m_E[7], false, loop4765, 0 /* trim */); /* 4 */
@@ -416,7 +379,6 @@ generate_brep(int count, ON_3dPoint *points)
     trim40.m_type = ON_BrepTrim::mated;
     trim40.m_tolerance[0] = SMALL_FASTF;
     trim40.m_tolerance[1] = SMALL_FASTF;
-#endif
 
     return brep;
 }
