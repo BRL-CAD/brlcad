@@ -59,7 +59,7 @@ void icv_add_val(icv_image_t* img, double val)
 	data++;
     }
 
-    if(img->flags && ICV_OPERATIONS_MODE)
+    if(img->flags & ICV_OPERATIONS_MODE)
 	img->flags&=(!ICV_SANITIZED);
     else
 	icv_sanitize(img);
@@ -76,7 +76,7 @@ void icv_multiply_val(icv_image_t* img, double val)
 	*data *= val;
 	 data++;
     }
-    if((img->flags && ICV_OPERATIONS_MODE))
+    if((img->flags & ICV_OPERATIONS_MODE))
 	img->flags&=(!ICV_SANITIZED);
     else
 	icv_sanitize(img);
@@ -96,7 +96,7 @@ void icv_divide_val(icv_image_t* img, double val)
 	 data++;
      }
 
-    if((img->flags && ICV_OPERATIONS_MODE))
+    if((img->flags & ICV_OPERATIONS_MODE))
 	img->flags&=(!ICV_SANITIZED);
     else
 	icv_sanitize(img);
@@ -114,7 +114,7 @@ void icv_pow_val(icv_image_t* img, double val)
 	 data++;
     }
 
-    if((img->flags && ICV_OPERATIONS_MODE))
+    if((img->flags & ICV_OPERATIONS_MODE))
 	img->flags&=(!ICV_SANITIZED);
     else
 	icv_sanitize(img);
