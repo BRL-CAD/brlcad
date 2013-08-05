@@ -52,7 +52,6 @@ rt_bot_oriented_bbox(struct rt_arb_internal *bbox, struct rt_db_internal *ip, co
     bb = gdiam_approx_mvbb_grid_sample(pnt_arr, bot_ip->num_vertices, 5, 400 );
 
     /* gdiam_bbox to struct rt_arb_internal */
-    double x, y, z;
     /* 0, 0, 0 */
     bb.get_vertex(0, 0, 0, &(bbox->pt[0][0]), &(bbox->pt[0][1]), &(bbox->pt[0][2]));
     /* 0, 1, 0 */
