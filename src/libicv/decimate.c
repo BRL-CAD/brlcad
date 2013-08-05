@@ -35,7 +35,7 @@ HIDDEN void shrink_image(icv_image_t* bif, int factor)
     int facsq,x,y,py,px,c;
     size_t widthstep =  bif->width*bif->channels;
 
-    facsq = factor*factor,c;
+    facsq = factor*factor;
     res_p = bif->data;
     p = bu_malloc(bif->channels*sizeof(double), "shrink_image : Pixel Values Temp Buffer");
 
