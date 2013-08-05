@@ -2989,7 +2989,7 @@ ON_Intersect(const ON_Surface* surfA,
 	// (See opennurbs/opennurbs_x.h)
 	double midA = x[i].m_curveA->Domain().Mid();
 	if (!x[i].m_curveA->IsContinuous(ON::G1_continuous, midA)) {
-	    // using the middle point is not suffient, we try another options.
+	    // using the middle point is not sufficient, we try another options.
 	    midA = x[i].m_curveA->Domain().NormalizedParameterAt(1.0/3.0);
 	    if (!x[i].m_curveA->IsContinuous(ON::G1_continuous, midA)) {
 		midA = x[i].m_curveA->Domain().NormalizedParameterAt(2.0/3.0);

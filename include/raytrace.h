@@ -3742,7 +3742,7 @@ RT_EXPORT extern struct bu_ptbl *db_search_unique_objects_strplan(const char *pl
 /**
  * TODO:  PROPOSED API for search functionality
  *
- * This is the proposed replacment to all of the preceeding search functionality -
+ * This is the proposed replacement to all of the preceding search functionality -
  * the previous API calls will .
  *
  * Design notes:
@@ -3780,7 +3780,7 @@ RT_EXPORT extern struct bu_ptbl *db_search_unique_objects_strplan(const char *pl
  * * One possible option to the enums for search types is to rely fully on the
  *   first character of the path strings (which are currently fully informative in the
  *   libged search command line interface) but the difficulty there is if more
- *   seach styles are added initial path string characters are a very constraining
+ *   search styles are added initial path string characters are a very constraining
  *   selection mechanism.  For future proofing I think the input conventions on the
  *   path strings should be handled above this level.
  */

@@ -94,7 +94,7 @@ typedef enum {
 #define ICV_NULL_IMAGE 0X0001
 #define ICV_SANITIZED 0X0002
 #define ICV_OPERATIONS_MODE 0x0004
-#define ICV_UNDIFINED_1 0x0008
+#define ICV_UNDEFINED_1 0x0008
 
 struct icv_image {
     uint32_t magic;
