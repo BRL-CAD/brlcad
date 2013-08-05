@@ -39,6 +39,7 @@
 #include "dm.h"
 #include "dm_xvars.h"
 
+
 HIDDEN bool
 qt_sendRepaintEvent(struct dm *dmp)
 {
@@ -735,14 +736,14 @@ struct dm dm_qt = {
 };
 
 
-QTkMainWindow::QTkMainWindow(QPixmap *p, QWindow *win)
+QTkMainWindow::QTkMainWindow(QPixmap *p, QWindow *win, struct dm *d)
     : QWindow(win)
     , m_update_pending(false)
 {
     m_backingStore = new QBackingStore(this);
     create();
     pixmap = p;
-
+    dmp = d;
 }
 
 void QTkMainWindow::exposeEvent(QExposeEvent *)
@@ -764,6 +765,21 @@ bool QTkMainWindow::event(QEvent *ev)
     if (ev->type() == QEvent::UpdateRequest) {
 	m_update_pending = false;
 	renderNow();
+	return true;
+    }
+    else if (ev->type() == QEvent::MouseButtonPress) {
+	struct bu_vls str = BU_VLS_INIT_ZERO;
+	QMouseEvent *mouseEv = (QMouseEvent *)ev;
+
+	if (mouseEv->button() == Qt::LeftButton)
+	    bu_vls_printf(&str, "event generate %V <1>", &dmp->dm_pathName);
+	else
+	    bu_vls_printf(&str, "event generate %V <3>", &dmp->dm_pathName);
+
+	if (Tcl_Eval(dmp->dm_interp, bu_vls_addr(&str)) == TCL_ERROR) {
+	    bu_log("error generate event\n");
+	}
+	bu_log("AICI\n");
 	return true;
     }
     return QWindow::event(ev);
@@ -852,7 +868,13 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
     }
     if (bu_vls_strlen(&init_proc_vls) == 0)
 	bu_vls_strcpy(&init_proc_vls, "bind_dm");
-
+    
+    /* initialize dm specific variables */
+    pubvars->devmotionnotify = LASTEvent;
+    pubvars->devbuttonpress = LASTEvent;
+    pubvars->devbuttonrelease = LASTEvent;
+    dmp->dm_aspect = 1.0;
+    
     if (dmp->dm_top) {
 	/* Make xtkwin a toplevel window */
 	pubvars->xtkwin = Tk_CreateWindowFromPath(interp, tkwin,
@@ -945,7 +967,7 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
 
     privars->pix = new QPixmap(dmp->dm_width, dmp->dm_height);
 
-    privars->win = new QTkMainWindow(privars->pix, window);
+    privars->win = new QTkMainWindow(privars->pix, window, dmp);
     privars->win->resize(dmp->dm_width, dmp->dm_height);
     privars->win->show();
 

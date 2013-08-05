@@ -38,7 +38,7 @@
 class QTkMainWindow: public QWindow {
 
 public:
-    QTkMainWindow(QPixmap *p, QWindow *parent = 0);
+    QTkMainWindow(QPixmap *p, QWindow *parent = 0, struct dm *d = NULL);
 
     virtual void render(QPainter *painter);
 public slots:
@@ -54,6 +54,7 @@ private:
     QPixmap *pixmap;
     QBackingStore *m_backingStore;
     bool m_update_pending;
+    struct dm *dmp;
 };
 
 
