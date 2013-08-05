@@ -242,6 +242,99 @@ rt_ell_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 }
 
 
+#ifdef OPENCL
+static int clt_initialized = 0;
+static cl_device_id clt_device;
+static cl_context clt_context;
+static cl_command_queue clt_queue;
+static cl_program clt_program;
+static cl_kernel kernel;
+
+
+const char * const clt_program_code = "";
+
+
+static cl_device_id clt_get_cl_device()
+{
+    cl_int error;
+    cl_platform_id platform;
+    cl_device_id device;
+
+    error = clGetPlatformIDs(1, &platform, nullptr);
+    if (error != CL_SUCCESS) bu_bomb("failed to find an OpenCL platform");
+
+    error = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
+    if (error == CL_DEVICE_NOT_FOUND)
+	error = clGetDeviceIDs(platform, CL_DEVICE_TYPE_CPU, 1, &device, NULL);
+    if (error != CL_SUCCESS) bu_bomb("failed to find an OpenCL device (in this way)");
+
+    return device;
+}
+
+
+static cl_program clt_get_program(cl_context context, cl_device_id device, const char *code)
+{
+    cl_int error;
+    cl_program program;
+    size_t code_size  = strnlen(code, 2<<20);
+
+    cl_program program = clCreateProgramWithSource(context, 1, &code, &code_size, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL program");
+
+    error = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
+    if (error != CL_SUCCESS) {
+	size_t log_size;
+	char *log_data;
+	clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
+	log_data = bu_malloc(log_size*sizeof(char));
+	clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, log_size+1, log_data, NULL);
+	bu_bomb("failed to build program\nBUILD LOG:\n%s\n", log_data);
+    }
+
+    return program;
+}
+
+
+static void clt_init()
+{
+    if (clt_initialized) return;
+    clt_initialized = 1;
+
+    cl_int error;
+
+    clt_device = clt_get_cl_device();
+
+    clt_context = clCreateContext(NULL, 1, &clt_device, NULL, NULL, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL context");
+
+    clt_queue = clCreateCommandQueue(clt_context, clt_device, 0, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL command queue");
+
+    clt_program = clt_get_program();
+
+    clt_kernel = clCreateKernel(program, "ell_shot", &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL kernel");
+}
+
+
+static void clt_cleanup()
+{
+    clReleaseKernel(clt_kernel);
+    clReleaseCommandQueue(clt_queue);
+    clReleaseProgram(clt_program);
+    clReleaseContext(clt_context);
+}
+
+
+fastf_t clt_shot()
+{
+    return -1;
+}
+
+
+#endif
+
+
 /**
  * R T _ E L L _ P R E P
  *
@@ -260,6 +353,9 @@ rt_ell_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 int
 rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
+#ifdef OPENCL
+    clt_init();
+#else
     register struct ell_specific *ell;
     struct rt_ell_internal *eip;
     fastf_t magsq_a, magsq_b, magsq_c;
@@ -365,6 +461,7 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     /* Compute bounding RPP */
     if (stp->st_meth->ft_bbox(ip, &(stp->st_min), &(stp->st_max), &(rtip->rti_tol))) return 1;
     return 0;			/* OK */
+#endif
 }
 
 
@@ -397,6 +494,8 @@ rt_ell_print(register const struct soltab *stp)
 int
 rt_ell_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
+#ifdef OPENCL
+#else
     register struct ell_specific *ell =
 	(struct ell_specific *)stp->st_specific;
     register struct seg *segp;
@@ -435,6 +534,7 @@ rt_ell_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     segp->seg_out.hit_surfno = 0;
     BU_LIST_INSERT(&(seghead->l), &(segp->l));
     return 2;			/* HIT */
+#endif
 }
 
 
