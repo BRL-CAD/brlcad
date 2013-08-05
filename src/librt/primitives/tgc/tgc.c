@@ -929,7 +929,6 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	}
     }
 
-#endif
 	return 0;			/* No hit */
     }
 
