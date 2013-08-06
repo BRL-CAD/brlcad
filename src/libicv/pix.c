@@ -49,10 +49,10 @@ pix_save(icv_image_t *bif, const char *filename)
     size_t ret, size;
 
     if (bif->color_space == ICV_COLOR_SPACE_GRAY) {
-        icv_gray2rgb(bif);
+	icv_gray2rgb(bif);
     } else if (bif->color_space != ICV_COLOR_SPACE_RGB) {
-        bu_log("pix_save : Color Space conflict");
-        return -1;
+	bu_log("pix_save : Color Space conflict");
+	return -1;
     }
     data =  data2uchar(bif);
     size = (size_t) bif->width*bif->height*3;
@@ -60,8 +60,8 @@ pix_save(icv_image_t *bif, const char *filename)
     ret = write(fd, data, size);
     close(fd);
     if (ret != size) {
-        bu_log("pix_save : Short Write");
-        return -1;
+	bu_log("pix_save : Short Write");
+	return -1;
     }
     return 0;
 }
@@ -77,21 +77,21 @@ pix_load(const char* filename, int width, int height)
     size_t size;
 
     if (width == 0 || height == 0) {
-        height = 512;
-        width = 512;
+	height = 512;
+	width = 512;
     }
 
     size = (size_t) height*width*3;
 
     if ((fd = open(filename, O_RDONLY, WRMODE))<0) {
-        bu_log("pix_load: Cannot open file for reading\n");
-        return NULL;
+	bu_log("pix_load: Cannot open file for reading\n");
+	return NULL;
     }
     data = (unsigned char *)bu_malloc(size, "pix_load : unsigned char data");
     if (read(fd, data, size) !=0) {
-        bu_log("pix_load: Error Occurred while Reading\n");
-        bu_free(data, "icv_image data");
-        return NULL;
+	bu_log("pix_load: Error Occurred while Reading\n");
+	bu_free(data, "icv_image data");
+	return NULL;
     }
     BU_ALLOC(bif, struct icv_image);
     ICV_IMAGE_INIT(bif);

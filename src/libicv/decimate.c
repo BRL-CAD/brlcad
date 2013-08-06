@@ -42,9 +42,9 @@ HIDDEN void shrink_image(icv_image_t* bif, int factor)
     for (y=0; y<bif->height; y+=factor)
 	for (x=0; x<bif->width; x+=factor) {
 
-            for (c=0; c<bif->channels; c++) {
-	        p[c]= 0;
-            }
+	    for (c=0; c<bif->channels; c++) {
+		p[c]= 0;
+	    }
 
 	    for (py = 0; py < factor; py++) {
 		data_p = bif->data + (y+py)*widthstep;
