@@ -233,6 +233,7 @@ set(LIBRT_SOURCES
   primitives/vol/vol.c
   primitives/vol/vol_brep.cpp
   primitives/vol/vol_mirror.c
+  primitives/hrt/hrt.c
   regionfix.c
   roots.c
   search.c
