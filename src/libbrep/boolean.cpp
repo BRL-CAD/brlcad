@@ -311,7 +311,6 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, ON_SimpleArray<ON_Curve*> &loop, 
 	    ON_PolylineCurve polycurve(ptarray);
 	    polycurve.GetNurbForm(*c3d);
 	} else {
-	    delete c3d;
 	    loop[k]->GetNurbForm(*c3d);
 	    c3d->ChangeDimension(3);
 	    for (int l = 0; l < c3d->SpanCount(); l++) {
