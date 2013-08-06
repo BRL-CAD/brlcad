@@ -113,7 +113,7 @@ RT_DECLARE_INTERFACE(revolve);
 RT_DECLARE_INTERFACE(constraint);
 /* RT_DECLARE_INTERFACE(binunif); */
 RT_DECLARE_INTERFACE(pnts);
-/*RT_DECLARE_INTERFACE(hrt);*/
+RT_DECLARE_INTERFACE(hrt);
 
 #if OBJ_BREP
 RT_DECLARE_INTERFACE(brep);
@@ -2006,7 +2006,6 @@ const struct rt_functab OBJ[] = {
 	NULL,
     },
 
-#if 0
     {
 	/* 43 */
 	RT_FUNCTAB_MAGIC, "ID_HRT", "hrt",
@@ -2048,7 +2047,6 @@ const struct rt_functab OBJ[] = {
 	rt_hrt_centroid,
 	NULL,
     },
-#endif
 
     {
 	/* this entry for sanity only */
