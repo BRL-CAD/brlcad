@@ -1445,9 +1445,6 @@ public:
         len1 = base.dist( *a );
         len2 = base.dist( *b );
 
-	if (len1 == len2)
-	    return false;
-
         return (len1 > len2);
     }
 };
