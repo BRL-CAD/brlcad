@@ -81,7 +81,6 @@ struct Sphere
 {
     cl_float3 position;
     cl_float radius;
-    cl_int is_light;
 };
 
 
@@ -108,15 +107,14 @@ clt_cleanup()
 
 
 const char * const clt_program_code = "\
-typedef struct\
+struct Sphere\
 {\
     float3 position;\
     float radius;\
-    int is_light;\
-} Sphere;\
+};\
 \
 \
-__kernel void ell_shot(__global float *output, __constant Sphere sphere, Sphere vlight, float3 E, float3 V)\
+__kernel void ell_shot(__global float *output, struct Sphere sphere, struct Sphere vlight, float3 E, float3 V)\
 {\
     float3 EO = sphere.position-(E+V);\
     float v = dot(EO, V);\
