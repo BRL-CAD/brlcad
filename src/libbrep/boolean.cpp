@@ -226,8 +226,8 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 
 	// need to form a new loop
 	ON_SimpleArray<ON_Curve*> newloop;
-	for (int i = p->m_pos + 1; i <= q->m_pos; i++) {
-	    newloop.Append(outerloop[i]);
+	for (int j = p->m_pos + 1; j <= q->m_pos; j++) {
+	    newloop.Append(outerloop[j]);
 	}
 	if (p->m_type != q->m_type) {
 	    bu_log("Error: p->type != q->type\n");
