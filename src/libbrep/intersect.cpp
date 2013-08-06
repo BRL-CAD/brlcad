@@ -253,26 +253,6 @@ public:
 };
 
 
-const ON_Interval
-check_domain(const ON_Interval* in, const ON_Interval& domain, const char* name)
-{
-    if (in) {
-	if (!in->IsIncreasing()) {
-	    bu_log("Bogus %s passed in", name);
-	    return domain;
-	}
-	ON_Interval dom;
-	dom.Intersection(*in, domain);
-	if (dom.IsEmptyInterval()) {
-	    bu_log("%s is disjoint from the whole domain.\n", name);
-	} else {
-	    return dom;
-	}
-    }
-    return domain;
-}
-
-
 ON_Curve*
 sub_curve(ON_Curve* in, double a, double b)
 {
@@ -306,8 +286,28 @@ sub_curve(ON_Curve* in, double a, double b)
 }
 
 
+HIDDEN const ON_Interval
+check_domain(const ON_Interval* in, const ON_Interval& domain, const char* name)
+{
+    if (in) {
+	if (!in->IsIncreasing()) {
+	    bu_log("Bogus %s passed in", name);
+	    return domain;
+	}
+	ON_Interval dom;
+	dom.Intersection(*in, domain);
+	if (dom.IsEmptyInterval()) {
+	    bu_log("%s is disjoint from the whole domain.\n", name);
+	} else {
+	    return dom;
+	}
+    }
+    return domain;
+}
+
+
 // Build the curve tree root within a given domain
-bool
+HIDDEN bool
 build_curve_root(const ON_Curve* curve, const ON_Interval* domain, Subcurve& root)
 {
     if (domain == NULL || *domain == curve->Domain()) {
@@ -335,7 +335,7 @@ build_curve_root(const ON_Curve* curve, const ON_Interval* domain, Subcurve& roo
 
 
 // Build the surface tree root within a given domain
-bool
+HIDDEN bool
 build_surface_root(const ON_Surface* surf, const ON_Interval* u_domain, const ON_Interval* v_domain, Subsurface& root)
 {
     // First, do u split
@@ -383,7 +383,7 @@ build_surface_root(const ON_Surface* surf, const ON_Interval* u_domain, const ON
 }
 
 
-ON_Curve*
+HIDDEN ON_Curve*
 curve_fitting(ON_Curve* in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool delete_curve = false)
 {
     // Fit a *2D* curve into line, arc, ellipse or other comic curves.
@@ -577,7 +577,7 @@ ON_Intersect(const ON_3dPoint& pointA,
 #define PCI_MAX_ITERATIONS 100
 
 
-bool
+HIDDEN bool
 newton_pci(double& t, const ON_3dPoint& pointA, const ON_Curve& curveB, double tolerance)
 {
     ON_3dPoint closest_point = curveB.PointAt(t);
@@ -747,7 +747,7 @@ ON_Intersect(const ON_3dPoint& pointA,
 #define PSI_MAX_ITERATIONS 100
 
 
-bool
+HIDDEN bool
 newton_psi(double& u, double& v, const ON_3dPoint& pointA, const ON_Surface& surfB, double tolerance)
 {
     ON_3dPoint closest_point = surfB.PointAt(u, v);
@@ -916,7 +916,7 @@ ON_Intersect(const ON_3dPoint& pointA,
 #define CCI_OVERLAP_TEST_POINTS 16
 
 
-void
+HIDDEN void
 newton_cci(double& t_a, double& t_b, const ON_Curve* curveA, const ON_Curve* curveB, double intersection_tolerance)
 {
     // Equations:
@@ -1432,7 +1432,7 @@ ON_Intersect(const ON_Curve* curveA,
 #define CSI_OVERLAP_TEST_POINTS 2
 
 
-void
+HIDDEN void
 newton_csi(double& t, double& u, double& v, const ON_Curve* curveA, const ON_Surface* surfB, double intersection_tolerance, Subsurface* tree)
 {
     // Equations:
@@ -2083,7 +2083,7 @@ struct Triangle {
 };
 
 
-bool
+HIDDEN bool
 triangle_intersection(const struct Triangle &TriA, const struct Triangle &TriB, ON_3dPoint &center)
 {
     ON_Plane plane_a(TriA.A, TriA.B, TriA.C);
@@ -2221,7 +2221,7 @@ struct PointPair {
 };
 
 
-void
+HIDDEN void
 closed_domain(int type, const ON_Surface* surfA, const ON_Surface* surfB, ON_3dPointArray& curvept, ON_2dPointArray& curveuv, ON_2dPointArray& curvest)
 {
     // type =
@@ -2255,7 +2255,7 @@ closed_domain(int type, const ON_Surface* surfA, const ON_Surface* surfB, ON_3dP
 }
 
 
-bool
+HIDDEN bool
 newton_ssi(double& u, double& v, double& s, double& t, const ON_Surface* surfA, const ON_Surface* surfB, double intersection_tolerance)
 {
     ON_3dPoint pointA = surfA->PointAt(u, v);
@@ -2320,7 +2320,7 @@ newton_ssi(double& u, double& v, double& s, double& t, const ON_Surface* surfA, 
 }
 
 
-ON_Curve*
+HIDDEN ON_Curve*
 link_curves(ON_Curve*& c1, ON_Curve*& c2)
 {
     ON_NurbsCurve* nc1 = c1->NurbsCurve();

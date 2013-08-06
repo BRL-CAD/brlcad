@@ -2120,6 +2120,24 @@ ON_Intersect(const ON_Surface* surfA,
 extern BREP_EXPORT int
 ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int operation);
 
+
+/**
+ * Get the curve segment between param a and param b
+ *
+ * Parameters:
+ *
+ *   in - [in]
+ *     the curve to split
+ *
+ *   a, b - [in]
+ *     either of them can be the larger one
+ *
+ * Returns:
+ *   the result curve segment. NULL for error.
+ */
+extern BREP_EXPORT ON_Curve*
+sub_curve(ON_Curve* in, double a, double b);
+
 } /* extern C++ */
 #endif
 
