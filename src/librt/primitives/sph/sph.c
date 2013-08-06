@@ -67,6 +67,148 @@ struct sph_specific {
     mat_t sph_SoR;	/* Rotate and scale for UV mapping */
 };
 
+
+#define OPENCL
+
+
+#ifdef OPENCL
+static int clt_initialized = 0;
+static cl_device_id clt_device;
+static cl_context clt_context;
+static cl_command_queue clt_queue;
+static cl_program clt_program;
+static cl_kernel kernel;
+
+
+/* FIXME: this needs alignment */
+struct Sphere
+{
+    cl_float3 position;
+    cl_float radius;
+    cl_int is_light;
+};
+
+
+/* just spheres at present  */
+const char * const clt_program_code = "\
+typedef struct\
+{\
+    float3 position;\
+    float radius;\
+    int is_light;\
+} Sphere;\
+\
+\
+__kernel void ell_shot(__global float *output, __constant Sphere sphere, Sphere vlight, float3 E, float3 V)\
+{\
+    float3 EO = sphere.position-(E+V);\
+    float v = dot(EO, V);\
+    float disc = pow(sphere.radius, 2) - (dot(EO, EO) - pow(v, 2));\
+\
+    if (disc < 0) {\
+	output = 0;\
+	return;\
+    }\
+\
+    output = 1;\
+    return;\
+\
+}\
+\
+";
+
+
+static cl_device_id
+clt_get_cl_device()
+{
+    cl_int error;
+    cl_platform_id platform;
+    cl_device_id device;
+
+    error = clGetPlatformIDs(1, &platform, nullptr);
+    if (error != CL_SUCCESS) bu_bomb("failed to find an OpenCL platform");
+
+    error = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
+    if (error == CL_DEVICE_NOT_FOUND)
+	error = clGetDeviceIDs(platform, CL_DEVICE_TYPE_CPU, 1, &device, NULL);
+    if (error != CL_SUCCESS) bu_bomb("failed to find an OpenCL device (using this method)");
+
+    return device;
+}
+
+
+static cl_program
+clt_get_program(cl_context context, cl_device_id device, const char *code)
+{
+    cl_int error;
+    cl_program program;
+    size_t code_size = strnlen(code, 2<<20);
+
+    cl_program program = clCreateProgramWithSource(context, 1, &code, &code_size, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL program");
+
+    error = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
+    if (error != CL_SUCCESS) {
+	size_t log_size;
+	char *log_data;
+	clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
+	log_data = bu_malloc(log_size*sizeof(char));
+	clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, log_size+1, log_data, NULL);
+	bu_bomb("failed to build program\nBUILD LOG:\n%s\n", log_data);
+    }
+
+    return program;
+}
+
+
+static void
+clt_init()
+{
+    cl_int error;
+
+    if (clt_initialized) return;
+    clt_initialized = 1;
+    atexit(clt_cleanup);
+
+    clt_device = clt_get_cl_device();
+
+    clt_context = clCreateContext(NULL, 1, &clt_device, NULL, NULL, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL context");
+
+    clt_queue = clCreateCommandQueue(clt_context, clt_device, 0, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL command queue");
+
+    clt_program = clt_get_program();
+
+    clt_kernel = clCreateKernel(program, "ell_shot", &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
+}
+
+
+static void
+clt_cleanup()
+{
+    if (!clt_initialized) return;
+
+    clReleaseKernel(clt_kernel);
+    clReleaseCommandQueue(clt_queue);
+    clReleaseProgram(clt_program);
+    clReleaseContext(clt_context);
+
+    clt_initialized = 0;
+}
+
+
+fastf_t
+clt_shot()
+{
+    return -1;
+}
+
+
+#endif
+
+
 /**
  * R T _ S P H _ P R E P
  *
@@ -86,6 +228,10 @@ struct sph_specific {
 int
 rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
+#ifdef OPENCL
+    clt_init();
+    return 0;
+#else
     register struct sph_specific *sph;
     fastf_t magsq_a, magsq_b, magsq_c;
     vect_t Au, Bu, Cu;	/* A, B, C with unit length */
@@ -170,6 +316,7 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     /* Compute bounding RPP */
     if (stp->st_meth->ft_bbox(ip, &(stp->st_min), &(stp->st_max), &(rtip->rti_tol))) return 1;
     return 0;			/* OK */
+#endif
 }
 
 
@@ -214,6 +361,8 @@ rt_sph_print(register const struct soltab *stp)
 int
 rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
+#ifdef OPENCL
+#else
     register struct sph_specific *sph =
 	(struct sph_specific *)stp->st_specific;
     register struct seg *segp;
@@ -253,6 +402,7 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     segp->seg_out.hit_surfno = 0;
     BU_LIST_INSERT(&(seghead->l), &(segp->l));
     return 2;			/* HIT */
+#endif
 }
 
 
