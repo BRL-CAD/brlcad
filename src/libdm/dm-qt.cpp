@@ -867,13 +867,13 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
     }
     if (bu_vls_strlen(&init_proc_vls) == 0)
 	bu_vls_strcpy(&init_proc_vls, "bind_dm");
-    
+
     /* initialize dm specific variables */
     pubvars->devmotionnotify = LASTEvent;
     pubvars->devbuttonpress = LASTEvent;
     pubvars->devbuttonrelease = LASTEvent;
     dmp->dm_aspect = 1.0;
-    
+
     if (dmp->dm_top) {
 	/* Make xtkwin a toplevel window */
 	pubvars->xtkwin = Tk_CreateWindowFromPath(interp, tkwin,

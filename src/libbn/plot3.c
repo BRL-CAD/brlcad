@@ -429,7 +429,7 @@ pl_3box(register FILE *plotfp, int px1, int py1, int pz1, int px2, int py2, int 
 void
 pd_point(register FILE *plotfp, double x, double y)
 {
-        pd( plotfp, x, y, 'x'); /* calling common function pd */   
+        pd( plotfp, x, y, 'x'); /* calling common function pd */
 }
 
 void
@@ -461,13 +461,13 @@ pd_line(register FILE *plotfp, double px1, double py1, double px2, double py2)
 void
 pd_move(register FILE *plotfp, double x, double y)
 {
-    pd( plotfp, x, y, 'o'); /* calling common function pd */ 
+    pd( plotfp, x, y, 'o'); /* calling common function pd */
 }
 
 void
 pd_cont(register FILE *plotfp, double x, double y)
 {
-    pd( plotfp, x, y, 'q'); /* calling common function pd */   
+    pd( plotfp, x, y, 'q'); /* calling common function pd */
 }
 
 void

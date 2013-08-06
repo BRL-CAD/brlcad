@@ -71,14 +71,14 @@ struct bu_structparse qt_vparse[] = {
 */
 static int
 qt_doevent(ClientData UNUSED(clientData), XEvent *eventPtr)
-{ 
+{
     if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
 	dirty = 1;
 
 	/* no further processing of this event */
 	return TCL_RETURN;
     }
-    
+
     /* allow further processing of this event */
     return TCL_OK;
 }
@@ -127,7 +127,7 @@ Qt_dm_init(struct dm_list *o_dm_list,
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     dm_var_init(o_dm_list);
-    
+
     /* register application provided routines */
     cmd_hook = qt_dm;
 
