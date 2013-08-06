@@ -58,9 +58,9 @@
 void
 usage(const char *argv0)
 {
-    bu_log("Usage: %s [-v] [-i] [-p] [-xX lvl] \n\
-       [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol] \n\
-       [-o output_file_name.dxf] brlcad_db.g object(s)\n\n", argv0);
+    bu_log("Usage: %s [-v] [-i] [-p] [-xX lvl]\n\
+       [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol]\n\
+       [-o output_file_name.dxf] [-P #_of_CPUs] brlcad_db.g object(s)\n\n", argv0);
 
     bu_log("Options:\n\
  -v	Verbose output\n\
@@ -68,14 +68,17 @@ usage(const char *argv0)
  -p	Output POLYFACE MESH (instead of default 3DFACE) entities\n\n");
 
     bu_log("\
- -x #	Specifies an RT debug flag\n\
- -X #	Specifies an NMG debug flag\n\n");
+ -x #	Specify an RT debug flag\n\
+ -X #	Specify an NMG debug flag\n\n");
 
     bu_log("\
  -a #	Specify an absolute tessellation tolerance (in mm)\n\
  -r #	Specify a relative tessellation tolerance (in mm)\n\
  -n #	Specify a surface normal tessellation tolerance (in degrees)\n\
  -D #	Specify a calculation distance tolerance (in mm)\n\n");
+
+    bu_log("\
+ -P #	Specify number of CPUS to be used, and turn on flag to enable receiving of core dumps\n\n");
 
     bu_log("\
  -o dxf	Output to the specified dxf filename\n\n---\n");
@@ -418,7 +421,7 @@ main(int argc, char *argv[])
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "a:n:o:pr:vx:D:P:X:i")) != -1) {
+    while ((c = bu_getopt(argc, argv, "a:n:o:pr:vx:D:P:X:ih?")) != -1) {
 	switch (c) {
 	    case 'a':		/* Absolute tolerance. */
 		ttol.abs = atof(bu_optarg);
