@@ -469,6 +469,7 @@ CMAKEFILES(${stepg_HDRS})
 set(gstep_SOURCES
   ${fedex_srcs}
   BRLCADWrapper.cpp
+  ON_Brep.cpp
   g-step.cpp
   )
 
@@ -507,7 +508,7 @@ endif(MSVC)
 
 DISTCLEAN(${SCHEMA_OUT_DIR}/make_schema)
 
-CMAKEFILES(ON_Brep.cpp)
+CMAKEFILES(ON_Brep.h)
 
 # Local Variables:
 # tab-width: 8

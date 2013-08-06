@@ -57,22 +57,10 @@
 // Note that STEPentity is the same thing as SDAI_Application_instance... see src/clstepcore/sdai.h line 220
 //
 
-STEPattribute * getAttribute(STEPentity *ent, const char *name)
-{
-	STEPattribute *attr, *attr_result;
-	ent->ResetAttributes();
-	while ((attr = ent->NextAttribute()) != NULL) {
-		std::string attrname = attr->Name();
-		if (attrname.compare(name) == 0) {
-			attr_result = attr;
-			break;
-		}
-	}
-	ent->ResetAttributes();
-	return attr_result;
-}
+#include "STEPEntity.h"
 
-bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry)
+
+bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 {
 	STEPentity ** vertex_cartesian_pt_array = new STEPentity*[brep->m_V.Count()];
 	STEPentity ** vertex_pt_array = new STEPentity*[brep->m_V.Count()];
@@ -91,19 +79,20 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry)
 	for (int i = 0; i < brep->m_V.Count(); ++i) {
                 // Cartesian points (actual 3D geometry)
 		vertex_cartesian_pt_array[i] = registry->ObjCreate("CARTESIAN_POINT");
-		STEPattribute *coords = getAttribute(vertex_cartesian_pt_array[i], "coordinates");
-		RealAggregate_ptr coord_vals = coords->coordinates_();
+		instance_list->Append(vertex_cartesian_pt_array[i], completeSE);
+		RealAggregate_ptr coord_vals = ((SdaiCartesian_point *)vertex_cartesian_pt_array[i])->coordinates_();
                 RealNode *xnode = new RealNode();
-                xnode->value = brep->m_V[i].x;
-		coord_vals.AddNode(xnode);
+                xnode->value = brep->m_V[i].Point().x;
+		coord_vals->AddNode(xnode);
                 RealNode *ynode = new RealNode();
-                ynode->value = brep->m_V[i].y;
-		coord_vals.AddNode(ynode);
+                ynode->value = brep->m_V[i].Point().y;
+		coord_vals->AddNode(ynode);
                 RealNode *znode = new RealNode();
-                znode->value = brep->m_V[i].z;
-		coord_vals.AddNode(znode);
+                znode->value = brep->m_V[i].Point().z;
+		coord_vals->AddNode(znode);
                 // Vertex points (topological, references actual 3D geometry)
 		vertex_pt_array[i] = registry->ObjCreate("VERTEX_POINT");
-		vertex_pt_array[i]->vertex_geometry_((const SdaiPoint_ptr)cartesian_pt_array[i]);
+		((SdaiVertex_point *)vertex_pt_array[i])->vertex_geometry_((const SdaiPoint_ptr)vertex_cartesian_pt_array[i]);
+		instance_list->Append(vertex_pt_array[i], completeSE);
 	}
 }
