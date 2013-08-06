@@ -32,7 +32,7 @@ HIDDEN void shrink_image(icv_image_t* bif, int factor)
 {
     double *data_p, *res_p; /**< input and output pointers */
     double *p;
-    int facsq,x,y,py,px,c;
+    int facsq, x, y, py, px, c;
     size_t widthstep =  bif->width*bif->channels;
 
     facsq = factor*factor;
@@ -70,7 +70,7 @@ HIDDEN void shrink_image(icv_image_t* bif, int factor)
 HIDDEN void under_sample(icv_image_t* bif, int factor)
 {
     double *data_p, *res_p;
-    int x,y,widthstep;
+    int x, y, widthstep;
 
     widthstep = bif->width*bif->channels;
 
@@ -92,8 +92,8 @@ HIDDEN void under_sample(icv_image_t* bif, int factor)
 HIDDEN void nintrep(icv_image_t* bif, int out_width, int out_height)
 {
     double xstep, ystep;
-    int i,j;
-    int x,y;
+    int i, j;
+    int x, y;
     int widthstep;
     double *in_r, *in_c; /*<< Pointer to row and col of input buffers*/
     double *out_data, *out_p;

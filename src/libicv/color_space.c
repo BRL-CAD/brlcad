@@ -35,7 +35,7 @@
 int
 icv_gray2rgb(icv_image_t *img)
 {
-    double *out_data,*op;
+    double *out_data, *op;
     double *in_data;
     long int size;
     long int i = 0;
