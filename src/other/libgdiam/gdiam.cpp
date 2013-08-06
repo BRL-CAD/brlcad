@@ -1445,6 +1445,14 @@ public:
         len1 = base.dist( *a );
         len2 = base.dist( *b );
 
+	/* If sgn == 0 and len1 == len2, fall back on point x,y values,
+	 * which thanks to the first a->equal(*b) check are not equal here.
+	 * Need this to ensure that swapping a and b doesn't result
+	 * in the same answer (i.e. no way to decide (!(a < b) && (b < a))
+	 * for the sort) when those conditions are true. */
+	if ((sgn == 0) && (len1 == len2))
+	   return  ( ( a->x > b->x )  &&  ( a->y > b->y ) );
+
         return (len1 > len2);
     }
 };
