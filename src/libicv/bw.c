@@ -35,7 +35,7 @@
 #include "bn.h"
 #include "icv.h"
 
- /* defined in encoding.c */
+/* defined in encoding.c */
 extern HIDDEN double *uchar2double(unsigned char *data, long int size);
 extern HIDDEN unsigned char *data2uchar(const icv_image_t *bif);
 
@@ -50,25 +50,25 @@ bw_save(icv_image_t *bif, const char *filename)
     size_t ret, size;
 
     if (bif->color_space == ICV_COLOR_SPACE_RGB) {
-	    icv_rgb2gray(bif, 0, 0, 0, 0, 0);
+        icv_rgb2gray(bif, 0, 0, 0, 0, 0);
     } else if (bif->color_space != ICV_COLOR_SPACE_GRAY) {
-	    bu_log("bw_save : Color Space conflict");
-	    return -1;
+        bu_log("bw_save : Color Space conflict");
+        return -1;
     }
     data =  data2uchar(bif);
     size = (size_t) bif->height*bif->width;
     fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, WRMODE);
     if (fd < 0) {
-	    bu_log("Unable to open the file\n");
-	    return -1;
+        bu_log("Unable to open the file\n");
+        return -1;
     }
 
     ret = write(fd, data, size);
     close(fd);
     bu_free(data, "bw_save : Unsigned Char data");
     if (ret != size) {
-	    bu_log("bw_save : Short Write\n");
-	    return -1;
+        bu_log("bw_save : Short Write\n");
+        return -1;
     }
 
     return 0;
@@ -84,21 +84,21 @@ bw_load(const char *filename, int width, int height)
     size_t size;
 
     if (width == 0 || height == 0) {
-	    height = 512;
-	    width = 512;
+        height = 512;
+        width = 512;
     }
 
     size = (size_t) height*width;
 
     if ((fd = open(filename, O_RDONLY, WRMODE))<0) {
-	    bu_log("bw_load: Cannot open file for reading\n");
-	    return NULL;
+        bu_log("bw_load: Cannot open file for reading\n");
+        return NULL;
     }
     data = (unsigned char *)bu_malloc(size, "bw_load : unsigned char data");
     if (read(fd, data, size) !=0) {
-	    bu_log("bw_load: Error Occurred while Reading\n");
-	    bu_free(data, "icv_image data");
-	    return NULL;
+        bu_log("bw_load: Error Occurred while Reading\n");
+        bu_free(data, "icv_image data");
+        return NULL;
     }
     BU_ALLOC(bif, struct icv_image);
     ICV_IMAGE_INIT(bif);

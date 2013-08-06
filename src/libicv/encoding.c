@@ -52,9 +52,9 @@ uchar2double(unsigned char *data, long int size)
     char_p = data;
     double_p = double_data = (double *) bu_malloc(size*sizeof(double), "uchar2data : double data");
     for (i=0; i<size; i++) {
-	    *double_p = ICV_CONV_8BIT(*char_p);
-	    double_p++;
-	    char_p++;
+        *double_p = ICV_CONV_8BIT(*char_p);
+        double_p++;
+        char_p++;
     }
 
     return double_data;
@@ -84,22 +84,22 @@ data2uchar(const icv_image_t *bif)
     double_p = bif->data;
 
     if (ZERO(bif->gamma_corr)) {
-	    for (i=0; i<size; i++) {
-		*char_p = (unsigned char)((*double_p)*255.0 +0.5) ;
-		char_p++;
-		double_p++;
-	    }
+        for (i=0; i<size; i++) {
+	    *char_p = (unsigned char)((*double_p)*255.0 +0.5) ;
+	    char_p++;
+	    double_p++;
+        }
 
     } else {
-	    float *rand_p;
-	    double ex = 1.0/bif->gamma_corr;
-	    bn_rand_init(rand_p, 0);
+        float *rand_p;
+        double ex = 1.0/bif->gamma_corr;
+        bn_rand_init(rand_p, 0);
 
-	    for (i=0; i<size; i++) {
-		*char_p = floor(pow(*double_p, ex)*255.0 + (double) bn_rand0to1(rand_p) + 0.5);
-		char_p++;
-		double_p++;
-	    }
+        for (i=0; i<size; i++) {
+	    *char_p = floor(pow(*double_p, ex)*255.0 + (double) bn_rand0to1(rand_p) + 0.5);
+	    char_p++;
+	    double_p++;
+        }
     }
 
     return uchar_data;

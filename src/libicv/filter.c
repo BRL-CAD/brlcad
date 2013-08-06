@@ -300,7 +300,7 @@ icv_fade(icv_image_t *img, double fraction)
 
     for (;size>0; size--) {
 	*data = *data*fraction;
-	if(*data > 1)
+	if (*data > 1)
 	    *data= 1.0;
 	data++;
     }

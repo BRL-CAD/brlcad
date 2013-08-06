@@ -42,9 +42,9 @@ HIDDEN void shrink_image(icv_image_t* bif, int factor)
     for (y=0; y<bif->height; y+=factor)
 	for (x=0; x<bif->width; x+=factor) {
 
-	    for (c=0; c<bif->channels; c++) {
-		p[c]= 0;
-	    }
+            for (c=0; c<bif->channels; c++) {
+	        p[c]= 0;
+            }
 
 	    for (py = 0; py < factor; py++) {
 		data_p = bif->data + (y+py)*widthstep;
@@ -73,7 +73,6 @@ HIDDEN void under_sample(icv_image_t* bif, int factor)
     int x, y, widthstep;
 
     widthstep = bif->width*bif->channels;
-
     res_p = data_p = bif->data;
 
     for (y=0; y<bif->height; y+=factor) {
@@ -106,7 +105,6 @@ HIDDEN void nintrep(icv_image_t* bif, int out_width, int out_height)
 
     for (j=0; j<out_height; j++) {
 	y = (int) (j*ystep);
-
 	in_r = bif->data + y*widthstep;
 
 	for (i = 0; i < out_width; i++) {
@@ -160,7 +158,7 @@ HIDDEN void binterp(icv_image_t *bif, int out_width, int out_height)
 	    upp_c = upp_r + (int)x*bif->channels;
 	    low_c = low_r + (int)x*bif->channels;
 
-	    for(c=0; c<bif->channels; c++) {
+	    for (c=0; c<bif->channels; c++) {
 		mid1 = low_c[0] + dx * ((double) low_c[bif->channels] - (double) low_c[0] );
 		mid2 = upp_c[0] + dx * ((double) upp_c[bif->channels] - (double) upp_c[0] );
 		*out_p = mid1 + dy * (mid2 - mid1);

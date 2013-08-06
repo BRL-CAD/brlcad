@@ -38,7 +38,7 @@ void icv_sanitize(icv_image_t* img)
     size_t size;
     data= img->data;
     for (size = img->width*img->height*img->channels; size>0; size--) {
-	if(*data>1.0)
+	if (*data>1.0)
 	    *data = 1.0;
 	else if (*data<0)
 	    *data = 0;
@@ -59,7 +59,7 @@ void icv_add_val(icv_image_t* img, double val)
 	data++;
     }
 
-    if(img->flags & ICV_OPERATIONS_MODE)
+    if (img->flags & ICV_OPERATIONS_MODE)
 	img->flags&=(!ICV_SANITIZED);
     else
 	icv_sanitize(img);
@@ -76,7 +76,7 @@ void icv_multiply_val(icv_image_t* img, double val)
 	*data *= val;
 	 data++;
     }
-    if((img->flags & ICV_OPERATIONS_MODE))
+    if ((img->flags & ICV_OPERATIONS_MODE))
 	img->flags&=(!ICV_SANITIZED);
     else
 	icv_sanitize(img);
@@ -96,7 +96,7 @@ void icv_divide_val(icv_image_t* img, double val)
 	 data++;
      }
 
-    if((img->flags & ICV_OPERATIONS_MODE))
+    if ((img->flags & ICV_OPERATIONS_MODE))
 	img->flags&=(!ICV_SANITIZED);
     else
 	icv_sanitize(img);
@@ -114,7 +114,7 @@ void icv_pow_val(icv_image_t* img, double val)
 	 data++;
     }
 
-    if((img->flags & ICV_OPERATIONS_MODE))
+    if ((img->flags & ICV_OPERATIONS_MODE))
 	img->flags&=(!ICV_SANITIZED);
     else
 	icv_sanitize(img);
@@ -248,7 +248,7 @@ int icv_saturate(icv_image_t* img, double sat)
     rwgt = 0.31*(1.0-sat);
     gwgt = 0.61*(1.0-sat);
     bwgt = 0.08*(1.0-sat);
-    while(size-- > 0) {
+    while (size-- > 0) {
 	rt = *data;
 	gt = *(data+1);
 	bt = *(data+2);

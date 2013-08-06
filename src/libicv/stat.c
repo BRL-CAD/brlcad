@@ -35,7 +35,7 @@ icv_init_bins(icv_image_t* img, int n_bins)
     bins = (size_t**) bu_malloc(sizeof(size_t*)*img->channels, "icv_init_bins : Histogram Bins");
     for (c = 0; c <= img->channels; c++) {
 	bins[c] = (size_t*) bu_malloc(sizeof(size_t)*n_bins, "icv_init_bins : Histogram Array for Channels");
-	for(i=0; i<n_bins; i++) {
+	for (i=0; i<n_bins; i++) {
 	    bins[c][i] = 0;
 	}
     }
@@ -56,8 +56,8 @@ icv_hist(icv_image_t* img, int n_bins)
 
     bins = icv_init_bins(img, n_bins);
 
-    for(i=0; i<=size; i++) {
-	for(j=0; j < img->channels; j++) {
+    for (i=0; i<=size; i++) {
+	for (j=0; j < img->channels; j++) {
 	    temp = (*data++)*n_bins;
 	    bins[j][temp]++;
 	}
@@ -74,7 +74,7 @@ double *icv_max(icv_image_t* img)
 
     max = bu_malloc(sizeof(double)*img->channels, "max values");
 
-    for(i=0; i<img->channels; i++)
+    for (i=0; i<img->channels; i++)
 	max[i] = 0.0;
 
     data = img->data;
@@ -96,7 +96,7 @@ double *icv_sum(icv_image_t* img)
     size_t size,j;
     sum = bu_malloc(sizeof(double)*img->channels, "sum values");
 
-    for(i=0; i<img->channels; i++)
+    for (i=0; i<img->channels; i++)
 	sum[i] = 0.0;
 
     data = img->data;
@@ -118,7 +118,7 @@ double *icv_mean(icv_image_t* img)
     mean = icv_sum(img); /**< receives sum from icv_image_sum*/
     size = (size_t)img->width*img->height;
 
-    for(i=0; i<img->channels; i++)
+    for (i=0; i<img->channels; i++)
 	mean[i]/=size;
 
     return mean;
@@ -133,7 +133,7 @@ double *icv_min(icv_image_t* img)
 
     min = bu_malloc(sizeof(double)*img->channels, "min values");
 
-    for(i=0; i<img->channels; i++)
+    for (i=0; i<img->channels; i++)
 	min[i] = 1.0;
 
     data = img->data;
