@@ -40,6 +40,7 @@
 #include "raytrace.h"
 #include "ged.h"
 
+const char *usage_fmt = "Usage: %s [-o output.dot] input.g [object1 ...]\n";
 
 struct output {
     FILE *outfp;
@@ -185,13 +186,12 @@ dot_footer(FILE *outfp)
 
 
 static void
-help()
+help(const char *argv0)
 {
-    bu_log("\n\t-? | -h | -H    (optional) displays this help");
+    bu_log(usage_fmt, argv0);
     bu_log("\n\t-o output.dot   (optional) name of output Graphviz .dot file");
     bu_log("\n\tinput.g         name of input BRL-CAD .g database");
-    bu_log("\n\tobject1 ...     (optional) name of object(s) to export from .g file");
-    bu_log("\n");
+    bu_log("\n\tobject1 ...     (optional) name of object(s) to export from .g file\n");
 }
 
 
@@ -200,7 +200,6 @@ main(int ac, char *av[])
 {
     int c;
 
-    const char *usage_fmt = "Usage: %s [-?hH] [-o output.dot] input.g [object1 ...]\n";
     const char *argv0 = av[0];
     const int argc0 = ac;
 
@@ -217,16 +216,13 @@ main(int ac, char *av[])
 
     bu_setprogname(av[0]);
 
-    while ((c = bu_getopt(ac, av, "o:")) != -1) {
+    while ((c = bu_getopt(ac, av, "o:h?")) != -1) {
 	switch (c) {
 	    case 'o':
 		output = bu_strdup(bu_optarg);
 		break;
-	    case 'h':
-	    case 'H':
-	    case '?':
-		bu_log(usage_fmt, argv0);
-		help();
+	    default:
+		help(argv0);
 		bu_exit(0, NULL);
 		break;
 	}
@@ -236,7 +232,7 @@ main(int ac, char *av[])
 
     /* there should at least be a db filename remaining */
     if (ac < 1) {
-	bu_log(usage_fmt, argv0);
+	help(argv0);
 	if (argc0 > 1) {
 	    bu_exit(2, "ERROR: input geometry database not specified\n");
 	} else {
