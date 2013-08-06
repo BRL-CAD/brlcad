@@ -32,6 +32,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+
+#include <OpenCL/cl.h>
 #include "bio.h"
 
 #include "vmath.h"
@@ -72,12 +74,6 @@ struct sph_specific {
 
 
 #ifdef OPENCL
-static int clt_initialized = 0;
-static cl_device_id clt_device;
-static cl_context clt_context;
-static cl_command_queue clt_queue;
-static cl_program clt_program;
-static cl_kernel kernel;
 
 
 /* FIXME: this needs alignment */
@@ -89,7 +85,28 @@ struct Sphere
 };
 
 
-/* just spheres at present  */
+static int clt_initialized = 0;
+static cl_device_id clt_device;
+static cl_context clt_context;
+static cl_command_queue clt_queue;
+static cl_program clt_program;
+static cl_kernel clt_kernel;
+
+
+static void
+clt_cleanup()
+{
+    if (!clt_initialized) return;
+
+    clReleaseKernel(clt_kernel);
+    clReleaseCommandQueue(clt_queue);
+    clReleaseProgram(clt_program);
+    clReleaseContext(clt_context);
+
+    clt_initialized = 0;
+}
+
+
 const char * const clt_program_code = "\
 typedef struct\
 {\
@@ -125,7 +142,7 @@ clt_get_cl_device()
     cl_platform_id platform;
     cl_device_id device;
 
-    error = clGetPlatformIDs(1, &platform, nullptr);
+    error = clGetPlatformIDs(1, &platform, NULL);
     if (error != CL_SUCCESS) bu_bomb("failed to find an OpenCL platform");
 
     error = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
@@ -144,7 +161,7 @@ clt_get_program(cl_context context, cl_device_id device, const char *code)
     cl_program program;
     size_t code_size = strnlen(code, 2<<20);
 
-    cl_program program = clCreateProgramWithSource(context, 1, &code, &code_size, &error);
+    program = clCreateProgramWithSource(context, 1, &code, &code_size, &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL program");
 
     error = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
@@ -152,13 +169,15 @@ clt_get_program(cl_context context, cl_device_id device, const char *code)
 	size_t log_size;
 	char *log_data;
 	clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
-	log_data = bu_malloc(log_size*sizeof(char));
+	log_data = bu_malloc(log_size*sizeof(char), "failed to allocate memory for log");
 	clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, log_size+1, log_data, NULL);
-	bu_bomb("failed to build program\nBUILD LOG:\n%s\n", log_data);
+	bu_log("BUILD LOG:\n%s\n", log_data);
+	bu_bomb("failed to build OpenCL program");
     }
 
     return program;
 }
+
 
 
 static void
@@ -178,24 +197,12 @@ clt_init()
     clt_queue = clCreateCommandQueue(clt_context, clt_device, 0, &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL command queue");
 
-    clt_program = clt_get_program();
+    clt_program = clt_get_program(clt_context, clt_device, clt_program_code);
 
-    clt_kernel = clCreateKernel(program, "ell_shot", &error);
+    clt_kernel = clCreateKernel(clt_program, "ell_shot", &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
-}
 
-
-static void
-clt_cleanup()
-{
-    if (!clt_initialized) return;
-
-    clReleaseKernel(clt_kernel);
-    clReleaseCommandQueue(clt_queue);
-    clReleaseProgram(clt_program);
-    clReleaseContext(clt_context);
-
-    clt_initialized = 0;
+    bu_log("initialized OpenCL");
 }
 
 
@@ -228,7 +235,7 @@ clt_shot()
 int
 rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
-#ifdef OPENCL
+#ifdef OPENCL_D
     clt_init();
     return 0;
 #else
@@ -237,7 +244,7 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     vect_t Au, Bu, Cu;	/* A, B, C with unit length */
     fastf_t f;
     struct rt_ell_internal *eip;
-
+clt_init();
     eip = (struct rt_ell_internal *)ip->idb_ptr;
     RT_ELL_CK_MAGIC(eip);
 
@@ -361,7 +368,7 @@ rt_sph_print(register const struct soltab *stp)
 int
 rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
-#ifdef OPENCL
+#ifdef OPENCL_D
 #else
     register struct sph_specific *sph =
 	(struct sph_specific *)stp->st_specific;
