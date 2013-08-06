@@ -1398,6 +1398,8 @@ inline int     AreaSign( const point2d  & a,
         a.y * c.x - a.x * c.y +
         b.x * c.y - c.x * b.y;
 
+    if (GDIAM_NEAR_ZERO(area)) return 0;
+
     //printf( "area: %g\n", area );
     return  ( ( area < (ldouble)0.0 )? -1: 
               ( (area > (ldouble)0.0)? 1 : 0 ) );
