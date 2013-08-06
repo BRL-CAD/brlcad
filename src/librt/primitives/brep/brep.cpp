@@ -3544,14 +3544,6 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 	    ON_Xform xform(mat);
 
 	    if (!xform.IsIdentity()) {
-		bu_log("Applying transformation matrix....\n");
-		for (int row=0;row<4;row++) {
-		    bu_log("%d - ", row);
-		    for (int col=0;col<4;col++) {
-			bu_log(" %5f", xform.m_xform[row][col]);
-		    }
-		    bu_log("\n");
-		}
 		bi->brep->Transform(xform);
 	    }
 	}
