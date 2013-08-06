@@ -165,7 +165,7 @@ main(int argc, char **argv)
 
 
     unsigned long nreps = 10000;
-    char c;
+    int c;
     int success;
 
     while ((c = bu_getopt(argc, argv, "n:")) != -1) {
