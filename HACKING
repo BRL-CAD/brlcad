@@ -639,6 +639,32 @@ A similar block can be used on source and script files in other
 languages (such as Tcl, Shell, Perl, etc.).  See the local variable
 footer script in sh/footer.sh to automatically set/update files.
 
+Here is an example where '.' represents a literal space character
+(0x20) and '[ ]' represents a literal tab character (0x09):
+
+int
+main(int ac, char *av[])
+{
+....int i;
+....int foo = 0;
+
+....for (i=0; i<10; i++) {
+[      ]foo += 1;
+[      ]if (foo % 2) {
+[      ]....printf("hello\n");
+[      ]....if (foo > 5) {
+[      ][      ]printf("world\n");
+[      ]....}
+[      ]}
+....}
+....return 0;
+}
+
+We may change this at some point in the future, but this is the style
+for now.  If this is confusing, use spaces to indent and run sh/ws.sh
+to convert spaces to tabs.  We value consistency in order to preserve
+maintainability.
+
 2) Stylistic whitespace
 
 No space immediately inside parentheses.
