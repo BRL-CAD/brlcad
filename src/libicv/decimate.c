@@ -40,24 +40,24 @@ HIDDEN void shrink_image(icv_image_t* bif, int factor)
     p = bu_malloc(bif->channels*sizeof(double), "shrink_image : Pixel Values Temp Buffer");
 
     for (y=0; y<bif->height; y+=factor)
-        for (x=0; x<bif->width; x+=factor) {
+	for (x=0; x<bif->width; x+=factor) {
 
-            for (c=0; c<bif->channels; c++) {
-                p[c]= 0;
-            }
+	    for (c=0; c<bif->channels; c++) {
+		p[c]= 0;
+	    }
 
-            for (py = 0; py < factor; py++) {
-                data_p = bif->data + (y+py)*widthstep;
-                for (px = 0; px < factor; px++) {
-                    for (c=0; c<bif->channels; c++) {
-                        p[c] += *data_p++;
-                    }
-                }
-            }
+	    for (py = 0; py < factor; py++) {
+		data_p = bif->data + (y+py)*widthstep;
+		for (px = 0; px < factor; px++) {
+		    for (c=0; c<bif->channels; c++) {
+			p[c] += *data_p++;
+		    }
+		}
+	    }
 
-            for (c=0; c<bif->channels; c++)
-                *res_p++ = p[c]/facsq;
-        }
+	    for (c=0; c<bif->channels; c++)
+		*res_p++ = p[c]/facsq;
+	}
 
     bif->width = (int) bif->width/factor;
     bif->height = (int) bif->height/factor;
@@ -77,9 +77,9 @@ HIDDEN void under_sample(icv_image_t* bif, int factor)
     res_p = data_p = bif->data;
 
     for (y=0; y<bif->height; y+=factor) {
-        data_p = bif->data + widthstep*y;
-        for (x=0; x<bif->width; x+=factor, res_p+=bif->channels, data_p+=factor*bif->channels)
-            VMOVEN(res_p,data_p, bif->channels);
+	data_p = bif->data + widthstep*y;
+	for (x=0; x<bif->width; x+=factor, res_p+=bif->channels, data_p+=factor*bif->channels)
+	    VMOVEN(res_p,data_p, bif->channels);
     }
 
     bif->width = (int) bif->width/factor;
@@ -105,18 +105,18 @@ HIDDEN void nintrep(icv_image_t* bif, int out_width, int out_height)
     widthstep= bif->width*bif->channels;
 
     for (j=0; j<out_height; j++) {
-        y = (int) (j*ystep);
+	y = (int) (j*ystep);
 
-        in_r = bif->data + y*widthstep;
+	in_r = bif->data + y*widthstep;
 
-        for (i = 0; i < out_width; i++) {
-            x =  (int) (i*xstep);
+	for (i = 0; i < out_width; i++) {
+	    x =  (int) (i*xstep);
 
-            in_c = in_r + x*bif->channels;
+	    in_c = in_r + x*bif->channels;
 
-            VMOVEN(out_p, in_c, bif->channels);
-            out_p += bif->channels;
-        }
+	    VMOVEN(out_p, in_c, bif->channels);
+	    out_p += bif->channels;
+	}
     }
 
     bu_free(bif->data, "intrep : in_data");
@@ -147,29 +147,29 @@ HIDDEN void binterp(icv_image_t *bif, int out_width, int out_height)
     widthstep = bif->width*bif->channels;
 
     for (j = 0; j < out_height; j++) {
-        y = j*ystep;
-        dy = y - (int)y;
+	y = j*ystep;
+	dy = y - (int)y;
 
-        low_r = bif->data + widthstep* (int)y;
-        upp_r = bif->data + widthstep* (int) (y+1);
+	low_r = bif->data + widthstep* (int)y;
+	upp_r = bif->data + widthstep* (int) (y+1);
 
-        for (i = 0; i < out_width; i++) {
-            x = i*xstep;
-            dx = x - (int)x;
+	for (i = 0; i < out_width; i++) {
+	    x = i*xstep;
+	    dx = x - (int)x;
 
-            upp_c = upp_r + (int)x*bif->channels;
-            low_c = low_r + (int)x*bif->channels;
+	    upp_c = upp_r + (int)x*bif->channels;
+	    low_c = low_r + (int)x*bif->channels;
 
-            for(c=0; c<bif->channels; c++) {
-                mid1 = low_c[0] + dx * ((double) low_c[bif->channels] - (double) low_c[0] );
-                mid2 = upp_c[0] + dx * ((double) upp_c[bif->channels] - (double) upp_c[0] );
-                *out_p = mid1 + dy * (mid2 - mid1);
+	    for(c=0; c<bif->channels; c++) {
+		mid1 = low_c[0] + dx * ((double) low_c[bif->channels] - (double) low_c[0] );
+		mid2 = upp_c[0] + dx * ((double) upp_c[bif->channels] - (double) upp_c[0] );
+		*out_p = mid1 + dy * (mid2 - mid1);
 
-                out_p++;
-                upp_c++;
-                low_c++;
-            }
-        }
+		out_p++;
+		upp_c++;
+		low_c++;
+	    }
+	}
     }
     bu_free(bif->data, "binterep : Input Data");
     bif->data = out_data;
