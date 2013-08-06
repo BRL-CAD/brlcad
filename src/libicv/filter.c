@@ -32,9 +32,10 @@
 /* private functions */
 
 HIDDEN void
-icv_get_kernel(ICV_FILTER filter_type, double *kern, double *offset) {
+icv_get_kernel(ICV_FILTER filter_type, double *kern, double *offset)
+{
     switch(filter_type) {
-	   case ICV_FILTER_LOW_PASS :
+	case ICV_FILTER_LOW_PASS :
 	    kern[0] = 3.0/42.0; kern[1] = 5.0/42.0; kern[2] = 3.0/42.0;
 	    kern[3] = 5.0/42.0; kern[4] = 10.0/42.0; kern[5] = 5.0/42.0;
 	    kern[6] = 3.0/42.0; kern[7] = 5.0/42.0; kern[8] = 3.0/42.0;
@@ -76,7 +77,7 @@ icv_get_kernel(ICV_FILTER filter_type, double *kern, double *offset) {
 	    kern[6] = 0; kern[7] = 0; kern[8] = 0;
 	    *offset = 0;
 	    break;
-    case ICV_FILTER_3_LOW_PASS :
+	case ICV_FILTER_3_LOW_PASS :
 	    kern[0] = 1.0/84; kern[1] = 3.0/84; kern[2] = 1.0/84;
 	    kern[3] = 3.0/84; kern[4] = 5.0/84; kern[5] = 3.0/84;
 	    kern[6] = 1.0/84; kern[7] = 3.0/84; kern[8] = 1.0/84;
@@ -88,7 +89,7 @@ icv_get_kernel(ICV_FILTER filter_type, double *kern, double *offset) {
 	    kern[24] = 1.0/84; kern[25] = 3.0/84; kern[26] = 1.0/84;
 	    *offset = 0;
 	    break;
-    case ICV_FILTER_3_HIGH_PASS :
+	case ICV_FILTER_3_HIGH_PASS :
 	    kern[0] = -1.0; kern[1] = -2.0; kern[2] = -1.0;
 	    kern[3] = -2.0; kern[4] = -4.0; kern[5] = -2.0;
 	    kern[6] = -1.0; kern[7] = -2.0; kern[8] = -1.0;
@@ -99,8 +100,8 @@ icv_get_kernel(ICV_FILTER filter_type, double *kern, double *offset) {
 	    kern[21] = -2.0; kern[22] = -4.0; kern[23] = -2.0;
 	    kern[24] = -1.0; kern[25] = -2.0; kern[26] = -1.0;
 	    *offset = 0;
-	break;
-    case ICV_FILTER_3_BOXCAR_AVERAGE :
+	    break;
+	case ICV_FILTER_3_BOXCAR_AVERAGE :
 	    kern[0] = 1.0/53; kern[1] = 1.0/53; kern[2] = 1.0/53;
 	    kern[3] = 1.0/53; kern[4] = 1.0/53; kern[5] = 1.0/53;
 	    kern[6] = 1.0/53; kern[7] = 1.0/53; kern[8] = 1.0/53;
@@ -112,7 +113,7 @@ icv_get_kernel(ICV_FILTER filter_type, double *kern, double *offset) {
 	    kern[24] = 1.0/53; kern[25] = 1.0/53; kern[26] = 1.0/53;
 	    *offset = 0;
 	    break;
-    case ICV_FILTER_3_ANIMATION_SMEAR :
+	case ICV_FILTER_3_ANIMATION_SMEAR :
 	    kern[0] = 1.0/69; kern[1] = 1.0/69; kern[2] = 1.0/69;
 	    kern[3] = 1.0/69; kern[4] = 1.0/69; kern[5] = 1.0/69;
 	    kern[6] = 1.0/69; kern[7] = 1.0/69; kern[8] = 1.0/69;
@@ -124,7 +125,7 @@ icv_get_kernel(ICV_FILTER filter_type, double *kern, double *offset) {
 	    kern[24] = 2.0/69; kern[25] = 2.0/69; kern[26] = 2.0/69;
 	    *offset = 0;
 	    break;
-    case ICV_FILTER_3_NULL :
+	case ICV_FILTER_3_NULL :
 	    kern[0] = 0; kern[1] = 0; kern[2] = 0;
 	    kern[3] = 0; kern[4] = 0; kern[5] = 0;
 	    kern[6] = 0; kern[7] = 0; kern[8] = 0;
@@ -144,11 +145,13 @@ icv_get_kernel(ICV_FILTER filter_type, double *kern, double *offset) {
     return;
 }
 
+
 /* end of private functions */
 
 /* begin public functions */
 
-int icv_filter(icv_image_t *img, ICV_FILTER filter_type)
+int
+icv_filter(icv_image_t *img, ICV_FILTER filter_type)
 {
     double *kern=NULL, *kern_p=NULL;
     double c_val;
@@ -156,15 +159,17 @@ int icv_filter(icv_image_t *img, ICV_FILTER filter_type)
     double offset = 0;
     int k_dim = KERN_DEFAULT;
     long int size;
-    long int s,k,i;
+    long int s, k, i;
     long int widthstep;
     long int index, n_index; /**< index is the index of the pixel in
-    out image and n_index corresponds to the nearby pixel in input
-    image*/
+			      * out image and n_index corresponds to
+			      * the nearby pixel in input image
+			      */
 
     /* TODO A new Functionality. Update the get_kernel function to
-    accommodate the generalized kernel length. This can be based
-    upon a library of filters or closed form definitions. */
+     * accommodate the generalized kernel length. This can be based
+     * upon a library of filters or closed form definitions.
+     */
 
     kern = bu_malloc(k_dim*k_dim*sizeof(double), "icv_filter : Kernel Allocation");
     icv_get_kernel(filter_type, kern, &offset);
@@ -174,7 +179,7 @@ int icv_filter(icv_image_t *img, ICV_FILTER filter_type)
     in_data = img->data;
     size = img->height*img->width*img->channels;
     /* Replaces data pointer in place */
-    img->data = out_data = (double* )bu_malloc(size*sizeof(double),"icv_filter : out_image_data");
+    img->data = out_data = (double*)bu_malloc(size*sizeof(double), "icv_filter : out_image_data");
 
     index = -1;
 
@@ -186,11 +191,12 @@ int icv_filter(icv_image_t *img, ICV_FILTER filter_type)
 	for (k = -k_dim/2; k<=k_dim/2; k++) {
 	    n_index = index + k*widthstep;
 	    data_p = in_data + n_index;
-	    for (i = 0; i<=k_dim; i++ ) {
-	   /* Ensures that the arguments are given a zero value for
-	   out of bound pixels. Thus behaves similar to zero padding */
+	    for (i = 0; i<=k_dim; i++) {
+		/* Ensures that the arguments are given a zero value for
+		 * out of bound pixels. Thus behaves similar to zero padding
+		 */
 		if (n_index >= 0 && n_index < size) {
-		    c_val  += (*kern_p++)*(*data_p);
+		    c_val += (*kern_p++)*(*data_p);
 		    data_p += img->channels;
 		    /* Ensures out bound in image */
 		    n_index += img->channels;
@@ -203,11 +209,13 @@ int icv_filter(icv_image_t *img, ICV_FILTER filter_type)
     return 0;
 }
 
-icv_image_t *icv_filter3(icv_image_t *old_img, icv_image_t *curr_img, icv_image_t *new_img, ICV_FILTER filter_type)
+
+icv_image_t *
+icv_filter3(icv_image_t *old_img, icv_image_t *curr_img, icv_image_t *new_img, ICV_FILTER filter_type)
 {
     icv_image_t *out_img;
     double *kern=NULL;
-    double *kern_old,*kern_curr,*kern_new;
+    double *kern_old, *kern_curr, *kern_new;
     double c_val;
     double *out_data;
     double *old_data, *curr_data, *new_data;
@@ -215,12 +223,12 @@ icv_image_t *icv_filter3(icv_image_t *old_img, icv_image_t *curr_img, icv_image_
     double offset = 0;
     int k_dim = KERN_DEFAULT;
     long int size;
-    long int s,k,i;
+    long int s, k, i;
     long int widthstep;
     long int index, n_index; /**< index is the index of the pixel in
-    out image and n_index corresponds to the nearby pixel in input
-    image*/
-
+			      * out image and n_index corresponds to
+			      * the nearby pixel in input image
+			      */
 
     if ((old_img->width == curr_img->width && curr_img->width == new_img->width) && \
 	(old_img->height == curr_img->height && curr_img->height == new_img->height) && \
@@ -246,24 +254,24 @@ icv_image_t *icv_filter3(icv_image_t *old_img, icv_image_t *curr_img, icv_image_
 
     index = -1;
 
-    for (s = 0; s <= size; s++ ) {
+    for (s = 0; s <= size; s++) {
 	index++;
 	c_val = 0;
 	kern_old = kern;
 	kern_curr = kern + k_dim*k_dim-1;
 	kern_new = kern + 2*k_dim*k_dim-1;
-	for (k = -k_dim/2; k<=k_dim/2; k++ ) {
+	for (k = -k_dim/2; k<=k_dim/2; k++) {
 	    n_index = index + k*widthstep;
 	    old_data_p = old_data + n_index;
 	    curr_data_p = curr_data + n_index;
 	    new_data_p = new_data + n_index;
-	    for (i = 0; i<=k_dim; i++ ) {
-	   /* Ensures that the arguments are given a zero value for
-	   out of bound pixels. Thus behaves similar to zero padding */
+	    for (i = 0; i<=k_dim; i++) {
+		/* Ensures that the arguments are given a zero value for
+		   out of bound pixels. Thus behaves similar to zero padding */
 		if (n_index >= 0 && n_index < size) {
-		    c_val  += (*kern_old++)*(*old_data_p);
-		    c_val  += (*kern_curr++)*(*curr_data_p);
-		    c_val  += (*kern_new++)*(*new_data_p);
+		    c_val += (*kern_old++)*(*old_data_p);
+		    c_val += (*kern_curr++)*(*curr_data_p);
+		    c_val += (*kern_new++)*(*new_data_p);
 		    old_data_p += old_img->channels;
 		    curr_data_p += old_img->channels;
 		    new_data_p += old_img->channels;
@@ -276,7 +284,9 @@ icv_image_t *icv_filter3(icv_image_t *old_img, icv_image_t *curr_img, icv_image_
     return 0;
 }
 
-int icv_fade(icv_image_t *img, double fraction)
+
+int
+icv_fade(icv_image_t *img, double fraction)
 {
     size_t size;
     double *data;
@@ -286,7 +296,7 @@ int icv_fade(icv_image_t *img, double fraction)
     data = img->data;
 
     if (fraction<0)
-	bu_exit(1,"Multiplier invalid. Image not Faded.");
+	bu_exit(1, "Multiplier invalid. Image not Faded.");
 
     for (;size>0; size--) {
 	*data = *data*fraction;
