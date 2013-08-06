@@ -98,8 +98,8 @@ check_results(fastf_t a[], fastf_t b[], int n)
     int i;
 
     for (i = 0; i < n; i++) {
-    if (!EQUAL(a[i],b[i]))
-	return -1;
+	if (!EQUAL(a[i], b[i]))
+	    return -1;
     }
 
     return 0;
@@ -116,7 +116,7 @@ test_bn_poly_scale(void)
     bn_poly_scale(&input[1], 2000);
     bn_poly_scale(&input[2], -400);
 
-    val = check_results(input[0].cf,output[0].cf, output[0].dgr + 1);
+    val = check_results(input[0].cf, output[0].cf, output[0].dgr + 1);
     val1 = check_results(input[1].cf, output[1].cf, output[1].dgr + 1);
     val2 = check_results(input[2].cf, output[2].cf, output[2].dgr + 1);
 
