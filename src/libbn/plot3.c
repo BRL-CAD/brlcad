@@ -370,7 +370,7 @@ pl_3point(register FILE *plotfp, int x, int y, int z)
 void
 pl_3move(register FILE *plotfp, int x, int y, int z)
 {
-    pl_3(plotfp, x, y, z, 'M'); /* calling common function pl_3 */}
+    pl_3(plotfp, x, y, z, 'M'); /* calling common function pl_3 */
 }
 
 void
