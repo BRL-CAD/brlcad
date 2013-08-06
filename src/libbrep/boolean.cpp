@@ -56,10 +56,10 @@ struct TrimmedFace {
 struct IntersectPoint {
     ON_3dPoint m_pt;	// 3D intersection point
     int m_seg;		// which curve of the loop
-    int m_t;		// param on the loop curve
+    double m_t;		// param on the loop curve
     int m_type;		// which intersection curve
     int m_rank;		// rank on the chain
-    int m_t_for_rank;	// param on the SSI curve
+    double m_t_for_rank;// param on the SSI curve
     bool m_in_out;	// dir is going inside(0)/outside(1)
     int m_pos;		// between curve[m_pos] and curve[m_pos+1]
 			// after the outerloop is splitted
@@ -192,8 +192,11 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	    curve_on_loop->Split(isect_pt->m_t, left, curve_on_loop);
 	    if (left != NULL)
 		outerloop.Append(left);
-	    else
+	    else {
 		bu_log("Split failed.\n");
+		bu_log("Domain: [%lf, %lf]\n", curve_on_loop->Domain().Min(), curve_on_loop->Domain().Max());
+		bu_log("m_t: %lf\n", isect_pt->m_t);
+	    }
 	    sorted_pointers[isect_iter]->m_pos = outerloop.Count() - 1;
 	}
 	outerloop.Append(curve_on_loop);
@@ -371,7 +374,7 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
 	    const ON_BrepLoop &loop = brep->m_L[loopindex[j]];
 	    const ON_SimpleArray<int> &trimindex = loop.m_ti;
 	    for (int k = 0; k < trimindex.Count(); k++) {
-		ON_Curve *curve2d = brepA->m_C2[brep->m_T[trimindex[k]].m_c2i];
+		ON_Curve *curve2d = brep->m_C2[brep->m_T[trimindex[k]].m_c2i];
 		if (j == 0) {
 		    outercurves.Append(curve2d->Duplicate());
 		} else {
