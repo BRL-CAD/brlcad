@@ -33,10 +33,8 @@
 #include "magic.h"
 
 
-struct bn_poly bn_Zero_poly = { BN_POLY_MAGIC, 0, {0.0} };
-
 /* holds three polynomials to be used in test. */
-bn_poly_t input[3], output[3];
+static bn_poly_t input[3], output[3];
 
 
 /**
@@ -45,6 +43,8 @@ bn_poly_t input[3], output[3];
 void
 poly_init(void)
 {
+    struct bn_poly bn_Zero_poly = { BN_POLY_MAGIC, 0, {0.0} };
+
     /* stores 0 coefficients to polynomial for input and output. */
     output[0] = bn_Zero_poly;
     input[0] = bn_Zero_poly;
@@ -138,10 +138,9 @@ main(void)
     if (ret == 0) {
 	bu_log("\nFunction computes correctly\n");
 	return EXIT_SUCCESS;
-    } else
-	return EXIT_FAILURE;
+    }
 
-    return 0;
+    return EXIT_FAILURE;
 }
 
 
