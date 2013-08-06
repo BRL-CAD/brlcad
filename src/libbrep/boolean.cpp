@@ -60,7 +60,10 @@ struct IntersectPoint {
     int m_type;		// which intersection curve
     int m_rank;		// rank on the chain
     double m_t_for_rank;// param on the SSI curve
-    bool m_in_out;	// dir is going inside(0)/outside(1)
+    enum {
+	IN,
+	OUT
+    } m_in_out;		// dir is going inside/outside
     int m_pos;		// between curve[m_pos] and curve[m_pos+1]
 			// after the outerloop is splitted
 };
@@ -172,9 +175,9 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
     for (int i = 0; i < intersect.Count(); i++) {
 	// We assume that the starting point is outside.
 	if (intersect[i].m_rank % 2 == 0) {
-	    intersect[i].m_in_out = false; // in
+	    intersect[i].m_in_out = IntersectPoint::IN;
 	} else {
-	    intersect[i].m_in_out = true; // out
+	    intersect[i].m_in_out = IntersectPoint::OUT;
 	}
     }
 
@@ -204,6 +207,7 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 
     std::stack<int> s;
     s.push(0);
+
     for (int i = 1; i < sorted_pointers.Count(); i++) {
 	if (s.empty()) {
 	    s.push(i);
@@ -218,9 +222,9 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	if (q->m_type != p->m_type) {
 	    s.push(i);
 	    continue;
-	} else if (q->m_rank - p->m_rank == 1 && q->m_in_out == false && p->m_in_out == true) {
+	} else if (q->m_rank - p->m_rank == 1 && q->m_in_out == IntersectPoint::OUT && p->m_in_out == IntersectPoint::IN) {
 	    s.pop();
-	} else if (p->m_rank - q->m_rank == 1 && p->m_in_out == false && q->m_in_out == true) {
+	} else if (p->m_rank - q->m_rank == 1 && p->m_in_out == IntersectPoint::OUT && q->m_in_out == IntersectPoint::IN) {
 	    s.pop();
 	} else {
 	    s.push(i);
@@ -262,6 +266,8 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	TrimmedFace *newface = new TrimmedFace();
 	newface->face = in->face;
 	newface->outerloop.Append(newloop.Count(), newloop.Array());
+
+	out.Append(newface);
     }
 
     if (out.Count() == 0) {
