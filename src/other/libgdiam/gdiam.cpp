@@ -1428,15 +1428,15 @@ public:
 	int  sgn;
 	gdiam_real  len1, len2;
 
-        if  ( a->equal( *b ) )
+        if  ( a->equal_real( *b ) )
             return  false;
         assert( a != NULL );
         assert( b != NULL );
-        if  ( a->equal( base ) ) {
+        if  ( a->equal_real( base ) ) {
             assert( false );
             return  true;
         }
-        if  ( b->equal( base ) ) {
+        if  ( b->equal_real( base ) ) {
             assert( false );
             return  false;
         }
@@ -1452,8 +1452,8 @@ public:
 	 * Need this to ensure that swapping a and b doesn't result
 	 * in the same answer (i.e. no way to decide (!(a < b) && (b < a))
 	 * for the sort) when those conditions are true. */
-	if ((sgn == 0) && (len1 == len2))
-	   return  ( ( a->x > b->x )  &&  ( a->y > b->y ) );
+	if ((sgn == 0) && (GDIAM_NEAR_ZERO(len1 - len2)))
+	   return  ( ( a->x < b->x ) || (GDIAM_NEAR_ZERO(a->x - b->x) && a->y < b->y) );
 
         return (len1 > len2);
     }
