@@ -76,7 +76,13 @@ struct sph_specific {
 #ifdef OPENCL
 
 
-/* FIXME: this needs alignment */
+struct Ray
+{
+    cl_float3 origin;
+    cl_float3 direction;
+};
+
+
 struct Sphere
 {
     cl_float3 position;
@@ -107,27 +113,25 @@ clt_cleanup()
 
 
 const char * const clt_program_code = "\
-struct Sphere\
+__kernel void ell_shot(__global float *output, float3 O, float3 d, float3 c, float3 r)\
 {\
-    float3 position;\
-    float radius;\
-};\
-\
-\
-__kernel void ell_shot(__global float *output, struct Sphere sphere, struct Sphere vlight, float3 E, float3 V)\
-{\
-    float3 EO = sphere.position-(E+V);\
-    float v = dot(EO, V);\
-    float disc = pow(sphere.radius, 2) - (dot(EO, EO) - pow(v, 2));\
-\
+    float A = dot(d, d);\
+    float B = 2*(o-c)*d;\
+    float C = (o-c)*(o-c) - r*r;\
+    float disc = B*B - 4*A*C;\
     if (disc < 0) {\
-	output = 0;\
+	result[0] = 0;\
+	result[1] = 0;\
+	result[2] = 0;\
 	return;\
     }\
 \
-    output = 1;\
-    return;\
-\
+    float sqrt_disc = sqrt(disc);\
+    q = B < 0 ? (-B + sqrt_disc)/2 : (-B - sqrt_disc)/2;\
+    \
+    result[0] = 1;\
+    result[1] = q/A;\
+    result[2] = C/q;\
 }\
 \
 ";
@@ -233,7 +237,8 @@ clt_shot()
 int
 rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
-#ifdef OPENCL_D
+#ifdef OPENCL
+    (void)stp; (void)ip; (void)rtip;
     clt_init();
     return 0;
 #else
@@ -366,7 +371,13 @@ rt_sph_print(register const struct soltab *stp)
 int
 rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
-#ifdef OPENCL_D
+#ifdef OPENCL
+    struct Sphere sphere;
+    struct seg *segp;
+    VMOVE(sphere.position.s, stp->st_center);
+    sphere.radius = ((sph_specific *)stp->st_specific)->sph_rad;
+
+    return 0;
 #else
     register struct sph_specific *sph =
 	(struct sph_specific *)stp->st_specific;
