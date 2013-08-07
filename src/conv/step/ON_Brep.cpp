@@ -59,6 +59,34 @@
 
 #include "STEPEntity.h"
 
+void
+ON_3dPoint_to_Cartesian_point(ON_3dPoint *inpnt, SdaiCartesian_point *step_pnt) {
+	RealAggregate_ptr coord_vals = step_pnt->coordinates_();
+	RealNode *xnode = new RealNode();
+	xnode->value = inpnt->x;
+	coord_vals->AddNode(xnode);
+	RealNode *ynode = new RealNode();
+	ynode->value = inpnt->y;
+	coord_vals->AddNode(ynode);
+	RealNode *znode = new RealNode();
+	znode->value = inpnt->z;
+	coord_vals->AddNode(znode);
+}
+
+void
+ON_3dVector_to_Direction(ON_3dVector *invect, SdaiDirection *step_direction) {
+	invect->Unitize();
+	RealAggregate_ptr coord_vals = step_direction->direction_ratios_();
+	RealNode *xnode = new RealNode();
+	xnode->value = invect->x;
+	coord_vals->AddNode(xnode);
+	RealNode *ynode = new RealNode();
+	ynode->value = invect->y;
+	coord_vals->AddNode(ynode);
+	RealNode *znode = new RealNode();
+	znode->value = invect->z;
+	coord_vals->AddNode(znode);
+}
 
 bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 {
@@ -91,51 +119,60 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
                 // Cartesian points (actual 3D geometry)
 		cartesian_pnts.at(i) = registry->ObjCreate("CARTESIAN_POINT");
 		instance_list->Append(cartesian_pnts.at(i), completeSE);
-		RealAggregate_ptr coord_vals = ((SdaiCartesian_point *)cartesian_pnts.at(i))->coordinates_();
-                RealNode *xnode = new RealNode();
-                xnode->value = brep->m_V[i].Point().x;
-		coord_vals->AddNode(xnode);
-                RealNode *ynode = new RealNode();
-                ynode->value = brep->m_V[i].Point().y;
-		coord_vals->AddNode(ynode);
-                RealNode *znode = new RealNode();
-                znode->value = brep->m_V[i].Point().z;
-		coord_vals->AddNode(znode);
+		ON_3dPoint v_pnt = brep->m_V[i].Point();
+		ON_3dPoint_to_Cartesian_point(&(v_pnt), (SdaiCartesian_point *)cartesian_pnts.at(i));
                 // Vertex points (topological, references actual 3D geometry)
 		vertex_pnts.at(i) = registry->ObjCreate("VERTEX_POINT");
-		((SdaiVertex_point *)vertex_pnts.at(i))->vertex_geometry_((const SdaiPoint_ptr)vertex_pnts.at(i));
+		((SdaiVertex_point *)vertex_pnts.at(i))->vertex_geometry_((const SdaiPoint_ptr)cartesian_pnts.at(i));
 		instance_list->Append(vertex_pnts.at(i), completeSE);
 	}
-#if 0
+
 	// 3D curves
 	for (int i = 0; i < brep->m_C3.Count(); ++i) {
 		int curve_converted = 0;
 		ON_Curve* curve = brep->m_C3[i];
 		/* Supported curve types */
 		ON_ArcCurve *a_curve = ON_ArcCurve::Cast(curve);
-		ON_BezierCurve *b_curve = ON_BezierCurve::Cast(curve);
 		ON_LineCurve *l_curve = ON_LineCurve::Cast(curve);
 		ON_NurbsCurve *n_curve = ON_NurbsCurve::Cast(curve);
-		ON_PolyLineCurve *pl_curve = ON_PolyLineCurve::Cast(curve);
 		ON_PolyCurve *p_curve = ON_PolyCurve::Cast(curve);
 
 		if (a_curve && !curve_converted) {
+			std::cout << "Have ArcCurve\n";
 		}
 		if (l_curve && !curve_converted) {
+			std::cout << "Have LineCurve\n";
+			ON_Line *m_line = &(l_curve->m_line);
+			/* In STEP, a line consists of a cartesian point and a 3D vector.  Since
+			 * it does not appear that OpenNURBS data structures reference m_V points
+			 * for these constructs, create our own */
+			three_dimensional_curves.at(i) = registry->ObjCreate("LINE");
+			SdaiLine *curr_line = (SdaiLine *)three_dimensional_curves.at(i);
+			curr_line->pnt_((SdaiCartesian_point *)registry->ObjCreate("CARTESIAN_POINT"));
+			ON_3dPoint_to_Cartesian_point(&(m_line->from), curr_line->pnt_());
+			curr_line->dir_((SdaiVector *)registry->ObjCreate("VECTOR"));
+			SdaiVector *curr_dir = curr_line->dir_();
+			curr_dir->orientation_((SdaiDirection *)registry->ObjCreate("DIRECTION"));
+			ON_3dVector on_dir = m_line->Direction();
+			ON_3dVector_to_Direction(&(on_dir), curr_line->dir_()->orientation_());
+			curr_line->dir_()->magnitude_(m_line->Length());
+			instance_list->Append(curr_line->pnt_(), completeSE);
+			instance_list->Append(curr_dir->orientation_(), completeSE);
+			instance_list->Append(curr_line->dir_(), completeSE);
+			instance_list->Append(three_dimensional_curves.at(i), completeSE);
 		}
 		if (p_curve && !curve_converted) {
-		}
-		if (pl_curve && !curve_converted) {
-		}
-		if (b_curve && !curve_converted) {
+			std::cout << "Have PolyCurve\n";
 		}
 		if (n_curve && !curve_converted) {
+			std::cout << "Have NurbsCurve\n";
+			//MakePiecewiseBezier
 		}
 
 		/* Whatever this is, if it's not a supported type and it does have
 		 * a NURBS form, use that */
 
 	}
-#endif
+
 	return true;
 }
