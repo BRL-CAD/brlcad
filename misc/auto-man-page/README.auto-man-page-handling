@@ -15,8 +15,7 @@ Rules:
   (missing strings are an error; other missing parts will be warned
   about and generated with an appropropriate FIXME statement):
 
-  const char purpose[]   = "list directory contents"; /* brief!! */
-  const char usage[]     = "....";
+  const char usage[]     = "...."; /* mandatory */
   const char optstring[] = ""; /* mandatory for use with bu_getopt if it is used */
 
 + Each option must be described in its own comment section in one of
@@ -25,6 +24,10 @@ Rules:
   /* opt: -c [N] description of this option and its optional arg N */
   /* opt: -a <Z> description of this option and its mandatory arg Z */
   /* opt: -d  description of this option which has no args */
+
++ The following is also mandatory:
+
+  /* purpose: ...brief description... */
 
 + The following is desired but not mandatory (a missing one will
   result in a FIXME DESCRIPTION section):
