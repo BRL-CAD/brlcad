@@ -108,29 +108,18 @@ ON_RationalNurbsCurve_to_EntityAggregate(ON_NurbsCurve *incrv, SdaiRational_B_sp
 
 bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 {
-	std::vector<STEPentity *> cartesian_pnts;
-	std::vector<STEPentity *> vertex_pnts;
-	std::vector<STEPentity *> three_dimensional_curves;
-	std::vector<STEPentity *> edge_curves;
-	std::vector<STEPentity *> oriented_edges;
-	std::vector<STEPentity *> edge_loops;
-	std::vector<STEPentity *> outer_bounds;
-	std::vector<STEPentity *> surfaces;
-	std::vector<STEPentity *> faces;
+	std::vector<STEPentity *> cartesian_pnts(brep->m_V.Count(), (STEPentity *)0);
+	std::vector<STEPentity *> vertex_pnts(brep->m_V.Count(), (STEPentity *)0);
+	std::vector<STEPentity *> three_dimensional_curves(brep->m_C3.Count(), (STEPentity *)0);
+	std::vector<STEPentity *> edge_curves(brep->m_E.Count(), (STEPentity *)0);
+	std::vector<STEPentity *> oriented_edges(2*(brep->m_E.Count()), (STEPentity *)0);
+	std::vector<STEPentity *> edge_loops(brep->m_L.Count(), (STEPentity *)0);
+	std::vector<STEPentity *> outer_bounds(brep->m_F.Count(), (STEPentity *)0);
+	std::vector<STEPentity *> surfaces(brep->m_S.Count(), (STEPentity *)0);
+	std::vector<STEPentity *> faces(brep->m_F.Count(), (STEPentity *)0);
 	//STEPentity *closed_shell = new STEPentity;
 	//STEPentity *manifold_solid_brep = new STEPentity;
 	//STEPentity *advanced_brep = new STEPentity;
-
-	/* Set initial container capacities */
-	cartesian_pnts.resize(brep->m_V.Count(), NULL);
-	vertex_pnts.resize(brep->m_V.Count(), NULL);
-	three_dimensional_curves.resize(brep->m_C3.Count(), NULL);
-	edge_curves.resize(brep->m_E.Count(), NULL);
-	oriented_edges.resize(2*(brep->m_E.Count()), NULL);
-	edge_loops.resize(brep->m_L.Count(), NULL);
-	outer_bounds.resize(brep->m_F.Count(), NULL);
-	surfaces.resize(brep->m_S.Count(), NULL);
-	faces.resize(brep->m_F.Count(), NULL);
 
         // Set up vertices and associated cartesian points
 	for (int i = 0; i < brep->m_V.Count(); ++i) {
