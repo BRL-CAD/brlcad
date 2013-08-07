@@ -1220,13 +1220,20 @@ ON_Intersect(const ON_Curve* curveA,
 	    newton_cci(t_a1, t_b1, curveA, curveB, intersection_tolerance);
 	    double t_a2 = i->first->m_t.Max(), t_b2 = i->second->m_t.Max();
 	    newton_cci(t_a2, t_b2, curveA, curveB, intersection_tolerance);
+	    if (isnan(t_a1) || isnan(t_b1)) {
+		// The first iteration result is not sufficient
+		std::swap(t_a1, t_a2);
+		std::swap(t_b1, t_b2);
+	    }
+	    if (isnan(t_a1) || isnan(t_b1))
+		continue;
 
 	    ON_3dPoint pointA1 = curveA->PointAt(t_a1);
 	    ON_3dPoint pointB1 = curveB->PointAt(t_b1);
 	    ON_3dPoint pointA2 = curveA->PointAt(t_a2);
 	    ON_3dPoint pointB2 = curveB->PointAt(t_b2);
-	    if (pointA1.DistanceTo(pointA2) < intersection_tolerance
-		&& pointB1.DistanceTo(pointB2) < intersection_tolerance) {
+	    if ((pointA1.DistanceTo(pointA2) < intersection_tolerance && pointB1.DistanceTo(pointB2) < intersection_tolerance)
+		|| (isnan(t_a2) || isnan(t_b2))) {
 		// it's considered the same point
 		ON_3dPoint pointA = curveA->PointAt(t_a1);
 		ON_3dPoint pointB = curveB->PointAt(t_b1);
