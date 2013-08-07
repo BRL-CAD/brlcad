@@ -1412,7 +1412,8 @@ struct CompareByAngle {
 public:    
     point2d  base;
 
-    bool operator()(const point2d_ptr  & a, const point2d_ptr   & b ) {
+
+    bool local_compare(const point2d_ptr  & a, const point2d_ptr   & b ) {
 	int  sgn;
 	gdiam_real  len1, len2;
 
@@ -1444,6 +1445,14 @@ public:
 	   return  ( ( a->x < b->x ) || (GDIAM_NEAR_ZERO(a->x - b->x) && a->y < b->y) );
 
         return (len1 > len2);
+    }
+    bool operator()(const point2d_ptr  & a, const point2d_ptr   & b ) {
+	    /*printf("comparing: %f,%f and %f,%f\n", a->x, a->y, b->x, b->y);*/
+	    if (!local_compare(a,b))
+		    return (false);
+	    else if (this->local_compare(b,a))
+		    printf("Problem - strick weak ordering failure!\n");
+	    return (true);
     }
 };
 
