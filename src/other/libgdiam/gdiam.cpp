@@ -191,26 +191,20 @@ public:
     gdiam_real   brute_diameter( int  a_lo, int  a_hi,
                                  int  b_lo, int  b_hi,
                                  GPointPair  & diam ) const { 
-        double  max_dist;
-        
-        max_dist = 0;
         for  ( int  ind = a_lo; ind <= a_hi; ind++ )
             for  ( int  jnd = b_lo; jnd <= b_hi; jnd++ )
                 diam.update_diam( arr[ ind ], arr[ jnd ] );
-        
+
         return  diam.distance;
     }
     gdiam_real   brute_diameter( int  a_lo, int  a_hi,
                                  int  b_lo, int  b_hi,
                                  GPointPair  & diam,
                                  const gdiam_point  dir ) const { 
-        double  max_dist;
-
-        max_dist = 0;
         for  ( int  ind = a_lo; ind <= a_hi; ind++ )
             for  ( int  jnd = b_lo; jnd <= b_hi; jnd++ )
                 diam.update_diam( arr[ ind ], arr[ jnd ], dir );
-        
+
         return  diam.distance;
     }
     gdiam_real   brute_diameter( const gdiam_point  * a_lo, 
@@ -218,13 +212,10 @@ public:
                            const gdiam_point  * b_lo, 
                            const gdiam_point  * b_hi,
                            GPointPair  & diam ) const { 
-        double  max_dist;
-
-        max_dist = 0;
         for  ( const gdiam_point  * ind = a_lo; ind <= a_hi; ind++ )
             for  ( const gdiam_point   * jnd = b_lo; jnd <= b_hi; jnd++ )
                 diam.update_diam( *ind, *jnd );
-        
+
         return  diam.distance;
     }
     gdiam_real   brute_diameter( const gdiam_point  * a_lo, 
@@ -233,13 +224,10 @@ public:
                                  const gdiam_point  * b_hi,
                                  GPointPair  & diam,
                                  const gdiam_point  dir ) const { 
-        double  max_dist;
-
-        max_dist = 0;
         for  ( const gdiam_point  * ind = a_lo; ind <= a_hi; ind++ )
             for  ( const gdiam_point   * jnd = b_lo; jnd <= b_hi; jnd++ )
                 diam.update_diam( *ind, *jnd, dir );
-        
+
         return  diam.distance;
     }
 
@@ -434,7 +422,7 @@ public:
         l = pnt_distance( left->getCenter(), right->getCenter() );
         two_r = max( left->maxDiam(), right->maxDiam() );
 
-        if  ( l == 0.0 )
+        if  ( GDIAM_NEAR_ZERO(l) )
             return  10;
 
         return  two_r / l;
@@ -1214,7 +1202,7 @@ gdiam_bbox   gdiam_approx_const_mvbb( gdiam_point  * start, int  size,
           &&  ( pnt_length( dir_3 ) < 1e-6 ) ) 
         gdiam_generate_orthonormal_base( dir, dir_2, dir_3 );
 
-    if  ( ( pnt_length( dir ) == 0.0 ) 
+    if  ( (( pnt_length( dir ) > -1e-6 ) && ( pnt_length( dir ) < 1e-6 ))
           ||  ( pnt_length( dir_2 ) < 1e-6 )
           ||  ( pnt_length( dir_3 ) < 1e-6 ) ) {
         gdiam_generate_orthonormal_base( dir, dir_2, dir_3 );
@@ -1277,32 +1265,32 @@ void  gdiam_generate_orthonormal_base( gdiam_point  in,
     pnt_normalize( in );
 
     // stupid cases..
-    if  ( in[ 0 ] == 0.0 ) {
-        if  ( in[ 1 ] == 0.0 ) {
+    if  ( GDIAM_NEAR_ZERO(in[ 0 ]) ) {
+        if  ( GDIAM_NEAR_ZERO(in[ 1 ]) ) {
             pnt_init_normalize( out1, 1, 0, 0 );
             pnt_init_normalize( out2, 0, 1, 0 );
             return;
         }
-        if  ( in[ 2 ] == 0.0 ) {
+        if  ( GDIAM_NEAR_ZERO(in[ 2 ]) ) {
             pnt_init_normalize( out1, 1, 0, 0 );
             pnt_init_normalize( out2, 0, 0, 1 );
             return;
-        }        
+        }
         pnt_init_normalize( out1, 0, -in[ 2 ], in[ 1 ] );
         pnt_init_normalize( out2, 1, 0, 0 );
         return;
     }
-    if  ( ( in[ 1 ] == 0.0 )  &&  ( in[ 2 ] == 0.0 ) )  {
+    if  ( ( GDIAM_NEAR_ZERO(in[ 1 ]) )  &&  ( GDIAM_NEAR_ZERO(in[ 2 ]) ) )  {
         pnt_init_normalize( out1, 0, 1, 0 );
         pnt_init_normalize( out2, 0, 0, 1 );
         return;
     }
-    if  ( in[ 1 ] == 0.0 ) {
+    if  ( GDIAM_NEAR_ZERO(in[ 1 ]) ) {
         pnt_init_normalize( out1, -in[ 2 ], 0, in[ 0 ] );
         pnt_init_normalize( out2, 0, 1, 0 );
         return;
-    }    
-    if  ( in[ 2 ] == 0.0 ) {
+    }
+    if  ( GDIAM_NEAR_ZERO(in[ 2 ]) ) {
         pnt_init_normalize( out1, -in[ 1 ], in[ 0 ], 0 );
         pnt_init_normalize( out2, 0, 0, 1 );
         return;
@@ -1339,7 +1327,7 @@ public:
         printf( "(%g, %g)\n", x, y );
     }
     bool  equal( const point2d  & pnt ) const {
-        return  ( ( x == pnt.x )  &&  ( y == pnt.y ) );
+        return  ( ( GDIAM_NEAR_ZERO(x - pnt.x) )  &&  ( GDIAM_NEAR_ZERO(y - pnt.y) ) );
     }
     bool  equal_real( const point2d  & pnt ) const {
         return  ( ( fabs( x - pnt.x ) < 1e-8 )
@@ -1364,13 +1352,13 @@ inline ldouble     Area( const point2d  & a,
     x2 = c.x - a.x;
     y2 = c.y - a.y;
 
-    if  ( ( x1 != 0.0 )  ||  ( y1 != 0.0 ) ) {
+    if  ( ( !GDIAM_NEAR_ZERO(x1) )  ||  ( !GDIAM_NEAR_ZERO(y1) ) ) {
         len = sqrt( x1 * x1 + y1 * y1 );
         x1 /= len;
         y1 /= len;
     }
 
-    if  ( ( x2 != 0.0 )  ||  ( y2 != 0.0 ) ) {
+    if  ( ( !GDIAM_NEAR_ZERO(x2) )  ||  ( !GDIAM_NEAR_ZERO(y2) ) ) {
         len = sqrt( x2 * x2 + y2 * y2 );
         x2 /= len;
         y2 /= len;
@@ -1472,21 +1460,21 @@ point2d_ptr  get_min_point( vec_point_2d  & in,
             min_pnt = in[ ind ];
             index = ind;
         } else
-            if  ( ( in[ ind ]->y == min_pnt->y ) 
+            if  ( ( GDIAM_NEAR_ZERO(in[ ind ]->y - min_pnt->y) )
                   &&  ( in[ ind ]->x < min_pnt->x ) ) {
                 min_pnt = in[ ind ];
                 index = ind;
             }
     }
 
-    return  min_pnt;        
+    return  min_pnt;
 }
 
 
 const void  dump( vec_point_2d   & vec ) 
 {
     for  ( int  ind = 0; ind < (int)vec.size(); ind++ ) {
-        printf( "-- %11d (%-11g, %-11g)\n",                
+        printf( "-- %11d (%-11g, %-11g)\n",
                 ind, vec[ ind ]->x,
                 vec[ ind ]->y );
     }
@@ -1630,22 +1618,12 @@ void  convex_hull( vec_point_2d  & in, vec_point_2d  & out )
     for  ( int  ind = 0; ind < (int)in.size(); ind++ ) {
         assert( in[ ind ] != NULL );
     }
-        
-    int  size;
 
-    size = in.size();
-
-    /*
-    if  ( in.size() == 24 ) {
-        dump( in );
-        fflush( stdout );
-        fflush( stderr );
-        }*/
 
     //printf( "sort( %d, %d, comp )\n", 1, in.size() );
     sort( in.begin() + 1, in.end(), comp );
     remove_consecutive_dup( in );
-    
+
     //dump( in );
     /*
     for  ( int  ind = 0; ind < (int)in.size(); ind++ ) {
@@ -1654,7 +1632,7 @@ void  convex_hull( vec_point_2d  & in, vec_point_2d  & out )
         x_delta = in[ ind ]->x - comp.base.x;
         y_delta = in[ ind ]->y - comp.base.y;
 
-        printf( "-- %11d (%-11g, %-11g)  atan2: %-11g\n",                
+        printf( "-- %11d (%-11g, %-11g)  atan2: %-11g\n",
                 ind, in[ ind ]->x,
                 in[ ind ]->y,
                 atan2( y_delta, x_delta ) );
@@ -2119,7 +2097,7 @@ public:
                 int  _size ) {
         arr = NULL;
 
-        if  ( pnt_length( dir ) == 0.0 ) { 
+        if  ( GDIAM_NEAR_ZERO(pnt_length( dir )) ) { 
             dump_points( _in_arr, _size );
             pnt_dump( dir );
             fflush( stdout );
@@ -2246,7 +2224,7 @@ gdiam_bbox   gdiam_mvbb_optimize( gdiam_point  * start, int  size,
     for  ( int  ind = 0; ind < times; ind++ ) {
         ProjPointSet  pps;
 
-        if  ( pnt_length( bb_out.get_dir( ind % 3 ) ) == 0.0 ) {
+        if  ( GDIAM_NEAR_ZERO(pnt_length( bb_out.get_dir( ind % 3 ) )) ) {
             printf( "Dumping!\n" );
             bb_out.dump();
             fflush( stdout );
@@ -2355,7 +2333,7 @@ gdiam_bbox   gdiam_approx_mvbb_grid( gdiam_point  * start, int  size,
     gdiam_bbox  bb, bb_out;
 
     bb_out = bb = gdiam_approx_const_mvbb( start, size, 0.0, NULL );
-    if  ( bb.volume() == 0 ) {
+    if  ( GDIAM_NEAR_ZERO(bb.volume()) ) {
         dump_points( start, size );
         printf( "1zero volume???\n" );
         bb.dump();
@@ -2363,7 +2341,7 @@ gdiam_bbox   gdiam_approx_mvbb_grid( gdiam_point  * start, int  size,
 
     bb_out = bb = gdiam_mvbb_optimize( start, size, bb_out, 10 );
     
-    if  ( bb.volume() == 0 ) {
+    if  ( GDIAM_NEAR_ZERO(bb.volume()) ) {
         printf( "2zero volume???\n" );
         bb.dump();
     }
