@@ -67,7 +67,7 @@ struct IntersectPoint {
 	OUT
     } m_in_out;		// dir is going inside/outside
     int m_pos;		// between curve[m_pos] and curve[m_pos+1]
-			// after the outerloop is splitted
+			// after the outerloop is split
 };
 
 
@@ -94,7 +94,7 @@ IsPointInsideLoop(const ON_2dPoint& pt, const ON_SimpleArray<ON_Curve*>& loop)
     //   -1: the input is not a loop
     //   0:  the point is not inside the loop or on boundary
     //   1:  the point is inside the loop or on boundary
-    
+
     if (loop.Count() == 0) {
 	bu_log("The input loop is empty.\n");
 	return -1;
