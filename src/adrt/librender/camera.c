@@ -96,6 +96,7 @@ render_camera_init(render_camera_t *camera, int threads)
 void
 render_camera_free(render_camera_t *UNUSED(camera))
 {
+    return;
 }
 
 
@@ -236,7 +237,6 @@ render_camera_prep_persp_dof(render_camera_t *camera)
     tfloat angle, mag, sfov, cfov, sdof, cdof;
     uint32_t i, n;
 
-
     /* Generate unitized lookector */
     VSUB2(dof_look, camera->focus, camera->pos);
     VUNITIZE(dof_look);
@@ -274,7 +274,6 @@ render_camera_prep_persp_dof(render_camera_t *camera)
     VSUB2(dof_look, camera->pos, camera->focus);
     mag = MAGNITUDE(dof_look);
     VUNITIZE(dof_look);
-
 
     /* Compute sine and cosine terms for field of view */
     sdof = sin(camera->dof*DEG2RAD);
@@ -585,7 +584,8 @@ render_shader_register(const char *name, int (*init)(render_t *, const char *))
 
 
 const char *
-render_shader_load_plugin(const char *filename) {
+render_shader_load_plugin(const char *filename)
+{
 #ifdef HAVE_DLFCN_H
     void *lh;	/* library handle */
     int (*init)(render_t *, const char *);
@@ -594,12 +594,23 @@ render_shader_load_plugin(const char *filename) {
 
     lh = bu_dlopen(filename, RTLD_LOCAL|RTLD_LAZY);
 
-    if(lh == NULL) { bu_log("Faulty plugin %s: %s\n", filename, bu_dlerror()); return NULL; }
+    if(lh == NULL) {
+	bu_log("Faulty plugin %s: %s\n", filename, bu_dlerror());
+	return NULL;
+    }
     name = bu_dlsym(lh, "name");
-    if(name == NULL) { bu_log("Faulty plugin %s: No name\n", filename); bu_dlclose(lh); return NULL; }
+    if(name == NULL) {
+	bu_log("Faulty plugin %s: No name\n", filename);
+	bu_dlclose(lh);
+	return NULL;
+    }
     /* assumes function pointers can be stored as a number, which ISO C does not guarantee */
     init = (int (*) (render_t *, const char *))(intptr_t)bu_dlsym(lh, "init");
-    if(init == NULL) { bu_log("Faulty plugin %s: No init\n", filename); bu_dlclose(lh); return NULL; }
+    if(init == NULL) {
+	bu_log("Faulty plugin %s: No init\n", filename);
+	bu_dlclose(lh);
+	return NULL;
+    }
     s = render_shader_register(name, init);
     s->dlh = lh;
     return s->name;
@@ -626,7 +637,7 @@ render_shader_unload_plugin(render_t *r, const char *name)
 	    }
 	    bu_exit(-1, "Unable to find suitable shader\n");
 	}
-    LOADED:
+LOADED:
 
 	if(s->dlh)
 	    bu_dlclose(s->dlh);
