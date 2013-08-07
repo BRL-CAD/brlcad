@@ -43,7 +43,7 @@ typedef  gdiam_real  * gdiam_point_2d;
 typedef  gdiam_real  * gdiam_point;
 typedef  const gdiam_real  * gdiam_point_cnt;
 
-#define SMALL_DOUBLE 1.0e-37
+#define SMALL_DOUBLE 1.0e-6
 #define GDIAM_NEAR_ZERO(val) (((val) > - SMALL_DOUBLE) && ((val) < SMALL_DOUBLE))
 
 
