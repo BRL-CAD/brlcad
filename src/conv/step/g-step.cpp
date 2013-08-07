@@ -129,7 +129,7 @@ main(int argc, char *argv[])
     ON_TextLog dump(wstr);
     brep->Dump(dump);
     ON_String ss = wstr;
-    bu_log("Brep:\n %s\n", ss.Array()); 
+    bu_log("Brep:\n %s\n", ss.Array());
 
     Registry *registry = new Registry( SchemaInit );
     InstMgr instance_list;

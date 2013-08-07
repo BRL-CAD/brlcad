@@ -82,7 +82,7 @@
  * NORMALS.  Given the point W on the heart, what is the vector normal
  * to the tangent plane at that point?
  *
- * Map W onto the heart, i.e.: W' = S(R(W - V)).  In this case, 
+ * Map W onto the heart, i.e.: W' = S(R(W - V)).  In this case,
  * we find W' by solving the parametric line given k.
  *
  * The gradient of the heart at W' is in fact the normal vector.
@@ -99,7 +99,7 @@
  *
  *    df/dx = 6 * x * (w**2 - y**3)
  *    df/dy = 6 * (12/27 * w**2 * y**2 - 1/2 * y**2 * (x**2 + 9 / 80*z**3))
- *    df/dz = 6 * (w**2 * z - 160 / 9 * y**3 * z**2) 
+ *    df/dz = 6 * (w**2 * z - 160 / 9 * y**3 * z**2)
  *
  * Note that the normal vector produced above will not have
  * length.  Also, to make this useful for the original heart, it will
@@ -127,13 +127,13 @@
 
 
 const struct bu_structparse rt_hrt_parse[] = {
-    { "%f", 3, "V", bu_offsetofarray(struct rt_hrt_internal, v, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }, 
-    { "%f", 3, "X", bu_offsetofarray(struct rt_hrt_internal, xdir, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }, 
-    { "%f", 3, "Y", bu_offsetofarray(struct rt_hrt_internal, ydir, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }, 
-    { "%f", 3, "Z", bu_offsetofarray(struct rt_hrt_internal, zdir, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }, 
-    { "%g", 1, "d", bu_offsetof(struct rt_hrt_internal, d), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }, 
+    { "%f", 3, "V", bu_offsetofarray(struct rt_hrt_internal, v, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "X", bu_offsetofarray(struct rt_hrt_internal, xdir, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "Y", bu_offsetofarray(struct rt_hrt_internal, ydir, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "Z", bu_offsetofarray(struct rt_hrt_internal, zdir, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%g", 1, "d", bu_offsetof(struct rt_hrt_internal, d), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
-}; 
+};
 
 
 struct hrt_specific {
@@ -144,10 +144,10 @@ struct hrt_specific {
     fastf_t hrt_d; /* for distance to upper and lower cusps */
     mat_t hrt_SoR; /* Scale(Rot(vect)) */
     mat_t hrt_invR; /* invRot(vect') */
-}; 
+};
 
 
-/** 
+/**
  * R T _ H R T _ B B O X
  *
  * Compute the bounding RPP for a heart.
@@ -155,12 +155,12 @@ struct hrt_specific {
 int
 rt_hrt_bbox(const struct bn_tol *UNUSED(tol))
 {
-    bu_log("Sorry, This function is not implemented yet!\n"); 
-    return 1; 
+    bu_log("Sorry, This function is not implemented yet!\n");
+    return 1;
 }
 
 
-/** 
+/**
  * R T _ H R T _ P R E P
  *
  * Given a pointer to a GED database record, and a transformation
@@ -176,24 +176,24 @@ rt_hrt_bbox(const struct bn_tol *UNUSED(tol))
  * stp->st_specific for use by rt_hrt_shot().
  */
 int
-rt_hrt_prep() 
+rt_hrt_prep()
 {
-    bu_log("Sorry, This function is not implemented yet!\n"); 
-    return 0; 
+    bu_log("Sorry, This function is not implemented yet!\n");
+    return 0;
 }
 
 
-/** 
+/**
  * R T _ H R T _ P R I N T
  */
 void
 rt_hrt_print()
 {
-    bu_log("Sorry, This function is not implemented yet!\n"); 
+    bu_log("Sorry, This function is not implemented yet!\n");
 }
 
 
-/** 
+/**
  * R T _ H R T _ S H O T
  *
  * Intersect a ray with a heart, where all constant terms have been
@@ -207,25 +207,25 @@ rt_hrt_print()
  * X = a*t + x0,	eg, X = Dx*t + Px
  * Y = b*t + y0,
  * Z = c*t + z0.
- * 
+ *
  * ^   ^     ^
  * |   |     |
  *
  * W = D*t + P
- * 
- * First, convert the line to the coordinate system of a "stan- dard"
+ *
+ * First, convert the line to the coordinate system of a "standard"
  * heart.  This is a heart which lies in the X-Y plane, circles the
  * origin, and whose distance to cusps is one.
  *
  * Then find the equation of that line and the heart, which
  * turns out (by substituting X, Y, Z above into the sextic equation above)
  * to be a sextic equation S in 't' given below.
- * 
+ *
  * S(t)=C6*t**6 + C5*t**5 + C4*t**4 + C3*t**3 + C2*t**2 + C1*t + C06 = 0.
  *
  * where C0, C1, C2, C3, C4, C5, C6 are coefficients of the equation.
  *
- * Solve the equation using a general polynomial root finder. 
+ * Solve the equation using a general polynomial root finder.
  * Use those values of 't' to compute the points of intersection
  * in the original coordinate system.
  *
@@ -236,12 +236,12 @@ rt_hrt_print()
 int
 rt_hrt_shot()
 {
-    bu_log("Sorry, This function is not yet implemented!\n"); 
-    return 6; 
+    bu_log("Sorry, This function is not yet implemented!\n");
+    return 6;
 }
 
 
-/** 
+/**
  * R T _ H R T _ V S H O T
  *
  * This is the Becker vector version
@@ -249,11 +249,11 @@ rt_hrt_shot()
 void
 rt_hrt_vshot()
 {
-    bu_log("Sorry, This function is not yet implemented!\n"); 
+    bu_log("Sorry, This function is not yet implemented!\n");
 }
 
 
-/** 
+/**
  * R T _ H R T _ N O R M
  *
  * Compute the normal to the heart, given a point on the heart
@@ -275,7 +275,7 @@ rt_hrt_vshot()
  *
  * df/dx = 6 * x * (w**2 - y**3)
  * df/dy = 6 * (12/27 * w**2 * y**2 - 1/2 * y**2 * (x**2 + 9 / 80*z**3))
- * df/dz = 6 * (w**2 * z - 160 / 9 * y**3 * z**2) 
+ * df/dz = 6 * (w**2 * z - 160 / 9 * y**3 * z**2)
  *
  * Since we rescale the gradient (normal) to unity, we divide the
  * above equations by six here.
@@ -283,11 +283,11 @@ rt_hrt_vshot()
 void
 rt_hrt_norm()
 {
-    bu_log("Sorry, This function is not implemented yet!\n"); 
+    bu_log("Sorry, This function is not implemented yet!\n");
 }
 
 
-/** 
+/**
  * R T _ H R T _ C U R V E
  *
  * Return the curvature of the heart.
@@ -295,74 +295,74 @@ rt_hrt_norm()
 void
 rt_hrt_curve()
 {
-    bu_log("Sorry, This function is not implemented yet!\n"); 
+    bu_log("Sorry, This function is not implemented yet!\n");
 }
 
 
-/** 
+/**
  * R T _ H R T _ U V
  */
 void
 rt_hrt_uv()
 {
-    bu_log("Sorry, This function is not implemented yet!\n"); 
+    bu_log("Sorry, This function is not implemented yet!\n");
 }
 
 
-/** 
+/**
  * R T _ H R T _ F R E E
  */
 void
 rt_hrt_free()
 {
-    bu_log("Sorry, This function is not implemented yet!\n"); 
+    bu_log("Sorry, This function is not implemented yet!\n");
 }
 
 
-/** 
+/**
  * R T _ H R T _ C L A S S
  */
 int
 rt_hrt_class(void)
 {
-    return 0; 
+    return 0;
 }
 
 
-/** 
- * R T _ H R T _ A D A P T I V E _ P L O T 
+/**
+ * R T _ H R T _ A D A P T I V E _ P L O T
  */
 int
 rt_hrt_adaptive_plot()
 {
-    bu_log("rt_adaptive_plot:Not implemented yet!\n"); 
-    return 0; 
+    bu_log("rt_adaptive_plot:Not implemented yet!\n");
+    return 0;
 }
 
 
-/** 
+/**
  * R T _ H R T _ P L O T
  */
 int
 rt_hrt_plot(const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
-    bu_log("Sorry, This function is not implemented yet!\n"); 
-    return 0; 
+    bu_log("Sorry, This function is not implemented yet!\n");
+    return 0;
 }
 
 
-/** 
+/**
  * R T _ H R T _ T E S S
  */
 int
 rt_hrt_tess()
 {
-    bu_log("Sorry, This function is not implemented yet!\n"); 
-    return 0; 
+    bu_log("Sorry, This function is not implemented yet!\n");
+    return 0;
 }
 
 
-/** 
+/**
  * R T _ H R T _ I M P O R T
  *
  * Import a heart from the database format to the internal format.
@@ -371,49 +371,49 @@ rt_hrt_tess()
 int
 rt_hrt_import4()
 {
-    bu_log("rt_hrt_import4: Not implemented yet!\n"); 
-    return -1; 
+    bu_log("rt_hrt_import4: Not implemented yet!\n");
+    return -1;
 }
 
 
-/** 
+/**
  * R T _ H R T _ E X P O R T 5
  */
 int
 rt_hrt_export5()
 {
-    bu_log("rt_hrt_export5: Not implemented yet!\n"); 
-    return 0; 
+    bu_log("rt_hrt_export5: Not implemented yet!\n");
+    return 0;
 }
 
 
-/** 
+/**
  * R T _ H R T _ E X P O R T
  *
  */
 int
 rt_hrt_export4()
 {
-    bu_log("rt_hrt_export4: Not implemented yet!\n"); 
-    return 0; 
+    bu_log("rt_hrt_export4: Not implemented yet!\n");
+    return 0;
 }
 
 
-/** 
+/**
  * R T _ H R T _ I M P O R T 5
  *
  * Import a HRT from the database format to the internal format.
- * 
+ *
  */
 int
 rt_hrt_import5()
 {
-    bu_log("rt_hrt_import5: Not implemented yet!\n"); 
-    return 0; 
+    bu_log("rt_hrt_import5: Not implemented yet!\n");
+    return 0;
 }
 
 
-/** 
+/**
  * R T _ H R T _ D E S C R I B E
  *
  * Make human-readable formatted presentation of this solid.  First
@@ -423,12 +423,12 @@ rt_hrt_import5()
 int
 rt_hrt_describe()
 {
-    bu_log("rt_hrt_describe: Not implemented yet!\n"); 
-    return 0; 
+    bu_log("rt_hrt_describe: Not implemented yet!\n");
+    return 0;
 }
 
 
-/** 
+/**
  * R T _ H R T _ I F R E E
  *
  * Free the storage associated with the rt_db_internal version of this
@@ -437,52 +437,52 @@ rt_hrt_describe()
 void
 rt_hrt_ifree()
 {
-    bu_log("rt_hrt_ifree: Not implemented yet!\n"); 
+    bu_log("rt_hrt_ifree: Not implemented yet!\n");
 }
 
 
-/** 
+/**
  * R T _ H R T _ P A R A M S
  *
  */
 int
 rt_hrt_params(struct pc_pc_set *UNUSED(ps))
 {
-    bu_log("rt_hrt_params: Not implemented yet!\n"); 
-    return 0; 
+    bu_log("rt_hrt_params: Not implemented yet!\n");
+    return 0;
 }
 
 
-/** 
+/**
  * R T _ H R T _ S U R F A C E _ A R E A
  *
  */
 void
 rt_hrt_surf_area()
 {
-    bu_log("rt_hrt_surf_area: Not implemented yet!\n"); 
+    bu_log("rt_hrt_surf_area: Not implemented yet!\n");
 }
 
 
-/** 
+/**
  * R T _ H R T _ V O L U M E
  *
  */
 void
 rt_hrt_volume()
 {
-    bu_log("rt_hrt_volume: Not implemented yet!\n"); 
+    bu_log("rt_hrt_volume: Not implemented yet!\n");
 }
 
 
-/** 
+/**
  * R T _ H R T _ C E N T R O I D
  *
  */
 void
 rt_hrt_centroid()
 {
-    bu_log("rt_hrt_centroid: Not implemented yet!\n"); 
+    bu_log("rt_hrt_centroid: Not implemented yet!\n");
 }
 
 
