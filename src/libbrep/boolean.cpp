@@ -85,6 +85,58 @@ compare_for_rank(IntersectPoint* const *a, IntersectPoint* const *b)
 }
 
 
+HIDDEN int
+IsPointInsideLoop(const ON_2dPoint& pt, const ON_SimpleArray<ON_Curve*>& loop)
+{
+    // returns:
+    //   -1: the input is not a loop
+    //   0:  the point is not inside the loop or on boundary
+    //   1:  the point is inside the loop or on boundary
+    
+    if (loop.Count() == 0) {
+	bu_log("The input loop is empty.\n");
+	return -1;
+    }
+
+    // First, use a ON_PolyCurve to represent the loop, and check the loop
+    // is continuous and closed or not.
+    ON_PolyCurve polycurve;
+    polycurve.Append(loop[0]->Duplicate());
+    for (int i = 1 ; i < loop.Count(); i++) {
+	if (loop[i] && loop[i - 1] && loop[i]->PointAtStart().DistanceTo(loop[i-1]->PointAtEnd()) < ON_ZERO_TOLERANCE)
+	    polycurve.Append(loop[i]->Duplicate());
+	else {
+	    bu_log("The input loop is not continuous.\n");
+	    return -1;
+	}
+    }
+    if (!polycurve.IsClosed()) {
+	bu_log("The input loop is not closed.\n");
+	return -1;
+    }
+
+    ON_BoundingBox bbox = polycurve.BoundingBox();
+    if (!bbox.IsPointIn(pt))
+	return false;
+
+    // The input point is inside the loop's bounding box.
+    // out must be outside the closed region (and the bbox).
+    ON_2dPoint out = pt + ON_2dVector(bbox.Diagonal());
+    ON_LineCurve linecurve(pt, out);
+    ON_SimpleArray<ON_X_EVENT> x_event;
+    ON_Intersect(&linecurve, &polycurve, x_event);
+    int count = x_event.Count();
+    for (int i = 0; i < x_event.Count(); i++) {
+	// Find tangent intersections.
+	// What should we do if it's ccx_overlap?
+	if (polycurve.TangentAt(x_event[i].m_a[0]).IsParallelTo(linecurve.m_line.Direction()))
+	    count++;
+    }
+
+    return count % 2 ? 1 : 0;
+}
+
+
 int
 split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, const ON_SimpleArray<ON_Curve*> &curves)
 {
@@ -130,17 +182,10 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
     // deal with the situations where there is no intersection
     std::vector<ON_SimpleArray<ON_Curve*> > innerloops;
     for (int i = 0; i < curves.Count(); i++) {
-	// XXX: There might be a special case that a curve has no intersection
-	// with the outerloop, and its bounding box is inside the outer loop's
-	// bbox, but it's actually outside the outer loop.
-	// We should use a similar machanism like OverlapEvent::IsCurveCompletelyIn()
-	// (See libbrep/intersect.cpp)
 	if (!have_intersect[i]) {
-	    ON_BoundingBox bbox_outerloop;
-	    for (int j = 0; j < in->outerloop.Count(); j++) {
-		bbox_outerloop.Union(in->outerloop[j]->BoundingBox());
-	    }
-	    if (bbox_outerloop.Includes(curves[i]->BoundingBox())) {
+	    // The start point cannot be on the boundary of the loop, because
+	    // there is no intersections between curves[i] and the loop.
+	    if (IsPointInsideLoop(curves[i]->PointAtStart(), in->outerloop)) {
 		if (curves[i]->IsClosed()) {
 		    ON_SimpleArray<ON_Curve*> iloop;
 		    iloop.Append(curves[i]);
