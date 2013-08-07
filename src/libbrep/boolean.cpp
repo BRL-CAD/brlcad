@@ -37,6 +37,8 @@
 #include "brep.h"
 #include "raytrace.h"
 
+#define DEBUG 1
+
 
 struct TrimmedFace {
     ON_SimpleArray<ON_Curve*> outerloop;
@@ -358,9 +360,14 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	out.Append(newface);
     }
 
+    // Remove the duplicated first segment.
+    if (sorted_pointers.Count())
+	outerloop.Remove();
+
     if (out.Count() == 0) {
 	out.Append(in->Duplicate());
     } else {
+	// The remaining part after splitting some parts out.
 	TrimmedFace *newface = new TrimmedFace();
 	newface->face = in->face;
 	newface->outerloop = outerloop;
@@ -370,6 +377,33 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
     }
 
     bu_log("Split to %d faces.\n", out.Count());
+    if (DEBUG) {
+	for (int i = 0; i < out.Count(); i++) {
+	    bu_log("Trimmed Face %d:\n", i);
+	    bu_log("outerloop:\n");
+	    ON_wString wstr;
+	    ON_TextLog textlog(wstr);
+	    textlog.PushIndent();
+	    for (int j = 0; j < out[i]->outerloop.Count(); j++) {
+		textlog.Print("Curve %d\n", j);
+		out[i]->outerloop[j]->Dump(textlog);
+	    }
+	    bu_log(ON_String(wstr).Array());
+
+	    for (unsigned int j = 0; j < out[i]->innerloop.size(); j++) {
+		bu_log("innerloop %d:\n", j);
+		ON_wString wstr;
+		ON_TextLog textlog(wstr);
+		textlog.PushIndent();
+		for (int k = 0; k < out[i]->innerloop[j].Count(); k++) {
+		    textlog.Print("Curve %d\n", k);
+		    out[i]->innerloop[j][k]->Dump(textlog);
+		}
+		bu_log(ON_String(wstr).Array());
+	    }
+	}
+    }
+
     return 0;
 }
 
