@@ -45,6 +45,7 @@ typedef  const gdiam_real  * gdiam_point_cnt;
 
 #define SMALL_DOUBLE 1.0e-6
 #define GDIAM_NEAR_ZERO(val) (((val) > - SMALL_DOUBLE) && ((val) < SMALL_DOUBLE))
+#define GDIAM_NEAR_ZERO_EPSILON(val, epsilon) (((val) > - epsilon) && ((val) < epsilon))
 
 
 #ifndef __MINMAX_DEFINED

@@ -1327,7 +1327,7 @@ public:
         printf( "(%g, %g)\n", x, y );
     }
     bool  equal( const point2d  & pnt ) const {
-        return  ( ( GDIAM_NEAR_ZERO(x - pnt.x) )  &&  ( GDIAM_NEAR_ZERO(y - pnt.y) ) );
+        return  ( ( GDIAM_NEAR_ZERO_EPSILON(x - pnt.x, 1e-37) )  &&  ( GDIAM_NEAR_ZERO_EPSILON(y - pnt.y, 1e-37) ) );
     }
     bool  equal_real( const point2d  & pnt ) const {
         return  ( ( fabs( x - pnt.x ) < 1e-8 )
@@ -1442,7 +1442,7 @@ public:
 	 * in the same answer (i.e. no way to decide (!(a < b) && (b < a))
 	 * for the sort) when those conditions are true. */
 	if ((sgn == 0) && (GDIAM_NEAR_ZERO(len1 - len2)))
-	   return  ( ( a->x < b->x ) || (GDIAM_NEAR_ZERO(a->x - b->x) && a->y < b->y) );
+	   return  ( ( a->x < b->x ) || (GDIAM_NEAR_ZERO_EPSILON(a->x - b->x, 1e-37) && a->y < b->y) );
 
         return (len1 > len2);
     }
@@ -1450,8 +1450,11 @@ public:
 	    /*printf("comparing: %f,%f and %f,%f\n", a->x, a->y, b->x, b->y);*/
 	    if (!this->local_compare(a,b))
 		    return (false);
-	    else if (this->local_compare(b,a))
+	    else if (this->local_compare(b,a)) {
 		    printf("Problem - strick weak ordering failure!\n");
+		    this->local_compare(a,b);
+		    this->local_compare(b,a);
+	    }
 	    return (true);
     }
 };
