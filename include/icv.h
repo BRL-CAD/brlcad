@@ -581,13 +581,37 @@ ICV_EXPORT double *icv_max(icv_image_t* img);
  */
 
 typedef enum {
-    ICV_RESIZE_UPSAMPLE,
+    ICV_RESIZE_UNDERSAMPLE,
     ICV_RESIZE_SHRINK,
     ICV_RESIZE_NINTERP,
     ICV_RESIZE_BINTERP
 } ICV_RESIZE_METHOD;
 
-ICV_EXPORT int icv_resize(icv_image_t *bif, ICV_RESIZE_METHOD method, int out_width, int out_height, unsigned int factor);
+/**
+ * This function resizes the given input image.
+ * Mode of usage. 
+ * a) ICV_RESIZE_UNDERSAMPLE : This method undersamples the said image
+ * eg. icv_resize(bif, ICV_RESIZE_UNDERSAMPLE, 0, 0, 2);
+ *   undersamples the image with a factor of 2.
+ *
+ * b) ICV_RESIZE_SHRINK : This Shrinks the image, keeping the light 
+ * energy per square area as constant.
+ * eg. icv_resize(bif, ICV_RESIZE_SHRINK,0,0,2); shrinks the image 
+ * with a factor of 2.
+ *
+ * c) ICV_RESIZE_NITERP : This interpolates using nearest neighbour 
+ * method.
+ * eg. icv_resize(bif, ICV_RESIZE_NITERP,1024,1024,0);
+ *  Interpolates the output image to have the size of 1024X1024.
+ * 
+ * d) ICV_RESIZE_BINTERP : This interpolates using bilinear 
+ * Interpolation Method.
+ * eg. icv_resize(bif, ICV_RESIZE_NITERP,1024,1024,0);
+ *  Interpolates the output image to have the size of 1024X1024.
+ *
+ */
+
+ICV_EXPORT int icv_resize(icv_image_t *bif, ICV_RESIZE_METHOD method, unsigned int out_width, unsigned int out_height, unsigned int factor);
 
 
 /** @} */

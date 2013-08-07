@@ -199,10 +199,10 @@ HIDDEN int binterp(icv_image_t *bif, unsigned int out_width, unsigned int out_he
 
 }
 
-int icv_resize(icv_image_t *bif, ICV_RESIZE_METHOD method, int out_width, int out_height, unsigned int factor)
+int icv_resize(icv_image_t *bif, ICV_RESIZE_METHOD method, unsigned int out_width, unsigned int out_height, unsigned int factor)
 {
     switch(method) {
-	case ICV_RESIZE_UPSAMPLE :
+	case ICV_RESIZE_UNDERSAMPLE :
 	    return shrink_image(bif, factor);
 	case ICV_RESIZE_SHRINK :
 	    return under_sample(bif, factor);
