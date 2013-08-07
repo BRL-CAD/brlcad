@@ -317,18 +317,33 @@ static int
 render_mode(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
 {
     char buf[BUFSIZ];
+    char *mode;
 
     if (objc < 3) {
 	Tcl_WrongNumArgs(interp, 1, objv, "pathName mode [arguments]");
 	return TCL_ERROR;
     }
 
+    mode = Tcl_GetString(objv[2]);
+
     /* pack the 'rest' into buf - probably should use a vls for this*/
     buf[0] = '\0';
+    if( strlen(mode) == 3 && strcmp("cut", mode) == 0 ) {
+	vect_t vec;
+	struct adrt_mesh_s *mesh;
+
+	/* clear all the hit list */
+	for(BU_LIST_FOR(mesh, adrt_mesh_s, &isst->meshes->l))
+	    mesh->flags &= ~ADRT_MESH_HIT;
+
+	VSUB2(vec, isst->camera.focus, isst->camera.pos);
+
+	sprintf(buf, "#(%f %f %f)  #(%f %f %f)", V3ARGS(isst->camera.pos), V3ARGS(vec));
+    }
 
     isst->dirty = 1;
 
-    if(render_shader_init(&isst->camera.render, Tcl_GetString(objv[2]), *buf?buf:NULL) != 0)
+    if(render_shader_init(&isst->camera.render, mode, *buf?buf:NULL) != 0)
 	return TCL_ERROR;
     return TCL_OK;
 }
