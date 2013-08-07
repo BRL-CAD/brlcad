@@ -88,6 +88,24 @@ ON_3dVector_to_Direction(ON_3dVector *invect, SdaiDirection *step_direction) {
 	coord_vals->AddNode(znode);
 }
 
+void
+ON_NurbsCurveCV_to_EntityAggregate(ON_NurbsCurve *incrv, SdaiB_spline_curve *step_crv, Registry *registry, InstMgr *instance_list) {
+	EntityAggregate *control_pnts = step_crv->control_points_list_();
+	ON_3dPoint cv_pnt;
+	for (int i = 0; i < incrv->CVCount(); i++) {
+		SdaiCartesian_point *step_cartesian = (SdaiCartesian_point *)registry->ObjCreate("CARTESIAN_POINT");
+		instance_list->Append(step_cartesian, completeSE);
+		incrv->GetCV(i, cv_pnt);
+		ON_3dPoint_to_Cartesian_point(&(cv_pnt), step_cartesian);
+		control_pnts->AddNode(new EntityNode((SDAI_Application_instance *)step_cartesian));
+	}
+}
+#if 0
+void
+ON_RationalNurbsCurve_to_EntityAggregate(ON_NurbsCurve *incrv, SdaiRational_B_spline_curve *step_crv) {
+}
+#endif
+
 bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 {
 	std::vector<STEPentity *> cartesian_pnts;
@@ -167,6 +185,16 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 		if (n_curve && !curve_converted) {
 			std::cout << "Have NurbsCurve\n";
 			//MakePiecewiseBezier
+			if (n_curve->IsRational()) {
+				three_dimensional_curves.at(i) = registry->ObjCreate("RATIONAL_B_SPLINE_CURVE");
+			} else {
+				three_dimensional_curves.at(i) = registry->ObjCreate("B_SPLINE_CURVE");
+				SdaiB_spline_curve *curr_curve = (SdaiB_spline_curve *)three_dimensional_curves.at(i);
+				curr_curve->degree_(n_curve->Degree());
+				ON_NurbsCurveCV_to_EntityAggregate(n_curve, curr_curve, registry, instance_list);
+			}
+
+			instance_list->Append(three_dimensional_curves.at(i), completeSE);
 		}
 
 		/* Whatever this is, if it's not a supported type and it does have
