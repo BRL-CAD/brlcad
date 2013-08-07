@@ -40,7 +40,7 @@
 
 struct TrimmedFace {
     ON_SimpleArray<ON_Curve*> outerloop;
-    ON_SimpleArray<ON_Curve*> innerloop;
+    std::vector<ON_SimpleArray<ON_Curve*> > innerloop;
     const ON_BrepFace *face;
     TrimmedFace *Duplicate() const
     {
@@ -128,7 +128,7 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
     }
 
     // deal with the situations where there is no intersection
-    ON_SimpleArray<ON_Curve*> innerloops;
+    std::vector<ON_SimpleArray<ON_Curve*> > innerloops;
     for (int i = 0; i < curves.Count(); i++) {
 	// XXX: There might be a special case that a curve has no intersection
 	// with the outerloop, and its bounding box is inside the outer loop's
@@ -142,7 +142,9 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	    }
 	    if (bbox_outerloop.Includes(curves[i]->BoundingBox())) {
 		if (curves[i]->IsClosed()) {
-		    innerloops.Append(curves[i]);
+		    ON_SimpleArray<ON_Curve*> iloop;
+		    iloop.Append(curves[i]);
+		    innerloops.push_back(iloop);
 		    TrimmedFace *newface = new TrimmedFace();
 		    newface->face = in->face;
 		    newface->outerloop.Append(curves[i]);
@@ -314,7 +316,7 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	newface->face = in->face;
 	newface->outerloop = outerloop;
 	newface->innerloop = in->innerloop;
-	newface->innerloop.Append(innerloops.Count(), innerloops.Array());
+	newface->innerloop.insert(newface->innerloop.end(), innerloops.begin(), innerloops.end());
 	out.Append(newface);
     }
 
@@ -417,27 +419,30 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
 
     // split the surfaces with the intersection curves
     for (int i = 0; i < facecount1 + facecount2; i++) {
-	ON_SimpleArray<ON_Curve*> innercurves, outercurves;
 	const ON_BrepFace &face = i < facecount1 ? brepA->m_F[i] : brepB->m_F[i - facecount1];
 	const ON_Brep *brep = i < facecount1 ? brepA : brepB;
 	const ON_SimpleArray<int> &loopindex = face.m_li;
-	for (int j = 0; j < loopindex.Count(); j++) {
-	    const ON_BrepLoop &loop = brep->m_L[loopindex[j]];
-	    const ON_SimpleArray<int> &trimindex = loop.m_ti;
-	    for (int k = 0; k < trimindex.Count(); k++) {
-		ON_Curve *curve2d = brep->m_C2[brep->m_T[trimindex[k]].m_c2i];
-		if (j == 0) {
-		    outercurves.Append(curve2d->Duplicate());
-		} else {
-		    innercurves.Append(curve2d->Duplicate());
-		}
-	    }
-	}
+
 	ON_SimpleArray<TrimmedFace*> trimmedfaces;
 	TrimmedFace *first = new TrimmedFace();
 	first->face = &face;
-	first->innerloop = innercurves;
-	first->outerloop = outercurves;
+
+	for (int j = 0; j < loopindex.Count(); j++) {
+	    const ON_BrepLoop &loop = brep->m_L[loopindex[j]];
+	    const ON_SimpleArray<int> &trimindex = loop.m_ti;
+	    ON_SimpleArray<ON_Curve*> iloop;
+	    for (int k = 0; k < trimindex.Count(); k++) {
+		ON_Curve *curve2d = brep->m_C2[brep->m_T[trimindex[k]].m_c2i];
+		if (j == 0) {
+		    first->outerloop.Append(curve2d->Duplicate());
+		} else {
+		    iloop.Append(curve2d->Duplicate());
+		}
+	    }
+	    if (j != 0)
+		first->innerloop.push_back(iloop);
+	}
+
 	split_trimmed_face(trimmedfaces, first, curvesarray[i]);
 
 	/* TODO: Perform inside-outside test to decide whether the trimmed face
@@ -457,7 +462,8 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
 
 	    add_elements(brepO, new_face, trimmedfaces[j]->outerloop, ON_BrepLoop::outer);
 	    ON_BrepLoop &loop = brepO->m_L[brepO->m_L.Count() - 1];
-	    add_elements(brepO, new_face, trimmedfaces[j]->innerloop, ON_BrepLoop::inner);
+	    for (unsigned int k = 0; k < trimmedfaces[j]->innerloop.size(); k++)
+		add_elements(brepO, new_face, trimmedfaces[j]->innerloop[k], ON_BrepLoop::inner);
 
 	    new_surf->SetDomain(0, loop.m_pbox.m_min.x, loop.m_pbox.m_max.x);
 	    new_surf->SetDomain(1, loop.m_pbox.m_min.y, loop.m_pbox.m_max.y);
