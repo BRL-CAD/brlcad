@@ -113,25 +113,25 @@ clt_cleanup()
 
 
 const char * const clt_program_code = "\
-__kernel void ell_shot(__global float *output, float3 o, float3 d, float3 c, float3 r)\n\
+__kernel void ell_shot(__global float *output, float3 o, float3 l, float3 c, float r)\n\
 {\n\
-    `float A = dot(d, d);\n\
-    float B = 2*(o-c)*d;\n\
-    float C = (o-c)*(o-c) - r*r;\n\
+    float A = dot(l, l);\n\
+    float B = 2*dot(l, o-c);\n\
+    float C = dot(o-c, o-c) - r*r;\n\
     float disc = B*B - 4*A*C;\n\
     if (disc < 0) {\n\
-	result[0] = 0;\n\
-	result[1] = 0;\n\
-	result[2] = 0;\n\
+	output[0] = 0;\n\
+	output[1] = 0;\n\
+	output[2] = 0;\n\
 	return;\n\
     }\n\
 \n\
     float sqrt_disc = sqrt(disc);\n\
-    q = B < 0 ? (-B + sqrt_disc)/2 : (-B - sqrt_disc)/2;\n\
+    float q = B < 0 ? (-B + sqrt_disc)/2 : (-B - sqrt_disc)/2;\n\
     \n\
-    result[0] = 1;\n\
-    result[1] = q/A;\n\
-    result[2] = C/q;\n\
+    output[0] = 1;\n\
+    output[1] = q/A;\n\
+    output[2] = C/q;\n\
 }\n\
 \n\
 ";
