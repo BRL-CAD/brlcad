@@ -573,6 +573,22 @@ ICV_EXPORT double *icv_sum(icv_image_t* img);
  */
 ICV_EXPORT double *icv_max(icv_image_t* img);
 
+/** @file decimate.c
+ *
+ * This file contains routines to scale down an image to a lower
+ * resolution or scale up an image to an higher Resolution.
+ *
+ */
+
+typedef enum {
+    ICV_RESIZE_UPSAMPLE,
+    ICV_RESIZE_SHRINK,
+    ICV_RESIZE_NINTERP,
+    ICV_RESIZE_BINTERP
+} ICV_RESIZE_METHOD;
+
+ICV_EXPORT int icv_resize(icv_image_t *bif, ICV_RESIZE_METHOD method, int out_width, int out_height, unsigned int factor);
+
 
 /** @} */
 /* end image utilities */

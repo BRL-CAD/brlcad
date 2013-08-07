@@ -28,12 +28,18 @@
 #include "icv.h"
 #include "vmath.h"
 
-HIDDEN void shrink_image(icv_image_t* bif, int factor)
+HIDDEN int shrink_image(icv_image_t* bif, unsigned int factor)
 {
     double *data_p, *res_p; /**< input and output pointers */
     double *p;
-    int facsq, x, y, py, px, c;
+    unsigned int facsq, py, px;
+    int x, y, c;
     size_t widthstep =  bif->width*bif->channels;
+
+    if (UNLIKELY(factor == 0)) {
+        bu_log("shrink_image : Cannot shrink image to 0 factor, factor should be non zero Unisgned Integer");
+        return -1;
+    }
 
     facsq = factor*factor;
     res_p = bif->data;
@@ -63,14 +69,19 @@ HIDDEN void shrink_image(icv_image_t* bif, int factor)
     bif->height = (int) bif->height/factor;
     bif->data = bu_realloc(bif->data, (size_t) (bif->width*bif->height*bif->channels)*sizeof(double), "shrink_image : Reallocation");
 
-    return;
+    return 0;
 
 }
 
-HIDDEN void under_sample(icv_image_t* bif, int factor)
+HIDDEN int under_sample(icv_image_t* bif, unsigned int factor)
 {
     double *data_p, *res_p;
     int x, y, widthstep;
+
+    if (UNLIKELY(factor == 0)) {
+        bu_log("under_sample : Cannot shrink image to 0 factor, factor should be non zero Unisgned Integer");
+        return -1;
+    }
 
     widthstep = bif->width*bif->channels;
     res_p = data_p = bif->data;
@@ -85,19 +96,24 @@ HIDDEN void under_sample(icv_image_t* bif, int factor)
     bif->height = (int) bif->height/factor;
     bif->data = bu_realloc(bif->data, (size_t) (bif->width*bif->height*bif->channels), "under_sample : Reallocation");
 
-    return;
+    return 0;
 }
 
-HIDDEN void nintrep(icv_image_t* bif, int out_width, int out_height)
+HIDDEN int ninterp(icv_image_t* bif, unsigned int out_width, unsigned int out_height)
 {
     double xstep, ystep;
-    int i, j;
+    unsigned int i, j;
     int x, y;
     int widthstep;
     double *in_r, *in_c; /*<< Pointer to row and col of input buffers*/
     double *out_data, *out_p;
     xstep = (double) (bif->width-1) / (double) (out_width) - 1.0e-06;
     ystep = (double) (bif->height-1) / (double) (out_height) - 1.0e-06;
+
+    if ((xstep < 1.0 && ystep > 1.0) || (xstep > 1.0 && ystep < 1.0)) {
+        bu_log("nitrep: Can't stretch one way and compress another\n");
+        return -1;
+    }
 
     out_p = out_data = bu_malloc(out_width*out_height*bif->channels*sizeof(double), "intrep : out_data");
 
@@ -124,12 +140,13 @@ HIDDEN void nintrep(icv_image_t* bif, int out_width, int out_height)
     bif->width = out_width;
     bif->height = out_height;
 
-    return;
+    return 0;
 
 }
-HIDDEN void binterp(icv_image_t *bif, int out_width, int out_height)
+HIDDEN int binterp(icv_image_t *bif, unsigned int out_width, unsigned int out_height)
 {
-    int i, j, c;
+    unsigned int i, j;
+    int c;
     double x, y, dx, dy, mid1, mid2;
     double xstep, ystep;
     double *out_data, *out_p;
@@ -139,6 +156,11 @@ HIDDEN void binterp(icv_image_t *bif, int out_width, int out_height)
 
     xstep = (double) (bif->width - 1) / (double)out_width - 1.0e-6;
     ystep = (double) (bif->height -1) / (double)out_height - 1.0e-6;
+
+    if ((xstep < 1.0 && ystep > 1.0) || (xstep > 1.0 && ystep < 1.0)) {
+        bu_log("bintrep: Can't stretch one way and compress another\n");
+        return -1;
+    }
 
     out_p = out_data = bu_malloc(out_width*out_height*bif->channels*sizeof(double), "binterp : out data");
 
@@ -173,6 +195,26 @@ HIDDEN void binterp(icv_image_t *bif, int out_width, int out_height)
     bif->data = out_data;
     bif->width = out_width;
     bif->height = out_height;
+    return 0;
+
+}
+
+int icv_resize(icv_image_t *bif, ICV_RESIZE_METHOD method, int out_width, int out_height, unsigned int factor)
+{
+    switch(method) {
+	case ICV_RESIZE_UPSAMPLE :
+	    return shrink_image(bif, factor);
+	case ICV_RESIZE_SHRINK :
+	    return under_sample(bif, factor);
+	case ICV_RESIZE_NINTERP :
+	    return ninterp(bif, out_width,out_height);
+	case ICV_RESIZE_BINTERP :
+	    return binterp(bif, out_width, out_height);
+	default :
+	    bu_log("icv_resize : Invalid Option to resize");
+	    return -1;
+    }
+
 }
 
 /*
