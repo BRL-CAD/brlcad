@@ -199,17 +199,21 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	for (; isect_iter < sorted_pointers.Count() && sorted_pointers[isect_iter]->m_seg == i; isect_iter++) {
 	    const IntersectPoint* isect_pt = sorted_pointers[isect_iter];
 	    ON_Curve* left = NULL;
-	    curve_on_loop->Split(isect_pt->m_t, left, curve_on_loop);
+	    if (curve_on_loop)
+		curve_on_loop->Split(isect_pt->m_t, left, curve_on_loop);
 	    if (left != NULL)
 		outerloop.Append(left);
 	    else {
 		bu_log("Split failed.\n");
-		bu_log("Domain: [%lf, %lf]\n", curve_on_loop->Domain().Min(), curve_on_loop->Domain().Max());
-		bu_log("m_t: %lf\n", isect_pt->m_t);
+		if (curve_on_loop) {
+		    bu_log("Domain: [%lf, %lf]\n", curve_on_loop->Domain().Min(), curve_on_loop->Domain().Max());
+		    bu_log("m_t: %lf\n", isect_pt->m_t);
+		}
 	    }
 	    sorted_pointers[isect_iter]->m_pos = outerloop.Count() - 1;
 	}
-	outerloop.Append(curve_on_loop);
+	if (curve_on_loop)
+	    outerloop.Append(curve_on_loop);
     }
 
     // Append the first element at the last to handle some special cases.
