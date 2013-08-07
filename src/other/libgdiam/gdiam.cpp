@@ -1448,7 +1448,7 @@ public:
     }
     bool operator()(const point2d_ptr  & a, const point2d_ptr   & b ) {
 	    /*printf("comparing: %f,%f and %f,%f\n", a->x, a->y, b->x, b->y);*/
-	    if (!local_compare(a,b))
+	    if (!this->local_compare(a,b))
 		    return (false);
 	    else if (this->local_compare(b,a))
 		    printf("Problem - strick weak ordering failure!\n");
