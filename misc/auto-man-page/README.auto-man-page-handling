@@ -1,0 +1,118 @@
+Rules:
+=====
+
++ Provide a version-controlled list of all bin programs to be
+  processed for the "auto-man" documentation feature:
+
+    auto-man-progs.txt
+
++ In the auto-man list each bin program name will be listed followed
+  on the same line by the source file which provides it, e.g.,
+
+    burst    ./src/burst/burst.c
+
++ Each bin source file should have one instance each of the following
+  (missing strings are an error; other missing parts will be warned
+  about and generated with an appropropriate FIXME statement):
+
+  const char purpose[]   = "list directory contents"; /* brief!! */
+  const char usage[]     = "....";
+  const char optstring[] = ""; /* mandatory for use with bu_getopt if it is used */
+
++ Each option must be described in its own comment section in one of
+  three possible formats:
+
+  /* opt: -c [N] description of this option and its optional arg N */
+  /* opt: -a <Z> description of this option and its mandatory arg Z */
+  /* opt: -d  description of this option which has no args */
+
++ The following is desired but not mandatory (a missing one will
+  result in a FIXME DESCRIPTION section):
+
+  /* description:
+
+  ... one or more paras which will got in the DESCRIPTION section...
+
+  ... paras are separated by one or more blank lines
+
+  ... DocBook code may be used here...
+
+  */
+
++ Optional:
+
+  /* see_also:
+
+  ...list of man pages (with sections) or other references,
+  semicolon-separated, no other embellishments...
+
+  ...list will go in the SEE ALSO section...
+
+  */
+
++ An optional beginning copyright year section (default is 1984:
+
+  /* copyright: 2000 */
+
++ User-defined sections may use the same format as the 'description:'
+  block but substituting the desired section name, e.g.,
+  'signal_handling:'.  The section name will be translated into upper
+  case and underscores into spaces in the man page.
+
++ All the portions using C-style comments may use valid DocBook code.
+  Embedded asterisks surrounded by white space are ignored (to allow
+  for the decorated comment style).  Paragraphs are indicated by one
+  or more blank lines.
+
+Translation:
+===========
+
++ The purpose string will be used in the NAME section, e.g.:
+
+NAME
+       ls - list directory contents
+
++ The usage string will be used for the SYNOPSIS section.  For
+  example:
+
+    const char usage[] = "\
+Usage: fbserv port_num\n\
+	  (for a stand-alone daemon)\n\
+   or  fbserv [-v] [-{sS} squaresize]\n\
+	  [-{wW} width] [-{nN} height] -p port_num -F frame_buffer\n\
+	  (for a single-frame-buffer server)\n\
+          (can omit -p and -F, in which case port_num and frame_buffer\n\
+           must appear in that order)\n\
+";
+
+  (Such a case may have to be specially handled for ease of parsing.)
+
+Processing:
+==========
+
+A Perl program (version controlled) will be used to parse the source
+files (defined in the file 'auto-man-progs.txt') and, after successful
+parsing, a complete docbook file in man format is written to file
+"progname.xml" in directory:
+
+  ./doc/docbook/system/man1/en/
+
+Assumptions:
+===========
+
++ Only plain C-style comments may be used for extracting man
+  information (i.e., only a leading '/*' with one or more white spaces
+  following it).
+
++ C++-style comments are ignored unless they are inside a C-style
+  comment in which case they are treated as ordinary text.
+
++ No more than one C-style comment or partial comment is allowed per
+  line.
+
+
+
+
+
+
+  
