@@ -128,6 +128,7 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
     }
 
     // deal with the situations where there is no intersection
+    ON_SimpleArray<ON_Curve*> innerloops;
     for (int i = 0; i < curves.Count(); i++) {
 	// XXX: There might be a special case that a curve has no intersection
 	// with the outerloop, and its bounding box is inside the outer loop's
@@ -141,10 +142,8 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	    }
 	    if (bbox_outerloop.Includes(curves[i]->BoundingBox())) {
 		if (curves[i]->IsClosed()) {
-		    TrimmedFace *newface = in->Duplicate();
-		    newface->innerloop.Append(curves[i]);
-		    out.Append(newface);
-		    newface = new TrimmedFace();
+		    innerloops.Append(curves[i]);
+		    TrimmedFace *newface = new TrimmedFace();
 		    newface->face = in->face;
 		    newface->outerloop.Append(curves[i]);
 		    out.Append(newface);
@@ -171,6 +170,12 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	delete pts_on_curves[i];
     }
     sorted_pointers.QuickSort(compare_t);
+
+    if (sorted_pointers.Count()) {
+	intersect.Append(*sorted_pointers[0]);
+	intersect.Last()->m_seg = in->outerloop.Count();
+	sorted_pointers.Append(intersect.Last());
+    }
 
     for (int i = 0; i < intersect.Count(); i++) {
 	// We assume that the starting point is outside.
@@ -205,6 +210,19 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	outerloop.Append(curve_on_loop);
     }
 
+    // Append the first element at the last to handle some special cases.
+    if (sorted_pointers.Count()) {
+	ON_Curve* dup = outerloop[0]->Duplicate();
+	if (dup != NULL) {
+	    outerloop.Append(dup);
+	    intersect.Last()->m_pos = outerloop.Count() - 1;
+	}
+	else {
+	    bu_log("ON_Curve::Duplicate() failed.\n");
+	    outerloop.Append(outerloop[0]);
+	}
+    }
+
     std::stack<int> s;
     s.push(0);
 
@@ -215,7 +233,7 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	}
 	IntersectPoint *p = sorted_pointers[s.top()];
 	IntersectPoint *q = sorted_pointers[i];
-	if (q->m_t < p->m_t || q->m_pos < p->m_pos) {
+	if (compare_t(&p, &q) > 0 || q->m_pos < p->m_pos) {
 	    bu_log("stack error or sort failure.\n");
 	    continue;
 	}
@@ -233,9 +251,11 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 
 	// need to form a new loop
 	ON_SimpleArray<ON_Curve*> newloop;
+	int curve_count = q->m_pos - p->m_pos;
 	for (int j = p->m_pos + 1; j <= q->m_pos; j++) {
 	    newloop.Append(outerloop[j]);
 	}
+
 	if (p->m_type != q->m_type) {
 	    bu_log("Error: p->type != q->type\n");
 	    continue;
@@ -262,17 +282,42 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	}
 	newloop.Append(seg_on_SSI);
 
+	ON_Curve* rev_seg_on_SSI = seg_on_SSI->Duplicate();
+	if (!rev_seg_on_SSI || !rev_seg_on_SSI->Reverse()) {
+	    bu_log("Reverse failed.\n");
+	} else {
+	    // Update the outerloop
+	    outerloop[p->m_pos + 1] = rev_seg_on_SSI;
+	    int k = p->m_pos + 2;
+	    for (int j = q->m_pos + 1; j < outerloop.Count(); j++)
+		outerloop[k++] = outerloop[j];
+	    while (k < outerloop.Count()) {
+		outerloop[outerloop.Count()-1] = NULL;
+		outerloop.Remove();
+	    }
+	    // Update m_pos
+	    for (int j = i + 1; j < sorted_pointers.Count(); j++)
+		sorted_pointers[j]->m_pos -= curve_count - 1;
+	}
+
 	// Append a trimmed face with newloop as its outerloop
 	TrimmedFace *newface = new TrimmedFace();
 	newface->face = in->face;
 	newface->outerloop.Append(newloop.Count(), newloop.Array());
-
 	out.Append(newface);
     }
 
     if (out.Count() == 0) {
 	out.Append(in->Duplicate());
+    } else {
+	TrimmedFace *newface = new TrimmedFace();
+	newface->face = in->face;
+	newface->outerloop = outerloop;
+	newface->innerloop = in->innerloop;
+	newface->innerloop.Append(innerloops.Count(), innerloops.Array());
+	out.Append(newface);
     }
+
     bu_log("Split to %d faces.\n", out.Count());
     return 0;
 }
