@@ -113,27 +113,27 @@ clt_cleanup()
 
 
 const char * const clt_program_code = "\
-__kernel void ell_shot(__global float *output, float3 O, float3 d, float3 c, float3 r)\
-{\
-    float A = dot(d, d);\
-    float B = 2*(o-c)*d;\
-    float C = (o-c)*(o-c) - r*r;\
-    float disc = B*B - 4*A*C;\
-    if (disc < 0) {\
-	result[0] = 0;\
-	result[1] = 0;\
-	result[2] = 0;\
-	return;\
-    }\
-\
-    float sqrt_disc = sqrt(disc);\
-    q = B < 0 ? (-B + sqrt_disc)/2 : (-B - sqrt_disc)/2;\
-    \
-    result[0] = 1;\
-    result[1] = q/A;\
-    result[2] = C/q;\
-}\
-\
+__kernel void ell_shot(__global float *output, float3 o, float3 d, float3 c, float3 r)\n\
+{\n\
+    `float A = dot(d, d);\n\
+    float B = 2*(o-c)*d;\n\
+    float C = (o-c)*(o-c) - r*r;\n\
+    float disc = B*B - 4*A*C;\n\
+    if (disc < 0) {\n\
+	result[0] = 0;\n\
+	result[1] = 0;\n\
+	result[2] = 0;\n\
+	return;\n\
+    }\n\
+\n\
+    float sqrt_disc = sqrt(disc);\n\
+    q = B < 0 ? (-B + sqrt_disc)/2 : (-B - sqrt_disc)/2;\n\
+    \n\
+    result[0] = 1;\n\
+    result[1] = q/A;\n\
+    result[2] = C/q;\n\
+}\n\
+\n\
 ";
 
 
@@ -373,9 +373,10 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 {
 #ifdef OPENCL
     struct Sphere sphere;
-    struct seg *segp;
     VMOVE(sphere.position.s, stp->st_center);
-    sphere.radius = ((sph_specific *)stp->st_specific)->sph_rad;
+    sphere.radius = ((struct sph_specific *)stp->st_specific)->sph_rad;
+
+    (void)rp; (void)ap; (void)seghead; (void)sphere;
 
     return 0;
 #else
