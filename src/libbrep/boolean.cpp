@@ -392,14 +392,14 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 
 	    for (unsigned int j = 0; j < out[i]->innerloop.size(); j++) {
 		bu_log("innerloop %d:\n", j);
-		ON_wString wstr;
-		ON_TextLog textlog(wstr);
-		textlog.PushIndent();
+		ON_wString wstr2;
+		ON_TextLog textlog2(wstr2);
+		textlog2.PushIndent();
 		for (int k = 0; k < out[i]->innerloop[j].Count(); k++) {
-		    textlog.Print("Curve %d\n", k);
-		    out[i]->innerloop[j][k]->Dump(textlog);
+		    textlog2.Print("Curve %d\n", k);
+		    out[i]->innerloop[j][k]->Dump(textlog2);
 		}
-		bu_log(ON_String(wstr).Array());
+		bu_log(ON_String(wstr2).Array());
 	    }
 	}
     }
