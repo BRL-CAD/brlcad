@@ -124,9 +124,13 @@ tie_kdtree_free_node(struct tie_kdtree_s *node)
 	tie_kdtree_free_node(&((struct tie_kdtree_s *)(((intptr_t)(node_aligned->data)) & ~0x7L))[1]);
     } else {
 	/* This node points to a geometry node, free it */
-	bu_free(((struct tie_geom_s *)((intptr_t)(node_aligned->data) & ~0x7L))->tri_list, "tri_list");
+	struct tie_geom_s *tmp;
+	tmp = (struct tie_geom_s *)((intptr_t)(node_aligned->data) & ~0x7L);
+	if (tmp->tri_num > 0) {
+	    bu_free(tmp->tri_list, "tri_list");
+	}
+	bu_free(tmp, "data");
     }
-    bu_free((void*)((intptr_t)(node_aligned->data) & ~0x7L), "data");
 }
 
 static void
