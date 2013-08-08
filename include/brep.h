@@ -211,7 +211,7 @@ BREP_EXPORT bool ON_NearZero(double x, double tolerance = ON_ZERO_TOLERANCE);
 #define BREP_FCP_ROOT_EPSILON 1e-5
 /** trim curve point sampling count for isLinear() check and possibly
  * growing bounding box
- */ 
+ */
 #define BREP_BB_CRV_PNT_CNT 10
 #define BREP_CURVE_FLATNESS 0.95
 
@@ -1908,7 +1908,7 @@ ON_Intersect(const ON_3dPoint& pointA,
  * @param overlap_tolerance [in] If t1 and t2 are parameters of
  *     curveA's intersection events and the distance from curveA(t)
  *     to curveB is <= overlap_tolerance for every t1 <= t <= t2,
- *     then the event will be returened as an overlap event. If the
+ *     then the event will be returned as an overlap event. If the
  *     input overlap_tolerance <= 0.0, then
  *     intersection_tolerance * 2.0 is used.
  * @param curveA_domain [in] optional restriction on curveA domain
