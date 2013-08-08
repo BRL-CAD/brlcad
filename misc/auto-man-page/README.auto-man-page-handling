@@ -13,7 +13,7 @@ Rules:
 
 + Each bin source file should have one instance each of the following
   (missing strings are an error; other missing parts will be warned
-  about and generated with an appropropriate FIXME statement):
+  about and generated with an appropriate FIXME statement):
 
   const char usage[]     = "...."; /* mandatory */
   const char optstring[] = ""; /* mandatory for use with bu_getopt if it is used */
@@ -113,9 +113,4 @@ Assumptions:
 + No more than one C-style comment or partial comment is allowed per
   line.
 
-
-
-
-
-
-  
+=====
