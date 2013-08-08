@@ -415,31 +415,15 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, ON_SimpleArray<ON_Curve*> &loop, 
 	return;
 
     ON_BrepLoop &breploop = brep->NewLoop(loop_type, face);
-    int start_index = brep->m_V.Count();
+    int start_count = brep->m_V.Count();
     for (int k = 0; k < loop.Count(); k++) {
-	int ti = brep->AddTrimCurve(loop[k]);
-	ON_2dPoint start = loop[k]->PointAtStart(), end = loop[k]->PointAtEnd();
-	ON_BrepVertex& start_v = k > 0 ? brep->m_V[brep->m_V.Count() - 1] :
-	    brep->NewVertex(face.SurfaceOf()->PointAt(start.x, start.y), 0.0);
-	ON_BrepVertex& end_v = loop[k]->IsClosed() ? start_v :
-	    brep->NewVertex(face.SurfaceOf()->PointAt(end.x, end.y), 0.0);
-	if (k == loop.Count() - 1) {
-	    if (!loop[k]->IsClosed())
-		brep->m_V.Remove(brep->m_V.Count() - 1);
-	    end_v = brep->m_V[start_index];
-	}
-	int start_idx = start_v.m_vertex_index;
-	int end_idx = end_v.m_vertex_index;
-
-	ON_NurbsCurve *c3d = ON_NurbsCurve::New();
+	ON_Curve* c3d = NULL;
 	// First, try the ON_Surface::Pushup() method.
 	// If Pushup() does not succeed, use sampling method.
-	ON_Curve *curve_pt = face.SurfaceOf()->Pushup(*(loop[k]), 1e-3);
-	if (curve_pt) {
-	    curve_pt->GetNurbForm(*c3d);
-	    delete curve_pt;
-	} else if (loop[k]->SpanCount() == 2) {
-	    // A closed curve with two control points
+	c3d = face.SurfaceOf()->Pushup(*(loop[k]), 1e-3);
+	if (c3d) {
+	    brep->AddEdgeCurve(c3d);
+	} else {
 	    // TODO: Sometimes we need a singular trim.
 	    ON_3dPointArray ptarray(101);
 	    for (int l = 0; l <= 100; l++) {
@@ -447,19 +431,40 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, ON_SimpleArray<ON_Curve*> &loop, 
 		pt2d = loop[k]->PointAt(loop[k]->Domain().NormalizedParameterAt(l/100.0));
 		ptarray.Append(face.SurfaceOf()->PointAt(pt2d.x, pt2d.y));
 	    }
-	    ON_PolylineCurve polycurve(ptarray);
-	    polycurve.GetNurbForm(*c3d);
-	} else {
-	    loop[k]->GetNurbForm(*c3d);
-	    c3d->ChangeDimension(3);
-	    for (int l = 0; l < c3d->SpanCount(); l++) {
-		ON_3dPoint pt2d;
-		c3d->GetCV(l, pt2d);
-		ON_3dPoint pt3d = face.SurfaceOf()->PointAt(pt2d.x, pt2d.y);
-		c3d->SetCV(l, pt3d);
+	    c3d = new ON_PolylineCurve(ptarray);
+	    brep->AddEdgeCurve(c3d);
+	}
+
+	int ti = brep->AddTrimCurve(loop[k]);
+	ON_2dPoint start = loop[k]->PointAtStart(), end = loop[k]->PointAtEnd();
+	int start_idx, end_idx;
+	if (k > 0)
+	    start_idx = brep->m_V.Count() - 1;
+	else {
+	    start_idx = brep->m_V.Count();
+	    brep->NewVertex(face.SurfaceOf()->PointAt(start.x, start.y), 0.0);
+	}
+	if (c3d->IsClosed())
+	    end_idx = start_idx;
+	else {
+	    end_idx = brep->m_V.Count();
+	    brep->NewVertex(face.SurfaceOf()->PointAt(end.x, end.y), 0.0);
+	}
+	if (k == loop.Count() - 1) {
+	    if (!c3d->IsClosed()) {
+		brep->m_V.Remove();
+		end_idx = start_count;
+	    } else if (k) {
+		brep->m_V.Remove();
+		start_idx = end_idx = start_count;
+		if (brep->m_E.Last() && brep->m_T.Last()) {
+		    brep->m_E.Last()->m_vi[1] = start_count;
+		    brep->m_T.Last()->m_vi[1] = start_count;
+		    brep->m_V[start_count].m_ei.Append(brep->m_E.Count() - 1);
+		}
 	    }
 	}
-	brep->AddEdgeCurve(c3d);
+
 	ON_BrepEdge &edge = brep->NewEdge(brep->m_V[start_idx], brep->m_V[end_idx],
 	    brep->m_C3.Count() - 1, (const ON_Interval *)0, MAX_FASTF);
 	ON_BrepTrim &trim = brep->NewTrim(edge, 0, breploop, ti);
@@ -467,8 +472,8 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, ON_SimpleArray<ON_Curve*> &loop, 
 
 	// TODO: Deal with split seam trims to pass ON_Brep::IsValid()
     }
-    if (brep->m_V.Count() < brep->m_V.Capacity())
-	brep->m_V[brep->m_V.Count()].m_ei.Empty();
+    //if (brep->m_V.Count() < brep->m_V.Capacity())
+	//brep->m_V[brep->m_V.Count()].m_ei.Empty();
 }
 
 
@@ -548,8 +553,6 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
 	    for (unsigned int k = 0; k < trimmedfaces[j]->innerloop.size(); k++)
 		add_elements(brepO, new_face, trimmedfaces[j]->innerloop[k], ON_BrepLoop::inner);
 
-	    new_surf->SetDomain(0, loop.m_pbox.m_min.x, loop.m_pbox.m_max.x);
-	    new_surf->SetDomain(1, loop.m_pbox.m_min.y, loop.m_pbox.m_max.y);
 	    brepO->SetTrimIsoFlags(new_face);
 	    brepO->FlipFace(new_face);
 	}
