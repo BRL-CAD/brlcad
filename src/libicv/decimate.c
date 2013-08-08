@@ -111,7 +111,7 @@ HIDDEN int ninterp(icv_image_t* bif, unsigned int out_width, unsigned int out_he
     ystep = (double) (bif->height-1) / (double) (out_height) - 1.0e-06;
 
     if ((xstep < 1.0 && ystep > 1.0) || (xstep > 1.0 && ystep < 1.0)) {
-        bu_log("nitrep: Can't stretch one way and compress another\n");
+        bu_log("ninterp: Can't stretch one way and compress another\n");
         return -1;
     }
 

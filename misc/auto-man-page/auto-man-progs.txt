@@ -1,4 +1,4 @@
-# Programs added to this list are exxpected to adhere to the
+# Programs added to this list are expected to adhere to the
 # formatting rules in the accompanying README; their DcBook man page
 # xml source will be overwritten.
 #
