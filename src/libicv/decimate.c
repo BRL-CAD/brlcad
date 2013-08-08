@@ -73,6 +73,7 @@ HIDDEN int shrink_image(icv_image_t* bif, unsigned int factor)
 
 }
 
+
 HIDDEN int under_sample(icv_image_t* bif, unsigned int factor)
 {
     double *data_p, *res_p;
@@ -89,7 +90,7 @@ HIDDEN int under_sample(icv_image_t* bif, unsigned int factor)
     for (y=0; y<bif->height; y+=factor) {
 	data_p = bif->data + widthstep*y;
 	for (x=0; x<bif->width; x+=factor, res_p+=bif->channels, data_p+=factor*bif->channels)
-	    VMOVEN(res_p,data_p, bif->channels);
+	    VMOVEN(res_p, data_p, bif->channels);
     }
 
     bif->width = (int) bif->width/factor;
@@ -98,6 +99,7 @@ HIDDEN int under_sample(icv_image_t* bif, unsigned int factor)
 
     return 0;
 }
+
 
 HIDDEN int ninterp(icv_image_t* bif, unsigned int out_width, unsigned int out_height)
 {
@@ -181,8 +183,8 @@ HIDDEN int binterp(icv_image_t *bif, unsigned int out_width, unsigned int out_he
 	    low_c = low_r + (int)x*bif->channels;
 
 	    for (c=0; c<bif->channels; c++) {
-		mid1 = low_c[0] + dx * ((double) low_c[bif->channels] - (double) low_c[0] );
-		mid2 = upp_c[0] + dx * ((double) upp_c[bif->channels] - (double) upp_c[0] );
+		mid1 = low_c[0] + dx * ((double) low_c[bif->channels] - (double) low_c[0]);
+		mid2 = upp_c[0] + dx * ((double) upp_c[bif->channels] - (double) upp_c[0]);
 		*out_p = mid1 + dy * (mid2 - mid1);
 
 		out_p++;
@@ -199,6 +201,7 @@ HIDDEN int binterp(icv_image_t *bif, unsigned int out_width, unsigned int out_he
 
 }
 
+
 int icv_resize(icv_image_t *bif, ICV_RESIZE_METHOD method, unsigned int out_width, unsigned int out_height, unsigned int factor)
 {
     switch(method) {
@@ -207,7 +210,7 @@ int icv_resize(icv_image_t *bif, ICV_RESIZE_METHOD method, unsigned int out_widt
 	case ICV_RESIZE_SHRINK :
 	    return under_sample(bif, factor);
 	case ICV_RESIZE_NINTERP :
-	    return ninterp(bif, out_width,out_height);
+	    return ninterp(bif, out_width, out_height);
 	case ICV_RESIZE_BINTERP :
 	    return binterp(bif, out_width, out_height);
 	default :
@@ -216,6 +219,7 @@ int icv_resize(icv_image_t *bif, ICV_RESIZE_METHOD method, unsigned int out_widt
     }
 
 }
+
 
 /*
  * Local Variables:
