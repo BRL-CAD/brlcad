@@ -155,7 +155,7 @@ struct hrt_specific {
 int
 rt_hrt_bbox(const struct bn_tol *UNUSED(tol))
 {
-    bu_log("Sorry, This function is not implemented yet!\n");
+    bu_log("rt_hrt_bbox: Not implemented yet!\n");
     return 1;
 }
 
@@ -178,7 +178,7 @@ rt_hrt_bbox(const struct bn_tol *UNUSED(tol))
 int
 rt_hrt_prep()
 {
-    bu_log("Sorry, This function is not implemented yet!\n");
+    bu_log("rt_hrt_prep: Not implemented yet!\n");
     return 0;
 }
 
@@ -189,7 +189,7 @@ rt_hrt_prep()
 void
 rt_hrt_print()
 {
-    bu_log("Sorry, This function is not implemented yet!\n");
+    bu_log("rt_hrt_print: Not implemented yet!\n");
 }
 
 
@@ -236,7 +236,7 @@ rt_hrt_print()
 int
 rt_hrt_shot()
 {
-    bu_log("Sorry, This function is not yet implemented!\n");
+    bu_log("rt_hrt_shot: Not implemented yet!\n");
     return 6;
 }
 
@@ -249,7 +249,7 @@ rt_hrt_shot()
 void
 rt_hrt_vshot()
 {
-    bu_log("Sorry, This function is not yet implemented!\n");
+    bu_log("rt_hrt_vshot: Not implemented yet!\n");
 }
 
 
@@ -283,7 +283,7 @@ rt_hrt_vshot()
 void
 rt_hrt_norm()
 {
-    bu_log("Sorry, This function is not implemented yet!\n");
+    bu_log("rt_hrt_norm: Not implemented yet!\n");
 }
 
 
@@ -295,7 +295,7 @@ rt_hrt_norm()
 void
 rt_hrt_curve()
 {
-    bu_log("Sorry, This function is not implemented yet!\n");
+    bu_log("rt_hrt_curve: Not implemented yet!\n");
 }
 
 
@@ -305,7 +305,7 @@ rt_hrt_curve()
 void
 rt_hrt_uv()
 {
-    bu_log("Sorry, This function is not implemented yet!\n");
+    bu_log("rt_hrt_uv: Not implemented yet!\n");
 }
 
 
@@ -315,7 +315,7 @@ rt_hrt_uv()
 void
 rt_hrt_free()
 {
-    bu_log("Sorry, This function is not implemented yet!\n");
+    bu_log("rt_hrt_free: Not implemented yet!\n");
 }
 
 
@@ -335,7 +335,7 @@ rt_hrt_class(void)
 int
 rt_hrt_adaptive_plot()
 {
-    bu_log("rt_adaptive_plot:Not implemented yet!\n");
+    bu_log("rt_adaptive_plot: Not implemented yet!\n");
     return 0;
 }
 
@@ -346,7 +346,7 @@ rt_hrt_adaptive_plot()
 int
 rt_hrt_plot(const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
-    bu_log("Sorry, This function is not implemented yet!\n");
+    bu_log("rt_hrt_plot: Not implemented yet!\n");
     return 0;
 }
 
@@ -357,7 +357,7 @@ rt_hrt_plot(const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(
 int
 rt_hrt_tess()
 {
-    bu_log("Sorry, This function is not implemented yet!\n");
+    bu_log("rt_hrt_tess: Not implemented yet!\n");
     return 0;
 }
 
