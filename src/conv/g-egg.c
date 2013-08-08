@@ -60,7 +60,7 @@ static struct gcv_data gcvwriter;
 static void
 usage(const char *argv0)
 {
-    bu_log("\nUsage: %s [-bvM] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol]\n", argv0);
+    bu_log("\nUsage: %s [-bv89] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol]\n", argv0);
     bu_log("[-D dist_calc_tol] [-P #_of_CPUs] [-o output_file_name.egg] brlcad_db.g object(s)\n");
     bu_exit(1,NULL);
 }
@@ -227,7 +227,7 @@ main(int argc, char *argv[])
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
-    while ((i = bu_getopt(argc, argv, "a:b89n:o:r:vx:D:P:X:ih?")) != -1) {
+    while ((i = bu_getopt(argc, argv, "a:b89n:o:r:vx:D:P:X:h?")) != -1) {
 	switch (i) {
 	    case 'a':		/* Absolute tolerance. */
 		ttol.abs = atof(bu_optarg);
