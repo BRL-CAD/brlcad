@@ -58,6 +58,14 @@ struct gcv_data {
 static struct gcv_data gcvwriter;
 
 static void
+usage(const char *argv0)
+{
+    bu_log("\nUsage: %s [-bvM] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol]\n", argv0);
+    bu_log("[-D dist_calc_tol] [-P #_of_CPUs] [-o output_file_name.egg] brlcad_db.g object(s)\n");
+    bu_exit(1,NULL);
+}
+
+static void
 nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id), float UNUSED(color[3]))
 {
     struct model *m;
@@ -176,8 +184,6 @@ nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 int
 main(int argc, char *argv[])
 {
-    char usage[] = "Usage: %s [-bvM] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol] [-o output_file_name.egg] brlcad_db.g object(s)\n";
-
     int verbose = 0;
     int ncpu = 1;			/* Number of processors */
     char *output_file = NULL;	/* output filename */
@@ -262,13 +268,12 @@ main(int argc, char *argv[])
 		use_bottess = 1;
 		break;
 	    default:
-		bu_exit(1, usage, argv[0]);
+		usage(argv[0]);
 	}
     }
 
-    if (bu_optind+1 >= argc) {
-	bu_exit(1, usage, argv[0]);
-    }
+    if (bu_optind+1 >= argc)
+	usage(argv[0]);
 
     gcvwriter.fp = stdout;
     if (output_file) {
@@ -282,7 +287,7 @@ main(int argc, char *argv[])
     argc -= bu_optind;
     argv += bu_optind;
     if(argc < 2 || argv[0] == NULL || argv[1] == NULL)
-	bu_exit(1, usage, argv[0]);
+	usage(argv[0]);
 
     gcvwriter.func = nmg_to_egg;
 
