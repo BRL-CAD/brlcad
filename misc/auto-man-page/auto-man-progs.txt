@@ -8,6 +8,10 @@
 # bin program       source file
 # ===========       ===========
 
+# the proof-of-concept case:
+fix_polysolids      src/util/fix_polysolids.c
+
+# others:
 3dm-g
 a-d                 src/sig/a-d.c
 alias-pix           src/util/alias-pix.c
@@ -67,7 +71,6 @@ f-i                 src/sig/f-i.c
 fbgammamod          src/fb/fbgammamod.c
 fence               src/shapes/fence.c
 fhor                src/sig/fhor.c
-fix_polysolids      src/util/fix_polysolids.c
 g-dot               src/conv/g-dot.c
 g-euclid1           src/conv/euclid/g-euclid1.c
 g-jack              src/conv/jack/g-jack.c
