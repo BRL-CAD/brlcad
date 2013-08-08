@@ -559,9 +559,8 @@ main(int argc, char **argv)
 	}
     }
 
-    if (bu_optind+1 >= argc) {
+    if (bu_optind+1 >= argc)
 	usage(argv[0]);
-    }
 
     if (!output_file) {
 	fp = stdout;

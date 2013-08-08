@@ -40,10 +40,15 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 
-
 extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 
-static char	usage[] = "Usage: %s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
+static void
+usage(const char *argv0)
+{
+    bu_log("Usage: %s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-P #_of_CPUs] [-o out_file] brlcad_db.g object(s)\n",
+	argv0);
+    bu_exit(1, NULL);
+}
 
 static int	NMG_debug=0;		/* saved arg of -X, for longjmp handling */
 static int	verbose;
@@ -103,9 +108,7 @@ fastf_print(FILE *out, size_t length, fastf_t f)
 
     ptr = strchr(buffer, '.');
     if ((size_t)(ptr - buffer) > length)
-    {
 	bu_exit(1, "ERROR: Value (%f) too large for format length (%zu)\n", f, length);
-    }
 
     for (i=0; i<length; i++)
 	fputc(buffer[i], out);
@@ -519,7 +522,7 @@ main(int argc, char **argv)
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "a:n:o:r:s:vx:P:X:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "a:n:o:r:s:vx:P:X:h?")) != -1) {
 	switch (c) {
 	    case 'a':		/* Absolute tolerance. */
 		ttol.abs = atof(bu_optarg);
@@ -550,14 +553,12 @@ main(int argc, char **argv)
 		NMG_debug = RTG.NMG_debug;
 		break;
 	    default:
-		bu_exit(1, usage, argv[0]);
-		break;
+		usage(argv[0]);
 	}
     }
 
-    if (bu_optind+1 >= argc) {
-	bu_exit(1, usage, argv[0]);
-    }
+    if (bu_optind+1 >= argc)
+	usage(argv[0]);
 
     /* Open BRL-CAD database */
     if ((dbip = db_open(argv[bu_optind], DB_OPEN_READONLY)) == DBI_NULL)
