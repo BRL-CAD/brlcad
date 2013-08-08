@@ -100,6 +100,33 @@ ON_NurbsCurveCV_to_EntityAggregate(ON_NurbsCurve *incrv, SdaiB_spline_curve *ste
 		control_pnts->AddNode(new EntityNode((SDAI_Application_instance *)step_cartesian));
 	}
 }
+
+void
+ON_NurbsCurveKnots_to_Aggregates(ON_NurbsCurve *incrv, SdaiB_spline_curve_with_knots *step_crv)
+{
+	IntAggregate_ptr knot_multiplicities = step_crv->knot_multiplicities_();
+	RealAggregate_ptr knots = step_crv->knots_();
+	int i = 0; 
+	std::cout << "KnotCount: " << incrv->KnotCount() << "\n";
+	while (i < incrv->KnotCount()) {
+		int multiplicity_val = incrv->KnotMultiplicity(i);
+		/* Add knot */
+		RealNode *knot = new RealNode();
+		knot->value = incrv->Knot(i);
+		knots->AddNode(knot);
+		/* OpenNURBS and STEP have different notions of end knot conditions - 
+		 * see http://wiki.mcneel.com/developer/onsuperfluousknot */
+		std::cout << "Multiplicity: " << multiplicity_val << " ";
+		if ((i == 0) || (i == (incrv->KnotCount() - incrv->KnotMultiplicity(0)))) multiplicity_val++;
+		std::cout << "Multiplicity after increment (" << i << "): " << multiplicity_val << "\n";
+		/* Set Multiplicity */
+		IntNode *multiplicity = new IntNode();
+		multiplicity->value = multiplicity_val;
+		knot_multiplicities->AddNode(multiplicity);
+		i += incrv->KnotMultiplicity(i);
+	}
+}
+
 #if 0
 void
 ON_RationalNurbsCurve_to_EntityAggregate(ON_NurbsCurve *incrv, SdaiRational_B_spline_curve *step_crv) {
@@ -177,10 +204,12 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 			if (n_curve->IsRational()) {
 				three_dimensional_curves.at(i) = registry->ObjCreate("RATIONAL_B_SPLINE_CURVE");
 			} else {
-				three_dimensional_curves.at(i) = registry->ObjCreate("B_SPLINE_CURVE");
+				three_dimensional_curves.at(i) = registry->ObjCreate("B_SPLINE_CURVE_WITH_KNOTS");
 				SdaiB_spline_curve *curr_curve = (SdaiB_spline_curve *)three_dimensional_curves.at(i);
 				curr_curve->degree_(n_curve->Degree());
 				ON_NurbsCurveCV_to_EntityAggregate(n_curve, curr_curve, registry, instance_list);
+				SdaiB_spline_curve_with_knots *curve_knots = (SdaiB_spline_curve_with_knots *)three_dimensional_curves.at(i);
+				ON_NurbsCurveKnots_to_Aggregates(n_curve, curve_knots);
 			}
 
 			instance_list->Append(three_dimensional_curves.at(i), completeSE);
