@@ -1394,19 +1394,10 @@ inline int     AreaSign( const point2d  & a,
 {
     ldouble  area, area1, area2;
 
-    area1 = a.x * b.y - a.y * b.x +
+    area = a.x * b.y - a.y * b.x +
         a.y * c.x - a.x * c.y +
         b.x * c.y - c.x * b.y;
 
-    area2 = b.x * a.y - b.y * a.x +
-        b.y * c.x - b.x * c.y +
-        a.x * c.y - c.x * a.y;
-
-    if (fabs(area1) < 1e-9 || fabs(area2) < 1e-9) {
-	    return 0;
-    }
-
-    area = area1;
     //printf( "area: %g\n", area );
     return  ( ( area < (ldouble)0.0 )? -1: 
               ( (area > (ldouble)0.0)? 1 : 0 ) );
