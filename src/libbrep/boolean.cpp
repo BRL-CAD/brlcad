@@ -494,11 +494,15 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
 		continue;
 	    ON_SimpleArray<ON_Curve*> curve_uv, curve_st;
 	    for (int k = 0; k < events.Count(); k++) {
-		curve_uv.Append(events[k].m_curveA);
-		curve_st.Append(events[k].m_curveB);
-		// Set m_curveA and m_curveB to NULL, in case that they are
-		// deleted by ~ON_SSX_EVENT().
-		events[k].m_curveA = events[k].m_curveB = NULL;
+		if (events[k].m_type == ON_SSX_EVENT::ssx_overlap
+		    || events[k].m_type == ON_SSX_EVENT::ssx_tangent
+		    || events[k].m_type == ON_SSX_EVENT::ssx_transverse) {
+		    curve_uv.Append(events[k].m_curveA);
+		    curve_st.Append(events[k].m_curveB);
+		    // Set m_curveA and m_curveB to NULL, in case that they are
+		    // deleted by ~ON_SSX_EVENT().
+		    events[k].m_curveA = events[k].m_curveB = NULL;
+		}
 	    }
 	    curvesarray[i].Append(curve_uv.Count(), curve_uv.Array());
 	    curvesarray[facecount1 + j].Append(curve_st.Count(), curve_st.Array());
