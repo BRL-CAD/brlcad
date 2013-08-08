@@ -37,7 +37,7 @@ HIDDEN int shrink_image(icv_image_t* bif, unsigned int factor)
     size_t widthstep =  bif->width*bif->channels;
 
     if (UNLIKELY(factor == 0)) {
-        bu_log("shrink_image : Cannot shrink image to 0 factor, factor should be non zero Unisgned Integer");
+        bu_log("shrink_image : Cannot shrink image to 0 factor, factor should be non zero Unsigned Integer");
         return -1;
     }
 
@@ -79,7 +79,7 @@ HIDDEN int under_sample(icv_image_t* bif, unsigned int factor)
     int x, y, widthstep;
 
     if (UNLIKELY(factor == 0)) {
-        bu_log("under_sample : Cannot shrink image to 0 factor, factor should be non zero Unisgned Integer");
+        bu_log("under_sample : Cannot shrink image to 0 factor, factor should be non zero Unsigned Integer");
         return -1;
     }
 
@@ -115,7 +115,7 @@ HIDDEN int ninterp(icv_image_t* bif, unsigned int out_width, unsigned int out_he
         return -1;
     }
 
-    out_p = out_data = bu_malloc(out_width*out_height*bif->channels*sizeof(double), "intrep : out_data");
+    out_p = out_data = bu_malloc(out_width*out_height*bif->channels*sizeof(double), "ninterp : out_data");
 
     widthstep= bif->width*bif->channels;
 
@@ -133,7 +133,7 @@ HIDDEN int ninterp(icv_image_t* bif, unsigned int out_width, unsigned int out_he
 	}
     }
 
-    bu_free(bif->data, "intrep : in_data");
+    bu_free(bif->data, "ninterp : in_data");
 
     bif->data = out_data;
 
@@ -158,7 +158,7 @@ HIDDEN int binterp(icv_image_t *bif, unsigned int out_width, unsigned int out_he
     ystep = (double) (bif->height -1) / (double)out_height - 1.0e-6;
 
     if ((xstep < 1.0 && ystep > 1.0) || (xstep > 1.0 && ystep < 1.0)) {
-        bu_log("bintrep: Can't stretch one way and compress another\n");
+        bu_log("binterp: Can't stretch one way and compress another\n");
         return -1;
     }
 
@@ -191,7 +191,7 @@ HIDDEN int binterp(icv_image_t *bif, unsigned int out_width, unsigned int out_he
 	    }
 	}
     }
-    bu_free(bif->data, "binterep : Input Data");
+    bu_free(bif->data, "binterp : Input Data");
     bif->data = out_data;
     bif->width = out_width;
     bif->height = out_height;
