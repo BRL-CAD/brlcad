@@ -129,7 +129,7 @@ main(int argc, char *argv[])
     ON_TextLog dump(wstr);
     brep->Dump(dump);
     ON_String ss = wstr;
-    bu_log("Brep:\n %s\n", ss.Array());
+    //bu_log("Brep:\n %s\n", ss.Array());
 
     Registry *registry = new Registry( SchemaInit );
     InstMgr instance_list;
@@ -139,7 +139,10 @@ main(int argc, char *argv[])
     registry->ResetEntities();
     ON_BRep_to_STEP(brep, registry, &instance_list);
 
-    sfile->WriteExchangeFile(std::cout);
+    if (!bu_file_exists(output_file, NULL)) {
+	std::ofstream stepout(output_file);
+	sfile->WriteExchangeFile(stepout);
+    }
 
     return ret;
 }

@@ -107,24 +107,22 @@ ON_NurbsCurveKnots_to_Aggregates(ON_NurbsCurve *incrv, SdaiB_spline_curve_with_k
 	IntAggregate_ptr knot_multiplicities = step_crv->knot_multiplicities_();
 	RealAggregate_ptr knots = step_crv->knots_();
 	int i = 0; 
-	std::cout << "KnotCount: " << incrv->KnotCount() << "\n";
 	while (i < incrv->KnotCount()) {
 		int multiplicity_val = incrv->KnotMultiplicity(i);
 		/* Add knot */
 		RealNode *knot = new RealNode();
 		knot->value = incrv->Knot(i);
 		knots->AddNode(knot);
-		/* OpenNURBS and STEP have different notions of end knot conditions - 
+		/* OpenNURBS and STEP have different notions of end knot multiplicity -
 		 * see http://wiki.mcneel.com/developer/onsuperfluousknot */
-		std::cout << "Multiplicity: " << multiplicity_val << " ";
 		if ((i == 0) || (i == (incrv->KnotCount() - incrv->KnotMultiplicity(0)))) multiplicity_val++;
-		std::cout << "Multiplicity after increment (" << i << "): " << multiplicity_val << "\n";
 		/* Set Multiplicity */
 		IntNode *multiplicity = new IntNode();
 		multiplicity->value = multiplicity_val;
 		knot_multiplicities->AddNode(multiplicity);
 		i += incrv->KnotMultiplicity(i);
 	}
+	step_crv->knot_spec_(Knot_type__unspecified);
 }
 
 #if 0
@@ -175,7 +173,6 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 			std::cout << "Have ArcCurve\n";
 		}
 		if (l_curve && !curve_converted) {
-			std::cout << "Have LineCurve\n";
 			ON_Line *m_line = &(l_curve->m_line);
 			/* In STEP, a line consists of a cartesian point and a 3D vector.  Since
 			 * it does not appear that OpenNURBS data structures reference m_V points
@@ -194,13 +191,12 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 			instance_list->Append(curr_dir->orientation_(), completeSE);
 			instance_list->Append(curr_line->dir_(), completeSE);
 			instance_list->Append(three_dimensional_curves.at(i), completeSE);
+			curve_converted = 1;
 		}
 		if (p_curve && !curve_converted) {
 			std::cout << "Have PolyCurve\n";
 		}
 		if (n_curve && !curve_converted) {
-			std::cout << "Have NurbsCurve\n";
-			//MakePiecewiseBezier
 			if (n_curve->IsRational()) {
 				three_dimensional_curves.at(i) = registry->ObjCreate("RATIONAL_B_SPLINE_CURVE");
 			} else {
@@ -211,12 +207,17 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 				SdaiB_spline_curve_with_knots *curve_knots = (SdaiB_spline_curve_with_knots *)three_dimensional_curves.at(i);
 				ON_NurbsCurveKnots_to_Aggregates(n_curve, curve_knots);
 			}
-
+			((SdaiB_spline_curve *)three_dimensional_curves.at(i))->curve_form_(B_spline_curve_form__unspecified);
+			((SdaiB_spline_curve *)three_dimensional_curves.at(i))->closed_curve_(SDAI_LOGICAL(n_curve->IsClosed()));
+			/* TODO:  Assume we don't have self-intersecting curves for now - need some way to test this... */
+			((SdaiB_spline_curve *)three_dimensional_curves.at(i))->self_intersect_(LFalse);
 			instance_list->Append(three_dimensional_curves.at(i), completeSE);
+			curve_converted = 1;
 		}
 
 		/* Whatever this is, if it's not a supported type and it does have
 		 * a NURBS form, use that */
+		if (!curve_converted) std::cout << "Curve not converted! " << i << "\n";
 
 	}
 
