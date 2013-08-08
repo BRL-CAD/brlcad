@@ -553,7 +553,7 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
 	    ON_BrepFace& new_face = brepO->NewFace(surfindex);
 
 	    add_elements(brepO, new_face, trimmedfaces[j]->outerloop, ON_BrepLoop::outer);
-	    ON_BrepLoop &loop = brepO->m_L[brepO->m_L.Count() - 1];
+	    // ON_BrepLoop &loop = brepO->m_L[brepO->m_L.Count() - 1];
 	    for (unsigned int k = 0; k < trimmedfaces[j]->innerloop.size(); k++)
 		add_elements(brepO, new_face, trimmedfaces[j]->innerloop[k], ON_BrepLoop::inner);
 
