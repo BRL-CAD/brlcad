@@ -2880,7 +2880,8 @@ ON_Intersect(const ON_Surface* surfA,
 	    if (!overlaps[j] || !overlaps[j]->m_curveA || !overlaps[j]->m_curveB || !overlaps[j]->m_curve3d)
 		continue;
 
-	    // Merge the curves that link together.
+	    // Check whether the start point and end point is linked to
+	    // another curve.
 	    if (overlaps[i]->m_curve3d->PointAtStart().DistanceTo(overlaps[j]->m_curve3d->PointAtEnd()) < intersection_tolerance
 		&& overlaps[i]->m_curveA->PointAtStart().DistanceTo(overlaps[j]->m_curveA->PointAtEnd()) < intersection_tolerance_A
 		&& overlaps[i]->m_curveB->PointAtStart().DistanceTo(overlaps[j]->m_curveB->PointAtEnd()) < intersection_tolerance_B) {
