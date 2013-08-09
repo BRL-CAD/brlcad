@@ -139,8 +139,74 @@ IsPointInsideLoop(const ON_2dPoint& pt, const ON_SimpleArray<ON_Curve*>& loop)
 }
 
 
+HIDDEN void
+link_curves(const ON_SimpleArray<ON_Curve*>& in, ON_SimpleArray<ON_Curve*>& out)
+{
+    // There might be two reasons why we need to link these curves.
+    // 1) They are from intersections with two different surfaces.
+    // 2) They are not continuous in the other surface's UV domain.
+
+    ON_SimpleArray<ON_Curve*> tmp;
+    for (int i = 0; i < in.Count(); i++) {
+	tmp.Append(in[i]->Duplicate());
+    }
+
+    // As usual, we use a greedy approach.
+    for (int i = 0; i < tmp.Count(); i++) {
+	for (int j = 0; j < tmp.Count(); j++) {
+	    if (tmp[i] == NULL || tmp[i]->IsClosed())
+		break;
+
+	    if (tmp[j] == NULL || tmp[j]->IsClosed() || j == i)
+		continue;
+
+	    ON_Curve *c1 = NULL, *c2 = NULL;
+	    // Link curves that share an end point.
+	    if (tmp[i]->PointAtStart().DistanceTo(tmp[j]->PointAtEnd()) < BREP_SAME_POINT_TOLERANCE) {
+		// end -- start -- end -- start
+		c1 = tmp[j];
+		c2 = tmp[i];
+	    } else if (tmp[i]->PointAtEnd().DistanceTo(tmp[j]->PointAtStart()) < BREP_SAME_POINT_TOLERANCE) {
+		// start -- end -- start -- end
+		c1 = tmp[i];
+		c2 = tmp[j];
+	    } else if (tmp[i]->PointAtStart().DistanceTo(tmp[j]->PointAtStart()) < BREP_SAME_POINT_TOLERANCE) {
+		// end -- start -- start -- end
+		if (tmp[i]->Reverse()) {
+		    c1 = tmp[i];
+		    c2 = tmp[j];
+		}
+	    } else if (tmp[i]->PointAtEnd().DistanceTo(tmp[j]->PointAtEnd()) < BREP_SAME_POINT_TOLERANCE) {
+		// start -- end -- end -- start
+		if (tmp[j]->Reverse()) {
+		    c1 = tmp[i];
+		    c2 = tmp[j];
+		}
+	    } else
+		continue;
+
+	    if (c1 != NULL && c2 != NULL) {
+		ON_PolyCurve* polycurve = new ON_PolyCurve;
+		polycurve->Append(c1);
+		polycurve->Append(c2);
+		tmp[i] = polycurve;
+		tmp[j] = NULL;
+	    }
+	}
+    }
+
+    // Append the remaining curves to out.
+    for (int i = 0; i < tmp.Count(); i++)
+	if (tmp[i] != NULL)
+	    out.Append(tmp[i]);
+
+    if (DEBUG)
+	bu_log("link_curves(): %d curves remaining.\n", out.Count());
+}
+
+
 int
-split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, const ON_SimpleArray<ON_Curve*> &curves)
+split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, const ON_SimpleArray<ON_Curve*> &curves_in)
 {
     /* We followed the algorithms described in:
      * S. Krishnan, A. Narkhede, and D. Manocha. BOOLE: A System to Compute
@@ -150,11 +216,14 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
      * Chains.
      */
 
-    if (curves.Count() == 0) {
+    if (curves_in.Count() == 0) {
 	// No curve, no splitting
 	out.Append(in->Duplicate());
 	return 0;
     }
+
+    ON_SimpleArray<ON_Curve*> curves;
+    link_curves(curves_in, curves);
 
     ON_SimpleArray<IntersectPoint> intersect;
     ON_SimpleArray<bool> have_intersect(curves.Count());
