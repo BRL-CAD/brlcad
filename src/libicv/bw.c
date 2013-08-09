@@ -89,13 +89,13 @@ bw_load(const char *filename, int width, int height)
 
     size = (size_t) height*width;
 
-    if(filename==NULL)    
-        fd = 0; /* for stdin */
+    if(filename==NULL)
+	fd = 0; /* for stdin */
     else if ((fd = open(filename, O_RDONLY, WRMODE)) < 0) {
 	bu_log("bw_load: Cannot open file for reading\n");
 	return NULL;
-        }
-        
+	}
+
     data = (unsigned char *)bu_malloc(size, "bw_load : unsigned char data");
     if (read(fd, data, size) != size) {
 	bu_log("bw_load: Error Occurred while Reading\n");
