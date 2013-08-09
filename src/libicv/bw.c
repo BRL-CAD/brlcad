@@ -57,9 +57,11 @@ bw_save(icv_image_t *bif, const char *filename)
     }
     data =  data2uchar(bif);
     size = (size_t) bif->height*bif->width;
-    fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, WRMODE);
-    if (fd < 0) {
-	bu_log("Unable to open the file\n");
+    
+    if(filename==NULL)
+	fd = 1; /* for stdout */
+    else if ((fd = open(filename, O_RDONLY, WRMODE)) < 0) {
+	bu_log("bw_save: Cannot open file for saving\n");
 	return -1;
     }
 
