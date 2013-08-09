@@ -179,7 +179,7 @@ struct rt_tess_tol {
     double		norm;			/**< @brief normal tol */
 };
 #define RT_CK_TESS_TOL(_p) BU_CKMAG(_p, RT_TESS_TOL_MAGIC, "rt_tess_tol")
-
+#define RT_TESS_TOL_INIT_ZERO {RT_TESS_TOL_MAGIC, 0.0, 0.0, 0.0}
 
 /**
  * R T _ D B _ I N T E R N A L
@@ -565,6 +565,7 @@ struct mater_info {
     char	ma_minherit;	/**< @brief mater: DB_INH_LOWER / DB_INH_HIGHER */
     char	*ma_shader;	/**< @brief shader name & parms */
 };
+#define RT_MATER_INFO_INIT_ZERO { VINIT_ZERO, 0.0, 0, 0, 0, NULL }
 
 
 /**
@@ -1123,6 +1124,8 @@ struct db_tree_state {
     struct rt_i *		ts_rtip;	/**< @brief  Helper for rt_gettrees() */
     struct resource *		ts_resp;	/**< @brief  Per-CPU data */
 };
+#define RT_DBTS_INIT_ZERO { RT_DBTS_MAGIC, NULL, 0, 0, 0, 0, 0, RT_MATER_INFO_INIT_ZERO, MAT_INIT_ZERO, 0, BU_AVS_INIT_ZERO, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
+
 #define TS_SOFAR_MINUS	1	/**< @brief  Subtraction encountered above */
 #define TS_SOFAR_INTER	2	/**< @brief  Intersection encountered above */
 #define TS_SOFAR_REGION	4	/**< @brief  Region encountered above */
@@ -1347,6 +1350,7 @@ struct rt_wdb {
 
 #define RT_CHECK_WDB(_p) BU_CKMAG(_p, RT_WDB_MAGIC, "rt_wdb")
 #define RT_CK_WDB(_p) RT_CHECK_WDB(_p)
+#define RT_WDB_INIT_ZERO { {RT_WDB_MAGIC, BU_LIST_NULL, BU_LIST_NULL}, 0, NULL, RT_DBTS_INIT_ZERO, RT_TESS_TOL_INIT_ZERO, BN_TOL_INIT_ZERO, NULL, BU_VLS_INIT_ZERO, 0, 0, 0, 0, 0, 0, BU_VLS_INIT_ZERO, BU_OBSERVER_INIT_ZERO, NULL }
 #define RT_WDB_NULL		((struct rt_wdb *)NULL)
 #define RT_WDB_TYPE_DB_DISK			2
 #define RT_WDB_TYPE_DB_DISK_APPEND_ONLY		3
@@ -1772,6 +1776,8 @@ struct rt_g {
     uint32_t		NMG_debug;	/**< @brief  debug bits for NMG's see nmg.h */
     struct rt_wdb	rtg_headwdb;	/**< @brief  head of database object list */
 };
+#define RT_G_INIT_ZERO { 0, 0, BU_LIST_INIT_ZERO, 0, RT_WDB_INIT_ZERO }
+
 
 /**
  * global ray-trace geometry state
