@@ -3864,6 +3864,24 @@ BU_EXPORT extern void *bu_heap_get(size_t sz);
  */
 BU_EXPORT extern void bu_heap_put(void *ptr, size_t sz);
 
+/**
+ * Convenience typedef for the printf()-style callback function used
+ * during application exit to print summary statistics.
+ */
+typedef int (*bu_heap_func_t)(const char *, ...);
+
+/**
+ * This function registers and returns the current printing function
+ * that will be used during application exit (via an atexit() handler)
+ * if the BU_HEAP_PRINT environment variable is set.  Statistics on
+ * calls to bu_heap_get() and bu_heap_put() will be logged.  If log is
+ * NULL, the currently set function will remain unchanged and will be
+ * returned.
+ */
+BU_EXPORT extern bu_heap_func_t bu_heap_log(bu_heap_func_t log);
+
+
+
 /** @} */
 
 /** @addtogroup log */
