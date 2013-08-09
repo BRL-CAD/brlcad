@@ -74,22 +74,6 @@ struct sph_specific {
 
 
 #ifdef OPENCL
-
-
-struct Ray
-{
-    cl_float3 origin;
-    cl_float3 direction;
-};
-
-
-struct Sphere
-{
-    cl_float3 position;
-    cl_float radius;
-};
-
-
 static int clt_initialized = 0;
 static cl_device_id clt_device;
 static cl_context clt_context;
@@ -119,15 +103,15 @@ __kernel void ell_shot(__global float *output, float3 o, float3 l, float3 c, flo
     float B = 2*dot(l, o-c);\n\
     float C = dot(o-c, o-c) - r*r;\n\
     float disc = B*B - 4*A*C;\n\
-    if (disc < 0) {\n\
+\n\
+    if (disc <= 0) {\n\
 	output[0] = 0;\n\
 	output[1] = 0;\n\
 	output[2] = 0;\n\
 	return;\n\
     }\n\
 \n\
-    float sqrt_disc = sqrt(disc);\n\
-    float q = B < 0 ? (-B + sqrt_disc)/2 : (-B - sqrt_disc)/2;\n\
+    float q = B < 0 ? (-B + sqrt(disc))/2 : (-B - sqrt(disc))/2;\n\
     \n\
     output[0] = 1;\n\
     output[1] = q/A;\n\
@@ -137,6 +121,7 @@ __kernel void ell_shot(__global float *output, float3 o, float3 l, float3 c, flo
 ";
 
 
+/* for now, just get the first device from the first platform  */
 static cl_device_id
 clt_get_cl_device()
 {
@@ -161,7 +146,7 @@ clt_get_program(cl_context context, cl_device_id device, const char *code)
 {
     cl_int error;
     cl_program program;
-    size_t code_size = strnlen(code, 2<<20);
+    size_t code_size = strnlen(code, 1<<20);
 
     program = clCreateProgramWithSource(context, 1, &code, &code_size, &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL program");
@@ -208,13 +193,33 @@ clt_init()
 }
 
 
-fastf_t
-clt_shot()
+static cl_float3
+clt_shot(cl_float3 o /* ray origin */, cl_float3 l /* ray direction (unit vector) */,
+cl_float3 c /* sphere center */, cl_float r /* sphere radius */)
 {
-    return -1;
+    cl_int error;
+    cl_mem output;
+    cl_float3 result;
+    const size_t global_size = 1;
+
+    output = clCreateBuffer(clt_context, CL_MEM_USE_HOST_PTR | CL_MEM_HOST_READ_ONLY | CL_MEM_WRITE_ONLY,
+	    sizeof(cl_float3), &result, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
+
+    error = clSetKernelArg(clt_kernel, 0, sizeof(cl_mem), &output);
+    error |= clSetKernelArg(clt_kernel, 1, sizeof(cl_float3), &o);
+    error |= clSetKernelArg(clt_kernel, 2, sizeof(cl_float3), &l);
+    error |= clSetKernelArg(clt_kernel, 3, sizeof(cl_float3), &c);
+    error |= clSetKernelArg(clt_kernel, 4, sizeof(cl_float), &r);
+    if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
+
+    error = clEnqueueNDRangeKernel(clt_queue, clt_kernel, 1, NULL, &global_size, NULL, 0, NULL, NULL);
+    if (error != CL_SUCCESS) bu_bomb("failed to enqueue OpenCL kernel");
+
+    if (clFinish(clt_queue) != CL_SUCCESS) bu_bomb("failure in clFinish");
+    clReleaseMemObject(output);
+    return result;
 }
-
-
 #endif
 
 
@@ -237,11 +242,6 @@ clt_shot()
 int
 rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
-#ifdef OPENCL
-    (void)stp; (void)ip; (void)rtip;
-    clt_init();
-    return 0;
-#else
     register struct sph_specific *sph;
     fastf_t magsq_a, magsq_b, magsq_c;
     vect_t Au, Bu, Cu;	/* A, B, C with unit length */
@@ -250,6 +250,10 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 clt_init();
     eip = (struct rt_ell_internal *)ip->idb_ptr;
     RT_ELL_CK_MAGIC(eip);
+
+#ifdef OPENCL
+    clt_init();
+#endif
 
     /* Validate that |A| > 0, |B| > 0, |C| > 0 */
     magsq_a = MAGSQ(eip->a);
@@ -326,7 +330,6 @@ clt_init();
     /* Compute bounding RPP */
     if (stp->st_meth->ft_bbox(ip, &(stp->st_min), &(stp->st_max), &(rtip->rti_tol))) return 1;
     return 0;			/* OK */
-#endif
 }
 
 
@@ -372,13 +375,33 @@ int
 rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
 #ifdef OPENCL
-    struct Sphere sphere;
-    VMOVE(sphere.position.s, stp->st_center);
-    sphere.radius = ((struct sph_specific *)stp->st_specific)->sph_rad;
+    cl_float3 o; /* ray origin  */
+    cl_float3 l; /* ray direction (unit vector) */
+    cl_float3 c; /* sphere center  */
+    cl_float r; /* sphere radius */
+    cl_float3 result;
+    struct seg *segp;
 
-    (void)rp; (void)ap; (void)seghead; (void)sphere;
+    (void)rp; (void)ap;
 
-    return 0;
+    VMOVE(o.s, rp->r_pt);
+    VMOVE(l.s, rp->r_dir);
+    VMOVE(c.s, stp->st_center);
+    r = ((struct sph_specific *)stp->st_specific)->sph_rad;
+    result = clt_shot(o, l, c, r);
+
+    if (EQUAL(result.s[0], 0)) return 0; /* no hit  */
+
+    RT_GET_SEG(segp, ap->a_resource);
+    segp->seg_stp = stp;
+
+    segp->seg_in.hit_dist = result.s[2];
+    segp->seg_out.hit_dist = result.s[1];
+    segp->seg_in.hit_surfno = 0;
+    segp->seg_out.hit_surfno = 0;
+    BU_LIST_INSERT(&(seghead->l), &(segp->l));
+    return 2;			/* HIT */
+#
 #else
     register struct sph_specific *sph =
 	(struct sph_specific *)stp->st_specific;
