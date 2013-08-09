@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2013-0X-XX  Release 7.24.2                                     ---
 ----------------------------------------------------------------------
 
+* fixed pixscale and bwscale to not output ioctl error - Mohit Daga
 * fixed adrt/TIE polygonal mesh memory management bug - Richard Weiss
 * fixed fast4-g importer parsing of blank input lines - Richard Weiss
 * added -o flag to 'bb' command for oriented bounding box - Cliff Yapp
