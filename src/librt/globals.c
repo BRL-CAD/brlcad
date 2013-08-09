@@ -36,7 +36,7 @@
 #include "db.h"
 
 
-struct rt_g RTG;
+struct rt_g RTG = RT_G_INIT_ZERO;
 
 struct resource rt_uniresource;
 
