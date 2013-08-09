@@ -401,7 +401,7 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     segp->seg_out.hit_surfno = 0;
     BU_LIST_INSERT(&(seghead->l), &(segp->l));
     return 2;			/* HIT */
-#
+
 #else
     register struct sph_specific *sph =
 	(struct sph_specific *)stp->st_specific;
