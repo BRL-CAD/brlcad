@@ -104,18 +104,12 @@ __kernel void ell_shot(__global float *output, float3 o, float3 l, float3 c, flo
     float C = dot(o-c, o-c) - r*r;\n\
     float disc = B*B - 4*A*C;\n\
 \n\
-    if (disc <= 0) {\n\
-	output[0] = 0;\n\
-	output[1] = 0;\n\
-	output[2] = 0;\n\
-	return;\n\
-    }\n\
+    if (disc <= 0) return;\n\
 \n\
     float q = B < 0 ? (-B + sqrt(disc))/2 : (-B - sqrt(disc))/2;\n\
     \n\
-    output[0] = 1;\n\
-    output[1] = q/A;\n\
-    output[2] = C/q;\n\
+    output[0] = q/A;\n\
+    output[1] = C/q;\n\
 }\n\
 \n\
 ";
@@ -202,6 +196,7 @@ cl_float3 c /* sphere center */, cl_float r /* sphere radius */)
     cl_float3 result;
     const size_t global_size = 1;
 
+    VSET(result.s, 0, 0, 0);
     output = clCreateBuffer(clt_context, CL_MEM_USE_HOST_PTR | CL_MEM_HOST_READ_ONLY | CL_MEM_WRITE_ONLY,
 	    sizeof(cl_float3), &result, &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
@@ -395,8 +390,8 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     RT_GET_SEG(segp, ap->a_resource);
     segp->seg_stp = stp;
 
-    segp->seg_in.hit_dist = result.s[2];
-    segp->seg_out.hit_dist = result.s[1];
+    segp->seg_in.hit_dist = result.s[1];
+    segp->seg_out.hit_dist = result.s[0];
     segp->seg_in.hit_surfno = 0;
     segp->seg_out.hit_surfno = 0;
     BU_LIST_INSERT(&(seghead->l), &(segp->l));
