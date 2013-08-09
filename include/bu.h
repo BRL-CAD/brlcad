@@ -2585,17 +2585,8 @@ struct bu_cmdtab {
     int (*ct_func)(void *data, int argc, const char *argv[]);
 };
 
-
-/*----------------------------------------------------------------------*/
-/* Miscellaneous macros */
-#define bu_made_it() bu_log("Made it to %s:%d\n",	\
-			    __FILE__, __LINE__)
-/*----------------------------------------------------------------------*/
-/*
- * Declarations of external functions in LIBBU.  Source file names
- * listed alphabetically.
- */
 /**@}*/
+
 
 /** @addtogroup avs */
 /** @ingroup container */
