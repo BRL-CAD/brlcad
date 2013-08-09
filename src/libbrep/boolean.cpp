@@ -220,12 +220,6 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
     }
     sorted_pointers.QuickSort(compare_t);
 
-    if (sorted_pointers.Count()) {
-	intersect.Append(*sorted_pointers[0]);
-	intersect.Last()->m_seg = in->outerloop.Count();
-	sorted_pointers.Append(intersect.Last());
-    }
-
     for (int i = 0; i < intersect.Count(); i++) {
 	// We assume that the starting point is outside.
 	if (intersect[i].m_rank % 2 == 0) {
@@ -235,6 +229,7 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	}
     }
 
+    // Split the outer loop.
     ON_SimpleArray<ON_Curve*> outerloop;
     int isect_iter = 0;
     for (int i = 0; i < in->outerloop.Count(); i++) {
@@ -246,8 +241,15 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	for (; isect_iter < sorted_pointers.Count() && sorted_pointers[isect_iter]->m_seg == i; isect_iter++) {
 	    const IntersectPoint* isect_pt = sorted_pointers[isect_iter];
 	    ON_Curve* left = NULL;
-	    if (curve_on_loop)
-		curve_on_loop->Split(isect_pt->m_t, left, curve_on_loop);
+	    if (curve_on_loop) {
+		if (ON_NearZero(isect_pt->m_t - curve_on_loop->Domain().Max())) {
+		    // Don't call Split(), which may fail when the point is
+		    // at the ends.
+		    left = curve_on_loop;
+		    curve_on_loop = NULL;
+		} else if (!ON_NearZero(isect_pt->m_t, curve_on_loop->Domain().Min()))
+		    curve_on_loop->Split(isect_pt->m_t, left, curve_on_loop);
+	    }
 	    if (left != NULL)
 		outerloop.Append(left);
 	    else {
@@ -265,15 +267,20 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 
     // Append the first element at the last to handle some special cases.
     if (sorted_pointers.Count()) {
-	ON_Curve* dup = outerloop[0]->Duplicate();
-	if (dup != NULL) {
-	    outerloop.Append(dup);
-	    intersect.Last()->m_pos = outerloop.Count() - 1;
+	intersect.Append(*sorted_pointers[0]);
+	intersect.Last()->m_seg += in->outerloop.Count();
+	sorted_pointers.Append(intersect.Last());
+	for (int i = 0; i <= sorted_pointers[0]->m_pos; i++) {
+	    ON_Curve* dup = outerloop[i]->Duplicate();
+	    if (dup != NULL) {
+		outerloop.Append(dup);
+	    }
+	    else {
+		bu_log("ON_Curve::Duplicate() failed.\n");
+		outerloop.Append(outerloop[i]);
+	    }
 	}
-	else {
-	    bu_log("ON_Curve::Duplicate() failed.\n");
-	    outerloop.Append(outerloop[0]);
-	}
+	intersect.Last()->m_pos = outerloop.Count() - 1;
     }
 
     std::stack<int> s;
@@ -360,9 +367,11 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	out.Append(newface);
     }
 
-    // Remove the duplicated first segment.
-    if (sorted_pointers.Count())
-	outerloop.Remove();
+    // Remove the duplicated segments before the first intersection point.
+    if (sorted_pointers.Count()) {
+	for (int i = 0; i <= sorted_pointers[0]->m_pos; i++)
+	    outerloop.Remove(0);
+    }
 
     if (out.Count() == 0) {
 	out.Append(in->Duplicate());
