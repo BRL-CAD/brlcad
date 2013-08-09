@@ -147,6 +147,102 @@ double *icv_min(icv_image_t* img)
     return min;
 }
 
+double *icv_var(icv_image_t* img, size_t** bins, int n_bins)
+{
+    int i,c;
+    double *var;
+    double *mean;
+    size_t size;
+    double d;
+    var = (double *) bu_malloc(sizeof(double)*img->channels, "variance values");
+
+    size = (size_t) img->height*img->width;
+
+    mean = icv_mean(img);
+    for (i=0; i < n_bins; i++) {
+	for (c=0 ; c<img->channels; c++) {
+	    d = (double)i - n_bins*mean[c];
+	    var[c] += bins[c][i] * d * d;
+	}
+    }
+
+    for (c=0 ; c<img->channels; c++) {
+	var[c] /= size;
+    }
+
+    return var;
+}
+
+double *icv_skew(icv_image_t* img, size_t** bins, int n_bins)
+{
+    int i,c;
+    double *skew;
+    double *mean;
+    size_t size;
+    double d;
+
+    skew = (double *)bu_malloc(sizeof(double)*img->channels, "skewness values");
+
+    size = (size_t) img->height*img->width;
+
+    mean = icv_mean(img);
+    for (i=0; i < n_bins; i++) {
+	for (c=0 ; c < img->channels; c++) {
+	    d = (double)i - n_bins*mean[c];
+	    skew[c] += bins[c][i] * d * d *d;
+	}
+    }
+
+    for (c=0 ; c < img->channels; c++) {
+	skew[c] /= size;
+    }
+
+    return skew;
+}
+
+int *icv_median(icv_image_t* img, size_t** bins, int n_bins)
+{
+    int i,c;
+    int *median;
+    double *sum;
+    double *partial_sum;
+
+    median = (int *)bu_malloc(sizeof(int)*img->channels, "median values");
+    partial_sum = (double *)bu_malloc(sizeof(int)*img->channels, "partial sum values");
+
+    sum = icv_sum(img);
+
+    for (c=0; c<img->channels; c++) {
+	partial_sum[c] = 0;
+	for (i=0; i < n_bins; i++) {
+	    if(partial_sum[c] < sum[c]/2) {
+		partial_sum[c] += i*bins[c][i];
+		median[c] = i;
+	    } else break;
+	}
+    }
+
+    bu_free(partial_sum, "icv_median : partial sum values\n");
+
+    return median;
+}
+
+int *icv_mode(icv_image_t* img, size_t** bins, int n_bins)
+{
+    int i,c;
+    int *mode;
+
+    mode = (int *) bu_malloc(sizeof(int)*img->channels, "mode values");
+
+    for (c=0; c < img->channels; c++) {
+	mode[c] = 0;
+	for (i=0; i < n_bins; i++)
+	    if(bins[c][mode[c]] < bins[c][i])
+		mode[c] = i;
+    }
+    return mode;
+}
+
 /*
  * Local Variables:
  * tab-width: 8

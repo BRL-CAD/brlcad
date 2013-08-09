@@ -573,6 +573,15 @@ ICV_EXPORT double *icv_sum(icv_image_t* img);
  */
 ICV_EXPORT double *icv_max(icv_image_t* img);
 
+ICV_EXPORT int *icv_mode(icv_image_t* img, size_t** bins, int n_bins);
+
+ICV_EXPORT int *icv_median(icv_image_t* img, size_t** bins, int n_bins);
+
+ICV_EXPORT double *icv_skew(icv_image_t* img, size_t** bins, int n_bins);
+
+ICV_EXPORT double *icv_var(icv_image_t* img, size_t** bins, int n_bins);
+
+
 /** @file decimate.c
  *
  * This file contains routines to scale down an image to a lower
