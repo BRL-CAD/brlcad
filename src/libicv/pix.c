@@ -56,7 +56,7 @@ pix_save(icv_image_t *bif, const char *filename)
     }
     
     if(filename==NULL)
-	fd = 1; /* for stdout */
+	fd = fileno(stdout); /* for stdout */
     else if ((fd = open(filename, O_RDONLY, WRMODE)) < 0) {
 	bu_log("pix_save: Cannot open file for saving\n");
 	return -1;
@@ -91,7 +91,7 @@ pix_load(const char* filename, int width, int height)
     size = (size_t) height*width*3;
 
     if(filename == NULL)
-	fd = 0; /* for stdin */
+	fd = fileno(stdin); /* for stdin */
     else if ((fd = open(filename, O_RDONLY, WRMODE))<0) {
 	bu_log("bw_load: Cannot open file for reading\n");
 	return NULL;
