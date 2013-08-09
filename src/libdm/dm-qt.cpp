@@ -767,12 +767,33 @@ bool QTkMainWindow::event(QEvent *ev)
 	renderNow();
 	return true;
     }
-    else if (ev->type() == QEvent::MouseButtonPress) {
+    if (ev->type() == 6) {
+	struct bu_vls str = BU_VLS_INIT_ZERO;
+	QKeyEvent *keyEv = (QKeyEvent *)ev;
+	bu_vls_printf(&str, "event generate %V <KeyPress-%s>", &dmp->dm_pathName, keyEv->text().data());
+	if (Tcl_Eval(dmp->dm_interp, bu_vls_addr(&str)) == TCL_ERROR) {
+	    bu_log("error generate event\n");
+	}
+	return true;
+    }
+    if (ev->type() == QEvent::MouseButtonRelease) {
+	struct bu_vls str = BU_VLS_INIT_ZERO;
+	bu_vls_printf(&str, "event generate %V <ButtonRelease-1>", &dmp->dm_pathName);
+	if (Tcl_Eval(dmp->dm_interp, bu_vls_addr(&str)) == TCL_ERROR) {
+	    bu_log("error generate event\n");
+	}
+	return true;
+    }
+    if (ev->type() == QEvent::MouseButtonPress) {
 	struct bu_vls str = BU_VLS_INIT_ZERO;
 	QMouseEvent *mouseEv = (QMouseEvent *)ev;
 
-	if (mouseEv->button() == Qt::LeftButton)
-	    bu_vls_printf(&str, "event generate %V <1>", &dmp->dm_pathName);
+	if (mouseEv->button() == Qt::LeftButton) {
+	    if (mouseEv->modifiers() == Qt::ControlModifier)
+		bu_vls_printf(&str, "event generate %V <Control-ButtonPress-1>", &dmp->dm_pathName);
+	    else
+		bu_vls_printf(&str, "event generate %V <1>", &dmp->dm_pathName);
+	}
 	else
 	    bu_vls_printf(&str, "event generate %V <3>", &dmp->dm_pathName);
 
@@ -780,6 +801,17 @@ bool QTkMainWindow::event(QEvent *ev)
 	    bu_log("error generate event\n");
 	}
 	return true;
+    }
+    if (ev->type() == QEvent::MouseMove) {
+	QMouseEvent *mouseEv = (QMouseEvent *)ev;
+
+	struct bu_vls str = BU_VLS_INIT_ZERO;
+	bu_vls_printf(&str, "event generate %V <Motion> -x %d -y %d", &dmp->dm_pathName, mouseEv->x(), mouseEv->y());
+
+	if (Tcl_Eval(dmp->dm_interp, bu_vls_addr(&str)) == TCL_ERROR) {
+	    bu_log("error generate event\n");
+        }
+        return true;
     }
     return QWindow::event(ev);
 }
