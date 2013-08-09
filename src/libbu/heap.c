@@ -114,6 +114,8 @@ heap_print()
     size_t total_pages = 0;
     size_t ncpu = bu_avail_cpus();
 
+    heap_func_t log = bu_heap_log(NULL);
+
     struct bu_vls str = BU_VLS_INIT_ZERO;
 
     /* this may get atexit()-registered multiple times, so make sure
@@ -122,8 +124,6 @@ heap_print()
     if (printed++ > 0) {
 	return;
     }
-
-    heap_func_t log = bu_heap_log(NULL);
 
     log("=======================\n"
 	"Memory Heap Information\n"
