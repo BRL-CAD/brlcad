@@ -3673,12 +3673,17 @@ BU_EXPORT extern void bu_putchar(int c);
  *
  * The function is essentially a semaphore-protected version of
  * fprintf(stderr) with optional logging hooks and automatic
- * indentation options.
+ * indentation options.  The main difference is that this function
+ * does not keep track of characters printed, so nothing is returned.
+ *
+ * This function recognizes a %V format specifier to print a bu_vls
+ * struct pointer.  See bu_vsscanf() for details.
  */
 BU_EXPORT extern void bu_log(const char *, ...) _BU_ATTR_PRINTF12;
 
 /**
- * Log a library event in the Standard way, to a specified file.
+ * Just like bu_log() except that you can send output to a specified
+ * file pointer.
  */
 BU_EXPORT extern void bu_flog(FILE *, const char *, ...) _BU_ATTR_PRINTF23;
 
