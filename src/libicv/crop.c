@@ -49,7 +49,7 @@ icv_rect(icv_image_t *img, int xorig, int yorig, int xnum, int ynum)
 	bu_exit(1, "icv_rect : ERROR: Horizontal Cut Size\n");
 
     if (ynum <= 0)
-	bu_exit(1, "icv_rect : ERROR: Horizontal Cut Size\n");
+	bu_exit(1, "icv_rect : ERROR: Vertical Cut Size\n");
 
     if (xorig+xnum > img->width)
 	bu_exit(1, "icv_rect : Cut not possible, Input parameters exceeds the width\n");
