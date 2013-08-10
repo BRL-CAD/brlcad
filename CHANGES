@@ -900,3 +900,6 @@ s/rt_functab\[/OBJ\[/g
         renamed rt_functab global to OBJ so it doesn't match the struct name [7.24]
 s/redraw_vlist/draw/g
         removed redraw_vlist mged command, just call draw or refresh [7.24]
+s/RT_BADNUM/INVALID/g
+s/RT_BADVAL/VINVALID/g
+        moved RT_BADNUM and RT_BADVEC to vmath.h as INVALID and VINVALID [7.24]
