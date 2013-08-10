@@ -1254,14 +1254,7 @@ randShots(fastf_t *center, fastf_t radius, int flag)
 	    /* jitter point */
 	    VMOVE(app.a_ray.r_dir, pt);
 
-
-	    if (RT_BADVEC(app.a_ray.r_dir)) {
-		VPRINT("bad dir:", app.a_ray.r_dir);
-	    }
-
-	    if (RT_BADVEC(app.a_ray.r_pt)) {
-		VPRINT("bad pt:", app.a_ray.r_pt);
-	    } else if (flag) {
+	    if (flag) {
 		/* shoot ray */
 		rt_shootray(&app);
 	    }
