@@ -27,8 +27,8 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <unistd.h>
 
+#include "bio.h"
 #include "bu.h"
 #include "icv.h"
 
