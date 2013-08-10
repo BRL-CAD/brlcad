@@ -35,6 +35,9 @@
 #include "bn.h"
 #include "icv.h"
 
+
+
+
 /* defined in encoding.c */
 extern HIDDEN double *uchar2double(unsigned char *data, long int size);
 extern HIDDEN unsigned char *data2uchar(const icv_image_t *bif);
@@ -59,8 +62,8 @@ bw_save(icv_image_t *bif, const char *filename)
     size = (size_t) bif->height*bif->width;
     
     if(filename==NULL)
-	fd = fileno(stdout); /* for stdout */
-    else if ((fd = open(filename, O_RDONLY, WRMODE)) < 0) {
+	fd = fileno(stdout);
+    else if ((fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, WRMODE)) < 0) {
 	bu_log("bw_save: Cannot open file for saving\n");
 	return -1;
     }
@@ -92,7 +95,7 @@ bw_load(const char *filename, int width, int height)
     size = (size_t) height*width;
 
     if(filename==NULL)
-	fd = fileno(stdin); /* for stdin */
+	fd = fileno(stdin);
     else if ((fd = open(filename, O_RDONLY, WRMODE)) < 0) {
 	bu_log("bw_load: Cannot open file for reading\n");
 	return NULL;
