@@ -32,11 +32,14 @@
 #include "bu.h"
 #include "icv.h"
 
+#define __ICV_DEBUG__ bu_log("bwrect : %d\n",__LINE__);
+
 int outx=0, outy=0;		/* Number of pixels in new map */
 int xorig=0, yorig=0;		/* Bottom left corner to extract from */
 int inx=512, iny=512;
 char *out_file = NULL;
 char *in_file = NULL;
+
 
 char usage[] = "\
 Usage: bwcrop [-s squaresize] [-w width] [-n height] [-W out_width ] [-N out_height] \n\
@@ -81,27 +84,42 @@ get_args(int argc, char **argv)
 	    iny = inx = 1024;
 	    break;
 	    default : /* '?' */
-	    bu_log("%s", usage);
 	    return 0;
 	}
     }
-    if (bu_optind < argc) {
-	if ((isatty(fileno(stdin)))) {
-	    in_file = argv[bu_optind];
-	    return 1;
+    if (bu_optind >= argc) {
+	if (isatty(fileno(stdin))){
+	    return 0;
 	}
+    } else {
+        in_file = argv[bu_optind];
+        bu_optind++;
+        return 1;
     }
-    return 1;		/* OK */
+  
+
+    if (!isatty(fileno(stdout)) && out_file!=NULL){
+	return 0;
+    }
+
+    if (argc > ++bu_optind) {
+	fprintf(stderr, "bwfilter: excess argument(s) ignored\n");
+    }
+
+    return 1;	
 }
 
 int
 main(int argc, char **argv)
 {
     icv_image_t *img;
-    if(!get_args(argc, argv))
-	return 1;
+    if(!get_args(argc, argv)) {
+        bu_log("%s", usage);
+        return 1;
+    }
 
-    img = icv_load(in_file, ICV_IMAGE_BW, inx, iny);
+    if((img = icv_load(in_file, ICV_IMAGE_BW, inx, iny))==NULL)
+        return 1;
     icv_rect(img, xorig, yorig, outx, outy);
     icv_save(img, out_file , ICV_IMAGE_BW);
 
