@@ -1557,70 +1557,104 @@ FUNCTIONALITY NEEDED TO SPEED UP RAYTRACING
 DOCUMENTATION
 -------------
 
-* add missing manual pages (jra generated list on 04.2007):
+* add missing manual pages (tbrowder2 generated list 2013-08):
 
+    3dm-g
     a-d
+    alias-pix
+    all_sf
+    anim_cascade
+    anim_fly
+    anim_hardtrack
+    anim_keyread
+    anim_lookat
+    anim_offset
+    anim_orient
     archer
     asc2pix
+    bolt
+    bombardier
     bot-bldxf
-    bottest
     brep_cube
     brep_simple
+    brepintersect
+    breplicator
     brickwall
-    btclsh
+    brlman
     burst
     bw-a
     bw-d
     bwish
     c-d
     chan_add
+    check-express
     clutter
     contours
+    csgbrep
     d-a
+    d-bw
+    d-f
+    d-i
+    d-u
+    d2-c
     damdf
     dauto
     dauto2
-    d-bw
     dconv
     ddisp
-    d-f
+    dem-g
     dfft
-    d-i
     dmod
     double-asc
     dpeak
     dsel
     dsp_add
-    dstat
-    d-u
+    dstats
     dwin
     euclid_format
     euclid_unformat
-    fbgammamod
     f-d
+    f-i
+    fbgammamod
     fence
     fhor
-    f-i
-    g-adrt
+    fix_polysolids
+    g-dot
     g-euclid1
     g-jack
-    globe
     g-off
+    g-step
+    g-voxel
+    g_qa
+    gastank
+    globe
+    handle
+    human
     i-a
     i-d
     i-f
     ihist
     imod
-    istat
+    isst
+    istats
     jack-g
     kurt
+    lens
     lowp
+    masonry
+    menger
+    metaball
+    mkbuilding
     molecule
-    nmgmodel
     nmg-sgp
+    nmgmodel
     off-g
+    pdb-g
+    perplex
+    picket_fence
     pipe
-    pipetest
+    pix-spm
+    pix-yuv
     pix2g
     pix3filter
     pixcount
@@ -1630,48 +1664,48 @@ DOCUMENTATION
     pixfieldsep
     pixflip-fb
     pixpaste
-    pix-spm
-    pix-yuv
-    plstat
+    plot3-dm
+    plot3stat
     pyramid
+    raw-g
     rawbot
-    rlesortmap
-    rletovcr
+    re2c
+    ringworld
     room
     rtcell
-    rtexample
     rtfrac
     rtrad
     rtsil
     rtsrv
     script-tab
+    shp-g
     sketch
-    solshoot
+    smod
     sphflake
-    spltest
     spm-fb
     ssampview
-    syn
+    step-g
+    surfaceintersec
     tea
     tea_nmg
-    testfree
     texturescale
+    tgf-g
     torii
     ttcp
     tube
-    txyz-pl
     u-a
     u-bw
     u-d
     u-f
     umod
-    ustat
-    vcrtorle
+    ustats
     vegetation
-    wall
+    wavy
     wdb_example
-    xbmtorle
-    xyz-pl
+    window
+    window_frame
+    wire
+    xyz-plot3
     yuv-pix
 
 * DocBook: create a DB index.xml to generate a doc listing (with
