@@ -87,39 +87,74 @@ compare_for_rank(IntersectPoint* const *a, IntersectPoint* const *b)
 }
 
 
+HIDDEN bool
+IsLoopValid(const ON_SimpleArray<ON_Curve*>& loop, double tolerance, ON_PolyCurve* polycurve = NULL)
+{
+    bool delete_curve = false;
+    bool ret = true;
+
+    if (loop.Count() == 0) {
+	bu_log("The input loop is empty.\n");
+	ret = false;
+    }
+
+    // First, use a ON_PolyCurve to represent the loop.
+    if (ret) {
+	if (polycurve == NULL) {
+	    polycurve = new ON_PolyCurve;
+	    if (polycurve)
+		delete_curve = true;
+	    else
+		ret = false;
+	}
+    }
+
+    // Check the loop is continuous and closed or not.
+    if (ret) {
+	polycurve->Append(loop[0]->Duplicate());
+	for (int i = 1 ; i < loop.Count(); i++) {
+	    if (loop[i] && loop[i - 1] && loop[i]->PointAtStart().DistanceTo(loop[i-1]->PointAtEnd()) < ON_ZERO_TOLERANCE)
+		polycurve->Append(loop[i]->Duplicate());
+	    else {
+		bu_log("The input loop is not continuous.\n");
+		ret = false;
+	    }
+	}
+    }
+    if (ret && !polycurve->IsClosed()) {
+	bu_log("The input loop is not closed.\n");
+	ret = false;
+    }
+
+    if (ret) {
+	// Check whether the loop is degenerated.
+	ON_BoundingBox bbox = polycurve->BoundingBox();
+	ret = !ON_NearZero(bbox.Diagonal().Length(), tolerance)
+	      && !polycurve->IsLinear(tolerance);
+    }
+
+    if (delete_curve)
+	delete polycurve;
+
+    return ret;
+}
+
+
 HIDDEN int
 IsPointInsideLoop(const ON_2dPoint& pt, const ON_SimpleArray<ON_Curve*>& loop)
 {
     // returns:
-    //   -1: the input is not a loop
+    //   -1: the input is not a valid loop
     //   0:  the point is not inside the loop or on boundary
     //   1:  the point is inside the loop or on boundary
 
-    if (loop.Count() == 0) {
-	bu_log("The input loop is empty.\n");
-	return -1;
-    }
-
-    // First, use a ON_PolyCurve to represent the loop, and check the loop
-    // is continuous and closed or not.
     ON_PolyCurve polycurve;
-    polycurve.Append(loop[0]->Duplicate());
-    for (int i = 1 ; i < loop.Count(); i++) {
-	if (loop[i] && loop[i - 1] && loop[i]->PointAtStart().DistanceTo(loop[i-1]->PointAtEnd()) < ON_ZERO_TOLERANCE)
-	    polycurve.Append(loop[i]->Duplicate());
-	else {
-	    bu_log("The input loop is not continuous.\n");
-	    return -1;
-	}
-    }
-    if (!polycurve.IsClosed()) {
-	bu_log("The input loop is not closed.\n");
+    if (!IsLoopValid(loop, ON_ZERO_TOLERANCE, &polycurve))
 	return -1;
-    }
 
     ON_BoundingBox bbox = polycurve.BoundingBox();
     if (!bbox.IsPointIn(pt))
-	return false;
+	return 0;
 
     // The input point is inside the loop's bounding box.
     // out must be outside the closed region (and the bbox).
@@ -430,10 +465,13 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	}
 
 	// Append a trimmed face with newloop as its outerloop
-	TrimmedFace *newface = new TrimmedFace();
-	newface->face = in->face;
-	newface->outerloop.Append(newloop.Count(), newloop.Array());
-	out.Append(newface);
+	// Don't add a face if the outerloop is not valid (e.g. degenerated).
+	if (IsLoopValid(newloop, ON_ZERO_TOLERANCE)) {
+	    TrimmedFace *newface = new TrimmedFace();
+	    newface->face = in->face;
+	    newface->outerloop.Append(newloop.Count(), newloop.Array());
+	    out.Append(newface);
+	}
     }
 
     // Remove the duplicated segments before the first intersection point.
@@ -446,12 +484,14 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	out.Append(in->Duplicate());
     } else {
 	// The remaining part after splitting some parts out.
-	TrimmedFace *newface = new TrimmedFace();
-	newface->face = in->face;
-	newface->outerloop = outerloop;
-	newface->innerloop = in->innerloop;
-	newface->innerloop.insert(newface->innerloop.end(), innerloops.begin(), innerloops.end());
-	out.Append(newface);
+	if (IsLoopValid(outerloop, ON_ZERO_TOLERANCE)) {
+	    TrimmedFace *newface = new TrimmedFace();
+	    newface->face = in->face;
+	    newface->outerloop = outerloop;
+	    newface->innerloop = in->innerloop;
+	    newface->innerloop.insert(newface->innerloop.end(), innerloops.begin(), innerloops.end());
+	    out.Append(newface);
+	}
     }
 
     bu_log("Split to %d faces.\n", out.Count());
