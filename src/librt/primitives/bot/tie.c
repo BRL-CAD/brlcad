@@ -154,11 +154,11 @@ void TIE_VAL(tie_free)(struct tie_s *tie)
 
     /* Free Triangle Data */
     for (i = 0; i < tie->tri_num; i++)
-	free ((void *)((intptr_t)(tie->tri_list[i].v) & ~0x7L));
-    bu_free (tie->tri_list, "tie_free");
+	bu_free((void *)((intptr_t)(tie->tri_list[i].v) & ~0x7L), "tie_free");
+    bu_free(tie->tri_list, "tie_free");
 
     /* Free KDTREE Nodes */
-    tie_kdtree_free (tie);
+    tie_kdtree_free(tie);
 }
 
 
@@ -267,7 +267,7 @@ void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_
 	 *
 	 * Gordon Stoll's Mantra - Rays are Measured in Millions :-)
 	 */
-	while (TIE_HAS_CHILDREN(node_aligned->data)) {
+	while (node_aligned && node_aligned->data && TIE_HAS_CHILDREN(node_aligned->data)) {
 	    ray->kdtree_depth++;
 
 	    /* Retrieve the splitting plane */
@@ -293,16 +293,19 @@ void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_
 	    far = dist;
 	}
 
+	if (!node_aligned || !node_aligned->data) {
+	    /* bu_log("INTERNAL ERROR: Unexpected TIE tree traversal encountered\n"); */
+	    continue;
+	}
 
 	/*
 	 * RAY/TRIANGLE INTERSECTION - Only gets executed on geometry nodes.
 	 * This part of the function is being executed because the KDTREE Traversal is Complete.
 	 */
-	data = (struct tie_geom_s *)(node_aligned->data);
-	if (data->tri_num == 0)
-	    continue;
 
 	hit_count = 0;
+	data = (struct tie_geom_s *)(node_aligned->data);
+
 	for (i = 0; i < data->tri_num; i++) {
 	    /*
 	     * Triangle Intersection Code
@@ -331,8 +334,8 @@ void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_
 	    /* Extract i1 and i2 indices from lower bits of the v pointer */
 	    v = (tfloat *)((intptr_t)(tri->v) & ~0x7L);
 
-	    i1 = TIE_TAB1[((intptr_t)(tri->v) & 0x7)];
-	    i2 = TIE_TAB1[3 + ((intptr_t)(tri->v) & 0x7)];
+	    i1 = TIE_TAB1[((intptr_t)(tri->v) & 0x7L)];
+	    i2 = TIE_TAB1[3 + ((intptr_t)(tri->v) & 0x7L)];
 
 	    /* Compute U and V */
 	    u0 = t.pos[i1] - tri->data[0].v[i1];
