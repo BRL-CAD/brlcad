@@ -118,7 +118,7 @@ tie_kdtree_free_node(struct tie_kdtree_s *node)
 {
     struct tie_kdtree_s *node_aligned = (struct tie_kdtree_s *)((intptr_t)node & ~0x7L);
 
-    if (TIE_HAS_CHILDREN(node_aligned->data)) {
+    if (node_aligned && node_aligned->data && TIE_HAS_CHILDREN(node_aligned->data)) {
 	/* Node Data is KDTREE Children, Recurse */
 	tie_kdtree_free_node(&((struct tie_kdtree_s *)(((intptr_t)(node_aligned->data)) & ~0x7L))[0]);
 	tie_kdtree_free_node(&((struct tie_kdtree_s *)(((intptr_t)(node_aligned->data)) & ~0x7L))[1]);
@@ -126,12 +126,15 @@ tie_kdtree_free_node(struct tie_kdtree_s *node)
 	/* This node points to a geometry node, free it */
 	struct tie_geom_s *tmp;
 	tmp = (struct tie_geom_s *)((intptr_t)(node_aligned->data) & ~0x7L);
-	if (tmp->tri_num > 0) {
-	    bu_free(tmp->tri_list, "tri_list");
+	if (tmp) {
+	    if (tmp->tri_num > 0) {
+		bu_free(tmp->tri_list, "tri_list");
+	    }
+	    bu_free(tmp, "data");
 	}
-	bu_free(tmp, "data");
     }
 }
+
 
 static void
 tie_kdtree_prep_head(struct tie_s *tie, struct tie_tri_s *tri_list, unsigned int tri_num)
@@ -595,15 +598,15 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
 
     /* Allocate 2 children nodes for the parent node */
     node->data = (void *)bu_calloc(2, sizeof(struct tie_kdtree_s), __FUNCTION__);
-    if(((size_t)node->data & 7L))
-	bu_log("node->data 0x%X is not aligned! %zu\n", node->data, (size_t)node->data & 7L);
+    if(((intptr_t)node->data & 0x7L))
+	bu_log("node->data 0x%X is not aligned! %zu\n", node->data, (intptr_t)node->data & 0x7L);
 
     BU_ALLOC(((struct tie_kdtree_s *)(node->data))[0].data, struct tie_geom_s);
-    if(((size_t)((struct tie_kdtree_s *)(node->data))[0].data & 7L))
+    if(((intptr_t)((struct tie_kdtree_s *)(node->data))[0].data & 0x7L))
 	bu_log("node->data[0].data 0x%X is not aligned!\n", ((struct tie_kdtree_s *)(node->data))[0].data);
 
     BU_ALLOC(((struct tie_kdtree_s *)(node->data))[1].data, struct tie_geom_s);
-    if(((size_t)((struct tie_kdtree_s *)(node->data))[1].data & 7L))
+    if(((intptr_t)((struct tie_kdtree_s *)(node->data))[1].data & 0x7L))
 	bu_log("node->data[1].data 0x%X is not aligned!\n", ((struct tie_kdtree_s *)(node->data))[1].data);
 
     /* Initialize Triangle List */
@@ -699,9 +702,10 @@ TIE_VAL(tie_kdtree_free)(struct tie_s *tie)
 {
     /* Free KDTREE Nodes */
     /* prevent tie from crashing when a tie_free() is called right after a tie_init() */
-    if (tie->kdtree)
+    if (tie->kdtree) {
 	tie_kdtree_free_node(tie->kdtree);
-    bu_free(tie->kdtree, "kdtree");
+	bu_free(tie->kdtree, "kdtree");
+    }
 }
 
 void
@@ -729,8 +733,9 @@ TIE_VAL(tie_kdtree_prep)(struct tie_s *tie)
     if (!already_built) {
 	if (g->tri_num)
 	    g->tri_list = (struct tie_tri_s **)bu_realloc(g->tri_list, sizeof(struct tie_tri_s *) * g->tri_num, "prep tri_list");
-    } else
+    } else {
 	bu_free(g->tri_list, "tri_list");
+    }
 
     /*
      * Compute Floating Fuzz Precision Value
