@@ -74,6 +74,7 @@ struct sph_specific {
 
 
 #ifdef OPENCL
+const int clt_semaphore = 12; /* FIXME: for testing; this isn't our semaphore */
 static int clt_initialized = 0;
 static cl_device_id clt_device;
 static cl_context clt_context;
@@ -97,7 +98,7 @@ clt_cleanup()
 
 
 const char * const clt_program_code = "\
-__kernel void ell_shot(__global double3 *output, double3 o, double3 l, double3 c, double r)\n\
+__kernel void sph_shot(__global __write_only double3 *output, double3 o, double3 l, double3 c, double r)\n\
 {\n\
     double A = dot(l, l);\n\
     double B = 2*dot(l, o-c);\n\
@@ -166,7 +167,12 @@ clt_init()
 {
     cl_int error;
 
-    if (clt_initialized) return;
+    bu_semaphore_acquire(clt_semaphore);
+    if (clt_initialized) {
+	bu_semaphore_release(clt_semaphore);
+	return;
+    }
+
     clt_initialized = 1;
     atexit(clt_cleanup);
 
@@ -180,10 +186,11 @@ clt_init()
 
     clt_program = clt_get_program(clt_context, clt_device, clt_program_code);
 
-    clt_kernel = clCreateKernel(clt_program, "ell_shot", &error);
+    clt_kernel = clCreateKernel(clt_program, "sph_shot", &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
 
     bu_log("initialized OpenCL");
+    bu_semaphore_release(clt_semaphore);
 }
 
 
@@ -194,12 +201,17 @@ cl_double3 c /* sphere center */, cl_double r /* sphere radius */)
     cl_int error;
     cl_mem output;
     cl_double3 result;
+    cl_event done_kernel;
     const size_t global_size = 1;
+
 
     VSET(result.s, 0, 0, 0);
     output = clCreateBuffer(clt_context, CL_MEM_USE_HOST_PTR | CL_MEM_HOST_READ_ONLY | CL_MEM_WRITE_ONLY,
 	    sizeof(cl_double3), &result, &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
+
+    /* it's too expensive to create a new kernel for each shot; disable parallelism from librt */
+    bu_semaphore_acquire(clt_semaphore);
 
     error = clSetKernelArg(clt_kernel, 0, sizeof(cl_mem), &output);
     error |= clSetKernelArg(clt_kernel, 1, sizeof(cl_double3), &o);
@@ -208,10 +220,12 @@ cl_double3 c /* sphere center */, cl_double r /* sphere radius */)
     error |= clSetKernelArg(clt_kernel, 4, sizeof(cl_double), &r);
     if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
 
-    error = clEnqueueNDRangeKernel(clt_queue, clt_kernel, 1, NULL, &global_size, NULL, 0, NULL, NULL);
+    error = clEnqueueNDRangeKernel(clt_queue, clt_kernel, 1, NULL, &global_size, NULL, 0, NULL, &done_kernel);
     if (error != CL_SUCCESS) bu_bomb("failed to enqueue OpenCL kernel");
+    if (clWaitForEvents(1, &done_kernel) != CL_SUCCESS) bu_bomb("failure in clWaitForEvents()");
 
-    if (clFinish(clt_queue) != CL_SUCCESS) bu_bomb("failure in clFinish");
+    bu_semaphore_release(clt_semaphore);
+
     clReleaseMemObject(output);
     return result;
 }
