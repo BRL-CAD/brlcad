@@ -34,8 +34,8 @@ extern "C" {
  * the object. 0x4 marks if the node has children (is set to 0 for a leaf), the
  * last two are the encoding for the splitting plane. Allocation must be a
  * multiple of 8. */
-#define TIE_HAS_CHILDREN(ptr) (((size_t)(ptr))&0x4)
-#define TIE_SET_HAS_CHILDREN(ptr) (((size_t)(ptr))|0x4)
+#define TIE_HAS_CHILDREN(ptr) (((intptr_t)(ptr))&0x4L)
+#define TIE_SET_HAS_CHILDREN(ptr) (((intptr_t)(ptr))|0x4L)
 
 struct tie_geom_s {
     struct tie_tri_s **tri_list;
