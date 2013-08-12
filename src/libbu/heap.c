@@ -88,12 +88,10 @@ struct cpus {
 static struct cpus per_cpu[MAX_PSW] = {{{{0, 0, 0}}, 0}};
 
 
-typedef int (*heap_func_t)(const char *, ...);
-
-heap_func_t
-bu_heap_log(heap_func_t log)
+bu_heap_func_t
+bu_heap_log(bu_heap_func_t log)
 {
-    static heap_func_t heap_log = (heap_func_t)&bu_log;
+    static bu_heap_func_t heap_log = (bu_heap_func_t)&bu_log;
 
     if (log)
 	heap_log = log;
@@ -114,7 +112,7 @@ heap_print()
     size_t total_pages = 0;
     size_t ncpu = bu_avail_cpus();
 
-    heap_func_t log = bu_heap_log(NULL);
+    bu_heap_func_t log = bu_heap_log(NULL);
 
     struct bu_vls str = BU_VLS_INIT_ZERO;
 
