@@ -382,14 +382,44 @@ rt_hrt_export5()
 /**
  * R T _ H R T _ I M P O R T 5
  *
- * Import a HRT from the database format to the internal format.
+ * Import a heart from the database format to the internal format.
  *
  */
 int
-rt_hrt_import5()
+rt_hrt_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
-    bu_log("rt_hrt_import5: Not implemented yet!\n");
-    return 0;
+    struct rt_hrt_internal *hip;
+
+    /* must be double for import and export */
+    double hec[ELEMENTS_PER_VECT*4 + 1];
+    
+    if(dbip) RT_CK_DBI(dbip);
+    
+    RT_CK_DB_INTERNAL(ip);
+    BU_CK_EXTERNAL(ep);
+
+    BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * (ELEMENTS_PER_VECT*4 + 1));
+
+    ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    ip->idb_type = ID_HRT;
+    ip->idb_meth = &OBJ[ID_HRT];
+    BU_ALLOC(ip->idb_ptr, struct rt_hrt_internal);
+
+    hip = (struct rt_hrt_internal *)ip->idb_ptr;
+    hip->hrt_magic = RT_HRT_INTERNAL_MAGIC;
+
+    /* Convert from database(network) to internal (host) format */
+    ntohd((unsigned char *)hec, ep->ext_buf, ELEMENTS_PER_VECT*4 + 1);
+
+    /* Apply modelling transormations */
+    if(mat == NULL) mat = bn_mat_identity;
+    MAT4X3PNT(hip->v, mat, &hec[0*ELEMENTS_PER_VECT]);
+    MAT4X3PNT(hip->xdir, mat, &hec[1*ELEMENTS_PER_VECT]);
+    MAT4X3PNT(hip->ydir, mat, &hec[2*ELEMENTS_PER_VECT]);
+    MAT4X3PNT(hip->zdir, mat, &hec[3*ELEMENTS_PER_VECT]); 
+    hip->d = hec[4*ELEMENTS_PER_VECT];
+
+    return 0;        /* OK */
 }
 
 
