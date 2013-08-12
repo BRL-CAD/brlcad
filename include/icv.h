@@ -219,7 +219,7 @@ ICV_EXPORT extern icv_image_t *icv_zero(icv_image_t *bif);
  * This function frees the allocated memory for a ICV Structure and
  * data.
  */
-ICV_EXPORT extern void icv_free(icv_image_t *bif);
+ICV_EXPORT extern void icv_destroy(icv_image_t *bif);
 
 /** @file libicv/color_space.c
  *

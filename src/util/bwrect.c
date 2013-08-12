@@ -123,7 +123,7 @@ main(int argc, char **argv)
     icv_rect(img, xorig, yorig, outx, outy);
     icv_write(img, out_file , ICV_IMAGE_BW);
 
-    icv_free(img);
+    icv_destroy(img);
     return 0;
 }
 

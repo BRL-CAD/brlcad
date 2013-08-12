@@ -332,7 +332,7 @@ icv_zero(icv_image_t *bif)
 
 
 void
-icv_free(icv_image_t *bif)
+icv_destroy(icv_image_t *bif)
 {
     bu_free(bif->data, "Image Data");
     bu_free(bif, "ICV IMAGE Structure");

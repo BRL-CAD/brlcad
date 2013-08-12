@@ -921,7 +921,7 @@ do_frame(int framenumber)
     }
     if (bif != NULL) {
 	icv_write(bif, framename, ICV_IMAGE_AUTO);
-	icv_free(bif);
+	icv_destroy(bif);
 	bif = NULL;
     }
 
