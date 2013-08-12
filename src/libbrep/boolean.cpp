@@ -71,7 +71,7 @@ struct IntersectPoint {
 };
 
 
-int
+HIDDEN int
 compare_t(IntersectPoint* const *a, IntersectPoint* const *b)
 {
     if ((*a)->m_seg != (*b)->m_seg)
@@ -80,7 +80,7 @@ compare_t(IntersectPoint* const *a, IntersectPoint* const *b)
 }
 
 
-int
+HIDDEN int
 compare_for_rank(IntersectPoint* const *a, IntersectPoint* const *b)
 {
     return (*a)->m_t_for_rank - (*b)->m_t_for_rank;
@@ -240,7 +240,7 @@ link_curves(const ON_SimpleArray<ON_Curve*>& in, ON_SimpleArray<ON_Curve*>& out)
 }
 
 
-int
+HIDDEN int
 split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, const ON_SimpleArray<ON_Curve*> &curves_in)
 {
     /* We followed the algorithms described in:
@@ -526,7 +526,7 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 }
 
 
-void
+HIDDEN void
 add_elements(ON_Brep *brep, ON_BrepFace &face, ON_SimpleArray<ON_Curve*> &loop, ON_BrepLoop::TYPE loop_type)
 {
     if (!loop.Count())
