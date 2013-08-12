@@ -55,9 +55,9 @@ ICV_EXPORT extern int icv_rot(int argv, char **argc);
 /** @{ */
 /** @file libicv/fileformat.c
  *
- * image save/read routines
+ * image read/write routines
  *
- * save or read images in a variety of formats.
+ * read/write images in a variety of formats.
  *
  */
 
@@ -181,10 +181,13 @@ ICV_EXPORT int icv_writeline(icv_image_t *bif, int y, void *data, ICV_DATA type)
 ICV_EXPORT int icv_writepixel(icv_image_t *bif, int x, int y, double *data);
 
 /**
- * Saves Image to a file of respective format
+ * Saves Image to a file or streams to stdout in respective format
+ *
+ * To stream it to stdout pass NULL pointer for filename.
+ *
  * @param bif Image structure of file.
- * @param filename Filename of the file to be saved
- * @param format Specific format of the file to be saved.
+ * @param filename Filename of the file to be written.
+ * @param format Specific format of the file to be written.
  * @return on success 0, on failure -1 with log messages.
  */
 ICV_EXPORT extern int icv_write(icv_image_t *bif, const char*filename, ICV_IMAGE_FORMAT format);
@@ -199,6 +202,8 @@ ICV_EXPORT extern int icv_write(icv_image_t *bif, const char*filename, ICV_IMAGE
  * heuristic sizing algorithm based on file size, assuming that the image is
  * square at first, then looking through a set of common sizes, finally assuming
  * 512x512.
+ *
+ * To read stream from stdin pass NULL pointer for filename.
  *
  * @param filename File to read
  * @param hint_format Probable format of the file, typically ICV_IMAGE_AUTO
