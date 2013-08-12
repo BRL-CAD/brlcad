@@ -142,8 +142,9 @@ struct hrt_specific {
     vect_t hrt_Y; /* unit-length Y vector */
     vect_t hrt_Z; /* unit-length Z vector */
     fastf_t hrt_d; /* for distance to upper and lower cusps */
+    vect_t hrt_invsq; /* [ 1.0 / |X|**2, 1.0 / |Y|**2, 1.0 / |Z|**2 ] */
     mat_t hrt_SoR; /* Scale(Rot(vect)) */
-    mat_t hrt_invR; /* invRot(vect') */
+    mat_t hrt_invRSSR; /* invRot(Scale(Scale(vect))) */
 };
 
 
