@@ -55,9 +55,9 @@ ICV_EXPORT extern int icv_rot(int argv, char **argc);
 /** @{ */
 /** @file libicv/fileformat.c
  *
- * image save/load routines
+ * image save/read routines
  *
- * save or load images in a variety of formats.
+ * save or read images in a variety of formats.
  *
  */
 
@@ -200,14 +200,14 @@ ICV_EXPORT extern int icv_write(icv_image_t *bif, const char*filename, ICV_IMAGE
  * square at first, then looking through a set of common sizes, finally assuming
  * 512x512.
  *
- * @param filename File to load
+ * @param filename File to read
  * @param hint_format Probable format of the file, typically ICV_IMAGE_AUTO
  * @param hint_width Width when passed as parameter from calling program. 0 for default
  * @param hint_height Height when passed as parameter from calling program. 0 for default
  * @param hint_depth Default depth field, 0 for default.
  * @return A newly allocated struct holding the loaded image info.
  */
-ICV_EXPORT extern icv_image_t *icv_load(const char *filename, int format, int width, int height);
+ICV_EXPORT extern icv_image_t *icv_read(const char *filename, int format, int width, int height);
 
 /**
  * This function zeroes all the data entries of an image

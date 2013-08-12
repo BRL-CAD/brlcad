@@ -75,7 +75,7 @@ pix_write(icv_image_t *bif, const char *filename)
 
 
 HIDDEN icv_image_t *
-pix_load(const char* filename, int width, int height)
+pix_read(const char* filename, int width, int height)
 {
     int fd;
     unsigned char *data = 0;
@@ -93,20 +93,20 @@ pix_load(const char* filename, int width, int height)
     if(filename == NULL)
 	fd = fileno(stdin);
     else if ((fd = open(filename, O_RDONLY, WRMODE))<0) {
-	bu_log("bw_load: Cannot open file for reading\n");
+	bu_log("bw_read: Cannot open file for reading\n");
 	return NULL;
 	}
 
-    data = (unsigned char *)bu_malloc(size, "pix_load : unsigned char data");
+    data = (unsigned char *)bu_malloc(size, "pix_read : unsigned char data");
     if (read(fd, data, size) != size) {
-	bu_log("pix_load: Error Occurred while Reading\n");
+	bu_log("pix_read: Error Occurred while Reading\n");
 	bu_free(data, "icv_image data");
 	return NULL;
     }
     BU_ALLOC(bif, struct icv_image);
     ICV_IMAGE_INIT(bif);
     bif->data = uchar2double(data, size);
-    bu_free(data, "pix_load : unsigned char data");
+    bu_free(data, "pix_read : unsigned char data");
     bif->magic = ICV_IMAGE_MAGIC;
     bif->height = height;
     bif->width = width;

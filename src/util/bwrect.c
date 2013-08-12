@@ -118,7 +118,7 @@ main(int argc, char **argv)
         return 1;
     }
 
-    if((img = icv_load(in_file, ICV_IMAGE_BW, inx, iny))==NULL)
+    if((img = icv_read(in_file, ICV_IMAGE_BW, inx, iny))==NULL)
         return 1;
     icv_rect(img, xorig, yorig, outx, outy);
     icv_write(img, out_file , ICV_IMAGE_BW);

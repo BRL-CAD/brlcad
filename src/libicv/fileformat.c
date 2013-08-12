@@ -49,11 +49,11 @@ extern HIDDEN unsigned char *data2uchar(const icv_image_t *bif);
 
 /* defined in bw.c */
 extern HIDDEN int bw_write(icv_image_t *bif, const char *filename);
-extern HIDDEN icv_image_t *bw_load(const char *filename, int width, int height);
+extern HIDDEN icv_image_t *bw_read(const char *filename, int width, int height);
 
 /* defined in pix.c */
 extern HIDDEN int pix_write(icv_image_t *bif, const char *filename);
-extern HIDDEN icv_image_t *pix_load(const char* filename, int width, int height);
+extern HIDDEN icv_image_t *pix_read(const char* filename, int width, int height);
 
 /* private functions */
 
@@ -195,7 +195,7 @@ ppm_write(icv_image_t *bif, const char *filename)
 /* begin public functions */
 
 icv_image_t *
-icv_load(const char *filename, int format, int width, int height)
+icv_read(const char *filename, int format, int width, int height)
 {
     if (format == ICV_IMAGE_AUTO) {
 	/* do some voodoo with the file magic or something... */
@@ -204,11 +204,11 @@ icv_load(const char *filename, int format, int width, int height)
 
     switch(format) {
 	case ICV_IMAGE_PIX:
-	    return pix_load(filename, width, height);
+	    return pix_read(filename, width, height);
 	case ICV_IMAGE_BW :
-	    return bw_load(filename, width, height);
+	    return bw_read(filename, width, height);
 	default:
-	    bu_log("icv_load not implemented for this format\n");
+	    bu_log("icv_read not implemented for this format\n");
 	    return NULL;
     }
 }
