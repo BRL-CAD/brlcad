@@ -153,8 +153,10 @@ void TIE_VAL(tie_free)(struct tie_s *tie)
     unsigned int i;
 
     /* Free Triangle Data */
-    for (i = 0; i < tie->tri_num; i++)
-	bu_free((void *)((intptr_t)(tie->tri_list[i].v) & ~0x7L), "tie_free");
+    for (i = 0; i < tie->tri_num; i++) {
+	tfloat *ptr = (tfloat *)((intptr_t)(tie->tri_list[i].v) & ~0x7L);
+	bu_free(ptr, "free tfloat list");
+    }
     bu_free(tie->tri_list, "tie_free");
 
     /* Free KDTREE Nodes */
@@ -453,8 +455,8 @@ void TIE_VAL(tie_push)(struct tie_s *tie, TIE_3 **tlist, unsigned int tnum, void
 	    plist = (void *)((intptr_t)plist + pstride);
 
 	/* ??? this looks like it might cause fragmentation? use a memory pool? */
-	tie->tri_list[tie->tri_num].v = (tfloat *)malloc(2*sizeof(tfloat));
-	if(tie->tri_list[tie->tri_num].v == NULL)
+	tie->tri_list[tie->tri_num].v = (tfloat *)bu_malloc(2*sizeof(tfloat), "alloc tfloat list");
+	if (tie->tri_list[tie->tri_num].v == NULL)
 	    bu_log("Bad malloc! %s:%s:%d\n", __FILE__, __FUNCTION__, __LINE__);
 	tie->tri_num++;
     }
