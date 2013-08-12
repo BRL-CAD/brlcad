@@ -920,7 +920,7 @@ do_frame(int framenumber)
 	       wallclock, ((double)(rtip->rti_nrays))/wallclock);
     }
     if (bif != NULL) {
-	icv_save(bif, framename, ICV_IMAGE_AUTO);
+	icv_write(bif, framename, ICV_IMAGE_AUTO);
 	icv_free(bif);
 	bif = NULL;
     }

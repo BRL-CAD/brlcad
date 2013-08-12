@@ -48,11 +48,11 @@ extern HIDDEN double *uchar2double(unsigned char *data, long int size);
 extern HIDDEN unsigned char *data2uchar(const icv_image_t *bif);
 
 /* defined in bw.c */
-extern HIDDEN int bw_save(icv_image_t *bif, const char *filename);
+extern HIDDEN int bw_write(icv_image_t *bif, const char *filename);
 extern HIDDEN icv_image_t *bw_load(const char *filename, int width, int height);
 
 /* defined in pix.c */
-extern HIDDEN int pix_save(icv_image_t *bif, const char *filename);
+extern HIDDEN int pix_write(icv_image_t *bif, const char *filename);
 extern HIDDEN icv_image_t *pix_load(const char* filename, int width, int height);
 
 /* private functions */
@@ -113,7 +113,7 @@ icv_guess_file_format(const char *filename, char *trimmedname)
 }
 
 HIDDEN int
-png_save(icv_image_t *bif, const char *filename)
+png_write(icv_image_t *bif, const char *filename)
 {
     png_structp png_ptr = NULL;
     png_infop info_ptr = NULL;
@@ -125,7 +125,7 @@ png_save(icv_image_t *bif, const char *filename)
     fh = fopen(filename, "w");
     if (UNLIKELY(fh==NULL)) {
 	perror("fdopen");
-	bu_log("ERROR: png_save failed to get a FILE pointer\n");
+	bu_log("ERROR: png_write failed to get a FILE pointer\n");
 	return 0;
     }
 
@@ -160,7 +160,7 @@ png_save(icv_image_t *bif, const char *filename)
 }
 
 HIDDEN int
-ppm_save(icv_image_t *bif, const char *filename)
+ppm_write(icv_image_t *bif, const char *filename)
 {
     unsigned char *data;
     int fd;
@@ -172,7 +172,7 @@ ppm_save(icv_image_t *bif, const char *filename)
     if (bif->color_space == ICV_COLOR_SPACE_GRAY) {
 	icv_gray2rgb(bif);
     } else if (bif->color_space != ICV_COLOR_SPACE_RGB) {
-	bu_log("ppm_save : Color Space conflict");
+	bu_log("ppm_write : Color Space conflict");
 	return -1;
     }
     data =  data2uchar(bif);
@@ -184,7 +184,7 @@ ppm_save(icv_image_t *bif, const char *filename)
     ret = write(fd, data, size);
     close(fd);
     if (ret != size) {
-	bu_log("ppm_save : Short Write");
+	bu_log("ppm_write : Short Write");
 	return -1;
     }
     return 0;
@@ -215,7 +215,7 @@ icv_load(const char *filename, int format, int width, int height)
 
 
 int
-icv_save(icv_image_t *bif, const char *filename, ICV_IMAGE_FORMAT format)
+icv_write(icv_image_t *bif, const char *filename, ICV_IMAGE_FORMAT format)
 {
     /* FIXME: should not be introducing fixed size buffers */
     char buf[BUFSIZ] = {0};
@@ -226,20 +226,20 @@ icv_save(icv_image_t *bif, const char *filename, ICV_IMAGE_FORMAT format)
 
     switch(format) {
 	/* case ICV_IMAGE_BMP:
-	   return bmp_save(bif, filename); */
+	   return bmp_write(bif, filename); */
 	case ICV_IMAGE_PPM:
-	    return ppm_save(bif, filename);
+	    return ppm_write(bif, filename);
 	case ICV_IMAGE_PNG:
-	    return png_save(bif, filename);
+	    return png_write(bif, filename);
 	case ICV_IMAGE_PIX:
-	    return pix_save(bif, filename);
+	    return pix_write(bif, filename);
 	case ICV_IMAGE_BW:
-	    return bw_save(bif, filename);
+	    return bw_write(bif, filename);
 	default:
 	    bu_log("Unrecognized format.  Outputting in PIX format.\n");
     }
 
-    return pix_save(bif, filename);
+    return pix_write(bif, filename);
 }
 
 

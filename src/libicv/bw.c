@@ -45,7 +45,7 @@ extern HIDDEN unsigned char *data2uchar(const icv_image_t *bif);
 #define WRMODE S_IRUSR|S_IRGRP|S_IROTH
 
 HIDDEN int
-bw_save(icv_image_t *bif, const char *filename)
+bw_write(icv_image_t *bif, const char *filename)
 {
 
     unsigned char *data;
@@ -55,24 +55,24 @@ bw_save(icv_image_t *bif, const char *filename)
     if (bif->color_space == ICV_COLOR_SPACE_RGB) {
 	icv_rgb2gray(bif, 0, 0, 0, 0, 0);
     } else if (bif->color_space != ICV_COLOR_SPACE_GRAY) {
-	bu_log("bw_save : Color Space conflict");
+	bu_log("bw_write : Color Space conflict");
 	return -1;
     }
     data =  data2uchar(bif);
     size = (size_t) bif->height*bif->width;
-    
+
     if(filename==NULL)
 	fd = fileno(stdout);
     else if ((fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, WRMODE)) < 0) {
-	bu_log("bw_save: Cannot open file for saving\n");
+	bu_log("bw_write: Cannot open file for saving\n");
 	return -1;
     }
 
     ret = write(fd, data, size);
     close(fd);
-    bu_free(data, "bw_save : Unsigned Char data");
+    bu_free(data, "bw_write : Unsigned Char data");
     if (ret != size) {
-	bu_log("bw_save : Short Write\n");
+	bu_log("bw_write : Short Write\n");
 	return -1;
     }
 

@@ -187,7 +187,7 @@ ICV_EXPORT int icv_writepixel(icv_image_t *bif, int x, int y, double *data);
  * @param format Specific format of the file to be saved.
  * @return on success 0, on failure -1 with log messages.
  */
-ICV_EXPORT extern int icv_save(icv_image_t *bif, const char*filename, ICV_IMAGE_FORMAT format);
+ICV_EXPORT extern int icv_write(icv_image_t *bif, const char*filename, ICV_IMAGE_FORMAT format);
 
 /**
  * Load a file into an ICV struct. For most formats, this will be called with

@@ -42,7 +42,7 @@ extern HIDDEN double *uchar2double(unsigned char *data, long int size);
 extern HIDDEN unsigned char *data2uchar(const icv_image_t *bif);
 
 HIDDEN int
-pix_save(icv_image_t *bif, const char *filename)
+pix_write(icv_image_t *bif, const char *filename)
 {
     unsigned char *data;
     int fd;
@@ -51,14 +51,14 @@ pix_save(icv_image_t *bif, const char *filename)
     if (bif->color_space == ICV_COLOR_SPACE_GRAY) {
 	icv_gray2rgb(bif);
     } else if (bif->color_space != ICV_COLOR_SPACE_RGB) {
-	bu_log("pix_save : Color Space conflict");
+	bu_log("pix_write : Color Space conflict");
 	return -1;
     }
     
     if(filename==NULL)
 	fd = fileno(stdout);
     else if ((fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, WRMODE)) < 0) {
-	bu_log("pix_save: Cannot open file for saving\n");
+	bu_log("pix_write: Cannot open file for saving\n");
 	return -1;
     }
     
@@ -67,7 +67,7 @@ pix_save(icv_image_t *bif, const char *filename)
     ret = write(fd, data, size);
     close(fd);
     if (ret != size) {
-	bu_log("pix_save : Short Write");
+	bu_log("pix_write : Short Write");
 	return -1;
     }
     return 0;

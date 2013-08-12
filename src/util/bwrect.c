@@ -121,7 +121,7 @@ main(int argc, char **argv)
     if((img = icv_load(in_file, ICV_IMAGE_BW, inx, iny))==NULL)
         return 1;
     icv_rect(img, xorig, yorig, outx, outy);
-    icv_save(img, out_file , ICV_IMAGE_BW);
+    icv_write(img, out_file , ICV_IMAGE_BW);
 
     icv_free(img);
     return 0;
