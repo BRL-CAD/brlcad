@@ -352,7 +352,14 @@ rt_bot_makesegs(struct hit *hits, size_t nhits, struct soltab *stp, struct xray 
 int
 rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
-    struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
+    struct bot_specific *bot;
+
+    if (UNLIKELY(!stp || !ap || !seghead))
+	return 0;
+
+    bot = (struct bot_specific *)stp->st_specific;
+    if (UNLIKELY(!bot))
+	return 0;
 
     if (bot->tie != NULL) {
 	return bottie_shot_double(stp, rp, ap, seghead);
