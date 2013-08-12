@@ -210,22 +210,18 @@ cl_double3 c /* sphere center */, cl_double r /* sphere radius */)
 	    sizeof(cl_double3), &result, &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
 
-    /* it's too expensive to create a new kernel for each shot; disable parallelism from librt */
     bu_semaphore_acquire(clt_semaphore);
-
     error = clSetKernelArg(clt_kernel, 0, sizeof(cl_mem), &output);
     error |= clSetKernelArg(clt_kernel, 1, sizeof(cl_double3), &o);
     error |= clSetKernelArg(clt_kernel, 2, sizeof(cl_double3), &l);
     error |= clSetKernelArg(clt_kernel, 3, sizeof(cl_double3), &c);
     error |= clSetKernelArg(clt_kernel, 4, sizeof(cl_double), &r);
     if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
-
     error = clEnqueueNDRangeKernel(clt_queue, clt_kernel, 1, NULL, &global_size, NULL, 0, NULL, &done_kernel);
-    if (error != CL_SUCCESS) bu_bomb("failed to enqueue OpenCL kernel");
-    if (clWaitForEvents(1, &done_kernel) != CL_SUCCESS) bu_bomb("failure in clWaitForEvents()");
-
     bu_semaphore_release(clt_semaphore);
+    if (error != CL_SUCCESS) bu_bomb("failed to enqueue OpenCL kernel");
 
+    if (clFinish(clt_queue) != CL_SUCCESS) bu_bomb("failure in clFinish()");
     clReleaseMemObject(output);
     return result;
 }
