@@ -370,11 +370,42 @@ rt_hrt_tess()
 
 /**
  * R T _ H R T _ E X P O R T 5
+ *
+ * The external form is:
+ * V point
+ * Xdir vector
+ * Ydir vector
+ * Zdir vector
  */
 int
-rt_hrt_export5()
+rt_hrt_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
-    bu_log("rt_hrt_export5: Not implemented yet!\n");
+    struct rt_hrt_internal *hip;
+
+    /* must be double for import and export */
+    double hec[ELEMENTS_PER_VECT*4 + 1];
+
+    if (dbip) RT_CK_DBI(dbip);
+
+    RT_CK_DB_INTERNAL(ip);
+    if (ip->idb_type != ID_HRT) return -1;
+    hip = (struct rt_hrt_internal *)ip->idb_ptr;
+    RT_HRT_CK_MAGIC(hip);
+
+    BU_CK_EXTERNAL(ep);
+    ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * (ELEMENTS_PER_VECT*4 + 1);
+    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "hrt external");
+
+    /* scale values to local buffer */
+    VSCALE(&hec[0*ELEMENTS_PER_VECT], hip->v, local2mm);
+    VSCALE(&hec[1*ELEMENTS_PER_VECT], hip->xdir, local2mm);
+    VSCALE(&hec[2*ELEMENTS_PER_VECT], hip->ydir, local2mm);
+    VSCALE(&hec[3*ELEMENTS_PER_VECT], hip->zdir, local2mm);
+    hec[4*ELEMENTS_PER_VECT] = hip->d;
+
+    /* Convert from internal (host) to database (network) format */
+    htond(ep->ext_buf, (unsigned char *)hec, ELEMENTS_PER_VECT*4 + 1);
+
     return 0;
 }
 
