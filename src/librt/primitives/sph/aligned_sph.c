@@ -82,6 +82,28 @@ static cl_program clt_program;
 static cl_kernel clt_kernel;
 
 
+struct AlignedPtr
+{
+    void *alloc;
+    void *ptr;
+};
+
+
+inline struct AlignedPtr
+aligned_malloc(size_t alignment, size_t size)
+{
+    struct AlignedPtr ap;
+    ap.alloc = bu_malloc(size + alignment - 1, "failed to allocate memory in align()");
+    ap.ptr = (void *)(((uintptr_t)ap.alloc + alignment - 1) / alignment*alignment);
+    return ap;
+}
+
+
+#define ALIGNED_SET(name, type, value) \
+    {(name) = aligned_malloc(sizeof(type), sizeof(type));\
+    *((type *)name.ptr) = (value);}
+
+
 static void
 clt_cleanup()
 {
@@ -97,19 +119,19 @@ clt_cleanup()
 
 
 const char * const clt_program_code = "\
-__kernel void ell_shot(__global double3 *output, double3 o, double3 l, double3 c, double r)\n\
+__kernel void ell_shot(__global float *output, float3 o, float3 l, float3 c, float r)\n\
 {\n\
-    double A = dot(l, l);\n\
-    double B = 2*dot(l, o-c);\n\
-    double C = dot(o-c, o-c) - r*r;\n\
-    double disc = B*B - 4*A*C;\n\
+    float A = dot(l, l);\n\
+    float B = 2*dot(l, o-c);\n\
+    float C = dot(o-c, o-c) - r*r;\n\
+    float disc = B*B - 4*A*C;\n\
 \n\
     if (disc <= 0) return;\n\
 \n\
-    double q = B < 0 ? (-B + sqrt(disc))/2 : (-B - sqrt(disc))/2;\n\
+    float q = B < 0 ? (-B + sqrt(disc))/2 : (-B - sqrt(disc))/2;\n\
     \n\
-    (*output)[0] = q/A;\n\
-    (*output)[1] = C/q;\n\
+    output[0] = q/A;\n\
+    output[1] = C/q;\n\
 }\n\
 \n\
 ";
@@ -187,33 +209,48 @@ clt_init()
 }
 
 
-static cl_double3
-clt_shot(cl_double3 o /* ray origin */, cl_double3 l /* ray direction (unit vector) */,
-cl_double3 c /* sphere center */, cl_double r /* sphere radius */)
+static cl_float3
+clt_shot(cl_float3 o /* ray origin */, cl_float3 l /* ray direction (unit vector) */,
+cl_float3 c /* sphere center */, cl_float r /* sphere radius */)
 {
     cl_int error;
     cl_mem output;
-    cl_double3 result;
     const size_t global_size = 1;
+    cl_float3 vresult;
+    struct AlignedPtr result, a_o, a_l, a_c, a_r;
 
-    VSET(result.s, 0, 0, 0);
+    result = aligned_malloc(sizeof(cl_float3), sizeof(cl_float3));
+    VSET(((cl_float3 *)result.ptr)->s, 0, 0, 0);
+    ALIGNED_SET(a_o, cl_float3, o);
+    ALIGNED_SET(a_l, cl_float3, l);
+    ALIGNED_SET(a_c, cl_float3, c);
+    ALIGNED_SET(a_r, cl_float, r);
+
     output = clCreateBuffer(clt_context, CL_MEM_USE_HOST_PTR | CL_MEM_HOST_READ_ONLY | CL_MEM_WRITE_ONLY,
-	    sizeof(cl_double3), &result, &error);
+	    sizeof(cl_float3), result.ptr, &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
 
     error = clSetKernelArg(clt_kernel, 0, sizeof(cl_mem), &output);
-    error |= clSetKernelArg(clt_kernel, 1, sizeof(cl_double3), &o);
-    error |= clSetKernelArg(clt_kernel, 2, sizeof(cl_double3), &l);
-    error |= clSetKernelArg(clt_kernel, 3, sizeof(cl_double3), &c);
-    error |= clSetKernelArg(clt_kernel, 4, sizeof(cl_double), &r);
+    error |= clSetKernelArg(clt_kernel, 1, sizeof(cl_float3), a_o.ptr);
+    error |= clSetKernelArg(clt_kernel, 2, sizeof(cl_float3), a_l.ptr);
+    error |= clSetKernelArg(clt_kernel, 3, sizeof(cl_float3), a_c.ptr);
+    error |= clSetKernelArg(clt_kernel, 4, sizeof(cl_float), a_r.ptr);
     if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
 
     error = clEnqueueNDRangeKernel(clt_queue, clt_kernel, 1, NULL, &global_size, NULL, 0, NULL, NULL);
     if (error != CL_SUCCESS) bu_bomb("failed to enqueue OpenCL kernel");
 
     if (clFinish(clt_queue) != CL_SUCCESS) bu_bomb("failure in clFinish");
+
+    VMOVE(vresult.s, ((cl_float3 *)result.ptr)->s);
+    free(result.alloc);
+    free(a_o.alloc);
+    free(a_l.alloc);
+    free(a_c.alloc);
+    free(a_r.alloc);
     clReleaseMemObject(output);
-    return result;
+
+    return vresult;
 }
 #endif
 
@@ -370,11 +407,11 @@ int
 rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
 #ifdef OPENCL
-    cl_double3 o; /* ray origin  */
-    cl_double3 l; /* ray direction (unit vector) */
-    cl_double3 c; /* sphere center  */
-    cl_double r; /* sphere radius */
-    cl_double3 result;
+    cl_float3 o; /* ray origin  */
+    cl_float3 l; /* ray direction (unit vector) */
+    cl_float3 c; /* sphere center  */
+    cl_float r; /* sphere radius */
+    cl_float3 result;
     struct seg *segp;
 
     (void)rp; (void)ap;
@@ -385,7 +422,7 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     r = ((struct sph_specific *)stp->st_specific)->sph_rad;
     result = clt_shot(o, l, c, r);
 
-    if (EQUAL(result.s[0], 0)) return 0; /* no hit  */
+    if (EQUAL(result.s[0], 0) && EQUAL(result.s[1], 0)) return 0; /* no hit  */
 
     RT_GET_SEG(segp, ap->a_resource);
     segp->seg_stp = stp;

@@ -194,10 +194,11 @@ cl_double3 c /* sphere center */, cl_double r /* sphere radius */)
     cl_int error;
     cl_mem output;
     cl_double3 result;
+    cl_double3 vres;
     const size_t global_size = 1;
 
     VSET(result.s, 0, 0, 0);
-    output = clCreateBuffer(clt_context, CL_MEM_USE_HOST_PTR | CL_MEM_HOST_READ_ONLY | CL_MEM_WRITE_ONLY,
+    output = clCreateBuffer(clt_context, CL_MEM_COPY_HOST_PTR,
 	    sizeof(cl_double3), &result, &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
 
@@ -212,8 +213,11 @@ cl_double3 c /* sphere center */, cl_double r /* sphere radius */)
     if (error != CL_SUCCESS) bu_bomb("failed to enqueue OpenCL kernel");
 
     if (clFinish(clt_queue) != CL_SUCCESS) bu_bomb("failure in clFinish");
+
+    error = clEnqueueReadBuffer(clt_queue, output, CL_TRUE, 0, sizeof(cl_double3), &vres, 0, NULL, NULL);
+    if (error != CL_SUCCESS) bu_bomb("failure to read OpenCL output buffer");
     clReleaseMemObject(output);
-    return result;
+    return vres;
 }
 #endif
 
