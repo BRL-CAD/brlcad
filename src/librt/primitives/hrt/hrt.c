@@ -188,9 +188,14 @@ rt_hrt_prep()
  * R T _ H R T _ P R I N T
  */
 void
-rt_hrt_print()
+rt_hrt_print(register const struct soltab *stp)
 {
-    bu_log("rt_hrt_print: Not implemented yet!\n");
+    register struct hrt_specific *hrt = 
+	(struct hrt_specific *)stp->st_specific;
+
+    VPRINT("V", hrt->hrt_V);
+    bn_mat_print("S o R", hrt->hrt_SoR);
+    bn_mat_print("invRSSR", hrt->hrt_invRSSR);
 }
 
 
@@ -364,38 +369,12 @@ rt_hrt_tess()
 
 
 /**
- * R T _ H R T _ I M P O R T
- *
- * Import a heart from the database format to the internal format.
- * Apply modeling transformations at the same time.
- */
-int
-rt_hrt_import4()
-{
-    bu_log("rt_hrt_import4: Not implemented yet!\n");
-    return -1;
-}
-
-
-/**
  * R T _ H R T _ E X P O R T 5
  */
 int
 rt_hrt_export5()
 {
     bu_log("rt_hrt_export5: Not implemented yet!\n");
-    return 0;
-}
-
-
-/**
- * R T _ H R T _ E X P O R T
- *
- */
-int
-rt_hrt_export4()
-{
-    bu_log("rt_hrt_export4: Not implemented yet!\n");
     return 0;
 }
 
