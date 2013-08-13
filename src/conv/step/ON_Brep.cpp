@@ -57,6 +57,7 @@
 // Note that STEPentity is the same thing as SDAI_Application_instance... see src/clstepcore/sdai.h line 220
 //
 
+#include <sstream>
 #include "STEPEntity.h"
 
 void
@@ -98,6 +99,27 @@ ON_NurbsCurveCV_to_EntityAggregate(ON_NurbsCurve *incrv, SdaiB_spline_curve *ste
 		incrv->GetCV(i, cv_pnt);
 		ON_3dPoint_to_Cartesian_point(&(cv_pnt), step_cartesian);
 		control_pnts->AddNode(new EntityNode((SDAI_Application_instance *)step_cartesian));
+	}
+}
+
+void
+ON_NurbsSurfaceCV_to_GenericAggregate(ON_NurbsSurface *insrf, SdaiB_spline_surface *step_srf, Registry *registry, InstMgr *instance_list) {
+	GenericAggregate *control_pnts_lists = step_srf->control_points_list_();
+	ON_3dPoint cv_pnt;
+	for (int i = 0; i < insrf->CVCount(0); i++) {
+		std::ostringstream ss;
+		ss << "(";
+		for (int j = 0; j < insrf->CVCount(1); j++) {
+			SdaiCartesian_point *step_cartesian = (SdaiCartesian_point *)registry->ObjCreate("CARTESIAN_POINT");
+			instance_list->Append(step_cartesian, completeSE);
+			insrf->GetCV(i, j, cv_pnt);
+			ON_3dPoint_to_Cartesian_point(&(cv_pnt), step_cartesian);
+			if (j != 0) ss << ",";
+			ss << ((SDAI_Application_instance *)step_cartesian)->StepFileId();
+		}
+		ss << ")";
+		std::string str = ss.str();
+		control_pnts_lists->AddNode(new GenericAggrNode(str.c_str()));
 	}
 }
 
@@ -160,6 +182,7 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 	}
 
 	// 3D curves
+	std::cout << "Have " << brep->m_C3.Count() << " curves\n";
 	for (int i = 0; i < brep->m_C3.Count(); ++i) {
 		int curve_converted = 0;
 		ON_Curve* curve = brep->m_C3[i];
@@ -173,6 +196,7 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 			std::cout << "Have ArcCurve\n";
 		}
 		if (l_curve && !curve_converted) {
+			std::cout << "Have LineCurve\n";
 			ON_Line *m_line = &(l_curve->m_line);
 			/* In STEP, a line consists of a cartesian point and a 3D vector.  Since
 			 * it does not appear that OpenNURBS data structures reference m_V points
@@ -197,7 +221,9 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 			std::cout << "Have PolyCurve\n";
 		}
 		if (n_curve && !curve_converted) {
+			std::cout << "Have NurbsCurve\n";
 			if (n_curve->IsRational()) {
+				std::cout << "TODO - Have Rational NurbsCurve\n";
 				three_dimensional_curves.at(i) = registry->ObjCreate("RATIONAL_B_SPLINE_CURVE");
 			} else {
 				three_dimensional_curves.at(i) = registry->ObjCreate("B_SPLINE_CURVE_WITH_KNOTS");
@@ -218,6 +244,67 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 		/* Whatever this is, if it's not a supported type and it does have
 		 * a NURBS form, use that */
 		if (!curve_converted) std::cout << "Curve not converted! " << i << "\n";
+
+	}
+	// surfaces - TODO - need to handle cylindrical, conical, toroidal, etc. types that are enumerated
+	std::cout << "Have " << brep->m_S.Count() << " surfaces\n";
+	for (int i = 0; i < brep->m_S.Count(); ++i) {
+		int surface_converted = 0;
+		ON_Surface* surface = brep->m_S[i];
+		/* Supported surface types */
+		ON_OffsetSurface *o_surface = ON_OffsetSurface::Cast(surface);
+		ON_PlaneSurface *p_surface = ON_PlaneSurface::Cast(surface);
+		ON_ClippingPlaneSurface *pc_surface = ON_ClippingPlaneSurface::Cast(surface);
+		ON_NurbsSurface *n_surface = ON_NurbsSurface::Cast(surface);
+		ON_RevSurface *rev_surface = ON_RevSurface::Cast(surface);
+		ON_SumSurface *sum_surface = ON_SumSurface::Cast(surface);
+		ON_SurfaceProxy *surface_proxy = ON_SurfaceProxy::Cast(surface);
+
+		if (o_surface && !surface_converted) {
+			std::cout << "Have OffsetSurface\n";
+		}
+
+		if (p_surface && !surface_converted) {
+			std::cout << "Have PlaneSurface\n";
+			ON_NurbsSurface p_nurb;
+			p_surface->GetNurbForm(p_nurb);
+			surfaces.at(i) = registry->ObjCreate("B_SPLINE_SURFACE_WITH_KNOTS");
+			SdaiB_spline_surface *curr_surface = (SdaiB_spline_surface *)surfaces.at(i);
+			curr_surface->u_degree_(p_nurb.Degree(0));
+			curr_surface->v_degree_(p_nurb.Degree(1));
+			ON_NurbsSurfaceCV_to_GenericAggregate(&p_nurb, curr_surface, registry, instance_list);
+			SdaiB_spline_surface_with_knots *surface_knots = (SdaiB_spline_surface_with_knots *)surfaces.at(i);
+			//ON_NurbsSurfaceKnots_to_Aggregates(p_nurb, surface_knots);
+			curr_surface->surface_form_(B_spline_surface_form__plane_surf);
+			/* Planes don't self-intersect */
+			curr_surface->self_intersect_(LFalse);
+			instance_list->Append(surfaces.at(i), completeSE);
+			surface_converted = 1;
+		}
+
+		if (pc_surface && !surface_converted) {
+			std::cout << "Have CuttingPlaneSurface\n";
+		}
+
+		if (n_surface && !surface_converted) {
+			std::cout << "Have NurbsSurface\n";
+		}
+
+		if (rev_surface && !surface_converted) {
+			std::cout << "Have RevSurface\n";
+		}
+
+		if (sum_surface && !surface_converted) {
+			std::cout << "Have SumSurface\n";
+			ON_NurbsSurface sum_nurb;
+			sum_surface->GetNurbForm(sum_nurb);
+			std::cout << "Have " << brep->m_S.Count() << " surfaces\n";
+			std::cout << "Have " << brep->m_C3.Count() << " curves\n";
+		}
+
+		if (surface_proxy && !surface_converted) {
+			std::cout << "Have SurfaceProxy\n";
+		}
 
 	}
 
