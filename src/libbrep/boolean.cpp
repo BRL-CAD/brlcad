@@ -88,6 +88,22 @@ compare_for_rank(IntersectPoint* const *a, IntersectPoint* const *b)
 }
 
 
+HIDDEN void
+AppendToPolyCurve(ON_Curve* curve, ON_PolyCurve& polycurve)
+{
+    // use this function rather than ON_PolyCurve::Append() to avoid
+    // getting nested polycurves, which makes ON_Brep::IsValid() to fail.
+    ON_PolyCurve* nested = ON_PolyCurve::Cast(curve);
+    if (nested != NULL) {
+	// The input curve is a polycurve
+	const ON_CurveArray& segments = nested->SegmentCurves();
+	for (int i = 0; i < segments.Count(); i++)
+	    AppendToPolyCurve(segments[i], polycurve);
+    } else
+	polycurve.Append(curve);
+}
+
+
 HIDDEN bool
 IsLoopValid(const ON_SimpleArray<ON_Curve*>& loop, double tolerance, ON_PolyCurve* polycurve = NULL)
 {
@@ -112,10 +128,10 @@ IsLoopValid(const ON_SimpleArray<ON_Curve*>& loop, double tolerance, ON_PolyCurv
 
     // Check the loop is continuous and closed or not.
     if (ret) {
-	polycurve->Append(loop[0]->Duplicate());
+	AppendToPolyCurve(loop[0]->Duplicate(), *polycurve);
 	for (int i = 1 ; i < loop.Count(); i++) {
 	    if (loop[i] && loop[i - 1] && loop[i]->PointAtStart().DistanceTo(loop[i-1]->PointAtEnd()) < ON_ZERO_TOLERANCE)
-		polycurve->Append(loop[i]->Duplicate());
+		AppendToPolyCurve(loop[i]->Duplicate(), *polycurve);
 	    else {
 		bu_log("The input loop is not continuous.\n");
 		ret = false;
@@ -224,10 +240,10 @@ link_curves(const ON_SimpleArray<ON_Curve*>& in, ON_SimpleArray<ON_Curve*>& out)
 
 	    if (c1 != NULL && c2 != NULL) {
 		ON_PolyCurve* polycurve = new ON_PolyCurve;
-		polycurve->Append(c1);
+		AppendToPolyCurve(c1, *polycurve);
 		if (dis > ON_ZERO_TOLERANCE)
-		    polycurve->Append(new ON_LineCurve(c1->PointAtEnd(), c2->PointAtStart()));
-		polycurve->Append(c2);
+		    AppendToPolyCurve(new ON_LineCurve(c1->PointAtEnd(), c2->PointAtStart()), *polycurve);
+		AppendToPolyCurve(c2, *polycurve);
 		tmp[i] = polycurve;
 		tmp[j] = NULL;
 	    }
@@ -238,8 +254,8 @@ link_curves(const ON_SimpleArray<ON_Curve*>& in, ON_SimpleArray<ON_Curve*>& out)
 		c1 = tmp[i];
 		c2 = new ON_LineCurve(tmp[i]->PointAtEnd(), tmp[i]->PointAtStart());
 		ON_PolyCurve* polycurve = new ON_PolyCurve;
-		polycurve->Append(c1);
-		polycurve->Append(c2);
+		AppendToPolyCurve(c1, *polycurve);
+		AppendToPolyCurve(c2, *polycurve);
 		tmp[i] = polycurve;
 	    }
 	}
