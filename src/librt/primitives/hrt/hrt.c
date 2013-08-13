@@ -190,7 +190,7 @@ rt_hrt_prep()
 void
 rt_hrt_print(register const struct soltab *stp)
 {
-    register struct hrt_specific *hrt = 
+    register struct hrt_specific *hrt =
 	(struct hrt_specific *)stp->st_specific;
 
     VPRINT("V", hrt->hrt_V);
@@ -423,9 +423,9 @@ rt_hrt_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
     /* must be double for import and export */
     double hec[ELEMENTS_PER_VECT*4 + 1];
-    
+
     if(dbip) RT_CK_DBI(dbip);
-    
+
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(ep);
 
@@ -442,12 +442,12 @@ rt_hrt_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* Convert from database(network) to internal (host) format */
     ntohd((unsigned char *)hec, ep->ext_buf, ELEMENTS_PER_VECT*4 + 1);
 
-    /* Apply modelling transormations */
+    /* Apply modelling transformations */
     if(mat == NULL) mat = bn_mat_identity;
     MAT4X3PNT(hip->v, mat, &hec[0*ELEMENTS_PER_VECT]);
     MAT4X3PNT(hip->xdir, mat, &hec[1*ELEMENTS_PER_VECT]);
     MAT4X3PNT(hip->ydir, mat, &hec[2*ELEMENTS_PER_VECT]);
-    MAT4X3PNT(hip->zdir, mat, &hec[3*ELEMENTS_PER_VECT]); 
+    MAT4X3PNT(hip->zdir, mat, &hec[3*ELEMENTS_PER_VECT]);
     hip->d = hec[4*ELEMENTS_PER_VECT];
 
     return 0;        /* OK */
@@ -464,7 +464,7 @@ rt_hrt_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 int
 rt_hrt_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-    struct rt_hrt_internal *hip = 
+    struct rt_hrt_internal *hip =
 	(struct rt_hrt_internal *)ip->idb_ptr;
     fastf_t mag_x, mag_y, mag_z;
     char buf[256];

@@ -149,7 +149,7 @@ main(int argc, char **argv)
 	argc--;
 	argv++;
     }
-    
+
     if (gottree != 0) {
 	VMOVE(dataValues.bbMin, rtip->mdl_min);
 
