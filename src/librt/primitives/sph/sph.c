@@ -97,25 +97,6 @@ clt_cleanup()
 }
 
 
-const char * const clt_program_code = "\
-__kernel void sph_shot(__global __write_only double3 *output, double3 o, double3 l, double3 c, double r)\n\
-{\n\
-    double A = dot(l, l);\n\
-    double B = 2*dot(l, o-c);\n\
-    double C = dot(o-c, o-c) - r*r;\n\
-    double disc = B*B - 4*A*C;\n\
-\n\
-    if (disc <= 0) return;\n\
-\n\
-    double q = B < 0 ? (-B + sqrt(disc))/2 : (-B - sqrt(disc))/2;\n\
-    \n\
-    (*output)[0] = q/A;\n\
-    (*output)[1] = C/q;\n\
-}\n\
-\n\
-";
-
-
 /* for now, just get the first device from the first platform  */
 static cl_device_id
 clt_get_cl_device()
@@ -136,14 +117,42 @@ clt_get_cl_device()
 }
 
 
+static char *
+clt_read_code(size_t *length)
+{
+    const char * const code_path = "sph_shot.cl";
+    FILE *fp;
+    char *data;
+
+    fp = fopen(code_path , "r");
+    if (!fp) bu_bomb("failed to read OpenCL code");
+
+    fseek(fp, 0, SEEK_END);
+    *length = ftell(fp);
+    rewind(fp);
+
+    data = bu_malloc((*length+1)*sizeof(char), "failed bu_malloc() in clt_read_code()");
+
+    if(fread(data, *length, 1, fp) != 1)
+	bu_bomb("failed to read OpenCL code");
+
+    fclose(fp);
+    return data;
+}
+
+
+
+
 static cl_program
-clt_get_program(cl_context context, cl_device_id device, const char *code)
+clt_get_program(cl_context context, cl_device_id device)
 {
     cl_int error;
     cl_program program;
-    size_t code_size = strnlen(code, 1<<20);
+    size_t code_length;
+    char *code = clt_read_code(&code_length);
+    const char *pc_code = code;
 
-    program = clCreateProgramWithSource(context, 1, &code, &code_size, &error);
+    program = clCreateProgramWithSource(context, 1, &pc_code, &code_length, &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL program");
 
     error = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
@@ -157,6 +166,7 @@ clt_get_program(cl_context context, cl_device_id device, const char *code)
 	bu_bomb("failed to build OpenCL program");
     }
 
+    bu_free(code, "failed bu_free() in clt_get_program()");
     return program;
 }
 
@@ -184,19 +194,17 @@ clt_init()
     clt_queue = clCreateCommandQueue(clt_context, clt_device, 0, &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL command queue");
 
-    clt_program = clt_get_program(clt_context, clt_device, clt_program_code);
+    clt_program = clt_get_program(clt_context, clt_device);
 
     clt_kernel = clCreateKernel(clt_program, "sph_shot", &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
 
-    bu_log("initialized OpenCL");
     bu_semaphore_release(clt_semaphore);
 }
 
 
 static cl_double3
-clt_shot(cl_double3 o /* ray origin */, cl_double3 l /* ray direction (unit vector) */,
-cl_double3 c /* sphere center */, cl_double r /* sphere radius */)
+clt_shot(cl_double3 o, cl_double3 dir, cl_double3 V, cl_double r)
 {
     cl_int error;
     cl_mem output;
@@ -213,8 +221,8 @@ cl_double3 c /* sphere center */, cl_double r /* sphere radius */)
     bu_semaphore_acquire(clt_semaphore);
     error = clSetKernelArg(clt_kernel, 0, sizeof(cl_mem), &output);
     error |= clSetKernelArg(clt_kernel, 1, sizeof(cl_double3), &o);
-    error |= clSetKernelArg(clt_kernel, 2, sizeof(cl_double3), &l);
-    error |= clSetKernelArg(clt_kernel, 3, sizeof(cl_double3), &c);
+    error |= clSetKernelArg(clt_kernel, 2, sizeof(cl_double3), &dir);
+    error |= clSetKernelArg(clt_kernel, 3, sizeof(cl_double3), &V);
     error |= clSetKernelArg(clt_kernel, 4, sizeof(cl_double), &r);
     if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
     error = clEnqueueNDRangeKernel(clt_queue, clt_kernel, 1, NULL, &global_size, NULL, 0, NULL, &done_kernel);
@@ -381,8 +389,8 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 {
 #ifdef OPENCL
     cl_double3 o; /* ray origin  */
-    cl_double3 l; /* ray direction (unit vector) */
-    cl_double3 c; /* sphere center  */
+    cl_double3 dir; /* ray direction (unit vector) */
+    cl_double3 V; /* vector to sphere  */
     cl_double r; /* sphere radius */
     cl_double3 result;
     struct seg *segp;
@@ -390,18 +398,18 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     (void)rp; (void)ap;
 
     VMOVE(o.s, rp->r_pt);
-    VMOVE(l.s, rp->r_dir);
-    VMOVE(c.s, stp->st_center);
+    VMOVE(dir.s, rp->r_dir);
+    VMOVE(V.s, ((struct sph_specific *)stp->st_specific)->sph_V);
     r = ((struct sph_specific *)stp->st_specific)->sph_rad;
-    result = clt_shot(o, l, c, r);
+    result = clt_shot(o, dir, V, r);
 
     if (EQUAL(result.s[0], 0)) return 0; /* no hit  */
 
     RT_GET_SEG(segp, ap->a_resource);
     segp->seg_stp = stp;
 
-    segp->seg_in.hit_dist = result.s[1];
-    segp->seg_out.hit_dist = result.s[0];
+    segp->seg_in.hit_dist = result.s[0];
+    segp->seg_out.hit_dist = result.s[1];
     segp->seg_in.hit_surfno = 0;
     segp->seg_out.hit_surfno = 0;
     BU_LIST_INSERT(&(seghead->l), &(segp->l));
