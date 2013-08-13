@@ -78,12 +78,10 @@ get_args(int argc, char **argv)
 	    case 'o':
 	    out_file = bu_optarg;
 	    break;
-	    case 'h' :
-	    iny = inx = 1024;
-	    break;
 	    case '#' :
 	    bu_log("pixrect: bytes per pixel is not supported.\n");
 	    return 0;
+    	    case 'h' :
 	    default : /* '?' */
 	    return 0;
 	}
