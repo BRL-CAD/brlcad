@@ -41,11 +41,11 @@
 static const char usage[] =
   "Usage: %s [-v] [-d] [-f] [-xX lvl] [-u eu_dist]\n"
   "       [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol]\n"
-  "       [-D dist_calc_tol]\n"
-  "       [-p prefix] brlcad_db.g object(s)\n"
+  "       [-D dist_calc_tol] [-p prefix]\n"
+  "       [-P #_of_cpus] brlcad_db.g object(s)\n"
   ;
 
-static const char optstring[] = "a:dfn:p:r:u:vx:D:P:X:";
+static const char optstring[] = "a:dfn:p:r:u:vx:D:P:X:h?";
 
 static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int	verbose;
