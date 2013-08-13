@@ -19,19 +19,34 @@
  */
 #include "analyze.h"
 
+
+struct voxelizeData
+{
+    fastf_t voxelSize[3];
+    fastf_t threshold;
+    fastf_t bbMin[3];
+};
+
+
 /**
  * Function to print values to File
  */
 HIDDEN void
 printToFile(genptr_t callBackData, int x, int y, int z, const char *a, fastf_t fill) {
-    fastf_t *threshold = (fastf_t *)callBackData;
+    struct voxelizeData *dataValues = (struct voxelizeData *)callBackData;
     FILE *fp;
 
-    if (a != NULL) {
+    if ((a != NULL) && (dataValues->threshold <= fill)) {
 	fp = fopen("voxels1.txt","a");
 
 	if (fp != NULL) {
-	    fprintf(fp, "%f\t(%4d,%4d,%4d)\t%s\t%f\n", *threshold, x, y, z, a, fill);
+	    fastf_t voxel[3];
+
+	    voxel[0] = dataValues->bbMin[0] + (x + 0.5) * dataValues->voxelSize[0];
+	    voxel[1] = dataValues->bbMin[1] + (y + 0.5) * dataValues->voxelSize[1];
+	    voxel[2] = dataValues->bbMin[2] + (z + 0.5) * dataValues->voxelSize[2];
+
+	    fprintf(fp, "(%f, %f, %f)\t%s\t%f\n", voxel[0], voxel[1], voxel[2], a, fill);
 	    fclose(fp);
 	}
     }
@@ -47,10 +62,11 @@ main(int argc, char **argv)
 {
     static struct rt_i *rtip;
     static const char *usage = "[-s \"dx dy dz\"] [-d n] [-t f] model.g objects...\n";
-    fastf_t sizeVoxel[3], threshold;
+    struct voxelizeData dataValues;
     int levelOfDetail;
     genptr_t callBackData;
     int c;
+    int gottree = 0;
 
     char title[1024] = {0};
 
@@ -62,11 +78,13 @@ main(int argc, char **argv)
     }
 
     /* default user parameters */
-    sizeVoxel[0] = 1.0;
-    sizeVoxel[1] = 1.0;
-    sizeVoxel[2] = 1.0;
 
-    threshold = 0.5;
+    dataValues.voxelSize[0] = 1.0;
+    dataValues.voxelSize[1] = 1.0;
+    dataValues.voxelSize[2] = 1.0;
+
+    dataValues.threshold = 0.5;
+
     levelOfDetail = 4;
 
     bu_optind = 1;
@@ -82,7 +100,7 @@ main(int argc, char **argv)
 		    bu_exit(1, "Usage: %s %s", argv[0], usage);
 		} else {
 		    /* convert from double to fastf_t */
-		    VMOVE(sizeVoxel, scan);
+		    VMOVE(dataValues.voxelSize, scan);
 		}
 		break;
 
@@ -93,7 +111,7 @@ main(int argc, char **argv)
 		break;
 
 	    case 't':
-		if(sscanf(bu_optarg, "%lf", &threshold) != 1) {
+		if(sscanf(bu_optarg, "%lf", &dataValues.threshold) != 1) {
 		    bu_exit(1, "Usage: %s %s", argv[0], usage);
 		}
 		break;
@@ -125,14 +143,21 @@ main(int argc, char **argv)
     while (argc > 0) {
 	if (rt_gettree(rtip, argv[0]) < 0)
 	    bu_log("Loading the geometry for [%s] FAILED\n", argv[0]);
+	else
+	    gottree = 1;
+
 	argc--;
 	argv++;
     }
+    
+    if (gottree != 0) {
+	VMOVE(dataValues.bbMin, rtip->mdl_min);
 
-    callBackData = (void *)(& threshold);
+	callBackData = (void *)(& dataValues);
 
-    /* voxelize function is called here with rtip(ray trace instance), userParameters and printToFile/printToScreen options */
-    voxelize(rtip, sizeVoxel, levelOfDetail, printToFile, callBackData);
+	/* voxelize function is called here with rtip(ray trace instance), userParameters and printToFile/printToScreen options */
+	voxelize(rtip, dataValues.voxelSize, levelOfDetail, printToFile, callBackData);
+    }
 
     rt_free_rti(rtip);
 
