@@ -106,7 +106,7 @@ ON_NurbsCurveKnots_to_Aggregates(ON_NurbsCurve *incrv, SdaiB_spline_curve_with_k
 {
 	IntAggregate_ptr knot_multiplicities = step_crv->knot_multiplicities_();
 	RealAggregate_ptr knots = step_crv->knots_();
-	int i = 0; 
+	int i = 0;
 	while (i < incrv->KnotCount()) {
 		int multiplicity_val = incrv->KnotMultiplicity(i);
 		/* Add knot */

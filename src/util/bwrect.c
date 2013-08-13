@@ -96,7 +96,7 @@ get_args(int argc, char **argv)
         bu_optind++;
         return 1;
     }
-  
+
 
     if (!isatty(fileno(stdout)) && out_file!=NULL){
 	return 0;
@@ -106,7 +106,7 @@ get_args(int argc, char **argv)
 	fprintf(stderr, "bwfilter: excess argument(s) ignored\n");
     }
 
-    return 1;	
+    return 1;
 }
 
 int
