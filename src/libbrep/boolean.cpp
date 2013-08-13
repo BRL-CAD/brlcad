@@ -323,7 +323,6 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	    // The start point cannot be on the boundary of the loop, because
 	    // there is no intersections between curves[i] and the loop.
 	    if (IsPointInsideLoop(curves[i]->PointAtStart(), in->outerloop)) {
-		bu_log("*********inside loop.\n");
 		if (curves[i]->IsClosed()) {
 		    ON_SimpleArray<ON_Curve*> iloop;
 		    iloop.Append(curves[i]);
@@ -431,6 +430,8 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	IntersectPoint *q = sorted_pointers[i];
 	if (compare_t(&p, &q) > 0 || q->m_pos < p->m_pos) {
 	    bu_log("stack error or sort failure.\n");
+	    bu_log("s.top() = %d, i = %d\n", s.top(), i);
+	    bu_log("p->m_pos = %d, q->m_pos = %d\n", p->m_pos, q->m_pos);
 	    continue;
 	}
 	if (q->m_type != p->m_type) {
