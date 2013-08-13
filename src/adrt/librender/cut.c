@@ -184,7 +184,7 @@ render_cut_init(render_t *render, const char *buf)
 	   f, f+1, f+2,
 	   f+3, f+3+1, f+3+2);
     VMOVE(ray_pos, f);
-    VMOVE(ray_dir, f);
+    VMOVE(ray_dir, f+3);
     VUNITIZE(ray_dir);
 
     shot_width = 0.01 * render->tie->radius;
