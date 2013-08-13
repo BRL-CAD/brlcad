@@ -578,7 +578,7 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, ON_SimpleArray<ON_Curve*> &loop, 
 	    ON_3dPointArray ptarray(101);
 	    for (int l = 0; l <= 100; l++) {
 		ON_3dPoint pt2d;
-		pt2d = loop[k]->PointAt(loop[k]->Domain().NormalizedParameterAt(l/100.0));
+		pt2d = loop[k]->PointAt(loop[k]->Domain().ParameterAt(l/100.0));
 		ptarray.Append(face.SurfaceOf()->PointAt(pt2d.x, pt2d.y));
 	    }
 	    c3d = new ON_PolylineCurve(ptarray);
