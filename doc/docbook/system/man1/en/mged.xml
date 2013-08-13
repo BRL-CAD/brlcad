@@ -62,7 +62,7 @@
       Technically, <application>MGED</application> can be opened without a database file
       being supplied, but until one <emphasis>is</emphasis> supplied it will not be terribly useful.
       This can be done either by supplying a file name on the command line or by opening a database from
-      with <application>MGED</application> using the File-&gt;Open... menu or the <command>opendb</command>
+      within <application>MGED</application> using the File-&gt;Open... menu or the <command>opendb</command>
       command.
     </para>
 
