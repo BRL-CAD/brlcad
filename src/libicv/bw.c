@@ -36,8 +36,6 @@
 #include "icv.h"
 
 
-
-
 /* defined in encoding.c */
 extern HIDDEN double *uchar2double(unsigned char *data, long int size);
 extern HIDDEN unsigned char *data2uchar(const icv_image_t *bif);

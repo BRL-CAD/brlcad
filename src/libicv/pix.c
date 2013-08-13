@@ -54,14 +54,14 @@ pix_write(icv_image_t *bif, const char *filename)
 	bu_log("pix_write : Color Space conflict");
 	return -1;
     }
-    
+
     if(filename==NULL)
 	fd = fileno(stdout);
     else if ((fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, WRMODE)) < 0) {
 	bu_log("pix_write: Cannot open file for saving\n");
 	return -1;
     }
-    
+
     data =  data2uchar(bif);
     size = (size_t) bif->width*bif->height*3;
     ret = write(fd, data, size);
