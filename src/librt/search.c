@@ -2264,7 +2264,37 @@ db_search_unique_objects_strplan(const char *plan_string,        /* search plan 
     return results;
 }
 
-
+/*
+struct bu_ptbl *
+db_search(const char *plan_string,
+	const char *path_strings[],
+	struct rt_wdb *wdbp,
+	int search_type)
+{
+    struct bu_ptbl *search_results = NULL;
+    void *dbplan;
+    char **plan_argv = (char **)bu_calloc(strlen(plan_string) + 1, sizeof(char *), "plan argv");
+    struct bu_vls plan_string_vls;
+    bu_vls_init(&plan_string_vls);
+    bu_vls_sprintf(&plan_string_vls, "%s", plan_string);
+    bu_argv_from_string(&plan_argv[0], strlen(plan_string), bu_vls_addr(&plan_string_vls));
+    dbplan = db_search_formplan(plan_argv, wdbp->dbip, wdbp);
+    switch (search_type) {
+	case DB_SEARCH_STANDARD:
+	    break;
+	case DB_SEARCH_UNIQ_OBJ:
+	    break;
+	case DB_SEARCH_FLAT:
+	    break;
+	default:
+	    break;
+    }
+    bu_vls_free(&plan_string_vls);
+    bu_free((char *)plan_argv, "free plan argv");
+    db_search_freeplan(&dbplan);
+    return search_results;
+}
+*/
 
 /*
  * Local Variables:
