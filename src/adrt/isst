@@ -148,7 +148,7 @@ proc ::isst::setup {} {
     .mb.mode add command -label "Phong" -underline 0 -command {render_mode $oglwin phong}
     .mb.mode add command -label "Normal" -underline 0 -command {render_mode $oglwin normal}
     .mb.mode add command -label "Depth" -underline 0 -command {render_mode $oglwin depth}
-    .mb.mode add command -label "Cut" -underline 0 -command { ::isst:cut }
+    .mb.mode add command -label "Cut" -underline 0 -command { ::isst::cut }
 
     bind . <Key-1> {if {[::isst::overwin %X %Y $oglwin]} {render_mode $oglwin phong}}
     bind . <Key-2> {if {[::isst::overwin %X %Y $oglwin]} {render_mode $oglwin normal} else {puts "Place mouse over geometry window."}}
