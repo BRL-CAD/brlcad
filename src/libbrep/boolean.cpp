@@ -77,7 +77,7 @@ compare_t(IntersectPoint* const *a, IntersectPoint* const *b)
 {
     if ((*a)->m_seg != (*b)->m_seg)
 	return (*a)->m_seg - (*b)->m_seg;
-    return (*a)->m_t - (*b)->m_t;
+    return (*a)->m_t - (*b)->m_t > 0.0 ? 1 : ((*a)->m_t < (*b)->m_t ? -1 : 0);
 }
 
 
@@ -432,6 +432,8 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	    bu_log("stack error or sort failure.\n");
 	    bu_log("s.top() = %d, i = %d\n", s.top(), i);
 	    bu_log("p->m_pos = %d, q->m_pos = %d\n", p->m_pos, q->m_pos);
+	    bu_log("p->m_seg = %d, q->m_seg = %d\n", p->m_seg, q->m_seg);
+	    bu_log("p->m_t = %g, q->m_t = %g\n", p->m_t, q->m_t);
 	    continue;
 	}
 	if (q->m_type != p->m_type) {
