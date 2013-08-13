@@ -87,8 +87,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   initialized. it looks like somebody has planned to extend the
   function but never carried out
 
-* fix bottie crash on 32b builds
-
 * implement a null spatial partitioning method so we can determine
   what other intersection hits are being masked (and what impact a
   given method has on performance)
@@ -316,11 +314,6 @@ comp.r4 ID 5678 material code 5 LOS 75
      simulate -f 0 0 -1.0 9.807 3.0  # earth's gravity for 3s
      simulate -k 1.0  # simulate 1s of gravity, overwriting original
      simulate -G -f 1 2 3 .4 5  # no gravity, custom force, 5s
-
-* implement new makesegs for tie
-
-* upgrade source repository back-end to the latest SVN 1.5 so we can
-  benefit from proper merge tracking.
 
 * implement http network transfer tool for crash reports and benchmark
   analyses (via libfetch)
