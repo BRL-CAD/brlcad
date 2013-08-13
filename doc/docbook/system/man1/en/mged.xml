@@ -170,6 +170,23 @@
 
   </refsection>
 
+  <refsection xml:id="scripting"><title>SCRIPTING (BATCHING) MGED</title>
+
+  <para>Often it is convenient to generate a series of <application>MGED</application> commands
+       outside <application>MGED</application> and then submit the command list to
+       <application>MGED</application>  which will
+       react as if each command were being manually entered within it.
+       Simply create a file (say, "cmds.txt") with each line being a desired command, and then
+       have <application>MGED</application> execute the list.  At the normal shell prompt execute</para>
+
+      <programlisting>
+$ mged -c tgm.g &lt; cmds.txt
+      </programlisting>
+
+  <para>Note that the procedure described above is very useful in rapid prototyping or
+       automated TGM processing without resorting to low-level library programming in C or C++.</para>
+  </refsection>
+
   <refsection xml:id="hints"><title>HINTS</title>
 
     <para>
