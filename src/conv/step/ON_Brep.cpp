@@ -317,12 +317,14 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 		}
 	}
 
-	// loop topology.  STEP defines loops with 3D edge curves, but OpenNURBS describes ON_BrepLoops with 
+	// loop topology.  STEP defines loops with 3D edge curves, but OpenNURBS describes ON_BrepLoops with
 	// 2d trim curves.  So for a given loop, we need to interate over the trims, for each trim get the
 	// index of its corresponding edge, and add that edge to the _edge_list for the loop.
 	//
 	// TODO - for some reason _edge_list is initialized to a NULL pointer in the ObjCreate process, and
-	// it's protected so I can't manually repair it afterward.
+	// it's protected so I can't manually repair it afterward.  Looks like this is supposed to inherit the
+	// initialization of _edge_list from SdaiPath, but is only inheriting from SdaiLoop.  May be related to
+	// the recent proposed patch by Mark in stepcode to enable diamond inheritance - will have to experiment.
 	/*
 	for (int i = 0; i < brep->m_L.Count(); ++i) {
 		ON_BrepLoop *loop= &(brep->m_L[i]);
