@@ -1500,7 +1500,10 @@ static  void   remove_consecutive_dup( vec_point_2d  & in )
         in.pop_back();
 }
 
-
+// TODO - need to try switching to Monotone Chain Algorithm to avoid the area computation, which
+// is problematic for strict weak ordering when doing sorting.  Useful links:
+// http://stackoverflow.com/questions/1041620/most-efficient-way-to-erase-duplicates-and-sort-a-c-vector
+// http://geomalgorithms.com/a10-_hull-1.html
 void  convex_hull( vec_point_2d  & in, vec_point_2d  & out )
 {
 
