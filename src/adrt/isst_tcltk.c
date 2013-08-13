@@ -328,7 +328,7 @@ render_mode(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj
 
     /* pack the 'rest' into buf - probably should use a vls for this*/
     buf[0] = '\0';
-    if( strlen(mode) == 3 && strcmp("cut", mode) == 0 ) {
+    if( strlen(mode) == 3 && bu_strncmp("cut", mode, 3) == 0 ) {
 	vect_t vec;
 	struct adrt_mesh_s *mesh;
 
