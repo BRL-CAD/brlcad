@@ -13,7 +13,7 @@ changes made.  See document footer for additional details.
 --- 2013-0X-XX  Release 7.24.2                                     ---
 ----------------------------------------------------------------------
 
-* improved bwrect to use pipes for input and output - Mohit Daga
+* improved bwrect to handle redirected input and output - Mohit Daga
 * fixed TIE mesh raytrace crashes on 32-bit platforms - Sean Morrison
 * fixed pixscale and bwscale to not output ioctl error - Mohit Daga
 * fixed adrt/TIE polygonal mesh memory management bug - Richard Weiss
