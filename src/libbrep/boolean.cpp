@@ -37,7 +37,7 @@
 #include "brep.h"
 #include "raytrace.h"
 
-#define DEBUG 1
+#define DEBUG_BREP_BOOLEAN 1
 #define INTERSECTION_TOL 0.001
 
 
@@ -266,7 +266,7 @@ link_curves(const ON_SimpleArray<ON_Curve*>& in, ON_SimpleArray<ON_Curve*>& out)
 	if (tmp[i] != NULL)
 	    out.Append(tmp[i]);
 
-    if (DEBUG)
+    if (DEBUG_BREP_BOOLEAN)
 	bu_log("link_curves(): %d curves remaining.\n", out.Count());
 }
 
@@ -527,7 +527,7 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
     }
 
     bu_log("Split to %d faces.\n", out.Count());
-    if (DEBUG) {
+    if (DEBUG_BREP_BOOLEAN) {
 	for (int i = 0; i < out.Count(); i++) {
 	    bu_log("Trimmed Face %d:\n", i);
 	    bu_log("outerloop:\n");
@@ -570,7 +570,7 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, ON_SimpleArray<ON_Curve*> &loop, 
 	ON_Curve* c3d = NULL;
 	// First, try the ON_Surface::Pushup() method.
 	// If Pushup() does not succeed, use sampling method.
-	c3d = face.SurfaceOf()->Pushup(*(loop[k]), 1e-3);
+	c3d = face.SurfaceOf()->Pushup(*(loop[k]), INTERSECTION_TOL);
 	if (c3d) {
 	    brep->AddEdgeCurve(c3d);
 	} else {
