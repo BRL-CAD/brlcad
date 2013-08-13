@@ -40,8 +40,7 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 
-
-static char	usage[] = "Usage: %s [-v] [-s alarm_seconds] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] brlcad_db.g object(s)\n";
+static char	usage[] = "Usage: %s [-v] [-s alarm_seconds] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-P #_of_CPUs] brlcad_db.g object(s)\n";
 
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
 static int	verbose;
@@ -619,7 +618,7 @@ main(int argc, char **argv)
     rt_init_resource( &rt_uniresource, 0, NULL );
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "a:n:r:s:vx:P:X:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "a:n:r:s:vx:P:X:h?")) != -1) {
 	switch (c) {
 	    case 's':
 		alarm_secs = atoi( bu_optarg );
