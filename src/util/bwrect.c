@@ -101,7 +101,7 @@ get_args(int argc, char **argv)
     }
 
     if (argc > ++bu_optind) {
-	fprintf(stderr, "bwfilter: excess argument(s) ignored\n");
+	bu_log("bwrect: excess argument(s) ignored\n");
     }
 
     return 1;
