@@ -86,12 +86,15 @@ TIE_VAL(tie_tri_prep)(struct tie_s *tie)
 	if (u.v[2] > u.v[1] && u.v[2] > u.v[0]) {
 	    i1 = 0;
 	    i2 = 1;
+	    tri->b = 2;
 	} else if (u.v[1] > u.v[2] && u.v[1] > u.v[0]) {
 	    i1 = 0;
 	    i2 = 2;
+	    tri->b = 1;
 	} else {
 	    i1 = 1;
 	    i2 = 2;
+	    tri->b = 0;
 	}
 
 	/* compute u1, v2, u2, v2 */
@@ -99,12 +102,6 @@ TIE_VAL(tie_tri_prep)(struct tie_s *tie)
 	tri->data[2].v[2] = v2.v[i1] - tri->data[0].v[i1];
 	tri->v[0] = v1.v[i2] - tri->data[0].v[i2];
 	tri->v[1] = v2.v[i2] - tri->data[0].v[i2];
-
-	/* !!! what? no entiendo. */
-	if (i1 == 0 && i2 == 1)
-	    tri->b = tri->b + 2;
-	else if (i1 == 0)
-	    tri->b = tri->b + 1;
 
 	/* Compute DotVN */
 	VSCALE(v1.v,  tri->data[0].v,  -1.0);
@@ -236,7 +233,7 @@ void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_
     }
 
     /* Extracting value of splitting plane from the kdtree */
-    split = tie->kdtree->b & (uint32_t)0x3L;
+    split = tie->kdtree->split;
 
     /* Initialize ray segment */
     if (ray->dir[split] < 0.0)
@@ -271,17 +268,22 @@ void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_
 	 *
 	 * Gordon Stoll's Mantra - Rays are Measured in Millions :-)
 	 */
-	while (node && node->data && TIE_HAS_CHILDREN(node->b)) {
+	while (node->has_children) {
 	    ray->kdtree_depth++;
 
 	    /* Retrieve the splitting plane */
-	    split = node->b & (uint32_t)0x3L;
+	    split = node->split;
 
 	    /* Calculate the projected 1d distance to splitting axis */
 	    dist = (node->axis - ray->pos[split]) * dirinv[split];
 
-	    temp[0] = &((struct tie_kdtree_s *)(node->data))[ab[split]];
-	    temp[1] = &((struct tie_kdtree_s *)(node->data))[1-ab[split]];
+	    if (!ab[split]) {
+		temp[0] = node->left;
+		temp[1] = node->right;
+	    } else {
+                temp[0] = node->right;
+                temp[1] = node->left;
+	    }
 
 	    i = near >= dist; /* Node B Only? */
 	    node = temp[i];
@@ -338,8 +340,8 @@ void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_
 	    /* Extract i1 and i2 indices from the 'b' field */
 	    v = tri->v;
 
-	    i1 = TIE_TAB1[tri->b & (uint32_t)0x7L];
-	    i2 = TIE_TAB1[3 + (tri->b & (uint32_t)0x7L)];
+	    i1 = TIE_TAB1[tri->b];
+	    i2 = TIE_TAB1[3 + tri->b];
 
 	    /* Compute U and V */
 	    u0 = t.pos[i1] - tri->data[0].v[i1];
@@ -425,9 +427,9 @@ void TIE_VAL(tie_push)(struct tie_s *tie, TIE_3 **tlist, unsigned int tnum, void
     unsigned int i;
 
     /* expand the tri buffer if needed */
-    if (tnum + tie->tri_num > tie->tri_num_alloc) {
-	tie->tri_list = (struct tie_tri_s *)bu_realloc( tie->tri_list, sizeof(struct tie_tri_s) * (tie->tri_num + tnum), "tri_list during tie_push");
-	tie->tri_num_alloc += tnum;
+    if (tie->tri_num + tnum > tie->tri_num_alloc) {
+	tie->tri_num_alloc = tie->tri_num + tnum;
+	tie->tri_list = (struct tie_tri_s *)bu_realloc(tie->tri_list, tie->tri_num_alloc * sizeof(struct tie_tri_s), "tri_list during tie_push");
     }
 
     for (i = 0; i < tnum; i++) {

@@ -116,19 +116,23 @@
 static void
 tie_kdtree_free_node(struct tie_kdtree_s *node)
 {
-    if (node && TIE_HAS_CHILDREN(node->b)) {
+    if (node->has_children) {
 	/* Node Data is KDTREE Children, Recurse */
-	tie_kdtree_free_node(&((struct tie_kdtree_s *)(node->data))[0]);
-	tie_kdtree_free_node(&((struct tie_kdtree_s *)(node->data))[1]);
+	tie_kdtree_free_node(node->left);
+	tie_kdtree_free_node(node->right);
     } else {
 	/* This node points to a geometry node, free it */
-	struct tie_geom_s *tmp;
-	tmp = (struct tie_geom_s *)node->data;
-	if (tmp) {
-	    if (tmp->tri_num > 0) {
-		bu_free(tmp->tri_list, "tri_list");
-	    }
-	    bu_free(tmp, "data");
+	if (node->left) {
+	    bu_free(node->left, "node left");
+	}
+	if (node->right) {
+	    bu_free(node->right, "node right");
+	}
+	if (node->data && node->data->tri_num > 0) {
+	    bu_free(node->data->tri_list, "tri_list");
+	}
+	if (node->data) {
+	    bu_free(node->data, "data");
 	}
     }
 }
@@ -584,6 +588,7 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
     /* Terminating criteria for KDTREE subdivision */
     if (node_gd->tri_num <= TIE_KDTREE_NODE_MAX || depth > tie->max_depth) {
 	tie->stat += node_gd->tri_num;
+	node->has_children = 0;
 	return;
     }
 
@@ -595,15 +600,14 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
 	bu_bomb("Illegal tie kdtree method\n");
 
     /* Allocate 2 children nodes for the parent node */
-    node->data = bu_calloc(2, sizeof(struct tie_kdtree_s), __FUNCTION__);
-    node->b = 0;
-
-    BU_ALLOC(((struct tie_kdtree_s *)(node->data))[0].data, struct tie_geom_s);
-    BU_ALLOC(((struct tie_kdtree_s *)(node->data))[1].data, struct tie_geom_s);
+    node->left = (struct tie_kdtree_s *)bu_calloc(1, sizeof(struct tie_kdtree_s), "tie node left");
+    node->left->data = (struct tie_geom_s *)bu_calloc(1, sizeof(struct tie_geom_s), "tie node left tie_geom_s");
+    node->right = (struct tie_kdtree_s *)bu_calloc(1, sizeof(struct tie_kdtree_s), "tie node right");
+    node->right->data = (struct tie_geom_s *)bu_calloc(1, sizeof(struct tie_geom_s), "tie node right tie_geom_s");
 
     /* Initialize Triangle List */
-    child[0] = ((struct tie_geom_s *)(((struct tie_kdtree_s *)(node->data))[0].data));
-    child[1] = ((struct tie_geom_s *)(((struct tie_kdtree_s *)(node->data))[1].data));
+    child[0] = node->left->data;
+    child[1] = node->right->data;
 
     child[0]->tri_list = (struct tie_tri_s **)bu_calloc(node_gd->tri_num, sizeof(struct tie_tri_s *), "child[0]->tri_list");
     child[0]->tri_num = 0;
@@ -677,13 +681,14 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
 	    VMOVE(lmin[1], cmin[1].v);
 	    VMOVE(lmax[0], cmax[0].v);
 	    VMOVE(lmax[1], cmax[1].v);
-    tie_kdtree_build(tie, &((struct tie_kdtree_s *)(node->data))[0], depth+1, lmin[0], lmax[0]);
-    tie_kdtree_build(tie, &((struct tie_kdtree_s *)(node->data))[1], depth+1, lmin[1], lmax[1]);
+    tie_kdtree_build(tie, node->left, depth+1, lmin[0], lmax[0]);
+    tie_kdtree_build(tie, node->right, depth+1, lmin[1], lmax[1]);
     }
 
     /* Assign the splitting dimension to the node */
     /* If we've come this far then YES, this node DOES have child nodes, MARK it as so. */
-    node->b = TIE_SET_HAS_CHILDREN(node->b) + split;
+    node->split = split;
+    node->has_children = 1;
 }
 
 /*************************************************************

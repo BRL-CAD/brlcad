@@ -107,13 +107,16 @@ struct tie_tri_s {
 			 */
     tfloat *v;		/* 4-bytes or 8-bytes */
     void *ptr;		/* 4-bytes or 8-bytes */
-    uint32_t b;		/* 4-bytes (way more than we need, but helps keep alignment) */
+    int8_t b;
 };
 
 struct tie_kdtree_s {
-    float axis; /* 4-bytes, intentionally float */
-    uint32_t b; /* 4-bytes, bit array to store data about the kdtree node */
-    void *data; /* 4-bytes or 8-bytes */
+    struct tie_kdtree_s *left;
+    struct tie_kdtree_s *right;
+    fastf_t axis;
+    int8_t split;
+    int8_t has_children;
+    struct tie_geom_s *data;
 };
 
 
