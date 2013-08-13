@@ -190,7 +190,7 @@ rt_hrt_prep()
 void
 rt_hrt_print(register const struct soltab *stp)
 {
-    register struct hrt_specific *hrt =
+    register struct hrt_specific *hrt = 
 	(struct hrt_specific *)stp->st_specific;
 
     VPRINT("V", hrt->hrt_V);
@@ -423,9 +423,9 @@ rt_hrt_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
     /* must be double for import and export */
     double hec[ELEMENTS_PER_VECT*4 + 1];
-
+    
     if(dbip) RT_CK_DBI(dbip);
-
+    
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(ep);
 
@@ -442,12 +442,12 @@ rt_hrt_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* Convert from database(network) to internal (host) format */
     ntohd((unsigned char *)hec, ep->ext_buf, ELEMENTS_PER_VECT*4 + 1);
 
-    /* Apply modelling transformations */
+    /* Apply modelling transormations */
     if(mat == NULL) mat = bn_mat_identity;
     MAT4X3PNT(hip->v, mat, &hec[0*ELEMENTS_PER_VECT]);
     MAT4X3PNT(hip->xdir, mat, &hec[1*ELEMENTS_PER_VECT]);
     MAT4X3PNT(hip->ydir, mat, &hec[2*ELEMENTS_PER_VECT]);
-    MAT4X3PNT(hip->zdir, mat, &hec[3*ELEMENTS_PER_VECT]);
+    MAT4X3PNT(hip->zdir, mat, &hec[3*ELEMENTS_PER_VECT]); 
     hip->d = hec[4*ELEMENTS_PER_VECT];
 
     return 0;        /* OK */
@@ -462,9 +462,66 @@ rt_hrt_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
  * tab, and give parameter values.
  */
 int
-rt_hrt_describe()
+rt_hrt_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-    bu_log("rt_hrt_describe: Not implemented yet!\n");
+    struct rt_hrt_internal *hip = 
+	(struct rt_hrt_internal *)ip->idb_ptr;
+    fastf_t mag_x, mag_y, mag_z;
+    char buf[256];
+    double angles[5];
+    vect_t unit_vector;
+
+    RT_HRT_CK_MAGIC(hip);
+    bu_vls_strcat(str, "Heart (HRT)\n");
+
+    sprintf(buf, "\tV (%g, %g, %g)\n",
+	INTCLAMP(hip->v[X] * mm2local),
+	INTCLAMP(hip->v[Y] * mm2local),
+	INTCLAMP(hip->v[Z] * mm2local));
+    bu_vls_strcat(str, buf);
+
+    mag_x = MAGNITUDE(hip->xdir);
+    mag_y = MAGNITUDE(hip->ydir);
+    mag_z = MAGNITUDE(hip->zdir);
+
+    sprintf(buf, "\tXdir (%g, %g, %g) mag=%g\n",
+	INTCLAMP(hip->xdir[X] * mm2local),
+	INTCLAMP(hip->xdir[Y] * mm2local),
+	INTCLAMP(hip->xdir[Z] * mm2local),
+	INTCLAMP(mag_x * mm2local));
+    bu_vls_strcat(str, buf);
+
+    sprintf(buf, "\tYdir (%g, %g, %g) mag=%g\n",
+	INTCLAMP(hip->ydir[X] * mm2local),
+	INTCLAMP(hip->ydir[Y] * mm2local),
+	INTCLAMP(hip->ydir[Z] * mm2local),
+	INTCLAMP(mag_y * mm2local));
+    bu_vls_strcat(str, buf);
+
+    sprintf(buf, "\tZdir (%g, %g, %g) mag=%g\n",
+	INTCLAMP(hip->zdir[X] * mm2local),
+	INTCLAMP(hip->zdir[Y] * mm2local),
+	INTCLAMP(hip->zdir[Z] * mm2local),
+	INTCLAMP(mag_z * mm2local));
+    bu_vls_strcat(str, buf);
+
+    sprintf(buf, "\td=%g\n", INTCLAMP(hip->d));
+    bu_vls_strcat(str, buf);
+
+    if (!verbose) return 0;
+
+    VSCALE(unit_vector, hip->xdir, 1/mag_x);
+    rt_find_fallback_angle(angles, unit_vector);
+    rt_pr_fallback_angle(str, "\tXdir", angles);
+
+    VSCALE(unit_vector, hip->ydir, 1/mag_y);
+    rt_find_fallback_angle(angles, unit_vector);
+    rt_pr_fallback_angle(str, "\tYdir", angles);
+
+    VSCALE(unit_vector, hip->zdir, 1/mag_z);
+    rt_find_fallback_angle(angles, unit_vector);
+    rt_pr_fallback_angle(str, "\tZdir", angles);
+
     return 0;
 }
 
