@@ -54,18 +54,9 @@ typedef long double  ldouble;
 
 class GFSPPair;
 
-/*void  computeExtremePairDir( const ArrPoint3d  & arr,
-                             const Point3d  & dir,
-                             GPointPair  & pp,
-                             int  start,
-                             int  end
-                             );
-*/
-
 class   GFSPTreeNode {
 private:
     GBBox    bbox;
-    //int  left_ind, p_pnt_right; // range in the array
     gdiam_point   * p_pnt_left, * p_pnt_right;
     gdiam_real  bbox_diam, bbox_diam_proj;
     GFSPTreeNode  * left, * right;
@@ -74,7 +65,6 @@ private:
 public:
     void  dump() const {
         printf( "dump...\n" );
-        //printf( "\tNode: Range: [%d, %d]\n", left_ind, p_pnt_right );
     }
     int  size() const {
         return  (int)( p_pnt_right - p_pnt_left );
@@ -97,8 +87,7 @@ public:
         return  sum;
     }
 
-        
-    GFSPTreeNode( gdiam_point   * _p_pnt_left, 
+    GFSPTreeNode( gdiam_point   * _p_pnt_left,
                   gdiam_point   * _p_pnt_right ) {
         bbox.init();
         left = right = NULL;
@@ -144,7 +133,7 @@ public:
 };
 
 
-class  GFSPTree { 
+class  GFSPTree {
 private:
     gdiam_point  * arr;
     GFSPTreeNode  * root;
@@ -190,56 +179,56 @@ public:
 
     gdiam_real   brute_diameter( int  a_lo, int  a_hi,
                                  int  b_lo, int  b_hi,
-                                 GPointPair  & diam ) const { 
+                                 GPointPair  & diam ) const {
         double  max_dist;
-        
+
         max_dist = 0;
         for  ( int  ind = a_lo; ind <= a_hi; ind++ )
             for  ( int  jnd = b_lo; jnd <= b_hi; jnd++ )
                 diam.update_diam( arr[ ind ], arr[ jnd ] );
-        
+
         return  diam.distance;
     }
     gdiam_real   brute_diameter( int  a_lo, int  a_hi,
                                  int  b_lo, int  b_hi,
                                  GPointPair  & diam,
-                                 const gdiam_point  dir ) const { 
+                                 const gdiam_point  dir ) const {
         double  max_dist;
 
         max_dist = 0;
         for  ( int  ind = a_lo; ind <= a_hi; ind++ )
             for  ( int  jnd = b_lo; jnd <= b_hi; jnd++ )
                 diam.update_diam( arr[ ind ], arr[ jnd ], dir );
-        
+
         return  diam.distance;
     }
-    gdiam_real   brute_diameter( const gdiam_point  * a_lo, 
+    gdiam_real   brute_diameter( const gdiam_point  * a_lo,
                            const gdiam_point  * a_hi,
-                           const gdiam_point  * b_lo, 
+                           const gdiam_point  * b_lo,
                            const gdiam_point  * b_hi,
-                           GPointPair  & diam ) const { 
+                           GPointPair  & diam ) const {
         double  max_dist;
 
         max_dist = 0;
         for  ( const gdiam_point  * ind = a_lo; ind <= a_hi; ind++ )
             for  ( const gdiam_point   * jnd = b_lo; jnd <= b_hi; jnd++ )
                 diam.update_diam( *ind, *jnd );
-        
+
         return  diam.distance;
     }
-    gdiam_real   brute_diameter( const gdiam_point  * a_lo, 
+    gdiam_real   brute_diameter( const gdiam_point  * a_lo,
                                  const gdiam_point  * a_hi,
-                                 const gdiam_point  * b_lo, 
+                                 const gdiam_point  * b_lo,
                                  const gdiam_point  * b_hi,
                                  GPointPair  & diam,
-                                 const gdiam_point  dir ) const { 
+                                 const gdiam_point  dir ) const {
         double  max_dist;
 
         max_dist = 0;
         for  ( const gdiam_point  * ind = a_lo; ind <= a_hi; ind++ )
             for  ( const gdiam_point   * jnd = b_lo; jnd <= b_hi; jnd++ )
                 diam.update_diam( *ind, *jnd, dir );
-        
+
         return  diam.distance;
     }
 
@@ -258,13 +247,13 @@ public:
             fflush( stdout );
             assert( left <= right );
         }
-        while  ( ( right > left ) 
+        while  ( ( right > left )
                  &&  ( pnt_isEqual( *right, *left ) ) )
             right--;
         GFSPTreeNode  * node = new  GFSPTreeNode( left, right );
 
         node->bbox.init();
-        for  ( const gdiam_point  * ind = left; ind <= right; ind++ ) 
+        for  ( const gdiam_point  * ind = left; ind <= right; ind++ )
             node->bbox.bound( *ind );
         node->bbox_diam = node->bbox.get_diam();
 
@@ -272,10 +261,10 @@ public:
 
         return  node;
     }
-    
+
     // return how many elements on left side.
-    int    split_array( gdiam_point   * left, 
-                        gdiam_point   * right, 
+    int    split_array( gdiam_point   * left,
+                        gdiam_point   * right,
                         int  dim, const gdiam_real  & val ) {
         const gdiam_point   * start_left = left;
 
@@ -294,7 +283,7 @@ public:
     }
 
 
-    void   split_node( GFSPTreeNode  * node ) 
+    void   split_node( GFSPTreeNode  * node )
     {
         int  dim, left_size;
         gdiam_real  split_val;
@@ -307,7 +296,7 @@ public:
         dim = bb.getLongestDim();
         split_val = ( bb.min_coord( dim ) + bb.max_coord( dim ) ) / 2.0;
 
-        left_size = split_array( node->p_pnt_left, node->p_pnt_right, 
+        left_size = split_array( node->p_pnt_left, node->p_pnt_right,
                               dim, split_val );
         if  ( left_size <= 0.0 ) {
             printf( "bb: %g   %g\n",
@@ -322,28 +311,28 @@ public:
             assert( left_size < (node->p_pnt_right - node->p_pnt_left + 1 ) );
         }
 
-        node->left = build_node( node->p_pnt_left, 
+        node->left = build_node( node->p_pnt_left,
                                  node->p_pnt_left + left_size - 1 );
-        node->right = build_node( node->p_pnt_left + left_size, 
+        node->right = build_node( node->p_pnt_left + left_size,
                                   node->p_pnt_right );
     }
 
-    void  findExtremeInProjection( GFSPPair  & pair, 
+    void  findExtremeInProjection( GFSPPair  & pair,
                                    GPointPair  & max_pair_diam );
 };
 
 void  bbox_vertex( const GBBox  & bb, gdiam_point_t  & ver,
                    int  vert ) {
-    ver[ 0 ] = ((vert & 0x1) != 0)? 
+    ver[ 0 ] = ((vert & 0x1) != 0)?
         bb.min_coord( 0 ) : bb.max_coord( 0 );
-    ver[ 1 ] = ((vert & 0x2) != 0)? 
+    ver[ 1 ] = ((vert & 0x2) != 0)?
         bb.min_coord( 1 ) : bb.max_coord( 1 );
-    ver[ 2 ] = ((vert & 0x4) != 0)? 
+    ver[ 2 ] = ((vert & 0x4) != 0)?
         bb.min_coord( 2 ) : bb.max_coord( 2 );
 }
 
 
-gdiam_real  bbox_proj_dist( const GBBox  & bb1, 
+gdiam_real  bbox_proj_dist( const GBBox  & bb1,
                             const GBBox  & bb2,
                             gdiam_point_cnt  proj )
 {
@@ -354,20 +343,18 @@ gdiam_real  bbox_proj_dist( const GBBox  & bb1,
     for  ( int  ind = 0; ind < 8; ind++ ) {
         bbox_vertex( bb1, a, ind );
 
-        //printf( "\n\n" );
         for  ( int  jnd = 0; jnd < 8; jnd++ ) {
             bbox_vertex( bb2, b, jnd );
-            //pnt_dump( b );
             rl = max( rl, pnt_distance( a, b, proj ) );
         }
     }
 
-    return  rl;            
+    return  rl;
 }
 
 
 
-class  GFSPPair 
+class  GFSPPair
 {
 private:
     GFSPTreeNode  * left, * right;
@@ -382,10 +369,7 @@ public:
         GBBox  bb;
 
         bb.init( left->getBBox(), right->getBBox() );
-        //printf( "\t\tbbox: \n" );
-        //bb.dump();
         max_diam = bb.get_diam();
-        //printf( "\t\tmax_diam: %g\n", max_diam );
     }
 
     void  init( GFSPTreeNode  * _left, GFSPTreeNode  * _right,
@@ -397,11 +381,6 @@ public:
         GBBox  bb;
 
         bb.init( left->getBBox(), right->getBBox() );
-        //printf( "\t\tbbox: \n" );
-        //bb.dump();
-        
-        //max_diam = dist + _left->getBBox().get_diam()
-        //    + _right->getBBox().get_diam();
         max_diam = max( max( bbox_proj_dist( _left->getBBox(),
                                         _right->getBBox(),
                                         proj_dir ),
@@ -411,23 +390,11 @@ public:
                         bbox_proj_dist( _right->getBBox(),
                                         _right->getBBox(),
                                         proj_dir ) );
-        
-        //printf( "diam: %g, smart diam: %g\n",
-        //        max_diam,
-        //        bbox_proj_dist( _left->getBBox(),
-        //                        _right->getBBox(),
-        //                        proj_dir ) );
 
-        //printf( "dist: %g, %g, %g:\n",
-        //        dist, _left->getBBox().get_diam(),
-        //         _right->getBBox().get_diam() );
-
-        //bb.get_diam_proj( proj_dir );
-        //printf( "\t\tmax_diam: %g\n", max_diam );
     }
 
     // error 2r/l - approximate cos of the max possible angle in the pair
-    double  getProjectionError() const 
+    double  getProjectionError() const
     {
         double  l, two_r;
 
@@ -466,7 +433,7 @@ public:
     double   directDiameter( const GFSPTree  & tree,
                              GPointPair  & diam ) const {
         return  tree.brute_diameter( left->ptr_pnt_left(),
-                                     left->ptr_pnt_right(), 
+                                     left->ptr_pnt_right(),
                                      right->ptr_pnt_left(),
                                      right->ptr_pnt_right(),
                                      diam );
@@ -476,7 +443,7 @@ public:
                              GPointPair  & diam,
                              const gdiam_point  dir ) const {
         return  tree.brute_diameter( left->ptr_pnt_left(),
-                                     left->ptr_pnt_right(), 
+                                     left->ptr_pnt_right(),
                                      right->ptr_pnt_left(),
                                      right->ptr_pnt_right(),
                                      diam, dir );
@@ -487,7 +454,7 @@ public:
     }
     double  minAprxDiam()  const {
         double   sub_diam;
-        
+
         sub_diam = left->maxDiam() + right->maxDiam();
         if  ( sub_diam > (max_diam / 10.0) )
             return  max_diam;
@@ -500,7 +467,7 @@ public:
 class g_heap_pairs_p;
 
 #define  UDM_SIMPLE      1
-#define  UDM_BIG_SAMPLE  2 
+#define  UDM_BIG_SAMPLE  2
 
 class  GTreeDiamAlg
 {
@@ -524,7 +491,7 @@ public:
     void  term() {
         tree.term();
     }
-    
+
     int  size() const {
         return  points_num;
     }
@@ -533,7 +500,7 @@ public:
     }
 
     int  nodes_number() const {
-        return  tree.nodes_number(); 
+        return  tree.nodes_number();
     }
 
     void  addPairHeap( g_heap_pairs_p  & heap,
@@ -551,7 +518,7 @@ public:
                            gdiam_point  proj );
     void  compute_by_heap( double  eps );
     void  compute_by_heap_proj( double  eps, gdiam_point  proj );
- 
+
     double  diameter() {
         return  pair_diam.distance;
     }
@@ -566,7 +533,7 @@ typedef  void  * voidPtr_t;
 struct  heap_t
 {
     voidPtr_t  * pArr;
-    int  curr_size, max_size;   
+    int  curr_size, max_size;
     ptrCompareFunc  pCompFunc;
 };
 
@@ -574,24 +541,24 @@ void  heap_init( heap_t  * pHeap, ptrCompareFunc  _pCompFunc )
 {
     assert( pHeap != NULL );
     assert( _pCompFunc != NULL );
-    
+
     memset( pHeap, 0, sizeof( heap_t ) );
 
     pHeap->pCompFunc = _pCompFunc;
     pHeap->max_size = 100;
-    pHeap->pArr = (voidPtr_t *)malloc( sizeof( void * ) 
+    pHeap->pArr = (voidPtr_t *)malloc( sizeof( void * )
                                        * pHeap->max_size );
     assert( pHeap->pArr != NULL );
     pHeap->curr_size = 0;
 }
 
 
-static void  resize( heap_t  * pHeap, int  size ) 
+static void  resize( heap_t  * pHeap, int  size )
 {
     int  max_sz;
     voidPtr_t  * pTmp;
 
-    if   ( size <= pHeap->max_size ) 
+    if   ( size <= pHeap->max_size )
         return;
 
     max_sz = size * 2;
@@ -608,7 +575,7 @@ void  heap_term( heap_t  * pHeap )
 {
     assert( pHeap != NULL );
 
-    if  ( pHeap->pArr != NULL ) 
+    if  ( pHeap->pArr != NULL )
         free( pHeap->pArr );
     memset( pHeap, 0, sizeof( heap_t ) );
 }
@@ -620,7 +587,7 @@ void  heap_insert( heap_t  * pHeap, void  * pData )
     voidPtr_t  pTmp;
 
     resize( pHeap, pHeap->curr_size + 1 );
-    
+
     ind = pHeap->curr_size;
     pHeap->curr_size++;
 
@@ -628,8 +595,8 @@ void  heap_insert( heap_t  * pHeap, void  * pData )
 
     while  ( ind > 0 ) {
         father = ( ind - 1 ) / 2;
-        
-        if  ( (*pHeap->pCompFunc)( pHeap->pArr[ ind ], 
+
+        if  ( (*pHeap->pCompFunc)( pHeap->pArr[ ind ],
                                    pHeap->pArr[ father ] ) <= 0 )
             break;
 
@@ -638,11 +605,11 @@ void  heap_insert( heap_t  * pHeap, void  * pData )
         pHeap->pArr[ father ] = pTmp;
 
         ind = father;
-    }    
+    }
 }
 
 
-void  * heap_top( heap_t  * pHeap ) 
+void  * heap_top( heap_t  * pHeap )
 {
     return  pHeap->pArr[ 0 ];
 }
@@ -659,31 +626,28 @@ void  * heap_delete_max( heap_t  * pHeap )
 
     res = pHeap->pArr[ 0 ];
 
-    //printf( "pHeap->curr_size: %d\n", pHeap->curr_size );
-    //printf( "res= %p\n", res );
-
     pHeap->curr_size--;
-    pHeap->pArr[ 0 ] = pHeap->pArr[ pHeap->curr_size ]; 
+    pHeap->pArr[ 0 ] = pHeap->pArr[ pHeap->curr_size ];
     pHeap->pArr[ pHeap->curr_size ] = NULL;
     ind = 0;
 
     while  ( ind < pHeap->curr_size ) {
         left = 2 * ind + 1;
         right = 2 * ind + 2;
-        if  ( left >= pHeap->curr_size ) 
+        if  ( left >= pHeap->curr_size )
             break;
-        if  ( right >= pHeap->curr_size ) 
+        if  ( right >= pHeap->curr_size )
             right = left;
-        
-        if  ( (*pHeap->pCompFunc)( pHeap->pArr[ left ], 
+
+        if  ( (*pHeap->pCompFunc)( pHeap->pArr[ left ],
                                    pHeap->pArr[ right ] ) <= 0 )
             max_ind = right;
         else
             max_ind = left;
-        if  ( (*pHeap->pCompFunc)( pHeap->pArr[ ind  ], 
+        if  ( (*pHeap->pCompFunc)( pHeap->pArr[ ind  ],
                                    pHeap->pArr[ max_ind ] ) >= 0 )
             break;
-        
+
         pTmp = pHeap->pArr[ ind ];
         pHeap->pArr[ ind ] = pHeap->pArr[ max_ind ];
         pHeap->pArr[ max_ind ] = pTmp;
@@ -735,15 +699,13 @@ public:
         heap_term( &heap );
     }
 
-    void  push( GFSPPair  & pair ) 
+    void  push( GFSPPair  & pair )
     {
-        //printf( "pushing: (%p, %p)\n", pair.get_left(),
-        //        pair.get_right() );
         GFSPPair  * p_pair = new GFSPPair( pair );
         heap_insert( &heap, (void *)p_pair );
     }
 
-    int  size() const { 
+    int  size() const {
         return  heap.curr_size;
     }
     GFSPPair  top() {
@@ -779,43 +741,37 @@ void  computeExtremePair( const gdiam_point  * arr, int  size,
 
 
 
-void  GTreeDiamAlg::compute_by_heap( double  eps ) 
+void  GTreeDiamAlg::compute_by_heap( double  eps )
 {
     g_heap_pairs_p  heap;
     int  heap_limit, heap_delta;
-    
+
     heap_limit = HEAP_LIMIT;
     heap_delta = HEAP_DELTA;
-    
+
     GFSPTreeNode  * root = tree.getRoot();
-    
+
     computeExtremePair( tree.getPoints(), points_num,
                         root->getBBox().getLongestDim(),
                         pair_diam );
-    
+
     GFSPPair  root_pair;
-    
+
     root_pair.init( root, root );
-    
+
     heap.push( root_pair );
-    //queue_a.pushx( root_pair );
-    
+
     int  count =0;
     while  ( heap.size() > 0 ) {
-        //printf( "heap.size: %d\n", heap.size() );
-        //printf( "%d: curr_diam: %g\n", count++, pair_diam.distance );
         GFSPPair  pair = heap.top();
         heap.pop();
         split_pair( pair, heap, eps );
-        //if  ( ( count & 0x3ff ) == 0 ) {
-        //    printf( "heap.size: %d\n", heap.size() );
-        //}
         if  ( ( count & 0x3ff ) == 0 ) {
             if  ( ((int)heap.size()) > heap_limit ) {
                 threshold_brute *= 2;
                 printf( "threshold_brute: %d\n", threshold_brute );
                 heap_limit += heap_delta;
-            } 
+            }
         }
         count++;
     }
@@ -823,45 +779,33 @@ void  GTreeDiamAlg::compute_by_heap( double  eps )
 
 
 void  GTreeDiamAlg::compute_by_heap_proj( double  eps,
-                                          gdiam_point  proj ) 
+                                          gdiam_point  proj )
 {
     g_heap_pairs_p  heap;
     int  heap_limit, heap_delta;
     GPointPair   pair_diam_x;
-    
-
-    //pnt_dump( proj );
-    //printf( "length = %g\n", pnt_length( proj ) );
 
     heap_limit = HEAP_LIMIT;
     heap_delta = HEAP_DELTA;
-    
+
     GFSPTreeNode  * root = tree.getRoot();
-    
+
     computeExtremePair( tree.getPoints(), points_num,
                         root->getBBox().getLongestDim(),
                         pair_diam_x );
     pair_diam.init( pair_diam_x.p, pair_diam_x.q, proj );
 
     GFSPPair  root_pair;
-    
+
     root_pair.init( root, root, proj, 0 );
-    
-    //printf( "root pair distance: %g\n", root_pair.maxDiam() );
+
     heap.push( root_pair );
-    //queue_a.pushx( root_pair );
-    
+
     int  count =0;
     while  ( heap.size() > 0 ) {
-        //printf( "heap.size: %d\n", heap.size() );
-        //printf( "%d: curr_diam: %g\n", count++, pair_diam.distance );
         GFSPPair  pair = heap.top();
         heap.pop();
-        //printf( "pair distance: %g\n", pair.maxDiam() );
         split_pair_proj( pair, heap, eps, proj );
-        //if  ( ( count & 0x3ff ) == 0 ) {
-        //    printf( "heap.size: %d\n", heap.size() );
-        //}
         if  ( ( count & 0x3ff ) == 0 ) {
             if  ( ((int)heap.size()) > heap_limit ) {
                 threshold_brute *= 2;
@@ -870,7 +814,6 @@ void  GTreeDiamAlg::compute_by_heap_proj( double  eps,
             } 
         }
         count++;
-        //printf( "Poping!\n" );
     }
 }
 
@@ -882,42 +825,37 @@ void  GTreeDiamAlg::addPairHeap( g_heap_pairs_p  & heap,
     if  ( update_diam_mode == UDM_SIMPLE ) {
         const gdiam_point  p( *(left->ptr_pnt_left()) );
         const gdiam_point  q( *(right->ptr_pnt_left()) );
-        
+
         pair_diam.update_diam( p, q );
     } else
         if  ( update_diam_mode == UDM_BIG_SAMPLE ) {
             if  ( ( left->size() < 100 )  ||  ( right->size() < 100 ) ) {
                 const gdiam_point  p( *(left->ptr_pnt_left()) );
                 const gdiam_point  q( *(right->ptr_pnt_left()) );
-                
+
                 pair_diam.update_diam( p, q );
                 } else
-            {                
+            {
 #define  UMD_SIZE        5
-                gdiam_point  arr_left[ UMD_SIZE ], 
+                gdiam_point  arr_left[ UMD_SIZE ],
                     arr_right[ UMD_SIZE ];
-                for  ( int  ind = 0; ind < UMD_SIZE; ind++ ) {                
+                for  ( int  ind = 0; ind < UMD_SIZE; ind++ ) {
                     const gdiam_point  p( *(left->ptr_pnt_rand()) );
                     const gdiam_point  q( *(right->ptr_pnt_rand()) );
                     arr_left[ ind ] = p;
                     arr_right[ ind ] = q;
-
-                    //pair_diam.update_diam( p, q );
                 }
                 for  ( int  ind = 0; ind < UMD_SIZE; ind++ )
                     for  ( int  jnd = 0; jnd < UMD_SIZE; jnd++ )
-                        pair_diam.update_diam( arr_left[ ind ], 
+                        pair_diam.update_diam( arr_left[ ind ],
                                                arr_right[ jnd ] );
             }
         } else {
             assert( false );
         }
-    //printf( "old_diam; %g\n", diam );
-    //diam = max( diam, pnt_distance( p, q ) );
-    //printf( "new_diam; %g\n", diam );
-    
+
     GFSPPair  pair;
-    
+
     pair.init( left, right );
     if  ( pair.maxDiam() <= pair_diam.distance )
         return;
@@ -934,22 +872,14 @@ void  GTreeDiamAlg::addPairHeap( g_heap_pairs_p  & heap,
     const gdiam_point  p( *(left->ptr_pnt_left()) );
     const gdiam_point  q( *(right->ptr_pnt_left()) );
 
-    //printf( "addPairHeap( ?, %p, %p, ? )\n", left, right );
     pair_diam.update_diam( p, q, proj );
-    //printf( "old_diam; %g\n", diam );
-    //diam = max( diam, pnt_distance( p, q ) );
-    //printf( "new_diam; %g\n", diam );
-    
+
     GFSPPair  pair;
-    
+
     pair.init( left, right, proj,
                pnt_distance( p, q, proj ) );
     if  ( pair.maxDiam() <= pair_diam.distance )
         return;
-    //printf( "pair.maxDiam: %g, father.maxDiam: %g\n",
-    //        pair.maxDiam(),  father.maxDiam() );
-    //printf( "pair_diam.distance: %g\n", pair_diam.distance );
-    //pnt_dump( proj );
     heap.push( pair );
 }
 
@@ -959,19 +889,15 @@ void  GTreeDiamAlg::split_pair_proj( GFSPPair  & pair,
                                      gdiam_point  proj )
 {
     bool  f_is_left_splitable, f_is_right_splitable;
-    
-    //printf( "pair.maxDiam: %g, limit: %g\n",
-    //        pair.maxDiam(), ((1.0 + eps) * pair_diam.distance ));
 
     if  ( pair.maxDiam() <= ((1.0 + eps) * pair_diam.distance ))
         return;
-    
+
     if  ( pair.isBelowThreshold( threshold_brute ) ) {
         pair.directDiameter( tree, pair_diam, proj );
         return;
     }
 
-    //printf( "Curr pair: (%p, %p)\n", pair.get_left(), pair.get_right() );
     f_is_left_splitable = pair.get_left()->isSplitable();
     f_is_right_splitable = pair.get_right()->isSplitable();
     assert( f_is_left_splitable  ||  f_is_right_splitable );
@@ -979,24 +905,24 @@ void  GTreeDiamAlg::split_pair_proj( GFSPPair  & pair,
         tree.split_node( pair.get_left() );
     if ( f_is_right_splitable )
         tree.split_node( pair.get_right() );
-    
-    if  ( f_is_left_splitable 
+
+    if  ( f_is_left_splitable
           &&  f_is_right_splitable ) {
-        addPairHeap( heap, 
+        addPairHeap( heap,
                      pair.get_left()->get_left(),
                      pair.get_right()->get_left(),
                      proj, pair );
-        addPairHeap( heap, 
+        addPairHeap( heap,
                      pair.get_left()->get_left(),
                      pair.get_right()->get_right(),
                      proj, pair );
         // to avoid exponential blowup
         if  ( pair.get_left() != pair.get_right() )
-            addPairHeap( heap, 
+            addPairHeap( heap,
                          pair.get_left()->get_right(),
                          pair.get_right()->get_left(),
                          proj, pair );
-        addPairHeap( heap, 
+        addPairHeap( heap,
                      pair.get_left()->get_right(),
                      pair.get_right()->get_right(),
                      proj, pair );
@@ -1006,16 +932,16 @@ void  GTreeDiamAlg::split_pair_proj( GFSPPair  & pair,
         addPairHeap( heap,
                      pair.get_left()->get_left(),
                      pair.get_right(), proj, pair );
-        addPairHeap( heap, 
+        addPairHeap( heap,
                      pair.get_left()->get_right(),
                      pair.get_right(), proj, pair );
         return;
     }
     if  ( f_is_right_splitable ) {
-        addPairHeap( heap, 
+        addPairHeap( heap,
                      pair.get_left(),
                      pair.get_right()->get_left(), proj, pair );
-        addPairHeap( heap, 
+        addPairHeap( heap,
                      pair.get_left(),
                      pair.get_right()->get_right(), proj, pair );
         return;
@@ -1028,15 +954,15 @@ void  GTreeDiamAlg::split_pair( GFSPPair  & pair,
                                 double  eps )
 {
     bool  f_is_left_splitable, f_is_right_splitable;
-    
+
     if  ( pair.maxDiam() <= ((1.0 + eps) * pair_diam.distance ))
         return;
-    
+
     if  ( pair.isBelowThreshold( threshold_brute ) ) {
         pair.directDiameter( tree, pair_diam );
         return;
     }
-    
+
     f_is_left_splitable = pair.get_left()->isSplitable();
     f_is_right_splitable = pair.get_right()->isSplitable();
     assert( f_is_left_splitable  ||  f_is_right_splitable );
@@ -1044,21 +970,21 @@ void  GTreeDiamAlg::split_pair( GFSPPair  & pair,
         tree.split_node( pair.get_left() );
     if ( f_is_right_splitable )
         tree.split_node( pair.get_right() );
-    
-    if  ( f_is_left_splitable 
+
+    if  ( f_is_left_splitable
           &&  f_is_right_splitable ) {
-        addPairHeap( heap, 
+        addPairHeap( heap,
                      pair.get_left()->get_left(),
                      pair.get_right()->get_left() );
-        addPairHeap( heap, 
+        addPairHeap( heap,
                      pair.get_left()->get_left(),
                      pair.get_right()->get_right() );
         // to avoid exponential blowup
         if  ( pair.get_left() != pair.get_right() )
-            addPairHeap( heap, 
+            addPairHeap( heap,
                          pair.get_left()->get_right(),
                          pair.get_right()->get_left() );
-        addPairHeap( heap, 
+        addPairHeap( heap,
                      pair.get_left()->get_right(),
                      pair.get_right()->get_right() );
         return;
@@ -1067,16 +993,16 @@ void  GTreeDiamAlg::split_pair( GFSPPair  & pair,
         addPairHeap( heap,
                      pair.get_left()->get_left(),
                      pair.get_right() );
-        addPairHeap( heap, 
+        addPairHeap( heap,
                      pair.get_left()->get_right(),
                      pair.get_right() );
         return;
     }
     if  ( f_is_right_splitable ) {
-        addPairHeap( heap, 
+        addPairHeap( heap,
                      pair.get_left(),
                      pair.get_right()->get_left() );
-        addPairHeap( heap, 
+        addPairHeap( heap,
                      pair.get_left(),
                      pair.get_right()->get_right() );
         return;
@@ -1087,7 +1013,6 @@ void  GTreeDiamAlg::split_pair( GFSPPair  & pair,
 GPointPair   gdiam_approx_diam( gdiam_point  * start, int  size,
                                 gdiam_real  eps )
 {
-    //gdiam_real  diam;
     GPointPair  pair;
 
     GTreeDiamAlg  * pAlg = new  GTreeDiamAlg( start, size, UDM_SIMPLE );
@@ -1104,7 +1029,6 @@ GPointPair   gdiam_approx_diam( gdiam_point  * start, int  size,
 GPointPair   gdiam_approx_diam_UDM( gdiam_point  * start, int  size,
                                     gdiam_real  eps )
 {
-    //gdiam_real  diam;
     GPointPair  pair;
 
     GTreeDiamAlg  * pAlg = new  GTreeDiamAlg( start, size, UDM_BIG_SAMPLE );
@@ -1128,7 +1052,7 @@ gdiam_point  * gdiam_convert( gdiam_real  * start, int  size )
     p_arr = (gdiam_point *)malloc( sizeof( gdiam_point ) * size );
     assert( p_arr != NULL );
 
-    for  ( int  ind = 0; ind < size; ind++ ) 
+    for  ( int  ind = 0; ind < size; ind++ )
         p_arr[ ind ] = (gdiam_point)&(start[ ind * 3 ]);
 
     return  p_arr;
@@ -1164,10 +1088,9 @@ GPointPair   gdiam_approx_diam_pair_UDM( gdiam_real  * start, int  size,
 
 
 gdiam_bbox   gdiam_approx_const_mvbb( gdiam_point  * start, int  size,
-                                      gdiam_real  eps, 
-                                      GBBox  * p_ap_bbox )    
+                                      gdiam_real  eps,
+                                      GBBox  * p_ap_bbox )
 {
-    //gdiam_real  diam;
     GPointPair  pair, pair_2;
 
     GTreeDiamAlg  * pAlg = new  GTreeDiamAlg( start, size, UDM_SIMPLE );
@@ -1175,24 +1098,20 @@ gdiam_bbox   gdiam_approx_const_mvbb( gdiam_point  * start, int  size,
 
     pair = pAlg->getDiameter();
 
-    /* Comput ethe resulting diameter */
+    /* Compute the resulting diameter */
     gdiam_point_t  dir, dir_2, dir_3;
 
     dir[ 0 ] = pair.p[ 0 ] - pair.q[ 0 ];
     dir[ 1 ] = pair.p[ 1 ] - pair.q[ 1 ];
-    dir[ 2 ] = pair.p[ 2 ] - pair.q[ 2 ];    
+    dir[ 2 ] = pair.p[ 2 ] - pair.q[ 2 ];
     pnt_normalize( dir );
 
-    //    printf( "Before computing second direction!\n" );
-    //fflush( stdout );
     pAlg->compute_by_heap_proj( eps, dir );
-    //printf( "second direction computed!\n" );
-    //fflush( stdout );
 
     pair_2 = pAlg->getDiameter();
     dir_2[ 0 ] = pair_2.p[ 0 ] - pair_2.q[ 0 ];
     dir_2[ 1 ] = pair_2.p[ 1 ] - pair_2.q[ 1 ];
-    dir_2[ 2 ] = pair_2.p[ 2 ] - pair_2.q[ 2 ];    
+    dir_2[ 2 ] = pair_2.p[ 2 ] - pair_2.q[ 2 ];
 
     gdiam_real prd;
 
@@ -1211,10 +1130,10 @@ gdiam_bbox   gdiam_approx_const_mvbb( gdiam_point  * start, int  size,
     GBBox  ap_bbox;
 
     if  ( ( pnt_length( dir_2 ) < 1e-6 )
-          &&  ( pnt_length( dir_3 ) < 1e-6 ) ) 
+          &&  ( pnt_length( dir_3 ) < 1e-6 ) )
         gdiam_generate_orthonormal_base( dir, dir_2, dir_3 );
 
-    if  ( ( pnt_length( dir ) == 0.0 ) 
+    if  ( ( pnt_length( dir ) == 0.0 )
           ||  ( pnt_length( dir_2 ) < 1e-6 )
           ||  ( pnt_length( dir_3 ) < 1e-6 ) ) {
         gdiam_generate_orthonormal_base( dir, dir_2, dir_3 );
@@ -1234,14 +1153,8 @@ gdiam_bbox   gdiam_approx_const_mvbb( gdiam_point  * start, int  size,
         ap_bbox.bound( start[ ind ] );
     }
 
-    //printf( "Axis parallel bounding box:\n" );
-    //ap_bbox.dump();
-
-    //printf( "Arbitrarily oriented bounding box:\n" );
-    //bbox.dump();
-
     delete  pAlg;
-    if  ( ap_bbox.volume() < bbox.volume() ) 
+    if  ( ap_bbox.volume() < bbox.volume() )
         bbox.init( ap_bbox );
 
     if  ( p_ap_bbox != NULL )
@@ -1265,7 +1178,7 @@ gdiam_bbox   gdiam_approx_const_mvbb( gdiam_real  * start, int  size,
 }
 
 /*-----------------------------------------------------------------------
- * Code for computing best bounding box in a given drection 
+ * Code for computing best bounding box in a given drection
 \*-----------------------------------------------------------------------*/
 
 void  gdiam_generate_orthonormal_base( gdiam_point  in,
@@ -1287,7 +1200,7 @@ void  gdiam_generate_orthonormal_base( gdiam_point  in,
             pnt_init_normalize( out1, 1, 0, 0 );
             pnt_init_normalize( out2, 0, 0, 1 );
             return;
-        }        
+        }
         pnt_init_normalize( out1, 0, -in[ 2 ], in[ 1 ] );
         pnt_init_normalize( out2, 1, 0, 0 );
         return;
@@ -1301,7 +1214,7 @@ void  gdiam_generate_orthonormal_base( gdiam_point  in,
         pnt_init_normalize( out1, -in[ 2 ], 0, in[ 0 ] );
         pnt_init_normalize( out2, 0, 1, 0 );
         return;
-    }    
+    }
     if  ( in[ 2 ] == 0.0 ) {
         pnt_init_normalize( out1, -in[ 1 ], in[ 0 ], 0 );
         pnt_init_normalize( out2, 0, 0, 1 );
@@ -1311,7 +1224,6 @@ void  gdiam_generate_orthonormal_base( gdiam_point  in,
     // all entries in the vector are not zero.
     pnt_init_normalize( out1, -in[ 1 ], in[ 0 ], 0 );
     pnt_cross_prod( in, out1, out2 );
-    
     pnt_normalize( out2 );
 }
 
@@ -1352,7 +1264,7 @@ class  vec_point_2d : public std::vector<point2d_ptr> {};
 
 
 
-inline ldouble     Area( const point2d  & a, 
+inline ldouble     Area( const point2d  & a,
                         const point2d  & b,
                         const point2d  & c )
 {
@@ -1379,16 +1291,11 @@ inline ldouble     Area( const point2d  & a,
     ldouble  area;
 
     area = x1 * y2 - x2 * y1;
-    //area = (ldouble)a.x * (ldouble)b.y - (ldouble)a.y * (ldouble)b.x +
-    //    (ldouble)a.y * (ldouble)c.x - (ldouble)a.x * (ldouble)c.y +
-    //    (ldouble)b.x * (ldouble)c.y - (ldouble)c.x * (ldouble)b.y;
-
-    //printf( "area: %g\n", area );
     return  area;
 }
 
 
-inline int     AreaSign( const point2d  & a, 
+inline int     AreaSign( const point2d  & a,
                          const point2d  & b,
                          const point2d  & c )
 {
@@ -1398,19 +1305,18 @@ inline int     AreaSign( const point2d  & a,
         a.y * c.x - a.x * c.y +
         b.x * c.y - c.x * b.y;
 
-    //printf( "area: %g\n", area );
-    return  ( ( area < (ldouble)0.0 )? -1: 
+    return  ( ( area < (ldouble)0.0 )? -1:
               ( (area > (ldouble)0.0)? 1 : 0 ) );
 }
 
-inline  bool    Left(  const point2d  & a, 
+inline  bool    Left(  const point2d  & a,
                          const point2d  & b,
                          const point2d  & c )
 {
     return  AreaSign( a, b, c ) > 0;
 }
 
-inline  bool    Left_colinear(  const point2d  & a, 
+inline  bool    Left_colinear(  const point2d  & a,
                                 const point2d  & b,
                                 const point2d  & c )
 {
@@ -1418,8 +1324,8 @@ inline  bool    Left_colinear(  const point2d  & a,
 }
 
 
-struct CompareByAngle {  
-public:    
+struct CompareByAngle {
+public:
     point2d  base;
 
     bool operator()(const point2d_ptr  & a, const point2d_ptr   & b ) {
@@ -1451,32 +1357,32 @@ public:
 
 
 point2d_ptr  get_min_point( vec_point_2d  & in,
-                            int  & index ) 
+                            int  & index )
 {
     point2d_ptr  min_pnt = in[ 0 ];
 
     index = 0;
 
-    for  ( int  ind = 0; ind < (int)in.size(); ind++ ) { 
+    for  ( int  ind = 0; ind < (int)in.size(); ind++ ) {
         if  ( in[ ind ]->y < min_pnt->y ) {
             min_pnt = in[ ind ];
             index = ind;
         } else
-            if  ( ( in[ ind ]->y == min_pnt->y ) 
+            if  ( ( in[ ind ]->y == min_pnt->y )
                   &&  ( in[ ind ]->x < min_pnt->x ) ) {
                 min_pnt = in[ ind ];
                 index = ind;
             }
     }
 
-    return  min_pnt;        
+    return  min_pnt;
 }
 
 
-const void  dump( vec_point_2d   & vec ) 
+const void  dump( vec_point_2d   & vec )
 {
     for  ( int  ind = 0; ind < (int)vec.size(); ind++ ) {
-        printf( "-- %11d (%-11g, %-11g)\n",                
+        printf( "-- %11d (%-11g, %-11g)\n",
                 ind, vec[ ind ]->x,
                 vec[ ind ]->y );
     }
@@ -1484,7 +1390,7 @@ const void  dump( vec_point_2d   & vec )
 }
 
 
-static void  print_pnt( point2d_ptr  pnt ) 
+static void  print_pnt( point2d_ptr  pnt )
 {
     printf( "(%g, %g)\n", pnt->x, pnt->y );
 }
@@ -1494,9 +1400,6 @@ void   verify_convex_hull( vec_point_2d  & in, vec_point_2d  & ch )
 {
     ldouble  area;
 
-    //dump( ch );
-    //fflush( stdout );
-    //fflush( stderr );
     for  ( int  ind = 0; ind < (int)( ch.size() - 2 ); ind++ )
         assert( Left( *( ch[ ind ] ), *( ch[ ind + 1 ] ),
                       *( ch[ ind + 2 ] ) ) );
@@ -1511,7 +1414,7 @@ void   verify_convex_hull( vec_point_2d  & in, vec_point_2d  & ch )
                  continue;
              if  ( ch[ jnd + 1 ]->equal( *( in[ ind ] ) ) )
                  continue;
-             
+
              if  ( ! Left_colinear( *( ch[ jnd ] ), *( ch[ jnd + 1 ] ),
                                     *( in[ ind ] ) ) ) {
                  area = Area( *( ch[ jnd ] ), *( ch[ jnd + 1 ] ),
@@ -1523,21 +1426,20 @@ void   verify_convex_hull( vec_point_2d  & in, vec_point_2d  & ch )
                  print_pnt( ch[ jnd + 1 ] );
                  print_pnt( in[ ind ] );
 
-                 //dump( ch );
-                 printf( "ch[ jnd ]: (%g, %g)\n", 
+                 printf( "ch[ jnd ]: (%g, %g)\n",
                          ch[ jnd ]->x, ch[ jnd ]->y );
-                 printf( "ch[ jnd + 1 ]: (%g, %g)\n", 
+                 printf( "ch[ jnd + 1 ]: (%g, %g)\n",
                          ch[ jnd + 1 ]->x, ch[ jnd + 1 ]->y );
-                 printf( "ch[ ind ]: (%g, %g)\n", 
+                 printf( "ch[ ind ]: (%g, %g)\n",
                          in[ ind ]->x, in[ ind ]->y );
-                 printf( "Area: %g\n", (double)Area( *( ch[ jnd ] ), 
+                 printf( "Area: %g\n", (double)Area( *( ch[ jnd ] ),
                                              *( ch[ jnd + 1 ] ),
                                              *( in[ ind ] ) ) );
                  printf( "jnd: %d, jnd + 1: %d, ind: %d\n",
                          jnd, jnd+1, ind );
                  fflush( stdout );
                  fflush( stderr );
-                 
+
                  assert( Left( *( ch[ jnd ] ), *( ch[ jnd + 1 ] ),
                                *( in[ ind ] ) ) );
              }
@@ -1546,7 +1448,7 @@ void   verify_convex_hull( vec_point_2d  & in, vec_point_2d  & ch )
              continue;
          if  ( ch[ ch.size() - 1 ]->equal( *( in[ ind ] ) ) )
              continue;
-         assert( Left( *( ch[ ch.size() - 1 ] ), 
+         assert( Left( *( ch[ ch.size() - 1 ] ),
                        *( ch[ 0 ] ),
                        *( in[ ind ] ) ) );
     }
@@ -1555,7 +1457,7 @@ void   verify_convex_hull( vec_point_2d  & in, vec_point_2d  & ch )
 
 
 
-static  void   remove_duplicate( vec_point_2d  & in, 
+static  void   remove_duplicate( vec_point_2d  & in,
                                  point2d_ptr  ptr,
                                  int  start )
 {
@@ -1569,7 +1471,7 @@ static  void   remove_duplicate( vec_point_2d  & in,
         }
         in[ dest++ ] = in[ start++ ];
     }
-    while  ( (int)in.size() > dest ) 
+    while  ( (int)in.size() > dest )
         in.pop_back();
 }
 
@@ -1578,9 +1480,9 @@ static  void   remove_consecutive_dup( vec_point_2d  & in )
 {
     int  dest, pos;
 
-    if  ( in.size() < 1 ) 
+    if  ( in.size() < 1 )
         return;
-    
+
     dest = pos = 0;
 
     // copy first entry
@@ -1590,69 +1492,37 @@ static  void   remove_consecutive_dup( vec_point_2d  & in )
             pos++;
             continue;
         }
-        in[ dest++ ] = in[ pos++ ];        
+        in[ dest++ ] = in[ pos++ ];
     }
     in[ dest++ ] = in[ pos++ ];
 
-    while  ( (int)in.size() > dest ) 
+    while  ( (int)in.size() > dest )
         in.pop_back();
 }
 
 
 void  convex_hull( vec_point_2d  & in, vec_point_2d  & out )
 {
-    
+
     CompareByAngle  comp;
     int  ind, position;
-    
+
     assert( in.size() > 1 );
-    
+
     comp.base = *( get_min_point( in, position ));
     std::swap( in[ 0 ], in[ position ] );
-    
+
     remove_duplicate( in, in[ 0 ], 1 );
-    
-    /*
-    printf( "comp.base: (%g, %g)\n",
-            comp.base.x,
-            comp.base.y );
-    */
+
     for  ( int  ind = 0; ind < (int)in.size(); ind++ ) {
         assert( in[ ind ] != NULL );
     }
-        
+
     int  size;
 
     size = in.size();
-
-    /*
-    if  ( in.size() == 24 ) {
-        dump( in );
-        fflush( stdout );
-        fflush( stderr );
-        }*/
-
-    //printf( "sort( %d, %d, comp )\n", 1, in.size() );
     sort( in.begin() + 1, in.end(), comp );
     remove_consecutive_dup( in );
-    
-    //dump( in );
-    /*
-    for  ( int  ind = 0; ind < (int)in.size(); ind++ ) {
-        double  x_delta, y_delta;
-
-        x_delta = in[ ind ]->x - comp.base.x;
-        y_delta = in[ ind ]->y - comp.base.y;
-
-        printf( "-- %11d (%-11g, %-11g)  atan2: %-11g\n",                
-                ind, in[ ind ]->x,
-                in[ ind ]->y,
-                atan2( y_delta, x_delta ) );
-                }*/
-
-    //fflush( stdout );
-    //printf( "pushing...\n" );
-    //fflush( stdout );
     out.push_back( in[ in.size() - 1 ] );
     out.push_back( in[ 0 ] );
 
@@ -1727,7 +1597,7 @@ struct bbox_2d_info
 
 #define  EPS  1e-6
 inline  bool   eq_real( gdiam_real  a, gdiam_real  b ) {
-    return  ( ( ( b - EPS ) < a )  
+    return  ( ( ( b - EPS ) < a )
               &&  ( a < (b + EPS) ) );
 }
 
@@ -1747,7 +1617,7 @@ public:
 
     void  compute_edge_dir( int  u ) {
         int  u2;
-        double  ang; 
+        double  ang;
         double  x1, y1, x2, y2;
 
         u2 = (u + 1) % ch.size();
@@ -1760,25 +1630,13 @@ public:
         ang = atan2( y2 - y1, x2 - x1 );
         if  ( ang < 0 )
             ang += 2.0 * PI;
-        angles[ u ] = ang; 
-       
+        angles[ u ] = ang;
+
         // floating point nonsence. A huck to solve this...
-        if  ( ( u > 0 )  
-              &&  ( angles[ u ] < angles[ u - 1 ] ) 
+        if  ( ( u > 0 )
+              &&  ( angles[ u ] < angles[ u - 1 ] )
               &&   eq_real( angles[ u ], angles[ u - 1 ] ) )
             angles[ u ] = angles[ u - 1 ];
-
-        /*
-        printf( "angles[ %4d ]: %.20f ", u, ang );
-        if  ( u > 0 ) 
-            printf( "%2d", (angles[ u ] >= angles[ u - 1 ] ) );
-        if  ( u > 1 ) {
-            printf( " area: %.20f ", (double)Area( *( ch[ u - 2 ] ),
-                                                  *( ch[ u - 1 ] ),
-                                                  *( ch[ u ] ) ) );
-        }
-        printf( "\n" );
-        */
     }
 
     /* Finding the first vertex whose edge is over a given angle */
@@ -1791,27 +1649,27 @@ public:
         f_found = false;
 
         prev_vertex = start_vertex - 1;
-        if  ( prev_vertex < 0 ) 
+        if  ( prev_vertex < 0 )
             prev_vertex = ch.size() - 1;
 
         prev_angle = angles[ prev_vertex ];
         ver = start_vertex;
         while  ( ! f_found ) {
             curr_angle = angles[ ver ];
-            if ( prev_angle <= curr_angle ) 
+            if ( prev_angle <= curr_angle )
                 f_found = ( ( prev_angle < trg_angle)
-                            &&  ( trg_angle <= curr_angle ) ); 
-            else 
+                            &&  ( trg_angle <= curr_angle ) );
+            else
                 f_found = ( ( prev_angle < trg_angle )
-                            ||  ( trg_angle <= curr_angle )); 
-            
-            if ( f_found) 
-                break; 
-            else 
-                prev_angle = curr_angle; 
-            
+                            ||  ( trg_angle <= curr_angle ));
+
+            if ( f_found)
+                break;
+            else
+                prev_angle = curr_angle;
+
             ver = ( ver + 1 ) % ch.size();
-        } 
+        }
 
         return  ver;
     }
@@ -1821,7 +1679,7 @@ public:
    point and slope */
     void  compute_crossing( int  a_ind, double  a_angle,
                             int  b_ind, double  b_angle,
-                            gdiam_real  & x, 
+                            gdiam_real  & x,
                             gdiam_real  & y ) {
         double  a_slope, b_slope, x_a, x_b, y_a, y_b;
 
@@ -1835,58 +1693,23 @@ public:
             y = ch[ b_ind ]->y;
             return;
         }
-        
-        a_slope = tan( a_angle ); 
-        b_slope = tan( b_angle ); 
-        x_a = ch[ a_ind ]->x; 
-        y_a = ch[ a_ind ]->y; 
-        x_b = ch[ b_ind ]->x; 
-        y_b = ch[ b_ind ]->y; 
+
+        a_slope = tan( a_angle );
+        b_slope = tan( b_angle );
+        x_a = ch[ a_ind ]->x;
+        y_a = ch[ a_ind ]->y;
+        x_b = ch[ b_ind ]->x;
+        y_b = ch[ b_ind ]->y;
 
         double  a_const, b_const, x_out, y_out;
-
-        // Let see:
-        //  l_a = y = a_slope * x + a_const ->
-        //        y_a = a_slope * x_a + a_const  (since (x_a, y_a) in l_a
-        //        a_const = y_a - a_slope * x_a
         a_const = y_a - a_slope * x_a;
-        //printf( "a_const: %g, y_a: %g, a_slope: %g, x_a: %g\n",
-        //        a_const, y_a, a_slope, x_a );
-
         b_const = y_b - b_slope * x_b;
-        //printf( "b_const: %g, y_b: %g, b_slope: %g, x_b: %g\n",
-        //        b_const, y_b, b_slope, x_b );
-
         x_out = - ( a_const - b_const ) / (a_slope - b_slope);
         y_out = a_slope * x_out + a_const;
-        /* 
-        x = (y_b - y_a + x_a * a_slope - x_b * a_slope)
-            / (a_slope - b_slope); 
-        y = ((y_a - x_a * a_slope) / a_slope - (y_b - x_b * b_slope) 
-             / b_slope) / 
-            (1.0 / a_slope - 1.0 / b_slope ); 
-        printf( "gill: (%g, %g)\nMine: (%g, %g)\n",
-                x, y, x_out, y_out );
-        */
-        //printf( "a_angle: %g, b_angle: %g\n",
-        //        a_angle / PI, b_angle/ PI );
-        //printf( "a_slope: %g, b_slope: %g\n", 
-        //        a_slope, b_slope );
-        //printf( "on line_b: %g\n",
-        //        b_slope * x_out + b_const - y_out );
         x = x_out;
         y = y_out;
-        //printf( "line_a : y = %g * x + %g\n", 
-        //        a_slope, a_const );
-        //printf( "line_b : y = %g * x + %g\n", 
-        //        b_slope, b_const );
-        //printf( "a: (%g, %g)\n"
-        //        "b: (%g, %g)\n",
-        //        x_a, y_a, x_b, y_b );
-
-        //printf( "out: (%g, %g)\n", x, y );
     }
-    
+
 
     void  get_bbox( int   a_ind, gdiam_real   a_angle,
                     int   b_ind, gdiam_real   b_angle,
@@ -1894,16 +1717,6 @@ public:
                     int   d_ind, gdiam_real   d_angle,
                     bbox_2d_info   & bbox,
                     gdiam_real  & area ) {
-        /*
-        printf( "get_bbox: (%d, %g,\n"
-                "%d, %g\n"
-                "%d, %g\n"
-                "%d, %g )\n", 
-                a_ind, a_angle / PI,
-                b_ind, b_angle / PI,
-                c_ind, c_angle / PI,
-                d_ind, d_angle / PI );*/
-                                
         compute_crossing( a_ind, a_angle, b_ind, b_angle,
                           bbox.vertices[ 0 ][ 0 ],
                           bbox.vertices[ 0 ][ 1 ] );
@@ -1932,14 +1745,10 @@ public:
 
         angle = angles[ ind ];
         angle_1 = angle + PI * 0.5;
-        //printf( "angle = %g\n", angle / PI );
-        //printf( "angle1 = %g\n", angle_1 / PI );
 
         if   ( angle_1 >= (2.0 * PI) )
             angle_1 -= 2.0 * PI;
-        //printf( "angle1 = %g\n", angle_1 / PI );
 
-        
         angle_2 = angle + PI;
         if ( angle_2 >= (2.0 * PI) )
             angle_2 -= 2.0 * PI;
@@ -1955,7 +1764,7 @@ public:
         gdiam_real     ang1, ang2, ang3, tmp_area;
         bbox_2d_info  tmp_bbox;
 
-        angles = (gdiam_real *)malloc( sizeof( gdiam_real ) 
+        angles = (gdiam_real *)malloc( sizeof( gdiam_real )
                                            * (int)ch.size() );
         assert( angles != NULL );
 
@@ -1964,24 +1773,18 @@ public:
             compute_edge_dir( u );
 
         /* Initializing the search */
-        //printf( "_angles[ 0 ]: %g\n", angles[ 0 ] );
         get_angles( 0, ang1, ang2, ang3 );
-        
-        //printf( "_angles[ 0 ]: %g\n", angles[ 0 ] );
+
         s = find_vertex( 0, ang1 );
-        //printf( "_angles[ 0 ]: %g\n", angles[ 0 ] );
         v = find_vertex( s, ang2 );
         t = find_vertex( v, ang3 );
-        
-        //printf( "_angles[ 0 ]: %g\n", angles[ 0 ] );
+
         get_bbox( 0, angles[ 0 ],
                   s, ang1,
                   v, ang2,
                   t, ang3,
                   min_bbox, min_area );
-        //min_bbox.dump();
-  
-        //printf( "min_area: %g\n", min_area );
+
         /* Performing a double rotating calipers */
         for  ( u = 1; u < (int)ch.size(); u ++ ) {
             get_angles( u, ang1, ang2, ang3 );
@@ -1993,32 +1796,26 @@ public:
                       v, ang2,
                       t, ang3,
                       tmp_bbox, tmp_area );
-            //tmp_bbox.dump();
-            //printf( "tmp_area: %g\n", tmp_area );
             if  ( min_area > tmp_area ) {
                 min_area = tmp_area;
                 min_bbox = tmp_bbox;
             }
         }
         free( angles );
-        angles = NULL;        
+        angles = NULL;
     }
 
     void  compute_min_bbox( vec_point_2d   & points,
                             bbox_2d_info   & min_bbox,
-                            gdiam_real  & min_area ) {        
-        //printf( "before cunvex hull\n" );
+                            gdiam_real  & min_area ) {
         convex_hull( points, ch );
-        //printf( "cunvex hull done!\n" );
-        //dump_ch();
         compute_min_bbox_inner( min_bbox, min_area );
-        //min_bbox.dump();
     }
 
 };
 
 void   dump_points( gdiam_point  * in_arr,
-                    int  size ) 
+                    int  size )
 {
     for  ( int  ind = 0; ind < size; ind++ ) {
         printf( "%d: (%g, %g, %g)\n", ind,
@@ -2090,7 +1887,7 @@ void   construct_base( gdiam_point  pnt1,
 }
 
 
-class  ProjPointSet 
+class  ProjPointSet
 {
 private:
     gdiam_point_t  base_x, base_y, base_proj;
@@ -2099,7 +1896,7 @@ private:
     gdiam_bbox   bbox;
     gdiam_point  * in_arr;
     int  size;
-        
+
 public:
     ~ProjPointSet() {
         term();
@@ -2109,7 +1906,7 @@ public:
                 int  _size ) {
         arr = NULL;
 
-        if  ( pnt_length( dir ) == 0.0 ) { 
+        if  ( pnt_length( dir ) == 0.0 ) {
             dump_points( _in_arr, _size );
             pnt_dump( dir );
             fflush( stdout );
@@ -2122,7 +1919,7 @@ public:
 
         pnt_copy( base_proj, dir );
         gdiam_generate_orthonormal_base( base_proj, base_x, base_y );
-        
+
         arr = (point2d *)malloc( sizeof( point2d ) * size );
         assert( arr != 0 );
 
@@ -2151,8 +1948,6 @@ public:
         y2 = min_bbox.vertices[ 0 ][ 1 ] -
             min_bbox.vertices[ 3 ][ 1 ];
 
-        //printf( "prod: %g\n", x1 * x2 + y1 * y2 );
-        
         double  len;
 
         len = sqrt( x1 * x1 + y1 * y1 );
@@ -2165,7 +1960,7 @@ public:
         if  ( len > 0.0 ) {
             x2 /= len;
             y2 /= len;
-        }        
+        }
 
         pnt_zero( out_1 );
         pnt_scale_and_add( out_1, x1, base_x );
@@ -2207,13 +2002,13 @@ public:
         }
 
         bbox.init( base_proj, out_1, out_2 );
-        for  ( int  ind = 0; ind < size; ind++ ) 
+        for  ( int  ind = 0; ind < size; ind++ )
             bbox.bound( in_arr[ ind ] );
     }
 
     gdiam_bbox   & get_bbox() {
         return  bbox;
-    }    
+    }
 
     void  term() {
         if  ( arr != NULL ) {
@@ -2230,8 +2025,6 @@ gdiam_bbox   gdiam_mvbb_optimize( gdiam_point  * start, int  size,
                                   gdiam_bbox  bb_out, int  times  )
 {
     gdiam_bbox  bb_tmp;
-    
-    //printf( "gdiam_mvbb_optimize called\n" );
 
     for  ( int  ind = 0; ind < times; ind++ ) {
         ProjPointSet  pps;
@@ -2246,14 +2039,9 @@ gdiam_bbox   gdiam_mvbb_optimize( gdiam_point  * start, int  size,
         pps.init( bb_out.get_dir( ind % 3 ), start, size );
 
         pps.compute();
-        
-        //printf( "Old volume: %g\n", bb_out.volume() );
         bb_tmp = pps.get_bbox();
-        //printf( "New volume: %g\n", bb_tmp.volume() );
-        //printf( "Old bounding box:\n" );
-        //bb2.dump();
 
-        if  ( bb_tmp.volume() < bb_out.volume() ) 
+        if  ( bb_tmp.volume() < bb_out.volume() )
             bb_out = bb_tmp;
     }
 
@@ -2262,85 +2050,80 @@ gdiam_bbox   gdiam_mvbb_optimize( gdiam_point  * start, int  size,
 
 
 gdiam_bbox   gdiam_approx_mvbb( gdiam_point  * start, int  size,
-                                gdiam_real  eps ) 
+                                gdiam_real  eps )
 {
     gdiam_bbox  bb, bb2;
 
     bb = gdiam_approx_const_mvbb( start, size, 0.0, NULL );
     bb2 = gdiam_mvbb_optimize( start, size,  bb, 10 );
 
-    //bb2.dump();
-
     return  bb2;
 }
 
 
-static int  gcd2( int  a, int  b ) 
+static int  gcd2( int  a, int  b )
 {
-    if  ( a == 0  ||  a == b ) 
+    if  ( a == 0  ||  a == b )
         return  b;
-    if  ( b == 0 ) 
+    if  ( b == 0 )
         return  a;
-    if  ( a > b ) 
+    if  ( a > b )
         return  gcd2( a % b, b );
     else
         return  gcd2( a, b % a );
 }
 
 
-static int  gcd3( int  a, int  b, int  c ) 
+static int  gcd3( int  a, int  b, int  c )
 {
     a = abs( a );
     b = abs( b );
     c = abs( c );
-    if   ( a == 0 ) 
+    if   ( a == 0 )
         return  gcd2( b, c );
-    if   ( b == 0 ) 
+    if   ( b == 0 )
         return  gcd2( a, c );
-    if   ( c == 0 ) 
+    if   ( c == 0 )
         return  gcd2( a, b );
 
     return  gcd2( a, gcd2( b, c ) );
 }
 
 
-static void  try_direction( gdiam_bbox  & bb, 
-                            gdiam_bbox  & bb_out, 
-                            gdiam_point  * start, 
+static void  try_direction( gdiam_bbox  & bb,
+                            gdiam_bbox  & bb_out,
+                            gdiam_point  * start,
                             int  size,
-                            int  x_coef, 
-                            int  y_coef, 
+                            int  x_coef,
+                            int  y_coef,
                             int  z_coef )
 {
     gdiam_bbox  bb_new;
 
-    if  ( gcd3( x_coef, y_coef, z_coef ) > 1 ) 
+    if  ( gcd3( x_coef, y_coef, z_coef ) > 1 )
         return;
-    if  ( ( x_coef == 0 )  &&  ( y_coef == 0 ) 
+    if  ( ( x_coef == 0 )  &&  ( y_coef == 0 )
           &&  ( z_coef == 0 ) )
         return;
-    //printf( "trying: (%d, %d, %d)\n",
-    //        x_coef, y_coef, z_coef );
-    //fflush( stdout );
     gdiam_point_t  new_dir;
     bb.combine( new_dir, x_coef, y_coef, z_coef );
-    
+
     ProjPointSet  pps;
-    
+
     pps.init( new_dir, start, size );
-    
+
     pps.compute();
-    
+
     bb_new = pps.get_bbox();
     bb_new = gdiam_mvbb_optimize( start, size, bb_new, 10 );
-    
-    if  ( bb_new.volume() < bb_out.volume() ) 
-        bb_out = bb_new;                
+
+    if  ( bb_new.volume() < bb_out.volume() )
+        bb_out = bb_new;
 }
 
 
 gdiam_bbox   gdiam_approx_mvbb_grid( gdiam_point  * start, int  size,
-                                     int  grid_size ) 
+                                     int  grid_size )
 {
     gdiam_bbox  bb, bb_out;
 
@@ -2352,18 +2135,15 @@ gdiam_bbox   gdiam_approx_mvbb_grid( gdiam_point  * start, int  size,
     }
 
     bb_out = bb = gdiam_mvbb_optimize( start, size, bb_out, 10 );
-    
+
     if  ( bb.volume() == 0 ) {
         printf( "2zero volume???\n" );
         bb.dump();
     }
-    //trying: (1, -4, 4)
-    //try_direction( bb, bb_out, start, size,
-    //               1, -4, 4 );
-    
+
     for  ( int  x_coef = -grid_size; x_coef <= grid_size; x_coef++ )
         for  ( int  y_coef = -grid_size; y_coef <= grid_size; y_coef++ )
-            for  ( int  z_coef = 0; z_coef <= grid_size; z_coef++ ) 
+            for  ( int  z_coef = 0; z_coef <= grid_size; z_coef++ )
                 try_direction( bb, bb_out, start, size,
                                x_coef, y_coef, z_coef );
 
@@ -2375,8 +2155,8 @@ gdiam_bbox   gdiam_approx_mvbb_grid( gdiam_point  * start, int  size,
 
 static void   register_point( gdiam_point  pnt,
                               gdiam_point  * tops,
-                              gdiam_point  * bottoms, 
-                              int  grid_size, 
+                              gdiam_point  * bottoms,
+                              int  grid_size,
                               gdiam_bbox  & bb )
 {
     gdiam_point_t  pnt_bb, pnt_bottom, pnt_top;
@@ -2384,7 +2164,7 @@ static void   register_point( gdiam_point  pnt,
 
     bb.get_normalized_coordinates( pnt, pnt_bb );
 
-    // x_ind 
+    // x_ind
     x_ind = (int)( pnt_bb[ 0 ] * grid_size );
     assert( ( -1 <= x_ind )  &&  ( x_ind <= grid_size ) );
     if  ( x_ind < 0 )
@@ -2392,7 +2172,7 @@ static void   register_point( gdiam_point  pnt,
     if  ( x_ind >= grid_size )
         x_ind = grid_size - 1;
 
-    // y_ind 
+    // y_ind
     y_ind = (int)( pnt_bb[ 1 ] * grid_size );
     assert( ( -1 <= y_ind )  &&  ( y_ind <= grid_size ) );
     if  ( y_ind < 0 )
@@ -2407,12 +2187,12 @@ static void   register_point( gdiam_point  pnt,
     }
 
     bb.get_normalized_coordinates( tops[ position ], pnt_top );
-    if  ( pnt_top[ 2 ] < pnt_bb[ 2 ] ) 
+    if  ( pnt_top[ 2 ] < pnt_bb[ 2 ] )
         tops[ position ] = pnt;
 
     bb.get_normalized_coordinates( bottoms[ position ], pnt_bottom );
     if  ( pnt_bottom[ 2 ] > pnt_bb[ 2 ] )
-        bottoms[ position ] = pnt;     
+        bottoms[ position ] = pnt;
 }
 
 
@@ -2420,10 +2200,10 @@ static void   register_point( gdiam_point  pnt,
 // gdiam_convex_sample
 
 //   We are given a point set, and (hopefully) a tight fitting
-// bounding box. We compute a smplae of the given size that represents 
+// bounding box. We compute a sample of the given size that represents
 // the point-set. The only guarenteed is that if we use ample of size m,
-// we get an approximation of quality about 1/\sqrt{m}. Note that we pad 
-// the sample if necessary to get the desired size. 
+// we get an approximation of quality about 1/\sqrt{m}. Note that we pad
+// the sample if necessary to get the desired size.
 gdiam_point  * gdiam_convex_sample( gdiam_point  * start, int  size,
                                     gdiam_bbox  & bb,
                                     int  sample_size )
@@ -2452,31 +2232,31 @@ gdiam_point  * gdiam_convex_sample( gdiam_point  * start, int  size,
 
     for  ( int  ind = 0; ind < grid_entries; ind++ )
         tops[ ind ] = bottoms[ ind ] = NULL;
-    
-    // No we stream the points registering them with the relevant
+
+    // Now we stream the points registering them with the relevant
     // shaft in the grid.
-    for  ( int  ind = 0; ind < size; ind++ ) 
-        register_point( start[ ind ], tops, bottoms, 
+    for  ( int  ind = 0; ind < size; ind++ )
+        register_point( start[ ind ], tops, bottoms,
                         grid_size, bb );
 
     out_count = 0;
     for  ( int  ind = 0; ind < grid_entries; ind++ ) {
-        if  ( tops[ ind ] == NULL ) 
+        if  ( tops[ ind ] == NULL )
             continue;
 
         out_arr[ out_count++ ] = tops[ ind ];
         if  ( tops[ ind ] != bottoms[ ind ] )
             out_arr[ out_count++ ] = bottoms[ ind ];
     }
-    
-    // We dont have neough entries in our sample - lets randomly pick
+
+    // We dont have enough entries in our sample - lets randomly pick
     // points.
-    while  ( out_count < sample_size ) 
+    while  ( out_count < sample_size )
         out_arr[ out_count++ ] = start[ rand() % size ];
 
     free( tops );
     free( bottoms );
-    
+
     return  out_arr;
 }
 
@@ -2487,35 +2267,20 @@ gdiam_bbox   gdiam_approx_mvbb_grid_sample( gdiam_point  * start, int  size,
     gdiam_bbox  bb, bb_new;
     gdiam_point  * sample;
 
-    if  ( sample_size >= size ) 
+    if  ( sample_size >= size )
         return   gdiam_approx_mvbb_grid( start, size, grid_size );
-        
-    //printf( "gdiam_approx_mvbb_grid_sample(...) called\n" );
-    //fflush( stdout );
 
     bb = gdiam_approx_const_mvbb( start, size, 0.0, NULL );
-    //printf( "guess from const approximation:\n" );
 
     sample = gdiam_convex_sample( start, size, bb, sample_size );
-    
+
     bb_new = gdiam_approx_mvbb_grid( sample, sample_size, grid_size );
 
-    //printf( "new volume on sample: %g\n",
-    //        bb_new.volume() );
-    //fflush( stdout );
-
-    for  ( int  ind = 0; ind < size; ind++ ) 
+    for  ( int  ind = 0; ind < size; ind++ )
         bb_new.bound( start[ ind ] );
 
-    //printf( "new volume on resized input: %g\n",
-    //        bb_new.volume() );
-    
-    //bb_new = gdiam_mvbb_optimize( start, size, bb_new, 10 );
-    //printf(s "optimized new volume: %g\n",
-    //        bb_new.volume() );
-
     return  bb_new;
-} 
+}
 
 
 
@@ -2525,14 +2290,11 @@ gdiam_bbox   gdiam_approx_mvbb_grid_sample( gdiam_real  * start, int  size,
     gdiam_point  * p_arr;
     gdiam_bbox  bb;
 
-    //printf( "gdiam_approx_mvbb_grid_sample( ?, %d, ...)\n", size );
-    //fflush( stdout );
-
     p_arr = gdiam_convert( start, size );
     bb = gdiam_approx_mvbb_grid_sample( p_arr, size, grid_size, sample_size );
     free( p_arr );
 
-    return  bb;    
+    return  bb;
 }
 
 
