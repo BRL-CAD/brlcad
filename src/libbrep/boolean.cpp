@@ -38,6 +38,7 @@
 #include "raytrace.h"
 
 #define DEBUG 1
+#define INTERSECTION_TOL 0.001
 
 
 struct TrimmedFace {
@@ -161,7 +162,7 @@ IsPointInsideLoop(const ON_2dPoint& pt, const ON_SimpleArray<ON_Curve*>& loop)
     ON_2dPoint out = pt + ON_2dVector(bbox.Diagonal());
     ON_LineCurve linecurve(pt, out);
     ON_SimpleArray<ON_X_EVENT> x_event;
-    ON_Intersect(&linecurve, &polycurve, x_event);
+    ON_Intersect(&linecurve, &polycurve, x_event, INTERSECTION_TOL);
     int count = x_event.Count();
     for (int i = 0; i < x_event.Count(); i++) {
 	// Find tangent intersections.
@@ -196,22 +197,23 @@ link_curves(const ON_SimpleArray<ON_Curve*>& in, ON_SimpleArray<ON_Curve*>& out)
 		continue;
 
 	    ON_Curve *c1 = NULL, *c2 = NULL;
+	    double dis;
 	    // Link curves that share an end point.
-	    if (tmp[i]->PointAtStart().DistanceTo(tmp[j]->PointAtEnd()) < BREP_SAME_POINT_TOLERANCE) {
+	    if ((dis = tmp[i]->PointAtStart().DistanceTo(tmp[j]->PointAtEnd())) < INTERSECTION_TOL) {
 		// end -- start -- end -- start
 		c1 = tmp[j];
 		c2 = tmp[i];
-	    } else if (tmp[i]->PointAtEnd().DistanceTo(tmp[j]->PointAtStart()) < BREP_SAME_POINT_TOLERANCE) {
+	    } else if ((dis = tmp[i]->PointAtEnd().DistanceTo(tmp[j]->PointAtStart())) < INTERSECTION_TOL) {
 		// start -- end -- start -- end
 		c1 = tmp[i];
 		c2 = tmp[j];
-	    } else if (tmp[i]->PointAtStart().DistanceTo(tmp[j]->PointAtStart()) < BREP_SAME_POINT_TOLERANCE) {
+	    } else if ((dis = tmp[i]->PointAtStart().DistanceTo(tmp[j]->PointAtStart())) < INTERSECTION_TOL) {
 		// end -- start -- start -- end
 		if (tmp[i]->Reverse()) {
 		    c1 = tmp[i];
 		    c2 = tmp[j];
 		}
-	    } else if (tmp[i]->PointAtEnd().DistanceTo(tmp[j]->PointAtEnd()) < BREP_SAME_POINT_TOLERANCE) {
+	    } else if ((dis = tmp[i]->PointAtEnd().DistanceTo(tmp[j]->PointAtEnd())) < INTERSECTION_TOL) {
 		// start -- end -- end -- start
 		if (tmp[j]->Reverse()) {
 		    c1 = tmp[i];
@@ -223,9 +225,22 @@ link_curves(const ON_SimpleArray<ON_Curve*>& in, ON_SimpleArray<ON_Curve*>& out)
 	    if (c1 != NULL && c2 != NULL) {
 		ON_PolyCurve* polycurve = new ON_PolyCurve;
 		polycurve->Append(c1);
+		if (dis > ON_ZERO_TOLERANCE)
+		    polycurve->Append(new ON_LineCurve(c1->PointAtEnd(), c2->PointAtStart()));
 		polycurve->Append(c2);
 		tmp[i] = polycurve;
 		tmp[j] = NULL;
+	    }
+
+	    // Check whether tmp[i] is closed within a tolerance
+	    if (tmp[i]->PointAtStart().DistanceTo(tmp[i]->PointAtEnd()) < INTERSECTION_TOL && !tmp[i]->IsClosed()) {
+		// make IsClosed() true
+		c1 = tmp[i];
+		c2 = new ON_LineCurve(tmp[i]->PointAtEnd(), tmp[i]->PointAtStart());
+		ON_PolyCurve* polycurve = new ON_PolyCurve;
+		polycurve->Append(c1);
+		polycurve->Append(c2);
+		tmp[i] = polycurve;
 	    }
 	}
     }
@@ -268,7 +283,7 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
     for (int i = 0; i < in->outerloop.Count(); i++) {
 	for (int j = 0; j < curves.Count(); j++) {
 	    ON_SimpleArray<ON_X_EVENT> x_event;
-	    ON_Intersect(in->outerloop[i], curves[j], x_event);
+	    ON_Intersect(in->outerloop[i], curves[j], x_event, INTERSECTION_TOL);
 	    for (int k = 0; k < x_event.Count(); k++) {
 		if (x_event[k].m_type == ON_X_EVENT::ccx_overlap)
 		    continue;	// Deal with it later
@@ -292,6 +307,7 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	    // The start point cannot be on the boundary of the loop, because
 	    // there is no intersections between curves[i] and the loop.
 	    if (IsPointInsideLoop(curves[i]->PointAtStart(), in->outerloop)) {
+		bu_log("*********inside loop.\n");
 		if (curves[i]->IsClosed()) {
 		    ON_SimpleArray<ON_Curve*> iloop;
 		    iloop.Append(curves[i]);
@@ -608,7 +624,8 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
 	    ON_ClassArray<ON_SSX_EVENT> events;
 	    if (ON_Intersect(brepA->m_S[brepA->m_F[i].m_si],
 			     brepB->m_S[brepB->m_F[j].m_si],
-			     events) <= 0)
+			     events,
+			     INTERSECTION_TOL) <= 0)
 		continue;
 	    ON_SimpleArray<ON_Curve*> curve_uv, curve_st;
 	    for (int k = 0; k < events.Count(); k++) {
