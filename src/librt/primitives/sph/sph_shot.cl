@@ -16,18 +16,16 @@
 
 
 __kernel void sph_shot(__global __write_only double3 *output,
-	const double3 o, const double3 dir, const double3 V, const double r)
+	const double3 o, const double3 dir, const double3 V, const double radsq)
 {
     double3 ov;        /* ray origin to center (V - P) */
     double magsq_ov;   /* length squared of ov */
     double b;          /* second term of quadratic eqn */
     double root;       /* root of radical */
-    double radsq;      /* square of radius */
 
     ov = V - o;
     b = dot(dir, ov);
     magsq_ov = ov[0]*ov[0] + ov[1]*ov[1] + ov[2]*ov[2];
-    radsq = r*r;
 
     if (magsq_ov >= radsq) {
 	/* ray origin is outside of sphere */

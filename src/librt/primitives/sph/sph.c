@@ -204,7 +204,7 @@ clt_init()
 
 
 static cl_double3
-clt_shot(cl_double3 o, cl_double3 dir, cl_double3 V, cl_double r)
+clt_shot(cl_double3 o, cl_double3 dir, cl_double3 V, cl_double radsq)
 {
     cl_int error;
     cl_mem output;
@@ -223,7 +223,7 @@ clt_shot(cl_double3 o, cl_double3 dir, cl_double3 V, cl_double r)
     error |= clSetKernelArg(clt_kernel, 1, sizeof(cl_double3), &o);
     error |= clSetKernelArg(clt_kernel, 2, sizeof(cl_double3), &dir);
     error |= clSetKernelArg(clt_kernel, 3, sizeof(cl_double3), &V);
-    error |= clSetKernelArg(clt_kernel, 4, sizeof(cl_double), &r);
+    error |= clSetKernelArg(clt_kernel, 4, sizeof(cl_double), &radsq);
     if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
     error = clEnqueueNDRangeKernel(clt_queue, clt_kernel, 1, NULL, &global_size, NULL, 0, NULL, &done_kernel);
     bu_semaphore_release(clt_semaphore);
@@ -391,7 +391,7 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     cl_double3 o; /* ray origin  */
     cl_double3 dir; /* ray direction (unit vector) */
     cl_double3 V; /* vector to sphere  */
-    cl_double r; /* sphere radius */
+    cl_double radsq; /* sphere radius */
     cl_double3 result;
     struct seg *segp;
 
@@ -400,8 +400,9 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     VMOVE(o.s, rp->r_pt);
     VMOVE(dir.s, rp->r_dir);
     VMOVE(V.s, ((struct sph_specific *)stp->st_specific)->sph_V);
-    r = ((struct sph_specific *)stp->st_specific)->sph_rad;
-    result = clt_shot(o, dir, V, r);
+    radsq = ((struct sph_specific *)stp->st_specific)->sph_rad;
+    radsq *= radsq;
+    result = clt_shot(o, dir, V, radsq);
 
     if (EQUAL(result.s[0], 0)) return 0; /* no hit  */
 
