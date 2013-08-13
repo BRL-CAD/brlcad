@@ -17,6 +17,7 @@
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
   <command>bwrect</command>
+    <arg choice='opt'>-h </arg>
     <arg choice='opt'>-s <replaceable>squaresize</replaceable></arg>
     <arg choice='opt'>-w <replaceable>width</replaceable></arg>
     <arg choice='opt'>-n <replaceable>height</replaceable></arg>
