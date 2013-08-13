@@ -40,10 +40,10 @@
 // surface-> bspline_surface_with_knots
 //           cartesian_point
 //
-// outer 3d trim loop ->  face_outer_bound
-//                        edge_loop
-//                        oriented_edge
-//                        edge_curve
+// outer 3d trim loop ->  face_outer_bound    ->    SdaiFace_outer_bound -> SdaiFace_bound
+//                        edge_loop           ->    SdaiEdge_loop
+//                        oriented_edge       ->    SdaiOriented_edge
+//                        edge_curve          ->    SdaiEdge_curve
 //                        bspline_curve_with_knots
 //                        vertex_point
 //                        cartesian_point
@@ -203,7 +203,7 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 	std::vector<STEPentity *> vertex_pnts(brep->m_V.Count(), (STEPentity *)0);
 	std::vector<STEPentity *> three_dimensional_curves(brep->m_C3.Count(), (STEPentity *)0);
 	std::vector<STEPentity *> edge_curves(brep->m_E.Count(), (STEPentity *)0);
-	std::vector<STEPentity *> oriented_edges(2*(brep->m_E.Count()), (STEPentity *)0);
+	std::vector<STEPentity *> oriented_edges(brep->m_E.Count(), (STEPentity *)0);
 	std::vector<STEPentity *> edge_loops(brep->m_L.Count(), (STEPentity *)0);
 	std::vector<STEPentity *> outer_bounds(brep->m_F.Count(), (STEPentity *)0);
 	std::vector<STEPentity *> surfaces(brep->m_S.Count(), (STEPentity *)0);
@@ -290,6 +290,53 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 		if (!curve_converted) std::cout << "Curve not converted! " << i << "\n";
 
 	}
+
+	// edge topology - ON_BrepEdge -> edge curves and oriented edges
+	for (int i = 0; i < brep->m_E.Count(); ++i) {
+		ON_BrepEdge *edge = &(brep->m_E[i]);
+		edge_curves.at(i) = registry->ObjCreate("EDGE_CURVE");
+		instance_list->Append(edge_curves.at(i), completeSE);
+		SdaiEdge_curve *e_curve = (SdaiEdge_curve *)edge_curves.at(i);
+		e_curve->edge_geometry_(((SdaiCurve *)three_dimensional_curves.at(edge->EdgeCurveIndexOf())));
+		e_curve->same_sense_(BTrue);
+		oriented_edges.at(i) = registry->ObjCreate("ORIENTED_EDGE");
+		instance_list->Append(oriented_edges.at(i), completeSE);
+		SdaiOriented_edge *oriented_edge = (SdaiOriented_edge *)oriented_edges.at(i);
+		oriented_edge->edge_element_((SdaiEdge *)e_curve);
+		oriented_edge->edge_start_(((SdaiVertex *)vertex_pnts.at(edge->Vertex(0)->m_vertex_index)));
+		oriented_edge->edge_start_(((SdaiVertex *)vertex_pnts.at(edge->Vertex(1)->m_vertex_index)));
+		/* Check whether the 3d points of the vertices correspond to the beginning and end of the curve */
+		double d1 = edge->Vertex(0)->Point().DistanceTo(brep->m_C3[edge->EdgeCurveIndexOf()]->PointAtStart());
+		double d1a = edge->Vertex(0)->Point().DistanceTo(brep->m_C3[edge->EdgeCurveIndexOf()]->PointAtEnd());
+		double d2 = edge->Vertex(1)->Point().DistanceTo(brep->m_C3[edge->EdgeCurveIndexOf()]->PointAtStart());
+		double d2a = edge->Vertex(1)->Point().DistanceTo(brep->m_C3[edge->EdgeCurveIndexOf()]->PointAtEnd());
+		if ((d1 < d1a) && (d2a < d2)) {
+			oriented_edge->orientation_(BTrue);
+		} else {
+			oriented_edge->orientation_(BFalse);
+		}
+	}
+
+	// loop topology.  STEP defines loops with 3D edge curves, but OpenNURBS describes ON_BrepLoops with 
+	// 2d trim curves.  So for a given loop, we need to interate over the trims, for each trim get the
+	// index of its corresponding edge, and add that edge to the _edge_list for the loop.
+	//
+	// TODO - for some reason _edge_list is initialized to a NULL pointer in the ObjCreate process, and
+	// it's protected so I can't manually repair it afterward.
+	/*
+	for (int i = 0; i < brep->m_L.Count(); ++i) {
+		ON_BrepLoop *loop= &(brep->m_L[i]);
+		edge_loops.at(i) = registry->ObjCreate("EDGE_LOOP");
+		instance_list->Append(edge_loops.at(i), completeSE);
+		SdaiEdge_loop *e_loop = (SdaiEdge_loop *)edge_loops.at(i);
+		for (int l = 0; l < loop->TrimCount(); ++l) {
+			ON_BrepEdge *edge = loop->Trim(l)->Edge();
+			if (edge)
+				e_loop->edge_list_()->AddNode(new EntityNode((SDAI_Application_instance *)(oriented_edges.at(edge->m_edge_index))));
+		}
+	}
+        */
+
 	// surfaces - TODO - need to handle cylindrical, conical, toroidal, etc. types that are enumerated
 	std::cout << "Have " << brep->m_S.Count() << " surfaces\n";
 	for (int i = 0; i < brep->m_S.Count(); ++i) {
@@ -354,8 +401,18 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 			std::cout << "Have SumSurface\n";
 			ON_NurbsSurface sum_nurb;
 			sum_surface->GetNurbForm(sum_nurb);
-			std::cout << "Have " << brep->m_S.Count() << " surfaces\n";
-			std::cout << "Have " << brep->m_C3.Count() << " curves\n";
+			surfaces.at(i) = registry->ObjCreate("B_SPLINE_SURFACE_WITH_KNOTS");
+			SdaiB_spline_surface *curr_surface = (SdaiB_spline_surface *)surfaces.at(i);
+			curr_surface->u_degree_(sum_nurb.Degree(0));
+			curr_surface->v_degree_(sum_nurb.Degree(1));
+			ON_NurbsSurfaceCV_to_GenericAggregate(&sum_nurb, curr_surface, registry, instance_list);
+			SdaiB_spline_surface_with_knots *surface_knots = (SdaiB_spline_surface_with_knots *)surfaces.at(i);
+			ON_NurbsSurfaceKnots_to_Aggregates(&sum_nurb, surface_knots);
+			curr_surface->surface_form_(B_spline_surface_form__plane_surf);
+			/* TODO - for now, assume non-self-intersecting */
+			curr_surface->self_intersect_(LFalse);
+			instance_list->Append(surfaces.at(i), completeSE);
+			surface_converted = 1;
 		}
 
 		if (surface_proxy && !surface_converted) {
