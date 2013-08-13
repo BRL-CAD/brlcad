@@ -34,7 +34,7 @@ ged_comb_color(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
-    static const char *usage = "comb_color combination R G B";
+    static const char *usage = "combination R G B";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
