@@ -32,8 +32,6 @@
 #include "bu.h"
 #include "icv.h"
 
-#define __ICV_DEBUG__ bu_log("bwrect : %d\n",__LINE__);
-
 int outx=0, outy=0;		/* Number of pixels in new map */
 int xorig=0, yorig=0;		/* Bottom left corner to extract from */
 int inx=512, iny=512;
