@@ -25,7 +25,7 @@ WARN_FORMAT            = "$file:$line: $text"
 #INPUT += @CMAKE_SOURCE_DIR@/src/libpc/
 #INPUT += @CMAKE_SOURCE_DIR@/src/libbrep/
 
-INPUT  = @CMAKE_SOURCE_DIR@/misc/doxygen_structure_libs
+INPUT  = @CMAKE_SOURCE_DIR@/misc/doxygen_structure_libs.txt
 INPUT += @CMAKE_SOURCE_DIR@/include/raytrace.h
 
 FILE_PATTERNS          = *.h
@@ -59,6 +59,11 @@ MAN_EXTENSION          = .3
 # would be unable to find the correct page. The default is NO.
 
 MAN_LINKS              = NO
+
+## options needed by doxy2man
+#GENERATE_XML           = YES
+#XML_OUTPUT             = xml
+#XML_PROGRAMLISTING     = NO
 
 #---------------------------------------------------------------------------
 # Configuration options related to the preprocessor
