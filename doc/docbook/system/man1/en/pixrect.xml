@@ -26,10 +26,10 @@
     <arg choice='opt'>-x <replaceable>xorig</replaceable></arg>
     <arg choice='opt'>-y <replaceable>yorig</replaceable></arg>
     <arg choice='opt'>-S <replaceable>out_squaresize</replaceable></arg>
-    <arg choice='opt'>-o <replaceable>out_file.bw</replaceable></arg>
-    <arg choice='plain'><replaceable>file.bw</replaceable></arg>
+    <arg choice='opt'>-o <replaceable>out_file.pix</replaceable></arg>
+    <arg choice='plain'><replaceable>file.pix</replaceable></arg>
     <arg choice='plain'><replaceable>&gt;</replaceable></arg>
-    <arg choice='opt'><replaceable>out_file.bw</replaceable></arg>
+    <arg choice='opt'><replaceable>out_file.pix</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 

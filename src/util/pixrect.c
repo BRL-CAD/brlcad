@@ -41,7 +41,7 @@ char *in_file = NULL;
 
 char usage[] = "\
 Usage:  pixrect [-h] [squaresize] [-w width] [-n height] [-W out_width ] [-N out_height] \n\
-			[-x xorig] [-y yorig] [-S out_squaresize] [-o out_file.bw] [file.bw] > [out_file.bw]\n";
+			[-x xorig] [-y yorig] [-S out_squaresize] [-o out_file.pix] [file.pix] > [out_file.pix]\n";
 
 
 static int
