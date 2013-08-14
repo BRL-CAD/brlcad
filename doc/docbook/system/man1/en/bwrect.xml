@@ -39,7 +39,7 @@
 extracts a rectangular region from a black and white
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 format file. The default input image size is 512X512.
-The x-y cordinates of the origin (xorig=0, yorig=0 corresponds to the
+The x-y coordinates of the origin (xorig=0, yorig=0 corresponds to the
 lower left corner) and the dimension of the output image are passed as
 command line arguments.</para>
 <para>This utility supports pipes and can read/write from/to them.

@@ -72,7 +72,7 @@ poly_init(void)
     rts[3].re = -0.5903129767152558, rts[3].im = 0.263475942656035;
     rts[4].re = -0.5903129767152558, rts[4].im = -0.263475942656035;
 
-    /* intializes a positive quadratic equation */
+    /* initializes a positive quadratic equation */
     input[2] = bn_Zero_poly;
     input[2].dgr = 4;
     input[2].cf[0] = 5478, input[2].cf[1] = 5485, input[2].cf[2] = 458, input[2].cf[3] = 258564, input[2].cf[4] = 54785;/* input coeff */
@@ -89,7 +89,7 @@ poly_init(void)
 int
 test_bn_poly_qua_rts(void)
 {
-    int val, val1[4], val2[4];/* variables get results for comparisms */
+    int val, val1[4], val2[4];/* variables get results for comparisons */
     bn_complex_t r1,r2[4],r3[4];
 
     int i, j, ind1 = 1, ind2 = 5; /* creates array indexes for rts */

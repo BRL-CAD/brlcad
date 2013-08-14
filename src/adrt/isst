@@ -127,7 +127,7 @@ proc ::isst::cut {} {
     set dir_y [expr $focus_y - $pos_y]
     set dir_z [expr $focus_z - $pos_z]
     render_mode $oglwin cut "#($pos_x $pos_y $pos_z) #($dir_x $dir_y $dir_z)"
-    ::isst::MoveRight $oglwin 
+    ::isst::MoveRight $oglwin
 }
 
 proc ::isst::setup {} {
