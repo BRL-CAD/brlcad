@@ -25,7 +25,7 @@ BRLCAD_ADDEXEC(test_bottess test_bottess.c libgcv NO_INSTALL)
 if(CPP_DLL_DEFINES)
   SET_PROPERTY(TARGET test_bottess APPEND PROPERTY COMPILE_DEFINITIONS "BOTTESS_DLL_IMPORTS")
 endif(CPP_DLL_DEFINES)
-add_test(bottess_test ${CMAKE_BINARY_DIR}/bin/test_bottess)
+add_test(bottess_test test_bottess)
 
 CMAKEFILES(NOTES soup.h tri_intersect.h)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake)
