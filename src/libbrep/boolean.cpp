@@ -746,7 +746,7 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
 		first->innerloop.push_back(iloop);
 	}
 
-	
+
 	ON_SimpleArray<ON_Curve*> linked_curves;
 	link_curves(curvesarray[i], linked_curves);
 	split_trimmed_face(trimmedfaces, first, linked_curves);
