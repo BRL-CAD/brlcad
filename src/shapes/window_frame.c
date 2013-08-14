@@ -176,7 +176,7 @@ main(int argc, char **argv)
 	/* -r# - # = radius of window frame corner in mm. */
 	/* -i# - # = width of frame itself in mm. */
 
-	for (i=1; i<argc; i++) {
+	for (i = 1; i < argc; i++) {
 	    /* START # 5 */
 	    /* Put argument in temporary character string. */
 	    temp = argv[i];
