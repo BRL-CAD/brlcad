@@ -24,7 +24,8 @@
  */
 
 /* === for auto-man-page use: === */
-/* purpose: fix polysolids with bad normals
+/*
+ * purpose: fix polysolids with bad normals
  *
  * description:
  *
