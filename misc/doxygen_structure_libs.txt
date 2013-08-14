@@ -30,7 +30,7 @@
  * @defgroup nurb NURBS
  * @ingroup primitives
  *
- ** @defgroup ray Ray Tracing
+ * @defgroup ray Ray Tracing
  * @ingroup librt
  *
  * @defgroup timer Timer
