@@ -182,13 +182,12 @@ bottie_shot_double(struct soltab *stp, struct xray *rp, struct application *ap, 
     int i;
     fastf_t dirlen;
 
-    memset((void *)&hitdata, 0, sizeof(hitdata));
-
     bot = (struct bot_specific *)stp->st_specific;
     tie = (struct tie_s *)bot->tie;
 
     hitdata.nhits = 0;
     hitdata.rp = &ap->a_ray;
+    /* do not need to init 'hits' and 'ts', tracked by 'nhits' */
 
     /* small backout applied to ray origin */
     dirlen = MAGSQ(rp->r_dir);
