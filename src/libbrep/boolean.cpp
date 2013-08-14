@@ -165,6 +165,9 @@ IsPointInsideLoop(const ON_2dPoint& pt, const ON_SimpleArray<ON_Curve*>& loop)
     //   -1: the input is not a valid loop
     //   0:  the point is not inside the loop or on boundary
     //   1:  the point is inside the loop or on boundary
+    // note:
+    //   If you want to know whether this point is on boundary, please call
+    //   IsPointOnLoop().
 
     ON_PolyCurve polycurve;
     if (!IsLoopValid(loop, ON_ZERO_TOLERANCE, &polycurve))
@@ -189,6 +192,23 @@ IsPointInsideLoop(const ON_2dPoint& pt, const ON_SimpleArray<ON_Curve*>& loop)
     }
 
     return count % 2 ? 1 : 0;
+}
+
+
+HIDDEN int
+IsPointOnLoop(const ON_2dPoint& pt, const ON_SimpleArray<ON_Curve*>& loop)
+{
+    // returns:
+    //   -1: the input is not a valid loop
+    //   0:  the point is on the boundary of the loop
+    //   1:  the point is not on the boundary of the loop
+
+    ON_PolyCurve polycurve;
+    if (!IsLoopValid(loop, ON_ZERO_TOLERANCE, &polycurve))
+	return -1;
+
+    ON_ClassArray<ON_PX_EVENT> px_event;
+    return ON_Intersect(ON_3dPoint(pt), polycurve, px_event, INTERSECTION_TOL) ? 1 : 0;
 }
 
 
