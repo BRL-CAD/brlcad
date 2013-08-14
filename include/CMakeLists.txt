@@ -8,7 +8,6 @@ set(include_hdrs
   magic.h
   pstdint.h
   raytrace.h
-  raytrace_deprecated_db_search.h
   rt/defines.h
   rtfunc.h
   rtgeom.h
