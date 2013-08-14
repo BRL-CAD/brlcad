@@ -23,6 +23,26 @@
  *
  */
 
+/* === for auto-man-page use: === */
+/* purpose: fix polysolids with bad normals
+ *
+ * description:
+ *
+ * Manually edited or auto-generated polysolids can have bad normals.
+ * This program attempts to correct those.
+ *
+ *
+ * opt: -v turn on verbose mode
+ *
+ * opt: -x [librt debug flag] turn on librt debugging
+ *          (option may used more than once)
+ *
+ * opt: -X [nmg debug flag] turn on nmg debugging
+ *         (option may used more than once)
+ *
+ *
+ */
+
 #include "common.h"
 
 #include <bio.h>
@@ -37,26 +57,25 @@
 #include "bn.h"
 #include "bu.h"
 
-static const char usage[] =
-  "Usage: %s [-v] [-xX DEBUG_FLAG] < brlcad_db.g > new_db.g\n"
-  "\n"
-  "Options:\n"
-  "  v - verbose\n"
-  "  x - librt debug flag\n"
-  "  X - nmg debug flag\n"
-  ;
-
-static char optstring[] = "vx:X:h?";
-
 /*
  * M A I N
  */
 int
 main(int argc, char *argv[])
 {
+
+    const char usage[] =
+      "Usage: %s [-v] [-x LDEBUG_FLAG] [-X NDEBUG_FLAG] < old_db.g > new_db.g\n"
+      "\n"
+      "Options:\n"
+      "  v - verbose\n"
+      "  x - librt debug flag\n"
+      "  X - nmg debug flag\n"
+      ;
+    const char optstring[] = "vx:X:h?";
+
     static int verbose;
     static struct bn_tol tol;
-
 
     union record rec;
     int c;
@@ -73,7 +92,7 @@ main(int argc, char *argv[])
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    if ( argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)) )
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
 	bu_exit(1, usage, argv[0]);
 
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
