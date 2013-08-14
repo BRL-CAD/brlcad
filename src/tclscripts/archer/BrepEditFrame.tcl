@@ -25,16 +25,21 @@
     constructor {args} {}
     destructor {}
 
-    public {}
+    public {
+	method CVEditMode {_dname _obj _x _y}
+	method clearEditState {{_clearModeOnly 0} {_inifFlag 0}}
+    }
 
     protected {
+	method initCVEdit {}
 	# GeometryEditFrame overrides
 	method buildUpperPanel
 	method buildLowerPanel
-	method initEditState {}
     }
 
-    private {}
+    private {
+	method toggleCVEdit {}
+    }
 }
 
 
@@ -51,11 +56,23 @@
 #                      PUBLIC METHODS
 # ------------------------------------------------------------
 
+::itcl::body BrepEditFrame::CVEditMode {_dname _obj _x _y} {
+}
 
+::itcl::body BrepEditFrame::clearEditState {{_clearModeOnly 0} {_initFlag 0}} {
+    set mEditCommand ""
+    chain $_clearModeOnly $_initFlag
+}
 
 # ------------------------------------------------------------
 #                      PROTECTED METHODS
 # ------------------------------------------------------------
+::itcl::body BrepEditFrame::initCVEdit {} {
+    set mEditCommand CVEditMode
+    set mEditClass $EDIT_CLASS_TRANS
+    set mEditLastTransMode $::ArcherCore::OBJECT_TRANSLATE_MODE
+    GeometryEditFrame::initEditState
+}
 
 ::itcl::body BrepEditFrame::buildUpperPanel {} {
 }
@@ -65,12 +82,23 @@
 
     itk_component add editCV {
 	::ttk::checkbutton $parent.editCV \
-	    -text "Edit Control Vertices"
+	    -text "Edit Control Vertices" \
+	    -variable [::itcl::scope mEditMode] \
+	    -command [::itcl::code $this toggleCVEdit]
     } {}
+
+    pack $itk_component(editCV)
 }
 
-::itcl::body BrepEditFrame::initEditState {} {
-    GeometryEditFrame::initEditState
+# ------------------------------------------------------------
+#                      PRIVATE METHODS
+# ------------------------------------------------------------
+::itcl::body BrepEditFrame::toggleCVEdit {} {
+    if {$mEditMode} {
+	initCVEdit
+    } else {
+	clearEditState 0 1
+    }
 }
 
 # Local Variables:

@@ -445,6 +445,7 @@ package provide Archer 1.0
 
     private {
 	variable mInstanceInit 1
+	method brepDragHandler {x y win startMode}
     }
 }
 
@@ -6472,6 +6473,16 @@ proc title_node_handler {node} {
     $itk_component(ged) rect lwidth 0
 }
 
+::itcl::body Archer::brepDragHandler {x y win startMode} {
+    # if we've switched to a different (standard) editing mode or if
+    # the edit command has been unset to exit the current mode, then
+    # delete this binding and clear the edit state to ensure it isn't
+    # restored until we explicitly switch back
+    if {$mDefaultBindingMode != $startMode || $GeometryEditFrame::mEditCommand == ""} {
+	bind $win <Button1-Motion> ""
+	$itk_component(brepView) clearEditState
+    }
+}
 
 ::itcl::body Archer::beginObjTranslate {} {
     set obj $mSelectedObjPath
@@ -6510,6 +6521,8 @@ proc title_node_handler {node} {
 		} else {
 		    bind $win <1> "$itk_component(ged) pane_otranslate_mode $dname $obj %x %y; break"
 		}
+	    } elseif {$mSelectedObjType == "brep"} {
+		bind $win <Button1-Motion> "[::itcl::code $this brepDragHandler %x %y $win $mDefaultBindingMode]; break"
 	    } else {
 		bind $win <1> "$itk_component(ged) pane_$GeometryEditFrame::mEditCommand\_mode $dname $obj $GeometryEditFrame::mEditParam1 %x %y; break"
 	    }
@@ -6641,7 +6654,7 @@ proc title_node_handler {node} {
 	    set diff [vsub2 $new_ocenter $ocenter]
 	    eval editMotionDeltaCallback otranslate $diff
 	} else {
-	    if {$GeometryEditFrame::mEditCommand != ""} {
+	    if {$GeometryEditFrame::mEditCommand != "" && $mSelectedObjType != "brep"} {
 		$itk_component($mSelectedObjType\View) moveElement $_dm $_obj $vx $vy $new_ocenter
 	    } else {
 		eval gedCmd ocenter $_obj $new_ocenter
