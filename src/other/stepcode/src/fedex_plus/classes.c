@@ -1644,6 +1644,28 @@ void LIBstructor_print( Entity entity, FILE * file, Schema schema ) {
 
     LISTod;
 
+    /* Need to initialize aggergate containers coming from non-principle supertypes */
+    if (multiple_inheritance) {
+	super_cnt = 0;
+	list = ENTITYget_supertypes( entity );
+        if( ! LISTempty( list ) ) {
+            LISTdo( list, e, Entity )
+            super_cnt++;
+	    if( super_cnt == 2 ) {
+		    attr_list = ENTITYget_all_attributes( e );
+		    LISTdo( attr_list, a, Variable )
+			    generate_attribute_name( a, attrnm );
+		            t = VARget_type( a );
+			    if( TYPEis_aggregate( t ) ) {
+				    fprintf( file, "    _%s = new %s;\n", attrnm, TYPEget_ctype( t ) );
+			    }
+		    LISTod;
+            }
+            LISTod;
+        }
+    }
+
+
     attr_list = ENTITYget_all_attributes( entity );
 
     LISTdo( attr_list, a, Variable )
