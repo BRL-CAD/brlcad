@@ -100,7 +100,11 @@ TIE_VAL(tie_tri_prep)(struct tie_s *tie)
 	tri->v[0] = v1.v[i2] - tri->data[0].v[i2];
 	tri->v[1] = v2.v[i2] - tri->data[0].v[i2];
 
-	/* !!! what? no entiendo. */
+	/* looks like this is intentionally injected to give the
+	 * compiler something to do if/while v1 and tri->data are
+	 * preloaded, instead of just getting set in the preceding
+	 * conditional above.
+	 */
 	if (i1 == 0 && i2 == 1)
 	    tri->b = tri->b + 2;
 	else if (i1 == 0)
