@@ -2273,6 +2273,7 @@ db_search(const char *plan_string,
 {
     struct bu_ptbl *search_results = NULL;
     void *dbplan;
+    const char **search_path_strings = path_strings;
     char **plan_argv = (char **)bu_calloc(strlen(plan_string) + 1, sizeof(char *), "plan argv");
     struct bu_vls plan_string_vls;
     bu_vls_init(&plan_string_vls);
@@ -2281,10 +2282,18 @@ db_search(const char *plan_string,
     dbplan = db_search_formplan(plan_argv, wdbp->dbip, wdbp);
     switch (search_type) {
 	case DB_SEARCH_STANDARD:
+	    if (!search_path_strings || !search_path_strings[0]) search_path_strings = db_get_top_objs(wdbp);
+	    const char *curr_path = search_path_strings[0];
+	    while (curr_path) {
+		// search
+		curr_path++;
+	    }
 	    break;
 	case DB_SEARCH_UNIQ_OBJ:
+	    if (!search_path_strings || !search_path_strings[0]) search_path_strings = db_get_top_objs(wdbp);
 	    break;
 	case DB_SEARCH_FLAT:
+	    // for loop
 	    break;
 	default:
 	    break;
