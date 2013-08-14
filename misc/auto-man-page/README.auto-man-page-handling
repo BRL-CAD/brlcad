@@ -11,61 +11,119 @@ Rules:
 
     burst    ./src/burst/burst.c
 
-+ Each bin source file should have one instance each of the following
-  (missing strings are an error; other missing parts will be warned
-  about and generated with an appropriate FIXME statement):
++ Each bin source file must have one instance each of the following
+  string variables:
 
-  const char usage[]     = "...."; /* mandatory */
-  const char optstring[] = ""; /* mandatory for use with bu_getopt if it is used */
+  const char usage[]     = "...."; /* mandatory: used for the SYNOPSIS 
+                                      section of the man page */
+  const char optstring[] = "";     /* mandatory for use with bu_getopt if it is used */
 
-+ Each option must be described in its own comment section in one of
-  three possible formats:
++ Other man page inputs come from one or more specially-formatted
+  ordinary C-style comment blocks (Doxygen-style comments beginning
+  with '/**' or '/*!' are completely ignored).
 
-  /* opt: -c [N] description of this option and its optional arg N */
-  /* opt: -a <Z> description of this option and its mandatory arg Z */
-  /* opt: -d  description of this option which has no args */
+  Each such block is divided into one or more parts beginning with a
+  keyword ('partname:'; but see 'opt:' later) which identifies a
+  section to appear in the man page.
 
-+ The following is also mandatory:
+  The block must begin with the following format or it will be ignored:
 
-  /* purpose: ...brief description... */
+  - Immediately following the opening '/*' must be one or more white
+    space characters (newlines allowed) followed by one keyword
+    followed by on or more white-space characters followed by its
+    description (its 'value').  Note the description must exist (i.e.,
+    its value must be at least one printable character).
 
-+ The following is desired but not mandatory (a missing one will
-  result in a FIXME DESCRIPTION section):
+  - A blank line inside a part description results in a new paragraph.
 
-  /* description:
+  - The part name may have underscores.  The part name will be
+    translated into upper case and underscores into spaces in the man
+    page.
 
-  ... one or more paras which will got in the DESCRIPTION section...
+  - Following the mandatory first part may be more parts.  
 
-  ... paras are separated by one or more blank lines
+  - A description ends when the next part keyword is found or the the
+    comment block ends.
 
-  ... DocBook code may be used here...
+  - Embedded asterisks surrounded by white space are ignored (to allow
+    for the decorated comment style).
+
+  - All the part desciptions may use valid DocBook code.
+
+  Some part names are mandatory and some parts have default values.
+  All part names must be unique except the 'opt:' part which may
+  appear as many times as there are options.  Note option names follow
+  the 'opt:' keyword and they must be unique.  Furthermore, the list
+  of options in the comment blocks must exactly match the option in
+  the optstring if it appears in the file.
+
+  Each option (keyword 'opt:') must be described in one of three
+  possible formats:
+
+     opt: -c [N] description of this option and its optional arg N
+     opt: -a <Z> description of this option and its mandatory arg Z
+     opt: -d  description of this option which has no args
+
+  Following is an example of such a comment block:
+
+  /*
+   * section1:  description
+   *
+   *  more description but this follows a blank line so it begins a new para
+
+   anothersection: description ...
+
+   ...
+
+   opt: optiona description
+
+   another para for optiona
+
+   opt: optiond ...
 
   */
 
-+ Optional:
++ Mandatory parts:
 
-  /* see_also:
+    purpose: ...brief description for NAME section...
 
-  ...list of man pages (with sections) or other references,
-  semicolon-separated, no other embellishments...
+    description: some words, should give user a good idea of how and why 
+         to use the program
 
-  ...list will go in the SEE ALSO section...
+      ...this will appear in the DESCRIPTION section
 
-  */
+    opt: option
 
-+ An optional beginning copyright year section (default is 1984:
+      ... one for each option (if any), all will be put in an OPTIONS 
+          section
 
-  /* copyright: 2000 */
++ Default parts (user may override by explictly providing them):
 
-+ User-defined sections may use the same format as the 'description:'
-  block but substituting the desired section name, e.g.,
-  'signal_handling:'.  The section name will be translated into upper
-  case and underscores into spaces in the man page.
+    copyright: YYYY
+  
+      where YYYY is the beginning copyright year (default is 1984).
 
-+ All the portions using C-style comments may use valid DocBook code.
-  Embedded asterisks surrounded by white space are ignored (to allow
-  for the decorated comment style).  Paragraphs are indicated by one
-  or more blank lines.
+    diagnostics:
+
+      default: Error messages are intended to be self-explanatory.
+
+    authors:
+
+      default:  BRL-CAD Team
+
+    bug_reports:
+
+      default:  Reports of bugs or problems should be submitted via
+                electronic mail to <devs@brlcad.org>.
+
++ Optional but desirable parts:
+
+    see_also:
+
+      ...list of man pages (with sections) or other references,
+      semicolon-separated, no other embellishments...
+
+      ...list will go in the SEE ALSO section...
 
 Translation:
 ===========
@@ -93,7 +151,7 @@ Usage: fbserv port_num\n\
 Processing:
 ==========
 
-A Perl program (version controlled) will be used to parse the source
+A C++ program (version controlled) will be used to parse the source
 files (defined in the file 'auto-man-progs.txt') and, after successful
 parsing, a complete docbook file in man format is written to file
 "progname.xml" in directory:
@@ -103,14 +161,8 @@ parsing, a complete docbook file in man format is written to file
 Assumptions:
 ===========
 
-+ Only plain C-style comments may be used for extracting man
-  information (i.e., only a leading '/*' with one or more white spaces
-  following it).
-
 + C++-style comments are ignored unless they are inside a C-style
   comment in which case they are treated as ordinary text.
 
 + No more than one C-style comment or partial comment is allowed per
   line.
-
-=====
