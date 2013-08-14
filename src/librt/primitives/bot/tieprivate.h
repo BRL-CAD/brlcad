@@ -30,6 +30,14 @@
 extern "C" {
 #endif
 
+/* The last three bits of the 'b' field in the kdtree are used to
+ * store data about the object.  0x4L marks if the node has children
+ * (is set to 0 for a leaf), the last two are the encoding for the
+ * splitting plane.
+ */
+#define TIE_HAS_CHILDREN(bits) (bits & (uint32_t)0x4L)
+#define TIE_SET_HAS_CHILDREN(bits) (bits | (uint32_t)0x4L)
+
 struct tie_geom_s {
     struct tie_tri_s **tri_list; /* 4-bytes or 8-bytes */
     uint32_t tri_num; /* 4-bytes */
