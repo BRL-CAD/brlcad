@@ -52,39 +52,39 @@ get_args(int argc, char **argv)
     while ((c = bu_getopt(argc, argv, "s:w:n:S:W:N:x:y:o:h?")) != -1) {
 	switch (c) {
 	    case 's':
-	    inx = iny = atoi(bu_optarg);
-	    break;
+		inx = iny = atoi(bu_optarg);
+		break;
 	    case 'W':
-	    outx = atoi(bu_optarg);
-	    break;
+		outx = atoi(bu_optarg);
+		break;
 	    case 'w':
-	    inx = atoi(bu_optarg);
-	    break;
+		inx = atoi(bu_optarg);
+		break;
 	    case 'N':
-	    outy = atoi(bu_optarg);
-	    break;
+		outy = atoi(bu_optarg);
+		break;
 	    case 'n':
-	    iny = atoi(bu_optarg);
-	    break;
+		iny = atoi(bu_optarg);
+		break;
 	    case 'S':
-	    outy = outx = atoi(bu_optarg);
-	    break;
+		outy = outx = atoi(bu_optarg);
+		break;
 	    case 'x':
-	    xorig = atoi(bu_optarg);
-	    break;
+		xorig = atoi(bu_optarg);
+		break;
 	    case 'y':
-	    yorig = atoi(bu_optarg);
-	    break;
+		yorig = atoi(bu_optarg);
+		break;
 	    case 'o':
-	    out_file = bu_optarg;
-	    break;
+		out_file = bu_optarg;
+		break;
 	    case 'h' :
 	    default : /* '?' */
-	    return 0;
+		return 0;
 	}
     }
     if (bu_optind >= argc) {
-	if (isatty(fileno(stdin))){
+	if (isatty(fileno(stdin))) {
 	    return 0;
 	}
     } else {
@@ -94,7 +94,7 @@ get_args(int argc, char **argv)
     }
 
 
-    if (!isatty(fileno(stdout)) && out_file!=NULL){
+    if (!isatty(fileno(stdout)) && out_file!=NULL) {
 	return 0;
     }
 
@@ -105,16 +105,18 @@ get_args(int argc, char **argv)
     return 1;
 }
 
+
 int
 main(int argc, char **argv)
 {
     icv_image_t *img;
-    if(!get_args(argc, argv)) {
+    if (!get_args(argc, argv)) {
         bu_log("%s", usage);
         return 1;
     }
 
-    if((img = icv_read(in_file, ICV_IMAGE_BW, inx, iny))==NULL)
+    img = icv_read(in_file, ICV_IMAGE_BW, inx, iny);
+    if (img == NULL)
         return 1;
     icv_rect(img, xorig, yorig, outx, outy);
     icv_write(img, out_file , ICV_IMAGE_BW);
