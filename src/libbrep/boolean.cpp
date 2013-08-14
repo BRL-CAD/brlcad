@@ -200,8 +200,8 @@ IsPointOnLoop(const ON_2dPoint& pt, const ON_SimpleArray<ON_Curve*>& loop)
 {
     // returns:
     //   -1: the input is not a valid loop
-    //   0:  the point is on the boundary of the loop
-    //   1:  the point is not on the boundary of the loop
+    //   0:  the point is not on the boundary of the loop
+    //   1:  the point is on the boundary of the loop
 
     ON_PolyCurve polycurve;
     if (!IsLoopValid(loop, ON_ZERO_TOLERANCE, &polycurve))
