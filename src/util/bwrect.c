@@ -119,7 +119,7 @@ main(int argc, char **argv)
     if (img == NULL)
         return 1;
     icv_rect(img, xorig, yorig, outx, outy);
-    icv_write(img, out_file , ICV_IMAGE_BW);
+    icv_write(img, out_file, ICV_IMAGE_BW);
 
     icv_destroy(img);
     return 0;
