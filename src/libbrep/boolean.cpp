@@ -272,7 +272,7 @@ link_curves(const ON_SimpleArray<ON_Curve*>& in, ON_SimpleArray<ON_Curve*>& out)
 
 
 HIDDEN int
-split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, const ON_SimpleArray<ON_Curve*> &curves_in)
+split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, const ON_SimpleArray<ON_Curve*> &curves)
 {
     /* We followed the algorithms described in:
      * S. Krishnan, A. Narkhede, and D. Manocha. BOOLE: A System to Compute
@@ -282,14 +282,11 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
      * Chains.
      */
 
-    if (curves_in.Count() == 0) {
+    if (curves.Count() == 0) {
 	// No curve, no splitting
 	out.Append(in->Duplicate());
 	return 0;
     }
-
-    ON_SimpleArray<ON_Curve*> curves;
-    link_curves(curves_in, curves);
 
     ON_SimpleArray<IntersectPoint> intersect;
     ON_SimpleArray<bool> have_intersect(curves.Count());
@@ -689,7 +686,10 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
 		first->innerloop.push_back(iloop);
 	}
 
-	split_trimmed_face(trimmedfaces, first, curvesarray[i]);
+	
+	ON_SimpleArray<ON_Curve*> linked_curves;
+	link_curves(curvesarray[i], linked_curves);
+	split_trimmed_face(trimmedfaces, first, linked_curves);
 
 	/* TODO: Perform inside-outside test to decide whether the trimmed face
 	 * should be used in the final b-rep structure or not.
