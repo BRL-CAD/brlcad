@@ -37,6 +37,8 @@
 
 /* 
  * This function normalizes the data array of the input image.
+ * This performs the normalization when the input image has data
+ * enteries less than 0.0 or greater than 1.0
  */
 HIDDEN icv_image_t *
 icv_normalize(icv_image_t *bif)
@@ -63,6 +65,8 @@ icv_normalize(icv_image_t *bif)
         V_MAX(max, *data);
         data++;
     }
+    if(max <= 1.0 || min >= 0.0) 
+        return bif;
 
     data = bif->data;
     m = 1/(max-min);
