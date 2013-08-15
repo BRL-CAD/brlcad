@@ -500,9 +500,8 @@ main(int argc, char **argv)
 	}
     }
 
-    if (bu_optind+1 >= argc) {
+    if (bu_optind+1 >= argc)
 	bu_exit(1, usage, argv[0]);
-    }
 
     /* Open BRL-CAD database */
     argc -= bu_optind;
@@ -557,6 +556,9 @@ main(int argc, char **argv)
     fprintf(fp_fig, "\troot=%s_seg.base;\n", bu_vls_addr(&base_seg));
     fprintf(fp_fig, "}\n");
     fclose(fp_fig);
+    bu_log("Writing file %s\n", bu_vls_addr(&fig_file));
+    if (!no_file_output)
+	printf("(check for writing of other files)\n");
     bu_vls_free(&fig_file);
     bu_vls_free(&base_seg);
 
