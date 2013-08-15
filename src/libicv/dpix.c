@@ -67,6 +67,7 @@ icv_normalize(icv_image_t *bif)
 	V_MAX(max, *data);
 	data++;
     }
+    /* strict Condition for avoiding normalization */
     if(max <= 1.0 || min >= 0.0)
 	return bif;
 
