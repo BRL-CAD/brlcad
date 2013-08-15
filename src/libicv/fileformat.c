@@ -57,6 +57,7 @@ extern HIDDEN icv_image_t *pix_read(const char* filename, int width, int height)
 
 /* defined in dpix.c */
 extern HIDDEN icv_image_t *dpix_read(const char* filename, int width, int height);
+extern HIDDEN int dpix_write(icv_image_t *bif, const char *filename);
 
 /* private functions */
 
@@ -242,6 +243,8 @@ icv_write(icv_image_t *bif, const char *filename, ICV_IMAGE_FORMAT format)
 	    return pix_write(bif, filename);
 	case ICV_IMAGE_BW:
 	    return bw_write(bif, filename);
+        case ICV_IMAGE_DPIX :
+            return dpix_write(bif, filename);
 	default:
 	    bu_log("Unrecognized format.  Outputting in PIX format.\n");
     }
