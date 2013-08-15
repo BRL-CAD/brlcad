@@ -35,14 +35,14 @@
 
 #define WRMODE S_IRUSR|S_IRGRP|S_IROTH
 
-/* 
+/*
  * This function normalizes the data array of the input image.
  * This performs the normalization when the input image has data
  * enteries less than 0.0 or greater than 1.0
  */
 HIDDEN icv_image_t *
 icv_normalize(icv_image_t *bif)
-{	
+{
     double *data;
     double max, min;
     double m, b;
@@ -50,8 +50,8 @@ icv_normalize(icv_image_t *bif)
     unsigned long int i;
 
     if (bif == NULL) {
-    	bu_log("icv_normalize : trying to normalize a NULL bif\n");
-    	return bif;
+	bu_log("icv_normalize : trying to normalize a NULL bif\n");
+	return bif;
     }
 
     data = bif->data;
@@ -61,20 +61,20 @@ icv_normalize(icv_image_t *bif)
     max = -INFINITY;
 
     for (i = 0; i<size; i++) {
-        V_MIN(min, *data);
-        V_MAX(max, *data);
-        data++;
+	V_MIN(min, *data);
+	V_MAX(max, *data);
+	data++;
     }
-    if(max <= 1.0 || min >= 0.0) 
-        return bif;
+    if(max <= 1.0 || min >= 0.0)
+	return bif;
 
     data = bif->data;
     m = 1/(max-min);
     b = -min/(max-min);
 
     for (i =0; i<size; i++) {
-        *data = m*(*data) + b;
-        data++;
+	*data = m*(*data) + b;
+	data++;
     }
 
     return bif;
@@ -88,16 +88,16 @@ dpix_read(const char *filename, int width, int height)
     ssize_t size;
 
     if (width == 0 || height == 0) {
-        bu_log("dpix_read : Using default size.\n");
-        height = 512;
-        width = 512;
+	bu_log("dpix_read : Using default size.\n");
+	height = 512;
+	width = 512;
     }
 
     if (filename == NULL)
-        fd = fileno(stdin);
+	fd = fileno(stdin);
     else if ((fd = open(filename, O_RDONLY, WRMODE)) <0 ) {
-        bu_log("dpix_read : Cannont open file %s for reading\n,", filename);
-        return NULL;
+	bu_log("dpix_read : Cannont open file %s for reading\n,", filename);
+	return NULL;
     }
 
     bif = icv_create(width, height, ICV_COLOR_SPACE_RGB);
@@ -105,9 +105,9 @@ dpix_read(const char *filename, int width, int height)
     size = width*height*3*sizeof(bif->data[0]);
 
     if (read(fd, bif->data, size) !=size) {
-        bu_log("dpix_read : Error while reading\n");
-        icv_destroy(bif);
-        return NULL;
+	bu_log("dpix_read : Error while reading\n");
+	icv_destroy(bif);
+	return NULL;
     }
     return bif;
 }
