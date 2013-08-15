@@ -36,9 +36,9 @@ Rules:
 
   - A blank line inside a part description results in a new paragraph.
 
-  - The part name may have underscores.  The part name will be
-    translated into upper case and underscores into spaces in the man
-    page.
+  - The part name must be lower-case alpha characters, and it may have
+    underscores.  The part name will be translated into upper case and
+    underscores into spaces in the man page.
 
   - Following the mandatory first part may be more parts.  
 
@@ -64,12 +64,18 @@ Rules:
      opt: -a <Z> description of this option and its mandatory arg Z
      opt: -d  description of this option which has no args
 
-  Following is an example of such a comment block:
+  'opt:' note: there must be no spaces inside the brackets ([] and
+  <>).  If spaces are needed, use underscores which will then be
+  translated to spaces in the man page.
+
+  Following is an example of such a comment block (partially
+  decorated):
 
   /*
    * section1:  description
    *
-   *  more description but this follows a blank line so it begins a new para
+   *  more description but this follows a blank line so it begins a
+      new para
 
    anothersection: description ...
 
@@ -153,7 +159,7 @@ Processing:
 
 A C++ program (version controlled) will be used to parse the source
 files (defined in the file 'auto-man-progs.txt') and, after successful
-parsing, a complete docbook file in man format is written to file
+parsing, a complete docbook file in man format will be written to file
 "progname.xml" in directory:
 
   ./doc/docbook/system/man1/en/
@@ -164,5 +170,7 @@ Assumptions:
 + C++-style comments are ignored unless they are inside a C-style
   comment in which case they are treated as ordinary text.
 
-+ No more than one C-style comment or partial comment is allowed per
-  line.
++ No more than one C-style comment or partial comment is on a line.
+
++ Mandatory string variable ('usage' and 'optstring') begin and
+  end on a line with no other C/C++ objects.
