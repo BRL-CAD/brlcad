@@ -65,6 +65,7 @@ typedef enum {
     ICV_IMAGE_AUTO,
     ICV_IMAGE_PIX,
     ICV_IMAGE_BW,
+    ICV_IMAGE_DPIX,
     ICV_IMAGE_ALIAS,
     ICV_IMAGE_BMP,
     ICV_IMAGE_CI,

@@ -55,6 +55,9 @@ extern HIDDEN icv_image_t *bw_read(const char *filename, int width, int height);
 extern HIDDEN int pix_write(icv_image_t *bif, const char *filename);
 extern HIDDEN icv_image_t *pix_read(const char* filename, int width, int height);
 
+/* defined in dpix.c */
+extern HIDDEN icv_image_t *dpix_read(const char* filename, int width, int height);
+
 /* private functions */
 
 /* flip an image vertically */
@@ -95,6 +98,7 @@ icv_guess_file_format(const char *filename, char *trimmedname)
     CMP(PPM);
     CMP(BMP);
     CMP(BW);
+    CMP(DPIX)
 #undef CMP
 
     /* no format header found, copy the name as it is */
@@ -107,6 +111,7 @@ icv_guess_file_format(const char *filename, char *trimmedname)
     CMP(PPM, ppm);
     CMP(BMP, bmp);
     CMP(BW, bw);
+    CMP(DPIX, dpix);
 #undef CMP
     /* defaulting to PIX */
     return ICV_IMAGE_UNKNOWN;
@@ -207,6 +212,8 @@ icv_read(const char *filename, int format, int width, int height)
 	    return pix_read(filename, width, height);
 	case ICV_IMAGE_BW :
 	    return bw_read(filename, width, height);
+	case ICV_IMAGE_DPIX :
+	    return dpix_read(filename, width, height);    
 	default:
 	    bu_log("icv_read not implemented for this format\n");
 	    return NULL;
