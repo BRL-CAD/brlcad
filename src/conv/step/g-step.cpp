@@ -34,6 +34,11 @@
 //
 #include <BRLCADWrapper.h>
 #include <STEPWrapper.h>
+#include <STEPfile.h>
+#include <sdai.h>
+#include <STEPcomplex.h>
+#include <STEPattribute.h>
+#include <SdaiHeaderSchema.h>
 #include "ON_Brep.h"
 
 //
@@ -137,8 +142,44 @@ main(int argc, char *argv[])
 
     registry->ResetSchemas();
     registry->ResetEntities();
+
+    /* Populate the header instances */
+    InstMgr *header_instances = sfile->HeaderInstances();
+
+    /* 1 - Populate File_Name */
+    SdaiFile_name * fn = (SdaiFile_name *)sfile->HeaderDefaultFileName();
+    fn->name_("'brep'");
+    fn->time_stamp_( "" );
+    StringAggregate_ptr author_tmp = new StringAggregate;
+    author_tmp->AddNode(new StringNode("''"));
+    fn->author_( author_tmp );
+    StringAggregate_ptr org_tmp = new StringAggregate;
+    org_tmp->AddNode(new StringNode("''"));
+    fn->organization_( org_tmp );
+    fn->preprocessor_version_("'BRL-CAD g-step exporter'");
+    fn->originating_system_("''");
+    fn->authorization_("''");
+    header_instances->Append((SDAI_Application_instance *)fn, completeSE);
+
+    /* 2 - Populate File_Description */
+    SdaiFile_description * fd = (SdaiFile_description *)sfile->HeaderDefaultFileDescription();
+    StringAggregate_ptr description_tmp = new StringAggregate;
+    description_tmp->AddNode(new StringNode("''"));
+    fd->description_(description_tmp);
+    fd->implementation_level_("'2;1'");
+    header_instances->Append((SDAI_Application_instance *)fd, completeSE);
+
+    /* 3 - Populate File_Schema */
+    SdaiFile_schema *fs = (SdaiFile_schema *)sfile->HeaderDefaultFileSchema();
+    StringAggregate_ptr schema_tmp = new StringAggregate;
+    schema_tmp->AddNode(new StringNode("'CONFIG_CONTROL_DESIGN'"));
+    fs->schema_identifiers_(schema_tmp);
+    header_instances->Append((SDAI_Application_instance *)fs, completeSE);
+
+    /* Now, add actual DATA */
     ON_BRep_to_STEP(brep, registry, &instance_list);
 
+    /* Write STEP file */
     if (!bu_file_exists(output_file, NULL)) {
 	std::ofstream stepout(output_file);
 	sfile->WriteExchangeFile(stepout);

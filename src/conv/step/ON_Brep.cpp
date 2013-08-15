@@ -95,6 +95,7 @@ ON_NurbsCurveCV_to_EntityAggregate(ON_NurbsCurve *incrv, SdaiB_spline_curve *ste
 	ON_3dPoint cv_pnt;
 	for (int i = 0; i < incrv->CVCount(); i++) {
 		SdaiCartesian_point *step_cartesian = (SdaiCartesian_point *)registry->ObjCreate("CARTESIAN_POINT");
+		step_cartesian->name_("''");
 		instance_list->Append(step_cartesian, completeSE);
 		incrv->GetCV(i, cv_pnt);
 		ON_3dPoint_to_Cartesian_point(&(cv_pnt), step_cartesian);
@@ -111,6 +112,7 @@ ON_NurbsSurfaceCV_to_GenericAggregate(ON_NurbsSurface *insrf, SdaiB_spline_surfa
 		ss << "(";
 		for (int j = 0; j < insrf->CVCount(1); j++) {
 			SdaiCartesian_point *step_cartesian = (SdaiCartesian_point *)registry->ObjCreate("CARTESIAN_POINT");
+			step_cartesian->name_("''");
 			instance_list->Append(step_cartesian, completeSE);
 			insrf->GetCV(i, j, cv_pnt);
 			ON_3dPoint_to_Cartesian_point(&(cv_pnt), step_cartesian);
@@ -213,11 +215,13 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 	for (int i = 0; i < brep->m_V.Count(); ++i) {
                 // Cartesian points (actual 3D geometry)
 		cartesian_pnts.at(i) = registry->ObjCreate("CARTESIAN_POINT");
+		((SdaiCartesian_point *)cartesian_pnts.at(i))->name_("''");
 		instance_list->Append(cartesian_pnts.at(i), completeSE);
 		ON_3dPoint v_pnt = brep->m_V[i].Point();
 		ON_3dPoint_to_Cartesian_point(&(v_pnt), (SdaiCartesian_point *)cartesian_pnts.at(i));
                 // Vertex points (topological, references actual 3D geometry)
 		vertex_pnts.at(i) = registry->ObjCreate("VERTEX_POINT");
+		((SdaiVertex_point *)vertex_pnts.at(i))->name_("''");
 		((SdaiVertex_point *)vertex_pnts.at(i))->vertex_geometry_((const SdaiPoint_ptr)cartesian_pnts.at(i));
 		instance_list->Append(vertex_pnts.at(i), completeSE);
 	}
@@ -252,6 +256,10 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 			ON_3dVector on_dir = m_line->Direction();
 			ON_3dVector_to_Direction(&(on_dir), curr_line->dir_()->orientation_());
 			curr_line->dir_()->magnitude_(m_line->Length());
+			curr_line->pnt_()->name_("''");
+			curr_dir->orientation_()->name_("''");
+			curr_line->dir_()->name_("''");
+			curr_line->name_("''");
 			instance_list->Append(curr_line->pnt_(), completeSE);
 			instance_list->Append(curr_dir->orientation_(), completeSE);
 			instance_list->Append(curr_line->dir_(), completeSE);
@@ -278,6 +286,7 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 			((SdaiB_spline_curve *)three_dimensional_curves.at(i))->closed_curve_(SDAI_LOGICAL(n_curve->IsClosed()));
 			/* TODO:  Assume we don't have self-intersecting curves for now - need some way to test this... */
 			((SdaiB_spline_curve *)three_dimensional_curves.at(i))->self_intersect_(LFalse);
+			((SdaiB_spline_curve *)three_dimensional_curves.at(i))->name_("''");
 			instance_list->Append(three_dimensional_curves.at(i), completeSE);
 			curve_converted = 1;
 		}
@@ -294,11 +303,13 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 		edge_curves.at(i) = registry->ObjCreate("EDGE_CURVE");
 		instance_list->Append(edge_curves.at(i), completeSE);
 		SdaiEdge_curve *e_curve = (SdaiEdge_curve *)edge_curves.at(i);
+		e_curve->name_("''");
 		e_curve->edge_geometry_(((SdaiCurve *)three_dimensional_curves.at(edge->EdgeCurveIndexOf())));
 		e_curve->same_sense_(BTrue);
 		oriented_edges.at(i) = registry->ObjCreate("ORIENTED_EDGE");
 		instance_list->Append(oriented_edges.at(i), completeSE);
 		SdaiOriented_edge *oriented_edge = (SdaiOriented_edge *)oriented_edges.at(i);
+		oriented_edge->name_("''");
 		oriented_edge->edge_element_((SdaiEdge *)e_curve);
 		oriented_edge->edge_start_(((SdaiVertex *)vertex_pnts.at(edge->Vertex(0)->m_vertex_index)));
 		oriented_edge->edge_start_(((SdaiVertex *)vertex_pnts.at(edge->Vertex(1)->m_vertex_index)));
@@ -321,6 +332,7 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 		ON_BrepLoop *loop= &(brep->m_L[i]);
 		edge_loops.at(i) = registry->ObjCreate("EDGE_LOOP");
 		instance_list->Append(edge_loops.at(i), completeSE);
+		((SdaiEdge_loop *)edge_loops.at(i))->name_("''");
 		// Why doesn't SdaiEdge_loop's edge_list_() function give use the edge_list from the SdaiPath??
 		// Initialized to NULL and crashes - what good is it?  Have to get at the internal SdaiPath
 		// directly to build something that STEPwrite will output.
@@ -356,6 +368,7 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 			p_surface->GetNurbForm(p_nurb);
 			surfaces.at(i) = registry->ObjCreate("B_SPLINE_SURFACE_WITH_KNOTS");
 			SdaiB_spline_surface *curr_surface = (SdaiB_spline_surface *)surfaces.at(i);
+			curr_surface->name_("''");
 			curr_surface->u_degree_(p_nurb.Degree(0));
 			curr_surface->v_degree_(p_nurb.Degree(1));
 			ON_NurbsSurfaceCV_to_GenericAggregate(&p_nurb, curr_surface, registry, instance_list);
@@ -376,6 +389,7 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 			std::cout << "Have NurbsSurface\n";
 			surfaces.at(i) = registry->ObjCreate("B_SPLINE_SURFACE_WITH_KNOTS");
 			SdaiB_spline_surface *curr_surface = (SdaiB_spline_surface *)surfaces.at(i);
+			curr_surface->name_("''");
 			curr_surface->u_degree_(n_surface->Degree(0));
 			curr_surface->v_degree_(n_surface->Degree(1));
 			ON_NurbsSurfaceCV_to_GenericAggregate(n_surface, curr_surface, registry, instance_list);
@@ -398,6 +412,7 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 			sum_surface->GetNurbForm(sum_nurb);
 			surfaces.at(i) = registry->ObjCreate("B_SPLINE_SURFACE_WITH_KNOTS");
 			SdaiB_spline_surface *curr_surface = (SdaiB_spline_surface *)surfaces.at(i);
+			curr_surface->name_("''");
 			curr_surface->u_degree_(sum_nurb.Degree(0));
 			curr_surface->v_degree_(sum_nurb.Degree(1));
 			ON_NurbsSurfaceCV_to_GenericAggregate(&sum_nurb, curr_surface, registry, instance_list);
@@ -421,6 +436,7 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 		ON_BrepFace* face = &(brep->m_F[i]);
 		faces.at(i) = registry->ObjCreate("ADVANCED_FACE");
 		SdaiAdvanced_face *step_face = (SdaiAdvanced_face *)faces.at(i);
+		step_face->name_("''");
 		step_face->face_geometry_((SdaiSurface *)surfaces.at(face->SurfaceIndexOf()));
 		// TODO - is m_bRev the same thing as same_sense?
 		step_face->same_sense_((const Boolean)(face->m_bRev));
@@ -429,6 +445,7 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 			ON_BrepLoop *curr_loop = face->Loop(j);
 			if (curr_loop == face->OuterLoop()) {
 				SdaiFace_outer_bound *outer_bound = (SdaiFace_outer_bound *)registry->ObjCreate("FACE_OUTER_BOUND");
+				outer_bound->name_("''");
 				instance_list->Append(outer_bound, completeSE);
 				outer_bound->bound_((SdaiLoop *)edge_loops.at(curr_loop->m_loop_index));
 				// TODO - When should this be false?
@@ -436,6 +453,7 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 				bounds->AddNode(new EntityNode((SDAI_Application_instance *)outer_bound));
 			} else {
 				SdaiFace_bound *inner_bound = (SdaiFace_bound *)registry->ObjCreate("FACE_BOUND");
+				inner_bound->name_("''");
 				instance_list->Append(inner_bound, completeSE);
 				inner_bound->bound_((SdaiLoop *)edge_loops.at(curr_loop->m_loop_index));
 				// TODO - When should this be false?
@@ -448,6 +466,7 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 
 	// Top level structures
 	SdaiClosed_shell *closed_shell = (SdaiClosed_shell *)registry->ObjCreate("CLOSED_SHELL");
+	closed_shell->name_("''");
 	instance_list->Append(closed_shell, completeSE);
 	EntityAggregate *shell_faces = closed_shell->cfs_faces_();
 	for (int i = 0; i < brep->m_F.Count(); ++i) {
@@ -456,9 +475,9 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 	SdaiManifold_solid_brep *manifold_solid_brep = (SdaiManifold_solid_brep *)registry->ObjCreate("MANIFOLD_SOLID_BREP");
 	instance_list->Append(manifold_solid_brep, completeSE);
 	manifold_solid_brep->outer_(closed_shell);
+	manifold_solid_brep->name_("''");
 	SdaiAdvanced_brep_shape_representation *advanced_brep= (SdaiAdvanced_brep_shape_representation *)registry->ObjCreate("ADVANCED_BREP_SHAPE_REPRESENTATION");
-	SdaiLabel *name = new SdaiLabel("brep.s");
-	advanced_brep->name_(*name);
+	advanced_brep->name_("'brep.s'");
 	instance_list->Append(advanced_brep, completeSE);
 	EntityAggregate *items = advanced_brep->items_();
 	items->AddNode(new EntityNode((SDAI_Application_instance *)manifold_solid_brep));
