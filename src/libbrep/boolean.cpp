@@ -594,7 +594,11 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 
     std::stack<int> s;
 
-    for (int i = 1; i < sorted_pointers.Count(); i++) {
+    for (int i = 0; i < sorted_pointers.Count(); i++) {
+	// Ignore UNSET IntersectPoints.
+	if (sorted_pointers[i]->m_in_out == IntersectPoint::UNSET)
+	    continue;
+
 	if (s.empty()) {
 	    s.push(i);
 	    continue;
