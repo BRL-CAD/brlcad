@@ -483,14 +483,29 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 	for (int i = 0; i < brep->m_F.Count(); ++i) {
 		shell_faces->AddNode(new EntityNode((SDAI_Application_instance *)faces.at(i)));
 	}
+
 	SdaiManifold_solid_brep *manifold_solid_brep = (SdaiManifold_solid_brep *)registry->ObjCreate("MANIFOLD_SOLID_BREP");
 	instance_list->Append(manifold_solid_brep, completeSE);
 	manifold_solid_brep->outer_(closed_shell);
 	manifold_solid_brep->name_("''");
+
 	SdaiAdvanced_brep_shape_representation *advanced_brep= (SdaiAdvanced_brep_shape_representation *)registry->ObjCreate("ADVANCED_BREP_SHAPE_REPRESENTATION");
 	advanced_brep->name_("'brep.s'");
 	instance_list->Append(advanced_brep, completeSE);
 	EntityAggregate *items = advanced_brep->items_();
 	items->AddNode(new EntityNode((SDAI_Application_instance *)manifold_solid_brep));
+
+	/* For advanced brep, need to create and add a representation context.  This is a
+	 * complex type of four other types: */
+	const char *entNmArr[64];
+	int fileid = 1;
+	entNmArr[0] = "geometric_representation_context";
+	entNmArr[1] = "global_uncertainty_assigned_context";
+	entNmArr[2] = "global_unit_assigned_context";
+	entNmArr[3] = "representation_context";
+	entNmArr[4] = "*";
+	STEPentity *complex_entity = new STEPcomplex(registry, (const char **)entNmArr, fileid);
+	instance_list->Append(complex_entity, completeSE);
+
 	return true;
 }
