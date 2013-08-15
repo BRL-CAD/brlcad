@@ -55,6 +55,8 @@ icv_normalize(icv_image_t *bif)
     }
 
     data = bif->data;
+    
+    /* Number of data elements. */
     size = bif->height*bif->width*bif->channels;
 
     min = INFINITY;
@@ -102,8 +104,9 @@ dpix_read(const char *filename, int width, int height)
 
     bif = icv_create(width, height, ICV_COLOR_SPACE_RGB);
 
+    /* Size in Bytes for reading. */
     size = width*height*3*sizeof(bif->data[0]);
-
+    
     if (read(fd, bif->data, size) !=size) {
 	bu_log("dpix_read : Error while reading\n");
 	icv_destroy(bif);
