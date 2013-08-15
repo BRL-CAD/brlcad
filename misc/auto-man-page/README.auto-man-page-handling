@@ -14,7 +14,7 @@ Rules:
 + Each bin source file must have one instance each of the following
   string variables:
 
-  const char usage[]     = "...."; /* mandatory: used for the SYNOPSIS 
+  const char usage[]     = "...."; /* mandatory: used for the SYNOPSIS
                                       section of the man page */
   const char optstring[] = "";     /* mandatory for use with bu_getopt 
                                       (if it is used) */
@@ -41,7 +41,7 @@ Rules:
     underscores.  The part name will be translated into upper case and
     underscores into spaces in the man page.
 
-  - Following the mandatory first part may be more parts.  
+  - Following the mandatory first part may be more parts.
 
   - A description ends when the next part keyword is found or the the
     comment block ends.
@@ -49,7 +49,7 @@ Rules:
   - Embedded asterisks surrounded by white space are ignored (to allow
     for the decorated comment style).
 
-  - All the part desciptions may use valid DocBook code.
+  - All the part descriptions may use valid DocBook code.
 
   Some part names are mandatory and some parts have default values.
   All part names must be unique except the 'opt:' part which may
@@ -78,7 +78,7 @@ Rules:
    *  more description but this follows a blank line so it begins a
       new para
 
-   anothersection: description ...
+   another section: description ...
 
    ...
 
@@ -94,20 +94,20 @@ Rules:
 
     purpose: ...brief description for NAME section...
 
-    description: some words, should give user a good idea of how and why 
+    description: some words, should give user a good idea of how and why
          to use the program
 
       ...this will appear in the DESCRIPTION section
 
     opt: option
 
-      ... one for each option (if any), all will be put in an OPTIONS 
+      ... one for each option (if any), all will be put in an OPTIONS
           section
 
-+ Default parts (user may override by explictly providing them):
++ Default parts (user may override by explicitly providing them):
 
     copyright: YYYY
-  
+
       where YYYY is the beginning copyright year (default is 1984).
 
     diagnostics:
