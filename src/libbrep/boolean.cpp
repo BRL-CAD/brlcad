@@ -212,6 +212,105 @@ IsPointOnLoop(const ON_2dPoint& pt, const ON_SimpleArray<ON_Curve*>& loop)
 }
 
 
+HIDDEN int
+get_subcurve_inside_faces(const ON_Brep* brep1, const ON_Brep* brep2, int fi1, int fi2, ON_SSX_EVENT* Event)
+{
+    if (Event == NULL)
+	return -1;
+
+    if (Event->m_curve3d == NULL || Event->m_curveA == NULL || Event->m_curveB == NULL)
+	return -1;
+
+    ON_SimpleArray<ON_Curve*> outerloop1, outerloop2;
+    if (fi1 < 0 || fi1 >= brep1->m_F.Count()) {
+	bu_log("get_subcurve_inside_faces(): invalid fi1 (%d).\n", fi1);
+	return -1;
+    }
+    if (fi2 < 0 || fi2 >= brep2->m_F.Count()) {
+	bu_log("get_subcurve_inside_faces(): invalid fi2 (%d).\n", fi2);
+	return -1;
+    }
+    const ON_BrepLoop& loop1 = brep1->m_L[brep1->m_F[fi1].m_li[0]];
+    const ON_BrepLoop& loop2 = brep2->m_L[brep2->m_F[fi2].m_li[0]];
+
+    for (int i = 0; i < loop1.TrimCount(); i++) {
+	outerloop1.Append(brep1->m_C2[brep1->m_T[loop1.m_ti[i]].m_c2i]);
+    }
+    for (int i = 0; i < loop2.TrimCount(); i++) {
+	outerloop2.Append(brep2->m_C2[brep2->m_T[loop2.m_ti[i]].m_c2i]);
+    }
+
+    ON_SimpleArray<double> div_t;
+    ON_SimpleArray<ON_Interval> intervals;
+    ON_SimpleArray<ON_X_EVENT> x_event1, x_event2;
+    for (int i = 0; i < outerloop1.Count(); i++)
+	ON_Intersect(Event->m_curveA, outerloop1[i], x_event1, INTERSECTION_TOL);
+    for (int i = 0; i < x_event1.Count(); i++) {
+	div_t.Append(x_event1[i].m_a[0]);
+	if (x_event1[i].m_type == ON_X_EVENT::ccx_overlap)
+	    div_t.Append(x_event1[i].m_a[1]);
+    }
+    div_t.QuickSort(ON_CompareIncreasing);
+    if (div_t.Count() != 0) {
+	if (!ON_NearZero(div_t[0] - Event->m_curveA->Domain().Min()))
+	    div_t.Insert(0, Event->m_curveA->Domain().Min());
+	if (!ON_NearZero(*div_t.Last() - Event->m_curveA->Domain().Max()))
+	    div_t.Append(Event->m_curveA->Domain().Max());
+	for (int i = 0; i < div_t.Count() - 1; i++) {
+	    ON_Interval interval(div_t[i], div_t[i + 1]);
+	    if (ON_NearZero(interval.Length()))
+		continue;
+	    ON_2dPoint pt = Event->m_curveA->PointAt(interval.Mid());
+	    if (!IsPointOnLoop(pt, outerloop1) && IsPointInsideLoop(pt, outerloop1))
+		intervals.Append(interval);
+	}
+    }
+
+    div_t.Empty();
+    for (int i = 0; i < outerloop2.Count(); i++)
+	ON_Intersect(Event->m_curveB, outerloop2[i], x_event2, INTERSECTION_TOL);
+    for (int i = 0; i < x_event2.Count(); i++) {
+	div_t.Append(x_event2[i].m_a[0]);
+	if (x_event2[i].m_type == ON_X_EVENT::ccx_overlap)
+	    div_t.Append(x_event2[i].m_a[1]);
+    }
+    div_t.QuickSort(ON_CompareIncreasing);
+    if (div_t.Count() != 0) {
+	if (!ON_NearZero(div_t[0] - Event->m_curveB->Domain().Min()))
+	    div_t.Insert(0, Event->m_curveB->Domain().Min());
+	if (!ON_NearZero(*div_t.Last() - Event->m_curveB->Domain().Max()))
+	    div_t.Append(Event->m_curveB->Domain().Max());
+	for (int i = 0; i < div_t.Count() - 1; i++) {
+	    ON_Interval interval(div_t[i], div_t[i + 1]);
+	    if (ON_NearZero(interval.Length()))
+		continue;
+	    ON_2dPoint pt = Event->m_curveB->PointAt(interval.Mid());
+	    if (!IsPointOnLoop(pt, outerloop2) && IsPointInsideLoop(pt, outerloop2)) {
+		// According to openNURBS's difinition, the domain of m_curve3d,
+		// m_curveA, m_curveB in an ON_SSX_EVENT should be the same.
+		// (See ON_SSX_EVENT::IsValid().
+		// So we don't need to pull the interval back to A
+		intervals.Append(interval);
+	    }
+	}
+    }
+
+    ON_Interval merged_interval;
+    for (int i = 0; i < intervals.Count(); i++) {
+	merged_interval.Union(intervals[i]);
+    }
+
+    if (DEBUG_BREP_BOOLEAN)
+	bu_log("merge_interval: [%g, %g]\n", merged_interval.Min(), merged_interval.Max());
+
+    Event->m_curve3d = sub_curve(Event->m_curve3d, merged_interval.Min(), merged_interval.Max());
+    Event->m_curveA = sub_curve(Event->m_curveA, merged_interval.Min(), merged_interval.Max());
+    Event->m_curveB = sub_curve(Event->m_curveB, merged_interval.Min(), merged_interval.Max());
+
+    return 0;
+}
+
+
 HIDDEN void
 link_curves(const ON_SimpleArray<ON_Curve*>& in, ON_SimpleArray<ON_Curve*>& out)
 {
@@ -710,6 +809,8 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
     // calculate intersection curves
     for (int i = 0; i < facecount1; i++) {
 	for (int j = 0; j < facecount2; j++) {
+	    // Possible enhancement: Some faces may share the same surface.
+	    // We can store the result of SSI to avoid re-computation.
 	    ON_ClassArray<ON_SSX_EVENT> events;
 	    if (ON_Intersect(brepA->m_S[brepA->m_F[i].m_si],
 			     brepB->m_S[brepB->m_F[j].m_si],
@@ -720,6 +821,7 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
 	    for (int k = 0; k < events.Count(); k++) {
 		if (events[k].m_type == ON_SSX_EVENT::ssx_tangent
 		    || events[k].m_type == ON_SSX_EVENT::ssx_transverse) {
+		    get_subcurve_inside_faces(brepA, brepB, i, j, &events[k]);
 		    curve_uv.Append(events[k].m_curveA);
 		    curve_st.Append(events[k].m_curveB);
 		    // Set m_curveA and m_curveB to NULL, in case that they are
@@ -757,7 +859,6 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
 	    if (j != 0)
 		first->innerloop.push_back(iloop);
 	}
-
 
 	ON_SimpleArray<ON_Curve*> linked_curves;
 	link_curves(curvesarray[i], linked_curves);
