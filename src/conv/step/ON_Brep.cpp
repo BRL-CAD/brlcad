@@ -325,19 +325,17 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 	// it's protected so I can't manually repair it afterward.  Looks like this is supposed to inherit the
 	// initialization of _edge_list from SdaiPath, but is only inheriting from SdaiLoop.  May be related to
 	// the recent proposed patch by Mark in stepcode to enable diamond inheritance - will have to experiment.
-	/*
 	for (int i = 0; i < brep->m_L.Count(); ++i) {
 		ON_BrepLoop *loop= &(brep->m_L[i]);
 		edge_loops.at(i) = registry->ObjCreate("EDGE_LOOP");
 		instance_list->Append(edge_loops.at(i), completeSE);
-		SdaiEdge_loop *e_loop = (SdaiEdge_loop *)edge_loops.at(i);
+		SdaiPath *e_loop = (SdaiPath *)edge_loops.at(i)->GetNextMiEntity();
 		for (int l = 0; l < loop->TrimCount(); ++l) {
 			ON_BrepEdge *edge = loop->Trim(l)->Edge();
 			if (edge)
 				e_loop->edge_list_()->AddNode(new EntityNode((SDAI_Application_instance *)(oriented_edges.at(edge->m_edge_index))));
 		}
 	}
-        */
 
 	// surfaces - TODO - need to handle cylindrical, conical, toroidal, etc. types that are enumerated
 	std::cout << "Have " << brep->m_S.Count() << " surfaces\n";
