@@ -16,7 +16,8 @@ Rules:
 
   const char usage[]     = "...."; /* mandatory: used for the SYNOPSIS 
                                       section of the man page */
-  const char optstring[] = "";     /* mandatory for use with bu_getopt if it is used */
+  const char optstring[] = "";     /* mandatory for use with bu_getopt 
+                                      (if it is used) */
 
 + Other man page inputs come from one or more specially-formatted
   ordinary C-style comment blocks (Doxygen-style comments beginning
@@ -172,5 +173,11 @@ Assumptions:
 
 + No more than one C-style comment or partial comment is on a line.
 
-+ Mandatory string variable ('usage' and 'optstring') begin and
++ Mandatory string variables ('usage' and 'optstring') begin and
   end on a line with no other C/C++ objects.
+
+Working example:
+===============
+
+See file "${BRLCAD_SOURCE_ROOT}/src/util/fix_polysolids.c" for an
+example of most of the features deescribed above.
