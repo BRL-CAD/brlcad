@@ -390,7 +390,7 @@ Usage: %s [-v] [-i] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "a:n:o:r:vx:D:P:X:e:i")) != -1) {
+    while ((c = bu_getopt(argc, argv, "a:n:o:r:vx:D:X:e:ih?")) != -1) {
 	switch (c) {
 	    case 'a':		/* Absolute tolerance. */
 		ttol.abs = atof(bu_optarg);
@@ -433,9 +433,8 @@ Usage: %s [-v] [-i] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_
 	}
     }
 
-    if (bu_optind+1 >= argc) {
+    if (bu_optind+1 >= argc)
 	bu_exit(1, usage, argv[0]);
-    }
 
     if (!output_file) {
 	bu_exit(1, "No output file specified!\n");
