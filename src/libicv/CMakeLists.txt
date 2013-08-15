@@ -19,6 +19,7 @@ set(LIBICV_SOURCES
   decimate.c
   pix.c
   bw.c
+  dpix.c
   )
 
 BRLCAD_ADDLIB(libicv "${LIBICV_SOURCES}" "libbu;libbn;${PNG_LIBRARY}")
