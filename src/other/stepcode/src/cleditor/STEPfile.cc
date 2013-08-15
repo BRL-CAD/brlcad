@@ -1557,7 +1557,7 @@ void STEPfile::WriteHeaderInstanceFileName( ostream & out ) {
     time_t t = time( NULL );
     struct tm * timeptr = localtime( &t );
     char time_buf[26];
-    strftime( time_buf, 26, "%Y-%m-%dT%H:%M:%S", timeptr );
+    strftime( time_buf, 26, "'%Y-%m-%dT%H:%M:%S'", timeptr );
     fn->time_stamp_( time_buf );
 
 //output the values to the file
