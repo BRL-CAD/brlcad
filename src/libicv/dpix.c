@@ -113,6 +113,7 @@ dpix_read(const char *filename, int width, int height)
 	icv_destroy(bif);
 	return NULL;
     }
+    icv_normalize(bif);
     return bif;
 }
 
