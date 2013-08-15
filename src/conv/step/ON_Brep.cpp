@@ -208,11 +208,8 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 	std::vector<STEPentity *> outer_bounds(brep->m_F.Count(), (STEPentity *)0);
 	std::vector<STEPentity *> surfaces(brep->m_S.Count(), (STEPentity *)0);
 	std::vector<STEPentity *> faces(brep->m_F.Count(), (STEPentity *)0);
-	//STEPentity *closed_shell = new STEPentity;
-	//STEPentity *manifold_solid_brep = new STEPentity;
-	//STEPentity *advanced_brep = new STEPentity;
 
-        // Set up vertices and associated cartesian points
+	// Set up vertices and associated cartesian points
 	for (int i = 0; i < brep->m_V.Count(); ++i) {
                 // Cartesian points (actual 3D geometry)
 		cartesian_pnts.at(i) = registry->ObjCreate("CARTESIAN_POINT");
@@ -449,6 +446,21 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 		instance_list->Append(step_face, completeSE);
 	}
 
-
+	// Top level structures
+	SdaiClosed_shell *closed_shell = (SdaiClosed_shell *)registry->ObjCreate("CLOSED_SHELL");
+	instance_list->Append(closed_shell, completeSE);
+	EntityAggregate *shell_faces = closed_shell->cfs_faces_();
+	for (int i = 0; i < brep->m_F.Count(); ++i) {
+		shell_faces->AddNode(new EntityNode((SDAI_Application_instance *)faces.at(i)));
+	}
+	SdaiManifold_solid_brep *manifold_solid_brep = (SdaiManifold_solid_brep *)registry->ObjCreate("MANIFOLD_SOLID_BREP");
+	instance_list->Append(manifold_solid_brep, completeSE);
+	manifold_solid_brep->outer_(closed_shell);
+	SdaiAdvanced_brep_shape_representation *advanced_brep= (SdaiAdvanced_brep_shape_representation *)registry->ObjCreate("ADVANCED_BREP_SHAPE_REPRESENTATION");
+	SdaiLabel *name = new SdaiLabel("brep.s");
+	advanced_brep->name_(*name);
+	instance_list->Append(advanced_brep, completeSE);
+	EntityAggregate *items = advanced_brep->items_();
+	items->AddNode(new EntityNode((SDAI_Application_instance *)manifold_solid_brep));
 	return true;
 }
