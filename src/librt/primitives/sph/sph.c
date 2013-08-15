@@ -260,7 +260,7 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     vect_t Au, Bu, Cu;	/* A, B, C with unit length */
     fastf_t f;
     struct rt_ell_internal *eip;
-clt_init();
+
     eip = (struct rt_ell_internal *)ip->idb_ptr;
     RT_ELL_CK_MAGIC(eip);
 
@@ -388,10 +388,10 @@ int
 rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
 #ifdef OPENCL
-    cl_double3 o; /* ray origin  */
-    cl_double3 dir; /* ray direction (unit vector) */
-    cl_double3 V; /* vector to sphere  */
-    cl_double radsq; /* sphere radius */
+    cl_double3 o;    /* ray origin  */
+    cl_double3 dir;  /* ray direction (unit vector) */
+    cl_double3 V;    /* vector to sphere  */
+    cl_double radsq; /* sphere radius squared */
     cl_double3 result;
     struct seg *segp;
 
@@ -400,8 +400,7 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     VMOVE(o.s, rp->r_pt);
     VMOVE(dir.s, rp->r_dir);
     VMOVE(V.s, ((struct sph_specific *)stp->st_specific)->sph_V);
-    radsq = ((struct sph_specific *)stp->st_specific)->sph_rad;
-    radsq *= radsq;
+    radsq = ((struct sph_specific *)stp->st_specific)->sph_radsq;
     result = clt_shot(o, dir, V, radsq);
 
     if (EQUAL(result.s[0], 0)) return 0; /* no hit  */
@@ -427,8 +426,11 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     fastf_t root;		/* root of radical */
 
     VSUB2(ov, sph->sph_V, rp->r_pt);
+    bu_log("TZ: ov: %0.30f\t%0.30f\t%0.30f\n", ov[X], ov[Y], ov[Z]);
     b = VDOT(rp->r_dir, ov);
+    bu_log("TZ: b: %0.30f\n", b);
     magsq_ov = MAGSQ(ov);
+    bu_log("TZ: magsq_ov: %0.30f\n", magsq_ov);
 
     if (magsq_ov >= sph->sph_radsq) {
 	/* ray origin is outside of sphere */
@@ -437,14 +439,18 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	    return 0;		/* No hit */
 	}
 	root = b*b - magsq_ov + sph->sph_radsq;
+	bu_log("TZ: root1: %0.30f\n", root);
 	if (root <= 0) {
 	    /* no real roots */
 	    return 0;		/* No hit */
 	}
     } else {
 	root = b*b - magsq_ov + sph->sph_radsq;
+	bu_log("TZ: root2: %0.30f\n", root);
     }
     root = sqrt(root);
+    bu_log("TZ: sqrt_root: %0.30f\n", root);
+    bu_log("TZ: b-root=%0.30f\nb+root=%0.30f\n", b-root, b+root);
 
     RT_GET_SEG(segp, ap->a_resource);
     segp->seg_stp = stp;
