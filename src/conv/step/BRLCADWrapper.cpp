@@ -37,8 +37,8 @@ int BRLCADWrapper::sol_reg_cnt = 0;
 
 
 BRLCADWrapper::BRLCADWrapper()
+    : outfp(NULL), dbip(NULL)
 {
-    outfp = NULL;
 }
 
 

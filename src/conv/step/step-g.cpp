@@ -125,13 +125,13 @@ main(int argc, char *argv[])
 	    std::cerr << "Writing output file [" << oflnm << "] ...";
 	    if (dotg->OpenFile(oflnm)) {
 		step->convert(dotg);
+		dotg->Close();
 		std::cerr << "done!" << std::endl;
 	    } else {
 		std::cerr << "ERROR: unable to open BRL-CAD output file [" << oflnm << "]" << std::endl;
 		ret = 4;
 	    }
 
-	    dotg->Close();
 	    delete dotg;
 	}
     }
