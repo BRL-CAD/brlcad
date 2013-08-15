@@ -240,24 +240,24 @@ get_subcurve_inside_faces(const ON_Brep* brep1, const ON_Brep* brep2, int fi1, i
 	outerloop2.Append(brep2->m_C2[brep2->m_T[loop2.m_ti[i]].m_c2i]);
     }
 
-    ON_SimpleArray<double> div_t;
+    ON_SimpleArray<double> divT;
     ON_SimpleArray<ON_Interval> intervals;
     ON_SimpleArray<ON_X_EVENT> x_event1, x_event2;
     for (int i = 0; i < outerloop1.Count(); i++)
 	ON_Intersect(Event->m_curveA, outerloop1[i], x_event1, INTERSECTION_TOL);
     for (int i = 0; i < x_event1.Count(); i++) {
-	div_t.Append(x_event1[i].m_a[0]);
+	divT.Append(x_event1[i].m_a[0]);
 	if (x_event1[i].m_type == ON_X_EVENT::ccx_overlap)
-	    div_t.Append(x_event1[i].m_a[1]);
+	    divT.Append(x_event1[i].m_a[1]);
     }
-    div_t.QuickSort(ON_CompareIncreasing);
-    if (div_t.Count() != 0) {
-	if (!ON_NearZero(div_t[0] - Event->m_curveA->Domain().Min()))
-	    div_t.Insert(0, Event->m_curveA->Domain().Min());
-	if (!ON_NearZero(*div_t.Last() - Event->m_curveA->Domain().Max()))
-	    div_t.Append(Event->m_curveA->Domain().Max());
-	for (int i = 0; i < div_t.Count() - 1; i++) {
-	    ON_Interval interval(div_t[i], div_t[i + 1]);
+    divT.QuickSort(ON_CompareIncreasing);
+    if (divT.Count() != 0) {
+	if (!ON_NearZero(divT[0] - Event->m_curveA->Domain().Min()))
+	    divT.Insert(0, Event->m_curveA->Domain().Min());
+	if (!ON_NearZero(*divT.Last() - Event->m_curveA->Domain().Max()))
+	    divT.Append(Event->m_curveA->Domain().Max());
+	for (int i = 0; i < divT.Count() - 1; i++) {
+	    ON_Interval interval(divT[i], divT[i + 1]);
 	    if (ON_NearZero(interval.Length()))
 		continue;
 	    ON_2dPoint pt = Event->m_curveA->PointAt(interval.Mid());
@@ -266,22 +266,22 @@ get_subcurve_inside_faces(const ON_Brep* brep1, const ON_Brep* brep2, int fi1, i
 	}
     }
 
-    div_t.Empty();
+    divT.Empty();
     for (int i = 0; i < outerloop2.Count(); i++)
 	ON_Intersect(Event->m_curveB, outerloop2[i], x_event2, INTERSECTION_TOL);
     for (int i = 0; i < x_event2.Count(); i++) {
-	div_t.Append(x_event2[i].m_a[0]);
+	divT.Append(x_event2[i].m_a[0]);
 	if (x_event2[i].m_type == ON_X_EVENT::ccx_overlap)
-	    div_t.Append(x_event2[i].m_a[1]);
+	    divT.Append(x_event2[i].m_a[1]);
     }
-    div_t.QuickSort(ON_CompareIncreasing);
-    if (div_t.Count() != 0) {
-	if (!ON_NearZero(div_t[0] - Event->m_curveB->Domain().Min()))
-	    div_t.Insert(0, Event->m_curveB->Domain().Min());
-	if (!ON_NearZero(*div_t.Last() - Event->m_curveB->Domain().Max()))
-	    div_t.Append(Event->m_curveB->Domain().Max());
-	for (int i = 0; i < div_t.Count() - 1; i++) {
-	    ON_Interval interval(div_t[i], div_t[i + 1]);
+    divT.QuickSort(ON_CompareIncreasing);
+    if (divT.Count() != 0) {
+	if (!ON_NearZero(divT[0] - Event->m_curveB->Domain().Min()))
+	    divT.Insert(0, Event->m_curveB->Domain().Min());
+	if (!ON_NearZero(*divT.Last() - Event->m_curveB->Domain().Max()))
+	    divT.Append(Event->m_curveB->Domain().Max());
+	for (int i = 0; i < divT.Count() - 1; i++) {
+	    ON_Interval interval(divT[i], divT[i + 1]);
 	    if (ON_NearZero(interval.Length()))
 		continue;
 	    ON_2dPoint pt = Event->m_curveB->PointAt(interval.Mid());
