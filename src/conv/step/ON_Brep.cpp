@@ -419,5 +419,36 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 
 	}
 
+	// faces
+	for (int i = 0; i < brep->m_F.Count(); ++i) {
+		ON_BrepFace* face = &(brep->m_F[i]);
+		faces.at(i) = registry->ObjCreate("ADVANCED_FACE");
+		SdaiAdvanced_face *step_face = (SdaiAdvanced_face *)faces.at(i);
+		step_face->face_geometry_((SdaiSurface *)surfaces.at(face->SurfaceIndexOf()));
+		// TODO - is m_bRev the same thing as same_sense?
+		step_face->same_sense_((const Boolean)(face->m_bRev));
+		EntityAggregate *bounds = step_face->bounds_();
+		for (int j = 0; j < face->LoopCount(); ++j) {
+			ON_BrepLoop *curr_loop = face->Loop(j);
+			if (curr_loop == face->OuterLoop()) {
+				SdaiFace_outer_bound *outer_bound = (SdaiFace_outer_bound *)registry->ObjCreate("FACE_OUTER_BOUND");
+				instance_list->Append(outer_bound, completeSE);
+				outer_bound->bound_((SdaiLoop *)edge_loops.at(curr_loop->m_loop_index));
+				// TODO - When should this be false?
+				outer_bound->orientation_(BTrue);
+				bounds->AddNode(new EntityNode((SDAI_Application_instance *)outer_bound));
+			} else {
+				SdaiFace_bound *inner_bound = (SdaiFace_bound *)registry->ObjCreate("FACE_BOUND");
+				instance_list->Append(inner_bound, completeSE);
+				inner_bound->bound_((SdaiLoop *)edge_loops.at(curr_loop->m_loop_index));
+				// TODO - When should this be false?
+				inner_bound->orientation_(BTrue);
+				bounds->AddNode(new EntityNode((SDAI_Application_instance *)inner_bound));
+			}
+		}
+		instance_list->Append(step_face, completeSE);
+	}
+
+
 	return true;
 }
