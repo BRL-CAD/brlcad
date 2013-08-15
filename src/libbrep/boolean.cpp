@@ -300,6 +300,9 @@ get_subcurve_inside_faces(const ON_Brep* brep1, const ON_Brep* brep2, int fi1, i
 	merged_interval.Union(intervals[i]);
     }
 
+    if (!merged_interval.IsValid())
+	return -1;
+
     if (DEBUG_BREP_BOOLEAN)
 	bu_log("merge_interval: [%g, %g]\n", merged_interval.Min(), merged_interval.Max());
 
@@ -307,6 +310,8 @@ get_subcurve_inside_faces(const ON_Brep* brep1, const ON_Brep* brep2, int fi1, i
     Event->m_curveA = sub_curve(Event->m_curveA, merged_interval.Min(), merged_interval.Max());
     Event->m_curveB = sub_curve(Event->m_curveB, merged_interval.Min(), merged_interval.Max());
 
+    if (Event->m_curve3d == NULL || Event->m_curveA == NULL || Event->m_curveB == NULL)
+	return -1;
     return 0;
 }
 
@@ -588,15 +593,16 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
     }
 
     std::stack<int> s;
-    s.push(0);
 
     for (int i = 1; i < sorted_pointers.Count(); i++) {
 	if (s.empty()) {
 	    s.push(i);
 	    continue;
 	}
+
 	IntersectPoint *p = sorted_pointers[s.top()];
 	IntersectPoint *q = sorted_pointers[i];
+
 	if (compare_t(&p, &q) > 0 || q->m_pos < p->m_pos) {
 	    bu_log("stack error or sort failure.\n");
 	    bu_log("s.top() = %d, i = %d\n", s.top(), i);
@@ -821,7 +827,8 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
 	    for (int k = 0; k < events.Count(); k++) {
 		if (events[k].m_type == ON_SSX_EVENT::ssx_tangent
 		    || events[k].m_type == ON_SSX_EVENT::ssx_transverse) {
-		    get_subcurve_inside_faces(brepA, brepB, i, j, &events[k]);
+		    if (get_subcurve_inside_faces(brepA, brepB, i, j, &events[k]) < 0)
+			continue;
 		    curve_uv.Append(events[k].m_curveA);
 		    curve_st.Append(events[k].m_curveB);
 		    // Set m_curveA and m_curveB to NULL, in case that they are
