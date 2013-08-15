@@ -319,8 +319,6 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	    ON_SimpleArray<ON_X_EVENT> x_event;
 	    ON_Intersect(in->outerloop[i], curves[j], x_event, INTERSECTION_TOL);
 	    for (int k = 0; k < x_event.Count(); k++) {
-		if (x_event[k].m_type == ON_X_EVENT::ccx_overlap)
-		    continue;	// Deal with it later
 		IntersectPoint tmp_pt;
 		tmp_pt.m_pt = x_event[k].m_A[0];
 		tmp_pt.m_seg = i;
@@ -328,6 +326,14 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 		tmp_pt.m_type = j;
 		tmp_pt.m_t_for_rank = x_event[k].m_b[0];
 		intersect.Append(tmp_pt);
+		if (x_event[k].m_type == ON_X_EVENT::ccx_overlap) {
+		    tmp_pt.m_pt = x_event[k].m_A[1];
+		    // tmp_pt.m_seg = i;
+		    tmp_pt.m_t = x_event[k].m_a[1];
+		    // tmp_pt.m_type = j;
+		    tmp_pt.m_t_for_rank = x_event[k].m_b[1];
+		    intersect.Append(tmp_pt);
+		}
 	    }
 	    if (x_event.Count())
 		have_intersect[j] = true;
@@ -377,8 +383,14 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 		    curves[i]->PointAt((ipt->m_t_for_rank+(*pts_on_curves[i])[j-1]->m_t_for_rank)*0.5);
 		ON_3dPoint right = j == pts_on_curves[i]->Count() - 1 ? curves[i]->PointAtEnd() :
 		    curves[i]->PointAt((ipt->m_t_for_rank+(*pts_on_curves[i])[j+1]->m_t_for_rank)*0.5);
-		int left_in = IsPointInsideLoop(left, in->outerloop);
-		int right_in = IsPointInsideLoop(right, in->outerloop);
+		// If the point is on the boundary, we treat it with the same
+		// way as it's outside.
+		// For example, the left side is inside, and the right's on
+		// boundary, that point should be IntersectPoint::OUT, the
+		// same as the right's outside the loop.
+		// Other cases are similar.
+		int left_in = IsPointInsideLoop(left, in->outerloop) && !IsPointOnLoop(left, in->outerloop);
+		int right_in = IsPointInsideLoop(right, in->outerloop) && !IsPointOnLoop(right, in->outerloop);
 		if (left_in < 0 || right_in < 0) {
 		    // not a loop
 		    ipt->m_in_out = IntersectPoint::UNSET;
