@@ -188,7 +188,7 @@ void MultList::processSubExp( Expression exp, Entity super,
             break;
         case op_:
             if( join == AND ) {
-                supertype = ( ( AndList * )this )->supertype;
+                supertype = ( dynamic_cast< AndList * >(this) )->supertype;
             }
             if( ! supertype &&
                     ( ( oe->op_code == OP_AND && join == AND )

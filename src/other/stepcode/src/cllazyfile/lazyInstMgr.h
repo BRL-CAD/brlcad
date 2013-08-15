@@ -56,7 +56,7 @@ class lazyInstMgr {
         Registry * _headerRegistry, * _mainRegistry;
         ErrorDescriptor * _errors;
 
-        unsigned long _lazyInstanceCount;
+        unsigned long _lazyInstanceCount, _loadedInstanceCount;
         int _longestTypeNameLen;
         std::string _longestTypeName;
 
@@ -97,8 +97,13 @@ class lazyInstMgr {
         }
 
         /// get the number of instances that have been found in the open files.
-        unsigned long countInstances() const {
+        unsigned long totalInstanceCount() const {
             return _lazyInstanceCount;
+        }
+
+        /// get the number of instances that are loaded.
+        unsigned long loadedInstanceCount() const {
+            return _loadedInstanceCount;
         }
 
         /// get the number of data sections that have been identified
@@ -144,6 +149,13 @@ class lazyInstMgr {
         SDAI_Application_instance * loadInstance( instanceID id );
 
         /* TODO implement these
+         *    //list all instances that one instance depends on (recursive)
+         *    std::vector<instanceID> instanceDependencies( instanceID id ); //set is faster?
+         *
+         *    /** the opposite of instanceDependencies() - all instances that are *not* dependencies of one particular instance
+         *    same as above, but with list of instances * /
+         *    std::vector<instanceID> notDependencies(...)
+         *
          *    //renumber instances so that they are numbered 1..N where N is the total number of instances
          *    void normalizeInstanceIds();
          *    //find data that is repeated and eliminate, if possible
@@ -152,9 +164,6 @@ class lazyInstMgr {
          *    void useDataSection( sectionID id );
          */
         // TODO support references from one file to another
-        // TODO registry
-
 };
 
 #endif //LAZYINSTMGR_H
-

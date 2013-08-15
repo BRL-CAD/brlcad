@@ -141,7 +141,7 @@ void SDAI_Application_instance::AppendMultInstance( SDAI_Application_instance * 
 
 // BUG implement this -- FIXME function is never used
 
-SDAI_Application_instance * SDAI_Application_instance::GetMiEntity( char * EntityName ) {
+SDAI_Application_instance * SDAI_Application_instance::GetMiEntity( char * entName ) {
     std::string s1, s2;
 
     const EntityDescLinkNode * edln = 0;
@@ -149,7 +149,7 @@ SDAI_Application_instance * SDAI_Application_instance::GetMiEntity( char * Entit
 
     // compare up the *leftmost* parent path
     while( ed ) {
-        if( !strcmp( StrToLower( ed->Name(), s1 ), StrToLower( EntityName, s2 ) ) ) {
+        if( !strcmp( StrToLower( ed->Name(), s1 ), StrToLower( entName, s2 ) ) ) {
             return this;    // return this parent path
         }
         edln = ( EntityDescLinkNode * )( ed->Supertypes().GetHead() );
@@ -161,23 +161,31 @@ SDAI_Application_instance * SDAI_Application_instance::GetMiEntity( char * Entit
     }
     // search alternate parent path since didn't find it in this one.
     if( nextMiEntity ) {
-        return nextMiEntity->GetMiEntity( EntityName );
+        return nextMiEntity->GetMiEntity( entName );
     }
     return 0;
 }
 
 
-
-STEPattribute * SDAI_Application_instance::GetSTEPattribute( const char * nm ) {
+/**
+ * Returns a STEPattribute or NULL
+ * \param nm The name to search for.
+ * \param entity If not null, check that the attribute comes from this entity. When MakeDerived is called from generated code, this is used to ensure that the correct attr is marked as derived. Issue #232
+ */
+STEPattribute * SDAI_Application_instance::GetSTEPattribute( const char * nm, const char * entity ) {
     if( !nm ) {
         return 0;
     }
     STEPattribute * a = 0;
 
     ResetAttributes();
-    while( ( a = NextAttribute() )
-            && strcmp( nm, a ->Name() ) ) {
-        ;    // keep going until no more attributes or attribute is found
+    // keep going until no more attributes, or attribute is found
+    while( a = NextAttribute() ) {
+        if( 0 == strcmp( nm, a ->Name() ) &&
+            //if entity isn't null, check for a match. NOTE: should we use IsA(), CanBe(), or Name()?
+            ( entity ? ( 0 != a->aDesc->Owner().IsA( entity ) ) : true ) ) {
+            break;
+        }
     }
 
     return a;
@@ -194,8 +202,13 @@ STEPattribute * SDAI_Application_instance::MakeRedefined( STEPattribute * redefi
     return a;
 }
 
-STEPattribute * SDAI_Application_instance::MakeDerived( const char * nm ) {
-    STEPattribute * a = GetSTEPattribute( nm );
+/**
+ * Returns a STEPattribute or NULL. If found, marks as derived.
+ * \param nm The name to search for.
+ * \param entity If not null, check that the attribute comes from this entity. When called from generated code, this is used to ensure that the correct attr is marked as derived. Issue #232
+ */
+STEPattribute * SDAI_Application_instance::MakeDerived( const char * nm, const char * entity ) {
+    STEPattribute * a = GetSTEPattribute( nm, entity );
     if( a ) {
         a ->Derive();
     }
@@ -377,8 +390,7 @@ const char * SDAI_Application_instance::STEPwrite( std::string & buf, const char
     char instanceInfo[BUFSIZ];
 
     std::string tmp;
-    sprintf( instanceInfo, "#%d=%s(", STEPfile_id,
-             ( char * )StrToUpper( EntityName( currSch ), tmp ) );
+    sprintf( instanceInfo, "#%d=%s(", STEPfile_id, StrToUpper( EntityName( currSch ), tmp ) );
     buf.append( instanceInfo );
 
     int n = attributes.list_length();
@@ -411,12 +423,13 @@ void SDAI_Application_instance::PrependEntityErrMsg() {
 /**************************************************************//**
  ** \param c --  character which caused error
  ** \param i --  index of attribute which caused error
- ** \param in  --  input stream for recovery
- ** \details  reports the error found, reads until it finds the end of an
- **     instance. i.e. a close quote followed by a semicolon optionally having
- **     whitespace between them.
+ ** \param in -- (used in STEPcomplex) input stream for recovery
+ ** Reports the error found, reads until it finds the end of an
+ ** instance. i.e. a close quote followed by a semicolon optionally
+ ** having whitespace between them.
  ******************************************************************/
-void SDAI_Application_instance::STEPread_error( char c, int i, istream & in ) {
+void SDAI_Application_instance::STEPread_error( char c, int i, istream & in, const char * schnm ) {
+    (void) in;
     char errStr[BUFSIZ];
     errStr[0] = '\0';
 
@@ -438,11 +451,12 @@ void SDAI_Application_instance::STEPread_error( char c, int i, istream & in ) {
     }
 
     std::string tmp;
-    STEPwrite( tmp ); // STEPwrite writes to a static buffer inside function
-    sprintf( errStr,
-             "  The invalid instance to this point looks like :\n%s\n",
-             tmp.c_str() );
-    _error.AppendToDetailMsg( errStr );
+    STEPwrite( tmp, schnm ); // STEPwrite writes to a static buffer inside function
+    _error.AppendToDetailMsg( "  The invalid instance to this point looks like :\n" );
+    _error.AppendToDetailMsg( tmp );
+    _error.AppendToDetailMsg( "\nUnexpected character: " );
+    _error.AppendToDetailMsg( c );
+    _error.AppendToDetailMsg( '\n' );
 
     sprintf( errStr, "\nfinished reading #%d\n", STEPfile_id );
     _error.AppendToDetailMsg( errStr );
@@ -584,7 +598,7 @@ Severity SDAI_Application_instance::STEPread( int id,  int idIncr,
             return _error.severity();
         }
     }
-    STEPread_error( c, i, in );
+    STEPread_error( c, i, in, currSch );
 //  code fragment imported from STEPread_error
 //  for some currently unknown reason it was commented out of STEPread_error
     errStr[0] = '\0';
@@ -785,7 +799,12 @@ int SetErrOnNull( const char * attrValue, ErrorDescriptor * error ) {
     char scanBuf[BUFSIZ];
     scanBuf[0] = '\0';
 
-    int numFound = sscanf( ( char * )attrValue, " %s", scanBuf );
+    std::stringstream fmtstr;
+    fmtstr << " %" << BUFSIZ -1 << "s ";
+    //fmtstr contains " %ns " where n is BUFSIZ -1
+
+    int numFound = sscanf( ( char * )attrValue , fmtstr.str().c_str() , scanBuf );
+
     if( numFound == EOF ) {
         error->GreaterSeverity( SEVERITY_INCOMPLETE );
         return 1;
@@ -809,6 +828,7 @@ Severity EntityValidLevel( const char * attrValue, // string contain entity ref
     tmp[0] = '\0';
     char messageBuf [BUFSIZ];
     messageBuf[0] = '\0';
+    std::stringstream fmtstr1, fmtstr2;
 
     if( clearError ) {
         err->ClearErrorMsg();
@@ -817,9 +837,15 @@ Severity EntityValidLevel( const char * attrValue, // string contain entity ref
     int fileId;
     MgrNode * mn = 0;
 
+    // fmtstr1 contains "#%d %ns" where n is BUFSIZ-1
+    fmtstr1 << " #%d %" << BUFSIZ - 1 << "s ";
+
+    // fmtstr2 contains "%d %ns" where n is BUFSIZ-1
+    fmtstr2 << " %d %" << BUFSIZ - 1 << "s ";
+ 
     // check for both forms:  #id or id
-    int found1 = sscanf( ( char * )attrValue, " #%d %s", &fileId, tmp );
-    int found2 = sscanf( ( char * )attrValue, " %d %s", &fileId, tmp );
+    int found1 = sscanf( ( char * )attrValue, fmtstr1.str().c_str() , &fileId, tmp );
+    int found2 = sscanf( ( char * )attrValue, fmtstr2.str().c_str() , &fileId, tmp );
 
     if( ( found1 > 0 ) || ( found2 > 0 ) ) {
         if( ( found1 == 2 ) || ( found2 == 2 ) ) {

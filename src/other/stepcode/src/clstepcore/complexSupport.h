@@ -372,7 +372,7 @@ class SC_CORE_EXPORT ComplexList {
             return ( strcmp( supertype(), name ) == 0 );
         }
         const char * supertype() {
-            return ( ( SimpleList * )head->childList )->name;
+            return ( dynamic_cast< SimpleList * >(head->childList ))->name ;
         }
         /** \fn supertype
          * Based on knowledge that ComplexList always created by ANDing supertype

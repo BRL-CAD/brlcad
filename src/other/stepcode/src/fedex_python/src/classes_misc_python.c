@@ -500,22 +500,21 @@ ENTITYput_superclass( Entity entity ) {
 #define ENTITYget_type(e)  ((e)->u.entity->type)
 
     Linked_List l = ENTITYget_supertypes( entity );
-    Entity super = 0;
-    Entity ignore = 0;
-    int super_cnt = 0;
     EntityTag tag;
 
-    Linked_List list = 0;
-
     if( ! LISTempty( l ) ) {
+        Entity super = 0;
 
         if( multiple_inheritance ) {
+            Linked_List list = 0;
             list = ENTITYget_supertypes( entity );
             if( ! LISTempty( list ) ) {
                 /* assign superclass to be the first one on the list of parents */
                 super = ( Entity )LISTpeek_first( list );
             }
         } else {
+            Entity ignore = 0;
+            int super_cnt = 0;
             /* find the first parent that has attributes (in the parent or any of its
             ancestors).  Make super point at that parent and print warnings for
              all the rest of the parents. DAS */

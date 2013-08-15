@@ -6,6 +6,8 @@
 #include "lazyTypes.h"
 #include "sc_memmgr.h"
 #include "sc_export.h"
+#include "errordesc.h"
+#include "STEPcomplex.h"
 
 class SDAI_Application_instance;
 class lazyFileReader;
@@ -19,7 +21,7 @@ class SC_LAZYFILE_EXPORT sectionReader {
         std::ifstream & _file;
 
         std::streampos _sectionStart,  ///< the start of this section as reported by tellg()
-            _sectionEnd;    ///< the end of this section as reported by tellg()
+            _sectionEnd;               ///< the end of this section as reported by tellg()
         unsigned long _totalInstances;
 
         ErrorDescriptor * _error;
@@ -51,9 +53,12 @@ class SC_LAZYFILE_EXPORT sectionReader {
             }
         }
 
+        STEPcomplex * CreateSubSuperInstance( const Registry * reg, instanceID fileid, Severity & sev );
+
     public:
         SDAI_Application_instance * getRealInstance( const Registry * reg, long int begin, instanceID instance,
                 const std::string & typeName = "", const std::string & schName = "", bool header = false );
+
         sectionID ID() const {
             return _sectionID;
         }
@@ -67,11 +72,15 @@ class SC_LAZYFILE_EXPORT sectionReader {
         std::streampos sectionStart() const {
             return _sectionStart;
         }
+
         std::streampos sectionEnd() const {
             return _sectionEnd;
         }
+
         void locateAllInstances(); /**< find instances in section, and add lazyInstance's to lazyInstMgr */
+
         virtual const namedLazyInstance nextInstance() = 0;
+
         instanceID readInstanceNumber();
 };
 

@@ -91,6 +91,7 @@ set(EXPRESS_SOURCES
   memory.c
   object.c
   express.c
+  ordered_attrs.cc
   )
 
 # TODO
@@ -116,6 +117,8 @@ SC_ADDLIB(express "${EXPRESS_SOURCES}" "base")
 add_dependencies(express express_verify)
 add_dependencies(express version_string)
 SC_ADDEXEC("check-express" "${CHECK_EXPRESS_SOURCES}" "express;base" )
+
+add_subdirectory(test)
 
 # Local Variables:
 # tab-width: 8

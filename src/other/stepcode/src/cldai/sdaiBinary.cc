@@ -79,17 +79,16 @@ Severity SDAI_Binary::ReadBinary( istream & in, ErrorDescriptor * err, int Assig
     }
 
     std::string str;
-    char c;
     char messageBuf[512];
     messageBuf[0] = '\0';
-
-    int validDelimiters = 1;
 
     in >> ws; // skip white space
 
     if( in.good() ) {
+        char c;
         in.get( c );
         if( ( c == '\"' ) || isxdigit( c ) ) {
+            int validDelimiters = 1;
             if( c == '\"' ) {
                 in.get( c ); // push past the delimiter
                 // since found a valid delimiter it is now invalid until the

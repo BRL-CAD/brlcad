@@ -30,7 +30,7 @@ MatchType AndOrList::matchORs( EntNode * ents )
     EntList * child = childList->firstWanted( UNKNOWN );
 
     while( child != NULL ) {
-        if( ( ( MultList * )child )->matchORs( ents ) == UNSATISFIED ) {
+        if( ( dynamic_cast< MultList * >(child) )->matchORs( ents ) == UNSATISFIED ) {
             // Unmark whatever we may have marked.  (E.g., there may have
             // been an AND beneath and it started marking and then found one
             // it couldn't match.)
@@ -58,7 +58,7 @@ MatchType AndList::matchORs( EntNode * ents )
     EntList * child = childList->firstWanted( UNKNOWN );
 
     while( child != NULL ) {
-        if( ( ( MultList * )child )->matchORs( ents ) == UNSATISFIED ) {
+        if( ( dynamic_cast< MultList * >(child) )->matchORs( ents ) == UNSATISFIED ) {        
             viable = UNSATISFIED;
             return UNSATISFIED;
             // This means the whole AndList has failed, by definition.
@@ -105,7 +105,7 @@ MatchType OrList::matchORs( EntNode * ents )
             // running matchNonORs() above.  (We also exclude the case of an
             // AND child who may have OR desc's, but already determined that
             // it can't satisfy one of its paths and so returned UNSAT.)
-            retval = ( ( MultList * )child )->matchORs( ents );
+            retval = ( dynamic_cast< MultList * >(child) )->matchORs( ents );
         }
 
         // Now register the result:

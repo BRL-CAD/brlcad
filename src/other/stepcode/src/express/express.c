@@ -87,6 +87,7 @@
 void * ParseAlloc( void * ( *mallocProc )( size_t ) );
 void ParseFree( void * parser, void ( *freeProc )( void * ) );
 void Parse( void * parser, int tokenID, YYSTYPE data, parse_data_t parseData );
+void ParseTrace(FILE *TraceFILE, char *zTracePrompt);
 
 Linked_List EXPRESS_path;
 int EXPRESSpass;
@@ -299,7 +300,6 @@ typedef struct Dir {
 static void EXPRESS_PATHinit() {
     char * p;
     Dir * dir;
-    int done = 0;
 
     EXPRESS_path = LISTcreate();
     p = getenv( "EXPRESS_PATH" );
@@ -309,6 +309,7 @@ static void EXPRESS_PATHinit() {
         dir->leaf = dir->full;
         LISTadd( EXPRESS_path, ( Generic )dir );
     } else {
+        int done = 0;
         while( !done ) {
             char * start;   /* start of current dir */
             int length; /* length of dir */
@@ -604,6 +605,7 @@ static Express PARSERrun( char * filename, FILE * fp ) {
     parserInitState();
 
     yyerrstatus = 0;
+//     ParseTrace( stderr, "- expparse - " ); //NOTE uncomment this to enable parser tracing
     while( ( tokenID = yylex( scanner ) ) > 0 ) {
         Parse( parser, tokenID, yylval, parseData );
     }
@@ -718,7 +720,6 @@ static void RENAMEresolve( Rename * r, Schema s ) {
 
 #ifdef using_enum_items_is_a_pain
 static void RENAMEresolve_enum( Type t, Schema s ) {
-    Dictionary      d = TYPEget_enum_tags( t );
     DictionaryEntry de;
     Expression      x;
 

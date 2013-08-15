@@ -89,6 +89,12 @@ if(NOT DEFINED SC_SDAI_ADDITIONAL_EXES_SRCS )
   set( SC_SDAI_ADDITIONAL_EXES_SRCS "" CACHE STRING "Source files for additional executables to be linked with SDAI libs" )
 endif(NOT DEFINED SC_SDAI_ADDITIONAL_EXES_SRCS )
 
+if( NOT DEFINED SC_BUILD_SCHEMAS )
+    message( "** CMake variable SC_BUILD_SCHEMAS not set. Defaults to building ALL schemas. This will take a while; see http://stepcode.org/mw/index.php?title=STEPcode_CMake_variables#SC_BUILD_SCHEMAS" )
+    #this makes SC_BUILD_SCHEMAS show up in cmake-gui
+    SET(SC_BUILD_SCHEMAS "ALL" CACHE string "Semicolon-separated list of paths to EXPRESS schemas to be built" )
+endif( NOT DEFINED SC_BUILD_SCHEMAS )
+
 # CMake derives much of its functionality from modules, typically
 # stored in one directory - let CMake know where to find them.
 SET(SC_CMAKE_DIR "${SC_SOURCE_DIR}/cmake")
@@ -135,10 +141,9 @@ ENDIF(SC_ENABLE_COVERAGE)
 # Testing option
 OPTION_WITH_DEFAULT( SC_ENABLE_TESTING "Enable unittesting framework" OFF )
 IF(SC_ENABLE_TESTING)
-  #this makes SC_BUILD_SCHEMAS show up in cmake-gui
   if( NOT DEFINED SC_BUILD_SCHEMAS )
-    SET(SC_BUILD_SCHEMAS "ALL" CACHE string "Semicolon-separated list of paths to EXPRESS schemas to be built" )
-  endif( NOT DEFINED SC_BUILD_SCHEMAS )
+    set( SC_BUILD_SCHEMAS "ALL" ) #test all schemas, unless otherwise specified
+  endif()
   INCLUDE(CTest)
   ENABLE_TESTING()
 ENDIF(SC_ENABLE_TESTING)
@@ -387,9 +392,9 @@ ADD_SUBDIRECTORY(src/clstepcore)
 ADD_SUBDIRECTORY(src/cleditor)
 ADD_SUBDIRECTORY(src/cldai)
 ADD_SUBDIRECTORY(src/clutils)
-if(NOT WIN32)
-  ADD_SUBDIRECTORY(src/cllazyfile)
-endif(NOT WIN32)
+if( NOT WIN32 ) # don't build cllazyfile on windows until export/import macros are in place
+  ADD_SUBDIRECTORY( src/cllazyfile )
+endif( NOT WIN32 )
 ADD_SUBDIRECTORY(include)
 ADD_SUBDIRECTORY(data)
 IF(SC_ENABLE_TESTING)

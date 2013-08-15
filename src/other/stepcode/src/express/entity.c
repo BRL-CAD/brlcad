@@ -459,7 +459,7 @@ Variable ENTITYget_named_attribute( Entity entity, char * name ) {
 **  is returned.
 */
 int ENTITYget_attribute_offset( Entity entity, Variable attribute ) {
-    int         offset, value;
+    int offset;
 
     LISTdo( entity->u.entity->attributes, attr, Variable )
     if( attr == attribute ) {
@@ -467,6 +467,7 @@ int ENTITYget_attribute_offset( Entity entity, Variable attribute ) {
     }
     LISTod;
     offset = 0;
+    int value;
     LISTdo( entity->u.entity->supertypes, super, Entity )
     /*  if (OBJis_kind_of(super, Class_Entity)) {*/
     if( ( value = ENTITYget_attribute_offset( super, attribute ) ) != -1 ) {
@@ -488,7 +489,7 @@ int ENTITYget_attribute_offset( Entity entity, Variable attribute ) {
 **      -1 is returned.
 */
 int ENTITYget_named_attribute_offset( Entity entity, char * name ) {
-    int         offset, value;
+    int offset;
 
     LISTdo( entity->u.entity->attributes, attr, Variable )
     if( streq( VARget_simple_name( attr ), name ) )
@@ -496,6 +497,7 @@ int ENTITYget_named_attribute_offset( Entity entity, char * name ) {
                VARget_offset( ENTITY_find_inherited_attribute( entity, name, 0, 0 ) );
     LISTod;
     offset = 0;
+    int value;
     LISTdo( entity->u.entity->supertypes, super, Entity )
     /*  if (OBJis_kind_of(super, Class_Entity)) {*/
     if( ( value = ENTITYget_named_attribute_offset( super, name ) ) != -1 ) {

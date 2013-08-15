@@ -60,7 +60,6 @@ FUNCTION(BUILD_A_SCHEMA SCHEMA_FILE)
     # seems to be set_target_properties( <target> PROPERTIES COMPILE_FLAGS <flags> )
     set( ${PROJECT_NAME}_COMPILE_FLAGS "-I${CMAKE_CURRENT_SOURCE_DIR} -I${SC_SOURCE_DIR}/src/cldai -I${SC_SOURCE_DIR}/src/cleditor -I${SC_SOURCE_DIR}/src/clutils -I${SCHEMA_OUTPUT_DIR} -I${SC_SOURCE_DIR}/src/clstepcore -I${SC_SOURCE_DIR}/src/base" )
 
-    add_custom_target( generate_cpp_${SCHEMA_SHORT_NAME} SOURCES ${FEDEX_OUT} )
     add_custom_command( OUTPUT ${SCHEMA_OUTPUT_DIR}
                         COMMAND ${CMAKE_COMMAND} ARGS -E make_directory ${SCHEMA_OUTPUT_DIR}
                         COMMENT "Creating ${SCHEMA_OUTPUT_DIR} for schema ${SCHEMA_SHORT_NAME}")
@@ -70,6 +69,7 @@ FUNCTION(BUILD_A_SCHEMA SCHEMA_FILE)
                         WORKING_DIRECTORY ${SCHEMA_OUTPUT_DIR}
                         COMMENT "Running fedex_plus for ${SCHEMA_SHORT_NAME}..."
                         VERBATIM )
+    add_custom_target( generate_cpp_${SCHEMA_SHORT_NAME} DEPENDS ${FEDEX_OUT} SOURCES ${FEDEX_OUT} )
 
     if( SC_ENABLE_COVERAGE AND NOT SC_COVER_SCHEMAS )
       # Coverage will always be sparse on schema libs. Compiling the libs with the -fprofile-arcs and
@@ -79,7 +79,7 @@ FUNCTION(BUILD_A_SCHEMA SCHEMA_FILE)
     endif( SC_ENABLE_COVERAGE AND NOT SC_COVER_SCHEMAS )
 
     # if testing is enabled, "TESTABLE" sets property EXCLUDE_FROM_ALL and prevents installation
-    SC_ADDLIB( ${PROJECT_NAME} "${FEDEX_OUT}" "stepdai;stepcore;express;stepeditor;steputils;base" "TESTABLE" )
+    SC_ADDLIB( ${PROJECT_NAME} "${FEDEX_OUT}" "stepdai;stepcore;stepeditor;steputils;base" "TESTABLE" )
     add_dependencies( ${PROJECT_NAME} generate_cpp_${SCHEMA_SHORT_NAME} )
     set_target_properties( ${PROJECT_NAME} PROPERTIES COMPILE_FLAGS
                            ${${PROJECT_NAME}_COMPILE_FLAGS} )

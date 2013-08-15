@@ -156,7 +156,7 @@ void SCOPEPrint( Scope scope, FILES * files, Schema schema, Express model,
     Linked_List list = SCOPEget_entities_superclass_order( scope );
     DictionaryEntry de;
     Type i;
-    int redefs = 0, index = 0;
+    int redefs = 0;
 
     if( cnt <= 1 ) {
         /* This will be the case if this is the first time we are generating a
@@ -290,6 +290,8 @@ void SCOPEPrint( Scope scope, FILES * files, Schema schema, Express model,
     LISTod;
 
     if( cnt <= 1 ) {
+        int index = 0;
+
         // Do the model stuff:
         fprintf( files->inc, "\n//        ***** generate Model related pieces\n" );
         fprintf( files->inc,

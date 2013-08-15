@@ -27,7 +27,7 @@ class SC_CORE_EXPORT SDAI_Application_instance  : public SDAI_DAObject_SDAI  {
         ErrorDescriptor   _error;
         std::string       p21Comment;
         // registry additions
-        EntityDescriptor * eDesc;
+        const EntityDescriptor * eDesc;
 
         /**
         ** head entity for multiple inheritance.  If it is null then this
@@ -98,7 +98,7 @@ class SC_CORE_EXPORT SDAI_Application_instance  : public SDAI_DAObject_SDAI  {
                                    class InstMgr * instance_set,
                                    istream & in = cin, const char * currSch = NULL,
                                    bool useTechCor = true, bool strict = true );
-        virtual void STEPread_error( char c, int index, istream & in );
+        virtual void STEPread_error( char c, int i, std::istream& in, const char * schnm );
 
 // WRITE
         virtual void STEPwrite( ostream & out = cout, const char * currSch = NULL,
@@ -129,12 +129,12 @@ class SC_CORE_EXPORT SDAI_Application_instance  : public SDAI_DAObject_SDAI  {
         SDAI_Application_instance  * GetNextMiEntity() {
             return nextMiEntity;
         }
-        SDAI_Application_instance  * GetMiEntity( char * EntityName );
+        SDAI_Application_instance  * GetMiEntity( char * entName );
         void AppendMultInstance( SDAI_Application_instance * se );
 
     protected:
-        STEPattribute * GetSTEPattribute( const char * );
-        STEPattribute * MakeDerived( const char * );
+        STEPattribute * GetSTEPattribute( const char * nm, const char * entity = NULL );
+        STEPattribute * MakeDerived( const char * nm, const char * entity = NULL );
         STEPattribute * MakeRedefined( STEPattribute * redefiningAttr,
                                        const char * nm );
 

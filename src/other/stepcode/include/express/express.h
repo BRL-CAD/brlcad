@@ -247,16 +247,17 @@ extern SC_EXPRESS_EXPORT char * KW_XOR;
 /* function prototypes */
 /***********************/
 
-extern SC_EXPRESS_EXPORT Express  EXPRESScreate PROTO( ( void ) );
-extern SC_EXPRESS_EXPORT void     EXPRESSdestroy PROTO( ( Express ) );
-extern SC_EXPRESS_EXPORT void     EXPRESSparse PROTO( ( Express, FILE *, char * ) );
+extern SC_EXPRESS_EXPORT Express  EXPRESScreate     PROTO( ( void ) );
+extern SC_EXPRESS_EXPORT void     EXPRESSdestroy    PROTO( ( Express ) );
+extern SC_EXPRESS_EXPORT void     EXPRESSparse      PROTO( ( Express, FILE *, char * ) );
 extern SC_EXPRESS_EXPORT void     EXPRESSinitialize PROTO( ( void ) );
-extern SC_EXPRESS_EXPORT void     EXPRESScleanup PROTO( ( void ) );
-extern SC_EXPRESS_EXPORT void     EXPRESSresolve PROTO( ( Express ) );
-extern SC_EXPRESS_EXPORT char  *  EXPRESSversion PROTO( ( void ) );
-extern SC_EXPRESS_EXPORT int      EXPRESS_fail PROTO( ( Express ) );
-extern SC_EXPRESS_EXPORT int      EXPRESS_succeed PROTO( ( Express ) );
-extern void     EXPRESSinit_init PROTO( ( void ) );
+extern SC_EXPRESS_EXPORT void     EXPRESScleanup    PROTO( ( void ) );
+extern SC_EXPRESS_EXPORT void     EXPRESSresolve    PROTO( ( Express ) );
+extern SC_EXPRESS_EXPORT char  *  EXPRESSversion    PROTO( ( void ) );
+extern SC_EXPRESS_EXPORT int      EXPRESS_fail      PROTO( ( Express ) );
+extern SC_EXPRESS_EXPORT int      EXPRESS_succeed   PROTO( ( Express ) );
+extern                   void     EXPRESSinit_init  PROTO( ( void ) );
+extern SC_EXPRESS_EXPORT void     EXPRESSusage( int _exit ); ///< exit unless _exit is non-zero
 extern SC_EXPRESS_EXPORT void     build_complex( Express );
 
 #endif /*EXPRESS_H*/

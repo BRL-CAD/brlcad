@@ -8,6 +8,7 @@ lazyInstMgr::lazyInstMgr() {
     _headerRegistry = new Registry( HeaderSchemaInit );
     _instanceTypes = new instanceTypes_t( 255 ); //NOTE arbitrary max of 255 chars for a type name
     _lazyInstanceCount = 0;
+    _loadedInstanceCount = 0;
     _longestTypeNameLen = 0;
     _errors = new ErrorDescriptor();
     _ima = new instMgrAdapter( this );
@@ -19,11 +20,11 @@ lazyInstMgr::~lazyInstMgr() {
     delete _ima;
     //loop over files, sections, instances; delete header instances
     lazyFileReaderVec_t::iterator fit = _files.begin();
-    for( ; fit != _files.end(); fit++ ) {
+    for( ; fit != _files.end(); ++fit ) {
         delete *fit;
     }
     dataSectionReaderVec_t::iterator sit = _dataSections.begin();
-    for( ; sit != _dataSections.end(); sit++ ) {
+    for( ; sit != _dataSections.end(); ++sit ) {
         delete *sit;
     }
     _instancesLoaded.clear();
@@ -58,7 +59,7 @@ void lazyInstMgr::addLazyInstance( namedLazyInstance inst ) {
             //forward refs
             _fwdInstanceRefs.insert( inst.loc.instance, *inst.refs );
             instanceRefs::iterator it = inst.refs->begin();
-            for( ; it != inst.refs->end(); it++ ) {
+            for( ; it != inst.refs->end(); ++it ) {
                 //reverse refs
                 _revInstanceRefs.insert( *it, inst.loc.instance );
             }
@@ -91,7 +92,6 @@ SDAI_Application_instance * lazyInstMgr::loadInstance( instanceID id ) {
     assert( _mainRegistry && "Main registry has not been initialized. Do so with initRegistry() or setRegistry()." );
     SDAI_Application_instance * inst = 0;
     positionAndSection ps;
-    long int off;
     sectionID sid;
     inst = _instancesLoaded.find( id );
     instanceStreamPos_t::cvector * cv;
@@ -102,6 +102,7 @@ SDAI_Application_instance * lazyInstMgr::loadInstance( instanceID id ) {
                 std::cerr << "Instance #" << id << " not found in any section." << std::endl;
                 break;
             case 1:
+                long int off;
                 ps = cv->at( 0 );
                 off = ps & 0xFFFFFFFFFFFFULL;
                 sid = ps >> 48;
@@ -112,11 +113,14 @@ SDAI_Application_instance * lazyInstMgr::loadInstance( instanceID id ) {
                 std::cerr << "Instance #" << id << " exists in multiple sections. This is not yet supported." << std::endl;
                 break;
         }
+        if( ( inst ) && ( inst != & NilSTEPentity ) ) {
+            _instancesLoaded.insert( id, inst );
+            _loadedInstanceCount++;
+        } else {
+            std::cerr << "Error loading instance #" << id << "." << std::endl;
+        }
     } else {
         std::cerr << "Instance #" << id << " not found in any section." << std::endl;
-    }
-    if( inst ) {
-        _instancesLoaded.insert( id, inst );
     }
     return inst;
 }

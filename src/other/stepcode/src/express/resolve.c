@@ -854,8 +854,6 @@ void CASE_ITresolve( Case_Item item, Scope scope, Statement statement ) {
 void STMTresolve( Statement statement, Scope scope ) {
     //scope is always the function/procedure/rule from SCOPEresolve_expressions_statements();
     Scope proc;
-    Logical eval;
-    bool skipped = false;
 
     if( !statement ) {
         return;    /* could be null statement */

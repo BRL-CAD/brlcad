@@ -53,7 +53,7 @@ struct freelist_head {
     int size;           /**< size of a single elt incl. next ptr */
     int bytes;          /**< if we run out, allocate memory by this many bytes */
     Freelist * freelist;
-#if SPACE_PROFILE
+#ifdef SPACE_PROFILE
     int count;
 #endif
 };

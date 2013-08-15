@@ -204,11 +204,11 @@ SC_HASHlist( HashEntry * he ) {
 
 void
 SC_HASHdestroy( Hash_TableP table ) {
-    unsigned int i, j;
     struct Element ** s;
     struct Element * p, *q;
 
     if( table != HASH_NULL ) {
+        unsigned int i, j;
         for( i = 0; i < table->SegmentCount; i++ ) {
             /* test probably unnecessary    */
             if( ( s = table->Directory[i] ) != NULL ) {
@@ -340,9 +340,6 @@ SC_HASHhash( char * Key, Hash_TableP table ) {
 static
 void
 SC_HASHexpand_table( Hash_TableP table ) {
-    Address NewAddress;
-    int     OldSegmentIndex, NewSegmentIndex;
-    int     OldSegmentDir, NewSegmentDir;
     struct Element ** OldSegment, **NewSegment;
     struct Element * Current, **Previous, **LastOfNew;
 
@@ -350,6 +347,9 @@ SC_HASHexpand_table( Hash_TableP table ) {
         /*
         ** Locate the bucket to be split
         */
+        Address NewAddress;
+        int OldSegmentIndex, NewSegmentIndex;
+        int OldSegmentDir, NewSegmentDir;
         OldSegmentDir = DIV( table->p, SEGMENT_SIZE );
         OldSegment = table->Directory[OldSegmentDir];
         OldSegmentIndex = MOD( table->p, SEGMENT_SIZE );

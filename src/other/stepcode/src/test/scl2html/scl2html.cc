@@ -223,7 +223,6 @@ main() {
     root << "<UL>" << endl;
 
     const TypeDescriptor * type;
-    std::string tmp;
     type = registry->NextType();
     root << "<! -- The following is a list of types, which are>\n";
     root << "<! --  cross-referenced from the entities.>\n";

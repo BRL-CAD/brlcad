@@ -10,6 +10,7 @@
 #include "sdaiApplication_instance.h"
 #include "read_func.h"
 #include "SdaiSchemaInit.h"
+#include "STEPcomplex.h"
 
 #include "sectionReader.h"
 #include "lazyFileReader.h"
@@ -218,7 +219,7 @@ instanceID sectionReader::readInstanceNumber() {
 SDAI_Application_instance * sectionReader::getRealInstance( const Registry * reg, long int begin, instanceID instance,
         const std::string & typeName, const std::string & schName, bool header ) {
     char c;
-    const char * tName = 0, * sName = 0;
+    const char * tName = 0, * sName = 0; //these are necessary since typeName and schName are const
     std::string comment;
     Severity sev;
     SDAI_Application_instance * inst = 0;
@@ -248,6 +249,7 @@ SDAI_Application_instance * sectionReader::getRealInstance( const Registry * reg
         findNormalString( "=" );
     }
     skipWS();
+    ReadTokenSeparator( _file, &comment );
     c = _file.peek();
     switch( c ) {
         case '&':
@@ -255,8 +257,7 @@ SDAI_Application_instance * sectionReader::getRealInstance( const Registry * reg
             // sev = CreateScopeInstances( in, &scopelist );
             break;
         case '(':
-            std::cerr << "Can't handle complex instances. Skipping #" << instance << ", offset " << _file.tellg() << std::endl;
-            //CreateSubSuperInstance( in, fileid, result );
+            inst = CreateSubSuperInstance( reg, instance, sev );
             break;
         case '!':
             std::cerr << "Can't handle user-defined instances. Skipping #" << instance << ", offset " << _file.tellg() << std::endl;
@@ -268,13 +269,48 @@ SDAI_Application_instance * sectionReader::getRealInstance( const Registry * reg
             inst = reg->ObjCreate( tName, sName );
             break;
     }
-    inst->StepFileId( instance );
-    if( !comment.empty() ) {
-        inst->AddP21Comment( comment );
+
+    if( inst != & NilSTEPentity ) {
+        if( !comment.empty() ) {
+            inst->AddP21Comment( comment );
+        }
+        assert( inst->eDesc );
+        _file.seekg( begin );
+        findNormalString( "(" );
+        _file.unget();
+        //TODO do something with 'sev'
+        sev = inst->STEPread( instance, 0, _lazyFile->getInstMgr()->getAdapter(), _file, sName, true, false );
     }
-    findNormalString( "(" );
-    _file.unget();
-    //TODO do something with 'sev'
-    sev = inst->STEPread( instance, 0, _lazyFile->getInstMgr()->getAdapter(), _file, schName.c_str(), true, false );
     return inst;
+}
+
+STEPcomplex * sectionReader::CreateSubSuperInstance( const Registry * reg, instanceID fileid, Severity & sev ) {
+    std::string buf;
+    ErrorDescriptor err;
+    std::vector<std::string *> typeNames;
+    _file.get(); //move past the first '('
+    while( _file.good() && ( _file.peek() != ')' ) ) {
+        typeNames.push_back( new std::string( getDelimitedKeyword( ";( /\\" ) ) );
+        if( typeNames.back()->empty() ) {
+            delete typeNames.back();
+            typeNames.pop_back();
+        } else {
+            SkipSimpleRecord( _file, buf, &err ); //exactly what does this do? if it doesn't count parenthesis, it probably should
+            buf.clear();
+        }
+        skipWS();
+        if( _file.peek() != ')' ) {
+            // do something
+        }
+    }
+    // STEPComplex needs an array of strings or of char*. construct the latter using c_str() on all strings in the vector
+    //FIXME: STEPComplex ctor should accept std::vector<std::string *> ?
+    const int s = typeNames.size();
+    const char ** names = new const char * [ s + 1 ];
+    names[ s ] = 0;
+    for( int i = 0; i < s; i++ ) {
+        names[ i ] = typeNames[i]->c_str();
+    }
+    //TODO still need the schema name
+    return new STEPcomplex( ( const_cast<Registry *>( reg ) ), ( const char ** ) names, ( int ) fileid /*, schnm*/ );
 }

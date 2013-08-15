@@ -6,7 +6,6 @@
 lazyDataSectionReader::lazyDataSectionReader( lazyFileReader * parent, std::ifstream & file,
         std::streampos start, sectionID sid ):
     sectionReader( parent, file, start, sid ) {
-    _sectionIdentifier = "";
-    std::cerr << "FIXME set _sectionIdentifier" << std::endl;
+    _sectionIdentifier = ""; //FIXME set _sectionIdentifier from the data section identifier (2002 rev of Part 21), if present
     _error = false;
 }

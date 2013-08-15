@@ -24,7 +24,6 @@ int main( int argc, char * argv[] ) {
     Registry  registry( SchemaInit );
     InstMgr   instance_list;
     STEPfile  sfile( registry, instance_list, "", false );
-    bool inverseAttrsFound = false;
     if( argc != 2 ) {
         exit( EXIT_FAILURE );
     }

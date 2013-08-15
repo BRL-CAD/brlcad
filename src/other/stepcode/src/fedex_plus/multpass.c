@@ -626,11 +626,15 @@ static void addRenameTypedefs( Schema schema, FILE * classes )
         }
         if( TYPEis_enumeration( t ) ) {
             strncpy( nm, TYPEget_ctype( t ), BUFSIZ - 1 );
+            nm[BUFSIZ-1] = '\0';
             strncpy( basenm, TYPEget_ctype( i ), BUFSIZ - 1 );
+            basenm[BUFSIZ-1] = '\0';
             fprintf( classes, "typedef %s_agg        %s_agg;\n", basenm, nm );
         } else {
             strncpy( nm, SelectName( TYPEget_name( t ) ), BUFSIZ - 1 );
+            nm[BUFSIZ-1] = '\0';
             strncpy( basenm, SelectName( TYPEget_name( i ) ), BUFSIZ - 1 );
+            basenm[BUFSIZ-1] = '\0';
             fprintf( classes, "typedef %s %s;\n", basenm, nm );
             fprintf( classes, "typedef %s * %s_ptr;\n", nm, nm );
             fprintf( classes, "typedef %s_agg %s_agg;\n", basenm, nm );
@@ -668,6 +672,7 @@ static void addAggrTypedefs( Schema schema, FILE * classes )
                 firsttime = FALSE;
             }
             strncpy( nm, ClassName( TYPEget_name( t ) ), BUFSIZ );
+            nm[BUFSIZ-1] = '\0';
             fprintf( classes, "typedef %s        %s;\n",
                      TYPEget_ctype( t ), nm );
             fprintf( classes, "typedef %s *        %sH;\n", nm, nm );

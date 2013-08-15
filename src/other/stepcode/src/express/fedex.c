@@ -86,7 +86,7 @@
 extern int exp_yydebug;
 #endif /*YYDEBUG*/
 
-char EXPRESSgetopt_options[256] = "Bbd:e:i:w:p:rvz";
+char EXPRESSgetopt_options[256] = "Bbd:e:i:w:p:rvz"; //larger than the string because fedex_plus, exppp, etc may append their own options
 static int no_need_to_work = 0; /* TRUE if we can exit gracefully without doing any work */
 
 void print_fedex_version( void ) {
@@ -94,7 +94,7 @@ void print_fedex_version( void ) {
     no_need_to_work = 1;
 }
 
-static void usage( void ) {
+void EXPRESSusage( int _exit ) {
     fprintf( stderr, "usage: %s [-v] [-d #] [-p <object_type>] {-w|-i <warning>} express_file\n", EXPRESSprogram_name );
     fprintf( stderr, "where\t-v produces the following version description:\n" );
     print_fedex_version();
@@ -116,7 +116,9 @@ static void usage( void ) {
     fprintf( stderr, "	s	schema or file\n" );
     fprintf( stderr, "	#	pass #\n" );
     fprintf( stderr, "	E	everything (all of the above)\n" );
-    exit( 2 );
+    if( _exit ) {
+        exit( 2 );
+    }
 }
 
 int main( int argc, char ** argv ) {
@@ -132,7 +134,7 @@ int main( int argc, char ** argv ) {
     Express model;
 
     EXPRESSprogram_name = argv[0];
-    ERRORusage_function = usage;
+    ERRORusage_function = 0;
 
     EXPRESSinit_init();
 
@@ -220,7 +222,11 @@ int main( int argc, char ** argv ) {
                     rc = ( *EXPRESSgetopt )( c, optarg );
                 }
                 if( rc == 1 ) {
-                    ( *ERRORusage_function )();
+                    if( ERRORusage_function ) {
+                        ( *ERRORusage_function )();
+                    } else {
+                        EXPRESSusage(1);
+                    }
                 }
                 break;
         }

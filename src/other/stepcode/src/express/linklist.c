@@ -27,42 +27,25 @@
 Error ERROR_empty_list = ERROR_none;
 struct freelist_head LINK_fl;
 struct freelist_head LIST_fl;
-Linked_List LINK__l;  /* for LISTcreate_with macro - ugh */
 
-void
-LISTinitialize( void ) {
+void LISTinitialize( void ) {
     MEMinitialize( &LINK_fl, sizeof( struct Link_ ), 500, 100 );
     MEMinitialize( &LIST_fl, sizeof( struct Linked_List_ ), 100, 50 );
-
-    ERROR_empty_list = ERRORcreate(
-                           "Empty list in %s.", SEVERITY_ERROR );
-
+    ERROR_empty_list = ERRORcreate( "Empty list in %s.", SEVERITY_ERROR );
 }
 
 void LISTcleanup( void ) {
     ERRORdestroy( ERROR_empty_list );
 }
 
-Linked_List
-LISTcreate() {
+Linked_List LISTcreate() {
     Linked_List list = LIST_new();
     list->mark = LINK_new();
     list->mark->next = list->mark->prev = list->mark;
     return( list );
 }
 
-#if 0
-/* could optimize this function! */
-Linked_List
-LISTcreate_with( Generic g ) {
-    Linked_List dst = LISTcreate();
-    LISTadd( dst, g );
-    return( dst );
-}
-#endif
-
-Linked_List
-LISTcopy( Linked_List src ) {
+Linked_List LISTcopy( Linked_List src ) {
     Linked_List dst = LISTcreate();
     LISTdo( src, x, Generic )
     LISTadd( dst, x );
@@ -71,10 +54,7 @@ LISTcopy( Linked_List src ) {
 }
 
 
-void
-LISTfree( list )
-Linked_List list;
-{
+void LISTfree( Linked_List list ) {
     Link p, q = list->mark->next;
 
     for( p = q->next; p != list->mark; q = p, p = p->next ) {
@@ -87,8 +67,7 @@ Linked_List list;
     LIST_destroy( list );
 }
 
-Generic
-LISTadd_first( Linked_List list, Generic item ) {
+Generic LISTadd_first( Linked_List list, Generic item ) {
     Link        node;
 
     node = LINK_new();
@@ -98,8 +77,7 @@ LISTadd_first( Linked_List list, Generic item ) {
     return item;
 }
 
-Generic
-LISTadd_last( Linked_List list, Generic item ) {
+Generic LISTadd_last( Linked_List list, Generic item ) {
     Link        node;
 
     node = LINK_new();
@@ -109,8 +87,7 @@ LISTadd_last( Linked_List list, Generic item ) {
     return item;
 }
 
-Generic
-LISTadd_after( Linked_List list, Link link, Generic item ) {
+Generic LISTadd_after( Linked_List list, Link link, Generic item ) {
     Link node;
 
     if( link == LINK_NULL ) {
@@ -124,8 +101,7 @@ LISTadd_after( Linked_List list, Link link, Generic item ) {
     return item;
 }
 
-Generic
-LISTadd_before( Linked_List list, Link link, Generic item ) {
+Generic LISTadd_before( Linked_List list, Link link, Generic item ) {
     Link node;
 
     if( link == LINK_NULL ) {
@@ -143,8 +119,7 @@ LISTadd_before( Linked_List list, Link link, Generic item ) {
 }
 
 
-Generic
-LISTremove_first( Linked_List list ) {
+Generic LISTremove_first( Linked_List list ) {
     Link        node;
     Generic     item;
 
@@ -160,9 +135,7 @@ LISTremove_first( Linked_List list ) {
 }
 
 /* 1st arg is historical and can be removed */
-/*ARGSUSED*/
-Generic
-LISTremove( Linked_List list, Link link ) {
+Generic LISTremove( Linked_List list, Link link ) {
     Generic     item;
 
     link->next->prev = link->prev;
@@ -172,8 +145,7 @@ LISTremove( Linked_List list, Link link ) {
     return item;
 }
 
-Generic
-LISTget_first( Linked_List list ) {
+Generic LISTget_first( Linked_List list ) {
     Link node;
     Generic item;
 
@@ -184,8 +156,8 @@ LISTget_first( Linked_List list ) {
     item = node->data;
     return item;
 }
-Generic
-LISTget_second( Linked_List list ) {
+
+Generic LISTget_second( Linked_List list ) {
     Link        node;
     Generic     item;
 
@@ -201,9 +173,8 @@ LISTget_second( Linked_List list ) {
     return item;
 }
 
-/* first is 1, not 0 */
-Generic
-LISTget_nth( Linked_List list, int n ) {
+/** first is 1, not 0 */
+Generic LISTget_nth( Linked_List list, int n ) {
     int count = 1;
     Link node;
 
@@ -215,8 +186,7 @@ LISTget_nth( Linked_List list, int n ) {
     return( 0 );
 }
 
-int
-LISTget_length( Linked_List list ) {
+int LISTget_length( Linked_List list ) {
     Link node;
     int count = 0;
 
