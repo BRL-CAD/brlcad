@@ -533,9 +533,17 @@ rt_hrt_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * solid.
  */
 void
-rt_hrt_ifree()
+rt_hrt_ifree(struct rt_db_internal *ip)
 {
-    bu_log("rt_hrt_ifree: Not implemented yet!\n");
+    register struct rt_hrt_internal *hip;
+
+    RT_CK_DB_INTERNAL(ip);
+
+    hip = (struct rt_hrt_internal *)ip->idb_ptr;
+    RT_HRT_CK_MAGIC(hip);
+
+    bu_free((char *)hip, "rt_hrt_");
+    ip->idb_ptr = GENPTR_NULL;
 }
 
 
