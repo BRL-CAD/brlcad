@@ -306,13 +306,15 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 		e_curve->name_("''");
 		e_curve->edge_geometry_(((SdaiCurve *)three_dimensional_curves.at(edge->EdgeCurveIndexOf())));
 		e_curve->same_sense_(BTrue);
+		e_curve->edge_start_(((SdaiVertex *)vertex_pnts.at(edge->Vertex(0)->m_vertex_index)));
+		e_curve->edge_end_(((SdaiVertex *)vertex_pnts.at(edge->Vertex(1)->m_vertex_index)));
 		oriented_edges.at(i) = registry->ObjCreate("ORIENTED_EDGE");
 		instance_list->Append(oriented_edges.at(i), completeSE);
 		SdaiOriented_edge *oriented_edge = (SdaiOriented_edge *)oriented_edges.at(i);
 		oriented_edge->name_("''");
 		oriented_edge->edge_element_((SdaiEdge *)e_curve);
 		oriented_edge->edge_start_(((SdaiVertex *)vertex_pnts.at(edge->Vertex(0)->m_vertex_index)));
-		oriented_edge->edge_start_(((SdaiVertex *)vertex_pnts.at(edge->Vertex(1)->m_vertex_index)));
+		oriented_edge->edge_end_(((SdaiVertex *)vertex_pnts.at(edge->Vertex(1)->m_vertex_index)));
 		/* Check whether the 3d points of the vertices correspond to the beginning and end of the curve */
 		double d1 = edge->Vertex(0)->Point().DistanceTo(brep->m_C3[edge->EdgeCurveIndexOf()]->PointAtStart());
 		double d1a = edge->Vertex(0)->Point().DistanceTo(brep->m_C3[edge->EdgeCurveIndexOf()]->PointAtEnd());
@@ -377,6 +379,9 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 			curr_surface->surface_form_(B_spline_surface_form__plane_surf);
 			/* Planes don't self-intersect */
 			curr_surface->self_intersect_(LFalse);
+			/* TODO - need to recognize when these should be true */
+			curr_surface->u_closed_(LFalse);
+			curr_surface->v_closed_(LFalse);
 			instance_list->Append(surfaces.at(i), completeSE);
 			surface_converted = 1;
 		}
@@ -398,6 +403,9 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 			curr_surface->surface_form_(B_spline_surface_form__unspecified);
 			/* TODO - for now, assume the surfaces don't self-intersect - need to figure out how to test this */
 			curr_surface->self_intersect_(LFalse);
+			/* TODO - need to recognize when these should be true */
+			curr_surface->u_closed_(LFalse);
+			curr_surface->v_closed_(LFalse);
 			instance_list->Append(surfaces.at(i), completeSE);
 			surface_converted = 1;
 		}
@@ -421,6 +429,9 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 			curr_surface->surface_form_(B_spline_surface_form__plane_surf);
 			/* TODO - for now, assume non-self-intersecting */
 			curr_surface->self_intersect_(LFalse);
+			/* TODO - need to recognize when these should be true */
+			curr_surface->u_closed_(LFalse);
+			curr_surface->v_closed_(LFalse);
 			instance_list->Append(surfaces.at(i), completeSE);
 			surface_converted = 1;
 		}
