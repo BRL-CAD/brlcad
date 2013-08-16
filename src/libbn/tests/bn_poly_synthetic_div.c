@@ -1,7 +1,7 @@
-/*  T E S T _ B N _ P O L Y _ S Y N T H E T I C _ D I V I S I O N . C
+/*         B N _ P O L Y _ S Y N T H E T I C _ D I V . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2013 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 
 #include "common.h"
 
@@ -37,8 +36,6 @@
 bn_poly_t input[2];
 bn_poly_t quo[1] = { BN_POLY_INIT_ZERO };
 bn_poly_t rem[1] = { BN_POLY_INIT_ZERO };
-
-struct bn_poly bn_Zero_poly = { BN_POLY_MAGIC, 0, {0.0} };
 
 
 /* Initialises polnomial storing a negative, positive and zero
