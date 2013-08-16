@@ -44,51 +44,51 @@ void
 poly_init(void)
 {
 
-  /*stores coefficients (zeros) to polynomial for input and output.*/
-  output[0] = bn_Zero_poly;
-  input[0] = bn_Zero_poly;
-  input[0].dgr = 2;
-  input[0].cf[0] = input[0].cf[1] = input[0].cf[2] = input[0].cf[3] = 0.0;
+    /*stores coefficients (zeros) to polynomial for input and output.*/
+    output[0] = bn_Zero_poly;
+    input[0] = bn_Zero_poly;
+    input[0].dgr = 2;
+    input[0].cf[0] = input[0].cf[1] = input[0].cf[2] = input[0].cf[3] = 0.0;
 
-  output[0].dgr = 4;
-  output[0].cf[0] = output[0].cf[1] = output[0].cf[2] = output[0].cf[3] = output[0].cf[4] = 0.0;
+    output[0].dgr = 4;
+    output[0].cf[0] = output[0].cf[1] = output[0].cf[2] = output[0].cf[3] = output[0].cf[4] = 0.0;
 
-  /*stores negative coefficients to polynomial.*/
-  output[1] = bn_Zero_poly;
-  input[1] = bn_Zero_poly;
-  input[1].dgr = 2;
-  output[1].dgr = 4;
+    /*stores negative coefficients to polynomial.*/
+    output[1] = bn_Zero_poly;
+    input[1] = bn_Zero_poly;
+    input[1].dgr = 2;
+    output[1].dgr = 4;
 
-  input[1].cf[0] = -4;
-  input[1].cf[1] = -3;
-  input[1].cf[2] = -2;
+    input[1].cf[0] = -4;
+    input[1].cf[1] = -3;
+    input[1].cf[2] = -2;
 
-  /**
-   * The known output values used for these tests were generated from
-   * GNU Octave, version 3.4.3
-   */
+    /**
+     * The known output values used for these tests were generated from
+     * GNU Octave, version 3.4.3
+     */
 
-  output[1].cf[0] = 16;
-  output[1].cf[1] = 24;
-  output[1].cf[2] = 25;
-  output[1].cf[3] = 12;
-  output[1].cf[4] = 4;
+    output[1].cf[0] = 16;
+    output[1].cf[1] = 24;
+    output[1].cf[2] = 25;
+    output[1].cf[3] = 12;
+    output[1].cf[4] = 4;
 
-  /*stores positive coefficients to to polynomial input.*/
-  output[2] = bn_Zero_poly;
-  input[2] = bn_Zero_poly;
-  input[2].dgr = 2;
-  output[2].dgr = 4;
+    /*stores positive coefficients to to polynomial input.*/
+    output[2] = bn_Zero_poly;
+    input[2] = bn_Zero_poly;
+    input[2].dgr = 2;
+    output[2].dgr = 4;
 
-  input[2].cf[0] = 7854;
-  input[2].cf[1] = 2136;
-  input[2].cf[2] = 1450;
+    input[2].cf[0] = 7854;
+    input[2].cf[1] = 2136;
+    input[2].cf[2] = 1450;
 
-  output[2].cf[0] = 61685316;
-  output[2].cf[1] = 33552288;
-  output[2].cf[2] = 27339096;
-  output[2].cf[3] = 6194400;
-  output[2].cf[4] = 2102500;
+    output[2].cf[0] = 61685316;
+    output[2].cf[1] = 33552288;
+    output[2].cf[2] = 27339096;
+    output[2].cf[3] = 6194400;
+    output[2].cf[4] = 2102500;
 
 }
 
@@ -97,57 +97,57 @@ poly_init(void)
 int
 check_results(fastf_t a[], fastf_t b[], int n)
 {
-  int i;
+    int i;
 
-  for (i = 0; i < n; i++) {
-    if (!EQUAL(a[i],b[i]))
-      return -1;
-  }
+    for (i = 0; i < n; i++) {
+	if (!EQUAL(a[i],b[i]))
+	    return -1;
+    }
 
-  return 0;
+    return 0;
 }
 
 
 /*tests the polynomials to make sure bn_poly_mul() works properly.*/
 int test_bn_poly(void)
 {
-  int val, val1, val2;
-  bn_poly_t a, b, c;
-  a = bn_Zero_poly, b = bn_Zero_poly, c = bn_Zero_poly;
+    int val, val1, val2;
+    bn_poly_t a, b, c;
+    a = bn_Zero_poly, b = bn_Zero_poly, c = bn_Zero_poly;
 
-  bn_poly_mul(&a, &input[0], &input[0]);
-  bn_poly_mul(&b, &input[1], &input[1]);
-  bn_poly_mul(&c, &input[2], &input[2]);
+    bn_poly_mul(&a, &input[0], &input[0]);
+    bn_poly_mul(&b, &input[1], &input[1]);
+    bn_poly_mul(&c, &input[2], &input[2]);
 
-  val = check_results(a.cf,output[0].cf, output[0].dgr + 1);
-  val1 = check_results( b.cf, output[1].cf, output[1].dgr + 1);
-  val2 = check_results(c.cf, output[2].cf, output[2].dgr + 1);
+    val = check_results(a.cf,output[0].cf, output[0].dgr + 1);
+    val1 = check_results( b.cf, output[1].cf, output[1].dgr + 1);
+    val2 = check_results(c.cf, output[2].cf, output[2].dgr + 1);
 
-  if (val == 0 && val1 == 0 && val2 == 0)
-    return val;
+    if (val == 0 && val1 == 0 && val2 == 0)
+	return val;
 
-  return -1;
+    return -1;
 }
 
 
 int main(void)
 {
-  int ret;
+    int ret;
 
-  poly_init();
+    poly_init();
 
-  ret = test_bn_poly();
+    ret = test_bn_poly();
 
-  if( ret == 0){
-    bu_log("\nFunction computes correctly\n");
+    if( ret == 0){
+	bu_log("\nFunction computes correctly\n");
 
-    return ret;
-  }
+	return ret;
+    }
 
-  else {
-    bu_log("\nInvalid output.\n");
-  }
-  return -1;
+    else {
+	bu_log("\nInvalid output.\n");
+    }
+    return -1;
 
 }
 
