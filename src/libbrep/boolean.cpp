@@ -549,18 +549,21 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	for (; isect_iter < intersect.Count() && intersect[isect_iter].m_seg == i; isect_iter++) {
 	    const IntersectPoint& isect_pt = intersect[isect_iter];
 	    ON_Curve* left = NULL;
+	    bool split_called = false;
 	    if (curve_on_loop) {
 		if (ON_NearZero(isect_pt.m_t - curve_on_loop->Domain().Max())) {
 		    // Don't call Split(), which may fail when the point is
 		    // at the ends.
 		    left = curve_on_loop;
 		    curve_on_loop = NULL;
-		} else if (!ON_NearZero(isect_pt.m_t, curve_on_loop->Domain().Min()))
+		} else if (!ON_NearZero(isect_pt.m_t - curve_on_loop->Domain().Min())) {
 		    curve_on_loop->Split(isect_pt.m_t, left, curve_on_loop);
+		    split_called = true;
+		}
 	    }
 	    if (left != NULL)
 		outerloop.Append(left);
-	    else {
+	    else if (split_called) {
 		bu_log("Split failed.\n");
 		if (curve_on_loop) {
 		    bu_log("Domain: [%lf, %lf]\n", curve_on_loop->Domain().Min(), curve_on_loop->Domain().Max());
