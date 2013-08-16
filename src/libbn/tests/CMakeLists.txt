@@ -3,7 +3,7 @@ BRLCAD_ADDEXEC(tester_bn_tri_tri_isect bn_tri_tri_isect.c "libbu;libbn" NO_INSTA
 BRLCAD_ADDEXEC(tester_bn_list bn_list.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_poly_multiply bn_poly_multiply.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_poly_scale bn_poly_scale.c "libbu;libbn" NO_INSTALL)
-
+BRLCAD_ADDEXEC(tester_bn_poly_add bn_poly_add.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_poly_sub bn_poly_sub.c "libbu;libbn" NO_INSTALL)
 
 
@@ -74,10 +74,10 @@ add_test(bn_list_3d_4                   tester_bn_list  3  3,7,8 1,-5.321,3 67,0
 #
 #Format is:
 # tester_bn_poly      <  void      >         void
-add_test(bn_poly_multiply                 tester_bn_poly_multiply)
+add_test(bn_poly_multiply              tester_bn_poly_multiply)
 add_test(bn_poly_scale                 tester_bn_poly_scale)
-
-add_test(bn_poly_cub_rts               tester_bn_poly_sub)
+add_test(bn_poly_add                   tester_bn_poly_add) 
+add_test(bn_poly_sub                   tester_bn_poly_sub)
 
 
 
