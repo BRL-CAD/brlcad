@@ -495,6 +495,13 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 	EntityAggregate *items = advanced_brep->items_();
 	items->AddNode(new EntityNode((SDAI_Application_instance *)manifold_solid_brep));
 
+
+	/* Uncertainty measure with unit */
+	SdaiUncertainty_measure_with_unit *uncertainty = (SdaiUncertainty_measure_with_unit *)registry->ObjCreate("UNCERTAINTY_MEASURE_WITH_UNIT");
+	uncertainty->name_("'DISTANCE_ACCURACY_VALUE'");
+	uncertainty->description_("'Threshold below which geometry imperfections (such as overlaps) are not considered errors.'");
+	instance_list->Append(uncertainty, completeSE);
+
 	/* For advanced brep, need to create and add a representation context.  This is a
 	 * complex type of four other types: */
 	const char *entNmArr[64];
@@ -526,6 +533,9 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 			while ((attr = sc->NextAttribute()) != NULL) {
 				std::string attrval;
 				if (!strcmp(attr->Name(), "uncertainty")) {
+					EntityAggregate *unc_agg = new EntityAggregate();
+					unc_agg->AddNode(new EntityNode((SDAI_Application_instance *)uncertainty));
+					attr->ptr.a = unc_agg;
 					attr->asStr(attrval);
 					std::cout << "Attribute(" << attr->NonRefType() << "): " << attr->Name() << "," << attrval << "\n";
 				}
