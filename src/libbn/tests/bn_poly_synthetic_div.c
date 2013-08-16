@@ -34,20 +34,23 @@
 
 
 /* holds three polynomials to be used in test. */
-bn_poly_t input[2], quo[1], rem[1];
+bn_poly_t input[2];
+bn_poly_t quo[1] = { BN_POLY_INIT_ZERO };
+bn_poly_t rem[1] = { BN_POLY_INIT_ZERO };
 
 struct bn_poly bn_Zero_poly = { BN_POLY_MAGIC, 0, {0.0} };
 
 
-/**
- *Initialises polnomial storing a negative, positive and zero coefficients.
- *Test polynomials will be of 4th, 3rd, and 2nd degrees
+/* Initialises polnomial storing a negative, positive and zero
+ * coefficients.  Test polynomials will be of 4th, 3rd, and 2nd
+ * degrees.
  */
 void
 poly_init(void)
 {
-    /* initializes a 3rd degree polynomial with negative coefficients. */
-    quo[0] = rem[0] = bn_Zero_poly;
+    /* initializes a 3rd degree polynomial with negative
+     * coefficients.
+     */
     input[0].dgr = 3;
     quo[0].dgr = rem[1].dgr = 4;
 
@@ -69,7 +72,7 @@ poly_init(void)
 }
 
 
-/* compares the values of the array and returns 0. */
+/* compares the values of the array and returns 0 if they all match */
 int
 check_results(fastf_t a[], fastf_t b[], int n)
 {
@@ -88,9 +91,10 @@ check_results(fastf_t a[], fastf_t b[], int n)
 int
 test_bn_poly_syn_div(void)
 {
-    int val1[2];/* variables get results for comparisms */
-    bn_poly_t q2, r2;
-    q2 = r2 = bn_Zero_poly;
+    /* variables to store results for comparison */
+    int val1[2];
+    bn_poly_t q2 = BN_POLY_INIT_ZERO;
+    bn_poly_t r2 = BN_POLY_INIT_ZERO;
 
     bn_poly_synthetic_division(&q2, &r2, &input[1], &input[0]);
 
@@ -109,6 +113,7 @@ int
 main(void)
 {
     int ret;
+
     poly_init();
     ret = test_bn_poly_syn_div();
 
