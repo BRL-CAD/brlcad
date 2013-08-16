@@ -534,6 +534,21 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
     /* Global Unit Assigned Context */
     const char *ua_entry_1_types[4] = {"named_unit", "si_unit", "solid_angle_unit", "*"};
     STEPcomplex *ua_entry_1 = new STEPcomplex(registry, (const char **)ua_entry_1_types, registry->GetEntityCnt());
+    {
+	STEPcomplex *sc = ua_entry_1->head;
+	while (sc) {
+	    if (!strcmp(sc->EntityName(), "Si_Unit")) {
+		sc->ResetAttributes();
+		STEPattribute *attr;
+		while ((attr = sc->NextAttribute()) != NULL) {
+		    if (!strcmp(attr->Name(), "name")) attr->ptr.e = new SdaiSi_unit_name_var(Si_unit_name__steradian);
+		}
+	    }
+	    sc = sc->sc;
+	}
+    }
+
+
     instance_list->Append((STEPentity *)ua_entry_1, completeSE);
     const char *ua_entry_2_types[4] = {"conversion_based_unit", "named_unit", "plane_angle_unit", "*"};
     STEPcomplex *ua_entry_2 = new STEPcomplex(registry, (const char **)ua_entry_2_types, registry->GetEntityCnt());
@@ -581,7 +596,7 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 		if (!strcmp(attr->Name(), "uncertainty")) {
 		    EntityAggregate *unc_agg = new EntityAggregate();
 		    unc_agg->AddNode(new EntityNode((SDAI_Application_instance *)uncertainty));
-		    attr->ptr.a = unc_agg;
+		    //attr->ptr.a = unc_agg;
 		}
 	    }
 
@@ -592,8 +607,10 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 		std::string attrval;
 		if (!strcmp(attr->Name(), "units")) {
 		    EntityAggregate *unit_assigned_agg = new EntityAggregate();
-		    //unit_assigned_agg->AddNode(new EntityNode((SDAI_Application_instance *)uncertainty));
-		    attr->ptr.a = unit_assigned_agg;
+		    unit_assigned_agg->AddNode(new EntityNode((SDAI_Application_instance *)ua_entry_1));
+		    unit_assigned_agg->AddNode(new EntityNode((SDAI_Application_instance *)ua_entry_2));
+		    unit_assigned_agg->AddNode(new EntityNode((SDAI_Application_instance *)uncertainty));
+		    //attr->ptr.a = unit_assigned_agg;
 		}
 	    }
 	}
