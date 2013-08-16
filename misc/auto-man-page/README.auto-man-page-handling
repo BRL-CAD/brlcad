@@ -16,7 +16,7 @@ Rules:
 
   const char usage[]     = "...."; /* mandatory: used for the SYNOPSIS
                                       section of the man page */
-  const char optstring[] = "";     /* mandatory for use with bu_getopt 
+  const char optstring[] = "";     /* mandatory for use with bu_getopt
                                       (if it is used) */
 
   Note the strings must either (1) be fully contained on one line or
@@ -32,7 +32,7 @@ Rules:
   There must be no embedded newlines nor may the end-of-line escape be
   used.  An ending newline is required for each line.
 
-  There must be nothing on the preceeding the the variable on its
+  There must be nothing preceding the variable on its
   beginning line (except a 'static' qualifier is allowed).
 
   The program name may be manually entered or one string format
