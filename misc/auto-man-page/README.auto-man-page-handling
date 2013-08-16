@@ -169,19 +169,6 @@ Usage: %s port_num\n\
 
       ...list will go in the SEE ALSO section...
 
-Translation:
-===========
-
-+ The purpose string will be used in the NAME section, e.g.:
-
-NAME
-       ls - list directory contents
-
-+ The usage string will be used for the SYNOPSIS section.  For
-  example:
-
-  (Such a case may have to be specially handled for ease of parsing.)
-
 Processing:
 ==========
 
@@ -207,4 +194,4 @@ Working example:
 ===============
 
 See file "${BRLCAD_SOURCE_ROOT}/src/util/fix_polysolids.c" for an
-example of most of the features deescribed above.
+example of some of the features described above.
