@@ -498,14 +498,32 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 	/* For advanced brep, need to create and add a representation context.  This is a
 	 * complex type of four other types: */
 	const char *entNmArr[64];
-	int fileid = 1;
+	int fileid = 1000;
 	entNmArr[0] = "geometric_representation_context";
 	entNmArr[1] = "global_uncertainty_assigned_context";
 	entNmArr[2] = "global_unit_assigned_context";
 	entNmArr[3] = "representation_context";
 	entNmArr[4] = "*";
-	STEPentity *complex_entity = new STEPcomplex(registry, (const char **)entNmArr, fileid);
-	instance_list->Append(complex_entity, completeSE);
+	STEPcomplex *complex_entity = new STEPcomplex(registry, (const char **)entNmArr, fileid);
+	STEPcomplex *sc = complex_entity->head;
+	while (sc) {
+		std::cout << "Entity name: " << sc->EntityName() << "\n";
+		sc->ResetAttributes();
+		STEPattribute *attr;
+		if (!strcmp(sc->EntityName(), "Geometric_Representation_Context")) {
+			while ((attr = sc->NextAttribute()) != NULL) {
+				std::string attrval;
+				if (!strcmp(attr->Name(), "coordinate_space_dimension")) {
+					attr->StrToVal("3");
+					std::cout << "Attribute: " << attr->Name() << "," << attrval << "\n";
+				}
+			}
+		}
+		sc = sc->sc;
+	}
+
+	instance_list->Append((STEPentity *)complex_entity, completeSE);
+	advanced_brep->context_of_items_((SdaiRepresentation_context *) complex_entity);
 
 	return true;
 }
