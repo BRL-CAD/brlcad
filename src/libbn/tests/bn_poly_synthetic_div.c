@@ -34,7 +34,7 @@
 
 
 /* holds three polynomials to be used in test. */
-bn_poly_t input[2], quo[1],rem[1];
+bn_poly_t input[2], quo[1], rem[1];
 
 struct bn_poly bn_Zero_poly = { BN_POLY_MAGIC, 0, {0.0} };
 
@@ -68,6 +68,7 @@ poly_init(void)
     return;
 }
 
+
 /* compares the values of the array and returns 0. */
 int
 check_results(fastf_t a[], fastf_t b[], int n)
@@ -75,7 +76,7 @@ check_results(fastf_t a[], fastf_t b[], int n)
     int i;
 
     for (i = 0; i < n; i++) {
-	if (!EQUAL(a[i],b[i]))
+	if (!EQUAL(a[i], b[i]))
 	    return -1;
     }
 
@@ -88,13 +89,13 @@ int
 test_bn_poly_syn_div(void)
 {
     int val1[2];/* variables get results for comparisms */
-    bn_poly_t q2,r2;
+    bn_poly_t q2, r2;
     q2 = r2 = bn_Zero_poly;
 
     bn_poly_synthetic_division(&q2, &r2, &input[1], &input[0]);
 
     /*checks the quotients */
-    val1[0] = check_results(q2.cf,quo[0].cf, quo[0].dgr + 1);
+    val1[0] = check_results(q2.cf, quo[0].cf, quo[0].dgr + 1);
     val1[1] = check_results(r2.cf, rem[0].cf, rem[0].dgr + 1);
 
     if (val1[0] == 0 && val1[1] == 0)
@@ -103,6 +104,7 @@ test_bn_poly_syn_div(void)
     return -1;
 
 }
+
 
 int
 main(void)
