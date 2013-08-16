@@ -33,7 +33,7 @@
 
 
 /* holds three polynomials to be used in test. */
-bn_poly_t input[2];
+bn_poly_t input[2] = { BN_POLY_INIT_ZERO, BN_POLY_INIT_ZERO };
 bn_poly_t quo[1] = { BN_POLY_INIT_ZERO };
 bn_poly_t rem[1] = { BN_POLY_INIT_ZERO };
 
