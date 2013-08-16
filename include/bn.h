@@ -2589,6 +2589,7 @@ typedef struct bn_poly {
 
 #define BN_CK_POLY(_p) BU_CKMAG(_p, BN_POLY_MAGIC, "struct bn_poly")
 #define BN_POLY_NULL   ((struct bn_poly *)NULL)
+#define BN_POLY_INIT_ZERO { BN_POLY_MAGIC, 0, {0.0} }
 
 
 /**
