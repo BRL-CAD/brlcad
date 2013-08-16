@@ -502,6 +502,56 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 	uncertainty->description_("'Threshold below which geometry imperfections (such as overlaps) are not considered errors.'");
 	instance_list->Append(uncertainty, completeSE);
 
+	/* unit component */
+	const char *unitNmArr[64];
+	unitNmArr[0] = "length_unit";
+	unitNmArr[1] = "named_unit";
+	unitNmArr[2] = "si_unit";
+	unitNmArr[3] = "*";
+	STEPcomplex *unit_complex = new STEPcomplex(registry, (const char **)unitNmArr, 10000011);
+	STEPcomplex *scu = unit_complex->head;
+	while (scu) {
+		if (!strcmp(scu->EntityName(), "Si_Unit")) {
+			scu->ResetAttributes();
+			STEPattribute *attr;
+			while ((attr = scu->NextAttribute()) != NULL) {
+				if (!strcmp(attr->Name(), "prefix")) {
+					attr->ptr.e = new SdaiSi_prefix_var(Si_prefix__milli);
+					std::string attrval;
+					attr->asStr(attrval);
+					std::cout << "Attribute(" << attr->NonRefType() << "): " << attr->Name() << "," << attrval << "\n";
+				}
+				if (!strcmp(attr->Name(), "name")) {
+					attr->ptr.e = new SdaiSi_unit_name_var(Si_unit_name__metre);
+					std::string attrval;
+					attr->asStr(attrval);
+					std::cout << "Attribute(" << attr->NonRefType() << "): " << attr->Name() << "," << attrval << "\n";
+				}
+			}
+		}
+		scu = scu->sc;
+	}
+	instance_list->Append((STEPentity *)unit_complex, completeSE);
+
+	SdaiUnit *new_unit = new SdaiUnit((SdaiNamed_unit *)unit_complex);
+	uncertainty->ResetAttributes();
+	STEPattribute *unit_attr;
+	while ((unit_attr = uncertainty->NextAttribute()) != NULL) {
+		std::string unit_attrval;
+		if (!strcmp(unit_attr->Name(), "unit_component")) {
+			unit_attr->ptr.sh = new_unit;
+			unit_attr->asStr(unit_attrval);
+			std::cout << "Attribute(" << unit_attr->NonRefType() << "): " << unit_attr->Name() << "," << unit_attrval << "\n";
+		}
+		/* value component */
+		if (!strcmp(unit_attr->Name(), "value_component")) {
+			unit_attr->StrToVal("0.05");
+			unit_attr->asStr(unit_attrval);
+			std::cout << "Attribute(" << unit_attr->NonRefType() << "): " << unit_attr->Name() << "," << unit_attrval << "\n";
+		}
+	}
+
+
 	/* For advanced brep, need to create and add a representation context.  This is a
 	 * complex type of four other types: */
 	const char *entNmArr[64];
