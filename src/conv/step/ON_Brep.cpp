@@ -503,121 +503,76 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 	instance_list->Append(uncertainty, completeSE);
 
 	/* unit component */
-	const char *unitNmArr[64];
-	unitNmArr[0] = "length_unit";
-	unitNmArr[1] = "named_unit";
-	unitNmArr[2] = "si_unit";
-	unitNmArr[3] = "*";
-	STEPcomplex *unit_complex = new STEPcomplex(registry, (const char **)unitNmArr, 10000011);
-	STEPcomplex *scu = unit_complex->head;
-	while (scu) {
-		if (!strcmp(scu->EntityName(), "Si_Unit")) {
-			scu->ResetAttributes();
-			STEPattribute *attr;
-			while ((attr = scu->NextAttribute()) != NULL) {
-				if (!strcmp(attr->Name(), "prefix")) {
-					attr->ptr.e = new SdaiSi_prefix_var(Si_prefix__milli);
-					std::string attrval;
-					attr->asStr(attrval);
-					std::cout << "Attribute(" << attr->NonRefType() << "): " << attr->Name() << "," << attrval << "\n";
-				}
-				if (!strcmp(attr->Name(), "name")) {
-					attr->ptr.e = new SdaiSi_unit_name_var(Si_unit_name__metre);
-					std::string attrval;
-					attr->asStr(attrval);
-					std::cout << "Attribute(" << attr->NonRefType() << "): " << attr->Name() << "," << attrval << "\n";
+	const char *unitNmArr[4] = {"length_unit", "named_unit", "si_unit", "*"};
+	STEPcomplex *unit_complex = new STEPcomplex(registry, (const char **)unitNmArr, registry->GetEntityCnt());
+	instance_list->Append((STEPentity *)unit_complex, completeSE);
+	{
+		STEPcomplex *sc = unit_complex->head;
+		while (sc) {
+			if (!strcmp(sc->EntityName(), "Si_Unit")) {
+				sc->ResetAttributes();
+				STEPattribute *attr;
+				while ((attr = sc->NextAttribute()) != NULL) {
+					if (!strcmp(attr->Name(), "prefix")) attr->ptr.e = new SdaiSi_prefix_var(Si_prefix__milli);
+					if (!strcmp(attr->Name(), "name")) attr->ptr.e = new SdaiSi_unit_name_var(Si_unit_name__metre);
 				}
 			}
+			sc = sc->sc;
 		}
-		scu = scu->sc;
 	}
-	instance_list->Append((STEPentity *)unit_complex, completeSE);
 
 	SdaiUnit *new_unit = new SdaiUnit((SdaiNamed_unit *)unit_complex);
 	uncertainty->ResetAttributes();
-	STEPattribute *unit_attr;
-	while ((unit_attr = uncertainty->NextAttribute()) != NULL) {
-		std::string unit_attrval;
-		if (!strcmp(unit_attr->Name(), "unit_component")) {
-			unit_attr->ptr.sh = new_unit;
-			unit_attr->asStr(unit_attrval);
-			std::cout << "Attribute(" << unit_attr->NonRefType() << "): " << unit_attr->Name() << "," << unit_attrval << "\n";
-		}
-		/* value component */
-		if (!strcmp(unit_attr->Name(), "value_component")) {
-			unit_attr->StrToVal("0.05");
-			unit_attr->asStr(unit_attrval);
-			std::cout << "Attribute(" << unit_attr->NonRefType() << "): " << unit_attr->Name() << "," << unit_attrval << "\n";
+	{
+		STEPattribute *attr;
+		while ((attr = uncertainty->NextAttribute()) != NULL) {
+			if (!strcmp(attr->Name(), "unit_component")) attr->ptr.sh = new_unit;
+			if (!strcmp(attr->Name(), "value_component")) attr->StrToVal("0.05");
 		}
 	}
 
 
 	/* For advanced brep, need to create and add a representation context.  This is a
 	 * complex type of four other types: */
-	const char *entNmArr[64];
-	int fileid = 1000;
-	entNmArr[0] = "geometric_representation_context";
-	entNmArr[1] = "global_uncertainty_assigned_context";
-	entNmArr[2] = "global_unit_assigned_context";
-	entNmArr[3] = "representation_context";
-	entNmArr[4] = "*";
-	STEPcomplex *complex_entity = new STEPcomplex(registry, (const char **)entNmArr, fileid);
+	const char *entNmArr[5] = {"geometric_representation_context", "global_uncertainty_assigned_context",
+	                           "global_unit_assigned_context", "representation_context", "*"};
+	STEPcomplex *complex_entity = new STEPcomplex(registry, (const char **)entNmArr, registry->GetEntityCnt());
 	STEPcomplex *sc = complex_entity->head;
 	while (sc) {
-		std::cout << "Entity name: " << sc->EntityName() << "\n";
+		STEPattribute *attr;
 		if (!strcmp(sc->EntityName(), "Geometric_Representation_Context")) {
 			sc->ResetAttributes();
-			STEPattribute *attr;
 			while ((attr = sc->NextAttribute()) != NULL) {
-				std::string attrval;
-				if (!strcmp(attr->Name(), "coordinate_space_dimension")) {
-					attr->StrToVal("3");
-					attr->asStr(attrval);
-					std::cout << "Attribute(" << attr->NonRefType() << "): " << attr->Name() << "," << attrval << "\n";
-				}
+				if (!strcmp(attr->Name(), "coordinate_space_dimension")) attr->StrToVal("3");
 			}
 		}
 		if (!strcmp(sc->EntityName(), "Global_Uncertainty_Assigned_Context")) {
 			sc->ResetAttributes();
-			STEPattribute *attr;
 			while ((attr = sc->NextAttribute()) != NULL) {
-				std::string attrval;
 				if (!strcmp(attr->Name(), "uncertainty")) {
 					EntityAggregate *unc_agg = new EntityAggregate();
 					unc_agg->AddNode(new EntityNode((SDAI_Application_instance *)uncertainty));
 					attr->ptr.a = unc_agg;
-					attr->asStr(attrval);
-					std::cout << "Attribute(" << attr->NonRefType() << "): " << attr->Name() << "," << attrval << "\n";
 				}
 			}
 
 		}
 		if (!strcmp(sc->EntityName(), "Global_Unit_Assigned_Context")) {
 			sc->ResetAttributes();
-			STEPattribute *attr;
 			while ((attr = sc->NextAttribute()) != NULL) {
 				std::string attrval;
 				if (!strcmp(attr->Name(), "units")) {
-					attr->asStr(attrval);
-					std::cout << "Attribute(" << attr->NonRefType() << "): " << attr->Name() << "," << attrval << "\n";
+					EntityAggregate *unit_assigned_agg = new EntityAggregate();
+					//unit_assigned_agg->AddNode(new EntityNode((SDAI_Application_instance *)uncertainty));
+					attr->ptr.a = unit_assigned_agg;
 				}
 			}
 		}
 		if (!strcmp(sc->EntityName(), "Representation_Context")) {
 			sc->ResetAttributes();
-			STEPattribute *attr;
 			while ((attr = sc->NextAttribute()) != NULL) {
-				std::string attrval;
-				if (!strcmp(attr->Name(), "context_identifier")) {
-					attr->StrToVal("'STANDARD'");
-					attr->asStr(attrval);
-					std::cout << "Attribute(" << attr->NonRefType() << "): " << attr->Name() << "," << attrval << "\n";
-				}
-				if (!strcmp(attr->Name(), "context_type")) {
-					attr->StrToVal("'3D'");
-					attr->asStr(attrval);
-					std::cout << "Attribute(" << attr->NonRefType() << "): " << attr->Name() << "," << attrval << "\n";
-				}
+				if (!strcmp(attr->Name(), "context_identifier")) attr->StrToVal("'STANDARD'");
+				if (!strcmp(attr->Name(), "context_type")) attr->StrToVal("'3D'");
 			}
 		}
 		sc = sc->sc;
