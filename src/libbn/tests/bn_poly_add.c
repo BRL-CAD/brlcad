@@ -97,7 +97,7 @@ check_results(fastf_t a[], fastf_t b[], int n)
     int i;
 
     for (i = 0; i < n; i++) {
-        if (!EQUAL(a[i],b[i]))
+	if (!EQUAL(a[i],b[i]))
 	    return -1;
     }
 
@@ -122,7 +122,7 @@ test_bn_poly_add(void)
     val2 = check_results(c.cf, output[2].cf, output[2].dgr + 1);
 
     if (val == 0 && val1 == 0 && val2 == 0)
-        return val;
+	return val;
 
     return -1;
 }
@@ -136,10 +136,10 @@ main(void)
     ret = test_bn_poly_add();
 
     if (ret == 0) {
-        bu_log("Function computes correctly");
-        exit(EXIT_SUCCESS);
+	bu_log("Function computes correctly");
+	exit(EXIT_SUCCESS);
     } else
-        exit(EXIT_FAILURE);
+	exit(EXIT_FAILURE);
 
     return 0;
 }
