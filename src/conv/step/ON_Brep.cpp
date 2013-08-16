@@ -572,6 +572,7 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
     // TODO - FEDEX_PLUS Bug?  plane_angle_measure is a TypeDescriptor, not a SelectTypeDescriptor - the following shouldn't be necessary
     // and doesn't produce a correct result anyway. 
     SelectTypeDescriptor *desc = (SelectTypeDescriptor *)config_control_design::t_plane_angle_measure;
+    // 1 degree = 0.01745329252 radians 
     p_ang_meas->value_component_(new SdaiMeasure_value(0.01745329252, desc));
     instance_list->Append((STEPentity *)p_ang_meas, completeSE);
 
