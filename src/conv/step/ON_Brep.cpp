@@ -516,7 +516,7 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 				if (!strcmp(attr->Name(), "coordinate_space_dimension")) {
 					attr->StrToVal("3");
 					attr->asStr(attrval);
-					std::cout << "Attribute: " << attr->Name() << "," << attrval << "\n";
+					std::cout << "Attribute(" << attr->NonRefType() << "): " << attr->Name() << "," << attrval << "\n";
 				}
 			}
 		}
@@ -526,9 +526,8 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 			while ((attr = sc->NextAttribute()) != NULL) {
 				std::string attrval;
 				if (!strcmp(attr->Name(), "uncertainty")) {
-					attr->StrToVal("#100001");
 					attr->asStr(attrval);
-					std::cout << "Attribute: " << attr->Name() << "," << attrval << "\n";
+					std::cout << "Attribute(" << attr->NonRefType() << "): " << attr->Name() << "," << attrval << "\n";
 				}
 			}
 
@@ -539,9 +538,8 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 			while ((attr = sc->NextAttribute()) != NULL) {
 				std::string attrval;
 				if (!strcmp(attr->Name(), "units")) {
-					attr->StrToVal("TEST");
 					attr->asStr(attrval);
-					std::cout << "Attribute: " << attr->Name() << "," << attrval << "\n";
+					std::cout << "Attribute(" << attr->NonRefType() << "): " << attr->Name() << "," << attrval << "\n";
 				}
 			}
 		}
@@ -553,12 +551,12 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 				if (!strcmp(attr->Name(), "context_identifier")) {
 					attr->StrToVal("'STANDARD'");
 					attr->asStr(attrval);
-					std::cout << "Attribute: " << attr->Name() << "," << attrval << "\n";
+					std::cout << "Attribute(" << attr->NonRefType() << "): " << attr->Name() << "," << attrval << "\n";
 				}
 				if (!strcmp(attr->Name(), "context_type")) {
 					attr->StrToVal("'3D'");
 					attr->asStr(attrval);
-					std::cout << "Attribute: " << attr->Name() << "," << attrval << "\n";
+					std::cout << "Attribute(" << attr->NonRefType() << "): " << attr->Name() << "," << attrval << "\n";
 				}
 			}
 		}
