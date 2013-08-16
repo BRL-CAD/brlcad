@@ -102,7 +102,6 @@ test_bn_poly_syn_div(void)
 	return val1[0];
 
     return -1;
-
 }
 
 
@@ -113,14 +112,12 @@ main(void)
     poly_init();
     ret = test_bn_poly_syn_div();
 
-    if (ret == 0) {
-	bu_log("\nFunction computes correctly\n");
+    if (ret)
+	bu_log("[FAIL] %s test failed\n", __FILE__);
+    else
+	bu_log("[PASS] %s test passed\n", __FILE__);
 
-	return ret;
-    } else
-	exit(EXIT_FAILURE);
-
-    return 0;
+    return ret;
 }
 
 
