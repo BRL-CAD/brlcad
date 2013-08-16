@@ -531,6 +531,35 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 	}
     }
 
+    /* Global Unit Assigned Context */
+    const char *ua_entry_1_types[4] = {"named_unit", "si_unit", "solid_angle_unit", "*"};
+    STEPcomplex *ua_entry_1 = new STEPcomplex(registry, (const char **)ua_entry_1_types, registry->GetEntityCnt());
+    instance_list->Append((STEPentity *)ua_entry_1, completeSE);
+    const char *ua_entry_2_types[4] = {"conversion_based_unit", "named_unit", "plane_angle_unit", "*"};
+    STEPcomplex *ua_entry_2 = new STEPcomplex(registry, (const char **)ua_entry_2_types, registry->GetEntityCnt());
+    instance_list->Append((STEPentity *)ua_entry_2, completeSE);
+    const char *ua_entry_3_types[4] = {"named_unit", "plane_angle_unit", "si_unit", "*"};
+    STEPcomplex *ua_entry_3 = new STEPcomplex(registry, (const char **)ua_entry_3_types, registry->GetEntityCnt());
+    instance_list->Append((STEPentity *)ua_entry_3, completeSE);
+
+    SdaiDimensional_exponents *dimensional_exp = (SdaiDimensional_exponents *)registry->ObjCreate("DIMENSIONAL_EXPONENTS");
+    dimensional_exp->length_exponent_(0.0);
+    dimensional_exp->mass_exponent_(0.0);
+    dimensional_exp->time_exponent_(0.0);
+    dimensional_exp->electric_current_exponent_(0.0);
+    dimensional_exp->thermodynamic_temperature_exponent_(0.0);
+    dimensional_exp->amount_of_substance_exponent_(0.0);
+    dimensional_exp->luminous_intensity_exponent_(0.0);
+    instance_list->Append((STEPentity *)dimensional_exp, completeSE);
+
+    SdaiPlane_angle_measure_with_unit *p_ang_meas = (SdaiPlane_angle_measure_with_unit *)registry->ObjCreate("PLANE_ANGLE_MEASURE_WITH_UNIT");
+    SdaiPlane_angle_measure *p_angle_measure = new SdaiPlane_angle_measure(0.01745329252);
+    // TODO - FEDEX_PLUS Bug?  plane_angle_measure is a TypeDescriptor, not a SelectTypeDescriptor - the following shouldn't be necessary
+    // and doesn't produce a correct result anyway. 
+    SelectTypeDescriptor *desc = (SelectTypeDescriptor *)config_control_design::t_plane_angle_measure;
+    p_ang_meas->value_component_(new SdaiMeasure_value(0.01745329252, desc));
+    instance_list->Append((STEPentity *)p_ang_meas, completeSE);
+
 
     /* For advanced brep, need to create and add a representation context.  This is a
      * complex type of four other types: */
