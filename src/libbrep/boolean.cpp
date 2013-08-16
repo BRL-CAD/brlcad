@@ -94,6 +94,7 @@ AppendToPolyCurve(ON_Curve* curve, ON_PolyCurve& polycurve)
 {
     // use this function rather than ON_PolyCurve::Append() to avoid
     // getting nested polycurves, which makes ON_Brep::IsValid() to fail.
+
     ON_PolyCurve* nested = ON_PolyCurve::Cast(curve);
     if (nested != NULL) {
 	// The input curve is a polycurve
@@ -215,12 +216,18 @@ IsPointOnLoop(const ON_2dPoint& pt, const ON_SimpleArray<ON_Curve*>& loop)
 HIDDEN int
 get_subcurve_inside_faces(const ON_Brep* brep1, const ON_Brep* brep2, int fi1, int fi2, ON_SSX_EVENT* Event)
 {
+    // The ON_SSX_EVENT from SSI is the intersection of two whole surfaces.
+    // We need to get the part that lies inside both trimmed patches.
+    // (brep1's face[fi1] and brep2's face[fi2])
+    // returns 0 for success, -1 for error.
+
     if (Event == NULL)
 	return -1;
 
     if (Event->m_curve3d == NULL || Event->m_curveA == NULL || Event->m_curveB == NULL)
 	return -1;
 
+    // 1. Get the outerloops.
     ON_SimpleArray<ON_Curve*> outerloop1, outerloop2;
     if (fi1 < 0 || fi1 >= brep1->m_F.Count()) {
 	bu_log("get_subcurve_inside_faces(): invalid fi1 (%d).\n", fi1);
@@ -240,6 +247,8 @@ get_subcurve_inside_faces(const ON_Brep* brep1, const ON_Brep* brep2, int fi1, i
 	outerloop2.Append(brep2->m_C2[brep2->m_T[loop2.m_ti[i]].m_c2i]);
     }
 
+    // 2.1 Intersect the curves in Event with outerloop1, and get the parts
+    // inside. (Represented with param intervals on the curve's domain [0, 1])
     ON_SimpleArray<double> divT;
     ON_SimpleArray<ON_Interval> intervals;
     ON_SimpleArray<ON_X_EVENT> x_event1, x_event2;
@@ -266,6 +275,8 @@ get_subcurve_inside_faces(const ON_Brep* brep1, const ON_Brep* brep2, int fi1, i
 	}
     }
 
+    // 2.2 Intersect the curves in Event with outerloop2, and get the parts
+    // inside. (Represented with param intervals on the curve's domain [0, 1])
     divT.Empty();
     for (int i = 0; i < outerloop2.Count(); i++)
 	ON_Intersect(Event->m_curveB, outerloop2[i], x_event2, INTERSECTION_TOL);
@@ -295,6 +306,7 @@ get_subcurve_inside_faces(const ON_Brep* brep1, const ON_Brep* brep2, int fi1, i
 	}
     }
 
+    // 3. Merge the intervals and get the final result.
     ON_Interval merged_interval;
     for (int i = 0; i < intervals.Count(); i++) {
 	merged_interval.Union(intervals[i]);
@@ -306,6 +318,7 @@ get_subcurve_inside_faces(const ON_Brep* brep1, const ON_Brep* brep2, int fi1, i
     if (DEBUG_BREP_BOOLEAN)
 	bu_log("merge_interval: [%g, %g]\n", merged_interval.Min(), merged_interval.Max());
 
+    // 4. Replace with the sub-curves.
     Event->m_curve3d = sub_curve(Event->m_curve3d, merged_interval.Min(), merged_interval.Max());
     Event->m_curveA = sub_curve(Event->m_curveA, merged_interval.Min(), merged_interval.Max());
     Event->m_curveB = sub_curve(Event->m_curveB, merged_interval.Min(), merged_interval.Max());
