@@ -25,7 +25,7 @@
 
 #include "common.h"
 
-#include <sys/stat.h>  /* for file mode infor in WRMODE */
+#include <sys/stat.h>  /* for file mode info in WRMODE */
 #include <fcntl.h>
 
 #include "bio.h"
@@ -38,7 +38,7 @@
 /*
  * This function normalizes the data array of the input image.
  * This performs the normalization when the input image has data
- * enteries less than 0.0 or greater than 1.0
+ * entries less than 0.0 or greater than 1.0 .
  */
 HIDDEN icv_image_t *
 icv_normalize(icv_image_t *bif)
@@ -55,7 +55,7 @@ icv_normalize(icv_image_t *bif)
     }
 
     data = bif->data;
-    
+
     /* Number of data elements. */
     size = bif->height*bif->width*bif->channels;
 
@@ -99,7 +99,7 @@ dpix_read(const char *filename, int width, int height)
     if (filename == NULL)
 	fd = fileno(stdin);
     else if ((fd = open(filename, O_RDONLY, WRMODE)) <0 ) {
-	bu_log("dpix_read : Cannont open file %s for reading\n,", filename);
+	bu_log("dpix_read : Cannot open file %s for reading\n,", filename);
 	return NULL;
     }
 
@@ -107,7 +107,7 @@ dpix_read(const char *filename, int width, int height)
 
     /* Size in Bytes for reading. */
     size = width*height*3*sizeof(bif->data[0]);
-    
+
     if (read(fd, bif->data, size) !=size) {
 	bu_log("dpix_read : Error while reading\n");
 	icv_destroy(bif);
@@ -136,7 +136,7 @@ dpix_write(icv_image_t *bif, const char *filename)
 	bu_log("dpix_write: Cannot open file for saving\n");
 	return -1;
     }
-    
+
     /* size in bytes */
     size = (size_t) bif->width*bif->height*3*sizeof(bif->data[0]);
     ret = write(fd, bif->data, size);

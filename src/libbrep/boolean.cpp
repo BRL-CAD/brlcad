@@ -297,7 +297,7 @@ get_subcurve_inside_faces(const ON_Brep* brep1, const ON_Brep* brep2, int fi1, i
 		continue;
 	    ON_2dPoint pt = Event->m_curveB->PointAt(interval.Mid());
 	    if (!IsPointOnLoop(pt, outerloop2) && IsPointInsideLoop(pt, outerloop2)) {
-		// According to openNURBS's difinition, the domain of m_curve3d,
+		// According to openNURBS's definition, the domain of m_curve3d,
 		// m_curveA, m_curveB in an ON_SSX_EVENT should be the same.
 		// (See ON_SSX_EVENT::IsValid().
 		// So we don't need to pull the interval back to A

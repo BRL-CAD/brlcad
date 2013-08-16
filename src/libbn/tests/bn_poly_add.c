@@ -40,12 +40,12 @@ struct bn_poly bn_Zero_poly = { BN_POLY_MAGIC, 0, {0.0} };
 
 
 /**
- *Initialises polnomial storing a negative, positive and zero coefficients.
+ *Initialises polynomial storing negative, positive and zero-value coefficients.
  */
 void
 poly_init(void)
 {
-    /* stores o coefficients to polynomial for input and output. */
+    /* stores zero-value coefficients to polynomial for input and output. */
     output[0] = bn_Zero_poly;
     input[0] = bn_Zero_poly;
     input[0].dgr = 2;

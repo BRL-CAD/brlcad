@@ -76,7 +76,7 @@ add_test(bn_list_3d_4                   tester_bn_list  3  3,7,8 1,-5.321,3 67,0
 # tester_bn_poly      <  void      >         void
 add_test(bn_poly_multiply              tester_bn_poly_multiply)
 add_test(bn_poly_scale                 tester_bn_poly_scale)
-add_test(bn_poly_add                   tester_bn_poly_add) 
+add_test(bn_poly_add                   tester_bn_poly_add)
 add_test(bn_poly_sub                   tester_bn_poly_sub)
 
 
