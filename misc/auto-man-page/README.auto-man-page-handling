@@ -19,6 +19,43 @@ Rules:
   const char optstring[] = "";     /* mandatory for use with bu_getopt 
                                       (if it is used) */
 
+  Note the strings must either (1) be fully contained on one line or
+  (2) adhere to the following format:
+
+    const char usage[] =
+       "Usage: %s ... first line...\n"
+       " ... second line...\n"
+       "... more lines if needed\n";
+
+  The ending semicolon may follow on a line by itself.
+
+  There must be no embedded newlines nor may the end-of-line escape be
+  used.  An ending newline is required for each line.
+
+  There must be nothing on the preceeding the the variable on its
+  beginning line (except a 'static' qualifier is allowed).
+
+  The program name may be manually entered or one string format
+  specification ('%s') entered for print statement use in the program.
+
+  Valid examples:
+  --------------
+
+    static const char usage[] = "Usage: %s input.g\n";
+
+    const char usage[] =
+      "Usage: fbserv port_num\n"
+      "  (for a stand-alone daemon)\n"
+      ;
+
+  Invalid example:
+  ---------------
+
+    const char usage[] = "\
+Usage: %s port_num\n\
+	  (for a stand-alone daemon)\n\
+";
+
 + Other man page inputs come from one or more specially-formatted
   ordinary C-style comment blocks (Doxygen-style comments beginning
   with '/**' or '/*!' are completely ignored).
@@ -142,16 +179,6 @@ NAME
 
 + The usage string will be used for the SYNOPSIS section.  For
   example:
-
-    const char usage[] = "\
-Usage: fbserv port_num\n\
-	  (for a stand-alone daemon)\n\
-   or  fbserv [-v] [-{sS} squaresize]\n\
-	  [-{wW} width] [-{nN} height] -p port_num -F frame_buffer\n\
-	  (for a single-frame-buffer server)\n\
-          (can omit -p and -F, in which case port_num and frame_buffer\n\
-           must appear in that order)\n\
-";
 
   (Such a case may have to be specially handled for ease of parsing.)
 
