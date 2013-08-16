@@ -78,14 +78,14 @@ compare_t(IntersectPoint* const *a, IntersectPoint* const *b)
 {
     if ((*a)->m_seg != (*b)->m_seg)
 	return (*a)->m_seg - (*b)->m_seg;
-    return (*a)->m_t - (*b)->m_t > 0.0 ? 1 : ((*a)->m_t < (*b)->m_t ? -1 : 0);
+    return (*a)->m_t > (*b)->m_t ? 1 : ((*a)->m_t < (*b)->m_t ? -1 : 0);
 }
 
 
 HIDDEN int
 compare_for_rank(IntersectPoint* const *a, IntersectPoint* const *b)
 {
-    return (*a)->m_t_for_rank - (*b)->m_t_for_rank;
+    return (*a)->m_t_for_rank > (*b)->m_t_for_rank ? 1 : ((*a)->m_t_for_rank < (*b)->m_t_for_rank ? -1 : 0);
 }
 
 
