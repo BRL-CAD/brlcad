@@ -117,7 +117,7 @@ ON_NurbsSurfaceCV_to_GenericAggregate(ON_NurbsSurface *insrf, SdaiB_spline_surfa
 	    insrf->GetCV(i, j, cv_pnt);
 	    ON_3dPoint_to_Cartesian_point(&(cv_pnt), step_cartesian);
 	    if (j != 0) ss << ",";
-	    ss << ((SDAI_Application_instance *)step_cartesian)->StepFileId();
+	    ss << "#" << ((SDAI_Application_instance *)step_cartesian)->StepFileId();
 	}
 	ss << ")";
 	std::string str = ss.str();
