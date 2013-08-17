@@ -49,7 +49,7 @@ poly_init(void)
      * coefficients.
      */
     input[0].dgr = 3;
-    quo[0].dgr = rem[1].dgr = 4;
+    quo[0].dgr = rem[0].dgr = 4;
 
     input[0].cf[0] = -4, input[0].cf[1] = -3, input[0].cf[2] = -2, input[0].cf[3] = -38;/* input coeff */
 
