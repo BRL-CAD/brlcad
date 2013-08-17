@@ -78,6 +78,8 @@
 
 #define SHMEM_KEY 42
 
+/* FIXME: see next FIXME ref gcc 4.8.1 error */
+const GLUMTBL_FACTOR = LONG_MAX / 256;
 
 /*
  * Per window state information.
@@ -951,7 +953,16 @@ x24_setup(FBIO *ifp, int width, int height)
 		int i;
 		for (i = 0; i < 256; i++) {
 		    rlumtbl[i] = i * 5016388;
-		    glumtbl[i] = i * 9848226;
+                    /* FIXME: The following line constant factor 9848226 causes an error with gcc 4.8.1:
+                     *   error: iteration 219u invokes undefined behavior [-Werror=aggressive-loop-optimizations]
+                     *
+                     * Short term fix is to make the factor = LONG_MAX / 256 until someone
+                     * with more contextual knowledge can fix it properly.
+                     *
+                     */
+
+		    /* glumtbl[i] = i * 9848226; */
+                    glumtbl[i] = i * GLUMTBL_FACTOR;
 		    blumtbl[i] = i * 1912603;
 		}
 		lumdone = 1;
