@@ -145,6 +145,7 @@ struct hrt_specific {
     vect_t hrt_invsq; /* [ 1.0 / |X|**2, 1.0 / |Y|**2, 1.0 / |Z|**2 ] */
     mat_t hrt_SoR; /* Scale(Rot(vect)) */
     mat_t hrt_invRSSR; /* invRot(Scale(Scale(vect))) */
+    mat_t hrt_invR; /* transposed rotation matrix */
 };
 
 
@@ -154,10 +155,60 @@ struct hrt_specific {
  * Compute the bounding RPP for a heart.
  */
 int
-rt_hrt_bbox(const struct bn_tol *UNUSED(tol))
+rt_hrt_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol))
 {
-    bu_log("rt_hrt_bbox: Not implemented yet!\n");
-    return 1;
+    struct rt_hrt_internal *hip;
+    fastf_t magsq_x, magsq_y, magsq_z;
+    vect_t Xu, Yu, Zu;
+    mat_t R;
+    vect_t w1, P;   /* used for bounding RPP */
+    fastf_t f;
+
+    hip = (struct rt_hrt_internal *)ip->idb_ptr;
+    RT_HRT_CK_MAGIC(hip);
+
+    magsq_x = MAGSQ(hip->xdir);
+    magsq_y = MAGSQ(hip->ydir);
+    magsq_z = MAGSQ(hip->zdir);
+
+    /* Create unit length versions of X, Y, Z  */
+    f = 1.0/sqrt(magsq_x);
+    VSCALE(Xu, hip->xdir, f);
+    f = 1.0/sqrt(magsq_y);
+    VSCALE(Yu, hip->ydir, f);
+    f = 1.0/sqrt(magsq_z);
+    VSCALE(Zu, hip->zdir, f);
+
+    MAT_IDN(R);
+    VMOVE(&R[0], Xu);
+    VMOVE(&R[4], Yu);
+    VMOVE(&R[8], Zu);
+
+    /* Computing bounding RPP */
+    VSET(w1, magsq_x, magsq_y, magsq_z);
+
+    /* X */
+    VSET(P, 1.0, 0, 0);        /* Bounding plane normal */
+    VCROSS(w1, hip->xdir, P);
+    f = hip->xdir[X];
+    (*min)[X] = hip->v[X] - f;
+    (*max)[X] = hip->v[X] + f;
+
+    /* Y */
+    VSET(P, 0, 1.0, 0);        /* Bounding plane normal */
+    VCROSS(w1, hip->ydir, P);
+    f = hip->ydir[Y];
+    (*min)[Y] = hip->v[Y] - f;
+    (*max)[Y] = hip->v[Y] + f;
+
+    /* Y */
+    VSET(P, 0, 0, 1.0);        /* Bounding plane normal */
+    VCROSS(w1, hip->zdir, P);
+    f = hip->zdir[Z];
+    (*min)[Z] = hip->v[Z] - f;
+    (*max)[Z] = hip->v[Z] + f * 1.25;
+    
+    return 0;
 }
 
 
@@ -177,10 +228,124 @@ rt_hrt_bbox(const struct bn_tol *UNUSED(tol))
  * stp->st_specific for use by rt_hrt_shot().
  */
 int
-rt_hrt_prep()
+rt_hrt_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
-    bu_log("rt_hrt_prep: Not implemented yet!\n");
-    return 0;
+    register struct hrt_specific *hrt;
+    struct rt_hrt_internal *hip;
+    fastf_t magsq_x, magsq_y, magsq_z, max;
+    mat_t R, TEMP;
+    vect_t Xu, Yu, Zu;
+    fastf_t f;
+
+    hip = (struct rt_hrt_internal *)ip->idb_ptr;
+    RT_HRT_CK_MAGIC(hip);
+
+    /* Validate that |X| > 0, |Y| > 0 and |Z| > 0  */
+    magsq_x = MAGSQ(hip->xdir);
+    magsq_y = MAGSQ(hip->ydir);
+    magsq_z = MAGSQ(hip->zdir);
+
+    if (magsq_x < rtip->rti_tol.dist_sq || magsq_y < rtip->rti_tol.dist_sq || magsq_z < rtip->rti_tol.dist_sq) {
+	bu_log("rt_hrt_prep(): hrt(%s) near-zero length X(%g), Y(%g), or Z(%g) vector\n", 
+	       stp->st_name, magsq_x, magsq_y, magsq_z);
+	return 1;
+    }
+    if (hip->d < rtip->rti_tol.dist) {
+	bu_log("rt_hrt_prep(): hrt(%s) near-zero length <d> distance to cusps (%g) causes problems\n", stp->st_name, hip->d);
+	return 1;
+    }
+    max = hip->xdir[X];
+    if (isgreater(hip->ydir[Y], max)) {
+	max = hip->ydir[Y];
+    }
+    if (isgreater(hip->zdir[Z], max)) {
+	max = hip->zdir[Z];
+    }
+	    
+    if (hip->d > 10000.0) {
+	bu_log("rt_hrt_prep(): hrt(%s) very large <d> distance to cusps (%g) causes problems\n", stp->st_name, hip->d);
+	/* BAD  */
+    }
+
+    if (hip->d > max) {
+	bu_log("rt_hrt_prep(): hrt(%s) Inappropriate value for <d> distance to cusps (%g) \n", stp->st_name, hip->d);
+	/* BAD  */
+    }
+    
+    /* Create unit length versions of X, Y, Z */
+    f = 1.0/sqrt(magsq_x);
+    VSCALE(Xu, hip->xdir, f);
+    f = 1.0/sqrt(magsq_y);
+    VSCALE(Yu, hip->ydir, f);
+    f = 1.0/sqrt(magsq_z);
+    VSCALE(Zu, hip->zdir, f);
+
+    /* Check that X, Y, Z are perpendicular to each other */
+    f = VDOT(Xu, Yu);
+    if (! NEAR_ZERO(f, rtip->rti_tol.dist)) {
+	bu_log("rt_hrt_prep(): hrt(%s) X not perpendicular to Y, f=%f\n", stp->st_name, f);
+	return 1;
+    }
+    f = VDOT(Xu, Zu);
+    if (! NEAR_ZERO(f, rtip->rti_tol.dist)) {
+	bu_log("rt_hrt_prep(): hrt(%s) X not perpendicular to Z, f=%f\n", stp->st_name, f);
+	return 1;
+    }
+    f = VDOT(Zu, Yu);
+    if (! NEAR_ZERO(f, rtip->rti_tol.dist)) {
+	bu_log("rt_hrt_prep(): hrt(%s) Z not perpendicular to Y, f=%f\n", stp->st_name, f);
+	return 1;
+    }
+    
+    /* Solid is OK, computer constan terms now  */
+    
+    BU_GET(hrt, struct hrt_specific);
+    stp->st_specific = (genptr_t)hrt;
+
+    hrt->hrt_d = hip->d;
+
+    VMOVE(hrt->hrt_V, hip->v);
+
+    VSET(hrt->hrt_invsq, 1.0/magsq_x, 1.0/magsq_y, 1.0/magsq_z);
+    VMOVE(hrt->hrt_X, Xu);
+    VMOVE(hrt->hrt_Y, Yu);
+    VMOVE(hrt->hrt_Z, Zu);
+
+    /* compute the rotation matrix  */
+    MAT_IDN(R);
+    VMOVE(&R[0], Xu);
+    VMOVE(&R[4], Yu);
+    VMOVE(&R[8], Zu);
+    bn_mat_trn(hrt->hrt_invR, R);
+
+    /* compute invRSSR */
+    MAT_IDN(hrt->hrt_invRSSR);
+    MAT_IDN(TEMP);
+    TEMP[0] = hrt->hrt_invsq[0];
+    TEMP[5] = hrt->hrt_invsq[1];
+    TEMP[10] = hrt->hrt_invsq[2];
+    bn_mat_mul(TEMP, TEMP, R);
+    bn_mat_mul(hrt->hrt_invRSSR, hrt->hrt_invR, TEMP);
+
+    /* compute Scale(Rotate(vect)) */
+    MAT_IDN(hrt->hrt_SoR);
+    VSCALE(&hrt->hrt_SoR[0], hip->xdir, hrt->hrt_invsq[0]);
+    VSCALE(&hrt->hrt_SoR[4], hip->ydir, hrt->hrt_invsq[1]);
+    VSCALE(&hrt->hrt_SoR[8], hip->zdir, hrt->hrt_invsq[2]);
+
+    /* compute bounding sphere  */
+    VMOVE(stp->st_center, hrt->hrt_V);
+    f = magsq_x;
+    if (magsq_y > f)
+	f = magsq_y;
+    if (magsq_z > f)
+	f = magsq_z;
+    stp->st_aradius = stp->st_bradius = sqrt(f);
+
+    /* compute bounding RPP */
+    if (rt_hrt_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
+
+    return 0;                /* OK */
 }
 
 
