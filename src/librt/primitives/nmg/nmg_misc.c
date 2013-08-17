@@ -117,7 +117,7 @@ nmg_snurb_calc_lu_uv_orient(const struct loopuse *lu)
 	    t2 = eg->k.knots[eg->k.k_size-1];
 	    coords = RT_NURB_EXTRACT_COORDS(eg->pt_type);
 
-	    for (i=0; i<5; i++) {
+	    for (i = 0; i < 5; i++) {
 		fastf_t t;
 
 		t = t1 + (t2 - t1)*0.2*(fastf_t)i;
@@ -135,14 +135,14 @@ nmg_snurb_calc_lu_uv_orient(const struct loopuse *lu)
     }
 
     /* translate loop such that pts[0] is at (0, 0, 0) */
-    for (edge_no=1; edge_no<edge_count; edge_no++) {
+    for (edge_no = 1; edge_no < edge_count; edge_no++) {
 	VSUB2(pts[edge_no], pts[edge_no], pts[0]);
 	pts[edge_no][Z] = 0.0;
     }
     VSETALL(pts[0], 0.0);
 
     /* calculate area of loop in uv-space */
-    for (edge_no=1; edge_no<edge_count-1; edge_no++) {
+    for (edge_no = 1; edge_no < edge_count - 1; edge_no++) {
 	vect_t cross;
 
 	VCROSS(cross, pts[edge_no], pts[edge_no+1]);
