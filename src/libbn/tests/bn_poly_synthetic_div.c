@@ -38,7 +38,7 @@ bn_poly_t quo[1] = { BN_POLY_INIT_ZERO };
 bn_poly_t rem[1] = { BN_POLY_INIT_ZERO };
 
 
-/* Initialises polnomial storing a negative, positive and zero
+/* Initializes polnomial storing a negative, positive and zero
  * coefficients.  Test polynomials will be of 4th, 3rd, and 2nd
  * degrees.
  */
