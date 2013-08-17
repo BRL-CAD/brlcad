@@ -289,7 +289,9 @@ rt_nurb_region_from_srf(const struct face_g_snurb *srf, int dir, fastf_t param1,
     register int i;
     struct face_g_snurb *region;
     struct knot_vector new_knots;
-    fastf_t knot_vec[40];
+    /* FIXME: gcc 4.8.1 report array overrun with size 40, temp  change to 400 */
+    /* fastf_t knot_vec[40]; */
+    fastf_t knot_vec[400];
 
     /* Build the new knot vector in the local array */
     /* XXX fill in magic number here? */
