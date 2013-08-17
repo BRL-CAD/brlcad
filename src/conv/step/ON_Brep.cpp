@@ -547,15 +547,37 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 	    sc = sc->sc;
 	}
     }
-
-
     instance_list->Append((STEPentity *)ua_entry_1, completeSE);
-    const char *ua_entry_2_types[4] = {"conversion_based_unit", "named_unit", "plane_angle_unit", "*"};
-    STEPcomplex *ua_entry_2 = new STEPcomplex(registry, (const char **)ua_entry_2_types, registry->GetEntityCnt());
-    instance_list->Append((STEPentity *)ua_entry_2, completeSE);
+
     const char *ua_entry_3_types[4] = {"named_unit", "plane_angle_unit", "si_unit", "*"};
     STEPcomplex *ua_entry_3 = new STEPcomplex(registry, (const char **)ua_entry_3_types, registry->GetEntityCnt());
+    {
+	STEPcomplex *sc = ua_entry_3->head;
+	while (sc) {
+	    if (!strcmp(sc->EntityName(), "Si_Unit")) {
+		sc->ResetAttributes();
+		STEPattribute *attr;
+		while ((attr = sc->NextAttribute()) != NULL) {
+		    if (!strcmp(attr->Name(), "name")) attr->ptr.e = new SdaiSi_unit_name_var(Si_unit_name__radian);
+		}
+	    }
+	    sc = sc->sc;
+	}
+    }
     instance_list->Append((STEPentity *)ua_entry_3, completeSE);
+
+    SdaiPlane_angle_measure_with_unit *p_ang_measure_with_unit = (SdaiPlane_angle_measure_with_unit *)registry->ObjCreate("PLANE_ANGLE_MEASURE_WITH_UNIT");
+    // 1 degree = 0.01745329252 radians 
+    SdaiMeasure_value * p_ang_measure_value = new SdaiMeasure_value(0.01745329252,config_control_design::t_measure_value);
+    p_ang_measure_value->SetUnderlyingType( config_control_design::t_plane_angle_measure );
+    p_ang_measure_with_unit->value_component_(p_ang_measure_value);
+    SdaiUnit *p_ang_unit = new SdaiUnit((SdaiNamed_unit *)ua_entry_3);
+    p_ang_measure_with_unit->unit_component_(p_ang_unit);
+    instance_list->Append((STEPentity *)p_ang_measure_with_unit, completeSE);
+
+
+    const char *ua_entry_2_types[4] = {"conversion_based_unit", "named_unit", "plane_angle_unit", "*"};
+    STEPcomplex *ua_entry_2 = new STEPcomplex(registry, (const char **)ua_entry_2_types, registry->GetEntityCnt());
 
     SdaiDimensional_exponents *dimensional_exp = (SdaiDimensional_exponents *)registry->ObjCreate("DIMENSIONAL_EXPONENTS");
     dimensional_exp->length_exponent_(0.0);
@@ -566,14 +588,29 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
     dimensional_exp->amount_of_substance_exponent_(0.0);
     dimensional_exp->luminous_intensity_exponent_(0.0);
     instance_list->Append((STEPentity *)dimensional_exp, completeSE);
+    {
+	STEPcomplex *sc = ua_entry_2->head;
+	while (sc) {
+	    if (!strcmp(sc->EntityName(), "Conversion_Based_Unit")) {
+		sc->ResetAttributes();
+		STEPattribute *attr;
+		while ((attr = sc->NextAttribute()) != NULL) {
+		    if (!strcmp(attr->Name(), "name")) attr->StrToVal("'DEGREES'");
+		    if (!strcmp(attr->Name(), "conversion_factor")) attr->ptr.c = (STEPentity **)&p_ang_measure_with_unit ;
+		}
+	    }
+	    if (!strcmp(sc->EntityName(), "Named_Unit")) {
+		sc->ResetAttributes();
+		STEPattribute *attr;
+		while ((attr = sc->NextAttribute()) != NULL) {
+		    if (!strcmp(attr->Name(), "dimensions")) attr->ptr.c = (STEPentity **)&dimensional_exp;
+		}
+	    }
+	    sc = sc->sc;
+	}
+    }
 
-    SdaiPlane_angle_measure_with_unit *p_ang_measure_with_unit = (SdaiPlane_angle_measure_with_unit *)registry->ObjCreate("PLANE_ANGLE_MEASURE_WITH_UNIT");
-    // 1 degree = 0.01745329252 radians 
-    SdaiMeasure_value * p_ang_measure_value = new SdaiMeasure_value(0.01745329252,config_control_design::t_measure_value);
-    p_ang_measure_value->SetUnderlyingType( config_control_design::t_plane_angle_measure );
-    p_ang_measure_with_unit->value_component_(p_ang_measure_value);
-    instance_list->Append((STEPentity *)p_ang_measure_with_unit, completeSE);
-
+    instance_list->Append((STEPentity *)ua_entry_2, completeSE);
 
     /* For advanced brep, need to create and add a representation context.  This is a
      * complex type of four other types: */
@@ -595,7 +632,7 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 		if (!strcmp(attr->Name(), "uncertainty")) {
 		    EntityAggregate *unc_agg = new EntityAggregate();
 		    unc_agg->AddNode(new EntityNode((SDAI_Application_instance *)uncertainty));
-		    //attr->ptr.a = unc_agg;
+		    attr->ptr.a = unc_agg;
 		}
 	    }
 
@@ -609,7 +646,7 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 		    unit_assigned_agg->AddNode(new EntityNode((SDAI_Application_instance *)ua_entry_1));
 		    unit_assigned_agg->AddNode(new EntityNode((SDAI_Application_instance *)ua_entry_2));
 		    unit_assigned_agg->AddNode(new EntityNode((SDAI_Application_instance *)uncertainty));
-		    //attr->ptr.a = unit_assigned_agg;
+		    attr->ptr.a = unit_assigned_agg;
 		}
 	    }
 	}
