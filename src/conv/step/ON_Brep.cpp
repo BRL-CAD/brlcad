@@ -567,14 +567,12 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
     dimensional_exp->luminous_intensity_exponent_(0.0);
     instance_list->Append((STEPentity *)dimensional_exp, completeSE);
 
-    SdaiPlane_angle_measure_with_unit *p_ang_meas = (SdaiPlane_angle_measure_with_unit *)registry->ObjCreate("PLANE_ANGLE_MEASURE_WITH_UNIT");
-    SdaiPlane_angle_measure *p_angle_measure = new SdaiPlane_angle_measure(0.01745329252);
-    // TODO - FEDEX_PLUS Bug?  plane_angle_measure is a TypeDescriptor, not a SelectTypeDescriptor - the following shouldn't be necessary
-    // and doesn't produce a correct result anyway. 
-    SelectTypeDescriptor *desc = (SelectTypeDescriptor *)config_control_design::t_plane_angle_measure;
+    SdaiPlane_angle_measure_with_unit *p_ang_measure_with_unit = (SdaiPlane_angle_measure_with_unit *)registry->ObjCreate("PLANE_ANGLE_MEASURE_WITH_UNIT");
     // 1 degree = 0.01745329252 radians 
-    p_ang_meas->value_component_(new SdaiMeasure_value(0.01745329252, desc));
-    instance_list->Append((STEPentity *)p_ang_meas, completeSE);
+    SdaiMeasure_value * p_ang_measure_value = new SdaiMeasure_value(0.01745329252,config_control_design::t_measure_value);
+    p_ang_measure_value->SetUnderlyingType( config_control_design::t_plane_angle_measure );
+    p_ang_measure_with_unit->value_component_(p_ang_measure_value);
+    instance_list->Append((STEPentity *)p_ang_measure_with_unit, completeSE);
 
 
     /* For advanced brep, need to create and add a representation context.  This is a
