@@ -44,6 +44,28 @@ objects.
     space, and if attribute values contain embedded white space, they must be surrounded
     by {} or double quotes.
   </para>
+
+  <para>Note that a newly formed region always has four attributes assigned to it:</para>
+  <unorderedlist>
+    <listitem>los<listitem>
+    <listitem>material_id<listitem>
+    <listitem>region<listitem>
+    <listitem>region_id<listitem>
+  </unorderedlist>
+
+  <para>The 'region' attribute is the 'region flag' mentioned in the
+  edcodes command.  Somewhat confusingly though, immediately upon
+  completing the 'r' (region) command in mged, this message is
+  displayed:</para>
+
+  <programlisting>
+Defaulting item number to 1001
+Creating region with attrs: region_id=1000, air=0, los=0, material_id=1
+  </programlisting>
+
+  <para>However, the air attribute will not show in a 'attr show' command unless
+  it is set to a non-zero value.</para>
+
 </refsection>
 
 <refsection xml:id="examples"><title>EXAMPLES</title>
@@ -52,11 +74,25 @@ objects.
     The examples demonstrate the use of the <command>attr</command> command and subcommands to
     assign and list attributes of database objects.
   </para>
-  <example><title>Assigns an attribute to an object.</title>
 
+  <example><title>Assigns an attribute to an object.</title>
     <variablelist>
       <varlistentry>
-	<term><prompt>mged</prompt><userinput>attr set region_1 comment {This is a comment for region_1}</userinput></term>
+	<term><prompt>mged&gt;</prompt> <userinput>attr set region_1 material_id 10</userinput></term>
+	<listitem>
+	  <para>
+	    Assigns an attribute name "material_id" to <emphasis>region_1</emphasis>. Its
+	    value is 10.
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+  </example>
+
+  <example><title>Assigns an attribute (with embedded white space in its value) to an object.</title>
+    <variablelist>
+      <varlistentry>
+	<term><prompt>mged&gt;</prompt> <userinput>attr set region_1 comment {This is a comment for region_1}</userinput></term>
 	<listitem>
 	  <para>
 	    Assigns an attribute named "comment" to <emphasis>region_1</emphasis>. Its
@@ -68,10 +104,9 @@ objects.
   </example>
 
   <example><title>List all the attributes for an object</title>
-
     <variablelist>
       <varlistentry>
-	<term><prompt>mged</prompt><userinput>attr show region_1 comment</userinput></term>
+	<term><prompt>mged&gt;</prompt> <userinput>attr show region_1 comment</userinput></term>
     <listitem>
 	<para>Lists all the attributes for <emphasis>region_1</emphasis>.
 	</para>
