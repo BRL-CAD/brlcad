@@ -55,7 +55,7 @@ objects.
 
   <para>The 'region' attribute is the 'region flag' mentioned in the
   edcomb command.  Somewhat confusingly though, immediately upon
-  completing the 'r' (region) command in mged, this message is
+  completing the 'r' (region) command in mged a message like this is
   displayed:</para>
 
   <programlisting>
