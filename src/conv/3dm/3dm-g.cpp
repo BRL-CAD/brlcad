@@ -52,33 +52,8 @@ STR_STR_MAP layer_name_uuid_map;
 REGION_CNT_MAP region_cnt_map;
 MEMBER_MAP member_map;
 
-char *
-itoa(int num)
-{
-    static char line[10];
 
-    sprintf(line, "%d", num);
-    return line;
-}
-
-
-void
-printPoints(struct rt_brep_internal* bi, ON_TextLog* dump)
-{
-    ON_Brep* brep = bi->brep;
-    if (brep) {
-	const int count = brep->m_V.Count();
-	for (int i = 0; i < count; i++) {
-	    ON_BrepVertex& bv = brep->m_V[i];
-	    bv.Dump(*dump);
-	}
-    } else {
-	dump->Print("brep was NULL!\n");
-    }
-}
-
-
-size_t
+static size_t
 RegionCnt(std::string &name)
 {
     REGION_CNT_MAP::iterator iter = region_cnt_map.find(name);
@@ -95,7 +70,7 @@ RegionCnt(std::string &name)
 }
 
 
-void
+static void
 MapRegion(ONX_Model &model, std::string &region_name, int layer_index)
 {
     char uuidstr[50];
@@ -113,7 +88,7 @@ MapRegion(ONX_Model &model, std::string &region_name, int layer_index)
 }
 
 
-void
+static void
 MapLayer(std::string &layer_name, std::string &uuid, std::string &parent_uuid)
 {
     layer_uuid_name_map.insert(std::pair<std::string, std::string>(uuid, layer_name));
@@ -136,7 +111,7 @@ MapLayer(std::string &layer_name, std::string &uuid, std::string &parent_uuid)
 }
 
 
-void
+static void
 BuildHierarchy(struct rt_wdb* outfp, std::string &uuid, ON_TextLog* dump)
 {
     static long groupcnt = 1;
@@ -182,7 +157,7 @@ BuildHierarchy(struct rt_wdb* outfp, std::string &uuid, ON_TextLog* dump)
 }
 
 
-void
+static void
 BuildHierarchy(struct rt_wdb* outfp, ON_TextLog* dump)
 {
     std::string root_uuid = "00000000-0000-0000-0000-000000000000";
@@ -194,7 +169,7 @@ BuildHierarchy(struct rt_wdb* outfp, ON_TextLog* dump)
 }
 
 
-void
+static void
 ProcessLayers(ONX_Model &model, ON_TextLog* dump)
 {
     char name[256];
