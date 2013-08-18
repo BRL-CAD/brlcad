@@ -54,7 +54,7 @@ objects.
   </unorderedlist>
 
   <para>The 'region' attribute is the 'region flag' mentioned in the
-  edcodes command.  Somewhat confusingly though, immediately upon
+  edcomb command.  Somewhat confusingly though, immediately upon
   completing the 'r' (region) command in mged, this message is
   displayed:</para>
 
