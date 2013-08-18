@@ -827,10 +827,11 @@ _ged_combadd2(struct ged *gedp,
 	    comb->los = gedp->ged_wdbp->wdb_los_default;
 	    comb->GIFTmater = gedp->ged_wdbp->wdb_mat_default;
 	    bu_vls_printf(gedp->ged_result_str,
-			  "Creating region id=%d, air=%d, GIFTmaterial=%d, los=%d\n",
+			  "Creating region with attrs: region_id=%d, air=%d, los=%d, material_id=%d\n",
 			  ident, air,
-			  gedp->ged_wdbp->wdb_mat_default,
-			  gedp->ged_wdbp->wdb_los_default);
+			  gedp->ged_wdbp->wdb_los_default,
+			  gedp->ged_wdbp->wdb_mat_default
+                          );
 	} else {
 	    comb->region_flag = 0;
 	}

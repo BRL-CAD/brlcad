@@ -677,10 +677,10 @@ wdb_combadd(struct db_i *dbip,
 	    comb->GIFTmater = wdbp->wdb_mat_default;
 	    bu_vls_init(&tmp_vls);
 	    bu_vls_printf(&tmp_vls,
-			  "Creating region id=%d, air=%d, GIFTmaterial=%d, los=%d\n",
+			  "Creating region with attrs: region_id=%d, air=%d, los=%d, material_id=%d\n",
 			  ident, air,
-			  wdbp->wdb_mat_default,
-			  wdbp->wdb_los_default);
+			  wdbp->wdb_los_default,
+			  wdbp->wdb_mat_default);
 	    bu_log("%s", bu_vls_addr(&tmp_vls));
 	    bu_vls_free(&tmp_vls);
 	} else {

@@ -634,7 +634,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 	    comb->los = gedp->ged_wdbp->wdb_los_default;
 	    comb->GIFTmater = gedp->ged_wdbp->wdb_mat_default;
 	    bu_vls_printf(gedp->ged_result_str,
-			  "Creating region id=%ld, air=%ld, los=%ld, GIFTmaterial=%ld\n",
+			  "Creating region with attrs: region_id=%ld, air=%ld, los=%ld, material_id=%ld\n",
 			  comb->region_id, comb->aircode, comb->los, comb->GIFTmater);
 
 	    flags |= RT_DIR_REGION;
