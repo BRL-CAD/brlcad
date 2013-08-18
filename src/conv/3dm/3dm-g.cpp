@@ -139,7 +139,7 @@ MapLayer(std::string &layer_name, std::string &uuid, std::string &parent_uuid)
 void
 BuildHierarchy(struct rt_wdb* outfp, std::string &uuid, ON_TextLog* dump)
 {
-    static int groupcnt = 1;
+    static long groupcnt = 1;
     struct wmember members;
     BU_LIST_INIT(&members.l);
 
@@ -155,7 +155,10 @@ BuildHierarchy(struct rt_wdb* outfp, std::string &uuid, ON_TextLog* dump)
 	}
     }
     if (groupname.empty()) {
-        groupname = "g" + itoa(groupcnt);
+	struct bu_vls str = BU_VLS_INIT_ZERO;
+	bu_vls_printf(&str, "g%ld", groupcnt);
+        groupname = bu_vls_addr(&str);
+	bu_vls_free(&str);
     }
 
     MEMBER_MAP::iterator iter = member_map.find(uuid);
