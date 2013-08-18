@@ -192,7 +192,7 @@ struct legInfo
 };
 
 
-enum genders { male, female };
+enum sexes { male, female };
 enum ethnicities { generic, white, black, hispanic, asian, other }; /* divisions taken from army demographic sheet */
 
 /*Top level struct that holds all body information */
@@ -200,7 +200,7 @@ struct human_data_t
 {
     fastf_t height;         	/* Height of person standing, inches */
     int age;                	/* Age of person, (still relevant?) */
-    enum genders gender;    	/* Gender of person */
+    enum sexes sex;    	        /* Sex of person */
     enum ethnicities ethnicity;	/* Ethnicity of person */
 
     /* Various part lengths */
