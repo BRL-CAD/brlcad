@@ -830,8 +830,7 @@ _ged_combadd2(struct ged *gedp,
 			  "Creating region with attrs: region_id=%d, air=%d, los=%d, material_id=%d\n",
 			  ident, air,
 			  gedp->ged_wdbp->wdb_los_default,
-			  gedp->ged_wdbp->wdb_mat_default
-                          );
+			  gedp->ged_wdbp->wdb_mat_default);
 	} else {
 	    comb->region_flag = 0;
 	}
