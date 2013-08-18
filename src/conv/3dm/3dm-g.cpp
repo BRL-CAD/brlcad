@@ -78,7 +78,7 @@ printPoints(struct rt_brep_internal* bi, ON_TextLog* dump)
 }
 
 
-int
+size_t
 RegionCnt(std::string &name)
 {
     REGION_CNT_MAP::iterator iter = region_cnt_map.find(name);
@@ -87,7 +87,7 @@ RegionCnt(std::string &name)
 	region_cnt_map.insert(std::pair<std::string, int>(name, 1));
 	return 1;
     } else {
-	int cnt = iter->second + 1;
+	size_t cnt = iter->second + 1;
 	region_cnt_map.erase(iter);
 	region_cnt_map.insert(std::pair<std::string, int>(name, cnt));
 	return cnt;
@@ -218,7 +218,7 @@ ProcessLayers(ONX_Model &model, ON_TextLog* dump)
 int
 main(int argc, char** argv)
 {
-    int mcount = 0;
+    size_t mcount = 0;
     int verbose_mode = 0;
     int random_colors = 0;
     int use_uuidnames = 0;
@@ -342,32 +342,38 @@ main(int argc, char** argv)
 	    ON_String constr(myAttributes.m_name);
 	    if (constr == NULL) {
 		std::string genName = "";
-		char name[256];
+		struct bu_vls name = BU_VLS_INIT_ZERO;
+
 		/* Use layer name to help name un-named regions/objects */
 		if (myAttributes.m_layer_index > 0) {
 		    const ON_Layer& layer = model.m_layer_table[myAttributes.m_layer_index];
 		    ON_wString layer_name = layer.LayerName();
-		    bu_strlcpy(name, ON_String(layer_name), sizeof(name));
-		    genName = name;
+		    bu_vls_strcpy(&name, ON_String(layer_name));
+		    genName = bu_vls_addr(&name);
 		    if (genName.length() <= 0) {
 			genName = GENERIC_NAME;
 		    }
-		    dump->Print("\n\nlayername:\"%s\"\n\n", name);
+		    dump->Print("\n\nlayername:\"%s\"\n\n", bu_vls_addr(&name));
 		} else {
 		    genName = GENERIC_NAME;
 		}
+
 		/* For layer named regions use layer region count
 		 * instead of global region count
 		 */
 		if (genName.compare(GENERIC_NAME) == 0) {
-		    genName+=itoa(mcount++);
+		    bu_vls_printf(&name, "%zd", mcount++);
+		    genName += bu_vls_addr(&name);
 		    geom_base = genName.c_str();
 		} else {
-		    int region_cnt = RegionCnt(genName);
-		    genName+=itoa(region_cnt);
+		    size_t region_cnt = RegionCnt(genName);
+		    bu_vls_printf(&name, "%zd", region_cnt);
+		    genName += bu_vls_addr(&name);
 		    geom_base = genName.c_str();
 		}
+
 		dump->Print("Object has no name - creating one %s.\n", geom_base.c_str());
+		bu_vls_free(&name);
 	    } else {
 		const char* cstr = constr;
 		geom_base = cstr;
