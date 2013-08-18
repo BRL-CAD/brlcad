@@ -161,7 +161,7 @@ rt_hrt_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     fastf_t magsq_x, magsq_y, magsq_z;
     vect_t Xu, Yu, Zu;
     mat_t R;
-    vect_t w1, P;   /* used for bounding RPP */
+    vect_t P;   /* used for bounding RPP */
     fastf_t f;
 
     hip = (struct rt_hrt_internal *)ip->idb_ptr;
@@ -184,30 +184,24 @@ rt_hrt_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     VMOVE(&R[4], Yu);
     VMOVE(&R[8], Zu);
 
-    /* Computing bounding RPP */
-    VSET(w1, magsq_x, magsq_y, magsq_z);
-
     /* X */
     VSET(P, 1.0, 0, 0);        /* Bounding plane normal */
-    VCROSS(w1, hip->xdir, P);
     f = hip->xdir[X];
     (*min)[X] = hip->v[X] - f;
     (*max)[X] = hip->v[X] + f;
 
     /* Y */
     VSET(P, 0, 1.0, 0);        /* Bounding plane normal */
-    VCROSS(w1, hip->ydir, P);
     f = hip->ydir[Y];
     (*min)[Y] = hip->v[Y] - f;
     (*max)[Y] = hip->v[Y] + f;
 
     /* Y */
     VSET(P, 0, 0, 1.0);        /* Bounding plane normal */
-    VCROSS(w1, hip->zdir, P);
     f = hip->zdir[Z];
     (*min)[Z] = hip->v[Z] - f;
     (*max)[Z] = hip->v[Z] + f * 1.25;
-    
+
     return 0;
 }
 
