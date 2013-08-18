@@ -76,6 +76,12 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* investigate integrating Blender's (OSL-based) Cycles engine:
+  http://code.blender.org/index.php/2013/08/cycles-render-engine-released-with-permissive-license/
+
+* investigate integrating Pixar's OpenSubdiv for subdivision surfaces:
+  http://graphics.pixar.com/opensubdiv/
+
 * Extract bounding box code from both autoview.c and get_autoview.c
   into a general bounding rpp function in libged (or perhaps librt if
   it generalizes sufficiently), and use accordingly.  Should combin
