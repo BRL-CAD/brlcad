@@ -46,13 +46,14 @@ objects.
   </para>
 
   <para>Note that a newly formed region always has four attributes assigned to it:</para>
-  <unorderedlist>
-    <listitem>los<listitem>
-    <listitem>material_id<listitem>
-    <listitem>region<listitem>
-    <listitem>region_id<listitem>
-  </unorderedlist>
-
+  <para>
+  <itemizedlist>
+    <listitem><para>los</para></listitem>
+    <listitem><para>material_id</para></listitem>
+    <listitem><para>region</para></listitem>
+    <listitem><para>region_id</para></listitem>
+  </itemizedlist>
+  </para>
   <para>The 'region' attribute is the 'region flag' mentioned in the
   edcomb command.  Somewhat confusingly though, immediately upon
   completing the 'r' (region) command in mged a message like this is
