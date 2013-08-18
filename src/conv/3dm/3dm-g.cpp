@@ -155,7 +155,7 @@ BuildHierarchy(struct rt_wdb* outfp, std::string &uuid, ON_TextLog* dump)
 	}
     }
     if (groupname.empty()) {
-	groupname = "g" + groupcnt;
+        groupname = "g" + itoa(groupcnt);
     }
 
     MEMBER_MAP::iterator iter = member_map.find(uuid);
