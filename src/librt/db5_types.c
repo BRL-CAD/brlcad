@@ -289,7 +289,7 @@ db5_standard_attribute(int idx)
 	case ATTR_LOS:
 	    return "los";
 	case ATTR_COLOR:
-	    return "color";
+	    return "rgb";
 	case ATTR_SHADER:
 	    return "shader";
 	case ATTR_INHERIT:
