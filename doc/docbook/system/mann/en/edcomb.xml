@@ -21,7 +21,7 @@
     <command>edcomb</command>
 
     <arg choice="req" rep="norepeat"><replaceable>combname</replaceable></arg>
-    <arg choice="opt" rep="norepeat"><replaceable>regionflag regionid air_code los material_code</replaceable></arg>
+    <arg choice="opt" rep="norepeat"><replaceable>regionflag region_id air_code los material_id</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
