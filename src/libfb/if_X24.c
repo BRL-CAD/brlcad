@@ -79,7 +79,7 @@
 #define SHMEM_KEY 42
 
 /* FIXME: see next FIXME ref gcc 4.8.1 error */
-const int GLUMTBL_FACTOR = LONG_MAX / 256;
+const int GLUMTBL_FACTOR = INT_MAX / 256;
 
 /*
  * Per window state information.
