@@ -849,7 +849,7 @@ build_connectivity_graph(const ON_Brep* brep, ON_SimpleArray<TrimmedFace*>& trim
 	for (int j = 0; j < face.m_li.Count(); j++) {
 	    const ON_BrepLoop& loop = brep->m_L[face.m_li[j]];
 	    for (int k = 0; k < loop.m_ti.Count(); k++) {
-		const ON_BrepTrim& trim = loop.m_ti[k];
+		const ON_BrepTrim& trim = brep->m_T[loop.m_ti[k]];
 		if (trim.m_ei != -1) {
 		    // The trim is not singular. It's corresponding to an edge
 		    ei.Append(trim.m_ei);
@@ -880,7 +880,7 @@ build_connectivity_graph(const ON_Brep* brep, ON_SimpleArray<TrimmedFace*>& trim
 		// They share an edge, so they're neighbors.
 		// Search the array to avoid duplication
 		if (trimmedfaces[start_idx+i]->neighbors.Search(trimmedfaces[start_idx+j]) == -1) {
-		    trimmedfaces[start_idx+1]->neighbors.Append(trimmedfaces[start_idx+j]);
+		    trimmedfaces[start_idx+i]->neighbors.Append(trimmedfaces[start_idx+j]);
 		}
 		if (trimmedfaces[start_idx+j]->neighbors.Search(trimmedfaces[start_idx+i]) == -1) {
 		    trimmedfaces[start_idx+j]->neighbors.Append(trimmedfaces[start_idx+i]);
@@ -964,6 +964,24 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
     
     build_connectivity_graph(brepA, original_faces, 0, facecount1 - 1);
     build_connectivity_graph(brepB, original_faces, facecount1, original_faces.Count() - 1);
+    
+    if (DEBUG_BREP_BOOLEAN) {
+	bu_log("The connectivity graph for the first brep structure.");
+	for (int i = 0; i < facecount1; i++) {
+	    bu_log("\nFace[%d]'s neighbors:", i);
+	    for (int j = 0; j < original_faces[i]->neighbors.Count(); j++) {
+		bu_log(" %d", original_faces.Search(original_faces[i]->neighbors[j]));
+	    }
+	}
+	bu_log("\nThe connectivity graph for the second brep structure.");
+	for (int i = 0; i < facecount2; i++) {
+	    bu_log("\nFace[%d]'s neighbors:", i);
+	    for (int j = 0; j < original_faces[facecount1 + i]->neighbors.Count(); j++) {
+		bu_log(" %d", original_faces.Search(original_faces[facecount1 + i]->neighbors[j]) - facecount1);
+	    }
+	}
+	bu_log("\n");
+    }
 
     // split the surfaces with the intersection curves
     for (int i = 0; i < original_faces.Count(); i++) {
