@@ -45,6 +45,8 @@ struct TrimmedFace {
     ON_SimpleArray<ON_Curve*> outerloop;
     std::vector<ON_SimpleArray<ON_Curve*> > innerloop;
     const ON_BrepFace *face;
+    // Connectivity graph support
+    ON_SimpleArray<TrimmedFace*> neighbors;
     TrimmedFace *Duplicate() const
     {
 	TrimmedFace *out = new TrimmedFace();
@@ -823,6 +825,68 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, ON_SimpleArray<ON_Curve*> &loop, 
 }
 
 
+HIDDEN int
+build_connectivity_graph(const ON_Brep* brep, ON_SimpleArray<TrimmedFace*>& trimmedfaces, int start_idx = -1, int end_idx = -1)
+{
+    if (start_idx == -1)
+	start_idx = 0;
+
+    if (end_idx == -1)
+	end_idx = trimmedfaces.Count() - 1;
+
+    int facecount = brep->m_F.Count();
+    // Index of the edges of a face
+    ON_ClassArray<ON_SimpleArray<int> > edge_index(facecount);
+
+    for (int i = 0; i < facecount; i++) {
+	ON_SimpleArray<int> ei;
+	const ON_BrepFace& face = brep->m_F[i];
+	for (int j = 0; j < face.m_li.Count(); j++) {
+	    const ON_BrepLoop& loop = brep->m_L[face.m_li[j]];
+	    for (int k = 0; k < loop.m_ti.Count(); k++) {
+		const ON_BrepTrim& trim = loop.m_ti[k];
+		if (trim.m_ei != -1) {
+		    // The trim is not singular. It's corresponding to an edge
+		    ei.Append(trim.m_ei);
+		}
+	    }
+	}
+	edge_index.Append(ei);
+    }
+
+    if (edge_index.Count() != facecount) {
+	bu_log("build_connectivity_graph() Error: edge_index.Count() != brep->m_F.Count()\n");
+    }
+
+    // Find the faces that share an edge
+    for (int i = 0; i < facecount; i++) {
+	for (int j = i + 1; j < facecount; j++) {
+	    bool shared = false;
+	    // Using O(n^2) searching. Because the problem size is usually very
+	    // small, this is an ideal choice.
+	    for (int k = 0; k < edge_index[i].Count(); k++) {
+		if (edge_index[j].Search(edge_index[i][k]) != -1) {
+		    shared = true;
+		    break;
+		}
+	    }
+	    if (shared) {
+		// They share an edge, so they're neighbors.
+		// Search the array to avoid duplication
+		if (trimmedfaces[start_idx+i]->neighbors.Search(trimmedfaces[start_idx+j]) == -1) {
+		    trimmedfaces[start_idx+1]->neighbors.Append(trimmedfaces[start_idx+j]);
+		}
+		if (trimmedfaces[start_idx+j]->neighbors.Search(trimmedfaces[start_idx+i]) == -1) {
+		    trimmedfaces[start_idx+j]->neighbors.Append(trimmedfaces[start_idx+i]);
+		}
+	    }
+	}
+    }
+
+    return 0;
+}
+
+
 int
 ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSED(operation))
 {
@@ -859,13 +923,12 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
 	}
     }
 
-    // split the surfaces with the intersection curves
+    ON_SimpleArray<TrimmedFace*> original_faces;
     for (int i = 0; i < facecount1 + facecount2; i++) {
 	const ON_BrepFace &face = i < facecount1 ? brepA->m_F[i] : brepB->m_F[i - facecount1];
 	const ON_Brep *brep = i < facecount1 ? brepA : brepB;
 	const ON_SimpleArray<int> &loopindex = face.m_li;
 
-	ON_SimpleArray<TrimmedFace*> trimmedfaces;
 	TrimmedFace *first = new TrimmedFace();
 	first->face = &face;
 
@@ -885,8 +948,24 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
 		first->innerloop.push_back(iloop);
 	}
 
+	original_faces.Append(first);
+    }
+
+    if (original_faces.Count() != facecount1 + facecount2) {
+	bu_log("ON_Boolean() Error: TrimmedFace generation failed.\n");
+	return -1;
+    }
+    
+    build_connectivity_graph(brepA, original_faces, 0, facecount1 - 1);
+    build_connectivity_graph(brepB, original_faces, facecount1, original_faces.Count() - 1);
+
+    // split the surfaces with the intersection curves
+    for (int i = 0; i < original_faces.Count(); i++) {
+	TrimmedFace* first = original_faces[i];
+
 	ON_SimpleArray<ON_Curve*> linked_curves;
 	link_curves(curvesarray[i], linked_curves);
+	ON_SimpleArray<TrimmedFace*> trimmedfaces;
 	split_trimmed_face(trimmedfaces, first, linked_curves);
 
 	/* TODO: Perform inside-outside test to decide whether the trimmed face
@@ -900,7 +979,7 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
 	for (int j = 0; j < trimmedfaces.Count(); j++) {
 	    // Add the surfaces, faces, loops, trims, vertices, edges, etc.
 	    // to the brep structure.
-	    ON_Surface *new_surf = face.SurfaceOf()->Duplicate();
+	    ON_Surface *new_surf = first->face->SurfaceOf()->Duplicate();
 	    int surfindex = brepO->AddSurface(new_surf);
 	    ON_BrepFace& new_face = brepO->NewFace(surfindex);
 
