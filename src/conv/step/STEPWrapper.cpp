@@ -48,11 +48,10 @@
 #include "ContextDependentShapeRepresentation.h"
 
 STEPWrapper::STEPWrapper()
+    : registry(NULL), sfile(NULL), dotg(NULL)
 {
-    instance_list = new InstMgr();
-    registry = NULL;
-    sfile = NULL;
-    dotg = NULL;
+    int ownsInstanceMemory = 1;
+    instance_list = new InstMgr(ownsInstanceMemory);
 }
 
 

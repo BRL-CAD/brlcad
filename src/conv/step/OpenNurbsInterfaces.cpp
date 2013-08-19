@@ -962,6 +962,7 @@ FaceSurface::LoadONBrep(ON_Brep *brep)
     }
 
     face_geometry->SetCurveBounds(bb);
+    delete bb;
 
     if (!face_geometry->LoadONBrep(brep)) {
 	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
@@ -1610,6 +1611,17 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	}
 	cs++;
     }
+
+    while (!curve_pullback_samples.empty()) {
+	PBCData *data = curve_pullback_samples.front();
+	while (!data->segments.empty()) {
+	    delete data->segments.front();
+	    data->segments.pop_front();
+	}
+	delete data;
+	curve_pullback_samples.pop_front();
+    }
+    delete st;
 
     return true;
 }

@@ -230,6 +230,10 @@ std::string DirObj::Normalize( const std::string & path ) {
         buf.clear();
     } else {
         buf.assign( b );
+
+#if !defined(__WIN32__)
+	free(b);
+#endif
     }
 
     if( buf.empty() ) {

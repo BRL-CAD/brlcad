@@ -32,12 +32,14 @@
 string Surface::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)Surface::Create);
 
 Surface::Surface()
+    : trim_curve_3d_bbox(NULL)
 {
     step = NULL;
     id = 0;
 }
 
 Surface::Surface(STEPWrapper *sw, int step_id)
+    : trim_curve_3d_bbox(NULL)
 {
     step = sw;
     id = step_id;
@@ -45,6 +47,7 @@ Surface::Surface(STEPWrapper *sw, int step_id)
 
 Surface::~Surface()
 {
+    delete trim_curve_3d_bbox;
 }
 
 bool

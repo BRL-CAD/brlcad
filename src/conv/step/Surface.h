@@ -47,8 +47,8 @@ public:
     Surface(STEPWrapper *sw, int step_id);
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual void Print(int level);
-    void SetCurveBounds(ON_BoundingBox *tcbb) {
-	trim_curve_3d_bbox = tcbb;
+    void SetCurveBounds(const ON_BoundingBox *tcbb) {
+	trim_curve_3d_bbox = new ON_BoundingBox(*tcbb);
     };
 
     //static methods

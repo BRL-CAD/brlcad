@@ -1194,17 +1194,20 @@ pullback_samples(const brlcad::SurfaceTree* surfacetree,
 		 double tolerance,
 		 double flatness)
 {
+    const ON_Surface *surf = NULL;
+
+    if (!surfacetree)
+	return NULL;
+
+    surf = ((brlcad::SurfaceTree *)surfacetree)->getSurface();
+    if (!surf)
+	return NULL;
+
     PBCData *data = new PBCData;
     data->tolerance = tolerance;
     data->flatness = flatness;
     data->curve = curve;
     data->surftree = (brlcad::SurfaceTree*)surfacetree;
-    if (!data->surftree)
-	return NULL;
-
-    const ON_Surface *surf = data->surftree->getSurface();
-    if (!surf)
-	return NULL;
 
     double tmin, tmax;
     data->curve->GetDomain(&tmin, &tmax);
