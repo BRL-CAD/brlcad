@@ -115,7 +115,7 @@ for file in $FILES ; do
 	MATCH="`grep -n -I -e '#[[:space:]]*include' $file /dev/null | head -n 1 | grep -v '\"'`"
 	if test ! "x$MATCH" = "x" ; then
 	    echo "ERROR: common.h needs to be included before: $MATCH"
-	    # FOUND=1
+	    FOUND=1
 	    continue
 	fi
     fi
