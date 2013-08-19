@@ -17,10 +17,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ug_misc.c
- *
- */
 
+#include "common.h"
+
+#include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <uf.h>
@@ -33,7 +33,6 @@
 #include <uf_object_types.h>
 #include <uf_facet.h>
 #include <uf_modl.h>
-#include <malloc.h>
 #include <tcl.h>
 
 
