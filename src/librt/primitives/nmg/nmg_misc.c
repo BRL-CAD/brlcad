@@ -120,7 +120,7 @@ nmg_snurb_calc_lu_uv_orient(const struct loopuse *lu)
 	    for (i = 0; i < 5; i++) {
 		fastf_t t;
 
-		t = t1 + (t2 - t1)*0.2*(fastf_t)i;
+		t = t1 + (t2 - t1) * 0.2 * (fastf_t)i;
 
 		VSETALLN(crv_pt, 0.0, coords);
 		rt_nurb_c_eval(eg, t, crv_pt);
