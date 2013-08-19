@@ -78,6 +78,7 @@ ON_3dPoint_to_Cartesian_point(ON_3dPoint *inpnt, SdaiCartesian_point *step_pnt) 
     coord_vals->AddNode(znode);
 }
 
+
 void
 ON_3dVector_to_Direction(ON_3dVector *invect, SdaiDirection *step_direction) {
     invect->Unitize();
@@ -93,6 +94,7 @@ ON_3dVector_to_Direction(ON_3dVector *invect, SdaiDirection *step_direction) {
     coord_vals->AddNode(znode);
 }
 
+
 void
 ON_NurbsCurveCV_to_EntityAggregate(ON_NurbsCurve *incrv, SdaiB_spline_curve *step_crv, Registry *registry, InstMgr *instance_list) {
     EntityAggregate *control_pnts = step_crv->control_points_list_();
@@ -107,6 +109,7 @@ ON_NurbsCurveCV_to_EntityAggregate(ON_NurbsCurve *incrv, SdaiB_spline_curve *ste
     }
 }
 
+
 void
 ON_NurbsSurfaceCV_to_GenericAggregate(ON_NurbsSurface *insrf, SdaiB_spline_surface *step_srf, Registry *registry, InstMgr *instance_list) {
     GenericAggregate *control_pnts_lists = step_srf->control_points_list_();
@@ -120,7 +123,7 @@ ON_NurbsSurfaceCV_to_GenericAggregate(ON_NurbsSurface *insrf, SdaiB_spline_surfa
 	    instance_list->Append(step_cartesian, completeSE);
 	    insrf->GetCV(i, j, cv_pnt);
 	    ON_3dPoint_to_Cartesian_point(&(cv_pnt), step_cartesian);
-	    if (j != 0) ss << ",";
+	    if (j != 0) ss << ", ";
 	    ss << "#" << ((SDAI_Application_instance *)step_cartesian)->StepFileId();
 	}
 	ss << ")";
@@ -129,7 +132,8 @@ ON_NurbsSurfaceCV_to_GenericAggregate(ON_NurbsSurface *insrf, SdaiB_spline_surfa
     }
 }
 
-    void
+
+void
 ON_NurbsCurveKnots_to_Aggregates(ON_NurbsCurve *incrv, SdaiB_spline_curve_with_knots *step_crv)
 {
     IntAggregate_ptr knot_multiplicities = step_crv->knot_multiplicities_();
@@ -153,7 +157,8 @@ ON_NurbsCurveKnots_to_Aggregates(ON_NurbsCurve *incrv, SdaiB_spline_curve_with_k
     step_crv->knot_spec_(Knot_type__unspecified);
 }
 
-    void
+
+void
 ON_NurbsSurfaceKnots_to_Aggregates(ON_NurbsSurface *insrf, SdaiB_spline_surface_with_knots *step_srf)
 {
     IntAggregate_ptr u_knot_multiplicities = step_srf->u_multiplicities_();
@@ -163,39 +168,40 @@ ON_NurbsSurfaceKnots_to_Aggregates(ON_NurbsSurface *insrf, SdaiB_spline_surface_
     /* u knots */
     int i = 0;
     while (i < insrf->KnotCount(0)) {
-	int multiplicity_val = insrf->KnotMultiplicity(0,i);
+	int multiplicity_val = insrf->KnotMultiplicity(0, i);
 	/* Add knot */
 	RealNode *knot = new RealNode();
-	knot->value = insrf->Knot(0,i);
+	knot->value = insrf->Knot(0, i);
 	u_knots->AddNode(knot);
 	/* OpenNURBS and STEP have different notions of end knot multiplicity -
 	 * see http://wiki.mcneel.com/developer/onsuperfluousknot */
-	if ((i == 0) || (i == (insrf->KnotCount(0) - insrf->KnotMultiplicity(0,0)))) multiplicity_val++;
+	if ((i == 0) || (i == (insrf->KnotCount(0) - insrf->KnotMultiplicity(0, 0)))) multiplicity_val++;
 	/* Set Multiplicity */
 	IntNode *multiplicity = new IntNode();
 	multiplicity->value = multiplicity_val;
 	u_knot_multiplicities->AddNode(multiplicity);
-	i += insrf->KnotMultiplicity(0,i);
+	i += insrf->KnotMultiplicity(0, i);
     }
     /* v knots */
     i = 0;
     while (i < insrf->KnotCount(1)) {
-	int multiplicity_val = insrf->KnotMultiplicity(1,i);
+	int multiplicity_val = insrf->KnotMultiplicity(1, i);
 	/* Add knot */
 	RealNode *knot = new RealNode();
-	knot->value = insrf->Knot(1,i);
+	knot->value = insrf->Knot(1, i);
 	v_knots->AddNode(knot);
 	/* OpenNURBS and STEP have different notions of end knot multiplicity -
 	 * see http://wiki.mcneel.com/developer/onsuperfluousknot */
-	if ((i == 0) || (i == (insrf->KnotCount(1) - insrf->KnotMultiplicity(1,0)))) multiplicity_val++;
+	if ((i == 0) || (i == (insrf->KnotCount(1) - insrf->KnotMultiplicity(1, 0)))) multiplicity_val++;
 	/* Set Multiplicity */
 	IntNode *multiplicity = new IntNode();
 	multiplicity->value = multiplicity_val;
 	v_knot_multiplicities->AddNode(multiplicity);
-	i += insrf->KnotMultiplicity(1,i);
+	i += insrf->KnotMultiplicity(1, i);
     }
     step_srf->knot_spec_(Knot_type__unspecified);
 }
+
 
 #if 0
 void
@@ -571,8 +577,8 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
     instance_list->Append((STEPentity *)ua_entry_3, completeSE);
 
     SdaiPlane_angle_measure_with_unit *p_ang_measure_with_unit = (SdaiPlane_angle_measure_with_unit *)registry->ObjCreate("PLANE_ANGLE_MEASURE_WITH_UNIT");
-    SdaiMeasure_value * p_ang_measure_value = new SdaiMeasure_value(DEG2RAD,config_control_design::t_measure_value);
-    p_ang_measure_value->SetUnderlyingType( config_control_design::t_plane_angle_measure );
+    SdaiMeasure_value * p_ang_measure_value = new SdaiMeasure_value(DEG2RAD, config_control_design::t_measure_value);
+    p_ang_measure_value->SetUnderlyingType(config_control_design::t_plane_angle_measure);
     p_ang_measure_with_unit->value_component_(p_ang_measure_value);
     SdaiUnit *p_ang_unit = new SdaiUnit((SdaiNamed_unit *)ua_entry_3);
     p_ang_measure_with_unit->unit_component_(p_ang_unit);
@@ -618,7 +624,7 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
     /* For advanced brep, need to create and add a representation context.  This is a
      * complex type of four other types: */
     const char *entNmArr[5] = {"geometric_representation_context", "global_uncertainty_assigned_context",
-	"global_unit_assigned_context", "representation_context", "*"};
+			       "global_unit_assigned_context", "representation_context", "*"};
     STEPcomplex *complex_entity = new STEPcomplex(registry, (const char **)entNmArr, registry->GetEntityCnt());
     STEPcomplex *sc = complex_entity->head;
     while (sc) {
@@ -668,6 +674,7 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 
     return true;
 }
+
 
 // Local Variables:
 // tab-width: 8
