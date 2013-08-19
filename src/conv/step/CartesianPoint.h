@@ -26,9 +26,8 @@
 #ifndef CARTESIANPOINT_H_
 #define CARTESIANPOINT_H_
 
-#include "common.h"
+#include "Point.h"
 
-#include <Point.h>
 
 class CartesianPoint: public Point
 {
