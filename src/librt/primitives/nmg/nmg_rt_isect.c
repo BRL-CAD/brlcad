@@ -1857,18 +1857,18 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
 	    coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
 
 	    pt = srf->ctl_points;
-	    for (i=0; i<4; i++) {
-		for (j=0; j<coords; j++) {
+	    for (i = 0; i < 4; i++) {
+		for (j = 0; j < coords; j++) {
 		    ctl_pt[i][j] = *pt;
 		    pt++;
 		}
 		if (rational) {
-		    for (j=0; j<coords-1; j++)
+		    for (j = 0; j < coords-1; j++)
 			ctl_pt[i][j] = ctl_pt[i][j]/ctl_pt[i][coords-1];
 		}
 	    }
 	    if (RTG.NMG_debug & DEBUG_RT_ISECT) {
-		for (i=0; i<4; i++)
+		for (i = 0; i < 4; i++)
 		    bu_log("\tctl_point[%d] = (%g %g %g)\n", i, V3ARGS(ctl_pt[i]));
 		bu_log("uv range (%g %g) <-> (%g %g)\n", srf->u.knots[0], srf->v.knots[0], srf->u.knots[srf->u.k_size-1], srf->v.knots[srf->v.k_size-1]);
 	    }
