@@ -33,7 +33,6 @@
 #include <string.h>
 #include <math.h>
 
-#include <OpenCL/cl.h>
 #include "bio.h"
 
 #include "vmath.h"
@@ -70,10 +69,27 @@ struct sph_specific {
 };
 
 
-#define OPENCL
+#define CLT
+#define CLT_SINGLE_PRECISION
 
 
-#ifdef OPENCL
+#ifdef CLT
+
+
+#include <CL/cl.h>
+
+
+#ifndef CL_VERSION_1_2
+#error "Requires OpenCL 1.2."
+#endif
+
+
+#ifdef CLT_SINGLE_PRECISION
+#define cl_double cl_float
+#define cl_double3 cl_float3
+#endif
+
+
 const int clt_semaphore = 12; /* FIXME: for testing; this isn't our semaphore */
 static int clt_initialized = 0;
 static cl_device_id clt_device;
@@ -104,14 +120,19 @@ clt_get_cl_device()
     cl_int error;
     cl_platform_id platform;
     cl_device_id device;
+    int using_cpu = 0;
 
     error = clGetPlatformIDs(1, &platform, NULL);
     if (error != CL_SUCCESS) bu_bomb("failed to find an OpenCL platform");
 
     error = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
-    if (error == CL_DEVICE_NOT_FOUND)
+    if (error == CL_DEVICE_NOT_FOUND) {
+        using_cpu = 1;
 	error = clGetDeviceIDs(platform, CL_DEVICE_TYPE_CPU, 1, &device, NULL);
+    }
     if (error != CL_SUCCESS) bu_bomb("failed to find an OpenCL device (using this method)");
+
+    if (using_cpu) bu_log("clt: no GPU devices available; using CPU for OpenCL\n");
 
     return device;
 }
@@ -204,13 +225,12 @@ clt_init()
 
 
 static cl_double3
-clt_shot(cl_double3 o, cl_double3 dir, cl_double3 V, cl_double radsq)
+clt_shot(cl_double3 o, cl_double3 dir, cl_double3 V, cl_double radsq, unsigned hypersample)
 {
     cl_int error;
     cl_mem output;
     cl_double3 result;
     cl_event done_kernel;
-    const size_t global_size = 1;
 
 
     VSET(result.s, 0, 0, 0);
@@ -225,7 +245,7 @@ clt_shot(cl_double3 o, cl_double3 dir, cl_double3 V, cl_double radsq)
     error |= clSetKernelArg(clt_kernel, 3, sizeof(cl_double3), &V);
     error |= clSetKernelArg(clt_kernel, 4, sizeof(cl_double), &radsq);
     if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
-    error = clEnqueueNDRangeKernel(clt_queue, clt_kernel, 1, NULL, &global_size, NULL, 0, NULL, &done_kernel);
+    error = clEnqueueNDRangeKernel(clt_queue, clt_kernel, 1, NULL, &hypersample, NULL, 0, NULL, &done_kernel);
     bu_semaphore_release(clt_semaphore);
     if (error != CL_SUCCESS) bu_bomb("failed to enqueue OpenCL kernel");
 
@@ -264,7 +284,7 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     eip = (struct rt_ell_internal *)ip->idb_ptr;
     RT_ELL_CK_MAGIC(eip);
 
-#ifdef OPENCL
+#ifdef CLT
     clt_init();
 #endif
 
@@ -387,7 +407,8 @@ rt_sph_print(register const struct soltab *stp)
 int
 rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
-#ifdef OPENCL
+#ifdef CLT
+    const int hypersample = 10;
     cl_double3 o;    /* ray origin  */
     cl_double3 dir;  /* ray direction (unit vector) */
     cl_double3 V;    /* vector to sphere  */
@@ -401,7 +422,7 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     VMOVE(dir.s, rp->r_dir);
     VMOVE(V.s, ((struct sph_specific *)stp->st_specific)->sph_V);
     radsq = ((struct sph_specific *)stp->st_specific)->sph_radsq;
-    result = clt_shot(o, dir, V, radsq);
+    result = clt_shot(o, dir, V, radsq, hypersample);
 
     if (EQUAL(result.s[0], 0)) return 0; /* no hit  */
 
