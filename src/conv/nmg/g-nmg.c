@@ -449,7 +449,7 @@ main(int argc, char **argv)
     rt_init_resource(&rt_uniresource, 0, NULL);
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "t:a:n:o:r:bvx:P:X:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "t:a:n:o:r:bvx:PX:h?")) != -1) {
 	switch (c) {
 	    case 'b':		/* make BOT's instead of NMG's */
 		do_bots = 1;
@@ -494,18 +494,16 @@ main(int argc, char **argv)
 	}
     }
 
-    if (bu_optind+1 >= argc) {
+    if (bu_optind+1 >= argc)
 	bu_exit(1, usage, argv[0]);
-    }
 
     /* Open BRL-CAD database */
     if ((dbip = db_open(argv[bu_optind], DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(argv[0]);
 	bu_exit(1, "Cannot open geometry database file %s\n", argv[bu_optind]);
     }
-    if (db_dirbuild(dbip)) {
+    if (db_dirbuild(dbip))
 	bu_exit(1, "db_dirbuild failed\n");
-    }
 
     if ((fp_out = wdb_fopen(out_file)) == NULL) {
 	perror(out_file);
