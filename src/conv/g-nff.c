@@ -466,21 +466,11 @@ Usage: %s [-v] [-i] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_
 	perror(argv[0]);
 	bu_exit(1, "ERROR: unable to open geometry database file (%s)\n", argv[0]);
     }
-    if (db_dirbuild(dbip)) {
+    if (db_dirbuild(dbip))
 	bu_exit(1, "db_dirbuild failed\n");
-    }
 
     BN_CK_TOL(tree_state.ts_tol);
     RT_CK_TESS_TOL(tree_state.ts_ttol);
-
-    fprintf(fpe, "Model: %s\n", argv[0]);
-    fprintf(fpe, "Objects:");
-    for (i = 1; i < argc; i++)
-	fprintf(fpe, " %s", argv[i]);
-    fprintf(fpe, "\nTessellation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
-	    tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
-    fprintf(fpe, "Calculational tolerances:\n\tdist = %g mm perp = %g\n",
-	    tree_state.ts_tol->dist, tree_state.ts_tol->perp);
 
     bu_log("Model: %s\n", argv[0]);
     bu_log("Objects:");
@@ -515,7 +505,6 @@ Usage: %s [-v] [-i] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_
     }
 
     bu_log("%ld triangles written\n", tot_polygons);
-    fprintf(fpe, "%ld triangles written\n", tot_polygons);
 
     /* Release dynamic storage */
     nmg_km(the_model);
