@@ -474,9 +474,12 @@ rt_hrt_uv()
  * R T _ H R T _ F R E E
  */
 void
-rt_hrt_free()
+rt_hrt_free(struct soltab *stp)
 {
-    bu_log("rt_hrt_free: Not implemented yet!\n");
+    struct hrt_specific *hrt =
+	(struct hrt_specific *)stp->st_specific;
+
+    BU_PUT(hrt, struct hrt_specific);
 }
 
 
@@ -707,10 +710,11 @@ rt_hrt_ifree(struct rt_db_internal *ip)
  *
  */
 int
-rt_hrt_params(struct pc_pc_set *UNUSED(ps))
+rt_hrt_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
-    bu_log("rt_hrt_params: Not implemented yet!\n");
-    return 0;
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
+    return 0;                /* OK */
 }
 
 
