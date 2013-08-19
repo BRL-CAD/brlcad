@@ -54,7 +54,6 @@ STEPWrapper *STEPEntity::Step()
 }
 
 
-
 STEPEntity *
 STEPEntity::CreateEntity(
     STEPWrapper *sw,

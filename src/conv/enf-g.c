@@ -582,7 +582,7 @@ Assembly_import( int id_start )
 	if ( mk_addmember( this_assem->members[i]->brlcad_comb,
 			   &assem_head.l, NULL, WMOP_UNION ) == WMEMBER_NULL )
 	    bu_exit( 1, "%s: ERROR: Failed to add region %s to assembly %s\n",
-                        progname,this_assem->members[i]->brlcad_comb, this_assem->brlcad_comb );
+			progname,this_assem->members[i]->brlcad_comb, this_assem->brlcad_comb );
 
     if ( mk_comb( fd_out, this_assem->brlcad_comb, &assem_head.l, 0, NULL, NULL, NULL,
 		  0, 0, 0, 0, 0, 0, 0 ) )

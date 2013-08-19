@@ -889,7 +889,7 @@ Add_stragglers_to_groups(void)
 	if (!ptr->in_comp_group && ptr->region_id > 0 && !is_a_hole(ptr->region_id)) {
 	    /* add this component to a series */
 
-            if (!group_head || ptr->region_id > region_id_max) {
+	    if (!group_head || ptr->region_id > region_id_max) {
 		struct wmember *new_head;
 		ssize_t new_cnt, i;
 		struct bu_list *list_first;

@@ -111,16 +111,16 @@ main(int argc, char *argv[])
     }
     if (!dotg->load(iflnm)) {
 	std::cerr << "ERROR: unable to open BRL-CAD input file [" << oflnm << "]" << std::endl;
-        delete dotg;
-        return 2;
+	delete dotg;
+	return 2;
     }
 
     struct db_i *dbip = dotg->GetDBIP();
     struct directory *dp = db_lookup(dbip, "brep.s", LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
 	std::cerr << "ERROR: cannot find " << "brep.s" << "\n" << std::endl;
-        delete dotg;
-        return 1;
+	delete dotg;
+	return 1;
     }
 
     struct rt_db_internal intern;
