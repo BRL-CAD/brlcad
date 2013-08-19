@@ -24,13 +24,14 @@
  */
 
 
-// Make entity arrays for each of the m_V, m_S, etc arrays and create step instances of them,
-// starting with the basic ones.
+// Make entity arrays for each of the m_V, m_S, etc arrays and create
+// step instances of them, starting with the basic ones.
 //
-// The array indices in the ON_Brep will correspond to the step entity array locations that
-// hold the step version of each entity.
+// The array indices in the ON_Brep will correspond to the step entity
+// array locations that hold the step version of each entity.
 //
-// then, need to map the ON_Brep hierarchy to the corresponding STEP hierarchy
+// then, need to map the ON_Brep hierarchy to the corresponding STEP
+// hierarchy
 //
 // brep -> advanced_brep_shape_representation
 //         manifold_solid_brep
@@ -51,10 +52,13 @@
 // 2d points -> point_on_surface
 // 1d points to bound curve -> point_on_curve
 //
-// 2d trimming curves -> pcurve using point_on_surface? almost doesn't look as if there is a good AP203 way to represent 2d trimming curves...
+// 2d trimming curves -> pcurve using point_on_surface? almost doesn't
+// look as if there is a good AP203 way to represent 2d trimming
+// curves...
 //
 //
-// Note that STEPentity is the same thing as SDAI_Application_instance... see src/clstepcore/sdai.h line 220
+// Note that STEPentity is the same thing as
+// SDAI_Application_instance... see src/clstepcore/sdai.h line 220
 //
 
 #include "common.h"
@@ -145,8 +149,11 @@ ON_NurbsCurveKnots_to_Aggregates(ON_NurbsCurve *incrv, SdaiB_spline_curve_with_k
 	RealNode *knot = new RealNode();
 	knot->value = incrv->Knot(i);
 	knots->AddNode(knot);
-	/* OpenNURBS and STEP have different notions of end knot multiplicity -
-	 * see http://wiki.mcneel.com/developer/onsuperfluousknot */
+
+	/* OpenNURBS and STEP have different notions of end knot
+	 * multiplicity - see:
+	 * http://wiki.mcneel.com/developer/onsuperfluousknot
+	 */
 	if ((i == 0) || (i == (incrv->KnotCount() - incrv->KnotMultiplicity(0)))) multiplicity_val++;
 	/* Set Multiplicity */
 	IntNode *multiplicity = new IntNode();
@@ -175,8 +182,10 @@ ON_NurbsSurfaceKnots_to_Aggregates(ON_NurbsSurface *insrf, SdaiB_spline_surface_
 	knot->value = insrf->Knot(0, i);
 	u_knots->AddNode(knot);
 
-	/* OpenNURBS and STEP have different notions of end knot multiplicity -
-	 * see http://wiki.mcneel.com/developer/onsuperfluousknot */
+	/* OpenNURBS and STEP have different notions of end knot
+	 * multiplicity - see:
+	 * http://wiki.mcneel.com/developer/onsuperfluousknot
+	 */
 	if ((i == 0) || (i == (insrf->KnotCount(0) - insrf->KnotMultiplicity(0, 0)))) multiplicity_val++;
 
 	/* Set Multiplicity */
@@ -262,9 +271,11 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 	    std::cout << "Have LineCurve\n";
 	    ON_Line *m_line = &(l_curve->m_line);
 
-	    /* In STEP, a line consists of a cartesian point and a 3D vector.  Since
-	     * it does not appear that OpenNURBS data structures reference m_V points
-	     * for these constructs, create our own */
+	    /* In STEP, a line consists of a cartesian point and a 3D
+	     * vector.  Since it does not appear that OpenNURBS data
+	     * structures reference m_V points for these constructs,
+	     * create our own
+	     */
 
 	    three_dimensional_curves.at(i) = registry->ObjCreate("LINE");
 
@@ -309,15 +320,19 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 
 	    ((SdaiB_spline_curve *)three_dimensional_curves.at(i))->curve_form_(B_spline_curve_form__unspecified);
 	    ((SdaiB_spline_curve *)three_dimensional_curves.at(i))->closed_curve_(SDAI_LOGICAL(n_curve->IsClosed()));
-	    /* TODO:  Assume we don't have self-intersecting curves for now - need some way to test this... */
+
+	    /* TODO: Assume we don't have self-intersecting curves for
+	     * now - need some way to test this...
+	     */
 	    ((SdaiB_spline_curve *)three_dimensional_curves.at(i))->self_intersect_(LFalse);
 	    ((SdaiB_spline_curve *)three_dimensional_curves.at(i))->name_("''");
 	    instance_list->Append(three_dimensional_curves.at(i), completeSE);
 	    curve_converted = 1;
 	}
 
-	/* Whatever this is, if it's not a supported type and it does have
-	 * a NURBS form, use that */
+	/* Whatever this is, if it's not a supported type and it does
+	 * have a NURBS form, use that
+	 */
 	if (!curve_converted) std::cout << "Curve not converted! " << i << "\n";
 
     }
@@ -343,7 +358,9 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 	oriented_edge->edge_start_(((SdaiVertex *)vertex_pnts.at(edge->Vertex(0)->m_vertex_index)));
 	oriented_edge->edge_end_(((SdaiVertex *)vertex_pnts.at(edge->Vertex(1)->m_vertex_index)));
 
-	/* Check whether the 3d points of the vertices correspond to the beginning and end of the curve */
+	/* Check whether the 3d points of the vertices correspond to
+	 * the beginning and end of the curve.
+	 */
 	double d1 = edge->Vertex(0)->Point().DistanceTo(brep->m_C3[edge->EdgeCurveIndexOf()]->PointAtStart());
 	double d1a = edge->Vertex(0)->Point().DistanceTo(brep->m_C3[edge->EdgeCurveIndexOf()]->PointAtEnd());
 	double d2 = edge->Vertex(1)->Point().DistanceTo(brep->m_C3[edge->EdgeCurveIndexOf()]->PointAtStart());
@@ -379,7 +396,8 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 	}
     }
 
-    // surfaces - TODO - need to handle cylindrical, conical, toroidal, etc. types that are enumerated
+    // surfaces - TODO - need to handle cylindrical, conical,
+    // toroidal, etc. types that are enumerated
     std::cout << "Have " << brep->m_S.Count() << " surfaces\n";
     for (int i = 0; i < brep->m_S.Count(); ++i) {
 	int surface_converted = 0;
