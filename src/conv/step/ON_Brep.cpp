@@ -165,6 +165,7 @@ ON_NurbsSurfaceKnots_to_Aggregates(ON_NurbsSurface *insrf, SdaiB_spline_surface_
     IntAggregate_ptr v_knot_multiplicities = step_srf->v_multiplicities_();
     RealAggregate_ptr u_knots = step_srf->u_knots_();
     RealAggregate_ptr v_knots = step_srf->v_knots_();
+
     /* u knots */
     int i = 0;
     while (i < insrf->KnotCount(0)) {
@@ -173,15 +174,18 @@ ON_NurbsSurfaceKnots_to_Aggregates(ON_NurbsSurface *insrf, SdaiB_spline_surface_
 	RealNode *knot = new RealNode();
 	knot->value = insrf->Knot(0, i);
 	u_knots->AddNode(knot);
+
 	/* OpenNURBS and STEP have different notions of end knot multiplicity -
 	 * see http://wiki.mcneel.com/developer/onsuperfluousknot */
 	if ((i == 0) || (i == (insrf->KnotCount(0) - insrf->KnotMultiplicity(0, 0)))) multiplicity_val++;
+
 	/* Set Multiplicity */
 	IntNode *multiplicity = new IntNode();
 	multiplicity->value = multiplicity_val;
 	u_knot_multiplicities->AddNode(multiplicity);
 	i += insrf->KnotMultiplicity(0, i);
     }
+
     /* v knots */
     i = 0;
     while (i < insrf->KnotCount(1)) {
@@ -190,9 +194,11 @@ ON_NurbsSurfaceKnots_to_Aggregates(ON_NurbsSurface *insrf, SdaiB_spline_surface_
 	RealNode *knot = new RealNode();
 	knot->value = insrf->Knot(1, i);
 	v_knots->AddNode(knot);
+
 	/* OpenNURBS and STEP have different notions of end knot multiplicity -
 	 * see http://wiki.mcneel.com/developer/onsuperfluousknot */
 	if ((i == 0) || (i == (insrf->KnotCount(1) - insrf->KnotMultiplicity(1, 0)))) multiplicity_val++;
+
 	/* Set Multiplicity */
 	IntNode *multiplicity = new IntNode();
 	multiplicity->value = multiplicity_val;
@@ -229,6 +235,7 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 	instance_list->Append(cartesian_pnts.at(i), completeSE);
 	ON_3dPoint v_pnt = brep->m_V[i].Point();
 	ON_3dPoint_to_Cartesian_point(&(v_pnt), (SdaiCartesian_point *)cartesian_pnts.at(i));
+
 	// Vertex points (topological, references actual 3D geometry)
 	vertex_pnts.at(i) = registry->ObjCreate("VERTEX_POINT");
 	((SdaiVertex_point *)vertex_pnts.at(i))->name_("''");
@@ -250,13 +257,17 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 	if (a_curve && !curve_converted) {
 	    std::cout << "Have ArcCurve\n";
 	}
+
 	if (l_curve && !curve_converted) {
 	    std::cout << "Have LineCurve\n";
 	    ON_Line *m_line = &(l_curve->m_line);
+
 	    /* In STEP, a line consists of a cartesian point and a 3D vector.  Since
 	     * it does not appear that OpenNURBS data structures reference m_V points
 	     * for these constructs, create our own */
+
 	    three_dimensional_curves.at(i) = registry->ObjCreate("LINE");
+
 	    SdaiLine *curr_line = (SdaiLine *)three_dimensional_curves.at(i);
 	    curr_line->pnt_((SdaiCartesian_point *)registry->ObjCreate("CARTESIAN_POINT"));
 	    ON_3dPoint_to_Cartesian_point(&(m_line->from), curr_line->pnt_());
@@ -270,15 +281,18 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 	    curr_dir->orientation_()->name_("''");
 	    curr_line->dir_()->name_("''");
 	    curr_line->name_("''");
+
 	    instance_list->Append(curr_line->pnt_(), completeSE);
 	    instance_list->Append(curr_dir->orientation_(), completeSE);
 	    instance_list->Append(curr_line->dir_(), completeSE);
 	    instance_list->Append(three_dimensional_curves.at(i), completeSE);
 	    curve_converted = 1;
 	}
+
 	if (p_curve && !curve_converted) {
 	    std::cout << "Have PolyCurve\n";
 	}
+
 	if (n_curve && !curve_converted) {
 	    std::cout << "Have NurbsCurve\n";
 	    if (n_curve->IsRational()) {
@@ -292,6 +306,7 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 		SdaiB_spline_curve_with_knots *curve_knots = (SdaiB_spline_curve_with_knots *)three_dimensional_curves.at(i);
 		ON_NurbsCurveKnots_to_Aggregates(n_curve, curve_knots);
 	    }
+
 	    ((SdaiB_spline_curve *)three_dimensional_curves.at(i))->curve_form_(B_spline_curve_form__unspecified);
 	    ((SdaiB_spline_curve *)three_dimensional_curves.at(i))->closed_curve_(SDAI_LOGICAL(n_curve->IsClosed()));
 	    /* TODO:  Assume we don't have self-intersecting curves for now - need some way to test this... */
@@ -312,12 +327,14 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 	ON_BrepEdge *edge = &(brep->m_E[i]);
 	edge_curves.at(i) = registry->ObjCreate("EDGE_CURVE");
 	instance_list->Append(edge_curves.at(i), completeSE);
+
 	SdaiEdge_curve *e_curve = (SdaiEdge_curve *)edge_curves.at(i);
 	e_curve->name_("''");
 	e_curve->edge_geometry_(((SdaiCurve *)three_dimensional_curves.at(edge->EdgeCurveIndexOf())));
 	e_curve->same_sense_(BTrue);
 	e_curve->edge_start_(((SdaiVertex *)vertex_pnts.at(edge->Vertex(0)->m_vertex_index)));
 	e_curve->edge_end_(((SdaiVertex *)vertex_pnts.at(edge->Vertex(1)->m_vertex_index)));
+
 	oriented_edges.at(i) = registry->ObjCreate("ORIENTED_EDGE");
 	instance_list->Append(oriented_edges.at(i), completeSE);
 	SdaiOriented_edge *oriented_edge = (SdaiOriented_edge *)oriented_edges.at(i);
@@ -325,6 +342,7 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 	oriented_edge->edge_element_((SdaiEdge *)e_curve);
 	oriented_edge->edge_start_(((SdaiVertex *)vertex_pnts.at(edge->Vertex(0)->m_vertex_index)));
 	oriented_edge->edge_end_(((SdaiVertex *)vertex_pnts.at(edge->Vertex(1)->m_vertex_index)));
+
 	/* Check whether the 3d points of the vertices correspond to the beginning and end of the curve */
 	double d1 = edge->Vertex(0)->Point().DistanceTo(brep->m_C3[edge->EdgeCurveIndexOf()]->PointAtStart());
 	double d1a = edge->Vertex(0)->Point().DistanceTo(brep->m_C3[edge->EdgeCurveIndexOf()]->PointAtEnd());
@@ -337,17 +355,22 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 	}
     }
 
-    // loop topology.  STEP defines loops with 3D edge curves, but OpenNURBS describes ON_BrepLoops with
-    // 2d trim curves.  So for a given loop, we need to iterate over the trims, for each trim get the
-    // index of its corresponding edge, and add that edge to the _edge_list for the loop.
+    // loop topology.  STEP defines loops with 3D edge curves, but
+    // OpenNURBS describes ON_BrepLoops with 2d trim curves.  So for a
+    // given loop, we need to iterate over the trims, for each trim
+    // get the index of its corresponding edge, and add that edge to
+    // the _edge_list for the loop.
     for (int i = 0; i < brep->m_L.Count(); ++i) {
 	ON_BrepLoop *loop= &(brep->m_L[i]);
 	edge_loops.at(i) = registry->ObjCreate("EDGE_LOOP");
 	instance_list->Append(edge_loops.at(i), completeSE);
 	((SdaiEdge_loop *)edge_loops.at(i))->name_("''");
-	// Why doesn't SdaiEdge_loop's edge_list_() function give use the edge_list from the SdaiPath??
-	// Initialized to NULL and crashes - what good is it?  Have to get at the internal SdaiPath
-	// directly to build something that STEPwrite will output.
+
+	// Why doesn't SdaiEdge_loop's edge_list_() function give use
+	// the edge_list from the SdaiPath??  Initialized to NULL and
+	// crashes - what good is it?  Have to get at the internal
+	// SdaiPath directly to build something that STEPwrite will
+	// output.
 	SdaiPath *e_loop_path = (SdaiPath *)edge_loops.at(i)->GetNextMiEntity();
 	for (int l = 0; l < loop->TrimCount(); ++l) {
 	    ON_BrepEdge *edge = loop->Trim(l)->Edge();
@@ -376,14 +399,17 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 
 	if (p_surface && !surface_converted) {
 	    std::cout << "Have PlaneSurface\n";
+
 	    ON_NurbsSurface p_nurb;
 	    p_surface->GetNurbForm(p_nurb);
 	    surfaces.at(i) = registry->ObjCreate("B_SPLINE_SURFACE_WITH_KNOTS");
+
 	    SdaiB_spline_surface *curr_surface = (SdaiB_spline_surface *)surfaces.at(i);
 	    curr_surface->name_("''");
 	    curr_surface->u_degree_(p_nurb.Degree(0));
 	    curr_surface->v_degree_(p_nurb.Degree(1));
 	    ON_NurbsSurfaceCV_to_GenericAggregate(&p_nurb, curr_surface, registry, instance_list);
+
 	    SdaiB_spline_surface_with_knots *surface_knots = (SdaiB_spline_surface_with_knots *)surfaces.at(i);
 	    ON_NurbsSurfaceKnots_to_Aggregates(&p_nurb, surface_knots);
 	    curr_surface->surface_form_(B_spline_surface_form__plane_surf);
@@ -403,11 +429,13 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 	if (n_surface && !surface_converted) {
 	    std::cout << "Have NurbsSurface\n";
 	    surfaces.at(i) = registry->ObjCreate("B_SPLINE_SURFACE_WITH_KNOTS");
+
 	    SdaiB_spline_surface *curr_surface = (SdaiB_spline_surface *)surfaces.at(i);
 	    curr_surface->name_("''");
 	    curr_surface->u_degree_(n_surface->Degree(0));
 	    curr_surface->v_degree_(n_surface->Degree(1));
 	    ON_NurbsSurfaceCV_to_GenericAggregate(n_surface, curr_surface, registry, instance_list);
+
 	    SdaiB_spline_surface_with_knots *surface_knots = (SdaiB_spline_surface_with_knots *)surfaces.at(i);
 	    ON_NurbsSurfaceKnots_to_Aggregates(n_surface, surface_knots);
 	    curr_surface->surface_form_(B_spline_surface_form__unspecified);
@@ -426,14 +454,17 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 
 	if (sum_surface && !surface_converted) {
 	    std::cout << "Have SumSurface\n";
+
 	    ON_NurbsSurface sum_nurb;
 	    sum_surface->GetNurbForm(sum_nurb);
 	    surfaces.at(i) = registry->ObjCreate("B_SPLINE_SURFACE_WITH_KNOTS");
+
 	    SdaiB_spline_surface *curr_surface = (SdaiB_spline_surface *)surfaces.at(i);
 	    curr_surface->name_("''");
 	    curr_surface->u_degree_(sum_nurb.Degree(0));
 	    curr_surface->v_degree_(sum_nurb.Degree(1));
 	    ON_NurbsSurfaceCV_to_GenericAggregate(&sum_nurb, curr_surface, registry, instance_list);
+
 	    SdaiB_spline_surface_with_knots *surface_knots = (SdaiB_spline_surface_with_knots *)surfaces.at(i);
 	    ON_NurbsSurfaceKnots_to_Aggregates(&sum_nurb, surface_knots);
 	    curr_surface->surface_form_(B_spline_surface_form__plane_surf);
@@ -456,12 +487,15 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
     for (int i = 0; i < brep->m_F.Count(); ++i) {
 	ON_BrepFace* face = &(brep->m_F[i]);
 	faces.at(i) = registry->ObjCreate("ADVANCED_FACE");
+
 	SdaiAdvanced_face *step_face = (SdaiAdvanced_face *)faces.at(i);
 	step_face->name_("''");
 	step_face->face_geometry_((SdaiSurface *)surfaces.at(face->SurfaceIndexOf()));
 	// TODO - is m_bRev the same thing as same_sense?
 	step_face->same_sense_((const Boolean)(face->m_bRev));
+
 	EntityAggregate *bounds = step_face->bounds_();
+
 	for (int j = 0; j < face->LoopCount(); ++j) {
 	    ON_BrepLoop *curr_loop = face->Loop(j);
 	    if (curr_loop == face->OuterLoop()) {
@@ -489,6 +523,7 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
     SdaiClosed_shell *closed_shell = (SdaiClosed_shell *)registry->ObjCreate("CLOSED_SHELL");
     closed_shell->name_("''");
     instance_list->Append(closed_shell, completeSE);
+
     EntityAggregate *shell_faces = closed_shell->cfs_faces_();
     for (int i = 0; i < brep->m_F.Count(); ++i) {
 	shell_faces->AddNode(new EntityNode((SDAI_Application_instance *)faces.at(i)));
@@ -504,7 +539,6 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
     instance_list->Append(advanced_brep, completeSE);
     EntityAggregate *items = advanced_brep->items_();
     items->AddNode(new EntityNode((SDAI_Application_instance *)manifold_solid_brep));
-
 
     /* Uncertainty measure with unit */
     SdaiUncertainty_measure_with_unit *uncertainty = (SdaiUncertainty_measure_with_unit *)registry->ObjCreate("UNCERTAINTY_MEASURE_WITH_UNIT");
@@ -584,7 +618,6 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
     p_ang_measure_with_unit->unit_component_(p_ang_unit);
     instance_list->Append((STEPentity *)p_ang_measure_with_unit, completeSE);
 
-
     const char *ua_entry_2_types[4] = {"conversion_based_unit", "named_unit", "plane_angle_unit", "*"};
     STEPcomplex *ua_entry_2 = new STEPcomplex(registry, (const char **)ua_entry_2_types, registry->GetEntityCnt());
 
@@ -608,6 +641,7 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 		    if (!strcmp(attr->Name(), "conversion_factor")) attr->ptr.c = (STEPentity **)&p_ang_measure_with_unit ;
 		}
 	    }
+
 	    if (!strcmp(sc->EntityName(), "Named_Unit")) {
 		sc->ResetAttributes();
 		STEPattribute *attr;
@@ -621,20 +655,24 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 
     instance_list->Append((STEPentity *)ua_entry_2, completeSE);
 
-    /* For advanced brep, need to create and add a representation context.  This is a
-     * complex type of four other types: */
+    /* For advanced brep, need to create and add a representation
+     * context.  This is a complex type of four other types:
+     */
     const char *entNmArr[5] = {"geometric_representation_context", "global_uncertainty_assigned_context",
 			       "global_unit_assigned_context", "representation_context", "*"};
     STEPcomplex *complex_entity = new STEPcomplex(registry, (const char **)entNmArr, registry->GetEntityCnt());
     STEPcomplex *sc = complex_entity->head;
+
     while (sc) {
 	STEPattribute *attr;
+
 	if (!strcmp(sc->EntityName(), "Geometric_Representation_Context")) {
 	    sc->ResetAttributes();
 	    while ((attr = sc->NextAttribute()) != NULL) {
 		if (!strcmp(attr->Name(), "coordinate_space_dimension")) attr->StrToVal("3");
 	    }
 	}
+
 	if (!strcmp(sc->EntityName(), "Global_Uncertainty_Assigned_Context")) {
 	    sc->ResetAttributes();
 	    while ((attr = sc->NextAttribute()) != NULL) {
@@ -646,6 +684,7 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 	    }
 
 	}
+
 	if (!strcmp(sc->EntityName(), "Global_Unit_Assigned_Context")) {
 	    sc->ResetAttributes();
 	    while ((attr = sc->NextAttribute()) != NULL) {
@@ -659,6 +698,7 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 		}
 	    }
 	}
+
 	if (!strcmp(sc->EntityName(), "Representation_Context")) {
 	    sc->ResetAttributes();
 	    while ((attr = sc->NextAttribute()) != NULL) {
