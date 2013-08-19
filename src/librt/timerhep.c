@@ -18,8 +18,10 @@
  * information.
  */
 
+#include "common.h"
 
 #include <stdio.h>
+
 
 /* Standard System V stuff */
 extern long time(time_t *);

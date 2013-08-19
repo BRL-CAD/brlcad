@@ -21,6 +21,8 @@
 #ifndef RENDER_SVC_H
 #define RENDER_SVC_H
 
+#include "common.h"
+
 #include <map>
 
 #include "oslexec.h"

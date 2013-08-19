@@ -28,8 +28,9 @@
 #ifndef LIB_OSL_RENDERER_H
 #define LIB_OSL_RENDERER_H
 
-#include <stdio.h>
+#include "common.h"
 
+#include <stdio.h>
 #include <string>
 #include <vector>
 
