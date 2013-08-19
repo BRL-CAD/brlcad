@@ -961,10 +961,10 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
 	bu_log("ON_Boolean() Error: TrimmedFace generation failed.\n");
 	return -1;
     }
-    
+
     build_connectivity_graph(brepA, original_faces, 0, facecount1 - 1);
     build_connectivity_graph(brepB, original_faces, facecount1, original_faces.Count() - 1);
-    
+
     if (DEBUG_BREP_BOOLEAN) {
 	bu_log("The connectivity graph for the first brep structure.");
 	for (int i = 0; i < facecount1; i++) {
