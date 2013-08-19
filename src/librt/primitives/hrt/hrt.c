@@ -287,7 +287,7 @@ rt_hrt_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	return 1;
     }
 
-    /* Solid is OK, computer constant terms now  */
+    /* Solid is OK, compute constant terms now  */
 
     BU_GET(hrt, struct hrt_specific);
     stp->st_specific = (genptr_t)hrt;
