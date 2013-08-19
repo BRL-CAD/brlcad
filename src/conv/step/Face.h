@@ -27,6 +27,8 @@
 #ifndef FACE_H_
 #define FACE_H_
 
+#include "common.h"
+
 #include <list>
 
 #include "TopologicalRepresentationItem.h"

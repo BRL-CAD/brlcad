@@ -26,6 +26,8 @@
 #ifndef BSPLINESURFACE_H_
 #define BSPLINESURFACE_H_
 
+#include "common.h"
+
 #include <list>
 
 #include "BoundedSurface.h"

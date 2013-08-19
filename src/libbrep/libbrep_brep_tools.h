@@ -27,10 +27,13 @@
 #ifndef __LIBBREP_BREP_TOOLS
 #define __LIBBREP_BREP_TOOLS
 
+#include "common.h"
+
 #include <vector>
 
 #include "opennurbs.h"
 #include "brep.h"
+
 
 /* Directions */
 #ifndef NE

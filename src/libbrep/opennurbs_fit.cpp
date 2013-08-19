@@ -36,15 +36,20 @@
  *
  */
 
+#include "common.h"
+
 #include <iostream>
 #include <stdexcept>
 #include <map>
 #include <algorithm>
+
 #include "opennurbs_fit.h"
 #include "bu.h"
 #include "vmath.h"
 
+
 using namespace on_fit;
+
 
 // ************************
 // * from nurbs_tools.cpp *

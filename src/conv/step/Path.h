@@ -27,6 +27,8 @@
 #ifndef PATH_H_
 #define PATH_H_
 
+#include "common.h"
+
 #include <list>
 
 #include "TopologicalRepresentationItem.h"
