@@ -835,6 +835,11 @@ build_connectivity_graph(const ON_Brep* brep, ON_SimpleArray<TrimmedFace*>& trim
 	end_idx = trimmedfaces.Count() - 1;
 
     int facecount = brep->m_F.Count();
+    if (end_idx - start_idx + 1 != facecount) {
+	bu_log("build_connectivity_graph() Error: length of [start_idx, end_idx] not equal to the face count.\n");
+	return -1;
+    }
+
     // Index of the edges of a face
     ON_ClassArray<ON_SimpleArray<int> > edge_index(facecount);
 
@@ -856,6 +861,7 @@ build_connectivity_graph(const ON_Brep* brep, ON_SimpleArray<TrimmedFace*>& trim
 
     if (edge_index.Count() != facecount) {
 	bu_log("build_connectivity_graph() Error: edge_index.Count() != brep->m_F.Count()\n");
+	return -1;
     }
 
     // Find the faces that share an edge
