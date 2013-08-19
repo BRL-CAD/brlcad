@@ -4090,7 +4090,7 @@ cmd_sca(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 		return ret;
 	    } else {
 		/* argc was 4 but state was ST_S_EDIT so do nothing */
-		bu_log("Error: Can only scale xyz independently on an object.\n");
+		bu_log("ERROR: Can only scale primitives uniformly (one scale factor).\n");
 		return TCL_OK;
 	    }
 	}
