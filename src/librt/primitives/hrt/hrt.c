@@ -236,7 +236,7 @@ rt_hrt_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     magsq_z = MAGSQ(hip->zdir);
 
     if (magsq_x < rtip->rti_tol.dist_sq || magsq_y < rtip->rti_tol.dist_sq || magsq_z < rtip->rti_tol.dist_sq) {
-	bu_log("rt_hrt_prep(): hrt(%s) near-zero length X(%g), Y(%g), or Z(%g) vector\n", 
+	bu_log("rt_hrt_prep(): hrt(%s) near-zero length X(%g), Y(%g), or Z(%g) vector\n",
 	       stp->st_name, magsq_x, magsq_y, magsq_z);
 	return 1;
     }
@@ -251,7 +251,7 @@ rt_hrt_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     if (isgreater(hip->zdir[Z], max)) {
 	max = hip->zdir[Z];
     }
-	    
+
     if (hip->d > 10000.0) {
 	bu_log("rt_hrt_prep(): hrt(%s) very large <d> distance to cusps (%g) causes problems\n", stp->st_name, hip->d);
 	/* BAD  */
@@ -261,7 +261,7 @@ rt_hrt_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	bu_log("rt_hrt_prep(): hrt(%s) Inappropriate value for <d> distance to cusps (%g) \n", stp->st_name, hip->d);
 	/* BAD  */
     }
-    
+
     /* Create unit length versions of X, Y, Z */
     f = 1.0/sqrt(magsq_x);
     VSCALE(Xu, hip->xdir, f);
@@ -286,9 +286,9 @@ rt_hrt_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	bu_log("rt_hrt_prep(): hrt(%s) Z not perpendicular to Y, f=%f\n", stp->st_name, f);
 	return 1;
     }
-    
-    /* Solid is OK, computer constan terms now  */
-    
+
+    /* Solid is OK, computer constant terms now  */
+
     BU_GET(hrt, struct hrt_specific);
     stp->st_specific = (genptr_t)hrt;
 

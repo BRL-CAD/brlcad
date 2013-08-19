@@ -60,7 +60,7 @@ poly_init(void)
     quo[0].cf[0] = -1369.500000, quo[0].cf[1] = -344.125000, quo[0].cf[2] = quo[0].cf[3] = quo[0].cf[4] = 0.000000; /* quotient coeff */
     rem[0].cf[0] = -3313.375000, rem[0].cf[1] = 205834.750000, rem[0].cf[2] = 41708.250000, rem[0].cf[3] = 0.0; /* remainder coeff */
 
-    /* intializes a 4th degree positive polynomial */
+    /* initializes a 4th degree positive polynomial */
     input[1].dgr = 4;
 
     input[1].cf[0] = 5478, input[1].cf[1] = 5485, input[1].cf[2] = 458, input[1].cf[3] = 258564, input[1].cf[4] = 54785;/* input coeff */
