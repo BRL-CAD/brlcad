@@ -125,6 +125,11 @@ nmg_snurb_calc_lu_uv_orient(const struct loopuse *lu)
 		VSETALLN(crv_pt, 0.0, coords);
 		rt_nurb_c_eval(eg, t, crv_pt);
 		if (RT_NURB_IS_PT_RATIONAL(eg->pt_type)) {
+                    /* FIXME: gcc 4.8.1 reports error here (rel build):
+/disk3/extsrc/brlcad-svn-trunk/src/librt/primitives/nmg/nmg_misc.c:128:42: error: array subscript is below array bounds [-Werror=array-bounds]
+       VSCALE(pts[edge_no], crv_pt, crv_pt[coords-1]);
+                                          ^
+                    */
 		    VSCALE(pts[edge_no], crv_pt, crv_pt[coords-1]);
 		} else {
 		    VMOVE(pts[edge_no], crv_pt);

@@ -1864,6 +1864,11 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
 		}
 		if (rational) {
 		    for (j = 0; j < coords-1; j++)
+                       /* FIXME: gcc 4.8.1 reports error here (rel build):
+/disk3/extsrc/brlcad-svn-trunk/src/librt/primitives/nmg/nmg_rt_isect.c:1867:41: error: array subscript is above array bounds [-Werror=array-bounds]
+    ctl_pt[i][j] = ctl_pt[i][j]/ctl_pt[i][coords-1];
+                                         ^
+                       */
 			ctl_pt[i][j] = ctl_pt[i][j]/ctl_pt[i][coords-1];
 		}
 	    }
