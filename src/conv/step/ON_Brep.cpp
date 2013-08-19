@@ -57,8 +57,12 @@
 // Note that STEPentity is the same thing as SDAI_Application_instance... see src/clstepcore/sdai.h line 220
 //
 
+#include "common.h"
+
 #include <sstream>
+
 #include "STEPEntity.h"
+
 
 void
 ON_3dPoint_to_Cartesian_point(ON_3dPoint *inpnt, SdaiCartesian_point *step_pnt) {
@@ -567,8 +571,7 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
     instance_list->Append((STEPentity *)ua_entry_3, completeSE);
 
     SdaiPlane_angle_measure_with_unit *p_ang_measure_with_unit = (SdaiPlane_angle_measure_with_unit *)registry->ObjCreate("PLANE_ANGLE_MEASURE_WITH_UNIT");
-    // 1 degree = 0.01745329252 radians 
-    SdaiMeasure_value * p_ang_measure_value = new SdaiMeasure_value(0.01745329252,config_control_design::t_measure_value);
+    SdaiMeasure_value * p_ang_measure_value = new SdaiMeasure_value(DEG2RAD,config_control_design::t_measure_value);
     p_ang_measure_value->SetUnderlyingType( config_control_design::t_plane_angle_measure );
     p_ang_measure_with_unit->value_component_(p_ang_measure_value);
     SdaiUnit *p_ang_unit = new SdaiUnit((SdaiNamed_unit *)ua_entry_3);
