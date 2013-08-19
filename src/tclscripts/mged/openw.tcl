@@ -1808,6 +1808,12 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	-label "Tk" -underline 0\
 	-command "dmtype set tk"
     }
+    set have_dm [dm valid qt]
+    if {$have_dm == "qt"} {
+    .$id.menubar.modes.dmtype add radiobutton -value s -variable mged_gui($id,dtype)\
+	-label "Qt" -underline 0\
+	-command "dmtype set qt"
+    }
     hoc_register_menu_data "Modes" "Display Manager" "Display Manager"\
 	{ { summary "Change the display manager being used to render wireframe and/or
 	shaded displays of BRL-CAD models." }

@@ -346,6 +346,10 @@ print_valid_dm(Tcl_Interp *interpreter)
     Tcl_AppendResult(interpreter, "glx", (char *)NULL);
     i++;
 #endif /* DM_GLX */
+#ifdef DM_QT
+    Tcl_AppendResult(interpreter, "qt", (char *)NULL);
+    i++;
+#endif /* DM_QT */
     if (i==0) {
 	Tcl_AppendResult(interpreter, "NONE AVAILABLE", (char *)NULL);
     }
@@ -695,6 +699,11 @@ f_dm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const cha
 	    Tcl_AppendResult(interpreter, "glx", (char *)NULL);
 	}
 #endif /* DM_GLX */
+#ifdef DM_QT
+	if (BU_STR_EQUAL(argv[argc-1], "qt")) {
+	    Tcl_AppendResult(interpreter, "qt", (char *)NULL);
+	}
+#endif /* DM_QT */
 	return TCL_OK;
     }
 
