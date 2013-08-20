@@ -8,8 +8,9 @@
 # bin program       source file
 # ===========       ===========
 
-# the proof-of-concept case:
+# the proof-of-concept cases:
 fix_polysolids      src/util/fix_polysolids.c
+dsp_add             src/util/dsp_add.c
 
 # others:
 3dm-g
@@ -61,7 +62,6 @@ dmod                src/sig/dmod.c
 double-asc          src/util/double-asc.c
 dpeak               src/sig/dpeak.c
 dsel                src/sig/dsel.c
-dsp_add             src/util/dsp_add.c
 dstats              src/sig/dstats.c
 dwin                src/sig/dwin.c
 euclid_format       src/conv/euclid/euclid_format.c
