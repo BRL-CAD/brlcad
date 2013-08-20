@@ -70,7 +70,7 @@ struct sph_specific {
 
 
 #define CLT
-#define CLT_SINGLE_PRECISION
+/* #define CLT_SINGLE_PRECISION */
 
 
 #ifdef CLT
@@ -80,7 +80,7 @@ struct sph_specific {
 
 
 #ifndef CL_VERSION_1_2
-#error "Requires OpenCL 1.2."
+/* #error "Requires OpenCL 1.2." */
 #endif
 
 
@@ -225,7 +225,7 @@ clt_init()
 
 
 static cl_double3
-clt_shot(cl_double3 o, cl_double3 dir, cl_double3 V, cl_double radsq, unsigned hypersample)
+clt_shot(cl_double3 o, cl_double3 dir, cl_double3 V, cl_double radsq, size_t hypersample)
 {
     cl_int error;
     cl_mem output;
@@ -234,7 +234,7 @@ clt_shot(cl_double3 o, cl_double3 dir, cl_double3 V, cl_double radsq, unsigned h
 
 
     VSET(result.s, 0, 0, 0);
-    output = clCreateBuffer(clt_context, CL_MEM_USE_HOST_PTR | CL_MEM_HOST_READ_ONLY | CL_MEM_WRITE_ONLY,
+    output = clCreateBuffer(clt_context, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY,
 	    sizeof(cl_double3), &result, &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
 
@@ -408,7 +408,7 @@ int
 rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
 #ifdef CLT
-    const int hypersample = 10;
+    const size_t hypersample = 1;
     cl_double3 o;    /* ray origin  */
     cl_double3 dir;  /* ray direction (unit vector) */
     cl_double3 V;    /* vector to sphere  */

@@ -24,7 +24,6 @@ __kernel void sph_shot(__global __write_only double3 *output,
 */
 
 
-
 __kernel void sph_shot(__global __write_only double3 *output,
 	const double3 o, const double3 dir, const double3 V, const double radsq)
 {
