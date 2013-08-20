@@ -139,7 +139,7 @@ main(int argc, char **argv)
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
-	bu_exit (1, NULL);
+	bu_exit(1, NULL);
     }
 
     /* autosize input? */
@@ -173,7 +173,7 @@ main(int argc, char **argv)
     if (write(1, (void *)outbuf, 3*file_width*file_height) < 3*file_width*file_height) {
 	perror("stdout");
 	fprintf(stderr, "yuv-pix: output write error, aborting\n");
-	bu_exit (2, NULL);
+	bu_exit(2, NULL);
     }
 
     bu_free(inbuf, "inbuf");
@@ -229,7 +229,7 @@ ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, long int len)
     unsigned char *cp;
     double *yp, *up, *vp;
     long int i;
-    static int first=1;
+    static int first = 1;
 
     if (first) {
 	/* SETUP */
