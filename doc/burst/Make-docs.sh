@@ -1,5 +1,11 @@
 #!/bin/sh
 
-groff -mm -Tps burst.mm   > burst.ps
+#OPTS='-V'
+OPTS='-b'
 
-groff -mm -Thtml burst.mm > burst.html
+groff $OPTS -mm -Tps burst.mm   > burst.ps
+ps2pdf burst.ps
+
+#groff $OPTS -mm
+
+#groff -mm -Thtml burst.mm > burst.html

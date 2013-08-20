@@ -16,9 +16,10 @@ TABLE_MM += topmenu.mm
 PRODS := burst.ps burst.pdf burst.html
 
 docs:
+	@echo "Making burst tables for groff..."
 	./Make-tables.sh
+	@echo "Making burst docs..."
 	./Make-docs.sh
-	ps2pdf burst.ps
 
 clean: distclean
 
