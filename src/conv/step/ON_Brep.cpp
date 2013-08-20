@@ -217,6 +217,207 @@ ON_NurbsSurfaceKnots_to_Aggregates(ON_NurbsSurface *insrf, SdaiB_spline_surface_
     step_srf->knot_spec_(Knot_type__unspecified);
 }
 
+// STEP needs explicit edges corresponding to what in OpenNURBS are the UV space trimming curves
+int Add_Edge(ON_BrepTrim *trim, Registry *registry, InstMgr *instance_list, std::vector<STEPentity *> *oriented_edges, std::vector<STEPentity *> *edge_curves,std::vector<STEPentity *> *vertex_pnts){
+    ON_BrepEdge *edge = trim->Edge();
+    int i = -1;
+    if (edge) {
+	STEPentity *new_oriented_edge = registry->ObjCreate("ORIENTED_EDGE");
+	SdaiOriented_edge *oriented_edge = (SdaiOriented_edge *)new_oriented_edge;
+	oriented_edge->name_("''");
+	SdaiEdge_curve *e_curve = (SdaiEdge_curve *)edge_curves->at(edge->EdgeCurveIndexOf());
+	oriented_edge->edge_element_((SdaiEdge *)e_curve);
+	oriented_edge->edge_start_(((SdaiVertex *)vertex_pnts->at(edge->Vertex(0)->m_vertex_index)));
+	oriented_edge->edge_end_(((SdaiVertex *)vertex_pnts->at(edge->Vertex(1)->m_vertex_index)));
+	oriented_edge->orientation_((Boolean)trim->m_bRev3d);
+	instance_list->Append(new_oriented_edge, completeSE);
+	oriented_edges->push_back(new_oriented_edge);
+	i = oriented_edges->size() - 1;
+    }
+    return i;
+}
+
+STEPcomplex *
+Add_Default_Geometric_Context(Registry *registry, InstMgr *instance_list)
+{
+
+    int instance_cnt = 0;
+    STEPattribute *attr;
+    STEPcomplex *stepcomplex;
+
+    /* Uncertainty measure with unit */
+    SdaiUncertainty_measure_with_unit *uncertainty = (SdaiUncertainty_measure_with_unit *)registry->ObjCreate("UNCERTAINTY_MEASURE_WITH_UNIT");
+    uncertainty->name_("'DISTANCE_ACCURACY_VALUE'");
+    uncertainty->description_("'Threshold below which geometry imperfections (such as overlaps) are not considered errors.'");
+    instance_list->Append(uncertainty, completeSE);
+    instance_cnt++;
+
+    /** unit component of uncertainty measure with unit */
+    const char *unitNmArr[4] = {"length_unit", "named_unit", "si_unit", "*"};
+    STEPcomplex *unit_complex = new STEPcomplex(registry, (const char **)unitNmArr, instance_cnt);
+    instance_list->Append((STEPentity *)unit_complex, completeSE);
+    instance_cnt++;
+    stepcomplex = unit_complex->head;
+    while (stepcomplex) {
+	if (!bu_strcmp(stepcomplex->EntityName(), "Si_Unit")) {
+	    stepcomplex->ResetAttributes();
+	    while ((attr = stepcomplex->NextAttribute()) != NULL) {
+		if (!bu_strcmp(attr->Name(), "prefix")) attr->ptr.e = new SdaiSi_prefix_var(Si_prefix__milli);
+		if (!bu_strcmp(attr->Name(), "name")) attr->ptr.e = new SdaiSi_unit_name_var(Si_unit_name__metre);
+	    }
+	}
+	stepcomplex = stepcomplex->sc;
+    }
+
+    SdaiUnit *new_unit = new SdaiUnit((SdaiNamed_unit *)unit_complex);
+    uncertainty->ResetAttributes();
+    {
+	while ((attr = uncertainty->NextAttribute()) != NULL) {
+	    if (!bu_strcmp(attr->Name(), "unit_component")) attr->ptr.sh = new_unit;
+	    if (!bu_strcmp(attr->Name(), "value_component")) attr->StrToVal("0.05");
+	}
+    }
+
+    /* Global Unit Assigned Context */
+    const char *ua_entry_1_types[4] = {"named_unit", "si_unit", "solid_angle_unit", "*"};
+    STEPcomplex *ua_entry_1 = new STEPcomplex(registry, (const char **)ua_entry_1_types, instance_cnt);
+    stepcomplex = ua_entry_1->head;
+    while (stepcomplex) {
+	if (!bu_strcmp(stepcomplex->EntityName(), "Si_Unit")) {
+	    stepcomplex->ResetAttributes();
+	    while ((attr = stepcomplex->NextAttribute()) != NULL) {
+		if (!bu_strcmp(attr->Name(), "name")) attr->ptr.e = new SdaiSi_unit_name_var(Si_unit_name__steradian);
+	    }
+	}
+	stepcomplex = stepcomplex->sc;
+    }
+    instance_list->Append((STEPentity *)ua_entry_1, completeSE);
+    instance_cnt++;
+
+    const char *ua_entry_3_types[4] = {"named_unit", "plane_angle_unit", "si_unit", "*"};
+    STEPcomplex *ua_entry_3 = new STEPcomplex(registry, (const char **)ua_entry_3_types, instance_cnt);
+    stepcomplex = ua_entry_3->head;
+    while (stepcomplex) {
+	if (!bu_strcmp(stepcomplex->EntityName(), "Si_Unit")) {
+	    stepcomplex->ResetAttributes();
+	    while ((attr = stepcomplex->NextAttribute()) != NULL) {
+		if (!bu_strcmp(attr->Name(), "name")) attr->ptr.e = new SdaiSi_unit_name_var(Si_unit_name__radian);
+	    }
+	}
+	stepcomplex = stepcomplex->sc;
+    }
+    instance_list->Append((STEPentity *)ua_entry_3, completeSE);
+    instance_cnt++;
+
+    /* Plane Angle Measure */
+    SdaiPlane_angle_measure_with_unit *p_ang_measure_with_unit = new SdaiPlane_angle_measure_with_unit();
+    SdaiMeasure_value * p_ang_measure_value = new SdaiMeasure_value(DEG2RAD, config_control_design::t_measure_value);
+    p_ang_measure_value->SetUnderlyingType(config_control_design::t_plane_angle_measure);
+    p_ang_measure_with_unit->value_component_(p_ang_measure_value);
+    SdaiUnit *p_ang_unit = new SdaiUnit((SdaiNamed_unit *)ua_entry_3);
+    p_ang_measure_with_unit->unit_component_(p_ang_unit);
+    instance_list->Append((STEPentity *)p_ang_measure_with_unit, completeSE);
+    instance_cnt++;
+
+    /* Conversion based unit */
+    const char *ua_entry_2_types[4] = {"conversion_based_unit", "named_unit", "plane_angle_unit", "*"};
+    STEPcomplex *ua_entry_2 = new STEPcomplex(registry, (const char **)ua_entry_2_types, instance_cnt);
+
+    /** dimensional exponents **/
+    SdaiDimensional_exponents *dimensional_exp = new SdaiDimensional_exponents();
+    dimensional_exp->length_exponent_(0.0);
+    dimensional_exp->mass_exponent_(0.0);
+    dimensional_exp->time_exponent_(0.0);
+    dimensional_exp->electric_current_exponent_(0.0);
+    dimensional_exp->thermodynamic_temperature_exponent_(0.0);
+    dimensional_exp->amount_of_substance_exponent_(0.0);
+    dimensional_exp->luminous_intensity_exponent_(0.0);
+    instance_list->Append((STEPentity *)dimensional_exp, completeSE);
+
+    stepcomplex = ua_entry_2->head;
+    while (stepcomplex) {
+	if (!bu_strcmp(stepcomplex->EntityName(), "Conversion_Based_Unit")) {
+	    stepcomplex->ResetAttributes();
+	    while ((attr = stepcomplex->NextAttribute()) != NULL) {
+		if (!bu_strcmp(attr->Name(), "name")) attr->StrToVal("'DEGREES'");
+		if (!bu_strcmp(attr->Name(), "conversion_factor")) {
+		    attr->ptr.c = new (STEPentity *);
+		    *(attr->ptr.c) = (STEPentity *)(p_ang_measure_with_unit);
+		}
+	    }
+	}
+	if (!bu_strcmp(stepcomplex->EntityName(), "Named_Unit")) {
+	    stepcomplex->ResetAttributes();
+	    while ((attr = stepcomplex->NextAttribute()) != NULL) {
+		if (!bu_strcmp(attr->Name(), "dimensions")) {
+		    attr->ptr.c = new (STEPentity *);
+		    *(attr->ptr.c) = (STEPentity *)(dimensional_exp);
+		}
+	    }
+	}
+	stepcomplex = stepcomplex->sc;
+    }
+
+    instance_list->Append((STEPentity *)ua_entry_2, completeSE);
+    instance_cnt++;
+
+     /*
+      * Now that we have the pieces, build thie final complex type from four other types:
+     */
+    const char *entNmArr[5] = {"geometric_representation_context", "global_uncertainty_assigned_context",
+			       "global_unit_assigned_context", "representation_context", "*"};
+    STEPcomplex *complex_entity = new STEPcomplex(registry, (const char **)entNmArr, instance_cnt);
+    stepcomplex = complex_entity->head;
+
+    while (stepcomplex) {
+
+	if (!bu_strcmp(stepcomplex->EntityName(), "Geometric_Representation_Context")) {
+	    stepcomplex->ResetAttributes();
+	    while ((attr = stepcomplex->NextAttribute()) != NULL) {
+		if (!bu_strcmp(attr->Name(), "coordinate_space_dimension")) attr->StrToVal("3");
+	    }
+	}
+
+	if (!bu_strcmp(stepcomplex->EntityName(), "Global_Uncertainty_Assigned_Context")) {
+	    stepcomplex->ResetAttributes();
+	    while ((attr = stepcomplex->NextAttribute()) != NULL) {
+		if (!bu_strcmp(attr->Name(), "uncertainty")) {
+		    EntityAggregate *unc_agg = new EntityAggregate();
+		    unc_agg->AddNode(new EntityNode((SDAI_Application_instance *)uncertainty));
+		    attr->ptr.a = unc_agg;
+		}
+	    }
+
+	}
+
+	if (!bu_strcmp(stepcomplex->EntityName(), "Global_Unit_Assigned_Context")) {
+	    stepcomplex->ResetAttributes();
+	    while ((attr = stepcomplex->NextAttribute()) != NULL) {
+		std::string attrval;
+		if (!bu_strcmp(attr->Name(), "units")) {
+		    EntityAggregate *unit_assigned_agg = new EntityAggregate();
+		    unit_assigned_agg->AddNode(new EntityNode((SDAI_Application_instance *)ua_entry_1));
+		    unit_assigned_agg->AddNode(new EntityNode((SDAI_Application_instance *)ua_entry_2));
+		    unit_assigned_agg->AddNode(new EntityNode((SDAI_Application_instance *)uncertainty));
+		    attr->ptr.a = unit_assigned_agg;
+		}
+	    }
+	}
+
+	if (!bu_strcmp(stepcomplex->EntityName(), "Representation_Context")) {
+	    stepcomplex->ResetAttributes();
+	    while ((attr = stepcomplex->NextAttribute()) != NULL) {
+		if (!bu_strcmp(attr->Name(), "context_identifier")) attr->StrToVal("'STANDARD'");
+		if (!bu_strcmp(attr->Name(), "context_type")) attr->StrToVal("'3D'");
+	    }
+	}
+	stepcomplex = stepcomplex->sc;
+    }
+
+    instance_list->Append((STEPentity *)complex_entity, completeSE);
+
+    return complex_entity;
+}
 
 #if 0
 void
@@ -230,11 +431,14 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
     std::vector<STEPentity *> vertex_pnts(brep->m_V.Count(), (STEPentity *)0);
     std::vector<STEPentity *> three_dimensional_curves(brep->m_C3.Count(), (STEPentity *)0);
     std::vector<STEPentity *> edge_curves(brep->m_E.Count(), (STEPentity *)0);
-    std::vector<STEPentity *> oriented_edges(brep->m_E.Count(), (STEPentity *)0);
+    std::vector<STEPentity *> oriented_edges;
     std::vector<STEPentity *> edge_loops(brep->m_L.Count(), (STEPentity *)0);
     std::vector<STEPentity *> outer_bounds(brep->m_F.Count(), (STEPentity *)0);
     std::vector<STEPentity *> surfaces(brep->m_S.Count(), (STEPentity *)0);
     std::vector<STEPentity *> faces(brep->m_F.Count(), (STEPentity *)0);
+
+    /* The BRep needs a context - TODO: this can probably be used once for the whole step file... */
+    STEPcomplex *context = Add_Default_Geometric_Context(registry, instance_list);
 
     // Set up vertices and associated cartesian points
     for (int i = 0; i < brep->m_V.Count(); ++i) {
@@ -349,27 +553,6 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 	e_curve->same_sense_(BTrue);
 	e_curve->edge_start_(((SdaiVertex *)vertex_pnts.at(edge->Vertex(0)->m_vertex_index)));
 	e_curve->edge_end_(((SdaiVertex *)vertex_pnts.at(edge->Vertex(1)->m_vertex_index)));
-
-	oriented_edges.at(i) = registry->ObjCreate("ORIENTED_EDGE");
-	instance_list->Append(oriented_edges.at(i), completeSE);
-	SdaiOriented_edge *oriented_edge = (SdaiOriented_edge *)oriented_edges.at(i);
-	oriented_edge->name_("''");
-	oriented_edge->edge_element_((SdaiEdge *)e_curve);
-	oriented_edge->edge_start_(((SdaiVertex *)vertex_pnts.at(edge->Vertex(0)->m_vertex_index)));
-	oriented_edge->edge_end_(((SdaiVertex *)vertex_pnts.at(edge->Vertex(1)->m_vertex_index)));
-
-	/* Check whether the 3d points of the vertices correspond to
-	 * the beginning and end of the curve.
-	 */
-	double d1 = edge->Vertex(0)->Point().DistanceTo(brep->m_C3[edge->EdgeCurveIndexOf()]->PointAtStart());
-	double d1a = edge->Vertex(0)->Point().DistanceTo(brep->m_C3[edge->EdgeCurveIndexOf()]->PointAtEnd());
-	double d2 = edge->Vertex(1)->Point().DistanceTo(brep->m_C3[edge->EdgeCurveIndexOf()]->PointAtStart());
-	double d2a = edge->Vertex(1)->Point().DistanceTo(brep->m_C3[edge->EdgeCurveIndexOf()]->PointAtEnd());
-	if ((d1 < d1a) && (d2a < d2)) {
-	    oriented_edge->orientation_(BTrue);
-	} else {
-	    oriented_edge->orientation_(BFalse);
-	}
     }
 
     // loop topology.  STEP defines loops with 3D edge curves, but
@@ -390,9 +573,9 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 	// output.
 	SdaiPath *e_loop_path = (SdaiPath *)edge_loops.at(i)->GetNextMiEntity();
 	for (int l = 0; l < loop->TrimCount(); ++l) {
-	    ON_BrepEdge *edge = loop->Trim(l)->Edge();
-	    if (edge)
-		e_loop_path->edge_list_()->AddNode(new EntityNode((SDAI_Application_instance *)(oriented_edges.at(edge->m_edge_index))));
+	    int trim_edge = Add_Edge(loop->Trim(l), registry, instance_list, &oriented_edges, &edge_curves, &vertex_pnts);
+	    if (trim_edge >= 0)
+		e_loop_path->edge_list_()->AddNode(new EntityNode((SDAI_Application_instance *)(oriented_edges.at(trim_edge))));
 	}
     }
 
@@ -558,177 +741,7 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
     EntityAggregate *items = advanced_brep->items_();
     items->AddNode(new EntityNode((SDAI_Application_instance *)manifold_solid_brep));
 
-    /* Uncertainty measure with unit */
-    SdaiUncertainty_measure_with_unit *uncertainty = (SdaiUncertainty_measure_with_unit *)registry->ObjCreate("UNCERTAINTY_MEASURE_WITH_UNIT");
-    uncertainty->name_("'DISTANCE_ACCURACY_VALUE'");
-    uncertainty->description_("'Threshold below which geometry imperfections (such as overlaps) are not considered errors.'");
-    instance_list->Append(uncertainty, completeSE);
-
-    /* unit component */
-    const char *unitNmArr[4] = {"length_unit", "named_unit", "si_unit", "*"};
-    STEPcomplex *unit_complex = new STEPcomplex(registry, (const char **)unitNmArr, registry->GetEntityCnt());
-    instance_list->Append((STEPentity *)unit_complex, completeSE);
-    {
-	STEPcomplex *sc = unit_complex->head;
-	while (sc) {
-	    if (!bu_strcmp(sc->EntityName(), "Si_Unit")) {
-		sc->ResetAttributes();
-		STEPattribute *attr;
-		while ((attr = sc->NextAttribute()) != NULL) {
-		    if (!bu_strcmp(attr->Name(), "prefix")) attr->ptr.e = new SdaiSi_prefix_var(Si_prefix__milli);
-		    if (!bu_strcmp(attr->Name(), "name")) attr->ptr.e = new SdaiSi_unit_name_var(Si_unit_name__metre);
-		}
-	    }
-	    sc = sc->sc;
-	}
-    }
-
-    SdaiUnit *new_unit = new SdaiUnit((SdaiNamed_unit *)unit_complex);
-    uncertainty->ResetAttributes();
-    {
-	STEPattribute *attr;
-	while ((attr = uncertainty->NextAttribute()) != NULL) {
-	    if (!bu_strcmp(attr->Name(), "unit_component")) attr->ptr.sh = new_unit;
-	    if (!bu_strcmp(attr->Name(), "value_component")) attr->StrToVal("0.05");
-	}
-    }
-
-    /* Global Unit Assigned Context */
-    const char *ua_entry_1_types[4] = {"named_unit", "si_unit", "solid_angle_unit", "*"};
-    STEPcomplex *ua_entry_1 = new STEPcomplex(registry, (const char **)ua_entry_1_types, registry->GetEntityCnt());
-    {
-	STEPcomplex *sc = ua_entry_1->head;
-	while (sc) {
-	    if (!bu_strcmp(sc->EntityName(), "Si_Unit")) {
-		sc->ResetAttributes();
-		STEPattribute *attr;
-		while ((attr = sc->NextAttribute()) != NULL) {
-		    if (!bu_strcmp(attr->Name(), "name")) attr->ptr.e = new SdaiSi_unit_name_var(Si_unit_name__steradian);
-		}
-	    }
-	    sc = sc->sc;
-	}
-    }
-    instance_list->Append((STEPentity *)ua_entry_1, completeSE);
-
-    const char *ua_entry_3_types[4] = {"named_unit", "plane_angle_unit", "si_unit", "*"};
-    STEPcomplex *ua_entry_3 = new STEPcomplex(registry, (const char **)ua_entry_3_types, registry->GetEntityCnt());
-    {
-	STEPcomplex *sc = ua_entry_3->head;
-	while (sc) {
-	    if (!bu_strcmp(sc->EntityName(), "Si_Unit")) {
-		sc->ResetAttributes();
-		STEPattribute *attr;
-		while ((attr = sc->NextAttribute()) != NULL) {
-		    if (!bu_strcmp(attr->Name(), "name")) attr->ptr.e = new SdaiSi_unit_name_var(Si_unit_name__radian);
-		}
-	    }
-	    sc = sc->sc;
-	}
-    }
-    instance_list->Append((STEPentity *)ua_entry_3, completeSE);
-
-    SdaiPlane_angle_measure_with_unit *p_ang_measure_with_unit = (SdaiPlane_angle_measure_with_unit *)registry->ObjCreate("PLANE_ANGLE_MEASURE_WITH_UNIT");
-    SdaiMeasure_value * p_ang_measure_value = new SdaiMeasure_value(DEG2RAD, config_control_design::t_measure_value);
-    p_ang_measure_value->SetUnderlyingType(config_control_design::t_plane_angle_measure);
-    p_ang_measure_with_unit->value_component_(p_ang_measure_value);
-    SdaiUnit *p_ang_unit = new SdaiUnit((SdaiNamed_unit *)ua_entry_3);
-    p_ang_measure_with_unit->unit_component_(p_ang_unit);
-    instance_list->Append((STEPentity *)p_ang_measure_with_unit, completeSE);
-
-    const char *ua_entry_2_types[4] = {"conversion_based_unit", "named_unit", "plane_angle_unit", "*"};
-    STEPcomplex *ua_entry_2 = new STEPcomplex(registry, (const char **)ua_entry_2_types, registry->GetEntityCnt());
-
-    SdaiDimensional_exponents *dimensional_exp = (SdaiDimensional_exponents *)registry->ObjCreate("DIMENSIONAL_EXPONENTS");
-    dimensional_exp->length_exponent_(0.0);
-    dimensional_exp->mass_exponent_(0.0);
-    dimensional_exp->time_exponent_(0.0);
-    dimensional_exp->electric_current_exponent_(0.0);
-    dimensional_exp->thermodynamic_temperature_exponent_(0.0);
-    dimensional_exp->amount_of_substance_exponent_(0.0);
-    dimensional_exp->luminous_intensity_exponent_(0.0);
-    instance_list->Append((STEPentity *)dimensional_exp, completeSE);
-    {
-	STEPcomplex *sc = ua_entry_2->head;
-	while (sc) {
-	    if (!bu_strcmp(sc->EntityName(), "Conversion_Based_Unit")) {
-		sc->ResetAttributes();
-		STEPattribute *attr;
-		while ((attr = sc->NextAttribute()) != NULL) {
-		    if (!bu_strcmp(attr->Name(), "name")) attr->StrToVal("'DEGREES'");
-		    if (!bu_strcmp(attr->Name(), "conversion_factor")) attr->ptr.c = (STEPentity **)&p_ang_measure_with_unit ;
-		}
-	    }
-
-	    if (!bu_strcmp(sc->EntityName(), "Named_Unit")) {
-		sc->ResetAttributes();
-		STEPattribute *attr;
-		while ((attr = sc->NextAttribute()) != NULL) {
-		    if (!bu_strcmp(attr->Name(), "dimensions")) attr->ptr.c = (STEPentity **)&dimensional_exp;
-		}
-	    }
-	    sc = sc->sc;
-	}
-    }
-
-    instance_list->Append((STEPentity *)ua_entry_2, completeSE);
-
-    /* For advanced brep, need to create and add a representation
-     * context.  This is a complex type of four other types:
-     */
-    const char *entNmArr[5] = {"geometric_representation_context", "global_uncertainty_assigned_context",
-			       "global_unit_assigned_context", "representation_context", "*"};
-    STEPcomplex *complex_entity = new STEPcomplex(registry, (const char **)entNmArr, registry->GetEntityCnt());
-    STEPcomplex *sc = complex_entity->head;
-
-    while (sc) {
-	STEPattribute *attr;
-
-	if (!bu_strcmp(sc->EntityName(), "Geometric_Representation_Context")) {
-	    sc->ResetAttributes();
-	    while ((attr = sc->NextAttribute()) != NULL) {
-		if (!bu_strcmp(attr->Name(), "coordinate_space_dimension")) attr->StrToVal("3");
-	    }
-	}
-
-	if (!bu_strcmp(sc->EntityName(), "Global_Uncertainty_Assigned_Context")) {
-	    sc->ResetAttributes();
-	    while ((attr = sc->NextAttribute()) != NULL) {
-		if (!bu_strcmp(attr->Name(), "uncertainty")) {
-		    EntityAggregate *unc_agg = new EntityAggregate();
-		    unc_agg->AddNode(new EntityNode((SDAI_Application_instance *)uncertainty));
-		    attr->ptr.a = unc_agg;
-		}
-	    }
-
-	}
-
-	if (!bu_strcmp(sc->EntityName(), "Global_Unit_Assigned_Context")) {
-	    sc->ResetAttributes();
-	    while ((attr = sc->NextAttribute()) != NULL) {
-		std::string attrval;
-		if (!bu_strcmp(attr->Name(), "units")) {
-		    EntityAggregate *unit_assigned_agg = new EntityAggregate();
-		    unit_assigned_agg->AddNode(new EntityNode((SDAI_Application_instance *)ua_entry_1));
-		    unit_assigned_agg->AddNode(new EntityNode((SDAI_Application_instance *)ua_entry_2));
-		    unit_assigned_agg->AddNode(new EntityNode((SDAI_Application_instance *)uncertainty));
-		    attr->ptr.a = unit_assigned_agg;
-		}
-	    }
-	}
-
-	if (!bu_strcmp(sc->EntityName(), "Representation_Context")) {
-	    sc->ResetAttributes();
-	    while ((attr = sc->NextAttribute()) != NULL) {
-		if (!bu_strcmp(attr->Name(), "context_identifier")) attr->StrToVal("'STANDARD'");
-		if (!bu_strcmp(attr->Name(), "context_type")) attr->StrToVal("'3D'");
-	    }
-	}
-	sc = sc->sc;
-    }
-
-    instance_list->Append((STEPentity *)complex_entity, completeSE);
-    advanced_brep->context_of_items_((SdaiRepresentation_context *) complex_entity);
+    advanced_brep->context_of_items_((SdaiRepresentation_context *) context);
 
     return true;
 }
