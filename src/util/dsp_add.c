@@ -59,12 +59,12 @@ int style = ADD_STYLE_INT;
 /*
  * U S A G E --- tell user how to invoke this program, then exit
  */
-void Usage(char *s)
+void
+Usage(char *s)
 {
     if (s) (void)fputs(s, stderr);
 
-    (void) fprintf(stderr, usage,
-		   progname);
+    (void)fprintf(stderr, usage, progname);
     bu_exit (1, NULL);
 }
 
@@ -72,7 +72,8 @@ void Usage(char *s)
 /*
  * P A R S E _ A R G S --- Parse through command line flags
  */
-int parse_args(int ac, char *av[])
+int
+parse_args(int ac, char *av[])
 {
     int c;
     char *strrchr(const char *, int);
