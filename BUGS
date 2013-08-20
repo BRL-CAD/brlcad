@@ -15,6 +15,11 @@ on-going issues.
 Recent Bugs
 -----------
 
+* calling "attr set obj key value" should always result in key getting
+  set to value, no matter what, as it is the lowest-level attribute
+  management interface and what the command (correctly) documents.
+  example demonstrated to not work was: attr set obj rgb 123/123/123
+
 * report of LIBBU not working when accessed by a multithreaded
   application on Windows.  reportedly due to some problem with the
   debug memory queue.
