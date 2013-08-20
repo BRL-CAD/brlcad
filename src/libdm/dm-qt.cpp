@@ -102,8 +102,10 @@ qt_drawEnd(struct dm *dmp)
     privars->painter->end();
     delete privars->painter;
     privars->painter = NULL;
+    privars->qapp->processEvents();
+
     qt_sendRepaintEvent(dmp);
-    dmp->dm_processEvents(dmp);
+    privars->qapp->processEvents();
 
     bu_log("qt_drawEnd called\n");
     return TCL_OK;
