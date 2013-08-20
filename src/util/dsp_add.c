@@ -77,13 +77,8 @@ int parse_args(int ac, char *av[])
     int c;
     char *strrchr(const char *, int);
 
-    if (!(progname = strrchr(*av, '/')))
-	progname = *av;
-    else
-	++progname;
-
     /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac, av, options)) != -1)
+    while ((c = bu_getopt(ac, av, options)) != -1)
 	switch (c) {
 	    default:
 		usage("");
@@ -123,7 +118,7 @@ add_float(unsigned short *buf1, unsigned short *buf2, unsigned long count)
     e = &buf1[count];
 
     /* add everything, keeping track of the min/max values found */
-    for (d=dbuf, p=buf1, q=buf2; p < e; p++, q++, d++) {
+    for (d = dbuf, p = buf1, q = buf2; p < e; p++, q++, d++) {
 	*d = *p + *q;
 	if (*d > max) max = *d;
 	if (*d < min) min = *d;
@@ -135,7 +130,7 @@ add_float(unsigned short *buf1, unsigned short *buf2, unsigned long count)
 
     bu_log("min: %g scale: %g\n", min - k, k);
 
-    for (d=dbuf, p=buf1, q=buf2; p < e; p++, q++, d++)
+    for (d = dbuf, p = buf1, q = buf2; p < e; p++, q++, d++)
 	*p = (unsigned short)  ((*d - min) * k) + 1;
 
     bu_free(dbuf, "buffer of double");
@@ -157,7 +152,7 @@ add_int(unsigned short *buf1, unsigned short *buf2, unsigned long count)
     unsigned long i;
     unsigned short s;
 
-    for (i=0; i < count; i++) {
+    for (i = 0; i < count; i++) {
 	int_value = buf1[i] + buf2[i];
 	s = (unsigned short)int_value;
 
@@ -210,7 +205,7 @@ main(int ac, char *av[])
 	return -1;
     }
 
-    if(fstat(fileno(in1), &sb)) {
+    if (fstat(fileno(in1), &sb)) {
 	perror(av[next_arg]);
 	fclose(in1);
 	return -1;
