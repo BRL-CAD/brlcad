@@ -7,23 +7,6 @@
 #endif
 
 
-/*
-__kernel void sph_shot(__global __write_only double3 *output,
-	const double3 o, const double3 l, const double3 c, const double r)
-{
-    double A = dot(l, l);
-    double B = 2*dot(l, o-c);
-    double C = dot(o-c, o-c) - r*r;
-    double disc = B*B - 4*A*C;
-
-    if (disc <= 0) return;
-    double q = B < 0 ? (-B + sqrt(disc))/2 : (-B - sqrt(disc))/2;
-    output[0] = q/A;
-    output[1] = C/q;
-}
-*/
-
-
 __kernel void sph_shot(__global __write_only double3 *output,
 	const double3 o, const double3 dir, const double3 V, const double radsq)
 {
