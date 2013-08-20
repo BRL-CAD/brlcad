@@ -157,13 +157,13 @@ main(int argc, char *argv[])
 		    if (done)
 			break;
 
-		    for (i=0; i<5; i++)
+		    for (i = 0; i < 5; i++)
 			verts[i] = (struct vertex *)NULL;
 
 		    fu = nmg_cface(s, verts, rec2.q.q_count);
 		    lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
 		    eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
-		    for (i=0; i<rec2.q.q_count; i++) {
+		    for (i = 0; i < rec2.q.q_count; i++) {
 			VMOVE(pt, rec2.q.q_verts[i]);
 			nmg_vertex_gv(eu->vu_p->v_p, pt);
 			eu = BU_LIST_NEXT(edgeuse, &eu->l);
