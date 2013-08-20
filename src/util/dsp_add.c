@@ -78,7 +78,7 @@ int parse_args(int ac, char *av[])
     char *strrchr(const char *, int);
 
     /* get all the option flags from the command line */
-    while ((c = bu_getopt(ac, av, options)) != -1)
+    while ((c = bu_getopt(ac, av, optstring)) != -1)
 	switch (c) {
 	    default:
 		Usage("");
@@ -184,11 +184,7 @@ main(int ac, char *av[])
     struct stat sb;
     size_t ret;
 
-    if (ac < 2) {
-	(void)fprintf(stderr, "Usage: %s dsp_1 dsp_2 > dsp_3\n",
-		      av[0]);
-	bu_exit (1, NULL);
-    }
+    if (ac < 2) Usage("");
 
     if (isatty(fileno(stdout))) Usage("Must redirect standard output\n");
 
