@@ -222,7 +222,7 @@ rt_hrt_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     register struct hrt_specific *hrt;
     struct rt_hrt_internal *hip;
-    fastf_t magsq_x, magsq_y, magsq_z, max;
+    fastf_t magsq_x, magsq_y, magsq_z;
     mat_t R, TEMP;
     vect_t Xu, Yu, Zu;
     fastf_t f;
@@ -244,22 +244,9 @@ rt_hrt_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	bu_log("rt_hrt_prep(): hrt(%s) near-zero length <d> distance to cusps (%g) causes problems\n", stp->st_name, hip->d);
 	return 1;
     }
-    max = hip->xdir[X];
-    if (isgreater(hip->ydir[Y], max)) {
-	max = hip->ydir[Y];
-    }
-    if (isgreater(hip->zdir[Z], max)) {
-	max = hip->zdir[Z];
-    }
-
     if (hip->d > 10000.0) {
 	bu_log("rt_hrt_prep(): hrt(%s) very large <d> distance to cusps (%g) causes problems\n", stp->st_name, hip->d);
-	/* BAD  */
-    }
-
-    if (hip->d > max) {
-	bu_log("rt_hrt_prep(): hrt(%s) Inappropriate value for <d> distance to cusps (%g) \n", stp->st_name, hip->d);
-	/* BAD  */
+	/* BAD */
     }
 
     /* Create unit length versions of X, Y, Z */
@@ -286,6 +273,12 @@ rt_hrt_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	bu_log("rt_hrt_prep(): hrt(%s) Z not perpendicular to Y, f=%f\n", stp->st_name, f);
 	return 1;
     }
+
+    /* Scale X and Y */
+    f = 0.8/sqrt(magsq_x);
+    VSCALE(Xu, hip->xdir, f);
+    f = 0.8/sqrt(magsq_y);
+    VSCALE(Yu, hip->ydir, f);
 
     /* Solid is OK, compute constant terms now  */
 
@@ -325,11 +318,7 @@ rt_hrt_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     /* compute bounding sphere  */
     VMOVE(stp->st_center, hrt->hrt_V);
-    f = magsq_x;
-    if (magsq_y > f)
-	f = magsq_y;
-    if (magsq_z > f)
-	f = magsq_z;
+    f = hip->zdir[Z] * 1.25;
     stp->st_aradius = stp->st_bradius = sqrt(f);
 
     /* compute bounding RPP */
