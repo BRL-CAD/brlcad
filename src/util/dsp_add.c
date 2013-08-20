@@ -50,6 +50,10 @@ const char usage[] = "Usage: %s dsp_1 dsp_2 > dsp_3\n";
  *
  * see_also: dsp(5) asc2dsp(1) cv(1)
  *
+ * opt: -h brief help
+ *
+ * opt: -? brief help
+ *
  */
 
 #define ADD_STYLE_INT 0
