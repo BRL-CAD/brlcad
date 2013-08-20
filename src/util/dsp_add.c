@@ -59,7 +59,7 @@ int style = ADD_STYLE_INT;
 /*
  * U S A G E --- tell user how to invoke this program, then exit
  */
-void usage(char *s)
+void Usage(char *s)
 {
     if (s) (void)fputs(s, stderr);
 
@@ -81,7 +81,7 @@ int parse_args(int ac, char *av[])
     while ((c = bu_getopt(ac, av, options)) != -1)
 	switch (c) {
 	    default:
-		usage("");
+		Usage("");
 	}
 
     return bu_optind;
@@ -190,11 +190,11 @@ main(int ac, char *av[])
 	bu_exit (1, NULL);
     }
 
-    if (isatty(fileno(stdout))) usage("Must redirect standard output\n");
+    if (isatty(fileno(stdout))) Usage("Must redirect standard output\n");
 
     next_arg = parse_args(ac, av);
 
-    if (next_arg >= ac) usage("No files specified\n");
+    if (next_arg >= ac) Usage("No files specified\n");
 
 
     /* Open the files */
