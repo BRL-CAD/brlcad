@@ -984,14 +984,19 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
     }
 
     // split the surfaces with the intersection curves
+    ON_ClassArray<ON_SimpleArray<TrimmedFace*> > trimmedfaces;
     for (int i = 0; i < original_faces.Count(); i++) {
 	TrimmedFace* first = original_faces[i];
-
 	ON_SimpleArray<ON_Curve*> linked_curves;
 	link_curves(curvesarray[i], linked_curves);
-	ON_SimpleArray<TrimmedFace*> trimmedfaces;
-	split_trimmed_face(trimmedfaces, first, linked_curves);
+	ON_SimpleArray<TrimmedFace*> splitted;
+	split_trimmed_face(splitted, first, linked_curves);
+	trimmedfaces.Append(splitted);
+    }
 
+    for (int i = 0; i < trimmedfaces.Count(); i++) {
+	const ON_SimpleArray<TrimmedFace*>& splitted = trimmedfaces[i];
+	const ON_Surface* surf = splitted.Count() ? splitted[0]->face->SurfaceOf() : NULL;
 	/* TODO: Perform inside-outside test to decide whether the trimmed face
 	 * should be used in the final b-rep structure or not.
 	 * Different operations should be dealt with accordingly.
@@ -1000,17 +1005,17 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
 	 * inside-outside tests.
 	 * Here we just use all of these trimmed faces.
 	 */
-	for (int j = 0; j < trimmedfaces.Count(); j++) {
+	for (int j = 0; j < splitted.Count(); j++) {
 	    // Add the surfaces, faces, loops, trims, vertices, edges, etc.
 	    // to the brep structure.
-	    ON_Surface *new_surf = first->face->SurfaceOf()->Duplicate();
+	    ON_Surface *new_surf = surf->Duplicate();
 	    int surfindex = brepO->AddSurface(new_surf);
 	    ON_BrepFace& new_face = brepO->NewFace(surfindex);
 
-	    add_elements(brepO, new_face, trimmedfaces[j]->outerloop, ON_BrepLoop::outer);
+	    add_elements(brepO, new_face, splitted[j]->outerloop, ON_BrepLoop::outer);
 	    // ON_BrepLoop &loop = brepO->m_L[brepO->m_L.Count() - 1];
-	    for (unsigned int k = 0; k < trimmedfaces[j]->innerloop.size(); k++)
-		add_elements(brepO, new_face, trimmedfaces[j]->innerloop[k], ON_BrepLoop::inner);
+	    for (unsigned int k = 0; k < splitted[j]->innerloop.size(); k++)
+		add_elements(brepO, new_face, splitted[j]->innerloop[k], ON_BrepLoop::inner);
 
 	    brepO->SetTrimIsoFlags(new_face);
 	    brepO->FlipFace(new_face);
