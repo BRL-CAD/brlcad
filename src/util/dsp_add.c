@@ -37,8 +37,20 @@
 
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "h?";
-char *progname = "(noname)";
+const char optstring[] = "h?";
+char *progname = "dsp_add";
+const char usage[] = "Usage: %s dsp_1 dsp_2 > dsp_3\n";
+
+/* purpose: combine two dsp files
+ *
+ * description: Combines two dsp files (which are binary files comprised of
+ * network unsigned shorts).  The two files must be of identical size.  The result
+ * is a file where each cell's height is the total of the heights of the same
+ * cell in the input files.
+ *
+ * see_also: dsp(5) asc2dsp(1) cv(1)
+ *
+ */
 
 #define ADD_STYLE_INT 0
 #define ADD_STYLE_FLOAT 1
@@ -51,7 +63,7 @@ void usage(char *s)
 {
     if (s) (void)fputs(s, stderr);
 
-    (void) fprintf(stderr, "Usage: %s dsp_1 dsp_2 > dsp_3\n",
+    (void) fprintf(stderr, usage,
 		   progname);
     bu_exit (1, NULL);
 }
