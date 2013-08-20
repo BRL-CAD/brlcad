@@ -70,7 +70,6 @@ struct sph_specific {
 
 
 #define CLT
-/* #define CLT_SINGLE_PRECISION */
 
 
 #ifdef CLT
@@ -88,6 +87,29 @@ struct sph_specific {
 #define cl_double cl_float
 #define cl_double3 cl_float3
 #endif
+
+
+struct AlignedPtr
+{
+    void *alloc;
+    void *ptr;
+};
+
+
+inline struct AlignedPtr
+aligned_malloc(size_t alignment, size_t size)
+{
+    struct AlignedPtr ap;
+    ap.alloc = bu_malloc(size + alignment - 1, "failed to allocate memory in aligned_malloc()");
+    ap.ptr = (void *)(((uintptr_t)ap.alloc + alignment - 1) / alignment*alignment);
+    return ap;
+}
+
+
+#define ALIGNED_SET(name, type, value) \
+        {(name) = aligned_malloc(sizeof(type), sizeof(type));\
+        *((type *)name.ptr) = (value);}
+
 
 
 const int clt_semaphore = 12; /* FIXME: for testing; this isn't our semaphore */
@@ -227,30 +249,43 @@ clt_init()
 static cl_double3
 clt_shot(cl_double3 o, cl_double3 dir, cl_double3 V, cl_double radsq, size_t hypersample)
 {
+    const char * const bu_free_error = "failed bu_free() in clt_shot()";
     cl_int error;
     cl_mem output;
     cl_double3 result;
-    cl_event done_kernel;
-
+    struct AlignedPtr a_result, a_o, a_dir, a_V, a_radsq;
 
     VSET(result.s, 0, 0, 0);
-    output = clCreateBuffer(clt_context, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY,
-	    sizeof(cl_double3), &result, &error);
+    ALIGNED_SET(a_result, cl_double3, result);
+    ALIGNED_SET(a_o, cl_double3, o);
+    ALIGNED_SET(a_dir, cl_double3, dir);
+    ALIGNED_SET(a_V, cl_double3, V);
+    ALIGNED_SET(a_radsq, cl_double, radsq);
+
+    output = clCreateBuffer(clt_context, CL_MEM_COPY_HOST_PTR | CL_MEM_WRITE_ONLY,
+	    sizeof(cl_double3), a_result.ptr, &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
 
     bu_semaphore_acquire(clt_semaphore);
     error = clSetKernelArg(clt_kernel, 0, sizeof(cl_mem), &output);
-    error |= clSetKernelArg(clt_kernel, 1, sizeof(cl_double3), &o);
-    error |= clSetKernelArg(clt_kernel, 2, sizeof(cl_double3), &dir);
-    error |= clSetKernelArg(clt_kernel, 3, sizeof(cl_double3), &V);
-    error |= clSetKernelArg(clt_kernel, 4, sizeof(cl_double), &radsq);
+    error |= clSetKernelArg(clt_kernel, 1, sizeof(cl_double3), a_o.ptr);
+    error |= clSetKernelArg(clt_kernel, 2, sizeof(cl_double3), a_dir.ptr);
+    error |= clSetKernelArg(clt_kernel, 3, sizeof(cl_double3), a_V.ptr);
+    error |= clSetKernelArg(clt_kernel, 4, sizeof(cl_double), a_radsq.ptr);
     if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
-    error = clEnqueueNDRangeKernel(clt_queue, clt_kernel, 1, NULL, &hypersample, NULL, 0, NULL, &done_kernel);
+    error = clEnqueueNDRangeKernel(clt_queue, clt_kernel, 1, NULL, &hypersample, NULL, 0, NULL, NULL);
     bu_semaphore_release(clt_semaphore);
     if (error != CL_SUCCESS) bu_bomb("failed to enqueue OpenCL kernel");
 
     if (clFinish(clt_queue) != CL_SUCCESS) bu_bomb("failure in clFinish()");
+    clEnqueueReadBuffer(clt_queue, output, CL_TRUE, 0, sizeof(cl_double3), &result, 0, NULL, NULL);
     clReleaseMemObject(output);
+    bu_free(a_result.alloc, bu_free_error);
+    bu_free(a_o.alloc, bu_free_error);
+    bu_free(a_dir.alloc, bu_free_error);
+    bu_free(a_V.alloc, bu_free_error);
+    bu_free(a_radsq.alloc, bu_free_error);
+
     return result;
 }
 #endif

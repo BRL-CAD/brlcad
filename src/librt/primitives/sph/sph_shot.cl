@@ -34,9 +34,9 @@ __kernel void sph_shot(__global __write_only double3 *output,
 
     ov = V - o;
     magsq_ov = ov[0]*ov[0] + ov[1]*ov[1] + ov[2]*ov[2];
-    printf("TZ: ov: %0.30f\t%0.30f\t%0.30f\n", ov[0], ov[1], ov[2]);
+    //printf("TZ: ov: %0.30f\t%0.30f\t%0.30f\n", ov[0], ov[1], ov[2]);
     b = dot(dir, ov);
-    printf("TZ: b: %0.30f\n", b);
+    //printf("TZ: b: %0.30f\n", b);
 
     if (magsq_ov >= radsq) {
 	// ray origin is outside of sphere
