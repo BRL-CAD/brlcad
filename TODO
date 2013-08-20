@@ -977,6 +977,37 @@ ARCHER
 ATTRIBUTES
 ----------
 
+* implement an attribute versioning system.  can hang attribute
+  version off of _GLOBAL (ideally) or per-object so application codes
+  (including our own tools) know whether they're compatible or whether
+  the attributes must be upgraded.
+
+* implement an "attr upgrade" subcommand that allows for forwards AND
+  backwards conversion of attributes.  the command will need two
+  function pointers per version that describes how to upgrade and
+  downgrade for that version transition.  this will allow new files to
+  be downgraded for use on older versions and obviously lets new files
+  be upgraded to the latest conventions.
+
+* implement namespacing for attributes as a means to group attributes
+  together.  examples: cad:color, cad:region_id, muves:component.
+  similar to svn properties, the namespace is predominantly (perhaps
+  entirely) a naming convention, but allows us to document and assert
+  requirements/conventions over a given prefix (e.g., 'cad:'), and
+  provides 3rd party applications with a sandbox to work with.
+
+* expose the list of internally recognized attributes via the man page
+  documentation and some internal method (e.g., an 'attr standards'
+  subcommand).
+
+* clean up default attributes to be consistent and upgrade old
+  attributes to their new names.  includes likes of region, region_id,
+  material_id, air, los, rgb, oshader, and inherit.  see
+  doc/docbook/system/man5/en/attributes.xml for more detailed listing.
+
+* implement an option to "attr upgrade" for reading upgrade/downgrade
+  plugins/instructions from an external file for 3rd party use.
+
 * prevent nirt from outputting a trailing space after values when
   there are no attributes to be displayed.  the problem is in the nirt
   format strings where they use " %s" for displaying any attributes.
@@ -985,17 +1016,6 @@ ATTRIBUTES
 
 * add support for user-specified sorting for the attr command (case,
   case-insensitive, creation, value, etc.)
-
-* clean up default attributes to be consistent and upgrade old
-  attributes to their new names.  includes likes of region, region_id,
-  material_id, air, los, rgb, oshader, and inherit.  see
-  doc/docbook/system/man5/en/attributes.xml for more detailed listing.
-
-* implement namespacing for attributes as a means to group attributes
-  together.  this can predominantly be a naming convention, but
-  requires awareness in the attribute-searching routines to search
-  without the namespace unless one is specified, and to reserve :: in
-  attribute names unless they're quoted.
 
 * binary attributes, see binary-incompatible section for details.
 
