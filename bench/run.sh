@@ -247,8 +247,8 @@ if test "x$HELP" = "x1" ; then
     echo "  ELP=/path/to/time_tool (e.g., elapsed.sh)"
     echo "  TIMEFRAME=#seconds (default 32)"
     echo "  MAXTIME=#seconds (default 300)"
-    echo "  DEVIATION=%deviation (default 3)"
-    echo "  AVERAGE=#frames (default 3)"
+    echo "  DEVIATION=%deviation (default 2)"
+    echo "  AVERAGE=#frames (default 5)"
     echo ""
     echo "Available RT options:"
     echo "  -P# (e.g., -P1 to force single CPU)"
@@ -650,10 +650,10 @@ if test $MAXTIME -lt $TIMEFRAME ; then
 fi
 
 # maximum deviation percentage
-set_if_unset DEVIATION 3
+set_if_unset DEVIATION 2
 
 # maximum number of iterations to average
-set_if_unset AVERAGE 3
+set_if_unset AVERAGE 5
 
 # end of settings, separate the output
 $ECHO
