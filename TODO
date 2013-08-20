@@ -76,20 +76,6 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
-* add support for user-specified sorting for the attr command (case,
-  case-insensitive, creation, value, etc.)
-
-* clean up default attributes to be consistent and upgrade old
-  attributes to their new names.  includes likes of region, region_id,
-  material_id, air, los, rgb, oshader, and inherit.  see
-  doc/docbook/system/man5/en/attributes.xml for more detailed listing.
-
-* implement namespacing for attributes as a means to group attributes
-  together.  this can predominantly be a naming convention, but
-  requires awareness in the attribute-searching routines to search
-  without the namespace unless one is specified, and to reserve :: in
-  attribute names unless they're quoted.
-
 * investigate integrating Blender's (OSL-based) Cycles engine:
   http://code.blender.org/index.php/2013/08/cycles-render-engine-released-with-permissive-license/
 
@@ -708,12 +694,6 @@ comp.r4 ID 5678 material code 5 LOS 75
 
 * extend analyze output formatting to user-specified formats ala nirt
 
-* prevent nirt from outputting a trailing space after values when
-  there are no attributes to be displayed.  the problem is in the nirt
-  format strings where they use " %s" for displaying any attributes.
-  need to left-pad a space conditionally, perhaps by supporting %*s
-  and sizeof(var).
-
 * implement make, ted, edsol, mirror, and analyze for revolve
   primitive.  implement tess() too.
 
@@ -992,6 +972,32 @@ ARCHER
 ------
 
 * See src/archer/TODO.
+
+
+ATTRIBUTES
+----------
+
+* prevent nirt from outputting a trailing space after values when
+  there are no attributes to be displayed.  the problem is in the nirt
+  format strings where they use " %s" for displaying any attributes.
+  need to left-pad a space conditionally, perhaps by supporting %*s
+  and sizeof(var).
+
+* add support for user-specified sorting for the attr command (case,
+  case-insensitive, creation, value, etc.)
+
+* clean up default attributes to be consistent and upgrade old
+  attributes to their new names.  includes likes of region, region_id,
+  material_id, air, los, rgb, oshader, and inherit.  see
+  doc/docbook/system/man5/en/attributes.xml for more detailed listing.
+
+* implement namespacing for attributes as a means to group attributes
+  together.  this can predominantly be a naming convention, but
+  requires awareness in the attribute-searching routines to search
+  without the namespace unless one is specified, and to reserve :: in
+  attribute names unless they're quoted.
+
+* binary attributes, see binary-incompatible section for details.
 
 
 NEW OBJECTS
