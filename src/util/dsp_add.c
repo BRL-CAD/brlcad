@@ -38,7 +38,7 @@
 
 /* declarations to support use of bu_getopt() system call */
 const char optstring[] = "h?";
-char *progname = "dsp_add";
+const char progname[] = "dsp_add";
 const char usage[] = "Usage: %s dsp_1 dsp_2 > dsp_3\n";
 
 /* purpose: combine two dsp files
@@ -77,7 +77,7 @@ int parse_args(int ac, char *av[])
     int c;
     char *strrchr(const char *, int);
 
-    if (! (progname=strrchr(*av, '/')))
+    if (!(progname = strrchr(*av, '/')))
 	progname = *av;
     else
 	++progname;
