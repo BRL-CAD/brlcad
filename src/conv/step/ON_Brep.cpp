@@ -571,12 +571,12 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
     {
 	STEPcomplex *sc = unit_complex->head;
 	while (sc) {
-	    if (!strcmp(sc->EntityName(), "Si_Unit")) {
+	    if (!bu_strcmp(sc->EntityName(), "Si_Unit")) {
 		sc->ResetAttributes();
 		STEPattribute *attr;
 		while ((attr = sc->NextAttribute()) != NULL) {
-		    if (!strcmp(attr->Name(), "prefix")) attr->ptr.e = new SdaiSi_prefix_var(Si_prefix__milli);
-		    if (!strcmp(attr->Name(), "name")) attr->ptr.e = new SdaiSi_unit_name_var(Si_unit_name__metre);
+		    if (!bu_strcmp(attr->Name(), "prefix")) attr->ptr.e = new SdaiSi_prefix_var(Si_prefix__milli);
+		    if (!bu_strcmp(attr->Name(), "name")) attr->ptr.e = new SdaiSi_unit_name_var(Si_unit_name__metre);
 		}
 	    }
 	    sc = sc->sc;
@@ -588,8 +588,8 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
     {
 	STEPattribute *attr;
 	while ((attr = uncertainty->NextAttribute()) != NULL) {
-	    if (!strcmp(attr->Name(), "unit_component")) attr->ptr.sh = new_unit;
-	    if (!strcmp(attr->Name(), "value_component")) attr->StrToVal("0.05");
+	    if (!bu_strcmp(attr->Name(), "unit_component")) attr->ptr.sh = new_unit;
+	    if (!bu_strcmp(attr->Name(), "value_component")) attr->StrToVal("0.05");
 	}
     }
 
@@ -599,11 +599,11 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
     {
 	STEPcomplex *sc = ua_entry_1->head;
 	while (sc) {
-	    if (!strcmp(sc->EntityName(), "Si_Unit")) {
+	    if (!bu_strcmp(sc->EntityName(), "Si_Unit")) {
 		sc->ResetAttributes();
 		STEPattribute *attr;
 		while ((attr = sc->NextAttribute()) != NULL) {
-		    if (!strcmp(attr->Name(), "name")) attr->ptr.e = new SdaiSi_unit_name_var(Si_unit_name__steradian);
+		    if (!bu_strcmp(attr->Name(), "name")) attr->ptr.e = new SdaiSi_unit_name_var(Si_unit_name__steradian);
 		}
 	    }
 	    sc = sc->sc;
@@ -616,11 +616,11 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
     {
 	STEPcomplex *sc = ua_entry_3->head;
 	while (sc) {
-	    if (!strcmp(sc->EntityName(), "Si_Unit")) {
+	    if (!bu_strcmp(sc->EntityName(), "Si_Unit")) {
 		sc->ResetAttributes();
 		STEPattribute *attr;
 		while ((attr = sc->NextAttribute()) != NULL) {
-		    if (!strcmp(attr->Name(), "name")) attr->ptr.e = new SdaiSi_unit_name_var(Si_unit_name__radian);
+		    if (!bu_strcmp(attr->Name(), "name")) attr->ptr.e = new SdaiSi_unit_name_var(Si_unit_name__radian);
 		}
 	    }
 	    sc = sc->sc;
@@ -651,20 +651,20 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
     {
 	STEPcomplex *sc = ua_entry_2->head;
 	while (sc) {
-	    if (!strcmp(sc->EntityName(), "Conversion_Based_Unit")) {
+	    if (!bu_strcmp(sc->EntityName(), "Conversion_Based_Unit")) {
 		sc->ResetAttributes();
 		STEPattribute *attr;
 		while ((attr = sc->NextAttribute()) != NULL) {
-		    if (!strcmp(attr->Name(), "name")) attr->StrToVal("'DEGREES'");
-		    if (!strcmp(attr->Name(), "conversion_factor")) attr->ptr.c = (STEPentity **)&p_ang_measure_with_unit ;
+		    if (!bu_strcmp(attr->Name(), "name")) attr->StrToVal("'DEGREES'");
+		    if (!bu_strcmp(attr->Name(), "conversion_factor")) attr->ptr.c = (STEPentity **)&p_ang_measure_with_unit ;
 		}
 	    }
 
-	    if (!strcmp(sc->EntityName(), "Named_Unit")) {
+	    if (!bu_strcmp(sc->EntityName(), "Named_Unit")) {
 		sc->ResetAttributes();
 		STEPattribute *attr;
 		while ((attr = sc->NextAttribute()) != NULL) {
-		    if (!strcmp(attr->Name(), "dimensions")) attr->ptr.c = (STEPentity **)&dimensional_exp;
+		    if (!bu_strcmp(attr->Name(), "dimensions")) attr->ptr.c = (STEPentity **)&dimensional_exp;
 		}
 	    }
 	    sc = sc->sc;
@@ -684,17 +684,17 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
     while (sc) {
 	STEPattribute *attr;
 
-	if (!strcmp(sc->EntityName(), "Geometric_Representation_Context")) {
+	if (!bu_strcmp(sc->EntityName(), "Geometric_Representation_Context")) {
 	    sc->ResetAttributes();
 	    while ((attr = sc->NextAttribute()) != NULL) {
-		if (!strcmp(attr->Name(), "coordinate_space_dimension")) attr->StrToVal("3");
+		if (!bu_strcmp(attr->Name(), "coordinate_space_dimension")) attr->StrToVal("3");
 	    }
 	}
 
-	if (!strcmp(sc->EntityName(), "Global_Uncertainty_Assigned_Context")) {
+	if (!bu_strcmp(sc->EntityName(), "Global_Uncertainty_Assigned_Context")) {
 	    sc->ResetAttributes();
 	    while ((attr = sc->NextAttribute()) != NULL) {
-		if (!strcmp(attr->Name(), "uncertainty")) {
+		if (!bu_strcmp(attr->Name(), "uncertainty")) {
 		    EntityAggregate *unc_agg = new EntityAggregate();
 		    unc_agg->AddNode(new EntityNode((SDAI_Application_instance *)uncertainty));
 		    attr->ptr.a = unc_agg;
@@ -703,11 +703,11 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 
 	}
 
-	if (!strcmp(sc->EntityName(), "Global_Unit_Assigned_Context")) {
+	if (!bu_strcmp(sc->EntityName(), "Global_Unit_Assigned_Context")) {
 	    sc->ResetAttributes();
 	    while ((attr = sc->NextAttribute()) != NULL) {
 		std::string attrval;
-		if (!strcmp(attr->Name(), "units")) {
+		if (!bu_strcmp(attr->Name(), "units")) {
 		    EntityAggregate *unit_assigned_agg = new EntityAggregate();
 		    unit_assigned_agg->AddNode(new EntityNode((SDAI_Application_instance *)ua_entry_1));
 		    unit_assigned_agg->AddNode(new EntityNode((SDAI_Application_instance *)ua_entry_2));
@@ -717,11 +717,11 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 	    }
 	}
 
-	if (!strcmp(sc->EntityName(), "Representation_Context")) {
+	if (!bu_strcmp(sc->EntityName(), "Representation_Context")) {
 	    sc->ResetAttributes();
 	    while ((attr = sc->NextAttribute()) != NULL) {
-		if (!strcmp(attr->Name(), "context_identifier")) attr->StrToVal("'STANDARD'");
-		if (!strcmp(attr->Name(), "context_type")) attr->StrToVal("'3D'");
+		if (!bu_strcmp(attr->Name(), "context_identifier")) attr->StrToVal("'STANDARD'");
+		if (!bu_strcmp(attr->Name(), "context_type")) attr->StrToVal("'3D'");
 	    }
 	}
 	sc = sc->sc;
