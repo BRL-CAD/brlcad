@@ -98,7 +98,7 @@ for file in $FILES ; do
 	continue
     fi
 
-    # test files that include common.h 
+    # test files that include common.h
     if test ! "x`grep -I -e '#[[:space:]]*include' $file | grep '\"common.h\"'`" = "x" ; then
 	# common.h is first?
 	MATCH="`grep -n -I -e '#[[:space:]]*include' $file /dev/null | head -n 1 | grep -v '\"common.h\"'`"
@@ -140,7 +140,7 @@ echo "running API usage check"
 # 89 - calloc
 # 21 - realloc
 FOUND=
-for func in fgets abort dirname getopt strcat strncat strlcat strcpy strncpy strlcpy strcmp strcasecmp stricmp strncmp strncasecmp stricmp unlink rmdir remove ; do
+for func in fgets abort dirname getopt strcat strncat strlcat strcpy strncpy strlcpy strcmp strcasecmp stricmp strncmp strncasecmp unlink rmdir remove ; do
     echo "Searching for $func ..."
     MATCH="`grep -n -e [^a-zA-Z0-9_]$func\( $INCFILES $SRCFILES /dev/null`"
 
