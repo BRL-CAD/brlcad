@@ -76,6 +76,20 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* add support for user-specified sorting for the attr command (case,
+  case-insensitive, creation, value, etc.)
+
+* clean up default attributes to be consistent and upgrade old
+  attributes to their new names.  includes likes of region, region_id,
+  material_id, air, los, rgb, oshader, and inherit.  see
+  doc/docbook/system/man5/en/attributes.xml for more detailed listing.
+
+* implement namespacing for attributes as a means to group attributes
+  together.  this can predominantly be a naming convention, but
+  requires awareness in the attribute-searching routines to search
+  without the namespace unless one is specified, and to reserve :: in
+  attribute names unless they're quoted.
+
 * investigate integrating Blender's (OSL-based) Cycles engine:
   http://code.blender.org/index.php/2013/08/cycles-render-engine-released-with-permissive-license/
 
@@ -385,9 +399,6 @@ comp.r4 ID 5678 material code 5 LOS 75
   for function replacements are being respected (e.g., bu_strcmp()
   instead of strcmp()).
 
-* add support for user-specified sorting for the attr command (case,
-  case-insensitive, creation, value, etc.)
-
 * make sure 'preview' works, particularly the 'tree' subcommand.
 
 * make nreed's new bot cleanup interface update interactively without
@@ -416,11 +427,6 @@ comp.r4 ID 5678 material code 5 LOS 75
   aggregate, this can help us focus development resources towards
   improving workflows, documentation, robustness, and new development
   areas.
-
-* clean up default attributes to be consistent and upgrade old
-  attributes to their new names.  includes likes of region, region_id,
-  material_id, air, los, rgb, oshader, and inherit.  see
-  doc/docbook/system/man5/en/attributes.xml for more detailed listing.
 
 * automatic anti-aliasing as a second render pass on the edges
   encountered (possibly using bilinear filtering scheme, improve upon
@@ -1105,12 +1111,6 @@ NEW OBJECTS
   raytrace objects containing the intersection results for a given
   view (i.e., a grid of primary rays), and 3) rtgl point samples
   (which is a variant of 2 but potentially view independent).
-
-* implement namespacing for attributes as a means to group attributes
-  together.  this can predominantly be a naming convention, but
-  requires awareness in the attribute-searching routines to search
-  without the namespace unless one is specified, and to reserve :: in
-  attribute names unless they're quoted.
 
 * alias objects.  this is an object handle in a geometry database that
   refers to another geometry database object.  in effect, it
