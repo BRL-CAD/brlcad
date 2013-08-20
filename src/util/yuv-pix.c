@@ -57,16 +57,19 @@ static long int file_height = 485L;	/* default input height */
 void ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, long int len);
 void ab_yuv_to_rgb(unsigned char *rgb_buf, unsigned char *yuv_buf, long int len);
 
-static char usage[] = "\
-Usage: yuv-pix [-h] [-a]\n\
-	[-s squaresize] [-w file_width] [-n file_height] [file.yuv] > file.pix\n";
+static const char usage[] =
+  "Usage: yuv-pix [-h] [-a]\n"
+  "	[-s squaresize] [-w file_width] [-n file_height] [file.yuv] > file.pix\n"
+  ;
+
+static const char optstring[] = "ahs:w:n:";
 
 int
 get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "ahs:w:n:")) != -1) {
+    while ((c = bu_getopt(argc, argv, optstring)) != -1) {
 	switch (c) {
 	    case 'a':
 		autosize = 1;
