@@ -1003,7 +1003,7 @@ ATTRIBUTES
 * clean up default attributes to be consistent and upgrade old
   attributes to their new names.  includes likes of region, region_id,
   material_id, air, los, rgb, oshader, and inherit.  see
-  doc/docbook/system/man5/en/attributes.xml for more detailed listing.
+  doc/docbook/system/man5/en/gattributes.xml for more detailed listing.
 
 * implement an option to "attr upgrade" for reading upgrade/downgrade
   plugins/instructions from an external file for 3rd party use.
