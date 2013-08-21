@@ -959,8 +959,8 @@ MACRO(CHECK_FD_SET_IN_TYPES_D)
 ENDMACRO(CHECK_FD_SET_IN_TYPES_D)
 
 MACRO(CHECK_COMPILER_SUPPORTS_HIDDEN_D)
-	SET(TEST_SRC"
-	#define MODULE_SCOPE extern __attribute__((__visibility__("hidden")))
+	SET(TEST_SRC "
+	#define MODULE_SCOPE extern __attribute__((__visibility__(\"hidden\")))
 	main(){};
 	")
 	CHECK_C_SOURCE_COMPILES("${TEST_SRC}" COMPILER_SUPPORTS_HIDDEN)
