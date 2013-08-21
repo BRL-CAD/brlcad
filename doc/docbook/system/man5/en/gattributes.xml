@@ -244,12 +244,6 @@
 
 </refsection>
 
-<refsection xml:id="examples"><title>EXAMPLES</title>
-
-  <para>
-  </para>
-</refsection>
-
 <refsection xml:id="see_also"><title>SEE ALSO</title>
 <para><citerefentry><refentrytitle>attr</refentrytitle><manvolnum>n</manvolnum></citerefentry>.</para>
 </refsection>
