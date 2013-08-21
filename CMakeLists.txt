@@ -1502,6 +1502,10 @@ BRLCAD_CHECK_LIBRARY(DL dl dlopen)
 # Solaris lexer library
 BRLCAD_CHECK_LIBRARY(SOLARIS_LEXER l yyless)
 
+# timeSetEvent in Windows memory management
+BRLCAD_CHECK_LIBRARY(WINMM winmm timeSetEvent)
+
+
 # *******************************************************************
 # ***             Check for Headers - Stage 5 of 9                ***
 # *******************************************************************
