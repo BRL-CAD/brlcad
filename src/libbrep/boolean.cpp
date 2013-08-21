@@ -66,7 +66,9 @@ struct TrimmedFace {
 #if USE_CONNECTIVITY_GRAPH
     // Connectivity graph support
     ON_SimpleArray<TrimmedFace*> neighbors;
-    IntersectPoint start, end;
+    // which parts of its parent's outerloop are used, decribed in multiple
+    // pairs of IntersectPoints (multiple intervals)
+    ON_ClassArray<std::pair<IntersectPoint, IntersectPoint> > parts;
 #endif
     TrimmedFace *Duplicate() const
     {
@@ -75,8 +77,7 @@ struct TrimmedFace {
 	out->outerloop = outerloop;
 	out->innerloop = innerloop;
 #if USE_CONNECTIVITY_GRAPH
-	out->start = start;
-	out->end = end;
+	out->parts = parts;
 	// Don't copy the neighbors
 #endif
 	return out;
@@ -483,7 +484,8 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 		    newface->face = in->face;
 		    newface->outerloop.Append(curves[i]);
 #if USE_CONNECTIVITY_GRAPH
-		    newface->start.m_seg = newface->start.m_t = newface->end.m_seg = newface->end.m_t = ON_UNSET_VALUE;
+		    // It doesn't share its parent's outerloop
+		    newface->parts.Empty();
 #endif
 		    out.Append(newface);
 		}
@@ -565,7 +567,13 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
     intersect.QuickSort(compare_t);
 
     // Split the outer loop.
-    ON_SimpleArray<ON_Curve*> outerloop;
+    ON_SimpleArray<ON_Curve*> outerloop;    // segments of the outerloop
+#if USE_CONNECTIVITY_GRAPH
+    // the start point and end point of an outerloop segment
+    // outerloop_start_end[] and outerloop[] should have the same size, and
+    // outerloop_start_end[i] should be corresponding to outerloop[i] exactly.
+    ON_SimpleArray<std::pair<IntersectPoint, IntersectPoint> > outerloop_start_end;
+#endif
     int isect_iter = 0;
     for (int i = 0; i < in->outerloop.Count(); i++) {
 	ON_Curve *curve_on_loop = in->outerloop[i]->Duplicate();
@@ -588,9 +596,21 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 		    split_called = true;
 		}
 	    }
-	    if (left != NULL)
+	    if (left != NULL) {
 		outerloop.Append(left);
-	    else if (split_called) {
+#if USE_CONNECTIVITY_GRAPH
+		IntersectPoint start;
+		if (outerloop_start_end.Count() == 0 || outerloop_start_end.Last()->second.m_seg != i) {
+		    // It should use the start point of in->outerloop[i]
+		    start.m_seg = i;
+		    start.m_t = in->outerloop[i]->Domain().Min();
+		} else {
+		    // Continuous to the last one
+		    start = outerloop_start_end.Last()->second;
+		}
+		outerloop_start_end.Append(std::make_pair(start, isect_pt));
+#endif
+	    } else if (split_called) {
 		bu_log("Split failed.\n");
 		if (curve_on_loop) {
 		    bu_log("Domain: [%lf, %lf]\n", curve_on_loop->Domain().Min(), curve_on_loop->Domain().Max());
@@ -599,8 +619,23 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	    }
 	    intersect[isect_iter].m_pos = outerloop.Count() - 1;
 	}
-	if (curve_on_loop)
+	if (curve_on_loop) {
 	    outerloop.Append(curve_on_loop);
+#if USE_CONNECTIVITY_GRAPH
+	    IntersectPoint start, end;
+	    if (outerloop_start_end.Count() == 0 || outerloop_start_end.Last()->second.m_seg != i) {
+		// It should use the start point of in->outerloop[i]
+		start.m_seg = i;
+		start.m_t = in->outerloop[i]->Domain().Min();
+	    } else {
+		// Continuous to the last one
+		start = outerloop_start_end.Last()->second;
+	    }
+	    end.m_seg = i;
+	    end.m_t = in->outerloop[i]->Domain().Max();
+	    outerloop_start_end.Append(std::make_pair(start, end));
+#endif
+	}
     }
 
     // Append the first element at the last to handle some special cases.
@@ -616,6 +651,9 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 		bu_log("ON_Curve::Duplicate() failed.\n");
 		outerloop.Append(outerloop[i]);
 	    }
+#if USE_CONNECTIVITY_GRAPH
+	    outerloop_start_end.Append(outerloop_start_end[i]);
+#endif
 	}
 	intersect.Last()->m_pos = outerloop.Count() - 1;
     }
@@ -623,6 +661,14 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
     std::stack<int> s;
 
     for (int i = 0; i < intersect.Count(); i++) {
+#if USE_CONNECTIVITY_GRAPH
+	// Check the validity of outerloop_start_end
+	if (outerloop_start_end.Count() != outerloop.Count()) {
+	    bu_log("split_trimmed_face() Error [i = %d]: outerloop_start_end.Count() != outerloop.Count()\n", i);
+	    return -1;
+	}
+#endif
+
 	// Ignore UNSET IntersectPoints.
 	if (intersect[i].m_in_out == IntersectPoint::UNSET)
 	    continue;
@@ -657,9 +703,15 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 
 	// need to form a new loop
 	ON_SimpleArray<ON_Curve*> newloop;
+#if USE_CONNECTIVITY_GRAPH
+	ON_SimpleArray<std::pair<IntersectPoint, IntersectPoint> > newloop_start_end;
+#endif
 	int curve_count = q.m_pos - p.m_pos;
 	for (int j = p.m_pos + 1; j <= q.m_pos; j++) {
 	    newloop.Append(outerloop[j]);
+#if USE_CONNECTIVITY_GRAPH
+	    newloop_start_end.Append(outerloop_start_end[j]);
+#endif
 	}
 
 	if (p.m_type != q.m_type) {
@@ -701,6 +753,18 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 		outerloop[outerloop.Count()-1] = NULL;
 		outerloop.Remove();
 	    }
+#if USE_CONNECTIVITY_GRAPH
+	    // Update outerloop_start_end
+	    IntersectPoint invalid_point;
+	    invalid_point.m_seg = -1;
+	    outerloop_start_end[p.m_pos + 1] = std::make_pair(invalid_point, invalid_point);
+	    k = p.m_pos + 2;
+	    for (int j = q.m_pos + 1; j < outerloop_start_end.Count(); j++)
+		outerloop_start_end[k++] = outerloop_start_end[j];
+	    while (k < outerloop_start_end.Count()) {
+		outerloop_start_end.Remove();
+	    }
+#endif
 	    // Update m_pos
 	    for (int j = i + 1; j < intersect.Count(); j++)
 		intersect[j].m_pos -= curve_count - 1;
@@ -713,8 +777,9 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	    newface->face = in->face;
 	    newface->outerloop.Append(newloop.Count(), newloop.Array());
 #if USE_CONNECTIVITY_GRAPH
-	    newface->start = p;
-	    newface->end = q;
+	    for (int i = 0; i < newloop_start_end.Count(); i++)
+		if (newloop_start_end[i].first.m_seg != -1)
+		    newface->parts.Append(newloop_start_end[i]);
 #endif
 	    out.Append(newface);
 	}
@@ -722,8 +787,12 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 
     // Remove the duplicated segments before the first intersection point.
     if (intersect.Count()) {
-	for (int i = 0; i <= intersect[0].m_pos; i++)
+	for (int i = 0; i <= intersect[0].m_pos; i++) {
 	    outerloop.Remove(0);
+#if USE_CONNECTIVITY_GRAPH
+	    outerloop_start_end.Remove(0);
+#endif
+	}
     }
 
     if (out.Count() == 0) {
@@ -737,14 +806,23 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	    newface->innerloop = in->innerloop;
 	    newface->innerloop.insert(newface->innerloop.end(), innerloops.begin(), innerloops.end());
 #if USE_CONNECTIVITY_GRAPH
-	    if (intersect.Count()) {
-		// XXX: Use more than one intervals
-		newface->start = intersect[0];
-		newface->end = *intersect.Last();
+	    /* if (intersect.Count()) {
+		// Eliminate the parts of outerloop used by other sub-faces
+		for (int i = 0; i < out.Count(); i++) {
+		    if (out[i]->parts.Count() == 0)
+			continue;
+		    IntersectPoint& start = intersect[0];
+		    for (int j = 0; j < out[i]->parts.Count(); j++) {
+			newface->parts.Append(std::make_pair(start, out[i]->parts[j].first));
+			start = out[i]->parts[j].second;
+		    }
+		}
 	    } else {
-		newface->start = in->start;
-		newface->end = in->end;
-	    }
+		newface->parts = in->parts;
+	    } */
+	    for (int i = 0; i < outerloop_start_end.Count(); i++)
+		if (outerloop_start_end[i].first.m_seg != -1)
+		    newface->parts.Append(outerloop_start_end[i]);
 #endif
 	    out.Append(newface);
 	}
@@ -982,10 +1060,14 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
 		first->innerloop.push_back(iloop);
 	}
 #if USE_CONNECTIVITY_GRAPH
-	first->start.m_seg = 0;
-	first->start.m_t = first->outerloop.Count() ? first->outerloop[0]->Domain().Min() : ON_UNSET_VALUE;
-	first->end.m_seg = first->outerloop.Count() - 1;
-	first->end.m_t = first->outerloop.Count() ? (*first->outerloop.Last())->Domain().Max() : ON_UNSET_VALUE;
+	if (first->outerloop.Count()) {
+	    IntersectPoint start, end;
+	    start.m_seg = 0;
+	    start.m_t = first->outerloop[0]->Domain().Min();
+	    end.m_seg = first->outerloop.Count() - 1;
+	    end.m_t = (*first->outerloop.Last())->Domain().Max();
+	    first->parts.Append(std::make_pair(start, end));
+	}
 #endif
 	original_faces.Append(first);
     }
@@ -1040,25 +1122,40 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
     for (int i = 0; i < original_faces.Count(); i++) {
 	for (int j = 0; j < trimmedfaces[i].Count(); j++) {
 	    TrimmedFace* t_face = trimmedfaces[i][j];
-	    if (t_face->start.m_seg == -1 || t_face->start.m_t == ON_UNSET_VALUE || t_face->end.m_seg == -1 || t_face->end.m_t == ON_UNSET_VALUE)
+	    if (t_face->parts.Count() == 0)
 		continue;
 	    for (int k = 0; k < original_faces[i]->neighbors.Count(); k++) {
 		int neighbor_index = original_faces.Search(original_faces[i]->neighbors[k]);
 		if (neighbor_index == -1)
 		    continue;
 		for (int l = 0; l < trimmedfaces[neighbor_index].Count(); l++) {
+		    // Search all of its parent's neighbors' children, and check
+		    // whether they share a common part of the original outerloop.
+		    // If their "parts" intersect (overlap) in some way, they are
+		    // neighbors again. (Neighboring parents' children become new
+		    // neighbors: parent[i]'s child[j] with parent[i]'s neighbor[k]'s
+		    // child[l])
 		    TrimmedFace* another_face = trimmedfaces[neighbor_index][l];
-		    if (another_face->start.m_seg == -1 || another_face->start.m_t == ON_UNSET_VALUE
-			|| another_face->end.m_seg == -1 || another_face->end.m_t == ON_UNSET_VALUE)
+		    if (another_face->parts.Count() == 0)
 			continue;
-		    const IntersectPoint& start = compare_t(&(t_face->start), &(another_face->start)) < 0 ? another_face->start : t_face->start;
-		    const IntersectPoint& end = compare_t(&(t_face->end), &(another_face->end)) < 0 ? t_face->end : another_face->end;
-		    if (compare_t(&start, &end) < 0) {
-			// The intervals intersect
-			if (t_face->neighbors.Search(another_face) == -1)
-			    t_face->neighbors.Append(another_face);
-			if (another_face->neighbors.Search(t_face) == -1)
-			    another_face->neighbors.Append(t_face);
+		    // Find an intersection between all their "parts".
+		    for (int i1 = 0; i1 < t_face->parts.Count(); i1++) {
+			for (int i2 = 0; i2 < another_face->parts.Count(); i2++) {
+			    const IntersectPoint& start1 = t_face->parts[i1].first;
+			    const IntersectPoint& start2 = another_face->parts[i2].first;
+			    const IntersectPoint& end1 = t_face->parts[i1].second;
+			    const IntersectPoint& end2 = another_face->parts[i2].second;
+			    const IntersectPoint& start_max = compare_t(&start1, &start2) < 0 ? start2 : start1;
+			    const IntersectPoint& end_min = compare_t(&end1, &end2) < 0 ? end1 : end2;
+			    if (compare_t(&start_max, &end_min) < 0) {
+				// The intervals intersect
+				if (t_face->neighbors.Search(another_face) == -1)
+				    t_face->neighbors.Append(another_face);
+				if (another_face->neighbors.Search(t_face) == -1)
+				    another_face->neighbors.Append(t_face);
+				break;
+			    }
+			}
 		    }
 		}
 	    }
