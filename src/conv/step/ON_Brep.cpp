@@ -365,7 +365,7 @@ Add_Default_Geometric_Context(Registry *registry, InstMgr *instance_list)
     instance_cnt++;
 
      /*
-      * Now that we have the pieces, build thie final complex type from four other types:
+      * Now that we have the pieces, build the final complex type from four other types:
      */
     const char *entNmArr[5] = {"geometric_representation_context", "global_uncertainty_assigned_context",
 			       "global_unit_assigned_context", "representation_context", "*"};
@@ -578,7 +578,7 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 	SdaiPath *e_loop_path = (SdaiPath *)edge_loops.at(i)->GetNextMiEntity();
 	for (int l = 0; l < loop->TrimCount(); ++l) {
 	    // FIXME - trims in a loop will not necessarily map back uniquely to edge curves for
-	    // a given loop.  The Add_Edge approach is inadquate - need to rethink this
+	    // a given loop.  The Add_Edge approach is inadequate - need to rethink this
 	    int trim_edge = Add_Edge(loop->Trim(l), registry, instance_list, &oriented_edges, &edge_curves, &vertex_pnts);
 	    if (trim_edge >= 0)
 		e_loop_path->edge_list_()->AddNode(new EntityNode((SDAI_Application_instance *)(oriented_edges.at(trim_edge))));
