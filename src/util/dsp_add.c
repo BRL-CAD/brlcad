@@ -43,10 +43,10 @@ const char usage[] = "Usage: %s dsp_1 dsp_2 > dsp_3\n";
 
 /* purpose: combine two dsp files
  *
- * description: Combines two dsp files (which are binary files comprised of
- * network unsigned shorts).  The two files must be of identical size.  The result
- * is a file where each cell's height is the total of the heights of the same
- * cell in the input files.
+ * description: Combines two dsp files (which are binary files
+ * comprised of network unsigned shorts).  The two files must be of
+ * identical size.  The result is a file where each cell's height is
+ * the total of the heights of the same cell in the input files.
  *
  * see_also: dsp(5) asc2dsp(1) cv(1)
  *
@@ -61,10 +61,10 @@ const char usage[] = "Usage: %s dsp_1 dsp_2 > dsp_3\n";
 int style = ADD_STYLE_INT;
 
 /*
- * U S A G E --- tell user how to invoke this program, then exit
+ * tell user how to invoke this program, then exit
  */
-void
-Usage(char *s)
+static void
+print_usage(char *s)
 {
     if (s) (void)fputs(s, stderr);
 
@@ -74,9 +74,9 @@ Usage(char *s)
 
 
 /*
- * P A R S E _ A R G S --- Parse through command line flags
+ * Parse command line flags
  */
-int
+static int
 parse_args(int ac, char *av[])
 {
     int c;
@@ -86,14 +86,14 @@ parse_args(int ac, char *av[])
     while ((c = bu_getopt(ac, av, optstring)) != -1)
 	switch (c) {
 	    default:
-		Usage("");
+		print_usage("");
 	}
 
     return bu_optind;
 }
 
 
-void
+static void
 swap_bytes(unsigned short *buf, unsigned long count)
 {
     unsigned short *p;
@@ -104,12 +104,9 @@ swap_bytes(unsigned short *buf, unsigned long count)
 
 
 /*
- * A D D _ F L O A T
- *
  * Perform floating point addition and re-normalization of the data.
- *
  */
-void
+static void
 add_float(unsigned short *buf1, unsigned short *buf2, unsigned long count)
 {
     unsigned short *p, *q, *e;
@@ -143,14 +140,12 @@ add_float(unsigned short *buf1, unsigned short *buf2, unsigned long count)
 
 
 /*
- * A D D _ I N T
- *
  * Perform simple integer addition to the input streams.
  * Issue warning on overflow.
  *
  * Result:	buf1 contents modified
  */
-void
+static void
 add_int(unsigned short *buf1, unsigned short *buf2, unsigned long count)
 {
     int int_value;
@@ -172,8 +167,6 @@ add_int(unsigned short *buf1, unsigned short *buf2, unsigned long count)
 
 
 /*
- * M A I N
- *
  * Call parse_args to handle command line arguments first, then
  * process input.
  */
@@ -189,13 +182,16 @@ main(int ac, char *av[])
     struct stat sb;
     size_t ret;
 
-    if (ac < 2) Usage("");
+    if (ac < 2)
+	print_usage("");
 
-    if (isatty(fileno(stdout))) Usage("Must redirect standard output\n");
+    if (isatty(fileno(stdout)))
+	print_usage("Must redirect standard output\n");
 
     next_arg = parse_args(ac, av);
 
-    if (next_arg >= ac) Usage("No files specified\n");
+    if (next_arg >= ac)
+	print_usage("No files specified\n");
 
 
     /* Open the files */
