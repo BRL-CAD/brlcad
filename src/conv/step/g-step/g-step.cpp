@@ -52,8 +52,6 @@
 #  include <SdaiCONFIG_CONTROL_DESIGN.h>
 #endif
 
-
-#include "Factory.h"
 #include "schema.h"
 
 void
