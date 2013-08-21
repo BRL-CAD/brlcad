@@ -398,9 +398,9 @@ Add_Default_Geometric_Context(Registry *registry, InstMgr *instance_list)
 		std::string attrval;
 		if (!bu_strcmp(attr->Name(), "units")) {
 		    EntityAggregate *unit_assigned_agg = new EntityAggregate();
-		    unit_assigned_agg->AddNode(new EntityNode((SDAI_Application_instance *)ua_entry_1));
+		    unit_assigned_agg->AddNode(new EntityNode((SDAI_Application_instance *)unit_complex));
 		    unit_assigned_agg->AddNode(new EntityNode((SDAI_Application_instance *)ua_entry_2));
-		    unit_assigned_agg->AddNode(new EntityNode((SDAI_Application_instance *)uncertainty));
+		    unit_assigned_agg->AddNode(new EntityNode((SDAI_Application_instance *)ua_entry_3));
 		    attr->ptr.a = unit_assigned_agg;
 		}
 	    }

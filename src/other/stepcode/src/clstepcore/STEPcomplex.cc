@@ -565,7 +565,7 @@ void STEPcomplex::STEPwrite( ostream & out, const char * currSch, int writeComme
     if( writeComment && !p21Comment.empty() ) {
         out << p21Comment;
     }
-    out << "#" << STEPfile_id << "=(";
+    out << "#" << STEPfile_id << "=(\n";
     WriteExtMapEntities( out, currSch );
     out << ");\n";
 }
@@ -597,7 +597,7 @@ void STEPcomplex::WriteExtMapEntities( ostream & out, const char * currSch ) {
             out << ",";
         }
     }
-    out << ")";
+    out << ")\n";
     if( sc ) {
         sc->WriteExtMapEntities( out, currSch );
     }
@@ -620,7 +620,7 @@ const char * STEPcomplex::WriteExtMapEntities( std::string & buf, const char * c
             buf.append( "," );
         }
     }
-    buf.append( ")" );
+    buf.append( ")\n" );
 
     if( sc ) {
         sc->WriteExtMapEntities( buf, currSch );
