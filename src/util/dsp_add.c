@@ -37,9 +37,9 @@
 
 
 /* declarations to support use of bu_getopt() system call */
-const char optstring[] = "h?";
-const char progname[] = "dsp_add";
-const char usage[] = "Usage: %s dsp_1 dsp_2 > dsp_3\n";
+static const char optstring[] = "h?";
+static const char progname[] = "dsp_add";
+static const char usage[] = "Usage: %s dsp_1 dsp_2 > dsp_3\n";
 
 /* purpose: combine two dsp files
  *
@@ -58,7 +58,8 @@ const char usage[] = "Usage: %s dsp_1 dsp_2 > dsp_3\n";
 
 #define ADD_STYLE_INT 0
 #define ADD_STYLE_FLOAT 1
-int style = ADD_STYLE_INT;
+
+static int style = ADD_STYLE_INT;
 
 /*
  * tell user how to invoke this program, then exit
@@ -68,7 +69,7 @@ print_usage(char *s)
 {
     if (s) (void)fputs(s, stderr);
 
-    (void)fprintf(stderr, usage, progname);
+    bu_log(usage, progname);
     bu_exit (1, NULL);
 }
 
@@ -80,7 +81,6 @@ static int
 parse_args(int ac, char *av[])
 {
     int c;
-    char *strrchr(const char *, int);
 
     /* get all the option flags from the command line */
     while ((c = bu_getopt(ac, av, optstring)) != -1)
@@ -193,7 +193,6 @@ main(int ac, char *av[])
     if (next_arg >= ac)
 	print_usage("No files specified\n");
 
-
     /* Open the files */
 
     in1 = fopen(av[next_arg], "r");
@@ -248,7 +247,6 @@ main(int ac, char *av[])
 	perror("fread");
     fclose(in2);
 
-
     /* Convert from network to host format */
     in_cookie = bu_cv_cookie("nus");
     out_cookie = bu_cv_cookie("hus");
@@ -259,17 +257,13 @@ main(int ac, char *av[])
 	swap_bytes(buf2, count);
     }
 
-
     /* add the two datasets together */
-
     switch (style) {
 	case ADD_STYLE_FLOAT	: add_float(buf1, buf2, count); break;
 	case ADD_STYLE_INT	: add_int(buf1, buf2, count); break;
-	default			: fprintf(stderr,
-					  "Error: Unknown add style\n");
+	default			: bu_log("Error: Unknown add style\n");
 	    break;
     }
-
 
     /* convert back to network format & write out */
     if (conv) {
@@ -278,7 +272,7 @@ main(int ac, char *av[])
     }
 
     if (fwrite(buf1, sizeof(short), count, stdout) != count) {
-	fprintf(stderr, "Error writing data\n");
+	bu_log("Error writing data\n");
 	return -1;
     }
 
