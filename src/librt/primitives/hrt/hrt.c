@@ -195,6 +195,11 @@ rt_hrt_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 
     /* Y */
     f = hip->zdir[Z];
+    /**
+     * 1.0 stands for the length of zdir vector and 0.25 closely approximates
+     * some value which encloses the displacement from upper cusp to highest
+     * point of either lobe in the Z direction
+     */
     (*min)[Z] = hip->v[Z] - f;
     (*max)[Z] = hip->v[Z] + f * 1.25;
 
@@ -390,9 +395,19 @@ rt_hrt_print(register const struct soltab *stp)
  * >0 HIT
  */
 int
-rt_hrt_shot()
+rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
-    bu_log("rt_hrt_shot: Not implemented yet!\n");
+    register struct hrt_specific *hrt = 
+	(struct hrt_specific *)stp->st_specific;
+    register struct seg *segp;
+    vect_t dprime;		/* D' */
+    vect_t pprime;		/* P' */
+    vect_t work;		/* temporary vector */
+    bn_poly_t S;		/* The sextic equation (of power 6) */
+    bn_complex_t complex[6];	/* The complex roots */
+    double real[6];		/* The real roots */
+    register int i;
+    int j;
     return 6;
 }
 
