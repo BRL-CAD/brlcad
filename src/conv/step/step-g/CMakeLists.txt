@@ -242,7 +242,6 @@ set(stepg_HDRS
   Axis2Placement.h
   Axis2Placement2D.h
   Axis2Placement3D.h
-  BRLCADWrapper.h
   BSplineCurve.h
   BSplineCurveWithKnots.h
   BSplineSurface.h
@@ -379,7 +378,6 @@ set(stepg_HDRS
   RepresentationRelationship.h
   RepresentationRelationshipWithTransformation.h
   STEPEntity.h
-  STEPWrapper.h
   SeamCurve.h
   ShapeRepresentation.h
   ShapeRepresentationRelationship.h
