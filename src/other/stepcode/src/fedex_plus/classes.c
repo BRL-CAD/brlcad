@@ -2490,6 +2490,7 @@ void ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap
     uniqs = entity->u.entity->unique;
 
     if( uniqs ) {
+        int i;
         fprintf( files->create,
                  "        %s::%s%s->_uniqueness_rules = new Uniqueness_rule__set;\n",
                  SCHEMAget_name( schema ), ENT_PREFIX, ENTITYget_name( entity ) );
@@ -2508,7 +2509,6 @@ void ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap
          * change EntityDescriptor::generate_express() to generate the UNIQUE clause
         */
         LISTdo( uniqs, list, Linked_List )
-        int i;
         i = 0;
         fprintf( files->create, "        ur = new Uniqueness_rule(\"" );
         LISTdo( list, v, Variable )
@@ -3334,6 +3334,7 @@ void TYPEprint_nm_ft_desc( Schema schema, const Type type, FILE * f, char * endC
 void TYPEprint_new( const Type type, FILE * create, Schema schema ) {
     Linked_List wheres;
     char * whereRule, *whereRule_formatted = NULL;
+    size_t whereRule_formatted_size = 0;
     char * ptr, *ptr2;
 
     Type tmpType = TYPEget_head( type );
@@ -3439,7 +3440,6 @@ void TYPEprint_new( const Type type, FILE * create, Schema schema ) {
     fprintf( create, "        %s::schema->AddType(%s);\n", SCHEMAget_name( schema ), TYPEtd_name( type ) );
 
 
-    size_t whereRule_formatted_size = 0;
     wheres = type->where;
 
     if( wheres ) {

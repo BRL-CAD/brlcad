@@ -122,13 +122,14 @@ StrToConstant( const char * word ) {
 
 FILE * FILEcreate( const char * filename ) {
     FILE * file;
+    const char * fn;
 
     if( ( file = fopen( filename, "w" ) ) == NULL ) {
         printf( "**Error in SCHEMAprint:  unable to create file %s ** \n", filename );
         return ( NULL );
     }
 
-    const char * fn = StrToConstant ( filename );
+    fn = StrToConstant ( filename );
     fprintf( file, "#ifndef  %s\n", fn );
     fprintf( file, "#define  %s\n\n", fn );
 
