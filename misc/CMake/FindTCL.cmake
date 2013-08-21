@@ -307,7 +307,7 @@ endmacro()
 
 
 # Set up the logic for determining if a particular Tcl is compiled threaded.
-set(tclthreaded_script"
+set(tclthreaded_script "
 set filename \"${CMAKE_BINARY_DIR}/CMakeTmp/TCL_THREADED\"
 set fileId [open $filename \"w\"]
 if {[info exists tcl_platform(threaded)]} {puts $fileId 1}
