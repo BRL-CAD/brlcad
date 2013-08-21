@@ -151,3 +151,4 @@ int SCLundefined::set_null() {
 int SCLundefined::is_null() {
     return ( val.empty() );
 }
+

@@ -168,8 +168,8 @@ class SC_CORE_EXPORT STEPattribute {
 ////////////////// Constructors
 
         STEPattribute( const STEPattribute & a );
-        STEPattribute()  {};
-        ~STEPattribute() {};
+        STEPattribute()  {}
+        ~STEPattribute() {}
 
         //  INTEGER
         STEPattribute( const class AttrDescriptor & d, SDAI_Integer * p );

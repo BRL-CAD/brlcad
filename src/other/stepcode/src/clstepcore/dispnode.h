@@ -57,7 +57,7 @@ class SC_CORE_EXPORT DisplayNode : public GenericNode {
         }
         virtual void * SEE()     {
             return see;
-        };
+        }
 
         void mgrNode( MgrNode * node ) {
             mn = node;

@@ -106,12 +106,12 @@ class SC_CORE_EXPORT InstMgr {
                                  int starting_index = 0 );
         SDAI_Application_instance  * GetApplication_instance( MgrNode * node ) {
             return node->GetApplication_instance();
-        };
+        }
 
         void * GetSEE( int index );
         void * GetSEE( MgrNode * node ) {
             return node->SEE();
-        };
+        }
 
         void PrintSortedFileIds();
 
@@ -121,7 +121,7 @@ class SC_CORE_EXPORT InstMgr {
                 int starting_index = 0 );
         SDAI_Application_instance  * GetSTEPentity( MgrNode * node ) {
             return node->GetApplication_instance();
-        };
+        }
 
 };
 

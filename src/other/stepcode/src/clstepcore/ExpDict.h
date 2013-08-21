@@ -1690,7 +1690,7 @@ class SC_CORE_EXPORT AggrTypeDescriptor  :    public TypeDescriptor  {
         /// find bound type
         AggrBoundTypeEnum Bound1Type() const {
             return _bound1_type;
-        };
+        }
         /// get a constant bound
         SDAI_Integer Bound1( ) const {
             assert( _bound1_type == bound_constant );
@@ -1724,7 +1724,7 @@ class SC_CORE_EXPORT AggrTypeDescriptor  :    public TypeDescriptor  {
         /// find bound type
         AggrBoundTypeEnum Bound2Type() const {
             return _bound2_type;
-        };
+        }
         /// get a constant bound
         SDAI_Integer Bound2( ) const {
             assert( _bound2_type == bound_constant );
