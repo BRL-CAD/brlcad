@@ -70,6 +70,7 @@
 
 #include "sc_memmgr.h"
 #include "express/basic.h"
+#include "sc_version_string.h"
 #include <ctype.h>
 #include <stdlib.h>
 #include <setjmp.h>
