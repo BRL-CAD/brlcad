@@ -65,8 +65,7 @@
 
 #include <sstream>
 
-#include "STEPEntity.h"
-
+#include "STEPWrapper.h"
 
 void
 ON_3dPoint_to_Cartesian_point(ON_3dPoint *inpnt, SdaiCartesian_point *step_pnt) {
