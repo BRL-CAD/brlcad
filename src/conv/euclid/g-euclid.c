@@ -54,6 +54,7 @@ static int	NMG_debug=0;		/* saved arg of -X, for longjmp handling */
 static int	verbose;
 static int	curr_id;		/* Current region ident code */
 static int	face_count;		/* Count of faces output for a region id */
+static int	ncpu = 1;
 static char	*out_file = NULL;	/* Output filename */
 static FILE	*fp_out;		/* Output file pointer */
 static int	*idents;		/* Array of region ident numbers */
@@ -542,8 +543,7 @@ main(int argc, char **argv)
 		verbose++;
 		break;
 	    case 'P':
-/*			ncpu = atoi(bu_optarg); */
-		RTG.debug = 1;	/* NOTE: setting DEBUG_ALLRAYS to get core dumps */
+		ncpu = atoi(bu_optarg);
 		break;
 	    case 'x':
 		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
@@ -623,7 +623,7 @@ main(int argc, char **argv)
 	tree_state.ts_ttol = &ttol;
 
 	(void)db_walk_tree(dbip, argc-bu_optind, (const char **)(&argv[bu_optind]),
-			   1,			/* ncpu */
+			   ncpu,
 			   &tree_state,
 			   select_region,
 			   do_region_end,

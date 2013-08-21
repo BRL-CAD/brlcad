@@ -477,7 +477,6 @@ main(int argc, char **argv)
 		break;
 	    case 'P':
 		ncpu = atoi(bu_optarg);
-		RTG.debug = 1;
 		break;
 	    case 'x':
 		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);

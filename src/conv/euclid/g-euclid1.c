@@ -44,7 +44,7 @@ static char	usage[] = "Usage: %s [-v] [-s alarm_seconds] [-xX lvl] [-a abs_tol] 
 
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
 static int	verbose;
-/* static int	ncpu = 1; */		/* Number of processors */
+static int	ncpu = 1;		/* Number of processors */
 static int	face_count;		/* Count of faces output for a region id */
 static int	alarm_secs;		/* Number of seconds to allow for conversion, 0 means no limit */
 static struct db_i		*dbip;
@@ -638,8 +638,7 @@ main(int argc, char **argv)
 		verbose++;
 		break;
 	    case 'P':
-/*			ncpu = atoi( bu_optarg ); */
-		RTG.debug = 1;	/* NOTE: enabling DEBUG_ALLRAYS to get core dumps */
+		ncpu = atoi(bu_optarg);
 		break;
 	    case 'x':
 		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.debug );
@@ -678,7 +677,7 @@ main(int argc, char **argv)
     tree_state.ts_ttol = &ttol;
 
     (void)db_walk_tree(dbip, argc-bu_optind, (const char **)(&argv[bu_optind]),
-		       1,			/* ncpu */
+		       ncpu,
 		       &tree_state,
 		       0,
 		       do_region_end,

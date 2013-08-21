@@ -110,7 +110,7 @@ static const char usage[] = "Usage: %s [-v] [-xX lvl] [-d tolerance_distance (mm
 static char	*tok_sep = " \t";
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
 static int	verbose=0;
-/* static int	ncpu = 1; */		/* Number of processors */
+static int	ncpu = 1;		/* Number of processors */
 static char	*out_file = NULL;	/* Output filename */
 static FILE	*outfp;		/* Output file pointer */
 static struct db_i		*dbip;
@@ -416,7 +416,7 @@ main(int argc, char **argv)
 		verbose++;
 		break;
 	    case 'P':
-		RTG.debug = 1;
+		ncpu = atoi(bu_optarg);
 		break;
 	    case 'x':
 		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.debug );
@@ -497,7 +497,7 @@ main(int argc, char **argv)
 
 	/* walk trees selecting only light source regions */
 	(void)db_walk_tree(dbip, 1, (const char **)(&argv[i]),
-			   1,				/* ncpu */
+			   ncpu,
 			   &tree_state,
 			   select_lights,
 			   do_region_end,
@@ -510,7 +510,7 @@ main(int argc, char **argv)
 
     /* Walk indicated tree(s).  Each non-light-source region will be output separately */
     (void)db_walk_tree(dbip, argc-bu_optind, (const char **)(&argv[bu_optind]),
-		       1,				/* ncpu */
+		       ncpu,
 		       &tree_state,
 		       select_non_lights,
 		       do_region_end,
