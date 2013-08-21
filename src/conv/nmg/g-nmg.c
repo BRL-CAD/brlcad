@@ -46,7 +46,7 @@
 
 extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 
-static char	usage[] = "Usage: %s [-v] [-b] [-xX lvl] [-a abs_tol] [-r rel_tol] [-t dist_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
+static char	usage[] = "Usage: %s [-v] [-b] [-xX lvl] [-a abs_tol] [-r rel_tol] [-t dist_tol] [-n norm_tol] [-P} [-o out_file] brlcad_db.g object(s)\n";
 
 static char	*tok_sep = " \t";
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
