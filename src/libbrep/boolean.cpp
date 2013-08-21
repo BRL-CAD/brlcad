@@ -38,6 +38,7 @@
 #include "raytrace.h"
 
 #define DEBUG_BREP_BOOLEAN 1
+#define USE_CONNECTIVITY_GRAPH 1
 #define INTERSECTION_TOL 0.001
 
 
@@ -62,18 +63,22 @@ struct TrimmedFace {
     ON_SimpleArray<ON_Curve*> outerloop;
     std::vector<ON_SimpleArray<ON_Curve*> > innerloop;
     const ON_BrepFace *face;
+#if USE_CONNECTIVITY_GRAPH
     // Connectivity graph support
     ON_SimpleArray<TrimmedFace*> neighbors;
     IntersectPoint start, end;
+#endif
     TrimmedFace *Duplicate() const
     {
 	TrimmedFace *out = new TrimmedFace();
 	out->face = face;
 	out->outerloop = outerloop;
 	out->innerloop = innerloop;
+#if USE_CONNECTIVITY_GRAPH
 	out->start = start;
 	out->end = end;
 	// Don't copy the neighbors
+#endif
 	return out;
     }
 };
@@ -477,7 +482,9 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 		    TrimmedFace *newface = new TrimmedFace();
 		    newface->face = in->face;
 		    newface->outerloop.Append(curves[i]);
+#if USE_CONNECTIVITY_GRAPH
 		    newface->start.m_seg = newface->start.m_t = newface->end.m_seg = newface->end.m_t = ON_UNSET_VALUE;
+#endif
 		    out.Append(newface);
 		}
 	    }
@@ -705,8 +712,10 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	    TrimmedFace *newface = new TrimmedFace();
 	    newface->face = in->face;
 	    newface->outerloop.Append(newloop.Count(), newloop.Array());
+#if USE_CONNECTIVITY_GRAPH
 	    newface->start = p;
 	    newface->end = q;
+#endif
 	    out.Append(newface);
 	}
     }
@@ -727,6 +736,7 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	    newface->outerloop = outerloop;
 	    newface->innerloop = in->innerloop;
 	    newface->innerloop.insert(newface->innerloop.end(), innerloops.begin(), innerloops.end());
+#if USE_CONNECTIVITY_GRAPH
 	    if (intersect.Count()) {
 		// XXX: Use more than one intervals
 		newface->start = intersect[0];
@@ -735,6 +745,7 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 		newface->start = in->start;
 		newface->end = in->end;
 	    }
+#endif
 	    out.Append(newface);
 	}
     }
@@ -772,7 +783,7 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 
 
 HIDDEN void
-add_elements(ON_Brep *brep, ON_BrepFace &face, ON_SimpleArray<ON_Curve*> &loop, ON_BrepLoop::TYPE loop_type)
+add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &loop, ON_BrepLoop::TYPE loop_type)
 {
     if (!loop.Count())
 	return;
@@ -840,6 +851,7 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, ON_SimpleArray<ON_Curve*> &loop, 
 }
 
 
+#if USE_CONNECTIVITY_GRAPH
 HIDDEN int
 build_connectivity_graph(const ON_Brep* brep, ON_SimpleArray<TrimmedFace*>& trimmedfaces, int start_idx = -1, int end_idx = -1)
 {
@@ -906,6 +918,7 @@ build_connectivity_graph(const ON_Brep* brep, ON_SimpleArray<TrimmedFace*>& trim
 
     return 0;
 }
+#endif	// #if USE_CONNECTIVITY_GRAPH
 
 
 int
@@ -968,11 +981,12 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
 	    if (j != 0)
 		first->innerloop.push_back(iloop);
 	}
-
+#if USE_CONNECTIVITY_GRAPH
 	first->start.m_seg = 0;
 	first->start.m_t = first->outerloop.Count() ? first->outerloop[0]->Domain().Min() : ON_UNSET_VALUE;
 	first->end.m_seg = first->outerloop.Count() - 1;
 	first->end.m_t = first->outerloop.Count() ? (*first->outerloop.Last())->Domain().Max() : ON_UNSET_VALUE;
+#endif
 	original_faces.Append(first);
     }
 
@@ -981,6 +995,7 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
 	return -1;
     }
 
+#if USE_CONNECTIVITY_GRAPH
     build_connectivity_graph(brepA, original_faces, 0, facecount1 - 1);
     build_connectivity_graph(brepB, original_faces, facecount1, original_faces.Count() - 1);
 
@@ -1001,6 +1016,7 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
 	}
 	bu_log("\n");
     }
+#endif	// #if USE_CONNECTIVITY_GRAPH
 
     // split the surfaces with the intersection curves
     ON_ClassArray<ON_SimpleArray<TrimmedFace*> > trimmedfaces;
@@ -1019,6 +1035,7 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
 	return -1;
     }
 
+#if USE_CONNECTIVITY_GRAPH
     // Update the connectivity graph after surface partitioning
     for (int i = 0; i < original_faces.Count(); i++) {
 	for (int j = 0; j < trimmedfaces[i].Count(); j++) {
@@ -1067,6 +1084,7 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
 	}
 	bu_log("\n");
     }
+#endif	// #if USE_CONNECTIVITY_GRAPH
 
     for (int i = 0; i < trimmedfaces.Count(); i++) {
 	const ON_SimpleArray<TrimmedFace*>& splitted = trimmedfaces[i];
