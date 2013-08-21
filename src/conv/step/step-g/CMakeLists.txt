@@ -4,16 +4,17 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
 
-# These files are shared between step-g and g-step, but
+# The fedex-plus files are shared between step-g and g-step, but
 # CMake currently requires that the custom command generating
 # source files used in a target build be in the same CMakeLists.txt
 # file as the target definition.  Hence, we need to repeat the
 # add_custom command definition for each converter that needs the
 # fedex output, even though they're all using the same outputs.
-# The top-level version of this logic includes a custom target 
-# to make sure the files expected by this command are already in
-# place which is depended on by the current build target - the
-# purpose of this code is only to allow files that don't exist
+# The top-level fedex-plus STEP custom target is used to make sure
+# the files expected by this target definition are already in
+# place.  That fedex-plus target is added as a dependency to the
+# current build target. Consequently, the only purpose of this
+# custom command definition is to allow files that don't exist
 # at configure time to be part of the target sources list.
 add_custom_command(OUTPUT ${FEDEX_OUTPUT}
   COMMAND ${FEDEX_PLUS_EXEC} ARGS ${SCHEMA_FILE}
