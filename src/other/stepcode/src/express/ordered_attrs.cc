@@ -4,6 +4,10 @@
 #include <vector>
 #include <assert.h>
 
+#ifdef _WIN32
+#  define strcasecmp _stricmp
+#endif
+
 Entity currentEntity = 0;
 oaList attrs;
 unsigned int attrIndex = 0;
