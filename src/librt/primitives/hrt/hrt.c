@@ -320,8 +320,9 @@ rt_hrt_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     VMOVE(stp->st_center, hrt->hrt_V);
 
     /**
-     * 1.0 stands for zdir vector and 0.25 takes care of displacement from upper
-     * cusp to highest point of either lobe in the Z direction 
+     * 1.0 stands for the length of zdir vector and 0.25 closely approximates
+     * some value which encloses the displacement from upper cusp to highest
+     * point of either lobe in the Z direction 
      */
     f = hip->zdir[Z] * 1.25;
     stp->st_aradius = stp->st_bradius = sqrt(f);
