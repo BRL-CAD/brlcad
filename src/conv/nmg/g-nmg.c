@@ -52,7 +52,7 @@ static char	*tok_sep = " \t";
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
 static int	verbose;
 static int	do_bots=0;		/* flag to output BOT's instead of NMG's */
-/* static int	ncpu = 1; */		/* Number of processors */
+static int	ncpu = 1;		/* Number of processors */
 static int	nmg_count=0;		/* Count of nmgregions written to output */
 static char	*out_file = "nmg.g";	/* Output filename */
 static struct rt_wdb		*fp_out; /* Output file pointer */
@@ -314,7 +314,7 @@ csg_comb_func(struct db_i *db, struct directory *dp, genptr_t UNUSED(ptr))
 	name = (&(dp->d_namep));
 
 	(void) db_walk_tree(db, 1, (const char **)name,
-			    1,
+			    ncpu,
 			    &tree_state,
 			    0,
 			    do_region_end,
@@ -449,7 +449,7 @@ main(int argc, char **argv)
     rt_init_resource(&rt_uniresource, 0, NULL);
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "t:a:n:o:r:bvx:PX:h?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "t:a:n:o:r:bvx:P:X:h?")) != -1) {
 	switch (c) {
 	    case 'b':		/* make BOT's instead of NMG's */
 		do_bots = 1;
@@ -476,6 +476,7 @@ main(int argc, char **argv)
 		verbose++;
 		break;
 	    case 'P':
+		ncpu = atoi(bu_optarg);
 		RTG.debug = 1;
 		break;
 	    case 'x':
