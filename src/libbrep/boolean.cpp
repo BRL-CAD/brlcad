@@ -572,7 +572,7 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
     // the start point and end point of an outerloop segment
     // outerloop_start_end[] and outerloop[] should have the same size, and
     // outerloop_start_end[i] should be corresponding to outerloop[i] exactly.
-    ON_SimpleArray<std::pair<IntersectPoint, IntersectPoint> > outerloop_start_end;
+    ON_ClassArray<std::pair<IntersectPoint, IntersectPoint> > outerloop_start_end;
 #endif
     int isect_iter = 0;
     for (int i = 0; i < in->outerloop.Count(); i++) {
@@ -704,7 +704,7 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	// need to form a new loop
 	ON_SimpleArray<ON_Curve*> newloop;
 #if USE_CONNECTIVITY_GRAPH
-	ON_SimpleArray<std::pair<IntersectPoint, IntersectPoint> > newloop_start_end;
+	ON_ClassArray<std::pair<IntersectPoint, IntersectPoint> > newloop_start_end;
 #endif
 	int curve_count = q.m_pos - p.m_pos;
 	for (int j = p.m_pos + 1; j <= q.m_pos; j++) {
