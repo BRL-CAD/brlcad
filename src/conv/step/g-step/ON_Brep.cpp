@@ -227,11 +227,16 @@ int Add_Edge(ON_BrepTrim *trim, Registry *registry, InstMgr *instance_list, std:
 	oriented_edge->name_("''");
 	SdaiEdge_curve *e_curve = (SdaiEdge_curve *)edge_curves->at(edge->EdgeCurveIndexOf());
 	oriented_edge->edge_element_((SdaiEdge *)e_curve);
-	oriented_edge->edge_start_(((SdaiVertex *)vertex_pnts->at(edge->Vertex(0)->m_vertex_index)));
-	oriented_edge->edge_end_(((SdaiVertex *)vertex_pnts->at(edge->Vertex(1)->m_vertex_index)));
-	//TODO - do I need to check 3d points here?
+	if (trim->m_bRev3d) {
+	    oriented_edge->edge_start_(((SdaiVertex *)vertex_pnts->at(edge->Vertex(1)->m_vertex_index)));
+	    oriented_edge->edge_end_(((SdaiVertex *)vertex_pnts->at(edge->Vertex(0)->m_vertex_index)));
+	    std::cout << "Verts " << edge->Vertex(1)->m_vertex_index << "," << edge->Vertex(0)->m_vertex_index << "\n";
+	} else {
+	    oriented_edge->edge_start_(((SdaiVertex *)vertex_pnts->at(edge->Vertex(0)->m_vertex_index)));
+	    oriented_edge->edge_end_(((SdaiVertex *)vertex_pnts->at(edge->Vertex(1)->m_vertex_index)));
+	    std::cout << "Verts " << edge->Vertex(0)->m_vertex_index << "," << edge->Vertex(1)->m_vertex_index << "\n";
+	}
 	oriented_edge->orientation_((Boolean)!trim->m_bRev3d);
-	if (edge->EdgeCurveOf()->IsClosed()) oriented_edge->orientation_(BTrue);
 	instance_list->Append(new_oriented_edge, completeSE);
 	oriented_edges->push_back(new_oriented_edge);
 	i = oriented_edges->size() - 1;
@@ -576,8 +581,6 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 	// output.
 	SdaiPath *e_loop_path = (SdaiPath *)edge_loops.at(i)->GetNextMiEntity();
 	for (int l = 0; l < loop->TrimCount(); ++l) {
-	    // FIXME - trims in a loop will not necessarily map back uniquely to edge curves for
-	    // a given loop.  The Add_Edge approach is inadequate - need to rethink this
 	    int trim_edge = Add_Edge(loop->Trim(l), registry, instance_list, &oriented_edges, &edge_curves, &vertex_pnts);
 	    if (trim_edge >= 0)
 		e_loop_path->edge_list_()->AddNode(new EntityNode((SDAI_Application_instance *)(oriented_edges.at(trim_edge))));
