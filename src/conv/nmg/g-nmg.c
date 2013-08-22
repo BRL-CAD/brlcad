@@ -146,9 +146,9 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 
     if (RT_G_DEBUG&DEBUG_TREEWALK || verbose) {
 	sofar = db_path_to_string(pathp);
-	bu_log("\ndo_region_end(%d %d%%) %s\n",
+	bu_log("\ndo_region_end(%d %.2lf%%) %s\n",
 	       regions_tried,
-	       regions_tried>0 ? (regions_converted * 100) / regions_tried : 0,
+	       regions_tried>0 ? ((double)regions_converted * 100.0) / (double)regions_tried : 0.0,
 	       sofar);
 	bu_free(sofar, "path string");
     }
@@ -534,9 +534,9 @@ main(int argc, char **argv)
     db_close(dbip);
 
     if (regions_tried > 0)
-	percent = (regions_converted * 100) / regions_tried;
+	percent = (double)regions_converted * 100.0) / (double)regions_tried;
     else
-	percent = 100;
+	percent = 100.0;
 
     printf("Tried %d regions, %d converted successfully.  %g%%\n",
 	    regions_tried, regions_converted, percent);
