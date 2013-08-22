@@ -395,9 +395,268 @@ rt_hrt_print(register const struct soltab *stp)
  * >0 HIT
  */
 int
-rt_hrt_shot()
+rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
-    bu_log("rt_hrt_shot: Not implemented yet!\n");
+    register struct hrt_specific *hrt =
+        (struct hrt_specific *)stp->st_specific;
+    register struct seg *segp;
+    vect_t dprime;              /* D' : The new shot direction */
+    vect_t pprime;              /* P' : The new shot point */
+    vect_t trans;               /* Tanslated shot vector */
+    vect_t norm_pprime;         /* P' with normalized distance from heart */
+    bn_poly_t S;                /* The sextic equation (of power 6) */
+    bn_complex_t complex[6];    /* The complex roots */
+    double real[6];             /* The real roots */
+    int i;
+    int j;
+   
+    /* Translate the ray point */
+    (trans)[X] = (rp->r_pt)[X] - (hrt->hrt_V)[X];
+    (trans)[Y] = (rp->r_pt)[Y] - (hrt->hrt_V)[Y];
+    (trans)[Z] = (rp->r_pt)[Z] - (hrt->hrt_V)[Z];
+ 
+    /* Scale and Rotate point to get P' */
+    pprime[X] = (hrt->hrt_SoR[0]*trans[X] + hrt->hrt_SoR[1]*trans[Y] + hrt->hrt_SoR[2]*trans[Z]) * 1.0/(hrt->hrt_SoR[15]);
+    pprime[Y] = (hrt->hrt_SoR[4]*trans[X] + hrt->hrt_SoR[5]*trans[Y] + hrt->hrt_SoR[6]*trans[Z]) * 1.0/(hrt->hrt_SoR[15]);
+    pprime[Z] = (hrt->hrt_SoR[8]*trans[X] + hrt->hrt_SoR[9]*trans[Y] + hrt->hrt_SoR[10]*trans[Z]) * 1.0/(hrt->hrt_SoR[15]);
+ 
+    /* Translate ray direction vector */
+    MAT4X3VEC(dprime, hrt->hrt_SoR, rp->r_dir);
+    VUNITIZE(dprime);
+ 
+    /* Normalize distance from the heart. Substitutes a corrected ray
+     * point, which contains a translation along the ray direction to
+     * the closest approach to vertex of the heart.Translating the ray
+     * along the direction of the ray to the closest point near the
+     * heart's center vertex. Thus, the New ray origin is normalized.
+     */
+    VSCALE(norm_pprime, dprime, VDOT(pprime, dprime));
+    VSUB2(norm_pprime, pprime, norm_pprime);
+ 
+    /**
+     * Generate the sextic equation S(t) = 0 to be passed through the root finder.
+     */
+ 
+    S.dgr = 6;
+    S.cf[0] = 4320.0 * dprime[X] * dprime[X] * dprime[Y] * dprime[Y] * dprime[Z] * dprime[Z] + 960.0 * dprime[X] * dprime[X] * dprime[Z] * dprime[Z]
+            * (dprime[X] * dprime[X] + dprime[Z] * dprime[Z]) + 320.0 * (dprime[X] * dprime[X] * dprime[X] * dprime[X] * dprime[X] * dprime[X]
+            + dprime[Z] * dprime[Z] * dprime[Z] * dprime[Z] * dprime[Z] * dprime[Z]) + 2160.0 * dprime[Y] * dprime[Y] * (dprime[X] * dprime[X]
+            * dprime[X] * dprime[X] + dprime[Z] * dprime[Z] * dprime[Z] * dprime[Z]) + 4860.0 * dprime[Y] * dprime[Y] * dprime[Y] * dprime[Y]
+            * ( dprime[X] * dprime[X] + dprime[Z] * dprime[Z] ) - 36.0 * dprime[Y] * dprime[Y] * dprime[Y] * dprime[Z] * dprime[Z] * dprime[Z]
+            + 3645.0 * dprime[Y] * dprime[Y] * dprime[Y] * dprime[Y] * dprime[Y] * dprime[Y];
+ 
+    S.cf[1] = 8640.0 * (dprime[X] * pprime[X] * dprime[Y] * dprime[Y] * (dprime[X] * dprime[X] + dprime[Z] * dprime[Z]) + dprime[Y] * pprime[Y] * dprime[X]
+            * dprime[X] * dprime[Z] * dprime[Z] + dprime[Z] * pprime[Z] * dprime[Y] * dprime[Y] * (dprime[X] * dprime[X] + dprime[Z] * dprime[Z]))
+            + 9720.0 * dprime[Y] * dprime[Y] * dprime[Y] * dprime[Y] * (dprime[X] * pprime[X] + dprime[Z] * pprime[Z]) + 1920.0 * (dprime[X] * dprime[X]
+            * dprime[X] * dprime[X] + dprime[Z] * dprime[Z] * dprime[Z] * dprime[Z] * (dprime[X] * pprime[X] + dprime[Z] * pprime[Z])) + 4320.0 * (dprime[X]
+            * dprime[X] * dprime[X] * dprime[X] + dprime[Z] * dprime[Z] * dprime[Z] * dprime[Z] * (dprime[Y] * pprime[Y])) + 3840.0 * (dprime[X]
+            * dprime[X] + dprime[Z] * dprime[Z]) * (dprime[X] * pprime[X] + dprime[Z] * pprime[Z]) + 19440.0 * (dprime[Z] * dprime[Z] * dprime[Y] * dprime[Y]
+            + dprime[X] * dprime[Y] * dprime[Y]) * dprime[Y] * pprime[Y] - 108.0 * dprime[Y] * dprime[Z] * (dprime[Z] * dprime[Z] * dprime[Y] * pprime[Y] + pprime[Z]
+            * dprime[Z] * dprime[Y] * dprime[Y]) - 320.0 * dprime[X] * dprime[X] * dprime[Y] * dprime[Y] * dprime[Y] + 21870.0 * pprime[Y] * dprime[Y]
+            * dprime[Y] * dprime[Y] * dprime[Y] * dprime[Y];
+ 
+    S.cf[2] = 4320.0 * (dprime[X] * dprime[X] * (dprime[Y] * dprime[Y] * pprime[Z] * pprime[Z] + dprime[Z] * dprime[Z] * pprime[Y] * pprime[Y]) + dprime[Y] * dprime[Y]
+            * (pprime[X] * pprime[X] * dprime[Z] * dprime[Z] - dprime[X] * dprime[X] - dprime[Z] * dprime[Z])) - 960.0 * (dprime[X] * dprime[X] * dprime[X]
+            * dprime[X] * (1.0 - pprime[Z] * pprime[Z]) + dprime[Z] * dprime[Z] * dprime[Z] * dprime[Z] + dprime[Y] * dprime[Y] * (dprime[X] * dprime[X] * pprime[Y]
+            - dprime[Y] * dprime[Y] * pprime[X] * pprime[X])) + 4860.0 * (dprime[Y] * dprime[Y] * dprime[Y] * dprime[Y] * (pprime[X] * pprime[X] + pprime[Z] * pprime[Z] - 1.0))
+            + 4800.0 * (dprime[X] * dprime[X] * dprime[X] * dprime[X] * pprime[X] * pprime[X] + dprime[Z] * dprime[Z] * dprime[Z] * dprime[Z] * pprime[Z] * pprime[Z])
+            + 2160.0 * pprime[Y] * pprime[Y] * (dprime[X] * dprime[X] * dprime[X] * dprime[X] + dprime[Z] * dprime[Z] * dprime[Z] * dprime[Z]) + 5760.0 * dprime[X] * dprime[X]
+            * dprime[Z] * dprime[Z] * (pprime[X] * pprime[X] + pprime[Z] * pprime[Z]) + 7680.0 * dprime[X] * pprime[X] * dprime[Z] * pprime[Z] * (dprime[X] * dprime[X]
+            + dprime[Z] * dprime[Z]) + 17280.0 * ((dprime[X] * pprime[X] * dprime[Y] * pprime[Y] + dprime[Y] * pprime[Y] * dprime[Z] * pprime[Z]) * (dprime[X] * dprime[X]
+            + dprime[Z] * dprime[Z]) + dprime[X] * pprime[X] * dprime[Z] * pprime[Z] * dprime[Y] * dprime[Y]) + 12960.0 * dprime[Y] * dprime[Y] * (dprime[X] * dprime[X]
+            * pprime[X] * pprime[X] + dprime[Z] * dprime[Z] * pprime[Z] * pprime[Z]) + 29160.0 * dprime[Y] * dprime[Y] * pprime[Y] * pprime[Y] * (dprime[X] * dprime[X]
+            + dprime[Z] * dprime[Z]) - 108.0 * dprime[Y] * dprime[Z]  * (dprime[Y] * dprime[Y] * pprime[Z] * pprime[Z] + dprime[Z] * dprime[Z] * pprime[Y] * pprime[Y])
+            - 1920.0 * dprime[X] * dprime[X] * dprime[Z] * dprime[Z] - 54675.0 * pprime[Y] * pprime[Y] * dprime[Y] * dprime[Y] * dprime[Y] * dprime[Y]- 324.0 * pprime[Z]
+            * dprime[Z] * dprime[Z] * dprime[Y] * dprime[Y] * pprime[Y] - 640.0 * dprime[X] * pprime[X] * dprime[Y] * dprime[Y] * dprime[Y];
+   
+    S.cf[3] = 3840.0 * (dprime[X] * pprime[X] + dprime[Z] * pprime[Z]) *  (dprime[X] * dprime[X] * pprime[Z] * pprime[Z] + dprime[Z] * dprime[Z] * pprime[X] * pprime[X]
+            - dprime[X] * dprime[X] + dprime[Z] * dprime[Z]) + 8640.0 * (dprime[X] * pprime[X] * (pprime[Z] * pprime[Z] * dprime[Y] * dprime[Y] + dprime[Z] * dprime[Z]
+            * pprime[Y] * pprime[Y] + dprime[Y] * dprime[Y] * pprime[X] * pprime[X] + dprime[X] * dprime[X] * pprime[Y] * pprime[Y] - dprime[Y] * dprime[Y]) + dprime[Y]
+            * pprime[Y] * (dprime[X] * dprime[X] * pprime[Z] * pprime[Z] + dprime[Z] * dprime[Z] * pprime[X] * pprime[X] - dprime[X] * dprime[X] - dprime[Z] * dprime[Z])
+            + dprime[Z] * pprime[Z] * (dprime[X] * dprime[X] * pprime[Y] * pprime[Y] + dprime[Y] * dprime[Y] * pprime[X] * pprime[X] + dprime[Y] * pprime[Z] * pprime[Z]
+            + dprime[Z] * dprime[Z] * pprime[Y] * pprime[Y] - dprime[Y] * dprime[Y])) + 6400.0 * (dprime[X] * dprime[X] * dprime[X] * pprime[X] * pprime[X] * pprime[X]
+            + dprime[Z] * dprime[Z] * dprime[Z] * pprime[Z] * pprime[Z] * pprime[Z]) + 19440.0 * dprime[Y] * pprime[Y] * (dprime[Y] * dprime[Y] * (pprime[X] * pprime[X]
+            + pprime[Z] * pprime[Z] - 1.0) + pprime[Y] * pprime[Y] * (dprime[X] * dprime[X] + dprime[Z] * dprime[Z])) - 36.0 * (dprime[Y] * dprime[Y] * dprime[Y]
+            * pprime[Z] * pprime[Z] * pprime[Z] + dprime[Z]* dprime[Z] * dprime[Z] * pprime[Y] * pprime[Y] * pprime[Y]) + 11520.0 * (dprime[X] * pprime[X] * dprime[Z]
+            * pprime[Z] * (dprime[X] * pprime[X] + dprime[Z] * pprime[Z]))- 324.0 * dprime[Y] * pprime[Y] * dprime[Z] * pprime[Z] * (dprime[Y] * pprime[Z] + dprime[Z]
+            + pprime[Y]) + 25920.0 * dprime[Y] * pprime[Y] * (pprime[Z] * pprime[Z] * dprime[Z] * dprime[Z] + pprime[X] * pprime[X] * dprime[X] * dprime[X]) - 320.0
+            * pprime[X] * pprime[X] * dprime[Y] * dprime[Y] * dprime[Y] + 72900.0 * pprime[Y] * pprime[Y] * pprime[Y] * dprime[Y] * dprime[Y] * dprime[Y] + 34560.0
+            * dprime[X] * pprime[X] * dprime[Y] * pprime[Y] * dprime[Z] * pprime[Z] + 58320.0 * dprime[X] * pprime[X] * dprime[Y] * dprime[Y] * pprime[Y] * pprime[Y]
+            - 1920.0 * dprime[X] * pprime[X] * dprime[Y] * dprime[Y] * pprime[Y] + 58320.0 * dprime[Z] * pprime[Z] * dprime[Y] * dprime[Y] * pprime[Y] * pprime[Y]
+            - 960.0 * dprime[X] * dprime[X] * dprime[Y] * pprime[Y] * pprime[Y];
+ 
+    S.cf[4] = 960.0 * (dprime[X] * dprime[X] * (1.0 + pprime[Z] * pprime[Z] * pprime[Z] * pprime[Z]) + dprime[Z] * dprime[Z] * (1.0 + pprime[X] * pprime[X] * pprime[X]
+            * pprime[X]) - dprime[Y] * dprime[Y] * pprime[X] * pprime[X] * pprime[Y]) + 2160.0 * dprime[Y] * dprime[Y] * (1.0 + pprime[X] * pprime[X] * pprime[X] * pprime[X]
+            + pprime[Z] * pprime[Z] * pprime[Z] * pprime[Z]) + 4320.0 * (pprime[Y] * pprime[Y] * (dprime[X] * dprime[X] + dprime[Z] * dprime[Z] + dprime[X] * dprime[X]
+            * pprime[Z] * pprime[Z] + dprime[Z] * dprime[Z] * pprime[X] * pprime[X]) + dprime[Y] * dprime[Y] * (pprime[X] * pprime[X] * pprime[Z] * pprime[Z] - pprime[X]
+            * pprime[X] - pprime[Z] * pprime[Z])) + 4800.0 * (pprime[X] * pprime[X] * pprime[X] * pprime[X] * dprime[X] * dprime[X] + pprime[Z] * pprime[Z] * pprime[Z]
+            * pprime[Z] * dprime[Z] * dprime[Z]) + 4860.0 * pprime[Y] * pprime[Y] * pprime[Y] * pprime[Y] * (dprime[X] * dprime[X] + dprime[Z] * dprime[Z]) + 5760.0
+            * (pprime[Z] * pprime[Z] * dprime[Z] * dprime[Z] * (1.0 + pprime[X] * pprime[X]) + pprime[X] * pprime[X] * dprime[X] * dprime[X] * (pprime[Z] * pprime[Z] - 1.0))
+            +  7680.0 * dprime[X] * pprime[X] * dprime[Z] * pprime[Z] * (pprime[X] * pprime[X] + pprime[Z] * pprime[Z] - 1.0 - 1920.0 * (dprime[X] * dprime[X] * pprime[Z]
+            * pprime[Z] + dprime[Z] * dprime[Z]* pprime[X] * pprime[X] + dprime[X] * pprime[X] * pprime[Y] * pprime[Y] * dprime[Y]) + 17280.0 * (dprime[Y] * pprime[Y]
+            * (dprime[X] * pprime[X] * pprime[X] * pprime[X] - dprime[X] * pprime[X] + dprime[Z] * pprime[Z] * pprime[Z] * pprime[Z] - dprime[Z] * pprime[Z] + dprime[X]
+            * pprime[X] * pprime[Z] * pprime[Z]) + dprime[X] * pprime[X] * dprime[Z] * pprime[Z] * pprime[Y] * pprime[Y]) + 38880.0 * dprime[Y] * pprime[Y] * pprime[Y]
+            * pprime[Y] * (dprime[X] * pprime[X] + dprime[Z] * pprime[Z]) + 12960.0 * pprime[Y] * pprime[Y] * (dprime[X] * dprime[X] * pprime[X] * pprime[X] - dprime[Z]
+            * dprime[Z] * pprime[Z] * pprime[Z]) + 29160.0 * dprime[Y] * dprime[Y] * pprime[Y] * pprime[Y] * (pprime[X] * pprime[X] + pprime[Z] * pprime[Z] - 1.0)
+            - 180.0 * pprime[Y] * pprime[Z] * dprime[Z] * dprime[Z] * pprime[Y] * pprime[Y] + dprime[Y] * dprime[Y] * pprime[Z] * pprime[Z]) - 320.0 * dprime[X]
+            * dprime[X] * pprime[Y] * pprime[Y] * pprime[Y] + 54675.0 * pprime[Y] * pprime[Y] * pprime[Y] * pprime[Y] * dprime[Y] * dprime[Y] ;
+ 
+    S.cf[5] = 1920.0 * ((dprime[X] * pprime[X] +  dprime[Z] * pprime[Z]) * (1.0 + pprime[X] * pprime[X] * pprime[X] * pprime[X] + pprime[Z] * pprime[Z]
+            * pprime[Z] * pprime[Z])) + 4320.0 * dprime[Y] * pprime[Y] * (1.0 + pprime[X] * pprime[X] * pprime[X] * pprime[X] + pprime[Z] * pprime[Z]
+            * pprime[Z] * pprime[Z]) + 8640.0 * (-dprime[Y] * pprime[Y] * pprime[Z] * pprime[Z] + dprime[X] * pprime[X] * pprime[Z] * pprime[Z]
+            * pprime[Y] * pprime[Y] + dprime[Z] * pprime[Z] * pprime[X] * pprime[X] * pprime[Y] * pprime[Y] + dprime[Y] * pprime[Y] * pprime[X]
+            * pprime[X] * pprime[Z] * pprime[Z] - dprime[X] * pprime[X] * pprime[Y] * pprime[Y] + dprime[X] * pprime[Y] * pprime[Y] + dprime[X] * pprime[X]
+            * pprime[X] * pprime[X] * pprime[Y] * pprime[Y] - dprime[Z] * pprime[Z] * pprime[Y] * pprime[Y] + dprime[Z] * pprime[Z] * pprime[Z] * pprime[Z]
+            * pprime[Y] * pprime[Y] - dprime[Y] * pprime[Y] * pprime[X] * pprime[X]) - 3840.0 * (dprime[Z] * pprime[Z] * pprime[Z] * pprime[Z] + dprime[X]
+            * pprime[X] * pprime[X] * pprime[X] + dprime[X] * pprime[X] * pprime[Z] * pprime[Z] - dprime[X] * pprime[X] * pprime[X] * pprime[X] * pprime[Z]
+            * pprime[Z] + dprime[Z] * pprime[Z] * pprime[X] * pprime[X] - dprime[Z] * pprime[Z] * pprime[Z] * pprime[Z] * pprime[X] * pprime[X])
+            - 19440.0 * (dprime[Y] * pprime[Y] * pprime[Y] * pprime[Y] * (1.0 - pprime[X] * pprime[X] - pprime[Z] * pprime[Z])) + 9720.0 * (pprime[Y]
+            * pprime[Y] * pprime[Y] * pprime[Y] * (dprime[X] * pprime[X] + dprime[Z] * pprime[Z])) + 21870.0 * (dprime[Y] * pprime[Y] * pprime[Y]
+            * pprime[Y] * pprime[Y] * pprime[Y])- 640.0 * (dprime[X] * pprime[X] * pprime[Y] * pprime[Y] * pprime[Y] - dprime[Y] * pprime[Y] * pprime[Y]
+            * pprime[X] * pprime[X]) - 108.0 * (dprime[Z] * pprime[Z] * pprime[Z] * pprime[Y] * pprime[Y] * pprime[Y] + dprime[Y] * pprime[Y] * pprime[Y]
+            * pprime[Z] * pprime[Z] * pprime[Z]);
+ 
+    S.cf[6] = 320.0 * (-1.0 * pprime[X] * pprime[X] * pprime[X] * pprime[X] * pprime[X] * pprime[X] + pprime[Z] * pprime[Z] * pprime[Z] * pprime[Z]
+            * pprime[Z] * pprime[Z] - pprime[X] * pprime[X] * pprime[Y] * pprime[Y] * pprime[Y]) + 960.0 * (pprime[X] * pprime[X] + pprime[Z] * pprime[Z]
+            + pprime[Z] * pprime[Z] * pprime[X] * pprime[X] * pprime[X] * pprime[X] + pprime[X] * pprime[X] * pprime[Z] * pprime[Z] * pprime[Z] * pprime[Z]
+            - pprime[X] * pprime[X] * pprime[X] * pprime[X] - pprime[Z] * pprime[Z] * pprime[Z] * pprime[Z])  + 4320.0 * (pprime[X] * pprime[X] * pprime[Y]
+            * pprime[Y] * pprime[Z] * pprime[Z] - pprime[X] * pprime[X] * pprime[Y] * pprime[Y] -pprime[Z] * pprime[Z] * pprime[Y] * pprime[Y])
+            - 1920.0 * pprime[X] * pprime[X] * pprime[Z] * pprime[Z] - 36.0 * pprime[Z] * pprime[Z] * pprime[Z] * pprime[Y] * pprime[Y] * pprime[Y]
+            + 2160.0 * (pprime[Y] * pprime[Y] * (1.0 + pprime[X] * pprime[X] * pprime[X] * pprime[X] + pprime[Z] * pprime[Z] * pprime[Z] * pprime[Z]))
+            + 4860.0 * (pprime[Y] * pprime[Y] * pprime[Y] * pprime[Y] * (pprime[X] * pprime[X] + pprime[Z] * pprime[Z] + 1.0)) + 3645.0 * pprime[Y]
+            * pprime[Y] * pprime[Y] * pprime[Y] * pprime[Y] * pprime[Y] ;
+ 
+    /* It is known that the equation is sextic (of order 6). Therefore, if the
+     * root finder returns other than 6 roots, return an error.
+     */
+    if ((i = rt_poly_roots(&S, complex, stp->st_dp->d_namep)) != 6) {
+        if (i > 0) {
+            bu_log("hrt:  rt_poly_roots() 6!=%d\n", i);
+            bn_pr_roots(stp->st_name, complex, i);
+        } else if (i < 0) {
+            static int reported=0;
+            bu_log("The root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
+            if (!reported) {
+                VPRINT("while shooting from:\t", rp->r_pt);
+                VPRINT("while shooting at:\t", rp->r_dir);
+                bu_log("Additional heart convergence failure details will be suppressed.\n");
+                reported=1;
+            }
+        }
+        return 0;               /* MISS */
+    }
+   
+    /* Only real roots indicate an intersection in real space.
+     *
+     * Look at each root returned; if the imaginary part is zero or
+     * sufficiently close, then use the real part as one value of 't'
+     * for the intersections
+     */
+    for (j=0, i=0; j < 6; j++) {
+        if (NEAR_ZERO(complex[j].im, ap->a_rt_i->rti_tol.dist))
+            real[i++] = complex[j].re;
+    }
+ 
+    /* Here, 'i' is number of points found */
+    switch (i) {
+        case 0:
+            return 0;           /* No hit */
+ 
+        default:
+            bu_log("rt_hrt_shot: reduced 6 to %d roots\n", i);
+            bn_pr_roots(stp->st_name, complex, 6);
+            return 0;           /* No hit */
+ 
+        case 2:
+            {
+                /* Sort most distant to least distant. */
+                fastf_t u;
+                if ((u=real[0]) < real[1]) {
+                    /* bubble larger towards [0] */
+                    real[0] = real[1];
+                    real[1] = u;
+                }
+            }
+            break;
+        case 4:
+            {
+                short n;
+                short lim;
+ 
+                /* Inline rt_pt_sort().  Sorts real[] into descending order. */
+                for (lim = i-1; lim > 0; lim--) {
+                    for (n = 0; n < lim; n++) {
+                        fastf_t u;
+                        if ((u=real[n]) < real[n+1]) {
+                            /* bubble larger towards [0] */
+                            real[n] = real[n+1];
+                            real[n+1] = u;
+                        }
+                    }
+                }
+            }
+            break;
+        case 6:
+            {
+                short num;
+                short limit;
+ 
+                /* Inline rt_pt_sort().  Sorts real[] into descending order. */
+                for (limit = i-1; limit > 0; limit--) {
+                    for (num = 0; num < limit; num++) {
+                        fastf_t u;
+                        if ((u=real[num]) < real[num+1]) {
+                            /* bubble larger towards [0] */
+                            real[num] = real[num+1];
+                            real[num+1] = u;
+                        }
+                    }
+                }
+            }
+            break;
+    }
+ 
+    /* Now, t[0] > t[npts-1] */
+    /* real[1] is entry point, and real[0] is farthest exit point */
+    RT_GET_SEG(segp, ap->a_resource);
+    segp->seg_stp = stp;
+    segp->seg_in.hit_dist = real[1];
+    segp->seg_out.hit_dist = real[0];
+    segp->seg_in.hit_surfno = segp->seg_out.hit_surfno = 0;
+    /* Set aside vector for rt_hrt_norm() later */
+    VJOIN1(segp->seg_in.hit_vpriv, pprime, real[1], dprime);
+    VJOIN1(segp->seg_out.hit_vpriv, pprime, real[0], dprime);
+    BU_LIST_INSERT(&(seghead->l), &(segp->l));
+   
+    if (i == 2)
+        return 2;                       /* HIT */
+   
+    /* 4 points */
+    /* real[3] is entry point, and real[2] is exit point */
+    RT_GET_SEG(segp, ap->a_resource);
+    segp->seg_stp = stp;
+    segp->seg_in.hit_dist = real[3];
+    segp->seg_out.hit_dist = real[2];
+    segp->seg_in.hit_surfno = segp->seg_out.hit_surfno = 0;
+    /* Set aside vector for rt_hrt_norm() later */
+    VJOIN1(segp->seg_in.hit_vpriv, pprime, real[3], dprime);
+    VJOIN1(segp->seg_out.hit_vpriv, pprime, real[2], dprime);
+    BU_LIST_INSERT(&(seghead->l), &(segp->l));
+ 
+    if (i == 4)
+        return 4;                       /* HIT */
+ 
+    /* 6 points */
+    /* real[5] is entry point, and real[4] is exit point */
+    RT_GET_SEG(segp, ap->a_resource);
+    segp->seg_stp = stp;
+    segp->seg_in.hit_dist = real[5];
+    segp->seg_out.hit_dist = real[4];
+    segp->seg_in.hit_surfno = segp->seg_out.hit_surfno = 0;
+    /* Set aside vector for rt_hrt_norm() later */
+    VJOIN1(segp->seg_in.hit_vpriv, pprime, real[5], dprime);
+    VJOIN1(segp->seg_out.hit_vpriv, pprime, real[4], dprime);
+    BU_LIST_INSERT(&(seghead->l), &(segp->l));
     return 6;
 }
 
