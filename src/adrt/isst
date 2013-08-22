@@ -19,10 +19,10 @@
 ISST_HOME=`dirname $0`/..
 #\
 export ISST_HOME
-# restart using bwish \
-WISH="bwish"
+# restart using wish \
+WISH="wish"
 #\
-for ish in bwish bwish_d ; do
+for ish in wish wish-8.5 ; do
 # see if we're installed \
     if test -f ${ISST_HOME}/bin/$ish ; then
 #\
@@ -31,18 +31,13 @@ for ish in bwish bwish_d ; do
         break;
 #\
     fi
-# see if we're not installed yet \
-    if test -f ${ISST_HOME}/bwish/$ish ; then
-#\
-        WISH="${ISST_HOME}/bwish/$ish"
-#\
-        break;
-#\
-    fi
 #\
 done
 #\
 exec $WISH $0 $@
+
+# open_dm uses this callback, but we don't load the tclscripts/libdm.tcl stuff any more
+proc _init_dm { func w } { }
 
 package require isst
 
