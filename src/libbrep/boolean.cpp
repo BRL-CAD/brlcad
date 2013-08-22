@@ -91,7 +91,7 @@ struct TrimmedFace {
 #if USE_CONNECTIVITY_GRAPH
     // Connectivity graph support
     ON_SimpleArray<TrimmedFace*> m_neighbors;
-    // which parts of its parent's outerloop are used, decribed in multiple
+    // which parts of its parent's outerloop are used, described in multiple
     // pairs of IntersectPoints (multiple intervals)
     ON_ClassArray<std::pair<IntersectPoint, IntersectPoint> > m_parts;
     // which SSI curves are used.

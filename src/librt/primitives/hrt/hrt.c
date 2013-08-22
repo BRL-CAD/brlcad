@@ -327,7 +327,7 @@ rt_hrt_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     /**
      * 1.0 stands for the length of zdir vector and 0.25 closely approximates
      * some value which encloses the displacement from upper cusp to highest
-     * point of either lobe in the Z direction 
+     * point of either lobe in the Z direction
      */
     f = hip->zdir[Z] * 1.25;
     stp->st_aradius = stp->st_bradius = sqrt(f);
@@ -397,7 +397,7 @@ rt_hrt_print(register const struct soltab *stp)
 int
 rt_hrt_shot()
 {
-    bu_log("rt_hrt_shot: Not implemented yet!\n"); 
+    bu_log("rt_hrt_shot: Not implemented yet!\n");
     return 6;
 }
 
