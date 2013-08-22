@@ -427,19 +427,20 @@ Add_Default_Geometric_Context(Registry *registry, InstMgr *instance_list)
 }
 
 /* Defining a shape, we need:
- * SHAPE_DEFINITION_REPRESENTATION
- * PRODUCT_DEFINITION_SHAPE
- * PRODUCT_DEFINITION
- * PRODUCT_DEFINITION_FORMATION_WITH_SPECIFIED_SOURCE
- * PRODUCT
- * MECHANICAL_CONTEXT
- * APPLICATION_CONTEXT
- * DESIGN_CONTEXT
+ * SHAPE_DEFINITION_REPRESENTATION (SdaiShape_definition_representation -> SdaiProperty_definition_representation)
+ * PRODUCT_DEFINITION_SHAPE (SdaiProduct_definition_shape -> SdaiProperty_definition)
+ * PRODUCT_DEFINITION (SdaiProduct_definition)
+ * PRODUCT_DEFINITION_FORMATION_WITH_SPECIFIED_SOURCE (SdaiProduct_definition_formation_with_specified_source -> SdaiProduct_definition_formation) Can we just use PRODUCT_DEFINITION_FORMATION here?
+ * PRODUCT (SdaiProduct)
+ * MECHANICAL_CONTEXT (SdaiMechanical_context -> SdaiProduct_context -> SdaiApplication_context_element)
+ * APPLICATION_CONTEXT (SdaiApplication_context)
+ * DESIGN_CONTEXT (SdaiDesign_context -> SdaiProduct_definition_context -> SdaiApplication_context_element)
  *
  * Also of possible interest here - APPLICATION_PROTOCOL_DEFINITION
  *
  * Need to figure out which of these are global and which are specific
  * to the particular shape definition.  Some clearly are global...
+ *
  */
 STEPentity *
 Add_Shape_Definition(Registry *registry, InstMgr *instance_list)
