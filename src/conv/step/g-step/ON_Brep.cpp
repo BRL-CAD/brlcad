@@ -179,6 +179,7 @@ ON_NurbsSurfaceKnots_to_Aggregates(ON_NurbsSurface *insrf, SdaiB_spline_surface_
 	/* Add knot */
 	RealNode *knot = new RealNode();
 	knot->value = insrf->Knot(0, i);
+	std::cout << "Knot value(0,i): " << knot->value << "\n";
 	u_knots->AddNode(knot);
 
 	/* OpenNURBS and STEP have different notions of end knot
@@ -201,6 +202,7 @@ ON_NurbsSurfaceKnots_to_Aggregates(ON_NurbsSurface *insrf, SdaiB_spline_surface_
 	/* Add knot */
 	RealNode *knot = new RealNode();
 	knot->value = insrf->Knot(1, i);
+	std::cout << "Knot value(1,i): " << knot->value << "\n";
 	v_knots->AddNode(knot);
 
 	/* OpenNURBS and STEP have different notions of end knot multiplicity -
@@ -742,7 +744,6 @@ ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 	    curr_surface->surface_form_(B_spline_surface_form__plane_surf);
 	    /* Planes don't self-intersect */
 	    curr_surface->self_intersect_(LFalse);
-	    /* TODO - need to recognize when these should be true */
 	    curr_surface->u_closed_(LFalse);
 	    curr_surface->v_closed_(LFalse);
 	    instance_list->Append(surfaces.at(i), completeSE);
@@ -768,9 +769,8 @@ ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 	    curr_surface->surface_form_(B_spline_surface_form__unspecified);
 	    /* TODO - for now, assume the surfaces don't self-intersect - need to figure out how to test this */
 	    curr_surface->self_intersect_(LFalse);
-	    /* TODO - need to recognize when these should be true */
-	    curr_surface->u_closed_(LFalse);
-	    curr_surface->v_closed_(LFalse);
+	    curr_surface->u_closed_((Logical)n_surface->IsClosed(0));
+	    curr_surface->v_closed_((Logical)n_surface->IsClosed(1));
 	    instance_list->Append(surfaces.at(i), completeSE);
 	    surface_converted = 1;
 	}
@@ -797,9 +797,8 @@ ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 	    curr_surface->surface_form_(B_spline_surface_form__plane_surf);
 	    /* TODO - for now, assume non-self-intersecting */
 	    curr_surface->self_intersect_(LFalse);
-	    /* TODO - need to recognize when these should be true */
-	    curr_surface->u_closed_(LFalse);
-	    curr_surface->v_closed_(LFalse);
+	    curr_surface->u_closed_((Logical)sum_surface->IsClosed(0));
+	    curr_surface->v_closed_((Logical)sum_surface->IsClosed(1));
 	    instance_list->Append(surfaces.at(i), completeSE);
 	    surface_converted = 1;
 	}
@@ -831,7 +830,7 @@ ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 		instance_list->Append(outer_bound, completeSE);
 		outer_bound->bound_((SdaiLoop *)edge_loops.at(curr_loop->m_loop_index));
 		// TODO - When should this be false?
-		outer_bound->orientation_(BTrue);
+		outer_bound->orientation_(BFalse);
 		bounds->AddNode(new EntityNode((SDAI_Application_instance *)outer_bound));
 	    } else {
 		SdaiFace_bound *inner_bound = (SdaiFace_bound *)registry->ObjCreate("FACE_BOUND");
