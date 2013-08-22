@@ -534,7 +534,7 @@ main(int argc, char **argv)
     db_close(dbip);
 
     if (regions_tried > 0)
-	percent = (double)regions_converted * 100.0) / (double)regions_tried;
+	percent = ((double)regions_converted * 100.0) / (double)regions_tried;
     else
 	percent = 100.0;
 
