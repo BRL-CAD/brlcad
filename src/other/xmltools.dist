@@ -1,7 +1,6 @@
 set(xmltools_ignore_files
 README
 CMake
-CMake/ResolveCompilerPaths.cmake
 libexslt/Copyright
 libexslt/include
 libexslt/include/libexslt

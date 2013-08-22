@@ -15,9 +15,6 @@ Docbook sources and is not strictly necessary for build functionality.
 Each library subdirectory has its Copyright file, and libxml2's
 license statement has been added to the header of xsltproc.c
 
-ResolveCompilerPaths.cmake is from Jed Brown and uses the same
-license as CMake (Modified BSD - see the .cmake file)
-
 BRL-CAD authored CMake logic in this directory is under the Modified
 BSD license (note that this is NOT the license of libxml2, libxslt,
 or other non-BRL-CAD authored code in this directory - for that 
