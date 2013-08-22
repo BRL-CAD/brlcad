@@ -426,6 +426,30 @@ Add_Default_Geometric_Context(Registry *registry, InstMgr *instance_list)
     return complex_entity;
 }
 
+/* Defining a shape, we need:
+ * SHAPE_DEFINITION_REPRESENTATION
+ * PRODUCT_DEFINITION_SHAPE
+ * PRODUCT_DEFINITION
+ * PRODUCT_DEFINITION_FORMATION_WITH_SPECIFIED_SOURCE
+ * PRODUCT
+ * MECHANICAL_CONTEXT
+ * APPLICATION_CONTEXT
+ * DESIGN_CONTEXT
+ *
+ * Also of possible interest here - APPLICATION_PROTOCOL_DEFINITION
+ *
+ * Need to figure out which of these are global and which are specific
+ * to the particular shape definition.  Some clearly are global...
+ */
+STEPentity *
+Add_Shape_Definition(Registry *registry, InstMgr *instance_list)
+{
+    STEPentity *shape_def_rep = registry->ObjCreate("SHAPE_DEFINITION_REPRESENTATION");
+    instance_list->Append(shape_def_rep, completeSE);
+    return shape_def_rep;
+}
+
+
 #if 0
 void
 ON_RationalNurbsCurve_to_EntityAggregate(ON_NurbsCurve *incrv, SdaiRational_B_spline_curve *step_crv) {
