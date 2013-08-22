@@ -134,7 +134,7 @@ main(int argc, char *argv[])
     ON_String ss = wstr;
     //bu_log("Brep:\n %s\n", ss.Array());
 
-    Registry *registry = new Registry( SchemaInit );
+    Registry *registry = new Registry(SchemaInit);
     InstMgr instance_list;
     STEPfile *sfile = new STEPfile(*registry, instance_list);
 
@@ -147,13 +147,13 @@ main(int argc, char *argv[])
     /* 1 - Populate File_Name */
     SdaiFile_name * fn = (SdaiFile_name *)sfile->HeaderDefaultFileName();
     fn->name_("'brep'");
-    fn->time_stamp_( "" );
+    fn->time_stamp_("");
     StringAggregate_ptr author_tmp = new StringAggregate;
     author_tmp->AddNode(new StringNode("''"));
-    fn->author_( author_tmp );
+    fn->author_(author_tmp);
     StringAggregate_ptr org_tmp = new StringAggregate;
     org_tmp->AddNode(new StringNode("''"));
-    fn->organization_( org_tmp );
+    fn->organization_(org_tmp);
     fn->preprocessor_version_("'BRL-CAD g-step exporter'");
     fn->originating_system_("''");
     fn->authorization_("''");
