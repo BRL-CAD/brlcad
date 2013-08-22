@@ -777,9 +777,9 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	    newface->m_face = in->m_face;
 	    newface->m_outerloop.Append(newloop.Count(), newloop.Array());
 #if USE_CONNECTIVITY_GRAPH
-	    for (int i = 0; i < newloop_start_end.Count(); i++)
-		if (newloop_start_end[i].first.m_seg != -1)
-		    newface->m_parts.Append(newloop_start_end[i]);
+	    for (int j = 0; j < newloop_start_end.Count(); j++)
+		if (newloop_start_end[j].first.m_seg != -1)
+		    newface->m_parts.Append(newloop_start_end[j]);
 #endif
 	    out.Append(newface);
 	}
