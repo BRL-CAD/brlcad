@@ -81,7 +81,7 @@ pix_read(const char* filename, int width, int height)
     unsigned char *data = 0;
     icv_image_t *bif;
 
-    ssize_t size;
+    size_t size;
 
     if (width == 0 || height == 0) {
 	height = 512;
@@ -95,10 +95,10 @@ pix_read(const char* filename, int width, int height)
     else if ((fd = open(filename, O_RDONLY, WRMODE))<0) {
 	bu_log("bw_read: Cannot open file for reading\n");
 	return NULL;
-	}
+    }
 
     data = (unsigned char *)bu_malloc(size, "pix_read : unsigned char data");
-    if (read(fd, data, size) != size) {
+    if (read(fd, data, size) < 0) {
 	bu_log("pix_read: Error Occurred while Reading\n");
 	bu_free(data, "icv_image data");
 	return NULL;
