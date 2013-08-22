@@ -216,8 +216,9 @@ ON_NurbsSurfaceKnots_to_Aggregates(ON_NurbsSurface *insrf, SdaiB_spline_surface_
     step_srf->knot_spec_(Knot_type__unspecified);
 }
 
+
 // STEP needs explicit edges corresponding to what in OpenNURBS are the UV space trimming curves
-int Add_Edge(ON_BrepTrim *trim, Registry *registry, InstMgr *instance_list, std::vector<STEPentity *> *oriented_edges, std::vector<STEPentity *> *edge_curves,std::vector<STEPentity *> *vertex_pnts){
+int Add_Edge(ON_BrepTrim *trim, Registry *registry, InstMgr *instance_list, std::vector<STEPentity *> *oriented_edges, std::vector<STEPentity *> *edge_curves, std::vector<STEPentity *> *vertex_pnts) {
     ON_BrepEdge *edge = trim->Edge();
     int i = -1;
     if (edge) {
@@ -230,11 +231,11 @@ int Add_Edge(ON_BrepTrim *trim, Registry *registry, InstMgr *instance_list, std:
 	if (trim->m_bRev3d) {
 	    oriented_edge->edge_start_(((SdaiVertex *)vertex_pnts->at(edge->Vertex(1)->m_vertex_index)));
 	    oriented_edge->edge_end_(((SdaiVertex *)vertex_pnts->at(edge->Vertex(0)->m_vertex_index)));
-	    std::cout << "Verts " << edge->Vertex(1)->m_vertex_index << "," << edge->Vertex(0)->m_vertex_index << "\n";
+	    std::cout << "Verts " << edge->Vertex(1)->m_vertex_index << ", " << edge->Vertex(0)->m_vertex_index << "\n";
 	} else {
 	    oriented_edge->edge_start_(((SdaiVertex *)vertex_pnts->at(edge->Vertex(0)->m_vertex_index)));
 	    oriented_edge->edge_end_(((SdaiVertex *)vertex_pnts->at(edge->Vertex(1)->m_vertex_index)));
-	    std::cout << "Verts " << edge->Vertex(0)->m_vertex_index << "," << edge->Vertex(1)->m_vertex_index << "\n";
+	    std::cout << "Verts " << edge->Vertex(0)->m_vertex_index << ", " << edge->Vertex(1)->m_vertex_index << "\n";
 	}
 	oriented_edge->orientation_((Boolean)!trim->m_bRev3d);
 	instance_list->Append(new_oriented_edge, completeSE);
@@ -243,6 +244,7 @@ int Add_Edge(ON_BrepTrim *trim, Registry *registry, InstMgr *instance_list, std:
     }
     return i;
 }
+
 
 STEPcomplex *
 Add_Default_Geometric_Context(Registry *registry, InstMgr *instance_list)
@@ -368,8 +370,8 @@ Add_Default_Geometric_Context(Registry *registry, InstMgr *instance_list)
     instance_list->Append((STEPentity *)ua_entry_2, completeSE);
     instance_cnt++;
 
-     /*
-      * Now that we have the pieces, build the final complex type from four other types:
+    /*
+     * Now that we have the pieces, build the final complex type from four other types:
      */
     const char *entNmArr[5] = {"geometric_representation_context", "global_uncertainty_assigned_context",
 			       "global_unit_assigned_context", "representation_context", "*"};
@@ -426,10 +428,13 @@ Add_Default_Geometric_Context(Registry *registry, InstMgr *instance_list)
     return complex_entity;
 }
 
-/* Defining a shape is necessary for at least some systems, but how this is done does not appear
- * to be at all uniform between the outputs from various systems.  The following hierarchies have
- * been seen so far - we'll initially follow Rhino's lead since we're using openNURBs representations,
- * but different importers may prove to need other styles and it's something to bear in mind.
+
+/* Defining a shape is necessary for at least some systems, but how
+ * this is done does not appear to be at all uniform between the
+ * outputs from various systems.  The following hierarchies have been
+ * seen so far - we'll initially follow Rhino's lead since we're using
+ * openNURBs representations, but different importers may prove to
+ * need other styles and it's something to bear in mind.
  *
  * #1:
  *
@@ -458,21 +463,31 @@ Add_Shape_Definition(Registry *registry, InstMgr *instance_list, SdaiRepresentat
 {
     STEPentity *ret_entity = registry->ObjCreate("SHAPE_REPRESENTATION_RELATIONSHIP");
     instance_list->Append(ret_entity, completeSE);
+
     SdaiShape_representation_relationship *shape_rep_rel = (SdaiShape_representation_relationship *) ret_entity;
     shape_rep_rel->name_("''");
     shape_rep_rel->description_("''");
+
     SdaiShape_representation *shape_rep = (SdaiShape_representation *)registry->ObjCreate("SHAPE_REPRESENTATION");
     instance_list->Append((STEPentity *)shape_rep, completeSE);
     shape_rep_rel->rep_1_((SdaiRepresentation *)shape_rep);
     shape_rep_rel->rep_2_(manifold_shape);
     shape_rep->name_("''");
     shape_rep->context_of_items_(context);
+
     EntityAggregate *axis_items = shape_rep->items_();
+
+    /* create an axis */
+
     SdaiAxis2_placement_3d *axis3d = (SdaiAxis2_placement_3d *)registry->ObjCreate("AXIS2_PLACEMENT_3D");
     instance_list->Append((STEPentity *)axis3d, completeSE);
     axis3d->name_("''");
+
+    /* set the axis origin */
+
     SdaiCartesian_point *origin= (SdaiCartesian_point *)registry->ObjCreate("CARTESIAN_POINT");
     instance_list->Append((STEPentity *)origin, completeSE);
+
     RealNode *xnode = new RealNode();
     xnode->value = 0.0;
     RealNode *ynode= new RealNode();
@@ -484,8 +499,12 @@ Add_Shape_Definition(Registry *registry, InstMgr *instance_list, SdaiRepresentat
     origin->coordinates_()->AddNode(znode);
     origin->name_("''");
     axis3d->location_(origin);
+
+    /* set the axis up direction (i-vector) */
+
     SdaiDirection *axis = (SdaiDirection *)registry->ObjCreate("DIRECTION");
     instance_list->Append((STEPentity *)axis, completeSE);
+
     RealNode *axis_xnode = new RealNode();
     axis_xnode->value = 0.0;
     RealNode *axis_ynode= new RealNode();
@@ -497,8 +516,12 @@ Add_Shape_Definition(Registry *registry, InstMgr *instance_list, SdaiRepresentat
     axis->direction_ratios_()->AddNode(axis_znode);
     axis->name_("''");
     axis3d->axis_(axis);
+
+    /* add the axis front direction (j-vector) */
+
     SdaiDirection *ref_dir = (SdaiDirection *)registry->ObjCreate("DIRECTION");
     instance_list->Append((STEPentity *)ref_dir, completeSE);
+
     RealNode *ref_dir_xnode = new RealNode();
     ref_dir_xnode->value = 1.0;
     RealNode *ref_dir_ynode= new RealNode();
@@ -510,7 +533,11 @@ Add_Shape_Definition(Registry *registry, InstMgr *instance_list, SdaiRepresentat
     ref_dir->direction_ratios_()->AddNode(ref_dir_znode);
     ref_dir->name_("''");
     axis3d->ref_direction_(ref_dir);
+
+    /* add the axis to the shape definition */
+
     axis_items->AddNode(new EntityNode((SDAI_Application_instance *)axis3d));
+
     return ret_entity;
 }
 
@@ -521,7 +548,9 @@ ON_RationalNurbsCurve_to_EntityAggregate(ON_NurbsCurve *incrv, SdaiRational_B_sp
 }
 #endif
 
-bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
+
+bool
+ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 {
     std::vector<STEPentity *> cartesian_pnts(brep->m_V.Count(), (STEPentity *)0);
     std::vector<STEPentity *> vertex_pnts(brep->m_V.Count(), (STEPentity *)0);
