@@ -426,7 +426,13 @@ Add_Default_Geometric_Context(Registry *registry, InstMgr *instance_list)
     return complex_entity;
 }
 
-/* Defining a shape, we need:
+/* Defining a shape is necessary for at least some systems, but how this is done does not appear
+ * to be at all uniform between the outputs from various systems.  The following hierarchies have
+ * been seen so far - we'll initially follow Rhino's lead since we're using openNURBs representations,
+ * but different importers may prove to need other styles and it's something to bear in mind.
+ *
+ * #1:
+ *
  * SHAPE_DEFINITION_REPRESENTATION (SdaiShape_definition_representation -> SdaiProperty_definition_representation)
  * PRODUCT_DEFINITION_SHAPE (SdaiProduct_definition_shape -> SdaiProperty_definition)
  * PRODUCT_DEFINITION (SdaiProduct_definition)
@@ -436,18 +442,76 @@ Add_Default_Geometric_Context(Registry *registry, InstMgr *instance_list)
  * APPLICATION_CONTEXT (SdaiApplication_context)
  * DESIGN_CONTEXT (SdaiDesign_context -> SdaiProduct_definition_context -> SdaiApplication_context_element)
  *
- * Also of possible interest here - APPLICATION_PROTOCOL_DEFINITION
  *
- * Need to figure out which of these are global and which are specific
- * to the particular shape definition.  Some clearly are global...
+ * #2
+ *
+ * SHAPE_REPRESENTATION_RELATIONSHIP (SdaiShape_representation_relationship -> SdaiRepresentation_relationship)
+ * SHAPE_REPRESENTATION (SdaiShape_representation -> SdaiRepresentation
+ * AXIS2_PLACEMENT_3D (SdaiAxis2_placement_3d -> SdaiPlacement)
+ * DIRECTION (two of these) (SdaiDirection -> SdaiGeometric_representation_item -> SdaiRepresentation_item)
+ * CARTESIAN_POINT (SdaiCartesian_point)
+ *
  *
  */
 STEPentity *
-Add_Shape_Definition(Registry *registry, InstMgr *instance_list)
+Add_Shape_Definition(Registry *registry, InstMgr *instance_list, SdaiRepresentation_context *context, SdaiRepresentation *manifold_shape)
 {
-    STEPentity *shape_def_rep = registry->ObjCreate("SHAPE_DEFINITION_REPRESENTATION");
-    instance_list->Append(shape_def_rep, completeSE);
-    return shape_def_rep;
+    STEPentity *ret_entity = registry->ObjCreate("SHAPE_REPRESENTATION_RELATIONSHIP");
+    instance_list->Append(ret_entity, completeSE);
+    SdaiShape_representation_relationship *shape_rep_rel = (SdaiShape_representation_relationship *) ret_entity;
+    shape_rep_rel->name_("''");
+    shape_rep_rel->description_("''");
+    SdaiShape_representation *shape_rep = (SdaiShape_representation *)registry->ObjCreate("SHAPE_REPRESENTATION");
+    instance_list->Append((STEPentity *)shape_rep, completeSE);
+    shape_rep_rel->rep_1_((SdaiRepresentation *)shape_rep);
+    shape_rep_rel->rep_2_(manifold_shape);
+    shape_rep->name_("''");
+    shape_rep->context_of_items_(context);
+    EntityAggregate *axis_items = shape_rep->items_();
+    SdaiAxis2_placement_3d *axis3d = (SdaiAxis2_placement_3d *)registry->ObjCreate("AXIS2_PLACEMENT_3D");
+    instance_list->Append((STEPentity *)axis3d, completeSE);
+    axis3d->name_("''");
+    SdaiCartesian_point *origin= (SdaiCartesian_point *)registry->ObjCreate("CARTESIAN_POINT");
+    instance_list->Append((STEPentity *)origin, completeSE);
+    RealNode *xnode = new RealNode();
+    xnode->value = 0.0;
+    RealNode *ynode= new RealNode();
+    ynode->value = 0.0;
+    RealNode *znode= new RealNode();
+    znode->value = 0.0;
+    origin->coordinates_()->AddNode(xnode);
+    origin->coordinates_()->AddNode(ynode);
+    origin->coordinates_()->AddNode(znode);
+    origin->name_("''");
+    axis3d->location_(origin);
+    SdaiDirection *axis = (SdaiDirection *)registry->ObjCreate("DIRECTION");
+    instance_list->Append((STEPentity *)axis, completeSE);
+    RealNode *axis_xnode = new RealNode();
+    axis_xnode->value = 0.0;
+    RealNode *axis_ynode= new RealNode();
+    axis_ynode->value = 0.0;
+    RealNode *axis_znode= new RealNode();
+    axis_znode->value = 1.0;
+    axis->direction_ratios_()->AddNode(axis_xnode);
+    axis->direction_ratios_()->AddNode(axis_ynode);
+    axis->direction_ratios_()->AddNode(axis_znode);
+    axis->name_("''");
+    axis3d->axis_(axis);
+    SdaiDirection *ref_dir = (SdaiDirection *)registry->ObjCreate("DIRECTION");
+    instance_list->Append((STEPentity *)ref_dir, completeSE);
+    RealNode *ref_dir_xnode = new RealNode();
+    ref_dir_xnode->value = 1.0;
+    RealNode *ref_dir_ynode= new RealNode();
+    ref_dir_ynode->value = 0.0;
+    RealNode *ref_dir_znode= new RealNode();
+    ref_dir_znode->value = 0.0;
+    ref_dir->direction_ratios_()->AddNode(ref_dir_xnode);
+    ref_dir->direction_ratios_()->AddNode(ref_dir_ynode);
+    ref_dir->direction_ratios_()->AddNode(ref_dir_znode);
+    ref_dir->name_("''");
+    axis3d->ref_direction_(ref_dir);
+    axis_items->AddNode(new EntityNode((SDAI_Application_instance *)axis3d));
+    return ret_entity;
 }
 
 
@@ -775,6 +839,8 @@ bool ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
     items->AddNode(new EntityNode((SDAI_Application_instance *)manifold_solid_brep));
 
     advanced_brep->context_of_items_((SdaiRepresentation_context *) context);
+
+    (void *)Add_Shape_Definition(registry, instance_list, (SdaiRepresentation_context *)context, (SdaiRepresentation *)advanced_brep);
 
     return true;
 }
