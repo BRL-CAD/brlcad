@@ -90,6 +90,10 @@
 #  include "dm-wgl.h"
 #endif /* DM_WGL */
 
+#ifdef DM_QT
+#  include "dm_xvars.h"
+#endif /* DM_QT */
+
 /* Private headers */
 #include "tclcad_private.h"
 
@@ -9640,6 +9644,11 @@ to_new_view(struct ged *gedp,
 	type = DM_TYPE_WGL;
 #endif /* DM_WGL */
 
+#ifdef DM_QT
+    if (BU_STR_EQUAL(argv[2], "qt"))
+	type = DM_TYPE_QT;
+#endif /* DM_QT */
+
     if (type == DM_TYPE_BAD) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR:  Requisite display manager is not available.\nBRL-CAD may need to be recompiled with support for:  %s\nRun 'fbhelp' for a list of available display managers.\n", argv[2]);
 	return GED_ERROR;
@@ -11997,7 +12006,7 @@ to_view_win_size(struct ged *gedp,
 	}
     }
 
-#if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_WGL)
+#if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_WGL) || defined(DM_QT)
 #   if (defined HAVE_TK)
     Tk_GeometryRequest(((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->xtkwin,
 		       width, height);
