@@ -1,6 +1,6 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 
-<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="gattributes">
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="attributes">
 
 <refmeta>
     <refentrytitle>Standard Attributes
@@ -11,7 +11,7 @@
 </refmeta>
 
 <refnamediv xml:id="name">
-  <refname>gattributes</refname>
+  <refname>attributes</refname>
   <refpurpose>
 	standard attribute conventions in BRL-CAD databases
   </refpurpose>

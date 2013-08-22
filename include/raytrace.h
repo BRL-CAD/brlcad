@@ -8013,7 +8013,7 @@ RT_EXPORT extern size_t db5_type_sizeof_n_binu(const int minor);
 
 /**
  * Define standard attribute types in BRL-CAD geometry. (See the
- * gattributes manual page) these should be a collective enumeration
+ * attributes manual page) these should be a collective enumeration
  * starting from 0 and increasing without any gaps in the numbers so
  * db5_standard_attribute() can be used as an index-based iterator.
  */

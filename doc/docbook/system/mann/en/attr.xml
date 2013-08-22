@@ -119,7 +119,7 @@ Creating region with attrs: region_id=1000, air=0, los=0, material_id=1
 </refsection>
 
 <refsection xml:id="see_also"><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>gattributes</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+<para><citerefentry><refentrytitle>attributes</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
 </refsection>
 
 <refsection xml:id="author"><title>AUTHOR</title>
