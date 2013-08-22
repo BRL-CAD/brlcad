@@ -185,7 +185,7 @@ extern int bu_bomb_failsafe_init();
 HIDDEN genptr_t
 alloc(alloc_t type, size_t cnt, size_t sz, const char *str)
 {
-    register genptr_t ptr = 0;
+    genptr_t ptr = 0;
     register size_t size = sz;
     const size_t MINSIZE = sizeof(uint32_t) > sizeof(intptr_t) ? sizeof(uint32_t) : sizeof(intptr_t);
 
@@ -214,6 +214,9 @@ alloc(alloc_t type, size_t cnt, size_t sz, const char *str)
 	size = MINSIZE;
     }
 
+    /* if we're debugging, we need a slightly larger allocation size
+     * for debug tracking.
+     */
     if (UNLIKELY(bu_debug&BU_DEBUG_MEM_CHECK)) {
 	/* Pad, plus full uint32_t for magic number */
 	size = (size + 2*sizeof(uint32_t) - 1) & (~(sizeof(uint32_t) - 1));
@@ -225,26 +228,33 @@ alloc(alloc_t type, size_t cnt, size_t sz, const char *str)
     bu_semaphore_acquire(BU_SEM_SYSCALL);
 #endif
 
+/* align allocations to what address multiple */
+#define ALIGN 8
+
     switch (type) {
 	case MALLOC:
+#ifdef HAVE_POSIX_MEMALIGN
+	    if (posix_memalign(&ptr, ALIGN, cnt*size))
+		ptr = NULL;
+#else
 	    ptr = malloc(cnt*size);
+#endif
 	    break;
 	case CALLOC:
-	    /* if we're debugging, we need a slightly larger
-	     * allocation size for debug tracking.
-	     */
-	    if (UNLIKELY(bu_debug&(BU_DEBUG_MEM_CHECK|BU_DEBUG_MEM_QCHECK))) {
-		ptr = malloc(cnt*size);
+#ifdef HAVE_POSIX_MEMALIGN
+	    if (posix_memalign(&ptr, ALIGN, cnt*size))
+		ptr = NULL;
+	    else
 		memset(ptr, 0, cnt*size);
-	    } else {
-		ptr = calloc(cnt, size);
-	    }
+#else
+	    ptr = calloc(cnt, size);
+#endif
 	    break;
 	default:
 	    bu_bomb("ERROR: alloc with unknown type\n");
     }
 
-    if (UNLIKELY(ptr==(char *)0 || bu_debug&BU_DEBUG_MEM_LOG)) {
+    if (UNLIKELY(ptr==NULL || bu_debug&BU_DEBUG_MEM_LOG)) {
 	fprintf(stderr, "NULL malloc(%llu) %s\n", (unsigned long long)(cnt*size), str);
     }
 
