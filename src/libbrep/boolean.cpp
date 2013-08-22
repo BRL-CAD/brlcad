@@ -1215,13 +1215,7 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
     ON_wString ws;
     ON_TextLog log(ws);
     brepO->IsValid(&log);
-    char *s = new char [ws.Length() + 1];
-    for (int k = 0; k < ws.Length(); k++) {
-	s[k] = ws[k];
-    }
-    s[ws.Length()] = 0;
-    bu_log("%s", s);
-    delete s;
+    bu_log(ON_String(ws).Array());
 
     // WIP
     delete [] curvesarray;
