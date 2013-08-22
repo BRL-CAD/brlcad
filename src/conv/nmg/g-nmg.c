@@ -425,6 +425,7 @@ main(int argc, char **argv)
 {
     int	i;
     int	c;
+    int suppliedname = 0;
     double percent;
 
     bu_setprogname(argv[0]);
@@ -467,6 +468,7 @@ main(int argc, char **argv)
 		break;
 	    case 'o':		/* Output file name */
 		out_file = bu_optarg;
+		suppliedname = 1;
 		break;
 	    case 'r':		/* Relative tolerance. */
 		ttol.rel = atof(bu_optarg);
@@ -531,12 +533,18 @@ main(int argc, char **argv)
     rt_vlist_cleanup();
     db_close(dbip);
 
-    percent = 100;
     if (regions_tried > 0)
-	percent = ((double)regions_converted * 100) / regions_tried;
+	percent = (regions_converted * 100) / regions_tried;
+    else
+	percent = 100;
 
     printf("Tried %d regions, %d converted successfully.  %g%%\n",
 	    regions_tried, regions_converted, percent);
+
+    if (suppliedname)
+    	printf("Output file name: %s\n",out_file);
+    else
+	printf("Output file name (default): %s\n",out_file);
 
     wdb_close(fp_out);
     return 0;
