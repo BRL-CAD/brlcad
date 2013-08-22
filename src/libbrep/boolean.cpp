@@ -1004,7 +1004,7 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
 {
     int facecount1 = brepA->m_F.Count();
     int facecount2 = brepB->m_F.Count();
-    ON_SimpleArray<ON_Curve*> *curvesarray = new ON_SimpleArray<ON_Curve*> [facecount1 + facecount2];
+    ON_ClassArray<ON_SimpleArray<ON_Curve*> > curvesarray(facecount1 + facecount2);
 
     // calculate intersection curves
     for (int i = 0; i < facecount1; i++) {
@@ -1113,7 +1113,6 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
 
     if (trimmedfaces.Count() != original_faces.Count()) {
 	bu_log("ON_Boolean() Error: trimmedfaces.Count() != original_faces.Count()\n");
-	delete [] curvesarray;
 	return -1;
     }
 
@@ -1218,7 +1217,6 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
     bu_log(ON_String(ws).Array());
 
     // WIP
-    delete [] curvesarray;
     return 0;
 }
 
