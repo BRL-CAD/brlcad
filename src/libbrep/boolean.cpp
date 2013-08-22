@@ -1140,10 +1140,17 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
 		    // Find an intersection between all their "parts".
 		    for (int i1 = 0; i1 < t_face->m_parts.Count(); i1++) {
 			for (int i2 = 0; i2 < another_face->m_parts.Count(); i2++) {
-			    const IntersectPoint& start1 = t_face->m_parts[i1].first;
-			    const IntersectPoint& start2 = another_face->m_parts[i2].first;
-			    const IntersectPoint& end1 = t_face->m_parts[i1].second;
-			    const IntersectPoint& end2 = another_face->m_parts[i2].second;
+			    IntersectPoint& start1 = t_face->m_parts[i1].first;
+			    IntersectPoint& start2 = another_face->m_parts[i2].first;
+			    IntersectPoint& end1 = t_face->m_parts[i1].second;
+			    IntersectPoint& end2 = another_face->m_parts[i2].second;
+			    if (compare_t(&start1, &end1) > 0) {
+				// start > end, swap them
+				std::swap(start1, end1);
+			    }
+			    if (compare_t(&start2, &end2) > 0) {
+				std::swap(start2, end2);
+			    }
 			    const IntersectPoint& start_max = compare_t(&start1, &start2) < 0 ? start2 : start1;
 			    const IntersectPoint& end_min = compare_t(&end1, &end2) < 0 ? end1 : end2;
 			    if (compare_t(&start_max, &end_min) < 0) {
