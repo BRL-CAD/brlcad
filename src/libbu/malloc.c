@@ -26,14 +26,19 @@
 
 #include "bu.h"
 
-/** this controls whether to semaphore protect malloc calls */
+/**
+ * this controls whether to semaphore protect malloc calls
+ *
+ * FIXME: we really don't need to do this any more, especially if
+ * compiling against glibc+pthreads.  Windows, however, needs might
+ * need some build flag encouragement.
+ */
 #define MALLOC_NOT_MP_SAFE 1
 
 
 /**
- * used by the memory allocation routines passed to bu_alloc by
- * default to indicate whether allocated memory should be zero'd
- * first.
+ * used by the memory allocation routines going through alloc() to
+ * indicate whether allocated memory should be zero'd.
  */
 typedef enum {
     MALLOC,
