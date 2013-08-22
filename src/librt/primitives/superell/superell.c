@@ -438,7 +438,7 @@ rt_superell_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
      * point, which contains a translation along the ray direction to the
      * closest approach to vertex of the superell.  Translating the ray
      * along the direction of the ray to the closest point near the
-     * primitives center vertex.  New ray origin is hence, normalized.
+     * primitive's center vertex.  New ray origin is hence, normalized.
      */
     VSCALE(normalizedShotPoint, newShotDir,
 	   VDOT(newShotPoint, newShotDir));
