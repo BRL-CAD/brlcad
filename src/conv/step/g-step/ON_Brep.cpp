@@ -431,12 +431,15 @@ Add_Default_Geometric_Context(Registry *registry, InstMgr *instance_list)
 
 /* Defining a shape is necessary for at least some systems, but how
  * this is done does not appear to be at all uniform between the
- * outputs from various systems.  The following hierarchies have been
- * seen so far - we'll initially follow Rhino's lead since we're using
- * openNURBs representations, but different importers may prove to
- * need other styles and it's something to bear in mind.
- *
- * #1:
+ * outputs from various systems. Rhino ouputs a shape definition representation
+ * that does not directly reference the Brep, and instead uses a shape
+ * representation relationship.  Creo, on the other hand, appears to reference
+ * the Brep directly in the shape definition representation and does not have
+ * the shape representation relationship defined.  TODO - figure out
+ * which way is 'better' practice.
+ * */
+
+/* #1: Shape Definition Representation
  *
  * SHAPE_DEFINITION_REPRESENTATION (SdaiShape_definition_representation -> SdaiProperty_definition_representation)
  * PRODUCT_DEFINITION_SHAPE (SdaiProduct_definition_shape -> SdaiProperty_definition)
@@ -447,8 +450,72 @@ Add_Default_Geometric_Context(Registry *registry, InstMgr *instance_list)
  * APPLICATION_CONTEXT (SdaiApplication_context)
  * DESIGN_CONTEXT (SdaiDesign_context -> SdaiProduct_definition_context -> SdaiApplication_context_element)
  *
- *
- * #2
+ */
+STEPentity *
+Add_Shape_Definition_Representation(Registry *registry, InstMgr *instance_list, SdaiRepresentation *sdairep)
+{
+    // SHAPE_DEFINITION_REPRESENTATION
+    STEPentity *ret_entity = registry->ObjCreate("SHAPE_DEFINITION_REPRESENTATION");
+    instance_list->Append(ret_entity, completeSE);
+    SdaiShape_definition_representation *shape_def_rep = (SdaiShape_definition_representation *)ret_entity;
+    shape_def_rep->used_representation_(sdairep);
+
+    // PRODUCT_DEFINITION_SHAPE
+    SdaiProduct_definition_shape *prod_def_shape = (SdaiProduct_definition_shape *)registry->ObjCreate("PRODUCT_DEFINITION_SHAPE");
+    instance_list->Append((STEPentity *)prod_def_shape, completeSE);
+    prod_def_shape->name_("''");
+    prod_def_shape->description_("''");
+    shape_def_rep->definition_(prod_def_shape);
+
+    // PRODUCT_DEFINITION
+    SdaiProduct_definition *prod_def = (SdaiProduct_definition *)registry->ObjCreate("PRODUCT_DEFINITION");
+    instance_list->Append((STEPentity *)prod_def, completeSE);
+    SdaiCharacterized_product_definition *char_def_prod = new SdaiCharacterized_product_definition(prod_def);
+    SdaiCharacterized_definition *char_def= new SdaiCharacterized_definition(char_def_prod);
+    prod_def_shape->definition_(char_def);
+    prod_def->id_("''");
+    prod_def->description_("''");
+
+    // PRODUCT_DEFINITION_FORMATION
+    SdaiProduct_definition_formation *prod_def_form = (SdaiProduct_definition_formation *)registry->ObjCreate("PRODUCT_DEFINITION_FORMATION");
+    instance_list->Append((STEPentity *)prod_def_form, completeSE);
+    prod_def->formation_(prod_def_form);
+    prod_def_form->id_("''");
+    prod_def_form->description_("''");
+
+    // PRODUCT
+    SdaiProduct *prod = (SdaiProduct *)registry->ObjCreate("PRODUCT");
+    instance_list->Append((STEPentity *)prod, completeSE);
+    prod_def_form->of_product_(prod);
+    prod->id_("''");
+    prod->name_("''");
+    prod->description_("''");
+
+    // MECHANICAL_CONTEXT
+    SdaiMechanical_context *mech_context = (SdaiMechanical_context *)registry->ObjCreate("MECHANICAL_CONTEXT");
+    instance_list->Append((STEPentity *)mech_context, completeSE);
+    prod->frame_of_reference_()->AddNode(new EntityNode((SDAI_Application_instance *)mech_context));
+    mech_context->name_("''");
+    mech_context->discipline_type_("''");
+
+    // APPLICATION_CONTEXT
+    SdaiApplication_context *app_context = (SdaiApplication_context *)registry->ObjCreate("APPLICATION_CONTEXT");
+    instance_list->Append((STEPentity *)app_context, completeSE);
+    mech_context->frame_of_reference_(app_context);
+    app_context->application_("''");
+
+    // DESIGN_CONTEXT
+    SdaiDesign_context *design_context = (SdaiDesign_context *)registry->ObjCreate("DESIGN_CONTEXT");
+    instance_list->Append((STEPentity *)design_context, completeSE);
+    prod_def->frame_of_reference_(design_context);
+    design_context->name_("''");
+    design_context->life_cycle_stage_("Design");
+    design_context->frame_of_reference_(app_context);
+
+    return ret_entity;
+}
+
+/* #2: Shape Representation Relationship
  *
  * SHAPE_REPRESENTATION_RELATIONSHIP (SdaiShape_representation_relationship -> SdaiRepresentation_relationship)
  * SHAPE_REPRESENTATION (SdaiShape_representation -> SdaiRepresentation
@@ -459,7 +526,7 @@ Add_Default_Geometric_Context(Registry *registry, InstMgr *instance_list)
  *
  */
 STEPentity *
-Add_Shape_Definition(Registry *registry, InstMgr *instance_list, SdaiRepresentation_context *context, SdaiRepresentation *manifold_shape)
+Add_Shape_Representation_Relationship(Registry *registry, InstMgr *instance_list, SdaiRepresentation *shape_rep, SdaiRepresentation *manifold_shape)
 {
     STEPentity *ret_entity = registry->ObjCreate("SHAPE_REPRESENTATION_RELATIONSHIP");
     instance_list->Append(ret_entity, completeSE);
@@ -467,11 +534,18 @@ Add_Shape_Definition(Registry *registry, InstMgr *instance_list, SdaiRepresentat
     SdaiShape_representation_relationship *shape_rep_rel = (SdaiShape_representation_relationship *) ret_entity;
     shape_rep_rel->name_("''");
     shape_rep_rel->description_("''");
+    shape_rep_rel->rep_1_(shape_rep);
+    shape_rep_rel->rep_2_(manifold_shape);
+
+    return ret_entity;
+}
+
+SdaiRepresentation *
+Add_Shape_Representation(Registry *registry, InstMgr *instance_list, SdaiRepresentation_context *context)
+{
 
     SdaiShape_representation *shape_rep = (SdaiShape_representation *)registry->ObjCreate("SHAPE_REPRESENTATION");
     instance_list->Append((STEPentity *)shape_rep, completeSE);
-    shape_rep_rel->rep_1_((SdaiRepresentation *)shape_rep);
-    shape_rep_rel->rep_2_(manifold_shape);
     shape_rep->name_("''");
     shape_rep->context_of_items_(context);
 
@@ -538,7 +612,7 @@ Add_Shape_Definition(Registry *registry, InstMgr *instance_list, SdaiRepresentat
 
     axis_items->AddNode(new EntityNode((SDAI_Application_instance *)axis3d));
 
-    return ret_entity;
+    return (SdaiRepresentation *)shape_rep;
 }
 
 
@@ -846,7 +920,7 @@ ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 	instance_list->Append(step_face, completeSE);
     }
 
-    // Top level structures
+    // Closed shell that assembles the faces
     SdaiClosed_shell *closed_shell = (SdaiClosed_shell *)registry->ObjCreate("CLOSED_SHELL");
     closed_shell->name_("''");
     instance_list->Append(closed_shell, completeSE);
@@ -856,20 +930,24 @@ ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
 	shell_faces->AddNode(new EntityNode((SDAI_Application_instance *)faces.at(i)));
     }
 
+    // Solid manifold BRep
     SdaiManifold_solid_brep *manifold_solid_brep = (SdaiManifold_solid_brep *)registry->ObjCreate("MANIFOLD_SOLID_BREP");
     instance_list->Append(manifold_solid_brep, completeSE);
     manifold_solid_brep->outer_(closed_shell);
     manifold_solid_brep->name_("''");
 
+    // Advanced BRep shape representation - this is the object step-g will look for
     SdaiAdvanced_brep_shape_representation *advanced_brep= (SdaiAdvanced_brep_shape_representation *)registry->ObjCreate("ADVANCED_BREP_SHAPE_REPRESENTATION");
     advanced_brep->name_("'brep.s'");
     instance_list->Append(advanced_brep, completeSE);
     EntityAggregate *items = advanced_brep->items_();
     items->AddNode(new EntityNode((SDAI_Application_instance *)manifold_solid_brep));
-
     advanced_brep->context_of_items_((SdaiRepresentation_context *) context);
 
-    (void *)Add_Shape_Definition(registry, instance_list, (SdaiRepresentation_context *)context, (SdaiRepresentation *)advanced_brep);
+    // Top level structures
+    SdaiRepresentation *shape_rep = Add_Shape_Representation(registry, instance_list, (SdaiRepresentation_context *)context);
+    (void *)Add_Shape_Representation_Relationship(registry, instance_list, shape_rep, (SdaiRepresentation *)advanced_brep);
+    (void *)Add_Shape_Definition_Representation(registry, instance_list, (SdaiRepresentation *)shape_rep);
 
     return true;
 }
