@@ -17,8 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-
 /** @addtogroup wdb */
 /** @{ */
 /** @file wdb.h
@@ -32,17 +30,14 @@
  *
  */
 
-
 #ifndef __WDB_H__
 #define __WDB_H__
 
-#include "common.h"
-
-/* interface headers */
 #include "bu.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "rtgeom.h"
+
 
 __BEGIN_DECLS
 
