@@ -419,7 +419,6 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     pprime[X] = (hrt->hrt_SoR[0]*trans[X] + hrt->hrt_SoR[1]*trans[Y] + hrt->hrt_SoR[2]*trans[Z]) * 1.0/(hrt->hrt_SoR[15]);
     pprime[Y] = (hrt->hrt_SoR[4]*trans[X] + hrt->hrt_SoR[5]*trans[Y] + hrt->hrt_SoR[6]*trans[Z]) * 1.0/(hrt->hrt_SoR[15]);
     pprime[Z] = (hrt->hrt_SoR[8]*trans[X] + hrt->hrt_SoR[9]*trans[Y] + hrt->hrt_SoR[10]*trans[Z]) * 1.0/(hrt->hrt_SoR[15]);
- 
     /* Translate ray direction vector */
     MAT4X3VEC(dprime, hrt->hrt_SoR, rp->r_dir);
     VUNITIZE(dprime);
@@ -436,7 +435,6 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     /**
      * Generate the sextic equation S(t) = 0 to be passed through the root finder.
      */
- 
     S.dgr = 6;
     S.cf[0] = 4320.0 * dprime[X] * dprime[X] * dprime[Y] * dprime[Y] * dprime[Z] * dprime[Z] + 960.0 * dprime[X] * dprime[X] * dprime[Z] * dprime[Z]
             * (dprime[X] * dprime[X] + dprime[Z] * dprime[Z]) + 320.0 * (dprime[X] * dprime[X] * dprime[X] * dprime[X] * dprime[X] * dprime[X]
@@ -525,7 +523,6 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
             + 2160.0 * (pprime[Y] * pprime[Y] * (1.0 + pprime[X] * pprime[X] * pprime[X] * pprime[X] + pprime[Z] * pprime[Z] * pprime[Z] * pprime[Z]))
             + 4860.0 * (pprime[Y] * pprime[Y] * pprime[Y] * pprime[Y] * (pprime[X] * pprime[X] + pprime[Z] * pprime[Z] + 1.0)) + 3645.0 * pprime[Y]
             * pprime[Y] * pprime[Y] * pprime[Y] * pprime[Y] * pprime[Y] ;
- 
     /* It is known that the equation is sextic (of order 6). Therefore, if the
      * root finder returns other than 6 roots, return an error.
      */
@@ -555,8 +552,7 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     for (j=0, i=0; j < 6; j++) {
         if (NEAR_ZERO(complex[j].im, ap->a_rt_i->rti_tol.dist))
             real[i++] = complex[j].re;
-    }
- 
+    } 
     /* Here, 'i' is number of points found */
     switch (i) {
         case 0:
@@ -615,7 +611,7 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
             }
             break;
     }
- 
+
     /* Now, t[0] > t[npts-1] */
     /* real[1] is entry point, and real[0] is farthest exit point */
     RT_GET_SEG(segp, ap->a_resource);

@@ -565,7 +565,6 @@ link_curves(const ON_SimpleArray<SSICurve>& in, ON_ClassArray<LinkedCurve>& out)
 		continue;
 
 	    if (c1 != NULL && c2 != NULL) {
-		ON_PolyCurve* polycurve = new ON_PolyCurve;
 		LinkedCurve newcurve;
 		newcurve.Append(*c1);
 		if (dis > ON_ZERO_TOLERANCE)
