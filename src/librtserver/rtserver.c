@@ -631,16 +631,16 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *UNUSED
 
 	/* write partition info to the byte array */
 	/* start with entrance point */
-	htond(buffer, (unsigned char *)pp->pt_inhit->hit_point, 3);
+	bu_htond(buffer, (unsigned char *)pp->pt_inhit->hit_point, 3);
 	bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_DOUBLE*3);
 	/* next exit point */
-	htond(buffer, (unsigned char *)pp->pt_outhit->hit_point, 3);
+	bu_htond(buffer, (unsigned char *)pp->pt_outhit->hit_point, 3);
 	bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_DOUBLE*3);
 	/* next entrance surface normal vector */
-	htond(buffer, (unsigned char *)enterNormal, 3);
+	bu_htond(buffer, (unsigned char *)enterNormal, 3);
 	bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_DOUBLE*3);
 	/* next entrance surface normal vector */
-	htond(buffer, (unsigned char *)exitNormal, 3);
+	bu_htond(buffer, (unsigned char *)exitNormal, 3);
 	bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_DOUBLE*3);
 
 	/* calculate the entrance and exit obliquities */
@@ -673,8 +673,8 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *UNUSED
 	}
 
 	/* write obliquities to the buffer */
-	htond( buffer, (unsigned char *)&inObl, 1 );
-	htond( &buffer[SIZEOF_NETWORK_DOUBLE], (unsigned char *)&outObl, 1);
+	bu_htond( buffer, (unsigned char *)&inObl, 1 );
+	bu_htond( &buffer[SIZEOF_NETWORK_DOUBLE], (unsigned char *)&outObl, 1);
 	bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_DOUBLE*2);
 
 	/* get the region index from the hash table */
@@ -711,7 +711,7 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *UNUSED
 	/* write the MUVEStoORCA matrix elements (if any) */
 	for ( i = 0; i < matrixSize*matrixSize; ++i ) {
 		double value = (double)inv_mat[i];
-		htond(buffer, (unsigned char *)&value, 1);
+		bu_htond(buffer, (unsigned char *)&value, 1);
 		bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_DOUBLE);
 	}
 
@@ -757,27 +757,27 @@ printHits(struct bu_vlb *vlb)
 	    double outObl;
 	    int regionIndex;
 
-	    ntohd((unsigned char *)enterPt, c, 3);
+	    bu_ntohd((unsigned char *)enterPt, c, 3);
 	    bu_log("\t\tenter hit at (%g %g %g)\n", V3ARGS(enterPt));
 	    c += SIZEOF_NETWORK_DOUBLE * 3;
 
-	    ntohd((unsigned char *)exitPt, c, 3);
+	    bu_ntohd((unsigned char *)exitPt, c, 3);
 	    bu_log("\t\texit hit at (%g %g %g)\n", V3ARGS(exitPt));
 	    c += SIZEOF_NETWORK_DOUBLE * 3;
 
-	    ntohd((unsigned char *)enterNorm, c, 3);
+	    bu_ntohd((unsigned char *)enterNorm, c, 3);
 	    bu_log("\t\tenter normal: (%g %g %g)\n", V3ARGS(enterNorm));
 	    c += SIZEOF_NETWORK_DOUBLE * 3;
 
-	    ntohd((unsigned char *)exitNorm, c, 3);
+	    bu_ntohd((unsigned char *)exitNorm, c, 3);
 	    bu_log("\t\texit normal; (%g %g %g)\n", V3ARGS(exitNorm));
 	    c += SIZEOF_NETWORK_DOUBLE * 3;
 
-	    ntohd((unsigned char*)&inObl, c, 1);
+	    bu_ntohd((unsigned char*)&inObl, c, 1);
 	    bu_log("\t\tenter obliquity: %g\n", inObl);
 	    c += SIZEOF_NETWORK_DOUBLE;
 
-	    ntohd((unsigned char*)&outObl, c, 1);
+	    bu_ntohd((unsigned char*)&outObl, c, 1);
 	    bu_log("\t\tenter obliquity: %g\n", outObl);
 	    c += SIZEOF_NETWORK_DOUBLE;
 
@@ -1309,9 +1309,9 @@ Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_shootRay( JNIEnv *env, j
     bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_LONG);
 
     /* write this ray info to the byte array */
-    htond(buffer, (unsigned char *)ap->a_ray.r_pt, 3);
+    bu_htond(buffer, (unsigned char *)ap->a_ray.r_pt, 3);
     bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_DOUBLE*3);
-    htond(buffer, (unsigned char *)ap->a_ray.r_dir, 3);
+    bu_htond(buffer, (unsigned char *)ap->a_ray.r_dir, 3);
     bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_DOUBLE*3);
 
     /* shoot the ray */
@@ -1523,9 +1523,9 @@ JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWra
 	}
 
 	/* write this ray info to the byte array */
-	htond(buffer, (unsigned char *)ap->a_ray.r_pt, 3);
+	bu_htond(buffer, (unsigned char *)ap->a_ray.r_pt, 3);
 	bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_DOUBLE*3);
-	htond(buffer, (unsigned char *)ap->a_ray.r_dir, 3);
+	bu_htond(buffer, (unsigned char *)ap->a_ray.r_dir, 3);
 	bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_DOUBLE*3);
 
 	/* shoot the ray */
@@ -1763,9 +1763,9 @@ JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWra
 	    VJOIN2( ap->a_ray.r_pt, base_pt, (double)row, row_dir, (double)col, col_dir );
 
 	    /* write this ray info to the byte array */
-	    htond(buffer, (unsigned char *)ap->a_ray.r_pt, 3);
+	    bu_htond(buffer, (unsigned char *)ap->a_ray.r_pt, 3);
 	    bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_DOUBLE*3);
-	    htond(buffer, (unsigned char *)ap->a_ray.r_dir, 3);
+	    bu_htond(buffer, (unsigned char *)ap->a_ray.r_dir, 3);
 	    bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_DOUBLE*3);
 
 	    /* finally, shoot this ray */

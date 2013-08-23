@@ -4448,7 +4448,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     }
 
     /* convert matrix */
-    ntohd((unsigned char *)scanmat, cp, ELEMENTS_PER_MAT);
+    bu_ntohd((unsigned char *)scanmat, cp, ELEMENTS_PER_MAT);
     MAT_COPY(dsp_ip->dsp_stom, scanmat); /* double to fastf_t */
 
     cp += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_MAT;
@@ -4562,7 +4562,7 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     dsp_ip->dsp_stom[15] *= local2mm;
 
     MAT_COPY(scanmat, dsp_ip->dsp_stom); /* convert fastf_t to double */
-    htond(cp, (unsigned char *)scanmat, ELEMENTS_PER_MAT);
+    bu_htond(cp, (unsigned char *)scanmat, ELEMENTS_PER_MAT);
 
     cp += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_MAT;
     rem -= SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_MAT;

@@ -863,7 +863,7 @@ rt_nmg_export4_fastf(const fastf_t *fp, int count, int pt_type, double scale)
 	for (i=0; i<count; i++) {
 	    scanp[i] = fp[i];
 	}
-	htond(cp + (4+4), (unsigned char *)scanp, count);
+	bu_htond(cp + (4+4), (unsigned char *)scanp, count);
 	bu_free(scanp, "scanp");
     } else {
 	/* Need to scale data by 'scale' ! */
@@ -881,7 +881,7 @@ rt_nmg_export4_fastf(const fastf_t *fp, int count, int pt_type, double scale)
 	    /* Scale everything as one long array */
 	    VSCALEN(scanp, fp, scale, count);
 	}
-	htond(cp + (4+4), (unsigned char *)scanp, count);
+	bu_htond(cp + (4+4), (unsigned char *)scanp, count);
 	bu_free(scanp, "rt_nmg_export4_fastf");
     }
     cp += (4+4) + count * 8;
@@ -935,7 +935,7 @@ rt_nmg_import4_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, lon
     ret = (fastf_t *)bu_malloc(count * sizeof(fastf_t), "rt_nmg_import4_fastf[]");
     if (!mat) {
 	scanp = (double *)bu_malloc(count * sizeof(double), "scanp");
-	ntohd((unsigned char *)scanp, cp + (4+4), count);
+	bu_ntohd((unsigned char *)scanp, cp + (4+4), count);
 	/* read as double, return as fastf_t */
 	for (i=0; i<count; i++) {
 	    ret[i] = scanp[i];
@@ -950,7 +950,7 @@ rt_nmg_import4_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, lon
      * The vector times matrix calculation can't be done in place.
      */
     tmp = (double *)bu_malloc(count * sizeof(double), "rt_nmg_import4_fastf tmp[]");
-    ntohd((unsigned char *)tmp, cp + (4+4), count);
+    bu_ntohd((unsigned char *)tmp, cp + (4+4), count);
 
     switch (RT_NURB_EXTRACT_COORDS(pt_type)) {
 	case 3:
@@ -1085,8 +1085,8 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, dou
 	    PUTMAGIC(DISK_REGION_A_MAGIC);
 	    VSCALE(min, r->min_pt, local2mm);
 	    VSCALE(max, r->max_pt, local2mm);
-	    htond(d->min_pt, (unsigned char *)min, ELEMENTS_PER_POINT);
-	    htond(d->max_pt, (unsigned char *)max, ELEMENTS_PER_POINT);
+	    bu_htond(d->min_pt, (unsigned char *)min, ELEMENTS_PER_POINT);
+	    bu_htond(d->max_pt, (unsigned char *)max, ELEMENTS_PER_POINT);
 	}
 	    return;
 	case NMG_KIND_SHELL: {
@@ -1117,8 +1117,8 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, dou
 	    PUTMAGIC(DISK_SHELL_A_MAGIC);
 	    VSCALE(min, sa->min_pt, local2mm);
 	    VSCALE(max, sa->max_pt, local2mm);
-	    htond(d->min_pt, (unsigned char *)min, ELEMENTS_PER_POINT);
-	    htond(d->max_pt, (unsigned char *)max, ELEMENTS_PER_POINT);
+	    bu_htond(d->min_pt, (unsigned char *)min, ELEMENTS_PER_POINT);
+	    bu_htond(d->max_pt, (unsigned char *)max, ELEMENTS_PER_POINT);
 	}
 	    return;
 	case NMG_KIND_FACEUSE: {
@@ -1166,7 +1166,7 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, dou
 	    VMOVE(plane, fg->N);
 	    plane[W] = fg->N[W] * local2mm;
 
-	    htond(d->N, (unsigned char *)plane, ELEMENTS_PER_PLANE);
+	    bu_htond(d->N, (unsigned char *)plane, ELEMENTS_PER_PLANE);
 	}
 	    return;
 	case NMG_KIND_FACE_G_SNURB: {
@@ -1237,8 +1237,8 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, dou
 	    VSCALE(min, lg->min_pt, local2mm);
 	    VSCALE(max, lg->max_pt, local2mm);
 
-	    htond(d->min_pt, (unsigned char *)min, ELEMENTS_PER_POINT);
-	    htond(d->max_pt, (unsigned char *)max, ELEMENTS_PER_POINT);
+	    bu_htond(d->min_pt, (unsigned char *)min, ELEMENTS_PER_POINT);
+	    bu_htond(d->max_pt, (unsigned char *)max, ELEMENTS_PER_POINT);
 	}
 	    return;
 	case NMG_KIND_EDGEUSE: {
@@ -1289,8 +1289,8 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, dou
 	    VSCALE(pt, eg->e_pt, local2mm);
 	    VMOVE(dir, eg->e_dir);
 
-	    htond(d->e_pt, (unsigned char *)pt, ELEMENTS_PER_POINT);
-	    htond(d->e_dir, (unsigned char *)dir, ELEMENTS_PER_VECT);
+	    bu_htond(d->e_pt, (unsigned char *)pt, ELEMENTS_PER_POINT);
+	    bu_htond(d->e_dir, (unsigned char *)dir, ELEMENTS_PER_VECT);
 	}
 	    return;
 	case NMG_KIND_EDGE_G_CNURB: {
@@ -1351,7 +1351,7 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, dou
 	    /* Normal vectors don't scale */
 	    /* This is not a plane equation here */
 	    VMOVE(normal, vua->N); /* convert fastf_t to double */
-	    htond(d->N, (unsigned char *)normal, ELEMENTS_PER_VECT);
+	    bu_htond(d->N, (unsigned char *)normal, ELEMENTS_PER_VECT);
 	}
 	    return;
 	case NMG_KIND_VERTEXUSE_A_CNURB: {
@@ -1368,7 +1368,7 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, dou
 	    /* (u, v) parameters on curves don't scale */
 	    VMOVE(param, vua->param); /* convert fastf_t to double */
 
-	    htond(d->param, (unsigned char *)param, 3);
+	    bu_htond(d->param, (unsigned char *)param, 3);
 	}
 	    return;
 	case NMG_KIND_VERTEX: {
@@ -1393,7 +1393,7 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, dou
 	    PUTMAGIC(DISK_VERTEX_G_MAGIC);
 	    VSCALE(pt, vg->coord, local2mm);
 
-	    htond(d->coord, (unsigned char *)pt, ELEMENTS_PER_POINT);
+	    bu_htond(d->coord, (unsigned char *)pt, ELEMENTS_PER_POINT);
 	}
 	    return;
     }
@@ -1493,9 +1493,9 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uin
 	    d = &((struct disk_nmgregion_a *)ip)[iindex];
 	    NMG_CK_REGION_A(r);
 	    NMG_CK_DISKMAGIC(d->magic, DISK_REGION_A_MAGIC);
-	    ntohd((unsigned char *)scanmin, d->min_pt, ELEMENTS_PER_POINT);
+	    bu_ntohd((unsigned char *)scanmin, d->min_pt, ELEMENTS_PER_POINT);
 	    VMOVE(min, scanmin); /* convert double to fastf_t */
-	    ntohd((unsigned char *)scanmax, d->max_pt, ELEMENTS_PER_POINT);
+	    bu_ntohd((unsigned char *)scanmax, d->max_pt, ELEMENTS_PER_POINT);
 	    VMOVE(max, scanmax); /* convert double to fastf_t */
 	    bn_rotate_bbox(r->min_pt, r->max_pt, mat, min, max);
 	}
@@ -1529,9 +1529,9 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uin
 	    d = &((struct disk_shell_a *)ip)[iindex];
 	    NMG_CK_SHELL_A(sa);
 	    NMG_CK_DISKMAGIC(d->magic, DISK_SHELL_A_MAGIC);
-	    ntohd((unsigned char *)scanmin, d->min_pt, ELEMENTS_PER_POINT);
+	    bu_ntohd((unsigned char *)scanmin, d->min_pt, ELEMENTS_PER_POINT);
 	    VMOVE(min, scanmin); /* convert double to fastf_t */
-	    ntohd((unsigned char *)scanmax, d->max_pt, ELEMENTS_PER_POINT);
+	    bu_ntohd((unsigned char *)scanmax, d->max_pt, ELEMENTS_PER_POINT);
 	    VMOVE(max, scanmax); /* convert double to fastf_t */
 	    bn_rotate_bbox(sa->min_pt, sa->max_pt, mat, min, max);
 	}
@@ -1582,7 +1582,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uin
 	    NMG_CK_FACE_G_PLANE(fg);
 	    NMG_CK_DISKMAGIC(d->magic, DISK_FACE_G_PLANE_MAGIC);
 	    INDEXL_HD(d, fg, f_hd, fg->f_hd);
-	    ntohd((unsigned char *)scan, d->N, ELEMENTS_PER_PLANE);
+	    bu_ntohd((unsigned char *)scan, d->N, ELEMENTS_PER_PLANE);
 	    HMOVE(plane, scan); /* convert double to fastf_t */
 	    bn_rotate_plane(fg->N, mat, plane);
 	}
@@ -1673,9 +1673,9 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uin
 	    d = &((struct disk_loop_g *)ip)[iindex];
 	    NMG_CK_LOOP_G(lg);
 	    NMG_CK_DISKMAGIC(d->magic, DISK_LOOP_G_MAGIC);
-	    ntohd((unsigned char *)scanmin, d->min_pt, ELEMENTS_PER_POINT);
+	    bu_ntohd((unsigned char *)scanmin, d->min_pt, ELEMENTS_PER_POINT);
 	    VMOVE(min, scanmin); /* convert double to fastf_t */
-	    ntohd((unsigned char *)scanmax, d->max_pt, ELEMENTS_PER_POINT);
+	    bu_ntohd((unsigned char *)scanmax, d->max_pt, ELEMENTS_PER_POINT);
 	    VMOVE(max, scanmax); /* convert double to fastf_t */
 	    bn_rotate_bbox(lg->min_pt, lg->max_pt, mat, min, max);
 	}
@@ -1745,9 +1745,9 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uin
 	    NMG_CK_DISKMAGIC(d->magic, DISK_EDGE_G_LSEG_MAGIC);
 	    /* Forw subscript points to edgeuse, not edgeuse2 */
 	    INDEXL_HD2(d, eg, eu_hd2, eg->eu_hd2);
-	    ntohd((unsigned char *)scanpt, d->e_pt, ELEMENTS_PER_POINT);
+	    bu_ntohd((unsigned char *)scanpt, d->e_pt, ELEMENTS_PER_POINT);
 	    VMOVE(pt, scanpt); /* convert double to fastf_t */
-	    ntohd((unsigned char *)scandir, d->e_dir, ELEMENTS_PER_VECT);
+	    bu_ntohd((unsigned char *)scandir, d->e_dir, ELEMENTS_PER_VECT);
 	    VMOVE(dir, scandir); /* convert double to fastf_t */
 	    MAT4X3PNT(eg->e_pt, mat, pt);
 	    MAT4X3VEC(eg->e_dir, mat, dir);
@@ -1822,7 +1822,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uin
 	    d = &((struct disk_vertexuse_a_plane *)ip)[iindex];
 	    NMG_CK_VERTEXUSE_A_PLANE(vua);
 	    NMG_CK_DISKMAGIC(d->magic, DISK_VERTEXUSE_A_PLANE_MAGIC);
-	    ntohd((unsigned char *)norm, d->N, ELEMENTS_PER_VECT);
+	    bu_ntohd((unsigned char *)norm, d->N, ELEMENTS_PER_VECT);
 	    MAT4X3VEC(vua->N, mat, norm);
 	}
 	    return 0;
@@ -1837,7 +1837,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uin
 	    NMG_CK_VERTEXUSE_A_CNURB(vua);
 	    NMG_CK_DISKMAGIC(d->magic, DISK_VERTEXUSE_A_CNURB_MAGIC);
 	    /* These parameters are invariant w.r.t. 'mat' */
-	    ntohd((unsigned char *)scan, d->param, 3);
+	    bu_ntohd((unsigned char *)scan, d->param, 3);
 	    VMOVE(vua->param, scan); /* convert double to fastf_t */
 	}
 	    return 0;
@@ -1860,7 +1860,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uin
 	    d = &((struct disk_vertex_g *)ip)[iindex];
 	    NMG_CK_VERTEX_G(vg);
 	    NMG_CK_DISKMAGIC(d->magic, DISK_VERTEX_G_MAGIC);
-	    ntohd((unsigned char *)pt, d->coord, ELEMENTS_PER_POINT);
+	    bu_ntohd((unsigned char *)pt, d->coord, ELEMENTS_PER_POINT);
 	    MAT4X3PNT(vg->coord, mat, pt);
 	}
 	    return 0;
