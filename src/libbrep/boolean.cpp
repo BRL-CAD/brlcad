@@ -1249,7 +1249,7 @@ IsPointInsideBrep(const ON_3dPoint& pt, const ON_Brep* brep, ON_SimpleArray<Subs
 	}
     }
 
-    return pt_no_dup.Count() % 2 == 0;
+    return pt_no_dup.Count() % 2 != 0;
 }
 
 
