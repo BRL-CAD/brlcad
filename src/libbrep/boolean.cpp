@@ -64,6 +64,11 @@ struct SSICurveInfo {
     int m_fi1;	// index of the first face
     int m_fi2;	// index of the second face
     int m_ci;	// index in the events array
+    // Default constructor. Set all to an invalid value.
+    SSICurveInfo()
+    {
+	m_fi1 = m_fi2 = m_ci = -1;
+    }
 };
 #endif
 
@@ -73,15 +78,156 @@ struct SSICurve {
 #if USE_CONNECTIVITY_GRAPH
     SSICurveInfo m_info;
 #endif
+
+    SSICurve()
+    {
+	m_curve = NULL;
+    }
+
+    SSICurve(ON_Curve* curve)
+    {
+	m_curve = curve;
+    }
+
+    SSICurve *Duplicate() const
+    {
+	SSICurve *out = new SSICurve();
+	if (out != NULL) {
+	    *out = *this;
+	    out->m_curve = m_curve->Duplicate();
+	}
+	return out;
+    }
 };
 
 
+void AppendToPolyCurve(ON_Curve* curve, ON_PolyCurve& polycurve);
 struct LinkedCurve {
+private:
     ON_Curve* m_curve;
+public:
+    ON_SimpleArray<SSICurve> m_ssi_curves;
+
+    // Default constructor
+    LinkedCurve()
+    {
+	m_curve = NULL;
+    }
+
+    ~LinkedCurve()
+    {
+	m_curve = NULL;
+    }
+
+    ON_3dPoint PointAtStart() const
+    {
+	if (m_ssi_curves.Count())
+	    return m_ssi_curves[0].m_curve->PointAtStart();
+	else
+	    return ON_3dPoint::UnsetPoint;
+    }
+
+    ON_3dPoint PointAtEnd() const
+    {
+	if (m_ssi_curves.Count())
+	    return m_ssi_curves.Last()->m_curve->PointAtEnd();
+	else
+	    return ON_3dPoint::UnsetPoint;
+    }
+
+    bool IsClosed() const
+    {
+	if (m_ssi_curves.Count() == 0)
+	    return false;
+	return PointAtStart().DistanceTo(PointAtEnd()) < ON_ZERO_TOLERANCE;
+    }
+
+    bool IsValid() const
+    {
+	for (int i = 1; i < m_ssi_curves.Count(); i++) {
+	    if (m_ssi_curves[i].m_curve->PointAtStart().DistanceTo(m_ssi_curves[i-1].m_curve->PointAtEnd()) >= ON_ZERO_TOLERANCE) {
+		bu_log("The LinkedCurve is not valid.\n");
+		return false;
+	    }
+	}
+	return true;
+    }
+
+    bool Reverse()
+    {
+	ON_SimpleArray<SSICurve> newarray;
+	for (int i = m_ssi_curves.Count() - 1; i >= 0; i--) {
+	    if (!m_ssi_curves[i].m_curve->Reverse())
+		return false;
+	    newarray.Append(m_ssi_curves[i]);
+	}
+	m_ssi_curves = newarray;
+	return true;
+    }
+
+    void Append(const LinkedCurve& lc)
+    {
+	m_ssi_curves.Append(lc.m_ssi_curves.Count(), lc.m_ssi_curves.Array());
+    }
+
+    void Append(const SSICurve& sc)
+    {
+	m_ssi_curves.Append(sc);
+    }
+
+    void AppendCurvesToArray(ON_SimpleArray<ON_Curve*>& arr) const
+    {
+	for (int i = 0; i < m_ssi_curves.Count(); i++)
+	    arr.Append(m_ssi_curves[i].m_curve);
+    }
+
 #if USE_CONNECTIVITY_GRAPH
-    ON_SimpleArray<SSICurveInfo> m_info_array;
+    void AppendSSIInfoToArray(ON_SimpleArray<SSICurveInfo>& arr) const
+    {
+	for (int i = 0; i < m_ssi_curves.Count(); i++)
+	    arr.Append(m_ssi_curves[i].m_info);
+    }
 #endif
+
+    const ON_Curve* Curve()
+    {
+	if (m_curve != NULL)
+	    return m_curve;
+	if (m_ssi_curves.Count() == 0 || !IsValid())
+	    return NULL;
+	ON_PolyCurve* polycurve = new ON_PolyCurve;
+	for (int i = 0; i < m_ssi_curves.Count(); i++)
+	    AppendToPolyCurve(m_ssi_curves[i].m_curve, *polycurve);
+	m_curve = polycurve;
+	return m_curve;
+    }
+
+    ON_3dPoint PointAt(double t)
+    {
+	const ON_Curve* c = Curve();
+	if (c == NULL)
+	    return ON_3dPoint::UnsetPoint;
+	return c->PointAt(t);
+    }
+
+    const ON_Interval Domain()
+    {
+	const ON_Curve* c = Curve();
+	if (c == NULL)
+	    return ON_Interval::EmptyInterval;
+	return c->Domain();
+    }
+
+    ON_Curve* SubCurve(double t1, double t2)
+    {
+	const ON_Curve* c = Curve();
+	if (c == NULL)
+	    return NULL;
+	ON_Curve* dup = c->Duplicate();
+	return sub_curve(dup, t1, t2);
+    }
 };
+	    
 
 
 struct TrimmedFace {
@@ -379,77 +525,67 @@ link_curves(const ON_SimpleArray<SSICurve>& in, ON_ClassArray<LinkedCurve>& out)
     ON_ClassArray<LinkedCurve> tmp;
     for (int i = 0; i < in.Count(); i++) {
 	LinkedCurve linked;
-	linked.m_curve = in[i].m_curve->Duplicate();
-#if USE_CONNECTIVITY_GRAPH
-	linked.m_info_array.Append(in[i].m_info);
-#endif
+	linked.m_ssi_curves.Append(*in[i].Duplicate());
 	tmp.Append(linked);
     }
 
     // As usual, we use a greedy approach.
     for (int i = 0; i < tmp.Count(); i++) {
 	for (int j = 0; j < tmp.Count(); j++) {
-	    if (tmp[i].m_curve == NULL || tmp[i].m_curve->IsClosed())
+	    if (tmp[i].m_ssi_curves.Count() == 0 || tmp[i].IsClosed())
 		break;
 
-	    if (tmp[j].m_curve == NULL || tmp[j].m_curve->IsClosed() || j == i)
+	    if (tmp[j].m_ssi_curves.Count() == 0 || tmp[j].IsClosed() || j == i)
 		continue;
 
-	    ON_Curve *c1 = NULL, *c2 = NULL;
+	    LinkedCurve *c1 = NULL, *c2 = NULL;
 	    double dis;
 	    // Link curves that share an end point.
-	    if ((dis = tmp[i].m_curve->PointAtStart().DistanceTo(tmp[j].m_curve->PointAtEnd())) < INTERSECTION_TOL) {
+	    if ((dis = tmp[i].PointAtStart().DistanceTo(tmp[j].PointAtEnd())) < INTERSECTION_TOL) {
 		// end -- start -- end -- start
-		c1 = tmp[j].m_curve;
-		c2 = tmp[i].m_curve;
-	    } else if ((dis = tmp[i].m_curve->PointAtEnd().DistanceTo(tmp[j].m_curve->PointAtStart())) < INTERSECTION_TOL) {
+		c1 = &tmp[j];
+		c2 = &tmp[i];
+	    } else if ((dis = tmp[i].PointAtEnd().DistanceTo(tmp[j].PointAtStart())) < INTERSECTION_TOL) {
 		// start -- end -- start -- end
-		c1 = tmp[i].m_curve;
-		c2 = tmp[j].m_curve;
-	    } else if ((dis = tmp[i].m_curve->PointAtStart().DistanceTo(tmp[j].m_curve->PointAtStart())) < INTERSECTION_TOL) {
+		c1 = &tmp[i];
+		c2 = &tmp[j];
+	    } else if ((dis = tmp[i].PointAtStart().DistanceTo(tmp[j].PointAtStart())) < INTERSECTION_TOL) {
 		// end -- start -- start -- end
-		if (tmp[i].m_curve->Reverse()) {
-		    c1 = tmp[i].m_curve;
-		    c2 = tmp[j].m_curve;
+		if (tmp[i].Reverse()) {
+		    c1 = &tmp[i];
+		    c2 = &tmp[j];
 		}
-	    } else if ((dis = tmp[i].m_curve->PointAtEnd().DistanceTo(tmp[j].m_curve->PointAtEnd())) < INTERSECTION_TOL) {
+	    } else if ((dis = tmp[i].PointAtEnd().DistanceTo(tmp[j].PointAtEnd())) < INTERSECTION_TOL) {
 		// start -- end -- end -- start
-		if (tmp[j].m_curve->Reverse()) {
-		    c1 = tmp[i].m_curve;
-		    c2 = tmp[j].m_curve;
+		if (tmp[j].Reverse()) {
+		    c1 = &tmp[i];
+		    c2 = &tmp[j];
 		}
 	    } else
 		continue;
 
 	    if (c1 != NULL && c2 != NULL) {
 		ON_PolyCurve* polycurve = new ON_PolyCurve;
-		AppendToPolyCurve(c1, *polycurve);
+		LinkedCurve newcurve;
+		newcurve.Append(*c1);
 		if (dis > ON_ZERO_TOLERANCE)
-		    AppendToPolyCurve(new ON_LineCurve(c1->PointAtEnd(), c2->PointAtStart()), *polycurve);
-		AppendToPolyCurve(c2, *polycurve);
-		tmp[i].m_curve = polycurve;
-		tmp[j].m_curve = NULL;
-#if USE_CONNECTIVITY_GRAPH
-		tmp[i].m_info_array.Append(tmp[j].m_info_array.Count(), tmp[j].m_info_array.Array());
-#endif
+		    newcurve.Append(SSICurve(new ON_LineCurve(c1->PointAtEnd(), c2->PointAtStart())));
+		newcurve.Append(*c2);
+		tmp[i] = newcurve;
+		tmp[j].m_ssi_curves.Empty();
 	    }
 
 	    // Check whether tmp[i] is closed within a tolerance
-	    if (tmp[i].m_curve->PointAtStart().DistanceTo(tmp[i].m_curve->PointAtEnd()) < INTERSECTION_TOL && !tmp[i].m_curve->IsClosed()) {
+	    if (tmp[i].PointAtStart().DistanceTo(tmp[i].PointAtEnd()) < INTERSECTION_TOL && !tmp[i].IsClosed()) {
 		// make IsClosed() true
-		c1 = tmp[i].m_curve;
-		c2 = new ON_LineCurve(tmp[i].m_curve->PointAtEnd(), tmp[i].m_curve->PointAtStart());
-		ON_PolyCurve* polycurve = new ON_PolyCurve;
-		AppendToPolyCurve(c1, *polycurve);
-		AppendToPolyCurve(c2, *polycurve);
-		tmp[i].m_curve = polycurve;
+		tmp[i].Append(SSICurve(new ON_LineCurve(tmp[i].PointAtEnd(), tmp[i].PointAtStart())));
 	    }
 	}
     }
 
     // Append the remaining curves to out.
     for (int i = 0; i < tmp.Count(); i++)
-	if (tmp[i].m_curve != NULL)
+	if (tmp[i].m_ssi_curves.Count() != 0)
 	    out.Append(tmp[i]);
 
     if (DEBUG_BREP_BOOLEAN)
@@ -458,7 +594,7 @@ link_curves(const ON_SimpleArray<SSICurve>& in, ON_ClassArray<LinkedCurve>& out)
 
 
 HIDDEN int
-split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, const ON_ClassArray<LinkedCurve> &curves)
+split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_ClassArray<LinkedCurve> &curves)
 {
     /* We followed the algorithms described in:
      * S. Krishnan, A. Narkhede, and D. Manocha. BOOLE: A System to Compute
@@ -483,7 +619,7 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
     for (int i = 0; i < in->m_outerloop.Count(); i++) {
 	for (int j = 0; j < curves.Count(); j++) {
 	    ON_SimpleArray<ON_X_EVENT> x_event;
-	    ON_Intersect(in->m_outerloop[i], curves[j].m_curve, x_event, INTERSECTION_TOL);
+	    ON_Intersect(in->m_outerloop[i], curves[j].Curve(), x_event, INTERSECTION_TOL);
 	    for (int k = 0; k < x_event.Count(); k++) {
 		IntersectPoint tmp_pt;
 		tmp_pt.m_pt = x_event[k].m_A[0];
@@ -500,9 +636,9 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 		    tmp_pt.m_t_for_rank = x_event[k].m_b[1];
 		    intersect.Append(tmp_pt);
 		}
+		if (x_event.Count())
+		    have_intersect[j] = true;
 	    }
-	    if (x_event.Count())
-		have_intersect[j] = true;
 	}
     }
 
@@ -520,19 +656,19 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	if (!have_intersect[i]) {
 	    // The start point cannot be on the boundary of the loop, because
 	    // there is no intersections between curves[i] and the loop.
-	    if (IsPointInsideLoop(curves[i].m_curve->PointAtStart(), in->m_outerloop)) {
-		if (curves[i].m_curve->IsClosed()) {
+	    if (IsPointInsideLoop(curves[i].PointAtStart(), in->m_outerloop)) {
+		if (curves[i].IsClosed()) {
 		    ON_SimpleArray<ON_Curve*> iloop;
-		    iloop.Append(curves[i].m_curve);
+		    curves[i].AppendCurvesToArray(iloop);
 		    innerloops.push_back(iloop);
 		    TrimmedFace *newface = new TrimmedFace();
 		    newface->m_face = in->m_face;
-		    newface->m_outerloop.Append(curves[i].m_curve);
+		    curves[i].AppendCurvesToArray(newface->m_outerloop);
 #if USE_CONNECTIVITY_GRAPH
 		    // It doesn't share its parent's outerloop
 		    newface->m_parts.Empty();
 		    // It used the SSI curve (curves[i])
-		    newface->m_ssi_info.Append(curves[i].m_info_array.Count(), curves[i].m_info_array.Array());
+		    curves[i].AppendSSIInfoToArray(newface->m_ssi_info);
 		    curves_from_ssi.Append(curves[i]);
 #endif
 		    out.Append(newface);
@@ -563,10 +699,10 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	    if (pts_on_curves[i]->Count() < 2)
 		ipt->m_in_out = IntersectPoint::UNSET;
 	    else {
-		ON_3dPoint left = j == 0 ? curves[i].m_curve->PointAtStart() :
-		    curves[i].m_curve->PointAt((ipt->m_t_for_rank+(*pts_on_curves[i])[j-1]->m_t_for_rank)*0.5);
-		ON_3dPoint right = j == pts_on_curves[i]->Count() - 1 ? curves[i].m_curve->PointAtEnd() :
-		    curves[i].m_curve->PointAt((ipt->m_t_for_rank+(*pts_on_curves[i])[j+1]->m_t_for_rank)*0.5);
+		ON_3dPoint left = j == 0 ? curves[i].PointAtStart() :
+		    curves[i].PointAt((ipt->m_t_for_rank+(*pts_on_curves[i])[j-1]->m_t_for_rank)*0.5);
+		ON_3dPoint right = j == pts_on_curves[i]->Count() - 1 ? curves[i].PointAtEnd() :
+		    curves[i].PointAt((ipt->m_t_for_rank+(*pts_on_curves[i])[j+1]->m_t_for_rank)*0.5);
 		// If the point is on the boundary, we treat it with the same
 		// way as it's outside.
 		// For example, the left side is inside, and the right's on
@@ -580,9 +716,9 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 		    ipt->m_in_out = IntersectPoint::UNSET;
 		    continue;
 		}
-		if (j == 0 && ON_NearZero(ipt->m_t_for_rank - curves[i].m_curve->Domain().Min())) {
+		if (j == 0 && ON_NearZero(ipt->m_t_for_rank - curves[i].Domain().Min())) {
 		    ipt->m_in_out = right_in ? IntersectPoint::IN : IntersectPoint::OUT;
-		} else if (j == pts_on_curves[i]->Count() - 1 && ON_NearZero(ipt->m_t_for_rank - curves[i].m_curve->Domain().Max())) {
+		} else if (j == pts_on_curves[i]->Count() - 1 && ON_NearZero(ipt->m_t_for_rank - curves[i].Domain().Max())) {
 		    ipt->m_in_out = left_in ? IntersectPoint::OUT : IntersectPoint::IN;
 		} else {
 		    if (left_in && right_in) {
@@ -776,7 +912,7 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	    std::swap(t1, t2);
 	    need_reverse = false;
 	}
-	ON_Curve* seg_on_SSI = sub_curve(curves[p.m_type].m_curve, t1, t2);
+	ON_Curve* seg_on_SSI = curves[p.m_type].SubCurve(t1, t2);
 	if (seg_on_SSI == NULL) {
 	    bu_log("sub_curve() failed.\n");
 	    continue;
@@ -831,7 +967,7 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	    for (int j = 0; j < newloop_start_end.Count(); j++)
 		if (newloop_start_end[j].first.m_seg != -1)
 		    newface->m_parts.Append(newloop_start_end[j]);
-	    newface->m_ssi_info.Append(curves[p.m_type].m_info_array.Count(), curves[p.m_type].m_info_array.Array());
+	    curves[p.m_type].AppendSSIInfoToArray(newface->m_ssi_info);
 #endif
 	    out.Append(newface);
 	}
@@ -876,7 +1012,7 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 		if (outerloop_start_end[i].first.m_seg != -1)
 		    newface->m_parts.Append(outerloop_start_end[i]);
 	    for (int i = 0; i < curves_from_ssi.Count(); i++)
-		newface->m_ssi_info.Append(curves_from_ssi[i].m_info_array.Count(), curves_from_ssi[i].m_info_array.Array());
+		curves_from_ssi[i].AppendSSIInfoToArray(newface->m_ssi_info);
 #endif
 	    out.Append(newface);
 	}
