@@ -31,11 +31,11 @@ set(gstep_SOURCES
   )
 
 set(gstep_LIBS
-  libbn
   libwdb
   librt
-  libbu
   libbrep
+  libbn
+  libbu
   steputils
   stepeditor
   stepdai
