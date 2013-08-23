@@ -30,7 +30,6 @@
 #include <stdio.h>
 #include "bn.h"
 #include "bu.h"
-#include "ged.h"
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "vmath.h"
