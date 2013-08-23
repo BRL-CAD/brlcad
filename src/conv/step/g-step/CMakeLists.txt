@@ -31,6 +31,7 @@ set(gstep_SOURCES
   )
 
 set(gstep_LIBS
+  libbn
   libwdb
   librt
   libbu
