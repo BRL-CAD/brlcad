@@ -13,7 +13,9 @@
 #endif
 #include <stdio.h>
 #include <errno.h>
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 #include "express/express.h"
 #include <express/scope.h>
 #include <express/variable.h>
