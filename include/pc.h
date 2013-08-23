@@ -50,8 +50,6 @@ __BEGIN_DECLS
  * list given for "args" be enclosed in parens.
  */
 
-#define PC_ARGS(args) args
-
 #define PC_PCSET_PUSHP(_pcsp,_par) \
 	BU_LIST_PUSH(&(_pcsp->ps->l),&(_par->l));
 #define PC_PCSET_PUSHC(_pcsp,_con) \

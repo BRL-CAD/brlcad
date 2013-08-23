@@ -44,14 +44,6 @@
 #  endif
 #endif
 
-/*
- *  Macros for providing function prototypes, regardless of whether
- *  the compiler understands them or not.
- *  It is vital that the argument list given for "args" be enclosed
- *  in parens.
- */
-#define PKG_ARGS(args) args
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -59,8 +51,8 @@ extern "C" {
 
 struct pkg_conn;
 
-typedef void (*pkg_callback)PKG_ARGS((struct pkg_conn*, char*));
-typedef void (*pkg_errlog)PKG_ARGS((char *msg));
+typedef void (*pkg_callback)(struct pkg_conn*, char*);
+typedef void (*pkg_errlog)(char *msg);
 
 struct pkg_switch {
     unsigned short pks_type;	/**< @brief Type code */

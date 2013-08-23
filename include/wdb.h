@@ -58,13 +58,6 @@ __BEGIN_DECLS
 #  endif
 #endif
 
-/*
- *  Macros for providing function prototypes, regardless of whether
- *  the compiler understands them or not.
- *  It is vital that the argument list given for "args" be enclosed
- *  in parentheses.
- */
-#define WDB_ARGS(args) args
 
 /*
  * In-memory form of database combinations

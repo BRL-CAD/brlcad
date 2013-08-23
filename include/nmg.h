@@ -75,13 +75,6 @@
 \017LABEL_PTS\016POLYTO\015MESH_EU\014MESH\013BASIC\012BOOLEVAL\011CLASSIFY\
 \010BOOL\7VERIFY\6POLYSECT\5PLOTEM\4PL_LOOP\3GRAPHCL\2PL_SLOW\1PL_ANIM"
 
-/*
- * Macros for providing function prototypes, regardless of whether the
- * compiler understands them or not.  It is vital that the argument
- * list given for "args" be enclosed in parens.
- */
-#define NMG_ARGS(args) args
-
 /* Boolean operations */
 #define NMG_BOOL_SUB   1	/**< @brief subtraction */
 #define NMG_BOOL_ADD   2	/**< @brief addition/union */
@@ -761,43 +754,43 @@ struct nmg_struct_counts {
  * be written, if desired.
  */
 struct nmg_visit_handlers {
-    void (*bef_model) NMG_ARGS((uint32_t *, genptr_t, int));
-    void (*aft_model) NMG_ARGS((uint32_t *, genptr_t, int));
+    void (*bef_model)(uint32_t *, genptr_t, int);
+    void (*aft_model)(uint32_t *, genptr_t, int);
 
-    void (*bef_region) NMG_ARGS((uint32_t *, genptr_t, int));
-    void (*aft_region) NMG_ARGS((uint32_t *, genptr_t, int));
+    void (*bef_region)(uint32_t *, genptr_t, int);
+    void (*aft_region)(uint32_t *, genptr_t, int);
 
-    void (*vis_region_a) NMG_ARGS((uint32_t *, genptr_t, int));
+    void (*vis_region_a)(uint32_t *, genptr_t, int);
 
-    void (*bef_shell) NMG_ARGS((uint32_t *, genptr_t, int));
-    void (*aft_shell) NMG_ARGS((uint32_t *, genptr_t, int));
+    void (*bef_shell)(uint32_t *, genptr_t, int);
+    void (*aft_shell)(uint32_t *, genptr_t, int);
 
-    void (*vis_shell_a) NMG_ARGS((uint32_t *, genptr_t, int));
+    void (*vis_shell_a)(uint32_t *, genptr_t, int);
 
-    void (*bef_faceuse) NMG_ARGS((uint32_t *, genptr_t, int));
-    void (*aft_faceuse) NMG_ARGS((uint32_t *, genptr_t, int));
+    void (*bef_faceuse)(uint32_t *, genptr_t, int);
+    void (*aft_faceuse)(uint32_t *, genptr_t, int);
 
-    void (*vis_face) NMG_ARGS((uint32_t *, genptr_t, int));
-    void (*vis_face_g) NMG_ARGS((uint32_t *, genptr_t, int));
+    void (*vis_face)(uint32_t *, genptr_t, int);
+    void (*vis_face_g)(uint32_t *, genptr_t, int);
 
-    void (*bef_loopuse) NMG_ARGS((uint32_t *, genptr_t, int));
-    void (*aft_loopuse) NMG_ARGS((uint32_t *, genptr_t, int));
+    void (*bef_loopuse)(uint32_t *, genptr_t, int);
+    void (*aft_loopuse)(uint32_t *, genptr_t, int);
 
-    void (*vis_loop) NMG_ARGS((uint32_t *, genptr_t, int));
-    void (*vis_loop_g) NMG_ARGS((uint32_t *, genptr_t, int));
+    void (*vis_loop)(uint32_t *, genptr_t, int);
+    void (*vis_loop_g)(uint32_t *, genptr_t, int);
 
-    void (*bef_edgeuse) NMG_ARGS((uint32_t *, genptr_t, int));
-    void (*aft_edgeuse) NMG_ARGS((uint32_t *, genptr_t, int));
+    void (*bef_edgeuse)(uint32_t *, genptr_t, int);
+    void (*aft_edgeuse)(uint32_t *, genptr_t, int);
 
-    void (*vis_edge) NMG_ARGS((uint32_t *, genptr_t, int));
-    void (*vis_edge_g) NMG_ARGS((uint32_t *, genptr_t, int));
+    void (*vis_edge)(uint32_t *, genptr_t, int);
+    void (*vis_edge_g)(uint32_t *, genptr_t, int);
 
-    void (*bef_vertexuse) NMG_ARGS((uint32_t *, genptr_t, int));
-    void (*aft_vertexuse) NMG_ARGS((uint32_t *, genptr_t, int));
+    void (*bef_vertexuse)(uint32_t *, genptr_t, int);
+    void (*aft_vertexuse)(uint32_t *, genptr_t, int);
 
-    void (*vis_vertexuse_a) NMG_ARGS((uint32_t *, genptr_t, int));
-    void (*vis_vertex) NMG_ARGS((uint32_t *, genptr_t, int));
-    void (*vis_vertex_g) NMG_ARGS((uint32_t *, genptr_t, int));
+    void (*vis_vertexuse_a)(uint32_t *, genptr_t, int);
+    void (*vis_vertex)(uint32_t *, genptr_t, int);
+    void (*vis_vertex_g)(uint32_t *, genptr_t, int);
 };
 
 #endif /* __NMG_H__ */
