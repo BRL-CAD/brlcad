@@ -73,6 +73,7 @@ char *options_str = "[-A A|a|b|c|e|g|m|o|p|v|w] [-a az] [-d] [-e el] [-f density
  * that spaces got inserted incorrectly.
  */
 #define COMMA ','
+#define STRCOMMA ","
 
 static int analysis_flags;
 static int multiple_analyses;
@@ -690,7 +691,7 @@ parse_args(int ac, char *av[])
 		    units_ap = units_name;
 
 		    /* acquire unit names */
-		    *units_ap = strtok(ptr, ", ");
+		    *units_ap = strtok(ptr, STRCOMMA);
 		    for (i = 0; i < 3 && ptr; i++) {
 			int found_unit;
 
@@ -714,7 +715,7 @@ parse_args(int ac, char *av[])
 			}
 
 			++units_ap;
-			*units_ap = strtok(NULL, ", ");
+			*units_ap = strtok(NULL, STRCOMMA);
 		    }
 
 		    bu_vls_printf(_ged_current_gedp->ged_result_str, "Units: ");
