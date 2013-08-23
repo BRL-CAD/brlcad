@@ -227,7 +227,6 @@ public:
 	return sub_curve(dup, t1, t2);
     }
 };
-	    
 
 
 struct TrimmedFace {
@@ -1186,6 +1185,72 @@ build_connectivity_graph(const ON_Brep* brep, ON_SimpleArray<TrimmedFace*>& trim
     return 0;
 }
 #endif	// #if USE_CONNECTIVITY_GRAPH
+
+
+HIDDEN bool
+IsPointInsideBrep(const ON_3dPoint& pt, const ON_Brep* brep, ON_SimpleArray<Subsurface*>& surf_tree)
+{
+    if (brep == NULL || pt.IsUnsetPoint()) {
+	bu_log("IsPointInsideBrep(): brep == NULL || pt.IsUnsetPoint()\n");
+	return false;
+    }
+
+    if (surf_tree.Count() != brep->m_F.Count()) {
+	bu_log("IsPointInsideBrep(): surf_tree.Count() != brep->m_F.Count()\n");
+	return false;
+    }
+
+    ON_BoundingBox bbox = brep->BoundingBox();
+    if (!bbox.IsPointIn(pt))
+	return false;
+
+    ON_3dVector diag = bbox.Diagonal()*1.5;  // Make it even longer
+    ON_LineCurve line(pt, pt + diag);	// pt + diag should be outside, if pt
+					// is inside the bbox
+
+    ON_3dPointArray isect_pt;
+    for (int i = 0; i < brep->m_F.Count(); i++) {
+	const ON_BrepFace& face = brep->m_F[i];
+	const ON_Surface* surf = face.SurfaceOf();
+	ON_SimpleArray<ON_X_EVENT> x_event;
+	if (!ON_Intersect(&line, surf, x_event, INTERSECTION_TOL, 0.0, 0, 0, 0, 0, 0, surf_tree[i]))
+	    continue;
+
+	// Get the trimming curves of the face, and determine whether the
+	// points are inside the outerloop
+	ON_SimpleArray<ON_Curve*> outerloop;
+	const ON_BrepLoop& loop = brep->m_L[face.m_li[0]];  // outerloop only
+	for (int j = 0; j < loop.m_ti.Count(); j++) {
+	    outerloop.Append(brep->m_C2[brep->m_T[loop.m_ti[j]].m_c2i]);
+	}
+	for (int j = 0; j < x_event.Count(); j++) {
+	    ON_2dPoint pt2d(x_event[j].m_b[0], x_event[j].m_b[1]);
+	    if (IsPointInsideLoop(pt2d, outerloop) || IsPointOnLoop(pt2d, outerloop))
+		isect_pt.Append(x_event[j].m_B[0]);
+	    if (x_event[j].m_type == ON_X_EVENT::ccx_overlap) {
+		pt2d = ON_2dPoint(x_event[j].m_b[2], x_event[j].m_b[3]);
+		if (IsPointInsideLoop(pt2d, outerloop) || IsPointOnLoop(pt2d, outerloop))
+		    isect_pt.Append(x_event[j].m_B[1]);
+	    }
+	}
+    }
+
+    // Remove duplications
+    ON_3dPointArray pt_no_dup;
+    for (int i = 0; i < isect_pt.Count(); i++) {
+	int j;
+	for (j = 0; j < pt_no_dup.Count(); j++) {
+	    if (isect_pt[i].DistanceTo(pt_no_dup[j]) < INTERSECTION_TOL)
+		break;
+	}
+	if (j == pt_no_dup.Count()) {
+	    // No duplication, append to the array
+	    pt_no_dup.Append(isect_pt[i]);
+	}
+    }
+
+    return pt_no_dup.Count() % 2 == 0;
+}
 
 
 int
