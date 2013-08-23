@@ -697,9 +697,28 @@ rt_hrt_vshot()
  * above equations by six here.
  */
 void
-rt_hrt_norm()
+rt_hrt_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
-    bu_log("rt_hrt_norm: Not implemented yet!\n");
+    register struct hrt_specific *hrt =
+	(struct hrt_specific *)stp->st_specific;
+
+    fastf_t w, fx, fy, fz;
+    vect_t work;
+
+    VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
+    w = hitp->hit_vpriv[X] * hitp->hit_vpriv[X] 
+        + 9.0/4.0 * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] 
+        + hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z] - 1.0;
+    fx = (w * w - hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y]) * hitp->hit_vpriv[X];
+    fy = 0.5 * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] * (8.0/9.0 * w * w 
+    - (hitp->hit_vpriv[X] * hitp->hit_vpriv[X] + 9.0 / 80.0 * hitp->hit_vpriv[Z] 
+    * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z]));
+    fz = w * w * hitp->hit_vpriv[Z] - 160.0/9.0 * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] 
+    * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z];
+    VSET(work, fx, fy, fz);
+    VUNITIZE(work);
+
+    MAT3X3VEC(hitp->hit_normal, hrt->hrt_invR, work);
 }
 
 
