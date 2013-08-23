@@ -365,7 +365,7 @@ rt_hrt_print(register const struct soltab *stp)
  * a point, P(x0, y0, z0) and a direction normal, D = ax + by + cz.
  * Any point on a line can be expressed by one variable 't', where
  *
- * X = a*t + x0,	eg, X = Dx*t + Px
+ * X = a*t + x0,	e.g., X = Dx*t + Px
  * Y = b*t + y0,
  * Z = c*t + z0.
  *
@@ -402,19 +402,19 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     register struct seg *segp;
     vect_t dprime;              /* D' : The new shot direction */
     vect_t pprime;              /* P' : The new shot point */
-    vect_t trans;               /* Tanslated shot vector */
+    vect_t trans;               /* Translated shot vector */
     vect_t norm_pprime;         /* P' with normalized distance from heart */
     bn_poly_t S;                /* The sextic equation (of power 6) */
     bn_complex_t complex[6];    /* The complex roots */
     double real[6];             /* The real roots */
     int i;
     int j;
-   
+
     /* Translate the ray point */
     (trans)[X] = (rp->r_pt)[X] - (hrt->hrt_V)[X];
     (trans)[Y] = (rp->r_pt)[Y] - (hrt->hrt_V)[Y];
     (trans)[Z] = (rp->r_pt)[Z] - (hrt->hrt_V)[Z];
- 
+
     /* Scale and Rotate point to get P' */
     pprime[X] = (hrt->hrt_SoR[0]*trans[X] + hrt->hrt_SoR[1]*trans[Y] + hrt->hrt_SoR[2]*trans[Z]) * 1.0/(hrt->hrt_SoR[15]);
     pprime[Y] = (hrt->hrt_SoR[4]*trans[X] + hrt->hrt_SoR[5]*trans[Y] + hrt->hrt_SoR[6]*trans[Z]) * 1.0/(hrt->hrt_SoR[15]);
@@ -422,7 +422,7 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     /* Translate ray direction vector */
     MAT4X3VEC(dprime, hrt->hrt_SoR, rp->r_dir);
     VUNITIZE(dprime);
- 
+
     /* Normalize distance from the heart. Substitutes a corrected ray
      * point, which contains a translation along the ray direction to
      * the closest approach to vertex of the heart.Translating the ray
@@ -431,7 +431,7 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
      */
     VSCALE(norm_pprime, dprime, VDOT(pprime, dprime));
     VSUB2(norm_pprime, pprime, norm_pprime);
- 
+
     /**
      * Generate the sextic equation S(t) = 0 to be passed through the root finder.
      */
@@ -442,7 +442,7 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
             * dprime[X] * dprime[X] + dprime[Z] * dprime[Z] * dprime[Z] * dprime[Z]) + 4860.0 * dprime[Y] * dprime[Y] * dprime[Y] * dprime[Y]
             * ( dprime[X] * dprime[X] + dprime[Z] * dprime[Z] ) - 36.0 * dprime[Y] * dprime[Y] * dprime[Y] * dprime[Z] * dprime[Z] * dprime[Z]
             + 3645.0 * dprime[Y] * dprime[Y] * dprime[Y] * dprime[Y] * dprime[Y] * dprime[Y];
- 
+
     S.cf[1] = 8640.0 * (dprime[X] * pprime[X] * dprime[Y] * dprime[Y] * (dprime[X] * dprime[X] + dprime[Z] * dprime[Z]) + dprime[Y] * pprime[Y] * dprime[X]
             * dprime[X] * dprime[Z] * dprime[Z] + dprime[Z] * pprime[Z] * dprime[Y] * dprime[Y] * (dprime[X] * dprime[X] + dprime[Z] * dprime[Z]))
             + 9720.0 * dprime[Y] * dprime[Y] * dprime[Y] * dprime[Y] * (dprime[X] * pprime[X] + dprime[Z] * pprime[Z]) + 1920.0 * (dprime[X] * dprime[X]
@@ -452,7 +452,7 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
             + dprime[X] * dprime[Y] * dprime[Y]) * dprime[Y] * pprime[Y] - 108.0 * dprime[Y] * dprime[Z] * (dprime[Z] * dprime[Z] * dprime[Y] * pprime[Y] + pprime[Z]
             * dprime[Z] * dprime[Y] * dprime[Y]) - 320.0 * dprime[X] * dprime[X] * dprime[Y] * dprime[Y] * dprime[Y] + 21870.0 * pprime[Y] * dprime[Y]
             * dprime[Y] * dprime[Y] * dprime[Y] * dprime[Y];
- 
+
     S.cf[2] = 4320.0 * (dprime[X] * dprime[X] * (dprime[Y] * dprime[Y] * pprime[Z] * pprime[Z] + dprime[Z] * dprime[Z] * pprime[Y] * pprime[Y]) + dprime[Y] * dprime[Y]
             * (pprime[X] * pprime[X] * dprime[Z] * dprime[Z] - dprime[X] * dprime[X] - dprime[Z] * dprime[Z])) - 960.0 * (dprime[X] * dprime[X] * dprime[X]
             * dprime[X] * (1.0 - pprime[Z] * pprime[Z]) + dprime[Z] * dprime[Z] * dprime[Z] * dprime[Z] + dprime[Y] * dprime[Y] * (dprime[X] * dprime[X] * pprime[Y]
@@ -466,7 +466,7 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
             + dprime[Z] * dprime[Z]) - 108.0 * dprime[Y] * dprime[Z]  * (dprime[Y] * dprime[Y] * pprime[Z] * pprime[Z] + dprime[Z] * dprime[Z] * pprime[Y] * pprime[Y])
             - 1920.0 * dprime[X] * dprime[X] * dprime[Z] * dprime[Z] - 54675.0 * pprime[Y] * pprime[Y] * dprime[Y] * dprime[Y] * dprime[Y] * dprime[Y]- 324.0 * pprime[Z]
             * dprime[Z] * dprime[Z] * dprime[Y] * dprime[Y] * pprime[Y] - 640.0 * dprime[X] * pprime[X] * dprime[Y] * dprime[Y] * dprime[Y];
-   
+
     S.cf[3] = 3840.0 * (dprime[X] * pprime[X] + dprime[Z] * pprime[Z]) *  (dprime[X] * dprime[X] * pprime[Z] * pprime[Z] + dprime[Z] * dprime[Z] * pprime[X] * pprime[X]
             - dprime[X] * dprime[X] + dprime[Z] * dprime[Z]) + 8640.0 * (dprime[X] * pprime[X] * (pprime[Z] * pprime[Z] * dprime[Y] * dprime[Y] + dprime[Z] * dprime[Z]
             * pprime[Y] * pprime[Y] + dprime[Y] * dprime[Y] * pprime[X] * pprime[X] + dprime[X] * dprime[X] * pprime[Y] * pprime[Y] - dprime[Y] * dprime[Y]) + dprime[Y]
@@ -482,7 +482,7 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
             * dprime[X] * pprime[X] * dprime[Y] * pprime[Y] * dprime[Z] * pprime[Z] + 58320.0 * dprime[X] * pprime[X] * dprime[Y] * dprime[Y] * pprime[Y] * pprime[Y]
             - 1920.0 * dprime[X] * pprime[X] * dprime[Y] * dprime[Y] * pprime[Y] + 58320.0 * dprime[Z] * pprime[Z] * dprime[Y] * dprime[Y] * pprime[Y] * pprime[Y]
             - 960.0 * dprime[X] * dprime[X] * dprime[Y] * pprime[Y] * pprime[Y];
- 
+
     S.cf[4] = 960.0 * (dprime[X] * dprime[X] * (1.0 + pprime[Z] * pprime[Z] * pprime[Z] * pprime[Z]) + dprime[Z] * dprime[Z] * (1.0 + pprime[X] * pprime[X] * pprime[X]
             * pprime[X]) - dprime[Y] * dprime[Y] * pprime[X] * pprime[X] * pprime[Y]) + 2160.0 * dprime[Y] * dprime[Y] * (1.0 + pprime[X] * pprime[X] * pprime[X] * pprime[X]
             + pprime[Z] * pprime[Z] * pprime[Z] * pprime[Z]) + 4320.0 * (pprime[Y] * pprime[Y] * (dprime[X] * dprime[X] + dprime[Z] * dprime[Z] + dprime[X] * dprime[X]
@@ -498,7 +498,7 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
             * dprime[Z] * pprime[Z] * pprime[Z]) + 29160.0 * dprime[Y] * dprime[Y] * pprime[Y] * pprime[Y] * (pprime[X] * pprime[X] + pprime[Z] * pprime[Z] - 1.0)
             - 180.0 * pprime[Y] * pprime[Z] * dprime[Z] * dprime[Z] * pprime[Y] * pprime[Y] + dprime[Y] * dprime[Y] * pprime[Z] * pprime[Z]) - 320.0 * dprime[X]
             * dprime[X] * pprime[Y] * pprime[Y] * pprime[Y] + 54675.0 * pprime[Y] * pprime[Y] * pprime[Y] * pprime[Y] * dprime[Y] * dprime[Y] ;
- 
+
     S.cf[5] = 1920.0 * ((dprime[X] * pprime[X] +  dprime[Z] * pprime[Z]) * (1.0 + pprime[X] * pprime[X] * pprime[X] * pprime[X] + pprime[Z] * pprime[Z]
             * pprime[Z] * pprime[Z])) + 4320.0 * dprime[Y] * pprime[Y] * (1.0 + pprime[X] * pprime[X] * pprime[X] * pprime[X] + pprime[Z] * pprime[Z]
             * pprime[Z] * pprime[Z]) + 8640.0 * (-dprime[Y] * pprime[Y] * pprime[Z] * pprime[Z] + dprime[X] * pprime[X] * pprime[Z] * pprime[Z]
@@ -513,7 +513,7 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
             * pprime[Y] * pprime[Y] * pprime[Y])- 640.0 * (dprime[X] * pprime[X] * pprime[Y] * pprime[Y] * pprime[Y] - dprime[Y] * pprime[Y] * pprime[Y]
             * pprime[X] * pprime[X]) - 108.0 * (dprime[Z] * pprime[Z] * pprime[Z] * pprime[Y] * pprime[Y] * pprime[Y] + dprime[Y] * pprime[Y] * pprime[Y]
             * pprime[Z] * pprime[Z] * pprime[Z]);
- 
+
     S.cf[6] = 320.0 * (-1.0 * pprime[X] * pprime[X] * pprime[X] * pprime[X] * pprime[X] * pprime[X] + pprime[Z] * pprime[Z] * pprime[Z] * pprime[Z]
             * pprime[Z] * pprime[Z] - pprime[X] * pprime[X] * pprime[Y] * pprime[Y] * pprime[Y]) + 960.0 * (pprime[X] * pprime[X] + pprime[Z] * pprime[Z]
             + pprime[Z] * pprime[Z] * pprime[X] * pprime[X] * pprime[X] * pprime[X] + pprime[X] * pprime[X] * pprime[Z] * pprime[Z] * pprime[Z] * pprime[Z]
@@ -542,7 +542,7 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
         }
         return 0;               /* MISS */
     }
-   
+
     /* Only real roots indicate an intersection in real space.
      *
      * Look at each root returned; if the imaginary part is zero or
@@ -552,17 +552,17 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     for (j=0, i=0; j < 6; j++) {
         if (NEAR_ZERO(complex[j].im, ap->a_rt_i->rti_tol.dist))
             real[i++] = complex[j].re;
-    } 
+    }
     /* Here, 'i' is number of points found */
     switch (i) {
         case 0:
             return 0;           /* No hit */
- 
+
         default:
             bu_log("rt_hrt_shot: reduced 6 to %d roots\n", i);
             bn_pr_roots(stp->st_name, complex, 6);
             return 0;           /* No hit */
- 
+
         case 2:
             {
                 /* Sort most distant to least distant. */
@@ -578,7 +578,7 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
             {
                 short n;
                 short lim;
- 
+
                 /* Inline rt_pt_sort().  Sorts real[] into descending order. */
                 for (lim = i-1; lim > 0; lim--) {
                     for (n = 0; n < lim; n++) {
@@ -596,7 +596,7 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
             {
                 short num;
                 short limit;
- 
+
                 /* Inline rt_pt_sort().  Sorts real[] into descending order. */
                 for (limit = i-1; limit > 0; limit--) {
                     for (num = 0; num < limit; num++) {
@@ -623,10 +623,10 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     VJOIN1(segp->seg_in.hit_vpriv, pprime, real[1], dprime);
     VJOIN1(segp->seg_out.hit_vpriv, pprime, real[0], dprime);
     BU_LIST_INSERT(&(seghead->l), &(segp->l));
-   
+
     if (i == 2)
         return 2;                       /* HIT */
-   
+
     /* 4 points */
     /* real[3] is entry point, and real[2] is exit point */
     RT_GET_SEG(segp, ap->a_resource);
@@ -638,10 +638,10 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     VJOIN1(segp->seg_in.hit_vpriv, pprime, real[3], dprime);
     VJOIN1(segp->seg_out.hit_vpriv, pprime, real[2], dprime);
     BU_LIST_INSERT(&(seghead->l), &(segp->l));
- 
+
     if (i == 4)
         return 4;                       /* HIT */
- 
+
     /* 6 points */
     /* real[5] is entry point, and real[4] is exit point */
     RT_GET_SEG(segp, ap->a_resource);
@@ -706,14 +706,14 @@ rt_hrt_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
     vect_t work;
 
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
-    w = hitp->hit_vpriv[X] * hitp->hit_vpriv[X] 
-        + 9.0/4.0 * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] 
+    w = hitp->hit_vpriv[X] * hitp->hit_vpriv[X]
+        + 9.0/4.0 * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y]
         + hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z] - 1.0;
     fx = (w * w - hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y]) * hitp->hit_vpriv[X];
-    fy = 0.5 * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] * (8.0/9.0 * w * w 
-    - (hitp->hit_vpriv[X] * hitp->hit_vpriv[X] + 9.0 / 80.0 * hitp->hit_vpriv[Z] 
+    fy = 0.5 * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] * (8.0/9.0 * w * w
+    - (hitp->hit_vpriv[X] * hitp->hit_vpriv[X] + 9.0 / 80.0 * hitp->hit_vpriv[Z]
     * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z]));
-    fz = w * w * hitp->hit_vpriv[Z] - 160.0/9.0 * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] 
+    fz = w * w * hitp->hit_vpriv[Z] - 160.0/9.0 * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y]
     * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z];
     VSET(work, fx, fy, fz);
     VUNITIZE(work);
