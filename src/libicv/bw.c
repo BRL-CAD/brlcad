@@ -97,7 +97,7 @@ bw_read(const char *filename, int width, int height)
     else if ((fd = open(filename, O_RDONLY, WRMODE)) < 0) {
 	bu_log("bw_read: Cannot open %s for reading\n", filename);
 	return NULL;
-    }   
+    }
 
     data = (unsigned char *)bu_malloc(size, "bw_read : unsigned char data");
     if (read(fd, data, size) < 0) {
