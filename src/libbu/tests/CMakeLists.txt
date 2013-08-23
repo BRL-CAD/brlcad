@@ -302,7 +302,7 @@ add_test(bu_gettime_test tester_bu_timer)
 #
 #  ************ bu_semaphore.c tests *************
 #
-BRLCAD_ADDEXEC(tester_bu_semaphore bu_semaphore.c libbu NO_INSTALL LOCAL)
+BRLCAD_ADDEXEC(tester_bu_semaphore bu_semaphore.c "libbu;${WINMM_LIBRARY}" NO_INSTALL LOCAL)
 add_test(bu_semaphore_test tester_bu_semaphore)
 
 #
