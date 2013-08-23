@@ -46,7 +46,7 @@
 
 extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 
-static char	usage[] = "Usage: %s [-v] [-b] [-xX lvl] [-a abs_tol] [-r rel_tol] [-t dist_tol] [-n norm_tol] [-P] [-o out_file] brlcad_db.g object(s)\n";
+static char	usage[] = "Usage: %s [-v] [-b] [-xX lvl] [-a abs_tol] [-r rel_tol] [-t dist_tol] [-n norm_tol] [-P #_of_CPUs] [-o out_file] brlcad_db.g object(s)\n";
 
 static char	*tok_sep = " \t";
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
@@ -104,9 +104,8 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	/* Get rid of (m)any other intermediate structures */
 	if ((*tsp->ts_m)->magic == NMG_MODEL_MAGIC) {
 	    nmg_km(*tsp->ts_m);
-	} else {
+	} else
 	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
-	}
 
 	/* Now, make a new, clean model structure for next pass. */
 	*tsp->ts_m = nmg_mm();
@@ -220,11 +219,10 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 	    nmg_count++;
 	    sprintf(nmg_name, "nmg.%d", nmg_count);
 
-	    if (do_bots) {
+	    if (do_bots)
 		wdb_export(fp_out, nmg_name, (genptr_t)bot, ID_BOT, 1.0);
-	    } else {
+	    else
 		mk_nmg(fp_out, nmg_name, r->m_p);
-	    }
 	}
 
 	/* Now make a normal brlcad region */
