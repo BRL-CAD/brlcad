@@ -37,9 +37,6 @@
 #include "bu.h"
 
 
-#define NMG_EXTERN(type_and_name, args) RT_EXTERN(type_and_name, args)
-
-
 #define DEBUG_PL_ANIM   0x00000001	/**< @brief 1 mged: animated evaluation */
 #define DEBUG_PL_SLOW   0x00000002	/**< @brief 2 mged: add delays to animation */
 #define DEBUG_GRAPHCL   0x00000004	/**< @brief 3 mged: graphic classification */
