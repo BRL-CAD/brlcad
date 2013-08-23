@@ -1,6 +1,7 @@
 
 #include <express/entity.h>
 #include <express/variable.h>
+#include "sc_export.h"
 
 #ifdef __cplusplus
 
@@ -15,13 +16,13 @@ typedef struct {
 } orderedAttr;
 
 ///set the entity we're working on, init working variables
-void orderedAttrsInit( Entity e );
+extern SC_EXPRESS_EXPORT void orderedAttrsInit( Entity e );
 
 ///free memory
-void orderedAttrsCleanup();
+extern SC_EXPRESS_EXPORT void orderedAttrsCleanup();
 
 ///get next attr; not thread safe (as if the rest of libexpress is)
-const orderedAttr * nextAttr();
+extern SC_EXPRESS_EXPORT const orderedAttr * nextAttr();
 #ifdef __cplusplus
 }
 
