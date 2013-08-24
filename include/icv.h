@@ -243,13 +243,6 @@ ICV_EXPORT extern void icv_destroy(icv_image_t *bif);
 ICV_EXPORT int icv_gray2rgb(icv_image_t *img);
 
 typedef enum {
-    ICV_PIX_NTSC,
-    ICV_PIX_CRT,
-    ICV_PIX_SET_EQUAL,
-    ICV_PIX_SELECT_CHANNEL
-} ICV_DEPTH_METHOD;
-
-typedef enum {
     ICV_COLOR_RGB,
     ICV_COLOR_R,
     ICV_COLOR_G,
@@ -298,7 +291,6 @@ typedef enum {
  *
  */
 ICV_EXPORT int icv_rgb2gray(icv_image_t *img,
-				  ICV_DEPTH_METHOD method,
 				  ICV_COLOR color,
 				  double rweight,
 				  double gweight,
