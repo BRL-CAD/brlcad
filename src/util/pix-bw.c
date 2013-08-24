@@ -170,6 +170,8 @@ main(int argc, char **argv)
     icv_rgb2gray(img, color, rweight, gweight, bweight);
 
     icv_write(img, out_file, ICV_IMAGE_BW);
+
+    return 0;
 }
 
 
