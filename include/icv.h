@@ -253,6 +253,18 @@ typedef enum {
 } ICV_COLOR;
 
 /**
+ * converts image to single channel image by combining three weights 
+ * based on NTSC primaries and 6500 white.
+ */
+#define icv_rgb2gray_ntsc(_a) icv_rgb2gray(_a, ICV_COLOR_RGB, 0.30, 0.59, 0.11)
+
+/**
+ * converts image to single channel image by combining three using 
+ * weights based on CRT phosphor and D6500 white.
+ */
+#define icv_rgb2gray_crt(_a) icv_rgb2gray(_a, ICV_COLOR_RGB, 0.26, 0.66, 0.08)
+
+/**
  * converts a three plane image to single plane image.
  * This function will combine or select planes of the image based on
  * the input arguments
@@ -261,16 +273,6 @@ typedef enum {
  * icv_image_rgb2gray(bif, 0 ,0 ,0 ,0 ,0); where bif is the rgb
  * image to be converted.
  *
- * @param img Image to be converted
- * @param method Conversion Method
- * ICV_PIX_NTSC:  converts to single plan image by combining three
- *                planes using weights based on NTSC primaries and
- *                D6500 white.
- * ICV_PIX_CRT :   converts to single plane image by combining three
- *                planes using weights based on CRT phosphor
- *                chromaticities and D6500 white.
- * ICV_PIX_SET_EQUAL: Combines the three planes using equal weights.
- * ICV_PIX_SELECT_CHANNEL: lets us select the channels
  * @param color Chooses color planes to be selected for combination
  *    This function will need color to be specified from
  *              ICV_COLOR_R

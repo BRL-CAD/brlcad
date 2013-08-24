@@ -51,7 +51,7 @@ bw_write(icv_image_t *bif, const char *filename)
     size_t ret, size;
 
     if (bif->color_space == ICV_COLOR_SPACE_RGB) {
-	icv_rgb2gray(bif, 0, 0, 0, 0);
+	icv_rgb2gray_ntsc(bif);
     } else if (bif->color_space != ICV_COLOR_SPACE_GRAY) {
 	bu_log("bw_write : Color Space conflict");
 	return -1;
