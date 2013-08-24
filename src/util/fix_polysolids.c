@@ -35,10 +35,10 @@
  *
  * opt: -v turn on verbose mode
  *
- * opt: -x [librt debug flag] turn on librt debugging
+ * opt: -x <librt debug flag> turn on librt debugging
  *          (option may used more than once)
  *
- * opt: -X [nmg debug flag] turn on nmg debugging
+ * opt: -X <nmg debug flag> turn on nmg debugging
  *         (option may used more than once)
  *
  *
