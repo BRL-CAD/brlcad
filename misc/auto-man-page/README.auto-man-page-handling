@@ -61,8 +61,8 @@ Usage: %s port_num\n\
   with '/**' or '/*!' are completely ignored).
 
   Each such block is divided into one or more parts beginning with a
-  keyword ('partname:'; but see 'opt:' later) which identifies a
-  section to appear in the man page.
+  keyword ending with a colon ('partname:'; but see 'opt:' later)
+  which identifies a section to appear in the man page.
 
   The block must begin with the following format or it will be ignored:
 
