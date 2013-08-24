@@ -41,6 +41,9 @@
  * opt: -X <nmg debug flag> turn on nmg debugging
  *         (option may used more than once)
  *
+ * opt: -h brief help
+ *
+ * opt: -? brief help
  *
  */
 
