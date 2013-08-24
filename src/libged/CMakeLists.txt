@@ -189,6 +189,7 @@ set(LIBGED_SOURCES
   pscale.c
   pset.c
   ptranslate.c
+  pull.c
   push.c
   put.c
   put_comb.c
