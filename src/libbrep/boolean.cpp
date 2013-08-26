@@ -1316,7 +1316,7 @@ IsFaceInsideBrep(const TrimmedFace* tface, const ON_Brep* brep, ON_SimpleArray<S
 
 
 int
-ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSED(operation))
+ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type operation)
 {
     int facecount1 = brepA->m_F.Count();
     int facecount2 = brepB->m_F.Count();
@@ -1531,26 +1531,34 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
 	const ON_Brep* another_brep = i >= facecount1 ? brepA : brepB;
 	ON_SimpleArray<Subsurface*>& surf_tree = i >= facecount1 ? surf_treeA : surf_treeB;
 	for (int j = 0; j < splitted.Count(); j++) {
-	    // Just for test. WIP.
+	    bool belong_to_final = false;
 	    if (IsFaceInsideBrep(splitted[j], another_brep, surf_tree)) {
-		bu_log("The trimmed face is inside the other brep.\n");
+		if (DEBUG_BREP_BOOLEAN)
+		    bu_log("The trimmed face is inside the other brep.\n");
+		if (operation == BOOLEAN_INTERSECT || (operation == BOOLEAN_DIFF && i >= facecount1))
+		    belong_to_final = true;
 	    } else {
-		bu_log("The trimmed face is not inside the other brep.\n");
+		if (DEBUG_BREP_BOOLEAN)
+		    bu_log("The trimmed face is not inside the other brep.\n");
+		if (operation == BOOLEAN_UNION || (operation == BOOLEAN_DIFF && i < facecount1))
+		    belong_to_final = true;
 	    }
 
-	    // Add the surfaces, faces, loops, trims, vertices, edges, etc.
-	    // to the brep structure.
-	    ON_Surface *new_surf = surf->Duplicate();
-	    int surfindex = brepO->AddSurface(new_surf);
-	    ON_BrepFace& new_face = brepO->NewFace(surfindex);
+	    if (belong_to_final) {
+		// Add the surfaces, faces, loops, trims, vertices, edges, etc.
+		// to the brep structure.
+		ON_Surface *new_surf = surf->Duplicate();
+		int surfindex = brepO->AddSurface(new_surf);
+		ON_BrepFace& new_face = brepO->NewFace(surfindex);
 
-	    add_elements(brepO, new_face, splitted[j]->m_outerloop, ON_BrepLoop::outer);
-	    // ON_BrepLoop &loop = brepO->m_L[brepO->m_L.Count() - 1];
-	    for (unsigned int k = 0; k < splitted[j]->m_innerloop.size(); k++)
-		add_elements(brepO, new_face, splitted[j]->m_innerloop[k], ON_BrepLoop::inner);
+		add_elements(brepO, new_face, splitted[j]->m_outerloop, ON_BrepLoop::outer);
+		// ON_BrepLoop &loop = brepO->m_L[brepO->m_L.Count() - 1];
+		for (unsigned int k = 0; k < splitted[j]->m_innerloop.size(); k++)
+		    add_elements(brepO, new_face, splitted[j]->m_innerloop[k], ON_BrepLoop::inner);
 
-	    brepO->SetTrimIsoFlags(new_face);
-	    brepO->FlipFace(new_face);
+		brepO->SetTrimIsoFlags(new_face);
+		brepO->FlipFace(new_face);
+	    }
 	}
     }
 
