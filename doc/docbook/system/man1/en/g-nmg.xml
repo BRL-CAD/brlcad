@@ -22,6 +22,7 @@
     <arg choice='opt'>-t <replaceable>calc_dist_tol</replaceable></arg>
     <arg choice='opt'>-a <replaceable>abs_tess_tol</replaceable></arg>
     <arg choice='opt'>-n <replaceable>norm_tess_tol</replaceable></arg>
+    <arg choice='opt'>-P <replaceable>number_of_CPUs</replaceable></arg>
     <arg choice='opt'>-r <replaceable>rel_tess_tol</replaceable></arg>
     <arg choice='opt'>-o <replaceable>outfile.g</replaceable></arg>
     <arg choice='plain'><replaceable>infile.g</replaceable></arg>
@@ -65,6 +66,12 @@ surface must not be greater than
   <term><option>-n norm_tess_tol</option></term>
   <listitem>
 <para>Specify a surface normal error tolerance (in degrees) for the tessellation.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-P #_of_CPUs</option></term>
+  <listitem>
+<para>Specify the number of CPUs.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
