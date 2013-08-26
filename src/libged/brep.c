@@ -59,7 +59,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 {
     struct bn_vlblock*vbp;
     const char *solid_name;
-    static const char *usage = "brep obj [command|brepname|suffix] ";
+    static const char *usage = "brep <obj> [command|brepname|suffix] ";
     struct directory *ndp;
     struct rt_db_internal intern;
     struct rt_brep_internal* bi;
@@ -68,7 +68,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     char commtag[64];
     char namebuf[64];
     int i, j, real_flag, valid_command;
-    const char *commands[] = {"info", "plot", "translate"};
+    const char *commands[] = {"info", "plot", "translate", "intersect", "u", "i", "-"};
     int num_commands = (int)(sizeof(commands) / sizeof(const char *));
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -80,7 +80,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc < 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n\t%s\n", argv[0], usage);
 	bu_vls_printf(gedp->ged_result_str, "commands:\n");
 	bu_vls_printf(gedp->ged_result_str, "\tinfo - return count information for specific BREP\n");
 	bu_vls_printf(gedp->ged_result_str, "\tinfo S [index] - return information for specific BREP 'surface'\n");
@@ -88,10 +88,11 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "\tplot - plot entire BREP\n");
 	bu_vls_printf(gedp->ged_result_str, "\tplot S [index] - plot specific BREP 'surface'\n");
 	bu_vls_printf(gedp->ged_result_str, "\tplot F [index] - plot specific BREP 'face'\n");
-	bu_vls_printf(gedp->ged_result_str, "\tintersect obj2 i j [PP|PC|PS|CC|CS|SS] - BREP intersections\n");
+	bu_vls_printf(gedp->ged_result_str, "\ttranslate SCV index i j dx dy dz - translate a surface control vertex\n");
+	bu_vls_printf(gedp->ged_result_str, "\tintersect <obj2> <i> <j> [PP|PC|PS|CC|CS|SS] - BREP intersections\n");
+	bu_vls_printf(gedp->ged_result_str, "\tu|i|- <obj2> <output> - BREP boolean evaluations\n");
 	bu_vls_printf(gedp->ged_result_str, "\t[brepname] - convert the non-BREP object to BREP form\n");
 	bu_vls_printf(gedp->ged_result_str, "\t[suffix] - convert non-BREP comb to unevaluated BREP form\n");
-	bu_vls_printf(gedp->ged_result_str, "\ttranslate SCV index i j dx dy dz - translate a surface control vertex\n");
 	return GED_HELP;
     }
 
