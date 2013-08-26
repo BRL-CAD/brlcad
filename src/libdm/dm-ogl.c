@@ -1629,9 +1629,13 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
     register int first;
     register int mflag = 1;
     static float black[4] = {0.0, 0.0, 0.0, 0.0};
+    GLdouble pointsize = -1.0; /* initialize to unsavory point size */
 
     if (dmp->dm_debugLevel)
 	bu_log("ogl_drawVList()\n");
+
+    /* get incoming point size to restore after drawing loop */
+    glGetDoublev(GL_POINT_SIZE,  &pointsize);
 
     /* Viewing region is from -1.0 to +1.0 */
     first = 1;
@@ -1734,7 +1738,7 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		    if (first == 0)
 			glEnd();
 		    first = 0;
-		    glPointSize(1.0);
+		    glPointSize((GLfloat)3.0);
 		    glBegin(GL_POINTS);
 		    glVertex3dv(dpt);
 		    break;
@@ -1744,6 +1748,9 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 
     if (first == 0)
 	glEnd();
+
+    /* restore incoming point size */
+    glPointSize((GLfloat)pointsize);
 
     if (dmp->dm_light && dmp->dm_transparency)
 	glDisable(GL_BLEND);
