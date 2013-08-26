@@ -40,6 +40,26 @@ _ged_cmpattr(const void *p1, const void *p2)
 		     ((struct bu_attribute_value_pair *)p2)->name);
 }
 
+int
+_ged_cmpattr_nocase(const void *p1, const void *p2)
+{
+    return bu_strcasecmp(((struct bu_attribute_value_pair *)p1)->name,
+                         ((struct bu_attribute_value_pair *)p2)->name);
+}
+
+int
+_ged_cmpattr_value(const void *p1, const void *p2)
+{
+    return bu_strcmp(((struct bu_attribute_value_pair *)p1)->value,
+		     ((struct bu_attribute_value_pair *)p2)->value);
+}
+
+int
+_ged_cmpattr_value_nocase(const void *p1, const void *p2)
+{
+    return bu_strcasecmp(((struct bu_attribute_value_pair *)p1)->value,
+		         ((struct bu_attribute_value_pair *)p2)->value);
+}
 
 int
 ged_attr(struct ged *gedp, int argc, const char *argv[])
@@ -48,7 +68,12 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     struct bu_attribute_value_set avs;
     struct bu_attribute_value_pair *avpp;
-    static const char *usage = "{set|get|show|rm|append} object [key [value] ... ]";
+    static const char *usage = "{set|get|show|rm|append|sort} object [key [value] ... ]";
+
+    const char CASE[]         = "case";
+    const char NOCASE[]       = "nocase";
+    const char VALUE[]        = "value";
+    const char VALUE_NOCASE[] = "value-nocase";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -85,10 +110,73 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    /* sort attribute-value set array by attribute name */
+    /* default: sort attribute-value set array by attribute name (case sensitive) */
     qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmpattr);
 
-    if (BU_STR_EQUAL(argv[1], "get")) {
+    if (BU_STR_EQUAL(argv[1], "sort")) {
+	int max_attr_name_len = 0;
+
+	/* pretty print */
+	if (dp->d_flags & RT_DIR_COMB) {
+	    if (dp->d_flags & RT_DIR_REGION) {
+		bu_vls_printf(gedp->ged_result_str, "%s region:\n", argv[2]);
+	    } else {
+		bu_vls_printf(gedp->ged_result_str, "%s combination:\n", argv[2]);
+	    }
+	} else if (dp->d_flags & RT_DIR_SOLID) {
+	    struct rt_db_internal intern;
+	    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
+	    bu_vls_printf(gedp->ged_result_str, "%s %s:\n", argv[2], intern.idb_meth->ft_label);
+	    rt_db_free_internal(&intern);
+
+	} else {
+	    switch (dp->d_major_type) {
+		case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
+		    bu_vls_printf(gedp->ged_result_str, "%s global:\n", argv[2]);
+		    break;
+		case DB5_MAJORTYPE_BINARY_MIME:
+		    bu_vls_printf(gedp->ged_result_str, "%s binary(mime):\n", argv[2]);
+		    break;
+		case DB5_MAJORTYPE_BINARY_UNIF:
+		    bu_vls_printf(gedp->ged_result_str, "%s %s:\n", argv[2],
+				  binu_types[dp->d_minor_type]);
+		    break;
+	    }
+	}
+
+        for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
+            int len = (int)strlen(avpp->name);
+            if (len > max_attr_name_len) {
+                max_attr_name_len = len;
+            }
+        }
+
+        if (argc == 3) {
+            /* just list the already sorted attribute-value pairs */
+	    for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
+		bu_vls_printf(gedp->ged_result_str, "\t%-*.*s    %s\n",
+			      max_attr_name_len, max_attr_name_len,
+			      avpp->name, avpp->value);
+	    }
+	} else {
+            /* argv[3] is the sort type: 'case', 'nocase', 'value', 'value-nocase' */
+            if (BU_STR_EQUAL(argv[3], NOCASE)) {
+                qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmpattr_nocase);
+            } else if (BU_STR_EQUAL(argv[3], VALUE)) {
+                qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmpattr_value);
+            } else if (BU_STR_EQUAL(argv[3], VALUE_NOCASE)) {
+                qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmpattr_value_nocase);
+            } else if (BU_STR_EQUAL(argv[3], CASE)) {
+              ; /* don't need to do anything */
+            }
+	    /* now list all the attributes */
+	    for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
+		bu_vls_printf(gedp->ged_result_str, "\t%-*.*s    %s\n",
+			      max_attr_name_len, max_attr_name_len,
+			      avpp->name, avpp->value);
+	    }
+        }
+    } else if (BU_STR_EQUAL(argv[1], "get")) {
 	if (argc == 3) {
 	    /* just list all the attributes */
 	    for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
@@ -167,7 +255,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
     } else if (BU_STR_EQUAL(argv[1], "append")) {
 	GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-	if ((argc-3)%2) {
+	if ((argc-3) % 2) {
 	    bu_vls_printf(gedp->ged_result_str,
 			  "Error: attribute names and values must be in pairs!!!\n");
 	    bu_avs_free(&avs);

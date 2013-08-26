@@ -1014,8 +1014,9 @@ ATTRIBUTES
   need to left-pad a space conditionally, perhaps by supporting %*s
   and sizeof(var).
 
-* add support for user-specified sorting for the attr command (case,
-  case-insensitive, creation, value, etc.)
+* add additional support for user-specified sorting for the attr
+  command when new attribute attributes are added (e.g., creation
+  date)
 
 * binary attributes, see binary-incompatible section for details.
 
