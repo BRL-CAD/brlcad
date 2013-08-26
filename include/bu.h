@@ -420,7 +420,7 @@ typedef const void *const_genptr_t;
 /**
  * Sizes of "network" format data.  We use the same convention as the
  * TCP/IP specification, namely, big-Endian, IEEE format, twos
- * compliment.  This is the BRL-CAD external data representation
+ * complement.  This is the BRL-CAD external data representation
  * (XDR).  See also the support routines in libbu/xdr.c
  *
  */
