@@ -431,7 +431,7 @@ Add_Default_Geometric_Context(Registry *registry, InstMgr *instance_list)
 
 /* Defining a shape is necessary for at least some systems, but how
  * this is done does not appear to be at all uniform between the
- * outputs from various systems. Rhino ouputs a shape definition representation
+ * outputs from various systems. Rhino outputs a shape definition representation
  * that does not directly reference the Brep, and instead uses a shape
  * representation relationship.  Creo, on the other hand, appears to reference
  * the Brep directly in the shape definition representation and does not have
