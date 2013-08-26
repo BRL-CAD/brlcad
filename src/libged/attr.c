@@ -61,9 +61,37 @@ _ged_cmpattr_value_nocase(const void *p1, const void *p2)
 			 ((struct bu_attribute_value_pair *)p2)->value);
 }
 
-void
-_ged_pretty_print()
+int
+_ged_pretty_print(struct ged *gedp, struct directory *dp, const char *name)
 {
+  if (dp->d_flags & RT_DIR_COMB) {
+    if (dp->d_flags & RT_DIR_REGION) {
+      bu_vls_printf(gedp->ged_result_str, "%s region:\n", name);
+    } else {
+      bu_vls_printf(gedp->ged_result_str, "%s combination:\n", name);
+    }
+  } else if (dp->d_flags & RT_DIR_SOLID) {
+    struct rt_db_internal intern;
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
+    bu_vls_printf(gedp->ged_result_str, "%s %s:\n", name, intern.idb_meth->ft_label);
+    rt_db_free_internal(&intern);
+
+  } else {
+    switch (dp->d_major_type) {
+	case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
+	  bu_vls_printf(gedp->ged_result_str, "%s global:\n", name);
+	  break;
+	case DB5_MAJORTYPE_BINARY_MIME:
+	  bu_vls_printf(gedp->ged_result_str, "%s binary(mime):\n", name);
+	  break;
+	case DB5_MAJORTYPE_BINARY_UNIF:
+	  bu_vls_printf(gedp->ged_result_str, "%s %s:\n", name,
+			binu_types[dp->d_minor_type]);
+	  break;
+    }
+  }
+
+  return GED_OK;
 }
 
 int
@@ -122,32 +150,8 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	int max_attr_name_len = 0;
 
 	/* pretty print */
-	if (dp->d_flags & RT_DIR_COMB) {
-	    if (dp->d_flags & RT_DIR_REGION) {
-		bu_vls_printf(gedp->ged_result_str, "%s region:\n", argv[2]);
-	    } else {
-		bu_vls_printf(gedp->ged_result_str, "%s combination:\n", argv[2]);
-	    }
-	} else if (dp->d_flags & RT_DIR_SOLID) {
-	    struct rt_db_internal intern;
-	    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
-	    bu_vls_printf(gedp->ged_result_str, "%s %s:\n", argv[2], intern.idb_meth->ft_label);
-	    rt_db_free_internal(&intern);
-
-	} else {
-	    switch (dp->d_major_type) {
-		case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
-		    bu_vls_printf(gedp->ged_result_str, "%s global:\n", argv[2]);
-		    break;
-		case DB5_MAJORTYPE_BINARY_MIME:
-		    bu_vls_printf(gedp->ged_result_str, "%s binary(mime):\n", argv[2]);
-		    break;
-		case DB5_MAJORTYPE_BINARY_UNIF:
-		    bu_vls_printf(gedp->ged_result_str, "%s %s:\n", argv[2],
-				  binu_types[dp->d_minor_type]);
-		    break;
-	    }
-	}
+	if ((_ged_pretty_print(gedp, dp, argv[2])) != GED_OK)
+	    return GED_ERROR;
 
 	for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
 	    int len = (int)strlen(avpp->name);
@@ -300,32 +304,9 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	int tabs1 = 0;
 
 	/* pretty print */
-	if (dp->d_flags & RT_DIR_COMB) {
-	    if (dp->d_flags & RT_DIR_REGION) {
-		bu_vls_printf(gedp->ged_result_str, "%s region:\n", argv[2]);
-	    } else {
-		bu_vls_printf(gedp->ged_result_str, "%s combination:\n", argv[2]);
-	    }
-	} else if (dp->d_flags & RT_DIR_SOLID) {
-	    struct rt_db_internal intern;
-	    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
-	    bu_vls_printf(gedp->ged_result_str, "%s %s:\n", argv[2], intern.idb_meth->ft_label);
-	    rt_db_free_internal(&intern);
+	if ((_ged_pretty_print(gedp, dp, argv[2])) != GED_OK)
+	    return GED_ERROR;
 
-	} else {
-	    switch (dp->d_major_type) {
-		case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
-		    bu_vls_printf(gedp->ged_result_str, "%s global:\n", argv[2]);
-		    break;
-		case DB5_MAJORTYPE_BINARY_MIME:
-		    bu_vls_printf(gedp->ged_result_str, "%s binary(mime):\n", argv[2]);
-		    break;
-		case DB5_MAJORTYPE_BINARY_UNIF:
-		    bu_vls_printf(gedp->ged_result_str, "%s %s:\n", argv[2],
-				  binu_types[dp->d_minor_type]);
-		    break;
-	    }
-	}
 	if (argc == 3) {
 	    /* just display all attributes */
 	    for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
