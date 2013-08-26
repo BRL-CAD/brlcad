@@ -46,7 +46,7 @@ extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full
 
 static char usage[] = "\
 Usage: %s [-m][-v][-i][-u][-xX lvl][-a abs_tess_tol][-r rel_tess_tol][-n norm_tess_tol][-P #_of_CPUs]\n\
-[-e error_file ][-D dist_calc_tol] -o output_file_name brlcad_db.g object(s)\n";
+[-e error_file_name ][-D dist_calc_tol][-o output_file_name ] brlcad_db.g object(s)\n";
 
 static long vert_offset=0;
 static long norm_offset=0;
