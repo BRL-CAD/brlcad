@@ -51,7 +51,7 @@ RT_EXPORT extern int brep_intersect_point_surface(struct rt_db_internal *intern1
 RT_EXPORT extern int brep_intersect_curve_curve(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
 RT_EXPORT extern int brep_intersect_curve_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
 RT_EXPORT extern int brep_intersect_surface_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock *vbp);
-RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, const enum op_type operation);
+RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, const char* operation);
 
 
 int
@@ -176,13 +176,17 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	return GED_OK;
     }
 
-    if (BU_STR_EQUAL(argv[2], "u")) {
-	/* test booleans on brep, just union here */
+    if (BU_STR_EQUAL(argv[2], "u") || BU_STR_EQUAL(argv[2], "i") || BU_STR_EQUAL(argv[2], "-")) {
+	/* test booleans on brep.
+	 * u: union, i: intersect, -: diff
+	 */
 	struct rt_db_internal intern2, intern_res;
 	struct rt_brep_internal *bip;
 
-	if (argc != 5)
+	if (argc != 5) {
+	    bu_vls_printf(gedp->ged_result_str, "Error: There should be exactly 5 params.\n");
 	    return GED_ERROR;
+	}
 
 	/* get the other solid */
 	if ((ndp = db_lookup(gedp->ged_wdbp->dbip,  argv[3], LOOKUP_NOISY)) == RT_DIR_NULL) {
@@ -200,7 +204,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 
 	GED_DB_GET_INTERNAL(gedp, &intern2, ndp, bn_mat_identity, &rt_uniresource, GED_ERROR);
 
-	rt_brep_boolean(&intern_res, &intern, &intern2, 0);
+	rt_brep_boolean(&intern_res, &intern, &intern2, argv[2]);
 	bip = (struct rt_brep_internal*)intern_res.idb_ptr;
 	mk_brep(gedp->ged_wdbp, argv[4], bip->brep);
 	rt_db_free_internal(&intern);

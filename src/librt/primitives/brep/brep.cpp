@@ -91,7 +91,7 @@ extern "C" {
     int rt_brep_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr);
     int rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, const char **argv);
     int rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *ip);
-    RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, const enum op_type operation);
+    RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, const char* operation);
 #ifdef __cplusplus
 }
 #endif
@@ -4065,7 +4065,7 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, ON_SimpleArray<ON_NurbsCurve*> &l
 
 
 int
-rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, const enum op_type operation)
+rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, const char* operation)
 {
     RT_CK_DB_INTERNAL(ip1);
     RT_CK_DB_INTERNAL(ip2);
@@ -4081,7 +4081,17 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
     brep_out = ON_Brep::New();
 
     int ret;
-    if ((ret = ON_Boolean(brep_out, brep1, brep2, operation)) < 0)
+    op_type operation_type;
+    if (BU_STR_EQUAL(operation, "u"))
+	operation_type = BOOLEAN_UNION;
+    else if (BU_STR_EQUAL(operation, "i"))
+	operation_type = BOOLEAN_INTERSECT;
+    else if (BU_STR_EQUAL(operation, "-"))
+	operation_type = BOOLEAN_DIFF;
+    else
+	return -1;
+
+    if ((ret = ON_Boolean(brep_out, brep1, brep2, operation_type)) < 0)
 	return ret;
 
     // make the final rt_db_internal
