@@ -45,14 +45,14 @@
 extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 
 static char usage[] = "\
-Usage: %s [-m][-v][-i][-u][-xX lvl][-a abs_tess_tol][-r rel_tess_tol][-n norm_tess_tol]\n\
+Usage: %s [-m][-v][-i][-u][-xX lvl][-a abs_tess_tol][-r rel_tess_tol][-n norm_tess_tol][-P #_of_CPUs]\n\
 [-e error_file ][-D dist_calc_tol] -o output_file_name brlcad_db.g object(s)\n";
 
 static long vert_offset=0;
 static long norm_offset=0;
 static int do_normals=0;
 static int NMG_debug;	/* saved arg of -X, for longjmp handling */
-static int verbose;
+static int verbose=0;
 static int usemtl=0;	/* flag to include 'usemtl' statements with a
 			 * code for GIFT materials:
 			 *
@@ -137,7 +137,7 @@ main(int argc, char **argv)
 		ttol.rel = atof(bu_optarg);
 		break;
 	    case 'v':
-		verbose++;
+		verbose = 1;
 		break;
 	    case 'P':
 		ncpu = atoi(bu_optarg);
