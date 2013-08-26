@@ -154,13 +154,20 @@ mged_bound_solid(struct solid *sp)
 		case BN_VLIST_TRI_MOVE:
 		case BN_VLIST_TRI_DRAW:
 		case BN_VLIST_TRI_END:
-		case BN_VLIST_POINT_DRAW:
 		    V_MIN(xmin, (*pt)[X]);
 		    V_MAX(xmax, (*pt)[X]);
 		    V_MIN(ymin, (*pt)[Y]);
 		    V_MAX(ymax, (*pt)[Y]);
 		    V_MIN(zmin, (*pt)[Z]);
 		    V_MAX(zmax, (*pt)[Z]);
+		    break;
+		case BN_VLIST_POINT_DRAW:
+		    V_MIN(xmin, (*pt)[X]-1.0);
+		    V_MAX(xmax, (*pt)[X]+1.0);
+		    V_MIN(ymin, (*pt)[Y]-1.0);
+		    V_MAX(ymax, (*pt)[Y]+1.0);
+		    V_MIN(zmin, (*pt)[Z]-1.0);
+		    V_MAX(zmax, (*pt)[Z]+1.0);
 		    break;
 		default:
 		    {

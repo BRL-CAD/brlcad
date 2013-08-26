@@ -24,6 +24,7 @@ objects.
     <arg choice="opt" rep="norepeat">rm</arg>
     <arg choice="opt" rep="norepeat">append</arg>
     <arg choice="opt" rep="norepeat">show</arg>
+    <arg choice="opt" rep="norepeat">sort</arg>
     <arg choice="req" rep="norepeat"><replaceable>object_name</replaceable></arg>
     <arg choice="opt" rep="norepeat"><replaceable>arguments</replaceable></arg>
   </cmdsynopsis>
@@ -35,7 +36,8 @@ objects.
     Used to create, change, retrieve, or view attributes of database
     objects. The arguments for "set" and "append" subcommands are attribute
     name/value pairs. The arguments for "get," "rm," and "show" subcommands are
-    attribute names. The "set" subcommand sets the specified attributes for the object.
+    attribute names. The arguments for the "sort" subcommand sets the sort type for the
+    attributes of the object: 'case' (default), 'nocase', 'value', and 'value-nocase'.
     The "append" subcommand appends the provided value to an existing attribute, or
     creates a new attribute if it does not already exist. The "get" subcommand retrieves
     and displays the specified attributes. The "rm" subcommand deletes the specified

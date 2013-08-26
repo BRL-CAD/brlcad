@@ -253,13 +253,20 @@ bound_solid(struct ged *gedp, struct solid *sp)
 		case BN_VLIST_TRI_MOVE:
 		case BN_VLIST_TRI_DRAW:
 		case BN_VLIST_TRI_END:
-		case BN_VLIST_POINT_DRAW:
 		    V_MIN(xmin, (*pt)[X]);
 		    V_MAX(xmax, (*pt)[X]);
 		    V_MIN(ymin, (*pt)[Y]);
 		    V_MAX(ymax, (*pt)[Y]);
 		    V_MIN(zmin, (*pt)[Z]);
 		    V_MAX(zmax, (*pt)[Z]);
+		    break;
+		case BN_VLIST_POINT_DRAW:
+		    V_MIN(xmin, (*pt)[X]-1.0);
+		    V_MAX(xmax, (*pt)[X]+1.0);
+		    V_MIN(ymin, (*pt)[Y]-1.0);
+		    V_MAX(ymax, (*pt)[Y]+1.0);
+		    V_MIN(zmin, (*pt)[Z]-1.0);
+		    V_MAX(zmax, (*pt)[Z]+1.0);
 		    break;
 		default:
 		    bu_vls_printf(gedp->ged_result_str, "unknown vlist op %d\n", *cmd);
@@ -1582,6 +1589,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
     int last_opt=0;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     static const char *usage = "<[-R -C#/#/# -s] objects> | <-o -A attribute name/value pairs>";
+    int64_t elapsetime;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -1596,6 +1604,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	return GED_HELP;
     }
 
+    elapsetime = bu_gettime();
     /* skip past cmd */
     --argc;
     ++argv;
@@ -1763,6 +1772,18 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	    _ged_drawtrees(gedp, argc, argv, kind, (struct _ged_client_data *)0);
 	}
     }
+    elapsetime = bu_gettime() - elapsetime;
+	{
+	    int seconds = elapsetime / 1000000;
+	    int minutes = seconds / 60;
+	    int hours = minutes / 60;
+
+	    minutes = minutes % 60;
+	    seconds = seconds %60;
+
+	    bu_vls_printf(gedp->ged_result_str, "Elapse time: %02d:%02d:%02d\n", hours, minutes,seconds);
+	    return GED_HELP;
+	}
 
     return GED_OK;
 }

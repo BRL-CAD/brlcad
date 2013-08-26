@@ -253,14 +253,14 @@ typedef enum {
 } ICV_COLOR;
 
 /**
- * converts image to single channel image by combining three weights 
+ * converts image to single channel image by combining three weights
  * based on NTSC primaries and 6500 white.
  */
 #define icv_rgb2gray_ntsc(_a) icv_rgb2gray(_a, ICV_COLOR_RGB, 0.30, 0.59, 0.11)
 
 /**
- * converts image to single channel image by combining three using 
- * weights based on CRT phosphor and D6500 white.
+ * converts image to single channel image by combining three weights
+ * based on CRT phosphor and D6500 white.
  */
 #define icv_rgb2gray_crt(_a) icv_rgb2gray(_a, ICV_COLOR_RGB, 0.26, 0.66, 0.08)
 
