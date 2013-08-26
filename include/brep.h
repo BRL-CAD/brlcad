@@ -2054,7 +2054,7 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
  * @return the result curve segment. NULL for error.
  */
 extern BREP_EXPORT ON_Curve*
-sub_curve(ON_Curve* in, double a, double b);
+sub_curve(const ON_Curve* in, double a, double b);
 
 } /* extern C++ */
 #endif
