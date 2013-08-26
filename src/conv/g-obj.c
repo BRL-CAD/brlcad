@@ -114,7 +114,7 @@ main(int argc, char **argv)
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "mua:n:o:r:vx:D:P:X:e:i")) != -1) {
+    while ((c = bu_getopt(argc, argv, "mua:n:o:r:vx:D:P:X:e:ih?")) != -1) {
 	switch (c) {
 	    case 'm':		/* include 'usemtl' statements */
 		usemtl = 1;
@@ -162,13 +162,11 @@ main(int argc, char **argv)
 		break;
 	    default:
 		bu_exit(1, usage, argv[0]);
-		break;
 	}
     }
 
-    if (bu_optind+1 >= argc) {
+    if (bu_optind+1 >= argc)
 	bu_exit(1, usage, argv[0]);
-    }
 
     if (!output_file)
 	fp = stdout;
@@ -198,9 +196,8 @@ main(int argc, char **argv)
 	perror(argv[0]);
 	bu_exit(1, "Unable to open geometry database file (%s)\n", argv[0]);
     }
-    if (db_dirbuild(dbip)) {
+    if (db_dirbuild(dbip))
 	bu_exit(1, "db_dirbuild failed\n");
-    }
 
     BN_CK_TOL(tree_state.ts_tol);
     RT_CK_TESS_TOL(tree_state.ts_ttol);
@@ -226,19 +223,15 @@ main(int argc, char **argv)
 			nmg_booltree_leaf_tess,
 			(genptr_t)NULL);	/* in librt/nmg_bool.c */
 
-    percent = 0;
     if (regions_tried>0) {
-	percent = ((double)regions_converted * 100) / regions_tried;
+	percent = ((double)regions_converted * 100.0) / regions_tried;
 	printf("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
 	       regions_tried, regions_converted, percent);
-    }
-    percent = 0;
-
-    if (regions_tried > 0) {
-	percent = ((double)regions_written * 100) / regions_tried;
+	percent = ((double)regions_written * 100.0) / regions_tried;
 	printf("                  %d triangulated successfully. %g%%\n",
 	       regions_written, percent);
     }
+
     fclose(fp);
 
     /* Release dynamic storage */
