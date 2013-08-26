@@ -252,6 +252,11 @@
     <para>BRL-CAD Team</para>
 </refsection>
 
+<refsection xml:id="copyright"><title>COPYRIGHT</title>
+    <para>This software is Copyright (c) 2010-2013 United States Government as
+    represented by the U.S. Army Research Laboratory. All rights reserved.</para>
+</refsection>
+
 <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>

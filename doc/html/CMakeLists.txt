@@ -93,6 +93,7 @@ set(librt_HTML
 ADD_DOC(librt_HTML html/manuals/librt)
 
 set(manuals_HTML
+  manuals/BRL-CAD_gear_logo.ico
   manuals/Install.html
   manuals/Obtain.html
   manuals/Overview.html

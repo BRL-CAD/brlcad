@@ -742,18 +742,7 @@ finish:
 	} else {
 	    bu_log("unable to parse 'rgb' attribute '%s'\n", ap);
 	}
-    } else {
-	if ((ap = bu_avs_get(&ip->idb_avs, "color")) != NULL) {
-	    int ibuf[3];
-	    if (sscanf(ap, "%d/%d/%d", ibuf, ibuf+1, ibuf+2) == 3) {
-		VMOVE(comb->rgb, ibuf);
-		comb->rgb_valid = 1;
-	    } else {
-		bu_log("unable to parse 'color' attribute '%s'\n", ap);
-	    }
-	}
     }
-
     if ((ap = bu_avs_get(&ip->idb_avs, db5_standard_attribute(ATTR_INHERIT))) != NULL) {
 	comb->inherit = atoi(ap);
     }

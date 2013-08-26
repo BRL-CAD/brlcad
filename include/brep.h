@@ -2026,6 +2026,13 @@ ON_Intersect(const ON_Surface* surfA,
 	     Subsurface* treeB = 0);
 
 
+enum op_type {
+    BOOLEAN_UNION = 0,
+    BOOLEAN_INTERSECT = 1,
+    BOOLEAN_DIFF = 2
+};
+
+
 /**
  * Evaluate NURBS boolean operations.
  *
@@ -2035,7 +2042,7 @@ ON_Intersect(const ON_Surface* surfA,
  * @param operation [in]
  */
 extern BREP_EXPORT int
-ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int operation);
+ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type operation);
 
 
 /**
@@ -2047,7 +2054,7 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int opera
  * @return the result curve segment. NULL for error.
  */
 extern BREP_EXPORT ON_Curve*
-sub_curve(ON_Curve* in, double a, double b);
+sub_curve(const ON_Curve* in, double a, double b);
 
 } /* extern C++ */
 #endif

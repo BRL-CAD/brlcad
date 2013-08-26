@@ -52,6 +52,7 @@ add_dependencies(g-step step-fedex-${SCHEMA_NAME})
 if(MSVC)
   set(gstep_IMPORTS
     BU_DLL_IMPORTS
+    BN_DLL_IMPORTS
     RT_DLL_IMPORTS
     WDB_DLL_IMPORTS
     SC_CORE_DLL_IMPORTS

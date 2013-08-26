@@ -61,8 +61,8 @@ Usage: %s port_num\n\
   with '/**' or '/*!' are completely ignored).
 
   Each such block is divided into one or more parts beginning with a
-  keyword ('partname:'; but see 'opt:' later) which identifies a
-  section to appear in the man page.
+  unique keyword ending with a colon ('partname:'; but see 'opt:' later)
+  which identifies a section to appear in the man page.
 
   The block must begin with the following format or it will be ignored:
 
@@ -78,7 +78,7 @@ Usage: %s port_num\n\
     underscores.  The part name will be translated into upper case and
     underscores into spaces in the man page.
 
-  - Following the mandatory first part may be more parts.
+  - Following the mandatory first part may be more unique parts.
 
   - A description ends when the next part keyword is found or the the
     comment block ends.

@@ -1,4 +1,4 @@
-/*                   C O L O R _ S P A C E . C
+/*         x
  * BRL-CAD
  *
  * Copyright (c) 2013 United States Government as represented by
@@ -72,7 +72,7 @@ icv_gray2rgb(icv_image_t *img)
 }
 
 int
-icv_rgb2gray(icv_image_t *img, ICV_DEPTH_METHOD method, ICV_COLOR color, double rweight, double gweight, double bweight)
+icv_rgb2gray(icv_image_t *img, ICV_COLOR color, double rweight, double gweight, double bweight)
 {
     double *out_data, *in_data;
     size_t in, out, size;
@@ -95,77 +95,54 @@ icv_rgb2gray(icv_image_t *img, ICV_DEPTH_METHOD method, ICV_COLOR color, double 
 	return -1;
     }
 
-
-    if (method == ICV_PIX_NTSC) {
-	/* NTSC weights */
-	rweight = 0.30;
-	gweight = 0.59;
-	bweight = 0.11;
-	red = green = blue = 1;
-	multiple_colors = 1;
-    } else if (method == ICV_PIX_CRT) {
-	/* CRT weights */
-	rweight = 0.26;
-	gweight = 0.66;
-	bweight = 0.08;
-	red = green = blue = 1;
-	multiple_colors = 1;
-    } else if (method == ICV_PIX_SET_EQUAL) {
-	/* CRT weights */
-	rweight = 0.34;
-	gweight = 0.33;
-	bweight = 0.33;
-	red = green = blue = 1;
-	multiple_colors = 1;
-    } else if (method == ICV_PIX_SELECT_CHANNEL) {
-	switch(color) {
-	    case ICV_COLOR_R :
-		red = 1;
-		bweight = 0;
-		gweight = 0;
-		multiple_colors = 0;
-		break;
-	    case ICV_COLOR_G :
-		green = 1;
-		rweight = 0;
-		bweight = 0;
-		multiple_colors = 0;
-		break;
-	    case ICV_COLOR_B :
-		blue = 1;
-		rweight = 0;
-		gweight = 0;
-		multiple_colors = 0;
-		break;
-	    case ICV_COLOR_RG :
-		red = 1;
-		green = 1;
-		bweight = 0;
-		multiple_colors = 1;
-		break;
-	    case ICV_COLOR_RB :
-		blue = 1;
-		red = 1;
-		gweight = 0;
-		multiple_colors = 1;
-		break;
-	    case ICV_COLOR_BG :
-		blue = 1;
-		green = 1;
-		rweight = 0;
-		multiple_colors = 1;
-		break;
-	    case ICV_COLOR_RGB :
-		red = 1;
-		green = 1;
-		blue = 1;
-		multiple_colors = 1;
-		break;
-	    default :
-		bu_exit(1,"icv_depth_3to1: Wrong Arguments for Color");
-		break;
-	}
+    switch(color) {
+	case ICV_COLOR_R :
+	    red = 1;
+	    bweight = 0;
+	    gweight = 0;
+	    multiple_colors = 0;
+	    break;
+	case ICV_COLOR_G :
+	    green = 1;
+	    rweight = 0;
+	    bweight = 0;
+	    multiple_colors = 0;
+	    break;
+	case ICV_COLOR_B :
+	    blue = 1;
+	    rweight = 0;
+	    gweight = 0;
+	    multiple_colors = 0;
+	    break;
+	case ICV_COLOR_RG :
+	    red = 1;
+	    green = 1;
+	    bweight = 0;
+	    multiple_colors = 1;
+	    break;
+	case ICV_COLOR_RB :
+	    blue = 1;
+	    red = 1;
+	    gweight = 0;
+	    multiple_colors = 1;
+	    break;
+	case ICV_COLOR_BG :
+	    blue = 1;
+	    green = 1;
+	    rweight = 0;
+	    multiple_colors = 1;
+	    break;
+	case ICV_COLOR_RGB :
+	    red = 1;
+	    green = 1;
+	    blue = 1;
+	    multiple_colors = 1;
+	    break;
+	default :
+	    bu_exit(1,"icv_depth_3to1: Wrong Arguments for Color");
+	    break;
     }
+
     /* Gets number of planes according to the status of arguments
        check */
     num_color_planes = red + green + blue;

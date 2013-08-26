@@ -1614,6 +1614,11 @@ GED_EXPORT extern int ged_pset(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_ptranslate(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ *Pull objects' path transformations from primitives
+ */
+GED_EXPORT extern int ged_pull(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Push objects' path transformations to primitives
  */
 GED_EXPORT extern int ged_push(struct ged *gedp, int argc, const char *argv[]);

@@ -254,7 +254,7 @@ public:
 
 
 ON_Curve*
-sub_curve(ON_Curve* in, double a, double b)
+sub_curve(const ON_Curve* in, double a, double b)
 {
     ON_Interval dom = in->Domain();
     ON_Interval sub(a, b);

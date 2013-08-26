@@ -1,4 +1,7 @@
 .\" ASI Note: PP was changed to P in this file; CS was commented out
+.\" Note the following line was added per Eric Raymond's advice for
+.\"  use by doclifter:
+.MT 0
 .PH ""
 .PF "''\\\\nP''"
 .so defs.mm

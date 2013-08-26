@@ -2575,7 +2575,7 @@ BN_EXPORT extern int bn_isect_planes(point_t pt,
 
 
 /* This could be larger, or even dynamic... */
-#define BN_MAX_POLY_DEGREE 4	/* Maximum Poly Order */
+#define BN_MAX_POLY_DEGREE 6	/* Maximum Poly Order */
 
 /**
  * Polynomial data type

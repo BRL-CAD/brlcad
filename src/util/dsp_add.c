@@ -50,7 +50,7 @@ static const char usage[] = "Usage: %s dsp_1 dsp_2 > dsp_3\n";
  *
  * See the wiki for a tutorial on using dsp's.
  *
- * see_also: dsp(5) asc2dsp(1) cv(1)
+ * see_also: dsp(5) ; asc2dsp(1) ; cv(1)
  *
  * opt: -h brief help
  *

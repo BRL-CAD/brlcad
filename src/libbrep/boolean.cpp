@@ -39,7 +39,8 @@
 
 #define DEBUG_BREP_BOOLEAN 1
 #define USE_CONNECTIVITY_GRAPH 1
-#define INTERSECTION_TOL 0.001
+#define INTERSECTION_TOL 1e-4
+#define ANGLE_TOL ON_PI/1800.0
 
 
 struct IntersectPoint {
@@ -373,7 +374,7 @@ IsPointInsideLoop(const ON_2dPoint& pt, const ON_SimpleArray<ON_Curve*>& loop)
     for (int i = 0; i < x_event.Count(); i++) {
 	// Find tangent intersections.
 	// What should we do if it's ccx_overlap?
-	if (polycurve.TangentAt(x_event[i].m_a[0]).IsParallelTo(linecurve.m_line.Direction()))
+	if (polycurve.TangentAt(x_event[i].m_a[0]).IsParallelTo(linecurve.m_line.Direction(), ANGLE_TOL))
 	    count++;
     }
 
@@ -1253,8 +1254,69 @@ IsPointInsideBrep(const ON_3dPoint& pt, const ON_Brep* brep, ON_SimpleArray<Subs
 }
 
 
+HIDDEN bool
+IsFaceInsideBrep(const TrimmedFace* tface, const ON_Brep* brep, ON_SimpleArray<Subsurface*>& surf_tree)
+{
+    if (tface == NULL || brep == NULL)
+	return false;
+
+    const ON_BrepFace* bface = tface->m_face;
+    if (bface == NULL || !bface->BoundingBox().Intersection(brep->BoundingBox()))
+	return false;
+
+    if (tface->m_outerloop.Count() == 0) {
+	bu_log("IsFaceInsideBrep(): the input TrimmedFace is not trimmed.\n");
+	return false;
+    }
+
+    ON_PolyCurve polycurve;
+    if (!IsLoopValid(tface->m_outerloop, ON_ZERO_TOLERANCE, &polycurve)) {
+	return false;
+    }
+
+    // Get a point inside the TrimmedFace, and then call IsPointInsideBrep().
+    // First, try the center of its 2D domain.
+    const int try_count = 10;
+    ON_BoundingBox bbox =  polycurve.BoundingBox();
+    bool found = false;
+    ON_2dPoint test_pt2d;
+    ON_RandomNumberGenerator rng;
+    for (int i = 0; i < try_count; i++) {
+	// Get a random point inside the outerloop's bounding box.
+	double x = rng.RandomDouble(bbox.m_min.x, bbox.m_max.x);
+	double y = rng.RandomDouble(bbox.m_min.y, bbox.m_max.y);
+	test_pt2d = ON_2dPoint(x, y);
+	if (IsPointInsideLoop(test_pt2d, tface->m_outerloop)
+	    && !IsPointOnLoop(test_pt2d, tface->m_outerloop)) {
+	    unsigned int j = 0;
+	    // The test point should not be inside an innerloop
+	    for (j = 0; j < tface->m_innerloop.size(); j++) {
+		if (IsPointInsideLoop(test_pt2d, tface->m_innerloop[j])
+		    || IsPointOnLoop(test_pt2d, tface->m_innerloop[j]))
+		    break;
+	    }
+	    if (j == tface->m_innerloop.size()) {
+		// We find a valid test point
+		found = true;
+		break;
+	    }
+	}
+    }
+
+    if (!found) {
+	bu_log("Cannot find a point inside this trimmed face. Aborted.\n");
+	return false;
+    }
+
+    ON_3dPoint test_pt3d = tface->m_face->PointAt(test_pt2d.x, test_pt2d.y);
+    if (DEBUG_BREP_BOOLEAN)
+	bu_log("valid test point: (%g, %g, %g)\n", test_pt3d.x, test_pt3d.y, test_pt3d.z);
+    return IsPointInsideBrep(test_pt3d, brep, surf_tree);
+}
+
+
 int
-ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSED(operation))
+ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type operation)
 {
     int facecount1 = brepA->m_F.Count();
     int facecount2 = brepB->m_F.Count();
@@ -1450,31 +1512,53 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
     }
 #endif	// #if USE_CONNECTIVITY_GRAPH
 
+    ON_SimpleArray<Subsurface*> surf_treeA, surf_treeB;
+    for (int i = 0; i < facecount1; i++)
+	surf_treeA.Append(NULL);
+    for (int i = 0; i < facecount2; i++)
+	surf_treeB.Append(NULL);
+
     for (int i = 0; i < trimmedfaces.Count(); i++) {
 	const ON_SimpleArray<TrimmedFace*>& splitted = trimmedfaces[i];
 	const ON_Surface* surf = splitted.Count() ? splitted[0]->m_face->SurfaceOf() : NULL;
-	/* TODO: Perform inside-outside test to decide whether the trimmed face
-	 * should be used in the final b-rep structure or not.
+	/* Perform inside-outside test to decide whether the trimmed face should
+	 * be used in the final b-rep structure or not.
 	 * Different operations should be dealt with accordingly.
-	 * Another solution is to use connectivity graphs which represents the
-	 * topological structure of the b-rep. This can reduce time-consuming
-	 * inside-outside tests.
-	 * Here we just use all of these trimmed faces.
+	 * Use connectivity graphs (optional) which represents the topological
+	 * structure of the b-rep. This can reduce time-consuming inside-outside
+	 * tests.
 	 */
+	const ON_Brep* another_brep = i >= facecount1 ? brepA : brepB;
+	ON_SimpleArray<Subsurface*>& surf_tree = i >= facecount1 ? surf_treeA : surf_treeB;
 	for (int j = 0; j < splitted.Count(); j++) {
-	    // Add the surfaces, faces, loops, trims, vertices, edges, etc.
-	    // to the brep structure.
-	    ON_Surface *new_surf = surf->Duplicate();
-	    int surfindex = brepO->AddSurface(new_surf);
-	    ON_BrepFace& new_face = brepO->NewFace(surfindex);
+	    bool belong_to_final = false;
+	    if (IsFaceInsideBrep(splitted[j], another_brep, surf_tree)) {
+		if (DEBUG_BREP_BOOLEAN)
+		    bu_log("The trimmed face is inside the other brep.\n");
+		if (operation == BOOLEAN_INTERSECT || (operation == BOOLEAN_DIFF && i >= facecount1))
+		    belong_to_final = true;
+	    } else {
+		if (DEBUG_BREP_BOOLEAN)
+		    bu_log("The trimmed face is not inside the other brep.\n");
+		if (operation == BOOLEAN_UNION || (operation == BOOLEAN_DIFF && i < facecount1))
+		    belong_to_final = true;
+	    }
 
-	    add_elements(brepO, new_face, splitted[j]->m_outerloop, ON_BrepLoop::outer);
-	    // ON_BrepLoop &loop = brepO->m_L[brepO->m_L.Count() - 1];
-	    for (unsigned int k = 0; k < splitted[j]->m_innerloop.size(); k++)
-		add_elements(brepO, new_face, splitted[j]->m_innerloop[k], ON_BrepLoop::inner);
+	    if (belong_to_final) {
+		// Add the surfaces, faces, loops, trims, vertices, edges, etc.
+		// to the brep structure.
+		ON_Surface *new_surf = surf->Duplicate();
+		int surfindex = brepO->AddSurface(new_surf);
+		ON_BrepFace& new_face = brepO->NewFace(surfindex);
 
-	    brepO->SetTrimIsoFlags(new_face);
-	    brepO->FlipFace(new_face);
+		add_elements(brepO, new_face, splitted[j]->m_outerloop, ON_BrepLoop::outer);
+		// ON_BrepLoop &loop = brepO->m_L[brepO->m_L.Count() - 1];
+		for (unsigned int k = 0; k < splitted[j]->m_innerloop.size(); k++)
+		    add_elements(brepO, new_face, splitted[j]->m_innerloop[k], ON_BrepLoop::inner);
+
+		brepO->SetTrimIsoFlags(new_face);
+		brepO->FlipFace(new_face);
+	    }
 	}
     }
 
