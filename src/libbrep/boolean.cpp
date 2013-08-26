@@ -39,7 +39,8 @@
 
 #define DEBUG_BREP_BOOLEAN 1
 #define USE_CONNECTIVITY_GRAPH 1
-#define INTERSECTION_TOL 0.001
+#define INTERSECTION_TOL 1e-4
+#define ANGLE_TOL ON_PI/1800.0
 
 
 struct IntersectPoint {
@@ -373,7 +374,7 @@ IsPointInsideLoop(const ON_2dPoint& pt, const ON_SimpleArray<ON_Curve*>& loop)
     for (int i = 0; i < x_event.Count(); i++) {
 	// Find tangent intersections.
 	// What should we do if it's ccx_overlap?
-	if (polycurve.TangentAt(x_event[i].m_a[0]).IsParallelTo(linecurve.m_line.Direction()))
+	if (polycurve.TangentAt(x_event[i].m_a[0]).IsParallelTo(linecurve.m_line.Direction(), ANGLE_TOL))
 	    count++;
     }
 
@@ -1275,28 +1276,41 @@ IsFaceInsideBrep(const TrimmedFace* tface, const ON_Brep* brep, ON_SimpleArray<S
 
     // Get a point inside the TrimmedFace, and then call IsPointInsideBrep().
     // First, try the center of its 2D domain.
-    ON_2dPoint test_pt2d = ON_2dPoint(tface->m_face->Domain(0).Mid(), tface->m_face->Domain(1).Mid());
-    if (!IsPointInsideLoop(test_pt2d, tface->m_outerloop)) {
-	// The first point tried is not valid.
-	// Second, try the mid point of PointAt(0) and PointAt(0.5)
-	ON_2dPoint left = polycurve.PointAtStart();
-	ON_2dPoint right = polycurve.PointAt(polycurve.Domain().Mid());
-	test_pt2d = (left + right) * 0.5;
-	if (!IsPointInsideLoop(test_pt2d, tface->m_outerloop)) {
-	    // It's not valid again.
-	    // Third, try the mid point of PointAt(0.25) and PointAt(0.75)
-	    left = polycurve.PointAt(polycurve.Domain().ParameterAt(0.25));
-	    right = polycurve.PointAt(polycurve.Domain().ParameterAt(0.75));
-	    test_pt2d = (left + right) * 0.5;
-	    if (!IsPointInsideLoop(test_pt2d, tface->m_outerloop)) {
-		// Don't try again.
-		bu_log("Cannot find a point inside this trimmed face. Aborted.\n");
-		return false;
+    const int try_count = 10;
+    ON_BoundingBox bbox =  polycurve.BoundingBox();
+    bool found = false;
+    ON_2dPoint test_pt2d;
+    ON_RandomNumberGenerator rng;
+    for (int i = 0; i < try_count; i++) {
+	// Get a random point inside the outerloop's bounding box.
+	double x = rng.RandomDouble(bbox.m_min.x, bbox.m_max.x);
+	double y = rng.RandomDouble(bbox.m_min.y, bbox.m_max.y);
+	test_pt2d = ON_2dPoint(x, y);
+	if (IsPointInsideLoop(test_pt2d, tface->m_outerloop)
+	    && !IsPointOnLoop(test_pt2d, tface->m_outerloop)) {
+	    unsigned int j = 0;
+	    // The test point should not be inside an innerloop
+	    for (j = 0; j < tface->m_innerloop.size(); j++) {
+		if (IsPointInsideLoop(test_pt2d, tface->m_innerloop[j])
+		    || IsPointOnLoop(test_pt2d, tface->m_innerloop[j]))
+		    break;
+	    }
+	    if (j == tface->m_innerloop.size()) {
+		// We find a valid test point
+		found = true;
+		break;
 	    }
 	}
     }
 
+    if (!found) {
+	bu_log("Cannot find a point inside this trimmed face. Aborted.\n");
+	return false;
+    }
+
     ON_3dPoint test_pt3d = tface->m_face->PointAt(test_pt2d.x, test_pt2d.y);
+    if (DEBUG_BREP_BOOLEAN)
+	bu_log("valid test point: (%g, %g, %g)\n", test_pt3d.x, test_pt3d.y, test_pt3d.z);
     return IsPointInsideBrep(test_pt3d, brep, surf_tree);
 }
 
