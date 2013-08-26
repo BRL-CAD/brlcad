@@ -44,7 +44,7 @@ int
 _ged_cmpattr_nocase(const void *p1, const void *p2)
 {
     return bu_strcasecmp(((struct bu_attribute_value_pair *)p1)->name,
-                         ((struct bu_attribute_value_pair *)p2)->name);
+			 ((struct bu_attribute_value_pair *)p2)->name);
 }
 
 int
@@ -58,7 +58,12 @@ int
 _ged_cmpattr_value_nocase(const void *p1, const void *p2)
 {
     return bu_strcasecmp(((struct bu_attribute_value_pair *)p1)->value,
-		         ((struct bu_attribute_value_pair *)p2)->value);
+			 ((struct bu_attribute_value_pair *)p2)->value);
+}
+
+void
+_ged_pretty_print()
+{
 }
 
 int
@@ -144,38 +149,38 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
 
-        for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
-            int len = (int)strlen(avpp->name);
-            if (len > max_attr_name_len) {
-                max_attr_name_len = len;
-            }
-        }
+	for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
+	    int len = (int)strlen(avpp->name);
+	    if (len > max_attr_name_len) {
+		max_attr_name_len = len;
+	    }
+	}
 
-        if (argc == 3) {
-            /* just list the already sorted attribute-value pairs */
+	if (argc == 3) {
+	    /* just list the already sorted attribute-value pairs */
 	    for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
 		bu_vls_printf(gedp->ged_result_str, "\t%-*.*s    %s\n",
 			      max_attr_name_len, max_attr_name_len,
 			      avpp->name, avpp->value);
 	    }
 	} else {
-            /* argv[3] is the sort type: 'case', 'nocase', 'value', 'value-nocase' */
-            if (BU_STR_EQUAL(argv[3], NOCASE)) {
-                qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmpattr_nocase);
-            } else if (BU_STR_EQUAL(argv[3], VALUE)) {
-                qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmpattr_value);
-            } else if (BU_STR_EQUAL(argv[3], VALUE_NOCASE)) {
-                qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmpattr_value_nocase);
-            } else if (BU_STR_EQUAL(argv[3], CASE)) {
-              ; /* don't need to do anything */
-            }
+	    /* argv[3] is the sort type: 'case', 'nocase', 'value', 'value-nocase' */
+	    if (BU_STR_EQUAL(argv[3], NOCASE)) {
+		qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmpattr_nocase);
+	    } else if (BU_STR_EQUAL(argv[3], VALUE)) {
+		qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmpattr_value);
+	    } else if (BU_STR_EQUAL(argv[3], VALUE_NOCASE)) {
+		qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmpattr_value_nocase);
+	    } else if (BU_STR_EQUAL(argv[3], CASE)) {
+	      ; /* don't need to do anything */
+	    }
 	    /* now list all the attributes */
 	    for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
 		bu_vls_printf(gedp->ged_result_str, "\t%-*.*s    %s\n",
 			      max_attr_name_len, max_attr_name_len,
 			      avpp->name, avpp->value);
 	    }
-        }
+	}
     } else if (BU_STR_EQUAL(argv[1], "get")) {
 	if (argc == 3) {
 	    /* just list all the attributes */
