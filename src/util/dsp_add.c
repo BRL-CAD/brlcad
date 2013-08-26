@@ -37,8 +37,7 @@
 
 
 /* declarations to support use of bu_getopt() system call */
-// static const char optstring[] = "h?";
-const char optstring[] = "h?";
+static const char optstring[] = "h?";
 static const char progname[] = "dsp_add";
 static const char usage[] = "Usage: %s dsp_1 dsp_2 > dsp_3\n";
 
