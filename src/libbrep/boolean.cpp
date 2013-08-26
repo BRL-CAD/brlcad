@@ -1253,6 +1253,54 @@ IsPointInsideBrep(const ON_3dPoint& pt, const ON_Brep* brep, ON_SimpleArray<Subs
 }
 
 
+HIDDEN bool
+IsFaceInsideBrep(const TrimmedFace* tface, const ON_Brep* brep, ON_SimpleArray<Subsurface*>& surf_tree)
+{
+    if (tface == NULL || brep == NULL)
+	return false;
+
+    const ON_BrepFace* bface = tface->m_face;
+    if (bface == NULL || !bface->BoundingBox().Intersection(brep->BoundingBox()))
+	return false;
+
+    if (tface->m_outerloop.Count() == 0) {
+	bu_log("IsFaceInsideBrep(): the input TrimmedFace is not trimmed.\n");
+	return false;
+    }
+
+    ON_PolyCurve polycurve;
+    if (!IsLoopValid(tface->m_outerloop, ON_ZERO_TOLERANCE, &polycurve)) {
+	return false;
+    }
+
+    // Get a point inside the TrimmedFace, and then call IsPointInsideBrep().
+    // First, try the center of its 2D domain.
+    ON_2dPoint test_pt2d = ON_2dPoint(tface->m_face->Domain(0).Mid(), tface->m_face->Domain(1).Mid());
+    if (!IsPointInsideLoop(test_pt2d, tface->m_outerloop)) {
+	// The first point tried is not valid.
+	// Second, try the mid point of PointAt(0) and PointAt(0.5)
+	ON_2dPoint left = polycurve.PointAtStart();
+	ON_2dPoint right = polycurve.PointAt(polycurve.Domain().Mid());
+	test_pt2d = (left + right) * 0.5;
+	if (!IsPointInsideLoop(test_pt2d, tface->m_outerloop)) {
+	    // It's not valid again.
+	    // Third, try the mid point of PointAt(0.25) and PointAt(0.75)
+	    left = polycurve.PointAt(polycurve.Domain().ParameterAt(0.25));
+	    right = polycurve.PointAt(polycurve.Domain().ParameterAt(0.75));
+	    test_pt2d = (left + right) * 0.5;
+	    if (!IsPointInsideLoop(test_pt2d, tface->m_outerloop)) {
+		// Don't try again.
+		bu_log("Cannot find a point inside this trimmed face. Aborted.\n");
+		return false;
+	    }
+	}
+    }
+
+    ON_3dPoint test_pt3d = tface->m_face->PointAt(test_pt2d.x, test_pt2d.y);
+    return IsPointInsideBrep(test_pt3d, brep, surf_tree);
+}
+
+
 int
 ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSED(operation))
 {
@@ -1450,18 +1498,32 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, int UNUSE
     }
 #endif	// #if USE_CONNECTIVITY_GRAPH
 
+    ON_SimpleArray<Subsurface*> surf_treeA, surf_treeB;
+    for (int i = 0; i < facecount1; i++)
+	surf_treeA.Append(NULL);
+    for (int i = 0; i < facecount2; i++)
+	surf_treeB.Append(NULL);
+
     for (int i = 0; i < trimmedfaces.Count(); i++) {
 	const ON_SimpleArray<TrimmedFace*>& splitted = trimmedfaces[i];
 	const ON_Surface* surf = splitted.Count() ? splitted[0]->m_face->SurfaceOf() : NULL;
-	/* TODO: Perform inside-outside test to decide whether the trimmed face
-	 * should be used in the final b-rep structure or not.
+	/* Perform inside-outside test to decide whether the trimmed face should
+	 * be used in the final b-rep structure or not.
 	 * Different operations should be dealt with accordingly.
-	 * Another solution is to use connectivity graphs which represents the
-	 * topological structure of the b-rep. This can reduce time-consuming
-	 * inside-outside tests.
-	 * Here we just use all of these trimmed faces.
+	 * Use connectivity graphs (optional) which represents the topological
+	 * structure of the b-rep. This can reduce time-consuming inside-outside
+	 * tests.
 	 */
+	const ON_Brep* another_brep = i >= facecount1 ? brepA : brepB;
+	ON_SimpleArray<Subsurface*>& surf_tree = i >= facecount1 ? surf_treeA : surf_treeB;
 	for (int j = 0; j < splitted.Count(); j++) {
+	    // Just for test. WIP.
+	    if (IsFaceInsideBrep(splitted[j], another_brep, surf_tree)) {
+		bu_log("The trimmed face is inside the other brep.\n");
+	    } else {
+		bu_log("The trimmed face is not inside the other brep.\n");
+	    }
+
 	    // Add the surfaces, faces, loops, trims, vertices, edges, etc.
 	    // to the brep structure.
 	    ON_Surface *new_surf = surf->Duplicate();
