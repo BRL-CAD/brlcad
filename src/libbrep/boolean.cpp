@@ -28,6 +28,7 @@
 #include <assert.h>
 #include <vector>
 #include <stack>
+#include <queue>
 #include <algorithm>
 #include "bio.h"
 
@@ -234,6 +235,12 @@ struct TrimmedFace {
     ON_SimpleArray<ON_Curve*> m_outerloop;
     std::vector<ON_SimpleArray<ON_Curve*> > m_innerloop;
     const ON_BrepFace *m_face;
+    enum {
+	UNKNOWN = -1,
+	NOT_BELONG = 0,
+	BELONG = 1
+    } m_belong_to_final;
+    bool m_rev;
 #if USE_CONNECTIVITY_GRAPH
     // Connectivity graph support
     ON_SimpleArray<TrimmedFace*> m_neighbors;
@@ -243,6 +250,15 @@ struct TrimmedFace {
     // which SSI curves are used.
     ON_SimpleArray<SSICurveInfo> m_ssi_info;
 #endif
+
+    // Default constructor
+    TrimmedFace()
+    {
+	m_face = NULL;
+	m_belong_to_final = UNKNOWN;
+	m_rev = false;
+    }
+
     TrimmedFace *Duplicate() const
     {
 	TrimmedFace *out = new TrimmedFace();
@@ -1520,7 +1536,6 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 
     for (int i = 0; i < trimmedfaces.Count(); i++) {
 	const ON_SimpleArray<TrimmedFace*>& splitted = trimmedfaces[i];
-	const ON_Surface* surf = splitted.Count() ? splitted[0]->m_face->SurfaceOf() : NULL;
 	/* Perform inside-outside test to decide whether the trimmed face should
 	 * be used in the final b-rep structure or not.
 	 * Different operations should be dealt with accordingly.
@@ -1531,25 +1546,50 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 	const ON_Brep* another_brep = i >= facecount1 ? brepA : brepB;
 	ON_SimpleArray<Subsurface*>& surf_tree = i >= facecount1 ? surf_treeA : surf_treeB;
 	for (int j = 0; j < splitted.Count(); j++) {
-	    bool belong_to_final = false;
-	    bool flip_face = false;
+	    if (splitted[j]->m_belong_to_final != TrimmedFace::UNKNOWN) {
+		// Visited before, don't need to test again
+		continue;
+	    }
+	    splitted[j]->m_belong_to_final = TrimmedFace::NOT_BELONG;
+	    splitted[j]->m_rev = false;
 	    if (IsFaceInsideBrep(splitted[j], another_brep, surf_tree)) {
 		if (DEBUG_BREP_BOOLEAN)
 		    bu_log("The trimmed face is inside the other brep.\n");
 		if (operation == BOOLEAN_INTERSECT || (operation == BOOLEAN_DIFF && i >= facecount1))
-		    belong_to_final = true;
+		    splitted[j]->m_belong_to_final = TrimmedFace::BELONG;
 		if (operation == BOOLEAN_DIFF)
-		    flip_face = true;
+		    splitted[j]->m_rev = true;
 	    } else {
 		if (DEBUG_BREP_BOOLEAN)
 		    bu_log("The trimmed face is not inside the other brep.\n");
 		if (operation == BOOLEAN_UNION || (operation == BOOLEAN_DIFF && i < facecount1))
-		    belong_to_final = true;
+		    splitted[j]->m_belong_to_final = TrimmedFace::BELONG;
 		if (operation == BOOLEAN_UNION)
-		    flip_face = true;
+		    splitted[j]->m_rev = true;
 	    }
+#if USE_CONNECTIVITY_GRAPH
+	    // BFS the connectivity graph and marked all connected trimmed faces.
+	    std::queue<TrimmedFace*> q;
+	    q.push(splitted[j]);
+	    while (!q.empty()) {
+		TrimmedFace* front = q.front();
+		q.pop();
+		for (int k = 0; k < front->m_neighbors.Count(); k++) {
+		    if (front->m_neighbors[k]->m_belong_to_final == TrimmedFace::UNKNOWN) {
+			front->m_neighbors[k]->m_belong_to_final = splitted[j]->m_belong_to_final;
+			q.push(front->m_neighbors[k]);
+		    }
+		}
+	    }
+#endif
+	}
+    }
 
-	    if (belong_to_final) {
+    for (int i = 0; i < trimmedfaces.Count(); i++) {
+	const ON_SimpleArray<TrimmedFace*>& splitted = trimmedfaces[i];
+	const ON_Surface* surf = splitted.Count() ? splitted[0]->m_face->SurfaceOf() : NULL;
+	for (int j = 0; j < splitted.Count(); j++) {
+	    if (splitted[j]->m_belong_to_final == TrimmedFace::BELONG) {
 		// Add the surfaces, faces, loops, trims, vertices, edges, etc.
 		// to the brep structure.
 		ON_Surface *new_surf = surf->Duplicate();
@@ -1563,7 +1603,7 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 
 		brepO->SetTrimIsoFlags(new_face);
 		const ON_BrepFace& original_face = i >= facecount1 ? brepB->m_F[i - facecount1] : brepA->m_F[i];
-		if (original_face.m_bRev ^ flip_face)
+		if (original_face.m_bRev ^ splitted[j]->m_rev)
 		    brepO->FlipFace(new_face);
 	    }
 	}
