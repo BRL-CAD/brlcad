@@ -76,6 +76,14 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* In tree.c line 531, the initialization of the local storage of the
+  full path in stp->st_path is conditionalized on the specifics of
+  the tree structure.  Why?  Could we get away with always initializing
+  (or never initializing, if it is not used) the st_path?  Current
+  behavior is odd - if a region has a solid unioned under it the st_path
+  is not set, but if it has a comb unioned in the path is set - is this
+  an optimization, and if so is it necessary?
+
 * investigate integrating Blender's (OSL-based) Cycles engine:
   http://code.blender.org/index.php/2013/08/cycles-render-engine-released-with-permissive-license/
 
