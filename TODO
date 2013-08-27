@@ -76,6 +76,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* get rid of the -P#processors user option (except rt* tools) common
+  on utilities.  call bu_avail_cpus() and provide an environment
+  variable override used by the library.
+
 * In tree.c line 531, the initialization of the local storage of the
   full path in stp->st_path is conditionalized on the specifics of
   the tree structure.  Why?  Could we get away with always initializing
