@@ -473,7 +473,7 @@ master_networking(void *ptr)
 			 * use to pass along to the slaves to associate a project id with.
 			 */
 			i = 0;
-			while (master.wid_list[i] && i < ADRT_MAX_WORKSPACE_NUM)
+			while (i < ADRT_MAX_WORKSPACE_NUM && master.wid_list[i])
 			    i++;
 
 			/* Mark this ID as being in use. */
