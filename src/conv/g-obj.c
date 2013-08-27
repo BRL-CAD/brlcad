@@ -228,7 +228,7 @@ main(int argc, char **argv)
 	printf("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
 	       regions_tried, regions_converted, percent);
 	percent = ((double)regions_written * 100.0) / regions_tried;
-	printf("                  %d triangulated successfully. %g%%\n",
+	printf("                 %d triangulated successfully. %g%%\n",
 	       regions_written, percent);
     }
 
@@ -653,7 +653,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 
 	npercent = (float)(regions_converted * 100) / regions_tried;
 	tpercent = (float)(regions_written * 100) / regions_tried;
-	printf("Tried %d regions, %d conv. to NMG's %d conv. to tri. nmgper = %.2f%% triper = %.2f%% \n",
+	printf("Tried %d regions; %d conv. to NMG's, %d conv. to tri.; nmgper = %.2f%%, triper = %.2f%%\n",
 	       regions_tried, regions_converted, regions_written, npercent, tpercent);
     }
 
