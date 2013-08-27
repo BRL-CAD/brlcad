@@ -85,11 +85,9 @@ master_dispatcher_generate (void *data, int data_len, int image_w, int image_h, 
     tile.format = image_format;
     tile.frame = dispatcher_frame;
 
-    for (i = 0; i < image_h; i += tile.size_y)
-    {
+    for (i = 0; i < image_h; i += tile.size_y) {
 	tile.orig_y = i;
-	for (n = 0; n < image_w; n += tile.size_x)
-	{
+	for (n = 0; n < image_w; n += tile.size_x) {
 	    tile.orig_x = n;
 	    TCOPY(camera_tile_t, &tile, 0, dispatcher_mesg.data, data_len);
 	    tienet_master_push(dispatcher_mesg.data, size);
@@ -100,6 +98,7 @@ master_dispatcher_generate (void *data, int data_len, int image_w, int image_h, 
 
     dispatcher_frame = (dispatcher_frame + 1) % (1<<14);
 }
+
 
 /*
  * Local Variables:

@@ -380,12 +380,12 @@ master_networking(void *ptr)
     /* listen for connections */
     observer_listener_result = listen(master.socklist->num, 3);
 
-    if(go_daemon_mode) {
+    if (go_daemon_mode) {
 	/* spinlock until other socket is good */
-	while(master_listener_result == 1)
+	while (master_listener_result == 1)
 	    sleep(0);
 	/* if both sockets are listening, background. */
-	if(master_listener_result == 0 && observer_listener_result == 0)
+	if (master_listener_result == 0 && observer_listener_result == 0)
 	    daemon(0, 0);
     }
 
@@ -709,11 +709,11 @@ int main(int argc, char **argv) {
 		break;
 
 	    case 'v':
-		if(!(bu_debug & BU_DEBUG_UNUSED_1))
+		if (!(bu_debug & BU_DEBUG_UNUSED_1))
 		    bu_debug |= BU_DEBUG_UNUSED_1;
-		else if(!(bu_debug & BU_DEBUG_UNUSED_2))
+		else if (!(bu_debug & BU_DEBUG_UNUSED_2))
 		    bu_debug |= BU_DEBUG_UNUSED_2;
-		else if(!(bu_debug & BU_DEBUG_UNUSED_3))
+		else if (!(bu_debug & BU_DEBUG_UNUSED_3))
 		    bu_debug |= BU_DEBUG_UNUSED_3;
 		else
 		    bu_log("Too verbose!\n");
