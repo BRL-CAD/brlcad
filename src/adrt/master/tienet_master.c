@@ -182,7 +182,7 @@ void tienet_master_init(int port, void fcb_result(tienet_buffer_t *result), char
     tienet_master_verbose = verbose;
     tienet_master_buffer_size = buffer_size;
 
-    BU_ALLOC(tienet_master_buffer, tienet_master_data_t)
+    BU_ALLOC(tienet_master_buffer, tienet_master_data_t);
 
     tienet_master_fcb_result = fcb_result;
     tienet_master_active_slaves = 0;
@@ -343,20 +343,23 @@ void tienet_master_wait()
 
 void tienet_master_connect_slaves(fd_set *readfds)
 {
-    FILE				*fh;
-    struct	sockaddr_in	daemon, slave;
-    struct	hostent		slave_ent;
-    tienet_master_socket_t	*tmp;
-    short				op;
-    char				host[64], *temp;
-    int				daemon_socket, port, slave_ver_key;
-
+    FILE *fh;
+    struct sockaddr_in daemon, slave;
+    struct hostent slave_ent;
+    tienet_master_socket_t *tmp;
+    short op;
+    char host[64], *temp;
+    int slave_ver_key;
 
     fh = fopen(tienet_master_list, "rb");
     if (fh) {
+
 	while (!feof(fh)) {
 	    bu_fgets(host, 64, fh);
+
 	    if (host[0]) {
+		int port;
+
 		port = TN_SLAVE_PORT;
 		temp = strchr(host, ':');
 		if (temp) {
@@ -368,6 +371,8 @@ void tienet_master_connect_slaves(fd_set *readfds)
 
 		/* check to see if this slave is in dns */
 		if (gethostbyname(host)) {
+		    int daemon_socket;
+
 		    slave_ent = gethostbyname(host)[0];
 
 		    /* This is what we're connecting to */
