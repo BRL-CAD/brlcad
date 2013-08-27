@@ -203,8 +203,8 @@ master_result(tienet_buffer_t *result)
     TCOPY(uint16_t, result->data, ind, &wid, 0);
     ind += 2;
 
-    if(bu_debug & BU_DEBUG_UNUSED_2 && lastop != op) {
-	bu_log("ADRT Master OP: %d %s\n", op, adrt_work_table[op-ADRT_WORK_BASE]);
+    if (bu_debug & BU_DEBUG_UNUSED_2 && lastop != op) {
+	bu_log("ADRT Master OP: %d\n", op);
 	lastop = op;
     }
 
