@@ -1218,6 +1218,14 @@ wgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		    VMOVE(glpt, *pt);
 		    glNormal3dv(glpt);
 		    break;
+		case BN_VLIST_POINT_DRAW:
+		    if (first == 0)
+			glEnd();
+		    first = 0;
+		    glPointSize(1.0);
+		    glBegin(GL_POINTS);
+		    glVertex3dv(dpt);
+		    break;
 	    }
 	}
     }
