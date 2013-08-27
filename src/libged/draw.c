@@ -243,7 +243,9 @@ bound_solid(struct ged *gedp, struct solid *sp)
 		case BN_VLIST_POLY_VERTNORM:
 		case BN_VLIST_TRI_START:
 		case BN_VLIST_TRI_VERTNORM:
-		    /* Has normal vector, not location */
+		case BN_VLIST_POINT_SIZE:
+		case BN_VLIST_LINE_WIDTH:
+		    /* attribute, not location */
 		    break;
 		case BN_VLIST_LINE_MOVE:
 		case BN_VLIST_LINE_DRAW:

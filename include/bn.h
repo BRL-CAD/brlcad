@@ -4107,8 +4107,10 @@ struct bn_vlist  {
 #define BN_VLIST_TRI_DRAW	9	/**< @brief subsequent triangle vertex */
 #define BN_VLIST_TRI_END	10	/**< @brief last vert (repeats 1st), draw poly */
 #define BN_VLIST_TRI_VERTNORM	11	/**< @brief per-vertex normal, for interpolation */
-#define BN_VLIST_POINT_DRAW	12	/**< @brief  Draw a single point */
-#define BN_VLIST_CMD_MAX	12	/**< @brief  Max command number */
+#define BN_VLIST_POINT_DRAW	12	/**< @brief Draw a single point */
+#define BN_VLIST_POINT_SIZE	13	/**< @brief specify point pixel size */
+#define BN_VLIST_LINE_WIDTH	14	/**< @brief specify line pixel width */
+#define BN_VLIST_CMD_MAX	14	/**< @brief Max command number */
 
 /**
  * Applications that are going to use BN_ADD_VLIST and BN_GET_VLIST
@@ -4145,6 +4147,32 @@ struct bn_vlist  {
 	VMOVE(_vp->pt[_vp->nused], (pnt)); \
 	_vp->cmd[_vp->nused++] = (draw); \
     }
+
+/** Set a point size to apply to the vlist elements that follow. */
+#define BN_VLIST_SET_POINT_SIZE(_free_hd, _dest_hd, _size) { \
+	struct bn_vlist *_vp; \
+	BU_CK_LIST_HEAD(_dest_hd); \
+	_vp = BU_LIST_LAST(bn_vlist, (_dest_hd)); \
+	if (BU_LIST_IS_HEAD(_vp, (_dest_hd)) || _vp->nused >= BN_VLIST_CHUNK) { \
+	    BN_GET_VLIST(_free_hd, _vp); \
+	    BU_LIST_INSERT((_dest_hd), &(_vp->l)); \
+	} \
+	_vp->pt[_vp->nused][0] = (_size); \
+	_vp->cmd[_vp->nused++] = BN_VLIST_POINT_SIZE; \
+}
+
+/** Set a line width to apply to the vlist elements that follow. */
+#define BN_VLIST_SET_LINE_WIDTH(_free_hd, _dest_hd, _width) { \
+	struct bn_vlist *_vp; \
+	BU_CK_LIST_HEAD(_dest_hd); \
+	_vp = BU_LIST_LAST(bn_vlist, (_dest_hd)); \
+	if (BU_LIST_IS_HEAD(_vp, (_dest_hd)) || _vp->nused >= BN_VLIST_CHUNK) { \
+	    BN_GET_VLIST(_free_hd, _vp); \
+	    BU_LIST_INSERT((_dest_hd), &(_vp->l)); \
+	} \
+	_vp->pt[_vp->nused][0] = (_width); \
+	_vp->cmd[_vp->nused++] = BN_VLIST_LINE_WIDTH; \
+}
 
 /**
  * B N _ V L B L O C K

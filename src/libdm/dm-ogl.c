@@ -1629,6 +1629,10 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
     register int first;
     register int mflag = 1;
     static float black[4] = {0.0, 0.0, 0.0, 0.0};
+    GLfloat originalPointSize, originalLineWidth;
+
+    glGetFloatv(GL_POINT_SIZE, &originalPointSize);
+    glGetFloatv(GL_LINE_WIDTH, &originalLineWidth);
 
     if (dmp->dm_debugLevel)
 	bu_log("ogl_drawVList()\n");
@@ -1641,6 +1645,7 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 	int *cmd = tvp->cmd;
 	point_t *pt = tvp->pt;
 	for (i = 0; i < nused; i++, cmd++, pt++) {
+	    GLfloat pointSize, lineWidth;
 	    GLdouble dpt[3];
 	    VMOVE(dpt, *pt);
 
@@ -1734,9 +1739,20 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		    if (first == 0)
 			glEnd();
 		    first = 0;
-		    glPointSize(1.0);
 		    glBegin(GL_POINTS);
 		    glVertex3dv(dpt);
+		    break;
+		case BN_VLIST_LINE_WIDTH:
+		    lineWidth = (GLfloat)pt[0][0];
+		    if (lineWidth > 0.0) {
+			glLineWidth(lineWidth);
+		    }
+		    break;
+		case BN_VLIST_POINT_SIZE:
+		    pointSize = (GLfloat)pt[0][0];
+		    if (pointSize > 0.0) {
+			glPointSize(pointSize);
+		    }
 		    break;
 	    }
 	}
@@ -1747,6 +1763,9 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 
     if (dmp->dm_light && dmp->dm_transparency)
 	glDisable(GL_BLEND);
+
+    glPointSize(originalPointSize);
+    glLineWidth(originalLineWidth);
 
     return TCL_OK;
 }
