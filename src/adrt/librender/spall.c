@@ -191,16 +191,16 @@ render_spall_init(render_t *render, const char *buf)
     double ray_pos[3], ray_dir[3];
     double scan;
 
-    if(buf == NULL)
+    if (buf == NULL)
 	return -1;
 
     render->work = render_spall_work;
     render->free = render_spall_free;
 
-    sscanf(buf, "(%lg %lg %lg) (%lg %lg %lg) %lg",
-	   &ray_pos[0], &ray_pos[1], &ray_pos[2],
-	   &ray_dir[0], &ray_dir[1], &ray_dir[2],
-	   &scan);
+    bu_sscanf(buf, "(%lg %lg %lg) (%lg %lg %lg) %lg",
+	      &ray_pos[0], &ray_pos[1], &ray_pos[2],
+	      &ray_dir[0], &ray_dir[1], &ray_dir[2],
+	      &scan);
     angle = scan; /* double to fastf_t */
 
     BU_ALLOC(render->data, struct render_spall_s);
