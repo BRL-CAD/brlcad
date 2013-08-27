@@ -64,34 +64,33 @@ _ged_cmpattr_value_nocase(const void *p1, const void *p2)
 int
 _ged_pretty_print(struct ged *gedp, struct directory *dp, const char *name)
 {
-  if (dp->d_flags & RT_DIR_COMB) {
-    if (dp->d_flags & RT_DIR_REGION) {
-      bu_vls_printf(gedp->ged_result_str, "%s region:\n", name);
+    if (dp->d_flags & RT_DIR_COMB) {
+	if (dp->d_flags & RT_DIR_REGION) {
+	    bu_vls_printf(gedp->ged_result_str, "%s region:\n", name);
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "%s combination:\n", name);
+	}
+    } else if (dp->d_flags & RT_DIR_SOLID) {
+	struct rt_db_internal intern;
+	GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
+	bu_vls_printf(gedp->ged_result_str, "%s %s:\n", name, intern.idb_meth->ft_label);
+	rt_db_free_internal(&intern);
     } else {
-      bu_vls_printf(gedp->ged_result_str, "%s combination:\n", name);
+	switch (dp->d_major_type) {
+	    case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
+		bu_vls_printf(gedp->ged_result_str, "%s global:\n", name);
+		break;
+	    case DB5_MAJORTYPE_BINARY_MIME:
+		bu_vls_printf(gedp->ged_result_str, "%s binary(mime):\n", name);
+		break;
+	    case DB5_MAJORTYPE_BINARY_UNIF:
+		bu_vls_printf(gedp->ged_result_str, "%s %s:\n", name,
+			      binu_types[dp->d_minor_type]);
+		break;
+       }
     }
-  } else if (dp->d_flags & RT_DIR_SOLID) {
-    struct rt_db_internal intern;
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
-    bu_vls_printf(gedp->ged_result_str, "%s %s:\n", name, intern.idb_meth->ft_label);
-    rt_db_free_internal(&intern);
 
-  } else {
-    switch (dp->d_major_type) {
-	case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
-	  bu_vls_printf(gedp->ged_result_str, "%s global:\n", name);
-	  break;
-	case DB5_MAJORTYPE_BINARY_MIME:
-	  bu_vls_printf(gedp->ged_result_str, "%s binary(mime):\n", name);
-	  break;
-	case DB5_MAJORTYPE_BINARY_UNIF:
-	  bu_vls_printf(gedp->ged_result_str, "%s %s:\n", name,
-			binu_types[dp->d_minor_type]);
-	  break;
-    }
-  }
-
-  return GED_OK;
+    return GED_OK;
 }
 
 int
