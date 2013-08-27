@@ -1532,16 +1532,21 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 	ON_SimpleArray<Subsurface*>& surf_tree = i >= facecount1 ? surf_treeA : surf_treeB;
 	for (int j = 0; j < splitted.Count(); j++) {
 	    bool belong_to_final = false;
+	    bool flip_face = false;
 	    if (IsFaceInsideBrep(splitted[j], another_brep, surf_tree)) {
 		if (DEBUG_BREP_BOOLEAN)
 		    bu_log("The trimmed face is inside the other brep.\n");
 		if (operation == BOOLEAN_INTERSECT || (operation == BOOLEAN_DIFF && i >= facecount1))
 		    belong_to_final = true;
+		if (operation == BOOLEAN_DIFF)
+		    flip_face = true;
 	    } else {
 		if (DEBUG_BREP_BOOLEAN)
 		    bu_log("The trimmed face is not inside the other brep.\n");
 		if (operation == BOOLEAN_UNION || (operation == BOOLEAN_DIFF && i < facecount1))
 		    belong_to_final = true;
+		if (operation == BOOLEAN_UNION)
+		    flip_face = true;
 	    }
 
 	    if (belong_to_final) {
@@ -1557,7 +1562,9 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 		    add_elements(brepO, new_face, splitted[j]->m_innerloop[k], ON_BrepLoop::inner);
 
 		brepO->SetTrimIsoFlags(new_face);
-		brepO->FlipFace(new_face);
+		const ON_BrepFace& original_face = i >= facecount1 ? brepB->m_F[i - facecount1] : brepA->m_F[i];
+		if (original_face.m_bRev ^ flip_face)
+		    brepO->FlipFace(new_face);
 	    }
 	}
     }
