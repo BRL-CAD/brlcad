@@ -382,7 +382,7 @@ rt_hrt_print(register const struct soltab *stp)
  * turns out (by substituting X, Y, Z above into the sextic equation above)
  * to be a sextic equation S in 't' given below.
  *
- * S(t)=C6*t**6 + C5*t**5 + C4*t**4 + C3*t**3 + C2*t**2 + C1*t + C06 = 0.
+ * S(t)=C6*t**6 + C5*t**5 + C4*t**4 + C3*t**3 + C2*t**2 + C1*t + C0 = 0.
  *
  * where C0, C1, C2, C3, C4, C5, C6 are coefficients of the equation.
  *
