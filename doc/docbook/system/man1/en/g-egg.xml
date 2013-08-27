@@ -70,7 +70,7 @@ option tells the facetizer to use the marching cubes algorithm.
 option tells the facetizer to use the "bottess" algorithm.
 The
 <option>-P</option>
-option specifies the number of CPU's to be used, and also turns on a flag to enable the receiving of core dumps.</para>
+option specifies the number of CPU's to be used.</para>
 </refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
