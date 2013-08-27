@@ -149,9 +149,9 @@ BuildHierarchy(struct rt_wdb* outfp, std::string &uuid, ON_TextLog* dump)
 		std::string uuid2 = siter->second;
 		BuildHierarchy(outfp, uuid2, dump);
 	    }
-	    viter++;
+	    ++viter;
 	}
-	iter++;
+	++iter;
     }
     mk_lcomb(outfp, groupname.c_str(), &members, 0, NULL, NULL, NULL, 0);
 }
@@ -178,7 +178,7 @@ ProcessLayers(ONX_Model &model, ON_TextLog* dump)
     ON_UuidIndex uuidIndex;
     int i, count = model.m_layer_table.Count();
     dump->Print("Number of layers: %d\n", count);
-    for (i=0; i < count; i++) {
+    for (i=0; i < count; ++i) {
 	const ON_Layer& layer = model.m_layer_table[i];
 	ON_wString lname = layer.LayerName();
 	bu_strlcpy(name, ON_String(lname), sizeof(name));
@@ -275,7 +275,7 @@ main(int argc, char** argv)
 	model.Audit(true, &repair_count, dump, &warnings); // repair
 
 	dump->Print("%d objects were repaired.\n", repair_count);
-	for (warn_i=0; warn_i < warnings.Count(); warn_i++) {
+	for (warn_i=0; warn_i < warnings.Count(); ++warn_i) {
 	    dump->Print("%s\n", warnings[warn_i]);
 	}
 
@@ -294,7 +294,7 @@ main(int argc, char** argv)
     BU_LIST_INIT(&all_regions.l);
 
     dump->Print("\n");
-    for (int i = 0; i < model.m_object_table.Count(); i++) {
+    for (int i = 0; i < model.m_object_table.Count(); ++i) {
 
 	dump->Print("Object %d of %d:\n\n", i + 1, model.m_object_table.Count());
 
