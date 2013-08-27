@@ -100,7 +100,6 @@ Cad_Main(int argc, char **argv, Tcl_AppInitProc (*appInitProc), Tcl_Interp *inte
     char *filename = NULL;
     char *args = NULL;
     char buf[TCL_INTEGER_SPACE] = {0};
-    int status;
     Tcl_DString argString;
 
     bu_setprogname(argv[0]);
@@ -143,6 +142,8 @@ Cad_Main(int argc, char **argv, Tcl_AppInitProc (*appInitProc), Tcl_Interp *inte
     }
 
     if (filename != NULL) {
+	int status;
+
 	/* ??? need to arrange for a bu_log handler and or handlers
 	 * for stdout/stderr?
 	 */
