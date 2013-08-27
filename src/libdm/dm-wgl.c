@@ -1231,13 +1231,13 @@ wgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		    glVertex3dv(dpt);
 		    break;
 		case BN_VLIST_LINE_WIDTH:
-		    lineWidth = (GLfloat)pt[0][0];
+		    lineWidth = (GLfloat)(*pt)[0];
 		    if (lineWidth > 0.0) {
 			glLineWidth(lineWidth);
 		    }
 		    break;
 		case BN_VLIST_POINT_SIZE:
-		    pointSize = (GLfloat)pt[0][0];
+		    pointSize = (GLfloat)(*pt)[0];
 		    if (pointSize > 0.0) {
 			glPointSize(pointSize);
 		    }
