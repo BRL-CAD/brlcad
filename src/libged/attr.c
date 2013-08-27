@@ -176,7 +176,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	    } else if (BU_STR_EQUAL(argv[3], VALUE_NOCASE)) {
 		qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmpattr_value_nocase);
 	    } else if (BU_STR_EQUAL(argv[3], CASE)) {
-	      ; /* don't need to do anything */
+	      ; /* don't need to do anything since this the existing (default) sort */
 	    }
 	    /* now list all the attributes */
 	    for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
