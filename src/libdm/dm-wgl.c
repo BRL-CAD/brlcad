@@ -1226,22 +1226,23 @@ wgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		    if (first == 0)
 			glEnd();
 		    first = 0;
-		    glPointSize(1.0);
 		    glBegin(GL_POINTS);
 		    glVertex3dv(glpt);
 		    break;
-		case BN_VLIST_LINE_WIDTH:
-		    originalLineWidth = (GLfloat)(*pt)[0];
-		    if (originalLineWidth > 0.0) {
-			glLineWidth(originalLineWidth);
+		case BN_VLIST_LINE_WIDTH: {
+		    GLfloat lineWidth = (GLfloat)(*pt)[0];
+		    if (lineWidth > 0.0) {
+			glLineWidth(lineWidth);
 		    }
 		    break;
-		case BN_VLIST_POINT_SIZE:
-		    originalPointSize = (GLfloat)(*pt)[0];
-		    if (originalPointSize > 0.0) {
-			glPointSize(originalPointSize);
+		}
+		case BN_VLIST_POINT_SIZE: {
+		    GLfloat pointSize = (GLfloat)(*pt)[0];
+		    if (pointSize > 0.0) {
+			glPointSize(pointSize);
 		    }
 		    break;
+		}
 	    }
 	}
     }
