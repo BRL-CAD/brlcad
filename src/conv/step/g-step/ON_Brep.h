@@ -44,6 +44,7 @@ struct Exporter_Info_AP203 {
     SdaiRepresentation *shape_rep;
 
     std::map<int, std::pair<STEPentity *, STEPentity *> > sdai_curve_to_splits;
+    std::map<int, std::pair<STEPentity *, STEPentity *> > sdai_e_curve_to_splits;
     std::map<int, STEPentity * > split_midpt_vertex;
 };
 
