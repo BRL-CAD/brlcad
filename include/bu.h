@@ -86,6 +86,7 @@
 
 #include <stdlib.h>
 #include <sys/types.h>
+#include <time.h>
 
 __BEGIN_DECLS
 
@@ -772,7 +773,6 @@ typedef enum {
  * returns the platform byte ordering (e.g., big-/little-endian)
  */
 BU_EXPORT extern bu_endian_t bu_byteorder(void);
-
 
 
 /*----------------------------------------------------------------------*/
@@ -1905,9 +1905,14 @@ typedef struct bu_hook_list bu_hook_list_t;
  * These strings may or may not be individually allocated, it depends
  * on usage.
  */
+/* FIXME: struct name should be changed to reflect more date, say, bu_attribute_data */
 struct bu_attribute_value_pair {
-    const char *name;	/**< attribute name */
-    const char *value; /**< attribute value */
+    const char *name;	    /**< attribute name          */
+    const char *value;      /**< attribute value         */
+    const char *created;    /**< attribute date created  */
+    const char *modified;   /**< attribute date modified */
+    const char *version;    /**< attribute version       */
+    const char *anamespace; /**< attribute anamespace    */
 };
 
 
@@ -2664,6 +2669,12 @@ struct bu_cmdtab {
 /** @{ */
 /* avs.c */
 
+
+/**
+ * Get current UTC date-time for attribute creation or modification times.
+ */
+BU_EXPORT extern void bu_avs_set_date(struct bu_attribute_value_pair *app,
+				      const char* typ);
 
 /**
  * Initialize avs with storage for len entries.
@@ -3864,7 +3875,6 @@ typedef int (*bu_heap_func_t)(const char *, ...);
  * returned.
  */
 BU_EXPORT extern bu_heap_func_t bu_heap_log(bu_heap_func_t log);
-
 
 
 /** @} */
@@ -6188,7 +6198,7 @@ BU_EXPORT extern int64_t bu_gettime();
 /**
  * Evaluate the current UTC time in ISO format as a string.
  *
- * The UTC time is written into the user-provided bu_vls struct. and is
+ * The UTC time is written into the user-provided bu_vls struct and is
  * also returned and guaranteed to be a non-null result, returning a
  * static "NULL" UTC time if an error is encountered.
  */
