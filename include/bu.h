@@ -1900,6 +1900,13 @@ typedef struct bu_hook_list bu_hook_list_t;
  * Routines to manage attribute/value sets.
  */
 
+/** for attr and avs use.
+ */
+typedef enum {
+  BU_ATTR_CREATED,
+  BU_ATTR_MODIFIED
+} bu_attr_time_t;
+
 /**
  * These strings may or may not be individually allocated, it depends
  * on usage.
@@ -2675,7 +2682,7 @@ struct bu_cmdtab {
  * Get current UTC date-time for attribute creation or modification times.
  */
 BU_EXPORT extern void bu_avs_set_date(struct bu_attribute_value_pair *app,
-				      const char* typ);
+				      const bu_attr_time_t typ);
 
 /**
  * Initialize avs with storage for len entries.
