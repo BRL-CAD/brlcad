@@ -157,16 +157,19 @@ BRLCAD_ADDEXEC(shp-g "shp/shp-g.c;shp/shapelib/safileio.c;shp/shapelib/shpopen.c
 
 BRLCAD_ADDEXEC(viewpoint-g viewpoint-g.c "libwdb;librt;libbu")
 
+BRLCAD_ADDEXEC(g-shell-rect g-shell-rect.c "libwdb;librt;libbu;${M_LIBRARY}")
+
+BRLCAD_ADDEXEC(g-xxx g-xxx.c "librt;libbu" NO_INSTALL)
+BRLCAD_ADDDATA(g-xxx.c sample_applications)
+
 BRLCAD_ADDEXEC(g-xxx_facets g-xxx_facets.c "librt;libbu" NO_INSTALL)
+BRLCAD_ADDDATA(g-xxx_facets.c sample_applications)
 
 BRLCAD_ADDEXEC(walk_example walk_example.c "libbu;librt" NO_INSTALL)
-
-BRLCAD_ADDEXEC(g-shell-rect g-shell-rect.c "libwdb;librt;libbu;${M_LIBRARY}")
+BRLCAD_ADDDATA(walk_example.c sample_applications)
 
 install(PROGRAMS intaval-g.py DESTINATION bin)
 
-BRLCAD_ADDDATA(g-xxx.c sample_applications)
-BRLCAD_ADDDATA(g-xxx_facets.c sample_applications)
 
 set(conv_ignore_files
   Formats.csv
