@@ -41,6 +41,9 @@
 #define GENERIC_NAME "rhino"
 #define Usage "Usage: 3dm-g [-v vmode] [-r] [-u] -o output_file.g input_file.3dm\n"
 
+/* UUID buffers must be >= 37 chars per openNURBS API */
+#define UUID_LEN 50
+
 /* typedefs and global containers for building layer hierarchy */
 typedef std::map< std::string, std::string> STR_STR_MAP;
 typedef std::map< std::string, int> REGION_CNT_MAP;
@@ -73,7 +76,7 @@ RegionCnt(std::string &name)
 static void
 MapRegion(ONX_Model &model, std::string &region_name, int layer_index)
 {
-    char uuidstr[50];
+    char uuidstr[UUID_LEN] = {0};
     std::string parent_uuid;
 
     const ON_Layer& layer = model.m_layer_table[layer_index];
@@ -174,7 +177,7 @@ static void
 ProcessLayers(ONX_Model &model, ON_TextLog* dump)
 {
     struct bu_vls name = BU_VLS_INIT_ZERO;
-    char uuidstr[50] = {0};
+    char uuidstr[UUID_LEN] = {0};
     std::string layer_name, uuid, parent_uuid;
     ON_UuidIndex uuidIndex;
     int i, count = model.m_layer_table.Count();
@@ -311,7 +314,7 @@ main(int argc, char** argv)
 	dump->Print("\n");
 
 	if (use_uuidnames) {
-	    char uuidstring[37];
+	    char uuidstring[UUID_LEN] = {0};
 	    ON_UuidToString(myAttributes.m_uuid, uuidstring);
 	    ON_String constr(uuidstring);
 	    const char* cstr = constr;
