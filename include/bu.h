@@ -86,7 +86,6 @@
 
 #include <stdlib.h>
 #include <sys/types.h>
-#include <time.h>
 
 __BEGIN_DECLS
 
@@ -1905,14 +1904,16 @@ typedef struct bu_hook_list bu_hook_list_t;
  * These strings may or may not be individually allocated, it depends
  * on usage.
  */
-/* FIXME: struct name should be changed to reflect more date, say, bu_attribute_data */
+/* FIXME: struct name should be changed to reflect more data, say, bu_attribute_data */
 struct bu_attribute_value_pair {
-    const char *name;	    /**< attribute name          */
-    const char *value;      /**< attribute value         */
-    const char *created;    /**< attribute date created  */
-    const char *modified;   /**< attribute date modified */
-    const char *version;    /**< attribute version       */
-    const char *anamespace; /**< attribute anamespace    */
+    const char *name;	    /**< attribute name           */
+    const char *value;      /**< attribute value          */
+    const char *anamespace; /**< attribute anamespace     */
+
+    /* integral variables */
+    int version;            /**< attribute version number */
+    int64_t created;        /**< attribute date created   */
+    int64_t modified;       /**< attribute date modified  */
 };
 
 
@@ -6196,13 +6197,13 @@ BU_EXPORT extern int64_t bu_gettime();
 /** @ingroup io */
 /** @{ */
 /**
- * Evaluate the current UTC time in ISO format as a string.
+ * Evaluate the time_t input as UTC time in ISO format.
  *
  * The UTC time is written into the user-provided bu_vls struct and is
  * also returned and guaranteed to be a non-null result, returning a
  * static "NULL" UTC time if an error is encountered.
  */
-BU_EXPORT void bu_utctime(struct bu_vls *utc_result);
+BU_EXPORT void bu_utctime(struct bu_vls *utc_result, const int64_t time_val);
 
 /** @} */
 
