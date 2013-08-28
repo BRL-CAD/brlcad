@@ -114,6 +114,9 @@ bu_avs_add(struct bu_attribute_value_set *avsp, const char *name, const char *va
 	    } else {
 		app->value = (char *)NULL;
 	    }
+	    /* ensure we have a creation time for existing attrs */
+	    if (!app->created)
+		bu_avs_set_date(app, BU_ATTR_CREATED);
 	    /* add modification time */
 	    bu_avs_set_date(app, BU_ATTR_MODIFIED);
 	    return 1;
