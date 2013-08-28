@@ -1010,20 +1010,6 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 	    newface->m_innerloop = in->m_innerloop;
 	    newface->m_innerloop.insert(newface->m_innerloop.end(), innerloops.begin(), innerloops.end());
 #if USE_CONNECTIVITY_GRAPH
-	    /* if (intersect.Count()) {
-		// Eliminate the parts of outerloop used by other sub-faces
-		for (int i = 0; i < out.Count(); i++) {
-		    if (out[i]->parts.Count() == 0)
-			continue;
-		    IntersectPoint& start = intersect[0];
-		    for (int j = 0; j < out[i]->parts.Count(); j++) {
-			newface->parts.Append(std::make_pair(start, out[i]->parts[j].first));
-			start = out[i]->parts[j].second;
-		    }
-		}
-	    } else {
-		newface->parts = in->parts;
-	    } */
 	    for (int i = 0; i < outerloop_start_end.Count(); i++)
 		if (outerloop_start_end[i].first.m_seg != -1)
 		    newface->m_parts.Append(outerloop_start_end[i]);
