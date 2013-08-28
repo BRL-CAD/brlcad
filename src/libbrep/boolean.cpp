@@ -66,6 +66,7 @@ struct SSICurveInfo {
     int m_fi1;	// index of the first face
     int m_fi2;	// index of the second face
     int m_ci;	// index in the events array
+
     // Default constructor. Set all to an invalid value.
     SSICurveInfo()
     {
@@ -1073,7 +1074,55 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &
 
     ON_BrepLoop &breploop = brep->NewLoop(loop_type, face);
     int start_count = brep->m_V.Count();
+    const ON_Surface* srf = face.SurfaceOf();
+
     for (int k = 0; k < loop.Count(); k++) {
+	// Determine whether it should be a seam trim, according to the
+	// requirements in ON_Brep::IsValid() (See opennurbs_brep.cpp)
+	ON_BOOL32 bClosed[2];
+	bClosed[0] = srf->IsClosed(0);
+	bClosed[1] = srf->IsClosed(1);
+	if (bClosed[0] || bClosed[1]) {
+	    ON_Interval side_interval;
+	    int endpt_index = 0;
+	    const double side_tol = 1.0e-4;
+	    double s0, s1;
+	    bool seamed = false;
+	    if (bClosed[0])
+		endpt_index = 1;
+	    else 
+		endpt_index = 0;
+	    side_interval.Set(loop[k]->PointAtStart()[endpt_index], loop[k]->PointAtEnd()[endpt_index]);
+	    for (int i = 0; i < breploop.m_ti.Count(); i++) {
+		ON_BrepTrim& trim = brep->m_T[breploop.m_ti[i]];
+		if (ON_BrepTrim::boundary != trim.m_type)
+		    continue;
+		s1 = side_interval.NormalizedParameterAt(trim.PointAtStart()[endpt_index]);
+		if (fabs(s1 - 1.0) > side_tol)
+		    continue;
+		s0 = side_interval.NormalizedParameterAt(trim.PointAtEnd()[endpt_index]);
+		if (fabs(s0) > side_tol)
+		    continue;
+
+		if (srf->IsIsoparametric(*loop[k]) && srf->IsIsoparametric(trim)) {
+		    double s2 = srf->Domain(1-endpt_index).NormalizedParameterAt(loop[k]->PointAtStart()[1-endpt_index]);
+		    double s3 = srf->Domain(1-endpt_index).NormalizedParameterAt(trim.PointAtStart()[1-endpt_index]);
+		    if ((fabs(s2 - 1.0) < side_tol && fabs(s3) < side_tol) ||
+			(fabs(s2) < side_tol && fabs(s3 - 1.0) < side_tol)) {
+			// Find a trim that should share the same edge
+			int ti = brep->AddTrimCurve(loop[k]);
+			ON_BrepTrim& newtrim = brep->NewTrim(brep->m_E[trim.m_ei], true, breploop, ti);
+			//newtrim.m_type = ON_BrepTrim::seam;
+			newtrim.m_tolerance[0] = newtrim.m_tolerance[1] = MAX_FASTF;
+			seamed = true;
+			break;
+		    }
+		}
+	    }
+	    if (seamed)
+		continue;
+	}
+	
 	ON_Curve* c3d = NULL;
 	// First, try the ON_Surface::Pushup() method.
 	// If Pushup() does not succeed, use sampling method.
@@ -1089,7 +1138,6 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &
 		ptarray.Append(face.SurfaceOf()->PointAt(pt2d.x, pt2d.y));
 	    }
 	    c3d = new ON_PolylineCurve(ptarray);
-	    brep->AddEdgeCurve(c3d);
 	}
 
 	int ti = brep->AddTrimCurve(loop[k]);
@@ -1101,6 +1149,7 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &
 	    start_idx = brep->m_V.Count();
 	    brep->NewVertex(face.SurfaceOf()->PointAt(start.x, start.y), 0.0);
 	}
+
 	if (c3d->IsClosed())
 	    end_idx = start_idx;
 	else {
@@ -1126,9 +1175,8 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &
 	    brep->m_C3.Count() - 1, (const ON_Interval *)0, MAX_FASTF);
 	ON_BrepTrim &trim = brep->NewTrim(edge, 0, breploop, ti);
 	trim.m_tolerance[0] = trim.m_tolerance[1] = MAX_FASTF;
-
-	// TODO: Deal with split seam trims to pass ON_Brep::IsValid()
     }
+
     //if (brep->m_V.Count() < brep->m_V.Capacity())
 	//brep->m_V[brep->m_V.Count()].m_ei.Empty();
 }
