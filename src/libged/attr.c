@@ -116,6 +116,8 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
     const char VALUE[]        = "value";
     const char VALUE_NOCASE[] = "value-nocase";
 
+    /* for pretty printing */
+    int max_attr_name_len  = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -156,8 +158,6 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
     qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmpattr);
 
     if (BU_STR_EQUAL(argv[1], SORT)) {
-	int max_attr_name_len = 0;
-
 	/* pretty print */
 	if ((_ged_pretty_print(gedp, dp, argv[2])) != GED_OK)
 	    return GED_ERROR;
@@ -309,7 +309,6 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	/* avs is freed by db5_replace_attributes() */
 
     } else if (BU_STR_EQUAL(argv[1], SHOW)) {
-	int max_attr_name_len = 0;
 	int tabs1 = 0;
 
 	/* pretty print */
