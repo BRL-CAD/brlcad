@@ -43,7 +43,7 @@
 extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 
 
-static const char usage[] = "Usage: %s [-v] [-d] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-p prefix] brlcad_db.g object(s)\n";
+static const char usage[] = "Usage: %s [-v] [-d] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-p prefix] [-P #_of_CPUs] brlcad_db.g object(s)\n";
 
 static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int	verbose;
@@ -135,13 +135,11 @@ main(int argc, char **argv)
 		break;
 	    default:
 		bu_exit(1, usage, argv[0]);
-		break;
 	}
     }
 
-    if (bu_optind+1 >= argc) {
+    if (bu_optind+1 >= argc)
 	bu_exit(1, usage, argv[0]);
-    }
 
     /* Open BRL-CAD database */
     argc -= bu_optind;
@@ -150,20 +148,18 @@ main(int argc, char **argv)
 	perror(argv[0]);
 	bu_exit(1, "ERROR: Unable to open geometry database file (%s)\n", argv[0]);
     }
-    if ( db_dirbuild( dbip ) ) {
+    if ( db_dirbuild( dbip ) )
 	bu_exit(1, "db_dirbuild failed\n" );
-    }
 
     /* Create .fig file name and open it. */
     size = sizeof(prefix) + sizeof(argv[0] + 4);
     fig_file = bu_malloc(size, "st");
     /* Ignore leading path name. */
     if ((dot = strrchr(argv[0], '/')) != (char *)NULL) {
-	if (prefix) {
+	if (prefix)
 	    snprintf(fig_file, size, "%s%s", prefix, 1+dot);
-	} else {
+	else
 	    snprintf(fig_file, size, "%s", 1+dot);
-	}
     } else {
 	if (prefix)
 	    snprintf(fig_file, size, "%s%s", prefix, argv[0]);
