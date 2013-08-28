@@ -162,6 +162,7 @@ BuildHierarchy(struct rt_wdb* outfp, ON_TextLog* dump)
 {
     std::string root_uuid = "00000000-0000-0000-0000-000000000000";
     MEMBER_MAP::iterator iter = member_map.find(root_uuid);
+
     if (iter != member_map.end()) {
 	std::string uuid = iter->first;
 	BuildHierarchy(outfp, uuid, dump);
@@ -172,17 +173,19 @@ BuildHierarchy(struct rt_wdb* outfp, ON_TextLog* dump)
 static void
 ProcessLayers(ONX_Model &model, ON_TextLog* dump)
 {
-    char name[256];
-    char uuidstr[50];
+    struct bu_vls name = BU_VLS_INIT_ZERO;
+    char uuidstr[50] = {0};
     std::string layer_name, uuid, parent_uuid;
     ON_UuidIndex uuidIndex;
     int i, count = model.m_layer_table.Count();
+
     dump->Print("Number of layers: %d\n", count);
     for (i=0; i < count; ++i) {
 	const ON_Layer& layer = model.m_layer_table[i];
 	ON_wString lname = layer.LayerName();
-	bu_strlcpy(name, ON_String(lname), sizeof(name));
-	layer_name = name;
+
+	bu_vls_strcpy(&name, ON_String(lname));
+	layer_name = bu_vls_addr(&name);
 	uuid = ON_UuidToString(layer.m_layer_id, uuidstr);
 	parent_uuid = ON_UuidToString(layer.m_parent_layer_id, uuidstr);
 	MapLayer(layer_name, uuid, parent_uuid);
