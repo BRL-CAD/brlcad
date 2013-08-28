@@ -101,13 +101,13 @@ ON_3dVector_to_Direction(ON_3dVector *invect, SdaiDirection *step_direction) {
 
 
 void
-ON_NurbsCurveCV_to_EntityAggregate(ON_NurbsCurve *incrv, SdaiB_spline_curve *step_crv, Registry *registry, InstMgr *instance_list) {
+ON_NurbsCurveCV_to_EntityAggregate(ON_NurbsCurve *incrv, SdaiB_spline_curve *step_crv, Exporter_Info_AP203 *info) {
     EntityAggregate *control_pnts = step_crv->control_points_list_();
     ON_3dPoint cv_pnt;
     for (int i = 0; i < incrv->CVCount(); i++) {
-	SdaiCartesian_point *step_cartesian = (SdaiCartesian_point *)registry->ObjCreate("CARTESIAN_POINT");
+	SdaiCartesian_point *step_cartesian = (SdaiCartesian_point *)info->registry->ObjCreate("CARTESIAN_POINT");
 	step_cartesian->name_("''");
-	instance_list->Append(step_cartesian, completeSE);
+	info->instance_list->Append(step_cartesian, completeSE);
 	incrv->GetCV(i, cv_pnt);
 	ON_3dPoint_to_Cartesian_point(&(cv_pnt), step_cartesian);
 	control_pnts->AddNode(new EntityNode((SDAI_Application_instance *)step_cartesian));
@@ -116,16 +116,16 @@ ON_NurbsCurveCV_to_EntityAggregate(ON_NurbsCurve *incrv, SdaiB_spline_curve *ste
 
 
 void
-ON_NurbsSurfaceCV_to_GenericAggregate(ON_NurbsSurface *insrf, SdaiB_spline_surface *step_srf, Registry *registry, InstMgr *instance_list) {
+ON_NurbsSurfaceCV_to_GenericAggregate(ON_NurbsSurface *insrf, SdaiB_spline_surface *step_srf, Exporter_Info_AP203 *info) {
     GenericAggregate *control_pnts_lists = step_srf->control_points_list_();
     ON_3dPoint cv_pnt;
     for (int i = 0; i < insrf->CVCount(0); i++) {
 	std::ostringstream ss;
 	ss << "(";
 	for (int j = 0; j < insrf->CVCount(1); j++) {
-	    SdaiCartesian_point *step_cartesian = (SdaiCartesian_point *)registry->ObjCreate("CARTESIAN_POINT");
+	    SdaiCartesian_point *step_cartesian = (SdaiCartesian_point *)info->registry->ObjCreate("CARTESIAN_POINT");
 	    step_cartesian->name_("''");
-	    instance_list->Append(step_cartesian, completeSE);
+	    info->instance_list->Append(step_cartesian, completeSE);
 	    insrf->GetCV(i, j, cv_pnt);
 	    ON_3dPoint_to_Cartesian_point(&(cv_pnt), step_cartesian);
 	    if (j != 0) ss << ", ";
@@ -220,26 +220,26 @@ ON_NurbsSurfaceKnots_to_Aggregates(ON_NurbsSurface *insrf, SdaiB_spline_surface_
 
 
 // STEP needs explicit edges corresponding to what in OpenNURBS are the UV space trimming curves
-int Add_Edge(ON_BrepTrim *trim, Registry *registry, InstMgr *instance_list, std::vector<STEPentity *> *oriented_edges, std::vector<STEPentity *> *edge_curves, std::vector<STEPentity *> *vertex_pnts) {
+int Add_Edge(ON_BrepTrim *trim, Exporter_Info_AP203 *info) {
     ON_BrepEdge *edge = trim->Edge();
     int i = -1;
     if (edge) {
-	STEPentity *new_oriented_edge = registry->ObjCreate("ORIENTED_EDGE");
+	STEPentity *new_oriented_edge = info->registry->ObjCreate("ORIENTED_EDGE");
 	SdaiOriented_edge *oriented_edge = (SdaiOriented_edge *)new_oriented_edge;
 	oriented_edge->name_("''");
-	SdaiEdge_curve *e_curve = (SdaiEdge_curve *)edge_curves->at(edge->EdgeCurveIndexOf());
+	SdaiEdge_curve *e_curve = (SdaiEdge_curve *)info->edge_curves.at(edge->EdgeCurveIndexOf());
 	oriented_edge->edge_element_((SdaiEdge *)e_curve);
 	if (trim->m_bRev3d) {
-	    oriented_edge->edge_start_(((SdaiVertex *)vertex_pnts->at(edge->Vertex(1)->m_vertex_index)));
-	    oriented_edge->edge_end_(((SdaiVertex *)vertex_pnts->at(edge->Vertex(0)->m_vertex_index)));
+	    oriented_edge->edge_start_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(1)->m_vertex_index)));
+	    oriented_edge->edge_end_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(0)->m_vertex_index)));
 	} else {
-	    oriented_edge->edge_start_(((SdaiVertex *)vertex_pnts->at(edge->Vertex(0)->m_vertex_index)));
-	    oriented_edge->edge_end_(((SdaiVertex *)vertex_pnts->at(edge->Vertex(1)->m_vertex_index)));
+	    oriented_edge->edge_start_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(0)->m_vertex_index)));
+	    oriented_edge->edge_end_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(1)->m_vertex_index)));
 	}
 	oriented_edge->orientation_((Boolean)!trim->m_bRev3d);
-	instance_list->Append(new_oriented_edge, completeSE);
-	oriented_edges->push_back(new_oriented_edge);
-	i = oriented_edges->size() - 1;
+	info->instance_list->Append(new_oriented_edge, completeSE);
+	info->oriented_edges.push_back(new_oriented_edge);
+	i = info->oriented_edges.size() - 1;
     }
     return i;
 }
@@ -654,7 +654,7 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 	    // Left curve
 	    SdaiB_spline_curve_with_knots *left_curve = (SdaiB_spline_curve_with_knots *)info->registry->ObjCreate("B_SPLINE_CURVE_WITH_KNOTS");
 	    left_curve->degree_(left_side->Degree());
-	    ON_NurbsCurveCV_to_EntityAggregate((ON_NurbsCurve *)left_side, left_curve, info->registry, info->instance_list);
+	    ON_NurbsCurveCV_to_EntityAggregate((ON_NurbsCurve *)left_side, left_curve, info);
 	    ON_NurbsCurveKnots_to_Aggregates((ON_NurbsCurve *)left_side, left_curve);
 	    left_curve->curve_form_(B_spline_curve_form__unspecified);
 	    left_curve->closed_curve_(LFalse);
@@ -664,7 +664,7 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 	    // Right curve
 	    SdaiB_spline_curve_with_knots *right_curve = (SdaiB_spline_curve_with_knots *)info->registry->ObjCreate("B_SPLINE_CURVE_WITH_KNOTS");
 	    right_curve->degree_(right_side->Degree());
-	    ON_NurbsCurveCV_to_EntityAggregate((ON_NurbsCurve *)right_side, right_curve, info->registry, info->instance_list);
+	    ON_NurbsCurveCV_to_EntityAggregate((ON_NurbsCurve *)right_side, right_curve, info);
 	    ON_NurbsCurveKnots_to_Aggregates((ON_NurbsCurve *)right_side, right_curve);
 	    right_curve->curve_form_(B_spline_curve_form__unspecified);
 	    right_curve->closed_curve_(LFalse);
@@ -769,7 +769,7 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 		info->three_dimensional_curves.at(i) = info->registry->ObjCreate("B_SPLINE_CURVE_WITH_KNOTS");
 		SdaiB_spline_curve *curr_curve = (SdaiB_spline_curve *)info->three_dimensional_curves.at(i);
 		curr_curve->degree_(n_curve->Degree());
-		ON_NurbsCurveCV_to_EntityAggregate(n_curve, curr_curve, info->registry, info->instance_list);
+		ON_NurbsCurveCV_to_EntityAggregate(n_curve, curr_curve, info);
 		SdaiB_spline_curve_with_knots *curve_knots = (SdaiB_spline_curve_with_knots *)info->three_dimensional_curves.at(i);
 		ON_NurbsCurveKnots_to_Aggregates(n_curve, curve_knots);
 	    }
@@ -826,7 +826,7 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 	// output.
 	SdaiPath *e_loop_path = (SdaiPath *)info->edge_loops.at(i)->GetNextMiEntity();
 	for (int l = 0; l < loop->TrimCount(); ++l) {
-	    int trim_edge = Add_Edge(loop->Trim(l), info->registry, info->instance_list, &info->oriented_edges, &info->edge_curves, &info->vertex_pnts);
+	    int trim_edge = Add_Edge(loop->Trim(l), info);
 	    if (trim_edge >= 0)
 		e_loop_path->edge_list_()->AddNode(new EntityNode((SDAI_Application_instance *)(info->oriented_edges.at(trim_edge))));
 	}
@@ -862,7 +862,7 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 	    curr_surface->name_("''");
 	    curr_surface->u_degree_(p_nurb.Degree(0));
 	    curr_surface->v_degree_(p_nurb.Degree(1));
-	    ON_NurbsSurfaceCV_to_GenericAggregate(&p_nurb, curr_surface, info->registry, info->instance_list);
+	    ON_NurbsSurfaceCV_to_GenericAggregate(&p_nurb, curr_surface, info);
 
 	    SdaiB_spline_surface_with_knots *surface_knots = (SdaiB_spline_surface_with_knots *)info->surfaces.at(i);
 	    ON_NurbsSurfaceKnots_to_Aggregates(&p_nurb, surface_knots);
@@ -888,7 +888,7 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 	    curr_surface->name_("''");
 	    curr_surface->u_degree_(n_surface->Degree(0));
 	    curr_surface->v_degree_(n_surface->Degree(1));
-	    ON_NurbsSurfaceCV_to_GenericAggregate(n_surface, curr_surface, info->registry, info->instance_list);
+	    ON_NurbsSurfaceCV_to_GenericAggregate(n_surface, curr_surface, info);
 
 	    SdaiB_spline_surface_with_knots *surface_knots = (SdaiB_spline_surface_with_knots *)info->surfaces.at(i);
 	    ON_NurbsSurfaceKnots_to_Aggregates(n_surface, surface_knots);
@@ -917,7 +917,7 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 	    curr_surface->name_("''");
 	    curr_surface->u_degree_(sum_nurb.Degree(0));
 	    curr_surface->v_degree_(sum_nurb.Degree(1));
-	    ON_NurbsSurfaceCV_to_GenericAggregate(&sum_nurb, curr_surface, info->registry, info->instance_list);
+	    ON_NurbsSurfaceCV_to_GenericAggregate(&sum_nurb, curr_surface, info);
 
 	    SdaiB_spline_surface_with_knots *surface_knots = (SdaiB_spline_surface_with_knots *)info->surfaces.at(i);
 	    ON_NurbsSurfaceKnots_to_Aggregates(&sum_nurb, surface_knots);
