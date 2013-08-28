@@ -131,6 +131,22 @@ _get_subcmd(const char* arg)
       return ATTR_UNKNOWN;
 }
 
+void
+_list_attrs(struct ged *gedp, struct bu_attribute_value_set *avs,
+	    const int max_attr_name_len, const int max_attr_value_len)
+{
+    struct bu_attribute_value_pair *avpp;
+    size_t i;
+
+    for (i = 0, avpp = avs->avp; i < avs->count; i++, avpp++) {
+	bu_vls_printf(gedp->ged_result_str,
+		      "\t%-*.*s"
+		      "\t%-*.*s\n",
+		      max_attr_name_len, max_attr_name_len, avpp->name,
+		      max_attr_value_len, max_attr_value_len, avpp->value);
+    }
+}
+
 int
 ged_attr(struct ged *gedp, int argc, const char *argv[])
 {
@@ -187,6 +203,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
     }
 
     scmd = _get_subcmd(argv[1]);
+
     if ((scmd == ATTR_SHOW && argc == 3) || scmd == ATTR_SORT) {
 	/* get a jump on calculating name and value lengths */
 	for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
@@ -211,11 +228,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	if (argc == 3) {
 	    /* just list the already sorted attribute-value pairs */
-	    for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
-		bu_vls_printf(gedp->ged_result_str, "\t%-*.*s    %s\n",
-			      max_attr_name_len, max_attr_name_len,
-			      avpp->name, avpp->value);
-	    }
+	  _list_attrs(gedp, &avs, max_attr_name_len, max_attr_value_len);
 	} else {
 	    /* argv[3] is the sort type: 'case', 'nocase', 'value', 'value-nocase' */
 	    if (BU_STR_EQUAL(argv[3], NOCASE)) {
@@ -227,19 +240,13 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	    } else if (BU_STR_EQUAL(argv[3], CASE)) {
 	      ; /* don't need to do anything since this is the existing (default) sort */
 	    }
-	    /* now list all the attributes */
-	    for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
-		bu_vls_printf(gedp->ged_result_str, "\t%-*.*s    %s\n",
-			      max_attr_name_len, max_attr_name_len,
-			      avpp->name, avpp->value);
-	    }
+	    /* just list the already sorted attribute-value pairs */
+	    _list_attrs(gedp, &avs, max_attr_name_len, max_attr_value_len);
 	}
     } else if (scmd == ATTR_GET) {
 	if (argc == 3) {
 	    /* just list all the attributes */
-	    for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
-		bu_vls_printf(gedp->ged_result_str, "%s {%s} ", avpp->name, avpp->value);
-	    }
+	    _list_attrs(gedp, &avs, max_attr_name_len, max_attr_value_len);
 	} else {
 	    const char *val;
 	    int do_separators=argc-4; /* if more than one attribute */
@@ -357,11 +364,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	if (argc == 3) {
 	    /* just display all attributes */
-	    for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
-		bu_vls_printf(gedp->ged_result_str, "\t%-*.*s    %s\n",
-			      max_attr_name_len, max_attr_name_len,
-			      avpp->name, avpp->value);
-	    }
+	    _list_attrs(gedp, &avs, max_attr_name_len, max_attr_value_len);
 	} else {
 	    const char *val;
 	    int len;
