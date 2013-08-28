@@ -34,25 +34,24 @@ bu_gmtime(struct bu_vls *vls_gmtime)
 {
     struct tm loctime;
     struct tm* retval;
-    time_t curr_time = time(0);
+    time_t curr_time;
+
+    if (!vls_gmtime)
+	return;
+
     BU_CK_VLS(vls_gmtime);
 
+    curr_time = time(0);
     if (curr_time == (time_t)(-1)) {
 	/* time error: but set something */
 	bu_vls_sprintf(vls_gmtime, "TIME_ERROR");
 	return;
     }
 
-#ifdef HAVE_GMTIME_S
-    retval = gmtime_s(&loctime, &curr_time);
-#else
-    retval = gmtime_r(&curr_time, &loctime);
-#endif
-    if (retval != &loctime) {
-	/* time error: but set something */
-	bu_vls_sprintf(vls_gmtime, "TIME_ERROR");
-	return;
-    }
+    bu_semaphore_acquire(BU_SEM_DATETIME);
+    retval = gmtime(&curr_time);
+    loctime = *retval; /* struct copy */
+    bu_semaphore_release(BU_SEM_DATETIME);
 
     /* put the UTC time in the desired ISO format: "yyyy-mm-ddThh:mm:ssZ" */
     bu_vls_sprintf(vls_gmtime, "%04d-%02d-%02dT%02d:%02d:%02dZ",
