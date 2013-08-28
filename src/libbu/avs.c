@@ -27,6 +27,18 @@
 
 #define AVS_ALLOCATION_INCREMENT 32
 
+void
+bu_avs_set_date(struct bu_attribute_value_pair *app, const char* typ)
+{
+    /* save the current time */
+    time_t curr_time = time(0);
+    const int typ_is_created = BU_STR_EQUAL(typ, "created") ? 1 : 0;
+
+    if (typ_is_created)
+        app->created = (int64_t)curr_time;
+    else
+        app->modified = (int64_t)curr_time;
+}
 
 void
 bu_avs_init_empty(struct bu_attribute_value_set *avsp)
