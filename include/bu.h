@@ -4828,7 +4828,8 @@ BU_EXPORT extern void bu_rb_walk(struct bu_rb_tree *tree, int order, void (*visi
 #define BU_SEM_MAPPEDFILE 3
 #define BU_SEM_THREAD 4
 #define BU_SEM_MALLOC 5
-#define BU_SEM_LAST (BU_SEM_MALLOC+1)	/* allocate this many for LIBBU+LIBBN */
+#define BU_SEM_DATETIME 6
+#define BU_SEM_LAST (BU_SEM_DATETIME+1)	/* allocate this many for LIBBU+LIBBN */
 /*
  * Automatic restart capability in bu_bomb().  The return from
  * BU_SETJUMP is the return from the setjmp().  It is 0 on the first
