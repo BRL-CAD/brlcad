@@ -33,6 +33,7 @@
 
 #include "bu.h"
 #include "icv.h"
+#include "vmath.h"
 
 /* The filter kernels */
 struct kernels {
@@ -55,8 +56,8 @@ struct kernels {
 int kerndiv;
 int kernoffset;
 int *kern;
-double kerndiv_diff, kernoffset_diff;
 ICV_FILTER filter_type;
+int kernel_index;
 int inx = 512;
 int iny = 512;   /* Default Width */
 int verbose = 0;
@@ -81,29 +82,21 @@ char *out_file = NULL;
 void
 select_filter(char *str)
 {
-    int i;
-
-    i = 0;
-    while (kernel[i].name != NULL) {
-	if (bu_strncmp(str, kernel[i].uname, strlen(kernel[i].uname)) == 0)
+    kernel_index = 0;
+    while (kernel[kernel_index].name != NULL) {
+	if (bu_strncmp(str, kernel[kernel_index].uname, strlen(kernel[kernel_index].uname)) == 0)
 	    break;
-	i++;
+	kernel_index++;
     }
 
-    if (kernel[i].name == NULL) {
+    if (kernel[kernel_index].name == NULL) {
 	/* No match, output list and exit */
 	fprintf(stderr, "Unrecognized filter type \"%s\"\n", str);
 	dousage();
 	bu_exit (3, NULL);
     }
-    kern = kernel[i].kern;
-    filter_type = kernel[i].filter;
-    /* Have a match, set up that kernel */
-    if (dflag == 1)
-	if(kernel[i].filter != ICV_FILTER_NULL)
-	    kerndiv_diff = kerndiv/kernel[i].kerndiv;
-    if (oflag == 1)
-	kernoffset_diff = ICV_CONV_8BIT(kernoffset - kernel[i].kernoffset)/(double) kerndiv;
+    kern = kernel[kernel_index].kern;
+    filter_type = kernel[kernel_index].filter;
 }
 
 void
@@ -135,6 +128,10 @@ get_args(int argc, char **argv)
 	    case 'd':
 		dflag++;
 		kerndiv = atoi(bu_optarg);
+		if(ZERO(kerndiv)) {
+		    bu_log("Bad argument for kerndiv\n");
+		    return 1;
+		}		    
 		break;
 	    case 'O':
 		oflag++;
@@ -197,6 +194,21 @@ main(int argc, char **argv)
 	return 1;
 
     icv_filter(img, filter_type);
+    
+    /* Correct the image as per the input offset and */
+    if(oflag | dflag) {
+        icv_add_val(img, -ICV_CONV_8BIT(kernel[kernel_index].kernoffset));
+
+        if(dflag) {
+            if(ZERO(kerndiv))
+            icv_multiply_val(img, ICV_CONV_8BIT(kernel[kernel_index].kerndiv/kerndiv));
+        }
+        
+        if(oflag)
+            icv_add_val(img, ICV_CONV_8BIT(kernoffset));
+        else
+            icv_add_val(img, ICV_CONV_8BIT(kernel[kernel_index].kernoffset));
+    }
 
     if (verbose) {
 	for (x = 0; x < 11; x++)
@@ -210,7 +222,7 @@ main(int argc, char **argv)
     }
     bu_free(min_d, "max value");
     bu_free(max_d, "min values");
-
+    
     icv_write(img, out_file, ICV_IMAGE_BW);
     return 0;
 }
