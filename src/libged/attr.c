@@ -102,10 +102,20 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
     struct bu_attribute_value_pair *avpp;
     static const char *usage = "{set|get|show|rm|append|sort} object [key [value] ... ]";
 
+    /* sub-commands in usage order: */
+    const char SET[]    = "set";
+    const char GET[]    = "get";
+    const char SHOW[]   = "show";
+    const char RM[]     = "rm";
+    const char APPEND[] = "append";
+    const char SORT[]   = "sort";
+
+    /* sort types */
     const char CASE[]         = "case";
     const char NOCASE[]       = "nocase";
     const char VALUE[]        = "value";
     const char VALUE_NOCASE[] = "value-nocase";
+
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -145,7 +155,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
     /* default: sort attribute-value set array by attribute name (case sensitive) */
     qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmpattr);
 
-    if (BU_STR_EQUAL(argv[1], "sort")) {
+    if (BU_STR_EQUAL(argv[1], SORT)) {
 	int max_attr_name_len = 0;
 
 	/* pretty print */
@@ -184,7 +194,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 			      avpp->name, avpp->value);
 	    }
 	}
-    } else if (BU_STR_EQUAL(argv[1], "get")) {
+    } else if (BU_STR_EQUAL(argv[1], GET)) {
 	if (argc == 3) {
 	    /* just list all the attributes */
 	    for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
@@ -214,7 +224,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	bu_avs_free(&avs);
 
-    } else if (BU_STR_EQUAL(argv[1], "set")) {
+    } else if (BU_STR_EQUAL(argv[1], SET)) {
 	GED_CHECK_READ_ONLY(gedp, GED_ERROR);
 	/* setting attribute/value pairs */
 	if ((argc - 3) % 2) {
@@ -242,7 +252,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	/* avs is freed by db5_update_attributes() */
 
-    } else if (BU_STR_EQUAL(argv[1], "rm")) {
+    } else if (BU_STR_EQUAL(argv[1], RM)) {
 	GED_CHECK_READ_ONLY(gedp, GED_ERROR);
 	i = 3;
 	while (i < (size_t)argc) {
@@ -261,7 +271,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	/* avs is freed by db5_replace_attributes() */
 
-    } else if (BU_STR_EQUAL(argv[1], "append")) {
+    } else if (BU_STR_EQUAL(argv[1], APPEND)) {
 	GED_CHECK_READ_ONLY(gedp, GED_ERROR);
 	if ((argc-3) % 2) {
 	    bu_vls_printf(gedp->ged_result_str,
@@ -298,7 +308,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	/* avs is freed by db5_replace_attributes() */
 
-    } else if (BU_STR_EQUAL(argv[1], "show")) {
+    } else if (BU_STR_EQUAL(argv[1], SHOW)) {
 	int max_attr_name_len = 0;
 	int tabs1 = 0;
 
