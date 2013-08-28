@@ -56,8 +56,8 @@ bu_utctime(struct bu_vls *vls_gmtime, const int64_t time_val)
 
     /* put the UTC time in the desired ISO format: "yyyy-mm-ddThh:mm:ssZ" */
     bu_vls_sprintf(vls_gmtime, "%04d-%02d-%02dT%02d:%02d:%02dZ",
-		   loctime.tm_year > 0 ? loctime.tm_year + 1900 : loctime.tm_year,
-		   loctime.tm_mon > 0 ? loctime.tm_mon + 1 : loctime.tm_mon,
+		   loctime.tm_year + 1900,
+		   loctime.tm_mon + 1,
 		   loctime.tm_mday,
 		   loctime.tm_hour,
 		   loctime.tm_min,
