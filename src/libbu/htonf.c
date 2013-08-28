@@ -30,7 +30,7 @@
 
 
 void
-bu_htonf(register unsigned char *out, register const unsigned char *in, size_t count)
+bu_cv_htonf(register unsigned char *out, register const unsigned char *in, size_t count)
 {
     register size_t i;
 
@@ -67,7 +67,7 @@ bu_htonf(register unsigned char *out, register const unsigned char *in, size_t c
 
 
 void
-bu_ntohf(register unsigned char *out, register const unsigned char *in, size_t count)
+bu_cv_ntohf(register unsigned char *out, register const unsigned char *in, size_t count)
 {
     register size_t i;
 
