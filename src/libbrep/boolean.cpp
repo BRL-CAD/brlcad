@@ -1113,18 +1113,29 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &
 	// First, try the ON_Surface::Pushup() method.
 	// If Pushup() does not succeed, use sampling method.
 	c3d = face.SurfaceOf()->Pushup(*(loop[k]), INTERSECTION_TOL);
-	if (c3d) {
-	    brep->AddEdgeCurve(c3d);
-	} else {
-	    // TODO: Sometimes we need a singular trim.
+	if (!c3d) {
 	    ON_3dPointArray ptarray(101);
 	    for (int l = 0; l <= 100; l++) {
 		ON_3dPoint pt2d;
 		pt2d = loop[k]->PointAt(loop[k]->Domain().ParameterAt(l/100.0));
 		ptarray.Append(face.SurfaceOf()->PointAt(pt2d.x, pt2d.y));
 	    }
+	    // The curve is closed within a tolerance
+	    if (ptarray[0].DistanceTo(ptarray[100]) < INTERSECTION_TOL)
+		ptarray[100] = ptarray[0];
 	    c3d = new ON_PolylineCurve(ptarray);
 	}
+
+	if (c3d->BoundingBox().Diagonal().Length() < INTERSECTION_TOL) {
+	    // The trim is singular
+	    if (brep->m_V.Count() == 0)
+		brep->NewVertex(c3d->PointAtStart());
+	    int ti = brep->AddTrimCurve(loop[k]);
+	    ON_BrepTrim& trim = brep->NewSingularTrim(*brep->m_V.Last(), breploop, srf->IsIsoparametric(*loop[k]), ti);
+	    trim.m_tolerance[0] = trim.m_tolerance[1] = MAX_FASTF;
+	    continue;
+	}
+	brep->AddEdgeCurve(c3d);
 
 	int ti = brep->AddTrimCurve(loop[k]);
 	ON_2dPoint start = loop[k]->PointAtStart(), end = loop[k]->PointAtEnd();
@@ -1147,12 +1158,15 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &
 		brep->m_V.Remove();
 		end_idx = start_count;
 	    } else if (k) {
-		brep->m_V.Remove();
 		start_idx = end_idx = start_count;
-		if (brep->m_E.Last() && brep->m_T.Last()) {
-		    brep->m_E.Last()->m_vi[1] = start_count;
+		if (brep->m_T.Last() && brep->m_T.Last()->m_ei != -1) {
+		    ON_BrepEdge& last_edge = brep->m_E[brep->m_T.Last()->m_ei];
+		    if (last_edge.m_vi[1-brep->m_T.Last()->m_bRev3d] != start_count) {
+			brep->m_V.Remove();
+			last_edge.m_vi[1-brep->m_T.Last()->m_bRev3d] = start_count;
+			brep->m_V[start_count].m_ei.Append(last_edge.m_edge_index);
+		    }
 		    brep->m_T.Last()->m_vi[1] = start_count;
-		    brep->m_V[start_count].m_ei.Append(brep->m_E.Count() - 1);
 		}
 	    }
 	}
