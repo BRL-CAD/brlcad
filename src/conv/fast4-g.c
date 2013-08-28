@@ -491,7 +491,6 @@ Insert_region_name(char *name, int reg_id)
     struct name_tree *nptr_model, *rptr_model;
     struct name_tree *new_ptr;
     int foundn, foundr;
-    int diff;
 
     if (debug)
 	bu_log("Insert_region_name(name=%s, reg_id=%d\n", name, reg_id);
@@ -529,6 +528,8 @@ Insert_region_name(char *name, int reg_id)
     if (!name_root) {
 	name_root = new_ptr;
     } else {
+	int diff;
+
 	diff = bu_strcmp(name, nptr_model->name);
 
 	if (diff > 0) {
