@@ -43,8 +43,8 @@ bu_gmtime(struct bu_vls *vls_gmtime)
 	return;
     }
 
-#ifdef HAVE__GMTIME_S
-    retval = _gmtime_s(&loctime, &curr_time);
+#ifdef HAVE_GMTIME_S
+    retval = gmtime_s(&loctime, &curr_time);
 #else
     retval = gmtime_r(&curr_time, &loctime);
 #endif

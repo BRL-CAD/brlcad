@@ -1708,12 +1708,12 @@ BRLCAD_FUNCTION_EXISTS(gmtime_r HAVE_GMTIME_R)
 # we do this manually for now because CHECK_SYMBOL_EXISTS and
 # CHECK_PROTOTYPE_EXISTS are both terribly broken.
 # test for _gmtime_s()
-if("${HAVE__GMTIME_S}" MATCHES "^${HAVE__GMTIME_S}$")
-  check_c_source_compiles("#include <time.h>\n int main() {struct tm* tm; time_t testtime; (void)_gmtime_s(&testtime, &tm); return 0; }" HAVE__GMTIME_S)
-  if(HAVE__GMTIME_S)
-    CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE__GMTIME_S 1\n")
-  endif(HAVE__GMTIME_S)
-endif("${HAVE__GMTIME_S}" MATCHES "^${HAVE__GMTIME_S}$")
+if("${HAVE_GMTIME_S}" MATCHES "^${HAVE_GMTIME_S}$")
+  check_c_source_compiles("#include <time.h>\n int main() {struct tm* tm; time_t testtime; (void)gmtime_s(&testtime, &tm); return 0; }" HAVE_GMTIME_S)
+  if(HAVE_GMTIME_S)
+    CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_GMTIME_S 1\n")
+  endif(HAVE_GMTIME_S)
+endif("${HAVE_GMTIME_S}" MATCHES "^${HAVE_GMTIME_S}$")
 
 BRLCAD_FUNCTION_EXISTS(kill HAVE_KILL)
 BRLCAD_FUNCTION_EXISTS(lrand48 HAVE_LRAND48)
