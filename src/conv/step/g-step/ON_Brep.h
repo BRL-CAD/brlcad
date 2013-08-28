@@ -41,6 +41,7 @@ struct Exporter_Info_AP203 {
     SdaiClosed_shell *closed_shell;
     SdaiManifold_solid_brep *manifold_solid_brep;
     SdaiAdvanced_brep_shape_representation *advanced_brep;
+    SdaiRepresentation *shape_rep;
 
     std::map<int, std::pair<STEPentity *, STEPentity *> > sdai_curve_to_splits;
     std::map<int, STEPentity * > split_midpt_vertex;
