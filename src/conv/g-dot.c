@@ -54,7 +54,6 @@ struct output {
 static void
 dot_comb(struct db_i *dbip, struct directory *dp, genptr_t out)
 {
-    size_t i;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
 
@@ -82,6 +81,7 @@ dot_comb(struct db_i *dbip, struct directory *dp, genptr_t out)
      * gets a list of comb members.  needs to return tabular data.
      */
     if (comb->tree) {
+	size_t i;
 	size_t node_count = 0;
 	size_t actual_count = 0;
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -259,7 +259,6 @@ main(int ac, char *av[])
 	char buffer[MAX_BUFFER] = {0};
 	char filename[MAXPATHLEN] = {0};
 	FILE *temp = NULL;
-	size_t total = 0;
 	size_t ret = 0;
 	size_t n = 0;
 
@@ -273,7 +272,6 @@ main(int ac, char *av[])
 	while (feof(stdin) == 0) {
 	    n = fread(buffer, 1, MAX_BUFFER, stdin);
 	    if (n > 0) {
-		total += n;
 		ret = fwrite(buffer, 1, n, temp);
 		if (ret != n) {
 		    bu_exit(5, "ERROR: problem encountered reading from standard input\n");
