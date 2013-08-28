@@ -42,7 +42,7 @@ TABLE OF CONTENTS
   Filesystem Organization
   Coding Style & Standards
   Documentation
-  Testing
+  Testing & Debugging
   Patch Submission Guidelines
   Bugs & Unexpected Behavior
   Commit Access
@@ -829,44 +829,74 @@ the_answer(void)
 }
 
 
-TESTING
--------
+TESTING & DEBUGGING
+-------------------
 
-A debug build may be specified via:
+BRL-CAD has extensive testing infrastructure in place to ensure tools
+and APIs working a particular manner keep working in an expected way.
+A testing failure usually indicates an unintended change to behavior
+that must be reviewed with the provoking code justified, reverted, or
+(most commonly) fixed.  There are system integration, performance,
+regression, and unit tests accessible through three primary build
+targets.
 
-   cmake ../brlcad -DCMAKE_BUILD_TYPE=Debug
-
-A profile build may be specified via:
-
-   cmake ../brlcad -DBRLCAD_ENABLE_PROFILING=ON
-
-Verbose compilation warnings may be enabled (by default these are on):
-
-   cmake ../brlcad -DBRLCAD_ENABLE_COMPILER_WARNINGS=ON
-
-To perform a run of the benchmark suite to validate raytrace behavior:
+The BRL-CAD Benchmark, contained in the bench/ directory, validates
+critical raytrace library behavior:
 
   make benchmark
 
-To perform a run of the test suite:
+A series of system integration regression tests, described in a series
+of scripts in the regress/ directory, examines applications:
 
   make regress
 
-To add tests, look at regress/weight.sh for an mged command example
-and regress/vls.sh for a utility function example.  Each test gets
-added to the automatic execution list by creating two target entries
-in the ./regress/CMakeLists.txt: one for running the test individually
-(e.g., make regress-weight) and one for running it with all the other
-tests (make regress).  Also added are the dependencies of the tests on
-binary executable rtweight and test_vls, respectively.  Note also that
-each added file in the regress directory must be added to the list in
-CMAKEFILES at the bottom of file ./regress/CMakeLists.txt
+API unit testing is contained within tests/ subdirectories of the
+respective library being tested (e.g., src/libbu/tests):
 
-Individual programs may be tested after a build without installing by
-running them from the build directory.  Typically, binaries will be
-found in the bin/ subdirectory of the toplevel build directory, e.g.:
+  make test
+
+Note that changes to publicly documented tools and library APIs must
+adhere to BRL-CAD's change policy.  This means changes to any tests
+may require thoughtful deployment.  See the CHANGES file for details.
+
+To add new regression tests, look at regress/weight.sh for an
+integration test example and src/libbu/tests/bu_vls_vprintf.c for an
+API unit test example.  See their corresponding CMakeLIsts.txt build
+file for examples of how they are added to the build.  Individual
+regression tests have separate regress-TARGET build targets defined
+(e.g., make regress-weight) to facilitate manual testing.
+
+In addition to benchmark, regression, and unit testing, individual
+programs may be tested after a build without installing by running
+them from the build directory.  Typically, installed binaries will be
+found in the bin/ subdirectory of the top-level build directory, e.g.:
 
   ./bin/mged
+
+Binaries not intended for installation (i.e., marked NO_INSTALL in the
+CMakeLists.txt file) are in a build path corresponding to the source
+code location, e.g. the unit tests in src/libbu/tests compile into
+binaries in the path/to/builddir/src/libbu/tests build directory.
+
+A profile build, useful for some types of performance inspection
+(e.g., gprof) but not enabled by default, may be specified via:
+
+   cmake .. -DBRLCAD_ENABLE_PROFILING=ON
+
+Debug symbols are enabled by default, even for installation, for all
+libraries and binaries in order to facilitate diagnosing and
+inspecting problems.  Graceful crashes (i.e., an application "bomb")
+may result in a crash log (named appname-#####-bomb.log) getting
+written out on platforms that have the GNU Debugger (gdb) available.
+On most platforms, gdb can also be interactively utilized to inspect a
+reproducible crash (graceful or otherwise):
+
+$ gdb --args bin/mged -c file.g
+...
+gdb> break bu_bomb
+gdb> run
+...[interact with application until it crashes or bombs]
+gdb> backtrace
 
 
 PATCH SUBMISSION GUIDELINES
