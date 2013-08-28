@@ -38,21 +38,23 @@
 struct kernels {
     char *name;
     char *uname;		/* What is needed to recognize it */
+    int kern[9];
     int kerndiv;	/* Divisor for kernel */
     int kernoffset;	/* To be added to result */
     ICV_FILTER filter;
 } kernel[] = {
-    { "Low Pass", "lo", 42, 0, ICV_FILTER_LOW_PASS },
-    { "Laplacian", "la", 16, 128, ICV_FILTER_LAPLACIAN },
-    { "High Pass", "hi",  1, 0, ICV_FILTER_HIGH_PASS },
-    { "Horizontal Gradient", "hg", 6, 128, ICV_FILTER_HORIZONTAL_GRAD },
-    { "Vertical Gradient", "vg", 6, 128, ICV_FILTER_VERTICAL_GRAD },
-    { "Boxcar Average", "b", 9, 0, ICV_FILTER_BOXCAR_AVERAGE },
-    { NULL, NULL, 0, 0, ICV_FILTER_NULL }
+    { "Low Pass", "lo", {3, 5, 3, 5, 10, 5, 3, 5, 3}, 42, 0, ICV_FILTER_LOW_PASS },
+    { "Laplacian", "la", {-1, -1, -1, -1, 8, -1, -1, -1, -1}, 16, 128, ICV_FILTER_LAPLACIAN },
+    { "High Pass", "hi", {-1, -2, -1, -2, 13, -2, -1, -2, -1}, 1, 0, ICV_FILTER_HIGH_PASS },
+    { "Horizontal Gradient", "hg", {1, 0, -1, 1, 0, -1, 1, 0, -1}, 6, 128, ICV_FILTER_HORIZONTAL_GRAD },
+    { "Vertical Gradient", "vg", {1, 1, 1, 0, 0, 0, -1, -1, -1}, 6, 128, ICV_FILTER_VERTICAL_GRAD },
+    { "Boxcar Average", "b", {1, 1, 1, 1, 1, 1, 1, 1, 1}, 9, 0, ICV_FILTER_BOXCAR_AVERAGE },
+    { NULL, NULL, {0, 0, 0, 0, 0, 0, 0, 0, 0}, 0, 0, ICV_FILTER_NULL },
 };
 
 int kerndiv;
 int kernoffset;
+int *kern;
 double kerndiv_diff, kernoffset_diff;
 ICV_FILTER filter_type;
 int inx = 512;
@@ -94,6 +96,7 @@ select_filter(char *str)
 	dousage();
 	bu_exit (3, NULL);
     }
+    kern = kernel[i].kern;
     filter_type = kernel[i].filter;
     /* Have a match, set up that kernel */
     if (dflag == 1)
@@ -179,6 +182,9 @@ int
 main(int argc, char **argv)
 {
     icv_image_t *img;
+    double *max_d = NULL, *min_d = NULL; /* return values from min and max */
+    int max, min;
+    int x;
     /* Select Default Filter (low pass) */
     select_filter("low");
 
@@ -192,6 +198,18 @@ main(int argc, char **argv)
 
     icv_filter(img, filter_type);
 
+    if (verbose) {
+	for (x = 0; x < 11; x++)
+	    bu_log("kern[%d] = %d\n", x, kern[x]);
+
+	max_d = icv_max(img);
+	min_d = icv_min(img);
+	max = (int) (*max_d * 255.0);
+	min = (int) (*min_d * 255.0);
+	bu_log("\n\tMax = %d, Min = %d\n",max, min);
+    }
+    bu_free(min_d, "max value");
+    bu_free(max_d, "min values");
 
     icv_write(img, out_file, ICV_IMAGE_BW);
     return 0;
