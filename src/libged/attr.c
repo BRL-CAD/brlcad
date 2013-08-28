@@ -118,6 +118,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
     /* for pretty printing */
     int max_attr_name_len  = 0;
+    int max_attr_value_len = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
