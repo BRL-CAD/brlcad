@@ -2285,7 +2285,7 @@ db_search(const char *plan_string,
 	    if (!search_path_strings || !search_path_strings[0]) search_path_strings = db_get_top_objs(wdbp);
 	    const char *curr_path = search_path_strings[0];
 	    while (curr_path) {
-		// search
+		/* search */
 		struct db_node_t curr_node;
 		struct directory *curr_dp = db_lookup
 		if (dp) {
@@ -2313,7 +2313,7 @@ db_search(const char *plan_string,
 	    if (!search_path_strings || !search_path_strings[0]) search_path_strings = db_get_top_objs(wdbp);
 	    break;
 	case DB_SEARCH_FLAT:
-	    // for loop
+	    /* for loop */
 	    break;
 	default:
 	    break;
