@@ -861,7 +861,7 @@ may require thoughtful deployment.  See the CHANGES file for details.
 
 To add new regression tests, look at regress/weight.sh for an
 integration test example and src/libbu/tests/bu_vls_vprintf.c for an
-API unit test example.  See their corresponding CMakeLIsts.txt build
+API unit test example.  See their corresponding CMakeLists.txt build
 file for examples of how they are added to the build.  Individual
 regression tests have separate regress-TARGET build targets defined
 (e.g., make regress-weight) to facilitate manual testing.
