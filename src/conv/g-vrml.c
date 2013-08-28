@@ -955,15 +955,16 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 	    }
 	    if (strlen(mat.tx_file)) {
 		int tex_fd;
-		int nbytes;
-		long tex_len;
-		long bytes_read = 0;
 		unsigned char tex_buf[TXT_BUF_LEN * 3];
 
 		if ((tex_fd = open(mat.tx_file, O_RDONLY | O_BINARY)) == (-1)) {
 		    bu_log("Cannot open texture file (%s)\n", mat.tx_file);
 		    perror("g-vrml: ");
 		} else {
+		    long tex_len;
+		    long bytes_read = 0;
+		    long bytes_to_go = 0;
+
 		    /* Johns note - need to check (test) the texture stuff */
 		    fprintf(fp_out, "\t\t\t\ttextureTransform TextureTransform {\n");
 		    fprintf(fp_out, "\t\t\t\t\tscale 1.33333 1.33333\n\t\t\t\t}\n");
@@ -973,7 +974,7 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 		    fprintf(fp_out, "\t\t\t\t\timage %d %d %d\n", mat.tx_w, mat.tx_n, 3);
 		    tex_len = mat.tx_w*mat.tx_n * 3;
 		    while (bytes_read < tex_len) {
-			long bytes_to_go=tex_len;
+			int nbytes;
 			long readval;
 
 			bytes_to_go = tex_len - bytes_read;
@@ -997,6 +998,8 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 			}
 		    }
 		    fprintf(fp_out, "\t\t\t\t}\n");
+
+		    close(tex_fd);
 		}
 	    }
 	} else if (mater->ma_color_valid) {
