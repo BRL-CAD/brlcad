@@ -20,18 +20,16 @@
 
 #include "common.h"
 
-/*
-#include <stdio.h>
-#include <string.h>
-*/
-
 #include <time.h>
+#include <string.h>
 
 #include "bu.h"
+
 
 void
 bu_utctime(struct bu_vls *vls_gmtime)
 {
+    static const char *nulltime = "0000-00-00T00:00:00Z";
     struct tm loctime;
     struct tm* retval;
     time_t curr_time;
@@ -43,20 +41,23 @@ bu_utctime(struct bu_vls *vls_gmtime)
 
     curr_time = time(0);
     if (curr_time == (time_t)(-1)) {
-	/* time error: but set something */
-	bu_vls_sprintf(vls_gmtime, "TIME_ERROR");
+	/* time error: but set something, an invalid "NULL" time. */
+	bu_vls_sprintf(vls_gmtime, nulltime);
 	return;
     }
 
+    memset(&loctime, 0, sizeof(loctime));
+
     bu_semaphore_acquire(BU_SEM_DATETIME);
     retval = gmtime(&curr_time);
-    loctime = *retval; /* struct copy */
+    if (retval)
+	loctime = *retval; /* struct copy */
     bu_semaphore_release(BU_SEM_DATETIME);
 
     /* put the UTC time in the desired ISO format: "yyyy-mm-ddThh:mm:ssZ" */
     bu_vls_sprintf(vls_gmtime, "%04d-%02d-%02dT%02d:%02d:%02dZ",
-		   loctime.tm_year + 1900,
-		   loctime.tm_mon + 1,
+		   loctime.tm_year > 0 ? loctime.tm_year + 1900 : loctime.tm_year,
+		   loctime.tm_mon > 0 ? loctime.tm_mon + 1 : loctime.tm_mon,
 		   loctime.tm_mday,
 		   loctime.tm_hour,
 		   loctime.tm_min,
