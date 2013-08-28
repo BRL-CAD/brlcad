@@ -41,6 +41,9 @@
 #define GENERIC_NAME "rhino"
 #define Usage "Usage: 3dm-g [-v vmode] [-r] [-u] -o output_file.g input_file.3dm\n"
 
+/* UUID buffers must be >= 37 chars per openNURBS API */
+#define UUID_LEN 50
+
 /* typedefs and global containers for building layer hierarchy */
 typedef std::map< std::string, std::string> STR_STR_MAP;
 typedef std::map< std::string, int> REGION_CNT_MAP;
@@ -73,7 +76,7 @@ RegionCnt(std::string &name)
 static void
 MapRegion(ONX_Model &model, std::string &region_name, int layer_index)
 {
-    char uuidstr[50];
+    char uuidstr[UUID_LEN] = {0};
     std::string parent_uuid;
 
     const ON_Layer& layer = model.m_layer_table[layer_index];
@@ -149,9 +152,9 @@ BuildHierarchy(struct rt_wdb* outfp, std::string &uuid, ON_TextLog* dump)
 		std::string uuid2 = siter->second;
 		BuildHierarchy(outfp, uuid2, dump);
 	    }
-	    viter++;
+	    ++viter;
 	}
-	iter++;
+	++iter;
     }
     mk_lcomb(outfp, groupname.c_str(), &members, 0, NULL, NULL, NULL, 0);
 }
@@ -162,6 +165,7 @@ BuildHierarchy(struct rt_wdb* outfp, ON_TextLog* dump)
 {
     std::string root_uuid = "00000000-0000-0000-0000-000000000000";
     MEMBER_MAP::iterator iter = member_map.find(root_uuid);
+
     if (iter != member_map.end()) {
 	std::string uuid = iter->first;
 	BuildHierarchy(outfp, uuid, dump);
@@ -172,17 +176,19 @@ BuildHierarchy(struct rt_wdb* outfp, ON_TextLog* dump)
 static void
 ProcessLayers(ONX_Model &model, ON_TextLog* dump)
 {
-    char name[256];
-    char uuidstr[50];
+    struct bu_vls name = BU_VLS_INIT_ZERO;
+    char uuidstr[UUID_LEN] = {0};
     std::string layer_name, uuid, parent_uuid;
     ON_UuidIndex uuidIndex;
     int i, count = model.m_layer_table.Count();
+
     dump->Print("Number of layers: %d\n", count);
-    for (i=0; i < count; i++) {
+    for (i=0; i < count; ++i) {
 	const ON_Layer& layer = model.m_layer_table[i];
 	ON_wString lname = layer.LayerName();
-	bu_strlcpy(name, ON_String(lname), sizeof(name));
-	layer_name = name;
+
+	bu_vls_strcpy(&name, ON_String(lname));
+	layer_name = bu_vls_addr(&name);
 	uuid = ON_UuidToString(layer.m_layer_id, uuidstr);
 	parent_uuid = ON_UuidToString(layer.m_parent_layer_id, uuidstr);
 	MapLayer(layer_name, uuid, parent_uuid);
@@ -275,7 +281,7 @@ main(int argc, char** argv)
 	model.Audit(true, &repair_count, dump, &warnings); // repair
 
 	dump->Print("%d objects were repaired.\n", repair_count);
-	for (warn_i=0; warn_i < warnings.Count(); warn_i++) {
+	for (warn_i=0; warn_i < warnings.Count(); ++warn_i) {
 	    dump->Print("%s\n", warnings[warn_i]);
 	}
 
@@ -294,7 +300,7 @@ main(int argc, char** argv)
     BU_LIST_INIT(&all_regions.l);
 
     dump->Print("\n");
-    for (int i = 0; i < model.m_object_table.Count(); i++) {
+    for (int i = 0; i < model.m_object_table.Count(); ++i) {
 
 	dump->Print("Object %d of %d:\n\n", i + 1, model.m_object_table.Count());
 
@@ -308,7 +314,7 @@ main(int argc, char** argv)
 	dump->Print("\n");
 
 	if (use_uuidnames) {
-	    char uuidstring[37];
+	    char uuidstring[UUID_LEN] = {0};
 	    ON_UuidToString(myAttributes.m_uuid, uuidstring);
 	    ON_String constr(uuidstring);
 	    const char* cstr = constr;

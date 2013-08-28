@@ -19,9 +19,11 @@
   <command>g-nmg</command>
     <arg choice='opt'>-v </arg>
     <arg choice='opt'>-b </arg>
+    <arg choice='opt'>-xX <replaceable>lvl</replaceable></arg>
     <arg choice='opt'>-t <replaceable>calc_dist_tol</replaceable></arg>
     <arg choice='opt'>-a <replaceable>abs_tess_tol</replaceable></arg>
     <arg choice='opt'>-n <replaceable>norm_tess_tol</replaceable></arg>
+    <arg choice='opt'>-P <replaceable>number_of_CPUs</replaceable></arg>
     <arg choice='opt'>-r <replaceable>rel_tess_tol</replaceable></arg>
     <arg choice='opt'>-o <replaceable>outfile.g</replaceable></arg>
     <arg choice='plain'><replaceable>infile.g</replaceable></arg>
@@ -68,6 +70,12 @@ surface must not be greater than
   </listitem>
   </varlistentry>
   <varlistentry>
+  <term><option>-P #_of_CPUs</option></term>
+  <listitem>
+<para>Specify the number of CPUs.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
   <term><option>-o outfile.g</option></term>
   <listitem>
 <para>Specify the name of the file to be created.  This should not be the same as the input file.</para>
@@ -110,7 +118,7 @@ can be controlled using the tessellation tolerances.</para>
   <listitem>
 <para>Set librt debug flags.
 The definitions of these flags may be found in
-<emphasis remap='I'>raytrace.h</emphasis></para>
+<emphasis remap='I'>raytrace.h.</emphasis></para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -119,6 +127,12 @@ The definitions of these flags may be found in
 <para>Set NMG routines debug flags.
 The definitions of these flags may be found in
 <emphasis remap='I'>h/nmg.h.</emphasis></para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-(</option></term>
+  <listitem>
+<para>Set the number of CPUs.</para>
   </listitem>
   </varlistentry>
 </variablelist>

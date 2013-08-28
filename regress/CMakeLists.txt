@@ -31,7 +31,7 @@ if(SH_EXEC)
     )
   add_custom_target(regress-iges
     ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/iges.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS iges-g g-iges mged
+    DEPENDS iges-g g-iges mged asc2g
     )
   add_custom_target(regress-weight
     ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/weight.sh ${CMAKE_SOURCE_DIR}
@@ -75,7 +75,7 @@ if(SH_EXEC)
     )
   add_custom_target(regress-gnff
     ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/g-nff.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS mged g-nff
+    DEPENDS mged g-nff asc2g
     )
   add_custom_target(regress-gdot
     ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/g-dot.sh ${CMAKE_SOURCE_DIR}

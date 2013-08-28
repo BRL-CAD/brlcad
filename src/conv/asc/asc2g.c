@@ -1527,10 +1527,11 @@ gettclblock(struct bu_vls *line, FILE *fp)
 {
     int ret = 0;
     struct bu_vls tmp = BU_VLS_INIT_ZERO;
-    int bcnt = 0;
-    int escapedcr = 0;
 
     if ((ret=bu_vls_gets(line, fp)) >= 0) {
+	int bcnt = 0;
+	int escapedcr = 0;
+
 	linecnt++;
 	escapedcr = endswith(bu_vls_addr(line),'\\');
 	bcnt = bracecnt(bu_vls_addr(line));

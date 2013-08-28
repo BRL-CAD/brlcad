@@ -76,6 +76,18 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* get rid of the -P#processors user option (except rt* tools) common
+  on utilities.  call bu_avail_cpus() and provide an environment
+  variable override used by the library.
+
+* In tree.c line 531, the initialization of the local storage of the
+  full path in stp->st_path is conditionalized on the specifics of
+  the tree structure.  Why?  Could we get away with always initializing
+  (or never initializing, if it is not used) the st_path?  Current
+  behavior is odd - if a region has a solid unioned under it the st_path
+  is not set, but if it has a comb unioned in the path is set - is this
+  an optimization, and if so is it necessary?
+
 * investigate integrating Blender's (OSL-based) Cycles engine:
   http://code.blender.org/index.php/2013/08/cycles-render-engine-released-with-permissive-license/
 
@@ -657,9 +669,9 @@ comp.r4 ID 5678 material code 5 LOS 75
 
 * make ged command names aware of object arguments for automatic
   globbing and regular expression expansion:
-	attr set t 1 [regex .*\.r]
-	attr set t 1 [glob *.r]
-	attr set t 1 *.r
+	attr set [regex .*\.r] t 1
+	attr set [glob *.r] t 1
+	attr set *.r t 1
 
 * mged crashes on Mac if using system Tcl/Tk with our incrTcl.
   crashes with the following stack (same whether dm-X or dm-ogl):

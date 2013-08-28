@@ -110,13 +110,13 @@ typedef struct master_s
 } master_t;
 
 
-void* master_networking (void *ptr);
-void master_result (tienet_buffer_t *result);
+void* master_networking(void *ptr);
+void master_result(tienet_buffer_t *result);
 
 master_t master;
 
 static void
-master_setup ()
+master_setup()
 {
     uint16_t i;
 
@@ -138,7 +138,7 @@ master_setup ()
 
 
 void
-master_init (int port, int obs_port, char *list, char *exec, char *comp_host)
+master_init(int port, int obs_port, char *list, char *exec, char *comp_host)
 {
     /* Setup defaults */
     master_setup();
@@ -184,7 +184,7 @@ master_init (int port, int obs_port, char *list, char *exec, char *comp_host)
 
 
 void
-master_result (tienet_buffer_t *result)
+master_result(tienet_buffer_t *result)
 {
     master_socket_t *sock;
     camera_tile_t tile;
@@ -200,20 +200,19 @@ master_result (tienet_buffer_t *result)
     op = result->data[ind];
     ind += 1;
 
-    TCOPY (uint16_t, result->data, ind, &wid, 0);
+    TCOPY(uint16_t, result->data, ind, &wid, 0);
     ind += 2;
 
-    if(bu_debug & BU_DEBUG_UNUSED_2 && lastop != op) {
-	bu_log("ADRT Master OP: %d %s\n", op, adrt_work_table[op-ADRT_WORK_BASE]);
+    if (bu_debug & BU_DEBUG_UNUSED_2 && lastop != op) {
+	bu_log("ADRT Master OP: %d\n", op);
 	lastop = op;
     }
 
-    switch (op)
-    {
+    switch (op) {
 	case ADRT_WORK_FRAME:
 	    /* Work unit data */
 	    TCOPY(camera_tile_t, result->data, ind, &tile, 0);
-	    ind += sizeof (camera_tile_t);
+	    ind += sizeof(camera_tile_t);
 
 	    /* Pointer to RGB Data */
 	    rgb_data = &result->data[ind];
@@ -223,8 +222,7 @@ master_result (tienet_buffer_t *result)
 	    ind2 = tile.orig_x + tile.orig_y * master.image_w;
 
 	    /* Only does 24-bit right now */
-	    for (i = 0; i < tile.size_y; i++)
-	    {
+	    for (i = 0; i < tile.size_y; i++) {
 		bcopy(&rgb_data[3*ind], &master.buf.data[3*ind2], 3*tile.size_x);
 		ind += tile.size_x;
 		ind2 += master.image_w;
@@ -233,8 +231,7 @@ master_result (tienet_buffer_t *result)
 	    master.frame_ind++;
 
 	    /* Image is complete, draw the frame. */
-	    if (master.frame_ind == master.tile_num)
-	    {
+	    if (master.frame_ind == master.tile_num) {
 		update = 1;
 		master.frame_ind = 0;
 		master.buf.ind = 3 * master.image_w * master.image_h;
@@ -242,78 +239,77 @@ master_result (tienet_buffer_t *result)
 	    break;
 
 	case ADRT_WORK_SHOTLINE:
-	{
-	    tienet_buffer_t selection_buf;
-	    uint32_t i, num, tind;
-	    uint8_t c;
-	    char name[256];
-
-	    TIENET_BUFFER_INIT(selection_buf);
-	    TIENET_BUFFER_SIZE(selection_buf, result->ind);
-
-	    /* Send this data to the slaves as ADRT_WORK_SELECT for highlighting hit components */
-	    selection_buf.ind = 0;
-
-	    op = ADRT_WORK_SELECT;
-	    TCOPY(uint8_t, &op, 0, selection_buf.data, selection_buf.ind);
-	    selection_buf.ind += 1;
-
-	    TCOPY(uint16_t, &wid, 0, selection_buf.data, selection_buf.ind);
-	    selection_buf.ind += 2;
-
-	    tind = ind;
-
-	    /* Skip over in-hit */
-	    tind += sizeof(TIE_3);
-
-	    /* Number of meshes */
-	    TCOPY(uint32_t, result->data, tind, &num, 0);
-	    tind += 4;
-
-	    /* Reset Flag */
-	    op = 1;
-	    TCOPY(uint8_t, &op, 0, selection_buf.data, selection_buf.ind);
-	    selection_buf.ind += 1;
-
-	    /* Number of meshes */
-	    TCOPY(uint32_t, &num, 0, selection_buf.data, selection_buf.ind);
-	    selection_buf.ind += 4;
-
-	    /* For each intersected mesh extract the name and pack it, skipping the thickness */
-	    for (i = 0; i < num; i++)
 	    {
-		/* length of string */
-		TCOPY(uint8_t, result->data, tind, &c, 0);
-		tind += 1;
+		tienet_buffer_t selection_buf;
+		uint32_t i, num, tind;
+		uint8_t c;
+		char name[256];
 
-		/* the name */
-		bcopy(&result->data[tind], name, c);
-		tind += c;
+		TIENET_BUFFER_INIT(selection_buf);
+		TIENET_BUFFER_SIZE(selection_buf, result->ind);
 
-		/* skip over the thickness */
-		tind += sizeof(tfloat);
+		/* Send this data to the slaves as ADRT_WORK_SELECT for highlighting hit components */
+		selection_buf.ind = 0;
 
-		/* pack the mesh name length and name */
-		TCOPY(uint8_t, &c, 0, selection_buf.data, selection_buf.ind);
+		op = ADRT_WORK_SELECT;
+		TCOPY(uint8_t, &op, 0, selection_buf.data, selection_buf.ind);
 		selection_buf.ind += 1;
 
-		bcopy(name, &selection_buf.data[selection_buf.ind], c);
-		selection_buf.ind += c;
+		TCOPY(uint16_t, &wid, 0, selection_buf.data, selection_buf.ind);
+		selection_buf.ind += 2;
+
+		tind = ind;
+
+		/* Skip over in-hit */
+		tind += sizeof(TIE_3);
+
+		/* Number of meshes */
+		TCOPY(uint32_t, result->data, tind, &num, 0);
+		tind += 4;
+
+		/* Reset Flag */
+		op = 1;
+		TCOPY(uint8_t, &op, 0, selection_buf.data, selection_buf.ind);
+		selection_buf.ind += 1;
+
+		/* Number of meshes */
+		TCOPY(uint32_t, &num, 0, selection_buf.data, selection_buf.ind);
+		selection_buf.ind += 4;
+
+		/* For each intersected mesh extract the name and pack it, skipping the thickness */
+		for (i = 0; i < num; i++) {
+		    /* length of string */
+		    TCOPY(uint8_t, result->data, tind, &c, 0);
+		    tind += 1;
+
+		    /* the name */
+		    bcopy(&result->data[tind], name, c);
+		    tind += c;
+
+		    /* skip over the thickness */
+		    tind += sizeof(tfloat);
+
+		    /* pack the mesh name length and name */
+		    TCOPY(uint8_t, &c, 0, selection_buf.data, selection_buf.ind);
+		    selection_buf.ind += 1;
+
+		    bcopy(name, &selection_buf.data[selection_buf.ind], c);
+		    selection_buf.ind += c;
+		}
+
+		/* Shotline Selection data being sent to slaves */
+		tienet_master_broadcast(selection_buf.data, selection_buf.ind);
+		update = 1;
+
+		TIENET_BUFFER_FREE(selection_buf);
+
+		/* The data that will be sent to the observer */
+		TIENET_BUFFER_SIZE(master.buf, result->ind - ind + 1);
+		master.buf.ind = 0;
+		bcopy(&result->data[ind], &master.buf.data[master.buf.ind], result->ind - ind);
+		master.buf.ind += result->ind - ind;
 	    }
-
-	    /* Shotline Selection data being sent to slaves */
-	    tienet_master_broadcast(selection_buf.data, selection_buf.ind);
-	    update = 1;
-
-	    TIENET_BUFFER_FREE(selection_buf);
-
-	    /* The data that will be sent to the observer */
-	    TIENET_BUFFER_SIZE(master.buf, result->ind - ind + 1);
-	    master.buf.ind = 0;
-	    bcopy(&result->data[ind], &master.buf.data[master.buf.ind], result->ind - ind);
-	    master.buf.ind += result->ind - ind;
-	}
-	break;
+	    break;
 
 	case ADRT_WORK_MINMAX:
 	    /* The data that will be sent to the observer */
@@ -333,12 +329,12 @@ master_result (tienet_buffer_t *result)
 	for (sock = master.socklist; sock; sock = sock->next)
 	    if (sock->next)
 		if (!sock->frame_sem.val)
-		    tienet_sem_post (&(sock->frame_sem));
+		    tienet_sem_post(&(sock->frame_sem));
 }
 
 
 void*
-master_networking (void *ptr)
+master_networking(void *ptr)
 {
     master_socket_t *sock, *tmp;
     struct sockaddr_in master_addr, observer_addr;
@@ -353,9 +349,8 @@ master_networking (void *ptr)
 
 
     /* create a socket */
-    if ((master_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-    {
-	fprintf (stderr, "unable to create socket, exiting.\n");
+    if ((master_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+	fprintf(stderr, "unable to create socket, exiting.\n");
 	exit(1);
     }
 
@@ -374,8 +369,7 @@ master_networking (void *ptr)
     master_addr.sin_port = htons(port);
 
     /* bind socket */
-    if (bind (master_socket, (struct sockaddr *)&master_addr, sizeof(master_addr)) < 0)
-    {
+    if (bind(master_socket, (struct sockaddr *)&master_addr, sizeof(master_addr)) < 0) {
 	fprintf(stderr, "observer socket already bound, exiting.\n");
 	exit(1);
     }
@@ -384,15 +378,15 @@ master_networking (void *ptr)
     FD_SET(master_socket, &readfds);
 
     /* listen for connections */
-    observer_listener_result = listen (master.socklist->num, 3);
+    observer_listener_result = listen(master.socklist->num, 3);
 
-    if(go_daemon_mode) {
+    if (go_daemon_mode) {
 	/* spinlock until other socket is good */
-	while(master_listener_result == 1)
+	while (master_listener_result == 1)
 	    sleep(0);
 	/* if both sockets are listening, background. */
-	if(master_listener_result == 0 && observer_listener_result == 0)
-	    daemon(0,0);
+	if (master_listener_result == 0 && observer_listener_result == 0)
+	    daemon(0, 0);
     }
 
     addrlen = sizeof(observer_addr);
@@ -401,14 +395,12 @@ master_networking (void *ptr)
     if (tienet_master_verbose)
 	printf("Now listening\n");
 
-    while (master.alive || master.active_connections)
-    {
+    while (master.alive || master.active_connections) {
 	/* wait for some network activity */
 	select(highest_fd+1, &readfds, NULL, NULL, NULL);
 
 	/* cycle through each socket and address the activity */
-	for (sock = master.socklist; sock; sock = sock->next)
-	{
+	for (sock = master.socklist; sock; sock = sock->next) {
 	    /* if no longer alive then mark each of the active connections as no longer active */
 	    if (!master.alive)
 		sock->active = 0;
@@ -418,11 +410,9 @@ master_networking (void *ptr)
 		continue;
 
 	    /* new connection */
-	    if (sock->num == master_socket)
-	    {
-		new_socket = accept (master_socket, (struct sockaddr *)&observer_addr, &addrlen);
-		if (new_socket >= 0)
-		{
+	    if (sock->num == master_socket) {
+		new_socket = accept(master_socket, (struct sockaddr *)&observer_addr, &addrlen);
+		if (new_socket >= 0) {
 		    tmp = master.socklist;
 
 		    BU_ALLOC(master.socklist, master_socket_t);
@@ -442,11 +432,10 @@ master_networking (void *ptr)
 
 	    /* remove socket from pool if there's an error, i.e. slave disconnected */
 	    op = 255;
-	    error = tienet_recv (sock->num, &op, 1);
-	    if (error || op == ADRT_NETOP_QUIT || !sock->active)
-	    {
+	    error = tienet_recv(sock->num, &op, 1);
+	    if (error || op == ADRT_NETOP_QUIT || !sock->active) {
 		op = ADRT_NETOP_QUIT;
-		tienet_send (sock->num, &op, 1);
+		tienet_send(sock->num, &op, 1);
 
 		tmp = sock;
 		if (sock->prev)
@@ -463,137 +452,135 @@ master_networking (void *ptr)
 	    }
 
 	    /* standard communication */
-	    switch (op)
-	    {
+	    switch (op) {
 		case ADRT_NETOP_SHUTDOWN:
-		    tienet_sem_post (&master.wait_sem);
+		    tienet_sem_post(&master.wait_sem);
 		    return NULL;
 		    break;
 
 		case ADRT_NETOP_INIT:
 		    /* send endian */
 		    endian = 1;
-		    tienet_send (sock->num, &endian, 2);
+		    tienet_send(sock->num, &endian, 2);
 		    break;
 
 		case ADRT_NETOP_REQWID:
-		{
-		    uint16_t i;
+		    {
+			uint16_t i;
 
-		    /*
-		     * Allocate a Workspace ID that the client application can
-		     * use to pass along to the slaves to associate a project id with.
-		     */
-		    i = 0;
-		    while (master.wid_list[i] && i < ADRT_MAX_WORKSPACE_NUM)
-			i++;
+			/*
+			 * Allocate a Workspace ID that the client application can
+			 * use to pass along to the slaves to associate a project id with.
+			 */
+			i = 0;
+			while (i < ADRT_MAX_WORKSPACE_NUM && master.wid_list[i])
+			    i++;
 
-		    /* Mark this ID as being in use. */
-		    master.wid_list[i] = 1;
+			/* Mark this ID as being in use. */
+			master.wid_list[i] = 1;
 
-		    /* Send this WID to the client application. */
-		    tienet_send (sock->num, &i, 2);
-		}
-		break;
+			/* Send this WID to the client application. */
+			tienet_send(sock->num, &i, 2);
+		    }
+		    break;
 
 		case ADRT_NETOP_LOAD:
-		{
-		    uint32_t size;
-		    void *mesg;
+		    {
+			uint32_t size;
+			void *mesg;
 
-		    tienet_recv (sock->num, &size, 4);
-		    mesg = bu_malloc (size, "message buffer");
-		    tienet_recv (sock->num, mesg, size);
-		    tienet_master_broadcast(mesg, size);
-		    bu_free(mesg, "message");
-		}
-		break;
+			tienet_recv(sock->num, &size, 4);
+			mesg = bu_malloc(size, "message buffer");
+			tienet_recv(sock->num, mesg, size);
+			tienet_master_broadcast(mesg, size);
+			bu_free(mesg, "message");
+		    }
+		    break;
 
 		case ADRT_NETOP_WORK:
-		{
-		    uint16_t wid;
-
-		    /* Size */
-		    tienet_recv (sock->num, &master.slave_data_len, 4);
-		    tienet_recv (sock->num, master.slave_data, master.slave_data_len);
-
-		    op = master.slave_data[0];
-		    bcopy (&master.slave_data[1], &wid, 2);
-
-		    switch (op)
 		    {
-			case ADRT_WORK_FRAME_ATTR:
-			    TCOPY(uint16_t, master.slave_data, 3, &master.image_w, 0);
-			    TCOPY(uint16_t, master.slave_data, 5, &master.image_h, 0);
-			    TCOPY(uint16_t, master.slave_data, 7, &master.image_format, 0);
-			    TIENET_BUFFER_SIZE(master.buf, 3 * master.image_w * master.image_h);
-			    tienet_master_broadcast(master.slave_data, master.slave_data_len);
-			    tienet_sem_post(&(sock->frame_sem));
-			    break;
+			uint16_t wid;
 
-			case ADRT_WORK_FRAME:
-			{
-			    /* Fill the work buffer */
-			    master_dispatcher_generate(master.slave_data, master.slave_data_len, master.image_w, master.image_h, master.image_format);
+			/* Size */
+			tienet_recv(sock->num, &master.slave_data_len, 4);
+			tienet_recv(sock->num, master.slave_data, master.slave_data_len);
+
+			op = master.slave_data[0];
+			bcopy(&master.slave_data[1], &wid, 2);
+
+			switch (op) {
+			    case ADRT_WORK_FRAME_ATTR:
+				TCOPY(uint16_t, master.slave_data, 3, &master.image_w, 0);
+				TCOPY(uint16_t, master.slave_data, 5, &master.image_h, 0);
+				TCOPY(uint16_t, master.slave_data, 7, &master.image_format, 0);
+				TIENET_BUFFER_SIZE(master.buf, 3 * master.image_w * master.image_h);
+				tienet_master_broadcast(master.slave_data, master.slave_data_len);
+				tienet_sem_post(&(sock->frame_sem));
+				break;
+
+			    case ADRT_WORK_FRAME:
+				{
+				    /* Fill the work buffer */
+				    master_dispatcher_generate(master.slave_data, master.slave_data_len, master.image_w, master.image_h, master.image_format);
+				}
+				break;
+
+			    case ADRT_WORK_SHOTLINE:
+				tienet_master_push(master.slave_data, master.slave_data_len);
+				break;
+
+			    case ADRT_WORK_SELECT:
+				tienet_master_broadcast(master.slave_data, master.slave_data_len);
+				tienet_sem_post(&(sock->frame_sem));
+				break;
+
+			    case ADRT_WORK_STATUS:
+				tienet_master_broadcast(master.slave_data, master.slave_data_len);
+				break;
+
+			    case ADRT_WORK_MINMAX:
+				tienet_master_push(master.slave_data, master.slave_data_len);
+				break;
+
+			    default:
+				break;
 			}
-			break;
 
-			case ADRT_WORK_SHOTLINE:
-			    tienet_master_push(master.slave_data, master.slave_data_len);
-			    break;
+			/* Wait for the result to come back */
+			tienet_sem_wait(&(sock->frame_sem));
 
-			case ADRT_WORK_SELECT:
-			    tienet_master_broadcast(master.slave_data, master.slave_data_len);
-			    tienet_sem_post(&(sock->frame_sem));
-			    break;
+			/* Stamp the result with the work type */
+			tienet_send(sock->num, &op, 1);
 
-			case ADRT_WORK_STATUS:
-			    tienet_master_broadcast(master.slave_data, master.slave_data_len);
-			    break;
+			/* Workspace ID */
+			tienet_send(sock->num, &wid, 2);
 
-			case ADRT_WORK_MINMAX:
-			    tienet_master_push(master.slave_data, master.slave_data_len);
-			    break;
-
-			default:
-			    break;
-		    }
-
-		    /* Wait for the result to come back */
-		    tienet_sem_wait(&(sock->frame_sem));
-
-		    /* Stamp the result with the work type */
-		    tienet_send (sock->num, &op, 1);
-
-		    /* Workspace ID */
-		    tienet_send (sock->num, &wid, 2);
-
-		    /* Size of result data */
-		    tienet_send (sock->num, &master.buf.ind, 4);
+			/* Size of result data */
+			tienet_send(sock->num, &master.buf.ind, 4);
 
 #if ADRT_USE_COMPRESSION
-		    {
-			unsigned long dest_len;
-			unsigned int comp_size;
+			{
+			    unsigned long dest_len;
+			    unsigned int comp_size;
 
-			dest_len = master.buf.ind + 32;
-			TIENET_BUFFER_SIZE(master.buf_comp, dest_len);
+			    dest_len = master.buf.ind + 32;
+			    TIENET_BUFFER_SIZE(master.buf_comp, dest_len);
 
-			/* result data */
-			compress(&master.buf_comp.data[sizeof(unsigned int)], &dest_len, master.buf.data, master.buf.ind);
-			comp_size = dest_len;
+			    /* result data */
+			    compress(&master.buf_comp.data[sizeof(unsigned int)], &dest_len, master.buf.data, master.buf.ind);
+			    comp_size = dest_len;
 
-			TCOPY(uint32_t, &comp_size, 0, master.buf_comp.data, 0);
+			    TCOPY(uint32_t, &comp_size, 0, master.buf_comp.data, 0);
 
-			/* int compressed data size in bytes followed by actual rgb frame data */
-			tienet_send (sock->num, master.buf_comp.data, comp_size + sizeof(unsigned int));
-		    }
+			    /* int compressed data size in bytes followed by actual rgb frame data */
+			    tienet_send(sock->num, master.buf_comp.data, comp_size + sizeof(unsigned int));
+			}
 #else
-		    /* result data */
-		    tienet_send (sock->num, master.buf.data, master.buf.ind);
+			/* result data */
+			tienet_send(sock->num, master.buf.data, master.buf.ind);
 #endif
-		}
-		break;
+		    }
+		    break;
 
 		case ADRT_NETOP_QUIT:
 		    master.active_connections = 0;
@@ -606,8 +593,7 @@ master_networking (void *ptr)
 
 	/* Rebuild select list for next select call */
 	highest_fd = 0;
-	for (sock = master.socklist; sock; sock = sock->next)
-	{
+	for (sock = master.socklist; sock; sock = sock->next) {
 	    if (sock->num > highest_fd)
 		highest_fd = sock->num;
 	    FD_SET(sock->num, &readfds);
@@ -620,6 +606,7 @@ master_networking (void *ptr)
 
     return 0;
 }
+
 
 #ifdef HAVE_GETOPT_LONG
 static struct option longopts[] =
@@ -646,6 +633,7 @@ static void finish(int sig) {
     printf("Collected signal %d, aborting!\n", sig);
     exit(EXIT_FAILURE);
 }
+
 
 static void help() {
     printf("%s\n", "Usage: adrt_master [options]\n\
@@ -721,11 +709,11 @@ int main(int argc, char **argv) {
 		break;
 
 	    case 'v':
-		if(!(bu_debug & BU_DEBUG_UNUSED_1))
+		if (!(bu_debug & BU_DEBUG_UNUSED_1))
 		    bu_debug |= BU_DEBUG_UNUSED_1;
-		else if(!(bu_debug & BU_DEBUG_UNUSED_2))
+		else if (!(bu_debug & BU_DEBUG_UNUSED_2))
 		    bu_debug |= BU_DEBUG_UNUSED_2;
-		else if(!(bu_debug & BU_DEBUG_UNUSED_3))
+		else if (!(bu_debug & BU_DEBUG_UNUSED_3))
 		    bu_debug |= BU_DEBUG_UNUSED_3;
 		else
 		    bu_log("Too verbose!\n");
@@ -739,10 +727,11 @@ int main(int argc, char **argv) {
     argc -= bu_optind;
     argv += bu_optind;
 
-    master_init (port, obs_port, list, exec, comp_host);
+    master_init(port, obs_port, list, exec, comp_host);
 
     return EXIT_SUCCESS;
 }
+
 
 /*
  * Local Variables:

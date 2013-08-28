@@ -27,9 +27,13 @@
 #include "bu.h"
 #include "icv.h"
 
+#include "vmath.h"
+
 #define KERN_DEFAULT 3
 
 /* private functions */
+
+#define __ICV_DEBUG__ if(h==510) {fprintf(stderr, "%d\n index = %ld", __LINE__, index);}
 
 HIDDEN void
 icv_get_kernel(ICV_FILTER filter_type, double *kern, double *offset)
@@ -157,9 +161,9 @@ icv_filter(icv_image_t *img, ICV_FILTER filter_type)
     double c_val;
     double *out_data, *in_data, *data_p;
     double offset = 0;
-    int k_dim = KERN_DEFAULT;
+    int k_dim = KERN_DEFAULT, k_dim_half, k_dim_half_ceil;
     long int size;
-    long int s, k, i;
+    long int h, w, k, i;
     long int widthstep;
     long int index, n_index; /**< index is the index of the pixel in
 			      * out image and n_index corresponds to
@@ -182,33 +186,43 @@ icv_filter(icv_image_t *img, ICV_FILTER filter_type)
     img->data = out_data = (double*)bu_malloc(size*sizeof(double), "icv_filter : out_image_data");
 
     index = -1;
+    /* Kernel Dimension is always considered to be */
+    k_dim_half = k_dim/2*img->channels;
+    k_dim_half_ceil = (k_dim - k_dim/2)*img->channels;
+    index = 0;
+    for (h = 0; h < img->height; h++) {
+	VMOVEN(out_data, in_data+index, k_dim_half);
+	out_data+=k_dim_half;
 
-    for (s = 0; s <= size; s++) {
-	index++;
-	c_val = 0;
-	kern_p = kern;
+	for (w = 0; w < widthstep - k_dim*img->channels; w++) {
+	    c_val = 0;
+	    kern_p = kern;
 
-	for (k = -k_dim/2; k<=k_dim/2; k++) {
-	    n_index = index + k*widthstep;
-	    data_p = in_data + n_index;
-	    for (i = 0; i<=k_dim; i++) {
-		/* Ensures that the arguments are given a zero value for
-		 * out of bound pixels. Thus behaves similar to zero padding
-		 */
-		if (n_index >= 0 && n_index < size) {
-		    c_val += (*kern_p++)*(*data_p);
-		    data_p += img->channels;
-		    /* Ensures out bound in image */
-		    n_index += img->channels;
+	    for (k = -k_dim/2; k<=k_dim/2; k++) {
+		n_index = index + k*widthstep;
+		data_p = in_data + n_index;
+		for (i = 0; i<=k_dim; i++) {
+		    /* Ensures that the arguments are given a zero value for
+		     * out of bound pixels. Thus behaves similar to zero padding
+		     */
+		    if (n_index >= 0 && n_index < size) {
+			c_val += (*kern_p++)*(*data_p);
+			data_p += img->channels;
+			/* Ensures out bound in image */
+			n_index += img->channels;
+		    }
 		}
 	    }
+	    *out_data = c_val + offset;
+	    index++;
 	}
-	*out_data++ = c_val + offset;
+	index = (h+1)*widthstep;
+	VMOVEN(out_data,in_data+index -k_dim_half_ceil*img->channels,k_dim_half_ceil*img->channels );
+	out_data+= k_dim_half_ceil;
     }
     bu_free(in_data, "icv:filter Input Image Data");
     return 0;
 }
-
 
 icv_image_t *
 icv_filter3(icv_image_t *old_img, icv_image_t *curr_img, icv_image_t *new_img, ICV_FILTER filter_type)

@@ -92,7 +92,7 @@ render_flos_init(render_t *render, const char *frag_pos)
 
     BU_ALLOC(render->data, struct render_flos_s);
     d = (struct render_flos_s *)render->data;
-    sscanf(frag_pos, "#(%lf %lf %lf)", &scan[0], &scan[1], &scan[2]);
+    bu_sscanf(frag_pos, "#(%lf %lf %lf)", &scan[0], &scan[1], &scan[2]);
     /* convert from double to fastf_t */
     VMOVE(d->frag_pos, scan);
     return 0;

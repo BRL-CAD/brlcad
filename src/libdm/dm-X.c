@@ -67,6 +67,7 @@
 
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
+#define DM_X_DEFAULT_POINT_SIZE 1.0
 
 extern void X_allocate_color_cube(Display *, Colormap, long unsigned int *, int, int, int);
 extern unsigned long X_get_pixel(unsigned char, unsigned char, unsigned char, long unsigned int *, int);
@@ -856,7 +857,7 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
     static int nvectors = 0;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
-
+    fastf_t pointSize = DM_X_DEFAULT_POINT_SIZE;
 
     if (dmp->dm_debugLevel) {
 	bu_log("X_drawVList()\n");
@@ -1091,9 +1092,25 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 			bu_log("pt - %lf %lf %lf\n", pnt[X], pnt[Y], pnt[Z]);
 		    }
 
-		    XDrawPoint(pubvars->dpy, privars->pix, privars->gc,
-			    GED_TO_Xx(dmp, pnt[0]), GED_TO_Xy(dmp, pnt[1]));
+		    if (pointSize <= DM_X_DEFAULT_POINT_SIZE) {
+			XDrawPoint(pubvars->dpy, privars->pix, privars->gc,
+				GED_TO_Xx(dmp, pnt[0]), GED_TO_Xy(dmp, pnt[1]));
+		    } else {
+			int upperLeft[2];
 
+			upperLeft[X] = GED_TO_Xx(dmp, pnt[0]) - pointSize / 2.0;
+			upperLeft[Y] = GED_TO_Xy(dmp, pnt[1]) - pointSize / 2.0;
+
+			XFillRectangle(pubvars->dpy, privars->pix, privars->gc,
+				upperLeft[X], upperLeft[Y], pointSize, pointSize);
+
+		    }
+		    break;
+		case BN_VLIST_POINT_SIZE:
+		    pointSize = (*pt)[0];
+		    if (pointSize < DM_X_DEFAULT_POINT_SIZE) {
+			pointSize = DM_X_DEFAULT_POINT_SIZE;
+		    }
 		    break;
 	    }
 	}

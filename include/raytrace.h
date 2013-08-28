@@ -1945,6 +1945,12 @@ struct rt_i {
 
 #define RT_ADD_VLIST(hd, pnt, draw) BN_ADD_VLIST(&RTG.rtg_vlfree, hd, pnt, draw)
 
+/** Set a point size to apply to the vlist elements that follow. */
+#define RT_VLIST_SET_POINT_SIZE(hd, size) BN_VLIST_SET_POINT_SIZE(&RTG.rtg_vlfree, hd, size)
+
+/** Set a line width to apply to the vlist elements that follow. */
+#define RT_VLIST_SET_LINE_WIDTH(hd, width) BN_VLIST_SET_LINE_WIDTH(&RTG.rtg_vlfree, hd, width)
+
 
 /*
  * Replacements for definitions from vmath.h

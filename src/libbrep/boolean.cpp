@@ -28,6 +28,7 @@
 #include <assert.h>
 #include <vector>
 #include <stack>
+#include <queue>
 #include <algorithm>
 #include "bio.h"
 
@@ -65,6 +66,7 @@ struct SSICurveInfo {
     int m_fi1;	// index of the first face
     int m_fi2;	// index of the second face
     int m_ci;	// index in the events array
+
     // Default constructor. Set all to an invalid value.
     SSICurveInfo()
     {
@@ -234,6 +236,12 @@ struct TrimmedFace {
     ON_SimpleArray<ON_Curve*> m_outerloop;
     std::vector<ON_SimpleArray<ON_Curve*> > m_innerloop;
     const ON_BrepFace *m_face;
+    enum {
+	UNKNOWN = -1,
+	NOT_BELONG = 0,
+	BELONG = 1
+    } m_belong_to_final;
+    bool m_rev;
 #if USE_CONNECTIVITY_GRAPH
     // Connectivity graph support
     ON_SimpleArray<TrimmedFace*> m_neighbors;
@@ -243,6 +251,15 @@ struct TrimmedFace {
     // which SSI curves are used.
     ON_SimpleArray<SSICurveInfo> m_ssi_info;
 #endif
+
+    // Default constructor
+    TrimmedFace()
+    {
+	m_face = NULL;
+	m_belong_to_final = UNKNOWN;
+	m_rev = false;
+    }
+
     TrimmedFace *Duplicate() const
     {
 	TrimmedFace *out = new TrimmedFace();
@@ -993,20 +1010,6 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 	    newface->m_innerloop = in->m_innerloop;
 	    newface->m_innerloop.insert(newface->m_innerloop.end(), innerloops.begin(), innerloops.end());
 #if USE_CONNECTIVITY_GRAPH
-	    /* if (intersect.Count()) {
-		// Eliminate the parts of outerloop used by other sub-faces
-		for (int i = 0; i < out.Count(); i++) {
-		    if (out[i]->parts.Count() == 0)
-			continue;
-		    IntersectPoint& start = intersect[0];
-		    for (int j = 0; j < out[i]->parts.Count(); j++) {
-			newface->parts.Append(std::make_pair(start, out[i]->parts[j].first));
-			start = out[i]->parts[j].second;
-		    }
-		}
-	    } else {
-		newface->parts = in->parts;
-	    } */
 	    for (int i = 0; i < outerloop_start_end.Count(); i++)
 		if (outerloop_start_end[i].first.m_seg != -1)
 		    newface->m_parts.Append(outerloop_start_end[i]);
@@ -1057,34 +1060,93 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &
 
     ON_BrepLoop &breploop = brep->NewLoop(loop_type, face);
     int start_count = brep->m_V.Count();
+    const ON_Surface* srf = face.SurfaceOf();
+
     for (int k = 0; k < loop.Count(); k++) {
+	// Determine whether it should be a seam trim, according to the
+	// requirements in ON_Brep::IsValid() (See opennurbs_brep.cpp)
+	ON_BOOL32 bClosed[2];
+	bClosed[0] = srf->IsClosed(0);
+	bClosed[1] = srf->IsClosed(1);
+	if (bClosed[0] || bClosed[1]) {
+	    ON_Interval side_interval;
+	    int endpt_index = 0;
+	    const double side_tol = 1.0e-4;
+	    double s0, s1;
+	    bool seamed = false;
+	    if (bClosed[0])
+		endpt_index = 1;
+	    else
+		endpt_index = 0;
+	    side_interval.Set(loop[k]->PointAtStart()[endpt_index], loop[k]->PointAtEnd()[endpt_index]);
+	    for (int i = 0; i < breploop.m_ti.Count(); i++) {
+		ON_BrepTrim& trim = brep->m_T[breploop.m_ti[i]];
+		if (ON_BrepTrim::boundary != trim.m_type)
+		    continue;
+		s1 = side_interval.NormalizedParameterAt(trim.PointAtStart()[endpt_index]);
+		if (fabs(s1 - 1.0) > side_tol)
+		    continue;
+		s0 = side_interval.NormalizedParameterAt(trim.PointAtEnd()[endpt_index]);
+		if (fabs(s0) > side_tol)
+		    continue;
+
+		if (srf->IsIsoparametric(*loop[k]) && srf->IsIsoparametric(trim)) {
+		    double s2 = srf->Domain(1-endpt_index).NormalizedParameterAt(loop[k]->PointAtStart()[1-endpt_index]);
+		    double s3 = srf->Domain(1-endpt_index).NormalizedParameterAt(trim.PointAtStart()[1-endpt_index]);
+		    if ((fabs(s2 - 1.0) < side_tol && fabs(s3) < side_tol) ||
+			(fabs(s2) < side_tol && fabs(s3 - 1.0) < side_tol)) {
+			// Find a trim that should share the same edge
+			int ti = brep->AddTrimCurve(loop[k]);
+			ON_BrepTrim& newtrim = brep->NewTrim(brep->m_E[trim.m_ei], true, breploop, ti);
+			//newtrim.m_type = ON_BrepTrim::seam;
+			newtrim.m_tolerance[0] = newtrim.m_tolerance[1] = MAX_FASTF;
+			seamed = true;
+			break;
+		    }
+		}
+	    }
+	    if (seamed)
+		continue;
+	}
+
 	ON_Curve* c3d = NULL;
 	// First, try the ON_Surface::Pushup() method.
 	// If Pushup() does not succeed, use sampling method.
 	c3d = face.SurfaceOf()->Pushup(*(loop[k]), INTERSECTION_TOL);
-	if (c3d) {
-	    brep->AddEdgeCurve(c3d);
-	} else {
-	    // TODO: Sometimes we need a singular trim.
+	if (!c3d) {
 	    ON_3dPointArray ptarray(101);
 	    for (int l = 0; l <= 100; l++) {
 		ON_3dPoint pt2d;
 		pt2d = loop[k]->PointAt(loop[k]->Domain().ParameterAt(l/100.0));
 		ptarray.Append(face.SurfaceOf()->PointAt(pt2d.x, pt2d.y));
 	    }
+	    // The curve is closed within a tolerance
+	    if (ptarray[0].DistanceTo(ptarray[100]) < INTERSECTION_TOL)
+		ptarray[100] = ptarray[0];
 	    c3d = new ON_PolylineCurve(ptarray);
-	    brep->AddEdgeCurve(c3d);
 	}
+
+	if (c3d->BoundingBox().Diagonal().Length() < ON_ZERO_TOLERANCE) {
+	    // The trim is singular
+	    if (brep->m_V.Count() == 0)
+		brep->NewVertex(c3d->PointAtStart(), 0.0);
+	    int ti = brep->AddTrimCurve(loop[k]);
+	    ON_BrepTrim& trim = brep->NewSingularTrim(*brep->m_V.Last(), breploop, srf->IsIsoparametric(*loop[k]), ti);
+	    trim.m_tolerance[0] = trim.m_tolerance[1] = MAX_FASTF;
+	    continue;
+	}
+	brep->AddEdgeCurve(c3d);
 
 	int ti = brep->AddTrimCurve(loop[k]);
 	ON_2dPoint start = loop[k]->PointAtStart(), end = loop[k]->PointAtEnd();
 	int start_idx, end_idx;
 	if (k > 0)
-	    start_idx = brep->m_V.Count() - 1;
+	    start_idx = brep->m_T.Last()->m_vi[1];
 	else {
 	    start_idx = brep->m_V.Count();
 	    brep->NewVertex(face.SurfaceOf()->PointAt(start.x, start.y), 0.0);
 	}
+
 	if (c3d->IsClosed())
 	    end_idx = start_idx;
 	else {
@@ -1096,12 +1158,15 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &
 		brep->m_V.Remove();
 		end_idx = start_count;
 	    } else if (k) {
-		brep->m_V.Remove();
 		start_idx = end_idx = start_count;
-		if (brep->m_E.Last() && brep->m_T.Last()) {
-		    brep->m_E.Last()->m_vi[1] = start_count;
+		if (brep->m_T.Last() && brep->m_T.Last()->m_ei != -1) {
+		    ON_BrepEdge& last_edge = brep->m_E[brep->m_T.Last()->m_ei];
+		    if (last_edge.m_vi[1-brep->m_T.Last()->m_bRev3d] != start_count) {
+			brep->m_V.Remove();
+			last_edge.m_vi[1-brep->m_T.Last()->m_bRev3d] = start_count;
+			brep->m_V[start_count].m_ei.Append(last_edge.m_edge_index);
+		    }
 		    brep->m_T.Last()->m_vi[1] = start_count;
-		    brep->m_V[start_count].m_ei.Append(brep->m_E.Count() - 1);
 		}
 	    }
 	}
@@ -1110,9 +1175,37 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &
 	    brep->m_C3.Count() - 1, (const ON_Interval *)0, MAX_FASTF);
 	ON_BrepTrim &trim = brep->NewTrim(edge, 0, breploop, ti);
 	trim.m_tolerance[0] = trim.m_tolerance[1] = MAX_FASTF;
-
-	// TODO: Deal with split seam trims to pass ON_Brep::IsValid()
     }
+
+    // If the first trim's m_vi[0] (start) != the last trim's m_vi[1] (end),
+    // change the references of end to start.
+    if (breploop.m_ti.Count()) {
+	int start_vi = brep->m_T[breploop.m_ti[0]].m_vi[0];
+	int end_vi = brep->m_T[*breploop.m_ti.Last()].m_vi[1];
+	if (start_vi != end_vi) {
+	    for (int i = 0; i < breploop.m_ti.Count(); i++) {
+		ON_BrepTrim& trim = brep->m_T[breploop.m_ti[i]];
+		if (trim.m_vi[0] == end_vi) {
+		    trim.m_vi[0] = start_vi;
+		    int &edge_vi = brep->m_E[trim.m_ei].m_vi[trim.m_bRev3d ? 1 : 0];
+		    if (edge_vi != start_vi) {
+			// Only need to update the array if edge_vi changes.
+			edge_vi = start_vi;
+			brep->m_V[start_vi].m_ei.Append(trim.m_ei);
+		    }
+		} else if (brep->m_T[breploop.m_ti[i]].m_vi[1] == end_vi) {
+		    trim.m_vi[1] = start_vi;
+		    int &edge_vi = brep->m_E[trim.m_ei].m_vi[trim.m_bRev3d ? 0 : 1];
+		    if (edge_vi != start_vi) {
+			edge_vi = start_vi;
+			brep->m_V[start_vi].m_ei.Append(trim.m_ei);
+		    }
+		}
+	    }
+	    brep->m_V[end_vi].m_ei.Empty(); // Or remove this vertex
+	}
+    }
+
     //if (brep->m_V.Count() < brep->m_V.Capacity())
 	//brep->m_V[brep->m_V.Count()].m_ei.Empty();
 }
@@ -1520,7 +1613,6 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 
     for (int i = 0; i < trimmedfaces.Count(); i++) {
 	const ON_SimpleArray<TrimmedFace*>& splitted = trimmedfaces[i];
-	const ON_Surface* surf = splitted.Count() ? splitted[0]->m_face->SurfaceOf() : NULL;
 	/* Perform inside-outside test to decide whether the trimmed face should
 	 * be used in the final b-rep structure or not.
 	 * Different operations should be dealt with accordingly.
@@ -1531,20 +1623,50 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 	const ON_Brep* another_brep = i >= facecount1 ? brepA : brepB;
 	ON_SimpleArray<Subsurface*>& surf_tree = i >= facecount1 ? surf_treeA : surf_treeB;
 	for (int j = 0; j < splitted.Count(); j++) {
-	    bool belong_to_final = false;
+	    if (splitted[j]->m_belong_to_final != TrimmedFace::UNKNOWN) {
+		// Visited before, don't need to test again
+		continue;
+	    }
+	    splitted[j]->m_belong_to_final = TrimmedFace::NOT_BELONG;
+	    splitted[j]->m_rev = false;
 	    if (IsFaceInsideBrep(splitted[j], another_brep, surf_tree)) {
 		if (DEBUG_BREP_BOOLEAN)
 		    bu_log("The trimmed face is inside the other brep.\n");
 		if (operation == BOOLEAN_INTERSECT || (operation == BOOLEAN_DIFF && i >= facecount1))
-		    belong_to_final = true;
+		    splitted[j]->m_belong_to_final = TrimmedFace::BELONG;
+		if (operation == BOOLEAN_DIFF)
+		    splitted[j]->m_rev = true;
 	    } else {
 		if (DEBUG_BREP_BOOLEAN)
 		    bu_log("The trimmed face is not inside the other brep.\n");
 		if (operation == BOOLEAN_UNION || (operation == BOOLEAN_DIFF && i < facecount1))
-		    belong_to_final = true;
+		    splitted[j]->m_belong_to_final = TrimmedFace::BELONG;
+		if (operation == BOOLEAN_UNION)
+		    splitted[j]->m_rev = true;
 	    }
+#if USE_CONNECTIVITY_GRAPH
+	    // BFS the connectivity graph and marked all connected trimmed faces.
+	    std::queue<TrimmedFace*> q;
+	    q.push(splitted[j]);
+	    while (!q.empty()) {
+		TrimmedFace* front = q.front();
+		q.pop();
+		for (int k = 0; k < front->m_neighbors.Count(); k++) {
+		    if (front->m_neighbors[k]->m_belong_to_final == TrimmedFace::UNKNOWN) {
+			front->m_neighbors[k]->m_belong_to_final = splitted[j]->m_belong_to_final;
+			q.push(front->m_neighbors[k]);
+		    }
+		}
+	    }
+#endif
+	}
+    }
 
-	    if (belong_to_final) {
+    for (int i = 0; i < trimmedfaces.Count(); i++) {
+	const ON_SimpleArray<TrimmedFace*>& splitted = trimmedfaces[i];
+	const ON_Surface* surf = splitted.Count() ? splitted[0]->m_face->SurfaceOf() : NULL;
+	for (int j = 0; j < splitted.Count(); j++) {
+	    if (splitted[j]->m_belong_to_final == TrimmedFace::BELONG) {
 		// Add the surfaces, faces, loops, trims, vertices, edges, etc.
 		// to the brep structure.
 		ON_Surface *new_surf = surf->Duplicate();
@@ -1557,7 +1679,9 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 		    add_elements(brepO, new_face, splitted[j]->m_innerloop[k], ON_BrepLoop::inner);
 
 		brepO->SetTrimIsoFlags(new_face);
-		brepO->FlipFace(new_face);
+		const ON_BrepFace& original_face = i >= facecount1 ? brepB->m_F[i - facecount1] : brepA->m_F[i];
+		if (original_face.m_bRev ^ splitted[j]->m_rev)
+		    brepO->FlipFace(new_face);
 	    }
 	}
     }

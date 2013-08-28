@@ -77,7 +77,6 @@ extern int	pix_start;		/* pixel to start at */
 extern int	pix_end;		/* pixel to end at */
 extern int	nobjs;			/* Number of cmd-line treetops */
 extern char	**objtab;		/* array of treetop strings */
-char		*beginptr;		/* sbrk() at start of program */
 long		n_malloc;		/* Totals at last check */
 long		n_free;
 long		n_realloc;
@@ -124,20 +123,16 @@ siginfo_handler(int UNUSED(arg))
 void
 memory_summary(void)
 {
-#ifdef HAVE_SBRK
     if (rt_verbosity & VERBOSE_STATS)  {
 	long	mdelta = bu_n_malloc - n_malloc;
 	long	fdelta = bu_n_free - n_free;
 	fprintf(stderr,
-		"Additional mem=%ld., #malloc=%ld, #free=%ld, #realloc=%ld (%ld retained)\n",
-		(long)((char *)sbrk(0)-beginptr),
+		"Additional #malloc=%ld, #free=%ld, #realloc=%ld (%ld retained)\n",
 		mdelta,
 		fdelta,
 		bu_n_realloc - n_realloc,
 		mdelta - fdelta);
     }
-    beginptr = (char *) sbrk(0);
-#endif
     n_malloc = bu_n_malloc;
     n_free = bu_n_free;
     n_realloc = bu_n_realloc;
@@ -163,9 +158,6 @@ int main(int argc, const char **argv)
     bu_setlinebuf( stderr );
 #endif
 
-#ifdef HAVE_SBRK
-    beginptr = (char *)sbrk(0);
-#endif
     azimuth = 35.0;			/* GIFT defaults */
     elevation = 25.0;
 

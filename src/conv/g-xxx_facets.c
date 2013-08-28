@@ -76,7 +76,6 @@ main(int argc, char **argv)
 {
     int	c;
     double percent;
-    int	i;
 
     bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
@@ -167,6 +166,8 @@ main(int argc, char **argv)
     RT_CK_TESS_TOL(tree_state.ts_ttol);
 
     if (verbose) {
+	int i;
+
 	bu_log("Model: %s\n", argv[0]);
 	bu_log("Objects:");
 	for (i = 1; i < argc; i++)

@@ -382,7 +382,7 @@ rt_hrt_print(register const struct soltab *stp)
  * turns out (by substituting X, Y, Z above into the sextic equation above)
  * to be a sextic equation S in 't' given below.
  *
- * S(t)=C6*t**6 + C5*t**5 + C4*t**4 + C3*t**3 + C2*t**2 + C1*t + C06 = 0.
+ * S(t)=C6*t**6 + C5*t**5 + C4*t**4 + C3*t**3 + C2*t**2 + C1*t + C0 = 0.
  *
  * where C0, C1, C2, C3, C4, C5, C6 are coefficients of the equation.
  *
@@ -836,7 +836,7 @@ rt_hrt_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     hec[4*ELEMENTS_PER_VECT] = hip->d;
 
     /* Convert from internal (host) to database (network) format */
-    bu_htond(ep->ext_buf, (unsigned char *)hec, ELEMENTS_PER_VECT*4 + 1);
+    bu_cv_htond(ep->ext_buf, (unsigned char *)hec, ELEMENTS_PER_VECT*4 + 1);
 
     return 0;
 }
@@ -872,7 +872,7 @@ rt_hrt_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     hip->hrt_magic = RT_HRT_INTERNAL_MAGIC;
 
     /* Convert from database(network) to internal (host) format */
-    bu_ntohd((unsigned char *)hec, ep->ext_buf, ELEMENTS_PER_VECT*4 + 1);
+    bu_cv_ntohd((unsigned char *)hec, ep->ext_buf, ELEMENTS_PER_VECT*4 + 1);
 
     /* Apply modelling transformations */
     if(mat == NULL) mat = bn_mat_identity;

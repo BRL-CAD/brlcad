@@ -292,15 +292,17 @@ Make_brlcad_names( struct obj_info *part )
 	    bu_vls_trunc( &vls, max_name_len );
 	}
 	while ( db_lookup( fd_out->dbip, bu_vls_addr( &vls ), LOOKUP_QUIET ) != RT_DIR_NULL) {
-	    int digits, val=10;
-
 	    count++;
+
 	    if ( max_name_len ) {
-		digits = 1;
+		int digits = 1;
+		int val = 10;
+
 		while ( count >= val ) {
 		    digits++;
 		    val *= 10;
 		}
+
 		bu_vls_trunc( &vls, 0 );
 		bu_vls_printf( &vls, "s.%s", tmp_name );
 		bu_vls_trunc( &vls, max_name_len - digits - 1 );
@@ -321,11 +323,12 @@ Make_brlcad_names( struct obj_info *part )
 	bu_vls_trunc( &vls, max_name_len );
     }
     while ( db_lookup( fd_out->dbip, bu_vls_addr( &vls ), LOOKUP_QUIET) != RT_DIR_NULL ) {
-	int digits, val=10;
-
 	count++;
+
 	if ( max_name_len ) {
-	    digits = 1;
+	    int digits = 1;
+	    int val = 10;
+
 	    while ( count >= val ) {
 		digits++;
 		val *= 10;
