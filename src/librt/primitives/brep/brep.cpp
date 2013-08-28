@@ -2602,6 +2602,149 @@ void getSurfacePoints(ON_BrepFace &face, const struct rt_tess_tol *ttol,
 }
 
 
+double surface_GetClosestPoint3dFirstOrderByRange(
+	const ON_Surface *surf,
+        const ON_3dPoint& p,
+        const ON_Interval& u_range,
+        const ON_Interval& v_range,
+        ON_2dPoint& p2d,
+        ON_3dPoint& p3d,
+        double tol
+        )
+{
+    ON_3dPoint p0;
+    ON_2dPoint p2d0;
+    ON_3dVector ds, dt, dss, dst, dtt;
+    ON_3dVector T, K;
+    bool rc = false;
+    ON_Interval current_u_range = u_range;
+    ON_Interval current_v_range = v_range;
+
+    p2d0.x = (u_range.m_t[0] + u_range.m_t[1]) / 2.0;
+    p2d0.y = (v_range.m_t[0] + v_range.m_t[1]) / 2.0;
+
+    int prec = std::cerr.precision();
+    std::cerr.precision(15);
+    bool notdone = true;
+    double current_distance = DBL_MAX;
+    double previous_distance = DBL_MAX;
+    double distance;
+    ON_3dPoint working_p3d;
+    ON_3dPoint working_p2d;
+    int errcnt = 0;
+    while (notdone && (surf->Ev2Der(p2d0.x, p2d0.y, p0, ds, dt, dss, dst, dtt))) {
+	if ((distance = p0.DistanceTo(p)) >= previous_distance) {
+	    if (++errcnt <= 10) {
+		p2d0 = (p2d0 + working_p2d) / 2.0;
+		continue;
+	    } else {
+		break;
+	    }
+	    /* if (++errcnt > 10) break; */
+	} else {
+	    previous_distance = distance;
+	    working_p3d = p0;
+	    working_p2d = p2d0;
+	    errcnt = 0;
+	}
+	ON_EvCurvature(ds, dt, T, K);
+	ON_3dVector N = ON_CrossProduct(ds, dt);
+	N.Unitize();
+	ON_Plane plane(p0, N);
+	ON_3dPoint q = plane.ClosestPointTo(p);
+	ON_2dVector pullback;
+	ON_3dVector vector = q - p0;
+	double vlength = vector.Length();
+
+	if (vlength > 0.0) {
+	    rc = true;
+
+	    if (ON_Pullback3dVector(vector, vlength, ds, dt, dss, dst, dtt,
+		    pullback)) {
+
+		if (pullback.x > 0.0)
+		    current_u_range.m_t[0] = p2d0.x;
+		else
+		    current_u_range.m_t[1] = p2d0.x;
+
+		if (pullback.y > 0.0)
+		    current_v_range.m_t[0] = p2d0.y;
+		else
+		    current_v_range.m_t[1] = p2d0.y;
+
+		p2d0 = p2d0 + pullback;
+
+		if (!current_u_range.Includes(p2d0.x, false)) {
+		    int i = (current_u_range.m_t[0] <= current_u_range.m_t[1]) ? 0 : 1;
+		    p2d0.x =
+			    (p2d0.x < current_u_range.m_t[i]) ?
+				    current_u_range.m_t[i] : current_u_range.m_t[1 - i];
+		}
+		if (!current_v_range.Includes(p2d0.y, false)) {
+		    int i = (current_v_range.m_t[0] <= current_v_range.m_t[1]) ? 0 : 1;
+		    p2d0.y =
+			    (p2d0.y < current_v_range.m_t[i]) ?
+				    current_v_range.m_t[i] : current_v_range.m_t[1 - i];
+		}
+
+	    } else {
+		// pullback fails so need to subdivide and try again
+		ON_Interval u_interval;
+		ON_Interval v_interval;
+		ON_2dPoint p2d1;
+		ON_3dPoint p3d1;
+		for (int iu = 0; iu < 2; iu++) {
+		    u_interval = current_u_range;
+		    u_interval.m_t[iu] = p2d0.x;
+		    for (int iv = 0; iv < 2; iv++) {
+			v_interval = current_v_range;
+			v_interval.m_t[iv] = p2d0.y;
+
+
+			//if (!u_interval.IsInterval()
+			//        && !v_interval.IsInterval()) {
+			if ((u_interval.Length() < tol)
+			        && (v_interval.Length() < tol)) {
+			    //walked down to nothing
+			    p2d1.x = (u_interval.m_t[0]+u_interval.m_t[1])/2.0;
+			    p2d1.y = (v_interval.m_t[0]+v_interval.m_t[1])/2.0;
+			    p3d1 = surf->PointAt(p2d1.x, p2d1.y);
+			    distance = p.DistanceTo(p3d1);
+			} else {
+			    distance =
+				    surface_GetClosestPoint3dFirstOrderByRange(
+				            surf, p, u_interval, v_interval,
+				            p2d1, p3d1, tol);
+			}
+			if (distance < tol) {
+			    p3d = working_p3d;
+			    p2d = working_p2d;
+			    return distance;
+			} else if (distance < previous_distance) {
+			    previous_distance = distance;
+			    working_p3d = p3d1;
+			    working_p2d = p2d1;
+			    errcnt = 0;
+			}
+		    }
+		}
+		notdone = false;
+	    }
+	} else {
+	    // can't get any closer
+	    notdone = false;
+	}
+    }
+    if (previous_distance < current_distance) {
+	current_distance = previous_distance;
+	p3d = working_p3d;
+	p2d = working_p2d;
+    }
+    std::cerr.precision(prec);
+    return current_distance;
+}
+
+
 bool surface_GetClosestPoint3dFirstOrder(
 	const ON_Surface *surf,
         const ON_3dPoint& p,
@@ -2845,16 +2988,28 @@ bool surface_GetClosestPoint3dFirstOrder(
     }
 
     double current_distance = DBL_MAX;
+    ON_2dPoint working_p2d;
+    ON_3dPoint working_p3d;
     for ( int u_span_index = 1; u_span_index < u_spancnt+1; u_span_index++ )
     {
 	for ( int v_span_index = 1; v_span_index < v_spancnt+1; v_span_index++ )
 	{
 	    if (skip[u_span_index][v_span_index] || (current_distance < tol) || (min_distance[u_span_index][v_span_index] > current_distance))
 		continue;
+
 	    ON_Interval u_interval(uspan[u_span_index-1],uspan[u_span_index]);
 	    ON_Interval v_interval(vspan[v_span_index-1],vspan[v_span_index]);
 
 
+	    double distance = surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
+
+	    if (distance < current_distance) {
+		current_distance = distance;
+		p3d = working_p3d;
+		p2d = working_p2d;
+	    }
+
+#if 0
 	    double udot_1 = normal[u_span_index-1][v_span_index-1]*normal[u_span_index][v_span_index-1];
 	    double udot_2 = normal[u_span_index-1][v_span_index]*normal[u_span_index][v_span_index];
 	    double vdot_1 = normal[u_span_index-1][v_span_index-1]*normal[u_span_index-1][v_span_index];
@@ -2863,6 +3018,12 @@ bool surface_GetClosestPoint3dFirstOrder(
 
 	    if ((udot_1 < 0.0) || (udot_2 < 0.0) || (vdot_1 < 0.0) || (vdot_2 < 0.0)) {
 		bool notdone = true;
+		bool testing = false;
+
+		if (testing) {
+		    surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,p2d0,p0,tol);
+		}
+
 		p2d0.x = (uspan[u_span_index - 1] + uspan[u_span_index])
 		        / 2.0;
 		p2d0.y = (vspan[v_span_index - 1] + vspan[v_span_index])
@@ -3372,6 +3533,471 @@ bool surface_GetClosestPoint3dFirstOrder(
 				p2d0.x =
 				        (p2d0.x < u_interval.m_t[i]) ?
 				                u_interval.m_t[i] :
+						bool notdone = true;
+						bool testing = false;
+
+						if (testing) {
+						    surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,p2d0,p0,tol);
+						}
+
+						p2d0.x = (uspan[u_span_index - 1] + uspan[u_span_index])
+						        / 2.0;
+						p2d0.y = (vspan[v_span_index - 1] + vspan[v_span_index])
+						        / 2.0;
+						double previous_distance = DBL_MAX;
+						double distance;
+						ON_3dPoint working_p3d;
+						ON_3dPoint working_p2d;
+						int errcnt=0;
+				/* need to subdivide while normals flip
+						double u0,u1,v0,v1;
+						u0 = uspan[u_span_index - 1]
+						while (notdone) {
+						    ON_3dVector subnormal;
+						    double stepu = (uspan[u_span_index] - uspan[u_span_index - 1]) / (surf->Degree(0)+1);
+						    double stepv = (vspan[v_span_index] - vspan[v_span_index - 1]) / (surf->Degree(1)+1);
+						    for(int iu = 0; iu <  surf->Degree(0)+1; iu++) {
+							double u = uspan[u_span_index - 1] + iu * stepu;
+							for(int iv=0; iv < surf->Degree(1)+1; iv++) {
+							    double v = vspan[v_span_index - 1] + iv * stepv;
+							    if (surf->Ev2Der(u, v, p0, ds,
+							    		                dt, dss, dst, dtt)) {
+								subnormal = ON_CrossProduct(ds,dt);
+								subnormal.Unitize();
+							    }
+							}
+						    }
+						}
+						*/
+						while (notdone
+						        && (surf->Ev2Der(p2d0.x, p2d0.y, p0, ds,
+						                dt, dss, dst, dtt))
+						        ) {
+						    if ((distance = p0.DistanceTo(p)) >= previous_distance) {
+							if (++errcnt <= 10) {
+							    p2d0 = (p2d0 + working_p2d)/2.0;
+							    continue;
+							} else {
+							    break;
+							}
+							/* if (++errcnt > 10) break; */
+						    } else {
+							previous_distance = distance;
+							working_p3d = p0;
+							working_p2d = p2d0;
+							errcnt=0;
+						    }
+						    ON_EvCurvature(ds, dt, T, K);
+						    ON_3dVector N = ON_CrossProduct(ds, dt);
+						    N.Unitize();
+						    ON_Plane plane(p0, N);
+						    ON_3dPoint q = plane.ClosestPointTo(p);
+						    ON_2dVector pullback;
+						    ON_3dVector vector = q - p0;
+						    double vlength = vector.Length();
+
+						    if (vlength > 0.0) {
+							rc = true;
+
+							if (ON_Pullback3dVector(vector, 0.0, ds, dt, dss, dst,
+							        dtt, pullback)) {
+							    p2d0 = p2d0 + pullback;
+							    if (!u_interval.Includes(p2d0.x, false)) {
+								int i =
+								        (u_interval.m_t[0] <= u_interval.m_t[1]) ?
+								                0 : 1;
+								p2d0.x =
+								        (p2d0.x < u_interval.m_t[i]) ?
+								                u_interval.m_t[i] :
+								                u_interval.m_t[1 - i];
+							    }
+							    if (!v_interval.Includes(p2d0.y, false)) {
+								int i =
+								        (v_interval.m_t[0] <= v_interval.m_t[1]) ?
+								                0 : 1;
+								p2d0.y =
+								        (p2d0.y < v_interval.m_t[i]) ?
+								                v_interval.m_t[i] :
+								                v_interval.m_t[1 - i];
+							    }
+							    /*
+							     if (distance < tol) {
+							     notdone = false;
+							     break;
+							     }
+							     */
+							} else {
+							    notdone = false;
+							    rc = false;
+							    break;
+							}
+						    } else {
+							// can't get any closer
+							rc = true;
+							notdone = false;
+							break;
+						    }
+						}
+						if (previous_distance < current_distance) {
+						    current_distance = previous_distance;
+						    p3d = working_p3d;
+						    p2d = working_p2d;
+						}
+						tol = 1.e-12;
+					    	if (current_distance > tol) {
+					    	    ON_2dPoint p2d_pass1 = p2d;
+					    	    double step = sqrt(current_distance/sqrt(2.0));
+						    //for now do slow four corner
+						    for(int ui = 0; ui < 2 && current_distance > tol; ui++) {
+							/*
+							p2d0.x = (p2d_pass1.x + uspan[u_span_index - 1 + ui])/2.0;
+							if (ui == 0) {
+							    p2d0.x = p2d_pass1.x - (uspan[u_span_index] - uspan[u_span_index - 1])*0.01;
+							} else {
+							    p2d0.x = p2d_pass1.x + (uspan[u_span_index] - uspan[u_span_index - 1])*0.01;
+							}
+							p2d0.x = (p2d_pass1.x + uspan[u_span_index - 1 + ui])/2.0;
+							*/
+							for(int vi = 0; vi < 2 && current_distance > tol; vi++) {
+							    bool notdone = true;
+							    /*
+							    if (vi == 0) {
+								p2d0.y = p2d_pass1.y - (vspan[v_span_index] - vspan[v_span_index - 1])*0.01;
+							    } else {
+								p2d0.y = p2d_pass1.y + (vspan[v_span_index] - vspan[v_span_index - 1])*0.01;
+							    }
+							    p2d0.x = (p2d_pass1.x + uspan[u_span_index - 1 + ui])/2.0;
+							    p2d0.y = (p2d_pass1.y + vspan[v_span_index - 1 + vi])/2.0;
+							    if (ui == 0) {
+								p2d0.x = p2d_pass1.x - (uspan[u_span_index] - uspan[u_span_index - 1])*0.01;
+							    } else {
+								p2d0.x = p2d_pass1.x + (uspan[u_span_index] - uspan[u_span_index - 1])*0.01;
+							    }
+							    if (vi == 0) {
+								p2d0.y = p2d_pass1.y - (vspan[v_span_index] - vspan[v_span_index - 1])*0.01;
+							    } else {
+								p2d0.y = p2d_pass1.y + (vspan[v_span_index] - vspan[v_span_index - 1])*0.01;
+							    }
+							    p2d0.x = uspan[u_span_index - 1 + ui];
+							    p2d0.y = vspan[v_span_index - 1 + vi];
+							    */
+							    if (ui == 0) {
+								p2d0.x = p2d_pass1.x - step;
+							    } else {
+								p2d0.x = p2d_pass1.x + step;
+							    }
+							    if (vi == 0) {
+								p2d0.y = p2d_pass1.y - step;
+							    } else {
+								p2d0.y = p2d_pass1.y + step;
+							    }
+							    p2d0.x = (p2d_pass1.x + uspan[u_span_index - 1 + ui])/2.0;
+							    p2d0.y = (p2d_pass1.y + vspan[v_span_index - 1 + vi])/2.0;
+							    if (!u_interval.Includes(p2d0.x, false)) {
+								int i =
+									(u_interval.m_t[0] <= u_interval.m_t[1]) ?
+										0 : 1;
+								p2d0.x =
+									(p2d0.x < u_interval.m_t[i]) ?
+										u_interval.m_t[i] :
+										u_interval.m_t[1 - i];
+							    }
+							    if (!v_interval.Includes(p2d0.y, false)) {
+								int i =
+									(v_interval.m_t[0] <= v_interval.m_t[1]) ?
+										0 : 1;
+								p2d0.y =
+									(p2d0.y < v_interval.m_t[i]) ?
+										v_interval.m_t[i] :
+										v_interval.m_t[1 - i];
+							    }
+							    ON_3dPoint working_p3d;
+							    ON_2dPoint working_p2d;
+							    int errcnt=0;
+							    double previous_distance = DBL_MAX;
+							    double distance;
+							    ON_2dVector pullback;
+
+							    while (notdone
+								    && (surf->Ev2Der(p2d0.x, p2d0.y, p0, ds,
+									    dt, dss, dst, dtt))) {
+								if ((distance = p0.DistanceTo(p)) >= previous_distance) {
+								    if (++errcnt <= 10) {
+									p2d0 = (p2d0 + working_p2d)/2.0;
+									continue;
+								    } else {
+									break;
+								    }
+								    //if (++errcnt > 10) break;
+								} else {
+								    previous_distance = distance;
+								    working_p3d = p0;
+								    working_p2d = p2d0;
+								    errcnt=0;
+								}
+								ON_EvCurvature(ds, dt, T, K);
+								ON_3dVector N = ON_CrossProduct(ds, dt);
+								N.Unitize();
+								ON_Plane plane(p0, N);
+								ON_3dPoint q = plane.ClosestPointTo(p);
+								//ON_2dVector pullback;
+								ON_3dVector vector = q - p0;
+								double vlength = vector.Length();
+
+								if (vlength > 0.0) {
+								    rc = true;
+
+								    if (ON_Pullback3dVector(vector, vlength, ds, dt, dss, dst,
+									    dtt, pullback)) {
+									p2d0 = p2d0 + pullback;
+									if (!u_interval.Includes(p2d0.x, false)) {
+									    int i =
+										    (u_interval.m_t[0] <= u_interval.m_t[1]) ?
+											    0 : 1;
+									    p2d0.x =
+										    (p2d0.x < u_interval.m_t[i]) ?
+											    u_interval.m_t[i] :
+											    u_interval.m_t[1 - i];
+									}
+									if (!v_interval.Includes(p2d0.y, false)) {
+									    int i =
+										    (v_interval.m_t[0] <= v_interval.m_t[1]) ?
+											    0 : 1;
+									    p2d0.y =
+										    (p2d0.y < v_interval.m_t[i]) ?
+											    v_interval.m_t[i] :
+											    v_interval.m_t[1 - i];
+									}
+								    } else {
+									const double ds_o_V = ds*vector;
+									const double dt_o_V = dt*vector;
+									const double ds_o_ds = ds*ds;
+									const double ds_o_dt = ds*dt;
+									const double dt_o_ds = dt*ds;
+									const double dt_o_dt = dt*dt;
+
+									int s_sign = sign(ds_o_V);
+									int t_sign = sign(dt_o_V);
+									double s_delta = 0.0;
+									if (fabs(ds_o_V) > 0.0) {
+									    s_delta = vlength / ds_o_V / ds_o_ds;
+									} else {
+									    s_delta = 0.0;
+									}
+									double t_delta = 0.0;
+									if (fabs(dt_o_V) > 0.0) {
+									    t_delta = vlength / dt_o_V / dt_o_dt;
+									} else {
+									    t_delta = 0.0;
+									}
+									p2d0.x = p2d0.x + s_delta;
+									p2d0.y = p2d0.y + t_delta;
+									// perform jittered perturbation in parametric domain....
+									//p2d0.x = p2d0.x + .1 * (drand48()-0.5) * (uspan[u_span_index] - uspan[u_span_index - 1]);
+									//p2d0.y = p2d0.y + .1 * (drand48()-0.5) * (vspan[v_span_index] - vspan[v_span_index - 1]);
+									if (!u_interval.Includes(p2d0.x, false)) {
+									    int i =
+										    (u_interval.m_t[0] <= u_interval.m_t[1]) ?
+											    0 : 1;
+									    p2d0.x =
+										    (p2d0.x < u_interval.m_t[i]) ?
+											    u_interval.m_t[i] :
+											    u_interval.m_t[1 - i];
+									}
+									if (!v_interval.Includes(p2d0.y, false)) {
+									    int i =
+										    (v_interval.m_t[0] <= v_interval.m_t[1]) ?
+											    0 : 1;
+									    p2d0.y =
+										    (p2d0.y < v_interval.m_t[i]) ?
+											    v_interval.m_t[i] :
+											    v_interval.m_t[1 - i];
+									}
+
+								    }
+								} else {
+								    // can't get any closer
+								    rc = true;
+								    notdone = false;
+								    break;
+								}
+							    }
+							    if (previous_distance < current_distance) {
+								current_distance = previous_distance;
+								p3d = working_p3d;
+								p2d = working_p2d;
+							    }
+							}
+						    }
+						    for(int ui = 0; ui < 2 && current_distance > tol; ui++) {
+							p2d0.x = (p2d_pass1.x + uspan[u_span_index - 1 + ui])/2.0;
+							if (ui == 0) {
+							    p2d0.x = p2d_pass1.x - (uspan[u_span_index] - uspan[u_span_index - 1])*0.01;
+							} else {
+							    p2d0.x = p2d_pass1.x + (uspan[u_span_index] - uspan[u_span_index - 1])*0.01;
+							}
+							p2d0.y = p2d_pass1.y;
+							bool notdone = true;
+							ON_3dPoint working_p3d;
+							ON_2dPoint working_p2d;
+							int errcnt=0;
+							double previous_distance = DBL_MAX;
+							double distance;
+							ON_2dVector pullback;
+
+							while (notdone
+								&& (surf->Ev2Der(p2d0.x, p2d0.y, p0, ds,
+									dt, dss, dst, dtt))) {
+							    if ((distance = p0.DistanceTo(p)) >= previous_distance) {
+								if (++errcnt <= 10) {
+								    p2d0 = (p2d0 + working_p2d)/2.0;
+								    continue;
+								} else {
+								    break;
+								}
+								//if (++errcnt > 10) break;
+							    } else {
+								previous_distance = distance;
+								working_p3d = p0;
+								working_p2d = p2d0;
+								errcnt=0;
+							    }
+							    ON_EvCurvature(ds, dt, T, K);
+							    ON_3dVector N = ON_CrossProduct(ds, dt);
+							    N.Unitize();
+							    ON_Plane plane(p0, N);
+							    ON_3dPoint q = plane.ClosestPointTo(p);
+							    //ON_2dVector pullback;
+							    ON_3dVector vector = q - p0;
+							    double vlength = vector.Length();
+
+							    if (vlength > 0.0) {
+								rc = true;
+
+								if (ON_Pullback3dVector(vector, 0.0, ds, dt, dss, dst,
+									dtt, pullback)) {
+								    p2d0 = p2d0 + pullback;
+								    if (!u_interval.Includes(p2d0.x, false)) {
+									int i =
+										(u_interval.m_t[0] <= u_interval.m_t[1]) ?
+											0 : 1;
+									p2d0.x =
+										(p2d0.x < u_interval.m_t[i]) ?
+											u_interval.m_t[i] :
+											u_interval.m_t[1 - i];
+								    }
+								    if (!v_interval.Includes(p2d0.y, false)) {
+									int i =
+										(v_interval.m_t[0] <= v_interval.m_t[1]) ?
+											0 : 1;
+									p2d0.y =
+										(p2d0.y < v_interval.m_t[i]) ?
+											v_interval.m_t[i] :
+											v_interval.m_t[1 - i];
+								    }
+								} else {
+								    notdone = false;
+								    rc = false;
+								    break;
+								}
+							    } else {
+								// can't get any closer
+								rc = true;
+								notdone = false;
+								break;
+							    }
+							}
+							if (previous_distance < current_distance) {
+							    current_distance = previous_distance;
+							    p3d = working_p3d;
+							    p2d = working_p2d;
+							}
+						    }
+						    for(int vi = 0; vi < 2 && current_distance > tol; vi++) {
+							bool notdone = true;
+							p2d0.x = p2d_pass1.x;
+							if (vi == 0) {
+							    p2d0.y = p2d_pass1.y - (vspan[v_span_index] - vspan[v_span_index - 1])*0.01;
+							} else {
+							    p2d0.y = p2d_pass1.y + (vspan[v_span_index] - vspan[v_span_index - 1])*0.01;
+							}
+							ON_3dPoint working_p3d;
+							ON_2dPoint working_p2d;
+							int errcnt=0;
+							double previous_distance = DBL_MAX;
+							double distance;
+							ON_2dVector pullback;
+
+							while (notdone
+								&& (surf->Ev2Der(p2d0.x, p2d0.y, p0, ds,
+									dt, dss, dst, dtt))) {
+							    if ((distance = p0.DistanceTo(p)) >= previous_distance) {
+								if (++errcnt <= 10) {
+								    p2d0 = (p2d0 + working_p2d)/2.0;
+								    continue;
+								} else {
+								    break;
+								}
+								//if (++errcnt > 10) break;
+							    } else {
+								previous_distance = distance;
+								working_p3d = p0;
+								working_p2d = p2d0;
+								errcnt=0;
+							    }
+							    ON_EvCurvature(ds, dt, T, K);
+							    ON_3dVector N = ON_CrossProduct(ds, dt);
+							    N.Unitize();
+							    ON_Plane plane(p0, N);
+							    ON_3dPoint q = plane.ClosestPointTo(p);
+							    //ON_2dVector pullback;
+							    ON_3dVector vector = q - p0;
+							    double vlength = vector.Length();
+
+							    if (vlength > 0.0) {
+								rc = true;
+
+								if (ON_Pullback3dVector(vector, 0.0, ds, dt, dss, dst,
+									dtt, pullback)) {
+								    p2d0 = p2d0 + pullback;
+								    if (!u_interval.Includes(p2d0.x, false)) {
+									int i =
+										(u_interval.m_t[0] <= u_interval.m_t[1]) ?
+											0 : 1;
+									p2d0.x =
+										(p2d0.x < u_interval.m_t[i]) ?
+											u_interval.m_t[i] :
+											u_interval.m_t[1 - i];
+								    }
+								    if (!v_interval.Includes(p2d0.y, false)) {
+									int i =
+										(v_interval.m_t[0] <= v_interval.m_t[1]) ?
+											0 : 1;
+									p2d0.y =
+										(p2d0.y < v_interval.m_t[i]) ?
+											v_interval.m_t[i] :
+											v_interval.m_t[1 - i];
+								    }
+								} else {
+								    notdone = false;
+								    rc = false;
+								    break;
+								}
+							    } else {
+								// can't get any closer
+								rc = true;
+								notdone = false;
+								break;
+							    }
+							}
+							if (previous_distance < current_distance) {
+							    current_distance = previous_distance;
+							    p3d = working_p3d;
+							    p2d = working_p2d;
+							}
+						    }
+					    	}
+
 				                u_interval.m_t[1 - i];
 			    }
 			    if (!v_interval.Includes(p2d0.y, false)) {
@@ -3407,6 +4033,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 		    p2d = working_p2d;
 		}
 	    }
+#endif
 	}
     }
 
@@ -3606,6 +4233,7 @@ void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
 	const struct rt_view_info *info, bool watertight = false, int plottype =
 		0, int num_points = -1.0)
 {
+	int fi = face.m_face_index;
     ON_RTree rt_trims, rt_points;
     ON_2dPointArray on_surf_points;
     const ON_Surface *s = face.SurfaceOf();
@@ -3671,7 +4299,6 @@ void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
 			    continue;
 #define PULLBACK_TESTING
 #ifdef PULLBACK_TESTING
-			int fi = face.m_face_index;
 			double tpercent = t;
 			ON_Interval interval = trim->Domain();
 			if (trim->Edge()->IsClosed()) {
