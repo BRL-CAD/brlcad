@@ -1946,7 +1946,7 @@ typedef struct bu_attribute_value_set bu_avs_t;
 /**
  *
  */
-struct bu_vls  {
+struct bu_vls {
     uint32_t vls_magic;
     char *vls_str;	/**< Dynamic memory for buffer */
     size_t vls_offset;	/**< Offset into vls_str where data is good */
@@ -6191,11 +6191,14 @@ BU_EXPORT extern int64_t bu_gettime();
 /** @addtogroup file */
 /** @ingroup io */
 /** @{ */
-/** @file libbu/date-time.c
- * Put the current UTC time in ISO format into the user-provided
- * bu_vls struct.
+/**
+ * Evaluate the current UTC time in ISO format as a string.
+ *
+ * The UTC time is written into the user-provided bu_vls struct. and is
+ * also returned and guaranteed to be a non-null result, returning a
+ * static "NULL" UTC time if an error is encountered.
  */
-BU_EXPORT void bu_utctime(struct bu_vls *vls_gmtime);
+BU_EXPORT void bu_utctime(struct bu_vls *utc_result);
 
 /** @} */
 
