@@ -1076,7 +1076,7 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &
 	    bool seamed = false;
 	    if (bClosed[0])
 		endpt_index = 1;
-	    else 
+	    else
 		endpt_index = 0;
 	    side_interval.Set(loop[k]->PointAtStart()[endpt_index], loop[k]->PointAtEnd()[endpt_index]);
 	    for (int i = 0; i < breploop.m_ti.Count(); i++) {
@@ -1108,7 +1108,7 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &
 	    if (seamed)
 		continue;
 	}
-	
+
 	ON_Curve* c3d = NULL;
 	// First, try the ON_Surface::Pushup() method.
 	// If Pushup() does not succeed, use sampling method.
