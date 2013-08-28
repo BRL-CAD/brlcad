@@ -6195,7 +6195,7 @@ BU_EXPORT extern int64_t bu_gettime();
  * Put the current UTC time in ISO format into the user-provided
  * bu_vls struct.
  */
-BU_EXPORT void bu_gmtime(struct bu_vls *vls_gmtime);
+BU_EXPORT void bu_utctime(struct bu_vls *vls_gmtime);
 
 /** @} */
 
