@@ -201,7 +201,7 @@ getsolid(void)
     int	i;
     double	r1, r2;
     vect_t	work;
-    double	m1, m2;		/* Magnitude temporaries */
+    double	m1;		/* Magnitude temporaries */
     char	*name = NULL;
     fastf_t	dd[4*6];	/* 4 cards of 6 nums each */
     point_t	tmp[8];		/* 8 vectors of 3 nums each */
@@ -695,8 +695,11 @@ getsolid(void)
 	goto ell1;
     }
 
-    if ((version == 5 && BU_STR_EQUAL(solid_type, "ell"))  ||
-	 BU_STR_EQUAL(solid_type, "ell1")) {
+    if ((version == 5 && BU_STR_EQUAL(solid_type, "ell"))
+	|| BU_STR_EQUAL(solid_type, "ell1"))
+    {
+	double m2 = 0.0;
+
 	/* V, A, r */
 	/* GIFT4 name is "ell1", GIFT5 name is "ell" */
 	if (getsoldata(dd, 2*3+1, sol_work) < 0) {
