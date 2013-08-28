@@ -64,6 +64,7 @@
 #include "common.h"
 
 #include <sstream>
+#include <map>
 
 #include "STEPWrapper.h"
 
@@ -222,7 +223,6 @@ int Add_Edge(ON_BrepTrim *trim, Registry *registry, InstMgr *instance_list, std:
     ON_BrepEdge *edge = trim->Edge();
     int i = -1;
     if (edge) {
-	std::cout << "Trim " << trim->m_trim_index << " curve: " << edge->EdgeCurveIndexOf() << "\n";
 	STEPentity *new_oriented_edge = registry->ObjCreate("ORIENTED_EDGE");
 	SdaiOriented_edge *oriented_edge = (SdaiOriented_edge *)new_oriented_edge;
 	oriented_edge->name_("''");
@@ -231,11 +231,9 @@ int Add_Edge(ON_BrepTrim *trim, Registry *registry, InstMgr *instance_list, std:
 	if (trim->m_bRev3d) {
 	    oriented_edge->edge_start_(((SdaiVertex *)vertex_pnts->at(edge->Vertex(1)->m_vertex_index)));
 	    oriented_edge->edge_end_(((SdaiVertex *)vertex_pnts->at(edge->Vertex(0)->m_vertex_index)));
-	    std::cout << "Verts " << edge->Vertex(1)->m_vertex_index << ", " << edge->Vertex(0)->m_vertex_index << "\n";
 	} else {
 	    oriented_edge->edge_start_(((SdaiVertex *)vertex_pnts->at(edge->Vertex(0)->m_vertex_index)));
 	    oriented_edge->edge_end_(((SdaiVertex *)vertex_pnts->at(edge->Vertex(1)->m_vertex_index)));
-	    std::cout << "Verts " << edge->Vertex(0)->m_vertex_index << ", " << edge->Vertex(1)->m_vertex_index << "\n";
 	}
 	oriented_edge->orientation_((Boolean)!trim->m_bRev3d);
 	instance_list->Append(new_oriented_edge, completeSE);
@@ -636,6 +634,61 @@ ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
     std::vector<STEPentity *> surfaces(brep->m_S.Count(), (STEPentity *)0);
     std::vector<STEPentity *> faces(brep->m_F.Count(), (STEPentity *)0);
 
+    /* Preliminary preparations.  If we have closed curves and edges that define
+     * loops, and we are avoiding such closed structures for export, we need to
+     * define alternatives.  Since STEP needs 3D curves, the loops in OpenNURBS are
+     * defined in 2D, and we would need to re-generate a new set of trims to
+     * provide a suitable map for the new loop edge structure, we instead provide
+     * an alternative - split all closed 3D curves in advance and store the
+     * split results in maps, which can be used for look-up in place of the
+     * standard ON_Brep arrays.*/
+    std::map<int, std::pair<STEPentity *, STEPentity *> > sdai_curve_to_splits;
+    std::map<int, STEPentity * > split_midpt_vertex;
+    for (int i = 0; i < brep->m_C3.Count(); ++i) {
+	ON_Curve* curve = brep->m_C3[i];
+	if (curve->IsClosed()) {
+	    std::cout << "Curve " << i << " is closed\n";
+	    ON_NurbsCurve crv;
+	    curve->GetNurbForm(crv);
+	    ON_Curve *left_side = NULL;
+	    ON_Curve *right_side = NULL;
+	    crv.Split(crv.Domain().Mid(), left_side, right_side);
+	    // Left curve
+	    SdaiB_spline_curve_with_knots *left_curve = (SdaiB_spline_curve_with_knots *)registry->ObjCreate("B_SPLINE_CURVE_WITH_KNOTS");
+	    left_curve->degree_(left_side->Degree());
+	    ON_NurbsCurveCV_to_EntityAggregate((ON_NurbsCurve *)left_side, left_curve, registry, instance_list);
+	    ON_NurbsCurveKnots_to_Aggregates((ON_NurbsCurve *)left_side, left_curve);
+	    left_curve->curve_form_(B_spline_curve_form__unspecified);
+	    left_curve->closed_curve_(LFalse);
+	    left_curve->self_intersect_(LFalse);
+	    left_curve->name_("''");
+	    instance_list->Append(left_curve, completeSE);
+	    // Right curve
+	    SdaiB_spline_curve_with_knots *right_curve = (SdaiB_spline_curve_with_knots *)registry->ObjCreate("B_SPLINE_CURVE_WITH_KNOTS");
+	    right_curve->degree_(right_side->Degree());
+	    ON_NurbsCurveCV_to_EntityAggregate((ON_NurbsCurve *)right_side, right_curve, registry, instance_list);
+	    ON_NurbsCurveKnots_to_Aggregates((ON_NurbsCurve *)right_side, right_curve);
+	    right_curve->curve_form_(B_spline_curve_form__unspecified);
+	    right_curve->closed_curve_(LFalse);
+	    right_curve->self_intersect_(LFalse);
+	    right_curve->name_("''");
+	    instance_list->Append(right_curve, completeSE);
+	    sdai_curve_to_splits[i] = std::pair<STEPentity *, STEPentity *>((STEPentity *)&(*left_curve), (STEPentity *)&(*right_curve));
+	    // Midpoint vertex
+	    SdaiCartesian_point *pt = (SdaiCartesian_point *)registry->ObjCreate("CARTESIAN_POINT");
+	    instance_list->Append(pt, completeSE);
+	    pt->name_("''");
+	    ON_3dPoint ONpnt = curve->PointAt(curve->Domain().Mid());
+	    ON_3dPoint_to_Cartesian_point(&(ONpnt), pt);
+	    SdaiVertex_point *vpt = (SdaiVertex_point *)registry->ObjCreate("VERTEX_POINT");
+	    vpt->name_("''");
+	    vpt->vertex_geometry_((const SdaiPoint_ptr)pt);
+	    instance_list->Append(vpt, completeSE);
+            split_midpt_vertex[i] = (STEPentity *)&(*vpt);
+	}
+    }
+
+
     /* The BRep needs a context - TODO: this can probably be used once for the whole step file... */
     STEPcomplex *context = Add_Default_Geometric_Context(registry, instance_list);
 
@@ -660,6 +713,8 @@ ON_BRep_to_STEP(ON_Brep *brep, Registry *registry, InstMgr *instance_list)
     for (int i = 0; i < brep->m_C3.Count(); ++i) {
 	int curve_converted = 0;
 	ON_Curve* curve = brep->m_C3[i];
+	// Already delt with closed curves
+	//if (curve->IsClosed()) curve_converted = 1;
 	/* Supported curve types */
 	ON_ArcCurve *a_curve = ON_ArcCurve::Cast(curve);
 	ON_LineCurve *l_curve = ON_LineCurve::Cast(curve);
