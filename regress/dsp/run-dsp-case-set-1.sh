@@ -33,7 +33,7 @@ for i in $CASES ; do
 
   # convert pix to bw format
   # take the blue pixel only
-  $P2B -B1.0 -s1 $BASE2.pix > ~/mohit.
+  $P2B -B1.0 $BASE2.pix > $BASE2.bw
 
   # convert pix to dsp format
   $CV huc nu16 $BASE2.bw $BASE2.dsp
