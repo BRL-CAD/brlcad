@@ -114,29 +114,55 @@ ON_NurbsCurveCV_to_EntityAggregate(ON_NurbsCurve *incrv, SdaiB_spline_curve *ste
     }
 }
 
-
+/* Unlike most of the structures we're working with, GenericAggregate seems to require that we manually
+ * build its final string with the step file id numbers that identify each control point.  To allow for
+ * delayed instance manager population, we build a temporary map of nested vectors to hold the information
+ * inthe proper form until we are ready for it.*/
 void
-ON_NurbsSurfaceCV_to_GenericAggregate(ON_NurbsSurface *insrf, SdaiB_spline_surface *step_srf, Exporter_Info_AP203 *info) {
-    GenericAggregate *control_pnts_lists = step_srf->control_points_list_();
+ON_NurbsSurfaceCV_Initialize(ON_NurbsSurface *insrf, SdaiB_spline_surface *step_srf, Exporter_Info_AP203 *info) {
     ON_3dPoint cv_pnt;
+    std::vector<std::vector<STEPentity *> > i_array;
     for (int i = 0; i < insrf->CVCount(0); i++) {
-	std::ostringstream ss;
-	ss << "(";
+	std::vector<STEPentity *> j_array;
 	for (int j = 0; j < insrf->CVCount(1); j++) {
 	    SdaiCartesian_point *step_cartesian = (SdaiCartesian_point *)info->registry->ObjCreate("CARTESIAN_POINT");
 	    step_cartesian->name_("''");
-	    info->instance_list->Append((STEPentity *)step_cartesian, completeSE);
 	    insrf->GetCV(i, j, cv_pnt);
 	    ON_3dPoint_to_Cartesian_point(&(cv_pnt), step_cartesian);
-	    if (j != 0) ss << ", ";
-	    ss << "#" << ((SDAI_Application_instance *)step_cartesian)->StepFileId();
+	    j_array.push_back((STEPentity *)step_cartesian);
 	}
-	ss << ")";
-	std::string str = ss.str();
-	control_pnts_lists->AddNode(new GenericAggrNode(str.c_str()));
+	i_array.push_back(j_array);
     }
+    info->surface_cv[(STEPentity*)step_srf] = i_array;
 }
 
+// Call this function after all cartesian points have an instance manager instance,
+// (and hence a StepFileID) to populate the surface GenericAggregate control point
+// slots.  Must be run *after* ON_NurbsSurfaceCV_Initialize has been run on *all*
+// surfaces.
+void
+ON_NurbsSurfaceCV_Finalize_GenericAggregates(Exporter_Info_AP203 *info) 
+{
+    std::map<STEPentity*, std::vector<std::vector<STEPentity *> > >::iterator scv_it;
+    std::vector<std::vector<STEPentity *> >::iterator outer_it;
+    std::vector<STEPentity *>::iterator inner_it;
+    for(scv_it = info->surface_cv.begin(); scv_it != info->surface_cv.end(); ++scv_it) {
+        SdaiB_spline_surface *step_srf = (SdaiB_spline_surface *)scv_it->first;
+	GenericAggregate *control_pnts_lists = step_srf->control_points_list_();
+	for (outer_it = scv_it->second.begin(); outer_it != scv_it->second.end(); ++outer_it) {
+	    std::ostringstream ss;
+	    ss << "(";
+	    for (inner_it = (*outer_it).begin(); inner_it != (*outer_it).end(); ++inner_it) {
+		info->instance_list->Append((STEPentity *)(*inner_it), completeSE);
+		if (inner_it != (*outer_it).begin()) ss << ", ";
+		ss << "#" << ((STEPentity *)(*inner_it))->StepFileId();
+	    }
+	    ss << ")";
+	    std::string str = ss.str();
+	    control_pnts_lists->AddNode(new GenericAggrNode(str.c_str()));
+	}
+    }
+}
 
 void
 ON_NurbsCurveKnots_to_Aggregates(ON_NurbsCurve *incrv, SdaiB_spline_curve_with_knots *step_crv)
@@ -517,7 +543,7 @@ Add_Shape_Definition_Representation(Registry *registry, InstMgr *instance_list, 
     instance_list->Append((STEPentity *)design_context, completeSE);
     prod_def->frame_of_reference_(design_context);
     design_context->name_("''");
-    design_context->life_cycle_stage_("Design");
+    design_context->life_cycle_stage_("'Design'");
     design_context->frame_of_reference_(app_context);
 
     return ret_entity;
@@ -713,6 +739,8 @@ Populate_Instance_List(Exporter_Info_AP203 *info)
 	info->instance_list->Append((STEPentity *)(*v_it), completeSE);
     }
 
+    // Now that we know the ids for all the points, we can finalize the surface definitions
+    ON_NurbsSurfaceCV_Finalize_GenericAggregates(info); 
 }
 
 bool
@@ -892,7 +920,7 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 	    curr_surface->name_("''");
 	    curr_surface->u_degree_(p_nurb.Degree(0));
 	    curr_surface->v_degree_(p_nurb.Degree(1));
-	    ON_NurbsSurfaceCV_to_GenericAggregate(&p_nurb, curr_surface, info);
+	    ON_NurbsSurfaceCV_Initialize(&p_nurb, curr_surface, info);
 
 	    SdaiB_spline_surface_with_knots *surface_knots = (SdaiB_spline_surface_with_knots *)info->surfaces.at(i);
 	    ON_NurbsSurfaceKnots_to_Aggregates(&p_nurb, surface_knots);
@@ -917,7 +945,7 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 	    curr_surface->name_("''");
 	    curr_surface->u_degree_(n_surface->Degree(0));
 	    curr_surface->v_degree_(n_surface->Degree(1));
-	    ON_NurbsSurfaceCV_to_GenericAggregate(n_surface, curr_surface, info);
+	    ON_NurbsSurfaceCV_Initialize(n_surface, curr_surface, info);
 
 	    SdaiB_spline_surface_with_knots *surface_knots = (SdaiB_spline_surface_with_knots *)info->surfaces.at(i);
 	    ON_NurbsSurfaceKnots_to_Aggregates(n_surface, surface_knots);
@@ -944,7 +972,7 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 	    curr_surface->name_("''");
 	    curr_surface->u_degree_(sum_nurb.Degree(0));
 	    curr_surface->v_degree_(sum_nurb.Degree(1));
-	    ON_NurbsSurfaceCV_to_GenericAggregate(&sum_nurb, curr_surface, info);
+	    ON_NurbsSurfaceCV_Initialize(&sum_nurb, curr_surface, info);
 
 	    SdaiB_spline_surface_with_knots *surface_knots = (SdaiB_spline_surface_with_knots *)info->surfaces.at(i);
 	    ON_NurbsSurfaceKnots_to_Aggregates(&sum_nurb, surface_knots);
