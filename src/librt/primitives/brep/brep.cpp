@@ -3642,6 +3642,9 @@ rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *)
 }
 
 
+/**
+ * R T _ B R E P _ B O O L E A N
+ */
 int
 rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, const char* operation)
 {
