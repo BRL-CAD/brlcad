@@ -227,8 +227,8 @@ void Add_Edge(ON_BrepTrim *trim, SdaiPath *e_loop_path, Exporter_Info_AP203 *inf
 	if (edge->EdgeCurveOf()->IsClosed()) {
 	    std::map<int, std::pair<STEPentity *, STEPentity *> >::iterator it;
 	    std::map<int, STEPentity * >::iterator v_it;
-	    it = info->sdai_curve_to_splits.find(i);
-	    v_it = info->split_midpt_vertex.find(i);
+	    it = info->sdai_curve_to_splits.find(edge->EdgeCurveIndexOf());
+	    v_it = info->split_midpt_vertex.find(edge->EdgeCurveIndexOf());
 	    SdaiOriented_edge *left_edge = (SdaiOriented_edge *)info->registry->ObjCreate("ORIENTED_EDGE");
 	    left_edge->name_("''");
 	    SdaiOriented_edge *right_edge = (SdaiOriented_edge *)info->registry->ObjCreate("ORIENTED_EDGE");
@@ -248,6 +248,8 @@ void Add_Edge(ON_BrepTrim *trim, SdaiPath *e_loop_path, Exporter_Info_AP203 *inf
 		left_edge->edge_end_((SdaiVertex *)(v_it->second));
 		right_edge->edge_end_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(1)->m_vertex_index)));
 	    }
+	    left_edge->orientation_((Boolean)!trim->m_bRev3d);
+	    right_edge->orientation_((Boolean)!trim->m_bRev3d);
 	    info->instance_list->Append((STEPentity *)left_edge, completeSE);
 	    info->oriented_edges.push_back((STEPentity *)left_edge);
 	    i = info->oriented_edges.size() - 1;
