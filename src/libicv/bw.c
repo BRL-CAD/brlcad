@@ -98,7 +98,7 @@ bw_read(const char *filename, int width, int height)
 	int status = 0;
 	size = 0;
 	data = (unsigned char *)bu_malloc(buffsize, "bw_read : unsigned char data");
-	while((status = read(fd, &data[size], 1))>0) {
+	while((status = read(fd, &data[size], 1))==1) {
 	    size++;
 	    if(size==buffsize) {
 		buffsize+=1024;

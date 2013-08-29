@@ -80,36 +80,49 @@ pix_read(const char* filename, int width, int height)
     int fd;
     unsigned char *data = 0;
     icv_image_t *bif;
-
     size_t size;
-
-    if (width == 0 || height == 0) {
-	height = 512;
-	width = 512;
-    }
-
-    size = (size_t) height*width*3;
+    size_t buffsize=1024*3;
 
     if(filename == NULL)
 	fd = fileno(stdin);
     else if ((fd = open(filename, O_RDONLY, WRMODE))<0) {
-	bu_log("bw_read: Cannot open file for reading\n");
+	bu_log("pix_read: Cannot open file for reading\n");
 	return NULL;
     }
 
-    data = (unsigned char *)bu_malloc(size, "pix_read : unsigned char data");
-    if (read(fd, data, size) < 0) {
-	bu_log("pix_read: Error Occurred while Reading\n");
-	bu_free(data, "icv_image data");
-	return NULL;
+    /* buffer pixel wise */
+    if (width == 0 || height == 0) {
+	int status = 0;
+	size = 0;
+	data = (unsigned char *)bu_malloc(buffsize, "pix_read : unsigned char data");
+	while((status = read(fd, &data[size], 3))==3) {
+	    size+=3;
+	    if(size==buffsize) {
+		buffsize+=1024*3;
+		data = (unsigned char *)bu_realloc(data, buffsize, "pix_read : increase size to acomodate data");
+	    }
+	}
+	if(size<buffsize) {
+	    data = (unsigned char *)bu_realloc(data, size, "pix_read : decrease size in overbuffered");
+	}
+	bif->height = 1;
+	bif->width = (int) size/3;
+    } else { /* buffer frame wise */
+	size = (size_t) height*width;
+	data = (unsigned char *)bu_malloc(size, "pix_read : unsigned char data");
+	if (read(fd, data, size) < 0) {
+	    bu_log("pix_read: Error Occurred while Reading\n");
+	    bu_free(data, "icv_image data");
+	    return NULL;
+	}
+	bif->height = height;
+	bif->width = width;
     }
     BU_ALLOC(bif, struct icv_image);
     ICV_IMAGE_INIT(bif);
     bif->data = uchar2double(data, size);
     bu_free(data, "pix_read : unsigned char data");
     bif->magic = ICV_IMAGE_MAGIC;
-    bif->height = height;
-    bif->width = width;
     bif->channels = 3;
     bif->color_space = ICV_COLOR_SPACE_RGB;
     close(fd);
