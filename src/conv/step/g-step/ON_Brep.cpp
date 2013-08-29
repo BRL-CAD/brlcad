@@ -257,13 +257,15 @@ Add_Edge(ON_BrepTrim *trim, SdaiPath *e_loop_path, Exporter_Info_AP203 *info)
 	    right_edge->edge_end_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(1)->m_vertex_index)));
 	}
 
-	left_edge->orientation_((Boolean)!trim->m_bRev3d);
-	right_edge->orientation_((Boolean)!trim->m_bRev3d);
-	info->oriented_edges.push_back((STEPentity *)left_edge);
 
-	// add the edge
+	// add the left edge
+	left_edge->orientation_((Boolean)!trim->m_bRev3d);
+	info->oriented_edges.push_back((STEPentity *)left_edge);
 	i = info->oriented_edges.size() - 1;
 	e_loop_path->edge_list_()->AddNode(new EntityNode((SDAI_Application_instance *)(info->oriented_edges.at(i))));
+
+	// add the right edge
+	right_edge->orientation_((Boolean)!trim->m_bRev3d);
 	info->oriented_edges.push_back((STEPentity *)right_edge);
 	i = info->oriented_edges.size() - 1;
 	e_loop_path->edge_list_()->AddNode(new EntityNode((SDAI_Application_instance *)(info->oriented_edges.at(i))));
@@ -284,10 +286,9 @@ Add_Edge(ON_BrepTrim *trim, SdaiPath *e_loop_path, Exporter_Info_AP203 *info)
 	    oriented_edge->edge_end_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(1)->m_vertex_index)));
 	}
 
+	// add the edge
 	oriented_edge->orientation_((Boolean)!trim->m_bRev3d);
 	info->oriented_edges.push_back(new_oriented_edge);
-
-	// add the edge
 	i = info->oriented_edges.size() - 1;
 	e_loop_path->edge_list_()->AddNode(new EntityNode((SDAI_Application_instance *)(info->oriented_edges.at(i))));
     }
