@@ -2479,6 +2479,7 @@ brep_conversion_comb(struct rt_db_internal *old_internal, char *name, char *suff
     return ret;
 }
 
+
 int
 translate_command(
 	struct bu_vls *result,
@@ -2531,6 +2532,7 @@ translate_command(
 
     return 0;
 }
+
 
 int
 brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_tol *ttol, const struct bn_tol *tol, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag)
