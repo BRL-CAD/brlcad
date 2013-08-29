@@ -630,48 +630,6 @@ ON_RationalNurbsCurve_to_EntityAggregate(ON_NurbsCurve *incrv, SdaiRational_B_sp
 }
 #endif
 
-void
-Split_Curve(ON_NurbsCurve *crv, int i, Exporter_Info_AP203 *info)
-{
-    ON_Curve *left_side = NULL;
-    ON_Curve *right_side = NULL;
-
-    crv->Split(crv->Domain().Mid(), left_side, right_side);
-
-    // Left curve
-    SdaiB_spline_curve_with_knots *left_curve = (SdaiB_spline_curve_with_knots *)info->registry->ObjCreate("B_SPLINE_CURVE_WITH_KNOTS");
-    left_curve->degree_(left_side->Degree());
-    ON_NurbsCurveCV_to_EntityAggregate((ON_NurbsCurve *)left_side, left_curve, info);
-    ON_NurbsCurveKnots_to_Aggregates((ON_NurbsCurve *)left_side, left_curve);
-    left_curve->curve_form_(B_spline_curve_form__unspecified);
-    left_curve->closed_curve_(LFalse);
-    left_curve->self_intersect_(LFalse);
-    left_curve->name_("''");
-
-    // Right curve
-    SdaiB_spline_curve_with_knots *right_curve = (SdaiB_spline_curve_with_knots *)info->registry->ObjCreate("B_SPLINE_CURVE_WITH_KNOTS");
-    right_curve->degree_(right_side->Degree());
-    ON_NurbsCurveCV_to_EntityAggregate((ON_NurbsCurve *)right_side, right_curve, info);
-    ON_NurbsCurveKnots_to_Aggregates((ON_NurbsCurve *)right_side, right_curve);
-    right_curve->curve_form_(B_spline_curve_form__unspecified);
-    right_curve->closed_curve_(LFalse);
-    right_curve->self_intersect_(LFalse);
-    right_curve->name_("''");
-    info->sdai_curve_to_splits[i] = std::pair<STEPentity *, STEPentity *>((STEPentity *)&(*left_curve), (STEPentity *)&(*right_curve));
-
-    // Midpoint vertex
-    SdaiCartesian_point *pt = (SdaiCartesian_point *)info->registry->ObjCreate("CARTESIAN_POINT");
-    info->cartesian_pnts.push_back((STEPentity *)pt);
-    pt->name_("''");
-    ON_3dPoint ONpnt = crv->PointAt(crv->Domain().Mid());
-    ON_3dPoint_to_Cartesian_point(&(ONpnt), pt);
-    SdaiVertex_point *vpt = (SdaiVertex_point *)info->registry->ObjCreate("VERTEX_POINT");
-    vpt->name_("''");
-    vpt->vertex_geometry_((const SdaiPoint_ptr)pt);
-    info->split_midpt_vertex[i] = (STEPentity *)&(*vpt);
-}
-
-
 /* Rather than have the organization of elements in the step file be
  * dicated by the order in which they are built up from ON_Brep,
  * define a function that iterates over the structures to populate the
@@ -723,23 +681,12 @@ Populate_Instance_List(Exporter_Info_AP203 *info)
 	if (*v_it) info->instance_list->Append((STEPentity *)(*v_it), completeSE);
     }
 
-   // edge curves from split curves
-    for(c_it = info->sdai_e_curve_to_splits.begin(); c_it != info->sdai_e_curve_to_splits.end(); ++c_it) {
-	info->instance_list->Append((STEPentity *)(c_it->second.first), completeSE);
-	info->instance_list->Append((STEPentity *)(c_it->second.second), completeSE);
-    }
-
     // vertex_pnts
     for(v_it = info->vertex_pnts.begin(); v_it != info->vertex_pnts.end(); ++v_it) {
 	info->instance_list->Append((STEPentity *)(*v_it), completeSE);
     }
 
     /* Geometry */
-
-    // vertex mid-points from split curves
-    for(mpt_it = info->split_midpt_vertex.begin(); mpt_it != info->split_midpt_vertex.end(); ++mpt_it) {
-	info->instance_list->Append((STEPentity *)(mpt_it->second), completeSE);
-    }
 
     // surfaces
     for(v_it = info->surfaces.begin(); v_it != info->surfaces.end(); ++v_it) {
@@ -751,12 +698,6 @@ Populate_Instance_List(Exporter_Info_AP203 *info)
 	if (*v_it) info->instance_list->Append((STEPentity *)(*v_it), completeSE);
     }
 
-    // 3D curves from split curves
-    for(c_it = info->sdai_curve_to_splits.begin(); c_it != info->sdai_curve_to_splits.end(); ++c_it) {
-	info->instance_list->Append((STEPentity *)(c_it->second.first), completeSE);
-	info->instance_list->Append((STEPentity *)(c_it->second.second), completeSE);
-    }
-
     // directions
     for(v_it = info->directions.begin(); v_it != info->directions.end(); ++v_it) {
 	info->instance_list->Append((STEPentity *)(*v_it), completeSE);
@@ -766,7 +707,6 @@ Populate_Instance_List(Exporter_Info_AP203 *info)
     for(v_it = info->vectors.begin(); v_it != info->vectors.end(); ++v_it) {
 	info->instance_list->Append((STEPentity *)(*v_it), completeSE);
     }
-
 
     // cartesian_pnts
     for(v_it = info->cartesian_pnts.begin(); v_it != info->cartesian_pnts.end(); ++v_it) {

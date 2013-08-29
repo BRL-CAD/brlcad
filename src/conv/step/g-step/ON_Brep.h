@@ -47,9 +47,7 @@ struct Exporter_Info_AP203 {
     SdaiAdvanced_brep_shape_representation *advanced_brep;
     SdaiRepresentation *shape_rep;
 
-    std::map<int, std::pair<STEPentity *, STEPentity *> > sdai_curve_to_splits;
-    std::map<int, std::pair<STEPentity *, STEPentity *> > sdai_e_curve_to_splits;
-    std::map<int, STEPentity * > split_midpt_vertex;
+    std::map<STEPentity *, ON_NurbsSurface*> surface_map;
 };
 
 bool ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info);
