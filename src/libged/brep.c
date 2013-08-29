@@ -177,9 +177,9 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	return GED_OK;
     }
 
-    if (BU_STR_EQUAL(argv[2], "u") || BU_STR_EQUAL(argv[2], "i") || BU_STR_EQUAL(argv[2], "-")) {
+    if (BU_STR_EQUAL(argv[2], "u") || BU_STR_EQUAL(argv[2], "i") || BU_STR_EQUAL(argv[2], "-") || BU_STR_EQUAL(argv[2], "x")) {
 	/* test booleans on brep.
-	 * u: union, i: intersect, -: diff
+	 * u: union, i: intersect, -: diff, x: xor
 	 */
 	struct rt_db_internal intern2, intern_res;
 	struct rt_brep_internal *bip;
