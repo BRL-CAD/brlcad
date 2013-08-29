@@ -92,7 +92,8 @@ bw_read(const char *filename, int width, int height)
 	bu_log("bw_read: Cannot open %s for reading\n", filename);
 	return NULL;
     }
-
+    BU_ALLOC(bif, struct icv_image);
+    ICV_IMAGE_INIT(bif);
     /* buffer pixel wise */
     if (width == 0 || height == 0) {
 	int status = 0;
@@ -116,13 +117,12 @@ bw_read(const char *filename, int width, int height)
 	if (read(fd, data, size) < 0) {
 	    bu_log("bw_read: Error Occurred while Reading\n");
 	    bu_free(data, "icv_image data");
+	    bu_free(bif, "icv_structure");
 	    return NULL;
 	}
 	bif->height = height;
 	bif->width = width;
     }
-    BU_ALLOC(bif, struct icv_image);
-    ICV_IMAGE_INIT(bif);
     bif->data = uchar2double(data, size);
     bu_free(data, "bw_read : unsigned char data");
     bif->magic = ICV_IMAGE_MAGIC;
