@@ -634,7 +634,7 @@ plotsurfacenormals(ON_Surface &surf, struct bn_vlblock *vbp, int gridres)
 	    ON_3dVector n = surf.NormalAt(udom.ParameterAt((double)u/(double)gridres), vdom.ParameterAt((double)(v-1)/(double)gridres));
 	    n.Unitize();
 	    VMOVE(pt1, p);
-	    VSCALE(pt2, n, 1.5);
+	    VSCALE(pt2, n, surf.BoundingBox().Diagonal().Length()*0.1);
 	    VADD2(pt2, pt1, pt2);
 	    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
 	    RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
