@@ -227,7 +227,7 @@ void Add_Edge(ON_BrepTrim *trim, SdaiPath *e_loop_path, Exporter_Info_AP203 *inf
 	if (edge->EdgeCurveOf()->IsClosed()) {
 	    std::map<int, std::pair<STEPentity *, STEPentity *> >::iterator it;
 	    std::map<int, STEPentity * >::iterator v_it;
-	    it = info->sdai_curve_to_splits.find(edge->EdgeCurveIndexOf());
+	    it = info->sdai_e_curve_to_splits.find(edge->EdgeCurveIndexOf());
 	    v_it = info->split_midpt_vertex.find(edge->EdgeCurveIndexOf());
 	    SdaiOriented_edge *left_edge = (SdaiOriented_edge *)info->registry->ObjCreate("ORIENTED_EDGE");
 	    left_edge->name_("''");
