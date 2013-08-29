@@ -33,28 +33,31 @@
 
 #include "bu.h"
 #include "icv.h"
+#include "vmath.h"
 
 /* The filter kernels */
 struct kernels {
     char *name;
     char *uname;		/* What is needed to recognize it */
+    int kern[9];
     int kerndiv;	/* Divisor for kernel */
     int kernoffset;	/* To be added to result */
     ICV_FILTER filter;
 } kernel[] = {
-    { "Low Pass", "lo", 42, 0, ICV_FILTER_LOW_PASS },
-    { "Laplacian", "la", 16, 128, ICV_FILTER_LAPLACIAN },
-    { "High Pass", "hi",  1, 0, ICV_FILTER_HIGH_PASS },
-    { "Horizontal Gradient", "hg", 6, 128, ICV_FILTER_HORIZONTAL_GRAD },
-    { "Vertical Gradient", "vg", 6, 128, ICV_FILTER_VERTICAL_GRAD },
-    { "Boxcar Average", "b", 9, 0, ICV_FILTER_BOXCAR_AVERAGE },
-    { NULL, NULL, 0, 0, ICV_FILTER_NULL }
+    { "Low Pass", "lo", {3, 5, 3, 5, 10, 5, 3, 5, 3}, 42, 0, ICV_FILTER_LOW_PASS },
+    { "Laplacian", "la", {-1, -1, -1, -1, 8, -1, -1, -1, -1}, 16, 128, ICV_FILTER_LAPLACIAN },
+    { "High Pass", "hi", {-1, -2, -1, -2, 13, -2, -1, -2, -1}, 1, 0, ICV_FILTER_HIGH_PASS },
+    { "Horizontal Gradient", "hg", {1, 0, -1, 1, 0, -1, 1, 0, -1}, 6, 128, ICV_FILTER_HORIZONTAL_GRAD },
+    { "Vertical Gradient", "vg", {1, 1, 1, 0, 0, 0, -1, -1, -1}, 6, 128, ICV_FILTER_VERTICAL_GRAD },
+    { "Boxcar Average", "b", {1, 1, 1, 1, 1, 1, 1, 1, 1}, 9, 0, ICV_FILTER_BOXCAR_AVERAGE },
+    { NULL, NULL, {0, 0, 0, 0, 0, 0, 0, 0, 0}, 0, 0, ICV_FILTER_NULL },
 };
 
 int kerndiv;
 int kernoffset;
-double kerndiv_diff, kernoffset_diff;
+int *kern;
 ICV_FILTER filter_type;
+int kernel_index;
 int inx = 512;
 int iny = 512;   /* Default Width */
 int verbose = 0;
@@ -79,28 +82,21 @@ char *out_file = NULL;
 void
 select_filter(char *str)
 {
-    int i;
-
-    i = 0;
-    while (kernel[i].name != NULL) {
-	if (bu_strncmp(str, kernel[i].uname, strlen(kernel[i].uname)) == 0)
+    kernel_index = 0;
+    while (kernel[kernel_index].name != NULL) {
+	if (bu_strncmp(str, kernel[kernel_index].uname, strlen(kernel[kernel_index].uname)) == 0)
 	    break;
-	i++;
+	kernel_index++;
     }
 
-    if (kernel[i].name == NULL) {
+    if (kernel[kernel_index].name == NULL) {
 	/* No match, output list and exit */
 	fprintf(stderr, "Unrecognized filter type \"%s\"\n", str);
 	dousage();
 	bu_exit (3, NULL);
     }
-    filter_type = kernel[i].filter;
-    /* Have a match, set up that kernel */
-    if (dflag == 1)
-	if(kernel[i].filter != ICV_FILTER_NULL)
-	    kerndiv_diff = kerndiv/kernel[i].kerndiv;
-    if (oflag == 1)
-	kernoffset_diff = ICV_CONV_8BIT(kernoffset - kernel[i].kernoffset)/(double) kerndiv;
+    kern = kernel[kernel_index].kern;
+    filter_type = kernel[kernel_index].filter;
 }
 
 void
@@ -132,6 +128,10 @@ get_args(int argc, char **argv)
 	    case 'd':
 		dflag++;
 		kerndiv = atoi(bu_optarg);
+		if(ZERO(kerndiv)) {
+		    bu_log("Bad argument for kerndiv\n");
+		    return 1;
+		}		    
 		break;
 	    case 'O':
 		oflag++;
@@ -179,6 +179,9 @@ int
 main(int argc, char **argv)
 {
     icv_image_t *img;
+    double *max_d = NULL, *min_d = NULL; /* return values from min and max */
+    int max, min;
+    int x;
     /* Select Default Filter (low pass) */
     select_filter("low");
 
@@ -191,8 +194,35 @@ main(int argc, char **argv)
 	return 1;
 
     icv_filter(img, filter_type);
+    
+    /* Correct the image as per the input offset and */
+    if(oflag | dflag) {
+        icv_add_val(img, -ICV_CONV_8BIT(kernel[kernel_index].kernoffset));
 
+        if(dflag) {
+            if(ZERO(kerndiv))
+            icv_multiply_val(img, ICV_CONV_8BIT(kernel[kernel_index].kerndiv/kerndiv));
+        }
+        
+        if(oflag)
+            icv_add_val(img, ICV_CONV_8BIT(kernoffset));
+        else
+            icv_add_val(img, ICV_CONV_8BIT(kernel[kernel_index].kernoffset));
+    }
 
+    if (verbose) {
+	for (x = 0; x < 11; x++)
+	    bu_log("kern[%d] = %d\n", x, kern[x]);
+
+	max_d = icv_max(img);
+	min_d = icv_min(img);
+	max = (int) (*max_d * 255.0);
+	min = (int) (*min_d * 255.0);
+	bu_log("\n\tMax = %d, Min = %d\n",max, min);
+    }
+    bu_free(min_d, "max value");
+    bu_free(max_d, "min values");
+    
     icv_write(img, out_file, ICV_IMAGE_BW);
     return 0;
 }

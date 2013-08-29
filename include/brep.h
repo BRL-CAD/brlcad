@@ -2047,7 +2047,8 @@ ON_Intersect(const ON_Surface* surfA,
 enum op_type {
     BOOLEAN_UNION = 0,
     BOOLEAN_INTERSECT = 1,
-    BOOLEAN_DIFF = 2
+    BOOLEAN_DIFF = 2,
+    BOOLEAN_XOR = 3
 };
 
 

@@ -774,7 +774,6 @@ typedef enum {
 BU_EXPORT extern bu_endian_t bu_byteorder(void);
 
 
-
 /*----------------------------------------------------------------------*/
 
 /** @addtogroup list */
@@ -1901,13 +1900,27 @@ typedef struct bu_hook_list bu_hook_list_t;
  * Routines to manage attribute/value sets.
  */
 
+/** for attr and avs use.
+ */
+typedef enum {
+  BU_ATTR_CREATED,
+  BU_ATTR_MODIFIED
+} bu_attr_time_t;
+
 /**
  * These strings may or may not be individually allocated, it depends
  * on usage.
  */
+/* FIXME: struct name should be changed to reflect more data, say, bu_attribute_data */
 struct bu_attribute_value_pair {
-    const char *name;	/**< attribute name */
-    const char *value; /**< attribute value */
+    const char *name;	    /**< attribute name           */
+    const char *value;      /**< attribute value          */
+    const char *anamespace; /**< attribute anamespace     */
+
+    /* integral variables */
+    int version;            /**< attribute version number */
+    int64_t created;        /**< attribute date created   */
+    int64_t modified;       /**< attribute date modified  */
 };
 
 
@@ -2664,6 +2677,12 @@ struct bu_cmdtab {
 /** @{ */
 /* avs.c */
 
+
+/**
+ * Get current UTC date-time for attribute creation or modification times.
+ */
+BU_EXPORT extern void bu_avs_set_date(struct bu_attribute_value_pair *app,
+				      const bu_attr_time_t typ);
 
 /**
  * Initialize avs with storage for len entries.
@@ -3864,7 +3883,6 @@ typedef int (*bu_heap_func_t)(const char *, ...);
  * returned.
  */
 BU_EXPORT extern bu_heap_func_t bu_heap_log(bu_heap_func_t log);
-
 
 
 /** @} */
@@ -6186,13 +6204,13 @@ BU_EXPORT extern int64_t bu_gettime();
 /** @ingroup io */
 /** @{ */
 /**
- * Evaluate the current UTC time in ISO format as a string.
+ * Evaluate the time_t input as UTC time in ISO format.
  *
- * The UTC time is written into the user-provided bu_vls struct. and is
+ * The UTC time is written into the user-provided bu_vls struct and is
  * also returned and guaranteed to be a non-null result, returning a
  * static "NULL" UTC time if an error is encountered.
  */
-BU_EXPORT void bu_utctime(struct bu_vls *utc_result);
+BU_EXPORT void bu_utctime(struct bu_vls *utc_result, const int64_t time_val);
 
 /** @} */
 

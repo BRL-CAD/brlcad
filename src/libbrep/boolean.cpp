@@ -1632,17 +1632,15 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 	    if (IsFaceInsideBrep(splitted[j], another_brep, surf_tree)) {
 		if (DEBUG_BREP_BOOLEAN)
 		    bu_log("The trimmed face is inside the other brep.\n");
-		if (operation == BOOLEAN_INTERSECT || (operation == BOOLEAN_DIFF && i >= facecount1))
+		if (operation == BOOLEAN_INTERSECT || operation == BOOLEAN_XOR || (operation == BOOLEAN_DIFF && i >= facecount1))
 		    splitted[j]->m_belong_to_final = TrimmedFace::BELONG;
-		if (operation == BOOLEAN_DIFF)
+		if (operation == BOOLEAN_DIFF || operation == BOOLEAN_XOR)
 		    splitted[j]->m_rev = true;
 	    } else {
 		if (DEBUG_BREP_BOOLEAN)
 		    bu_log("The trimmed face is not inside the other brep.\n");
-		if (operation == BOOLEAN_UNION || (operation == BOOLEAN_DIFF && i < facecount1))
+		if (operation == BOOLEAN_UNION || operation == BOOLEAN_XOR || (operation == BOOLEAN_DIFF && i < facecount1))
 		    splitted[j]->m_belong_to_final = TrimmedFace::BELONG;
-		if (operation == BOOLEAN_UNION)
-		    splitted[j]->m_rev = true;
 	    }
 #if USE_CONNECTIVITY_GRAPH
 	    // BFS the connectivity graph and marked all connected trimmed faces.

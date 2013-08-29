@@ -134,9 +134,14 @@ main(int argc, char *argv[])
     ON_String ss = wstr;
     //bu_log("Brep:\n %s\n", ss.Array());
 
+    Exporter_Info_AP203 *info = new Exporter_Info_AP203();
+
     Registry *registry = new Registry(SchemaInit);
     InstMgr instance_list;
     STEPfile *sfile = new STEPfile(*registry, instance_list);
+
+    info->registry = registry;
+    info->instance_list = &instance_list;
 
     registry->ResetSchemas();
     registry->ResetEntities();
@@ -175,7 +180,7 @@ main(int argc, char *argv[])
     header_instances->Append((SDAI_Application_instance *)fs, completeSE);
 
     /* Now, add actual DATA */
-    ON_BRep_to_STEP(brep, registry, &instance_list);
+    ON_BRep_to_STEP(brep, info);
 
     /* Write STEP file */
     if (!bu_file_exists(output_file, NULL)) {

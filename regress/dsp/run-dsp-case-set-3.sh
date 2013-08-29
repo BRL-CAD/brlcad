@@ -31,7 +31,7 @@ BASE=dsp-$WID
 
 CASES='1 2 3 4 5 6 7 8'
 
-FAILURES=0
+FAILED=0
 
 for i in $CASES ; do
   BASE2=$BASE-$i
