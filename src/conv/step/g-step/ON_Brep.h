@@ -31,10 +31,13 @@ struct Exporter_Info_AP203 {
     InstMgr *instance_list;
     std::vector<STEPentity *> cartesian_pnts;
     std::vector<STEPentity *> vertex_pnts;
+    std::vector<STEPentity *> vectors;
+    std::vector<STEPentity *> directions;
     std::vector<STEPentity *> three_dimensional_curves;
     std::vector<STEPentity *> edge_curves;
     std::vector<STEPentity *> oriented_edges;
     std::vector<STEPentity *> edge_loops;
+    std::vector<STEPentity *> inner_bounds;
     std::vector<STEPentity *> outer_bounds;
     std::vector<STEPentity *> surfaces;
     std::vector<STEPentity *> faces;

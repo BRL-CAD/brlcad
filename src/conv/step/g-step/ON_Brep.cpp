@@ -107,7 +107,7 @@ ON_NurbsCurveCV_to_EntityAggregate(ON_NurbsCurve *incrv, SdaiB_spline_curve *ste
     for (int i = 0; i < incrv->CVCount(); i++) {
 	SdaiCartesian_point *step_cartesian = (SdaiCartesian_point *)info->registry->ObjCreate("CARTESIAN_POINT");
 	step_cartesian->name_("''");
-	info->instance_list->Append(step_cartesian, completeSE);
+	info->cartesian_pnts.push_back((STEPentity *)step_cartesian);
 	incrv->GetCV(i, cv_pnt);
 	ON_3dPoint_to_Cartesian_point(&(cv_pnt), step_cartesian);
 	control_pnts->AddNode(new EntityNode((SDAI_Application_instance *)step_cartesian));
@@ -125,7 +125,7 @@ ON_NurbsSurfaceCV_to_GenericAggregate(ON_NurbsSurface *insrf, SdaiB_spline_surfa
 	for (int j = 0; j < insrf->CVCount(1); j++) {
 	    SdaiCartesian_point *step_cartesian = (SdaiCartesian_point *)info->registry->ObjCreate("CARTESIAN_POINT");
 	    step_cartesian->name_("''");
-	    info->instance_list->Append(step_cartesian, completeSE);
+	    info->instance_list->Append((STEPentity *)step_cartesian, completeSE);
 	    insrf->GetCV(i, j, cv_pnt);
 	    ON_3dPoint_to_Cartesian_point(&(cv_pnt), step_cartesian);
 	    if (j != 0) ss << ", ";
@@ -250,11 +250,9 @@ void Add_Edge(ON_BrepTrim *trim, SdaiPath *e_loop_path, Exporter_Info_AP203 *inf
 	    }
 	    left_edge->orientation_((Boolean)!trim->m_bRev3d);
 	    right_edge->orientation_((Boolean)!trim->m_bRev3d);
-	    info->instance_list->Append((STEPentity *)left_edge, completeSE);
 	    info->oriented_edges.push_back((STEPentity *)left_edge);
 	    i = info->oriented_edges.size() - 1;
 	    e_loop_path->edge_list_()->AddNode(new EntityNode((SDAI_Application_instance *)(info->oriented_edges.at(i))));
-	    info->instance_list->Append((STEPentity *)right_edge, completeSE);
 	    info->oriented_edges.push_back((STEPentity *)right_edge);
 	    i = info->oriented_edges.size() - 1;
 	    e_loop_path->edge_list_()->AddNode(new EntityNode((SDAI_Application_instance *)(info->oriented_edges.at(i))));
@@ -273,7 +271,6 @@ void Add_Edge(ON_BrepTrim *trim, SdaiPath *e_loop_path, Exporter_Info_AP203 *inf
 		oriented_edge->edge_end_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(1)->m_vertex_index)));
 	    }
 	    oriented_edge->orientation_((Boolean)!trim->m_bRev3d);
-	    info->instance_list->Append(new_oriented_edge, completeSE);
 	    info->oriented_edges.push_back(new_oriented_edge);
 	    i = info->oriented_edges.size() - 1;
 	    e_loop_path->edge_list_()->AddNode(new EntityNode((SDAI_Application_instance *)(info->oriented_edges.at(i))));
@@ -673,7 +670,6 @@ Split_Curve(ON_NurbsCurve *crv, int i, Exporter_Info_AP203 *info)
     left_curve->closed_curve_(LFalse);
     left_curve->self_intersect_(LFalse);
     left_curve->name_("''");
-    info->instance_list->Append(left_curve, completeSE);
     // Right curve
     SdaiB_spline_curve_with_knots *right_curve = (SdaiB_spline_curve_with_knots *)info->registry->ObjCreate("B_SPLINE_CURVE_WITH_KNOTS");
     right_curve->degree_(right_side->Degree());
@@ -683,19 +679,119 @@ Split_Curve(ON_NurbsCurve *crv, int i, Exporter_Info_AP203 *info)
     right_curve->closed_curve_(LFalse);
     right_curve->self_intersect_(LFalse);
     right_curve->name_("''");
-    info->instance_list->Append(right_curve, completeSE);
     info->sdai_curve_to_splits[i] = std::pair<STEPentity *, STEPentity *>((STEPentity *)&(*left_curve), (STEPentity *)&(*right_curve));
     // Midpoint vertex
     SdaiCartesian_point *pt = (SdaiCartesian_point *)info->registry->ObjCreate("CARTESIAN_POINT");
-    info->instance_list->Append(pt, completeSE);
+    info->cartesian_pnts.push_back((STEPentity *)pt);
     pt->name_("''");
     ON_3dPoint ONpnt = crv->PointAt(crv->Domain().Mid());
     ON_3dPoint_to_Cartesian_point(&(ONpnt), pt);
     SdaiVertex_point *vpt = (SdaiVertex_point *)info->registry->ObjCreate("VERTEX_POINT");
     vpt->name_("''");
     vpt->vertex_geometry_((const SdaiPoint_ptr)pt);
-    info->instance_list->Append(vpt, completeSE);
     info->split_midpt_vertex[i] = (STEPentity *)&(*vpt);
+}
+
+/* Rather than have the organization of elements in the step file be
+ * dicated by the order in which they are built up from ON_Brep, define
+ * a function that iterates over the structures to populate the list
+ * in a way that puts the more complex/high-level structures at the
+ * beginning of the file. */
+void
+Populate_Instance_List(Exporter_Info_AP203 *info)
+{
+    std::vector<STEPentity *>::iterator v_it;
+    std::map<int, std::pair<STEPentity *, STEPentity *> >::iterator c_it;
+    std::map<int, STEPentity * >::iterator mpt_it;
+
+    /* Topology */
+
+    // High level strucures
+    info->instance_list->Append((STEPentity *)(info->shape_rep), completeSE);
+    info->instance_list->Append((STEPentity *)(info->advanced_brep), completeSE);
+    info->instance_list->Append((STEPentity *)(info->manifold_solid_brep), completeSE);
+    info->instance_list->Append((STEPentity *)(info->closed_shell), completeSE);
+
+    // Faces
+    for(v_it = info->faces.begin(); v_it != info->faces.end(); ++v_it) {
+	info->instance_list->Append((STEPentity *)(*v_it), completeSE);
+    }
+
+    // inner_bounds
+    for(v_it = info->inner_bounds.begin(); v_it != info->inner_bounds.end(); ++v_it) {
+	info->instance_list->Append((STEPentity *)(*v_it), completeSE);
+    }
+
+    // outer_bounds
+    for(v_it = info->outer_bounds.begin(); v_it != info->outer_bounds.end(); ++v_it) {
+	info->instance_list->Append((STEPentity *)(*v_it), completeSE);
+    }
+
+    // edge_loops
+    for(v_it = info->edge_loops.begin(); v_it != info->edge_loops.end(); ++v_it) {
+	info->instance_list->Append((STEPentity *)(*v_it), completeSE);
+    }
+
+    // oriented_edges
+    for(v_it = info->oriented_edges.begin(); v_it != info->oriented_edges.end(); ++v_it) {
+	info->instance_list->Append((STEPentity *)(*v_it), completeSE);
+    }
+
+    // edge_curves
+    for(v_it = info->edge_curves.begin(); v_it != info->edge_curves.end(); ++v_it) {
+	if (*v_it) info->instance_list->Append((STEPentity *)(*v_it), completeSE);
+    }
+
+   // edge curves from split curves
+    for(c_it = info->sdai_e_curve_to_splits.begin(); c_it != info->sdai_e_curve_to_splits.end(); ++c_it) {
+	info->instance_list->Append((STEPentity *)(c_it->second.first), completeSE);
+	info->instance_list->Append((STEPentity *)(c_it->second.second), completeSE);
+    }
+
+    // vertex_pnts
+    for(v_it = info->vertex_pnts.begin(); v_it != info->vertex_pnts.end(); ++v_it) {
+	info->instance_list->Append((STEPentity *)(*v_it), completeSE);
+    }
+
+    /* Geometry */
+
+    // vertex mid-points from split curves
+    for(mpt_it = info->split_midpt_vertex.begin(); mpt_it != info->split_midpt_vertex.end(); ++mpt_it) {
+	info->instance_list->Append((STEPentity *)(mpt_it->second), completeSE);
+    }
+
+    // surfaces
+    for(v_it = info->surfaces.begin(); v_it != info->surfaces.end(); ++v_it) {
+	info->instance_list->Append((STEPentity *)(*v_it), completeSE);
+    }
+
+    // three_dimensional_curves
+    for(v_it = info->three_dimensional_curves.begin(); v_it != info->three_dimensional_curves.end(); ++v_it) {
+	if (*v_it) info->instance_list->Append((STEPentity *)(*v_it), completeSE);
+    }
+
+    // 3D curves from split curves
+    for(c_it = info->sdai_curve_to_splits.begin(); c_it != info->sdai_curve_to_splits.end(); ++c_it) {
+	info->instance_list->Append((STEPentity *)(c_it->second.first), completeSE);
+	info->instance_list->Append((STEPentity *)(c_it->second.second), completeSE);
+    }
+
+    // directions
+    for(v_it = info->directions.begin(); v_it != info->directions.end(); ++v_it) {
+	info->instance_list->Append((STEPentity *)(*v_it), completeSE);
+    }
+
+    // vectors
+    for(v_it = info->vectors.begin(); v_it != info->vectors.end(); ++v_it) {
+	info->instance_list->Append((STEPentity *)(*v_it), completeSE);
+    }
+
+
+    // cartesian_pnts
+    for(v_it = info->cartesian_pnts.begin(); v_it != info->cartesian_pnts.end(); ++v_it) {
+	info->instance_list->Append((STEPentity *)(*v_it), completeSE);
+    }
+
 }
 
 bool
@@ -706,7 +802,6 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
     info->three_dimensional_curves.assign(brep->m_C3.Count(), (STEPentity *)0);
     info->edge_curves.assign(brep->m_E.Count(), (STEPentity *)0);
     info->edge_loops.assign(brep->m_L.Count(), (STEPentity *)0);
-    info->outer_bounds.assign(brep->m_F.Count(), (STEPentity *)0);
     info->surfaces.assign(brep->m_S.Count(), (STEPentity *)0);
     info->faces.assign(brep->m_F.Count(), (STEPentity *)0);
 
@@ -718,7 +813,6 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 	// Cartesian points (actual 3D geometry)
 	info->cartesian_pnts.at(i) = info->registry->ObjCreate("CARTESIAN_POINT");
 	((SdaiCartesian_point *)info->cartesian_pnts.at(i))->name_("''");
-	info->instance_list->Append(info->cartesian_pnts.at(i), completeSE);
 	ON_3dPoint v_pnt = brep->m_V[i].Point();
 	ON_3dPoint_to_Cartesian_point(&(v_pnt), (SdaiCartesian_point *)info->cartesian_pnts.at(i));
 
@@ -726,7 +820,6 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 	info->vertex_pnts.at(i) = info->registry->ObjCreate("VERTEX_POINT");
 	((SdaiVertex_point *)info->vertex_pnts.at(i))->name_("''");
 	((SdaiVertex_point *)info->vertex_pnts.at(i))->vertex_geometry_((const SdaiPoint_ptr)info->cartesian_pnts.at(i));
-	info->instance_list->Append(info->vertex_pnts.at(i), completeSE);
     }
 
     // 3D curves
@@ -781,10 +874,9 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 	    curr_line->dir_()->name_("''");
 	    curr_line->name_("''");
 
-	    info->instance_list->Append(curr_line->pnt_(), completeSE);
-	    info->instance_list->Append(curr_dir->orientation_(), completeSE);
-	    info->instance_list->Append(curr_line->dir_(), completeSE);
-	    info->instance_list->Append(info->three_dimensional_curves.at(i), completeSE);
+	    info->cartesian_pnts.push_back((STEPentity *)curr_line->pnt_());
+	    info->directions.push_back((STEPentity *)curr_dir->orientation_());
+	    info->vectors.push_back((STEPentity *)curr_line->dir_());
 	    curve_converted = 1;
 	}
 
@@ -814,7 +906,6 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 	     */
 	    ((SdaiB_spline_curve *)info->three_dimensional_curves.at(i))->self_intersect_(LFalse);
 	    ((SdaiB_spline_curve *)info->three_dimensional_curves.at(i))->name_("''");
-	    info->instance_list->Append(info->three_dimensional_curves.at(i), completeSE);
 	    curve_converted = 1;
 	}
 
@@ -835,14 +926,12 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 	    v_it = info->split_midpt_vertex.find(i);
 	    std::cout << "Closed edge curve: " << i << "  " << it->second.first << "," << it->second.second << "\n";
 	    SdaiEdge_curve *left_curve = (SdaiEdge_curve *)info->registry->ObjCreate("EDGE_CURVE");
-	    info->instance_list->Append((STEPentity *)left_curve, completeSE);
 	    left_curve->name_("''");
 	    left_curve->edge_geometry_(((SdaiCurve *)it->second.first));
 	    left_curve->same_sense_(BTrue);
 	    left_curve->edge_start_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(0)->m_vertex_index)));
 	    left_curve->edge_end_(((SdaiVertex *)v_it->second));
 	    SdaiEdge_curve *right_curve = (SdaiEdge_curve *)info->registry->ObjCreate("EDGE_CURVE");
-	    info->instance_list->Append((STEPentity *)right_curve, completeSE);
 	    right_curve->name_("''");
 	    right_curve->edge_geometry_(((SdaiCurve *)it->second.second));
 	    right_curve->same_sense_(BTrue);
@@ -851,7 +940,6 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 	    info->sdai_e_curve_to_splits[i] = std::pair<STEPentity *, STEPentity *>((STEPentity *)&(*left_curve), (STEPentity *)&(*right_curve));
 	} else {
 	    info->edge_curves.at(i) = info->registry->ObjCreate("EDGE_CURVE");
-	    info->instance_list->Append(info->edge_curves.at(i), completeSE);
 
 	    SdaiEdge_curve *e_curve = (SdaiEdge_curve *)info->edge_curves.at(i);
 	    e_curve->name_("''");
@@ -871,7 +959,6 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 	ON_BrepLoop *loop= &(brep->m_L[i]);
 	std::cout << "Loop " << i << "\n";
 	info->edge_loops.at(i) = info->registry->ObjCreate("EDGE_LOOP");
-	info->instance_list->Append(info->edge_loops.at(i), completeSE);
 	((SdaiEdge_loop *)info->edge_loops.at(i))->name_("''");
 
 	// Why doesn't SdaiEdge_loop's edge_list_() function give use
@@ -925,7 +1012,6 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 	    /* TODO - need to recognize when these should be true */
 	    curr_surface->u_closed_(LFalse);
 	    curr_surface->v_closed_(LFalse);
-	    info->instance_list->Append(info->surfaces.at(i), completeSE);
 	    surface_converted = 1;
 	}
 
@@ -951,7 +1037,6 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 	    /* TODO - need to recognize when these should be true */
 	    curr_surface->u_closed_(LFalse);
 	    curr_surface->v_closed_(LFalse);
-	    info->instance_list->Append(info->surfaces.at(i), completeSE);
 	    surface_converted = 1;
 	}
 
@@ -980,7 +1065,6 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 	    /* TODO - need to recognize when these should be true */
 	    curr_surface->u_closed_(LFalse);
 	    curr_surface->v_closed_(LFalse);
-	    info->instance_list->Append(info->surfaces.at(i), completeSE);
 	    surface_converted = 1;
 	}
 
@@ -1007,28 +1091,26 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 	    if (curr_loop == face->OuterLoop()) {
 		SdaiFace_outer_bound *outer_bound = (SdaiFace_outer_bound *)info->registry->ObjCreate("FACE_OUTER_BOUND");
 		outer_bound->name_("''");
-		info->instance_list->Append(outer_bound, completeSE);
 		outer_bound->bound_((SdaiLoop *)info->edge_loops.at(curr_loop->m_loop_index));
 		// TODO - When should this be false?
 		outer_bound->orientation_(BTrue);
 		bounds->AddNode(new EntityNode((SDAI_Application_instance *)outer_bound));
+		info->outer_bounds.push_back((STEPentity *)outer_bound);
 	    } else {
 		SdaiFace_bound *inner_bound = (SdaiFace_bound *)info->registry->ObjCreate("FACE_BOUND");
 		inner_bound->name_("''");
-		info->instance_list->Append(inner_bound, completeSE);
 		inner_bound->bound_((SdaiLoop *)info->edge_loops.at(curr_loop->m_loop_index));
 		// TODO - When should this be false?
 		inner_bound->orientation_(BTrue);
 		bounds->AddNode(new EntityNode((SDAI_Application_instance *)inner_bound));
+		info->inner_bounds.push_back((STEPentity *)inner_bound);
 	    }
 	}
-	info->instance_list->Append(step_face, completeSE);
     }
 
     // Closed shell that assembles the faces
     info->closed_shell = (SdaiClosed_shell *)info->registry->ObjCreate("CLOSED_SHELL");
     info->closed_shell->name_("''");
-    info->instance_list->Append(info->closed_shell, completeSE);
 
     EntityAggregate *shell_faces = info->closed_shell->cfs_faces_();
     for (int i = 0; i < brep->m_F.Count(); ++i) {
@@ -1037,14 +1119,12 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 
     // Solid manifold BRep
     info->manifold_solid_brep = (SdaiManifold_solid_brep *)info->registry->ObjCreate("MANIFOLD_SOLID_BREP");
-    info->instance_list->Append(info->manifold_solid_brep, completeSE);
     info->manifold_solid_brep->outer_(info->closed_shell);
     info->manifold_solid_brep->name_("''");
 
     // Advanced BRep shape representation - this is the object step-g will look for
     info->advanced_brep= (SdaiAdvanced_brep_shape_representation *)info->registry->ObjCreate("ADVANCED_BREP_SHAPE_REPRESENTATION");
     info->advanced_brep->name_("'brep.s'");
-    info->instance_list->Append(info->advanced_brep, completeSE);
     EntityAggregate *items = info->advanced_brep->items_();
     items->AddNode(new EntityNode((SDAI_Application_instance *)info->manifold_solid_brep));
     info->advanced_brep->context_of_items_((SdaiRepresentation_context *) context);
@@ -1053,6 +1133,8 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
     info->shape_rep = Add_Shape_Representation(info->registry, info->instance_list, (SdaiRepresentation_context *)context);
     (void *)Add_Shape_Representation_Relationship(info->registry, info->instance_list, info->shape_rep, (SdaiRepresentation *)info->advanced_brep);
     (void *)Add_Shape_Definition_Representation(info->registry, info->instance_list, info->shape_rep);
+
+    Populate_Instance_List(info);
 
     return true;
 }
