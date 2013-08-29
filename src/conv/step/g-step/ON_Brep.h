@@ -29,6 +29,7 @@
 struct Exporter_Info_AP203 {
     Registry *registry;
     InstMgr *instance_list;
+    int split_closed;
     std::vector<STEPentity *> cartesian_pnts;
     std::vector<STEPentity *> vertex_pnts;
     std::vector<STEPentity *> vectors;

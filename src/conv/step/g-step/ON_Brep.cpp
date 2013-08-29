@@ -229,7 +229,7 @@ Add_Edge(ON_BrepTrim *trim, SdaiPath *e_loop_path, Exporter_Info_AP203 *info)
     int i = -1;
 
     // handle closed loop edges a little differently
-    if (edge && edge->EdgeCurveOf()->IsClosed()) {
+    if (edge && edge->EdgeCurveOf()->IsClosed() && info->split_closed) {
 	std::map<int, std::pair<STEPentity *, STEPentity *> >::iterator it;
 	std::map<int, STEPentity * >::iterator v_it;
 
@@ -851,7 +851,7 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 	ON_Curve* curve = brep->m_C3[i];
 
 	// Deal with closed curves
-	if (curve->IsClosed()) {
+	if (curve->IsClosed() && info->split_closed) {
 	    std::cout << "Have Closed curve: " << i << "\n";
 	    ON_NurbsCurve crv;
 	    curve->GetNurbForm(crv);
@@ -941,7 +941,7 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
     // edge topology - ON_BrepEdge -> edge curve
     for (int i = 0; i < brep->m_E.Count(); ++i) {
 	ON_BrepEdge *edge = &(brep->m_E[i]);
-	if (edge->EdgeCurveOf()->IsClosed()) {
+	if (edge->EdgeCurveOf()->IsClosed() && info->split_closed) {
 	    std::map<int, std::pair<STEPentity *, STEPentity *> >::iterator it;
 	    std::map<int, STEPentity * >::iterator v_it;
 	    it = info->sdai_curve_to_splits.find(i);
