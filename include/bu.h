@@ -1911,16 +1911,9 @@ typedef enum {
  * These strings may or may not be individually allocated, it depends
  * on usage.
  */
-/* FIXME: struct name should be changed to reflect more data, say, bu_attribute_data */
 struct bu_attribute_value_pair {
     const char *name;	    /**< attribute name           */
     const char *value;      /**< attribute value          */
-    const char *anamespace; /**< attribute anamespace     */
-
-    /* integral variables */
-    int version;            /**< attribute version number */
-    int64_t created;        /**< attribute date created   */
-    int64_t modified;       /**< attribute date modified  */
 };
 
 
