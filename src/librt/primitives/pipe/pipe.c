@@ -1533,13 +1533,13 @@ rt_pipe_elim_dups(
 	hitp = &hit[hitNo];
 	next_hit = &hit[hitNo + 1];
 
-	if (NEAR_EQUAL(hitp->hit_dist, next_hit->hit_dist, 0.00001) &&
+	if (NEAR_EQUAL(hitp->hit_dist, next_hit->hit_dist, stp->st_rtip->rti_tol.dist) &&
 	    hitp->hit_surfno == next_hit->hit_surfno) {
 	    int i;
-	    for (i = hitNo ; i < (*nh) ; i++) {
-		hit[i] = hit[i + 1];
+	    for (i = hitNo ; i < (*nh-2) ; i++) {
+		hit[i] = hit[i + 2];
 	    }
-	    (*nh)--;
+	    (*nh)=(*nh)-2;
 	} else {
 	    hitNo++;
 	}
@@ -1551,19 +1551,6 @@ rt_pipe_elim_dups(
     }
 
     if ((*nh) == 0 || (*nh) == 2) {
-	return;
-    }
-
-    /* handle cases where this pipe overlaps with itself */
-    hitp = &hit[0];
-    if (VDOT(hitp->hit_normal, rp->r_dir) > 0.0) {
-
-	bu_log("ERROR: first hit on %s (surfno = %d) is an exit at (%g %g %g)\n",
-	       stp->st_dp->d_namep, hitp->hit_surfno, V3ARGS(hitp->hit_point));
-	bu_log("\tray start = (%.12e %.12e %.12e), ray dir = (%.12e %.12e %.12e)\n",
-	       V3ARGS(rp->r_pt), V3ARGS(rp->r_dir));
-
-	(*nh) = 0;
 	return;
     }
 
