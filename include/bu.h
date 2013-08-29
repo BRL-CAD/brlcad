@@ -2672,12 +2672,6 @@ struct bu_cmdtab {
 
 
 /**
- * Get current UTC date-time for attribute creation or modification times.
- */
-BU_EXPORT extern void bu_avs_set_date(struct bu_attribute_value_pair *app,
-				      const bu_attr_time_t typ);
-
-/**
  * Initialize avs with storage for len entries.
  */
 BU_EXPORT extern void bu_avs_init(struct bu_attribute_value_set *avp,
