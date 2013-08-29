@@ -1641,7 +1641,7 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 		    bu_log("The trimmed face is not inside the other brep.\n");
 		if (operation == BOOLEAN_UNION || (operation == BOOLEAN_DIFF && i < facecount1))
 		    splitted[j]->m_belong_to_final = TrimmedFace::BELONG;
-		if (operation == BOOLEAN_UNION)
+		if (operation == BOOLEAN_DIFF)
 		    splitted[j]->m_rev = true;
 	    }
 #if USE_CONNECTIVITY_GRAPH
