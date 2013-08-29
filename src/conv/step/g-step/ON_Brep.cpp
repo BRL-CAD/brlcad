@@ -219,62 +219,77 @@ ON_NurbsSurfaceKnots_to_Aggregates(ON_NurbsSurface *insrf, SdaiB_spline_surface_
 }
 
 
-// STEP needs explicit edges corresponding to what in OpenNURBS are the UV space trimming curves
-void Add_Edge(ON_BrepTrim *trim, SdaiPath *e_loop_path, Exporter_Info_AP203 *info) {
+/* STEP needs explicit edges corresponding to what in OpenNURBS are
+ * the UV space trimming curves
+ */
+void
+Add_Edge(ON_BrepTrim *trim, SdaiPath *e_loop_path, Exporter_Info_AP203 *info)
+{
     ON_BrepEdge *edge = trim->Edge();
     int i = -1;
-    if (edge) {
-	if (edge->EdgeCurveOf()->IsClosed()) {
-	    std::map<int, std::pair<STEPentity *, STEPentity *> >::iterator it;
-	    std::map<int, STEPentity * >::iterator v_it;
-	    it = info->sdai_e_curve_to_splits.find(edge->EdgeCurveIndexOf());
-	    v_it = info->split_midpt_vertex.find(edge->EdgeCurveIndexOf());
-	    SdaiOriented_edge *left_edge = (SdaiOriented_edge *)info->registry->ObjCreate("ORIENTED_EDGE");
-	    left_edge->name_("''");
-	    SdaiOriented_edge *right_edge = (SdaiOriented_edge *)info->registry->ObjCreate("ORIENTED_EDGE");
-	    right_edge->name_("''");
-	    if (trim->m_bRev3d) {
-		left_edge->edge_element_((SdaiEdge *)(it->second.second));
-		right_edge->edge_element_((SdaiEdge *)(it->second.first));
-		left_edge->edge_start_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(1)->m_vertex_index)));
-		right_edge->edge_start_((SdaiVertex *)v_it->second);
-		left_edge->edge_end_((SdaiVertex *)v_it->second);
-		right_edge->edge_end_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(0)->m_vertex_index)));
-	    } else {
-		left_edge->edge_element_((SdaiEdge *)(it->second.first));
-		right_edge->edge_element_((SdaiEdge *)(it->second.second));
-		left_edge->edge_start_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(0)->m_vertex_index)));
-		right_edge->edge_start_((SdaiVertex *)(v_it->second));
-		left_edge->edge_end_((SdaiVertex *)(v_it->second));
-		right_edge->edge_end_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(1)->m_vertex_index)));
-	    }
-	    left_edge->orientation_((Boolean)!trim->m_bRev3d);
-	    right_edge->orientation_((Boolean)!trim->m_bRev3d);
-	    info->oriented_edges.push_back((STEPentity *)left_edge);
-	    i = info->oriented_edges.size() - 1;
-	    e_loop_path->edge_list_()->AddNode(new EntityNode((SDAI_Application_instance *)(info->oriented_edges.at(i))));
-	    info->oriented_edges.push_back((STEPentity *)right_edge);
-	    i = info->oriented_edges.size() - 1;
-	    e_loop_path->edge_list_()->AddNode(new EntityNode((SDAI_Application_instance *)(info->oriented_edges.at(i))));
 
+    // handle closed loop edges a little differently
+    if (edge && edge->EdgeCurveOf()->IsClosed()) {
+	std::map<int, std::pair<STEPentity *, STEPentity *> >::iterator it;
+	std::map<int, STEPentity * >::iterator v_it;
+
+	it = info->sdai_e_curve_to_splits.find(edge->EdgeCurveIndexOf());
+	v_it = info->split_midpt_vertex.find(edge->EdgeCurveIndexOf());
+
+	SdaiOriented_edge *left_edge = (SdaiOriented_edge *)info->registry->ObjCreate("ORIENTED_EDGE");
+	left_edge->name_("''");
+	SdaiOriented_edge *right_edge = (SdaiOriented_edge *)info->registry->ObjCreate("ORIENTED_EDGE");
+	right_edge->name_("''");
+
+	if (trim->m_bRev3d) {
+	    left_edge->edge_element_((SdaiEdge *)(it->second.second));
+	    right_edge->edge_element_((SdaiEdge *)(it->second.first));
+	    left_edge->edge_start_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(1)->m_vertex_index)));
+	    right_edge->edge_start_((SdaiVertex *)v_it->second);
+	    left_edge->edge_end_((SdaiVertex *)v_it->second);
+	    right_edge->edge_end_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(0)->m_vertex_index)));
 	} else {
-	    STEPentity *new_oriented_edge = info->registry->ObjCreate("ORIENTED_EDGE");
-	    SdaiOriented_edge *oriented_edge = (SdaiOriented_edge *)new_oriented_edge;
-	    oriented_edge->name_("''");
-	    SdaiEdge_curve *e_curve = (SdaiEdge_curve *)info->edge_curves.at(edge->EdgeCurveIndexOf());
-	    oriented_edge->edge_element_((SdaiEdge *)e_curve);
-	    if (trim->m_bRev3d) {
-		oriented_edge->edge_start_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(1)->m_vertex_index)));
-		oriented_edge->edge_end_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(0)->m_vertex_index)));
-	    } else {
-		oriented_edge->edge_start_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(0)->m_vertex_index)));
-		oriented_edge->edge_end_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(1)->m_vertex_index)));
-	    }
-	    oriented_edge->orientation_((Boolean)!trim->m_bRev3d);
-	    info->oriented_edges.push_back(new_oriented_edge);
-	    i = info->oriented_edges.size() - 1;
-	    e_loop_path->edge_list_()->AddNode(new EntityNode((SDAI_Application_instance *)(info->oriented_edges.at(i))));
+	    left_edge->edge_element_((SdaiEdge *)(it->second.first));
+	    right_edge->edge_element_((SdaiEdge *)(it->second.second));
+	    left_edge->edge_start_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(0)->m_vertex_index)));
+	    right_edge->edge_start_((SdaiVertex *)(v_it->second));
+	    left_edge->edge_end_((SdaiVertex *)(v_it->second));
+	    right_edge->edge_end_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(1)->m_vertex_index)));
 	}
+
+	left_edge->orientation_((Boolean)!trim->m_bRev3d);
+	right_edge->orientation_((Boolean)!trim->m_bRev3d);
+	info->oriented_edges.push_back((STEPentity *)left_edge);
+
+	// add the edge
+	i = info->oriented_edges.size() - 1;
+	e_loop_path->edge_list_()->AddNode(new EntityNode((SDAI_Application_instance *)(info->oriented_edges.at(i))));
+	info->oriented_edges.push_back((STEPentity *)right_edge);
+	i = info->oriented_edges.size() - 1;
+	e_loop_path->edge_list_()->AddNode(new EntityNode((SDAI_Application_instance *)(info->oriented_edges.at(i))));
+
+    } else {
+	STEPentity *new_oriented_edge = info->registry->ObjCreate("ORIENTED_EDGE");
+	SdaiOriented_edge *oriented_edge = (SdaiOriented_edge *)new_oriented_edge;
+	SdaiEdge_curve *e_curve = (SdaiEdge_curve *)info->edge_curves.at(edge->EdgeCurveIndexOf());
+
+	oriented_edge->name_("''");
+	oriented_edge->edge_element_((SdaiEdge *)e_curve);
+
+	if (trim->m_bRev3d) {
+	    oriented_edge->edge_start_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(1)->m_vertex_index)));
+	    oriented_edge->edge_end_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(0)->m_vertex_index)));
+	} else {
+	    oriented_edge->edge_start_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(0)->m_vertex_index)));
+	    oriented_edge->edge_end_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(1)->m_vertex_index)));
+	}
+
+	oriented_edge->orientation_((Boolean)!trim->m_bRev3d);
+	info->oriented_edges.push_back(new_oriented_edge);
+
+	// add the edge
+	i = info->oriented_edges.size() - 1;
+	e_loop_path->edge_list_()->AddNode(new EntityNode((SDAI_Application_instance *)(info->oriented_edges.at(i))));
     }
 }
 
@@ -660,7 +675,9 @@ Split_Curve(ON_NurbsCurve *crv, int i, Exporter_Info_AP203 *info)
 {
     ON_Curve *left_side = NULL;
     ON_Curve *right_side = NULL;
+
     crv->Split(crv->Domain().Mid(), left_side, right_side);
+
     // Left curve
     SdaiB_spline_curve_with_knots *left_curve = (SdaiB_spline_curve_with_knots *)info->registry->ObjCreate("B_SPLINE_CURVE_WITH_KNOTS");
     left_curve->degree_(left_side->Degree());
@@ -670,6 +687,7 @@ Split_Curve(ON_NurbsCurve *crv, int i, Exporter_Info_AP203 *info)
     left_curve->closed_curve_(LFalse);
     left_curve->self_intersect_(LFalse);
     left_curve->name_("''");
+
     // Right curve
     SdaiB_spline_curve_with_knots *right_curve = (SdaiB_spline_curve_with_knots *)info->registry->ObjCreate("B_SPLINE_CURVE_WITH_KNOTS");
     right_curve->degree_(right_side->Degree());
@@ -680,6 +698,7 @@ Split_Curve(ON_NurbsCurve *crv, int i, Exporter_Info_AP203 *info)
     right_curve->self_intersect_(LFalse);
     right_curve->name_("''");
     info->sdai_curve_to_splits[i] = std::pair<STEPentity *, STEPentity *>((STEPentity *)&(*left_curve), (STEPentity *)&(*right_curve));
+
     // Midpoint vertex
     SdaiCartesian_point *pt = (SdaiCartesian_point *)info->registry->ObjCreate("CARTESIAN_POINT");
     info->cartesian_pnts.push_back((STEPentity *)pt);
@@ -692,11 +711,13 @@ Split_Curve(ON_NurbsCurve *crv, int i, Exporter_Info_AP203 *info)
     info->split_midpt_vertex[i] = (STEPentity *)&(*vpt);
 }
 
+
 /* Rather than have the organization of elements in the step file be
- * dicated by the order in which they are built up from ON_Brep, define
- * a function that iterates over the structures to populate the list
- * in a way that puts the more complex/high-level structures at the
- * beginning of the file. */
+ * dicated by the order in which they are built up from ON_Brep,
+ * define a function that iterates over the structures to populate the
+ * list in a way that puts the more complex/high-level structures at
+ * the beginning of the file.
+ */
 void
 Populate_Instance_List(Exporter_Info_AP203 *info)
 {
