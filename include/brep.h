@@ -363,6 +363,24 @@ BANode<BA>::BANode(const ON_Curve* curve, int adj_face_index, const BA& node,
     m_Horizontal = false;
     m_Vertical = false;
 
+    /*
+     * should be okay since we split on Horz/Vert tangents
+     */
+    if (m_end[X] < m_start[X]) {
+	m_u[0] = m_end[X];
+	m_u[1] = m_start[X];
+    } else {
+	m_u[0] = m_start[X];
+	m_u[1] = m_end[X];
+    }
+    if (m_end[Y] < m_start[Y]) {
+	m_v[0] = m_end[Y];
+	m_v[1] = m_start[Y];
+    } else {
+	m_v[0] = m_start[Y];
+	m_v[1] = m_end[Y];
+    }
+
     if (NEAR_EQUAL(m_end[X], m_start[X], 0.000001)) {
 	m_Vertical = true;
 	if (m_innerTrim) {
