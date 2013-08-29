@@ -57,9 +57,9 @@ get_args(int argc, char **argv)
 	    return 0;
 	}
     } else {
-        in_file = argv[bu_optind];
-        bu_optind++;
-        return 1;
+	in_file = argv[bu_optind];
+	bu_optind++;
+	return 1;
     }
 
 
@@ -79,13 +79,13 @@ main(int argc, char **argv)
 {
     icv_image_t *img;
     if (!get_args(argc, argv)) {
-        bu_log("%s", usage);
-        return 1;
+	bu_log("%s", usage);
+	return 1;
     }
 
     img = icv_read(in_file, ICV_IMAGE_BW, 0, 0);
     if (img == NULL)
-        return 1;
+	return 1;
     icv_gray2rgb(img);
     icv_write(img, out_file, ICV_IMAGE_PIX);
     icv_destroy(img);
