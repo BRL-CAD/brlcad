@@ -4089,7 +4089,7 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
     else if (BU_STR_EQUAL(operation, "-"))
 	operation_type = BOOLEAN_DIFF;
     else if (BU_STR_EQUAL(operation, "x"))
-	operation_type == BOOLEAN_XOR;
+	operation_type = BOOLEAN_XOR;
     else
 	return -1;
 
