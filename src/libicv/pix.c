@@ -108,7 +108,7 @@ pix_read(const char* filename, int width, int height)
 	bif->height = 1;
 	bif->width = (int) size/3;
     } else { /* buffer frame wise */
-	size = (size_t) height*width;
+	size = (size_t) height*width*3;
 	data = (unsigned char *)bu_malloc(size, "pix_read : unsigned char data");
 	if (read(fd, data, size) < 0) {
 	    bu_log("pix_read: Error Occurred while Reading\n");
