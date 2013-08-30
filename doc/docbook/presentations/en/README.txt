@@ -11,3 +11,7 @@ The transformation process was:
 
 + use herold (http://www.dbdoclet.org/projects/herold/index.html) to
   convert xhtml to DocBook
+
++ use xmllint to fix errors until none remain
+
++ clean up and refine doc until satisfied...
