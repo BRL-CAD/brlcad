@@ -80,6 +80,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* fix nurbs_ssi and nurbs_tester unit tests
+
 * get rid of the -P#processors user option (except rt* tools) common
   on utilities.  call bu_avail_cpus() and provide an environment
   variable override used by the library.
