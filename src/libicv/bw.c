@@ -59,9 +59,12 @@ bw_write(icv_image_t *bif, const char *filename)
     data =  data2uchar(bif);
     size = (size_t) bif->height*bif->width;
 
-    if(filename==NULL)
+    if(filename==NULL) {
 	fd = fileno(stdout);
-    else if ((fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, WRMODE)) < 0) {
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    setmode(fd, O_BINARY);
+#endif
+    } else if ((fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, WRMODE)) < 0) {
 	bu_log("bw_write: Cannot open file for saving\n");
 	return -1;
     }
@@ -86,9 +89,12 @@ bw_read(const char *filename, int width, int height)
     size_t size;
     size_t buffsize=1024;
 
-    if(filename==NULL)
+    if(filename==NULL) {
 	fd = fileno(stdin);
-    else if ((fd = open(filename, O_RDONLY, WRMODE)) < 0) {
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    setmode(fd, O_BINARY);
+#endif
+    } else if ((fd = open(filename, O_RDONLY, WRMODE)) < 0) {
 	bu_log("bw_read: Cannot open %s for reading\n", filename);
 	return NULL;
     }

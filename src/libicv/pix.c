@@ -55,9 +55,12 @@ pix_write(icv_image_t *bif, const char *filename)
 	return -1;
     }
 
-    if(filename==NULL)
+    if(filename==NULL) {
 	fd = fileno(stdout);
-    else if ((fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, WRMODE)) < 0) {
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    setmode(fd, O_BINARY);
+#endif
+    } else if ((fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, WRMODE)) < 0) {
 	bu_log("pix_write: Cannot open file for saving\n");
 	return -1;
     }
@@ -83,9 +86,12 @@ pix_read(const char* filename, int width, int height)
     size_t size;
     size_t buffsize=1024*3;
 
-    if(filename == NULL)
+    if(filename == NULL) {
 	fd = fileno(stdin);
-    else if ((fd = open(filename, O_RDONLY, WRMODE))<0) {
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    setmode(fd, O_BINARY);
+#endif
+    } else if ((fd = open(filename, O_RDONLY, WRMODE))<0) {
 	bu_log("pix_read: Cannot open file for reading\n");
 	return NULL;
     }
