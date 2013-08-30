@@ -3,6 +3,7 @@ LIBICV To Do List
 
 Add fileformats for png,bmp,ppm type images.
 FIX fixed size buffers in fileformat.c.
+convert open to fopen.
 
 TODO for icv.h
 ==============
