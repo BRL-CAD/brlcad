@@ -76,9 +76,9 @@ add_test(bn_poly_add                   tester_bn_poly_add)
 add_test(bn_poly_sub                   tester_bn_poly_sub)
 add_test(bn_poly_syn_div                  tester_bn_poly_syn_div)
 
-add_test(bn_poly_cubic_roots               tester_bn_poly_cubic_roots)
-add_test(bn_poly_quartic_roots             tester_bn_poly_quartic_roots)
-
+#add_test(bn_poly_cubic_roots               tester_bn_poly_cubic_roots)
+#add_test(bn_poly_quartic_roots             tester_bn_poly_quartic_roots)
+CMAKEFILES(bn_poly_cubic_roots.c bn_poly_quartic_roots.c)
 
 # Local Variables:
 # tab-width: 8

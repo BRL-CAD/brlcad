@@ -51,6 +51,14 @@ src/cleditor/editordefines.h
 src/cleditor/seeinfodefault.h
 src/cllazyfile/current_function.hpp
 src/cllazyfile/instMgrHelper.h
+src/cllazyfile/headerSectionReader.h
+src/cllazyfile/lazyDataSectionReader.h
+src/cllazyfile/lazyFileReader.h
+src/cllazyfile/lazyInstMgr.h
+src/cllazyfile/lazyP21DataSectionReader.h
+src/cllazyfile/lazyTypes.h
+src/cllazyfile/p21HeaderSectionReader.h
+src/cllazyfile/sectionReader.h
 src/clprobe-ui
 src/clprobe-ui/dpmenuitem.cc
 src/clprobe-ui/dpmenuitem.h
