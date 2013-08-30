@@ -40,6 +40,10 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
+* fix the bu_sempahore unit test
+
+* fix the bn_poly_sub unit test
+
 * resolve bot bin sort optimization crash, disabled during release
 
 * investigate INFINITY spatial partitioning issue.
