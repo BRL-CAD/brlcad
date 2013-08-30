@@ -25,6 +25,9 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * address the ctest failure of bu_heap_test_1 (seen on ia32 fbsd)
 
+* heap unit test needs to actually compare performance against system
+  allocation, not just do some work
+
 * re-do the sh/enumerate.sh script for CMake
 
 * attempt to replicate the GTK+ ISST interface in TCL
