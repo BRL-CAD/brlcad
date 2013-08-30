@@ -2,13 +2,12 @@
 <article version="5.0"
          xml:lang="en"
          xmlns="http://docbook.org/ns/docbook"
-         xmlns:xl="http://www.w3.org/1999/xlink">
+>
   <info>
     <title>Building Applications</title>
   </info>
 
   <!-- Next 'div' was a 'draw:page'. -->
-  <anchor xml:id="Application_Development_with_BRL-CAD"/>
 
   <!-- Next 'div' is a draw:frame. -->
   <!-- Next 'div' was a 'draw:text-box'. -->
@@ -18,12 +17,10 @@
   </orderedlist>
   <!-- Next 'div' was a 'draw:page'. -->
 
-      <para>        <!-- Next 'div' is a draw:frame. -->
-        <!-- Next 'div' was a 'draw:text-box'. -->
-<orderedlist><listitem>
+      <para><orderedlist><listitem>
             <para> WARNING Code Intensive Presentation</para>
           </listitem>
-</orderedlist>        <!-- Next 'div' is a draw:frame. -->
+</orderedlist>
         <!-- Next 'div' was a 'draw:text-box'. -->
 <orderedlist><listitem>
             <para> For Code Warriors Only!</para>
@@ -33,7 +30,6 @@
 </orderedlist></para>
 
 <!-- Next 'div' was a 'draw:page'. -->
-<anchor xml:id="Overview"/>    <!-- Next 'div' is a draw:frame. -->
     <!-- Next 'div' was a 'draw:text-box'. -->
 <orderedlist><listitem>
         <para> Overview</para>
@@ -64,7 +60,6 @@
       </listitem>
     </itemizedlist>
 <!-- Next 'div' was a 'draw:page'. -->
-<anchor xml:id="Header_Files"/>    <!-- Next 'div' is a draw:frame. -->
     <!-- Next 'div' was a 'draw:text-box'. -->
 <orderedlist><listitem>
         <para>Header Files</para>
@@ -156,7 +151,6 @@
       </tgroup>
     </informaltable>
   <!-- Next 'div' was a 'draw:page'. -->
-<anchor xml:id="Prototype_Application__rtexample_c"/>
 <!-- Next 'div' is a draw:frame. -->
     <!-- Next 'div' was a 'draw:text-box'. -->
 <orderedlist><listitem>
@@ -184,9 +178,6 @@ Next 'div' was a 'draw:text-box'.
       </listitem>
     </itemizedlist>
 <!-- Next 'div' was a 'draw:page'. -->
-<anchor xml:id="Necessary_Headers"/>    <!--
-Next 'div' is a draw:frame.
--->
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -232,9 +223,6 @@ Next 'div' was a 'draw:text-box'.
 <!--
 Next 'div' was a 'draw:page'.
 -->
-<anchor xml:id="Opening_the_Database"/>    <!--
-Next 'div' is a draw:frame.
--->
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -270,9 +258,6 @@ Next 'div' was a 'draw:text-box'.
 <!--
 Next 'div' was a 'draw:page'.
 -->
-<anchor xml:id="Reading_Geometry"/>    <!--
-Next 'div' is a draw:frame.
--->
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -300,9 +285,6 @@ Next 'div' was a 'draw:text-box'.
 -->
 <!--
 Next 'div' was a 'draw:page'.
--->
-<anchor xml:id="Preparing_Geometry_for_Raytracing"/>    <!--
-Next 'div' is a draw:frame.
 -->
     <!--
 Next 'div' was a 'draw:text-box'.
@@ -348,9 +330,6 @@ Next 'div' was a 'draw:text-box'.
 <!--
 Next 'div' was a 'draw:page'.
 -->
-<anchor xml:id="Application_Struct___Shot"/>    <!--
-Next 'div' is a draw:frame.
--->
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -381,9 +360,6 @@ Next 'div' was a 'draw:text-box'.
 -->
 <!-- Next 'div' was a 'draw:page'.
 -->
-<anchor xml:id="Application_Struct"/>    <!--
-Next 'div' is a draw:frame.
--->
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -401,9 +377,6 @@ Next 'div' was a 'draw:text-box'.
 -->
 <!--
 Next 'div' was a 'draw:page'.
--->
-<anchor xml:id="Miss_Routine"/>    <!--
-Next 'div' is a draw:frame.
 -->
     <!--
 Next 'div' was a 'draw:text-box'.
@@ -433,9 +406,6 @@ Next 'div' was a 'draw:text-box'.
 -->
 <!--
 Next 'div' was a 'draw:page'.
--->
-<anchor xml:id="Hit_Routine"/>    <!--
-Next 'div' is a draw:frame.
 -->
     <!--
 Next 'div' was a 'draw:text-box'.
@@ -482,7 +452,6 @@ Next 'div' was a 'draw:text-box'.
       </listitem>
 </orderedlist>
 <!-- Next 'div' was a 'draw:page'. -->
-<anchor xml:id="Hit_Routine_Breakdown"/>
 <!-- Next 'div' is a draw:frame. -->
 <orderedlist><listitem>
         <para> Hit Routine Breakdown</para>
@@ -509,9 +478,6 @@ Next 'div' was a 'draw:text-box'.
 -->
 <!--
 Next 'div' was a 'draw:page'.
--->
-<anchor xml:id="Partition_Structure"/>    <!--
-Next 'div' is a draw:frame.
 -->
     <!--
 Next 'div' was a 'draw:text-box'.
@@ -541,9 +507,6 @@ Next 'div' was a 'draw:text-box'.
 -->
 <!--
 Next 'div' was a 'draw:page'.
--->
-<anchor xml:id="Hit_Structure"/>    <!--
-Next 'div' is a draw:frame.
 -->
     <!--
 Next 'div' was a 'draw:text-box'.
@@ -580,9 +543,6 @@ Next 'div' was a 'draw:text-box'.
 -->
 <!--
 Next 'div' was a 'draw:page'.
--->
-<anchor xml:id="Hit_Routine__Again_"/>    <!--
-Next 'div' is a draw:frame.
 -->
     <!--
 Next 'div' was a 'draw:text-box'.
@@ -631,9 +591,6 @@ Next 'div' was a 'draw:text-box'.
 <!--
 Next 'div' was a 'draw:page'.
 -->
-<anchor xml:id="Using_the_RTUIF"/>    <!--
-Next 'div' is a draw:frame.
--->
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -662,9 +619,6 @@ Next 'div' was a 'draw:text-box'.
     </itemizedlist>
 <!--
 Next 'div' was a 'draw:page'.
--->
-<anchor xml:id="The_5_RTUIF_Functions"/>    <!--
-Next 'div' is a draw:frame.
 -->
     <!--
 Next 'div' was a 'draw:text-box'.
@@ -697,9 +651,6 @@ Next 'div' was a 'draw:text-box'.
     </itemizedlist>
 <!--
 Next 'div' was a 'draw:page'.
--->
-<anchor xml:id="RTUIF_Routines1"/>    <!--
-Next 'div' is a draw:frame.
 -->
     <!--
 Next 'div' was a 'draw:text-box'.
@@ -738,9 +689,6 @@ Next 'div' was a 'draw:text-box'.
 </orderedlist><!--
 Next 'div' was a 'draw:page'.
 -->
-<anchor xml:id="RTUIF_Routines2"/>    <!--
-Next 'div' is a draw:frame.
--->
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -761,9 +709,6 @@ Next 'div' was a 'draw:text-box'.
       </listitem>
 </orderedlist><!--
 Next 'div' was a 'draw:page'.
--->
-<anchor xml:id="RTUIF_Routines3"/>    <!--
-Next 'div' is a draw:frame.
 -->
     <!--
 Next 'div' was a 'draw:text-box'.
@@ -787,9 +732,6 @@ Next 'div' was a 'draw:text-box'.
 </orderedlist>    <!--
 Next 'div' was a 'draw:page'.
 -->
-<anchor xml:id="So_Much_for_the_Trivialities"/>    <!--
-Next 'div' is a draw:frame.
--->
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -809,9 +751,6 @@ Next 'div' was a 'draw:text-box'.
     </itemizedlist>
 <!--
 Next 'div' was a 'draw:page'.
--->
-<anchor xml:id="Thinking_About_Geometry"/>    <!--
-Next 'div' is a draw:frame.
 -->
     <!--
 Next 'div' was a 'draw:text-box'.
@@ -838,9 +777,6 @@ Next 'div' was a 'draw:text-box'.
     </itemizedlist>
 <!--
 Next 'div' was a 'draw:page'.
--->
-<anchor xml:id="Geometric_Representation"/>    <!--
-Next 'div' is a draw:frame.
 -->
     <!--
 Next 'div' was a 'draw:text-box'.
@@ -902,7 +838,7 @@ Next 'div' was a 'draw:text-box'.
 <!--
 Next 'div' was a 'draw:page'.
 -->
-<anchor xml:id="On-Disk_Representation"/>    <!--
+<!--
 Next 'div' is a draw:frame.
 -->
     <!--
@@ -966,9 +902,6 @@ Next 'div' was a 'draw:text-box'.
 <!--
 Next 'div' was a 'draw:page'.
 -->
-<anchor xml:id="Internal_Representation"/>    <!--
-Next 'div' is a draw:frame.
--->
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -1009,9 +942,6 @@ Next 'div' was a 'draw:text-box'.
     </itemizedlist>
 <!--
 Next 'div' was a 'draw:page'.
--->
-<anchor xml:id="Prep-ed_Representation"/>    <!--
-Next 'div' is a draw:frame.
 -->
     <!--
 Next 'div' was a 'draw:text-box'.
@@ -1064,9 +994,6 @@ Next 'div' was a 'draw:text-box'.
 <!--
 Next 'div' was a 'draw:page'.
 -->
-<anchor xml:id="Simple_Database_Appilcation"/>    <!--
-Next 'div' is a draw:frame.
--->
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -1096,9 +1023,6 @@ Next 'div' was a 'draw:text-box'.
 <!--
 Next 'div' was a 'draw:page'.
 -->
-<anchor xml:id="Opening_The_Database"/>    <!--
-Next 'div' is a draw:frame.
--->
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -1116,9 +1040,6 @@ Next 'div' was a 'draw:text-box'.
 -->
 <!--
 Next 'div' was a 'draw:page'.
--->
-<anchor xml:id="_Creating_Geometry"/>    <!--
-Next 'div' is a draw:frame.
 -->
     <!--
 Next 'div' was a 'draw:text-box'.
@@ -1159,9 +1080,6 @@ Next 'div' was a 'draw:text-box'.
 <!--
 Next 'div' was a 'draw:page'.
 -->
-<anchor xml:id="Getting_Geometry"/>    <!--
-Next 'div' is a draw:frame.
--->
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -1190,9 +1108,6 @@ Next 'div' was a 'draw:text-box'.
 -->
 <!--
 Next 'div' was a 'draw:page'.
--->
-<anchor xml:id="Primitive_-Methods-"/>    <!--
-Next 'div' is a draw:frame.
 -->
     <!--
 Next 'div' was a 'draw:text-box'.
@@ -1240,9 +1155,6 @@ Next 'div' was a 'draw:text-box'.
 <!--
 Next 'div' was a 'draw:page'.
 -->
-<anchor xml:id="Putting_Geometry_Back"/>    <!--
-Next 'div' is a draw:frame.
--->
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -1271,9 +1183,6 @@ Next 'div' was a 'draw:text-box'.
 -->
 <!--
 Next 'div' was a 'draw:page'.
--->
-<anchor xml:id="Building_Boolean_Trees"/>    <!--
-Next 'div' is a draw:frame.
 -->
     <!--
 Next 'div' was a 'draw:text-box'.
@@ -1347,9 +1256,6 @@ Next 'div' was a 'draw:text-box'.
 <!--
 Next 'div' was a 'draw:page'.
 -->
-<anchor xml:id="Constructing_Boolean_List"/>    <!--
-Next 'div' is a draw:frame.
--->
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -1378,9 +1284,6 @@ Next 'div' was a 'draw:text-box'.
 -->
 <!--
 Next 'div' was a 'draw:page'.
--->
-<anchor xml:id="Regions_Combinations"/>    <!--
-Next 'div' is a draw:frame.
 -->
     <!--
 Next 'div' was a 'draw:text-box'.
@@ -1425,9 +1328,6 @@ Next 'div' was a 'draw:text-box'.
 -->
 <!--
 Next 'div' was a 'draw:page'.
--->
-<anchor xml:id="Retrieving_A_Combination"/>    <!--
-Next 'div' is a draw:frame.
 -->
     <!--
 Next 'div' was a 'draw:text-box'.
@@ -1474,9 +1374,6 @@ Next 'div' was a 'draw:text-box'.
 <!--
 Next 'div' was a 'draw:page'.
 -->
-<anchor xml:id="Combination_Write-Back"/>    <!--
-Next 'div' is a draw:frame.
--->
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -1508,9 +1405,6 @@ Next 'div' was a 'draw:text-box'.
 -->
 <!--
 Next 'div' was a 'draw:page'.
--->
-<anchor xml:id="Combination_Tree_Info"/>    <!--
-Next 'div' is a draw:frame.
 -->
     <!--
 Next 'div' was a 'draw:text-box'.
@@ -1551,9 +1445,6 @@ Next 'div' was a 'draw:text-box'.
 <!--
 Next 'div' was a 'draw:page'.
 -->
-<anchor xml:id="Processing_combination_tree"/>    <!--
-Next 'div' is a draw:frame.
--->
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -1585,9 +1476,6 @@ Next 'div' was a 'draw:text-box'.
 -->
 <!--
 Next 'div' was a 'draw:page'.
--->
-<anchor xml:id="Accessing_Prepped_Regions"/>    <!--
-Next 'div' is a draw:frame.
 -->
     <!--
 Next 'div' was a 'draw:text-box'.
@@ -1624,9 +1512,6 @@ Next 'div' was a 'draw:text-box'.
 <!--
 Next 'div' was a 'draw:page'.
 -->
-<anchor xml:id="Making_Temporary_Changes"/>    <!--
-Next 'div' is a draw:frame.
--->
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -1649,9 +1534,6 @@ Next 'div' was a 'draw:text-box'.
     </itemizedlist>
 <!--
 Next 'div' was a 'draw:page'.
--->
-<anchor xml:id="Dynamic_Geometry"/>    <!--
-Next 'div' is a draw:frame.
 -->
     <!--
 Next 'div' was a 'draw:text-box'.
@@ -1697,9 +1579,6 @@ Next 'div' was a 'draw:text-box'.
 <!--
 Next 'div' was a 'draw:page'.
 -->
-<anchor xml:id="Accessing_inmem_database"/>    <!--
-Next 'div' is a draw:frame.
--->
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -1732,9 +1611,6 @@ Next 'div' was a 'draw:text-box'.
 <!--
 Next 'div' was a 'draw:page'.
 -->
-<anchor xml:id="Closing_the_Database"/>    <!--
-Next 'div' is a draw:frame.
--->
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -1763,9 +1639,6 @@ Next 'div' was a 'draw:text-box'.
 -->
 <!--
 Next 'div' was a 'draw:page'.
--->
-<anchor xml:id="Thank_you"/>    <!--
-Next 'div' is a draw:frame.
 -->
     <!--
 Next 'div' was a 'draw:text-box'.
