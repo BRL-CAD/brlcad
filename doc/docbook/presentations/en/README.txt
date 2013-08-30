@@ -14,4 +14,9 @@ The transformation process was:
 
 + use xmllint to fix errors until none remain
 
++ use 'make doc' and correct DocBook errors until none remain
+
 + clean up and refine doc until satisfied...
+
+Note that even after DB errors are fixed, there may be tweaking needed
+to get an error-free pdf output.
