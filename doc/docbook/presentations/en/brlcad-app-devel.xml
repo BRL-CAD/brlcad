@@ -1,19 +1,18 @@
-<?xml version="1.0" encoding="us-ascii"?>
-<article xmlns="http://docbook.org/ns/docbook" version="5.0" xml:lang="en">
-  <info>
-    <title>Building Applications</title>
-  </info>
+<article
+  xmlns="http://docbook.org/ns/docbook"
+  version="5.0"
+>
 
-<section>
 <title>Application Development with BRL-CAD</title>
 
-<para>WARNING Code Intensive Presentation</para>
+<para>Note: This is based on an old Power Point presentation by Lee
+A. Butler and John Anderson. It has been extensively reformatted and
+is being brought up-to-date, by the BRL-CAD Team, with the current state of the BRL-CAD source the
+best practices recommended by the BRL-CAD developers</para>
 
-<para>For Code Warriors Only! Non-programmers will need atropine,
-caffeine, and electro-shock therapy (run, do not walk, to the nearest
-exit)</para>
-
-</section>
+<para>WARNING: This a code-intensive presentation for Code Warriors only!
+Non-programmers will need atropine, caffeine, and electro-shock
+therapy (run, do not walk, to the nearest exit).</para>
 
 <section>
 <title>Overview</title>
@@ -132,7 +131,7 @@ exit)</para>
 </section>
 
 <section>
-  <para>Prototype Application: rtexample.c</para>
+  <title>Prototype Application: rtexample.c</title>
 
 <itemizedlist>
       <listitem>
@@ -158,10 +157,9 @@ exit)</para>
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
 
-  <para>Necessary Headers</para>
+  <title>Necessary Headers</title>
 
-<programlisting>
-#include "conf.h"	/* compilation macros */
+<programlisting>#include "conf.h"	/* compilation macros */
 #include &lt;stdio.h&gt;
 #include &lt;math.h&gt;
 #include "machine.h"	/* machine specific definitions */
@@ -199,10 +197,9 @@ Next 'div' was a 'draw:page'.
 -->
 <section>
 
-<para>Opening the Database</para>
+<title>Opening the Database</title>
 
-<programlisting>
-static struct rt_i *rtip; /* librt Instance structure */
+<programlisting>static struct rt_i *rtip; /* librt Instance structure */
 /* rt_dirbuild() performs many functions for us */
 rtip = rt_dirbuild(argv[1], buf, sizeof(buf));
 if (rtip == RTI_NULL) {
@@ -230,8 +227,7 @@ if (rtip == RTI_NULL) {
       </listitem>
 </orderedlist>
 
-<programlisting>
-if (rt_gettree(rtip, argv[2]) &lt; 0)
+<programlisting>if (rt_gettree(rtip, argv[2]) &lt; 0)
     fprintf(stderr,"rt_gettree(%s) FAILED\n", argv[2]);
 </programlisting>
 
@@ -245,10 +241,9 @@ if (rt_gettree(rtip, argv[2]) &lt; 0)
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <para>Preparing Geometry for Raytracing</para>
+  <title>Preparing Geometry for Raytracing</title>
 
-<programlisting>
-rt_prep_parallel(rtip,1);
+<programlisting>rt_prep_parallel(rtip,1);
 </programlisting>
 
 <itemizedlist>
@@ -278,8 +273,7 @@ rt_prep_parallel(rtip,1);
 <section>
   <para>Application Struct and Shot</para>
 
-<programlisting>
-struct application ap;
+<programlisting>struct application ap;
 ap.a_rt_i = rtip;
 VSET(ap.a_ray.r_pt, 0, 0, 10000);
 VSET(ap.a_ray.r_dir, 0, 0, -1);
@@ -306,8 +300,7 @@ ap.a_miss = miss;         /* where to go on a miss */
 
 <para>Excerpts of application struct from raytrace.h:</para>
 
-<programlisting>
-struct application {
+<programlisting>struct application {
 
     struct xray  a_ray;	/* Actual ray to be shot */
     int          (*a_hit)(struct application *,
@@ -323,22 +316,13 @@ struct application {
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <para>Miss Routine</para>
+  <title>Miss Routine</title>
 
 <itemizedlist>
       <listitem>
         <para>Called when ray does not hit any geometry</para>
       </listitem>
     </itemizedlist>
-    <!--
-Next 'div' added for floating.
--->
-    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
 
 </section>
 
@@ -346,44 +330,29 @@ Next 'div' was a 'draw:text-box'.
 <section>
   <para>Hit Routine</para>
 
-<orderedlist><listitem>
-        <para>hit(register struct application *ap, /* see raytrace.h */</para>
-        <para>struct partition *PartHeadp) /* see raytrace.h */</para>
-        <para>{</para>
-       <para>register struct partition *pp;</para>
-        <para>register struct hit *hitp;</para>
-       <para>point_t pt;</para>
-        <para>for (pp = PartHeadp-&gt;pt_forw;</para>
-        <para>pp != PartHeadp;</para>
-        <para>pp = pp-&gt;pt_forw ) {</para>
-        <para>hitp = pp-&gt;pt_inhit;</para>
-        <para>VJOIN1( pt, ap-&gt;a_ray.r_pt, hitp-&gt;hit_dist, ap-&gt;a_ray.r_dir);</para>
-      </listitem>
-</orderedlist><itemizedlist>
-      <listitem>
-        <para><itemizedlist>
-            <listitem>
-              <para><orderedlist><listitem>
-                    <para>VPRINT(Hit Point, pt);</para>
-                  </listitem>
-</orderedlist></para>
-            </listitem>
-          </itemizedlist>
-</para>
-      </listitem>
-    </itemizedlist>
-<orderedlist><listitem>
-        <para>}</para>
-        <para>return 1; /* value returned by rt_shootray();</para>
-        <para>}</para>
-      </listitem>
-</orderedlist>
+<programlisting>int
+hit(register struct application *ap, /* see raytrace.h */
+    struct partition *PartHeadp)     /* see raytrace.h */
+{
+    register struct partition *pp;
+    register struct hit *hitp;
+    point_t pt;
+    for (pp = PartHeadp-&gt;pt_forw;
+         pp != PartHeadp;
+         pp = pp-&gt;pt_forw ) {
+        hitp = pp-&gt;pt_inhit;
+        VJOIN1( pt, ap-&gt;a_ray.r_pt, hitp-&gt;hit_dist, ap-&gt;a_ray.r_dir);
+        VPRINT(Hit Point, pt);
+    }
+    return 1; /* value returned by rt_shootray();
+}
+</programlisting>
 
 </section>
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <para>Hit Routine Breakdown</para>
+  <title>Hit Routine Breakdown</title>
 
 <itemizedlist>
       <listitem>
@@ -398,7 +367,7 @@ Next 'div' was a 'draw:text-box'.
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <para>Partition Structure</para>
+  <title>Partition Structure</title>
 
 <itemizedlist>
       <listitem>
@@ -411,69 +380,49 @@ Next 'div' was a 'draw:text-box'.
 <section>
   <para>Hit Structure</para>
 
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para> struct hit {</para>
-        <para>long hit_magic;</para>
-        <para>fastf_t hit_dist; /* dist from r_pt to hit_point */</para>
-        <para>point_t hit_point; /* Intersection point */</para>
-        <para>vect_t hit_normal; /* Surface Normal at hit_point */</para>
-        <para>vect_t hit_vpriv; /* PRIVATE vector for xxx_*() */</para>
-        <para>genptr_t hit_private; /* PRIVATE handle for xxx_shot() */</para>
-        <para>int hit_surfno; /* solid-specific surface indicator */</para>
-        <para>struct xray *hit_rayp; /* pointer to defining ray */</para>
-        <para>};</para>
-      </listitem>
-</orderedlist>
+<programlisting>
+struct hit {
+    long         hit_magic;
+    fastf_t      hit_dist;    /* dist from r_pt to hit_point      */
+    point_t      hit_point;   /* Intersection point               */
+    vect_t       hit_normal;  /* Surface Normal at hit_point      */
+    vect_t       hit_vpriv;   /* PRIVATE vector for xxx_*()       */
+    void        *hit_private; /* PRIVATE handle for xxx_shot()    */
+    int          hit_surfno;  /* solid-specific surface indicator */
+    struct xray *hit_rayp;    /* pointer to defining ray          */
+};
+</programlisting>
 
 </section>
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <para>Hit Routine (Again)</para>
+  <title>Hit Routine (Again)</title>
 
-<orderedlist><listitem>
-        <para> hit(register struct application *ap, /* see raytrace.h */</para>
-        <para>struct partition *PartHeadp) /* see raytrace.h */</para>
-        <para>{</para>
-        <para>register struct partition *pp;</para>
-        <para>register struct hit *hitp;</para>
-        <para>point_t pt;</para>
-        <para>for (pp = PartHeadp-&gt;pt_forw;</para>
-        <para>pp != PartHeadp;</para>
-        <para>pp = pp-&gt;pt_forw ) {</para>
-        <para>hitp = pp-&gt;pt_inhit;</para>
-        <para>VJOIN1(pt, ap-&gt;a_ray.r_pt, hitp-&gt;hit_dist, ap-&gt;a_ray.r_dir);</para>
-      </listitem>
-</orderedlist><itemizedlist>
-      <listitem>
-        <para><itemizedlist>
-            <listitem>
-              <para><orderedlist><listitem>
-                    <para>VPRINT(Hit Point, pt);</para>
-                  </listitem>
-</orderedlist></para>
-            </listitem>
-          </itemizedlist>
-</para>
-      </listitem>
-    </itemizedlist>
-<orderedlist><listitem>
-<para>}</para>
-<para>return 1; /* value returned by rt_shootray();</para>
-<para>}</para>
-</listitem>
-</orderedlist>
+<programlisting>
+int
+hit(register struct application *ap, /* see raytrace.h */
+    struct partition *PartHeadp)     /* see raytrace.h */
+{
+    register struct partition *pp;
+    register struct hit *hitp;
+    point_t pt;
+    for (pp = PartHeadp-&gt;pt_forw;
+         pp != PartHeadp;
+         pp = pp-&gt;pt_forw ) {
+        hitp = pp-&gt;pt_inhit;
+        VJOIN1(pt, ap-&gt;a_ray.r_pt, hitp-&gt;hit_dist, ap-&gt;a_ray.r_dir);
+        VPRINT(Hit Point, pt);
+    }
+    return 1; /* value returned by rt_shootray();
+}
+</programlisting>
 
 </section>
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <para>Using the RTUIF</para>
-
-<!-- Next 'div' is a draw:frame. -->
+  <title>Using the RTUIF</title>
 
 <itemizedlist>
       <listitem>
@@ -494,12 +443,8 @@ Next 'div' was a 'draw:text-box'.
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <para>The 5 RTUIF Functions</para>
+  <title>The 5 RTUIF Functions</title>
 
-<!-- Next 'div' is a draw:frame. -->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
 <itemizedlist>
       <listitem>
         <para>view_init</para>
@@ -522,19 +467,9 @@ Next 'div' was a 'draw:text-box'.
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
+  <title>RTUIF Routines1</title>
 
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para>RTUIF Routines1</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
+
 <orderedlist><listitem>
         <para>int view_init(struct application *ap, char *file,</para>
         <para>char *obj, int minus_o);</para>
@@ -563,7 +498,7 @@ Next 'div' was a 'draw:text-box'.
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <para>RTUIF Routines2</para>
+  <title>RTUIF Routines2</title>
 
 <orderedlist><listitem>
         <para> int rayhit(struct application *ap, struct partition *PartHeadp);</para>
@@ -577,11 +512,8 @@ Next 'div' was a 'draw:text-box'.
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <para>RTUIF Routines3</para>
+  <title>RTUIF Routines3</title>
 
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
 <orderedlist><listitem>
         <para> void view_pixel(struct application *ap);</para>
         <para>Called by worker() after the end of proccessing for</para>
@@ -595,31 +527,15 @@ Next 'div' was a 'draw:text-box'.
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <para>So Much for the Trivialities</para>
+  <title>So Much for the Trivialities</title>
 
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<itemizedlist>
-      <listitem>
         <para>Now we look at actual geometry</para>
-      </listitem>
-    </itemizedlist>
-<!--
-Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para> Thinking About Geometry</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title> Thinking About Geometry</title>
+
 <itemizedlist>
       <listitem>
         <para>How to create it</para>
@@ -637,24 +553,10 @@ Next 'div' was a 'draw:text-box'.
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
+  <title>Geometric Representation</title>
 
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para>Geometric Representation</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<itemizedlist>
-      <listitem>
-        <para>BRL-CAD geometry has 3 forms:</para>
-      </listitem>
-    </itemizedlist>
+   <para>BRL-CAD geometry has 3 forms:</para>
+
 <itemizedlist>
       <listitem>
         <para><itemizedlist>
@@ -701,11 +603,8 @@ Next 'div' was a 'draw:text-box'.
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <para>On-Disk Representation</para>
+  <title>On-Disk Representation</title>
 
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
 <itemizedlist>
       <listitem>
         <para>Space Efficient</para>
@@ -757,11 +656,8 @@ Next 'div' was a 'draw:text-box'.
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <para>Internal Representation</para>
+  <title>Internal Representation</title>
 
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
 <itemizedlist>
       <listitem>
         <para>Convenient editing form</para>
@@ -793,11 +689,8 @@ Next 'div' was a 'draw:text-box'.
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <para>Prepped Representation</para>
+  <title>Prepped Representation</title>
 
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
 <itemizedlist>
       <listitem>
         <para>The form that is actually raytraced</para>
@@ -839,53 +732,25 @@ Next 'div' was a 'draw:text-box'.
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <para>Simple Database Application</para>
+  <title>Simple Database Application</title>
 
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<itemizedlist>
-      <listitem>
         <para>Necessary headers</para>
-      </listitem>
-    </itemizedlist>
-    <!--
-Next 'div' added for floating.
--->
-    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
 
 </section>
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <para>Opening The Database</para>
+  <title>Opening The Database</title>
 
-    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<!--
-Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para>Creating Geometry</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
+<programlisting>
+</programlisting>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Creating Geometry</title>
+
 <itemizedlist>
       <listitem>
         <para>Note: All db units are in mm</para>
@@ -901,86 +766,29 @@ Next 'div' was a 'draw:text-box'.
 </para>
       </listitem>
     </itemizedlist>
-    <!--
-Next 'div' added for floating.
--->
-    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
 
 </section>
 
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <para> Getting Geometry</para>
+  <title>Getting Geometry</title>
 
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<itemizedlist>
-      <listitem>
-        <para>To retrieve geometry, we have to get an internal representation</para>
-      </listitem>
-    </itemizedlist>
-    <!--
-Next 'div' added for floating.
--->
-    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<!--
-Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para>Primitive Methods</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<itemizedlist>
-      <listitem>
-        <para>Retrieved geometry has a specific set of defined operations and methods available</para>
-      </listitem>
-      <listitem>
-        <para>See h/raytrace.h for a description of</para>
-      </listitem>
-    </itemizedlist>
-<itemizedlist>
-      <listitem>
-        <para><orderedlist><listitem>
-              <para>struct rt_functab</para>
-            </listitem>
-</orderedlist></para>
-      </listitem>
-    </itemizedlist>
-<itemizedlist>
-      <listitem>
-        <para>Primitives should implement every method</para>
-      </listitem>
-    </itemizedlist>
-<itemizedlist>
-      <listitem>
-        <para><itemizedlist>
-            <listitem>
-              <para>Some do not. See librt/table.c for specifics</para>
-            </listitem>
-          </itemizedlist>
-</para>
-      </listitem>
-    </itemizedlist>
+    <para>To retrieve geometry, we have to get an internal representation</para>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Primitive Methods</title>
+
+  <para>Retrieved geometry has a specific set of defined operations
+  and methods available. See <filename>h/raytrace.h</filename> for a
+  description of <filename>struct rt_functab</filename>.</para>
+
+  <para>Primitives should implement every method, but some do not. See
+  librt/table.c for specifics.</para>
+
 </section>
 
 
@@ -988,32 +796,17 @@ Next 'div' was a 'draw:text-box'.
 <section>
   <para>Putting Geometry Back</para>
 
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
 <itemizedlist>
       <listitem>
         <para>Database I/O layer converts from internal to external format.</para>
       </listitem>
     </itemizedlist>
-    <!--
-Next 'div' added for floating.
--->
-    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
 
 </section>
 
 <section>
   <para>Building Boolean Trees</para>
 
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
 <itemizedlist>
       <listitem>
         <para>Regions/combinations used to store boolean trees.</para>
@@ -1076,11 +869,8 @@ Next 'div' was a 'draw:text-box'.
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <para>Constructing Boolean List</para>
+  <title>Constructing Boolean List</title>
 
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
 <itemizedlist>
       <listitem>
         <para>Build the list of elements first:</para>
@@ -1091,11 +881,8 @@ Next 'div' was a 'draw:text-box'.
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <para>Regions/Combinations</para>
+  <title>Regions/Combinations</title>
 
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
 <itemizedlist>
       <listitem>
         <para>Constructing the actual combination record</para>
@@ -1116,21 +903,12 @@ Next 'div' was a 'draw:text-box'.
 </para>
       </listitem>
     </itemizedlist>
-    <!--
-Next 'div' added for floating.
--->
-    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
 
 </section>
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <para>Retrieving A Combination</para>
+  <title>Retrieving A Combination</title>
 
 <itemizedlist>
       <listitem>
@@ -1153,25 +931,13 @@ Next 'div' was a 'draw:text-box'.
 </para>
       </listitem>
     </itemizedlist>
-    <!--
-Next 'div' added for floating.
--->
-    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
 
 </section>
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <para>Combination Write-Back</para>
+  <title>Combination Write-Back</title>
 
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
 <itemizedlist>
       <listitem>
         <para>Modify the boolean tree</para>
@@ -1180,25 +946,13 @@ Next 'div' was a 'draw:text-box'.
         <para>Write back out to db</para>
       </listitem>
     </itemizedlist>
-    <!--
-Next 'div' added for floating.
--->
-    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
 
 </section>
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <para>Combination Tree Info</para>
+  <title>Combination Tree Info</title>
 
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
 <itemizedlist>
       <listitem>
         <para>Need to prep the tree to obtain geometry</para>
@@ -1214,25 +968,13 @@ Next 'div' was a 'draw:text-box'.
 </para>
       </listitem>
     </itemizedlist>
-    <!--
-Next 'div' added for floating.
--->
-    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
 
 </section>
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <para>Processing combination tree</para>
+  <title>Processing combination tree</title>
 
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
 <itemizedlist>
       <listitem>
         <para>Now to retrieve a treetop and prep:</para>
@@ -1241,25 +983,13 @@ Next 'div' was a 'draw:text-box'.
         <para>This could have been any level in the tree, not just a region.</para>
       </listitem>
     </itemizedlist>
-    <!--
-Next 'div' added for floating.
--->
-    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
 
 </section>
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <para>Accessing Prepped Regions</para>
+  <title>Accessing Prepped Regions</title>
 
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
 <itemizedlist>
       <listitem>
         <para>rtip has list of regions</para>
@@ -1271,25 +1001,13 @@ Next 'div' was a 'draw:text-box'.
         <para>Example: getting bounding box of regions</para>
       </listitem>
     </itemizedlist>
-    <!--
-Next 'div' added for floating.
--->
-    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
 
 </section>
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <para>Making Temporary Changes</para>
+  <title>Making Temporary Changes</title>
 
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
 <itemizedlist>
       <listitem>
         <para>Changes that only last for 1 application run</para>
@@ -1303,11 +1021,8 @@ Next 'div' was a 'draw:text-box'.
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <para>Dynamic Geometry</para>
+  <title>Dynamic Geometry</title>
 
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
 <itemizedlist>
       <listitem>
         <para>Involves special inmem database</para>
@@ -1342,11 +1057,8 @@ Next 'div' was a 'draw:text-box'.
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <para>Accessing inmem database</para>
+  <title>Accessing inmem database</title>
 
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
 <itemizedlist>
       <listitem>
         <para>small difference in wdb_dbopen call</para>
@@ -1355,52 +1067,19 @@ Next 'div' was a 'draw:text-box'.
         <para>all writes to this rt_wdb will go to memory database only</para>
       </listitem>
     </itemizedlist>
-    <!--
-Next 'div' added for floating.
--->
-    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
 
 </section>
 
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <para>Closing the Database</para>
+  <title>Closing the Database</title>
 
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
 <itemizedlist>
       <listitem>
         <para>Important to flush data and purge data structures!</para>
       </listitem>
     </itemizedlist>
-    <!--
-Next 'div' added for floating.
--->
-    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-
-</section>
-
-<!-- Next 'div' was a 'draw:page'. -->
-<section>
-  <para>Thank you</para>
-
-  <orderedlist><listitem>
-      <para>Lee A. Butler</para>
-      <para>John Anderson</para>
-    </listitem>
-  </orderedlist>
 
 </section>
 
