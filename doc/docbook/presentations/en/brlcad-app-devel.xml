@@ -16,13 +16,6 @@
       <para> Application Development with BRL-CAD</para>
     </listitem>
   </orderedlist>
-  <!-- Next 'div' is a draw:frame. -->
-  <!-- Next 'div' was a 'draw:text-box'. -->
-  <orderedlist><listitem>
-      <para>Lee A. Butler</para>
-      <para>John Anderson</para>
-    </listitem>
-  </orderedlist>
   <!-- Next 'div' was a 'draw:page'. -->
 
       <para>        <!-- Next 'div' is a draw:frame. -->
@@ -1780,17 +1773,12 @@ Next 'div' was a 'draw:text-box'.
 <orderedlist><listitem>
         <para>Thank you</para>
       </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para>Lee A. Butler</para>
-      </listitem>
-<listitem>
-        <para>410 278 9200</para>
-      </listitem>
 </orderedlist>
+  <!-- Next 'div' is a draw:frame. -->
+  <!-- Next 'div' was a 'draw:text-box'. -->
+  <orderedlist><listitem>
+      <para>Lee A. Butler</para>
+      <para>John Anderson</para>
+    </listitem>
+  </orderedlist>
 </article>
