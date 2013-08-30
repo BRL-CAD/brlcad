@@ -1,7 +1,7 @@
 set(en_pres_ignore_files
   README.txt
   )
-CMAKEFILES(${misc_ignore_files})
+CMAKEFILES(${en_pres_ignore_files})
 
 set(docbook_presentations_EN
   intro-to-tcltk.xml
