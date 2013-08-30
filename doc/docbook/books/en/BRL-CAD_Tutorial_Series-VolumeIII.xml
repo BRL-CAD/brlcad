@@ -151,8 +151,11 @@
       <figure><info><title>External detail commonly used in radar signature models.</title></info>
 
 	<mediaobject>
-	  <imageobject>
-	    <imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig02.png" format="PNG"/>
+	  <imageobject role="html">
+	    <imagedata align="center" width="4in" fileref="../../books/en/images/tutorial_series_volIII_fig02.png" format="PNG"/>
+          </imageobject>
+	  <imageobject role="fo">
+	    <imagedata width="80%" scalefit="1" fileref="../../books/en/images/tutorial_series_volIII_fig02.png" format="PNG"/>
 	  </imageobject>
 	</mediaobject>
       </figure>
@@ -229,8 +232,11 @@
       <figure><info><title>M-O-D-E-L: the five-stage modeling process.</title></info>
 
 	<mediaobject>
-	  <imageobject>
-	    <imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig03.png" format="PNG"/>
+	  <imageobject role="html">
+	    <imagedata align="center" width="4in" fileref="../../books/en/images/tutorial_series_volIII_fig03.png" format="PNG"/>
+          </imageobject>
+	  <imageobject role="fo">
+	    <imagedata width="4in" scalefit="1" fileref="../../books/en/images/tutorial_series_volIII_fig03.png" format="PNG"/>
 	  </imageobject>
 	</mediaobject>
       </figure>
@@ -284,7 +290,10 @@
 		Blueprints/schematics/mechanical drawings/photographs
 	      </para>
 	      <para>
-		<inlinemediaobject><imageobject><imagedata fileref="../../books/en/images/tutorial_series_volIII_fig30.png"/></imageobject></inlinemediaobject>
+		<inlinemediaobject>
+                   <imageobject role="html"><imagedata width="1in" scalefit="1" fileref="../../books/en/images/tutorial_series_volIII_fig30.png"/></imageobject>
+                   <imageobject role="fo"><imagedata  fileref="../../books/en/images/tutorial_series_volIII_fig30.png"/></imageobject>
+                </inlinemediaobject>
 	      </para>
 	    </entry>
 	    <entry>
@@ -304,7 +313,10 @@
 		Measurable objects
 	      </para>
 	      <para>
-		<inlinemediaobject><imageobject><imagedata fileref="../../books/en/images/tutorial_series_volIII_fig21.png"/></imageobject></inlinemediaobject>
+		<inlinemediaobject>
+                    <imageobject role="html"><imagedata width="1in" scalefit="1" fileref="../../books/en/images/tutorial_series_volIII_fig21.png"/></imageobject>
+                    <imageobject role="fo"><imagedata fileref="../../books/en/images/tutorial_series_volIII_fig21.png"/></imageobject>
+                </inlinemediaobject>
 	      </para>
 	    </entry>
 	    <entry>
@@ -322,7 +334,10 @@
 		Converted geometry
 	      </para>
 	      <para>
-		<inlinemediaobject><imageobject><imagedata fileref="../../books/en/images/tutorial_series_volIII_fig22.png"/></imageobject></inlinemediaobject>
+		<inlinemediaobject>
+                    <imageobject role="html"><imagedata width="1in" scalefit="1" fileref="../../books/en/images/tutorial_series_volIII_fig22.png"/></imageobject>
+                    <imageobject role="fo"><imagedata fileref="../../books/en/images/tutorial_series_volIII_fig22.png"/></imageobject>
+                </inlinemediaobject>
 	      </para>
 	    </entry>
 	    <entry>
