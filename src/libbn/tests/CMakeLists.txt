@@ -77,7 +77,7 @@ add_test(bn_poly_add                   tester_bn_poly_add)
 # failure encountered, no output to indicate why (disabled in prep for release)
 # add_test(bn_poly_sub                   tester_bn_poly_sub)
 
-add_test(bn_poly_syn_div               tester_bn_poly_syn_div)
+add_test(bn_poly_synthetic_div               tester_bn_poly_synthetic_div)
 
 # Local Variables:
 # tab-width: 8
