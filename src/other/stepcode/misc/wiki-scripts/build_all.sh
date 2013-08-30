@@ -47,14 +47,14 @@ function fedex_details {
     w=`sed -ne 's|^.*:\([0-9]\+\): WARNING: \(.*\)$|<tr><td>\1</td><td>\2</td></tr>|p;' $i`
     e=`sed -ne 's|^.*:\([0-9]\+\): --ERROR: \(.*\)$|<tr><td>\1</td><td>\2</td></tr>|p;' $i`
     if [ "x$w" != "x" ]; then
-        echo "<a name=\"fedex_plus_w\">" #enable jumping to this location in the file
-        echo "### fedex_plus warnings"
+        echo "<a name=\"exp2cxx_w\">" #enable jumping to this location in the file
+        echo "### exp2cxx warnings"
         echo "</a><table  width=100%><tr><th>Line</th><th>Message</th>$w</table>"
         echo
     fi
     if [ "x$e" != "x" ]; then
-        echo "<a name=\"fedex_plus_e\">"
-        echo "### fedex_plus errors"
+        echo "<a name=\"exp2cxx_e\">"
+        echo "### exp2cxx errors"
         echo "</a><table  width=100%><tr><th>Line</th><th>Message</th>$e</tr></table>"
         echo
     fi
@@ -67,7 +67,7 @@ function fedex_details {
         echo
     fi
     if [ -s $result_dir/fedex_$1_stdout.txt ]; then
-        echo "<a name=\"fedex_plus_o\">"
+        echo "<a name=\"exp2cxx_o\">"
         echo "### Standard Output"
         echo "</a><pre>"
         cat $result_dir/fedex_$1_stdout.txt
@@ -76,11 +76,11 @@ function fedex_details {
 }
 
 function build_one_schema {
-    #set $i to the schema name, all caps (to match fedex_plus output)
+    #set $i to the schema name, all caps (to match exp2cxx output)
     i=`sed -ne '0,/^\s*SCHEMA/s/^.*SCHEMA\s\+\(.*\);.*$/\1/p;' $1|tr a-z A-Z`
     d=`echo $1|sed -e 's|^.*/\([^/]*\)\.exp$|\1|;'`
 
-    echo "Running fedex_plus and gcc for $i..."
+    echo "Running exp2cxx and gcc for $i..."
     make generate_cpp_$d 2>"$result_dir/fedex_"$i"_stderr.txt" >"$result_dir/fedex_"$i"_stdout.txt" && \
     $mk sdai_$d >/dev/null 2>"$result_dir/compile_libsdai_"$i"_stderr.txt" && \
     $mk p21read_sdai_$d >/dev/null 2>"$result_dir/compile_p21read_sdai_"$i"_stderr.txt"
@@ -96,7 +96,7 @@ function build {
     # when given multiple targets, cmake's makefiles don't always work well with 'make -j4' - some things get built twice, simultaneously
     echo "Building SCL:"
     $mk stepeditor | grep "^Linking"
-    $mk fedex_plus stepdai | grep "^Linking"
+    $mk exp2cxx stepdai | grep "^Linking"
 
     for h in `echo $schemas | sed -e 's/;/\n/g;'`
     do
@@ -135,7 +135,7 @@ function gen_wiki {
     echo "<table border=1>" >>$matrix_file
     echo "<tr><th>Key</th></tr><tr><td><table width=100%>" >>$matrix_file
     echo "<tr><th>Item</th><th>Description</th></tr>" >>$matrix_file
-    echo "<tr><td>fedex_plus</td><td>Generate c++ from an EXPRESS schema</td></tr>" >>$matrix_file
+    echo "<tr><td>exp2cxx</td><td>Generate c++ from an EXPRESS schema</td></tr>" >>$matrix_file
     echo "<tr><td>lib</td><td>Compile the generated c++ into a library</td></tr>" >>$matrix_file
     echo "<tr><td>p21read</td><td>Compile a p21read app, linked against the above library</td></tr>" >>$matrix_file
     echo "</table></td></tr>" >>$matrix_file
@@ -147,7 +147,7 @@ function gen_wiki {
         echo "<tr><td><table width=100%><tr><th>Schema $i</th></tr><tr><td>" >>$matrix_file
         j=${h##*/} #schema file name, without dirs
         echo "$j</td></tr><tr><td><table border=1>" >>$matrix_file
-        count_we "fedex_plus" $result_dir/fedex_$i $i
+        count_we "exp2cxx" $result_dir/fedex_$i $i
         count_we "lib" $result_dir/compile_libsdai_$i $i
         count_we "p21read" $result_dir/compile_p21read_sdai_$i $i
         echo "</table></td></tr>" >>$matrix_file

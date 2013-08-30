@@ -37,7 +37,7 @@ ENTITY representation_relationship_with_transformation SUBTYPE OF (representatio
 
 
 (**********************************************************************************
-When fedex_plus translates the next line, spaces are inserted into a function name:
+When exp2cxx translates the next line, spaces are inserted into a function name:
 SdaiSPACES_IN_FUNCTION.h:550:   const SdaiKinematic_frame_based_transformation_ptr representation_relationship_with_transformation_         transformation_operator_() const;
 **********************************************************************************)
 

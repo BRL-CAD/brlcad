@@ -56,6 +56,18 @@ IF(COMMAND CMAKE_POLICY)
   CMAKE_POLICY(SET CMP0003 NEW)
 ENDIF(COMMAND CMAKE_POLICY)
 
+IF( NOT DEFINED INCLUDE_INSTALL_DIR )
+  SET( INCLUDE_INSTALL_DIR include )
+ENDIF( NOT DEFINED INCLUDE_INSTALL_DIR )
+
+IF( NOT DEFINED LIB_INSTALL_DIR )
+  SET( LIB_INSTALL_DIR lib )
+ENDIF( NOT DEFINED LIB_INSTALL_DIR )
+
+IF( NOT DEFINED BIN_INSTALL_DIR )
+  SET( BIN_INSTALL_DIR bin )
+ENDIF( NOT DEFINED BIN_INSTALL_DIR )
+
 IF( NOT DEFINED SC_BUILD_TYPE )
   SET( SC_BUILD_TYPE "Debug" CACHE STRING "Build type" ) # By default set debug build
 ENDIF( NOT DEFINED SC_BUILD_TYPE )
@@ -79,11 +91,11 @@ OPTION_WITH_DEFAULT(SC_BUILD_SHARED_LIBS "Build shared libs" ON )
 # don't build static libs by default
 OPTION_WITH_DEFAULT(SC_BUILD_STATIC_LIBS "Build static libs" OFF)
 
-OPTION_WITH_DEFAULT(SC_PYTHON_GENERATOR "Compile fedex_python" ON)
-OPTION_WITH_DEFAULT(SC_CPP_GENERATOR "Compile fedex_plus" ON)
+OPTION_WITH_DEFAULT(SC_PYTHON_GENERATOR "Compile exp2python" ON)
+OPTION_WITH_DEFAULT(SC_CPP_GENERATOR "Compile exp2cxx" ON)
 
 OPTION_WITH_DEFAULT(SC_MEMMGR_ENABLE_CHECKS "Enable sc_memmgr's memory leak detection" OFF)
-OPTION_WITH_DEFAULT(SC_TRACE_FPRINTF "Enable extra comments in generated code so the code's source in fedex_plus may be located" OFF)
+OPTION_WITH_DEFAULT(SC_TRACE_FPRINTF "Enable extra comments in generated code so the code's source in exp2cxx may be located" OFF)
 
 if(NOT DEFINED SC_SDAI_ADDITIONAL_EXES_SRCS )
   set( SC_SDAI_ADDITIONAL_EXES_SRCS "" CACHE STRING "Source files for additional executables to be linked with SDAI libs" )
@@ -386,8 +398,8 @@ include_directories(
 ADD_SUBDIRECTORY(src/base)
 ADD_SUBDIRECTORY(src/express)
 ADD_SUBDIRECTORY(src/exppp)
-ADD_SUBDIRECTORY(src/fedex_plus)
-ADD_SUBDIRECTORY(src/fedex_python)
+ADD_SUBDIRECTORY(src/exp2cxx)
+ADD_SUBDIRECTORY(src/exp2python)
 ADD_SUBDIRECTORY(src/clstepcore)
 ADD_SUBDIRECTORY(src/cleditor)
 ADD_SUBDIRECTORY(src/cldai)
@@ -404,7 +416,7 @@ ADD_SUBDIRECTORY(doc)
 
 # this is for testing - 'make core' builds everything that isn't generated
 add_custom_target( core )
-add_dependencies( core stepdai check-express stepeditor fedex_plus )
+add_dependencies( core stepdai check-express stepeditor exp2cxx )
 
 if(NOT SC_IS_SUBBUILD)
   ###############################################################################

@@ -21,9 +21,20 @@ SET(express_HDRS
   express/type.h
   express/variable.h
 )
-install(FILES ${express_HDRS} DESTINATION include/express)
+install(FILES ${express_HDRS}
+	DESTINATION ${INCLUDE_INSTALL_DIR}/stepcode/express)
 
 SET(exppp_HDRS
   exppp/exppp.h
 )
-install(FILES ${exppp_HDRS} DESTINATION include/exppp)
+install(FILES ${exppp_HDRS}
+	DESTINATION ${INCLUDE_INSTALL_DIR}/stepcode/exppp)
+
+install(FILES ordered_attrs.h
+              sc_export.h
+              sc_stdbool.h
+	DESTINATION ${INCLUDE_INSTALL_DIR}/stepcode)
+
+install(FILES ${CMAKE_BINARY_DIR}/include/sc_cf.h
+              ${CMAKE_BINARY_DIR}/include/sc_version_string.h
+	DESTINATION ${INCLUDE_INSTALL_DIR}/stepcode)

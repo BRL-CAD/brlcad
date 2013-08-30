@@ -52,5 +52,5 @@ class instMgrAdapter: public InstMgr {
         }
 };
 
-#endif //INSTMGRHELPER_H
 
+#endif //INSTMGRHELPER_H

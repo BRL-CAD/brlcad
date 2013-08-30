@@ -2,12 +2,12 @@
 .\" part of their official duties and is, therefore, a work of the U.S.
 .\" Government and not subject to copyright.
 .\"
-.\" $Id: fedex_plus.1,v 2.1.0.2 1998/02/27 23:54:30 sauderd Exp $
+.\" $Id: exp2cxx.1,v 2.1.0.2 1998/02/27 23:54:30 sauderd Exp $
 .TH FEDEX_PLUS 1 "19 November 1997"
 .SH NAME
-fedex_plus - EXPRESS compiler and translater
+exp2cxx - EXPRESS compiler and translater
 .SH SYNOPSIS
-fedex_plus [ options ] [ express-file ]
+exp2cxx [ options ] [ express-file ]
 .nf
 
 Command Arguments:
@@ -19,36 +19,36 @@ Command Arguments:
 .fi
 .SH DESCRIPTION
 .LP
-fedex_plus is based on the NIST EXPRESS compiler fedex.  fedex_plus
+exp2cxx is based on the NIST EXPRESS compiler fedex.  exp2cxx
 translates an EXPRESS file into C++ code and a class library.  The C++
 library includes classes for representing all the types and entities
 in the input EXPRESS file, and a dictionary for describing those
 classes.  The translation depends on base classes provided in the NIST
 STEP Class Library.
 
-fedex_plus does not create C++ representations of the rules,
+exp2cxx does not create C++ representations of the rules,
 procedures, or any EXPRESS constructs other than schemas, types and
 entities.  It supports multiple schemas contained in a single file and
 complex entities.  It generates code which can be integrated with
 orbix and ObjectStore.
 
 Combined with the NIST STEP Class Library, the translator provides a
-"C++ working form" of an EXPRESS schema.  fedex_plus was designed for
+"C++ working form" of an EXPRESS schema.  exp2cxx was designed for
 use together with a graphical data editing system (see dataprobe(1)),
-but care has been taken to keep fedex_plus separate so that it can be
+but care has been taken to keep exp2cxx separate so that it can be
 used as a component of other software systems.
 
-The fedex_plus compiler makes two passes through the EXPRESS file.  In
-the first pass fedex_plus reads the syntax of the EXPRESS file and
-detects any errors.  In the second pass fedex_plus converts the
+The exp2cxx compiler makes two passes through the EXPRESS file.  In
+the first pass exp2cxx reads the syntax of the EXPRESS file and
+detects any errors.  In the second pass exp2cxx converts the
 EXPRESS code into C++ source code.  The C++ source code is generated
-in files in the directory in which fedex_plus was run.  The files are
+in files in the directory in which exp2cxx was run.  The files are
 named according to the schema names in the input EXPRESS file.
 
 .SH OPTIONS
 .TP
 .B -s|S
-Tells fedex_plus to use only single-inheritance, rather than multiple
+Tells exp2cxx to use only single-inheritance, rather than multiple
 inheritance.
 .TP
 .B -c|C
@@ -94,7 +94,7 @@ If no arguments are given in the command line, a list and description
 of the options available are sent to stdout.
 
 .SH OUTPUT
-fedex_plus sends the following to stdout subject to the options
+exp2cxx sends the following to stdout subject to the options
 specified when executed:
 
  - a statement indicating that the Express schema is being 

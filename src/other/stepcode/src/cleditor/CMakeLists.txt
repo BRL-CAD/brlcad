@@ -9,7 +9,7 @@ set(LIBSTEPEDITOR_SRCS
     SdaiSchemaInit.cc
 )
 
-SET(LIBSTEPEDITOR_PRIVATE_HDRS
+SET(SC_CLEDITOR_HDRS
     STEPfile.h
     cmdmgr.h
     editordefines.h
@@ -28,3 +28,6 @@ include_directories(
 )
 
 SC_ADDLIB(stepeditor "${LIBSTEPEDITOR_SRCS}" "stepcore;stepdai;steputils;base")
+
+install(FILES ${SC_CLEDITOR_HDRS}
+	DESTINATION ${INCLUDE_INSTALL_DIR}/stepcode/cleditor)
