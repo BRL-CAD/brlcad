@@ -1755,6 +1755,12 @@ DOCUMENTATION
   and pdf (role='fo') image sizing and placement; remove unnecessary
   image markup; lift child namespaces to each document's root element.
 
+  Particular targets for improvement:
+
+    doc/docbook/presentations/en/brlcad-app-devel.xml
+    doc/docbook/presentations/en/intro-to-tcltk.xml
+    doc/docbook/specifications/en/BRL_CAD_g_format_V5.xml
+
 * group public library headers into subdirs, e.g. include/bu/bu.h, so
   it's clear when you're using headers from another library and
   breaking encapsulation.
