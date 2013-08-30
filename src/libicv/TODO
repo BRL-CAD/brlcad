@@ -1,6 +1,13 @@
 LIBICV To Do List
 ==================
 
+Add fileformats for png,bmp,ppm type images.
+FIX fixed size buffers in fileformat.c.
+
+TODO for icv.h
+==============
+
+Align doxygen comments in icv.h to 70 col width.
 
 ---------------------------------------------------------------------
 TODO items should be formatted to column 70 (M-q in emacs), no tabs.
