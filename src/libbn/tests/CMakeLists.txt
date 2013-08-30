@@ -6,7 +6,7 @@ BRLCAD_ADDEXEC(tester_bn_poly_scale bn_poly_scale.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_poly_add bn_poly_add.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_poly_sub bn_poly_sub.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_poly_synthetic_div bn_poly_synthetic_div.c "libbu;libbn" NO_INSTALL)
-
+CMAKEFILES(bn_poly_cubic_roots.c bn_poly_quartic_roots.c)
 
 # For tester_bn_tri_tri_isect_coplanar, the input format is as follows:
 #
