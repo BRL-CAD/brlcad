@@ -1,5 +1,13 @@
+set(en_pres_ignore_files
+  README.txt
+  brlcad-app-devel.ppt
+  intro-to-tcltk.ppt
+  )
+CMAKEFILES(${misc_ignore_files})
+
 set(docbook_presentations_EN
   intro-to-tcltk.xml
+  brlcad-app-devel.xml
   )
 
 set(docbook_presentations_EN_IMAGES
