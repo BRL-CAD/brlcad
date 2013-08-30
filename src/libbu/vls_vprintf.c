@@ -486,8 +486,6 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	bu_vls_strncpy(&fbuf, sp, (size_t)len);
 	fbufp = bu_vls_addr(&fbuf);
 
-	/*!!!	fprintf(stderr, "FBUF[%s]\n", fbufp);*/
-
 #ifndef HAVE_C99_FORMAT_SPECIFIERS
 	/* if the format string uses the %z or %t width specifier, we need to
 	 * replace it with something more palatable to this busted compiler.
