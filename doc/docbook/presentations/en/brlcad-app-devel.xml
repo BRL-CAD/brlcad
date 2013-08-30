@@ -1,41 +1,23 @@
 <?xml version="1.0" encoding="us-ascii"?>
-<article version="5.0"
-         xml:lang="en"
-         xmlns="http://docbook.org/ns/docbook"
->
+<article xmlns="http://docbook.org/ns/docbook" version="5.0" xml:lang="en">
   <info>
     <title>Building Applications</title>
   </info>
 
-  <!-- Next 'div' was a 'draw:page'. -->
+<section>
+<title>Application Development with BRL-CAD</title>
 
-  <!-- Next 'div' is a draw:frame. -->
-  <!-- Next 'div' was a 'draw:text-box'. -->
-  <orderedlist><listitem>
-      <para> Application Development with BRL-CAD</para>
-    </listitem>
-  </orderedlist>
-  <!-- Next 'div' was a 'draw:page'. -->
+<para>WARNING Code Intensive Presentation</para>
 
-      <para><orderedlist><listitem>
-            <para> WARNING Code Intensive Presentation</para>
-          </listitem>
-</orderedlist>
-        <!-- Next 'div' was a 'draw:text-box'. -->
-<orderedlist><listitem>
-            <para> For Code Warriors Only!</para>
-            <para>non-programmers will need atropine, caffeine, and electro-shock therapy</para>
-            <para>(run, do not walk, to the nearest exit)</para>
-          </listitem>
-</orderedlist></para>
+<para>For Code Warriors Only! Non-programmers will need atropine,
+caffeine, and electro-shock therapy (run, do not walk, to the nearest
+exit)</para>
 
-<!-- Next 'div' was a 'draw:page'. -->
-    <!-- Next 'div' was a 'draw:text-box'. -->
-<orderedlist><listitem>
-        <para> Overview</para>
-      </listitem>
-</orderedlist>    <!-- Next 'div' is a draw:frame. -->
-    <!-- Next 'div' was a 'draw:text-box'. -->
+</section>
+
+<section>
+<title>Overview</title>
+
 <itemizedlist>
       <listitem>
         <para>Header files</para>
@@ -59,19 +41,15 @@
         <para>Modifying Geometry</para>
       </listitem>
     </itemizedlist>
+
+</section>
+
 <!-- Next 'div' was a 'draw:page'. -->
-    <!-- Next 'div' was a 'draw:text-box'. -->
-<orderedlist><listitem>
-        <para>Header Files</para>
-      </listitem>
-</orderedlist>    <!-- Next 'div' is a draw:frame. -->
-    <!-- Next 'div' was a 'draw:text-box'. -->
-<itemizedlist>
-      <listitem>
+<section>
+  <title>Header Files</title>
+
         <para>The Big-6</para>
-      </listitem>
-    </itemizedlist>
-    <!-- Next 'div' is a draw:frame. -->
+
 <informaltable frame="none">
       <tgroup cols="2">
         <colspec colname="c1" colwidth="50*"/>
@@ -150,16 +128,12 @@
         </tbody>
       </tgroup>
     </informaltable>
-  <!-- Next 'div' was a 'draw:page'. -->
-<!-- Next 'div' is a draw:frame. -->
-    <!-- Next 'div' was a 'draw:text-box'. -->
-<orderedlist><listitem>
-        <para> Prototype Application: rtexample.c</para>
-      </listitem>
-</orderedlist>    <!-- Next 'div' is a draw:frame. -->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
+
+</section>
+
+<section>
+  <para>Prototype Application: rtexample.c</para>
+
 <itemizedlist>
       <listitem>
         <para>Opens a database</para>
@@ -177,19 +151,24 @@ Next 'div' was a 'draw:text-box'.
         <para>See source tree: rt/rtexample.c</para>
       </listitem>
     </itemizedlist>
+
+</section>
+
+
 <!-- Next 'div' was a 'draw:page'. -->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para>Necessary Headers</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
+<section>
+
+  <para>Necessary Headers</para>
+
+<programlisting>
+#include "conf.h"	/* compilation macros */
+#include &lt;stdio.h&gt;
+#include &lt;math.h&gt;
+#include "machine.h"	/* machine specific definitions */
+#include "vmath.h"	/* vector math macros */
+#include "raytrace.h"	/* librt interface definitions */
+</programlisting>
+
 <itemizedlist>
       <listitem>
         <para>The conf.h and machine.h are ubiquitous in almost all BRLCAD apps</para>
@@ -211,30 +190,27 @@ Next 'div' was a 'draw:text-box'.
 </para>
       </listitem>
     </itemizedlist>
-    <!--
-Next 'div' added for floating.
--->
-    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
+
+</section>
+
+
 <!--
 Next 'div' was a 'draw:page'.
 -->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para> Opening the Database</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
+<section>
+
+<para>Opening the Database</para>
+
+<programlisting>
+static struct rt_i *rtip; /* librt Instance structure */
+/* rt_dirbuild() performs many functions for us */
+rtip = rt_dirbuild(argv[1], buf, sizeof(buf));
+if (rtip == RTI_NULL) {
+    fprintf(stderr,"rtexample: rt_dirbuild failure\n");
+    exit(2);
+}
+</programlisting>
+
 <itemizedlist>
       <listitem>
         <para>Opens database file</para>
@@ -246,58 +222,35 @@ Next 'div' was a 'draw:text-box'.
         <para>Allows us to retrieve individual objects</para>
       </listitem>
     </itemizedlist>
-    <!--
-Next 'div' added for floating.
--->
-    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<!--
-Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
+
+<!-- Next 'div' was a 'draw:page'. -->
+
 <orderedlist><listitem>
         <para> Reading Geometry</para>
       </listitem>
-</orderedlist>    <!-- Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
+</orderedlist>
+
+<programlisting>
+if (rt_gettree(rtip, argv[2]) &lt; 0)
+    fprintf(stderr,"rt_gettree(%s) FAILED\n", argv[2]);
+</programlisting>
+
 <itemizedlist>
       <listitem>
         <para>Retrieves tree top specified by argv[2] into a working set used by librt</para>
       </listitem>
     </itemizedlist>
-    <!--
-Next 'div' added for floating.
--->
-    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<!--
-Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para>Preparing Geometry for Raytracing</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <para>Preparing Geometry for Raytracing</para>
+
+<programlisting>
+rt_prep_parallel(rtip,1);
+</programlisting>
+
 <itemizedlist>
       <listitem>
         <para>Pre-computes useful terms for each primitive</para>
@@ -318,30 +271,24 @@ Next 'div' was a 'draw:text-box'.
         <para>Builds space partition tree to accelerate ray-trace</para>
       </listitem>
     </itemizedlist>
-    <!--
-Next 'div' added for floating.
--->
-    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<!--
-Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para>Application Struct and Shot</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <para>Application Struct and Shot</para>
+
+<programlisting>
+struct application ap;
+ap.a_rt_i = rtip;
+VSET(ap.a_ray.r_pt, 0, 0, 10000);
+VSET(ap.a_ray.r_dir, 0, 0, -1);
+ap.a_hit = hit;	          /* where to go on a hit */
+ap.a_miss = miss;         /* where to go on a miss */
+
+(void)rt_shootray(&amp;); /* do it */
+</programlisting>
+
 <itemizedlist>
       <listitem>
         <para>The application struct contains information about the
@@ -349,47 +296,35 @@ Next 'div' was a 'draw:text-box'.
         results.</para>
       </listitem>
     </itemizedlist>
-    <!--
-Next 'div' added for floating.
--->
-    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<!-- Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
+
+<!-- Next 'div' was a 'draw:page'. -->
+
 <orderedlist><listitem>
         <para>Application Struct</para>
       </listitem>
-</orderedlist>    <!--
-Next 'div' added for floating.
--->
-    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<!--
-Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para>Miss Routine</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
+</orderedlist>
+
+<para>Excerpts of application struct from raytrace.h:</para>
+
+<programlisting>
+struct application {
+
+    struct xray  a_ray;	/* Actual ray to be shot */
+    int          (*a_hit)(struct application *,
+                          struct partition *,
+                          struct seg *);
+    int          (*a_miss) (struct application *);
+    int          a_onehit; /* flag to stop on first hit */
+
+    struct rt_i  *a_rt_i;  /* this librt instance */
+};
+</programlisting>
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <para>Miss Routine</para>
+
 <itemizedlist>
       <listitem>
         <para>Called when ray does not hit any geometry</para>
@@ -404,21 +339,13 @@ Next 'div' is a draw:frame.
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
-<!--
-Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para>Hit Routine</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <para>Hit Routine</para>
+
 <orderedlist><listitem>
         <para>hit(register struct application *ap, /* see raytrace.h */</para>
         <para>struct partition *PartHeadp) /* see raytrace.h */</para>
@@ -451,13 +378,13 @@ Next 'div' was a 'draw:text-box'.
         <para>}</para>
       </listitem>
 </orderedlist>
+
+</section>
+
 <!-- Next 'div' was a 'draw:page'. -->
-<!-- Next 'div' is a draw:frame. -->
-<orderedlist><listitem>
-        <para> Hit Routine Breakdown</para>
-      </listitem>
-</orderedlist>
-<!-- Next 'div' is a draw:frame. -->
+<section>
+  <para>Hit Routine Breakdown</para>
+
 <itemizedlist>
       <listitem>
         <para>Partition Structure contains information about intervals
@@ -467,56 +394,23 @@ Next 'div' was a 'draw:text-box'.
         <para>Hit structure contains information about an individual boundary/ray intersection</para>
       </listitem>
     </itemizedlist>
-    <!--
-Next 'div' added for floating.
--->
-    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<!--
-Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para> Partition Structure</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <para>Partition Structure</para>
+
 <itemizedlist>
       <listitem>
         <para>From h/raytrace.h</para>
       </listitem>
     </itemizedlist>
-    <!--
-Next 'div' added for floating.
--->
-    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<!--
-Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para>Hit Structure</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
+
+</section>
+
+<section>
+  <para>Hit Structure</para>
+
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -532,30 +426,14 @@ Next 'div' was a 'draw:text-box'.
         <para>struct xray *hit_rayp; /* pointer to defining ray */</para>
         <para>};</para>
       </listitem>
-</orderedlist>    <!--
-Next 'div' added for floating.
--->
-    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<!--
-Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para> Hit Routine (Again)</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
+</orderedlist>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <para>Hit Routine (Again)</para>
+
 <orderedlist><listitem>
         <para> hit(register struct application *ap, /* see raytrace.h */</para>
         <para>struct partition *PartHeadp) /* see raytrace.h */</para>
@@ -588,21 +466,15 @@ Next 'div' was a 'draw:text-box'.
 <para>}</para>
 </listitem>
 </orderedlist>
-<!--
-Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para>Using the RTUIF</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <para>Using the RTUIF</para>
+
+<!-- Next 'div' is a draw:frame. -->
+
 <itemizedlist>
       <listitem>
         <para>Makes shooting grids of rays easy.</para>
@@ -617,18 +489,14 @@ Next 'div' was a 'draw:text-box'.
         <para>Simplest example shown in rt/viewdummy.c in source tree</para>
       </listitem>
     </itemizedlist>
-<!--
-Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para>The 5 RTUIF Functions</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <para>The 5 RTUIF Functions</para>
+
+<!-- Next 'div' is a draw:frame. -->
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -649,9 +517,12 @@ Next 'div' was a 'draw:text-box'.
         <para>view_end</para>
       </listitem>
     </itemizedlist>
-<!--
-Next 'div' was a 'draw:page'.
--->
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -686,39 +557,28 @@ Next 'div' was a 'draw:text-box'.
         <para>Called at the beginning of a frame. Called by</para>
         <para>do_frame() just before raytracing starts.</para>
       </listitem>
-</orderedlist><!--
-Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para>RTUIF Routines2</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
+</orderedlist>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <para>RTUIF Routines2</para>
+
 <orderedlist><listitem>
         <para> int rayhit(struct application *ap, struct partition *PartHeadp);</para>
         <para>Called via a_hit linkage from rt_shootray() when ray hits.</para>
         <para>int raymiss(struct application *ap);</para>
         <para>Called via a_miss linkage from rt_shootray() when ray misses.</para>
       </listitem>
-</orderedlist><!--
-Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para>RTUIF Routines3</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
+</orderedlist>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <para>RTUIF Routines3</para>
+
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -729,18 +589,14 @@ Next 'div' was a 'draw:text-box'.
         <para>void view_end(struct application *ap);</para>
         <para>Called in do_frame() at the end of a frame, just after raytracing completes.</para>
       </listitem>
-</orderedlist>    <!--
-Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para>So Much for the Trivialities</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
+</orderedlist>
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <para>So Much for the Trivialities</para>
+
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -775,9 +631,13 @@ Next 'div' was a 'draw:text-box'.
         <para>Doing anything useful with it</para>
       </listitem>
     </itemizedlist>
-<!--
-Next 'div' was a 'draw:page'.
--->
+</section>
+
+
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -835,21 +695,14 @@ Next 'div' was a 'draw:text-box'.
 </para>
       </listitem>
     </itemizedlist>
-<!--
-Next 'div' was a 'draw:page'.
--->
-<!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para>On-Disk Representation</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
+
+</section>
+
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <para>On-Disk Representation</para>
+
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -899,18 +752,13 @@ Next 'div' was a 'draw:text-box'.
 </para>
       </listitem>
     </itemizedlist>
-<!--
-Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para>Internal Representation</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <para>Internal Representation</para>
+
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -940,18 +788,13 @@ Next 'div' was a 'draw:text-box'.
         <para>Combination (and hence region) structure defined in raytrace.h</para>
       </listitem>
     </itemizedlist>
-<!--
-Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para> Prepped Representation</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <para>Prepped Representation</para>
+
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -991,18 +834,13 @@ Next 'div' was a 'draw:text-box'.
 </para>
       </listitem>
     </itemizedlist>
-<!--
-Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para>Simple Database Application</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
+</section>
+
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <para>Simple Database Application</para>
+
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -1020,18 +858,13 @@ Next 'div' is a draw:frame.
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
-<!--
-Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para>Opening The Database</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' added for floating.
--->
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <para>Opening The Database</para>
+
     <!--
 Next 'div' is a draw:frame.
 -->
@@ -1077,18 +910,14 @@ Next 'div' is a draw:frame.
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
-<!--
-Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para> Getting Geometry</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
+
+</section>
+
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <para> Getting Geometry</para>
+
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -1152,18 +981,13 @@ Next 'div' was a 'draw:text-box'.
 </para>
       </listitem>
     </itemizedlist>
-<!--
-Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para>Putting Geometry Back</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
+</section>
+
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <para>Putting Geometry Back</para>
+
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -1181,18 +1005,12 @@ Next 'div' is a draw:frame.
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
-<!--
-Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para>Building Boolean Trees</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
+
+</section>
+
+<section>
+  <para>Building Boolean Trees</para>
+
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -1253,18 +1071,13 @@ Next 'div' was a 'draw:text-box'.
 </para>
       </listitem>
     </itemizedlist>
-<!--
-Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para>Constructing Boolean List</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <para>Constructing Boolean List</para>
+
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -1273,27 +1086,13 @@ Next 'div' was a 'draw:text-box'.
         <para>Build the list of elements first:</para>
       </listitem>
     </itemizedlist>
-    <!--
-Next 'div' added for floating.
--->
-    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<!--
-Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para>Regions/Combinations</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <para>Regions/Combinations</para>
+
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -1326,21 +1125,13 @@ Next 'div' is a draw:frame.
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
-<!--
-Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para>Retrieving A Combination</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <para>Retrieving A Combination</para>
+
 <itemizedlist>
       <listitem>
         <para>Simple retrieval only gets:</para>
@@ -1371,18 +1162,13 @@ Next 'div' is a draw:frame.
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
-<!--
-Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para>Combination Write-Back</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <para>Combination Write-Back</para>
+
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -1403,18 +1189,13 @@ Next 'div' is a draw:frame.
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
-<!--
-Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para>Combination Tree Info</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <para>Combination Tree Info</para>
+
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -1442,18 +1223,13 @@ Next 'div' is a draw:frame.
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
-<!--
-Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para>Processing combination tree</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <para>Processing combination tree</para>
+
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -1474,18 +1250,13 @@ Next 'div' is a draw:frame.
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
-<!--
-Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para>Accessing Prepped Regions</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <para>Accessing Prepped Regions</para>
+
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -1509,18 +1280,13 @@ Next 'div' is a draw:frame.
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
-<!--
-Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para>Making Temporary Changes</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <para>Making Temporary Changes</para>
+
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -1532,18 +1298,13 @@ Next 'div' was a 'draw:text-box'.
         <para>Changes do not reside in on-disk database</para>
       </listitem>
     </itemizedlist>
-<!--
-Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para>Dynamic Geometry</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <para>Dynamic Geometry</para>
+
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -1576,18 +1337,13 @@ Next 'div' was a 'draw:text-box'.
         <para>Writes to inmem arranged though special wdb_dbopen() call</para>
       </listitem>
     </itemizedlist>
-<!--
-Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para>Accessing inmem database</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <para>Accessing inmem database</para>
+
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -1608,18 +1364,14 @@ Next 'div' is a draw:frame.
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
-<!--
-Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para>Closing the Database</para>
-      </listitem>
-</orderedlist>    <!--
-Next 'div' is a draw:frame.
--->
+
+</section>
+
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <para>Closing the Database</para>
+
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
@@ -1637,21 +1389,19 @@ Next 'div' is a draw:frame.
     <!--
 Next 'div' was a 'draw:text-box'.
 -->
-<!--
-Next 'div' was a 'draw:page'.
--->
-    <!--
-Next 'div' was a 'draw:text-box'.
--->
-<orderedlist><listitem>
-        <para>Thank you</para>
-      </listitem>
-</orderedlist>
-  <!-- Next 'div' is a draw:frame. -->
-  <!-- Next 'div' was a 'draw:text-box'. -->
+
+</section>
+
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <para>Thank you</para>
+
   <orderedlist><listitem>
       <para>Lee A. Butler</para>
       <para>John Anderson</para>
     </listitem>
   </orderedlist>
+
+</section>
+
 </article>
