@@ -139,8 +139,11 @@
       <figure><info><title>Ballistic penetration model with transparent exterior.</title></info>
 
 	<mediaobject>
-	  <imageobject>
-	    <imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig01.png" format="PNG"/>
+	  <imageobject role="html">
+	    <imagedata align="center" width="4in" fileref="../../books/en/images/tutorial_series_volIII_fig01.png" format="PNG"/>
+          </imageobject>
+	  <imageobject role="fo">
+	    <imagedata width="80%" scalefit="1" fileref="../../books/en/images/tutorial_series_volIII_fig01.png" format="PNG"/>
 	  </imageobject>
 	</mediaobject>
       </figure>
