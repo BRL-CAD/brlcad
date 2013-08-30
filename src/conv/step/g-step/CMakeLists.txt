@@ -7,7 +7,7 @@ include_directories(
 GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} gstep)
 
 set(gstep_SOURCES
-  ${fedex_srcs}
+  ${express_srcs}
   ../BRLCADWrapper.cpp
   ON_Brep.cpp
   g-step.cpp
@@ -30,7 +30,7 @@ list(APPEND gstep_LIBS ${gstep_LIBS})
 #add_definitions(-DAP203e2)
 
 BRLCAD_ADDEXEC(g-step "${gstep_SOURCES}" "${gstep_LIBS}" NO_STRICT)
-add_dependencies(g-step step-fedex-${SCHEMA_NAME}-gstep)
+add_dependencies(g-step step-express-${SCHEMA_NAME}-gstep)
 
 if(MSVC)
   set(gstep_IMPORTS

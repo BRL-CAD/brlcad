@@ -124,9 +124,9 @@ src/express/generated/verification_info.cmake
 src/express/parse_data.h
 src/express/stack.h
 src/express/token_type.h
-src/fedex_plus/classes.h
-src/fedex_plus/complexSupport.h
-src/fedex_python
+src/exp2cxx/classes.h
+src/exp2cxx/complexSupport.h
+src/exp2python
 src/test
 test
 )
