@@ -1,7 +1,5 @@
 set(en_pres_ignore_files
   README.txt
-  brlcad-app-devel.ppt
-  intro-to-tcltk.ppt
   )
 CMAKEFILES(${misc_ignore_files})
 
