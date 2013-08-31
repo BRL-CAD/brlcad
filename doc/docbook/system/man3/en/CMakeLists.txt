@@ -1,5 +1,4 @@
 set(docbook_man3_EN
-  bu_htond.xml
   libcursor.xml
   libfb.xml
   liborle.xml
@@ -13,7 +12,7 @@ set(docbook_man3_EN
 # describe more than one command.  Those files need special
 # handling, since the CMake logic has no way to know about the
 # extra outputs without being told.
-set_source_files_properties(htond.xml PROPERTIES EXTRA_MAN_OUTPUTS "bu_ntohd.3")
+#set_source_files_properties(bu_htond.xml PROPERTIES EXTRA_MAN_OUTPUTS "bu_ntohd.3")
 
 DOCBOOK_TO_HTML(man3 docbook_man3_EN html/man3/en "")
 DOCBOOK_TO_MAN(man3 docbook_man3_EN 3 3 man3 "")
