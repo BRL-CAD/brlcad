@@ -23,6 +23,11 @@ endif(BRLCAD_EXTRADOCS_HTML OR BRLCAD_EXTRADOCS_PDF OR BRLCAD_EXTRADOCS_MAN)
 if(BRLCAD_EXTRADOCS_HTML)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/brlcad-xhtml-stylesheet.xsl.in
     ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-xhtml-stylesheet.xsl)
+  # for DB articles
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/brlcad-article-xhtml-stylesheet.xsl.in
+    ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-article-xhtml-stylesheet.xsl)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/brlcad-article-fo-stylesheet.xsl.in
+    ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-article-fo-stylesheet.xsl)
 endif(BRLCAD_EXTRADOCS_HTML)
 
 # Style sheet for XSLT transformation to manual pages
@@ -36,6 +41,10 @@ if(BRLCAD_EXTRADOCS_PDF)
   # Style sheet for XSLT transformation to PDF
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/brlcad-fo-stylesheet.xsl.in
     ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-fo-stylesheet.xsl)
+  # for DB articles
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/brlcad-article-fo-stylesheet.xsl.in
+    ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-article-fo-stylesheet.xsl)
+
   # Apache FOP needs a couple of config files set up
   set(srcdir ${CMAKE_CURRENT_SOURCE_DIR})
   configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/fop.xconf.in ${CMAKE_BINARY_DIR}/doc/docbook/fop.xconf)
@@ -50,6 +59,9 @@ endif(BRLCAD_EXTRADOCS_PDF)
 set(XSL_XHTML_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-xhtml-stylesheet.xsl")
 set(XSL_MAN_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-man-stylesheet.xsl")
 set(XSL_FO_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-fo-stylesheet.xsl")
+# for DB articles
+set(XSL_ARTICLE_XHTML_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-article-xhtml-stylesheet.xsl")
+set(XSL_ARTICLE_FO_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-article-fo-stylesheet.xsl")
 
 # Include CMake macros for DocBook.
 include(${BRLCAD_SOURCE_DIR}/misc/CMake/DocBook.cmake)
