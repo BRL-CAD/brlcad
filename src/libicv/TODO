@@ -7,8 +7,6 @@ LIBICV To Do List
 
 * Convert open to fopen.
 
-* Align doxygen comments in icv.h to 70 col width.
-
 * Make each file format a modular extension to the library (organized
   as one file or one directory per format).
 
