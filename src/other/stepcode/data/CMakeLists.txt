@@ -40,7 +40,7 @@ FUNCTION(BUILD_A_SCHEMA SCHEMA_FILE)
     # read the schema name from a line like 'SCHEMA AUTOMOTIVE_DESIGN;'
     file(STRINGS ${SCHEMA_FILE} SCHEMA_STATEMENT LIMIT_COUNT 1 REGEX "^SCHEMA .*")
     string(REGEX REPLACE "^SCHEMA \(.*\)\;$" "\\1" SCHEMA_N ${SCHEMA_STATEMENT} )
-    string(TOUPPER ${SCHEMA_N} SCHEMA_LONG_NAME) #fedex_plus always uses upper case for file names
+    string(TOUPPER ${SCHEMA_N} SCHEMA_LONG_NAME) #exp2cxx always uses upper case for file names
     get_filename_component( SCHEMA_SN ${SCHEMA_FILE} NAME )
     string( REGEX REPLACE "\(.*\).[Ee][Xx][Pp]" "\\1" SCHEMA_SHORT_NAME ${SCHEMA_SN} )
 
@@ -64,10 +64,10 @@ FUNCTION(BUILD_A_SCHEMA SCHEMA_FILE)
                         COMMAND ${CMAKE_COMMAND} ARGS -E make_directory ${SCHEMA_OUTPUT_DIR}
                         COMMENT "Creating ${SCHEMA_OUTPUT_DIR} for schema ${SCHEMA_SHORT_NAME}")
     add_custom_command( OUTPUT ${FEDEX_OUT}
-                        COMMAND fedex_plus ARGS ${SCHEMA_FILE}
+                        COMMAND exp2cxx ARGS ${SCHEMA_FILE}
                         DEPENDS ${SCHEMA_FILE} ${SCHEMA_OUTPUT_DIR}
                         WORKING_DIRECTORY ${SCHEMA_OUTPUT_DIR}
-                        COMMENT "Running fedex_plus for ${SCHEMA_SHORT_NAME}..."
+                        COMMENT "Running exp2cxx for ${SCHEMA_SHORT_NAME}..."
                         VERBATIM )
     add_custom_target( generate_cpp_${SCHEMA_SHORT_NAME} DEPENDS ${FEDEX_OUT} SOURCES ${FEDEX_OUT} )
 

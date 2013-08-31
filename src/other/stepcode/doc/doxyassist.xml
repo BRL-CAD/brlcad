@@ -132,7 +132,7 @@
       <input>./src/clutils</input>
       <input>./src/exppp</input>
       <input>./src/express</input>
-      <input>./src/fedex_plus</input>
+      <input>./src/exp2cxx</input>
       <input>./src/test</input>-->
       <!-- A list of files/paths to exclude. Add one <exclude> tag per path to
            exclude. This will automatically be expanded to exclude input directories
@@ -240,7 +240,7 @@
         <project>
             <name>Fedex Plus</name>
         <version> </version>
-            <input>./src/fedex_plus</input>
+            <input>./src/exp2cxx</input>
         </project>
         <project>
             <name>Tests</name>

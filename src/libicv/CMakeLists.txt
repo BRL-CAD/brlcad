@@ -23,7 +23,9 @@ set(LIBICV_SOURCES
   )
 
 BRLCAD_ADDLIB(libicv "${LIBICV_SOURCES}" "libbu;libbn;${PNG_LIBRARY}")
-SET_TARGET_PROPERTIES(libicv PROPERTIES VERSION 20.0.1 SOVERSION 20)
+set_target_properties(libicv PROPERTIES VERSION 20.0.1 SOVERSION 20)
+
+CMAKEFILES(TODO)
 
 # Local Variables:
 # tab-width: 8

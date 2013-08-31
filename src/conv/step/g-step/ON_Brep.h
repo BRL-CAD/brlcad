@@ -29,12 +29,16 @@
 struct Exporter_Info_AP203 {
     Registry *registry;
     InstMgr *instance_list;
+    int split_closed;
     std::vector<STEPentity *> cartesian_pnts;
     std::vector<STEPentity *> vertex_pnts;
+    std::vector<STEPentity *> vectors;
+    std::vector<STEPentity *> directions;
     std::vector<STEPentity *> three_dimensional_curves;
     std::vector<STEPentity *> edge_curves;
     std::vector<STEPentity *> oriented_edges;
     std::vector<STEPentity *> edge_loops;
+    std::vector<STEPentity *> inner_bounds;
     std::vector<STEPentity *> outer_bounds;
     std::vector<STEPentity *> surfaces;
     std::vector<STEPentity *> faces;
@@ -43,9 +47,7 @@ struct Exporter_Info_AP203 {
     SdaiAdvanced_brep_shape_representation *advanced_brep;
     SdaiRepresentation *shape_rep;
 
-    std::map<int, std::pair<STEPentity *, STEPentity *> > sdai_curve_to_splits;
-    std::map<int, std::pair<STEPentity *, STEPentity *> > sdai_e_curve_to_splits;
-    std::map<int, STEPentity * > split_midpt_vertex;
+    std::map<STEPentity*, std::vector<std::vector<STEPentity *> > > surface_cv;
 };
 
 bool ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info);

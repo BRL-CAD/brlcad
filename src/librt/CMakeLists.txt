@@ -30,6 +30,7 @@ set(LIBRT_SOURCES
   bundle.c
   cmd.c
   comb/comb.c
+  comb/comb_brep.cpp
   comb/comb_mirror.c
   comb/db_comb.c
   constraint.c

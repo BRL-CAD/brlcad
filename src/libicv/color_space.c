@@ -158,11 +158,10 @@ icv_rgb2gray(icv_image_t *img, ICV_COLOR color, double rweight, double gweight, 
     if (blue != 0 && ZERO(bweight))
 	bweight = 1.0 / (double)num_color_planes;
 
-    size = img->height*img->width*img->channels;
-    out_data = (double*) bu_malloc(size/3*sizeof(double), "Out Image Data");
-
+    size = img->height*img->width;
+    out_data = (double*) bu_malloc(size*sizeof(double), "Out Image Data");
     if (multiple_colors) {
-	for (in = out = 0; out < size/3; out++, in += 3) {
+	for (in = out = 0; out < size; out++, in += 3) {
 	    value = rweight*in_data[in] + gweight*in_data[in+1] + bweight*in_data[in+2];
 	    if (value > 1.0) {
 		out_data[out] = 1.0;
@@ -172,17 +171,17 @@ icv_rgb2gray(icv_image_t *img, ICV_COLOR color, double rweight, double gweight, 
 		out_data[out] = value;
 	}
     } else if (red) {
-	for (in = out = 0; out < size/3; out++, in += 3)
+	for (in = out = 0; out < size; out++, in += 3)
 	    out_data[out] = in_data[in];
     } else if (green) {
-	for (in = out = 0; out < size/3; out++, in += 3)
+	for (in = out = 0; out < size; out++, in += 3)
 	    out_data[out] = in_data[in+1];
     } else if (blue) {
-	for (in = out = 0; out < size/3; out++, in += 3)
+	for (in = out = 0; out < size; out++, in += 3)
 	    out_data[out] = in_data[in+2];
     } else {
 	/* uniform weight */
-	for (in = out = 0; out < size/3; out++, in += 3)
+	for (in = out = 0; out < size; out++, in += 3)
 	    out_data[out] = (in_data[in] + in_data[in+1] + in_data[in+2]) / 3.0;
     }
     bu_free(img->data, "icv_image_rgb2gray : rgb image data");

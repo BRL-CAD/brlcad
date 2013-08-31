@@ -139,43 +139,47 @@ typedef struct icv_image icv_image_t;
 #define ICV_CONV_8BIT(data) ((double)(data))/255.0
 
 /**
- * Finds the Image format based on heuristics depending on the file name.
- * @param filename Filename of the image whose format is to be know.
- * @param trimmedname Buffer for storing filename after removing extensions
- * @return File Format
+ * Finds the Image format based on heuristics depending on the file
+ * name.  @param filename Filename of the image whose format is to be
+ * know.  @param trimmedname Buffer for storing filename after
+ * removing extensions @return File Format
  */
 ICV_EXPORT extern int icv_guess_file_format(const char *filename, char *trimmedname);
 
 /**
  * This function allocates memory for an image and returns the
  * resultant image.
+ *
  * @param width Width of the image to be created
- * @param height Height of the image to be created.
- * @param color_space Specifies the color_space of the image to be
- * created
+ * @param height Height of the image to be created
+ * @param color_space Color space of the image (RGB, grayscale)
  * @return Image structure with allocated space and zeroed data array
  */
 ICV_EXPORT extern icv_image_t *icv_create(int width, int height, ICV_COLOR_SPACE color_space);
 
 /**
- * Write an image line to the data of ICV struct. Can handle unsigned char buffers.
+ * Write an image line to the data of ICV struct. Can handle unsigned
+ * char buffers.
  *
- * Note : This function requires memory allocation for ICV_UCHAR_DATA, which in turn acquires
- * BU_SEM_SYSCALL semaphore.
+ * Note : This function requires memory allocation for ICV_UCHAR_DATA,
+ * which in turn acquires BU_SEM_SYSCALL semaphore.
  *
  * @param bif ICV struct where data is to be written
- * @param y Index of the line at which data is to be written. 0 for the first line
+ * @param y Index of the line at which data is to be written. 0 for
+ * the first line
  * @data Line Data to be written
- * @type Type of data, for unsigned char data specify ICV_DATA_UCHAR or 1
+ * @type Type of data, e.g., uint8 data specify ICV_DATA_UCHAR or 1
  * @return on success 0, on failure -1
  */
 ICV_EXPORT int icv_writeline(icv_image_t *bif, int y, void *data, ICV_DATA type);
 
 /**
  * Writes a pixel to the specified coordinates in the data of ICV struct.
+ *
  * @param bif ICV struct where data is to be written
  * @param x x-dir coordinate of the pixel
- * @param y y-dir coordinate of the pixel. (0,0) coordinate is taken as bottom left
+ * @param y y-dir coordinate of the pixel. (0,0) coordinate is taken
+ * as bottom left
  * @data Data to be written
  * @return on success 0, on failure -1
  */
@@ -194,23 +198,31 @@ ICV_EXPORT int icv_writepixel(icv_image_t *bif, int x, int y, double *data);
 ICV_EXPORT extern int icv_write(icv_image_t *bif, const char*filename, ICV_IMAGE_FORMAT format);
 
 /**
- * Load a file into an ICV struct. For most formats, this will be called with
- * format=ICV_IMAGE_AUTO, hint_format=0, hint_width=0, hint_height=0 and
- * hint_depth=0 for default values. At the moment, the data is packed into the
- * data field as rgb24 (raw pix style).
+ * Load a file into an ICV struct. For most formats, this will be
+ * called with format=ICV_IMAGE_AUTO, hint_format=0, hint_width=0,
+ * hint_height=0 and hint_depth=0 for default values. At the moment,
+ * the data is packed into the data field as rgb24 (raw pix style).
  *
- * For pix and bw files, having width and height set to 0 will trigger a
- * heuristic sizing algorithm based on file size, assuming that the image is
- * square at first, then looking through a set of common sizes, finally assuming
- * 512x512.
+ * For pix and bw files, having width and height set to 0 will trigger
+ * a heuristic sizing algorithm based on file size, assuming that the
+ * image is square at first, then looking through a set of common
+ * sizes, finally assuming 512x512.
  *
  * To read stream from stdin pass NULL pointer for filename.
  *
+ * In case of bw and pix image if size is unknown pass 0 for width and
+ * height. This will read the image till EOF is reached. The image
+ * size of the output image will be : height = 1; width = size; where
+ * size = total bytes read
+ *
  * @param filename File to read
- * @param hint_format Probable format of the file, typically ICV_IMAGE_AUTO
- * @param hint_width Width when passed as parameter from calling program. 0 for default
- * @param hint_height Height when passed as parameter from calling program. 0 for default
- * @param hint_depth Default depth field, 0 for default.
+
+ * @param hint_format Probable format of the file, typically
+ * ICV_IMAGE_AUTO
+ * @param hint_width Width when passed as parameter from calling
+ * program.
+ * @param hint_height Height when passed as parameter from calling
+ * program.
  * @return A newly allocated struct holding the loaded image info.
  */
 ICV_EXPORT extern icv_image_t *icv_read(const char *filename, int format, int width, int height);
@@ -235,10 +247,10 @@ ICV_EXPORT extern void icv_destroy(icv_image_t *bif);
  */
 
 /**
- * Converts a single channel image to three channel image.
- * Replicates the pixel as done by bw-pix utility
- * returns a three channel image.
- * If a three channel image is passed, this function returns the same image.
+ * Converts a single channel image to three channel image.  Replicates
+ * the pixel as done by bw-pix utility returns a three channel image.
+ * If a three channel image is passed, this function returns the same
+ * image.
  */
 ICV_EXPORT int icv_gray2rgb(icv_image_t *img);
 
@@ -265,16 +277,16 @@ typedef enum {
 #define icv_rgb2gray_crt(_a) icv_rgb2gray(_a, ICV_COLOR_RGB, 0.26, 0.66, 0.08)
 
 /**
- * converts a three plane image to single plane image.
- * This function will combine or select planes of the image based on
- * the input arguments
+ * converts a three plane image to single plane image.  This function
+ * will combine or select planes of the image based on the input
+ * arguments
  *
- * A normal calling of this functions is as follows :
- * icv_image_rgb2gray(bif, 0 ,0 ,0 ,0 ,0); where bif is the rgb
- * image to be converted.
+ * A normal calling of this functions is as follows:
+ * icv_image_rgb2gray(bif, 0 ,0 ,0 ,0 ,0); where bif is the rgb image
+ * to be converted.
  *
- * @param color Chooses color planes to be selected for combination
- *    This function will need color to be specified from
+ * @param color Chooses color planes to be selected for combination.
+ * This function will need color to be specified from
  *              ICV_COLOR_R
  *              ICV_COLOR_G
  *              ICV_COLOR_B
@@ -287,9 +299,8 @@ typedef enum {
  * @param bweight Weight for b-plane
  * @return 0 on success; on failure return 1
  *
- *  User can specify weights in the arguments, for the selected
- *  color planes. If 0 weight is chosen this utility assigns equal
- *  weights.
+ * User can specify weights in the arguments, for the selected color
+ * planes. If 0 weight is chosen this utility assigns equal weights.
  *
  */
 ICV_EXPORT int icv_rgb2gray(icv_image_t *img,
@@ -321,6 +332,7 @@ ICV_EXPORT extern int icv_rect(icv_image_t *img, int xorig, int yorig, int xnum,
 
 /**
  * This function crops an input image.
+ *
  * This can do a screwed cropping, i.e. given any four points of
  * quadrilateral in an image, map it to a rectangle of xnumXynum
  * dimension.
@@ -366,9 +378,9 @@ ICV_EXPORT extern int icv_crop(icv_image_t *img,
 ICV_EXPORT void icv_sanitize(icv_image_t* img);
 
 /**
- * This adds a constant value to all the pixels of the image.
- * Also if the flag ICV_OPERATIONS_MODE is set this doesn't sanitize
- * the image.
+ * This adds a constant value to all the pixels of the image.  Also if
+ * the flag ICV_OPERATIONS_MODE is set this doesn't sanitize the
+ * image.
  *
  * Note to set the flag for a bif (icv_image struct);
  * bif->flags |= ICV_OPERATIONS_MODE;
@@ -391,24 +403,23 @@ ICV_EXPORT void icv_divide_val(icv_image_t* img, double val);
 
 /**
  * This raises all the pixels of the image to a constant exponential
- *  power.
- * Also if the flag ICV_OPERATIONS_MODE is set this doesn't sanitize
- * the image.
+ * power.  Also if the flag ICV_OPERATIONS_MODE is set this doesn't
+ * sanitize the image.
  */
 ICV_EXPORT void icv_pow_val(icv_image_t* img, double val);
 
 /**
- * This routine adds pixel value of one image to pixel value of
- * other pixel and inserts in the same index of the output image.
+ * This routine adds pixel value of one image to pixel value of other
+ * pixel and inserts in the same index of the output image.
  *
  * Also it sanitizes the image.
  */
 ICV_EXPORT icv_image_t *icv_add(icv_image_t *img1, icv_image_t *img2);
 
 /**
- * This routine subtracts pixel value of one image from pixel value
- * of other pixel and inserts the result at the same index of the
- * output image.
+ * This routine subtracts pixel value of one image from pixel value of
+ * other pixel and inserts the result at the same index of the output
+ * image.
  *
  * Also it sanitizes the image.
  */
@@ -416,8 +427,8 @@ ICV_EXPORT icv_image_t *icv_sub(icv_image_t *img1, icv_image_t *img2);
 
 /**
  * This routine multiplies pixel value of one image to pixel value of
- * other pixel and inserts the result at the same index of the
- * output image.
+ * other pixel and inserts the result at the same index of the output
+ * image.
  *
  * Also it sanitizes the image.
  */
@@ -425,23 +436,24 @@ ICV_EXPORT icv_image_t *icv_multiply(icv_image_t *img1, icv_image_t *img2);
 
 /**
  * This routine divides pixel value of one image from pixel value of
- * other pixel and inserts the result at the same index of the
- * output image.
+ * other pixel and inserts the result at the same index of the output
+ * image.
  *
  * Also it sanitizes the image.
  */
 ICV_EXPORT icv_image_t *icv_divides(icv_image_t *img1, icv_image_t *img2);
 
 /**
- * Change the saturation of image pixels.  If sat is
- * set to 0.0 the result will be monochromatic, if sat is made
- * 1.0, the color will not change, if sat is made greater than 1.0,
- * the amount of color is increased.
+ * Change the saturation of image pixels.  If sat is set to 0.0 the
+ * result will be monochromatic, if sat is made 1.0, the color will
+ * not change, if sat is made greater than 1.0, the amount of color is
+ * increased.
  *
  * @param img RGB Image to be saturated.
  * @param sat Saturation value.
  */
 ICV_EXPORT int icv_saturate(icv_image_t* img, double sat);
+
 
 /** @file libicv/filter.c
  *
@@ -467,10 +479,11 @@ typedef enum {
     ICV_FILTER_3_NULL
 } ICV_FILTER;
 
+
 /**
- * Filters an image with the specified filter type. Basically convolves
- * kernel with the image.
- * Does zero_padding for outbound pixels.
+ * Filters an image with the specified filter type. Basically
+ * convolves kernel with the image.  Does zero_padding for outbound
+ * pixels.
  *
  * @param img Image to be filtered.
  * @param filter_type Type of filter to be used.
@@ -478,11 +491,11 @@ typedef enum {
  */
 ICV_EXPORT extern int icv_filter(icv_image_t *img, ICV_FILTER filter_type);
 
+
 /**
- * Filters a set of three image with the specified filter type.
- * Does zero_padding for outbound pixels.
- * Finds the resultant pixel with the help of neighbouring pixels in
- * all the three images.
+ * Filters a set of three image with the specified filter type.  Does
+ * zero_padding for outbound pixels.  Finds the resultant pixel with
+ * the help of neighbouring pixels in all the three images.
  *
  * @return Resultant image.
  *
@@ -491,6 +504,7 @@ ICV_EXPORT extern icv_image_t *icv_filter3(icv_image_t *old_img,
 					       icv_image_t *curr_img,
 					       icv_image_t *new_img,
 					       ICV_FILTER filter_type);
+
 
 /**
  * icv_fade will darken a pix by a certain fraction.
@@ -508,6 +522,7 @@ ICV_EXPORT extern int icv_fade(icv_image_t *img, double fraction);
  * This file contains image statistics and histogram routines.
  *
  */
+
 
 /**
  * This function calculates the histogram of different channels

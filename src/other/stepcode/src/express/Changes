@@ -23,7 +23,7 @@ cleaner.  The bad news is that I left in some of the original code as
 comments, so you may be distracted by this.
 
 I have converted over two pieces of programs that depend on the
-library.  fedex_plus (in ~pdevel/src/ffedex_plus) and the step parser
+library.  exp2cxx (in ~pdevel/src/fexp2cxx) and the step parser
 (in ~pdevel/src/fstep).  Since I didn't write either one originally, I
 don't take credit for the overall readability, but they at least
 provide proof that the library functions.

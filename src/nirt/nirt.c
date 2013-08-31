@@ -170,7 +170,7 @@ attrib_print(void)
 {
     int i;
 
-    for (i=0; i < a_tab.attrib_use; i++) {
+    for (i = 0; i < a_tab.attrib_use; i++) {
 	fprintf(stdout, "\"%s\"\n", a_tab.attrib[i]);
     }
 }
@@ -185,7 +185,7 @@ attrib_flush(void)
     int i;
 
     a_tab.attrib_use = 0;
-    for (i=0; i < a_tab.attrib_use; i++)
+    for (i = 0; i < a_tab.attrib_use; i++)
 	bu_free(a_tab.attrib[i], "strdup");
 }
 

@@ -1,4 +1,4 @@
---    $ ../bin/fedex_plus ../../data/test_schema.exp
+--    $ ../bin/exp2cxx ../../data/test_schema.exp
 --    ../../data/test_schema.exp:34: --ERROR: Query expression source must be an aggregate.
 --    Errors in input
 

@@ -1300,6 +1300,17 @@ static struct to_cmdtab to_cmds[] = {
     {(char *)0,	(char *)0, 0, TO_WRAPPER_FUNC_PTR_NULL, GED_FUNC_PTR_NULL}
 };
 
+static fastf_t
+screen_to_view_x(struct dm *dmp, fastf_t x)
+{
+    return x / dmp->dm_width * 2.0 - 1.0;
+}
+
+static fastf_t
+screen_to_view_y(struct dm *dmp, fastf_t y)
+{
+    return (y / dmp->dm_height * -2.0 + 1.0) / dmp->dm_aspect;
+}
 
 /**
  * @brief create the Tcl command for to_open
@@ -6323,9 +6334,6 @@ to_mouse_append_pt_common(struct ged *gedp,
 {
     int ret;
     char *av[4];
-    fastf_t inv_width;
-    fastf_t inv_height;
-    fastf_t inv_aspect;
     point_t view;
     struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
@@ -6363,11 +6371,8 @@ to_mouse_append_pt_common(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    inv_width = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
-    inv_height = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_height;
-    inv_aspect = (fastf_t)gdvp->gdv_dmp->dm_height / (fastf_t)gdvp->gdv_dmp->dm_width;
-    x = x * inv_width * 2.0 - 1.0;
-    y = (y * inv_height * -2.0 + 1.0) * inv_aspect;
+    x = screen_to_view_x(gdvp->gdv_dmp, x);
+    y = screen_to_view_y(gdvp->gdv_dmp, y);
     VSET(view, x, y, 0.0);
 
     gedp->ged_gvp = gdvp->gdv_view;
@@ -6627,9 +6632,6 @@ to_mouse_find_arb_edge(struct ged *gedp,
 		       int UNUSED(maxargs))
 {
     char *av[6];
-    fastf_t inv_width;
-    fastf_t inv_height;
-    fastf_t inv_aspect;
     point_t view;
     struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
@@ -6667,11 +6669,8 @@ to_mouse_find_arb_edge(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    inv_width = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
-    inv_height = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_height;
-    inv_aspect = (fastf_t)gdvp->gdv_dmp->dm_height / (fastf_t)gdvp->gdv_dmp->dm_width;
-    x = x * inv_width * 2.0 - 1.0;
-    y = (y * inv_height * -2.0 + 1.0) * inv_aspect;
+    x = screen_to_view_x(gdvp->gdv_dmp, x);
+    y = screen_to_view_y(gdvp->gdv_dmp, y);
     VSET(view, x, y, 0.0);
 
     bu_vls_printf(&pt_vls, "%lf %lf %lf", view[X], view[Y], view[Z]);
@@ -6699,9 +6698,6 @@ to_mouse_find_bot_edge(struct ged *gedp,
 		       int UNUSED(maxargs))
 {
     char *av[6];
-    fastf_t inv_width;
-    fastf_t inv_height;
-    fastf_t inv_aspect;
     point_t view;
     struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
@@ -6739,11 +6735,8 @@ to_mouse_find_bot_edge(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    inv_width = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
-    inv_height = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_height;
-    inv_aspect = (fastf_t)gdvp->gdv_dmp->dm_height / (fastf_t)gdvp->gdv_dmp->dm_width;
-    x = x * inv_width * 2.0 - 1.0;
-    y = (y * inv_height * -2.0 + 1.0) * inv_aspect;
+    x = screen_to_view_x(gdvp->gdv_dmp, x);
+    y = screen_to_view_y(gdvp->gdv_dmp, y);
     VSET(view, x, y, 0.0);
 
     bu_vls_printf(&pt_vls, "%lf %lf %lf", view[X], view[Y], view[Z]);
@@ -6770,9 +6763,6 @@ to_mouse_find_botpt(struct ged *gedp,
 		    int UNUSED(maxargs))
 {
     char *av[6];
-    fastf_t inv_width;
-    fastf_t inv_height;
-    fastf_t inv_aspect;
     point_t view;
     struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
@@ -6810,11 +6800,8 @@ to_mouse_find_botpt(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    inv_width = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
-    inv_height = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_height;
-    inv_aspect = (fastf_t)gdvp->gdv_dmp->dm_height / (fastf_t)gdvp->gdv_dmp->dm_width;
-    x = x * inv_width * 2.0 - 1.0;
-    y = (y * inv_height * -2.0 + 1.0) * inv_aspect;
+    x = screen_to_view_x(gdvp->gdv_dmp, x);
+    y = screen_to_view_y(gdvp->gdv_dmp, y);
     VSET(view, x, y, 0.0);
 
     bu_vls_printf(&pt_vls, "%lf %lf %lf", view[X], view[Y], view[Z]);
@@ -6841,9 +6828,6 @@ to_mouse_find_metaballpt(struct ged *gedp,
 			 int UNUSED(maxargs))
 {
     char *av[6];
-    fastf_t inv_width;
-    fastf_t inv_height;
-    fastf_t inv_aspect;
     point_t model;
     point_t view;
     struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
@@ -6882,11 +6866,8 @@ to_mouse_find_metaballpt(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    inv_width = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
-    inv_height = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_height;
-    inv_aspect = (fastf_t)gdvp->gdv_dmp->dm_height / (fastf_t)gdvp->gdv_dmp->dm_width;
-    x = x * inv_width * 2.0 - 1.0;
-    y = (y * inv_height * -2.0 + 1.0) * inv_aspect;
+    x = screen_to_view_x(gdvp->gdv_dmp, x);
+    y = screen_to_view_y(gdvp->gdv_dmp, y);
     VSET(view, x, y, 0.0);
     MAT4X3PNT(model, gdvp->gdv_view->gv_view2model, view);
 
@@ -6913,9 +6894,6 @@ to_mouse_find_pipept(struct ged *gedp,
 		     int UNUSED(maxargs))
 {
     char *av[6];
-    fastf_t inv_width;
-    fastf_t inv_height;
-    fastf_t inv_aspect;
     point_t model;
     point_t view;
     struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
@@ -6954,11 +6932,8 @@ to_mouse_find_pipept(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    inv_width = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
-    inv_height = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_height;
-    inv_aspect = (fastf_t)gdvp->gdv_dmp->dm_height / (fastf_t)gdvp->gdv_dmp->dm_width;
-    x = x * inv_width * 2.0 - 1.0;
-    y = (y * inv_height * -2.0 + 1.0) * inv_aspect;
+    x = screen_to_view_x(gdvp->gdv_dmp, x);
+    y = screen_to_view_y(gdvp->gdv_dmp, y);
     VSET(view, x, y, 0.0);
     MAT4X3PNT(model, gdvp->gdv_view->gv_view2model, view);
 
@@ -7270,8 +7245,6 @@ to_mouse_move_botpt(struct ged *gedp,
 	mat_t mat;
 	size_t vertex_i;
 	char *last;
-	fastf_t inv_height;
-	fastf_t inv_aspect;
 
 	if ((last = strrchr(argv[2], '/')) == NULL)
 	    last = (char *)argv[2];
@@ -7312,11 +7285,8 @@ to_mouse_move_botpt(struct ged *gedp,
 	MAT4X3PNT(view, gdvp->gdv_view->gv_model2view, &botip->vertices[vertex_i*3]);
 	MAT_COPY(v2m_mat, gdvp->gdv_view->gv_view2model);
 
-	inv_width = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
-	inv_height = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_height;
-	inv_aspect = (fastf_t)gdvp->gdv_dmp->dm_height / (fastf_t)gdvp->gdv_dmp->dm_width;
-	dx = x * inv_width * 2.0 - 1.0;
-	dy = (y * inv_height * -2.0 + 1.0) * inv_aspect;
+	dx = screen_to_view_x(gdvp->gdv_dmp, x);
+	dy = screen_to_view_y(gdvp->gdv_dmp, y);
 	dz = view[Z];
 
 	rt_db_free_internal(&intern);
@@ -7917,9 +7887,6 @@ to_mouse_poly_circ(struct ged *gedp,
     char *av[7];
     int x, y;
     fastf_t fx, fy;
-    fastf_t inv_width;
-    fastf_t inv_height;
-    fastf_t inv_aspect;
     point_t v_pt, m_pt;
     struct bu_vls plist = BU_VLS_INIT_ZERO;
     struct bu_vls i_vls = BU_VLS_INIT_ZERO;
@@ -7964,11 +7931,8 @@ to_mouse_poly_circ(struct ged *gedp,
     gdvp->gdv_view->gv_prevMouseX = x;
     gdvp->gdv_view->gv_prevMouseY = y;
 
-    inv_width = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
-    inv_height = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_height;
-    inv_aspect = (fastf_t)gdvp->gdv_dmp->dm_height / (fastf_t)gdvp->gdv_dmp->dm_width;
-    fx = x * inv_width * 2.0 - 1.0;
-    fy = (y * inv_height * -2.0 + 1.0) * inv_aspect;
+    fx = screen_to_view_x(gdvp->gdv_dmp, x);
+    fy = screen_to_view_y(gdvp->gdv_dmp, y);
 
     bu_vls_printf(&plist, "{0 ");
 
@@ -8041,9 +8005,6 @@ to_mouse_poly_cont(struct ged *gedp,
     char *av[8];
     int x, y;
     fastf_t fx, fy;
-    fastf_t inv_width;
-    fastf_t inv_height;
-    fastf_t inv_aspect;
     point_t v_pt, m_pt;
     struct ged_dm_view *gdvp;
     ged_data_polygon_state *gdpsp;
@@ -8086,11 +8047,8 @@ to_mouse_poly_cont(struct ged *gedp,
     gdvp->gdv_view->gv_prevMouseX = x;
     gdvp->gdv_view->gv_prevMouseY = y;
 
-    inv_width = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
-    inv_height = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_height;
-    inv_aspect = (fastf_t)gdvp->gdv_dmp->dm_height / (fastf_t)gdvp->gdv_dmp->dm_width;
-    fx = x * inv_width * 2.0 - 1.0;
-    fy = (y * inv_height * -2.0 + 1.0) * inv_aspect;
+    fx = screen_to_view_x(gdvp->gdv_dmp, x);
+    fy = screen_to_view_y(gdvp->gdv_dmp, y);
     VSET(v_pt, fx, fy, 1.0);
 
     MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, v_pt);
@@ -8139,9 +8097,6 @@ to_mouse_poly_ell(struct ged *gedp,
     char *av[7];
     int x, y;
     fastf_t fx, fy;
-    fastf_t inv_width;
-    fastf_t inv_height;
-    fastf_t inv_aspect;
     point_t m_pt;
     struct bu_vls plist = BU_VLS_INIT_ZERO;
     struct bu_vls i_vls = BU_VLS_INIT_ZERO;
@@ -8186,11 +8141,8 @@ to_mouse_poly_ell(struct ged *gedp,
     gdvp->gdv_view->gv_prevMouseX = x;
     gdvp->gdv_view->gv_prevMouseY = y;
 
-    inv_width = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
-    inv_height = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_height;
-    inv_aspect = (fastf_t)gdvp->gdv_dmp->dm_height / (fastf_t)gdvp->gdv_dmp->dm_width;
-    fx = x * inv_width * 2.0 - 1.0;
-    fy = (y * inv_height * -2.0 + 1.0) * inv_aspect;
+    fx = screen_to_view_x(gdvp->gdv_dmp, x);
+    fy = screen_to_view_y(gdvp->gdv_dmp, y);
 
     bu_vls_printf(&plist, "{0 ");
 
@@ -8272,9 +8224,6 @@ to_mouse_poly_rect(struct ged *gedp,
     char *av[7];
     int x, y;
     fastf_t fx, fy;
-    fastf_t inv_width;
-    fastf_t inv_height;
-    fastf_t inv_aspect;
     point_t v_pt, m_pt;
     struct bu_vls plist = BU_VLS_INIT_ZERO;
     struct bu_vls i_vls = BU_VLS_INIT_ZERO;
@@ -8319,11 +8268,8 @@ to_mouse_poly_rect(struct ged *gedp,
     gdvp->gdv_view->gv_prevMouseX = x;
     gdvp->gdv_view->gv_prevMouseY = y;
 
-    inv_width = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
-    inv_height = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_height;
-    inv_aspect = (fastf_t)gdvp->gdv_dmp->dm_height / (fastf_t)gdvp->gdv_dmp->dm_width;
-    fx = x * inv_width * 2.0 - 1.0;
-    fy = (y * inv_height * -2.0 + 1.0) * inv_aspect;
+    fx = screen_to_view_x(gdvp->gdv_dmp, x);
+    fy = screen_to_view_y(gdvp->gdv_dmp, y);
 
     if (gdvp->gdv_view->gv_mode == TCLCAD_POLY_SQUARE_MODE) {
 	fastf_t dx, dy;
@@ -10181,9 +10127,6 @@ to_poly_circ_mode(struct ged *gedp,
     char *av[5];
     int x, y;
     fastf_t fx, fy;
-    fastf_t inv_width;
-    fastf_t inv_height;
-    fastf_t inv_aspect;
     point_t v_pt, m_pt;
     struct bu_vls plist = BU_VLS_INIT_ZERO;
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
@@ -10237,12 +10180,8 @@ to_poly_circ_mode(struct ged *gedp,
     gdvp->gdv_view->gv_prevMouseY = y;
     gdvp->gdv_view->gv_mode = TCLCAD_POLY_CIRCLE_MODE;
 
-    inv_width = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
-    inv_height = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_height;
-    inv_aspect = (fastf_t)gdvp->gdv_dmp->dm_height / (fastf_t)gdvp->gdv_dmp->dm_width;
-
-    fx = x * inv_width * 2.0 - 1.0;
-    fy = (y * inv_height * -2.0 + 1.0) * inv_aspect;
+    fx = screen_to_view_x(gdvp->gdv_dmp, x);
+    fy = screen_to_view_y(gdvp->gdv_dmp, y);
     VSET(v_pt, fx, fy, 1.0);
     if (gedp->ged_gvp->gv_grid.ggs_snap)
 	ged_snap_to_grid(gedp, &v_pt[X], &v_pt[Y]);
@@ -10292,9 +10231,6 @@ to_poly_cont_build(struct ged *gedp,
     char *av[8];
     int x, y;
     fastf_t fx, fy;
-    fastf_t inv_width;
-    fastf_t inv_height;
-    fastf_t inv_aspect;
     point_t v_pt, m_pt;
     struct ged_dm_view *gdvp;
     ged_data_polygon_state *gdpsp;
@@ -10346,12 +10282,8 @@ to_poly_cont_build(struct ged *gedp,
     gdvp->gdv_view->gv_prevMouseY = y;
     gdvp->gdv_view->gv_mode = TCLCAD_POLY_CONTOUR_MODE;
 
-    inv_width = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
-    inv_height = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_height;
-    inv_aspect = (fastf_t)gdvp->gdv_dmp->dm_height / (fastf_t)gdvp->gdv_dmp->dm_width;
-
-    fx = x * inv_width * 2.0 - 1.0;
-    fy = (y * inv_height * -2.0 + 1.0) * inv_aspect;
+    fx = screen_to_view_x(gdvp->gdv_dmp, x);
+    fy = screen_to_view_y(gdvp->gdv_dmp, y);
     VSET(v_pt, fx, fy, 1.0);
     if (gedp->ged_gvp->gv_grid.ggs_snap)
 	ged_snap_to_grid(gedp, &v_pt[X], &v_pt[Y]);
@@ -10481,9 +10413,6 @@ to_poly_ell_mode(struct ged *gedp,
     char *av[5];
     int x, y;
     fastf_t fx, fy;
-    fastf_t inv_width;
-    fastf_t inv_height;
-    fastf_t inv_aspect;
     point_t v_pt, m_pt;
     struct bu_vls plist = BU_VLS_INIT_ZERO;
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
@@ -10537,12 +10466,8 @@ to_poly_ell_mode(struct ged *gedp,
     gdvp->gdv_view->gv_prevMouseY = y;
     gdvp->gdv_view->gv_mode = TCLCAD_POLY_ELLIPSE_MODE;
 
-    inv_width = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
-    inv_height = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_height;
-    inv_aspect = (fastf_t)gdvp->gdv_dmp->dm_height / (fastf_t)gdvp->gdv_dmp->dm_width;
-
-    fx = x * inv_width * 2.0 - 1.0;
-    fy = (y * inv_height * -2.0 + 1.0) * inv_aspect;
+    fx = screen_to_view_x(gdvp->gdv_dmp, x);
+    fy = screen_to_view_y(gdvp->gdv_dmp, y);
     VSET(v_pt, fx, fy, 1.0);
     if (gedp->ged_gvp->gv_grid.ggs_snap)
 	ged_snap_to_grid(gedp, &v_pt[X], &v_pt[Y]);
@@ -10593,9 +10518,6 @@ to_poly_rect_mode(struct ged *gedp,
     int x, y;
     int sflag;
     fastf_t fx, fy;
-    fastf_t inv_width;
-    fastf_t inv_height;
-    fastf_t inv_aspect;
     point_t v_pt, m_pt;
     struct bu_vls plist = BU_VLS_INIT_ZERO;
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
@@ -10661,12 +10583,8 @@ to_poly_rect_mode(struct ged *gedp,
     else
 	gdvp->gdv_view->gv_mode = TCLCAD_POLY_RECTANGLE_MODE;
 
-    inv_width = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
-    inv_height = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_height;
-    inv_aspect = (fastf_t)gdvp->gdv_dmp->dm_height / (fastf_t)gdvp->gdv_dmp->dm_width;
-
-    fx = x * inv_width * 2.0 - 1.0;
-    fy = (y * inv_height * -2.0 + 1.0) * inv_aspect;
+    fx = screen_to_view_x(gdvp->gdv_dmp, x);
+    fy = screen_to_view_y(gdvp->gdv_dmp, y);
     VSET(v_pt, fx, fy, 1.0);
     if (gedp->ged_gvp->gv_grid.ggs_snap)
 	ged_snap_to_grid(gedp, &v_pt[X], &v_pt[Y]);
@@ -11404,9 +11322,6 @@ to_screen2model(struct ged *gedp,
 		const char *usage,
 		int UNUSED(maxargs))
 {
-    fastf_t inv_width;
-    fastf_t inv_height;
-    fastf_t inv_aspect;
     point_t view;
     point_t model;
     struct ged_dm_view *gdvp;
@@ -11444,11 +11359,8 @@ to_screen2model(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    inv_width = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
-    inv_height = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_height;
-    inv_aspect = (fastf_t)gdvp->gdv_dmp->dm_height / (fastf_t)gdvp->gdv_dmp->dm_width;
-    x = x * inv_width * 2.0 - 1.0;
-    y = (y * inv_height * -2.0 + 1.0) * inv_aspect;
+    x = screen_to_view_x(gdvp->gdv_dmp, x);
+    y = screen_to_view_y(gdvp->gdv_dmp, y);
     VSET(view, x, y, 0.0);
     MAT4X3PNT(model, gdvp->gdv_view->gv_view2model, view);
 
@@ -11465,9 +11377,6 @@ to_screen2view(struct ged *gedp,
 	       const char *usage,
 	       int UNUSED(maxargs))
 {
-    fastf_t inv_width;
-    fastf_t inv_height;
-    fastf_t inv_aspect;
     point_t view;
     struct ged_dm_view *gdvp;
 
@@ -11504,11 +11413,8 @@ to_screen2view(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    inv_width = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
-    inv_height = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_height;
-    inv_aspect = (fastf_t)gdvp->gdv_dmp->dm_height / (fastf_t)gdvp->gdv_dmp->dm_width;
-    x = x * inv_width * 2.0 - 1.0;
-    y = (y * inv_height * -2.0 + 1.0) * inv_aspect;
+    x = screen_to_view_x(gdvp->gdv_dmp, x);
+    y = screen_to_view_y(gdvp->gdv_dmp, y);
     VSET(view, x, y, 0.0);
 
     bu_vls_printf(gedp->ged_result_str, "%lf %lf %lf", V3ARGS(view));

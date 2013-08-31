@@ -33,6 +33,7 @@ bu_utctime(struct bu_vls *vls_gmtime, const int64_t time_val)
     struct tm loctime;
     struct tm* retval;
     time_t some_time;
+    int fail = 0;
 
     if (!vls_gmtime)
 	return;
@@ -52,7 +53,15 @@ bu_utctime(struct bu_vls *vls_gmtime, const int64_t time_val)
     retval = gmtime(&some_time);
     if (retval)
 	loctime = *retval; /* struct copy */
+    else
+	fail = 1;
     bu_semaphore_release(BU_SEM_DATETIME);
+
+    if (fail) {
+	/* time error: but set something, an invalid "NULL" time. */
+	bu_vls_sprintf(vls_gmtime, nulltime);
+	return;
+    }
 
     /* put the UTC time in the desired ISO format: "yyyy-mm-ddThh:mm:ssZ" */
     bu_vls_sprintf(vls_gmtime, "%04d-%02d-%02dT%02d:%02d:%02dZ",

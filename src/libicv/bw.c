@@ -59,9 +59,12 @@ bw_write(icv_image_t *bif, const char *filename)
     data =  data2uchar(bif);
     size = (size_t) bif->height*bif->width;
 
-    if(filename==NULL)
+    if(filename==NULL) {
 	fd = fileno(stdout);
-    else if ((fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, WRMODE)) < 0) {
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    setmode(fd, O_BINARY);
+#endif
+    } else if ((fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, WRMODE)) < 0) {
 	bu_log("bw_write: Cannot open file for saving\n");
 	return -1;
     }
@@ -81,37 +84,54 @@ HIDDEN icv_image_t *
 bw_read(const char *filename, int width, int height)
 {
     int fd;
-    unsigned char *data = 0;
+    unsigned char *data = NULL;
     icv_image_t *bif;
     size_t size;
+    size_t buffsize=1024;
 
-    if (width == 0 || height == 0) {
-	height = 512;
-	width = 512;
-    }
-
-    size = (size_t) height*width;
-
-    if(filename==NULL)
+    if(filename==NULL) {
 	fd = fileno(stdin);
-    else if ((fd = open(filename, O_RDONLY, WRMODE)) < 0) {
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    setmode(fd, O_BINARY);
+#endif
+    } else if ((fd = open(filename, O_RDONLY, WRMODE)) < 0) {
 	bu_log("bw_read: Cannot open %s for reading\n", filename);
-	return NULL;
-    }
-
-    data = (unsigned char *)bu_malloc(size, "bw_read : unsigned char data");
-    if (read(fd, data, size) < 0) {
-	bu_log("bw_read: Error Occurred while Reading\n");
-	bu_free(data, "icv_image data");
 	return NULL;
     }
     BU_ALLOC(bif, struct icv_image);
     ICV_IMAGE_INIT(bif);
+    /* buffer pixel wise */
+    if (width == 0 || height == 0) {
+	int status = 0;
+	size = 0;
+	data = (unsigned char *)bu_malloc(buffsize, "bw_read : unsigned char data");
+	while((status = read(fd, &data[size], 1))==1) {
+	    size++;
+	    if(size==buffsize) {
+		buffsize+=1024;
+		data = (unsigned char *)bu_realloc(data, buffsize, "bw_read : increase size to acomodate data");
+	    }
+	}
+	if(size<buffsize) {
+	    data = (unsigned char *)bu_realloc(data, size, "bw_read : decrease size in overbuffered");
+	}
+	bif->height = 1;
+	bif->width = (int) size;
+    } else { /* buffer frame wise */
+	size = (size_t) height*width;
+	data = (unsigned char *)bu_malloc(size, "bw_read : unsigned char data");
+	if (read(fd, data, size) < 0) {
+	    bu_log("bw_read: Error Occurred while Reading\n");
+	    bu_free(data, "icv_image data");
+	    bu_free(bif, "icv_structure");
+	    return NULL;
+	}
+	bif->height = height;
+	bif->width = width;
+    }
     bif->data = uchar2double(data, size);
     bu_free(data, "bw_read : unsigned char data");
     bif->magic = ICV_IMAGE_MAGIC;
-    bif->height = height;
-    bif->width = width;
     bif->channels = 1;
     bif->color_space = ICV_COLOR_SPACE_GRAY;
     bif->gamma_corr = 0.0;

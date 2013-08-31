@@ -29,18 +29,6 @@
 #define AVS_ALLOCATION_INCREMENT 32
 
 void
-bu_avs_set_date(struct bu_attribute_value_pair *app, const bu_attr_time_t typ)
-{
-    /* save the current time */
-    time_t curr_time = time(0);
-
-    if (typ == BU_ATTR_CREATED)
-	app->created = (int64_t)curr_time;
-    else
-	app->modified = (int64_t)curr_time;
-}
-
-void
 bu_avs_init_empty(struct bu_attribute_value_set *avsp)
 {
     avsp->magic = BU_AVS_MAGIC;
@@ -114,11 +102,6 @@ bu_avs_add(struct bu_attribute_value_set *avsp, const char *name, const char *va
 	    } else {
 		app->value = (char *)NULL;
 	    }
-	    /* ensure we have a creation time for existing attrs */
-	    if (!app->created)
-		bu_avs_set_date(app, BU_ATTR_CREATED);
-	    /* add modification time */
-	    bu_avs_set_date(app, BU_ATTR_MODIFIED);
 	    return 1;
 	}
     }
@@ -144,8 +127,6 @@ bu_avs_add(struct bu_attribute_value_set *avsp, const char *name, const char *va
     } else {
 	app->value = (char *)NULL;
     }
-    /* add creation time */
-    bu_avs_set_date(app, BU_ATTR_CREATED);
     return 2;
 }
 
@@ -322,8 +303,6 @@ bu_avs_add_nonunique(struct bu_attribute_value_set *avsp, const char *name, cons
     } else {
 	app->value = (char *)NULL;
     }
-    /* add creation time */
-    bu_avs_set_date(app, BU_ATTR_CREATED);
 }
 
 /*

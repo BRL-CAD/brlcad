@@ -37,7 +37,7 @@
  * Embedded or memory-constrained environments probably want to set
  * this a lot smaller than the default.
  */
-#define HEAP_BINS 1024
+#define HEAP_BINS 256
 
 /**
  * This specifies how much memory we should preallocate for each
@@ -50,7 +50,7 @@
  * Embedded or memory-constrained environments probably want to set
  * this a lot smaller than the default.
  */
-#define HEAP_PAGESIZE (HEAP_BINS * 1024)
+#define HEAP_PAGESIZE (HEAP_BINS * 256)
 
 
 struct heap {

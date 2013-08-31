@@ -56,7 +56,7 @@
       <term><option>-M</option></term>
       <listitem>
 	<para>
-	  Causes<command>nirt</command>	to read the eye point and
+	  Causes <command>nirt</command>	to read the eye point and
 	  either the orientation quaternion (new format) or the
 	  view-rotation matrix (old format) from the standard input,
 	  and fire a single ray from the point in the specified direction.

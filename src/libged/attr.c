@@ -138,19 +138,12 @@ _list_attrs(struct ged *gedp, struct bu_attribute_value_set *avs,
     struct bu_attribute_value_pair *avpp;
     size_t i;
 
-    /* show the time stamps */
-    struct bu_vls c_time = BU_VLS_INIT_ZERO;
-    struct bu_vls m_time = BU_VLS_INIT_ZERO;
     for (i = 0, avpp = avs->avp; i < avs->count; i++, avpp++) {
-	bu_utctime(&c_time, avpp->created);
-	bu_utctime(&m_time, avpp->modified);
 	bu_vls_printf(gedp->ged_result_str,
 		      "\t%-*.*s"
-		      "\t%-*.*s"
-		      "\t%s\t%s\n",
+		      "\t%-*.*s\n",
 		      max_attr_name_len, max_attr_name_len, avpp->name,
-		      max_attr_value_len, max_attr_value_len, avpp->value,
-		      c_time.vls_str, m_time.vls_str
+		      max_attr_value_len, max_attr_value_len, avpp->value
 		      );
     }
 }
@@ -236,7 +229,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	if (argc == 3) {
 	    /* just list the already sorted attribute-value pairs */
-	  _list_attrs(gedp, &avs, max_attr_name_len, max_attr_value_len);
+	    _list_attrs(gedp, &avs, max_attr_name_len, max_attr_value_len);
 	} else {
 	    /* argv[3] is the sort type: 'case', 'nocase', 'value', 'value-nocase' */
 	    if (BU_STR_EQUAL(argv[3], NOCASE)) {

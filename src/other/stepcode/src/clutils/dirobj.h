@@ -101,3 +101,4 @@ inline const char * DirObj::File( int index ) {
 }
 
 #endif
+
