@@ -3,7 +3,7 @@ SCHEMA step_merged_cad_schema;
 (* this is a MODIFIED version of the merged schema
  * original is at http://www.steptools.com/support/stdev_docs/stpcad/step_merged_cad_schema.exp
  *
- * modified to eliminate fedex_plus errors. To view changes, use one of
+ * modified to eliminate exp2cxx errors. To view changes, use one of
  * - `git log -p data/STEPTools_merged_schema/step_merged_cad_schema.exp`
  * - http://github.com/stepcode/stepcode/commits/master/data/STEPTools_merged_schema
  *)

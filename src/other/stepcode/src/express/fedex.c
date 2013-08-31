@@ -86,7 +86,7 @@
 extern int exp_yydebug;
 #endif /*YYDEBUG*/
 
-char EXPRESSgetopt_options[256] = "Bbd:e:i:w:p:rvz"; //larger than the string because fedex_plus, exppp, etc may append their own options
+char EXPRESSgetopt_options[256] = "Bbd:e:i:w:p:rvz"; //larger than the string because exp2cxx, exppp, etc may append their own options
 static int no_need_to_work = 0; /* TRUE if we can exit gracefully without doing any work */
 
 void print_fedex_version( void ) {

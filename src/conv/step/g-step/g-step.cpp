@@ -136,6 +136,8 @@ main(int argc, char *argv[])
 
     Exporter_Info_AP203 *info = new Exporter_Info_AP203();
 
+    info->split_closed = 0; /* For now, don't try splitting things - need some libbrep functionality before that can work */
+
     Registry *registry = new Registry(SchemaInit);
     InstMgr instance_list;
     STEPfile *sfile = new STEPfile(*registry, instance_list);

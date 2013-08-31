@@ -1247,7 +1247,7 @@ class SC_CORE_EXPORT TypeDescriptor {
         //
         // NOTE - memory is not allocated for this, or for _description
         // below.  It is assumed that at creation, _name will be made
-        // to point to a static location in memory.  The fedex_plus
+        // to point to a static location in memory.  The exp2cxx
         // generated code, for example, places a literal string in its
         // TypeDesc constructor calls.  This creates a location in me-
         // mory static throughout the lifetime of the calling program.

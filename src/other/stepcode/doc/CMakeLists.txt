@@ -1,7 +1,7 @@
 SET(sc_MANS
     man/man1/dataprobe.1
     man/man1/fedex.1
-    man/man1/fedex_plus.1
+    man/man1/exp2cxx.1
     man/man1/mkProbe.1
 )
 

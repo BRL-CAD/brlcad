@@ -7,7 +7,7 @@ include_directories(
 GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} stepg)
 
 set(stepg_SOURCES
-  ${fedex_srcs}
+  ${express_srcs}
   ../BRLCADWrapper.cpp
   ../STEPWrapper.cpp
   AdvancedBrepShapeRepresentation.cpp
@@ -422,7 +422,7 @@ list(APPEND stepg_LIBS ${stepg_LIBS})
 #add_definitions(-DAP203e2)
 
 BRLCAD_ADDEXEC(step-g "${stepg_SOURCES}" "${stepg_LIBS}" NO_STRICT)
-add_dependencies(step-g step-fedex-${SCHEMA_NAME}-stepg)
+add_dependencies(step-g step-express-${SCHEMA_NAME}-stepg)
 
 if(MSVC)
   set(stepg_IMPORTS

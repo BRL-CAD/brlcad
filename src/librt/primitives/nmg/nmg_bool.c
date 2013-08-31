@@ -1196,20 +1196,28 @@ nmg_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pat
     union tree *curtree;
     struct directory *dp;
 
-    NMG_CK_MODEL(*tsp->ts_m);
-    BN_CK_TOL(tsp->ts_tol);
-    RT_CK_TESS_TOL(tsp->ts_ttol);
-    RT_CK_DB_INTERNAL(ip);
-    RT_CK_RESOURCE(tsp->ts_resp);
+    if (!tsp || !pathp || !ip)
+	return TREE_NULL;
 
+    RT_CK_DB_INTERNAL(ip);
     RT_CK_FULL_PATH(pathp);
     dp = DB_FULL_PATH_CUR_DIR(pathp);
     RT_CK_DIR(dp);
 
+    if (!ip->idb_meth || !ip->idb_meth->ft_tessellate) {
+	bu_log("ERROR(%s): tessellation support not available\n", dp->d_namep);
+	return TREE_NULL;
+    }
+
+    NMG_CK_MODEL(*tsp->ts_m);
+    BN_CK_TOL(tsp->ts_tol);
+    RT_CK_TESS_TOL(tsp->ts_ttol);
+    RT_CK_RESOURCE(tsp->ts_resp);
+
     m = nmg_mm();
 
-    if (ip->idb_meth && ip->idb_meth->ft_tessellate && ip->idb_meth->ft_tessellate(&r1, m, ip, tsp->ts_ttol, tsp->ts_tol) < 0) {
-	bu_log("nmg_booltree_leaf_tess(%s): tessellation failure\n", dp->d_namep);
+    if (ip->idb_meth->ft_tessellate(&r1, m, ip, tsp->ts_ttol, tsp->ts_tol) < 0) {
+	bu_log("ERROR(%s): tessellation failure\n", dp->d_namep);
 	return TREE_NULL;
     }
 

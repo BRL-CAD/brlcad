@@ -25,6 +25,9 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * address the ctest failure of bu_heap_test_1 (seen on ia32 fbsd)
 
+* heap unit test needs to actually compare performance against system
+  allocation, not just do some work
+
 * re-do the sh/enumerate.sh script for CMake
 
 * attempt to replicate the GTK+ ISST interface in TCL
@@ -33,12 +36,13 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * investigate thread affinity locking on Linux
 
-* perform final syncing of our step code with the
-  main stepcode project and switch to their tree
-
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* fix the bu_sempahore unit test
+
+* fix the bn_poly_sub unit test
 
 * resolve bot bin sort optimization crash, disabled during release
 
@@ -75,6 +79,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* fix nurbs_ssi and nurbs_tester unit tests
 
 * get rid of the -P#processors user option (except rt* tools) common
   on utilities.  call bu_avail_cpus() and provide an environment
@@ -1754,6 +1760,12 @@ DOCUMENTATION
   other similar references; add separate markup for html (role='html')
   and pdf (role='fo') image sizing and placement; remove unnecessary
   image markup; lift child namespaces to each document's root element.
+
+  Particular targets for improvement:
+
+    doc/docbook/presentations/en/brlcad-app-devel.xml
+    doc/docbook/presentations/en/intro-to-tcltk.xml
+    doc/docbook/specifications/en/BRL_CAD_g_format_V5.xml
 
 * group public library headers into subdirs, e.g. include/bu/bu.h, so
   it's clear when you're using headers from another library and

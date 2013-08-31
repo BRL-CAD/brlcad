@@ -52,13 +52,11 @@ double gweight = 0.0;
 double bweight = 0.0;
 ICV_COLOR color;
 
-int inx=512, iny=512;
 char *out_file = NULL;
 char *in_file = NULL;
 
 static const char usage[] = "\
-pix-bw [-h] [squaresize] [-w width] [-n height]  \n\
-	[ [-N] [-C] [-R red_weight] [-G green_weight] [-B blue_weight] ] \n\
+pix-bw [-h] [ [-N] [-C] [-R red_weight] [-G green_weight] [-B blue_weight] ] \n\
 	[-o out_file.bw] [file.bw] > [out_file.bw] \n";
 
 double multiplier = 0.5;
@@ -68,7 +66,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "R:G:B:s:w:n:o:h?NC")) != -1) {
+    while ((c = bu_getopt(argc, argv, "R:G:B:o:h?NC")) != -1) {
 	switch (c) {
 	    case 'N' :
 		rweight = 0.30;
@@ -95,15 +93,6 @@ get_args(int argc, char **argv)
 	    case 'B' :
 		blue++;
 		bweight = atof(bu_optarg);
-		break;
-	    case 's':
-		inx = iny = atoi(bu_optarg);
-		break;
-	    case 'w':
-		inx = atoi(bu_optarg);
-		break;
-	    case 'n':
-		iny = atoi(bu_optarg);
 		break;
 	    case 'o':
 		out_file = bu_optarg;
@@ -145,8 +134,7 @@ main(int argc, char **argv)
 	bu_log("%s", usage);
 	return 1;
     }
-
-    img = icv_read(in_file, ICV_IMAGE_PIX, inx, iny);
+    img = icv_read(in_file, ICV_IMAGE_PIX, 0,0);
 
     if (img == NULL)
 	return 1;

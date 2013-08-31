@@ -31,10 +31,8 @@
 #include "bu.h"
 
 char usage[] = "\
-Usage: bw-pix [-h] [-s squaresize] [-w width] [-n height] \n\
-                [-o out_file.pix] [file.pix] > [out_file.pix]\n";
+Usage: bw-pix [-h] [-o out_file.pix] [file.pix] > [out_file.pix]\n";
 
-int inx=512, iny=512;
 char *out_file = NULL;
 char *in_file = NULL;
 
@@ -43,17 +41,8 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "s:w:n:o:h?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "o:h?")) != -1) {
 	switch (c) {
-            case 's':
-		inx = iny = atoi(bu_optarg);
-		break;
-	    case 'w':
-		inx = atoi(bu_optarg);
-		break;
-	    case 'n':
-		iny = atoi(bu_optarg);
-		break;
 	    case 'o':
 		out_file = bu_optarg;
 		break;
@@ -68,9 +57,9 @@ get_args(int argc, char **argv)
 	    return 0;
 	}
     } else {
-        in_file = argv[bu_optind];
-        bu_optind++;
-        return 1;
+	in_file = argv[bu_optind];
+	bu_optind++;
+	return 1;
     }
 
 
@@ -90,13 +79,13 @@ main(int argc, char **argv)
 {
     icv_image_t *img;
     if (!get_args(argc, argv)) {
-        bu_log("%s", usage);
-        return 1;
+	bu_log("%s", usage);
+	return 1;
     }
 
-    img = icv_read(in_file, ICV_IMAGE_BW, inx, iny);
+    img = icv_read(in_file, ICV_IMAGE_BW, 0, 0);
     if (img == NULL)
-        return 1;
+	return 1;
     icv_gray2rgb(img);
     icv_write(img, out_file, ICV_IMAGE_PIX);
     icv_destroy(img);

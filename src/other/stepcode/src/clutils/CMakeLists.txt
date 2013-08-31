@@ -9,7 +9,7 @@ set(LIBSTEPUTILS_SRCS
     errordesc.cc 
 )
 
-SET(LIBSTEPUTILS_PRIVATE_HDRS
+SET(SC_CLUTILS_HDRS
     dirobj.h
     errordesc.h
     gennodearray.h
@@ -30,3 +30,6 @@ SC_ADDLIB(steputils "${LIBSTEPUTILS_SRCS}" "base")
 IF(MINGW OR MSVC OR BORLAND)
     TARGET_LINK_LIBRARIES(steputils shlwapi.lib)
 ENDIF()
+
+install(FILES ${SC_CLUTILS_HDRS}
+	DESTINATION ${INCLUDE_INSTALL_DIR}/stepcode/clutils)

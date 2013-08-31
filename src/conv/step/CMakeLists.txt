@@ -1,4 +1,4 @@
-# Because the fedex_plus outputs are used by both step-g and g-step,
+# Because the exp2cxx outputs are used by both step-g and g-step,
 # the logic both commands need is the same and is defined up front.
 
 set(STEP_INCLUDE_DIRS
@@ -34,17 +34,17 @@ macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
   # read the schema name from a line like 'SCHEMA AUTOMOTIVE_DESIGN;'
   file(STRINGS ${SCHEMA_FILE} SCHEMA_STATEMENT LIMIT_COUNT 1 REGEX "SCHEMA .*")
   string(REGEX REPLACE "^SCHEMA \(.*\)\;$" "\\1" SCHEMA_N ${SCHEMA_STATEMENT} )
-  string(TOUPPER ${SCHEMA_N} SCHEMA_NAME) #fedex_plus always uses upper case for file names
+  string(TOUPPER ${SCHEMA_N} SCHEMA_NAME) #exp2cxx always uses upper case for file names
 
-  # Because SCHEMA_OUT_DIR is the working directory for fedex_plus, it must be
-  # created at configure time and be present when fedex_plus is run
+  # Because SCHEMA_OUT_DIR is the working directory for exp2cxx, it must be
+  # created at configure time and be present when exp2cxx is run
   set(SCHEMA_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/${SCHEMA_NAME})
   make_directory(${SCHEMA_OUT_DIR})
   include_directories(${SCHEMA_OUT_DIR})
   DISTCLEAN(${SCHEMA_OUT_DIR})
 
-  # These files are the standard fedex_plus outputs that need to be compiled.
-  set(fedex_srcs
+  # These files are the standard exp2cxx outputs that need to be compiled.
+  set(express_srcs
     ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.cc
     ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.init.cc
     ${SCHEMA_OUT_DIR}/SdaiAll.cc
@@ -54,27 +54,27 @@ macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
 
   # For the subdirectory add_custom_command definitions, need the generated
   # headers as well.
-  set(FEDEX_OUTPUT
-    ${fedex_srcs}
+  set(EXPRESS_OUTPUT
+    ${express_srcs}
     ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.h
     ${SCHEMA_OUT_DIR}/Sdaiclasses.h
     ${SCHEMA_OUT_DIR}/schema.h
     )
 
-  # Define a common custom build target that ensures the fedex_plus outputs
+  # Define a common custom build target that ensures the exp2cxx outputs
   # are present.  Do this rather than relying on custom commands in the
-  # subdirectories to avoid multiple build targets trying to run fedex_plus
+  # subdirectories to avoid multiple build targets trying to run exp2cxx
   # simultaneously to generate identical inputs (unknown if that is problematic)
   # and to add extra robustness for parallel build target ordering.
-  add_custom_command(OUTPUT ${FEDEX_OUTPUT} ${SCHEMA_OUT_DIR}/step_fedex_${SCHEMA_NAME}.done
-    COMMAND ${FEDEX_PLUS_EXEC} ARGS ${SCHEMA_FILE}
-    COMMAND ${CMAKE_COMMAND} -E touch ${SCHEMA_OUT_DIR}/step_fedex_${SCHEMA_NAME}.done
-    DEPENDS ${SCHEMA_FILE} ${FEDEX_PLUS_EXECUTABLE_TARGET}
+  add_custom_command(OUTPUT ${EXPRESS_OUTPUT} ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done
+    COMMAND ${EXP2CXX_EXEC} ARGS ${SCHEMA_FILE}
+    COMMAND ${CMAKE_COMMAND} -E touch ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done
+    DEPENDS ${SCHEMA_FILE} ${EXP2CXX_EXECUTABLE_TARGET}
     WORKING_DIRECTORY ${SCHEMA_OUT_DIR}
     COMMENT "Generating C++ code to express ${SCHEMA_NAME}..."
     VERBATIM)
-  add_custom_target(step-fedex-${SCHEMA_NAME}-${TARGET_SUFFIX}
-    DEPENDS ${SCHEMA_OUT_DIR}/step_fedex_${SCHEMA_NAME}.done)
+  add_custom_target(step-express-${SCHEMA_NAME}-${TARGET_SUFFIX}
+    DEPENDS ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done)
 endmacro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE)
 
 add_subdirectory(step-g)

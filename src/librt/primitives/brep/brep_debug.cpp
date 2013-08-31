@@ -53,7 +53,7 @@
 extern "C" {
 #endif
     RT_EXPORT extern int brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_tol* ttol, const struct bn_tol* tol, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);
-    RT_EXPORT extern int brep_conversion(struct rt_db_internal* intern, ON_Brep** brep);
+    RT_EXPORT extern int brep_conversion(struct rt_db_internal* intern, ON_Brep** brep, struct db_i *ip);
     RT_EXPORT extern int brep_conversion_comb(struct rt_db_internal *old_internal, char *name, char *suffix, struct rt_wdb *wdbp, fastf_t local2mm);
     RT_EXPORT extern int brep_intersect_point_point(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
     RT_EXPORT extern int brep_intersect_point_curve(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
@@ -61,6 +61,7 @@ extern "C" {
     RT_EXPORT extern int brep_intersect_curve_curve(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
     RT_EXPORT extern int brep_intersect_curve_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
     RT_EXPORT extern int brep_intersect_surface_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock *vbp);
+    extern void rt_comb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), struct db_i *db);
 #ifdef __cplusplus
 }
 #endif
@@ -2286,22 +2287,27 @@ plot_usage(struct bu_vls *vls)
 
 
 int
-brep_conversion(struct rt_db_internal* intern, ON_Brep** brep)
+brep_conversion(struct rt_db_internal* intern, ON_Brep** brep, struct db_i* db)
 {
     *brep = ON_Brep::New();
     ON_Brep *old = *brep;
+
     struct bn_tol tol;
     tol.magic = BN_TOL_MAGIC;
     tol.dist = BN_TOL_DIST;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = SMALL_FASTF;
     tol.para = 1.0 - tol.perp;
-    if (intern->idb_meth->ft_brep == NULL) {
-	delete old;
-	*brep = NULL;
-	return -1;
+    if (intern->idb_type == ID_COMBINATION) {
+	rt_comb_brep(brep, intern, &tol, db);
+    } else {
+	if (intern->idb_meth->ft_brep == NULL) {
+	    delete old;
+	    *brep = NULL;
+	    return -1;
+	}
+	intern->idb_meth->ft_brep(brep, intern, &tol);
     }
-    intern->idb_meth->ft_brep(brep, intern, &tol);
     if (*brep == NULL) {
 	delete old;
 	return -2;
@@ -2380,7 +2386,7 @@ brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtree, 
 		    if (BU_STR_EQUAL(intern->idb_meth->ft_name, "ID_BREP")) {
 			*brep = ((struct rt_brep_internal *)intern->idb_ptr)->brep->Duplicate();
 		    } else {
-			ret = brep_conversion(intern, brep);
+			ret = brep_conversion(intern, brep, db);
 			if (ret == -1) {
 			    bu_log("The brep conversion of %s is unsuccessful.\n", oldname);
 			    newtree = NULL;

@@ -25,6 +25,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <assert.h>
+#include <math.h>
 
 #ifdef HAVE_STDINT_H
 #   include <stdint.h>
@@ -64,8 +65,6 @@ static const int PRECISION = 0x0200;
 
 /* private functions */
 
-/* decls */
-static void reset_vflags(vflags_t *f);
 
 /* defs */
 static void
@@ -341,8 +340,8 @@ handle_obsolete_format_char(const char c, const int print)
     return status;
 }
 
-/*
 
+/*
 The bu_vls_vprintf function aims to adhere to the following
 specifications:
 
@@ -376,7 +375,6 @@ specifications:
       "unknown" part to one of the categories described in [4].
 
 */
-
 void
 bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 {
@@ -425,17 +423,14 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	    if (c == ' '
 		|| c == '#'
 		|| c == '+'
-		|| c == '.'
 		|| c == '\''
-		|| isdigit(c)) {
-		/* need to set flags for some of these */
-		if (c == '.') {
-		    f.have_dot = 1;
-		} else if (isdigit(c)) {
-		    /* set flag for later error checks */
-		    f.have_digit = 1;
-		}
-		continue;
+		)
+	    {
+		/* skip */
+	    } else if (c == '.') {
+		f.have_dot = 1;
+	    } else if (isdigit(c)) {
+		/* skip */
 	    } else if (c == '-') {
 		/* the first occurrence before a dot is the
 		 left-justify flag, but the occurrence AFTER a dot is
@@ -459,8 +454,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		if (!f.have_dot) {
 		    f.fieldlen = va_arg(ap, int);
 		    f.flags |= FIELDLEN;
-		}
-		else {
+		} else {
 		    f.precision = va_arg(ap, int);
 		    f.flags |= PRECISION;
 		}
@@ -548,16 +542,54 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		    int maxstrlen = -1;
 
 		    char *str = va_arg(ap, char *);
+		    const char *fp = fbufp;
+
+		    f.left_justify = 0;
+		    f.have_dot = 0;
+		    while (*fp) {
+			if (isdigit(*fp)) {
+
+			    if (!f.have_dot) {
+				if (*fp == '0') {
+				    bu_sscanf(fp, "%o", &f.fieldlen);
+				} else {
+				    f.fieldlen = atoi(fp);
+				}
+				f.flags |= FIELDLEN;
+			    } else {
+				if (*fp == '0') {
+				    bu_sscanf(fp, "%o", &f.precision);
+				} else {
+				    f.precision = atoi(fp);
+				}
+				f.flags |= PRECISION;
+			    }
+
+			    while (isdigit(*(fp+1)))
+				fp++;
+
+			    if (*fp == '\0') {
+				break;
+			    }
+			} else if (*fp == '.') {
+			    f.have_dot = 1;
+			} else if (*fp == '-') {
+			    f.left_justify = 1;
+			}
+			fp++;
+		    }
 
 		    /* for strings only */
 		    /* field length is a minimum size and precision is
-		       max length of string to be printed */
+		     * max length of string to be printed.
+		     */
 		    if (f.flags & FIELDLEN) {
 			minfldwid = f.fieldlen;
 		    }
 		    if (f.flags & PRECISION) {
 			maxstrlen = f.precision;
 		    }
+
 		    if (str) {
 			int stringlen = (int)strlen(str);
 			struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
