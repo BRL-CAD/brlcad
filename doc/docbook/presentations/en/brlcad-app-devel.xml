@@ -132,7 +132,7 @@ therapy (run, do not walk, to the nearest exit).</para>
 </section>
 
 <section>
-  <title>Prototype Application: rtexample.c</title>
+  <title>Prototype Application: <filename>rtexample.c</filename></title>
 
 <itemizedlist>
       <listitem>
@@ -148,7 +148,7 @@ therapy (run, do not walk, to the nearest exit).</para>
         <para>Performs raytrace</para>
       </listitem>
       <listitem>
-        <para>See source tree: rt/rtexample.c</para>
+        <para>See source tree: <filename>rt/rtexample.c</filename></para>
       </listitem>
     </itemizedlist>
 
@@ -176,6 +176,7 @@ therapy (run, do not walk, to the nearest exit).</para>
         <para>The raytrace.h is present for geometry programs</para>
       </listitem>
     </itemizedlist>
+
 <itemizedlist>
       <listitem>
         <para><itemizedlist>
@@ -193,12 +194,9 @@ therapy (run, do not walk, to the nearest exit).</para>
 </section>
 
 
-<!--
-Next 'div' was a 'draw:page'.
--->
+<!-- Next 'div' was a 'draw:page'. -->
 <section>
-
-<title>Opening the Database</title>
+  <title>Opening the Database</title>
 
 <programlisting>static struct rt_i *rtip; /* librt Instance structure */
 /* rt_dirbuild() performs many functions for us */
@@ -206,8 +204,7 @@ rtip = rt_dirbuild(argv[1], buf, sizeof(buf));
 if (rtip == RTI_NULL) {
     fprintf(stderr,"rtexample: rt_dirbuild failure\n");
     exit(2);
-}
-</programlisting>
+}</programlisting>
 
 <itemizedlist>
       <listitem>
@@ -221,22 +218,17 @@ if (rtip == RTI_NULL) {
       </listitem>
     </itemizedlist>
 
-<!-- Next 'div' was a 'draw:page'. -->
+</section>
 
-<orderedlist><listitem>
-        <para> Reading Geometry</para>
-      </listitem>
-</orderedlist>
+<!-- Next 'div' was a 'draw:page'. -->
+<section>
+  <title>Reading Geometry</title>
 
 <programlisting>if (rt_gettree(rtip, argv[2]) &lt; 0)
-    fprintf(stderr,"rt_gettree(%s) FAILED\n", argv[2]);
-</programlisting>
+    fprintf(stderr,"rt_gettree(%s) FAILED\n", argv[2]);</programlisting>
 
-<itemizedlist>
-      <listitem>
-        <para>Retrieves tree top specified by argv[2] into a working set used by librt</para>
-      </listitem>
-    </itemizedlist>
+<para>Retrieves tree top specified by argv[2] into a working set used
+by librt</para>
 
 </section>
 
@@ -244,35 +236,18 @@ if (rtip == RTI_NULL) {
 <section>
   <title>Preparing Geometry for Raytracing</title>
 
-<programlisting>rt_prep_parallel(rtip,1);
-</programlisting>
+<programlisting>rt_prep_parallel(rtip, 1);</programlisting>
 
-<itemizedlist>
-      <listitem>
-        <para>Pre-computes useful terms for each primitive</para>
-      </listitem>
-    </itemizedlist>
-<itemizedlist>
-      <listitem>
-        <para><itemizedlist>
-            <listitem>
-              <para>E.g.: triangle normals, function roots, trig terms</para>
-            </listitem>
-          </itemizedlist>
-</para>
-      </listitem>
-    </itemizedlist>
-<itemizedlist>
-      <listitem>
-        <para>Builds space partition tree to accelerate ray-trace</para>
-      </listitem>
-    </itemizedlist>
+<para>Pre-computes useful terms for each primitive, e.g.,triangle
+normals, function roots, trig terms.</para>
+
+<para>Builds space partition tree to accelerate ray-trace</para>
 
 </section>
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <para>Application Struct and Shot</para>
+  <title>Application Struct and Shot</title>
 
 <programlisting>struct application ap;
 ap.a_rt_i = rtip;
@@ -281,23 +256,17 @@ VSET(ap.a_ray.r_dir, 0, 0, -1);
 ap.a_hit = hit;	          /* where to go on a hit */
 ap.a_miss = miss;         /* where to go on a miss */
 
-(void)rt_shootray(&amp;); /* do it */
-</programlisting>
+(void)rt_shootray(&amp;); /* do it */</programlisting>
 
-<itemizedlist>
-      <listitem>
-        <para>The application struct contains information about the
+  <para>The application struct contains information about the
         ray that is to be computed and what should be done with the
         results.</para>
-      </listitem>
-    </itemizedlist>
+
+</section>
 
 <!-- Next 'div' was a 'draw:page'. -->
-
-<orderedlist><listitem>
-        <para>Application Struct</para>
-      </listitem>
-</orderedlist>
+<section>
+  <title>Application Struct</title>
 
 <para>Excerpts of application struct from raytrace.h:</para>
 
@@ -310,26 +279,28 @@ ap.a_miss = miss;         /* where to go on a miss */
     int          (*a_miss) (struct application *);
     int          a_onehit; /* flag to stop on first hit */
 
-    struct rt_i  *a_rt_i;  /* this librt instance */
-};
-</programlisting>
+    struct rt_i  *a_rt_i;  /* this librt instance */</programlisting>
+
 </section>
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
   <title>Miss Routine</title>
 
-<itemizedlist>
-      <listitem>
-        <para>Called when ray does not hit any geometry</para>
-      </listitem>
-    </itemizedlist>
+<programlisting>int
+miss(register struct application *ap)
+{
+    bu_log("missed\n");
+    return (0); /* Value returned by rt_shootray() */
+}</programlisting>
+
+  <para>Called when ray does not hit any geometry.</para>
 
 </section>
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <para>Hit Routine</para>
+  <title>Hit Routine</title>
 
 <programlisting>int
 hit(register struct application *ap, /* see raytrace.h */
@@ -346,8 +317,7 @@ hit(register struct application *ap, /* see raytrace.h */
         VPRINT(Hit Point, pt);
     }
     return 1; /* value returned by rt_shootray();
-}
-</programlisting>
+}</programlisting>
 
 </section>
 
@@ -355,34 +325,54 @@ hit(register struct application *ap, /* see raytrace.h */
 <section>
   <title>Hit Routine Breakdown</title>
 
-<itemizedlist>
-      <listitem>
-        <para>Partition Structure contains information about intervals
-        of the ray which pass through geometry</para>
-      </listitem>
-      <listitem>
-        <para>Hit structure contains information about an individual boundary/ray intersection</para>
-      </listitem>
-    </itemizedlist>
+<programlisting>int
+hit(register struct application *ap,
+    struct partition *PartHeadp)
+{
+    register struct partition *pp;
+    register struct hit *hitp;
+    point_t         pt;
+    /* ... */
+}</programlisting>
+
+  <para>Partition Structure contains information about intervals of
+  the ray which pass through geometry</para>
+
+  <para>Hit structure contains information about an individual
+  boundary/ray intersection</para>
+
 </section>
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
   <title>Partition Structure</title>
 
-<itemizedlist>
-      <listitem>
-        <para>From h/raytrace.h</para>
-      </listitem>
-    </itemizedlist>
+<programlisting>struct partition {
+long              pt_magic;       /* sanity check               */
+struct partition *pt_forw;        /* forwards link              */
+struct partition *pt_back;        /* backwards link             */
+struct seg       *pt_inseg;       /* IN seg ptr (gives stp)     */
+struct hit       *pt_inhit;       /* IN hit pointer             */
+struct seg       *pt_outseg;      /* OUT seg pointer            */
+struct hit       *pt_outhit;      /* OUT hit ptr                */
+struct region    *pt_regionp;     /* ptr to containing region   */
+char              pt_inflip;      /* flip inhit->hit_normal     */
+char              pt_outflip;     /* flip outhit->hit_normal    */
+struct region   **pt_overlap_reg; /* NULL-terminated array of
+                                   * overlapping regions.
+                                   * NULL if no overlap.
+                                   */
+struct bu_ptbl  pt_seglist;       /* all segs in this partition */
+};</programlisting>
+
+ <para>From <filename>h/raytrace.h</filename>.</para>
 
 </section>
 
 <section>
   <para>Hit Structure</para>
 
-<programlisting>
-struct hit {
+<programlisting>struct hit {
     long         hit_magic;
     fastf_t      hit_dist;    /* dist from r_pt to hit_point      */
     point_t      hit_point;   /* Intersection point               */
@@ -391,8 +381,12 @@ struct hit {
     void        *hit_private; /* PRIVATE handle for xxx_shot()    */
     int          hit_surfno;  /* solid-specific surface indicator */
     struct xray *hit_rayp;    /* pointer to defining ray          */
-};
-</programlisting>
+};</programlisting>
+
+ <para>From <filename>raytrace.h</filename>.  Holds information about
+ a single ray/surface intersection. (Note: Only
+ <filename>hit_dist</filename> is filled in by
+ <filename>librt</filename>.</para>
 
 </section>
 
@@ -400,8 +394,7 @@ struct hit {
 <section>
   <title>Hit Routine (Again)</title>
 
-<programlisting>
-int
+<programlisting>int
 hit(register struct application *ap, /* see raytrace.h */
     struct partition *PartHeadp)     /* see raytrace.h */
 {
@@ -416,8 +409,7 @@ hit(register struct application *ap, /* see raytrace.h */
         VPRINT(Hit Point, pt);
     }
     return 1; /* value returned by rt_shootray();
-}
-</programlisting>
+}</programlisting>
 
 </section>
 
@@ -470,30 +462,24 @@ hit(register struct application *ap, /* see raytrace.h */
 <section>
   <title>RTUIF Routines1</title>
 
+<programlisting>int view_init(struct application *ap, char *file,
+              char *obj, int minus_o);
+</programlisting>
 
-<orderedlist><listitem>
-        <para>int view_init(struct application *ap, char *file,</para>
-        <para>char *obj, int minus_o);</para>
-        <para>Called by main() at the start of a run. Returns 1 if framebuffer should be opened, else 0.</para>
-        <para>void view_setup(struct rt_i *rtip);</para>
-      </listitem>
-</orderedlist><itemizedlist>
-      <listitem>
-        <para><orderedlist><listitem>
-              <para>Called by do_prep(), just before rt_prep() is
-              called, in do.c. This allows the lighting model to get
-              set up for this frame, e.g., generate lights, associate
-              materials routines, etc.</para>
-            </listitem>
-</orderedlist></para>
-      </listitem>
-    </itemizedlist>
-<orderedlist><listitem>
-        <para>Void view_2init(struct application *ap);</para>
-        <para>Called at the beginning of a frame. Called by</para>
-        <para>do_frame() just before raytracing starts.</para>
-      </listitem>
-</orderedlist>
+<para>Called by main() at the start of a run. Returns 1 if framebuffer
+should be opened, else 0.</para>
+
+<programlisting>void view_setup(struct rt_i *rtip);</programlisting>
+
+  <para>Called by do_prep(), just before rt_prep() is
+  called, in do.c. This allows the lighting model to get
+  set up for this frame, e.g., generate lights, associate
+  materials routines, etc.</para>
+
+<programlisting>void view_2init(struct application *ap);</programlisting>
+
+  <para>Called at the beginning of a frame. Called by do_frame() just
+  before raytracing starts.</para>
 
 </section>
 
@@ -501,13 +487,15 @@ hit(register struct application *ap, /* see raytrace.h */
 <section>
   <title>RTUIF Routines2</title>
 
-<orderedlist><listitem>
-        <para> int rayhit(struct application *ap, struct partition *PartHeadp);</para>
-        <para>Called via a_hit linkage from rt_shootray() when ray hits.</para>
-        <para>int raymiss(struct application *ap);</para>
-        <para>Called via a_miss linkage from rt_shootray() when ray misses.</para>
-      </listitem>
-</orderedlist>
+<programlisting>int rayhit(struct application *ap, struct partition *PartHeadp);</programlisting>
+
+  <para>Called via a_hit linkage from rt_shootray() when ray
+  hits.</para>
+
+<programlisting>int raymiss(struct application *ap);</programlisting>
+
+  <para>Called via a_miss linkage from rt_shootray() when ray
+  misses.</para>
 
 </section>
 
@@ -515,14 +503,15 @@ hit(register struct application *ap, /* see raytrace.h */
 <section>
   <title>RTUIF Routines3</title>
 
-<orderedlist><listitem>
-        <para> void view_pixel(struct application *ap);</para>
-        <para>Called by worker() after the end of proccessing for</para>
-        <para>each pixel.</para>
-        <para>void view_end(struct application *ap);</para>
-        <para>Called in do_frame() at the end of a frame, just after raytracing completes.</para>
-      </listitem>
-</orderedlist>
+<programlisting>void view_pixel(struct application *ap);</programlisting>
+
+  <para>Called by worker() after the end of proccessing for each
+  pixel.</para>
+
+<programlisting>void view_end(struct application *ap);</programlisting>
+
+  <para>Called in do_frame() at the end of a frame, just after
+  raytracing completes.</para>
 
 </section>
 
@@ -530,27 +519,18 @@ hit(register struct application *ap, /* see raytrace.h */
 <section>
   <title>So Much for the Trivialities</title>
 
-        <para>Now we look at actual geometry</para>
+        <para>Now we look at actual geometry.</para>
 </section>
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
   <title> Thinking About Geometry</title>
 
-<itemizedlist>
-      <listitem>
         <para>How to create it</para>
-      </listitem>
-      <listitem>
         <para>How to read it</para>
-      </listitem>
-      <listitem>
         <para>Doing anything useful with it</para>
-      </listitem>
-    </itemizedlist>
+
 </section>
-
-
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
@@ -690,7 +670,7 @@ hit(register struct application *ap, /* see raytrace.h */
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <title>Prepped Representation</title>
+  <title>Prep'ed Representation</title>
 
 <itemizedlist>
       <listitem>
@@ -737,14 +717,38 @@ hit(register struct application *ap, /* see raytrace.h */
 
         <para>Necessary headers</para>
 
+<programlisting>#include "conf.h"
+#include &lt;stdio.h&gt;
+#include "machine.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "rtgeom.h"
+#include "wdb.h"</programlisting>
+
 </section>
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
   <title>Opening The Database</title>
 
-<programlisting>
-</programlisting>
+<programlisting>struct rt_wdb *wdbp;
+struct db_i *dbip = DBI_NULL;
+
+/* open first, to avoid clobbering existing databases */
+if ((dbip = db_open(argv[1], "r+w")) != DBI_NULL) {
+    /* build a wdbp structure for convenient read/write */
+    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
+
+    if (db_dirbuild(dbip) &lt; 0 ) {
+        /* create directory database contents */
+        bu_log("Error building directory for %s\n",
+               argv[1]);
+        exit(-1);
+    }
+} else {
+    /* it doesn't exist, so we create one */
+    bu_log("doing wdb_fopen()\n");
+    wdbp = wdb_fopen(argv[1]); /* force create */}</programlisting>
 
 </section>
 
@@ -752,21 +756,22 @@ hit(register struct application *ap, /* see raytrace.h */
 <section>
   <title>Creating Geometry</title>
 
-<itemizedlist>
-      <listitem>
-        <para>Note: All db units are in mm</para>
-      </listitem>
-    </itemizedlist>
-<itemizedlist>
-      <listitem>
-        <para><itemizedlist>
-            <listitem>
-              <para>Set mk_conv2mm global for other units</para>
-            </listitem>
-          </itemizedlist>
-</para>
-      </listitem>
-    </itemizedlist>
+  <para>Note: All db units are in mm</para>
+
+  <para>Set mk_conv2mm global for other units</para>
+
+<programlisting>
+point_t lo, hi;
+/* ... */
+/* add an axis-aligned ARB8 */
+VSETALL(lo, 0.0);
+VSETALL(hi, 2.0);
+if (mk_rpp(wdbp, "mybox", lo, hi)) /* see libwdb for APIs */
+    return -1;
+
+/* add a sphere (really ellipse special case) */
+if (mk_sph(wdbp, "myball", hi, 0.5)) /* see libwdb for APIs */
+    return -1;</programlisting>
 
 </section>
 
@@ -775,7 +780,26 @@ hit(register struct application *ap, /* see raytrace.h */
 <section>
   <title>Getting Geometry</title>
 
-    <para>To retrieve geometry, we have to get an internal representation</para>
+    <para>To retrieve geometry, we have to get an internal
+    representation.</para>
+
+<programlisting>struct rt_db_internal ip;
+/* ... */
+RT_INIT_DB_INTERNAL(&amp;ip);
+cond = rt_db_lookup_internal(wdbp->dbip, "mybox", &amp;dp, &amp;ip,
+                             LOOKUP_QUIET, &amp;rt_uniresource);
+if (!cond) {
+    bu_log("couldn't find %s\n", "mybox");
+    exit(0);
+}
+if (ip.idb_major_type == DB5_MAJORTYPE_BRLCAD /* see db5.h */
+    &amp;&amp; ip.idb_minor_type == ID_ARB8 /* see raytrace.h */) {
+
+    struct rt_arb_internal *arb; /* see rtgeom.h */
+    arb = (struct rt_arb_internal *)ip.idb_ptr;
+    RT_ARB_CK_MAGIC(arb);
+    VPRINT("First Point", arb->pt[0]);
+/* ... */</programlisting>
 
 </section>
 
@@ -795,18 +819,17 @@ hit(register struct application *ap, /* see raytrace.h */
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <para>Putting Geometry Back</para>
+  <title>Putting Geometry Back</title>
 
-<itemizedlist>
-      <listitem>
-        <para>Database I/O layer converts from internal to external format.</para>
-      </listitem>
-    </itemizedlist>
+  <para>Database I/O layer converts from internal to external
+  format.</para>
+
+<programlisting>wdb_export(wdbp, "mybox", arb, ID_ARB8, mk_conv2mm);</programlisting>
 
 </section>
 
 <section>
-  <para>Building Boolean Trees</para>
+  <title>Building Boolean Trees</title>
 
 <itemizedlist>
       <listitem>
@@ -872,11 +895,25 @@ hit(register struct application *ap, /* see raytrace.h */
 <section>
   <title>Constructing Boolean List</title>
 
-<itemizedlist>
-      <listitem>
-        <para>Build the list of elements first:</para>
-      </listitem>
-    </itemizedlist>
+  <para>Build the list of elements first:</para>
+
+<programlisting>struct wmember wm_hd; /* defined in wdb.h */
+BU_LIST_INIT(&amp;wm_hd.l);
+
+/* see h/wdb.h or libwdb/reg.c for API conv or proc-db
+ * for examples
+ */
+(void)mk_addmember("mybox", &amp;wm_hd.l, NULL, WMOP_UNION);
+
+/* If we wanted a transformation matrix for this element, we could
+ * have passed the matrix in to mk_addmember as an argument or we
+ * could add the following code:
+ */
+memcpy(wm_hd->wm_mat, trans_matrix, sizeof(mat_t));
+/* Remember that values in the database are stored in millimeters,
+ * so the values in the matrix must take this into account.
+ */
+(void)mk_addmember("myball",&amp;wm_hd.l,NULL,WMOP_SUBTRACT);</programlisting>
 
 </section>
 
@@ -904,6 +941,20 @@ hit(register struct application *ap, /* see raytrace.h */
 </para>
       </listitem>
     </itemizedlist>
+
+<programlisting>int is_region = 1;
+VSET(rgb, 64, 180, 96); /* a nice green */
+
+/* mk_lcomb is a macro using mk_comb.
+ * See libwdb/mk_comb() for full form */
+mk_lcomb(wdbp,
+	"box_n_ball.r", /* Name of the db element created */
+	&amp;wm_hd,        /* list of elements and boolean operations */
+	is_region,      /* Flag:  This is a region */
+	"plastic",      /* optical shader */
+	"di=.8 sp=.2",  /* shader parameters */
+	rgb,            /* item color */
+	0);             /* inherit (override) flag */</programlisting>
 
 </section>
 
@@ -933,6 +984,18 @@ hit(register struct application *ap, /* see raytrace.h */
       </listitem>
     </itemizedlist>
 
+<programlisting>struct rt_comb_internal *comb; /* see raytrace.h */
+/* ... */
+rt_db_lookup_internal(wdbp->dbip, "box_n_ball.r", &amp;dp, &amp;ip,
+                      LOOKUP_QUIET, &amp;rt_uniresource);
+
+if (ip.idb_major_type != DB5_MAJORTYPE_BRLCAD /* see db5.h */
+    || ip.idb_minor_type != ID_COMBINATION /* see raytrace.h */ ) {
+    bu_bomb("gack\n");
+}
+comb = (struct rt_comb_internal *)ip.idb_ptr;
+RT_CK_COMB(comb);</programlisting>
+
 </section>
 
 <!-- Next 'div' was a 'draw:page'. -->
@@ -947,6 +1010,23 @@ hit(register struct application *ap, /* see raytrace.h */
         <para>Write back out to db</para>
       </listitem>
     </itemizedlist>
+
+<programlisting>/* Modify the combination we retrieved */
+RT_GET_TREE(a, &amp;rt_uniresource);
+RT_GET_TREE(b, &amp;rt_uniresource);
+
+a->tr_l.tl_name = bu_strdup("newball");
+a->tr_l.tl_op = OP_DB_LEAF;
+a->tr_l.tl_mat = (matp_t)NULL;
+a->tr_l.magic = RT_TREE_MAGIC;
+
+b->tr_b.magic = RT_TREE_MAGIC;
+b->tr_b.tb_left = comb->tree;
+b->tr_b.tb_right = a;
+b->tr_b.tb_op = OP_UNION;
+
+comb->tree = b;
+wdb_export(wdbp, "box_n_ball.r", comb, ID_COMBINATION, 1.0);</programlisting>
 
 </section>
 
@@ -970,26 +1050,32 @@ hit(register struct application *ap, /* see raytrace.h */
       </listitem>
     </itemizedlist>
 
+<programlisting>struct rt_i *rtip; /* see raytrace.h */
+
+/* if we've been doing db I/O */
+rtip = rt_new_rti(wdbp->dbip);
+
+/* if not already doing db I/O */
+rtip=rt_dirbuild(filename, idbuf, sizeof(idbuf));</programlisting>
+
 </section>
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
   <title>Processing combination tree</title>
 
-<itemizedlist>
-      <listitem>
-        <para>Now to retrieve a treetop and prep:</para>
-      </listitem>
-      <listitem>
-        <para>This could have been any level in the tree, not just a region.</para>
-      </listitem>
-    </itemizedlist>
+  <para>Now to retrieve a treetop and prep:</para>
+
+<programlisting>rt_gettree(rtip, "box_n_ball.r");
+rt_prep(rtip);   /* now rtip has valid information */</programlisting>
+
+  <para>This could have been any level in the tree, not just a region.</para>
 
 </section>
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <title>Accessing Prepped Regions</title>
+  <title>Accessing Prep'ed Regions</title>
 
 <itemizedlist>
       <listitem>
@@ -1002,6 +1088,19 @@ hit(register struct application *ap, /* see raytrace.h */
         <para>Example: getting bounding box of regions</para>
       </listitem>
     </itemizedlist>
+
+<programlisting>struct region *rp; /* see raytrace.h */
+
+for (BU_LIST_FOR(rp, region, &amp;rtip->HeadRegion)) {
+    point_t tree_min, tree_max;
+    VSETALL(tree_max, MAX_FASTF);
+    VREVERSE(tree_min, tree_max);
+    if (rt_bound_tree(rp->reg_treetop, tree_min, tree_max)) {
+    	bu_bomb("choke\n");
+    }
+    VPRINT("tree_min", tree_min); /* VPRINT is a macro from vmath.h */
+    VPRINT("tree_max", tree_max);
+}</programlisting>
 
 </section>
 
@@ -1069,6 +1168,20 @@ hit(register struct application *ap, /* see raytrace.h */
       </listitem>
     </itemizedlist>
 
+<programlisting>struct rt_wdb *wdb_memp;
+struct db_i *dbip = DBI_NULL;
+
+if ((dbip = db_open(argv[1], "r+w")) != DBI_NULL) {
+    /*  The "INMEM" specifies that changes are to be made
+     * ONLY in memory.  Reads still come from disk for non-mem obj
+     */
+    wdb_memp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
+
+    if( db_dirbuild( dbip ) &lt; 0 ) { /* create database content directory */
+        bu_log( "Error building directory for %s\n", argv[1] ); exit(-1);
+    }
+}</programlisting>
+
 </section>
 
 
@@ -1081,6 +1194,8 @@ hit(register struct application *ap, /* see raytrace.h */
         <para>Important to flush data and purge data structures!</para>
       </listitem>
     </itemizedlist>
+
+<programlisting>wdb_close(wdbp);</programlisting>
 
 </section>
 
