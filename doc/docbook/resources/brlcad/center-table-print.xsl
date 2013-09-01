@@ -32,7 +32,7 @@
 
        2.  This style sheet uses DocBook namespaces.
 
-       3.  This does not seem to work with proportional columns widths.
+       3.  This does not seem to work with proportional column widths.
 
        Known improvements needed:
 
