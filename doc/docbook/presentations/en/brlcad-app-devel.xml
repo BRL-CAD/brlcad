@@ -421,7 +421,7 @@ hit(register struct application *ap, /* see raytrace.h */
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <title>RTUIF Routines1</title>
+  <title>RTUIF Routines</title>
 
 <programlisting>int view_init(struct application *ap, char *file,
               char *obj, int minus_o);
@@ -442,12 +442,6 @@ should be opened, else 0.</para>
   <para>Called at the beginning of a frame. Called by do_frame() just
   before raytracing starts.</para>
 
-</section>
-
-<!-- Next 'div' was a 'draw:page'. -->
-<section>
-  <title>RTUIF Routines2</title>
-
 <programlisting>int rayhit(struct application *ap, struct partition *PartHeadp);</programlisting>
 
   <para>Called via a_hit linkage from rt_shootray() when ray
@@ -457,12 +451,6 @@ should be opened, else 0.</para>
 
   <para>Called via a_miss linkage from rt_shootray() when ray
   misses.</para>
-
-</section>
-
-<!-- Next 'div' was a 'draw:page'. -->
-<section>
-  <title>RTUIF Routines3</title>
 
 <programlisting>void view_pixel(struct application *ap);</programlisting>
 
