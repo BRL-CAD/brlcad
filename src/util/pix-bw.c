@@ -58,7 +58,7 @@ char *in_file = NULL;
 
 static const char usage[] = "\
 pix-bw [-h] [-s squaresize] [-w width] [-n height] \n\
-            [ [-e ntsc|crt ] [-R red_weight] [-G green_weight] [-B blue_weight] ] \n\
+            [ [-e ntsc|crt] [[-R red_weight] [-G green_weight] [-B blue_weight]] ]\n\
 	    [-o out_file.bw] [file.bw] > [out_file.bw] \n";
 
 double multiplier = 0.5;
@@ -68,7 +68,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "R:G:B:o:h?NC")) != -1) {
+    while ((c = bu_getopt(argc, argv, "s:w:n:R:G:B:o:h?NC")) != -1) {
 	switch (c) {
 	    case 'e' :
 	        if(BU_STR_EQUAL(bu_optarg, "ntsc")) {
