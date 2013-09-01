@@ -309,21 +309,21 @@ hit(register struct application *ap,
   <title>Partition Structure</title>
 
 <programlisting>struct partition {
-long              pt_magic;       /* sanity check               */
-struct partition *pt_forw;        /* forwards link              */
-struct partition *pt_back;        /* backwards link             */
-struct seg       *pt_inseg;       /* IN seg ptr (gives stp)     */
-struct hit       *pt_inhit;       /* IN hit pointer             */
-struct seg       *pt_outseg;      /* OUT seg pointer            */
-struct hit       *pt_outhit;      /* OUT hit ptr                */
-struct region    *pt_regionp;     /* ptr to containing region   */
-char              pt_inflip;      /* flip inhit->hit_normal     */
-char              pt_outflip;     /* flip outhit->hit_normal    */
-struct region   **pt_overlap_reg; /* NULL-terminated array of
-                                   * overlapping regions.
-                                   * NULL if no overlap.
-                                   */
-struct bu_ptbl  pt_seglist;       /* all segs in this partition */
+    long              pt_magic;       /* sanity check               */
+    struct partition *pt_forw;        /* forwards link              */
+    struct partition *pt_back;        /* backwards link             */
+    struct seg       *pt_inseg;       /* IN seg ptr (gives stp)     */
+    struct hit       *pt_inhit;       /* IN hit pointer             */
+    struct seg       *pt_outseg;      /* OUT seg pointer            */
+    struct hit       *pt_outhit;      /* OUT hit ptr                */
+    struct region    *pt_regionp;     /* ptr to containing region   */
+    char              pt_inflip;      /* flip inhit->hit_normal     */
+    char              pt_outflip;     /* flip outhit->hit_normal    */
+    struct region   **pt_overlap_reg; /* NULL-terminated array of
+                                       * overlapping regions.
+                                       * NULL if no overlap.
+                                       */
+    struct bu_ptbl  pt_seglist;       /* all segs in this partition */
 };</programlisting>
 
  <para>From <filename>h/raytrace.h</filename>.</para>
