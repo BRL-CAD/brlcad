@@ -93,7 +93,7 @@ therapy (run, do not walk, to the nearest exit).</para>
 </section>
 
 <section>
-  <title>Prototype Application: <filename>rtexample.c</filename></title>
+  <title>Prototype Application: rtexample.c</title>
 
 <itemizedlist>
       <listitem>
@@ -121,12 +121,12 @@ therapy (run, do not walk, to the nearest exit).</para>
 
   <title>Necessary Headers</title>
 
-<programlisting>#include "conf.h"	/* compilation macros */
+<programlisting>#include "conf.h"       /* compilation macros           */
 #include &lt;stdio.h&gt;
 #include &lt;math.h&gt;
-#include "machine.h"	/* machine specific definitions */
-#include "vmath.h"	/* vector math macros */
-#include "raytrace.h"	/* librt interface definitions */
+#include "machine.h"    /* machine specific definitions */
+#include "vmath.h"      /* vector math macros           */
+#include "raytrace.h"   /* librt interface definitions  */
 </programlisting>
 
 <itemizedlist>
@@ -240,7 +240,9 @@ ap.a_miss = miss;         /* where to go on a miss */
     int          (*a_miss) (struct application *);
     int          a_onehit; /* flag to stop on first hit */
 
-    struct rt_i  *a_rt_i;  /* this librt instance */</programlisting>
+    struct rt_i  *a_rt_i;  /* this librt instance *
+    /* ... */
+};/</programlisting>
 
 </section>
 
@@ -692,7 +694,8 @@ if ((dbip = db_open(argv[1], "r+w")) != DBI_NULL) {
 } else {
     /* it doesn't exist, so we create one */
     bu_log("doing wdb_fopen()\n");
-    wdbp = wdb_fopen(argv[1]); /* force create */}</programlisting>
+    wdbp = wdb_fopen(argv[1]); /* force create */
+}</programlisting>
 
 </section>
 
@@ -704,8 +707,7 @@ if ((dbip = db_open(argv[1], "r+w")) != DBI_NULL) {
 
   <para>Set mk_conv2mm global for other units</para>
 
-<programlisting>
-point_t lo, hi;
+<programlisting>point_t lo, hi;
 /* ... */
 /* add an axis-aligned ARB8 */
 VSETALL(lo, 0.0);
@@ -743,7 +745,8 @@ if (ip.idb_major_type == DB5_MAJORTYPE_BRLCAD /* see db5.h */
     arb = (struct rt_arb_internal *)ip.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
     VPRINT("First Point", arb->pt[0]);
-/* ... */</programlisting>
+    /* ... */
+}</programlisting>
 
 </section>
 
@@ -853,11 +856,12 @@ BU_LIST_INIT(&amp;wm_hd.l);
  * have passed the matrix in to mk_addmember as an argument or we
  * could add the following code:
  */
+
 memcpy(wm_hd->wm_mat, trans_matrix, sizeof(mat_t));
 /* Remember that values in the database are stored in millimeters,
  * so the values in the matrix must take this into account.
  */
-(void)mk_addmember("myball",&amp;wm_hd.l,NULL,WMOP_SUBTRACT);</programlisting>
+(void)mk_addmember("myball", &amp; wm_hd.l, NULL, WMOP_SUBTRACT);</programlisting>
 
 </section>
 
@@ -890,15 +894,16 @@ memcpy(wm_hd->wm_mat, trans_matrix, sizeof(mat_t));
 VSET(rgb, 64, 180, 96); /* a nice green */
 
 /* mk_lcomb is a macro using mk_comb.
- * See libwdb/mk_comb() for full form */
+ * See libwdb/mk_comb() for full form
+ */
 mk_lcomb(wdbp,
-	"box_n_ball.r", /* Name of the db element created */
-	&amp;wm_hd,        /* list of elements and boolean operations */
-	is_region,      /* Flag:  This is a region */
-	"plastic",      /* optical shader */
-	"di=.8 sp=.2",  /* shader parameters */
-	rgb,            /* item color */
-	0);             /* inherit (override) flag */</programlisting>
+         "box_n_ball.r", /* Name of the db element created          */
+         &amp;wm_hd,         /* list of elements and boolean operations */
+         is_region,      /* Flag:  This is a region                 */
+         "plastic",      /* optical shader                          */
+         "di=.8 sp=.2",  /* shader parameters                       */
+         rgb,            /* item color                              */
+         0);             /* inherit (override) flag                 */</programlisting>
 
 </section>
 
