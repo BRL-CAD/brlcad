@@ -35,17 +35,27 @@ Usage: bw-pix [-h] [-o out_file.pix] [file.pix] > [out_file.pix]\n";
 
 char *out_file = NULL;
 char *in_file = NULL;
+int inx=0, iny=0;
 
 int
 get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "o:h?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "s:w:n:o:h?")) != -1) {
 	switch (c) {
 	    case 'o':
 		out_file = bu_optarg;
 		break;
+	    case 's' :
+               inx = iny = atoi(bu_optarg);
+               break;
+            case 'w' :
+               inx = atoi(bu_optarg);
+               break;
+            case 'n' :
+               iny = atoi(bu_optarg);
+               break;
 	    case 'h':
 	    default:		/* '?' */
 		return 0;
@@ -83,7 +93,7 @@ main(int argc, char **argv)
 	return 1;
     }
 
-    img = icv_read(in_file, ICV_IMAGE_BW, 0, 0);
+    img = icv_read(in_file, ICV_IMAGE_BW, inx, iny);
     if (img == NULL)
 	return 1;
     icv_gray2rgb(img);
