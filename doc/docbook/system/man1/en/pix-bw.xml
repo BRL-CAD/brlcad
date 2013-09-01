@@ -84,7 +84,7 @@ are 1.0 divided by the number of colors selected.</para>
 </refsect1>
 
 <refsect1 xml:id='examples'><title>EXAMPLES</title>
-<para><emphasis remap='I'>pix-bw -R -B &lt; file.pix &gt; file.bw</emphasis>
+<para><emphasis remap='I'>pix-bw -R0.0 -B0.0 &lt; file.pix &gt; file.bw</emphasis>
 <!-- .br -->
 will equally blend the red and blue color planes.</para>
 
