@@ -639,6 +639,8 @@ should be opened, else 0.</para>
 <section>
   <title>Internal Representation</title>
 
+<para>[NEEDS UPDATING]</para>
+
 <itemizedlist>
       <listitem>
         <para>Convenient editing form</para>
@@ -671,6 +673,8 @@ should be opened, else 0.</para>
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
   <title>Prep'ed Representation</title>
+
+<para>[NEEDS UPDATING]</para>
 
 <itemizedlist>
       <listitem>
@@ -715,6 +719,8 @@ should be opened, else 0.</para>
 <section>
   <title>Simple Database Application</title>
 
+<para>[NEEDS UPDATING]</para>
+
         <para>Necessary headers</para>
 
 <programlisting>#include "conf.h"
@@ -730,6 +736,8 @@ should be opened, else 0.</para>
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
   <title>Opening The Database</title>
+
+<para>[NEEDS UPDATING]</para>
 
 <programlisting>struct rt_wdb *wdbp;
 struct db_i *dbip = DBI_NULL;
@@ -756,6 +764,8 @@ if ((dbip = db_open(argv[1], "r+w")) != DBI_NULL) {
 <section>
   <title>Creating Geometry</title>
 
+<para>[NEEDS UPDATING]</para>
+
   <para>Note: All db units are in mm</para>
 
   <para>Set mk_conv2mm global for other units</para>
@@ -779,6 +789,8 @@ if (mk_sph(wdbp, "myball", hi, 0.5)) /* see libwdb for APIs */
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
   <title>Getting Geometry</title>
+
+<para>[NEEDS UPDATING]</para>
 
     <para>To retrieve geometry, we have to get an internal
     representation.</para>
@@ -807,6 +819,8 @@ if (ip.idb_major_type == DB5_MAJORTYPE_BRLCAD /* see db5.h */
 <section>
   <title>Primitive Methods</title>
 
+<para>[NEEDS UPDATING]</para>
+
   <para>Retrieved geometry has a specific set of defined operations
   and methods available. See <filename>h/raytrace.h</filename> for a
   description of <filename>struct rt_functab</filename>.</para>
@@ -821,6 +835,8 @@ if (ip.idb_major_type == DB5_MAJORTYPE_BRLCAD /* see db5.h */
 <section>
   <title>Putting Geometry Back</title>
 
+<para>[NEEDS UPDATING]</para>
+
   <para>Database I/O layer converts from internal to external
   format.</para>
 
@@ -828,8 +844,11 @@ if (ip.idb_major_type == DB5_MAJORTYPE_BRLCAD /* see db5.h */
 
 </section>
 
+<!-- Next 'div' was a 'draw:page'. -->
 <section>
   <title>Building Boolean Trees</title>
+
+<para>[NEEDS UPDATING]</para>
 
 <itemizedlist>
       <listitem>
@@ -895,6 +914,8 @@ if (ip.idb_major_type == DB5_MAJORTYPE_BRLCAD /* see db5.h */
 <section>
   <title>Constructing Boolean List</title>
 
+<para>[NEEDS UPDATING]</para>
+
   <para>Build the list of elements first:</para>
 
 <programlisting>struct wmember wm_hd; /* defined in wdb.h */
@@ -920,6 +941,8 @@ memcpy(wm_hd->wm_mat, trans_matrix, sizeof(mat_t));
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
   <title>Regions/Combinations</title>
+
+<para>[NEEDS UPDATING]</para>
 
 <itemizedlist>
       <listitem>
