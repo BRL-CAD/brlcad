@@ -31,7 +31,8 @@
 #include "bu.h"
 
 char usage[] = "\
-Usage: bw-pix [-h] [-o out_file.pix] [file.pix] > [out_file.pix]\n";
+Usage: bw-pix [-h] [[-s squaresize] [-w width] [-n height]]\n\
+[-o out_file.pix] [file.pix] > [out_file.pix]\n";
 
 char *out_file = NULL;
 char *in_file = NULL;
