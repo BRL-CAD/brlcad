@@ -466,20 +466,15 @@ should be opened, else 0.</para>
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <title>So Much for the Trivialities</title>
+  <title>Thinking About Geometry</title>
 
         <para>Now we look at actual geometry.</para>
-</section>
 
-<!-- Next 'div' was a 'draw:page'. -->
-<section>
-  <title> Thinking About Geometry</title>
-
-        <para>How to create it</para>
-        <para>How to read it</para>
-        <para>Doing anything useful with it</para>
-
-</section>
+<itemizedlist>
+        <listitem><para>How to create it</para></listitem>
+        <listitem><para>How to read it</para></listitem>
+        <listitem><para>Doing something useful with it</para></listitem>
+</itemizedlist>
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
@@ -529,7 +524,6 @@ should be opened, else 0.</para>
     </itemizedlist>
 
 </section>
-
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
@@ -659,6 +653,7 @@ should be opened, else 0.</para>
     </itemizedlist>
 </section>
 
+</section>
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
