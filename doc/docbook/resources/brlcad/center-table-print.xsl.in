@@ -145,18 +145,63 @@
       </xsl:otherwise>
 
     </xsl:choose>
-</xsl:template>
+  </xsl:template>
 
-<xsl:template name="col-width-sum">
-  <!-- input parameters -->
-  <xsl:param name="total-width" select="0"/>
-  <xsl:param name="col-path" select="//colspec"/>
+  <xsl:template name="col-width-sum">
+    <!-- input parameters -->
+    <xsl:param name="total-width" select="0"/>
+    <xsl:param name="col-path" select="//colspec"/>
 
-  <!-- other instructions -->
-  <xsl:comment>
-    comment in template "col-width-sum"
-  </xsl:comment>
-</xsl:template>
+    <!-- other instructions -->
+    <xsl:comment>
+      comment in template "col-width-sum"
+    </xsl:comment>
+  </xsl:template>
+
+  <!-- ====================================================== -->
+  <!--
+       Center table titles, based on e-mail from Bob Stayton
+       to DB lists:
+
+         http://www.sourceware.org/ml/docbook-apps/2004-q1/msg00813.html
+
+       <quote>
+       
+       It checks to see if the formal object is a table, and if so adds the
+       text-align attribute. I presume you only wanted to do this with
+       tables, not figures, examples, etc.
+       
+       Bob Stayton
+       Sagehill Enterprises
+       DocBook Consulting
+       bobs@sagehill.net
+       
+       </quote>
+
+  -->
+  <xsl:template name="formal.object.heading">
+    <xsl:param name="object" select="."/>
+    <xsl:param name="placement" select="'before'"/>
+  
+    <fo:block xsl:use-attribute-sets="formal.title.properties">
+       <!-- ADD THE FOLLOWING THREE LINES   -->
+       <xsl:if test="self::table">
+        <xsl:attribute name="text-align">center</xsl:attribute>
+      </xsl:if>
+      <xsl:choose>
+        <xsl:when test="$placement = 'before'">
+          <xsl:attribute
+                 name="keep-with-next.within-column">always</xsl:attribute>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:attribute name="keep-with-previous.within-column">always</xsl:attribute>
+        </xsl:otherwise>
+      </xsl:choose>
+      <xsl:apply-templates select="$object" mode="object.title.markup">
+        <xsl:with-param name="allow-anchors" select="1"/>
+      </xsl:apply-templates>
+    </fo:block>
+  </xsl:template>
 
 
 </xsl:stylesheet>
