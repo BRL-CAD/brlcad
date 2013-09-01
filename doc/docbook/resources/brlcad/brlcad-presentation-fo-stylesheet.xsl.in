@@ -18,7 +18,7 @@
   <xsl:import href="file:///@DOCBOOK_BINARY_DIR@/doc/docbook/resources/brlcad/brlcad-fonts.xsl"/>
 
   <!-- table centering -->
-  <xsl:import href="file:///@DOCBOOK_BINARY_DIR@/doc/docbook/resources/brlcad/center-table-print.xsl"/>
+  <xsl:import href="file:///@DOCBOOK_SOURCE_DIR@/doc/docbook/resources/brlcad/center-table-print.xsl"/>
 
   <!-- for itemized lists -->
   <xsl:template name="itemizedlist.label.markup">
