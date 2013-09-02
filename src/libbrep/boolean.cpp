@@ -1059,7 +1059,6 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &
 	return;
 
     ON_BrepLoop &breploop = brep->NewLoop(loop_type, face);
-    int start_count = brep->m_V.Count();
     const ON_Surface* srf = face.SurfaceOf();
 
     // Determine whether a segment should be a seam trim, according to the
