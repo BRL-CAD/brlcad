@@ -1022,7 +1022,7 @@ static struct qt_tk_bind qt_bindings[] = {
     {qt_mouseButton1Release, "button1release"},
     {qt_mouseButton2Press, "button2press"},
     {qt_mouseButton2Release, "button2release"},
-    {qt_mouseMove, "mouseMove"}, 
+    {qt_mouseMove, "mouseMove"},
     {NULL, NULL}
 };
 
