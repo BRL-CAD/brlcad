@@ -272,7 +272,7 @@ sub_curve(const ON_Curve* in, double a, double b)
 	delete left;
     left = NULL;
     if (!right) {
-	bu_log("Error: sub_curve(): a = %lf, b = %lf\n", a, b);
+	bu_log("Error: sub_curve(): a = %lf, b = %lf, min = %lf, max = %lf\n", a, b, dom.Min(), dom.Max());
 	return NULL;
     }
     if (ON_NearZero(sub.m_t[1] - dom.m_t[1]))
@@ -2786,6 +2786,8 @@ ON_Intersect(const ON_Surface* surfA,
 	    if (params[i][j].x - params[i][start].x < intersection_tolerance)
 		continue;
 	    ON_Curve* subcurveA = sub_curve(overlaps[i]->m_curveA, params[i][start].y, params[i][j].y);
+	    if (subcurveA == NULL)
+		continue;
 	    bool isvalid = false, isreversed = false;
 	    double test_distance = 0.01;
 	    // TODO: more sample points
