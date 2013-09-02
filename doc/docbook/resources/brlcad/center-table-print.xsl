@@ -7,6 +7,23 @@
   exclude-result-prefixes="d"
 >
 
+
+	<!-- center table titles, thanks to Dean Nelson <deannelson@aol.com>,
+		2010-11-09, from the docbook-apps mailing list>
+
+             Note there are other centering tricks in file 'tutorial-template.xsl.in'
+        -->
+	<xsl:attribute-set name="formal.title.properties">
+		<xsl:attribute name="text-align">
+			<xsl:choose>
+				<xsl:when test="self::table[@align] and descendant::title">
+					<xsl:value-of select="@align" />
+				</xsl:when>
+				<xsl:otherwise>center</xsl:otherwise>
+			</xsl:choose>
+		</xsl:attribute>
+	</xsl:attribute-set>
+
   <!-- ====================================================== -->
   <!--
        Center tables in print, based on the example on p. 474 in
