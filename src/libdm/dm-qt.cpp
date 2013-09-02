@@ -676,182 +676,6 @@ qt_processEvents(struct dm *dmp)
 }
 
 
-struct dm dm_qt = {
-    qt_close,
-    qt_drawBegin,
-    qt_drawEnd,
-    qt_normal,
-    qt_loadMatrix,
-    qt_loadPMatrix,
-    qt_drawString2D,
-    qt_drawLine2D,
-    qt_drawLine3D,
-    qt_drawLines3D,
-    qt_drawPoint2D,
-    qt_drawPoint3D,
-    qt_drawPoints3D,
-    qt_drawVList,
-    qt_drawVListHiddenLine,
-    qt_draw,
-    qt_setFGColor,
-    qt_setBGColor,
-    qt_setLineAttr,
-    qt_configureWin,
-    qt_setWinBounds,
-    qt_setLight,
-    qt_setTransparency,
-    qt_setDepthMask,
-    qt_setZBuffer,
-    qt_debug,
-    qt_beginDList,
-    qt_endDList,
-    qt_drawDList,
-    qt_freeDLists,
-    qt_genDLists,
-    qt_getDisplayImage,
-    qt_reshape,
-    qt_makeCurrent,
-    qt_processEvents,
-    0,
-    0,				/* no displaylist */
-    0,				/* no stereo */
-    0.0,			/* zoom-in limit */
-    1,				/* bound flag */
-    "qt",
-    "Qt Display",
-    DM_TYPE_QT,
-    1,
-    0,/* width */
-    0,/* height */
-    0,/* bytes per pixel */
-    0,/* bits per channel */
-    0,
-    0,
-    1.0,/* aspect ratio */
-    0,
-    {0, 0},
-    BU_VLS_INIT_ZERO,		/* bu_vls path name*/
-    BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
-    BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
-    {0, 0, 0},			/* bg color */
-    {0, 0, 0},			/* fg color */
-    {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
-    {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
-    0,				/* no debugging */
-    0,				/* no perspective */
-    0,				/* no lighting */
-    0,				/* no transparency */
-    0,				/* depth buffer is not writable */
-    0,				/* no zbuffer */
-    0,				/* no zclipping */
-    1,                          /* clear back buffer after drawing and swap */
-    0,                          /* not overriding the auto font size */
-    0				/* Tcl interpreter */
-};
-
-
-QTkMainWindow::QTkMainWindow(QPixmap *p, QWindow *win, struct dm *d)
-    : QWindow(win)
-    , m_update_pending(false)
-{
-    m_backingStore = new QBackingStore(this);
-    create();
-    pixmap = p;
-    dmp = d;
-}
-
-void QTkMainWindow::exposeEvent(QExposeEvent *)
-{
-    if (isExposed()) {
-	renderNow();
-    }
-}
-
-void QTkMainWindow::resizeEvent(QResizeEvent *resizeEv)
-{
-    m_backingStore->resize(resizeEv->size());
-    if (isExposed())
-	renderNow();
-}
-
-bool QTkMainWindow::event(QEvent *ev)
-{
-    if (ev->type() == QEvent::UpdateRequest) {
-	m_update_pending = false;
-	renderNow();
-	return true;
-    }
-    if (ev->type() == 6) {
-	struct bu_vls str = BU_VLS_INIT_ZERO;
-	QKeyEvent *keyEv = (QKeyEvent *)ev;
-	bu_vls_printf(&str, "event generate %V <KeyPress-%s>", &dmp->dm_pathName, keyEv->text().data());
-	if (Tcl_Eval(dmp->dm_interp, bu_vls_addr(&str)) == TCL_ERROR) {
-	    bu_log("error generate event\n");
-	}
-	return true;
-    }
-    if (ev->type() == QEvent::MouseButtonRelease) {
-	struct bu_vls str = BU_VLS_INIT_ZERO;
-	bu_vls_printf(&str, "event generate %V <ButtonRelease-1>", &dmp->dm_pathName);
-	if (Tcl_Eval(dmp->dm_interp, bu_vls_addr(&str)) == TCL_ERROR) {
-	    bu_log("error generate event\n");
-	}
-	return true;
-    }
-    if (ev->type() == QEvent::MouseButtonPress) {
-	struct bu_vls str = BU_VLS_INIT_ZERO;
-	QMouseEvent *mouseEv = (QMouseEvent *)ev;
-
-	if (mouseEv->button() == Qt::LeftButton) {
-	    if (mouseEv->modifiers() == Qt::ControlModifier)
-		bu_vls_printf(&str, "event generate %V <Control-ButtonPress-1> -x %d -y %d", &dmp->dm_pathName, mouseEv->x(), mouseEv->y());
-	    else
-		bu_vls_printf(&str, "event generate %V <1>", &dmp->dm_pathName);
-	}
-	else
-	    bu_vls_printf(&str, "event generate %V <3>", &dmp->dm_pathName);
-
-	if (Tcl_Eval(dmp->dm_interp, bu_vls_addr(&str)) == TCL_ERROR) {
-	    bu_log("error generate event\n");
-	}
-	return true;
-    }
-    if (ev->type() == QEvent::MouseMove) {
-	QMouseEvent *mouseEv = (QMouseEvent *)ev;
-
-	struct bu_vls str = BU_VLS_INIT_ZERO;
-	bu_vls_printf(&str, "event generate %V <Motion> -x %d -y %d", &dmp->dm_pathName, mouseEv->x(), mouseEv->y());
-
-	if (Tcl_Eval(dmp->dm_interp, bu_vls_addr(&str)) == TCL_ERROR) {
-	    bu_log("error generate event\n");
-	}
-	return true;
-    }
-    return QWindow::event(ev);
-}
-
-void QTkMainWindow::renderNow()
-{
-    if (!isExposed())
-	return;
-
-    QRect rect(0, 0, width(), height());
-    m_backingStore->beginPaint(rect);
-
-    QPaintDevice *device = m_backingStore->paintDevice();
-    QPainter painter(device);
-
-    render(&painter);
-
-    m_backingStore->endPaint();
-    m_backingStore->flush(rect);
-}
-
-void QTkMainWindow::render(QPainter *painter)
-{
-    painter->drawPixmap(0, 0, *pixmap);
-}
-
 __BEGIN_DECLS
 
 /*
@@ -1031,6 +855,249 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
 }
 
 __END_DECLS
+
+
+struct dm dm_qt = {
+    qt_close,
+    qt_drawBegin,
+    qt_drawEnd,
+    qt_normal,
+    qt_loadMatrix,
+    qt_loadPMatrix,
+    qt_drawString2D,
+    qt_drawLine2D,
+    qt_drawLine3D,
+    qt_drawLines3D,
+    qt_drawPoint2D,
+    qt_drawPoint3D,
+    qt_drawPoints3D,
+    qt_drawVList,
+    qt_drawVListHiddenLine,
+    qt_draw,
+    qt_setFGColor,
+    qt_setBGColor,
+    qt_setLineAttr,
+    qt_configureWin,
+    qt_setWinBounds,
+    qt_setLight,
+    qt_setTransparency,
+    qt_setDepthMask,
+    qt_setZBuffer,
+    qt_debug,
+    qt_beginDList,
+    qt_endDList,
+    qt_drawDList,
+    qt_freeDLists,
+    qt_genDLists,
+    qt_getDisplayImage,
+    qt_reshape,
+    qt_makeCurrent,
+    qt_processEvents,
+    0,
+    0,				/* no displaylist */
+    0,				/* no stereo */
+    0.0,			/* zoom-in limit */
+    1,				/* bound flag */
+    "qt",
+    "Qt Display",
+    DM_TYPE_QT,
+    1,
+    0,/* width */
+    0,/* height */
+    0,/* bytes per pixel */
+    0,/* bits per channel */
+    0,
+    0,
+    1.0,/* aspect ratio */
+    0,
+    {0, 0},
+    BU_VLS_INIT_ZERO,		/* bu_vls path name*/
+    BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
+    BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
+    {0, 0, 0},			/* bg color */
+    {0, 0, 0},			/* fg color */
+    {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
+    {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
+    0,				/* no debugging */
+    0,				/* no perspective */
+    0,				/* no lighting */
+    0,				/* no transparency */
+    0,				/* depth buffer is not writable */
+    0,				/* no zbuffer */
+    0,				/* no zclipping */
+    1,                          /* clear back buffer after drawing and swap */
+    0,                          /* not overriding the auto font size */
+    0				/* Tcl interpreter */
+};
+
+
+/**
+ * ================================================== Event bindings declaration ==========================================================
+ */
+
+char* qt_mouseButton1Press(QEvent *event) {
+    if (event->type() ==  QEvent::MouseButtonPress) {
+	QMouseEvent *mouseEv = (QMouseEvent *)event;
+	if (mouseEv->button() == Qt::LeftButton) {
+	    struct bu_vls str = BU_VLS_INIT_ZERO;
+	    bu_vls_printf(&str, "<1>");
+	    return bu_vls_addr(&str);
+	}
+    }
+    return NULL;
+}
+
+char* qt_mouseButton1Release(QEvent *event) {
+    if (event->type() ==  QEvent::MouseButtonRelease) {
+	QMouseEvent *mouseEv = (QMouseEvent *)event;
+	if (mouseEv->button() == Qt::LeftButton) {
+	    struct bu_vls str = BU_VLS_INIT_ZERO;
+	    bu_vls_printf(&str, "<ButtonRelease-1>");
+	    return bu_vls_addr(&str);
+	}
+    }
+    return NULL;
+}
+
+char* qt_mouseButton2Press(QEvent *event) {
+    if (event->type() ==  QEvent::MouseButtonPress) {
+	QMouseEvent *mouseEv = (QMouseEvent *)event;
+	if (mouseEv->button() == Qt::RightButton) {
+	    struct bu_vls str = BU_VLS_INIT_ZERO;
+	    bu_vls_printf(&str, "<3>");
+	    return bu_vls_addr(&str);
+	}
+    }
+    return NULL;
+}
+
+char* qt_mouseButton2Release(QEvent *event) {
+    if (event->type() ==  QEvent::MouseButtonPress) {
+	QMouseEvent *mouseEv = (QMouseEvent *)event;
+	if (mouseEv->button() == Qt::RightButton) {
+	    struct bu_vls str = BU_VLS_INIT_ZERO;
+	    bu_vls_printf(&str, "<ButtonRelease-3>");
+	    return bu_vls_addr(&str);
+	}
+    }
+    return NULL;
+}
+
+char* qt_controlMousePress(QEvent *event) {
+    if (event->type() ==  QEvent::MouseButtonPress) {
+	QMouseEvent *mouseEv = (QMouseEvent *)event;
+	if (mouseEv->button() == Qt::LeftButton && mouseEv->modifiers() == Qt::ControlModifier) {
+	    struct bu_vls str = BU_VLS_INIT_ZERO;
+	    bu_vls_printf(&str, "<Control-ButtonPress-1> -x %d -y %d", mouseEv->x(), mouseEv->y());
+	    return bu_vls_addr(&str);
+	}
+    }
+    return NULL;
+}
+
+char* qt_mouseMove(QEvent *event) {
+    if (event->type() ==  QEvent::MouseMove) {
+	QMouseEvent *mouseEv = (QMouseEvent *)event;
+	struct bu_vls str = BU_VLS_INIT_ZERO;
+	bu_vls_printf(&str, "<Motion> -x %d -y %d", mouseEv->x(), mouseEv->y());
+	return bu_vls_addr(&str);
+    }
+    return NULL;
+}
+
+char* qt_keyPress(QEvent *event) {
+    if (event->type() ==  6 /* Key Press */) {
+	QKeyEvent *keyEv = (QKeyEvent *)event;
+	struct bu_vls str = BU_VLS_INIT_ZERO;
+	bu_vls_printf(&str, "<KeyPress-%s>", keyEv->text().data());
+	return bu_vls_addr(&str);
+    }
+    return NULL;
+}
+
+static struct qt_tk_bind qt_bindings[] = {
+    {qt_keyPress, "keypress"},
+    {qt_controlMousePress, "controlbutton1"},
+    {qt_mouseButton1Press, "button1press"},
+    {qt_mouseButton1Release, "button1release"},
+    {qt_mouseButton2Press, "button2press"},
+    {qt_mouseButton2Release, "button2release"},
+    {qt_mouseMove, "mouseMove"}, 
+    {NULL, NULL}
+};
+
+/**
+ * ===================================================== Main window class ===============================================
+ */
+
+QTkMainWindow::QTkMainWindow(QPixmap *p, QWindow *win, struct dm *d)
+    : QWindow(win)
+    , m_update_pending(false)
+{
+    m_backingStore = new QBackingStore(this);
+    create();
+    pixmap = p;
+    dmp = d;
+}
+
+void QTkMainWindow::exposeEvent(QExposeEvent *)
+{
+    if (isExposed()) {
+	renderNow();
+    }
+}
+
+void QTkMainWindow::resizeEvent(QResizeEvent *resizeEv)
+{
+    m_backingStore->resize(resizeEv->size());
+    if (isExposed())
+	renderNow();
+}
+
+bool QTkMainWindow::event(QEvent *ev)
+{
+    int index = 0;
+    if (ev->type() == QEvent::UpdateRequest) {
+	m_update_pending = false;
+	renderNow();
+	return true;
+    }
+    while (qt_bindings[index].name != NULL) {
+	char *tk_event = qt_bindings[index].bind_function(ev);
+	if (tk_event != NULL) {
+	    struct bu_vls str = BU_VLS_INIT_ZERO;
+	    bu_vls_printf(&str, "event generate %V %s", &dmp->dm_pathName, tk_event);
+	    if (Tcl_Eval(dmp->dm_interp, bu_vls_addr(&str)) == TCL_ERROR) {
+		bu_log("error generate event\n");
+	    }
+	    return true;
+	}
+	index++;
+    }
+    return QWindow::event(ev);
+}
+
+void QTkMainWindow::renderNow()
+{
+    if (!isExposed())
+	return;
+
+    QRect rect(0, 0, width(), height());
+    m_backingStore->beginPaint(rect);
+
+    QPaintDevice *device = m_backingStore->paintDevice();
+    QPainter painter(device);
+
+    render(&painter);
+
+    m_backingStore->endPaint();
+    m_backingStore->flush(rect);
+}
+
+void QTkMainWindow::render(QPainter *painter)
+{
+    painter->drawPixmap(0, 0, *pixmap);
+}
 
 #endif /* DM_QT */
 /*

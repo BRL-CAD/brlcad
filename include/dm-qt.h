@@ -68,6 +68,11 @@ struct qt_vars {
     mat_t qmat;
 };
 
+struct qt_tk_bind {
+    char* (*bind_function)(QEvent *event);
+    const char *name;
+};
+
 #endif /* DM_QT */
 
 #endif /* __DM_QT__ */
