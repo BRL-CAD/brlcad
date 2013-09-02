@@ -167,7 +167,7 @@ Usage: %s port_num\n\
       ...list of man pages only (with sections),
       semicolon- or white-space-separated, no other embellishments...
 
-    other_refs
+    other_refs:
 
       ...list of other refences, if any,
       semicolon-separated, no other embellishments...
