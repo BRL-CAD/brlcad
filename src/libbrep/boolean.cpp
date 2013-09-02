@@ -1098,7 +1098,7 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &
 			// Find a trim that should share the same edge
 			int ti = brep->AddTrimCurve(loop[k]);
 			ON_BrepTrim& newtrim = brep->NewTrim(brep->m_E[trim.m_ei], true, breploop, ti);
-			//newtrim.m_type = ON_BrepTrim::seam;
+			// newtrim.m_type = ON_BrepTrim::seam;
 			newtrim.m_tolerance[0] = newtrim.m_tolerance[1] = MAX_FASTF;
 			seamed = true;
 			break;
@@ -1140,19 +1140,39 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &
 	int ti = brep->AddTrimCurve(loop[k]);
 	ON_2dPoint start = loop[k]->PointAtStart(), end = loop[k]->PointAtEnd();
 	int start_idx, end_idx;
+
+	// Get the start vertex index
 	if (k > 0)
 	    start_idx = brep->m_T.Last()->m_vi[1];
 	else {
-	    start_idx = brep->m_V.Count();
-	    brep->NewVertex(face.SurfaceOf()->PointAt(start.x, start.y), 0.0);
+	    ON_3dPoint vtx = face.SurfaceOf()->PointAt(start.x, start.y);
+	    int i;
+	    for (i = 0; i < brep->m_V.Count(); i++)
+		if (brep->m_V[i].Point().DistanceTo(vtx) < ON_ZERO_TOLERANCE)
+		    break;
+	    start_idx = i;
+	    if (i == brep->m_V.Count()) {
+		brep->NewVertex(vtx, 0.0);
+	    }
 	}
 
+	// Get the end vertex index
 	if (c3d->IsClosed())
 	    end_idx = start_idx;
 	else {
-	    end_idx = brep->m_V.Count();
-	    brep->NewVertex(face.SurfaceOf()->PointAt(end.x, end.y), 0.0);
+	    ON_3dPoint vtx = face.SurfaceOf()->PointAt(end.x, end.y);
+	    int i;
+	    for (i = 0; i < brep->m_V.Count(); i++)
+		if (brep->m_V[i].Point().DistanceTo(vtx) < ON_ZERO_TOLERANCE)
+		    break;
+	    end_idx = i;
+	    if (i == brep->m_V.Count()) {
+		brep->NewVertex(vtx, 0.0);
+	    }
 	}
+
+	/*
+	// Adjust the index for the last segment
 	if (k == loop.Count() - 1) {
 	    if (!c3d->IsClosed()) {
 		brep->m_V.Remove();
@@ -1169,7 +1189,7 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &
 		    brep->m_T.Last()->m_vi[1] = start_count;
 		}
 	    }
-	}
+	}*/
 
 	ON_BrepEdge &edge = brep->NewEdge(brep->m_V[start_idx], brep->m_V[end_idx],
 	    brep->m_C3.Count() - 1, (const ON_Interval *)0, MAX_FASTF);
@@ -1177,6 +1197,7 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &
 	trim.m_tolerance[0] = trim.m_tolerance[1] = MAX_FASTF;
     }
 
+    /*
     // If the first trim's m_vi[0] (start) != the last trim's m_vi[1] (end),
     // change the references of end to start.
     if (breploop.m_ti.Count()) {
@@ -1205,7 +1226,7 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &
 	    brep->m_V[end_vi].m_ei.Empty(); // Or remove this vertex
 	}
     }
-
+    */
     //if (brep->m_V.Count() < brep->m_V.Capacity())
 	//brep->m_V[brep->m_V.Count()].m_ei.Empty();
 }
