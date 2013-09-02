@@ -38,7 +38,7 @@
 #include "brep.h"
 #include "raytrace.h"
 
-#define DEBUG_BREP_BOOLEAN 1
+#define DEBUG_BREP_BOOLEAN 0
 #define USE_CONNECTIVITY_GRAPH 1
 #define INTERSECTION_TOL 1e-4
 #define ANGLE_TOL ON_PI/1800.0
@@ -1020,8 +1020,8 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 	}
     }
 
-    bu_log("Split to %d faces.\n", out.Count());
     if (DEBUG_BREP_BOOLEAN) {
+	bu_log("Split to %d faces.\n", out.Count());
 	for (int i = 0; i < out.Count(); i++) {
 	    bu_log("Trimmed Face %d:\n", i);
 	    bu_log("outerloop:\n");

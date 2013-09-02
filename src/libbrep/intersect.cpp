@@ -35,6 +35,8 @@
 
 #include "brep.h"
 
+#define DEBUG_BREP_INTERSECT 0
+
 
 /* Sub-division support for a curve.
  * It's similar to generating the bounding box tree, when the Split()
@@ -414,7 +416,8 @@ curve_fitting(ON_Curve* in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool d
 	    // Some points have been eliminated
 	    if (delete_curve) delete in;
 	    in = new ON_PolylineCurve(new_points);
-	    bu_log("fitting: %d => %d points.\n", point_count, new_points.Count());
+	    if (DEBUG_BREP_INTERSECT)
+		bu_log("fitting: %d => %d points.\n", point_count, new_points.Count());
 	}
     }
 
@@ -3080,7 +3083,8 @@ ON_Intersect(const ON_Surface* surfA,
 	}
     }
 
-    bu_log("%d overlap events.\n", overlapevents.Count());
+    if (DEBUG_BREP_INTERSECT)
+	bu_log("%d overlap events.\n", overlapevents.Count());
 
     /* Second step: calculate the intersection of the bounding boxes.
      * Only the children of intersecting b-box pairs need to be considered.
@@ -3145,7 +3149,8 @@ ON_Intersect(const ON_Surface* surfA,
 	}
 	candidates = next_candidates;
     }
-    bu_log("We get %d intersection bounding boxes.\n", candidates.size());
+    if (DEBUG_BREP_INTERSECT)
+	bu_log("We get %d intersection bounding boxes.\n", candidates.size());
 
     /* Third step: get the intersection points using triangular approximation. */
     for (NodePairs::iterator i = candidates.begin(); i != candidates.end(); i++) {
@@ -3290,7 +3295,8 @@ ON_Intersect(const ON_Surface* surfA,
 	    }
 	}
     }
-    bu_log("%d points on the intersection curves.\n", curvept.Count());
+    if (DEBUG_BREP_INTERSECT)
+	bu_log("%d points on the intersection curves.\n", curvept.Count());
 
     if (!curvept.Count()) {
 	if (treeA == NULL) delete rootA;
@@ -3313,11 +3319,13 @@ ON_Intersect(const ON_Surface* surfA,
     double max_dis_v = surfA->Domain(1).Length() * 0.05;
     double max_dis_s = surfB->Domain(0).Length() * 0.05;
     double max_dis_t = surfB->Domain(1).Length() * 0.05;
-    bu_log("max_dis: %lf\n", max_dis);
-    bu_log("max_dis_u: %lf\n", max_dis_u);
-    bu_log("max_dis_v: %lf\n", max_dis_v);
-    bu_log("max_dis_s: %lf\n", max_dis_s);
-    bu_log("max_dis_t: %lf\n", max_dis_t);
+    if (DEBUG_BREP_INTERSECT) {
+	bu_log("max_dis: %lf\n", max_dis);
+	bu_log("max_dis_u: %lf\n", max_dis_u);
+	bu_log("max_dis_v: %lf\n", max_dis_v);
+	bu_log("max_dis_s: %lf\n", max_dis_s);
+	bu_log("max_dis_t: %lf\n", max_dis_t);
+    }
     // NOTE: More tests are needed to find a better threshold.
 
     std::vector<PointPair> ptpairs;
@@ -3556,7 +3564,8 @@ ON_Intersect(const ON_Surface* surfA,
 	}
     }
 
-    bu_log("%d curve segments and %d single points.\n", intersect3d.Count(), single_pts.Count());
+    if (DEBUG_BREP_INTERSECT)
+	bu_log("%d curve segments and %d single points.\n", intersect3d.Count(), single_pts.Count());
     bu_free(index, "int");
     bu_free(startpt, "int");
     bu_free(endpt, "int");
