@@ -804,7 +804,7 @@ bool QTkMainWindow::event(QEvent *ev)
 
 	if (mouseEv->button() == Qt::LeftButton) {
 	    if (mouseEv->modifiers() == Qt::ControlModifier)
-		bu_vls_printf(&str, "event generate %V <Control-ButtonPress-1>", &dmp->dm_pathName);
+		bu_vls_printf(&str, "event generate %V <Control-ButtonPress-1> -x %d -y %d", &dmp->dm_pathName, mouseEv->x(), mouseEv->y());
 	    else
 		bu_vls_printf(&str, "event generate %V <1>", &dmp->dm_pathName);
 	}
