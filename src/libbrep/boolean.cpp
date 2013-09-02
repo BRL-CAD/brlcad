@@ -1062,9 +1062,9 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &
     int start_count = brep->m_V.Count();
     const ON_Surface* srf = face.SurfaceOf();
 
+    // Determine whether a segment should be a seam trim, according to the
+    // requirements in ON_Brep::IsValid() (See opennurbs_brep.cpp)
     for (int k = 0; k < loop.Count(); k++) {
-	// Determine whether it should be a seam trim, according to the
-	// requirements in ON_Brep::IsValid() (See opennurbs_brep.cpp)
 	ON_BOOL32 bClosed[2];
 	bClosed[0] = srf->IsClosed(0);
 	bClosed[1] = srf->IsClosed(1);
@@ -1190,64 +1190,11 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &
 	    }
 	}
 
-	/*
-	// Adjust the index for the last segment
-	if (k == loop.Count() - 1) {
-	    if (!c3d->IsClosed()) {
-		brep->m_V.Remove();
-		end_idx = start_count;
-	    } else if (k) {
-		start_idx = end_idx = start_count;
-		if (brep->m_T.Last() && brep->m_T.Last()->m_ei != -1) {
-		    ON_BrepEdge& last_edge = brep->m_E[brep->m_T.Last()->m_ei];
-		    if (last_edge.m_vi[1-brep->m_T.Last()->m_bRev3d] != start_count) {
-			brep->m_V.Remove();
-			last_edge.m_vi[1-brep->m_T.Last()->m_bRev3d] = start_count;
-			brep->m_V[start_count].m_ei.Append(last_edge.m_edge_index);
-		    }
-		    brep->m_T.Last()->m_vi[1] = start_count;
-		}
-	    }
-	}*/
-
 	ON_BrepEdge &edge = brep->NewEdge(brep->m_V[start_idx], brep->m_V[end_idx],
 	    brep->m_C3.Count() - 1, (const ON_Interval *)0, MAX_FASTF);
 	ON_BrepTrim &trim = brep->NewTrim(edge, 0, breploop, ti);
 	trim.m_tolerance[0] = trim.m_tolerance[1] = MAX_FASTF;
     }
-
-    /*
-    // If the first trim's m_vi[0] (start) != the last trim's m_vi[1] (end),
-    // change the references of end to start.
-    if (breploop.m_ti.Count()) {
-	int start_vi = brep->m_T[breploop.m_ti[0]].m_vi[0];
-	int end_vi = brep->m_T[*breploop.m_ti.Last()].m_vi[1];
-	if (start_vi != end_vi) {
-	    for (int i = 0; i < breploop.m_ti.Count(); i++) {
-		ON_BrepTrim& trim = brep->m_T[breploop.m_ti[i]];
-		if (trim.m_vi[0] == end_vi) {
-		    trim.m_vi[0] = start_vi;
-		    int &edge_vi = brep->m_E[trim.m_ei].m_vi[trim.m_bRev3d ? 1 : 0];
-		    if (edge_vi != start_vi) {
-			// Only need to update the array if edge_vi changes.
-			edge_vi = start_vi;
-			brep->m_V[start_vi].m_ei.Append(trim.m_ei);
-		    }
-		} else if (brep->m_T[breploop.m_ti[i]].m_vi[1] == end_vi) {
-		    trim.m_vi[1] = start_vi;
-		    int &edge_vi = brep->m_E[trim.m_ei].m_vi[trim.m_bRev3d ? 0 : 1];
-		    if (edge_vi != start_vi) {
-			edge_vi = start_vi;
-			brep->m_V[start_vi].m_ei.Append(trim.m_ei);
-		    }
-		}
-	    }
-	    brep->m_V[end_vi].m_ei.Empty(); // Or remove this vertex
-	}
-    }
-    */
-    //if (brep->m_V.Count() < brep->m_V.Capacity())
-	//brep->m_V[brep->m_V.Count()].m_ei.Empty();
 }
 
 
