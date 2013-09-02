@@ -1069,44 +1069,63 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &
 	bClosed[0] = srf->IsClosed(0);
 	bClosed[1] = srf->IsClosed(1);
 	if (bClosed[0] || bClosed[1]) {
-	    ON_Interval side_interval;
-	    int endpt_index = 0;
-	    const double side_tol = 1.0e-4;
-	    double s0, s1;
-	    bool seamed = false;
-	    if (bClosed[0])
+	    ON_Surface::ISO iso1, iso2, iso_type;
+	    int endpt_index = -1;
+	    iso1 = srf->IsIsoparametric(*loop[k]);
+	    if (ON_Surface::E_iso == iso1 && bClosed[0]) {
+		iso_type = ON_Surface::W_iso;
 		endpt_index = 1;
-	    else
+	    } else if (ON_Surface::W_iso == iso1 && bClosed[0]) {
+		iso_type = ON_Surface::E_iso;
+		endpt_index = 1;
+	    } else if (ON_Surface::S_iso == iso1 && bClosed[1]) {
+		iso_type = ON_Surface::N_iso;
 		endpt_index = 0;
-	    side_interval.Set(loop[k]->PointAtStart()[endpt_index], loop[k]->PointAtEnd()[endpt_index]);
-	    for (int i = 0; i < breploop.m_ti.Count(); i++) {
-		ON_BrepTrim& trim = brep->m_T[breploop.m_ti[i]];
-		if (ON_BrepTrim::boundary != trim.m_type)
-		    continue;
-		s1 = side_interval.NormalizedParameterAt(trim.PointAtStart()[endpt_index]);
-		if (fabs(s1 - 1.0) > side_tol)
-		    continue;
-		s0 = side_interval.NormalizedParameterAt(trim.PointAtEnd()[endpt_index]);
-		if (fabs(s0) > side_tol)
-		    continue;
+	    } else if (ON_Surface::N_iso == iso1 && bClosed[1]) {
+		iso_type = ON_Surface::S_iso;
+		endpt_index = 0;
+	    }
+	    if (endpt_index != -1) {
+		ON_Interval side_interval;
+		const double side_tol = 1.0e-4;
+		double s0, s1;
+		bool seamed = false;
+		side_interval.Set(loop[k]->PointAtStart()[endpt_index], loop[k]->PointAtEnd()[endpt_index]);
+		if (((ON_Surface::N_iso == iso_type || ON_Surface::W_iso == iso_type) && side_interval.IsIncreasing())
+		    || ((ON_Surface::S_iso == iso_type || ON_Surface::E_iso == iso_type) && side_interval.IsDecreasing())) {
+		    for (int i = 0; i < breploop.m_ti.Count(); i++) {
+			ON_BrepTrim& trim = brep->m_T[breploop.m_ti[i]];
+			if (ON_BrepTrim::boundary != trim.m_type)
+			    continue;
+			iso2 = srf->IsIsoparametric(trim);
+			if (iso2 != iso_type)
+			    continue;
+			s1 = side_interval.NormalizedParameterAt(trim.PointAtStart()[endpt_index]);
+			if (fabs(s1 - 1.0) > side_tol)
+			    continue;
+			s0 = side_interval.NormalizedParameterAt(trim.PointAtEnd()[endpt_index]);
+			if (fabs(s0) > side_tol)
+			    continue;
 
-		if (srf->IsIsoparametric(*loop[k]) && srf->IsIsoparametric(trim)) {
-		    double s2 = srf->Domain(1-endpt_index).NormalizedParameterAt(loop[k]->PointAtStart()[1-endpt_index]);
-		    double s3 = srf->Domain(1-endpt_index).NormalizedParameterAt(trim.PointAtStart()[1-endpt_index]);
-		    if ((fabs(s2 - 1.0) < side_tol && fabs(s3) < side_tol) ||
-			(fabs(s2) < side_tol && fabs(s3 - 1.0) < side_tol)) {
-			// Find a trim that should share the same edge
-			int ti = brep->AddTrimCurve(loop[k]);
-			ON_BrepTrim& newtrim = brep->NewTrim(brep->m_E[trim.m_ei], true, breploop, ti);
-			// newtrim.m_type = ON_BrepTrim::seam;
-			newtrim.m_tolerance[0] = newtrim.m_tolerance[1] = MAX_FASTF;
-			seamed = true;
-			break;
+			// We add another checking, which is not included in ON_Brep::IsValid()
+			// - they should be iso boundaries of the surface.
+			double s2 = srf->Domain(1-endpt_index).NormalizedParameterAt(loop[k]->PointAtStart()[1-endpt_index]);
+			double s3 = srf->Domain(1-endpt_index).NormalizedParameterAt(trim.PointAtStart()[1-endpt_index]);
+			if ((fabs(s2 - 1.0) < side_tol && fabs(s3) < side_tol) ||
+			    (fabs(s2) < side_tol && fabs(s3 - 1.0) < side_tol)) {
+			    // Find a trim that should share the same edge
+			    int ti = brep->AddTrimCurve(loop[k]);
+			    ON_BrepTrim& newtrim = brep->NewTrim(brep->m_E[trim.m_ei], true, breploop, ti);
+			    // newtrim.m_type = ON_BrepTrim::seam;
+			    newtrim.m_tolerance[0] = newtrim.m_tolerance[1] = MAX_FASTF;
+			    seamed = true;
+			    break;
+			}
 		    }
+		    if (seamed)
+			continue;
 		}
 	    }
-	    if (seamed)
-		continue;
 	}
 
 	ON_Curve* c3d = NULL;
