@@ -1754,6 +1754,17 @@ public:
     {
 	m_children[0] = m_children[1] = NULL;
     }
+    Subcurve(ON_Curve* curve)
+    {
+	m_curve = curve;
+	if (curve) {
+	    m_node = curve->BoundingBox();
+	    m_t = curve->Domain();
+	    m_islinear = curve->IsLinear();
+	} else
+	    m_islinear = false;
+	m_children[0] = m_children[1] = NULL;
+    }
     Subcurve(const Subcurve &_scurve)
     {
 	m_islinear = _scurve.m_islinear;
@@ -1837,6 +1848,18 @@ public:
 
     Subsurface() : m_surf(NULL), m_isplanar(false)
     {
+	m_children[0] = m_children[1] = m_children[2] = m_children[3] = NULL;
+    }
+    Subsurface(ON_Surface* surf)
+    {
+	m_surf = surf;
+	if (surf) {
+	    SetBBox(surf->BoundingBox());
+	    m_u = surf->Domain(0);
+	    m_v = surf->Domain(1);
+	    m_isplanar = surf->IsPlanar();
+	} else
+	    m_isplanar = false;
 	m_children[0] = m_children[1] = m_children[2] = m_children[3] = NULL;
     }
     Subsurface(const Subsurface &_ssurf)

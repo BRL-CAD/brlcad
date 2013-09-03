@@ -1403,9 +1403,9 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 
     ON_SimpleArray<Subsurface*> surf_treeA, surf_treeB;
     for (int i = 0; i < facecount1; i++)
-	surf_treeA.Append(new Subsurface());
+	surf_treeA.Append(new Subsurface(brepA->m_F[i].SurfaceOf()->Duplicate()));
     for (int i = 0; i < facecount2; i++)
-	surf_treeB.Append(new Subsurface());
+	surf_treeB.Append(new Subsurface(brepB->m_F[i].SurfaceOf()->Duplicate()));
 
     // calculate intersection curves
     for (int i = 0; i < facecount1; i++) {
