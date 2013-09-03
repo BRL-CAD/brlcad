@@ -671,13 +671,6 @@ Add_Shape_Representation(Registry *registry, InstMgr *instance_list, SdaiReprese
     return (SdaiRepresentation *)shape_rep;
 }
 
-
-#if 0
-void
-ON_RationalNurbsCurve_to_EntityAggregate(ON_NurbsCurve *incrv, SdaiRational_B_spline_curve *step_crv) {
-}
-#endif
-
 /* Rather than have the organization of elements in the step file be
  * dicated by the order in which they are built up from ON_Brep,
  * define a function that iterates over the structures to populate the
@@ -852,6 +845,7 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 		info->three_dimensional_curves.at(i) = info->registry->ObjCreate("RATIONAL_B_SPLINE_CURVE");
 		SdaiRational_b_spline_curve *curr_curve = (SdaiRational_b_spline_curve *)info->three_dimensional_curves.at(i);
 		ON_RationalNurbsCurveCV_to_Aggregates(n_curve, curr_curve, info);
+		curr_curve->degree_(n_curve->Degree());
 	    } else {
 		info->three_dimensional_curves.at(i) = info->registry->ObjCreate("B_SPLINE_CURVE_WITH_KNOTS");
 		SdaiB_spline_curve *curr_curve = (SdaiB_spline_curve *)info->three_dimensional_curves.at(i);
