@@ -272,8 +272,8 @@ sub_curve(const ON_Curve* in, double a, double b)
 	delete left;
     left = NULL;
     if (!right) {
-	bu_log("Error: sub_curve(): a = %lf, b = %lf, min = %lf, max = %lf\n", a, b, dom.Min(), dom.Max());
-	return NULL;
+	// bu_log("Error: sub_curve(): a = %lf, b = %lf, min = %lf, max = %lf\n", a, b, dom.Min(), dom.Max());
+	right = in->Duplicate();
     }
     if (ON_NearZero(sub.m_t[1] - dom.m_t[1]))
 	left = right->Duplicate();
