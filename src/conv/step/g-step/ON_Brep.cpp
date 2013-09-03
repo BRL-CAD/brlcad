@@ -70,17 +70,21 @@
 #include "STEPWrapper.h"
 
 void
-ON_3dPoint_to_Cartesian_point(ON_3dPoint *inpnt, SdaiCartesian_point *step_pnt) {
+XYZ_to_Cartesian_point(double x, double y, double z, SdaiCartesian_point *step_pnt) {
     RealAggregate_ptr coord_vals = step_pnt->coordinates_();
     RealNode *xnode = new RealNode();
-    xnode->value = inpnt->x;
+    xnode->value = x;
     coord_vals->AddNode(xnode);
     RealNode *ynode = new RealNode();
-    ynode->value = inpnt->y;
+    ynode->value = y;
     coord_vals->AddNode(ynode);
     RealNode *znode = new RealNode();
-    znode->value = inpnt->z;
+    znode->value = z;
     coord_vals->AddNode(znode);
+}
+void
+ON_3dPoint_to_Cartesian_point(ON_3dPoint *inpnt, SdaiCartesian_point *step_pnt) {
+    XYZ_to_Cartesian_point(inpnt->x, inpnt->y, inpnt->z, step_pnt);
 }
 
 
@@ -111,6 +115,24 @@ ON_NurbsCurveCV_to_EntityAggregate(ON_NurbsCurve *incrv, SdaiB_spline_curve *ste
 	incrv->GetCV(i, cv_pnt);
 	ON_3dPoint_to_Cartesian_point(&(cv_pnt), step_cartesian);
 	control_pnts->AddNode(new EntityNode((SDAI_Application_instance *)step_cartesian));
+    }
+}
+
+void
+ON_RationalNurbsCurveCV_to_Aggregates(ON_NurbsCurve *incrv, SdaiRational_b_spline_curve *step_crv, Exporter_Info_AP203 *info) {
+    EntityAggregate *control_pnts = step_crv->control_points_list_();
+    RealAggregate *weights = step_crv->weights_data_();
+    ON_4dPoint cv_pnt;
+    for (int i = 0; i < incrv->CVCount(); i++) {
+	SdaiCartesian_point *step_cartesian = (SdaiCartesian_point *)info->registry->ObjCreate("CARTESIAN_POINT");
+	step_cartesian->name_("''");
+	info->cartesian_pnts.push_back((STEPentity *)step_cartesian);
+	incrv->GetCV(i, cv_pnt);
+	XYZ_to_Cartesian_point(cv_pnt.x, cv_pnt.y, cv_pnt.z, step_cartesian);
+	control_pnts->AddNode(new EntityNode((SDAI_Application_instance *)step_cartesian));
+	RealNode *wnode = new RealNode();
+	wnode->value = cv_pnt.w;
+	weights->AddNode(wnode);
     }
 }
 
@@ -826,8 +848,10 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 	if (n_curve && !curve_converted) {
 	    std::cout << "Have NurbsCurve\n";
 	    if (n_curve->IsRational()) {
-		std::cout << "TODO - Have Rational NurbsCurve\n";
+		std::cout << "Have Rational NurbsCurve\n";
 		info->three_dimensional_curves.at(i) = info->registry->ObjCreate("RATIONAL_B_SPLINE_CURVE");
+		SdaiRational_b_spline_curve *curr_curve = (SdaiRational_b_spline_curve *)info->three_dimensional_curves.at(i);
+		ON_RationalNurbsCurveCV_to_Aggregates(n_curve, curr_curve, info);
 	    } else {
 		info->three_dimensional_curves.at(i) = info->registry->ObjCreate("B_SPLINE_CURVE_WITH_KNOTS");
 		SdaiB_spline_curve *curr_curve = (SdaiB_spline_curve *)info->three_dimensional_curves.at(i);
