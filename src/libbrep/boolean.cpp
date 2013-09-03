@@ -1401,6 +1401,12 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
     int facecount2 = brepB->m_F.Count();
     ON_ClassArray<ON_SimpleArray<SSICurve> > curvesarray(facecount1 + facecount2);
 
+    ON_SimpleArray<Subsurface*> surf_treeA, surf_treeB;
+    for (int i = 0; i < facecount1; i++)
+	surf_treeA.Append(new Subsurface());
+    for (int i = 0; i < facecount2; i++)
+	surf_treeB.Append(new Subsurface());
+
     // calculate intersection curves
     for (int i = 0; i < facecount1; i++) {
 	for (int j = 0; j < facecount2; j++) {
@@ -1410,7 +1416,15 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 	    if (ON_Intersect(brepA->m_S[brepA->m_F[i].m_si],
 			     brepB->m_S[brepB->m_F[j].m_si],
 			     events,
-			     INTERSECTION_TOL) <= 0)
+			     INTERSECTION_TOL,
+			     0.0,
+			     0.0,
+			     NULL,
+			     NULL,
+			     NULL,
+			     NULL,
+			     surf_treeA[i],
+			     surf_treeB[j]) <= 0)
 		continue;
 	    ON_SimpleArray<ON_Curve*> curve_uv, curve_st;
 	    for (int k = 0; k < events.Count(); k++) {
@@ -1591,12 +1605,6 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
     }
 #endif	// #if USE_CONNECTIVITY_GRAPH
 
-    ON_SimpleArray<Subsurface*> surf_treeA, surf_treeB;
-    for (int i = 0; i < facecount1; i++)
-	surf_treeA.Append(NULL);
-    for (int i = 0; i < facecount2; i++)
-	surf_treeB.Append(NULL);
-
     for (int i = 0; i < trimmedfaces.Count(); i++) {
 	const ON_SimpleArray<TrimmedFace*>& splitted = trimmedfaces[i];
 	/* Perform inside-outside test to decide whether the trimmed face should
@@ -1675,6 +1683,11 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
     ON_TextLog log(ws);
     brepO->IsValid(&log);
     bu_log(ON_String(ws).Array());
+
+    for (int i = 0; i < surf_treeA.Count(); i++)
+	delete surf_treeA[i];
+    for (int i = 0; i < surf_treeB.Count(); i++)
+	delete surf_treeB[i];
 
     // WIP
     return 0;
