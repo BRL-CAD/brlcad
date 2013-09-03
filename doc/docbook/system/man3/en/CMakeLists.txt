@@ -5,6 +5,7 @@ set(docbook_man3_EN
   libplot3.xml
   librt.xml
   libwdb.xml
+  popt.xml
   redblack.xml
   )
 

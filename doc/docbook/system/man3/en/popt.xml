@@ -1,0 +1,954 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- the original file had an entity '&bsol;' which is the backslash; it was
+     replaced by the equivalent unicode character reference '&#92;'
+-->
+<!-- lifted from man+troff by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='popt3'>
+<refmeta>
+<refentrytitle>POPT</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo class='source'>June 30, 1998</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>popt</refname>
+<refpurpose>Parse command line options</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<funcsynopsis>
+<funcsynopsisinfo>
+#include &lt;popt.h&gt;
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>poptContext <function>poptGetContext</function></funcdef>
+    <paramdef>const char * <parameter>name</parameter></paramdef>
+    <paramdef>int <parameter>argc</parameter></paramdef>
+    <paramdef>const char ** <parameter>argv</parameter></paramdef>
+    <paramdef>const struct poptOption * <parameter>options</parameter></paramdef>
+    <paramdef>int <parameter>flags</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>void <function>poptFreeContext</function></funcdef>
+    <paramdef>poptContext <parameter>con</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>void <function>poptResetContext</function></funcdef>
+    <paramdef>poptContext <parameter>con</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>poptGetNextOpt</function></funcdef>
+    <paramdef>poptContext <parameter>con</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>const char *<function>poptGetOptArg</function></funcdef>
+    <paramdef>poptContext <parameter>con</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>const char *<function>poptGetArg</function></funcdef>
+    <paramdef>poptContext <parameter>con</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>const char *<function>poptPeekArg</function></funcdef>
+    <paramdef>poptContext <parameter>con</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>const char **<function>poptGetArgs</function></funcdef>
+    <paramdef>poptContext <parameter>con</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>const char *const <function>poptStrerror</function></funcdef>
+    <paramdef>const int <parameter>error</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>const char *<function>poptBadOption</function></funcdef>
+    <paramdef>poptContext <parameter>con</parameter></paramdef>
+    <paramdef>int <parameter>flags</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>poptReadDefaultConfig</function></funcdef>
+    <paramdef>poptContext <parameter>con</parameter></paramdef>
+    <paramdef>int <parameter>flags</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>poptReadConfigFile</function></funcdef>
+    <paramdef>poptContext <parameter>con</parameter></paramdef>
+    <paramdef>char * <parameter>fn</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>poptAddAlias</function></funcdef>
+    <paramdef>poptContext <parameter>con</parameter></paramdef>
+    <paramdef>struct poptAlias <parameter>alias</parameter></paramdef>
+    <paramdef>int <parameter>flags</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>poptParseArgvString</function></funcdef>
+    <paramdef>char * <parameter>s</parameter></paramdef>
+    <paramdef>int * <parameter>argcPtr</parameter></paramdef>
+    <paramdef>const char *** <parameter>argvPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>poptDupArgv</function></funcdef>
+    <paramdef>int <parameter>argc</parameter></paramdef>
+    <paramdef>const char ** <parameter>argv</parameter></paramdef>
+    <paramdef>int * <parameter>argcPtr</parameter></paramdef>
+    <paramdef>const char *** <parameter>argvPtr</parameter></paramdef>
+</funcprototype>
+<funcprototype>
+<funcdef>int <function>poptStuffArgs</function></funcdef>
+    <paramdef>poptContext <parameter>con</parameter></paramdef>
+    <paramdef>const char ** <parameter>argv</parameter></paramdef>
+</funcprototype>
+</funcsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>The popt library exists essentially for parsing command-line 
+options. It is found superior in many ways when compared to 
+parsing the argv array by hand or using the getopt functions 
+<function>getopt()</function>
+and 
+<function>getopt_long()</function>
+[see 
+<citerefentry><refentrytitle>getopt</refentrytitle><manvolnum>3</manvolnum></citerefentry>].
+Some specific advantages of popt are: it does not utilize global 
+variables, thus enabling multiple passes in parsing <varname role='parameter'>argv</varname>
+; it can parse an arbitrary array of <varname role='parameter'>argv</varname>-style elements, 
+allowing parsing of command-line-strings from any source; 
+it provides a standard method of option aliasing (to be 
+discussed at length below.); it can exec external option filters; and,
+finally, it can automatically generate help and usage messages for
+the application.</para>
+
+<para>Like
+<function>getopt_long()</function>,
+the popt library supports short and long style options.  Recall 
+that a 
+<emphasis remap='B'>short option</emphasis>
+consists of a - character followed by a single alphanumeric character.
+A 
+<emphasis remap='B'>long option</emphasis>,
+common in GNU utilities, consists of two - characters followed by a
+string made up of letters, numbers and hyphens.  Long options are
+optionally allowed to begin with a single -, primarily to allow command-line
+compatibility between popt applications and X toolkit applications.
+Either type of option may be followed by an argument.  A space separates a 
+short option from its arguments; either a space or an = separates a long 
+option from an argument.</para> 
+
+<para>The popt library is highly portable and should work on any POSIX 
+platform.  The latest version is distributed with rpm and is always available
+from: ftp://ftp.rpm.org/pub/rpm/dist.</para>
+
+<para>It may be redistributed under the X consortium license, see the file COPYING
+in the popt source distribution for details.</para>
+</refsect1>
+
+<refsect1 xml:id='basic_popt_usage'><title>BASIC POPT USAGE</title>
+
+<refsect2 xml:id='x1_the_option_table'><title>1. THE OPTION TABLE</title>
+<para>Applications provide popt with information on their command-line 
+options by means of an "option table," i.e., an array of 
+<emphasis remap='B'>struct poptOption</emphasis>
+structures:</para>
+
+<para>#include &lt;popt.h&gt;</para>
+
+<programlisting remap='.nf'>
+struct poptOption {
+    const char * longName; /* may be NULL */
+    char shortName;        /* may be '&#92;0' */
+    int argInfo;
+    void * arg;            /* depends on argInfo */
+    int val;               /* 0 means don't return, just update flag */
+    char * descrip;        /* description for autohelp -- may be NULL */
+    char * argDescrip;     /* argument description for autohelp */
+};
+</programlisting> <!-- .fi -->
+
+<para>Each member of the table defines a single option that may be
+passed to the program.  Long and short options are considered
+a single option that may occur in two different forms.  The
+first two members,
+<emphasis remap='I'>longName</emphasis> and <emphasis remap='I'>shortName</emphasis>, define the names of the option;
+the first is a long name, while the latter is a single character.</para>
+
+<para>The
+<emphasis remap='I'>argInfo</emphasis> member tells popt what type of argument is expected
+after the option.  If no argument is expected,
+<emphasis remap='B'>POPT_ARG_NONE</emphasis>
+should be used.
+The rest of the valid values are shown in the following table:</para>
+
+<informaltable pgwide='0' frame='none'>
+  <tgroup cols='3' align='center'>
+    <colspec colname='c1'/>
+    <colspec colname='c2'/>
+    <colspec colname='c3'/>
+    <thead>
+      <row>
+        <entry align='left'>Value</entry>
+        <entry align='left'>Description</entry>
+        <entry align='left'>arg Type</entry>
+      </row>
+    </thead>
+    <tbody>
+      <row>
+        <entry align='left'>POPT_ARG_NONE</entry>
+        <entry align='left'>No argument expected</entry>
+        <entry align='left'>int</entry>
+      </row>
+      <row>
+        <entry align='left'>POPT_ARG_STRING</entry>
+        <entry align='left'>No type checking to be performed</entry>
+        <entry align='left'>char *</entry>
+      </row>
+      <row>
+        <entry align='left'>POPT_ARG_ARGV</entry>
+        <entry align='left'>No type checking to be performed</entry>
+        <entry align='left'>char **</entry>
+      </row>
+      <row>
+        <entry align='left'>POPT_ARG_SHORT</entry>
+        <entry align='left'>An short argument is expected</entry>
+        <entry align='left'>short</entry>
+      </row>
+      <row>
+        <entry align='left'>POPT_ARG_INT</entry>
+        <entry align='left'>An integer argument is expected</entry>
+        <entry align='left'>int</entry>
+      </row>
+      <row>
+        <entry align='left'>POPT_ARG_LONG</entry>
+        <entry align='left'>A long integer is expected</entry>
+        <entry align='left'>long</entry>
+      </row>
+      <row>
+        <entry align='left'>POPT_ARG_LONGLONG</entry>
+        <entry align='left'>A long long integer is expected</entry>
+        <entry align='left'>long long</entry>
+      </row>
+      <row>
+        <entry align='left'>POPT_ARG_VAL</entry>
+        <entry align='left'>Integer value taken from <emphasis remap='CW'>val</emphasis></entry>
+        <entry align='left'>int</entry>
+      </row>
+      <row>
+        <entry align='left'>POPT_ARG_FLOAT</entry>
+        <entry align='left'>An float argument is expected</entry>
+        <entry align='left'>float</entry>
+      </row>
+      <row>
+        <entry align='left'>POPT_ARG_DOUBLE</entry>
+        <entry align='left'>A double argument is expected</entry>
+        <entry align='left'>double</entry>
+      </row>
+    </tbody>
+  </tgroup>
+</informaltable>
+
+
+
+<para>For numeric values, if the <emphasis remap='I'>argInfo</emphasis> value is bitwise or'd with one of
+<emphasis remap='B'>POPT_ARGFLAG_OR</emphasis>, <emphasis remap='B'>POPT_ARGFLAG_AND</emphasis>, or <emphasis remap='B'>POPT_ARGFLAG_XOR</emphasis>,
+the value is saved by performing an OR, AND, or XOR.
+If the <emphasis remap='I'>argInfo</emphasis> value is bitwise or'd with <emphasis remap='B'>POPT_ARGFLAG_NOT</emphasis>,
+the value will be negated before saving. For the common operations of
+setting and/or clearing bits, <emphasis remap='B'>POPT_BIT_SET</emphasis> and <emphasis remap='B'>POPT_BIT_CLR</emphasis>
+have the appropriate flags set to perform bit operations.</para>
+
+<para>If the <emphasis remap='I'>argInfo</emphasis> value is bitwise or'd with <emphasis remap='B'>POPT_ARGFLAG_ONEDASH</emphasis>,
+the long argument may be given with a single - instead of two. For example,
+if <option>--longopt</option> is an option with <emphasis remap='B'>POPT_ARGFLAG_ONEDASH</emphasis>, is
+specified, <option>-longopt</option> is accepted as well.</para>
+
+<para>The next element, <emphasis remap='I'>arg</emphasis>, allows popt to automatically update
+program variables when the option is used. If <emphasis remap='I'>arg</emphasis> is
+<emphasis remap='B'>NULL</emphasis>, it is ignored and popt takes no special action.
+Otherwise it should point to a variable of the type indicated in the
+right-most column of the table above. A <emphasis remap='B'>POPT_ARG_ARGV</emphasis> arg will
+(re-)allocate an array of char * string pointers, append the string argument, and add a
+<emphasis remap='B'>NULL</emphasis> sentinel at the end of the array as needed.
+The target char ** address of a <emphasis remap='B'>POPT_ARG_ARGV</emphasis> arg should be initialized to <emphasis remap='B'>NULL</emphasis>.</para>
+
+<para>If the option takes no argument (<emphasis remap='I'>argInfo</emphasis> is
+<emphasis remap='B'>POPT_ARG_NONE</emphasis>), the variable pointed to by
+<emphasis remap='I'>arg</emphasis> is set to 1 when the option is used.  (Incidentally, it
+will perhaps not escape the attention of hunt-and-peck typists that
+the value of <emphasis remap='B'>POPT_ARG_NONE</emphasis> is 0.)  If the option does take
+an argument, the variable that
+<emphasis remap='I'>arg</emphasis> points to is updated to reflect the value of the argument.
+Any string is acceptable for <emphasis remap='B'>POPT_ARG_STRING</emphasis> and <emphasis remap='B'>POPT_ARG_ARGV</emphasis> arguments, but
+<emphasis remap='B'>POPT_ARG_INT</emphasis>, <emphasis remap='B'>POPT_ARG_SHORT</emphasis>, <emphasis remap='B'>POPT_ARG_LONG</emphasis>, <emphasis remap='B'>POPT_ARG_LONGLONG</emphasis>, <emphasis remap='B'>POPT_ARG_FLOAT</emphasis>, and
+<emphasis remap='B'>POPT_ARG_DOUBLE</emphasis> are converted to the appropriate type, and an
+error returned if the conversion fails.</para>
+
+<para><emphasis remap='B'>POPT_ARG_VAL</emphasis> causes <emphasis remap='I'>arg</emphasis> to be set to the (integer) value of
+<emphasis remap='I'>val</emphasis> when the argument is found.  This is most often useful for
+mutually-exclusive arguments in cases where it is not an error for
+multiple arguments to occur and where you want the last argument
+specified to win; for example, "rm -i -f".  <emphasis remap='B'>POPT_ARG_VAL</emphasis> causes
+the parsing function not to return a value, since the value of <emphasis remap='I'>val</emphasis>
+has already been used.</para>
+
+<para>If the <emphasis remap='I'>argInfo</emphasis> value is bitwise or'd with <emphasis remap='B'>POPT_ARGFLAG_OPTIONAL</emphasis>,
+the argument to the long option may be omitted. If the long option
+is used without an argument, a default value of zero or NULL will be saved
+(if the arg pointer is present), otherwise behavior will be identical to
+a long option with argument.</para>
+
+<para>The next option, <emphasis remap='I'>val</emphasis>, is the value popt's parsing function
+should return when the option is encountered.  If it is 0, the parsing
+function does not return a value, instead parsing the next
+command-line argument.</para>
+
+<para>The last two options, <emphasis remap='I'>descrip</emphasis> and <emphasis remap='I'>argDescrip</emphasis> are only required
+if automatic help messages are desired (automatic usage messages can
+be generated without them). <emphasis remap='I'>descrip</emphasis> is a text description of the
+argument and <emphasis remap='I'>argdescrip</emphasis> is a short summary of the type of arguments
+the option expects, or NULL if the option doesn't require any
+arguments.</para>
+
+<para>If popt should automatically provide <option>--usage</option> and <option>--help</option> (<option>-?</option>)
+options, one line in the table should be the macro <emphasis remap='B'>POPT_AUTOHELP</emphasis>.
+This macro includes another option table (via <emphasis remap='B'>POPT_ARG_INCLUDE_TABLE</emphasis>
+; see below) in the main one which provides the table entries for these
+arguments. When <option>--usage</option> or <option>--help</option> are passed to programs which
+use popt's automatical help, popt displays the appropriate message on
+stderr as soon as it finds the option, and exits the program with a
+return code of 0. If you want to use popt's automatic help generation in
+a different way, you need to explicitly add the option entries to your programs
+option table instead of using <emphasis remap='B'>POPT_AUTOHELP</emphasis>.</para>
+
+<para>If the <emphasis remap='I'>argInfo</emphasis> value is bitwise or'd with <emphasis remap='B'>POPT_ARGFLAG_DOC_HIDDEN</emphasis>,
+the argument will not be shown in help output.</para>
+
+<para>If the <emphasis remap='I'>argInfo</emphasis> value is bitwise or'd with <emphasis remap='B'>POPT_ARGFLAG_SHOW_DEFAULT</emphasis>,
+the inital value of the arg will be shown in help output.</para>
+
+<para>The final structure in the table should have all the pointer values set
+to <emphasis remap='B'>NULL</emphasis> and all the arithmetic values set to 0, marking the
+end of the table. The macro <emphasis remap='B'>POPT_TABLEEND</emphasis> is provided to do that.</para>
+
+<para>There are two types of option table entries which do not specify command
+line options. When either of these types of entries are used, the
+<emphasis remap='I'>longName</emphasis> element must be <emphasis remap='B'>NULL</emphasis> and the <emphasis remap='B'>shortName</emphasis> element
+must be <emphasis remap='B'>'&#92;0'</emphasis>.</para>
+
+<para>The first of these special entry types allows the application to nest
+another option table in the current one; such nesting may extend quite
+deeply (the actual depth is limited by the program's stack). Including
+other option tables allows a library to provide a standard set of
+command-line options to every program which uses it (this is often done
+in graphical programming toolkits, for example). To do this, set
+the <emphasis remap='I'>argInfo</emphasis> field to <emphasis remap='B'>POPT_ARG_INCLUDE_TABLE</emphasis> and the
+arg field to point to the table which is being included. If
+automatic help generation is being used, the <emphasis remap='I'>descrip</emphasis> field should
+contain a overall description of the option table being included.</para>
+
+<para>The other special option table entry type tells popt to call a function (a
+callback) when any option in that table is found. This is especially usefull
+when included option tables are being used, as the program which provides
+the top-level option table doesn't need to be aware of the other options
+which are provided by the included table. When a callback is set for
+a table, the parsing function never returns information on an option in
+the table. Instead, options information must be retained via the callback
+or by having popt set a variable through the option's <emphasis remap='I'>arg</emphasis> field.
+Option callbacks should match the following prototype:</para>
+
+<literallayout remap='.nf'>
+<emphasis remap='B'>void poptCallbackType(poptContext con, </emphasis>
+<emphasis remap='B'>                      const struct poptOption * opt, </emphasis>
+<emphasis remap='B'>                      const char * arg, void * data);</emphasis>
+</literallayout> <!-- .fi -->
+
+<para>The first parameter is the context which is being parsed (see the next
+section for information on contexts), <emphasis remap='I'>opt</emphasis> points to the option
+which triggered this callback, and <emphasis remap='I'>arg</emphasis> is the option's argument.
+If the option does not take an argument, <emphasis remap='I'>arg</emphasis> is <emphasis remap='B'>NULL</emphasis>.  The
+final parameter, <emphasis remap='I'>data</emphasis> is taken from the <emphasis remap='I'>descrip</emphasis> field
+of the option table entry which defined the callback. As <emphasis remap='I'>descrip</emphasis>
+is a pointer, this allows callback functions to be passed an arbitrary
+set of data (though a typecast will have to be used).</para>
+
+<para>The option table entry which defines a callback has an <emphasis remap='I'>argInfo</emphasis> of
+<emphasis remap='B'>POPT_ARG_CALLBACK</emphasis>, an <emphasis remap='I'>arg</emphasis> which points to the callback
+function, and a <emphasis remap='I'>descrip</emphasis> field which specifies an arbitrary pointer
+to be passed to the callback.</para>
+</refsect2>
+
+<refsect2 xml:id='x2_creating_a_context'><title>2. CREATING A CONTEXT</title>
+<para>popt can interleave the parsing of multiple command-line sets. It allows
+this by keeping all the state information for a particular set of
+command-line arguments in a
+<type>poptContext</type> data structure, an opaque type that should not be
+modified outside the popt library.</para>
+
+<para>New popt contexts are created by <emphasis remap='B'>poptGetContext()</emphasis>:</para>
+
+<literallayout remap='.nf'>
+<emphasis remap='B'>poptContext poptGetContext(const char * </emphasis><varname role='parameter'>name</varname><emphasis remap='B'>, int </emphasis><varname role='parameter'>argc</varname><emphasis remap='B'>,</emphasis>
+<emphasis remap='B'>                           const char ** </emphasis><varname role='parameter'>argv</varname><emphasis remap='B'>,</emphasis>
+<emphasis remap='B'>                           const struct poptOption * </emphasis><varname role='parameter'>options</varname><emphasis remap='B'>,</emphasis>
+<emphasis remap='B'>                           int </emphasis><varname role='parameter'>flags</varname><emphasis remap='B'>);</emphasis>
+</literallayout> <!-- .fi -->
+
+<para>The first parameter,
+<varname role='parameter'>name</varname>, is used only for alias handling (discussed later). It
+should be the name of the application whose options are being parsed,
+or should be <emphasis remap='B'>NULL</emphasis> if no option aliasing is desired. The next
+two arguments specify the command-line arguments to parse. These are
+generally passed to <emphasis remap='B'>poptGetContext()</emphasis> exactly as they were
+passed to the program's <function>main()</function> function. The
+<varname role='parameter'>options</varname> parameter points to the table of command-line options,
+which was described in the previous section. The final parameter,
+<varname role='parameter'>flags</varname>,
+can take one of three values:</para>
+<!-- br -->
+
+<informaltable pgwide='0' frame='none'>
+  <tgroup cols='2' align='center'>
+    <colspec colname='c1'/>
+    <colspec colname='c2'/>
+    <thead>
+      <row>
+        <entry align='left'>Value</entry>
+        <entry align='left'>Description</entry>
+      </row>
+    </thead>
+    <tbody>
+      <row>
+        <entry align='left'>POPT_CONTEXT_NO_EXEC</entry>
+        <entry align='left'>Ignore exec expansions</entry>
+      </row>
+      <row>
+        <entry align='left'>POPT_CONTEXT_KEEP_FIRST</entry>
+        <entry align='left'>Do not ignore argv[0]</entry>
+      </row>
+      <row>
+        <entry align='left'>POPT_CONTEXT_POSIXMEHARDER</entry>
+        <entry align='left'>Options cannot follow arguments</entry>
+      </row>
+    </tbody>
+  </tgroup>
+</informaltable>
+
+
+
+<para>A <type>poptContext</type> keeps track of which options have already been
+parsed and which remain, among other things. If a program wishes to
+restart option processing of a set of arguments, it can reset the
+<type>poptContext</type> by passing the context as the sole argument to
+<emphasis remap='B'>poptResetContext()</emphasis>.</para>
+
+<para>When argument processing is complete, the process should free the
+<type>poptContext</type> as it contains dynamically allocated components. The
+<emphasis remap='B'>poptFreeContext()</emphasis> function takes a
+<type>poptContext</type> as its sole argument and frees the resources the
+context is using.</para>
+
+<para>Here are the prototypes of both <emphasis remap='B'>poptResetContext()</emphasis> and
+<emphasis remap='B'>poptFreeContext()</emphasis>:</para>
+
+<literallayout remap='.nf'>
+<emphasis remap='B'>#include &lt;popt.h&gt;</emphasis>
+<emphasis remap='B'>void poptFreeContext(poptContext </emphasis><varname role='parameter'>con</varname><emphasis remap='B'>);</emphasis>
+<emphasis remap='B'>void poptResetContext(poptContext </emphasis><varname role='parameter'>con</varname><emphasis remap='B'>);</emphasis>
+</literallayout> <!-- .fi -->
+
+</refsect2>
+
+<refsect2 xml:id='x3_parsing_the_command_line'><title>3. PARSING THE COMMAND LINE</title>
+<para>After an application has created a <type>poptContext</type>, it may begin
+parsing arguments. <emphasis remap='B'>poptGetNextOpt()</emphasis> performs the actual
+argument parsing.</para>
+
+<literallayout remap='.nf'>
+<emphasis remap='B'>#include &lt;popt.h&gt;</emphasis>
+<emphasis remap='B'>int poptGetNextOpt(poptContext </emphasis><varname role='parameter'>con</varname><emphasis remap='B'>);</emphasis>
+</literallayout> <!-- .fi -->
+
+<para>Taking the context as its sole argument, this function parses the next
+command-line argument found. After finding the next argument in the
+option table, the function fills in the object pointed to by the option
+table entry's <emphasis remap='I'>arg</emphasis>
+pointer if it is not <emphasis remap='B'>NULL</emphasis>. If the val entry for the option is
+non-0, the function then returns that value. Otherwise,
+<emphasis remap='B'>poptGetNextOpt()</emphasis> continues on to the next argument.</para>
+
+<para><emphasis remap='B'>poptGetNextOpt()</emphasis> returns -1 when the final argument has been
+parsed, and other negative values when errors occur. This makes it a
+good idea to
+keep the <emphasis remap='I'>val</emphasis> elements in the options table greater than 0.</para>
+
+<para>If all of the command-line options are handled through <emphasis remap='I'>arg</emphasis>
+pointers, command-line parsing is reduced to the following line of code:</para>
+
+<literallayout remap='.nf'>
+rc = poptGetNextOpt(poptcon);
+</literallayout> <!-- .fi -->
+
+<para>Many applications require more complex command-line parsing than this,
+however, and use the following structure:</para>
+
+<literallayout remap='.nf'>
+while ((rc = poptGetNextOpt(poptcon)) &gt; 0) {
+     switch (rc) {
+          /* specific arguments are handled here */
+     }
+}
+</literallayout> <!-- .fi -->
+
+<para>When returned options are handled, the application needs to know the
+value of any arguments that were specified after the option. There are two
+ways to discover them. One is to ask popt to fill in a variable with the
+value of the option through the option table's <emphasis remap='I'>arg</emphasis> elements. The
+other is to use <emphasis remap='B'>poptGetOptArg()</emphasis>:</para>
+
+<literallayout remap='.nf'>
+<emphasis remap='B'>#include &lt;popt.h&gt;</emphasis>
+<emphasis remap='B'>char * poptGetOptArg(poptContext </emphasis><varname role='parameter'>con</varname><emphasis remap='B'>);</emphasis>
+</literallayout> <!-- .fi -->
+
+<para>This function returns the argument given for the final option returned by
+<emphasis remap='B'>poptGetNextOpt()</emphasis>, or it returns <emphasis remap='B'>NULL</emphasis> if no argument was specified.
+The calling function is responsible for deallocating this string.</para>
+
+</refsect2>
+
+<refsect2 xml:id='x4_leftover_arguments'><title>4. LEFTOVER ARGUMENTS</title>
+<para>Many applications take an arbitrary number of command-line arguments,
+such as a list of file names. When popt encounters an argument that does
+not begin with a -, it assumes it is such an argument and adds it to a list
+of leftover arguments. Three functions allow applications to access such
+arguments:</para>
+<para><emphasis remap='B'>const char * poptGetArg(poptContext </emphasis><varname role='parameter'>con</varname><emphasis remap='B'>);</emphasis>
+This function returns the next leftover argument and marks it as
+processed.</para>
+
+<para><emphasis remap='B'>const char * poptPeekArg(poptContext </emphasis><varname role='parameter'>con</varname><emphasis remap='B'>);</emphasis>
+The next leftover argument is returned but not marked as processed.
+This allows an application to look ahead into the argument list,
+without modifying the list.</para>
+
+<para><emphasis remap='B'>const char ** poptGetArgs(poptContext </emphasis><varname role='parameter'>con</varname><emphasis remap='B'>);</emphasis>
+All the leftover arguments are returned in a manner identical to
+<varname role='parameter'>argv</varname>.  The final element in the returned array points to
+<emphasis remap='B'>NULL</emphasis>, indicating the end of the arguments.</para>
+
+</refsect2>
+
+<refsect2 xml:id='x5_automatic_help_messages'><title>5. AUTOMATIC HELP MESSAGES</title>
+<para>The <emphasis remap='B'>popt</emphasis> library can automatically generate help messages which
+describe the options a program accepts. There are two types of help
+messages which can be generated. Usage messages are a short messages
+which lists valid options, but does not describe them. Help messages
+describe each option on one (or more) lines, resulting in a longer, but
+more useful, message. Whenever automatic help messages are used, the
+<emphasis remap='B'>descrip</emphasis> and <emphasis remap='B'>argDescrip</emphasis> fields <emphasis remap='B'>struct poptOption</emphasis> members
+should be filled in for each option.</para>
+
+<para>The <emphasis remap='B'>POPT_AUTOHELP</emphasis> macro makes it easy to add <option>--usage</option> and
+<option>--help</option> messages to your program, and is described in part 1
+of this man page. If more control is needed over your help messages,
+the following two functions are available:</para>
+
+<literallayout remap='.nf'>
+<emphasis remap='B'>#include &lt;popt.h&gt;</emphasis>
+<emphasis remap='B'>void poptPrintHelp(poptContext </emphasis><varname role='parameter'>con</varname><emphasis remap='B'>, FILE * </emphasis><emphasis remap='I'>f</emphasis><emphasis remap='B'>, int </emphasis><varname role='parameter'>flags</varname><emphasis remap='B'>);</emphasis>
+<emphasis remap='B'>void poptPrintUsage(poptContext </emphasis><varname role='parameter'>con</varname><emphasis remap='B'>, FILE * </emphasis><emphasis remap='I'>f</emphasis><emphasis remap='B'>, int </emphasis><varname role='parameter'>flags</varname><emphasis remap='B'>);</emphasis>
+</literallayout> <!-- .fi -->
+
+<para><emphasis remap='B'>poptPrintHelp()</emphasis> displays the standard help message to the stdio file
+descriptor f, while <emphasis remap='B'>poptPrintUsage()</emphasis> displays the shorter usage
+message. Both functions currently ignore the <varname role='parameter'>flags</varname> argument; it is
+there to allow future changes.</para>
+
+</refsect2>
+</refsect1>
+
+<refsect1 xml:id='error_handling'><title>ERROR HANDLING</title>
+<para>All of the popt functions that can return errors return integers.
+When an error occurs, a negative error code is returned. The
+following table summarizes the error codes that occur:</para>
+
+<literallayout remap='.nf'>
+<emphasis remap='B'>     Error                      Description</emphasis>
+<emphasis remap='B'>POPT_ERROR_NOARG       </emphasis>Argument missing for an option.
+<emphasis remap='B'>POPT_ERROR_BADOPT      </emphasis>Option's argument couldn't be parsed.
+<emphasis remap='B'>POPT_ERROR_OPTSTOODEEP </emphasis>Option aliasing nested too deeply.
+<emphasis remap='B'>POPT_ERROR_BADQUOTE    </emphasis>Quotations do not match.
+<emphasis remap='B'>POPT_ERROR_BADNUMBER   </emphasis>Option couldn't be converted to number.
+<emphasis remap='B'>POPT_ERROR_OVERFLOW    </emphasis>A given number was too big or small.
+</literallayout> <!-- .fi -->
+
+<para>Here is a more detailed discussion of each error:</para>
+
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>POPT_ERROR_NOARG</emphasis></term>
+  <listitem>
+<para>An option that requires an argument was specified on the command
+line, but no argument was given. This can be returned only by
+<emphasis remap='B'>poptGetNextOpt()</emphasis>.</para>
+
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>POPT_ERROR_BADOPT</emphasis></term>
+  <listitem>
+<para>An option was specified in <varname role='parameter'>argv</varname> but is not in the option
+table. This error can be returned only from <emphasis remap='B'>poptGetNextOpt()</emphasis>.</para>
+
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>POPT_ERROR_OPTSTOODEEP</emphasis></term>
+  <listitem>
+<para>A set of option aliases is nested too deeply. Currently, popt
+follows options only 10 levels to prevent infinite recursion. Only
+<emphasis remap='B'>poptGetNextOpt()</emphasis> can return this error.</para>
+
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>POPT_ERROR_BADQUOTE</emphasis></term>
+  <listitem>
+<para>A parsed string has a quotation mismatch (such as a single quotation
+mark). <emphasis remap='B'>poptParseArgvString()</emphasis>, <emphasis remap='B'>poptReadConfigFile()</emphasis>, or
+<emphasis remap='B'>poptReadDefaultConfig()</emphasis> can return this error.</para>
+
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>POPT_ERROR_BADNUMBER</emphasis></term>
+  <listitem>
+<para>A conversion from a string to a number (int or long) failed due
+to the string containing nonnumeric characters. This occurs when
+<emphasis remap='B'>poptGetNextOpt()</emphasis> is processing an argument of type
+<emphasis remap='B'>POPT_ARG_INT</emphasis>, <emphasis remap='B'>POPT_ARG_SHORT</emphasis>, <emphasis remap='B'>POPT_ARG_LONG</emphasis>, <emphasis remap='B'>POPT_ARG_LONGLONG</emphasis>,
+POPT_ARG_FLOAT<emphasis remap='B'>, or </emphasis>POPT_ARG_DOUBLE<literal>.</literal></para>
+
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>POPT_ERROR_OVERFLOW</emphasis></term>
+  <listitem>
+<para>A string-to-number conversion failed because the number was too
+large or too small. Like <emphasis remap='B'>POPT_ERROR_BADNUMBER</emphasis>, this error
+can occur only when <emphasis remap='B'>poptGetNextOpt()</emphasis> is processing an
+argument of type <emphasis remap='B'>POPT_ARG_INT</emphasis>, <emphasis remap='B'>POPT_ARG_SHORT</emphasis>, <emphasis remap='B'>POPT_ARG_LONG</emphasis>, <emphasis remap='B'>POPT_ARG_LONGLONG</emphasis>,
+POPT_ARG_FLOAT<emphasis remap='B'>, or </emphasis>POPT_ARG_DOUBLE<literal>.</literal></para>
+
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>POPT_ERROR_ERRNO</emphasis></term>
+  <listitem>
+<para>A system call returned with an error, and <varname>errno</varname> still
+contains the error from the system call. Both
+<emphasis remap='B'>poptReadConfigFile()</emphasis> and <emphasis remap='B'>poptReadDefaultConfig()</emphasis> can
+return this error.</para>
+
+
+<para>Two functions are available to make it easy for applications to provide
+good error messages.</para>
+
+<literallayout remap='.nf'>
+<emphasis remap='B'>const char *const poptStrerror(const int </emphasis><varname role='parameter'>error</varname><emphasis remap='B'>);</emphasis>
+</literallayout> <!-- .fi -->
+<para>This function takes a popt error code and returns a string describing
+the error, just as with the standard <function>strerror()</function> function.</para>
+
+
+<literallayout remap='.nf'>
+<emphasis remap='B'>const char * poptBadOption(poptContext </emphasis><varname role='parameter'>con</varname><emphasis remap='B'>, int </emphasis><varname role='parameter'>flags</varname><emphasis remap='B'>);</emphasis>
+</literallayout> <!-- .fi -->
+<para>If an error occurred during <emphasis remap='B'>poptGetNextOpt()</emphasis>, this function
+returns the option that caused the error. If the <varname role='parameter'>flags</varname> argument
+is set to <emphasis remap='B'>POPT_BADOPTION_NOALIAS</emphasis>, the outermost option is
+returned. Otherwise, <varname role='parameter'>flags</varname> should be 0, and the option that is
+returned may have been specified through an alias.</para>
+
+<para>These two functions make popt error handling trivial for most
+applications. When an error is detected from most of the functions,
+an error message is printed along with the error string from
+<emphasis remap='B'>poptStrerror()</emphasis>. When an error occurs during argument parsing,
+code similiar to the following displays a useful error message:</para>
+
+<programlisting remap='.nf'>
+fprintf(stderr, "%s: %s&#92;n",
+        poptBadOption(optCon, POPT_BADOPTION_NOALIAS),
+        poptStrerror(rc));
+</programlisting> <!-- .fi -->
+
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='option_aliasing'><title>OPTION ALIASING</title>
+<para>One of the primary benefits of using popt over <function>getopt()</function> is the
+ability to use option aliasing. This lets the user specify options that
+popt expands into other options when they are specified. If the standard
+grep program made use of popt, users could add a <option>--text</option> option
+that expanded to <option>-i -n -E -2</option> to let them more easily find
+information in text files.</para>
+
+
+<refsect2 xml:id='x1_specifying_aliases'><title>1. SPECIFYING ALIASES</title>
+<para>Aliases are normally specified in two places: <filename>/etc/popt</filename>
+and the <markup>.popt</markup> file in the user's home directory (found through
+the <envar>HOME</envar> environment variable). Both files have the same format,
+an arbitrary number of lines formatted like this:</para>
+
+<para><emphasis remap='I'>appname</emphasis><emphasis remap='B'> alias </emphasis><emphasis remap='I'>newoption</emphasis><emphasis remap='I'> expansion</emphasis></para>
+
+<para>The <emphasis remap='I'>appname</emphasis> is the name of the application, which must be the
+same as the <varname role='parameter'>name</varname> parameter passed to
+<emphasis remap='B'>poptGetContext()</emphasis>. This allows each file to specify aliases for
+multiple programs. The <varname role='parameter'>alias</varname> keyword specifies that an alias is
+being defined; currently popt configuration files support only aliases, but
+other abilities may be added in the future. The next option is the option
+that should be aliased, and it may be either a short or a long option. The
+rest of the line specifies the expansion for the alias. It is parsed
+similarly to a shell command, which allows &#92;, ", and ' to be used for
+quoting. If a backslash is the final character on a line, the next line
+in the file is assumed to be a logical continuation of the line containing
+the backslash, just as in shell.</para>
+
+<para>The following entry would add a <option>--text</option> option to the grep command,
+as suggested at the beginning of this section.</para>
+
+<para><emphasis remap='B'>grep alias --text -i -n -E -2</emphasis></para>
+</refsect2>
+
+<refsect2 xml:id='x2_enabling_aliases'><title>2. ENABLING ALIASES</title>
+<para>An application must enable alias expansion for a <type>poptContext</type>
+before calling <emphasis remap='B'>poptGetNextArg()</emphasis> for the first time. There are
+three functions that define aliases for a context:</para>
+
+<literallayout remap='.nf'>
+<emphasis remap='B'>int poptReadDefaultConfig(poptContext </emphasis><varname role='parameter'>con</varname><emphasis remap='B'>, int </emphasis><varname role='parameter'>flags</varname><emphasis remap='B'>);</emphasis>
+</literallayout> <!-- .fi -->
+<para>This function reads aliases from <filename>/etc/popt</filename> and the
+<markup>.popt</markup> file in the user's home directory. Currently,
+<varname role='parameter'>flags</varname> should be
+<emphasis remap='B'>NULL</emphasis>, as it is provided only for future expansion.</para>
+
+
+<literallayout remap='.nf'>
+<emphasis remap='B'>int poptReadConfigFile(poptContext </emphasis><varname role='parameter'>con</varname><emphasis remap='B'>, char * </emphasis><varname role='parameter'>fn</varname><emphasis remap='B'>);</emphasis>
+</literallayout> <!-- .fi -->
+<para>The file specified by <varname role='parameter'>fn</varname> is opened and parsed as a popt
+configuration file. This allows programs to use program-specific
+configuration files.</para>
+
+
+<literallayout remap='.nf'>
+<emphasis remap='B'>int poptAddAlias(poptContext </emphasis><varname role='parameter'>con</varname><emphasis remap='B'>, struct poptAlias </emphasis><varname role='parameter'>alias</varname><emphasis remap='B'>,</emphasis>
+<emphasis remap='B'>                 int </emphasis><varname role='parameter'>flags</varname><emphasis remap='B'>);</emphasis>
+</literallayout> <!-- .fi -->
+<para>Occasionally, processes want to specify aliases without having to
+read them from a configuration file. This function adds a new alias
+to a context. The <varname role='parameter'>flags</varname> argument should be 0, as it is
+currently reserved for future expansion. The new alias is specified
+as a <emphasis remap='B'>struct poptAlias</emphasis>, which is defined as:</para>
+
+<programlisting remap='.nf'>
+struct poptAlias {
+     const char * longName; /* may be NULL */
+     char shortName; /* may be '&#92;0' */
+     int argc;
+     const char ** argv; /* must be free()able */
+};
+</programlisting> <!-- .fi -->
+
+<para>The first two elements, <emphasis remap='I'>longName</emphasis> and <emphasis remap='I'>shortName</emphasis>, specify
+the option that is aliased. The final two, <varname role='parameter'>argc</varname> and <varname role='parameter'>argv</varname>,
+define the expansion to use when the aliases option is encountered.</para>
+
+</refsect2>
+</refsect1>
+
+<refsect1 xml:id='parsing_argument_strings'><title>PARSING ARGUMENT STRINGS</title>
+<para>Although popt is usually used for parsing arguments already divided into
+an <varname role='parameter'>argv</varname>-style array, some programs need to parse strings that
+are formatted identically to command lines. To facilitate this, popt
+provides a function that parses a string into an array of strings,
+using rules similiar to normal shell parsing.</para>
+
+<literallayout remap='.nf'>
+<emphasis remap='B'>#include &lt;popt.h&gt;</emphasis>
+<emphasis remap='B'>int poptParseArgvString(char * </emphasis><varname role='parameter'>s</varname><emphasis remap='B'>, int * </emphasis><varname role='parameter'>argcPtr</varname><emphasis remap='B'>,</emphasis>
+<emphasis remap='B'>                        char *** </emphasis><varname role='parameter'>argvPtr</varname><emphasis remap='B'>);</emphasis>
+<emphasis remap='B'>int poptDupArgv(int </emphasis><varname role='parameter'>argc</varname><emphasis remap='B'>, const char ** </emphasis><varname role='parameter'>argv</varname><emphasis remap='B'>, int * </emphasis><varname role='parameter'>argcPtr</varname><emphasis remap='B'>,</emphasis>
+<emphasis remap='B'>                        const char *** </emphasis><varname role='parameter'>argvPtr</varname><emphasis remap='B'>);</emphasis>
+</literallayout> <!-- .fi -->
+
+<para>The string s is parsed into an <varname role='parameter'>argv</varname>-style array. The integer
+pointed to by the <varname role='parameter'>argcPtr</varname> parameter contains the number of elements
+parsed, and the final <varname role='parameter'>argvPtr</varname> parameter contains the address of the
+newly created array.
+The routine <emphasis remap='B'>poptDupArgv()</emphasis> can be used to make a copy of an existing
+argument array.</para>
+
+<para>The <varname role='parameter'>argvPtr</varname>
+created by <emphasis remap='B'>poptParseArgvString()</emphasis> or <emphasis remap='B'>poptDupArgv()</emphasis> is suitable to pass directly
+to <emphasis remap='B'>poptGetContext()</emphasis>.
+Both routines return a single dynamically allocated contiguous
+block of storage and should be <function>free()</function>ed when the application is
+finished with the storage.</para>
+</refsect1>
+
+<refsect1 xml:id='handling_extra_arguments'><title>HANDLING EXTRA ARGUMENTS</title>
+<para>Some applications implement the equivalent of option aliasing but need
+to do so through special logic. The <emphasis remap='B'>poptStuffArgs()</emphasis> function
+allows an application to insert new arguments into the current
+<type>poptContext</type>.</para>
+
+<literallayout remap='.nf'>
+<emphasis remap='B'>#include &lt;popt.h&gt;</emphasis>
+<emphasis remap='B'>int poptStuffArgs(poptContext </emphasis><varname role='parameter'>con</varname><emphasis remap='B'>, const char ** </emphasis><varname role='parameter'>argv</varname><emphasis remap='B'>);</emphasis>
+</literallayout> <!-- .fi -->
+
+<para>The passed <varname role='parameter'>argv</varname>
+must have a <emphasis remap='B'>NULL</emphasis> pointer as its final element. When
+<emphasis remap='B'>poptGetNextOpt()</emphasis> is next called, the
+"stuffed" arguments are the first to be parsed. popt returns to the
+normal arguments once all the stuffed arguments have been exhausted.</para>
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLE</title>
+<para>The following example is a simplified version of the program "robin"
+which appears in Chapter 15 of the text cited below.  Robin has
+been stripped of everything but its argument-parsing logic, slightly
+reworked, and renamed "parse." It may prove useful in illustrating
+at least some of the features of the extremely rich popt library.</para>
+
+<programlisting remap='.nf'>
+#include &lt;popt.h&gt;
+#include &lt;stdio.h&gt;
+
+void usage(poptContext optCon, int exitcode, char *error, char *addl) {
+    poptPrintUsage(optCon, stderr, 0);
+    if (error) fprintf(stderr, "%s: %s0, error, addl);
+    exit(exitcode);
+}
+
+int main(int argc, char *argv[]) {
+   char    c;            /* used for argument parsing */
+   int     i = 0;        /* used for tracking options */
+   char    *portname;
+   int     speed = 0;    /* used in argument parsing to set speed */
+   int     raw = 0;      /* raw mode? */
+   int     j;
+   char    buf[BUFSIZ+1];
+   poptContext optCon;   /* context for parsing command-line options */
+
+   struct poptOption optionsTable[] = {
+      { "bps", 'b', POPT_ARG_INT, &amp;speed, 0,
+	"signaling rate in bits-per-second", "BPS" },
+      { "crnl", 'c', 0, 0, 'c',
+	"expand cr characters to cr/lf sequences", NULL },
+      { "hwflow", 'h', 0, 0, 'h',
+	"use hardware (RTS/CTS) flow control", NULL },
+      { "noflow", 'n', 0, 0, 'n',
+	"use no flow control", NULL },
+      { "raw", 'r', 0, &amp;raw, 0,
+	"don't perform any character conversions", NULL },
+      { "swflow", 's', 0, 0, 's',
+	"use software (XON/XOF) flow control", NULL } ,
+      POPT_AUTOHELP
+      { NULL, 0, 0, NULL, 0 }
+    };
+
+   optCon = poptGetContext(NULL, argc, argv, optionsTable, 0);
+   poptSetOtherOptionHelp(optCon, "[OPTIONS]* &lt;port&gt;");
+
+   if (argc &lt; 2) {
+	poptPrintUsage(optCon, stderr, 0);
+	exit(1);
+   }
+
+   /* Now do options processing, get portname */
+   while ((c = poptGetNextOpt(optCon)) &gt;= 0) {
+      switch (c) {
+       case 'c':
+          buf[i++] = 'c';
+          break;
+       case 'h':
+          buf[i++] = 'h';
+          break;
+       case 's':
+          buf[i++] = 's';
+          break;
+       case 'n':
+          buf[i++] = 'n';
+          break;
+      }
+   }
+   portname = poptGetArg(optCon);
+   if((portname == NULL) || !(poptPeekArg(optCon) == NULL))
+      usage(optCon, 1, "Specify a single port", ".e.g., /dev/cua0");
+
+   if (c &lt; -1) {
+      /* an error occurred during option processing */
+      fprintf(stderr, "%s: %s&#92;n",
+              poptBadOption(optCon, POPT_BADOPTION_NOALIAS),
+              poptStrerror(c));
+      return 1;
+   }
+
+   /* Print out options, portname chosen */
+   printf("Options  chosen: ");
+   for(j = 0; j &lt; i ; j++)
+      printf("-%c ", buf[j]);
+   if(raw) printf("-r ");
+   if(speed) printf("-b %d ", speed);
+   printf("&#92;nPortname chosen: %s&#92;n", portname);
+
+   poptFreeContext(optCon);
+   exit(0);
+}
+</programlisting> <!-- .fi -->
+
+<para>RPM, a popular Linux package management program, makes heavy use
+of popt's features. Many of its command-line arguments are implemented
+through popt aliases, which makes RPM an excellent example of how to
+take advantage of the popt library. For more information on RPM, see
+http://www.rpm.org. The popt source code distribution includes test
+program(s) which use all of the features of the popt libraries in
+various ways. If a feature isn't working for you, the popt test code
+is the first place to look.</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>None presently known.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Erik W. Troan &lt;ewt@redhat.com&gt;</para>
+
+<para>This man page is derived in part from
+<emphasis remap='I'>Linux Application Development</emphasis>
+by Michael K. Johnson and Erik W. Troan, Copyright (c) 1998 by Addison
+Wesley Longman, Inc., and included in the popt documentation with the
+permission of the Publisher and the appreciation of the Authors.</para>
+
+<para>Thanks to Robert Lynch for his extensive work on this man page.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>getopt</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
+
+<para><emphasis remap='I'>Linux Application Development</emphasis>, by Michael K. Johnson and 
+Erik W. Troan (Addison-Wesley, 1998; ISBN 0-201-30821-5), Chapter 24.</para>
+
+<para><emphasis remap='B'>popt.ps</emphasis> is a Postscript version of the above cited book 
+chapter. It can be found in the source archive for popt available at: 
+ftp://ftp.rpm.org/pub/rpm.</para>
+</refsect1>
+</refentry>
+
