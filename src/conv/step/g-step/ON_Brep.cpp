@@ -800,6 +800,34 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 
 	if (a_curve && !curve_converted) {
 	    std::cout << "Have ArcCurve\n";
+
+	    ON_NurbsCurve arc_nurb;
+	    a_curve->GetNurbForm(arc_nurb);
+
+	    if (arc_nurb.IsRational()) {
+		std::cout << "Have Rational NurbsCurve Arc\n";
+		info->three_dimensional_curves.at(i) = info->registry->ObjCreate("RATIONAL_B_SPLINE_CURVE");
+		SdaiRational_b_spline_curve *curr_curve = (SdaiRational_b_spline_curve *)info->three_dimensional_curves.at(i);
+		ON_RationalNurbsCurveCV_to_Aggregates(&arc_nurb, curr_curve, info);
+		curr_curve->degree_(arc_nurb.Degree());
+	    } else {
+		info->three_dimensional_curves.at(i) = info->registry->ObjCreate("B_SPLINE_CURVE_WITH_KNOTS");
+		SdaiB_spline_curve *curr_curve = (SdaiB_spline_curve *)info->three_dimensional_curves.at(i);
+		curr_curve->degree_(arc_nurb.Degree());
+		ON_NurbsCurveCV_to_EntityAggregate(&arc_nurb, curr_curve, info);
+		SdaiB_spline_curve_with_knots *curve_knots = (SdaiB_spline_curve_with_knots *)info->three_dimensional_curves.at(i);
+		ON_NurbsCurveKnots_to_Aggregates(&arc_nurb, curve_knots);
+	    }
+
+	    ((SdaiB_spline_curve *)info->three_dimensional_curves.at(i))->curve_form_(B_spline_curve_form__unspecified);
+	    ((SdaiB_spline_curve *)info->three_dimensional_curves.at(i))->closed_curve_(SDAI_LOGICAL(arc_nurb.IsClosed()));
+
+	    /* TODO: Assume we don't have self-intersecting curves for
+	     * now - need some way to test this...
+	     */
+	    ((SdaiB_spline_curve *)info->three_dimensional_curves.at(i))->self_intersect_(LFalse);
+	    ((SdaiB_spline_curve *)info->three_dimensional_curves.at(i))->name_("''");
+	    curve_converted = 1;
 	}
 
 	if (l_curve && !curve_converted) {
