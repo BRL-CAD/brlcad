@@ -53,7 +53,7 @@
 extern "C" {
 #endif
     RT_EXPORT extern int brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_tol* ttol, const struct bn_tol* tol, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);
-    RT_EXPORT extern int brep_conversion(struct rt_db_internal* intern, ON_Brep** brep, struct db_i *ip);
+    RT_EXPORT extern int brep_conversion(struct rt_db_internal* intern, ON_Brep** brep, const struct db_i *dbip);
     RT_EXPORT extern int brep_conversion_comb(struct rt_db_internal *old_internal, char *name, char *suffix, struct rt_wdb *wdbp, fastf_t local2mm);
     RT_EXPORT extern int brep_intersect_point_point(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
     RT_EXPORT extern int brep_intersect_point_curve(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
@@ -61,7 +61,7 @@ extern "C" {
     RT_EXPORT extern int brep_intersect_curve_curve(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
     RT_EXPORT extern int brep_intersect_curve_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
     RT_EXPORT extern int brep_intersect_surface_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock *vbp);
-    extern void rt_comb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), struct db_i *db);
+    extern void rt_comb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct db_i *dbip);
 #ifdef __cplusplus
 }
 #endif
@@ -2287,7 +2287,7 @@ plot_usage(struct bu_vls *vls)
 
 
 int
-brep_conversion(struct rt_db_internal* intern, ON_Brep** brep, struct db_i* db)
+brep_conversion(struct rt_db_internal* intern, ON_Brep** brep, const struct db_i* dbip)
 {
     *brep = ON_Brep::New();
     ON_Brep *old = *brep;
@@ -2299,7 +2299,7 @@ brep_conversion(struct rt_db_internal* intern, ON_Brep** brep, struct db_i* db)
     tol.perp = SMALL_FASTF;
     tol.para = 1.0 - tol.perp;
     if (intern->idb_type == ID_COMBINATION) {
-	rt_comb_brep(brep, intern, &tol, db);
+	rt_comb_brep(brep, intern, &tol, dbip);
     } else {
 	if (intern->idb_meth->ft_brep == NULL) {
 	    delete old;

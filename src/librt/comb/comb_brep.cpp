@@ -32,11 +32,11 @@
 
 
 // Declaration
-extern "C" void rt_comb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol, struct db_i *db);
+extern "C" void rt_comb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol, const struct db_i *dbip);
 
 
 int
-brep_conversion(struct rt_db_internal* intern, ON_Brep** brep, struct db_i* db)
+single_conversion(struct rt_db_internal* intern, ON_Brep** brep, const struct db_i* dbip)
 {
     if (*brep)
 	delete *brep;
@@ -59,7 +59,7 @@ brep_conversion(struct rt_db_internal* intern, ON_Brep** brep, struct db_i* db)
     tol.perp = SMALL_FASTF;
     tol.para = 1.0 - tol.perp;
     if (intern->idb_type == ID_COMBINATION) {
-	rt_comb_brep(brep, intern, &tol, db);
+	rt_comb_brep(brep, intern, &tol, dbip);
     } else {
 	if (intern->idb_meth->ft_brep == NULL) {
 	    delete old;
@@ -77,7 +77,7 @@ brep_conversion(struct rt_db_internal* intern, ON_Brep** brep, struct db_i* db)
 
 
 int
-conv_tree(ON_Brep **b, union tree *t, struct db_i *db)
+conv_tree(ON_Brep **b, union tree *t, const struct db_i *dbip)
 {
     ON_Brep *left = NULL, *right = NULL, *old = NULL;
     int ret = 0;
@@ -88,7 +88,7 @@ conv_tree(ON_Brep **b, union tree *t, struct db_i *db)
 	case OP_XOR:
 	    /* convert right */
 	    old = right = ON_Brep::New();
-	    ret = conv_tree(&right, t->tr_b.tb_right, db);
+	    ret = conv_tree(&right, t->tr_b.tb_right, dbip);
 	    if (ret) {
 		if (right)
 		    delete old;
@@ -100,7 +100,7 @@ conv_tree(ON_Brep **b, union tree *t, struct db_i *db)
 	case OP_XNOP:
 	    /* convert left */
 	    old = left = ON_Brep::New();
-	    ret = conv_tree(&left, t->tr_b.tb_left, db);
+	    ret = conv_tree(&left, t->tr_b.tb_left, dbip);
 	    if (!ret) {
 		// Perform NURBS evaluations
 		if (t->tr_op == OP_UNION)
@@ -124,13 +124,13 @@ conv_tree(ON_Brep **b, union tree *t, struct db_i *db)
 	    {
 		char *name = t->tr_l.tl_name;
 		directory *dir;
-		dir = db_lookup(db, name, LOOKUP_QUIET);
+		dir = db_lookup(dbip, name, LOOKUP_QUIET);
 		if (dir != RT_DIR_NULL) {
 		    rt_db_internal *intern;
 		    BU_ALLOC(intern, struct rt_db_internal);
-		    rt_db_get_internal(intern, dir, db, bn_mat_identity, &rt_uniresource);
+		    rt_db_get_internal(intern, dir, dbip, bn_mat_identity, &rt_uniresource);
 		    RT_CK_DB_INTERNAL(intern);
-		    ret = brep_conversion(intern, b, db);
+		    ret = single_conversion(intern, b, dbip);
 		} else {
 		    bu_log("Cannot find %s.\n", name);
 		    ret = -1;
@@ -150,10 +150,10 @@ conv_tree(ON_Brep **b, union tree *t, struct db_i *db)
  * R T _ C O M B _ B R E P
  */
 extern "C" void
-rt_comb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), struct db_i *db)
+rt_comb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct db_i *dbip)
 {
     RT_CK_DB_INTERNAL(ip);
-    RT_CK_DBI(db);
+    RT_CK_DBI(dbip);
 
     struct rt_comb_internal *cip;
     cip = (struct rt_comb_internal *)ip->idb_ptr;
@@ -164,7 +164,7 @@ rt_comb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 	return;
     }
 
-    conv_tree(b, cip->tree, db);
+    conv_tree(b, cip->tree, dbip);
 }
 
 
