@@ -34,7 +34,7 @@
 /* private functions */
 
 HIDDEN void
-icv_get_kernel(ICV_FILTER filter_type, double *kern, double *offset)
+get_kernel(ICV_FILTER filter_type, double *kern, double *offset)
 {
     switch(filter_type) {
 	case ICV_FILTER_LOW_PASS :
@@ -174,7 +174,7 @@ icv_filter(icv_image_t *img, ICV_FILTER filter_type)
      */
 
     kern = bu_malloc(k_dim*k_dim*sizeof(double), "icv_filter : Kernel Allocation");
-    icv_get_kernel(filter_type, kern, &offset);
+    get_kernel(filter_type, kern, &offset);
 
     if(!kern)
         return -1;
@@ -253,7 +253,7 @@ icv_filter3(icv_image_t *old_img, icv_image_t *curr_img, icv_image_t *new_img, I
     }
 
     kern = bu_malloc(k_dim*k_dim*3*sizeof(double), "icv_filter3 : Kernel Allocation");
-    icv_get_kernel(filter_type, kern, &offset);
+    get_kernel(filter_type, kern, &offset);
 
     if(!kern)
         return -1;
