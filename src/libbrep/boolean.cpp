@@ -38,7 +38,7 @@
 #include "brep.h"
 #include "raytrace.h"
 
-#define DEBUG_BREP_BOOLEAN 0
+#define DEBUG_BREP_BOOLEAN 1
 #define USE_CONNECTIVITY_GRAPH 1
 #define INTERSECTION_TOL 1e-4
 #define ANGLE_TOL ON_PI/1800.0
@@ -63,8 +63,8 @@ struct IntersectPoint {
 
 #if USE_CONNECTIVITY_GRAPH
 struct SSICurveInfo {
-    int m_fi1;	// index of the first face
-    int m_fi2;	// index of the second face
+    int m_fi1;	// index of the this face
+    int m_fi2;	// index of the the other face
     int m_ci;	// index in the events array
 
     // Default constructor. Set all to an invalid value.
@@ -1452,10 +1452,9 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 		    c1.m_curve = events[k].m_curveA;
 		    c2.m_curve = events[k].m_curveB;
 #if USE_CONNECTIVITY_GRAPH
-		    c1.m_info.m_fi1 = i;
-		    c1.m_info.m_fi2 = j;
-		    c1.m_info.m_ci = k;
-		    c2.m_info = c1.m_info;
+		    c1.m_info.m_fi1 = c2.m_info.m_fi2 = i;
+		    c1.m_info.m_fi2 = c2.m_info.m_fi1 = facecount1 + j;
+		    c1.m_info.m_ci = c2.m_info.m_ci = k;
 #endif
 		    curvesarray[i].Append(c1);
 		    curvesarray[facecount1 + j].Append(c2);
@@ -1674,25 +1673,74 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 	const ON_SimpleArray<TrimmedFace*>& splitted = trimmedfaces[i];
 	const ON_Surface* surf = splitted.Count() ? splitted[0]->m_face->SurfaceOf() : NULL;
 	for (int j = 0; j < splitted.Count(); j++) {
-	    if (splitted[j]->m_belong_to_final == TrimmedFace::BELONG) {
+	    TrimmedFace* t_face = splitted[j];
+	    if (t_face->m_belong_to_final == TrimmedFace::BELONG) {
 		// Add the surfaces, faces, loops, trims, vertices, edges, etc.
 		// to the brep structure.
 		ON_Surface *new_surf = surf->Duplicate();
 		int surfindex = brepO->AddSurface(new_surf);
 		ON_BrepFace& new_face = brepO->NewFace(surfindex);
 
-		add_elements(brepO, new_face, splitted[j]->m_outerloop, ON_BrepLoop::outer);
+		add_elements(brepO, new_face, t_face->m_outerloop, ON_BrepLoop::outer);
 		// ON_BrepLoop &loop = brepO->m_L[brepO->m_L.Count() - 1];
-		for (unsigned int k = 0; k < splitted[j]->m_innerloop.size(); k++)
-		    add_elements(brepO, new_face, splitted[j]->m_innerloop[k], ON_BrepLoop::inner);
+		for (unsigned int k = 0; k < t_face->m_innerloop.size(); k++)
+		    add_elements(brepO, new_face, t_face->m_innerloop[k], ON_BrepLoop::inner);
 
 		brepO->SetTrimIsoFlags(new_face);
 		const ON_BrepFace& original_face = i >= facecount1 ? brepB->m_F[i - facecount1] : brepA->m_F[i];
-		if (original_face.m_bRev ^ splitted[j]->m_rev)
+		if (original_face.m_bRev ^ t_face->m_rev)
 		    brepO->FlipFace(new_face);
+
+#if USE_CONNECTIVITY_GRAPH
+		// Generate the connectivity graph for the new solid (Remove
+		// the nodes that don't belong to it)
+		for (int k = 0; k < t_face->m_neighbors.Count(); k++)
+		    if (t_face->m_neighbors[k]->m_belong_to_final != TrimmedFace::BELONG) {
+			t_face->m_neighbors.Remove(k);
+			k--;
+		    }
+
+		for (int k = 0; k < t_face->m_ssi_info.Count(); k++) {
+		    SSICurveInfo info = t_face->m_ssi_info[k];
+		    if (info.m_fi1 != i) {
+			bu_log("Error: info.m_fi1(%d) != i(%d)\n", info.m_fi1, i);
+			continue;
+		    }
+		    for (int l = 0; l < trimmedfaces[info.m_fi2].Count(); l++) {
+			TrimmedFace* another_face = trimmedfaces[info.m_fi2][l];
+			if (another_face->m_belong_to_final != TrimmedFace::BELONG)
+			    continue;
+			int m;
+			for (m = 0; m < another_face->m_ssi_info.Count(); m++)
+			    if (another_face->m_ssi_info[m].m_fi2 == i && another_face->m_ssi_info[m].m_ci == info.m_ci)
+				break;
+			if (m != another_face->m_ssi_info.Count()) {
+			    if (t_face->m_neighbors.Search(another_face) == -1)
+				t_face->m_neighbors.Append(another_face);
+			    if (another_face->m_neighbors.Search(t_face) == -1)
+				another_face->m_neighbors.Append(t_face);
+			}
+		    }
+		}
+#endif
 	    }
 	}
     }
+
+#if USE_CONNECTIVITY_GRAPH
+    if (DEBUG_BREP_BOOLEAN) {
+	bu_log("The new connectivity graph for the final brep structure.");
+	for (int i = 0; i < facecount1 + facecount2; i++) {
+	    for (int j = 0; j < trimmedfaces[i].Count(); j++) {
+		if (trimmedfaces[i][j]->m_belong_to_final != TrimmedFace::BELONG)
+		    continue;
+		bu_log("\nFace[%p]'s neighbors:", trimmedfaces[i][j]);
+		for (int k = 0; k < trimmedfaces[i][j]->m_neighbors.Count(); k++)
+		    bu_log(" %p", trimmedfaces[i][j]->m_neighbors[k]);
+	    }
+	}
+    }
+#endif
 
     // Check IsValid() and output the message.
     ON_wString ws;
