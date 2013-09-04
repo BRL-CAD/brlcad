@@ -45,12 +45,13 @@ static const char usage[] = "Usage: %s dsp_1 dsp_2 > dsp_3\n";
  *
  * description: Combines two dsp files (which are binary files
  * comprised of network unsigned shorts).  The two files must be of
- * identical size.  The result is a file where each cell's height is
- * the total of the heights of the same cell in the input files.
+ * identical size.  The result, written to stdout, is a file where
+ * each cell's height is the total of the heights of the same cell
+ * in the input files.
  *
- * See the wiki for a tutorial on using dsp's.
+ * See the BRL-CAD wiki for a tutorial on using dsp's.
  *
- * see_also: dsp(5) ; asc2dsp(1) ; cv(1)
+ * see_also: dsp(5) asc2dsp(1) cv(1)
  *
  * opt: -h brief help
  *
