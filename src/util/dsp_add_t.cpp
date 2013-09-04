@@ -69,12 +69,11 @@ static int style = ADD_STYLE_INT;
  * tell user how to invoke this program, then exit
  */
 static void
-print_usage(char *s)
+print_usage(const char *s)
 {
-    if (s) (void)fputs(s, stderr);
+    if (!BU_STR_EMPTY(s)) (void)fputs(s, stderr);
 
-    bu_log(usage, progname);
-    bu_exit (1, NULL);
+    bu_exit(EXIT_FAILURE, usage, progname);
 }
 
 
@@ -90,7 +89,7 @@ parse_args(int ac, char *av[])
     while ((c = bu_getopt(ac, av, optstring)) != -1)
 	switch (c) {
 	    default:
-                print_usage((char *)"");
+                print_usage("");
 	}
 
     return bu_optind;
@@ -187,28 +186,28 @@ main(int ac, char *av[])
     size_t ret;
 
     if (ac < 2)
-	print_usage((char *)"");
+	print_usage("");
 
     if (isatty(fileno(stdout)))
-	print_usage((char *)"Must redirect standard output\n");
+	print_usage("Must redirect standard output\n");
 
     next_arg = parse_args(ac, av);
 
     if (next_arg >= ac)
-	print_usage((char *)"No files specified\n");
+	print_usage("No files specified\n");
 
     /* Open the files */
 
     in1 = fopen(av[next_arg], "r");
     if (!in1) {
 	perror(av[next_arg]);
-	return -1;
+	return EXIT_FAILURE;
     }
 
     if (fstat(fileno(in1), &sb)) {
 	perror(av[next_arg]);
 	fclose(in1);
-	return -1;
+	return EXIT_FAILURE;
     }
 
     count = sb.st_size;
@@ -220,14 +219,14 @@ main(int ac, char *av[])
     if (!in2) {
 	perror(av[next_arg]);
 	fclose(in1);
-	return -1;
+	return EXIT_FAILURE;
     }
 
     if (fstat(fileno(in2), &sb)) {
 	perror(av[next_arg]);
 	fclose(in1);
 	fclose(in2);
-	return -1;
+	return EXIT_FAILURE;
     }
 
     if ((size_t)sb.st_size != count) {
@@ -276,8 +275,7 @@ main(int ac, char *av[])
     }
 
     if (fwrite(buf1, sizeof(short), count, stdout) != count) {
-	bu_log("Error writing data\n");
-	return -1;
+	bu_exit(EXIT_FAILURE, "Error writing data\n");
     }
 
     return 0;
