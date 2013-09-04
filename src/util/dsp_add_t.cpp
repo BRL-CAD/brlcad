@@ -89,7 +89,7 @@ parse_args(int ac, char *av[])
     while ((c = bu_getopt(ac, av, optstring)) != -1)
 	switch (c) {
 	    default:
-		print_usage("");
+                print_usage((char *)"");
 	}
 
     return bu_optind;
@@ -186,15 +186,15 @@ main(int ac, char *av[])
     size_t ret;
 
     if (ac < 2)
-	print_usage("");
+	print_usage((char *)"");
 
     if (isatty(fileno(stdout)))
-	print_usage("Must redirect standard output\n");
+	print_usage((char *)"Must redirect standard output\n");
 
     next_arg = parse_args(ac, av);
 
     if (next_arg >= ac)
-	print_usage("No files specified\n");
+	print_usage((char *)"No files specified\n");
 
     /* Open the files */
 
