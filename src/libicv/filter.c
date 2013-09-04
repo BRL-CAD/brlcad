@@ -256,7 +256,7 @@ icv_filter3(icv_image_t *old_img, icv_image_t *curr_img, icv_image_t *new_img, I
     get_kernel(filter_type, kern, &offset);
 
     if(!kern)
-        return -1;
+        return NULL;
 
     widthstep = old_img->width*old_img->channels;
 
