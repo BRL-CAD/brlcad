@@ -77,7 +77,7 @@ single_conversion(struct rt_db_internal* intern, ON_Brep** brep, const struct db
 
 
 int
-conv_tree(ON_Brep **b, union tree *t, const struct db_i *dbip)
+conv_tree(ON_Brep **b, const union tree *t, const struct db_i *dbip)
 {
     ON_Brep *left = NULL, *right = NULL, *old = NULL;
     int ret = 0;

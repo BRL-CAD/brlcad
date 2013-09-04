@@ -54,7 +54,7 @@ extern "C" {
 #endif
     RT_EXPORT extern int brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_tol* ttol, const struct bn_tol* tol, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);
     RT_EXPORT extern int brep_conversion(struct rt_db_internal* intern, ON_Brep** brep, const struct db_i *dbip);
-    RT_EXPORT extern int brep_conversion_comb(struct rt_db_internal *old_internal, char *name, char *suffix, struct rt_wdb *wdbp, fastf_t local2mm);
+    RT_EXPORT extern int brep_conversion_comb(struct rt_db_internal *old_internal, const char *name, const char *suffix, struct rt_wdb *wdbp, fastf_t local2mm);
     RT_EXPORT extern int brep_intersect_point_point(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
     RT_EXPORT extern int brep_intersect_point_curve(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
     RT_EXPORT extern int brep_intersect_point_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
@@ -2317,7 +2317,7 @@ brep_conversion(struct rt_db_internal* intern, ON_Brep** brep, const struct db_i
 
 
 int
-brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtree, char *suffix, struct rt_wdb *wdbp, fastf_t local2mm)
+brep_conversion_tree(const struct db_i *dbip, const union tree *oldtree, union tree *newtree, const char *suffix, struct rt_wdb *wdbp, fastf_t local2mm)
 {
     int ret = 0;
     *newtree = *oldtree;
@@ -2331,7 +2331,7 @@ brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtree, 
 	    comb = new rt_comb_internal;
 	    newtree->tr_b.tb_right = new tree;
 	    RT_TREE_INIT(newtree->tr_b.tb_right);
-	    ret = brep_conversion_tree(db, oldtree->tr_b.tb_right, newtree->tr_b.tb_right, suffix, wdbp, local2mm);
+	    ret = brep_conversion_tree(dbip, oldtree->tr_b.tb_right, newtree->tr_b.tb_right, suffix, wdbp, local2mm);
 	    if (ret) {
 		delete newtree->tr_b.tb_right;
 		break;
@@ -2343,7 +2343,7 @@ brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtree, 
 	    /* convert left */
 	    BU_ALLOC(newtree->tr_b.tb_left, union tree);
 	    RT_TREE_INIT(newtree->tr_b.tb_left);
-	    ret = brep_conversion_tree(db, oldtree->tr_b.tb_left, newtree->tr_b.tb_left, suffix, wdbp, local2mm);
+	    ret = brep_conversion_tree(dbip, oldtree->tr_b.tb_left, newtree->tr_b.tb_left, suffix, wdbp, local2mm);
 	    if (!ret) {
 		comb->tree = newtree;
 	    } else {
@@ -2359,13 +2359,13 @@ brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtree, 
 	    newtree->tr_l.tl_name = (char*)bu_malloc(strlen(oldname)+strlen(suffix)+1, "char");
 	    bu_strlcpy(tmpname, oldname, strlen(oldname)+1);
 	    bu_strlcat(tmpname, suffix, strlen(oldname)+strlen(suffix)+1);
-	    if (db_lookup(db, tmpname, LOOKUP_QUIET) == RT_DIR_NULL) {
+	    if (db_lookup(dbip, tmpname, LOOKUP_QUIET) == RT_DIR_NULL) {
 		directory *dir;
-		dir = db_lookup(db, oldname, LOOKUP_QUIET);
+		dir = db_lookup(dbip, oldname, LOOKUP_QUIET);
 		if (dir != RT_DIR_NULL) {
 		    rt_db_internal *intern;
 		    BU_ALLOC(intern, struct rt_db_internal);
-		    rt_db_get_internal(intern, dir, db, bn_mat_identity, &rt_uniresource);
+		    rt_db_get_internal(intern, dir, dbip, bn_mat_identity, &rt_uniresource);
 		    if (BU_STR_EQUAL(intern->idb_meth->ft_name, "ID_COMBINATION")) {
 			ret = brep_conversion_comb(intern, tmpname, suffix, wdbp, local2mm);
 			if (ret) {
@@ -2386,7 +2386,7 @@ brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtree, 
 		    if (BU_STR_EQUAL(intern->idb_meth->ft_name, "ID_BREP")) {
 			*brep = ((struct rt_brep_internal *)intern->idb_ptr)->brep->Duplicate();
 		    } else {
-			ret = brep_conversion(intern, brep, db);
+			ret = brep_conversion(intern, brep, dbip);
 			if (ret == -1) {
 			    bu_log("The brep conversion of %s is unsuccessful.\n", oldname);
 			    newtree = NULL;
@@ -2447,7 +2447,7 @@ brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtree, 
 
 
 int
-brep_conversion_comb(struct rt_db_internal *old_internal, char *name, char *suffix, struct rt_wdb *wdbp, fastf_t local2mm)
+brep_conversion_comb(struct rt_db_internal *old_internal, const char *name, const char *suffix, struct rt_wdb *wdbp, fastf_t local2mm)
 {
     RT_CK_COMB(old_internal->idb_ptr);
     rt_comb_internal *comb_internal;
