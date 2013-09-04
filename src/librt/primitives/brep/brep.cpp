@@ -2656,12 +2656,12 @@ double surface_GetClosestPoint3dFirstOrderByRange(
 	ON_3dVector vector = q - p0;
 	double vlength = vector.Length();
 
-	if (vlength > 0.0) {
+	if (vlength > tol) {
 	    rc = true;
 
 	    if (ON_Pullback3dVector(vector, vlength, ds, dt, dss, dst, dtt,
 		    pullback)) {
-
+/*
 		if (pullback.x > 0.0)
 		    current_u_range.m_t[0] = p2d0.x;
 		else
@@ -2671,21 +2671,34 @@ double surface_GetClosestPoint3dFirstOrderByRange(
 		    current_v_range.m_t[0] = p2d0.y;
 		else
 		    current_v_range.m_t[1] = p2d0.y;
-
+*/
 		p2d0 = p2d0 + pullback;
 
+#if 1
 		if (!current_u_range.Includes(p2d0.x, false)) {
 		    int i = (current_u_range.m_t[0] <= current_u_range.m_t[1]) ? 0 : 1;
-		    p2d0.x =
-			    (p2d0.x < current_u_range.m_t[i]) ?
+#if 0
+		    p2d0.x = (current_u_range.m_t[i] + current_u_range.m_t[1 - i])/2.0;
+#else
+		    p2d0.x = (p2d0.x < current_u_range.m_t[i]) ?
 				    current_u_range.m_t[i] : current_u_range.m_t[1 - i];
+#endif
 		}
 		if (!current_v_range.Includes(p2d0.y, false)) {
 		    int i = (current_v_range.m_t[0] <= current_v_range.m_t[1]) ? 0 : 1;
-		    p2d0.y =
-			    (p2d0.y < current_v_range.m_t[i]) ?
+#if 0
+		    p2d0.y = ( current_v_range.m_t[i] + current_v_range.m_t[1 - i] ) / 2.0;
+#else
+		    p2d0.y = (p2d0.y < current_v_range.m_t[i]) ?
 				    current_v_range.m_t[i] : current_v_range.m_t[1 - i];
+#endif
 		}
+#else
+		if ((!current_u_range.Includes(p2d0.x, false)) || (!current_v_range.Includes(p2d0.y, false))) {
+		    p2d0.x = (current_u_range.m_t[0] + current_u_range.m_t[1])/2.0;
+		    p2d0.y = ( current_v_range.m_t[0] + current_v_range.m_t[1] ) / 2.0;
+		}
+#endif
 
 	    } else {
 		// pullback fails so need to subdivide and try again
@@ -2745,6 +2758,68 @@ double surface_GetClosestPoint3dFirstOrderByRange(
 }
 
 
+void surface_GetIntervalMinMaxDistance(
+	const ON_Surface *surf,
+        const ON_3dPoint& p,
+	ON_Interval u_interval,
+	ON_Interval v_interval,
+        double &min_distance,
+        double &max_distance
+        )
+{
+    ON_Surface *tmpsurf = surf->Duplicate();
+    ON_BoundingBox bbox;
+
+    tmpsurf = surf->Duplicate();
+    tmpsurf->Trim(0, u_interval);
+    tmpsurf->Trim(1, v_interval);
+    if (tmpsurf->GetBoundingBox(bbox, false)) {
+	min_distance = bbox.MinimumDistanceTo(p);
+
+	max_distance = bbox.MaximumDistanceTo(p);
+	ON_BoundingBox face_bbox;
+	double max;
+	face_bbox = bbox;
+	// try closest maximum distance to each BB face
+	// X
+	face_bbox.m_min.x = face_bbox.m_max.x = bbox.m_min.x;
+	max = face_bbox.MaximumDistanceTo(p);
+	if (max < max_distance) {
+	    max_distance = max;
+	}
+	face_bbox.m_min.x = face_bbox.m_max.x = bbox.m_max.x;
+	max = face_bbox.MaximumDistanceTo(p);
+	if (max < max_distance) {
+	    max_distance = max;
+	}
+	face_bbox.m_min.x = bbox.m_min.x;
+	// Y
+	face_bbox.m_min.y = face_bbox.m_max.y = bbox.m_min.y;
+	max = face_bbox.MaximumDistanceTo(p);
+	if (max < max_distance) {
+	    max_distance = max;
+	}
+	face_bbox.m_min.y = face_bbox.m_max.y = bbox.m_max.y;
+	max = face_bbox.MaximumDistanceTo(p);
+	if (max < max_distance) {
+	    max_distance = max;
+	}
+	face_bbox.m_min.y = bbox.m_min.y;
+	// Z
+	face_bbox.m_min.z = face_bbox.m_max.z = bbox.m_min.z;
+	max = face_bbox.MaximumDistanceTo(p);
+	if (max < max_distance) {
+	    max_distance = max;
+	}
+	face_bbox.m_min.z = face_bbox.m_max.z = bbox.m_max.z;
+	max = face_bbox.MaximumDistanceTo(p);
+	if (max < max_distance) {
+	    max_distance = max;
+	}
+    }
+}
+
+
 bool surface_GetClosestPoint3dFirstOrder(
 	const ON_Surface *surf,
         const ON_3dPoint& p,
@@ -2758,8 +2833,6 @@ bool surface_GetClosestPoint3dFirstOrder(
     ON_3dVector ds,dt,dss,dst,dtt;
     ON_3dVector T,K;
     bool rc = false;
-    ON_Surface *mysurf = surf->Duplicate();
-
 
     int prec = std::cerr.precision();
     std::cerr.precision(15);
@@ -2823,7 +2896,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 	    skip[u_span_index][v_span_index] = true;
 	}
     }
-    if ( mysurf->GetSpanVector(0,uspan) && mysurf->GetSpanVector(1,vspan)) {
+    if ( surf->GetSpanVector(0,uspan) && surf->GetSpanVector(1,vspan)) {
 	ON_Interval u_interval;
 	ON_Interval v_interval;
 	for ( int u_span_index = 1; u_span_index < u_spancnt+1; u_span_index++ )
@@ -2832,59 +2905,12 @@ bool surface_GetClosestPoint3dFirstOrder(
 	    for ( int v_span_index = 1; v_span_index < v_spancnt+1; v_span_index++ )
 	    {
 		v_interval.Set(vspan[v_span_index-1],vspan[v_span_index]);
-		mysurf = surf->Duplicate();
-		mysurf->Trim(0,u_interval);
-		mysurf->Trim(1,v_interval);
-		if (mysurf->GetBoundingBox(bbox[u_span_index][v_span_index],false)) {
-		    min_distance[u_span_index][v_span_index] = bbox[u_span_index][v_span_index].MinimumDistanceTo(p);
-		    if ( min_distance[u_span_index][v_span_index] <= running_maxmin_distance) {
-			max_distance[u_span_index][v_span_index] = bbox[u_span_index][v_span_index].MaximumDistanceTo(p);
-			ON_BoundingBox face_bbox;
-			double max;
-			face_bbox = bbox[u_span_index][v_span_index];
-			// try closest maximum distance to each BB face
-			// X
-			face_bbox.m_min.x = face_bbox.m_max.x = bbox[u_span_index][v_span_index].m_min.x;
-			max = face_bbox.MaximumDistanceTo(p);
-			if (max < max_distance[u_span_index][v_span_index]) {
-			    max_distance[u_span_index][v_span_index] = max;
-			}
-			face_bbox.m_min.x = face_bbox.m_max.x = bbox[u_span_index][v_span_index].m_max.x;
-			max = face_bbox.MaximumDistanceTo(p);
-			if (max < max_distance[u_span_index][v_span_index]) {
-			    max_distance[u_span_index][v_span_index] = max;
-			}
-			face_bbox.m_min.x = bbox[u_span_index][v_span_index].m_min.x;
-			// Y
-			face_bbox.m_min.y = face_bbox.m_max.y = bbox[u_span_index][v_span_index].m_min.y;
-			max = face_bbox.MaximumDistanceTo(p);
-			if (max < max_distance[u_span_index][v_span_index]) {
-			    max_distance[u_span_index][v_span_index] = max;
-			}
-			face_bbox.m_min.y = face_bbox.m_max.y = bbox[u_span_index][v_span_index].m_max.y;
-			max = face_bbox.MaximumDistanceTo(p);
-			if (max < max_distance[u_span_index][v_span_index]) {
-			    max_distance[u_span_index][v_span_index] = max;
-			}
-			face_bbox.m_min.y = bbox[u_span_index][v_span_index].m_min.y;
-			// Z
-			face_bbox.m_min.z = face_bbox.m_max.z = bbox[u_span_index][v_span_index].m_min.z;
-			max = face_bbox.MaximumDistanceTo(p);
-			if (max < max_distance[u_span_index][v_span_index]) {
-			    max_distance[u_span_index][v_span_index] = max;
-			}
-			face_bbox.m_min.z = face_bbox.m_max.z = bbox[u_span_index][v_span_index].m_max.z;
-			max = face_bbox.MaximumDistanceTo(p);
-			if (max < max_distance[u_span_index][v_span_index]) {
-			    max_distance[u_span_index][v_span_index] = max;
-			}
 
-			if (max_distance[u_span_index][v_span_index] < running_maxmin_distance) {
-			    running_maxmin_distance = max_distance[u_span_index][v_span_index];
-			}
-			skip[u_span_index][v_span_index] = false;
-		    }
+		surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance[u_span_index][v_span_index],max_distance[u_span_index][v_span_index]);
+		if (max_distance[u_span_index][v_span_index] < running_maxmin_distance) {
+		    running_maxmin_distance = max_distance[u_span_index][v_span_index];
 		}
+		skip[u_span_index][v_span_index] = false;
 	    }
 	}
 	for ( int u_span_index = 1; u_span_index < u_spancnt+1; u_span_index++ )
@@ -3007,6 +3033,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 		current_distance = distance;
 		p3d = working_p3d;
 		p2d = working_p2d;
+		rc = true;
 	    }
 
 #else
@@ -3799,6 +3826,7 @@ void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
 
 	for (int lti = 0; lti < loop->TrimCount(); lti++) {
 	    ON_BrepTrim *trim = loop->Trim(lti);
+	    ON_Interval d = trim->Domain();
 	    //ON_BrepEdge *edge = trim->Edge();
 
 	    if (trim->m_type == ON_BrepTrim::singular) {
@@ -3833,6 +3861,7 @@ void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
 			    i != param_points3d->end();) {
 			double t = (*i).first;
 			ON_3dPoint *p3d = (*i).second;
+			p2d = trim->PointAt(d.ParameterAt(t));
 			if (++i == param_points3d->end())
 			    continue;
 #define PULLBACK_TESTING
@@ -3871,10 +3900,17 @@ void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
 			     std::cerr << "     tp2d: < " << tp2d.x << ", " << tp2d.y << ", 0 >" << std::endl;
 			     }
 			     */
+
+			     if (!NEAR_ZERO(tp2d.DistanceTo(p2d),tol->dist)) {
+			     std::cerr << "2d First Order failed for Face - " << fi << std::endl;
+			     std::cerr << "     p2d: < " << p2d.x << ", " << p2d.y << ", 0 >" << std::endl;
+			     std::cerr << "     tp2d: < " << tp2d.x << ", " << tp2d.y << ", 0 >" << std::endl;
+			     }
+
 			    double test_dist = p3d->DistanceTo(tp3d);
 			    double test_dist2 = p3d->DistanceTo(tp3d2);
 			    double test_dist3 = p3d->DistanceTo(tp3d3);
-			    if (!NEAR_ZERO(test_dist,tol->dist_sq)) {
+			    if (!NEAR_ZERO(test_dist,tol->dist)) {
 				////////////////////
 				int prec = std::cerr.precision();
 				std::cerr.precision(15);
