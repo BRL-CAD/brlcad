@@ -33,8 +33,6 @@
 
 /* private functions */
 
-#define __ICV_DEBUG__ if(h==510) {fprintf(stderr, "%d\n index = %ld", __LINE__, index);}
-
 HIDDEN void
 icv_get_kernel(ICV_FILTER filter_type, double *kern, double *offset)
 {
