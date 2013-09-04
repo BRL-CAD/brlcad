@@ -1106,6 +1106,22 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &
 			if (fabs(s0) > side_tol)
 			    continue;
 
+			// Check 3D distances - not included in ON_Brep::IsValid().
+			// So with this check, we only add seam trims if their end points
+			// are the same within ON_ZERO_TOLERANCE. This will cause IsValid()
+			// reporting "they should be seam trims connected to the same edge",
+			// because the 2D tolerance (side_tol) are hardcoded to 1.0e-4.
+			// We still add this check because we treat two vertexes to be the
+			// same only if their distance < ON_ZERO_TOLREANCE. (Maybe 3D dist
+			// should also be added to ON_Brep::IsValid()?)
+			if (srf->PointAt(trim.PointAtStart().x, trim.PointAtStart().y).DistanceTo(
+			    srf->PointAt(loop[k]->PointAtEnd().x, loop[k]->PointAtEnd().y)) >= ON_ZERO_TOLERANCE)
+			    continue;
+
+			if (srf->PointAt(trim.PointAtEnd().x, trim.PointAtEnd().y).DistanceTo(
+			    srf->PointAt(loop[k]->PointAtStart().x, loop[k]->PointAtStart().y)) >= ON_ZERO_TOLERANCE)
+			    continue;
+
 			// We add another checking, which is not included in ON_Brep::IsValid()
 			// - they should be iso boundaries of the surface.
 			double s2 = srf->Domain(1-endpt_index).NormalizedParameterAt(loop[k]->PointAtStart()[1-endpt_index]);
@@ -1139,8 +1155,8 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &
 		ptarray.Append(face.SurfaceOf()->PointAt(pt2d.x, pt2d.y));
 	    }
 	    // The curve is closed within a tolerance
-	    if (ptarray[0].DistanceTo(ptarray[100]) < INTERSECTION_TOL)
-		ptarray[100] = ptarray[0];
+	    // if (ptarray[0].DistanceTo(ptarray[100]) < INTERSECTION_TOL)
+		// ptarray[100] = ptarray[0];
 	    c3d = new ON_PolylineCurve(ptarray);
 	}
 
