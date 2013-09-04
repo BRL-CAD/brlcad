@@ -12,6 +12,7 @@ LIBICV To Do List
 
 * Support dynamically loading formats (e.g., define a plug-in API).
 
+* Validate input parameters of all the PUBLIC functions.
 
 ---------------------------------------------------------------------
 TODO items should be formatted to column 70 (M-q in emacs), no tabs.
