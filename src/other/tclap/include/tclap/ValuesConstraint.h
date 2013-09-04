@@ -28,7 +28,7 @@
 #include <tclap/Constraint.h>
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include <tclap_config.h>
 #else
 #define HAVE_SSTREAM
 #endif

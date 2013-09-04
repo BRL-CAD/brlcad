@@ -26,7 +26,7 @@
 #define TCLAP_ARGUMENT_H
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include <tclap_config.h>
 #else
 #define HAVE_SSTREAM
 #endif

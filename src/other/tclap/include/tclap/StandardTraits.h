@@ -27,7 +27,7 @@
 #define TCLAP_STANDARD_TRAITS_H
 
 #ifdef HAVE_CONFIG_H
-#include <config.h> // To check for long long
+#include <tclap_config.h> // To check for long long
 #endif
 
 // If Microsoft has already typedef'd wchar_t as an unsigned 

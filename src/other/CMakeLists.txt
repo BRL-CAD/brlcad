@@ -935,7 +935,9 @@ mark_as_advanced(TNT_INCLUDE_DIR)
 CMAKEFILES(Eigen)
 
 # TCLAP is used for option parsing - consists entirely of headers
-# and does not need to be installed.
+# and does not need to be installed, but does need to generate a
+# config file
+add_subdirectory(tclap)
 CMAKEFILES(tclap)
 
 if(BRLCAD_ENABLE_OSL)

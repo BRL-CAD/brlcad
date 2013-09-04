@@ -14,6 +14,8 @@ set(UTIL_LOCAL_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${UTAHRLE_INCLUDE_DIR}
   ${PNG_INCLUDE_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR}/../other/tclap/include  #TODO - need to get this into libbu
+  ${CMAKE_CURRENT_SOURCE_DIR}/../other/tclap/include  #TODO - need to get this into libbu
   )
 
 set(UTIL_ALL_INCLUDE_DIRS ${UTIL_INCLUDE_DIRS} ${UTIL_LOCAL_INCLUDE_DIRS})
