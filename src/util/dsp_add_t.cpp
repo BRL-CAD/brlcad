@@ -116,7 +116,7 @@ add_float(unsigned short *buf1, unsigned short *buf2, unsigned long count)
     double *dbuf, *d;
     double min, max, k;
 
-    dbuf = bu_malloc(sizeof(double) * count, "buffer of double");
+    dbuf = (double *)bu_malloc(sizeof(double) * count, "buffer of double");
 
     min = MAX_FASTF;
     max = -MAX_FASTF;
@@ -211,7 +211,7 @@ main(int ac, char *av[])
     }
 
     count = sb.st_size;
-    buf1 = bu_malloc((size_t)sb.st_size, "buf1");
+    buf1 = (unsigned short *)bu_malloc((size_t)sb.st_size, "buf1");
 
     next_arg++;
 
@@ -235,7 +235,7 @@ main(int ac, char *av[])
 	bu_exit(EXIT_FAILURE, "**** ERROR **** file size mis-match\n");
     }
 
-    buf2 = bu_malloc((size_t)sb.st_size, "buf2");
+    buf2 = (unsigned short *)bu_malloc((size_t)sb.st_size, "buf2");
 
     count = count >> 1; /* convert count of char to count of short */
 
