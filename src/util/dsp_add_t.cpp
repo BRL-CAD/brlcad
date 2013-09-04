@@ -35,6 +35,7 @@
 #include "vmath.h"
 #include "bn.h"
 
+//# include "tclap/CmdLine.h"
 
 /* declarations to support use of bu_getopt() system call */
 static const char optstring[] = "h?";
