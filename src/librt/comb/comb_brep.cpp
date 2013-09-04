@@ -153,6 +153,7 @@ extern "C" void
 rt_comb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), struct db_i *db)
 {
     RT_CK_DB_INTERNAL(ip);
+    RT_CK_DBI(db);
 
     struct rt_comb_internal *cip;
     cip = (struct rt_comb_internal *)ip->idb_ptr;
