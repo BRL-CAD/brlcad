@@ -1,0 +1,204 @@
+1.15 -> 1.16:
+    - add lv.po, update translations (Translation Project).
+    - include xcode project files in distributed popt tar ball.
+    - make distcheck is now squeaky clean.
+    - permit VPATH builds.
+    - add shallow tests using ISP/RAS api-sanity-autotest.pl.
+    - prefix bit set routines with popt to avoid symbol coolisions w rpm.
+    - add tdict.c to exercise popt bit sets against /usr/dict/words.
+    - add poptBitsArgs() method to generate args bit set.
+    - add methods for bit set union and intersection.
+    - permit comma separated attribute lists, handle negated attributes.
+    - better test for POPT_ARG_BITSET.
+    - add POPT_ARG_BITSET handling.
+    - add POPT_ARG_SHORT handling.
+    - handle all callback traversals within a C switch (for extendability ease).
+    - add popt.pc.
+    - devzero2000: add AC_CONFIG_AUX_DIR, AC_CONFIG_MACRO_DIR to configure. Create build-aux 
+    - devzero2000: del acinclude.m4 : AC_CHECK_VA_COPY is not used
+1.14 -> 1.15:
+    - release popt-1.15.
+    - rse: fix building under --disable-nls
+    - rse: fix building under non GLIBC platforms where glob_pattern_p fallback has to be used
+    - rse: fix building under platforms where FNM_EXTMATCH is not available
+    - jbj: poptReadFile: permit NULL if return values are not desired.
+    - jbj: poptReadFile: add routine.
+    - jbj: trim out escaped newline(s) from file content, other fixes.
+    - jbj: permit popt alias/exec to include content from a file.
+    - jbj: permit glob(3) patterns in appName field of popt alias/exec config.
+    - jbj: add test cases for bit operations and toggles.
+    - jbj: avoid displaying --[no]nofoo with POPT_ARGFLAG_TOGGLE.
+    - jbj: add poptArgInfo() to get argInfo, implementing POPT_ARGFLAG_TOGGLE.
+    - jbj: add longOptionStrcmp() to match w POPT_ARGFLAG_TOGGLE.
+    - jbj: change singleDash arg to a bit enum, use LF_ISSET(ONEDASH) instead.
+    - jbj: rework the glob wrappers into something more useful. portability todo++.
+    - jbj: stub in glob(3) wrappers for popt. more useful poptGlob() API next.
+    - jbj: add poptInit/poptFini/poptReadConfigFiles/poptSaneFile routines.
+    - jbj: rewrite poptReadConfigFile(), styling for (i.e. my) readbility.
+    - jbj: reserve a bit for --[no]opt prefix toggling.
+    - jbj: fix: check/print argv[0] in --help for NULL.
+    - jbj: permit type/group bitmasks to be changed (if needed somewhen).
+    - jbj: snip out 8 unused bits for argument groups.
+    - jbj: fix: eliminate dead code (CID#5).
+    - jbj: fix: rearrange code to better hint to coverity scan (CID#9).
+    - jbj: fix: rewrite (and simplify) strdup_locale_from_utf8() (CID#7, CID#8, CID#11, CID#12).
+    - jbj: test/use HAVE_SRANDOM to avoid portability issues.
+    - jbj: fix: remove AC_CHECK_VA_COPY check, va_copy is no longer used.
+    - jbj: add eo.po and id.po (Translation Project).
+    - jbj: updated da.po (Translation Project).
+    - jbj: extend coverage to several additional setup routines.
+    - jbj: add tests for --usage/--help coverage.
+    - jbj: add lconv/gcov targets to Makefile.am.
+    - jbj: refactor automagic (*opt->arg) option arg store to poptSaveArg().
+    - ldv: update INPUT tag in Doxyfile.in, fix doxygen warnings in popthelp.c.
+    - start popt-1.15 development.
+
+1.13 -> 1.14:
+    - release popt-1.14.
+    - jbj: remove findme.c, add poptint.c, to po/POTFILES.in.
+    - jbj: use stpcpy 2 more places (Wayne Davison<wayned@samba.org>).
+    - jbj: add @LTLIBICONV@ when needed (Stanislav Brabec<sbrabec@suse.cz>).
+    - jbj: fix: remove the "echo --" Fedorable hack-a-round.
+    - rsc: updated de.po (not from the Translation Project).
+    - jbj: study the mess with splint. Sigh, splint is so easily confused ...
+    - jbj: rewrite findProgramPath & move to popt.c. Nuke the findme.{c,h} toys.
+    - jbj: use stpcpy several more places (Wayne Davison<wayned@samba.org>).
+    - jbj: enable equal after short option (Wayne Davison<wayned@samba.org>).
+    - jbj: permit "#define POPT_fprintf fprintf" to lose the malloc'ing fprintf.
+    - jbj: use vasprintf(3) when available (Wayne Davison<wayned@samba.org>).
+    - jbj: study the mess with splint, remove annotations where possible.
+    - jbj: add -D_GNU_SOURCE for gcc to use __builtin_stpcpy when available.
+    - jbj: add static inline stpcpy for the deprived.
+    - jbj: use stpcpy to eliminate sprintf calls everywhere but popthelp.c
+    - jbj: remove (now unneeded afaik) va_copy() from POPT_fprintf().
+    - jbj: inline strdup_fprintf() => POPT_fprintf keeping (unneeded?) va_copy.
+    - rse: fix memcpy(3) based va_copy(3) fallbacks
+    - jbj: fix: short option with "foo=bar" argument was mishandled.
+	(Wayne Davison<wayned@samba.org>).
+    - jbj: rename _ABS to avoid collisions, define DBL_EPSILON if not present
+	(Wayne Davison<wayned@samba.org>).
+    - jbj: test for <glob.h>, disable reading directory poptrc files if not.
+    - jbj: add __attribute__(__unused__) (Wayne Davison<wayned@samba.org>).
+    - jbj: permit equal after short option (Wayne Davison<wayned@samba.org>).
+    - jbj: make sure that short options are printed only once with --usage.
+    - jbj: don't display hidden short options with --usage.
+    - jbj: updated sv.po (Translation Project).
+    - jbj: updated {fi,nl}.po (Translation Project).
+    - jbj: updated th.po (Translation Project).
+    - rsc: avoid multilib file conflicts in generated doxygen.
+    - jbj: updated vi.po and zh_CN.po (Translation Project).
+    - jbj: fix: keep the poptHelpOptions array exactly the same size.
+    - jbj: updated pl.po (Translation Project).
+    - jbj: add new fi, th, zh_TW translations (Translation Project).
+    - jbj: add "make updatepo" to simplify PO file maintenance.
+    - jbj: display POPT_ARG_ARGV options in --help just like other options.
+    - jbj: add test for POPT_ARG_ARGV handling.
+    - jbj: fix: permit "--foo bar" and "--foo=bar" equivalent forms for aliases.
+    - jbj: fix: tests 20 -> 23 require an explicit '--' arg separator now.
+    - jbj: popt.3: add POPT_ARG_ARGV description.
+    - jbj: use NUL terminator to align help with (possible) multibyte chars.
+    - jbj: add utf8_skip_data table[] to keep track of utf8 character widths.
+    - jbj: refactor the POPT_WCHAR_HACK into stringDisplayWidth().
+    - jbj: add POPT_dgettext() prototype.
+    - jbj: add POPT_dgettext() for popt internal UTF-8 codeset (Takao Fujiwara).
+    - jbj: add POPT_next_char(), backout POPT_fprintf() usage (for the moment).
+    - jbj: finish POPT_ARG_ARGV implementation.
+    - jbj: free aliases/execs with common code.
+    - jbj: rewrite the callback logic using a switch for simplicity.
+    - jbj: hide bit field structure behind F_ISSET/LF_ISSET/CBF_ISSET macros.
+    - jbj: expose poptSaveLongLong and poptSaveString in the loader map.
+    - jbj: add POPT_ARG_ARGV, starting with the poptSaveString() method.
+    - jbj: add help for POPT_ARG_LONGLONG.
+    - jbj: hmmm, POSIXly correct --echo-args needs fixing, disable for now.
+    - jbj: poptint.h: typedef's for string and string arrays.
+    - jbj: add POPT_ARG_LONGLONG, and poptSaveLongLong().
+    - jbj: poptint.h: add poptSubstituteHelpI18N() to bury the ABI hack.
+    - jbj: start using poptArg and poptArgType() where useful.
+    - jbj: poptint.h: add a poptArgType define for bitfield type abstraction.
+    - jbj: poptint.h: add a poptArg union for opt->arg access without casts.
+    - jbj: include "-- Terminate options" end-of-options msg in poptHelpOptions.
+    - jbj: opt->argDescrip[0] determines "--foo=bar" or "--foo bar".
+    - jbj: --long always padded for alignment with/without "-X, ".
+    - jbj: Display shortName iff printable non-space.
+    - jbj: POPT_AUTOALIAS: if no popt aliases/execs, don't display the sub-head.
+    - jbj: add --libdir=/%{_lib} to popt.spec.
+    - jbj: add .cvsignore to m4 subdirectory.
+    - jbj: remove duplicate nb locale from ALL_LINGUAS.
+    - jbj: autogen.sh: on linux, add --libdir=/lib (no /lib64 autodetect yet).
+
+1.12 -> 1.13:
+    - release popt-1.13.
+    - jbj: add a %track section (as in rpm-5.0) to popt.spec.
+    - jbj: chg poptGetOptArg() to "char *", document application needs to free.
+    - jbj: re-add it.po (from Sandro Bonazzola <sandro.bonazzola@gmail.com>).
+    - jbj: rescuscitate the splint annotations.
+    - jbj: change sizeof to use the type implicitly, rather than explicitly.
+    - jbj: remove incorrect casts, changing to size_t where needed.
+    - jbj: remove unused STD_VFPRINTF macro.
+    - jbj: reindent (and otherwise diddle) recent patch for popt coding style.
+    - jbj: remove splint bounds/branch annotations, little gain, much pain.
+    - jbj: revert alloca usage again again.
+    - jbj: handle Solaris signed character isspace(3) issues consistently.
+    - bero: read /etc/popt.d/* files.
+    - jbj: don't read /etc/popt twice (#290531).
+    - jbj: isspace(3) has i18n encoding signednesss issues on Solaris (#172393).
+    - jbj: refactor column cursor to a structure, carry maxcols as well.
+    - jbj: use TIOCGWINSZ to determine --help column wrapping.
+    - jbj: help formatting for POPT_ARG_MAINCALL.
+    - jbj: remove N_(...) markings from popt.h, markers in popthelp.c instead.
+    - jbj: add zh_CN.po (Translation Project).
+    - jbj: use PACKAGE_BUGREPORT.
+    - jbj: hotwire POPT_AUTOHELP/POPT_AUTOALIAS lookup in popt i18n domain.
+
+1.11 -> 1.12
+    - jbj: plug a memory leak.
+    - jbj: fix index thinko.
+    - jbj: add vi.po (Translation Project).
+    - jbj: add nl.po (Translation Project).
+    
+1.5 -> 1.6
+	- add ability to perform callbacks for every, not just first, match.
+
+1.3 -> 1.5
+	- heavy dose of const's
+	- poptParseArgvString() now NULL terminates the list
+
+1.2.3 -> 1.3
+	- added support for single -
+	- misc bug fixes
+	- portability improvements
+
+1.2.2 -> 1.2.3
+	- fixed memset() in help message generation (Dale Hawkins)
+	- added extern "C" stuff to popt.h for C++ compilers (Dale Hawkins)
+	- const'ified poptParseArgvString (Jeff Garzik)
+
+1.2.1 -> 1.2.2
+	- fixed bug in chaind alias happens which seems to have only
+	  affected --triggers in rpm
+	- added POPT_ARG_VAL
+	- popt.3 installed by default
+
+1.2 -> 1.2.1
+	- added POPT_ARG_INTL_DOMAIN (Elliot Lee)
+	- updated Makefile's to be more GNUish (Elliot Lee)
+
+1.1 -> 1.2
+	- added popt.3 man page (Robert Lynch)
+	- don't use mmap anymore (its lack of portability isn't worth the
+	  trouble)
+	- added test script
+	- added support for exec
+	- removed support for *_POPT_ALIASES env variable -- it was a bad
+	  idea
+	- reorganized into multiple source files
+	- added automatic help generation, POPT_AUTOHELP
+	- added table callbacks
+	- added table inclusion
+	- updated man page for new features
+	- added test scripts
+
+1.0 -> 1.1
+	- moved to autoconf (Fred Fish)
+	- added STRERROR replacement (Norbert Warmuth)
+	- added const keywords (Bruce Perens)

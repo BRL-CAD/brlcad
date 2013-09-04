@@ -154,6 +154,10 @@ do
                                   shift;;
      --disable-tktable)                options="$options -DBRLCAD_TKTABLE=SYSTEM";
                                   shift;;
+     --enable-popt)                options="$options -DBRLCAD_LIBPOPT=BUNDLED";
+                                  shift;;
+     --disable-popt)                options="$options -DBRLCAD_LIBPOPT=SYSTEM";
+                                  shift;;
      --enable-opennurbs)                options="$options -DBRLCAD_OPENNURBS=BUNDLED";
                                   shift;;
      --disable-opennurbs)                options="$options -DBRLCAD_OPENNURBS=SYSTEM";

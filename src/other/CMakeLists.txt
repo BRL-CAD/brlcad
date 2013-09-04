@@ -768,6 +768,21 @@ DISTCLEAN(${CMAKE_BINARY_DIR}/lib/Tktable2.10)
 #DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/tktreectrl/tktreectrl_cfg.h)
 #DISTCLEAN(${CMAKE_BINARY_DIR}/lib/TkTreeCtrl2.4)
 
+
+# POPTlib - An option parsing library
+
+set(libpopt_ALIASES ENABLE_POPT)
+set(libpopt_DESCRIPTION "
+Option for enabling and disabling compilation of the libpopt triangle
+simplification library provided with BRL-CAD's source code.  Default
+is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
+testing first for a system version if BRLCAD_BUNDLED_LIBS is also
+AUTO.
+")
+THIRD_PARTY(libpopt libpopt "" libpopt_ALIASES libpopt_DESCRIPTION NOSYS)
+set(LIBPOPT_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libpopt" CACHE STRING "Directory containing libpopt headers." FORCE)
+
+
 # OpenNURBS Library
 set(opennurbs_ALIASES ENABLE_OPENNURBS)
 set(opennurbs_DESCRIPTION "
