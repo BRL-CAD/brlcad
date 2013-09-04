@@ -1016,7 +1016,7 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 	step_face->name_("''");
 	step_face->face_geometry_((SdaiSurface *)info->surfaces.at(face->SurfaceIndexOf()));
 	// TODO - is m_bRev the same thing as same_sense?
-	step_face->same_sense_((const Boolean)(face->m_bRev));
+	step_face->same_sense_((const Boolean)!(face->m_bRev));
 
 	EntityAggregate *bounds = step_face->bounds_();
 
