@@ -37,10 +37,8 @@
 
 #include "tclap/CmdLine.h"
 
-/* declarations to support use of bu_getopt() system call */
-static const char optstring[] = "h?";
-static const char progname[] = "dsp_add";
-static const char usage[] = "Usage: %s dsp_1 dsp_2 > dsp_3\n";
+/* declarations to support use of TCLAP arg parsing */
+static const char usage[] = "Usage: dsp_add dsp_1 dsp_2 > dsp_3\n";
 
 /* purpose: combine two dsp files
  *
@@ -54,47 +52,12 @@ static const char usage[] = "Usage: %s dsp_1 dsp_2 > dsp_3\n";
  *
  * see_also: dsp(5) asc2dsp(1) cv(1)
  *
- * opt: -h brief help
- *
- * opt: -? brief help
- *
  */
 
 #define ADD_STYLE_INT 0
 #define ADD_STYLE_FLOAT 1
 
 static int style = ADD_STYLE_INT;
-
-/*
- * tell user how to invoke this program, then exit
- */
-static void
-print_usage(const char *s)
-{
-    if (!BU_STR_EMPTY(s)) (void)fputs(s, stderr);
-
-    bu_exit(EXIT_FAILURE, usage, progname);
-}
-
-
-/*
- * Parse command line flags
- */
-static int
-parse_args(int ac, char *av[])
-{
-    int c;
-
-    /* get all the option flags from the command line */
-    while ((c = bu_getopt(ac, av, optstring)) != -1)
-	switch (c) {
-	    default:
-                print_usage("");
-	}
-
-    return bu_optind;
-}
-
 
 static void
 swap_bytes(unsigned short *buf, unsigned long count)
@@ -168,15 +131,12 @@ add_int(unsigned short *buf1, unsigned short *buf2, unsigned long count)
 
 }
 
+using namespace std;
 
-/*
- * Call parse_args to handle command line arguments first, then
- * process input.
- */
 int
 main(int ac, char *av[])
 {
-    int next_arg;
+  /*  int next_arg; *//* <= not needed */
     FILE *in1, *in2;
     unsigned short *buf1, *buf2;
     size_t count;
@@ -185,19 +145,111 @@ main(int ac, char *av[])
     struct stat sb;
     size_t ret;
 
+    try {
+
+      // form the command line
+      //
+      // note help (-h and --help) and version (-v and --version) are
+      // automatic
+      TCLAP::CmdLine cmd(usage, ' ',
+                         "[BRL_CAD_VERSION]"); // help and version are automatic
+/*
+      // we also want the '-?' option (note empty second arg for no
+      // long option), last arg means option not required
+      TCLAP::SwitchArg h_arg("?",    // short option char
+                             "help",     // long option name, if any
+                             "Displays usage information and exits.",  // short description string
+                             cmd,    // add to 'cmd' object
+                             false); // default value
+*/
+      // need two file names
+      TCLAP::UnlabeledValueArg<string> dsp1_arg("<dsp_file1>", // name of object
+                                                "first dsp input file name", // description
+                                                true,      // arg is required
+                                                "",        // default value
+                                                "string",  // type of arg value
+                                                cmd);      // add to cmd object
+
+      // need two file names
+      TCLAP::UnlabeledValueArg<string> dsp2_arg("<dsp_file2>", // name of object
+                                                "second dsp input file name", // description
+                                                true,      // arg is required
+                                                "",        // default value
+                                                "string",  // type of arg value
+                                                cmd);      // add to cmd object
+
+      // parse the args
+      cmd.parse(ac, av);
+
+      // Get the value parsed by each arg.
+      //bool has_h = h_arg.getValue();
+      const char *dsp1_fname = dsp1_arg.getValue().c_str();
+      const char *dsp2_fname = dsp2_arg.getValue().c_str();
+
+      // take appropriate action
+      //if (has_h) {
+      //bu_exit(1, usage);
+      //}
+
+      // open files
+      in1 = fopen(dsp1_fname, "r");
+      if (!in1) {
+	perror(dsp1_fname);
+	return EXIT_FAILURE;
+      }
+
+      if (fstat(fileno(in1), &sb)) {
+        perror(dsp1_fname);
+	fclose(in1);
+	return EXIT_FAILURE;
+      }
+
+      count = sb.st_size;
+      buf1 = (unsigned short *)bu_malloc((size_t)sb.st_size, "buf1");
+
+      in2 = fopen(dsp2_fname, "r");
+      if (!in2) {
+	perror(dsp2_fname);
+	fclose(in1);
+	return EXIT_FAILURE;
+      }
+
+      if (fstat(fileno(in2), &sb)) {
+	perror(dsp2_fname);
+	fclose(in1);
+	fclose(in2);
+	return EXIT_FAILURE;
+      }
+
+      if ((size_t)sb.st_size != count) {
+	fclose(in1);
+	fclose(in2);
+	bu_exit(EXIT_FAILURE, "**** ERROR **** file size mis-match\n");
+      }
+
+    } catch (TCLAP::ArgException &e) { // catch any exceptions
+
+      cerr << "error: " << e.error() << " for arg " << e.argId() << endl;
+
+    }
+
     if (ac < 2)
-	print_usage("");
+      bu_exit(1, usage);
 
     if (isatty(fileno(stdout)))
-	print_usage("Must redirect standard output\n");
+      bu_exit(1, "Must redirect standard output\n");
 
+    /*
     next_arg = parse_args(ac, av);
 
     if (next_arg >= ac)
 	print_usage("No files specified\n");
 
-    /* Open the files */
+    */
 
+    /* Open the files */
+    /* see try block above */
+    /*
     in1 = fopen(av[next_arg], "r");
     if (!in1) {
 	perror(av[next_arg]);
@@ -234,6 +286,7 @@ main(int ac, char *av[])
 	fclose(in2);
 	bu_exit(EXIT_FAILURE, "**** ERROR **** file size mis-match\n");
     }
+    */
 
     buf2 = (unsigned short *)bu_malloc((size_t)sb.st_size, "buf2");
 
