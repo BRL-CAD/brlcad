@@ -248,8 +248,16 @@ BRLCAD_StdOutput::_shortUsage(CmdLineInterface& _cmd,
 
   // then the rest
   for (ArgListIterator it = argList.begin(); it != argList.end(); it++)
-    if (!xorHandler.contains((*it)))
+    if (!xorHandler.contains((*it))) {
+
+      // hack: skip two args we don't currently use
+      const string& id((*it)->longID());
+      if (id.find("version") != string::npos
+          || id.find("ignore_rest") !=  string::npos)
+        continue;
+
       s += " " + (*it)->shortID();
+    }
 
   // if the program name is too long, then adjust the second line offset
   int secondLineOffset = static_cast<int>(progName.length()) + 2;
@@ -270,15 +278,14 @@ BRLCAD_StdOutput::_longUsage(CmdLineInterface& _cmd,
   std::vector< std::vector<Arg*> > xorList = xorHandler.getXorList();
 
   // first the xor
-  for ( int i = 0; static_cast<unsigned int>(i) < xorList.size(); i++ ) {
-    for ( ArgVectorIterator it = xorList[i].begin();
+  for (int i = 0; static_cast<unsigned int>(i) < xorList.size(); i++) {
+    for (ArgVectorIterator it = xorList[i].begin();
           it != xorList[i].end();
-          it++)
-    {
+          it++) {
       spacePrint(os, (*it)->longID(), 75, 3, 3);
       spacePrint(os, (*it)->getDescription(), 75, 5, 0);
 
-      if ( it+1 != xorList[i].end() )
+      if (it+1 != xorList[i].end())
         spacePrint(os, "-- OR --", 75, 9, 0);
     }
     os << std::endl << std::endl;
@@ -287,6 +294,13 @@ BRLCAD_StdOutput::_longUsage(CmdLineInterface& _cmd,
   // then the rest
   for (ArgListIterator it = argList.begin(); it != argList.end(); it++) {
     if (!xorHandler.contains((*it))) {
+
+      // hack: skip two args we don't currently use
+      const string& id((*it)->longID());
+      if (id.find("version") != string::npos
+          || id.find("ignore_rest") !=  string::npos)
+        continue;
+
       spacePrint(os, (*it)->longID(), 75, 3, 3);
       spacePrint(os, (*it)->getDescription(), 75, 5, 0);
       os << std::endl;
