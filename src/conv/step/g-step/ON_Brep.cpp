@@ -118,6 +118,7 @@ ON_NurbsCurveCV_to_EntityAggregate(ON_NurbsCurve *incrv, SdaiB_spline_curve *ste
     }
 }
 
+//TODO - multiplicity is coming out wrong - need to figure out how to get it right!!
 void
 ON_RationalNurbsCurveCV_to_Aggregates(ON_NurbsCurve *incrv, SdaiRational_b_spline_curve *step_crv, Exporter_Info_AP203 *info) {
     EntityAggregate *control_pnts = step_crv->control_points_list_();
@@ -125,6 +126,7 @@ ON_RationalNurbsCurveCV_to_Aggregates(ON_NurbsCurve *incrv, SdaiRational_b_splin
     ON_4dPoint cv_pnt;
     ON_3dPoint cv_pnt3d;
     for (int i = 0; i < incrv->CVCount(); i++) {
+	double w = incrv->Weight(i);
 	SdaiCartesian_point *step_cartesian = (SdaiCartesian_point *)info->registry->ObjCreate("CARTESIAN_POINT");
 	step_cartesian->name_("''");
 	info->cartesian_pnts.push_back((STEPentity *)step_cartesian);
@@ -132,7 +134,7 @@ ON_RationalNurbsCurveCV_to_Aggregates(ON_NurbsCurve *incrv, SdaiRational_b_splin
 	std::cout << "4d point: " << cv_pnt.x << "," << cv_pnt.y << "," << cv_pnt.z << "," << incrv->Weight(i) << "\n";
 	incrv->GetCV(i, cv_pnt3d);
 	std::cout << "3d point: " << cv_pnt3d.x << "," << cv_pnt3d.y << "," << cv_pnt3d.z << "\n";
-	XYZ_to_Cartesian_point(cv_pnt.x, cv_pnt.y, cv_pnt.z, step_cartesian);
+	XYZ_to_Cartesian_point(cv_pnt.x/w, cv_pnt.y/w, cv_pnt.z/w, step_cartesian);
 	control_pnts->AddNode(new EntityNode((SDAI_Application_instance *)step_cartesian));
 	RealNode *wnode = new RealNode();
 	//wnode->value = cv_pnt.w;
