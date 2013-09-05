@@ -491,9 +491,6 @@ main(int ac, char *av[])
 
     }
 
-    if (ac < 2)
-      bu_exit(1, usage);
-
     if (isatty(fileno(stdout)))
       bu_exit(1, "Must redirect standard output\n");
 
