@@ -252,6 +252,13 @@ BRLCAD_StdOutput::_shortUsage(CmdLineInterface& _cmd,
 
       // hack: skip two args we don't currently use
       const string& id((*it)->longID());
+
+      /*
+      // debug
+      const string& id2((*it)->shortID());
+      printf("DEBUG: short ID => '%s'; long ID => '%s'\n", id2.c_str(), id.c_str());
+      */
+
       if (id.find("version") != string::npos
           || id.find("ignore_rest") !=  string::npos)
         continue;
@@ -405,16 +412,14 @@ main(int ac, char *av[])
       cmd.setOutput(&brlstdout);
       // proceed normally ...
 
-
-/*
-      // we also want the '-?' option (note empty second arg for no
+      // we also want the '-?' option (long help, if available, help otherwise
       // long option), last arg means option not required
       TCLAP::SwitchArg h_arg("?",    // short option char
-                             "help",     // long option name, if any
-                             "Displays usage information and exits.",  // short description string
+                             "short-help", // long option name, if any
+                             "Same as '-h' or '--help'.",  // short description string
                              cmd,    // add to 'cmd' object
                              false); // default value
-*/
+
       // need two file names
       TCLAP::UnlabeledValueArg<string> dsp1_arg("dsp_file1", // name of object
                                                 "first dsp input file name", // description
@@ -424,7 +429,7 @@ main(int ac, char *av[])
                                                 cmd);      // add to cmd object
 
       // need two file names
-      TCLAP::UnlabeledValueArg<string> dsp2_arg("<dsp_file2>", // name of object
+      TCLAP::UnlabeledValueArg<string> dsp2_arg("dsp_file2", // name of object
                                                 "second dsp input file name", // description
                                                 true,      // arg is required
                                                 "",        // default value
@@ -435,14 +440,14 @@ main(int ac, char *av[])
       cmd.parse(ac, av);
 
       // Get the value parsed by each arg.
-      //bool has_h = h_arg.getValue();
+      bool has_h = h_arg.getValue();
       const char *dsp1_fname = dsp1_arg.getValue().c_str();
       const char *dsp2_fname = dsp2_arg.getValue().c_str();
 
       // take appropriate action
-      //if (has_h) {
-      //bu_exit(1, usage);
-      //}
+      if (has_h) {
+        bu_exit(1, usage);
+      }
 
       // open files
       in1 = fopen(dsp1_fname, "r");
