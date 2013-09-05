@@ -169,6 +169,8 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 		} else {
 		    VSET(vnormal, -fg->N[0], -fg->N[1], -fg->N[2]);
 		}
+		if (fu->f_p->flip)
+		    VSET(vnormal, -vnormal[0], -vnormal[1], -vnormal[2]);
 		VSUB2(uv1, max_pt, center);
 		VCROSS(vtmp, uv1, vnormal);
 		VADD2(uv1, uv1, vtmp);
@@ -191,8 +193,6 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 
 		// Now that we have the surface, define the face
 		ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
-		if (fu->f_p->flip)
-		    (*b)->FlipFace(face);
 
 		// With the surface and the face defined, make
 		// trimming loops and create faces.  To generate UV
