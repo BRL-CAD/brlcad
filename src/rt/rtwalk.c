@@ -100,8 +100,8 @@ get_args(int argc, const char *argv[])
     while ( (c=bu_getopt( argc, (char * const *)argv, "x:X:n:v:" )) != -1 )  {
 	switch ( c )  {
 	    case 'x':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
-		fprintf(stderr, "librt rt_g.debug=x%x\n", rt_g.debug);
+		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.debug );
+		fprintf(stderr, "librt RTG.debug=x%x\n", RTG.debug);
 		break;
 	    case 'X':
 		sscanf( bu_optarg, "%x", (unsigned int *)&rdebug );

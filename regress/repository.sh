@@ -60,7 +60,8 @@ INCFILES="`find ${TOPSRC}/include -type f \( -name \*.c -o -name \*.cpp -o -name
 
 
 ###
-# TEST: make sure nobody includes private headers like bio.h in a public header
+# TEST: make sure nobody includes private headers like bio.h in a
+# public header
 echo "running public header private header checks..."
 
 for i in bio.h bin.h bselect.h ; do
@@ -80,26 +81,45 @@ done
 
 
 ###
-# TEST: make sure common.h is always included first
+# TEST: make sure common.h is always included first when included
 echo "running common.h inclusion order check..."
 
-COMMONSRCS="`grep -n -I -e '#[[:space:]]*include' $SRCFILES /dev/null | grep '\"common.h\"' | sed 's/:.*//g'`"
-COMMONINCS="`grep -n -I -e '#[[:space:]]*include' $INCFILES /dev/null | grep '\"common.h\"' | sed 's/:.*//g'`"
+# limit our search to files containing common.h or system headers for
+# small performance savings.
+FILES="`grep -I -e '#[[:space:]]*include' $SRCFILES $INCFILES | grep -E 'common.h|<' | sed 's/:.*//g' | sort | uniq`"
+
+EXEMPT="bin.h bio.h config_win.h pstdint.h uce-dirent.h ttcp.c"
 
 FOUND=
-for file in $COMMONSRCS $COMMONINCS ; do
-    if test -f "`echo $file | sed 's/\.c$/\.l/g'`" ; then
+for file in $FILES ; do
+    # some files are exempt
+    basefile="`basename $file`"
+    if test ! "x`echo $EXEMPT | grep $basefile`" = "x" ; then
 	continue
     fi
-    MATCH="`grep '#[[:space:]]*include' $file /dev/null | head -n 1 | grep -v '\"common.h\"' | sed 's/:.*//g'`"
-    if test ! "x$MATCH" = "x" ; then
-	if test "x`head $file | grep BRL-CAD`" = "x" ; then
-	    # not a BRL-CAD file (or it's lexer-generated) , so skip it
+
+    # test files that include common.h
+    if test ! "x`grep -I -e '#[[:space:]]*include' $file | grep '\"common.h\"'`" = "x" ; then
+	# common.h is first?
+	MATCH="`grep -n -I -e '#[[:space:]]*include' $file /dev/null | head -n 1 | grep -v '\"common.h\"'`"
+	if test ! "x$MATCH" = "x" ; then
+	    echo "ERROR: common.h include needs to be moved before: $MATCH"
+	    FOUND=1
 	    continue
 	fi
-	echo "ERROR: Header (common.h) out of order: $MATCH"
-	FOUND=1
     fi
+
+    # test files that include system headers
+    if test ! "x`grep -I -e '#[[:space:]]*include' $file | grep '<'`" = "x" ; then
+	# non-system header is first?
+	MATCH="`grep -n -I -e '#[[:space:]]*include' $file /dev/null | head -n 1 | grep -v '\"'`"
+	if test ! "x$MATCH" = "x" ; then
+	    echo "ERROR: common.h needs to be included before: $MATCH"
+	    FOUND=1
+	    continue
+	fi
+    fi
+
 done
 if test "x$FOUND" = "x" ; then
     echo "-> common.h check succeeded"
@@ -120,7 +140,7 @@ echo "running API usage check"
 # 89 - calloc
 # 21 - realloc
 FOUND=
-for func in fgets abort dirname getopt strcat strncat strlcat strcpy strncpy strlcpy strcmp strcasecmp stricmp strncmp strncasecmp stricmp unlink rmdir remove ; do
+for func in fgets abort dirname getopt strcat strncat strlcat strcpy strncpy strlcpy strcmp strcasecmp stricmp strncmp strncasecmp unlink rmdir remove ; do
     echo "Searching for $func ..."
     MATCH="`grep -n -e [^a-zA-Z0-9_]$func\( $INCFILES $SRCFILES /dev/null`"
 

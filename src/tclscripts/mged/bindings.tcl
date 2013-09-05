@@ -109,6 +109,7 @@ if ![info exists mged_default(dm_key_bindings)] {
 
 proc default_key_bindings { w } {
     bind $w a "winset $w; adc; break"
+    bind $w c "open_cmd_win id_0"
     bind $w e "winset $w; rset ax edit_draw !;\
 	    update_gui $w edit_draw \[rset ax edit_draw\]; break"
     bind $w m "winset $w; rset ax model_draw !;\

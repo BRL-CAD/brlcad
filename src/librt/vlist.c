@@ -69,7 +69,7 @@ bn_vlblock_init(struct bu_list *free_vlist_hd, /**< where to get/put free vlists
 struct bn_vlblock *
 rt_vlblock_init(void)
 {
-    return bn_vlblock_init(&rt_g.rtg_vlfree, 32);
+    return bn_vlblock_init(&RTG.rtg_vlfree, 32);
 }
 
 
@@ -215,7 +215,7 @@ rt_vlist_copy(struct bu_list *dest, const struct bu_list *src)
 	register int *cmd = vp->cmd;
 	register point_t *pt = vp->pt;
 	for (i = 0; i < nused; i++, cmd++, pt++) {
-	    BN_ADD_VLIST(&rt_g.rtg_vlfree, dest, *pt, *cmd);
+	    BN_ADD_VLIST(&RTG.rtg_vlfree, dest, *pt, *cmd);
 	}
     }
 }
@@ -242,7 +242,7 @@ bn_vlist_cleanup(struct bu_list *hd)
 void
 rt_vlist_cleanup(void)
 {
-    bn_vlist_cleanup(&rt_g.rtg_vlfree);
+    bn_vlist_cleanup(&RTG.rtg_vlfree);
 }
 
 
@@ -252,49 +252,49 @@ bn_vlist_rpp(struct bu_list *hd, const point_t minn, const point_t maxx)
     point_t p;
 
     VSET(p, minn[X], minn[Y], minn[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_MOVE)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_MOVE)
 
 	/* first side */
 	VSET(p, minn[X], maxx[Y], minn[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 	VSET(p, minn[X], maxx[Y], maxx[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 	VSET(p, minn[X], minn[Y], maxx[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 	VSET(p, minn[X], minn[Y], minn[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 
 	/* across */
 	VSET(p, maxx[X], minn[Y], minn[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 
 	/* second side */
 	VSET(p, maxx[X], maxx[Y], minn[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 	VSET(p, maxx[X], maxx[Y], maxx[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 	VSET(p, maxx[X], minn[Y], maxx[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 	VSET(p, maxx[X], minn[Y], minn[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 
 	/* front edge */
 	VSET(p, minn[X], maxx[Y], minn[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_MOVE)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_MOVE)
 	VSET(p, maxx[X], maxx[Y], minn[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 
 	/* bottom back */
 	VSET(p, minn[X], minn[Y], maxx[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_MOVE)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_MOVE)
 	VSET(p, maxx[X], minn[Y], maxx[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 
 	/* top back */
 	VSET(p, minn[X], maxx[Y], maxx[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_MOVE)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_MOVE)
 	VSET(p, maxx[X], maxx[Y], maxx[Z]);
-    BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
+    BN_ADD_VLIST(&RTG.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW)
 	}
 
 
@@ -353,7 +353,7 @@ rt_vlist_export(struct bu_vls *vls, struct bu_list *hp, const char *name)
 
 	for (i = 0; i < nused; i++) {
 	    VMOVE(point, pt[i]); /* convert fastf_t to double */
-	    htond(bp, (unsigned char *)point, ELEMENTS_PER_VECT);
+	    bu_cv_htond(bp, (unsigned char *)point, ELEMENTS_PER_VECT);
 	    bp += ELEMENTS_PER_VECT*SIZEOF_NETWORK_DOUBLE;
 	}
     }
@@ -387,9 +387,9 @@ rt_vlist_import(struct bu_list *hp, struct bu_vls *namevls, const unsigned char 
 	int cmd;
 
 	cmd = *bp++;
-	ntohd((unsigned char *)point, pp, ELEMENTS_PER_POINT);
+	bu_cv_ntohd((unsigned char *)point, pp, ELEMENTS_PER_POINT);
 	pp += ELEMENTS_PER_POINT*SIZEOF_NETWORK_DOUBLE;
-	BN_ADD_VLIST(&rt_g.rtg_vlfree, hp, point, cmd);
+	BN_ADD_VLIST(&RTG.rtg_vlfree, hp, point, cmd);
     }
 }
 
@@ -565,7 +565,7 @@ rt_uplot_get_args(FILE *fp, const struct uplot *up, char *carg, fastf_t *arg)
 		ret = fread(inbuf, SIZEOF_NETWORK_DOUBLE, 1, fp);
 		if (ret != 1)
 		    bu_log("WARNING: uplot read failure\n");
-		ntohd((unsigned char *)&scan, (unsigned char *)inbuf, 1);
+		bu_cv_ntohd((unsigned char *)&scan, (unsigned char *)inbuf, 1);
 		arg[i] = scan; /* convert double to fastf_t */
 		break;
 	    }

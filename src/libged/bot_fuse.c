@@ -298,7 +298,7 @@ ged_bot_fuse(struct ged *gedp, int argc, const char **argv)
     RT_DB_INTERNAL_INIT(&intern2);
     intern2.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern2.idb_type = ID_BOT;
-    intern2.idb_meth = &rt_functab[ID_BOT];
+    intern2.idb_meth = &OBJ[ID_BOT];
     intern2.idb_ptr = (genptr_t)bot;
 
     GED_DB_DIRADD(gedp, new_dp, argv[i], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern2.idb_type, GED_ERROR);

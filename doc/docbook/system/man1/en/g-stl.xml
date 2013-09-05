@@ -12,20 +12,27 @@
 
 <refnamediv>
 <refname>g-stl</refname>
-<refpurpose>Stereolithography Translator (BRL-CAD to STL)</refpurpose>
+<refpurpose> Stereolithography Translator (BRL-CAD to STL)</refpurpose>
 </refnamediv>
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>g-stl</command><arg choice='opt'>-8 </arg>
-    <arg choice='opt'>-xX <replaceable>lvl</replaceable></arg>
+  <command>g-stl</command>
+    <arg choice='opt'>-o <replaceable>output_file</replaceable></arg>
+    <arg choice='opt'>-m <replaceable>output_directory</replaceable></arg>
+    <arg choice='opt'>-b</arg>
+    <arg choice='opt'>-P <replaceable>num_cpus</replaceable></arg>
+    <arg choice='opt'>-i</arg>
+    <arg choice='opt'>-8</arg>
     <arg choice='opt'>-D <replaceable>calculation_tolerance</replaceable></arg>
-    <arg choice='opt'>-a <replaceable>abs_tol</replaceable></arg>
-    <arg choice='opt'>-r <replaceable>rel_tol</replaceable></arg>
-    <arg choice='opt'>-n <replaceable>norm_tol</replaceable></arg>
-    <group choice='opt'><arg choice='plain'>-o <replaceable>STL_file</replaceable></arg><arg choice='plain'>-m <replaceable>directory_name</replaceable></arg></group>
+    <arg choice='opt'>-a <replaceable>absolute_tol</replaceable></arg>
+    <arg choice='opt'>-r <replaceable>relative_tol</replaceable></arg>
+    <arg choice='opt'>-n <replaceable>normal_tol</replaceable></arg>
+    <arg choice='opt'>-xX <replaceable>level</replaceable></arg>
+    <arg choice='opt'>-v</arg>
+
     <arg choice='plain'><replaceable>database.g</replaceable></arg>
-    <arg choice='plain'><replaceable>object(s)</replaceable></arg>
+    <arg choice='plain' rep='repeat'><replaceable>object(s)</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -38,56 +45,101 @@ from a BRL-CAD
 <emphasis remap='I'>database.g</emphasis>
 file to the
 <emphasis remap='I'>stereolithography</emphasis>
-file format.
-The
-<option>-x</option>
-option specifies an RT debug flag and the
-<option>-X</option>
-option specifies an NMG debug flag. The
-<option>-a</option>
-,
-<option>-r</option>
-, and
-<option>-n</option>
-options specify tessellation tolerances.
-The
-<option>-D</option>
-option specifies a calculational distance tolerance (mm). Any two vertices
-that are less than this distance apart will be treated as the same vertex.
-The
-<option>-v</option>
-option requests verbose output.
-The
-<option>-i</option>
-option requests the output file units to be inches (the default is mm).
-The
-<option>-b</option>
-option requests binary output (the default in ASCII).
-In the case of ASCII output, the region name is specified
-on the "solid" line of the STL file. In the case of binary output, all the regions are output
-as a single STL part.
-The
-<option>-8</option>
-option tells the facetizer to use the marching cubes algorithm.
-The
-<option>-o</option>
-option specifies the name of the file to receive the output
-(stdout is the default).
-The
-<option>-m</option>
-option specifies the name of a directory where the output files will be placed.
-In this case each region converted is written to a separate file
-and placed in this directory. The file names are constructed from the full path
-names of each region (path from the specified object to the region). Any "/" characters
-in the path name are replaced by "@" characters, and "." and white space are replaced by
-"_" characters. If the
-<option>-m</option>
-option is not specified, then all the
-regions are written to the same file. The
-<option>-o</option>
-and
-<option>-m</option>
-options are mutually exclusive.</para>
+file format.</para>
+
+
+<para>The following options are recognized.</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-o PATH</option></term>
+  <listitem>
+<para>Specify output file name (default is stdout).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-m DIR</option></term>
+  <listitem>
+<para>Specify a directory for output files.
+Each region converted is written to a separate file. File names are constructed from the
+full path names of each region (the path from the specified object to the region).
+Any "/" characters in the path name are replaced by "@" characters and "." and white
+space are replaced by "_" characters. If the -m option is not specified, all regions
+are written to the same file. The <option>-o</option> and <option>-m</option> options
+are mutually exclusive.
+</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-b</option></term>
+  <listitem>
+<para>Write output as a binary STL file. The default is ASCII. In the case of ASCII output,
+the region name is specified on the "solid" line of the STL file. In the case of binary
+output, all the regions are output as a single STL part.
+</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-P#</option></term>
+  <listitem>
+<para>Specify the number of CPUs to utilize.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-i</option></term>
+  <listitem>
+<para>Use inches as the output format (the default is mm).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-8</option></term>
+  <listitem>
+<para>Facetize using the marching cubes algorithm.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-D#</option></term>
+  <listitem>
+<para>Specify a calculational distance tolerance (mm). Any two vertices that are
+less than this distance apart will be treated as the same vertex.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-a#</option></term>
+  <listitem>
+<para>Specify the absolute tesselation tolerance.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-r#</option></term>
+  <listitem>
+<para>Specify the relative tesselation tolerance.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-n#</option></term>
+  <listitem>
+<para>Specify the surface-normal tesselation tolerance.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-x#</option></term>
+  <listitem>
+<para>Specify an RT debug flag.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-X#</option></term>
+  <listitem>
+<para>Specify an NMG debug flag.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-v</option></term>
+  <listitem>
+<para>Enable verbose output.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
 </refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>

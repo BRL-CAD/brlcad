@@ -66,7 +66,7 @@ rt_revolve_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_REVOLVE;
-    BU_ASSERT(&rt_functab[intern->idb_type] == ftp);
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
 
     intern->idb_meth = ftp;
     BU_ALLOC(rev, struct rt_revolve_internal);
@@ -229,7 +229,7 @@ rt_revolve_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
     }
 
     stp->st_id = ID_REVOLVE;
-    stp->st_meth = &rt_functab[ID_REVOLVE];
+    stp->st_meth = &OBJ[ID_REVOLVE];
 
     BU_GET(rev, struct revolve_specific);
     stp->st_specific = (genptr_t)rev;
@@ -1514,7 +1514,7 @@ rt_revolve_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
     /* set up the internal structure */
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_REVOLVE;
-    ip->idb_meth = &rt_functab[ID_REVOLVE];
+    ip->idb_meth = &OBJ[ID_REVOLVE];
     BU_ALLOC(ip->idb_ptr, struct rt_revolve_internal);
 
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
@@ -1543,7 +1543,7 @@ rt_revolve_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
 	    rip->skt = (struct rt_sketch_internal *)tmp_ip.idb_ptr;
     }
 
-    ntohd((unsigned char *)&vv, (unsigned char *)ep->ext_buf, ELEMENTS_PER_VECT*3 + 1);
+    bu_cv_ntohd((unsigned char *)&vv, (unsigned char *)ep->ext_buf, ELEMENTS_PER_VECT*3 + 1);
 
     /* Apply the modeling transformation */
     if (mat == NULL) mat = bn_mat_identity;
@@ -1597,7 +1597,7 @@ rt_revolve_xform(
 	bu_vls_init(&rop->sketch_name);
 	bu_vls_vlscat(&rop->sketch_name, &rip->sketch_name);
 	op->idb_ptr = (genptr_t)rop;
-	op->idb_meth = &rt_functab[ID_REVOLVE];
+	op->idb_meth = &OBJ[ID_REVOLVE];
 	op->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	op->idb_type = ID_REVOLVE;
 	if (ip->idb_avs.magic == BU_AVS_MAGIC) {
@@ -1674,7 +1674,7 @@ rt_revolve_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
     VSCALE(&vec[2*3], rip->r, local2mm);
     vec[9] = rip->ang;
 
-    htond(ptr, (unsigned char *)vec, ELEMENTS_PER_VECT*3 + 1);
+    bu_cv_htond(ptr, (unsigned char *)vec, ELEMENTS_PER_VECT*3 + 1);
     ptr += (ELEMENTS_PER_VECT*3 + 1) * SIZEOF_NETWORK_DOUBLE;
 
     bu_strlcpy((char *)ptr, bu_vls_addr(&rip->sketch_name), bu_vls_strlen(&rip->sketch_name) + 1);

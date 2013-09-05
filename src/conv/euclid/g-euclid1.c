@@ -40,12 +40,11 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 
-
-static char	usage[] = "Usage: %s [-v] [-s alarm_seconds] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] brlcad_db.g object(s)\n";
+static char	usage[] = "Usage: %s [-v] [-s alarm_seconds] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-P #_of_CPUs] brlcad_db.g object(s)\n";
 
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
 static int	verbose;
-/* static int	ncpu = 1; */		/* Number of processors */
+static int	ncpu = 1;		/* Number of processors */
 static int	face_count;		/* Count of faces output for a region id */
 static int	alarm_secs;		/* Number of seconds to allow for conversion, 0 means no limit */
 static struct db_i		*dbip;
@@ -435,7 +434,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before before bombing out.
 	 */
-	rt_g.NMG_debug = NMG_debug;/* restore mode */
+	RTG.NMG_debug = NMG_debug;/* restore mode */
 
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();
@@ -614,12 +613,12 @@ main(int argc, char **argv)
     tree_state.ts_tol = &tol;
     tree_state.ts_ttol = &ttol;
 
-    BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
+    BU_LIST_INIT( &RTG.rtg_vlfree );	/* for vlist macros */
 
     rt_init_resource( &rt_uniresource, 0, NULL );
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "a:n:r:s:vx:P:X:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "a:n:r:s:vx:P:X:h?")) != -1) {
 	switch (c) {
 	    case 's':
 		alarm_secs = atoi( bu_optarg );
@@ -639,15 +638,14 @@ main(int argc, char **argv)
 		verbose++;
 		break;
 	    case 'P':
-/*			ncpu = atoi( bu_optarg ); */
-		rt_g.debug = 1;	/* NOTE: enabling DEBUG_ALLRAYS to get core dumps */
+		ncpu = atoi(bu_optarg);
 		break;
 	    case 'x':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
+		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.debug );
 		break;
 	    case 'X':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
-		NMG_debug = rt_g.NMG_debug;
+		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug );
+		NMG_debug = RTG.NMG_debug;
 		break;
 	    default:
 		bu_exit(1, usage, argv[0]);
@@ -679,7 +677,7 @@ main(int argc, char **argv)
     tree_state.ts_ttol = &ttol;
 
     (void)db_walk_tree(dbip, argc-bu_optind, (const char **)(&argv[bu_optind]),
-		       1,			/* ncpu */
+		       ncpu,
 		       &tree_state,
 		       0,
 		       do_region_end,

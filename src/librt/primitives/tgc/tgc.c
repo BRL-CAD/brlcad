@@ -913,15 +913,21 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     }
 
     if (npts != 0 && npts != 2 && npts != 4) {
+	static int tgc_msgs = 0;
 	/* these are printed in 'mm' regardless of local units */
-#if 0
-	bu_log("tgc(%s):  %d intersects != {0, 2, 4}\n", stp->st_name, npts);
-	bu_log("\tray: pt = (%g %g %g), dir = (%g %g %g), units in mm\n", V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir));
-	for (i=0; i<npts; i++) {
-	    bu_log("\t%g", k[i]*t_scale);
+
+	if (tgc_msgs++ < 100) {
+	    bu_log("tgc(%s):  %d intersects != {0, 2, 4}\n", stp->st_name, npts);
+	    bu_log("\tray: pt = (%g %g %g), dir = (%g %g %g), units in mm\n", V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir));
+	    for (i=0; i<npts; i++) {
+		bu_log("\t%g", k[i]*t_scale);
+	    }
+	    bu_log("\n");
+	} else if (tgc_msgs == 100) {
+	    bu_log("tgc(%s):  too many grazing intersections encountered.  further reporting suppressed.\n");
+	    tgc_msgs++;
 	}
-	bu_log("\n");
-#endif
+
 	return 0;			/* No hit */
     }
 
@@ -1620,7 +1626,7 @@ rt_tgc_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_TGC;
-    ip->idb_meth = &rt_functab[ID_TGC];
+    ip->idb_meth = &OBJ[ID_TGC];
     BU_ALLOC(ip->idb_ptr, struct rt_tgc_internal);
 
     tip = (struct rt_tgc_internal *)ip->idb_ptr;
@@ -1700,14 +1706,14 @@ rt_tgc_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_TGC;
-    ip->idb_meth = &rt_functab[ID_TGC];
+    ip->idb_meth = &OBJ[ID_TGC];
     BU_ALLOC(ip->idb_ptr, struct rt_tgc_internal);
 
     tip = (struct rt_tgc_internal *)ip->idb_ptr;
     tip->magic = RT_TGC_INTERNAL_MAGIC;
 
     /* Convert from database (network) to internal (host) format */
-    ntohd((unsigned char *)vec, ep->ext_buf, ELEMENTS_PER_VECT*6);
+    bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, ELEMENTS_PER_VECT*6);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
@@ -1753,7 +1759,7 @@ rt_tgc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     VSCALE(&vec[5*ELEMENTS_PER_VECT], tip->d, local2mm);
 
     /* Convert from internal (host) to database (network) format */
-    htond(ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*6);
+    bu_cv_htond(ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*6);
 
     return 0;
 }

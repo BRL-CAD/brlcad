@@ -24,6 +24,7 @@
     <arg choice='opt'>-a <replaceable>abs_tol</replaceable></arg>
     <arg choice='opt'>-r <replaceable>rel_tol</replaceable></arg>
     <arg choice='opt'>-n <replaceable>norm_tol</replaceable></arg>
+    <arg choice='opt'>-P <replaceable>number_of_CPUs</replaceable></arg>
     <arg choice='opt'>-o <replaceable>output.obj</replaceable></arg>
     <arg choice='plain'><replaceable>database.g</replaceable></arg>
     <arg choice='plain'><replaceable>object(s)</replaceable></arg>
@@ -52,6 +53,9 @@ option specifies an NMG debug flag. The
 , and
 <option>-n</option>
 options specify tessellation tolerances.
+The
+<option>-P</option>
+option specifies the number of CPUs.
 The
 <option>-D</option>
 option specifies a calculational distance tolerance (mm). Any two vertices

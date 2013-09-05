@@ -158,14 +158,14 @@ nmg_pick_best_edge_g(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn_t
 
 	/* Dot product of 1 means colinear.  Take largest dot. */
 	if (dot_2 > dot_1) {
-	    if (rt_g.NMG_debug & DEBUG_BASIC) {
+	    if (RTG.NMG_debug & DEBUG_BASIC) {
 		bu_log("nmg_pick_best_edge_g() Make eu1 use geometry of eu2, s.d=%g, d.d=%g\n",
 		       acos(dot_2)*bn_radtodeg,
 		       acos(dot_1)*bn_radtodeg);
 	    }
 	    return eu2->g.lseg_p;
 	} else {
-	    if (rt_g.NMG_debug & DEBUG_BASIC) {
+	    if (RTG.NMG_debug & DEBUG_BASIC) {
 		bu_log("nmg_pick_best_edge_g() Make eu2 use geometry of eu1, s.d=%g, d.d=%g\n",
 		       acos(dot_2)*bn_radtodeg,
 		       acos(dot_1)*bn_radtodeg);
@@ -258,7 +258,7 @@ nmg_radial_join_eu(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn_tol
      */
     nmg_eu_2vecs_perp(xvec, yvec, zvec, original_eu1, tol);
 
-    if (rt_g.NMG_debug & DEBUG_MESH_EU) {
+    if (RTG.NMG_debug & DEBUG_MESH_EU) {
 	bu_log("nmg_radial_join_eu(eu1=x%x, eu2=x%x) e1=x%x, e2=x%x\n",
 	       eu1, eu2,
 	       eu1->e_p, eu2->e_p);
@@ -327,7 +327,7 @@ nmg_radial_join_eu(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn_tol
 	    abs2 = nmg_measure_fu_angle(eu2, xvec, yvec, zvec);
 	    absr = nmg_measure_fu_angle(eur, xvec, yvec, zvec);
 
-	    if (rt_g.NMG_debug & DEBUG_MESH_EU) {
+	    if (RTG.NMG_debug & DEBUG_MESH_EU) {
 		bu_log("  abs1=%g, abs2=%g, absr=%g\n",
 		       abs1*bn_radtodeg,
 		       abs2*bn_radtodeg,
@@ -338,7 +338,7 @@ nmg_radial_join_eu(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn_tol
 	    if (NEAR_EQUAL(abs1, absr, 1.0e-8)) {
 		if (fu1->f_p->g.plane_p == fur->f_p->g.plane_p) {
 		    /* abs1 == absr, faces are fused, don't insert here. */
-		    if (rt_g.NMG_debug & DEBUG_MESH_EU) {
+		    if (RTG.NMG_debug & DEBUG_MESH_EU) {
 			bu_log("fu1 and fur share face geometry x%x (flip1=%d, flip2=%d), skip\n",
 			       fu1->f_p->g.plane_p, fu1->f_p->flip, fur->f_p->flip);
 		    }
@@ -357,11 +357,11 @@ nmg_radial_join_eu(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn_tol
 		PLPRINT("  fu2", fu2->f_p->g.plane_p->N);
 		PLPRINT("  fur", fur->f_p->g.plane_p->N);
 		{
-		    int debug = rt_g.NMG_debug;
+		    int debug = RTG.NMG_debug;
 
 		    if (nmg_two_face_fuse(fu1->f_p, fur->f_p, tol) == 0)
 			bu_bomb("faces didn't fuse?\n");
-		    rt_g.NMG_debug = debug;
+		    RTG.NMG_debug = debug;
 		}
 		bu_log("  nmg_radial_join_eu() skipping this eu\n");
 		goto cont;
@@ -374,7 +374,7 @@ nmg_radial_join_eu(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn_tol
 	     * Special handling if abs1==abs2 or abs2==absr.
 	     */
 	    code = nmg_is_angle_in_wedge(abs1, absr, abs2);
-	    if (rt_g.NMG_debug & DEBUG_MESH_EU)
+	    if (RTG.NMG_debug & DEBUG_MESH_EU)
 		bu_log("    code=%d %s\n", code, (code!=0)?"INSERT_HERE":"skip");
 	    if (code > 0) break;
 	    if (code == -1) {
@@ -429,7 +429,7 @@ nmg_radial_join_eu(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn_tol
 	if (eu2->vu_p->v_p == eus->vu_p->v_p)
 	    eu2 = eu2->eumate_p;
 
-	if (rt_g.NMG_debug & DEBUG_MESH_EU) {
+	if (RTG.NMG_debug & DEBUG_MESH_EU) {
 	    bu_log("  Inserting.  code=%d\n", code);
 	    bu_log("joining eu1=x%x eu2=x%x with abs1=%g, absr=%g\n",
 		   eu1, eu2,
@@ -444,7 +444,7 @@ nmg_radial_join_eu(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn_tol
 	 */
 	nmg_je(eu1, eu2);
 
-	if (rt_g.NMG_debug & DEBUG_MESH_EU) {
+	if (RTG.NMG_debug & DEBUG_MESH_EU) {
 	    bu_log("After nmg_je(), faces around original_eu1 are:\n");
 	    nmg_pr_fu_around_eu_vecs(original_eu1, xvec, yvec, zvec, tol);
 	}
@@ -470,7 +470,7 @@ nmg_radial_join_eu(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn_tol
 	if (eu1 == original_eu1) break;
     }
 
-    if (rt_g.NMG_debug & DEBUG_MESH_EU) bu_log("nmg_radial_join_eu: END\n");
+    if (RTG.NMG_debug & DEBUG_MESH_EU) bu_log("nmg_radial_join_eu: END\n");
 #endif
 }
 
@@ -508,7 +508,7 @@ nmg_mesh_two_faces(register struct faceuse *fu1, register struct faceuse *fu2, c
 	    v1a = eu1->vu_p->v_p;
 	    v1b = eu1->eumate_p->vu_p->v_p;
 	    e1 = eu1->e_p;
-	    if (rt_g.NMG_debug & DEBUG_MESH) {
+	    if (RTG.NMG_debug & DEBUG_MESH) {
 		pt1 = v1a->vg_p->coord;
 		pt2 = v1b->vg_p->coord;
 		bu_log("ref_e=%8x v:%8x--%8x (%g, %g, %g)->(%g, %g, %g)\n",
@@ -523,7 +523,7 @@ nmg_mesh_two_faces(register struct faceuse *fu1, register struct faceuse *fu2, c
 		    continue;
 		/* Visit all the edgeuses in loopuse2 */
 		for (BU_LIST_FOR(eu2, edgeuse, &lu2->down_hd)) {
-		    if (rt_g.NMG_debug & DEBUG_MESH) {
+		    if (RTG.NMG_debug & DEBUG_MESH) {
 			pt1 = eu2->vu_p->v_p->vg_p->coord;
 			pt2 = eu2->eumate_p->vu_p->v_p->vg_p->coord;
 			bu_log("\te:%8x v:%8x--%8x (%g, %g, %g)->(%g, %g, %g)\n",
@@ -568,24 +568,24 @@ nmg_mesh_faces(struct faceuse *fu1, struct faceuse *fu2, const struct bn_tol *to
     NMG_CK_FACEUSE(fu2);
     BN_CK_TOL(tol);
 
-    if (rt_g.NMG_debug & DEBUG_MESH_EU && rt_g.NMG_debug & DEBUG_PLOTEM) {
-	nmg_pl_2fu("Before_mesh%d.pl", fu1, fu2, 1);
+    if (RTG.NMG_debug & DEBUG_MESH_EU && RTG.NMG_debug & DEBUG_PLOTEM) {
+	nmg_pl_2fu("Before_mesh%d.plot3", fu1, fu2, 1);
     }
 
-    if (rt_g.NMG_debug & DEBUG_MESH_EU)
+    if (RTG.NMG_debug & DEBUG_MESH_EU)
 	bu_log("meshing self (fu1 %8x)\n", fu1);
     count += nmg_mesh_two_faces(fu1, fu1, tol);
 
-    if (rt_g.NMG_debug & DEBUG_MESH_EU)
+    if (RTG.NMG_debug & DEBUG_MESH_EU)
 	bu_log("meshing self (fu2 %8x)\n", fu2);
     count += nmg_mesh_two_faces(fu2, fu2, tol);
 
-    if (rt_g.NMG_debug & DEBUG_MESH_EU)
+    if (RTG.NMG_debug & DEBUG_MESH_EU)
 	bu_log("meshing to other (fu1:%8x fu2:%8x)\n", fu1, fu2);
     count += nmg_mesh_two_faces(fu1, fu2, tol);
 
-    if (rt_g.NMG_debug & DEBUG_MESH_EU && rt_g.NMG_debug & DEBUG_PLOTEM) {
-	nmg_pl_2fu("After_mesh%d.pl", fu1, fu2, 1);
+    if (RTG.NMG_debug & DEBUG_MESH_EU && RTG.NMG_debug & DEBUG_PLOTEM) {
+	nmg_pl_2fu("After_mesh%d.plot3", fu1, fu2, 1);
     }
 }
 

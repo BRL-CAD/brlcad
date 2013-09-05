@@ -37,51 +37,66 @@
 
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "h?";
-char *progname = "(noname)";
+static const char optstring[] = "h?";
+static const char progname[] = "dsp_add";
+static const char usage[] = "Usage: %s dsp_1 dsp_2 > dsp_3\n";
+
+/* purpose: combine two dsp files
+ *
+ * description: Combines two dsp files (which are binary files
+ * comprised of network unsigned shorts).  The two files must be of
+ * identical size.  The result, written to stdout, is a file where
+ * each cell's height is the total of the heights of the same cell
+ * in the input files.
+ *
+ * See the BRL-CAD wiki for a tutorial on using dsp's.
+ *
+ * see_also: dsp(5) asc2dsp(1) cv(1)
+ *
+ * opt: -h brief help
+ *
+ * opt: -? brief help
+ *
+ */
 
 #define ADD_STYLE_INT 0
 #define ADD_STYLE_FLOAT 1
-int style = ADD_STYLE_INT;
+
+static int style = ADD_STYLE_INT;
 
 /*
- * U S A G E --- tell user how to invoke this program, then exit
+ * tell user how to invoke this program, then exit
  */
-void usage(char *s)
+static void
+print_usage(char *s)
 {
     if (s) (void)fputs(s, stderr);
 
-    (void) fprintf(stderr, "Usage: %s dsp_1 dsp_2 > dsp_3\n",
-		   progname);
+    bu_log(usage, progname);
     bu_exit (1, NULL);
 }
 
 
 /*
- * P A R S E _ A R G S --- Parse through command line flags
+ * Parse command line flags
  */
-int parse_args(int ac, char *av[])
+static int
+parse_args(int ac, char *av[])
 {
     int c;
-    char *strrchr(const char *, int);
-
-    if (! (progname=strrchr(*av, '/')))
-	progname = *av;
-    else
-	++progname;
 
     /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac, av, options)) != -1)
+    while ((c = bu_getopt(ac, av, optstring)) != -1)
 	switch (c) {
 	    default:
-		usage("");
+		print_usage("");
 	}
 
     return bu_optind;
 }
 
 
-void
+static void
 swap_bytes(unsigned short *buf, unsigned long count)
 {
     unsigned short *p;
@@ -92,12 +107,9 @@ swap_bytes(unsigned short *buf, unsigned long count)
 
 
 /*
- * A D D _ F L O A T
- *
  * Perform floating point addition and re-normalization of the data.
- *
  */
-void
+static void
 add_float(unsigned short *buf1, unsigned short *buf2, unsigned long count)
 {
     unsigned short *p, *q, *e;
@@ -111,7 +123,7 @@ add_float(unsigned short *buf1, unsigned short *buf2, unsigned long count)
     e = &buf1[count];
 
     /* add everything, keeping track of the min/max values found */
-    for (d=dbuf, p=buf1, q=buf2; p < e; p++, q++, d++) {
+    for (d = dbuf, p = buf1, q = buf2; p < e; p++, q++, d++) {
 	*d = *p + *q;
 	if (*d > max) max = *d;
 	if (*d < min) min = *d;
@@ -123,7 +135,7 @@ add_float(unsigned short *buf1, unsigned short *buf2, unsigned long count)
 
     bu_log("min: %g scale: %g\n", min - k, k);
 
-    for (d=dbuf, p=buf1, q=buf2; p < e; p++, q++, d++)
+    for (d = dbuf, p = buf1, q = buf2; p < e; p++, q++, d++)
 	*p = (unsigned short)  ((*d - min) * k) + 1;
 
     bu_free(dbuf, "buffer of double");
@@ -131,21 +143,19 @@ add_float(unsigned short *buf1, unsigned short *buf2, unsigned long count)
 
 
 /*
- * A D D _ I N T
- *
  * Perform simple integer addition to the input streams.
  * Issue warning on overflow.
  *
  * Result:	buf1 contents modified
  */
-void
+static void
 add_int(unsigned short *buf1, unsigned short *buf2, unsigned long count)
 {
     int int_value;
     unsigned long i;
     unsigned short s;
 
-    for (i=0; i < count; i++) {
+    for (i = 0; i < count; i++) {
 	int_value = buf1[i] + buf2[i];
 	s = (unsigned short)int_value;
 
@@ -160,8 +170,6 @@ add_int(unsigned short *buf1, unsigned short *buf2, unsigned long count)
 
 
 /*
- * M A I N
- *
  * Call parse_args to handle command line arguments first, then
  * process input.
  */
@@ -177,12 +185,16 @@ main(int ac, char *av[])
     struct stat sb;
     size_t ret;
 
-    if (isatty(fileno(stdout))) usage("Must redirect standard output\n");
+    if (ac < 2)
+	print_usage("");
+
+    if (isatty(fileno(stdout)))
+	print_usage("Must redirect standard output\n");
 
     next_arg = parse_args(ac, av);
 
-    if (next_arg >= ac) usage("No files specified\n");
-
+    if (next_arg >= ac)
+	print_usage("No files specified\n");
 
     /* Open the files */
 
@@ -192,7 +204,7 @@ main(int ac, char *av[])
 	return -1;
     }
 
-    if(fstat(fileno(in1), &sb)) {
+    if (fstat(fileno(in1), &sb)) {
 	perror(av[next_arg]);
 	fclose(in1);
 	return -1;
@@ -238,7 +250,6 @@ main(int ac, char *av[])
 	perror("fread");
     fclose(in2);
 
-
     /* Convert from network to host format */
     in_cookie = bu_cv_cookie("nus");
     out_cookie = bu_cv_cookie("hus");
@@ -249,17 +260,13 @@ main(int ac, char *av[])
 	swap_bytes(buf2, count);
     }
 
-
     /* add the two datasets together */
-
     switch (style) {
 	case ADD_STYLE_FLOAT	: add_float(buf1, buf2, count); break;
 	case ADD_STYLE_INT	: add_int(buf1, buf2, count); break;
-	default			: fprintf(stderr,
-					  "Error: Unknown add style\n");
+	default			: bu_log("Error: Unknown add style\n");
 	    break;
     }
-
 
     /* convert back to network format & write out */
     if (conv) {
@@ -268,7 +275,7 @@ main(int ac, char *av[])
     }
 
     if (fwrite(buf1, sizeof(short), count, stdout) != count) {
-	fprintf(stderr, "Error writing data\n");
+	bu_log("Error writing data\n");
 	return -1;
     }
 

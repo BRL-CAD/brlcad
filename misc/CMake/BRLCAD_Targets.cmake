@@ -135,11 +135,11 @@ macro(FLAGS_TO_FILES srcslist targetname)
 	endforeach(srcfile ${srcslist})
 endmacro(FLAGS_TO_FILES)
 
-# Handle C++ NOSTRICT settings
-macro(CXX_NOSTRICT cxx_srcslist args)
+# Handle C++ NO_STRICT settings
+macro(CXX_NO_STRICT cxx_srcslist args)
   if(NOERROR_FLAG)
     foreach(extraarg ${args})
-      if(${extraarg} MATCHES "NOSTRICTCXX" AND BRLCAD_ENABLE_STRICT)
+      if(${extraarg} MATCHES "NO_STRICT_CXX" AND BRLCAD_ENABLE_STRICT)
 	foreach(srcfile ${cxx_srcslist})
 	  get_filename_component(srcfile_ext ${srcfile} EXT)
 	  if(${srcfile_ext} STREQUAL ".cxx" OR ${srcfile_ext} STREQUAL ".cpp" OR ${srcfile_ext} STREQUAL ".cc")
@@ -147,10 +147,10 @@ macro(CXX_NOSTRICT cxx_srcslist args)
 	    set_source_files_properties(${srcfile} COMPILE_FLAGS "${previous_flags} -Wno-error")
 	  endif()
 	endforeach(srcfile ${cxx_srcslist})
-      endif(${extraarg} MATCHES "NOSTRICTCXX" AND BRLCAD_ENABLE_STRICT)
+      endif(${extraarg} MATCHES "NO_STRICT_CXX" AND BRLCAD_ENABLE_STRICT)
     endforeach(extraarg ${args})
   endif(NOERROR_FLAG)
-endmacro(CXX_NOSTRICT cxx_srcslist)
+endmacro(CXX_NO_STRICT cxx_srcslist)
 
 
 #-----------------------------------------------------------------------------
@@ -163,21 +163,15 @@ macro(BRLCAD_ADDEXEC execname srcslist libslist)
   target_link_libraries(${execname} ${libslist})
 
 
-  # If an executable isn't to be installed or needs to be installed 
+  # In some situations (usually test executables) we want to be able
+  # to force the executable to remain in the local compilation
+  # directory regardless of the global CMAKE_RUNTIME_OUTPUT_DIRECTORY
+  # setting.  The NO_INSTALL flag is used to denote such executables.
+  # If an executable isn't to be installed or needs to be installed
   # somewhere other than the default location, the NO_INSTALL argument
-  # bypasses the standard install command call.  Otherwise, call install
-  # with standard arguments.
+  # bypasses the standard install command call.
   CHECK_OPT("NO_INSTALL" NO_EXEC_INSTALL "${ARGN}")
-  if(NOT NO_EXEC_INSTALL)
-    install(TARGETS ${execname} DESTINATION ${BIN_DIR})
-  endif(NOT NO_EXEC_INSTALL)
-
-  # In some situations (usually testing executables) we want to
-  # be able to force the executable to remain in the local directory
-  # regardless of the global CMAKE_RUNTIME_OUTPUT_DIRECTORY setting.
-  # The LOCAL flag is used to denote such executables.
-  CHECK_OPT("LOCAL" LOCAL_EXEC "${ARGN}")
-  if(LOCAL_EXEC)
+  if(NO_EXEC_INSTALL)
     if(NOT CMAKE_CONFIGURATION_TYPES)
       set_target_properties(${execname} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
     else(NOT CMAKE_CONFIGURATION_TYPES)
@@ -186,7 +180,9 @@ macro(BRLCAD_ADDEXEC execname srcslist libslist)
 	set_target_properties(${execname} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER} ${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE})
       endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
     endif(NOT CMAKE_CONFIGURATION_TYPES)
-  endif(LOCAL_EXEC)
+  else(NO_EXEC_INSTALL)
+    install(TARGETS ${execname} DESTINATION ${BIN_DIR})
+  endif(NO_EXEC_INSTALL)
 
   # Use the list of libraries to be linked into this target to
   # accumulate the necessary definitions and compilation flags.
@@ -222,16 +218,16 @@ macro(BRLCAD_ADDEXEC execname srcslist libslist)
 
   # If this target is marked as incompatible with the strict flags, disable them
   foreach(extraarg ${ARGN})
-    if(${extraarg} MATCHES "NOSTRICT$" AND BRLCAD_ENABLE_STRICT)
+    if(${extraarg} MATCHES "NO_STRICT$" AND BRLCAD_ENABLE_STRICT)
       if(NOERROR_FLAG)
 			set_property(TARGET ${execname} APPEND PROPERTY COMPILE_FLAGS "-Wno-error")
 		endif(NOERROR_FLAG)
-    endif(${extraarg} MATCHES "NOSTRICT$" AND BRLCAD_ENABLE_STRICT)
+    endif(${extraarg} MATCHES "NO_STRICT$" AND BRLCAD_ENABLE_STRICT)
   endforeach(extraarg ${ARGN})
 
-  # C++ is handled separately (on a per-file basis) if we have mixed sources via the NOSTRICTCXX flag
+  # C++ is handled separately (on a per-file basis) if we have mixed sources via the NO_STRICT_CXX flag
   if(${exec_type} STREQUAL "MIXED")
-    CXX_NOSTRICT("${srcslist}" "${ARGN}")
+    CXX_NO_STRICT("${srcslist}" "${ARGN}")
   endif(${exec_type} STREQUAL "MIXED")
 
 endmacro(BRLCAD_ADDEXEC execname srcslist libslist)
@@ -287,9 +283,9 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
       target_link_libraries(${libname} ${libslist})
     endif(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
 
-    # If a library isn't to be installed or needs to be installed 
+    # If a library isn't to be installed or needs to be installed
     # somewhere other than the default location, the NO_INSTALL argument
-    # bypasses the standard install command call. Otherwise, call install 
+    # bypasses the standard install command call. Otherwise, call install
     # with standard arguments.
     CHECK_OPT("NO_INSTALL" NO_LIB_INSTALL "${ARGN}")
     if(NOT NO_LIB_INSTALL)
@@ -321,11 +317,11 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
     endif(NOT ${lib_type} STREQUAL "MIXED")
 
     foreach(extraarg ${ARGN})
-      if(${extraarg} MATCHES "NOSTRICT" AND BRLCAD_ENABLE_STRICT AND NOT  ${lib_type} STREQUAL "MIXED")
+      if(${extraarg} MATCHES "NO_STRICT" AND BRLCAD_ENABLE_STRICT AND NOT  ${lib_type} STREQUAL "MIXED")
 	if(NOERROR_FLAG)
 	  set_property(TARGET ${libname} APPEND PROPERTY COMPILE_FLAGS "-Wno-error")
 	endif(NOERROR_FLAG)
-      endif(${extraarg} MATCHES "NOSTRICT" AND BRLCAD_ENABLE_STRICT AND NOT  ${lib_type} STREQUAL "MIXED")
+      endif(${extraarg} MATCHES "NO_STRICT" AND BRLCAD_ENABLE_STRICT AND NOT  ${lib_type} STREQUAL "MIXED")
     endforeach(extraarg ${ARGN})
   endif(BUILD_SHARED_LIBS)
 
@@ -346,9 +342,9 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
       set_target_properties(${libname}-static PROPERTIES OUTPUT_NAME "${libname}")
     endif(NOT MSVC)
 
-    # If a library isn't to be installed or needs to be installed 
+    # If a library isn't to be installed or needs to be installed
     # somewhere other than the default location, the NO_INSTALL argument
-    # bypasses the standard install command call. Otherwise, call install 
+    # bypasses the standard install command call. Otherwise, call install
     # with standard arguments.
     CHECK_OPT("NO_INSTALL" NO_LIB_INSTALL "${ARGN}")
     if(NOT NO_LIB_INSTALL)
@@ -373,18 +369,18 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
 
     # If we can't build this library strict, add the -Wno-error flag
     foreach(extraarg ${ARGN})
-      if(${extraarg} MATCHES "NOSTRICT" AND BRLCAD_ENABLE_STRICT AND NOT  ${lib_type} STREQUAL "MIXED")
+      if(${extraarg} MATCHES "NO_STRICT" AND BRLCAD_ENABLE_STRICT AND NOT  ${lib_type} STREQUAL "MIXED")
 	if(NOERROR_FLAG)
 	  set_property(TARGET ${libname}-static APPEND PROPERTY COMPILE_FLAGS "-Wno-error")
 	endif(NOERROR_FLAG)
-      endif(${extraarg} MATCHES "NOSTRICT" AND BRLCAD_ENABLE_STRICT AND NOT  ${lib_type} STREQUAL "MIXED")
+      endif(${extraarg} MATCHES "NO_STRICT" AND BRLCAD_ENABLE_STRICT AND NOT  ${lib_type} STREQUAL "MIXED")
     endforeach(extraarg ${ARGN})
   endif(BUILD_STATIC_LIBS)
 
   # C++ STRICTNESS is handled separately (on a per-file basis) if we have mixed
-  # sources via the NOSTRICTCXX flag
+  # sources via the NO_STRICT_CXX flag
   if(${lib_type} STREQUAL "MIXED")
-    CXX_NOSTRICT("${srcslist}" "${ARGN}")
+    CXX_NO_STRICT("${srcslist}" "${ARGN}")
   endif(${lib_type} STREQUAL "MIXED")
 
   # For any CPP_DLL_DEFINES DLL library, users of that library will need the DLL_IMPORTS

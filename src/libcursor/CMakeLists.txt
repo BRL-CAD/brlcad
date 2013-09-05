@@ -8,7 +8,6 @@ if(HAVE_TERMLIB)
 
   BRLCAD_ADDLIB(libcursor cursor.c "${TERMLIB_LIBRARY}")
   SET_TARGET_PROPERTIES(libcursor PROPERTIES VERSION 20.0.1 SOVERSION 20)
-  CMAKEFILES(Makefile.am)
 endif(HAVE_TERMLIB)
 
 # Local Variables:

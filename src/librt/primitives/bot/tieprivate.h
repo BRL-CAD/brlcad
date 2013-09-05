@@ -30,16 +30,17 @@
 extern "C" {
 #endif
 
-/* The last three bits of the void* in the kdtree are used to store data about
- * the object. 0x4 marks if the node has children (is set to 0 for a leaf), the
- * last two are the encoding for the splitting plane. Allocation must be a
- * multiple of 8. */
-#define TIE_HAS_CHILDREN(ptr) (((size_t)(ptr))&0x4)
-#define TIE_SET_HAS_CHILDREN(ptr) (((size_t)(ptr))|0x4)
+/* The last three bits of the 'b' field in the kdtree are used to
+ * store data about the object.  0x4L marks if the node has children
+ * (is set to 0 for a leaf), the last two are the encoding for the
+ * splitting plane.
+ */
+#define TIE_HAS_CHILDREN(bits) (bits & (uint32_t)0x4L)
+#define TIE_SET_HAS_CHILDREN(bits) (bits | (uint32_t)0x4L)
 
 struct tie_geom_s {
-    struct tie_tri_s **tri_list;
-    unsigned int tri_num;
+    struct tie_tri_s **tri_list; /* 4-bytes or 8-bytes */
+    uint32_t tri_num; /* 4-bytes */
 };
 
 #ifdef _WIN32
@@ -48,9 +49,9 @@ struct tie_geom_s {
 #endif
 
 struct tie_stack_s {
-    struct tie_kdtree_s *node;
-    tfloat near;
-    tfloat far;
+    struct tie_kdtree_s *node; /* 4-bytes or 8-bytes */
+    tfloat near; /* 4-bytes or 8-bytes */
+    tfloat far; /* 4-bytes or 8-bytes */
 };
 
 #ifdef __cplusplus

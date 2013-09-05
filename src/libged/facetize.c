@@ -285,7 +285,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	RT_DB_INTERNAL_INIT(&intern);
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_BOT;
-	intern.idb_meth = &rt_functab[ID_BOT];
+	intern.idb_meth = &OBJ[ID_BOT];
 	intern.idb_ptr = (genptr_t) bot;
     } else {
 
@@ -295,7 +295,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	RT_DB_INTERNAL_INIT(&intern);
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_NMG;
-	intern.idb_meth = &rt_functab[ID_NMG];
+	intern.idb_meth = &OBJ[ID_NMG];
 	intern.idb_ptr = (genptr_t)nmg_model;
 	nmg_model = (struct model *)NULL;
     }

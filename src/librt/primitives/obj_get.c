@@ -39,7 +39,7 @@ rt_obj_get(struct bu_vls *logstr, const struct rt_db_internal *ip, const char *a
     if (id < 0)
 	return -2;
 
-    ft = &rt_functab[id];
+    ft = &OBJ[id];
     if (!ft)
 	return -3;
     if (!ft->ft_get)

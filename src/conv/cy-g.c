@@ -441,7 +441,6 @@ main(int argc, char **argv)
 
 	for (y=0; y<nlt; y++) {
 	    short r;
-	    long radius;
 	    fastf_t rad;
 
 	    ptr = &curves[y+1][x*3];
@@ -454,6 +453,8 @@ main(int argc, char **argv)
 /*		bu_log("FOUND NEGATIVE VALUE at %d,%d\n", x, y);*/
 		rad = 0.0;
 	    } else {
+		long radius;
+
 		if (y < first_non_zero)
 		    first_non_zero = y;
 		radius = (long)(r) << rshift;

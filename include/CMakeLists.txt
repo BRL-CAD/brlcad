@@ -30,6 +30,7 @@ set(include_hdrs
   dm-pex.h
   dm-plot.h
   dm-ps.h
+  dm-qt.h
   dm-rtgl.h
   dm-tk.h
   dm-wgl.h
@@ -97,7 +98,6 @@ set(include_misc
 CMAKEFILES(${include_hdrs})
 CMAKEFILES(${noinst_HEADERS})
 CMAKEFILES(${include_misc})
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

@@ -40,7 +40,7 @@ rt_obj_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
     if (id < 0)
 	return -2;
 
-    ft = &rt_functab[id];
+    ft = &OBJ[id];
     if (!ft)
 	return -3;
     if (!ft->ft_norm)

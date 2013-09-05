@@ -22,11 +22,11 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #include "bu.h"
 
 #define AVS_ALLOCATION_INCREMENT 32
-
 
 void
 bu_avs_init_empty(struct bu_attribute_value_set *avsp)

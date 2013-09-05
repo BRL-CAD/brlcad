@@ -92,7 +92,7 @@ nmg_polytonmg(FILE *fp, struct nmgregion *r, const struct bn_tol *tol)
     if (fscanf(fp, "%d %d", &num_pts, &num_facets) != 2)
 	bu_bomb("polytonmg() Error in first line of poly file\n");
     else
-	if (rt_g.NMG_debug & DEBUG_POLYTO)
+	if (RTG.NMG_debug & DEBUG_POLYTO)
 	    bu_log("points: %d facets: %d\n",
 		   num_pts, num_facets);
 
@@ -111,7 +111,7 @@ nmg_polytonmg(FILE *fp, struct nmgregion *r, const struct bn_tol *tol)
 	if (fscanf(fp, "%lg %lg %lg", &p[0], &p[1], &p[2]) != 3)
 	    bu_bomb("polytonmg() Error reading point");
 	else
-	    if (rt_g.NMG_debug & DEBUG_POLYTO)
+	    if (RTG.NMG_debug & DEBUG_POLYTO)
 		bu_log("read vertex #%d (%g %g %g)\n",
 		       i, p[0], p[1], p[2]);
 
@@ -125,7 +125,7 @@ nmg_polytonmg(FILE *fp, struct nmgregion *r, const struct bn_tol *tol)
 	if (fscanf(fp, "%d", &pts_this_face) != 1)
 	    bu_bomb("polytonmg() error getting pt count for this face");
 
-	if (rt_g.NMG_debug & DEBUG_POLYTO)
+	if (RTG.NMG_debug & DEBUG_POLYTO)
 	    bu_log("facet %d pts in face %d\n",
 		   facet, pts_this_face);
 
@@ -193,7 +193,7 @@ nmg_isect_face3p_shell_int(struct nmg_inter_struct *is, struct faceuse *fu1, str
     s1 = fu1->s_p;
     NMG_CK_SHELL(s1);
 
-    if (rt_g.NMG_debug & DEBUG_POLYSECT)
+    if (RTG.NMG_debug & DEBUG_POLYSECT)
 	bu_log("nmg_isect_face3p_shell_int(, fu1=x%x, s2=x%x) START\n", fu1, s2);
 
     for (BU_LIST_FOR (lu1, loopuse, &fu1->lu_hd)) {
@@ -221,7 +221,7 @@ nmg_isect_face3p_shell_int(struct nmg_inter_struct *is, struct faceuse *fu1, str
 	}
     }
 
-    if (rt_g.NMG_debug & DEBUG_POLYSECT)
+    if (RTG.NMG_debug & DEBUG_POLYSECT)
 	bu_log("nmg_isect_face3p_shell_int(, fu1=x%x, s2=x%x) END\n", fu1, s2);
 }
 

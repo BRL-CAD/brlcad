@@ -60,7 +60,7 @@ add_definitions(
   -DOBJ_BREP=1
   )
 
-BRLCAD_ADDLIB(libpc "${LIBPC_SOURCES}" "libbu;${OPENNURBS_LIBRARY};${STDCXX_LIBRARIES}" NOSTRICTCXX)
+BRLCAD_ADDLIB(libpc "${LIBPC_SOURCES}" "libbu;${OPENNURBS_LIBRARY};${STDCXX_LIBRARIES}" NO_STRICT_CXX)
 SET_TARGET_PROPERTIES(libpc PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 #BRLCAD_ADDEXEC(solver_test solver_test.cpp libpc NO_INSTALL)
@@ -86,7 +86,6 @@ set(pc_ignore_files
   vm_test.cpp
   )
 CMAKEFILES(${pc_ignore_files})
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

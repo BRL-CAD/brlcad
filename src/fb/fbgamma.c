@@ -35,7 +35,7 @@
 #include "fb.h"
 #include "pkg.h"
 
-char *options = "ihoF:";
+char *options = "iHoF:h?";
 
 void checkgamma(double g);
 
@@ -47,7 +47,7 @@ char *framebuffer = (char *)NULL;
 int image = 0;
 
 static char usage[] = "\
-Usage: fbgamma [-h -o -i] [-F framebuffer] val [gval bval]\n";
+Usage: fbgamma [-H -o -i] [-F framebuffer] val [gval bval]\n";
 
 void mk_ramp(FBIO *fb, int r, int g, int b, int n)
 {
@@ -123,11 +123,11 @@ main(int argc, char **argv)
     bu_opterr = 0;
     while ((i=bu_getopt(argc, argv, options)) != -1) {
 	switch (i) {
-	    case 'h'	: fbsize = 1024; break;
+	    case 'H'	: fbsize = 1024; break;
 	    case 'o'	: overlay++; break;
 	    case 'i'	: image = !image; break;
 	    case 'F'	: framebuffer = bu_optarg; break;
-	    default		: break;
+	    default	: bu_exit(1, "%s", usage);
 	}
     }
 

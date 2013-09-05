@@ -19,8 +19,8 @@
  */
 /** @file librender/texture.h
  *
- *  Comments -
- *      Texture Library - Applies a 3 color camouflage
+ * Comments -
+ * Texture Library - Applies a 3 color camouflage
  *
  */
 
@@ -32,7 +32,7 @@
 
 void
 texture_camo_init(struct texture_s *texture, fastf_t size, int octaves, int absolute, vect_t color1, vect_t color2, vect_t color3) {
-    struct texture_camo_s   *sd;
+    struct texture_camo_s *sd;
 
     BU_ALLOC(texture->data, struct texture_camo_s);
     texture->free = texture_camo_free;
@@ -49,6 +49,7 @@ texture_camo_init(struct texture_s *texture, fastf_t size, int octaves, int abso
     texture_perlin_init(&sd->perlin);
 }
 
+
 void
 texture_camo_free(struct texture_s *texture) {
     struct texture_camo_s *td;
@@ -57,6 +58,7 @@ texture_camo_free(struct texture_s *texture) {
     texture_perlin_free(&td->perlin);
     bu_free(texture->data, "camo data");
 }
+
 
 void
 texture_camo_work(struct texture_s *texture, void *mesh, struct tie_ray_s *UNUSED(ray), struct tie_id_s *id, vect_t *pixel) {
@@ -89,6 +91,7 @@ texture_camo_work(struct texture_s *texture, void *mesh, struct tie_ray_s *UNUSE
     if (sum2 < 0.3)
 	VMOVE(*pixel, td->color3);
 }
+
 
 /*
  * Local Variables:

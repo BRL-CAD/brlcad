@@ -18,6 +18,8 @@
  * information.
  */
 
+#include "common.h"
+
 #include <assert.h>
 
 #include "brlcad_brep.hpp"

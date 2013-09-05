@@ -346,7 +346,7 @@ draw_dsp_bb(int *plotnum,
     FILE *fp;
     struct dsp_bb bb;
 
-    sprintf(buf, "dsp_bb%03d.pl", (*plotnum)++);
+    sprintf(buf, "dsp_bb%03d.plot3", (*plotnum)++);
     if ((fp=fopen(buf, "wb")) == (FILE *)NULL) {
 	perror(buf);
 	bu_bomb("");
@@ -391,7 +391,7 @@ plot_layers(struct dsp_specific *dsp_sp)
 
     for (l=0; l < dsp_sp->layers; l++) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	sprintf(buf, "Dsp_layer%d.pl", l);
+	sprintf(buf, "Dsp_layer%d.plot3", l);
 	fp=fopen(buf, "wb");
 	bu_semaphore_release(BU_SEM_SYSCALL);
 	if (fp == (FILE *)NULL) {
@@ -458,9 +458,9 @@ plot_cell_top(struct isect_stuff *isect,
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     if (style)
-	sprintf(buf, "dsp_cell_isect%04d.pl", cnt++);
+	sprintf(buf, "dsp_cell_isect%04d.plot3", cnt++);
     else
-	sprintf(buf, "dsp_cell_top%04d.pl", plotcnt++);
+	sprintf(buf, "dsp_cell_top%04d.plot3", plotcnt++);
 
     fp=fopen(buf, "wb");
 
@@ -1126,7 +1126,7 @@ plot_seg(struct isect_stuff *isect,
 
     /* plot the bounding box and the seg */
     bu_semaphore_acquire(BU_SEM_SYSCALL);
-    sprintf(fname, "dsp_seg%04d.pl", segnum++);
+    sprintf(fname, "dsp_seg%04d.plot3", segnum++);
     fp=fopen(fname, "wb");
     bu_semaphore_release(BU_SEM_SYSCALL);
 
@@ -1181,6 +1181,11 @@ add_seg(struct isect_stuff *isect,
     struct bu_list *spot;
 #endif
 
+    /*  FIXME: gcc 4.8.1 reports error here (rel build):
+/disk3/extsrc/brlcad-svn-trunk/src/librt/primitives/dsp/dsp.c:1184:9: error: 'seg_in.hit_vpriv[0]' may be used uninitialized in this function [-Werror=maybe-uninitialized]
+     dlog("add_seg %g %g line %d vpriv:%g %g\n", in_hit->hit_dist, out_hit->hit_dist, line, in_hit->hit_vpriv[X], in_hit->hit_vpriv[Y]);
+         ^
+    */
     dlog("add_seg %g %g line %d vpriv:%g %g\n", in_hit->hit_dist, out_hit->hit_dist, line, in_hit->hit_vpriv[X], in_hit->hit_vpriv[Y]);
 
     tt *= tt;
@@ -1407,7 +1412,7 @@ isect_ray_triangle(struct isect_stuff *isect,
 	point_t p1, p2;
 
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	sprintf(buf, "dsp_tri%03d.pl", plotnum++);
+	sprintf(buf, "dsp_tri%03d.plot3", plotnum++);
 	fp=fopen(buf, "wb");
 	bu_semaphore_release(BU_SEM_SYSCALL);
 
@@ -2922,7 +2927,7 @@ rt_dsp_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
     if (RT_G_DEBUG & DEBUG_HF) {
 	struct bu_vls str = BU_VLS_INIT_ZERO;
 
-	bu_vls_printf(&str, "dsp_gourand%02d.pl", plot_file_num++);
+	bu_vls_printf(&str, "dsp_gourand%02d.plot3", plot_file_num++);
 	bu_log("plotting normals in %s", bu_vls_addr(&str));
 	fd = fopen(bu_vls_addr(&str), "w");
 	bu_vls_free(&str);
@@ -4283,7 +4288,7 @@ rt_dsp_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_DSP;
-    ip->idb_meth = &rt_functab[ID_DSP];
+    ip->idb_meth = &OBJ[ID_DSP];
     BU_ALLOC(ip->idb_ptr, struct rt_dsp_internal);
 
     dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
@@ -4410,7 +4415,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_DSP;
-    ip->idb_meth = &rt_functab[ID_DSP];
+    ip->idb_meth = &OBJ[ID_DSP];
     BU_ALLOC(ip->idb_ptr, struct rt_dsp_internal);
 
     dsp_ip = ip->idb_ptr;
@@ -4443,7 +4448,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     }
 
     /* convert matrix */
-    ntohd((unsigned char *)scanmat, cp, ELEMENTS_PER_MAT);
+    bu_cv_ntohd((unsigned char *)scanmat, cp, ELEMENTS_PER_MAT);
     MAT_COPY(dsp_ip->dsp_stom, scanmat); /* double to fastf_t */
 
     cp += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_MAT;
@@ -4557,7 +4562,7 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     dsp_ip->dsp_stom[15] *= local2mm;
 
     MAT_COPY(scanmat, dsp_ip->dsp_stom); /* convert fastf_t to double */
-    htond(cp, (unsigned char *)scanmat, ELEMENTS_PER_MAT);
+    bu_cv_htond(cp, (unsigned char *)scanmat, ELEMENTS_PER_MAT);
 
     cp += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_MAT;
     rem -= SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_MAT;
@@ -4747,7 +4752,7 @@ const struct bu_structparse fake_dsp_printab[] = {
 /**
  * R T _ D S P _ G E T
  *
- * This is the generic routine to be listed in rt_functab[].ft_get for
+ * This is the generic routine to be listed in OBJ[].ft_get for
  * those solid types which are fully described by their ft_parsetab
  * entry.
  *
@@ -4819,7 +4824,7 @@ rt_dsp_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
  * R T _ P A R S E T A B _ T C L A D J U S T
  *
  * For those solids entirely defined by their parsetab.  Invoked via
- * rt_functab[].ft_adjust()
+ * OBJ[].ft_adjust()
  */
 int
 rt_dsp_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
@@ -4856,7 +4861,7 @@ rt_dsp_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_DSP;
 
-    BU_ASSERT(&rt_functab[intern->idb_type] == ftp);
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
     intern->idb_meth = ftp;
 
     BU_ALLOC(dsp, struct rt_dsp_internal);

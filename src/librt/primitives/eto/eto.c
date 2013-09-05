@@ -1343,7 +1343,7 @@ rt_eto_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_ETO;
-    ip->idb_meth = &rt_functab[ID_ETO];
+    ip->idb_meth = &OBJ[ID_ETO];
     BU_ALLOC(ip->idb_ptr, struct rt_eto_internal);
 
     tip = (struct rt_eto_internal *)ip->idb_ptr;
@@ -1448,14 +1448,14 @@ rt_eto_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_ETO;
-    ip->idb_meth = &rt_functab[ID_ETO];
+    ip->idb_meth = &OBJ[ID_ETO];
     BU_ALLOC(ip->idb_ptr, struct rt_eto_internal);
 
     tip = (struct rt_eto_internal *)ip->idb_ptr;
     tip->eto_magic = RT_ETO_INTERNAL_MAGIC;
 
     /* Convert from database (network) to internal (host) format */
-    ntohd((unsigned char *)vec, ep->ext_buf, 11);
+    bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, 11);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
@@ -1508,7 +1508,7 @@ rt_eto_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     vec[3*3+1] = tip->eto_rd * local2mm;
 
     /* Convert from internal (host) to database (network) format */
-    htond(ep->ext_buf, (unsigned char *)vec, 11);
+    bu_cv_htond(ep->ext_buf, (unsigned char *)vec, 11);
 
     return 0;
 }

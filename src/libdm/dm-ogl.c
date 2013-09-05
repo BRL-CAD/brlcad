@@ -76,6 +76,7 @@
 #include "raytrace.h"
 #include "dm.h"
 #include "dm-ogl.h"
+#include "dm-Null.h"
 #include "dm_xvars.h"
 #include "solid.h"
 
@@ -169,6 +170,7 @@ struct dm dm_ogl = {
     ogl_getDisplayImage, /* display to image function */
     ogl_reshape,
     ogl_makeCurrent,
+    null_processEvents,
     0,
     1,				/* has displaylist */
     0,                          /* no stereo by default */
@@ -1300,11 +1302,6 @@ ogl_drawEnd(struct dm *dmp)
 	bu_vls_free(&tmp_vls);
     }
 
-/*XXX Keep this off unless testing */
-#if 0
-    glFinish();
-#endif
-
     return TCL_OK;
 }
 
@@ -1632,6 +1629,10 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
     register int first;
     register int mflag = 1;
     static float black[4] = {0.0, 0.0, 0.0, 0.0};
+    GLfloat originalPointSize, originalLineWidth;
+
+    glGetFloatv(GL_POINT_SIZE, &originalPointSize);
+    glGetFloatv(GL_LINE_WIDTH, &originalLineWidth);
 
     if (dmp->dm_debugLevel)
 	bu_log("ogl_drawVList()\n");
@@ -1737,10 +1738,23 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		    if (first == 0)
 			glEnd();
 		    first = 0;
-		    glPointSize(1.0);
 		    glBegin(GL_POINTS);
 		    glVertex3dv(dpt);
 		    break;
+		case BN_VLIST_LINE_WIDTH: {
+		    GLfloat lineWidth = (GLfloat)(*pt)[0];
+		    if (lineWidth > 0.0) {
+			glLineWidth(lineWidth);
+		    }
+		    break;
+		}
+		case BN_VLIST_POINT_SIZE: {
+		    GLfloat pointSize = (GLfloat)(*pt)[0];
+		    if (pointSize > 0.0) {
+			glPointSize(pointSize);
+		    }
+		    break;
+		}
 	    }
 	}
     }
@@ -1750,6 +1764,9 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 
     if (dmp->dm_light && dmp->dm_transparency)
 	glDisable(GL_BLEND);
+
+    glPointSize(originalPointSize);
+    glLineWidth(originalLineWidth);
 
     return TCL_OK;
 }
@@ -1980,12 +1997,9 @@ ogl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b
 	    backDiffuseColorLight[2] = wireColor[2] * 0.9;
 	    backDiffuseColorLight[3] = wireColor[3];
 
-#if 1
 	    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientColor);
 	    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specularColor);
 	    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseColor);
-#endif
-
 	} else {
 	    glColor3ub((GLubyte)r,  (GLubyte)g,  (GLubyte)b);
 	}

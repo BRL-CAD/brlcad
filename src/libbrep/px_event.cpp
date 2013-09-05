@@ -64,21 +64,21 @@ ON_PX_EVENT::Dump(ON_TextLog& text_log) const
 {
     text_log.Print("m_type: ");
     switch (m_type) {
-    case ON_PX_EVENT::no_px_event:
-	text_log.Print("no_px_event");
-	break;
-    case ON_PX_EVENT::ppx_point:
-	text_log.Print("ppx_point");
-	break;
-    case ON_PX_EVENT::pcx_point:
-	text_log.Print("pcx_point");
-	break;
-    case ON_PX_EVENT::psx_point:
-	text_log.Print("psx_point");
-	break;
-    default:
-	text_log.Print("illegal value");
-	break;
+	case ON_PX_EVENT::no_px_event:
+	    text_log.Print("no_px_event");
+	    break;
+	case ON_PX_EVENT::ppx_point:
+	    text_log.Print("ppx_point");
+	    break;
+	case ON_PX_EVENT::pcx_point:
+	    text_log.Print("pcx_point");
+	    break;
+	case ON_PX_EVENT::psx_point:
+	    text_log.Print("psx_point");
+	    break;
+	default:
+	    text_log.Print("illegal value");
+	    break;
     }
     text_log.Print("\n");
     text_log.PushIndent();
@@ -102,24 +102,24 @@ ON_PX_EVENT::Dump(ON_TextLog& text_log) const
     text_log.PopIndent();
 
     switch (m_type) {
-    case ON_PX_EVENT::ppx_point:
-	text_log.Print("pointB = \n");
-	break;
+	case ON_PX_EVENT::ppx_point:
+	    text_log.Print("pointB = \n");
+	    break;
 
-    case ON_PX_EVENT::pcx_point:
-	text_log.Print("curveB(");
-	text_log.Print(m_b[0]);
-	text_log.Print(") = \n");
-	break;
+	case ON_PX_EVENT::pcx_point:
+	    text_log.Print("curveB(");
+	    text_log.Print(m_b[0]);
+	    text_log.Print(") = \n");
+	    break;
 
-    case ON_PX_EVENT::psx_point:
-	text_log.Print("surfaceB");
-	text_log.Print(m_b);
-	text_log.Print(" = \n");
-	break;
+	case ON_PX_EVENT::psx_point:
+	    text_log.Print("surfaceB");
+	    text_log.Print(m_b);
+	    text_log.Print(" = \n");
+	    break;
 
-    case ON_PX_EVENT::no_px_event:
-	break;
+	case ON_PX_EVENT::no_px_event:
+	    break;
     }
 
     text_log.PushIndent();

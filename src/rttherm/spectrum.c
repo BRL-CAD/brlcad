@@ -151,17 +151,9 @@ spect_make_NTSC_RGB(struct bn_tabdata **rp,
     bn_print_table_and_tabdata("/dev/tty", rt_NTSC_b_tabdata);
 
     /* Resample original NTSC curves to match given bn_table sampling */
-#if 0
-    /* just to test the routine */
-    *rp = bn_tabdata_resample_avg(tabp, rt_NTSC_r_tabdata);
-    *gp = bn_tabdata_resample_avg(tabp, rt_NTSC_g_tabdata);
-    *bp = bn_tabdata_resample_avg(tabp, rt_NTSC_b_tabdata);
-#else
-    /* use this one for real */
     *rp = bn_tabdata_resample_max(tabp, rt_NTSC_r_tabdata);
     *gp = bn_tabdata_resample_max(tabp, rt_NTSC_g_tabdata);
     *bp = bn_tabdata_resample_max(tabp, rt_NTSC_b_tabdata);
-#endif
 }
 
 
@@ -287,8 +279,8 @@ make_ntsc_xyz2rgb(fastf_t *xyz2rgb)
 	bu_exit(EXIT_FAILURE, "make_ntsc_xyz2rgb() can't initialize color space\n");
     bn_mat_inv(xyz2rgb, rgb2xyz);
 
-#if 1
     /* Verify that it really works, I'm a skeptic */
+
     VSET(tst, 1, 1, 1);
     MAT3X3VEC(newpt, rgb2xyz, tst);
     VPRINT("white_rgb (i)", tst);
@@ -328,7 +320,6 @@ make_ntsc_xyz2rgb(fastf_t *xyz2rgb)
     MAT3X3VEC(newpt, xyz2rgb, tst);
     VPRINT("blu_xyz (i)", tst);
     VPRINT("blu_rgb (o)", newpt);
-#endif
 }
 
 
@@ -351,19 +342,8 @@ spect_curve_to_xyz(point_t xyz,
 
     BN_CK_TABDATA(tabp);
 
-#if 0
-    tab_area = bn_tabdata_area2(tabp);
-    bu_log(" tab_area = %g\n", tab_area);
-    if (fabs(tab_area) < VDIVIDE_TOL) {
-	bu_log("spect_curve_to_xyz(): Area = 0 (no luminance) in this part of the spectrum\n");
-	VSETALL(xyz, 0);
-	return;
-    }
-    tab_area = 1 / tab_area;
-#else
     /* This is what Roy says to do, but I'm not certain */
     tab_area = 1;
-#endif
 
     xyz[X] = bn_tabdata_mul_area2(tabp, cie_x) * tab_area;
     xyz[Y] = bn_tabdata_mul_area2(tabp, cie_y) * tab_area;

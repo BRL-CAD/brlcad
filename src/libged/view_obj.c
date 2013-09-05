@@ -795,13 +795,9 @@ vo_perspective_cmd(struct view_obj *vop,
 
 	vop->vo_perspective = perspective;
 
-#if 1
 	/* This way works, with reasonable Z-clipping */
 	vo_persp_mat(vop->vo_pmat, vop->vo_perspective,
 		     1.0, 0.01, 1.0e10, 1.0);
-#else
-	vo_mike_persp_mat(vop->vo_pmat, vop->vo_eye_pos);
-#endif
 	vo_update(vop, 1);
 
 	return TCL_OK;
@@ -2914,13 +2910,6 @@ vo_cmd(ClientData clientData,
 	{"viewDir",		vo_viewDir_tcl},
 	{"vrot",		vo_vrot_tcl},
 	{"zoom",		vo_zoom_tcl},
-#if 0
-	{"knob",		vo_knob_tcl},
-	{"qorot",		vo_qorot_tcl},
-	{"qvrot",		vo_qvrot_tcl},
-	{"status",		vo_status_tcl},
-	{"",			vo__tcl},
-#endif
 	{(char *)0,		(int (*)())0}
     };
 

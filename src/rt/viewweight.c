@@ -203,6 +203,9 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj),
     if (!minus_o) {
 	outfp = stdout;
 	output_is_binary = 0;
+    } else {
+	if (outfp == NULL && outputfile != NULL && strlen(outputfile) > 0)
+	    outfp = fopen(outputfile, "w");
     }
 
     for (i = 1; i < MAXMATLS; i++) {
@@ -223,6 +226,9 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj),
 	if ((densityfp = fopen(densityfile, "r")) == (FILE *)0) {
 	    bu_log("Unable to load density file \"%s\" for reading\n", densityfile);
 	    perror(densityfile);
+	    if (minus_o) {
+		fclose(outfp);
+	    }
 	    bu_exit(-1, NULL);
 	}
     }
@@ -267,6 +273,9 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj),
     ap->a_miss = miss;
     ap->a_overlap = overlap;
     ap->a_onehit = 0;
+    if (minus_o) {
+	fclose(outfp);
+    }
 
     return 0;		/* no framebuffer needed */
 }

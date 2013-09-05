@@ -391,7 +391,7 @@ check_syntax(struct ged *gedp, struct bu_list *hp, char *comb_name, struct direc
 		if (!dp && BU_STR_EQUAL(comb_name, tok->tp->tr_l.tl_name))
 		    circular_ref++;
 		else if (db_lookup(gedp->ged_wdbp->dbip, tok->tp->tr_l.tl_name, LOOKUP_QUIET) == RT_DIR_NULL)
-		    bu_vls_printf(gedp->ged_result_str, "WARNING: '%s' does not actually exist\n", tok->tp->tr_l.tl_name);
+		    bu_vls_printf(gedp->ged_result_str, "WARNING: '%s' does not currently exist\n", tok->tp->tr_l.tl_name);
 		break;
 	}
 	if (paren_count < 0)
@@ -634,7 +634,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 	    comb->los = gedp->ged_wdbp->wdb_los_default;
 	    comb->GIFTmater = gedp->ged_wdbp->wdb_mat_default;
 	    bu_vls_printf(gedp->ged_result_str,
-			  "Creating region id=%ld, air=%ld, los=%ld, GIFTmaterial=%ld\n",
+			  "Creating region with attrs: region_id=%ld, air=%ld, los=%ld, material_id=%ld\n",
 			  comb->region_id, comb->aircode, comb->los, comb->GIFTmater);
 
 	    flags |= RT_DIR_REGION;
@@ -643,7 +643,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 	RT_DB_INTERNAL_INIT(&intern);
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_COMBINATION;
-	intern.idb_meth = &rt_functab[ID_COMBINATION];
+	intern.idb_meth = &OBJ[ID_COMBINATION];
 	intern.idb_ptr = (genptr_t)comb;
 
 	GED_DB_DIRADD(gedp, dp, comb_name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type, GED_ERROR);

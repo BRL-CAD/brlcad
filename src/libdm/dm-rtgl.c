@@ -122,6 +122,7 @@ struct dm dm_rtgl = {
     null_getDisplayImage,	/* display to image function */
     null_reshape,
     null_makeCurrent,
+    null_processEvents,
     0,
     1,				/* has displaylist */
     0,                          /* no stereo by default */
@@ -922,11 +923,6 @@ rtgl_drawEnd(struct dm *dmp)
 	bu_vls_free(&tmp_vls);
     }
 
-    /*XXX Keep this off unless testing */
-#if 0
-    glFinish();
-#endif
-
     rtgl_actively_drawing = 0;
     return TCL_OK;
 }
@@ -1258,14 +1254,7 @@ randShots(fastf_t *center, fastf_t radius, int flag)
 	    /* jitter point */
 	    VMOVE(app.a_ray.r_dir, pt);
 
-
-	    if (RT_BADVEC(app.a_ray.r_dir)) {
-		VPRINT("bad dir:", app.a_ray.r_dir);
-	    }
-
-	    if (RT_BADVEC(app.a_ray.r_pt)) {
-		VPRINT("bad pt:", app.a_ray.r_pt);
-	    } else if (flag) {
+	    if (flag) {
 		/* shoot ray */
 		rt_shootray(&app);
 	    }
@@ -1553,7 +1542,6 @@ drawPoints(float *view, int pointSize)
 	for (BU_LIST_FOR (rtgljob.currItem, ptInfoList, head)) {
 	    used = rtgljob.currItem->used;
 
-#if 1
 	    glBegin(GL_POINTS);
 	    for (i = 0; i < used; i += 3) {
 
@@ -1569,11 +1557,6 @@ drawPoints(float *view, int pointSize)
 		}
 	    }
 	    glEnd();
-#else
-	    glNormalPointer(GL_FLOAT, 0, &(rtgljob.currItem->norms));
-	    glVertexPointer(3, GL_FLOAT, 0, &(rtgljob.currItem->points));
-	    glDrawArrays(GL_POINTS, 0, (used / 3));
-#endif
 	}
     } while ((entry = bu_hash_tbl_next(&record)) != NULL);
 

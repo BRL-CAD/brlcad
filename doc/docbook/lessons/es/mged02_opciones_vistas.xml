@@ -479,7 +479,7 @@
 	opera en un sistema de coordenadas tridimensional (determinado por los
 	ejes x, y, and z).
 	Acimut se mide por los ejes del plano xy, con el semieje positivo del
-	eje x correspondiendo al acimuth igual a 0'0. Los ángulos positivos
+	eje x correspondiendo al acimut igual a 0'0. Los ángulos positivos
 	del acimut son medidos desde el lado positivo del eje x, yendo hacia
 	y pasando el lado positivo del eje y (sentido antihorario). Los valores
 	 negativos de acimut son medidos en la dirección opuesta.

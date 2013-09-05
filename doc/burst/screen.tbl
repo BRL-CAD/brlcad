@@ -1,0 +1,54 @@
+.TS
+center,box,tab(@);
+c0 l s s s.
+@0.97 user + 1.21 sys in 6 elapsed secs (16.1667%)
+.T&
+c0   c   c   c   c
+c0 | c | c | c | c
+c0 | c | c | c | c
+c0 | c | _ | c | c
+c0 | c | c | c | c
+c0 | c | c | c | c
+c0 | c | c   _   c
+c0 | c | c   c   c .
+@_@_@_@
+@units@bursting method@burst-distance
+@project files@\fBbursting parameters\fR@\fBcone-half-angle\fR
+@target files@@deflect-spall-cone
+@shotlines@@max-spall-rays
+@\fBburst points\fR@@max-barriers
+@comment
+@execute
+@preferences
+@_@
+.sp 2
+.T&
+c0 lb s s c
+c0 lb s s c
+c0 l  s s s .
+@degrees from spall cone axis to limit burst rays
+@Cone angle ? (degrees)[45.000000]
+@___BURST (2.2)_______________________________________________
+.T&
+c0 l l.
+@error-file@tfiles/ktank.log
+@plot-file@tfiles/ktank.plot
+@image-file@/dev/sgi
+@units@inches
+@shotline-file@tfiles/ktank.shotlines
+@burst-file@tfiles/ktank.burst
+@burst-air-file@tfiles/ktank,air.ids
+@burst-armor-file@tfiles/ktank,armor.ids
+@critical-comp-file@tfiles/ktank,crit.ids
+@color-file@tfiles/ktank,colors
+@burst-distance@0
+@cell-size@16
+@attack-direction@0 0
+@max-spall-rays@50
+@cone-half-angle@45
+@target-file@/vld/moss/g/ktank.g
+@target-objects@component
+@report-overlaps@no
+@shotline-burst@yes yes
+@#ground-plane@yes 66 200 200 200 200
+.TE

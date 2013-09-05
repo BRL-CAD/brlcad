@@ -19,6 +19,7 @@ set(BREP_LOCAL_INCLUDE_DIRS
 BRLCAD_LIB_INCLUDE_DIRS(brep BREP_INCLUDE_DIRS BREP_LOCAL_INCLUDE_DIRS)
 
 set(LIBBREP_SOURCES
+  boolean.cpp
   intersect.cpp
   libbrep_brep_tools.cpp
   opennurbs_ext.cpp
@@ -35,7 +36,6 @@ set(libbrep_ignored_files
   PullbackCurve.h
   )
 CMAKEFILES(${libbrep_ignored_files})
-CMAKEFILES(Makefile.am)
 
 # Initialize libbrep_DEFINES in case of reconfiguration
 set(libbrep_DEFINES "")
@@ -49,9 +49,13 @@ if(CPP_DLL_DEFINES)
 endif(CPP_DLL_DEFINES)
 set_property(GLOBAL PROPERTY libbrep_DEFINES "${libbrep_DEFINES}")
 
-BRLCAD_ADDLIB(libbrep "${LIBBREP_SOURCES}" "libbn;libbu;${OPENNURBS_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NOSTRICTCXX)
+BRLCAD_ADDLIB(libbrep "${LIBBREP_SOURCES}" "libbn;libbu;${OPENNURBS_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NO_STRICT_CXX)
 
 set_target_properties(libbrep PROPERTIES VERSION 20.0.1 SOVERSION 20)
+
+BRLCAD_ADDEXEC(test_point_intersect test_point_intersect.cpp "libbrep" NO_STRICT NO_INSTALL)
+
+BRLCAD_ADDEXEC(test_curve_intersect test_curve_intersect.cpp "libbrep" NO_STRICT NO_INSTALL)
 
 # Local Variables:
 # tab-width: 8

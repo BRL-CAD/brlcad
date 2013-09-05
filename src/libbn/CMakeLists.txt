@@ -48,7 +48,6 @@ BRLCAD_ADDEXEC(bntester bntester.c "libbu;libbn" NO_INSTALL)
 add_subdirectory(tests)
 
 CMAKEFILES(
-  Makefile.am
   README
   bntester.dat
   )

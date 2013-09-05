@@ -18,7 +18,7 @@
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
 <para>Files of this format are produced by programs
 such as
-<citerefentry><refentrytitle>pixhist3d-pl</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>pixhist3d-plot3</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 using the routines
 described in
 <citerefentry><refentrytitle>libplot3</refentrytitle><manvolnum>3</manvolnum></citerefentry>
@@ -26,14 +26,14 @@ and are interpreted for various devices
 by standard programs described in
 <citerefentry><refentrytitle>plot</refentrytitle><manvolnum>1G</manvolnum></citerefentry>,
 as well as additional programs such as
-<citerefentry><refentrytitle>pl-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+<citerefentry><refentrytitle>plot3-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 The format of output from
 <emphasis remap='I'>libplot3</emphasis>
 differs from that of
 <emphasis remap='I'>libplot</emphasis>
 only in the addition of 3-D primitives and color.
 A graphics file is a stream of plotting instructions.
-Each instruction consists of an <?troff ps -1?>ASCII<?troff ps +1?> letter
+Each instruction consists of an ASCII letter
 usually followed by bytes of binary information.
 The instructions are executed in order.
 A point is designated by
@@ -99,7 +99,7 @@ four bytes to the point given by the following four bytes.</para>
   <varlistentry>
   <term><emphasis remap='B'>t</emphasis></term>
   <listitem>
-<para>label:  Place the following <?troff ps -1?>ASCII<?troff ps 0?> string so that its
+<para>label:  Place the following ASCII string so that its
 first character falls on the current point.
 The string is terminated by a new-line.</para>
   </listitem>
@@ -144,7 +144,7 @@ and
 <option>-Tver</option>
 options of
 <citerefentry><refentrytitle>plot</refentrytitle><manvolnum>1G</manvolnum></citerefentry>
-(<?troff ps -1?>TEKTRONIX<?troff ps +1?> 4014 terminal and Versatec plotter).</para>
+(TEKTRONIX 4014 terminal and Versatec plotter).</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -329,7 +329,7 @@ devices whose face is not square.</para>
     </listitem>
     </varlistentry>
     <varlistentry>
-    <term><?troff ps -1?>TEKTRONIX<?troff ps +1?> 4014</term>
+    <term>TEKTRONIX 4014</term>
     <listitem>
 <para>space(0, 0, 3120, 3120);</para>
     </listitem>
@@ -353,11 +353,10 @@ devices whose face is not square.</para>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
 <para><citerefentry><refentrytitle>libplot3</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>plot</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>plot</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+<citerefentry><refentrytitle>plot</refentrytitle><manvolnum>n</manvolnum></citerefentry>.</para>
 
 <para><citerefentry><refentrytitle>graph</refentrytitle><manvolnum>1G</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot</refentrytitle><manvolnum>1G</manvolnum></citerefentry> in the
-<emphasis remap='I'><?troff ps -1?>UNIX<?troff ps +1?> System User Reference Manual</emphasis>.</para>
+<emphasis remap='I'>UNIX System User Reference Manual</emphasis>.</para>
 </refsect1>
 
 <refsect1 xml:id='author'><title>AUTHOR</title>

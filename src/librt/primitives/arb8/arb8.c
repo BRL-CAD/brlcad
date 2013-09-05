@@ -85,7 +85,7 @@ struct aface {
 
 
 /* One of these for each ARB, custom allocated to size */
-struct arb_specific  {
+struct arb_specific {
     int arb_nmfaces;		/* number of faces */
     struct oface *arb_opt;	/* pointer to optional info */
     struct aface arb_face[6];	/* May really be up to [6] faces */
@@ -332,7 +332,8 @@ rt_arb_std_type(const struct rt_db_internal *ip, const struct bn_tol *tol)
 
     /* return rt_arb_get_cgtype(...); causes segfault in bk_mk_plane_3pts() when
      * using analyze command */
-    if (rt_arb_get_cgtype(&cgtype, arb, tol, uvec, svec) == 0) return 0;
+    if (rt_arb_get_cgtype(&cgtype, arb, tol, uvec, svec) == 0)
+	return 0;
 
     return cgtype;
 }
@@ -541,7 +542,7 @@ rt_arb_add_pt(register pointp_t point, const char *title, struct prep_arb *pap, 
  *
  * Returns -
  * 0 OK
- *	<0 failure
+ * <0 failure
  */
 HIDDEN int
 rt_arb_mk_planes(register struct prep_arb *pap, struct rt_arb_internal *aip, const char *name)
@@ -693,7 +694,7 @@ rt_arb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
  *
  * Returns -
  * 0 OK
- *	!0 failure
+ * !0 failure
  */
 HIDDEN int
 rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip, int uv_wanted)
@@ -780,7 +781,7 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
  *
  * Returns -
  * 0 OK
- *	!0 failure
+ * !0 failure
  */
 int
 rt_arb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
@@ -840,7 +841,7 @@ rt_arb_print(register const struct soltab *stp)
  *
  * Returns -
  * 0 MISS
- *	>0 HIT
+ * >0 HIT
  */
 int
 rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
@@ -1254,7 +1255,7 @@ rt_arb_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_ARB8;
-    ip->idb_meth = &rt_functab[ID_ARB8];
+    ip->idb_meth = &OBJ[ID_ARB8];
     BU_ALLOC(ip->idb_ptr, struct rt_arb_internal);
 
     aip = (struct rt_arb_internal *)ip->idb_ptr;
@@ -1336,14 +1337,14 @@ rt_arb_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_ARB8;
-    ip->idb_meth = &rt_functab[ID_ARB8];
+    ip->idb_meth = &OBJ[ID_ARB8];
     BU_ALLOC(ip->idb_ptr, struct rt_arb_internal);
 
     aip = (struct rt_arb_internal *)ip->idb_ptr;
     aip->magic = RT_ARB_INTERNAL_MAGIC;
 
     /* Convert from database (network) to internal (host) format */
-    ntohd((unsigned char *)vec, ep->ext_buf, 8*3);
+    bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, 8*3);
     if (mat == NULL) mat = bn_mat_identity;
     for (i=0; i<8; i++) {
 	MAT4X3PNT(aip->pt[i], mat, &vec[i*3]);
@@ -1377,7 +1378,7 @@ rt_arb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     for (i=0; i<8; i++) {
 	VSCALE(&vec[i*ELEMENTS_PER_VECT], aip->pt[i], local2mm);
     }
-    htond(ep->ext_buf, (unsigned char *)vec, 8*ELEMENTS_PER_VECT);
+    bu_cv_htond(ep->ext_buf, (unsigned char *)vec, 8*ELEMENTS_PER_VECT);
     return 0;
 }
 
@@ -1584,14 +1585,8 @@ rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* Associate face geometry */
     for (i=0; i < pa.pa_faces; i++) {
-#if 1
 	/* We already know the plane equations, this is fast */
 	nmg_face_g(fu[i], pa.pa_face[i].peqn);
-#else
-	/* For the cautious, ensure topology and geometry match */
-	if (nmg_fu_planeeqn(fu[i], tol) < 0)
-	    return -1;		/* FAIL */
-#endif
     }
 
     /* Mark edges as real */
@@ -1764,7 +1759,7 @@ rt_arb_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	    vect_t c_b;
 	    /* Trimming curve describes a triangle ABC on face,
 	     * generate a phantom fourth corner at A + (C-B)
-	     *  [3] = [0] + [2] - [1]
+	     * [3] = [0] + [2] - [1]
 	     */
 	    VSUB2(c_b,
 		  &fg->ctl_points[rt_arb_vert_index_scramble[2]*3],

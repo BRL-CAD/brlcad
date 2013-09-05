@@ -28,69 +28,100 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "bio.h"
 #include "bu.h"
+#include "icv.h"
+
+int outx=0, outy=0;		/* Number of pixels in new map */
+int xorig=0, yorig=0;		/* Bottom left corner to extract from */
+int inx=512, iny=512;
+char *out_file = NULL;
+char *in_file = NULL;
 
 
-int xnum, ynum;		/* Number of pixels in new map */
-int xorig, yorig;		/* Bottom left corner to extract from */
-int linelen;
-char *buf;			/* output scanline buffer, malloc'd */
+char usage[] = "\
+Usage:  bwrect [-h] [squaresize] [-w width] [-n height] [-W out_width ] [-N out_height] \n\
+			[-x xorig] [-y yorig] [-S out_squaresize] [-o out_file.bw] [file.bw] > [out_file.bw]\n";
+
+
+static int
+get_args(int argc, char **argv)
+{
+    int c;
+
+    while ((c = bu_getopt(argc, argv, "s:w:n:S:W:N:x:y:o:h?")) != -1) {
+	switch (c) {
+	    case 's':
+		inx = iny = atoi(bu_optarg);
+		break;
+	    case 'W':
+		outx = atoi(bu_optarg);
+		break;
+	    case 'w':
+		inx = atoi(bu_optarg);
+		break;
+	    case 'N':
+		outy = atoi(bu_optarg);
+		break;
+	    case 'n':
+		iny = atoi(bu_optarg);
+		break;
+	    case 'S':
+		outy = outx = atoi(bu_optarg);
+		break;
+	    case 'x':
+		xorig = atoi(bu_optarg);
+		break;
+	    case 'y':
+		yorig = atoi(bu_optarg);
+		break;
+	    case 'o':
+		out_file = bu_optarg;
+		break;
+	    case 'h' :
+	    default : /* '?' */
+		return 0;
+	}
+    }
+    if (bu_optind >= argc) {
+	if (isatty(fileno(stdin))) {
+	    return 0;
+	}
+    } else {
+        in_file = argv[bu_optind];
+        bu_optind++;
+        return 1;
+    }
+
+
+    if (!isatty(fileno(stdout)) && out_file!=NULL) {
+	return 0;
+    }
+
+    if (argc > ++bu_optind) {
+	bu_log("bwrect: excess argument(s) ignored\n");
+    }
+
+    return 1;
+}
 
 
 int
 main(int argc, char **argv)
 {
-    FILE *ifp, *ofp;
-    int row;
-    off_t offset;
-    size_t ret;
-
-    if (argc < 3) {
-	bu_exit(1, "Usage: bwrect infile outfile (I prompt!)\n");
-    }
-    if ((ifp = fopen(argv[1], "r")) == NULL) {
-	bu_exit(2, "bwrect: can't open %s for reading\n", argv[1]);
-    }
-    if ((ofp = fopen(argv[2], "w")) == NULL) {
-	bu_exit(3, "bwrect: can't open %s for writing\n", argv[2]);
+    icv_image_t *img;
+    if (!get_args(argc, argv)) {
+        bu_log("%s", usage);
+        return 1;
     }
 
-    /* Get info */
-    printf("Area to extract (x, y) in pixels ");
-    ret = scanf("%d%d", &xnum, &ynum);
-    if (ret != 2)
-	perror("scanf");
+    img = icv_read(in_file, ICV_IMAGE_BW, inx, iny);
+    if (img == NULL)
+        return 1;
+    icv_rect(img, xorig, yorig, outx, outy);
+    icv_write(img, out_file, ICV_IMAGE_BW);
 
-    printf("Origin to extract from (0, 0 is lower left) ");
-    ret = scanf("%d%d", &xorig, &yorig);
-    if (ret != 2)
-	perror("scanf");
-
-    printf("Scan line length of input file ");
-    ret = scanf("%d", &linelen);
-    if (ret != 1)
-	perror("scanf");
-
-    buf = (char *)bu_malloc(xnum, "buffer");
-
-    /* Move all points */
-    for (row = 0+yorig; row < ynum+yorig; row++) {
-	offset = row * linelen + xorig;
-	bu_fseek(ifp, offset, 0);
-	ret = fread(buf, sizeof(*buf), xnum, ifp);
-	if (ret == 0) {
-	    perror("fread");
-	    break;
-	}
-
-	ret = fwrite(buf, sizeof(*buf), xnum, ofp);
-	if (ret == 0) {
-	    perror("fwrite");
-	    break;
-	}
-    }
-
-    bu_free(buf, "buffer");
+    icv_destroy(img);
     return 0;
 }
 

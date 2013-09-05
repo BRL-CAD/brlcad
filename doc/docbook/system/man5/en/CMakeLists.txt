@@ -1,6 +1,6 @@
 set(docbook_man5_EN
   dsp.xml
-  gattributes.xml
+  attributes.xml
   bw.xml
   cmap.xml
   pix.xml

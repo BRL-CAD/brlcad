@@ -970,6 +970,7 @@ namespace eval ArcherCore {
 
 	method watchVar {_name1 _name2 _op}
 	method accordianCallback {_item _state}
+	method updatePrimitiveLabels {args}
     }
 }
 
@@ -1580,7 +1581,11 @@ namespace eval ArcherCore {
 
     foreach item [gedCmd report 0] {
 	if {[lsearch [split $item /] $obj] != -1} {
-	    gedCmd draw -m$rmode -x$rtrans $item
+	    if { $rmode == $DISPLAY_MODE_HIDDEN } {
+		gedCmd draw -h $item
+	    } else {
+		gedCmd draw -m$rmode -x$rtrans $item
+	    }
 	}
     }
 }
@@ -1592,7 +1597,12 @@ namespace eval ArcherCore {
 	set rdata [gedCmd how -b $obj]
 	set rmode [lindex $rdata 0]
 	set rtrans [lindex $rdata 1]
-	gedCmd draw -m$rmode -x$rtrans $obj
+
+	if [ $rmode == $DISPLAY_MODE_HIDDEN ] {
+	    gedCmd draw -h $obj
+	} else {
+	    gedCmd draw -m$rmode -x$rtrans $obj
+	}
     }
 
     $itk_component(ged) refresh_on
@@ -6457,11 +6467,38 @@ namespace eval ArcherCore {
     eval gedWrapper item 0 0 1 0 $args
 }
 
+::itcl::body ArcherCore::updatePrimitiveLabels {args} {
+    if {![info exists itk_component(ged)]} {
+	return
+    }
+
+    set plist [$itk_component(ged) cget -primitiveLabels]
+    if {[llength $plist] > 0} {
+	set tail_plist {}
+	foreach item $plist {
+	    lappend tail_plist [file tail $item]
+	}
+
+	foreach item [eval gedCmd kill -n $args] {
+	    set item [string trim $item]
+	    set i [lsearch $tail_plist $item]
+	    if {$i != -1} {
+		set plist [lreplace $plist $i $i]
+		set tail_plist [lreplace $tail_plist $i $i]
+	    }
+	}
+
+	$itk_component(ged) configure -primitiveLabels $plist
+    }
+}
+
 ::itcl::body ArcherCore::kill {args} {
+    eval updatePrimitiveLabels $args
     eval gedWrapper kill 1 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::killall {args} {
+    eval updatePrimitiveLabels $args
     eval gedWrapper killall 1 0 1 2 $args
 }
 
@@ -7173,6 +7210,7 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::watchVar {_name1 _name2 _op} {
     global rt_bot_mintie
+    global env
 
     if {![info exists itk_component(ged)]} {
 	return
@@ -7236,6 +7274,7 @@ namespace eval ArcherCore {
 	}
 	mRtBotMintie {
 	    set rt_bot_mintie $mRtBotMintie
+	    set env(LIBRT_BOT_MINTIE) $mRtBotMintie
 	}
     }
 }

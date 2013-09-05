@@ -56,7 +56,7 @@ char null_str = '\0';
 void SimpleInput(void);
 
 char usage[] = "\
-Usage: fbpoint [-h] [-x[prefix]] [-y[prefix]] [initx inity]\n";
+Usage: fbpoint [-H] [-x[prefix]] [-y[prefix]] [initx inity]\n";
 
 static char *help = "\
 Char:   Command:                                                \r\n\
@@ -143,11 +143,11 @@ main(int argc, char **argv)
     int width, height;
 
     setbuf(stderr, malloc(BUFSIZ));
-    width = height = 0;
+    width = height = 512;
     curX = curY = -1;
 
     while (argc > 1) {
-	if (BU_STR_EQUAL(argv[1], "-h")) {
+	if (BU_STR_EQUAL(argv[1], "-H")) {
 	    width = height = 1024;
 	} else if (bu_strncmp(argv[1], "-x", 2) == 0) {
 	    if (xflag++ != 0)
@@ -162,6 +162,8 @@ main(int argc, char **argv)
 	argc--;
 	argv++;
     }
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
+	bu_exit(1, "%s", usage);
     /*
      * Check for optional starting coordinate.
      * Test for bad flags while we're at it.

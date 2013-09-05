@@ -1,0 +1,13 @@
+.TS
+center,allbox,tab(@);
+cb cb cb cb cb
+_ _ _ _ _
+lb ci ci ci l.
+COLOR@R@G@B@REPRESENTATION
+yellow@255@255@0@grid cell centers
+red@255@0@0@burst cone
+blue@0@0@255@default component intersection
+lt blue@100@100@255@default outside air intersection
+lt green@100@255@100@default inside air intersection
+purple@255@0@255@default critical component intersection
+.TE

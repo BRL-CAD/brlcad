@@ -424,18 +424,18 @@ int main(int argc, char **argv)
 	if (nmged != numreg) {
 	    fprintf(stdout, "ERROR -- The number of regions in the mged\n");
 	    fprintf(stdout, "file (%d) does not equal the number of\n",
-			  nmged);
+		    nmged);
 	    fprintf(stdout, "regions in the second pass file (%d).\n",
-			  numreg);
+		    numreg);
 	    fprintf(stdout, "Watch for unexplained errors.\n");
 	    (void)fflush(stdout);
 
 	    if (iwrite == 1) {
 		fprintf(fp3, "ERROR -- The number of regions in the mged\n");
 		fprintf(fp3, "file (%d) does not equal the number of\n",
-			      nmged);
+			nmged);
 		fprintf(fp3, "regions in the second pass file (%d).\n",
-			      numreg);
+			numreg);
 		fprintf(fp3, "Watch for unexplained errors.\n");
 		(void)fflush(fp3);
 	    }
@@ -472,9 +472,9 @@ int main(int argc, char **argv)
 	/* Print center of bounding rpp, diagonal, & maximum */
 	/*  & minimum of grid.  */
 	fprintf(stdout, "Center of bounding rpp (%f, %f, %f)\n",
-		      center[X], center[Y], center[Z]);
+		center[X], center[Y], center[Z]);
 	fprintf(stdout, "Length of diagonal of bounding rpp:  %f\n",
-		      diagonal);
+		diagonal);
 	fprintf(stdout, "Minimums & maximums of grid:\n");
 	fprintf(stdout, "  %f - %f\n", xmin, xmax);
 	fprintf(stdout, "  %f - %f\n", ymin, ymax);
@@ -484,18 +484,18 @@ int main(int argc, char **argv)
 	/* Write model minimum & maximum.  */
 	fprintf(stdout, "Model minimum & maximum.\n");
 	fprintf(stdout, "\tX:  %f to %f\n\tY:  %f to %f\n\tZ:  %f to %f\n\n",
-		      rtip->mdl_min[X], rtip->mdl_max[X],
-		      rtip->mdl_min[Y], rtip->mdl_max[Y],
-		      rtip->mdl_min[Z], rtip->mdl_max[Z]);
+		rtip->mdl_min[X], rtip->mdl_max[X],
+		rtip->mdl_min[Y], rtip->mdl_max[Y],
+		rtip->mdl_min[Z], rtip->mdl_max[Z]);
 	(void)fflush(stdout);
 
 	if (iwrite == 1) {
 	    fprintf(fp3, "Model minimum & maximum.\n");
 	    fprintf(fp3, "\tX:  %f to %f\n\tY:  %f kto %f\n",
-			  rtip->mdl_min[X], rtip->mdl_max[X],
-			  rtip->mdl_min[Y], rtip->mdl_max[Y]);
+		    rtip->mdl_min[X], rtip->mdl_max[X],
+		    rtip->mdl_min[Y], rtip->mdl_max[Y]);
 	    fprintf(fp3, "\tZ:  %f to %f\n\n",
-			  rtip->mdl_min[Z], rtip->mdl_max[Z]);
+		    rtip->mdl_min[Z], rtip->mdl_max[Z]);
 	    (void)fflush(fp3);
 	}
 
@@ -712,21 +712,21 @@ int main(int argc, char **argv)
 
 		    if (iwrite == 0) {
 			fprintf(stdout, "\tadjreg=%d, numcal=%f, shrarea=%f, ",
-				      (j+1), cond[i].numcal[j], cond[i].shrarea[j]);
+				(j+1), cond[i].numcal[j], cond[i].shrarea[j]);
 			fprintf(stdout, "avglen=%f\n", cond[i].avglen[j]);
 			fprintf(stdout, "\t\trmslen=%f, ", cond[i].rmslen[j]);
 			fprintf(stdout, "minlen=%f, maxlen=%f\n",
-				      cond[i].minlen[j], cond[i].maxlen[j]);
+				cond[i].minlen[j], cond[i].maxlen[j]);
 			(void)fflush(stdout);
 		    }
 
 		    if (iwrite == 1) {
 			fprintf(fp3, "\tadjreg=%d, numcal=%f, shrarea=%f, ",
-				      (j+1), cond[i].numcal[j], cond[i].shrarea[j]);
+				(j+1), cond[i].numcal[j], cond[i].shrarea[j]);
 			fprintf(fp3, "avglen=%f\n", cond[i].avglen[j]);
 			fprintf(fp3, "\t\trmslen=%f, ", cond[i].rmslen[j]);
 			fprintf(fp3, "minlen=%f, maxlen=%f\n",
-				      cond[i].minlen[j], cond[i].maxlen[j]);
+				cond[i].minlen[j], cond[i].maxlen[j]);
 			(void)fflush(fp3);
 		    }
 
@@ -750,7 +750,7 @@ int main(int argc, char **argv)
 		i++;
 	    }
 	    fprintf(fp3, "\tfile containing second pass information:  %s\n",
-			  spfile);
+		    spfile);
 	    fprintf(fp3, "\tmaterial file used:  %s\n", filemat);
 	    fprintf(fp3, "\toutput file created:  %s\n", filename);
 	    if (typeout == 0) {
@@ -758,9 +758,9 @@ int main(int argc, char **argv)
 		fprintf(fp3, "\t (format is PRISM %d.0)\n", prmrel);
 	    } else if (typeout == 1)
 		fprintf(fp3, "\tgeneric file created:  %s\n"
-			      , genfile);
+			, genfile);
 	    fprintf(fp3, "\tconductivity table file created:  %s\n",
-			  tblfile);
+		    tblfile);
 	    fprintf(fp3, "\terror file created:  %s\n\n\n", fileerr);
 	    (void)fflush(fp3);
 
@@ -855,45 +855,45 @@ int main(int argc, char **argv)
 			if ((itype == 1) && (cond[i].shrarea[j] > ZEROTOL)) {
 			    if (prmrel == 2)
 				fprintf(fp1, "%3d %3d %7.3f %.3e\n",
-					      (j+1), (i+1), cond[i].rkavg[j],
-					      (cond[i].shrarea[j] * 1.0e-6));
+					(j+1), (i+1), cond[i].rkavg[j],
+					(cond[i].shrarea[j] * 1.0e-6));
 			    if (prmrel == 3)
 				fprintf(fp1, "%6d %6d %7.3f %.3e\n",
-					      (j+1), (i+1), cond[i].rkavg[j],
-					      (cond[i].shrarea[j] * 1.0e-6));
+					(j+1), (i+1), cond[i].rkavg[j],
+					(cond[i].shrarea[j] * 1.0e-6));
 			}
 
 			if ((itype == 2) && (cond[i].shrarea[j] > ZEROTOL)) {
 			    if (prmrel == 2)
 				fprintf(fp1, "%3d %3d %7.3f %.3e\n",
-					      (j+1), (i+1), cond[i].rkrms[j],
-					      (cond[i].shrarea[j] * 1.0e-6));
+					(j+1), (i+1), cond[i].rkrms[j],
+					(cond[i].shrarea[j] * 1.0e-6));
 			    if (prmrel == 3)
 				fprintf(fp1, "%6d %6d %7.3f %.3e\n",
-					      (j+1), (i+1), cond[i].rkrms[j],
-					      (cond[i].shrarea[j] * 1.0e-6));
+					(j+1), (i+1), cond[i].rkrms[j],
+					(cond[i].shrarea[j] * 1.0e-6));
 			}
 
 			if ((itype == 3) && (cond[i].shrarea[j] > ZEROTOL)) {
 			    if (prmrel == 2)
 				fprintf(fp1, "%3d %3d %7.3f %.3e\n",
-					      (j+1), (i+1), cond[i].rkmin[j],
-					      (cond[i].shrarea[j] * 1.0e-6));
+					(j+1), (i+1), cond[i].rkmin[j],
+					(cond[i].shrarea[j] * 1.0e-6));
 			    if (prmrel == 3)
 				fprintf(fp1, "%6d %6d %7.3f %.3e\n",
-					      (j+1), (i+1), cond[i].rkmin[j],
-					      (cond[i].shrarea[j] * 1.0e-6));
+					(j+1), (i+1), cond[i].rkmin[j],
+					(cond[i].shrarea[j] * 1.0e-6));
 			}
 
 			if ((itype == 4) && (cond[i].shrarea[j] > ZEROTOL)) {
 			    if (prmrel == 2)
 				fprintf(fp1, "%3d %3d %7.3f %.3e\n",
-					      (j+1), (i+1), cond[i].rkmax[j],
-					      (cond[i].shrarea[j] * 1.0e-6));
+					(j+1), (i+1), cond[i].rkmax[j],
+					(cond[i].shrarea[j] * 1.0e-6));
 			    if (prmrel == 3)
 				fprintf(fp1, "%6d %6d %7.3f %.3e\n",
-					      (j+1), (i+1), cond[i].rkmax[j],
-					      (cond[i].shrarea[j] * 1.0e-6));
+					(j+1), (i+1), cond[i].rkmax[j],
+					(cond[i].shrarea[j] * 1.0e-6));
 			}
 
 			(void)fflush(fp1);
@@ -931,15 +931,15 @@ int main(int argc, char **argv)
 		for (j=0; j<numreg; j++) {
 		    if (cond[i].shrarea[j] > ZEROTOL) {
 			fprintf(fp6, "   %5d  %.3e  ", (j+1),
-				      (cond[i].shrarea[j] * 1.e-6));
+				(cond[i].shrarea[j] * 1.e-6));
 			if (itype == 1) fprintf(fp6, "%.3e\n",
-						      (cond[i].avglen[j] * 1.e-3));
+						(cond[i].avglen[j] * 1.e-3));
 			if (itype == 2) fprintf(fp6, "%.3e\n",
-						      (cond[i].rmslen[j] * 1.e-3));
+						(cond[i].rmslen[j] * 1.e-3));
 			if (itype == 3) fprintf(fp6, "%.3e\n",
-						      (cond[i].minlen[j] * 1.e-3));
+						(cond[i].minlen[j] * 1.e-3));
 			if (itype == 4) fprintf(fp6, "%.3e\n",
-						      (cond[i].maxlen[j] * 1.e-3));
+						(cond[i].maxlen[j] * 1.e-3));
 		    }
 		    (void)fflush(fp6);
 		}
@@ -976,7 +976,7 @@ int main(int argc, char **argv)
 		    l4 = cond[i].maxlen[j] * 1.e-3;
 
 		    fprintf(fp2, "%4d, %4d, %4d, %.3e, ",
-				  (i+1), cond[i].mat, (j+1), a1);
+			    (i+1), cond[i].mat, (j+1), a1);
 		    if (j > i) {
 			fprintf(fp2, " %.3e, %.3e, ", l1, cond[i].rkavg[j]);
 			fprintf(fp2, " %.3e, %.3e, ", l2, cond[i].rkrms[j]);
@@ -1010,7 +1010,7 @@ int main(int argc, char **argv)
 	    i++;
 	}
 	fprintf(stdout, "\tfile containing second pass information:  %s\n",
-		      spfile);
+		spfile);
 	fprintf(stdout, "\tmaterial file used:  %s\n", filemat);
 	if (iwrite == 1) {
 	    fprintf(stdout, "\toutput file created:  %s\n", filename);
@@ -1036,7 +1036,7 @@ int main(int argc, char **argv)
 	/* Write type of file created to error file.  */
 	if (typeout == 0) {
 	    fprintf(fp4, "PRISM %d.0 conductivity file, %s, created.\n\n",
-			  prmrel, confile);
+		    prmrel, confile);
 	} else if (typeout == 1) {
 	    fprintf(fp4, "Generic file, %s, created.\n\n", genfile);
 	}
@@ -1047,7 +1047,7 @@ int main(int argc, char **argv)
 		if ((cond[i].numcal[j] > ZEROTOL) &&
 		    (cond[i].numcal[j] < MINCAL)) {
 		    fprintf(fp4, "region %d, adjacent region %d:\n",
-				  (i+1), (j+1));
+			    (i+1), (j+1));
 		    fprintf(fp4, "\tnumber of length calculations ");
 		    fprintf(fp4, "below minimum of %d\n", MINCAL);
 		    (void)fflush(fp4);

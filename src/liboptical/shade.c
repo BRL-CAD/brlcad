@@ -166,7 +166,7 @@ shade_inputs(struct application *ap, const struct partition *pp, struct shadewor
 		    bu_log("shade_inputs(%s) flip N xy=%d, %d %s surf=%d dot=%g\n",
 			   pp->pt_inseg->seg_stp->st_name,
 			   ap->a_x, ap->a_y,
-			   rt_functab[pp->pt_inseg->seg_stp->st_id].ft_name,
+			   OBJ[pp->pt_inseg->seg_stp->st_id].ft_name,
 			   swp->sw_hit.hit_surfno, f);
 		} else {
 		    if (counter++ == 101) {
@@ -218,7 +218,7 @@ hit pt: %g %g %g end pt: %g %g %g\n",
 		   swp->sw_uv.uv_u, swp->sw_uv.uv_v,
 		   swp->sw_uv.uv_du, swp->sw_uv.uv_dv,
 		   pp->pt_inseg->seg_stp->st_name,
-		   rt_functab[pp->pt_inseg->seg_stp->st_id].ft_name,
+		   OBJ[pp->pt_inseg->seg_stp->st_id].ft_name,
 		   pp->pt_inhit->hit_surfno,
 		   ap->a_x, ap->a_y);
 #ifdef RT_MULTISPECTRAL

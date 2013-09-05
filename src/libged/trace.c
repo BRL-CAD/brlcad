@@ -172,8 +172,8 @@ _ged_trace(struct directory *dp,
 	return;
     }
     bu_vls_printf(gtdp->gtd_gedp->ged_result_str, "%s:\n", dp->d_namep);
-    if (!rt_functab[id].ft_describe ||
-	rt_functab[id].ft_describe(gtdp->gtd_gedp->ged_result_str,
+    if (!OBJ[id].ft_describe ||
+	OBJ[id].ft_describe(gtdp->gtd_gedp->ged_result_str,
 				   &intern,
 				   verbose,
 				   gtdp->gtd_gedp->ged_wdbp->dbip->dbi_base2local,

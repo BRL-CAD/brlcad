@@ -162,6 +162,8 @@ bu_identify_magic(register uint32_t magic)
 	    return "rt_tor_internal";
 	case RT_VOL_INTERNAL_MAGIC:
 	    return "rt_vol_internal";
+	case RT_HRT_INTERNAL_MAGIC:
+	    return "rt_hrt_internal";
 
 	    /*
 	     * N-manifold geometry

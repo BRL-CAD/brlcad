@@ -38,7 +38,6 @@ by this package.  On start up, the program always attempts to open the
 default frame buffer.  This device is specified by the frame buffer library,
 and is configurable on a per system basis.  Often the user will want to
 over ride this default by setting the environment variable
-<!-- B elided -->
 <envar>FB_FILE</envar>
 (see
 <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
@@ -46,16 +45,12 @@ The
 <option>-h</option>
 option is for editing
 1024x1024 or high resolution
-<!-- B elided -->
 <emphasis remap='SM'>(HIRES)</emphasis>
 images;  the default is low resolution, 512x512
-<!-- B elided -->
 <emphasis remap='SM'>(LORES).</emphasis>
 The frame buffer's state can be toggled back and forth between
-<!-- B elided -->
 <acronym>HIRES</acronym>
 and
-<!-- B elided -->
 <acronym>LORES</acronym>
 at any time during execution of the program.</para>
 
@@ -80,7 +75,7 @@ The position of the cursor points to the
 <para>When run interactively,
 with the standard input attached to a terminal,
 the screen will be divided into 5 areas:
-the top line will be refered to as the
+the top line will be referred to as the
 <emphasis remap='I'>option line</emphasis>;
 the second line from the top will be called the
 <emphasis remap='I'>header line</emphasis>;
@@ -135,7 +130,7 @@ indicating to the user that an operation is on-going.</para>
 
 <para><emphasis remap='B'>Modes of Input</emphasis></para>
 
-<para>The user interface consists of a list of provided commands, refered to as
+<para>The user interface consists of a list of provided commands, referred to as
 <emphasis remap='I'>functions</emphasis>
 and user-defined commands, called
 <emphasis remap='I'>macros</emphasis>.
@@ -145,7 +140,6 @@ popularly called
 mode input) and therefore, virtually every
 function or macro is executed by striking a particular key,
 without having to enter it by hitting
-<!-- B elided -->
 <acronym>RETURN.</acronym>
 The key that activates a particular function or macro is said to be
 <emphasis remap='I'>bound</emphasis>
@@ -264,12 +258,10 @@ the user only needs to type the unambiguous root of the name.
 If the user has done so,
 hitting the space bar will show the complete name,
 or hitting the
-<!-- B elided -->
 <acronym>RETURN</acronym>
 key will
 enter the command.
 If the
-<!-- B elided -->
 <acronym>RETURN</acronym>
 key is struck,
 and there is no unique match,
@@ -664,7 +656,6 @@ the execution of the certain functions will at times display bogus
 messages like "I seem to have lost my bindings."</para>
 
 <para>There is currently a hard limit of 10 times
-<!-- B elided -->
 <acronym>BUFSIZ</acronym>
 (defined in
 <emphasis remap='I'>stdio.h</emphasis>)

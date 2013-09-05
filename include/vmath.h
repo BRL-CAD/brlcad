@@ -81,7 +81,7 @@
  *
  * #define ABC() do { register double _f; do stuff; } while (0)
  *
- * All of the macros that introduce a scope like the preceeding
+ * All of the macros that introduce a scope like the preceding
  * example are written as do { } while (0) loops in order to require
  * callers provide a trailing semicolon (e.g., ABC();).  This helps
  * preserve source code formatting.
@@ -304,6 +304,29 @@ typedef enum bn_matrix_component_ {
  */
 typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
+/**
+ * Evaluates truthfully whether a number is not within valid range of
+ * INFINITY to -INFINITY inclusive.
+ */
+#define INVALID(n) (!((n) >= -INFINITY && (n) <= INFINITY))
+
+/**
+ * Evaluates truthfully whether all components of a vector are not
+ * within a valid range.
+ */
+#define VINVALID(v) (INVALID((v)[X]) || INVALID((v)[Y]) || INVALID((v)[Z]))
+
+/**
+ * Evaluates truthfully whether all components of a 2D vector are not
+ * within a valid range.
+ */
+#define V2INVALID(v) (INVALID((v)[X]) || INVALID((v)[Y]))
+
+/**
+ * Evaluates truthfully whether all components of a 4D vector are not
+ * within a valid range.
+ */
+#define HINVALID(v) (INVALID((v)[X]) || INVALID((v)[Y]) || INVALID((v)[Z]) || INVALID((v)[W]))
 
 /**
  * Return truthfully whether a value is within a specified epsilon

@@ -263,10 +263,6 @@ rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     struct ehy_specific *ehy;
 
     fastf_t magsq_h;
-#if 0
-    /* unused compile error */
-    fastf_t mag_a;
-#endif
     fastf_t mag_h;
     fastf_t c, r1, r2;
     mat_t R;
@@ -281,10 +277,6 @@ rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	return -2;
     }
 
-#if 0
-    /* unused compile error */
-    mag_a = MAGSQ(xip->ehy_Au); /* a is unit vector, so |A|^2 == |A| */
-#endif
     magsq_h = MAGSQ(xip->ehy_H);
     mag_h = sqrt(magsq_h);
     r1 = xip->ehy_r1;
@@ -295,7 +287,7 @@ rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
      * EHY is ok
      */
     stp->st_id = ID_EHY;		/* set soltab ID */
-    stp->st_meth = &rt_functab[ID_EHY];
+    stp->st_meth = &OBJ[ID_EHY];
 
     BU_GET(ehy, struct ehy_specific);
     stp->st_specific = (genptr_t)ehy;
@@ -1190,10 +1182,6 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 int
 rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-#if 0
-    /* unused compile error */
-    fastf_t mag_a;
-#endif
     fastf_t c, dtol, mag_h, ntol, r1, r2, cprime;
     fastf_t **ellipses, theta_prev, theta_new;
     int *pts_dbl, face, i, j, nseg;
@@ -1223,10 +1211,6 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	return 1;
     }
 
-#if 0
-    /* unused compile error */
-    mag_a = MAGSQ(xip->ehy_Au); /* a is unit vector, so |A|^2 == |A| */
-#endif
     mag_h = MAGNITUDE(xip->ehy_H);
     c = xip->ehy_c;
     cprime = c / mag_h;
@@ -1665,7 +1649,7 @@ rt_ehy_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_EHY;
-    ip->idb_meth = &rt_functab[ID_EHY];
+    ip->idb_meth = &OBJ[ID_EHY];
     BU_ALLOC(ip->idb_ptr, struct rt_ehy_internal);
 
     xip = (struct rt_ehy_internal *)ip->idb_ptr;
@@ -1798,14 +1782,14 @@ rt_ehy_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_EHY;
-    ip->idb_meth = &rt_functab[ID_EHY];
+    ip->idb_meth = &OBJ[ID_EHY];
     BU_ALLOC(ip->idb_ptr, struct rt_ehy_internal);
 
     xip = (struct rt_ehy_internal *)ip->idb_ptr;
     xip->ehy_magic = RT_EHY_INTERNAL_MAGIC;
 
     /* Convert from database (network) to internal (host) format */
-    ntohd((unsigned char *)vec, ep->ext_buf, 3*4);
+    bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, 3*4);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
@@ -1884,7 +1868,7 @@ rt_ehy_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     vec[3*3+2] = xip->ehy_c * local2mm;
 
     /* Convert from internal (host) to database (network) format */
-    htond(ep->ext_buf, (unsigned char *)vec, 3*4);
+    bu_cv_htond(ep->ext_buf, (unsigned char *)vec, 3*4);
 
     return 0;
 }

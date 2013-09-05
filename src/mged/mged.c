@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <locale.h>
 #include <ctype.h>
 #include <signal.h>
 #include <time.h>
@@ -1082,7 +1083,7 @@ main(int argc, char *argv[])
      * Do not use bu_log() or bu_malloc() before here.
      */
     if (bu_avail_cpus() > 1) {
-	rt_g.rtg_parallel = 1;
+	RTG.rtg_parallel = 1;
 	bu_semaphore_init(RT_SEM_LAST);
     }
 
@@ -1105,7 +1106,7 @@ main(int argc, char *argv[])
 		classic_mged = 1;
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
 		break;
 	    case 'X':
 		sscanf(bu_optarg, "%x", (unsigned int *)&bu_debug);
@@ -1266,8 +1267,8 @@ main(int argc, char *argv[])
 
     /* Set up linked lists */
     BU_LIST_INIT(&MGED_FreeSolid.l);
-    BU_LIST_INIT(&rt_g.rtg_vlfree);
-    BU_LIST_INIT(&rt_g.rtg_headwdb.l);
+    BU_LIST_INIT(&RTG.rtg_vlfree);
+    BU_LIST_INIT(&RTG.rtg_headwdb.l);
 
     memset((void *)&head_cmd_list, 0, sizeof(struct cmd_list));
     BU_LIST_INIT(&head_cmd_list.l);
@@ -1689,6 +1690,9 @@ main(int argc, char *argv[])
 #endif
     }
 
+    /* mged inputs and outputs assume POSIX/C locale settings */
+    setlocale(LC_ALL, "POSIX");
+
     mged_init_flag = 0;	/* all done with initialization */
 
     /**************** M A I N   L O O P *********************/
@@ -1696,7 +1700,11 @@ main(int argc, char *argv[])
 	/* This test stops optimizers from complaining about an
 	 * infinite loop.
 	 */
+#ifdef DM_QT
+	if ((rateflag = event_check(1)) < 0) break;
+#else
 	if ((rateflag = event_check(rateflag)) < 0) break;
+#endif /* DM_QT */
 
 	/*
 	 * Cause the control portion of the displaylist to be updated
@@ -2261,6 +2269,8 @@ event_check(int non_blocking)
 
 	curr_dm_list = save_dm_list;
     }
+
+    DM_PROCESS_EVENTS(dmp);
 
     return non_blocking;
 }

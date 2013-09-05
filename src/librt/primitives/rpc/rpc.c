@@ -290,7 +290,7 @@ rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     magsq_r = mag_r * mag_r;
 
     stp->st_id = ID_RPC;		/* set soltab ID */
-    stp->st_meth = &rt_functab[ID_RPC];
+    stp->st_meth = &OBJ[ID_RPC];
 
     BU_GET(rpc, struct rpc_specific);
     stp->st_specific = (genptr_t)rpc;
@@ -1355,7 +1355,7 @@ rt_rpc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_RPC;
-    ip->idb_meth = &rt_functab[ID_RPC];
+    ip->idb_meth = &OBJ[ID_RPC];
     BU_ALLOC(ip->idb_ptr, struct rt_rpc_internal);
 
     xip = (struct rt_rpc_internal *)ip->idb_ptr;
@@ -1469,14 +1469,14 @@ rt_rpc_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_RPC;
-    ip->idb_meth = &rt_functab[ID_RPC];
+    ip->idb_meth = &OBJ[ID_RPC];
     BU_ALLOC(ip->idb_ptr, struct rt_rpc_internal);
 
     xip = (struct rt_rpc_internal *)ip->idb_ptr;
     xip->rpc_magic = RT_RPC_INTERNAL_MAGIC;
 
     /* Convert from database (network) to internal (host) format */
-    ntohd((unsigned char *)vec, ep->ext_buf, 10);
+    bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, 10);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
@@ -1541,7 +1541,7 @@ rt_rpc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     vec[3*3] = xip->rpc_r * local2mm;
 
     /* Convert from internal (host) to database (network) format */
-    htond(ep->ext_buf, (unsigned char *)vec, 10);
+    bu_cv_htond(ep->ext_buf, (unsigned char *)vec, 10);
 
     return 0;
 }

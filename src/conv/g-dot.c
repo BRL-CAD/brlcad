@@ -40,6 +40,7 @@
 #include "raytrace.h"
 #include "ged.h"
 
+const char *usage_fmt = "Usage: %s [-o output.dot] input.g [object1 ...]\n";
 
 struct output {
     FILE *outfp;
@@ -53,7 +54,6 @@ struct output {
 static void
 dot_comb(struct db_i *dbip, struct directory *dp, genptr_t out)
 {
-    size_t i;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
 
@@ -81,6 +81,7 @@ dot_comb(struct db_i *dbip, struct directory *dp, genptr_t out)
      * gets a list of comb members.  needs to return tabular data.
      */
     if (comb->tree) {
+	size_t i;
 	size_t node_count = 0;
 	size_t actual_count = 0;
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -167,33 +168,7 @@ dot_header(FILE *outfp, const char *label)
 
     fprintf(outfp, "\ndigraph \"BRL-CAD\" {\n");
 
-#if 1
     fprintf(outfp, "\tlabel=%s\n", bu_vls_encode(&vp, label));
-#else
-    /* starting with empty vls */
-    fprintf(outfp, "\tBEFORE(1): [%s]\n", bu_vls_addr(&vp));
-
-    /* add a chunk */
-    bu_vls_printf(&vp, "test1");
-
-    /* show it */
-    fprintf(outfp, "\tBEFORE(2): [%s]\n", bu_vls_addr(&vp));
-
-    fprintf(outfp, "\tlabel=[%s]\n", bu_vls_encode(&vp, label));
-
-    bu_vls_printf(&vp, "test2");
-    fprintf(outfp, "\tBEFORE(3): [%s]\n", bu_vls_addr(&vp));
-
-    /* FIXME: investigate bu_vls_dcode */
-    /*
-    fprintf(outfp, "\tAFTER(1): [%s]\n", bu_vls_decode(&vp, bu_vls_addr(&vp)));
-    */
-
-    bu_vls_printf(&vp, "test3");
-    fprintf(outfp, "\tAFTER(2): [%s]\n", bu_vls_addr(&vp));
-    bu_vls_free(&vp);
-#endif
-
     fprintf(outfp, "\tgraph [ rankdir=LR ];\n");
     fprintf(outfp, "\tnode [ style=filled ];\n");
     fprintf(outfp, "\tnode [ shape=box ];\n"); /* try Mrecord */
@@ -211,13 +186,12 @@ dot_footer(FILE *outfp)
 
 
 static void
-help()
+help(const char *argv0)
 {
-    bu_log("\n\t-? | -h | -H    (optional) displays this help");
+    bu_log(usage_fmt, argv0);
     bu_log("\n\t-o output.dot   (optional) name of output Graphviz .dot file");
     bu_log("\n\tinput.g         name of input BRL-CAD .g database");
-    bu_log("\n\tobject1 ...     (optional) name of object(s) to export from .g file");
-    bu_log("\n");
+    bu_log("\n\tobject1 ...     (optional) name of object(s) to export from .g file\n");
 }
 
 
@@ -226,7 +200,6 @@ main(int ac, char *av[])
 {
     int c;
 
-    const char *usage_fmt = "Usage: %s [-?hH] [-o output.dot] input.g [object1 ...]\n";
     const char *argv0 = av[0];
     const int argc0 = ac;
 
@@ -243,16 +216,13 @@ main(int ac, char *av[])
 
     bu_setprogname(av[0]);
 
-    while ((c = bu_getopt(ac, av, "o:")) != -1) {
+    while ((c = bu_getopt(ac, av, "o:h?")) != -1) {
 	switch (c) {
 	    case 'o':
 		output = bu_strdup(bu_optarg);
 		break;
-	    case 'h':
-	    case 'H':
-	    case '?':
-		bu_log(usage_fmt, argv0);
-		help();
+	    default:
+		help(argv0);
 		bu_exit(0, NULL);
 		break;
 	}
@@ -262,7 +232,7 @@ main(int ac, char *av[])
 
     /* there should at least be a db filename remaining */
     if (ac < 1) {
-	bu_log(usage_fmt, argv0);
+	help(argv0);
 	if (argc0 > 1) {
 	    bu_exit(2, "ERROR: input geometry database not specified\n");
 	} else {
@@ -289,7 +259,6 @@ main(int ac, char *av[])
 	char buffer[MAX_BUFFER] = {0};
 	char filename[MAXPATHLEN] = {0};
 	FILE *temp = NULL;
-	size_t total = 0;
 	size_t ret = 0;
 	size_t n = 0;
 
@@ -303,7 +272,6 @@ main(int ac, char *av[])
 	while (feof(stdin) == 0) {
 	    n = fread(buffer, 1, MAX_BUFFER, stdin);
 	    if (n > 0) {
-		total += n;
 		ret = fwrite(buffer, 1, n, temp);
 		if (ret != n) {
 		    bu_exit(5, "ERROR: problem encountered reading from standard input\n");

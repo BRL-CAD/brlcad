@@ -46,13 +46,13 @@
 
 extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 
-static char	usage[] = "Usage: %s [-v] [-b] [-xX lvl] [-a abs_tol] [-r rel_tol] [-t dist_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
+static char	usage[] = "Usage: %s [-v] [-b] [-xX lvl] [-a abs_tol] [-r rel_tol] [-t dist_tol] [-n norm_tol] [-P #_of_CPUs] [-o out_file] brlcad_db.g object(s)\n";
 
 static char	*tok_sep = " \t";
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
 static int	verbose;
 static int	do_bots=0;		/* flag to output BOT's instead of NMG's */
-/* static int	ncpu = 1; */		/* Number of processors */
+static int	ncpu = 1;		/* Number of processors */
 static int	nmg_count=0;		/* Count of nmgregions written to output */
 static char	*out_file = "nmg.g";	/* Output filename */
 static struct rt_wdb		*fp_out; /* Output file pointer */
@@ -93,7 +93,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before bombing out.
 	 */
-	rt_g.NMG_debug = NMG_debug;	/* restore mode */
+	RTG.NMG_debug = NMG_debug;	/* restore mode */
 
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();
@@ -104,9 +104,8 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	/* Get rid of (m)any other intermediate structures */
 	if ((*tsp->ts_m)->magic == NMG_MODEL_MAGIC) {
 	    nmg_km(*tsp->ts_m);
-	} else {
+	} else
 	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
-	}
 
 	/* Now, make a new, clean model structure for next pass. */
 	*tsp->ts_m = nmg_mm();
@@ -146,9 +145,9 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 
     if (RT_G_DEBUG&DEBUG_TREEWALK || verbose) {
 	sofar = db_path_to_string(pathp);
-	bu_log("\ndo_region_end(%d %d%%) %s\n",
+	bu_log("\ndo_region_end(%d %.2lf%%) %s\n",
 	       regions_tried,
-	       regions_tried>0 ? (regions_converted * 100) / regions_tried : 0,
+	       regions_tried>0 ? ((double)regions_converted * 100.0) / (double)regions_tried : 0.0,
 	       sofar);
 	bu_free(sofar, "path string");
     }
@@ -212,20 +211,18 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 	}
 
 	/* kill zero length edgeuses */
-	if (!empty_region) {
+	if (!empty_region)
 	    empty_model = nmg_kill_zero_length_edgeuses(*tsp->ts_m);
-	}
 
 	if (!empty_region && !empty_model) {
 	    /* Write the nmgregion to the output file */
 	    nmg_count++;
 	    sprintf(nmg_name, "nmg.%d", nmg_count);
 
-	    if (do_bots) {
+	    if (do_bots)
 		wdb_export(fp_out, nmg_name, (genptr_t)bot, ID_BOT, 1.0);
-	    } else {
+	    else
 		mk_nmg(fp_out, nmg_name, r->m_p);
-	    }
 	}
 
 	/* Now make a normal brlcad region */
@@ -314,7 +311,7 @@ csg_comb_func(struct db_i *db, struct directory *dp, genptr_t UNUSED(ptr))
 	name = (&(dp->d_namep));
 
 	(void) db_walk_tree(db, 1, (const char **)name,
-			    1,
+			    ncpu,
 			    &tree_state,
 			    0,
 			    do_region_end,
@@ -426,12 +423,13 @@ main(int argc, char **argv)
 {
     int	i;
     int	c;
+    int suppliedname = 0;
     double percent;
 
     bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
 
-    BU_LIST_INIT(&rt_g.rtg_vlfree);	/* for vlist macros */
+    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     ttol.magic = RT_TESS_TOL_MAGIC;
     /* Defaults, updated by command line options. */
@@ -449,7 +447,7 @@ main(int argc, char **argv)
     rt_init_resource(&rt_uniresource, 0, NULL);
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "t:a:n:o:r:bvx:P:X:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "t:a:n:o:r:bvx:P:X:h?")) != -1) {
 	switch (c) {
 	    case 'b':		/* make BOT's instead of NMG's */
 		do_bots = 1;
@@ -468,6 +466,7 @@ main(int argc, char **argv)
 		break;
 	    case 'o':		/* Output file name */
 		out_file = bu_optarg;
+		suppliedname = 1;
 		break;
 	    case 'r':		/* Relative tolerance. */
 		ttol.rel = atof(bu_optarg);
@@ -476,17 +475,17 @@ main(int argc, char **argv)
 		verbose++;
 		break;
 	    case 'P':
-		rt_g.debug = 1;
+		ncpu = atoi(bu_optarg);
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
 		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT);
 		bu_log("\n");
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug);
-		NMG_debug = rt_g.NMG_debug;
-		bu_printb("librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT);
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
+		NMG_debug = RTG.NMG_debug;
+		bu_printb("librt RTG.NMG_debug", RTG.NMG_debug, NMG_DEBUG_FORMAT);
 		bu_log("\n");
 		break;
 	    default:
@@ -494,18 +493,16 @@ main(int argc, char **argv)
 	}
     }
 
-    if (bu_optind+1 >= argc) {
+    if (bu_optind+1 >= argc)
 	bu_exit(1, usage, argv[0]);
-    }
 
     /* Open BRL-CAD database */
     if ((dbip = db_open(argv[bu_optind], DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(argv[0]);
 	bu_exit(1, "Cannot open geometry database file %s\n", argv[bu_optind]);
     }
-    if (db_dirbuild(dbip)) {
+    if (db_dirbuild(dbip))
 	bu_exit(1, "db_dirbuild failed\n");
-    }
 
     if ((fp_out = wdb_fopen(out_file)) == NULL) {
 	perror(out_file);
@@ -534,12 +531,18 @@ main(int argc, char **argv)
     rt_vlist_cleanup();
     db_close(dbip);
 
-    percent = 100;
     if (regions_tried > 0)
-	percent = ((double)regions_converted * 100) / regions_tried;
+	percent = ((double)regions_converted * 100.0) / (double)regions_tried;
+    else
+	percent = 100.0;
 
     printf("Tried %d regions, %d converted successfully.  %g%%\n",
 	    regions_tried, regions_converted, percent);
+
+    if (suppliedname)
+    	printf("Output file name: %s\n",out_file);
+    else
+	printf("Output file name (default): %s\n",out_file);
 
     wdb_close(fp_out);
     return 0;

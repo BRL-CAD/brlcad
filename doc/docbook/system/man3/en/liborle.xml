@@ -103,16 +103,15 @@ file.
 If
 <emphasis remap='I'>bgpixel</emphasis>
 is not
-<emphasis remap='B'><?troff ps -1?>NULL<?troff ps 0?></emphasis>,
+<emphasis remap='B'>NULL</emphasis>,
 the background color stored in the
 RLE
 header will be placed there.
 <emphasis remap='I'>Flags</emphasis>
 is a flag word using a combination of single-bit flags
-<emphasis remap='B'><?troff ps -1?>NO_BOX_SAVE<?troff ps 0?></emphasis>,
-<emphasis remap='B'><?troff ps -1?>NO_COLORMAP<?troff ps 0?></emphasis>,
+<emphasis remap='B'>NO_BOX_SAVE</emphasis>,
+<emphasis remap='B'>NO_COLORMAP</emphasis>,
 and
-<!-- B elided -->
 <envar>NO_IMAGE</envar>
 (described in
 <emphasis remap='B'>rle.h</emphasis>)
@@ -172,15 +171,15 @@ The
 parameter specifies the number of color channels.
 Normally, this should
 be set to
-<emphasis remap='B'><?troff ps -1?>3<?troff ps 0?></emphasis>
+<emphasis remap='B'>3</emphasis>
 (for red, green, and blue channels).
 If
 <emphasis remap='I'>ncolors</emphasis>
 equals
-<emphasis remap='B'><?troff ps -1?>1<?troff ps 0?></emphasis>,
+<emphasis remap='B'>1</emphasis>,
 a monochrome (black and white) image is assumed, and if
 it is
-<emphasis remap='B'><?troff ps -1?>0<?troff ps 0?></emphasis>,
+<emphasis remap='B'>0</emphasis>,
 only the color map will be saved.
 <emphasis remap='I'>Bgflag</emphasis>
 specifies whether or not the image is saved with the background.
@@ -212,7 +211,7 @@ file.
 If the value of
 <emphasis remap='I'>cmap</emphasis>
 is
-<emphasis remap='B'><?troff ps -1?>NULL<?troff ps 0?></emphasis>,
+<emphasis remap='B'>NULL</emphasis>,
 a standard (linear) color map will be written.</para>
 
 <para><emphasis remap='I'>Rle_encode_ln</emphasis>

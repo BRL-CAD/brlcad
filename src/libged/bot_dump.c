@@ -40,6 +40,8 @@
 #include "raytrace.h"
 #include "wdb.h"
 
+#include "brlcad_version.h"
+
 #include "mater.h"
 #include "solid.h"
 #include "obj.h"
@@ -118,7 +120,7 @@ lswap(unsigned int *v)
 
 
 static struct _ged_obj_material *
-get_obj_material(int red, int green, int blue, fastf_t transparency)
+obj_get_material(int red, int green, int blue, fastf_t transparency)
 {
     struct _ged_obj_material *gomp;
 
@@ -154,7 +156,7 @@ get_obj_material(int red, int green, int blue, fastf_t transparency)
 
 
 static void
-free_obj_materials() {
+obj_free_materials() {
     struct _ged_obj_material *gomp;
 
     while (BU_LIST_WHILE(gomp, _ged_obj_material, &HeadObjMaterials)) {
@@ -166,7 +168,31 @@ free_obj_materials() {
 
 
 static void
-write_bot_sat(struct rt_bot_internal *bot, FILE *fp, char *UNUSED(name))
+sat_write_header(FILE *fp)
+{
+    time_t now;
+
+    /* SAT header consists of three lines:
+     *
+     * 1: SAT_version num_records num_objects history_boolean
+     * 2: strlen product_id_str strlen version_str strlen date_str
+     * 3: cnv_to_mm resabs_value resnor_value
+     *
+     * When num_records is zero, it looks for an end marker.
+     */
+    fprintf(fp, "400 0 1 0\n");
+
+    time(&now);
+    fprintf(fp, "%ld BRL-CAD(%s)-bot_dump 16 ACIS 8.0 Unknown %ld %s",
+	    (long)strlen(brlcad_version())+18, brlcad_version(), (long)strlen(ctime(&now)) - 1, ctime(&now));
+
+    /* FIXME: this includes abs tolerance info, should probably output ours */
+    fprintf(fp, "1 9.9999999999999995e-007 1e-010\n");
+}
+
+
+static void
+sat_write_bot(struct rt_bot_internal *bot, FILE *fp, char *UNUSED(name))
 {
     int i, j;
     fastf_t *vertices;
@@ -346,7 +372,7 @@ write_bot_sat(struct rt_bot_internal *bot, FILE *fp, char *UNUSED(name))
 
 
 static void
-write_bot_dxf(struct rt_bot_internal *bot, FILE *fp, char *name)
+dxf_write_bot(struct rt_bot_internal *bot, FILE *fp, char *name)
 {
     fastf_t *vertices;
     int num_faces, *faces;
@@ -386,7 +412,7 @@ write_bot_dxf(struct rt_bot_internal *bot, FILE *fp, char *name)
 
 
 static void
-write_bot_obj(struct rt_bot_internal *bot, FILE *fp, char *name)
+obj_write_bot(struct rt_bot_internal *bot, FILE *fp, char *name)
 {
     int num_vertices;
     fastf_t *vertices;
@@ -401,7 +427,7 @@ write_bot_obj(struct rt_bot_internal *bot, FILE *fp, char *name)
     struct _ged_obj_material *gomp;
 
     if (using_dbot_dump) {
-	gomp = get_obj_material(curr_obj_red,
+	gomp = obj_get_material(curr_obj_red,
 				    curr_obj_green,
 				    curr_obj_blue,
 				    curr_obj_alpha);
@@ -456,7 +482,7 @@ write_bot_obj(struct rt_bot_internal *bot, FILE *fp, char *name)
 
 
 static void
-write_bot_stl(struct rt_bot_internal *bot, FILE *fp, char *name)
+stl_write_bot(struct rt_bot_internal *bot, FILE *fp, char *name)
 {
     fastf_t *vertices;
     int num_faces, *faces;
@@ -503,7 +529,7 @@ write_bot_stl(struct rt_bot_internal *bot, FILE *fp, char *name)
 
 
 static void
-write_bot_stl_binary(struct rt_bot_internal *bot, int fd, char *UNUSED(name))
+stl_write_bot_binary(struct rt_bot_internal *bot, int fd, char *UNUSED(name))
 {
     fastf_t *vertices;
     size_t num_faces;
@@ -559,7 +585,7 @@ write_bot_stl_binary(struct rt_bot_internal *bot, int fd, char *UNUSED(name))
 	VMOVE(flt_ptr, C);
 	flt_ptr += 3;
 
-	htonf(vert_buffer, (const unsigned char *)flts, 12);
+	bu_cv_htonf(vert_buffer, (const unsigned char *)flts, 12);
 	for (j = 0; j < 12; j++) {
 	    lswap((unsigned int *)&vert_buffer[j*4]);
 	}
@@ -621,7 +647,7 @@ bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, co
 		perror("write");
 	    }
 
-	    write_bot_stl_binary(bot, fd, dp->d_namep);
+	    stl_write_bot_binary(bot, fd, dp->d_namep);
 
 	    /* Re-position pointer to 80th byte */
 	    lseek(fd, 80, SEEK_SET);
@@ -648,32 +674,25 @@ bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, co
 		    fprintf(fp,
 			    "0\nSECTION\n2\nHEADER\n999\n%s (BOT from %s)\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n",
 			    dp->d_namep, db_name);
-		    write_bot_dxf(bot, fp, dp->d_namep);
+		    dxf_write_bot(bot, fp, dp->d_namep);
 		    fprintf(fp, "0\nENDSEC\n0\nEOF\n");
 		    break;
 		case OTYPE_OBJ:
 		    v_offset = 1;
 		    fprintf(fp, "mtllib %s\n", bu_vls_addr(&obj_materials_file));
-		    write_bot_obj(bot, fp, dp->d_namep);
+		    obj_write_bot(bot, fp, dp->d_namep);
 		    break;
 		case OTYPE_SAT:
 		    curr_line_num = 0;
 
-		    fprintf(fp, "400 0 1 0\n");
-		    /*XXX Temporarily hardwired */
-#if 1
-		    fprintf(fp, "37 SolidWorks(2008000)-Sat-Convertor-2.0 11 ACIS 8.0 NT 24 Wed Dec 03 09:26:53 2003\n");
-#else
-		    fprintf(fp, "08 BRL-CAD-bot_dump-4.0 11 ACIS 4.0 NT 24 Thur Sep 25 15:00:00 2008\n");
-#endif
-		    fprintf(fp, "1 9.9999999999999995e-007 1e-010\n");
+		    sat_write_header(fp);
 
-		    write_bot_sat(bot, fp, dp->d_namep);
+		    sat_write_bot(bot, fp, dp->d_namep);
 		    fprintf(fp, "End-of-ACIS-data\n");
 		    break;
 		case OTYPE_STL:
 		default:
-		    write_bot_stl(bot, fp, dp->d_namep);
+		    stl_write_bot(bot, fp, dp->d_namep);
 		    break;
 	    }
 
@@ -684,7 +703,7 @@ bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, co
     } else {
       if (binary && output_type == OTYPE_STL) {
 	total_faces += bot->num_faces;
-	write_bot_stl_binary(bot, fd, dp->d_namep);
+	stl_write_bot_binary(bot, fd, dp->d_namep);
       } else if (binary && output_type != OTYPE_STL) {
 	bu_log("Unsupported binary file type - only STL is currently supported\n");
 	return;
@@ -693,17 +712,17 @@ bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, co
 	if (fp) {
 	switch (output_type) {
 	  case OTYPE_DXF:
-	    write_bot_dxf(bot, fp, dp->d_namep);
+	    dxf_write_bot(bot, fp, dp->d_namep);
 	    break;
 	  case OTYPE_OBJ:
-	    write_bot_obj(bot, fp, dp->d_namep);
+	    obj_write_bot(bot, fp, dp->d_namep);
 	    break;
 	  case OTYPE_SAT:
-	    write_bot_sat(bot, fp, dp->d_namep);
+	    sat_write_bot(bot, fp, dp->d_namep);
 	    break;
 	  case OTYPE_STL:
 	  default:
-	    write_bot_stl(bot, fp, dp->d_namep);
+	    stl_write_bot(bot, fp, dp->d_namep);
 	    break;
 	}
 	} else {
@@ -920,14 +939,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 			    argv[argc-1]);
 		    break;
 		case OTYPE_SAT:
-		    fprintf(fp, "400 0 1 0\n");
-		    /*XXX Temporarily hardwired */
-#if 1
-		    fprintf(fp, "37 SolidWorks(2008000)-Sat-Convertor-2.0 11 ACIS 8.0 NT 24 Wed Dec 03 09:26:53 2003\n");
-#else
-		    fprintf(fp, "08 BRL-CAD-bot_dump-4.0 11 ACIS 4.0 NT 24 Thur Sep 25 15:00:00 2008\n");
-#endif
-		    fprintf(fp, "1 9.9999999999999995e-007 1e-010\n");
+		    sat_write_header(fp);
 		    break;
 		default:
 		    break;
@@ -1058,7 +1070,7 @@ write_data_arrows(struct ged_data_arrow_state *gdasp, FILE *fp, int sflag)
     if (gdasp->gdas_draw) {
 	struct _ged_obj_material *gomp;
 
-	gomp = get_obj_material(gdasp->gdas_color[0],
+	gomp = obj_get_material(gdasp->gdas_color[0],
 				    gdasp->gdas_color[1],
 				    gdasp->gdas_color[2],
 				    1);
@@ -1136,7 +1148,7 @@ write_data_axes(struct ged_data_axes_state *gdasp, FILE *fp, int sflag)
 
 	halfAxesSize = gdasp->gdas_size * 0.5;
 
-	gomp = get_obj_material(gdasp->gdas_color[0],
+	gomp = obj_get_material(gdasp->gdas_color[0],
 				    gdasp->gdas_color[1],
 				    gdasp->gdas_color[2],
 				    1);
@@ -1210,7 +1222,7 @@ write_data_lines(struct ged_data_line_state *gdlsp, FILE *fp, int sflag)
     if (gdlsp->gdls_draw) {
 	struct _ged_obj_material *gomp;
 
-	gomp = get_obj_material(gdlsp->gdls_color[0],
+	gomp = obj_get_material(gdlsp->gdls_color[0],
 				    gdlsp->gdls_color[1],
 				    gdlsp->gdls_color[2],
 				    1);
@@ -1241,7 +1253,7 @@ write_data_lines(struct ged_data_line_state *gdlsp, FILE *fp, int sflag)
 
 
 static void
-write_data_obj(struct ged *gedp, FILE *fp)
+obj_write_data(struct ged *gedp, FILE *fp)
 {
     write_data_arrows(&gedp->ged_gvp->gv_data_arrows, fp, 0);
     write_data_arrows(&gedp->ged_gvp->gv_sdata_arrows, fp, 1);
@@ -1286,11 +1298,11 @@ data_dump(struct ged *gedp, FILE *fp)
 		}
 
 		bu_vls_free(&filepath);
-		write_data_obj(gedp, data_fp);
+		obj_write_data(gedp, data_fp);
 		fclose(data_fp);
 	    } else
 		if (fp) {
-		  write_data_obj(gedp, fp);
+		  obj_write_data(gedp, fp);
 		} else {
 		  bu_vls_printf(gedp->ged_result_str, "data_dump: bad FILE fp\n");
 		  return GED_ERROR;
@@ -1399,14 +1411,7 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 			    argv[argc-1]);
 		    break;
 		case OTYPE_SAT:
-		    fprintf(fp, "400 0 1 0\n");
-		    /*XXX Temporarily hardwired */
-#if 1
-		    fprintf(fp, "37 SolidWorks(2008000)-Sat-Convertor-2.0 11 ACIS 8.0 NT 24 Wed Dec 03 09:26:53 2003\n");
-#else
-		    fprintf(fp, "08 BRL-CAD-bot_dump-4.0 11 ACIS 4.0 NT 24 Thur Sep 25 15:00:00 2008\n");
-#endif
-		    fprintf(fp, "1 9.9999999999999995e-007 1e-010\n");
+		    sat_write_header(fp);
 		    break;
 		default:
 		    break;
@@ -1523,24 +1528,12 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 		continue;
 	    }
 
-	    /* Write out materials */
+	    /* Write out object color */
 	    if (output_type == OTYPE_OBJ) {
-#if 0
-		struct _ged_obj_material *gomp;
-
-		gomp = get_obj_material(sp->s_color[0],
-					    sp->s_color[1],
-					    sp->s_color[2],
-					    sp->s_transparency);
-
-		/* Write out usemtl to obj file */
-		fprintf(fp, "usemtl %s\n", bu_vls_addr(&gomp->name));
-#else
 		curr_obj_red = sp->s_color[0];
 		curr_obj_green = sp->s_color[1];
 		curr_obj_blue = sp->s_color[2];
 		curr_obj_alpha = sp->s_transparency;
-#endif
 	    }
 
 	    bot = (struct rt_bot_internal *)intern.idb_ptr;
@@ -1586,7 +1579,7 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 
     if (output_type == OTYPE_OBJ) {
 	bu_vls_free(&obj_materials_file);
-	free_obj_materials();
+	obj_free_materials();
 	fclose(obj_materials_fp);
     }
 

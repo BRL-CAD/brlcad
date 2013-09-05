@@ -44,11 +44,11 @@ typedef struct render_path_s {
 
 /* _a is reflected ray, _b is incident ray, _c is normal */
 #define MATH_VEC_REFLECT(_a, _b, _c) { \
-    fastf_t _d; \
-    _d = VDOT( _b,  _c); \
-    VSCALE(_a,  _c,  2.0*_d); \
-    VSUB2(_a,  _b,  _a); \
-    VUNITIZE(_a); }
+	fastf_t _d; \
+	_d = VDOT(_b, _c); \
+	VSCALE(_a, _c, 2.0*_d); \
+	VSUB2(_a, _b, _a); \
+	VUNITIZE(_a); }
 
 
 void
@@ -90,7 +90,7 @@ render_path_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vec
 		} else if (new_mesh->attributes->emission > 0.0) {
 		    /* Emitting Light Source */
 		    VMOVE(T, new_mesh->attributes->color.v);
-		    VSCALE(T,  T,  new_mesh->attributes->emission);
+		    VSCALE(T, T, new_mesh->attributes->emission);
 		    propogate = 0;
 		} else {
 		    /* Diffuse */
@@ -102,7 +102,7 @@ render_path_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vec
 		}
 
 		if (new_ray.depth) {
-		    VELMUL(new_pix,  new_pix,  T);
+		    VELMUL(new_pix, new_pix, T);
 		} else {
 		    VMOVE(new_pix, T);
 		}
@@ -154,11 +154,12 @@ render_path_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vec
 	    }
 	}
 
-	VADD2(accum,  accum,  new_pix);
+	VADD2(accum, accum, new_pix);
     }
 
-    VSCALE(*pixel,  accum,  rd->inv_samples);
+    VSCALE(*pixel, accum, rd->inv_samples);
 }
+
 
 int
 render_path_init(render_t *render, const char *samples)

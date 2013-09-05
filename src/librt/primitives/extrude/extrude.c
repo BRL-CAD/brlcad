@@ -2151,8 +2151,8 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     }
 
     BU_LIST_INIT(&vhead);
-    if (!BU_LIST_IS_INITIALIZED(&rt_g.rtg_vlfree)) {
-	BU_LIST_INIT(&rt_g.rtg_vlfree);
+    if (!BU_LIST_IS_INITIALIZED(&RTG.rtg_vlfree)) {
+	BU_LIST_INIT(&RTG.rtg_vlfree);
     }
     for (i=0; outer_loop && i<(size_t)BU_PTBL_END(outer_loop); i++) {
 	genptr_t seg;
@@ -2190,7 +2190,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 	    }
 	}
     }
-    BN_FREE_VLIST(&rt_g.rtg_vlfree, &vhead);
+    BN_FREE_VLIST(&RTG.rtg_vlfree, &vhead);
 
     /* make sure face normal is in correct direction */
     bu_free((char *)verts, "verts");
@@ -2333,7 +2333,7 @@ rt_extrude_import4(struct rt_db_internal *ip, const struct bu_external *ep, cons
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_EXTRUDE;
-    ip->idb_meth = &rt_functab[ID_EXTRUDE];
+    ip->idb_meth = &OBJ[ID_EXTRUDE];
     BU_ALLOC(ip->idb_ptr, struct rt_extrude_internal);
 
     extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
@@ -2358,13 +2358,13 @@ rt_extrude_import4(struct rt_db_internal *ip, const struct bu_external *ep, cons
     }
 
     if (mat == NULL) mat = bn_mat_identity;
-    ntohd((unsigned char *)tmp_vec, rp->extr.ex_V, ELEMENTS_PER_VECT);
+    bu_cv_ntohd((unsigned char *)tmp_vec, rp->extr.ex_V, ELEMENTS_PER_VECT);
     MAT4X3PNT(extrude_ip->V, mat, tmp_vec);
-    ntohd((unsigned char *)tmp_vec, rp->extr.ex_h, ELEMENTS_PER_VECT);
+    bu_cv_ntohd((unsigned char *)tmp_vec, rp->extr.ex_h, ELEMENTS_PER_VECT);
     MAT4X3VEC(extrude_ip->h, mat, tmp_vec);
-    ntohd((unsigned char *)tmp_vec, rp->extr.ex_uvec, ELEMENTS_PER_VECT);
+    bu_cv_ntohd((unsigned char *)tmp_vec, rp->extr.ex_uvec, ELEMENTS_PER_VECT);
     MAT4X3VEC(extrude_ip->u_vec, mat, tmp_vec);
-    ntohd((unsigned char *)tmp_vec, rp->extr.ex_vvec, ELEMENTS_PER_VECT);
+    bu_cv_ntohd((unsigned char *)tmp_vec, rp->extr.ex_vvec, ELEMENTS_PER_VECT);
     MAT4X3VEC(extrude_ip->v_vec, mat, tmp_vec);
     extrude_ip->keypoint = ntohl(*(uint32_t *)&rp->extr.ex_key[0]);
 
@@ -2408,13 +2408,13 @@ rt_extrude_export4(struct bu_external *ep, const struct rt_db_internal *ip, doub
     rec->extr.ex_id = DBID_EXTR;
 
     VSCALE(tmp_vec, extrude_ip->V, local2mm);
-    htond(rec->extr.ex_V, (unsigned char *)tmp_vec, ELEMENTS_PER_VECT);
+    bu_cv_htond(rec->extr.ex_V, (unsigned char *)tmp_vec, ELEMENTS_PER_VECT);
     VSCALE(tmp_vec, extrude_ip->h, local2mm);
-    htond(rec->extr.ex_h, (unsigned char *)tmp_vec, ELEMENTS_PER_VECT);
+    bu_cv_htond(rec->extr.ex_h, (unsigned char *)tmp_vec, ELEMENTS_PER_VECT);
     VSCALE(tmp_vec, extrude_ip->u_vec, local2mm);
-    htond(rec->extr.ex_uvec, (unsigned char *)tmp_vec, ELEMENTS_PER_VECT);
+    bu_cv_htond(rec->extr.ex_uvec, (unsigned char *)tmp_vec, ELEMENTS_PER_VECT);
     VSCALE(tmp_vec, extrude_ip->v_vec, local2mm);
-    htond(rec->extr.ex_vvec, (unsigned char *)tmp_vec, ELEMENTS_PER_VECT);
+    bu_cv_htond(rec->extr.ex_vvec, (unsigned char *)tmp_vec, ELEMENTS_PER_VECT);
     *(uint32_t *)rec->extr.ex_key = htonl(extrude_ip->keypoint);
     *(uint32_t *)rec->extr.ex_count = htonl(1);
 
@@ -2461,7 +2461,7 @@ rt_extrude_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
     VSCALE(tmp_vec[1], extrude_ip->h, local2mm);
     VSCALE(tmp_vec[2], extrude_ip->u_vec, local2mm);
     VSCALE(tmp_vec[3], extrude_ip->v_vec, local2mm);
-    htond(ptr, (unsigned char *)tmp_vec, ELEMENTS_PER_VECT*4);
+    bu_cv_htond(ptr, (unsigned char *)tmp_vec, ELEMENTS_PER_VECT*4);
 
     ptr += ELEMENTS_PER_VECT * 4 * SIZEOF_NETWORK_DOUBLE;
     rem -= ELEMENTS_PER_VECT * 4 * SIZEOF_NETWORK_DOUBLE;
@@ -2500,7 +2500,7 @@ rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_EXTRUDE;
-    ip->idb_meth = &rt_functab[ID_EXTRUDE];
+    ip->idb_meth = &OBJ[ID_EXTRUDE];
     BU_ALLOC(ip->idb_ptr, struct rt_extrude_internal);
 
     extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
@@ -2525,7 +2525,7 @@ rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
 	}
     }
 
-    ntohd((unsigned char *)tmp_vec, ptr, ELEMENTS_PER_VECT*4);
+    bu_cv_ntohd((unsigned char *)tmp_vec, ptr, ELEMENTS_PER_VECT*4);
     if (mat == NULL) mat = bn_mat_identity;
     MAT4X3PNT(extrude_ip->V, mat, tmp_vec[0]);
     MAT4X3VEC(extrude_ip->h, mat, tmp_vec[1]);
@@ -2601,7 +2601,7 @@ rt_extrude_ifree(struct rt_db_internal *ip)
 	tmp_ip.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	tmp_ip.idb_type = ID_SKETCH;
 	tmp_ip.idb_ptr = (genptr_t)extrude_ip->skt;
-	tmp_ip.idb_meth = &rt_functab[ID_SKETCH];
+	tmp_ip.idb_meth = &OBJ[ID_SKETCH];
 	tmp_ip.idb_meth->ft_ifree(&tmp_ip);
     }
     extrude_ip->magic = 0;	/* sanity */
@@ -2641,7 +2641,7 @@ rt_extrude_xform(
 	eop->magic = RT_EXTRUDE_INTERNAL_MAGIC;
 	eop->sketch_name = bu_strdup(eip->sketch_name);
 	op->idb_ptr = (genptr_t)eop;
-	op->idb_meth = &rt_functab[ID_EXTRUDE];
+	op->idb_meth = &OBJ[ID_EXTRUDE];
 	op->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	op->idb_type = ID_EXTRUDE;
 	if (ip->idb_avs.magic == BU_AVS_MAGIC) {

@@ -66,6 +66,7 @@ endif(NOT BRLCAD_ENABLE_TARGETS)
 # At the start, clear the src/other subdirs list so repeated
 # configures will correctly add the required directories
 set(SRC_OTHER_ADDED_DIRS "" CACHE STRING "initialize 3rd party sub-directories list" FORCE)
+mark_as_advanced(SRC_OTHER_ADDED_DIRS)
 
 #-----------------------------------------------------------------------------
 # Load some CMake macros to handle the special case of third party libraries.
@@ -210,7 +211,8 @@ endif(NOT COMMAND RE2C_TARGET)
 
 # For all BRL-CAD projects, we will use the perplex template in
 # src/other/perplex
-SET(PERPLEX_TEMPLATE "${CMAKE_CURRENT_SOURCE_DIR}/perplex/perplex_template.c" CACHE STRING "Perplex template file" FORCE)
+set(PERPLEX_TEMPLATE "${CMAKE_CURRENT_SOURCE_DIR}/perplex/perplex_template.c" CACHE STRING "Perplex template file" FORCE)
+mark_as_advanced(PERPLEX_TEMPLATE)
 
 set(perplex_ALIASES ENABLE_PERPLEX)
 set(perplex_DESCRIPTION "
@@ -783,11 +785,14 @@ endif(NOT MSVC)
 # Need Lemon/Perplex to build STEP - conditionalize
 
 # Set some options for the SCL build
-set(SCL_PYTHON_GENERATOR OFF)
-set(SCL_ENABLE_TESTING OFF)
-set(SCL_ENABLE_COVERAGE OFF)
-set(SCL_IS_SUBBUILD ON)
-set(SCL_BUILD_TYPE "${CMAKE_BUILD_TYPE}")
+set(SC_PYTHON_GENERATOR OFF)
+set(SC_ENABLE_TESTING OFF)
+set(SC_ENABLE_COVERAGE OFF)
+set(SC_IS_SUBBUILD ON)
+set(SC_BUILD_TYPE "${CMAKE_BUILD_TYPE}")
+set(INCLUDE_INSTALL_DIR ${INCLUDE_DIR})
+set(BIN_INSTALL_DIR ${BIN_DIR})
+set(LIB_INSTALL_DIR ${LIB_DIR})
 
 set(scl_ALIASES ENABLE_SCL ENABLE_STEP ENABLE_STEP_CLASS_LIBRARIES)
 set(scl_DESCRIPTION "
@@ -796,24 +801,31 @@ Libraries provided with BRL-CAD's source code.  Default is AUTO,
 responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
 first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(scl step "LEMON_EXECUTABLE;PERPLEX_EXECUTABLE;BRLCAD_LEVEL3"  scl_ALIASES scl_DESCRIPTION NOSYS)
+set(IS_SUBBUILD_STASH ${IS_SUBBUILD})
+set(IS_SUBBUILD ON)
+set(SC_BUILD_SCHEMAS "" CACHE STRING "Disable schema builds for BRL-CAD" FORCE)
+THIRD_PARTY(scl stepcode "LEMON_EXECUTABLE;PERPLEX_EXECUTABLE;BRLCAD_LEVEL3"  scl_ALIASES scl_DESCRIPTION NOSYS)
 if(BRLCAD_SCL_BUILD)
-  set(FEDEX_PLUS_EXEC fedex_plus CACHE STRING "Fedex plus executable" FORCE)
-  set(FEDEX_PLUS_EXECUTABLE_TARGET fedex_plus CACHE STRING "Fedex plus executable target" FORCE)
-  mark_as_advanced(FEDEX_PLUS_EXEC)
-  mark_as_advanced(FEDEX_PLUS_EXECUTABLE_TARGET)
-  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/step/include/scl_cf.h.in)
-  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/step/scl_version_string.h.txt)
+  set(EXP2CXX_EXEC exp2cxx CACHE STRING "Express to C++ executable" FORCE)
+  set(EXP2CXX_EXECUTABLE_TARGET exp2cxx CACHE STRING "Express to C++ executable target" FORCE)
+  mark_as_advanced(EXP2CXX_EXEC)
+  mark_as_advanced(EXP2CXX_EXECUTABLE_TARGET)
+  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/stepcode/include/sc_cf.h.in)
+  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/stepcode/sc_version_string.h.txt)
 endif(BRLCAD_SCL_BUILD)
-mark_as_advanced(SCL_BUILD_TYPE)
-mark_as_advanced(SCL_GENERATE_LEXER_PARSER)
-mark_as_advanced(SCL_BUILD_SHARED_LIBS)
-mark_as_advanced(SCL_BUILD_STATIC_LIBS)
-mark_as_advanced(SCL_CPP_GENERATOR)
-mark_as_advanced(SCL_ENABLE_COVERAGE)
-mark_as_advanced(SCL_ENABLE_TESTING)
-mark_as_advanced(SCL_PYTHON_GENERATOR)
-mark_as_advanced(SCL_MEMMGR_ENABLE_CHECKS)
+set(IS_SUBBUILD ${IS_SUBBUILD_STASH})
+mark_as_advanced(SC_BUILD_TYPE)
+mark_as_advanced(SC_BUILD_SCHEMAS)
+mark_as_advanced(SC_GENERATE_LEXER_PARSER)
+mark_as_advanced(SC_BUILD_SHARED_LIBS)
+mark_as_advanced(SC_BUILD_STATIC_LIBS)
+mark_as_advanced(SC_CPP_GENERATOR)
+mark_as_advanced(SC_ENABLE_COVERAGE)
+mark_as_advanced(SC_ENABLE_TESTING)
+mark_as_advanced(SC_PYTHON_GENERATOR)
+mark_as_advanced(SC_MEMMGR_ENABLE_CHECKS)
+mark_as_advanced(SC_SDAI_ADDITIONAL_EXECS_SRCS)
+mark_as_advanced(SC_TRACE_FPRINTF)
 
 # Clipper polygon clipping library - for now, we're going to use our copy
 if(BRLCAD_LEVEL2)
@@ -845,6 +857,19 @@ AUTO.
 ")
 THIRD_PARTY(libvds libvds "" libvds_ALIASES libvds_DESCRIPTION NOSYS)
 set(LIBVDS_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libvds" CACHE STRING "Directory containing libvds headers." FORCE)
+
+# gdiam
+
+set(libgdiam_ALIASES ENABLE_GDIAM)
+set(libgdiam_DESCRIPTION "
+Option for enabling and disabling compilation of the libgdiam approximate
+tight bounding box library provided with BRL-CAD's source code.  Default
+is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
+testing first for a system version if BRLCAD_BUNDLED_LIBS is also
+AUTO.
+")
+THIRD_PARTY(libgdiam libgdiam "" libgdiam_ALIASES libgdiam_DESCRIPTION NOSYS)
+set(LIBGDIAM_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libgdiam" CACHE STRING "Directory containing libgdiam headers." FORCE)
 
 # Bullet is not yet integrated as a src/other subbuild, but there is
 # code that will make use of it if it is available.  If that code
@@ -909,12 +934,17 @@ mark_as_advanced(TNT_INCLUDE_DIR)
 #
 CMAKEFILES(Eigen)
 
+# TCLAP is used for option parsing - consists entirely of headers
+# and does not need to be installed, but does need to generate a
+# config file
+add_subdirectory(tclap)
+CMAKEFILES(tclap)
+
 if(BRLCAD_ENABLE_OSL)
   add_subdirectory(osl)
 endif(BRLCAD_ENABLE_OSL)
 
 CMAKEFILES(README)
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

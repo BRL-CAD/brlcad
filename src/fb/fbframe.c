@@ -33,8 +33,7 @@
 #include "bu.h"
 #include "fb.h"
 
-char *Usage="[-h] [-F framebuffer]\n\
-	[-s squareframesize] [-w frame_width] [-n frame_height]\n";
+char *Usage="[-F framebuffer] [-s squareframesize] [-w frame_width] [-n frame_height]\n";
 
 #define USAGE_EXIT(p) { fprintf(stderr, "Usage: %s %s\n", (p), Usage); \
 	bu_exit(-1, NULL); }
@@ -55,12 +54,8 @@ main(int argc, char **argv)
     static RGBpixel blue = { 0, 0, 255 };
 
     xsize = ysize = 0;
-    while ((c = bu_getopt(argc, argv, "ahF:s:w:n:S:W:N:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "F:s:w:n:S:W:N:h?")) != -1) {
 	switch (c) {
-	    case 'h':
-		/* high-res */
-		xsize = ysize = 1024;
-		break;
 	    case 'F':
 		framebuffer = bu_optarg;
 		break;
@@ -71,7 +66,6 @@ main(int argc, char **argv)
 		    xsize = ysize = len;
 		else
 		    USAGE_EXIT(*argv);
-
 		break;
 	    case 'w':
 	    case 'W':
@@ -92,6 +86,9 @@ main(int argc, char **argv)
 		break;
 	}
     }
+
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
+	USAGE_EXIT(*argv);
 
     if ((fbp = fb_open(framebuffer, xsize, ysize)) == FBIO_NULL)
 	bu_exit(1, NULL);

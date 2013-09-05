@@ -49,7 +49,6 @@ set_property(GLOBAL PROPERTY libwdb_DEFINES "${libwdb_DEFINES}")
 BRLCAD_ADDLIB(libwdb "${LIBWDB_SOURCES}" "librt;libbn;libbu;libsysv;${OPENNURBS_LIBRARY};${REGEX_LIBRARY};${ZLIB_LIBRARY}")
 set_target_properties(libwdb PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

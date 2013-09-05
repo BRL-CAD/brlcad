@@ -164,7 +164,7 @@ wdb_add_solid(const struct directory *dp,
     } else {
 	/* create the NMG version of this solid */
 	eptr->l.m = nmg_mm();
-	if (!rt_functab[id].ft_tessellate && rt_functab[id].ft_tessellate(&r, eptr->l.m, &intern,
+	if (!OBJ[id].ft_tessellate && OBJ[id].ft_tessellate(&r, eptr->l.m, &intern,
 									  &dgcdp->dgop->dgo_wdbp->wdb_ttol, &dgcdp->dgop->dgo_wdbp->wdb_tol) < 0) {
 	    nmg_km(eptr->l.m);
 	    eptr->l.m = NULL;
@@ -196,19 +196,19 @@ wdb_add_solid(const struct directory *dp,
 		|| (bot=nmg_bot(s, &dgcdp->dgop->dgo_wdbp->wdb_tol)) == (struct rt_bot_internal *)NULL)
 	    {
 		eptr->l.stp->st_id = id;
-		eptr->l.stp->st_meth = &rt_functab[id];
-		if (!rt_functab[id].ft_prep || rt_functab[id].ft_prep(eptr->l.stp, &intern, dgcdp->rtip) < 0)
+		eptr->l.stp->st_meth = &OBJ[id];
+		if (!OBJ[id].ft_prep || OBJ[id].ft_prep(eptr->l.stp, &intern, dgcdp->rtip) < 0)
 		    Tcl_AppendResult(dgcdp->interp, "Prep failure for solid '", dp->d_namep,
 				     "'\n", (char *)NULL);
 	    } else {
 		RT_DB_INTERNAL_INIT(&intern2);
 		intern2.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		intern2.idb_type = ID_BOT;
-		intern2.idb_meth = &rt_functab[ID_BOT];
+		intern2.idb_meth = &OBJ[ID_BOT];
 		intern2.idb_ptr = (genptr_t)bot;
 		eptr->l.stp->st_id = ID_BOT;
-		eptr->l.stp->st_meth = &rt_functab[ID_BOT];
-		if (!rt_functab[ID_BOT].ft_prep || rt_functab[ID_BOT].ft_prep(eptr->l.stp, &intern2, dgcdp->rtip) < 0) {
+		eptr->l.stp->st_meth = &OBJ[ID_BOT];
+		if (!OBJ[ID_BOT].ft_prep || OBJ[ID_BOT].ft_prep(eptr->l.stp, &intern2, dgcdp->rtip) < 0) {
 		    Tcl_AppendResult(dgcdp->interp, "Prep failure for solid '", dp->d_namep,
 				     "'\n", (char *)NULL);
 		}
@@ -219,8 +219,8 @@ wdb_add_solid(const struct directory *dp,
 	    /* prep this solid */
 
 	    eptr->l.stp->st_id = id;
-	    eptr->l.stp->st_meth = &rt_functab[id];
-	    if (!rt_functab[id].ft_prep || rt_functab[id].ft_prep(eptr->l.stp, &intern, dgcdp->rtip) < 0)
+	    eptr->l.stp->st_meth = &OBJ[id];
+	    if (!OBJ[id].ft_prep || OBJ[id].ft_prep(eptr->l.stp, &intern, dgcdp->rtip) < 0)
 		Tcl_AppendResult(dgcdp->interp, "Prep failure for solid '", dp->d_namep,
 				 "'\n", (char *)NULL);
 	}
@@ -1065,7 +1065,7 @@ wdb_classify_seg(struct seg *seg, struct soltab *shoot, struct xray *rp, struct 
     rd.hitmiss = (struct hitmiss **)NULL;
     rd.stp = shoot;
 
-    if (rt_functab[shoot->st_id].ft_shot && rt_functab[shoot->st_id].ft_shot(shoot, &new_rp, dgcdp->ap, rd.seghead)) {
+    if (OBJ[shoot->st_id].ft_shot && OBJ[shoot->st_id].ft_shot(shoot, &new_rp, dgcdp->ap, rd.seghead)) {
 	struct seg *segp;
 
 	while (BU_LIST_WHILE(segp, seg, &rd.seghead->l)) {
@@ -1092,7 +1092,7 @@ wdb_classify_seg(struct seg *seg, struct soltab *shoot, struct xray *rp, struct 
 	VCROSS(new_dir, new_rp.r_dir, rp->r_dir);
 	VMOVE(new_rp.r_dir, new_dir);
 	wdb_inverse_dir(new_rp.r_dir, rd.rd_invdir);
-	if (rt_functab[shoot->st_id].ft_shot && rt_functab[shoot->st_id].ft_shot(shoot, &new_rp, dgcdp->ap, rd.seghead)) {
+	if (OBJ[shoot->st_id].ft_shot && OBJ[shoot->st_id].ft_shot(shoot, &new_rp, dgcdp->ap, rd.seghead)) {
 	    struct seg *segp;
 
 	    while (BU_LIST_WHILE(segp, seg, &rd.seghead->l)) {
@@ -1271,7 +1271,7 @@ wdb_shoot_and_plot(point_t start_pt,
 
 	/* actually shoot the ray, assign segments to the leaf, and mark them as IN_SOL */
 	if (rt_in_rpp(&rp, rd.rd_invdir, shoot->l.stp->st_min, shoot->l.stp->st_max)) {
-	    if (rt_functab[shoot->l.stp->st_id].ft_shot && rt_functab[shoot->l.stp->st_id].ft_shot(shoot->l.stp, &rp, dgcdp->ap, rd.seghead)) {
+	    if (OBJ[shoot->l.stp->st_id].ft_shot && OBJ[shoot->l.stp->st_id].ft_shot(shoot->l.stp, &rp, dgcdp->ap, rd.seghead)) {
 		struct seg *seg;
 
 		/* put the segments in the lead solid structure */
@@ -1733,8 +1733,8 @@ wdb_free_etree(union E_tree *eptr,
 		bu_ptbl_free(&eptr->l.edge_list);
 	    }
 	    if (eptr->l.stp) {
-		if (eptr->l.stp->st_specific && rt_functab[eptr->l.stp->st_id].ft_free)
-		    rt_functab[eptr->l.stp->st_id].ft_free(eptr->l.stp);
+		if (eptr->l.stp->st_specific && OBJ[eptr->l.stp->st_id].ft_free)
+		    OBJ[eptr->l.stp->st_id].ft_free(eptr->l.stp);
 		bu_free((char *)eptr->l.stp, "struct soltab");
 	    }
 
@@ -2002,15 +2002,15 @@ wdb_fix_halfs(struct dg_client_data *dgcdp)
 	    RT_DB_INTERNAL_INIT(&intern2);
 	    intern2.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    intern2.idb_type = ID_POLY;
-	    intern2.idb_meth = &rt_functab[ID_POLY];
+	    intern2.idb_meth = &OBJ[ID_POLY];
 	    intern2.idb_ptr = (genptr_t)pg;
-	    if (rt_functab[tp->l.stp->st_id].ft_free)
-		rt_functab[tp->l.stp->st_id].ft_free(tp->l.stp);
+	    if (OBJ[tp->l.stp->st_id].ft_free)
+		OBJ[tp->l.stp->st_id].ft_free(tp->l.stp);
 	    tp->l.stp->st_specific = NULL;
 	    tp->l.stp->st_id = ID_POLY;
 	    VSETALL(tp->l.stp->st_max, -INFINITY);
 	    VSETALL(tp->l.stp->st_min,  INFINITY);
-	    if (!rt_functab[ID_POLY].ft_prep || rt_functab[ID_POLY].ft_prep(tp->l.stp, &intern2, dgcdp->rtip) < 0) {
+	    if (!OBJ[ID_POLY].ft_prep || OBJ[ID_POLY].ft_prep(tp->l.stp, &intern2, dgcdp->rtip) < 0) {
 		Tcl_AppendResult(dgcdp->interp, "Prep failure for polysolid version of solid '", tp->l.stp->st_dp->d_namep,
 				 "'\n", (char *)NULL);
 	    }

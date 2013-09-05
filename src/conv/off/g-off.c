@@ -43,7 +43,7 @@
 extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 
 
-static const char usage[] = "Usage: %s [-v] [-d] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-p prefix] brlcad_db.g object(s)\n";
+static const char usage[] = "Usage: %s [-v] [-d] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-p prefix] [-P #_of_CPUs] brlcad_db.g object(s)\n";
 
 static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int	verbose;
@@ -100,10 +100,10 @@ main(int argc, char **argv)
     rt_init_resource( &rt_uniresource, 0, NULL );
 
     the_model = nmg_mm();
-    BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
+    BU_LIST_INIT( &RTG.rtg_vlfree );	/* for vlist macros */
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "a:dn:p:r:vx:P:X:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "a:dn:p:r:vx:P:X:h?")) != -1) {
 	switch (c) {
 	    case 'a':		/* Absolute tolerance. */
 		ttol.abs = atof(bu_optarg);
@@ -125,24 +125,21 @@ main(int argc, char **argv)
 		break;
 	    case 'P':
 		ncpu = atoi( bu_optarg );
-		rt_g.debug = 1;
 		break;
 	    case 'x':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
+		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.debug );
 		break;
 	    case 'X':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
-		NMG_debug = rt_g.NMG_debug;
+		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug );
+		NMG_debug = RTG.NMG_debug;
 		break;
 	    default:
 		bu_exit(1, usage, argv[0]);
-		break;
 	}
     }
 
-    if (bu_optind+1 >= argc) {
+    if (bu_optind+1 >= argc)
 	bu_exit(1, usage, argv[0]);
-    }
 
     /* Open BRL-CAD database */
     argc -= bu_optind;
@@ -151,20 +148,18 @@ main(int argc, char **argv)
 	perror(argv[0]);
 	bu_exit(1, "ERROR: Unable to open geometry database file (%s)\n", argv[0]);
     }
-    if ( db_dirbuild( dbip ) ) {
+    if ( db_dirbuild( dbip ) )
 	bu_exit(1, "db_dirbuild failed\n" );
-    }
 
     /* Create .fig file name and open it. */
     size = sizeof(prefix) + sizeof(argv[0] + 4);
     fig_file = bu_malloc(size, "st");
     /* Ignore leading path name. */
     if ((dot = strrchr(argv[0], '/')) != (char *)NULL) {
-	if (prefix) {
+	if (prefix)
 	    snprintf(fig_file, size, "%s%s", prefix, 1+dot);
-	} else {
+	else
 	    snprintf(fig_file, size, "%s", 1+dot);
-	}
     } else {
 	if (prefix)
 	    snprintf(fig_file, size, "%s%s", prefix, argv[0]);
@@ -227,7 +222,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before before bombing out.
 	 */
-	rt_g.NMG_debug = NMG_debug;/* restore mode */
+	RTG.NMG_debug = NMG_debug;/* restore mode */
 
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();
@@ -352,7 +347,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 	if ( debug_plots )  {
 	    FILE	*fp;
 	    bu_vls_vlscat(&file, &file_base);
-	    bu_vls_strcat(&file, ".pl");
+	    bu_vls_strcat(&file, ".plot3");
 
 	    if ((fp = fopen(bu_vls_addr(&file), "wb")) == NULL)
 		perror(bu_vls_addr(&file));

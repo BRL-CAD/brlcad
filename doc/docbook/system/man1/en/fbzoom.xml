@@ -17,7 +17,6 @@
 <cmdsynopsis sepchar=" ">
   <command>fbzoom</command>
     <arg choice="opt" rep="norepeat">-F <replaceable>frame_buffer</replaceable></arg>
-    <arg choice="opt" rep="norepeat">-h </arg>
     <arg choice="opt" rep="norepeat">-s <replaceable>image_sqrsize</replaceable></arg>
     <arg choice="opt" rep="norepeat">-w <replaceable>image_width</replaceable></arg>
     <arg choice="opt" rep="norepeat">-n <replaceable>image_height</replaceable></arg>
@@ -44,13 +43,6 @@ optional command line arguments,</para>
 specifies
 the current framebuffer, see
 <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><option>-h</option></term>
-  <listitem>
-<para>changes the frame buffer size to 1024x1024.
-By default, it is assumed to be 512x512 pixels.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -200,7 +192,7 @@ but not the image in the frame buffer.</para>
 </refsection>
 
 <refsection xml:id="see_also"><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>bw-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>gif-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pl-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rle-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle>bw-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>gif-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rle-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
 
 </refsection>
 

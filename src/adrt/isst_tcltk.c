@@ -283,7 +283,7 @@ set_resolution(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_
 
 
 static int
-isst_init(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(objc), Tcl_Obj *const *UNUSED(objv))
+isst_init(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(objc), Tcl_Obj *const *UNUSED(objv))
 {
     BU_ALLOC(isst, struct isst_s);
     isst->ui = 0;
@@ -295,6 +295,13 @@ isst_init(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(
 
     isst->camera.type = RENDER_CAMERA_PERSPECTIVE;
     isst->camera.fov = 25;
+
+    Tcl_LinkVar(interp, "pos_x", (char *)&isst->camera.pos[0], TCL_LINK_DOUBLE);
+    Tcl_LinkVar(interp, "pos_y", (char *)&isst->camera.pos[1], TCL_LINK_DOUBLE);
+    Tcl_LinkVar(interp, "pos_z", (char *)&isst->camera.pos[2], TCL_LINK_DOUBLE);
+    Tcl_LinkVar(interp, "focus_x", (char *)&isst->camera.focus[0], TCL_LINK_DOUBLE);
+    Tcl_LinkVar(interp, "focus_y", (char *)&isst->camera.focus[1], TCL_LINK_DOUBLE);
+    Tcl_LinkVar(interp, "focus_z", (char *)&isst->camera.focus[2], TCL_LINK_DOUBLE);
 
     return TCL_OK;
 }
@@ -316,20 +323,32 @@ isst_zap(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *c
 static int
 render_mode(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
 {
-    char buf[BUFSIZ];
+    char *buf = NULL;
+    char *mode;
 
     if (objc < 3) {
 	Tcl_WrongNumArgs(interp, 1, objv, "pathName mode [arguments]");
 	return TCL_ERROR;
     }
 
+    mode = Tcl_GetString(objv[2]);
+    if(objc == 4)
+	buf = Tcl_GetString(objv[3]);
+
     /* pack the 'rest' into buf - probably should use a vls for this*/
-    buf[0] = '\0';
+    if( strlen(mode) == 3 && bu_strncmp("cut", mode, 3) == 0 ) {
+	struct adrt_mesh_s *mesh;
+
+	/* clear all the hit list */
+	for(BU_LIST_FOR(mesh, adrt_mesh_s, &isst->meshes->l))
+	    mesh->flags &= ~ADRT_MESH_HIT;
+    }
+
+    if(render_shader_init(&isst->camera.render, mode, buf) != 0)
+	return TCL_ERROR;
 
     isst->dirty = 1;
 
-    if(render_shader_init(&isst->camera.render, Tcl_GetString(objv[2]), *buf?buf:NULL) != 0)
-	return TCL_ERROR;
     return TCL_OK;
 }
 
@@ -524,12 +543,13 @@ open_dm(ClientData UNUSED(cdata), Tcl_Interp *interp, int UNUSED(objc), Tcl_Obj 
     char *av[] = { "Ogl_open", "-t", "0", "-n", ".w0", "-W", "800", "-N", "600", NULL };
 
     dmp = DM_OPEN(interp, DM_TYPE_ISST, sizeof(av)/sizeof(void*)-1, (const char **)av);
-    DM_SET_BGCOLOR(dmp, 0, 0, 0x30);
 
     if(dmp == DM_NULL) {
 	printf("dm failed?\n");
 	return TCL_ERROR;
     }
+
+    DM_SET_BGCOLOR(dmp, 0, 0, 0x30);
 
     return TCL_OK;
 

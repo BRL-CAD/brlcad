@@ -179,7 +179,7 @@ struct rt_tess_tol {
     double		norm;			/**< @brief normal tol */
 };
 #define RT_CK_TESS_TOL(_p) BU_CKMAG(_p, RT_TESS_TOL_MAGIC, "rt_tess_tol")
-
+#define RT_TESS_TOL_INIT_ZERO {RT_TESS_TOL_MAGIC, 0.0, 0.0, 0.0}
 
 /**
  * R T _ D B _ I N T E R N A L
@@ -208,20 +208,31 @@ struct rt_db_internal {
 /**
  * D B _ F U L L _ P A T H
  *
- * For collecting paths through the database tree
+ * For collecting paths through the database tree.
+ * The fp_bool array can optionally hold a boolean flag
+ * associated with each corresponding dp in fp_names.  This
+ * array must be manually maintained by the client code in
+ * order for it to have valid data - many functions using
+ * full paths (for example, conversion from strings) don't
+ * have knowledge of a specific boolean tree.
  */
 struct db_full_path {
     uint32_t		magic;
     size_t		fp_len;
     size_t		fp_maxlen;
     struct directory **	fp_names;	/**< @brief array of dir pointers */
+    int	              * fp_bool;	/**< @brief array of boolean flags */
 };
 #define DB_FULL_PATH_POP(_pp) { \
 	(_pp)->fp_len--; \
     }
 #define DB_FULL_PATH_CUR_DIR(_pp) ((_pp)->fp_names[(_pp)->fp_len-1])
+#define DB_FULL_PATH_CUR_BOOL(_pp) ((_pp)->fp_bool[(_pp)->fp_len-1])
+#define DB_FULL_PATH_SET_CUR_BOOL(_pp, _i) ((_pp)->fp_bool[(_pp)->fp_len-1] = _i)
 #define DB_FULL_PATH_ROOT_DIR(_pp) ((_pp)->fp_names[0])
 #define DB_FULL_PATH_GET(_pp, _i) ((_pp)->fp_names[(_i)])
+#define DB_FULL_PATH_GET_BOOL(_pp, _i) ((_pp)->fp_bool[(_i)])
+#define DB_FULL_PATH_SET_BOOL(_pp, _i, _j) ((_pp)->fp_bool[(_i)] = _j)
 #define RT_CK_FULL_PATH(_p) BU_CKMAG(_p, DB_FULL_PATH_MAGIC, "db_full_path")
 
 /**
@@ -280,6 +291,7 @@ struct hit {
 };
 #define HIT_NULL	((struct hit *)0)
 #define RT_CK_HIT(_p) BU_CKMAG(_p, RT_HIT_MAGIC, "struct hit")
+#define RT_HIT_INIT_ZERO { RT_HIT_MAGIC, 0.0, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, NULL, 0, NULL }
 
 /**
  * Compute normal into (_hitp)->hit_normal.  Set flip-flag accordingly
@@ -518,7 +530,7 @@ struct soltab {
  * NOTE: must update the non-geometric object id's below the
  * ADD_BELOW_HERE marker
  */
-#define	ID_MAX_SOLID	43	/**< @brief Maximum defined ID_xxx for solids */
+#define	ID_MAX_SOLID	44	/**< @brief Maximum defined ID_xxx for solids */
 
 /*
  * Non-geometric objects
@@ -538,8 +550,9 @@ struct soltab {
 #define ID_REVOLVE	40	/**< @brief Solid of Revolution */
 #define ID_PNTS         41      /**< @brief Collection of Points */
 #define ID_ANNOTATION   42      /**< @brief Annotation */
+#define ID_HRT		43	/**< @brief Heart */
 
-#define ID_MAXIMUM	43	/**< @brief Maximum defined ID_xxx value */
+#define ID_MAXIMUM	44	/**< @brief Maximum defined ID_xxx value */
 
 /**
  * M A T E R _ I N F O
@@ -552,6 +565,7 @@ struct mater_info {
     char	ma_minherit;	/**< @brief mater: DB_INH_LOWER / DB_INH_HIGHER */
     char	*ma_shader;	/**< @brief shader name & parms */
 };
+#define RT_MATER_INFO_INIT_ZERO { VINIT_ZERO, 0.0, 0, 0, 0, NULL }
 
 
 /**
@@ -1110,6 +1124,8 @@ struct db_tree_state {
     struct rt_i *		ts_rtip;	/**< @brief  Helper for rt_gettrees() */
     struct resource *		ts_resp;	/**< @brief  Per-CPU data */
 };
+#define RT_DBTS_INIT_ZERO { RT_DBTS_MAGIC, NULL, 0, 0, 0, 0, 0, RT_MATER_INFO_INIT_ZERO, MAT_INIT_ZERO, 0, BU_AVS_INIT_ZERO, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
+
 #define TS_SOFAR_MINUS	1	/**< @brief  Subtraction encountered above */
 #define TS_SOFAR_INTER	2	/**< @brief  Intersection encountered above */
 #define TS_SOFAR_REGION	4	/**< @brief  Region encountered above */
@@ -1334,6 +1350,7 @@ struct rt_wdb {
 
 #define RT_CHECK_WDB(_p) BU_CKMAG(_p, RT_WDB_MAGIC, "rt_wdb")
 #define RT_CK_WDB(_p) RT_CHECK_WDB(_p)
+#define RT_WDB_INIT_ZERO { {RT_WDB_MAGIC, BU_LIST_NULL, BU_LIST_NULL}, 0, NULL, RT_DBTS_INIT_ZERO, RT_TESS_TOL_INIT_ZERO, BN_TOL_INIT_ZERO, NULL, BU_VLS_INIT_ZERO, 0, 0, 0, 0, 0, 0, BU_VLS_INIT_ZERO, BU_OBSERVER_INIT_ZERO, NULL }
 #define RT_WDB_NULL		((struct rt_wdb *)NULL)
 #define RT_WDB_TYPE_DB_DISK			2
 #define RT_WDB_TYPE_DB_DISK_APPEND_ONLY		3
@@ -1759,11 +1776,13 @@ struct rt_g {
     uint32_t		NMG_debug;	/**< @brief  debug bits for NMG's see nmg.h */
     struct rt_wdb	rtg_headwdb;	/**< @brief  head of database object list */
 };
+#define RT_G_INIT_ZERO { 0, 0, BU_LIST_INIT_ZERO, 0, RT_WDB_INIT_ZERO }
+
 
 /**
  * global ray-trace geometry state
  */
-RT_EXPORT extern struct rt_g rt_g;
+RT_EXPORT extern struct rt_g RTG;
 
 /* Normally set when in production mode, setting the RT_G_DEBUG define
  * to 0 will allow chucks of code to poof away at compile time (since
@@ -1773,7 +1792,7 @@ RT_EXPORT extern struct rt_g rt_g;
 #ifdef NO_DEBUG_CHECKING
 #  define RT_G_DEBUG 0
 #else
-#  define RT_G_DEBUG rt_g.debug
+#  define RT_G_DEBUG RTG.debug
 #endif
 
 /**
@@ -1915,16 +1934,22 @@ struct rt_i {
  * Applications that are going to use RT_ADD_VLIST and RT_GET_VLIST
  * are required to execute this macro once, first:
  *
- * BU_LIST_INIT(&rt_g.rtg_vlfree);
+ * BU_LIST_INIT(&RTG.rtg_vlfree);
  *
  * Note that RT_GET_VLIST and RT_FREE_VLIST are non-PARALLEL.
  */
-#define RT_GET_VLIST(p) BN_GET_VLIST(&rt_g.rtg_vlfree, p)
+#define RT_GET_VLIST(p) BN_GET_VLIST(&RTG.rtg_vlfree, p)
 
 /** Place an entire chain of bn_vlist structs on the freelist */
-#define RT_FREE_VLIST(hd) BN_FREE_VLIST(&rt_g.rtg_vlfree, hd)
+#define RT_FREE_VLIST(hd) BN_FREE_VLIST(&RTG.rtg_vlfree, hd)
 
-#define RT_ADD_VLIST(hd, pnt, draw) BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, pnt, draw)
+#define RT_ADD_VLIST(hd, pnt, draw) BN_ADD_VLIST(&RTG.rtg_vlfree, hd, pnt, draw)
+
+/** Set a point size to apply to the vlist elements that follow. */
+#define RT_VLIST_SET_POINT_SIZE(hd, size) BN_VLIST_SET_POINT_SIZE(&RTG.rtg_vlfree, hd, size)
+
+/** Set a line width to apply to the vlist elements that follow. */
+#define RT_VLIST_SET_LINE_WIDTH(hd, width) BN_VLIST_SET_LINE_WIDTH(&RTG.rtg_vlfree, hd, width)
 
 
 /*
@@ -2127,10 +2152,14 @@ struct rt_functab {
     void (*ft_volume)(fastf_t * /*vol*/, const struct rt_db_internal * /*ip*/);
     void (*ft_surf_area)(fastf_t * /*area*/, const struct rt_db_internal * /*ip*/);
     void (*ft_centroid)(point_t * /*cent*/, const struct rt_db_internal * /*ip*/);
+    int (*ft_oriented_bbox)(struct rt_arb_internal * /* bounding arb8 */,
+		   struct rt_db_internal * /*ip*/,
+		   const fastf_t);
+
 };
 
 
-RT_EXPORT extern const struct rt_functab rt_functab[];
+RT_EXPORT extern const struct rt_functab OBJ[];
 
 #define RT_CK_FUNCTAB(_p) BU_CKMAG(_p, RT_FUNCTAB_MAGIC, "functab");
 
@@ -2188,7 +2217,7 @@ struct rt_shootray_status {
 /*********************************************************************************
  *	The following section is an exact copy of what was previously "nmg_rt.h" *
  *      (with minor changes to NMG_GET_HITMISS and NMG_FREE_HITLIST              *
- *	moved here to use rt_g.rtg_nmgfree freelist for hitmiss structs.         *
+ *	moved here to use RTG.rtg_nmgfree freelist for hitmiss structs.         *
  ******************************************************************************* */
 
 #define NMG_HIT_LIST	0
@@ -2381,10 +2410,10 @@ struct ray_data {
 #else
 #  define nmg_bu_bomb(rd, str) { \
 	bu_log("%s", str); \
-	if (rt_g.NMG_debug & DEBUG_NMGRT) bu_bomb("End of diagnostics"); \
+	if (RTG.NMG_debug & DEBUG_NMGRT) bu_bomb("End of diagnostics"); \
 	BU_LIST_INIT(&rd->rd_hit); \
 	BU_LIST_INIT(&rd->rd_miss); \
-	rt_g.NMG_debug |= DEBUG_NMGRT; \
+	RTG.NMG_debug |= DEBUG_NMGRT; \
 	nmg_isect_ray_model(rd); \
 	(void) nmg_ray_segs(rd); \
 	bu_bomb("Should have bombed before this\n"); \
@@ -3673,12 +3702,17 @@ struct db_full_path_list {
 };
 
 /**
+ * Add an object to the db_full_path_list based on its database object name
+ */
+RT_EXPORT extern int db_full_path_list_add(const char *path, int local, struct db_i *dbip, struct db_full_path_list *path_list);
+
+/**
  * Free all entries and the list of a db_full_path_list
  */
 RT_EXPORT extern void db_free_full_path_list(struct db_full_path_list *path_list);
 
 /**
- * process the command line and create a "plan" corresponding to the
+ * Low level command to process the command line and create a "plan" corresponding to the
  * command arguments.
  */
 RT_EXPORT extern void *db_search_formplan(char **argv,
@@ -3691,6 +3725,9 @@ RT_EXPORT extern void *db_search_formplan(char **argv,
  */
 RT_EXPORT extern void db_search_freeplan(void **plan);
 
+/**
+ * Low level routines for invocation of search plans
+ */
 RT_EXPORT extern struct db_full_path_list *db_search_full_paths(void *searchplan,
 								struct db_full_path_list *path_list,
 								struct db_i *dbip,
@@ -3700,6 +3737,77 @@ RT_EXPORT extern struct bu_ptbl *db_search_unique_objects(void *searchplan,
 							  struct db_full_path_list *path_list,
 							  struct db_i *dbip,
 							  struct rt_wdb *wdbp);
+
+/**
+ * Use the string form of a search plan to build and execute a search
+ */
+RT_EXPORT extern struct db_full_path_list *db_search_full_paths_strplan(const char *plan_string,
+								struct db_full_path_list *path_list,
+								struct db_i *dbip,
+								struct rt_wdb *wdbp);
+
+RT_EXPORT extern struct bu_ptbl *db_search_unique_objects_strplan(const char *plan_string,
+							  struct db_full_path_list *path_list,
+							  struct db_i *dbip,
+							  struct rt_wdb *wdbp);
+
+/**
+ * TODO:  PROPOSED API for search functionality
+ *
+ * This is the proposed replacement to all of the preceding search functionality -
+ * the previous API calls will .
+ *
+ * Design notes:
+ *
+ * * As long as struct db_i retains its pointer back to its parent rt_wdb
+ *   structure, and dbip is a parameter in rt_wdb, only one of the two is
+ *   needed as a parameter and either will work.  Probably go with rt_wdb,
+ *   since it isn't tagged as private within the data structure definition.
+ *
+ * * Plan strings are the most intuitive way for humans to spell out a search
+ *   pattern - db_search_formplan becomes a behind-the-scenes function that
+ *   the user then doesn't have to worry about.  Only counterargument would
+ *   be re-using plans already built from a string, and the slight overhead
+ *   of rebuilding the plan from a string for repeated search calls isn't
+ *   sufficient justification for the added API complexity without hard
+ *   evidence that complexity is needed.
+ *
+ * * Instead of having the user go through the trouble of generating full
+ *   path structures from string inputs, just accept char pointers to
+ *   object or path names and build the necessary additional data structures
+ *   in the backend.  Again, minor possible performance gain from path list
+ *   re-use doesn't justify more API complexity without compelling evidence
+ *   it is needed.
+ *
+ * * instead of having multiple search function calls, add a search type
+ *   parameter that toggles between various search types.  All of them can
+ *   return a bu_ptbl of pointers to db full paths, and the search type
+ *   will control how the search is done and what the expectations/guarantees
+ *   are for the results.
+ *
+ * * Need a flag to know what to do about hidden geometry during the search,
+ *   unless we make that one of the plan options - maybe -nohide or something
+ *   like that...
+ *
+ * * One possible option to the enums for search types is to rely fully on the
+ *   first character of the path strings (which are currently fully informative in the
+ *   libged search command line interface) but the difficulty there is if more
+ *   search styles are added initial path string characters are a very constraining
+ *   selection mechanism.  For future proofing I think the input conventions on the
+ *   path strings should be handled above this level.
+ */
+
+/* Available search types */
+enum {
+    DB_SEARCH_STANDARD = 0, /* Full path tree search starting with the set of objects having no parents */
+    DB_SEARCH_UNIQ_OBJ,     /* Like DB_SEARCH_STANDARD, but returns only unique object list without paths */
+    DB_SEARCH_FLAT          /* Instead of only starting with objects that don't have a parent, all objects are starting points for a full path tree search*/
+};
+
+RT_EXPORT extern struct bu_ptbl *db_search(const char *plan_string,
+	                                   const char *path_strings[],
+	                                   struct rt_wdb *wdbp,
+	                                   int search_type);
 
 /* db_open.c */
 /**
@@ -4270,7 +4378,7 @@ RT_EXPORT extern void db_comb_describe(struct bu_vls	*str,
 /**
  * R T _ C O M B _ D E S C R I B E
  *
- * rt_functab[ID_COMBINATION].ft_describe() method
+ * OBJ[ID_COMBINATION].ft_describe() method
  */
 RT_EXPORT extern int rt_comb_describe(struct bu_vls	*str,
 				      const struct rt_db_internal *ip,
@@ -4363,6 +4471,19 @@ RT_EXPORT extern void rt_ell_16pts(fastf_t *ov,
 				   fastf_t *A,
 				   fastf_t *B);
 
+
+/**
+ * d b _ c o m b _ m v a l l
+ *
+ * change all matching object names in the comb tree from old_name to new_name
+ *
+ * calling function must supply an initialized bu_ptbl, and free it once done.
+ */
+RT_EXPORT extern int db_comb_mvall(struct directory *dp,
+				   struct db_i *dbip,
+				   const char *old_name,
+				   const char *new_name,
+				   struct bu_ptbl *stack);
 
 /* roots.c */
 /** @addtogroup librt */
@@ -5257,7 +5378,7 @@ RT_EXPORT extern int db_tally_subtree_regions(union tree	*tp,
  * must be 1.
  *
  * If ncpu > 1, the caller is responsible for making sure that
- * rt_g.rtg_parallel is non-zero, and that the bu_semaphore_init()
+ * RTG.rtg_parallel is non-zero, and that the bu_semaphore_init()
  * functions has been performed, first.
  *
  * Plucks per-cpu resources out of rtip->rti_resources[].  They need
@@ -5973,7 +6094,7 @@ RT_EXPORT extern void rt_vlist_copy(struct bu_list *dest,
 
 /**
  * The macro RT_FREE_VLIST() simply appends to the list
- * &rt_g.rtg_vlfree.  Now, give those structures back to bu_free().
+ * &RTG.rtg_vlfree.  Now, give those structures back to bu_free().
  */
 RT_EXPORT extern void bn_vlist_cleanup(struct bu_list *hd);
 
@@ -7898,7 +8019,7 @@ RT_EXPORT extern size_t db5_type_sizeof_n_binu(const int minor);
 
 /**
  * Define standard attribute types in BRL-CAD geometry. (See the
- * gattributes manual page) these should be a collective enumeration
+ * attributes manual page) these should be a collective enumeration
  * starting from 0 and increasing without any gaps in the numbers so
  * db5_standard_attribute() can be used as an index-based iterator.
  */

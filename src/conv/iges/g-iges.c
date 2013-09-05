@@ -222,7 +222,7 @@ main(int argc, char *argv[])
     tol.para = 1 - tol.perp;
 
     the_model = nmg_mm();
-    BU_LIST_INIT(&rt_g.rtg_vlfree);	/* for vlist macros */
+    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     rt_init_resource(&rt_uniresource, 0, NULL);
 
@@ -263,18 +263,17 @@ main(int argc, char *argv[])
 		tol.dist_sq = tol.dist * tol.dist;
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug);
-		NMG_debug = rt_g.NMG_debug;
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
+		NMG_debug = RTG.NMG_debug;
 		break;
 	    case 'o':		/* Output file name. */
 		output_file = bu_optarg;
 		break;
 	    case 'P':
 		ncpu = atoi(bu_optarg);
-		rt_g.debug = 1;
 		break;
 	    default:
 		usage(argv[0]);
@@ -470,7 +469,7 @@ process_boolean(struct db_tree_state *tsp, union tree *curtree, const struct db_
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before bombing out.
 	 */
-	rt_g.NMG_debug = NMG_debug;	/* restore mode */
+	RTG.NMG_debug = NMG_debug;	/* restore mode */
 
 	/* Release the tree memory & input regions */
 	db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */

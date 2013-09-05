@@ -1,0 +1,7 @@
+SET(libgdiam_ignore_files
+README
+LICENSE.GPL2
+LICENSE.LGPL21
+gdiam.hpp
+gdiam_test.cpp
+)

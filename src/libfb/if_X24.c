@@ -76,28 +76,10 @@
 #include "fb.h"
 
 
-/* Print a debug message on first time into a piece of code */
-#if 0
-#  define DEBUG1(str) { \
-	static int before=1;			\
-	if (before) {				\
-	    int ret;				\
-	    ret = write(2, str, strlen(str));	\
-	    before=0;				\
-	}					\
-    }
-#else
-#  define DEBUG1(str)	/* NIL */
-#endif
-
-#define X_DBG 0
-#define UPD_DBG 0
-#define BLIT_DBG 0
-#define EVENT_DBG 0
-#define BLIT_DBG_PIX 0
-
 #define SHMEM_KEY 42
 
+/* FIXME: see next FIXME ref gcc 4.8.1 error */
+const int GLUMTBL_FACTOR = INT_MAX / 256;
 
 /*
  * Per window state information.
@@ -559,10 +541,6 @@ x24_setup(FBIO *ifp, int width, int height)
 
     FB_CK_FBIO(ifp);
 
-#if X_DBG
-    printf("x24_setup(ifp:0x%x, width:%d, height:%d) entered\n", ifp, width, height);
-#endif
-
     /* Save these in state structure */
 
     xi->xi_xwidth = width;
@@ -828,16 +806,8 @@ x24_setup(FBIO *ifp, int width, int height)
     xswa.background_pixel = xi->xi_bp;
     xswa.border_pixel = xi->xi_wp;
     xswa.bit_gravity = ForgetGravity;
-#ifdef X_DBG
-    xswa.backing_store = NotUseful;
-#else
     xswa.backing_store = Always;
-#endif
     xswa.colormap = xi->xi_cmap;
-
-#if X_DBG
-    printf("Creating window\n");
-#endif
 
     xi->xi_win = XCreateWindow(xi->xi_dpy, RootWindow(xi->xi_dpy,
 						      xi->xi_screen), 0, 0, width, height, 3, xi->xi_depth,
@@ -983,7 +953,16 @@ x24_setup(FBIO *ifp, int width, int height)
 		int i;
 		for (i = 0; i < 256; i++) {
 		    rlumtbl[i] = i * 5016388;
-		    glumtbl[i] = i * 9848226;
+                    /* FIXME: The following line constant factor 9848226 causes an error with gcc 4.8.1:
+                     *   error: iteration 219u invokes undefined behavior [-Werror=aggressive-loop-optimizations]
+                     *
+                     * Short term fix is to make the factor = LONG_MAX / 256 until someone
+                     * with more contextual knowledge can fix it properly.
+                     *
+                     */
+
+		    /* glumtbl[i] = i * 9848226; */
+                    glumtbl[i] = i * GLUMTBL_FACTOR;
 		    blumtbl[i] = i * 1912603;
 		}
 		lumdone = 1;
@@ -1101,11 +1080,6 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
     }
     blue_shift = i-8;
 
-#if BLIT_DBG
-    printf("blit: enter %dx%d at (%d, %d), disp (%d, %d) to (%d, %d) flags %d\n",
-	   w, h, x1, y1, xi->xi_ilf, xi->xi_ibt, xi->xi_irt, xi->xi_itp, flags);
-#endif
-
     /*
      * If the changed rectangle is outside the displayed one, there's
      * nothing to do
@@ -1132,11 +1106,6 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
     x2wd = (x2 == xi->xi_irt) ? xi->xi_irt_w : ifp->if_xzoom;
     y1ht = (y1 == xi->xi_ibt) ? xi->xi_ibt_h : ifp->if_yzoom;
     y2ht = (y2 == xi->xi_itp) ? xi->xi_itp_h : ifp->if_yzoom;
-
-#if BLIT_DBG
-    printf("blit: postclip (%d, %d) to (%d, %d) wds (%d, %d) hts (%d, %d)\n",
-	   x1, y1, x2, y2, x1wd, x2wd, y1ht, y2ht);
-#endif
 
     /* Compute ox: offset from left edge of window to left pixel */
 
@@ -1172,11 +1141,6 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
 	xht = y1ht + y2ht + ifp->if_yzoom * (y2 - y1 - 1);
     }
 
-#if BLIT_DBG
-    printf("blit: output to (%d, %d)\n", ox, oy);
-    printf("blit: xi_flags & FLG_VMASK = 0x%x\n", xi->xi_flags & FLG_VMASK);
-#endif
-
     /*
      * Set pointers to start of source and destination areas; note
      * that we're going from lower to higher image coordinates, so
@@ -1203,13 +1167,6 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
 		opix = &(xi->xi_pix[oy * xi->xi_image->bytes_per_line]);
 		/* + ox * (xi->xi_image->bits_per_pixel/8)]); */
 
-#if BLIT_DBG_PIX
-		if (opix < xi->xi_pix) {
-		    bu_log("X24_blit: about to clobber memory 1\n");
-		    bu_log("\topix - Ox%lx\txi->xi_pix - 0x%lx\n", opix, xi->xi_pix);
-		    break;
-		}
-#endif
 		/*
 		 * Our source of pixels in packed RGB order
 		 */
@@ -1221,13 +1178,6 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
 		    unsigned char *line_irgb;
 		    unsigned char *p;
 
-#if BLIT_DBG_PIX
-		    if (opix < xi->xi_pix) {
-			bu_log("X24_blit: about to clobber memory 2\n");
-			bu_log("\topix - Ox%lx\txi->xi_pix - 0x%lx\n", opix, xi->xi_pix);
-			break;
-		    }
-#endif
 		    /* Save pointer to start of line */
 
 		    line_irgb = irgb;
@@ -1871,9 +1821,6 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
     if (flags & BLIT_DISP) {
 	XPutImage(xi->xi_dpy, xi->xi_win, xi->xi_gc, xi->xi_image,
 		  ox, oy - xht + 1, ox, oy - xht + 1, xwd, xht);
-#if BLIT_DBG
-	printf("blit: PutImage of %dx%d to (%d, %d)\n", xwd, xht, ox, oy - xht + 1);
-#endif
     }
 
     /* If we changed the valid region, make a new one. */
@@ -1920,11 +1867,6 @@ X24_rmap(FBIO *ifp, ColorMap *cmp)
     struct xinfo *xi = XI(ifp);
     FB_CK_FBIO(ifp);
 
-#if X_DBG
-    printf("X24_rmap(ifp:0x%x, cmp:0x%x) entered.\n",
-	   ifp, cmp);
-#endif
-
     memcpy(cmp, xi->xi_rgb_cmap, sizeof (ColorMap));
 
     return 0;
@@ -1938,11 +1880,6 @@ X24_wmap(FBIO *ifp, const ColorMap *cmp)
     ColorMap *map = xi->xi_rgb_cmap;
     int waslincmap;
     FB_CK_FBIO(ifp);
-
-#if X_DBG
-    printf("X24_wmap(ifp:0x%x, cmp:0x%x) entered.\n",
-	   ifp, cmp);
-#endif
 
     /* Did we have a linear colormap before this call? */
 
@@ -2155,14 +2092,6 @@ X24_updstate(FBIO *ifp)
     int want, avail;	/* Wanted/available image pixels */
 
     FB_CK_FBIO(ifp);
-
-#if UPD_DBG
-    printf("upd: x %dx%d i %dx%d z %d, %d ctr (%d, %d)\n",
-	   xi->xi_xwidth, xi->xi_xheight,
-	   xi->xi_iwidth, xi->xi_iheight,
-	   ifp->if_xzoom, ifp->if_yzoom,
-	   ifp->if_xcenter, ifp->if_ycenter);
-#endif
 
     /*
      * Set ?wp to the number of whole zoomed image pixels we could display
@@ -2405,12 +2334,6 @@ X24_updstate(FBIO *ifp)
 	xi->xi_itp = xi->xi_iheight - 1;
     }
 
-#if UPD_DBG
-    printf("upd: off (%d, %d) 1 (%d, %d) 2 (%d, %d) wd (%d, %d) ht (%d, %d)\n",
-	   xi->xi_xlf, xi->xi_xtp, xi->xi_ilf, xi->xi_ibt,
-	   xi->xi_irt, xi->xi_itp, xi->xi_ilf_w, xi->xi_irt_w,
-	   xi->xi_ibt_h, xi->xi_itp_h);
-#endif
 }
 
 
@@ -2503,11 +2426,6 @@ X24_open(FBIO *ifp, const char *file, int width, int height)
 
     unsigned long mode;			/* local copy */
     int getmem_stat;
-
-#if X_DBG
-    printf("X24_open(ifp:0x%x, file:%s width:%d, height:%d): entered.\n",
-	   ifp, file, width, height);
-#endif
 
     FB_CK_FBIO(ifp);
 
@@ -2972,11 +2890,6 @@ X24_handle_event(FBIO *ifp, XEvent *event)
 		XExposeEvent *expose = (XExposeEvent *)event;
 		int ex1, ey1, ex2, ey2;
 
-#if EVENT_DBG
-		printf("expose event x= %d y= %d width= %d height= %d\n",
-		       expose->x, expose->y, expose->width, expose->height);
-#endif
-
 		ex1 = expose->x;
 		ey1 = expose->y;
 		ex2 = ex1 + expose->width - 1;
@@ -2991,13 +2904,6 @@ X24_handle_event(FBIO *ifp, XEvent *event)
 		    ey1 = xi->xi_xtp;
 		if (ey2 > xi->xi_xbt)
 		    ey2 = xi->xi_xbt;
-
-#if EVENT_DBG
-		printf("expose limits (%d, %d) to (%d, %d)\n",
-		       xi->xi_xlf, xi->xi_xtp, xi->xi_xrt, xi->xi_xbt);
-		printf("clipped expose (%d, %d) to (%d, %d)\n",
-		       ex1, ey1, ex2, ey2);
-#endif
 
 		if (ex2 >= ex1 && ey2 >= ey1)
 		    XPutImage(xi->xi_dpy, xi->xi_win, xi->xi_gc,
@@ -3079,12 +2985,6 @@ X24_handle_event(FBIO *ifp, XEvent *event)
 		if (conf->width == xi->xi_xwidth &&
 		    conf->height == xi->xi_xheight)
 		    return;
-
-#if EVENT_DBG
-		printf("configure, oldht %d oldwid %d newht %d newwid %d\n",
-		       xi->xi_xheight, xi->xi_xwidth, conf->height,
-		       conf->width);
-#endif
 
 		X24_configureWindow(ifp, conf->width, conf->height);
 
@@ -3176,11 +3076,6 @@ X24_clear(FBIO *ifp, unsigned char *pp)
 
     FB_CK_FBIO(ifp);
 
-#if X_DBG
-    printf("X24_clear(ifp:0x%x, pp:0x%x) pixel = (%d, %d, %d): entered.\n",
-	   ifp, pp, pp[RED], pp[GRN], pp[BLU]);
-#endif
-
     if (pp == (unsigned char *)NULL) {
 	red = grn = blu = 0;
     } else {
@@ -3240,11 +3135,6 @@ X24_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 
     FB_CK_FBIO(ifp);
 
-#if X_DBG
-    printf("X24_write(ifp:0x%x, x:%d, y:%d, pixelp:0x%x, count:%lu) entered.\n",
-	   ifp, x, y, pixelp, count);
-#endif
-
     /* Check origin bounds */
     if (x < 0 || x >= xi->xi_iwidth || y < 0 || y >= xi->xi_iheight)
 	return -1;
@@ -3283,12 +3173,6 @@ X24_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
     struct xinfo *xi = XI(ifp);
     FB_CK_FBIO(ifp);
 
-
-#if X_DBG
-    printf("X24_view(ifp:0x%x, xcenter:%d, ycenter:%d, xzoom:%d, yzoom:%d) entered.\n",
-	   ifp, xcenter, ycenter, xzoom, yzoom);
-#endif
-
     /* bypass if no change */
     if (ifp->if_xcenter == xcenter && ifp->if_ycenter == ycenter
 	&& ifp->if_xzoom == xcenter && ifp->if_yzoom == ycenter)
@@ -3318,11 +3202,6 @@ HIDDEN int
 X24_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
 
-#if X_DBG
-    printf("X24_getview(ifp:0x%x, xcenter:0x%x, ycenter:0x%x, xzoom:0x%x, yzoom:0x%x) entered.\n",
-	   ifp, xcenter, ycenter, xzoom, yzoom);
-#endif
-
     *xcenter = ifp->if_xcenter;
     *ycenter = ifp->if_ycenter;
     *xzoom = ifp->if_xzoom;
@@ -3338,11 +3217,6 @@ X24_setcursor(FBIO *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), i
 {
     FB_CK_FBIO(ifp);
 
-#if X_DBG
-    printf("X24_setcursor(ifp:0x%x, bits:%u, xbits:%d, ybits:%d, xorig:%d, yorig:%d) entered.\n",
-	   ifp, bits, xbits, ybits, xorig, yorig);
-#endif
-
     return 0;
 }
 
@@ -3351,11 +3225,6 @@ HIDDEN int
 X24_cursor(FBIO *ifp, int mode, int x, int y)
 {
     struct xinfo *xi = XI(ifp);
-
-#if X_DBG
-    printf("X24_cursor(ifp:0x%x, mode:%d, x:%d, y:%d) entered.\n",
-	   ifp, mode, x, y);
-#endif
 
     if (mode) {
 	register int xx, xy;
@@ -3413,12 +3282,6 @@ X24_cursor(FBIO *ifp, int mode, int x, int y)
 HIDDEN int
 X24_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 {
-
-#if X_DBG
-    printf("X24_getcursor(ifp:0x%x, mode:%d, x:0x%x, y:0x%x) entered.\n",
-	   ifp, mode, x, y);
-#endif
-
     fb_sim_getcursor(ifp, mode, x, y);
 
     return 0;
@@ -3431,10 +3294,6 @@ X24_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char
     struct xinfo *xi = XI(ifp);
     FB_CK_FBIO(ifp);
 
-#if X_DBG
-    printf("X24_readrect(ifp:0x%x, xmin:%d, ymin:%d, width:%d, height:%d, pp:0x%x) entered.\n",
-	   ifp, xmin, ymin, width, height, pp);
-#endif
     /* Clip arguments */
 
     if (xmin < 0)
@@ -3477,11 +3336,6 @@ X24_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsign
 {
     struct xinfo *xi = XI(ifp);
     FB_CK_FBIO(ifp);
-
-#if X_DBG
-    printf("X24_writerect(ifp:0x%x, xmin:%d, ymin:%d, width:%d, height:%d, pp:0x%x) entered.\n",
-	   ifp, xmin, ymin, width, height, pp);
-#endif
 
     /* Clip arguments */
 
@@ -3545,11 +3399,6 @@ X24_flush(FBIO *ifp)
     struct xinfo *xi = XI(ifp);
     FB_CK_FBIO(ifp);
 
-
-#if X_DBG
-    printf("X24_flush(ifp:0x%x) entered\n", ifp);
-#endif
-
     XFlush(xi->xi_dpy);
     return 0;
 }
@@ -3559,10 +3408,6 @@ HIDDEN int
 X24_free(FBIO *ifp)
 {
     FB_CK_FBIO(ifp);
-
-#if X_DBG
-    printf("X24_free(ifp:0x%x) entered\n", ifp);
-#endif
 
     return 0;
 }
@@ -3574,10 +3419,6 @@ X24_help(FBIO *ifp)
     struct xinfo *xi = XI(ifp);
     struct modeflags *mfp;
     FB_CK_FBIO(ifp);
-
-#if X_DBG
-    printf("X24_help(ifp:0x%x) entered\n", ifp);
-#endif
 
     fb_log("Description: %s\n", X24_interface.if_type);
     fb_log("Device: %s\n", ifp->if_name);

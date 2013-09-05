@@ -38,10 +38,12 @@
 
 
 /* Maximum number of segments.  The maximum may be no greater then 100
- * because of the way the name of the segments is found.
+ * because of the way the names of the segments are found.
  */
 #define MAXWIRESEG 100
 
+static const char usage[]   = "Usage: wire [interactive questions...]\n";
+static const char purpose[] = "generate a wire of up to 100 segments";
 
 int
 main(int argc, char *argv[])
@@ -77,8 +79,8 @@ main(int argc, char *argv[])
     char temp1[10];			/* Temporary char string. */
     int ret;
 
-    if (argc > 1)
-	bu_exit(1, "Usage: %s\n", argv[0]);
+    if (argc > 1 && argv)
+	bu_exit(1, usage);
 
     /* Set up solid, region, & group names. */
     solcyl[0] = 's';
@@ -182,7 +184,7 @@ main(int argc, char *argv[])
 	numseg = (float)MAXWIRESEG;
 
     /* Enter starting & ending points of segments & radi. */
-    for (i=0; i<numseg; i++) {
+    for (i = 0; i < numseg; i++) {
 	/* START # 2 */
 	if (i == 0) {
 	    /* START # 3 */
@@ -257,7 +259,7 @@ main(int argc, char *argv[])
     (void)fflush(stdout);
 
     /* Print out coordinates of segments. */
-    for (i=0; i<numseg; i++) {
+    for (i = 0; i < numseg; i++) {
 	/* START # 5 */
 	printf("Segment # %d:  ", (i+1));
 	printf("(%f, %f, %f)", strtpt[i][0], strtpt[i][1], strtpt[i][2]);
@@ -277,7 +279,7 @@ main(int argc, char *argv[])
     /* Create solids. */
 
     /* Create solid for each segment. */
-    for (i=0; i<numseg; i++) {
+    for (i = 0; i < numseg; i++) {
 	/* START # 10 */
 	/* Base of cone. */
 	bs[0] = (fastf_t)strtpt[i][0];
@@ -326,7 +328,7 @@ main(int argc, char *argv[])
     }							/* END # 10 */
 
     /* Create solid for each sphere. */
-    for (i=1; i<numseg; i++) {
+    for (i = 1; i < numseg; i++) {
 	/* Sphere 0 does not exist since there is one less sphere
 	 * than segment.
 	 */
@@ -368,7 +370,7 @@ main(int argc, char *argv[])
 
     /* Create region for each segment. */
 
-    for (i=0; i<numseg; i++) {
+    for (i = 0; i < numseg; i++) {
 	/* START # 30 */
 	/* Fill in correct number in region & solid names. */
 	(void)sprintf(temp, "%d", i);
@@ -426,7 +428,7 @@ main(int argc, char *argv[])
     }							/* END # 30 */
 
     /* Create region for each sphere. */
-    for (i=1; i<numseg; i++) {
+    for (i = 1; i < numseg; i++) {
 	/* START # 40 */
 	/* Fill in correct region & solid names. */
 	(void)sprintf(temp, "%d", i);
@@ -473,7 +475,7 @@ main(int argc, char *argv[])
     /* Initialize list. */
     BU_LIST_INIT(&comb1.l);
 
-    for (i=0; i<numseg; i++) {
+    for (i = 0; i < numseg; i++) {
 	/* START # 50 */
 	(void)sprintf(temp, "%d", i);
 

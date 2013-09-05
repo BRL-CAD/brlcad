@@ -15,6 +15,7 @@ set(RT_LOCAL_INCLUDE_DIRS
   ${REGEX_INCLUDE_DIR}
   ${TNT_INCLUDE_DIR}
   ${LIBVDS_INCLUDE_DIR}
+  ${LIBGDIAM_INCLUDE_DIR}
   )
 
 BRLCAD_LIB_INCLUDE_DIRS(rt RT_INCLUDE_DIRS RT_LOCAL_INCLUDE_DIRS)
@@ -29,6 +30,7 @@ set(LIBRT_SOURCES
   bundle.c
   cmd.c
   comb/comb.c
+  comb/comb_brep.cpp
   comb/comb_mirror.c
   comb/db_comb.c
   constraint.c
@@ -77,6 +79,7 @@ set(LIBRT_SOURCES
   primitives/bot/bot.c
   primitives/bot/bot_brep.cpp
   primitives/bot/bot_mirror.c
+  primitives/bot/bot_oriented_bbox.cpp
   primitives/bot/btg.c
   primitives/bot/btgf.c
   primitives/brep/brep.cpp
@@ -231,6 +234,7 @@ set(LIBRT_SOURCES
   primitives/vol/vol.c
   primitives/vol/vol_brep.cpp
   primitives/vol/vol_mirror.c
+  primitives/hrt/hrt.c
   regionfix.c
   roots.c
   search.c
@@ -287,26 +291,26 @@ else(MSVC)
   set(LIBRT_SOURCES ${LIBRT_SOURCES} timer42.c)
 endif(MSVC)
 
-BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${LIBVDS_LIBRARY};libbn;libbu;${OPENNURBS_LIBRARY};${P2T_LIBRARY};libbrep;${REGEX_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NOSTRICTCXX)
+BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${LIBGDIAM_LIBRARY};${LIBVDS_LIBRARY};libbn;libbu;${OPENNURBS_LIBRARY};${P2T_LIBRARY};libbrep;${REGEX_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NO_STRICT_CXX)
 
 SET_TARGET_PROPERTIES(librt PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(CPP_DLL_DEFINES)
   SET_PROPERTY(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "TIE_DLL_EXPORTS")
   SET_PROPERTY(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "DB5_DLL_EXPORTS")
   SET_PROPERTY(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "VDS_DLL_IMPORTS")
+  SET_PROPERTY(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "GDIAM_DLL_IMPORTS")
 endif(CPP_DLL_DEFINES)
 
-CMAKEFILES(Makefile.am)
 
 include_directories(
   ${CMAKE_SOURCE_DIR}/src/other/Eigen
   ${CMAKE_CURRENT_SOURCE_DIR}/../libbrep
   )
 
-#BRLCAD_ADDEXEC(test_bot2nurbs test_bot2nurbs.cpp "librt;libwdb;libbrep;libbu" NOSTRICT NO_INSTALL)
-#BRLCAD_ADDEXEC(test_nurbsfit test_nurbsfit.cpp "librt;libwdb;libbrep;libbu" NOSTRICT NO_INSTALL)
-#BRLCAD_ADDEXEC(test_root3-subd test_root3-subd.cpp "librt;libwdb;libbrep;libbu" NOSTRICT NO_INSTALL)
-#BRLCAD_ADDEXEC(test_surfacetree test_surfacetree.cpp "librt;libwdb;libbrep;libbu" NOSTRICT NO_INSTALL)
+#BRLCAD_ADDEXEC(test_bot2nurbs test_bot2nurbs.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
+#BRLCAD_ADDEXEC(test_nurbsfit test_nurbsfit.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
+#BRLCAD_ADDEXEC(test_root3-subd test_root3-subd.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
+#BRLCAD_ADDEXEC(test_surfacetree test_surfacetree.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 
 add_subdirectory(tests)
 

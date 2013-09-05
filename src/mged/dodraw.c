@@ -85,47 +85,6 @@ static struct db_tree_state mged_initial_tree_state = {
 };
 
 
-static int mged_draw_nmg_only = 0;
-static int mged_nmg_triangulate = 0;
-static int mged_draw_wireframes = 0;
-static int mged_draw_normals = 0;
-static int mged_draw_solid_lines_only = 0;
-static int mged_draw_no_surfaces = 0;
-static int mged_shade_per_vertex_normals = 0;
-static int mged_wireframe_color_override = 0;
-static int mged_wireframe_color[3] = {0, 0, 0};
-static struct model *mged_nmg_model = NULL;
-
-
-/*
- * Used via upcall by routines deep inside LIBRT, to have a UNIX-plot
- * file dynamically overlaid on the screen.
- * This can be used to provide a very easy to program diagnostic
- * animation capability.
- * Alas, no wextern keyword to make this a little less indirect.
- *
- * 'us' is microseconds of extra delay
- */
-void
-mged_plot_anim_upcall_handler(char *file, long int us)
-{
-    const char *av[3];
-
-    /* Overlay plot file */
-    av[0] = "overlay";
-    av[1] = file;
-    av[2] = NULL;
-    (void)cmd_overlay((ClientData)NULL, INTERP, 2, av);
-
-    do {
-	event_check(1);	/* Take any device events */
-	refresh();		/* Force screen update */
-	us -= frametime * 1000000;
-    } while (us > 0);
-
-}
-
-
 void
 cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy)
 {
@@ -160,39 +119,6 @@ cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy)
 
 
 /*
- * Used via upcall by routines deep inside LIBRT, to have a UNIX-plot
- * file dynamically overlaid on the screen.
- * This can be used to provide a very easy to program diagnostic
- * animation capability.
- * Alas, no wextern keyword to make this a little less indirect.
- *
- * 'us' is microseconds of extra delay
- */
-void
-mged_vlblock_anim_upcall_handler(struct bn_vlblock *vbp, long int us, int copy)
-{
-
-    cvt_vlblock_to_solids(vbp, "_PLOT_OVERLAY_", copy);
-
-
-    do {
-	event_check(1);	/* Take any device events */
-	refresh();		/* Force screen update */
-	us -= frametime * 1000000;
-    } while (us > 0);
-}
-
-
-static void
-hack_for_lee(void)
-{
-    event_check(1);	/* Take any device events */
-
-    refresh();		/* Force screen update */
-}
-
-
-/*
  * Compute the min, max, and center points of the solid.
  * Also finds s_vlen;
  * XXX Should split out a separate bn_vlist_rpp() routine, for librt/vlist.c
@@ -218,7 +144,9 @@ mged_bound_solid(struct solid *sp)
 		case BN_VLIST_POLY_VERTNORM:
 		case BN_VLIST_TRI_START:
 		case BN_VLIST_TRI_VERTNORM:
-		    /* Has normal vector, not location */
+		case BN_VLIST_POINT_SIZE:
+		case BN_VLIST_LINE_WIDTH:
+		    /* attribute, not location */
 		    break;
 		case BN_VLIST_LINE_MOVE:
 		case BN_VLIST_LINE_DRAW:
@@ -228,13 +156,20 @@ mged_bound_solid(struct solid *sp)
 		case BN_VLIST_TRI_MOVE:
 		case BN_VLIST_TRI_DRAW:
 		case BN_VLIST_TRI_END:
-		case BN_VLIST_POINT_DRAW:
 		    V_MIN(xmin, (*pt)[X]);
 		    V_MAX(xmax, (*pt)[X]);
 		    V_MIN(ymin, (*pt)[Y]);
 		    V_MAX(ymax, (*pt)[Y]);
 		    V_MIN(zmin, (*pt)[Z]);
 		    V_MAX(zmax, (*pt)[Z]);
+		    break;
+		case BN_VLIST_POINT_DRAW:
+		    V_MIN(xmin, (*pt)[X]-1.0);
+		    V_MAX(xmax, (*pt)[X]+1.0);
+		    V_MIN(ymin, (*pt)[Y]-1.0);
+		    V_MAX(ymax, (*pt)[Y]+1.0);
+		    V_MIN(zmin, (*pt)[Z]-1.0);
+		    V_MAX(zmax, (*pt)[Z]+1.0);
 		    break;
 		default:
 		    {
@@ -294,26 +229,17 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
      */
     if (!existing_sp) {
 	/* Take note of the base color */
-	if (mged_wireframe_color_override) {
-	    /* a user specified the color, so arrange to use it */
-	    sp->s_uflag = 1;
-	    sp->s_dflag = 0;
-	    sp->s_basecolor[0] = mged_wireframe_color[0];
-	    sp->s_basecolor[1] = mged_wireframe_color[1];
-	    sp->s_basecolor[2] = mged_wireframe_color[2];
-	} else {
-	    sp->s_uflag = 0;
-	    if (tsp) {
-		if (tsp->ts_mater.ma_color_valid) {
-		    sp->s_dflag = 0;	/* color specified in db */
-		} else {
-		    sp->s_dflag = 1;	/* default color */
-		}
-		/* Copy into basecolor anyway, to prevent black */
-		sp->s_basecolor[0] = tsp->ts_mater.ma_color[0] * 255.0;
-		sp->s_basecolor[1] = tsp->ts_mater.ma_color[1] * 255.0;
-		sp->s_basecolor[2] = tsp->ts_mater.ma_color[2] * 255.0;
+	sp->s_uflag = 0;
+	if (tsp) {
+	    if (tsp->ts_mater.ma_color_valid) {
+		sp->s_dflag = 0;	/* color specified in db */
+	    } else {
+		sp->s_dflag = 1;	/* default color */
 	    }
+	    /* Copy into basecolor anyway, to prevent black */
+	    sp->s_basecolor[0] = tsp->ts_mater.ma_color[0] * 255.0;
+	    sp->s_basecolor[1] = tsp->ts_mater.ma_color[1] * 255.0;
+	    sp->s_basecolor[2] = tsp->ts_mater.ma_color[2] * 255.0;
 	}
 	sp->s_cflag = 0;
 	sp->s_iflag = DOWN;
@@ -340,554 +266,6 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
 	/* replacing existing solid -- struct already linked in */
 	sp->s_iflag = UP;
     }
-}
-
-
-HIDDEN union tree *
-mged_wireframe_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), union tree *curtree, genptr_t UNUSED(client_data))
-{
-    return curtree;
-}
-
-
-HIDDEN union tree *
-mged_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t UNUSED(client_data))
-{
-    union tree *curtree;
-    int dashflag;		/* draw with dashed lines */
-    struct bu_list vhead;
-
-    RT_CK_TESS_TOL(tsp->ts_ttol);
-    BN_CK_TOL(tsp->ts_tol);
-    RT_CK_DB_INTERNAL(ip);
-
-    BU_LIST_INIT(&vhead);
-
-    if (RT_G_DEBUG&DEBUG_TREEWALK) {
-	char *sofar = db_path_to_string(pathp);
-
-	Tcl_AppendResult(INTERP, "mged_wireframe_leaf(",
-			 ip->idb_meth->ft_name,
-			 ") path='", sofar, "'\n", (char *)NULL);
-	bu_free((genptr_t)sofar, "path string");
-    }
-
-    if (mged_draw_solid_lines_only)
-	dashflag = 0;
-    else
-	dashflag = (tsp->ts_sofar & (TS_SOFAR_MINUS|TS_SOFAR_INTER));
-
-    if (ip->idb_meth->ft_plot(
-	    &vhead, ip,
-	    tsp->ts_ttol, tsp->ts_tol, NULL) < 0) {
-	Tcl_AppendResult(INTERP, DB_FULL_PATH_CUR_DIR(pathp)->d_namep,
-			 ": plot failure\n", (char *)NULL);
-	return TREE_NULL;		/* ERROR */
-    }
-
-    /*
-     * XXX HACK CTJ - drawH_part2 sets the default color of a
-     * solid by looking in tps->ts_mater.ma_color, for pseudo
-     * solids, this needs to be something different and drawH
-     * has no idea or need to know what type of solid this is.
-     */
-    if (ip->idb_type == ID_GRIP) {
-	int r, g, b;
-	r= tsp->ts_mater.ma_color[0];
-	g= tsp->ts_mater.ma_color[1];
-	b= tsp->ts_mater.ma_color[2];
-	tsp->ts_mater.ma_color[0] = 0;
-	tsp->ts_mater.ma_color[1] = 128;
-	tsp->ts_mater.ma_color[2] = 128;
-	drawH_part2(dashflag, &vhead, pathp, tsp, SOLID_NULL);
-	tsp->ts_mater.ma_color[0] = r;
-	tsp->ts_mater.ma_color[1] = g;
-	tsp->ts_mater.ma_color[2] = b;
-    } else {
-	drawH_part2(dashflag, &vhead, pathp, tsp, SOLID_NULL);
-    }
-
-    /* Indicate success by returning something other than TREE_NULL */
-    BU_ALLOC(curtree, union tree);
-    RT_TREE_INIT(curtree);
-    curtree->tr_op = OP_NOP;
-
-    return curtree;
-}
-/* XXX Grotesque, shameless hack */
-static int mged_do_not_draw_nmg_solids_during_debugging = 0;
-static int mged_draw_edge_uses=0;
-static int mged_enable_fastpath = 0;
-static int mged_fastpath_count=0;	/* statistics */
-static struct bn_vlblock *mged_draw_edge_uses_vbp;
-
-
-/*
- * When performing "ev" on a region, consider whether to process
- * the whole subtree recursively.
- * Normally, say "yes" to all regions by returning 0.
- *
- * Check for special case:  a region of one solid, which can be
- * directly drawn as polygons without going through NMGs.
- * If we draw it here, then return -1 to signal caller to ignore
- * further processing of this region.
- * A hack to view polygonal models (converted from FASTGEN) more rapidly.
- */
-int
-mged_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t UNUSED(client_data))
-{
-    union tree *tp;
-    struct directory *dp;
-    struct rt_db_internal intern;
-    mat_t xform;
-    matp_t matp;
-    struct bu_list vhead;
-
-    if (RT_G_DEBUG&DEBUG_TREEWALK) {
-	char *sofar = db_path_to_string(pathp);
-	bu_log("mged_nmg_region_start(%s)\n", sofar);
-	bu_free((genptr_t)sofar, "path string");
-	rt_pr_tree(combp->tree, 1);
-	db_pr_tree_state(tsp);
-    }
-
-    BU_LIST_INIT(&vhead);
-
-    RT_CK_COMB(combp);
-    tp = combp->tree;
-    if (!tp)
-	return -1;
-    RT_CK_TREE(tp);
-    if (tp->tr_l.tl_op != OP_DB_LEAF)
-	return 0;	/* proceed as usual */
-
-    /* The subtree is a single node.  It may be a combination, though */
-
-    /* Fetch by name, check to see if it's an easy type */
-    dp = db_lookup(tsp->ts_dbip, tp->tr_l.tl_name, LOOKUP_NOISY);
-    if (!dp)
-	return 0;	/* proceed as usual */
-
-    if (!bn_mat_is_identity(tsp->ts_mat)) {
-	if (tp->tr_l.tl_mat) {
-	    matp = xform;
-	    bn_mat_mul(xform, tsp->ts_mat, tp->tr_l.tl_mat);
-	} else {
-	    matp = tsp->ts_mat;
-	}
-    } else {
-	if (tp->tr_l.tl_mat) {
-	    matp = tp->tr_l.tl_mat;
-	} else {
-	    matp = (matp_t)NULL;
-	}
-    }
-
-    if (rt_db_get_internal(&intern, dp, tsp->ts_dbip, matp, &rt_uniresource) < 0)
-	return 0;	/* proceed as usual */
-
-    switch (intern.idb_type) {
-	case ID_POLY:
-	    {
-		if (RT_G_DEBUG&DEBUG_TREEWALK) {
-		    bu_log("fastpath draw ID_POLY %s\n", dp->d_namep);
-		}
-		if (mged_draw_wireframes) {
-		    (void)rt_pg_plot(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol, NULL);
-		} else {
-		    (void)rt_pg_plot_poly(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol);
-		}
-	    }
-	    goto out;
-	case ID_BOT:
-	    {
-		if (RT_G_DEBUG&DEBUG_TREEWALK) {
-		    bu_log("fastpath draw ID_BOT %s\n", dp->d_namep);
-		}
-		if (mged_draw_wireframes) {
-		    (void)rt_bot_plot(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol, NULL);
-		} else {
-		    (void)rt_bot_plot_poly(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol);
-		}
-	    }
-	    goto out;
-	case ID_COMBINATION:
-	default:
-	    break;
-    }
-    rt_db_free_internal(&intern);
-    return 0;
-
-out:
-    /* Successful fastpath drawing of this solid */
-    {
-	struct db_full_path pp;
-	db_full_path_init(&pp);
-	db_dup_full_path(&pp, pathp);
-
-	/* Successful fastpath drawing of this solid */
-	db_add_node_to_full_path(&pp, dp);
-	drawH_part2(0, &vhead, &pp, tsp, SOLID_NULL);
-
-	db_free_full_path(&pp);
-    }
-
-    rt_db_free_internal(&intern);
-    mged_fastpath_count++;
-    return -1;	/* SKIP THIS REGION */
-}
-
-
-int
-process_boolean(const struct db_full_path *pathp, union tree *curtree, struct db_tree_state *tsp)
-{
-    int failed = 1;
-
-    if (!BU_SETJUMP) {
-	/* try */
-
-	failed = nmg_boolean(curtree, *tsp->ts_m, tsp->ts_tol, &rt_uniresource);
-
-    } else {
-	/* catch */
-
-	char *sofar = db_path_to_string(pathp);
-
-	BU_UNSETJUMP;
-
-	Tcl_AppendResult(INTERP, "WARNING: Boolean evaluation of ", sofar,
-			 " failed!!!\n", (char *)NULL);
-	bu_free((genptr_t)sofar, "path string");
-	db_free_tree(curtree, &rt_uniresource);
-
-	return failed;
-
-    } BU_UNSETJUMP;
-
-    return failed;
-}
-
-
-void
-process_triangulate(const struct db_full_path *pathp, union tree *curtree, struct db_tree_state *tsp)
-{
-    if (!BU_SETJUMP) {
-	/* try */
-
-	nmg_triangulate_model(*tsp->ts_m, tsp->ts_tol);
-
-    } else {
-	/* catch */
-
-	char *sofar = db_path_to_string(pathp);
-
-	BU_UNSETJUMP;
-
-	Tcl_AppendResult(INTERP, "WARNING: Triangulation of ", sofar,
-			 " failed!!!\n", (char *)NULL);
-	bu_free((genptr_t)sofar, "path string");
-	db_free_tree(curtree, &rt_uniresource);
-	return;
-    } BU_UNSETJUMP;
-}
-
-
-HIDDEN union tree *
-mged_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
-{
-    struct nmgregion *r;
-    struct bu_list vhead;
-    int failed;
-
-    RT_CK_TESS_TOL(tsp->ts_ttol);
-    BN_CK_TOL(tsp->ts_tol);
-    NMG_CK_MODEL(*tsp->ts_m);
-
-    BU_LIST_INIT(&vhead);
-
-    if (RT_G_DEBUG&DEBUG_TREEWALK) {
-	char *sofar = db_path_to_string(pathp);
-
-	Tcl_AppendResult(INTERP, "mged_nmg_region_end() path='", sofar,
-			 "'\n", (char *)NULL);
-	bu_free((genptr_t)sofar, "path string");
-    }
-
-    if (curtree->tr_op == OP_NOP) return curtree;
-
-    if (!mged_draw_nmg_only) {
-
-	failed = process_boolean(pathp, curtree, tsp);
-
-	if (failed) {
-	    db_free_tree(curtree, &rt_uniresource);
-	    return (union tree *)NULL;
-	}
-    } else if (curtree->tr_op != OP_NMG_TESS) {
-	Tcl_AppendResult(INTERP, "Cannot use '-d' option when Boolean evaluation is required\n", (char *)NULL);
-	db_free_tree(curtree, &rt_uniresource);
-	return (union tree *)NULL;
-    }
-    r = curtree->tr_d.td_r;
-    NMG_CK_REGION(r);
-
-    if (mged_do_not_draw_nmg_solids_during_debugging && r) {
-	db_free_tree(curtree, &rt_uniresource);
-	return (union tree *)NULL;
-    }
-
-    if (mged_nmg_triangulate) {
-	process_triangulate(pathp, curtree, tsp);
-    }
-
-    if (r != 0) {
-	int style;
-	/* Convert NMG to vlist */
-	NMG_CK_REGION(r);
-
-	if (mged_draw_wireframes) {
-	    /* Draw in vector form */
-	    style = NMG_VLIST_STYLE_VECTOR;
-	} else {
-	    /* Default -- draw polygons */
-	    style = NMG_VLIST_STYLE_POLYGON;
-	}
-	if (mged_draw_normals) {
-	    style |= NMG_VLIST_STYLE_VISUALIZE_NORMALS;
-	}
-	if (mged_shade_per_vertex_normals) {
-	    style |= NMG_VLIST_STYLE_USE_VU_NORMALS;
-	}
-	if (mged_draw_no_surfaces) {
-	    style |= NMG_VLIST_STYLE_NO_SURFACES;
-	}
-	nmg_r_to_vlist(&vhead, r, style);
-
-	drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL);
-
-	if (mged_draw_edge_uses) {
-	    nmg_vlblock_r(mged_draw_edge_uses_vbp, r, 1);
-	}
-	/* NMG region is no longer necessary, only vlist remains */
-	db_free_tree(curtree, &rt_uniresource);
-	return (union tree *)NULL;
-    }
-
-    /* Return tree -- it needs to be freed (by caller) */
-    return curtree;
-}
-
-
-/*
- * This routine is MGED's analog of rt_gettrees().
- * Add a set of tree hierarchies to the active set.
- * Note that argv[0] should be ignored, it has the command name in it.
- *
- * Kind =
- * 1 regular wireframes
- * 2 big-E
- * 3 NMG polygons
- *
- * Returns -
- * 0 Ordinarily
- * -1 On major error
- */
-int
-drawtrees(int argc, const char *argv[], int kind)
-{
-    int ret = 0;
-    int c;
-    int ncpu;
-    int mged_nmg_use_tnurbs = 0;
-
-    if (dbip == DBI_NULL)
-	return 0;
-
-    RT_CHECK_DBI(dbip);
-
-    if (argc <= 0) return -1;	/* FAIL */
-
-    /* Initial values for options, must be reset each time */
-    ncpu = 1;
-    mged_draw_nmg_only = 0;	/* no booleans */
-    mged_nmg_triangulate = 1;
-    mged_draw_wireframes = 0;
-    mged_draw_normals = 0;
-    mged_draw_edge_uses = 0;
-    mged_draw_solid_lines_only = 0;
-    mged_shade_per_vertex_normals = 0;
-    mged_draw_no_surfaces = 0;
-    mged_wireframe_color_override = 0;
-    mged_fastpath_count = 0;
-    mged_enable_fastpath = 0;
-
-    /* Parse options. */
-    bu_optind = 1;		/* re-init bu_getopt() */
-    while ((c=bu_getopt(argc, (char * const *)argv, "dfnqrstuvwSTP:C:")) != -1) {
-	switch (c) {
-	    case 'u':
-		mged_draw_edge_uses = 1;
-		break;
-	    case 's':
-		mged_draw_solid_lines_only = 1;
-		break;
-	    case 't':
-		mged_nmg_use_tnurbs = 1;
-		break;
-	    case 'v':
-		mged_shade_per_vertex_normals = 1;
-		break;
-	    case 'w':
-		mged_draw_wireframes = 1;
-		break;
-	    case 'S':
-		mged_draw_no_surfaces = 1;
-		break;
-	    case 'T':
-		mged_nmg_triangulate = 0;
-		break;
-	    case 'n':
-		mged_draw_normals = 1;
-		break;
-	    case 'P':
-		ncpu = atoi(bu_optarg);
-		break;
-	    case 'q':
-		mged_do_not_draw_nmg_solids_during_debugging = 1;
-		break;
-	    case 'd':
-		mged_draw_nmg_only = 1;
-		break;
-	    case 'f':
-		mged_enable_fastpath = 1;
-		break;
-	    case 'C':
-		{
-		    int r, g, b;
-		    char *cp = bu_optarg;
-
-		    r = atoi(cp);
-		    while ((*cp >= '0' && *cp <= '9')) cp++;
-		    while (*cp && (*cp < '0' || *cp > '9')) cp++;
-		    g = atoi(cp);
-		    while ((*cp >= '0' && *cp <= '9')) cp++;
-		    while (*cp && (*cp < '0' || *cp > '9')) cp++;
-		    b = atoi(cp);
-
-		    if (r < 0 || r > 255) r = 255;
-		    if (g < 0 || g > 255) g = 255;
-		    if (b < 0 || b > 255) b = 255;
-
-		    mged_wireframe_color_override = 1;
-		    mged_wireframe_color[0] = r;
-		    mged_wireframe_color[1] = g;
-		    mged_wireframe_color[2] = b;
-		}
-		break;
-	    case 'r':
-		/* Draw in all-red, as in Release 3 and earlier */
-		/* Useful for spotting regions colored black */
-		mged_wireframe_color_override = 1;
-		mged_wireframe_color[0] = 255;
-		mged_wireframe_color[1] = 0;
-		mged_wireframe_color[2] = 0;
-		break;
-	    default:
-		{
-		    struct bu_vls vls = BU_VLS_INIT_ZERO;
-
-		    bu_vls_printf(&vls, "help %s", argv[0]);
-		    Tcl_Eval(INTERP, bu_vls_addr(&vls));
-		    bu_vls_free(&vls);
-
-		    return TCL_ERROR;
-		}
-#if 0
-		Tcl_AppendResult(INTERP, "Usage: ev [-dfnqstuvwST] [-P ncpu] object(s)\n\
-	-d draw nmg without performing boolean operations\n\
-	-f enable polysolid fastpath\n\
-	-w draw wireframes (rather than polygons)\n\
-	-n draw surface normals as little 'hairs'\n\
-	-s draw solid lines only (no dot-dash for subtract and intersect)\n\
-	-t Perform CSG-to-tNURBS conversion\n\
-	-v shade using per-vertex normals, when present.\n\
-	-u debug: draw edgeuses\n\
-	-S draw tNURBs with trimming curves only, no surfaces.\n\
-	-T debug: disable triangulator\n", (char *)NULL);
-		break;
-#endif
-	}
-    }
-    argc -= bu_optind;
-    argv += bu_optind;
-
-    /* Establish upcall interfaces for use by bottom of NMG library */
-    nmg_plot_anim_upcall = mged_plot_anim_upcall_handler;
-    nmg_vlblock_anim_upcall = mged_vlblock_anim_upcall_handler;
-    nmg_mged_debug_display_hack = hack_for_lee;
-
-    /* Establish tolerances */
-    mged_initial_tree_state.ts_ttol = &mged_ttol;
-    mged_initial_tree_state.ts_tol = &mged_tol;
-
-    mged_ttol.magic = RT_TESS_TOL_MAGIC;
-    mged_ttol.abs = mged_abs_tol;
-    mged_ttol.rel = mged_rel_tol;
-    mged_ttol.norm = mged_nrm_tol;
-
-    switch (kind) {
-	default:
-	    Tcl_AppendResult(INTERP, "ERROR, bad kind\n", (char *)NULL);
-	    return -1;
-	case 1:		/* Wireframes */
-	    ret = db_walk_tree(dbip, argc, (const char **)argv,
-			       ncpu,
-			       &mged_initial_tree_state,
-			       0,			/* take all regions */
-			       mged_wireframe_region_end,
-			       mged_wireframe_leaf, (genptr_t)NULL);
-	    break;
-	case 2:		/* Big-E */
-	    Tcl_AppendResult(INTERP, "drawtrees:  can't do big-E here\n", (char *)NULL);
-	    return -1;
-	case 3:
-	    {
-		/* NMG */
-		mged_nmg_model = nmg_mm();
-		mged_initial_tree_state.ts_m = &mged_nmg_model;
-		if (mged_draw_edge_uses) {
-		    Tcl_AppendResult(INTERP, "Doing the edgeuse thang (-u)\n", (char *)NULL);
-		    mged_draw_edge_uses_vbp = rt_vlblock_init();
-		}
-
-		ret = db_walk_tree(dbip, argc, (const char **)argv,
-				   ncpu,
-				   &mged_initial_tree_state,
-				   mged_enable_fastpath ? mged_nmg_region_start : 0,
-				   mged_nmg_region_end,
-				   mged_nmg_use_tnurbs ?
-				   nmg_booltree_leaf_tnurb :
-				   nmg_booltree_leaf_tess,
-				   (genptr_t)NULL
-		    );
-
-		if (mged_draw_edge_uses) {
-		    cvt_vlblock_to_solids(mged_draw_edge_uses_vbp, "_EDGEUSES_", 0);
-		    rt_vlblock_free(mged_draw_edge_uses_vbp);
-		    mged_draw_edge_uses_vbp = (struct bn_vlblock *)NULL;
-		}
-
-		/* Destroy NMG */
-		nmg_km(mged_nmg_model);
-		break;
-	    }
-    }
-    if (mged_fastpath_count) {
-	bu_log("%d region%s rendered through polygon fastpath\n",
-	       mged_fastpath_count, mged_fastpath_count==1?"":"s");
-    }
-    if (ret < 0) return -1;
-    return 0;	/* OK */
 }
 
 
@@ -1007,7 +385,7 @@ replot_modified_solid(
 
     transform_editing_solid(&intern, mat, ip, 0);
 
-    if (rt_functab[ip->idb_type].ft_plot(&vhead, &intern, &mged_ttol, &mged_tol, NULL) < 0) {
+    if (OBJ[ip->idb_type].ft_plot(&vhead, &intern, &mged_ttol, &mged_tol, NULL) < 0) {
 	Tcl_AppendResult(INTERP, LAST_SOLID(sp)->d_namep,
 			 ": re-plot failure\n", (char *)NULL);
 	return -1;
@@ -1101,57 +479,6 @@ add_solid_path_to_result(
     db_path_to_vls(&str, &sp->s_fullpath);
     Tcl_AppendResult(interp, bu_vls_addr(&str), " ", NULL);
     bu_vls_free(&str);
-}
-
-
-/*
- * Given the name(s) of database objects, re-generate the vlist
- * associated with every solid in view which references the
- * named object(s), either solids or regions.
- * Particularly useful with outboard .inmem database modifications.
- */
-int
-cmd_redraw_vlist(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
-{
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
-    struct directory *dp;
-    int i;
-
-    CHECK_DBI_NULL;
-
-    if (argc < 2) {
-	struct bu_vls vls = BU_VLS_INIT_ZERO;
-
-	bu_vls_printf(&vls, "help redraw_vlist");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
-    for (i = 1; i < argc; i++) {
-	struct solid *sp;
-
-	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) == NULL)
-	    continue;
-
-	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
-
-	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-		if (db_full_path_search(&sp->s_fullpath, dp)) {
-		    (void)replot_original_solid(sp);
-		    sp->s_iflag = DOWN;	/* It won't be drawn otherwise */
-		}
-	    }
-
-	    gdlp = next_gdlp;
-	}
-    }
-
-    update_views = 1;
-    return TCL_OK;
 }
 
 int

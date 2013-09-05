@@ -1,0 +1,37 @@
+.TS
+allbox,center,tab(@);
+lb lb lb
+_ _ _
+l l l.
+record description@field format@field description
+run header@'1'@record number 1
+@1x,f9.4@attack azimuth (degrees)
+@1x,f8.4@attack elevation (degrees)
+@1x,f5.2@burst distance
+@1x,f10.2@projected area associated with burst point
+@1x,6a@units (mm,cm,inches,feet,meters)
+@1x,f9.6@ray solid angle (steradians)
+shotline header@'2'@record number 2
+@1x,f8.3@Y' coordinate of shotline
+@1x,f8.3@Z' coordinate of shotline
+shotline intersections@'3'@record number 3
+@1x,f8.2@X' coordinate of component intersection
+@1x,f8.2@line-of-sight thickness of component
+@1x,i4@component code number
+@1x,i2@space code
+@1x,f7.3@sine of fallback angle of exit normal
+@1x,f7.2@rotation angle of exit normal (degrees)
+@1x,f7.3@cosine of obliquity angle at entry
+@1x,a1@burst flag ('1' for yes, '0' for no)
+burst ray header@'4'@record number 4
+@1x,f8.3@azimuth angle WRT shotline (radians)
+@1x,f8.3@sine of elevation angle WRT shotline
+@1x,i6@sequential ray number for this burst point
+burst ray intersections@'5'@record number 5
+@1x,f10.3@distance to first contact with component
+@1x,f9.3@line-of-sight thickness of component
+@1x,f9.3@normal thickness of component
+@1x,i4@space code
+@1x,i4@component code number
+@1x,f6.3@cosine of obliquity angle at entry
+.TE

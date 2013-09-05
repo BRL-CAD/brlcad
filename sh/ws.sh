@@ -44,7 +44,7 @@
 #
 #   b) removes whitespace at the end of any line.
 #
-#   c) removes successive blanks lines so there are no more than two
+#   c) removes successive blank lines so there are no more than two
 #      in a row anywhere in a given file.  WS_SUCCESSIVE=2
 #
 #   d) removes all blank lines at the end of a file.
@@ -70,7 +70,7 @@
 #   # only remove blank lines and whitespace at end of lines
 #   WS=abd ./ws.sh some_file
 #
-#   # reduce collections of blank lines to no more than 4 in a row
+#   # reduce collections of blank lines to no more than 2 in a row
 #   WS_SUCCESSIVE=2 WS=ac ./ws.sh some_file
 #
 #   # run all tasks on all files in current directory without backups

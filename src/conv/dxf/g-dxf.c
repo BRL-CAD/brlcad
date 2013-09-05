@@ -58,9 +58,9 @@
 void
 usage(const char *argv0)
 {
-    bu_log("Usage: %s [-v] [-i] [-p] [-xX lvl] \n\
-       [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol] \n\
-       [-o output_file_name.dxf] brlcad_db.g object(s)\n\n", argv0);
+    bu_log("Usage: %s [-v] [-i] [-p] [-xX lvl]\n\
+       [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol]\n\
+       [-o output_file_name.dxf] [-P #_of_CPUs] brlcad_db.g object(s)\n\n", argv0);
 
     bu_log("Options:\n\
  -v	Verbose output\n\
@@ -68,14 +68,17 @@ usage(const char *argv0)
  -p	Output POLYFACE MESH (instead of default 3DFACE) entities\n\n");
 
     bu_log("\
- -x #	Specifies an RT debug flag\n\
- -X #	Specifies an NMG debug flag\n\n");
+ -x #	Specify an RT debug flag\n\
+ -X #	Specify an NMG debug flag\n\n");
 
     bu_log("\
  -a #	Specify an absolute tessellation tolerance (in mm)\n\
  -r #	Specify a relative tessellation tolerance (in mm)\n\
  -n #	Specify a surface normal tessellation tolerance (in degrees)\n\
  -D #	Specify a calculation distance tolerance (in mm)\n\n");
+
+    bu_log("\
+ -P #	Specify number of CPUS to be used, and turn on flag to enable receiving of core dumps\n\n");
 
     bu_log("\
  -o dxf	Output to the specified dxf filename\n\n---\n");
@@ -386,9 +389,8 @@ static struct gcv_data gcvwriter = {nmg_to_dxf};
 int
 main(int argc, char *argv[])
 {
-    int	c;
-    double		percent;
-    int		i;
+    int c;
+    double percent;
 
     bu_setlinebuf(stderr);
 
@@ -415,10 +417,10 @@ main(int argc, char *argv[])
     /* init resources we might need */
     rt_init_resource(&rt_uniresource, 0, NULL);
 
-    BU_LIST_INIT(&rt_g.rtg_vlfree);	/* for vlist macros */
+    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "a:n:o:pr:vx:D:P:X:i")) != -1) {
+    while ((c = bu_getopt(argc, argv, "a:n:o:pr:vx:D:P:X:ih?")) != -1) {
 	switch (c) {
 	    case 'a':		/* Absolute tolerance. */
 		ttol.abs = atof(bu_optarg);
@@ -442,10 +444,9 @@ main(int argc, char *argv[])
 		break;
 	    case 'P':
 		ncpu = atoi(bu_optarg);
-		rt_g.debug = 1;	/* NOTE: enabling DEBUG_ALLRAYS to get core dumps */
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
 		break;
 	    case 'D':
 		tol.dist = atof(bu_optarg);
@@ -453,8 +454,8 @@ main(int argc, char *argv[])
 		rt_pr_tol(&tol);
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug);
-		NMG_debug = rt_g.NMG_debug;
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
+		NMG_debug = RTG.NMG_debug;
 		break;
 	    case 'i':
 		inches = 1;
@@ -500,6 +501,8 @@ main(int argc, char *argv[])
     RT_CK_TESS_TOL(tree_state.ts_ttol);
 
     if (verbose) {
+	int i;
+
 	bu_log("Model: %s\n", argv[0]);
 	bu_log("Objects:");
 	for (i = 1; i < argc; i++)

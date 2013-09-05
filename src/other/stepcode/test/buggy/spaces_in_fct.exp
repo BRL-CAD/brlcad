@@ -1,0 +1,47 @@
+SCHEMA SPACES_IN_FUNCTION;
+TYPE label = STRING; END_TYPE;
+TYPE identifier = STRING; END_TYPE;
+TYPE text = STRING; END_TYPE;
+TYPE transformation = STRING; END_TYPE;
+TYPE rigid_placement = STRING; END_TYPE;
+TYPE dimension_count = INTEGER; END_TYPE;
+TYPE compound_item_definition = STRING; END_TYPE;
+TYPE founded_item_select = STRING; END_TYPE;
+TYPE id_attribute_select = STRING; END_TYPE;
+
+FUNCTION dimension_of(item : geometric_representation_item) : dimension_count; END_FUNCTION;
+
+FUNCTION using_representations(item : founded_item_select) : SET OF representation; END_FUNCTION;
+
+FUNCTION item_in_context(item : representation_item; cntxt : representation_context) : BOOLEAN; LOCAL y : BAG OF representation_item; END_LOCAL;END_FUNCTION;
+
+FUNCTION get_id_value(obj : id_attribute_select) : identifier; END_FUNCTION;
+
+ENTITY representation; name : label; items : SET [1:?] OF representation_item; context_of_items : representation_context; DERIVE id : identifier := get_id_value(SELF); WHERE wr1 : SIZEOF(USEDIN(SELF, 'AUTOMOTIVE_DESIGN.ID_ATTRIBUTE.IDENTIFIED_ITEM' )) <= 1; END_ENTITY;
+
+ENTITY representation_context; context_type : text; INVERSE representations_in_context : SET [1:?] OF representation FOR context_of_items ; END_ENTITY;
+
+ENTITY representation_item SUPERTYPE OF (ONEOF (compound_representation_item, mapped_item)); WHERE wr1 : SIZEOF(using_representations(SELF)) > 0; END_ENTITY;
+
+ENTITY mapped_item SUBTYPE OF (representation_item); mapping_source : representation_map; mapping_target : representation_item; END_ENTITY;
+
+ENTITY geometric_representation_item SUBTYPE OF (representation_item); DERIVE dim : dimension_count := dimension_of(SELF); END_ENTITY;
+
+ENTITY compound_representation_item SUBTYPE OF (representation_item); item_element : compound_item_definition; END_ENTITY;
+
+ENTITY representation_map; mapping_origin : representation_item; mapped_representation : representation; INVERSE map_usage : SET [1:?] OF mapped_item FOR mapping_source; WHERE wr1 : item_in_context(SELF.mapping_origin, SELF.mapped_representation. context_of_items); END_ENTITY;
+
+ENTITY representation_relationship; rep_1 : representation; rep_2 : representation; END_ENTITY;
+
+ENTITY representation_relationship_with_transformation SUBTYPE OF (representation_relationship); transformation_operator : transformation; WHERE wr1 : SELF\representation_relationship.rep_1.context_of_items :<>: SELF\ representation_relationship.rep_2.context_of_items; END_ENTITY;
+
+
+(**********************************************************************************
+When exp2cxx translates the next line, spaces are inserted into a function name:
+SdaiSPACES_IN_FUNCTION.h:550:   const SdaiKinematic_frame_based_transformation_ptr representation_relationship_with_transformation_         transformation_operator_() const;
+**********************************************************************************)
+
+ENTITY kinematic_frame_based_transformation SUBTYPE OF (geometric_representation_item); transformator : rigid_placement; WHERE wr1 : SELF\geometric_representation_item.dim = 3; END_ENTITY;
+ENTITY kinematic_frame_background_representation_association SUBTYPE OF (representation_relationship_with_transformation); SELF\representation_relationship_with_transformation.transformation_operator : kinematic_frame_based_transformation; WHERE transformation_operator\kinematic_frame_based_transformation.transformator IN SELF\representation_relationship.rep_1.items; END_ENTITY; 
+ 
+END_SCHEMA;

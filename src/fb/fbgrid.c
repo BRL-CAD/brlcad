@@ -46,7 +46,7 @@ static int clear = 0;
 void grid(FBIO *fbiop, unsigned char *line, int spacing), oldflavor(void);
 
 static char usage[] = "\
-Usage: fbgrid [-h -c] [-b | -d | -o] [-F framebuffer]\n\
+Usage: fbgrid [-c] [-b | -d | -o] [-F framebuffer]\n\
 	[-S squaresize] [-W width] [-N height]\n";
 
 int
@@ -54,12 +54,8 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "hcbdoF:s:w:n:S:W:N:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "cbdoF:s:w:n:S:W:N:h?")) != -1) {
 	switch (c) {
-	    case 'h':
-		/* high-res */
-		fbheight = fbwidth = 1024;
-		break;
 	    case 'c':
 		clear = 1;
 		break;
@@ -93,6 +89,9 @@ get_args(int argc, char **argv)
 		return 0;
 	}
     }
+
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
+	return 0;
 
     if (argc > ++bu_optind)
 	fprintf(stderr, "fbgrid: excess argument(s) ignored\n");

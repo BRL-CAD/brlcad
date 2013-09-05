@@ -62,7 +62,7 @@
       Technically, <application>MGED</application> can be opened without a database file
       being supplied, but until one <emphasis>is</emphasis> supplied it will not be terribly useful.
       This can be done either by supplying a file name on the command line or by opening a database from
-      with <application>MGED</application> using the File-&gt;Open... menu or the <command>opendb</command>
+      within <application>MGED</application> using the File-&gt;Open... menu or the <command>opendb</command>
       command.
     </para>
 
@@ -168,6 +168,23 @@
       </varlistentry>
     </variablelist>
 
+  </refsection>
+
+  <refsection xml:id="scripting"><title>SCRIPTING (BATCHING) MGED</title>
+
+  <para>Often it is convenient to generate a series of <application>MGED</application> commands
+       outside <application>MGED</application> and then submit the command list to
+       <application>MGED</application>  which will
+       react as if each command were being manually entered within it.
+       Simply create a file (say, "cmds.txt") with each line being a desired command, and then
+       have <application>MGED</application> execute the list.  At the normal shell prompt execute</para>
+
+      <programlisting>
+$ mged -c tgm.g &lt; cmds.txt
+      </programlisting>
+
+  <para>Note that the procedure described above is very useful in rapid prototyping or
+       automated TGM processing without resorting to low-level library programming in C or C++.</para>
   </refsection>
 
   <refsection xml:id="hints"><title>HINTS</title>

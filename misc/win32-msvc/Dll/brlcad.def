@@ -59,7 +59,7 @@ rt_db_get_internal
 rt_db_put_internal
 rt_dirbuild
 rt_free_rti
-rt_g
+RTG
 rt_gettree
 rt_init_resource
 rt_initial_tree_state

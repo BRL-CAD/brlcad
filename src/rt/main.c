@@ -58,7 +58,7 @@ extern const char title[];
 /***** Variables shared with viewing model *** */
 FBIO		*fbp = FBIO_NULL;	/* Framebuffer handle */
 FILE		*outfp = NULL;		/* optional pixel output file */
-struct icv_image_file *bif = NULL;	/* optional bu image for saving non-PIX formats */
+struct icv_image *bif = NULL;
 mat_t		view2model;
 mat_t		model2view;
 /***** end of sharing with viewing model *****/
@@ -77,7 +77,6 @@ extern int	pix_start;		/* pixel to start at */
 extern int	pix_end;		/* pixel to end at */
 extern int	nobjs;			/* Number of cmd-line treetops */
 extern char	**objtab;		/* array of treetop strings */
-char		*beginptr;		/* sbrk() at start of program */
 long		n_malloc;		/* Totals at last check */
 long		n_free;
 long		n_realloc;
@@ -124,20 +123,16 @@ siginfo_handler(int UNUSED(arg))
 void
 memory_summary(void)
 {
-#ifdef HAVE_SBRK
     if (rt_verbosity & VERBOSE_STATS)  {
 	long	mdelta = bu_n_malloc - n_malloc;
 	long	fdelta = bu_n_free - n_free;
 	fprintf(stderr,
-		"Additional mem=%ld., #malloc=%ld, #free=%ld, #realloc=%ld (%ld retained)\n",
-		(long)((char *)sbrk(0)-beginptr),
+		"Additional #malloc=%ld, #free=%ld, #realloc=%ld (%ld retained)\n",
 		mdelta,
 		fdelta,
 		bu_n_realloc - n_realloc,
 		mdelta - fdelta);
     }
-    beginptr = (char *) sbrk(0);
-#endif
     n_malloc = bu_n_malloc;
     n_free = bu_n_free;
     n_realloc = bu_n_realloc;
@@ -163,9 +158,6 @@ int main(int argc, const char **argv)
     bu_setlinebuf( stderr );
 #endif
 
-#ifdef HAVE_SBRK
-    beginptr = (char *)sbrk(0);
-#endif
     azimuth = 35.0;			/* GIFT defaults */
     elevation = 25.0;
 
@@ -198,7 +190,7 @@ int main(int argc, const char **argv)
 #if defined(DEBUG)
     fprintf(stderr, "Compile-time debug symbols are available\n");
 #endif
-#if defined(NO_BOMBING_MACROS) || defined(NO_MAGIC_CHECKING) || defined(NO_BADRAY_CHECKING) || defined(NO_DEBUG_CHECKING)
+#if defined(NO_BOMBING_MACROS) || defined(NO_MAGIC_CHECKING) || defined(NO_DEBUG_CHECKING)
     fprintf(stderr, "WARNING: Run-time debugging is disabled and may enhance performance\n");
 #endif
 
@@ -284,11 +276,11 @@ int main(int argc, const char **argv)
     }
 
     if (npsw > 1) {
-	rt_g.rtg_parallel = 1;
+	RTG.rtg_parallel = 1;
 	if (rt_verbosity & VERBOSE_MULTICPU)
 	    fprintf(stderr, "Planning to run with %d processors\n", npsw );
     } else {
-	rt_g.rtg_parallel = 0;
+	RTG.rtg_parallel = 0;
     }
 
     /* Initialize parallel processor support */
@@ -304,7 +296,7 @@ int main(int argc, const char **argv)
     }
 
     if (RT_G_DEBUG) {
-	bu_printb("librt rt_g.debug", rt_g.debug, DEBUG_FORMAT);
+	bu_printb("librt RTG.debug", RTG.debug, DEBUG_FORMAT);
 	bu_log("\n");
     }
     if (rdebug) {
@@ -496,6 +488,10 @@ int main(int argc, const char **argv)
     if (fbp != FBIO_NULL) {
 	fb_close(fbp);
     }
+
+    /* Release the ray-tracer instance */
+    rt_free_rti(rtip);
+    rtip = NULL;
 
     return 0;
 }

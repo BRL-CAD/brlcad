@@ -146,11 +146,9 @@ wgl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b
 	    backDiffuseColorDark[2] = wireColor[2] * 0.9;
 	    backDiffuseColorDark[3] = wireColor[3];
 
-#if 1
 	    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientColor);
 	    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specularColor);
 	    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseColor);
-#endif
 	} else {
 	    glColor3ub((GLubyte)r,  (GLubyte)g,  (GLubyte)b);
 	}
@@ -290,7 +288,6 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
 
     if (dmp->dm_top) {
 	/* Make xtkwin a toplevel window */
-#if 1
 	Tcl_DString ds;
 
 	Tcl_DStringInit(&ds);
@@ -305,13 +302,6 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
 	((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin =
 	    Tk_NameToWindow(interp, bu_vls_addr(&dmp->dm_pathName), tkwin);
 	Tcl_DStringFree(&ds);
-#else
-	((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin =
-	    Tk_CreateWindowFromPath(interp,
-				    tkwin,
-				    bu_vls_addr(&dmp->dm_pathName),
-				    bu_vls_addr(&dmp->dm_dName));
-#endif
 	((struct dm_xvars *)dmp->dm_vars.pub_vars)->top = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin;
     } else {
 	char *cp;
@@ -794,11 +784,6 @@ wgl_drawEnd(struct dm *dmp)
 	bu_vls_free(&tmp_vls);
     }
 
-/*XXX Keep this off unless testing */
-#if 0
-    glFinish();
-#endif
-
     wgl_actively_drawing = 0;
     return TCL_OK;
 }
@@ -1129,6 +1114,10 @@ wgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
     register int	first;
     register int mflag = 1;
     float black[4] = {0.0, 0.0, 0.0, 0.0};
+    GLfloat originalPointSize, originalLineWidth;
+
+    glGetFloatv(GL_POINT_SIZE, &originalPointSize);
+    glGetFloatv(GL_LINE_WIDTH, &originalLineWidth);
 
     if (dmp->dm_debugLevel)
 	bu_log("wgl_drawVList()\n");
@@ -1233,6 +1222,27 @@ wgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		    VMOVE(glpt, *pt);
 		    glNormal3dv(glpt);
 		    break;
+		case BN_VLIST_POINT_DRAW:
+		    if (first == 0)
+			glEnd();
+		    first = 0;
+		    glBegin(GL_POINTS);
+		    glVertex3dv(glpt);
+		    break;
+		case BN_VLIST_LINE_WIDTH: {
+		    GLfloat lineWidth = (GLfloat)(*pt)[0];
+		    if (lineWidth > 0.0) {
+			glLineWidth(lineWidth);
+		    }
+		    break;
+		}
+		case BN_VLIST_POINT_SIZE: {
+		    GLfloat pointSize = (GLfloat)(*pt)[0];
+		    if (pointSize > 0.0) {
+			glPointSize(pointSize);
+		    }
+		    break;
+		}
 	    }
 	}
     }
@@ -1242,6 +1252,9 @@ wgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 
     if (dmp->dm_light && dmp->dm_transparency)
 	glDisable(GL_BLEND);
+
+    glPointSize(originalPointSize);
+    glLineWidth(originalLineWidth);
 
     return TCL_OK;
 }
@@ -2130,6 +2143,7 @@ struct dm dm_wgl = {
     null_getDisplayImage,	/* display to image function */
     wgl_reshape,
     wgl_makeCurrent,
+    null_processEvents,
     0,
     1,				/* has displaylist */
     0,                          /* no stereo by default */

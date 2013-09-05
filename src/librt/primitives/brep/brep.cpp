@@ -91,7 +91,7 @@ extern "C" {
     int rt_brep_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr);
     int rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, const char **argv);
     int rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *ip);
-    RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, const int operation);
+    RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, const char* operation);
 #ifdef __cplusplus
 }
 #endif
@@ -622,17 +622,28 @@ utah_pushBack(const ON_Surface* surf, ON_2dPoint &uv)
     double t0, t1;
 
     surf->GetDomain(0, &t0, &t1);
+    if (t1 < t0) {
+	double tmp = t0;
+	t0 = t1;
+	t1 = tmp;
+    }
+
     if (uv.x < t0) {
 	uv.x = t0;
-    } else if (uv.x >= t1) {
-	uv.x = t1 - ROOT_TOL;
+    } else if (uv.x > t1) {
+	uv.x = t1;
     }
 
     surf->GetDomain(1, &t0, &t1);
+    if (t1 < t0) {
+	double tmp = t0;
+	t0 = t1;
+	t1 = tmp;
+    }
     if (uv.y < t0) {
 	uv.y = t0;
-    } else if (uv.y >= t1) {
-	uv.y = t1 - ROOT_TOL;
+    } else if (uv.y > t1) {
+	uv.y = t1;
     }
 }
 
@@ -641,21 +652,22 @@ void
 utah_pushBack(const BBNode* sbv, ON_2dPoint &uv)
 {
     double t0, t1;
+    int i = sbv->m_u.m_t[0] < sbv->m_u.m_t[1] ? 0 : 1;
 
-    t0 = sbv->m_u.m_t[0];
-    t1 = sbv->m_u.m_t[1];
-    if (uv.x < t0 - BREP_EDGE_MISS_TOLERANCE) {
-	uv.x = t0 + ROOT_TOL;;
-    } else if (uv.x >= t1 + BREP_EDGE_MISS_TOLERANCE) {
-	uv.x = t1 - ROOT_TOL;
+    t0 = sbv->m_u.m_t[i];
+    t1 = sbv->m_u.m_t[1-i];
+    if (uv.x < t0) {
+	uv.x = t0;
+    } else if (uv.x > t1) {
+	uv.x = t1;
     }
-
-    t0 = sbv->m_v.m_t[0];
-    t1 = sbv->m_v.m_t[1];
-    if (uv.y < t0 - BREP_EDGE_MISS_TOLERANCE) {
-	uv.y = t0 + ROOT_TOL;;
-    } else if (uv.y >= t1 + BREP_EDGE_MISS_TOLERANCE) {
-	uv.y = t1 - ROOT_TOL;
+    i = sbv->m_v.m_t[0] < sbv->m_v.m_t[1] ? 0 : 1;
+    t0 = sbv->m_v.m_t[i];
+    t1 = sbv->m_v.m_t[1-i];
+    if (uv.y < t0 ) {
+	uv.y = t0;
+    } else if (uv.y > t1) {
+	uv.y = t1;
     }
 }
 
@@ -769,6 +781,8 @@ utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, O
 	    uv.x = (puv.x + uv.x)/2.0;
 	    uv.y = (puv.y + uv.y)/2.0;
 
+	    utah_pushBack(sbv, uv);
+
 	    surf->Ev1Der(uv.x, uv.y, S, Su, Sv);
 	    utah_F(S, p1, p1d, p2, p2d, f, g);
 	    rootdist = fabs(f) + fabs(g);
@@ -778,7 +792,7 @@ utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, O
 
 	    /* FIXME: all constants should be documented. why this
 	     * value? must it coincide with the constant in the
-	     * preceeding loop?
+	     * preceding loop?
 	     */
 	    if (errantcount > 3) {
 		return intersects;
@@ -791,7 +805,7 @@ utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, O
 	    int ulow = (sbv->m_u.m_t[0] <= sbv->m_u.m_t[1]) ? 0 : 1;
 	    int vlow = (sbv->m_v.m_t[0] <= sbv->m_v.m_t[1]) ? 0 : 1;
 	    if ((sbv->m_u.m_t[ulow]-VUNITIZE_TOL < uv.x && uv.x < sbv->m_u.m_t[1-ulow]+VUNITIZE_TOL) &&
-		    (sbv->m_v.m_t[vlow]-VUNITIZE_TOL < uv.y && uv.y < sbv->m_v.m_t[1-vlow]-VUNITIZE_TOL)) {
+		    (sbv->m_v.m_t[vlow]-VUNITIZE_TOL < uv.y && uv.y < sbv->m_v.m_t[1-vlow]+VUNITIZE_TOL)) {
 		bool new_point = true;
 		for (int j=0;j<count;j++) {
 		    if (NEAR_EQUAL(uv.x, ouv[j].x, VUNITIZE_TOL) && NEAR_EQUAL(uv.y, ouv[j].y, VUNITIZE_TOL)) {
@@ -1195,27 +1209,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	    }
 	    curr++;
 	}
-#if 0
-	bu_log("**** After Pass1 Hits: %d\n", hits.size());
 
-	for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
-	    point_t prev;
-
-	    brep_hit &out = *i;
-
-	    if (i != hits.begin()) {
-		bu_log("<%g>", DIST_PT_PT(out.point, prev));
-	    }
-	    bu_log("(");
-	    if (out.hit == brep_hit::CLEAN_HIT) bu_log("_CH_(%d)", out.face.m_face_index);
-	    if (out.hit == brep_hit::NEAR_HIT) bu_log("_NH_(%d)", out.face.m_face_index);
-	    if (out.hit == brep_hit::NEAR_MISS) bu_log("_NM_(%d)", out.face.m_face_index);
-	    if (out.direction == brep_hit::ENTERING) bu_log("+");
-	    if (out.direction == brep_hit::LEAVING) bu_log("-");
-	    VMOVE(prev, out.point);
-	    bu_log(")");
-	}
-#endif
 	// check for crack hits between adjacent faces
 	curr = hits.begin();
 	while (curr != hits.end()) {
@@ -1269,31 +1263,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	    }
 	    curr++;
 	}
-#if 0
-	//debugging print
-	bu_log("**** After Pass2 Hits: %d\n", hits.size());
 
-	for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
-	    point_t prev;
-
-	    brep_hit &out = *i;
-
-	    if (i != hits.begin()) {
-		bu_log("<%g>", DIST_PT_PT(out.point, prev));
-	    }
-	    bu_log("(");
-	    if (out.hit == brep_hit::CRACK_HIT) bu_log("_CRACK_(%d)", out.face.m_face_index);
-	    if (out.hit == brep_hit::CLEAN_HIT) bu_log("_CH_(%d)", out.face.m_face_index);
-	    if (out.hit == brep_hit::NEAR_HIT) bu_log("_NH_(%d)", out.face.m_face_index);
-	    if (out.hit == brep_hit::NEAR_MISS) bu_log("_NM_(%d)", out.face.m_face_index);
-	    if (out.direction == brep_hit::ENTERING) bu_log("+");
-	    if (out.direction == brep_hit::LEAVING) bu_log("-");
-	    VMOVE(prev, out.point);
-	    bu_log(")");
-	}
-
-	bu_log("\n**********************\n");
-#endif
 	if ((hits.size() > 0) && ((hits.size() % 2) != 0)) {
 	    brep_hit &curr_hit = hits.back();
 	    if (curr_hit.hit == brep_hit::NEAR_MISS) {
@@ -1381,88 +1351,39 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	    }
 	    curr++;
 	}
-	//    bu_log("**** After Pass2 Hits: %d\n", hits.size());
-
-	if ((hits.size() > 0) && ((hits.size() % 2) != 0)) {
-	    brep_hit &curr_hit = hits.back();
-	    if (curr_hit.hit == brep_hit::NEAR_HIT) {
-		hits.pop_back();
-	    }
-	}
-    }
-    ///////////// near hit end
-    if (false) { //((hits.size() % 2) != 0) {
-	bu_log("**** After Pass3 Hits: %zu\n", hits.size());
-
-	for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
-	    point_t prev;
-
-	    brep_hit &out = *i;
-
-	    if (i != hits.begin()) {
-		bu_log("<%g>", DIST_PT_PT(out.point, prev));
-	    }
-	    bu_log("(");
-	    if (out.hit == brep_hit::CRACK_HIT) bu_log("_CRACK_(%d)", out.face.m_face_index);
-	    if (out.hit == brep_hit::CLEAN_HIT) bu_log("_CH_(%d)", out.face.m_face_index);
-	    if (out.hit == brep_hit::NEAR_HIT) bu_log("_NH_(%d)", out.face.m_face_index);
-	    if (out.hit == brep_hit::NEAR_MISS) bu_log("_NM_(%d)", out.face.m_face_index);
-	    if (out.direction == brep_hit::ENTERING) bu_log("+");
-	    if (out.direction == brep_hit::LEAVING) bu_log("-");
-	    VMOVE(prev, out.point);
-	    bu_log(")");
-	}
-	bu_log("\n**** Orig Hits: %zu\n", orig.size());
-
-	for (HitList::iterator i = orig.begin(); i != orig.end(); ++i) {
-	    point_t prev;
-
-	    brep_hit &out = *i;
-
-	    if (i != orig.begin()) {
-		bu_log("<%g>", DIST_PT_PT(out.point, prev));
-	    }
-	    bu_log("(");
-	    if (out.hit == brep_hit::CRACK_HIT) bu_log("_CRACK_(%d)", out.face.m_face_index);
-	    if (out.hit == brep_hit::CLEAN_HIT) bu_log("_CH_(%d)", out.face.m_face_index);
-	    if (out.hit == brep_hit::NEAR_HIT) bu_log("_NH_(%d)", out.face.m_face_index);
-	    if (out.hit == brep_hit::NEAR_MISS) bu_log("_NM_(%d)", out.face.m_face_index);
-	    if (out.direction == brep_hit::ENTERING) bu_log("+");
-	    if (out.direction == brep_hit::LEAVING) bu_log("-");
-	    VMOVE(prev, out.point);
-	    bu_log(")");
-	}
-
-	bu_log("\n**********************\n");
-
     }
 
     all_hits.clear();
     all_hits = hits;
 
-    ////////////////////////
-    TRACE("---");
-    int num = 0;
-    for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
-	if ((i->trimmed && !i->closeToEdge) || i->oob || NEAR_ZERO(VDOT(i->normal, rp->r_dir), RT_DOT_TOL)) {
-	    // remove what we were removing earlier
-	    if (i->oob) {
-		TRACE("\toob u: " << i->uv[0] << ", " << IVAL(i->sbv->m_u));
-		TRACE("\toob v: " << i->uv[1] << ", " << IVAL(i->sbv->m_v));
-	    }
-	    i = hits.erase(i);
-
-	    if (i != hits.begin())
-		--i;
-
-	    continue;
-	}
-	TRACE("hit " << num << ": " << PT(i->point) << " [" << VDOT(i->normal, rp->r_dir) << "]");
-	++num;
-    }
 
     if (hits.size() > 0) {
-	// we should have "valid" points now, remove duplicates or grazes
+	// remove grazing hits with with normal to ray dot less than BREP_GRAZING_DOT_TOL (>= 89.999 degrees obliq)
+	TRACE("-- Remove grazing hits --");
+	int num = 0;
+	for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
+	    brep_hit &curr_hit = *i;
+	    if ((curr_hit.trimmed && !curr_hit.closeToEdge) || curr_hit.oob || NEAR_ZERO(VDOT(curr_hit.normal, rp->r_dir), BREP_GRAZING_DOT_TOL)) {
+		// remove what we were removing earlier
+		if (curr_hit.oob) {
+		    TRACE("\toob u: " << i->uv[0] << ", " << IVAL(i->sbv->m_u));
+		    TRACE("\toob v: " << i->uv[1] << ", " << IVAL(i->sbv->m_v));
+		}
+		i = hits.erase(i);
+
+		if (i != hits.begin())
+		    --i;
+
+		continue;
+	    }
+	    TRACE("hit " << num << ": " << PT(i->point) << " [" << VDOT(i->normal, rp->r_dir) << "]");
+	    ++num;
+	}
+    }
+
+
+    if (hits.size() > 0) {
+	// we should have "valid" points now, remove duplicates or grazes(same point with in/out sign change)
 	HitList::iterator last = hits.begin();
 	HitList::iterator i = hits.begin();
 	++i;
@@ -1489,6 +1410,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	    }
 	}
     }
+
     // remove multiple "INs" in a row assume last "IN" is the actual entering hit, for
     // multiple "OUTs" in a row assume first "OUT" is the actual exiting hit, remove unused
     // "INs/OUTs" from hit list.
@@ -1536,215 +1458,8 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	}
     }
 
-#if 0
-    if (false) {
-	if (hits.size() > 1 && (hits.size() % 2) != 0) {
-	    bu_log("**** ERROR odd number of hits: %d\n", hits.size());
-	    for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
-		brep_hit&out = *i;
-		bu_log("(");
-		if (out.hit == brep_hit::CLEAN_HIT) bu_log("H");
-		if ((out.hit == brep_hit::NEAR_HIT) || (out.hit == brep_hit::NEAR_MISS)) bu_log("c");
-		if (out.direction == brep_hit::ENTERING) bu_log("+");
-		if (out.direction == brep_hit::LEAVING) bu_log("-");
-		bu_log(")");
-	    }
-	    bu_log("\n");
-
-	    bu_log("xyz %g %g %g \n", rp->r_pt[0], rp->r_pt[1], rp->r_pt[2]);
-	    bu_log("dir %g %g %g \n", rp->r_dir[0], rp->r_dir[1], rp->r_dir[2]);
-	    if ((hits.size() % 2) != 0) {
-		bu_log("**** Current Hits: %d\n", hits.size());
-
-		for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
-		    point_t prev;
-
-		    brep_hit &out = *i;
-
-		    if (i != hits.begin()) {
-			bu_log("<%g>", DIST_PT_PT(out.point, prev));
-		    }
-		    bu_log("(");
-		    if (out.hit == brep_hit::CRACK_HIT) bu_log("_CRACK_(%d)", out.face.m_face_index);
-		    if (out.hit == brep_hit::CLEAN_HIT) bu_log("_CH_(%d)", out.face.m_face_index);
-		    if (out.hit == brep_hit::NEAR_HIT) bu_log("_NH_(%d)", out.face.m_face_index);
-		    if (out.hit == brep_hit::NEAR_MISS) bu_log("_NM_(%d)", out.face.m_face_index);
-		    if (out.direction == brep_hit::ENTERING) bu_log("+");
-		    if (out.direction == brep_hit::LEAVING) bu_log("-");
-		    VMOVE(prev, out.point);
-		    bu_log(")");
-		}
-		bu_log("\n**** Orig Hits: %d\n", orig.size());
-
-		for (HitList::iterator i = orig.begin(); i != orig.end(); ++i) {
-		    point_t prev;
-
-		    brep_hit &out = *i;
-
-		    if (i != orig.begin()) {
-			bu_log("<%g>", DIST_PT_PT(out.point, prev));
-		    }
-		    bu_log("(");
-		    if (out.hit == brep_hit::CRACK_HIT) bu_log("_CRACK_(%d)", out.face.m_face_index);
-		    if (out.hit == brep_hit::CLEAN_HIT) bu_log("_CH_(%d)", out.face.m_face_index);
-		    if (out.hit == brep_hit::NEAR_HIT) bu_log("_NH_(%d)", out.face.m_face_index);
-		    if (out.hit == brep_hit::NEAR_MISS) bu_log("_NM_(%d)", out.face.m_face_index);
-		    if (out.direction == brep_hit::ENTERING) bu_log("+");
-		    if (out.direction == brep_hit::LEAVING) bu_log("-");
-		    //bu_log("<%d>", out.sbv->m_face->m_bRev);
-		    VMOVE(prev, out.point);
-		    bu_log(")");
-		}
-
-		bu_log("\n**********************\n");
-
-	    }
-	}
-	point_t last_point;
-	int hitCount = 0;
-	for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
-	    if (hitCount == 0) {
-		TRACE2("point: " << i->point[0] << ", " << i->point[1] << ", " << i->point[2] << " dist_to_ray: " << DIST_PT_PT(i->point, rp->r_pt));
-	    } else {
-		TRACE2("point: " << i->point[0] << ", " << i->point[1] << ", " << i->point[2] << " dist_to_ray: " << DIST_PT_PT(i->point, rp->r_pt) << " dist_to_last_point: " << DIST_PT_PT(i->point, last_point));
-	    }
-	    VMOVE(last_point, i->point);
-	    hitCount += 1;
-	}
-#ifdef PLOTTING
-	pcount++;
-	if (pcount > -1) {
-	    point_t ray;
-	    point_t vscaled;
-	    VSCALE(vscaled, rp->r_dir, 100);
-	    VADD2(ray, rp->r_pt, vscaled);
-	    COLOR_PLOT(200, 200, 200);
-	    LINE_PLOT(rp->r_pt, ray);
-	}
-#endif
-	all_hits.clear();
-	all_hits = hits;
-
-	num = 0;
-	MissList::iterator m = misses.begin();
-	for (HitList::iterator i = all_hits.begin(); i != all_hits.end(); ++i) {
-
-#ifdef PLOTTING
-	    if (pcount > -1) {
-		// set the color of point and normal
-		if (i->trimmed && i->closeToEdge) {
-		    COLOR_PLOT(0, 0, 255); // blue is trimmed but close to edge
-		} else if (i->trimmed) {
-		    COLOR_PLOT(255, 255, 0); // yellow trimmed
-		} else if (i->oob) {
-		    COLOR_PLOT(255, 0, 0); // red is oob
-		} else if (NEAR_ZERO(VDOT(i->normal, rp->r_dir), RT_DOT_TOL)) {
-		    COLOR_PLOT(0, 255, 255); // purple is grazing
-		} else {
-		    COLOR_PLOT(0, 255, 0); // green is regular surface
-		}
-
-		// draw normal
-		point_t v;
-		VADD2(v, i->point, i->normal);
-		LINE_PLOT(i->point, v);
-
-		// draw intersection
-		PT_PLOT(i->point);
-
-		// draw bounding box
-		BB_PLOT(i->sbv->m_node.m_min, i->sbv->m_node.m_max);
-	    }
-#endif
-
-	    TRACE("hit " << num << ": " << ON_PRINT3(i->point) << " [" << dot << "]");
-	    while ((m != misses.end()) && (m->first == num)) {
-		static int reasons = 0;
-		if (reasons < 100) {
-		    reasons++;
-		    TRACE("miss " << num << ": " << BREP_INTERSECT_REASON(m->second));
-		} else {
-		    static int quelled = 0;
-		    if (!quelled) {
-			TRACE("Too many reasons.  Suppressing further output." << std::endl);
-			quelled = 1;
-		    }
-		}
-		++m;
-	    }
-	    num++;
-	}
-	while (m != misses.end()) {
-	    static int reasons = 0;
-	    if (reasons < 100) {
-		reasons++;
-		TRACE("miss " << BREP_INTERSECT_REASON(m->second));
-	    } else {
-		static int quelled = 0;
-		if (!quelled) {
-		    TRACE("Too many reasons.  Suppressing further output." << std::endl);
-		    quelled = 1;
-		}
-	    }
-	    ++m;
-	}
-    }
-#endif
-
     bool hit = false;
     if (hits.size() > 1) {
-
-#if 0
-	if (false) {
-	    //TRACE2("screen xy: " << ap->a_x << ", " << ap->a_y);
-	    bu_log("**** ERROR odd number of hits: %d\n", hits.size());
-	    bu_log("xyz %g %g %g \n", rp->r_pt[0], rp->r_pt[1], rp->r_pt[2]);
-	    bu_log("dir %g %g %g \n", rp->r_dir[0], rp->r_dir[1], rp->r_dir[2]);
-	    bu_log("**** Current Hits: %d\n", hits.size());
-
-	    for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
-		point_t prev;
-
-		brep_hit &out = *i;
-
-		if (i != hits.begin()) {
-		    bu_log("<%g>", DIST_PT_PT(out.point, prev));
-		}
-		bu_log("(");
-		if (out.hit == brep_hit::CRACK_HIT) bu_log("_CRACK_(%d)", out.face.m_face_index);
-		if (out.hit == brep_hit::CLEAN_HIT) bu_log("_CH_(%d)", out.face.m_face_index);
-		if (out.hit == brep_hit::NEAR_HIT) bu_log("_NH_(%d)", out.face.m_face_index);
-		if (out.hit == brep_hit::NEAR_MISS) bu_log("_NM_(%d)", out.face.m_face_index);
-		if (out.direction == brep_hit::ENTERING) bu_log("+");
-		if (out.direction == brep_hit::LEAVING) bu_log("-");
-		VMOVE(prev, out.point);
-		bu_log(")");
-	    }
-	    bu_log("\n**** Orig Hits: %d\n", orig.size());
-
-	    for (HitList::iterator i = orig.begin(); i != orig.end(); ++i) {
-		point_t prev;
-
-		brep_hit &out = *i;
-
-		if (i != orig.begin()) {
-		    bu_log("<%g>", DIST_PT_PT(out.point, prev));
-		}
-		bu_log("(");
-		if (out.hit == brep_hit::CRACK_HIT) bu_log("_CRACK_(%d)", out.face.m_face_index);
-		if (out.hit == brep_hit::CLEAN_HIT) bu_log("_CH_(%d)", out.face.m_face_index);
-		if (out.hit == brep_hit::NEAR_HIT) bu_log("_NH_(%d)", out.face.m_face_index);
-		if (out.hit == brep_hit::NEAR_MISS) bu_log("_NM_(%d)", out.face.m_face_index);
-		if (out.direction == brep_hit::ENTERING) bu_log("+");
-		if (out.direction == brep_hit::LEAVING) bu_log("-");
-		bu_log("<%d>", out.sbv->m_face->m_bRev);
-		VMOVE(prev, out.point);
-		bu_log(")");
-	    }
-
-	    bu_log("\n**********************\n");
-	}
-#endif
 
 //#define KODDHIT
 #ifdef KODDHIT //ugly debugging hack to raytrace single surface and not worry about odd hits
@@ -3326,7 +3041,7 @@ rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info
 	    RT_ADD_VLIST(info->vhead, pt1, BN_VLIST_LINE_MOVE);
 
 	    // add segments until the minimum segment count is
-	    // acheived and the distance between the end of the last
+	    // achieved and the distance between the end of the last
 	    // segment and the endpoint is within point spacing
 	    for (int nsegs = 0; (nsegs < min_linear_seg_count) ||
 		(DIST_PT_PT(pt1, endpt) > info->point_spacing); ++nsegs)
@@ -3335,7 +3050,7 @@ rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info
 		VMOVE(pt2, p);
 
 		// bring t2 increasingly closer to t1 until target
-		// point spacing is acheived
+		// point spacing is achieved
 		double step = t2 - t1;
 		while (DIST_PT_PT(pt1, pt2) > info->point_spacing) {
 		    step /= 2.0;
@@ -3808,7 +3523,7 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_BREP;
-    ip->idb_meth = &rt_functab[ID_BREP];
+    ip->idb_meth = &OBJ[ID_BREP];
     BU_ALLOC(ip->idb_ptr, struct rt_brep_internal);
 
     bi = (struct rt_brep_internal*)ip->idb_ptr;
@@ -3829,14 +3544,6 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 	    ON_Xform xform(mat);
 
 	    if (!xform.IsIdentity()) {
-		bu_log("Applying transformation matrix....\n");
-		for (int row=0;row<4;row++) {
-		    bu_log("%d - ", row);
-		    for (int col=0;col<4;col++) {
-			bu_log(" %5f", xform.m_xform[row][col]);
-		    }
-		    bu_log("\n");
-		}
 		bi->brep->Transform(xform);
 	    }
 	}
@@ -3935,430 +3642,11 @@ rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *)
 }
 
 
+/**
+ * R T _ B R E P _ B O O L E A N
+ */
 int
-curve_intersect(const ON_NurbsCurve *curveA,
-		const ON_NurbsCurve *curveB,
-		ON_3dPointArray *intersect,
-		ON_SimpleArray<std::pair<int, int> > *CV,
-		ON_SimpleArray<std::pair<double, double> > *parameter)
-{
-    int countA = curveA->CVCount();
-    int countB = curveB->CVCount();
-    for (int i = 0; i < countA - 1; i++) {
-	ON_3dPoint fromA, toA;
-	curveA->GetCV(i, fromA);
-	curveA->GetCV(i + 1, toA);
-	ON_Line lineA(fromA, toA);
-	for (int j = 0; j < countB - 1; j++) {
-	    ON_3dPoint fromB, toB;
-	    curveB->GetCV(j, fromB);
-	    curveB->GetCV(j + 1, toB);
-	    ON_Line lineB(fromB, toB);
-	    double tA, tB;
-	    if (ON_Intersect(lineA, lineB, &tA, &tB) != true)
-		continue;
-	    if (tA >= 0.0 && tA <= 1.0 && tB >= 0.0 && tB <= 1.0) {
-		intersect->Append(lineA.PointAt(tA));
-		CV->Append(std::make_pair(i, j));
-		parameter->Append(std::make_pair(tA, tB));
-	    }
-	}
-    }
-    return 0;
-}
-
-
-int
-split_curve(ON_NurbsCurve *out1, ON_NurbsCurve *out2, const ON_NurbsCurve *curve, const int CVindex, const double t)
-{
-    if (out1 == NULL || out2 == NULL)
-	return -1;
-
-    // Split the curve using polyline curves.
-    ON_3dPointArray pts1, pts2;
-    for (int i = 0; i <= CVindex; i++) {
-	ON_3dPoint point;
-	curve->GetCV(i, point);
-	pts1.Append(point);
-    }
-    ON_3dPoint start, end;
-    curve->GetCV(CVindex, start);
-    curve->GetCV(CVindex + 1, end);
-    ON_Line line(start, end);
-    pts1.Append(line.PointAt(t));
-    pts2.Append(line.PointAt(t));
-    for (int i = CVindex + 1; i < curve->CVCount(); i++) {
-	ON_3dPoint point;
-	curve->GetCV(i, point);
-	pts2.Append(point);
-    }
-
-    ON_PolylineCurve poly1(pts1), poly2(pts2);
-    poly1.GetNurbForm(*out1);
-    poly2.GetNurbForm(*out2);
-    return 0;
-}
-
-
-struct TrimmedFace {
-    ON_SimpleArray<ON_NurbsCurve*> outerloop;
-    ON_SimpleArray<ON_NurbsCurve*> innerloop;
-    ON_BrepFace *face;
-    TrimmedFace *Duplicate() const
-    {
-	TrimmedFace *out = new TrimmedFace();
-	out->face = face;
-	out->outerloop = outerloop;
-	out->innerloop = innerloop;
-	return out;
-    }
-};
-
-
-struct IntersectPoint {
-    ON_3dPoint m_pt;
-    int m_seg;
-    int m_t;
-    int m_type;
-    int m_rank;
-    int m_seg_for_rank;
-    int m_t_for_rank;
-    bool m_in_out;
-    std::list<ON_3dPoint>::iterator m_pos;
-};
-
-
-int
-compare_seg_t(IntersectPoint* const *a, IntersectPoint* const *b)
-{
-    if ((*a)->m_seg != (*b)->m_seg)
-	return (*a)->m_seg - (*b)->m_seg;
-    return (*a)->m_t - (*b)->m_t;
-}
-
-
-int
-compare_for_rank(IntersectPoint* const *a, IntersectPoint* const *b)
-{
-    if ((*a)->m_seg_for_rank != (*b)->m_seg_for_rank)
-	return (*a)->m_seg_for_rank - (*b)->m_seg_for_rank;
-    return (*a)->m_t_for_rank - (*b)->m_t_for_rank;
-}
-
-
-int
-split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, const ON_SimpleArray<ON_NurbsCurve*> &curves)
-{
-    /* We followed the algorithms described in:
-     * S. Krishnan, A. Narkhede, and D. Manocha. BOOLE: A System to Compute
-     * Boolean Combinations of Sculptured Solids. Technical Report TR95-008,
-     * Department of Computer Science, University of North Carolina, 1995.
-     * Appendix B: Partitioning a Simple Polygon using Non-Intersecting
-     * Chains.
-     */
-
-    if (curves.Count() == 0) {
-	// No curve, no splitting
-	out.Append(in->Duplicate());
-	return 0;
-    }
-
-    ON_SimpleArray<IntersectPoint> intersect;
-    ON_SimpleArray<bool> have_intersect(curves.Count());
-    for (int i = 0; i < curves.Count(); i++)
-	have_intersect[i] = false;
-
-    int CVCount_sum = 0;
-    for (int i = 0; i < in->outerloop.Count(); i++) {
-	for (int j = 0; j < curves.Count(); j++) {
-	    ON_3dPointArray intersect_pt;
-	    ON_SimpleArray<std::pair<int, int> > CV;
-	    ON_SimpleArray<std::pair<double, double> > parameter;
-	    curve_intersect(in->outerloop[i], curves[j], &intersect_pt, &CV, &parameter);
-	    for (int k = 0; k < intersect_pt.Count(); k++) {
-		IntersectPoint tmp_pt;
-		tmp_pt.m_pt = intersect_pt[k];
-		tmp_pt.m_seg = CVCount_sum + CV[k].first;
-		tmp_pt.m_t = (int)parameter[k].first;
-		tmp_pt.m_type = j;
-		tmp_pt.m_seg_for_rank = CV[k].second;
-		tmp_pt.m_t_for_rank = (int)parameter[k].second;
-		intersect.Append(tmp_pt);
-	    }
-	    if (intersect_pt.Count())
-		have_intersect[j] = true;
-	}
-	CVCount_sum += in->outerloop[i]->CVCount();
-    }
-
-    // deal with the situations where there is no intersection
-    for (int i = 0; i < curves.Count(); i++) {
-	if (!have_intersect[i]) {
-	    ON_BoundingBox bbox_outerloop;
-	    for (int j = 0; j < in->outerloop.Count(); j++) {
-		bbox_outerloop.Union(in->outerloop[j]->BoundingBox());
-	    }
-	    if (bbox_outerloop.Includes(curves[i]->BoundingBox())) {
-		if (curves[i]->IsClosed()) {
-		    TrimmedFace *newface = in->Duplicate();
-		    newface->innerloop.Append(curves[i]);
-		    out.Append(newface);
-		    newface = new TrimmedFace();
-		    newface->face = in->face;
-		    newface->outerloop.Append(curves[i]);
-		    out.Append(newface);
-		}
-	    }
-	}
-    }
-
-    // rank these intersection points
-    ON_SimpleArray<ON_SimpleArray<IntersectPoint*>*> pts_on_curves(curves.Count());
-    ON_SimpleArray<IntersectPoint*> sorted_pointers;
-    for (int i = 0; i < curves.Count(); i++)
-	pts_on_curves[i] = new ON_SimpleArray<IntersectPoint*>();
-    for (int i = 0; i < intersect.Count(); i++) {
-	pts_on_curves[intersect[i].m_type]->Append(&(intersect[i]));
-	sorted_pointers.Append(&(intersect[i]));
-    }
-    for (int i = 0; i < curves.Count(); i++) {
-	pts_on_curves[i]->QuickSort(compare_for_rank);
-	for (int j = 0; j < pts_on_curves[i]->Count(); j++)
-	    (*pts_on_curves[i])[j]->m_rank = j;
-    }
-    for (int i = 0; i < curves.Count(); i++) {
-	delete pts_on_curves[i];
-    }
-    sorted_pointers.QuickSort(compare_seg_t);
-
-    for (int i = 0; i < intersect.Count(); i++) {
-	// We assume that the starting point is outside.
-	if (intersect[i].m_rank % 2 == 0) {
-	    intersect[i].m_in_out = false; // in
-	} else {
-	    intersect[i].m_in_out = true; // out
-	}
-    }
-
-    std::list<ON_3dPoint> outerloop;
-    int count = 0;
-    int isect_iter = 0;
-    for (int i = 0; i < in->outerloop.Count(); i++) {
-	const ON_NurbsCurve *curve_on_loop = in->outerloop[i];
-	for (int j = 0; j < curve_on_loop->CVCount(); j++) {
-	    ON_3dPoint cvpt;
-	    curve_on_loop->GetCV(j, cvpt);
-	    outerloop.push_back(cvpt);
-	    count++;
-	    for (; isect_iter < sorted_pointers.Count() && sorted_pointers[isect_iter]->m_seg < count; isect_iter++) {
-		outerloop.push_back(sorted_pointers[isect_iter]->m_pt);
-		sorted_pointers[isect_iter]->m_pos = --outerloop.end();
-	    }
-	}
-    }
-    outerloop.push_back(in->outerloop[0]->PointAtStart());
-
-    std::stack<int> s;
-    s.push(0);
-    for (int i = 1; i < sorted_pointers.Count(); i++) {
-	if (s.empty()) {
-	    s.push(i);
-	    continue;
-	}
-	IntersectPoint *p = sorted_pointers[s.top()];
-	IntersectPoint *q = sorted_pointers[i];
-	if (q->m_type != p->m_type) {
-	    s.push(i);
-	    continue;
-	} else if (q->m_rank - p->m_rank == 1 && q->m_in_out == false && p->m_in_out == true) {
-	    s.pop();
-	} else if (p->m_rank - q->m_rank == 1 && p->m_in_out == false && q->m_in_out == true) {
-	    s.pop();
-	} else {
-	    s.push(i);
-	    continue;
-	}
-
-	// need to form a new loop
-	if (compare_seg_t(&p, &q) > 0)
-	    std::swap(p, q);
-	ON_3dPointArray newloop;
-	std::list<ON_3dPoint> newsegment;
-	std::list<ON_3dPoint>::iterator iter;
-	for (iter = p->m_pos; iter != q->m_pos; iter++) {
-	    newloop.Append(*iter);
-	}
-	newloop.Append(q->m_pt);
-	if (p->m_seg_for_rank < q->m_seg_for_rank) {
-	    for (int j = p->m_seg_for_rank + 1; j <= q->m_seg_for_rank; j++) {
-		ON_3dPoint cvpt;
-		curves[p->m_type]->GetCV(j, cvpt);
-		newloop.Append(cvpt);
-		newsegment.push_back(cvpt);
-	    }
-	} else if (p->m_seg_for_rank > q->m_seg_for_rank) {
-	    for (int j = p->m_seg_for_rank; j > q->m_seg_for_rank; j--) {
-		ON_3dPoint cvpt;
-		curves[p->m_type]->GetCV(j, cvpt);
-		newloop.Append(cvpt);
-		newsegment.push_back(cvpt);
-	    }
-	}
-	newloop.Append(p->m_pt);
-
-	// Append a surface with newloop as its outerloop
-	ON_PolylineCurve polycurve(newloop);
-	ON_NurbsCurve *nurbscurve = ON_NurbsCurve::New();
-	polycurve.GetNurbForm(*nurbscurve);
-	TrimmedFace *newface = new TrimmedFace();
-	newface->face = in->face;
-	newface->outerloop.Append(nurbscurve);
-
-	// adjust the outerloop
-	std::list<ON_3dPoint>::iterator first = p->m_pos;
-	outerloop.erase(++first, q->m_pos);
-	first = p->m_pos;
-	outerloop.insert(++first, newsegment.begin(), newsegment.end());
-    }
-
-    // WIP
-    // The follows commented out are out of date.
-    /* if (sum == 0) {
-	// no intersection points with the outerloop
-	ON_BoundingBox bbox_outerloop;
-	for (int i = 0; i < in->outerloop.Count(); i++) {
-	    bbox_outerloop.Union(in->outerloop[i].BoundingBox());
-	}
-	if (bbox_outerloop.Includes(curve->BoundingBox())) {
-	    if (curve->IsClosed()) {
-		TrimmedFace *newface = in->Duplicate();
-		newface->innerloop.Append(*curve);
-		out.Append(newface);
-		newface = new TrimmedFace();
-		newface->face = in->face;
-		newface->outerloop.Append(*curve);
-		out.Append(newface);
-		return 0;
-	    }
-	}
-    } else if (sum >= 2) {
-	// intersect the outerloop (TODO)
-	// Now we only consider sum == 2 and the two intersection points are
-	// not on the same curve of the outer loop.
-	int start = -1;
-	for (int i = 0; i < intersect.Count(); i++) {
-	    if (intersect[i].Count() != 0) {
-		start = i;
-		break;
-	    }
-	}
-	TrimmedFace *newface = new TrimmedFace();
-	newface->face = in->face;
-	ON_NurbsCurve curve1, curve2;
-	split_curve(&curve1, &curve2, &(in->outerloop[start]), CV[start][0].first, parameter[start][0][0]);
-	newface->outerloop.Append(curve2);
-	int i;
-	for (i = start + 1; i != start; i = (i+1)%intersect.Count()) {
-	    if (intersect[i].Count() == 0) {
-		newface->outerloop.Append(in->outerloop[i]);
-	    } else {
-		break;
-	    }
-	}
-	ON_NurbsCurve curve3, curve4;
-	split_curve(&curve3, &curve4, &(in->outerloop[i]), CV[i][0].first, parameter[i][0][0]);
-	newface->outerloop.Append(curve3);
-	newface->outerloop.Append(*curve);
-	out.Append(newface);
-	newface = new TrimmedFace();
-	newface->face = in->face;
-	newface->outerloop.Append(curve4);
-	for (; i != start; i = (i+1)%intersect.Count()) {
-	    if (intersect[i].Count() == 0) {
-		newface->outerloop.Append(in->outerloop[i]);
-	    }
-	}
-	newface->outerloop.Append(curve1);
-	newface->outerloop.Append(*curve);
-	out.Append(newface);
-	return 0;
-    }*/
-
-    if (out.Count() == 0) {
-	out.Append(in->Duplicate());
-    }
-    bu_log("Split to %d faces.\n", out.Count());
-    return 0;
-}
-
-
-void
-add_elements(ON_Brep *brep, ON_BrepFace &face, ON_SimpleArray<ON_NurbsCurve*> &loop, ON_BrepLoop::TYPE loop_type)
-{
-    if (!loop.Count())
-	return;
-
-    ON_BrepLoop &breploop = brep->NewLoop(loop_type, face);
-    int start_index = brep->m_V.Count();
-    for (int k = 0; k < loop.Count(); k++) {
-	int ti = brep->AddTrimCurve(loop[k]);
-	ON_2dPoint start = loop[k]->PointAtStart(), end = loop[k]->PointAtEnd();
-	ON_BrepVertex& start_v = k > 0 ? brep->m_V[brep->m_V.Count() - 1] :
-	    brep->NewVertex(face.SurfaceOf()->PointAt(start.x, start.y), 0.0);
-	ON_BrepVertex& end_v = loop[k]->IsClosed() ? start_v :
-	    brep->NewVertex(face.SurfaceOf()->PointAt(end.x, end.y), 0.0);
-	if (k == loop.Count() - 1) {
-	    if (!loop[k]->IsClosed())
-		brep->m_V.Remove(brep->m_V.Count() - 1);
-	    end_v = brep->m_V[start_index];
-	}
-	int start_idx = start_v.m_vertex_index;
-	int end_idx = end_v.m_vertex_index;
-
-	ON_NurbsCurve *c3d = ON_NurbsCurve::New();
-	// First, try the ON_Surface::Pushup() method.
-	// If Pushup() does not succeed, use sampling method.
-	ON_Curve *curve_pt = face.SurfaceOf()->Pushup(*(loop[k]), 1e-3);
-	if (curve_pt) {
-	    curve_pt->GetNurbForm(*c3d);
-	    delete curve_pt;
-	} else if (loop[k]->CVCount() == 2) {
-	    // A closed curve with two control points
-	    // TODO: Sometimes we need a singular trim.
-	    ON_3dPointArray ptarray(101);
-	    for (int l = 0; l <= 100; l++) {
-		ON_3dPoint pt2d;
-		pt2d = loop[k]->PointAt(loop[k]->Domain().NormalizedParameterAt(l/100.0));
-		ptarray.Append(face.SurfaceOf()->PointAt(pt2d.x, pt2d.y));
-	    }
-	    ON_PolylineCurve polycurve(ptarray);
-	    polycurve.GetNurbForm(*c3d);
-	} else {
-	    delete c3d;
-	    c3d = loop[k]->Duplicate();
-	    c3d->ChangeDimension(3);
-	    for (int l = 0; l < loop[k]->CVCount(); l++) {
-		ON_3dPoint pt2d;
-		loop[k]->GetCV(l, pt2d);
-		ON_3dPoint pt3d = face.SurfaceOf()->PointAt(pt2d.x, pt2d.y);
-		c3d->SetCV(l, pt3d);
-	    }
-	}
-	brep->AddEdgeCurve(c3d);
-	ON_BrepEdge &edge = brep->NewEdge(brep->m_V[start_idx], brep->m_V[end_idx],
-	    brep->m_C3.Count() - 1, (const ON_Interval *)0, MAX_FASTF);
-	ON_BrepTrim &trim = brep->NewTrim(edge, 0, breploop, ti);
-	trim.m_tolerance[0] = trim.m_tolerance[1] = MAX_FASTF;
-
-	// TODO: Deal with split seam trims to pass ON_Brep::IsValid()
-    }
-    if (brep->m_V.Count() < brep->m_V.Capacity())
-	brep->m_V[brep->m_V.Count()].m_ei.Empty();
-}
-
-
-int
-rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, const int UNUSED(operation))
+rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, const char* operation)
 {
     RT_CK_DB_INTERNAL(ip1);
     RT_CK_DB_INTERNAL(ip2);
@@ -4373,97 +3661,21 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
     brep2 = bip2->brep;
     brep_out = ON_Brep::New();
 
-    int facecount1 = brep1->m_F.Count();
-    int facecount2 = brep2->m_F.Count();
-    ON_SimpleArray<ON_NurbsCurve *> *curvesarray = new ON_SimpleArray<ON_NurbsCurve *> [facecount1 + facecount2];
+    int ret;
+    op_type operation_type;
+    if (BU_STR_EQUAL(operation, "u"))
+	operation_type = BOOLEAN_UNION;
+    else if (BU_STR_EQUAL(operation, "i"))
+	operation_type = BOOLEAN_INTERSECT;
+    else if (BU_STR_EQUAL(operation, "-"))
+	operation_type = BOOLEAN_DIFF;
+    else if (BU_STR_EQUAL(operation, "x"))
+	operation_type = BOOLEAN_XOR;
+    else
+	return -1;
 
-    // calculate intersection curves
-    for (int i = 0; i < facecount1; i++) {
-	for (int j = 0; j < facecount2; j++) {
-	    ON_ClassArray<ON_SSX_EVENT> events;
-	    if (ON_Intersect(brep1->m_S[brep1->m_F[i].m_si],
-			     brep2->m_S[brep2->m_F[j].m_si],
-			     events) <= 0)
-		continue;
-	    ON_SimpleArray<ON_NurbsCurve *> curve_uv, curve_st;
-	    for (int k = 0; k < events.Count(); k++) {
-		ON_NurbsCurve *nurbscurve = ON_NurbsCurve::New();
-		events[k].m_curveA->GetNurbForm(*nurbscurve);
-		curve_uv.Append(nurbscurve);
-		nurbscurve = ON_NurbsCurve::New();
-		events[k].m_curveA->GetNurbForm(*nurbscurve);
-		curve_st.Append(nurbscurve);
-	    }
-	    curvesarray[i].Append(curve_uv.Count(), curve_uv.Array());
-	    curvesarray[facecount1 + j].Append(curve_st.Count(), curve_st.Array());
-	}
-    }
-
-    // split the surfaces with the intersection curves
-    for (int i = 0; i < facecount1 + facecount2; i++) {
-	ON_SimpleArray<ON_NurbsCurve*> innercurves, outercurves;
-	ON_BrepFace &face = i < facecount1 ? brep1->m_F[i] : brep2->m_F[i - facecount1];
-	ON_Brep *brep = i < facecount1 ? brep1 : brep2;
-	ON_SimpleArray<int> &loopindex = face.m_li;
-	for (int j = 0; j < loopindex.Count(); j++) {
-	    ON_BrepLoop &loop = brep->m_L[loopindex[j]];
-	    ON_SimpleArray<int> &trimindex = loop.m_ti;
-	    for (int k = 0; k < trimindex.Count(); k++) {
-		ON_Curve *curve2d = brep1->m_C2[brep->m_T[trimindex[k]].m_c2i];
-		ON_NurbsCurve *nurbscurve = ON_NurbsCurve::New();
-		if (!curve2d->GetNurbForm(*nurbscurve))
-		    continue;
-		if (j == 0) {
-		    outercurves.Append(nurbscurve);
-		} else {
-		    innercurves.Append(nurbscurve);
-		}
-	    }
-	}
-	ON_SimpleArray<TrimmedFace*> trimmedfaces;
-	TrimmedFace *first = new TrimmedFace();
-	first->face = &face;
-	first->innerloop = innercurves;
-	first->outerloop = outercurves;
-	split_trimmed_face(trimmedfaces, first, curvesarray[i]);
-
-	/* TODO: Perform inside-outside test to decide whether the trimmed face
-	 * should be used in the final b-rep structure or not.
-	 * Different operations should be dealt with accordingly.
-	 * Another solution is to use connectivity graphs which represents the
-	 * topological structure of the b-rep. This can reduce time-consuming
-	 * inside-outside tests.
-	 * Here we just use all of these trimmed faces.
-	 */
-	for (int j = 0; j < trimmedfaces.Count(); j++) {
-	    // Add the surfaces, faces, loops, trims, vertices, edges, etc.
-	    // to the brep structure.
-	    ON_Surface *new_surf = face.SurfaceOf()->Duplicate();
-	    int surfindex = brep_out->AddSurface(new_surf);
-	    ON_BrepFace& new_face = brep_out->NewFace(surfindex);
-
-	    add_elements(brep_out, new_face, trimmedfaces[j]->outerloop, ON_BrepLoop::outer);
-	    ON_BrepLoop &loop = brep_out->m_L[brep_out->m_L.Count() - 1];
-	    add_elements(brep_out, new_face, trimmedfaces[j]->innerloop, ON_BrepLoop::inner);
-
-	    new_surf->SetDomain(0, loop.m_pbox.m_min.x, loop.m_pbox.m_max.x);
-	    new_surf->SetDomain(1, loop.m_pbox.m_min.y, loop.m_pbox.m_max.y);
-	    brep_out->SetTrimIsoFlags(new_face);
-	    brep_out->FlipFace(new_face);
-	}
-    }
-
-    // Check IsValid() and output the message.
-    ON_wString ws;
-    ON_TextLog log(ws);
-    brep_out->IsValid(&log);
-    char *s = new char [ws.Length() + 1];
-    for (int k = 0; k < ws.Length(); k++) {
-	s[k] = ws[k];
-    }
-    s[ws.Length()] = 0;
-    bu_log("%s", s);
-    delete s;
+    if ((ret = ON_Boolean(brep_out, brep1, brep2, operation_type)) < 0)
+	return ret;
 
     // make the final rt_db_internal
     struct rt_brep_internal *bip_out;
@@ -4473,11 +3685,9 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
     RT_DB_INTERNAL_INIT(out);
     out->idb_ptr = (genptr_t)bip_out;
     out->idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    out->idb_meth = &rt_functab[ID_BREP];
+    out->idb_meth = &OBJ[ID_BREP];
     out->idb_minor_type = ID_BREP;
 
-    // WIP
-    delete [] curvesarray;
     return 0;
 }
 

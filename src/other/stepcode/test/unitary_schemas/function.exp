@@ -1,0 +1,45 @@
+SCHEMA test_function;
+
+ENTITY dummy;
+END_ENTITY;
+
+FUNCTION add(r1:REAL;r2:REAL):REAL;
+LOCAL
+result : REAL;
+END_LOCAL;
+result := r1+r2;
+RETURN(result);
+END_FUNCTION;
+
+
+FUNCTION pow_n(r1:REAL;n:INTEGER):REAL;
+LOCAL
+result : REAL;
+END_LOCAL;
+IF n = 0 THEN
+  RETURN(1);
+ELSE
+  result := r1;
+  REPEAT i := 1 TO n;
+    result := result * r1;
+  END_REPEAT;
+  RETURN(result);
+END_IF;
+END_FUNCTION;
+
+
+FUNCTION case_1(a:INTEGER):REAL;
+LOCAL
+x : REAL;
+END_LOCAL;
+CASE a OF
+1 : x := SIN(a) ;
+2 : x := EXP(a) ;
+3 : x := SQRT(a) ; 
+4, 5 : x := LOG(a) ;
+OTHERWISE : x := 0.0 ;
+END_CASE ;
+RETURN(x);
+END_FUNCTION;
+
+END_SCHEMA;

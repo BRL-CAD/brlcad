@@ -58,6 +58,13 @@ done
 #\
 exec "$WISH" "$0" "$@"
 
+# If we're not launching in the sh script mode (i.e. we're
+# launching via the mged command) argv0 doesn't seem to be
+# populated - try info nameofexecutable
+if {! [info exists argv0] } {
+   set argv0 [info nameofexecutable]
+}
+
 # If we're running from a build directory but an installed BRL-CAD
 # already exists in the configured install path, all tcl scripts
 # will be pulled from the installed location and not the local

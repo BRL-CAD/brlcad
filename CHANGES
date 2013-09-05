@@ -67,6 +67,8 @@ new names should be listed for reference.
 
 7.24
 ----
+src/irprep
+       all_sf, firpass, ir-X, irdisp, pictx, secpass, shapefact, showterm [deprecated 7.24]
 include/raytrace.h librt
         RT_DBHASH and RT_DBNHASH [deprecation 7.24]
 
@@ -178,12 +180,6 @@ reserved attributes and case-sensitivity
 	oshader -> shader [deprecated 7.16]
 genptr_t/GENPTR_NULL
 	genptr_t -> void* [deprecated 7.16]
-.pl file suffix
-	.pl -> .plot3 [deprecated 7.16]
-*-pl
-	*-pl -> *-plot3 [deprecated 7.16]
-pl*
-	pl* -> plot3* [deprecated 7.16]
 any-png.sh
 	use pix tools [deprecated 7.16]
 cadbug.sh
@@ -250,6 +246,15 @@ include/raytrace.h
 ************
 * OBSOLETE *
 ************
+
+7.24.2
+------
+.pl file suffix
+	.pl -> .plot3 [deprecated 7.16]
+*-pl
+	*-pl -> *-plot3 [deprecated 7.16]
+pl*
+	pl* -> plot3* [deprecated 7.16]
 
 7.24.0
 ------
@@ -889,3 +894,12 @@ s/bu_set_realtime([[:space:]]);//g
         didn't do anything [7.23]
 s/.*bu_cpulimit_[sg]et([[:space:]]);//g
         didn't do anything [7.23]
+s/rt_g\./RTG\./g
+        renamed rt_g global to RTG so it doesn't match the struct name [7.24]
+s/rt_functab\[/OBJ\[/g
+        renamed rt_functab global to OBJ so it doesn't match the struct name [7.24]
+s/redraw_vlist/draw/g
+        removed redraw_vlist mged command, just call draw or refresh [7.24]
+s/RT_BADNUM/INVALID/g
+s/RT_BADVAL/VINVALID/g
+        moved RT_BADNUM and RT_BADVEC to vmath.h as INVALID and VINVALID [7.24]

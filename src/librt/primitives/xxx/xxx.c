@@ -42,7 +42,7 @@
  *	rt_id_solid()
  * edit raytrace.h to make ID_XXX, increment ID_MAXIMUM
  * edit db_scan.c to add the new solid to db_scan()
- * edit Makefile.am to add g_xxx.c to compile
+ * edit CMakeLists.txt to add g_xxx.c to compile
  *
  * go to src/libwdb and create mk_xxx() routine
  * go to src/conv and edit g2asc.c and asc2g.c to support the new solid
@@ -308,7 +308,7 @@ rt_xxx_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
     /* set up the internal structure */
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_XXX;
-    ip->idb_meth = &rt_functab[ID_XXX];
+    ip->idb_meth = &OBJ[ID_XXX];
     BU_ALLOC(ip->idb_ptr, struct rt_xxx_internal);
 
     xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
@@ -318,7 +318,7 @@ rt_xxx_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
      * conversion from network data (Big Endian ints, IEEE double
      * floating point) to host local data representations.
      */
-    ntohd((unsigned char *)&vv, (unsigned char *)ep->ext_buf, ELEMENTS_PER_VECT*1);
+    bu_cv_ntohd((unsigned char *)&vv, (unsigned char *)ep->ext_buf, ELEMENTS_PER_VECT*1);
 
     /* Apply the modeling transformation */
     if (mat == NULL) mat = bn_mat_identity;
@@ -362,7 +362,7 @@ rt_xxx_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     VSCALE(vec, xxx_ip->v, local2mm);
 
     /* Convert from internal (host) to database (network) format */
-    htond(ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT);
+    bu_cv_htond(ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT);
 
     return 0;
 }

@@ -34,7 +34,7 @@
  *		edit the gauss_render function to do the actual rendering
  *	3) Edit view.c to add extern for gauss_mfuncs and call to mlib_add
  *		to function view_init()
- *	4) Edit Makefile.am to add shader file to the compilation
+ *	4) Edit CMakeLists.txt to add shader file to the compilation
  *	5) replace this list with a description of the shader, its parameters
  *		and use.
  *
@@ -176,7 +176,7 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 	    /* Get the internal form of this solid & add it to the list */
 	    ret = rt_db_get_internal(&dbint->ip, tp->tr_a.tu_stp->st_dp, tb->dbip, mp, resp);
 	    if (ret < 0) {
-		bu_log("Failure reading %s object from database.\n", rt_functab[sol_id].ft_name);
+		bu_log("Failure reading %s object from database.\n", OBJ[sol_id].ft_name);
 		return;
 	    }
 
@@ -199,7 +199,7 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 
 		if (rdebug&RDEBUG_SHADE)
 		    bu_log(" got a primitive type %ld \"%s\".  This primitive ain't no ellipse bucko!\n",
-			   sol_id, rt_functab[sol_id].ft_name);
+			   sol_id, OBJ[sol_id].ft_name);
 
 		break;
 	    }
@@ -210,7 +210,7 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 	    if (rdebug&RDEBUG_SHADE)
 		bu_log(" got a primitive type %ld \"%s\"\n",
 		       sol_id,
-		       rt_functab[sol_id].ft_name);
+		       OBJ[sol_id].ft_name);
 
 	    RT_ELL_CK_MAGIC(ell_p);
 
@@ -461,17 +461,13 @@ eval_seg(struct application *ap, struct reg_db_internals *dbint, struct seg *seg
 	       span, step_dist, steps);
 
     }
-#if 1
+
     for (dist=seg_p->seg_in.hit_dist; dist < seg_p->seg_out.hit_dist; dist += step_dist) {
 	VJOIN1(pt, ap->a_ray.r_pt, dist, ap->a_ray.r_dir);
 	optical_density += gauss_eval(pt, ell_p->v, dbint->one_sigma);
     }
 
-
     return optical_density;
-#else
-    return gauss_eval(ell_p->v, ell_p->v, dbint->one_sigma);
-#endif
 }
 
 

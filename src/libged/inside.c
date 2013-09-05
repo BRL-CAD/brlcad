@@ -280,7 +280,7 @@ arbin(struct ged *gedp,
 	m = nmg_mm();
 
 	/* get an NMG version of this arb7 */
-	if (!rt_functab[ip->idb_type].ft_tessellate || rt_functab[ip->idb_type].ft_tessellate(&r, m, ip, &ttol, &gedp->ged_wdbp->wdb_tol)) {
+	if (!OBJ[ip->idb_type].ft_tessellate || OBJ[ip->idb_type].ft_tessellate(&r, m, ip, &ttol, &gedp->ged_wdbp->wdb_tol)) {
 	    bu_vls_printf(gedp->ged_result_str, "Cannot tessellate arb7\n");
 	    rt_db_free_internal(ip);
 	    return GED_ERROR;
@@ -358,7 +358,7 @@ arbin(struct ged *gedp,
 	/* put new solid in "ip" */
 	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	ip->idb_type = ID_BOT;
-	ip->idb_meth = &rt_functab[ID_BOT];
+	ip->idb_meth = &OBJ[ID_BOT];
 	ip->idb_ptr = (genptr_t)bot;
     }
 
@@ -757,18 +757,6 @@ rpcin(struct ged *UNUSED(gedp), struct rt_db_internal *ip, fastf_t thick[4])
     VJOIN2(rpc->rpc_V, rpc->rpc_V, thick[0], Hu, thick[2], Bu);
     VSCALE(rpc->rpc_H, Hu, MAGNITUDE(rpc->rpc_H) - thick[0] - thick[1]);
     VSCALE(rpc->rpc_B, Bu, b - thick[2] - thick[3]);
-#if 0
-    bp = b - thick[2] - thick[3];
-    rp = rpc->rpc_r - thick[3];	/* !!! ESTIMATE !!! */
-    yp = rp * sqrt((bp - thick[2])/bp);
-    VSET(Norm,
-	 0.,
-	 2 * bp * yp/(rp * rp),
-	 -1.0);
-    VUNITIZE(Norm)
-	th = thick[3] / Norm[Y];
-    rpc->rpc_r -= th;
-#endif
     rpc->rpc_r -= thick[3];
 
     return GED_OK;
@@ -1153,7 +1141,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	    if (ip->idb_type < 0) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot find inside of uninitialized object.\n");
 	    } else {
-		bu_vls_printf(gedp->ged_result_str, "Cannot find inside for '%s' solid\n", rt_functab[ip->idb_type].ft_name);
+		bu_vls_printf(gedp->ged_result_str, "Cannot find inside for '%s' solid\n", OBJ[ip->idb_type].ft_name);
 	    }
 	    return GED_ERROR;
     }

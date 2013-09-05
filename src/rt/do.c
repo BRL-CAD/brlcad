@@ -82,7 +82,7 @@ void do_ae(double azim, double elev);
 void res_pr(void);
 void memory_summary(void);
 
-extern struct icv_image_file *bif;
+extern struct icv_image *bif;
 
 
 /**
@@ -599,7 +599,7 @@ do_frame(int framenumber)
     if (Query_one_pixel) {
 	query_rdebug = R_DEBUG;
 	query_debug = RT_G_DEBUG;
-	rt_g.debug = rdebug = 0;
+	RTG.debug = rdebug = 0;
     }
 
     if (rtip->nsolids <= 0)
@@ -633,28 +633,28 @@ do_frame(int framenumber)
 	bu_log("Orientation: %g, %g, %g, %g\n", V4ARGS(quat));
 	bu_log("Eye_pos: %g, %g, %g\n", V3ARGS(eye_model));
 	bu_log("Size: %gmm\n", viewsize);
-#if 0
-	/*
+
+	/**
 	 * This code shows how the model2view matrix can be
 	 * reconstructed using the information from the Orientation,
-	 * Eye_pos, and Size messages.
+	 * Eye_pos, and Size messages in the rt log output.
+	 @code
+	 {
+	 mat_t rotscale, xlate, newmat;
+	 quat_t newquat;
+	 bn_mat_print("model2view", model2view);
+	 quat_quat2mat(rotscale, quat);
+	 rotscale[15] = 0.5 * viewsize;
+	 MAT_IDN(xlate);
+	 MAT_DELTAS_VEC_NEG(xlate, eye_model);
+	 bn_mat_mul(newmat, rotscale, xlate);
+	 bn_mat_print("reconstructed m2v", newmat);
+	 quat_mat2quat(newquat, newmat);
+	 HPRINT("reconstructed orientation:", newquat);
+	 @endcode
+	 *
 	 */
-	{
-	    mat_t rotscale, xlate;
-	    mat_t newmat;
-	    quat_t newquat;
 
-	    bn_mat_print("model2view", model2view);
-	    quat_quat2mat(rotscale, quat);
-	    rotscale[15] = 0.5 * viewsize;
-	    MAT_IDN(xlate);
-	    MAT_DELTAS_VEC_NEG(xlate, eye_model);
-	    bn_mat_mul(newmat, rotscale, xlate);
-	    bn_mat_print("reconstructed m2v", newmat);
-	    quat_mat2quat(newquat, newmat);
-	    HPRINT("reconstructed orientation:", newquat);
-	}
-#endif
 	bu_log("Grid: (%g, %g) mm, (%zu, %zu) pixels\n",
 	       cell_width, cell_height,
 	       width, height);
@@ -746,10 +746,18 @@ do_frame(int framenumber)
 
 	    if (bu_file_exists(framename, NULL)) {
 		/* File exists, maybe with partial results */
-		fd = open(framename, 2);
-		outfp = fdopen(fd, "r+");
+		outfp = NULL;
+		fd = open(framename, O_RDWR);
+		if (fd < 0) {
+		    perror("open");
+		} else {
+		    outfp = fdopen(fd, "r+");
+		    if (!outfp)
+			perror("fdopen");
+		}
+
 		if (fd < 0 || !outfp) {
-		    perror(framename);
+		    bu_log("ERROR: Unable to open \"%s\" for reading and writing (check file permissions)\n", framename);
 
 		    if (matflag)
 			return 0; /* OK: some undocumented reason */
@@ -764,6 +772,8 @@ do_frame(int framenumber)
 		    /* Read existing pix data into the frame buffer */
 		    if (sb.st_size > 0) {
 			size_t bytes_read = fread(pixmap, 1, (size_t)sb.st_size, outfp);
+			if (rt_verbosity & VERBOSE_OUTPUTFILE)
+			    bu_log("Reading existing pix data from \"%s\".\n", framename);
 			if (bytes_read < (size_t)sb.st_size)
 			    return -1;
 		    }
@@ -778,7 +788,8 @@ do_frame(int framenumber)
 	    /* FIXME: in the case of rtxray, this is wrong.  it writes
 	     * out a bw image so depth should be just 1, not 3.
 	     */
-	    bif = icv_image_save_open(framename, ICV_IMAGE_AUTO_NO_PIX, width, height, 3);
+	    bif = icv_create(width, height, ICV_COLOR_SPACE_RGB);
+
 	    if (bif == NULL && (outfp = fopen(framename, "w+b")) == NULL) {
 		perror(framename);
 		if (matflag) return 0;	/* OK */
@@ -908,9 +919,12 @@ do_frame(int framenumber)
 	       rtip->rti_nrays,
 	       wallclock, ((double)(rtip->rti_nrays))/wallclock);
     }
-    if (bif != NULL)
-	icv_image_save_close(bif);
-    bif = NULL;
+    if (bif != NULL) {
+	icv_write(bif, framename, ICV_IMAGE_AUTO);
+	icv_destroy(bif);
+	bif = NULL;
+    }
+
     if (outfp != NULL) {
 	/* Protect finished product */
 	if (outputfile != (char *)0)

@@ -319,11 +319,9 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 	nu_ncells = rtip->rti_nugrid_dimlimit;
     nu_sol_per_cell = (fromp->bn_len + nu_ncells - 1) / nu_ncells;
     nu_max_ncells = 2*nu_ncells + 8;
-#if 0
-    pseudo_depth = depth+(int)log((double)(nu_ncells*nu_ncells*nu_ncells));
-#else
+
+    /* pseudo_depth = depth+(int)log((double)(nu_ncells*nu_ncells*nu_ncells)); */
     pseudo_depth = depth;
-#endif
 
     if (RT_G_DEBUG&DEBUG_CUT)
 	bu_log(
@@ -395,13 +393,10 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 	    nstart += shp->hg_bins[hindex];
 	    nend += ehp->hg_bins[hindex];
 	    pos += shp->hg_clumpsize;
-#if 1
-	    if (nstart < nu_sol_per_cell &&
-		nend < nu_sol_per_cell) continue;
-#else
-	    if (nstart + nend < 2 * nu_sol_per_cell)
+
+	    if (nstart < nu_sol_per_cell && nend < nu_sol_per_cell)
 		continue;
-#endif
+
 	    /* End current interval, start new one */
 	    nugnp->nu_axis[i][axi].nu_epos = pos;
 	    nugnp->nu_axis[i][axi].nu_width =
@@ -467,28 +462,19 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 		    ++nend;
 		}
 
-#if 1
-		if (nstart < nu_sol_per_cell &&
-		    nend < nu_sol_per_cell)
-#else
-		    if (nstart + nend < nu_sol_per_cell)
-#endif
-			continue;
+		if (nstart < nu_sol_per_cell && nend < nu_sol_per_cell)
+		    continue;
 
 		/* Don't make really teeny intervals. */
 		if (pos <= nugnp->nu_axis[i][axi].nu_spos
-#if 1
 		    + 1.0
-#endif
 		    + rtip->rti_tol.dist)
 		    continue;
 
 		/* don't make any more cuts if we've gone
 		   past the end. */
 		if (pos >= fromp->bn_max[i]
-#if 1
 		    - 1.0
-#endif
 		    - rtip->rti_tol.dist)
 		    continue;
 
@@ -648,26 +634,7 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 		       sizeof(struct soltab *));
 
 		if (rtip->rti_nugrid_dimlimit > 0) {
-#if 1
 		    rt_ct_optim(rtip, cutp, pseudo_depth);
-#else
-		    /* Recurse, but only if we're cutting down on
-		       the cellsize. */
-		    if (cutp->bn.bn_len > 5 &&
-			cutp->bn.bn_len < fromp->bn_len>>1) {
-
-			/* Make a little NUGRID node here
-			   to clean things up */
-			union cutter temp;
-
-			temp = *cutp;  /* union copy */
-			cutp->cut_type = CUT_NUGRIDNODE;
-			/* recursive call! */
-			rt_nugrid_cut(&cutp->nugn,
-				      &temp.bn, rtip, 0,
-				      depth+1);
-		    }
-#endif
 		}
 	    }
 	}
@@ -939,7 +906,7 @@ rt_cut_it(register struct rt_i *rtip, int ncpu)
 
     if (RT_G_DEBUG&DEBUG_PL_BOX) {
 	/* Debugging code to plot cuts */
-	if ((plotfp=fopen("rtcut.pl", "wb"))!=NULL) {
+	if ((plotfp=fopen("rtcut.plot3", "wb"))!=NULL) {
 	    pdv_3space(plotfp, rtip->rti_pmin, rtip->rti_pmax);
 	    /* Plot all the cutting boxes */
 	    rt_plot_cut(plotfp, rtip, &rtip->rti_CutHead, 0);
@@ -1378,11 +1345,11 @@ rt_ck_overlap(register const fastf_t *min, register const fastf_t *max, register
 	    goto fail;
     }
 
-    if (!rt_functab[stp->st_id].ft_classify)
+    if (!OBJ[stp->st_id].ft_classify)
 	goto fail;
 
     /* RPP overlaps, invoke per-solid method for detailed check */
-    if (rt_functab[stp->st_id].ft_classify(stp, min, max, &rtip->rti_tol) == BN_CLASSIFY_OUTSIDE)
+    if (OBJ[stp->st_id].ft_classify(stp, min, max, &rtip->rti_tol) == BN_CLASSIFY_OUTSIDE)
 	goto fail;
 
     if (RT_G_DEBUG&DEBUG_BOXING)
@@ -1486,7 +1453,6 @@ rt_ct_optim(struct rt_i *rtip, register union cutter *cutp, size_t depth)
 	 * terms, each box must be at least 1mm wide after cut.
 	 */
 	axis = AXIS(depth);
-#if 1
 	did_a_cut = 0;
 	for (i=0; i<3; i++, axis += 1) {
 	    if (axis > Z) {
@@ -1509,18 +1475,6 @@ rt_ct_optim(struct rt_i *rtip, register union cutter *cutp, size_t depth)
 	if (!did_a_cut) {
 	    return;
 	}
-#else
-	if (cutp->bn.bn_max[axis]-cutp->bn.bn_min[axis] < 2.0)
-	    return;
-	if (rt_ct_old_assess(cutp, axis, &where, &offcenter) <= 0)
-	    return;			/* not practical */
-	if (rt_ct_box(rtip, cutp, axis, where, 0) == 0) {
-	    if (rt_ct_old_assess(cutp, AXIS(depth+1), &where, &offcenter) <= 0)
-		return;			/* not practical */
-	    if (rt_ct_box(rtip, cutp, AXIS(depth+1), where, 0) == 0)
-		return;	/* hopeless */
-	}
-#endif
 	if (rt_ct_piececount(cutp->cn.cn_l) >= oldlen &&
 	    rt_ct_piececount(cutp->cn.cn_r) >= oldlen) {
 	    if (RT_G_DEBUG&DEBUG_CUTDETAIL)

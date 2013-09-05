@@ -17,7 +17,6 @@ BRLCAD_ADDEXEC(tpkg tpkg.c "libbu;libpkg" NO_INSTALL)
 
 BRLCAD_ADDLIB(libpkg "${LIBPKG_SOURCES}" libbu)
 SET_TARGET_PROPERTIES(libpkg PROPERTIES VERSION 20.0.1 SOVERSION 20)
-CMAKEFILES(Makefile.am)
 
 add_subdirectory(example)
 

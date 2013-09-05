@@ -32,7 +32,6 @@ endforeach(script ${sh_SCRIPTS})
 install(PROGRAMS ${sh_SCRIPTS} DESTINATION ${BIN_DIR})
 
 set(noinst_SCRIPTS
-  cmakecheck.sh
   copyright.sh
   distcheck_screen.sh
   enumerate.sh
@@ -54,7 +53,6 @@ set(noinst_SCRIPTS
   )
 CMAKEFILES(${sh_SCRIPTS})
 CMAKEFILES(${noinst_SCRIPTS})
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

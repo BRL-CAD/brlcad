@@ -83,10 +83,6 @@ static struct cmdtab mged_cmdtab[] = {
     {"bb", cmd_ged_plain_wrapper, ged_bb},
     {"bev", cmd_ged_plain_wrapper, ged_bev},
     {"bo", cmd_ged_plain_wrapper, ged_bo},
-#if 0
-    {"import_body", cmd_import_body, GED_FUNC_PTR_NULL},
-    {"export_body", cmd_export_body, GED_FUNC_PTR_NULL},
-#endif
     {"bomb", f_bomb, GED_FUNC_PTR_NULL},
     {"bot", cmd_ged_plain_wrapper, ged_bot},
     {"bot_condense", cmd_ged_plain_wrapper, ged_bot_condense},
@@ -109,6 +105,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"clone", cmd_ged_edit_wrapper, ged_clone},
     {"closedb", f_closedb, GED_FUNC_PTR_NULL},
     {"cmd_win", cmd_cmd_win, GED_FUNC_PTR_NULL},
+    {"coil", cmd_ged_plain_wrapper, ged_coil},
     {"color", cmd_ged_plain_wrapper, ged_color},
     {"comb", cmd_ged_plain_wrapper, ged_comb},
     {"comb_color", cmd_ged_plain_wrapper, ged_comb_color},
@@ -265,6 +262,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"press", f_press, GED_FUNC_PTR_NULL},
     {"preview", cmd_ged_dm_wrapper, ged_preview},
     {"ps", f_ps, GED_FUNC_PTR_NULL},
+    {"pull", cmd_ged_plain_wrapper, ged_pull},
     {"push", cmd_ged_plain_wrapper, ged_push},
     {"put", cmd_ged_plain_wrapper, ged_put},
     {"put_comb", cmd_ged_plain_wrapper, ged_put_comb},
@@ -282,7 +280,6 @@ static struct cmdtab mged_cmdtab[] = {
     {"read_muves", f_read_muves, GED_FUNC_PTR_NULL},
     {"rear", f_bv_rear, GED_FUNC_PTR_NULL},
     {"red", f_red, GED_FUNC_PTR_NULL},
-    {"redraw_vlist", cmd_redraw_vlist, GED_FUNC_PTR_NULL},
     {"refresh", f_refresh, GED_FUNC_PTR_NULL},
     {"regdebug", f_regdebug, GED_FUNC_PTR_NULL},
     {"regdef", cmd_ged_plain_wrapper, ged_regdef},
@@ -361,10 +358,6 @@ static struct cmdtab mged_cmdtab[] = {
     {"vdraw", cmd_ged_plain_wrapper, ged_vdraw},
     {"view", cmd_ged_view_wrapper, ged_view_func},
     {"view_ring", f_view_ring, GED_FUNC_PTR_NULL},
-#if 0
-    {"viewget", cmd_viewget, GED_FUNC_PTR_NULL},
-    {"viewset", cmd_viewset, GED_FUNC_PTR_NULL},
-#endif
     {"view2grid_lu", cmd_ged_plain_wrapper, ged_view2grid_lu},
     {"view2model", cmd_ged_plain_wrapper, ged_view2model},
     {"view2model_lu", cmd_ged_plain_wrapper, ged_view2model_lu},
@@ -375,9 +368,6 @@ static struct cmdtab mged_cmdtab[] = {
     {"voxelize", cmd_ged_plain_wrapper, ged_voxelize},
     {"vquery_ray", f_vnirt, GED_FUNC_PTR_NULL},
     {"vrot", cmd_vrot, GED_FUNC_PTR_NULL},
-#if 0
-    {"vrot_center", f_vrot_center, GED_FUNC_PTR_NULL},
-#endif
     {"wcodes", cmd_ged_plain_wrapper, ged_wcodes},
     {"whatid", cmd_ged_plain_wrapper, ged_whatid},
     {"which_shader", cmd_ged_plain_wrapper, ged_which_shader},

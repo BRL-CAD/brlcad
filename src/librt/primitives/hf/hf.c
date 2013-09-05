@@ -185,7 +185,7 @@ rt_hf_to_dsp(struct rt_db_internal *db_intern)
     db_intern->idb_ptr = (genptr_t)dsp;
     db_intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     db_intern->idb_type = ID_DSP;
-    db_intern->idb_meth = &rt_functab[ID_DSP];
+    db_intern->idb_meth = &OBJ[ID_DSP];
 
     return 0;
 
@@ -738,11 +738,11 @@ axis_plane_isect(int plane, fastf_t inout, struct xray *rp, struct hf_specific *
 	    xx = loc[X] - CellX* xWidth;
 	    break;
     }
-#if 1 /* What does this indicate that it generates so much noise? */
+
+    /* What does this indicate that it generates so much noise? */
     if (xx < 0) {
 	bu_log("hf: xx < 0, plane = %d\n", plane);
     }
-#endif
 
     if (hf->hf_shorts) {
 	unsigned short *sp;
@@ -1978,7 +1978,7 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_HF;
-    ip->idb_meth = &rt_functab[ID_HF];
+    ip->idb_meth = &OBJ[ID_HF];
     BU_ALLOC(ip->idb_ptr, struct rt_hf_internal);
 
     xip = (struct rt_hf_internal *)ip->idb_ptr;

@@ -301,7 +301,7 @@ rt_grp_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_GRIP;
-    ip->idb_meth = &rt_functab[ID_GRIP];
+    ip->idb_meth = &OBJ[ID_GRIP];
     BU_ALLOC(ip->idb_ptr, struct rt_grip_internal);
 
     gip = (struct rt_grip_internal *)ip->idb_ptr;
@@ -382,14 +382,14 @@ rt_grp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_GRIP;
-    ip->idb_meth = &rt_functab[ID_GRIP];
+    ip->idb_meth = &OBJ[ID_GRIP];
     BU_ALLOC(ip->idb_ptr, struct rt_grip_internal);
 
     gip = (struct rt_grip_internal *)ip->idb_ptr;
     gip->magic = RT_GRIP_INTERNAL_MAGIC;
 
     /* Convert from database (network) to internal (host) format */
-    ntohd((unsigned char *)vec, ep->ext_buf, 7);
+    bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, 7);
 
     /* Transform the point, and the normal */
     if (mat == NULL) mat = bn_mat_identity;
@@ -443,7 +443,7 @@ rt_grp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     vec[6] = gip->mag * local2mm;
 
     /* Convert from internal (host) to database (network) format */
-    htond(ep->ext_buf, (unsigned char *)vec, 7);
+    bu_cv_htond(ep->ext_buf, (unsigned char *)vec, 7);
 
     return 0;
 }

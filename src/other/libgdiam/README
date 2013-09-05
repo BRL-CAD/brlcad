@@ -1,0 +1,37 @@
+Source code implementing the algorithms described in:
+
+A Practical Approach for Computing the Diameter of a Point-Set
+Sariel Har-Peled
+
+Copyright 2001 Sariel Har-Peled (ssaarriieell@cs.uiuc.edu)
+http://valis.cs.uiuc.edu/~sariel/research/papers/00/diameter/diam_prog.html
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of either:
+
+ * the GNU General Public License as published by the Free Software
+   Foundation; either version 2, or (at your option) any later version.
+
+or
+
+ * the GNU Lesser General Public License as published by the Free
+   Software Foundation; either version 2.1, or (at your option)
+   any later version.
+
+Program is provdied without any guarantee. Use at your own risk.
+
+*--------------------------------------------------------------
+ * History
+ *
+ * 8/4/13 -
+ *     Add get_vertex method for low-level data translation. (C. Yapp)
+ *
+ * 8/3/13 -
+ *     Update licensing - can now use either GPLv2 or LGPLv2.1.
+ *     Added CMake build.
+ *
+ * 3/28/01 -
+ *     Original code updated to be more robust. It should now
+ *     handle really abnoxious inputs well (i.e., points with equal
+ *     coordinates, etc.
+

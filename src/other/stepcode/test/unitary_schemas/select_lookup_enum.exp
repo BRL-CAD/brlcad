@@ -1,0 +1,148 @@
+SCHEMA select_lookup_enum;
+
+--following are copypasta from cd209
+TYPE cell_shape = SELECT (
+    cell_shape_0D,
+    cell_shape_1D,
+    cell_shape_2D,
+    cell_shape_3D);
+END_TYPE;
+
+TYPE cell_shape_0D = ENUMERATION OF (
+    single );
+END_TYPE;
+
+TYPE cell_shape_1D = ENUMERATION OF (
+    line );
+END_TYPE;
+
+TYPE cell_shape_2D = ENUMERATION OF (
+    quadrilateral,
+    triangle );
+END_TYPE;
+
+TYPE cell_shape_3D = ENUMERATION OF (
+    hexahedron,
+    pyramid,
+    tetrahedron,
+    wedge );
+END_TYPE;
+
+TYPE element_order = ENUMERATION OF (
+    linear,
+    quadratic,
+    cubic );
+END_TYPE;
+-- vertex_defined_cell has lines commented out to eliminate 'cell' dependency
+ENTITY vertex_defined_cell
+--    SUBTYPE OF (cell)
+;
+    shape : cell_shape;
+    order : element_order;
+--     vertices : ARRAY [1:vn_count] OF  OPTIONAL vertex;
+DERIVE
+    bound_count : INTEGER := cell_counts(SELF)[1];
+    edge_node_count : INTEGER := cell_counts(SELF)[2];
+    opt_node_count : INTEGER := cell_counts(SELF)[3];
+    required_count : INTEGER := bound_count + edge_node_count;
+--     required_vertices : ARRAY [1:required_count] OF vertex := shorten_array(vertices, vn_count, required_count);
+    vn_count : INTEGER := required_count + opt_node_count;
+END_ENTITY;
+
+-- cell_counts is the function with errors in cd209
+FUNCTION cell_counts
+    (arg: vertex_defined_cell) : ARRAY [1:3] OF INTEGER;
+LOCAL
+  om1    : INTEGER := 0;      -- (order - 1)
+  om1sq  : INTEGER := om1**2; -- (order - 1) squared
+  vts    : INTEGER;           -- number of bounding vertices
+  eds    : INTEGER;           -- number of edges
+  qf     : INTEGER := 0;      -- number of quadrilateral faces
+  tf     : INTEGER := 0;      -- number of triangular faces
+  result : ARRAY [1:3] OF INTEGER := [0,0,0];
+END_LOCAL;
+  CASE arg.order OF
+    linear    : om1 := 0;
+    quadratic : om1 := 1;
+    cubic     : om1 := 2;
+    OTHERWISE : RETURN(result);
+  END_CASE;
+  om1sq := om1**2;
+  CASE arg.shape OF
+    arg.shape.single :
+        BEGIN
+          vts := 1; eds := 0; qf := 0; tf := 0;
+          result[1] := vts;
+          result[2] := om1*eds;                   -- 0, 0, 0
+          result[3] := 0;                         -- 0, 0, 0
+        END;
+    arg.shape.line :
+        BEGIN
+          vts := 2; eds := 1; qf := 0; tf := 0;
+          result[1] := vts;
+          result[2] := om1*eds;                   -- 0, 1, 2
+          result[3] := 0;                         -- 0, 0, 0
+        END;
+    arg.shape.quadrilateral :
+        BEGIN
+          vts := 4; eds := 4; qf := 1; tf := 0;
+          result[1] := vts;
+          result[2] := om1*eds;                   -- 0, 4, 8
+          result[3] := om1sq*qf;                  -- 0, 1, 4
+        END;
+    arg.shape.triangle :
+        BEGIN
+          vts := 3; eds := 3; qf := 0; tf := 1;
+          result[1] := vts;
+          result[2] := om1*eds;                   -- 0, 3, 6
+          result[3] := (om1-1)*tf;                --    0, 1
+          CASE arg.order OF
+            linear : result[3] := 0;              -- 0
+          END_CASE;
+        END;
+    arg.shape.polygon : -- this is missing from cd209
+        BEGIN
+          vts := arg.vn_count; eds := arg.vn_count;
+          result[1] := vts;
+          result[2] := 0;
+          result[3] := 0;
+        END;
+    arg.shape.hexahedron :
+        BEGIN
+          vts := 8; eds := 12; qf := 6; tf := 0;
+          result[1] := vts;
+          result[2] := om1*eds;                   -- 0, 12, 24
+          result[3] := om1sq*(qf+om1);            -- 0, 7, 32
+        END;
+    arg.shape.wedge :
+        BEGIN
+          vts := 6; eds := 9; qf := 3; tf := 2;
+          result[1] := vts;
+          result[2] := om1*eds;                   -- 0, 9,  18
+          result[3] := om1sq*qf + om1*tf;         -- 0, 3, 16
+        END;
+    arg.shape.tetrahedron :
+        BEGIN
+          vts := 4; eds := 6; qf := 0; tf := 4;
+          result[1] := vts;
+          result[2] := om1*eds;                   -- 0, 6, 12
+          result[3] := (om1-1)*tf;                --    0, 4
+          CASE arg.order OF
+            linear : result[3] := 0;              -- 0
+          END_CASE;
+        END;
+    arg.shape.pyramid :
+        BEGIN
+          vts := 5; eds := 8; qf := 1; tf := 4;
+          result[1] := vts;
+          result[2] := om1*eds;                   -- 0, 8, 16
+          result[3] := om1sq*qf + (om1-1)*tf;     --    1, 9
+          CASE arg.order OF
+            linear : result[3] := 0;              -- 0
+          END_CASE;
+        END;
+  END_CASE;
+RETURN(result);
+END_FUNCTION;
+
+END_SCHEMA;

@@ -7,7 +7,7 @@ if(BULLET_FOUND)
   set(LIBGED_CMD_INCLUDE_DIRS ${LIBGED_CMD_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/simulate ${BULLET_INCLUDE_DIR})
   # The Bullet headers introduce a lot of shadow warnings - don't stop the
   # build because of them
-  set(NOSTRICTCXX_SETTING "NOSTRICTCXX")
+  set(NO_STRICT_CXX_SETTING "NO_STRICT_CXX")
 endif(BULLET_FOUND)
 
 if(ADAPTAGRAMS_FOUND)
@@ -53,6 +53,7 @@ set(LIBGED_SOURCES
   center.c
   clip.c
   clone.c
+  coil.c
   color.c
   columns.c
   comb.c
@@ -188,6 +189,7 @@ set(LIBGED_SOURCES
   pscale.c
   pset.c
   ptranslate.c
+  pull.c
   push.c
   put.c
   put_comb.c
@@ -330,7 +332,7 @@ if(CPP_DLL_DEFINES)
   add_definitions(-DCLIPPER_DLL_IMPORTS)
 endif(CPP_DLL_DEFINES)
 
-BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;librt;libfb;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${REGEX_LIBRARY};${WINSOCK_LIB};${CLIPPER_LIBRARY};${M_LIBRARY}" ${NOSTRICTCXX_SETTING})
+BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;librt;libfb;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${REGEX_LIBRARY};${WINSOCK_LIB};${CLIPPER_LIBRARY};${M_LIBRARY}" ${NO_STRICT_CXX_SETTING})
 SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 set(ged_ignore_files
@@ -344,7 +346,6 @@ set(ged_ignore_files
   simulate/simutils.h
   )
 CMAKEFILES(${ged_ignore_files})
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

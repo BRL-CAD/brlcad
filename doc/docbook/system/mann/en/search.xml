@@ -1,5 +1,3 @@
-<!-- Converted by db4-upgrade version 1.0 -->
-
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="search1">
 
 <refmeta>
@@ -50,7 +48,7 @@
     Something to bear in mind is that all search routines perform a full path tree
     search "under the hood."  A prefix "/" character changes the <emphasis remap="I">way</emphasis> the output is
     reported, but does not change the underlying search <emphasis remap="I">method</emphasis> - for example, depth
-    and patch search criteria will still match even if no "/" character is appended to the input path.
+    and path search criteria will still match even if no "/" character is appended to the input path.
   </para>
 </refsection>
 
@@ -71,6 +69,21 @@
 	  Both <emphasis remap="I">attrib</emphasis> and <emphasis remap="I">val</emphasis>
 	  are treated as patterns under shell pattern matching rules when a string comparison
 	  is performed, but in numerical mode only the attribute name is pattern matched.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><emphasis remap="B" role="bold">-bool</emphasis> <emphasis remap="I">u/+/-</emphasis></term>
+      <listitem>
+	<para>
+	  True if the object in question is being combined into the local hierarchy with the
+	  specified boolean operation.  Recognized types are Union (u), Intersection (+), and
+	  Subtraction (-).
+	</para>
+	<para>
+	  Note that by convention, top level objects are implicitly "unioned" into the database. To
+	  see only objects that have been unioned into a comb tree without returning the top level
+	  comb object as well, use the <option>-mindepth</option> option to filter for returns deeper in the tree.
 	</para>
       </listitem>
     </varlistentry>
@@ -284,7 +297,7 @@
 	<para>
 	  The above operator applies the expression to every object above the current
 	  object in the full path to that object, and returns TRUE if one or more of
-	  them satisfies the expression - e.g -above -name s\* applied to
+	  them satisfies the expression - e.g. -above -name s\* applied to
 	  /component/region.r/start_comb.c/prim1.s would return TRUE for /component and
 	  /component/region.r as both being "above" start_comb.c, but would return FALSE
 	  the deeper objects.
@@ -313,7 +326,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><emphasis remap="B" role="bold">-not</emphasis> <emphasis remap="I">expression</emphasis> (a.k.a -!)</term>
+      <term><emphasis remap="B" role="bold">-not</emphasis> <emphasis remap="I">expression</emphasis> (a.k.a !)</term>
       <listitem>
 	<para>
 	  The logical NOT operator - returns the opposite of the evaluation result of
@@ -474,6 +487,56 @@
     </para>
   </example>
 
+  <example><title>Finding all Intersected Objects</title>
+
+    <para>
+      <userinput>search -bool +</userinput>
+    </para>
+    <para>
+      Find all objects that are combined into one or more trees using the
+      Intersect boolean operation somewhere in the .g file. This
+      approach only identifies which objects are intersected somewhere in
+      the tree, not where specifically they are intersected.
+    </para>
+  </example>
+
+  <example><title>Finding all Instances of Object Intersection</title>
+
+    <para>
+      <userinput>search / -bool +</userinput>
+    </para>
+    <para>
+      Find all boolean operations that use the Intersect boolean operation
+      and report the full paths to those objects. This approach
+      reports all individual cases where an object has been combined into a
+      hierarchy by intersection, not just which objects have
+      been included with the intersection operator.
+    </para>
+  </example>
+
+  <example><title>Finding all Unions Within a Comb's Tree</title>
+
+    <para>
+      <userinput>search /all.g -mindepth 1 -bool u</userinput>
+    </para>
+    <para>
+      Find all unions within the all.g tree hierarchy, excluding all.g itself.
+    </para>
+  </example>
+
+  <example><title>Finding all Non-Subtracted Regions below Regions</title>
+
+    <para>
+      <userinput>search / -type region -above -type region ! -bool -</userinput>
+    </para>
+    <para>
+      A more nuanced variation on finding nested regions that adds a check to
+      make sure that the regions aren't being subtracted.  While not ideal,
+      using a subtraction does avoid the modeling error of two volumes
+      claiming the three dimensional space and is arguably acceptable - the
+      above command finds nested region instances that are definite errors.
+    </para>
+  </example>
 
 </refsection>
 

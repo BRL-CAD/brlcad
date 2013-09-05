@@ -10,6 +10,43 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
+--- 2013-0X-XX  Release 7.24.2                                     ---
+----------------------------------------------------------------------
+
+* added attribute sorting option to the 'attr' command - Tom Browder
+* changed 'bwfilter' tool offset option from -o to -O - Mohit Daga
+* gattributes section 5 man page renamed to attributes - Tom Browder
+* changed 'benchmark' defaults: 2% deviation, 5 frames - Sean Morrison
+* improved bwrect to handle redirected input and output - Mohit Daga
+* fixed TIE mesh raytrace crashes on 32-bit platforms - Sean Morrison
+* fixed pixscale and bwscale to not output ioctl error - Mohit Daga
+* fixed adrt/TIE polygonal mesh memory management bug - Richard Weiss
+* fixed fast4-g importer parsing of blank input lines - Richard Weiss
+* added -o flag to 'bb' command for oriented bounding box - Cliff Yapp
+* allow search to see hidden combs with the -a flag - Cliff Yapp
+* added comb -l option - 'lifts' R flag to top of comb tree - C. Yapp
+* print current grid information in gqa output - Cliff Yapp
+* added -f option for flattening combs to 'comb' command - Cliff Yapp
+* added support for boolean op filtering in search - Cliff Yapp
+* added new g-raw geometry converter - Jon Engbert, Daniel Roßberg
+* improved g-stl usage and documentation - Jon Engbert
+* added -c and -r region flag options to the comb command - Cliff Yapp
+* added -p/-P point/line plot options to 'burst' tool - Sean Morrison
+* added -w wrapping option to the 'comb' command - Cliff Yapp
+* archer respects LIBRT_BOT_MINTIE environment variable - Bob Parker
+* new 'cchannel' procedural geometry tool for C-Channel - Emory Huff
+* improved 'comb' command error messages - Talwinder Saini
+* pl -> plot3 rename for utilities and docs - Tom Browder, Cliff Yapp
+* exposed 'coil' command within mged & archer - Alexandrus, Cliff Yapp
+* added centroid reporting to 'analyze' command output - Csaba Nagy
+* added arb8 centroid 'analyze' command reporting - Silviu Ungureanu
+* pipe centroid, volume, & surface area analyze reporting - Csaba Nagy
+* added ebm centroid 'analyze' command reporting - Michael Huang
+* improved help option consistency across numerous tools - Carl Moore
+* upgraded libpng to 1.6.3 - Erik Greenwald
+
+
+----------------------------------------------------------------------
 --- 2013-06-13  Release 7.24.0                                     ---
 ----------------------------------------------------------------------
 
@@ -57,6 +94,7 @@ including the STEP, Patch, and 3DM importers.
 * initial NURBS shaded display and tessellation support - Keith Bowman
 * fixed patch-g -f input file permissions failure - Sean Morrison
 * improved large file support for the patch-g importer - Sean Morrison
+* upgraded libpng to version 1.5.12 - Cliff Yapp
 * openNURBS updated to version 5.0 (2012-10-24) - Richard Weiss
 * improved BoT mesh editing interface in archer - Bob Parker
 * fixed crash when running screengrab in archer - Nick Reed

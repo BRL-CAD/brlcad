@@ -125,16 +125,6 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 	       ap->a_onehit);
 	VPRINT("Dir", ap->a_ray.r_dir);
     }
-    if (RT_BADVEC(ap->a_ray.r_pt)||RT_BADVEC(ap->a_ray.r_dir)) {
-	bu_log("\n**********shootray cpu=%d  %d, %d lvl=%d (%s)\n",
-	       resp->re_cpu,
-	       ap->a_x, ap->a_y,
-	       ap->a_level,
-	       ap->a_purpose != (char *)0 ? ap->a_purpose : "?");
-	VPRINT(" r_pt", ap->a_ray.r_pt);
-	VPRINT("r_dir", ap->a_ray.r_dir);
-	bu_bomb("rt_shootray_bundle() bad ray\n");
-    }
 
     if (rtip->needprep)
 	rt_prep(rtip);
@@ -335,7 +325,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 		VJOIN1(ss2_newray.r_pt, rays[ray].r_pt, ss.dist_corr, ss2_newray.r_dir);
 
 		/* Check against bounding RPP, if desired by solid */
-		if (rt_functab[stp->st_id].ft_use_rpp) {
+		if (OBJ[stp->st_id].ft_use_rpp) {
 		    if (!rt_in_rpp(&ss2_newray, ss.inv_dir,
 				   stp->st_min, stp->st_max)) {
 			if (debug_shoot)bu_log("rpp miss %s by ray %d\n", stp->st_name, ray);
@@ -355,8 +345,8 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 		BU_LIST_INIT(&(new_segs.l));
 
 		ret = -1;
-		if (rt_functab[stp->st_id].ft_shot) {
-		    ret = rt_functab[stp->st_id].ft_shot(stp, &ss2_newray, ap, &new_segs);
+		if (OBJ[stp->st_id].ft_shot) {
+		    ret = OBJ[stp->st_id].ft_shot(stp, &ss2_newray, ap, &new_segs);
 		}
 		if (ret <= 0) {
 		    resp->re_shot_miss++;

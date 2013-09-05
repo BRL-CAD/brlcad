@@ -598,10 +598,10 @@ wdb_do_list(struct db_i *dbip,
 	    return;
 	}
 
-	if (rt_functab[id].ft_describe) {
+	if (OBJ[id].ft_describe) {
 	    int ret;
 	    bu_vls_printf(outstrp, "%s:  ", dp->d_namep);
-	    ret = rt_functab[id].ft_describe(outstrp, &intern, verbose, dbip->dbi_base2local, &rt_uniresource, dbip);
+	    ret = OBJ[id].ft_describe(outstrp, &intern, verbose, dbip->dbi_base2local, &rt_uniresource, dbip);
 	    if (ret < 0)
 		bu_log("%s: describe error\n", dp->d_namep);
 	} else {
@@ -654,7 +654,7 @@ wdb_combadd(struct db_i *dbip,
 	RT_DB_INTERNAL_INIT(&intern);
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_COMBINATION;
-	intern.idb_meth = &rt_functab[ID_COMBINATION];
+	intern.idb_meth = &OBJ[ID_COMBINATION];
 
 	/* Update the in-core directory */
 	dp = db_diradd(dbip, combname, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type);
@@ -677,10 +677,10 @@ wdb_combadd(struct db_i *dbip,
 	    comb->GIFTmater = wdbp->wdb_mat_default;
 	    bu_vls_init(&tmp_vls);
 	    bu_vls_printf(&tmp_vls,
-			  "Creating region id=%d, air=%d, GIFTmaterial=%d, los=%d\n",
+			  "Creating region with attrs: region_id=%d, air=%d, los=%d, material_id=%d\n",
 			  ident, air,
-			  wdbp->wdb_mat_default,
-			  wdbp->wdb_los_default);
+			  wdbp->wdb_los_default,
+			  wdbp->wdb_mat_default);
 	    bu_log("%s", bu_vls_addr(&tmp_vls));
 	    bu_vls_free(&tmp_vls);
 	} else {
@@ -2739,7 +2739,7 @@ wdb_shells_cmd(struct rt_wdb *wdbp,
 	    RT_DB_INTERNAL_INIT(&new_intern);
 	    new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    new_intern.idb_type = ID_NMG;
-	    new_intern.idb_meth = &rt_functab[ID_NMG];
+	    new_intern.idb_meth = &OBJ[ID_NMG];
 	    new_intern.idb_ptr = (genptr_t)m_tmp;
 
 	    new_dp = db_diradd(wdbp->dbip, bu_vls_addr(&shell_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);
@@ -3292,7 +3292,7 @@ wdb_list_cmd(struct rt_wdb *wdbp,
 
 	    bu_vls_printf(&str, "%s:  ", argv[arg]);
 
-	    if (!rt_functab[id].ft_describe || rt_functab[id].ft_describe(&str, &intern, 99, wdbp->dbip->dbi_base2local, &rt_uniresource, wdbp->dbip) < 0)
+	    if (!OBJ[id].ft_describe || OBJ[id].ft_describe(&str, &intern, 99, wdbp->dbip->dbi_base2local, &rt_uniresource, wdbp->dbip) < 0)
 		Tcl_AppendResult(wdbp->wdb_interp, dp->d_namep, ": describe error", (char *)NULL);
 
 	    rt_db_free_internal(&intern);
@@ -5440,7 +5440,7 @@ wdb_facetize_cmd(struct rt_wdb *wdbp,
 	RT_DB_INTERNAL_INIT(&intern);
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_BOT;
-	intern.idb_meth = &rt_functab[ID_BOT];
+	intern.idb_meth = &OBJ[ID_BOT];
 	intern.idb_ptr = (genptr_t) bot;
     } else {
 
@@ -5450,7 +5450,7 @@ wdb_facetize_cmd(struct rt_wdb *wdbp,
 	RT_DB_INTERNAL_INIT(&intern);
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_NMG;
-	intern.idb_meth = &rt_functab[ID_NMG];
+	intern.idb_meth = &OBJ[ID_NMG];
 	intern.idb_ptr = (genptr_t)nmg_model;
 	nmg_model = (struct model *)NULL;
     }
@@ -6715,7 +6715,7 @@ wdb_push_cmd(struct rt_wdb *wdbp,
 		if (ncpu<1) ncpu = 1;
 		break;
 	    case 'd':
-		rt_g.debug |= DEBUG_TREEWALK;
+		RTG.debug |= DEBUG_TREEWALK;
 		break;
 	    case '?':
 	    default:
@@ -6751,7 +6751,7 @@ wdb_push_cmd(struct rt_wdb *wdbp,
 	    pip->back->forw = pip->forw;
 	    bu_free((genptr_t)pip, "Push ident");
 	}
-	rt_g.debug = old_debug;
+	RTG.debug = old_debug;
 	bu_free((genptr_t)wpdp, "wdb_push_tcl: wpdp");
 	Tcl_AppendResult(wdbp->wdb_interp,
 			 "push:\tdb_walk_tree failed or there was a solid moving\n\tin two or more directions",
@@ -6806,7 +6806,7 @@ wdb_push_cmd(struct rt_wdb *wdbp,
 	bu_free((genptr_t)pip, "Push ident");
     }
 
-    rt_g.debug = old_debug;
+    RTG.debug = old_debug;
     push_error = wpdp->push_error;
     bu_free((genptr_t)wpdp, "wdb_push_tcl: wpdp");
 
@@ -7838,7 +7838,7 @@ wdb_make_bb_cmd(struct rt_wdb *wdbp,
     RT_DB_INTERNAL_INIT(&new_intern);
     new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     new_intern.idb_type = ID_ARB8;
-    new_intern.idb_meth = &rt_functab[ID_ARB8];
+    new_intern.idb_meth = &OBJ[ID_ARB8];
     new_intern.idb_ptr = (genptr_t)arb;
 
     dp = db_diradd(wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);
@@ -8613,7 +8613,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 	    new_intern.idb_ptr = (genptr_t)(arb_int);
 	    new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    new_intern.idb_type = ID_ARB8;
-	    new_intern.idb_meth = &rt_functab[ID_ARB8];
+	    new_intern.idb_meth = &OBJ[ID_ARB8];
 	    success = 1;
 	} else if (do_arb) {
 	    /* see if we can get an arb by simplifying the NMG */
@@ -8629,7 +8629,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 		    new_intern.idb_ptr = (genptr_t)(arb_int);
 		    new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		    new_intern.idb_type = ID_ARB8;
-		    new_intern.idb_meth = &rt_functab[ID_ARB8];
+		    new_intern.idb_meth = &OBJ[ID_ARB8];
 		    success = 1;
 		}
 	    }
@@ -8651,7 +8651,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 	    new_intern.idb_ptr = (genptr_t)(tgc_int);
 	    new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    new_intern.idb_type = ID_TGC;
-	    new_intern.idb_meth = &rt_functab[ID_TGC];
+	    new_intern.idb_meth = &OBJ[ID_TGC];
 	    success = 1;
 	} else if (do_tgc) {
 	    rt_db_free_internal(&nmg_intern);
@@ -8670,7 +8670,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 	    new_intern.idb_ptr = (genptr_t)(poly_int);
 	    new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    new_intern.idb_type = ID_POLY;
-	    new_intern.idb_meth = &rt_functab[ID_POLY];
+	    new_intern.idb_meth = &OBJ[ID_POLY];
 	    success = 1;
 	} else if (do_poly) {
 	    rt_db_free_internal(&nmg_intern);
@@ -9773,7 +9773,7 @@ wdb_init_obj(Tcl_Interp *interp,
     wdbp->wdb_interp = interp;
 
     /* append to list of rt_wdb's */
-    BU_LIST_APPEND(&rt_g.rtg_headwdb.l, &wdbp->l);
+    BU_LIST_APPEND(&RTG.rtg_headwdb.l, &wdbp->l);
 
     return TCL_OK;
 }
@@ -9812,7 +9812,7 @@ wdb_open_tcl(ClientData UNUSED(clientData),
 
     if (argc == 1) {
 	/* get list of database objects */
-	for (BU_LIST_FOR (wdbp, rt_wdb, &rt_g.rtg_headwdb.l))
+	for (BU_LIST_FOR (wdbp, rt_wdb, &RTG.rtg_headwdb.l))
 	    Tcl_AppendResult(interp, bu_vls_addr(&wdbp->wdb_name), " ", (char *)NULL);
 
 	return TCL_OK;

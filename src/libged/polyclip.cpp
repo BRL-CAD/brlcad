@@ -263,7 +263,7 @@ ged_export_polygon(struct ged *gedp, ged_data_polygon_state *gdpsp, size_t polyg
 
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     internal.idb_type = ID_SKETCH;
-    internal.idb_meth = &rt_functab[ID_SKETCH];
+    internal.idb_meth = &OBJ[ID_SKETCH];
 
     BU_ALLOC(internal.idb_ptr, struct rt_sketch_internal);
     sketch_ip = (struct rt_sketch_internal *)internal.idb_ptr;
@@ -281,11 +281,9 @@ ged_export_polygon(struct ged *gedp, ged_data_polygon_state *gdpsp, size_t polyg
     VSET(view, 0.0, 1.0, 0.0);
     MAT4X3PNT(sketch_ip->v_vec, invRot, view);
 
-#if 0
     /* should already be unit vectors */
     VUNITIZE(sketch_ip->u_vec);
-    VUNITIZE(sketch_ip->V_vec);
-#endif
+    VUNITIZE(sketch_ip->v_vec);
 
     /* Project the origin onto the front of the viewing cube */
     MAT4X3PNT(vorigin, gdpsp->gdps_model2view, gdpsp->gdps_origin);
@@ -450,14 +448,6 @@ ged_import_polygon(struct ged *gedp, const char *sname)
 		   sketch_ip->verts[curr_lsg->start][1], sketch_ip->v_vec);
 	    ++k;
 	}
-
-#if 0
-	if (curr_lsg) {
-	    VJOIN2(gpp->gp_contour[j].gpc_point[k], sketch_ip->V,
-		   sketch_ip->verts[curr_lsg->end][0], sketch_ip->u_vec,
-		   sketch_ip->verts[curr_lsg->end][1], sketch_ip->v_vec);
-	}
-#endif
 
 	/* free contour node */
 	bu_free((genptr_t)curr_cnode, "curr_cnode");

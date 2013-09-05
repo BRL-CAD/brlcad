@@ -6,7 +6,7 @@ set(docbook_man1_EN
   anim_turn.xml
   ap-pix.xml
   asc-nmg.xml
-  asc-pl.xml
+  asc-plot3.xml
   asc2dsp.xml
   asc2g.xml
   azel.xml
@@ -96,6 +96,7 @@ set(docbook_man1_EN
   g-nff.xml
   g-nmg.xml
   g-obj.xml
+  g-raw.xml
   g-shell-rect.xml
   g-stl.xml
   g-tankill.xml
@@ -156,7 +157,7 @@ set(docbook_man1_EN
   pixfilter.xml
   pixhalve.xml
   pixhist.xml
-  pixhist3d-pl.xml
+  pixhist3d-plot3.xml
   pixhist3d.xml
   pixinterp2x.xml
   pixmatte.xml
@@ -171,18 +172,18 @@ set(docbook_man1_EN
   pixsubst.xml
   pixtile.xml
   pixuntile.xml
-  pl-X.xml
-  pl-asc.xml
-  pl-fb.xml
-  pl-hpgl.xml
-  pl-pl.xml
-  pl-ps.xml
-  pl-tek.xml
-  plcolor.xml
-  pldebug.xml
-  plgetframe.xml
-  plline2.xml
-  plrot.xml
+  plot3-X.xml
+  plot3-asc.xml
+  plot3-fb.xml
+  plot3-hpgl.xml
+  plot3-plot3.xml
+  plot3-ps.xml
+  plot3-tek.xml
+  plot3color.xml
+  plot3debug.xml
+  plot3getframe.xml
+  plot3line2.xml
+  plot3rot.xml
   ply-g.xml
   png-bw.xml
   png-fb.xml

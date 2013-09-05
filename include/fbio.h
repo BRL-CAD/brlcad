@@ -33,8 +33,6 @@
 #include "bu.h"
 
 
-#define FB_ARGS(args) args
-
 #ifndef FB_EXPORT
 #  if defined(FB_DLL_EXPORTS) && defined(FB_DLL_IMPORTS)
 #    error "Only FB_DLL_EXPORTS or FB_DLL_IMPORTS can be defined, not both."
@@ -92,26 +90,26 @@ typedef struct {
 typedef struct FBIO_ {
     uint32_t if_magic;
     /* Static information: per device TYPE.	*/
-    int (*if_open)FB_ARGS((struct FBIO_ *ifp, const char *file, int _width, int _height));		/**< @brief open device */
-    int (*if_close)FB_ARGS((struct FBIO_ *ifp));							/**< @brief close device */
-    int (*if_clear)FB_ARGS((struct FBIO_ *ifp, unsigned char *pp));					/**< @brief clear device */
-    ssize_t (*if_read)FB_ARGS((struct FBIO_ *ifp, int x, int y, unsigned char *pp, size_t count));		/**< @brief read pixels */
-    ssize_t (*if_write)FB_ARGS((struct FBIO_ *ifp, int x, int y, const unsigned char *pp, size_t count));	/**< @brief write pixels */
-    int (*if_rmap)FB_ARGS((struct FBIO_ *ifp, ColorMap *cmap));						/**< @brief read colormap */
-    int (*if_wmap)FB_ARGS((struct FBIO_ *ifp, const ColorMap *cmap));					/**< @brief write colormap */
-    int (*if_view)FB_ARGS((struct FBIO_ *ifp, int xcent, int ycent, int xzoom, int yzoom));		/**< @brief set view */
-    int (*if_getview)FB_ARGS((struct FBIO_ *ifp, int *xcent, int *ycent, int *xzoom, int *yzoom));	/**< @brief get view */
-    int (*if_setcursor)FB_ARGS((struct FBIO_ *ifp, const unsigned char *bits, int xb, int yb, int xo, int yo));	/**< @brief define cursor */
-    int (*if_cursor)FB_ARGS((struct FBIO_ *ifp, int mode, int x, int y));				/**< @brief set cursor */
-    int (*if_getcursor)FB_ARGS((struct FBIO_ *ifp, int *mode, int *x, int *y));				/**< @brief get cursor */
-    int (*if_readrect)FB_ARGS((struct FBIO_ *ifp, int xmin, int ymin, int _width, int _height, unsigned char *pp));		/**< @brief read rectangle */
-    int (*if_writerect)FB_ARGS((struct FBIO_ *ifp, int xmin, int ymin, int _width, int _height, const unsigned char *pp));	/**< @brief write rectangle */
-    int (*if_bwreadrect)FB_ARGS((struct FBIO_ *ifp, int xmin, int ymin, int _width, int _height, unsigned char *pp));		/**< @brief read monochrome rectangle */
-    int (*if_bwwriterect)FB_ARGS((struct FBIO_ *ifp, int xmin, int ymin, int _width, int _height, const unsigned char *pp));	/**< @brief write rectangle */
-    int (*if_poll)FB_ARGS((struct FBIO_ *ifp));		/**< @brief handle events */
-    int (*if_flush)FB_ARGS((struct FBIO_ *ifp));	/**< @brief flush output */
-    int (*if_free)FB_ARGS((struct FBIO_ *ifp));		/**< @brief free resources */
-    int (*if_help)FB_ARGS((struct FBIO_ *ifp));		/**< @brief print useful info */
+    int (*if_open)(struct FBIO_ *ifp, const char *file, int _width, int _height);			/**< @brief open device */
+    int (*if_close)(struct FBIO_ *ifp);									/**< @brief close device */
+    int (*if_clear)(struct FBIO_ *ifp, unsigned char *pp);						/**< @brief clear device */
+    ssize_t (*if_read)(struct FBIO_ *ifp, int x, int y, unsigned char *pp, size_t count);		/**< @brief read pixels */
+    ssize_t (*if_write)(struct FBIO_ *ifp, int x, int y, const unsigned char *pp, size_t count);	/**< @brief write pixels */
+    int (*if_rmap)(struct FBIO_ *ifp, ColorMap *cmap);							/**< @brief read colormap */
+    int (*if_wmap)(struct FBIO_ *ifp, const ColorMap *cmap);						/**< @brief write colormap */
+    int (*if_view)(struct FBIO_ *ifp, int xcent, int ycent, int xzoom, int yzoom);			/**< @brief set view */
+    int (*if_getview)(struct FBIO_ *ifp, int *xcent, int *ycent, int *xzoom, int *yzoom);		/**< @brief get view */
+    int (*if_setcursor)(struct FBIO_ *ifp, const unsigned char *bits, int xb, int yb, int xo, int yo);	/**< @brief define cursor */
+    int (*if_cursor)(struct FBIO_ *ifp, int mode, int x, int y);					/**< @brief set cursor */
+    int (*if_getcursor)(struct FBIO_ *ifp, int *mode, int *x, int *y);					/**< @brief get cursor */
+    int (*if_readrect)(struct FBIO_ *ifp, int xmin, int ymin, int _width, int _height, unsigned char *pp);		/**< @brief read rectangle */
+    int (*if_writerect)(struct FBIO_ *ifp, int xmin, int ymin, int _width, int _height, const unsigned char *pp);	/**< @brief write rectangle */
+    int (*if_bwreadrect)(struct FBIO_ *ifp, int xmin, int ymin, int _width, int _height, unsigned char *pp);		/**< @brief read monochrome rectangle */
+    int (*if_bwwriterect)(struct FBIO_ *ifp, int xmin, int ymin, int _width, int _height, const unsigned char *pp);	/**< @brief write rectangle */
+    int (*if_poll)(struct FBIO_ *ifp);		/**< @brief handle events */
+    int (*if_flush)(struct FBIO_ *ifp);		/**< @brief flush output */
+    int (*if_free)(struct FBIO_ *ifp);		/**< @brief free resources */
+    int (*if_help)(struct FBIO_ *ifp);		/**< @brief print useful info */
     char *if_type;	/**< @brief what "open" calls it */
     int if_max_width;	/**< @brief max device width */
     int if_max_height;	/**< @brief max device height */

@@ -292,15 +292,17 @@ Make_brlcad_names( struct obj_info *part )
 	    bu_vls_trunc( &vls, max_name_len );
 	}
 	while ( db_lookup( fd_out->dbip, bu_vls_addr( &vls ), LOOKUP_QUIET ) != RT_DIR_NULL) {
-	    int digits, val=10;
-
 	    count++;
+
 	    if ( max_name_len ) {
-		digits = 1;
+		int digits = 1;
+		int val = 10;
+
 		while ( count >= val ) {
 		    digits++;
 		    val *= 10;
 		}
+
 		bu_vls_trunc( &vls, 0 );
 		bu_vls_printf( &vls, "s.%s", tmp_name );
 		bu_vls_trunc( &vls, max_name_len - digits - 1 );
@@ -321,11 +323,12 @@ Make_brlcad_names( struct obj_info *part )
 	bu_vls_trunc( &vls, max_name_len );
     }
     while ( db_lookup( fd_out->dbip, bu_vls_addr( &vls ), LOOKUP_QUIET) != RT_DIR_NULL ) {
-	int digits, val=10;
-
 	count++;
+
 	if ( max_name_len ) {
-	    digits = 1;
+	    int digits = 1;
+	    int val = 10;
+
 	    while ( count >= val ) {
 		digits++;
 		val *= 10;
@@ -582,7 +585,7 @@ Assembly_import( int id_start )
 	if ( mk_addmember( this_assem->members[i]->brlcad_comb,
 			   &assem_head.l, NULL, WMOP_UNION ) == WMEMBER_NULL )
 	    bu_exit( 1, "%s: ERROR: Failed to add region %s to assembly %s\n",
-                        progname,this_assem->members[i]->brlcad_comb, this_assem->brlcad_comb );
+			progname,this_assem->members[i]->brlcad_comb, this_assem->brlcad_comb );
 
     if ( mk_comb( fd_out, this_assem->brlcad_comb, &assem_head.l, 0, NULL, NULL, NULL,
 		  0, 0, 0, 0, 0, 0, 0 ) )

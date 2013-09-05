@@ -46,7 +46,7 @@ char *filename = "(stdin)";
 void
 shrink_image(int w, int h, unsigned char *buffer, int Factor)
 {
-    unsigned char *finalpixel;	/* output pixel pointer */
+    unsigned char *finalpixel, *pixelp;	/* output pixel pointer */
     unsigned int p;		/* pixel sum/average */
     int facsq, x, y, px, py;
 
@@ -57,13 +57,13 @@ shrink_image(int w, int h, unsigned char *buffer, int Factor)
 	for (x=0; x < w; x += Factor) {
 
 	    /* average factor by factor grid of pixels */
-
 	    p = 0;
 	    for (py = 0; py < Factor; py++) {
 
+		pixelp = &buffer[(y+py)*w+x];
 		/* add pixels from scanline to average */
 		for (px = 0; px < Factor; px++) {
-		    p += buffer[y*w + x+px];
+		    p += *pixelp++;
 		}
 	    }
 
@@ -182,25 +182,24 @@ int main(int ac, char **av)
     int t;
 
     (void)parse_args(ac, av);
-    if (isatty(fileno(stdin))) usage();
+    if (isatty(fileno(stdin)))
+	usage();
 
     /* process stdin */
 
     /* get buffer for image */
     size = width * height;
-    if ((buffer = (unsigned char *)malloc(width*height)) == (unsigned char *)NULL) {
-	fprintf(stderr, "%s: cannot allocate input buffer\n",
-		progname);
-	bu_free(buffer, "buffer alloc from malloc");
-	bu_exit (-1, NULL);
+    if (size > 0) {
+	buffer = (unsigned char *)bu_malloc(size, "alloc buffer");
+    } else {
+	bu_log("ERROR: zero dimension image\n");
+	usage();
     }
 
     /* read in entire image */
     for (t=0; t < size && (c=read(0, (char *)&buffer[t], size-t)) >= 0; t += c) {
 	/* do nothing */;
     }
-
-    bu_free(buffer, "buffer alloc from malloc");
 
     if (c < 0) {
 	perror (filename);

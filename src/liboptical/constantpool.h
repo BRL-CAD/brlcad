@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef CONSTANTPOOL_H
 #define CONSTANTPOOL_H
 
+#include "common.h"
+
 #include <vector>
 #include <list>
 #include <boost/foreach.hpp>

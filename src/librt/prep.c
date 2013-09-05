@@ -62,17 +62,17 @@ rt_new_rti(struct db_i *dbip)
     RT_CK_DBI(dbip);
 
     /* XXX Move to rt_global_init() ? */
-    if (BU_LIST_FIRST(bu_list, &rt_g.rtg_vlfree) == 0) {
+    if (BU_LIST_FIRST(bu_list, &RTG.rtg_vlfree) == 0) {
 	char *envflags;
 	envflags = getenv("LIBRT_DEBUG");
 	if (envflags) {
-	    if (rt_g.debug)
+	    if (RTG.debug)
 		bu_log("WARNING: discarding LIBRT_DEBUG value in favor of application specified flags\n");
 	    else
-		rt_g.debug = strtol(envflags, NULL, 0x10);
+		RTG.debug = strtol(envflags, NULL, 0x10);
 	}
 
-	BU_LIST_INIT(&rt_g.rtg_vlfree);
+	BU_LIST_INIT(&RTG.rtg_vlfree);
     }
 
     BU_ALLOC(rtip, struct rt_i);
@@ -355,7 +355,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 	for (i=1; i <= ID_MAX_SOLID; i++) {
 	    bu_log("%5d %s (%d)\n",
 		   rtip->rti_nsol_by_type[i],
-		   rt_functab[i].ft_name,
+		   OBJ[i].ft_name,
 		   i);
 	}
     }
@@ -404,7 +404,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
     if ((RT_G_DEBUG&DEBUG_PL_BOX)) {
 	FILE *plotfp;
 
-	plotfp = fopen("rtrpp.plot", "wb");
+	plotfp = fopen("rtrpp.plot3", "wb");
 	if (plotfp != NULL) {
 	    /* Plot solid bounding boxes, in white */
 	    pl_color(plotfp, 255, 255, 255);
@@ -417,7 +417,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
     if ((RT_G_DEBUG&DEBUG_PL_SOLIDS)) {
 	FILE *plotfp;
 
-	plotfp = fopen("rtsolids.pl", "wb");
+	plotfp = fopen("rtsolids.plot3", "wb");
 	if (plotfp != NULL) {
 	    rt_plot_all_solids(plotfp, rtip, resp);
 	    (void)fclose(plotfp);
@@ -518,8 +518,8 @@ rt_vlist_solid(
     RT_CK_DB_INTERNAL(&intern);
 
     ret = -1;
-    if (rt_functab[intern.idb_type].ft_plot) {
-	ret = rt_functab[intern.idb_type].ft_plot(vhead, &intern, &rtip->rti_ttol, &rtip->rti_tol, NULL);
+    if (OBJ[intern.idb_type].ft_plot) {
+	ret = OBJ[intern.idb_type].ft_plot(vhead, &intern, &rtip->rti_ttol, &rtip->rti_tol, NULL);
     }
     if (ret < 0) {
 	bu_log("rt_vlist_solid(%s): ft_plot() failure\n", stp->st_name);

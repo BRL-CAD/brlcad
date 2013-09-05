@@ -352,7 +352,14 @@ rt_bot_makesegs(struct hit *hits, size_t nhits, struct soltab *stp, struct xray 
 int
 rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
-    struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
+    struct bot_specific *bot;
+
+    if (UNLIKELY(!stp || !ap || !seghead))
+	return 0;
+
+    bot = (struct bot_specific *)stp->st_specific;
+    if (UNLIKELY(!bot))
+	return 0;
 
     if (bot->tie != NULL) {
 	return bottie_shot_double(stp, rp, ap, seghead);
@@ -929,7 +936,7 @@ rt_bot_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_BOT;
-    ip->idb_meth = &rt_functab[ID_BOT];
+    ip->idb_meth = &OBJ[ID_BOT];
     BU_ALLOC(ip->idb_ptr, struct rt_bot_internal);
 
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
@@ -948,7 +955,7 @@ rt_bot_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     for (i = 0; i < bot_ip->num_vertices; i++) {
 	double tmp[ELEMENTS_PER_POINT];
 
-	ntohd((unsigned char *)tmp, (const unsigned char *)(&rp->bot.bot_data[i*24]), ELEMENTS_PER_POINT);
+	bu_cv_ntohd((unsigned char *)tmp, (const unsigned char *)(&rp->bot.bot_data[i*24]), ELEMENTS_PER_POINT);
 	MAT4X3PNT(&(bot_ip->vertices[i*ELEMENTS_PER_POINT]), mat, tmp);
     }
 
@@ -969,7 +976,7 @@ rt_bot_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	for (i = 0; i < bot_ip->num_faces; i++) {
 	    double scan;
 
-	    ntohd((unsigned char *)&scan, (const unsigned char *)(&rp->bot.bot_data[chars_used + i*8]), 1);
+	    bu_cv_ntohd((unsigned char *)&scan, (const unsigned char *)(&rp->bot.bot_data[chars_used + i*8]), 1);
 	    bot_ip->thickness[i] = scan; /* convert double to fastf_t */
 	}
 
@@ -1054,7 +1061,7 @@ rt_bot_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	double tmp[ELEMENTS_PER_POINT];
 
 	VSCALE(tmp, &bot_ip->vertices[i*ELEMENTS_PER_POINT], local2mm);
-	htond((unsigned char *)&rec->bot.bot_data[i*24], (const unsigned char *)tmp, ELEMENTS_PER_POINT);
+	bu_cv_htond((unsigned char *)&rec->bot.bot_data[i*24], (const unsigned char *)tmp, ELEMENTS_PER_POINT);
     }
 
     chars_used = bot_ip->num_vertices * 24;
@@ -1075,7 +1082,7 @@ rt_bot_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	    double tmp;
 
 	    tmp = bot_ip->thickness[i] * local2mm;
-	    htond((unsigned char *)&rec->bot.bot_data[chars_used], (const unsigned char *)&tmp, 1);
+	    bu_cv_htond((unsigned char *)&rec->bot.bot_data[chars_used], (const unsigned char *)&tmp, 1);
 	    chars_used += 8;
 	}
 	bu_strlcpy((char *)&rec->bot.bot_data[chars_used], bu_vls_addr(&face_mode), ep->ext_nbytes - (sizeof(struct bot_rec)-1) - chars_used);
@@ -1102,7 +1109,7 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_BOT;
-    ip->idb_meth = &rt_functab[ID_BOT];
+    ip->idb_meth = &OBJ[ID_BOT];
     BU_ALLOC(ip->idb_ptr, struct rt_bot_internal);
 
     bip = (struct rt_bot_internal *)ip->idb_ptr;
@@ -1141,7 +1148,7 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	/* must be double for import and export */
 	double tmp[ELEMENTS_PER_POINT];
 
-	ntohd((unsigned char *)tmp, (const unsigned char *)cp, ELEMENTS_PER_POINT);
+	bu_cv_ntohd((unsigned char *)tmp, (const unsigned char *)cp, ELEMENTS_PER_POINT);
 	cp += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_POINT;
 	MAT4X3PNT(&(bip->vertices[i*ELEMENTS_PER_POINT]), mat, tmp);
     }
@@ -1159,7 +1166,7 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	bip->thickness = (fastf_t *)bu_calloc(bip->num_faces, sizeof(fastf_t), "BOT thickness");
 	for (i = 0; i < bip->num_faces; i++) {
 	    double scan;
-	    ntohd((unsigned char *)&scan, cp, 1);
+	    bu_cv_ntohd((unsigned char *)&scan, cp, 1);
 	    bip->thickness[i] = scan; /* convert double to fastf_t */
 	    cp += SIZEOF_NETWORK_DOUBLE;
 	}
@@ -1189,7 +1196,7 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	    bip->normals = (fastf_t *)bu_calloc(bip->num_normals * 3, sizeof(fastf_t), "BOT normals");
 
 	    for (i = 0; i < bip->num_normals; i++) {
-		ntohd((unsigned char *)tmp, (const unsigned char *)cp, ELEMENTS_PER_VECT);
+		bu_cv_ntohd((unsigned char *)tmp, (const unsigned char *)cp, ELEMENTS_PER_VECT);
 		cp += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
 		MAT4X3VEC(&(bip->normals[i*ELEMENTS_PER_VECT]), mat, tmp);
 	    }
@@ -1283,7 +1290,7 @@ rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	double tmp[ELEMENTS_PER_POINT];
 
 	VSCALE(tmp, &bip->vertices[i*ELEMENTS_PER_POINT], local2mm);
-	htond(cp, (unsigned char *)tmp, ELEMENTS_PER_POINT);
+	bu_cv_htond(cp, (unsigned char *)tmp, ELEMENTS_PER_POINT);
 	cp += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_POINT;
 	rem -= SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_POINT;
     }
@@ -1308,7 +1315,7 @@ rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	    double tmp;
 
 	    tmp = bip->thickness[i] * local2mm;
-	    htond(cp, (const unsigned char *)&tmp, 1);
+	    bu_cv_htond(cp, (const unsigned char *)&tmp, 1);
 	    cp += SIZEOF_NETWORK_DOUBLE;
 	    rem -= SIZEOF_NETWORK_DOUBLE;
 	}
@@ -1340,7 +1347,7 @@ rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 		normals[i] = bip->normals[i];
 	    }
 
-	    htond(cp, (unsigned char*)normals, bip->num_normals*ELEMENTS_PER_VECT);
+	    bu_cv_htond(cp, (unsigned char*)normals, bip->num_normals*ELEMENTS_PER_VECT);
 
 	    bu_free(normals, "normals");
 
@@ -1613,7 +1620,7 @@ rt_bot_xform(struct rt_db_internal *op, const fastf_t *mat, struct rt_db_interna
 	op->idb_ptr = (genptr_t)botop;
 	op->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	op->idb_type = ID_BOT;
-	op->idb_meth = &rt_functab[ID_BOT];
+	op->idb_meth = &OBJ[ID_BOT];
     } else
 	botop = botip;
 

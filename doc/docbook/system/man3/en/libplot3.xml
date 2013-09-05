@@ -18,81 +18,156 @@
 <funcsynopsis>
 
 <funcprototype>
-<funcdef><function>pl_space</function></funcdef>
-    <paramdef>FILE *fp <parameter></parameter></paramdef>
-    <paramdef>int x0 , y0 , x1 , <parameter>y1</parameter></paramdef>
-    <paramdef>pl_3space ( fp , x0 , y0 , z0 , x1 , y1 , z1 ) <parameter>FILE</parameter>*fp</paramdef>
-    <paramdef>int x0 , y0 , z0 , x1 , y1 , <parameter>z1</parameter></paramdef>
-    <paramdef>pl_erase ( fp ) <parameter>FILE</parameter>*fp</paramdef>
+<funcdef>void <function>pl_3box</function></funcdef>
+    <paramdef>FILE *<parameter>fp</parameter></paramdef>
+    <paramdef>int <parameter>x0</parameter></paramdef>
+    <paramdef>int <parameter>y0</parameter></paramdef>
+    <paramdef>int <parameter>z0</parameter></paramdef>
+    <paramdef>int <parameter>x1</parameter></paramdef>
+    <paramdef>int <parameter>y1</parameter></paramdef>
+    <paramdef>int <parameter>z1</parameter></paramdef>
 </funcprototype>
 
 <funcprototype>
-<funcdef><function>pl_color</function></funcdef>
-    <paramdef>FILE *fp <parameter></parameter></paramdef>
-    <paramdef>int r , g , <parameter>b</parameter></paramdef>
-    <paramdef>pl_linmod ( fp , s ) <parameter>FILE</parameter>*fp</paramdef>
-    <paramdef>char *s <parameter></parameter></paramdef>
+<funcdef>void <function>pl_3cont</function></funcdef>
+    <paramdef>FILE *<parameter>fp</parameter></paramdef>
+    <paramdef>int <parameter>x</parameter></paramdef>
+    <paramdef>int <parameter>y</parameter></paramdef>
+    <paramdef>int <parameter>z</parameter></paramdef>
 </funcprototype>
 
 <funcprototype>
-<funcdef><function>pl_label</function></funcdef>
-    <paramdef>FILE *fp <parameter></parameter></paramdef>
-    <paramdef>char *s <parameter></parameter></paramdef>
+<funcdef>void <function>pl_3line</function></funcdef>
+    <paramdef>FILE *<parameter>fp</parameter></paramdef>
+    <paramdef>int <parameter>x0</parameter></paramdef>
+    <paramdef>int <parameter>y0</parameter></paramdef>
+    <paramdef>int <parameter>z0</parameter></paramdef>
+    <paramdef>int <parameter>x1</parameter></paramdef>
+    <paramdef>int <parameter>y1</parameter></paramdef>
+    <paramdef>int <parameter>z1</parameter></paramdef>
 </funcprototype>
 
 <funcprototype>
-<funcdef><function>pl_line</function></funcdef>
-    <paramdef>FILE *fp <parameter></parameter></paramdef>
-    <paramdef>int x1 , y1 , x2 , <parameter>y2</parameter></paramdef>
-    <paramdef>pl_3line ( fp , x1 , y1 , z1 , x2 , y2 , z2 ) <parameter>FILE</parameter>*fp</paramdef>
-    <paramdef>int x1 , y1 , z1 , x2 , y2 , <parameter>z2</parameter></paramdef>
-    <paramdef>pl_move ( fp , x , y ) <parameter>FILE</parameter>*fp</paramdef>
-</funcprototype>
-<funcsynopsisinfo>
-int x, y;
-
-</funcsynopsisinfo>
-<funcprototype>
-<funcdef><function>pl_3move</function></funcdef>
-    <paramdef>FILE *fp <parameter></parameter></paramdef>
-    <paramdef>int x , y , <parameter>z</parameter></paramdef>
-    <paramdef>pl_cont ( fp , x , y ) <parameter>FILE</parameter>*fp</paramdef>
-    <paramdef>int x , <parameter>y</parameter></paramdef>
+<funcdef>void <function>pl_3move</function></funcdef>
+    <paramdef>FILE *<parameter>fp</parameter></paramdef>
+    <paramdef>int <parameter>x</parameter></paramdef>
+    <paramdef>int <parameter>y</parameter></paramdef>
+    <paramdef>int <parameter>z</parameter></paramdef>
 </funcprototype>
 
 <funcprototype>
-<funcdef><function>pl_3cont</function></funcdef>
-    <paramdef>FILE *fp <parameter></parameter></paramdef>
-    <paramdef>int x , y , <parameter>z</parameter></paramdef>
-    <paramdef>pl_point ( fp , x , y ) <parameter>FILE</parameter>*fp</paramdef>
-    <paramdef>int x , <parameter>y</parameter></paramdef>
+<funcdef>void <function>pl_3point</function></funcdef>
+    <paramdef>FILE *<parameter>fp</parameter></paramdef>
+    <paramdef>int <parameter>x</parameter></paramdef>
+    <paramdef>int <parameter>y</parameter></paramdef>
+    <paramdef>int <parameter>z</parameter></paramdef>
 </funcprototype>
 
 <funcprototype>
-<funcdef><function>pl_3point</function></funcdef>
-    <paramdef>FILE *fp <parameter></parameter></paramdef>
-    <paramdef>int x , y , <parameter>z</parameter></paramdef>
-    <paramdef>pl_box ( fp , x1 , y1 , x2 , y2 ) <parameter>FILE</parameter>*fp</paramdef>
-    <paramdef>int x1 , y1 , x2 , <parameter>y2</parameter></paramdef>
+<funcdef>void <function>pl_3space</function></funcdef>
+    <paramdef>FILE *<parameter>fp</parameter></paramdef>
+    <paramdef>int <parameter>x0</parameter></paramdef>
+    <paramdef>int <parameter>y0</parameter></paramdef>
+    <paramdef>int <parameter>z0</parameter></paramdef>
+    <paramdef>int <parameter>x1</parameter></paramdef>
+    <paramdef>int <parameter>y1</parameter></paramdef>
+    <paramdef>int <parameter>z1</parameter></paramdef>
 </funcprototype>
 
-</funcsynopsis>
-<para><emphasis remap='B'>pl_3box( fp, x1, y1, z1, x2, y2, z2 )</emphasis></para>
-<funcsynopsis>
-<funcsynopsisinfo>
-FILE *fp;
-int x1, y1, z1, x2, y2, z2;
+<funcprototype>
+<funcdef>void <function>pl_arc</function></funcdef>
+    <paramdef>FILE *<parameter>fp</parameter></paramdef>
+    <paramdef>int <parameter>xc</parameter></paramdef>
+    <paramdef>int <parameter>yc</parameter></paramdef>
+    <paramdef>int <parameter>x0</parameter></paramdef>
+    <paramdef>int <parameter>y0</parameter></paramdef>
+    <paramdef>int <parameter>x1</parameter></paramdef>
+    <paramdef>int <parameter>y1</parameter></paramdef>
+</funcprototype>
 
-</funcsynopsisinfo>
+<funcprototype>
+<funcdef>void <function>pl_box</function></funcdef>
+    <paramdef>FILE *<parameter>fp</parameter></paramdef>
+    <paramdef>int <parameter>x0</parameter></paramdef>
+    <paramdef>int <parameter>y0</parameter></paramdef>
+    <paramdef>int <parameter>x1</parameter></paramdef>
+    <paramdef>int <parameter>y1</parameter></paramdef>
+</funcprototype>
+
 <funcprototype>
 <funcdef><function>pl_circle</function></funcdef>
-    <paramdef>FILE *fp <parameter></parameter></paramdef>
-    <paramdef>int x , y , <parameter>r</parameter></paramdef>
-    <paramdef>pl_arc ( fp , x , y , x0 , y0 , x1 , y1 ) <parameter>FILE</parameter>*fp</paramdef>
-    <paramdef>int x , y , x0 , y0 , x1 , <parameter>y1</parameter></paramdef>
+    <paramdef>FILE *<parameter>fp</parameter></paramdef>
+    <paramdef>int <parameter>x</parameter></paramdef>
+    <paramdef>int <parameter>y</parameter></paramdef>
+    <paramdef>int <parameter>r</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>void <function>pl_color</function></funcdef>
+    <paramdef>FILE *<parameter>fp</parameter></paramdef>
+    <paramdef>int <parameter>r</parameter></paramdef>
+    <paramdef>int <parameter>g</parameter></paramdef>
+    <paramdef>int <parameter>b</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>void <function>pl_cont</function></funcdef>
+    <paramdef>FILE *<parameter>fp</parameter></paramdef>
+    <paramdef>int <parameter>x</parameter></paramdef>
+    <paramdef>int <parameter>y</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>void <function>pl_erase</function></funcdef>
+    <paramdef>FILE *<parameter>fp</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>void <function>pl_label</function></funcdef>
+    <paramdef>FILE *<parameter>fp</parameter></paramdef>
+    <paramdef>const char *<parameter>s</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>void <function>pl_line</function></funcdef>
+    <paramdef>FILE *<parameter>fp</parameter></paramdef>
+    <paramdef>int <parameter>x0</parameter></paramdef>
+    <paramdef>int <parameter>y0</parameter></paramdef>
+    <paramdef>int <parameter>x1</parameter></paramdef>
+    <paramdef>int <parameter>y1</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>void <function>pl_linmod</function></funcdef>
+    <paramdef>FILE *<parameter>fp</parameter></paramdef>
+    <paramdef>const char *<parameter>s</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>void <function>pl_move</function></funcdef>
+    <paramdef>FILE *<parameter>fp</parameter></paramdef>
+    <paramdef>int <parameter>x</parameter></paramdef>
+    <paramdef>int <parameter>y</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>void <function>pl_point</function></funcdef>
+    <paramdef>FILE *<parameter>fp</parameter></paramdef>
+    <paramdef>int <parameter>x</parameter></paramdef>
+    <paramdef>int <parameter>y</parameter></paramdef>
+</funcprototype>
+
+<funcprototype>
+<funcdef>void <function>pl_space</function></funcdef>
+    <paramdef>FILE *<parameter>fp</parameter></paramdef>
+    <paramdef>int <parameter>x0</parameter></paramdef>
+    <paramdef>int <parameter>y0</parameter></paramdef>
+    <paramdef>int <parameter>x1</parameter></paramdef>
+    <paramdef>int <parameter>y1</parameter></paramdef>
 </funcprototype>
 
 </funcsynopsis>
+
 </refsynopsisdiv>
 
 

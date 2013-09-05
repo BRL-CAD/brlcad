@@ -715,8 +715,8 @@ mged_freemem(void)
 	bu_free((genptr_t)sp, "mged_freemem: struct solid");
     }
 
-    while (BU_LIST_NON_EMPTY(&rt_g.rtg_vlfree)) {
-	vp = BU_LIST_FIRST(bn_vlist, &rt_g.rtg_vlfree);
+    while (BU_LIST_NON_EMPTY(&RTG.rtg_vlfree)) {
+	vp = BU_LIST_FIRST(bn_vlist, &RTG.rtg_vlfree);
 	BU_LIST_DEQUEUE(&(vp->l));
 	bu_free((genptr_t)vp, "mged_freemem: struct bn_vlist");
     }
@@ -2627,7 +2627,10 @@ mged_zoom(double val)
 	return TCL_OK;
     }
 
-    snprintf(buf, 32, "%f", val);
+    if (val > 0.0)
+	snprintf(buf, 32, "%f", val);
+    else
+	snprintf(buf, 32, "%f", 1.0); /* do nothing */
 
     av[0] = "zoom";
     av[1] = buf;
@@ -2677,6 +2680,8 @@ mged_zoom(double val)
 int
 cmd_zoom(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
+    double zval;
+
     if (argc != 2) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
@@ -2687,7 +2692,12 @@ cmd_zoom(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	return TCL_ERROR;
     }
 
-    return mged_zoom(atof(argv[1]));
+    /* sanity check the zoom value */
+    zval = atof(argv[1]);
+    if (zval > 0.0)
+	return mged_zoom(zval);
+
+    return TCL_ERROR;
 }
 
 
@@ -2878,36 +2888,6 @@ f_svbase(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
     }
 
     return status;
-}
-
-
-/*
- * F _ V R O T _ C E N T E R
- *
- * Set the center of rotation, either in model coordinates, or
- * in view (+/-1) coordinates.
- * The default is to rotate around the view center: v=(0, 0, 0).
- */
-int
-f_vrot_center(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
-{
-    if (argc < 5 || 5 < argc) {
-	struct bu_vls vls = BU_VLS_INIT_ZERO;
-
-	if (argv && argc > 5) {
-	    bu_log("Unexpected parameter [%s]\n", argv[5]);
-	}
-
-	bu_vls_printf(&vls, "help vrot_center");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-
-	return TCL_ERROR;
-    }
-
-    /* XXXX Actually, this is now available in LIBRT's view_obj.c */
-    Tcl_AppendResult(interp, "Not ready until tomorrow.\n", (char *)NULL);
-    return TCL_OK;
 }
 
 
@@ -4110,7 +4090,7 @@ cmd_sca(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 		return ret;
 	    } else {
 		/* argc was 4 but state was ST_S_EDIT so do nothing */
-		bu_log("Error: Can only scale xyz independently on an object.\n");
+		bu_log("ERROR: Can only scale primitives uniformly (one scale factor).\n");
 		return TCL_OK;
 	    }
 	}

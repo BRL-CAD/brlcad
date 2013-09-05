@@ -97,7 +97,7 @@ extern int do_kut_plane;           /* from opt.c */
 extern plane_t kut_plane;              /* from opt.c */
 vect_t kut_norm;
 struct soltab *kut_soltab = NULL;
-extern struct icv_image_file *bif;
+extern struct icv_image *bif;
 
 extern struct floatpixel *curr_float_frame;	/* buffer of full frame */
 
@@ -195,7 +195,13 @@ view_pixel(struct application *ap)
     int do_eol = 0;
     unsigned char dist[8];	/* pixel distance (in IEEE format) */
 
-#if 0
+#ifdef DRAW_INDICATOR_LINE
+    /* this draws a nice indicator line to let you know where you are
+     * currently rendering into the frame, but testing demonstrated
+     * that this utterly kills performance for some framebuffer types.
+     * need to revisit and test making this be runtime requestable.
+     */
+
     RGBpixel white = {255, 255, 255};
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -205,7 +211,7 @@ view_pixel(struct application *ap)
 
 
     if (rpt_dist)
-	htond(dist, (unsigned char *)&(ap->a_dist), 1);
+	bu_cv_htond(dist, (unsigned char *)&(ap->a_dist), 1);
 
     if (ap->a_user == 0) {
 	/* Shot missed the model, don't dither */
@@ -316,7 +322,7 @@ view_pixel(struct application *ap)
 
 		if (bif != NULL) {
 		    bu_semaphore_acquire(BU_SEM_SYSCALL);
-		    icv_image_save_writepixel(bif, ap->a_x, ap->a_y, p);
+		    icv_writepixel(bif, ap->a_x, ap->a_y, ap->a_color);
 		    bu_semaphore_release(BU_SEM_SYSCALL);
 		} else if (outfp != NULL) {
 		    bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -567,8 +573,9 @@ view_pixel(struct application *ap)
 		}
 	    }
 	    if (bif != NULL) {
+		/* TODO : Add double type data to maintain resolution */
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
-		icv_image_save_writeline(bif, ap->a_y, (unsigned char *)scanline[ap->a_y].sl_buf);
+		icv_writeline(bif, ap->a_y, (unsigned char *)scanline[ap->a_y].sl_buf, ICV_DATA_UCHAR);
 		bu_semaphore_release(BU_SEM_SYSCALL);
 	    } else if (outfp != NULL) {
 		size_t count;

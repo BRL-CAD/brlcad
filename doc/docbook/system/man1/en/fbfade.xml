@@ -16,7 +16,7 @@
 <refsynopsisdiv xml:id="synopsis">
 <cmdsynopsis sepchar=" ">
   <command>fbfade</command>
-    <arg choice="opt" rep="norepeat">-h </arg>
+    <arg choice="opt" rep="norepeat">-H </arg>
     <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-f </arg><arg choice="plain" rep="norepeat"><replaceable>input</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>image</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>name</replaceable></arg></arg>
     <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-s </arg><arg choice="plain" rep="norepeat"><replaceable>input</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>square</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>size</replaceable></arg></arg>
     <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-w </arg><arg choice="plain" rep="norepeat"><replaceable>input</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>width</replaceable></arg></arg>
@@ -41,7 +41,7 @@ one randomly chosen pixel at a time.</para>
 <refsection xml:id="options"><title>Options</title>
 <variablelist remap="TP">
   <varlistentry>
-  <term>­-h</term>
+  <term>­-H</term>
   <listitem>
 <!-- .lg  IGNORED -->
 <para>(“high resolution”)Assumes 1024 by 1024 pixels for default input image size

@@ -53,7 +53,8 @@
 }
 
 
-static char usage[] = "Usage: %s [-bviM8] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol] [-o output_file_name.stl | -m directory_name] brlcad_db.g object(s)\n";
+static char usage[] = "Usage: %s [-bvi8] [-xX lvl] [-P num_cpus] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol] [-o output_file_name.stl | -m directory_name] brlcad_db.g object(s)\n";
+
 
 static int verbose;
 static int NMG_debug;			/* saved arg of -X, for longjmp handling */
@@ -255,7 +256,7 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 		} else {
 		    int i;
 
-		    htonf(vert_buffer, (const unsigned char *)flts, 12);
+		    bu_cv_htonf(vert_buffer, (const unsigned char *)flts, 12);
 		    for (i=0; i<12; i++) {
 			lswap((unsigned int *)&vert_buffer[i*4]);
 		    }
@@ -341,7 +342,7 @@ main(int argc, char *argv[])
 
     /* make empty NMG model */
     the_model = nmg_mm();
-    BU_LIST_INIT(&rt_g.rtg_vlfree);	/* for vlist macros */
+    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "a:b8m:n:o:r:vx:D:P:X:i")) != -1) {
@@ -374,10 +375,9 @@ main(int argc, char *argv[])
 		break;
 	    case 'P':
 		ncpu = atoi(bu_optarg);
-		rt_g.debug = 1;
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
 		break;
 	    case 'D':
 		tol.dist = atof(bu_optarg);
@@ -385,8 +385,8 @@ main(int argc, char *argv[])
 		rt_pr_tol(&tol);
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug);
-		NMG_debug = rt_g.NMG_debug;
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
+		NMG_debug = RTG.NMG_debug;
 		break;
 	    case 'i':
 		inches = 1;

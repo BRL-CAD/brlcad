@@ -50,7 +50,9 @@ _path_scrub(struct bu_vls *path)
     if (bu_vls_addr(path)[0] == '/') islocal = 0;
     normalized = db_normalize(bu_vls_addr(path));
     if (normalized && !BU_STR_EQUAL(normalized, "/")) {
-	bu_vls_sprintf(&tmp, "%s", bu_basename(normalized));
+	char *basename = bu_basename(normalized);
+	bu_vls_sprintf(&tmp, "%s", basename);
+	bu_free(basename, "free bu_basename string (caller's responsibility per bu.h)");
 	bu_vls_sprintf(path, "%s", bu_vls_addr(&tmp));
     } else {
 	bu_vls_sprintf(path, "%s", "/");
@@ -72,16 +74,17 @@ _add_toplevel(struct db_full_path_list *path_list, int local)
     BU_LIST_INSERT(&(path_list->l), &(new_entry->l));
 }
 
-
+/* TODO - another instance of the "build a toplevel search list" function - need
+ * to consolidate these and get them into librt.  There's at least one more in comb.c*/
 HIDDEN void
-_gen_toplevel(struct db_i *dbip, struct db_full_path_list *path_list, struct db_full_path *dfp, int local)
+_gen_toplevel(struct db_i *dbip, struct db_full_path_list *path_list, struct db_full_path *dfp, int local, int aflag)
 {
     int i;
     struct directory *dp;
     struct db_full_path_list *new_entry;
     for (i = 0; i < RT_DBNHASH; i++) {
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (dp->d_nref == 0 && !(dp->d_flags & RT_DIR_HIDDEN) && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
+	    if (dp->d_nref == 0 && (!(dp->d_flags & RT_DIR_HIDDEN) || aflag) && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
 	      if (!db_string_to_path(dfp, dbip, dp->d_namep)) {
 		BU_ALLOC(new_entry, struct db_full_path_list);
 		BU_ALLOC(new_entry->path, struct db_full_path);
@@ -100,7 +103,9 @@ int
 ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 {
     void *dbplan;
-    int i, islocal;
+    int i, c, islocal, optcnt;
+    int aflag = 0; /* flag controlling whether hidden objects are examined */
+    int want_help = 0;
     int plan_argv = 1;
     int plan_found = 0;
     int path_found = 0;
@@ -115,13 +120,55 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     struct db_full_path_list *local_list = NULL;
     struct db_full_path_list *search_results = NULL;
     struct bu_ptbl *uniq_db_objs;
+    const char *usage = "[-a] [-h] [path] [expressions...]\n";
     /* COPY argv_orig to argv; */
-    char **argv = bu_dup_argv(argc, argv_orig);
+    char **argv = NULL;
 
     if (argc < 2) {
-	bu_vls_printf(gedp->ged_result_str, " [path] [expressions...]\n");
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv_orig[0], usage);
 	return TCL_OK;
     }
+
+    /* Find how many options we have */
+
+    optcnt = 0;
+    for (i = 1; i < argc; i++) {
+        if ((argv_orig[i][0] == '-') && (strlen(argv_orig[i]) == 2)) {
+	    optcnt++;
+	} else {
+	    break;
+	}
+    }
+
+    /* Options have to come before paths and search expressions, so don't look
+     * any further than the max possible option count */
+    bu_optind = 1;
+    while ((bu_optind < (optcnt + 1)) && ((c = bu_getopt(argc, (char * const *)argv_orig, "ah?")) != -1)) {
+	switch(c) {
+	    case 'a':
+		aflag = 1;
+		break;
+	    case 'h':
+	    case '?':
+		want_help = 1;
+		break;
+	    default:
+		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv_orig[0], usage);
+		return GED_ERROR;
+	}
+    }
+
+    if (want_help) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv_orig[0], usage);
+	return TCL_OK;
+    }
+
+    argc -= (bu_optind - 1);
+    argv_orig += (bu_optind - 1);
+
+    /* COPY argv_orig to argv; */
+    argv = bu_dup_argv(argc, argv_orig);
+
 
     /* initialize list of search paths */
     BU_ALLOC(path_list, struct db_full_path_list);
@@ -227,7 +274,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 	    if (search_all) {
 		BU_ALLOC(local_list, struct db_full_path_list);
 		BU_LIST_INIT(&(local_list->l));
-		_gen_toplevel(gedp->ged_wdbp->dbip, local_list, &dfp, 1);
+		_gen_toplevel(gedp->ged_wdbp->dbip, local_list, &dfp, 1, aflag);
 		uniq_db_objs = db_search_unique_objects(dbplan, local_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
 		db_free_full_path_list(local_list);
 	    } else {
@@ -243,7 +290,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		if (entry->path->fp_maxlen == 0) {
 		    BU_ALLOC(local_list, struct db_full_path_list);
 		    BU_LIST_INIT(&(local_list->l));
-		    _gen_toplevel(gedp->ged_wdbp->dbip, local_list, &dfp, entry->local);
+		    _gen_toplevel(gedp->ged_wdbp->dbip, local_list, &dfp, entry->local, aflag);
 		    if (entry->local) {
 			uniq_db_objs = db_search_unique_objects(dbplan, local_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
 			for (i = (int)BU_PTBL_LEN(uniq_db_objs) - 1; i >= 0 ; i--) {
@@ -275,12 +322,15 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		    } else {
 			search_results = db_search_full_paths(dbplan, dispatch_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
 			for (BU_LIST_FOR_BACKWARDS(result, db_full_path_list, &(search_results->l))) {
-			    bu_vls_printf(gedp->ged_result_str, "%s\n", db_path_to_string(result->path));
+			    char *path_string = db_path_to_string(result->path);
+			    bu_vls_printf(gedp->ged_result_str, "%s\n", path_string);
+			    bu_free(path_string, "free db_path_to_string output, per raytrace.h");
 			}
 			db_free_full_path_list(search_results);
 		    }
 		    db_free_full_path(new_entry->path);
 		    BU_LIST_DEQUEUE(&(new_entry->l));
+		    bu_free(new_entry->path, "free new_entry path");
 		    bu_free(new_entry, "free new_entry");
 		}
 	    }
@@ -292,6 +342,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
      * just assemble the full path list and return it */
     db_free_full_path(&dfp);
     db_free_full_path_list(path_list);
+    db_free_full_path_list(dispatch_list);
     bu_vls_free(&argvls);
     bu_free_argv(argc, argv);
     return TCL_OK;

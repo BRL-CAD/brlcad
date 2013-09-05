@@ -68,7 +68,7 @@ ged_cc(struct ged *gedp, int argc, const char *argv[])
     RT_DB_INTERNAL_INIT(&internal);
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     internal.idb_type = ID_CONSTRAINT;
-    internal.idb_meth=&rt_functab[ID_CONSTRAINT];
+    internal.idb_meth=&OBJ[ID_CONSTRAINT];
 
     BU_ALLOC(internal.idb_ptr, struct rt_constraint_internal);
     con_ip = (struct rt_constraint_internal *)internal.idb_ptr;

@@ -10,6 +10,7 @@ set(DM_INCLUDE_DIRS
   ${OPENGL_INCLUDE_DIR_GLX}
   ${TCL_INCLUDE_DIRS}
   ${TK_INCLUDE_PATH}
+  ${Qt5Widgets_INCLUDE_DIRS}
   )
 
 # local includes
@@ -53,6 +54,16 @@ if(BRLCAD_ENABLE_TK AND NOT WIN32)
   set(dmtk_srcs dm-tk.c)
 endif(BRLCAD_ENABLE_TK AND NOT WIN32)
 
+if(BRLCAD_ENABLE_QT)
+  BRLCAD_CHECK_CXX_FLAG(Wno-float-equal)
+
+  list(APPEND libdm_DEFINES DM_QT)
+  set(dmqt_srcs dm-qt.cpp)
+  set(CMAKE_AUTOMOC ON)
+  set(CMAKE_INCLUDE_CURRENT_DIR ON)
+  add_definitions(${Qt5Widgets_DEFINITIONS})
+endif(BRLCAD_ENABLE_QT)
+
 set_property(GLOBAL PROPERTY libdm_DEFINES "${libdm_DEFINES}")
 
 # Unfortunately, on Mac OS X the OpenGL headers are not C90
@@ -67,6 +78,7 @@ set(LIBDM_SRCS
   ${dmogl_srcs}
   ${dmrtgl_srcs}
   ${dmtk_srcs}
+  ${dmqt_srcs}
   adc.c
   axes.c
   clip.c
@@ -77,6 +89,7 @@ set(LIBDM_SRCS
   dm-ps.c
   dm_obj.c
   dm_util.c
+  dm-txt.c
   focus.c
   grid.c
   knob.c
@@ -89,7 +102,7 @@ set(LIBDM_SRCS
   vers.c
   )
 
-BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "libged;librt;libfb;${DM_X_LIBS};${DM_TKLIB};${Carbon_LIBRARIES}")
+BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "libged;librt;libfb;${DM_X_LIBS};${DM_TKLIB};${Carbon_LIBRARIES};${Qt5Widgets_LIBRARIES}")
 set_target_properties(libdm PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 if(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
@@ -99,13 +112,13 @@ set(libdm_ignore_files
   dm-wgl.c
   dm-X.c
   dm-ogl.c
+  dm-qt.cpp
   dm-rtgl.c
   dm-tk.c
   TODO
   )
 CMAKEFILES(${libdm_ignore_files})
 CMAKEFILES(dm_util.h)
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

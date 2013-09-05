@@ -483,7 +483,7 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
     RT_DB_INTERNAL_INIT(&(_intern)); \
     (_intern).idb_major_type = DB5_MAJORTYPE_BRLCAD; \
     (_intern).idb_type = ID_COMBINATION; \
-	     (_intern).idb_meth = &rt_functab[ID_COMBINATION]; \
+	     (_intern).idb_meth = &OBJ[ID_COMBINATION]; \
 		      (_intern).idb_ptr = (genptr_t)(_comb); \
 		      (_comb)->tree = (_final_tree); \
 		      \

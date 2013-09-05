@@ -55,14 +55,14 @@ static int xZoom, yZoom;		/* Zoom Factor.			*/
 static int new_xPan, new_yPan;
 static int new_xZoom, new_yZoom;
 
-static int scr_width = 0;		/* screen size */
-static int scr_height = 0;
+static int scr_width = 512;		/* screen size */
+static int scr_height = 512;
 static int toggle_pan = 0;		/* Reverse sense of pan commands? */
 static char *framebuffer = NULL;
 static FBIO *fbp;
 
 static char usage[] = "\
-Usage: fbzoom [-hT] [-F framebuffer]\n\
+Usage: fbzoom [-T] [-F framebuffer]\n\
 	[-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height]\n";
 
 int
@@ -296,12 +296,8 @@ pars_Argv(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "hTF:s:S:w:W:n:N:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "TF:s:S:w:W:n:N:h?")) != -1) {
 	switch (c) {
-	    case 'h':
-		/* high-res */
-		scr_height = scr_width = 1024;
-		break;
 	    case 'T':
 		/* reverse the sense of pan commands */
 		toggle_pan = 1;
@@ -326,6 +322,10 @@ pars_Argv(int argc, char **argv)
 		return 0;
 	}
     }
+
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
+	return 0;
+
     return 1;
 }
 

@@ -21,7 +21,6 @@
     <arg choice='opt'>-w <replaceable>in_width</replaceable></arg>
     <arg choice='opt'>-n <replaceable>in_height</replaceable></arg>
     <arg choice='opt'>-f <replaceable>shrink_factor</replaceable></arg>
-    <arg choice='opt'>-h </arg>
     <arg choice='opt'>-u </arg>
     <arg choice='opt'><replaceable>infile.bw</replaceable></arg>
     <arg choice='plain'><replaceable>&gt;</replaceable></arg>
@@ -57,11 +56,6 @@ to 1/factor the original size in both dimensions.</para>
 the input.  The
 <option>-u</option>
 option causes bwshrink to use image undersampling instead.</para>
-
-<para>The
-<option>-h</option>
-flag causes the file to be
-read in high resolution mode (1024x1024).</para>
 
 </refsect1>
 

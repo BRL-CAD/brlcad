@@ -23,7 +23,7 @@
     <arg choice='plain'><replaceable>file.log</replaceable></arg>
     <arg choice='opt'><arg choice='plain'><replaceable>optional</replaceable></arg><arg choice='plain'><replaceable>string</replaceable></arg></arg>
     <arg choice='plain'><replaceable>&gt;</replaceable></arg>
-    <arg choice='plain'><replaceable>scale.pl</replaceable></arg>
+    <arg choice='plain'><replaceable>scale.plot3</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -63,19 +63,19 @@ may be given to identify the view or the model.</para>
 <para>This section shows the ordinary usage of <command>rtscale</command>.  For example:</para>
 
 <literallayout remap='.nf'>
-rtscale 30 mm 10 rt.log &gt; scale.pl
+rtscale 30 mm 10 rt.log &gt; scale.plot3
 </literallayout> <!-- .fi -->
 
 <para>This will result in a 30 mm scale with ten tickmarks being plotted in the
-lower left corner of the scale.pl image.  Alternately, a descriptive
+lower left corner of the scale.plot3 image.  Alternately, a descriptive
 string may be given to identify the view or the model:</para>
 
 <literallayout remap='.nf'>
-rtscale 30 mm 10 rt.log "UH-60 a90 e0" &gt; scale.pl
+rtscale 30 mm 10 rt.log "UH-60 a90 e0" &gt; scale.plot3
 </literallayout> <!-- .fi -->
 
 <para>Note that a descriptive string longer than 28 characters will be cut
-off by <emphasis remap='B'>pl-fb</emphasis>.</para>
+off by <emphasis remap='B'>plot3-fb</emphasis>.</para>
 
 <para>The plot file is now concatenated
 with the plot file of the image to scale needs to be put on.  The order in
@@ -83,29 +83,22 @@ which they are concatenated is important: the scale is always concatenated
 over top of the model plot:</para>
 
 <literallayout remap='.nf'>
-cat scale.pl model.pl &gt;&gt; model.w.scale.pl
+cat scale.plot3 model.plot3 &gt;&gt; model.w.scale.plot3
 </literallayout> <!-- .fi -->
 
 <para>The resulting UNIX-Plot of the geometry with a scale added to it can be
 viewed in several ways.  It can be overlaid in <emphasis remap='B'>mged</emphasis>, or it can be
-rotated to the desired azimuth and elevation with <emphasis remap='B'>plrot</emphasis> and be
-stored in a file or view with <emphasis remap='B'>pl-sgi</emphasis> or <emphasis remap='B'>pl-fb</emphasis>:</para>
+rotated to the desired azimuth and elevation with <emphasis remap='B'>plot3rot</emphasis> and be
+stored in a file or view with <emphasis remap='B'>plot3-fb</emphasis>:</para>
 
 <literallayout remap='.nf'>
-plrot -a# -e# -g model.w.scale.pl | pl-sgi
+plot3rot -a# -e# -g model.w.scale.plot3 | plot3-fb
 </literallayout> <!-- .fi -->
-
-<para>or</para>
-
-<literallayout remap='.nf'>
-plrot -a# -e# -g model.w.scale.pl | pl-fb
-</literallayout> <!-- .fi -->
-
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
 <para><citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>plrot</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pl-sgi</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rthide</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>plot3rot</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rthide</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>libplot3</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>ray</refentrytitle><manvolnum>5V</manvolnum></citerefentry>.</para>
 </refsect1>
 

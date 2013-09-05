@@ -434,15 +434,6 @@ HIDDEN void osl_free(genptr_t cp)
     register struct osl_specific *osl_sp =
 	(struct osl_specific *)cp;
     BU_PUT(cp, struct osl_specific);
-
-#if 0
-    bu_semaphore_acquire(BU_SEM_SYSCALL);
-    if(oslr != NULL){
-	delete oslr;
-	oslr = NULL;
-    }
-    bu_semaphore_release(BU_SEM_SYSCALL);
-#endif
 }
 
 /*
@@ -606,67 +597,6 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 
 
 // Ray-tracing (local illumination)
-#if 0
-
-    /* -----------------------------------
-     * Get a list of all visible lights from this point
-     * -----------------------------------
-     */
-    light_obs(ap, swp, MFI_NORMAL|MFI_HIT|MFI_UV);
-
-    for (int i = ap->a_rt_i->rti_nlights-1; i >= 0; i--) {
-
-	struct light_specific *lp;
-
-	/* Light is not visible */
-	if ((lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL)
-	    continue;
-	/* Get the direction of this light */
-	Vec3 to_light;
-	VMOVE(to_light, swp->sw_tolight+3*i);
-	info.light_dirs.push_back(to_light);
-    }
-
-    info.reflect_weight = Color3(0.0);
-    info.transmit_weight = Color3(0.0);
-    Color3 weight = oslr->QueryColor(&info);
-
-    /* If the weight of reflection is greater than zero, we shoot another ray */
-    fastf_t reflect_W = 0;
-    for(size_t i = 0; i < 3; i++)
-	reflect_W += info.reflect_weight[i];
-
-    // Do reflection
-    if(reflect_W > 0.0f){
-
-	/* Find the direction of the reflected ray */
-	Vec3 I, N;
-	VMOVE(I, info.I); // incidence ray
-	VMOVE(N, info.N); // normal
-
-	float proj = N.dot(I);
-	Vec3 R = (2 * proj) * N - I;
-
-	struct application new_ap;
-	RT_APPLICATION_INIT(&new_ap);
-
-	new_ap = *ap;                     /* struct copy */
-	new_ap.a_onehit = 1;
-	new_ap.a_hit = default_a_hit;
-	new_ap.a_level = info.depth + 1;
-	new_ap.a_flag = 0;
-
-	VMOVE(new_ap.a_ray.r_dir, R);
-	VMOVE(new_ap.a_ray.r_pt, info.P);
-	VMOVE(swp->sw_color, info.reflect_weight);
-    }
-    else {
-	VMOVE(swp->sw_color, weight);
-    }
-
-
-// Path-tracing (global illumination)
-#else
 
     /* We only perform reflection if application decides to */
     info.doreflection = 0;
@@ -717,7 +647,6 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 	/* Final color */
 	VMOVE(swp->sw_color, weight);
     }
-#endif
 
     return 1;
 }

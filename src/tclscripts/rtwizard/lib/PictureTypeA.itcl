@@ -155,14 +155,20 @@ namespace eval RtWizard {
 	#
 	set perspective [$viewPage getPerspective]
 
-	::cadwidgets::rtimage $::RtWizard::wizard_state(dbFile) $fb \
-	    $w $h \
-	    $viewsize $orientation $eye_pt $perspective\
-	    $bg "" ""\
-	    "" "" \
-	    $color_objects \
-	    "" \
-	    ""
+        # populate a dictionary to pass to rtimage
+        set rtimage_dict [dict create \
+        _dbfile $::RtWizard::wizard_state(dbFile) \
+        _port $fb \
+        _w $w \
+        _n $h \
+        _viewsize $viewsize \
+        _orientation $orientation \
+        _eye_pt $eye_pt \
+        _perspective $perspective \
+        _bgcolor $bg \
+        _color_objects $color_objects ]
+
+	::cadwidgets::rtimage $rtimage_dict
 
 	# If we're outputting a file, write it out and close down
 	# the in-memory fbserv

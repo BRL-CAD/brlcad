@@ -11,6 +11,7 @@ set(archer_TCLSCRIPTS
   AttrGroupsDisplayUtility.tcl
   BotEditFrame.tcl
   BotUtility.tcl
+  BrepEditFrame.tcl
   CombEditFrame.tcl
   DataUtils.tcl
   EhyEditFrame.tcl
@@ -45,9 +46,6 @@ set(archer_TCLSCRIPTS
 BRLCAD_ADDDATA(archer_TCLSCRIPTS tclscripts/archer)
 pkgIndex_BUILD(tclscripts/archer)
 tclIndex_BUILD(tclscripts/archer)
-
-CMAKEFILES(pkgIndex.tcl tclIndex)
-CMAKEFILES(Makefile.am)
 
 # Local Variables:
 # tab-width: 8

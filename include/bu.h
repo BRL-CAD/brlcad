@@ -414,13 +414,15 @@ typedef const void *const_genptr_t;
 
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup hton */
+
+/** @addtogroup conv */
 /** @ingroup data */
-/** @{ */
+/** @{*/
+
 /**
  * Sizes of "network" format data.  We use the same convention as the
  * TCP/IP specification, namely, big-Endian, IEEE format, twos
- * compliment.  This is the BRL-CAD external data representation
+ * complement.  This is the BRL-CAD external data representation
  * (XDR).  See also the support routines in libbu/xdr.c
  *
  */
@@ -428,20 +430,60 @@ typedef const void *const_genptr_t;
 #define SIZEOF_NETWORK_LONG   4	/* htonl(), bu_glong(), bu_plong() */
 #define SIZEOF_NETWORK_FLOAT  4	/* htonf() */
 #define SIZEOF_NETWORK_DOUBLE 8	/* htond() */
-/** @} */
+
+/**
+ * provide for 64-bit network/host conversions using ntohl()
+ */
+#ifndef HAVE_NTOHLL
+#  define ntohll(_val) ((bu_byteorder() == BU_LITTLE_ENDIAN) ?				\
+			((((uint64_t)ntohl((_val))) << 32) + ntohl((_val) >> 32)) : \
+			(_val)) /* sorry pdp-endian */
+#endif
+#ifndef HAVE_HTONLL
+#  define htonll(_val) ntohll(_val)
+#endif
 
 
-/*----------------------------------------------------------------------*/
+#define CV_CHANNEL_MASK 0x00ff
+#define CV_HOST_MASK    0x0100
+#define CV_SIGNED_MASK  0x0200
+#define CV_TYPE_MASK    0x1c00  /* 0001 1100 0000 0000 */
+#define CV_CONVERT_MASK 0x6000  /* 0110 0000 0000 0000 */
 
-/** @addtogroup conv */
-/** @ingroup data */
-/** @{*/
+#define CV_TYPE_SHIFT    10
+#define CV_CONVERT_SHIFT 13
+
+#define CV_8  0x0400
+#define CV_16 0x0800
+#define CV_32 0x0c00
+#define CV_64 0x1000
+#define CV_D  0x1400
+
+#define CV_CLIP   0x0000
+#define CV_NORMAL 0x2000
+#define CV_LIT    0x4000
+
+/** deprecated */
+#define END_NOTSET 0
+#define END_BIG    1	/* PowerPC/MIPS */
+#define END_LITTLE 2	/* Intel */
+#define END_ILL    3	/* PDP-11 */
+#define END_CRAY   4	/* Old Cray */
+
+/** deprecated */
+#define IND_NOTSET 0
+#define IND_BIG    1
+#define IND_LITTLE 2
+#define IND_ILL    3
+#define IND_CRAY   4
+
+
 /** @file libbu/convert.c
  *
  * Routines to translate data formats.  The data formats are:
  *
  * \li Host/Network		is the data in host format or local format
- * \li  signed/unsigned		Is the data signed?
+ * \li signed/unsigned		Is the data signed?
  * \li char/short/int/long/double
  *				Is the data 8bits, 16bits, 32bits, 64bits
  *				or a double?
@@ -450,7 +492,6 @@ typedef const void *const_genptr_t;
  * the expected output format.
  *
  */
-
 
 /**
  * convert from one format to another.
@@ -606,7 +647,7 @@ BU_EXPORT extern size_t bu_cv_w_cookie(genptr_t out, int outcookie, size_t size,
  *
  * @return	number of conversions done.
  */
-BU_EXPORT extern size_t bu_cv_ntohss(signed short *in,
+BU_EXPORT extern size_t bu_cv_ntohss(signed short *in, /* FIXME: in/out right? */
 				     size_t count,
 				     genptr_t out,
 				     size_t size);
@@ -639,39 +680,105 @@ BU_EXPORT extern size_t bu_cv_htonul(genptr_t,
 				     unsigned long *,
 				     size_t);
 
-#define CV_CHANNEL_MASK 0x00ff
-#define CV_HOST_MASK    0x0100
-#define CV_SIGNED_MASK  0x0200
-#define CV_TYPE_MASK    0x1c00  /* 0001 1100 0000 0000 */
-#define CV_CONVERT_MASK 0x6000  /* 0110 0000 0000 0000 */
+/** @file libbu/htond.c
+ *
+ * Convert doubles to host/network format.
+ *
+ * Library routines for conversion between the local host 64-bit
+ * ("double precision") representation, and 64-bit IEEE double
+ * precision representation, in "network order", i.e., big-endian, the
+ * MSB in byte [0], on the left.
+ *
+ * As a quick review, the IEEE double precision format is as follows:
+ * sign bit, 11 bits of exponent (bias 1023), and 52 bits of mantissa,
+ * with a hidden leading one (0.1 binary).
+ *
+ * When the exponent is 0, IEEE defines a "denormalized number", which
+ * is not supported here.
+ *
+ * When the exponent is 2047 (all bits set), and:
+ *	all mantissa bits are zero,
+ *	value is infinity*sign,
+ *	mantissa is non-zero, and:
+ *		msb of mantissa=0:  signaling NAN
+ *		msb of mantissa=1:  quiet NAN
+ *
+ * Note that neither the input or output buffers need be word aligned,
+ * for greatest flexibility in converting data, even though this
+ * imposes a speed penalty here.
+ *
+ * These subroutines operate on a sequential block of numbers, to save
+ * on subroutine linkage execution costs, and to allow some hope for
+ * vectorization.
+ *
+ * On brain-damaged machines like the SGI 3-D, where type "double"
+ * allocates only 4 bytes of space, these routines *still* return 8
+ * bytes in the IEEE buffer.
+ *
+ */
 
-#define CV_TYPE_SHIFT    10
-#define CV_CONVERT_SHIFT 13
+/**
+ * Host to Network Doubles
+ */
+BU_EXPORT extern void bu_cv_htond(unsigned char *out,
+				  const unsigned char *in,
+				  size_t count);
 
-#define CV_8  0x0400
-#define CV_16 0x0800
-#define CV_32 0x0c00
-#define CV_64 0x1000
-#define CV_D  0x1400
+/**
+ * Network to Host Doubles
+ */
+BU_EXPORT extern void bu_cv_ntohd(unsigned char *out,
+				  const unsigned char *in,
+				  size_t count);
 
-#define CV_CLIP   0x0000
-#define CV_NORMAL 0x2000
-#define CV_LIT    0x4000
+/** @file libbu/htonf.c
+ *
+ * convert floats to host/network format
+ *
+ * Host to Network Floats  +  Network to Host Floats.
+ *
+ */
 
-/** deprecated */
-#define END_NOTSET 0
-#define END_BIG    1	/* PowerPC/MIPS */
-#define END_LITTLE 2	/* Intel */
-#define END_ILL    3	/* PDP-11 */
-#define END_CRAY   4	/* Old Cray */
+/**
+ * Host to Network Floats
+ */
+BU_EXPORT extern void bu_cv_htonf(unsigned char *out,
+				  const unsigned char *in,
+				  size_t count);
 
-/** deprecated */
-#define IND_NOTSET 0
-#define IND_BIG    1
-#define IND_LITTLE 2
-#define IND_ILL    3
-#define IND_CRAY   4
+/**
+ * Network to Host Floats
+ */
+BU_EXPORT extern void bu_cv_ntohf(unsigned char *out,
+				  const unsigned char *in,
+				  size_t count);
 
+
+/*----------------------------------------------------------------------*/
+/** @file libbu/endian.c
+ *
+ * Run-time byte order detection.
+ *
+ */
+
+typedef enum {
+    BU_LITTLE_ENDIAN = 1234, /* LSB first: i386, VAX order */
+    BU_BIG_ENDIAN    = 4321, /* MSB first: 68000, IBM, network order */
+    BU_PDP_ENDIAN    = 3412  /* LSB first in word, MSW first in long */
+} bu_endian_t;
+
+
+/**
+ * returns the platform byte ordering (e.g., big-/little-endian)
+ */
+BU_EXPORT extern bu_endian_t bu_byteorder(void);
+
+
+/*----------------------------------------------------------------------*/
+
+/** @addtogroup list */
+/** @ingroup container */
+/** @{ */
 /*----------------------------------------------------------------------*/
 /** @file libbu/badmagic.c
  *
@@ -718,43 +825,6 @@ BU_EXPORT extern const char *bu_identify_magic(uint32_t magic);
 
 
 /*----------------------------------------------------------------------*/
-/** @file libbu/endian.c
- *
- * Run-time byte order detection.
- *
- */
-
-typedef enum {
-    BU_LITTLE_ENDIAN = 1234, /* LSB first: i386, VAX order */
-    BU_BIG_ENDIAN    = 4321, /* MSB first: 68000, IBM, network order */
-    BU_PDP_ENDIAN    = 3412  /* LSB first in word, MSW first in long */
-} bu_endian_t;
-
-
-/**
- * returns the platform byte ordering (e.g., big-/little-endian)
- */
-BU_EXPORT extern bu_endian_t bu_byteorder(void);
-
-
-/* provide for 64-bit network/host conversions using ntohl() */
-#ifndef HAVE_NTOHLL
-#  define ntohll(_val) ((bu_byteorder() == BU_LITTLE_ENDIAN) ?				\
-			((((uint64_t)ntohl((_val))) << 32) + ntohl((_val) >> 32)) : \
-			(_val)) /* sorry pdp-endian */
-#endif
-#ifndef HAVE_HTONLL
-#  define htonll(_val) ntohll(_val)
-#endif
-
-
-/**@}*/
-
-/*----------------------------------------------------------------------*/
-
-/** @addtogroup list */
-/** @ingroup container */
-/** @{ */
 /** @file libbu/list.c
  *
  * @brief Support routines for doubly-linked lists.
@@ -1782,7 +1852,7 @@ typedef struct bu_mapped_file bu_mapped_file_t;
 /** @} */
 /*----------------------------------------------------------------------*/
 
-/* formerly rt_g.rtg_logindent, now use bu_log_indent_delta() */
+/** log indentation hook */
 typedef int (*bu_hook_t)(genptr_t, genptr_t);
 
 struct bu_hook_list {
@@ -1830,13 +1900,20 @@ typedef struct bu_hook_list bu_hook_list_t;
  * Routines to manage attribute/value sets.
  */
 
+/** for attr and avs use.
+ */
+typedef enum {
+  BU_ATTR_CREATED,
+  BU_ATTR_MODIFIED
+} bu_attr_time_t;
+
 /**
  * These strings may or may not be individually allocated, it depends
  * on usage.
  */
 struct bu_attribute_value_pair {
-    const char *name;	/**< attribute name */
-    const char *value; /**< attribute value */
+    const char *name;	    /**< attribute name           */
+    const char *value;      /**< attribute value          */
 };
 
 
@@ -1946,7 +2023,7 @@ typedef struct bu_attribute_value_set bu_avs_t;
 /**
  *
  */
-struct bu_vls  {
+struct bu_vls {
     uint32_t vls_magic;
     char *vls_str;	/**< Dynamic memory for buffer */
     size_t vls_offset;	/**< Offset into vls_str where data is good */
@@ -2585,17 +2662,8 @@ struct bu_cmdtab {
     int (*ct_func)(void *data, int argc, const char *argv[]);
 };
 
-
-/*----------------------------------------------------------------------*/
-/* Miscellaneous macros */
-#define bu_made_it() bu_log("Made it to %s:%d\n",	\
-			    __FILE__, __LINE__)
-/*----------------------------------------------------------------------*/
-/*
- * Declarations of external functions in LIBBU.  Source file names
- * listed alphabetically.
- */
 /**@}*/
+
 
 /** @addtogroup avs */
 /** @ingroup container */
@@ -3363,83 +3431,6 @@ BU_EXPORT extern void bu_hist_pr(const struct bu_hist *histp, const char *title)
 
 /** @} */
 
-/** @addtogroup hton */
-/** @ingroup data */
-/** @{ */
-/** @file libbu/htond.c
- *
- * Convert doubles to host/network format.
- *
- * Library routines for conversion between the local host 64-bit
- * ("double precision") representation, and 64-bit IEEE double
- * precision representation, in "network order", i.e., big-endian, the
- * MSB in byte [0], on the left.
- *
- * As a quick review, the IEEE double precision format is as follows:
- * sign bit, 11 bits of exponent (bias 1023), and 52 bits of mantissa,
- * with a hidden leading one (0.1 binary).
- *
- * When the exponent is 0, IEEE defines a "denormalized number", which
- * is not supported here.
- *
- * When the exponent is 2047 (all bits set), and:
- *	all mantissa bits are zero,
- *	value is infinity*sign,
- *	mantissa is non-zero, and:
- *		msb of mantissa=0:  signaling NAN
- *		msb of mantissa=1:  quiet NAN
- *
- * Note that neither the input or output buffers need be word aligned,
- * for greatest flexibility in converting data, even though this
- * imposes a speed penalty here.
- *
- * These subroutines operate on a sequential block of numbers, to save
- * on subroutine linkage execution costs, and to allow some hope for
- * vectorization.
- *
- * On brain-damaged machines like the SGI 3-D, where type "double"
- * allocates only 4 bytes of space, these routines *still* return 8
- * bytes in the IEEE buffer.
- *
- */
-
-/**
- * Host to Network Doubles
- */
-BU_EXPORT extern void htond(unsigned char *out,
-			    const unsigned char *in,
-			    size_t count);
-
-/**
- * Network to Host Doubles
- */
-BU_EXPORT extern void ntohd(unsigned char *out,
-			    const unsigned char *in,
-			    size_t count);
-
-/** @file libbu/htonf.c
- *
- * convert floats to host/network format
- *
- * Host to Network Floats  +  Network to Host Floats.
- *
- */
-
-/**
- * Host to Network Floats
- */
-BU_EXPORT extern void htonf(unsigned char *out,
-			    const unsigned char *in,
-			    size_t count);
-
-/**
- * Network to Host Floats
- */
-BU_EXPORT extern void ntohf(unsigned char *out,
-			    const unsigned char *in,
-			    size_t count);
-
-/** @} */
 
 /** @addtogroup thread */
 /** @ingroup parallel */
@@ -3673,12 +3664,17 @@ BU_EXPORT extern void bu_putchar(int c);
  *
  * The function is essentially a semaphore-protected version of
  * fprintf(stderr) with optional logging hooks and automatic
- * indentation options.
+ * indentation options.  The main difference is that this function
+ * does not keep track of characters printed, so nothing is returned.
+ *
+ * This function recognizes a %V format specifier to print a bu_vls
+ * struct pointer.  See bu_vsscanf() for details.
  */
 BU_EXPORT extern void bu_log(const char *, ...) _BU_ATTR_PRINTF12;
 
 /**
- * Log a library event in the Standard way, to a specified file.
+ * Just like bu_log() except that you can send output to a specified
+ * file pointer.
  */
 BU_EXPORT extern void bu_flog(FILE *, const char *, ...) _BU_ATTR_PRINTF23;
 
@@ -3858,6 +3854,23 @@ BU_EXPORT extern void *bu_heap_get(size_t sz);
  * force compaction of any unused memory.
  */
 BU_EXPORT extern void bu_heap_put(void *ptr, size_t sz);
+
+/**
+ * Convenience typedef for the printf()-style callback function used
+ * during application exit to print summary statistics.
+ */
+typedef int (*bu_heap_func_t)(const char *, ...);
+
+/**
+ * This function registers and returns the current printing function
+ * that will be used during application exit (via an atexit() handler)
+ * if the BU_HEAP_PRINT environment variable is set.  Statistics on
+ * calls to bu_heap_get() and bu_heap_put() will be logged.  If log is
+ * NULL, the currently set function will remain unchanged and will be
+ * returned.
+ */
+BU_EXPORT extern bu_heap_func_t bu_heap_log(bu_heap_func_t log);
+
 
 /** @} */
 
@@ -4813,7 +4826,9 @@ BU_EXPORT extern void bu_rb_walk(struct bu_rb_tree *tree, int order, void (*visi
 #define BU_SEM_BN_NOISE 2
 #define BU_SEM_MAPPEDFILE 3
 #define BU_SEM_THREAD 4
-#define BU_SEM_LAST (BU_SEM_THREAD+1)	/* allocate this many for LIBBU+LIBBN */
+#define BU_SEM_MALLOC 5
+#define BU_SEM_DATETIME 6
+#define BU_SEM_LAST (BU_SEM_DATETIME+1)	/* allocate this many for LIBBU+LIBBN */
 /*
  * Automatic restart capability in bu_bomb().  The return from
  * BU_SETJUMP is the return from the setjmp().  It is 0 on the first
@@ -6169,6 +6184,20 @@ BU_EXPORT extern int bu_simd_supported(int level);
  * Return microsecond accuracy time information.
  */
 BU_EXPORT extern int64_t bu_gettime();
+
+/** @} */
+
+/** @addtogroup file */
+/** @ingroup io */
+/** @{ */
+/**
+ * Evaluate the time_t input as UTC time in ISO format.
+ *
+ * The UTC time is written into the user-provided bu_vls struct and is
+ * also returned and guaranteed to be a non-null result, returning a
+ * static "NULL" UTC time if an error is encountered.
+ */
+BU_EXPORT void bu_utctime(struct bu_vls *utc_result, const int64_t time_val);
 
 /** @} */
 

@@ -193,7 +193,7 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
     intern.idb_type = ID_BOT;
     intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern.idb_minor_type = DB5_MINORTYPE_BRLCAD_BOT;
-    intern.idb_meth = &rt_functab[ID_BOT];
+    intern.idb_meth = &OBJ[ID_BOT];
     intern.idb_ptr = (genptr_t)bots[0];
 
     GED_DB_DIRADD(gedp, new_dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type, GED_ERROR);

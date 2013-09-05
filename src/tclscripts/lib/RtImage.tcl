@@ -26,23 +26,28 @@
 package provide cadwidgets::RtImage 1.0
 
 namespace eval cadwidgets {
-proc rtimage {_dbfile
-	      _port
-	      _w _n
-	      _viewsize
-	      _orientation
-	      _eye_pt
-	      _perspective
-	      _bgcolor
-	      _ecolor
-	      _necolor
-	      _occmode
-	      _gamma
-	      _color_objects
-	      _ghost_objects
-	      _edge_objects} {
+proc rtimage {rtimage_dict} {
     global tcl_platform
     global env
+    set necessary_vars [list _dbfile _port _w _n _viewsize _orientation \
+    _eye_pt _perspective _bgcolor _ecolor _necolor _occmode _gamma]
+    set necessary_lists [list _color_objects _ghost_objects _edge_objects]
+
+    # It's the responsibility of the calling function
+    # to populate the dictionary with what is needed.
+    # Make the variables for local processing.
+    foreach param [dict keys $rtimage_dict] {
+        set $param [dict get $rtimage_dict $param]
+    }
+
+    # Anything we don't already have from the dictionary
+    # is assumed empty
+    foreach var ${necessary_vars} {
+      if {![info exists $var]} { set $var "" }
+    }
+    foreach var ${necessary_lists} {
+      if {![info exists $var]} { set $var {} }
+    }
 
     set ar [ expr $_w.0 / $_n.0 ]
 
@@ -107,7 +112,7 @@ proc rtimage {_dbfile
 		set fgMode [list set fg=[lindex $_ecolor 0],[lindex $_ecolor 1],[lindex $_ecolor 2]]
 
 		set ce_objects {}
-		set cne_objects {}
+		set ne_objects {}
 		foreach cobj $_color_objects {
 		    set i [lsearch $_edge_objects $cobj]
 		    if {$i != -1} {

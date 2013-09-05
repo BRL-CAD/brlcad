@@ -58,6 +58,14 @@ struct gcv_data {
 static struct gcv_data gcvwriter;
 
 static void
+usage(const char *argv0)
+{
+    bu_log("\nUsage: %s [-bv89] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol]\n", argv0);
+    bu_log("[-D dist_calc_tol] [-P #_of_CPUs] [-o output_file_name.egg] brlcad_db.g object(s)\n");
+    bu_exit(1,NULL);
+}
+
+static void
 nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id), float UNUSED(color[3]))
 {
     struct model *m;
@@ -176,8 +184,6 @@ nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 int
 main(int argc, char *argv[])
 {
-    char usage[] = "Usage: %s [-bvM] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol] [-o output_file_name.egg] brlcad_db.g object(s)\n";
-
     int verbose = 0;
     int ncpu = 1;			/* Number of processors */
     char *output_file = NULL;	/* output filename */
@@ -218,10 +224,10 @@ main(int argc, char *argv[])
 
     /* make empty NMG model */
     the_model = nmg_mm();
-    BU_LIST_INIT(&rt_g.rtg_vlfree);	/* for vlist macros */
+    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
-    while ((i = bu_getopt(argc, argv, "a:b89n:o:r:vx:D:P:X:i")) != -1) {
+    while ((i = bu_getopt(argc, argv, "a:b89n:o:r:vx:D:P:X:h?")) != -1) {
 	switch (i) {
 	    case 'a':		/* Absolute tolerance. */
 		ttol.abs = atof(bu_optarg);
@@ -242,10 +248,9 @@ main(int argc, char *argv[])
 		break;
 	    case 'P':
 		ncpu = atoi(bu_optarg);
-		rt_g.debug = 1;
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
 		break;
 	    case 'D':
 		gcvwriter.tol.dist = atof(bu_optarg);
@@ -253,7 +258,7 @@ main(int argc, char *argv[])
 		rt_pr_tol(&gcvwriter.tol);
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
 		break;
 	    case '8':
 		use_mc = 1;
@@ -261,18 +266,13 @@ main(int argc, char *argv[])
 	    case '9':
 		use_bottess = 1;
 		break;
-	    case '?':
-		bu_log("Unknown argument: \"%c\"\n", i);
-		bu_exit(1, usage, argv[0]);
 	    default:
-		bu_log("Booga. %c\n", i);
-		bu_exit(1, usage, argv[0]);
+		usage(argv[0]);
 	}
     }
 
-    if (bu_optind+1 >= argc) {
-	bu_exit(1, usage, argv[0]);
-    }
+    if (bu_optind+1 >= argc)
+	usage(argv[0]);
 
     gcvwriter.fp = stdout;
     if (output_file) {
@@ -286,7 +286,7 @@ main(int argc, char *argv[])
     argc -= bu_optind;
     argv += bu_optind;
     if(argc < 2 || argv[0] == NULL || argv[1] == NULL)
-	bu_exit(1, usage, argv[0]);
+	usage(argv[0]);
 
     gcvwriter.func = nmg_to_egg;
 

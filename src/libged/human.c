@@ -192,7 +192,7 @@ struct legInfo
 };
 
 
-enum genders { male, female };
+enum sexes { male, female };
 enum ethnicities { generic, white, black, hispanic, asian, other }; /* divisions taken from army demographic sheet */
 
 /*Top level struct that holds all body information */
@@ -200,7 +200,7 @@ struct human_data_t
 {
     fastf_t height;         	/* Height of person standing, inches */
     int age;                	/* Age of person, (still relevant?) */
-    enum genders gender;    	/* Gender of person */
+    enum sexes sex;    	        /* Sex of person */
     enum ethnicities ethnicity;	/* Ethnicity of person */
 
     /* Various part lengths */
@@ -1510,60 +1510,6 @@ Manual(struct human_data_t *dude)
 }
 
 
-#if 0
-/**
- * Goes through the human struct and sets all measurements to needed
- * measurements, i.e. if certain percentile person is needed, those
- * measurements are set.
- */
-HIDDEN void
-setMeasurements(struct human_data_t *UNUSED(dude), fastf_t percentile)
-{
-    /* If percentile, load data from database or something */
-
-    /* Standing height from this point on will be derived from gathered values
-     * so it will be a combination of leglength, torsolength, and headsize. So standing
-     * height itself is now mostly irrelevant
-     */
-    bu_log("Setting %.0f percentile data\n", percentile);
-
-/*	Find a method of database storage first, then apply those values to here */
-    dude->head.headSize=
-	dude->head.neckLength=
-	dude->head.neckWidth=
-
-	dude->torso.topTorsoLength=
-	dude->torso.lowTorsoLength=
-	dude->torso.shoulderWidth=
-	dude->torso.shoulderDepth=
-	dude->torso.abWidth=
-	dude->torso.abDepth=
-	dude->torso.pelvisWidth=
-	dude->torso.pelvisDepth=
-	dude->torso.torsoLength= dude->torso.topTorsoLength + dude->torso.lowTorsoLength;
-
-    dude->arms.upperArmWidth=
-	dude->arms.upperArmLength=
-	dude->arms.lowerArmLength=
-	dude->arms.elbowWidth=
-	dude->arms.wristWidth=
-	dude->arms.handLength=
-	dude->arms.handWidth=
-	dude->arms.armLength=dude->arms.upperArmLength + dude->arms.lowerArmLength + dude->arms.handLength;
-
-    dude->legs.thighLength=
-	dude->legs.thighWidth=
-	dude->legs.calfLength=
-	dude->legs.kneeWidth=
-	dude->legs.footLength=
-	dude->legs.ankleWidth=
-	dude->legs.toeWidth=
-	dude->legs.legLength=dude->legs.thighLength + dude->legs.calfLength;
-
-    dude.height=(dude->torso.torsoLength + dude->legs.legLength + dude->head.headSize);
-}
-#endif
-
 /**
  * Help message printed when -h/-? option is supplied
  */
@@ -2282,8 +2228,6 @@ ged_human(struct ged *gedp, int ac, const char *av[])
     bu_log("%.2f %.2f %.2f\n", location[X], location[Y], location[Z]);
 
 /******MAGIC******/
-/*Magically set pose, and apply pose to human geometry*/
-    /*setMeasurements(&human_data, percentile);*/
 
     /* This applies the generic end-name to the high-level object */
     bu_log("%s\n", topLevel);

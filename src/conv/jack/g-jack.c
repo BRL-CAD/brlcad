@@ -38,11 +38,14 @@
 #include "plot3.h"
 
 
-static const char usage[] = "\
-Usage: %s [-v] [-d] [-f] [-xX lvl] [-u eu_dist]\n\
-	[-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol]\n\
-	[-D dist_calc_tol]\n\
-	[-p prefix] brlcad_db.g object(s)\n";
+static const char usage[] =
+  "Usage: %s [-v] [-d] [-f] [-xX lvl] [-u eu_dist]\n"
+  "       [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol]\n"
+  "       [-D dist_calc_tol] [-p prefix]\n"
+  "       [-P #_of_cpus] brlcad_db.g object(s)\n"
+  ;
+
+static const char optstring[] = "a:dfn:p:r:u:vx:D:P:X:h?";
 
 static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int	verbose;
@@ -235,7 +238,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before before bombing out.
 	 */
-	rt_g.NMG_debug = NMG_debug;/* restore mode */
+	RTG.NMG_debug = NMG_debug;/* restore mode */
 
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();
@@ -362,7 +365,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 	if (debug_plots)  {
 	    FILE	*fp;
 	    bu_vls_vlscat(&file, &file_base);
-	    bu_vls_strcat(&file, ".pl");
+	    bu_vls_strcat(&file, ".plot3");
 
 	    if ((fp = fopen(bu_vls_addr(&file), "wb")) == NULL)
 		perror(bu_vls_addr(&file));
@@ -446,10 +449,10 @@ main(int argc, char **argv)
     rt_init_resource(&rt_uniresource, 0, NULL);
 
     the_model = nmg_mm();
-    BU_LIST_INIT(&rt_g.rtg_vlfree);	/* for vlist macros */
+    BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "a:dfn:p:r:u:vx:D:P:X:")) != -1) {
+    while ((c = bu_getopt(argc, argv, optstring)) != -1) {
 	switch (c) {
 	    case 'a':		/* Absolute tolerance. */
 		ttol.abs = atof(bu_optarg);
@@ -477,10 +480,9 @@ main(int argc, char **argv)
 		break;
 	    case 'P':
 		ncpu = atoi(bu_optarg);
-		rt_g.debug = 1;
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
 		break;
 	    case 'D':
 		tol.dist = atof(bu_optarg);
@@ -488,8 +490,8 @@ main(int argc, char **argv)
 		rt_pr_tol(&tol);
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug);
-		NMG_debug = rt_g.NMG_debug;
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
+		NMG_debug = RTG.NMG_debug;
 		break;
 	    default:
 		bu_exit(1, usage, argv[0]);
@@ -497,9 +499,8 @@ main(int argc, char **argv)
 	}
     }
 
-    if (bu_optind+1 >= argc) {
+    if (bu_optind+1 >= argc)
 	bu_exit(1, usage, argv[0]);
-    }
 
     /* Open BRL-CAD database */
     argc -= bu_optind;
@@ -554,6 +555,9 @@ main(int argc, char **argv)
     fprintf(fp_fig, "\troot=%s_seg.base;\n", bu_vls_addr(&base_seg));
     fprintf(fp_fig, "}\n");
     fclose(fp_fig);
+    bu_log("Writing file %s\n", bu_vls_addr(&fig_file));
+    if (!no_file_output)
+	printf("(check for writing of other files)\n");
     bu_vls_free(&fig_file);
     bu_vls_free(&base_seg);
 

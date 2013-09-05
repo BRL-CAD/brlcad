@@ -658,7 +658,7 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
 	    comb->GIFTmater = wdbp->wdb_mat_default;
 
 	    bu_vls_printf(&tmp_vls,
-			  "Creating region id=%ld, air=%ld, los=%ld, GIFTmaterial=%ld\n",
+			  "Creating region with attrs: region_id=%ld, air=%ld, los=%ld, material_id=%ld\n",
 			  comb->region_id, comb->aircode, comb->los, comb->GIFTmater);
 	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	    bu_vls_free(&tmp_vls);
@@ -669,7 +669,7 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
 	RT_DB_INTERNAL_INIT(&intern);
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_COMBINATION;
-	intern.idb_meth = &rt_functab[ID_COMBINATION];
+	intern.idb_meth = &OBJ[ID_COMBINATION];
 	intern.idb_ptr = (genptr_t)comb;
 
 	dp=db_diradd(wdbp->dbip, comb_name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type);

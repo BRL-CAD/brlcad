@@ -571,7 +571,7 @@ main(int argc, char **argv)
 {
 
     bu_debug = BU_DEBUG_COREDUMP;
-    rt_g.debug = 1;
+    RTG.debug = 1;
 
     make_ntsc_xyz2rgb(xyz2rgb);
 

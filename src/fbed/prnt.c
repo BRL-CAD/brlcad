@@ -50,9 +50,9 @@ static char *usage[] =
     "",
     "fbed (2.1)",
     "",
-    "Usage: fbed [-hp]",
+    "Usage: fbed [-Hp]",
     "",
-    "options : -h   use high resolution display",
+    "options : -H   use high resolution display",
     "          -p   open the GTCO bit pad",
     0
 };

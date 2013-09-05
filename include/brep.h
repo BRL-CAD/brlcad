@@ -36,6 +36,7 @@ extern "C++" {
 #include <vector>
 #include <list>
 #include <iostream>
+#include <queue>
 #include <assert.h>
 
 
@@ -76,7 +77,10 @@ typedef struct _on_brep_placeholder {
 #define BREP_INTERSECTION_ROOT_SETTLE 1e-2
 /** Jungle Gym epsilon */
 
-/* Use vector operations? For debugging */
+/** tighten BREP grazing tolerance to 0.000017453(0.001 degrees) was using RT_DOT_TOL at 0.001 (0.05 degrees) **/
+#define BREP_GRAZING_DOT_TOL 0.000017453
+
+/** Use vector operations? For debugging */
 #define DO_VECTOR 1
 
 #ifndef BREP_EXPORT
@@ -168,13 +172,10 @@ public:
     }
 
     /**
-     * Description:
-     *  Intersect two 2d Rays
-     * Parameters:
-     *  v - [in] other ray to intersect with
-     *  isect - [out] point of intersection
-     * Returns:
-     *  true if single point of intersection is found
+     * Intersect two 2d Rays
+     * @param v [in] other ray to intersect with
+     * @param isect [out] point of intersection
+     * @return true if single point of intersection is found
      */
     bool IntersectRay(const ON_Ray& v, ON_2dPoint& isect) const
     {
@@ -197,22 +198,24 @@ BREP_EXPORT void utah_ray_planes(const ON_Ray &r, ON_3dVector &p1, double &p1d, 
 
 BREP_EXPORT bool ON_NearZero(double x, double tolerance = ON_ZERO_TOLERANCE);
 
-/* Maximum per-surface BVH depth */
+/** Maximum per-surface BVH depth */
 #define BREP_MAX_FT_DEPTH 8
 #define BREP_MAX_LN_DEPTH 20
 #define SIGN(x) ((x) >= 0 ? 1 : -1)
-/* Surface flatness parameter, Abert says between 0.8-0.9 */
+/** Surface flatness parameter, Abert says between 0.8-0.9 */
 #define BREP_SURFACE_FLATNESS 0.85
 #define BREP_SURFACE_STRAIGHTNESS 0.75
-/* Max newton iterations when finding closest point */
+/** Max newton iterations when finding closest point */
 #define BREP_MAX_FCP_ITERATIONS 50
-/* Root finding epsilon */
+/** Root finding epsilon */
 #define BREP_FCP_ROOT_EPSILON 1e-5
-/* trim curve point sampling count for isLinear() check and possibly growing bounding box*/
+/** trim curve point sampling count for isLinear() check and possibly
+ * growing bounding box
+ */
 #define BREP_BB_CRV_PNT_CNT 10
 #define BREP_CURVE_FLATNESS 0.95
 
-/* subdivision size factors */
+/** subdivision size factors */
 #define BREP_SURF_SUB_FACTOR 1
 #define BREP_TRIM_SUB_FACTOR 1
 
@@ -286,12 +289,14 @@ public:
     /**
      * Get 2 points defining bounding box:
      *
+     * @verbatim
      *       *----------------max
      *       |                 |
      *  v    |                 |
      *       |                 |
      *      min----------------*
      *                 u
+     * @endverbatim
      */
     void GetBBox(fastf_t* min, fastf_t* max) const;
 
@@ -861,8 +866,6 @@ public:
     int depth();
 
 private:
-    fastf_t getVerticalTangent(const ON_Curve *curve, fastf_t min, fastf_t max);
-    fastf_t getHorizontalTangent(const ON_Curve *curve, fastf_t min, fastf_t max);
     bool getHVTangents(const ON_Curve* curve, ON_Interval& t, std::list<fastf_t>& list);
     bool isLinear(const ON_Curve* curve, double min, double max);
     BRNode* subdivideCurve(const ON_Curve* curve, int adj_face_index, double min, double max, bool innerTrim, int depth);
@@ -892,33 +895,34 @@ public:
 
     ~BVNode();
 
-    /* List of all children of a given node */
+    /** List of all children of a given node */
     typedef std::vector<BVNode<BV>*> ChildList;
     ChildList m_children;
 
-    /* Curve Tree associated with the parent Surface Tree */
+    /** Curve Tree associated with the parent Surface Tree */
     CurveTree* m_ctree;
 
-    /* Bounding Box */
+    /** Bounding Box */
     BV m_node;
 
-    /* Test if this node is a leaf node in the hierarchy */
+    /** Test if this node is a leaf node in the hierarchy */
     bool isLeaf();
 
-    /* Return all leaves below this node that are leaf nodes */
+    /** Return all leaves below this node that are leaf nodes */
     void getLeaves(std::list<BVNode<BV>*>& out_leaves);
 
-    /* Functions to add and remove child nodes from this node. */
+    /** Functions to add and remove child nodes from this node. */
     void addChild(const BV& child);
     void addChild(BVNode<BV>* child);
     void removeChild(const BV& child);
     void removeChild(BVNode<BV>* child);
 
-    /* Report the depth of this node in the hierarchy */
+    /** Report the depth of this node in the hierarchy */
     int depth();
 
-    /* Get 2 points defining a bounding box
+    /** Get 2 points defining a bounding box
      *
+     * @verbatim
      *                _  max  _
      *        _   -       +      -  _
      *     *  _           +         _  *
@@ -930,20 +934,21 @@ public:
      *     *  _          |          _  *
      *            -   _  |  _   -
      *                  min
+     * @endverbatim
      */
     void GetBBox(float* min, float* max);
     void GetBBox(double* min, double* max);
 
-    /* Surface Information */
+    /** Surface Information */
     const ON_BrepFace* m_face;
     ON_Interval m_u;
     ON_Interval m_v;
 
-    /* Trimming Flags */
+    /** Trimming Flags */
     bool m_checkTrim;
     bool m_trimmed;
 
-    /* Point used for closeness testing - usually based on evaluation
+    /** Point used for closeness testing - usually based on evaluation
      * of the curve/surface at the center of the parametric domain
      */
     ON_3dPoint m_estimate;
@@ -951,14 +956,14 @@ public:
     /* Normal at the m_estimate point */
     ON_3dVector m_normal;
 
-    /* Test whether a ray intersects the 3D bounding volume of the
+    /** Test whether a ray intersects the 3D bounding volume of the
      * node - if so, and node is not a leaf node, query children.  If
      * leaf node, and intersects, add to list.
      */
     bool intersectedBy(ON_Ray& ray, double* tnear = 0, double* tfar = 0);
     bool intersectsHierarchy(ON_Ray& ray, std::list<BVNode<ON_BoundingBox>*>& results);
 
-    /* Report if a given uv point is within the uv boundaries defined
+    /** Report if a given uv point is within the uv boundaries defined
      * by a node.
      */
     bool containsUV(const ON_2dPoint& uv);
@@ -1631,12 +1636,12 @@ private:
     bool isStraight(ON_Plane frames[]);
     bool isFlatU(ON_Plane frames[]);
     bool isFlatV(ON_Plane frames[]);
-    BBNode* subdivideSurfaceByKnots(const ON_Surface *localsurf, const ON_Interval& u, const ON_Interval& v, ON_Plane frames[], ON_3dPoint corners[], ON_3dVector normals[], int depth, int depthLimit);
-    BBNode* subdivideSurface(const ON_Surface *localsurf, const ON_Interval& u, const ON_Interval& v, ON_Plane frames[], ON_3dPoint corners[], ON_3dVector normals[], int depth, int depthLimit);
-    BBNode* surfaceBBox(const ON_Surface *localsurf, bool leaf, ON_3dPoint corners[], ON_3dVector normals[], const ON_Interval& u, const ON_Interval& v);
+    BBNode* subdivideSurface(const ON_Surface *localsurf, const ON_Interval& u, const ON_Interval& v, ON_Plane frames[], int depth, int depthLimit, int prev_knot);
+    BBNode* surfaceBBox(const ON_Surface *localsurf, bool leaf, ON_Plane frames[], const ON_Interval& u, const ON_Interval& v);
 
     const ON_BrepFace* m_face;
     BBNode* m_root;
+    std::queue<ON_Plane *> f_queue;
 };
 
 
@@ -1730,112 +1735,292 @@ interpolateLocalCubicCurve(const ON_3dPointArray &Q);
 extern BREP_EXPORT void
 DumpSSXEvent(ON_SSX_EVENT &x, ON_TextLog &text_log);
 
-/**
- * An overload of ON_Intersect for surface-surface intersection.
- *
- * Description:
- *   Intersect surfaceA with surfaceB.
- *
- * Parameters:
- *   surfaceA - [in]
- *
- *   surfaceB - [in]
- *
- *   x - [out]
- *     Intersection events are appended to this array.
- *
- *   intersection_tolerance - [in]
- *     If the input intersection_tolerance <= 0.0, then 0.001 is used.
- *
- *   overlap_tolerance - [in]
- *     If positive, then overlap_tolerance must be
- *     >= intersection_tolerance and is used to test for
- *     overlapping regions. If the input
- *     overlap_tolerance <= 0.0, then 2*intersection_tolerance
- *     is used.
- *
- *   fitting_tolerance - [in]
- *     If fitting_tolerance is > 0 and >= intersection_tolerance,
- *     then the intersection curves are fit to this tolerance.
- *     If input fitting_tolerance <= 0.0 or < intersection_tolerance,
- *     then intersection_tolerance is used.
- *
- *   surfaceA_udomain - [in]
- *     optional restriction on surfaceA u domain
- *   surfaceA_vdomain - [in]
- *     optional restriction on surfaceA v domain
- *
- *   surfaceB_udomain - [in]
- *     optional restriction on surfaceB u domain
- *   surfaceB_vdomain - [in]
- *     optional restriction on surfaceB v domain
- *
- * Returns:
- *    Number of intersection events appended to x. -1 for error.
+/* Sub-division support for a curve.
+ * It's similar to generating the bounding box tree, when the Split()
+ * method is called, the curve is split into two parts, whose bounding
+ * boxes become the children of the original curve's bbox.
  */
+class Subcurve {
+    friend class Subsurface;
+private:
+    ON_BoundingBox m_node;
+public:
+    ON_Curve *m_curve;
+    ON_Interval m_t;
+    Subcurve *m_children[2];
+    ON_BOOL32 m_islinear;
 
-extern BREP_EXPORT int
-ON_Intersect(const ON_Surface* surfA,
-	     const ON_Surface* surfB,
-	     ON_ClassArray<ON_SSX_EVENT>& x,
-	     double intersection_tolerance = 0.0,
-	     double overlap_tolerance = 0.0,
-	     double fitting_tolerance = 0.0,
-	     const ON_Interval* surfaceA_udomain = 0,
-	     const ON_Interval* surfaceA_vdomain = 0,
-	     const ON_Interval* surfaceB_udomain = 0,
-	     const ON_Interval* surfaceB_vdomain = 0);
+    Subcurve() : m_curve(NULL), m_islinear(false)
+    {
+	m_children[0] = m_children[1] = NULL;
+    }
+    Subcurve(ON_Curve* curve)
+    {
+	m_curve = curve;
+	if (curve) {
+	    m_node = curve->BoundingBox();
+	    m_t = curve->Domain();
+	    m_islinear = curve->IsLinear();
+	} else
+	    m_islinear = false;
+	m_children[0] = m_children[1] = NULL;
+    }
+    Subcurve(const Subcurve &_scurve)
+    {
+	m_islinear = _scurve.m_islinear;
+	m_curve = _scurve.m_curve->Duplicate();
+	m_t = _scurve.m_t;
+	m_children[0] = m_children[1] = NULL;
+	SetBBox(_scurve.m_node);
+    }
+    ~Subcurve()
+    {
+	for (int i = 0; i < 2; i++) {
+	    if (m_children[i])
+		delete m_children[i];
+	}
+	delete m_curve;
+    }
+    int Split()
+    {
+	if (m_children[0] && m_children[1])
+	    return 0;
 
-/* The ON_PX_EVENT class is used to report point-point, point-curve
+	for (int i = 0; i < 2; i++)
+	    m_children[i] = new Subcurve();
+	ON_SimpleArray<double> pline_t;
+	double split_t = m_t.Mid();
+	if (m_curve->IsPolyline(NULL, &pline_t) && pline_t.Count() > 2) {
+	    split_t = pline_t[pline_t.Count()/2];
+	}
+	if (m_curve->Split(split_t, m_children[0]->m_curve, m_children[1]->m_curve) == false)
+	    return -1;
+
+	m_children[0]->m_t = m_children[0]->m_curve->Domain();
+	m_children[0]->SetBBox(m_children[0]->m_curve->BoundingBox());
+	m_children[0]->m_islinear = m_children[0]->m_curve->IsLinear();
+	m_children[1]->m_t = m_children[1]->m_curve->Domain();
+	m_children[1]->SetBBox(m_children[1]->m_curve->BoundingBox());
+	m_children[1]->m_islinear = m_children[1]->m_curve->IsLinear();
+
+	return 0;
+    }
+    void GetBBox(ON_3dPoint &min, ON_3dPoint &max)
+    {
+	min = m_node.m_min;
+	max = m_node.m_max;
+    }
+    void SetBBox(const ON_BoundingBox &bbox)
+    {
+	m_node = bbox;
+    }
+    bool IsPointIn(const ON_3dPoint &pt, double tolerance = 0.0)
+    {
+	ON_3dVector vtol(tolerance, tolerance, tolerance);
+	ON_BoundingBox new_bbox(m_node.m_min-vtol, m_node.m_max+vtol);
+	return new_bbox.IsPointIn(pt);
+    }
+    bool Intersect(const Subcurve& other, double tolerance = 0.0, ON_BoundingBox* intersection = NULL) const
+    {
+	ON_3dVector vtol(tolerance, tolerance, tolerance);
+	ON_BoundingBox new_bbox(m_node.m_min-vtol, m_node.m_max+vtol);
+	ON_BoundingBox box;
+	bool ret = box.Intersection(new_bbox, other.m_node);
+	if (intersection != NULL)
+	    *intersection = box;
+	return ret;
+    }
+};
+
+/* Sub-division support for a surface.
+ * It's similar to generating the bounding box tree, when the Split()
+ * method is called, the surface is split into two parts, whose bounding
+ * boxes become the children of the original surface's bbox.
+ */
+class Subsurface {
+private:
+    ON_BoundingBox m_node;
+public:
+    ON_Surface *m_surf;
+    ON_Interval m_u, m_v;
+    Subsurface *m_children[4];
+    ON_BOOL32 m_isplanar;
+
+    Subsurface() : m_surf(NULL), m_isplanar(false)
+    {
+	m_children[0] = m_children[1] = m_children[2] = m_children[3] = NULL;
+    }
+    Subsurface(ON_Surface* surf)
+    {
+	m_surf = surf;
+	if (surf) {
+	    SetBBox(surf->BoundingBox());
+	    m_u = surf->Domain(0);
+	    m_v = surf->Domain(1);
+	    m_isplanar = surf->IsPlanar();
+	} else
+	    m_isplanar = false;
+	m_children[0] = m_children[1] = m_children[2] = m_children[3] = NULL;
+    }
+    Subsurface(const Subsurface &_ssurf)
+    {
+	m_surf = _ssurf.m_surf->Duplicate();
+	m_u = _ssurf.m_u;
+	m_v = _ssurf.m_v;
+	m_isplanar = _ssurf.m_isplanar;
+	m_children[0] = m_children[1] = m_children[2] = m_children[3] = NULL;
+	SetBBox(_ssurf.m_node);
+    }
+    ~Subsurface()
+    {
+	for (int i = 0; i < 4; i++) {
+	    if (m_children[i])
+		delete m_children[i];
+	}
+	delete m_surf;
+    }
+    int Split()
+    {
+	if (m_children[0] && m_children[1] && m_children[2] && m_children[3])
+	    return 0;
+
+	for (int i = 0; i < 4; i++)
+	    m_children[i] = new Subsurface();
+	ON_Surface *temp_surf1 = NULL, *temp_surf2 = NULL;
+	ON_BOOL32 ret = true;
+	ret = m_surf->Split(0, m_surf->Domain(0).Mid(), temp_surf1, temp_surf2);
+	if (!ret) {
+	    delete temp_surf1;
+	    delete temp_surf2;
+	    return -1;
+	}
+
+	ret = temp_surf1->Split(1, m_surf->Domain(1).Mid(), m_children[0]->m_surf, m_children[1]->m_surf);
+	delete temp_surf1;
+	if (!ret) {
+	    delete temp_surf2;
+	    return -1;
+	}
+	m_children[0]->m_u = ON_Interval(m_u.Min(), m_u.Mid());
+	m_children[0]->m_v = ON_Interval(m_v.Min(), m_v.Mid());
+	m_children[0]->SetBBox(m_children[0]->m_surf->BoundingBox());
+	m_children[0]->m_isplanar = m_children[0]->m_surf->IsPlanar();
+	m_children[1]->m_u = ON_Interval(m_u.Min(), m_u.Mid());
+	m_children[1]->m_v = ON_Interval(m_v.Mid(), m_v.Max());
+	m_children[1]->SetBBox(m_children[1]->m_surf->BoundingBox());
+	m_children[1]->m_isplanar = m_children[1]->m_surf->IsPlanar();
+
+	ret = temp_surf2->Split(1, m_v.Mid(), m_children[2]->m_surf, m_children[3]->m_surf);
+	delete temp_surf2;
+	if (!ret)
+	    return -1;
+	m_children[2]->m_u = ON_Interval(m_u.Mid(), m_u.Max());
+	m_children[2]->m_v = ON_Interval(m_v.Min(), m_v.Mid());
+	m_children[2]->SetBBox(m_children[2]->m_surf->BoundingBox());
+	m_children[2]->m_isplanar = m_children[2]->m_surf->IsPlanar();
+	m_children[3]->m_u = ON_Interval(m_u.Mid(), m_u.Max());
+	m_children[3]->m_v = ON_Interval(m_v.Mid(), m_v.Max());
+	m_children[3]->SetBBox(m_children[3]->m_surf->BoundingBox());
+	m_children[3]->m_isplanar = m_children[3]->m_surf->IsPlanar();
+
+	return 0;
+    }
+    void GetBBox(ON_3dPoint &min, ON_3dPoint &max)
+    {
+	min = m_node.m_min;
+	max = m_node.m_max;
+    }
+    void SetBBox(const ON_BoundingBox &bbox)
+    {
+	m_node = bbox;
+	/* Make sure that each dimension of the bounding box is greater than
+	 * ON_ZERO_TOLERANCE.
+	 * It does the same work as building the surface tree when ray tracing
+	 */
+	for (int i = 0; i < 3; i++) {
+	    double d = m_node.m_max[i] - m_node.m_min[i];
+	    if (ON_NearZero(d, ON_ZERO_TOLERANCE)) {
+		m_node.m_min[i] -= 0.001;
+		m_node.m_max[i] += 0.001;
+	    }
+	}
+    }
+    bool IsPointIn(const ON_3dPoint &pt, double tolerance = 0.0)
+    {
+	ON_3dVector vtol(tolerance, tolerance, tolerance);
+	ON_BoundingBox new_bbox(m_node.m_min-vtol, m_node.m_max+vtol);
+	return new_bbox.IsPointIn(pt);
+    }
+    bool Intersect(const Subcurve& curve, double tolerance = 0.0, ON_BoundingBox* intersection = NULL) const
+    {
+	ON_3dVector vtol(tolerance, tolerance, tolerance);
+	ON_BoundingBox new_bbox(m_node.m_min-vtol, m_node.m_max+vtol);
+	ON_BoundingBox box;
+	bool ret = box.Intersection(new_bbox, curve.m_node);
+	if (intersection != NULL)
+	    *intersection = box;
+	return ret;
+    }
+    bool Intersect(const Subsurface& surf, double tolerance = 0.0, ON_BoundingBox* intersection = NULL) const
+    {
+	ON_3dVector vtol(tolerance, tolerance, tolerance);
+	ON_BoundingBox new_bbox(m_node.m_min-vtol, m_node.m_max+vtol);
+	ON_BoundingBox box;
+	bool ret = box.Intersection(new_bbox, surf.m_node);
+	if (intersection != NULL)
+	    *intersection = ON_BoundingBox(box.m_min-vtol, box.m_max+vtol);
+	return ret;
+    }
+};
+
+/** The ON_PX_EVENT class is used to report point-point, point-curve
  * and point-surface intersection events.
  */
 class ON_CLASS BREP_EXPORT ON_PX_EVENT
 {
 public:
-    /* Default construction sets everything to zero. */
+    /** Default construction sets everything to zero. */
     ON_PX_EVENT();
 
-    /*
-      Description:
-	Compares point intersection events and sorts them in the
-	canonical order.
-      Returns:
-	@untitled table
-	-1    this  < other
-	 0    this == other
-	+1    this  > other
-      Remarks:
-	ON_PX_EVENT::Compare is used to sort intersection events into canonical
-	order.
-    */
+    /**
+     * Compares point intersection events and sorts them in the
+     * canonical order.
+     *
+     * @retval -1 this < other
+     * @retval  0 this == other
+     * @retval +1 this > other
+     *
+     * @remarks ON_PX_EVENT::Compare is used to sort intersection
+     * events into canonical order.
+     */
     static
     int Compare(const ON_PX_EVENT* a, const ON_PX_EVENT* b);
 
-    /*
-      Description:
-	Check point intersection event values to make sure they are valid.
-      Parameters:
-	text_log - [in] If not null and an error is found, then a description
-			of the error is printed to text_log.
-	intersection_tolerance - [in]
-	     0.0 or value used in intersection calculation.
-	pointA - [in]
-	     NULL or pointA passed to intersection calculation.
-	pointB - [in]
-	     NULL or pointB passed to intersection calculation.
-	curveB - [in]
-	     NULL or curveB passed to intersection calculation.
-	curveB_domain - [in]
-	     NULL or curveB domain used in intersection calculation.
-	surfaceB - [in]
-	     NULL or surfaceB passed to intersection calculation.
-	surfaceB_domain0 - [in]
-	     NULL or surfaceB "u" domain used in intersection calculation.
-	surfaceB_domain1 - [in]
-	     NULL or surfaceB "v" domain used in intersection calculation.
-      Returns:
-	True if event is valid.
-    */
+    /**
+     * Check point intersection event values to make sure they are
+     * valid.
+     *
+     * @param text_log [in] If not null and an error is found, then
+     *     a description of the error is printed to text_log.
+     * @param intersection_tolerance [in] 0.0 or value used in
+     *     intersection calculation.
+     * @param pointA [in] NULL or pointA passed to intersection
+     *     calculation.
+     * @param pointB [in] NULL or pointB passed to intersection
+     *     calculation.
+     * @param curveB [in] NULL or curveB passed to intersection
+     *     calculation.
+     * @param curveB_domain [in] NULL or curveB domain used in
+     *     intersection calculation.
+     * @param surfaceB [in] NULL or surfaceB passed to intersection
+     *     calculation.
+     * @param surfaceB_domain0 [in] NULL or surfaceB "u" domain used
+     *     in intersection calculation.
+     * @param surfaceB_domain1 [in] NULL or surfaceB "v" domain used
+     *     in intersection calculation.
+     *
+     * @return True if event is valid.
+     */
     bool IsValid(ON_TextLog* text_log,
 		 double intersection_tolerance,
 		 const class ON_3dPoint* pointA,
@@ -1850,45 +2035,37 @@ public:
 
     enum TYPE {
 	no_px_event =  0,
-	ppx_point   =  1, /* point-point intersection */
-	pcx_point   =  2, /* point-curve intersection */
-	psx_point   =  3  /* point-surface intersection */
+	ppx_point   =  1, /**< point-point intersection */
+	pcx_point   =  2, /**< point-curve intersection */
+	psx_point   =  3  /**< point-surface intersection */
     };
 
     TYPE m_type;
 
-    ON_3dPoint m_A;	/* Point A in 3D space */
-    ON_3dPoint m_B;	/* Point B in 3D space */
+    ON_3dPoint m_A;	/**< Point A in 3D space */
+    ON_3dPoint m_B;	/**< Point B in 3D space */
 
-    ON_2dPoint m_b;	/* Point B in 2D space for the curve/surface
+    ON_2dPoint m_b;	/**< Point B in 2D space for the curve/surface
 			 * For a curve, m_b[1] == 0
 			 * For a point, m_b[0] == m_b[1] == 0
 			 */
 
-    ON_3dPoint m_Mid;	/* The mid-point of Point A and Point B */
-    double m_radius;	/* To trace the uncertainty area */
+    ON_3dPoint m_Mid;	/**< The mid-point of Point A and Point B */
+    double m_radius;	/**< To trace the uncertainty area */
 };
 
 
 /**
  * An overload of ON_Intersect for point-point intersection.
+ * Intersect pointA with pointB.
  *
- * Description:
- *   Intersect pointA with pointB.
+ * @param pointA [in]
+ * @param pointB [in]
+ * @param x [out] Intersection events are appended to this array.
+ * @param tolerance [in] If the input intersection_tolerance <= 0.0,
+ *     then 0.001 is used.
  *
- * Parameters:
- *   pointA - [in]
- *
- *   pointB - [in]
- *
- *   x - [out]
- *     Intersection events are appended to this array.
- *
- *   tolerance - [in]
- *     If the input intersection_tolerance <= 0.0, then 0.001 is used.
- *
- * Returns:
- *    True for an intersection. False for no intersection.
+ * @return True for an intersection. False for no intersection.
  */
 extern BREP_EXPORT bool
 ON_Intersect(const ON_3dPoint& pointA,
@@ -1898,59 +2075,43 @@ ON_Intersect(const ON_3dPoint& pointA,
 
 /**
  * An overload of ON_Intersect for point-curve intersection.
+ * Intersect pointA with curveB.
  *
- * Description:
- *   Intersect pointA with curveB.
+ * @param pointA [in]
+ * @param pointB [in]
+ * @param x [out] Intersection events are appended to this array.
+ * @param tolerance [in] If the input intersection_tolerance <= 0.0,
+ *     then 0.001 is used.
+ * @param curveB_domain [in] optional restriction on curveB t domain
+ * @param treeB [in] optional curve tree for curveB, to avoid re-computation
  *
- * Parameters:
- *   pointA - [in]
- *
- *   curveB - [in]
- *
- *   x - [out]
- *     Intersection events are appended to this array.
- *
- *   tolerance - [in]
- *     If the input intersection_tolerance <= 0.0, then 0.001 is used.
- *
- *   curveB_domain - [in]
- *     optional restriction on curveB t domain
- *
- * Returns:
- *    True for an intersection. False for no intersection.
+ * @return True for an intersection. False for no intersection.
  */
 extern BREP_EXPORT bool
 ON_Intersect(const ON_3dPoint& pointA,
 	     const ON_Curve& curveB,
 	     ON_ClassArray<ON_PX_EVENT>& x,
 	     double tolerance = 0.0,
-	     const ON_Interval* curveB_domain = 0);
+	     const ON_Interval* curveB_domain = 0,
+	     Subcurve* treeB = 0);
 
 /**
  * An overload of ON_Intersect for point-surface intersection.
+ * Intersect pointA with surfaceB.
  *
- * Description:
- *   Intersect pointA with surfaceB.
+ * @param pointA [in]
+ * @param surfaceB [in]
+ * @param x [out] Intersection events are appended to this array.
+ * @param tolerance [in] If the input intersection_tolerance <= 0.0,
+ *     then 0.001 is used.
+ * @param surfaceB_udomain [in] optional restriction on surfaceB u
+ *     domain
+ * @param surfaceB_vdomain [in] optional restriction on surfaceB v
+ *     domain
+ * @param treeB [in] optional surface tree for surfaceB, to avoid
+ *     re-computation
  *
- * Parameters:
- *   pointA - [in]
- *
- *   surfaceB - [in]
- *
- *   x - [out]
- *     Intersection events are appended to this array.
- *
- *   tolerance - [in]
- *     If the input intersection_tolerance <= 0.0, then 0.001 is used.
- *
- *   surfaceB_udomain - [in]
- *     optional restriction on surfaceB u domain
- *
- *   surfaceB_vdomain - [in]
- *     optional restriction on surfaceB v domain
- *
- * Returns:
- *    True for an intersection. False for no intersection.
+ * @return True for an intersection. False for no intersection.
  */
 extern BREP_EXPORT bool
 ON_Intersect(const ON_3dPoint& pointA,
@@ -1958,7 +2119,172 @@ ON_Intersect(const ON_3dPoint& pointA,
 	     ON_ClassArray<ON_PX_EVENT>& x,
 	     double tolerance = 0.0,
 	     const ON_Interval* surfaceB_udomain = 0,
-	     const ON_Interval* surfaceB_vdomain = 0);
+	     const ON_Interval* surfaceB_vdomain = 0,
+	     Subsurface* treeB = 0);
+
+/**
+ * An overload of ON_Intersect for curve-curve intersection.
+ * Intersect curveA with curveB.
+ *
+ * Parameters:
+ * @param curveA [in]
+ * @param curveB [in]
+ * @param x [out] Intersection events are appended to this array.
+ * @param intersection_tolerance [in]  If the distance from a point
+ *     on curveA to curveB is <= intersection tolerance, then the
+ *     point will be part of an intersection event. If the input
+ *     intersection_tolerance <= 0.0, then 0.001 is used.
+ * @param overlap_tolerance [in] If t1 and t2 are parameters of
+ *     curveA's intersection events and the distance from curveA(t)
+ *     to curveB is <= overlap_tolerance for every t1 <= t <= t2,
+ *     then the event will be returned as an overlap event. If the
+ *     input overlap_tolerance <= 0.0, then
+ *     intersection_tolerance * 2.0 is used.
+ * @param curveA_domain [in] optional restriction on curveA domain
+ * @param curveB_domain [in] optional restriction on curveB domain
+ * @param treeA [in] optional curve tree for curveA, to avoid re
+ *     computation
+ * @param treeB [in] optional curve tree for curveB, to avoid re
+ *     computation
+ *
+ * @return Number of intersection events appended to x.
+ */
+extern BREP_EXPORT int
+ON_Intersect(const ON_Curve* curveA,
+	     const ON_Curve* curveB,
+	     ON_SimpleArray<ON_X_EVENT>& x,
+	     double intersection_tolerance = 0.0,
+	     double overlap_tolerance = 0.0,
+	     const ON_Interval* curveA_domain = 0,
+	     const ON_Interval* curveB_domain = 0,
+	     Subcurve* treeA = 0,
+	     Subcurve* treeB = 0);
+
+/**
+ * An overload of ON_Intersect for curve-surface intersection.
+ * Intersect curveA with surfaceB.
+ *
+ * @param curveA [in]
+ * @param surfaceB [in]
+ * @param x [out] Intersection events are appended to this array.
+ * @param intersection_tolerance [in] If the distance from a
+ *     point on curveA to the surface is <= intersection tolerance,
+ *     then the point will be part of an intersection event, or
+ *     there is an intersection event the point leads to. If the
+ *     input intersection_tolerance <= 0.0, then 0.001 is used.
+ * @param overlap_tolerance [in] If the input overlap_tolerance
+ *     <= 0.0, then 2.0*intersection_tolerance is used.  Otherwise,
+ *     overlap tolerance must be >= intersection_tolerance.  In all
+ *     cases, the intersection calculation is performed with an
+ *     overlap_tolerance that is >= intersection_tolerance.  If t1
+ *     and t2 are curve parameters of intersection events and the
+ *     distance from curve(t) to the surface is <=
+ *     overlap_tolerance for every t1 <= t <= t2, then the event
+ *     will be returned as an overlap event.
+ * @param curveA_domain [in] optional restriction on curveA domain
+ * @param surfaceB_udomain [in] optional restriction on surfaceB
+ *     u domain
+ * @param surfaceB_vdomain [in] optional restriction on surfaceB
+ *     v domain
+ * @param overlap2d [out] return the 2D overlap curves on surfaceB.
+ *     overlap2d[i] is the curve for event x[i].
+ * @param treeA [in] optional curve tree for curveA, to avoid
+ *     re-computation
+ * @param treeB [in] optional surface tree for surfaceB, to avoid
+ *     re-computation
+ *
+ * @return Number of intersection events appended to x.
+ */
+extern BREP_EXPORT int
+ON_Intersect(const ON_Curve* curveA,
+	     const ON_Surface* surfaceB,
+	     ON_SimpleArray<ON_X_EVENT>& x,
+	     double intersection_tolerance = 0.0,
+	     double overlap_tolerance = 0.0,
+	     const ON_Interval* curveA_domain = 0,
+	     const ON_Interval* surfaceB_udomain = 0,
+	     const ON_Interval* surfaceB_vdomain = 0,
+	     ON_CurveArray* overlap2d = 0,
+	     Subcurve* treeA = 0,
+	     Subsurface* treeB = 0);
+
+/**
+ * An overload of ON_Intersect for surface-surface intersection.
+ * Intersect surfaceA with surfaceB.
+ *
+ * @param surfaceA [in]
+ * @param surfaceB [in]
+ * @param x [out] Intersection events are appended to this array.
+ * @param intersection_tolerance [in] If the input
+ *     intersection_tolerance <= 0.0, then 0.001 is used.
+ * @param overlap_tolerance [in] If positive, then overlap_tolerance
+ *     must be >= intersection_tolerance and is used to test for
+ *     overlapping regions. If the input overlap_tolerance <= 0.0,
+ *     then 2*intersection_tolerance is used.
+ * @param fitting_tolerance [in] If fitting_tolerance is > 0 and
+ *     >= intersection_tolerance, then the intersection curves are
+ *     fit to this tolerance.  If input fitting_tolerance <= 0.0 or
+ *     < intersection_tolerance, then intersection_tolerance is used.
+ * @param surfaceA_udomain [in] optional restriction on surfaceA
+ *     u domain
+ * @param surfaceA_vdomain [in] optional restriction on surfaceA
+ *     v domain
+ * @param surfaceB_udomain [in] optional restriction on surfaceB
+ *     u domain
+ * @param surfaceB_vdomain [in] optional restriction on surfaceB
+ *     v domain
+ * @param treeA [in] optional surface tree for surfaceA, to avoid
+ *     re-computation
+ * @param treeB [in] optional surface tree for surfaceB, to avoid
+ *     re-computation
+ *
+ * @return Number of intersection events appended to x.
+ */
+extern BREP_EXPORT int
+ON_Intersect(const ON_Surface* surfA,
+	     const ON_Surface* surfB,
+	     ON_ClassArray<ON_SSX_EVENT>& x,
+	     double intersection_tolerance = 0.0,
+	     double overlap_tolerance = 0.0,
+	     double fitting_tolerance = 0.0,
+	     const ON_Interval* surfaceA_udomain = 0,
+	     const ON_Interval* surfaceA_vdomain = 0,
+	     const ON_Interval* surfaceB_udomain = 0,
+	     const ON_Interval* surfaceB_vdomain = 0,
+	     Subsurface* treeA = 0,
+	     Subsurface* treeB = 0);
+
+
+enum op_type {
+    BOOLEAN_UNION = 0,
+    BOOLEAN_INTERSECT = 1,
+    BOOLEAN_DIFF = 2,
+    BOOLEAN_XOR = 3
+};
+
+
+/**
+ * Evaluate NURBS boolean operations.
+ *
+ * @param brepO [out]
+ * @param brepA [in]
+ * @param brepB [in]
+ * @param operation [in]
+ */
+extern BREP_EXPORT int
+ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type operation);
+
+
+/**
+ * Get the curve segment between param a and param b
+ *
+ * @param in [in] the curve to split
+ * @param a, b [in] either of them can be the larger one
+ *
+ * @return the result curve segment. NULL for error.
+ */
+extern BREP_EXPORT ON_Curve*
+sub_curve(const ON_Curve* in, double a, double b);
 
 } /* extern C++ */
 #endif

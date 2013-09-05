@@ -39,7 +39,7 @@
  *	rt_id_solid()
  * edit raytrace.h to make ID_XXX, increment ID_MAXIMUM
  * edit db_scan.c to add the new solid to db_scan()
- * edit Makefile.am to add g_xxx.c to compile
+ * edit CMakeLists.txt to add g_xxx.c to compile
  *
  * go to src/libwdb and create mk_xxx() routine
  * go to src/conv and edit g2asc.c and asc2g.c to support the new solid

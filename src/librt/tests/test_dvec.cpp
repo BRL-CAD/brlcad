@@ -18,10 +18,13 @@
  * information.
  */
 
+#include "common.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
 #include <assert.h>
+
 #include "vmath.h"
 #include "brep.h"
 #include "dvec.h"

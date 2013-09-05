@@ -26,8 +26,8 @@
  *
  * To obtain a UNIX-plot of a ray file, the procedure is:
  * rayvect -mMM < file.ray > file.vect
- * vectplot -mMM < file.vect > file.plot
- * tplot -Tmeg file.plot # or equivalent
+ * vectplot -mMM < file.vect > file.plot3
+ * tplot -Tmeg file.plot3 # or equivalent
  *
  */
 
