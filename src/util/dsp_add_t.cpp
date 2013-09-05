@@ -132,6 +132,40 @@ add_int(unsigned short *buf1, unsigned short *buf2, unsigned long count)
 }
 
 using namespace std;
+using namespace TCLAP;
+
+// some customization of TCLAP classes
+class BRLCAD_StdOutput : public StdOutput
+{
+  // example usage in main:
+  //   CmdLine cmd("this is a message", ' ', "0.99" );
+  //   // set the output
+  //   BRLCAD_StdOutput brlstdout;
+  //   cmd.setOutput(&brlstdout);
+  //   // proceed normally ...
+
+public:
+  virtual void failure(CmdLineInterface& c, ArgException& e) {
+    list<Arg*> args = c.getArgList(); // quieten compiler
+    cerr << "Input error: " << endl
+         << e.what() << endl;
+    exit(1);
+  }
+
+  virtual void usage(CmdLineInterface& c) {
+    cout << "Usage:" << endl;
+    list<Arg*> args = c.getArgList();
+    for (ArgListIterator it = args.begin(); it != args.end(); it++)
+      cout << (*it)->longID()
+           << "  (" << (*it)->getDescription() << ")" << endl;
+  }
+
+  virtual void version(CmdLineInterface& c) {
+    list<Arg*> args = c.getArgList(); // quieten compiler
+    ; // do not show version
+    //cout << "my version message: 0.1" << endl;
+  }
+};
 
 int
 main(int ac, char *av[])
@@ -153,6 +187,12 @@ main(int ac, char *av[])
       // automatic
       TCLAP::CmdLine cmd(usage, ' ',
                          "[BRL_CAD_VERSION]"); // help and version are automatic
+      // use our subclassed stdout
+      BRLCAD_StdOutput brlstdout;
+      cmd.setOutput(&brlstdout);
+      // proceed normally ...
+
+
 /*
       // we also want the '-?' option (note empty second arg for no
       // long option), last arg means option not required
@@ -163,11 +203,11 @@ main(int ac, char *av[])
                              false); // default value
 */
       // need two file names
-      TCLAP::UnlabeledValueArg<string> dsp1_arg("<dsp_file1>", // name of object
+      TCLAP::UnlabeledValueArg<string> dsp1_arg("dsp_file1", // name of object
                                                 "first dsp input file name", // description
                                                 true,      // arg is required
                                                 "",        // default value
-                                                "string",  // type of arg value
+                                                "dsp_file1",  // type of arg value
                                                 cmd);      // add to cmd object
 
       // need two file names
@@ -175,7 +215,7 @@ main(int ac, char *av[])
                                                 "second dsp input file name", // description
                                                 true,      // arg is required
                                                 "",        // default value
-                                                "string",  // type of arg value
+                                                "dsp_file2",  // type of arg value
                                                 cmd);      // add to cmd object
 
       // parse the args
