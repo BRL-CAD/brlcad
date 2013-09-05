@@ -696,29 +696,29 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
     // rank these intersection points
     // during the time using pts_on_curves(), must make sure that
     // the capacity of intersect[] never change.
-    ON_SimpleArray<ON_SimpleArray<IntersectPoint*>*> pts_on_curves(curves.Count());
-    for (int i = 0; i < curves.Count(); i++)
-	pts_on_curves[i] = new ON_SimpleArray<IntersectPoint*>();
+    ON_ClassArray<ON_SimpleArray<IntersectPoint*> > pts_on_curves(curves.Count());
     for (int i = 0; i < intersect.Count(); i++) {
-	pts_on_curves[intersect[i].m_type]->Append(&(intersect[i]));
+	pts_on_curves[intersect[i].m_type].Append(&(intersect[i]));
     }
     for (int i = 0; i < curves.Count(); i++) {
-	pts_on_curves[i]->QuickSort(compare_for_rank);
-	for (int j = 0; j < pts_on_curves[i]->Count(); j++)
-	    (*pts_on_curves[i])[j]->m_rank = j;
+	pts_on_curves[i].QuickSort(compare_for_rank);
+	for (int j = 0; j < pts_on_curves[i].Count(); j++)
+	    pts_on_curves[i][j]->m_rank = j;
     }
+
+    ON_SimpleArray<IntersectPoint> intersect_append;
 
     // Determine whether it's going inside or outside (IntersectPoint::m_in_out).
     for (int i = 0; i < curves.Count(); i++) {
-	for (int j = 0;  j < pts_on_curves[i]->Count(); j++) {
-	    IntersectPoint* ipt = (*pts_on_curves[i])[j];
-	    if (pts_on_curves[i]->Count() < 2)
+	for (int j = 0;  j < pts_on_curves[i].Count(); j++) {
+	    IntersectPoint* ipt = pts_on_curves[i][j];
+	    if (pts_on_curves[i].Count() < 2)
 		ipt->m_in_out = IntersectPoint::UNSET;
 	    else {
 		ON_3dPoint left = j == 0 ? curves[i].PointAtStart() :
-		    curves[i].PointAt((ipt->m_t_for_rank+(*pts_on_curves[i])[j-1]->m_t_for_rank)*0.5);
-		ON_3dPoint right = j == pts_on_curves[i]->Count() - 1 ? curves[i].PointAtEnd() :
-		    curves[i].PointAt((ipt->m_t_for_rank+(*pts_on_curves[i])[j+1]->m_t_for_rank)*0.5);
+		    curves[i].PointAt((ipt->m_t_for_rank+pts_on_curves[i][j-1]->m_t_for_rank)*0.5);
+		ON_3dPoint right = j == pts_on_curves[i].Count() - 1 ? curves[i].PointAtEnd() :
+		    curves[i].PointAt((ipt->m_t_for_rank+pts_on_curves[i][j+1]->m_t_for_rank)*0.5);
 		// If the point is on the boundary, we treat it with the same
 		// way as it's outside.
 		// For example, the left side is inside, and the right's on
@@ -734,16 +734,16 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 		}
 		if (j == 0 && ON_NearZero(ipt->m_t_for_rank - curves[i].Domain().Min())) {
 		    ipt->m_in_out = right_in ? IntersectPoint::IN : IntersectPoint::OUT;
-		} else if (j == pts_on_curves[i]->Count() - 1 && ON_NearZero(ipt->m_t_for_rank - curves[i].Domain().Max())) {
+		} else if (j == pts_on_curves[i].Count() - 1 && ON_NearZero(ipt->m_t_for_rank - curves[i].Domain().Max())) {
 		    ipt->m_in_out = left_in ? IntersectPoint::OUT : IntersectPoint::IN;
 		} else {
 		    if (left_in && right_in) {
 			// tangent point, both sides in, duplicate that point
-			intersect.Append(*ipt);
-			intersect.Last()->m_in_out = IntersectPoint::IN;
-			intersect.Last()->m_rank = ipt->m_rank+1;
-			for (int k = j + 1; k < pts_on_curves[i]->Count(); k++)
-			    (*pts_on_curves[i])[k]->m_rank++;
+			intersect_append.Append(*ipt);
+			intersect_append.Last()->m_in_out = IntersectPoint::IN;
+			intersect_append.Last()->m_rank = ipt->m_rank+1;
+			for (int k = j + 1; k < pts_on_curves[i].Count(); k++)
+			    pts_on_curves[i][k]->m_rank++;
 			ipt->m_in_out = IntersectPoint::OUT;
 		    } else if (!left_in && !right_in) {
 			// tangent point, both sides out, useless
@@ -757,14 +757,10 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 		    }
 		}
 	    }
-	    if (DEBUG_BREP_BOOLEAN)
-		bu_log("[%d][%d] in_out = %d\n", i, j, ipt->m_in_out);
 	}
     }
-    for (int i = 0; i < curves.Count(); i++) {
-	delete pts_on_curves[i];
-    }
 
+    intersect.Append(intersect_append.Count(), intersect_append.Array());
     intersect.QuickSort(compare_t);
 
     // Split the outer loop.
@@ -858,6 +854,10 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 	}
 	intersect.Last()->m_pos = outerloop.Count() - 1;
     }
+
+    if (DEBUG_BREP_BOOLEAN)
+	for (int i = 0; i < intersect.Count(); i++)
+	    bu_log("intersect[%d](count = %d): m_type = %d, m_rank = %d, m_in_out = %d\n", i, intersect.Count(), intersect[i].m_type, intersect[i].m_rank, intersect[i].m_in_out);
 
     std::stack<int> s;
 
