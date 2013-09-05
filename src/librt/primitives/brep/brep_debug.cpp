@@ -1239,6 +1239,31 @@ brep_trim_bezier_info(struct brep_specific* bs, struct bu_vls *vls, int ti)
 
 
 int
+brep_curve_info(struct brep_specific* bs, struct bu_vls *vls, int ci)
+{
+    ON_Brep* brep = bs->brep;
+    ON_wString wstr;
+    ON_TextLog dump(wstr);
+    if (brep == NULL) {
+	return -1;
+    }
+    if (!((ci >= 0) && (ci < brep->m_C3.Count())))
+	return 0;
+    const ON_Curve *curve = brep->m_C3[ci];
+    ON_NurbsCurve* nc3 = ON_NurbsCurve::New();
+    curve->GetNurbForm(*nc3, 0.0);
+    dump.Print("NURBS form of 3d_curve(edge) \n");
+    nc3->Dump(dump);
+    delete nc3;
+
+    ON_String ss = wstr;
+    bu_vls_printf(vls, "%s\n", ss.Array());
+    return 0;
+}
+
+
+
+int
 brep_edge_info(struct brep_specific* bs, struct bu_vls *vls, int ei)
 {
     ON_Brep* brep = bs->brep;
@@ -2254,6 +2279,7 @@ info_usage(struct bu_vls *vls)
 {
     bu_vls_printf(vls, "mged>brep brepname.s info\n");
     bu_vls_printf(vls, "\tinfo - return count information for specific BREP\n");
+    bu_vls_printf(vls, "\tinfo C [index] or C [index-index] - return information for specific BREP '3D curve'\n");
     bu_vls_printf(vls, "\tinfo S [index] or S [index-index] - return information for specific BREP 'surface'\n");
     bu_vls_printf(vls, "\tinfo F [index] or F [index-index]- return information for specific BREP 'face'\n");
     bu_vls_printf(vls, "\tinfo T [index] or T [index-index]- return information for specific BREP 'trim'\n");
@@ -2584,6 +2610,10 @@ brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_to
 		for (int i = 0; i < brep->m_T.Count(); ++i) {
 		    ret = brep_trim_bezier_info(bs, vls, i);
 		}
+	    } else if (BU_STR_EQUAL(part, "C")) {
+		for (int i = 0; i < brep->m_C3.Count(); ++i) {
+		    ret = brep_curve_info(bs, vls, i);
+		}
 	    }
 	} else if (argc == 5) {
 	    const char *part = argv[3];
@@ -2615,6 +2645,10 @@ brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_to
 		} else if (BU_STR_EQUAL(part, "TB")) {
 		    for (int i = 0; i < brep->m_T.Count(); ++i) {
 			ret = brep_trim_bezier_info(bs, vls, i);
+		    }
+		} else if (BU_STR_EQUAL(part, "C")) {
+		    for (int i = 0; i < brep->m_C3.Count(); ++i) {
+			ret = brep_curve_info(bs, vls, i);
 		    }
 		}
 	    } else if (BU_STR_EQUAL(strindex, "?")) {
@@ -2663,6 +2697,11 @@ brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_to
 		    int T_count = brep->m_T.Count() - 1 ? endindex : brep->m_T.Count() - 1 < endindex;
 		    for (int i = startindex; i <= T_count; ++i) {
 			ret = brep_trim_bezier_info(bs, vls, i);
+		    }
+		} else if (BU_STR_EQUAL(part, "C")) {
+		    int C_count = brep->m_C3.Count() - 1 ? endindex : brep->m_C3.Count() - 1 < endindex;
+		    for (int i = startindex; i <= C_count; ++i) {
+			ret = brep_curve_info(bs, vls, i);
 		    }
 		}
 	    }
