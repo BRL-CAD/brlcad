@@ -1005,6 +1005,26 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 
 	if (rev_surface && !surface_converted) {
 	    std::cout << "Have RevSurface\n";
+
+	    ON_NurbsSurface rev_nurb;
+	    rev_surface->GetNurbForm(rev_nurb);
+	    info->surfaces.at(i) = info->registry->ObjCreate("B_SPLINE_SURFACE_WITH_KNOTS");
+
+	    SdaiB_spline_surface *curr_surface = (SdaiB_spline_surface *)info->surfaces.at(i);
+	    curr_surface->name_("''");
+	    curr_surface->u_degree_(rev_nurb.Degree(0));
+	    curr_surface->v_degree_(rev_nurb.Degree(1));
+	    ON_NurbsSurfaceCV_Initialize(&rev_nurb, curr_surface, info);
+
+	    SdaiB_spline_surface_with_knots *surface_knots = (SdaiB_spline_surface_with_knots *)info->surfaces.at(i);
+	    ON_NurbsSurfaceKnots_to_Aggregates(&rev_nurb, surface_knots);
+	    curr_surface->surface_form_(B_spline_surface_form__plane_surf);
+	    /* TODO - for now, assume non-self-intersecting */
+	    curr_surface->self_intersect_(LFalse);
+	    curr_surface->u_closed_((Logical)rev_nurb.IsClosed(0));
+	    curr_surface->v_closed_((Logical)rev_nurb.IsClosed(1));
+	    surface_converted = 1;
+
 	}
 
 	if (sum_surface && !surface_converted) {
