@@ -38,7 +38,7 @@
 #include "tclap/CmdLine.h"
 
 /* declarations to support use of TCLAP arg parsing */
-static const char usage[] = "Usage: dsp_add dsp_1 dsp_2 dsp_3\n";
+static const char usage[] = "Example: dsp_add  dsp1.dsp  dsp2.dsp  dsp12added.dsp\n";
 
 /* purpose: combine two dsp files
  *
