@@ -520,7 +520,7 @@ main(int ac, char *av[])
 
       // check for zero-size file
       if (!sb.st_size) {
-        bu_exit(EXIT_FAILURE, "zero-length input file\n");
+        bu_exit(EXIT_FAILURE, "ERROR: zero-length input file\n");
       }
 
       if ((size_t)sb.st_size != count) {
