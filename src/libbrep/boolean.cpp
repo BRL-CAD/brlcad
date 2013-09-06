@@ -391,7 +391,7 @@ IsPointInsideLoop(const ON_2dPoint& pt, const ON_SimpleArray<ON_Curve*>& loop)
     for (int i = 0; i < x_event.Count(); i++) {
 	// Find tangent intersections.
 	// What should we do if it's ccx_overlap?
-	if (polycurve.TangentAt(x_event[i].m_a[0]).IsParallelTo(linecurve.m_line.Direction(), ANGLE_TOL))
+	if (polycurve.TangentAt(x_event[i].m_b[0]).IsParallelTo(linecurve.m_line.Direction(), ANGLE_TOL))
 	    count++;
     }
 
