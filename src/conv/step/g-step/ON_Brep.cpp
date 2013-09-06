@@ -215,7 +215,6 @@ Create_Rational_Curve_Aggregate(ON_NurbsCurve *ncurve, Exporter_Info_AP203 *info
 
 	stepcomplex = stepcomplex->sc;
     }
-    info->instance_list->Append((STEPentity *)complex_entity, completeSE);
     return (STEPentity *)complex_entity;
 }
 
