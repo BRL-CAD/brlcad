@@ -80,6 +80,15 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* implement new 'reduce' command to perform model reduction.  should
+  perform automatic simplification of geometry to reduce complexity by
+  (potentially) orders of magnitude.  this is level of detail for
+  non-viewing purposes, for export.  possibly automatable by replacing
+  leave-node geometry with bounding box (arb8s), but collapsing and
+  combining up the hierarchy to a prescribed tree depth.  however, it
+  model includes BoTs/NURBS, more advanced spatial logic will be
+  needed.
+
 * fix nurbs_ssi and nurbs_tester unit tests
 
 * get rid of the -P#processors user option (except rt* tools) common
