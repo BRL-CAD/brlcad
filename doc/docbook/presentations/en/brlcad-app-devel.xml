@@ -48,91 +48,53 @@ therapy (run, do not walk, to the nearest exit).</para>
 <section>
   <title>Header Files</title>
 
-        <para>The Big-6</para>
+        <para>The Big Six</para>
 
-<informaltable frame="none">
+<table>
+    <?dbfo centered-table-width="2in" ?>
+    <title>Important Headers</title>
       <tgroup cols="2">
-        <colspec colname="c1" colwidth="50*"/>
-        <colspec colname="c2" colwidth="50*"/>
+        <colspec colname="c1" colwidth="1in" align='center'/>
+        <colspec colname="c2" colwidth="1in" align='center'/>
+        <thead>
+          <row>
+            <entry><emphasis role="bold">Header</emphasis></entry>
+            <entry><emphasis role="bold">Library</emphasis></entry>
+          </row>
+        </thead>
         <tbody>
           <row>
-            <entry><para><orderedlist><listitem>
-                    <para>Header</para>
-                  </listitem>
-</orderedlist></para></entry>
-            <entry><para><orderedlist><listitem>
-                    <para>Library</para>
-                  </listitem>
-</orderedlist></para></entry>
+            <entry>bu.h</entry>
+            <entry>libbu</entry>
           </row>
           <row>
-            <entry><para><orderedlist><listitem>
-                    <para>bu.h</para>
-                  </listitem>
-</orderedlist></para></entry>
-            <entry><para><orderedlist><listitem>
-                    <para>libbu</para>
-                  </listitem>
-</orderedlist></para></entry>
+            <entry>bn.h</entry>
+            <entry>libbn</entry>
           </row>
           <row>
-            <entry><para><orderedlist><listitem>
-                    <para>bn.h</para>
-                  </listitem>
-</orderedlist></para></entry>
-            <entry><para><orderedlist><listitem>
-                    <para>libbn</para>
-                  </listitem>
-</orderedlist></para></entry>
+            <entry>raytrace.h</entry>
+            <entry>librt</entry>
           </row>
           <row>
-            <entry><para><orderedlist><listitem>
-                    <para>raytrace.h</para>
-                  </listitem>
-</orderedlist></para></entry>
-            <entry><para><orderedlist><listitem>
-                    <para>librt</para>
-                  </listitem>
-</orderedlist></para></entry>
+            <entry>rtgeom.h</entry>
+            <entry>librt / libwdb</entry>
           </row>
           <row>
-            <entry><para><orderedlist><listitem>
-                    <para>rtgeom.h</para>
-                  </listitem>
-</orderedlist></para></entry>
-            <entry><para><orderedlist><listitem>
-                    <para>librt / libwdb</para>
-                  </listitem>
-</orderedlist></para></entry>
+            <entry>wdb.h</entry>
+            <entry>libwdb</entry>
           </row>
           <row>
-            <entry><para><orderedlist><listitem>
-                    <para>wdb.h</para>
-                  </listitem>
-</orderedlist></para></entry>
-            <entry><para><orderedlist><listitem>
-                    <para>libwdb</para>
-                  </listitem>
-</orderedlist></para></entry>
-          </row>
-          <row>
-            <entry><para><orderedlist><listitem>
-                    <para>vmath.h</para>
-                  </listitem>
-</orderedlist></para></entry>
-            <entry><para><orderedlist><listitem>
-                    <para>(data types)</para>
-                  </listitem>
-</orderedlist></para></entry>
+            <entry>vmath.h</entry>
+            <entry>(data types)</entry>
           </row>
         </tbody>
       </tgroup>
-    </informaltable>
+    </table>
 
 </section>
 
 <section>
-  <title>Prototype Application: <filename>rtexample.c</filename></title>
+  <title>Prototype Application: rtexample.c</title>
 
 <itemizedlist>
       <listitem>
@@ -160,12 +122,12 @@ therapy (run, do not walk, to the nearest exit).</para>
 
   <title>Necessary Headers</title>
 
-<programlisting>#include "conf.h"	/* compilation macros */
+<programlisting>#include "conf.h"       /* compilation macros           */
 #include &lt;stdio.h&gt;
 #include &lt;math.h&gt;
-#include "machine.h"	/* machine specific definitions */
-#include "vmath.h"	/* vector math macros */
-#include "raytrace.h"	/* librt interface definitions */
+#include "machine.h"    /* machine specific definitions */
+#include "vmath.h"      /* vector math macros           */
+#include "raytrace.h"   /* librt interface definitions  */
 </programlisting>
 
 <itemizedlist>
@@ -279,7 +241,9 @@ ap.a_miss = miss;         /* where to go on a miss */
     int          (*a_miss) (struct application *);
     int          a_onehit; /* flag to stop on first hit */
 
-    struct rt_i  *a_rt_i;  /* this librt instance */</programlisting>
+    struct rt_i  *a_rt_i;  /* this librt instance *
+    /* ... */
+};/</programlisting>
 
 </section>
 
@@ -348,21 +312,21 @@ hit(register struct application *ap,
   <title>Partition Structure</title>
 
 <programlisting>struct partition {
-long              pt_magic;       /* sanity check               */
-struct partition *pt_forw;        /* forwards link              */
-struct partition *pt_back;        /* backwards link             */
-struct seg       *pt_inseg;       /* IN seg ptr (gives stp)     */
-struct hit       *pt_inhit;       /* IN hit pointer             */
-struct seg       *pt_outseg;      /* OUT seg pointer            */
-struct hit       *pt_outhit;      /* OUT hit ptr                */
-struct region    *pt_regionp;     /* ptr to containing region   */
-char              pt_inflip;      /* flip inhit->hit_normal     */
-char              pt_outflip;     /* flip outhit->hit_normal    */
-struct region   **pt_overlap_reg; /* NULL-terminated array of
-                                   * overlapping regions.
-                                   * NULL if no overlap.
-                                   */
-struct bu_ptbl  pt_seglist;       /* all segs in this partition */
+    long              pt_magic;       /* sanity check               */
+    struct partition *pt_forw;        /* forwards link              */
+    struct partition *pt_back;        /* backwards link             */
+    struct seg       *pt_inseg;       /* IN seg ptr (gives stp)     */
+    struct hit       *pt_inhit;       /* IN hit pointer             */
+    struct seg       *pt_outseg;      /* OUT seg pointer            */
+    struct hit       *pt_outhit;      /* OUT hit ptr                */
+    struct region    *pt_regionp;     /* ptr to containing region   */
+    char              pt_inflip;      /* flip inhit->hit_normal     */
+    char              pt_outflip;     /* flip outhit->hit_normal    */
+    struct region   **pt_overlap_reg; /* NULL-terminated array of
+                                       * overlapping regions.
+                                       * NULL if no overlap.
+                                       */
+    struct bu_ptbl  pt_seglist;       /* all segs in this partition */
 };</programlisting>
 
  <para>From <filename>h/raytrace.h</filename>.</para>
@@ -460,7 +424,7 @@ hit(register struct application *ap, /* see raytrace.h */
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <title>RTUIF Routines1</title>
+  <title>RTUIF Routines</title>
 
 <programlisting>int view_init(struct application *ap, char *file,
               char *obj, int minus_o);
@@ -481,12 +445,6 @@ should be opened, else 0.</para>
   <para>Called at the beginning of a frame. Called by do_frame() just
   before raytracing starts.</para>
 
-</section>
-
-<!-- Next 'div' was a 'draw:page'. -->
-<section>
-  <title>RTUIF Routines2</title>
-
 <programlisting>int rayhit(struct application *ap, struct partition *PartHeadp);</programlisting>
 
   <para>Called via a_hit linkage from rt_shootray() when ray
@@ -496,12 +454,6 @@ should be opened, else 0.</para>
 
   <para>Called via a_miss linkage from rt_shootray() when ray
   misses.</para>
-
-</section>
-
-<!-- Next 'div' was a 'draw:page'. -->
-<section>
-  <title>RTUIF Routines3</title>
 
 <programlisting>void view_pixel(struct application *ap);</programlisting>
 
@@ -517,20 +469,15 @@ should be opened, else 0.</para>
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
-  <title>So Much for the Trivialities</title>
+  <title>Thinking About Geometry</title>
 
         <para>Now we look at actual geometry.</para>
-</section>
 
-<!-- Next 'div' was a 'draw:page'. -->
-<section>
-  <title> Thinking About Geometry</title>
-
-        <para>How to create it</para>
-        <para>How to read it</para>
-        <para>Doing anything useful with it</para>
-
-</section>
+<itemizedlist>
+        <listitem><para>How to create it</para></listitem>
+        <listitem><para>How to read it</para></listitem>
+        <listitem><para>Doing something useful with it</para></listitem>
+</itemizedlist>
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
@@ -580,7 +527,6 @@ should be opened, else 0.</para>
     </itemizedlist>
 
 </section>
-
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
@@ -710,6 +656,7 @@ should be opened, else 0.</para>
     </itemizedlist>
 </section>
 
+</section>
 
 <!-- Next 'div' was a 'draw:page'. -->
 <section>
@@ -748,7 +695,8 @@ if ((dbip = db_open(argv[1], "r+w")) != DBI_NULL) {
 } else {
     /* it doesn't exist, so we create one */
     bu_log("doing wdb_fopen()\n");
-    wdbp = wdb_fopen(argv[1]); /* force create */}</programlisting>
+    wdbp = wdb_fopen(argv[1]); /* force create */
+}</programlisting>
 
 </section>
 
@@ -760,8 +708,7 @@ if ((dbip = db_open(argv[1], "r+w")) != DBI_NULL) {
 
   <para>Set mk_conv2mm global for other units</para>
 
-<programlisting>
-point_t lo, hi;
+<programlisting>point_t lo, hi;
 /* ... */
 /* add an axis-aligned ARB8 */
 VSETALL(lo, 0.0);
@@ -799,7 +746,8 @@ if (ip.idb_major_type == DB5_MAJORTYPE_BRLCAD /* see db5.h */
     arb = (struct rt_arb_internal *)ip.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
     VPRINT("First Point", arb->pt[0]);
-/* ... */</programlisting>
+    /* ... */
+}</programlisting>
 
 </section>
 
@@ -909,11 +857,12 @@ BU_LIST_INIT(&amp;wm_hd.l);
  * have passed the matrix in to mk_addmember as an argument or we
  * could add the following code:
  */
+
 memcpy(wm_hd->wm_mat, trans_matrix, sizeof(mat_t));
 /* Remember that values in the database are stored in millimeters,
  * so the values in the matrix must take this into account.
  */
-(void)mk_addmember("myball",&amp;wm_hd.l,NULL,WMOP_SUBTRACT);</programlisting>
+(void)mk_addmember("myball", &amp; wm_hd.l, NULL, WMOP_SUBTRACT);</programlisting>
 
 </section>
 
@@ -946,15 +895,16 @@ memcpy(wm_hd->wm_mat, trans_matrix, sizeof(mat_t));
 VSET(rgb, 64, 180, 96); /* a nice green */
 
 /* mk_lcomb is a macro using mk_comb.
- * See libwdb/mk_comb() for full form */
+ * See libwdb/mk_comb() for full form
+ */
 mk_lcomb(wdbp,
-	"box_n_ball.r", /* Name of the db element created */
-	&amp;wm_hd,        /* list of elements and boolean operations */
-	is_region,      /* Flag:  This is a region */
-	"plastic",      /* optical shader */
-	"di=.8 sp=.2",  /* shader parameters */
-	rgb,            /* item color */
-	0);             /* inherit (override) flag */</programlisting>
+         "box_n_ball.r", /* Name of the db element created          */
+         &amp;wm_hd,         /* list of elements and boolean operations */
+         is_region,      /* Flag:  This is a region                 */
+         "plastic",      /* optical shader                          */
+         "di=.8 sp=.2",  /* shader parameters                       */
+         rgb,            /* item color                              */
+         0);             /* inherit (override) flag                 */</programlisting>
 
 </section>
 

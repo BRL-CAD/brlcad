@@ -35,222 +35,7 @@
 
 #include "brep.h"
 
-
-/* Sub-division support for a curve.
- * It's similar to generating the bounding box tree, when the Split()
- * method is called, the curve is split into two parts, whose bounding
- * boxes become the children of the original curve's bbox.
- */
-class Subcurve {
-    friend class Subsurface;
-private:
-    ON_BoundingBox m_node;
-public:
-    ON_Curve *m_curve;
-    ON_Interval m_t;
-    Subcurve *m_children[2];
-    ON_BOOL32 m_islinear;
-
-    Subcurve() : m_curve(NULL), m_islinear(false)
-    {
-	m_children[0] = m_children[1] = NULL;
-    }
-    Subcurve(const Subcurve &_scurve)
-    {
-	m_islinear = _scurve.m_islinear;
-	m_curve = _scurve.m_curve->Duplicate();
-	m_t = _scurve.m_t;
-	m_children[0] = m_children[1] = NULL;
-	SetBBox(_scurve.m_node);
-    }
-    ~Subcurve()
-    {
-	for (int i = 0; i < 2; i++) {
-	    if (m_children[i])
-		delete m_children[i];
-	}
-	delete m_curve;
-    }
-    int Split()
-    {
-	if (m_children[0] && m_children[1])
-	    return 0;
-
-	for (int i = 0; i < 2; i++)
-	    m_children[i] = new Subcurve();
-	ON_SimpleArray<double> pline_t;
-	double split_t = m_t.Mid();
-	if (m_curve->IsPolyline(NULL, &pline_t) && pline_t.Count() > 2) {
-	    split_t = pline_t[pline_t.Count()/2];
-	}
-	if (m_curve->Split(split_t, m_children[0]->m_curve, m_children[1]->m_curve) == false)
-	    return -1;
-
-	m_children[0]->m_t = m_children[0]->m_curve->Domain();
-	m_children[0]->SetBBox(m_children[0]->m_curve->BoundingBox());
-	m_children[0]->m_islinear = m_children[0]->m_curve->IsLinear();
-	m_children[1]->m_t = m_children[1]->m_curve->Domain();
-	m_children[1]->SetBBox(m_children[1]->m_curve->BoundingBox());
-	m_children[1]->m_islinear = m_children[1]->m_curve->IsLinear();
-
-	return 0;
-    }
-    void GetBBox(ON_3dPoint &min, ON_3dPoint &max)
-    {
-	min = m_node.m_min;
-	max = m_node.m_max;
-    }
-    void SetBBox(const ON_BoundingBox &bbox)
-    {
-	m_node = bbox;
-    }
-    bool IsPointIn(const ON_3dPoint &pt, double tolerance = 0.0)
-    {
-	ON_3dVector vtol(tolerance, tolerance, tolerance);
-	ON_BoundingBox new_bbox(m_node.m_min-vtol, m_node.m_max+vtol);
-	return new_bbox.IsPointIn(pt);
-    }
-    bool Intersect(const Subcurve& other, double tolerance = 0.0, ON_BoundingBox* intersection = NULL) const
-    {
-	ON_3dVector vtol(tolerance, tolerance, tolerance);
-	ON_BoundingBox new_bbox(m_node.m_min-vtol, m_node.m_max+vtol);
-	ON_BoundingBox box;
-	bool ret = box.Intersection(new_bbox, other.m_node);
-	if (intersection != NULL)
-	    *intersection = box;
-	return ret;
-    }
-};
-
-
-/* Sub-division support for a surface.
- * It's similar to generating the bounding box tree, when the Split()
- * method is called, the surface is split into two parts, whose bounding
- * boxes become the children of the original surface's bbox.
- */
-class Subsurface {
-private:
-    ON_BoundingBox m_node;
-public:
-    ON_Surface *m_surf;
-    ON_Interval m_u, m_v;
-    Subsurface *m_children[4];
-    ON_BOOL32 m_isplanar;
-
-    Subsurface() : m_surf(NULL), m_isplanar(false)
-    {
-	m_children[0] = m_children[1] = m_children[2] = m_children[3] = NULL;
-    }
-    Subsurface(const Subsurface &_ssurf)
-    {
-	m_surf = _ssurf.m_surf->Duplicate();
-	m_u = _ssurf.m_u;
-	m_v = _ssurf.m_v;
-	m_isplanar = _ssurf.m_isplanar;
-	m_children[0] = m_children[1] = m_children[2] = m_children[3] = NULL;
-	SetBBox(_ssurf.m_node);
-    }
-    ~Subsurface()
-    {
-	for (int i = 0; i < 4; i++) {
-	    if (m_children[i])
-		delete m_children[i];
-	}
-	delete m_surf;
-    }
-    int Split()
-    {
-	if (m_children[0] && m_children[1] && m_children[2] && m_children[3])
-	    return 0;
-
-	for (int i = 0; i < 4; i++)
-	    m_children[i] = new Subsurface();
-	ON_Surface *temp_surf1 = NULL, *temp_surf2 = NULL;
-	ON_BOOL32 ret = true;
-	ret = m_surf->Split(0, m_surf->Domain(0).Mid(), temp_surf1, temp_surf2);
-	if (!ret) {
-	    delete temp_surf1;
-	    delete temp_surf2;
-	    return -1;
-	}
-
-	ret = temp_surf1->Split(1, m_surf->Domain(1).Mid(), m_children[0]->m_surf, m_children[1]->m_surf);
-	delete temp_surf1;
-	if (!ret) {
-	    delete temp_surf2;
-	    return -1;
-	}
-	m_children[0]->m_u = ON_Interval(m_u.Min(), m_u.Mid());
-	m_children[0]->m_v = ON_Interval(m_v.Min(), m_v.Mid());
-	m_children[0]->SetBBox(m_children[0]->m_surf->BoundingBox());
-	m_children[0]->m_isplanar = m_children[0]->m_surf->IsPlanar();
-	m_children[1]->m_u = ON_Interval(m_u.Min(), m_u.Mid());
-	m_children[1]->m_v = ON_Interval(m_v.Mid(), m_v.Max());
-	m_children[1]->SetBBox(m_children[1]->m_surf->BoundingBox());
-	m_children[1]->m_isplanar = m_children[1]->m_surf->IsPlanar();
-
-	ret = temp_surf2->Split(1, m_v.Mid(), m_children[2]->m_surf, m_children[3]->m_surf);
-	delete temp_surf2;
-	if (!ret)
-	    return -1;
-	m_children[2]->m_u = ON_Interval(m_u.Mid(), m_u.Max());
-	m_children[2]->m_v = ON_Interval(m_v.Min(), m_v.Mid());
-	m_children[2]->SetBBox(m_children[2]->m_surf->BoundingBox());
-	m_children[2]->m_isplanar = m_children[2]->m_surf->IsPlanar();
-	m_children[3]->m_u = ON_Interval(m_u.Mid(), m_u.Max());
-	m_children[3]->m_v = ON_Interval(m_v.Mid(), m_v.Max());
-	m_children[3]->SetBBox(m_children[3]->m_surf->BoundingBox());
-	m_children[3]->m_isplanar = m_children[3]->m_surf->IsPlanar();
-
-	return 0;
-    }
-    void GetBBox(ON_3dPoint &min, ON_3dPoint &max)
-    {
-	min = m_node.m_min;
-	max = m_node.m_max;
-    }
-    void SetBBox(const ON_BoundingBox &bbox)
-    {
-	m_node = bbox;
-	/* Make sure that each dimension of the bounding box is greater than
-	 * ON_ZERO_TOLERANCE.
-	 * It does the same work as building the surface tree when ray tracing
-	 */
-	for (int i = 0; i < 3; i++) {
-	    double d = m_node.m_max[i] - m_node.m_min[i];
-	    if (ON_NearZero(d, ON_ZERO_TOLERANCE)) {
-		m_node.m_min[i] -= 0.001;
-		m_node.m_max[i] += 0.001;
-	    }
-	}
-    }
-    bool IsPointIn(const ON_3dPoint &pt, double tolerance = 0.0)
-    {
-	ON_3dVector vtol(tolerance, tolerance, tolerance);
-	ON_BoundingBox new_bbox(m_node.m_min-vtol, m_node.m_max+vtol);
-	return new_bbox.IsPointIn(pt);
-    }
-    bool Intersect(const Subcurve& curve, double tolerance = 0.0, ON_BoundingBox* intersection = NULL) const
-    {
-	ON_3dVector vtol(tolerance, tolerance, tolerance);
-	ON_BoundingBox new_bbox(m_node.m_min-vtol, m_node.m_max+vtol);
-	ON_BoundingBox box;
-	bool ret = box.Intersection(new_bbox, curve.m_node);
-	if (intersection != NULL)
-	    *intersection = box;
-	return ret;
-    }
-    bool Intersect(const Subsurface& surf, double tolerance = 0.0, ON_BoundingBox* intersection = NULL) const
-    {
-	ON_3dVector vtol(tolerance, tolerance, tolerance);
-	ON_BoundingBox new_bbox(m_node.m_min-vtol, m_node.m_max+vtol);
-	ON_BoundingBox box;
-	bool ret = box.Intersection(new_bbox, surf.m_node);
-	if (intersection != NULL)
-	    *intersection = ON_BoundingBox(box.m_min-vtol, box.m_max+vtol);
-	return ret;
-    }
-};
+#define DEBUG_BREP_INTERSECT 0
 
 
 ON_Curve*
@@ -270,8 +55,8 @@ sub_curve(const ON_Curve* in, double a, double b)
 	delete left;
     left = NULL;
     if (!right) {
-	bu_log("Error: sub_curve(): a = %lf, b = %lf\n", a, b);
-	return NULL;
+	// bu_log("Error: sub_curve(): a = %lf, b = %lf, min = %lf, max = %lf\n", a, b, dom.Min(), dom.Max());
+	right = in->Duplicate();
     }
     if (ON_NearZero(sub.m_t[1] - dom.m_t[1]))
 	left = right->Duplicate();
@@ -414,7 +199,8 @@ curve_fitting(ON_Curve* in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool d
 	    // Some points have been eliminated
 	    if (delete_curve) delete in;
 	    in = new ON_PolylineCurve(new_points);
-	    bu_log("fitting: %d => %d points.\n", point_count, new_points.Count());
+	    if (DEBUG_BREP_INTERSECT)
+		bu_log("fitting: %d => %d points.\n", point_count, new_points.Count());
 	}
     }
 
@@ -637,12 +423,10 @@ ON_Intersect(const ON_3dPoint& pointA,
 	root = new Subcurve;
 	if (root == NULL)
 	    return false;
-    }
-
-    if (!build_curve_root(&curveB, curveB_domain, *root)) {
-	if (treeB == NULL)
+	if (!build_curve_root(&curveB, curveB_domain, *root)) {
 	    delete root;
-	return false;
+	    return false;
+	}
     }
 
     if (!root->IsPointIn(pointA, tolerance)) {
@@ -815,12 +599,10 @@ ON_Intersect(const ON_3dPoint& pointA,
 	root = new Subsurface;
 	if (root == NULL)
 	    return false;
-    }
-
-    if (!build_surface_root(&surfaceB, &u_domain, &v_domain, *root)) {
-	if (treeB == NULL)
+	if (!build_surface_root(&surfaceB, &u_domain, &v_domain, *root)) {
 	    delete root;
-	return false;
+	    return false;
+	}
     }
 
     if (!root->IsPointIn(pointA, tolerance)) {
@@ -1081,27 +863,26 @@ ON_Intersect(const ON_Curve* curveA,
 	rootA = new Subcurve;
 	if (rootA == NULL)
 	    return 0;
+	if (!build_curve_root(curveA, curveA_domain, *rootA)) {
+	    delete rootA;
+	    return 0;
+	}
     } else
 	rootA = treeA;
+
     if (treeB == NULL) {
 	rootB = new Subcurve;
 	if (rootB == NULL) {
 	    if (treeA == NULL) delete rootA;
 	    return 0;
 	}
+	if (!build_curve_root(curveB, curveB_domain, *rootB)) {
+	    if (treeA == NULL) delete rootA;
+	    delete rootB;
+	    return 0;
+	}
     } else
 	rootB = treeB;
-
-    if (!build_curve_root(curveA, curveA_domain, *rootA)) {
-	if (treeA == NULL) delete rootA;
-	if (treeB == NULL) delete rootB;
-	return 0;
-    }
-    if (!build_curve_root(curveB, curveB_domain, *rootB)) {
-	if (treeA == NULL) delete rootA;
-	if (treeB == NULL) delete rootB;
-	return 0;
-    }
 
     // We adjust the tolerance from 3D scale to respective 2D scales.
     double l = rootA->m_curve->BoundingBox().Diagonal().Length();
@@ -1553,27 +1334,26 @@ ON_Intersect(const ON_Curve* curveA,
 	rootA = new Subcurve;
 	if (rootA == NULL)
 	    return 0;
+	if (!build_curve_root(curveA, curveA_domain, *rootA)) {
+	    delete rootA;
+	    return 0;
+	}
     } else
 	rootA = treeA;
+
     if (treeB == NULL) {
 	rootB = new Subsurface;
 	if (rootB == NULL) {
 	    if (treeA == NULL) delete rootA;
 	    return 0;
 	}
+	if (!build_surface_root(surfaceB, surfaceB_udomain, surfaceB_vdomain, *rootB)) {
+	    if (treeA == NULL) delete rootA;
+	    delete rootB;
+	    return 0;
+	}
     } else
 	rootB = treeB;
-
-    if (!build_curve_root(curveA, curveA_domain, *rootA)) {
-	if (treeA == NULL) delete rootA;
-	if (treeB == NULL) delete rootB;
-	return 0;
-    }
-    if (!build_surface_root(surfaceB, surfaceB_udomain, surfaceB_vdomain, *rootB)) {
-	if (treeA == NULL) delete rootA;
-	if (treeB == NULL) delete rootB;
-	return 0;
-    }
 
     // We adjust the tolerance from 3D scale to respective 2D scales.
     double l = rootA->m_curve->BoundingBox().Diagonal().Length();
@@ -2533,22 +2313,24 @@ ON_Intersect(const ON_Surface* surfA,
 	rootA = new Subsurface;
 	if (rootA == NULL)
 	    return 0;
+	if (!build_surface_root(surfA, surfaceA_udomain, surfaceA_vdomain, *rootA))
+	    delete rootA;
     } else
 	rootA = treeA;
+
     if (treeB == NULL) {
 	rootB = new Subsurface;
 	if (rootB == NULL) {
 	    if (treeA == NULL) delete rootA;
 	    return 0;
 	}
+	if (!build_surface_root(surfB, surfaceB_udomain, surfaceB_vdomain, *rootB)) {
+	    if (treeA == NULL) delete rootA;
+	    delete rootB;
+	}
     } else
 	rootB = treeB;
 
-    if (!build_surface_root(surfA, surfaceA_udomain, surfaceA_vdomain, *rootA)
-	|| !build_surface_root(surfB, surfaceB_udomain, surfaceB_vdomain, *rootB)) {
-	if (treeA == NULL) delete rootA;
-	if (treeB == NULL) delete rootB;
-    }
     if (rootA->Intersect(*rootB, intersection_tolerance))
 	candidates.push_back(std::make_pair(rootA, rootB));
     else {
@@ -2783,6 +2565,8 @@ ON_Intersect(const ON_Surface* surfA,
 	    if (params[i][j].x - params[i][start].x < intersection_tolerance)
 		continue;
 	    ON_Curve* subcurveA = sub_curve(overlaps[i]->m_curveA, params[i][start].y, params[i][j].y);
+	    if (subcurveA == NULL)
+		continue;
 	    bool isvalid = false, isreversed = false;
 	    double test_distance = 0.01;
 	    // TODO: more sample points
@@ -3080,7 +2864,8 @@ ON_Intersect(const ON_Surface* surfA,
 	}
     }
 
-    bu_log("%d overlap events.\n", overlapevents.Count());
+    if (DEBUG_BREP_INTERSECT)
+	bu_log("%d overlap events.\n", overlapevents.Count());
 
     /* Second step: calculate the intersection of the bounding boxes.
      * Only the children of intersecting b-box pairs need to be considered.
@@ -3145,7 +2930,8 @@ ON_Intersect(const ON_Surface* surfA,
 	}
 	candidates = next_candidates;
     }
-    bu_log("We get %d intersection bounding boxes.\n", candidates.size());
+    if (DEBUG_BREP_INTERSECT)
+	bu_log("We get %d intersection bounding boxes.\n", candidates.size());
 
     /* Third step: get the intersection points using triangular approximation. */
     for (NodePairs::iterator i = candidates.begin(); i != candidates.end(); i++) {
@@ -3290,7 +3076,8 @@ ON_Intersect(const ON_Surface* surfA,
 	    }
 	}
     }
-    bu_log("%d points on the intersection curves.\n", curvept.Count());
+    if (DEBUG_BREP_INTERSECT)
+	bu_log("%d points on the intersection curves.\n", curvept.Count());
 
     if (!curvept.Count()) {
 	if (treeA == NULL) delete rootA;
@@ -3313,11 +3100,13 @@ ON_Intersect(const ON_Surface* surfA,
     double max_dis_v = surfA->Domain(1).Length() * 0.05;
     double max_dis_s = surfB->Domain(0).Length() * 0.05;
     double max_dis_t = surfB->Domain(1).Length() * 0.05;
-    bu_log("max_dis: %lf\n", max_dis);
-    bu_log("max_dis_u: %lf\n", max_dis_u);
-    bu_log("max_dis_v: %lf\n", max_dis_v);
-    bu_log("max_dis_s: %lf\n", max_dis_s);
-    bu_log("max_dis_t: %lf\n", max_dis_t);
+    if (DEBUG_BREP_INTERSECT) {
+	bu_log("max_dis: %lf\n", max_dis);
+	bu_log("max_dis_u: %lf\n", max_dis_u);
+	bu_log("max_dis_v: %lf\n", max_dis_v);
+	bu_log("max_dis_s: %lf\n", max_dis_s);
+	bu_log("max_dis_t: %lf\n", max_dis_t);
+    }
     // NOTE: More tests are needed to find a better threshold.
 
     std::vector<PointPair> ptpairs;
@@ -3556,7 +3345,8 @@ ON_Intersect(const ON_Surface* surfA,
 	}
     }
 
-    bu_log("%d curve segments and %d single points.\n", intersect3d.Count(), single_pts.Count());
+    if (DEBUG_BREP_INTERSECT)
+	bu_log("%d curve segments and %d single points.\n", intersect3d.Count(), single_pts.Count());
     bu_free(index, "int");
     bu_free(startpt, "int");
     bu_free(endpt, "int");

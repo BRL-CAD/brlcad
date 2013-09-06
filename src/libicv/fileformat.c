@@ -243,8 +243,8 @@ icv_write(icv_image_t *bif, const char *filename, ICV_IMAGE_FORMAT format)
 	    return pix_write(bif, filename);
 	case ICV_IMAGE_BW:
 	    return bw_write(bif, filename);
-        case ICV_IMAGE_DPIX :
-            return dpix_write(bif, filename);
+	case ICV_IMAGE_DPIX :
+	    return dpix_write(bif, filename);
 	default:
 	    bu_log("Unrecognized format.  Outputting in PIX format.\n");
     }

@@ -50,14 +50,16 @@ int blue  = 0;
 double rweight = 0.0;
 double gweight = 0.0;
 double bweight = 0.0;
+int inx = 0, iny = 0;
 ICV_COLOR color;
 
 char *out_file = NULL;
 char *in_file = NULL;
 
 static const char usage[] = "\
-pix-bw [-h] [ [-N] [-C] [-R red_weight] [-G green_weight] [-B blue_weight] ] \n\
-	[-o out_file.bw] [file.bw] > [out_file.bw] \n";
+pix-bw [-h] [-s squaresize] [-w width] [-n height] \n\
+            [ [-e ntsc|crt] [[-R red_weight] [-G green_weight] [-B blue_weight]] ]\n\
+	    [-o out_file.bw] [file.bw] > [out_file.bw] \n";
 
 double multiplier = 0.5;
 
@@ -66,22 +68,26 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "R:G:B:o:h?NC")) != -1) {
+    while ((c = bu_getopt(argc, argv, "s:w:n:R:G:B:o:h?NC")) != -1) {
 	switch (c) {
-	    case 'N' :
-		rweight = 0.30;
-		gweight = 0.59;
-		bweight = 0.11;
-		red = green = blue = 1;
-		color = ICV_COLOR_RGB;
-		break;
-	    case 'C' :
-		rweight = 0.26;
-		gweight = 0.66;
-		bweight = 0.08;
-		red = green = blue = 1;
-		color = ICV_COLOR_RGB;
-		break;
+	    case 'e' :
+	        if(BU_STR_EQUAL(bu_optarg, "ntsc")) {
+		    rweight = 0.30;
+		    gweight = 0.59;
+		    bweight = 0.11;
+		    red = green = blue = 1;
+		    color = ICV_COLOR_RGB;
+		}
+		else if(BU_STR_EQUAL(bu_optarg, "crt")) {
+		    rweight = 0.26;
+		    gweight = 0.66;
+		    bweight = 0.08;
+		    red = green = blue = 1;
+		    color = ICV_COLOR_RGB;
+		}
+		else
+		    return 0;
+	    break;
 	    case 'R' :
 		red++;
 		rweight = atof(bu_optarg);
@@ -94,10 +100,19 @@ get_args(int argc, char **argv)
 		blue++;
 		bweight = atof(bu_optarg);
 		break;
-	    case 'o':
+	    case 'o' :
 		out_file = bu_optarg;
 		break;
-	    case 'h':
+            case 's' :
+               inx = iny = atoi(bu_optarg);
+               break;
+            case 'w' :
+               inx = atoi(bu_optarg);
+               break;
+            case 'n' :
+               iny = atoi(bu_optarg);
+               break;
+	    case 'h' :
 	    default:		/* '?' */
 		return 0;
 	}
@@ -134,7 +149,7 @@ main(int argc, char **argv)
 	bu_log("%s", usage);
 	return 1;
     }
-    img = icv_read(in_file, ICV_IMAGE_PIX, 0,0);
+    img = icv_read(in_file, ICV_IMAGE_PIX, inx, iny);
 
     if (img == NULL)
 	return 1;

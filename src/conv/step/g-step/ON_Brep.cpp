@@ -70,17 +70,21 @@
 #include "STEPWrapper.h"
 
 void
-ON_3dPoint_to_Cartesian_point(ON_3dPoint *inpnt, SdaiCartesian_point *step_pnt) {
+XYZ_to_Cartesian_point(double x, double y, double z, SdaiCartesian_point *step_pnt) {
     RealAggregate_ptr coord_vals = step_pnt->coordinates_();
     RealNode *xnode = new RealNode();
-    xnode->value = inpnt->x;
+    xnode->value = x;
     coord_vals->AddNode(xnode);
     RealNode *ynode = new RealNode();
-    ynode->value = inpnt->y;
+    ynode->value = y;
     coord_vals->AddNode(ynode);
     RealNode *znode = new RealNode();
-    znode->value = inpnt->z;
+    znode->value = z;
     coord_vals->AddNode(znode);
+}
+void
+ON_3dPoint_to_Cartesian_point(ON_3dPoint *inpnt, SdaiCartesian_point *step_pnt) {
+    XYZ_to_Cartesian_point(inpnt->x, inpnt->y, inpnt->z, step_pnt);
 }
 
 
@@ -111,6 +115,31 @@ ON_NurbsCurveCV_to_EntityAggregate(ON_NurbsCurve *incrv, SdaiB_spline_curve *ste
 	incrv->GetCV(i, cv_pnt);
 	ON_3dPoint_to_Cartesian_point(&(cv_pnt), step_cartesian);
 	control_pnts->AddNode(new EntityNode((SDAI_Application_instance *)step_cartesian));
+    }
+}
+
+//TODO - multiplicity is coming out wrong - need to figure out how to get it right!!
+void
+ON_RationalNurbsCurveCV_to_Aggregates(ON_NurbsCurve *incrv, SdaiRational_b_spline_curve *step_crv, Exporter_Info_AP203 *info) {
+    EntityAggregate *control_pnts = step_crv->control_points_list_();
+    RealAggregate *weights = step_crv->weights_data_();
+    ON_4dPoint cv_pnt;
+    ON_3dPoint cv_pnt3d;
+    for (int i = 0; i < incrv->CVCount(); i++) {
+	double w = incrv->Weight(i);
+	SdaiCartesian_point *step_cartesian = (SdaiCartesian_point *)info->registry->ObjCreate("CARTESIAN_POINT");
+	step_cartesian->name_("''");
+	info->cartesian_pnts.push_back((STEPentity *)step_cartesian);
+	incrv->GetCV(i, cv_pnt);
+	std::cout << "4d point: " << cv_pnt.x << "," << cv_pnt.y << "," << cv_pnt.z << "," << incrv->Weight(i) << "\n";
+	incrv->GetCV(i, cv_pnt3d);
+	std::cout << "3d point: " << cv_pnt3d.x << "," << cv_pnt3d.y << "," << cv_pnt3d.z << "\n";
+	XYZ_to_Cartesian_point(cv_pnt.x/w, cv_pnt.y/w, cv_pnt.z/w, step_cartesian);
+	control_pnts->AddNode(new EntityNode((SDAI_Application_instance *)step_cartesian));
+	RealNode *wnode = new RealNode();
+	//wnode->value = cv_pnt.w;
+	wnode->value = incrv->Weight(i);
+	weights->AddNode(wnode);
     }
 }
 
@@ -649,13 +678,6 @@ Add_Shape_Representation(Registry *registry, InstMgr *instance_list, SdaiReprese
     return (SdaiRepresentation *)shape_rep;
 }
 
-
-#if 0
-void
-ON_RationalNurbsCurve_to_EntityAggregate(ON_NurbsCurve *incrv, SdaiRational_B_spline_curve *step_crv) {
-}
-#endif
-
 /* Rather than have the organization of elements in the step file be
  * dicated by the order in which they are built up from ON_Brep,
  * define a function that iterates over the structures to populate the
@@ -785,6 +807,34 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 
 	if (a_curve && !curve_converted) {
 	    std::cout << "Have ArcCurve\n";
+
+	    ON_NurbsCurve arc_nurb;
+	    a_curve->GetNurbForm(arc_nurb);
+
+	    if (arc_nurb.IsRational()) {
+		std::cout << "Have Rational NurbsCurve Arc\n";
+		info->three_dimensional_curves.at(i) = info->registry->ObjCreate("RATIONAL_B_SPLINE_CURVE");
+		SdaiRational_b_spline_curve *curr_curve = (SdaiRational_b_spline_curve *)info->three_dimensional_curves.at(i);
+		ON_RationalNurbsCurveCV_to_Aggregates(&arc_nurb, curr_curve, info);
+		curr_curve->degree_(arc_nurb.Degree());
+	    } else {
+		info->three_dimensional_curves.at(i) = info->registry->ObjCreate("B_SPLINE_CURVE_WITH_KNOTS");
+		SdaiB_spline_curve *curr_curve = (SdaiB_spline_curve *)info->three_dimensional_curves.at(i);
+		curr_curve->degree_(arc_nurb.Degree());
+		ON_NurbsCurveCV_to_EntityAggregate(&arc_nurb, curr_curve, info);
+		SdaiB_spline_curve_with_knots *curve_knots = (SdaiB_spline_curve_with_knots *)info->three_dimensional_curves.at(i);
+		ON_NurbsCurveKnots_to_Aggregates(&arc_nurb, curve_knots);
+	    }
+
+	    ((SdaiB_spline_curve *)info->three_dimensional_curves.at(i))->curve_form_(B_spline_curve_form__unspecified);
+	    ((SdaiB_spline_curve *)info->three_dimensional_curves.at(i))->closed_curve_(SDAI_LOGICAL(arc_nurb.IsClosed()));
+
+	    /* TODO: Assume we don't have self-intersecting curves for
+	     * now - need some way to test this...
+	     */
+	    ((SdaiB_spline_curve *)info->three_dimensional_curves.at(i))->self_intersect_(LFalse);
+	    ((SdaiB_spline_curve *)info->three_dimensional_curves.at(i))->name_("''");
+	    curve_converted = 1;
 	}
 
 	if (l_curve && !curve_converted) {
@@ -826,8 +876,11 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 	if (n_curve && !curve_converted) {
 	    std::cout << "Have NurbsCurve\n";
 	    if (n_curve->IsRational()) {
-		std::cout << "TODO - Have Rational NurbsCurve\n";
+		std::cout << "Have Rational NurbsCurve\n";
 		info->three_dimensional_curves.at(i) = info->registry->ObjCreate("RATIONAL_B_SPLINE_CURVE");
+		SdaiRational_b_spline_curve *curr_curve = (SdaiRational_b_spline_curve *)info->three_dimensional_curves.at(i);
+		ON_RationalNurbsCurveCV_to_Aggregates(n_curve, curr_curve, info);
+		curr_curve->degree_(n_curve->Degree());
 	    } else {
 		info->three_dimensional_curves.at(i) = info->registry->ObjCreate("B_SPLINE_CURVE_WITH_KNOTS");
 		SdaiB_spline_curve *curr_curve = (SdaiB_spline_curve *)info->three_dimensional_curves.at(i);
@@ -959,6 +1012,26 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 
 	if (rev_surface && !surface_converted) {
 	    std::cout << "Have RevSurface\n";
+
+	    ON_NurbsSurface rev_nurb;
+	    rev_surface->GetNurbForm(rev_nurb);
+	    info->surfaces.at(i) = info->registry->ObjCreate("B_SPLINE_SURFACE_WITH_KNOTS");
+
+	    SdaiB_spline_surface *curr_surface = (SdaiB_spline_surface *)info->surfaces.at(i);
+	    curr_surface->name_("''");
+	    curr_surface->u_degree_(rev_nurb.Degree(0));
+	    curr_surface->v_degree_(rev_nurb.Degree(1));
+	    ON_NurbsSurfaceCV_Initialize(&rev_nurb, curr_surface, info);
+
+	    SdaiB_spline_surface_with_knots *surface_knots = (SdaiB_spline_surface_with_knots *)info->surfaces.at(i);
+	    ON_NurbsSurfaceKnots_to_Aggregates(&rev_nurb, surface_knots);
+	    curr_surface->surface_form_(B_spline_surface_form__plane_surf);
+	    /* TODO - for now, assume non-self-intersecting */
+	    curr_surface->self_intersect_(LFalse);
+	    curr_surface->u_closed_((Logical)rev_nurb.IsClosed(0));
+	    curr_surface->v_closed_((Logical)rev_nurb.IsClosed(1));
+	    surface_converted = 1;
+
 	}
 
 	if (sum_surface && !surface_converted) {
@@ -998,7 +1071,7 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 	step_face->name_("''");
 	step_face->face_geometry_((SdaiSurface *)info->surfaces.at(face->SurfaceIndexOf()));
 	// TODO - is m_bRev the same thing as same_sense?
-	step_face->same_sense_((const Boolean)(face->m_bRev));
+	step_face->same_sense_((const Boolean)!(face->m_bRev));
 
 	EntityAggregate *bounds = step_face->bounds_();
 

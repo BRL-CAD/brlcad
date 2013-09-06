@@ -164,10 +164,15 @@ Usage: %s port_num\n\
 
     see_also:
 
-      ...list of man pages (with sections) or other references,
+      ...list of man pages only (with sections),
+      semicolon- or white-space-separated, no other embellishments...
+
+    other_refs:
+
+      ...list of other refences, if any,
       semicolon-separated, no other embellishments...
 
-      ...list will go in the SEE ALSO section...
+    ...both lists will go in the SEE ALSO section...
 
 Processing:
 ==========

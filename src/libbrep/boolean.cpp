@@ -63,8 +63,8 @@ struct IntersectPoint {
 
 #if USE_CONNECTIVITY_GRAPH
 struct SSICurveInfo {
-    int m_fi1;	// index of the first face
-    int m_fi2;	// index of the second face
+    int m_fi1;	// index of the this face
+    int m_fi2;	// index of the the other face
     int m_ci;	// index in the events array
 
     // Default constructor. Set all to an invalid value.
@@ -391,7 +391,7 @@ IsPointInsideLoop(const ON_2dPoint& pt, const ON_SimpleArray<ON_Curve*>& loop)
     for (int i = 0; i < x_event.Count(); i++) {
 	// Find tangent intersections.
 	// What should we do if it's ccx_overlap?
-	if (polycurve.TangentAt(x_event[i].m_a[0]).IsParallelTo(linecurve.m_line.Direction(), ANGLE_TOL))
+	if (polycurve.TangentAt(x_event[i].m_b[0]).IsParallelTo(linecurve.m_line.Direction(), ANGLE_TOL))
 	    count++;
     }
 
@@ -453,7 +453,7 @@ get_subcurve_inside_faces(const ON_Brep* brep1, const ON_Brep* brep2, int fi1, i
     // 2.1 Intersect the curves in Event with outerloop1, and get the parts
     // inside. (Represented with param intervals on the curve's domain [0, 1])
     ON_SimpleArray<double> divT;
-    ON_SimpleArray<ON_Interval> intervals;
+    ON_SimpleArray<ON_Interval> intervals1, intervals2;
     ON_SimpleArray<ON_X_EVENT> x_event1, x_event2;
     for (int i = 0; i < outerloop1.Count(); i++)
 	ON_Intersect(Event->m_curveA, outerloop1[i], x_event1, INTERSECTION_TOL);
@@ -473,10 +473,11 @@ get_subcurve_inside_faces(const ON_Brep* brep1, const ON_Brep* brep2, int fi1, i
 	    if (ON_NearZero(interval.Length()))
 		continue;
 	    ON_2dPoint pt = Event->m_curveA->PointAt(interval.Mid());
-	    if (!IsPointOnLoop(pt, outerloop1) && IsPointInsideLoop(pt, outerloop1))
-		intervals.Append(interval);
+	    if (IsPointOnLoop(pt, outerloop1) == 0 && IsPointInsideLoop(pt, outerloop1) == 1)
+		intervals1.Append(interval);
 	}
-    }
+    } else
+	intervals1.Append(Event->m_curveA->Domain());   // No intersection
 
     // 2.2 Intersect the curves in Event with outerloop2, and get the parts
     // inside. (Represented with param intervals on the curve's domain [0, 1])
@@ -499,32 +500,41 @@ get_subcurve_inside_faces(const ON_Brep* brep1, const ON_Brep* brep2, int fi1, i
 	    if (ON_NearZero(interval.Length()))
 		continue;
 	    ON_2dPoint pt = Event->m_curveB->PointAt(interval.Mid());
-	    if (!IsPointOnLoop(pt, outerloop2) && IsPointInsideLoop(pt, outerloop2)) {
+	    if (IsPointOnLoop(pt, outerloop2) == 0 && IsPointInsideLoop(pt, outerloop2) == 1) {
 		// According to openNURBS's definition, the domain of m_curve3d,
 		// m_curveA, m_curveB in an ON_SSX_EVENT should be the same.
 		// (See ON_SSX_EVENT::IsValid().
 		// So we don't need to pull the interval back to A
-		intervals.Append(interval);
+		intervals2.Append(interval);
 	    }
 	}
-    }
+    } else
+	intervals2.Append(Event->m_curveB->Domain());   // No intersection
 
     // 3. Merge the intervals and get the final result.
-    ON_Interval merged_interval;
-    for (int i = 0; i < intervals.Count(); i++) {
-	merged_interval.Union(intervals[i]);
+    ON_Interval merged_interval1, merged_interval2;
+    for (int i = 0; i < intervals1.Count(); i++) {
+	merged_interval1.Union(intervals1[i]);
+    }
+    for (int i = 0; i < intervals2.Count(); i++) {
+	merged_interval2.Union(intervals2[i]);
     }
 
-    if (!merged_interval.IsValid())
+    if (!merged_interval1.IsValid() || !merged_interval2.IsValid()) {
+	return -1;
+    }
+
+    ON_Interval shared_interval;
+    if (!shared_interval.Intersection(merged_interval1, merged_interval2))
 	return -1;
 
     if (DEBUG_BREP_BOOLEAN)
-	bu_log("merge_interval: [%g, %g]\n", merged_interval.Min(), merged_interval.Max());
+	bu_log("shared_interval: [%g, %g]\n", shared_interval.Min(), shared_interval.Max());
 
     // 4. Replace with the sub-curves.
-    Event->m_curve3d = sub_curve(Event->m_curve3d, merged_interval.Min(), merged_interval.Max());
-    Event->m_curveA = sub_curve(Event->m_curveA, merged_interval.Min(), merged_interval.Max());
-    Event->m_curveB = sub_curve(Event->m_curveB, merged_interval.Min(), merged_interval.Max());
+    Event->m_curve3d = sub_curve(Event->m_curve3d, shared_interval.Min(), shared_interval.Max());
+    Event->m_curveA = sub_curve(Event->m_curveA, shared_interval.Min(), shared_interval.Max());
+    Event->m_curveB = sub_curve(Event->m_curveB, shared_interval.Min(), shared_interval.Max());
 
     if (Event->m_curve3d == NULL || Event->m_curveA == NULL || Event->m_curveB == NULL)
 	return -1;
@@ -672,7 +682,7 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 	if (!have_intersect[i]) {
 	    // The start point cannot be on the boundary of the loop, because
 	    // there is no intersections between curves[i] and the loop.
-	    if (IsPointInsideLoop(curves[i].PointAtStart(), in->m_outerloop)) {
+	    if (IsPointInsideLoop(curves[i].PointAtStart(), in->m_outerloop) == 1) {
 		if (curves[i].IsClosed()) {
 		    ON_SimpleArray<ON_Curve*> iloop;
 		    curves[i].AppendCurvesToArray(iloop);
@@ -696,37 +706,37 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
     // rank these intersection points
     // during the time using pts_on_curves(), must make sure that
     // the capacity of intersect[] never change.
-    ON_SimpleArray<ON_SimpleArray<IntersectPoint*>*> pts_on_curves(curves.Count());
-    for (int i = 0; i < curves.Count(); i++)
-	pts_on_curves[i] = new ON_SimpleArray<IntersectPoint*>();
+    ON_ClassArray<ON_SimpleArray<IntersectPoint*> > pts_on_curves(curves.Count());
     for (int i = 0; i < intersect.Count(); i++) {
-	pts_on_curves[intersect[i].m_type]->Append(&(intersect[i]));
+	pts_on_curves[intersect[i].m_type].Append(&(intersect[i]));
     }
     for (int i = 0; i < curves.Count(); i++) {
-	pts_on_curves[i]->QuickSort(compare_for_rank);
-	for (int j = 0; j < pts_on_curves[i]->Count(); j++)
-	    (*pts_on_curves[i])[j]->m_rank = j;
+	pts_on_curves[i].QuickSort(compare_for_rank);
+	for (int j = 0; j < pts_on_curves[i].Count(); j++)
+	    pts_on_curves[i][j]->m_rank = j;
     }
+
+    ON_SimpleArray<IntersectPoint> intersect_append;
 
     // Determine whether it's going inside or outside (IntersectPoint::m_in_out).
     for (int i = 0; i < curves.Count(); i++) {
-	for (int j = 0;  j < pts_on_curves[i]->Count(); j++) {
-	    IntersectPoint* ipt = (*pts_on_curves[i])[j];
-	    if (pts_on_curves[i]->Count() < 2)
+	for (int j = 0;  j < pts_on_curves[i].Count(); j++) {
+	    IntersectPoint* ipt = pts_on_curves[i][j];
+	    if (pts_on_curves[i].Count() < 2)
 		ipt->m_in_out = IntersectPoint::UNSET;
 	    else {
 		ON_3dPoint left = j == 0 ? curves[i].PointAtStart() :
-		    curves[i].PointAt((ipt->m_t_for_rank+(*pts_on_curves[i])[j-1]->m_t_for_rank)*0.5);
-		ON_3dPoint right = j == pts_on_curves[i]->Count() - 1 ? curves[i].PointAtEnd() :
-		    curves[i].PointAt((ipt->m_t_for_rank+(*pts_on_curves[i])[j+1]->m_t_for_rank)*0.5);
+		    curves[i].PointAt((ipt->m_t_for_rank+pts_on_curves[i][j-1]->m_t_for_rank)*0.5);
+		ON_3dPoint right = j == pts_on_curves[i].Count() - 1 ? curves[i].PointAtEnd() :
+		    curves[i].PointAt((ipt->m_t_for_rank+pts_on_curves[i][j+1]->m_t_for_rank)*0.5);
 		// If the point is on the boundary, we treat it with the same
 		// way as it's outside.
 		// For example, the left side is inside, and the right's on
 		// boundary, that point should be IntersectPoint::OUT, the
 		// same as the right's outside the loop.
 		// Other cases are similar.
-		int left_in = IsPointInsideLoop(left, in->m_outerloop) && !IsPointOnLoop(left, in->m_outerloop);
-		int right_in = IsPointInsideLoop(right, in->m_outerloop) && !IsPointOnLoop(right, in->m_outerloop);
+		int left_in = IsPointInsideLoop(left, in->m_outerloop) == 1 && IsPointOnLoop(left, in->m_outerloop) == 0;
+		int right_in = IsPointInsideLoop(right, in->m_outerloop) == 1 && IsPointOnLoop(right, in->m_outerloop) == 0;
 		if (left_in < 0 || right_in < 0) {
 		    // not a loop
 		    ipt->m_in_out = IntersectPoint::UNSET;
@@ -734,16 +744,16 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 		}
 		if (j == 0 && ON_NearZero(ipt->m_t_for_rank - curves[i].Domain().Min())) {
 		    ipt->m_in_out = right_in ? IntersectPoint::IN : IntersectPoint::OUT;
-		} else if (j == pts_on_curves[i]->Count() - 1 && ON_NearZero(ipt->m_t_for_rank - curves[i].Domain().Max())) {
+		} else if (j == pts_on_curves[i].Count() - 1 && ON_NearZero(ipt->m_t_for_rank - curves[i].Domain().Max())) {
 		    ipt->m_in_out = left_in ? IntersectPoint::OUT : IntersectPoint::IN;
 		} else {
 		    if (left_in && right_in) {
 			// tangent point, both sides in, duplicate that point
-			intersect.Append(*ipt);
-			intersect.Last()->m_in_out = IntersectPoint::IN;
-			intersect.Last()->m_rank = ipt->m_rank+1;
-			for (int k = j + 1; k < pts_on_curves[i]->Count(); k++)
-			    (*pts_on_curves[i])[k]->m_rank++;
+			intersect_append.Append(*ipt);
+			intersect_append.Last()->m_in_out = IntersectPoint::IN;
+			intersect_append.Last()->m_rank = ipt->m_rank+1;
+			for (int k = j + 1; k < pts_on_curves[i].Count(); k++)
+			    pts_on_curves[i][k]->m_rank++;
 			ipt->m_in_out = IntersectPoint::OUT;
 		    } else if (!left_in && !right_in) {
 			// tangent point, both sides out, useless
@@ -757,14 +767,10 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 		    }
 		}
 	    }
-	    if (DEBUG_BREP_BOOLEAN)
-		bu_log("[%d][%d] in_out = %d\n", i, j, ipt->m_in_out);
 	}
     }
-    for (int i = 0; i < curves.Count(); i++) {
-	delete pts_on_curves[i];
-    }
 
+    intersect.Append(intersect_append.Count(), intersect_append.Array());
     intersect.QuickSort(compare_t);
 
     // Split the outer loop.
@@ -858,6 +864,10 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 	}
 	intersect.Last()->m_pos = outerloop.Count() - 1;
     }
+
+    if (DEBUG_BREP_BOOLEAN)
+	for (int i = 0; i < intersect.Count(); i++)
+	    bu_log("intersect[%d](count = %d): m_type = %d, m_rank = %d, m_in_out = %d\n", i, intersect.Count(), intersect[i].m_type, intersect[i].m_rank, intersect[i].m_in_out);
 
     std::stack<int> s;
 
@@ -1020,8 +1030,8 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 	}
     }
 
-    bu_log("Split to %d faces.\n", out.Count());
     if (DEBUG_BREP_BOOLEAN) {
+	bu_log("Split to %d faces.\n", out.Count());
 	for (int i = 0; i < out.Count(); i++) {
 	    bu_log("Trimmed Face %d:\n", i);
 	    bu_log("outerloop:\n");
@@ -1059,54 +1069,88 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &
 	return;
 
     ON_BrepLoop &breploop = brep->NewLoop(loop_type, face);
-    int start_count = brep->m_V.Count();
     const ON_Surface* srf = face.SurfaceOf();
 
+    // Determine whether a segment should be a seam trim, according to the
+    // requirements in ON_Brep::IsValid() (See opennurbs_brep.cpp)
     for (int k = 0; k < loop.Count(); k++) {
-	// Determine whether it should be a seam trim, according to the
-	// requirements in ON_Brep::IsValid() (See opennurbs_brep.cpp)
 	ON_BOOL32 bClosed[2];
 	bClosed[0] = srf->IsClosed(0);
 	bClosed[1] = srf->IsClosed(1);
 	if (bClosed[0] || bClosed[1]) {
-	    ON_Interval side_interval;
-	    int endpt_index = 0;
-	    const double side_tol = 1.0e-4;
-	    double s0, s1;
-	    bool seamed = false;
-	    if (bClosed[0])
+	    ON_Surface::ISO iso1, iso2, iso_type;
+	    int endpt_index = -1;
+	    iso1 = srf->IsIsoparametric(*loop[k]);
+	    if (ON_Surface::E_iso == iso1 && bClosed[0]) {
+		iso_type = ON_Surface::W_iso;
 		endpt_index = 1;
-	    else
+	    } else if (ON_Surface::W_iso == iso1 && bClosed[0]) {
+		iso_type = ON_Surface::E_iso;
+		endpt_index = 1;
+	    } else if (ON_Surface::S_iso == iso1 && bClosed[1]) {
+		iso_type = ON_Surface::N_iso;
 		endpt_index = 0;
-	    side_interval.Set(loop[k]->PointAtStart()[endpt_index], loop[k]->PointAtEnd()[endpt_index]);
-	    for (int i = 0; i < breploop.m_ti.Count(); i++) {
-		ON_BrepTrim& trim = brep->m_T[breploop.m_ti[i]];
-		if (ON_BrepTrim::boundary != trim.m_type)
-		    continue;
-		s1 = side_interval.NormalizedParameterAt(trim.PointAtStart()[endpt_index]);
-		if (fabs(s1 - 1.0) > side_tol)
-		    continue;
-		s0 = side_interval.NormalizedParameterAt(trim.PointAtEnd()[endpt_index]);
-		if (fabs(s0) > side_tol)
-		    continue;
+	    } else if (ON_Surface::N_iso == iso1 && bClosed[1]) {
+		iso_type = ON_Surface::S_iso;
+		endpt_index = 0;
+	    }
+	    if (endpt_index != -1) {
+		ON_Interval side_interval;
+		const double side_tol = 1.0e-4;
+		double s0, s1;
+		bool seamed = false;
+		side_interval.Set(loop[k]->PointAtStart()[endpt_index], loop[k]->PointAtEnd()[endpt_index]);
+		if (((ON_Surface::N_iso == iso_type || ON_Surface::W_iso == iso_type) && side_interval.IsIncreasing())
+		    || ((ON_Surface::S_iso == iso_type || ON_Surface::E_iso == iso_type) && side_interval.IsDecreasing())) {
+		    for (int i = 0; i < breploop.m_ti.Count(); i++) {
+			ON_BrepTrim& trim = brep->m_T[breploop.m_ti[i]];
+			if (ON_BrepTrim::boundary != trim.m_type)
+			    continue;
+			iso2 = srf->IsIsoparametric(trim);
+			if (iso2 != iso_type)
+			    continue;
+			s1 = side_interval.NormalizedParameterAt(trim.PointAtStart()[endpt_index]);
+			if (fabs(s1 - 1.0) > side_tol)
+			    continue;
+			s0 = side_interval.NormalizedParameterAt(trim.PointAtEnd()[endpt_index]);
+			if (fabs(s0) > side_tol)
+			    continue;
 
-		if (srf->IsIsoparametric(*loop[k]) && srf->IsIsoparametric(trim)) {
-		    double s2 = srf->Domain(1-endpt_index).NormalizedParameterAt(loop[k]->PointAtStart()[1-endpt_index]);
-		    double s3 = srf->Domain(1-endpt_index).NormalizedParameterAt(trim.PointAtStart()[1-endpt_index]);
-		    if ((fabs(s2 - 1.0) < side_tol && fabs(s3) < side_tol) ||
-			(fabs(s2) < side_tol && fabs(s3 - 1.0) < side_tol)) {
-			// Find a trim that should share the same edge
-			int ti = brep->AddTrimCurve(loop[k]);
-			ON_BrepTrim& newtrim = brep->NewTrim(brep->m_E[trim.m_ei], true, breploop, ti);
-			//newtrim.m_type = ON_BrepTrim::seam;
-			newtrim.m_tolerance[0] = newtrim.m_tolerance[1] = MAX_FASTF;
-			seamed = true;
-			break;
+			// Check 3D distances - not included in ON_Brep::IsValid().
+			// So with this check, we only add seam trims if their end points
+			// are the same within ON_ZERO_TOLERANCE. This will cause IsValid()
+			// reporting "they should be seam trims connected to the same edge",
+			// because the 2D tolerance (side_tol) are hardcoded to 1.0e-4.
+			// We still add this check because we treat two vertexes to be the
+			// same only if their distance < ON_ZERO_TOLREANCE. (Maybe 3D dist
+			// should also be added to ON_Brep::IsValid()?)
+			if (srf->PointAt(trim.PointAtStart().x, trim.PointAtStart().y).DistanceTo(
+			    srf->PointAt(loop[k]->PointAtEnd().x, loop[k]->PointAtEnd().y)) >= ON_ZERO_TOLERANCE)
+			    continue;
+
+			if (srf->PointAt(trim.PointAtEnd().x, trim.PointAtEnd().y).DistanceTo(
+			    srf->PointAt(loop[k]->PointAtStart().x, loop[k]->PointAtStart().y)) >= ON_ZERO_TOLERANCE)
+			    continue;
+
+			// We add another checking, which is not included in ON_Brep::IsValid()
+			// - they should be iso boundaries of the surface.
+			double s2 = srf->Domain(1-endpt_index).NormalizedParameterAt(loop[k]->PointAtStart()[1-endpt_index]);
+			double s3 = srf->Domain(1-endpt_index).NormalizedParameterAt(trim.PointAtStart()[1-endpt_index]);
+			if ((fabs(s2 - 1.0) < side_tol && fabs(s3) < side_tol) ||
+			    (fabs(s2) < side_tol && fabs(s3 - 1.0) < side_tol)) {
+			    // Find a trim that should share the same edge
+			    int ti = brep->AddTrimCurve(loop[k]);
+			    ON_BrepTrim& newtrim = brep->NewTrim(brep->m_E[trim.m_ei], true, breploop, ti);
+			    // newtrim.m_type = ON_BrepTrim::seam;
+			    newtrim.m_tolerance[0] = newtrim.m_tolerance[1] = MAX_FASTF;
+			    seamed = true;
+			    break;
+			}
 		    }
+		    if (seamed)
+			continue;
 		}
 	    }
-	    if (seamed)
-		continue;
 	}
 
 	ON_Curve* c3d = NULL;
@@ -1121,8 +1165,8 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &
 		ptarray.Append(face.SurfaceOf()->PointAt(pt2d.x, pt2d.y));
 	    }
 	    // The curve is closed within a tolerance
-	    if (ptarray[0].DistanceTo(ptarray[100]) < INTERSECTION_TOL)
-		ptarray[100] = ptarray[0];
+	    // if (ptarray[0].DistanceTo(ptarray[100]) < INTERSECTION_TOL)
+		// ptarray[100] = ptarray[0];
 	    c3d = new ON_PolylineCurve(ptarray);
 	}
 
@@ -1140,34 +1184,34 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &
 	int ti = brep->AddTrimCurve(loop[k]);
 	ON_2dPoint start = loop[k]->PointAtStart(), end = loop[k]->PointAtEnd();
 	int start_idx, end_idx;
+
+	// Get the start vertex index
 	if (k > 0)
 	    start_idx = brep->m_T.Last()->m_vi[1];
 	else {
-	    start_idx = brep->m_V.Count();
-	    brep->NewVertex(face.SurfaceOf()->PointAt(start.x, start.y), 0.0);
+	    ON_3dPoint vtx = face.SurfaceOf()->PointAt(start.x, start.y);
+	    int i;
+	    for (i = 0; i < brep->m_V.Count(); i++)
+		if (brep->m_V[i].Point().DistanceTo(vtx) < ON_ZERO_TOLERANCE)
+		    break;
+	    start_idx = i;
+	    if (i == brep->m_V.Count()) {
+		brep->NewVertex(vtx, 0.0);
+	    }
 	}
 
+	// Get the end vertex index
 	if (c3d->IsClosed())
 	    end_idx = start_idx;
 	else {
-	    end_idx = brep->m_V.Count();
-	    brep->NewVertex(face.SurfaceOf()->PointAt(end.x, end.y), 0.0);
-	}
-	if (k == loop.Count() - 1) {
-	    if (!c3d->IsClosed()) {
-		brep->m_V.Remove();
-		end_idx = start_count;
-	    } else if (k) {
-		start_idx = end_idx = start_count;
-		if (brep->m_T.Last() && brep->m_T.Last()->m_ei != -1) {
-		    ON_BrepEdge& last_edge = brep->m_E[brep->m_T.Last()->m_ei];
-		    if (last_edge.m_vi[1-brep->m_T.Last()->m_bRev3d] != start_count) {
-			brep->m_V.Remove();
-			last_edge.m_vi[1-brep->m_T.Last()->m_bRev3d] = start_count;
-			brep->m_V[start_count].m_ei.Append(last_edge.m_edge_index);
-		    }
-		    brep->m_T.Last()->m_vi[1] = start_count;
-		}
+	    ON_3dPoint vtx = face.SurfaceOf()->PointAt(end.x, end.y);
+	    int i;
+	    for (i = 0; i < brep->m_V.Count(); i++)
+		if (brep->m_V[i].Point().DistanceTo(vtx) < ON_ZERO_TOLERANCE)
+		    break;
+	    end_idx = i;
+	    if (i == brep->m_V.Count()) {
+		brep->NewVertex(vtx, 0.0);
 	    }
 	}
 
@@ -1176,38 +1220,6 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &
 	ON_BrepTrim &trim = brep->NewTrim(edge, 0, breploop, ti);
 	trim.m_tolerance[0] = trim.m_tolerance[1] = MAX_FASTF;
     }
-
-    // If the first trim's m_vi[0] (start) != the last trim's m_vi[1] (end),
-    // change the references of end to start.
-    if (breploop.m_ti.Count()) {
-	int start_vi = brep->m_T[breploop.m_ti[0]].m_vi[0];
-	int end_vi = brep->m_T[*breploop.m_ti.Last()].m_vi[1];
-	if (start_vi != end_vi) {
-	    for (int i = 0; i < breploop.m_ti.Count(); i++) {
-		ON_BrepTrim& trim = brep->m_T[breploop.m_ti[i]];
-		if (trim.m_vi[0] == end_vi) {
-		    trim.m_vi[0] = start_vi;
-		    int &edge_vi = brep->m_E[trim.m_ei].m_vi[trim.m_bRev3d ? 1 : 0];
-		    if (edge_vi != start_vi) {
-			// Only need to update the array if edge_vi changes.
-			edge_vi = start_vi;
-			brep->m_V[start_vi].m_ei.Append(trim.m_ei);
-		    }
-		} else if (brep->m_T[breploop.m_ti[i]].m_vi[1] == end_vi) {
-		    trim.m_vi[1] = start_vi;
-		    int &edge_vi = brep->m_E[trim.m_ei].m_vi[trim.m_bRev3d ? 0 : 1];
-		    if (edge_vi != start_vi) {
-			edge_vi = start_vi;
-			brep->m_V[start_vi].m_ei.Append(trim.m_ei);
-		    }
-		}
-	    }
-	    brep->m_V[end_vi].m_ei.Empty(); // Or remove this vertex
-	}
-    }
-
-    //if (brep->m_V.Count() < brep->m_V.Capacity())
-	//brep->m_V[brep->m_V.Count()].m_ei.Empty();
 }
 
 
@@ -1319,11 +1331,11 @@ IsPointInsideBrep(const ON_3dPoint& pt, const ON_Brep* brep, ON_SimpleArray<Subs
 	}
 	for (int j = 0; j < x_event.Count(); j++) {
 	    ON_2dPoint pt2d(x_event[j].m_b[0], x_event[j].m_b[1]);
-	    if (IsPointInsideLoop(pt2d, outerloop) || IsPointOnLoop(pt2d, outerloop))
+	    if (IsPointInsideLoop(pt2d, outerloop) == 1 || IsPointOnLoop(pt2d, outerloop) == 1)
 		isect_pt.Append(x_event[j].m_B[0]);
 	    if (x_event[j].m_type == ON_X_EVENT::ccx_overlap) {
 		pt2d = ON_2dPoint(x_event[j].m_b[2], x_event[j].m_b[3]);
-		if (IsPointInsideLoop(pt2d, outerloop) || IsPointOnLoop(pt2d, outerloop))
+		if (IsPointInsideLoop(pt2d, outerloop) == 1 || IsPointOnLoop(pt2d, outerloop) == 1)
 		    isect_pt.Append(x_event[j].m_B[1]);
 	    }
 	}
@@ -1379,13 +1391,13 @@ IsFaceInsideBrep(const TrimmedFace* tface, const ON_Brep* brep, ON_SimpleArray<S
 	double x = rng.RandomDouble(bbox.m_min.x, bbox.m_max.x);
 	double y = rng.RandomDouble(bbox.m_min.y, bbox.m_max.y);
 	test_pt2d = ON_2dPoint(x, y);
-	if (IsPointInsideLoop(test_pt2d, tface->m_outerloop)
-	    && !IsPointOnLoop(test_pt2d, tface->m_outerloop)) {
+	if (IsPointInsideLoop(test_pt2d, tface->m_outerloop) == 1
+	    && IsPointOnLoop(test_pt2d, tface->m_outerloop) == 0) {
 	    unsigned int j = 0;
 	    // The test point should not be inside an innerloop
 	    for (j = 0; j < tface->m_innerloop.size(); j++) {
-		if (IsPointInsideLoop(test_pt2d, tface->m_innerloop[j])
-		    || IsPointOnLoop(test_pt2d, tface->m_innerloop[j]))
+		if (IsPointInsideLoop(test_pt2d, tface->m_innerloop[j]) == 1
+		    || IsPointOnLoop(test_pt2d, tface->m_innerloop[j]) == 1)
 		    break;
 	    }
 	    if (j == tface->m_innerloop.size()) {
@@ -1415,6 +1427,12 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
     int facecount2 = brepB->m_F.Count();
     ON_ClassArray<ON_SimpleArray<SSICurve> > curvesarray(facecount1 + facecount2);
 
+    ON_SimpleArray<Subsurface*> surf_treeA, surf_treeB;
+    for (int i = 0; i < facecount1; i++)
+	surf_treeA.Append(new Subsurface(brepA->m_F[i].SurfaceOf()->Duplicate()));
+    for (int i = 0; i < facecount2; i++)
+	surf_treeB.Append(new Subsurface(brepB->m_F[i].SurfaceOf()->Duplicate()));
+
     // calculate intersection curves
     for (int i = 0; i < facecount1; i++) {
 	for (int j = 0; j < facecount2; j++) {
@@ -1424,7 +1442,15 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 	    if (ON_Intersect(brepA->m_S[brepA->m_F[i].m_si],
 			     brepB->m_S[brepB->m_F[j].m_si],
 			     events,
-			     INTERSECTION_TOL) <= 0)
+			     INTERSECTION_TOL,
+			     0.0,
+			     0.0,
+			     NULL,
+			     NULL,
+			     NULL,
+			     NULL,
+			     surf_treeA[i],
+			     surf_treeB[j]) <= 0)
 		continue;
 	    ON_SimpleArray<ON_Curve*> curve_uv, curve_st;
 	    for (int k = 0; k < events.Count(); k++) {
@@ -1436,10 +1462,9 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 		    c1.m_curve = events[k].m_curveA;
 		    c2.m_curve = events[k].m_curveB;
 #if USE_CONNECTIVITY_GRAPH
-		    c1.m_info.m_fi1 = i;
-		    c1.m_info.m_fi2 = j;
-		    c1.m_info.m_ci = k;
-		    c2.m_info = c1.m_info;
+		    c1.m_info.m_fi1 = c2.m_info.m_fi2 = i;
+		    c1.m_info.m_fi2 = c2.m_info.m_fi1 = facecount1 + j;
+		    c1.m_info.m_ci = c2.m_info.m_ci = k;
 #endif
 		    curvesarray[i].Append(c1);
 		    curvesarray[facecount1 + j].Append(c2);
@@ -1605,12 +1630,6 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
     }
 #endif	// #if USE_CONNECTIVITY_GRAPH
 
-    ON_SimpleArray<Subsurface*> surf_treeA, surf_treeB;
-    for (int i = 0; i < facecount1; i++)
-	surf_treeA.Append(NULL);
-    for (int i = 0; i < facecount2; i++)
-	surf_treeB.Append(NULL);
-
     for (int i = 0; i < trimmedfaces.Count(); i++) {
 	const ON_SimpleArray<TrimmedFace*>& splitted = trimmedfaces[i];
 	/* Perform inside-outside test to decide whether the trimmed face should
@@ -1664,31 +1683,85 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 	const ON_SimpleArray<TrimmedFace*>& splitted = trimmedfaces[i];
 	const ON_Surface* surf = splitted.Count() ? splitted[0]->m_face->SurfaceOf() : NULL;
 	for (int j = 0; j < splitted.Count(); j++) {
-	    if (splitted[j]->m_belong_to_final == TrimmedFace::BELONG) {
+	    TrimmedFace* t_face = splitted[j];
+	    if (t_face->m_belong_to_final == TrimmedFace::BELONG) {
 		// Add the surfaces, faces, loops, trims, vertices, edges, etc.
 		// to the brep structure.
 		ON_Surface *new_surf = surf->Duplicate();
 		int surfindex = brepO->AddSurface(new_surf);
 		ON_BrepFace& new_face = brepO->NewFace(surfindex);
 
-		add_elements(brepO, new_face, splitted[j]->m_outerloop, ON_BrepLoop::outer);
+		add_elements(brepO, new_face, t_face->m_outerloop, ON_BrepLoop::outer);
 		// ON_BrepLoop &loop = brepO->m_L[brepO->m_L.Count() - 1];
-		for (unsigned int k = 0; k < splitted[j]->m_innerloop.size(); k++)
-		    add_elements(brepO, new_face, splitted[j]->m_innerloop[k], ON_BrepLoop::inner);
+		for (unsigned int k = 0; k < t_face->m_innerloop.size(); k++)
+		    add_elements(brepO, new_face, t_face->m_innerloop[k], ON_BrepLoop::inner);
 
 		brepO->SetTrimIsoFlags(new_face);
 		const ON_BrepFace& original_face = i >= facecount1 ? brepB->m_F[i - facecount1] : brepA->m_F[i];
-		if (original_face.m_bRev ^ splitted[j]->m_rev)
+		if (original_face.m_bRev ^ t_face->m_rev)
 		    brepO->FlipFace(new_face);
+
+#if USE_CONNECTIVITY_GRAPH
+		// Generate the connectivity graph for the new solid (Remove
+		// the nodes that don't belong to it)
+		for (int k = 0; k < t_face->m_neighbors.Count(); k++)
+		    if (t_face->m_neighbors[k]->m_belong_to_final != TrimmedFace::BELONG) {
+			t_face->m_neighbors.Remove(k);
+			k--;
+		    }
+
+		for (int k = 0; k < t_face->m_ssi_info.Count(); k++) {
+		    SSICurveInfo info = t_face->m_ssi_info[k];
+		    if (info.m_fi1 != i) {
+			bu_log("Error: info.m_fi1(%d) != i(%d)\n", info.m_fi1, i);
+			continue;
+		    }
+		    for (int l = 0; l < trimmedfaces[info.m_fi2].Count(); l++) {
+			TrimmedFace* another_face = trimmedfaces[info.m_fi2][l];
+			if (another_face->m_belong_to_final != TrimmedFace::BELONG)
+			    continue;
+			int m;
+			for (m = 0; m < another_face->m_ssi_info.Count(); m++)
+			    if (another_face->m_ssi_info[m].m_fi2 == i && another_face->m_ssi_info[m].m_ci == info.m_ci)
+				break;
+			if (m != another_face->m_ssi_info.Count()) {
+			    if (t_face->m_neighbors.Search(another_face) == -1)
+				t_face->m_neighbors.Append(another_face);
+			    if (another_face->m_neighbors.Search(t_face) == -1)
+				another_face->m_neighbors.Append(t_face);
+			}
+		    }
+		}
+#endif
 	    }
 	}
     }
+
+#if USE_CONNECTIVITY_GRAPH
+    if (DEBUG_BREP_BOOLEAN) {
+	bu_log("The new connectivity graph for the final brep structure.");
+	for (int i = 0; i < facecount1 + facecount2; i++) {
+	    for (int j = 0; j < trimmedfaces[i].Count(); j++) {
+		if (trimmedfaces[i][j]->m_belong_to_final != TrimmedFace::BELONG)
+		    continue;
+		bu_log("\nFace[%p]'s neighbors:", trimmedfaces[i][j]);
+		for (int k = 0; k < trimmedfaces[i][j]->m_neighbors.Count(); k++)
+		    bu_log(" %p", trimmedfaces[i][j]->m_neighbors[k]);
+	    }
+	}
+    }
+#endif
 
     // Check IsValid() and output the message.
     ON_wString ws;
     ON_TextLog log(ws);
     brepO->IsValid(&log);
     bu_log(ON_String(ws).Array());
+
+    for (int i = 0; i < surf_treeA.Count(); i++)
+	delete surf_treeA[i];
+    for (int i = 0; i < surf_treeB.Count(); i++)
+	delete surf_treeB[i];
 
     // WIP
     return 0;

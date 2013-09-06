@@ -129,7 +129,14 @@ bw_read(const char *filename, int width, int height)
 	bif->height = height;
 	bif->width = width;
     }
-    bif->data = uchar2double(data, size);
+    if(size)
+	bif->data = uchar2double(data, size);
+    else {
+	/* zero sized image */
+	bu_free(bif, "icv container");
+	bu_free(data, "unisigned char data");
+	return NULL;
+    }
     bu_free(data, "bw_read : unsigned char data");
     bif->magic = ICV_IMAGE_MAGIC;
     bif->channels = 1;

@@ -53,15 +53,15 @@
 extern "C" {
 #endif
     RT_EXPORT extern int brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_tol* ttol, const struct bn_tol* tol, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);
-    RT_EXPORT extern int brep_conversion(struct rt_db_internal* intern, ON_Brep** brep, struct db_i *ip);
-    RT_EXPORT extern int brep_conversion_comb(struct rt_db_internal *old_internal, char *name, char *suffix, struct rt_wdb *wdbp, fastf_t local2mm);
+    RT_EXPORT extern int brep_conversion(struct rt_db_internal* intern, ON_Brep** brep, const struct db_i *dbip);
+    RT_EXPORT extern int brep_conversion_comb(struct rt_db_internal *old_internal, const char *name, const char *suffix, struct rt_wdb *wdbp, fastf_t local2mm);
     RT_EXPORT extern int brep_intersect_point_point(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
     RT_EXPORT extern int brep_intersect_point_curve(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
     RT_EXPORT extern int brep_intersect_point_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
     RT_EXPORT extern int brep_intersect_curve_curve(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
     RT_EXPORT extern int brep_intersect_curve_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
     RT_EXPORT extern int brep_intersect_surface_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock *vbp);
-    extern void rt_comb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), struct db_i *db);
+    extern void rt_comb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct db_i *dbip);
 #ifdef __cplusplus
 }
 #endif
@@ -1239,6 +1239,31 @@ brep_trim_bezier_info(struct brep_specific* bs, struct bu_vls *vls, int ti)
 
 
 int
+brep_curve_info(struct brep_specific* bs, struct bu_vls *vls, int ci)
+{
+    ON_Brep* brep = bs->brep;
+    ON_wString wstr;
+    ON_TextLog dump(wstr);
+    if (brep == NULL) {
+	return -1;
+    }
+    if (!((ci >= 0) && (ci < brep->m_C3.Count())))
+	return 0;
+    const ON_Curve *curve = brep->m_C3[ci];
+    ON_NurbsCurve* nc3 = ON_NurbsCurve::New();
+    curve->GetNurbForm(*nc3, 0.0);
+    dump.Print("NURBS form of 3d_curve(edge) \n");
+    nc3->Dump(dump);
+    delete nc3;
+
+    ON_String ss = wstr;
+    bu_vls_printf(vls, "%s\n", ss.Array());
+    return 0;
+}
+
+
+
+int
 brep_edge_info(struct brep_specific* bs, struct bu_vls *vls, int ei)
 {
     ON_Brep* brep = bs->brep;
@@ -2254,6 +2279,7 @@ info_usage(struct bu_vls *vls)
 {
     bu_vls_printf(vls, "mged>brep brepname.s info\n");
     bu_vls_printf(vls, "\tinfo - return count information for specific BREP\n");
+    bu_vls_printf(vls, "\tinfo C [index] or C [index-index] - return information for specific BREP '3D curve'\n");
     bu_vls_printf(vls, "\tinfo S [index] or S [index-index] - return information for specific BREP 'surface'\n");
     bu_vls_printf(vls, "\tinfo F [index] or F [index-index]- return information for specific BREP 'face'\n");
     bu_vls_printf(vls, "\tinfo T [index] or T [index-index]- return information for specific BREP 'trim'\n");
@@ -2287,7 +2313,7 @@ plot_usage(struct bu_vls *vls)
 
 
 int
-brep_conversion(struct rt_db_internal* intern, ON_Brep** brep, struct db_i* db)
+brep_conversion(struct rt_db_internal* intern, ON_Brep** brep, const struct db_i* dbip)
 {
     *brep = ON_Brep::New();
     ON_Brep *old = *brep;
@@ -2299,7 +2325,7 @@ brep_conversion(struct rt_db_internal* intern, ON_Brep** brep, struct db_i* db)
     tol.perp = SMALL_FASTF;
     tol.para = 1.0 - tol.perp;
     if (intern->idb_type == ID_COMBINATION) {
-	rt_comb_brep(brep, intern, &tol, db);
+	rt_comb_brep(brep, intern, &tol, dbip);
     } else {
 	if (intern->idb_meth->ft_brep == NULL) {
 	    delete old;
@@ -2317,7 +2343,7 @@ brep_conversion(struct rt_db_internal* intern, ON_Brep** brep, struct db_i* db)
 
 
 int
-brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtree, char *suffix, struct rt_wdb *wdbp, fastf_t local2mm)
+brep_conversion_tree(const struct db_i *dbip, const union tree *oldtree, union tree *newtree, const char *suffix, struct rt_wdb *wdbp, fastf_t local2mm)
 {
     int ret = 0;
     *newtree = *oldtree;
@@ -2331,7 +2357,7 @@ brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtree, 
 	    comb = new rt_comb_internal;
 	    newtree->tr_b.tb_right = new tree;
 	    RT_TREE_INIT(newtree->tr_b.tb_right);
-	    ret = brep_conversion_tree(db, oldtree->tr_b.tb_right, newtree->tr_b.tb_right, suffix, wdbp, local2mm);
+	    ret = brep_conversion_tree(dbip, oldtree->tr_b.tb_right, newtree->tr_b.tb_right, suffix, wdbp, local2mm);
 	    if (ret) {
 		delete newtree->tr_b.tb_right;
 		break;
@@ -2343,7 +2369,7 @@ brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtree, 
 	    /* convert left */
 	    BU_ALLOC(newtree->tr_b.tb_left, union tree);
 	    RT_TREE_INIT(newtree->tr_b.tb_left);
-	    ret = brep_conversion_tree(db, oldtree->tr_b.tb_left, newtree->tr_b.tb_left, suffix, wdbp, local2mm);
+	    ret = brep_conversion_tree(dbip, oldtree->tr_b.tb_left, newtree->tr_b.tb_left, suffix, wdbp, local2mm);
 	    if (!ret) {
 		comb->tree = newtree;
 	    } else {
@@ -2359,13 +2385,13 @@ brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtree, 
 	    newtree->tr_l.tl_name = (char*)bu_malloc(strlen(oldname)+strlen(suffix)+1, "char");
 	    bu_strlcpy(tmpname, oldname, strlen(oldname)+1);
 	    bu_strlcat(tmpname, suffix, strlen(oldname)+strlen(suffix)+1);
-	    if (db_lookup(db, tmpname, LOOKUP_QUIET) == RT_DIR_NULL) {
+	    if (db_lookup(dbip, tmpname, LOOKUP_QUIET) == RT_DIR_NULL) {
 		directory *dir;
-		dir = db_lookup(db, oldname, LOOKUP_QUIET);
+		dir = db_lookup(dbip, oldname, LOOKUP_QUIET);
 		if (dir != RT_DIR_NULL) {
 		    rt_db_internal *intern;
 		    BU_ALLOC(intern, struct rt_db_internal);
-		    rt_db_get_internal(intern, dir, db, bn_mat_identity, &rt_uniresource);
+		    rt_db_get_internal(intern, dir, dbip, bn_mat_identity, &rt_uniresource);
 		    if (BU_STR_EQUAL(intern->idb_meth->ft_name, "ID_COMBINATION")) {
 			ret = brep_conversion_comb(intern, tmpname, suffix, wdbp, local2mm);
 			if (ret) {
@@ -2386,7 +2412,7 @@ brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtree, 
 		    if (BU_STR_EQUAL(intern->idb_meth->ft_name, "ID_BREP")) {
 			*brep = ((struct rt_brep_internal *)intern->idb_ptr)->brep->Duplicate();
 		    } else {
-			ret = brep_conversion(intern, brep, db);
+			ret = brep_conversion(intern, brep, dbip);
 			if (ret == -1) {
 			    bu_log("The brep conversion of %s is unsuccessful.\n", oldname);
 			    newtree = NULL;
@@ -2447,7 +2473,7 @@ brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtree, 
 
 
 int
-brep_conversion_comb(struct rt_db_internal *old_internal, char *name, char *suffix, struct rt_wdb *wdbp, fastf_t local2mm)
+brep_conversion_comb(struct rt_db_internal *old_internal, const char *name, const char *suffix, struct rt_wdb *wdbp, fastf_t local2mm)
 {
     RT_CK_COMB(old_internal->idb_ptr);
     rt_comb_internal *comb_internal;
@@ -2584,6 +2610,10 @@ brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_to
 		for (int i = 0; i < brep->m_T.Count(); ++i) {
 		    ret = brep_trim_bezier_info(bs, vls, i);
 		}
+	    } else if (BU_STR_EQUAL(part, "C")) {
+		for (int i = 0; i < brep->m_C3.Count(); ++i) {
+		    ret = brep_curve_info(bs, vls, i);
+		}
 	    }
 	} else if (argc == 5) {
 	    const char *part = argv[3];
@@ -2615,6 +2645,10 @@ brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_to
 		} else if (BU_STR_EQUAL(part, "TB")) {
 		    for (int i = 0; i < brep->m_T.Count(); ++i) {
 			ret = brep_trim_bezier_info(bs, vls, i);
+		    }
+		} else if (BU_STR_EQUAL(part, "C")) {
+		    for (int i = 0; i < brep->m_C3.Count(); ++i) {
+			ret = brep_curve_info(bs, vls, i);
 		    }
 		}
 	    } else if (BU_STR_EQUAL(strindex, "?")) {
@@ -2663,6 +2697,11 @@ brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_to
 		    int T_count = brep->m_T.Count() - 1 ? endindex : brep->m_T.Count() - 1 < endindex;
 		    for (int i = startindex; i <= T_count; ++i) {
 			ret = brep_trim_bezier_info(bs, vls, i);
+		    }
+		} else if (BU_STR_EQUAL(part, "C")) {
+		    int C_count = brep->m_C3.Count() - 1 ? endindex : brep->m_C3.Count() - 1 < endindex;
+		    for (int i = startindex; i <= C_count; ++i) {
+			ret = brep_curve_info(bs, vls, i);
 		    }
 		}
 	    }

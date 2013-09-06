@@ -1,3 +1,9 @@
+brlcad (7.24.2-0) unstable; urgency=low
+
+  * update brlcad version
+
+ -- Jordi Sayol <g.sayol@yahoo.es>  Thu, 05 Sep 2013 23:44:51 +0200
+
 brlcad (7.24.0-0) unstable; urgency=low
 
   * update brlcad version
