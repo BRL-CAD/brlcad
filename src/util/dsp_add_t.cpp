@@ -494,55 +494,6 @@ main(int ac, char *av[])
     if (isatty(fileno(stdout)))
       bu_exit(1, "Must redirect standard output\n");
 
-    /*
-    next_arg = parse_args(ac, av);
-
-    if (next_arg >= ac)
-	print_usage("No files specified\n");
-
-    */
-
-    /* Open the files */
-    /* see try block above */
-    /*
-    in1 = fopen(av[next_arg], "r");
-    if (!in1) {
-	perror(av[next_arg]);
-	return EXIT_FAILURE;
-    }
-
-    if (fstat(fileno(in1), &sb)) {
-	perror(av[next_arg]);
-	fclose(in1);
-	return EXIT_FAILURE;
-    }
-
-    count = sb.st_size;
-    buf1 = (unsigned short *)bu_malloc((size_t)sb.st_size, "buf1");
-
-    next_arg++;
-
-    in2 = fopen(av[next_arg], "r");
-    if (!in2) {
-	perror(av[next_arg]);
-	fclose(in1);
-	return EXIT_FAILURE;
-    }
-
-    if (fstat(fileno(in2), &sb)) {
-	perror(av[next_arg]);
-	fclose(in1);
-	fclose(in2);
-	return EXIT_FAILURE;
-    }
-
-    if ((size_t)sb.st_size != count) {
-	fclose(in1);
-	fclose(in2);
-	bu_exit(EXIT_FAILURE, "**** ERROR **** file size mis-match\n");
-    }
-    */
-
     buf2 = (unsigned short *)bu_malloc((size_t)sb.st_size, "buf2");
 
     count = count >> 1; /* convert count of char to count of short */
