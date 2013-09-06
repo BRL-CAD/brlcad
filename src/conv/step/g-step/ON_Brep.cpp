@@ -158,7 +158,6 @@ Create_Rational_Curve_Aggregate(ON_NurbsCurve *ncurve, Exporter_Info_AP203 *info
     stepcomplex->ResetAttributes();
     std::cout << "b_spline_curve\n";
     while ((attr = stepcomplex->NextAttribute()) != NULL) {
-	std::cout << "  " << attr->Name() << "," << attr->NonRefType() << "\n";
 	if (!bu_strcmp(attr->Name(), "degree")) {
 	    attr->ptr.i = new SDAI_Integer(ncurve->Degree());
 	}
@@ -182,36 +181,53 @@ Create_Rational_Curve_Aggregate(ON_NurbsCurve *ncurve, Exporter_Info_AP203 *info
 	if (!bu_strcmp(attr->Name(), "self_intersect")) attr->ptr.e = new SDAI_LOGICAL(LFalse);
     }
 
+    /* Set knots */
+    stepcomplex = complex_entity->EntityPart("b_spline_curve_with_knots");
+    stepcomplex->ResetAttributes();
+    std::cout << "b_spline_curve_with_knots\n";
+    while ((attr = stepcomplex->NextAttribute()) != NULL) {
+	if (!bu_strcmp(attr->Name(), "knot_multiplicities")) {
+	    IntAggregate *knot_multiplicities = new IntAggregate();
+	    int i = 0;
+	    while (i < ncurve->KnotCount()) {
+		int multiplicity_val = ncurve->KnotMultiplicity(i);
+		/* OpenNURBS and STEP have different notions of end knot
+		 * multiplicity - see:
+		 * http://wiki.mcneel.com/developer/onsuperfluousknot
+		 *
+		 * TODO - might have a problem here if curve is closed (and in the non-rational case too)
+		 */
+		if ((i == 0) || (i == (ncurve->KnotCount() - ncurve->KnotMultiplicity(0)))) multiplicity_val++;
+		/* Set Multiplicity */
+		IntNode *multiplicity = new IntNode();
+		multiplicity->value = multiplicity_val;
+		knot_multiplicities->AddNode(multiplicity);
+		i += ncurve->KnotMultiplicity(i);
+	    }
+	    attr->ptr.a = knot_multiplicities;
+	}
+	if (!bu_strcmp(attr->Name(), "knots")) {
+	    RealAggregate *knots = new RealAggregate();
+	    int i = 0;
+	    while (i < ncurve->KnotCount()) {
+		/* Add knot */
+		RealNode *knot = new RealNode();
+		knot->value = ncurve->Knot(i);
+		knots->AddNode(knot);
+		i += ncurve->KnotMultiplicity(i);
+	    }
+	    attr->ptr.a = knots;
+	}
+	if (!bu_strcmp(attr->Name(), "knot_spec")) attr->ptr.e = new SdaiKnot_type_var(Knot_type__unspecified);
+    }
+#if 0
     stepcomplex = complex_entity->head;
 
 
     while (stepcomplex) {
 
-
-	if (!bu_strcmp(stepcomplex->EntityName(), "B_Spline_Curve")) {
-	    stepcomplex->ResetAttributes();
-//	    std::cout << "b_spline_curve\n";
-	    while ((attr = stepcomplex->NextAttribute()) != NULL) {
-//		std::cout << "  " << attr->Name() << "\n";
-//		if (!bu_strcmp(attr->Name(), "uncertainty")) {
-		    //EntityAggregate *unc_agg = new EntityAggregate();
-		    //unc_agg->AddNode(new EntityNode((SDAI_Application_instance *)uncertainty));
-		    //attr->ptr.a = unc_agg;
-		//}
-	    }
-
-	}
-
-	if (!bu_strcmp(stepcomplex->EntityName(), "B_Spline_Curve_With_Knots")) {
-	    stepcomplex->ResetAttributes();
-	    std::cout << "b_spline_curve_with_knots\n";
-	    while ((attr = stepcomplex->NextAttribute()) != NULL) {
-		//if (!bu_strcmp(attr->Name(), "context_identifier")) attr->StrToVal("'STANDARD'");
-		//if (!bu_strcmp(attr->Name(), "context_type")) attr->StrToVal("'3D'");
-	    }
-	}
-
 	if (!bu_strcmp(stepcomplex->EntityName(), "Rational_B_Spline_Curve")) {
+	    std::cout << "  " << attr->Name() << "," << attr->NonRefType() << "\n";
 	    stepcomplex->ResetAttributes();
 	    std::cout << "rational_b_spline_curve\n";
 	    while ((attr = stepcomplex->NextAttribute()) != NULL) {
@@ -226,10 +242,9 @@ Create_Rational_Curve_Aggregate(ON_NurbsCurve *ncurve, Exporter_Info_AP203 *info
 	}
 
 
-
-
 	stepcomplex = stepcomplex->sc;
     }
+#endif
     return (STEPentity *)complex_entity;
 }
 
