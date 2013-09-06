@@ -453,7 +453,7 @@ get_subcurve_inside_faces(const ON_Brep* brep1, const ON_Brep* brep2, int fi1, i
     // 2.1 Intersect the curves in Event with outerloop1, and get the parts
     // inside. (Represented with param intervals on the curve's domain [0, 1])
     ON_SimpleArray<double> divT;
-    ON_SimpleArray<ON_Interval> intervals;
+    ON_SimpleArray<ON_Interval> intervals1, intervals2;
     ON_SimpleArray<ON_X_EVENT> x_event1, x_event2;
     for (int i = 0; i < outerloop1.Count(); i++)
 	ON_Intersect(Event->m_curveA, outerloop1[i], x_event1, INTERSECTION_TOL);
@@ -474,7 +474,7 @@ get_subcurve_inside_faces(const ON_Brep* brep1, const ON_Brep* brep2, int fi1, i
 		continue;
 	    ON_2dPoint pt = Event->m_curveA->PointAt(interval.Mid());
 	    if (!IsPointOnLoop(pt, outerloop1) && IsPointInsideLoop(pt, outerloop1))
-		intervals.Append(interval);
+		intervals1.Append(interval);
 	}
     }
 
@@ -504,27 +504,34 @@ get_subcurve_inside_faces(const ON_Brep* brep1, const ON_Brep* brep2, int fi1, i
 		// m_curveA, m_curveB in an ON_SSX_EVENT should be the same.
 		// (See ON_SSX_EVENT::IsValid().
 		// So we don't need to pull the interval back to A
-		intervals.Append(interval);
+		intervals2.Append(interval);
 	    }
 	}
     }
 
     // 3. Merge the intervals and get the final result.
-    ON_Interval merged_interval;
-    for (int i = 0; i < intervals.Count(); i++) {
-	merged_interval.Union(intervals[i]);
+    ON_Interval merged_interval1, merged_interval2;
+    for (int i = 0; i < intervals1.Count(); i++) {
+	merged_interval1.Union(intervals1[i]);
+    }
+    for (int i = 0; i < intervals2.Count(); i++) {
+	merged_interval2.Union(intervals2[i]);
     }
 
-    if (!merged_interval.IsValid())
+    if (!merged_interval1.IsValid() || !merged_interval2.IsValid())
+	return -1;
+
+    ON_Interval shared_interval;
+    if (!shared_interval.Intersection(merged_interval1, merged_interval2))
 	return -1;
 
     if (DEBUG_BREP_BOOLEAN)
-	bu_log("merge_interval: [%g, %g]\n", merged_interval.Min(), merged_interval.Max());
+	bu_log("shared_interval: [%g, %g]\n", shared_interval.Min(), shared_interval.Max());
 
     // 4. Replace with the sub-curves.
-    Event->m_curve3d = sub_curve(Event->m_curve3d, merged_interval.Min(), merged_interval.Max());
-    Event->m_curveA = sub_curve(Event->m_curveA, merged_interval.Min(), merged_interval.Max());
-    Event->m_curveB = sub_curve(Event->m_curveB, merged_interval.Min(), merged_interval.Max());
+    Event->m_curve3d = sub_curve(Event->m_curve3d, shared_interval.Min(), shared_interval.Max());
+    Event->m_curveA = sub_curve(Event->m_curveA, shared_interval.Min(), shared_interval.Max());
+    Event->m_curveB = sub_curve(Event->m_curveB, shared_interval.Min(), shared_interval.Max());
 
     if (Event->m_curve3d == NULL || Event->m_curveA == NULL || Event->m_curveB == NULL)
 	return -1;
