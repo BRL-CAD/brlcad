@@ -462,13 +462,13 @@ main(int ac, char *av[])
 
       // take appropriate action
       if (has_help) {
-        bu_exit(1, usage);
+        bu_exit(EXIT_FAILURE, usage);
       }
 
       // TCLAP doesn't check for confusion in file names
       if (dsp3_fname == dsp1_fname
           || dsp3_fname == dsp2_fname) {
-        bu_exit(1, "overwriting an input file (use the '-f' option to continue)\n");
+        bu_exit(EXIT_FAILURE, "overwriting an input file (use the '-f' option to continue)\n");
       }
 
       // nor does it check for existing files (FIXME: add to TCLAP)
@@ -478,7 +478,7 @@ main(int ac, char *av[])
           unlink(dsp3_fname.c_str());
         }
         else {
-          bu_exit(1, "overwriting an existing file (use the '-f' option to continue)\n");
+          bu_exit(EXIT_FAILURE, "overwriting an existing file (use the '-f' option to continue)\n");
         }
       }
 
@@ -499,7 +499,7 @@ main(int ac, char *av[])
       count = sb.st_size;
       // check for zero-size file
       if (!count) {
-        bu_exit(1, "zero length input file '%s'\n", dsp1_fname.c_str());
+        bu_exit(EXIT_FAILURE, "zero length input file '%s'\n", dsp1_fname.c_str());
       }
 
       buf1 = (unsigned short *)bu_malloc((size_t)sb.st_size, "buf1");
@@ -528,7 +528,7 @@ main(int ac, char *av[])
       }
       // check for zero-size file
       if (!sb.st_size) {
-        bu_exit(1, "zero length input file '%s'\n", dsp2_fname.c_str());
+        bu_exit(EXIT_FAILURE, "zero length input file '%s'\n", dsp2_fname.c_str());
       }
 
       if ((size_t)sb.st_size != count) {
