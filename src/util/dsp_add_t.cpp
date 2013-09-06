@@ -38,13 +38,13 @@
 #include "tclap/CmdLine.h"
 
 /* declarations to support use of TCLAP arg parsing */
-static const char usage[] = "Usage: dsp_add dsp_1 dsp_2 > dsp_3\n";
+static const char usage[] = "Usage: dsp_add dsp_1 dsp_2 dsp_3\n";
 
 /* purpose: combine two dsp files
  *
  * description: Combines two dsp files (which are binary files
  * comprised of network unsigned shorts).  The two files must be of
- * identical size.  The result, written to stdout, is a file where
+ * identical size.  The result is a third file where
  * each cell's height is the total of the heights of the same cell
  * in the input files.
  *
@@ -390,8 +390,8 @@ BRLCAD_StdOutput::spacePrint(std::ostream& os,
 int
 main(int ac, char *av[])
 {
-  /*  int next_arg; *//* <= not needed */
-    FILE *in1, *in2;
+    /*  int next_arg; *//* <= not needed */
+    FILE *in1, *in2, *out1;
     unsigned short *buf1, *buf2;
     size_t count = 0;
     int in_cookie, out_cookie;
@@ -436,6 +436,13 @@ main(int ac, char *av[])
                                                 "dsp_file2",  // type of arg value
                                                 cmd);      // add to cmd object
 
+      TCLAP::UnlabeledValueArg<string> dsp3_arg("dsp_file3", // name of object
+                                                "redirected output", // description
+                                                true,      // arg is required
+                                                "",        // default value
+                                                "dsp_file3",  // type of arg value
+                                                cmd);      // add to cmd object
+
       // parse the args
       cmd.parse(ac, av);
 
@@ -443,6 +450,7 @@ main(int ac, char *av[])
       bool has_h = h_arg.getValue();
       const char *dsp1_fname = dsp1_arg.getValue().c_str();
       const char *dsp2_fname = dsp2_arg.getValue().c_str();
+      const char *dsp3_fname = dsp3_arg.getValue().c_str();
 
       // take appropriate action
       if (has_h) {
@@ -472,16 +480,26 @@ main(int ac, char *av[])
 	return EXIT_FAILURE;
       }
 
+      // the ouput file is now named instead of being redirected
+      out1 = fopen(dsp3_fname, "w");
+      if (!out1) {
+	perror(dsp3_fname);
+	fclose(out1);
+	return EXIT_FAILURE;
+      }
+
       if (fstat(fileno(in2), &sb)) {
 	perror(dsp2_fname);
 	fclose(in1);
 	fclose(in2);
+	fclose(out1);
 	return EXIT_FAILURE;
       }
 
       if ((size_t)sb.st_size != count) {
 	fclose(in1);
 	fclose(in2);
+	fclose(out1);
 	bu_exit(EXIT_FAILURE, "**** ERROR **** file size mis-match\n");
       }
 
@@ -490,9 +508,6 @@ main(int ac, char *av[])
       cerr << "error: " << e.error() << " for arg " << e.argId() << endl;
 
     }
-
-    if (isatty(fileno(stdout)))
-      bu_exit(1, "Must redirect standard output\n");
 
     buf2 = (unsigned short *)bu_malloc((size_t)sb.st_size, "buf2");
 
@@ -533,7 +548,7 @@ main(int ac, char *av[])
 	swap_bytes(buf2, count);
     }
 
-    if (fwrite(buf1, sizeof(short), count, stdout) != count) {
+    if (fwrite(buf1, sizeof(short), count, out1) != count) {
 	bu_exit(EXIT_FAILURE, "Error writing data\n");
     }
 
