@@ -398,6 +398,9 @@ main(int ac, char *av[])
     int conv;
     struct stat sb;
     size_t ret;
+    const char* dsp1_fname = NULL;
+    const char* dsp2_fname = NULL;
+    const char* dsp3_fname = NULL;
 
     try {
 
@@ -456,9 +459,9 @@ main(int ac, char *av[])
       // Get the value parsed by each arg.
       bool has_force = f_arg.getValue();
       bool has_help  = h_arg.getValue();
-      const string& dsp1_fname = dsp1_arg.getValue();
-      const string& dsp2_fname = dsp2_arg.getValue();
-      const string& dsp3_fname = dsp3_arg.getValue();
+      dsp1_fname     = dsp1_arg.getValue().c_str();
+      dsp2_fname     = dsp2_arg.getValue().c_str();
+      dsp3_fname     = dsp3_arg.getValue().c_str();
 
       // take appropriate action
       if (has_help) {
@@ -466,16 +469,16 @@ main(int ac, char *av[])
       }
 
       // TCLAP doesn't check for confusion in file names
-      if (dsp3_fname == dsp1_fname
-          || dsp3_fname == dsp2_fname) {
+      if (BU_STR_EQUAL(dsp3_fname, dsp1_fname)
+          || BU_STR_EQUAL(dsp3_fname, dsp2_fname)) {
         bu_exit(EXIT_FAILURE, "overwriting an input file (use the '-f' option to continue)\n");
       }
 
       // nor does it check for existing files (FIXME: add to TCLAP)
-      if (!stat(dsp3_fname.c_str(), &sb)) {
+      if (!stat(dsp3_fname, &sb)) {
         if (has_force) {
           printf("WARNING: overwriting an existing file...\n");
-          unlink(dsp3_fname.c_str());
+          unlink(dsp3_fname);
         }
         else {
           bu_exit(EXIT_FAILURE, "overwriting an existing file (use the '-f' option to continue)\n");
@@ -483,14 +486,14 @@ main(int ac, char *av[])
       }
 
       // open files
-      in1 = fopen(dsp1_fname.c_str(), "r");
+      in1 = fopen(dsp1_fname, "r");
       if (!in1) {
-	perror(dsp1_fname.c_str());
+	perror(dsp1_fname);
 	bu_exit(EXIT_FAILURE, "ERROR: input file open failure\n");
       }
 
       if (fstat(fileno(in1), &sb)) {
-        perror(dsp1_fname.c_str());
+        perror(dsp1_fname);
 	fclose(in1);
 	bu_exit(EXIT_FAILURE, "ERROR: input file stat failure\n");
       }
@@ -499,20 +502,22 @@ main(int ac, char *av[])
       count = sb.st_size;
       // check for zero-size file
       if (!count) {
+        perror(dsp1_fname);
+	fclose(in1);
         bu_exit(EXIT_FAILURE, "zero-length input file\n");
       }
 
       buf1 = (unsigned short *)bu_malloc((size_t)sb.st_size, "buf1");
 
-      in2 = fopen(dsp2_fname.c_str(), "r");
+      in2 = fopen(dsp2_fname, "r");
       if (!in2) {
-	perror(dsp2_fname.c_str());
+	perror(dsp2_fname);
 	fclose(in1);
 	bu_exit(EXIT_FAILURE, "ERROR: input file open failure\n");
       }
 
       if (fstat(fileno(in2), &sb)) {
-	perror(dsp2_fname.c_str());
+	perror(dsp2_fname);
 	fclose(in1);
 	fclose(in2);
 	bu_exit(EXIT_FAILURE, "ERROR: input file stat failure\n");
@@ -520,6 +525,9 @@ main(int ac, char *av[])
 
       // check for zero-size file
       if (!sb.st_size) {
+        perror(dsp2_fname);
+	fclose(in1);
+	fclose(in2);
         bu_exit(EXIT_FAILURE, "ERROR: zero-length input file\n");
       }
 
@@ -530,9 +538,9 @@ main(int ac, char *av[])
       }
 
       // the ouput file is now named instead of being redirected
-      out1 = fopen(dsp3_fname.c_str(), "w");
+      out1 = fopen(dsp3_fname, "w");
       if (!out1) {
-	perror(dsp3_fname.c_str());
+	perror(dsp3_fname);
 	fclose(in1);
 	fclose(in2);
 	fclose(out1);
@@ -551,14 +559,22 @@ main(int ac, char *av[])
 
     /* Read the terrain data */
     ret = fread(buf1, sizeof(short), count, in1);
-    if (ret < count)
-	perror("fread");
-    fclose(in1);
+    if (ret < count) {
+	perror(dsp1_fname);
+        fclose(in1);
+        fclose(in2);
+        fclose(out1);
+	bu_exit(EXIT_FAILURE, "ERROR: input file short read count\n");
+    }
 
     ret = fread(buf2, sizeof(short), count, in2);
-    if (ret < count)
-	perror("fread");
-    fclose(in2);
+    if (ret < count) {
+	perror(dsp2_fname);
+        fclose(in1);
+        fclose(in2);
+        fclose(out1);
+	bu_exit(EXIT_FAILURE, "ERROR: input file short read count\n");
+    }
 
     /* Convert from network to host format */
     in_cookie = bu_cv_cookie("nus");
@@ -585,6 +601,10 @@ main(int ac, char *av[])
     }
 
     if (fwrite(buf1, sizeof(short), count, out1) != count) {
+	perror(dsp3_fname);
+        fclose(in1);
+        fclose(in2);
+        fclose(out1);
 	bu_exit(EXIT_FAILURE, "ERROR: count error writing data\n");
     }
 
