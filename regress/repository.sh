@@ -88,7 +88,8 @@ echo "running common.h inclusion order check..."
 # small performance savings.
 FILES="`grep -I -e '#[[:space:]]*include' $SRCFILES $INCFILES | grep -E 'common.h|<' | sed 's/:.*//g' | sort | uniq`"
 
-EXEMPT="bin.h bio.h config_win.h pstdint.h uce-dirent.h ttcp.c"
+LEXERS="schema.h obj_grammar.c obj_grammar.cpp obj_scanner.h points_scan.c script.c"
+EXEMPT="bin.h bio.h config_win.h pstdint.h uce-dirent.h ttcp.c $LEXERS"
 
 FOUND=
 for file in $FILES ; do
