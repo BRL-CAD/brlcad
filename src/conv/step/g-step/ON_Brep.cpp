@@ -220,31 +220,31 @@ Create_Rational_Curve_Aggregate(ON_NurbsCurve *ncurve, Exporter_Info_AP203 *info
 	}
 	if (!bu_strcmp(attr->Name(), "knot_spec")) attr->ptr.e = new SdaiKnot_type_var(Knot_type__unspecified);
     }
-#if 0
-    stepcomplex = complex_entity->head;
 
-
-    while (stepcomplex) {
-
-	if (!bu_strcmp(stepcomplex->EntityName(), "Rational_B_Spline_Curve")) {
-	    std::cout << "  " << attr->Name() << "," << attr->NonRefType() << "\n";
-	    stepcomplex->ResetAttributes();
-	    std::cout << "rational_b_spline_curve\n";
-	    while ((attr = stepcomplex->NextAttribute()) != NULL) {
-		//if (!bu_strcmp(attr->Name(), "context_identifier")) attr->StrToVal("'STANDARD'");
-		//if (!bu_strcmp(attr->Name(), "context_type")) attr->StrToVal("'3D'");
-	    }
+    /* Set weights */
+    stepcomplex = complex_entity->EntityPart("rational_b_spline_curve");
+    stepcomplex->ResetAttributes();
+    std::cout << "rational_b_spline_curve\n";
+    while ((attr = stepcomplex->NextAttribute()) != NULL) {
+	std::cout << "  " << attr->Name() << "," << attr->NonRefType() << "\n";
+	RealAggregate *weights = new RealAggregate();
+	for (int i = 0; i < ncurve->CVCount(); i++) {
+	    RealNode *wnode = new RealNode();
+	    wnode->value = ncurve->Weight(i);
+	    weights->AddNode(wnode);
 	}
-
-	if (!bu_strcmp(stepcomplex->EntityName(), "Representation_Item")) {
-	    stepcomplex->ResetAttributes();
-	    std::cout << "representation_item\n";
-	}
-
-
-	stepcomplex = stepcomplex->sc;
+	attr->ptr.a = weights;
     }
-#endif
+
+    /* Representation item */
+    stepcomplex = complex_entity->EntityPart("representation_item");
+    stepcomplex->ResetAttributes();
+    std::cout << "representation_item\n";
+    while ((attr = stepcomplex->NextAttribute()) != NULL) {
+	std::cout << "  " << attr->Name() << "," << attr->NonRefType() << "\n";
+	if (!bu_strcmp(attr->Name(), "name")) attr->StrToVal("''");
+    }
+
     return (STEPentity *)complex_entity;
 }
 
