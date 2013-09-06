@@ -178,6 +178,8 @@ Create_Rational_Curve_Aggregate(ON_NurbsCurve *ncurve, Exporter_Info_AP203 *info
 	    attr->ptr.a = control_pnts;
 	}
 	if (!bu_strcmp(attr->Name(), "curve_form")) attr->ptr.e = new SdaiB_spline_curve_form_var(B_spline_curve_form__unspecified);
+	if (!bu_strcmp(attr->Name(), "closed_curve")) attr->ptr.e = new SDAI_LOGICAL((Logical)(ncurve->IsClosed()));
+	if (!bu_strcmp(attr->Name(), "self_intersect")) attr->ptr.e = new SDAI_LOGICAL(LFalse);
     }
 
     stepcomplex = complex_entity->head;
