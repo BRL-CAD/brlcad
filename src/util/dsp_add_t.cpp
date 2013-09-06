@@ -428,26 +428,26 @@ main(int ac, char *av[])
                              false); // default value
 
       // need two file names
-      TCLAP::UnlabeledValueArg<string> dsp1_arg("dsp_file1", // name of object
+      TCLAP::UnlabeledValueArg<string> dsp1_arg("dsp_infile1", // name of object
                                                 "first dsp input file name", // description
                                                 true,      // arg is required
                                                 "",        // default value
-                                                "dsp_file1",  // type of arg value
+                                                "dsp_infile1",  // type of arg value
                                                 cmd);      // add to cmd object
 
       // need two file names
-      TCLAP::UnlabeledValueArg<string> dsp2_arg("dsp_file2", // name of object
+      TCLAP::UnlabeledValueArg<string> dsp2_arg("dsp_infile2", // name of object
                                                 "second dsp input file name", // description
                                                 true,      // arg is required
                                                 "",        // default value
-                                                "dsp_file2",  // type of arg value
+                                                "dsp_infile2",  // type of arg value
                                                 cmd);      // add to cmd object
 
-      TCLAP::UnlabeledValueArg<string> dsp3_arg("dsp_file3", // name of object
-                                                "redirected output", // description
+      TCLAP::UnlabeledValueArg<string> dsp3_arg("dsp_outfile", // name of object
+                                                "dsp output file", // description
                                                 true,      // arg is required
                                                 "",        // default value
-                                                "dsp_file3",  // type of arg value
+                                                "dsp_outfile",  // type of arg value
                                                 cmd);      // add to cmd object
 
       // parse the args
