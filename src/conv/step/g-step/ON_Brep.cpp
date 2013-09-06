@@ -143,6 +143,83 @@ ON_RationalNurbsCurveCV_to_Aggregates(ON_NurbsCurve *incrv, SdaiRational_b_splin
     }
 }
 
+/* For a rational B-Spline curve with weights, we need to create an aggregate type */
+
+STEPentity *
+Create_Rational_Curve_Aggregate(ON_NurbsCurve *ncurve, Exporter_Info_AP203 *info) {
+    STEPattribute *attr;
+    STEPcomplex *stepcomplex;
+    const char *entNmArr[8] = {"bounded_curve", "b_spline_curve", "b_spline_curve_with_knots",
+	"curve", "geometric_representation_item", "rational_b_spline_curve", "representation_item", "*"};
+    STEPcomplex *complex_entity = new STEPcomplex(info->registry, (const char **)entNmArr, info->registry->GetEntityCnt() + 1);
+    stepcomplex = complex_entity->head;
+    while (stepcomplex) {
+
+	if (!bu_strcmp(stepcomplex->EntityName(), "Bounded_Curve")) {
+	    stepcomplex->ResetAttributes();
+	    std::cout << "bounded_curve\n";
+	}
+
+	if (!bu_strcmp(stepcomplex->EntityName(), "B_Spline_Curve")) {
+	    stepcomplex->ResetAttributes();
+	    std::cout << "b_spline_curve\n";
+	    while ((attr = stepcomplex->NextAttribute()) != NULL) {
+		std::cout << "  " << attr->Name() << "\n";
+		if (!bu_strcmp(attr->Name(), "uncertainty")) {
+		    //EntityAggregate *unc_agg = new EntityAggregate();
+		    //unc_agg->AddNode(new EntityNode((SDAI_Application_instance *)uncertainty));
+		    //attr->ptr.a = unc_agg;
+		}
+	    }
+
+	}
+
+	if (!bu_strcmp(stepcomplex->EntityName(), "B_Spline_Curve_With_Knots")) {
+	    stepcomplex->ResetAttributes();
+	    std::cout << "b_spline_curve_with_knots\n";
+	    while ((attr = stepcomplex->NextAttribute()) != NULL) {
+		//if (!bu_strcmp(attr->Name(), "context_identifier")) attr->StrToVal("'STANDARD'");
+		//if (!bu_strcmp(attr->Name(), "context_type")) attr->StrToVal("'3D'");
+	    }
+	}
+
+
+	if (!bu_strcmp(stepcomplex->EntityName(), "Curve")) {
+	    stepcomplex->ResetAttributes();
+	    std::cout << "curve\n";
+	}
+
+	if (!bu_strcmp(stepcomplex->EntityName(), "Geometric_Representation_Item")) {
+	    stepcomplex->ResetAttributes();
+	    std::cout << "geometric_representation_item\n";
+	}
+
+
+
+	if (!bu_strcmp(stepcomplex->EntityName(), "Rational_B_Spline_Curve")) {
+	    stepcomplex->ResetAttributes();
+	    std::cout << "rational_b_spline_curve\n";
+	    while ((attr = stepcomplex->NextAttribute()) != NULL) {
+		//if (!bu_strcmp(attr->Name(), "context_identifier")) attr->StrToVal("'STANDARD'");
+		//if (!bu_strcmp(attr->Name(), "context_type")) attr->StrToVal("'3D'");
+	    }
+	}
+
+	if (!bu_strcmp(stepcomplex->EntityName(), "Representation_Item")) {
+	    stepcomplex->ResetAttributes();
+	    std::cout << "representation_item\n";
+	}
+
+
+
+
+	stepcomplex = stepcomplex->sc;
+    }
+    info->instance_list->Append((STEPentity *)complex_entity, completeSE);
+    return (STEPentity *)complex_entity;
+}
+
+
 /* Unlike most of the structures we're working with, GenericAggregate seems to require that we manually
  * build its final string with the step file id numbers that identify each control point.  To allow for
  * delayed instance manager population, we build a temporary map of nested vectors to hold the information
@@ -813,10 +890,9 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 
 	    if (arc_nurb.IsRational()) {
 		std::cout << "Have Rational NurbsCurve Arc\n";
-		info->three_dimensional_curves.at(i) = info->registry->ObjCreate("RATIONAL_B_SPLINE_CURVE");
-		SdaiRational_b_spline_curve *curr_curve = (SdaiRational_b_spline_curve *)info->three_dimensional_curves.at(i);
-		ON_RationalNurbsCurveCV_to_Aggregates(&arc_nurb, curr_curve, info);
-		curr_curve->degree_(arc_nurb.Degree());
+		//info->registry->ObjCreate("RATIONAL_B_SPLINE_CURVE");
+		info->three_dimensional_curves.at(i) = Create_Rational_Curve_Aggregate(&arc_nurb, info);
+		//curr_curve->degree_(arc_nurb.Degree());
 	    } else {
 		info->three_dimensional_curves.at(i) = info->registry->ObjCreate("B_SPLINE_CURVE_WITH_KNOTS");
 		SdaiB_spline_curve *curr_curve = (SdaiB_spline_curve *)info->three_dimensional_curves.at(i);
@@ -824,16 +900,16 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 		ON_NurbsCurveCV_to_EntityAggregate(&arc_nurb, curr_curve, info);
 		SdaiB_spline_curve_with_knots *curve_knots = (SdaiB_spline_curve_with_knots *)info->three_dimensional_curves.at(i);
 		ON_NurbsCurveKnots_to_Aggregates(&arc_nurb, curve_knots);
+
+		((SdaiB_spline_curve *)info->three_dimensional_curves.at(i))->curve_form_(B_spline_curve_form__unspecified);
+		((SdaiB_spline_curve *)info->three_dimensional_curves.at(i))->closed_curve_(SDAI_LOGICAL(arc_nurb.IsClosed()));
+
+		/* TODO: Assume we don't have self-intersecting curves for
+		 * now - need some way to test this...
+		 */
+		((SdaiB_spline_curve *)info->three_dimensional_curves.at(i))->self_intersect_(LFalse);
+		((SdaiB_spline_curve *)info->three_dimensional_curves.at(i))->name_("''");
 	    }
-
-	    ((SdaiB_spline_curve *)info->three_dimensional_curves.at(i))->curve_form_(B_spline_curve_form__unspecified);
-	    ((SdaiB_spline_curve *)info->three_dimensional_curves.at(i))->closed_curve_(SDAI_LOGICAL(arc_nurb.IsClosed()));
-
-	    /* TODO: Assume we don't have self-intersecting curves for
-	     * now - need some way to test this...
-	     */
-	    ((SdaiB_spline_curve *)info->three_dimensional_curves.at(i))->self_intersect_(LFalse);
-	    ((SdaiB_spline_curve *)info->three_dimensional_curves.at(i))->name_("''");
 	    curve_converted = 1;
 	}
 
@@ -877,10 +953,11 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 	    std::cout << "Have NurbsCurve\n";
 	    if (n_curve->IsRational()) {
 		std::cout << "Have Rational NurbsCurve\n";
-		info->three_dimensional_curves.at(i) = info->registry->ObjCreate("RATIONAL_B_SPLINE_CURVE");
-		SdaiRational_b_spline_curve *curr_curve = (SdaiRational_b_spline_curve *)info->three_dimensional_curves.at(i);
-		ON_RationalNurbsCurveCV_to_Aggregates(n_curve, curr_curve, info);
-		curr_curve->degree_(n_curve->Degree());
+		info->three_dimensional_curves.at(i) = Create_Rational_Curve_Aggregate(n_curve, info);
+		//info->three_dimensional_curves.at(i) = info->registry->ObjCreate("RATIONAL_B_SPLINE_CURVE");
+		//SdaiRational_b_spline_curve *curr_curve = (SdaiRational_b_spline_curve *)info->three_dimensional_curves.at(i);
+		//ON_RationalNurbsCurveCV_to_Aggregates(n_curve, curr_curve, info);
+		//curr_curve->degree_(n_curve->Degree());
 	    } else {
 		info->three_dimensional_curves.at(i) = info->registry->ObjCreate("B_SPLINE_CURVE_WITH_KNOTS");
 		SdaiB_spline_curve *curr_curve = (SdaiB_spline_curve *)info->three_dimensional_curves.at(i);
@@ -888,16 +965,16 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 		ON_NurbsCurveCV_to_EntityAggregate(n_curve, curr_curve, info);
 		SdaiB_spline_curve_with_knots *curve_knots = (SdaiB_spline_curve_with_knots *)info->three_dimensional_curves.at(i);
 		ON_NurbsCurveKnots_to_Aggregates(n_curve, curve_knots);
+		((SdaiB_spline_curve *)info->three_dimensional_curves.at(i))->curve_form_(B_spline_curve_form__unspecified);
+		((SdaiB_spline_curve *)info->three_dimensional_curves.at(i))->closed_curve_(SDAI_LOGICAL(n_curve->IsClosed()));
+
+		/* TODO: Assume we don't have self-intersecting curves for
+		 * now - need some way to test this...
+		 */
+		((SdaiB_spline_curve *)info->three_dimensional_curves.at(i))->self_intersect_(LFalse);
+		((SdaiB_spline_curve *)info->three_dimensional_curves.at(i))->name_("''");
 	    }
 
-	    ((SdaiB_spline_curve *)info->three_dimensional_curves.at(i))->curve_form_(B_spline_curve_form__unspecified);
-	    ((SdaiB_spline_curve *)info->three_dimensional_curves.at(i))->closed_curve_(SDAI_LOGICAL(n_curve->IsClosed()));
-
-	    /* TODO: Assume we don't have self-intersecting curves for
-	     * now - need some way to test this...
-	     */
-	    ((SdaiB_spline_curve *)info->three_dimensional_curves.at(i))->self_intersect_(LFalse);
-	    ((SdaiB_spline_curve *)info->three_dimensional_curves.at(i))->name_("''");
 	    curve_converted = 1;
 	}
 
