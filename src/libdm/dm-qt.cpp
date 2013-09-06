@@ -20,6 +20,7 @@
 /** @file libdm/dm-qt.cpp
  *
  */
+#include <locale.h>
 #include "common.h"
 
 #ifdef DM_QT
@@ -59,6 +60,7 @@ qt_close(struct dm *dmp)
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
 
     delete privars->font;
+    delete privars->painter;
     privars->win->close();
     delete privars->win;
 
@@ -87,7 +89,6 @@ qt_drawBegin(struct dm *dmp)
 
     privars->pix->fill(privars->bg);
 
-    privars->painter = new QPainter(privars->pix);
     privars->painter->setPen(privars->fg);
     privars->painter->setFont(*privars->font);
 
@@ -102,11 +103,7 @@ qt_drawEnd(struct dm *dmp)
 
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
 
-    privars->painter->end();
-    delete privars->painter;
-    privars->painter = NULL;
     privars->qapp->processEvents();
-
     qt_sendRepaintEvent(dmp);
     privars->qapp->processEvents();
 
@@ -519,7 +516,10 @@ qt_configureWin(struct dm *dmp, int force)
 
     qt_reshape(dmp, width, height);
     privars->win->resize(width, height);
+
+    privars->painter->end();
     *privars->pix = privars->pix->scaled(width, height);
+    privars->painter->begin(privars->pix);
 
     if (dmp->dm_debugLevel) {
 	bu_log("qt_configureWin()\n");
@@ -842,14 +842,15 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
 
     privars->font = NULL;
 
-    qt_configureWin(dmp, 1);
-
-    privars->painter = NULL;
+    privars->painter = new QPainter(privars->pix);
     qt_setFGColor(dmp, 1, 0, 0, 0, 0);
     qt_setBGColor(dmp, 0, 0, 0);
 
+    qt_configureWin(dmp, 1);
+
     MAT_IDN(privars->qmat);
 
+    setlocale(LC_ALL, "POSIX");
     bu_log("qt_open called\n");
     return dmp;
 }
@@ -1079,8 +1080,9 @@ bool QTkMainWindow::event(QEvent *ev)
 
 void QTkMainWindow::renderNow()
 {
-    if (!isExposed())
+    if (!isExposed()) {
 	return;
+    }
 
     QRect rect(0, 0, width(), height());
     m_backingStore->beginPaint(rect);
