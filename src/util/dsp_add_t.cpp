@@ -420,6 +420,13 @@ main(int ac, char *av[])
                              cmd,    // add to 'cmd' object
                              false); // default value
 
+      // define a force option to allow user to shoot himself in the foot
+      TCLAP::SwitchArg f_arg("f",    // short option char
+                             "force", // long option name, if any
+                             "Allow overwriting existing files.",  // short description string
+                             cmd,    // add to 'cmd' object
+                             false); // default value
+
       // need two file names
       TCLAP::UnlabeledValueArg<string> dsp1_arg("dsp_file1", // name of object
                                                 "first dsp input file name", // description
@@ -447,49 +454,68 @@ main(int ac, char *av[])
       cmd.parse(ac, av);
 
       // Get the value parsed by each arg.
-      bool has_h = h_arg.getValue();
-      const char *dsp1_fname = dsp1_arg.getValue().c_str();
-      const char *dsp2_fname = dsp2_arg.getValue().c_str();
-      const char *dsp3_fname = dsp3_arg.getValue().c_str();
+      bool has_force = f_arg.getValue();
+      bool has_help  = h_arg.getValue();
+      const string& dsp1_fname = dsp1_arg.getValue();
+      const string& dsp2_fname = dsp2_arg.getValue();
+      const string& dsp3_fname = dsp3_arg.getValue();
 
       // take appropriate action
-      if (has_h) {
+      if (has_help) {
         bu_exit(1, usage);
       }
 
+      // TCLAP doesn't check for confusion in file names
+      if (dsp3_fname == dsp1_fname
+          || dsp3_fname == dsp2_fname) {
+        bu_exit(1, "overwriting an input file (use the '-f' option to continue)\n");
+      }
+
+      // nor does it check for existing files (FIXME: add to TCLAP)
+      if (!stat(dsp3_fname.c_str(), &sb)) {
+        if (has_force) {
+          printf("WARNING: overwriting an existing file...\n");
+          unlink(dsp3_fname.c_str());
+        }
+        else {
+          bu_exit(1, "overwriting an existing file (use the '-f' option to continue)\n");
+        }
+      }
+
       // open files
-      in1 = fopen(dsp1_fname, "r");
+      in1 = fopen(dsp1_fname.c_str(), "r");
       if (!in1) {
-	perror(dsp1_fname);
+	perror(dsp1_fname.c_str());
 	return EXIT_FAILURE;
       }
 
       if (fstat(fileno(in1), &sb)) {
-        perror(dsp1_fname);
+        perror(dsp1_fname.c_str());
 	fclose(in1);
 	return EXIT_FAILURE;
       }
 
+      // save size of first input file for comparison with other two
       count = sb.st_size;
       buf1 = (unsigned short *)bu_malloc((size_t)sb.st_size, "buf1");
 
-      in2 = fopen(dsp2_fname, "r");
+      in2 = fopen(dsp2_fname.c_str(), "r");
       if (!in2) {
-	perror(dsp2_fname);
+	perror(dsp2_fname.c_str());
 	fclose(in1);
 	return EXIT_FAILURE;
       }
 
       // the ouput file is now named instead of being redirected
-      out1 = fopen(dsp3_fname, "w");
+      out1 = fopen(dsp3_fname.c_str(), "w");
       if (!out1) {
-	perror(dsp3_fname);
+	perror(dsp3_fname.c_str());
 	fclose(out1);
 	return EXIT_FAILURE;
       }
 
       if (fstat(fileno(in2), &sb)) {
-	perror(dsp2_fname);
+	perror(dsp2_fname.c_str());
 	fclose(in1);
 	fclose(in2);
 	fclose(out1);
@@ -500,7 +526,7 @@ main(int ac, char *av[])
 	fclose(in1);
 	fclose(in2);
 	fclose(out1);
-	bu_exit(EXIT_FAILURE, "**** ERROR **** file size mis-match\n");
+	bu_exit(EXIT_FAILURE, "**** ERROR **** input file size mis-match\n");
       }
 
     } catch (TCLAP::ArgException &e) { // catch any exceptions
