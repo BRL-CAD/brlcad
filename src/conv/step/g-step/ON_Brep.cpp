@@ -152,24 +152,50 @@ Create_Rational_Curve_Aggregate(ON_NurbsCurve *ncurve, Exporter_Info_AP203 *info
     const char *entNmArr[8] = {"bounded_curve", "b_spline_curve", "b_spline_curve_with_knots",
 	"curve", "geometric_representation_item", "rational_b_spline_curve", "representation_item", "*"};
     STEPcomplex *complex_entity = new STEPcomplex(info->registry, (const char **)entNmArr, info->registry->GetEntityCnt() + 1);
+
+    /* Set b_spline_curve data */
+    stepcomplex = complex_entity->EntityPart("b_spline_curve");
+    stepcomplex->ResetAttributes();
+    std::cout << "b_spline_curve\n";
+    while ((attr = stepcomplex->NextAttribute()) != NULL) {
+	std::cout << "  " << attr->Name() << "," << attr->NonRefType() << "\n";
+	if (!bu_strcmp(attr->Name(), "degree")) {
+	    attr->ptr.i = new SDAI_Integer(ncurve->Degree());
+	}
+	if (!bu_strcmp(attr->Name(), "control_points_list")) {
+	    EntityAggregate *control_pnts= new EntityAggregate();
+	    ON_4dPoint cv_pnt;
+	    for (int i = 0; i < ncurve->CVCount(); i++) {
+		double w = ncurve->Weight(i);
+		SdaiCartesian_point *step_cartesian = (SdaiCartesian_point *)info->registry->ObjCreate("CARTESIAN_POINT");
+		step_cartesian->name_("''");
+		info->cartesian_pnts.push_back((STEPentity *)step_cartesian);
+		ncurve->GetCV(i, cv_pnt);
+		std::cout << "4d point: " << cv_pnt.x << "," << cv_pnt.y << "," << cv_pnt.z << "," << ncurve->Weight(i) << "\n";
+		XYZ_to_Cartesian_point(cv_pnt.x/w, cv_pnt.y/w, cv_pnt.z/w, step_cartesian);
+		control_pnts->AddNode(new EntityNode((SDAI_Application_instance *)step_cartesian));
+	    }
+	    attr->ptr.a = control_pnts;
+	}
+	if (!bu_strcmp(attr->Name(), "curve_form")) attr->ptr.e = new SdaiB_spline_curve_form_var(B_spline_curve_form__unspecified);
+    }
+
     stepcomplex = complex_entity->head;
+
+
     while (stepcomplex) {
 
-	if (!bu_strcmp(stepcomplex->EntityName(), "Bounded_Curve")) {
-	    stepcomplex->ResetAttributes();
-	    std::cout << "bounded_curve\n";
-	}
 
 	if (!bu_strcmp(stepcomplex->EntityName(), "B_Spline_Curve")) {
 	    stepcomplex->ResetAttributes();
-	    std::cout << "b_spline_curve\n";
+//	    std::cout << "b_spline_curve\n";
 	    while ((attr = stepcomplex->NextAttribute()) != NULL) {
-		std::cout << "  " << attr->Name() << "\n";
-		if (!bu_strcmp(attr->Name(), "uncertainty")) {
+//		std::cout << "  " << attr->Name() << "\n";
+//		if (!bu_strcmp(attr->Name(), "uncertainty")) {
 		    //EntityAggregate *unc_agg = new EntityAggregate();
 		    //unc_agg->AddNode(new EntityNode((SDAI_Application_instance *)uncertainty));
 		    //attr->ptr.a = unc_agg;
-		}
+		//}
 	    }
 
 	}
@@ -182,19 +208,6 @@ Create_Rational_Curve_Aggregate(ON_NurbsCurve *ncurve, Exporter_Info_AP203 *info
 		//if (!bu_strcmp(attr->Name(), "context_type")) attr->StrToVal("'3D'");
 	    }
 	}
-
-
-	if (!bu_strcmp(stepcomplex->EntityName(), "Curve")) {
-	    stepcomplex->ResetAttributes();
-	    std::cout << "curve\n";
-	}
-
-	if (!bu_strcmp(stepcomplex->EntityName(), "Geometric_Representation_Item")) {
-	    stepcomplex->ResetAttributes();
-	    std::cout << "geometric_representation_item\n";
-	}
-
-
 
 	if (!bu_strcmp(stepcomplex->EntityName(), "Rational_B_Spline_Curve")) {
 	    stepcomplex->ResetAttributes();
