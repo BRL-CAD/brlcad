@@ -497,6 +497,11 @@ main(int ac, char *av[])
 
       // save size of first input file for comparison with other two
       count = sb.st_size;
+      // check for zero-size file
+      if (!count) {
+        bu_exit(1, "zero length input file '%s'\n", dsp1_fname.c_str());
+      }
+
       buf1 = (unsigned short *)bu_malloc((size_t)sb.st_size, "buf1");
 
       in2 = fopen(dsp2_fname.c_str(), "r");
@@ -520,6 +525,10 @@ main(int ac, char *av[])
 	fclose(in2);
 	fclose(out1);
 	return EXIT_FAILURE;
+      }
+      // check for zero-size file
+      if (!sb.st_size) {
+        bu_exit(1, "zero length input file '%s'\n", dsp2_fname.c_str());
       }
 
       if ((size_t)sb.st_size != count) {
