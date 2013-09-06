@@ -473,10 +473,11 @@ get_subcurve_inside_faces(const ON_Brep* brep1, const ON_Brep* brep2, int fi1, i
 	    if (ON_NearZero(interval.Length()))
 		continue;
 	    ON_2dPoint pt = Event->m_curveA->PointAt(interval.Mid());
-	    if (!IsPointOnLoop(pt, outerloop1) && IsPointInsideLoop(pt, outerloop1))
+	    if (IsPointOnLoop(pt, outerloop1) == 0 && IsPointInsideLoop(pt, outerloop1) == 1)
 		intervals1.Append(interval);
 	}
-    }
+    } else
+	intervals1.Append(Event->m_curveA->Domain());   // No intersection
 
     // 2.2 Intersect the curves in Event with outerloop2, and get the parts
     // inside. (Represented with param intervals on the curve's domain [0, 1])
@@ -499,7 +500,7 @@ get_subcurve_inside_faces(const ON_Brep* brep1, const ON_Brep* brep2, int fi1, i
 	    if (ON_NearZero(interval.Length()))
 		continue;
 	    ON_2dPoint pt = Event->m_curveB->PointAt(interval.Mid());
-	    if (!IsPointOnLoop(pt, outerloop2) && IsPointInsideLoop(pt, outerloop2)) {
+	    if (IsPointOnLoop(pt, outerloop2) == 0 && IsPointInsideLoop(pt, outerloop2) == 1) {
 		// According to openNURBS's definition, the domain of m_curve3d,
 		// m_curveA, m_curveB in an ON_SSX_EVENT should be the same.
 		// (See ON_SSX_EVENT::IsValid().
@@ -507,7 +508,8 @@ get_subcurve_inside_faces(const ON_Brep* brep1, const ON_Brep* brep2, int fi1, i
 		intervals2.Append(interval);
 	    }
 	}
-    }
+    } else
+	intervals2.Append(Event->m_curveB->Domain());   // No intersection
 
     // 3. Merge the intervals and get the final result.
     ON_Interval merged_interval1, merged_interval2;
@@ -518,8 +520,9 @@ get_subcurve_inside_faces(const ON_Brep* brep1, const ON_Brep* brep2, int fi1, i
 	merged_interval2.Union(intervals2[i]);
     }
 
-    if (!merged_interval1.IsValid() || !merged_interval2.IsValid())
+    if (!merged_interval1.IsValid() || !merged_interval2.IsValid()) {
 	return -1;
+    }
 
     ON_Interval shared_interval;
     if (!shared_interval.Intersection(merged_interval1, merged_interval2))
@@ -679,7 +682,7 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 	if (!have_intersect[i]) {
 	    // The start point cannot be on the boundary of the loop, because
 	    // there is no intersections between curves[i] and the loop.
-	    if (IsPointInsideLoop(curves[i].PointAtStart(), in->m_outerloop)) {
+	    if (IsPointInsideLoop(curves[i].PointAtStart(), in->m_outerloop) == 1) {
 		if (curves[i].IsClosed()) {
 		    ON_SimpleArray<ON_Curve*> iloop;
 		    curves[i].AppendCurvesToArray(iloop);
@@ -732,8 +735,8 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 		// boundary, that point should be IntersectPoint::OUT, the
 		// same as the right's outside the loop.
 		// Other cases are similar.
-		int left_in = IsPointInsideLoop(left, in->m_outerloop) && !IsPointOnLoop(left, in->m_outerloop);
-		int right_in = IsPointInsideLoop(right, in->m_outerloop) && !IsPointOnLoop(right, in->m_outerloop);
+		int left_in = IsPointInsideLoop(left, in->m_outerloop) == 1 && IsPointOnLoop(left, in->m_outerloop) == 0;
+		int right_in = IsPointInsideLoop(right, in->m_outerloop) == 1 && IsPointOnLoop(right, in->m_outerloop) == 0;
 		if (left_in < 0 || right_in < 0) {
 		    // not a loop
 		    ipt->m_in_out = IntersectPoint::UNSET;
@@ -1328,11 +1331,11 @@ IsPointInsideBrep(const ON_3dPoint& pt, const ON_Brep* brep, ON_SimpleArray<Subs
 	}
 	for (int j = 0; j < x_event.Count(); j++) {
 	    ON_2dPoint pt2d(x_event[j].m_b[0], x_event[j].m_b[1]);
-	    if (IsPointInsideLoop(pt2d, outerloop) || IsPointOnLoop(pt2d, outerloop))
+	    if (IsPointInsideLoop(pt2d, outerloop) == 1 || IsPointOnLoop(pt2d, outerloop) == 1)
 		isect_pt.Append(x_event[j].m_B[0]);
 	    if (x_event[j].m_type == ON_X_EVENT::ccx_overlap) {
 		pt2d = ON_2dPoint(x_event[j].m_b[2], x_event[j].m_b[3]);
-		if (IsPointInsideLoop(pt2d, outerloop) || IsPointOnLoop(pt2d, outerloop))
+		if (IsPointInsideLoop(pt2d, outerloop) == 1 || IsPointOnLoop(pt2d, outerloop) == 1)
 		    isect_pt.Append(x_event[j].m_B[1]);
 	    }
 	}
@@ -1388,13 +1391,13 @@ IsFaceInsideBrep(const TrimmedFace* tface, const ON_Brep* brep, ON_SimpleArray<S
 	double x = rng.RandomDouble(bbox.m_min.x, bbox.m_max.x);
 	double y = rng.RandomDouble(bbox.m_min.y, bbox.m_max.y);
 	test_pt2d = ON_2dPoint(x, y);
-	if (IsPointInsideLoop(test_pt2d, tface->m_outerloop)
-	    && !IsPointOnLoop(test_pt2d, tface->m_outerloop)) {
+	if (IsPointInsideLoop(test_pt2d, tface->m_outerloop) == 1
+	    && IsPointOnLoop(test_pt2d, tface->m_outerloop) == 0) {
 	    unsigned int j = 0;
 	    // The test point should not be inside an innerloop
 	    for (j = 0; j < tface->m_innerloop.size(); j++) {
-		if (IsPointInsideLoop(test_pt2d, tface->m_innerloop[j])
-		    || IsPointOnLoop(test_pt2d, tface->m_innerloop[j]))
+		if (IsPointInsideLoop(test_pt2d, tface->m_innerloop[j]) == 1
+		    || IsPointOnLoop(test_pt2d, tface->m_innerloop[j]) == 1)
 		    break;
 	    }
 	    if (j == tface->m_innerloop.size()) {
