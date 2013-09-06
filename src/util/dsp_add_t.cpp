@@ -486,20 +486,20 @@ main(int ac, char *av[])
       in1 = fopen(dsp1_fname.c_str(), "r");
       if (!in1) {
 	perror(dsp1_fname.c_str());
-	return EXIT_FAILURE;
+	bu_exit(EXIT_FAILURE, "ERROR: input file open failure\n");
       }
 
       if (fstat(fileno(in1), &sb)) {
         perror(dsp1_fname.c_str());
 	fclose(in1);
-	return EXIT_FAILURE;
+	bu_exit(EXIT_FAILURE, "ERROR: input file stat failure\n");
       }
 
       // save size of first input file for comparison with other two
       count = sb.st_size;
       // check for zero-size file
       if (!count) {
-        bu_exit(EXIT_FAILURE, "zero length input file '%s'\n", dsp1_fname.c_str());
+        bu_exit(EXIT_FAILURE, "zero-length input file\n");
       }
 
       buf1 = (unsigned short *)bu_malloc((size_t)sb.st_size, "buf1");
@@ -508,34 +508,35 @@ main(int ac, char *av[])
       if (!in2) {
 	perror(dsp2_fname.c_str());
 	fclose(in1);
-	return EXIT_FAILURE;
-      }
-
-      // the ouput file is now named instead of being redirected
-      out1 = fopen(dsp3_fname.c_str(), "w");
-      if (!out1) {
-	perror(dsp3_fname.c_str());
-	fclose(out1);
-	return EXIT_FAILURE;
+	bu_exit(EXIT_FAILURE, "ERROR: input file open failure\n");
       }
 
       if (fstat(fileno(in2), &sb)) {
 	perror(dsp2_fname.c_str());
 	fclose(in1);
 	fclose(in2);
-	fclose(out1);
-	return EXIT_FAILURE;
+	bu_exit(EXIT_FAILURE, "ERROR: input file stat failure\n");
       }
+
       // check for zero-size file
       if (!sb.st_size) {
-        bu_exit(EXIT_FAILURE, "zero length input file '%s'\n", dsp2_fname.c_str());
+        bu_exit(EXIT_FAILURE, "zero-length input file\n");
       }
 
       if ((size_t)sb.st_size != count) {
 	fclose(in1);
 	fclose(in2);
+	bu_exit(EXIT_FAILURE, "ERROR: input file size mis-match\n");
+      }
+
+      // the ouput file is now named instead of being redirected
+      out1 = fopen(dsp3_fname.c_str(), "w");
+      if (!out1) {
+	perror(dsp3_fname.c_str());
+	fclose(in1);
+	fclose(in2);
 	fclose(out1);
-	bu_exit(EXIT_FAILURE, "**** ERROR **** input file size mis-match\n");
+	bu_exit(EXIT_FAILURE, "ERROR: output file open failure\n");
       }
 
     } catch (TCLAP::ArgException &e) { // catch any exceptions
@@ -584,7 +585,7 @@ main(int ac, char *av[])
     }
 
     if (fwrite(buf1, sizeof(short), count, out1) != count) {
-	bu_exit(EXIT_FAILURE, "Error writing data\n");
+	bu_exit(EXIT_FAILURE, "ERROR: count error writing data\n");
     }
 
     return 0;
