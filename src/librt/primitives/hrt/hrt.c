@@ -495,13 +495,13 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     X2_Z3_Y3.cf[6] = X2_Z3.cf[3] * Ycube.cf[3];
 
     S.dgr = 6;
-    S.cf[0] = 320 * (Acube.cf[0] - X2_Z3_Y3.cf[0]);
-    S.cf[1] = 320 * (Acube.cf[1] - X2_Z3_Y3.cf[1]);
-    S.cf[2] = 320 * (Acube.cf[2] - X2_Z3_Y3.cf[2]);
-    S.cf[3] = 320 * (Acube.cf[3] - X2_Z3_Y3.cf[3]);
-    S.cf[4] = 320 * (Acube.cf[4] - X2_Z3_Y3.cf[4]);
-    S.cf[5] = 320 * (Acube.cf[5] - X2_Z3_Y3.cf[5]);
-    S.cf[6] = 320 * (Acube.cf[6] - X2_Z3_Y3.cf[6]);
+    S.cf[0] = Acube.cf[0] - X2_Z3_Y3.cf[0];
+    S.cf[1] = Acube.cf[1] - X2_Z3_Y3.cf[1];
+    S.cf[2] = Acube.cf[2] - X2_Z3_Y3.cf[2];
+    S.cf[3] = Acube.cf[3] - X2_Z3_Y3.cf[3];
+    S.cf[4] = Acube.cf[4] - X2_Z3_Y3.cf[4];
+    S.cf[5] = Acube.cf[5] - X2_Z3_Y3.cf[5];
+    S.cf[6] = Acube.cf[6] - X2_Z3_Y3.cf[6];
          
     /* It is known that the equation is sextic (of order 6). Therefore, if the
      * root finder returns other than 6 roots, return an error.
