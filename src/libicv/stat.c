@@ -32,6 +32,12 @@ icv_init_bins(icv_image_t* img, int n_bins)
     int c;
     int i;
     size_t **bins;
+
+    if (!ICV_IMAGE_IS_INITIALIZED(img)) {
+	bu_log("ICV Structure not defined.\n");
+	return NULL;
+    }
+
     bins = (size_t**) bu_malloc(sizeof(size_t*)*img->channels, "icv_init_bins : Histogram Bins");
     for (c = 0; c <= img->channels; c++) {
 	bins[c] = (size_t*) bu_malloc(sizeof(size_t)*n_bins, "icv_init_bins : Histogram Array for Channels");
@@ -54,6 +60,11 @@ icv_hist(icv_image_t* img, int n_bins)
     size = img->width*img->height;
     data = img->data;
 
+    if (!ICV_IMAGE_IS_INITIALIZED(img)) {
+	bu_log("ICV Structure not defined.\n");
+	return NULL;
+    }
+
     bins = icv_init_bins(img, n_bins);
 
     for (i=0; i<=size; i++) {
@@ -71,6 +82,11 @@ double *icv_max(icv_image_t* img)
     size_t size;
     double *max; /**< An array of size channels. */
     int i;
+
+    if (!ICV_IMAGE_IS_INITIALIZED(img)) {
+	bu_log("ICV Structure not defined.\n");
+	return NULL;
+    }
 
     max = bu_malloc(sizeof(double)*img->channels, "max values");
 
@@ -94,6 +110,12 @@ double *icv_sum(icv_image_t* img)
     double *sum; /**< An array of size channels. */
     int i;
     size_t size,j;
+
+    if (!ICV_IMAGE_IS_INITIALIZED(img)) {
+	bu_log("ICV Structure not defined.\n");
+	return NULL;
+    }
+
     sum = bu_malloc(sizeof(double)*img->channels, "sum values");
 
     for (i=0; i<img->channels; i++)
@@ -115,6 +137,11 @@ double *icv_mean(icv_image_t* img)
     size_t size;
     int i;
 
+    if (!ICV_IMAGE_IS_INITIALIZED(img)) {
+	bu_log("ICV Structure not defined.\n");
+	return NULL;
+    }
+
     mean = icv_sum(img); /**< receives sum from icv_image_sum*/
     size = (size_t)img->width*img->height;
 
@@ -130,6 +157,11 @@ double *icv_min(icv_image_t* img)
     size_t size;
     double *min; /**< An array of size channels. */
     int i;
+
+    if (!ICV_IMAGE_IS_INITIALIZED(img)) {
+	bu_log("ICV Structure not defined.\n");
+	return NULL;
+    }
 
     min = bu_malloc(sizeof(double)*img->channels, "min values");
 
@@ -154,6 +186,12 @@ double *icv_var(icv_image_t* img, size_t** bins, int n_bins)
     double *mean;
     size_t size;
     double d;
+
+    if (!ICV_IMAGE_IS_INITIALIZED(img)) {
+	bu_log("ICV Structure not defined.\n");
+	return NULL;
+    }
+
     var = (double *) bu_malloc(sizeof(double)*img->channels, "variance values");
 
     size = (size_t) img->height*img->width;
@@ -181,6 +219,11 @@ double *icv_skew(icv_image_t* img, size_t** bins, int n_bins)
     size_t size;
     double d;
 
+    if (!ICV_IMAGE_IS_INITIALIZED(img)) {
+	bu_log("ICV Structure not defined.\n");
+	return NULL;
+    }
+
     skew = (double *)bu_malloc(sizeof(double)*img->channels, "skewness values");
 
     size = (size_t) img->height*img->width;
@@ -206,6 +249,11 @@ int *icv_median(icv_image_t* img, size_t** bins, int n_bins)
     int *median;
     double *sum;
     double *partial_sum;
+
+    if (!ICV_IMAGE_IS_INITIALIZED(img)) {
+	bu_log("ICV Structure not defined.\n");
+	return NULL;
+    }
 
     median = (int *)bu_malloc(sizeof(int)*img->channels, "median values");
     partial_sum = (double *)bu_malloc(sizeof(int)*img->channels, "partial sum values");
