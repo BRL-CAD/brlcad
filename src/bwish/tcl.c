@@ -45,6 +45,7 @@
 #endif
 
 #include "bu.h"
+#include "dm.h"
 
 /* We need to be careful about tty resetting - xcodebuild
  * and resetTty were locking up.  Add a tty check
@@ -197,7 +198,9 @@ Cad_MainLoop(void)
 	while (1)
 #endif
 	{
-	    Tcl_DoOneEvent(0);
+	    if (qt_tk_processEvents() == TCL_ERROR) {
+		Tcl_DoOneEvent(0);
+	    }
 	}
 }
 
