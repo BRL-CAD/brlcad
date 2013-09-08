@@ -208,7 +208,7 @@ icv_read(const char *filename, int format, int width, int height)
 	format = ICV_IMAGE_PIX;
     }
 
-    switch(format) {
+    switch (format) {
 	case ICV_IMAGE_PIX:
 	    return pix_read(filename, width, height);
 	case ICV_IMAGE_BW :
@@ -232,7 +232,7 @@ icv_write(icv_image_t *bif, const char *filename, ICV_IMAGE_FORMAT format)
 	format = icv_guess_file_format(filename, buf);
     }
 
-    switch(format) {
+    switch (format) {
 	/* case ICV_IMAGE_BMP:
 	   return bmp_write(bif, filename); */
 	case ICV_IMAGE_PPM:
@@ -308,7 +308,7 @@ icv_create(int width, int height, ICV_COLOR_SPACE color_space)
     bif->color_space = color_space;
     bif->alpha_channel = 0;
     bif->magic = ICV_IMAGE_MAGIC;
-    switch(color_space) {
+    switch (color_space) {
 	case ICV_COLOR_SPACE_RGB :
 	    /* Add all the other three channel images here (eg. HSV, YCbCr etc.) */
 	    bif->data = (double *) bu_malloc(bif->height*bif->width*3*sizeof(double), "Image Data");

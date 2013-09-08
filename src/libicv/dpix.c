@@ -68,7 +68,7 @@ icv_normalize(icv_image_t *bif)
 	data++;
     }
     /* strict Condition for avoiding normalization */
-    if(max <= 1.0 || min >= 0.0)
+    if (max <= 1.0 || min >= 0.0)
 	return bif;
 
     data = bif->data;
@@ -130,7 +130,7 @@ dpix_write(icv_image_t *bif, const char *filename)
 	return -1;
     }
 
-    if(filename==NULL)
+    if (filename==NULL)
 	fd = fileno(stdout);
     else if ((fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, WRMODE)) < 0) {
 	bu_log("dpix_write: Cannot open file for saving\n");

@@ -95,7 +95,7 @@ icv_rgb2gray(icv_image_t *img, ICV_COLOR color, double rweight, double gweight, 
 	return -1;
     }
 
-    switch(color) {
+    switch (color) {
 	case ICV_COLOR_R :
 	    red = 1;
 	    bweight = 0;

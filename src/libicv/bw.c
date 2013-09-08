@@ -59,7 +59,7 @@ bw_write(icv_image_t *bif, const char *filename)
     data =  data2uchar(bif);
     size = (size_t) bif->height*bif->width;
 
-    if(filename==NULL) {
+    if (filename==NULL) {
 	fd = fileno(stdout);
 #if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fd, O_BINARY);
@@ -89,7 +89,7 @@ bw_read(const char *filename, int width, int height)
     size_t size;
     size_t buffsize=1024;
 
-    if(filename==NULL) {
+    if (filename==NULL) {
 	fd = fileno(stdin);
 #if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fd, O_BINARY);
@@ -105,14 +105,14 @@ bw_read(const char *filename, int width, int height)
 	int status = 0;
 	size = 0;
 	data = (unsigned char *)bu_malloc(buffsize, "bw_read : unsigned char data");
-	while((status = read(fd, &data[size], 1))==1) {
+	while ((status = read(fd, &data[size], 1))==1) {
 	    size++;
-	    if(size==buffsize) {
+	    if (size==buffsize) {
 		buffsize+=1024;
 		data = (unsigned char *)bu_realloc(data, buffsize, "bw_read : increase size to acomodate data");
 	    }
 	}
-	if(size<buffsize) {
+	if (size<buffsize) {
 	    data = (unsigned char *)bu_realloc(data, size, "bw_read : decrease size in overbuffered");
 	}
 	bif->height = 1;
@@ -129,7 +129,7 @@ bw_read(const char *filename, int width, int height)
 	bif->height = height;
 	bif->width = width;
     }
-    if(size)
+    if (size)
 	bif->data = uchar2double(data, size);
     else {
 	/* zero sized image */

@@ -215,7 +215,7 @@ int *icv_median(icv_image_t* img, size_t** bins, int n_bins)
     for (c=0; c<img->channels; c++) {
 	partial_sum[c] = 0;
 	for (i=0; i < n_bins; i++) {
-	    if(partial_sum[c] < sum[c]/2) {
+	    if (partial_sum[c] < sum[c]/2) {
 		partial_sum[c] += i*bins[c][i];
 		median[c] = i;
 	    } else break;
@@ -237,7 +237,7 @@ int *icv_mode(icv_image_t* img, size_t** bins, int n_bins)
     for (c=0; c < img->channels; c++) {
 	mode[c] = 0;
 	for (i=0; i < n_bins; i++)
-	    if(bins[c][mode[c]] < bins[c][i])
+	    if (bins[c][mode[c]] < bins[c][i])
 		mode[c] = i;
     }
     return mode;
