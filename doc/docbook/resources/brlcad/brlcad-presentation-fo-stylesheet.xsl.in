@@ -64,8 +64,8 @@
     <xsl:attribute name="keep-together.within-column">always</xsl:attribute>
   </xsl:attribute-set>
   
+  <!-- set verbatim blocks off from normal text --> 
   <xsl:param name="shade.verbatim" select="1"/>
-  
   <xsl:attribute-set name="shade.verbatim.style">
     <xsl:attribute name="border">0.5pt solid blue</xsl:attribute>
     <xsl:attribute name="background-color">#E0E0E0</xsl:attribute>
