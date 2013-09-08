@@ -36,7 +36,7 @@ int
 main(int argc, char *argv[])
 {
     bn_poly_t equation; /* holds our polynomial equation */
-    bn_complex_t roots[4]; /* stash up to four roots */
+    bn_complex_t roots[BN_MAX_POLY_DEGREE]; /* stash up to four roots */
     int num_roots;
 
     if (argc > 1)
@@ -170,6 +170,39 @@ main(int argc, char *argv[])
     /* print the roots */
     bu_log("The roots should be 3, 1, -2, -4\n");
     bn_pr_roots("My Quartic Polynomial", roots, num_roots);
+
+    /*******************************************
+     * Sextic polynomial (6th degree equation):
+     *  A*X^6 + B*X^5 + C*X^4 + D*X^3 + E*X^2 + F*X + G = 0
+     * [0]     [1]     [2]     [3]     [4]     [5]   [6]  <=coefficients
+     */
+    
+    equation.dgr = 6;
+    equation.cf[0] = 1;
+    equation.cf[1] = -8;
+    equation.cf[2] = 32;
+    equation.cf[3] = -78;
+    equation.cf[4] = 121;
+    equation.cf[5] = -110;
+    equation.cf[6] = 50;
+
+    /* print the equation */
+    bu_log("\n*** SEXTIC ***\n");
+    bn_pr_poly("Solving for Sextic", &equation);
+
+    /* solve for the roots */
+    num_roots = rt_poly_roots(&equation, roots, "My Sextic Polynomial");
+    if (num_roots == 0) {
+	bu_log("No roots found!\n");
+	return 0;
+    } else if (num_roots < 0) {
+	bu_log("The root solver failed to converge on a solution\n");
+	return 1;
+    }
+    
+    /* print the roots */
+    bu_log("The roots should be 1 - i, 1 + i, 2 - i,2 + i, 1 - 2*i, 1 + 2*i \n");
+    bn_pr_roots("My Sextic Polynomial", roots, num_roots);
 
     return 0;
 }

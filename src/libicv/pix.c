@@ -55,7 +55,7 @@ pix_write(icv_image_t *bif, const char *filename)
 	return -1;
     }
 
-    if(filename==NULL) {
+    if (filename==NULL) {
 	fd = fileno(stdout);
 #if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fd, O_BINARY);
@@ -86,7 +86,7 @@ pix_read(const char* filename, int width, int height)
     size_t size;
     size_t buffsize=1024*3;
 
-    if(filename == NULL) {
+    if (filename == NULL) {
 	fd = fileno(stdin);
 #if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fd, O_BINARY);
@@ -102,14 +102,14 @@ pix_read(const char* filename, int width, int height)
 	int status = 0;
 	size = 0;
 	data = (unsigned char *)bu_malloc(buffsize, "pix_read : unsigned char data");
-	while((status = read(fd, &data[size], 3))==3) {
+	while ((status = read(fd, &data[size], 3))==3) {
 	    size+=3;
-	    if(size==buffsize) {
+	    if (size==buffsize) {
 		buffsize+=1024*3;
 		data = (unsigned char *)bu_realloc(data, buffsize, "pix_read : increase size to acomodate data");
 	    }
 	}
-	if(size<buffsize) {
+	if (size<buffsize) {
 	    data = (unsigned char *)bu_realloc(data, size, "pix_read : decrease size in overbuffered");
 	}
 	bif->height = 1;
@@ -126,7 +126,7 @@ pix_read(const char* filename, int width, int height)
 	bif->height = height;
 	bif->width = width;
     }
-    if(size)
+    if (size)
 	bif->data = uchar2double(data, size);
     else {
 	/* zero sized image */

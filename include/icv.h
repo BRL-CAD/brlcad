@@ -472,13 +472,15 @@ typedef enum {
     ICV_FILTER_HIGH_PASS,
     ICV_FILTER_NULL,
     ICV_FILTER_BOXCAR_AVERAGE,
-    ICV_FILTER_3_LOW_PASS,
-    ICV_FILTER_3_HIGH_PASS,
-    ICV_FILTER_3_BOXCAR_AVERAGE,
-    ICV_FILTER_3_ANIMATION_SMEAR,
-    ICV_FILTER_3_NULL
 } ICV_FILTER;
 
+typedef enum {
+    ICV_FILTER3_LOW_PASS,
+    ICV_FILTER3_HIGH_PASS,
+    ICV_FILTER3_BOXCAR_AVERAGE,
+    ICV_FILTER3_ANIMATION_SMEAR,
+    ICV_FILTER3_NULL
+} ICV_FILTER3;
 
 /**
  * Filters an image with the specified filter type. Basically
@@ -503,7 +505,7 @@ ICV_EXPORT extern int icv_filter(icv_image_t *img, ICV_FILTER filter_type);
 ICV_EXPORT extern icv_image_t *icv_filter3(icv_image_t *old_img,
 					       icv_image_t *curr_img,
 					       icv_image_t *new_img,
-					       ICV_FILTER filter_type);
+					       ICV_FILTER3 filter_type);
 
 
 /**

@@ -891,7 +891,6 @@ private:
     BRNode* initialLoopBBox();
 
     const ON_BrepFace* m_face;
-    int m_adj_face_index;
     BRNode* m_root;
     std::list<BRNode*> m_sortedX;
     std::list<BRNode*> m_sortedY;

@@ -12840,6 +12840,22 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 			       0);
 	    break;
 #endif
+	default: {
+	    free((void*)gdvp->gdv_fbs.fbs_fbp);
+	    gdvp->gdv_fbs.fbs_fbp = FBIO_NULL;
+
+	    Tcl_Obj *obj;
+
+	    obj = Tcl_GetObjResult(interp);
+	    if (Tcl_IsShared(obj))
+		obj = Tcl_DuplicateObj(obj);
+
+	    Tcl_AppendStringsToObj(obj, "openfb: failed to attach framebuffer interface (unsupported display manager type)\n",
+				   (char *)NULL);
+
+	    Tcl_SetObjResult(interp, obj);
+	    return TCL_ERROR;
+	}
     }
 
     return TCL_OK;
