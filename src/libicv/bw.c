@@ -47,7 +47,7 @@ bw_write(icv_image_t *bif, const char *filename)
 {
 
     unsigned char *data;
-    int fd;
+    FILE *fp;
     size_t ret, size;
 
     if (!ICV_IMAGE_IS_INITIALIZED(bif)) {
@@ -65,17 +65,14 @@ bw_write(icv_image_t *bif, const char *filename)
     size = (size_t) bif->height*bif->width;
 
     if (filename==NULL) {
-	fd = fileno(stdout);
-#if defined(_WIN32) && !defined(__CYGWIN__)
-    setmode(fd, O_BINARY);
-#endif
-    } else if ((fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, WRMODE)) < 0) {
+	fp = stdout;
+    } else if ((fp = fopen(filename, "w")) == NULL) {
 	bu_log("bw_write: Cannot open file for saving\n");
 	return -1;
     }
 
-    ret = write(fd, data, size);
-    close(fd);
+    ret = fwrite(data, 1, size, fp);
+    fclose(fp);
     bu_free(data, "bw_write : Unsigned Char data");
     if (ret != size) {
 	bu_log("bw_write : Short Write\n");

@@ -45,7 +45,7 @@ HIDDEN int
 pix_write(icv_image_t *bif, const char *filename)
 {
     unsigned char *data;
-    int fd;
+    FILE* fp;
     size_t ret, size;
 
     if (!ICV_IMAGE_IS_INITIALIZED(bif)) {
@@ -61,19 +61,16 @@ pix_write(icv_image_t *bif, const char *filename)
     }
 
     if (filename==NULL) {
-	fd = fileno(stdout);
-#if defined(_WIN32) && !defined(__CYGWIN__)
-    setmode(fd, O_BINARY);
-#endif
-    } else if ((fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, WRMODE)) < 0) {
+	fp = stdout;
+    } else if ((fp = fopen(filename, "w")) == NULL) {
 	bu_log("pix_write: Cannot open file for saving\n");
 	return -1;
     }
 
     data =  data2uchar(bif);
     size = (size_t) bif->width*bif->height*3;
-    ret = write(fd, data, size);
-    close(fd);
+    ret = fwrite(data, 1, size, fp);
+    fclose(fp);
     if (ret != size) {
 	bu_log("pix_write : Short Write");
 	return -1;
