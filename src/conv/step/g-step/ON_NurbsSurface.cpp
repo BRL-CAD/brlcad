@@ -31,118 +31,6 @@
 #include "G_STEP_internal.h"
 #include "ON_Brep.h"
 
-/* For a rational B-Spline surface with weights, we need to create an aggregate type */
-
-STEPentity *
-Create_Rational_Surface_Aggregate(ON_NurbsSurface *nsurface, Exporter_Info_AP203 *info) {
-    STEPattribute *attr;
-    STEPcomplex *stepcomplex;
-    const char *entNmArr[8] = {"bounded_surface", "b_spline_surface", "b_spline_surface_with_knots",
-	"surface", "geometric_representation_item", "rational_b_spline_surface", "representation_item", "*"};
-    STEPcomplex *complex_entity = new STEPcomplex(info->registry, (const char **)entNmArr, info->registry->GetEntityCnt() + 1);
-/*
-    stepcomplex = complex_entity->head;
-    stepcomplex->ResetAttributes();
-    while (stepcomplex) {
-	std::cout << stepcomplex->EntityName() << "\n";
-	while ((attr = stepcomplex->NextAttribute()) != NULL) {
-	    std::cout << "  " << attr->Name() << "," << attr->NonRefType() << "\n";
-	}
-	stepcomplex = stepcomplex->sc;
-	stepcomplex->ResetAttributes();
-    }
-*/
-    /* Set b_spline_surface data */
-    stepcomplex = complex_entity->EntityPart("b_spline_surface");
-    stepcomplex->ResetAttributes();
-    std::cout << "b_spline_surface\n";
-    while ((attr = stepcomplex->NextAttribute()) != NULL) {
-	if (!bu_strcmp(attr->Name(), "u_degree")) {
-	    attr->ptr.i = new SDAI_Integer(nsurface->Degree(0));
-	}
-	if (!bu_strcmp(attr->Name(), "v_degree")) {
-	    attr->ptr.i = new SDAI_Integer(nsurface->Degree(1));
-	}
-
-	if (!bu_strcmp(attr->Name(), "control_points_list")) {
-	    GenericAggregate *control_pnts= new GenericAggregate();
-	    attr->ptr.a = control_pnts;
-	    info->surf_genagg[(STEPentity*)complex_entity] = control_pnts;
-	}
-	/*if (!bu_strcmp(attr->Name(), "surface_form")) attr->ptr.e = new SdaiB_spline_surface_form_var(B_spline_surface_form__unspecified);
-	if (!bu_strcmp(attr->Name(), "closed_surface")) attr->ptr.e = new SDAI_LOGICAL((Logical)(nsurface->IsClosed()));
-	if (!bu_strcmp(attr->Name(), "self_intersect")) attr->ptr.e = new SDAI_LOGICAL(LFalse);*/
-    }
-
-#if 0
-    /* Set knots */
-    stepcomplex = complex_entity->EntityPart("b_spline_surface_with_knots");
-    stepcomplex->ResetAttributes();
-    std::cout << "b_spline_surface_with_knots\n";
-    while ((attr = stepcomplex->NextAttribute()) != NULL) {
-	if (!bu_strcmp(attr->Name(), "knot_multiplicities")) {
-	    IntAggregate *knot_multiplicities = new IntAggregate();
-	    int i = 0;
-	    while (i < nsurface->KnotCount()) {
-		int multiplicity_val = nsurface->KnotMultiplicity(i);
-		/* OpenNURBS and STEP have different notions of end knot
-		 * multiplicity - see:
-		 * http://wiki.mcneel.com/developer/onsuperfluousknot
-		 *
-		 * TODO - might have a problem here if surface is closed (and in the non-rational case too)
-		 */
-		if ((i == 0) || (i == (nsurface->KnotCount() - nsurface->KnotMultiplicity(0)))) multiplicity_val++;
-		/* Set Multiplicity */
-		IntNode *multiplicity = new IntNode();
-		multiplicity->value = multiplicity_val;
-		knot_multiplicities->AddNode(multiplicity);
-		i += nsurface->KnotMultiplicity(i);
-	    }
-	    attr->ptr.a = knot_multiplicities;
-	}
-	if (!bu_strcmp(attr->Name(), "knots")) {
-	    RealAggregate *knots = new RealAggregate();
-	    int i = 0;
-	    while (i < nsurface->KnotCount()) {
-		/* Add knot */
-		RealNode *knot = new RealNode();
-		knot->value = nsurface->Knot(i);
-		knots->AddNode(knot);
-		i += nsurface->KnotMultiplicity(i);
-	    }
-	    attr->ptr.a = knots;
-	}
-	if (!bu_strcmp(attr->Name(), "knot_spec")) attr->ptr.e = new SdaiKnot_type_var(Knot_type__unspecified);
-    }
-
-    /* Set weights */
-    stepcomplex = complex_entity->EntityPart("rational_b_spline_surface");
-    stepcomplex->ResetAttributes();
-    std::cout << "rational_b_spline_surface\n";
-    while ((attr = stepcomplex->NextAttribute()) != NULL) {
-	std::cout << "  " << attr->Name() << "," << attr->NonRefType() << "\n";
-	RealAggregate *weights = new RealAggregate();
-	for (int i = 0; i < nsurface->CVCount(); i++) {
-	    RealNode *wnode = new RealNode();
-	    wnode->value = nsurface->Weight(i);
-	    weights->AddNode(wnode);
-	}
-	attr->ptr.a = weights;
-    }
-
-    /* Representation item */
-    stepcomplex = complex_entity->EntityPart("representation_item");
-    stepcomplex->ResetAttributes();
-    std::cout << "representation_item\n";
-    while ((attr = stepcomplex->NextAttribute()) != NULL) {
-	std::cout << "  " << attr->Name() << "," << attr->NonRefType() << "\n";
-	if (!bu_strcmp(attr->Name(), "name")) attr->StrToVal("''");
-    }
-
-#endif
-    return (STEPentity *)complex_entity;
-}
-
 
 /* Unlike most of the structures we're working with, GenericAggregate seems to require that we manually
  * build its final string with the step file id numbers that identify each control point.  To allow for
@@ -166,40 +54,15 @@ ON_NurbsSurfaceCV_Initialize(ON_NurbsSurface *insrf, STEPentity *step_srf, Expor
     info->surface_cv[(STEPentity*)step_srf] = i_array;
 }
 
-// Call this function after all cartesian points have an instance manager instance,
-// (and hence a StepFileID) to populate the surface GenericAggregate control point
-// slots.  Must be run *after* ON_NurbsSurfaceCV_Initialize has been run on *all*
-// surfaces.
-void
-ON_NurbsSurfaceCV_Finalize_GenericAggregates(Exporter_Info_AP203 *info) 
-{
-    std::map<STEPentity*, std::vector<std::vector<STEPentity *> > >::iterator scv_it;
-    std::vector<std::vector<STEPentity *> >::iterator outer_it;
-    std::vector<STEPentity *>::iterator inner_it;
-    for(scv_it = info->surface_cv.begin(); scv_it != info->surface_cv.end(); ++scv_it) {
-	GenericAggregate *control_pnts_lists = info->surf_genagg.find(scv_it->first)->second;
-	for (outer_it = scv_it->second.begin(); outer_it != scv_it->second.end(); ++outer_it) {
-	    std::ostringstream ss;
-	    ss << "(";
-	    for (inner_it = (*outer_it).begin(); inner_it != (*outer_it).end(); ++inner_it) {
-		info->instance_list->Append((STEPentity *)(*inner_it), completeSE);
-		if (inner_it != (*outer_it).begin()) ss << ", ";
-		ss << "#" << ((STEPentity *)(*inner_it))->StepFileId();
-	    }
-	    ss << ")";
-	    std::string str = ss.str();
-	    control_pnts_lists->AddNode(new GenericAggrNode(str.c_str()));
-	}
-    }
-}
 
 void
-ON_NurbsSurfaceKnots_to_Aggregates(ON_NurbsSurface *insrf, SdaiB_spline_surface_with_knots *step_srf)
+ON_NurbsSurfaceKnots_to_Aggregates(
+	IntAggregate *u_knot_multiplicities,
+	IntAggregate *v_knot_multiplicities,
+	RealAggregate *u_knots,
+	RealAggregate *v_knots,
+	ON_NurbsSurface *insrf)
 {
-    IntAggregate_ptr u_knot_multiplicities = step_srf->u_multiplicities_();
-    IntAggregate_ptr v_knot_multiplicities = step_srf->v_multiplicities_();
-    RealAggregate_ptr u_knots = step_srf->u_knots_();
-    RealAggregate_ptr v_knots = step_srf->v_knots_();
 
     /* u knots */
     int i = 0;
@@ -242,7 +105,133 @@ ON_NurbsSurfaceKnots_to_Aggregates(ON_NurbsSurface *insrf, SdaiB_spline_surface_
 	v_knot_multiplicities->AddNode(multiplicity);
 	i += insrf->KnotMultiplicity(1, i);
     }
-    step_srf->knot_spec_(Knot_type__unspecified);
+}
+
+
+/* For a rational B-Spline surface with weights, we need to create an aggregate type */
+
+STEPentity *
+Create_Rational_Surface_Aggregate(ON_NurbsSurface *nsurface, Exporter_Info_AP203 *info) {
+    STEPattribute *attr;
+    STEPcomplex *stepcomplex;
+    const char *entNmArr[8] = {"bounded_surface", "b_spline_surface", "b_spline_surface_with_knots",
+	"surface", "geometric_representation_item", "rational_b_spline_surface", "representation_item", "*"};
+    STEPcomplex *complex_entity = new STEPcomplex(info->registry, (const char **)entNmArr, info->registry->GetEntityCnt() + 1);
+/*
+    stepcomplex = complex_entity->head;
+    stepcomplex->ResetAttributes();
+    while (stepcomplex) {
+	std::cout << stepcomplex->EntityName() << "\n";
+	while ((attr = stepcomplex->NextAttribute()) != NULL) {
+	    std::cout << "  " << attr->Name() << "," << attr->NonRefType() << "\n";
+	}
+	stepcomplex = stepcomplex->sc;
+	stepcomplex->ResetAttributes();
+    }
+*/
+    /* Set b_spline_surface data */
+    stepcomplex = complex_entity->EntityPart("b_spline_surface");
+    stepcomplex->ResetAttributes();
+    std::cout << "b_spline_surface\n";
+    while ((attr = stepcomplex->NextAttribute()) != NULL) {
+	if (!bu_strcmp(attr->Name(), "u_degree")) attr->ptr.i = new SDAI_Integer(nsurface->Degree(0));
+	if (!bu_strcmp(attr->Name(), "v_degree")) attr->ptr.i = new SDAI_Integer(nsurface->Degree(1));
+
+	if (!bu_strcmp(attr->Name(), "control_points_list")) {
+	    GenericAggregate *control_pnts= new GenericAggregate();
+	    ON_NurbsSurfaceCV_Initialize(nsurface, complex_entity, info);
+	    attr->ptr.a = control_pnts;
+	    info->surf_genagg[(STEPentity*)complex_entity] = control_pnts;
+	}
+	if (!bu_strcmp(attr->Name(), "surface_form")) attr->ptr.e = new SdaiB_spline_surface_form_var(B_spline_surface_form__unspecified);
+	if (!bu_strcmp(attr->Name(), "u_closed")) attr->ptr.e = new SDAI_LOGICAL((Logical)(nsurface->IsClosed(0)));
+	if (!bu_strcmp(attr->Name(), "v_closed")) attr->ptr.e = new SDAI_LOGICAL((Logical)(nsurface->IsClosed(1)));
+	if (!bu_strcmp(attr->Name(), "self_intersect")) attr->ptr.e = new SDAI_LOGICAL(LFalse);
+    }
+
+    /* Set knots */
+    stepcomplex = complex_entity->EntityPart("b_spline_surface_with_knots");
+    stepcomplex->ResetAttributes();
+    std::cout << "b_spline_surface_with_knots\n";
+    IntAggregate *u_multiplicities = new IntAggregate();
+    IntAggregate *v_multiplicities = new IntAggregate();
+    RealAggregate *u_knots = new RealAggregate();
+    RealAggregate *v_knots = new RealAggregate();
+
+    ON_NurbsSurfaceKnots_to_Aggregates(u_multiplicities, v_multiplicities, u_knots, v_knots, nsurface);
+
+    while ((attr = stepcomplex->NextAttribute()) != NULL) {
+
+	if (!bu_strcmp(attr->Name(), "u_multiplicities")) attr->ptr.a = u_multiplicities;
+	if (!bu_strcmp(attr->Name(), "v_multiplicities")) attr->ptr.a = v_multiplicities;
+
+	if (!bu_strcmp(attr->Name(), "u_knots")) attr->ptr.a = u_knots;
+	if (!bu_strcmp(attr->Name(), "v_knots")) attr->ptr.a = v_knots;
+
+	if (!bu_strcmp(attr->Name(), "knot_spec")) attr->ptr.e = new SdaiKnot_type_var(Knot_type__unspecified);
+    }
+
+    /* Set weights */
+    stepcomplex = complex_entity->EntityPart("rational_b_spline_surface");
+    stepcomplex->ResetAttributes();
+    std::cout << "rational_b_spline_surface\n";
+    while ((attr = stepcomplex->NextAttribute()) != NULL) {
+	if (!bu_strcmp(attr->Name(), "weights_data")) {
+	    GenericAggregate *weights = new GenericAggregate();
+	    for (int i = 0; i < nsurface->CVCount(0); i++) {
+		std::ostringstream ss;
+		ss << "(";
+		for (int j = 0; j < nsurface->CVCount(1); j++) {
+		    if (j != 0) ss << ", ";
+		    ss << nsurface->Weight(i,j);
+		}
+		ss << ")";
+		std::string str = ss.str();
+		weights->AddNode(new GenericAggrNode(str.c_str()));
+
+	    }
+	    attr->ptr.a = weights;
+	}
+    }
+
+    /* Representation item */
+    stepcomplex = complex_entity->EntityPart("representation_item");
+    stepcomplex->ResetAttributes();
+    std::cout << "representation_item\n";
+    while ((attr = stepcomplex->NextAttribute()) != NULL) {
+	std::cout << "  " << attr->Name() << "," << attr->NonRefType() << "\n";
+	if (!bu_strcmp(attr->Name(), "name")) attr->StrToVal("''");
+    }
+
+    return (STEPentity *)complex_entity;
+}
+
+
+// Call this function after all cartesian points have an instance manager instance,
+// (and hence a StepFileID) to populate the surface GenericAggregate control point
+// slots.  Must be run *after* ON_NurbsSurfaceCV_Initialize has been run on *all*
+// surfaces.
+void
+ON_NurbsSurfaceCV_Finalize_GenericAggregates(Exporter_Info_AP203 *info) 
+{
+    std::map<STEPentity*, std::vector<std::vector<STEPentity *> > >::iterator scv_it;
+    std::vector<std::vector<STEPentity *> >::iterator outer_it;
+    std::vector<STEPentity *>::iterator inner_it;
+    for(scv_it = info->surface_cv.begin(); scv_it != info->surface_cv.end(); ++scv_it) {
+	GenericAggregate *control_pnts_lists = info->surf_genagg.find(scv_it->first)->second;
+	for (outer_it = scv_it->second.begin(); outer_it != scv_it->second.end(); ++outer_it) {
+	    std::ostringstream ss;
+	    ss << "(";
+	    for (inner_it = (*outer_it).begin(); inner_it != (*outer_it).end(); ++inner_it) {
+		info->instance_list->Append((STEPentity *)(*inner_it), completeSE);
+		if (inner_it != (*outer_it).begin()) ss << ", ";
+		ss << "#" << ((STEPentity *)(*inner_it))->StepFileId();
+	    }
+	    ss << ")";
+	    std::string str = ss.str();
+	    control_pnts_lists->AddNode(new GenericAggrNode(str.c_str()));
+	}
+    }
 }
 
 bool
@@ -250,27 +239,29 @@ ON_NurbsSurface_to_STEP(ON_NurbsSurface *n_surface, Exporter_Info_AP203 *info, i
 {
     bool surface_converted = true;
     std::cout << "Have NurbsSurface\n";
-//    if (n_surface->IsRational()) {
-//	std::cout << "Have Rational NurbsSurface\n";
-//	info->surfaces.at(i) = Create_Rational_Surface_Aggregate(n_surface, info);
-//    } else {
+    if (n_surface->IsRational()) {
+	std::cout << "Have Rational NurbsSurface\n";
+	info->surfaces.at(i) = Create_Rational_Surface_Aggregate(n_surface, info);
+    } else {
 	info->surfaces.at(i) = info->registry->ObjCreate("B_SPLINE_SURFACE_WITH_KNOTS");
 
-	SdaiB_spline_surface *curr_surface = (SdaiB_spline_surface *)info->surfaces.at(i);
+	SdaiB_spline_surface_with_knots *curr_surface = (SdaiB_spline_surface_with_knots *)info->surfaces.at(i);
 	curr_surface->name_("''");
 	curr_surface->u_degree_(n_surface->Degree(0));
 	curr_surface->v_degree_(n_surface->Degree(1));
 	ON_NurbsSurfaceCV_Initialize(n_surface, curr_surface, info);
 	info->surf_genagg[(STEPentity*)curr_surface] = curr_surface->control_points_list_();
 
-	SdaiB_spline_surface_with_knots *surface_knots = (SdaiB_spline_surface_with_knots *)info->surfaces.at(i);
-	ON_NurbsSurfaceKnots_to_Aggregates(n_surface, surface_knots);
+	ON_NurbsSurfaceKnots_to_Aggregates(curr_surface->u_multiplicities_(), curr_surface->v_multiplicities_(),
+		curr_surface->u_knots_(), curr_surface->v_knots_(), n_surface);
+
 	curr_surface->surface_form_(B_spline_surface_form__unspecified);
+	curr_surface->knot_spec_(Knot_type__unspecified);
 	/* TODO - for now, assume the surfaces don't self-intersect - need to figure out how to test this */
 	curr_surface->self_intersect_(LFalse);
 	curr_surface->u_closed_((Logical)n_surface->IsClosed(0));
 	curr_surface->v_closed_((Logical)n_surface->IsClosed(1));
-//   }
+    }
     return surface_converted;
 }
 
