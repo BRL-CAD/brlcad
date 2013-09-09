@@ -1172,16 +1172,21 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &
 
 	if (c3d->BoundingBox().Diagonal().Length() < ON_ZERO_TOLERANCE) {
 	    // The trim is singular
-	    if (brep->m_V.Count() == 0)
+	    int i;
+	    ON_3dPoint vtx = c3d->PointAtStart();
+	    for (i = brep->m_V.Count() - 1; i >= 0; i--)
+		if (brep->m_V[i].Point().DistanceTo(vtx) < ON_ZERO_TOLERANCE)
+		    break;
+	    if (i < 0) {
+		i = brep->m_V.Count();
 		brep->NewVertex(c3d->PointAtStart(), 0.0);
+	    }
 	    int ti = brep->AddTrimCurve(loop[k]);
-	    ON_BrepTrim& trim = brep->NewSingularTrim(*brep->m_V.Last(), breploop, srf->IsIsoparametric(*loop[k]), ti);
+	    ON_BrepTrim& trim = brep->NewSingularTrim(brep->m_V[i], breploop, srf->IsIsoparametric(*loop[k]), ti);
 	    trim.m_tolerance[0] = trim.m_tolerance[1] = MAX_FASTF;
 	    continue;
 	}
-	brep->AddEdgeCurve(c3d);
 
-	int ti = brep->AddTrimCurve(loop[k]);
 	ON_2dPoint start = loop[k]->PointAtStart(), end = loop[k]->PointAtEnd();
 	int start_idx, end_idx;
 
@@ -1215,6 +1220,8 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &
 	    }
 	}
 
+	brep->AddEdgeCurve(c3d);
+	int ti = brep->AddTrimCurve(loop[k]);
 	ON_BrepEdge &edge = brep->NewEdge(brep->m_V[start_idx], brep->m_V[end_idx],
 	    brep->m_C3.Count() - 1, (const ON_Interval *)0, MAX_FASTF);
 	ON_BrepTrim &trim = brep->NewTrim(edge, 0, breploop, ti);
