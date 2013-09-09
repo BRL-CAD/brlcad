@@ -80,109 +80,6 @@ ON_3dVector_to_Direction(ON_3dVector *invect, SdaiDirection *step_direction) {
     XYZ_to_Direction(invect->x, invect->y, invect->z, step_direction);
 }
 
-/* Unlike most of the structures we're working with, GenericAggregate seems to require that we manually
- * build its final string with the step file id numbers that identify each control point.  To allow for
- * delayed instance manager population, we build a temporary map of nested vectors to hold the information
- * inthe proper form until we are ready for it.*/
-void
-ON_NurbsSurfaceCV_Initialize(ON_NurbsSurface *insrf, SdaiB_spline_surface *step_srf, Exporter_Info_AP203 *info) {
-    ON_3dPoint cv_pnt;
-    std::vector<std::vector<STEPentity *> > i_array;
-    for (int i = 0; i < insrf->CVCount(0); i++) {
-	std::vector<STEPentity *> j_array;
-	for (int j = 0; j < insrf->CVCount(1); j++) {
-	    SdaiCartesian_point *step_cartesian = (SdaiCartesian_point *)info->registry->ObjCreate("CARTESIAN_POINT");
-	    step_cartesian->name_("''");
-	    insrf->GetCV(i, j, cv_pnt);
-	    ON_3dPoint_to_Cartesian_point(&(cv_pnt), step_cartesian);
-	    j_array.push_back((STEPentity *)step_cartesian);
-	}
-	i_array.push_back(j_array);
-    }
-    info->surface_cv[(STEPentity*)step_srf] = i_array;
-}
-
-// Call this function after all cartesian points have an instance manager instance,
-// (and hence a StepFileID) to populate the surface GenericAggregate control point
-// slots.  Must be run *after* ON_NurbsSurfaceCV_Initialize has been run on *all*
-// surfaces.
-void
-ON_NurbsSurfaceCV_Finalize_GenericAggregates(Exporter_Info_AP203 *info) 
-{
-    std::map<STEPentity*, std::vector<std::vector<STEPentity *> > >::iterator scv_it;
-    std::vector<std::vector<STEPentity *> >::iterator outer_it;
-    std::vector<STEPentity *>::iterator inner_it;
-    for(scv_it = info->surface_cv.begin(); scv_it != info->surface_cv.end(); ++scv_it) {
-        SdaiB_spline_surface *step_srf = (SdaiB_spline_surface *)scv_it->first;
-	GenericAggregate *control_pnts_lists = step_srf->control_points_list_();
-	for (outer_it = scv_it->second.begin(); outer_it != scv_it->second.end(); ++outer_it) {
-	    std::ostringstream ss;
-	    ss << "(";
-	    for (inner_it = (*outer_it).begin(); inner_it != (*outer_it).end(); ++inner_it) {
-		info->instance_list->Append((STEPentity *)(*inner_it), completeSE);
-		if (inner_it != (*outer_it).begin()) ss << ", ";
-		ss << "#" << ((STEPentity *)(*inner_it))->StepFileId();
-	    }
-	    ss << ")";
-	    std::string str = ss.str();
-	    control_pnts_lists->AddNode(new GenericAggrNode(str.c_str()));
-	}
-    }
-}
-
-void
-ON_NurbsSurfaceKnots_to_Aggregates(ON_NurbsSurface *insrf, SdaiB_spline_surface_with_knots *step_srf)
-{
-    IntAggregate_ptr u_knot_multiplicities = step_srf->u_multiplicities_();
-    IntAggregate_ptr v_knot_multiplicities = step_srf->v_multiplicities_();
-    RealAggregate_ptr u_knots = step_srf->u_knots_();
-    RealAggregate_ptr v_knots = step_srf->v_knots_();
-
-    /* u knots */
-    int i = 0;
-    while (i < insrf->KnotCount(0)) {
-	int multiplicity_val = insrf->KnotMultiplicity(0, i);
-	/* Add knot */
-	RealNode *knot = new RealNode();
-	knot->value = insrf->Knot(0, i);
-	u_knots->AddNode(knot);
-
-	/* OpenNURBS and STEP have different notions of end knot
-	 * multiplicity - see:
-	 * http://wiki.mcneel.com/developer/onsuperfluousknot
-	 */
-	if ((i == 0) || (i == (insrf->KnotCount(0) - insrf->KnotMultiplicity(0, 0)))) multiplicity_val++;
-
-	/* Set Multiplicity */
-	IntNode *multiplicity = new IntNode();
-	multiplicity->value = multiplicity_val;
-	u_knot_multiplicities->AddNode(multiplicity);
-	i += insrf->KnotMultiplicity(0, i);
-    }
-
-    /* v knots */
-    i = 0;
-    while (i < insrf->KnotCount(1)) {
-	int multiplicity_val = insrf->KnotMultiplicity(1, i);
-	/* Add knot */
-	RealNode *knot = new RealNode();
-	knot->value = insrf->Knot(1, i);
-	v_knots->AddNode(knot);
-
-	/* OpenNURBS and STEP have different notions of end knot multiplicity -
-	 * see http://wiki.mcneel.com/developer/onsuperfluousknot */
-	if ((i == 0) || (i == (insrf->KnotCount(1) - insrf->KnotMultiplicity(1, 0)))) multiplicity_val++;
-
-	/* Set Multiplicity */
-	IntNode *multiplicity = new IntNode();
-	multiplicity->value = multiplicity_val;
-	v_knot_multiplicities->AddNode(multiplicity);
-	i += insrf->KnotMultiplicity(1, i);
-    }
-    step_srf->knot_spec_(Knot_type__unspecified);
-}
-
-
 /* STEP needs explicit edges corresponding to what in OpenNURBS are
  * the UV space trimming curves
  */
@@ -808,7 +705,7 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
     // toroidal, etc. types that are enumerated
     std::cout << "Have " << brep->m_S.Count() << " surfaces\n";
     for (int i = 0; i < brep->m_S.Count(); ++i) {
-	int surface_converted = 0;
+	bool surface_converted = false;
 	ON_Surface* surface = brep->m_S[i];
 	/* Supported surface types */
 	ON_OffsetSurface *o_surface = ON_OffsetSurface::Cast(surface);
@@ -821,30 +718,20 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 
 	if (o_surface && !surface_converted) {
 	    std::cout << "Have OffsetSurface\n";
+	    ON_NurbsSurface o_nurb;
+	    o_surface->GetNurbForm(o_nurb);
+	    surface_converted = ON_NurbsSurface_to_STEP(&o_nurb, info, i);
 	}
 
 	if (p_surface && !surface_converted) {
 	    std::cout << "Have PlaneSurface\n";
-
 	    ON_NurbsSurface p_nurb;
 	    p_surface->GetNurbForm(p_nurb);
-	    info->surfaces.at(i) = info->registry->ObjCreate("B_SPLINE_SURFACE_WITH_KNOTS");
-
-	    SdaiB_spline_surface *curr_surface = (SdaiB_spline_surface *)info->surfaces.at(i);
-	    curr_surface->name_("''");
-	    curr_surface->u_degree_(p_nurb.Degree(0));
-	    curr_surface->v_degree_(p_nurb.Degree(1));
-	    ON_NurbsSurfaceCV_Initialize(&p_nurb, curr_surface, info);
-
-	    SdaiB_spline_surface_with_knots *surface_knots = (SdaiB_spline_surface_with_knots *)info->surfaces.at(i);
-	    ON_NurbsSurfaceKnots_to_Aggregates(&p_nurb, surface_knots);
-	    curr_surface->surface_form_(B_spline_surface_form__plane_surf);
-	    /* Planes don't self-intersect */
-	    curr_surface->self_intersect_(LFalse);
-	    /* TODO - need to recognize when these should be true */
-	    curr_surface->u_closed_(LFalse);
-	    curr_surface->v_closed_(LFalse);
-	    surface_converted = 1;
+	    surface_converted = ON_NurbsSurface_to_STEP(&p_nurb, info, i);
+	    if (!p_nurb.IsRational()) {
+		SdaiB_spline_surface_with_knots *curr_surface = (SdaiB_spline_surface_with_knots *)info->surfaces.at(i);
+		curr_surface->surface_form_(B_spline_surface_form__plane_surf);
+	    }
 	}
 
 	if (pc_surface && !surface_converted) {
@@ -853,73 +740,21 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 
 	if (n_surface && !surface_converted) {
 	    std::cout << "Have NurbsSurface\n";
-	    if (n_surface->IsRational()) {
-		std::cout << "Have Rational NurbsSurface\n";
-	    } else {
-		info->surfaces.at(i) = info->registry->ObjCreate("B_SPLINE_SURFACE_WITH_KNOTS");
-
-		SdaiB_spline_surface *curr_surface = (SdaiB_spline_surface *)info->surfaces.at(i);
-		curr_surface->name_("''");
-		curr_surface->u_degree_(n_surface->Degree(0));
-		curr_surface->v_degree_(n_surface->Degree(1));
-		ON_NurbsSurfaceCV_Initialize(n_surface, curr_surface, info);
-
-		SdaiB_spline_surface_with_knots *surface_knots = (SdaiB_spline_surface_with_knots *)info->surfaces.at(i);
-		ON_NurbsSurfaceKnots_to_Aggregates(n_surface, surface_knots);
-		curr_surface->surface_form_(B_spline_surface_form__unspecified);
-		/* TODO - for now, assume the surfaces don't self-intersect - need to figure out how to test this */
-		curr_surface->self_intersect_(LFalse);
-		curr_surface->u_closed_((Logical)n_surface->IsClosed(0));
-		curr_surface->v_closed_((Logical)n_surface->IsClosed(1));
-	    }
-	    surface_converted = 1;
+	    surface_converted = ON_NurbsSurface_to_STEP(n_surface, info, i);
 	}
 
 	if (rev_surface && !surface_converted) {
 	    std::cout << "Have RevSurface\n";
-
 	    ON_NurbsSurface rev_nurb;
 	    rev_surface->GetNurbForm(rev_nurb);
-	    info->surfaces.at(i) = info->registry->ObjCreate("B_SPLINE_SURFACE_WITH_KNOTS");
-
-	    SdaiB_spline_surface *curr_surface = (SdaiB_spline_surface *)info->surfaces.at(i);
-	    curr_surface->name_("''");
-	    curr_surface->u_degree_(rev_nurb.Degree(0));
-	    curr_surface->v_degree_(rev_nurb.Degree(1));
-	    ON_NurbsSurfaceCV_Initialize(&rev_nurb, curr_surface, info);
-
-	    SdaiB_spline_surface_with_knots *surface_knots = (SdaiB_spline_surface_with_knots *)info->surfaces.at(i);
-	    ON_NurbsSurfaceKnots_to_Aggregates(&rev_nurb, surface_knots);
-	    curr_surface->surface_form_(B_spline_surface_form__plane_surf);
-	    /* TODO - for now, assume non-self-intersecting */
-	    curr_surface->self_intersect_(LFalse);
-	    curr_surface->u_closed_((Logical)rev_nurb.IsClosed(0));
-	    curr_surface->v_closed_((Logical)rev_nurb.IsClosed(1));
-	    surface_converted = 1;
-
+	    surface_converted = ON_NurbsSurface_to_STEP(&rev_nurb, info, i);
 	}
 
 	if (sum_surface && !surface_converted) {
 	    std::cout << "Have SumSurface\n";
-
 	    ON_NurbsSurface sum_nurb;
 	    sum_surface->GetNurbForm(sum_nurb);
-	    info->surfaces.at(i) = info->registry->ObjCreate("B_SPLINE_SURFACE_WITH_KNOTS");
-
-	    SdaiB_spline_surface *curr_surface = (SdaiB_spline_surface *)info->surfaces.at(i);
-	    curr_surface->name_("''");
-	    curr_surface->u_degree_(sum_nurb.Degree(0));
-	    curr_surface->v_degree_(sum_nurb.Degree(1));
-	    ON_NurbsSurfaceCV_Initialize(&sum_nurb, curr_surface, info);
-
-	    SdaiB_spline_surface_with_knots *surface_knots = (SdaiB_spline_surface_with_knots *)info->surfaces.at(i);
-	    ON_NurbsSurfaceKnots_to_Aggregates(&sum_nurb, surface_knots);
-	    curr_surface->surface_form_(B_spline_surface_form__plane_surf);
-	    /* TODO - for now, assume non-self-intersecting */
-	    curr_surface->self_intersect_(LFalse);
-	    curr_surface->u_closed_((Logical)sum_nurb.IsClosed(0));
-	    curr_surface->v_closed_((Logical)sum_nurb.IsClosed(1));
-	    surface_converted = 1;
+	    surface_converted = ON_NurbsSurface_to_STEP(&sum_nurb, info, i);
 	}
 
 	if (surface_proxy && !surface_converted) {

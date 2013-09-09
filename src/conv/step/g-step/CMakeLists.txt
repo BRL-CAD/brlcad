@@ -11,6 +11,7 @@ set(gstep_SOURCES
   ../BRLCADWrapper.cpp
   G_STEP_Util.cpp
   ON_NurbsCurve.cpp
+  ON_NurbsSurface.cpp
   ON_Brep.cpp
   g-step.cpp
   )

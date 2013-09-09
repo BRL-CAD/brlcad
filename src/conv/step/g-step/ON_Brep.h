@@ -54,6 +54,8 @@ void ON_3dPoint_to_Cartesian_point(ON_3dPoint *inpnt, SdaiCartesian_point *step_
 void ON_3dVector_to_Direction(ON_3dVector *invect, SdaiDirection *step_direction);
 
 bool ON_NurbsCurve_to_STEP(ON_NurbsCurve *n_curve, Exporter_Info_AP203 *info, int i);
+void ON_NurbsSurfaceCV_Finalize_GenericAggregates(Exporter_Info_AP203 *info);
+bool ON_NurbsSurface_to_STEP(ON_NurbsSurface *n_surface, Exporter_Info_AP203 *info, int i);
 
 bool ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info);
 
