@@ -123,6 +123,11 @@ dpix_write(icv_image_t *bif, const char *filename)
     int fd;
     size_t ret, size;
 
+    if (!ICV_IMAGE_IS_INITIALIZED(bif)) {
+	bu_log("ICV Structure not defined.\n");
+	return -1;
+    }
+
     if (bif->color_space == ICV_COLOR_SPACE_GRAY) {
 	icv_gray2rgb(bif);
     } else if (bif->color_space != ICV_COLOR_SPACE_RGB) {

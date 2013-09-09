@@ -204,6 +204,11 @@ HIDDEN int binterp(icv_image_t *bif, unsigned int out_width, unsigned int out_he
 
 int icv_resize(icv_image_t *bif, ICV_RESIZE_METHOD method, unsigned int out_width, unsigned int out_height, unsigned int factor)
 {
+    if(!ICV_IMAGE_IS_INITIALIZED(bif)) {
+	bu_log("ICV Structure not defined.\n");
+	return -1;
+    }
+
     switch (method) {
 	case ICV_RESIZE_UNDERSAMPLE :
 	    return shrink_image(bif, factor);

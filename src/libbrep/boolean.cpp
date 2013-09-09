@@ -1062,6 +1062,36 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 }
 
 
+bool IsSameSurface(const ON_Surface* surfA, const ON_Surface* surfB)
+{
+    // Approach: Get their NURBS forms, and compare their CVs.
+    // If their CVs are all the same (location and weight), they are
+    // regarded as the same surface.
+
+    if (surfA == NULL || surfB == NULL)
+	return false;
+
+    ON_NurbsSurface nurbsSurfaceA, nurbsSurfaceB;
+    if (!surfA->GetNurbForm(nurbsSurfaceA) || !surfB->GetNurbForm(nurbsSurfaceB))
+	return false;
+
+    if (nurbsSurfaceA.CVCount(0) != nurbsSurfaceB.CVCount(0)
+	|| nurbsSurfaceA.CVCount(1) != nurbsSurfaceB.CVCount(1))
+	return false;
+
+    for (int i = 0; i < nurbsSurfaceA.CVCount(0); i++)
+	for (int j = 0; j < nurbsSurfaceB.CVCount(1); j++) {
+	    ON_4dPoint cvA, cvB;
+	    nurbsSurfaceA.GetCV(i, j, cvA);
+	    nurbsSurfaceB.GetCV(i, j, cvB);
+	    if (cvA != cvB)
+		return false;
+	}
+
+    return true;
+}
+
+
 HIDDEN void
 add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &loop, ON_BrepLoop::TYPE loop_type)
 {
@@ -1172,16 +1202,21 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &
 
 	if (c3d->BoundingBox().Diagonal().Length() < ON_ZERO_TOLERANCE) {
 	    // The trim is singular
-	    if (brep->m_V.Count() == 0)
+	    int i;
+	    ON_3dPoint vtx = c3d->PointAtStart();
+	    for (i = brep->m_V.Count() - 1; i >= 0; i--)
+		if (brep->m_V[i].Point().DistanceTo(vtx) < ON_ZERO_TOLERANCE)
+		    break;
+	    if (i < 0) {
+		i = brep->m_V.Count();
 		brep->NewVertex(c3d->PointAtStart(), 0.0);
+	    }
 	    int ti = brep->AddTrimCurve(loop[k]);
-	    ON_BrepTrim& trim = brep->NewSingularTrim(*brep->m_V.Last(), breploop, srf->IsIsoparametric(*loop[k]), ti);
+	    ON_BrepTrim& trim = brep->NewSingularTrim(brep->m_V[i], breploop, srf->IsIsoparametric(*loop[k]), ti);
 	    trim.m_tolerance[0] = trim.m_tolerance[1] = MAX_FASTF;
 	    continue;
 	}
-	brep->AddEdgeCurve(c3d);
 
-	int ti = brep->AddTrimCurve(loop[k]);
 	ON_2dPoint start = loop[k]->PointAtStart(), end = loop[k]->PointAtEnd();
 	int start_idx, end_idx;
 
@@ -1215,6 +1250,8 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &
 	    }
 	}
 
+	brep->AddEdgeCurve(c3d);
+	int ti = brep->AddTrimCurve(loop[k]);
 	ON_BrepEdge &edge = brep->NewEdge(brep->m_V[start_idx], brep->m_V[end_idx],
 	    brep->m_C3.Count() - 1, (const ON_Interval *)0, MAX_FASTF);
 	ON_BrepTrim &trim = brep->NewTrim(edge, 0, breploop, ti);
@@ -1436,11 +1473,16 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
     // calculate intersection curves
     for (int i = 0; i < facecount1; i++) {
 	for (int j = 0; j < facecount2; j++) {
+	    ON_Surface *surfA, *surfB;
+	    surfA = brepA->m_S[brepA->m_F[i].m_si];
+	    surfB = brepB->m_S[brepB->m_F[j].m_si];
+	    if (IsSameSurface(surfA, surfB))
+		continue;
 	    // Possible enhancement: Some faces may share the same surface.
 	    // We can store the result of SSI to avoid re-computation.
 	    ON_ClassArray<ON_SSX_EVENT> events;
-	    if (ON_Intersect(brepA->m_S[brepA->m_F[i].m_si],
-			     brepB->m_S[brepB->m_F[j].m_si],
+	    if (ON_Intersect(surfA,
+			     surfB,
 			     events,
 			     INTERSECTION_TOL,
 			     0.0,
@@ -1682,14 +1724,18 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
     for (int i = 0; i < trimmedfaces.Count(); i++) {
 	const ON_SimpleArray<TrimmedFace*>& splitted = trimmedfaces[i];
 	const ON_Surface* surf = splitted.Count() ? splitted[0]->m_face->SurfaceOf() : NULL;
+	bool added = false;
 	for (int j = 0; j < splitted.Count(); j++) {
 	    TrimmedFace* t_face = splitted[j];
 	    if (t_face->m_belong_to_final == TrimmedFace::BELONG) {
 		// Add the surfaces, faces, loops, trims, vertices, edges, etc.
 		// to the brep structure.
-		ON_Surface *new_surf = surf->Duplicate();
-		int surfindex = brepO->AddSurface(new_surf);
-		ON_BrepFace& new_face = brepO->NewFace(surfindex);
+		if (!added) {
+		    ON_Surface *new_surf = surf->Duplicate();
+		    brepO->AddSurface(new_surf);
+		    added = true;
+		}
+		ON_BrepFace& new_face = brepO->NewFace(brepO->m_S.Count() - 1);
 
 		add_elements(brepO, new_face, t_face->m_outerloop, ON_BrepLoop::outer);
 		// ON_BrepLoop &loop = brepO->m_L[brepO->m_L.Count() - 1];

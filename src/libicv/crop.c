@@ -87,6 +87,11 @@ icv_crop(icv_image_t *img, int ulx, int uly, int urx, int ury, int lrx, int lry,
     int  x, y;
     double *data, *p, *q;
 
+    if (!ICV_IMAGE_IS_INITIALIZED(img)) {
+	bu_log("ICV Structure not defined.\n");
+	return -1;
+    }
+
     /* Allocates output data and assigns to image*/
     data = img->data;
     img->data = p = bu_malloc(ynum*xnum*img->channels*sizeof(double), "icv_crop: Out Image");
