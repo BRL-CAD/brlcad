@@ -378,6 +378,24 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 	    ON_NurbsSurface rev_nurb;
 	    rev_surface->GetNurbForm(rev_nurb);
 	    surface_converted = ON_NurbsSurface_to_STEP(&rev_nurb, info, i);
+	    /* Surfaces of revolution can satisfy several of the surface types
+	     * offered by STEP - check*/
+	    /* TODO - need to also expose the surface type via a map, since rational
+	     * surface composites do not offer a hook that is compatible with the C++
+	     * surface_form_ method.*/
+	    /*
+	    if(rev_surface->IsPlanar()) {
+	    }
+	    if(rev_surface->IsSphere()) {
+	    }
+	    if(rev_surface->IsCylinder()) {
+	    }
+	    if(rev_surface->IsCone()) {
+	    }
+	    if(rev_surface->IsTorus()) {
+	    }*/
+	    /* If none of the other conditions are satisfied, by definition we still have
+	     * a surface of revolution...*/
 	}
 
 	if (sum_surface && !surface_converted) {
