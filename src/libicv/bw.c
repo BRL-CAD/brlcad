@@ -85,18 +85,15 @@ bw_write(icv_image_t *bif, const char *filename)
 HIDDEN icv_image_t *
 bw_read(const char *filename, int width, int height)
 {
-    int fd;
+    FILE *fp;
     unsigned char *data = NULL;
     icv_image_t *bif;
-    size_t size;
+    size_t size, ret;
     size_t buffsize=1024;
 
     if (filename==NULL) {
-	fd = fileno(stdin);
-#if defined(_WIN32) && !defined(__CYGWIN__)
-    setmode(fd, O_BINARY);
-#endif
-    } else if ((fd = open(filename, O_RDONLY, WRMODE)) < 0) {
+	fp = stdin;
+    } else if ((fp = fopen(filename, "r")) == NULL) {
 	bu_log("bw_read: Cannot open %s for reading\n", filename);
 	return NULL;
     }
@@ -107,7 +104,7 @@ bw_read(const char *filename, int width, int height)
 	int status = 0;
 	size = 0;
 	data = (unsigned char *)bu_malloc(buffsize, "bw_read : unsigned char data");
-	while ((status = read(fd, &data[size], 1))==1) {
+	while ((status = fread(&data[size], 1, 1, fp))==1) {
 	    size++;
 	    if (size==buffsize) {
 		buffsize+=1024;
@@ -122,10 +119,12 @@ bw_read(const char *filename, int width, int height)
     } else { /* buffer frame wise */
 	size = (size_t) height*width;
 	data = (unsigned char *)bu_malloc(size, "bw_read : unsigned char data");
-	if (read(fd, data, size) < 0) {
+	ret = fread(data, 1, size, fp);
+	if (ret!=0 && ferror(fp)) {
 	    bu_log("bw_read: Error Occurred while Reading\n");
 	    bu_free(data, "icv_image data");
 	    bu_free(bif, "icv_structure");
+	    fclose(fp);
 	    return NULL;
 	}
 	bif->height = height;
@@ -137,6 +136,7 @@ bw_read(const char *filename, int width, int height)
 	/* zero sized image */
 	bu_free(bif, "icv container");
 	bu_free(data, "unisigned char data");
+	fclose(fp);
 	return NULL;
     }
     bu_free(data, "bw_read : unsigned char data");
@@ -144,7 +144,7 @@ bw_read(const char *filename, int width, int height)
     bif->channels = 1;
     bif->color_space = ICV_COLOR_SPACE_GRAY;
     bif->gamma_corr = 0.0;
-    close(fd);
+    fclose(fp);
     return bif;
 }
 
