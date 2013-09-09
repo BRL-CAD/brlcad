@@ -31,6 +31,46 @@
 #include "G_STEP_internal.h"
 #include "ON_Brep.h"
 
+
+void
+ON_NurbsCurveCV_to_EntityAggregate(EntityAggregate *control_pnts, ON_NurbsCurve *incrv, Exporter_Info_AP203 *info) {
+    ON_3dPoint cv_pnt;
+    for (int i = 0; i < incrv->CVCount(); i++) {
+	SdaiCartesian_point *step_cartesian = (SdaiCartesian_point *)info->registry->ObjCreate("CARTESIAN_POINT");
+	step_cartesian->name_("''");
+	info->cartesian_pnts.push_back((STEPentity *)step_cartesian);
+	incrv->GetCV(i, cv_pnt);
+	ON_3dPoint_to_Cartesian_point(&(cv_pnt), step_cartesian);
+	control_pnts->AddNode(new EntityNode((SDAI_Application_instance *)step_cartesian));
+    }
+}
+
+
+void
+ON_NurbsCurveKnots_to_Aggregates(IntAggregate *knot_multiplicities, RealAggregate *knots, ON_NurbsCurve *incrv)
+{
+    int i = 0;
+    while (i < incrv->KnotCount()) {
+	int multiplicity_val = incrv->KnotMultiplicity(i);
+	/* Add knot */
+	RealNode *knot = new RealNode();
+	knot->value = incrv->Knot(i);
+	knots->AddNode(knot);
+
+	/* OpenNURBS and STEP have different notions of end knot
+	 * multiplicity - see:
+	 * http://wiki.mcneel.com/developer/onsuperfluousknot
+	 */
+	if ((i == 0) || (i == (incrv->KnotCount() - incrv->KnotMultiplicity(0)))) multiplicity_val++;
+	/* Set Multiplicity */
+	IntNode *multiplicity = new IntNode();
+	multiplicity->value = multiplicity_val;
+	knot_multiplicities->AddNode(multiplicity);
+	i += incrv->KnotMultiplicity(i);
+    }
+}
+
+
 /* For a rational B-Spline curve with weights, we need to create an aggregate type */
 
 STEPentity *
@@ -51,17 +91,7 @@ Create_Rational_Curve_Aggregate(ON_NurbsCurve *ncurve, Exporter_Info_AP203 *info
 	}
 	if (!bu_strcmp(attr->Name(), "control_points_list")) {
 	    EntityAggregate *control_pnts= new EntityAggregate();
-	    ON_4dPoint cv_pnt;
-	    for (int i = 0; i < ncurve->CVCount(); i++) {
-		double w = ncurve->Weight(i);
-		SdaiCartesian_point *step_cartesian = (SdaiCartesian_point *)info->registry->ObjCreate("CARTESIAN_POINT");
-		step_cartesian->name_("''");
-		info->cartesian_pnts.push_back((STEPentity *)step_cartesian);
-		ncurve->GetCV(i, cv_pnt);
-		std::cout << "4d point: " << cv_pnt.x << "," << cv_pnt.y << "," << cv_pnt.z << "," << ncurve->Weight(i) << "\n";
-		XYZ_to_Cartesian_point(cv_pnt.x/w, cv_pnt.y/w, cv_pnt.z/w, step_cartesian);
-		control_pnts->AddNode(new EntityNode((SDAI_Application_instance *)step_cartesian));
-	    }
+	    ON_NurbsCurveCV_to_EntityAggregate(control_pnts, ncurve, info);
 	    attr->ptr.a = control_pnts;
 	}
 	if (!bu_strcmp(attr->Name(), "curve_form")) attr->ptr.e = new SdaiB_spline_curve_form_var(B_spline_curve_form__unspecified);
@@ -73,37 +103,14 @@ Create_Rational_Curve_Aggregate(ON_NurbsCurve *ncurve, Exporter_Info_AP203 *info
     stepcomplex = complex_entity->EntityPart("b_spline_curve_with_knots");
     stepcomplex->ResetAttributes();
     std::cout << "b_spline_curve_with_knots\n";
+    IntAggregate *knot_multiplicities = new IntAggregate();
+    RealAggregate *knots = new RealAggregate();
+    ON_NurbsCurveKnots_to_Aggregates(knot_multiplicities, knots, ncurve);
     while ((attr = stepcomplex->NextAttribute()) != NULL) {
 	if (!bu_strcmp(attr->Name(), "knot_multiplicities")) {
-	    IntAggregate *knot_multiplicities = new IntAggregate();
-	    int i = 0;
-	    while (i < ncurve->KnotCount()) {
-		int multiplicity_val = ncurve->KnotMultiplicity(i);
-		/* OpenNURBS and STEP have different notions of end knot
-		 * multiplicity - see:
-		 * http://wiki.mcneel.com/developer/onsuperfluousknot
-		 *
-		 * TODO - might have a problem here if curve is closed (and in the non-rational case too)
-		 */
-		if ((i == 0) || (i == (ncurve->KnotCount() - ncurve->KnotMultiplicity(0)))) multiplicity_val++;
-		/* Set Multiplicity */
-		IntNode *multiplicity = new IntNode();
-		multiplicity->value = multiplicity_val;
-		knot_multiplicities->AddNode(multiplicity);
-		i += ncurve->KnotMultiplicity(i);
-	    }
 	    attr->ptr.a = knot_multiplicities;
 	}
 	if (!bu_strcmp(attr->Name(), "knots")) {
-	    RealAggregate *knots = new RealAggregate();
-	    int i = 0;
-	    while (i < ncurve->KnotCount()) {
-		/* Add knot */
-		RealNode *knot = new RealNode();
-		knot->value = ncurve->Knot(i);
-		knots->AddNode(knot);
-		i += ncurve->KnotMultiplicity(i);
-	    }
 	    attr->ptr.a = knots;
 	}
 	if (!bu_strcmp(attr->Name(), "knot_spec")) attr->ptr.e = new SdaiKnot_type_var(Knot_type__unspecified);
@@ -136,70 +143,25 @@ Create_Rational_Curve_Aggregate(ON_NurbsCurve *ncurve, Exporter_Info_AP203 *info
     return (STEPentity *)complex_entity;
 }
 
-void
-ON_NurbsCurveCV_to_EntityAggregate(ON_NurbsCurve *incrv, SdaiB_spline_curve *step_crv, Exporter_Info_AP203 *info) {
-    EntityAggregate *control_pnts = step_crv->control_points_list_();
-    ON_3dPoint cv_pnt;
-    for (int i = 0; i < incrv->CVCount(); i++) {
-	SdaiCartesian_point *step_cartesian = (SdaiCartesian_point *)info->registry->ObjCreate("CARTESIAN_POINT");
-	step_cartesian->name_("''");
-	info->cartesian_pnts.push_back((STEPentity *)step_cartesian);
-	incrv->GetCV(i, cv_pnt);
-	ON_3dPoint_to_Cartesian_point(&(cv_pnt), step_cartesian);
-	control_pnts->AddNode(new EntityNode((SDAI_Application_instance *)step_cartesian));
-    }
-}
-
-void
-ON_NurbsCurveKnots_to_Aggregates(ON_NurbsCurve *incrv, SdaiB_spline_curve_with_knots *step_crv)
-{
-    IntAggregate_ptr knot_multiplicities = step_crv->knot_multiplicities_();
-    RealAggregate_ptr knots = step_crv->knots_();
-    int i = 0;
-    while (i < incrv->KnotCount()) {
-	int multiplicity_val = incrv->KnotMultiplicity(i);
-	/* Add knot */
-	RealNode *knot = new RealNode();
-	knot->value = incrv->Knot(i);
-	knots->AddNode(knot);
-
-	/* OpenNURBS and STEP have different notions of end knot
-	 * multiplicity - see:
-	 * http://wiki.mcneel.com/developer/onsuperfluousknot
-	 */
-	if ((i == 0) || (i == (incrv->KnotCount() - incrv->KnotMultiplicity(0)))) multiplicity_val++;
-	/* Set Multiplicity */
-	IntNode *multiplicity = new IntNode();
-	multiplicity->value = multiplicity_val;
-	knot_multiplicities->AddNode(multiplicity);
-	i += incrv->KnotMultiplicity(i);
-    }
-    step_crv->knot_spec_(Knot_type__unspecified);
-}
-
-
 bool
 ON_NurbsCurve_to_STEP(ON_NurbsCurve *n_curve, Exporter_Info_AP203 *info, int i)
 {
-    std::cout << "Have NurbsCurve\n";
+    /* For rational curves, we need a composite type.  Otherwise, go with the BSpline curve with knots.*/
     if (n_curve->IsRational()) {
-	std::cout << "Have Rational NurbsCurve\n";
 	info->three_dimensional_curves.at(i) = Create_Rational_Curve_Aggregate(n_curve, info);
     } else {
-	info->three_dimensional_curves.at(i) = info->registry->ObjCreate("B_SPLINE_CURVE_WITH_KNOTS");
-	SdaiB_spline_curve *curr_curve = (SdaiB_spline_curve *)info->three_dimensional_curves.at(i);
+	SdaiB_spline_curve_with_knots *curr_curve = (SdaiB_spline_curve_with_knots *)info->registry->ObjCreate("B_SPLINE_CURVE_WITH_KNOTS");
+	info->three_dimensional_curves.at(i) = (STEPentity *)curr_curve;
+	ON_NurbsCurveCV_to_EntityAggregate(curr_curve->control_points_list_(), n_curve, info);
+	ON_NurbsCurveKnots_to_Aggregates(curr_curve->knot_multiplicities_(), curr_curve->knots_(), n_curve);
+	curr_curve->name_("''");
 	curr_curve->degree_(n_curve->Degree());
-	ON_NurbsCurveCV_to_EntityAggregate(n_curve, curr_curve, info);
-	SdaiB_spline_curve_with_knots *curve_knots = (SdaiB_spline_curve_with_knots *)info->three_dimensional_curves.at(i);
-	ON_NurbsCurveKnots_to_Aggregates(n_curve, curve_knots);
-	((SdaiB_spline_curve *)info->three_dimensional_curves.at(i))->curve_form_(B_spline_curve_form__unspecified);
-	((SdaiB_spline_curve *)info->three_dimensional_curves.at(i))->closed_curve_(SDAI_LOGICAL(n_curve->IsClosed()));
-
+	curr_curve->knot_spec_(Knot_type__unspecified);
+	curr_curve->curve_form_(B_spline_curve_form__unspecified);
+	curr_curve->closed_curve_(SDAI_LOGICAL(n_curve->IsClosed()));
 	/* TODO: Assume we don't have self-intersecting curves for
-	 * now - need some way to test this...
-	 */
-	((SdaiB_spline_curve *)info->three_dimensional_curves.at(i))->self_intersect_(LFalse);
-	((SdaiB_spline_curve *)info->three_dimensional_curves.at(i))->name_("''");
+	 * now - need some way to test this...*/
+	curr_curve->self_intersect_(LFalse);
     }
 
     return true;
