@@ -10,6 +10,7 @@ set(gstep_SOURCES
   ${express_srcs}
   ../BRLCADWrapper.cpp
   G_STEP_Util.cpp
+  ON_NurbsCurve.cpp
   ON_Brep.cpp
   g-step.cpp
   )

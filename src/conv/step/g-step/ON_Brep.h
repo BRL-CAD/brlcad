@@ -53,6 +53,8 @@ struct Exporter_Info_AP203 {
 void ON_3dPoint_to_Cartesian_point(ON_3dPoint *inpnt, SdaiCartesian_point *step_pnt);
 void ON_3dVector_to_Direction(ON_3dVector *invect, SdaiDirection *step_direction);
 
+bool ON_NurbsCurve_to_STEP(ON_NurbsCurve *n_curve, Exporter_Info_AP203 *info, int i);
+
 bool ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info);
 
 #endif /* ON_BREP_H_ */
