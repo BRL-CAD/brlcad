@@ -42,11 +42,13 @@ Create_Rational_Surface_Aggregate(ON_NurbsSurface *nsurface, Exporter_Info_AP203
     STEPcomplex *complex_entity = new STEPcomplex(info->registry, (const char **)entNmArr, info->registry->GetEntityCnt() + 1);
 
     stepcomplex = complex_entity->head;
+    stepcomplex->ResetAttributes();
     while (stepcomplex) {
 	while ((attr = stepcomplex->NextAttribute()) != NULL) {
 	    std::cout << "  " << attr->Name() << "," << attr->NonRefType() << "\n";
 	}
 	stepcomplex = stepcomplex->sc;
+	stepcomplex->ResetAttributes();
     }
 #if 0
     /* Set b_spline_curve data */
@@ -255,22 +257,24 @@ ON_NurbsSurface_to_STEP(ON_NurbsSurface *n_surface, Exporter_Info_AP203 *info, i
     std::cout << "Have NurbsSurface\n";
     if (n_surface->IsRational()) {
 	std::cout << "Have Rational NurbsSurface\n";
+	info->surfaces.at(i) = Create_Rational_Surface_Aggregate(n_surface, info);
+    } else {
+	info->surfaces.at(i) = info->registry->ObjCreate("B_SPLINE_SURFACE_WITH_KNOTS");
+
+	SdaiB_spline_surface *curr_surface = (SdaiB_spline_surface *)info->surfaces.at(i);
+	curr_surface->name_("''");
+	curr_surface->u_degree_(n_surface->Degree(0));
+	curr_surface->v_degree_(n_surface->Degree(1));
+	ON_NurbsSurfaceCV_Initialize(n_surface, curr_surface, info);
+
+	SdaiB_spline_surface_with_knots *surface_knots = (SdaiB_spline_surface_with_knots *)info->surfaces.at(i);
+	ON_NurbsSurfaceKnots_to_Aggregates(n_surface, surface_knots);
+	curr_surface->surface_form_(B_spline_surface_form__unspecified);
+	/* TODO - for now, assume the surfaces don't self-intersect - need to figure out how to test this */
+	curr_surface->self_intersect_(LFalse);
+	curr_surface->u_closed_((Logical)n_surface->IsClosed(0));
+	curr_surface->v_closed_((Logical)n_surface->IsClosed(1));
     }
-    info->surfaces.at(i) = info->registry->ObjCreate("B_SPLINE_SURFACE_WITH_KNOTS");
-
-    SdaiB_spline_surface *curr_surface = (SdaiB_spline_surface *)info->surfaces.at(i);
-    curr_surface->name_("''");
-    curr_surface->u_degree_(n_surface->Degree(0));
-    curr_surface->v_degree_(n_surface->Degree(1));
-    ON_NurbsSurfaceCV_Initialize(n_surface, curr_surface, info);
-
-    SdaiB_spline_surface_with_knots *surface_knots = (SdaiB_spline_surface_with_knots *)info->surfaces.at(i);
-    ON_NurbsSurfaceKnots_to_Aggregates(n_surface, surface_knots);
-    curr_surface->surface_form_(B_spline_surface_form__unspecified);
-    /* TODO - for now, assume the surfaces don't self-intersect - need to figure out how to test this */
-    curr_surface->self_intersect_(LFalse);
-    curr_surface->u_closed_((Logical)n_surface->IsClosed(0));
-    curr_surface->v_closed_((Logical)n_surface->IsClosed(1));
     return surface_converted;
 }
 
