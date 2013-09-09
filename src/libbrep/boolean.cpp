@@ -1682,14 +1682,18 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
     for (int i = 0; i < trimmedfaces.Count(); i++) {
 	const ON_SimpleArray<TrimmedFace*>& splitted = trimmedfaces[i];
 	const ON_Surface* surf = splitted.Count() ? splitted[0]->m_face->SurfaceOf() : NULL;
+	bool added = false;
 	for (int j = 0; j < splitted.Count(); j++) {
 	    TrimmedFace* t_face = splitted[j];
 	    if (t_face->m_belong_to_final == TrimmedFace::BELONG) {
 		// Add the surfaces, faces, loops, trims, vertices, edges, etc.
 		// to the brep structure.
-		ON_Surface *new_surf = surf->Duplicate();
-		int surfindex = brepO->AddSurface(new_surf);
-		ON_BrepFace& new_face = brepO->NewFace(surfindex);
+		if (!added) {
+		    ON_Surface *new_surf = surf->Duplicate();
+		    brepO->AddSurface(new_surf);
+		    added = true;
+		}
+		ON_BrepFace& new_face = brepO->NewFace(brepO->m_S.Count() - 1);
 
 		add_elements(brepO, new_face, t_face->m_outerloop, ON_BrepLoop::outer);
 		// ON_BrepLoop &loop = brepO->m_L[brepO->m_L.Count() - 1];
