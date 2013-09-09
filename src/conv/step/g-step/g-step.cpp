@@ -190,6 +190,13 @@ main(int argc, char *argv[])
 	sfile->WriteExchangeFile(stepout);
     }
 
+    /* Free memory */
+    header_instances->DeleteInstances();
+    instance_list.DeleteInstances();
+    delete dotg;
+    delete registry;
+    delete sfile;
+
     return ret;
 }
 
