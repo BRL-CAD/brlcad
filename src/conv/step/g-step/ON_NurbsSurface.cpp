@@ -44,6 +44,7 @@ Create_Rational_Surface_Aggregate(ON_NurbsSurface *nsurface, Exporter_Info_AP203
     stepcomplex = complex_entity->head;
     stepcomplex->ResetAttributes();
     while (stepcomplex) {
+	std::cout << stepcomplex->EntityName() << "\n";
 	while ((attr = stepcomplex->NextAttribute()) != NULL) {
 	    std::cout << "  " << attr->Name() << "," << attr->NonRefType() << "\n";
 	}
