@@ -941,7 +941,7 @@ char* qt_mouseButton1Press(QEvent *event) {
 	QMouseEvent *mouseEv = (QMouseEvent *)event;
 	if (mouseEv->button() == Qt::LeftButton) {
 	    struct bu_vls str = BU_VLS_INIT_ZERO;
-	    bu_vls_printf(&str, "<1>");
+	    bu_vls_printf(&str, "<1> -x %d -y %d", mouseEv->x(), mouseEv->y());
 	    return bu_vls_addr(&str);
 	}
     }
@@ -965,7 +965,7 @@ char* qt_mouseButton2Press(QEvent *event) {
 	QMouseEvent *mouseEv = (QMouseEvent *)event;
 	if (mouseEv->button() == Qt::RightButton) {
 	    struct bu_vls str = BU_VLS_INIT_ZERO;
-	    bu_vls_printf(&str, "<3>");
+	    bu_vls_printf(&str, "<3> -x %d -y %d", mouseEv->x(), mouseEv->y());
 	    return bu_vls_addr(&str);
 	}
     }
