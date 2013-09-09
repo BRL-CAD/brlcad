@@ -40,16 +40,6 @@ __BEGIN_DECLS
 #  endif
 #endif
 
-/**
- * I C V _ R O T
- *
- * Rotate an image.
- * %s [-rifb | -a angle] [-# bytes] [-s squaresize] [-w width] [-n height] [-o outputfile] inputfile [> outputfile]
- *
- */
-ICV_EXPORT extern int icv_rot(int argv, char **argc);
-
-
 /** @addtogroup image */
 /** @ingroup data */
 /** @{ */
@@ -639,9 +629,17 @@ typedef enum {
 
 ICV_EXPORT int icv_resize(icv_image_t *bif, ICV_RESIZE_METHOD method, unsigned int out_width, unsigned int out_height, unsigned int factor);
 
-
 /** @} */
 /* end image utilities */
+
+/**
+ * I C V _ R O T
+ *
+ * Rotate an image.
+ * %s [-rifb | -a angle] [-# bytes] [-s squaresize] [-w width] [-n height] [-o outputfile] inputfile [> outputfile]
+ *
+ */
+ICV_EXPORT extern int icv_rot(int argv, char **argc);
 
 __END_DECLS
 
