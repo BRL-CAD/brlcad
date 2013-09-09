@@ -13,6 +13,7 @@ set(gstep_SOURCES
   ON_NurbsCurve.cpp
   ON_NurbsSurface.cpp
   ON_Brep.cpp
+  Shape_Definition_Representation.cpp
   g-step.cpp
   )
 

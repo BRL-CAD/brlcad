@@ -29,6 +29,9 @@
 void XYZ_to_Cartesian_point(double x, double y, double z, SdaiCartesian_point *step_pnt);
 void XYZ_to_Direction(double x, double y, double z, SdaiDirection *step_direction);
 
+STEPentity * Add_Shape_Definition_Representation(Registry *registry, InstMgr *instance_list, SdaiRepresentation *sdairep);
+
+
 #endif /* ON_BREP_H_ */
 
 /*
