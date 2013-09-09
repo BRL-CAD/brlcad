@@ -9,6 +9,7 @@ GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} gstep)
 set(gstep_SOURCES
   ${express_srcs}
   ../BRLCADWrapper.cpp
+  Default_Geometric_Context.cpp
   G_STEP_Util.cpp
   ON_NurbsCurve.cpp
   ON_NurbsSurface.cpp
