@@ -1062,6 +1062,36 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 }
 
 
+bool IsSameSurface(const ON_Surface* surfA, const ON_Surface* surfB)
+{
+    // Approach: Get their NURBS forms, and compare their CVs.
+    // If their CVs are all the same (location and weight), they are
+    // regarded as the same surface.
+
+    if (surfA == NULL || surfB == NULL)
+	return false;
+
+    ON_NurbsSurface nurbsSurfaceA, nurbsSurfaceB;
+    if (!surfA->GetNurbForm(nurbsSurfaceA) || !surfB->GetNurbForm(nurbsSurfaceB))
+	return false;
+
+    if (nurbsSurfaceA.CVCount(0) != nurbsSurfaceB.CVCount(0)
+	|| nurbsSurfaceA.CVCount(1) != nurbsSurfaceB.CVCount(1))
+	return false;
+
+    for (int i = 0; i < nurbsSurfaceA.CVCount(0); i++)
+	for (int j = 0; j < nurbsSurfaceB.CVCount(1); j++) {
+	    ON_4dPoint cvA, cvB;
+	    nurbsSurfaceA.GetCV(i, j, cvA);
+	    nurbsSurfaceB.GetCV(i, j, cvB);
+	    if (cvA != cvB)
+		return false;
+	}
+
+    return true;
+}
+
+
 HIDDEN void
 add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &loop, ON_BrepLoop::TYPE loop_type)
 {
@@ -1443,11 +1473,16 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
     // calculate intersection curves
     for (int i = 0; i < facecount1; i++) {
 	for (int j = 0; j < facecount2; j++) {
+	    ON_Surface *surfA, *surfB;
+	    surfA = brepA->m_S[brepA->m_F[i].m_si];
+	    surfB = brepB->m_S[brepB->m_F[j].m_si];
+	    if (IsSameSurface(surfA, surfB))
+		continue;
 	    // Possible enhancement: Some faces may share the same surface.
 	    // We can store the result of SSI to avoid re-computation.
 	    ON_ClassArray<ON_SSX_EVENT> events;
-	    if (ON_Intersect(brepA->m_S[brepA->m_F[i].m_si],
-			     brepB->m_S[brepB->m_F[j].m_si],
+	    if (ON_Intersect(surfA,
+			     surfB,
 			     events,
 			     INTERSECTION_TOL,
 			     0.0,
