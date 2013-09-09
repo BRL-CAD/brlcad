@@ -15,6 +15,8 @@ set(gstep_SOURCES
   ON_NurbsSurface.cpp
   ON_Brep.cpp
   Shape_Definition_Representation.cpp
+  Shape_Representation.cpp
+  Shape_Representation_Relationship.cpp
   g-step.cpp
   )
 
