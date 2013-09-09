@@ -9,6 +9,7 @@ GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} gstep)
 set(gstep_SOURCES
   ${express_srcs}
   ../BRLCADWrapper.cpp
+  G_STEP_Util.cpp
   ON_Brep.cpp
   g-step.cpp
   )

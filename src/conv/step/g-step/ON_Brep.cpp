@@ -66,43 +66,19 @@
 #include <sstream>
 #include <map>
 
+#include "G_STEP_internal.h"
 #include "ON_Brep.h"
-#include "STEPWrapper.h"
 
-void
-XYZ_to_Cartesian_point(double x, double y, double z, SdaiCartesian_point *step_pnt) {
-    RealAggregate_ptr coord_vals = step_pnt->coordinates_();
-    RealNode *xnode = new RealNode();
-    xnode->value = x;
-    coord_vals->AddNode(xnode);
-    RealNode *ynode = new RealNode();
-    ynode->value = y;
-    coord_vals->AddNode(ynode);
-    RealNode *znode = new RealNode();
-    znode->value = z;
-    coord_vals->AddNode(znode);
-}
 void
 ON_3dPoint_to_Cartesian_point(ON_3dPoint *inpnt, SdaiCartesian_point *step_pnt) {
     XYZ_to_Cartesian_point(inpnt->x, inpnt->y, inpnt->z, step_pnt);
 }
 
-
 void
 ON_3dVector_to_Direction(ON_3dVector *invect, SdaiDirection *step_direction) {
     invect->Unitize();
-    RealAggregate_ptr coord_vals = step_direction->direction_ratios_();
-    RealNode *xnode = new RealNode();
-    xnode->value = invect->x;
-    coord_vals->AddNode(xnode);
-    RealNode *ynode = new RealNode();
-    ynode->value = invect->y;
-    coord_vals->AddNode(ynode);
-    RealNode *znode = new RealNode();
-    znode->value = invect->z;
-    coord_vals->AddNode(znode);
+    XYZ_to_Direction(invect->x, invect->y, invect->z, step_direction);
 }
-
 
 void
 ON_NurbsCurveCV_to_EntityAggregate(ON_NurbsCurve *incrv, SdaiB_spline_curve *step_crv, Exporter_Info_AP203 *info) {
