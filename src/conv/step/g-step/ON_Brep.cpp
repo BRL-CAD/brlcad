@@ -411,16 +411,14 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
 		SdaiFace_outer_bound *outer_bound = (SdaiFace_outer_bound *)info->registry->ObjCreate("FACE_OUTER_BOUND");
 		outer_bound->name_("''");
 		outer_bound->bound_((SdaiLoop *)info->edge_loops.at(curr_loop->m_loop_index));
-		// TODO - When should this be false?
-		outer_bound->orientation_(BTrue);
+		outer_bound->orientation_((const Boolean)!(face->m_bRev));
 		bounds->AddNode(new EntityNode((SDAI_Application_instance *)outer_bound));
 		info->outer_bounds.push_back((STEPentity *)outer_bound);
 	    } else {
 		SdaiFace_bound *inner_bound = (SdaiFace_bound *)info->registry->ObjCreate("FACE_BOUND");
 		inner_bound->name_("''");
 		inner_bound->bound_((SdaiLoop *)info->edge_loops.at(curr_loop->m_loop_index));
-		// TODO - When should this be false?
-		inner_bound->orientation_(BTrue);
+		inner_bound->orientation_((const Boolean)!(face->m_bRev));
 		bounds->AddNode(new EntityNode((SDAI_Application_instance *)inner_bound));
 		info->inner_bounds.push_back((STEPentity *)inner_bound);
 	    }
