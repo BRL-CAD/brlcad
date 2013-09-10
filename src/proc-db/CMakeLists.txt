@@ -13,6 +13,7 @@ include_directories(${PROC_DB_INCLUDE_DIRS})
 # applications should start as NO_INSTALL until they reach a state
 # where they provide some conceivable value to an end user.
 BRLCAD_ADDEXEC(bottest bottest.c libwdb NO_INSTALL)
+BRLCAD_ADDEXEC(brep_cobb brep_cobb.cpp "libwdb;${OPENNURBS_LIBRARY}" NO_INSTALL)
 BRLCAD_ADDEXEC(brep_cube brep_cube.cpp "libwdb;${OPENNURBS_LIBRARY}" NO_INSTALL)
 BRLCAD_ADDEXEC(brep_simple brep_simple.cpp "libwdb;${OPENNURBS_LIBRARY}" NO_INSTALL)
 BRLCAD_ADDEXEC(brepintersect brepintersect.cpp "libwdb;${OPENNURBS_LIBRARY}" NO_INSTALL)
