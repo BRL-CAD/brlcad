@@ -93,8 +93,8 @@ Number of programs per error:
   3:exit status: exit code 5                              :   1
   3:exit status: exit code 9                              :   1
 
-Results per program
-===================
+Attributes per program
+======================
 
 ***** begin 3dm-g ***********************************
 	result : (usage)
