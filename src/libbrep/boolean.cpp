@@ -1075,6 +1075,10 @@ bool IsSameSurface(const ON_Surface* surfA, const ON_Surface* surfB)
     if (!surfA->GetNurbForm(nurbsSurfaceA) || !surfB->GetNurbForm(nurbsSurfaceB))
 	return false;
 
+    if (nurbsSurfaceA.Degree(0) != nurbsSurfaceB.Degree(0)
+	|| nurbsSurfaceA.Degree(1) != nurbsSurfaceB.Degree(1))
+	return false;
+
     if (nurbsSurfaceA.CVCount(0) != nurbsSurfaceB.CVCount(0)
 	|| nurbsSurfaceA.CVCount(1) != nurbsSurfaceB.CVCount(1))
 	return false;
@@ -1087,6 +1091,18 @@ bool IsSameSurface(const ON_Surface* surfA, const ON_Surface* surfB)
 	    if (cvA != cvB)
 		return false;
 	}
+
+    if (nurbsSurfaceA.KnotCount(0) != nurbsSurfaceB.KnotCount(0)
+	|| nurbsSurfaceA.KnotCount(1) != nurbsSurfaceB.KnotCount(1))
+	return false;
+
+    for (int i = 0; i < nurbsSurfaceA.KnotCount(0); i++)
+	if (!ON_NearZero(nurbsSurfaceA.m_knot[0][i] - nurbsSurfaceB.m_knot[0][i]))
+	    return false;
+
+    for (int i = 0; i < nurbsSurfaceA.KnotCount(1); i++)
+	if (!ON_NearZero(nurbsSurfaceA.m_knot[1][i] - nurbsSurfaceB.m_knot[1][i]))
+	    return false;
 
     return true;
 }
