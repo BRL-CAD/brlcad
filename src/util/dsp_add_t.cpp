@@ -391,13 +391,16 @@ int
 main(int ac, char *av[])
 {
     /*  int next_arg; *//* <= not needed */
-    FILE *in1=NULL, *in2=NULL, *out1=NULL;
-    unsigned short *buf1=NULL, *buf2=NULL;
-    size_t count = 0;
-    int in_cookie, out_cookie;
+    FILE *in1 = NULL;
+    FILE *in2 = NULL;
+    FILE *out1 = NULL;
     int conv;
-    struct stat sb;
+    int in_cookie, out_cookie;
+    size_t count = 0;
     size_t ret;
+    struct stat sb;
+    unsigned short *buf1 = NULL;
+    unsigned short *buf2 = NULL;
     const char* dsp1_fname = NULL;
     const char* dsp2_fname = NULL;
     const char* dsp3_fname = NULL;
