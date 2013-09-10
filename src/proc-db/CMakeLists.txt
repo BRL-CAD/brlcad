@@ -7,6 +7,7 @@ LIST(REMOVE_DUPLICATES PROC_DB_INCLUDE_DIRS)
 include_directories(${PROC_DB_INCLUDE_DIRS})
 
 BRLCAD_ADDEXEC(bottest bottest.c libwdb)
+BRLCAD_ADDEXEC(brep_cobb brep_cobb.cpp "libwdb;${OPENNURBS_LIBRARY}")
 BRLCAD_ADDEXEC(brep_cube brep_cube.cpp "libwdb;${OPENNURBS_LIBRARY}")
 BRLCAD_ADDEXEC(brep_simple brep_simple.cpp "libwdb;${OPENNURBS_LIBRARY}")
 
