@@ -89,7 +89,7 @@
  *
  * Given that the sextic equation for the heart is:
  *
- *    [ X**2 + 9/4 * Y**2 + Z**2 - 1 ]**3 - Y**3 * (X**2 + 9/80 * Z**3)  =  0.
+ *    [ X**2 + 9/4 * Y**2 + Z**2 - 1 ]**3 - Z**3 * (X**2 + 9/80 * Y**2)  =  0.
  *
  * let w =  X**2 + 9/4*Y**2 + Z**2 - 1 , then the sextic equation becomes:
  *
@@ -660,17 +660,17 @@ rt_hrt_vshot()
  *
  * Given that the equation for the heart is:
  *
- * [ X**2 + 9/4 * Y**2 + Z**2 - 1 ]**3 - Y**3 * (X**2 + 9/80*Z**3) = 0.
+ * [ X**2 + 9/4 * Y**2 + Z**2 - 1 ]**3 - Z**3 * (X**2 + 9/80*Y**2) = 0.
  *
  * let w = X**2 + 9/4 * Y**2 + Z**2 - 1, then the equation becomes:
  *
- * w**3 - Y**3 * (X**2 + 9/80 * Y**2)  =  0.
+ * w**3 - Z**3 * (X**2 + 9/80 * Y**2)  =  0.
  *
  * For f(x, y, z) = 0, the gradient of f() is (df/dx, df/dy, df/dz).
  *
- * df/dx = 6 * x * (w**2 - y**3)
- * df/dy = 6 * (12/27 * w**2 * y**2 - 1/2 * y**2 * (x**2 + 9 / 80*z**3))
- * df/dz = 6 * (w**2 * z - 160 / 9 * y**3 * z**2)
+ * df/dx = 6 * X * (w**2 - Z**3/3)
+ * df/dy = 6 * Y * (12/27 * w**2 - 80/3 * Z**3)
+ * df/dz = 6 * Z * ( w**2 - 3/2 * Z**2 * (X**2 + 9/80 * Y**2))
  *
  * Since we rescale the gradient (normal) to unity, we divide the
  * above equations by six here.
@@ -688,12 +688,9 @@ rt_hrt_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
     w = hitp->hit_vpriv[X] * hitp->hit_vpriv[X]
         + 9.0/4.0 * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y]
         + hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z] - 1.0;
-    fx = (w * w - hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y]) * hitp->hit_vpriv[X];
-    fy = 0.5 * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] * (8.0/9.0 * w * w
-    - (hitp->hit_vpriv[X] * hitp->hit_vpriv[X] + 9.0 / 80.0 * hitp->hit_vpriv[Z]
-    * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z]));
-    fz = w * w * hitp->hit_vpriv[Z] - 160.0/9.0 * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y]
-    * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z];
+    fx = (w * w - 1/3 * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z]) * hitp->hit_vpriv[X];
+    fy = hitp->hit_vpriv[Y] * (12/27 * w * w - 80/3 * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z]);
+    fz = (w * w - 3/2 * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z] * (hitp->hit_vpriv[X] * hitp->hit_vpriv[X] + 9/80 * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y])) * hitp->hit_vpriv[Z];
     VSET(work, fx, fy, fz);
     VUNITIZE(work);
 
