@@ -457,7 +457,7 @@ should be opened, else 0.</para>
 
 <programlisting>void view_pixel(struct application *ap);</programlisting>
 
-  <para>Called by worker() after the end of proccessing for each
+  <para>Called by worker() after the end of processing for each
   pixel.</para>
 
 <programlisting>void view_end(struct application *ap);</programlisting>
@@ -879,7 +879,7 @@ memcpy(wm_hd->wm_mat, trans_matrix, sizeof(mat_t));
       <listitem>
         <para><itemizedlist>
             <listitem>
-              <para>Note: use mk_lcomb/mk_comb for inital creation only!</para>
+              <para>Note: use mk_lcomb/mk_comb for initial creation only!</para>
               <itemizedlist>
                 <listitem>
                   <para>caveat: can use to update boolean tree under special conditions</para>

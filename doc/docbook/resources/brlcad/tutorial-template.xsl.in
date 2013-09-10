@@ -68,7 +68,7 @@
   </xsl:attribute-set>
 
   <!-- center table titles, thanks to Dean Nelson <deannelson@aol.com>,
-    2010-11-09, from the docbook-apps mailing list> 
+    2010-11-09, from the docbook-apps mailing list>
   -->
   <xsl:attribute-set name="formal.title.properties">
     <xsl:attribute name="text-align">

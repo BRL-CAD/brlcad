@@ -17,9 +17,9 @@
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
   <command>pix-bw</command>
-   <arg choice='opt'> 
+   <arg choice='opt'>
     <arg choice='opt'>-s <replaceable>squaresize</replaceable></arg>
-    <arg choice='opt'> 
+    <arg choice='opt'>
      <arg choice='opt'>-w <replaceable>width</replaceable></arg>
      <arg choice='opt'>-n <replaceable>height</replaceable></arg></arg></arg>
    <arg choice='opt'>
@@ -44,7 +44,7 @@ file from its standard input
 and produce a black and white
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 file on its standard output.
-By default all three colors are weighted equally. 
+By default all three colors are weighted equally.
 The
 <option>-e </option><replaceable>type</replaceable>
 flag can be used to specify a standard weighting scheme</para>
@@ -56,7 +56,7 @@ choices include:</para>
   <varlistentry>
   <term><emphasis remap='B'>ntsc</emphasis></term>
   <listitem>
-<para> weighting used is based on the NTSC primaries and the 
+<para> weighting used is based on the NTSC primaries and the
 D6500 alignment white.</para>
   </listitem>
   </varlistentry>
@@ -79,7 +79,7 @@ the value will be treated as a weight
 to be applied to that color.
 </para>
 <para>
-If 0 is supplied by the user for weights, then the weights assigned 
+If 0 is supplied by the user for weights, then the weights assigned
 are 1.0 divided by the number of colors selected.</para>
 </refsect1>
 

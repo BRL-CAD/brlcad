@@ -21,7 +21,7 @@
     <arg choice='opt'>-s <replaceable>squaresize</replaceable></arg>
     <arg choice='opt'>-w <replaceable>width</replaceable></arg>
     <arg choice='opt'>-n <replaceable>height</replaceable></arg>
-   </arg> 
+   </arg>
     <arg choice='opt'>-o <replaceable>out.pix</replaceable></arg>
     <arg choice='opt'><replaceable>in.bw</replaceable></arg>
     <arg choice='plain'><replaceable>&gt;</replaceable></arg>

@@ -540,7 +540,7 @@ main(int ac, char *av[])
 	bu_exit(EXIT_FAILURE, "ERROR: input file size mis-match\n");
       }
 
-      // the ouput file is now named instead of being redirected
+      // the output file is now named instead of being redirected
       out1 = fopen(dsp3_fname, "w");
       if (!out1) {
 	perror(dsp3_fname);

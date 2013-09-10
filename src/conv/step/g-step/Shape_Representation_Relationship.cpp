@@ -1,5 +1,5 @@
 /* S H A P E _ R E P R E S E N T A T I O N _ R E L A T I O N S H I P . C P P
- * 
+ *
  * BRL-CAD
  *
  * Copyright (c) 2013 United States Government as represented by

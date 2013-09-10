@@ -131,7 +131,7 @@ get_args(int argc, char **argv)
 		if(ZERO(kerndiv)) {
 		    bu_log("Bad argument for kerndiv\n");
 		    return 1;
-		}		    
+		}
 		break;
 	    case 'O':
 		oflag++;
@@ -194,7 +194,7 @@ main(int argc, char **argv)
 	return 1;
 
     icv_filter(img, filter_type);
-    
+
     /* Correct the image as per the input offset and */
     if(oflag | dflag) {
         icv_add_val(img, -ICV_CONV_8BIT(kernel[kernel_index].kernoffset));
@@ -203,7 +203,7 @@ main(int argc, char **argv)
             if(ZERO(kerndiv))
             icv_multiply_val(img, ICV_CONV_8BIT(kernel[kernel_index].kerndiv/kerndiv));
         }
-        
+
         if(oflag)
             icv_add_val(img, ICV_CONV_8BIT(kernoffset));
         else
@@ -222,7 +222,7 @@ main(int argc, char **argv)
     }
     bu_free(min_d, "max value");
     bu_free(max_d, "min values");
-    
+
     icv_write(img, out_file, ICV_IMAGE_BW);
     return 0;
 }

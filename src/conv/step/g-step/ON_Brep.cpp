@@ -115,7 +115,7 @@ Add_Edge(ON_BrepTrim *trim, SdaiPath *e_loop_path, Exporter_Info_AP203 *info)
 }
 
 /* Rather than have the organization of elements in the step file be
- * dicated by the order in which they are built up from ON_Brep,
+ * dictated by the order in which they are built up from ON_Brep,
  * define a function that iterates over the structures to populate the
  * list in a way that puts the more complex/high-level structures at
  * the beginning of the file.
@@ -129,7 +129,7 @@ Populate_Instance_List(Exporter_Info_AP203 *info)
 
     /* Topology */
 
-    // High level strucures
+    // High level structures
     info->instance_list->Append((STEPentity *)(info->shape_rep), completeSE);
     info->instance_list->Append((STEPentity *)(info->advanced_brep), completeSE);
     info->instance_list->Append((STEPentity *)(info->manifold_solid_brep), completeSE);
@@ -198,7 +198,7 @@ Populate_Instance_List(Exporter_Info_AP203 *info)
     }
 
     // Now that we know the ids for all the points, we can finalize the surface definitions
-    ON_NurbsSurfaceCV_Finalize_GenericAggregates(info); 
+    ON_NurbsSurfaceCV_Finalize_GenericAggregates(info);
 }
 
 bool

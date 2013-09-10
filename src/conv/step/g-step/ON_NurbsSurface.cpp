@@ -35,7 +35,7 @@
 /* Unlike most of the structures we're working with, GenericAggregate seems to require that we manually
  * build its final string with the step file id numbers that identify each control point.  To allow for
  * delayed instance manager population, we build a temporary map of nested vectors to hold the information
- * inthe proper form until we are ready for it.*/
+ * in the proper form until we are ready for it.*/
 void
 ON_NurbsSurfaceCV_Initialize(ON_NurbsSurface *insrf, STEPentity *step_srf, Exporter_Info_AP203 *info) {
     ON_3dPoint cv_pnt;
@@ -212,7 +212,7 @@ Create_Rational_Surface_Aggregate(ON_NurbsSurface *nsurface, Exporter_Info_AP203
 // slots.  Must be run *after* ON_NurbsSurfaceCV_Initialize has been run on *all*
 // surfaces.
 void
-ON_NurbsSurfaceCV_Finalize_GenericAggregates(Exporter_Info_AP203 *info) 
+ON_NurbsSurfaceCV_Finalize_GenericAggregates(Exporter_Info_AP203 *info)
 {
     std::map<STEPentity*, std::vector<std::vector<STEPentity *> > >::iterator scv_it;
     std::vector<std::vector<STEPentity *> >::iterator outer_it;

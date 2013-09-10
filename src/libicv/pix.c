@@ -105,7 +105,7 @@ pix_read(const char* filename, int width, int height)
 	    size+=3;
 	    if (size==buffsize) {
 		buffsize+=1024*3;
-		data = (unsigned char *)bu_realloc(data, buffsize, "pix_read : increase size to acomodate data");
+		data = (unsigned char *)bu_realloc(data, buffsize, "pix_read : increase size to accommodate data");
 	    }
 	}
 	if (size<buffsize) {
@@ -132,7 +132,7 @@ pix_read(const char* filename, int width, int height)
     else {
 	/* zero sized image */
 	bu_free(bif, "icv container");
-	bu_free(data, "unisigned char data");
+	bu_free(data, "unsigned char data");
 	fclose(fp);
 	return NULL;
     }

@@ -1236,7 +1236,7 @@ pullback_samples_from_closed_surface(PBCData* data,
 
     return;
 }
- 
+
 PBCData *
 pullback_samples(const brlcad::SurfaceTree* surfacetree,
 		 const ON_Curve* curve,

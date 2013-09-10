@@ -1168,7 +1168,7 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &
 			// reporting "they should be seam trims connected to the same edge",
 			// because the 2D tolerance (side_tol) are hardcoded to 1.0e-4.
 			// We still add this check because we treat two vertexes to be the
-			// same only if their distance < ON_ZERO_TOLREANCE. (Maybe 3D dist
+			// same only if their distance < ON_ZERO_TOLERANCE. (Maybe 3D dist
 			// should also be added to ON_Brep::IsValid()?)
 			if (srf->PointAt(trim.PointAtStart().x, trim.PointAtStart().y).DistanceTo(
 			    srf->PointAt(loop[k]->PointAtEnd().x, loop[k]->PointAtEnd().y)) >= ON_ZERO_TOLERANCE)

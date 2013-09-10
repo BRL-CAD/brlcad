@@ -21,7 +21,7 @@ Bounding Box (ARB8) : box {
   perpendicular(H, W) && perpendicular(W, D) && perpendicular(H, D)
 }
 
-Right Parallelpiped (ARB8) : rpp {
+Right Parallelepiped (ARB8) : rpp {
   point min
   point max
   distance(min, max) > 0.0
@@ -176,7 +176,7 @@ Metaball : metaball {
   float t => threshold
   integer c => number of points
   array points {
-    vector F => field stength vector
+    vector F => field strength vector
     float f => field strength
   }
   t > 0.0
@@ -393,4 +393,4 @@ Uniform Binary Array : binunif {
 // joint
 // combination
 // constraint
-// anotation
+// annotation
