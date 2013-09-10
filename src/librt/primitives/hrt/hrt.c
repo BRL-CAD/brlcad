@@ -404,10 +404,10 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     vect_t pprime;              /* P' : The new shot point */
     vect_t trans;               /* Translated shot vector */
     vect_t norm_pprime;         /* P' with normalized distance from heart */
-    bn_poly_t Xsqr, Ysqr, Zsqr, A; /* X^2, 9/4*Y^2, Z^2 - 1, X^2 + 9/4 * Y^2 + Z^2 - 1 */
+    bn_poly_t Xsqr, Ysqr, Zsqr; /* X^2, 9/4*Y^2, Z^2 - 1 */
     bn_poly_t  Acube, S;    /* The sextic equation (of power 6) and A^3 */
-    bn_poly_t Zcube, Ycube;     /* Z^3 and Y^3*/
-    bn_poly_t X2_Z3, X2_Z3_Y3;  /* X^2 + 9/80*Z^3 and Y^3*(X^2 + 9/80*Z^3) */
+    bn_poly_t Zcube, A;     /* Z^3 and  X^2 + 9/4 * Y^2 + Z^2 - 1 */
+    bn_poly_t X2_Y2, Z3_X2_Y2;  /* X^2 + 9/80*Y^2 and Z^3*(X^2 + 9/80*Y^2) */
     bn_complex_t complex[6];    /* The complex roots */
     double real[6];             /* The real roots */
     int i;
@@ -438,37 +438,36 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     /**
      * Generate the sextic equation S(t) = 0 to be passed through the root finder.
      */
+    /* X**2 */
     Xsqr.dgr = 2;
     Xsqr.cf[0] = dprime[X] * dprime[X];
     Xsqr.cf[1] = 2 * dprime[X] * pprime[X];
     Xsqr.cf[2] = pprime[X] * pprime[X];
-
+    
+    /* 9/4 * Y**2*/
     Ysqr.dgr = 2;
-    Ysqr.cf[0] = dprime[Y] * dprime[Y];
-    Ysqr.cf[1] = 2 * dprime[Y] * pprime[Y];
-    Ysqr.cf[2] = pprime[Y] * pprime[Y];
+    Ysqr.cf[0] = 9/4 * dprime[Y] * dprime[Y];
+    Ysqr.cf[1] = 9/2 * dprime[Y] * pprime[Y];
+    Ysqr.cf[2] = 9/4 * (pprime[Y] * pprime[Y]);
 
+    /* Z**2 - 1 */
     Zsqr.dgr = 2;
     Zsqr.cf[0] = dprime[Z] * dprime[Z];
     Zsqr.cf[1] = 2 * dprime[Z] * pprime[Z];
     Zsqr.cf[2] = pprime[Z] * pprime[Z] - 1.0 ;
 
-    Ycube.dgr = 3;
-    Ycube.cf[0] = Ysqr.cf[0] * dprime[Y];
-    Ycube.cf[1] = 1.5 * dprime[Y] * Ysqr.cf[1];
-    Ycube.cf[2] = 1.5 * pprime[Y] * Ysqr.cf[1];
-    Ycube.cf[3] = pprime[Y] * Ysqr.cf[2];
-
-    Zcube.dgr = 3;
-    Zcube.cf[0] = 9 / 80 * dprime[Z] * Zsqr.cf[0];
-    Zcube.cf[1] = 27.0 / 80 * dprime[Z] * Zsqr.cf[1];
-    Zcube.cf[2] = 0.5 * pprime[Z] * Zsqr.cf[1];
-    Zcube.cf[3] = pprime[Z] * ( Zsqr.cf[2] + 1.0 );
-
+    /* A = X^2 + 9/4 * Y^2 + Z^2 - 1 */
     A.dgr = 2;
     A.cf[0] = Xsqr.cf[0] + Ysqr.cf[0] + Zsqr.cf[0];
     A.cf[1] = Xsqr.cf[1] + Ysqr.cf[1] + Zsqr.cf[1];
     A.cf[2] = Xsqr.cf[2] + Ysqr.cf[2] + Zsqr.cf[2];
+
+    /* Z**3 */
+    Zcube.dgr = 3;
+    Zcube.cf[0] = dprime[Z] * Zsqr.cf[0];
+    Zcube.cf[1] = 1.5 * dprime[Z] * Zsqr.cf[1];
+    Zcube.cf[2] = 1.5 * pprime[Z] * Zsqr.cf[1];
+    Zcube.cf[3] = pprime[Z] * ( Zsqr.cf[2] + 1.0 );
 
     Acube.dgr = 6;
     Acube.cf[0] = A.cf[0] * A.cf[0] * A.cf[0];
@@ -479,29 +478,29 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     Acube.cf[5] = 3.0 * A.cf[1] * A.cf[2] * A.cf[2];
     Acube.cf[6] = A.cf[2] * A.cf[2] * A.cf[2];
 
-    X2_Z3.dgr = 3;
-    X2_Z3.cf[0] = Zcube.cf[0];
-    X2_Z3.cf[1] = Xsqr.cf[0] + Zcube.cf[1];
-    X2_Z3.cf[2] = Xsqr.cf[1] + Zcube.cf[2];
-    X2_Z3.cf[3] = Xsqr.cf[2] + Zcube.cf[3];
+    /* X**2 + 9/80 Y**2 */
+    X2_Y2.dgr = 2;
+    X2_Y2.cf[0] = Xsqr.cf[0] + Ysqr.cf[0] / 20 ;
+    X2_Y2.cf[1] = Xsqr.cf[1] + Ysqr.cf[1] / 20 ;
+    X2_Y2.cf[2] = Xsqr.cf[2] + Ysqr.cf[2] / 20 ;
 
-    X2_Z3_Y3.dgr = 6;
-    X2_Z3_Y3.cf[0] = Ycube.cf[0] * X2_Z3.cf[0];
-    X2_Z3_Y3.cf[1] = X2_Z3.cf[0] * Ycube.cf[1] + X2_Z3.cf[1] * Ycube.cf[0];
-    X2_Z3_Y3.cf[2] = X2_Z3.cf[2] * Ycube.cf[0] + X2_Z3.cf[1] * Ycube.cf[1] + X2_Z3.cf[0] * Ycube.cf[2];
-    X2_Z3_Y3.cf[3] = X2_Z3.cf[3] * Ycube.cf[0] + X2_Z3.cf[2] * Ycube.cf[1] + X2_Z3.cf[1] * Ycube.cf[2] + X2_Z3.cf[0] * Ycube.cf[3];
-    X2_Z3_Y3.cf[4] = X2_Z3.cf[3] * Ycube.cf[1] + X2_Z3.cf[2] * Ycube.cf[2] + X2_Z3.cf[1] * Ycube.cf[3];
-    X2_Z3_Y3.cf[5] = X2_Z3.cf[3] * Ycube.cf[2] + X2_Z3.cf[2] * Ycube.cf[3];
-    X2_Z3_Y3.cf[6] = X2_Z3.cf[3] * Ycube.cf[3];
+    /* Z**3 * (X**2 + 9/80 * Y**2) */
+    Z3_X2_Y2.dgr = 5;
+    Z3_X2_Y2.cf[0] = Zcube.cf[0] * X2_Y2.cf[0];
+    Z3_X2_Y2.cf[1] = X2_Y2.cf[0] * Zcube.cf[1];
+    Z3_X2_Y2.cf[2] = X2_Y2.cf[0] * Zcube.cf[2] + X2_Y2.cf[1] * Zcube.cf[0] + X2_Y2.cf[1] * Zcube.cf[1] + X2_Y2.cf[2] * Zcube.cf[0];
+    Z3_X2_Y2.cf[3] = X2_Y2.cf[0] * Zcube.cf[3] + X2_Y2.cf[1] * Zcube.cf[2] + X2_Y2.cf[2] * Zcube.cf[1];
+    Z3_X2_Y2.cf[4] = X2_Y2.cf[1] * Zcube.cf[3] + X2_Y2.cf[2] * Zcube.cf[2];
+    Z3_X2_Y2.cf[5] = X2_Y2.cf[2] * Zcube.cf[3];
 
     S.dgr = 6;
-    S.cf[0] = Acube.cf[0] - X2_Z3_Y3.cf[0];
-    S.cf[1] = Acube.cf[1] - X2_Z3_Y3.cf[1];
-    S.cf[2] = Acube.cf[2] - X2_Z3_Y3.cf[2];
-    S.cf[3] = Acube.cf[3] - X2_Z3_Y3.cf[3];
-    S.cf[4] = Acube.cf[4] - X2_Z3_Y3.cf[4];
-    S.cf[5] = Acube.cf[5] - X2_Z3_Y3.cf[5];
-    S.cf[6] = Acube.cf[6] - X2_Z3_Y3.cf[6];
+    S.cf[0] = Acube.cf[0];
+    S.cf[1] = Acube.cf[1] - Z3_X2_Y2.cf[0];
+    S.cf[2] = Acube.cf[2] - Z3_X2_Y2.cf[1];
+    S.cf[3] = Acube.cf[3] - Z3_X2_Y2.cf[2];
+    S.cf[4] = Acube.cf[4] - Z3_X2_Y2.cf[3];
+    S.cf[5] = Acube.cf[5] - Z3_X2_Y2.cf[4];
+    S.cf[6] = Acube.cf[6] - Z3_X2_Y2.cf[5];
          
     /* It is known that the equation is sextic (of order 6). Therefore, if the
      * root finder returns other than 6 roots, return an error.
