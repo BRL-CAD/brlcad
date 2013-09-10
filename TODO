@@ -84,6 +84,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* review proc-db for promotion to src/shapes
+
 * implement new 'reduce' command to perform model reduction.  should
   perform automatic simplification of geometry to reduce complexity by
   (potentially) orders of magnitude.  this is level of detail for
