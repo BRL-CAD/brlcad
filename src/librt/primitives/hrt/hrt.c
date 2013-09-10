@@ -67,7 +67,7 @@
  *
  * The equation for the heart is:
  *
- *    [ X**2 + 9/4*Y**2 + Z**2 - 1 ]**3 - Y**3 * (X**2 + 9/80 * Z**3)  =  0
+ *    [ X**2 + 9/4*Y**2 + Z**2 - 1 ]**3 - Z**3 * (X**2 + 9/80 * Y**2)  =  0
  *
  * First, find X, Y, and Z in terms of 't' for this line, then
  * substitute them into the equation above.
@@ -501,7 +501,7 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     S.cf[4] = Acube.cf[4] - Z3_X2_Y2.cf[3];
     S.cf[5] = Acube.cf[5] - Z3_X2_Y2.cf[4];
     S.cf[6] = Acube.cf[6] - Z3_X2_Y2.cf[5];
-
+         
     /* It is known that the equation is sextic (of order 6). Therefore, if the
      * root finder returns other than 6 roots, return an error.
      */
