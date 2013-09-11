@@ -1455,6 +1455,7 @@ HIDDEN int
 IsFaceInsideBrep(const TrimmedFace* tface, const ON_Brep* brep, ON_SimpleArray<Subsurface*>& surf_tree)
 {
     // returns:
+    //  -1: whether the face is inside/outside is unknown
     //   0: the face is outside the brep
     //   1: the face is inside the brep
     //   2: the face is (completely) on the brep's surface
@@ -1463,20 +1464,23 @@ IsFaceInsideBrep(const TrimmedFace* tface, const ON_Brep* brep, ON_SimpleArray<S
     //       the whole trimmed face should be on the surface)
 
     if (tface == NULL || brep == NULL)
-	return false;
+	return -1;
 
     const ON_BrepFace* bface = tface->m_face;
-    if (bface == NULL || !bface->BoundingBox().Intersection(brep->BoundingBox()))
-	return false;
+    if (bface == NULL)
+	return -1;
+
+    if (!bface->BoundingBox().Intersection(brep->BoundingBox()))
+	return 0;
 
     if (tface->m_outerloop.Count() == 0) {
 	bu_log("IsFaceInsideBrep(): the input TrimmedFace is not trimmed.\n");
-	return false;
+	return -1;
     }
 
     ON_PolyCurve polycurve;
     if (!IsLoopValid(tface->m_outerloop, ON_ZERO_TOLERANCE, &polycurve)) {
-	return false;
+	return -1;
     }
 
     // Get a point inside the TrimmedFace, and then call IsPointInsideBrep().
@@ -1510,7 +1514,7 @@ IsFaceInsideBrep(const TrimmedFace* tface, const ON_Brep* brep, ON_SimpleArray<S
 
     if (!found) {
 	bu_log("Cannot find a point inside this trimmed face. Aborted.\n");
-	return false;
+	return -1;
     }
 
     ON_3dPoint test_pt3d = tface->m_face->PointAt(test_pt2d.x, test_pt2d.y);
@@ -1772,12 +1776,16 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 		    bu_log("The trimmed face is outside the other brep.\n");
 		if (operation == BOOLEAN_UNION || operation == BOOLEAN_XOR || (operation == BOOLEAN_DIFF && i < facecount1))
 		    splitted[j]->m_belong_to_final = TrimmedFace::BELONG;
-	    } else {
+	    } else if (ret_inside_test == 2) {
 		if (DEBUG_BREP_BOOLEAN)
 		    bu_log("The trimmed face is on the other brep's surfaces.\n");
 		if (operation == BOOLEAN_UNION || operation == BOOLEAN_INTERSECT)
 		    splitted[j]->m_belong_to_final = TrimmedFace::BELONG;
 		// TODO: Actually only one of them is needed in the final brep structure
+	    } else {
+		if (DEBUG_BREP_BOOLEAN)
+		    bu_log("Whether the trimmed face is inside/outside is unknown.\n");
+		splitted[j]->m_belong_to_final = TrimmedFace::UNKNOWN;
 	    }
 #if USE_CONNECTIVITY_GRAPH
 	    // BFS the connectivity graph and marked all connected trimmed faces.
