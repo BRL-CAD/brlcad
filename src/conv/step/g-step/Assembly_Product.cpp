@@ -103,6 +103,26 @@
  * #6001=(REPRESENTATION_RELATIONSHIP('','',#200,#300)REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION(#7001)SHAPE_REPRESENTATION_RELATIONSHIP());
  * #6002=CONTEXT_DEPENDENT_SHAPE_REPRESENTATION(#6001,#2002);
  *
+ *
+ * Mapping from BRL-CAD to STEP
+ *
+ * Roughly speaking, the STEP requirement that each shape representation have an associated product appears
+ * to translate to BRL-CAD as each brep object having a comb above it.  To avoid introducing unnecessary combs,
+ * it will be necessary to recognize when a brep referenced by one or more comb trees listed for export has
+ * one and only one parent comb in the existing tree structure, which in turn does not have any other children.
+ * Otherwise, repeated imports and exports will bury the brep below an ever deepening hierarchy of combs.  When
+ * a brep does not have this wrapper already in place, one will need to be explicitly created for it.
+ * Hopefully, search can be used to quickly identify sets of geometry that need to be handled differently.
+ * It may be that the assumption of shared naming - a comb with the same root name as its child brep - can be used
+ * as a quick check to determine if the comb is a parent or not, if we accept that as a convention.
+ *
+ * Because combs reference combs in BRL-CAD, the step product definitions associated with combs will need to be
+ * fully created before the assembly usage occurances can start to be assembled.  A search that collects all combs
+ * will provide a convenient list for multiple passes that create and then assemble combs, as will a similar search
+ * for solids (currently just breps...).  Should also make sure the tree is union only for AP203, where booleans are
+ * not supported. Once boolean evaluation is in place, should be able to default to brep solids for combs with non
+ * union booleans below them.
+ *
  */
 
 void
