@@ -25,17 +25,9 @@
  
 #include "common.h"
 #include <string.h>
-#include <stdlib.h>
-#include <sys/stat.h>	/* for file mode info in WRMODE */
-#include <fcntl.h>
 
-#include "bio.h"
-#include "vmath.h"
 #include "bu.h"
-#include "bn.h"
 #include "icv.h"
-
-#define WRMODE S_IRUSR|S_IRGRP|S_IROTH
 
 /* defined in encoding.c */
 extern HIDDEN unsigned char *data2uchar(const icv_image_t *bif);
@@ -60,7 +52,7 @@ HIDDEN int
 ppm_write(icv_image_t *bif, const char *filename)
 {
     unsigned char *data;
-    int fd;
+    FILE *fp;
     size_t ret, size;
 
     /* FIXME: should not be introducing fixed size buffers */
@@ -72,16 +64,24 @@ ppm_write(icv_image_t *bif, const char *filename)
 	bu_log("ppm_write : Color Space conflict");
 	return -1;
     }
+    
+    if (filename==NULL) {
+	fp = stdout;
+    } else if ((fp = fopen(filename, "w")) == NULL) {
+	bu_log("ERROR : Cannot open file for saving\n");
+	return -1;
+    }
     data =  data2uchar(bif);
     size = (size_t) bif->width*bif->height*3;
-    fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, WRMODE);
     image_flip(data, bif->width, bif->height);
     snprintf(buf, BUFSIZ, "P6 %d %d 255\n", bif->width, bif->height);
-    ret = write(fd, buf, strlen(buf));
-    ret = write(fd, data, size);
-    close(fd);
+    
+    ret = fwrite(buf, 1, strlen(buf),fp);
+    ret = fwrite(data, 1, size, fp);
+    
+    fclose(fp);
     if (ret != size) {
-	bu_log("ppm_write : Short Write");
+	bu_log("ERROR : Short Write");
 	return -1;
     }
     return 0;
