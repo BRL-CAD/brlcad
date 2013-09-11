@@ -65,30 +65,29 @@ typedef enum {
   BU_ARG_REQUIRED = 1
 } bu_arg_req_t;
 
-typedef union bu_arg_value_union {
-  int b; /* bool */
+typedef union {
+  /* important that first field is int */
+  int i; /* also use as bool */
   char c;
-  double d;
   float f;
-  int i;
   char *s;
 } bu_arg_value;
 
 /* TCLAP::Arg */
 typedef struct bu_arg_vars_type {
-  bu_arg_t arg_type; /* enum: what TCLAP type is the arg */
-  const char  flag;  /* the "short" option, may be NULL */
-  const char *name;  /* the "long" option  */
-  const char *desc;  /* a brief description */
-  bu_arg_req_t req;           /* bool: is arg required? */
-  bu_arg_req_t valreq;        /* bool: is value required? */
-  /* bu_arg_value val; */ /* union: holds all value types */
-  /* bu_arg_val_t val_type; *//* enum: what type is in the value union */
+  bu_arg_t arg_type;          /* enum: what TCLAP type is the arg      */
+  const char  flag;           /* the "short" option, may be NULL       */
+  const char *name;           /* the "long" option                     */
+  const char *desc;           /* a brief description                   */
+  bu_arg_req_t req;           /* bool: is arg required?                */
+  bu_arg_req_t valreq;        /* bool: is value required?              */
+  bu_arg_value val;           /* union: can hold all value types       */
+  bu_arg_value_t val_type;    /* enum: what type is in the value union */
 } bu_arg_vars;
 
 /* the action: all in one function */
 int
-bu_opt_parse(const bu_arg_vars *args[], int argc, char **argv);
+bu_opt_parse(bu_arg_vars *args[], int argc, char **argv);
 
 /* all in this header MUST have "C" linkage */
 #ifdef __cplusplus
