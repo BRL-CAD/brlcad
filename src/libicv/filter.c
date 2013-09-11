@@ -330,12 +330,12 @@ icv_fade(icv_image_t *img, double fraction)
 
     size= img->height*img->width*img->channels;
 
-   if (size == 0) 
-        return -1;
+   if (size == 0)
+	return -1;
 
     if (fraction<0) {
 	bu_log("ERROR : Multiplier invalid. Image not Faded.");
-        return -1
+	return -1
     }
 
      data = img->data;
