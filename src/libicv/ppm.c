@@ -22,7 +22,7 @@
  * This file contains reading and writting routines for ppm format.
  *
  */
- 
+
 #include "common.h"
 #include <string.h>
 
@@ -31,6 +31,7 @@
 
 /* defined in encoding.c */
 extern HIDDEN unsigned char *data2uchar(const icv_image_t *bif);
+extern HIDDEN double *uchar2double(unsigned char *data, long int size);
 
 /* flip an image vertically */
 HIDDEN int
@@ -61,7 +62,7 @@ ppm_write(icv_image_t *bif, const char *filename)
 	bu_log("ppm_write : Color Space conflict");
 	return -1;
     }
-    
+
     if (filename==NULL) {
 	fp = stdout;
     } else if ((fp = fopen(filename, "w")) == NULL) {
@@ -72,15 +73,106 @@ ppm_write(icv_image_t *bif, const char *filename)
     size = (size_t) bif->width*bif->height*3;
     image_flip(data, bif->width, bif->height);
     ret = fprintf(fp, "P6 %d %d 255\n", bif->width, bif->height);
-    
+
     ret = fwrite(data, 1, size, fp);
-    
+
     fclose(fp);
     if (ret != size) {
 	bu_log("ERROR : Short Write");
 	return -1;
     }
     return 0;
+}
+
+HIDDEN icv_image_t*
+ppm_read(const char *filename)
+{
+    char buff[3]; /* To ensure that the format. And thus read "P6" */
+    FILE *fp;
+    char c;
+    icv_image_t *bif;
+    int rgb_comp_color;
+    unsigned char *data;
+    size_t size,ret;
+
+    if (filename == NULL) {
+	fp = stdin;
+    } else if ((fp = fopen(filename, "r")) == NULL) {
+	bu_log("ERROR: Cannot open file for reading\n");
+	return NULL;
+    }
+
+    if (!fgets(buff, sizeof(buff), fp)) {
+	bu_log("ERROR : Invalid Image");
+	return NULL;
+    }
+
+    /* check the image format */
+    if (buff[0] != 'P' || buff[1] != '6') {
+	bu_log("ERROR: Invalid image format (must be 'P6')\n");
+	return NULL;
+    }
+
+    BU_ALLOC(bif, struct icv_image);
+    ICV_IMAGE_INIT(bif);
+
+    /* check for comments in PPM image*/
+    c = getc(fp);
+    while (c == '#') {
+	while (getc(fp) != '\n') ;
+	    c = getc(fp);
+    }
+
+    ungetc(c, fp);
+
+    /* read image size information */
+    if (fscanf(fp, "%d %d", &bif->width, &bif->height) != 2) {
+	fprintf(stderr, "Invalid image size (error loading '%s')\n", filename);
+	bu_free(bif, "icv_image structure");
+	return NULL;
+    }
+
+    /* read rgb component */
+    if (fscanf(fp, "%d", &rgb_comp_color) != 1) {
+	bu_log("ERROR: Invalid rgb component\n");
+	bu_free(bif, "icv_image structure");
+	return NULL;
+    }
+
+    /* check rgb component depth */
+    if (rgb_comp_color!= 255) {
+	bu_log("ERROR: Image does not have 8-bits components\n");
+	bu_free(bif, "icv_image structure");
+	return NULL;
+    }
+
+    while (fgetc(fp) != '\n');
+
+    /* memory allocation for pixel data */
+    data = (unsigned char*) bu_malloc(bif->width * bif->height * 3, "image data");
+
+    size = 3 * bif->width * bif->height;
+    /* read pixel data from file */
+    ret = fread(data, 1, size, fp);
+    if (ret!=0 && ferror(fp)) {
+	bu_log("Error Occurred while Reading\n");
+	bu_free(data, "icv_image data");
+	bu_free(bif, "icv_structure");
+	fclose(fp);
+	return NULL;
+    }
+
+    fclose(fp);
+
+    image_flip(data, bif->width, bif->height);
+
+    bif->data = uchar2double(data, size);
+    bu_free(data, "ppm_read : unsigned char data");
+    bif->magic = ICV_IMAGE_MAGIC;
+    bif->channels = 3;
+    bif->color_space = ICV_COLOR_SPACE_RGB;
+    fclose(fp);
+    return bif;
 }
 
 /*
