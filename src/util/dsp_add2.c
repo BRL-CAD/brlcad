@@ -154,6 +154,7 @@ main(int ac, char *av[])
     int has_force = 0;
     int has_help  = 0;
 
+    /* note the arg structs have to be static to compile */
     static bu_arg_vars h_arg = {
       BU_ARG_SwitchArg,
       '?',
