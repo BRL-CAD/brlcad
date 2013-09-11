@@ -251,6 +251,15 @@ icv_writepixel(icv_image_t *bif, int x, int y, double *data)
     double *dst;
 
     ICV_IMAGE_VAL_INT(bif);
+    
+    if(x > bif->width || x < 0)
+        return -1;
+    
+    if(y > bif->height || y < 0)
+        return -1;
+        
+    if(data == NULL)
+        return -1:
 
     dst = bif->data + (y*bif->width + x)*bif->channels;
 
@@ -308,10 +317,6 @@ icv_zero(icv_image_t *bif)
 int
 icv_destroy(icv_image_t *bif)
 {
-    if (!ICV_IMAGE_IS_INITIALIZED(bif)) {
-	return -1;
-    }
-
     ICV_IMAGE_VAL_INT(bif);
 
     bu_free(bif->data, "Image Data");
