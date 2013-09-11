@@ -188,6 +188,7 @@ main(int, char**)
 	test_psi(test_pt, *surf);
     }
 
+    delete brep;
     bu_log("All finished.\n");
     return 0;
 }
