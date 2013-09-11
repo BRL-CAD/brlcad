@@ -78,10 +78,7 @@ data2uchar(const icv_image_t *bif)
     unsigned char *uchar_data, *char_p;
     double *double_p;
 
-    if (!ICV_IMAGE_IS_INITIALIZED(bif)) {
-	bu_log("ICV Structure not defined.\n");
-	return NULL;
-    }
+    ICV_IMAGE_VAL_PTR(bif);
 
     size = bif->height*bif->width*bif->channels;
     char_p = uchar_data = (unsigned char *) bu_malloc((size_t)size, "data2uchar : unsigned char data");

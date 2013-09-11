@@ -175,11 +175,6 @@ ppm_write(icv_image_t *bif, const char *filename)
     /* FIXME: should not be introducing fixed size buffers */
     char buf[BUFSIZ] = {0};
 
-    if (!ICV_IMAGE_IS_INITIALIZED(bif)) {
-	bu_log("ICV Structure not defined.\n");
-	return -1;
-    }
-
     if (bif->color_space == ICV_COLOR_SPACE_GRAY) {
 	icv_gray2rgb(bif);
     } else if (bif->color_space != ICV_COLOR_SPACE_RGB) {
@@ -237,6 +232,8 @@ icv_write(icv_image_t *bif, const char *filename, ICV_IMAGE_FORMAT format)
 	format = icv_guess_file_format(filename, buf);
     }
 
+    ICV_IMAGE_VAL_INT(bif);
+
     switch (format) {
 	/* case ICV_IMAGE_BMP:
 	   return bmp_write(bif, filename); */
@@ -269,6 +266,8 @@ icv_writeline(icv_image_t *bif, int y, void *data, ICV_DATA type)
 	return -1;
     }
 
+    ICV_IMAGE_VAL_INT(bif);
+
     width_size = (size_t) bif->width*bif->channels;
     dst = bif->data + width_size*y;
 
@@ -291,10 +290,9 @@ int
 icv_writepixel(icv_image_t *bif, int x, int y, double *data)
 {
     double *dst;
-    if (bif == NULL) {
-	bu_log("ERROR: trying to write the pixel to a null bif\n");
-	return -1;
-    }
+    
+    ICV_IMAGE_VAL_INT(bif);
+    
     dst = bif->data + (y*bif->width + x)*bif->channels;
 
     /* can copy float to double also double to double */
@@ -336,6 +334,8 @@ icv_zero(icv_image_t *bif)
 {
     double *data;
     long size, i;
+    
+    ICV_IMAGE_VAL_PTR(bif);
 
     data = bif->data;
     size = bif->width * bif->height * bif->channels;
@@ -352,6 +352,9 @@ icv_destroy(icv_image_t *bif)
     if (!ICV_IMAGE_IS_INITIALIZED(bif)) {
 	return -1;
     }
+    
+    ICV_IMAGE_VAL_INT(bif);
+    
     bu_free(bif->data, "Image Data");
     bu_free(bif, "ICV IMAGE Structure");
     return 0;

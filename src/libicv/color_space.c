@@ -83,10 +83,7 @@ icv_rgb2gray(icv_image_t *img, ICV_COLOR color, double rweight, double gweight, 
     int red, green, blue;
     red = green = blue = 0;
 
-     if (!ICV_IMAGE_IS_INITIALIZED(img)) {
-	bu_log("icv_image_rgb2gray : Uninitialized Image argument\n");
-	return -1;
-    }
+    ICV_IMAGE_VAL_INT(img);
 
     if (img->color_space == ICV_COLOR_SPACE_GRAY)
 	return 0;
