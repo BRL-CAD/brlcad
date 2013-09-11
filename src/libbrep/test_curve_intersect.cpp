@@ -190,6 +190,7 @@ main(int, char**)
     ON_NurbsSurface* torus_surface = ON_NurbsSurface::New();
     torus.GetNurbForm(*torus_surface);
     test_csi(&ray, torus_surface);
+    delete torus_surface;
 
     bu_log("All finished.\n");
     return 0;
