@@ -1359,6 +1359,12 @@ IsPointOnBrepSurface(const ON_3dPoint& pt, const ON_Brep* brep, ON_SimpleArray<S
 	return false;
     }
 
+    ON_BoundingBox bbox = brep->BoundingBox();
+    bbox.m_min -= ON_3dVector(INTERSECTION_TOL, INTERSECTION_TOL, INTERSECTION_TOL);
+    bbox.m_max += ON_3dVector(INTERSECTION_TOL, INTERSECTION_TOL, INTERSECTION_TOL);
+    if (!bbox.IsPointIn(pt))
+	return false;
+
     for (int i = 0; i < brep->m_F.Count(); i++) {
 	const ON_BrepFace& face = brep->m_F[i];
 	const ON_Surface* surf = face.SurfaceOf();
@@ -1399,6 +1405,8 @@ IsPointInsideBrep(const ON_3dPoint& pt, const ON_Brep* brep, ON_SimpleArray<Subs
     }
 
     ON_BoundingBox bbox = brep->BoundingBox();
+    bbox.m_min -= ON_3dVector(INTERSECTION_TOL, INTERSECTION_TOL, INTERSECTION_TOL);
+    bbox.m_max += ON_3dVector(INTERSECTION_TOL, INTERSECTION_TOL, INTERSECTION_TOL);
     if (!bbox.IsPointIn(pt))
 	return false;
 
@@ -1470,7 +1478,10 @@ IsFaceInsideBrep(const TrimmedFace* tface, const ON_Brep* brep, ON_SimpleArray<S
     if (bface == NULL)
 	return -1;
 
-    if (!bface->BoundingBox().Intersection(brep->BoundingBox()))
+    ON_BoundingBox brep_bbox = brep->BoundingBox();
+    brep_bbox.m_min -= ON_3dVector(INTERSECTION_TOL, INTERSECTION_TOL, INTERSECTION_TOL);
+    brep_bbox.m_max += ON_3dVector(INTERSECTION_TOL, INTERSECTION_TOL, INTERSECTION_TOL);
+    if (!bface->BoundingBox().Intersection(brep_bbox))
 	return 0;
 
     if (tface->m_outerloop.Count() == 0) {
