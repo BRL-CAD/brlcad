@@ -172,7 +172,7 @@ icv_read(const char *filename, int format, int width, int height)
 	    return bw_read(filename, width, height);
 	case ICV_IMAGE_DPIX :
 	    return dpix_read(filename, width, height);
-        case ICV_IMAGE_PPM :
+	case ICV_IMAGE_PPM :
 	    return ppm_read(filename);
 	default:
 	    bu_log("icv_read not implemented for this format\n");
