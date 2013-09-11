@@ -335,7 +335,7 @@ icv_fade(icv_image_t *img, double fraction)
 
     if (fraction<0) {
 	bu_log("ERROR : Multiplier invalid. Image not Faded.");
-	return -1
+	return -1;
     }
 
      data = img->data;
