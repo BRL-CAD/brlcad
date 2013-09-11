@@ -148,9 +148,12 @@ main(int ac, char *av[])
     struct stat sb;
     unsigned short *buf1 = NULL;
     unsigned short *buf2 = NULL;
+    // vars from TCLAP parsing
     const char* dsp1_fname = NULL;
     const char* dsp2_fname = NULL;
     const char* dsp3_fname = NULL;
+    bool has_force = false;
+    bool has_help  = false;
 
     try {
 
@@ -207,100 +210,102 @@ main(int ac, char *av[])
       cmd.parse(ac, av);
 
       // Get the value parsed by each arg.
-      bool has_force = f_arg.getValue();
-      bool has_help  = h_arg.getValue();
-      dsp1_fname     = dsp1_arg.getValue().c_str();
-      dsp2_fname     = dsp2_arg.getValue().c_str();
-      dsp3_fname     = dsp3_arg.getValue().c_str();
+      has_force  = f_arg.getValue();
+      has_help   = h_arg.getValue();
+      dsp1_fname = dsp1_arg.getValue().c_str();
+      dsp2_fname = dsp2_arg.getValue().c_str();
+      dsp3_fname = dsp3_arg.getValue().c_str();
 
-      // take appropriate action
-      if (has_help) {
-        bu_exit(EXIT_FAILURE, usage);
-      }
-
-      // TCLAP doesn't check for confusion in file names
-      if (BU_STR_EQUAL(dsp3_fname, dsp1_fname)
-          || BU_STR_EQUAL(dsp3_fname, dsp2_fname)) {
-        bu_exit(EXIT_FAILURE, "overwriting an input file (use the '-f' option to continue)\n");
-      }
-
-      // nor does it check for existing files (FIXME: add to TCLAP)
-      if (!stat(dsp3_fname, &sb)) {
-        if (has_force) {
-          printf("WARNING: overwriting an existing file...\n");
-          unlink(dsp3_fname);
-        }
-        else {
-          bu_exit(EXIT_FAILURE, "overwriting an existing file (use the '-f' option to continue)\n");
-        }
-      }
-
-      // open files
-      in1 = fopen(dsp1_fname, "r");
-      if (!in1) {
-	perror(dsp1_fname);
-	bu_exit(EXIT_FAILURE, "ERROR: input file open failure\n");
-      }
-
-      if (fstat(fileno(in1), &sb)) {
-        perror(dsp1_fname);
-	fclose(in1);
-	bu_exit(EXIT_FAILURE, "ERROR: input file stat failure\n");
-      }
-
-      // save size of first input file for comparison with other two
-      count = sb.st_size;
-      // check for zero-size file
-      if (!count) {
-        perror(dsp1_fname);
-	fclose(in1);
-        bu_exit(EXIT_FAILURE, "zero-length input file\n");
-      }
-
-      buf1 = (unsigned short *)bu_malloc((size_t)sb.st_size, "buf1");
-
-      in2 = fopen(dsp2_fname, "r");
-      if (!in2) {
-	perror(dsp2_fname);
-	fclose(in1);
-	bu_exit(EXIT_FAILURE, "ERROR: input file open failure\n");
-      }
-
-      if (fstat(fileno(in2), &sb)) {
-	perror(dsp2_fname);
-	fclose(in1);
-	fclose(in2);
-	bu_exit(EXIT_FAILURE, "ERROR: input file stat failure\n");
-      }
-
-      // check for zero-size file
-      if (!sb.st_size) {
-        perror(dsp2_fname);
-	fclose(in1);
-	fclose(in2);
-        bu_exit(EXIT_FAILURE, "ERROR: zero-length input file\n");
-      }
-
-      if ((size_t)sb.st_size != count) {
-	fclose(in1);
-	fclose(in2);
-	bu_exit(EXIT_FAILURE, "ERROR: input file size mis-match\n");
-      }
-
-      // the output file is now named instead of being redirected
-      out1 = fopen(dsp3_fname, "w");
-      if (!out1) {
-	perror(dsp3_fname);
-	fclose(in1);
-	fclose(in2);
-	fclose(out1);
-	bu_exit(EXIT_FAILURE, "ERROR: output file open failure\n");
-      }
+      // exit try block here
 
     } catch (TCLAP::ArgException &e) { // catch any exceptions
 
       cerr << "error: " << e.error() << " for arg " << e.argId() << endl;
 
+    }
+
+    // take appropriate action
+    if (has_help) {
+      bu_exit(EXIT_FAILURE, usage);
+    }
+
+    // TCLAP doesn't check for confusion in file names
+    if (BU_STR_EQUAL(dsp3_fname, dsp1_fname)
+        || BU_STR_EQUAL(dsp3_fname, dsp2_fname)) {
+      bu_exit(EXIT_FAILURE, "overwriting an input file (use the '-f' option to continue)\n");
+    }
+
+    // nor does it check for existing files (FIXME: add to TCLAP)
+    if (!stat(dsp3_fname, &sb)) {
+      if (has_force) {
+        printf("WARNING: overwriting an existing file...\n");
+        unlink(dsp3_fname);
+      }
+      else {
+        bu_exit(EXIT_FAILURE, "overwriting an existing file (use the '-f' option to continue)\n");
+      }
+    }
+
+    // open files
+    in1 = fopen(dsp1_fname, "r");
+    if (!in1) {
+      perror(dsp1_fname);
+      bu_exit(EXIT_FAILURE, "ERROR: input file open failure\n");
+    }
+
+    if (fstat(fileno(in1), &sb)) {
+      perror(dsp1_fname);
+      fclose(in1);
+      bu_exit(EXIT_FAILURE, "ERROR: input file stat failure\n");
+    }
+
+    // save size of first input file for comparison with other two
+    count = sb.st_size;
+    // check for zero-size file
+    if (!count) {
+      perror(dsp1_fname);
+      fclose(in1);
+      bu_exit(EXIT_FAILURE, "zero-length input file\n");
+    }
+
+    buf1 = (unsigned short *)bu_malloc((size_t)sb.st_size, "buf1");
+
+    in2 = fopen(dsp2_fname, "r");
+    if (!in2) {
+      perror(dsp2_fname);
+      fclose(in1);
+      bu_exit(EXIT_FAILURE, "ERROR: input file open failure\n");
+    }
+
+    if (fstat(fileno(in2), &sb)) {
+      perror(dsp2_fname);
+      fclose(in1);
+      fclose(in2);
+      bu_exit(EXIT_FAILURE, "ERROR: input file stat failure\n");
+    }
+
+    // check for zero-size file
+    if (!sb.st_size) {
+      perror(dsp2_fname);
+      fclose(in1);
+      fclose(in2);
+      bu_exit(EXIT_FAILURE, "ERROR: zero-length input file\n");
+    }
+
+    if ((size_t)sb.st_size != count) {
+      fclose(in1);
+      fclose(in2);
+      bu_exit(EXIT_FAILURE, "ERROR: input file size mis-match\n");
+    }
+
+    // the output file is now named instead of being redirected
+    out1 = fopen(dsp3_fname, "w");
+    if (!out1) {
+      perror(dsp3_fname);
+      fclose(in1);
+      fclose(in2);
+      fclose(out1);
+      bu_exit(EXIT_FAILURE, "ERROR: output file open failure\n");
     }
 
     buf2 = (unsigned short *)bu_malloc((size_t)sb.st_size, "buf2");
