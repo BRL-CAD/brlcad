@@ -22,20 +22,8 @@
  * Contains routines related to pix format.
  *
  */
-
-#include "common.h"
-
-#include <stdlib.h>
-#include <sys/stat.h>	/* for file mode info in WRMODE */
-#include <fcntl.h>
-
-#include "bio.h"
 #include "bu.h"
-#include "bn.h"
 #include "icv.h"
-
-/* this might be a little better than saying 0444 */
-#define WRMODE S_IRUSR|S_IRGRP|S_IROTH
 
 /* defined in encoding.c */
 extern HIDDEN double *uchar2double(unsigned char *data, long int size);

@@ -23,24 +23,12 @@
  *
  */
 
-#include "common.h"
-
-#include <stdlib.h>
-#include <sys/stat.h>	/* for file mode info in WRMODE */
-#include <fcntl.h>
-
-#include "bio.h"
-#include "vmath.h"
 #include "bu.h"
-#include "bn.h"
 #include "icv.h"
-
 
 /* defined in encoding.c */
 extern HIDDEN double *uchar2double(unsigned char *data, long int size);
 extern HIDDEN unsigned char *data2uchar(const icv_image_t *bif);
-
-#define WRMODE S_IRUSR|S_IRGRP|S_IROTH
 
 HIDDEN int
 bw_write(icv_image_t *bif, const char *filename)
