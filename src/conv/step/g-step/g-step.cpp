@@ -98,6 +98,11 @@ main(int argc, char *argv[])
 	bu_exit(2, "ERROR: unable to read input \"%s\" .g file", argv[0]);
     }
 
+    if (argc < 2) {
+	bu_exit(3, "ERROR: specify object to export");
+    }
+
+
     std::string iflnm = argv[0];
     std::string oflnm = output_file;
 
@@ -114,9 +119,9 @@ main(int argc, char *argv[])
     }
 
     struct db_i *dbip = dotg->GetDBIP();
-    struct directory *dp = db_lookup(dbip, "brep.s", LOOKUP_QUIET);
+    struct directory *dp = db_lookup(dbip, argv[1], LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
-	std::cerr << "ERROR: cannot find " << "brep.s" << "\n" << std::endl;
+	std::cerr << "ERROR: cannot find " << argv[1] << "\n" << std::endl;
 	delete dotg;
 	return 1;
     }
