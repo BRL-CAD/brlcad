@@ -126,6 +126,7 @@ main(int argc, char *argv[])
     rt_db_get_internal(&intern, dp, dbip, bn_mat_identity, &rt_uniresource);
     RT_CK_DB_INTERNAL(&intern);
     bi = (struct rt_brep_internal*)intern.idb_ptr;
+    struct bu_vls scratch_string;
     //RT_BREP_TEST_MAGIC(bi);
     ON_Brep *brep = bi->brep;
     ON_wString wstr;
@@ -133,6 +134,7 @@ main(int argc, char *argv[])
     brep->Dump(dump);
     ON_String ss = wstr;
     //bu_log("Brep:\n %s\n", ss.Array());
+    bu_vls_init(&scratch_string);
 
     Exporter_Info_AP203 *info = new Exporter_Info_AP203();
 
@@ -153,7 +155,8 @@ main(int argc, char *argv[])
 
     /* 1 - Populate File_Name */
     SdaiFile_name * fn = (SdaiFile_name *)sfile->HeaderDefaultFileName();
-    fn->name_("'brep'");
+    bu_vls_sprintf(&scratch_string, "'%s'", output_file);
+    fn->name_(bu_vls_addr(&scratch_string));
     fn->time_stamp_("");
     StringAggregate_ptr author_tmp = new StringAggregate;
     author_tmp->AddNode(new StringNode("''"));
@@ -196,6 +199,7 @@ main(int argc, char *argv[])
     delete dotg;
     delete registry;
     delete sfile;
+    bu_vls_free(&scratch_string);
 
     return ret;
 }
