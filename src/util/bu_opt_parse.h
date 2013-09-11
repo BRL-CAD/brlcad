@@ -28,18 +28,6 @@ extern "C" {
 
 /* using ideas from Cliff */
 
-/* not sure these two are needed: */
-/**
- * a struct to carry a cmd pointer
- */
-typedef struct bu_cmd_type_UNUSED {
-  void *tclap_CmdLine; /* this gets cast to a TCLAP::CmdLine object on the C++ side */
-} bu_cmd_UNUSED;
-
-  typedef struct bu_arg_type {
-  void *tclap_Arg; /* this gets cast to a TCLAP::Arg [type] object on the C++ side */
-} bu_arg_UNUSED;
-
 /* types of arg values */
 typedef enum {
   BU_ARG_BOOL,
