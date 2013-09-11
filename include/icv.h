@@ -227,7 +227,7 @@ ICV_EXPORT extern icv_image_t *icv_zero(icv_image_t *bif);
  * This function frees the allocated memory for a ICV Structure and
  * data.
  */
-ICV_EXPORT extern void icv_destroy(icv_image_t *bif);
+ICV_EXPORT extern int icv_destroy(icv_image_t *bif);
 
 /** @file libicv/color_space.c
  *
@@ -365,7 +365,7 @@ ICV_EXPORT extern int icv_crop(icv_image_t *img,
  * is true.
  *
  */
-ICV_EXPORT void icv_sanitize(icv_image_t* img);
+ICV_EXPORT int icv_sanitize(icv_image_t* img);
 
 /**
  * This adds a constant value to all the pixels of the image.  Also if
@@ -375,28 +375,28 @@ ICV_EXPORT void icv_sanitize(icv_image_t* img);
  * Note to set the flag for a bif (icv_image struct);
  * bif->flags |= ICV_OPERATIONS_MODE;
  */
-ICV_EXPORT void icv_add_val(icv_image_t* img, double val);
+ICV_EXPORT int icv_add_val(icv_image_t* img, double val);
 
 /**
  * This multiplies all the pixels of the image with a constant Value.
  * Also if the flag ICV_OPERATIONS_MODE is set this doesn't sanitize
  * the image.
  */
-ICV_EXPORT void icv_multiply_val(icv_image_t* img, double val);
+ICV_EXPORT int icv_multiply_val(icv_image_t* img, double val);
 
 /**
  * This divides all the pixels of the image with a constant Value.
  * Also if the flag ICV_OPERATIONS_MODE is set this doesn't sanitize
  * the image.
  */
-ICV_EXPORT void icv_divide_val(icv_image_t* img, double val);
+ICV_EXPORT int icv_divide_val(icv_image_t* img, double val);
 
 /**
  * This raises all the pixels of the image to a constant exponential
  * power.  Also if the flag ICV_OPERATIONS_MODE is set this doesn't
  * sanitize the image.
  */
-ICV_EXPORT void icv_pow_val(icv_image_t* img, double val);
+ICV_EXPORT int icv_pow_val(icv_image_t* img, double val);
 
 /**
  * This routine adds pixel value of one image to pixel value of other

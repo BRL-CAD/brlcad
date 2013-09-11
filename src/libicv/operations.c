@@ -32,14 +32,14 @@
 
 #include "bio.h"
 
-void icv_sanitize(icv_image_t* img)
+int icv_sanitize(icv_image_t* img)
 {
     double *data = NULL;
     size_t size;
 
     if (!ICV_IMAGE_IS_INITIALIZED(img)) {
 	bu_log("ICV Structure not defined.\n");
-	return;
+	return -1;
     }
 
     data= img->data;
@@ -51,9 +51,10 @@ void icv_sanitize(icv_image_t* img)
 	data++;
     }
     img->flags |= ICV_SANITIZED;
+    return 0;
 }
 
-void icv_add_val(icv_image_t* img, double val)
+int icv_add_val(icv_image_t* img, double val)
 {
     double *data = NULL;
     size_t size;
@@ -62,7 +63,7 @@ void icv_add_val(icv_image_t* img, double val)
 
     if (!ICV_IMAGE_IS_INITIALIZED(img)) {
 	bu_log("ICV Structure not defined.\n");
-	return;
+	return -1;
     }
 
     for (size = img->width*img->height*img->channels; size>0; size--) {
@@ -74,16 +75,18 @@ void icv_add_val(icv_image_t* img, double val)
 	img->flags&=(!ICV_SANITIZED);
     else
 	icv_sanitize(img);
+
+    return 0;
 }
 
-void icv_multiply_val(icv_image_t* img, double val)
+int icv_multiply_val(icv_image_t* img, double val)
 {
     double *data = NULL;
     size_t size;
 
     if (!ICV_IMAGE_IS_INITIALIZED(img)) {
 	bu_log("ICV Structure not defined.\n");
-	return;
+	return -1;
     }
 
     data = img->data;
@@ -96,16 +99,18 @@ void icv_multiply_val(icv_image_t* img, double val)
 	img->flags&=(!ICV_SANITIZED);
     else
 	icv_sanitize(img);
+
+    return 0;
 }
 
-void icv_divide_val(icv_image_t* img, double val)
+int icv_divide_val(icv_image_t* img, double val)
 {
     double *data = NULL;
     size_t size;
 
     if (!ICV_IMAGE_IS_INITIALIZED(img)) {
 	bu_log("ICV Structure not defined.\n");
-	return;
+	return -1;
     }
 
     data = img->data;
@@ -121,16 +126,18 @@ void icv_divide_val(icv_image_t* img, double val)
 	img->flags&=(!ICV_SANITIZED);
     else
 	icv_sanitize(img);
+
+    return 0;
 }
 
-void icv_pow_val(icv_image_t* img, double val)
+int icv_pow_val(icv_image_t* img, double val)
 {
     double *data = NULL;
     size_t size;
 
     if (!ICV_IMAGE_IS_INITIALIZED(img)) {
 	bu_log("ICV Structure not defined.\n");
-	return;
+	return -1;
     }
 
     data = img->data;
@@ -144,6 +151,8 @@ void icv_pow_val(icv_image_t* img, double val)
 	img->flags&=(!ICV_SANITIZED);
     else
 	icv_sanitize(img);
+
+    return 0;
 }
 
 icv_image_t *icv_add(icv_image_t *img1, icv_image_t *img2)

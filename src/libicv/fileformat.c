@@ -346,12 +346,15 @@ icv_zero(icv_image_t *bif)
 }
 
 
-void
+int 
 icv_destroy(icv_image_t *bif)
 {
+    if (!ICV_IMAGE_IS_INITIALIZED(bif)) {
+	return -1;
+    }
     bu_free(bif->data, "Image Data");
     bu_free(bif, "ICV IMAGE Structure");
-    return;
+    return 0;
 }
 
 /*
