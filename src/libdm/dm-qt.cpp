@@ -61,13 +61,12 @@ qt_close(struct dm *dmp)
 
     delete privars->font;
     delete privars->painter;
-    privars->win->close();
-    delete privars->win;
+    delete privars->pix;
+    privars->win->~QTkMainWindow();
+    delete privars->parent;
 
-    if (privars->qapp)
-	privars->qapp->quit();
-    if (pubvars->xtkwin)
-	Tk_DestroyWindow(pubvars->xtkwin);
+    privars->qapp->quit();
+    Tk_DestroyWindow(pubvars->xtkwin);
 
     bu_vls_free(&dmp->dm_pathName);
     bu_vls_free(&dmp->dm_tkName);
@@ -76,6 +75,7 @@ qt_close(struct dm *dmp)
     bu_free((genptr_t)dmp->dm_vars.pub_vars, "qt_close: dm_xvars");
     bu_free((genptr_t)dmp, "qt_close: dmp");
 
+    bu_log("CLOSE called\n");
     return TCL_OK;
 }
 
@@ -832,11 +832,11 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
     Tk_MapWindow(pubvars->xtkwin);
     privars->qapp = new QApplication(argc, argv);
 
-    QWindow *window = QWindow::fromWinId(pubvars->win);
+    privars->parent = QWindow::fromWinId(pubvars->win);
 
     privars->pix = new QPixmap(dmp->dm_width, dmp->dm_height);
 
-    privars->win = new QTkMainWindow(privars->pix, window, dmp);
+    privars->win = new QTkMainWindow(privars->pix, privars->parent, dmp);
     privars->win->resize(dmp->dm_width, dmp->dm_height);
     privars->win->show();
 
@@ -1039,6 +1039,12 @@ QTkMainWindow::QTkMainWindow(QPixmap *p, QWindow *win, struct dm *d)
     create();
     pixmap = p;
     dmp = d;
+}
+
+QTkMainWindow::~QTkMainWindow()
+{
+    delete m_backingStore;
+    close();
 }
 
 void QTkMainWindow::exposeEvent(QExposeEvent *)
