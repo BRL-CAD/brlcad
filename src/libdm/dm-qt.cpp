@@ -675,6 +675,9 @@ qt_processEvents(struct dm *dmp)
     privars->qapp->processEvents();
 }
 
+void CheckProc(ClientData UNUSED(clientData), int UNUSED(flags)) {
+    qt_processEvents(&dm_qt);
+}
 
 __BEGIN_DECLS
 
@@ -852,6 +855,7 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
 
     setlocale(LC_ALL, "POSIX");
     bu_log("qt_open called\n");
+    Tcl_CreateEventSource(NULL, CheckProc, NULL);
     return dmp;
 }
 
