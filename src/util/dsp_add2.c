@@ -35,17 +35,16 @@
 #include "vmath.h"
 #include "bn.h"
 
+#include "bu_opt_parse.h"
 
-/* declarations to support use of bu_getopt() system call */
-static const char optstring[] = "h?";
-static const char progname[] = "dsp_add";
-static const char usage[] = "Usage: %s dsp_1 dsp_2 > dsp_3\n";
+/* declarations to support use of TCLAP arg parsing */
+static const char usage[] = "Example: dsp_add  dsp1.dsp  dsp2.dsp  dsp12added.dsp\n";
 
 /* purpose: combine two dsp files
  *
  * description: Combines two dsp files (which are binary files
  * comprised of network unsigned shorts).  The two files must be of
- * identical size.  The result, written to stdout, is a file where
+ * identical size.  The result is a third file where
  * each cell's height is the total of the heights of the same cell
  * in the input files.
  *
@@ -53,48 +52,12 @@ static const char usage[] = "Usage: %s dsp_1 dsp_2 > dsp_3\n";
  *
  * see_also: dsp(5) asc2dsp(1) cv(1)
  *
- * opt: -h brief help
- *
- * opt: -? brief help
- *
  */
 
 #define ADD_STYLE_INT 0
 #define ADD_STYLE_FLOAT 1
 
 static int style = ADD_STYLE_INT;
-
-/*
- * tell user how to invoke this program, then exit
- */
-static void
-print_usage(char *s)
-{
-    if (s) (void)fputs(s, stderr);
-
-    bu_log(usage, progname);
-    bu_exit (1, NULL);
-}
-
-
-/*
- * Parse command line flags
- */
-static int
-parse_args(int ac, char *av[])
-{
-    int c;
-
-    /* get all the option flags from the command line */
-    while ((c = bu_getopt(ac, av, optstring)) != -1)
-	switch (c) {
-	    default:
-		print_usage("");
-	}
-
-    return bu_optind;
-}
-
 
 static void
 swap_bytes(unsigned short *buf, unsigned long count)
@@ -116,7 +79,7 @@ add_float(unsigned short *buf1, unsigned short *buf2, unsigned long count)
     double *dbuf, *d;
     double min, max, k;
 
-    dbuf = bu_malloc(sizeof(double) * count, "buffer of double");
+    dbuf = (double *)bu_malloc(sizeof(double) * count, "buffer of double");
 
     min = MAX_FASTF;
     max = -MAX_FASTF;
@@ -168,87 +131,219 @@ add_int(unsigned short *buf1, unsigned short *buf2, unsigned long count)
 
 }
 
-
-/*
- * Call parse_args to handle command line arguments first, then
- * process input.
- */
 int
 main(int ac, char *av[])
 {
-    int next_arg;
-    FILE *in1, *in2;
-    unsigned short *buf1, *buf2;
-    size_t count;
-    int in_cookie, out_cookie;
+    /*  int next_arg; *//* <= not needed */
+    FILE *in1 = NULL;
+    FILE *in2 = NULL;
+    FILE *out1 = NULL;
     int conv;
-    struct stat sb;
+    int in_cookie, out_cookie;
+    size_t count = 0;
     size_t ret;
+    struct stat sb;
+    unsigned short *buf1 = NULL;
+    unsigned short *buf2 = NULL;
+    const char* dsp1_fname = NULL;
+    const char* dsp2_fname = NULL;
+    const char* dsp3_fname = NULL;
+    int arg_err = 0;
 
-    if (ac < 2)
-	print_usage("");
+    static const bu_arg_vars arg1 = {
+      BU_ARG_SwitchArg,
+      'c',
+      "arg1",
+      "first arg",
+      BU_ARG_NOT_REQUIRED,
+      BU_ARG_NOT_REQUIRED
+    };
 
-    if (isatty(fileno(stdout)))
-	print_usage("Must redirect standard output\n");
+    static const bu_arg_vars *args[] = {&arg1, NULL};
 
-    next_arg = parse_args(ac, av);
-
-    if (next_arg >= ac)
-	print_usage("No files specified\n");
-
-    /* Open the files */
-
-    in1 = fopen(av[next_arg], "r");
-    if (!in1) {
-	perror(av[next_arg]);
-	return -1;
+    /* tmp code to avoid compiler errors during piece-meal development */
+    if (ac < 2) {
+      bu_exit(EXIT_SUCCESS, "%s %s\n", av[0], usage);
     }
+    arg_err = bu_opt_parse(args, ac, av);
 
-    if (fstat(fileno(in1), &sb)) {
-	perror(av[next_arg]);
+
+/*
+    //try {
+
+      // form the command line
+      //
+      // note help (-h and --help) and version (-v and --version) are
+      // automatic
+      TCLAP::CmdLine cmd(usage, ' ',
+                         "[BRL_CAD_VERSION]"); // help and version are automatic
+      // use our subclassed stdout
+      BRLCAD_StdOutput brlstdout;
+      cmd.setOutput(&brlstdout);
+      // proceed normally ...
+
+      // we also want the '-?' option (long help, if available, help otherwise
+      // long option), last arg means option not required
+      TCLAP::SwitchArg h_arg("?",    // short option char
+                             "short-help", // long option name, if any
+                             "Same as '-h' or '--help'.",  // short description string
+                             cmd,    // add to 'cmd' object
+                             false); // default value
+
+      // define a force option to allow user to shoot himself in the foot
+      TCLAP::SwitchArg f_arg("f",    // short option char
+                             "force", // long option name, if any
+                             "Allow overwriting existing files.",  // short description string
+                             cmd,    // add to 'cmd' object
+                             false); // default value
+
+      // need two file names
+      TCLAP::UnlabeledValueArg<string> dsp1_arg("dsp_infile1", // name of object
+                                                "first dsp input file name", // description
+                                                true,      // arg is required
+                                                "",        // default value
+                                                "dsp_infile1",  // type of arg value
+                                                cmd);      // add to cmd object
+
+      // need two file names
+      TCLAP::UnlabeledValueArg<string> dsp2_arg("dsp_infile2", // name of object
+                                                "second dsp input file name", // description
+                                                true,      // arg is required
+                                                "",        // default value
+                                                "dsp_infile2",  // type of arg value
+                                                cmd);      // add to cmd object
+
+      TCLAP::UnlabeledValueArg<string> dsp3_arg("dsp_outfile", // name of object
+                                                "dsp output file", // description
+                                                true,      // arg is required
+                                                "",        // default value
+                                                "dsp_outfile",  // type of arg value
+                                                cmd);      // add to cmd object
+
+      // parse the args
+      cmd.parse(ac, av);
+
+      // Get the value parsed by each arg.
+      bool has_force = f_arg.getValue();
+      bool has_help  = h_arg.getValue();
+      dsp1_fname     = dsp1_arg.getValue().c_str();
+      dsp2_fname     = dsp2_arg.getValue().c_str();
+      dsp3_fname     = dsp3_arg.getValue().c_str();
+
+      // take appropriate action
+      if (has_help) {
+        bu_exit(EXIT_FAILURE, usage);
+      }
+
+      // TCLAP doesn't check for confusion in file names
+      if (BU_STR_EQUAL(dsp3_fname, dsp1_fname)
+          || BU_STR_EQUAL(dsp3_fname, dsp2_fname)) {
+        bu_exit(EXIT_FAILURE, "overwriting an input file (use the '-f' option to continue)\n");
+      }
+
+      // nor does it check for existing files (FIXME: add to TCLAP)
+      if (!stat(dsp3_fname, &sb)) {
+        if (has_force) {
+          printf("WARNING: overwriting an existing file...\n");
+          unlink(dsp3_fname);
+        }
+        else {
+          bu_exit(EXIT_FAILURE, "overwriting an existing file (use the '-f' option to continue)\n");
+        }
+      }
+
+      // open files
+      in1 = fopen(dsp1_fname, "r");
+      if (!in1) {
+	perror(dsp1_fname);
+	bu_exit(EXIT_FAILURE, "ERROR: input file open failure\n");
+      }
+
+      if (fstat(fileno(in1), &sb)) {
+        perror(dsp1_fname);
 	fclose(in1);
-	return -1;
-    }
+	bu_exit(EXIT_FAILURE, "ERROR: input file stat failure\n");
+      }
 
-    count = sb.st_size;
-    buf1 = bu_malloc((size_t)sb.st_size, "buf1");
-
-    next_arg++;
-
-    in2 = fopen(av[next_arg], "r");
-    if (!in2) {
-	perror(av[next_arg]);
+      // save size of first input file for comparison with other two
+      count = sb.st_size;
+      // check for zero-size file
+      if (!count) {
+        perror(dsp1_fname);
 	fclose(in1);
-	return -1;
-    }
+        bu_exit(EXIT_FAILURE, "zero-length input file\n");
+      }
 
-    if (fstat(fileno(in2), &sb)) {
-	perror(av[next_arg]);
+      buf1 = (unsigned short *)bu_malloc((size_t)sb.st_size, "buf1");
+
+      in2 = fopen(dsp2_fname, "r");
+      if (!in2) {
+	perror(dsp2_fname);
+	fclose(in1);
+	bu_exit(EXIT_FAILURE, "ERROR: input file open failure\n");
+      }
+
+      if (fstat(fileno(in2), &sb)) {
+	perror(dsp2_fname);
 	fclose(in1);
 	fclose(in2);
-	return -1;
-    }
+	bu_exit(EXIT_FAILURE, "ERROR: input file stat failure\n");
+      }
 
-    if ((size_t)sb.st_size != count) {
+      // check for zero-size file
+      if (!sb.st_size) {
+        perror(dsp2_fname);
 	fclose(in1);
 	fclose(in2);
-	bu_exit(EXIT_FAILURE, "**** ERROR **** file size mis-match\n");
+        bu_exit(EXIT_FAILURE, "ERROR: zero-length input file\n");
+      }
+
+      if ((size_t)sb.st_size != count) {
+	fclose(in1);
+	fclose(in2);
+	bu_exit(EXIT_FAILURE, "ERROR: input file size mis-match\n");
+      }
+
+      // the output file is now named instead of being redirected
+      out1 = fopen(dsp3_fname, "w");
+      if (!out1) {
+	perror(dsp3_fname);
+	fclose(in1);
+	fclose(in2);
+	fclose(out1);
+	bu_exit(EXIT_FAILURE, "ERROR: output file open failure\n");
+      }
+
+    } catch (TCLAP::ArgException &e) { // catch any exceptions
+
+      cerr << "error: " << e.error() << " for arg " << e.argId() << endl;
+
     }
 
-    buf2 = bu_malloc((size_t)sb.st_size, "buf2");
+*/
+
+    buf2 = (unsigned short *)bu_malloc((size_t)sb.st_size, "buf2");
 
     count = count >> 1; /* convert count of char to count of short */
 
     /* Read the terrain data */
     ret = fread(buf1, sizeof(short), count, in1);
-    if (ret < count)
-	perror("fread");
-    fclose(in1);
+    if (ret < count) {
+	perror(dsp1_fname);
+        fclose(in1);
+        fclose(in2);
+        fclose(out1);
+	bu_exit(EXIT_FAILURE, "ERROR: input file short read count\n");
+    }
 
     ret = fread(buf2, sizeof(short), count, in2);
-    if (ret < count)
-	perror("fread");
-    fclose(in2);
+    if (ret < count) {
+	perror(dsp2_fname);
+        fclose(in1);
+        fclose(in2);
+        fclose(out1);
+	bu_exit(EXIT_FAILURE, "ERROR: input file short read count\n");
+    }
 
     /* Convert from network to host format */
     in_cookie = bu_cv_cookie("nus");
@@ -274,9 +369,12 @@ main(int ac, char *av[])
 	swap_bytes(buf2, count);
     }
 
-    if (fwrite(buf1, sizeof(short), count, stdout) != count) {
-	bu_log("Error writing data\n");
-	return -1;
+    if (fwrite(buf1, sizeof(short), count, out1) != count) {
+	perror(dsp3_fname);
+        fclose(in1);
+        fclose(in2);
+        fclose(out1);
+	bu_exit(EXIT_FAILURE, "ERROR: count error writing data\n");
     }
 
     return 0;

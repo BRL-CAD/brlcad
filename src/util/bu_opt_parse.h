@@ -21,5 +21,78 @@
 #ifndef BU_OPT_PARSE_H
 #define BU_OPT_PARSE_H
 
+/* all in this header MUST have "C" linkage */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* using ideas from Cliff */
+
+/* not sure these two are needed: */
+/**
+ * a struct to carry a cmd pointer
+ */
+typedef struct bu_cmd_type_UNUSED {
+  void *tclap_CmdLine; /* this gets cast to a TCLAP::CmdLine object on the C++ side */
+} bu_cmd_UNUSED;
+
+  typedef struct bu_arg_type {
+  void *tclap_Arg; /* this gets cast to a TCLAP::Arg [type] object on the C++ side */
+} bu_arg_UNUSED;
+
+/* types of arg values */
+typedef enum {
+  BU_ARG_BOOL,
+  BU_ARG_CHAR,
+  BU_ARG_DOUBLE,
+  BU_ARG_FLOAT,
+  BU_ARG_INT,
+  BU_ARG_STRING
+} bu_arg_value_t;
+
+/* TCLAP arg types */
+typedef enum {
+  BU_ARG_MultiArg,
+  BU_ARG_MultiSwitchArg,
+  BU_ARG_SwitchArg,
+  BU_ARG_UnlabeledMultiArg,
+  BU_ARG_UnlabeledValueArg,
+  BU_ARG_ValueArg
+} bu_arg_t;
+
+typedef enum {
+  BU_ARG_NOT_REQUIRED = 0,
+  BU_ARG_REQUIRED = 1
+} bu_arg_req_t;
+
+typedef union bu_arg_value_union {
+  int b; /* bool */
+  char c;
+  double d;
+  float f;
+  int i;
+  char *s;
+} bu_arg_value;
+
+/* TCLAP::Arg */
+typedef struct bu_arg_vars_type {
+  bu_arg_t arg_type; /* enum: what TCLAP type is the arg */
+  const char  flag;  /* the "short" option, may be NULL */
+  const char *name;  /* the "long" option  */
+  const char *desc;  /* a brief description */
+  bu_arg_req_t req;           /* bool: is arg required? */
+  bu_arg_req_t valreq;        /* bool: is value required? */
+  /* bu_arg_value val; */ /* union: holds all value types */
+  /* bu_arg_val_t val_type; *//* enum: what type is in the value union */
+} bu_arg_vars;
+
+/* the action: all in one function */
+int
+bu_opt_parse(const bu_arg_vars *args[], int argc, char **argv);
+
+/* all in this header MUST have "C" linkage */
+#ifdef __cplusplus
+} /* extern "C" { */
+#endif
 
 #endif /* BU_OPT_PARSE_H */

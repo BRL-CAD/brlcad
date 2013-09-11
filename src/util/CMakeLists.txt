@@ -93,6 +93,8 @@ BRLCAD_ADDEXEC(dsp_add2 "dsp_add2.c;bu_opt_parse.cpp" libbu NO_INSTALL)
 
 # tmp header to stand-in for bu.h (ignore it)
 CMAKEFILES(bu_opt_parse.h)
+# permanent private header for TCLAP customizations
+CMAKEFILES(bu_opt_parse_private.h)
 #=====================================================
 # end TCLAP testing
 #=====================================================

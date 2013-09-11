@@ -18,6 +18,44 @@
  * information.
  */
 
+#include "common.h"
+
+#include <stdlib.h>
+#include <sys/stat.h>
+#include "bio.h"
+
+#include "bu.h"
+#include "vmath.h"
+#include "bn.h"
+
+
+#include "tclap/CmdLine.h"
+#include "bu_opt_parse_private.h"
 #include "bu_opt_parse.h"
 
-#define BU_OPT_PARSE_DUMMY_Cpp
+/* using ideas from Cliff and Sean... */
+/**
+ * construct all for TCLAP handling, ensure input args get proper values for the caller
+ */
+extern "C"
+int
+bu_opt_parse(const bu_arg_vars *args[], int argc, char **argv)
+{
+  int i = 0;
+  if (argc < 2)
+    bu_exit(EXIT_FAILURE, "ERROR: too few args in %s\n", argv[0]);
+
+  while (args[i]) {
+    // handle this arg and fill in the values
+    ++i;
+  }
+
+/*
+  // map inputs to TCLAP:
+  string
+  TCLAP::ValueArg<int> intArg(short,long,description,required,default,"int");
+  cmd->add(intArg);
+*/
+
+  return 0; // tmp return
+}
