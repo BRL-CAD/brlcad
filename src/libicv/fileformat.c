@@ -231,7 +231,7 @@ icv_writeline(icv_image_t *bif, int y, void *data, ICV_DATA type)
         return -1;
     
     if(data == NULL)
-        return -1:
+        return -1;
 
     width_size = (size_t) bif->width*bif->channels;
     dst = bif->data + width_size*y;
@@ -265,7 +265,7 @@ icv_writepixel(icv_image_t *bif, int x, int y, double *data)
         return -1;
         
     if(data == NULL)
-        return -1:
+        return -1;
 
     dst = bif->data + (y*bif->width + x)*bif->channels;
 
