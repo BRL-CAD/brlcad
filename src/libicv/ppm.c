@@ -55,9 +55,6 @@ ppm_write(icv_image_t *bif, const char *filename)
     FILE *fp;
     size_t ret, size;
 
-    /* FIXME: should not be introducing fixed size buffers */
-    char buf[BUFSIZ] = {0};
-
     if (bif->color_space == ICV_COLOR_SPACE_GRAY) {
 	icv_gray2rgb(bif);
     } else if (bif->color_space != ICV_COLOR_SPACE_RGB) {
@@ -74,9 +71,8 @@ ppm_write(icv_image_t *bif, const char *filename)
     data =  data2uchar(bif);
     size = (size_t) bif->width*bif->height*3;
     image_flip(data, bif->width, bif->height);
-    snprintf(buf, BUFSIZ, "P6 %d %d 255\n", bif->width, bif->height);
+    ret = fprintf(fp, "P6 %d %d 255\n", bif->width, bif->height);
     
-    ret = fwrite(buf, 1, strlen(buf),fp);
     ret = fwrite(data, 1, size, fp);
     
     fclose(fp);
