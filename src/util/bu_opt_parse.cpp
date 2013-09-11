@@ -39,7 +39,7 @@
  */
 extern "C"
 int
-bu_opt_parse(const bu_arg_vars *args[], int argc, char **argv)
+bu_opt_parse(bu_arg_vars *args[], int argc, char **argv)
 {
   int i = 0;
   if (argc < 2)
