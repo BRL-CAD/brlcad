@@ -1354,8 +1354,8 @@ IsPointOnBrepSurface(const ON_3dPoint& pt, const ON_Brep* brep, ON_SimpleArray<S
 	return false;
     }
 
-    if (surf_tree.Count() != brep->m_F.Count()) {
-	bu_log("IsPointOnBrepSurface(): surf_tree.Count() != brep->m_F.Count()\n");
+    if (surf_tree.Count() != brep->m_S.Count()) {
+	bu_log("IsPointOnBrepSurface(): surf_tree.Count() != brep->m_S.Count()\n");
 	return false;
     }
 
@@ -1363,7 +1363,7 @@ IsPointOnBrepSurface(const ON_3dPoint& pt, const ON_Brep* brep, ON_SimpleArray<S
 	const ON_BrepFace& face = brep->m_F[i];
 	const ON_Surface* surf = face.SurfaceOf();
 	ON_ClassArray<ON_PX_EVENT> px_event;
-	if (!ON_Intersect(pt, *surf, px_event, INTERSECTION_TOL, 0, 0, surf_tree[i]))
+	if (!ON_Intersect(pt, *surf, px_event, INTERSECTION_TOL, 0, 0, surf_tree[face.m_si]))
 	    continue;
 
 	// Get the trimming curves of the face, and determine whether the
@@ -1393,8 +1393,8 @@ IsPointInsideBrep(const ON_3dPoint& pt, const ON_Brep* brep, ON_SimpleArray<Subs
 	return false;
     }
 
-    if (surf_tree.Count() != brep->m_F.Count()) {
-	bu_log("IsPointInsideBrep(): surf_tree.Count() != brep->m_F.Count()\n");
+    if (surf_tree.Count() != brep->m_S.Count()) {
+	bu_log("IsPointInsideBrep(): surf_tree.Count() != brep->m_S.Count()\n");
 	return false;
     }
 
@@ -1411,7 +1411,7 @@ IsPointInsideBrep(const ON_3dPoint& pt, const ON_Brep* brep, ON_SimpleArray<Subs
 	const ON_BrepFace& face = brep->m_F[i];
 	const ON_Surface* surf = face.SurfaceOf();
 	ON_SimpleArray<ON_X_EVENT> x_event;
-	if (!ON_Intersect(&line, surf, x_event, INTERSECTION_TOL, 0.0, 0, 0, 0, 0, 0, surf_tree[i]))
+	if (!ON_Intersect(&line, surf, x_event, INTERSECTION_TOL, 0.0, 0, 0, 0, 0, 0, surf_tree[face.m_si]))
 	    continue;
 
 	// Get the trimming curves of the face, and determine whether the
@@ -1529,13 +1529,15 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 {
     int facecount1 = brepA->m_F.Count();
     int facecount2 = brepB->m_F.Count();
+    int surfcount1 = brepA->m_S.Count();
+    int surfcount2 = brepB->m_S.Count();
     ON_ClassArray<ON_SimpleArray<SSICurve> > curvesarray(facecount1 + facecount2);
 
     ON_SimpleArray<Subsurface*> surf_treeA, surf_treeB;
-    for (int i = 0; i < facecount1; i++)
-	surf_treeA.Append(new Subsurface(brepA->m_F[i].SurfaceOf()->Duplicate()));
-    for (int i = 0; i < facecount2; i++)
-	surf_treeB.Append(new Subsurface(brepB->m_F[i].SurfaceOf()->Duplicate()));
+    for (int i = 0; i < surfcount1; i++)
+	surf_treeA.Append(new Subsurface(brepA->m_S[i]->Duplicate()));
+    for (int i = 0; i < surfcount2; i++)
+	surf_treeB.Append(new Subsurface(brepB->m_S[i]->Duplicate()));
 
     // calculate intersection curves
     for (int i = 0; i < facecount1; i++) {
@@ -1558,8 +1560,8 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 			     NULL,
 			     NULL,
 			     NULL,
-			     surf_treeA[i],
-			     surf_treeB[j]) <= 0)
+			     surf_treeA[brepA->m_F[i].m_si],
+			     surf_treeB[brepB->m_F[j].m_si]) <= 0)
 		continue;
 	    ON_SimpleArray<ON_Curve*> curve_uv, curve_st;
 	    for (int k = 0; k < events.Count(); k++) {
@@ -1740,7 +1742,6 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 #endif	// #if USE_CONNECTIVITY_GRAPH
 
     for (int i = 0; i < trimmedfaces.Count(); i++) {
-	const ON_SimpleArray<TrimmedFace*>& splitted = trimmedfaces[i];
 	/* Perform inside-outside test to decide whether the trimmed face should
 	 * be used in the final b-rep structure or not.
 	 * Different operations should be dealt with accordingly.
@@ -1748,6 +1749,7 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 	 * structure of the b-rep. This can reduce time-consuming inside-outside
 	 * tests.
 	 */
+	const ON_SimpleArray<TrimmedFace*>& splitted = trimmedfaces[i];
 	const ON_Brep* another_brep = i >= facecount1 ? brepA : brepB;
 	ON_SimpleArray<Subsurface*>& surf_tree = i >= facecount1 ? surf_treeA : surf_treeB;
 	for (int j = 0; j < splitted.Count(); j++) {
