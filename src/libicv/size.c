@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file decimate.c
+/** @file size.c
  *
  * This file contains routines to scale down an image to a lower
  * resolution.

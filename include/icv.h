@@ -599,7 +599,7 @@ ICV_EXPORT double *icv_skew(icv_image_t* img, size_t** bins, int n_bins);
 ICV_EXPORT double *icv_var(icv_image_t* img, size_t** bins, int n_bins);
 
 
-/** @file decimate.c
+/** @file size.c
  *
  * This file contains routines to scale down an image to a lower
  * resolution or scale up an image to an higher Resolution.
