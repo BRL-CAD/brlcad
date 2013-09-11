@@ -18,6 +18,7 @@ set(LIBICV_SOURCES
   stat.c
   size.c
   pix.c
+  ppm.c
   bw.c
   dpix.c
   )

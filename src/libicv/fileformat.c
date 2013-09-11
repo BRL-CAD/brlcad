@@ -59,23 +59,10 @@ extern HIDDEN icv_image_t *pix_read(const char* filename, int width, int height)
 extern HIDDEN icv_image_t *dpix_read(const char* filename, int width, int height);
 extern HIDDEN int dpix_write(icv_image_t *bif, const char *filename);
 
+/* defined in ppm.c */
+extern HIDDEN int ppm_write(icv_image_t *bif, const char *filename);
+
 /* private functions */
-
-/* flip an image vertically */
-HIDDEN int
-image_flip(unsigned char *buf, int width, int height)
-{
-    unsigned char *buf2;
-    int i;
-    size_t pitch = width * 3 * sizeof(char);
-
-    buf2 = (unsigned char *)bu_malloc((size_t)(height * pitch), "image flip");
-    for (i=0 ; i<height ; i++)
-	memcpy(buf2+i*pitch, buf+(height-i)*pitch, pitch);
-    memcpy(buf, buf2, height * pitch);
-    bu_free(buf2, "image flip");
-    return 0;
-}
 
 /*
  * Attempt to guess the file type. Understands ImageMagick style
@@ -163,37 +150,6 @@ png_write(icv_image_t *bif, const char *filename)
     png_destroy_write_struct(&png_ptr, &info_ptr);
     fclose(fh);
     return 1;
-}
-
-HIDDEN int
-ppm_write(icv_image_t *bif, const char *filename)
-{
-    unsigned char *data;
-    int fd;
-    size_t ret, size;
-
-    /* FIXME: should not be introducing fixed size buffers */
-    char buf[BUFSIZ] = {0};
-
-    if (bif->color_space == ICV_COLOR_SPACE_GRAY) {
-	icv_gray2rgb(bif);
-    } else if (bif->color_space != ICV_COLOR_SPACE_RGB) {
-	bu_log("ppm_write : Color Space conflict");
-	return -1;
-    }
-    data =  data2uchar(bif);
-    size = (size_t) bif->width*bif->height*3;
-    fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, WRMODE);
-    image_flip(data, bif->width, bif->height);
-    snprintf(buf, BUFSIZ, "P6 %d %d 255\n", bif->width, bif->height);
-    ret = write(fd, buf, strlen(buf));
-    ret = write(fd, data, size);
-    close(fd);
-    if (ret != size) {
-	bu_log("ppm_write : Short Write");
-	return -1;
-    }
-    return 0;
 }
 
 /* end of private functions */
