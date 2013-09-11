@@ -290,9 +290,9 @@ int
 icv_writepixel(icv_image_t *bif, int x, int y, double *data)
 {
     double *dst;
-    
+
     ICV_IMAGE_VAL_INT(bif);
-    
+
     dst = bif->data + (y*bif->width + x)*bif->channels;
 
     /* can copy float to double also double to double */
@@ -334,7 +334,7 @@ icv_zero(icv_image_t *bif)
 {
     double *data;
     long size, i;
-    
+
     ICV_IMAGE_VAL_PTR(bif);
 
     data = bif->data;
@@ -346,15 +346,15 @@ icv_zero(icv_image_t *bif)
 }
 
 
-int 
+int
 icv_destroy(icv_image_t *bif)
 {
     if (!ICV_IMAGE_IS_INITIALIZED(bif)) {
 	return -1;
     }
-    
+
     ICV_IMAGE_VAL_INT(bif);
-    
+
     bu_free(bif->data, "Image Data");
     bu_free(bif, "ICV IMAGE Structure");
     return 0;

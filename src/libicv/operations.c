@@ -100,7 +100,7 @@ int icv_divide_val(icv_image_t* img, double val)
     size_t size;
 
     ICV_IMAGE_VAL_INT(img);
-    
+
     data = img->data;
 
     /* Since data is double dividing by 0 will result in INF and -INF */

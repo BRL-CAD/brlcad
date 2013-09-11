@@ -56,7 +56,7 @@ icv_hist(icv_image_t* img, int n_bins)
     data = img->data;
 
     ICV_IMAGE_VAL_PTR(img);
-    
+
     bins = icv_init_bins(img, n_bins);
 
     for (i=0; i<=size; i++) {
@@ -76,7 +76,7 @@ double *icv_max(icv_image_t* img)
     int i;
 
     ICV_IMAGE_VAL_PTR(img);
-    
+
     max = bu_malloc(sizeof(double)*img->channels, "max values");
 
     for (i=0; i<img->channels; i++)
@@ -250,7 +250,7 @@ int *icv_mode(icv_image_t* img, size_t** bins, int n_bins)
 {
     int i,c;
     int *mode;
-    
+
     ICV_IMAGE_VAL_PTR(img);
 
     mode = (int *) bu_malloc(sizeof(int)*img->channels, "mode values");

@@ -257,7 +257,7 @@ icv_filter3(icv_image_t *old_img, icv_image_t *curr_img, icv_image_t *new_img, I
 			      * out image and n_index corresponds to
 			      * the nearby pixel in input image
 			      */
-    
+
     ICV_IMAGE_VAL_PTR(old_img);
     ICV_IMAGE_VAL_PTR(curr_img);
     ICV_IMAGE_VAL_PTR(new_img);
