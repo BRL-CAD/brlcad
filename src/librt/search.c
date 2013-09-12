@@ -2288,6 +2288,7 @@ db_search(const char *plan_string,
 	int search_type)
 {
     struct bu_ptbl *search_results = NULL;
+    const char *curr_path = NULL;
     void *dbplan;
     const char **search_path_strings = path_strings;
     char **plan_argv = (char **)bu_calloc(strlen(plan_string) + 1, sizeof(char *), "plan argv");
@@ -2296,31 +2297,24 @@ db_search(const char *plan_string,
     bu_vls_sprintf(&plan_string_vls, "%s", plan_string);
     bu_argv_from_string(&plan_argv[0], strlen(plan_string), bu_vls_addr(&plan_string_vls));
     dbplan = db_search_formplan(plan_argv, wdbp->dbip, wdbp);
+    if (!search_path_strings || !search_path_strings[0]) {
+	curr_path = db_search_get_top_objs(wdbp, search_type);
+    } else {
+	curr_path = search_path_strings[0];
+    }
     switch (search_type) {
 	case DB_SEARCH_STANDARD:
-	    if (!search_path_strings || !search_path_strings[0]) search_path_strings = db_get_top_objs(wdbp);
-	    const char *curr_path = search_path_strings[0];
+	    BU_ALLOC(search_results, struct bu_ptbl);
+	    bu_ptbl_init(search_results, 8, "initialize searchresults table");
 	    while (curr_path) {
 		/* search */
 		struct db_node_t curr_node;
 		struct directory *curr_dp = db_lookup
 		if (dp) {
-		    struct db_full_path_list *search_results_list = NULL;
-		    struct db_full_path_list *entry = NULL;
-		    BU_ALLOC(search_results_list, struct db_full_path_list);
-		    BU_LIST_INIT(&(search_results_list->l));
 		    db_add_node_to_full_path(curr_node.path, curr_dp);
 		    /* by convention, the top level node is "unioned" into the global database */
 		    DB_FULL_PATH_SET_CUR_BOOL(curr_node.path, 2);
-		    db_fullpath_traverse(wdbp->dbip, wdbp, search_results_list, &curr_node, find_execute_plans, find_execute_plans, wdbp->wdb_resp, (struct db_plan_t *)dbplan);
-		    for (BU_LIST_FOR(entry, db_full_path_list, &(search_results_list->l))) {
-			/* Need to duplicate each path here so we can free the results list itself -
-			 * once the deprecation is complete just have the tree searches work directly
-			 * on ptbls*/
-			/* duplicate path */
-			bu_ptbl_ins(search_results, (long *)dup_path);
-		    }
-		    db_free_full_path_list(search_results);
+		    db_fullpath_traverse(wdbp->dbip, wdbp, search_results, &curr_node, find_execute_plans, find_execute_plans, wdbp->wdb_resp, (struct db_plan_t *)dbplan);
 		}
 		curr_path++;
 	    }
