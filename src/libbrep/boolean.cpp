@@ -558,9 +558,16 @@ get_subcurve_inside_faces(const ON_Brep* brep1, const ON_Brep* brep2, int fi1, i
 	bu_log("shared_interval: [%g, %g]\n", shared_interval.Min(), shared_interval.Max());
 
     // 4. Replace with the sub-curves.
-    Event->m_curve3d = sub_curve(Event->m_curve3d, shared_interval.Min(), shared_interval.Max());
-    Event->m_curveA = sub_curve(Event->m_curveA, shared_interval.Min(), shared_interval.Max());
-    Event->m_curveB = sub_curve(Event->m_curveB, shared_interval.Min(), shared_interval.Max());
+    ON_Curve *tmp_curve;
+    tmp_curve = sub_curve(Event->m_curve3d, shared_interval.Min(), shared_interval.Max());
+    delete Event->m_curve3d;
+    Event->m_curve3d = tmp_curve;
+    tmp_curve = sub_curve(Event->m_curveA, shared_interval.Min(), shared_interval.Max());
+    delete Event->m_curveA;
+    Event->m_curveA = tmp_curve;
+    tmp_curve = sub_curve(Event->m_curveB, shared_interval.Min(), shared_interval.Max());
+    delete Event->m_curveB;
+    Event->m_curveB = tmp_curve;
 
     if (Event->m_curve3d == NULL || Event->m_curveA == NULL || Event->m_curveB == NULL)
 	return -1;
@@ -578,7 +585,7 @@ link_curves(const ON_SimpleArray<SSICurve>& in, ON_ClassArray<LinkedCurve>& out)
     ON_ClassArray<LinkedCurve> tmp;
     for (int i = 0; i < in.Count(); i++) {
 	LinkedCurve linked;
-	linked.m_ssi_curves.Append(*in[i].Duplicate());
+	linked.m_ssi_curves.Append(in[i]);
 	tmp.Append(linked);
     }
 
@@ -1090,11 +1097,6 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 	    }
 	}
     }
-
-    for (int i = 0; i < curves_from_ssi.Count(); i++)
-	for (int j = 0; j < curves_from_ssi[i].m_ssi_curves.Count(); j++)
-	    if (curves_from_ssi[i].m_ssi_curves[j].m_curve)
-		delete curves_from_ssi[i].m_ssi_curves[j].m_curve;
 
     return 0;
 }
@@ -1712,6 +1714,13 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 	ON_SimpleArray<TrimmedFace*> splitted;
 	split_trimmed_face(splitted, first, linked_curves);
 	trimmedfaces.Append(splitted);
+	
+	// Delete the curves passed in.
+	// Only the copies of them will be used later.
+	for (int j = 0; j < linked_curves.Count(); j++)
+	    for (int k = 0; k < linked_curves[j].m_ssi_curves.Count(); k++)
+		if (linked_curves[j].m_ssi_curves[k].m_curve)
+		    delete linked_curves[j].m_ssi_curves[k].m_curve;
     }
 
     if (trimmedfaces.Count() != original_faces.Count()) {
