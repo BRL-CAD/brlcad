@@ -443,7 +443,7 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     Xsqr.cf[0] = dprime[X] * dprime[X];
     Xsqr.cf[1] = 2 * dprime[X] * pprime[X];
     Xsqr.cf[2] = pprime[X] * pprime[X];
-    
+
     /* 9/4 * Y**2*/
     Ysqr.dgr = 2;
     Ysqr.cf[0] = 9/4 * dprime[Y] * dprime[Y];
@@ -501,7 +501,7 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     S.cf[4] = Acube.cf[4] - Z3_X2_Y2.cf[3];
     S.cf[5] = Acube.cf[5] - Z3_X2_Y2.cf[4];
     S.cf[6] = Acube.cf[6] - Z3_X2_Y2.cf[5];
-         
+
     /* It is known that the equation is sextic (of order 6). Therefore, if the
      * root finder returns other than 6 roots, return an error.
      */

@@ -226,10 +226,10 @@ icv_writeline(icv_image_t *bif, int y, void *data, ICV_DATA type)
     }
 
     ICV_IMAGE_VAL_INT(bif);
-    
+
     if(y > bif->height || y < 0)
         return -1;
-    
+
     if(data == NULL)
         return -1;
 
@@ -257,13 +257,13 @@ icv_writepixel(icv_image_t *bif, int x, int y, double *data)
     double *dst;
 
     ICV_IMAGE_VAL_INT(bif);
-    
+
     if(x > bif->width || x < 0)
         return -1;
-    
+
     if(y > bif->height || y < 0)
         return -1;
-        
+
     if(data == NULL)
         return -1;
 

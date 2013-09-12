@@ -53,7 +53,7 @@
  * // in a representation context?  Used by the REPRESENTATION_RELATIONSHIP objects.
  * #300=SHAPE_REPRESENTATION('',(...,#9004,#9013,...), #20);
  *
- * // Transformation definitions - I think these are similar to matricies over combs?
+ * // Transformation definitions - I think these are similar to matrices over combs?
  *
  * #8001=CARTESIAN_POINT('',(0.E0,0.E0,0.E0));
  * #8002=DIRECTION('',(0.E0,0.E0,1.E0));
@@ -117,7 +117,7 @@
  * as a quick check to determine if the comb is a parent or not, if we accept that as a convention.
  *
  * Because combs reference combs in BRL-CAD, the step product definitions associated with combs will need to be
- * fully created before the assembly usage occurances can start to be assembled.  A search that collects all combs
+ * fully created before the assembly usage occurrences can start to be assembled.  A search that collects all combs
  * will provide a convenient list for multiple passes that create and then assemble combs, as will a similar search
  * for solids (currently just breps...).  Should also make sure the tree is union only for AP203, where booleans are
  * not supported. Once boolean evaluation is in place, should be able to default to brep solids for combs with non

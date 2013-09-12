@@ -19,7 +19,7 @@
  */
 /** @file ppm.c
  *
- * This file contains reading and writting routines for ppm format.
+ * This file contains reading and writing routines for ppm format.
  *
  */
 
