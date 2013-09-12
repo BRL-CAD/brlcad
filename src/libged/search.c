@@ -124,11 +124,6 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     /* COPY argv_orig to argv; */
     char **argv = NULL;
 
-    if (argc < 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv_orig[0], usage);
-	return TCL_OK;
-    }
-
     /* Find how many options we have */
 
     optcnt = 0;
@@ -158,13 +153,13 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 	}
     }
 
-    if (want_help) {
+    argc -= (bu_optind - 1);
+    argv_orig += (bu_optind - 1);
+
+    if (want_help || argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv_orig[0], usage);
 	return TCL_OK;
     }
-
-    argc -= (bu_optind - 1);
-    argv_orig += (bu_optind - 1);
 
     /* COPY argv_orig to argv; */
     argv = bu_dup_argv(argc, argv_orig);
@@ -347,6 +342,83 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     bu_free_argv(argc, argv);
     return TCL_OK;
 }
+
+#if 0
+    struct bu_ptbl *
+db_search(const char *plan_string,
+	const char *path,
+	struct rt_wdb *wdbp,
+	int search_type)
+{
+    struct bu_ptbl *search_results = NULL;
+    char **plan_argv = NULL;
+    void *dbplan;
+    struct bu_vls plan_string_vls;
+
+    if (!path)return NULL;
+    /* get the plan string into an argv array */
+    plan_argv = (char **)bu_calloc(strlen(plan_string) + 1, sizeof(char *), "plan argv");
+    bu_vls_init(&plan_string_vls);
+    bu_vls_sprintf(&plan_string_vls, "%s", plan_string);
+    bu_argv_from_string(&plan_argv[0], strlen(plan_string), bu_vls_addr(&plan_string_vls));
+    dbplan = db_search_formplan(plan_argv, wdbp->dbip, wdbp);
+
+    /* Based on the type of search, execute the plan and build the appropriate
+     *      * final results table */
+    BU_ALLOC(search_results, struct bu_ptbl);
+    bu_ptbl_init(search_results, 8, "initialize searchresults table");
+    switch (search_type) {
+	case DB_SEARCH_STANDARD:
+	    struct directory *dp = db_lookup(wdbp->dbip, path, LOOKUP_QUIET);
+	    if (dp != RT_DIR_NULL) {
+		struct db_node_t curr_node;
+		db_add_node_to_full_path(curr_node.path, dp);
+		/* by convention, the top level node is "unioned" into the global database */
+		DB_FULL_PATH_SET_CUR_BOOL(curr_node.path, 2);
+		db_fullpath_traverse(wdbp->dbip, wdbp, search_results, &curr_node, find_execute_plans, find_execute_plans, wdbp->wdb_resp, (struct db_plan_t *)dbplan);
+	    }
+	    break;
+	case DB_SEARCH_UNIQ_OBJ:
+	    struct directory *dp = db_lookup(wdbp->dbip, path, LOOKUP_QUIET);
+	    if (dp != RT_DIR_NULL) {
+		struct db_node_t curr_node;
+		struct bu_ptbl *initial_search_results = NULL;
+		BU_ALLOC(initial_search_results, struct bu_ptbl);
+		bu_ptbl_init(initial_search_results, 8, "initialize search results table");
+		db_add_node_to_full_path(curr_node.path, dp);
+		/* by convention, the top level node is "unioned" into the global database */
+		DB_FULL_PATH_SET_CUR_BOOL(curr_node.path, 2);
+		db_fullpath_traverse(wdbp->dbip, wdbp, initial_search_results, &curr_node, find_execute_plans, find_execute_plans, wdbp->wdb_resp, (struct db_plan_t *)dbplan);
+		/* For this return, we want a list of all unique leaf objects */
+		if ((int)BU_PTBL_LEN(initial_search_results) > 0) {
+		    struct bu_ptbl *uniq_db_objs = NULL;
+		    BU_ALLOC(uniq_db_objs, struct bu_ptbl);
+		    bu_ptbl_init(uniq_db_objs, 8, "initialize unique objects table");
+		    for(int i = (int)BU_PTBL_LEN(initial_search_results) - 1; i >= 0; i--){
+			dfptr = (struct db_full_path *)BU_PTBL_GET(initial_search_results, i);
+			if (bu_ptbl_ins_unique(uniq_db_objs, (long *)entry->path->fp_names[entry->path->fp_len - 1]) == -1) {
+			    struct db_full_path *new_entry;
+			    BU_ALLOC(new_entry, struct db_full_path);
+			    db_full_path_init(new_entry);
+			    db_add_node_to_full_path(new_entry, entry->path->fp_names[entry->path->fp_len - 1]);
+			    bu_ptbl_ins(search_results, (long *)new_entry);
+			}
+		    }
+		    bu_ptbl_free(uniq_db_objs);
+		}
+		bu_ptbl_free(initial_search_results);
+	    }
+	    break;
+	default:
+	    break;
+    }
+    bu_vls_free(&plan_string_vls);
+    bu_free((char *)plan_argv, "free plan argv");
+    db_search_freeplan(&dbplan);
+    return search_results;
+}
+#endif
+
 
 
 /*
