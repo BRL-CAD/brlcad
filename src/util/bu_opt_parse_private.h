@@ -41,10 +41,10 @@ public:
   virtual void failure(TCLAP::CmdLineInterface& c, TCLAP::ArgException& e) {
     std::string progName = c.getProgramName();
 
-  // trim path (user can use 'which prog' if he wants it
-  std::string::size_type idx = progName.rfind('/');
-  if (idx != std::string::npos)
-     progName.erase(0, idx+1);
+    // trim path (user can use 'which prog' if he wants it
+    std::string::size_type idx = progName.rfind('/');
+    if (idx != std::string::npos)
+      progName.erase(0, idx+1);
 
     std::cerr << "Input error: " << e.argId() << std::endl
               << "             " << e.error() << std::endl << std::endl;
