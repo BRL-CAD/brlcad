@@ -450,6 +450,12 @@ inline void CmdLine::parse(std::vector<std::string>& args)
 		_progName = args.front();
 		args.erase(args.begin());
 
+  // trim path (user can use 'which prog' if he wants it
+  std::string::size_type idx = _progName.rfind('/');
+  if (idx != std::string::npos)
+      _progName.erase(0, idx+1);
+
+
 		int requiredCount = 0;
 
 		for (int i = 0; static_cast<unsigned int>(i) < args.size(); i++) 
@@ -577,6 +583,7 @@ inline std::string& CmdLine::getVersion()
 
 inline std::string& CmdLine::getProgramName()
 {
+
 	return _progName;
 }
 
