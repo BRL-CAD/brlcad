@@ -56,9 +56,10 @@ typedef enum {
 typedef union {
   /* important that first field is int */
   int i; /* also use as bool */
-  char c;
-  float f;
   char *s;
+  char c;
+  double d;
+  float f;
 } bu_arg_value;
 
 /* TCLAP::Arg */
