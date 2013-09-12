@@ -49,7 +49,7 @@ public:
 
       _shortUsage(c, std::cerr );
 
-      std::cerr << std::endl << "For complete usage and HELP type: "
+      std::cerr << std::endl << "For complete usage and help type: "
                 << std::endl << "   " << progName << " --help"
                 << std::endl << std::endl;
     }
