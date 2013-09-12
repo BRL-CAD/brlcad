@@ -1236,9 +1236,6 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &
 		pt2d = loop[k]->PointAt(loop[k]->Domain().ParameterAt(l/100.0));
 		ptarray.Append(face.SurfaceOf()->PointAt(pt2d.x, pt2d.y));
 	    }
-	    // The curve is closed within a tolerance
-	    // if (ptarray[0].DistanceTo(ptarray[100]) < INTERSECTION_TOL)
-		// ptarray[100] = ptarray[0];
 	    c3d = new ON_PolylineCurve(ptarray);
 	}
 
@@ -1256,6 +1253,7 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &
 	    int ti = brep->AddTrimCurve(loop[k]);
 	    ON_BrepTrim& trim = brep->NewSingularTrim(brep->m_V[i], breploop, srf->IsIsoparametric(*loop[k]), ti);
 	    trim.m_tolerance[0] = trim.m_tolerance[1] = MAX_FASTF;
+	    delete c3d;
 	    continue;
 	}
 
