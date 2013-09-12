@@ -33,6 +33,8 @@
 #include "bu_opt_parse_private.h"
 #include "bu_opt_parse.h"
 
+#include <vector>
+
 using namespace std;
 using namespace TCLAP;
 
@@ -48,6 +50,11 @@ void handle_ValueArg(bu_arg_vars *a, CmdLine &cmd);
 
 void handle_SwitchArg(bu_arg_vars *a, CmdLine &cmd);
 void handle_UnlabeledValueArg(bu_arg_vars *a, CmdLine &cmd);
+
+/**
+ * need vec for deleting Arg pointers when done
+ */
+static vector<Arg*> Arg_pointers;
 
 /**
  * construct all for TCLAP handling, ensure input args get proper values for the caller
@@ -111,8 +118,19 @@ bu_opt_parse(bu_arg_vars *args[], int argc, char **argv)
   } catch (TCLAP::ArgException &e) { // catch any exceptions
 
     cerr << "error: " << e.error() << " for arg " << e.argId() << endl;
+
+    // cleanup
+    if (!Arg_pointers.empty())
+      for (unsigned i = 0; i < Arg_pointers.size(); ++i)
+        delete Arg_pointers[i];
+
     return BU_ARG_PARSE_ERR;
   }
+
+  // cleanup
+  if (!Arg_pointers.empty())
+    for (unsigned i = 0; i < Arg_pointers.size(); ++i)
+      delete Arg_pointers[i];
 
   return retval;
 
@@ -123,6 +141,8 @@ void
 handle_SwitchArg(bu_arg_vars *a, CmdLine &cmd)
 {
   SwitchArg *A = new SwitchArg(a->flag, a->name, a->desc, a->val.i);
+  if (A)
+    Arg_pointers.push_back(A);
   cmd.add(A);
 }
 
@@ -133,7 +153,7 @@ handle_UnlabeledValueArg(bu_arg_vars *a, CmdLine &cmd)
   // this is a templated type
   bu_arg_value_t val_type = a->val_type;
   string type_desc;
-  Arg *A;
+  Arg *A = 0;
   switch (val_type) {
       case BU_ARG_BOOL: {
         bool val = a->val.i;
@@ -185,6 +205,8 @@ handle_UnlabeledValueArg(bu_arg_vars *a, CmdLine &cmd)
       }
         break;
   }
+  if (A)
+    Arg_pointers.push_back(A);
 }
 
 /* not yet ready
@@ -192,23 +214,31 @@ void
 handle_MultiArg(bu_arg_vars *a, CmdLine &cmd)
 {
   MultiArg *A = new MultiArg();
+  if (A)
+    Arg_pointers.push_back(A);
 }
 
 void
 handle_MultiSwitchArg(bu_arg_vars *a, CmdLine &cmd)
 {
   MultiSwitchArg *A = new MultiSwitchArg();
+  if (A)
+    Arg_pointers.push_back(A);
 }
 
 void
 handle_UnlabeledMultiArg(bu_arg_vars *a, CmdLine &cmd)
 {
   UnlabeledMultiArg *A = new UnlabeledMultiArg();
+  if (A)
+    Arg_pointers.push_back(A);
 }
 
 void
 handle_ValueArg(bu_arg_vars *a, CmdLine &cmd)
 {
   ValueArg *A = new ValueArg();
+  if (A)
+    Arg_pointers.push_back(A);
 }
 */
