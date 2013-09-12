@@ -2283,7 +2283,7 @@ db_search_unique_objects_strplan(const char *plan_string,        /* search plan 
 #if 0
 struct bu_ptbl *
 db_search(const char *plan_string,
-	const char *path_strings[], /* TODO - should this be a bu_ptbl of char * rather than an array?  more flexible in terms of reuse of dynamic path lists and won't have to worry about "is it NULL terminated" issue... */
+	const char *path_strings[],
 	struct rt_wdb *wdbp,
 	int search_type)
 {
