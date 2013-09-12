@@ -155,6 +155,7 @@ main(int ac, char *av[])
     int has_help  = 0;
 
     /* note the arg structs have to be static to compile */
+    /* FIXME: this '-?' arg doesn't wok correctly due to some TCLAPisms */
     static bu_arg_vars h_arg = {
       BU_ARG_SwitchArg,
       "?",
@@ -248,9 +249,12 @@ main(int ac, char *av[])
     dsp2_fname = dsp2_arg.val.s;
     dsp3_fname = dsp3_arg.val.s;
 
-    /* take appropriate action */
+    /* take appropriate action... */
+
+    /* note this exit is success because it is expected
+     * behavior--important for good auto-man-page handling */
     if (has_help) {
-      bu_exit(EXIT_FAILURE, usage);
+      bu_exit(EXIT_SUCCESS, usage);
     }
 
     /* TCLAP doesn't check for confusion in file names */
