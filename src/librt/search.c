@@ -170,17 +170,17 @@ db_free_full_path_list(struct db_full_path_list *path_list)
  */
 void
 db_fullpath_traverse_subtree(union tree *tp,
-			     void (*traverse_func) (struct db_i *, struct rt_wdb *, struct db_full_path_list *, struct db_node_t *,
-						    void (*) (struct db_i *, struct rt_wdb *, struct db_full_path_list *, struct db_node_t *, genptr_t),
-						    void (*) (struct db_i *, struct rt_wdb *, struct db_full_path_list *, struct db_node_t *, genptr_t),
+			     void (*traverse_func) (struct db_i *, struct rt_wdb *, struct bu_ptbl *, struct db_node_t *,
+						    void (*) (struct db_i *, struct rt_wdb *, struct bu_ptbl *, struct db_node_t *, genptr_t),
+						    void (*) (struct db_i *, struct rt_wdb *, struct bu_ptbl *, struct db_node_t *, genptr_t),
 						    struct resource *,
 						    genptr_t),
 			     struct db_i *dbip,
 			     struct rt_wdb *wdbp,
-			     struct db_full_path_list *results,
+			     struct bu_ptbl *results,
 			     struct db_node_t *db_node,
-			     void (*comb_func) (struct db_i *, struct rt_wdb *, struct db_full_path_list *, struct db_node_t *, genptr_t),
-			     void (*leaf_func) (struct db_i *, struct rt_wdb *, struct db_full_path_list *, struct db_node_t *, genptr_t),
+			     void (*comb_func) (struct db_i *, struct rt_wdb *, struct bu_ptbl *, struct db_node_t *, genptr_t),
+			     void (*leaf_func) (struct db_i *, struct rt_wdb *, struct bu_ptbl *, struct db_node_t *, genptr_t),
 			     struct resource *resp,
 			     genptr_t client_data)
 {
@@ -249,10 +249,10 @@ db_fullpath_traverse_subtree(union tree *tp,
 void
 db_fullpath_traverse(struct db_i *dbip,
 		     struct rt_wdb *wdbp,
-		     struct db_full_path_list *results,
+		     struct bu_ptbl *results,
 		     struct db_node_t *db_node,
-		     void (*comb_func) (struct db_i *, struct rt_wdb *, struct db_full_path_list *, struct db_node_t *, genptr_t),
-		     void (*leaf_func) (struct db_i *, struct rt_wdb *, struct db_full_path_list *, struct db_node_t *, genptr_t),
+		     void (*comb_func) (struct db_i *, struct rt_wdb *, struct bu_ptbl *, struct db_node_t *, genptr_t),
+		     void (*leaf_func) (struct db_i *, struct rt_wdb *, struct bu_ptbl *, struct db_node_t *, genptr_t),
 		     struct resource *resp,
 		     genptr_t client_data)
 {
@@ -315,7 +315,7 @@ db_fullpath_traverse(struct db_i *dbip,
 
 
 static struct db_plan_t *
-palloc(enum db_search_ntype t, int (*f)(struct db_plan_t *, struct db_node_t *, struct db_i *, struct rt_wdb *, struct db_full_path_list *))
+palloc(enum db_search_ntype t, int (*f)(struct db_plan_t *, struct db_node_t *, struct db_i *, struct rt_wdb *, struct bu_ptbl *))
 {
     struct db_plan_t *newplan;
 
@@ -332,7 +332,7 @@ palloc(enum db_search_ntype t, int (*f)(struct db_plan_t *, struct db_node_t *, 
  * True if expression is true.
  */
 HIDDEN int
-f_expr(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results)
+f_expr(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *wdbp, struct bu_ptbl *results)
 {
     struct db_plan_t *p = NULL;
     int state = 0;
@@ -352,7 +352,7 @@ f_expr(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
 HIDDEN int
 c_openparen(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput))
 {
-    (*resultplan) = (palloc(N_OPENPAREN, (int (*)(struct db_plan_t *, struct db_node_t *, struct db_i *, struct rt_wdb *, struct db_full_path_list *))-1));
+    (*resultplan) = (palloc(N_OPENPAREN, (int (*)(struct db_plan_t *, struct db_node_t *, struct db_i *, struct rt_wdb *, struct bu_ptbl *))-1));
     return BRLCAD_OK;
 }
 
@@ -360,7 +360,7 @@ c_openparen(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), s
 HIDDEN int
 c_closeparen(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput))
 {
-    (*resultplan) = (palloc(N_CLOSEPAREN, (int (*)(struct db_plan_t *, struct db_node_t *, struct db_i *, struct rt_wdb *, struct db_full_path_list *))-1));
+    (*resultplan) = (palloc(N_CLOSEPAREN, (int (*)(struct db_plan_t *, struct db_node_t *, struct db_i *, struct rt_wdb *, struct bu_ptbl *))-1));
     return BRLCAD_OK;
 }
 
@@ -371,7 +371,7 @@ c_closeparen(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), 
  * Negation of a primary; the unary NOT operator.
  */
 HIDDEN int
-f_not(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results)
+f_not(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *wdbp, struct bu_ptbl *results)
 {
     struct db_plan_t *p = NULL;
     int state = 0;
@@ -392,7 +392,7 @@ c_not(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct 
 
 
 HIDDEN int
-find_execute_nested_plans(struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results, struct db_node_t *db_node, genptr_t inputplan) {
+find_execute_nested_plans(struct db_i *dbip, struct rt_wdb *wdbp, struct bu_ptbl *results, struct db_node_t *db_node, genptr_t inputplan) {
     struct db_plan_t *p = NULL;
     struct db_plan_t *plan = (struct db_plan_t *)inputplan;
     int state = 0;
@@ -413,7 +413,7 @@ find_execute_nested_plans(struct db_i *dbip, struct rt_wdb *wdbp, struct db_full
  * objects at any level above the current object depth.
  */
 HIDDEN int
-f_above(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results)
+f_above(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *wdbp, struct bu_ptbl *results)
 {
     int state = 0;
     struct db_node_t curr_node;
@@ -448,15 +448,15 @@ c_above(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struc
  */
 HIDDEN int
 db_fullpath_stateful_traverse_subtree(union tree *tp,
-				      int (*traverse_func) (struct db_i *, struct rt_wdb *, struct db_full_path_list *results, struct db_node_t *,
-							    int (*) (struct db_i *, struct rt_wdb *, struct db_full_path_list *, struct db_node_t *, genptr_t),
-							    int (*) (struct db_i *, struct rt_wdb *, struct db_full_path_list *, struct db_node_t *, genptr_t),
+				      int (*traverse_func) (struct db_i *, struct rt_wdb *, struct bu_ptbl *results, struct db_node_t *,
+							    int (*) (struct db_i *, struct rt_wdb *, struct bu_ptbl *, struct db_node_t *, genptr_t),
+							    int (*) (struct db_i *, struct rt_wdb *, struct bu_ptbl *, struct db_node_t *, genptr_t),
 							    struct resource *,
 							    genptr_t),
-				      struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results,
+				      struct db_i *dbip, struct rt_wdb *wdbp, struct bu_ptbl *results,
 				      struct db_node_t *db_node,
-				      int (*comb_func) (struct db_i *, struct rt_wdb *, struct db_full_path_list *, struct db_node_t *, genptr_t),
-				      int (*leaf_func) (struct db_i *, struct rt_wdb *, struct db_full_path_list *, struct db_node_t *, genptr_t),
+				      int (*comb_func) (struct db_i *, struct rt_wdb *, struct bu_ptbl *, struct db_node_t *, genptr_t),
+				      int (*leaf_func) (struct db_i *, struct rt_wdb *, struct bu_ptbl *, struct db_node_t *, genptr_t),
 				      struct resource *resp,
 				      genptr_t client_data)
 {
@@ -561,10 +561,10 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
  * a value > 0 and return that value.
  */
 HIDDEN int
-db_fullpath_stateful_traverse(struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results,
+db_fullpath_stateful_traverse(struct db_i *dbip, struct rt_wdb *wdbp, struct bu_ptbl *results,
 			      struct db_node_t *db_node,
-			      int (*comb_func) (struct db_i *, struct rt_wdb *, struct db_full_path_list *, struct db_node_t *, genptr_t),
-			      int (*leaf_func) (struct db_i *, struct rt_wdb *, struct db_full_path_list *, struct db_node_t *, genptr_t),
+			      int (*comb_func) (struct db_i *, struct rt_wdb *, struct bu_ptbl *, struct db_node_t *, genptr_t),
+			      int (*leaf_func) (struct db_i *, struct rt_wdb *, struct bu_ptbl *, struct db_node_t *, genptr_t),
 			      struct resource *resp,
 			      genptr_t client_data)
 {
@@ -649,7 +649,7 @@ db_fullpath_stateful_traverse(struct db_i *dbip, struct rt_wdb *wdbp, struct db_
  * below the current object in the tree.
  */
 HIDDEN int
-f_below(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results)
+f_below(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *wdbp, struct bu_ptbl *results)
 {
     struct db_node_t curr_node;
     struct db_full_path belowpath;
@@ -701,7 +701,7 @@ c_below(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struc
  * not evaluated if the first expression is true.
  */
 HIDDEN int
-f_or(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results)
+f_or(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *wdbp, struct bu_ptbl *results)
 {
     struct db_plan_t *p = NULL;
     int state = 0;
@@ -734,7 +734,7 @@ c_or(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct d
  * matches pattern using Pattern Matching Notation S3.14
  */
 HIDDEN int
-f_name(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
+f_name(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct bu_ptbl *UNUSED(results))
 {
     struct directory *dp;
     dp = DB_FULL_PATH_CUR_DIR(db_node->path);
@@ -763,7 +763,7 @@ c_name(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
  * matches pattern using case insensitive Pattern Matching Notation S3.14
  */
 HIDDEN int
-f_iname(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
+f_iname(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct bu_ptbl *UNUSED(results))
 {
     struct directory *dp;
     dp = DB_FULL_PATH_CUR_DIR(db_node->path);
@@ -793,7 +793,7 @@ c_iname(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pl
  * For -iregex, regexp is a case-insensitive (basic) regular expression.
  */
 HIDDEN int
-f_regex(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
+f_regex(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct bu_ptbl *UNUSED(results))
 {
     return !(regexec(&plan->regexp_data, db_path_to_string(db_node->path), 0, NULL, 0));
 }
@@ -845,7 +845,7 @@ c_iregex(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_p
  * supplied to the attr option
  */
 HIDDEN int
-f_attr(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
+f_attr(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *UNUSED(wdbp), struct bu_ptbl *UNUSED(results))
 {
     struct bu_vls attribname = BU_VLS_INIT_ZERO;
     struct bu_vls value = BU_VLS_INIT_ZERO;
@@ -1103,7 +1103,7 @@ c_attr(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
  * associated with an object.
  */
 HIDDEN int
-f_stdattr(struct db_plan_t *UNUSED(plan), struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
+f_stdattr(struct db_plan_t *UNUSED(plan), struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *UNUSED(wdbp), struct bu_ptbl *UNUSED(results))
 {
     struct bu_attribute_value_pair *avpp;
     struct bu_attribute_value_set avs;
@@ -1172,7 +1172,7 @@ c_stdattr(char *UNUSED(pattern), char ***UNUSED(ignored), int UNUSED(unused), st
  * region.
  */
 HIDDEN int
-f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *UNUSED(results))
+f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *wdbp, struct bu_ptbl *UNUSED(results))
 {
     struct rt_db_internal intern;
     struct directory *dp;
@@ -1346,7 +1346,7 @@ c_type(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
  *
  */
 HIDDEN int
-f_bool(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
+f_bool(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct bu_ptbl *UNUSED(results))
 {
    int bool_match = 0;
    int bool_type = DB_FULL_PATH_CUR_BOOL(db_node->path);
@@ -1378,7 +1378,7 @@ c_bool(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
  *
  */
 HIDDEN int
-f_maxdepth(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
+f_maxdepth(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct bu_ptbl *UNUSED(results))
 {
     struct db_full_path depthtest;
     int depthcount = -1;
@@ -1413,7 +1413,7 @@ c_maxdepth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db
  *
  */
 HIDDEN int
-f_mindepth(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
+f_mindepth(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct bu_ptbl *UNUSED(results))
 {
     struct db_full_path depthtest;
     int depthcount = -1;
@@ -1451,7 +1451,7 @@ c_mindepth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db
  *
  */
 HIDDEN int
-f_nnodes(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
+f_nnodes(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *UNUSED(wdbp), struct bu_ptbl *UNUSED(results))
 {
     int dogreaterthan = 0;
     int dolessthan = 0;
@@ -1554,7 +1554,7 @@ c_nnodes(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_p
  * with this option.
  */
 HIDDEN int
-f_path(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
+f_path(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct bu_ptbl *UNUSED(results))
 {
     return !bu_fnmatch(plan->path_data, db_path_to_string(db_node->path), 0);
 }
@@ -1579,16 +1579,15 @@ c_path(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
  * list.
  */
 HIDDEN int
-f_print(struct db_plan_t *UNUSED(plan), struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *results)
+f_print(struct db_plan_t *UNUSED(plan), struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct bu_ptbl *results)
 {
-    struct db_full_path_list *new_entry;
+    struct db_full_path *new_entry;
 
-    BU_ALLOC(new_entry, struct db_full_path_list);
-    BU_ALLOC(new_entry->path, struct db_full_path);
+    BU_ALLOC(new_entry, struct db_full_path);
 
-    db_full_path_init(new_entry->path);
-    db_dup_full_path(new_entry->path, (const struct db_full_path *)(db_node->path));
-    BU_LIST_PUSH(&(results->l), &(new_entry->l));
+    db_full_path_init(new_entry);
+    db_dup_full_path(new_entry, (const struct db_full_path *)(db_node->path));
+    bu_ptbl_ins(results, (long *)new_entry);
     return 1;
 }
 
@@ -1630,7 +1629,7 @@ option(char *name)
  * this switch stuff.
  */
 HIDDEN int
-find_create(char ***argvp, struct db_plan_t **resultplan, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results), int *db_search_isoutput)
+find_create(char ***argvp, struct db_plan_t **resultplan, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct bu_ptbl *UNUSED(results), int *db_search_isoutput)
 {
     OPTION *p;
     struct db_plan_t *newplan;
@@ -1697,7 +1696,7 @@ yankexpr(struct db_plan_t **planp, struct db_plan_t **resultplan)          /* po
     struct db_plan_t *node;             /* pointer to returned node or expression */
     struct db_plan_t *tail;             /* pointer to tail of subplan */
     struct db_plan_t *subplan;          /* pointer to head of () expression */
-    extern int f_expr(struct db_plan_t *, struct db_node_t *, struct db_i *, struct rt_wdb *, struct db_full_path_list *);
+    extern int f_expr(struct db_plan_t *, struct db_node_t *, struct db_i *, struct rt_wdb *, struct bu_ptbl *);
     int error_return = BRLCAD_OK;
 
     /* first pull the top node from the plan */
@@ -2038,7 +2037,7 @@ void *
 db_search_formplan(char **argv, struct db_i *dbip, struct rt_wdb *wdbp) {
     struct db_plan_t *plan, *tail;
     struct db_plan_t *newplan = NULL;
-    struct db_full_path_list *results = NULL;
+    struct bu_ptbl *results = NULL;
     int db_search_isoutput = 0;
 
     /*
@@ -2125,7 +2124,7 @@ db_search_formplan(char **argv, struct db_i *dbip, struct rt_wdb *wdbp) {
 
 
 HIDDEN void
-find_execute_plans(struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results, struct db_node_t *db_node, genptr_t inputplan) {
+find_execute_plans(struct db_i *dbip, struct rt_wdb *wdbp, struct bu_ptbl *results, struct db_node_t *db_node, genptr_t inputplan) {
     struct db_plan_t *p;
     struct db_plan_t *plan = (struct db_plan_t *)inputplan;
     for (p = plan; p && (p->eval)(p, db_node, dbip, wdbp, results); p = p->next)
@@ -2157,11 +2156,15 @@ db_search_full_paths(void *searchplan,        /* search plan */
     int i;
     struct directory *dp;
     struct db_full_path dfp;
+    struct db_full_path *dfptr;
     struct db_full_path_list *new_entry = NULL;
     struct db_full_path_list *currentpath = NULL;
-    struct db_full_path_list *searchresults = NULL;
-    BU_ALLOC(searchresults, struct db_full_path_list);
-    BU_LIST_INIT(&(searchresults->l));
+    struct db_full_path_list *searchresults_list = NULL;
+    struct bu_ptbl *searchresults = NULL;
+    BU_ALLOC(searchresults_list, struct db_full_path_list);
+    BU_LIST_INIT(&(searchresults_list->l));
+    BU_ALLOC(searchresults, struct bu_ptbl);
+    bu_ptbl_init(searchresults, 8, "initialize searchresults table");
     /* If nothing is passed in, try to get the list of toplevel objects */
     if (BU_LIST_IS_EMPTY(&(pathnames->l))) {
 	db_full_path_init(&dfp);
@@ -2189,7 +2192,20 @@ db_search_full_paths(void *searchplan,        /* search plan */
 	DB_FULL_PATH_SET_CUR_BOOL(curr_node.path, 2);
 	db_fullpath_traverse(dbip, wdbp, searchresults, &curr_node, find_execute_plans, find_execute_plans, wdbp->wdb_resp, (struct db_plan_t *)searchplan);
     }
-    return searchresults;
+    for(i = 0; i < (int)BU_PTBL_LEN(searchresults); i++){
+	BU_ALLOC(new_entry, struct db_full_path_list);
+	BU_ALLOC(new_entry->path, struct db_full_path);
+	dfptr = (struct db_full_path *)BU_PTBL_GET(searchresults, i);
+	db_full_path_init(new_entry->path);
+	db_dup_full_path(new_entry->path, dfptr);
+	BU_LIST_PUSH(&(searchresults_list->l), &(new_entry->l));
+    }
+    for(i = (int)BU_PTBL_LEN(searchresults) - 1; i >= 0; i--){
+	dfptr = (struct db_full_path *)BU_PTBL_GET(searchresults, i);
+	db_free_full_path(dfptr);
+    }
+    bu_ptbl_free(searchresults);
+    return searchresults_list;
 }
 
 
