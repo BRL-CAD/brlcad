@@ -283,6 +283,7 @@ curve_fitting(ON_Curve* in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool d
 		}
 
 		// The params of the nurbscurve is between [0, 2*pi]
+		delete []knots;
 		return sub_curve(&nurbscurve, t_min, t_max);
 	    }
 	}
@@ -290,6 +291,7 @@ curve_fitting(ON_Curve* in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool d
 
     // We have tried all fittings, but none of them succeed.
     // So we just return the original curve.
+    delete []knots;
     return in;
 }
 
@@ -2486,7 +2488,7 @@ ON_Intersect(const ON_Surface* surfA,
 		}
 	    }
 	}
-	delete knots;
+	delete []knots;
     }
 
     int count_before = overlaps.Count();

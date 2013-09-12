@@ -181,7 +181,7 @@ public:
     void AppendCurvesToArray(ON_SimpleArray<ON_Curve*>& arr) const
     {
 	for (int i = 0; i < m_ssi_curves.Count(); i++)
-	    arr.Append(m_ssi_curves[i].m_curve);
+	    arr.Append(m_ssi_curves[i].m_curve->Duplicate());
     }
 
 #if USE_CONNECTIVITY_GRAPH
@@ -226,8 +226,7 @@ public:
 	const ON_Curve* c = Curve();
 	if (c == NULL)
 	    return NULL;
-	ON_Curve* dup = c->Duplicate();
-	return sub_curve(dup, t1, t2);
+	return sub_curve(c, t1, t2);
     }
 };
 
@@ -260,12 +259,39 @@ struct TrimmedFace {
 	m_rev = false;
     }
 
+    // Destructor
+    ~TrimmedFace()
+    {
+	if (m_belong_to_final != BELONG) {
+	    for (int i = 0; i < m_outerloop.Count(); i++) {
+		if (m_outerloop[i]) {
+		    delete m_outerloop[i];
+		    m_outerloop[i] = NULL;
+		}
+	    }
+	    for (unsigned int i = 0; i < m_innerloop.size(); i++) {
+		for (int j = 0; j < m_innerloop[i].Count(); j++) {
+		    if (m_innerloop[i][j]) {
+			delete m_innerloop[i][j];
+			m_innerloop[i][j] = NULL;
+		    }
+		}
+	    }
+	}
+    }
+
     TrimmedFace *Duplicate() const
     {
 	TrimmedFace *out = new TrimmedFace();
 	out->m_face = m_face;
-	out->m_outerloop = m_outerloop;
+	for (int i = 0; i < m_outerloop.Count(); i++)
+	    if (m_outerloop[i])
+		out->m_outerloop.Append(m_outerloop[i]->Duplicate());
 	out->m_innerloop = m_innerloop;
+	for (unsigned int i = 0; i < m_innerloop.size(); i++)
+	    for (int j = 0; j < m_innerloop[i].Count(); j++)
+		if (m_innerloop[i][j])
+		    out->m_innerloop[i][j] = m_innerloop[i][j]->Duplicate();
 #if USE_CONNECTIVITY_GRAPH
 	out->m_parts = m_parts;
 	out->m_ssi_info = m_ssi_info;
@@ -1756,6 +1782,11 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
     }
 #endif	// #if USE_CONNECTIVITY_GRAPH
 
+    for (int i = 0; i < original_faces.Count(); i++) {
+	delete original_faces[i];
+	original_faces[i] = NULL;
+    }
+
     for (int i = 0; i < trimmedfaces.Count(); i++) {
 	/* Perform inside-outside test to decide whether the trimmed face should
 	 * be used in the final b-rep structure or not.
@@ -1892,6 +1923,13 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 	}
     }
 #endif
+
+    for (int i = 0; i < facecount1 + facecount2; i++)
+	for (int j = 0; j < trimmedfaces[i].Count(); j++)
+	    if (trimmedfaces[i][j]) {
+		delete trimmedfaces[i][j];
+		trimmedfaces[i][j] = NULL;
+	    }
 
     // Check IsValid() and output the message.
     ON_wString ws;
