@@ -56,9 +56,6 @@ extern "C"
 int
 bu_opt_parse(bu_arg_vars *args[], int argc, char **argv)
 {
-  //if (argc < 2)
-  //bu_exit(EXIT_FAILURE, "ERROR: too few args in %s\n", argv[0]);
-
   int retval = BU_ARG_PARSE_SUCCESS;
   try {
 
