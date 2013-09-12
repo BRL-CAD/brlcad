@@ -2292,6 +2292,7 @@ db_search(const char *plan_string,
     char **plan_argv = NULL;
     void *dbplan;
     struct bu_vls plan_string_vls;
+    int i = 0;
 
     /* It is the responsibility of other functions to
      * generate path lists (see db_top_objs, for example)
@@ -2316,14 +2317,13 @@ db_search(const char *plan_string,
     /* Based on the type of search, execute the plan and build the appropriate
      * final results table */
     curr_path = path_strings[0];
+    BU_ALLOC(search_results, struct bu_ptbl);
+    bu_ptbl_init(search_results, 8, "initialize searchresults table");
     switch (search_type) {
 	case DB_SEARCH_STANDARD:
-	    BU_ALLOC(search_results, struct bu_ptbl);
-	    bu_ptbl_init(search_results, 8, "initialize searchresults table");
 	    while (curr_path) {
-		/* search */
 		struct db_node_t curr_node;
-		struct directory *curr_dp = db_lookup(
+		struct directory *curr_dp = db_lookup();
 		if (dp) {
 		    db_add_node_to_full_path(curr_node.path, curr_dp);
 		    /* by convention, the top level node is "unioned" into the global database */
@@ -2334,7 +2334,36 @@ db_search(const char *plan_string,
 	    }
 	    break;
 	case DB_SEARCH_UNIQ_OBJ:
-	    if (!search_path_strings || !search_path_strings[0]) search_path_strings = db_get_top_objs(wdbp);
+	    struct bu_ptbl *uniq_db_objs = NULL;
+	    struct bu_ptbl *initial_search_results = NULL;
+	    BU_ALLOC(uniq_db_objs, struct bu_ptbl);
+	    bu_ptbl_init(uniq_db_objs, 8, "initialize unique objects table");
+	    BU_ALLOC(initial_search_results, struct bu_ptbl);
+	    bu_ptbl_init(initial_search_results, 8, "initialize search results table");
+	    while (curr_path) {
+		struct db_node_t curr_node;
+		struct directory *curr_dp = db_lookup();
+		if (dp) {
+		    db_add_node_to_full_path(curr_node.path, curr_dp);
+		    /* by convention, the top level node is "unioned" into the global database */
+		    DB_FULL_PATH_SET_CUR_BOOL(curr_node.path, 2);
+		    db_fullpath_traverse(wdbp->dbip, wdbp, initial_search_results, &curr_node, find_execute_plans, find_execute_plans, wdbp->wdb_resp, (struct db_plan_t *)dbplan);
+		}
+		curr_path++;
+	    }
+	    /* For this return, we want a list of all unique leaf objects */
+	    for(i = (int)BU_PTBL_LEN(initial_search_results) - 1; i >= 0; i--){
+		dfptr = (struct db_full_path *)BU_PTBL_GET(initial_search_results, i);
+		if (bu_ptbl_ins_unique(uniq_db_objs, (long *)entry->path->fp_names[entry->path->fp_len - 1]) == -1) {
+		    struct db_full_path *new_entry;
+		    BU_ALLOC(new_entry, struct db_full_path);
+		    db_full_path_init(new_entry);
+		    db_add_node_to_full_path(new_entry, entry->path->fp_names[entry->path->fp_len - 1]);
+		    bu_ptbl_ins(search_results, (long *)new_entry);
+		}
+	    }
+	    bu_ptbl_free(initial_search_results);
+	    bu_ptbl_free(uniq_db_objs);
 	    break;
 	case DB_SEARCH_FLAT:
 	    /* for loop */
@@ -2348,7 +2377,6 @@ db_search(const char *plan_string,
     return search_results;
 }
 #endif
-
 /*
  * Local Variables:
  * tab-width: 8
