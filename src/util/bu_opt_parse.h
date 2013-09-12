@@ -64,14 +64,14 @@ typedef union {
 
 /* TCLAP::Arg */
 typedef struct bu_arg_vars_type {
-  bu_arg_t arg_type;          /* enum: what TCLAP type is the arg      */
-  const char  flag;           /* the "short" option, may be NULL       */
+  bu_arg_t arg_type;          /* enum: type of TCLAP arg               */
+  const char *flag;           /* the "short" option, may be empty ("") */
   const char *name;           /* the "long" option                     */
   const char *desc;           /* a brief description                   */
   bu_arg_req_t req;           /* bool: is arg required?                */
   bu_arg_req_t valreq;        /* bool: is value required?              */
   bu_arg_value val;           /* union: can hold all value types       */
-  bu_arg_value_t val_type;    /* enum: what type is in the value union */
+  bu_arg_value_t val_type;    /* enum: type in the value union         */
 } bu_arg_vars;
 
 /* the action: all in one function */

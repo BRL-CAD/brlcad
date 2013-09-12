@@ -157,7 +157,7 @@ main(int ac, char *av[])
     /* note the arg structs have to be static to compile */
     static bu_arg_vars h_arg = {
       BU_ARG_SwitchArg,
-      '?',
+      "?",
       "short-help",
       "Same as '-h' or '--help'",
       BU_ARG_NOT_REQUIRED,
@@ -169,7 +169,7 @@ main(int ac, char *av[])
     /* define a force option to allow user to shoot himself in the foot */
     static bu_arg_vars f_arg = {
       BU_ARG_SwitchArg,
-      'f',
+      "f",
       "force",
       "Allow overwriting existing files.",
       BU_ARG_NOT_REQUIRED,
@@ -181,7 +181,7 @@ main(int ac, char *av[])
     /* need two file names */
     static bu_arg_vars dsp1_arg = {
       BU_ARG_UnlabeledValueArg,
-      0,
+      "",
       "dsp_infile1",
       "first dsp input file name",
       BU_ARG_REQUIRED,
@@ -193,7 +193,7 @@ main(int ac, char *av[])
     /* need two file names */
     static bu_arg_vars dsp2_arg = {
       BU_ARG_UnlabeledValueArg,
-      0,
+      "",
       "dsp_infile2",
       "second dsp input file name",
       BU_ARG_REQUIRED,
@@ -205,7 +205,7 @@ main(int ac, char *av[])
     /* the output file name */
     static bu_arg_vars dsp3_arg = {
       BU_ARG_UnlabeledValueArg,
-      0,
+      "",
       "dsp_outfile",
       "dsp output file name",
       BU_ARG_REQUIRED,

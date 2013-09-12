@@ -56,9 +56,8 @@ extern "C"
 int
 bu_opt_parse(bu_arg_vars *args[], int argc, char **argv)
 {
-  int i = 0;
-  if (argc < 2)
-    bu_exit(EXIT_FAILURE, "ERROR: too few args in %s\n", argv[0]);
+  //if (argc < 2)
+  //bu_exit(EXIT_FAILURE, "ERROR: too few args in %s\n", argv[0]);
 
   try {
 
@@ -73,6 +72,7 @@ bu_opt_parse(bu_arg_vars *args[], int argc, char **argv)
     cmd.setOutput(&brlstdout);
     // proceed normally ...
 
+    int i = 0;
     while (args[i]) {
       // handle this arg and fill in the values
       // map inputs to TCLAP:
@@ -124,18 +124,13 @@ bu_opt_parse(bu_arg_vars *args[], int argc, char **argv)
 void
 handle_SwitchArg(bu_arg_vars *a, CmdLine &cmd)
 {
-  string flag;
-  flag += a->flag;
-
-  SwitchArg A(flag, a->name, a->desc, a->val.i);
+  SwitchArg A(a->flag, a->name, a->desc, a->val.i);
   cmd.add(A);
 }
 
 void
 handle_UnlabeledValueArg(bu_arg_vars *a, CmdLine &cmd)
 {
-  string flag;
-  flag += a->flag;
 
   // this is a templated type
   bu_arg_value_t val_type = a->val_type;
