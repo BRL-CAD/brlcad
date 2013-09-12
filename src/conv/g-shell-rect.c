@@ -20,11 +20,11 @@
  */
 /** @file conv/g-shell-rect.c
  *
- * This routine creates an single NMG shell from an object by
+ * This routine creates a single NMG shell from an object by
  * raytracing and using the hit points as vertices in the shell.
  * Raytracing is done in the Y-direction primarily. The -r option
  * requests raytracing in the X and Z directions to refine the shape
- * of the shell.
+ * of the shell. [Sept. 12, 2013: CANNOT FIND -r OPTION!]
  *
  */
 
@@ -97,8 +97,8 @@ static struct xray *xz_rays;
 static struct xray *yz_rays;
 static struct rt_i *rtip;
 static struct bn_tol tol;
-static char *usage="Usage:\n\
-	%s [-d debug_level] [-b] [-n] [-v] [-i initial_ray_dir] [-g cell_size] [-d debug_level] -o brlcad_output_file database.g object1 object2...\n";
+static char *usage="Usage: %s [-a rpp_args] [-R edge_tol] [-p plotfile] [-X lvl]\n\
+	[-d debug_level] [-b] [-n] [-i initial_ray_dir] [-g cell_size] -o brlcad_output_file database.g object1 object2...\n";
 static char dir_ch[3]={ 'X', 'Y', 'Z' };
 
 static struct local_part *xy_parts=(struct local_part *)NULL;
@@ -1659,7 +1659,7 @@ main(int argc, char **argv)
     BU_LIST_INIT(&subtract_rpp_head);
 
     /* Get command line arguments. */
-    while ((c=bu_getopt(argc, argv, "bi:a:s:nR:g:o:d:p:X:")) != -1) {
+    while ((c=bu_getopt(argc, argv, "bi:a:nR:g:o:d:p:X:h?")) != -1) {
 	switch (c) {
 	    case 'i':	/* set initial ray direction */
 		switch (*bu_optarg)
@@ -1764,22 +1764,21 @@ main(int argc, char **argv)
 		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.NMG_debug);
 		bu_log("%s: setting RTG.NMG_debug to x%x\n", argv[0], RTG.NMG_debug);
 		break;
+	    default:
+		bu_exit(1, usage, argv[0]);
 	}
     }
 
-    if (bu_optind+1 >= argc) {
+    if (bu_optind+1 >= argc)
 	bu_exit(1, usage, argv[0]);
-    }
 
-    if (output_file) {
-	if ((fd_out = wdb_fopen(output_file)) == NULL) {
-	    perror(argv[0]);
-	    bu_exit(1, "ERROR: Cannot open output file (%s)\n", output_file);
-	}
-	mk_id(fd_out, "test g-sgp");
-    }
-    else
+    if (!output_file)
 	bu_exit(1, "ERROR: Output file must be specified!\n");
+    if ((fd_out = wdb_fopen(output_file)) == NULL) {
+        perror(argv[0]);
+        bu_exit(1, "ERROR: Cannot open output file (%s)\n", output_file);
+    }
+    mk_id(fd_out, "test g-sgp");
 
     if (plotfile) {
 	if ((fd_plot = fopen(plotfile, "wb")) == NULL) {
