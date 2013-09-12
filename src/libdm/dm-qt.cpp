@@ -679,6 +679,14 @@ void CheckProc(ClientData UNUSED(clientData), int UNUSED(flags)) {
     qt_processEvents(&dm_qt);
 }
 
+Tcl_TimerToken token = NULL;
+
+void IdleCall(ClientData UNUSED(clientData)) {
+    qt_processEvents(&dm_qt);
+    Tcl_DeleteTimerHandler(token);
+    token = Tcl_CreateTimerHandler(1, IdleCall, NULL);
+}
+
 __BEGIN_DECLS
 
 /*
@@ -856,6 +864,7 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
     setlocale(LC_ALL, "POSIX");
     bu_log("qt_open called\n");
     Tcl_CreateEventSource(NULL, CheckProc, NULL);
+    Tcl_DoWhenIdle(IdleCall, NULL);
     return dmp;
 }
 

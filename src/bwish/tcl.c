@@ -198,9 +198,7 @@ Cad_MainLoop(void)
 	while (1)
 #endif
 	{
-	    if (qt_tk_processEvents() == TCL_ERROR) {
-		Tcl_DoOneEvent(0);
-	    }
+	Tcl_DoOneEvent(0); 
 	}
 }
 
