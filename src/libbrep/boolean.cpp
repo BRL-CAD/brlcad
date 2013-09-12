@@ -980,6 +980,7 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 	ON_Curve* rev_seg_on_SSI = seg_on_SSI->Duplicate();
 	if (!rev_seg_on_SSI || !rev_seg_on_SSI->Reverse()) {
 	    bu_log("Reverse failed.\n");
+	    continue;
 	} else {
 	    // Update the outerloop
 	    outerloop[p.m_pos + 1] = rev_seg_on_SSI;
@@ -1028,6 +1029,8 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
     // Remove the duplicated segments before the first intersection point.
     if (intersect.Count()) {
 	for (int i = 0; i <= intersect[0].m_pos; i++) {
+	    delete outerloop[0];
+	    outerloop[0] = NULL;
 	    outerloop.Remove(0);
 #if USE_CONNECTIVITY_GRAPH
 	    outerloop_start_end.Remove(0);
@@ -1053,6 +1056,10 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 		curves_from_ssi[i].AppendSSIInfoToArray(newface->m_ssi_info);
 #endif
 	    out.Append(newface);
+	} else {
+	    for (int i = 0; i < outerloop.Count(); i++)
+		if (outerloop[i])
+		    delete outerloop[i];
 	}
     }
 
@@ -1083,6 +1090,11 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 	    }
 	}
     }
+
+    for (int i = 0; i < curves_from_ssi.Count(); i++)
+	for (int j = 0; j < curves_from_ssi[i].m_ssi_curves.Count(); j++)
+	    if (curves_from_ssi[i].m_ssi_curves[j].m_curve)
+		delete curves_from_ssi[i].m_ssi_curves[j].m_curve;
 
     return 0;
 }
