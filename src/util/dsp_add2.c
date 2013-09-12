@@ -235,9 +235,11 @@ main(int ac, char *av[])
     /* parse the args */
     arg_err = bu_opt_parse(args, ac, av);
 
-    /* the TCLAP execption handler has fired with a message */
-    if (arg_err == BU_ARG_PARSE_ERR)
-      bu_exit(EXIT_SUCCESS, NULL);
+    if (arg_err == BU_ARG_PARSE_ERR) {
+        /* the TCLAP execption handler has fired with its own message
+         * so need no words here */
+        bu_exit(EXIT_SUCCESS, NULL);
+    }
 
     /* Get the value parsed by each arg. */
     has_force  = f_arg.val.i;
