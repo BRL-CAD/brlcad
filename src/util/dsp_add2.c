@@ -214,11 +214,6 @@ main(int ac, char *av[])
       BU_ARG_BOOL /* type in union */
     };
 
-    static bu_arg_vars *args[]
-      = {&h_arg, &f_arg,
-         &dsp1_arg, &dsp2_arg, &dsp3_arg,
-         NULL};
-
     /* for C90 we have to initialize a struct's union
      * separately for other than its first field
      */
@@ -230,6 +225,12 @@ main(int ac, char *av[])
 
     dsp3_arg.val.s    = "dsp_outfile";
     dsp3_arg.val_type = BU_ARG_STRING;
+
+    /* place the arg pointers in an array */
+    static bu_arg_vars *args[]
+      = {&h_arg, &f_arg,
+         &dsp1_arg, &dsp2_arg, &dsp3_arg,
+         NULL};
 
     /* parse the args */
     arg_err = bu_opt_parse(args, ac, av);
