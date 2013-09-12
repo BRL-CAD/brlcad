@@ -59,6 +59,7 @@ bu_opt_parse(bu_arg_vars *args[], int argc, char **argv)
   //if (argc < 2)
   //bu_exit(EXIT_FAILURE, "ERROR: too few args in %s\n", argv[0]);
 
+  int retval = BU_ARG_PARSE_SUCCESS;
   try {
 
     // form the command line
@@ -113,10 +114,10 @@ bu_opt_parse(bu_arg_vars *args[], int argc, char **argv)
   } catch (TCLAP::ArgException &e) { // catch any exceptions
 
     cerr << "error: " << e.error() << " for arg " << e.argId() << endl;
-
+    return BU_ARG_PARSE_ERR;
   }
 
-  return 0; // tmp return value
+  return retval;
 
 } // bu_opt_parse
 

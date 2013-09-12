@@ -27,6 +27,11 @@ extern "C" {
 #endif
 
 /* using ideas from Cliff */
+/* types of parse arg results */
+typedef enum {
+  BU_ARG_PARSE_SUCCESS = 0,
+  BU_ARG_PARSE_ERR
+} bu_arg_parse_result_t;
 
 /* types of arg values */
 typedef enum {
