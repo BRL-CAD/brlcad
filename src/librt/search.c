@@ -2283,25 +2283,39 @@ db_search_unique_objects_strplan(const char *plan_string,        /* search plan 
 #if 0
 struct bu_ptbl *
 db_search(const char *plan_string,
-	const char *path_strings[],
+	const char *path_strings[], /* TODO - should this be a bu_ptbl of char * rather than an array?  more flexible in terms of reuse of dynamic path lists and won't have to worry about "is it NULL terminated" issue... */
 	struct rt_wdb *wdbp,
 	int search_type)
 {
     struct bu_ptbl *search_results = NULL;
     const char *curr_path = NULL;
+    char **plan_argv = NULL;
     void *dbplan;
-    const char **search_path_strings = path_strings;
-    char **plan_argv = (char **)bu_calloc(strlen(plan_string) + 1, sizeof(char *), "plan argv");
     struct bu_vls plan_string_vls;
+
+    /* It is the responsibility of other functions to
+     * generate path lists (see db_top_objs, for example)
+     * by the time db_search is called, the list
+     * should be known. For commands that wish to search
+     * multiple automatically expanded paths, they should
+     * run one search per expanded list and use the bu_ptbl
+     * functions to combine the result tables
+     *
+     * TODO - discuss most of above in header comment instead for doxygen */
+    if (!path_strings || !path_strings[0]) {
+	return NULL;
+    }
+
+    /* get the plan string into an argv array */
+    plan_argv = (char **)bu_calloc(strlen(plan_string) + 1, sizeof(char *), "plan argv");
     bu_vls_init(&plan_string_vls);
     bu_vls_sprintf(&plan_string_vls, "%s", plan_string);
     bu_argv_from_string(&plan_argv[0], strlen(plan_string), bu_vls_addr(&plan_string_vls));
     dbplan = db_search_formplan(plan_argv, wdbp->dbip, wdbp);
-    if (!search_path_strings || !search_path_strings[0]) {
-	curr_path = db_search_get_top_objs(wdbp, search_type);
-    } else {
-	curr_path = search_path_strings[0];
-    }
+
+    /* Based on the type of search, execute the plan and build the appropriate
+     * final results table */
+    curr_path = path_strings[0];
     switch (search_type) {
 	case DB_SEARCH_STANDARD:
 	    BU_ALLOC(search_results, struct bu_ptbl);
@@ -2309,7 +2323,7 @@ db_search(const char *plan_string,
 	    while (curr_path) {
 		/* search */
 		struct db_node_t curr_node;
-		struct directory *curr_dp = db_lookup
+		struct directory *curr_dp = db_lookup(
 		if (dp) {
 		    db_add_node_to_full_path(curr_node.path, curr_dp);
 		    /* by convention, the top level node is "unioned" into the global database */
