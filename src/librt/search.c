@@ -2280,32 +2280,18 @@ db_search_unique_objects_strplan(const char *plan_string,        /* search plan 
     return results;
 }
 
-#if 0
 struct bu_ptbl *
 db_search(const char *plan_string,
-	const char *path_strings[],
-	struct rt_wdb *wdbp,
-	int search_type)
+	const char *path,
+	struct rt_wdb *wdbp)
 {
+    struct directory *dp = NULL;
     struct bu_ptbl *search_results = NULL;
-    const char *curr_path = NULL;
     char **plan_argv = NULL;
-    void *dbplan;
+    void *dbplan = NULL;
     struct bu_vls plan_string_vls;
-    int i = 0;
 
-    /* It is the responsibility of other functions to
-     * generate path lists (see db_top_objs, for example)
-     * by the time db_search is called, the list
-     * should be known. For commands that wish to search
-     * multiple automatically expanded paths, they should
-     * run one search per expanded list and use the bu_ptbl
-     * functions to combine the result tables
-     *
-     * TODO - discuss most of above in header comment instead for doxygen */
-    if (!path_strings || !path_strings[0]) {
-	return NULL;
-    }
+    if (!path)return NULL;
 
     /* get the plan string into an argv array */
     plan_argv = (char **)bu_calloc(strlen(plan_string) + 1, sizeof(char *), "plan argv");
@@ -2313,70 +2299,28 @@ db_search(const char *plan_string,
     bu_vls_sprintf(&plan_string_vls, "%s", plan_string);
     bu_argv_from_string(&plan_argv[0], strlen(plan_string), bu_vls_addr(&plan_string_vls));
     dbplan = db_search_formplan(plan_argv, wdbp->dbip, wdbp);
+    if (!dbplan) return NULL;
 
-    /* Based on the type of search, execute the plan and build the appropriate
-     * final results table */
-    curr_path = path_strings[0];
-    BU_ALLOC(search_results, struct bu_ptbl);
-    bu_ptbl_init(search_results, 8, "initialize searchresults table");
-    switch (search_type) {
-	case DB_SEARCH_STANDARD:
-	    while (curr_path) {
-		struct db_node_t curr_node;
-		struct directory *curr_dp = db_lookup();
-		if (dp) {
-		    db_add_node_to_full_path(curr_node.path, curr_dp);
-		    /* by convention, the top level node is "unioned" into the global database */
-		    DB_FULL_PATH_SET_CUR_BOOL(curr_node.path, 2);
-		    db_fullpath_traverse(wdbp->dbip, wdbp, search_results, &curr_node, find_execute_plans, find_execute_plans, wdbp->wdb_resp, (struct db_plan_t *)dbplan);
-		}
-		curr_path++;
-	    }
-	    break;
-	case DB_SEARCH_UNIQ_OBJ:
-	    struct bu_ptbl *uniq_db_objs = NULL;
-	    struct bu_ptbl *initial_search_results = NULL;
-	    BU_ALLOC(uniq_db_objs, struct bu_ptbl);
-	    bu_ptbl_init(uniq_db_objs, 8, "initialize unique objects table");
-	    BU_ALLOC(initial_search_results, struct bu_ptbl);
-	    bu_ptbl_init(initial_search_results, 8, "initialize search results table");
-	    while (curr_path) {
-		struct db_node_t curr_node;
-		struct directory *curr_dp = db_lookup();
-		if (dp) {
-		    db_add_node_to_full_path(curr_node.path, curr_dp);
-		    /* by convention, the top level node is "unioned" into the global database */
-		    DB_FULL_PATH_SET_CUR_BOOL(curr_node.path, 2);
-		    db_fullpath_traverse(wdbp->dbip, wdbp, initial_search_results, &curr_node, find_execute_plans, find_execute_plans, wdbp->wdb_resp, (struct db_plan_t *)dbplan);
-		}
-		curr_path++;
-	    }
-	    /* For this return, we want a list of all unique leaf objects */
-	    for(i = (int)BU_PTBL_LEN(initial_search_results) - 1; i >= 0; i--){
-		dfptr = (struct db_full_path *)BU_PTBL_GET(initial_search_results, i);
-		if (bu_ptbl_ins_unique(uniq_db_objs, (long *)entry->path->fp_names[entry->path->fp_len - 1]) == -1) {
-		    struct db_full_path *new_entry;
-		    BU_ALLOC(new_entry, struct db_full_path);
-		    db_full_path_init(new_entry);
-		    db_add_node_to_full_path(new_entry, entry->path->fp_names[entry->path->fp_len - 1]);
-		    bu_ptbl_ins(search_results, (long *)new_entry);
-		}
-	    }
-	    bu_ptbl_free(initial_search_results);
-	    bu_ptbl_free(uniq_db_objs);
-	    break;
-	case DB_SEARCH_FLAT:
-	    /* for loop */
-	    break;
-	default:
-	    break;
+    /* execute the plan and return the results table */
+    dp = db_lookup(wdbp->dbip, path, LOOKUP_QUIET);
+    if (dp != RT_DIR_NULL) {
+	struct db_node_t curr_node;
+	struct db_full_path start_path;
+	db_full_path_init(&start_path);
+	db_add_node_to_full_path(&start_path, dp);
+	curr_node.path = &start_path;
+	BU_ALLOC(search_results, struct bu_ptbl);
+	BU_PTBL_INIT(search_results);
+	/* by convention, the top level node is "unioned" into the global database */
+	DB_FULL_PATH_SET_CUR_BOOL(curr_node.path, 2);
+	db_fullpath_traverse(wdbp->dbip, wdbp, search_results, &curr_node, find_execute_plans, find_execute_plans, wdbp->wdb_resp, (struct db_plan_t *)dbplan);
     }
     bu_vls_free(&plan_string_vls);
     bu_free((char *)plan_argv, "free plan argv");
     db_search_freeplan(&dbplan);
     return search_results;
 }
-#endif
+
 /*
  * Local Variables:
  * tab-width: 8
