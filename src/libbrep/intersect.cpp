@@ -2487,6 +2487,7 @@ ON_Intersect(const ON_Surface* surfA,
 		    }
 		}
 	    }
+	    delete boundary;
 	}
 	delete []knots;
     }
@@ -3295,6 +3296,7 @@ ON_Intersect(const ON_Surface* surfA,
 	    if (polylines[i]->Count() == 1) {
 		// It's a single point
 		single_pts.Append(startpoint);
+		delete polylines[i];
 		continue;
 	    }
 

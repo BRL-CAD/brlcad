@@ -329,7 +329,8 @@ AppendToPolyCurve(ON_Curve* curve, ON_PolyCurve& polycurve)
 	// The input curve is a polycurve
 	const ON_CurveArray& segments = nested->SegmentCurves();
 	for (int i = 0; i < segments.Count(); i++)
-	    AppendToPolyCurve(segments[i], polycurve);
+	    AppendToPolyCurve(segments[i]->Duplicate(), polycurve);
+	delete nested;
     } else
 	polycurve.Append(curve);
 }
