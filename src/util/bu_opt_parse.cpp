@@ -122,7 +122,7 @@ bu_opt_parse(bu_arg_vars *args[], int argc, char **argv)
 void
 handle_SwitchArg(bu_arg_vars *a, CmdLine &cmd)
 {
-  SwitchArg A(a->flag, a->name, a->desc, a->val.i);
+  SwitchArg *A = new SwitchArg(a->flag, a->name, a->desc, a->val.i);
   cmd.add(A);
 }
 
@@ -133,53 +133,54 @@ handle_UnlabeledValueArg(bu_arg_vars *a, CmdLine &cmd)
   // this is a templated type
   bu_arg_value_t val_type = a->val_type;
   string type_desc;
+  Arg *A;
   switch (val_type) {
       case BU_ARG_BOOL: {
         bool val = a->val.i;
         type_desc = "bool";
-        UnlabeledValueArg<bool> A(a->name, a->desc, a->req, val, type_desc);
+        A = new UnlabeledValueArg<bool>(a->name, a->desc, a->req, val, type_desc);
         cmd.add(A);
       }
         break;
       case BU_ARG_CHAR: {
         char val = a->val.c;
         type_desc = "char";
-        UnlabeledValueArg<char> A(a->name, a->desc, a->req, val, type_desc);
+        A = new UnlabeledValueArg<char>(a->name, a->desc, a->req, val, type_desc);
         cmd.add(A);
       }
         break;
       case BU_ARG_DOUBLE: {
         double val = a->val.d;
         type_desc = "double";
-        UnlabeledValueArg<double> A(a->name, a->desc, a->req, val, type_desc);
+        A = new UnlabeledValueArg<double>(a->name, a->desc, a->req, val, type_desc);
         cmd.add(A);
       }
         break;
       case BU_ARG_FLOAT: {
         type_desc = "float";
         float val = a->val.f;
-        UnlabeledValueArg<float> A(a->name, a->desc, a->req, val, type_desc);
+        A = new UnlabeledValueArg<float>(a->name, a->desc, a->req, val, type_desc);
         cmd.add(A);
       }
         break;
       case BU_ARG_INT: {
         int val = a->val.i;
         type_desc = "int";
-        UnlabeledValueArg<int> A(a->name, a->desc, a->req, val, type_desc);
+        A = new UnlabeledValueArg<int>(a->name, a->desc, a->req, val, type_desc);
         cmd.add(A);
       }
         break;
       case BU_ARG_STRING: {
         string val = a->val.s;
         type_desc = "string";
-        UnlabeledValueArg<string> A(a->name, a->desc, a->req, val, type_desc);
+        A = new UnlabeledValueArg<string>(a->name, a->desc, a->req, val, type_desc);
         cmd.add(A);
       }
         break;
       default: {
         string val = a->val.s;
         type_desc = "string";
-        UnlabeledValueArg<string> A(a->name, a->desc, a->req, val, type_desc);
+        A = new UnlabeledValueArg<string>(a->name, a->desc, a->req, val, type_desc);
         cmd.add(A);
       }
         break;
