@@ -3657,41 +3657,6 @@ RT_EXPORT extern int db_full_path_match_top(const struct db_full_path	*a,
 RT_EXPORT extern int db_full_path_search(const struct db_full_path *a,
 					 const struct directory *dp);
 
-/**
- * search the database using a supplied list of filter criteria.
- * db_search_full_paths returns a bu_list of db_full_path structs to
- * instances of objects matching the filter criteria.  Note that this is
- * a full path tree search of the entire database, not just the toplevel
- * objects that would be reported by the ls command.  E.g., a
- * database with the following objects:
- *
- *       r1            r2
- *       |             |
- *       s1            s1
- *
- * would, if searched from the top level for s1,  return both
- *
- *  /r1/s1
- *
- * and
- *
- *  /r2/s1
- *
- * instead of just s1.  To iterate over the results, see examples of
- * iterating over bu_list structures.  (Bear in mind the db_full_path
- * structures in the list are individually malloced.)
- *
- * To return only unique objects, use
- * db_search_unique_objects, which would return just
- *
- * s1
- *
- * in the above example.  db_search_unique_objects returns a bu_ptbl of
- * (struct directory *) pointers.  To iterate over this list use
- * BU_PTBL_LEN to get the size of the table and BU_PTBL_GET in a for
- * loop to access each element.
- *
- */
 
 /* search.c */
 
@@ -3703,47 +3668,27 @@ struct db_full_path_list {
     struct db_full_path *path;
     int local;
 };
-
-/**
- * Add an object to the db_full_path_list based on its database object name
- */
 DEPRECATED RT_EXPORT extern int db_full_path_list_add(const char *path, int local, struct db_i *dbip, struct db_full_path_list *path_list);
-
-/**
- * Free all entries and the list of a db_full_path_list
- */
 DEPRECATED RT_EXPORT extern void db_free_full_path_list(struct db_full_path_list *path_list);
-
-/**
- * Low level command to process the command line and create a "plan" corresponding to the
- * command arguments.
- */
 DEPRECATED RT_EXPORT extern void *db_search_formplan(char **argv,
 					  struct db_i *dbip,
 					  struct rt_wdb *wdbp);
-
-/**
- * release memory for the formulated plan returned by
- * db_search_formplan().
- */
 DEPRECATED RT_EXPORT extern void db_search_freeplan(void **plan);
-
-/**
- * Low level routines for invocation of search plans
- */
 DEPRECATED RT_EXPORT extern struct db_full_path_list *db_search_full_paths(void *searchplan,
 								struct db_full_path_list *path_list,
 								struct db_i *dbip,
 								struct rt_wdb *wdbp);
-
 DEPRECATED RT_EXPORT extern struct bu_ptbl *db_search_unique_objects(void *searchplan,
 							  struct db_full_path_list *path_list,
 							  struct db_i *dbip,
 							  struct rt_wdb *wdbp);
 
 /**
- *   Programmatic interface to the find-command style search functionality
- *   available in librt for databases.
+ * Programmatic interface to the find-command style search functionality
+ * available in librt for databases.  These functions search the
+ * database using a supplied list of filter criteria and return either
+ * db_full_path instances or directory pointers (depending on the function).
+ * Both types of returns use a bu_ptbl container to hold the set of results.
  *
  * Design notes:
  *
@@ -3768,21 +3713,17 @@ DEPRECATED RT_EXPORT extern struct bu_ptbl *db_search_unique_objects(void *searc
  *   sufficient justification for the added API complexity without hard
  *   evidence that complexity is needed.
  *
- * * For simplicity, go with one path per search.  Unless re-building plan
- *   is prohibitively expensive (and the argument in the previous case is
- *   that it isn't) this lets the calling function manage its own path inputs.
- *   Don't worry about the various ways to generate top level object lists
- *   here - that belongs in another function or functions.
- *
- * * Rather than offer the option to post-process the search results into
- *   unique objects here, leave that up to callers.  A calling function
- *   may want to consolidate all leaf nodes for multiple paths, do so only
- *   on a per-path basis, etc. - leave it up to them.
+ * * Offer simple function calls for the common cases of one path and an
+ *   array of paths, and for both input cases support returning either
+ *   a db_full_path set or a unique directory pointer set via table.  This
+ *   should cover the most common programattic situations, while still
+ *   allowing commands enough flexibility to do what they need to (see,
+ *   for example, combining results from search sets (multiple arrays
+ *   of paths) in libged's search result consolidation.)
  *
  * * Need to add a plan option for dealing with hidden geometry during the search,
  *   maybe -nohide or something like that...  The traversal by default shouldn't
- *   traverse down anything hidden, but be able to override that at user request.
- *
+ *   traverse down anything hidden, but we should be able to override that at user request.
  *
  * WARNING:  THESE FUNCTIONS ARE STILL IN DEVELOPMENT - IT IS NOT YET
  * ASSUMED THAT THE SEARCH API IS IN ITS FINAL FORM - DO NOT DEPEND ON IT
