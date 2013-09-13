@@ -59,6 +59,10 @@ qt_close(struct dm *dmp)
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
 
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_close\n");
+    }
+
     delete privars->font;
     delete privars->painter;
     delete privars->pix;
@@ -75,7 +79,6 @@ qt_close(struct dm *dmp)
     bu_free((genptr_t)dmp->dm_vars.pub_vars, "qt_close: dm_xvars");
     bu_free((genptr_t)dmp, "qt_close: dmp");
 
-    bu_log("CLOSE called\n");
     return TCL_OK;
 }
 
@@ -83,9 +86,11 @@ qt_close(struct dm *dmp)
 HIDDEN int
 qt_drawBegin(struct dm *dmp)
 {
-    bu_log("qt_drawBegin called\n");
-
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_drawBegin\n");
+    }
 
     privars->pix->fill(privars->bg);
 
@@ -99,10 +104,11 @@ qt_drawBegin(struct dm *dmp)
 HIDDEN int
 qt_drawEnd(struct dm *dmp)
 {
-    bu_log("qt_drawEnd called\n");
-
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
 
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_drawEnd\n");
+    }
     privars->qapp->processEvents();
     qt_sendRepaintEvent(dmp);
     privars->qapp->processEvents();
@@ -122,9 +128,11 @@ qt_normal(struct dm *UNUSED(dmp))
 HIDDEN int
 qt_loadMatrix(struct dm *dmp, fastf_t *mat, int UNUSED(which_eye))
 {
-    bu_log("qt_loadMatrix called\n");
-
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_loadMatrix\n");
+    }
 
     MAT_COPY(privars->qmat, mat);
 
@@ -143,10 +151,12 @@ qt_loadPMatrix(struct dm *UNUSED(dmp), fastf_t *UNUSED(mat))
 HIDDEN int
 qt_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
 {
-    bu_log("qt_drawString2D called\n");
-
     int sx, sy;
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_drawString2D\n");
+    }
 
     sx = dm_Normal2Xx(dmp, x);
     sy = dm_Normal2Xy(dmp, y, use_aspect);
@@ -162,9 +172,12 @@ qt_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUSE
 HIDDEN int
 qt_drawLine2D(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2)
 {
-    bu_log("qt_drawLine2D called\n");
     int sx1, sy1, sx2, sy2;
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_drawLine2D\n");
+    }
 
     sx1 = dm_Normal2Xx(dmp, x_1);
     sx2 = dm_Normal2Xx(dmp, x_2);
@@ -201,6 +214,10 @@ qt_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
     int sx, sy;
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
 
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_drawPoint2D\n");
+    }
+
     sx = dm_Normal2Xx(dmp, x);
     sy = dm_Normal2Xy(dmp, y, 0);
 
@@ -231,8 +248,6 @@ qt_drawPoints3D(struct dm *UNUSED(dmp), int UNUSED(npoints), point_t *UNUSED(poi
 HIDDEN int
 qt_drawVList(struct dm *dmp, struct bn_vlist *vp)
 {
-    bu_log("qt_drawVList called\n");
-
     static vect_t spnt, lpnt, pnt;
     struct bn_vlist *tvp;
     QLine lines[1024];
@@ -242,6 +257,10 @@ qt_drawVList(struct dm *dmp, struct bn_vlist *vp)
     point_t *pt_prev = NULL;
     fastf_t dist_prev=1.0;
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_drawVList\n");
+    }
 
     /* delta is used in clipping to insure clipped endpoint is
      * slightly in front of eye plane (perspective mode only).  This
@@ -418,9 +437,11 @@ qt_draw(struct dm *UNUSED(dmp), struct bn_vlist *(*callback_function)(void *), g
 HIDDEN int
 qt_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int UNUSED(strict), fastf_t UNUSED(transparency))
 {
-    bu_log("qt_setFGColor called\n");
-
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_setFGColor\n");
+    }
 
     dmp->dm_fg[0] = r;
     dmp->dm_fg[1] = g;
@@ -441,9 +462,11 @@ qt_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b,
 HIDDEN int
 qt_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
-    bu_log("qt_setBGColor called\n");
-
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_setBGColor\n");
+    }
 
     privars->bg.setRgb(r, g, b);
 
@@ -462,9 +485,11 @@ qt_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 HIDDEN int
 qt_setLineAttr(struct dm *dmp, int width, int style)
 {
-    bu_log("qt_setLineAttr called\n");
-
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_setLineAttr\n");
+    }
 
     dmp->dm_lineWidth = width;
     dmp->dm_lineStyle = style;
@@ -489,7 +514,9 @@ qt_setLineAttr(struct dm *dmp, int width, int style)
 HIDDEN void
 qt_reshape(struct dm *dmp, int width, int height)
 {
-    bu_log("qt_reshape called\n");
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_reshape\n");
+    }
 
     dmp->dm_height = height;
     dmp->dm_width = width;
@@ -501,8 +528,6 @@ qt_reshape(struct dm *dmp, int width, int height)
 HIDDEN int
 qt_configureWin(struct dm *dmp, int force)
 {
-    bu_log("qt_configureWin called\n");
-
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
 
@@ -560,7 +585,9 @@ qt_configureWin(struct dm *dmp, int force)
 HIDDEN int
 qt_setWinBounds(struct dm *dmp, fastf_t *w)
 {
-    bu_log("qt_setWinBounds called\n");
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_setWinBounds\n");
+    }
 
     dmp->dm_clipmin[0] = w[0];
     dmp->dm_clipmin[1] = w[2];
@@ -708,8 +735,9 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
     struct dm_xvars *pubvars = NULL;
     struct qt_vars *privars = NULL;
 
-    if (argc < 0 || !argv)
+    if (argc < 0 || !argv) {
 	return DM_NULL;
+    }
 
     if ((tkwin = Tk_MainWindow(interp)) == NULL) {
 	return DM_NULL;
@@ -746,8 +774,9 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
 	else
 	    bu_vls_strcpy(&dmp->dm_dName, ":0.0");
     }
-    if (bu_vls_strlen(&init_proc_vls) == 0)
+    if (bu_vls_strlen(&init_proc_vls) == 0) {
 	bu_vls_strcpy(&init_proc_vls, "bind_dm");
+    }
 
     /* initialize dm specific variables */
     pubvars->devmotionnotify = LASTEvent;
@@ -862,9 +891,15 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
     MAT_IDN(privars->qmat);
 
     setlocale(LC_ALL, "POSIX");
-    bu_log("qt_open called\n");
+
     Tcl_CreateEventSource(NULL, CheckProc, NULL);
+
     Tcl_DoWhenIdle(IdleCall, NULL);
+
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_open called\n");
+    }
+
     return dmp;
 }
 
