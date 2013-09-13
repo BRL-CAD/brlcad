@@ -1727,7 +1727,7 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 	ON_SimpleArray<TrimmedFace*> splitted;
 	split_trimmed_face(splitted, first, linked_curves);
 	trimmedfaces.Append(splitted);
-	
+
 	// Delete the curves passed in.
 	// Only the copies of them will be used later.
 	for (int j = 0; j < linked_curves.Count(); j++)

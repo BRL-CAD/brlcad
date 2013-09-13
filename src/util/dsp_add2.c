@@ -237,7 +237,7 @@ main(int ac, char *av[])
     arg_err = bu_opt_parse(args, ac, av);
 
     if (arg_err == BU_ARG_PARSE_ERR) {
-        /* the TCLAP execption handler has fired with its own message
+        /* the TCLAP exception handler has fired with its own message
          * so need no words here */
         bu_exit(EXIT_SUCCESS, NULL);
     }

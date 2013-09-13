@@ -125,7 +125,7 @@ typedef struct icv_image icv_image_t;
  * Validates input icv_struct, if failure (in validation) returns -1
  */
 #define ICV_IMAGE_VAL_INT(_i)  if (!ICV_IMAGE_IS_INITIALIZED(_i)) return -1
-	    
+
 /**
  * Validates input icv_struct, if failure (in validation) returns NULL
  */

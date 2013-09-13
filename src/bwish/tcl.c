@@ -198,7 +198,7 @@ Cad_MainLoop(void)
 	while (1)
 #endif
 	{
-	Tcl_DoOneEvent(0); 
+	Tcl_DoOneEvent(0);
 	}
 }
 
