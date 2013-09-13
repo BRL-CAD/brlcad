@@ -36,7 +36,6 @@ typedef enum {
 /* types of arg values */
 typedef enum {
   BU_ARG_BOOL,
-  BU_ARG_CHAR,
   BU_ARG_DOUBLE,
   BU_ARG_LONG,
   BU_ARG_STRING
