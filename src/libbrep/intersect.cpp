@@ -176,6 +176,8 @@ curve_fitting(ON_Curve* in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool d
     if (in == NULL)
 	return NULL;
 
+    bool changed = false;
+
     // First, eliminate some unnecessary points (if three neighbor points
     // are collinear, the middle one can be removed (for a polyline))
     ON_3dPointArray points;
@@ -199,6 +201,7 @@ curve_fitting(ON_Curve* in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool d
 	    // Some points have been eliminated
 	    if (delete_curve) delete in;
 	    in = new ON_PolylineCurve(new_points);
+	    changed = true;
 	    if (DEBUG_BREP_INTERSECT)
 		bu_log("fitting: %d => %d points.\n", point_count, new_points.Count());
 	}
@@ -208,7 +211,7 @@ curve_fitting(ON_Curve* in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool d
     if (in->IsLinear(fitting_tolerance)) {
 	ON_LineCurve *linecurve = new ON_LineCurve(in->PointAtStart(), in->PointAtEnd());
 	linecurve->ChangeDimension(in->Dimension());
-	if (delete_curve) delete in;
+	if (delete_curve || changed) delete in;
 	return linecurve;
     }
 
@@ -284,6 +287,8 @@ curve_fitting(ON_Curve* in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool d
 
 		// The params of the nurbscurve is between [0, 2*pi]
 		delete []knots;
+		if (delete_curve || changed)
+		    delete in;
 		return sub_curve(&nurbscurve, t_min, t_max);
 	    }
 	}

@@ -539,7 +539,7 @@ get_subcurve_inside_faces(const ON_Brep* brep1, const ON_Brep* brep2, int fi1, i
 	    if (IsPointOnLoop(pt, outerloop2) == 0 && IsPointInsideLoop(pt, outerloop2) == 1) {
 		// According to openNURBS's definition, the domain of m_curve3d,
 		// m_curveA, m_curveB in an ON_SSX_EVENT should be the same.
-		// (See ON_SSX_EVENT::IsValid().
+		// (See ON_SSX_EVENT::IsValid()).
 		// So we don't need to pull the interval back to A
 		intervals2.Append(interval);
 	    }
