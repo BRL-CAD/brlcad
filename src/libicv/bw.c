@@ -27,10 +27,10 @@
 #include "icv.h"
 
 /* defined in encoding.c */
-extern HIDDEN double *uchar2double(unsigned char *data, long int size);
-extern HIDDEN unsigned char *data2uchar(const icv_image_t *bif);
+extern double *uchar2double(unsigned char *data, long int size);
+extern unsigned char *data2uchar(const icv_image_t *bif);
 
-HIDDEN int
+int
 bw_write(icv_image_t *bif, const char *filename)
 {
 
@@ -65,7 +65,7 @@ bw_write(icv_image_t *bif, const char *filename)
     return 0;
 }
 
-HIDDEN icv_image_t *
+icv_image_t *
 bw_read(const char *filename, int width, int height)
 {
     FILE *fp;

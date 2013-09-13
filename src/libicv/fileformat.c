@@ -44,24 +44,24 @@ extern FILE *fdopen(int, const char *);
 #define WRMODE S_IRUSR|S_IRGRP|S_IROTH
 
 /* defined in encoding.c */
-extern HIDDEN double *uchar2double(unsigned char *data, long int size);
-extern HIDDEN unsigned char *data2uchar(const icv_image_t *bif);
+extern double *uchar2double(unsigned char *data, long int size);
+extern unsigned char *data2uchar(const icv_image_t *bif);
 
 /* defined in bw.c */
-extern HIDDEN int bw_write(icv_image_t *bif, const char *filename);
-extern HIDDEN icv_image_t *bw_read(const char *filename, int width, int height);
+extern int bw_write(icv_image_t *bif, const char *filename);
+extern icv_image_t *bw_read(const char *filename, int width, int height);
 
 /* defined in pix.c */
-extern HIDDEN int pix_write(icv_image_t *bif, const char *filename);
-extern HIDDEN icv_image_t *pix_read(const char* filename, int width, int height);
+extern int pix_write(icv_image_t *bif, const char *filename);
+extern icv_image_t *pix_read(const char* filename, int width, int height);
 
 /* defined in dpix.c */
-extern HIDDEN icv_image_t *dpix_read(const char* filename, int width, int height);
-extern HIDDEN int dpix_write(icv_image_t *bif, const char *filename);
+extern icv_image_t *dpix_read(const char* filename, int width, int height);
+extern int dpix_write(icv_image_t *bif, const char *filename);
 
 /* defined in ppm.c */
-extern HIDDEN int ppm_write(icv_image_t *bif, const char *filename);
-HIDDEN icv_image_t* ppm_read(const char *filename);
+extern int ppm_write(icv_image_t *bif, const char *filename);
+extern icv_image_t* ppm_read(const char *filename);
 
 /* private functions */
 
