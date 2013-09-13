@@ -76,10 +76,87 @@ void _ged_free_search_set(struct bu_ptbl *search_set) {
     bu_free(search_set, "free search container");
 }
 
+/* Returns 1 if char string seems to be part of a plan,
+ * else return 0 */
+int
+_ged_plan_item(char *arg)
+{
+    if (arg[0] == '-') return 1;
+    if (arg[0] == '!') return 1;
+    if (arg[0] == '(') return 1;
+    return 0;
+}
+
+/* Wrapper to identify the various types of searches being requested.  Returns:
+ *
+ *  0: path is invalid - db_lookup failed or null input or path normalized to nothing
+ *  1: valid search path
+ *
+ *  The variables is_specific, is_local, and is_flat convey specifics about the search.
+ */
+int
+_ged_search_characterize_path(struct ged *gedp, const char *orig, struct bu_vls *normalized, int *is_specific, int *is_local, int *is_flat)
+{
+    struct directory *path_dp = NULL;
+    (*is_flat) = 0;
+    (*is_specific) = 0;
+    (*is_local) = 0;
+    if (!orig || !normalized) return 0;
+    if (BU_STR_EQUAL(orig, "/")) {
+	return 1;
+    }
+    if (BU_STR_EQUAL(orig, ".")) {
+	(*is_local) = 1;
+	return 1;
+    }
+    bu_vls_sprintf(normalized, "%s", orig);
+    if (bu_vls_addr(normalized)[0] == '|') {
+	(*is_flat) = 1;
+	bu_vls_nibble(normalized, 1);
+    }
+    if (BU_STR_EQUAL(bu_vls_addr(normalized), "/")) {
+	return 1;
+    }
+    if (BU_STR_EQUAL(bu_vls_addr(normalized), ".")) {
+	(*is_local) = 1;
+	return 1;
+    }
+    (*is_local) = _path_scrub(normalized);
+    if (!bu_vls_strlen(normalized)) return 0;
+    if (BU_STR_EQUAL(bu_vls_addr(normalized), "/")) {
+	return 1;
+    }
+    /* We've handled the toplevel special cases - now the only question
+     * is is the path valid */
+    (*is_specific) = 1;
+    path_dp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(normalized), LOOKUP_QUIET);
+    if (path_dp == RT_DIR_NULL) {
+	bu_vls_printf(normalized, " not found in database!");
+	return 0;
+    }
+    return 1;
+}
+
+char **
+_ged_search_localized_obj_list(struct ged *gedp, const char *path)
+{
+    int j;
+    const char *comb_str = "-name *";
+    struct bu_ptbl *tmp_search = db_search_path_obj(comb_str, path, gedp->ged_wdbp);
+    char **path_list = (char **)bu_malloc(sizeof(char *) * ((int)BU_PTBL_LEN(tmp_search)+1), "object path array");
+    for(j = 0; j < (int)BU_PTBL_LEN(tmp_search); j++){
+	path_list[j] = ((struct directory *)BU_PTBL_GET(tmp_search, j))->d_namep;
+    }
+    path_list[BU_PTBL_LEN(tmp_search)] = '\0';
+    bu_ptbl_free(tmp_search);
+    bu_free(tmp_search, "Free search table container");
+    return path_list;
+}
+
 int
 ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 {
-    int i, c, islocal, optcnt;
+    int i, c, optcnt;
     int aflag = 0; /* flag controlling whether hidden objects are examined */
     int want_help = 0;
     int plan_argv = 1;
@@ -145,44 +222,46 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
+    /* If any specific paths are specified before the plan, we need to identify
+     * them and construct search structs. */
     while (!plan_found) {
 	if (!argv[plan_argv]) {
 	    /* OK, no plan - will use default behavior */
 	    plan_found = 1;
 	} else {
-	    if (!((argv[plan_argv][0] == '-') || (argv[plan_argv][0] == '!')  || (argv[plan_argv][0] == '('))) {
-		/* We seem to have a path - make sure it's valid */
+	    if (!(_ged_plan_item(argv[plan_argv]))) {
+		/* We seem to have a path - figure out what type of search it specifies */
+		int is_specific, is_local, is_flat;
 		struct ged_search *new_search;
+		struct directory *path_dp;
+		char **path_list;
+		int search_path_type = _ged_search_characterize_path(gedp, argv[plan_argv], &argvls, &is_specific, &is_local, &is_flat);
 		path_found = 1;
-		bu_vls_sprintf(&argvls, "%s", argv[plan_argv]);
-		islocal = _path_scrub(&argvls);
-		if (BU_STR_EQUAL(argv[plan_argv], ".") || BU_STR_EQUAL(argv[plan_argv], "/") || BU_STR_EQUAL(bu_vls_addr(&argvls), "/")) {
+		if (search_path_type) {
 		    BU_ALLOC(new_search, struct ged_search);
-		    new_search->paths = (const char **)db_tops(gedp->ged_wdbp->dbip, aflag, 0);
-		    new_search->search_type = islocal;
-		    if (!islocal) all_local = 0;
-		    bu_ptbl_ins(search_set, (long *)new_search);
-		    plan_argv++;
 		} else {
-		    struct directory *path_dp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&argvls), LOOKUP_QUIET);
-		    if (!bu_vls_strlen(&argvls) || path_dp == RT_DIR_NULL) {
-			bu_vls_printf(gedp->ged_result_str,  "Search path %s not found in database.\n", argv[plan_argv]);
-			bu_vls_free(&argvls);
-			bu_free_argv(argc, argv);
-			_ged_free_search_set(search_set);
-			return GED_ERROR;
+		    bu_vls_printf(gedp->ged_result_str,  "Search path error:\n input: %s normalized: %s \n", argv[plan_argv]);
+		    bu_vls_free(&argvls);
+		    bu_free_argv(argc, argv);
+		    _ged_free_search_set(search_set);
+		    return GED_ERROR;
+		}
+		if (!is_specific) {
+		    new_search->paths = (const char **)db_tops(gedp->ged_wdbp->dbip, aflag, is_flat);
+		} else {
+		    if (is_flat) {
+			path_list = _ged_search_localized_obj_list(gedp, (const char *)bu_vls_addr(&argvls));
 		    } else {
-			char **path_list = (char **)bu_malloc(sizeof(char *) * 2, "object path array");
+			path_dp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&argvls), LOOKUP_QUIET);
+			path_list = (char **)bu_malloc(sizeof(char *) * 2, "object path array");
 			path_list[0] = path_dp->d_namep;
 			path_list[1] = '\0';
-			BU_ALLOC(new_search, struct ged_search);
-			new_search->paths = (const char **)path_list;
-			new_search->search_type = islocal;
-			if (!islocal) all_local = 0;
-			bu_ptbl_ins(search_set, (long *)new_search);
-			plan_argv++;
 		    }
+		    new_search->paths = (const char **)path_list;
 		}
+		new_search->search_type = is_local;
+		bu_ptbl_ins(search_set, (long *)new_search);
+		plan_argv++;
 	    } else {
 		plan_found = 1;
 		if (!path_found) {
@@ -202,6 +281,12 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     while (argv[plan_argv]) {
 	bu_vls_printf(&search_string, " %s", argv[plan_argv]);
 	plan_argv++;
+    }
+
+    /* Check if all of our searches are local or not */
+    for (i = (int)BU_PTBL_LEN(search_set) - 1; i >= 0; i--){
+	struct ged_search *search = (struct ged_search *)BU_PTBL_GET(search_set, i);
+	if (!(search->search_type)) all_local = 0;
     }
 
     /* If all searches are local, use all supplied paths in the search to
