@@ -268,6 +268,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	}
 	bu_free(bname, "char");
 	if (argc > 2) bu_free(suffix, "char");
+	rt_db_free_internal(&intern);
 	return GED_OK;
     }
 

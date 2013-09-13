@@ -137,6 +137,7 @@ conv_tree(ON_Brep **b, const union tree *t, const struct db_i *dbip)
 			    ret = (*b)->Transform(xform);
 			}
 		    }
+		    BU_FREE(intern, struct rt_db_internal);
 		} else {
 		    bu_log("Cannot find %s.\n", name);
 		    ret = -1;
