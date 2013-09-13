@@ -3792,6 +3792,9 @@ RT_EXPORT extern struct bu_ptbl *db_search(const char *plan_string,
 	                                   const char *path,
 	                                   struct rt_wdb *wdbp);
 
+/* Properly free the table returned by db_search */
+RT_EXPORT void db_free_search_tbl(struct bu_ptbl *search_results);
+
 /* db_open.c */
 /**
  * D B _ S Y N C

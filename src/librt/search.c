@@ -2280,6 +2280,17 @@ db_search_unique_objects_strplan(const char *plan_string,        /* search plan 
     return results;
 }
 
+void db_free_search_tbl(struct bu_ptbl *search_results) {
+    int i;
+    for(i = (int)BU_PTBL_LEN(search_results) - 1; i >= 0; i--){
+	struct db_full_path *path = (struct db_full_path *)BU_PTBL_GET(search_results, i);
+	db_free_full_path(path);
+	bu_free(path, "free search path container");
+    }
+    bu_ptbl_free(search_results);
+    bu_free(search_results, "free search container");
+}
+
 struct bu_ptbl *
 db_search(const char *plan_string,
 	const char *path,
@@ -2314,6 +2325,7 @@ db_search(const char *plan_string,
 	/* by convention, the top level node is "unioned" into the global database */
 	DB_FULL_PATH_SET_CUR_BOOL(curr_node.path, 2);
 	db_fullpath_traverse(wdbp->dbip, wdbp, search_results, &curr_node, find_execute_plans, find_execute_plans, wdbp->wdb_resp, (struct db_plan_t *)dbplan);
+	db_free_full_path(&start_path);
     }
     bu_vls_free(&plan_string_vls);
     bu_free((char *)plan_argv, "free plan argv");
