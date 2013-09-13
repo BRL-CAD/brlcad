@@ -151,8 +151,8 @@ main(int ac, char *av[])
     const char* dsp2_fname = NULL;
     const char* dsp3_fname = NULL;
     int arg_err = 0;
-    int has_force = 0;
-    int has_help  = 0;
+    long has_force = 0;
+    long has_help  = 0;
 
     /* note the arg structs have to be static to compile */
     /* FIXME: this '-?' arg doesn't wok correctly due to some TCLAPisms */
@@ -224,13 +224,13 @@ main(int ac, char *av[])
     /* for C90 we have to initialize a struct's union
      * separately for other than its first field
      */
-    dsp1_arg.val.s    = "dsp_infile1";
+    dsp1_arg.val.s    = 0;
     dsp1_arg.val_type = BU_ARG_STRING;
 
-    dsp2_arg.val.s    = "dsp_infile2";
+    dsp2_arg.val.s    = 0;
     dsp2_arg.val_type = BU_ARG_STRING;
 
-    dsp3_arg.val.s    = "dsp_outfile";
+    dsp3_arg.val.s    = 0;
     dsp3_arg.val_type = BU_ARG_STRING;
 
     /* parse the args */
@@ -243,8 +243,8 @@ main(int ac, char *av[])
     }
 
     /* Get the value parsed by each arg. */
-    has_force  = f_arg.val.i;
-    has_help   = h_arg.val.i;
+    has_force  = f_arg.val.l;
+    has_help   = h_arg.val.l;
     dsp1_fname = dsp1_arg.val.s;
     dsp2_fname = dsp2_arg.val.s;
     dsp3_fname = dsp3_arg.val.s;
