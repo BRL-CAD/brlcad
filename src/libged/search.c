@@ -282,13 +282,15 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		switch(search->search_type) {
 		    case 0:
 			search_results = db_search(bu_vls_addr(&search_string), curr_path, gedp->ged_wdbp);
-			for (j = (int)BU_PTBL_LEN(search_results) - 1; j >= 0; j--){
-			    struct db_full_path *dfptr = (struct db_full_path *)BU_PTBL_GET(search_results, j);
-			    char *full_path = db_path_to_string(dfptr);
-			    bu_vls_printf(gedp->ged_result_str, "%s\n", full_path);
-			    bu_free(full_path, "free string from db_path_to_string");
+			if (search_results) {
+			    for (j = (int)BU_PTBL_LEN(search_results) - 1; j >= 0; j--){
+				struct db_full_path *dfptr = (struct db_full_path *)BU_PTBL_GET(search_results, j);
+				char *full_path = db_path_to_string(dfptr);
+				bu_vls_printf(gedp->ged_result_str, "%s\n", full_path);
+				bu_free(full_path, "free string from db_path_to_string");
+			    }
+			    db_free_search_tbl(search_results);
 			}
-			db_free_search_tbl(search_results);
 			break;
 		    case 1:
 			uniq_db_objs = db_search_obj(bu_vls_addr(&search_string), curr_path, gedp->ged_wdbp);
