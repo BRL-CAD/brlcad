@@ -3739,19 +3739,6 @@ RT_EXPORT extern struct bu_ptbl *db_search_unique_objects(void *searchplan,
 							  struct rt_wdb *wdbp);
 
 /**
- * Use the string form of a search plan to build and execute a search
- */
-RT_EXPORT extern struct db_full_path_list *db_search_full_paths_strplan(const char *plan_string,
-								struct db_full_path_list *path_list,
-								struct db_i *dbip,
-								struct rt_wdb *wdbp);
-
-RT_EXPORT extern struct bu_ptbl *db_search_unique_objects_strplan(const char *plan_string,
-							  struct db_full_path_list *path_list,
-							  struct db_i *dbip,
-							  struct rt_wdb *wdbp);
-
-/**
  * TODO:  PROPOSED API for search functionality
  *
  * This is the proposed replacement to all of the preceding search functionality -
