@@ -66,7 +66,7 @@ struct ged_search {
     int search_type;
 };
 
-void _ged_free_search_set(struct bu_ptbl *search_set) {
+HIDDEN void _ged_free_search_set(struct bu_ptbl *search_set) {
     for(int i = (int)BU_PTBL_LEN(search_set) - 1; i >= 0; i--){
 	struct ged_search *search = (struct ged_search *)BU_PTBL_GET(search_set, i);
 	bu_free(search->paths, "free search paths");
@@ -78,7 +78,7 @@ void _ged_free_search_set(struct bu_ptbl *search_set) {
 
 /* Returns 1 if char string seems to be part of a plan,
  * else return 0 */
-int
+HIDDEN int
 _ged_plan_item(char *arg)
 {
     if (arg[0] == '-') return 1;
@@ -94,7 +94,7 @@ _ged_plan_item(char *arg)
  *
  *  The variables is_specific, is_local, and is_flat convey specifics about the search.
  */
-int
+HIDDEN int
 _ged_search_characterize_path(struct ged *gedp, const char *orig, struct bu_vls *normalized, int *is_specific, int *is_local, int *is_flat)
 {
     struct directory *path_dp = NULL;
@@ -137,7 +137,7 @@ _ged_search_characterize_path(struct ged *gedp, const char *orig, struct bu_vls 
     return 1;
 }
 
-char **
+HIDDEN char **
 _ged_search_localized_obj_list(struct ged *gedp, const char *path)
 {
     int j;

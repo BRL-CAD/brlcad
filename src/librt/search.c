@@ -128,7 +128,7 @@ static OPTION options[] = {
  * A generic traversal function maintaining awareness of the full path
  * to a given object.
  */
-void
+HIDDEN void
 db_fullpath_traverse_subtree(union tree *tp,
 			     void (*traverse_func) (struct db_i *, struct rt_wdb *, struct bu_ptbl *, struct db_node_t *,
 						    void (*) (struct db_i *, struct rt_wdb *, struct bu_ptbl *, struct db_node_t *, genptr_t),
@@ -206,7 +206,7 @@ db_fullpath_traverse_subtree(union tree *tp,
  * Unlike db_preorder_traverse, this routine and its subroutines
  * use db_full_path structures instead of directory structures.
  */
-void
+HIDDEN void
 db_fullpath_traverse(struct db_i *dbip,
 		     struct rt_wdb *wdbp,
 		     struct bu_ptbl *results,
@@ -274,7 +274,7 @@ db_fullpath_traverse(struct db_i *dbip,
 }
 
 
-static struct db_plan_t *
+HIDDEN static struct db_plan_t *
 palloc(enum db_search_ntype t, int (*f)(struct db_plan_t *, struct db_node_t *, struct db_i *, struct rt_wdb *, struct bu_ptbl *))
 {
     struct db_plan_t *newplan;
@@ -1993,7 +1993,7 @@ or_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)           /* pl
 }
 
 
-struct db_plan_t *
+HIDDEN struct db_plan_t *
 db_search_form_plan(char **argv, struct db_i *dbip, struct rt_wdb *wdbp) {
     struct db_plan_t *plan, *tail;
     struct db_plan_t *newplan = NULL;
@@ -2092,7 +2092,7 @@ find_execute_plans(struct db_i *dbip, struct rt_wdb *wdbp, struct bu_ptbl *resul
 
 }
 
-void
+HIDDEN void
 db_search_free_plan(void **vplan) {
     struct db_plan_t *p;
     struct db_plan_t *plan = (struct db_plan_t *)*vplan;
