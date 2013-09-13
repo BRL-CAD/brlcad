@@ -124,46 +124,6 @@ static OPTION options[] = {
     { "-type",      N_TYPE,         c_type,	    O_ARGV },
 };
 
-int
-db_full_path_list_add(const char *path, int local, struct db_i *dbip, struct db_full_path_list *path_list)
-{
-    struct db_full_path dfp;
-    struct db_full_path_list *new_entry;
-    db_full_path_init(&dfp);
-    /* Turn string path into a full path structure */
-    if (db_string_to_path(&dfp, dbip, path) == -1) {
-	db_free_full_path(&dfp);
-	return 1;
-    }
-    /* Make a search list and add the entry from the directory name full path */
-    BU_ALLOC(new_entry, struct db_full_path_list);
-    BU_ALLOC(new_entry->path, struct db_full_path);
-    db_full_path_init(new_entry->path);
-    db_dup_full_path(new_entry->path, (const struct db_full_path *)&dfp);
-    new_entry->local = local;
-    BU_LIST_PUSH(&(path_list->l), &(new_entry->l));
-    db_free_full_path(&dfp);
-    return 0;
-}
-
-void
-db_free_full_path_list(struct db_full_path_list *path_list)
-{
-    struct db_full_path_list *currentpath;
-    if (path_list) {
-	if (!BU_LIST_IS_EMPTY(&(path_list->l))) {
-	    while (BU_LIST_WHILE(currentpath, db_full_path_list, &(path_list->l))) {
-		db_free_full_path(currentpath->path);
-		BU_LIST_DEQUEUE((struct bu_list *)currentpath);
-		bu_free(currentpath->path, "free db_full_path_list path entry");
-		bu_free(currentpath, "free db_full_path_list entry");
-	    }
-	}
-	bu_free(path_list, "free path_list");
-    }
-}
-
-
 /**
  * A generic traversal function maintaining awareness of the full path
  * to a given object.
@@ -2033,8 +1993,8 @@ or_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)           /* pl
 }
 
 
-void *
-db_search_formplan(char **argv, struct db_i *dbip, struct rt_wdb *wdbp) {
+struct db_plan_t *
+db_search_form_plan(char **argv, struct db_i *dbip, struct rt_wdb *wdbp) {
     struct db_plan_t *plan, *tail;
     struct db_plan_t *newplan = NULL;
     struct bu_ptbl *results = NULL;
@@ -2119,7 +2079,7 @@ db_search_formplan(char **argv, struct db_i *dbip, struct rt_wdb *wdbp) {
     if (below_squish(plan, &plan) != BRLCAD_OK) return NULL;              /* below's */
     if (not_squish(plan, &plan) != BRLCAD_OK) return NULL;                /* !'s */
     if (or_squish(plan, &plan) != BRLCAD_OK) return NULL;                 /* -o's */
-    return (void *)plan;
+    return plan;
 }
 
 
@@ -2132,9 +2092,8 @@ find_execute_plans(struct db_i *dbip, struct rt_wdb *wdbp, struct bu_ptbl *resul
 
 }
 
-
 void
-db_search_freeplan(void **vplan) {
+db_search_free_plan(void **vplan) {
     struct db_plan_t *p;
     struct db_plan_t *plan = (struct db_plan_t *)*vplan;
     for (p = plan; p;) {
@@ -2147,8 +2106,62 @@ db_search_freeplan(void **vplan) {
 }
 
 
+
+/*********** DEPRECATED search functionality ******************/
+int
+db_full_path_list_add(const char *path, int local, struct db_i *dbip, struct db_full_path_list *path_list)
+{
+    struct db_full_path dfp;
+    struct db_full_path_list *new_entry;
+    db_full_path_init(&dfp);
+    /* Turn string path into a full path structure */
+    if (db_string_to_path(&dfp, dbip, path) == -1) {
+	db_free_full_path(&dfp);
+	return 1;
+    }
+    /* Make a search list and add the entry from the directory name full path */
+    BU_ALLOC(new_entry, struct db_full_path_list);
+    BU_ALLOC(new_entry->path, struct db_full_path);
+    db_full_path_init(new_entry->path);
+    db_dup_full_path(new_entry->path, (const struct db_full_path *)&dfp);
+    new_entry->local = local;
+    BU_LIST_PUSH(&(path_list->l), &(new_entry->l));
+    db_free_full_path(&dfp);
+    return 0;
+}
+
+/* Internal version of deprecated function */
+void
+_db_free_full_path_list(struct db_full_path_list *path_list)
+{
+    struct db_full_path_list *currentpath;
+    if (path_list) {
+	if (!BU_LIST_IS_EMPTY(&(path_list->l))) {
+	    while (BU_LIST_WHILE(currentpath, db_full_path_list, &(path_list->l))) {
+		db_free_full_path(currentpath->path);
+		BU_LIST_DEQUEUE((struct bu_list *)currentpath);
+		bu_free(currentpath->path, "free db_full_path_list path entry");
+		bu_free(currentpath, "free db_full_path_list entry");
+	    }
+	}
+	bu_free(path_list, "free path_list");
+    }
+}
+
+void
+db_free_full_path_list(struct db_full_path_list *path_list)
+{
+    _db_free_full_path_list(path_list);
+}
+
+void
+db_search_freeplan(void **vplan) {
+    db_search_free_plan(vplan);
+}
+
+/* Internal version of deprecated function */
 struct db_full_path_list *
-db_search_full_paths(void *searchplan,        /* search plan */
+_db_search_full_paths(void *searchplan,        /* search plan */
 		     struct db_full_path_list *pathnames,      /* list of pathnames to traverse */
 		     struct db_i *dbip,
 		     struct rt_wdb *wdbp)
@@ -2208,10 +2221,15 @@ db_search_full_paths(void *searchplan,        /* search plan */
     return searchresults_list;
 }
 
+struct db_full_path_list *
+db_search_full_paths(void *searchplan,        /* search plan */
+		     struct db_full_path_list *pathnames,      /* list of pathnames to traverse */
+		     struct db_i *dbip,
+		     struct rt_wdb *wdbp)
+{
+    return _db_search_full_paths(searchplan, pathnames, dbip, wdbp);
+}
 
-/**
- *
- */
 struct bu_ptbl *
 db_search_unique_objects(void *searchplan,        /* search plan */
 			 struct db_full_path_list *pathnames,      /* list of pathnames to traverse */
@@ -2224,16 +2242,22 @@ db_search_unique_objects(void *searchplan,        /* search plan */
 
     BU_ALLOC(uniq_db_objs, struct bu_ptbl);
 
-    search_results = db_search_full_paths(searchplan, pathnames, dbip, wdbp);
+    search_results = _db_search_full_paths(searchplan, pathnames, dbip, wdbp);
     bu_ptbl_init(uniq_db_objs, 8, "initialize ptr table");
     for (BU_LIST_FOR(entry, db_full_path_list, &(search_results->l))) {
 	bu_ptbl_ins_unique(uniq_db_objs, (long *)entry->path->fp_names[entry->path->fp_len - 1]);
     }
-    db_free_full_path_list(search_results);
+    _db_free_full_path_list(search_results);
 
     return uniq_db_objs;
 }
 
+void *
+db_search_formplan(char **argv, struct db_i *dbip, struct rt_wdb *wdbp) {
+    return (void *)db_search_form_plan(argv, dbip, wdbp);
+}
+
+/*********** New search functionality ******************/
 
 void db_free_search_tbl(struct bu_ptbl *search_results) {
     int i;
@@ -2254,7 +2278,7 @@ db_search_path(const char *plan_string,
     struct directory *dp = NULL;
     struct bu_ptbl *search_results = NULL;
     char **plan_argv = NULL;
-    void *dbplan = NULL;
+    struct db_plan_t *dbplan = NULL;
     struct bu_vls plan_string_vls;
 
     if (!path)return NULL;
@@ -2264,7 +2288,7 @@ db_search_path(const char *plan_string,
     bu_vls_init(&plan_string_vls);
     bu_vls_sprintf(&plan_string_vls, "%s", plan_string);
     bu_argv_from_string(&plan_argv[0], strlen(plan_string), bu_vls_addr(&plan_string_vls));
-    dbplan = db_search_formplan(plan_argv, wdbp->dbip, wdbp);
+    dbplan = db_search_form_plan(plan_argv, wdbp->dbip, wdbp);
     if (!dbplan) return NULL;
 
     /* execute the plan and return the results table */
@@ -2284,7 +2308,7 @@ db_search_path(const char *plan_string,
     }
     bu_vls_free(&plan_string_vls);
     bu_free((char *)plan_argv, "free plan argv");
-    db_search_freeplan(&dbplan);
+    db_search_free_plan((void **)&dbplan);
     return search_results;
 }
 

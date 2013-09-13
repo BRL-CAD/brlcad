@@ -3695,6 +3695,9 @@ RT_EXPORT extern int db_full_path_search(const struct db_full_path *a,
 
 /* search.c */
 
+
+/* DEPRECATED - db_full_path_list structure is replaced by
+ * bu_ptbl and char ** arrays in new search functionality*/
 struct db_full_path_list {
     struct bu_list l;
     struct db_full_path *path;
@@ -3704,18 +3707,18 @@ struct db_full_path_list {
 /**
  * Add an object to the db_full_path_list based on its database object name
  */
-RT_EXPORT extern int db_full_path_list_add(const char *path, int local, struct db_i *dbip, struct db_full_path_list *path_list);
+DEPRECATED RT_EXPORT extern int db_full_path_list_add(const char *path, int local, struct db_i *dbip, struct db_full_path_list *path_list);
 
 /**
  * Free all entries and the list of a db_full_path_list
  */
-RT_EXPORT extern void db_free_full_path_list(struct db_full_path_list *path_list);
+DEPRECATED RT_EXPORT extern void db_free_full_path_list(struct db_full_path_list *path_list);
 
 /**
  * Low level command to process the command line and create a "plan" corresponding to the
  * command arguments.
  */
-RT_EXPORT extern void *db_search_formplan(char **argv,
+DEPRECATED RT_EXPORT extern void *db_search_formplan(char **argv,
 					  struct db_i *dbip,
 					  struct rt_wdb *wdbp);
 
@@ -3723,26 +3726,24 @@ RT_EXPORT extern void *db_search_formplan(char **argv,
  * release memory for the formulated plan returned by
  * db_search_formplan().
  */
-RT_EXPORT extern void db_search_freeplan(void **plan);
+DEPRECATED RT_EXPORT extern void db_search_freeplan(void **plan);
 
 /**
  * Low level routines for invocation of search plans
  */
-RT_EXPORT extern struct db_full_path_list *db_search_full_paths(void *searchplan,
+DEPRECATED RT_EXPORT extern struct db_full_path_list *db_search_full_paths(void *searchplan,
 								struct db_full_path_list *path_list,
 								struct db_i *dbip,
 								struct rt_wdb *wdbp);
 
-RT_EXPORT extern struct bu_ptbl *db_search_unique_objects(void *searchplan,
+DEPRECATED RT_EXPORT extern struct bu_ptbl *db_search_unique_objects(void *searchplan,
 							  struct db_full_path_list *path_list,
 							  struct db_i *dbip,
 							  struct rt_wdb *wdbp);
 
 /**
- * TODO:  PROPOSED API for search functionality
- *
- * This is the proposed replacement to all of the preceding search functionality -
- * the previous API calls will .
+ *   Programmatic interface to the find-command style search functionality
+ *   available in librt for databases.
  *
  * Design notes:
  *
@@ -3781,6 +3782,11 @@ RT_EXPORT extern struct bu_ptbl *db_search_unique_objects(void *searchplan,
  * * Need to add a plan option for dealing with hidden geometry during the search,
  *   maybe -nohide or something like that...  The traversal by default shouldn't
  *   traverse down anything hidden, but be able to override that at user request.
+ *
+ *
+ * WARNING:  THESE FUNCTIONS ARE STILL IN DEVELOPMENT - IT IS NOT YET
+ * ASSUMED THAT THE SEARCH API IS IN ITS FINAL FORM - DO NOT DEPEND ON IT
+ * REMAINING THE SAME UNTIL THIS WARNING IS REMOVED
  *
  */
 RT_EXPORT extern struct bu_ptbl *db_search_path(const char *plan_string,
