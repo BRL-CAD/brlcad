@@ -2234,51 +2234,6 @@ db_search_unique_objects(void *searchplan,        /* search plan */
     return uniq_db_objs;
 }
 
-struct db_full_path_list *
-db_search_full_paths_strplan(const char *plan_string,        /* search plan */
-		     struct db_full_path_list *pathnames,      /* list of pathnames to traverse */
-		     struct db_i *dbip,
-		     struct rt_wdb *wdbp)
-{
-    struct db_full_path_list *results = NULL;
-    struct bu_vls plan_string_vls;
-    void *dbplan;
-    char **plan_argv = (char **)bu_calloc(strlen(plan_string) + 1, sizeof(char *), "plan argv");
-    bu_vls_init(&plan_string_vls);
-    bu_vls_sprintf(&plan_string_vls, "%s", plan_string);
-    bu_argv_from_string(&plan_argv[0], strlen(plan_string), bu_vls_addr(&plan_string_vls));
-    dbplan = db_search_formplan(plan_argv, dbip, wdbp);
-    results = db_search_full_paths(dbplan, pathnames, dbip, wdbp);
-    bu_vls_free(&plan_string_vls);
-    bu_free((char *)plan_argv, "free plan argv");
-    db_search_freeplan(&dbplan);
-    return results;
-}
-
-
-/**
- *
- */
-struct bu_ptbl *
-db_search_unique_objects_strplan(const char *plan_string,        /* search plan */
-			 struct db_full_path_list *pathnames,      /* list of pathnames to traverse */
-			 struct db_i *dbip,
-			 struct rt_wdb *wdbp)
-{
-    struct bu_ptbl *results = NULL;
-    struct bu_vls plan_string_vls;
-    void *dbplan;
-    char **plan_argv = (char **)bu_calloc(strlen(plan_string) + 1, sizeof(char *), "plan argv");
-    bu_vls_init(&plan_string_vls);
-    bu_vls_sprintf(&plan_string_vls, "%s", plan_string);
-    bu_argv_from_string(&plan_argv[0], strlen(plan_string), bu_vls_addr(&plan_string_vls));
-    dbplan = db_search_formplan(plan_argv, dbip, wdbp);
-    results = db_search_unique_objects(dbplan, pathnames, dbip, wdbp);
-    bu_vls_free(&plan_string_vls);
-    bu_free((char *)plan_argv, "free plan argv");
-    db_search_freeplan(&dbplan);
-    return results;
-}
 
 void db_free_search_tbl(struct bu_ptbl *search_results) {
     int i;
@@ -2292,7 +2247,7 @@ void db_free_search_tbl(struct bu_ptbl *search_results) {
 }
 
 struct bu_ptbl *
-db_search(const char *plan_string,
+db_search_path(const char *plan_string,
 	const char *path,
 	struct rt_wdb *wdbp)
 {
@@ -2334,13 +2289,38 @@ db_search(const char *plan_string,
 }
 
 struct bu_ptbl *
-db_search_obj(const char *plan_string,
+db_search_paths(const char *plan_string,
+	const char **paths,
+	struct rt_wdb *wdbp)
+{
+    int i = 0;
+    const char *curr_path = paths[i];
+    struct bu_ptbl *combined_results;
+    BU_ALLOC(combined_results, struct bu_ptbl);
+    BU_PTBL_INIT(combined_results);
+    while (curr_path) {
+	struct bu_ptbl *search_results = db_search_path(plan_string, curr_path, wdbp);
+	if (search_results) {
+	    bu_ptbl_cat(combined_results, search_results);
+	    /* we need to free the search result table itself, but don't do a full
+	     * db_free_seach_tbl - the contents are in use by combined_results*/
+	    bu_ptbl_free(search_results);
+	    bu_free(search_results, "free search container");
+	}
+	i++;
+	curr_path = paths[i];
+    }
+    return combined_results;
+}
+
+struct bu_ptbl *
+db_search_path_obj(const char *plan_string,
 	const char *path,
 	struct rt_wdb *wdbp)
 {
     int i;
     struct bu_ptbl *uniq_db_objs = NULL;
-    struct bu_ptbl *search_results = db_search(plan_string, path, wdbp);
+    struct bu_ptbl *search_results = db_search_path(plan_string, path, wdbp);
     if (search_results) {
 	BU_ALLOC(uniq_db_objs, struct bu_ptbl);
 	BU_PTBL_INIT(uniq_db_objs);
@@ -2351,6 +2331,32 @@ db_search_obj(const char *plan_string,
 	db_free_search_tbl(search_results);
     }
     return uniq_db_objs;
+}
+
+struct bu_ptbl *
+db_search_paths_obj(const char *plan_string,
+	const char **paths,
+	struct rt_wdb *wdbp)
+{
+    int i = 0;
+    int j = 0;
+    const char *curr_path = paths[i];
+    struct bu_ptbl *combined_results;
+    BU_ALLOC(combined_results, struct bu_ptbl);
+    BU_PTBL_INIT(combined_results);
+    while (curr_path) {
+	struct bu_ptbl *search_results = db_search_path(plan_string, curr_path, wdbp);
+	if (search_results) {
+	    for(j = (int)BU_PTBL_LEN(search_results) - 1; j >= 0; j--){
+		struct db_full_path *dfptr = (struct db_full_path *)BU_PTBL_GET(search_results, j);
+		bu_ptbl_ins_unique(combined_results, (long *)dfptr->fp_names[dfptr->fp_len - 1]);
+	    }
+	    db_free_search_tbl(search_results);
+	}
+	i++;
+	curr_path = paths[i];
+    }
+    return combined_results;
 }
 
 /*

@@ -3796,23 +3796,29 @@ RT_EXPORT extern struct bu_ptbl *db_search_unique_objects_strplan(const char *pl
  *   traverse down anything hidden, but be able to override that at user request.
  *
  */
-RT_EXPORT extern struct bu_ptbl *db_search(const char *plan_string,
+RT_EXPORT extern struct bu_ptbl *db_search_path(const char *plan_string,
 	                                   const char *path,
 	                                   struct rt_wdb *wdbp);
+RT_EXPORT extern struct bu_ptbl *db_search_paths(const char *plan_string,
+	                                   const char **paths,
+	                                   struct rt_wdb *wdbp);
 
-/* Properly free the table returned by db_search */
+/* Properly free the tables returned by db_search_path and db_search_paths */
 RT_EXPORT extern void db_free_search_tbl(struct bu_ptbl *search_results);
 
 /* Because a list of unique directory pointers is a common output
- * needed from search, a wrapper is provided that produces a
- * table of directory pointers to unique leaf objects from
- * search.  Note that db_free_search_tbl does *not* free the table returned
+ * needed from search, functions are provided that produce a
+ * table of directory pointers to unique leaf objects from the search
+ * results.  Note that db_free_search_tbl does *not* free the table returned
  * by db_search_obj, but a custom free is not needed - only directory
  * pointers are stored in the table, so a normal bu_ptbl_free combined
  * with a freeing of the table structure itself is sufficient.
  */
-RT_EXPORT extern struct bu_ptbl *db_search_obj(const char *plan_string,
+RT_EXPORT extern struct bu_ptbl *db_search_path_obj(const char *plan_string,
 	                                       const char *path,
+	                                       struct rt_wdb *wdbp);
+RT_EXPORT extern struct bu_ptbl *db_search_paths_obj(const char *plan_string,
+	                                       const char **paths,
 	                                       struct rt_wdb *wdbp);
 
 /* db_open.c */

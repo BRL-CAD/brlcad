@@ -76,7 +76,6 @@ void _ged_free_search_set(struct bu_ptbl *search_set) {
     bu_free(search_set, "free search container");
 }
 
-
 int
 ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 {
@@ -218,7 +217,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 	    struct ged_search *search = (struct ged_search *)BU_PTBL_GET(search_set, i);
 	    const char *curr_path = search->paths[path_cnt];
 	    while (curr_path) {
-		struct bu_ptbl *initial_search_results = db_search(bu_vls_addr(&search_string), curr_path, gedp->ged_wdbp);
+		struct bu_ptbl *initial_search_results = db_search_path(bu_vls_addr(&search_string), curr_path, gedp->ged_wdbp);
 		if (initial_search_results) {
 		    for(j = (int)BU_PTBL_LEN(initial_search_results) - 1; j >= 0; j--){
 			struct db_full_path *dfptr = (struct db_full_path *)BU_PTBL_GET(initial_search_results, j);
@@ -250,7 +249,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		struct bu_ptbl *search_results;
 		switch(search->search_type) {
 		    case 0:
-			search_results = db_search(bu_vls_addr(&search_string), curr_path, gedp->ged_wdbp);
+			search_results = db_search_path(bu_vls_addr(&search_string), curr_path, gedp->ged_wdbp);
 			if (search_results) {
 			    for (j = (int)BU_PTBL_LEN(search_results) - 1; j >= 0; j--){
 				struct db_full_path *dfptr = (struct db_full_path *)BU_PTBL_GET(search_results, j);
@@ -262,7 +261,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 			}
 			break;
 		    case 1:
-			uniq_db_objs = db_search_obj(bu_vls_addr(&search_string), curr_path, gedp->ged_wdbp);
+			uniq_db_objs = db_search_path_obj(bu_vls_addr(&search_string), curr_path, gedp->ged_wdbp);
 			for (j = (int)BU_PTBL_LEN(uniq_db_objs) - 1; j >= 0; j--){
 			    struct directory *uniq_dp = (struct directory *)BU_PTBL_GET(uniq_db_objs, j);
 			    bu_vls_printf(gedp->ged_result_str, "%s\n", uniq_dp->d_namep);
