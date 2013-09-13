@@ -22,6 +22,7 @@
 
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <cstring> // for strdup
 #include "bio.h"
 
 #include "bu.h"
@@ -42,14 +43,25 @@ using namespace TCLAP;
 /* local funcs */
 
 /* not yet ready
-void handle_MultiArg(bu_arg_vars *a, CmdLine &cmd);
-void handle_MultiSwitchArg(bu_arg_vars *a, CmdLine &cmd);
-void handle_UnlabeledMultiArg(bu_arg_vars *a, CmdLine &cmd);
-void handle_ValueArg(bu_arg_vars *a, CmdLine &cmd);
+Arg *handle_MultiArg(bu_arg_vars *a, CmdLine &cmd);
+Arg *handle_MultiSwitchArg(bu_arg_vars *a, CmdLine &cmd);
+Arg *handle_UnlabeledMultiArg(bu_arg_vars *a, CmdLine &cmd);
+Arg *handle_ValueArg(bu_arg_vars *a, CmdLine &cmd);
 */
 
-void handle_SwitchArg(bu_arg_vars *a, CmdLine &cmd);
-void handle_UnlabeledValueArg(bu_arg_vars *a, CmdLine &cmd);
+Arg *handle_SwitchArg(bu_arg_vars *a, CmdLine &cmd);
+Arg *handle_UnlabeledValueArg(bu_arg_vars *a, CmdLine &cmd);
+
+/* not yet ready
+void extract_MultiArg_data(bu_arg_vars *a, Arg *A);
+void extract_MultiSwitchArg_data(bu_arg_vars *a, Arg *A);
+void extract_UnlabeledMultiArg_data(bu_arg_vars *a, Arg *A);
+void extract_ValueArg_data(bu_arg_vars *a, Arg *A);
+*/
+
+void extract_SwitchArg_data(bu_arg_vars *a, Arg *A);
+void extract_UnlabeledValueArg_data(bu_arg_vars *a, Arg *A);
+
 
 /**
  * need vec for deleting Arg pointers when done
@@ -64,6 +76,11 @@ int
 bu_opt_parse(bu_arg_vars *args[], int argc, char **argv)
 {
   int retval = BU_ARG_PARSE_SUCCESS;
+
+  // need a local collection to extract TCLAP data after a successful
+  // parse
+  vector<Arg*> tclap_results;
+
   try {
 
     // form the command line
@@ -81,32 +98,37 @@ bu_opt_parse(bu_arg_vars *args[], int argc, char **argv)
     while (args[i]) {
       // handle this arg and fill in the values
       // map inputs to TCLAP:
+      Arg *A         = 0;
       bu_arg_vars *a = args[i];
       switch (a->arg_type) {
           case BU_ARG_SwitchArg:
-            handle_SwitchArg(a, cmd);
+            A = handle_SwitchArg(a, cmd);
             break;
           case BU_ARG_UnlabeledValueArg:
-            handle_UnlabeledValueArg(a, cmd);
+            A = handle_UnlabeledValueArg(a, cmd);
             break;
 /* not yet ready
           case BU_ARG_MultiArg:
-            handle_MultiArg(a, cmd);
+            A = handle_MultiArg(a, cmd);
             break;
           case BU_ARG_MultiSwitchArg:
-            handle_MultiSwitchArg(a, cmd);
+            A = handle_MultiSwitchArg(a, cmd);
             break;
           case BU_ARG_UnlabeledMultiArg:
-            handle_UnlabeledMultiArg(a, cmd);
+            A = handle_UnlabeledMultiArg(a, cmd);
             break;
           case BU_ARG_ValueArg:
-            handle_ValueArg(a, cmd);
+            A = handle_ValueArg(a, cmd);
             break;
 */
           default:
              // error
             break;
       }
+
+      // save results for later
+      tclap_results.push_back(A);
+
       // next arg
       ++i;
 
@@ -115,7 +137,39 @@ bu_opt_parse(bu_arg_vars *args[], int argc, char **argv)
     // parse the args
     cmd.parse(argc, argv);
 
-  } catch (TCLAP::ArgException &e) { // catch any exceptions
+    // FIXME:  extract the data to send back to the C caller
+    for (unsigned j = 0; j < tclap_results.size(); ++j) {
+      Arg *A         = tclap_results[i];
+      bu_arg_vars *a = args[j];
+      switch (a->arg_type) {
+          case BU_ARG_SwitchArg:
+            extract_SwitchArg_data(a, A);
+            break;
+          case BU_ARG_UnlabeledValueArg:
+            extract_UnlabeledValueArg_data(a, A);
+            break;
+/* not yet ready
+          case BU_ARG_MultiArg:
+            extract_MultiArg_data(a, cmd);
+            break;
+          case BU_ARG_MultiSwitchArg:
+            extract_MultiSwitchArg_data(a, A);
+            break;
+          case BU_ARG_UnlabeledMultiArg:
+            extract_UnlabeledMultiArg_data(a, A);
+            break;
+          case BU_ARG_ValueArg:
+            extract_ValueArg_data(a, A);
+            break;
+*/
+          default:
+             // error
+            break;
+      }
+    }
+
+  } catch (TCLAP::ArgException &e) {
+    // catch and handle any exceptions
 
     cerr << "error: " << e.error() << " for arg " << e.argId() << endl;
 
@@ -127,7 +181,7 @@ bu_opt_parse(bu_arg_vars *args[], int argc, char **argv)
     return BU_ARG_PARSE_ERR;
   }
 
-  // cleanup
+  // successful parse, clean up heap memory used
   if (!Arg_pointers.empty())
     for (unsigned i = 0; i < Arg_pointers.size(); ++i)
       delete Arg_pointers[i];
@@ -136,17 +190,18 @@ bu_opt_parse(bu_arg_vars *args[], int argc, char **argv)
 
 } // bu_opt_parse
 
-
-void
+Arg *
 handle_SwitchArg(bu_arg_vars *a, CmdLine &cmd)
 {
-  SwitchArg *A = new SwitchArg(a->flag, a->name, a->desc, a->val.i);
+  SwitchArg *A = new SwitchArg(a->flag, a->name, a->desc, a->val.l);
   if (A)
     Arg_pointers.push_back(A);
   cmd.add(A);
+
+  return A;
 }
 
-void
+Arg *
 handle_UnlabeledValueArg(bu_arg_vars *a, CmdLine &cmd)
 {
 
@@ -156,16 +211,9 @@ handle_UnlabeledValueArg(bu_arg_vars *a, CmdLine &cmd)
   Arg *A = 0;
   switch (val_type) {
       case BU_ARG_BOOL: {
-        bool val = a->val.i;
+        bool val = (a->val.l ? true : false);
         type_desc = "bool";
         A = new UnlabeledValueArg<bool>(a->name, a->desc, a->req, val, type_desc);
-        cmd.add(A);
-      }
-        break;
-      case BU_ARG_CHAR: {
-        char val = a->val.c;
-        type_desc = "char";
-        A = new UnlabeledValueArg<char>(a->name, a->desc, a->req, val, type_desc);
         cmd.add(A);
       }
         break;
@@ -176,29 +224,22 @@ handle_UnlabeledValueArg(bu_arg_vars *a, CmdLine &cmd)
         cmd.add(A);
       }
         break;
-      case BU_ARG_FLOAT: {
-        type_desc = "float";
-        float val = a->val.f;
-        A = new UnlabeledValueArg<float>(a->name, a->desc, a->req, val, type_desc);
-        cmd.add(A);
-      }
-        break;
-      case BU_ARG_INT: {
-        int val = a->val.i;
-        type_desc = "int";
-        A = new UnlabeledValueArg<int>(a->name, a->desc, a->req, val, type_desc);
+      case BU_ARG_LONG: {
+        long val = a->val.l;
+        type_desc = "long";
+        A = new UnlabeledValueArg<long>(a->name, a->desc, a->req, val, type_desc);
         cmd.add(A);
       }
         break;
       case BU_ARG_STRING: {
-        string val = a->val.s;
+        string val = (a->val.s ? a->val.s : "");
         type_desc = "string";
         A = new UnlabeledValueArg<string>(a->name, a->desc, a->req, val, type_desc);
         cmd.add(A);
       }
         break;
       default: {
-        string val = a->val.s;
+        string val = (a->val.s ? a->val.s : "");
         type_desc = "string";
         A = new UnlabeledValueArg<string>(a->name, a->desc, a->req, val, type_desc);
         cmd.add(A);
@@ -207,38 +248,94 @@ handle_UnlabeledValueArg(bu_arg_vars *a, CmdLine &cmd)
   }
   if (A)
     Arg_pointers.push_back(A);
+  return A;
 }
 
 /* not yet ready
-void
+Arg *
 handle_MultiArg(bu_arg_vars *a, CmdLine &cmd)
 {
   MultiArg *A = new MultiArg();
   if (A)
     Arg_pointers.push_back(A);
+  return A;
 }
 
-void
+Arg *
 handle_MultiSwitchArg(bu_arg_vars *a, CmdLine &cmd)
 {
   MultiSwitchArg *A = new MultiSwitchArg();
   if (A)
     Arg_pointers.push_back(A);
+  return A;
 }
 
-void
+Arg *
 handle_UnlabeledMultiArg(bu_arg_vars *a, CmdLine &cmd)
 {
   UnlabeledMultiArg *A = new UnlabeledMultiArg();
   if (A)
     Arg_pointers.push_back(A);
+  return A;
 }
 
-void
+Arg *
 handle_ValueArg(bu_arg_vars *a, CmdLine &cmd)
 {
   ValueArg *A = new ValueArg();
   if (A)
     Arg_pointers.push_back(A);
+  return A;
 }
+*/
+
+void
+extract_SwitchArg_data(bu_arg_vars *a, Arg *A)
+{
+  SwitchArg *B = dynamic_cast<SwitchArg*>(A);
+  if (a->val_type == BU_ARG_STRING) {
+    bool val = B->getValue();
+    a->val.s = (val ? strdup("true") : strdup("false"));
+   }
+  else {
+    bool val = B->getValue();
+    a->val.l = (val ? 1 : 0);
+  }
+}
+
+void
+extract_UnlabeledValueArg_data(bu_arg_vars *a, Arg *A)
+{
+  if (a->val_type == BU_ARG_STRING) {
+    UnlabeledValueArg<string> *B = dynamic_cast<UnlabeledValueArg<string> *>(A);
+    a->val.s = strdup(B->getValue().c_str());
+  }
+}
+
+/* not yet ready
+void
+extract_MultiArg_data(bu_arg_vars *a, Arg *A)
+{
+  MultiArg *B = dynamic_cast<MultiArg*>(A);
+}
+
+
+void
+extract_MultiSwitchArg_data(bu_arg_vars *a, Arg *A)
+{
+  MultiSwitchArg *B = dynamic_cast<MultiSwitchArg*>(A);
+}
+
+void
+extract_UnlabeledMultiArg_data(bu_arg_vars *a, Arg *A)
+{
+  UnlabeledMultiArg *B = dynamic_cast<UnlabeledMultiArg*>(A);
+}
+
+void
+extract_ValueArg_data(bu_arg_vars *a, Arg *A)
+{
+  ValueArg *B = dynamic_cast<ValueArg*>(A);
+}
+
 */
