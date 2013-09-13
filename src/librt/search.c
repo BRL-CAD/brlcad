@@ -2333,6 +2333,26 @@ db_search(const char *plan_string,
     return search_results;
 }
 
+struct bu_ptbl *
+db_search_obj(const char *plan_string,
+	const char *path,
+	struct rt_wdb *wdbp)
+{
+    int i;
+    struct bu_ptbl *uniq_db_objs = NULL;
+    struct bu_ptbl *search_results = db_search(plan_string, path, wdbp);
+    if (search_results) {
+	BU_ALLOC(uniq_db_objs, struct bu_ptbl);
+	BU_PTBL_INIT(uniq_db_objs);
+	for (i = (int)BU_PTBL_LEN(search_results) - 1; i >= 0; i--){
+	    struct db_full_path *dfptr = (struct db_full_path *)BU_PTBL_GET(search_results, i);
+	    bu_ptbl_ins_unique(uniq_db_objs, (long *)dfptr->fp_names[dfptr->fp_len - 1]);
+	}
+	db_free_search_tbl(search_results);
+    }
+    return uniq_db_objs;
+}
+
 /*
  * Local Variables:
  * tab-width: 8

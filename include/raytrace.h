@@ -3762,7 +3762,15 @@ RT_EXPORT extern struct bu_ptbl *db_search_unique_objects_strplan(const char *pl
  * * As long as struct db_i retains its pointer back to its parent rt_wdb
  *   structure, and dbip is a parameter in rt_wdb, only one of the two is
  *   needed as a parameter and either will work.  Probably go with rt_wdb,
- *   since it isn't tagged as private within the data structure definition.
+ *   since it isn't tagged as private within the data structure definition,
+ *   but on the other hand some ways db_i would be preferable since it
+ *   would allow the search functions to break out cleanly into a
+ *   hypothetical libgio/libdb that is separate from the raytracing.
+ *   Unfortunately, the need to get to the internal form of some of the
+ *   primitives means we do need rt_wdb available for now.  If the ways
+ *   search currently is accessing rt_wdb could be avoided with a future
+ *   improvement/redesign, then db_i and using the private link to rt_wdb
+ *   is justified.  Need to discuss before this API is finalized.
  *
  * * Plan strings are the most intuitive way for humans to spell out a search
  *   pattern - db_search_formplan becomes a behind-the-scenes function that
@@ -3793,7 +3801,19 @@ RT_EXPORT extern struct bu_ptbl *db_search(const char *plan_string,
 	                                   struct rt_wdb *wdbp);
 
 /* Properly free the table returned by db_search */
-RT_EXPORT void db_free_search_tbl(struct bu_ptbl *search_results);
+RT_EXPORT extern void db_free_search_tbl(struct bu_ptbl *search_results);
+
+/* Because a list of unique directory pointers is a common output
+ * needed from search, a wrapper is provided that produces a
+ * table of directory pointers to unique leaf objects from
+ * search.  Note that db_free_search_tbl does *not* free the table returned
+ * by db_search_obj, but a custom free is not needed - only directory
+ * pointers are stored in the table, so a normal bu_ptbl_free combined
+ * with a freeing of the table structure itself is sufficient.
+ */
+RT_EXPORT extern struct bu_ptbl *db_search_obj(const char *plan_string,
+	                                       const char *path,
+	                                       struct rt_wdb *wdbp);
 
 /* db_open.c */
 /**

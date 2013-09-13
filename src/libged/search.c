@@ -269,6 +269,8 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 	bu_ptbl_free(uniq_db_objs);
 	bu_free(uniq_db_objs, "free unique object container");
     } else {
+	/* Search types are either mixed or all full path, so use the standard calls and print
+	 * the full output of each search */
 	for (i = 0; i < (int)BU_PTBL_LEN(search_set); i++){
 	    int path_cnt = 0;
 	    int j;
@@ -276,36 +278,30 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 	    const char *curr_path = search->paths[path_cnt];
 	    while (curr_path) {
 		struct bu_ptbl *uniq_db_objs;
-		struct bu_ptbl *search_results = db_search(bu_vls_addr(&search_string), curr_path, gedp->ged_wdbp);
-		if (search_results) {
-		    switch(search->search_type) {
-			case 0:
-			    for (j = (int)BU_PTBL_LEN(search_results) - 1; j >= 0; j--){
-				struct db_full_path *dfptr = (struct db_full_path *)BU_PTBL_GET(search_results, j);
-				char *full_path = db_path_to_string(dfptr);
-				bu_vls_printf(gedp->ged_result_str, "%s\n", full_path);
-				bu_free(full_path, "free string from db_path_to_string");
-			    }
-			    break;
-			case 1:
-			    BU_ALLOC(uniq_db_objs, struct bu_ptbl);
-			    BU_PTBL_INIT(uniq_db_objs);
-			    for (j = (int)BU_PTBL_LEN(search_results) - 1; j >= 0; j--){
-				struct db_full_path *dfptr = (struct db_full_path *)BU_PTBL_GET(search_results, j);
-				bu_ptbl_ins_unique(uniq_db_objs, (long *)dfptr->fp_names[dfptr->fp_len - 1]);
-			    }
-			    for (j = (int)BU_PTBL_LEN(uniq_db_objs) - 1; j >= 0; j--){
-				struct directory *uniq_dp = (struct directory *)BU_PTBL_GET(uniq_db_objs, j);
-				bu_vls_printf(gedp->ged_result_str, "%s\n", uniq_dp->d_namep);
-			    }
-			    bu_ptbl_free(uniq_db_objs);
-			    bu_free(uniq_db_objs, "free unique object container");
-			    break;
-			default:
-			    bu_log("Warning - ignoring unknown search type %d\n", search->search_type);
-			    break;
-		    }
-		    db_free_search_tbl(search_results);
+		struct bu_ptbl *search_results;
+		switch(search->search_type) {
+		    case 0:
+			search_results = db_search(bu_vls_addr(&search_string), curr_path, gedp->ged_wdbp);
+			for (j = (int)BU_PTBL_LEN(search_results) - 1; j >= 0; j--){
+			    struct db_full_path *dfptr = (struct db_full_path *)BU_PTBL_GET(search_results, j);
+			    char *full_path = db_path_to_string(dfptr);
+			    bu_vls_printf(gedp->ged_result_str, "%s\n", full_path);
+			    bu_free(full_path, "free string from db_path_to_string");
+			}
+			db_free_search_tbl(search_results);
+			break;
+		    case 1:
+			uniq_db_objs = db_search_obj(bu_vls_addr(&search_string), curr_path, gedp->ged_wdbp);
+			for (j = (int)BU_PTBL_LEN(uniq_db_objs) - 1; j >= 0; j--){
+			    struct directory *uniq_dp = (struct directory *)BU_PTBL_GET(uniq_db_objs, j);
+			    bu_vls_printf(gedp->ged_result_str, "%s\n", uniq_dp->d_namep);
+			}
+			bu_ptbl_free(uniq_db_objs);
+			bu_free(uniq_db_objs, "free unique object container");
+			break;
+		    default:
+			bu_log("Warning - ignoring unknown search type %d\n", search->search_type);
+			break;
 		}
 		path_cnt++;
 		curr_path = search->paths[path_cnt];
