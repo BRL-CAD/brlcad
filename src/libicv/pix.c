@@ -22,20 +22,8 @@
  * Contains routines related to pix format.
  *
  */
-
-#include "common.h"
-
-#include <stdlib.h>
-#include <sys/stat.h>	/* for file mode info in WRMODE */
-#include <fcntl.h>
-
-#include "bio.h"
 #include "bu.h"
-#include "bn.h"
 #include "icv.h"
-
-/* this might be a little better than saying 0444 */
-#define WRMODE S_IRUSR|S_IRGRP|S_IROTH
 
 /* defined in encoding.c */
 extern HIDDEN double *uchar2double(unsigned char *data, long int size);
@@ -45,13 +33,8 @@ HIDDEN int
 pix_write(icv_image_t *bif, const char *filename)
 {
     unsigned char *data;
-    int fd;
+    FILE* fp;
     size_t ret, size;
-
-    if (!ICV_IMAGE_IS_INITIALIZED(bif)) {
-	bu_log("ICV Structure not defined.\n");
-	return -1;
-    }
 
     if (bif->color_space == ICV_COLOR_SPACE_GRAY) {
 	icv_gray2rgb(bif);
@@ -61,19 +44,16 @@ pix_write(icv_image_t *bif, const char *filename)
     }
 
     if (filename==NULL) {
-	fd = fileno(stdout);
-#if defined(_WIN32) && !defined(__CYGWIN__)
-    setmode(fd, O_BINARY);
-#endif
-    } else if ((fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, WRMODE)) < 0) {
+	fp = stdout;
+    } else if ((fp = fopen(filename, "w")) == NULL) {
 	bu_log("pix_write: Cannot open file for saving\n");
 	return -1;
     }
 
     data =  data2uchar(bif);
     size = (size_t) bif->width*bif->height*3;
-    ret = write(fd, data, size);
-    close(fd);
+    ret = fwrite(data, 1, size, fp);
+    fclose(fp);
     if (ret != size) {
 	bu_log("pix_write : Short Write");
 	return -1;
@@ -85,18 +65,15 @@ pix_write(icv_image_t *bif, const char *filename)
 HIDDEN icv_image_t *
 pix_read(const char* filename, int width, int height)
 {
-    int fd;
+    FILE* fp;
     unsigned char *data = 0;
     icv_image_t *bif;
-    size_t size;
+    size_t size,ret;
     size_t buffsize=1024*3;
 
     if (filename == NULL) {
-	fd = fileno(stdin);
-#if defined(_WIN32) && !defined(__CYGWIN__)
-    setmode(fd, O_BINARY);
-#endif
-    } else if ((fd = open(filename, O_RDONLY, WRMODE))<0) {
+	fp = stdin;
+    } else if ((fp = fopen(filename, "r")) == NULL) {
 	bu_log("pix_read: Cannot open file for reading\n");
 	return NULL;
     }
@@ -107,11 +84,11 @@ pix_read(const char* filename, int width, int height)
 	int status = 0;
 	size = 0;
 	data = (unsigned char *)bu_malloc(buffsize, "pix_read : unsigned char data");
-	while ((status = read(fd, &data[size], 3))==3) {
+	while ((status = fread(&data[size], 1, 3, fp))==3) {
 	    size+=3;
 	    if (size==buffsize) {
 		buffsize+=1024*3;
-		data = (unsigned char *)bu_realloc(data, buffsize, "pix_read : increase size to acomodate data");
+		data = (unsigned char *)bu_realloc(data, buffsize, "pix_read : increase size to accommodate data");
 	    }
 	}
 	if (size<buffsize) {
@@ -122,10 +99,12 @@ pix_read(const char* filename, int width, int height)
     } else { /* buffer frame wise */
 	size = (size_t) height*width*3;
 	data = (unsigned char *)bu_malloc(size, "pix_read : unsigned char data");
-	if (read(fd, data, size) < 0) {
+	ret = fread(data, 1, size, fp);
+	if (ret!=0 && ferror(fp)) {
 	    bu_log("pix_read: Error Occurred while Reading\n");
 	    bu_free(data, "icv_image data");
 	    bu_free(bif, "icv_structure");
+	    fclose(fp);
 	    return NULL;
 	}
 	bif->height = height;
@@ -136,7 +115,8 @@ pix_read(const char* filename, int width, int height)
     else {
 	/* zero sized image */
 	bu_free(bif, "icv container");
-	bu_free(data, "unisigned char data");
+	bu_free(data, "unsigned char data");
+	fclose(fp);
 	return NULL;
     }
     bif->data = uchar2double(data, size);
@@ -144,7 +124,7 @@ pix_read(const char* filename, int width, int height)
     bif->magic = ICV_IMAGE_MAGIC;
     bif->channels = 3;
     bif->color_space = ICV_COLOR_SPACE_RGB;
-    close(fd);
+    fclose(fp);
     return bif;
 }
 

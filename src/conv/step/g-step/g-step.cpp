@@ -98,6 +98,11 @@ main(int argc, char *argv[])
 	bu_exit(2, "ERROR: unable to read input \"%s\" .g file", argv[0]);
     }
 
+    if (argc < 2) {
+	bu_exit(3, "ERROR: specify object to export");
+    }
+
+
     std::string iflnm = argv[0];
     std::string oflnm = output_file;
 
@@ -114,9 +119,9 @@ main(int argc, char *argv[])
     }
 
     struct db_i *dbip = dotg->GetDBIP();
-    struct directory *dp = db_lookup(dbip, "brep.s", LOOKUP_QUIET);
+    struct directory *dp = db_lookup(dbip, argv[1], LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
-	std::cerr << "ERROR: cannot find " << "brep.s" << "\n" << std::endl;
+	std::cerr << "ERROR: cannot find " << argv[1] << "\n" << std::endl;
 	delete dotg;
 	return 1;
     }
@@ -126,6 +131,7 @@ main(int argc, char *argv[])
     rt_db_get_internal(&intern, dp, dbip, bn_mat_identity, &rt_uniresource);
     RT_CK_DB_INTERNAL(&intern);
     bi = (struct rt_brep_internal*)intern.idb_ptr;
+    struct bu_vls scratch_string;
     //RT_BREP_TEST_MAGIC(bi);
     ON_Brep *brep = bi->brep;
     ON_wString wstr;
@@ -133,6 +139,7 @@ main(int argc, char *argv[])
     brep->Dump(dump);
     ON_String ss = wstr;
     //bu_log("Brep:\n %s\n", ss.Array());
+    bu_vls_init(&scratch_string);
 
     Exporter_Info_AP203 *info = new Exporter_Info_AP203();
 
@@ -153,7 +160,8 @@ main(int argc, char *argv[])
 
     /* 1 - Populate File_Name */
     SdaiFile_name * fn = (SdaiFile_name *)sfile->HeaderDefaultFileName();
-    fn->name_("'brep'");
+    bu_vls_sprintf(&scratch_string, "'%s'", output_file);
+    fn->name_(bu_vls_addr(&scratch_string));
     fn->time_stamp_("");
     StringAggregate_ptr author_tmp = new StringAggregate;
     author_tmp->AddNode(new StringNode("''"));
@@ -189,6 +197,14 @@ main(int argc, char *argv[])
 	std::ofstream stepout(output_file);
 	sfile->WriteExchangeFile(stepout);
     }
+
+    /* Free memory */
+    header_instances->DeleteInstances();
+    instance_list.DeleteInstances();
+    delete dotg;
+    delete registry;
+    delete sfile;
+    bu_vls_free(&scratch_string);
 
     return ret;
 }

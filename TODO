@@ -44,7 +44,7 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   rt_shootrays(), modify to pass all rays down through the spatial
   partitioning simultaneously
 
-* fix the bu_sempahore unit test
+* fix the bu_semaphore unit test
 
 * fix the bn_poly_sub unit test
 
@@ -83,6 +83,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* review proc-db for promotion to src/shapes
 
 * implement new 'reduce' command to perform model reduction.  should
   perform automatic simplification of geometry to reduce complexity by

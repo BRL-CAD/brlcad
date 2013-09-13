@@ -82,8 +82,22 @@ BRLCAD_ADDEXEC(double-asc double-asc.c "libfb;libbu")
 BRLCAD_ADDEXEC(dpix-pix dpix-pix.c libbu)
 BRLCAD_ADDEXEC(dsp_add dsp_add.c libbu)
 
+#=====================================================
+# TCLAP testing
+#=====================================================
 # a test copy for tclap/auto-man-page proof of concept:
-BRLCAD_ADDEXEC(dsp_add_t dsp_add_t.cpp libbu NOINSTALL)
+BRLCAD_ADDEXEC(dsp_add_t dsp_add_t.cpp libbu NO_INSTALL)
+
+# tmp def for testing c wrapper for TCLAP
+BRLCAD_ADDEXEC(dsp_add2 "dsp_add2.c;bu_opt_parse.cpp" libbu NO_INSTALL)
+
+# tmp header to stand-in for bu.h (ignore it)
+CMAKEFILES(bu_opt_parse.h)
+# permanent private header for TCLAP customizations
+CMAKEFILES(bu_opt_parse_private.h)
+#=====================================================
+# end TCLAP testing
+#=====================================================
 
 # Not fixing these for Windows - they're on their way out (deprecated)
 if(NOT WIN32)

@@ -210,6 +210,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	mk_brep(gedp->ged_wdbp, argv[4], bip->brep);
 	rt_db_free_internal(&intern);
 	rt_db_free_internal(&intern2);
+	rt_db_free_internal(&intern_res);
 	return GED_OK;
     }
 
@@ -267,6 +268,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	}
 	bu_free(bname, "char");
 	if (argc > 2) bu_free(suffix, "char");
+	rt_db_free_internal(&intern);
 	return GED_OK;
     }
 

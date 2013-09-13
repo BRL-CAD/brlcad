@@ -169,12 +169,14 @@ build_surface_root(const ON_Surface* surf, const ON_Interval* u_domain, const ON
 
 
 HIDDEN ON_Curve*
-curve_fitting(ON_Curve* in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool delete_curve = false)
+curve_fitting(ON_Curve* in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool delete_curve = true)
 {
     // Fit a *2D* curve into line, arc, ellipse or other comic curves.
 
     if (in == NULL)
 	return NULL;
+
+    bool changed = false;
 
     // First, eliminate some unnecessary points (if three neighbor points
     // are collinear, the middle one can be removed (for a polyline))
@@ -199,6 +201,7 @@ curve_fitting(ON_Curve* in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool d
 	    // Some points have been eliminated
 	    if (delete_curve) delete in;
 	    in = new ON_PolylineCurve(new_points);
+	    changed = true;
 	    if (DEBUG_BREP_INTERSECT)
 		bu_log("fitting: %d => %d points.\n", point_count, new_points.Count());
 	}
@@ -208,7 +211,7 @@ curve_fitting(ON_Curve* in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool d
     if (in->IsLinear(fitting_tolerance)) {
 	ON_LineCurve *linecurve = new ON_LineCurve(in->PointAtStart(), in->PointAtEnd());
 	linecurve->ChangeDimension(in->Dimension());
-	if (delete_curve) delete in;
+	if (delete_curve || changed) delete in;
 	return linecurve;
     }
 
@@ -283,6 +286,9 @@ curve_fitting(ON_Curve* in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool d
 		}
 
 		// The params of the nurbscurve is between [0, 2*pi]
+		delete []knots;
+		if (delete_curve || changed)
+		    delete in;
 		return sub_curve(&nurbscurve, t_min, t_max);
 	    }
 	}
@@ -290,6 +296,7 @@ curve_fitting(ON_Curve* in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool d
 
     // We have tried all fittings, but none of them succeed.
     // So we just return the original curve.
+    delete []knots;
     return in;
 }
 
@@ -2485,8 +2492,9 @@ ON_Intersect(const ON_Surface* surfA,
 		    }
 		}
 	    }
+	    delete boundary;
 	}
-	delete knots;
+	delete []knots;
     }
 
     int count_before = overlaps.Count();
@@ -2708,9 +2716,9 @@ ON_Intersect(const ON_Surface* surfA,
 		// The i-th curve is close loop, we get a complete boundary of
 		// that overlap region.
 		ON_SSX_EVENT Event;
-		Event.m_curve3d = curve_fitting(overlaps[i]->m_curve3d, fitting_tolerance, true);
-		Event.m_curveA = curve_fitting(overlaps[i]->m_curveA, fitting_tolerance_A, true);
-		Event.m_curveB = curve_fitting(overlaps[i]->m_curveB, fitting_tolerance_B, true);
+		Event.m_curve3d = curve_fitting(overlaps[i]->m_curve3d, fitting_tolerance);
+		Event.m_curveA = curve_fitting(overlaps[i]->m_curveA, fitting_tolerance_A);
+		Event.m_curveB = curve_fitting(overlaps[i]->m_curveB, fitting_tolerance_B);
 		Event.m_type = ON_SSX_EVENT::ssx_overlap;
 		// Normalize the curves
 		Event.m_curve3d->SetDomain(ON_Interval(0.0, 1.0));
@@ -3293,6 +3301,7 @@ ON_Intersect(const ON_Surface* surfA,
 	    if (polylines[i]->Count() == 1) {
 		// It's a single point
 		single_pts.Append(startpoint);
+		delete polylines[i];
 		continue;
 	    }
 
@@ -3322,7 +3331,7 @@ ON_Intersect(const ON_Surface* surfA,
 	    }
 	    curve = new ON_PolylineCurve(ptarray);
 	    curve->ChangeDimension(2);
-	    intersect_uv2d.Append(curve_fitting(curve, fitting_tolerance_A, true));
+	    intersect_uv2d.Append(curve_fitting(curve, fitting_tolerance_A));
 
 	    // The intersection curves in the 2d UV parameter space (surfB)
 	    ptarray.Empty();
@@ -3339,7 +3348,7 @@ ON_Intersect(const ON_Surface* surfA,
 	    }
 	    curve = new ON_PolylineCurve(ptarray);
 	    curve->ChangeDimension(2);
-	    intersect_st2d.Append(curve_fitting(curve, fitting_tolerance_B, true));
+	    intersect_st2d.Append(curve_fitting(curve, fitting_tolerance_B));
 
 	    delete polylines[i];
 	}

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file decimate.c
+/** @file size.c
  *
  * This file contains routines to scale down an image to a lower
  * resolution.
@@ -204,10 +204,7 @@ HIDDEN int binterp(icv_image_t *bif, unsigned int out_width, unsigned int out_he
 
 int icv_resize(icv_image_t *bif, ICV_RESIZE_METHOD method, unsigned int out_width, unsigned int out_height, unsigned int factor)
 {
-    if(!ICV_IMAGE_IS_INITIALIZED(bif)) {
-	bu_log("ICV Structure not defined.\n");
-	return -1;
-    }
+    ICV_IMAGE_VAL_INT(bif);
 
     switch (method) {
 	case ICV_RESIZE_UNDERSAMPLE :

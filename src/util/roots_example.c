@@ -176,7 +176,7 @@ main(int argc, char *argv[])
      *  A*X^6 + B*X^5 + C*X^4 + D*X^3 + E*X^2 + F*X + G = 0
      * [0]     [1]     [2]     [3]     [4]     [5]   [6]  <=coefficients
      */
-    
+
     equation.dgr = 6;
     equation.cf[0] = 1;
     equation.cf[1] = -8;
@@ -199,7 +199,7 @@ main(int argc, char *argv[])
 	bu_log("The root solver failed to converge on a solution\n");
 	return 1;
     }
-    
+
     /* print the roots */
     bu_log("The roots should be 1 - i, 1 + i, 2 - i,2 + i, 1 - 2*i, 1 + 2*i \n");
     bn_pr_roots("My Sextic Polynomial", roots, num_roots);

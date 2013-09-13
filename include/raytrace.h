@@ -3657,112 +3657,53 @@ RT_EXPORT extern int db_full_path_match_top(const struct db_full_path	*a,
 RT_EXPORT extern int db_full_path_search(const struct db_full_path *a,
 					 const struct directory *dp);
 
-/**
- * search the database using a supplied list of filter criteria.
- * db_search_full_paths returns a bu_list of db_full_path structs to
- * instances of objects matching the filter criteria.  Note that this is
- * a full path tree search of the entire database, not just the toplevel
- * objects that would be reported by the ls command.  E.g., a
- * database with the following objects:
- *
- *       r1            r2
- *       |             |
- *       s1            s1
- *
- * would, if searched from the top level for s1,  return both
- *
- *  /r1/s1
- *
- * and
- *
- *  /r2/s1
- *
- * instead of just s1.  To iterate over the results, see examples of
- * iterating over bu_list structures.  (Bear in mind the db_full_path
- * structures in the list are individually malloced.)
- *
- * To return only unique objects, use
- * db_search_unique_objects, which would return just
- *
- * s1
- *
- * in the above example.  db_search_unique_objects returns a bu_ptbl of
- * (struct directory *) pointers.  To iterate over this list use
- * BU_PTBL_LEN to get the size of the table and BU_PTBL_GET in a for
- * loop to access each element.
- *
- */
 
 /* search.c */
 
+
+/* DEPRECATED - db_full_path_list structure is replaced by
+ * bu_ptbl and char ** arrays in new search functionality*/
 struct db_full_path_list {
     struct bu_list l;
     struct db_full_path *path;
     int local;
 };
-
-/**
- * Add an object to the db_full_path_list based on its database object name
- */
-RT_EXPORT extern int db_full_path_list_add(const char *path, int local, struct db_i *dbip, struct db_full_path_list *path_list);
-
-/**
- * Free all entries and the list of a db_full_path_list
- */
-RT_EXPORT extern void db_free_full_path_list(struct db_full_path_list *path_list);
-
-/**
- * Low level command to process the command line and create a "plan" corresponding to the
- * command arguments.
- */
-RT_EXPORT extern void *db_search_formplan(char **argv,
+DEPRECATED RT_EXPORT extern int db_full_path_list_add(const char *path, int local, struct db_i *dbip, struct db_full_path_list *path_list);
+DEPRECATED RT_EXPORT extern void db_free_full_path_list(struct db_full_path_list *path_list);
+DEPRECATED RT_EXPORT extern void *db_search_formplan(char **argv,
 					  struct db_i *dbip,
 					  struct rt_wdb *wdbp);
-
-/**
- * release memory for the formulated plan returned by
- * db_search_formplan().
- */
-RT_EXPORT extern void db_search_freeplan(void **plan);
-
-/**
- * Low level routines for invocation of search plans
- */
-RT_EXPORT extern struct db_full_path_list *db_search_full_paths(void *searchplan,
+DEPRECATED RT_EXPORT extern void db_search_freeplan(void **plan);
+DEPRECATED RT_EXPORT extern struct db_full_path_list *db_search_full_paths(void *searchplan,
 								struct db_full_path_list *path_list,
 								struct db_i *dbip,
 								struct rt_wdb *wdbp);
-
-RT_EXPORT extern struct bu_ptbl *db_search_unique_objects(void *searchplan,
+DEPRECATED RT_EXPORT extern struct bu_ptbl *db_search_unique_objects(void *searchplan,
 							  struct db_full_path_list *path_list,
 							  struct db_i *dbip,
 							  struct rt_wdb *wdbp);
 
 /**
- * Use the string form of a search plan to build and execute a search
- */
-RT_EXPORT extern struct db_full_path_list *db_search_full_paths_strplan(const char *plan_string,
-								struct db_full_path_list *path_list,
-								struct db_i *dbip,
-								struct rt_wdb *wdbp);
-
-RT_EXPORT extern struct bu_ptbl *db_search_unique_objects_strplan(const char *plan_string,
-							  struct db_full_path_list *path_list,
-							  struct db_i *dbip,
-							  struct rt_wdb *wdbp);
-
-/**
- * TODO:  PROPOSED API for search functionality
- *
- * This is the proposed replacement to all of the preceding search functionality -
- * the previous API calls will .
+ * Programmatic interface to the find-command style search functionality
+ * available in librt for databases.  These functions search the
+ * database using a supplied list of filter criteria and return either
+ * db_full_path instances or directory pointers (depending on the function).
+ * Both types of returns use a bu_ptbl container to hold the set of results.
  *
  * Design notes:
  *
  * * As long as struct db_i retains its pointer back to its parent rt_wdb
  *   structure, and dbip is a parameter in rt_wdb, only one of the two is
  *   needed as a parameter and either will work.  Probably go with rt_wdb,
- *   since it isn't tagged as private within the data structure definition.
+ *   since it isn't tagged as private within the data structure definition,
+ *   but on the other hand some ways db_i would be preferable since it
+ *   would allow the search functions to break out cleanly into a
+ *   hypothetical libgio/libdb that is separate from the raytracing.
+ *   Unfortunately, the need to get to the internal form of some of the
+ *   primitives means we do need rt_wdb available for now.  If the ways
+ *   search currently is accessing rt_wdb could be avoided with a future
+ *   improvement/redesign, then db_i and using the private link to rt_wdb
+ *   is justified.  Need to discuss before this API is finalized.
  *
  * * Plan strings are the most intuitive way for humans to spell out a search
  *   pattern - db_search_formplan becomes a behind-the-scenes function that
@@ -3772,42 +3713,47 @@ RT_EXPORT extern struct bu_ptbl *db_search_unique_objects_strplan(const char *pl
  *   sufficient justification for the added API complexity without hard
  *   evidence that complexity is needed.
  *
- * * Instead of having the user go through the trouble of generating full
- *   path structures from string inputs, just accept char pointers to
- *   object or path names and build the necessary additional data structures
- *   in the backend.  Again, minor possible performance gain from path list
- *   re-use doesn't justify more API complexity without compelling evidence
- *   it is needed.
+ * * Offer simple function calls for the common cases of one path and an
+ *   array of paths, and for both input cases support returning either
+ *   a db_full_path set or a unique directory pointer set via table.  This
+ *   should cover the most common programattic situations, while still
+ *   allowing commands enough flexibility to do what they need to (see,
+ *   for example, combining results from search sets (multiple arrays
+ *   of paths) in libged's search result consolidation.)
  *
- * * instead of having multiple search function calls, add a search type
- *   parameter that toggles between various search types.  All of them can
- *   return a bu_ptbl of pointers to db full paths, and the search type
- *   will control how the search is done and what the expectations/guarantees
- *   are for the results.
+ * * Need to add a plan option for dealing with hidden geometry during the search,
+ *   maybe -nohide or something like that...  The traversal by default shouldn't
+ *   traverse down anything hidden, but we should be able to override that at user request.
  *
- * * Need a flag to know what to do about hidden geometry during the search,
- *   unless we make that one of the plan options - maybe -nohide or something
- *   like that...
+ * WARNING:  THESE FUNCTIONS ARE STILL IN DEVELOPMENT - IT IS NOT YET
+ * ASSUMED THAT THE SEARCH API IS IN ITS FINAL FORM - DO NOT DEPEND ON IT
+ * REMAINING THE SAME UNTIL THIS WARNING IS REMOVED
  *
- * * One possible option to the enums for search types is to rely fully on the
- *   first character of the path strings (which are currently fully informative in the
- *   libged search command line interface) but the difficulty there is if more
- *   search styles are added initial path string characters are a very constraining
- *   selection mechanism.  For future proofing I think the input conventions on the
- *   path strings should be handled above this level.
  */
+RT_EXPORT extern struct bu_ptbl *db_search_path(const char *plan_string,
+	                                   const char *path,
+	                                   struct rt_wdb *wdbp);
+RT_EXPORT extern struct bu_ptbl *db_search_paths(const char *plan_string,
+	                                   const char **paths,
+	                                   struct rt_wdb *wdbp);
 
-/* Available search types */
-enum {
-    DB_SEARCH_STANDARD = 0, /* Full path tree search starting with the set of objects having no parents */
-    DB_SEARCH_UNIQ_OBJ,     /* Like DB_SEARCH_STANDARD, but returns only unique object list without paths */
-    DB_SEARCH_FLAT          /* Instead of only starting with objects that don't have a parent, all objects are starting points for a full path tree search*/
-};
+/* Properly free the tables returned by db_search_path and db_search_paths */
+RT_EXPORT extern void db_free_search_tbl(struct bu_ptbl *search_results);
 
-RT_EXPORT extern struct bu_ptbl *db_search(const char *plan_string,
-	                                   const char *path_strings[],
-	                                   struct rt_wdb *wdbp,
-	                                   int search_type);
+/* Because a list of unique directory pointers is a common output
+ * needed from search, functions are provided that produce a
+ * table of directory pointers to unique leaf objects from the search
+ * results.  Note that db_free_search_tbl does *not* free the table returned
+ * by db_search_obj, but a custom free is not needed - only directory
+ * pointers are stored in the table, so a normal bu_ptbl_free combined
+ * with a freeing of the table structure itself is sufficient.
+ */
+RT_EXPORT extern struct bu_ptbl *db_search_path_obj(const char *plan_string,
+	                                       const char *path,
+	                                       struct rt_wdb *wdbp);
+RT_EXPORT extern struct bu_ptbl *db_search_paths_obj(const char *plan_string,
+	                                       const char **paths,
+	                                       struct rt_wdb *wdbp);
 
 /* db_open.c */
 /**
@@ -4912,6 +4858,31 @@ RT_EXPORT extern struct bu_ptbl *db_lookup_by_attr(struct db_i *dbip,
 						   int dir_flags,
 						   struct bu_attribute_value_set *avs,
 						   int op);
+
+/**
+ * D B _ T O P S
+ *
+ * This routine takes a database instance pointer and assembles an
+ * argv style array of the names of all top level objects in the
+ * database.  It takes two flags:  aflag, which is 0 by default and
+ * 1 if the caller wishes to include hidden objects in list, and
+ * flat - if a "flat" tops list is requested, every object in the
+ * database is considered a top level object.
+ *
+ * The caller is responsible for freeing the array.
+ *
+ * Returns -
+ * char ** array of object names on success
+ * NULL if no objects were found
+ *
+ * WARNING:  THIS FUNCTION IS STILL IN DEVELOPMENT - IT IS NOT YET
+ * ASSUMED THAT THIS IS ITS FINAL FORM - DO NOT DEPEND ON IT REMAINING
+ * THE SAME UNTIL THIS WARNING IS REMOVED
+ */
+RT_EXPORT extern char **db_tops(const struct db_i *dbip,
+				int aflag,
+				int flat);
+
 /* add entry to directory */
 
 /**

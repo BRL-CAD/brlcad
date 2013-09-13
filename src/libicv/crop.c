@@ -34,10 +34,7 @@ icv_rect(icv_image_t *img, int xorig, int yorig, int xnum, int ynum)
     double *p, *in_data, *out_data;
     int widthstep_in, widthstep_out, bytes_row; /**<  */
 
-    if (!ICV_IMAGE_IS_INITIALIZED(img)) {
-	    bu_log("ERROR: trying to crop a null image\n");
-	    return -1;
-    }
+    ICV_IMAGE_VAL_INT(img);
 
     if (xorig < 0)
 	xorig = 0;
@@ -87,10 +84,7 @@ icv_crop(icv_image_t *img, int ulx, int uly, int urx, int ury, int lrx, int lry,
     int  x, y;
     double *data, *p, *q;
 
-    if (!ICV_IMAGE_IS_INITIALIZED(img)) {
-	bu_log("ICV Structure not defined.\n");
-	return -1;
-    }
+    ICV_IMAGE_VAL_INT(img);
 
     /* Allocates output data and assigns to image*/
     data = img->data;

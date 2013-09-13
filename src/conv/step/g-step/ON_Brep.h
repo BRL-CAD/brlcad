@@ -24,6 +24,8 @@
 #ifndef ON_BREP_H_
 #define ON_BREP_H_
 
+#include <map>
+
 #include "STEPWrapper.h"
 
 struct Exporter_Info_AP203 {
@@ -47,8 +49,16 @@ struct Exporter_Info_AP203 {
     SdaiAdvanced_brep_shape_representation *advanced_brep;
     SdaiRepresentation *shape_rep;
 
+    std::map<STEPentity*, GenericAggregate * > surf_genagg;
     std::map<STEPentity*, std::vector<std::vector<STEPentity *> > > surface_cv;
 };
+
+void ON_3dPoint_to_Cartesian_point(ON_3dPoint *inpnt, SdaiCartesian_point *step_pnt);
+void ON_3dVector_to_Direction(ON_3dVector *invect, SdaiDirection *step_direction);
+
+bool ON_NurbsCurve_to_STEP(ON_NurbsCurve *n_curve, Exporter_Info_AP203 *info, int i);
+void ON_NurbsSurfaceCV_Finalize_GenericAggregates(Exporter_Info_AP203 *info);
+bool ON_NurbsSurface_to_STEP(ON_NurbsSurface *n_surface, Exporter_Info_AP203 *info, int i);
 
 bool ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info);
 

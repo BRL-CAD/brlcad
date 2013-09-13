@@ -32,15 +32,12 @@
 
 #include "bio.h"
 
-void icv_sanitize(icv_image_t* img)
+int icv_sanitize(icv_image_t* img)
 {
     double *data = NULL;
     size_t size;
 
-    if (!ICV_IMAGE_IS_INITIALIZED(img)) {
-	bu_log("ICV Structure not defined.\n");
-	return;
-    }
+    ICV_IMAGE_VAL_INT(img);
 
     data= img->data;
     for (size = img->width*img->height*img->channels; size>0; size--) {
@@ -51,19 +48,17 @@ void icv_sanitize(icv_image_t* img)
 	data++;
     }
     img->flags |= ICV_SANITIZED;
+    return 0;
 }
 
-void icv_add_val(icv_image_t* img, double val)
+int icv_add_val(icv_image_t* img, double val)
 {
     double *data = NULL;
     size_t size;
 
     data = img->data;
 
-    if (!ICV_IMAGE_IS_INITIALIZED(img)) {
-	bu_log("ICV Structure not defined.\n");
-	return;
-    }
+    ICV_IMAGE_VAL_INT(img);
 
     for (size = img->width*img->height*img->channels; size>0; size--) {
 	*data += val;
@@ -74,17 +69,16 @@ void icv_add_val(icv_image_t* img, double val)
 	img->flags&=(!ICV_SANITIZED);
     else
 	icv_sanitize(img);
+
+    return 0;
 }
 
-void icv_multiply_val(icv_image_t* img, double val)
+int icv_multiply_val(icv_image_t* img, double val)
 {
     double *data = NULL;
     size_t size;
 
-    if (!ICV_IMAGE_IS_INITIALIZED(img)) {
-	bu_log("ICV Structure not defined.\n");
-	return;
-    }
+    ICV_IMAGE_VAL_INT(img);
 
     data = img->data;
 
@@ -96,17 +90,16 @@ void icv_multiply_val(icv_image_t* img, double val)
 	img->flags&=(!ICV_SANITIZED);
     else
 	icv_sanitize(img);
+
+    return 0;
 }
 
-void icv_divide_val(icv_image_t* img, double val)
+int icv_divide_val(icv_image_t* img, double val)
 {
     double *data = NULL;
     size_t size;
 
-    if (!ICV_IMAGE_IS_INITIALIZED(img)) {
-	bu_log("ICV Structure not defined.\n");
-	return;
-    }
+    ICV_IMAGE_VAL_INT(img);
 
     data = img->data;
 
@@ -121,17 +114,16 @@ void icv_divide_val(icv_image_t* img, double val)
 	img->flags&=(!ICV_SANITIZED);
     else
 	icv_sanitize(img);
+
+    return 0;
 }
 
-void icv_pow_val(icv_image_t* img, double val)
+int icv_pow_val(icv_image_t* img, double val)
 {
     double *data = NULL;
     size_t size;
 
-    if (!ICV_IMAGE_IS_INITIALIZED(img)) {
-	bu_log("ICV Structure not defined.\n");
-	return;
-    }
+    ICV_IMAGE_VAL_INT(img);
 
     data = img->data;
 
@@ -144,6 +136,8 @@ void icv_pow_val(icv_image_t* img, double val)
 	img->flags&=(!ICV_SANITIZED);
     else
 	icv_sanitize(img);
+
+    return 0;
 }
 
 icv_image_t *icv_add(icv_image_t *img1, icv_image_t *img2)
@@ -152,10 +146,8 @@ icv_image_t *icv_add(icv_image_t *img1, icv_image_t *img2)
     size_t size;
     icv_image_t *out_img;
 
-    if (!(ICV_IMAGE_IS_INITIALIZED(img1) && ICV_IMAGE_IS_INITIALIZED(img2))) {
-	bu_log("ICV Structure not defined.\n");
-	return NULL;
-    }
+    ICV_IMAGE_VAL_PTR(img1);
+    ICV_IMAGE_VAL_PTR(img2);
 
     if ((img1->width == img2->width) && (img1->height == img2->height) && (img1->channels == img2->channels)) {
 	bu_log("icv_add : Image Parameters not Equal");
@@ -183,10 +175,8 @@ icv_image_t *icv_sub(icv_image_t *img1, icv_image_t *img2)
     size_t size;
     icv_image_t *out_img;
 
-    if (!(ICV_IMAGE_IS_INITIALIZED(img1) && ICV_IMAGE_IS_INITIALIZED(img2))) {
-	bu_log("ICV Structure not defined.\n");
-	return NULL;
-    }
+    ICV_IMAGE_VAL_PTR(img1);
+    ICV_IMAGE_VAL_PTR(img2);
 
     if ((img1->width == img2->width) && (img1->height == img2->height) && (img1->channels == img2->channels)) {
 	bu_log("icv_add : Image Parameters not Equal");
@@ -214,10 +204,8 @@ icv_image_t *icv_multiply(icv_image_t *img1, icv_image_t *img2)
     size_t size;
     icv_image_t *out_img;
 
-    if (!(ICV_IMAGE_IS_INITIALIZED(img1) && ICV_IMAGE_IS_INITIALIZED(img2))) {
-	bu_log("ICV Structure not defined.\n");
-	return NULL;
-    }
+    ICV_IMAGE_VAL_PTR(img1);
+    ICV_IMAGE_VAL_PTR(img2);
 
     if ((img1->width == img2->width) && (img1->height == img2->height) && (img1->channels == img2->channels)) {
 	bu_log("icv_add : Image Parameters not Equal");
@@ -246,10 +234,8 @@ icv_image_t *icv_divide(icv_image_t *img1, icv_image_t *img2)
     size_t size;
     icv_image_t *out_img;
 
-    if (!(ICV_IMAGE_IS_INITIALIZED(img1) && ICV_IMAGE_IS_INITIALIZED(img2))) {
-	bu_log("ICV Structure not defined.\n");
-	return NULL;
-    }
+    ICV_IMAGE_VAL_PTR(img1);
+    ICV_IMAGE_VAL_PTR(img2);
 
     if ((img1->width == img2->width) && (img1->height == img2->height) && (img1->channels == img2->channels)) {
 	bu_log("icv_add : Image Parameters not Equal");
@@ -279,10 +265,7 @@ int icv_saturate(icv_image_t* img, double sat)
     double rt, gt, bt;
     long size;
 
-    if (!ICV_IMAGE_IS_INITIALIZED(img)) {
-	bu_log("ICV Structure not defined.\n");
-	return -1;
-    }
+    ICV_IMAGE_VAL_INT(img);
 
     if (img == NULL) {
 	bu_log("icv_saturate : Trying to Saturate a Null img");

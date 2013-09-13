@@ -184,10 +184,7 @@ icv_filter(icv_image_t *img, ICV_FILTER filter_type)
      * upon a library of filters or closed form definitions.
      */
 
-    if (!ICV_IMAGE_IS_INITIALIZED(img)) {
-	bu_log("ICV Structure not defined.\n");
-	return -1;
-    }
+    ICV_IMAGE_VAL_INT(img);
 
     kern = bu_malloc(k_dim*k_dim*sizeof(double), "icv_filter : Kernel Allocation");
     get_kernel(filter_type, kern, &offset);
@@ -260,10 +257,10 @@ icv_filter3(icv_image_t *old_img, icv_image_t *curr_img, icv_image_t *new_img, I
 			      * out image and n_index corresponds to
 			      * the nearby pixel in input image
 			      */
-    if (!(ICV_IMAGE_IS_INITIALIZED(old_img) && ICV_IMAGE_IS_INITIALIZED(curr_img) && ICV_IMAGE_IS_INITIALIZED(new_img))) {
-	bu_log("ICV IMAGE not defined.\n");
-	return NULL;
-    }
+
+    ICV_IMAGE_VAL_PTR(old_img);
+    ICV_IMAGE_VAL_PTR(curr_img);
+    ICV_IMAGE_VAL_PTR(new_img);
 
     if ((old_img->width == curr_img->width && curr_img->width == new_img->width) && \
 	(old_img->height == curr_img->height && curr_img->height == new_img->height) && \
@@ -329,14 +326,21 @@ icv_fade(icv_image_t *img, double fraction)
     size_t size;
     double *data;
 
+    ICV_IMAGE_VAL_INT(img);
+
     size= img->height*img->width*img->channels;
 
-    data = img->data;
+   if (size == 0)
+	return -1;
 
-    if (fraction<0)
-	bu_exit(1, "Multiplier invalid. Image not Faded.");
+    if (fraction<0) {
+	bu_log("ERROR : Multiplier invalid. Image not Faded.");
+	return -1;
+    }
 
-    for (;size>0; size--) {
+     data = img->data;
+
+    while (size--) {
 	*data = *data*fraction;
 	if (*data > 1)
 	    *data= 1.0;

@@ -39,19 +39,18 @@ icv_gray2rgb(icv_image_t *img)
     double *in_data;
     long int size;
     long int i = 0;
-     if (!ICV_IMAGE_IS_INITIALIZED(img)) {
-	bu_log("icv_image_gray2rgb : Uninitialized Image argument\n");
-	return -1;
-    }
 
+    ICV_IMAGE_VAL_INT(img);
+
+    /* This is a true condition i.e the image is already RGB*/
     if (img->color_space == ICV_COLOR_SPACE_RGB) {
-	bu_log("icv_image_gray2rgb : already RGB");
 	return 0;
     }
     else if (img->color_space != ICV_COLOR_SPACE_GRAY) {
-	bu_log("icv_image_gray2rgb : color_space error");
+	bu_log("ERROR : color_space error");
 	return -1;
     }
+
     size = img->height*img->width;
     op = out_data = (double *)bu_malloc(size*3*sizeof(double), "Out Image Data");
     in_data = img->data;
@@ -63,7 +62,7 @@ icv_gray2rgb(icv_image_t *img)
 	in_data++;
     }
 
-    bu_free(img->data, "icv_image_gray2rgb : gray image data");
+    bu_free(img->data, "icv_gray2rgb : gray image data");
     img->data = op;
     img->color_space = ICV_COLOR_SPACE_RGB;
     img->channels = 3;
@@ -83,15 +82,13 @@ icv_rgb2gray(icv_image_t *img, ICV_COLOR color, double rweight, double gweight, 
     int red, green, blue;
     red = green = blue = 0;
 
-     if (!ICV_IMAGE_IS_INITIALIZED(img)) {
-	bu_log("icv_image_rgb2gray : Uninitialized Image argument\n");
-	return -1;
-    }
+    ICV_IMAGE_VAL_INT(img);
 
+    /* This is a true condition i.e the image is already GRAY*/
     if (img->color_space == ICV_COLOR_SPACE_GRAY)
 	return 0;
     else if (img->color_space != ICV_COLOR_SPACE_RGB) {
-	bu_log("icv_image_rgb2gray : color_space error");
+	bu_log("ERROR : color_space error");
 	return -1;
     }
 
@@ -139,8 +136,8 @@ icv_rgb2gray(icv_image_t *img, ICV_COLOR color, double rweight, double gweight, 
 	    multiple_colors = 1;
 	    break;
 	default :
-	    bu_exit(1,"icv_depth_3to1: Wrong Arguments for Color");
-	    break;
+	    bu_log("ERROR: Wrong Arguments for Color");
+	    return -1;
     }
 
     /* Gets number of planes according to the status of arguments

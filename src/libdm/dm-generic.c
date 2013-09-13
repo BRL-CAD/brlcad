@@ -243,7 +243,6 @@ dm_fogHint(struct dm *dmp, int fastfog)
 int
 qt_tk_processEvents() {
 #ifdef DM_QT
-    dm_qt.dm_processEvents(&dm_qt);
     while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
     return TCL_OK;
 #else

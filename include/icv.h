@@ -40,16 +40,6 @@ __BEGIN_DECLS
 #  endif
 #endif
 
-/**
- * I C V _ R O T
- *
- * Rotate an image.
- * %s [-rifb | -a angle] [-# bytes] [-s squaresize] [-w width] [-n height] [-o outputfile] inputfile [> outputfile]
- *
- */
-ICV_EXPORT extern int icv_rot(int argv, char **argc);
-
-
 /** @addtogroup image */
 /** @ingroup data */
 /** @{ */
@@ -130,9 +120,19 @@ typedef struct icv_image icv_image_t;
  */
 #define ICV_IMAGE_IS_INITIALIZED(_i) (((struct icv_image *)(_i) != ICV_IMAGE_NULL) && LIKELY((_i)->magic == ICV_IMAGE_MAGIC))
 
+/* Validation Macros */
+/**
+ * Validates input icv_struct, if failure (in validation) returns -1
+ */
+#define ICV_IMAGE_VAL_INT(_i)  if (!ICV_IMAGE_IS_INITIALIZED(_i)) return -1
+
+/**
+ * Validates input icv_struct, if failure (in validation) returns NULL
+ */
+#define ICV_IMAGE_VAL_PTR(_i) if (!ICV_IMAGE_IS_INITIALIZED(_i)) return NULL
+
 
 /* Data conversion MACROS  */
-
 /**
  * Converts to double (icv data) type from unsigned char(8bit).
  */
@@ -237,7 +237,7 @@ ICV_EXPORT extern icv_image_t *icv_zero(icv_image_t *bif);
  * This function frees the allocated memory for a ICV Structure and
  * data.
  */
-ICV_EXPORT extern void icv_destroy(icv_image_t *bif);
+ICV_EXPORT extern int icv_destroy(icv_image_t *bif);
 
 /** @file libicv/color_space.c
  *
@@ -375,7 +375,7 @@ ICV_EXPORT extern int icv_crop(icv_image_t *img,
  * is true.
  *
  */
-ICV_EXPORT void icv_sanitize(icv_image_t* img);
+ICV_EXPORT int icv_sanitize(icv_image_t* img);
 
 /**
  * This adds a constant value to all the pixels of the image.  Also if
@@ -385,28 +385,28 @@ ICV_EXPORT void icv_sanitize(icv_image_t* img);
  * Note to set the flag for a bif (icv_image struct);
  * bif->flags |= ICV_OPERATIONS_MODE;
  */
-ICV_EXPORT void icv_add_val(icv_image_t* img, double val);
+ICV_EXPORT int icv_add_val(icv_image_t* img, double val);
 
 /**
  * This multiplies all the pixels of the image with a constant Value.
  * Also if the flag ICV_OPERATIONS_MODE is set this doesn't sanitize
  * the image.
  */
-ICV_EXPORT void icv_multiply_val(icv_image_t* img, double val);
+ICV_EXPORT int icv_multiply_val(icv_image_t* img, double val);
 
 /**
  * This divides all the pixels of the image with a constant Value.
  * Also if the flag ICV_OPERATIONS_MODE is set this doesn't sanitize
  * the image.
  */
-ICV_EXPORT void icv_divide_val(icv_image_t* img, double val);
+ICV_EXPORT int icv_divide_val(icv_image_t* img, double val);
 
 /**
  * This raises all the pixels of the image to a constant exponential
  * power.  Also if the flag ICV_OPERATIONS_MODE is set this doesn't
  * sanitize the image.
  */
-ICV_EXPORT void icv_pow_val(icv_image_t* img, double val);
+ICV_EXPORT int icv_pow_val(icv_image_t* img, double val);
 
 /**
  * This routine adds pixel value of one image to pixel value of other
@@ -599,7 +599,7 @@ ICV_EXPORT double *icv_skew(icv_image_t* img, size_t** bins, int n_bins);
 ICV_EXPORT double *icv_var(icv_image_t* img, size_t** bins, int n_bins);
 
 
-/** @file decimate.c
+/** @file size.c
  *
  * This file contains routines to scale down an image to a lower
  * resolution or scale up an image to an higher Resolution.
@@ -639,9 +639,17 @@ typedef enum {
 
 ICV_EXPORT int icv_resize(icv_image_t *bif, ICV_RESIZE_METHOD method, unsigned int out_width, unsigned int out_height, unsigned int factor);
 
-
 /** @} */
 /* end image utilities */
+
+/**
+ * I C V _ R O T
+ *
+ * Rotate an image.
+ * %s [-rifb | -a angle] [-# bytes] [-s squaresize] [-w width] [-n height] [-o outputfile] inputfile [> outputfile]
+ *
+ */
+ICV_EXPORT extern int icv_rot(int argv, char **argc);
 
 __END_DECLS
 

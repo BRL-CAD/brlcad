@@ -43,15 +43,18 @@
  *
  */
 HIDDEN double *
-uchar2double(unsigned char *data, long int size)
+uchar2double(unsigned char *data, size_t size)
 {
     double *double_data, *double_p;
     unsigned char *char_p;
-    long int i;
+
+    if(size == 0 )
+	return NULL;
 
     char_p = data;
     double_p = double_data = (double *) bu_malloc(size*sizeof(double), "uchar2data : double data");
-    for (i=0; i<size; i++) {
+
+    while(size--) {
 	*double_p = ICV_CONV_8BIT(*char_p);
 	double_p++;
 	char_p++;
@@ -74,14 +77,10 @@ HIDDEN unsigned char *
 data2uchar(const icv_image_t *bif)
 {
     long int size;
-    long int i;
     unsigned char *uchar_data, *char_p;
     double *double_p;
 
-    if (!ICV_IMAGE_IS_INITIALIZED(bif)) {
-	bu_log("ICV Structure not defined.\n");
-	return NULL;
-    }
+    ICV_IMAGE_VAL_PTR(bif);
 
     size = bif->height*bif->width*bif->channels;
     char_p = uchar_data = (unsigned char *) bu_malloc((size_t)size, "data2uchar : unsigned char data");
@@ -89,7 +88,7 @@ data2uchar(const icv_image_t *bif)
     double_p = bif->data;
 
     if (ZERO(bif->gamma_corr)) {
-	for (i=0; i<size; i++) {
+	while(size--) {
 	    *char_p = (unsigned char)((*double_p)*255.0 +0.5) ;
 	    char_p++;
 	    double_p++;
@@ -100,7 +99,7 @@ data2uchar(const icv_image_t *bif)
 	double ex = 1.0/bif->gamma_corr;
 	bn_rand_init(rand_p, 0);
 
-	for (i=0; i<size; i++) {
+	while(size--) {
 	    *char_p = floor(pow(*double_p, ex)*255.0 + (double) bn_rand0to1(rand_p) + 0.5);
 	    char_p++;
 	    double_p++;

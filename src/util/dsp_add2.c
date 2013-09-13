@@ -35,7 +35,7 @@
 #include "vmath.h"
 #include "bn.h"
 
-#include "bu_opt_parse_private.h"
+#include "bu_opt_parse.h"
 
 /* declarations to support use of TCLAP arg parsing */
 static const char usage[] = "Example: dsp_add  dsp1.dsp  dsp2.dsp  dsp12added.dsp\n";
@@ -131,9 +131,6 @@ add_int(unsigned short *buf1, unsigned short *buf2, unsigned long count)
 
 }
 
-using namespace std;
-using namespace TCLAP;
-
 int
 main(int ac, char *av[])
 {
@@ -148,94 +145,125 @@ main(int ac, char *av[])
     struct stat sb;
     unsigned short *buf1 = NULL;
     unsigned short *buf2 = NULL;
-    // vars from TCLAP parsing
+
+    /* vars expected from cmd line parsing */
     const char* dsp1_fname = NULL;
     const char* dsp2_fname = NULL;
     const char* dsp3_fname = NULL;
-    bool has_force = false;
-    bool has_help  = false;
+    int arg_err = 0;
+    int has_force = 0;
+    int has_help  = 0;
 
-    try {
+    /* note the arg structs have to be static to compile */
+    /* FIXME: this '-?' arg doesn't wok correctly due to some TCLAPisms */
+    static bu_arg_vars h_arg = {
+      BU_ARG_SwitchArg,
+      "?",
+      "short-help",
+      "Same as '-h' or '--help'",
+      BU_ARG_NOT_REQUIRED,
+      BU_ARG_NOT_REQUIRED,
+      {0},        /* value in first field of union */
+      BU_ARG_BOOL /* type in union */
+    };
 
-      // form the command line
-      //
-      // note help (-h and --help) and version (-v and --version) are
-      // automatic
-      TCLAP::CmdLine cmd(usage, ' ',
-                         "[BRL_CAD_VERSION]"); // help and version are automatic
-      // use our subclassed stdout
-      BRLCAD_StdOutput brlstdout;
-      cmd.setOutput(&brlstdout);
-      // proceed normally ...
+    /* define a force option to allow user to shoot himself in the foot */
+    static bu_arg_vars f_arg = {
+      BU_ARG_SwitchArg,
+      "f",
+      "force",
+      "Allow overwriting existing files.",
+      BU_ARG_NOT_REQUIRED,
+      BU_ARG_NOT_REQUIRED,
+      {0},        /* value in first field of union */
+      BU_ARG_BOOL /* type in union */
+    };
 
-      // we also want the '-?' option (long help, if available, help otherwise
-      // long option), last arg means option not required
-      TCLAP::SwitchArg h_arg("?",    // short option char
-                             "short-help", // long option name, if any
-                             "Same as '-h' or '--help'.",  // short description string
-                             cmd,    // add to 'cmd' object
-                             false); // default value
+    /* need two file names */
+    static bu_arg_vars dsp1_arg = {
+      BU_ARG_UnlabeledValueArg,
+      "",
+      "dsp_infile1",
+      "first dsp input file name",
+      BU_ARG_REQUIRED,
+      BU_ARG_REQUIRED,
+      {0},        /* value in first field of union */
+      BU_ARG_BOOL /* type in union */
+    };
 
-      // define a force option to allow user to shoot himself in the foot
-      TCLAP::SwitchArg f_arg("f",    // short option char
-                             "force", // long option name, if any
-                             "Allow overwriting existing files.",  // short description string
-                             cmd,    // add to 'cmd' object
-                             false); // default value
+    /* need two file names */
+    static bu_arg_vars dsp2_arg = {
+      BU_ARG_UnlabeledValueArg,
+      "",
+      "dsp_infile2",
+      "second dsp input file name",
+      BU_ARG_REQUIRED,
+      BU_ARG_REQUIRED,
+      {0},        /* value in first field of union */
+      BU_ARG_BOOL /* type in union */
+    };
 
-      // need two file names
-      TCLAP::UnlabeledValueArg<string> dsp1_arg("dsp_infile1", // name of object
-                                                "first dsp input file name", // description
-                                                true,      // arg is required
-                                                "",        // default value
-                                                "dsp_infile1",  // type of arg value
-                                                cmd);      // add to cmd object
+    /* the output file name */
+    static bu_arg_vars dsp3_arg = {
+      BU_ARG_UnlabeledValueArg,
+      "",
+      "dsp_outfile",
+      "dsp output file name",
+      BU_ARG_REQUIRED,
+      BU_ARG_REQUIRED,
+      {0},        /* value in first field of union */
+      BU_ARG_BOOL /* type in union */
+    };
 
-      // need two file names
-      TCLAP::UnlabeledValueArg<string> dsp2_arg("dsp_infile2", // name of object
-                                                "second dsp input file name", // description
-                                                true,      // arg is required
-                                                "",        // default value
-                                                "dsp_infile2",  // type of arg value
-                                                cmd);      // add to cmd object
+    /* place the arg pointers in an array */
+    static bu_arg_vars *args[]
+      = {&h_arg, &f_arg,
+         &dsp1_arg, &dsp2_arg, &dsp3_arg,
+         NULL};
 
-      TCLAP::UnlabeledValueArg<string> dsp3_arg("dsp_outfile", // name of object
-                                                "dsp output file", // description
-                                                true,      // arg is required
-                                                "",        // default value
-                                                "dsp_outfile",  // type of arg value
-                                                cmd);      // add to cmd object
+    /* for C90 we have to initialize a struct's union
+     * separately for other than its first field
+     */
+    dsp1_arg.val.s    = "dsp_infile1";
+    dsp1_arg.val_type = BU_ARG_STRING;
 
-      // parse the args
-      cmd.parse(ac, av);
+    dsp2_arg.val.s    = "dsp_infile2";
+    dsp2_arg.val_type = BU_ARG_STRING;
 
-      // Get the value parsed by each arg.
-      has_force  = f_arg.getValue();
-      has_help   = h_arg.getValue();
-      dsp1_fname = dsp1_arg.getValue().c_str();
-      dsp2_fname = dsp2_arg.getValue().c_str();
-      dsp3_fname = dsp3_arg.getValue().c_str();
+    dsp3_arg.val.s    = "dsp_outfile";
+    dsp3_arg.val_type = BU_ARG_STRING;
 
-      // exit try block here
+    /* parse the args */
+    arg_err = bu_opt_parse(args, ac, av);
 
-    } catch (TCLAP::ArgException &e) { // catch any exceptions
-
-      cerr << "error: " << e.error() << " for arg " << e.argId() << endl;
-
+    if (arg_err == BU_ARG_PARSE_ERR) {
+        /* the TCLAP exception handler has fired with its own message
+         * so need no words here */
+        bu_exit(EXIT_SUCCESS, NULL);
     }
 
-    // take appropriate action
+    /* Get the value parsed by each arg. */
+    has_force  = f_arg.val.i;
+    has_help   = h_arg.val.i;
+    dsp1_fname = dsp1_arg.val.s;
+    dsp2_fname = dsp2_arg.val.s;
+    dsp3_fname = dsp3_arg.val.s;
+
+    /* take appropriate action... */
+
+    /* note this exit is success because it is expected
+     * behavior--important for good auto-man-page handling */
     if (has_help) {
-      bu_exit(EXIT_FAILURE, usage);
+      bu_exit(EXIT_SUCCESS, usage);
     }
 
-    // TCLAP doesn't check for confusion in file names
+    /* TCLAP doesn't check for confusion in file names */
     if (BU_STR_EQUAL(dsp3_fname, dsp1_fname)
         || BU_STR_EQUAL(dsp3_fname, dsp2_fname)) {
       bu_exit(EXIT_FAILURE, "overwriting an input file (use the '-f' option to continue)\n");
     }
 
-    // nor does it check for existing files (FIXME: add to TCLAP)
+    /* nor does it check for existing files (FIXME: add to TCLAP) */
     if (!stat(dsp3_fname, &sb)) {
       if (has_force) {
         printf("WARNING: overwriting an existing file...\n");
@@ -246,7 +274,7 @@ main(int ac, char *av[])
       }
     }
 
-    // open files
+    /* open files */
     in1 = fopen(dsp1_fname, "r");
     if (!in1) {
       perror(dsp1_fname);
@@ -259,9 +287,9 @@ main(int ac, char *av[])
       bu_exit(EXIT_FAILURE, "ERROR: input file stat failure\n");
     }
 
-    // save size of first input file for comparison with other two
+    /* save size of first input file for comparison with other two */
     count = sb.st_size;
-    // check for zero-size file
+    /* check for zero-size file */
     if (!count) {
       perror(dsp1_fname);
       fclose(in1);
@@ -284,7 +312,7 @@ main(int ac, char *av[])
       bu_exit(EXIT_FAILURE, "ERROR: input file stat failure\n");
     }
 
-    // check for zero-size file
+    /* check for zero-size file */
     if (!sb.st_size) {
       perror(dsp2_fname);
       fclose(in1);
@@ -298,7 +326,7 @@ main(int ac, char *av[])
       bu_exit(EXIT_FAILURE, "ERROR: input file size mis-match\n");
     }
 
-    // the output file is now named instead of being redirected
+    /* the output file is now named instead of being redirected */
     out1 = fopen(dsp3_fname, "w");
     if (!out1) {
       perror(dsp3_fname);

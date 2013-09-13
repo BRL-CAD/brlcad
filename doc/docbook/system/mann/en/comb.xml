@@ -185,7 +185,7 @@
 <prompt>mged&gt;</prompt> <userinput>tree region1.r</userinput>
 region1.r/R
         u region2.r/R
-	        u sph.s
+                u sph.s
         u comb.c/
                 u arb.s
       </computeroutput>
@@ -461,7 +461,7 @@ r3/R
 
       <literallayout>
       <computeroutput>
-<prompt>mged&gt;</prompt> <userinput>comb -l spheres.c</userinput>
+<prompt>mged&gt;</prompt> <userinput>comb -l r3</userinput>
 Comb region lift failed - the following combs in the tree contain
 regions and are also used outside the tree of r3:
 

@@ -39,6 +39,7 @@ class QTkMainWindow: public QWindow {
 
 public:
     QTkMainWindow(QPixmap *p, QWindow *parent = 0, struct dm *d = NULL);
+    ~QTkMainWindow();
 
     virtual void render(QPainter *painter);
 public slots:
@@ -60,6 +61,7 @@ private:
 
 struct qt_vars {
     QApplication *qapp;
+    QWindow *parent;
     QTkMainWindow *win;
     QColor fg, bg;
     QPixmap *pix;

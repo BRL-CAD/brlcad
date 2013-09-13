@@ -115,6 +115,8 @@ conv_tree(ON_Brep **b, const union tree *t, const struct db_i *dbip)
 		    bu_log("operation %d isn't supported yet.\n", t->tr_op);
 		    ret = -1;
 		}
+		delete left;
+		delete right;
 	    } else {
 		delete old;
 		delete right;
@@ -126,17 +128,17 @@ conv_tree(ON_Brep **b, const union tree *t, const struct db_i *dbip)
 		directory *dir;
 		dir = db_lookup(dbip, name, LOOKUP_QUIET);
 		if (dir != RT_DIR_NULL) {
-		    rt_db_internal *intern;
-		    BU_ALLOC(intern, struct rt_db_internal);
-		    rt_db_get_internal(intern, dir, dbip, bn_mat_identity, &rt_uniresource);
-		    RT_CK_DB_INTERNAL(intern);
-		    ret = single_conversion(intern, b, dbip);
+		    rt_db_internal intern;
+		    rt_db_get_internal(&intern, dir, dbip, bn_mat_identity, &rt_uniresource);
+		    RT_CK_DB_INTERNAL(&intern);
+		    ret = single_conversion(&intern, b, dbip);
 		    if (ret == 0 && *b != NULL) {
 			if (t->tr_l.tl_mat != NULL && !bn_mat_is_identity(t->tr_l.tl_mat)) {
 			    ON_Xform xform(t->tr_l.tl_mat);
 			    ret = (*b)->Transform(xform);
 			}
 		    }
+		    rt_db_free_internal(&intern);
 		} else {
 		    bu_log("Cannot find %s.\n", name);
 		    ret = -1;
