@@ -4918,6 +4918,31 @@ RT_EXPORT extern struct bu_ptbl *db_lookup_by_attr(struct db_i *dbip,
 						   int dir_flags,
 						   struct bu_attribute_value_set *avs,
 						   int op);
+
+/**
+ * D B _ T O P S
+ *
+ * This routine takes a database instance pointer and assembles an
+ * argv style array of the names of all top level objects in the
+ * database.  It takes two flags:  aflag, which is 0 by default and
+ * 1 if the caller wishes to include hidden objects in list, and
+ * flat - if a "flat" tops list is requested, every object in the
+ * database is considered a top level object.
+ *
+ * The caller is responsible for freeing the array.
+ *
+ * Returns -
+ * char ** array of object names on success
+ * NULL if no objects were found
+ *
+ * WARNING:  THIS FUNCTION IS STILL IN DEVELOPMENT - IT IS NOT YET
+ * ASSUMED THAT THIS IS ITS FINAL FORM - DO NOT DEPEND ON IT REMAINING
+ * THE SAME UNTIL THIS WARNING IS REMOVED
+ */
+RT_EXPORT extern char **db_tops(const struct db_i *dbip,
+				int aflag,
+				int flat);
+
 /* add entry to directory */
 
 /**

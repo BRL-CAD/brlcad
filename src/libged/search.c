@@ -61,38 +61,6 @@ _path_scrub(struct bu_vls *path)
     return islocal;
 }
 
-
-/* TODO - another instance of the "build a toplevel search list" function - need
- * to consolidate these and get them into librt.  There's at least one more in comb.c*/
-char **
-db_tops(struct db_i *dbip, int aflag, int flat)
-{
-    int i;
-    int objcount = 0;
-    struct directory *dp;
-    char ** path_list = NULL;
-    for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (((!flat && dp->d_nref == 0) || flat) && (!(dp->d_flags & RT_DIR_HIDDEN) || aflag) && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
-		objcount++;
-	    }
-	}
-    }
-    path_list = (char **)bu_malloc(sizeof(char *) * (objcount + 1), "tops path array");
-    objcount = 0;
-    for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (((!flat && dp->d_nref == 0) || flat) && (!(dp->d_flags & RT_DIR_HIDDEN) || aflag) && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
-		path_list[objcount] = dp->d_namep;
-		objcount++;
-	    }
-	}
-    }
-    path_list[objcount] = '\0';
-
-    return path_list;
-}
-
 struct ged_search {
     const char **paths;
     int search_type;
