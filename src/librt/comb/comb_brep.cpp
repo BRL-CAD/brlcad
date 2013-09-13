@@ -115,6 +115,8 @@ conv_tree(ON_Brep **b, const union tree *t, const struct db_i *dbip)
 		    bu_log("operation %d isn't supported yet.\n", t->tr_op);
 		    ret = -1;
 		}
+		delete left;
+		delete right;
 	    } else {
 		delete old;
 		delete right;
