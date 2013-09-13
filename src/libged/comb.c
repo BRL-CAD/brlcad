@@ -390,7 +390,7 @@ _ged_lift_region_comb(struct ged *gedp, struct directory *dp) {
     bu_free(combs_outside_of_tree, "free search table container");
 
     if (failure_case) {
-	bu_vls_printf(gedp->ged_result_str,  "The above combs must be reworked before region lifting the tree of %s can succeed.\n", dp->d_namep);
+	bu_vls_printf(gedp->ged_result_str,  "\nThe above combs must be reworked before region lifting the tree of %s can succeed.\n", dp->d_namep);
 	bu_ptbl_free(&regions_to_clear);
 	bu_ptbl_free(&regions_to_wrap);
 	return GED_ERROR;
