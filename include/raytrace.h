@@ -3683,7 +3683,10 @@ DEPRECATED RT_EXPORT extern struct bu_ptbl *db_search_unique_objects(void *searc
 							  struct db_i *dbip,
 							  struct rt_wdb *wdbp);
 
+/* search.c */
 /**
+ * D B _ S E A R C H _ P A T H
+ *
  * Programmatic interface to the find-command style search functionality
  * available in librt for databases.  These functions search the
  * database using a supplied list of filter criteria and return either
