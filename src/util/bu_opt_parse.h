@@ -38,8 +38,7 @@ typedef enum {
   BU_ARG_BOOL,
   BU_ARG_CHAR,
   BU_ARG_DOUBLE,
-  BU_ARG_FLOAT,
-  BU_ARG_INT,
+  BU_ARG_LONG,
   BU_ARG_STRING
 } bu_arg_value_t;
 
@@ -59,12 +58,11 @@ typedef enum {
 } bu_arg_req_t;
 
 typedef union {
-  /* important that first field is int */
-  int i; /* also use as bool */
+  /* important that first field is integral type */
+  long l; /* also use as bool */
   char *s;
   char c;
   double d;
-  float f;
 } bu_arg_value;
 
 /* TCLAP::Arg */
