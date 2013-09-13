@@ -230,6 +230,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 	}
     }
 
+    /* re-assemble search plan into a string - the db search functions break it out themselves */
     bu_vls_trunc(&search_string, 0);
     while (argv[plan_argv]) {
 	bu_vls_printf(&search_string, " %s", argv[plan_argv]);
