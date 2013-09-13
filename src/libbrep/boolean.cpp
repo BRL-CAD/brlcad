@@ -1040,6 +1040,9 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 	    curves[p.m_type].AppendSSIInfoToArray(newface->m_ssi_info);
 #endif
 	    out.Append(newface);
+	} else {
+	    for (int j = 0; j < newloop.Count(); j++)
+		delete newloop[j];
 	}
     }
 
