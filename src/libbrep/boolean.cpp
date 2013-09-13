@@ -119,7 +119,16 @@ public:
 
     ~LinkedCurve()
     {
+	if (m_curve)
+	    delete m_curve;
 	m_curve = NULL;
+    }
+
+    LinkedCurve& operator= (const LinkedCurve& _lc)
+    {
+	m_curve = _lc.m_curve ? _lc.m_curve->Duplicate() : NULL;
+	m_ssi_curves = _lc.m_ssi_curves;
+	return *this;
     }
 
     ON_3dPoint PointAtStart() const
@@ -200,12 +209,12 @@ public:
 	    return NULL;
 	ON_PolyCurve* polycurve = new ON_PolyCurve;
 	for (int i = 0; i < m_ssi_curves.Count(); i++)
-	    AppendToPolyCurve(m_ssi_curves[i].m_curve, *polycurve);
+	    AppendToPolyCurve(m_ssi_curves[i].m_curve->Duplicate(), *polycurve);
 	m_curve = polycurve;
 	return m_curve;
     }
 
-    ON_3dPoint PointAt(double t)
+    const ON_3dPoint PointAt(double t)
     {
 	const ON_Curve* c = Curve();
 	if (c == NULL)
@@ -1720,8 +1729,10 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 	// Only the copies of them will be used later.
 	for (int j = 0; j < linked_curves.Count(); j++)
 	    for (int k = 0; k < linked_curves[j].m_ssi_curves.Count(); k++)
-		if (linked_curves[j].m_ssi_curves[k].m_curve)
+		if (linked_curves[j].m_ssi_curves[k].m_curve) {
 		    delete linked_curves[j].m_ssi_curves[k].m_curve;
+		    linked_curves[j].m_ssi_curves[k].m_curve = NULL;
+		}
     }
 
     if (trimmedfaces.Count() != original_faces.Count()) {
