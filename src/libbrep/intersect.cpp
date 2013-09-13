@@ -169,7 +169,7 @@ build_surface_root(const ON_Surface* surf, const ON_Interval* u_domain, const ON
 
 
 HIDDEN ON_Curve*
-curve_fitting(ON_Curve* in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool delete_curve = false)
+curve_fitting(ON_Curve* in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool delete_curve = true)
 {
     // Fit a *2D* curve into line, arc, ellipse or other comic curves.
 
@@ -2711,9 +2711,9 @@ ON_Intersect(const ON_Surface* surfA,
 		// The i-th curve is close loop, we get a complete boundary of
 		// that overlap region.
 		ON_SSX_EVENT Event;
-		Event.m_curve3d = curve_fitting(overlaps[i]->m_curve3d, fitting_tolerance, true);
-		Event.m_curveA = curve_fitting(overlaps[i]->m_curveA, fitting_tolerance_A, true);
-		Event.m_curveB = curve_fitting(overlaps[i]->m_curveB, fitting_tolerance_B, true);
+		Event.m_curve3d = curve_fitting(overlaps[i]->m_curve3d, fitting_tolerance);
+		Event.m_curveA = curve_fitting(overlaps[i]->m_curveA, fitting_tolerance_A);
+		Event.m_curveB = curve_fitting(overlaps[i]->m_curveB, fitting_tolerance_B);
 		Event.m_type = ON_SSX_EVENT::ssx_overlap;
 		// Normalize the curves
 		Event.m_curve3d->SetDomain(ON_Interval(0.0, 1.0));
@@ -3326,7 +3326,7 @@ ON_Intersect(const ON_Surface* surfA,
 	    }
 	    curve = new ON_PolylineCurve(ptarray);
 	    curve->ChangeDimension(2);
-	    intersect_uv2d.Append(curve_fitting(curve, fitting_tolerance_A, true));
+	    intersect_uv2d.Append(curve_fitting(curve, fitting_tolerance_A));
 
 	    // The intersection curves in the 2d UV parameter space (surfB)
 	    ptarray.Empty();
@@ -3343,7 +3343,7 @@ ON_Intersect(const ON_Surface* surfA,
 	    }
 	    curve = new ON_PolylineCurve(ptarray);
 	    curve->ChangeDimension(2);
-	    intersect_st2d.Append(curve_fitting(curve, fitting_tolerance_B, true));
+	    intersect_st2d.Append(curve_fitting(curve, fitting_tolerance_B));
 
 	    delete polylines[i];
 	}
