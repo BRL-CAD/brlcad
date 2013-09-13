@@ -247,12 +247,9 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		    return GED_ERROR;
 		}
 		if (!is_specific) {
-		    /* There's no point in doing a flat search if we're just collecting database
-		     * objects in an is_local search - the results will be the same and it will
-		     * be more expensive to do */
-		    new_search->paths = (const char **)db_tops(gedp->ged_wdbp->dbip, aflag, (!is_local && is_flat));
+		    new_search->paths = (const char **)db_tops(gedp->ged_wdbp->dbip, aflag, is_flat);
 		} else {
-		    if (is_flat && !is_local) {
+		    if (is_flat) {
 			path_list = _ged_search_localized_obj_list(gedp, (const char *)bu_vls_addr(&argvls));
 		    } else {
 			path_dp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&argvls), LOOKUP_QUIET);
