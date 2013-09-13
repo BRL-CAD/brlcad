@@ -48,7 +48,8 @@ qt_sendRepaintEvent(struct dm *dmp)
     QEvent e(QEvent::UpdateRequest);
     return privars->qapp->sendEvent(privars->win, &e);
 }
-/*
+
+/**
  * Q T _ C L O S E
  *
  * Release the display manager
@@ -116,15 +117,27 @@ qt_drawEnd(struct dm *dmp)
     return TCL_OK;
 }
 
-
+/**
+ * Q T _ N O R M A L
+ *
+ * Restore the display processor to a normal mode of operation (i.e.,
+ * not scaled, rotated, displaced, etc.).
+ */
 HIDDEN int
-qt_normal(struct dm *UNUSED(dmp))
+qt_normal(struct dm *dmp)
 {
-    bu_log("qt_normal not implemented\n");
-    return 0;
+    if (dmp->dm_debugLevel)
+	bu_log("qt_normal()\n");
+
+    return TCL_OK;
 }
 
-
+/**
+ * Q T _ L O A D M A T R I X
+ *
+ * Load a new transformation matrix.  This will be followed by many
+ * calls to qt_draw().
+ */
 HIDDEN int
 qt_loadMatrix(struct dm *dmp, fastf_t *mat, int UNUSED(which_eye))
 {
@@ -147,7 +160,12 @@ qt_loadPMatrix(struct dm *UNUSED(dmp), fastf_t *UNUSED(mat))
     return 0;
 }
 
-
+/**
+ * Q T _ D R A W S T R I N G 2 D
+ *
+ * Output a string into the displaylist. The starting position of the
+ * beam is as specified.
+ */
 HIDDEN int
 qt_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
 {
@@ -425,12 +443,27 @@ qt_drawVListHiddenLine(struct dm *UNUSED(dmp), struct bn_vlist *UNUSED(vp))
 
 
 HIDDEN int
-qt_draw(struct dm *UNUSED(dmp), struct bn_vlist *(*callback_function)(void *), genptr_t *UNUSED(data))
+qt_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data)
 {
-    /* set callback_function as unused */
-    (void)callback_function;
-    bu_log("qt_draw not implemented\n");
-    return 0;
+    struct bn_vlist *vp;
+
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_draw\n");
+    }
+
+    if (!callback_function) {
+	if (data) {
+	    vp = (struct bn_vlist *)data;
+	    qt_drawVList(dmp, vp);
+	}
+    } else {
+	if (!data) {
+	    return TCL_ERROR;
+	} else {
+	    (void)callback_function(data);
+	}
+    }
+    return TCL_OK;
 }
 
 
