@@ -34,25 +34,33 @@
 #include "raytrace.h"
 
 
-#define DB_LS_HIDE_SOLID	0x1
-#define DB_LS_HIDE_COMB		0x2
-#define DB_LS_HIDE_REGION	0x4
-#define DB_LS_SHOW_HIDDEN	0x8
-#define DB_LS_HIDE_NON_GEOM	0x10
-#define DB_LS_HIDE_NON_TOPS	0x20
+#define DB_LS_PRIM	0x1
+#define DB_LS_COMB	0x2
+#define DB_LS_REGION	0x4
+#define DB_LS_HIDDEN	0x8
+#define DB_LS_NON_GEOM	0x10
+#define DB_LS_TOPS	0x20
 
 HIDDEN int
 dp_eval_flags(struct directory *dp, int flags)
 {
-    int add_obj = 1;
-    if (dp->d_addr == RT_DIR_PHONY_ADDR) add_obj = 0; /* TODO - do we ever write these? */
-    if ((flags & DB_LS_HIDE_SOLID) && (dp->d_flags & RT_DIR_SOLID)) add_obj = 0;
-    if ((flags & DB_LS_HIDE_COMB) && (dp->d_flags & RT_DIR_COMB)) add_obj = 0;
-    if ((flags & DB_LS_HIDE_REGION) && (dp->d_flags & RT_DIR_COMB)) add_obj = 0;
-    if (!(flags & DB_LS_SHOW_HIDDEN) && (dp->d_flags & RT_DIR_HIDDEN)) add_obj = 0;
-    if ((flags & DB_LS_HIDE_NON_GEOM) && (dp->d_flags & RT_DIR_NON_GEOM)) add_obj = 0;
-    if ((flags & DB_LS_HIDE_NON_TOPS) && (!(dp->d_nref == 0))) add_obj = 0;
-    return add_obj;
+    int flag_eval = 0;
+
+    /* TODO - do we ever write these? */
+    if (dp->d_addr == RT_DIR_PHONY_ADDR) return 0;
+
+    /* Unless we're explicitly listing hidden objects, it's game over if the
+     * hidden flag is set */
+    if (!(flags & DB_LS_HIDDEN) && (dp->d_flags & RT_DIR_HIDDEN)) return 0;
+
+    /* For any other flags that were provided, if we don't match them we don't return
+     * true.  If no flags are present, we default to true. */
+    if (flags & DB_LS_PRIM)     { flag_eval += (dp->d_flags & RT_DIR_SOLID)    ? 0 : 1; }
+    if (flags & DB_LS_COMB)     { flag_eval += (dp->d_flags & RT_DIR_COMB)     ? 0 : 1; }
+    if (flags & DB_LS_REGION)   { flag_eval += (dp->d_flags & RT_DIR_COMB)     ? 0 : 1; }
+    if (flags & DB_LS_NON_GEOM) { flag_eval += (dp->d_flags & RT_DIR_NON_GEOM) ? 0 : 1; }
+    if (flags & DB_LS_TOPS)     { flag_eval += (dp->d_nref == 0)               ? 0 : 1; }
+    return !flag_eval;
 }
 
 struct directory **
@@ -87,55 +95,36 @@ db_ls(const struct db_i *dbip, int flags)
 }
 
 struct directory **
-db_argv_to_dpv(const struct db_i *dbip, const char **argv)
+db_argv_to_dpv(const struct db_i *dbip, int argc, const char **argv)
 {
+    int i = 0;
     struct directory **dpv = NULL;
     struct directory *dp = RT_DIR_NULL;
-    int argv_cnt = 0;
-    const char *arg = argv[0];
-    if (!argv) return dpv;
-    while (arg) {
-	argv_cnt++;
-	arg = argv[argv_cnt];
-    }
-    if (argv_cnt > 0) {
-	dpv = (struct directory **)bu_malloc(sizeof(struct directory *) * (argv_cnt + 1), "directory pointer array");
-	argv_cnt = 0;
-	arg = argv[0];
-	while (arg) {
-	    dp = db_lookup(dbip, arg, LOOKUP_QUIET);
-	    if (dp == RT_DIR_NULL) {
-		dpv[argv_cnt] = RT_DIR_NULL;
-	    } else {
-		dpv[argv_cnt] = dp;
-	    }
-	    argv_cnt++;
-	    arg = argv[argv_cnt];
+    if (!argv || !argc) return dpv;
+    dpv = (struct directory **)bu_malloc(sizeof(struct directory *) * (argc + 1), "directory pointer array");
+    for (i = 0; i < argc; i++) {
+	if (argv[i]) {
+	    dp = db_lookup(dbip, argv[i], LOOKUP_QUIET);
+	    dpv[i] = (dp == RT_DIR_NULL) ? RT_DIR_NULL : dp;
+	} else {
+	    dpv[i] = RT_DIR_NULL;
 	}
     }
+    dpv[argc] = RT_DIR_NULL;
     return dpv;
 }
 
 char **
-db_dpv_to_argv(struct directory **dpv)
+db_dpv_to_argv(struct directory **dpv, int argc)
 {
+    int i = 0;
     char **argv = NULL;
-    int dpv_cnt = 0;
-    struct directory *dp = dpv[dpv_cnt];
-    if (!dpv) return argv;
-    while (dp) {
-	dpv_cnt++;
-	dp = dpv[dpv_cnt];
+    if (!dpv || !argc) return argv;
+    argv = (char **)bu_malloc(sizeof(char *) * (argc + 1), "char pointer array");
+    for (i = 0; i < argc; i++) {
+	argv[i] = (dpv[i] != RT_DIR_NULL) ? dpv[i]->d_namep : NULL;
     }
-    if (dpv_cnt > 0) {
-	argv = (char **)bu_malloc(sizeof(char *) * (dpv_cnt + 1), "char pointer array");
-	dpv_cnt = 0;
-	dp = dpv[0];
-	while (dpv) {
-	    argv[dpv_cnt] = dpv[dpv_cnt]->d_namep;
-	    dpv_cnt++;
-	}
-    }
+    argv[argc] = '\0';
     return argv;
 }
 
