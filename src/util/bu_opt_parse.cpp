@@ -293,6 +293,7 @@ extract_SwitchArg_data(bu_arg_vars *a, Arg *A)
 {
   SwitchArg *B = dynamic_cast<SwitchArg*>(A);
   if (a->val_type == BU_ARG_STRING) {
+    // it's a user error if this happens
     bool val = B->getValue();
     a->val.s = (val ? strdup("true") : strdup("false"));
    }
@@ -305,9 +306,33 @@ extract_SwitchArg_data(bu_arg_vars *a, Arg *A)
 void
 extract_UnlabeledValueArg_data(bu_arg_vars *a, Arg *A)
 {
-  if (a->val_type == BU_ARG_STRING) {
-    UnlabeledValueArg<string> *B = dynamic_cast<UnlabeledValueArg<string> *>(A);
-    a->val.s = strdup(B->getValue().c_str());
+  // this is a templated type
+  bu_arg_value_t val_type = a->val_type;
+  switch (val_type) {
+      case BU_ARG_BOOL: {
+        UnlabeledValueArg<bool> *B = dynamic_cast<UnlabeledValueArg<bool> *>(A);
+        bool val = B->getValue();
+        a->val.l = (val ? 1 : 0);
+      }
+        break;
+      case BU_ARG_DOUBLE: {
+        UnlabeledValueArg<double> *B = dynamic_cast<UnlabeledValueArg<double> *>(A);
+        a->val.d = B->getValue();
+      }
+        break;
+      case BU_ARG_LONG: {
+        UnlabeledValueArg<long> *B = dynamic_cast<UnlabeledValueArg<long> *>(A);
+        a->val.l = B->getValue();
+      }
+        break;
+      case BU_ARG_STRING: {
+        UnlabeledValueArg<string> *B = dynamic_cast<UnlabeledValueArg<string> *>(A);
+        a->val.s = strdup(B->getValue().c_str());
+      }
+        break;
+      default:
+        // error
+        break;
   }
 }
 
