@@ -254,12 +254,14 @@ main(int ac, char *av[])
     /* note this exit is success because it is expected
      * behavior--important for good auto-man-page handling */
     if (has_help) {
+      bu_arg_free(args);
       bu_exit(EXIT_SUCCESS, usage);
     }
 
     /* TCLAP doesn't check for confusion in file names */
     if (BU_STR_EQUAL(dsp3_fname, dsp1_fname)
         || BU_STR_EQUAL(dsp3_fname, dsp2_fname)) {
+      bu_arg_free(args);
       bu_exit(EXIT_FAILURE, "overwriting an input file (use the '-f' option to continue)\n");
     }
 
@@ -270,6 +272,7 @@ main(int ac, char *av[])
         unlink(dsp3_fname);
       }
       else {
+        bu_arg_free(args);
         bu_exit(EXIT_FAILURE, "overwriting an existing file (use the '-f' option to continue)\n");
       }
     }
@@ -278,12 +281,14 @@ main(int ac, char *av[])
     in1 = fopen(dsp1_fname, "r");
     if (!in1) {
       perror(dsp1_fname);
+      bu_arg_free(args);
       bu_exit(EXIT_FAILURE, "ERROR: input file open failure\n");
     }
 
     if (fstat(fileno(in1), &sb)) {
       perror(dsp1_fname);
       fclose(in1);
+      bu_arg_free(args);
       bu_exit(EXIT_FAILURE, "ERROR: input file stat failure\n");
     }
 
@@ -293,6 +298,7 @@ main(int ac, char *av[])
     if (!count) {
       perror(dsp1_fname);
       fclose(in1);
+      bu_arg_free(args);
       bu_exit(EXIT_FAILURE, "zero-length input file\n");
     }
 
@@ -302,6 +308,7 @@ main(int ac, char *av[])
     if (!in2) {
       perror(dsp2_fname);
       fclose(in1);
+      bu_arg_free(args);
       bu_exit(EXIT_FAILURE, "ERROR: input file open failure\n");
     }
 
@@ -309,6 +316,7 @@ main(int ac, char *av[])
       perror(dsp2_fname);
       fclose(in1);
       fclose(in2);
+      bu_arg_free(args);
       bu_exit(EXIT_FAILURE, "ERROR: input file stat failure\n");
     }
 
@@ -317,12 +325,14 @@ main(int ac, char *av[])
       perror(dsp2_fname);
       fclose(in1);
       fclose(in2);
+      bu_arg_free(args);
       bu_exit(EXIT_FAILURE, "ERROR: zero-length input file\n");
     }
 
     if ((size_t)sb.st_size != count) {
       fclose(in1);
       fclose(in2);
+      bu_arg_free(args);
       bu_exit(EXIT_FAILURE, "ERROR: input file size mis-match\n");
     }
 
@@ -333,6 +343,7 @@ main(int ac, char *av[])
       fclose(in1);
       fclose(in2);
       fclose(out1);
+      bu_arg_free(args);
       bu_exit(EXIT_FAILURE, "ERROR: output file open failure\n");
     }
 
@@ -347,6 +358,7 @@ main(int ac, char *av[])
         fclose(in1);
         fclose(in2);
         fclose(out1);
+        bu_arg_free(args);
 	bu_exit(EXIT_FAILURE, "ERROR: input file short read count\n");
     }
 
@@ -388,8 +400,11 @@ main(int ac, char *av[])
         fclose(in1);
         fclose(in2);
         fclose(out1);
+        bu_arg_free(args);
 	bu_exit(EXIT_FAILURE, "ERROR: count error writing data\n");
     }
+
+    bu_arg_free(args);
 
     return 0;
 }
