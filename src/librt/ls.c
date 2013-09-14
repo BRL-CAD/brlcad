@@ -65,7 +65,7 @@ dp_eval_flags(struct directory *dp, int flags)
     if (flags & DB_LS_REGION)   { flag_eval += (dp->d_flags & RT_DIR_REGION)   ? 0 : 1; }
     if (flags & DB_LS_NON_GEOM) { flag_eval += (dp->d_flags & RT_DIR_NON_GEOM) ? 0 : 1; }
     if (flags & DB_LS_TOPS)     { flag_eval += (dp->d_nref == 0)               ? 0 : 1; }
-    if (flag_eval) return 0;
+    flag_eval = (flag_eval) ? 0 : 1;
 
     /* Now that we have handled the filtering flags, check to see if we pass
      * the additive flags - these allow for returning (say) a list of primitives
