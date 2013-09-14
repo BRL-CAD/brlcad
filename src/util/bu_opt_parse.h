@@ -60,7 +60,6 @@ typedef union {
   /* important that first field is integral type */
   long l; /* also use as bool */
   char *s;
-  char c;
   double d;
 } bu_arg_value;
 
