@@ -76,7 +76,7 @@ typedef struct bu_arg_vars_type {
 } bu_arg_vars;
 
 /* the action: all in one function */
-int bu_arg_parse(bu_arg_vars *args[], int argc, char **argv);
+int bu_arg_parse(bu_arg_vars *args[], int argc, char * const argv[]);
 /* free arg memory for any strings */
 void bu_arg_free(bu_arg_vars *args[]);
 

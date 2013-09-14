@@ -73,7 +73,7 @@ static vector<Arg*> Arg_pointers;
  */
 extern "C"
 int
-bu_arg_parse(bu_arg_vars *args[], int argc, char **argv)
+bu_arg_parse(bu_arg_vars *args[], int argc, char * const argv[])
 {
   int retval = BU_ARG_PARSE_SUCCESS;
 
