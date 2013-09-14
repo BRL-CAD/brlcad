@@ -35,7 +35,7 @@
 #include "vmath.h"
 #include "bn.h"
 
-#include "bu_opt_parse_private.h"
+#include "bu_arg_parse_private.h"
 
 /* declarations to support use of TCLAP arg parsing */
 static const char usage[] = "Example: dsp_add  dsp1.dsp  dsp2.dsp  dsp12added.dsp\n";

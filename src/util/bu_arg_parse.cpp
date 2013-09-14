@@ -31,8 +31,8 @@
 
 
 #include "tclap/CmdLine.h"
-#include "bu_opt_parse_private.h"
-#include "bu_opt_parse.h"
+#include "bu_arg_parse_private.h"
+#include "bu_arg_parse.h"
 
 #include <vector>
 
@@ -73,7 +73,7 @@ static vector<Arg*> Arg_pointers;
  */
 extern "C"
 int
-bu_opt_parse(bu_arg_vars *args[], int argc, char **argv)
+bu_arg_parse(bu_arg_vars *args[], int argc, char **argv)
 {
   int retval = BU_ARG_PARSE_SUCCESS;
 
@@ -363,3 +363,20 @@ extract_ValueArg_data(bu_arg_vars *a, Arg *A)
 }
 
 */
+
+extern "C" void
+bu_arg_free(bu_arg_vars *args[])
+{
+  int i = 0;
+  while (args[i]) {
+      bu_arg_vars *a = args[i];
+      if (a->val_type == BU_ARG_STRING) {
+        if (a->val.s) {
+          free(a->val.s);
+          a->val.s = 0;
+        }
+      }
+      // next arg
+      ++i;
+  }
+}

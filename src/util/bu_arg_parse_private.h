@@ -1,4 +1,4 @@
-/*              B U _ O P T _ P A R S E _ P R I V A T E.H
+/*              B U _ A R G _ P A R S E _ P R I V A T E.H
  * BRL-CAD
  *
  * Copyright (c) 2013 United States Government as represented by
@@ -18,14 +18,14 @@
  * information.
  */
 
-#ifndef BU_OPT_PARSE_PRIVATE_H
-#define BU_OPT_PARSE_PRIVATE_H
+#ifndef BU_ARG_PARSE_PRIVATE_H
+#define BU_ARG_PARSE_PRIVATE_H
 
 #include "tclap/CmdLine.h"
 /* local customizations of TCLAP MUST follow the above header */
 
 /* get common data from the C world */
-#include "bu_opt_parse.h"
+#include "bu_arg_parse.h"
 
 // some customization of TCLAP classes
 class BRLCAD_StdOutput : public TCLAP::StdOutput
@@ -291,4 +291,4 @@ BRLCAD_StdOutput::spacePrint(std::ostream& os,
 
 } // BRLCAD_StdOutput::spacePrint
 
-#endif /* BU_OPT_PARSE_PRIVATE_H */
+#endif /* BU_ARG_PARSE_PRIVATE_H */

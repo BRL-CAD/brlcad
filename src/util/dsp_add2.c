@@ -35,7 +35,7 @@
 #include "vmath.h"
 #include "bn.h"
 
-#include "bu_opt_parse.h"
+#include "bu_arg_parse.h"
 
 /* declarations to support use of TCLAP arg parsing */
 static const char usage[] = "Example: dsp_add  dsp1.dsp  dsp2.dsp  dsp12added.dsp\n";
@@ -234,7 +234,7 @@ main(int ac, char *av[])
     dsp3_arg.val_type = BU_ARG_STRING;
 
     /* parse the args */
-    arg_err = bu_opt_parse(args, ac, av);
+    arg_err = bu_arg_parse(args, ac, av);
 
     if (arg_err == BU_ARG_PARSE_ERR) {
         /* the TCLAP exception handler has fired with its own message

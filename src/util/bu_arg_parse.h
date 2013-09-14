@@ -18,8 +18,8 @@
  * information.
  */
 
-#ifndef BU_OPT_PARSE_H
-#define BU_OPT_PARSE_H
+#ifndef BU_ARG_PARSE_H
+#define BU_ARG_PARSE_H
 
 /* all in this header MUST have "C" linkage */
 #ifdef __cplusplus
@@ -76,12 +76,14 @@ typedef struct bu_arg_vars_type {
 } bu_arg_vars;
 
 /* the action: all in one function */
-int
-bu_opt_parse(bu_arg_vars *args[], int argc, char **argv);
+int bu_arg_parse(bu_arg_vars *args[], int argc, char **argv);
+/* free arg memory for any strings */
+void bu_arg_free(bu_arg_vars *args[]);
+
 
 /* all in this header MUST have "C" linkage */
 #ifdef __cplusplus
 } /* extern "C" { */
 #endif
 
-#endif /* BU_OPT_PARSE_H */
+#endif /* BU_ARG_PARSE_H */
