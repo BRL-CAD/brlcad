@@ -175,16 +175,19 @@ bu_opt_parse(bu_arg_vars *args[], int argc, char **argv)
 
     // cleanup
     if (!Arg_pointers.empty())
-      for (unsigned i = 0; i < Arg_pointers.size(); ++i)
+      for (unsigned i = 0; i < Arg_pointers.size(); ++i) {
         delete Arg_pointers[i];
-
+        Arg_pointers[i] = 0;
+      }
     return BU_ARG_PARSE_ERR;
   }
 
   // successful parse, clean up heap memory used
   if (!Arg_pointers.empty())
-    for (unsigned i = 0; i < Arg_pointers.size(); ++i)
+    for (unsigned i = 0; i < Arg_pointers.size(); ++i) {
       delete Arg_pointers[i];
+      Arg_pointers[i] = 0;
+    }
 
   return retval;
 
