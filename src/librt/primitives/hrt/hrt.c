@@ -183,17 +183,22 @@ rt_hrt_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     VMOVE(&R[4], Yu);
     VMOVE(&R[8], Zu);
 
+    /**
+     * 1.0 stands for the length of xdir vector and 0.25 approximates some
+     * value which encloses the displacement from the Z-axis to the furthest
+     * point on the heart surface in either the -X or +X direction
+     */
     /* X */
     f = hip->xdir[X];
-    (*min)[X] = hip->v[X] - f;
-    (*max)[X] = hip->v[X] + f;
-
+    (*min)[X] = hip->v[X] - f * 1.25;
+    (*max)[X] = hip->v[X] + f * 1.25;
+    
     /* Y */
     f = hip->ydir[Y];
     (*min)[Y] = hip->v[Y] - f;
     (*max)[Y] = hip->v[Y] + f;
 
-    /* Y */
+    /* Z */
     f = hip->zdir[Z];
     /**
      * 1.0 stands for the length of zdir vector and 0.25 closely approximates
@@ -670,7 +675,7 @@ rt_hrt_vshot()
  *
  * df/dx = 6 * X * (w**2 - Z**3/3)
  * df/dy = 6 * Y * (12/27 * w**2 - 80/3 * Z**3)
- * df/dz = 6 * Z * ( w**2 - 3/2 * Z**2 * (X**2 + 9/80 * Y**2))
+ * df/dz = 6 * Z * ( w**2 - 1/2 * Z * (X**2 + 9/80 * Y**2))
  *
  * Since we rescale the gradient (normal) to unity, we divide the
  * above equations by six here.
@@ -690,7 +695,7 @@ rt_hrt_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
         + hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z] - 1.0;
     fx = (w * w - 1/3 * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z]) * hitp->hit_vpriv[X];
     fy = hitp->hit_vpriv[Y] * (12/27 * w * w - 80/3 * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z]);
-    fz = (w * w - 3/2 * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z] * (hitp->hit_vpriv[X] * hitp->hit_vpriv[X] + 9/80 * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y])) * hitp->hit_vpriv[Z];
+    fz = (w * w - 0.5 * hitp->hit_vpriv[Z] * (hitp->hit_vpriv[X] * hitp->hit_vpriv[X] + 9/80 * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y])) * hitp->hit_vpriv[Z];
     VSET(work, fx, fy, fz);
     VUNITIZE(work);
 
