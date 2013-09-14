@@ -34,12 +34,17 @@
 #include "raytrace.h"
 
 
-#define DB_LS_PRIM	0x1
-#define DB_LS_COMB	0x2
-#define DB_LS_REGION	0x4
-#define DB_LS_HIDDEN	0x8
-#define DB_LS_NON_GEOM	0x10
-#define DB_LS_TOPS	0x20
+#define DB_LS_PRIM         0x1
+#define DB_LS_COMB         0x2
+#define DB_LS_REGION       0x4
+#define DB_LS_HIDDEN       0x8
+#define DB_LS_NON_GEOM     0x10
+#define DB_LS_TOPS         0x20
+#define DB_LS_ADD_PRIM     0x40
+#define DB_LS_ADD_COMB     0x80
+#define DB_LS_ADD_REGION   0x100
+#define DB_LS_ADD_NON_GEOM 0x200
+
 
 HIDDEN int
 dp_eval_flags(struct directory *dp, int flags)
@@ -60,7 +65,16 @@ dp_eval_flags(struct directory *dp, int flags)
     if (flags & DB_LS_REGION)   { flag_eval += (dp->d_flags & RT_DIR_REGION)   ? 0 : 1; }
     if (flags & DB_LS_NON_GEOM) { flag_eval += (dp->d_flags & RT_DIR_NON_GEOM) ? 0 : 1; }
     if (flags & DB_LS_TOPS)     { flag_eval += (dp->d_nref == 0)               ? 0 : 1; }
-    return !flag_eval;
+    if (flag_eval) return 0;
+
+    /* Now that we have handled the filtering flags, check to see if we pass
+     * the additive flags - these allow for returning (say) a list of primitives
+     * and regions but not combs */
+    if (flags & DB_LS_ADD_PRIM)     { flag_eval += (dp->d_flags & RT_DIR_SOLID)    ? 1 : 0; }
+    if (flags & DB_LS_ADD_COMB)     { flag_eval += (dp->d_flags & RT_DIR_COMB)     ? 1 : 0; }
+    if (flags & DB_LS_ADD_REGION)   { flag_eval += (dp->d_flags & RT_DIR_REGION)   ? 1 : 0; }
+    if (flags & DB_LS_ADD_NON_GEOM) { flag_eval += (dp->d_flags & RT_DIR_NON_GEOM) ? 1 : 0; }
+    return (flag_eval) ? 1 : 0;
 }
 
 struct directory **
