@@ -57,7 +57,7 @@ dp_eval_flags(struct directory *dp, int flags)
      * true.  If no flags are present, we default to true. */
     if (flags & DB_LS_PRIM)     { flag_eval += (dp->d_flags & RT_DIR_SOLID)    ? 0 : 1; }
     if (flags & DB_LS_COMB)     { flag_eval += (dp->d_flags & RT_DIR_COMB)     ? 0 : 1; }
-    if (flags & DB_LS_REGION)   { flag_eval += (dp->d_flags & RT_DIR_COMB)     ? 0 : 1; }
+    if (flags & DB_LS_REGION)   { flag_eval += (dp->d_flags & RT_DIR_REGION)     ? 0 : 1; }
     if (flags & DB_LS_NON_GEOM) { flag_eval += (dp->d_flags & RT_DIR_NON_GEOM) ? 0 : 1; }
     if (flags & DB_LS_TOPS)     { flag_eval += (dp->d_nref == 0)               ? 0 : 1; }
     return !flag_eval;
