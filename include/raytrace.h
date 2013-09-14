@@ -3734,11 +3734,12 @@ DEPRECATED RT_EXPORT extern struct bu_ptbl *db_search_unique_objects(void *searc
  *
  */
 RT_EXPORT extern struct bu_ptbl *db_search_path(const char *plan_string,
-	                                   const char *path,
-	                                   struct rt_wdb *wdbp);
+	                                        struct directory *dp,
+	                                        struct rt_wdb *wdbp);
 RT_EXPORT extern struct bu_ptbl *db_search_paths(const char *plan_string,
-	                                   const char **paths,
-	                                   struct rt_wdb *wdbp);
+                                                 int path_cnt,
+	                                         struct directory **paths,
+	                                         struct rt_wdb *wdbp);
 
 /* Properly free the tables returned by db_search_path and db_search_paths */
 RT_EXPORT extern void db_free_search_tbl(struct bu_ptbl *search_results);
@@ -3752,11 +3753,12 @@ RT_EXPORT extern void db_free_search_tbl(struct bu_ptbl *search_results);
  * with a freeing of the table structure itself is sufficient.
  */
 RT_EXPORT extern struct bu_ptbl *db_search_path_obj(const char *plan_string,
-	                                       const char *path,
-	                                       struct rt_wdb *wdbp);
+	                                            struct directory *dp,
+	                                            struct rt_wdb *wdbp);
 RT_EXPORT extern struct bu_ptbl *db_search_paths_obj(const char *plan_string,
-	                                       const char **paths,
-	                                       struct rt_wdb *wdbp);
+	                                             int path_cnt,
+	                                             struct directory **paths,
+	                                             struct rt_wdb *wdbp);
 
 /* db_open.c */
 /**
@@ -4862,30 +4864,6 @@ RT_EXPORT extern struct bu_ptbl *db_lookup_by_attr(struct db_i *dbip,
 						   struct bu_attribute_value_set *avs,
 						   int op);
 
-/**
- * D B _ T O P S
- *
- * This routine takes a database instance pointer and assembles an
- * argv style array of the names of all top level objects in the
- * database.  It takes two flags:  aflag, which is 0 by default and
- * 1 if the caller wishes to include hidden objects in list, and
- * flat - if a "flat" tops list is requested, every object in the
- * database is considered a top level object.
- *
- * The caller is responsible for freeing the array.
- *
- * Returns -
- * char ** array of object names on success
- * NULL if no objects were found
- *
- * WARNING:  THIS FUNCTION IS STILL IN DEVELOPMENT - IT IS NOT YET
- * ASSUMED THAT THIS IS ITS FINAL FORM - DO NOT DEPEND ON IT REMAINING
- * THE SAME UNTIL THIS WARNING IS REMOVED
- */
-RT_EXPORT extern char **db_tops(const struct db_i *dbip,
-				int aflag,
-				int flat);
-
 /* add entry to directory */
 
 /**
@@ -5008,6 +4986,59 @@ DEPRECATED RT_EXPORT extern int db_regexp_match(const char *pattern,
 RT_EXPORT extern int db_regexp_match_all(struct bu_vls *dest,
 					 struct db_i *dbip,
 					 const char *pattern);
+
+/* db_ls.c */
+/**
+ * db_ls takes a database instance pointer and assembles a
+ * directory pointer array of objects in the database according
+ * to a set of flags.
+ *
+ * The caller is responsible for freeing the array.
+ *
+ * Returns -
+ * integer count of objects in dpv
+ * struct directory ** array of objects in dpv via argument
+ *
+ * WARNING:  THIS FUNCTION IS STILL IN DEVELOPMENT - IT IS NOT YET
+ * ASSUMED THAT THIS IS ITS FINAL FORM - DO NOT DEPEND ON IT REMAINING
+ * THE SAME UNTIL THIS WARNING IS REMOVED
+ */
+#define DB_LS_PRIM         0x1    /* filter for primitives (solids)*/
+#define DB_LS_COMB         0x2    /* filter for combinations */
+#define DB_LS_REGION       0x4    /* filter for regions */
+#define DB_LS_HIDDEN       0x8    /* include hidden objects in results */
+#define DB_LS_NON_GEOM     0x10   /* filter for non-geometry objects */
+#define DB_LS_TOPS         0x20   /* filter for objects un-referenced by other objects */
+#define DB_LS_ADD_PRIM     0x40   /* add all primitives to the results */
+#define DB_LS_ADD_COMB     0x80   /* add all combinations to the results */
+#define DB_LS_ADD_REGION   0x100  /* add all regions to the results */
+#define DB_LS_ADD_NON_GEOM 0x200  /* add all non-geometry objects to the results */
+RT_EXPORT extern int db_ls(const struct db_i *dbip,
+		           int flags,
+			   struct directory ***dpv);
+
+/**
+ * convert an argv list of names to a directory pointer array.
+ *
+ * Because the results of the conversion may be RT_DIR_NULL, it
+ * is necessary to specify the size of the array with argc rather
+ * than rely on NULL termination
+ */
+RT_EXPORT extern struct directory **db_argv_to_dpv(const struct db_i *dbip,
+	                                           int argc,
+						   const char **argv);
+
+
+/**
+ * convert a directory pointer array to an argv char pointer array.
+ *
+ * Because there may be RT_DIR_NULL entries in the array, it
+ * is necessary to specify the size of the array with argc rather
+ * than rely on NULL termination.
+ */
+RT_EXPORT extern char **db_dpv_to_argv(struct directory **dpv,
+	                               int argc);
+
 
 /* db_flags.c */
 /**

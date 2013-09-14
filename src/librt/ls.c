@@ -33,19 +33,6 @@
 #include "db.h"
 #include "raytrace.h"
 
-
-#define DB_LS_PRIM         0x1
-#define DB_LS_COMB         0x2
-#define DB_LS_REGION       0x4
-#define DB_LS_HIDDEN       0x8
-#define DB_LS_NON_GEOM     0x10
-#define DB_LS_TOPS         0x20
-#define DB_LS_ADD_PRIM     0x40
-#define DB_LS_ADD_COMB     0x80
-#define DB_LS_ADD_REGION   0x100
-#define DB_LS_ADD_NON_GEOM 0x200
-
-
 HIDDEN int
 dp_eval_flags(struct directory *dp, int flags)
 {
@@ -77,13 +64,12 @@ dp_eval_flags(struct directory *dp, int flags)
     return (flag_eval) ? 1 : 0;
 }
 
-struct directory **
-db_ls(const struct db_i *dbip, int flags)
+int
+db_ls(const struct db_i *dbip, int flags, struct directory ***dpv)
 {
     int i;
     int objcount = 0;
     struct directory *dp;
-    struct directory **dpv;
 
     RT_CK_DBI(dbip);
 
@@ -93,19 +79,19 @@ db_ls(const struct db_i *dbip, int flags)
 	}
     }
     if (objcount > 0) {
-	dpv = (struct directory **)bu_malloc(sizeof(struct directory *) * (objcount + 1), "directory pointer array");
+	(*dpv) = (struct directory **)bu_malloc(sizeof(struct directory *) * (objcount + 1), "directory pointer array");
 	objcount = 0;
 	for (i = 0; i < RT_DBNHASH; i++) {
 	    for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 		if (dp_eval_flags(dp,flags)) {
-		    dpv[objcount] = dp;
+		    (*dpv)[objcount] = dp;
 		    objcount++;
 		}
 	    }
 	}
-	dpv[objcount] = '\0';
+	(*dpv)[objcount] = '\0';
     }
-    return dpv;
+    return objcount;
 }
 
 struct directory **

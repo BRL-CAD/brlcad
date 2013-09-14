@@ -2272,16 +2272,17 @@ void db_free_search_tbl(struct bu_ptbl *search_results) {
 
 struct bu_ptbl *
 db_search_path(const char *plan_string,
-	const char *path,
+	struct directory *dp,
 	struct rt_wdb *wdbp)
 {
-    struct directory *dp = NULL;
     struct bu_ptbl *search_results = NULL;
     char **plan_argv = NULL;
     struct db_plan_t *dbplan = NULL;
     struct bu_vls plan_string_vls;
+    struct db_node_t curr_node;
+    struct db_full_path start_path;
 
-    if (!path)return NULL;
+    if (!dp || dp == RT_DIR_NULL) return NULL;
 
     /* get the plan string into an argv array */
     plan_argv = (char **)bu_calloc(strlen(plan_string) + 1, sizeof(char *), "plan argv");
@@ -2291,21 +2292,18 @@ db_search_path(const char *plan_string,
     dbplan = db_search_form_plan(plan_argv, wdbp->dbip, wdbp);
     if (!dbplan) return NULL;
 
-    /* execute the plan and return the results table */
-    dp = db_lookup(wdbp->dbip, path, LOOKUP_QUIET);
-    if (dp != RT_DIR_NULL) {
-	struct db_node_t curr_node;
-	struct db_full_path start_path;
-	db_full_path_init(&start_path);
-	db_add_node_to_full_path(&start_path, dp);
-	curr_node.path = &start_path;
-	BU_ALLOC(search_results, struct bu_ptbl);
-	BU_PTBL_INIT(search_results);
-	/* by convention, the top level node is "unioned" into the global database */
-	DB_FULL_PATH_SET_CUR_BOOL(curr_node.path, 2);
-	db_fullpath_traverse(wdbp->dbip, wdbp, search_results, &curr_node, find_execute_plans, find_execute_plans, wdbp->wdb_resp, (struct db_plan_t *)dbplan);
-	db_free_full_path(&start_path);
-    }
+    /* execute the plan */
+    db_full_path_init(&start_path);
+    db_add_node_to_full_path(&start_path, dp);
+    curr_node.path = &start_path;
+    BU_ALLOC(search_results, struct bu_ptbl);
+    BU_PTBL_INIT(search_results);
+    /* by convention, the top level node is "unioned" into the global database */
+    DB_FULL_PATH_SET_CUR_BOOL(curr_node.path, 2);
+    db_fullpath_traverse(wdbp->dbip, wdbp, search_results, &curr_node, find_execute_plans, find_execute_plans, wdbp->wdb_resp, (struct db_plan_t *)dbplan);
+    
+    /* free memory */
+    db_free_full_path(&start_path);
     bu_vls_free(&plan_string_vls);
     bu_free((char *)plan_argv, "free plan argv");
     db_search_free_plan((void **)&dbplan);
@@ -2314,37 +2312,39 @@ db_search_path(const char *plan_string,
 
 struct bu_ptbl *
 db_search_paths(const char *plan_string,
-	const char **paths,
+	int path_cnt,
+	struct directory **paths,
 	struct rt_wdb *wdbp)
 {
     int i = 0;
-    const char *curr_path = paths[i];
+    struct directory *curr_path;
     struct bu_ptbl *combined_results;
     BU_ALLOC(combined_results, struct bu_ptbl);
     BU_PTBL_INIT(combined_results);
-    while (curr_path) {
-	struct bu_ptbl *search_results = db_search_path(plan_string, curr_path, wdbp);
-	if (search_results) {
-	    bu_ptbl_cat(combined_results, search_results);
-	    /* we need to free the search result table itself, but don't do a full
-	     * db_free_seach_tbl - the contents are in use by combined_results*/
-	    bu_ptbl_free(search_results);
-	    bu_free(search_results, "free search container");
-	}
-	i++;
+    for (i = 0; i < path_cnt; i++) {
 	curr_path = paths[i];
+	if (curr_path != RT_DIR_NULL) {
+	    struct bu_ptbl *search_results = db_search_path(plan_string, curr_path, wdbp);
+	    if (search_results) {
+		bu_ptbl_cat(combined_results, search_results);
+		/* we need to free the search result table itself, but don't do a full
+		 * db_free_seach_tbl - the contents are in use by combined_results*/
+		bu_ptbl_free(search_results);
+		bu_free(search_results, "free search container");
+	    }
+	}
     }
     return combined_results;
 }
 
 struct bu_ptbl *
 db_search_path_obj(const char *plan_string,
-	const char *path,
+	struct directory *dp,
 	struct rt_wdb *wdbp)
 {
     int i;
     struct bu_ptbl *uniq_db_objs = NULL;
-    struct bu_ptbl *search_results = db_search_path(plan_string, path, wdbp);
+    struct bu_ptbl *search_results = db_search_path(plan_string, dp, wdbp);
     if (search_results) {
 	BU_ALLOC(uniq_db_objs, struct bu_ptbl);
 	BU_PTBL_INIT(uniq_db_objs);
@@ -2359,26 +2359,28 @@ db_search_path_obj(const char *plan_string,
 
 struct bu_ptbl *
 db_search_paths_obj(const char *plan_string,
-	const char **paths,
+	int path_cnt,
+	struct directory **paths,
 	struct rt_wdb *wdbp)
 {
     int i = 0;
     int j = 0;
-    const char *curr_path = paths[i];
+    struct directory *curr_path;
     struct bu_ptbl *combined_results;
     BU_ALLOC(combined_results, struct bu_ptbl);
     BU_PTBL_INIT(combined_results);
-    while (curr_path) {
-	struct bu_ptbl *search_results = db_search_path(plan_string, curr_path, wdbp);
-	if (search_results) {
-	    for(j = (int)BU_PTBL_LEN(search_results) - 1; j >= 0; j--){
-		struct db_full_path *dfptr = (struct db_full_path *)BU_PTBL_GET(search_results, j);
-		bu_ptbl_ins_unique(combined_results, (long *)dfptr->fp_names[dfptr->fp_len - 1]);
-	    }
-	    db_free_search_tbl(search_results);
-	}
-	i++;
+    for (i = 0; i < path_cnt; i++) {
 	curr_path = paths[i];
+	if (curr_path != RT_DIR_NULL) {
+	    struct bu_ptbl *search_results = db_search_path(plan_string, curr_path, wdbp);
+	    if (search_results) {
+		for(j = (int)BU_PTBL_LEN(search_results) - 1; j >= 0; j--){
+		    struct db_full_path *dfptr = (struct db_full_path *)BU_PTBL_GET(search_results, j);
+		    bu_ptbl_ins_unique(combined_results, (long *)dfptr->fp_names[dfptr->fp_len - 1]);
+		}
+		db_free_search_tbl(search_results);
+	    }
+	}
     }
     return combined_results;
 }

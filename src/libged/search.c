@@ -62,7 +62,8 @@ _path_scrub(struct bu_vls *path)
 }
 
 struct ged_search {
-    const char **paths;
+    struct directory **paths;
+    int path_cnt;
     int search_type;
 };
 
@@ -137,20 +138,22 @@ _ged_search_characterize_path(struct ged *gedp, const char *orig, struct bu_vls 
     return 1;
 }
 
-HIDDEN char **
-_ged_search_localized_obj_list(struct ged *gedp, const char *path)
+HIDDEN int
+_ged_search_localized_obj_list(struct ged *gedp, struct directory *path, struct directory ***path_list)
 {
+    int path_cnt;
     int j;
     const char *comb_str = "-name *";
     struct bu_ptbl *tmp_search = db_search_path_obj(comb_str, path, gedp->ged_wdbp);
-    char **path_list = (char **)bu_malloc(sizeof(char *) * ((int)BU_PTBL_LEN(tmp_search)+1), "object path array");
-    for(j = 0; j < (int)BU_PTBL_LEN(tmp_search); j++){
-	path_list[j] = ((struct directory *)BU_PTBL_GET(tmp_search, j))->d_namep;
+    path_cnt = (int)BU_PTBL_LEN(tmp_search);
+    (*path_list) = (struct directory **)bu_malloc(sizeof(char *) * (path_cnt+1), "object path array");
+    for(j = 0; j < path_cnt; j++){
+	(*path_list)[j] = (struct directory *)BU_PTBL_GET(tmp_search, j);
     }
-    path_list[BU_PTBL_LEN(tmp_search)] = '\0';
+    (*path_list)[path_cnt] = RT_DIR_NULL;
     bu_ptbl_free(tmp_search);
     bu_free(tmp_search, "Free search table container");
-    return path_list;
+    return path_cnt;
 }
 
 int
@@ -233,8 +236,6 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		/* We seem to have a path - figure out what type of search it specifies */
 		int is_specific, is_local, is_flat;
 		struct ged_search *new_search;
-		struct directory *path_dp;
-		char **path_list;
 		int search_path_type = _ged_search_characterize_path(gedp, argv[plan_argv], &argvls, &is_specific, &is_local, &is_flat);
 		path_found = 1;
 		if (search_path_type) {
@@ -247,17 +248,21 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		    return GED_ERROR;
 		}
 		if (!is_specific) {
-		    new_search->paths = (const char **)db_tops(gedp->ged_wdbp->dbip, aflag, is_flat);
+		    if (!is_flat && !aflag) new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, &(new_search->paths));
+		    if (!is_flat && aflag) new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS | DB_LS_HIDDEN, &(new_search->paths));
+		    if (is_flat && !aflag) new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, 0, &(new_search->paths));
+		    if (is_flat && aflag) new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_HIDDEN, &(new_search->paths));
 		} else {
+		    /* _ged_search_characterize_path verified that the db_lookup will succeed */
+		    struct directory *local_dp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&argvls), LOOKUP_QUIET);
 		    if (is_flat) {
-			path_list = _ged_search_localized_obj_list(gedp, (const char *)bu_vls_addr(&argvls));
+			new_search->path_cnt = _ged_search_localized_obj_list(gedp, local_dp, &(new_search->paths));
 		    } else {
-			path_dp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&argvls), LOOKUP_QUIET);
-			path_list = (char **)bu_malloc(sizeof(char *) * 2, "object path array");
-			path_list[0] = path_dp->d_namep;
-			path_list[1] = '\0';
+			new_search->paths = (struct directory **)bu_malloc(sizeof(struct directory *) * 2, "object path array");
+			new_search->paths[0] = local_dp;
+			new_search->paths[1] = RT_DIR_NULL;
+			new_search->path_cnt = 1;
 		    }
-		    new_search->paths = (const char **)path_list;
 		}
 		new_search->search_type = is_local;
 		bu_ptbl_ins(search_set, (long *)new_search);
@@ -268,7 +273,8 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		    /* We have a plan but not path - in that case, do a non-full-path tops search */
 		    struct ged_search *new_search;
 		    BU_ALLOC(new_search, struct ged_search);
-		    new_search->paths = (const char **)db_tops(gedp->ged_wdbp->dbip, aflag, 0);
+		    if (!aflag) new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, &(new_search->paths));
+		    if (aflag) new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS | DB_LS_HIDDEN, &(new_search->paths));
 		    new_search->search_type = 1;
 		    bu_ptbl_ins(search_set, (long *)new_search);
 		}
@@ -300,8 +306,8 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 	for (i = (int)BU_PTBL_LEN(search_set) - 1; i >= 0; i--){
 	    int path_cnt = 0;
 	    struct ged_search *search = (struct ged_search *)BU_PTBL_GET(search_set, i);
-	    const char *curr_path = search->paths[path_cnt];
-	    while (curr_path) {
+	    struct directory *curr_path = search->paths[path_cnt];
+	    while (path_cnt < search->path_cnt) {
 		struct bu_ptbl *initial_search_results = db_search_path(bu_vls_addr(&search_string), curr_path, gedp->ged_wdbp);
 		if (initial_search_results) {
 		    for(j = (int)BU_PTBL_LEN(initial_search_results) - 1; j >= 0; j--){
@@ -328,8 +334,8 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 	    int path_cnt = 0;
 	    int j;
 	    struct ged_search *search = (struct ged_search *)BU_PTBL_GET(search_set, i);
-	    const char *curr_path = search->paths[path_cnt];
-	    while (curr_path) {
+	    struct directory *curr_path = search->paths[path_cnt];
+	    while (path_cnt < search->path_cnt) {
 		struct bu_ptbl *uniq_db_objs;
 		struct bu_ptbl *search_results;
 		switch(search->search_type) {
