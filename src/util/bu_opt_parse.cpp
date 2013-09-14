@@ -214,38 +214,34 @@ handle_UnlabeledValueArg(bu_arg_vars *a, CmdLine &cmd)
         bool val = (a->val.l ? true : false);
         type_desc = "bool";
         A = new UnlabeledValueArg<bool>(a->name, a->desc, a->req, val, type_desc);
-        cmd.add(A);
       }
         break;
       case BU_ARG_DOUBLE: {
         double val = a->val.d;
         type_desc = "double";
         A = new UnlabeledValueArg<double>(a->name, a->desc, a->req, val, type_desc);
-        cmd.add(A);
       }
         break;
       case BU_ARG_LONG: {
         long val = a->val.l;
         type_desc = "long";
         A = new UnlabeledValueArg<long>(a->name, a->desc, a->req, val, type_desc);
-        cmd.add(A);
       }
         break;
       case BU_ARG_STRING: {
         string val = (a->val.s ? a->val.s : "");
         type_desc = "string";
         A = new UnlabeledValueArg<string>(a->name, a->desc, a->req, val, type_desc);
-        cmd.add(A);
       }
         break;
       default: {
         string val = (a->val.s ? a->val.s : "");
         type_desc = "string";
         A = new UnlabeledValueArg<string>(a->name, a->desc, a->req, val, type_desc);
-        cmd.add(A);
       }
         break;
   }
+  cmd.add(A);
   if (A)
     Arg_pointers.push_back(A);
   return A;
