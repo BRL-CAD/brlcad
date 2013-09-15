@@ -1690,9 +1690,6 @@ main(int argc, char *argv[])
 #endif
     }
 
-    /* mged inputs and outputs assume POSIX/C locale settings */
-    setlocale(LC_ALL, "POSIX");
-
     mged_init_flag = 0;	/* all done with initialization */
 
     /**************** M A I N   L O O P *********************/
@@ -1700,11 +1697,7 @@ main(int argc, char *argv[])
 	/* This test stops optimizers from complaining about an
 	 * infinite loop.
 	 */
-#ifdef DM_QT
-	if ((rateflag = event_check(1)) < 0) break;
-#else
 	if ((rateflag = event_check(rateflag)) < 0) break;
-#endif /* DM_QT */
 
 	/*
 	 * Cause the control portion of the displaylist to be updated

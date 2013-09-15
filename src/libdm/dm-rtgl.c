@@ -122,7 +122,6 @@ struct dm dm_rtgl = {
     null_getDisplayImage,	/* display to image function */
     null_reshape,
     null_makeCurrent,
-    null_processEvents,
     0,
     1,				/* has displaylist */
     0,                          /* no stereo by default */

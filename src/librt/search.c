@@ -128,7 +128,7 @@ static OPTION options[] = {
  * A generic traversal function maintaining awareness of the full path
  * to a given object.
  */
-void
+HIDDEN void
 db_fullpath_traverse_subtree(union tree *tp,
 			     void (*traverse_func) (struct db_i *, struct rt_wdb *, struct bu_ptbl *, struct db_node_t *,
 						    void (*) (struct db_i *, struct rt_wdb *, struct bu_ptbl *, struct db_node_t *, genptr_t),
@@ -206,7 +206,7 @@ db_fullpath_traverse_subtree(union tree *tp,
  * Unlike db_preorder_traverse, this routine and its subroutines
  * use db_full_path structures instead of directory structures.
  */
-void
+HIDDEN void
 db_fullpath_traverse(struct db_i *dbip,
 		     struct rt_wdb *wdbp,
 		     struct bu_ptbl *results,
@@ -274,7 +274,7 @@ db_fullpath_traverse(struct db_i *dbip,
 }
 
 
-static struct db_plan_t *
+HIDDEN static struct db_plan_t *
 palloc(enum db_search_ntype t, int (*f)(struct db_plan_t *, struct db_node_t *, struct db_i *, struct rt_wdb *, struct bu_ptbl *))
 {
     struct db_plan_t *newplan;
@@ -1589,7 +1589,7 @@ option(char *name)
  * this switch stuff.
  */
 HIDDEN int
-find_create(char ***argvp, struct db_plan_t **resultplan, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct bu_ptbl *UNUSED(results), int *db_search_isoutput)
+find_create(char ***argvp, struct db_plan_t **resultplan, struct bu_ptbl *UNUSED(results), int *db_search_isoutput, int quiet)
 {
     OPTION *p;
     struct db_plan_t *newplan;
@@ -1598,12 +1598,14 @@ find_create(char ***argvp, struct db_plan_t **resultplan, struct db_i *UNUSED(db
     argv = *argvp;
 
     if ((p = option(*argv)) == NULL) {
-	bu_log("%s: unknown option passed to find_create\n", *argv);
+	if (!quiet)
+	    bu_log("%s: unknown option passed to find_create\n", *argv);
 	return BRLCAD_ERROR;
     }
     ++argv;
     if (p->flags & (O_ARGV|O_ARGVP) && !*argv) {
-	bu_log("%s: requires additional arguments\n", *--argv);
+	if (!quiet)
+	    bu_log("%s: requires additional arguments\n", *--argv);
 	return BRLCAD_ERROR;
     }
     switch(p->flags) {
@@ -1993,8 +1995,8 @@ or_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)           /* pl
 }
 
 
-struct db_plan_t *
-db_search_form_plan(char **argv, struct db_i *dbip, struct rt_wdb *wdbp) {
+HIDDEN struct db_plan_t *
+db_search_form_plan(char **argv, int quiet) {
     struct db_plan_t *plan, *tail;
     struct db_plan_t *newplan = NULL;
     struct bu_ptbl *results = NULL;
@@ -2017,7 +2019,7 @@ db_search_form_plan(char **argv, struct db_i *dbip, struct rt_wdb *wdbp) {
      * plan->next pointer.
      */
     for (plan = tail = NULL; *argv;) {
-	if (find_create(&argv, &newplan, dbip, wdbp, results, &db_search_isoutput) != BRLCAD_OK) return NULL;
+	if (find_create(&argv, &newplan, results, &db_search_isoutput, quiet) != BRLCAD_OK) return NULL;
 	if (!(newplan))
 	    continue;
 	if (plan == NULL)
@@ -2092,7 +2094,7 @@ find_execute_plans(struct db_i *dbip, struct rt_wdb *wdbp, struct bu_ptbl *resul
 
 }
 
-void
+HIDDEN void
 db_search_free_plan(void **vplan) {
     struct db_plan_t *p;
     struct db_plan_t *plan = (struct db_plan_t *)*vplan;
@@ -2253,8 +2255,8 @@ db_search_unique_objects(void *searchplan,        /* search plan */
 }
 
 void *
-db_search_formplan(char **argv, struct db_i *dbip, struct rt_wdb *wdbp) {
-    return (void *)db_search_form_plan(argv, dbip, wdbp);
+db_search_formplan(char **argv, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp)) {
+    return (void *)db_search_form_plan(argv, 0);
 }
 
 /*********** New search functionality ******************/
@@ -2270,42 +2272,63 @@ void db_free_search_tbl(struct bu_ptbl *search_results) {
     bu_free(search_results, "free search container");
 }
 
-struct bu_ptbl *
-db_search_path(const char *plan_string,
-	const char *path,
-	struct rt_wdb *wdbp)
-{
-    struct directory *dp = NULL;
-    struct bu_ptbl *search_results = NULL;
-    char **plan_argv = NULL;
-    struct db_plan_t *dbplan = NULL;
+int
+db_search_plan_validate(const char *plan_string) {
+    int valid;
     struct bu_vls plan_string_vls;
-
-    if (!path)return NULL;
+    struct db_plan_t *dbplan = NULL;
+    char **plan_argv = NULL;
 
     /* get the plan string into an argv array */
     plan_argv = (char **)bu_calloc(strlen(plan_string) + 1, sizeof(char *), "plan argv");
     bu_vls_init(&plan_string_vls);
     bu_vls_sprintf(&plan_string_vls, "%s", plan_string);
     bu_argv_from_string(&plan_argv[0], strlen(plan_string), bu_vls_addr(&plan_string_vls));
-    dbplan = db_search_form_plan(plan_argv, wdbp->dbip, wdbp);
+
+    dbplan = db_search_form_plan(plan_argv, 1);
+
+    bu_vls_free(&plan_string_vls);
+    bu_free((char *)plan_argv, "free plan argv");
+    valid = (dbplan) ? 1 : 0;
+    if (dbplan) db_search_free_plan((void **)&dbplan);
+
+    return valid;
+}
+
+struct bu_ptbl *
+db_search_path(const char *plan_string,
+	struct directory *dp,
+	struct rt_wdb *wdbp)
+{
+    struct bu_ptbl *search_results = NULL;
+    char **plan_argv = NULL;
+    struct db_plan_t *dbplan = NULL;
+    struct bu_vls plan_string_vls;
+    struct db_node_t curr_node;
+    struct db_full_path start_path;
+
+    if (!dp || dp == RT_DIR_NULL) return NULL;
+
+    /* get the plan string into an argv array */
+    plan_argv = (char **)bu_calloc(strlen(plan_string) + 1, sizeof(char *), "plan argv");
+    bu_vls_init(&plan_string_vls);
+    bu_vls_sprintf(&plan_string_vls, "%s", plan_string);
+    bu_argv_from_string(&plan_argv[0], strlen(plan_string), bu_vls_addr(&plan_string_vls));
+    dbplan = db_search_form_plan(plan_argv, 0);
     if (!dbplan) return NULL;
 
-    /* execute the plan and return the results table */
-    dp = db_lookup(wdbp->dbip, path, LOOKUP_QUIET);
-    if (dp != RT_DIR_NULL) {
-	struct db_node_t curr_node;
-	struct db_full_path start_path;
-	db_full_path_init(&start_path);
-	db_add_node_to_full_path(&start_path, dp);
-	curr_node.path = &start_path;
-	BU_ALLOC(search_results, struct bu_ptbl);
-	BU_PTBL_INIT(search_results);
-	/* by convention, the top level node is "unioned" into the global database */
-	DB_FULL_PATH_SET_CUR_BOOL(curr_node.path, 2);
-	db_fullpath_traverse(wdbp->dbip, wdbp, search_results, &curr_node, find_execute_plans, find_execute_plans, wdbp->wdb_resp, (struct db_plan_t *)dbplan);
-	db_free_full_path(&start_path);
-    }
+    /* execute the plan */
+    db_full_path_init(&start_path);
+    db_add_node_to_full_path(&start_path, dp);
+    curr_node.path = &start_path;
+    BU_ALLOC(search_results, struct bu_ptbl);
+    BU_PTBL_INIT(search_results);
+    /* by convention, the top level node is "unioned" into the global database */
+    DB_FULL_PATH_SET_CUR_BOOL(curr_node.path, 2);
+    db_fullpath_traverse(wdbp->dbip, wdbp, search_results, &curr_node, find_execute_plans, find_execute_plans, wdbp->wdb_resp, (struct db_plan_t *)dbplan);
+
+    /* free memory */
+    db_free_full_path(&start_path);
     bu_vls_free(&plan_string_vls);
     bu_free((char *)plan_argv, "free plan argv");
     db_search_free_plan((void **)&dbplan);
@@ -2314,37 +2337,39 @@ db_search_path(const char *plan_string,
 
 struct bu_ptbl *
 db_search_paths(const char *plan_string,
-	const char **paths,
+	int path_cnt,
+	struct directory **paths,
 	struct rt_wdb *wdbp)
 {
     int i = 0;
-    const char *curr_path = paths[i];
+    struct directory *curr_path;
     struct bu_ptbl *combined_results;
     BU_ALLOC(combined_results, struct bu_ptbl);
     BU_PTBL_INIT(combined_results);
-    while (curr_path) {
-	struct bu_ptbl *search_results = db_search_path(plan_string, curr_path, wdbp);
-	if (search_results) {
-	    bu_ptbl_cat(combined_results, search_results);
-	    /* we need to free the search result table itself, but don't do a full
-	     * db_free_seach_tbl - the contents are in use by combined_results*/
-	    bu_ptbl_free(search_results);
-	    bu_free(search_results, "free search container");
-	}
-	i++;
+    for (i = 0; i < path_cnt; i++) {
 	curr_path = paths[i];
+	if (curr_path != RT_DIR_NULL) {
+	    struct bu_ptbl *search_results = db_search_path(plan_string, curr_path, wdbp);
+	    if (search_results) {
+		bu_ptbl_cat(combined_results, search_results);
+		/* we need to free the search result table itself, but don't do a full
+		 * db_free_seach_tbl - the contents are in use by combined_results*/
+		bu_ptbl_free(search_results);
+		bu_free(search_results, "free search container");
+	    }
+	}
     }
     return combined_results;
 }
 
 struct bu_ptbl *
 db_search_path_obj(const char *plan_string,
-	const char *path,
+	struct directory *dp,
 	struct rt_wdb *wdbp)
 {
     int i;
     struct bu_ptbl *uniq_db_objs = NULL;
-    struct bu_ptbl *search_results = db_search_path(plan_string, path, wdbp);
+    struct bu_ptbl *search_results = db_search_path(plan_string, dp, wdbp);
     if (search_results) {
 	BU_ALLOC(uniq_db_objs, struct bu_ptbl);
 	BU_PTBL_INIT(uniq_db_objs);
@@ -2359,26 +2384,28 @@ db_search_path_obj(const char *plan_string,
 
 struct bu_ptbl *
 db_search_paths_obj(const char *plan_string,
-	const char **paths,
+	int path_cnt,
+	struct directory **paths,
 	struct rt_wdb *wdbp)
 {
     int i = 0;
     int j = 0;
-    const char *curr_path = paths[i];
+    struct directory *curr_path;
     struct bu_ptbl *combined_results;
     BU_ALLOC(combined_results, struct bu_ptbl);
     BU_PTBL_INIT(combined_results);
-    while (curr_path) {
-	struct bu_ptbl *search_results = db_search_path(plan_string, curr_path, wdbp);
-	if (search_results) {
-	    for(j = (int)BU_PTBL_LEN(search_results) - 1; j >= 0; j--){
-		struct db_full_path *dfptr = (struct db_full_path *)BU_PTBL_GET(search_results, j);
-		bu_ptbl_ins_unique(combined_results, (long *)dfptr->fp_names[dfptr->fp_len - 1]);
-	    }
-	    db_free_search_tbl(search_results);
-	}
-	i++;
+    for (i = 0; i < path_cnt; i++) {
 	curr_path = paths[i];
+	if (curr_path != RT_DIR_NULL) {
+	    struct bu_ptbl *search_results = db_search_path(plan_string, curr_path, wdbp);
+	    if (search_results) {
+		for(j = (int)BU_PTBL_LEN(search_results) - 1; j >= 0; j--){
+		    struct db_full_path *dfptr = (struct db_full_path *)BU_PTBL_GET(search_results, j);
+		    bu_ptbl_ins_unique(combined_results, (long *)dfptr->fp_names[dfptr->fp_len - 1]);
+		}
+		db_free_search_tbl(search_results);
+	    }
+	}
     }
     return combined_results;
 }

@@ -450,40 +450,6 @@ db_lookup_by_attr(struct db_i *dbip, int dir_flags, struct bu_attribute_value_se
     return tbl;
 }
 
-
-char **
-db_tops(const struct db_i *dbip, int aflag, int flat)
-{
-    int i;
-    int objcount = 0;
-    struct directory *dp;
-    char ** path_list = NULL;
-
-    RT_CK_DBI(dbip);
-
-    for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (((!flat && dp->d_nref == 0) || flat) && (!(dp->d_flags & RT_DIR_HIDDEN) || aflag) && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
-		objcount++;
-	    }
-	}
-    }
-    if (objcount > 0) {
-	path_list = (char **)bu_malloc(sizeof(char *) * (objcount + 1), "tops path array");
-	objcount = 0;
-	for (i = 0; i < RT_DBNHASH; i++) {
-	    for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-		if (((!flat && dp->d_nref == 0) || flat) && (!(dp->d_flags & RT_DIR_HIDDEN) || aflag) && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
-		    path_list[objcount] = dp->d_namep;
-		    objcount++;
-		}
-	    }
-	}
-	path_list[objcount] = '\0';
-    }
-    return path_list;
-}
-
 /** @} */
 /*
  * Local Variables:

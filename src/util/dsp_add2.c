@@ -35,7 +35,7 @@
 #include "vmath.h"
 #include "bn.h"
 
-#include "bu_opt_parse.h"
+#include "bu_arg_parse.h"
 
 /* declarations to support use of TCLAP arg parsing */
 static const char usage[] = "Example: dsp_add  dsp1.dsp  dsp2.dsp  dsp12added.dsp\n";
@@ -151,8 +151,8 @@ main(int ac, char *av[])
     const char* dsp2_fname = NULL;
     const char* dsp3_fname = NULL;
     int arg_err = 0;
-    int has_force = 0;
-    int has_help  = 0;
+    long has_force = 0;
+    long has_help  = 0;
 
     /* note the arg structs have to be static to compile */
     /* FIXME: this '-?' arg doesn't wok correctly due to some TCLAPisms */
@@ -224,17 +224,17 @@ main(int ac, char *av[])
     /* for C90 we have to initialize a struct's union
      * separately for other than its first field
      */
-    dsp1_arg.val.s    = "dsp_infile1";
+    dsp1_arg.val.s    = 0;
     dsp1_arg.val_type = BU_ARG_STRING;
 
-    dsp2_arg.val.s    = "dsp_infile2";
+    dsp2_arg.val.s    = 0;
     dsp2_arg.val_type = BU_ARG_STRING;
 
-    dsp3_arg.val.s    = "dsp_outfile";
+    dsp3_arg.val.s    = 0;
     dsp3_arg.val_type = BU_ARG_STRING;
 
     /* parse the args */
-    arg_err = bu_opt_parse(args, ac, av);
+    arg_err = bu_arg_parse(args, ac, av);
 
     if (arg_err == BU_ARG_PARSE_ERR) {
         /* the TCLAP exception handler has fired with its own message
@@ -243,8 +243,8 @@ main(int ac, char *av[])
     }
 
     /* Get the value parsed by each arg. */
-    has_force  = f_arg.val.i;
-    has_help   = h_arg.val.i;
+    has_force  = f_arg.val.l;
+    has_help   = h_arg.val.l;
     dsp1_fname = dsp1_arg.val.s;
     dsp2_fname = dsp2_arg.val.s;
     dsp3_fname = dsp3_arg.val.s;
@@ -254,12 +254,14 @@ main(int ac, char *av[])
     /* note this exit is success because it is expected
      * behavior--important for good auto-man-page handling */
     if (has_help) {
+      bu_arg_free(args);
       bu_exit(EXIT_SUCCESS, usage);
     }
 
     /* TCLAP doesn't check for confusion in file names */
     if (BU_STR_EQUAL(dsp3_fname, dsp1_fname)
         || BU_STR_EQUAL(dsp3_fname, dsp2_fname)) {
+      bu_arg_free(args);
       bu_exit(EXIT_FAILURE, "overwriting an input file (use the '-f' option to continue)\n");
     }
 
@@ -270,6 +272,7 @@ main(int ac, char *av[])
         unlink(dsp3_fname);
       }
       else {
+        bu_arg_free(args);
         bu_exit(EXIT_FAILURE, "overwriting an existing file (use the '-f' option to continue)\n");
       }
     }
@@ -278,12 +281,14 @@ main(int ac, char *av[])
     in1 = fopen(dsp1_fname, "r");
     if (!in1) {
       perror(dsp1_fname);
+      bu_arg_free(args);
       bu_exit(EXIT_FAILURE, "ERROR: input file open failure\n");
     }
 
     if (fstat(fileno(in1), &sb)) {
       perror(dsp1_fname);
       fclose(in1);
+      bu_arg_free(args);
       bu_exit(EXIT_FAILURE, "ERROR: input file stat failure\n");
     }
 
@@ -293,6 +298,7 @@ main(int ac, char *av[])
     if (!count) {
       perror(dsp1_fname);
       fclose(in1);
+      bu_arg_free(args);
       bu_exit(EXIT_FAILURE, "zero-length input file\n");
     }
 
@@ -302,6 +308,7 @@ main(int ac, char *av[])
     if (!in2) {
       perror(dsp2_fname);
       fclose(in1);
+      bu_arg_free(args);
       bu_exit(EXIT_FAILURE, "ERROR: input file open failure\n");
     }
 
@@ -309,6 +316,7 @@ main(int ac, char *av[])
       perror(dsp2_fname);
       fclose(in1);
       fclose(in2);
+      bu_arg_free(args);
       bu_exit(EXIT_FAILURE, "ERROR: input file stat failure\n");
     }
 
@@ -317,12 +325,14 @@ main(int ac, char *av[])
       perror(dsp2_fname);
       fclose(in1);
       fclose(in2);
+      bu_arg_free(args);
       bu_exit(EXIT_FAILURE, "ERROR: zero-length input file\n");
     }
 
     if ((size_t)sb.st_size != count) {
       fclose(in1);
       fclose(in2);
+      bu_arg_free(args);
       bu_exit(EXIT_FAILURE, "ERROR: input file size mis-match\n");
     }
 
@@ -333,6 +343,7 @@ main(int ac, char *av[])
       fclose(in1);
       fclose(in2);
       fclose(out1);
+      bu_arg_free(args);
       bu_exit(EXIT_FAILURE, "ERROR: output file open failure\n");
     }
 
@@ -347,6 +358,7 @@ main(int ac, char *av[])
         fclose(in1);
         fclose(in2);
         fclose(out1);
+        bu_arg_free(args);
 	bu_exit(EXIT_FAILURE, "ERROR: input file short read count\n");
     }
 
@@ -388,8 +400,11 @@ main(int ac, char *av[])
         fclose(in1);
         fclose(in2);
         fclose(out1);
+        bu_arg_free(args);
 	bu_exit(EXIT_FAILURE, "ERROR: count error writing data\n");
     }
+
+    bu_arg_free(args);
 
     return 0;
 }

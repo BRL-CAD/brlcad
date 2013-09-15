@@ -272,12 +272,6 @@ null_makeCurrent(struct dm *UNUSED(dmp))
 }
 
 
-void
-null_processEvents(struct dm *UNUSED(dmp))
-{
-}
-
-
 struct dm dm_null = {
     null_close,
     null_drawBegin,
@@ -313,7 +307,6 @@ struct dm dm_null = {
     null_getDisplayImage,
     null_reshape,
     null_makeCurrent,
-    null_processEvents,
     0,
     0,				/* no displaylist */
     0,				/* no stereo */

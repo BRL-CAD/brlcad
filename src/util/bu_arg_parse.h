@@ -18,8 +18,8 @@
  * information.
  */
 
-#ifndef BU_OPT_PARSE_H
-#define BU_OPT_PARSE_H
+#ifndef BU_ARG_PARSE_H
+#define BU_ARG_PARSE_H
 
 /* all in this header MUST have "C" linkage */
 #ifdef __cplusplus
@@ -36,10 +36,8 @@ typedef enum {
 /* types of arg values */
 typedef enum {
   BU_ARG_BOOL,
-  BU_ARG_CHAR,
   BU_ARG_DOUBLE,
-  BU_ARG_FLOAT,
-  BU_ARG_INT,
+  BU_ARG_LONG,
   BU_ARG_STRING
 } bu_arg_value_t;
 
@@ -59,12 +57,10 @@ typedef enum {
 } bu_arg_req_t;
 
 typedef union {
-  /* important that first field is int */
-  int i; /* also use as bool */
+  /* important that first field is integral type */
+  long l; /* also use as bool */
   char *s;
-  char c;
   double d;
-  float f;
 } bu_arg_value;
 
 /* TCLAP::Arg */
@@ -80,12 +76,14 @@ typedef struct bu_arg_vars_type {
 } bu_arg_vars;
 
 /* the action: all in one function */
-int
-bu_opt_parse(bu_arg_vars *args[], int argc, char **argv);
+int bu_arg_parse(bu_arg_vars *args[], int argc, char * const argv[]);
+/* free arg memory for any strings */
+void bu_arg_free(bu_arg_vars *args[]);
+
 
 /* all in this header MUST have "C" linkage */
 #ifdef __cplusplus
 } /* extern "C" { */
 #endif
 
-#endif /* BU_OPT_PARSE_H */
+#endif /* BU_ARG_PARSE_H */

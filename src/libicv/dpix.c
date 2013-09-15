@@ -83,7 +83,7 @@ icv_normalize(icv_image_t *bif)
     return bif;
 }
 
-HIDDEN icv_image_t *
+icv_image_t *
 dpix_read(const char *filename, int width, int height)
 {
     icv_image_t *bif;
@@ -117,7 +117,7 @@ dpix_read(const char *filename, int width, int height)
     return bif;
 }
 
-HIDDEN int
+int
 dpix_write(icv_image_t *bif, const char *filename)
 {
     int fd;

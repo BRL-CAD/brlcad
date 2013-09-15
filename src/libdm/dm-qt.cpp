@@ -154,9 +154,11 @@ qt_loadMatrix(struct dm *dmp, fastf_t *mat, int UNUSED(which_eye))
 
 
 HIDDEN int
-qt_loadPMatrix(struct dm *UNUSED(dmp), fastf_t *UNUSED(mat))
+qt_loadPMatrix(struct dm *dmp, fastf_t *UNUSED(mat))
 {
-    bu_log("qt_loadPMatrix not implemented\n");
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_loadPMatrix not implemented\n");
+    }
     return 0;
 }
 
@@ -211,17 +213,21 @@ qt_drawLine2D(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2
 
 
 HIDDEN int
-qt_drawLine3D(struct dm *UNUSED(dmp), point_t UNUSED(pt1), point_t UNUSED(pt2))
+qt_drawLine3D(struct dm *dmp, point_t UNUSED(pt1), point_t UNUSED(pt2))
 {
-    bu_log("qt_drawLine3D not implemented\n");
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_drawLine3D not implemented\n");
+    }
     return 0;
 }
 
 
 HIDDEN int
-qt_drawLines3D(struct dm *UNUSED(dmp), int UNUSED(npoints), point_t *UNUSED(points), int UNUSED(sflag))
+qt_drawLines3D(struct dm *dmp, int UNUSED(npoints), point_t *UNUSED(points), int UNUSED(sflag))
 {
-    bu_log("qt_drawLines3D not implemented\n");
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_drawLines3D not implemented\n");
+    }
     return 0;
 }
 
@@ -248,17 +254,21 @@ qt_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 
 
 HIDDEN int
-qt_drawPoint3D(struct dm *UNUSED(dmp), point_t UNUSED(point))
+qt_drawPoint3D(struct dm *dmp, point_t UNUSED(point))
 {
-    bu_log("qt_drawPoint3D not implemented\n");
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_drawPoint3D not implemented\n");
+    }
     return 0;
 }
 
 
 HIDDEN int
-qt_drawPoints3D(struct dm *UNUSED(dmp), int UNUSED(npoints), point_t *UNUSED(points))
+qt_drawPoints3D(struct dm *dmp, int UNUSED(npoints), point_t *UNUSED(points))
 {
-    bu_log("qt_drawPoints3D not implemented\n");
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_drawPoints3D not implemented\n");
+    }
     return 0;
 }
 
@@ -435,9 +445,11 @@ qt_drawVList(struct dm *dmp, struct bn_vlist *vp)
 
 
 HIDDEN int
-qt_drawVListHiddenLine(struct dm *UNUSED(dmp), struct bn_vlist *UNUSED(vp))
+qt_drawVListHiddenLine(struct dm *dmp, struct bn_vlist *UNUSED(vp))
 {
-    bu_log("qt_drawVListHiddenLine not implemented\n");
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_drawVListHiddenLine not implemented\n");
+    }
     return 0;
 }
 
@@ -634,57 +646,71 @@ qt_setWinBounds(struct dm *dmp, fastf_t *w)
 
 
 HIDDEN int
-qt_setLight(struct dm *UNUSED(dmp), int UNUSED(light_on))
+qt_setLight(struct dm *dmp, int UNUSED(light_on))
 {
-    bu_log("qt_setLight not implemented\n");
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_setLight not implemented\n");
+    }
     return 0;
 }
 
 
 HIDDEN int
-qt_setTransparency(struct dm *UNUSED(dmp), int UNUSED(transparency))
+qt_setTransparency(struct dm *dmp, int UNUSED(transparency))
 {
-    bu_log("qt_setTransparency not implemented\n");
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_setTransparency not implemented\n");
+    }
     return 0;
 }
 
 
 HIDDEN int
-qt_setDepthMask(struct dm *UNUSED(dmp), int UNUSED(mask))
+qt_setDepthMask(struct dm *dmp, int UNUSED(mask))
 {
-    bu_log("qt_setDepthMask not implemented\n");
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_setDepthMask not implemented\n");
+    }
     return 0;
 }
 
 
 HIDDEN int
-qt_setZBuffer(struct dm *UNUSED(dmp), int UNUSED(zbuffer_on))
+qt_setZBuffer(struct dm *dmp, int UNUSED(zbuffer_on))
 {
-    bu_log("qt_setZBuffer not implemented\n");
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_setZBuffer not implemented\n");
+    }
     return 0;
 }
 
 
 HIDDEN int
-qt_debug(struct dm *UNUSED(dmp), int UNUSED(lvl))
+qt_debug(struct dm *dmp, int UNUSED(lvl))
 {
-    bu_log("qt_debug not implemented\n");
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_debug not implemented\n");
+    }
     return 0;
 }
 
 
 HIDDEN int
-qt_beginDList(struct dm *UNUSED(dmp), unsigned int UNUSED(list))
+qt_beginDList(struct dm *dmp, unsigned int UNUSED(list))
 {
-    bu_log("qt_beginDList not implemented\n");
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_beginDList not implemented\n");
+    }
     return 0;
 }
 
 
 HIDDEN int
-qt_endDList(struct dm *UNUSED(dmp))
+qt_endDList(struct dm *dmp)
 {
-    bu_log("qt_endDList not implemented\n");
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_endDList not implemented\n");
+    }
     return 0;
 }
 
@@ -697,33 +723,41 @@ qt_drawDList(unsigned int UNUSED(list))
 
 
 HIDDEN int
-qt_freeDLists(struct dm *UNUSED(dmp), unsigned int UNUSED(list), int UNUSED(range))
+qt_freeDLists(struct dm *dmp, unsigned int UNUSED(list), int UNUSED(range))
 {
-    bu_log("qt_freeDList not implemented\n");
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_freeDList not implemented\n");
+    }
     return 0;
 }
 
 
 HIDDEN int
-qt_genDLists(struct dm *UNUSED(dmp), size_t UNUSED(range))
+qt_genDLists(struct dm *dmp, size_t UNUSED(range))
 {
-    bu_log("qt_genDLists not implemented\n");
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_genDLists not implemented\n");
+    }
     return 0;
 }
 
 
 HIDDEN int
-qt_getDisplayImage(struct dm *UNUSED(dmp), unsigned char **UNUSED(image))
+qt_getDisplayImage(struct dm *dmp, unsigned char **UNUSED(image))
 {
-    bu_log("qt_getDisplayImage not implemented\n");
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_getDisplayImage not implemented\n");
+    }
     return 0;
 }
 
 
 HIDDEN int
-qt_makeCurrent(struct dm *UNUSED(dmp))
+qt_makeCurrent(struct dm *dmp)
 {
-    bu_log("qt_makeCurrent not implemented\n");
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_makeCurrent not implemented\n");
+    }
     return 0;
 }
 
@@ -735,15 +769,31 @@ qt_processEvents(struct dm *dmp)
     privars->qapp->processEvents();
 }
 
-void CheckProc(ClientData UNUSED(clientData), int UNUSED(flags)) {
+/**
+ * P R O C E S S Q T E V E N T S
+ * 
+ * Function called in Tk event loop. It simply process any 
+ * pendin Qt events
+ * 
+ */
+void processQtEvents(ClientData UNUSED(clientData), int UNUSED(flags)) {
     qt_processEvents(&dm_qt);
 }
 
 Tcl_TimerToken token = NULL;
 
+/**
+ * I D L E C A L L
+ * 
+ * Call when Tk is idle. It process Qt events then
+ * reschedules itself.
+ * 
+ */
 void IdleCall(ClientData UNUSED(clientData)) {
     qt_processEvents(&dm_qt);
     Tcl_DeleteTimerHandler(token);
+
+    /* Reschedule the function so that it continously tries to process Qt events */
     token = Tcl_CreateTimerHandler(1, IdleCall, NULL);
 }
 
@@ -923,15 +973,16 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
 
     MAT_IDN(privars->qmat);
 
+    /* inputs and outputs assume POSIX/C locale settings */
     setlocale(LC_ALL, "POSIX");
 
-    Tcl_CreateEventSource(NULL, CheckProc, NULL);
+    /* Make Tcl_DoOneEvent call QApplication::processEvents */
+    Tcl_CreateEventSource(NULL, processQtEvents, NULL);
 
+    /* Try to process Qt events when idle */
     Tcl_DoWhenIdle(IdleCall, NULL);
 
-    if (dmp->dm_debugLevel) {
-	bu_log("qt_open called\n");
-    }
+    bu_log("qt_open called\n");
 
     return dmp;
 }
@@ -974,7 +1025,6 @@ struct dm dm_qt = {
     qt_getDisplayImage,
     qt_reshape,
     qt_makeCurrent,
-    qt_processEvents,
     0,
     0,				/* no displaylist */
     0,				/* no stereo */

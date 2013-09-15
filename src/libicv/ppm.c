@@ -30,11 +30,11 @@
 #include "icv.h"
 
 /* defined in encoding.c */
-extern HIDDEN unsigned char *data2uchar(const icv_image_t *bif);
-extern HIDDEN double *uchar2double(unsigned char *data, long int size);
+extern unsigned char *data2uchar(const icv_image_t *bif);
+extern double *uchar2double(unsigned char *data, long int size);
 
 /* flip an image vertically */
-HIDDEN int
+int
 image_flip(unsigned char *buf, int width, int height)
 {
     unsigned char *buf2;
@@ -49,7 +49,7 @@ image_flip(unsigned char *buf, int width, int height)
     return 0;
 }
 
-HIDDEN int
+int
 ppm_write(icv_image_t *bif, const char *filename)
 {
     unsigned char *data;
@@ -84,7 +84,7 @@ ppm_write(icv_image_t *bif, const char *filename)
     return 0;
 }
 
-HIDDEN icv_image_t*
+icv_image_t*
 ppm_read(const char *filename)
 {
     char buff[3]; /* To ensure that the format. And thus read "P6" */
@@ -119,7 +119,7 @@ ppm_read(const char *filename)
     /* check for comments in PPM image*/
     c = getc(fp);
     while (c == '#') {
-	while (getc(fp) != '\n') ;
+	while (getc(fp) != '\n')
 	    c = getc(fp);
     }
 

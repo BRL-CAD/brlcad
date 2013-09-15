@@ -89,12 +89,15 @@ BRLCAD_ADDEXEC(dsp_add dsp_add.c libbu)
 BRLCAD_ADDEXEC(dsp_add_t dsp_add_t.cpp libbu NO_INSTALL)
 
 # tmp def for testing c wrapper for TCLAP
-BRLCAD_ADDEXEC(dsp_add2 "dsp_add2.c;bu_opt_parse.cpp" libbu NO_INSTALL)
+BRLCAD_ADDEXEC(dsp_add2 "dsp_add2.c;bu_arg_parse.cpp" libbu NO_INSTALL)
+
+# a test file for the entire TCLAP wrapper interface
+BRLCAD_ADDEXEC(test_bu_arg_parse "test_bu_arg_parse.c;bu_arg_parse.cpp" libbu NO_INSTALL)
 
 # tmp header to stand-in for bu.h (ignore it)
-CMAKEFILES(bu_opt_parse.h)
+CMAKEFILES(bu_arg_parse.h)
 # permanent private header for TCLAP customizations
-CMAKEFILES(bu_opt_parse_private.h)
+CMAKEFILES(bu_arg_parse_private.h)
 #=====================================================
 # end TCLAP testing
 #=====================================================
