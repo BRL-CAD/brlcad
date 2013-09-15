@@ -1025,7 +1025,6 @@ struct dm dm_qt = {
     qt_getDisplayImage,
     qt_reshape,
     qt_makeCurrent,
-    qt_processEvents,
     0,
     0,				/* no displaylist */
     0,				/* no stereo */

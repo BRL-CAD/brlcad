@@ -324,14 +324,6 @@ txt_makeCurrent(struct dm *UNUSED(dmp))
 }
 
 
-HIDDEN void
-txt_processEvents(struct dm *UNUSED(dmp))
-{
-    bu_log("processEvents called\n");
-}
-
-
-
 struct dm dm_txt = {
     txt_close,
     txt_drawBegin,
@@ -367,7 +359,6 @@ struct dm dm_txt = {
     txt_getDisplayImage,
     txt_reshape,
     txt_makeCurrent,
-    txt_processEvents,
     0,
     0,				/* no displaylist */
     0,				/* no stereo */
