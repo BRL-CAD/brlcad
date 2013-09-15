@@ -422,8 +422,6 @@ DM_EXPORT extern void dm_draw_scale(struct dm *dmp,
 /* vers.c */
 DM_EXPORT extern const char *dm_version(void);
 
-/* dm-generic.c - used in bwish/tcl.c to process both Tk and Qt events */
-DM_EXPORT extern int qt_tk_processEvents();
 
 __END_DECLS
 
