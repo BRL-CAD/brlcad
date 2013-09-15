@@ -1589,7 +1589,7 @@ option(char *name)
  * this switch stuff.
  */
 HIDDEN int
-find_create(char ***argvp, struct db_plan_t **resultplan, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct bu_ptbl *UNUSED(results), int *db_search_isoutput)
+find_create(char ***argvp, struct db_plan_t **resultplan, struct bu_ptbl *UNUSED(results), int *db_search_isoutput, int quiet)
 {
     OPTION *p;
     struct db_plan_t *newplan;
@@ -1598,12 +1598,14 @@ find_create(char ***argvp, struct db_plan_t **resultplan, struct db_i *UNUSED(db
     argv = *argvp;
 
     if ((p = option(*argv)) == NULL) {
-	bu_log("%s: unknown option passed to find_create\n", *argv);
+	if (!quiet)
+	    bu_log("%s: unknown option passed to find_create\n", *argv);
 	return BRLCAD_ERROR;
     }
     ++argv;
     if (p->flags & (O_ARGV|O_ARGVP) && !*argv) {
-	bu_log("%s: requires additional arguments\n", *--argv);
+	if (!quiet)
+	    bu_log("%s: requires additional arguments\n", *--argv);
 	return BRLCAD_ERROR;
     }
     switch(p->flags) {
@@ -1994,7 +1996,7 @@ or_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)           /* pl
 
 
 HIDDEN struct db_plan_t *
-db_search_form_plan(char **argv, struct db_i *dbip, struct rt_wdb *wdbp) {
+db_search_form_plan(char **argv, int quiet) {
     struct db_plan_t *plan, *tail;
     struct db_plan_t *newplan = NULL;
     struct bu_ptbl *results = NULL;
@@ -2017,7 +2019,7 @@ db_search_form_plan(char **argv, struct db_i *dbip, struct rt_wdb *wdbp) {
      * plan->next pointer.
      */
     for (plan = tail = NULL; *argv;) {
-	if (find_create(&argv, &newplan, dbip, wdbp, results, &db_search_isoutput) != BRLCAD_OK) return NULL;
+	if (find_create(&argv, &newplan, results, &db_search_isoutput, quiet) != BRLCAD_OK) return NULL;
 	if (!(newplan))
 	    continue;
 	if (plan == NULL)
@@ -2253,8 +2255,8 @@ db_search_unique_objects(void *searchplan,        /* search plan */
 }
 
 void *
-db_search_formplan(char **argv, struct db_i *dbip, struct rt_wdb *wdbp) {
-    return (void *)db_search_form_plan(argv, dbip, wdbp);
+db_search_formplan(char **argv, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp)) {
+    return (void *)db_search_form_plan(argv, 0);
 }
 
 /*********** New search functionality ******************/
@@ -2268,6 +2270,29 @@ void db_free_search_tbl(struct bu_ptbl *search_results) {
     }
     bu_ptbl_free(search_results);
     bu_free(search_results, "free search container");
+}
+
+int
+db_search_plan_validate(const char *plan_string) {
+    int valid;
+    struct bu_vls plan_string_vls;
+    struct db_plan_t *dbplan = NULL;
+    char **plan_argv = NULL;
+
+    /* get the plan string into an argv array */
+    plan_argv = (char **)bu_calloc(strlen(plan_string) + 1, sizeof(char *), "plan argv");
+    bu_vls_init(&plan_string_vls);
+    bu_vls_sprintf(&plan_string_vls, "%s", plan_string);
+    bu_argv_from_string(&plan_argv[0], strlen(plan_string), bu_vls_addr(&plan_string_vls));
+
+    dbplan = db_search_form_plan(plan_argv, 1);
+
+    bu_vls_free(&plan_string_vls);
+    bu_free((char *)plan_argv, "free plan argv");
+    valid = (dbplan) ? 1 : 0;
+    if (dbplan) db_search_free_plan((void **)&dbplan);
+
+    return valid;
 }
 
 struct bu_ptbl *
@@ -2289,7 +2314,7 @@ db_search_path(const char *plan_string,
     bu_vls_init(&plan_string_vls);
     bu_vls_sprintf(&plan_string_vls, "%s", plan_string);
     bu_argv_from_string(&plan_argv[0], strlen(plan_string), bu_vls_addr(&plan_string_vls));
-    dbplan = db_search_form_plan(plan_argv, wdbp->dbip, wdbp);
+    dbplan = db_search_form_plan(plan_argv, 0);
     if (!dbplan) return NULL;
 
     /* execute the plan */
@@ -2301,7 +2326,7 @@ db_search_path(const char *plan_string,
     /* by convention, the top level node is "unioned" into the global database */
     DB_FULL_PATH_SET_CUR_BOOL(curr_node.path, 2);
     db_fullpath_traverse(wdbp->dbip, wdbp, search_results, &curr_node, find_execute_plans, find_execute_plans, wdbp->wdb_resp, (struct db_plan_t *)dbplan);
-    
+
     /* free memory */
     db_free_full_path(&start_path);
     bu_vls_free(&plan_string_vls);

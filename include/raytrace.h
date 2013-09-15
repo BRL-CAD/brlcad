@@ -3741,6 +3741,15 @@ RT_EXPORT extern struct bu_ptbl *db_search_paths(const char *plan_string,
 	                                         struct directory **paths,
 	                                         struct rt_wdb *wdbp);
 
+/* Because the handling of the plan is now wrapped up inside the
+ * search commands, we need a way to check ahead of time to see
+ * if the string we have is valid.  Not an issue for hard-coded
+ * search strings in C logic, but may be needed when the string
+ * is user (or script) generated.
+ *
+ * Returns: 1 if plan is valid, 0 if it is not */
+RT_EXPORT extern int db_search_plan_validate(const char *plan_string);
+
 /* Properly free the tables returned by db_search_path and db_search_paths */
 RT_EXPORT extern void db_free_search_tbl(struct bu_ptbl *search_results);
 

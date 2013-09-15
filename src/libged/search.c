@@ -165,6 +165,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 {
     int i, c, optcnt;
     int aflag = 0; /* flag controlling whether hidden objects are examined */
+    int wflag = 0; /* flag controlling whether to fail quietly or not */
     int want_help = 0;
     int plan_argv = 1;
     int plan_found = 0;
@@ -173,7 +174,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     struct bu_vls argvls = BU_VLS_INIT_ZERO;
     struct bu_vls search_string = BU_VLS_INIT_ZERO;
     struct bu_ptbl *search_set;
-    const char *usage = "[-a] [-h] [path] [expressions...]\n";
+    const char *usage = "[-a] [-Q] [-h] [path] [expressions...]\n";
     /* COPY argv_orig to argv; */
     char **argv = NULL;
 
@@ -193,10 +194,13 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     /* Options have to come before paths and search expressions, so don't look
      * any further than the max possible option count */
     bu_optind = 1;
-    while ((bu_optind < (optcnt + 1)) && ((c = bu_getopt(argc, (char * const *)argv_orig, "ah?")) != -1)) {
+    while ((bu_optind < (optcnt + 1)) && ((c = bu_getopt(argc, (char * const *)argv_orig, "aQh?")) != -1)) {
 	switch(c) {
 	    case 'a':
 		aflag = 1;
+		break;
+	    case 'Q':
+		wflag = 1;
 		break;
 	    case 'h':
 	    case '?':
@@ -293,6 +297,18 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 	plan_argv++;
     }
 
+    /* If we have the quiet flag set, check now whether we have a valid plan.  Search will handle
+     * an invalid plan string, but it will report why it is invalid.  So in quiet mode,
+     * we need to identify the bad string and return now. */
+    if (wflag && !db_search_plan_validate(bu_vls_addr(&search_string))) {
+	bu_vls_free(&argvls);
+	bu_vls_free(&search_string);
+	bu_free_argv(argc, argv);
+	_ged_free_search_set(search_set);
+	bu_vls_sprintf(gedp->ged_result_str, "");
+	return GED_ERROR;
+    }
+
     /* Check if all of our searches are local or not */
     for (i = (int)BU_PTBL_LEN(search_set) - 1; i >= 0; i--){
 	struct ged_search *search = (struct ged_search *)BU_PTBL_GET(search_set, i);
@@ -381,7 +397,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     bu_vls_free(&search_string);
     bu_free_argv(argc, argv);
     _ged_free_search_set(search_set);
-    return TCL_OK;
+    return GED_OK;
 }
 
 /*

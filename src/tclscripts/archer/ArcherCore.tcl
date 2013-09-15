@@ -4973,9 +4973,10 @@ namespace eval ArcherCore {
 	if {$mEnableListView} {
 	    selectTreePath $mSelectedObj
 	} else {
-	    set paths [gedCmd search / -name $mSelectedObj]
-	    if {[llength $paths]} {
-		selectTreePath [lindex $paths 0]
+	    if {![catch {set paths [gedCmd search -Q / -name $mSelectedObj]}]} {
+	        if {[llength $paths]} {
+	           selectTreePath [lindex $paths 0]
+	        }
 	    }
 	}
     }
