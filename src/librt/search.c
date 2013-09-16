@@ -797,6 +797,42 @@ c_iregex(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_p
     return c_regex_common(N_IREGEX, pattern, 1, resultplan);
 }
 
+HIDDEN int
+string_to_name_and_val(const char *in, struct bu_vls *name, struct bu_vls *value){
+    size_t equalpos = 0;
+    int checkval = 0;
+
+    while ((equalpos < strlen(in)) &&
+	   (in[equalpos] != '=') &&
+	   (in[equalpos] != '>') &&
+	   (in[equalpos] != '<')) {
+	if ((in[equalpos] == '/') && (in[equalpos + 1] == '=')) {equalpos++;}
+	if ((in[equalpos] == '/') && (in[equalpos + 1] == '<')) {equalpos++;}
+	if ((in[equalpos] == '/') && (in[equalpos + 1] == '>')) {equalpos++;}
+	equalpos++;
+    }
+
+    if (equalpos == strlen(in)) {
+	/*No logical expression given - just copy attribute name*/
+	bu_vls_strcpy(name, in);
+    } else {
+	checkval = 1; /*Assume simple equality comparison, then check for other cases and change if found.*/
+	if ((in[equalpos] == '>') && (in[equalpos + 1] != '=')) {checkval = 2;}
+	if ((in[equalpos] == '<') && (in[equalpos + 1] != '=')) {checkval = 3;}
+	if ((in[equalpos] == '=') && (in[equalpos + 1] == '>')) {checkval = 4;}
+	if ((in[equalpos] == '=') && (in[equalpos + 1] == '<')) {checkval = 5;}
+	if ((in[equalpos] == '>') && (in[equalpos + 1] == '=')) {checkval = 4;}
+	if ((in[equalpos] == '<') && (in[equalpos + 1] == '=')) {checkval = 5;}
+
+	bu_vls_strncpy(name, in, equalpos);
+	if (checkval < 4) {
+	    bu_vls_strncpy(value, &(in[equalpos+1]), strlen(in) - equalpos - 1);
+	} else {
+	    bu_vls_strncpy(value, &(in[equalpos+2]), strlen(in) - equalpos - 1);
+	}
+    }
+    return checkval;
+}
 
 /*
  * -attr functions --
@@ -811,7 +847,6 @@ f_attr(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
     struct bu_vls value = BU_VLS_INIT_ZERO;
     struct bu_attribute_value_set avs;
     struct bu_attribute_value_pair *avpp;
-    size_t equalpos = 0;
     int checkval = 0;
     int strcomparison = 0;
     size_t i;
@@ -825,36 +860,7 @@ f_attr(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
      * between strings, fnmatch is used to support pattern matching
      */
 
-    while ((equalpos < strlen(plan->attr_data)) &&
-	   (plan->attr_data[equalpos] != '=') &&
-	   (plan->attr_data[equalpos] != '>') &&
-	   (plan->attr_data[equalpos] != '<')) {
-	if ((plan->attr_data[equalpos] == '/') && (plan->attr_data[equalpos + 1] == '=')) {equalpos++;}
-	if ((plan->attr_data[equalpos] == '/') && (plan->attr_data[equalpos + 1] == '<')) {equalpos++;}
-	if ((plan->attr_data[equalpos] == '/') && (plan->attr_data[equalpos + 1] == '>')) {equalpos++;}
-	equalpos++;
-    }
-
-
-    if (equalpos == strlen(plan->attr_data)) {
-	/*No logical expression given - just copy attribute name*/
-	bu_vls_strcpy(&attribname, plan->attr_data);
-    } else {
-	checkval = 1; /*Assume simple equality comparison, then check for other cases and change if found.*/
-	if ((plan->attr_data[equalpos] == '>') && (plan->attr_data[equalpos + 1] != '=')) {checkval = 2;}
-	if ((plan->attr_data[equalpos] == '<') && (plan->attr_data[equalpos + 1] != '=')) {checkval = 3;}
-	if ((plan->attr_data[equalpos] == '=') && (plan->attr_data[equalpos + 1] == '>')) {checkval = 4;}
-	if ((plan->attr_data[equalpos] == '=') && (plan->attr_data[equalpos + 1] == '<')) {checkval = 5;}
-	if ((plan->attr_data[equalpos] == '>') && (plan->attr_data[equalpos + 1] == '=')) {checkval = 4;}
-	if ((plan->attr_data[equalpos] == '<') && (plan->attr_data[equalpos + 1] == '=')) {checkval = 5;}
-
-	bu_vls_strncpy(&attribname, plan->attr_data, equalpos);
-	if (checkval < 4) {
-	    bu_vls_strncpy(&value, &(plan->attr_data[equalpos+1]), strlen(plan->attr_data) - equalpos - 1);
-	} else {
-	    bu_vls_strncpy(&value, &(plan->attr_data[equalpos+2]), strlen(plan->attr_data) - equalpos - 1);
-	}
-    }
+    checkval = string_to_name_and_val(plan->attr_data, &attribname, &value);
 
     /* Now that we have the value, check to see if it is all numbers.
      * If so, use numerical comparison logic - otherwise use string
