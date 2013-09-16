@@ -418,7 +418,10 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
 				      int (*comb_func) (struct db_i *, struct rt_wdb *, struct bu_ptbl *, struct db_node_t *, genptr_t),
 				      int (*leaf_func) (struct db_i *, struct rt_wdb *, struct bu_ptbl *, struct db_node_t *, genptr_t),
 				      struct resource *resp,
-				      genptr_t client_data)
+				      genptr_t client_data,
+				      int curr_depth,
+				      int max_depth,
+				      int min_depth)
 {
     struct directory *dp;
     int state = 0;
@@ -441,7 +444,7 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
 		DB_FULL_PATH_SET_CUR_BOOL(db_node->path, curr_bool);
 		state = traverse_func(dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
 		DB_FULL_PATH_POP(db_node->path);
-		if (state == 1) {
+		if (state == 1 && curr_depth >= min_depth && curr_depth <= max_depth) {
 		    return 1;
 		} else {
 		    return 0;
@@ -450,10 +453,10 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
 	    break;
 	case OP_UNION:
 	    DB_FULL_PATH_SET_CUR_BOOL(db_node->path, 2);
-	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
+	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data, curr_depth+1, max_depth, min_depth);
 	    if (state == 1) return 1;
 	    DB_FULL_PATH_SET_CUR_BOOL(db_node->path, 2);
-	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
+	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data, curr_depth+1, max_depth, min_depth);
 	    if (state == 1) {
 		return 1;
 	    } else {
@@ -463,10 +466,10 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
 
 	case OP_INTERSECT:
 	    DB_FULL_PATH_SET_CUR_BOOL(db_node->path, 2);
-	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
+	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data, curr_depth+1, max_depth, min_depth);
 	    if (state == 1) return 1;
 	    DB_FULL_PATH_SET_CUR_BOOL(db_node->path, 3);
-	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
+	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data, curr_depth+1, max_depth, min_depth);
 	    if (state == 1) {
 		return 1;
 	    } else {
@@ -476,10 +479,10 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
 
 	case OP_SUBTRACT:
 	    DB_FULL_PATH_SET_CUR_BOOL(db_node->path, 2);
-	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
+	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data, curr_depth+1, max_depth, min_depth);
 	    if (state == 1) return 1;
 	    DB_FULL_PATH_SET_CUR_BOOL(db_node->path, 4);
-	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
+	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data, curr_depth+1, max_depth, min_depth);
 	    if (state == 1) {
 		return 1;
 	    } else {
@@ -488,9 +491,9 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
 	    break;
 
 	case OP_XOR:
-	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
+	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data, curr_depth+1, max_depth, min_depth);
 	    if (state == 1) return 1;
-	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
+	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data, curr_depth+1, max_depth, min_depth);
 	    if (state == 1) {
 		return 1;
 	    } else {
@@ -577,7 +580,7 @@ db_fullpath_stateful_traverse(struct db_i *dbip, struct rt_wdb *wdbp, struct bu_
 
 	    comb = (struct rt_comb_internal *)in.idb_ptr;
 
-	    state = db_fullpath_stateful_traverse_subtree(comb->tree, db_fullpath_stateful_traverse, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
+	    state = db_fullpath_stateful_traverse_subtree(comb->tree, db_fullpath_stateful_traverse, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data, 0, INT_MAX, 0);
 
 	    rt_db_free_internal(&in);
 	    if (state == 1) {
@@ -632,7 +635,7 @@ f_below(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, st
 	comb = (struct rt_comb_internal *)in.idb_ptr;
 
         curr_node.path = &belowpath;
-	state = db_fullpath_stateful_traverse_subtree(comb->tree, db_fullpath_stateful_traverse, dbip, wdbp, results, &curr_node, find_execute_nested_plans, find_execute_nested_plans, wdbp->wdb_resp, plan->bl_data[0]);
+	state = db_fullpath_stateful_traverse_subtree(comb->tree, db_fullpath_stateful_traverse, dbip, wdbp, results, &curr_node, find_execute_nested_plans, find_execute_nested_plans, wdbp->wdb_resp, plan->bl_data[0], 0, plan->max_depth, plan->min_depth);
 
 	rt_db_free_internal(&in);
     }
@@ -1600,10 +1603,16 @@ find_create(char ***argvp, struct db_plan_t **resultplan, struct bu_ptbl *UNUSED
     OPTION *p;
     struct db_plan_t *newplan;
     char **argv;
+    int checkval;
+    struct bu_vls name = BU_VLS_INIT_ZERO;
+    struct bu_vls value = BU_VLS_INIT_ZERO;
+
 
     argv = *argvp;
 
-    if ((p = option(*argv)) == NULL) {
+    checkval = string_to_name_and_val(argv[0], &name, &value);
+
+    if ((p = option(bu_vls_addr(&name))) == NULL) {
 	if (!quiet)
 	    bu_log("%s: unknown option passed to find_create\n", *argv);
 	return BRLCAD_ERROR;
@@ -1630,8 +1639,43 @@ find_create(char ***argvp, struct db_plan_t **resultplan, struct bu_ptbl *UNUSED
 	default:
 	    return BRLCAD_OK;
     }
+
+    if (bu_vls_strlen(&value) > 0 && isdigit((int)bu_vls_addr(&value)[0])) {
+	switch (checkval) {
+	    case 1:
+		newplan->min_depth = atol(bu_vls_addr(&value));
+		newplan->max_depth = atol(bu_vls_addr(&value));
+		break;
+	    case 2:
+		newplan->min_depth = 0;
+		newplan->max_depth = atol(bu_vls_addr(&value)) - 1;
+		break;
+	    case 3:
+		newplan->min_depth = atol(bu_vls_addr(&value)) + 1;
+		newplan->max_depth = INT_MAX;
+		break;
+	    case 4:
+		newplan->min_depth = atol(bu_vls_addr(&value));
+		newplan->max_depth = INT_MAX;
+		break;
+	    case 5:
+		newplan->min_depth = 0;
+		newplan->max_depth = atol(bu_vls_addr(&value));
+		break;
+	    default:
+		newplan->min_depth = 0;
+		newplan->max_depth = INT_MAX;
+		break;
+	}
+    } else {
+	newplan->min_depth = 0;
+	newplan->max_depth = INT_MAX;
+    }
+
     *argvp = argv;
     (*resultplan) = newplan;
+    bu_vls_free(&name);
+    bu_vls_free(&value);
     return BRLCAD_OK;
 }
 
