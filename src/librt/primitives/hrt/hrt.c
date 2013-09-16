@@ -192,7 +192,7 @@ rt_hrt_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     f = hip->xdir[X];
     (*min)[X] = hip->v[X] - f * 1.25;
     (*max)[X] = hip->v[X] + f * 1.25;
-    
+
     /* Y */
     f = hip->ydir[Y];
     (*min)[Y] = hip->v[Y] - f;

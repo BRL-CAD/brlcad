@@ -2353,7 +2353,7 @@ db_search_paths(const char *plan_string,
 	    if (search_results) {
 		bu_ptbl_cat(combined_results, search_results);
 		/* we need to free the search result table itself, but don't do a full
-		 * db_free_seach_tbl - the contents are in use by combined_results*/
+		 * db_free_search_tbl - the contents are in use by combined_results*/
 		bu_ptbl_free(search_results);
 		bu_free(search_results, "free search container");
 	    }
