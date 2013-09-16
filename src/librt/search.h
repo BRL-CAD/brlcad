@@ -82,8 +82,6 @@ struct db_plan_t {
 #define F_MTFLAG 1 /* fstype */
 #define F_MTTYPE 2
 #define F_ATLEAST 1 /* perm */
-    int min_depth;				/* relative depth specifier */
-    int max_depth;				/* relative depth specifier */
     int flags;				/* private flags */
     enum db_search_ntype type;			/* plan node type */
     union {
