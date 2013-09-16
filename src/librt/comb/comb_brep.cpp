@@ -33,47 +33,7 @@
 
 // Declaration
 extern "C" void rt_comb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol, const struct db_i *dbip);
-
-
-int
-single_conversion(struct rt_db_internal* intern, ON_Brep** brep, const struct db_i* dbip)
-{
-    if (*brep)
-	delete *brep;
-
-    if (intern->idb_type == ID_BREP) {
-	// already a brep
-	RT_BREP_CK_MAGIC(intern->idb_ptr);
-	*brep = ((struct rt_brep_internal *)intern->idb_ptr)->brep->Duplicate();
-	if (*brep != NULL)
-	    return 0;
-	return -2;
-    }
-
-    *brep = ON_Brep::New();
-    ON_Brep *old = *brep;
-    struct bn_tol tol;
-    tol.magic = BN_TOL_MAGIC;
-    tol.dist = BN_TOL_DIST;
-    tol.dist_sq = tol.dist * tol.dist;
-    tol.perp = SMALL_FASTF;
-    tol.para = 1.0 - tol.perp;
-    if (intern->idb_type == ID_COMBINATION) {
-	rt_comb_brep(brep, intern, &tol, dbip);
-    } else {
-	if (intern->idb_meth->ft_brep == NULL) {
-	    delete old;
-	    *brep = NULL;
-	    return -1;
-	}
-	intern->idb_meth->ft_brep(brep, intern, &tol);
-    }
-    if (*brep == NULL) {
-	delete old;
-	return -2;
-    }
-    return 0;
-}
+extern "C" int brep_conversion(struct rt_db_internal* intern, ON_Brep** brep, const struct db_i *dbip);
 
 
 int
@@ -131,7 +91,7 @@ conv_tree(ON_Brep **b, const union tree *t, const struct db_i *dbip)
 		    rt_db_internal intern;
 		    rt_db_get_internal(&intern, dir, dbip, bn_mat_identity, &rt_uniresource);
 		    RT_CK_DB_INTERNAL(&intern);
-		    ret = single_conversion(&intern, b, dbip);
+		    ret = brep_conversion(&intern, b, dbip);
 		    if (ret == 0 && *b != NULL) {
 			if (t->tr_l.tl_mat != NULL && !bn_mat_is_identity(t->tr_l.tl_mat)) {
 			    ON_Xform xform(t->tr_l.tl_mat);

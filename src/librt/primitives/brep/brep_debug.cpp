@@ -53,7 +53,8 @@
 extern "C" {
 #endif
     RT_EXPORT extern int brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_tol* ttol, const struct bn_tol* tol, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);
-    RT_EXPORT extern int brep_conversion(struct rt_db_internal* intern, ON_Brep** brep, const struct db_i *dbip);
+    extern int single_conversion(struct rt_db_internal* intern, ON_Brep** brep, const struct db_i *dbip);
+    RT_EXPORT extern int brep_conversion(struct rt_db_internal* in, struct rt_db_internal* out, const struct db_i *dbip);
     RT_EXPORT extern int brep_conversion_comb(struct rt_db_internal *old_internal, const char *name, const char *suffix, struct rt_wdb *wdbp, fastf_t local2mm);
     RT_EXPORT extern int brep_intersect_point_point(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
     RT_EXPORT extern int brep_intersect_point_curve(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
@@ -2313,11 +2314,22 @@ plot_usage(struct bu_vls *vls)
 
 
 int
-brep_conversion(struct rt_db_internal* intern, ON_Brep** brep, const struct db_i* dbip)
+single_conversion(struct rt_db_internal* intern, ON_Brep** brep, const struct db_i* dbip)
 {
+    if (*brep)
+	delete *brep;
+
+    if (intern->idb_type == ID_BREP) {
+	// already a brep
+	RT_BREP_CK_MAGIC(intern->idb_ptr);
+	*brep = ((struct rt_brep_internal *)intern->idb_ptr)->brep->Duplicate();
+	if (*brep != NULL)
+	    return 0;
+	return -2;
+    }
+
     *brep = ON_Brep::New();
     ON_Brep *old = *brep;
-
     struct bn_tol tol;
     tol.magic = BN_TOL_MAGIC;
     tol.dist = BN_TOL_DIST;
@@ -2338,6 +2350,32 @@ brep_conversion(struct rt_db_internal* intern, ON_Brep** brep, const struct db_i
 	delete old;
 	return -2;
     }
+    return 0;
+}
+
+
+int
+brep_conversion(struct rt_db_internal* in, struct rt_db_internal* out, const struct db_i *dbip)
+{
+    if (out == NULL)
+	return -1;
+
+    ON_Brep* brep = NULL;
+    int ret;
+    if ((ret = single_conversion(in, &brep, dbip)) < 0) {
+	return ret;
+    }
+
+    struct rt_brep_internal *bip_out;
+    BU_ALLOC(bip_out, struct rt_brep_internal);
+    bip_out->magic = RT_BREP_INTERNAL_MAGIC;
+    bip_out->brep = brep;
+    RT_DB_INTERNAL_INIT(out);
+    out->idb_ptr = (genptr_t)bip_out;
+    out->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    out->idb_meth = &OBJ[ID_BREP];
+    out->idb_minor_type = ID_BREP;
+
     return 0;
 }
 
@@ -2412,7 +2450,7 @@ brep_conversion_tree(const struct db_i *dbip, const union tree *oldtree, union t
 		    if (BU_STR_EQUAL(intern->idb_meth->ft_name, "ID_BREP")) {
 			*brep = ((struct rt_brep_internal *)intern->idb_ptr)->brep->Duplicate();
 		    } else {
-			ret = brep_conversion(intern, brep, dbip);
+			ret = single_conversion(intern, brep, dbip);
 			if (ret == -1) {
 			    bu_log("The brep conversion of %s is unsuccessful.\n", oldname);
 			    newtree = NULL;

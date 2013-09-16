@@ -43,7 +43,7 @@
  * directly and export what we need from brep_debug.cpp which sucks.
  */
 RT_EXPORT extern int brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_tol *ttol, const struct bn_tol *tol, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);
-RT_EXPORT extern int brep_conversion(struct rt_db_internal *intern, ON_Brep **brep, const struct db_i *dbip);
+RT_EXPORT extern int brep_conversion(struct rt_db_internal* in, struct rt_db_internal* out, const struct db_i *dbip);
 RT_EXPORT extern int brep_conversion_comb(struct rt_db_internal *old_internal, const char *name, const char *suffix, struct rt_wdb *wdbp, fastf_t local2mm);
 RT_EXPORT extern int brep_intersect_point_point(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
 RT_EXPORT extern int brep_intersect_point_curve(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
@@ -219,7 +219,6 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 
 	char *bname;
 	char *suffix;
-	ON_Brep* brep = NULL;
 	int ret;
 	if (argc > 2) {
 	    bname = (char*)bu_malloc(strlen(argv[2])+1, "char");
@@ -248,13 +247,16 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	    brep_conversion_comb(&intern, bname_suffix, suffix, gedp->ged_wdbp, mk_conv2mm);
 	    bu_free(bname_suffix, "char");
 	} else {
+	    struct rt_db_internal brep_db_internal;
+	    ON_Brep* brep;
 	    if (db_lookup(gedp->ged_wdbp->dbip, bname, LOOKUP_QUIET) != RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "%s already exists.", bname);
 		bu_free(bname, "char");
 		if (argc > 2) bu_free(suffix, "char");
 		return GED_OK;
 	    }
-	    ret = brep_conversion(&intern, &brep, gedp->ged_wdbp->dbip);
+	    ret = brep_conversion(&intern, &brep_db_internal, gedp->ged_wdbp->dbip);
+	    brep = ((struct rt_brep_internal *)brep_db_internal.idb_ptr)->brep;
 	    if (ret == -1) {
 		bu_vls_printf(gedp->ged_result_str, "%s doesn't have a brep-conversion function yet. Type: %s", solid_name, intern.idb_meth->ft_label);
 	    } else if (brep == NULL) {
@@ -265,6 +267,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 		    bu_vls_printf(gedp->ged_result_str, "%s is made.", bname);
 		}
 	    }
+	    rt_db_free_internal(&brep_db_internal);
 	}
 	bu_free(bname, "char");
 	if (argc > 2) bu_free(suffix, "char");
