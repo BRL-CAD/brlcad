@@ -33,7 +33,7 @@
 
 // Declaration
 extern "C" void rt_comb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol, const struct db_i *dbip);
-extern "C" int brep_conversion(struct rt_db_internal* intern, ON_Brep** brep, const struct db_i *dbip);
+extern "C" int single_conversion(struct rt_db_internal* intern, ON_Brep** brep, const struct db_i *dbip);
 
 
 int
@@ -50,7 +50,7 @@ conv_tree(ON_Brep **b, const union tree *t, const struct db_i *dbip)
 	    old = right = ON_Brep::New();
 	    ret = conv_tree(&right, t->tr_b.tb_right, dbip);
 	    if (ret) {
-		if (right)
+		if (right && old)
 		    delete old;
 		break;
 	    }
@@ -75,11 +75,11 @@ conv_tree(ON_Brep **b, const union tree *t, const struct db_i *dbip)
 		    bu_log("operation %d isn't supported yet.\n", t->tr_op);
 		    ret = -1;
 		}
-		delete left;
-		delete right;
+		if (left) delete left;
+		if (right) delete right;
 	    } else {
-		delete old;
-		delete right;
+		if (old) delete old;
+		if (right) delete right;
 	    }
 	    break;
 	case OP_DB_LEAF:
@@ -91,7 +91,7 @@ conv_tree(ON_Brep **b, const union tree *t, const struct db_i *dbip)
 		    rt_db_internal intern;
 		    rt_db_get_internal(&intern, dir, dbip, bn_mat_identity, &rt_uniresource);
 		    RT_CK_DB_INTERNAL(&intern);
-		    ret = brep_conversion(&intern, b, dbip);
+		    ret = single_conversion(&intern, b, dbip);
 		    if (ret == 0 && *b != NULL) {
 			if (t->tr_l.tl_mat != NULL && !bn_mat_is_identity(t->tr_l.tl_mat)) {
 			    ON_Xform xform(t->tr_l.tl_mat);
