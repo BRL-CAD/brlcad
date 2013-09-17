@@ -36,7 +36,7 @@ extern "C" void rt_comb_brep(ON_Brep **b, const struct rt_db_internal *ip, const
 extern "C" int single_conversion(struct rt_db_internal* intern, ON_Brep** brep, const struct db_i *dbip);
 
 
-int
+HIDDEN int
 conv_tree(ON_Brep **b, const union tree *t, const struct db_i *dbip)
 {
     ON_Brep *left = NULL, *right = NULL, *old = NULL;
