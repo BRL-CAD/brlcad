@@ -84,6 +84,18 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* change 'mirror' command offset to be prior to mirror instead of
+  after, so that you can mirror intuitively over a specified point
+  along a given axis.
+
+* refactor rt_mirror (src/librt/primitives/mirror.c) into the functab
+
+* refactor rt_functab accessors to go through an api call or calls so
+  that the array is not accessed directly.  either an rt_eval() style
+  interface with data-driven keys to tell it with function(s) to call,
+  or simply have an rt_*() for each function (e.g., rt_mirror(),
+  rt_shot(), rt_describe(), etc.).
+
 * review proc-db for promotion to src/shapes
 
 * implement new 'reduce' command to perform model reduction.  should
@@ -401,14 +413,6 @@ comp.r4 ID 5678 material code 5 LOS 75
 
 * vls name wrapping (reversible argv-to-vls, vls-to-argv).  look at
   src/libged/glob.c code, very similar.
-
-* refactor rt_mirror (src/librt/primitives/mirror.c) into the functab
-
-* refactor rt_functab accessors to go through an api call or calls so
-  that the array is not accessed directly.  either an rt_eval() style
-  interface with data-driven keys to tell it with function(s) to call,
-  or simply have an rt_*() for each function (e.g., rt_mirror(),
-  rt_shot(), rt_describe(), etc.).
 
 * release dm X get_color() memory
 
