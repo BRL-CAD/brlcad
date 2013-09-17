@@ -107,6 +107,7 @@ struct db_plan_t {
 	char *_ci_data;			/* char pointer */
 	char *_path_data;		/* char pointer */
 	char *_attr_data;		/* char pointer */
+	char *_depth_data;		/* char pointer */
 	char *_node_data;		/* char pointer */
 	char *_type_data;
 	regex_t _regex_data;	/* compiled regexp */
@@ -123,6 +124,7 @@ struct db_plan_t {
 #define path_data	p_un._path_data
 #define regexp_data 	p_un._regex_data
 #define attr_data	p_un._attr_data
+#define depth_data	p_un._depth_data
 #define node_data	p_un._node_data
 #define fl_flags	p_un.fl._f_flags
 #define fl_mask		p_un.fl._f_mask
@@ -156,6 +158,7 @@ static int c_attr(char *, char ***, int, struct db_plan_t **, int *);
 static int c_iname(char *, char ***, int, struct db_plan_t **, int *);
 static int c_maxdepth(char *, char ***, int, struct db_plan_t **, int *);
 static int c_mindepth(char *, char ***, int, struct db_plan_t **, int *);
+static int c_depth(char *, char ***, int, struct db_plan_t **, int *);
 static int c_name(char *, char ***, int, struct db_plan_t **, int *);
 static int c_nnodes(char *, char ***, int, struct db_plan_t **, int *);
 static int c_regex(char *, char ***, int, struct db_plan_t **, int *);
