@@ -5018,10 +5018,6 @@ RT_EXPORT extern int db_regexp_match_all(struct bu_vls *dest,
 #define DB_LS_HIDDEN       0x8    /* include hidden objects in results */
 #define DB_LS_NON_GEOM     0x10   /* filter for non-geometry objects */
 #define DB_LS_TOPS         0x20   /* filter for objects un-referenced by other objects */
-#define DB_LS_ADD_PRIM     0x40   /* add all primitives to the results */
-#define DB_LS_ADD_COMB     0x80   /* add all combinations to the results */
-#define DB_LS_ADD_REGION   0x100  /* add all regions to the results */
-#define DB_LS_ADD_NON_GEOM 0x200  /* add all non-geometry objects to the results */
 RT_EXPORT extern int db_ls(const struct db_i *dbip,
 		           int flags,
 			   struct directory ***dpv);

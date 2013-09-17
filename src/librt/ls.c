@@ -52,16 +52,7 @@ dp_eval_flags(struct directory *dp, int flags)
     if (flags & DB_LS_REGION)   { flag_eval += (dp->d_flags & RT_DIR_REGION)   ? 0 : 1; }
     if (flags & DB_LS_NON_GEOM) { flag_eval += (dp->d_flags & RT_DIR_NON_GEOM) ? 0 : 1; }
     if (flags & DB_LS_TOPS)     { flag_eval += (dp->d_nref == 0)               ? 0 : 1; }
-    flag_eval = (flag_eval) ? 0 : 1;
-
-    /* Now that we have handled the filtering flags, check to see if we pass
-     * the additive flags - these allow for returning (say) a list of primitives
-     * and regions but not combs */
-    if (flags & DB_LS_ADD_PRIM)     { flag_eval += (dp->d_flags & RT_DIR_SOLID)    ? 1 : 0; }
-    if (flags & DB_LS_ADD_COMB)     { flag_eval += (dp->d_flags & RT_DIR_COMB)     ? 1 : 0; }
-    if (flags & DB_LS_ADD_REGION)   { flag_eval += (dp->d_flags & RT_DIR_REGION)   ? 1 : 0; }
-    if (flags & DB_LS_ADD_NON_GEOM) { flag_eval += (dp->d_flags & RT_DIR_NON_GEOM) ? 1 : 0; }
-    return (flag_eval) ? 1 : 0;
+    return (flag_eval) ? 0 : 1;
 }
 
 int
