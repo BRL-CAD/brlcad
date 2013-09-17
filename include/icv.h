@@ -608,10 +608,10 @@ ICV_EXPORT int *icv_mode(icv_image_t* img, size_t** bins, int n_bins);
 /**
  * Calculates median of the values of each channel.
  * Median value are calculated for quantified data which is sent as
- * bins(histogram information). For any image mode is a 'c' length 
+ * bins(histogram information). For any image mode is a 'c' length
  * array, where c is the number of channels.
  *
- * To calculate the median of an icv_image, a default call is as 
+ * To calculate the median of an icv_image, a default call is as
  * follows :
  *    icv_median(img, icv_hist(img, n_bins), n_bins);
  *
@@ -624,8 +624,8 @@ ICV_EXPORT int *icv_median(icv_image_t* img, size_t** bins, int n_bins);
 /**
  * Calculates the skewness in data.
  *
- * To calculate the skewness in an icv_image, a default call is as 
- * follows : 
+ * To calculate the skewness in an icv_image, a default call is as
+ * follows :
  *   icv_skew(img, icv_hist(img, n_bins), n_bins);
  *
  * @return c length double array where c is the number of channels in
@@ -636,7 +636,7 @@ ICV_EXPORT double *icv_skew(icv_image_t* img, size_t** bins, int n_bins);
 /**
  * Calculates the variance in data.
  *
- * To calculate the variance in an icv_image, a default call is as 
+ * To calculate the variance in an icv_image, a default call is as
  * follows :
  *    icv_variance(img, icv_hist(img, n_bins), n_bins);
  *
