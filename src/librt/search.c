@@ -1360,16 +1360,7 @@ c_bool(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
 HIDDEN int
 f_maxdepth(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct bu_ptbl *UNUSED(results))
 {
-    struct db_full_path depthtest;
-    int depthcount = -1;
-    db_full_path_init(&depthtest);
-    db_dup_full_path(&depthtest, db_node->path);
-    while (depthtest.fp_len > 0) {
-	depthcount++;
-	DB_FULL_PATH_POP(&depthtest);
-    }
-    db_free_full_path(&depthtest);
-    return depthcount <= plan->max_data;
+    return ((int)db_node->path->fp_len - 1 <= plan->max_data) ? 1 : 0;
 }
 
 
@@ -1395,16 +1386,7 @@ c_maxdepth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db
 HIDDEN int
 f_mindepth(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct bu_ptbl *UNUSED(results))
 {
-    struct db_full_path depthtest;
-    int depthcount = -1;
-    db_full_path_init(&depthtest);
-    db_dup_full_path(&depthtest, db_node->path);
-    while (depthtest.fp_len > 0) {
-	depthcount++;
-	DB_FULL_PATH_POP(&depthtest);
-    }
-    db_free_full_path(&depthtest);
-    return depthcount >= plan->min_data;
+    return ((int)db_node->path->fp_len - 1 >= plan->min_data) ? 1 : 0;
 }
 
 
