@@ -440,10 +440,15 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
 		db_add_node_to_full_path(db_node->path, dp);
 		DB_FULL_PATH_SET_CUR_BOOL(db_node->path, curr_bool);
 		state = traverse_func(dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
-		DB_FULL_PATH_POP(db_node->path);
 		if (state == 1) {
+		    if ((int)db_node->path->fp_len > db_node->matching_len) {
+			db_node->matching_len = db_node->path->fp_len;
+			/*bu_log("matching_leaf: %s(%d)\n", db_path_to_string(db_node->path),db_node->matching_len);*/
+		    }
+		    DB_FULL_PATH_POP(db_node->path);
 		    return 1;
 		} else {
+		    DB_FULL_PATH_POP(db_node->path);
 		    return 0;
 		}
 	    }
@@ -632,12 +637,15 @@ f_below(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, st
 	comb = (struct rt_comb_internal *)in.idb_ptr;
 
         curr_node.path = &belowpath;
+        curr_node.matching_len = 0;
 	state = db_fullpath_stateful_traverse_subtree(comb->tree, db_fullpath_stateful_traverse, dbip, wdbp, results, &curr_node, find_execute_nested_plans, find_execute_nested_plans, wdbp->wdb_resp, plan->bl_data[0]);
 
 	rt_db_free_internal(&in);
     }
     db_free_full_path(&belowpath);
-    if (state >= 1) {
+    if (state >= 1 && ((int)((curr_node.matching_len - (db_node->path->fp_len - db_node->orig_len)) - 1) >= plan->min_depth)
+	    && ((int)((curr_node.matching_len - (db_node->path->fp_len - db_node->orig_len)) - 1) <= plan->max_depth)) {
+	/*bu_log("(%d) f_below match: %s(%d): (%d) - %d; (%d,%d)\n", db_node->orig_len, db_path_to_string(db_node->path), db_node->path->fp_len, curr_node.matching_len, curr_node.matching_len - (db_node->path->fp_len - db_node->orig_len) - 1, plan->min_depth, plan->max_depth);*/
 	return 1;
     } else {
 	return 0;
@@ -1600,10 +1608,15 @@ find_create(char ***argvp, struct db_plan_t **resultplan, struct bu_ptbl *UNUSED
     OPTION *p;
     struct db_plan_t *newplan;
     char **argv;
+    int checkval;
+    struct bu_vls name = BU_VLS_INIT_ZERO;
+    struct bu_vls value = BU_VLS_INIT_ZERO;
 
     argv = *argvp;
 
-    if ((p = option(*argv)) == NULL) {
+    checkval = string_to_name_and_val(argv[0], &name, &value);
+
+    if ((p = option(bu_vls_addr(&name))) == NULL) {
 	if (!quiet)
 	    bu_log("%s: unknown option passed to find_create\n", *argv);
 	return BRLCAD_ERROR;
@@ -1630,8 +1643,44 @@ find_create(char ***argvp, struct db_plan_t **resultplan, struct bu_ptbl *UNUSED
 	default:
 	    return BRLCAD_OK;
     }
+
+    if (bu_vls_strlen(&value) > 0 && isdigit((int)bu_vls_addr(&value)[0])) {
+	switch (checkval) {
+	    case 1:
+		newplan->min_depth = atol(bu_vls_addr(&value));
+		newplan->max_depth = atol(bu_vls_addr(&value));
+		break;
+	    case 2:
+		newplan->min_depth = atol(bu_vls_addr(&value)) + 1;
+		newplan->max_depth = INT_MAX;
+		break;
+	    case 3:
+		newplan->min_depth = 0;
+		newplan->max_depth = atol(bu_vls_addr(&value)) - 1;
+		break;
+	    case 4:
+		newplan->min_depth = atol(bu_vls_addr(&value));
+		newplan->max_depth = INT_MAX;
+		break;
+	    case 5:
+		newplan->min_depth = 0;
+		newplan->max_depth = atol(bu_vls_addr(&value));
+		break;
+	    default:
+		newplan->min_depth = 0;
+		newplan->max_depth = INT_MAX;
+		break;
+	}
+    } else {
+	newplan->min_depth = 0;
+	newplan->max_depth = INT_MAX;
+    }
+
+
     *argvp = argv;
     (*resultplan) = newplan;
+    bu_vls_free(&name);
+    bu_vls_free(&value);
     return BRLCAD_OK;
 }
 
@@ -2331,6 +2380,7 @@ db_search_path(const char *plan_string,
     BU_PTBL_INIT(search_results);
     /* by convention, the top level node is "unioned" into the global database */
     DB_FULL_PATH_SET_CUR_BOOL(curr_node.path, 2);
+    curr_node.orig_len = curr_node.path->fp_len;
     db_fullpath_traverse(wdbp->dbip, wdbp, search_results, &curr_node, find_execute_plans, find_execute_plans, wdbp->wdb_resp, (struct db_plan_t *)dbplan);
 
     /* free memory */

@@ -58,6 +58,8 @@
 /* node struct - holds data specific to each node under consideration */
 struct db_node_t {
     struct db_full_path *path;
+    int orig_len;
+    int matching_len;
 };
 
 /* search node type */
@@ -82,6 +84,8 @@ struct db_plan_t {
 #define F_MTFLAG 1 /* fstype */
 #define F_MTTYPE 2
 #define F_ATLEAST 1 /* perm */
+    int min_depth;
+    int max_depth;
     int flags;				/* private flags */
     enum db_search_ntype type;			/* plan node type */
     union {
