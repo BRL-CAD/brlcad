@@ -74,7 +74,7 @@ bu_ptbl_ins(struct bu_ptbl *b, long int *p)
 					"bu_ptbl.buffer[] (ins)");
     }
 
-    i=b->end++;
+    i = b->end++;
     b->buffer[i] = p;
     return i;
 }

@@ -3719,7 +3719,7 @@ DEPRECATED RT_EXPORT extern struct bu_ptbl *db_search_unique_objects(void *searc
  * * Offer simple function calls for the common cases of one path and an
  *   array of paths, and for both input cases support returning either
  *   a db_full_path set or a unique directory pointer set via table.  This
- *   should cover the most common programattic situations, while still
+ *   should cover the most common programmatic situations, while still
  *   allowing commands enough flexibility to do what they need to (see,
  *   for example, combining results from search sets (multiple arrays
  *   of paths) in libged's search result consolidation.)

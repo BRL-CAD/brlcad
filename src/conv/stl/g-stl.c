@@ -345,7 +345,7 @@ main(int argc, char *argv[])
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "a:b8m:n:o:r:vx:D:P:X:i")) != -1) {
+    while ((c = bu_getopt(argc, argv, "a:b8m:n:o:r:vx:D:P:X:ih?")) != -1) {
 	switch (c) {
 	    case 'a':		/* Absolute tolerance. */
 		ttol.abs = atof(bu_optarg);
@@ -393,7 +393,6 @@ main(int argc, char *argv[])
 		break;
 	    default:
 		bu_exit(1, usage, argv[0]);
-		break;
 	}
     }
 

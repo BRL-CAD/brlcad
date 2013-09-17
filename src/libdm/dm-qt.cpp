@@ -771,10 +771,10 @@ qt_processEvents(struct dm *dmp)
 
 /**
  * P R O C E S S Q T E V E N T S
- * 
- * Function called in Tk event loop. It simply process any 
- * pendin Qt events
- * 
+ *
+ * Function called in Tk event loop. It simply processes any
+ * pending Qt events.
+ *
  */
 void processQtEvents(ClientData UNUSED(clientData), int UNUSED(flags)) {
     qt_processEvents(&dm_qt);
@@ -784,16 +784,16 @@ Tcl_TimerToken token = NULL;
 
 /**
  * I D L E C A L L
- * 
+ *
  * Call when Tk is idle. It process Qt events then
  * reschedules itself.
- * 
+ *
  */
 void IdleCall(ClientData UNUSED(clientData)) {
     qt_processEvents(&dm_qt);
     Tcl_DeleteTimerHandler(token);
 
-    /* Reschedule the function so that it continously tries to process Qt events */
+    /* Reschedule the function so that it continuously tries to process Qt events */
     token = Tcl_CreateTimerHandler(1, IdleCall, NULL);
 }
 

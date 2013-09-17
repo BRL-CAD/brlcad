@@ -43,7 +43,7 @@
  * directly and export what we need from brep_debug.cpp which sucks.
  */
 RT_EXPORT extern int brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_tol *ttol, const struct bn_tol *tol, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);
-RT_EXPORT extern int brep_conversion(struct rt_db_internal *intern, ON_Brep **brep, const struct db_i *dbip);
+RT_EXPORT extern int brep_conversion(struct rt_db_internal* in, struct rt_db_internal* out, const struct db_i *dbip);
 RT_EXPORT extern int brep_conversion_comb(struct rt_db_internal *old_internal, const char *name, const char *suffix, struct rt_wdb *wdbp, fastf_t local2mm);
 RT_EXPORT extern int brep_intersect_point_point(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
 RT_EXPORT extern int brep_intersect_point_curve(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
@@ -92,7 +92,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "\tintersect <obj2> <i> <j> [PP|PC|PS|CC|CS|SS] - BREP intersections\n");
 	bu_vls_printf(gedp->ged_result_str, "\tu|i|- <obj2> <output> - BREP boolean evaluations\n");
 	bu_vls_printf(gedp->ged_result_str, "\t[brepname] - convert the non-BREP object to BREP form\n");
-	bu_vls_printf(gedp->ged_result_str, "\t[suffix] - convert non-BREP comb to unevaluated BREP form\n");
+	bu_vls_printf(gedp->ged_result_str, "\t --no-evaluation [suffix] - convert non-BREP comb to unevaluated BREP form\n");
 	return GED_HELP;
     }
 
@@ -217,57 +217,71 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     if (!RT_BREP_TEST_MAGIC(bi)) {
 	/* The solid is not in brep form. Covert it to brep. */
 
-	char *bname;
-	char *suffix;
-	ON_Brep* brep = NULL;
-	int ret;
-	if (argc > 2) {
-	    bname = (char*)bu_malloc(strlen(argv[2])+1, "char");
-	    bu_strlcpy(bname, argv[2], strlen(argv[2])+1);
-	    suffix = (char*)bu_malloc(strlen(argv[2])+2, "char");
-	    bu_strlcpy(suffix, ".", 2);
-	    bu_strlcat(suffix, argv[2], strlen(argv[2])+2);
+	struct bu_vls bname, suffix;
+	int ret, no_evaluation = 0;
+
+	bu_vls_init(&bname);
+	bu_vls_init(&suffix);
+
+	if (argc == 2) {
+	    // brep obj
+	    bu_vls_sprintf(&bname, "%s_brep", solid_name);
+	    bu_vls_sprintf(&suffix, "_brep");
+	} else if (BU_STR_EQUAL(argv[2], "--no-evaluation")) {
+	    no_evaluation = 1;
+	    if (argc == 3) {
+		// brep obj --no-evaluation
+		bu_vls_sprintf(&bname, "%s_brep", solid_name);
+		bu_vls_sprintf(&suffix, "_brep");
+	    } else if (argc == 4) {
+		// brep obj --no-evaluation suffix
+		bu_vls_sprintf(&bname, argv[3]);
+		bu_vls_sprintf(&suffix, argv[3]);
+	    }
 	} else {
-	    bname = (char*)bu_malloc(strlen(solid_name)+6, "char");
-	    bu_strlcpy(bname, solid_name, strlen(solid_name)+1);
-	    bu_strlcat(bname, "_brep", strlen(bname)+6);
-	    suffix = "_brep";
+	    // brep obj brepname/suffix
+	    bu_vls_sprintf(&bname, argv[2]);
+	    bu_vls_sprintf(&suffix, argv[2]);
 	}
-	if (0) {
-	    char *bname_suffix;
-	    bname_suffix = (char*)bu_malloc(strlen(solid_name)+strlen(suffix)+1, "char");
-	    bu_strlcpy(bname_suffix, solid_name, strlen(solid_name)+1);
-	    bu_strlcat(bname_suffix, suffix, strlen(solid_name)+strlen(suffix)+1);
-	    if (db_lookup(gedp->ged_wdbp->dbip, bname_suffix, LOOKUP_QUIET) != RT_DIR_NULL) {
+
+	if (no_evaluation && intern.idb_type == ID_COMBINATION) {
+	    struct bu_vls bname_suffix;
+	    bu_vls_init(&bname_suffix);
+	    bu_vls_sprintf(&bname_suffix, "%s%s", solid_name, bu_vls_addr(&suffix));
+	    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&bname_suffix), LOOKUP_QUIET) != RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "%s already exists.", bname_suffix);
-		bu_free(bname, "char");
-		bu_free(bname_suffix, "char");
-		if (argc > 2) bu_free(suffix, "char");
+		bu_vls_free(&bname);
+		bu_vls_free(&suffix);
+		bu_vls_free(&bname_suffix);
 		return GED_OK;
 	    }
-	    brep_conversion_comb(&intern, bname_suffix, suffix, gedp->ged_wdbp, mk_conv2mm);
-	    bu_free(bname_suffix, "char");
+	    brep_conversion_comb(&intern, bu_vls_addr(&bname_suffix), bu_vls_addr(&suffix), gedp->ged_wdbp, mk_conv2mm);
+	    bu_vls_free(&bname_suffix);
 	} else {
-	    if (db_lookup(gedp->ged_wdbp->dbip, bname, LOOKUP_QUIET) != RT_DIR_NULL) {
-		bu_vls_printf(gedp->ged_result_str, "%s already exists.", bname);
-		bu_free(bname, "char");
-		if (argc > 2) bu_free(suffix, "char");
+	    struct rt_db_internal brep_db_internal;
+	    ON_Brep* brep;
+	    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&bname), LOOKUP_QUIET) != RT_DIR_NULL) {
+		bu_vls_printf(gedp->ged_result_str, "%s already exists.", bu_vls_addr(&bname));
+		bu_vls_free(&bname);
+		bu_vls_free(&suffix);
 		return GED_OK;
 	    }
-	    ret = brep_conversion(&intern, &brep, gedp->ged_wdbp->dbip);
+	    ret = brep_conversion(&intern, &brep_db_internal, gedp->ged_wdbp->dbip);
+	    brep = ((struct rt_brep_internal *)brep_db_internal.idb_ptr)->brep;
 	    if (ret == -1) {
 		bu_vls_printf(gedp->ged_result_str, "%s doesn't have a brep-conversion function yet. Type: %s", solid_name, intern.idb_meth->ft_label);
 	    } else if (brep == NULL) {
 		bu_vls_printf(gedp->ged_result_str, "%s cannot be converted to brep correctly.", solid_name);
 	    } else {
-		ret = mk_brep(gedp->ged_wdbp, bname, brep);
+		ret = mk_brep(gedp->ged_wdbp, bu_vls_addr(&bname), brep);
 		if (ret == 0) {
-		    bu_vls_printf(gedp->ged_result_str, "%s is made.", bname);
+		    bu_vls_printf(gedp->ged_result_str, "%s is made.", bu_vls_addr(&bname));
 		}
 	    }
+	    rt_db_free_internal(&brep_db_internal);
 	}
-	bu_free(bname, "char");
-	if (argc > 2) bu_free(suffix, "char");
+	bu_vls_free(&bname);
+	bu_vls_free(&suffix);
 	rt_db_free_internal(&intern);
 	return GED_OK;
     }

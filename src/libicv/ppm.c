@@ -84,6 +84,28 @@ ppm_write(icv_image_t *bif, const char *filename)
     return 0;
 }
 
+
+HIDDEN void
+ppm_nextline(FILE *fp)
+{
+    int c;
+
+    /* skip to the binary data section, starting on next line.
+     * supports mac, unix, windows line endings.
+     */
+    do {
+	c = fgetc(fp);
+	if (c == '\r') {
+	    c = fgetc(fp);
+	    if (c != '\n') {
+		ungetc(c, fp);
+		c = '\n'; /* pretend we're not an old mac file */
+	    }
+	}
+    } while (c != '\n');
+}
+
+
 icv_image_t*
 ppm_read(const char *filename)
 {
@@ -116,11 +138,12 @@ ppm_read(const char *filename)
     BU_ALLOC(bif, struct icv_image);
     ICV_IMAGE_INIT(bif);
 
-    /* check for comments in PPM image*/
+    /* check for comments lines in PPM image header */
     c = getc(fp);
     while (c == '#') {
-	while (getc(fp) != '\n')
-	    c = getc(fp);
+	/* encountered comment, skip to next line */
+	ppm_nextline(fp);
+	c = getc(fp);
     }
 
     ungetc(c, fp);
@@ -146,7 +169,10 @@ ppm_read(const char *filename)
 	return NULL;
     }
 
-    while (fgetc(fp) != '\n');
+    /* skip to the binary data section, starting on next line.
+     * supports mac, unix, windows line endings.
+     */
+    ppm_nextline(fp);
 
     /* memory allocation for pixel data */
     data = (unsigned char*) bu_malloc(bif->width * bif->height * 3, "image data");
