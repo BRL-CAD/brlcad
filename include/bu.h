@@ -1678,7 +1678,7 @@ typedef struct bu_hist bu_hist_t;
  * dynamic array.
  *
  * The table is currently un-ordered, and is merely an array of
- * pointers.  The support routines BU_TBL* manipulate the array for
+ * pointers.  The support routines BU_*PTBL* manipulate the array for
  * you.  Pointers to be operated on (inserted, deleted, searched for)
  * are passed as a "pointer to long".
  *
