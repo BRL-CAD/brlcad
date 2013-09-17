@@ -18,9 +18,10 @@
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
     <command>search</command>
+    <arg choice="opt" rep="repeat"><replaceable>options</replaceable></arg>
     <arg choice="opt" rep="norepeat"><replaceable>path1</replaceable></arg>
     <arg choice="opt" rep="repeat"><replaceable>path2</replaceable></arg>
-    <arg choice="opt" rep="repeat"><replaceable>options</replaceable></arg>
+    <arg choice="opt" rep="repeat"><replaceable>search plan</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -30,26 +31,118 @@
     <command>search</command> works in a fashion similar to Unix-style
     find commands (internally it is based on OpenBSD's and NetBSD's find
     code) but searches <emphasis remap="I">objects</emphasis> in the
-    current open database in MGED rather than files in a file system.  There
-    are two modes of search output.  The default mode returns a list of all objects
-    found matching the criteria.  A second mode returns a list of full paths
-    containing all instances of all matching objects in the database.  The mode of search
-    is determined by each path argument - a path starting with the "/" character
-    will produce a full path instance list, while all other paths will produce the
-    unique object list.  One search command may use paths indicating both modes - such
-    a "mixed mode" search will return a list of full paths and objects in the order
-    paths were supplied to search.  Matching of objects is done according to boolean
+    current open database in MGED rather than files in a file system.
+    One or more search paths are specified for searching, and a search
+    plan specifies filters through which objects in the search paths are
+    tested.  The names of objects satisfying all of the filters are
+    returned as the command output.
+    </para>
+
+    <para>
+    Search Inputs are specified using 
+    <link linkend="primitives">PATHS</link> and
+    matching of objects is done according to boolean
     expressions formed using the
     <link linkend="primitives">PRIMITIVES</link> and
     <link linkend="operators">OPERATORS</link>
     described below.
+
   </para>
+</refsection>
+
+<refsection xml:id="search_options"><title>OPTIONS</title>
+
+  <variablelist remap="TP">
+    <varlistentry>
+      <term><emphasis remap="B" role="bold">-a</emphasis></term>
+      <listitem>
+	<para>
+	  Overrides the hidden flag when assembling path lists, if a generic toplevel path has been specified.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><emphasis remap="B" role="bold">-Q</emphasis></term>
+      <listitem>
+	<para>
+	  Exit quietly without printing error messages if the search plan contains errors.  Primarly
+	  used in situations where programs automatically generate search invocations.
+	</para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
+
+</refsection>
+
+<refsection xml:id="paths"><title>PATHS:</title>
+  <para>
+    By default, only the "top level" objects in any search are used as starting
+    points in the search.  The default mode if no path is explicitly specified returns a list of all objects
+    found matching the criteria using the top level objects as inputs.  Specifiying paths is done as follows:
+    </para>
+
+	<para>
+
+		<table><title>Path Specifiers</title>
+
+			<tgroup cols="2">
+				<thead>
+					<row>
+						<entry>Form</entry>
+						<entry>Results</entry>
+					</row>
+				</thead>
+				<tbody>
+					<row>
+						<entry align="center" valign='middle'>/</entry>
+						<entry>Search using top level objects in database as starting points, return list of full paths.</entry>
+					</row>
+					<row>
+						<entry align="center" valign='middle'>.</entry>
+						<entry>Search using top level objects in database as starting points, return list of all objects.</entry>
+					</row>
+					<row>
+						<entry align="center" valign='middle'>|/</entry>
+						<entry>Search using every object in the database as a starting point, return list of full paths.</entry>
+					</row>
+					<row>
+						<entry align="center" valign='middle'>|.</entry>
+						<entry>Search using every object in the database as a starting point, return list of all objects.</entry>
+					</row>
+					<row>
+						<entry align="center" valign='middle'>/objname</entry>
+						<entry>Use object <emphasis>objname</emphasis> as the starting point, return list of full paths.</entry>
+					</row>
+					<row>
+						<entry align="center" valign='middle'>objname</entry>
+						<entry>Use object <emphasis>objname</emphasis> as the starting point, return list of all objects.</entry>
+					</row>
+					<row>
+						<entry align="center" valign='middle'>|/objname</entry>
+						<entry>Use every object below <emphasis>objname</emphasis> as starting points, return list of full paths.</entry>
+					</row>
+					<row>
+						<entry align="center" valign='middle'>|objname</entry>
+						<entry>Use every object below <emphasis>objname</emphasis> as starting points, return list of all objects.</entry>
+					</row>
+
+				</tbody>
+			</tgroup>
+	  </table>
+    One search command may use paths indicating both modes - such
+    a "mixed mode" search will return a list of full paths and objects in the order
+    paths were supplied to search.
+     </para>
+     <para>
+    The "flat" search that uses every object in the database as starting points will be significantly more expensive for complex tree hierarchies.
+     </para>
   <para>
     Something to bear in mind is that all search routines perform a full path tree
     search "under the hood."  A prefix "/" character changes the <emphasis remap="I">way</emphasis> the output is
-    reported, but does not change the underlying search <emphasis remap="I">method</emphasis> - for example, depth
+    reported, and the "|" prefix changes the set of toplevel starting points, but neither changes the underlying search <emphasis remap="I">method</emphasis> - for example, depth
     and path search criteria will still match even if no "/" character is appended to the input path.
   </para>
+
 </refsection>
 
 <refsection xml:id="primitives"><title>PRIMITIVES:</title>
@@ -537,6 +630,27 @@
       above command finds nested region instances that are definite errors.
     </para>
   </example>
+
+  <example><title>Using <command>search</command> Results</title>
+     <para>
+       While the <command>search</command> command as currently implemented
+       in BRL-CAD does not support a <command>find</command> command style
+       <option>exec</option> option, it is possible
+       to collect <command>search</command> results in a Tcl varaible and
+       use Tcl scripting to operate on the resulting object set.
+      <literallayout>
+      <computeroutput>
+<prompt>mged&gt;</prompt><userinput> set glob_compat_mode 0</userinput>
+<prompt>mged&gt;</prompt><userinput> set search_results [search all.g -type region ! -below -bool - -and ! -below -bool +]</userinput>
+<prompt>mged&gt;</prompt><userinput> foreach i $search_results {draw $i}</userinput>
+      </computeroutput>
+      </literallayout>
+       The above set of commands finds all regions below the <emphasis>all.g</emphasis>
+       object that contain only unioned objects and draws those regions in the MGED
+       display manager window.
+    </para>
+  </example>
+
 
 </refsection>
 
