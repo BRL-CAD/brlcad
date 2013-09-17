@@ -39,7 +39,7 @@
     </para>
 
     <para>
-    Search Inputs are specified using 
+    Search Inputs are specified using
     <link linkend="primitives">PATHS</link> and
     matching of objects is done according to boolean
     expressions formed using the
@@ -177,6 +177,14 @@
 	  Note that by convention, top level objects are implicitly "unioned" into the database. To
 	  see only objects that have been unioned into a comb tree without returning the top level
 	  comb object as well, use the <option>-mindepth</option> option to filter for returns deeper in the tree.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><emphasis remap="B" role="bold">-depth</emphasis> <emphasis remap="I">[&gt;/&lt;/=]depth</emphasis></term>
+      <listitem>
+	<para>
+	  True if the depth of the object in the tree is within the range specified.
 	</para>
       </listitem>
     </varlistentry>
