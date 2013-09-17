@@ -119,8 +119,9 @@ ppm_read(const char *filename)
     /* check for comments in PPM image*/
     c = getc(fp);
     while (c == '#') {
-	while (getc(fp) != '\n') ;
-	    c = getc(fp);
+	while (getc(fp) != '\n')
+	    /* do nothing */;
+	c = getc(fp);
     }
 
     ungetc(c, fp);
@@ -146,7 +147,8 @@ ppm_read(const char *filename)
 	return NULL;
     }
 
-    while (fgetc(fp) != '\n');
+    while (fgetc(fp) != '\n')
+	/* do nothing */;
 
     /* memory allocation for pixel data */
     data = (unsigned char*) bu_malloc(bif->width * bif->height * 3, "image data");
