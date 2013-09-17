@@ -376,15 +376,20 @@ HIDDEN int
 f_above(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *wdbp, struct bu_ptbl *results)
 {
     int state = 0;
+    int distance_above = 0;
     struct db_node_t curr_node;
     struct db_full_path abovepath;
     db_full_path_init(&abovepath);
     db_dup_full_path(&abovepath, db_node->path);
     DB_FULL_PATH_POP(&abovepath);
     curr_node.path = &abovepath;
+    distance_above = db_node->path->fp_len - abovepath.fp_len;
     while ((abovepath.fp_len > 0) && (state == 0)) {
-	state = find_execute_nested_plans(dbip, wdbp, results, &curr_node, plan->ab_data[0]);
+	if ((distance_above <= plan->max_depth) && (distance_above >= plan->min_depth)) {
+	    state = find_execute_nested_plans(dbip, wdbp, results, &curr_node, plan->ab_data[0]);
+	}
 	DB_FULL_PATH_POP(&abovepath);
+	distance_above++;
     }
     db_free_full_path(&abovepath);
     return state;
