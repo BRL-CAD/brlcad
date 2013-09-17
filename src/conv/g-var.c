@@ -405,7 +405,7 @@ int main(int argc, char *argv[])
     rt_init_resource(&rt_uniresource, 0, NULL);
 
     /* process command line arguments */
-    while ((c = bu_getopt(argc, argv, "vo:ys:f")) != -1) {
+    while ((c = bu_getopt(argc, argv, "vo:ys:fh?")) != -1) {
 	switch (c) {
 	    case 'v':
 		verbose++;
@@ -429,13 +429,12 @@ int main(int argc, char *argv[])
 
 	    default:
 		bu_exit(1, usage, argv[0]);
-		break;
 	}
     }
     /* param check */
-    if (bu_optind+1 >= argc) {
+    if (bu_optind+1 >= argc)
 	bu_exit(1, usage, argv[0]);
-    }
+
     /* get database filename and object */
     db_file = argv[bu_optind++];
     object = argv[bu_optind];
@@ -445,12 +444,11 @@ int main(int argc, char *argv[])
 	perror(argv[0]);
 	bu_exit(1, "Cannot open geometry database file %s\n", db_file);
     }
-    if (db_dirbuild(dbip)) {
+    if (db_dirbuild(dbip))
 	bu_exit(1, "db_dirbuild() failed!\n");
-    }
-    if (verbose) {
+
+    if (verbose)
 	fprintf(stderr, ">> opened db '%s'\n", dbip->dbi_title);
-    }
 
     /* setup output stream */
     if (out_file == NULL) {
@@ -470,15 +468,13 @@ int main(int argc, char *argv[])
     db_update_nref(dbip, &rt_uniresource);
 
     dp = db_lookup(dbip, object, 0);
-    if (dp == RT_DIR_NULL) {
+    if (dp == RT_DIR_NULL)
 	bu_exit(1, "Object %s not found in database!\n", object);
-    }
 
     /* generate mesh list */
     db_functree(dbip, dp, NULL, mesh_tracker, &rt_uniresource, NULL);
-    if (verbose) {
+    if (verbose)
 	fprintf(stderr, ">> mesh count: %d\n", mesh_count);
-    }
 
     /* write out header */
     write_header(dbip);
