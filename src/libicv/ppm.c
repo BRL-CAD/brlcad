@@ -119,7 +119,7 @@ ppm_read(const char *filename)
     /* check for comments in PPM image*/
     c = getc(fp);
     while (c == '#') {
-	while (getc(fp) != '\n')
+	while (getc(fp) != '\n') ;
 	    c = getc(fp);
     }
 
