@@ -201,9 +201,20 @@ Populate_Instance_List(Exporter_Info_AP203 *info)
     ON_NurbsSurfaceCV_Finalize_GenericAggregates(info);
 }
 
-bool
-ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
+STEPentity *
+ON_BRep_to_STEP(struct rt_db_internal *intern, Exporter_Info_AP203 *info)
 {
+    STEPentity *brep_shape = NULL;
+    RT_CK_DB_INTERNAL(intern);
+    struct rt_brep_internal *bi = (struct rt_brep_internal*)(intern->idb_ptr);
+    RT_BREP_TEST_MAGIC(bi);
+    ON_Brep *brep = bi->brep;
+    //ON_wString wstr;
+    //ON_TextLog dump(wstr);
+    //brep->Dump(dump);
+    //ON_String ss = wstr;
+    //bu_log("Brep:\n %s\n", ss.Array());
+
     info->cartesian_pnts.assign(brep->m_V.Count(), (STEPentity *)0);
     info->vertex_pnts.assign(brep->m_V.Count(), (STEPentity *)0);
     info->three_dimensional_curves.assign(brep->m_C3.Count(), (STEPentity *)0);
@@ -467,11 +478,11 @@ ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info)
     // Top level structures
     info->shape_rep = Add_Shape_Representation(info->registry, info->instance_list, (SdaiRepresentation_context *)context);
     (void *)Add_Shape_Representation_Relationship(info->registry, info->instance_list, info->shape_rep, (SdaiRepresentation *)info->advanced_brep);
-    (void *)Add_Shape_Definition_Representation(info->registry, info->instance_list, info->shape_rep);
+    brep_shape = Add_Shape_Definition_Representation(info->registry, info->instance_list, info->shape_rep);
 
     Populate_Instance_List(info);
 
-    return true;
+    return brep_shape;
 }
 
 
