@@ -130,7 +130,6 @@ Populate_Instance_List(Exporter_Info_AP203 *info)
     /* Topology */
 
     // High level structures
-    info->instance_list->Append((STEPentity *)(info->shape_rep), completeSE);
     info->instance_list->Append((STEPentity *)(info->advanced_brep), completeSE);
     info->instance_list->Append((STEPentity *)(info->manifold_solid_brep), completeSE);
     info->instance_list->Append((STEPentity *)(info->closed_shell), completeSE);
@@ -479,7 +478,6 @@ ON_BRep_to_STEP(struct directory *dp, struct rt_db_internal *intern, Exporter_In
     info->advanced_brep->context_of_items_((SdaiRepresentation_context *) context);
 
     // Top level structures
-    (void *)Add_Shape_Representation_Relationship(info->registry, info->instance_list, info->shape_rep, (SdaiRepresentation *)info->advanced_brep);
     brep_shape = Add_Shape_Definition_Representation(info->registry, info->instance_list, info->advanced_brep);
 
     Populate_Instance_List(info);

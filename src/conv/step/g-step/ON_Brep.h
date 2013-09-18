@@ -47,7 +47,6 @@ struct Exporter_Info_AP203 {
     SdaiClosed_shell *closed_shell;
     SdaiManifold_solid_brep *manifold_solid_brep;
     SdaiAdvanced_brep_shape_representation *advanced_brep;
-    SdaiRepresentation *shape_rep;
 
     std::map<STEPentity*, GenericAggregate * > surf_genagg;
     std::map<STEPentity*, std::vector<std::vector<STEPentity *> > > surface_cv;
