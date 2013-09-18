@@ -3769,6 +3769,18 @@ RT_EXPORT extern struct bu_ptbl *db_search_paths_obj(const char *plan_string,
 	                                             struct directory **paths,
 	                                             struct rt_wdb *wdbp);
 
+/* For situations where performance is critical and there are no
+ * search criteria that depend on depth (for example, wanting a list
+ * of all brep objects with name matching pattern *.b) a truly flat
+ * itearation through the directory objects will be much faster.
+ *
+ * Returns a bu_ptbl of directory pointers, since full paths are
+ * meaningless in this type of search
+ */
+RT_EXPORT extern struct bu_ptbl *db_search_flat(const char *plan_string,
+	                                            struct rt_wdb *wdbp,
+						    int flags);
+
 /* db_open.c */
 /**
  * D B _ S Y N C

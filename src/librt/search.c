@@ -2407,6 +2407,67 @@ db_search_plan_validate(const char *plan_string) {
 }
 
 struct bu_ptbl *
+db_search_flat(const char *plan_string,
+	struct rt_wdb *wdbp,
+	int flags)
+{
+    int i = 0;
+    struct bu_ptbl *search_results = NULL;
+    struct bu_ptbl *dp_set = NULL;
+    struct directory *dp = NULL;
+    char **plan_argv = NULL;
+    struct db_plan_t *dbplan = NULL;
+    struct bu_vls plan_string_vls;
+    struct db_node_t curr_node;
+    struct db_full_path start_path;
+
+    /* get the plan string into an argv array */
+    plan_argv = (char **)bu_calloc(strlen(plan_string) + 1, sizeof(char *), "plan argv");
+    bu_vls_init(&plan_string_vls);
+    bu_vls_sprintf(&plan_string_vls, "%s", plan_string);
+    bu_argv_from_string(&plan_argv[0], strlen(plan_string), bu_vls_addr(&plan_string_vls));
+    dbplan = db_search_form_plan(plan_argv, 0);
+    if (!dbplan) return NULL;
+
+    /* execute the plan */
+    db_full_path_init(&start_path);
+    curr_node.path = &start_path;
+    BU_ALLOC(search_results, struct bu_ptbl);
+    BU_PTBL_INIT(search_results);
+
+    for (i = 0; i < RT_DBNHASH; i++) {
+	for (dp = wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    if (dp->d_addr != RT_DIR_PHONY_ADDR) {
+		if ((flags & DB_LS_HIDDEN) || !(dp->d_flags & RT_DIR_HIDDEN)) {
+		    db_add_node_to_full_path(curr_node.path, dp);
+		    /* by convention, the top level node is "unioned" into the global database */
+		    DB_FULL_PATH_SET_CUR_BOOL(curr_node.path, 2);
+		    curr_node.orig_len = curr_node.path->fp_len;
+		    find_execute_plans(wdbp->dbip, wdbp, search_results, &curr_node, dbplan);
+		    DB_FULL_PATH_POP(curr_node.path);
+		}
+	    }
+	}
+    }
+    if (search_results) {
+	BU_ALLOC(dp_set, struct bu_ptbl);
+	BU_PTBL_INIT(dp_set);
+	for (i = (int)BU_PTBL_LEN(search_results) - 1; i >= 0; i--){
+	    struct db_full_path *dfptr = (struct db_full_path *)BU_PTBL_GET(search_results, i);
+	    bu_ptbl_ins(dp_set, (long *)dfptr->fp_names[dfptr->fp_len - 1]);
+	}
+	db_free_search_tbl(search_results);
+    }
+
+    /* free memory */
+    db_free_full_path(&start_path);
+    bu_vls_free(&plan_string_vls);
+    bu_free((char *)plan_argv, "free plan argv");
+    db_search_free_plan((void **)&dbplan);
+    return dp_set;
+}
+
+struct bu_ptbl *
 db_search_path(const char *plan_string,
 	struct directory *dp,
 	struct rt_wdb *wdbp)
