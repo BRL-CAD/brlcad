@@ -59,7 +59,7 @@ sub_curve(const ON_Curve* in, double a, double b)
     if (!right) {
 	right = in->Duplicate();
     }
-    
+
     right->Split(sub.m_t[1], left, three);
     if (!left) {
 	left = right->Duplicate();
@@ -94,7 +94,7 @@ sub_surface(const ON_Surface* in, int dir, double a, double b)
     if (!right) {
 	right = in->Duplicate();
     }
-    
+
     right->Split(dir, sub.m_t[1], left, three);
     if (!left) {
 	left = right->Duplicate();
@@ -355,7 +355,7 @@ curve_fitting(ON_Curve* in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool d
  * - Calculate the distance of the two points.
  *
  * - If the distance is within the tolerance, the two points
- *   intersect. Thd mid-point of them is the intersection point,
+ *   intersect. The mid-point of them is the intersection point,
  *   and half of the distance is the uncertainty radius.
  */
 
@@ -593,7 +593,7 @@ newton_psi(double& u, double& v, const ON_3dPoint& pointA, const ON_Surface& sur
     ON_3dPoint closest_point = surfB.PointAt(u, v);
     double dis = closest_point.DistanceTo(pointA);
 
-    // Use Newton-Raphson method to get an accruate point of PSI.
+    // Use Newton-Raphson method to get an accurate point of PSI.
     // We actually calculates the closest point on the surface to that point.
     //       (surface(u, v) - pointA) \dot deriv_u(u, v) = 0 (1)
     //	     (surface(u, v) - pointA) \dot deriv_v(u, v) = 0 (2)

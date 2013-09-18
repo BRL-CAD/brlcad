@@ -65,7 +65,7 @@
 	  <term><emphasis remap="B" role="bold">-Q</emphasis></term>
 	  <listitem>
 		<para>
-		  Exit quietly without printing error messages if the search plan contains errors.  Primarly
+		  Exit quietly without printing error messages if the search plan contains errors.  Primarily
 		  used in situations where programs automatically generate search invocations.
 		</para>
 	  </listitem>
@@ -78,7 +78,7 @@
   <para>
 	By default, only the "top level" objects in any search are used as starting
 	points in the search.  The default mode if no path is explicitly specified returns a list of all objects
-	found matching the criteria using the top level objects as inputs.  Specifiying paths is done as follows:
+	found matching the criteria using the top level objects as inputs.  Specifying paths is done as follows:
   </para>
 
   <para>
@@ -652,7 +652,7 @@
 	  While the <command>search</command> command as currently implemented
 	  in BRL-CAD does not support a <command>find</command> command style
 	  <option>exec</option> option, it is possible
-	  to collect <command>search</command> results in a Tcl varaible and
+	  to collect <command>search</command> results in a Tcl variable and
 	  use Tcl scripting to operate on the resulting object set.
 	  <literallayout>
 		<computeroutput>
