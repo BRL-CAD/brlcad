@@ -211,8 +211,9 @@ curve_fitting(ON_Curve* in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool d
 
     bool changed = false;
 
-    // First, eliminate some unnecessary points (if three neighbor points
-    // are collinear, the middle one can be removed (for a polyline))
+    // First, for a polyline, eliminate some unnecessary points (if three
+    // neighbor points are collinear, the middle one can be removed)
+
     ON_3dPointArray points;
     if (in->IsPolyline(&points)) {
 	int point_count = points.Count();
@@ -225,6 +226,7 @@ curve_fitting(ON_Curve* in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool d
 	    if (!ON_NearZero(ON_CrossProduct(v1, v2).Length()) || ON_DotProduct(v1, v2) < -ON_ZERO_TOLERANCE) {
 		// start, points[i-1], points[i] are not collinear,
 		// or v1 and v2 have opposite directions.
+		// No points can be eliminated
 		start = points[i-1];
 		new_points.Append(start);
 	    }
@@ -249,6 +251,8 @@ curve_fitting(ON_Curve* in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool d
     }
 
     // Conic fitting (ellipse, parabola, hyperbola)
+    // Now we only have the ellipse fitting
+
     // It's only meaningful to fit the curve when it's a complex one
     // For a polyline curve, the number of points should not be less than 10.
     const int fit_minimum_knots = 10;
@@ -259,9 +263,11 @@ curve_fitting(ON_Curve* in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool d
     double* knots = new double [knotcnt + 1];
     in->GetSpanVector(knots);
 
+    // Sample 6 points along the curve, and call ON_GetConicEquationThrough6Points().
     double conic[6];
     double sample_pts[12];
     int plotres = in->IsClosed() ? 6 : 5;
+
     // The sample points should be knots (which are accurate if the curve
     // is a polyline curve).
     for (int i = 0; i < 6; i++) {
@@ -281,12 +287,14 @@ curve_fitting(ON_Curve* in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool d
 	// an alternative solution is to use least square fitting on all
 	// points.
 	if (ON_IsConicEquationAnEllipse(conic, ell_center, ell_A, ell_B, &ell_a, &ell_b)) {
+	    // The conic equation is an ellipse. But since we only considered
+	    // the 6 sampled points, now we need to check whether all the points
+	    // are on the ellipse.
+
 	    ON_Plane ell_plane = ON_Plane(ON_3dPoint(ell_center), ON_3dVector(ell_A), ON_3dVector(ell_B));
 	    ON_Ellipse ell(ell_plane, ell_a, ell_b);
 	    int i;
 	    for (i = 0; i <= knotcnt; i++) {
-		// It may not be a complete ellipse.
-		// We find the domain of its parameter.
 		ON_3dPoint pt = in->PointAt(knots[i]);
 		ON_3dPoint ell_pt;
 		ell_pt = ell.ClosestPointTo(pt);
@@ -296,10 +304,13 @@ curve_fitting(ON_Curve* in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool d
 	    }
 
 	    if (i == knotcnt+1) {
+		// All points are on the ellipse
 		ON_NurbsCurve nurbscurve;
 		ell.GetNurbForm(nurbscurve);
 
-		// All points are on the ellipse
+		// It may not be a complete ellipse.
+		// We find the domain of its parameter.
+		// The params of the nurbscurve is between [0, 2*pi]
 		double t_min, t_max;
 		if (in->IsClosed()) {
 		    t_max = ON_PI*2, t_min = 0;
@@ -318,10 +329,12 @@ curve_fitting(ON_Curve* in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool d
 		    }
 		}
 
-		// The params of the nurbscurve is between [0, 2*pi]
 		delete []knots;
 		if (delete_curve || changed)
 		    delete in;
+
+		// The domain of the nurbscurve is [0, 4*pi]
+		// t_min \in [0, 2*pi], t_max \in [0, 4*pi]
 		return sub_curve(&nurbscurve, t_min, t_max);
 	    }
 	}
