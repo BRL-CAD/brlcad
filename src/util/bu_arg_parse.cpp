@@ -207,14 +207,15 @@ bu_arg_parse(bu_ptbl_t *ptbl_args, int argc, char * const argv[])
   try {
 
     // form the command line
-    //
     // note help (-h and --help) and version (-v and --version) are
     // automatic
     TCLAP::CmdLine cmd("<usage or purpose>", ' ',
                        "[BRL_CAD_VERSION]"); // help and version are automatic
+
     // use our subclassed stdout
     BRLCAD_StdOutput brlstdout;
     cmd.setOutput(&brlstdout);
+
     // proceed normally ...
 
     for (unsigned i = 0; i < args.size(); ++i) {
@@ -255,7 +256,6 @@ bu_arg_parse(bu_ptbl_t *ptbl_args, int argc, char * const argv[])
     // parse the args
     cmd.parse(argc, argv);
 
-    // FIXME:  extract the data to send back to the C caller
     for (unsigned j = 0; j < tclap_results.size(); ++j) {
       Arg *A         = tclap_results[j];
       bu_arg_vars *a = args[j];
@@ -297,6 +297,7 @@ bu_arg_parse(bu_ptbl_t *ptbl_args, int argc, char * const argv[])
         delete Arg_pointers[i];
         Arg_pointers[i] = 0;
       }
+
     return BU_ARG_PARSE_ERR;
   }
 
