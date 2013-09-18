@@ -10,6 +10,7 @@ set(gstep_SOURCES
   ${express_srcs}
   ../BRLCADWrapper.cpp
   Assembly_Product.cpp
+  Comb_Tree.cpp
   Default_Geometric_Context.cpp
   G_STEP_Util.cpp
   ON_NurbsCurve.cpp
@@ -55,7 +56,7 @@ if(MSVC)
   set_target_properties(g-step PROPERTIES COMPILE_DEFINITIONS "${gstep_IMPORTS}")
 endif(MSVC)
 
-CMAKEFILES(ON_Brep.h)
+CMAKEFILES(ON_Brep.h Comb_Tree.h)
 
 # Local Variables:
 # tab-width: 8
