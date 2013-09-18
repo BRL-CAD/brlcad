@@ -55,6 +55,9 @@ VertexLoop::~VertexLoop()
 bool
 VertexLoop::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
+    if (!sw || !sse)
+	return false;
+
     step = sw;
     id = sse->STEPfile_id;
 
