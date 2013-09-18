@@ -2479,16 +2479,18 @@ mged_finish(int exitcode)
 
     /* Release all displays */
     while (BU_LIST_WHILE(p, dm_list, &(head_dm_list.l))) {
-	if(p == NULL)
+	if (!p)
 	    bu_bomb("dm list entry is null? aborting!\n");
+
 	BU_LIST_DEQUEUE(&(p->l));
+
 	if (p && p->dml_dmp) {
 	    DM_CLOSE(p->dml_dmp);
+	    RT_FREE_VLIST(&p->dml_p_vlist);
+	    mged_slider_free_vls(p);
+	    bu_free(p, "release: curr_dm_list");
 	}
 
-	RT_FREE_VLIST(&p->dml_p_vlist);
-	mged_slider_free_vls(p);
-	bu_free((genptr_t) p, "release: curr_dm_list");
 	curr_dm_list = DM_LIST_NULL;
     }
 
