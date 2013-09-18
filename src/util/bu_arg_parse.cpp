@@ -174,6 +174,7 @@ bu_arg_UnlabeledValueArg(const char *name,
         break;
       default:
         // error
+        BU_ASSERT(0 && "tried to use non-existent BU_ARG value type\n");
         break;
   }
 
@@ -246,6 +247,7 @@ bu_arg_parse(bu_ptbl_t *ptbl_args, int argc, char * const argv[])
 */
           default:
              // error
+            BU_ASSERT(0 && "tried to use non-handled BU_ARG type\n");
             break;
       }
 
@@ -282,6 +284,7 @@ bu_arg_parse(bu_ptbl_t *ptbl_args, int argc, char * const argv[])
 */
           default:
              // error
+            BU_ASSERT(0 && "tried to use non-existent BU_ARG type\n");
             break;
       }
     }
@@ -415,8 +418,8 @@ extract_SwitchArg_data(bu_arg_vars *a, Arg *A)
     a->val.u.l = (val ? 1 : 0);
    }
   else {
-    // it's a user error if this happens
-    BU_ASSERT("tried to use non-existent bool type");
+    // error
+    BU_ASSERT(0 && "tried to use non-existent BU_ARG bool type");
   }
 }
 
@@ -450,6 +453,7 @@ extract_UnlabeledValueArg_data(bu_arg_vars *a, Arg *A)
         break;
       default:
         // error
+        BU_ASSERT(0 && "tried to use non-existent BU_ARG value type\n");
         break;
   }
 }
