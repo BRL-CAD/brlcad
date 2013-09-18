@@ -24,22 +24,43 @@
  *
  */
 
+#include "bu.h"
+#include "raytrace.h"
 #include "STEPWrapper.h"
 
 STEPentity *
-Comb_Tree_to_STEP(struct directory *dp, struct rt_db_internal *intern)
+Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, struct rt_db_internal *intern, Registry *registry, InstMgr *instance_list)
 {
     STEPentity *toplevel_comb = NULL;
 
     struct rt_comb_internal *comb = (struct rt_comb_internal *)(intern->idb_ptr);
 
-    /* Find all combs, make instances of them, insert them, and stick in *dp to STEPentity* map */
     /* Find all solids, make instances of them, insert them, and stick in *dp to STEPentity* map */
+    const char *brep_search = "-type brep";
+    struct bu_ptbl *breps = db_search_path_obj(brep_search, dp, wdbp);
+    for (int j = (int)BU_PTBL_LEN(breps) - 1; j >= 0; j--){
+	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(breps, j);
+	bu_log("Brep: %s\n", curr_dp->d_namep);
+    }
 
-    /* TODO - id combs whos name is the name of a single solid under them plus .c - those combs
-     * are auto-created by the brep routine and don't need to be created here.*/
+    /* Find all combs that are not already brep wrappers, make instances of them, insert them, and stick in *dp to STEPentity* map */
+    const char *comb_search = "-type comb ! ( -nnodes 1 -below=1 -type brep )";
+    struct bu_ptbl *combs = db_search_path_obj(comb_search, dp, wdbp);
+    for (int j = (int)BU_PTBL_LEN(combs) - 1; j >= 0; j--){
+	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(combs, j);
+	bu_log("Comb non-wrapper: %s\n", curr_dp->d_namep);
+    }
 
-    /* For each comb, get list of immediate children and call Assembly Product,
+    /* Find the combs that *are* wrappers, and point them to the product associated with their brep.
+     * Change the name of the product, if appropriate */
+    const char *comb_wrapper_search = "-type comb -nnodes 1 -below=1 -type brep";
+    struct bu_ptbl *comb_wrappers = db_search_path_obj(comb_wrapper_search, dp, wdbp);
+    for (int j = (int)BU_PTBL_LEN(comb_wrappers) - 1; j >= 0; j--){
+	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(comb_wrappers, j);
+	bu_log("Comb wrapper: %s\n", curr_dp->d_namep);
+    }
+
+    /* For each non-wrapper comb, get list of immediate children and call Assembly Product,
      * which will define the relationships between the comb and its children using
      * the appropriate step foo and the pointers in the map.*/
 

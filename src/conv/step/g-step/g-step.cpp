@@ -28,6 +28,9 @@
 #include <iostream>
 
 #include "bu.h"
+#include "rtgeom.h"
+#include "raytrace.h"
+#include "wdb.h"
 
 //
 // step-g related headers
@@ -40,6 +43,7 @@
 #include <STEPattribute.h>
 #include <SdaiHeaderSchema.h>
 #include "ON_Brep.h"
+#include "Comb_Tree.h"
 
 //
 // include NIST step related headers
@@ -125,6 +129,7 @@ main(int argc, char *argv[])
 	delete dotg;
 	return 1;
     }
+    struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
 
     struct rt_db_internal intern;
     rt_db_get_internal(&intern, dp, dbip, bn_mat_identity, &rt_uniresource);
@@ -179,7 +184,7 @@ main(int argc, char *argv[])
 	    (void)ON_BRep_to_STEP(dp, &intern, registry, &instance_list);
 	    break;
 	case DB5_MINORTYPE_BRLCAD_COMBINATION:
-	    //(void)Comb_Tree_to_STEP(&intern, registry, &instance_list);
+	    (void)Comb_Tree_to_STEP(dp, wdbp, &intern, registry, &instance_list);
 	    break;
 	default:
 	    bu_log("Primitive type of %s is not yet supported\n", argv[1]);
