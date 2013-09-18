@@ -21,7 +21,9 @@
 #ifndef BU_ARG_PARSE_H
 #define BU_ARG_PARSE_H
 
-/* all in this header MUST have "C" linkage */
+#include "bu.h"
+
+/* all in this part of the header MUST have "C" linkage */
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -39,7 +41,7 @@ typedef enum {
   BU_ARG_DOUBLE,
   BU_ARG_LONG,
   BU_ARG_STRING
-} bu_arg_value_t;
+} bu_arg_valtype_t;
 
 /* TCLAP arg types */
 typedef enum {
@@ -56,30 +58,50 @@ typedef enum {
   BU_ARG_REQUIRED = 1
 } bu_arg_req_t;
 
-typedef union {
-  /* important that first field is integral type */
-  long l; /* also use as bool */
-  char *s;
-  double d;
-} bu_arg_value;
+typedef struct bu_arg_value {
+  bu_arg_valtype_t typ;
+  union u_typ {
+    /* important that first field is integral type */
+    long l; /* also use as bool */
+    bu_vls_t s;
+    double d;
+  } u;
+} bu_arg_value_t;
 
 /* TCLAP::Arg */
 typedef struct bu_arg_vars_type {
-  bu_arg_t arg_type;          /* enum: type of TCLAP arg               */
-  const char *flag;           /* the "short" option, may be empty ("") */
-  const char *name;           /* the "long" option                     */
-  const char *desc;           /* a brief description                   */
-  bu_arg_req_t req;           /* bool: is arg required?                */
-  bu_arg_req_t valreq;        /* bool: is value required?              */
-  bu_arg_value val;           /* union: can hold all value types       */
-  bu_arg_value_t val_type;    /* enum: type in the value union         */
+  bu_arg_t arg_type;        /* enum: type of TCLAP arg                   */
+  bu_vls_t flag;            /* the "short" option, may be empty ("")     */
+  bu_vls_t name;            /* the "long" option                         */
+  bu_vls_t desc;            /* a brief description                       */
+  bu_arg_req_t req;         /* bool: is arg required?                    */
+  bu_arg_req_t valreq;      /* bool: is value required?                  */
+  bu_arg_value_t val;       /* type plus union: can hold all value types */
 } bu_arg_vars;
 
-/* the action: all in one function */
-int bu_arg_parse(bu_arg_vars *args[], int argc, char * const argv[]);
-/* free arg memory for any strings */
-void bu_arg_free(bu_arg_vars *args[]);
+/* initialization */
+bu_arg_vars *
+bu_arg_SwitchArg(const char *flag,
+                 const char *name,
+                 const char *desc,
+                 const char *def_val);
+bu_arg_vars *
+bu_arg_UnlabeledValueArg(const char *name,
+                         const char *desc,
+                         const char *def_val,
+                         const bu_arg_req_t required,
+                         const bu_arg_valtype_t val_typ);
+/* the getters */
+long bu_arg_get_bool_value(bu_arg_vars *arg);
+long bu_arg_get_long_value(bu_arg_vars *arg);
+double bu_arg_get_double_value(bu_arg_vars *arg);
+const char *bu_arg_get_string_value(bu_arg_vars *arg);
 
+/* the action: all in one function */
+int bu_arg_parse(bu_ptbl_t *args, int argc, char * const argv[]);
+
+/* free arg memory for any strings */
+void bu_arg_free(bu_ptbl_t *args);
 
 /* all in this header MUST have "C" linkage */
 #ifdef __cplusplus

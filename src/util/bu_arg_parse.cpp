@@ -20,19 +20,16 @@
 
 #include "common.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <sys/stat.h>
 #include <cstring> // for strdup
 #include "bio.h"
 
-#include "bu.h"
+/* #include "bu.h" */
 #include "vmath.h"
 #include "bn.h"
 
-
-#include "tclap/CmdLine.h"
-#include "bu_arg_parse_private.h"
-#include "bu_arg_parse.h"
+#include "bu_arg_parse_private.h" /* includes bu_arg_parse.h which includes bu.h */
 
 #include <vector>
 
@@ -41,6 +38,7 @@ using namespace TCLAP;
 
 /* using ideas from Cliff and Sean... */
 /* local funcs */
+bu_arg_vars *bu_arg_init();
 
 /* not yet ready
 Arg *handle_MultiArg(bu_arg_vars *a, CmdLine &cmd);
@@ -69,17 +67,142 @@ void extract_UnlabeledValueArg_data(bu_arg_vars *a, Arg *A);
 static vector<Arg*> Arg_pointers;
 
 /**
+ * get a value for an arg
+ */
+long
+bu_arg_get_bool_value(bu_arg_vars *arg)
+{
+  return (arg->val.u.l ? 1 : 0);
+}
+
+long
+bu_arg_get_long_value(bu_arg_vars *arg)
+{
+  return arg->val.u.l;
+}
+
+double
+bu_arg_get_double_value(bu_arg_vars *arg)
+{
+  return arg->val.u.d;
+}
+
+const char *
+bu_arg_get_string_value(bu_arg_vars *arg)
+{
+  return arg->val.u.s.vls_str;
+}
+
+/**
+ * general contructor for bu_arg_vars
+ */
+bu_arg_vars *
+bu_arg_init()
+{
+  // get the mem for the struct
+  bu_arg_vars *arg;
+  BU_ALLOC(arg, bu_arg_vars);
+
+  // fill in bu_vls_t pointers
+  BU_VLS_INIT(&(arg->flag));
+  BU_VLS_INIT(&(arg->name));
+  BU_VLS_INIT(&(arg->desc));
+  BU_VLS_INIT(&(arg->val.u.s));
+
+  // return to caller
+  return arg;
+}
+
+/**
+ * C constructor for SwitchArg
+ */
+extern "C"
+bu_arg_vars *
+bu_arg_SwitchArg(const char *flag,
+                 const char *name,
+                 const char *desc,
+                 const char *def_val)
+{
+  bu_arg_vars *arg = bu_arg_init();
+
+  // fill in the values
+  arg->arg_type = BU_ARG_SwitchArg;
+
+  bu_vls_sprintf(&(arg->flag), flag);
+  bu_vls_sprintf(&(arg->name), name);
+  bu_vls_sprintf(&(arg->desc), desc);
+
+  arg->val.typ = BU_ARG_BOOL;
+  arg->val.u.l = (long)bu_str_true(def_val);
+
+  return arg;
+}
+
+/**
+ * C constructor for UnlabeledValueArg
+ */
+extern "C"
+bu_arg_vars *
+bu_arg_UnlabeledValueArg(const char *name,
+                         const char *desc,
+                         const char *def_val,
+                         const bu_arg_req_t required,
+                         const bu_arg_valtype_t val_typ)
+{
+  bu_arg_vars *arg = bu_arg_init();
+
+  // fill in the values
+  arg->arg_type = BU_ARG_UnlabeledValueArg;
+
+  bu_vls_sprintf(&(arg->name), name);
+  bu_vls_sprintf(&(arg->desc), desc);
+
+  arg->req = required;
+
+  switch (val_typ) {
+      case BU_ARG_BOOL:
+        arg->val.u.l = (long)bu_str_true(def_val);
+        break;
+      case BU_ARG_DOUBLE:
+        arg->val.u.d = strtod(def_val, NULL);
+        break;
+      case BU_ARG_LONG:
+        arg->val.u.l = strtol(def_val, NULL, 10);
+        break;
+      case BU_ARG_STRING:
+        bu_vls_sprintf(&(arg->val.u.s), def_val);
+        break;
+      default:
+        // error
+        break;
+  }
+
+  return arg;
+}
+
+/**
  * construct all for TCLAP handling, ensure input args get proper values for the caller
  */
 extern "C"
 int
-bu_arg_parse(bu_arg_vars *args[], int argc, char * const argv[])
+bu_arg_parse(bu_ptbl_t *ptbl_args, int argc, char * const argv[])
 {
-  int retval = BU_ARG_PARSE_SUCCESS;
+  BU_CK_PTBL(ptbl_args);
+
+  // unpack the table into a C++ container for convenience
+  vector<bu_arg_vars*> args;
+
+  bu_arg_vars **ap;
+  for (BU_PTBL_FOR(ap, (bu_arg_vars**), ptbl_args)) {
+    bu_arg_vars *a = *ap;
+    args.push_back(a);
+  }
 
   // need a local collection to extract TCLAP data after a successful
   // parse
   vector<Arg*> tclap_results;
+
+  int retval = BU_ARG_PARSE_SUCCESS;
 
   try {
 
@@ -94,8 +217,7 @@ bu_arg_parse(bu_arg_vars *args[], int argc, char * const argv[])
     cmd.setOutput(&brlstdout);
     // proceed normally ...
 
-    int i = 0;
-    while (args[i]) {
+    for (unsigned i = 0; i < args.size(); ++i) {
       // handle this arg and fill in the values
       // map inputs to TCLAP:
       Arg *A         = 0;
@@ -128,10 +250,6 @@ bu_arg_parse(bu_arg_vars *args[], int argc, char * const argv[])
 
       // save results for later
       tclap_results.push_back(A);
-
-      // next arg
-      ++i;
-
     }
 
     // parse the args
@@ -139,7 +257,7 @@ bu_arg_parse(bu_arg_vars *args[], int argc, char * const argv[])
 
     // FIXME:  extract the data to send back to the C caller
     for (unsigned j = 0; j < tclap_results.size(); ++j) {
-      Arg *A         = tclap_results[i];
+      Arg *A         = tclap_results[j];
       bu_arg_vars *a = args[j];
       switch (a->arg_type) {
           case BU_ARG_SwitchArg:
@@ -196,7 +314,7 @@ bu_arg_parse(bu_arg_vars *args[], int argc, char * const argv[])
 Arg *
 handle_SwitchArg(bu_arg_vars *a, CmdLine &cmd)
 {
-  SwitchArg *A = new SwitchArg(a->flag, a->name, a->desc, a->val.l);
+  SwitchArg *A = new SwitchArg(a->flag.vls_str, a->name.vls_str, a->desc.vls_str, a->val.u.l);
 
   Arg_pointers.push_back(A);
   cmd.add(A);
@@ -209,38 +327,38 @@ handle_UnlabeledValueArg(bu_arg_vars *a, CmdLine &cmd)
 {
 
   // this is a templated type
-  bu_arg_value_t val_type = a->val_type;
+  bu_arg_valtype_t val_type = a->val.typ;
   string type_desc;
   Arg *A = 0;
   switch (val_type) {
       case BU_ARG_BOOL: {
-        bool val = (a->val.l ? true : false);
+        bool val = (a->val.u.l ? true : false);
         type_desc = "bool";
-        A = new UnlabeledValueArg<bool>(a->name, a->desc, a->req, val, type_desc);
+        A = new UnlabeledValueArg<bool>(a->name.vls_str, a->desc.vls_str, a->req, val, type_desc);
       }
         break;
       case BU_ARG_DOUBLE: {
-        double val = a->val.d;
+        double val = a->val.u.d;
         type_desc = "double";
-        A = new UnlabeledValueArg<double>(a->name, a->desc, a->req, val, type_desc);
+        A = new UnlabeledValueArg<double>(a->name.vls_str, a->desc.vls_str, a->req, val, type_desc);
       }
         break;
       case BU_ARG_LONG: {
-        long val = a->val.l;
+        long val = a->val.u.l;
         type_desc = "long";
-        A = new UnlabeledValueArg<long>(a->name, a->desc, a->req, val, type_desc);
+        A = new UnlabeledValueArg<long>(a->name.vls_str, a->desc.vls_str, a->req, val, type_desc);
       }
         break;
       case BU_ARG_STRING: {
-        string val = (a->val.s ? a->val.s : "");
+        string val = (a->val.u.s.vls_str ? a->val.u.s.vls_str : "");
         type_desc = "string";
-        A = new UnlabeledValueArg<string>(a->name, a->desc, a->req, val, type_desc);
+        A = new UnlabeledValueArg<string>(a->name.vls_str, a->desc.vls_str, a->req, val, type_desc);
       }
         break;
       default: {
-        string val = (a->val.s ? a->val.s : "");
+        string val = (a->val.u.s.vls_str ? a->val.u.s.vls_str : "");
         type_desc = "string";
-        A = new UnlabeledValueArg<string>(a->name, a->desc, a->req, val, type_desc);
+        A = new UnlabeledValueArg<string>(a->name.vls_str, a->desc.vls_str, a->req, val, type_desc);
       }
         break;
   }
@@ -291,14 +409,13 @@ void
 extract_SwitchArg_data(bu_arg_vars *a, Arg *A)
 {
   SwitchArg *B = dynamic_cast<SwitchArg*>(A);
-  if (a->val_type == BU_ARG_STRING) {
-    // it's a user error if this happens
+  if (a->val.typ == BU_ARG_BOOL) {
     bool val = B->getValue();
-    a->val.s = (val ? strdup("true") : strdup("false"));
+    a->val.u.l = (val ? 1 : 0);
    }
   else {
-    bool val = B->getValue();
-    a->val.l = (val ? 1 : 0);
+    // it's a user error if this happens
+    BU_ASSERT("tried to use non-existent bool type");
   }
 }
 
@@ -306,27 +423,28 @@ void
 extract_UnlabeledValueArg_data(bu_arg_vars *a, Arg *A)
 {
   // this is a templated type
-  bu_arg_value_t val_type = a->val_type;
+  bu_arg_valtype_t val_type = a->val.typ;
   switch (val_type) {
       case BU_ARG_BOOL: {
         UnlabeledValueArg<bool> *B = dynamic_cast<UnlabeledValueArg<bool> *>(A);
         bool val = B->getValue();
-        a->val.l = (val ? 1 : 0);
+        a->val.u.l = (val ? 1 : 0);
       }
         break;
       case BU_ARG_DOUBLE: {
         UnlabeledValueArg<double> *B = dynamic_cast<UnlabeledValueArg<double> *>(A);
-        a->val.d = B->getValue();
+        a->val.u.d = B->getValue();
       }
         break;
       case BU_ARG_LONG: {
         UnlabeledValueArg<long> *B = dynamic_cast<UnlabeledValueArg<long> *>(A);
-        a->val.l = B->getValue();
+        a->val.u.l = B->getValue();
       }
         break;
       case BU_ARG_STRING: {
         UnlabeledValueArg<string> *B = dynamic_cast<UnlabeledValueArg<string> *>(A);
-        a->val.s = strdup(B->getValue().c_str());
+        // a->val.u.s is a bu_vsl_t
+        bu_vls_sprintf(&(a->val.u.s), B->getValue().c_str());
       }
         break;
       default:
@@ -364,18 +482,36 @@ extract_ValueArg_data(bu_arg_vars *a, Arg *A)
 */
 
 extern "C" void
-bu_arg_free(bu_arg_vars *args[])
+bu_arg_vls_free(bu_arg_vars *arg)
 {
-  int i = 0;
-  while (args[i]) {
-      bu_arg_vars *a = args[i];
-      if (a->val_type == BU_ARG_STRING) {
-        if (a->val.s) {
-          free(a->val.s);
-          a->val.s = 0;
-        }
-      }
-      // next arg
-      ++i;
+  // frees memory used by bu_vls_t vars in the arg
+  if (arg->flag.vls_str)
+    BU_FREE(arg->flag.vls_str, char);
+  if (arg->name.vls_str)
+    BU_FREE(arg->name.vls_str, char);
+  if (arg->desc.vls_str)
+    BU_FREE(arg->desc.vls_str, char);
+  if (arg->val.u.s.vls_str)
+    BU_FREE(arg->val.u.s.vls_str, char);
+}
+
+extern "C" void
+bu_arg_free(bu_ptbl_t *args)
+{
+  BU_CK_PTBL(args);
+  /* pointer to access args table; */
+  bu_arg_vars **ap;
+  for (BU_PTBL_FOR(ap, (bu_arg_vars **), args)) {
+    bu_arg_vars *a = *ap;
+
+    // free all heap mem in a bu_arg_vars
+    bu_arg_vls_free(a);
+
+    // free a
+    if (a)
+      BU_FREE(a, bu_arg_vars);
   }
+
+  // now free the ptbl memory
+  BU_FREE(args->buffer, long*);
 }

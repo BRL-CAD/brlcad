@@ -25,7 +25,7 @@
 /* local customizations of TCLAP MUST follow the above header */
 
 /* get common data from the C world */
-#include "bu_arg_parse.h"
+#include "bu_arg_parse.h" /* includes bu.h */
 
 // some customization of TCLAP classes
 class BRLCAD_StdOutput : public TCLAP::StdOutput
