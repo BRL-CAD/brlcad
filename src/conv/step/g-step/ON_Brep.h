@@ -60,7 +60,7 @@ bool ON_NurbsCurve_to_STEP(ON_NurbsCurve *n_curve, Exporter_Info_AP203 *info, in
 void ON_NurbsSurfaceCV_Finalize_GenericAggregates(Exporter_Info_AP203 *info);
 bool ON_NurbsSurface_to_STEP(ON_NurbsSurface *n_surface, Exporter_Info_AP203 *info, int i);
 
-STEPentity *ON_BRep_to_STEP(struct rt_db_internal *intern, Exporter_Info_AP203 *info);
+STEPentity *ON_BRep_to_STEP(struct directory *dp, struct rt_db_internal *intern, Exporter_Info_AP203 *info);
 
 #endif /* ON_BREP_H_ */
 

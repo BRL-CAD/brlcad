@@ -202,7 +202,7 @@ Populate_Instance_List(Exporter_Info_AP203 *info)
 }
 
 STEPentity *
-ON_BRep_to_STEP(struct rt_db_internal *intern, Exporter_Info_AP203 *info)
+ON_BRep_to_STEP(struct directory *dp, struct rt_db_internal *intern, Exporter_Info_AP203 *info)
 {
     STEPentity *brep_shape = NULL;
     RT_CK_DB_INTERNAL(intern);
@@ -470,7 +470,10 @@ ON_BRep_to_STEP(struct rt_db_internal *intern, Exporter_Info_AP203 *info)
 
     // Advanced BRep shape representation - this is the object step-g will look for
     info->advanced_brep= (SdaiAdvanced_brep_shape_representation *)info->registry->ObjCreate("ADVANCED_BREP_SHAPE_REPRESENTATION");
-    info->advanced_brep->name_("'brep.s'");
+    std::ostringstream ss;
+    ss << "'" << dp->d_namep << "'";
+    std::string str = ss.str();
+    info->advanced_brep->name_(str.c_str());
     EntityAggregate *items = info->advanced_brep->items_();
     items->AddNode(new EntityNode((SDAI_Application_instance *)info->manifold_solid_brep));
     info->advanced_brep->context_of_items_((SdaiRepresentation_context *) context);

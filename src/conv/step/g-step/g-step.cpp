@@ -181,7 +181,17 @@ main(int argc, char *argv[])
     header_instances->Append((SDAI_Application_instance *)fs, completeSE);
 
     /* Now, add actual DATA */
-    (void)ON_BRep_to_STEP(&intern, info);
+    switch (intern.idb_minor_type) {
+	case DB5_MINORTYPE_BRLCAD_BREP:
+	    (void)ON_BRep_to_STEP(dp, &intern, info);
+	    break;
+	case DB5_MINORTYPE_BRLCAD_COMBINATION:
+	    //(void)Comb_Tree_to_STEP(&intern, info);
+	    break;
+	default:
+	    bu_log("Primitive type of %s is not yet supported\n", argv[1]);
+	    break;
+    }
 
     /* Write STEP file */
     if (!bu_file_exists(output_file, NULL)) {
