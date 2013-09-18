@@ -86,38 +86,61 @@ db_ls(const struct db_i *dbip, int flags, struct directory ***dpv)
 }
 
 struct directory **
-db_argv_to_dpv(const struct db_i *dbip, int argc, const char **argv)
+db_argv_to_dpv(const struct db_i *dbip, const char **argv)
 {
-    int i = 0;
     struct directory **dpv = NULL;
     struct directory *dp = RT_DIR_NULL;
-    if (!argv || !argc) return dpv;
-    dpv = (struct directory **)bu_malloc(sizeof(struct directory *) * (argc + 1), "directory pointer array");
-    for (i = 0; i < argc; i++) {
-	if (argv[i]) {
-	    dp = db_lookup(dbip, argv[i], LOOKUP_QUIET);
-	    dpv[i] = (dp == RT_DIR_NULL) ? RT_DIR_NULL : dp;
-	} else {
-	    dpv[i] = RT_DIR_NULL;
+    int argv_cnt = 0;
+    const char *arg = argv[0];
+    if (!argv) return dpv;
+    while (arg) {
+	argv_cnt++;
+	arg = argv[argv_cnt];
+    }
+    if (argv_cnt > 0) {
+	dpv = (struct directory **)bu_malloc(sizeof(struct directory *) * (argv_cnt + 1), "directory pointer array");
+	argv_cnt = 0;
+	arg = argv[0];
+	while (arg) {
+	    dp = db_lookup(dbip, arg, LOOKUP_QUIET);
+	    if (dp == RT_DIR_NULL) {
+		/* Doesn't exist in the .g file - create an empty structure */
+		BU_ALLOC(dpv[argv_cnt], struct directory);
+		dpv[argv_cnt]->d_addr = RT_DIR_PHONY_ADDR;
+		dpv[argv_cnt]->d_namep = bu_strdup(arg);
+	    } else {
+		dpv[argv_cnt] = dp;
+	    }
+	    argv_cnt++;
+	    arg = argv[argv_cnt];
 	}
     }
-    dpv[argc] = RT_DIR_NULL;
     return dpv;
 }
 
 char **
-db_dpv_to_argv(struct directory **dpv, int argc)
+db_dpv_to_argv(struct directory **dpv)
 {
-    int i = 0;
     char **argv = NULL;
-    if (!dpv || !argc) return argv;
-    argv = (char **)bu_malloc(sizeof(char *) * (argc + 1), "char pointer array");
-    for (i = 0; i < argc; i++) {
-	argv[i] = (dpv[i] != RT_DIR_NULL) ? dpv[i]->d_namep : NULL;
+    int dpv_cnt = 0;
+    struct directory *dp = dpv[dpv_cnt];
+    if (!dpv) return argv;
+    while (dp) {
+	dpv_cnt++;
+	dp = dpv[dpv_cnt];
     }
-    argv[argc] = '\0';
+    if (dpv_cnt > 0) {
+	argv = (char **)bu_malloc(sizeof(char *) * (dpv_cnt + 1), "char pointer array");
+	dpv_cnt = 0;
+	dp = dpv[0];
+	while (dpv) {
+	    argv[dpv_cnt] = dpv[dpv_cnt]->d_namep;
+	    dpv_cnt++;
+	}
+    }
     return argv;
 }
+
 
 /** @} */
 /*

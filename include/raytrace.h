@@ -5025,24 +5025,19 @@ RT_EXPORT extern int db_ls(const struct db_i *dbip,
 /**
  * convert an argv list of names to a directory pointer array.
  *
- * Because the results of the conversion may be RT_DIR_NULL, it
- * is necessary to specify the size of the array with argc rather
- * than rely on NULL termination
+ * If db_lookup fails for any individual argv, an empty directory
+ * structure is created and assigned the name and RT_DIR_PHONY_ADDR
+ *
+ * The returned directory ** structure is NULL terminated.
  */
 RT_EXPORT extern struct directory **db_argv_to_dpv(const struct db_i *dbip,
-	                                           int argc,
 						   const char **argv);
 
 
 /**
  * convert a directory pointer array to an argv char pointer array.
- *
- * Because there may be RT_DIR_NULL entries in the array, it
- * is necessary to specify the size of the array with argc rather
- * than rely on NULL termination.
  */
-RT_EXPORT extern char **db_dpv_to_argv(struct directory **dpv,
-	                               int argc);
+RT_EXPORT extern char **db_dpv_to_argv(struct directory **dpv);
 
 
 /* db_flags.c */
