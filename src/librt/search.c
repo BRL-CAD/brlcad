@@ -385,7 +385,7 @@ f_above(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, st
     DB_FULL_PATH_POP(&abovepath);
     curr_node.path = &abovepath;
     distance_above = db_node->path->fp_len - abovepath.fp_len;
-    while ((abovepath.fp_len > 0) && (state == 0)) {
+    while ((abovepath.fp_len > 0) && (state == 0) && !db_node->flat_search) {
 	if ((distance_above <= plan->max_depth) && (distance_above >= plan->min_depth)) {
 	    state = find_execute_nested_plans(dbip, wdbp, results, &curr_node, plan->ab_data[0]);
 	}
@@ -636,7 +636,7 @@ f_below(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, st
     if (!dp)
 	return 0;
 
-    if (dp->d_flags & RT_DIR_COMB) {
+    if (dp->d_flags & RT_DIR_COMB && !db_node->flat_search) {
 	if (rt_db_get_internal(&in, dp, dbip, NULL, wdbp->wdb_resp) < 0)
 	    return 0;
 
@@ -2443,6 +2443,7 @@ db_search_flat(const char *plan_string,
 		    /* by convention, the top level node is "unioned" into the global database */
 		    DB_FULL_PATH_SET_CUR_BOOL(curr_node.path, 2);
 		    curr_node.orig_len = curr_node.path->fp_len;
+		    curr_node.flat_search = 1;
 		    find_execute_plans(wdbp->dbip, wdbp, search_results, &curr_node, dbplan);
 		    DB_FULL_PATH_POP(curr_node.path);
 		}
@@ -2498,6 +2499,7 @@ db_search_path(const char *plan_string,
     /* by convention, the top level node is "unioned" into the global database */
     DB_FULL_PATH_SET_CUR_BOOL(curr_node.path, 2);
     curr_node.orig_len = curr_node.path->fp_len;
+    curr_node.flat_search = 0;
     db_fullpath_traverse(wdbp->dbip, wdbp, search_results, &curr_node, find_execute_plans, find_execute_plans, wdbp->wdb_resp, (struct db_plan_t *)dbplan);
 
     /* free memory */
