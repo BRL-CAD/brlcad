@@ -401,7 +401,7 @@ MakeTwistedCube(ON_TextLog& error_log)
     // create the faces
     MakeTwistedCubeFaces(*brep);
 
-    if (!brep->IsValid()) {
+    if (brep && !brep->IsValid()) {
 	error_log.Print("Twisted cube b-rep is not valid!\n");
 	delete brep;
 	brep = NULL;
