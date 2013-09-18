@@ -1678,9 +1678,9 @@ typedef struct bu_hist bu_hist_t;
  * dynamic array.
  *
  * The table is currently un-ordered, and is merely an array of
- * pointers.  The support routines BU_*PTBL* manipulate the array for
- * you.  Pointers to be operated on (inserted, deleted, searched for)
- * are passed as a "pointer to long".
+ * pointers.  The support routines BU_*PTBL* and bu_ptbl* manipulate the
+ * array for you.  Pointers to be operated on (inserted, deleted, searched
+ * for) are passed as a "pointer to long".
  *
  */
 
@@ -1690,15 +1690,15 @@ typedef struct bu_hist bu_hist_t;
  */
 struct bu_ptbl {
     struct bu_list l; /**< linked list for caller's use */
-    off_t end; /**< index into buffer of first available location */
-    size_t blen; /**< # of (long *)'s worth of storage at *buffer */
-    long **buffer; /**< data storage area */
+    off_t end;        /**< index into buffer of first available location */
+    size_t blen;      /**< # of (long *)'s worth of storage at *buffer */
+    long **buffer;    /**< data storage area */
 };
 typedef struct bu_ptbl bu_ptbl_t;
 #define BU_PTBL_NULL ((struct bu_ptbl *)0)
 
 /**
- * assert the integrity of a non-head node bu_ptbl struct.
+ * assert the integrity of a bu_ptbl struct pointer.
  */
 #define BU_CK_PTBL(_p) BU_CKMAG(_p, BU_PTBL_MAGIC, "bu_ptbl")
 
