@@ -905,10 +905,10 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 	is_light = 1;
     } else {
 	path_2_vrml_id(&shape_name, full_path);
-	fprintf(fp_out, "\t\tDEF %s Shape { \n", bu_vls_addr(&shape_name));
+	fprintf(fp_out, "\t\tDEF %s Shape {\n", bu_vls_addr(&shape_name));
 
 	fprintf(fp_out, "\t\t\t# Component_ID: %ld   %s\n", comb->region_id, full_path);
-	fprintf(fp_out, "\t\t\tappearance Appearance { \n");
+	fprintf(fp_out, "\t\t\tappearance Appearance {\n");
 
 	if (bu_strncmp("plastic", mat.shader, 7) == 0) {
 	    if (mat.shininess < 0) {
@@ -1018,9 +1018,9 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 
     if (!is_light) {
 	nmg_triangulate_model(m, tol2);
-	fprintf(fp_out, "\t\t\t} \n");
-	fprintf(fp_out, "\t\t\tgeometry IndexedFaceSet { \n");
-	fprintf(fp_out, "\t\t\t\tcoord Coordinate { \n");
+	fprintf(fp_out, "\t\t\t}\n");
+	fprintf(fp_out, "\t\t\tgeometry IndexedFaceSet {\n");
+	fprintf(fp_out, "\t\t\t\tcoord Coordinate {\n");
     }
 
     /* get list of vertices */
