@@ -277,9 +277,12 @@ new_client(struct pkg_conn *pcp)
 void
 drop_client(int sub)
 {
-    int fd = clients[sub]->pkc_fd;
+    int fd;
 
-    if ( clients[sub] == PKC_NULL )  return;
+    if ( clients[sub] == PKC_NULL )
+	return;
+
+    fd = clients[sub]->pkc_fd;
 
     FD_CLR( fd, &select_list );
     pkg_close( clients[sub] );

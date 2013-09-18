@@ -197,8 +197,8 @@ Arg *
 handle_SwitchArg(bu_arg_vars *a, CmdLine &cmd)
 {
   SwitchArg *A = new SwitchArg(a->flag, a->name, a->desc, a->val.l);
-  if (A)
-    Arg_pointers.push_back(A);
+
+  Arg_pointers.push_back(A);
   cmd.add(A);
 
   return A;
@@ -245,8 +245,7 @@ handle_UnlabeledValueArg(bu_arg_vars *a, CmdLine &cmd)
         break;
   }
   cmd.add(A);
-  if (A)
-    Arg_pointers.push_back(A);
+  Arg_pointers.push_back(A);
   return A;
 }
 
@@ -255,8 +254,8 @@ Arg *
 handle_MultiArg(bu_arg_vars *a, CmdLine &cmd)
 {
   MultiArg *A = new MultiArg();
-  if (A)
-    Arg_pointers.push_back(A);
+
+  Arg_pointers.push_back(A);
   return A;
 }
 
@@ -264,8 +263,8 @@ Arg *
 handle_MultiSwitchArg(bu_arg_vars *a, CmdLine &cmd)
 {
   MultiSwitchArg *A = new MultiSwitchArg();
-  if (A)
-    Arg_pointers.push_back(A);
+
+  Arg_pointers.push_back(A);
   return A;
 }
 
@@ -273,8 +272,8 @@ Arg *
 handle_UnlabeledMultiArg(bu_arg_vars *a, CmdLine &cmd)
 {
   UnlabeledMultiArg *A = new UnlabeledMultiArg();
-  if (A)
-    Arg_pointers.push_back(A);
+
+  Arg_pointers.push_back(A);
   return A;
 }
 
@@ -282,8 +281,8 @@ Arg *
 handle_ValueArg(bu_arg_vars *a, CmdLine &cmd)
 {
   ValueArg *A = new ValueArg();
-  if (A)
-    Arg_pointers.push_back(A);
+
+  Arg_pointers.push_back(A);
   return A;
 }
 */

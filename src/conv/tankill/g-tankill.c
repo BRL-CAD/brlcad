@@ -44,10 +44,13 @@
 extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 
 static const char usage[] = "Usage:\n\
-	%s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-s surroundings_code] [-i idents_output_file] [-o out_file] brlcad_db.g object(s)\n\
+	%s [-v] [-xX lvl] [-P dummy_arg] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-s surroundings_code]\n\
+	[-i idents_output_file] [-o out_file] brlcad_db.g object(s)\n";
+static const char usage2[] = "\
 		v - verbose\n\
 		x - librt debug level\n\
 		X - NMG debug level\n\
+		P - enable core dumps (dummy argument is currently-disabled # of processors)\n\
 		a - absolute tolerance for tessellation\n\
 		r - relative tolerance for tessellation\n\
 		n - surface normal tolerance for tessellation\n\
@@ -382,12 +385,20 @@ outt:	bu_free( (char *)flags, "g-tankill: flags" );
     bu_ptbl_free( &vertices );
 }
 
+
+static void
+printusage(const char *arg) {
+	fprintf(stderr,usage,arg);
+	bu_exit(1, usage2);
+}
+
 /*
  *			M A I N
  */
 int
 main(int argc, char **argv)
 {
+
     int		j;
     int	c;
     double		percent;
@@ -462,12 +473,12 @@ main(int argc, char **argv)
 		NMG_debug = RTG.NMG_debug;
 		break;
 	    default:
-		bu_exit(1, usage, argv[0]);
+		printusage(argv[0]);
 	}
     }
 
     if (bu_optind+1 >= argc)
-	bu_exit(1, usage, argv[0]);
+	printusage(argv[0]);
 
     /* Open BRL-CAD database */
     if ((dbip = db_open(argv[bu_optind], DB_OPEN_READONLY)) == DBI_NULL)

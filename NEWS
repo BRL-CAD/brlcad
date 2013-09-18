@@ -13,6 +13,9 @@ changes made.  See document footer for additional details.
 --- 2013-0X-XX  Release 7.24.2                                     ---
 ----------------------------------------------------------------------
 
+* added -depth option to MGED 'search' command - Cliff Yapp
+* improved 'search' with 'flat' search path modifier - Cliff Yapp
+* improved 'search' with above/equal/below depth limits - Cliff Yapp
 * added attribute sorting option to the 'attr' command - Tom Browder
 * changed 'bwfilter' tool offset option from -o to -O - Mohit Daga
 * gattributes section 5 man page renamed to attributes - Tom Browder
@@ -24,7 +27,7 @@ changes made.  See document footer for additional details.
 * fixed fast4-g importer parsing of blank input lines - Richard Weiss
 * added -o flag to 'bb' command for oriented bounding box - Cliff Yapp
 * allow search to see hidden combs with the -a flag - Cliff Yapp
-* added comb -l option - 'lifts' R flag to top of comb tree - C. Yapp
+* added comb -l lift option to change region designation - Cliff Yapp
 * print current grid information in gqa output - Cliff Yapp
 * added -f option for flattening combs to 'comb' command - Cliff Yapp
 * added support for boolean op filtering in search - Cliff Yapp

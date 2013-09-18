@@ -108,6 +108,7 @@ static OPTION options[] = {
     { "-below",     N_BELOW,        c_below,        O_ZERO },
     { "-bool",      N_BOOL,         c_bool,	    O_ARGV },
     { "-bl",        N_BELOW,        c_below,        O_ZERO },
+    { "-depth",     N_DEPTH,        c_depth,        O_ARGV },
     { "-iname",     N_INAME,        c_iname,        O_ARGV },
     { "-iregex",    N_IREGEX,       c_iregex,       O_ARGV },
     { "-maxdepth",  N_MAXDEPTH,     c_maxdepth,     O_ARGV },
@@ -376,15 +377,20 @@ HIDDEN int
 f_above(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *wdbp, struct bu_ptbl *results)
 {
     int state = 0;
+    int distance_above = 0;
     struct db_node_t curr_node;
     struct db_full_path abovepath;
     db_full_path_init(&abovepath);
     db_dup_full_path(&abovepath, db_node->path);
     DB_FULL_PATH_POP(&abovepath);
     curr_node.path = &abovepath;
+    distance_above = db_node->path->fp_len - abovepath.fp_len;
     while ((abovepath.fp_len > 0) && (state == 0)) {
-	state = find_execute_nested_plans(dbip, wdbp, results, &curr_node, plan->ab_data[0]);
+	if ((distance_above <= plan->max_depth) && (distance_above >= plan->min_depth)) {
+	    state = find_execute_nested_plans(dbip, wdbp, results, &curr_node, plan->ab_data[0]);
+	}
 	DB_FULL_PATH_POP(&abovepath);
+	distance_above++;
     }
     db_free_full_path(&abovepath);
     return state;
@@ -440,10 +446,15 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
 		db_add_node_to_full_path(db_node->path, dp);
 		DB_FULL_PATH_SET_CUR_BOOL(db_node->path, curr_bool);
 		state = traverse_func(dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
-		DB_FULL_PATH_POP(db_node->path);
 		if (state == 1) {
+		    if ((int)db_node->path->fp_len > db_node->matching_len) {
+			db_node->matching_len = db_node->path->fp_len;
+			/*bu_log("matching_leaf: %s(%d)\n", db_path_to_string(db_node->path),db_node->matching_len);*/
+		    }
+		    DB_FULL_PATH_POP(db_node->path);
 		    return 1;
 		} else {
+		    DB_FULL_PATH_POP(db_node->path);
 		    return 0;
 		}
 	    }
@@ -632,12 +643,15 @@ f_below(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, st
 	comb = (struct rt_comb_internal *)in.idb_ptr;
 
         curr_node.path = &belowpath;
+        curr_node.matching_len = 0;
 	state = db_fullpath_stateful_traverse_subtree(comb->tree, db_fullpath_stateful_traverse, dbip, wdbp, results, &curr_node, find_execute_nested_plans, find_execute_nested_plans, wdbp->wdb_resp, plan->bl_data[0]);
 
 	rt_db_free_internal(&in);
     }
     db_free_full_path(&belowpath);
-    if (state >= 1) {
+    if (state >= 1 && ((int)((curr_node.matching_len - (db_node->path->fp_len - db_node->orig_len)) - 1) >= plan->min_depth)
+	    && ((int)((curr_node.matching_len - (db_node->path->fp_len - db_node->orig_len)) - 1) <= plan->max_depth)) {
+	/*bu_log("(%d) f_below match: %s(%d): (%d) - %d; (%d,%d)\n", db_node->orig_len, db_path_to_string(db_node->path), db_node->path->fp_len, curr_node.matching_len, curr_node.matching_len - (db_node->path->fp_len - db_node->orig_len) - 1, plan->min_depth, plan->max_depth);*/
 	return 1;
     } else {
 	return 0;
@@ -1346,16 +1360,7 @@ c_bool(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
 HIDDEN int
 f_maxdepth(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct bu_ptbl *UNUSED(results))
 {
-    struct db_full_path depthtest;
-    int depthcount = -1;
-    db_full_path_init(&depthtest);
-    db_dup_full_path(&depthtest, db_node->path);
-    while (depthtest.fp_len > 0) {
-	depthcount++;
-	DB_FULL_PATH_POP(&depthtest);
-    }
-    db_free_full_path(&depthtest);
-    return depthcount <= plan->max_data;
+    return ((int)db_node->path->fp_len - 1 <= plan->max_data) ? 1 : 0;
 }
 
 
@@ -1381,16 +1386,7 @@ c_maxdepth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db
 HIDDEN int
 f_mindepth(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct bu_ptbl *UNUSED(results))
 {
-    struct db_full_path depthtest;
-    int depthcount = -1;
-    db_full_path_init(&depthtest);
-    db_dup_full_path(&depthtest, db_node->path);
-    while (depthtest.fp_len > 0) {
-	depthcount++;
-	DB_FULL_PATH_POP(&depthtest);
-    }
-    db_free_full_path(&depthtest);
-    return depthcount >= plan->min_data;
+    return ((int)db_node->path->fp_len - 1 >= plan->min_data) ? 1 : 0;
 }
 
 
@@ -1401,6 +1397,74 @@ c_mindepth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db
 
     newplan = palloc(N_MINDEPTH, f_mindepth);
     newplan->min_data = atoi(pattern);
+    (*resultplan) = newplan;
+    return BRLCAD_OK;
+}
+
+
+/*
+ * -depth function --
+ *
+ * True if the database object being examined satisfies
+ * the depth criteria: [><=]depth
+ */
+HIDDEN int
+f_depth(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct bu_ptbl *UNUSED(results))
+{
+    int ret = 0;
+    int checkval = 0;
+    struct bu_vls name = BU_VLS_INIT_ZERO;
+    struct bu_vls value = BU_VLS_INIT_ZERO;
+
+    /* Check for unescaped >, < or = characters.  If present, the
+     * attribute must not only be present but the value assigned to
+     * the attribute must satisfy the logical expression.  In the case
+     * where a > or < is used with a string argument the behavior will
+     * follow ASCII lexicographical order.  In the case of equality
+     * between strings, fnmatch is used to support pattern matching
+     */
+
+    checkval = string_to_name_and_val(plan->depth_data, &name, &value);
+
+    if ((bu_vls_strlen(&value) > 0 && isdigit((int)bu_vls_addr(&value)[0]))
+	   || (bu_vls_strlen(&value) == 0 && isdigit((int)bu_vls_addr(&name)[0]))) {
+	switch (checkval) {
+	    case 0:
+		ret = ((int)db_node->path->fp_len - 1 == atol(bu_vls_addr(&name))) ? 1 : 0;
+		break;
+	    case 1:
+		ret = ((int)db_node->path->fp_len - 1 == atol(bu_vls_addr(&value))) ? 1 : 0;
+		break;
+	    case 2:
+		ret = ((int)db_node->path->fp_len - 1 > atol(bu_vls_addr(&value))) ? 1 : 0;
+		break;
+	    case 3:
+		ret = ((int)db_node->path->fp_len - 1 < atol(bu_vls_addr(&value))) ? 1 : 0;
+		break;
+	    case 4:
+		ret = ((int)db_node->path->fp_len - 1 >= atol(bu_vls_addr(&value))) ? 1 : 0;
+		break;
+	    case 5:
+		ret = ((int)db_node->path->fp_len - 1 <= atol(bu_vls_addr(&value))) ? 1 : 0;
+		break;
+	    default:
+		ret = 0;
+		break;
+	}
+    }
+    bu_vls_free(&name);
+    bu_vls_free(&value);
+    return ret;
+}
+
+
+HIDDEN int
+c_depth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput))
+{
+    struct db_plan_t *newplan;
+
+    newplan = palloc(N_DEPTH, f_depth);
+    newplan->attr_data = pattern;
     (*resultplan) = newplan;
     return BRLCAD_OK;
 }
@@ -1600,10 +1664,15 @@ find_create(char ***argvp, struct db_plan_t **resultplan, struct bu_ptbl *UNUSED
     OPTION *p;
     struct db_plan_t *newplan;
     char **argv;
+    int checkval;
+    struct bu_vls name = BU_VLS_INIT_ZERO;
+    struct bu_vls value = BU_VLS_INIT_ZERO;
 
     argv = *argvp;
 
-    if ((p = option(*argv)) == NULL) {
+    checkval = string_to_name_and_val(argv[0], &name, &value);
+
+    if ((p = option(bu_vls_addr(&name))) == NULL) {
 	if (!quiet)
 	    bu_log("%s: unknown option passed to find_create\n", *argv);
 	return BRLCAD_ERROR;
@@ -1630,8 +1699,44 @@ find_create(char ***argvp, struct db_plan_t **resultplan, struct bu_ptbl *UNUSED
 	default:
 	    return BRLCAD_OK;
     }
+
+    if (bu_vls_strlen(&value) > 0 && isdigit((int)bu_vls_addr(&value)[0])) {
+	switch (checkval) {
+	    case 1:
+		newplan->min_depth = atol(bu_vls_addr(&value));
+		newplan->max_depth = atol(bu_vls_addr(&value));
+		break;
+	    case 2:
+		newplan->min_depth = atol(bu_vls_addr(&value)) + 1;
+		newplan->max_depth = INT_MAX;
+		break;
+	    case 3:
+		newplan->min_depth = 0;
+		newplan->max_depth = atol(bu_vls_addr(&value)) - 1;
+		break;
+	    case 4:
+		newplan->min_depth = atol(bu_vls_addr(&value));
+		newplan->max_depth = INT_MAX;
+		break;
+	    case 5:
+		newplan->min_depth = 0;
+		newplan->max_depth = atol(bu_vls_addr(&value));
+		break;
+	    default:
+		newplan->min_depth = 0;
+		newplan->max_depth = INT_MAX;
+		break;
+	}
+    } else {
+	newplan->min_depth = 0;
+	newplan->max_depth = INT_MAX;
+    }
+
+
     *argvp = argv;
     (*resultplan) = newplan;
+    bu_vls_free(&name);
+    bu_vls_free(&value);
     return BRLCAD_OK;
 }
 
@@ -2331,6 +2436,7 @@ db_search_path(const char *plan_string,
     BU_PTBL_INIT(search_results);
     /* by convention, the top level node is "unioned" into the global database */
     DB_FULL_PATH_SET_CUR_BOOL(curr_node.path, 2);
+    curr_node.orig_len = curr_node.path->fp_len;
     db_fullpath_traverse(wdbp->dbip, wdbp, search_results, &curr_node, find_execute_plans, find_execute_plans, wdbp->wdb_resp, (struct db_plan_t *)dbplan);
 
     /* free memory */

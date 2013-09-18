@@ -72,6 +72,9 @@ SurfacePatch::~SurfacePatch()
 bool
 SurfacePatch::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
+    if (!sw || !sse)
+	return false;
+
     step = sw;
     id = sse->STEPfile_id;
 
@@ -125,10 +128,13 @@ SurfacePatch::Print(int level)
     std::cout << "u_transition:" << Transition_code_string[u_transition] << std::endl;
     TAB(level + 1);
     std::cout << "v_transition:" << Transition_code_string[v_transition] << std::endl;
-    TAB(level + 1);
-    std::cout << "u_sense:" << step->getBooleanString(u_sense) << std::endl;
-    TAB(level + 1);
-    std::cout << "v_sense:" << step->getBooleanString(v_sense) << std::endl;
+
+    if (step) {
+	TAB(level + 1);
+	std::cout << "u_sense:" << step->getBooleanString(u_sense) << std::endl;
+	TAB(level + 1);
+	std::cout << "v_sense:" << step->getBooleanString(v_sense) << std::endl;
+    }
 
     TAB(level);
     std::cout << "Inherited Attributes:" << std::endl;

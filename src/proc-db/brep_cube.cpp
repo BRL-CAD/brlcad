@@ -396,7 +396,7 @@ MakeTwistedCube(ON_TextLog& error_log)
     // create the faces
     MakeTwistedCubeFaces(*brep);
 
-    if (!brep->IsValid()) {
+    if (brep && !brep->IsValid()) {
 	error_log.Print("Twisted cube b-rep is not valid!\n");
 	delete brep;
 	brep = NULL;
@@ -456,6 +456,10 @@ main(int argc, char** argv)
     mk_id(outfp, id_name);
 
     brep = MakeTwistedCube(error_log);
+    if (!brep) {
+	bu_exit(1, "ERROR: unable to make the cube\n");
+    }
+
     mk_brep(outfp, geom_name, brep);
 
     //mk_comb1(outfp, "cube.r", geom_name, 1);
