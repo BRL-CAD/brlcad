@@ -41,28 +41,65 @@
 ON_Curve*
 sub_curve(const ON_Curve* in, double a, double b)
 {
+    // approach: call ON_Curve::Split() twice with a and b respectively.
+    // [min, max] -> [min, a] & [a, max]
+    // [a, max] -> [a, b] & [b, max]
+
     ON_Interval dom = in->Domain();
     ON_Interval sub(a, b);
     sub.MakeIncreasing();
     if (!sub.Intersection(dom))
 	return NULL;
     ON_Curve *left = NULL, *right = NULL, *three = NULL;
-    if (ON_NearZero(sub.m_t[0] - dom.m_t[0]))
-	right = in->Duplicate();
-    else
-	in->Split(sub.m_t[0], left, right);
+
+    in->Split(sub.m_t[0], left, right);
     if (left)
 	delete left;
     left = NULL;
     if (!right) {
-	// bu_log("Error: sub_curve(): a = %lf, b = %lf, min = %lf, max = %lf\n", a, b, dom.Min(), dom.Max());
 	right = in->Duplicate();
     }
-    if (ON_NearZero(sub.m_t[1] - dom.m_t[1]))
+    
+    right->Split(sub.m_t[1], left, three);
+    if (!left) {
 	left = right->Duplicate();
-    else {
-	right->Split(sub.m_t[1], left, three);
     }
+
+    if (right)
+	delete right;
+    if (three)
+	delete three;
+    return left;
+}
+
+
+ON_Surface*
+sub_surface(const ON_Surface* in, int dir, double a, double b)
+{
+    // approach: call ON_Surface::Split() twice with a and b respectively.
+    // [min, max] -> [min, a] & [a, max]
+    // [a, max] -> [a, b] & [b, max]
+
+    ON_Interval dom = in->Domain(dir);
+    ON_Interval sub(a, b);
+    sub.MakeIncreasing();
+    if (!sub.Intersection(dom))
+	return NULL;
+    ON_Surface *left = NULL, *right = NULL, *three = NULL;
+
+    in->Split(dir, sub.m_t[0], left, right);
+    if (left)
+	delete left;
+    left = NULL;
+    if (!right) {
+	right = in->Duplicate();
+    }
+    
+    right->Split(dir, sub.m_t[1], left, three);
+    if (!left) {
+	left = right->Duplicate();
+    }
+
     if (right)
 	delete right;
     if (three)
@@ -74,6 +111,11 @@ sub_curve(const ON_Curve* in, double a, double b)
 HIDDEN const ON_Interval
 check_domain(const ON_Interval* in, const ON_Interval& domain, const char* name)
 {
+    // Check the validity of the input domain.
+    // Returns the intersection of the input interval and the curve/surface's
+    // domain.
+    // If the input interval is NULL, just returns the whole domain.
+
     if (in) {
 	if (!in->IsIncreasing()) {
 	    bu_log("Bogus %s passed in", name);
@@ -91,80 +133,71 @@ check_domain(const ON_Interval* in, const ON_Interval& domain, const char* name)
 }
 
 
-// Build the curve tree root within a given domain
 HIDDEN bool
 build_curve_root(const ON_Curve* curve, const ON_Interval* domain, Subcurve& root)
 {
+    // Build the curve tree root within a given domain
+
+    if (curve == NULL)
+	return false;
+
     if (domain == NULL || *domain == curve->Domain()) {
 	root.m_curve = curve->Duplicate();
 	root.m_t = curve->Domain();
     } else {
-	// Use ON_Curve::Split() to get the sub-curve inside the domain
-	ON_Curve *temp_curve1 = NULL, *temp_curve2 = NULL, *temp_curve3 = NULL;
-	if (!curve->Split(domain->Min(), temp_curve1, temp_curve2))
-	    return false;
-	delete temp_curve1;
-	temp_curve1 = NULL;
-	if (!temp_curve2->Split(domain->Max(), temp_curve1, temp_curve3))
-	    return false;
-	delete temp_curve1;
-	delete temp_curve2;
-	root.m_curve = temp_curve3;
+	// Call sub_curve() to get the curve segment inside the input domain.
+	root.m_curve = sub_curve(curve, domain->Min(), domain->Max());
 	root.m_t = *domain;
     }
 
-    root.SetBBox(root.m_curve->BoundingBox());
-    root.m_islinear = root.m_curve->IsLinear();
-    return true;
+    if (root.m_curve) {
+	root.SetBBox(root.m_curve->BoundingBox());
+	root.m_islinear = root.m_curve->IsLinear();
+	return true;
+    } else
+	return false;
 }
 
 
-// Build the surface tree root within a given domain
 HIDDEN bool
 build_surface_root(const ON_Surface* surf, const ON_Interval* u_domain, const ON_Interval* v_domain, Subsurface& root)
 {
-    // First, do u split
+    // Build the surface tree root within a given domain
+
+    if (surf == NULL)
+	return false;
+
     const ON_Surface* u_splitted_surf; // the surface after u-split
+
+    // First, do u split
     if (u_domain == NULL || *u_domain == surf->Domain(0)) {
 	u_splitted_surf = surf;
 	root.m_u = surf->Domain(0);
     } else {
-	// Use ON_Surface::Split() to get the sub-surface inside the domain
-	ON_Surface *temp_surf1 = NULL, *temp_surf2 = NULL, *temp_surf3 = NULL;
-	if (!surf->Split(0, u_domain->Min(), temp_surf1, temp_surf2))
-	    return false;
-	delete temp_surf1;
-	temp_surf1 = NULL;
-	if (!temp_surf2->Split(0, u_domain->Max(), temp_surf1, temp_surf3))
-	    return false;
-	delete temp_surf1;
-	delete temp_surf2;
-	u_splitted_surf = temp_surf3;
+	// Call sub_surface() to get the sub-surface inside the input U domain.
+	u_splitted_surf = sub_surface(surf, 0, u_domain->Min(), u_domain->Max());
 	root.m_u = *u_domain;
     }
+
+    if (u_splitted_surf == NULL)
+	return false;
 
     // Then v split
     if (v_domain == NULL || *v_domain == surf->Domain(1)) {
 	root.m_surf = u_splitted_surf->Duplicate();
 	root.m_v = surf->Domain(1);
     } else {
-	// Use ON_Surface::Split() to get the sub-surface inside the domain
-	ON_Surface *temp_surf1 = NULL, *temp_surf2 = NULL, *temp_surf3 = NULL;
-	if (!surf->Split(1, v_domain->Min(), temp_surf1, temp_surf2))
-	    return false;
-	delete temp_surf1;
-	temp_surf1 = NULL;
-	if (!temp_surf2->Split(1, v_domain->Max(), temp_surf1, temp_surf3))
-	    return false;
-	delete temp_surf1;
-	delete temp_surf2;
-	root.m_surf = temp_surf3;
+	// // Call sub_surface() to get the sub-surface inside the input V domain.
+	root.m_surf = sub_surface(surf, 1, v_domain->Min(), v_domain->Max());
 	root.m_v = *v_domain;
     }
 
-    root.SetBBox(root.m_surf->BoundingBox());
-    root.m_isplanar = root.m_surf->IsPlanar();
-    return true;
+    if (root.m_surf) {
+	root.SetBBox(root.m_surf->BoundingBox());
+	root.m_isplanar = root.m_surf->IsPlanar();
+	return true;
+    } else
+	return false;
 }
 
 

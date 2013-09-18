@@ -2285,6 +2285,19 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 extern BREP_EXPORT ON_Curve*
 sub_curve(const ON_Curve* in, double a, double b);
 
+
+/**
+ * Get the sub-surface whose u \in [a,b] or v \in [a, b]
+ *
+ * @param in [in] the surface to split
+ * @param dir [in] 0: u-split, 1: v-split
+ * @param a, b [in] either of them can be the larger one
+ *
+ * @return the result sub-surface. NULL for error.
+ */
+extern BREP_EXPORT ON_Surface*
+sub_surface(const ON_Surface* in, int dir, double a, double b);
+
 } /* extern C++ */
 #endif
 
