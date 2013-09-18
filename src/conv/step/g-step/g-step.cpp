@@ -132,16 +132,9 @@ main(int argc, char *argv[])
     struct bu_vls scratch_string;
     bu_vls_init(&scratch_string);
 
-    Exporter_Info_AP203 *info = new Exporter_Info_AP203();
-
-    info->split_closed = 0; /* For now, don't try splitting things - need some libbrep functionality before that can work */
-
     Registry *registry = new Registry(SchemaInit);
     InstMgr instance_list;
     STEPfile *sfile = new STEPfile(*registry, instance_list);
-
-    info->registry = registry;
-    info->instance_list = &instance_list;
 
     registry->ResetSchemas();
     registry->ResetEntities();
@@ -183,10 +176,10 @@ main(int argc, char *argv[])
     /* Now, add actual DATA */
     switch (intern.idb_minor_type) {
 	case DB5_MINORTYPE_BRLCAD_BREP:
-	    (void)ON_BRep_to_STEP(dp, &intern, info);
+	    (void)ON_BRep_to_STEP(dp, &intern, registry, &instance_list);
 	    break;
 	case DB5_MINORTYPE_BRLCAD_COMBINATION:
-	    //(void)Comb_Tree_to_STEP(&intern, info);
+	    //(void)Comb_Tree_to_STEP(&intern, registry, &instance_list);
 	    break;
 	default:
 	    bu_log("Primitive type of %s is not yet supported\n", argv[1]);

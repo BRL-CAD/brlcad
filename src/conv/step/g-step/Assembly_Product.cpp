@@ -126,7 +126,7 @@
  */
 
 void
-Add_Assembly_Product(Registry *registry, InstMgr *instance_list, Exporter_Info_AP203 *info)
+Add_Assembly_Product(Registry *registry, InstMgr *instance_list)
 {
 
 }

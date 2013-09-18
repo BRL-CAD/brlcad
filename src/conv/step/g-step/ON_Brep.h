@@ -28,7 +28,7 @@
 
 #include "STEPWrapper.h"
 
-struct Exporter_Info_AP203 {
+struct ON_Brep_Info_AP203 {
     Registry *registry;
     InstMgr *instance_list;
     int split_closed;
@@ -55,11 +55,11 @@ struct Exporter_Info_AP203 {
 void ON_3dPoint_to_Cartesian_point(ON_3dPoint *inpnt, SdaiCartesian_point *step_pnt);
 void ON_3dVector_to_Direction(ON_3dVector *invect, SdaiDirection *step_direction);
 
-bool ON_NurbsCurve_to_STEP(ON_NurbsCurve *n_curve, Exporter_Info_AP203 *info, int i);
-void ON_NurbsSurfaceCV_Finalize_GenericAggregates(Exporter_Info_AP203 *info);
-bool ON_NurbsSurface_to_STEP(ON_NurbsSurface *n_surface, Exporter_Info_AP203 *info, int i);
+bool ON_NurbsCurve_to_STEP(ON_NurbsCurve *n_curve, ON_Brep_Info_AP203 *info, int i);
+void ON_NurbsSurfaceCV_Finalize_GenericAggregates(ON_Brep_Info_AP203 *info);
+bool ON_NurbsSurface_to_STEP(ON_NurbsSurface *n_surface, ON_Brep_Info_AP203 *info, int i);
 
-STEPentity *ON_BRep_to_STEP(struct directory *dp, struct rt_db_internal *intern, Exporter_Info_AP203 *info);
+STEPentity *ON_BRep_to_STEP(struct directory *dp, struct rt_db_internal *intern, Registry *registry, InstMgr *instance_list);
 
 #endif /* ON_BREP_H_ */
 

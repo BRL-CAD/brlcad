@@ -84,7 +84,7 @@ ON_3dVector_to_Direction(ON_3dVector *invect, SdaiDirection *step_direction) {
  * the UV space trimming curves
  */
 void
-Add_Edge(ON_BrepTrim *trim, SdaiPath *e_loop_path, Exporter_Info_AP203 *info)
+Add_Edge(ON_BrepTrim *trim, SdaiPath *e_loop_path, ON_Brep_Info_AP203 *info)
 {
     ON_BrepEdge *edge = trim->Edge();
     int i = -1;
@@ -121,7 +121,7 @@ Add_Edge(ON_BrepTrim *trim, SdaiPath *e_loop_path, Exporter_Info_AP203 *info)
  * the beginning of the file.
  */
 void
-Populate_Instance_List(Exporter_Info_AP203 *info)
+Populate_Instance_List(ON_Brep_Info_AP203 *info)
 {
     std::vector<STEPentity *>::iterator v_it;
     std::map<int, std::pair<STEPentity *, STEPentity *> >::iterator c_it;
@@ -201,7 +201,7 @@ Populate_Instance_List(Exporter_Info_AP203 *info)
 }
 
 STEPentity *
-ON_BRep_to_STEP(struct directory *dp, struct rt_db_internal *intern, Exporter_Info_AP203 *info)
+ON_BRep_to_STEP(struct directory *dp, struct rt_db_internal *intern, Registry *registry, InstMgr *instance_list)
 {
     STEPentity *brep_shape = NULL;
     RT_CK_DB_INTERNAL(intern);
@@ -213,6 +213,10 @@ ON_BRep_to_STEP(struct directory *dp, struct rt_db_internal *intern, Exporter_In
     //brep->Dump(dump);
     //ON_String ss = wstr;
     //bu_log("Brep:\n %s\n", ss.Array());
+    ON_Brep_Info_AP203 *info = new ON_Brep_Info_AP203();
+    info->registry = registry;
+    info->instance_list = instance_list;
+    info->split_closed = 0; /* For now, don't try splitting things - need some libbrep functionality before that can work */
 
     info->cartesian_pnts.assign(brep->m_V.Count(), (STEPentity *)0);
     info->vertex_pnts.assign(brep->m_V.Count(), (STEPentity *)0);
@@ -481,6 +485,8 @@ ON_BRep_to_STEP(struct directory *dp, struct rt_db_internal *intern, Exporter_In
     brep_shape = Add_Shape_Definition_Representation(info->registry, info->instance_list, info->advanced_brep);
 
     Populate_Instance_List(info);
+
+    delete info;
 
     return brep_shape;
 }

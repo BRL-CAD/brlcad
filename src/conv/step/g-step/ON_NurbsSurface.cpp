@@ -37,7 +37,7 @@
  * delayed instance manager population, we build a temporary map of nested vectors to hold the information
  * in the proper form until we are ready for it.*/
 void
-ON_NurbsSurfaceCV_Initialize(ON_NurbsSurface *insrf, STEPentity *step_srf, Exporter_Info_AP203 *info) {
+ON_NurbsSurfaceCV_Initialize(ON_NurbsSurface *insrf, STEPentity *step_srf, ON_Brep_Info_AP203 *info) {
     ON_3dPoint cv_pnt;
     std::vector<std::vector<STEPentity *> > i_array;
     for (int i = 0; i < insrf->CVCount(0); i++) {
@@ -111,7 +111,7 @@ ON_NurbsSurfaceKnots_to_Aggregates(
 /* For a rational B-Spline surface with weights, we need to create an aggregate type */
 
 STEPentity *
-Create_Rational_Surface_Aggregate(ON_NurbsSurface *nsurface, Exporter_Info_AP203 *info) {
+Create_Rational_Surface_Aggregate(ON_NurbsSurface *nsurface, ON_Brep_Info_AP203 *info) {
     STEPattribute *attr;
     STEPcomplex *stepcomplex;
     const char *entNmArr[8] = {"bounded_surface", "b_spline_surface", "b_spline_surface_with_knots",
@@ -212,7 +212,7 @@ Create_Rational_Surface_Aggregate(ON_NurbsSurface *nsurface, Exporter_Info_AP203
 // slots.  Must be run *after* ON_NurbsSurfaceCV_Initialize has been run on *all*
 // surfaces.
 void
-ON_NurbsSurfaceCV_Finalize_GenericAggregates(Exporter_Info_AP203 *info)
+ON_NurbsSurfaceCV_Finalize_GenericAggregates(ON_Brep_Info_AP203 *info)
 {
     std::map<STEPentity*, std::vector<std::vector<STEPentity *> > >::iterator scv_it;
     std::vector<std::vector<STEPentity *> >::iterator outer_it;
@@ -235,7 +235,7 @@ ON_NurbsSurfaceCV_Finalize_GenericAggregates(Exporter_Info_AP203 *info)
 }
 
 bool
-ON_NurbsSurface_to_STEP(ON_NurbsSurface *n_surface, Exporter_Info_AP203 *info, int i)
+ON_NurbsSurface_to_STEP(ON_NurbsSurface *n_surface, ON_Brep_Info_AP203 *info, int i)
 {
     bool surface_converted = true;
     std::cout << "Have NurbsSurface\n";
