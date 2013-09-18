@@ -95,52 +95,51 @@
 		<tbody>
 		  <row>
 			<entry align="center" valign='middle'>/</entry>
-			<entry>Search using top level objects in database as starting points, return list of full paths.</entry>
+			<entry>Search using top level objects in database as starting points, return list of matching full paths.</entry>
 		  </row>
 		  <row>
 			<entry align="center" valign='middle'>.</entry>
-			<entry>Search using top level objects in database as starting points, return list of all objects.</entry>
+			<entry>Search using top level objects in database as starting points, return list of all matching objects.</entry>
+		  </row>
+		  <row>
+			<entry align="center" valign='middle'>|</entry>
+			<entry>Iterate over all objects in the database without doing a tree walk, return list of all matching objects.</entry>
 		  </row>
 		  <row>
 			<entry align="center" valign='middle'>|/</entry>
-			<entry>Search using every object in the database as a starting point, return list of full paths.</entry>
+			<entry>Search using every object in the database as a starting point, return list of matching full paths.</entry>
 		  </row>
 		  <row>
 			<entry align="center" valign='middle'>|.</entry>
-			<entry>Search using every object in the database as a starting point, return list of all objects.</entry>
+			<entry>Search using every object in the database as a starting point, return list of all matching objects.</entry>
 		  </row>
 		  <row>
 			<entry align="center" valign='middle'>/objname</entry>
-			<entry>Use object <emphasis>objname</emphasis> as the starting point, return list of full paths.</entry>
+			<entry>Use object <emphasis>objname</emphasis> as the starting point, return list of matching full paths.</entry>
 		  </row>
 		  <row>
 			<entry align="center" valign='middle'>objname</entry>
-			<entry>Use object <emphasis>objname</emphasis> as the starting point, return list of all objects.</entry>
+			<entry>Use object <emphasis>objname</emphasis> as the starting point, return list of all matching objects.</entry>
 		  </row>
 		  <row>
 			<entry align="center" valign='middle'>|/objname</entry>
-			<entry>Use every object below <emphasis>objname</emphasis> as starting points, return list of full paths.</entry>
+			<entry>Use every object below <emphasis>objname</emphasis> as starting points, return list of matching full paths.</entry>
 		  </row>
 		  <row>
 			<entry align="center" valign='middle'>|objname</entry>
-			<entry>Use every object below <emphasis>objname</emphasis> as starting points, return list of all objects.</entry>
+			<entry>Use every object below <emphasis>objname</emphasis> as starting points, return list of all matching objects.</entry>
 		  </row>
 
 		</tbody>
 	  </tgroup>
 	</table>
-	One search command may use paths indicating both modes - such
+
+	One search command may use multiple paths, each of which can specify its own mode - such
 	a "mixed mode" search will return a list of full paths and objects in the order
 	paths were supplied to search.
   </para>
   <para>
-	The "flat" search that uses every object in the database as starting points will be significantly more expensive for complex tree hierarchies.
-  </para>
-  <para>
-	Something to bear in mind is that all search routines perform a full path tree
-	search "under the hood."  A prefix "/" character changes the <emphasis remap="I">way</emphasis> the output is
-	reported, and the "|" prefix changes the set of toplevel starting points, but neither changes the underlying search <emphasis remap="I">method</emphasis> - for example, depth
-	and path search criteria will still match even if no "/" character is appended to the input path.
+	The "flat" searches that are specified by using '|' as a modifier to other paths will use every object in the database as starting points for full tree walks and consequently will be significantly more expensive for complex tree hierarchies.  The "truly flat" iterative search triggered by the the stand-alone '|' path specifier will be faster, but because it does not walk the tree hierarchy depth-related options (-above, -below, -depth, etc.) will not function.
   </para>
 
 </refsection>
