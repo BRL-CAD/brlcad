@@ -38,6 +38,8 @@ class BRLCAD_StdOutput : public TCLAP::StdOutput
   //   // proceed normally ...
 
 public:
+
+
   virtual void failure(TCLAP::CmdLineInterface& c, TCLAP::ArgException& e) {
     std::string progName = c.getProgramName();
 
@@ -61,6 +63,12 @@ public:
     else
       usage(c);
 
+    // free our memory
+    std::list<TCLAP::Arg*> args = c.getArgList();
+    for (std::list<TCLAP::Arg*>::iterator i = args.begin(); i != args.end(); ++i) {
+      delete *i;
+      *i = 0;
+    }
     exit(1);
   }
 
@@ -75,7 +83,6 @@ public:
 
     std::cout << std::endl;
 
-    _shortUsage(c, std::cout);
   }
 
   virtual void version(TCLAP::CmdLineInterface& c) {
