@@ -1167,7 +1167,7 @@ ON_Intersect(const ON_Curve* curveA,
     }
 
     // Use an O(n^2) naive approach to eliminate duplications
-    ON_SimpleArray<ON_X_EVENT> points, overlap, pending;
+    ON_SimpleArray<ON_X_EVENT> points, overlap;
     for (int i = 0; i < tmp_x.Count(); i++) {
 	int j;
 	if (tmp_x[i].m_type == ON_X_EVENT::ccx_overlap) {
@@ -1189,49 +1189,41 @@ ON_Intersect(const ON_Curve* curveA,
     }
 
     // Merge the overlap events that are continuous
+    ON_X_EVENT pending;
     overlap.QuickSort(compare_by_m_a0);
-    for (int i = 0; i < overlap.Count(); i++) {
-	bool merged = false;
-	for (int j = 0; j < pending.Count(); j++) {
-	    if (pending[j].m_a[1] < overlap[i].m_a[0] - t1_tolerance) {
+    if (overlap.Count()) {
+	pending = overlap[0];
+	for (int i = 1; i < overlap.Count(); i++) {
+	    if (pending.m_a[1] < overlap[i].m_a[0] - t1_tolerance) {
 		// pending[j] and overlap[i] are disjoint. pending[j] has
 		// already merged, and should be removed from the list.
 		// Because the elements in overlap[] are sorted by m_a[0],
 		// the rest elements won't have intersection with pending[j]
-		pending[j].m_A[0] = curveA->PointAt(pending[j].m_a[0]);
-		pending[j].m_A[1] = curveA->PointAt(pending[j].m_a[1]);
-		pending[j].m_B[0] = curveB->PointAt(pending[j].m_b[0]);
-		pending[j].m_B[1] = curveB->PointAt(pending[j].m_b[1]);
-		x.Append(pending[j]);
-		pending.Remove(j);
-		j--;
-		continue;
-	    }
-	    if (overlap[i].m_a[0] < pending[j].m_a[1] + t1_tolerance) {
+		pending.m_A[0] = curveA->PointAt(pending.m_a[0]);
+		pending.m_A[1] = curveA->PointAt(pending.m_a[1]);
+		pending.m_B[0] = curveB->PointAt(pending.m_b[0]);
+		pending.m_B[1] = curveB->PointAt(pending.m_b[1]);
+		x.Append(pending);
+		pending = overlap[i];
+	    } else if (overlap[i].m_a[0] < pending.m_a[1] + t1_tolerance) {
 		ON_Interval interval_1(overlap[i].m_b[0], overlap[i].m_b[1]);
-		ON_Interval interval_2(pending[j].m_b[0], pending[j].m_b[1]);
+		ON_Interval interval_2(pending.m_b[0], pending.m_b[1]);
 		interval_1.MakeIncreasing();
 		interval_1.m_t[0] -= t2_tolerance;
 		interval_1.m_t[1] += t2_tolerance;
 		if (interval_1.Intersection(interval_2)) {
 		    // Need to merge: pending[j] = union(pending[j], overlap[i])
-		    merged = true;
-		    pending[j].m_a[1] = std::max(overlap[i].m_a[1], pending[j].m_a[1]);
-		    pending[j].m_b[0] = std::min(overlap[i].m_b[0], pending[j].m_b[0]);
-		    pending[j].m_b[1] = std::max(overlap[i].m_b[1], pending[j].m_b[1]);
-		    break;
+		    pending.m_a[1] = std::max(overlap[i].m_a[1], pending.m_a[1]);
+		    pending.m_b[0] = std::min(overlap[i].m_b[0], pending.m_b[0]);
+		    pending.m_b[1] = std::max(overlap[i].m_b[1], pending.m_b[1]);
 		}
 	    }
 	}
-	if (merged == false)
-	    pending.Append(overlap[i]);
-    }
-    for (int i = 0; i < pending.Count(); i++) {
-	pending[i].m_A[0] = curveA->PointAt(pending[i].m_a[0]);
-	pending[i].m_A[1] = curveA->PointAt(pending[i].m_a[1]);
-	pending[i].m_B[0] = curveB->PointAt(pending[i].m_b[0]);
-	pending[i].m_B[1] = curveB->PointAt(pending[i].m_b[1]);
-	x.Append(pending[i]);
+	pending.m_A[0] = curveA->PointAt(pending.m_a[0]);
+	pending.m_A[1] = curveA->PointAt(pending.m_a[1]);
+	pending.m_B[0] = curveB->PointAt(pending.m_b[0]);
+	pending.m_B[1] = curveB->PointAt(pending.m_b[1]);
+	x.Append(pending);
     }
 
     // The intersection points shouldn't be inside the overlapped parts.
@@ -1763,7 +1755,7 @@ ON_Intersect(const ON_Curve* curveA,
 	}
     }
 
-    ON_SimpleArray<ON_X_EVENT> points, overlap, pending;
+    ON_SimpleArray<ON_X_EVENT> points, overlap;
     // Use an O(n^2) naive approach to eliminate duplications
     for (int i = 0; i < tmp_x.Count(); i++) {
 	int j;
@@ -1785,35 +1777,35 @@ ON_Intersect(const ON_Curve* curveA,
     }
 
     // Merge the overlap events that are continuous
+    ON_X_EVENT pending;
+    ON_3dPointArray ptarrayB;
     overlap.QuickSort(compare_by_m_a0);
-    ON_ClassArray<ON_3dPointArray> ptarrayB;
-    for (int i = 0; i < overlap.Count(); i++) {
-	bool merged = false;
-	for (int j = 0; j < pending.Count(); j++) {
-	    if (pending[j].m_a[1] < overlap[i].m_a[0] - t_tolerance) {
+    if (overlap.Count()) {
+	pending = overlap[0];
+	ptarrayB.Append(ON_3dPoint(pending.m_b[0], pending.m_b[1], 0.0));
+	for (int i = 1; i < overlap.Count(); i++) {
+	    if (pending.m_a[1] < overlap[i].m_a[0] - t_tolerance) {
 		// pending[j] and overlap[i] are disjoint. pending[j] has
 		// already merged, and should be removed from the list.
 		// Because the elements in overlap[] are sorted by m_a[0],
 		// the rest elements won't have intersection with pending[j]
-		x.Append(pending[j]);
+		x.Append(pending);
 		if (overlap2d) {
-		    ptarrayB[j].Append(ON_3dPoint(pending[j].m_b[2], pending[j].m_b[3], 0.0));
-		    ON_PolylineCurve* polyline = new ON_PolylineCurve(ptarrayB[j]);
+		    ptarrayB.Append(ON_3dPoint(pending.m_b[2], pending.m_b[3], 0.0));
+		    ON_PolylineCurve* polyline = new ON_PolylineCurve(ptarrayB);
 		    polyline->ChangeDimension(2);
 		    overlap2d->Append(curve_fitting(polyline));
-		    ptarrayB.Remove(j);
+		    ptarrayB.Empty();
+		    ptarrayB.Append(ON_3dPoint(overlap[i].m_b[0], overlap[i].m_b[1], 0.0));
 		}
-		pending.Remove(j);
-		j--;
-		continue;
-	    }
-	    if (overlap[i].m_a[0] < pending[j].m_a[1] + t_tolerance) {
+		pending = overlap[i];
+	    } else if (overlap[i].m_a[0] < pending.m_a[1] + t_tolerance) {
 		if (overlap2d)
-		    ptarrayB[j].Append(ON_3dPoint(overlap[i].m_b[0], overlap[i].m_b[1], 0.0));
+		    ptarrayB.Append(ON_3dPoint(overlap[i].m_b[0], overlap[i].m_b[1], 0.0));
 		ON_Interval interval_u1(overlap[i].m_b[0], overlap[i].m_b[2]);
-		ON_Interval interval_u2(pending[j].m_b[0], pending[j].m_b[2]);
+		ON_Interval interval_u2(pending.m_b[0], pending.m_b[2]);
 		ON_Interval interval_v1(overlap[i].m_b[1], overlap[i].m_b[3]);
-		ON_Interval interval_v2(pending[j].m_b[1], pending[j].m_b[3]);
+		ON_Interval interval_v2(pending.m_b[1], pending.m_b[3]);
 		interval_u1.MakeIncreasing();
 		interval_u1.m_t[0] -= u_tolerance;
 		interval_u1.m_t[1] += u_tolerance;
@@ -1823,32 +1815,20 @@ ON_Intersect(const ON_Curve* curveA,
 		if (interval_u1.Intersection(interval_u2) && interval_v1.Intersection(interval_v2)) {
 		    // if the uv rectangle of them intersects, it's consider overlap.
 		    // Need to merge: pending[j] = union(pending[j], overlap[i])
-		    merged = true;
-		    if (overlap[i].m_a[1] > pending[j].m_a[1]) {
-			pending[j].m_a[1] = overlap[i].m_a[1];
-			pending[j].m_b[2] = overlap[i].m_b[2];
-			pending[j].m_b[3] = overlap[i].m_b[3];
-			pending[j].m_A[1] = overlap[i].m_A[1];
-			pending[j].m_B[1] = overlap[i].m_B[1];
+		    if (overlap[i].m_a[1] > pending.m_a[1]) {
+			pending.m_a[1] = overlap[i].m_a[1];
+			pending.m_b[2] = overlap[i].m_b[2];
+			pending.m_b[3] = overlap[i].m_b[3];
+			pending.m_A[1] = overlap[i].m_A[1];
+			pending.m_B[1] = overlap[i].m_B[1];
 		    }
-		    break;
 		}
 	    }
 	}
-	if (merged == false) {
-	    if (overlap2d) {
-		ptarrayB.Append(ON_3dPointArray());
-		ptarrayB[ptarrayB.Count()-1].Append(ON_3dPoint(overlap[i].m_b[0], overlap[i].m_b[1], 0.0));
-	    }
-	    pending.Append(overlap[i]);
-	}
-    }
-
-    for (int i = 0; i < pending.Count(); i++) {
-	x.Append(pending[i]);
+	x.Append(pending);
 	if (overlap2d) {
-	    ptarrayB[i].Append(ON_3dPoint(pending[i].m_b[2], pending[i].m_b[3], 0.0));
-	    ON_PolylineCurve* polyline = new ON_PolylineCurve(ptarrayB[i]);
+	    ptarrayB.Append(ON_3dPoint(pending.m_b[2], pending.m_b[3], 0.0));
+	    ON_PolylineCurve* polyline = new ON_PolylineCurve(ptarrayB);
 	    polyline->ChangeDimension(2);
 	    overlap2d->Append(curve_fitting(polyline));
 	}
