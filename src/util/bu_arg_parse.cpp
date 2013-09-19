@@ -69,7 +69,7 @@ static vector<Arg*> Arg_pointers;
 /**
  * get a value for an arg
  */
-long
+int
 bu_arg_get_bool(bu_arg_vars *arg)
 {
   return (arg->val.u.l ? 1 : 0);

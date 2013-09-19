@@ -158,9 +158,9 @@ main(int ac, char *av[])
     bu_ptbl_t args = BU_PTBL_INIT_ZERO;
 
     /* vars expected from cmd line parsing */
-    int arg_err        = 0;
-    long has_force     = 0;
-    long has_help      = 0;
+    int arg_err            = 0;
+    int has_force          = 0;
+    int has_help           = 0;
     const char *dsp1_fname = NULL;
     const char *dsp2_fname = NULL;
     const char *dsp3_fname = NULL;
