@@ -75,7 +75,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * provide a viable FindBRLCAD.cmake
 
-* attempt to replicate the GTK+ ISST interface in TCL
+* replicate the GTK+ ISST interface in TCL
 
 * Archer GUI needs to remember the last size of the command
   window when it is in detached (2 window) mode
