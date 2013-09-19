@@ -24,14 +24,58 @@
  *
  */
 
+#include <map>
 #include "bu.h"
 #include "raytrace.h"
 #include "STEPWrapper.h"
+#include "ON_Brep.h"
+
+STEPentity *
+Comb_to_STEP(struct directory *dp, Registry *registry, InstMgr *instance_list) {
+    // MECHANICAL_CONTEXT
+    SdaiMechanical_context *mech_context = (SdaiMechanical_context *)registry->ObjCreate("MECHANICAL_CONTEXT");
+    instance_list->Append((STEPentity *)mech_context, completeSE);
+    mech_context->name_("''");
+    mech_context->discipline_type_("''");
+
+    // APPLICATION_CONTEXT - TODO, should be one of these per file?
+    SdaiApplication_context *app_context = (SdaiApplication_context *)registry->ObjCreate("APPLICATION_CONTEXT");
+    instance_list->Append((STEPentity *)app_context, completeSE);
+    mech_context->frame_of_reference_(app_context);
+    app_context->application_("''");
+
+    // PRODUCT_DEFINITION
+    SdaiProduct_definition *prod_def = (SdaiProduct_definition *)registry->ObjCreate("PRODUCT_DEFINITION");
+    instance_list->Append((STEPentity *)prod_def, completeSE);
+    prod_def->id_("''");
+    prod_def->description_("''");
+
+    // PRODUCT_DEFINITION_FORMATION
+    SdaiProduct_definition_formation *prod_def_form = (SdaiProduct_definition_formation *)registry->ObjCreate("PRODUCT_DEFINITION_FORMATION");
+    instance_list->Append((STEPentity *)prod_def_form, completeSE);
+    prod_def->formation_(prod_def_form);
+    prod_def_form->id_("''");
+    prod_def_form->description_("''");
+
+    // PRODUCT
+    SdaiProduct *prod = (SdaiProduct *)registry->ObjCreate("PRODUCT");
+    instance_list->Append((STEPentity *)prod, completeSE);
+    prod_def_form->of_product_(prod);
+    prod->id_("''");
+    prod->name_(dp->d_namep);
+    prod->description_("''");
+    prod->frame_of_reference_()->AddNode(new EntityNode((SDAI_Application_instance *)mech_context));
+
+    return (STEPentity *)prod_def;
+}
 
 STEPentity *
 Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, struct rt_db_internal *intern, Registry *registry, InstMgr *instance_list)
 {
     STEPentity *toplevel_comb = NULL;
+
+    std::map<struct directory *, STEPentity *> brep_to_step;
+    std::map<struct directory *, STEPentity *> comb_to_step;
 
     struct rt_comb_internal *comb = (struct rt_comb_internal *)(intern->idb_ptr);
 
@@ -40,6 +84,10 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, struct rt_db_intern
     struct bu_ptbl *breps = db_search_path_obj(brep_search, dp, wdbp);
     for (int j = (int)BU_PTBL_LEN(breps) - 1; j >= 0; j--){
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(breps, j);
+	struct rt_db_internal brep_intern;
+	rt_db_get_internal(&brep_intern, curr_dp, wdbp->dbip, bn_mat_identity, &rt_uniresource);
+	RT_CK_DB_INTERNAL(&brep_intern);
+	brep_to_step[curr_dp] = ON_BRep_to_STEP(curr_dp, &brep_intern, registry, instance_list);
 	bu_log("Brep: %s\n", curr_dp->d_namep);
     }
 
@@ -48,15 +96,20 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, struct rt_db_intern
     struct bu_ptbl *combs = db_search_path_obj(comb_search, dp, wdbp);
     for (int j = (int)BU_PTBL_LEN(combs) - 1; j >= 0; j--){
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(combs, j);
+	comb_to_step[curr_dp] = Comb_to_STEP(curr_dp, registry, instance_list);
 	bu_log("Comb non-wrapper: %s\n", curr_dp->d_namep);
     }
 
     /* Find the combs that *are* wrappers, and point them to the product associated with their brep.
      * Change the name of the product, if appropriate */
     const char *comb_wrapper_search = "-type comb -nnodes 1 -below=1 -type brep";
+    const char *comb_child_search = "-type comb -nnodes 1 -below=1 -type brep";
     struct bu_ptbl *comb_wrappers = db_search_path_obj(comb_wrapper_search, dp, wdbp);
     for (int j = (int)BU_PTBL_LEN(comb_wrappers) - 1; j >= 0; j--){
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(comb_wrappers, j);
+	struct bu_ptbl *comb_child = db_search_path_obj(comb_child_search, curr_dp, wdbp);
+	struct directory *child = (struct directory *)BU_PTBL_GET(comb_child, 0);
+	comb_to_step[curr_dp] = brep_to_step.find(child)->second;
 	bu_log("Comb wrapper: %s\n", curr_dp->d_namep);
     }
 
