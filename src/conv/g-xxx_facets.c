@@ -107,7 +107,7 @@ main(int argc, char **argv)
     the_model = nmg_mm();
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "r:a:n:o:vx:D:X:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "r:a:n:o:vx:D:X:h?")) != -1) {
 	switch (c) {
 	    case 'r':		/* Relative tolerance. */
 		ttol.rel = atof(bu_optarg);
@@ -140,13 +140,11 @@ main(int argc, char **argv)
 		break;
 	    default:
 		bu_exit(1, usage, argv[0]);
-		break;
 	}
     }
 
-    if (bu_optind+1 >= argc) {
+    if (bu_optind+1 >= argc)
 	bu_exit(1, usage, argv[0]);
-    }
 
     /* Open output file */
 
