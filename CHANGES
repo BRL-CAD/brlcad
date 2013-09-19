@@ -66,7 +66,7 @@ b) during a minor release provided the change was publicly announced
 
 c) during any release provided there still exists an EQUIVALENT
    alternative interface that does not impose an undue burden on users
-   or developers (see "MINIMALLY IMPACTING" below)
+   or developers (see "MINIMALLY IMPACTING")
 
 Public interfaces scheduled for removal should be visibly marked as
 deprecated during compilation with the DEPRECATED keyword on function
