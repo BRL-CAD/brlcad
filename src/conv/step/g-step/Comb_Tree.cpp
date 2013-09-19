@@ -152,6 +152,18 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, struct rt_db_intern
 	    if(curr_matrix) {
 		bu_log(" - found matrix over %s in %s\n", curr_dp->d_namep, (*it)->d_namep);
 		bn_mat_print(curr_dp->d_namep, curr_matrix);
+		vect_t inv, outv;
+		VSET(inv, 0, 0, 0);
+		MAT4X3PNT(outv, curr_matrix, inv);
+		bu_log("AXIS2_PLACEMENT_3D cartesian_point: %f, %f, %f\n", outv[0], outv[1], outv[2]);
+		VSET(inv, 0, 0, 1);
+		MAT4X3VEC(outv, curr_matrix, inv);
+		VUNITIZE(outv);
+		bu_log("AXIS2_PLACEMENT_3D axis: %f, %f, %f\n", outv[0], outv[1], outv[2]);
+		VSET(inv, 1, 0, 0);
+		MAT4X3VEC(outv, curr_matrix, inv);
+		VUNITIZE(outv);
+		bu_log("AXIS2_PLACEMENT_3D ref axis: %f, %f, %f\n", outv[0], outv[1], outv[2]);
 	    } else {
 		bu_log("identity matrix\n");
 	    }
