@@ -197,10 +197,10 @@ dmo_openFb(struct dm_obj *dmop)
 	    break;
 #endif
 	default: {
+	    Tcl_Obj *obj;
+
 	    free((void*)dmop->dmo_fbs.fbs_fbp);
 	    dmop->dmo_fbs.fbs_fbp = FBIO_NULL;
-
-	    Tcl_Obj *obj;
 
 	    obj = Tcl_GetObjResult(dmop->interp);
 	    if (Tcl_IsShared(obj))
