@@ -33,7 +33,7 @@
 
 
 void
-ON_NurbsCurveCV_to_EntityAggregate(EntityAggregate *control_pnts, ON_NurbsCurve *incrv, Exporter_Info_AP203 *info) {
+ON_NurbsCurveCV_to_EntityAggregate(EntityAggregate *control_pnts, ON_NurbsCurve *incrv, ON_Brep_Info_AP203 *info) {
     ON_3dPoint cv_pnt;
     for (int i = 0; i < incrv->CVCount(); i++) {
 	SdaiCartesian_point *step_cartesian = (SdaiCartesian_point *)info->registry->ObjCreate("CARTESIAN_POINT");
@@ -74,7 +74,7 @@ ON_NurbsCurveKnots_to_Aggregates(IntAggregate *knot_multiplicities, RealAggregat
 /* For a rational B-Spline curve with weights, we need to create an aggregate type */
 
 STEPentity *
-Create_Rational_Curve_Aggregate(ON_NurbsCurve *ncurve, Exporter_Info_AP203 *info) {
+Create_Rational_Curve_Aggregate(ON_NurbsCurve *ncurve, ON_Brep_Info_AP203 *info) {
     STEPattribute *attr;
     STEPcomplex *stepcomplex;
     const char *entNmArr[8] = {"bounded_curve", "b_spline_curve", "b_spline_curve_with_knots",
@@ -144,7 +144,7 @@ Create_Rational_Curve_Aggregate(ON_NurbsCurve *ncurve, Exporter_Info_AP203 *info
 }
 
 bool
-ON_NurbsCurve_to_STEP(ON_NurbsCurve *n_curve, Exporter_Info_AP203 *info, int i)
+ON_NurbsCurve_to_STEP(ON_NurbsCurve *n_curve, ON_Brep_Info_AP203 *info, int i)
 {
     /* For rational curves, we need a composite type.  Otherwise, go with the BSpline curve with knots.*/
     if (n_curve->IsRational()) {

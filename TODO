@@ -84,6 +84,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* Update the comb "region lift" capability to handle automatic duplication
+  and substituion of the duplicate into the tree of combs who can't have
+  their definitions changed without impacting other geometry in the .g file.
+
 * change 'mirror' command offset to be prior to mirror instead of
   after, so that you can mirror intuitively over a specified point
   along a given axis.

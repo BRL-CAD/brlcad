@@ -92,7 +92,8 @@ extern union tree *do_region_end1(struct db_tree_state *tsp, const struct db_ful
 extern union tree *do_region_end2(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 extern union tree *nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 
-static const char usage[] = "Usage: %s [-b] [-e] [-v] [-xX lvl] [-d tolerance_distance (mm) ] [-a abs_tol (mm)] [-r rel_tol] [-n norm_tol] [-o out_file] [-u units] brlcad_db.g object(s)\n";
+static const char usage[] = "Usage: %s [-b] [-e] [-v] [-xX lvl] [-d tolerance_distance ] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] [-u units] brlcad_db.g object(s)\n\
+(units default to mm)\n";
 
 static char *tok_sep = " \t";
 static int NMG_debug; /* saved arg of -X, for longjmp handling */
@@ -104,7 +105,7 @@ static struct rt_tess_tol ttol;
 static struct bn_tol tol;
 static struct model *the_model;
 
-static char *units = (char *)NULL;
+static char *units = "mm";
 static fastf_t scale_factor = 1.0;
 
 static struct db_tree_state tree_state;	/* includes tol & model */
@@ -616,7 +617,7 @@ main(int argc, char **argv)
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "a:bd:en:o:r:vx:X:u:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "a:bd:en:o:r:vx:X:u:h?")) != -1) {
 	switch (c) {
 	    case 'a':		/* Absolute tolerance. */
 		ttol.abs = atof(bu_optarg);
@@ -655,24 +656,17 @@ main(int argc, char **argv)
 	    case 'u':
 		units = bu_strdup(bu_optarg);
 		scale_factor = bu_units_conversion(units);
-		if (ZERO(scale_factor)) {
+		if (ZERO(scale_factor))
 		    bu_exit(1, "Unrecognized units (%s)\n", units);
-		}
 		scale_factor = 1.0 / scale_factor;
 		break;
 	    default:
 		bu_exit(1, usage, argv[0]);
-		break;
 	}
     }
 
-    if (bu_optind + 1 >= argc) {
+    if (bu_optind + 1 >= argc)
 	bu_exit(1, usage, argv[0]);
-    }
-
-    if (!units) {
-	units = "mm";
-    }
 
     if ((bot_dump == 1) && (eval_all == 1)) {
 	bu_exit(1, "BOT Dump and Evaluate All are mutually exclusive\n");
@@ -911,10 +905,10 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 	is_light = 1;
     } else {
 	path_2_vrml_id(&shape_name, full_path);
-	fprintf(fp_out, "\t\tDEF %s Shape { \n", bu_vls_addr(&shape_name));
+	fprintf(fp_out, "\t\tDEF %s Shape {\n", bu_vls_addr(&shape_name));
 
 	fprintf(fp_out, "\t\t\t# Component_ID: %ld   %s\n", comb->region_id, full_path);
-	fprintf(fp_out, "\t\t\tappearance Appearance { \n");
+	fprintf(fp_out, "\t\t\tappearance Appearance {\n");
 
 	if (bu_strncmp("plastic", mat.shader, 7) == 0) {
 	    if (mat.shininess < 0) {
@@ -1024,9 +1018,9 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 
     if (!is_light) {
 	nmg_triangulate_model(m, tol2);
-	fprintf(fp_out, "\t\t\t} \n");
-	fprintf(fp_out, "\t\t\tgeometry IndexedFaceSet { \n");
-	fprintf(fp_out, "\t\t\t\tcoord Coordinate { \n");
+	fprintf(fp_out, "\t\t\t}\n");
+	fprintf(fp_out, "\t\t\tgeometry IndexedFaceSet {\n");
+	fprintf(fp_out, "\t\t\t\tcoord Coordinate {\n");
     }
 
     /* get list of vertices */

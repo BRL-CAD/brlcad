@@ -28,6 +28,9 @@
 #include <iostream>
 
 #include "bu.h"
+#include "rtgeom.h"
+#include "raytrace.h"
+#include "wdb.h"
 
 //
 // step-g related headers
@@ -40,6 +43,7 @@
 #include <STEPattribute.h>
 #include <SdaiHeaderSchema.h>
 #include "ON_Brep.h"
+#include "Comb_Tree.h"
 
 //
 // include NIST step related headers
@@ -125,32 +129,17 @@ main(int argc, char *argv[])
 	delete dotg;
 	return 1;
     }
+    struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
 
     struct rt_db_internal intern;
-    struct rt_brep_internal *bi;
     rt_db_get_internal(&intern, dp, dbip, bn_mat_identity, &rt_uniresource);
     RT_CK_DB_INTERNAL(&intern);
-    bi = (struct rt_brep_internal*)intern.idb_ptr;
     struct bu_vls scratch_string;
-    //RT_BREP_TEST_MAGIC(bi);
-    ON_Brep *brep = bi->brep;
-    ON_wString wstr;
-    ON_TextLog dump(wstr);
-    brep->Dump(dump);
-    ON_String ss = wstr;
-    //bu_log("Brep:\n %s\n", ss.Array());
     bu_vls_init(&scratch_string);
-
-    Exporter_Info_AP203 *info = new Exporter_Info_AP203();
-
-    info->split_closed = 0; /* For now, don't try splitting things - need some libbrep functionality before that can work */
 
     Registry *registry = new Registry(SchemaInit);
     InstMgr instance_list;
     STEPfile *sfile = new STEPfile(*registry, instance_list);
-
-    info->registry = registry;
-    info->instance_list = &instance_list;
 
     registry->ResetSchemas();
     registry->ResetEntities();
@@ -190,7 +179,17 @@ main(int argc, char *argv[])
     header_instances->Append((SDAI_Application_instance *)fs, completeSE);
 
     /* Now, add actual DATA */
-    ON_BRep_to_STEP(brep, info);
+    switch (intern.idb_minor_type) {
+	case DB5_MINORTYPE_BRLCAD_BREP:
+	    (void)ON_BRep_to_STEP(dp, &intern, registry, &instance_list);
+	    break;
+	case DB5_MINORTYPE_BRLCAD_COMBINATION:
+	    (void)Comb_Tree_to_STEP(dp, wdbp, &intern, registry, &instance_list);
+	    break;
+	default:
+	    bu_log("Primitive type of %s is not yet supported\n", argv[1]);
+	    break;
+    }
 
     /* Write STEP file */
     if (!bu_file_exists(output_file, NULL)) {

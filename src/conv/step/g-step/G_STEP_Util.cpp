@@ -59,7 +59,6 @@ XYZ_to_Direction(double x, double y, double z, SdaiDirection *step_direction) {
     coord_vals->AddNode(znode);
 }
 
-
 // Local Variables:
 // tab-width: 8
 // mode: C++

@@ -31,11 +31,11 @@
 #include <sys/stat.h>
 #include "bio.h"
 
-#include "bu.h"
+/* #include "bu.h" */
 #include "vmath.h"
 #include "bn.h"
 
-#include "bu_arg_parse.h"
+#include "bu_arg_parse.h" /* includes bu.h */
 
 /* declarations to support use of TCLAP arg parsing */
 static const char usage[] = "Example: dsp_add  dsp1.dsp  dsp2.dsp  dsp12added.dsp\n";
@@ -131,6 +131,7 @@ add_int(unsigned short *buf1, unsigned short *buf2, unsigned long count)
 
 }
 
+
 int
 main(int ac, char *av[])
 {
@@ -146,122 +147,105 @@ main(int ac, char *av[])
     unsigned short *buf1 = NULL;
     unsigned short *buf2 = NULL;
 
-    /* vars expected from cmd line parsing */
-    const char* dsp1_fname = NULL;
-    const char* dsp2_fname = NULL;
-    const char* dsp3_fname = NULL;
-    int arg_err = 0;
-    long has_force = 0;
-    long has_help  = 0;
+    /* for arg processing */
+    /* one bu_arg_vars pointer per cmd line var */
+    bu_arg_vars *h_arg    = NULL;
+    bu_arg_vars *f_arg    = NULL;
+    bu_arg_vars *dsp1_arg = NULL;
+    bu_arg_vars *dsp2_arg = NULL;
+    bu_arg_vars *dsp3_arg = NULL;
+    /* expandable container for the arg pointers */
+    bu_ptbl_t args = BU_PTBL_INIT_ZERO;
 
-    /* note the arg structs have to be static to compile */
-    /* FIXME: this '-?' arg doesn't wok correctly due to some TCLAPisms */
-    static bu_arg_vars h_arg = {
-      BU_ARG_SwitchArg,
+    /* vars expected from cmd line parsing */
+    int arg_err        = 0;
+    long has_force     = 0;
+    long has_help      = 0;
+    const char *dsp1_fname = NULL;
+    const char *dsp2_fname = NULL;
+    const char *dsp3_fname = NULL;
+
+    /* FIXME: this '-?' arg doesn't work correctly due to some TCLAPisms */
+    h_arg = bu_arg_SwitchArg(
       "?",
       "short-help",
       "Same as '-h' or '--help'",
-      BU_ARG_NOT_REQUIRED,
-      BU_ARG_NOT_REQUIRED,
-      {0},        /* value in first field of union */
-      BU_ARG_BOOL /* type in union */
-    };
+      "false"
+      );
 
     /* define a force option to allow user to shoot himself in the foot */
-    static bu_arg_vars f_arg = {
-      BU_ARG_SwitchArg,
+    f_arg = bu_arg_SwitchArg(
       "f",
       "force",
       "Allow overwriting existing files.",
-      BU_ARG_NOT_REQUIRED,
-      BU_ARG_NOT_REQUIRED,
-      {0},        /* value in first field of union */
-      BU_ARG_BOOL /* type in union */
-    };
+      "false"
+      );
 
     /* need two file names */
-    static bu_arg_vars dsp1_arg = {
-      BU_ARG_UnlabeledValueArg,
-      "",
+    dsp1_arg = bu_arg_UnlabeledValueArg(
       "dsp_infile1",
       "first dsp input file name",
+      "",
       BU_ARG_REQUIRED,
-      BU_ARG_REQUIRED,
-      {0},        /* value in first field of union */
-      BU_ARG_BOOL /* type in union */
-    };
+      BU_ARG_STRING
+      );
 
     /* need two file names */
-    static bu_arg_vars dsp2_arg = {
-      BU_ARG_UnlabeledValueArg,
-      "",
+    dsp2_arg = bu_arg_UnlabeledValueArg(
       "dsp_infile2",
       "second dsp input file name",
+      "",
       BU_ARG_REQUIRED,
-      BU_ARG_REQUIRED,
-      {0},        /* value in first field of union */
-      BU_ARG_BOOL /* type in union */
-    };
+      BU_ARG_STRING
+      );
 
     /* the output file name */
-    static bu_arg_vars dsp3_arg = {
-      BU_ARG_UnlabeledValueArg,
-      "",
+    dsp3_arg = bu_arg_UnlabeledValueArg(
       "dsp_outfile",
       "dsp output file name",
+      "",
       BU_ARG_REQUIRED,
-      BU_ARG_REQUIRED,
-      {0},        /* value in first field of union */
-      BU_ARG_BOOL /* type in union */
-    };
+      BU_ARG_STRING
+      );
 
     /* place the arg pointers in an array */
-    static bu_arg_vars *args[]
-      = {&h_arg, &f_arg,
-         &dsp1_arg, &dsp2_arg, &dsp3_arg,
-         NULL};
+    BU_PTBL_INIT(&args);
+    BU_ASSERT(BU_PTBL_IS_INITIALIZED(&args));
+    bu_ptbl_init(&args, 8, "arg ptr array");
 
-    /* for C90 we have to initialize a struct's union
-     * separately for other than its first field
-     */
-    dsp1_arg.val.s    = 0;
-    dsp1_arg.val_type = BU_ARG_STRING;
-
-    dsp2_arg.val.s    = 0;
-    dsp2_arg.val_type = BU_ARG_STRING;
-
-    dsp3_arg.val.s    = 0;
-    dsp3_arg.val_type = BU_ARG_STRING;
+    (void)bu_ptbl_ins(&args, (long*)h_arg);
+    (void)bu_ptbl_ins(&args, (long*)f_arg);
+    (void)bu_ptbl_ins(&args, (long*)dsp1_arg);
+    (void)bu_ptbl_ins(&args, (long*)dsp2_arg);
+    (void)bu_ptbl_ins(&args, (long*)dsp3_arg);
 
     /* parse the args */
-    arg_err = bu_arg_parse(args, ac, av);
+    arg_err = bu_arg_parse(&args, ac, av);
 
     if (arg_err == BU_ARG_PARSE_ERR) {
         /* the TCLAP exception handler has fired with its own message
-         * so need no words here */
+         * so need no message here */
         bu_exit(EXIT_SUCCESS, NULL);
     }
 
     /* Get the value parsed by each arg. */
-    has_force  = f_arg.val.l;
-    has_help   = h_arg.val.l;
-    dsp1_fname = dsp1_arg.val.s;
-    dsp2_fname = dsp2_arg.val.s;
-    dsp3_fname = dsp3_arg.val.s;
+    has_force  = bu_arg_get_bool(f_arg);
+    has_help   = bu_arg_get_bool(h_arg);
+    dsp1_fname = bu_arg_get_string(dsp1_arg);
+    dsp2_fname = bu_arg_get_string(dsp2_arg);
+    dsp3_fname = bu_arg_get_string(dsp3_arg);
 
     /* take appropriate action... */
 
-    /* note this exit is success because it is expected
+    /* note this exit is SUCCESS because it is expected
      * behavior--important for good auto-man-page handling */
     if (has_help) {
-      bu_arg_free(args);
       bu_exit(EXIT_SUCCESS, usage);
     }
 
     /* TCLAP doesn't check for confusion in file names */
     if (BU_STR_EQUAL(dsp3_fname, dsp1_fname)
         || BU_STR_EQUAL(dsp3_fname, dsp2_fname)) {
-      bu_arg_free(args);
       bu_exit(EXIT_FAILURE, "overwriting an input file (use the '-f' option to continue)\n");
     }
 
@@ -272,7 +256,6 @@ main(int ac, char *av[])
         unlink(dsp3_fname);
       }
       else {
-        bu_arg_free(args);
         bu_exit(EXIT_FAILURE, "overwriting an existing file (use the '-f' option to continue)\n");
       }
     }
@@ -281,15 +264,13 @@ main(int ac, char *av[])
     in1 = fopen(dsp1_fname, "r");
     if (!in1) {
       perror(dsp1_fname);
-      bu_arg_free(args);
-      bu_exit(EXIT_FAILURE, "ERROR: input file open failure\n");
+      bu_arg_exit(EXIT_FAILURE, "ERROR: input file open failure\n", &args);
     }
 
     if (fstat(fileno(in1), &sb)) {
       perror(dsp1_fname);
       fclose(in1);
-      bu_arg_free(args);
-      bu_exit(EXIT_FAILURE, "ERROR: input file stat failure\n");
+      bu_arg_exit(EXIT_FAILURE, "ERROR: input file stat failure\n", &args);
     }
 
     /* save size of first input file for comparison with other two */
@@ -298,8 +279,7 @@ main(int ac, char *av[])
     if (!count) {
       perror(dsp1_fname);
       fclose(in1);
-      bu_arg_free(args);
-      bu_exit(EXIT_FAILURE, "zero-length input file\n");
+      bu_arg_exit(EXIT_FAILURE, "zero-length input file\n", &args);
     }
 
     buf1 = (unsigned short *)bu_malloc((size_t)sb.st_size, "buf1");
@@ -308,16 +288,14 @@ main(int ac, char *av[])
     if (!in2) {
       perror(dsp2_fname);
       fclose(in1);
-      bu_arg_free(args);
-      bu_exit(EXIT_FAILURE, "ERROR: input file open failure\n");
+      bu_arg_exit(EXIT_FAILURE, "ERROR: input file open failure\n", &args);
     }
 
     if (fstat(fileno(in2), &sb)) {
       perror(dsp2_fname);
       fclose(in1);
       fclose(in2);
-      bu_arg_free(args);
-      bu_exit(EXIT_FAILURE, "ERROR: input file stat failure\n");
+      bu_arg_exit(EXIT_FAILURE, "ERROR: input file stat failure\n", &args);
     }
 
     /* check for zero-size file */
@@ -325,15 +303,13 @@ main(int ac, char *av[])
       perror(dsp2_fname);
       fclose(in1);
       fclose(in2);
-      bu_arg_free(args);
-      bu_exit(EXIT_FAILURE, "ERROR: zero-length input file\n");
+      bu_arg_exit(EXIT_FAILURE, "ERROR: zero-length input file\n", &args);
     }
 
     if ((size_t)sb.st_size != count) {
       fclose(in1);
       fclose(in2);
-      bu_arg_free(args);
-      bu_exit(EXIT_FAILURE, "ERROR: input file size mis-match\n");
+      bu_arg_exit(EXIT_FAILURE, "ERROR: input file size mis-match\n", &args);
     }
 
     /* the output file is now named instead of being redirected */
@@ -343,8 +319,7 @@ main(int ac, char *av[])
       fclose(in1);
       fclose(in2);
       fclose(out1);
-      bu_arg_free(args);
-      bu_exit(EXIT_FAILURE, "ERROR: output file open failure\n");
+      bu_arg_exit(EXIT_FAILURE, "ERROR: output file open failure\n", &args);
     }
 
     buf2 = (unsigned short *)bu_malloc((size_t)sb.st_size, "buf2");
@@ -358,8 +333,7 @@ main(int ac, char *av[])
         fclose(in1);
         fclose(in2);
         fclose(out1);
-        bu_arg_free(args);
-	bu_exit(EXIT_FAILURE, "ERROR: input file short read count\n");
+	bu_arg_exit(EXIT_FAILURE, "ERROR: input file short read count\n", &args);
     }
 
     ret = fread(buf2, sizeof(short), count, in2);
@@ -368,7 +342,7 @@ main(int ac, char *av[])
         fclose(in1);
         fclose(in2);
         fclose(out1);
-	bu_exit(EXIT_FAILURE, "ERROR: input file short read count\n");
+	bu_arg_exit(EXIT_FAILURE, "ERROR: input file short read count\n", &args);
     }
 
     /* Convert from network to host format */
@@ -400,11 +374,10 @@ main(int ac, char *av[])
         fclose(in1);
         fclose(in2);
         fclose(out1);
-        bu_arg_free(args);
-	bu_exit(EXIT_FAILURE, "ERROR: count error writing data\n");
+	bu_arg_exit(EXIT_FAILURE, "ERROR: count error writing data\n", &args);
     }
 
-    bu_arg_free(args);
+    bu_arg_free(&args);
 
     return 0;
 }

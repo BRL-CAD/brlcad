@@ -3769,6 +3769,18 @@ RT_EXPORT extern struct bu_ptbl *db_search_paths_obj(const char *plan_string,
 	                                             struct directory **paths,
 	                                             struct rt_wdb *wdbp);
 
+/* For situations where performance is critical and there are no
+ * search criteria that depend on depth (for example, wanting a list
+ * of all brep objects with name matching pattern *.b) a truly flat
+ * itearation through the directory objects will be much faster.
+ *
+ * Returns a bu_ptbl of directory pointers, since full paths are
+ * meaningless in this type of search
+ */
+RT_EXPORT extern struct bu_ptbl *db_search_flat(const char *plan_string,
+	                                            struct rt_wdb *wdbp,
+						    int flags);
+
 /* db_open.c */
 /**
  * D B _ S Y N C
@@ -5025,24 +5037,19 @@ RT_EXPORT extern int db_ls(const struct db_i *dbip,
 /**
  * convert an argv list of names to a directory pointer array.
  *
- * Because the results of the conversion may be RT_DIR_NULL, it
- * is necessary to specify the size of the array with argc rather
- * than rely on NULL termination
+ * If db_lookup fails for any individual argv, an empty directory
+ * structure is created and assigned the name and RT_DIR_PHONY_ADDR
+ *
+ * The returned directory ** structure is NULL terminated.
  */
 RT_EXPORT extern struct directory **db_argv_to_dpv(const struct db_i *dbip,
-	                                           int argc,
 						   const char **argv);
 
 
 /**
  * convert a directory pointer array to an argv char pointer array.
- *
- * Because there may be RT_DIR_NULL entries in the array, it
- * is necessary to specify the size of the array with argc rather
- * than rely on NULL termination.
  */
-RT_EXPORT extern char **db_dpv_to_argv(struct directory **dpv,
-	                               int argc);
+RT_EXPORT extern char **db_dpv_to_argv(struct directory **dpv);
 
 
 /* db_flags.c */

@@ -192,7 +192,7 @@ rt_hrt_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     f = hip->xdir[X];
     (*min)[X] = hip->v[X] - f * 1.25;
     (*max)[X] = hip->v[X] + f * 1.25;
-
+    
     /* Y */
     f = hip->ydir[Y];
     (*min)[Y] = hip->v[Y] - f;
@@ -697,7 +697,6 @@ rt_hrt_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
     fy = hitp->hit_vpriv[Y] * (12/27 * w * w - 80/3 * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z]);
     fz = (w * w - 0.5 * hitp->hit_vpriv[Z] * (hitp->hit_vpriv[X] * hitp->hit_vpriv[X] + 9/80 * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y])) * hitp->hit_vpriv[Z];
     VSET(work, fx, fy, fz);
-    VUNITIZE(work);
 
     MAT3X3VEC(hitp->hit_normal, hrt->hrt_invR, work);
 }
@@ -749,6 +748,58 @@ rt_hrt_class(void)
 
 
 /**
+ * R T _ H R T _ 2 4 P T S
+ *
+ * Similar to code used by the ELL 
+ */
+#define HRTOUT(n) ov+(n-1)*5
+void
+rt_hrt_24pts(fastf_t *ov, fastf_t *V, fastf_t *A, fastf_t *B)
+{
+    static fastf_t c, d, e, f, g, h, i, j, k, l;
+
+    c = h = .96593;		/* cos(15.0 degrees) */
+    d = i = 0.86603;            /* cos(30.0 degrees) */
+    e = j = M_SQRT1_2;		/* cos(45.0 degrees) */
+    f = k = 0.5;                /* cos(60.0 degrees) */
+    g = l = .25882;		/* cos(75.0 degrees) */
+
+    /*
+     * For angle theta, compute surface point as
+     *
+     * V + cos(theta) * A + sin(theta) * B
+     *
+     * note that sin(theta) is cos(90-theta); arguments in degrees.
+     */
+
+    VADD2(HRTOUT(1), V, A);
+    VJOIN2(HRTOUT(2), V, c, A, h, B);
+    VJOIN2(HRTOUT(3), V, d, A, i, B);
+    VJOIN2(HRTOUT(4), V, e, A, j, B);
+    VJOIN2(HRTOUT(5), V, f, A, k, B);
+    VJOIN2(HRTOUT(6), V, g, A, l, B);
+    VADD2(HRTOUT(7), V, B);
+    VJOIN2(HRTOUT(8), V, -g, A, h, B);
+    VJOIN2(HRTOUT(9), V, -f, A, i, B);
+    VJOIN2(HRTOUT(10), V, -e, A, j, B);
+    VJOIN2(HRTOUT(11), V, -d, A, k, B);
+    VJOIN2(HRTOUT(12), V, -c, A, l, B);
+    VSUB2(HRTOUT(13), V, A);
+    VJOIN2(HRTOUT(14), V, -g, A, -l, B);
+    VJOIN2(HRTOUT(15), V, -f, A, -k, B);
+    VJOIN2(HRTOUT(16), V, -e, A, -j, B);
+    VJOIN2(HRTOUT(17), V, -d, A, -i, B);
+    VJOIN2(HRTOUT(18), V, -c, A, -h, B);
+    VSUB2(HRTOUT(19), V, B);
+    VJOIN2(HRTOUT(20), V, g, A, -h, B);
+    VJOIN2(HRTOUT(21), V, f, A, -i, B);
+    VJOIN2(HRTOUT(22), V, e, A, -j, B);
+    VJOIN2(HRTOUT(23), V, d, A, -k, B);
+    VJOIN2(HRTOUT(24), V, c, A, -l, B);
+}
+
+
+/**
  * R T _ H R T _ A D A P T I V E _ P L O T
  */
 int
@@ -763,9 +814,30 @@ rt_hrt_adaptive_plot()
  * R T _ H R T _ P L O T
  */
 int
-rt_hrt_plot(const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
-    bu_log("rt_hrt_plot: Not implemented yet!\n");
+    int i;
+    struct rt_hrt_internal *hip;
+    fastf_t top[24*3];
+    fastf_t middle[24*3];
+
+    BU_CK_LIST_HEAD(vhead);
+    RT_CK_DB_INTERNAL(ip);
+    hip = (struct rt_hrt_internal *)ip->idb_ptr;
+    RT_HRT_CK_MAGIC(hip);
+    
+    rt_hrt_24pts(top, hip->v, hip->xdir, hip->ydir);
+    rt_hrt_24pts(middle, hip->v, hip->xdir, hip->zdir);
+    
+    RT_ADD_VLIST(vhead, &top[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    for (i=0; i<24; i++) {
+	RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+    }
+
+    RT_ADD_VLIST(vhead, &middle[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    for (i=0; i<24; i++) {
+	RT_ADD_VLIST(vhead, &middle[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+    }
     return 0;
 }
 
