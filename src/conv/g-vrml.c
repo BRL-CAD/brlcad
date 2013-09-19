@@ -92,7 +92,7 @@ extern union tree *do_region_end1(struct db_tree_state *tsp, const struct db_ful
 extern union tree *do_region_end2(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 extern union tree *nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 
-static const char usage[] = "Usage: %s [-b] [-e] [-v] [-xX lvl] [-d tolerance_distance ] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] [-u units] brlcad_db.g object(s)\n\
+static const char usage[] = "Usage: %s [-b] [-e] [-v] [-xX lvl] [-d tolerance_distance] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] [-u units] brlcad_db.g object(s)\n\
 (units default to mm)\n";
 
 static char *tok_sep = " \t";
