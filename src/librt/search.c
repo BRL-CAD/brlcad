@@ -275,7 +275,7 @@ db_fullpath_traverse(struct db_i *dbip,
 }
 
 
-HIDDEN static struct db_plan_t *
+HIDDEN struct db_plan_t *
 palloc(enum db_search_ntype t, int (*f)(struct db_plan_t *, struct db_node_t *, struct db_i *, struct rt_wdb *, struct bu_ptbl *))
 {
     struct db_plan_t *newplan;
