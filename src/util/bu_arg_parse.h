@@ -103,6 +103,9 @@ int bu_arg_parse(bu_ptbl_t *args, int argc, char * const argv[]);
 /* free arg memory for any strings */
 void bu_arg_free(bu_ptbl_t *args);
 
+/* exit AND free memory */
+void bu_arg_exit(const int status, const char *msg, bu_ptbl_t *args);
+
 /* all in this header MUST have "C" linkage */
 #ifdef __cplusplus
 } /* extern "C" { */

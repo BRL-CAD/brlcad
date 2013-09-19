@@ -520,3 +520,10 @@ bu_arg_free(bu_ptbl_t *args)
   // now free the ptbl memory
   BU_FREE(args->buffer, long*);
 }
+
+extern "C" void
+bu_arg_exit(const int status, const char *msg, bu_ptbl_t *args)
+{
+  bu_arg_free(args);
+  bu_exit(status, msg);
+}

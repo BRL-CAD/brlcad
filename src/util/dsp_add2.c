@@ -132,16 +132,6 @@ add_int(unsigned short *buf1, unsigned short *buf2, unsigned long count)
 }
 
 
-/* expandable container for the arg pointers */
-bu_ptbl_t args = BU_PTBL_INIT_ZERO;
-
-/* function to clear memory at exit */
-void
-free_mem_atexit(void)
-{
-  bu_arg_free(&args);
-}
-
 int
 main(int ac, char *av[])
 {
@@ -164,6 +154,8 @@ main(int ac, char *av[])
     bu_arg_vars *dsp1_arg = NULL;
     bu_arg_vars *dsp2_arg = NULL;
     bu_arg_vars *dsp3_arg = NULL;
+    /* expandable container for the arg pointers */
+    bu_ptbl_t args = BU_PTBL_INIT_ZERO;
 
     /* vars expected from cmd line parsing */
     int arg_err        = 0;
@@ -172,12 +164,6 @@ main(int ac, char *av[])
     const char *dsp1_fname = NULL;
     const char *dsp2_fname = NULL;
     const char *dsp3_fname = NULL;
-
-    /* for arg cleanup at exit */
-    int res = atexit(free_mem_atexit);
-    if (res != 0) {
-      bu_exit(EXIT_FAILURE, "cannot set exit function\n");
-    }
 
     /* FIXME: this '-?' arg doesn't work correctly due to some TCLAPisms */
     h_arg = bu_arg_SwitchArg(
@@ -278,13 +264,13 @@ main(int ac, char *av[])
     in1 = fopen(dsp1_fname, "r");
     if (!in1) {
       perror(dsp1_fname);
-      bu_exit(EXIT_FAILURE, "ERROR: input file open failure\n");
+      bu_arg_exit(EXIT_FAILURE, "ERROR: input file open failure\n", &args);
     }
 
     if (fstat(fileno(in1), &sb)) {
       perror(dsp1_fname);
       fclose(in1);
-      bu_exit(EXIT_FAILURE, "ERROR: input file stat failure\n");
+      bu_arg_exit(EXIT_FAILURE, "ERROR: input file stat failure\n", &args);
     }
 
     /* save size of first input file for comparison with other two */
@@ -293,7 +279,7 @@ main(int ac, char *av[])
     if (!count) {
       perror(dsp1_fname);
       fclose(in1);
-      bu_exit(EXIT_FAILURE, "zero-length input file\n");
+      bu_arg_exit(EXIT_FAILURE, "zero-length input file\n", &args);
     }
 
     buf1 = (unsigned short *)bu_malloc((size_t)sb.st_size, "buf1");
@@ -302,14 +288,14 @@ main(int ac, char *av[])
     if (!in2) {
       perror(dsp2_fname);
       fclose(in1);
-      bu_exit(EXIT_FAILURE, "ERROR: input file open failure\n");
+      bu_arg_exit(EXIT_FAILURE, "ERROR: input file open failure\n", &args);
     }
 
     if (fstat(fileno(in2), &sb)) {
       perror(dsp2_fname);
       fclose(in1);
       fclose(in2);
-      bu_exit(EXIT_FAILURE, "ERROR: input file stat failure\n");
+      bu_arg_exit(EXIT_FAILURE, "ERROR: input file stat failure\n", &args);
     }
 
     /* check for zero-size file */
@@ -317,13 +303,13 @@ main(int ac, char *av[])
       perror(dsp2_fname);
       fclose(in1);
       fclose(in2);
-      bu_exit(EXIT_FAILURE, "ERROR: zero-length input file\n");
+      bu_arg_exit(EXIT_FAILURE, "ERROR: zero-length input file\n", &args);
     }
 
     if ((size_t)sb.st_size != count) {
       fclose(in1);
       fclose(in2);
-      bu_exit(EXIT_FAILURE, "ERROR: input file size mis-match\n");
+      bu_arg_exit(EXIT_FAILURE, "ERROR: input file size mis-match\n", &args);
     }
 
     /* the output file is now named instead of being redirected */
@@ -333,7 +319,7 @@ main(int ac, char *av[])
       fclose(in1);
       fclose(in2);
       fclose(out1);
-      bu_exit(EXIT_FAILURE, "ERROR: output file open failure\n");
+      bu_arg_exit(EXIT_FAILURE, "ERROR: output file open failure\n", &args);
     }
 
     buf2 = (unsigned short *)bu_malloc((size_t)sb.st_size, "buf2");
@@ -347,7 +333,7 @@ main(int ac, char *av[])
         fclose(in1);
         fclose(in2);
         fclose(out1);
-	bu_exit(EXIT_FAILURE, "ERROR: input file short read count\n");
+	bu_arg_exit(EXIT_FAILURE, "ERROR: input file short read count\n", &args);
     }
 
     ret = fread(buf2, sizeof(short), count, in2);
@@ -356,7 +342,7 @@ main(int ac, char *av[])
         fclose(in1);
         fclose(in2);
         fclose(out1);
-	bu_exit(EXIT_FAILURE, "ERROR: input file short read count\n");
+	bu_arg_exit(EXIT_FAILURE, "ERROR: input file short read count\n", &args);
     }
 
     /* Convert from network to host format */
@@ -388,8 +374,10 @@ main(int ac, char *av[])
         fclose(in1);
         fclose(in2);
         fclose(out1);
-	bu_exit(EXIT_FAILURE, "ERROR: count error writing data\n");
+	bu_arg_exit(EXIT_FAILURE, "ERROR: count error writing data\n", &args);
     }
+
+    bu_arg_free(&args);
 
     return 0;
 }
