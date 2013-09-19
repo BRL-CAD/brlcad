@@ -2437,7 +2437,6 @@ ON_Intersect(const ON_Surface* surfA,
     ON_3dPointArray curvept, tmp_curvept;
     ON_2dPointArray curveuv, curvest, tmp_curveuv, tmp_curvest;
 
-    // Deal with boundaries with curve-surface intersections.
     // Overlap detection:
     // According to the Theorem 3 in paper:
     // http://libgen.org/scimag1/10.1016/S0010-4485%252896%252900099-1.pdf
@@ -2449,6 +2448,7 @@ ON_Intersect(const ON_Surface* surfA,
     // (See ON_NurbsSurface::ConvertSpanToBezier()).
     // So we actually don't need to generate the Bezier patches explicitly,
     // and we can get the boundaries of them using IsoCurve() on knots.
+    // Deal with boundaries with curve-surface intersections.
 
     ON_SimpleArray<OverlapSegment*> overlaps;
     for (int i = 0; i < 4; i++) {
@@ -3008,7 +3008,9 @@ ON_Intersect(const ON_Surface* surfA,
     if (DEBUG_BREP_INTERSECT)
 	bu_log("We get %d intersection bounding boxes.\n", candidates.size());
 
-    /* Third step: get the intersection points using triangular approximation. */
+    /* Third step: get the intersection points using triangular approximation,
+     * and then Newton iterations.
+     */
     for (NodePairs::iterator i = candidates.begin(); i != candidates.end(); i++) {
 	// We have arrived at the bottom of the trees.
 	// Get an estimate of the intersection point lying on the intersection curve
@@ -3357,7 +3359,7 @@ ON_Intersect(const ON_Surface* surfA,
 	}
     }
 
-    // Generate NURBS curves from the polylines.
+    // Generate ON_Curves from the polylines.
     ON_SimpleArray<ON_Curve *> intersect3d, intersect_uv2d, intersect_st2d;
     ON_SimpleArray<int> single_pts;
     for (unsigned int i = 0; i < polylines.size(); i++) {
@@ -3480,7 +3482,7 @@ ON_Intersect(const ON_Surface* surfA,
     }
 
     for (int i = 0; i < single_pts.Count(); i++) {
-	// Check duplication (point-curve intersection)
+	// Check if the single point is duplicated (point-curve intersection)
 	int j;
 	for (j = 0; j < intersect3d.Count(); j++) {
 	    ON_ClassArray<ON_PX_EVENT> px_event;
