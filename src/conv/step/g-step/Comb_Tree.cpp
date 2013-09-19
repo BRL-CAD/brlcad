@@ -25,6 +25,7 @@
  */
 
 #include <map>
+#include <set>
 #include "bu.h"
 #include "raytrace.h"
 #include "STEPWrapper.h"
@@ -76,8 +77,8 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, struct rt_db_intern
 
     std::map<struct directory *, STEPentity *> brep_to_step;
     std::map<struct directory *, STEPentity *> comb_to_step;
+    std::set<struct directory *> non_wrapper_combs;
 
-    struct rt_comb_internal *comb = (struct rt_comb_internal *)(intern->idb_ptr);
 
     /* Find all solids, make instances of them, insert them, and stick in *dp to STEPentity* map */
     const char *brep_search = "-type brep";
@@ -88,6 +89,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, struct rt_db_intern
 	rt_db_get_internal(&brep_intern, curr_dp, wdbp->dbip, bn_mat_identity, &rt_uniresource);
 	RT_CK_DB_INTERNAL(&brep_intern);
 	brep_to_step[curr_dp] = ON_BRep_to_STEP(curr_dp, &brep_intern, registry, instance_list);
+	non_wrapper_combs.insert(curr_dp);
 	bu_log("Brep: %s\n", curr_dp->d_namep);
     }
 
@@ -107,12 +109,25 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, struct rt_db_intern
     struct bu_ptbl *comb_wrappers = db_search_path_obj(comb_wrapper_search, dp, wdbp);
     for (int j = (int)BU_PTBL_LEN(comb_wrappers) - 1; j >= 0; j--){
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(comb_wrappers, j);
-	struct bu_ptbl *comb_child = db_search_path_obj(comb_child_search, curr_dp, wdbp);
-	struct directory *child = (struct directory *)BU_PTBL_GET(comb_child, 0);
-	bu_ptbl_free(comb_child);
-	bu_free(comb_child, "free search result");
-	comb_to_step[curr_dp] = brep_to_step.find(child)->second;
-	bu_log("Comb wrapper: %s\n", curr_dp->d_namep);
+	/* Satisfying the search pattern isn't enough to qualify as a wrapping comb - there
+	 * must also be no matrix hanging over the primitive */
+	struct rt_db_internal comb_intern;
+	rt_db_get_internal(&comb_intern, curr_dp, wdbp->dbip, bn_mat_identity, &rt_uniresource);
+	RT_CK_DB_INTERNAL(&comb_intern);
+	struct rt_comb_internal *comb = (struct rt_comb_internal *)(intern->idb_ptr);
+	union tree *curr_node = db_find_named_leaf(comb->tree, curr_dp->d_namep);
+	if (!(curr_node->tr_l.tl_mat)) {
+	    struct bu_ptbl *comb_child = db_search_path_obj(comb_child_search, curr_dp, wdbp);
+	    struct directory *child = (struct directory *)BU_PTBL_GET(comb_child, 0);
+	    bu_ptbl_free(comb_child);
+	    bu_free(comb_child, "free search result");
+	    comb_to_step[curr_dp] = brep_to_step.find(child)->second;
+	    bu_log("Comb wrapper: %s\n", curr_dp->d_namep);
+	}else{
+	    comb_to_step[curr_dp] = Comb_to_STEP(curr_dp, registry, instance_list);
+	    non_wrapper_combs.insert(curr_dp);
+	    bu_log("Comb non-wrapper (matrix over primitive): %s\n", curr_dp->d_namep);
+	}
     }
 
     /* For each non-wrapper comb, get list of immediate children and call Assembly Product,
@@ -121,17 +136,26 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, struct rt_db_intern
 
     /* TODO - need to figure out how to pull matrices, translate them into STEP, and
      * where to associate them.*/
-    struct bu_ptbl *comb_children = db_search_path_obj(comb_child_search, dp, wdbp);
-    for (int j = (int)BU_PTBL_LEN(comb_children) - 1; j >= 0; j--){
-	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(comb_children, j);
-	bu_log("%s under %s: ", curr_dp->d_namep, dp->d_namep);
-	union tree *curr_node = db_find_named_leaf(comb->tree, curr_dp->d_namep);
-	matp_t curr_matrix = curr_node->tr_l.tl_mat;
-	if(curr_matrix) {
-	    bn_mat_print(curr_dp->d_namep, curr_matrix);
-	} else {
-	    bu_log("identity matrix\n");
+    const char *comb_children_search = "-type comb -mindepth 1 -maxdepth 1";
+    for (std::set<struct directory *>::iterator it=non_wrapper_combs.begin(); it != non_wrapper_combs.end(); ++it) {
+	struct bu_ptbl *comb_children = db_search_path_obj(comb_children_search, (*it), wdbp);
+	struct rt_db_internal comb_intern;
+	rt_db_get_internal(&comb_intern, (*it), wdbp->dbip, bn_mat_identity, &rt_uniresource);
+	RT_CK_DB_INTERNAL(&comb_intern);
+	struct rt_comb_internal *comb = (struct rt_comb_internal *)(intern->idb_ptr);
+	for (int j = (int)BU_PTBL_LEN(comb_children) - 1; j >= 0; j--){
+	    struct directory *curr_dp = (struct directory *)BU_PTBL_GET(comb_children, j);
+	    bu_log("%s under %s: ", curr_dp->d_namep, (*it)->d_namep);
+	    union tree *curr_node = db_find_named_leaf(comb->tree, curr_dp->d_namep);
+	    matp_t curr_matrix = curr_node->tr_l.tl_mat;
+	    if(curr_matrix) {
+		bn_mat_print(curr_dp->d_namep, curr_matrix);
+	    } else {
+		bu_log("identity matrix\n");
+	    }
 	}
+	bu_ptbl_free(comb_children);
+	bu_free(comb_children, "free search result");
     }
 
     return toplevel_comb;
