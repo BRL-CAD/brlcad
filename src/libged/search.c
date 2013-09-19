@@ -54,17 +54,23 @@ _path_scrub(struct bu_vls *path)
     const char *normalized;
     int islocal = 1;
 
-    if (bu_vls_addr(path)[0] == '/') islocal = 0;
+    if (!path)
+	return 0;
+
+    if (bu_vls_addr(path)[0] == '/')
+	islocal = 0;
+
     normalized = db_normalize(bu_vls_addr(path));
+
     if (normalized && !BU_STR_EQUAL(normalized, "/")) {
 	char *basename = bu_basename(normalized);
 	bu_vls_sprintf(&tmp, "%s", basename);
 	bu_free(basename, "free bu_basename string (caller's responsibility per bu.h)");
 	bu_vls_sprintf(path, "%s", bu_vls_addr(&tmp));
+	bu_vls_free(&tmp);
     } else {
 	bu_vls_sprintf(path, "%s", "/");
     }
-    bu_vls_free(&tmp);
 
     return islocal;
 }
@@ -73,6 +79,9 @@ _path_scrub(struct bu_vls *path)
 HIDDEN void
 _ged_free_search_set(struct bu_ptbl *search_set)
 {
+    if (!search_set)
+	return;
+
     for (int i = (int)BU_PTBL_LEN(search_set) - 1; i >= 0; i--) {
 	struct ged_search *search = (struct ged_search *)BU_PTBL_GET(search_set, i);
 
@@ -95,6 +104,9 @@ _ged_free_search_set(struct bu_ptbl *search_set)
 HIDDEN int
 _ged_plan_item(char *arg)
 {
+    if (!arg)
+	return 0;
+
     if (arg[0] == '-') return 1;
     if (arg[0] == '!') return 1;
     if (arg[0] == '(') return 1;
