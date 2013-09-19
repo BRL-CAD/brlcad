@@ -109,6 +109,8 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, struct rt_db_intern
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(comb_wrappers, j);
 	struct bu_ptbl *comb_child = db_search_path_obj(comb_child_search, curr_dp, wdbp);
 	struct directory *child = (struct directory *)BU_PTBL_GET(comb_child, 0);
+	bu_ptbl_free(comb_child);
+	bu_free(comb_child, "free search result");
 	comb_to_step[curr_dp] = brep_to_step.find(child)->second;
 	bu_log("Comb wrapper: %s\n", curr_dp->d_namep);
     }
@@ -119,10 +121,18 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, struct rt_db_intern
 
     /* TODO - need to figure out how to pull matricies, translate them into STEP, and
      * where to associate them.*/
-
-    //union tree *curr_node = db_find_named_leaf(comb->tree, curr_dp->d_namep)
-    //matp_t curr_matrix = curr_node->tr_l.tl_mat;
-    //bn_mat_print(curr_dp->d_namep, curr_matrix);
+    struct bu_ptbl *comb_children = db_search_path_obj(comb_child_search, dp, wdbp);
+    for (int j = (int)BU_PTBL_LEN(comb_children) - 1; j >= 0; j--){
+	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(comb_children, j);
+	bu_log("%s under %s: ", curr_dp->d_namep, dp->d_namep);
+	union tree *curr_node = db_find_named_leaf(comb->tree, curr_dp->d_namep);
+	matp_t curr_matrix = curr_node->tr_l.tl_mat;
+	if(curr_matrix) {
+	    bn_mat_print(curr_dp->d_namep, curr_matrix);
+	} else {
+	    bu_log("identity matrix\n");
+	}
+    }
 
     return toplevel_comb;
 }
