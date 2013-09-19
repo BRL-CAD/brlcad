@@ -1562,7 +1562,7 @@ ON_Intersect(const ON_Curve* curveA,
 
 			for (int j = 0; j < count; j++) {
 			    if (intersections >= 2) break;
-			    // Convert from the boxes' domain to the whold surface's domain
+			    // Convert from the boxes' domain to the whole surface's domain
 			    double surf_u = 0.0, surf_v = 0.0;
 			    switch (boundary_index[j]) {
 			    case 0:

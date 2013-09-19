@@ -28,10 +28,10 @@
 
 #include "ON_Brep.h"
 
-STEPentity *Comb_Tree_to_STEP(struct directory *dp, 
-                              struct rt_wdb *wdbp, 
-	                      struct rt_db_internal *intern, 
-                              Registry *registry, 
+STEPentity *Comb_Tree_to_STEP(struct directory *dp,
+                              struct rt_wdb *wdbp,
+	                      struct rt_db_internal *intern,
+                              Registry *registry,
                               InstMgr *instance_list);
 
 #endif /* COMB_TREE_H_ */

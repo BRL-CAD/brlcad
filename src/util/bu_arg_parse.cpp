@@ -94,7 +94,7 @@ bu_arg_get_string(bu_arg_vars *arg)
 }
 
 /**
- * general contructor for bu_arg_vars
+ * general constructor for bu_arg_vars
  */
 bu_arg_vars *
 bu_arg_init()

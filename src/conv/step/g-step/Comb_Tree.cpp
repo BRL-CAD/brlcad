@@ -19,7 +19,7 @@
  */
 /** @file Comb_Tree.cpp
  *
- * File for writing out a combination and its tree contentents 
+ * File for writing out a combination and its tree contents
  * into the STEPcode containers
  *
  */
@@ -119,7 +119,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, struct rt_db_intern
      * which will define the relationships between the comb and its children using
      * the appropriate step foo and the pointers in the map.*/
 
-    /* TODO - need to figure out how to pull matricies, translate them into STEP, and
+    /* TODO - need to figure out how to pull matrices, translate them into STEP, and
      * where to associate them.*/
     struct bu_ptbl *comb_children = db_search_path_obj(comb_child_search, dp, wdbp);
     for (int j = (int)BU_PTBL_LEN(comb_children) - 1; j >= 0; j--){

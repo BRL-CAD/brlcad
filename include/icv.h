@@ -705,7 +705,7 @@ typedef enum {
  * @param out_width Out Width.
  * @param out_height Out Height.
  * @param factor Integer type data representing the factor to be
- * shrinked
+ * shrunken
  * @return 0 on success and -1 on failure.
  */
 ICV_EXPORT int icv_resize(icv_image_t *bif, ICV_RESIZE_METHOD method, unsigned int out_width, unsigned int out_height, unsigned int factor);
