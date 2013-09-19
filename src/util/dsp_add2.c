@@ -229,11 +229,11 @@ main(int ac, char *av[])
     }
 
     /* Get the value parsed by each arg. */
-    has_force  = bu_arg_get_bool_value(f_arg);
-    has_help   = bu_arg_get_bool_value(h_arg);
-    dsp1_fname = bu_arg_get_string_value(dsp1_arg);
-    dsp2_fname = bu_arg_get_string_value(dsp2_arg);
-    dsp3_fname = bu_arg_get_string_value(dsp3_arg);
+    has_force  = bu_arg_get_bool(f_arg);
+    has_help   = bu_arg_get_bool(h_arg);
+    dsp1_fname = bu_arg_get_string(dsp1_arg);
+    dsp2_fname = bu_arg_get_string(dsp2_arg);
+    dsp3_fname = bu_arg_get_string(dsp3_arg);
 
     /* take appropriate action... */
 

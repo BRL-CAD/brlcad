@@ -92,10 +92,10 @@ bu_arg_UnlabeledValueArg(const char *name,
                          const bu_arg_req_t required,
                          const bu_arg_valtype_t val_typ);
 /* the getters */
-long bu_arg_get_bool_value(bu_arg_vars *arg);
-long bu_arg_get_long_value(bu_arg_vars *arg);
-double bu_arg_get_double_value(bu_arg_vars *arg);
-const char *bu_arg_get_string_value(bu_arg_vars *arg);
+long bu_arg_get_bool(bu_arg_vars *arg);
+long bu_arg_get_long(bu_arg_vars *arg);
+double bu_arg_get_double(bu_arg_vars *arg);
+const char *bu_arg_get_string(bu_arg_vars *arg);
 
 /* the action: all in one function */
 int bu_arg_parse(bu_ptbl_t *args, int argc, char * const argv[]);

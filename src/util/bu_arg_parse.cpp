@@ -70,25 +70,25 @@ static vector<Arg*> Arg_pointers;
  * get a value for an arg
  */
 long
-bu_arg_get_bool_value(bu_arg_vars *arg)
+bu_arg_get_bool(bu_arg_vars *arg)
 {
   return (arg->val.u.l ? 1 : 0);
 }
 
 long
-bu_arg_get_long_value(bu_arg_vars *arg)
+bu_arg_get_long(bu_arg_vars *arg)
 {
   return arg->val.u.l;
 }
 
 double
-bu_arg_get_double_value(bu_arg_vars *arg)
+bu_arg_get_double(bu_arg_vars *arg)
 {
   return arg->val.u.d;
 }
 
 const char *
-bu_arg_get_string_value(bu_arg_vars *arg)
+bu_arg_get_string(bu_arg_vars *arg)
 {
   return arg->val.u.s.vls_str;
 }
