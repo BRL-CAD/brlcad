@@ -2842,6 +2842,7 @@ surface_GetIntervalMinMaxDistance(
 	min_distance = bbox.MinimumDistanceTo(p);
 
 	max_distance = bbox.MaximumDistanceTo(p);
+	/*
 	ON_BoundingBox face_bbox;
 	double max;
 	face_bbox = bbox;
@@ -2881,6 +2882,7 @@ surface_GetIntervalMinMaxDistance(
 	if (max < max_distance) {
 	    max_distance = max;
 	}
+	*/
 	return true;
     }
     return false;
@@ -3034,26 +3036,22 @@ double surface_GetClosestPointUsingSubdivision(const ON_Surface *surf,
 	    new_v_interval.m_t[1 - iv] = (v_interval.m_t[1] + v_interval.m_t[0]) / 2.0;
 	    if (surface_GetIntervalMinMaxDistance(surf, p, new_u_interval,new_v_interval, min_distance, max_distance)) {
 		double distance = DBL_MAX;
-		if (NEAR_ZERO(max_distance,tol)) {
-		    p2d.x = u_interval.Mid();
-		    p2d.y = v_interval.Mid();
-		    ON_3dPoint p3d = surf->PointAt(p2d.x,p2d.y);
-		    current_closest_dist = p3d.DistanceTo(p);
-		    return current_closest_dist;
-		} else if (NEAR_EQUAL(min_distance,max_distance,tol)) {
-		    if (max_distance < current_closest_dist) {
-			p2d.x = u_interval.Mid();
-			p2d.y = v_interval.Mid();
-			p3d = surf->PointAt(p2d.x,p2d.y);
-			current_closest_dist = p3d.DistanceTo(p);
+		if (min_distance < current_closest_dist) {
+		    if (NEAR_EQUAL(min_distance,max_distance,tol*tol)) {
+			if (max_distance < current_closest_dist) {
+			    p2d.x = new_u_interval.Mid();
+			    p2d.y = new_v_interval.Mid();
+			    p3d = surf->PointAt(p2d.x,p2d.y);
+			    current_closest_dist = p3d.DistanceTo(p);
+			}
 			return current_closest_dist;
-		    }
-		} else if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
-		    double distance = surface_GetClosestPointUsingSubdivision(surf, p, new_u_interval, new_v_interval,current_closest_dist, p2d, p3d, tol, level);
-		    if (distance < current_closest_dist - tol) {
-			current_closest_dist = distance;
-			if (current_closest_dist < tol)
-			    return current_closest_dist;
+		    } else if (NEAR_ZERO(min_distance,tol)) { // (min_distance < current_closest_dist) { // (NEAR_ZERO(min_distance,tol)) { //
+			double distance = surface_GetClosestPointUsingSubdivision(surf, p, new_u_interval, new_v_interval,current_closest_dist, p2d, p3d, tol, level);
+			if (distance < current_closest_dist) {
+			    current_closest_dist = distance;
+			    if (current_closest_dist < tol)
+				return current_closest_dist;
+			}
 		    }
 		}
 	    }
@@ -3289,7 +3287,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 		if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
 		    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
 			double distance = surface_GetClosestPointUsingSubdivision(surf,p,u_interval,v_interval,current_distance,working_p2d,working_p3d,tol,level);
-			if (distance < current_distance-tol) {
+			if (distance < current_distance) {
 			    current_distance = distance;
 			    p3d = working_p3d;
 			    p2d = working_p2d;
