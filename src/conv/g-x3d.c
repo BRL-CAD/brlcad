@@ -105,7 +105,8 @@ struct bu_structparse vrml_mat_parse[]={
 extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 extern union tree *nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 
-static const char usage[] = "Usage: %s [-v] [-xX lvl] [-d tolerance_distance (mm) ] [-a abs_tol (mm)] [-r rel_tol] [-n norm_tol] [-o out_file] [-u units] brlcad_db.g object(s)\n";
+static const char usage[] = "Usage: %s [-v] [-xX lvl] [-d tolerance_distance] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-P #_of_cpus] [-o out_file] [-u units] brlcad_db.g object(s)\n\
+(units default to mm)\n";
 
 static char	*tok_sep = " \t";
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
@@ -118,7 +119,7 @@ static struct rt_tess_tol	ttol;
 static struct bn_tol		tol;
 static struct model		*the_model;
 
-static	char*	units=NULL;
+static	char*	units="mm";
 static fastf_t	scale_factor=1.0;
 
 static struct db_tree_state	tree_state;	/* includes tol & model */
@@ -392,7 +393,7 @@ main(int argc, char **argv)
 
     BARRIER_CHECK;
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "d:a:n:o:r:vx:P:X:u:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "d:a:n:o:r:vx:P:X:u:h?")) != -1) {
 	switch (c) {
 	    case 'a':		/* Absolute tolerance. */
 		ttol.abs = atof(bu_optarg);
@@ -429,23 +430,16 @@ main(int argc, char **argv)
 		units = bu_strdup( bu_optarg );
 		scale_factor = bu_units_conversion( units );
 		if ( ZERO(scale_factor) )
-		{
 		    bu_exit(1, "Unrecognized units (%s)\n", units );
-		}
 		scale_factor = 1.0 / scale_factor;
 		break;
 	    default:
 		bu_exit(1, usage, argv[0]);
-		break;
 	}
     }
 
-    if (bu_optind+1 >= argc) {
+    if (bu_optind+1 >= argc)
 	bu_exit(1, usage, argv[0]);
-    }
-
-    if ( !units )
-	units = "mm";
 
     /* Open BRL-CAD database */
     if ((dbip = db_open( argv[bu_optind], DB_OPEN_READONLY)) == DBI_NULL)
@@ -453,9 +447,8 @@ main(int argc, char **argv)
 	perror(argv[0]);
 	bu_exit(1, "Cannot open geometry database file %s\n", argv[bu_optind] );
     }
-    if ( db_dirbuild( dbip ) ) {
+    if ( db_dirbuild( dbip ) )
 	bu_exit(1, "db_dirbuild() failed!\n" );
-    }
 
     if (out_file == NULL) {
 	outfp = stdout;
