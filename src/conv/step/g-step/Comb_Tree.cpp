@@ -152,6 +152,16 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, struct rt_db_intern
 	    if(curr_matrix) {
 		bu_log(" - found matrix over %s in %s\n", curr_dp->d_namep, (*it)->d_namep);
 		bn_mat_print(curr_dp->d_namep, curr_matrix);
+
+		//TODO - investigate CARTESIAN_TRANSFORMATION_OPERATOR_3D, which seems to
+		// allow uniform scaling as well and appears to be compatible with the
+		// same slot used for AXIS2_PLACEMENT_3D - may be able to use the latter
+		// for simple cases without scaling (i.e. VUNITIZE doesn't change the length
+		// of X, Y or Z unit vectors after the matrix is applied), the former when
+		// the there is uniform scaling (X, Y and Z lengths all change by the same
+		// amount) and in the worst case (non-uniform scaling) will have to create
+		// a new Brep and abandon the attempt to preserve the comb-level operation.
+
 		vect_t inv, outv;
 		VSET(inv, 0, 0, 0);
 		MAT4X3PNT(outv, curr_matrix, inv);
