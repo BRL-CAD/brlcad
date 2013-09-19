@@ -1,6 +1,6 @@
 						 -*- coding: utf-8 -*-
-BRL-CAD API Change Log
-======================
+BRL-CAD Interface Change Policy
+===============================
 
 Included below are details of BRL-CAD public interface changes that
 potentially impact external developers and users.  Public interfaces
