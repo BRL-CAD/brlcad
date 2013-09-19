@@ -35,10 +35,17 @@
 #endif
 
 #include "bio.h"
-
 #include "cmd.h"
 
 #include "./ged_private.h"
+
+
+struct ged_search {
+    struct directory **paths;
+    int path_cnt;
+    int search_type;
+};
+
 
 HIDDEN int
 _path_scrub(struct bu_vls *path)
@@ -58,28 +65,30 @@ _path_scrub(struct bu_vls *path)
 	bu_vls_sprintf(path, "%s", "/");
     }
     bu_vls_free(&tmp);
+
     return islocal;
 }
 
-struct ged_search {
-    struct directory **paths;
-    int path_cnt;
-    int search_type;
-};
 
-HIDDEN void _ged_free_search_set(struct bu_ptbl *search_set) {
-    for(int i = (int)BU_PTBL_LEN(search_set) - 1; i >= 0; i--){
+HIDDEN void
+_ged_free_search_set(struct bu_ptbl *search_set)
+{
+    for (int i = (int)BU_PTBL_LEN(search_set) - 1; i >= 0; i--) {
 	struct ged_search *search = (struct ged_search *)BU_PTBL_GET(search_set, i);
+
 	if (search && search->paths)
 	    bu_free(search->paths, "free search paths");
+
 	if (search)
-	bu_free(search, "free search");
+	    bu_free(search, "free search");
     }
+
     if (search_set) {
 	bu_ptbl_free(search_set);
 	bu_free(search_set, "free search container");
     }
 }
+
 
 /* Returns 1 if char string seems to be part of a plan,
  * else return 0 */
@@ -92,12 +101,13 @@ _ged_plan_item(char *arg)
     return 0;
 }
 
+
 /* Wrapper to identify the various types of searches being requested.  Returns:
  *
- *  0: path is invalid - db_lookup failed or null input or path normalized to nothing
- *  1: valid search path
+ * 0: path is invalid - db_lookup failed or null input or path normalized to nothing
+ * 1: valid search path
  *
- *  The variables is_specific, is_local, and is_flat convey specifics about the search.
+ * The variables is_specific, is_local, and is_flat convey specifics about the search.
  */
 HIDDEN int
 _ged_search_characterize_path(struct ged *gedp, const char *orig, struct bu_vls *normalized, int *is_specific, int *is_local, int *is_flat, int *flat_only)
@@ -147,6 +157,7 @@ _ged_search_characterize_path(struct ged *gedp, const char *orig, struct bu_vls 
     return 1;
 }
 
+
 HIDDEN int
 _ged_search_localized_obj_list(struct ged *gedp, struct directory *path, struct directory ***path_list)
 {
@@ -156,7 +167,7 @@ _ged_search_localized_obj_list(struct ged *gedp, struct directory *path, struct 
     struct bu_ptbl *tmp_search = db_search_path_obj(comb_str, path, gedp->ged_wdbp);
     path_cnt = (int)BU_PTBL_LEN(tmp_search);
     (*path_list) = (struct directory **)bu_malloc(sizeof(char *) * (path_cnt+1), "object path array");
-    for(j = 0; j < path_cnt; j++){
+    for (j = 0; j < path_cnt; j++) {
 	(*path_list)[j] = (struct directory *)BU_PTBL_GET(tmp_search, j);
     }
     (*path_list)[path_cnt] = RT_DIR_NULL;
@@ -164,6 +175,7 @@ _ged_search_localized_obj_list(struct ged *gedp, struct directory *path, struct 
     bu_free(tmp_search, "Free search table container");
     return path_cnt;
 }
+
 
 int
 ged_search(struct ged *gedp, int argc, const char *argv_orig[])
@@ -190,7 +202,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
      * toplevel path specifiers, etc. */
     optcnt = 0;
     for (i = 1; i < argc; i++) {
-        if ((argv_orig[i][0] == '-') && (strlen(argv_orig[i]) == 2)) {
+	if ((argv_orig[i][0] == '-') && (strlen(argv_orig[i]) == 2)) {
 	    optcnt++;
 	} else {
 	    break;
@@ -317,7 +329,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     }
 
     /* Check if all of our searches are local or not */
-    for (i = (int)BU_PTBL_LEN(search_set) - 1; i >= 0; i--){
+    for (i = (int)BU_PTBL_LEN(search_set) - 1; i >= 0; i--) {
 	struct ged_search *search = (struct ged_search *)BU_PTBL_GET(search_set, i);
 	if (search->search_type != 1) all_local = 0;
     }
@@ -330,14 +342,14 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 	struct bu_ptbl *uniq_db_objs;
 	BU_ALLOC(uniq_db_objs, struct bu_ptbl);
 	BU_PTBL_INIT(uniq_db_objs);
-	for (i = (int)BU_PTBL_LEN(search_set) - 1; i >= 0; i--){
+	for (i = (int)BU_PTBL_LEN(search_set) - 1; i >= 0; i--) {
 	    int path_cnt = 0;
 	    struct ged_search *search = (struct ged_search *)BU_PTBL_GET(search_set, i);
 	    struct directory *curr_path = search->paths[path_cnt];
 	    while (path_cnt < search->path_cnt) {
 		struct bu_ptbl *initial_search_results = db_search_path(bu_vls_addr(&search_string), curr_path, gedp->ged_wdbp);
 		if (initial_search_results) {
-		    for(j = (int)BU_PTBL_LEN(initial_search_results) - 1; j >= 0; j--){
+		    for (j = (int)BU_PTBL_LEN(initial_search_results) - 1; j >= 0; j--) {
 			struct db_full_path *dfptr = (struct db_full_path *)BU_PTBL_GET(initial_search_results, j);
 			bu_ptbl_ins_unique(uniq_db_objs, (long *)dfptr->fp_names[dfptr->fp_len - 1]);
 		    }
@@ -348,7 +360,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 	    }
 	}
 	/* For this return, we want a list of all unique leaf objects */
-	for (i = (int)BU_PTBL_LEN(uniq_db_objs) - 1; i >= 0; i--){
+	for (i = (int)BU_PTBL_LEN(uniq_db_objs) - 1; i >= 0; i--) {
 	    struct directory *uniq_dp = (struct directory *)BU_PTBL_GET(uniq_db_objs, i);
 	    bu_vls_printf(gedp->ged_result_str, "%s\n", uniq_dp->d_namep);
 	}
@@ -357,7 +369,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     } else {
 	/* Search types are either mixed or all full path, so use the standard calls and print
 	 * the full output of each search */
-	for (i = 0; i < (int)BU_PTBL_LEN(search_set); i++){
+	for (i = 0; i < (int)BU_PTBL_LEN(search_set); i++) {
 	    int path_cnt = 0;
 	    int j;
 	    struct ged_search *search = (struct ged_search *)BU_PTBL_GET(search_set, i);
@@ -366,7 +378,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		    if (aflag) flags = DB_LS_HIDDEN;
 		    struct bu_ptbl *search_results = db_search_flat(bu_vls_addr(&search_string), gedp->ged_wdbp, flags);
 		    if (search_results) {
-			for (j = (int)BU_PTBL_LEN(search_results) - 1; j >= 0; j--){
+			for (j = (int)BU_PTBL_LEN(search_results) - 1; j >= 0; j--) {
 			    struct directory *uniq_dp = (struct directory *)BU_PTBL_GET(search_results, j);
 			    bu_vls_printf(gedp->ged_result_str, "%s\n", uniq_dp->d_namep);
 			}
@@ -382,7 +394,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 			    case 0:
 				search_results = db_search_path(bu_vls_addr(&search_string), curr_path, gedp->ged_wdbp);
 				if (search_results) {
-				    for (j = (int)BU_PTBL_LEN(search_results) - 1; j >= 0; j--){
+				    for (j = (int)BU_PTBL_LEN(search_results) - 1; j >= 0; j--) {
 					struct db_full_path *dfptr = (struct db_full_path *)BU_PTBL_GET(search_results, j);
 					char *full_path = db_path_to_string(dfptr);
 					bu_vls_printf(gedp->ged_result_str, "%s\n", full_path);
@@ -393,7 +405,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 				break;
 			    case 1:
 				uniq_db_objs = db_search_path_obj(bu_vls_addr(&search_string), curr_path, gedp->ged_wdbp);
-				for (j = (int)BU_PTBL_LEN(uniq_db_objs) - 1; j >= 0; j--){
+				for (j = (int)BU_PTBL_LEN(uniq_db_objs) - 1; j >= 0; j--) {
 				    struct directory *uniq_dp = (struct directory *)BU_PTBL_GET(uniq_db_objs, j);
 				    bu_vls_printf(gedp->ged_result_str, "%s\n", uniq_dp->d_namep);
 				}
@@ -419,6 +431,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     _ged_free_search_set(search_set);
     return GED_OK;
 }
+
 
 /*
  * Local Variables:
