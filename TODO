@@ -18,27 +18,20 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* Archer GUI needs to remember the last size of the command
-  window when it is in detached (2 window) mode
-
 * address the ctest failure of bu_progname_tests (seen on ia64 linux)
 
 * address the ctest failure of bu_heap_test_1 (seen on ia32 fbsd)
 
-* heap unit test needs to actually compare performance against system
-  allocation, not just do some work
-
-* re-do the sh/enumerate.sh script for CMake
-
-* attempt to replicate the GTK+ ISST interface in TCL
-
-* provide a viable FindBRLCAD.cmake
-
-* investigate thread affinity locking on Linux
-
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* investigate thread affinity locking on Linux
+
+* re-do the sh/enumerate.sh script for CMake
+
+* heap unit test needs to actually compare performance against system
+  allocation, not just do some work
 
 * fix the bu_sempahore unit test
 
@@ -79,6 +72,13 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* provide a viable FindBRLCAD.cmake
+
+* attempt to replicate the GTK+ ISST interface in TCL
+
+* Archer GUI needs to remember the last size of the command
+  window when it is in detached (2 window) mode
 
 * fix nurbs_ssi and nurbs_tester unit tests
 
