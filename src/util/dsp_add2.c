@@ -166,7 +166,7 @@ main(int ac, char *av[])
     const char *dsp3_fname = NULL;
 
     /* FIXME: this '-?' arg doesn't work correctly due to some TCLAPisms */
-    h_arg = bu_arg_SwitchArg(
+    h_arg = bu_arg_switch(
       "?",
       "short-help",
       "Same as '-h' or '--help'",
@@ -174,7 +174,7 @@ main(int ac, char *av[])
       );
 
     /* define a force option to allow user to shoot himself in the foot */
-    f_arg = bu_arg_SwitchArg(
+    f_arg = bu_arg_switch(
       "f",
       "force",
       "Allow overwriting existing files.",
@@ -182,7 +182,7 @@ main(int ac, char *av[])
       );
 
     /* need two file names */
-    dsp1_arg = bu_arg_UnlabeledValueArg(
+    dsp1_arg = bu_arg_unlabeled_value(
       "dsp_infile1",
       "first dsp input file name",
       "",
@@ -191,7 +191,7 @@ main(int ac, char *av[])
       );
 
     /* need two file names */
-    dsp2_arg = bu_arg_UnlabeledValueArg(
+    dsp2_arg = bu_arg_unlabeled_value(
       "dsp_infile2",
       "second dsp input file name",
       "",
@@ -200,7 +200,7 @@ main(int ac, char *av[])
       );
 
     /* the output file name */
-    dsp3_arg = bu_arg_UnlabeledValueArg(
+    dsp3_arg = bu_arg_unlabeled_value(
       "dsp_outfile",
       "dsp output file name",
       "",
