@@ -192,7 +192,7 @@ rt_hrt_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     f = hip->xdir[X];
     (*min)[X] = hip->v[X] - f * 1.25;
     (*max)[X] = hip->v[X] + f * 1.25;
-    
+
     /* Y */
     f = hip->ydir[Y];
     (*min)[Y] = hip->v[Y] - f;
@@ -750,7 +750,7 @@ rt_hrt_class(void)
 /**
  * R T _ H R T _ 2 4 P T S
  *
- * Similar to code used by the ELL 
+ * Similar to code used by the ELL
  */
 #define HRTOUT(n) ov+(n-1)*5
 void
@@ -825,10 +825,10 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct rt_tes
     RT_CK_DB_INTERNAL(ip);
     hip = (struct rt_hrt_internal *)ip->idb_ptr;
     RT_HRT_CK_MAGIC(hip);
-    
+
     rt_hrt_24pts(top, hip->v, hip->xdir, hip->ydir);
     rt_hrt_24pts(middle, hip->v, hip->xdir, hip->zdir);
-    
+
     RT_ADD_VLIST(vhead, &top[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
     for (i=0; i<24; i++) {
 	RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);

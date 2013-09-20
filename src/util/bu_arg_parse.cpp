@@ -69,7 +69,7 @@ static vector<Arg*> Arg_pointers;
 /**
  * get a value for an arg
  */
-long
+int
 bu_arg_get_bool(bu_arg_vars *arg)
 {
   return (arg->val.u.l ? 1 : 0);
@@ -94,7 +94,7 @@ bu_arg_get_string(bu_arg_vars *arg)
 }
 
 /**
- * general contructor for bu_arg_vars
+ * general constructor for bu_arg_vars
  */
 bu_arg_vars *
 bu_arg_init()
@@ -118,10 +118,10 @@ bu_arg_init()
  */
 extern "C"
 bu_arg_vars *
-bu_arg_SwitchArg(const char *flag,
-                 const char *name,
-                 const char *desc,
-                 const char *def_val)
+bu_arg_switch(const char *flag,
+              const char *name,
+              const char *desc,
+              const char *def_val)
 {
   bu_arg_vars *arg = bu_arg_init();
 
@@ -143,11 +143,11 @@ bu_arg_SwitchArg(const char *flag,
  */
 extern "C"
 bu_arg_vars *
-bu_arg_UnlabeledValueArg(const char *name,
-                         const char *desc,
-                         const char *def_val,
-                         const bu_arg_req_t required,
-                         const bu_arg_valtype_t val_typ)
+bu_arg_unlabeled_value(const char *name,
+                       const char *desc,
+                       const char *def_val,
+                       const bu_arg_req_t required,
+                       const bu_arg_valtype_t val_typ)
 {
   bu_arg_vars *arg = bu_arg_init();
 

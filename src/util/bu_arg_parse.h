@@ -81,18 +81,18 @@ typedef struct bu_arg_vars_type {
 
 /* initialization */
 bu_arg_vars *
-bu_arg_SwitchArg(const char *flag,
-                 const char *name,
-                 const char *desc,
-                 const char *def_val);
+bu_arg_switch(const char *flag,
+              const char *name,
+              const char *desc,
+              const char *def_val);
 bu_arg_vars *
-bu_arg_UnlabeledValueArg(const char *name,
-                         const char *desc,
-                         const char *def_val,
-                         const bu_arg_req_t required,
-                         const bu_arg_valtype_t val_typ);
+bu_arg_unlabeled_value(const char *name,
+                       const char *desc,
+                       const char *def_val,
+                       const bu_arg_req_t required,
+                       const bu_arg_valtype_t val_typ);
 /* the getters */
-long bu_arg_get_bool(bu_arg_vars *arg);
+int bu_arg_get_bool(bu_arg_vars *arg);
 long bu_arg_get_long(bu_arg_vars *arg);
 double bu_arg_get_double(bu_arg_vars *arg);
 const char *bu_arg_get_string(bu_arg_vars *arg);

@@ -96,7 +96,7 @@ endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG)
 if(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
   # also of interest:
   # -Wunreachable-code -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -ansi
-  # -Wformat=2 (after bu_fopen_uniq() is obsolete)
+  # -Wformat=2 (after bu_fopen_uniq() is obsolete) -Wdocumentation (for Doxygen comments)
   BRLCAD_CHECK_C_FLAG(pedantic)
   BRLCAD_CHECK_CXX_FLAG(pedantic)
 

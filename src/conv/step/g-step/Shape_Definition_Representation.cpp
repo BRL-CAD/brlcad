@@ -102,7 +102,9 @@ Add_Shape_Definition_Representation(Registry *registry, InstMgr *instance_list, 
     design_context->life_cycle_stage_("'Design'");
     design_context->frame_of_reference_(app_context);
 
-    return ret_entity;
+    //return ret_entity;
+    // The product definition is what is used to define assemblies, so return that
+    return (STEPentity *)prod_def;
 }
 
 

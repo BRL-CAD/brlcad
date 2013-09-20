@@ -12841,10 +12841,10 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 	    break;
 #endif
 	default: {
+	    Tcl_Obj *obj;
+
 	    free((void*)gdvp->gdv_fbs.fbs_fbp);
 	    gdvp->gdv_fbs.fbs_fbp = FBIO_NULL;
-
-	    Tcl_Obj *obj;
 
 	    obj = Tcl_GetObjResult(interp);
 	    if (Tcl_IsShared(obj))

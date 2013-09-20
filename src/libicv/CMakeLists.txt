@@ -25,6 +25,7 @@ set(LIBICV_SOURCES
 
 BRLCAD_ADDLIB(libicv "${LIBICV_SOURCES}" "libbu;libbn;${PNG_LIBRARY}")
 set_target_properties(libicv PROPERTIES VERSION 20.0.1 SOVERSION 20)
+add_subdirectory(tests)
 
 CMAKEFILES(TODO)
 

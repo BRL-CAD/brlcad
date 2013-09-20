@@ -271,7 +271,7 @@ curve_fitting(ON_Curve* in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool d
     // The sample points should be knots (which are accurate if the curve
     // is a polyline curve).
     for (int i = 0; i < 6; i++) {
-	double knot_t = knots[ON_Round((double)i/plotres*(knotcnt+1))];
+	double knot_t = knots[ON_Round((double)i/plotres*knotcnt)];
 	ON_3dPoint pt3d = in->PointAt(knot_t);
 	sample_pts[2*i] = pt3d.x;
 	sample_pts[2*i+1] = pt3d.y;
@@ -1562,7 +1562,7 @@ ON_Intersect(const ON_Curve* curveA,
 
 			for (int j = 0; j < count; j++) {
 			    if (intersections >= 2) break;
-			    // Convert from the boxes' domain to the whold surface's domain
+			    // Convert from the boxes' domain to the whole surface's domain
 			    double surf_u = 0.0, surf_v = 0.0;
 			    switch (boundary_index[j]) {
 			    case 0:

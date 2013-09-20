@@ -1,12 +1,56 @@
 						 -*- coding: utf-8 -*-
-BRL-CAD Deprecation Log
-=======================
+BRL-CAD Interface Change Policy
+===============================
 
-Included below is a deprecation log and notes for BRL-CAD public
-interface changes that potentially impact external developers and
-users.  Public interfaces include developer application programming
-interface (API) calls as well as user application command-line
-interface (CLI) and graphical user interface (GUI) behaviors.
+Included below are details of BRL-CAD public interface changes that
+potentially impact external developers and users.  Public interfaces
+include developer application programming interface (API) calls as
+well as user application command-line interface (CLI) and graphical
+user interface (GUI) behaviors.  Changes are characterized as:
+
+    1) changing a new interface,
+    2) being minimally impacting, or
+    3) requiring adherence to deprecation policy.
+
+This policy is intentionally designed to balance developer agility,
+helping accelerate development, with interface stabaility, helping
+preserve application developer and user investments.
+
+All changes to BRL-CAD are expected to conform to this change policy.
+
+
+NEW INTERFACE
+-------------
+
+Changes to interfaces that have been recently introduced are often
+subject to change and should not yet be relied upon by application
+developers or users.  They may be changed as needed from release to
+release and are not subject to change policy restrictions until they
+have been included in at least TWO releases without change.
+
+
+MINIMALLY IMPACTING
+-------------------
+
+If a change to an interface has a suitable and completely equivalent
+alternative, the change is deemed to be "minimally impacting" and can
+be made during any release.  Examples of such changes include renaming
+an interface, reordering parameters, adding additional parameters for
+previously implicit behavior, and removing unused parameters.
+
+Basically, the impact can usually be considered minimally impacting if
+a static regular expression search-and-replace is all that is needed
+to update calling code, and no change is imposed on the user.
+
+
+DEPRECATION POLICY
+------------------
+
+If a change will intentionally change, replace, or remove
+functionality that has been documented and published in at least TWO
+releases should be first marked as DEPRECATED.  Otherwise, changes to
+interfaces that have not been publicly announced or are not publicly
+documented for at least two releases may be changed without notice.
 
 The general practice is that public interface changes may go from
 deprecated to obsolete, whereby previous behavior is removed or
@@ -16,53 +60,57 @@ a) during a major release (e.g. going from 7.*.* to 8.*.*)
 
 b) during a minor release provided the change was publicly announced
    as deprecated beforehand AND sufficient deprecation warning was
-   given via i) two minor releases included the deprecation notice,
-   and ii) at least three months (90 days) have passed since the
+   given via i) TWO minor releases included the deprecation notice,
+   and ii) at least THREE months (90 days) have passed since the
    deprecation was announced
 
-c) during a minor release provided there still exists an equivalent
-   alternative interface that will not impose an undue burden on users
-   or developers (see "MINIMALLY IMPACTING API CHANGES" below)
+c) during any release provided there still exists an EQUIVALENT
+   alternative interface that does not impose an undue burden on users
+   or developers (see "MINIMALLY IMPACTING")
 
-d) during a patch release provided you can correctly prove P = NP
+Public interfaces scheduled for removal should be visibly marked as
+deprecated during compilation with the DEPRECATED keyword on function
+declarations, with #warning "DEPRECATED ..." pre-processor statements,
+and with @DEPRECATED in source code comments.  Where users are not
+adversely affected, a run-time DEPRECATION statement may be printed.
 
-If a change will intentionally replace or remove functionality, then
-they should be then marked as deprecated first.  Otherwise, changes to
-interfaces that are never publicly announced, not installed, or are
-not part of publicly available documentation are fair game to change
-as needed.
+Whenever published funtionality is finally removed, move its entry
+from the DEPRECATED section below to the OBSOLETE section for the
+version in which it was removed.  Make sure the entry retains a
+reference to the version in which the item was marked as deprecated.
 
-Where feasible, interfaces should be visibly marked as deprecated
-either during compile-time with #warning pre-processor declarations or
-during run-time with print statements.
 
-Example: Say we decided during 7.50.3 development to remove
-rt_shootray() from our API without a replacement that would qualify as
-"minimally impacting".  We'd annotate the deprecation here, mark the
+EXAMPLES
+--------
+
+Example #1: Say we decided during 7.50.3 development to remove
+rt_shootray() from the API without a replacement. That does NOT
+qualify as "minimally impacting" because there's no replacement and
+rt_shootray() has been published and documented in more than two
+releases.  We'd annotate the deprecation in the CHANGES file, mark the
 function as DEPRECATED in the API header, and post the 7.50.4 release.
 The soonest that function could be removed would be in the 7.54.0
 release during 7.53 development.  It could NOT be removed in 7.54.2
 since it's a patch version, prior to the 7.54 release line, nor even
 during 7.54.0 if less than 90 days had passed since 7.50.6 was posted.
 
-When it is finally removed, remove its entry in the DEPRECATED section
-and move it to the OBSOLETE section under the version entry in which
-it was removed.  Make sure the entry has a reference to the version
-in which the item was first classified as deprecated.  See the %S
-entry for an example.
-
-DEPRECATED/OBSOLETE Items
--------------------------
-
-The items listed below are interfaces that are deprecated or obsolete,
-categorized by the release in which the change was made.  If the
-change involved a rename/removal of a routine, both the original and
-new names should be listed for reference.
+Example #2: Say we decide during 7.48.0 development to modify bu_log()
+by adding a new additional enum parameter denoting a message type.
+This change is considered minimally impacting because it can be
+characterized by a simple regular expression (e.g.,
+s/bu_log(/bu_log(PRINT, /g).  Updates to calling codes are considered
+trivial.  The change would get documented in the CHANGES file and all
+calls that can be updated must be updated at that time.
 
 
 **************
 * DEPRECATED *
 **************
+
+The items listed below are interfaces that are deprecated.  They are
+categorized by the release in which the change was made.  If the
+change involved a removal of a command or function, both the original
+and new names should be listed for reference.
 
 
 7.24
@@ -251,6 +299,10 @@ include/raytrace.h
 * OBSOLETE *
 ************
 
+Below are the interfaces that have followed deprecation policy and are
+now no longer a part of BRL-CAD.
+
+
 7.24.2
 ------
 .pl file suffix
@@ -416,15 +468,6 @@ include/[library].h (several)
 * MINIMALLY IMPACTING API CHANGES *
 ***********************************
 
-If a change to an interface has a suitable and completely equivalent
-alternative, the change is deemed to be "minimally impacting" and can
-be made during any minor release.  Examples of such changes include
-renaming an interface, reordering parameters, adding new parameters to
-an interface for previously implicit or restricted behavior, and
-removing unused parameters.
-
-Basically, the impact can usually be considered minor if a static
-regular expression search-and-replace is all that is needed to update.
 Included in following are various minimally impacting API changes that
 have been identified in chronological order.  As expressions are not
 extensively tested, use with caution.
