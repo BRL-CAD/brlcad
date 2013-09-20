@@ -153,7 +153,7 @@ void print_volume_table(struct ged *gedp
 
 	/* field 0 */
 	field = 0;
-	table.rows[i].fields[0].nchars = sprintf(table.rows[i].fields[field].buf, "%s",
+	table.rows[i].fields[0].nchars = snprintf(table.rows[i].fields[field].buf, FBUFSIZ, "%s",
 						 fnames[i]);
 	if (maxwidth[field] < table.rows[i].fields[field].nchars)
 	    maxwidth[field] = table.rows[i].fields[field].nchars;
@@ -169,9 +169,9 @@ void print_volume_table(struct ged *gedp
 	/* field 1 */
 	field = 1;
     if (val < 0) {
-	table.rows[i].fields[1].nchars = sprintf(table.rows[i].fields[field].buf, "COULD NOT DETERMINE");
+	table.rows[i].fields[1].nchars = snprintf(table.rows[i].fields[field].buf, FBUFSIZ, "COULD NOT DETERMINE");
     } else {
-	table.rows[i].fields[1].nchars = sprintf(table.rows[i].fields[field].buf, "%10.8f", val);
+	table.rows[i].fields[1].nchars = snprintf(table.rows[i].fields[field].buf, FBUFSIZ, "%10.8f", val);
     }
 	if (maxwidth[field] < table.rows[i].fields[field].nchars)
 	    maxwidth[field] = table.rows[i].fields[field].nchars;
@@ -323,23 +323,23 @@ void print_edges_table(struct ged *gedp, table_t *table)
 
 	if (tcol == 0) {
 	  /* need to start a row */
-	  sprintf(buf, "%-*.*s|",
-		  indent, indent, " ");
-	  bu_vls_printf(gedp->ged_result_str, "%s", buf);
+	    snprintf(buf, FBUFSIZ, "%-*.*s|",
+		     indent, indent, " ");
+	    bu_vls_printf(gedp->ged_result_str, "%s", buf);
 	}
 
 	/* data in sets of two */
 	/* field 0 */
 	field = 0;
-	/* FIXME: using sprintf because bu_vls_printf is broken for complex formats */
-	sprintf(buf, " %-*.*s",
+	/* FIXME: using snprintf because bu_vls_printf is broken for complex formats */
+	snprintf(buf, FBUFSIZ, " %-*.*s",
 		maxwidth[tcol], maxwidth[tcol], table->rows[i].fields[field].buf);
 	bu_vls_printf(gedp->ged_result_str, "%s", buf);
 
 	/* field 1 */
 	field = 1;
-	/* FIXME: using sprintf because bu_vls_printf is broken for complex formats */
-	sprintf(buf, " %-*.*s |",
+	/* FIXME: using snprintf because bu_vls_printf is broken for complex formats */
+	snprintf(buf, FBUFSIZ, " %-*.*s |",
 		maxwidth[tcol+1], maxwidth[tcol+1], table->rows[i].fields[field].buf);
 	bu_vls_printf(gedp->ged_result_str, "%s", buf);
 
@@ -364,14 +364,14 @@ void print_edges_table(struct ged *gedp, table_t *table)
 
 	    /* data in sets of two */
 	    /* this is field 0 */
-	    /* FIXME: using sprintf because bu_vls_printf is broken for complex formats */
-	    sprintf(buf, " %-*.*s",
+	    /* FIXME: using snprintf because bu_vls_printf is broken for complex formats */
+	    snprintf(buf, FBUFSIZ, " %-*.*s",
 		    maxwidth[tcol], maxwidth[tcol], " ");
 	    bu_vls_printf(gedp->ged_result_str, "%s", buf);
 
 	    /* this is field 1 */
-	    /* FIXME: using sprintf because bu_vls_printf is broken for complex formats */
-	    sprintf(buf, " %-*.*s |",
+	    /* FIXME: using snprintf because bu_vls_printf is broken for complex formats */
+	    snprintf(buf, FBUFSIZ, " %-*.*s |",
 		    maxwidth[tcol+1], maxwidth[tcol+1], " ");
 	    bu_vls_printf(gedp->ged_result_str, "%s", buf);
 
