@@ -115,6 +115,12 @@ long bu_arg_get_long(bu_arg_vars *arg);
 double bu_arg_get_double(bu_arg_vars *arg);
 const char *bu_arg_get_string(bu_arg_vars *arg);
 
+/* but use tmp  names while dual use in effect */
+int bu_arg_get_bool2(bu_arg_vars *arg);
+long bu_arg_get_long2(bu_arg_vars *arg);
+double bu_arg_get_double2(bu_arg_vars *arg);
+const char *bu_arg_get_string2(bu_arg_vars *arg);
+
 /* the action: all in one function */
 int bu_arg_parse(bu_ptbl_t *args, int argc, char * const argv[]);
 /* for use with static struct init (tmp name) */
