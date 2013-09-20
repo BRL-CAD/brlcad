@@ -13,7 +13,7 @@ user interface (GUI) behaviors.  Changes are characterized as:
     3) requiring adherence to deprecation policy.
 
 This policy is intentionally designed to balance developer agility,
-helping accelerate development, with interface stabaility, helping
+helping accelerate development, with interface stability, helping
 preserve application developer and user investments.
 
 All changes to BRL-CAD are expected to conform to this change policy.
@@ -74,7 +74,7 @@ declarations, with #warning "DEPRECATED ..." pre-processor statements,
 and with @DEPRECATED in source code comments.  Where users are not
 adversely affected, a run-time DEPRECATION statement may be printed.
 
-Whenever published funtionality is finally removed, move its entry
+Whenever published functionality is finally removed, move its entry
 from the DEPRECATED section below to the OBSOLETE section for the
 version in which it was removed.  Make sure the entry retains a
 reference to the version in which the item was marked as deprecated.

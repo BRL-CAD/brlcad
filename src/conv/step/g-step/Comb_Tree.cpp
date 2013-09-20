@@ -138,7 +138,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, struct rt_db_intern
      * where to associate them.*/
     const char *comb_children_search = "-mindepth 1 -maxdepth 1";
     for (std::set<struct directory *>::iterator it=non_wrapper_combs.begin(); it != non_wrapper_combs.end(); ++it) {
-	bu_log("look for matricies in %s\n", (*it)->d_namep);
+	bu_log("look for matrices in %s\n", (*it)->d_namep);
 	struct bu_ptbl *comb_children = db_search_path_obj(comb_children_search, (*it), wdbp);
 	struct rt_db_internal comb_intern;
 	rt_db_get_internal(&comb_intern, (*it), wdbp->dbip, bn_mat_identity, &rt_uniresource);
