@@ -225,7 +225,7 @@ main(int argc, char *argv[])
 	    }
 	    if (endrad[i] < SMALL_FASTF)
 		endrad[i] = SMALL_FASTF;
-	}						/* END # 3 */
+	}
 
 	else {
 	    /* START # 4 */
@@ -251,8 +251,8 @@ main(int argc, char *argv[])
 	    }
 	    if (endrad[i] < SMALL_FASTF)
 		endrad[i] = SMALL_FASTF;
-	}						/* END # 4 */
-    }							/* END # 2 */
+	}
+    }
 
     /* Print out all info. */
     printf("\n\nmged file created:  %s\n", filemged);
@@ -268,7 +268,7 @@ main(int argc, char *argv[])
 	printf("(%f, %f, %f)", endpt[i][0], endpt[i][1], endpt[i][2]);
 	printf("%f\n", endrad[i]);
 	(void)fflush(stdout);
-    }							/* END # 5 */
+    }
 
     /* Open mged file. */
     fpw = wdb_fopen(filemged);
@@ -310,22 +310,17 @@ main(int argc, char *argv[])
 	    /* START # 11 */
 	    solcyl[5] = '0';
 	    solcyl[6] = temp[0];
-	}						/* END # 11 */
-	else if (i < 100) {
+	}
+	else /* (i < 100) */ {
 	    /* START # 12 */
 	    solcyl[5] = temp[0];
 	    solcyl[6] = temp[1];
-	}						/* END # 12 */
-	else {
-	    /* START # 13 */
-	    printf("** ERROR ** i = %d\n", i);
-	    (void)fflush(stdout);
-	}						/* END # 13 */
+	}
 
 	/* Make cylinder. */
 	mk_cone(fpw, solcyl, bs, dir, ht, rdc1, rdc2);
 
-    }							/* END # 10 */
+    }
 
     /* Create solid for each sphere. */
     for (i = 1; i < numseg; i++) {
@@ -347,21 +342,16 @@ main(int argc, char *argv[])
 	    /* START # 21 */
 	    solsph[5] = '0';
 	    solsph[6] = temp[0];
-	}						/* END # 21 */
-	else if (i < 100) {
+	}
+	else /* (i < 100) */ {
 	    /* START # 22 */
 	    solsph[5] = temp[0];
 	    solsph[6] = temp[1];
-	}						/* END # 22 */
-	else {
-	    /* START # 23 */
-	    printf("** ERROR ** i = %d\n", i);
-	    (void)fflush(stdout);
-	}						/* END # 23 */
+	}
 
 	/* Make sphere. */
 	mk_sph(fpw, solsph, cent, rds);
-    }							/* END # 20 */
+    }
 
     /* Create regions. */
 
@@ -389,15 +379,15 @@ main(int argc, char *argv[])
 		    /* START # 33 */
 		    solsub1[5] = '0';
 		    solsub1[6] = temp1[0];
-		}					/* END # 33 */
+		}
 		else {
 		    /* START # 34 */
 		    solsub1[5] = temp1[0];
 		    solsub1[6] = temp1[1];
-		}					/* END # 34 */
-	    }						/* END # 32 */
-	}						/* END # 31 */
-	else if (i < 100) {
+		}
+	    }
+	}
+	else /* (i < 100) */ {
 	    /* START # 35 */
 	    solcyl[5] = temp[0];
 	    solcyl[6] = temp[1];
@@ -408,24 +398,18 @@ main(int argc, char *argv[])
 		/* START # 36 */
 		solsub1[5] = temp1[0];
 		solsub1[6] = temp1[1];
-	    }						/* END # 36 */
-	}						/* END # 35 */
-
-	else {
-	    /* START # 37 */
-	    printf("** ERROR ** i = %d\n", i);
-	    (void)fflush(stdout);
-	}						/* END # 37 */
+	    }
+	}
 
 	(void)mk_addmember(solcyl, &comb.l, NULL, WMOP_INTERSECT);
 
 	if (i < (numseg - 1)) {
 	    /* START # 38 */
 	    (void)mk_addmember(solsub1, &comb.l, NULL, WMOP_SUBTRACT);
-	}						/* END # 38 */
+	}
 
 	mk_lfcomb(fpw, regcyl, &comb, 1);
-    }							/* END # 30 */
+    }
 
     /* Create region for each sphere. */
     for (i = 1; i < numseg; i++) {
@@ -444,8 +428,8 @@ main(int argc, char *argv[])
 	    solsub1[6] = temp1[0];
 	    solsub2[5] = '0';
 	    solsub2[6] = temp[0];
-	}						/* END # 41 */
-	else if (i < 100) {
+	}
+	else /* (i < 100) */ {
 	    /* START # 42 */
 	    solsph[5] = temp[0];
 	    solsph[6] = temp[1];
@@ -455,20 +439,14 @@ main(int argc, char *argv[])
 	    solsub1[6] = temp1[1];
 	    solsub2[5] = temp[0];
 	    solsub2[6] = temp[1];
-	}						/* END # 42 */
-
-	else {
-	    /* START # 43 */
-	    printf("** ERROR ** i = %d\n", i);
-	    (void)fflush(stdout);
-	}						/* END # 43 */
+	}
 
 	(void)mk_addmember(solsph, &comb.l, NULL, WMOP_INTERSECT);
 	(void)mk_addmember(solsub1, &comb.l, NULL, WMOP_SUBTRACT);
 	(void)mk_addmember(solsub2, &comb.l, NULL, WMOP_SUBTRACT);
 
 	mk_lfcomb(fpw, regsph, &comb, 1);
-    }							/* END # 40 */
+    }
 
     /* Create group. */
 
@@ -487,29 +465,24 @@ main(int argc, char *argv[])
 		/* START # 52 */
 		regsph[5] = '0';
 		regsph[6] = temp[0];
-	    }						/* END # 52 */
-	}						/* END # 51 */
-	else if (i < 100) {
+	    }
+	}
+	else /* (i < 100) */ {
 	    /* START # 53 */
 	    regcyl[5] = temp[0];
 	    regcyl[6] = temp[1];
 	    regsph[5] = temp[0];
 	    regsph[6] = temp[1];
-	}						/* END # 53 */
-	else {
-	    /* START # 54 */
-	    printf("** ERROR ** i = %d\n", i);
-	    (void)fflush(stdout);
-	}						/* END # 54 */
+	}
 
 	(void)mk_addmember(regcyl, &comb1.l, NULL, WMOP_UNION);
 	if (i != 0)(void)mk_addmember(regsph, &comb1.l, NULL, WMOP_UNION);
-    }							/* END # 50 */
+    }
 
     mk_lfcomb(fpw, group, &comb1, 0);
     wdb_close(fpw);
     return 0;
-}							/* END # 1 */
+}
 
 /*
  * Local Variables:
