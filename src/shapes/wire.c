@@ -155,7 +155,7 @@ main(int argc, char *argv[])
 
     /* Find the number of segments. */
     printf("Enter the number of segments (maximum of %d).\n\t",
-		 MAXWIRESEG);
+	   MAXWIRESEG);
     (void)fflush(stdout);
     ret = scanf("%lf", &scanseg);
     if (ret == 0) {
@@ -167,7 +167,7 @@ main(int argc, char *argv[])
     /* maximum. */
     while (scanseg > MAXWIRESEG && scanseg < 0.0) {
 	printf("The maximum number of segments is %d.  Enter the\nnumber of segments.\n\t",
-		     MAXWIRESEG);
+	       MAXWIRESEG);
 	(void)fflush(stdout);
 	ret = scanf("%lf", &scanseg);
 	if (ret == 0) {
@@ -303,8 +303,8 @@ main(int argc, char *argv[])
 	if (i < 10) {
 	    solcyl[5] = '0';
 	    solcyl[6] = temp[0];
-	}
-	else /* (i < 100) */ {
+	} else {
+	    /* (i < MAXWIRESEG) */
 	    solcyl[5] = temp[0];
 	    solcyl[6] = temp[1];
 	}
@@ -332,8 +332,8 @@ main(int argc, char *argv[])
 	if (i < 10) {
 	    solsph[5] = '0';
 	    solsph[6] = temp[0];
-	}
-	else /* (i < 100) */ {
+	} else {
+	    /* (i < MAXWIRESEG) */
 	    solsph[5] = temp[0];
 	    solsph[6] = temp[1];
 	}
@@ -364,14 +364,13 @@ main(int argc, char *argv[])
 		if ((i + 1) < 10) {
 		    solsub1[5] = '0';
 		    solsub1[6] = temp1[0];
-		}
-		else {
+		} else {
 		    solsub1[5] = temp1[0];
 		    solsub1[6] = temp1[1];
 		}
 	    }
-	}
-	else /* (i < 100) */ {
+	} else {
+	    /* (i < MAXWIRESEG) */
 	    solcyl[5] = temp[0];
 	    solcyl[6] = temp[1];
 	    regcyl[5] = temp[0];
@@ -407,8 +406,8 @@ main(int argc, char *argv[])
 	    solsub1[6] = temp1[0];
 	    solsub2[5] = '0';
 	    solsub2[6] = temp[0];
-	}
-	else /* (i < 100) */ {
+	} else {
+	    /* (i < MAXWIRESEG) */
 	    solsph[5] = temp[0];
 	    solsph[6] = temp[1];
 	    regsph[5] = temp[0];
@@ -441,8 +440,8 @@ main(int argc, char *argv[])
 		regsph[5] = '0';
 		regsph[6] = temp[0];
 	    }
-	}
-	else /* (i < 100) */ {
+	} else {
+	    /* (i < MAXWIRESEG) */
 	    regcyl[5] = temp[0];
 	    regcyl[6] = temp[1];
 	    regsph[5] = temp[0];
@@ -457,6 +456,7 @@ main(int argc, char *argv[])
     wdb_close(fpw);
     return 0;
 }
+
 
 /*
  * Local Variables:
