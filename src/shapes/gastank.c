@@ -109,9 +109,8 @@ main(int argc, char **argv)
 	printf("Enter the mged file to be created (25 char max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%26s", filemged);
-	if (ret == 0) {
+	if (ret == 0)
 	    perror("scanf");
-	}
 	if (BU_STR_EQUAL(filemged, ""))
 	    bu_strlcpy(filemged, "gastank.g", sizeof(filemged));
 
@@ -123,9 +122,9 @@ main(int argc, char **argv)
 	    perror("scanf");
 	    numtnk = 1;
 	}
-	if (numtnk < 1)
+	else if (numtnk < 1)
 	    numtnk = 1;
-	if (numtnk > 26)
+	else if (numtnk > 26)
 	    numtnk = 26;
 
 	/* Find the dimensions of the gas tanks. */
@@ -201,7 +200,10 @@ main(int argc, char **argv)
 		temp1[k] = '\0';
 		if (temp[1] == 'n') {
 		    sscanf(temp1, "%d", &numtnk);
-		    if (numtnk > 26) numtnk = 26;
+		    if (numtnk < 1)
+			numtnk = 1;
+		    else if (numtnk > 26)
+			numtnk = 26;
 		} else if (temp[1] == 'h') {
 		    sscanf(temp1, "%lf", &hgt);
 		} else if (temp[1] == 'w') {
