@@ -111,6 +111,7 @@ int main(int argc, char* argv[])
 
     bif = icv_read(in_file, format, inx, iny);
     icv_write(bif,out_file, format);
+    icv_destroy(bif);
 
     return 0;
 }

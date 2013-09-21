@@ -123,6 +123,7 @@ int main(int argc, char* argv[])
     bif = icv_read(in_file, format, inx, iny);
     icv_rect(bif, xorig, yorig, outx, outy);
     icv_write(bif,out_file, format);
+    icv_destroy(bif);
 
     return 0;
 }
