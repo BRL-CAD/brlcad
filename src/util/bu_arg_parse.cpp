@@ -45,43 +45,43 @@ static bool _debug(false);
 
 // using ideas from Cliff and Sean...
 // local funcs
-bu_arg_vars *bu_arg_init();
-std::string _get_fname(void *arg);
-void _write_bool(void *addr, const bool b);
-void _write_long(void *addr, const long l);
-void _write_double(void *addr, const double d);
-void _write_string(void *addr, const std::string& s);
+static bu_arg_vars *bu_arg_init();
+static std::string _get_fname(void *arg);
+static void _write_bool(void *addr, const bool b);
+static void _write_long(void *addr, const long l);
+static void _write_double(void *addr, const double d);
+static void _write_string(void *addr, const std::string& s);
 
-bool _read_bool(void *addr);
-long _read_long(void *addr);
-double _read_double(void *addr);
-std::string _read_string(void *addr);
-
-/* not yet ready
-Arg *_handle_MultiArg(bu_arg_vars *a, CmdLine &cmd);
-Arg *_handle_MultiSwitchArg(bu_arg_vars *a, CmdLine &cmd);
-Arg *_handle_UnlabeledMultiArg(bu_arg_vars *a, CmdLine &cmd);
-Arg *_handle_ValueArg(bu_arg_vars *a, CmdLine &cmd);
-*/
-
-Arg *_handle_SwitchArg(bu_arg_vars *a, CmdLine &cmd);
-Arg *_handle_UnlabeledValueArg(bu_arg_vars *a, CmdLine &cmd);
-
-Arg *_handle_SwitchArg2(bu_arg_vars2 *a, CmdLine &cmd);
-Arg *_handle_UnlabeledValueArg2(bu_arg_vars2 *a, CmdLine &cmd);
+static bool _read_bool(void *addr);
+static long _read_long(void *addr);
+static double _read_double(void *addr);
+static std::string _read_string(void *addr);
 
 /* not yet ready
-void _extract_MultiArg_data(bu_arg_vars *a, Arg *A);
-void _extract_MultiSwitchArg_data(bu_arg_vars *a, Arg *A);
-void _extract_UnlabeledMultiArg_data(bu_arg_vars *a, Arg *A);
-void _extract_ValueArg_data(bu_arg_vars *a, Arg *A);
+static Arg *_handle_MultiArg(bu_arg_vars *a, CmdLine &cmd);
+static Arg *_handle_MultiSwitchArg(bu_arg_vars *a, CmdLine &cmd);
+static Arg *_handle_UnlabeledMultiArg(bu_arg_vars *a, CmdLine &cmd);
+static Arg *_handle_ValueArg(bu_arg_vars *a, CmdLine &cmd);
 */
 
-void _extract_SwitchArg_data(bu_arg_vars *a, Arg *A);
-void _extract_UnlabeledValueArg_data(bu_arg_vars *a, Arg *A);
+static Arg *_handle_SwitchArg(bu_arg_vars *a, CmdLine &cmd);
+static Arg *_handle_UnlabeledValueArg(bu_arg_vars *a, CmdLine &cmd);
 
-void _extract_SwitchArg_data2(bu_arg_vars2 *a, Arg *A);
-void _extract_UnlabeledValueArg_data2(bu_arg_vars2 *a, Arg *A);
+static Arg *_handle_SwitchArg2(bu_arg_vars2 *a, CmdLine &cmd);
+static Arg *_handle_UnlabeledValueArg2(bu_arg_vars2 *a, CmdLine &cmd);
+
+/* not yet ready
+static void _extract_MultiArg_data(bu_arg_vars *a, Arg *A);
+static void _extract_MultiSwitchArg_data(bu_arg_vars *a, Arg *A);
+static void _extract_UnlabeledMultiArg_data(bu_arg_vars *a, Arg *A);
+static void _extract_ValueArg_data(bu_arg_vars *a, Arg *A);
+*/
+
+static void _extract_SwitchArg_data(bu_arg_vars *a, Arg *A);
+static void _extract_UnlabeledValueArg_data(bu_arg_vars *a, Arg *A);
+
+static void _extract_SwitchArg_data2(bu_arg_vars2 *a, Arg *A);
+static void _extract_UnlabeledValueArg_data2(bu_arg_vars2 *a, Arg *A);
 
 
 /**
