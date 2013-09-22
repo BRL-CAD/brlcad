@@ -63,12 +63,6 @@ public:
     else
       usage(c);
 
-    // free our memory
-    std::list<TCLAP::Arg*> args = c.getArgList();
-    for (std::list<TCLAP::Arg*>::iterator i = args.begin(); i != args.end(); ++i) {
-      delete *i;
-      *i = 0;
-    }
     exit(1);
   }
 
