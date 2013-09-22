@@ -23,6 +23,11 @@
 
 #include "bu.h"
 
+static const int BU_TRUE  = 1;
+static const int BU_FALSE = 0;
+
+#define BU_ARG_MAGIC                    0x2189165c /**< arg structs */
+
 /* all in this part of the header MUST have "C" linkage */
 #ifdef __cplusplus
 extern "C" {
@@ -93,7 +98,7 @@ bu_arg_unlabeled_value(const char *name,
                        const bu_arg_req_t required,
                        const bu_arg_valtype_t val_typ);
 
-/* struct for static initialization */
+/* structs for static initialization */
 /* TCLAP::Arg */
 typedef struct bu_arg_vars_type2 {
   bu_arg_t arg_type;              /* enum: type of TCLAP arg                   */
@@ -104,6 +109,33 @@ typedef struct bu_arg_vars_type2 {
   const bu_arg_valtype_t val_typ; /* enum: value type                          */
   const char *def_val;            /* default value (if any)                    */
 } bu_arg_vars2;
+
+typedef struct {
+  uint32_t magic;                 /* BU_ARG_MAGIC                              */
+  bu_arg_t arg_type;              /* enum: type of TCLAP arg                   */
+  const char *flag;               /* the "short" option, may be empty ("")     */
+  const char *name;               /* the "long" option                         */
+  const char *desc;               /* a brief description                       */
+} bu_arg_switch_t;
+
+typedef struct {
+  uint32_t magic;                 /* BU_ARG_MAGIC                              */
+  bu_arg_t arg_type;              /* enum: type of TCLAP arg                   */
+  const char *flag;               /* the "short" option, may be empty ("")     */
+  const char *name;               /* the "long" option                         */
+  const char *desc;               /* a brief description                       */
+  const bu_arg_req_t req;         /* bool: is arg required?                    */
+  const bu_arg_valtype_t val_typ; /* enum: value type                          */
+  const char *def_val;            /* default value (if any)                    */
+} bu_arg_unlabeled_value_t;
+
+#define BU_ARG_SWITCH(_flag_str, _name_str, _desc_str) \
+{BU_ARG_MAGIC, BU_SwitchArg, _flag_str, _name_str, _desc_str}
+
+#define BU_ARG_UNLABELED_VALUE(_flag_str, _name_str, _desc_str,        \
+                        _required_bool, _val_typ, _def_val_str) \
+{BU_ARG_MAGIC, BU_UnlabeledValueArg, _flag_str, _name_str, _desc_str,  \
+      _required_bool, _val_typ, _def_val_str}
 
 /* the getters (signature should ALMOST stay the same for atatic and pointer inits) */
 int bu_arg_get_bool(bu_arg_vars *arg);
