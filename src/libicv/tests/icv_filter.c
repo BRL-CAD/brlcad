@@ -1,4 +1,4 @@
-/*                      I C V _ R E C T . C
+/*                    I C V _ F I L T E R . C
  * BRL-CAD
  *
  * Copyright (c) 2013 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file icv_rect.c
+/** @file icv_filter.c
  *
- * tester function for icv_rect api.
+ * tester function for icv_api.
  *
  */
 
