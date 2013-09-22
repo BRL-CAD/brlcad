@@ -163,9 +163,11 @@ main(int ac, char *av[])
       // automatic
       TCLAP::CmdLine cmd(usage, ' ',
                          "[BRL_CAD_VERSION]"); // help and version are automatic
+
       // use our subclassed stdout
       BRLCAD_StdOutput brlstdout;
       cmd.setOutput(&brlstdout);
+
       // proceed normally ...
 
       // we also want the '-?' option (long help, if available, help otherwise
