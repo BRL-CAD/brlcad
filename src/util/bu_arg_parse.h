@@ -23,10 +23,10 @@
 
 #include "bu.h"
 
-static const int BU_TRUE  = 1;
-static const int BU_FALSE = 0;
+enum { BU_TRUE  = 1 };
+enum { BU_FALSE = 0 };
 
-#define BU_ARG_MAGIC                    0x2189165c /**< arg structs */
+enum { BU_ARG_MAGIC = 0x2189165c }; /**< arg structs */
 
 /* all in this part of the header MUST have "C" linkage */
 #ifdef __cplusplus
@@ -111,7 +111,7 @@ typedef struct bu_arg_vars_type2 {
 } bu_arg_vars2;
 
 typedef struct {
-  uint32_t magic;                 /* BU_ARG_MAGIC                              */
+  const uint32_t magic;           /* BU_ARG_MAGIC                              */
   bu_arg_t arg_type;              /* enum: type of TCLAP arg                   */
   const char *flag;               /* the "short" option, may be empty ("")     */
   const char *name;               /* the "long" option                         */
@@ -120,7 +120,7 @@ typedef struct {
 } bu_arg_switch_t;
 
 typedef struct {
-  uint32_t magic;                 /* BU_ARG_MAGIC                              */
+  const uint32_t magic;           /* BU_ARG_MAGIC                              */
   bu_arg_t arg_type;              /* enum: type of TCLAP arg                   */
   const char *flag;               /* the "short" option, may be empty ("")     */
   const char *name;               /* the "long" option                         */
@@ -131,7 +131,7 @@ typedef struct {
 } bu_arg_unlabeled_value_t;
 
 #define BU_ARG_SWITCH_INIT(_flag_str, _name_str, _desc_str) \
-{BU_ARG_MAGIC, BU_ARG_SwitchArg, _flag_str, _name_str, _desc_str, 0}
+{BU_ARG_MAGIC, BU_ARG_SwitchArg, _flag_str, _name_str, _desc_str, BU_FALSE}
 
 #define BU_ARG_UNLABELED_VALUE_INIT(_flag_str, _name_str, _desc_str,      \
                         _required_bool, _val_typ, _def_val_str)           \
