@@ -161,15 +161,6 @@ qt_loadMatrix(struct dm *dmp, fastf_t *mat, int UNUSED(which_eye))
 }
 
 
-HIDDEN int
-qt_loadPMatrix(struct dm *dmp, fastf_t *UNUSED(mat))
-{
-    if (dmp->dm_debugLevel) {
-	bu_log("qt_loadPMatrix not implemented\n");
-    }
-    return 0;
-}
-
 /**
  * Q T _ D R A W S T R I N G 2 D
  *
@@ -221,26 +212,6 @@ qt_drawLine2D(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2
 
 
 HIDDEN int
-qt_drawLine3D(struct dm *dmp, point_t UNUSED(pt1), point_t UNUSED(pt2))
-{
-    if (dmp->dm_debugLevel) {
-	bu_log("qt_drawLine3D not implemented\n");
-    }
-    return 0;
-}
-
-
-HIDDEN int
-qt_drawLines3D(struct dm *dmp, int UNUSED(npoints), point_t *UNUSED(points), int UNUSED(sflag))
-{
-    if (dmp->dm_debugLevel) {
-	bu_log("qt_drawLines3D not implemented\n");
-    }
-    return 0;
-}
-
-
-HIDDEN int
 qt_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 {
     int sx, sy;
@@ -258,26 +229,6 @@ qt_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
     privars->painter->drawPoint(sx, sy);
 
     return TCL_OK;
-}
-
-
-HIDDEN int
-qt_drawPoint3D(struct dm *dmp, point_t UNUSED(point))
-{
-    if (dmp->dm_debugLevel) {
-	bu_log("qt_drawPoint3D not implemented\n");
-    }
-    return 0;
-}
-
-
-HIDDEN int
-qt_drawPoints3D(struct dm *dmp, int UNUSED(npoints), point_t *UNUSED(points))
-{
-    if (dmp->dm_debugLevel) {
-	bu_log("qt_drawPoints3D not implemented\n");
-    }
-    return 0;
 }
 
 
@@ -982,8 +933,8 @@ struct dm dm_qt = {
     null_loadPMatrix,
     qt_drawString2D,
     qt_drawLine2D,
-    qt_drawLine3D,
-    qt_drawLines3D,
+    null_drawLine3D,
+    null_drawLines3D,
     qt_drawPoint2D,
     null_drawPoint3D,
     null_drawPoints3D,
