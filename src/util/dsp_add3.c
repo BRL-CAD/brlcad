@@ -152,7 +152,7 @@ main(int ac, char *av[])
     int arg_err            = 0;
     int has_force          = 0;
     int has_help           = 0;
-#define ARGBUF_SIZ 256
+    #define ARGBUF_SIZ 256
     char dsp1_fname[ARGBUF_SIZ] = {0};
     char dsp2_fname[ARGBUF_SIZ] = {0};
     char dsp3_fname[ARGBUF_SIZ] = {0};
@@ -201,11 +201,12 @@ main(int ac, char *av[])
       ""
       );
 
-    /* place the arg pointers in an array */
-    /* container for the arg pointers */
+    /* place the arg pointers in an array (note the array is of
+     * type void* to hold the heterogenous arg type structs)
+     */
     static void *args[] = {
-      (void*)&h_arg, (void*)&f_arg,
-      (void*)&dsp1_arg, (void*)&dsp2_arg, (void*)&dsp3_arg,
+      &h_arg, &f_arg,
+      &dsp1_arg, &dsp2_arg, &dsp3_arg,
       NULL
     };
 
@@ -214,7 +215,8 @@ main(int ac, char *av[])
 
     if (arg_err == BU_ARG_PARSE_ERR) {
         /* the TCLAP exception handler has fired with its own message
-         * so need no message here */
+         * so need no message here
+         */
         bu_exit(EXIT_SUCCESS, NULL);
     }
 
@@ -228,7 +230,8 @@ main(int ac, char *av[])
     /* take appropriate action... */
 
     /* note this exit is SUCCESS because it is expected
-     * behavior--important for good auto-man-page handling */
+     * behavior--important for good auto-man-page handling
+     */
     if (has_help) {
       bu_exit(EXIT_SUCCESS, usage);
     }
