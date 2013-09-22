@@ -1,7 +1,7 @@
-BRLCAD_ADDEXEC(tester_icv_read_write icv_read_write.c libicv libbu NO_INSTALL LOCAL)
-BRLCAD_ADDEXEC(tester_icv_rect icv_rect.c libicv libbu NO_INSTALL LOCAL)
-BRLCAD_ADDEXEC(tester_icv_crop icv_crop.c libicv libbu NO_INSTALL LOCAL)
-BRLCAD_ADDEXEC(tester_icv_filter icv_filter.c libicv libbu NO_INSTALL LOCAL)
+BRLCAD_ADDEXEC(tester_icv_read_write icv_read_write.c libicv libbu NO_INSTALL)
+BRLCAD_ADDEXEC(tester_icv_rect icv_rect.c libicv libbu NO_INSTALL)
+BRLCAD_ADDEXEC(tester_icv_crop icv_crop.c libicv libbu NO_INSTALL)
+BRLCAD_ADDEXEC(tester_icv_filter icv_filter.c libicv libbu NO_INSTALL)
 
 # Local Variables:
 # tab-width: 8
