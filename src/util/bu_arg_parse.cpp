@@ -45,6 +45,7 @@ static bool _debug(false);
 
 // using ideas from Cliff and Sean...
 // local funcs
+static bu_arg_t _get_arg_type(void *arg);
 static bu_arg_vars *bu_arg_init();
 static std::string _get_fname(void *arg);
 static void _write_bool(void *addr, const bool b);
@@ -67,8 +68,8 @@ static Arg *_handle_ValueArg(bu_arg_vars *a, CmdLine &cmd);
 static Arg *_handle_SwitchArg(bu_arg_vars *a, CmdLine &cmd);
 static Arg *_handle_UnlabeledValueArg(bu_arg_vars *a, CmdLine &cmd);
 
-static Arg *_handle_SwitchArg2(bu_arg_vars2 *a, CmdLine &cmd);
-static Arg *_handle_UnlabeledValueArg2(bu_arg_vars2 *a, CmdLine &cmd);
+static Arg *_handle_SwitchArg2(bu_arg_switch_t *a, CmdLine &cmd);
+static Arg *_handle_UnlabeledValueArg2(bu_arg_unlabeled_value_t *a, CmdLine &cmd);
 
 /* not yet ready
 static void _extract_MultiArg_data(bu_arg_vars *a, Arg *A);
@@ -80,8 +81,8 @@ static void _extract_ValueArg_data(bu_arg_vars *a, Arg *A);
 static void _extract_SwitchArg_data(bu_arg_vars *a, Arg *A);
 static void _extract_UnlabeledValueArg_data(bu_arg_vars *a, Arg *A);
 
-static void _extract_SwitchArg_data2(bu_arg_vars2 *a, Arg *A);
-static void _extract_UnlabeledValueArg_data2(bu_arg_vars2 *a, Arg *A);
+static void _extract_SwitchArg_data2(bu_arg_switch_t *a, Arg *A);
+static void _extract_UnlabeledValueArg_data2(bu_arg_unlabeled_value_t *a, Arg *A);
 
 
 /**
@@ -350,10 +351,9 @@ _handle_SwitchArg(bu_arg_vars *a, CmdLine &cmd)
 }
 
 Arg *
-_handle_SwitchArg2(bu_arg_vars2 *a, CmdLine &cmd)
+_handle_SwitchArg2(bu_arg_switch_t *a, CmdLine &cmd)
 {
-  bool b = bu_str_true(a->def_val);
-  SwitchArg *A = new SwitchArg(a->flag, a->name, a->desc, b);
+  SwitchArg *A = new SwitchArg(a->flag, a->name, a->desc);
 
   _Arg_pointers.push_back(A);
   cmd.add(A);
@@ -407,7 +407,7 @@ _handle_UnlabeledValueArg(bu_arg_vars *a, CmdLine &cmd)
 }
 
 Arg *
-_handle_UnlabeledValueArg2(bu_arg_vars2 *a, CmdLine &cmd)
+_handle_UnlabeledValueArg2(bu_arg_unlabeled_value_t *a, CmdLine &cmd)
 {
 
   // this is a templated type
@@ -610,32 +610,32 @@ bu_arg_exit(const int status, const char *msg, bu_ptbl_t *args)
 
 // funcs below are for the static init API
 extern "C" int
-bu_arg_get_bool2(bu_arg_vars2 *arg)
+bu_arg_get_bool2(void *arg)
 {
   return _read_bool(arg);
 }
 
 extern "C" long
-bu_arg_get_long2(bu_arg_vars2 *arg)
+bu_arg_get_long2(void *arg)
 {
   return _read_long(arg);
 }
 
 extern "C" double
-bu_arg_get_double2(bu_arg_vars2 *arg)
+bu_arg_get_double2(void *arg)
 {
   return _read_double(arg);
 }
 
 extern "C" void
-bu_arg_get_string2(bu_arg_vars2 *arg, char buf[], const size_t buflen)
+bu_arg_get_string2(void *arg, char buf[], const size_t buflen)
 {
   string s = _read_string(arg);
   snprintf(buf, buflen, "%s", s.c_str());
 }
 
 extern "C" int
-bu_arg_parse2(bu_arg_vars2 *args[], int argc, char * const argv[])
+bu_arg_parse2(void *args[], int argc, char * const argv[])
 {
 
   // need a local collection to extract TCLAP data after a successful
@@ -663,13 +663,14 @@ bu_arg_parse2(bu_arg_vars2 *args[], int argc, char * const argv[])
       // handle this arg and fill in the values
       // map inputs to TCLAP:
       Arg *A         = 0;
-      bu_arg_vars2 *a = args[i];
-      switch (a->arg_type) {
+      void *a = args[i];
+      bu_arg_t arg_type = _get_arg_type(a);
+      switch (arg_type) {
           case BU_ARG_SwitchArg:
-            A = _handle_SwitchArg2(a, cmd);
+            A = _handle_SwitchArg2((bu_arg_switch_t *)a, cmd);
             break;
           case BU_ARG_UnlabeledValueArg:
-            A = _handle_UnlabeledValueArg2(a, cmd);
+            A = _handle_UnlabeledValueArg2((bu_arg_unlabeled_value_t *)a, cmd);
             break;
 /* not yet ready
           case BU_ARG_MultiArg:
@@ -703,13 +704,14 @@ bu_arg_parse2(bu_arg_vars2 *args[], int argc, char * const argv[])
 
     for (unsigned j = 0; j < tclap_results.size(); ++j) {
       Arg *A         = tclap_results[j];
-      bu_arg_vars2 *a = args[j];
-      switch (a->arg_type) {
+      void *a = args[i];
+      bu_arg_t arg_type = _get_arg_type(a);
+      switch (arg_type) {
           case BU_ARG_SwitchArg:
-            _extract_SwitchArg_data2(a, A);
+            _extract_SwitchArg_data2((bu_arg_switch_t *)a, A);
             break;
           case BU_ARG_UnlabeledValueArg:
-            _extract_UnlabeledValueArg_data2(a, A);
+            _extract_UnlabeledValueArg_data2((bu_arg_unlabeled_value_t *)a, A);
             break;
 /* not yet ready
           case BU_ARG_MultiArg:
@@ -764,21 +766,15 @@ _get_fname(void *addr)
 
 //====== for static init ==========
 void
-_extract_SwitchArg_data2(bu_arg_vars2 *a, Arg *A)
+_extract_SwitchArg_data2(bu_arg_switch_t *a, Arg *A)
 {
   SwitchArg *B = dynamic_cast<SwitchArg*>(A);
-  if (a->val_typ == BU_ARG_BOOL) {
-    bool val = B->getValue();
-    _write_bool(a, val);
-   }
-  else {
-    // error
-    BU_ASSERT(0 && "tried to use non-existent BU_ARG bool type");
-  }
+  bool val = B->getValue();
+  _write_bool(a, val);
 }
 
 void
-_extract_UnlabeledValueArg_data2(bu_arg_vars2 *a, Arg *A)
+_extract_UnlabeledValueArg_data2(bu_arg_unlabeled_value_t *a, Arg *A)
 {
   // this is a templated type
   bu_arg_valtype_t val_type = a->val_typ;
@@ -920,4 +916,18 @@ _write_string(void *addr, const std::string& s)
   ofstream fo(fname.c_str());
 
   fo << s;
+}
+
+bu_arg_t
+_get_arg_type(void *arg)
+{
+  // this only works if arg is a struct with the correct MAGIC in the
+  // first field and the type in the second field
+
+  // cast to any one of the magical bu_arg type structs, but switch is
+  // the simplest
+  bu_arg_switch_t *a = (bu_arg_switch_t *)arg;
+  BU_ASSERT(a->magic == BU_ARG_MAGIC);
+  bu_arg_t arg_type = a->arg_type;
+  return arg_type;
 }
