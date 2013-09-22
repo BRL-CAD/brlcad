@@ -37,6 +37,7 @@ typedef enum {
 
 /* types of arg values */
 typedef enum {
+  BU_ARG_UNDEFINED,
   BU_ARG_BOOL,
   BU_ARG_DOUBLE,
   BU_ARG_LONG,
@@ -92,39 +93,34 @@ bu_arg_unlabeled_value(const char *name,
                        const bu_arg_req_t required,
                        const bu_arg_valtype_t val_typ);
 
-/* structs for static initialization */
-typedef struct {
-  const char *flag;
-  const char *name;
-  const char *desc;
-  const char *def_val;
-} bu_arg_switch_t;
+/* struct for static initialization */
+/* TCLAP::Arg */
+typedef struct bu_arg_vars_type2 {
+  bu_arg_t arg_type;              /* enum: type of TCLAP arg                   */
+  const char *flag;               /* the "short" option, may be empty ("")     */
+  const char *name;               /* the "long" option                         */
+  const char *desc;               /* a brief description                       */
+  const bu_arg_req_t req;         /* bool: is arg required?                    */
+  const bu_arg_valtype_t val_typ; /* enum: value type                          */
+  const char *def_val;            /* default value (if any)                    */
+} bu_arg_vars2;
 
-typedef struct {
-  const char *name;
-  const char *desc;
-  const char *def_val;
-  const bu_arg_req_t required;
-  const char *val_typ; /* "bool" (really an int), "long", "string" */
-} bu_arg_unlabeled_value_t;
-
-
-/* the getters (signature should stay the same for atatic and pointer inits) */
+/* the getters (signature should ALMOST stay the same for atatic and pointer inits) */
 int bu_arg_get_bool(bu_arg_vars *arg);
 long bu_arg_get_long(bu_arg_vars *arg);
 double bu_arg_get_double(bu_arg_vars *arg);
 const char *bu_arg_get_string(bu_arg_vars *arg);
 
 /* but use tmp  names while dual use in effect */
-int bu_arg_get_bool2(bu_arg_vars *arg);
-long bu_arg_get_long2(bu_arg_vars *arg);
-double bu_arg_get_double2(bu_arg_vars *arg);
-const char *bu_arg_get_string2(bu_arg_vars *arg);
+int bu_arg_get_bool2(bu_arg_vars2 *arg);
+long bu_arg_get_long2(bu_arg_vars2 *arg);
+double bu_arg_get_double2(bu_arg_vars2 *arg);
+void bu_arg_get_string2(bu_arg_vars2 *arg, char buf[], const size_t buflen);
 
 /* the action: all in one function */
 int bu_arg_parse(bu_ptbl_t *args, int argc, char * const argv[]);
 /* for use with static struct init (tmp name) */
-int bu_arg_parse2(bu_arg_vars *args[], int argc, char * const argv[]);
+int bu_arg_parse2(bu_arg_vars2 *args[], int argc, char * const argv[]);
 
 /* free arg memory for any strings */
 void bu_arg_free(bu_ptbl_t *args);
