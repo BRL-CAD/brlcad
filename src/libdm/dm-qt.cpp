@@ -39,6 +39,7 @@
 #include "bu.h"
 #include "dm.h"
 #include "dm_xvars.h"
+#include "dm-Null.h"
 
 #define DM_QT_DEFAULT_POINT_SIZE 1.0
 
@@ -494,16 +495,6 @@ qt_drawVList(struct dm *dmp, struct bn_vlist *vp)
 
 
 HIDDEN int
-qt_drawVListHiddenLine(struct dm *dmp, struct bn_vlist *UNUSED(vp))
-{
-    if (dmp->dm_debugLevel) {
-	bu_log("qt_drawVListHiddenLine not implemented\n");
-    }
-    return 0;
-}
-
-
-HIDDEN int
 qt_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data)
 {
     struct bn_vlist *vp;
@@ -696,119 +687,61 @@ qt_setWinBounds(struct dm *dmp, fastf_t *w)
 
 
 HIDDEN int
-qt_setLight(struct dm *dmp, int UNUSED(light_on))
+qt_setZBuffer(struct dm *dmp, int zbuffer_on)
 {
     if (dmp->dm_debugLevel) {
-	bu_log("qt_setLight not implemented\n");
+	bu_log("qt_setZBuffer\n");
     }
-    return 0;
+
+    dmp->dm_zbuffer = zbuffer_on;
+
+    return TCL_OK;
 }
 
 
 HIDDEN int
-qt_setTransparency(struct dm *dmp, int UNUSED(transparency))
+qt_debug(struct dm *dmp, int lvl)
 {
-    if (dmp->dm_debugLevel) {
-	bu_log("qt_setTransparency not implemented\n");
-    }
-    return 0;
+    dmp->dm_debugLevel = lvl;
+
+    return TCL_OK;
 }
 
 
 HIDDEN int
-qt_setDepthMask(struct dm *dmp, int UNUSED(mask))
+qt_getDisplayImage(struct dm *dmp, unsigned char **image)
 {
+    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+    int i,j;
+    int height, width;
+
     if (dmp->dm_debugLevel) {
-	bu_log("qt_setDepthMask not implemented\n");
+	bu_log("qt_getDisplayImage\n");
     }
-    return 0;
+
+    QImage qimage = privars->pix->toImage();
+    height = qimage.height();
+    width = qimage.width();
+
+    for (i = 0; i < height; i++) {
+	for (j = 0; j < width; j++) {
+	    image[i][j] = qimage.pixel(i,j);
+	}
+    }
+
+    return TCL_OK;
 }
 
 
 HIDDEN int
-qt_setZBuffer(struct dm *dmp, int UNUSED(zbuffer_on))
+qt_setLight(struct dm *dmp, int light_on)
 {
-    if (dmp->dm_debugLevel) {
-	bu_log("qt_setZBuffer not implemented\n");
-    }
-    return 0;
-}
+    if (dmp->dm_debugLevel)
+	bu_log("qt_setLight:\n");
 
+    dmp->dm_light = light_on;
 
-HIDDEN int
-qt_debug(struct dm *dmp, int UNUSED(lvl))
-{
-    if (dmp->dm_debugLevel) {
-	bu_log("qt_debug not implemented\n");
-    }
-    return 0;
-}
-
-
-HIDDEN int
-qt_beginDList(struct dm *dmp, unsigned int UNUSED(list))
-{
-    if (dmp->dm_debugLevel) {
-	bu_log("qt_beginDList not implemented\n");
-    }
-    return 0;
-}
-
-
-HIDDEN int
-qt_endDList(struct dm *dmp)
-{
-    if (dmp->dm_debugLevel) {
-	bu_log("qt_endDList not implemented\n");
-    }
-    return 0;
-}
-
-
-HIDDEN void
-qt_drawDList(unsigned int UNUSED(list))
-{
-    bu_log("qt_drawDList not implemented\n");
-}
-
-
-HIDDEN int
-qt_freeDLists(struct dm *dmp, unsigned int UNUSED(list), int UNUSED(range))
-{
-    if (dmp->dm_debugLevel) {
-	bu_log("qt_freeDList not implemented\n");
-    }
-    return 0;
-}
-
-
-HIDDEN int
-qt_genDLists(struct dm *dmp, size_t UNUSED(range))
-{
-    if (dmp->dm_debugLevel) {
-	bu_log("qt_genDLists not implemented\n");
-    }
-    return 0;
-}
-
-
-HIDDEN int
-qt_getDisplayImage(struct dm *dmp, unsigned char **UNUSED(image))
-{
-    if (dmp->dm_debugLevel) {
-	bu_log("qt_getDisplayImage not implemented\n");
-    }
-    return 0;
-}
-
-
-HIDDEN int
-qt_makeCurrent(struct dm *dmp)
-{
-    if (dmp->dm_debugLevel) {
-	bu_log("qt_makeCurrent not implemented\n");
-    }
-    return 0;
+    return TCL_OK;
 }
 
 
@@ -1046,16 +979,16 @@ struct dm dm_qt = {
     qt_drawEnd,
     qt_normal,
     qt_loadMatrix,
-    qt_loadPMatrix,
+    null_loadPMatrix,
     qt_drawString2D,
     qt_drawLine2D,
     qt_drawLine3D,
     qt_drawLines3D,
     qt_drawPoint2D,
-    qt_drawPoint3D,
-    qt_drawPoints3D,
+    null_drawPoint3D,
+    null_drawPoints3D,
     qt_drawVList,
-    qt_drawVListHiddenLine,
+    qt_drawVList,
     qt_draw,
     qt_setFGColor,
     qt_setBGColor,
@@ -1063,18 +996,18 @@ struct dm dm_qt = {
     qt_configureWin,
     qt_setWinBounds,
     qt_setLight,
-    qt_setTransparency,
-    qt_setDepthMask,
+    null_setTransparency,
+    null_setDepthMask,
     qt_setZBuffer,
     qt_debug,
-    qt_beginDList,
-    qt_endDList,
-    qt_drawDList,
-    qt_freeDLists,
-    qt_genDLists,
+    null_beginDList,
+    null_endDList,
+    null_drawDList,
+    null_freeDLists,
+    null_genDLists,
     qt_getDisplayImage,
     qt_reshape,
-    qt_makeCurrent,
+    null_makeCurrent,
     0,
     0,				/* no displaylist */
     0,				/* no stereo */
@@ -1340,7 +1273,7 @@ bool QTkMainWindow::event(QEvent *ev)
 	    struct bu_vls str = BU_VLS_INIT_ZERO;
 	    bu_vls_printf(&str, "event generate %V %s", &dmp->dm_pathName, tk_event);
 	    if (Tcl_Eval(dmp->dm_interp, bu_vls_addr(&str)) == TCL_ERROR) {
-		bu_log("error generate event\n");
+		bu_log("error generate event %s\n", tk_event);
 	    }
 	    return true;
 	}

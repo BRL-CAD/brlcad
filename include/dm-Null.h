@@ -26,6 +26,8 @@
 #define __DM_NULL__
 #include "dm.h"
 
+__BEGIN_DECLS
+
 DM_EXPORT extern struct dm dm_null;
 
 
@@ -179,6 +181,8 @@ null_makeCurrent(struct dm *dmp);
 
 DM_EXPORT extern void
 null_processEvents(struct dm *dmp);
+
+__END_DECLS
 
 #endif  /* __DM_NULL__ */
 
