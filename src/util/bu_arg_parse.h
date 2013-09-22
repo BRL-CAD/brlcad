@@ -130,11 +130,11 @@ typedef struct {
 } bu_arg_unlabeled_value_t;
 
 #define BU_ARG_SWITCH_INIT(_flag_str, _name_str, _desc_str) \
-{BU_ARG_MAGIC, BU_SwitchArg, _flag_str, _name_str, _desc_str}
+{BU_ARG_MAGIC, BU_ARG_SwitchArg, _flag_str, _name_str, _desc_str}
 
 #define BU_ARG_UNLABELED_VALUE_INIT(_flag_str, _name_str, _desc_str,        \
                         _required_bool, _val_typ, _def_val_str) \
-{BU_ARG_MAGIC, BU_UnlabeledValueArg, _flag_str, _name_str, _desc_str,  \
+{BU_ARG_MAGIC, BU_ARG_UnlabeledValueArg, _flag_str, _name_str, _desc_str,  \
       _required_bool, _val_typ, _def_val_str}
 
 /* the getters (signature should ALMOST stay the same for atatic and pointer inits) */
