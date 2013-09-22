@@ -158,65 +158,54 @@ main(int ac, char *av[])
     char dsp3_fname[ARGBUF_SIZ] = {0};
 
     /* FIXME: this '-?' arg doesn't work correctly due to some TCLAPisms */
-    static bu_arg_vars2 h_arg = {
-      BU_ARG_SwitchArg,
+    static bu_arg_switch_t h_arg = BU_ARG_SWITCH_INIT(
       "?",
       "short-help",
-      "Same as '-h' or '--help'",
-      BU_ARG_NOT_REQUIRED,
-      BU_ARG_BOOL,
-      ""
-    };
+      "Same as '-h' or '--help'"
+      );
 
     /* define a force option to allow user to shoot himself in the foot */
-    static bu_arg_vars2 f_arg = {
-      BU_ARG_SwitchArg,
+    static bu_arg_switch_t f_arg = BU_ARG_SWITCH_INIT(
       "f",
       "force",
-      "Allow overwriting existing files.",
-      BU_ARG_NOT_REQUIRED,
-      BU_ARG_BOOL,
-      ""
-    };
+      "Allow overwriting existing files."
+      );
 
     /* need two file names */
-    static bu_arg_vars2 dsp1_arg = {
-      BU_ARG_UnlabeledValueArg,
+    static bu_arg_unlabeled_value_t dsp1_arg = BU_ARG_UNLABELED_VALUE_INIT(
       "",
       "dsp_infile1",
       "first dsp input file name",
       BU_ARG_REQUIRED,
       BU_ARG_STRING,
       ""
-    };
+      );
 
     /* need two file names */
-    static bu_arg_vars2 dsp2_arg = {
-      BU_ARG_UnlabeledValueArg,
+    static bu_arg_unlabeled_value_t dsp2_arg = BU_ARG_UNLABELED_VALUE_INIT(
       "",
       "dsp_infile2",
       "second dsp input file name",
       BU_ARG_REQUIRED,
       BU_ARG_STRING,
       ""
-    };
+      );
 
     /* the output file name */
-    static bu_arg_vars2 dsp3_arg = {
-      BU_ARG_UnlabeledValueArg,
+    static bu_arg_unlabeled_value_t dsp3_arg = BU_ARG_UNLABELED_VALUE_INIT(
       "",
       "dsp_outfile",
       "dsp output file name",
       BU_ARG_REQUIRED,
       BU_ARG_STRING,
       ""
-    };
+      );
 
     /* place the arg pointers in an array */
     /* container for the arg pointers */
-    static bu_arg_vars2 *args[] = {
-      &h_arg, &f_arg,
-      &dsp1_arg, &dsp2_arg, &dsp3_arg,
+    static void *args[] = {
+      (void*)&h_arg, (void*)&f_arg,
+      (void*)&dsp1_arg, (void*)&dsp2_arg, (void*)&dsp3_arg,
       NULL
     };
 
