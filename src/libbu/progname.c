@@ -35,83 +35,11 @@ static char bu_argv0_buffer[MAXPATHLEN] = {0};
 static char bu_progname[MAXPATHLEN] = {0};
 
 
-/**
- * b u _ i p w d
- *
- * set/return the path to the initial working directory.
- * bu_setprogname() must be called on app startup for the correct pwd to
- * be acquired/set.
- */
-HIDDEN const char *
-progname_ipwd()
-{
-    /* private stash */
-    static const char *ipwd = NULL;
-    static char buffer[MAXPATHLEN] = {0};
-    const char *pwd = NULL;
-
-    /* already found the path before */
-    if (ipwd) {
-	return ipwd;
-    }
-
-    /* FIRST: try environment */
-    pwd = getenv("PWD"); /* not our memory to free */
-    if (pwd && strlen(pwd) > 0) {
-#ifdef HAVE_REALPATH
-	ipwd = realpath(pwd, buffer);
-	if (ipwd) {
-	    return ipwd;
-	}
-#endif
-	ipwd = pwd;
-	return ipwd;
-    }
-
-    /* SECOND: try to query path */
-#ifdef HAVE_REALPATH
-    ipwd = realpath(".", buffer);
-    if (ipwd && strlen(ipwd) > 0) {
-	return ipwd;
-    }
-#endif
-
-    /* THIRD: try calling the 'pwd' command */
-    ipwd = bu_which("pwd");
-    if (ipwd) {
-#if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)
-	FILE *fp = NULL;
-
-	fp = popen(ipwd, "r");
-	if (LIKELY(fp != NULL)) {
-	    if (bu_fgets(buffer, MAXPATHLEN, fp)) {
-		ipwd = buffer;
-	    } else {
-		ipwd = ".";
-	    }
-	} else {
-	    ipwd = ".";
-	}
-#else
-	memset(buffer, 0, MAXPATHLEN); /* quellage */
-	ipwd = ".";
-#endif
-    }
-
-    /* LAST: punt (but do not return NULL) */
-    ipwd = ".";
-    return ipwd;
-}
-
-
 HIDDEN const char *
 progname_argv0(void)
 {
     /* private stash */
     static const char *argv0 = NULL;
-
-    /* FIXME: this is temporary until bu_getcwd() is working. */
-    (void)progname_ipwd();
 
     if (bu_argv0_buffer[0] != '\0') {
 	argv0 = bu_argv0_buffer;
@@ -139,9 +67,6 @@ bu_argv0_full_path(void)
 
     const char *argv0 = progname_argv0();
 
-    /* FIXME: this is temporary until bu_getcwd() is working. */
-    const char *ipwd = progname_ipwd();
-
     const char *which = bu_which(argv0);
 
     if (argv0[0] == BU_DIR_SEPARATOR) {
@@ -162,7 +87,8 @@ bu_argv0_full_path(void)
     }
 
     /* running from relative dir */
-    snprintf(buffer, MAXPATHLEN, "%s%c%s", ipwd, BU_DIR_SEPARATOR, argv0);
+    bu_getcwd(buffer, MAXPATHLEN);
+    snprintf(buffer+strlen(buffer), MAXPATHLEN-strlen(buffer), "%c%s", BU_DIR_SEPARATOR, argv0);
     if (bu_file_exists(buffer, NULL)) {
 	return buffer;
     }
@@ -174,7 +100,8 @@ bu_argv0_full_path(void)
 
 
 const char *
-bu_getprogname(void) {
+bu_getprogname(void)
+{
     const char *name = NULL;
     char *tmp_basename = NULL;
 
@@ -213,9 +140,6 @@ bu_setprogname(const char *argv0)
     } else {
 	bu_progname[0] = '\0';
     }
-
-    /* FIXME: this is temporary until bu_getcwd() is working. */
-    (void)progname_ipwd();
 
     return;
 }
