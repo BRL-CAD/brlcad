@@ -32,25 +32,8 @@
 #include "G_STEP_internal.h"
 #include "STEPWrapper.h"
 #include "ON_Brep.h"
+#include "Assembly_Product.h"
 
-STEPentity *
-Identity_AXIS2_PLACEMENT_3D(Registry *registry, InstMgr *instance_list) {
-    SdaiCartesian_point *pnt = (SdaiCartesian_point *)registry->ObjCreate("CARTESIAN_POINT");
-    XYZ_to_Cartesian_point(0.0, 0.0, 0.0, pnt);
-    SdaiDirection *axis = (SdaiDirection *)registry->ObjCreate("DIRECTION");
-    XYZ_to_Direction(0.0, 0.0, 1.0, axis);
-    SdaiDirection *ref = (SdaiDirection *)registry->ObjCreate("DIRECTION");
-    XYZ_to_Direction(1.0, 0.0, 0.0, ref);
-    SdaiAxis2_placement_3d *placement = (SdaiAxis2_placement_3d *)registry->ObjCreate("AXIS2_PLACEMENT_3D");
-    placement->location_(pnt);
-    placement->axis_(axis);
-    placement->ref_direction_(ref);
-    instance_list->Append((STEPentity *)pnt, completeSE);
-    instance_list->Append((STEPentity *)axis, completeSE);
-    instance_list->Append((STEPentity *)ref, completeSE);
-    instance_list->Append((STEPentity *)placement, completeSE);
-    return (STEPentity *)placement;
-}
 
 STEPentity *
 Comb_to_STEP(struct directory *dp, Registry *registry, InstMgr *instance_list) {
@@ -161,6 +144,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, struct rt_db_intern
 	    non_wrapper_combs.insert(curr_dp);
 	    bu_log("Comb non-wrapper (matrix over primitive): %s\n", curr_dp->d_namep);
 	}
+	rt_db_free_internal(&comb_intern);
     }
 
     /* For each non-wrapper comb, get list of immediate children and call Assembly Product,
@@ -173,67 +157,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, struct rt_db_intern
     for (std::set<struct directory *>::iterator it=non_wrapper_combs.begin(); it != non_wrapper_combs.end(); ++it) {
 	bu_log("look for matrices in %s\n", (*it)->d_namep);
 	struct bu_ptbl *comb_children = db_search_path_obj(comb_children_search, (*it), wdbp);
-	struct rt_db_internal comb_intern;
-	rt_db_get_internal(&comb_intern, (*it), wdbp->dbip, bn_mat_identity, &rt_uniresource);
-	RT_CK_DB_INTERNAL(&comb_intern);
-	struct rt_comb_internal *comb = (struct rt_comb_internal *)(comb_intern.idb_ptr);
-	for (int j = (int)BU_PTBL_LEN(comb_children) - 1; j >= 0; j--){
-	    struct directory *curr_dp = (struct directory *)BU_PTBL_GET(comb_children, j);
-	    bu_log("%s under %s: ", curr_dp->d_namep, (*it)->d_namep);
-	    union tree *curr_node = db_find_named_leaf(comb->tree, curr_dp->d_namep);
-	    matp_t curr_matrix = curr_node->tr_l.tl_mat;
-	    if(curr_matrix) {
-		bu_log(" - found matrix over %s in %s\n", curr_dp->d_namep, (*it)->d_namep);
-		bn_mat_print(curr_dp->d_namep, curr_matrix);
-
-		//TODO - investigate CARTESIAN_TRANSFORMATION_OPERATOR_3D, which seems to
-		// allow uniform scaling as well and appears to be compatible with the
-		// same slot used for AXIS2_PLACEMENT_3D - may be able to use the latter
-		// for simple cases without scaling (i.e. VUNITIZE doesn't change the length
-		// of X, Y or Z unit vectors after the matrix is applied), the former when
-		// the there is uniform scaling (X, Y and Z lengths all change by the same
-		// amount) and in the worst case (non-uniform scaling) will have to create
-		// a new Brep and abandon the attempt to preserve the comb-level operation.
-
-		vect_t inv, outv;
-		VSET(inv, 0, 0, 0);
-		MAT4X3PNT(outv, curr_matrix, inv);
-		bu_log("AXIS2_PLACEMENT_3D cartesian_point: %f, %f, %f\n", outv[0], outv[1], outv[2]);
-		VSET(inv, 0, 0, 1);
-		MAT4X3VEC(outv, curr_matrix, inv);
-		VUNITIZE(outv);
-		bu_log("AXIS2_PLACEMENT_3D axis: %f, %f, %f\n", outv[0], outv[1], outv[2]);
-		VSET(inv, 1, 0, 0);
-		MAT4X3VEC(outv, curr_matrix, inv);
-		VUNITIZE(outv);
-		bu_log("AXIS2_PLACEMENT_3D ref axis: %f, %f, %f\n", outv[0], outv[1], outv[2]);
-
-		vect_t outx, outy, outz;
-		fastf_t xm, ym, zm;
-		VSET(inv, 0, 0, 0);
-		MAT4X3PNT(outv, curr_matrix, inv);
-		bu_log("CAERTESIAN_TRANSFORMATION_OPERATOR_3D local_origin: %f, %f, %f\n", outv[0], outv[1], outv[2]);
-		VSET(inv, 1, 0, 0);
-		MAT4X3VEC(outx, curr_matrix, inv);
-		xm = MAGNITUDE(outx);
-		VUNITIZE(outx);
-		bu_log("CAERTESIAN_TRANSFORMATION_OPERATOR_3D axis1: %f, %f, %f\n", outx[0], outx[1], outx[2]);
-		VSET(inv, 0, 1, 0);
-		MAT4X3VEC(outy, curr_matrix, inv);
-		ym = MAGNITUDE(outy);
-		VUNITIZE(outy);
-		bu_log("CAERTESIAN_TRANSFORMATION_OPERATOR_3D axis2: %f, %f, %f\n", outy[0], outy[1], outy[2]);
-		VSET(inv, 0, 0, 1);
-		MAT4X3VEC(outz, curr_matrix, inv);
-		zm = MAGNITUDE(outz);
-		VUNITIZE(outz);
-		bu_log("CAERTESIAN_TRANSFORMATION_OPERATOR_3D axis3: %f, %f, %f\n", outz[0], outz[1], outz[2]);
-		bu_log("Scaling: x: %f, y: %f, z: %f\n", xm, ym, zm);
-
-	    } else {
-		bu_log("identity matrix\n");
-	    }
-	}
+	Add_Assembly_Product((*it), wdbp->dbip, comb_children, &comb_to_step, registry, instance_list);
 	bu_ptbl_free(comb_children);
 	bu_free(comb_children, "free search result");
     }
