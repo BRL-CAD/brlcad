@@ -1215,6 +1215,10 @@ endif(BRLCAD_ENABLE_VERBOSE_PROGRESS)
 option(BRLCAD_ENABLE_PROFILING "Build with profiling support" OFF)
 mark_as_advanced(BRLCAD_ENABLE_PROFILING)
 
+# Build with strict C89 checking
+option(BRLCAD_ENABLE_STRICT_C89 "Build with strict C89 checking" OFF)
+mark_as_advanced(BRLCAD_ENABLE_STRICT_C89)
+
 # Build with dtrace support
 option(BRLCAD_ENABLE_DTRACE "Build with dtrace support" OFF)
 mark_as_advanced(BRLCAD_ENABLE_DTRACE)

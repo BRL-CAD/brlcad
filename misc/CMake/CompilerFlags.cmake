@@ -254,7 +254,13 @@ BRLCAD_CHECK_C_FLAG(msse3 BUILD_TYPES Debug)
 # a release so we get more broad portability testing.  Since the
 # default is debug, it will be the more difficult to keep working
 # given it's the lesser feature-rich C standard.
-BRLCAD_CHECK_C_FLAG("std=gnu89" BUILD_TYPES Debug)
+if(NOT BRLCAD_ENABLE_STRICT_C89)
+  BRLCAD_CHECK_C_FLAG("std=gnu89" BUILD_TYPES Debug)
+else()
+  #=== strict C89 support =======
+  BRLCAD_CHECK_C_FLAG("std=c89")
+  BRLCAD_CHECK_C_FLAG("pedantic")
+endif()
 
 # Check for c99 support with gnu extensions when we are building for a
 # release so we get to leverage more system features where available.
@@ -263,7 +269,9 @@ BRLCAD_CHECK_C_FLAG("std=gnu89" BUILD_TYPES Debug)
 # environments require it due to c99-specific system headers (e.g.,
 # /System/Library/Frameworks/OpenGL.framework/Headers/gl.h on Mac OS X
 # having '//' comments embedded).
-BRLCAD_CHECK_C_FLAG("std=gnu99" BUILD_TYPES Release VARS C99_FLAG)
+if(NOT BRLCAD_ENABLE_STRICT_C89)
+  BRLCAD_CHECK_C_FLAG("std=gnu99" BUILD_TYPES Release VARS C99_FLAG)
+endif()
 
 # Silence check for unused arguments (used to silence clang warnings about
 # unused options on the command line). By default clang generates a lot of
