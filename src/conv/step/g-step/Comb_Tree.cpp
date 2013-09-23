@@ -63,7 +63,7 @@ Comb_to_STEP(struct directory *dp, Registry *registry, InstMgr *instance_list) {
     SdaiApplication_context *app_context = (SdaiApplication_context *)registry->ObjCreate("APPLICATION_CONTEXT");
     instance_list->Append((STEPentity *)app_context, completeSE);
     mech_context->frame_of_reference_(app_context);
-    app_context->application_("''");
+    app_context->application_("'CONFIGURATION CONTROLLED 3D DESIGNS OF MECHANICAL PARTS AND ASSEMBLIES'");
 
     // PRODUCT_DEFINITION
     SdaiProduct_definition *prod_def = (SdaiProduct_definition *)registry->ObjCreate("PRODUCT_DEFINITION");
