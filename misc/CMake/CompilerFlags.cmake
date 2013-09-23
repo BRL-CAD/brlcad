@@ -69,7 +69,8 @@ macro(ADD_NEW_FLAG FLAG_TYPE NEW_FLAG CONFIG_LIST)
   endif(${NEW_FLAG})
 endmacro(ADD_NEW_FLAG)
 
-# Convenience language based wrapper for calling the correct compiler flag test macro
+# Convenience language based wrapper for calling the correct compiler
+# flag test macro
 macro(CHECK_COMPILER_FLAG FLAG_LANG NEW_FLAG RESULTVAR)
   if("${FLAG_LANG}" STREQUAL "C")
     CHECK_C_COMPILER_FLAG(${NEW_FLAG} ${RESULTVAR})
@@ -82,20 +83,24 @@ endmacro(CHECK_COMPILER_FLAG LANG NEW_FLAG RESULTVAR)
 
 # Synopsis:  BRLCAD_CHECK_FLAG(LANG flag [BUILD_TYPES type1 type2 ...] [GROUPS group1 group2 ...] [VARS var1 var2 ...] )
 #
-# BRLCAD_CHECK_FLAG is BRL-CAD's core macro for C/C++ flag testing.  The first value
-# is the language to test (C or C++ currently).  The second entry is the flag (without
-# preliminary dash).
+# BRLCAD_CHECK_FLAG is BRL-CAD's core macro for C/C++ flag testing.
+# The first value is the language to test (C or C++ currently).  The
+# second entry is the flag (without preliminary dash).
 #
-# If the first two mandatory options are the only ones provided, a successful test
-# of the flag will result in its being assigned to *all* compilations using the appropriate global
-# C/C++ CMake variable.  If optional parameters are included, they tell the macro what to do with the
-# test results instead of doing the default global assignment.  Options include assigning the
-# flag to one or more of the variable lists associated with build types (e.g. Debug or Release),
-# appending the variable to a string that contains a group of variables, or assigning the flag to
-# a variable if that variable does not already hold a value.  The assignments are not mutually
+# If the first two mandatory options are the only ones provided, a
+# successful test of the flag will result in its being assigned to
+# *all* compilations using the appropriate global C/C++ CMake
+# variable.  If optional parameters are included, they tell the macro
+# what to do with the test results instead of doing the default global
+# assignment.  Options include assigning the flag to one or more of
+# the variable lists associated with build types (e.g. Debug or
+# Release), appending the variable to a string that contains a group
+# of variables, or assigning the flag to a variable if that variable
+# does not already hold a value.  The assignments are not mutually
 # exclusive - any or all of them may be used in a given command.
 #
-# For example, to test a flag and add it to the C Debug configuration flags:
+# For example, to test a flag and add it to the C Debug configuration
+# flags:
 #
 # BRLCAD_CHECK_FLAG(C ggdb3 BUILD_TYPES Debug)
 #
@@ -169,7 +174,8 @@ macro(BRLCAD_CHECK_FLAG)
 
 endmacro(BRLCAD_CHECK_FLAG)
 
-# Convenience wrappers to call the primary checking function with a default language.
+# Convenience wrappers to call the primary checking function with a
+# default language.
 macro(BRLCAD_CHECK_C_FLAG)
   BRLCAD_CHECK_FLAG(C ${ARGN})
 endmacro(BRLCAD_CHECK_C_FLAG)
