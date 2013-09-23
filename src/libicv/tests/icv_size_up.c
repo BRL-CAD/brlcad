@@ -97,6 +97,7 @@ int main(int argc, char* argv[])
 		    usage();
 		    bu_exit(1, "Wrong Input Argument\n");
 		}
+	    break;
 	    case 'b':
 		format = ICV_IMAGE_BW;
 		break;
