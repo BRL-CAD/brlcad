@@ -87,7 +87,6 @@ qt_close(struct dm *dmp)
     bu_free((genptr_t)dmp->dm_vars.pub_vars, "qt_close: dm_xvars");
     bu_free((genptr_t)dmp, "qt_close: dmp");
 
-    bu_log("close called");
     return TCL_OK;
 }
 
@@ -915,8 +914,6 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
 
     /* Try to process Qt events when idle */
     Tcl_DoWhenIdle(IdleCall, NULL);
-
-    bu_log("qt_open called\n");
 
     return dmp;
 }
