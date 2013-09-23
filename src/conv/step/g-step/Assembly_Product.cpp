@@ -48,6 +48,7 @@
  * ((#19))GLOBAL_UNIT_ASSIGNED_CONTEXT((#13,#17,#18))REPRESENTATION_CONTEXT('ID52','3'));
  *
  * #100=APPLICATION_CONTEXT('CONFIGURATION CONTROLLED 3D DESIGNS OF MECHANICAL PARTS AND ASSEMBLIES');
+ * #1001=DESIGN_CONTEXT('',#100,'design');
  *
  * // seems to be a list of AXIS2_PLACEMENT_3D objects - does this put all the axis
  * // in a representation context?  Used by the REPRESENTATION_RELATIONSHIP objects.
@@ -75,7 +76,6 @@
  * // Solid shape representation  Looks like this is the bit that needs to be created
  * // for each solid - should be done by the SHAPE_DEFINITION_REPRESENTATION logic.
  * #200=ADVANCED_BREP_SHAPE_REPRESENTATION();
- * #1001=DESIGN_CONTEXT('',#100,'design');
  * #1002=MECHANICAL_CONTEXT('',#100,'mechanical');
  * #1003=PRODUCT('Geometric_Shape_01','Geometric_Shape_01','NOT SPECIFIED',(#1002));
  * #1004=PRODUCT_DEFINITION_FORMATION_WITH_SPECIFIED_SOURCE('1','LAST_VERSION',#1003,.MADE.);

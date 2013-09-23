@@ -65,11 +65,19 @@ Comb_to_STEP(struct directory *dp, Registry *registry, InstMgr *instance_list) {
     mech_context->frame_of_reference_(app_context);
     app_context->application_("'CONFIGURATION CONTROLLED 3D DESIGNS OF MECHANICAL PARTS AND ASSEMBLIES'");
 
+    // DESIGN_CONTEXT - TODO, should be one of these per file?
+    SdaiDesign_context *design_context = (SdaiDesign_context *)registry->ObjCreate("DESIGN_CONTEXT");
+    instance_list->Append((STEPentity *)design_context, completeSE);
+    design_context->name_("''");
+    design_context->life_cycle_stage_("'design'");
+    design_context->frame_of_reference_(app_context);
+
     // PRODUCT_DEFINITION
     SdaiProduct_definition *prod_def = (SdaiProduct_definition *)registry->ObjCreate("PRODUCT_DEFINITION");
     instance_list->Append((STEPentity *)prod_def, completeSE);
     prod_def->id_("''");
     prod_def->description_("''");
+    prod_def->frame_of_reference_(design_context);
 
     // PRODUCT_DEFINITION_FORMATION
     SdaiProduct_definition_formation *prod_def_form = (SdaiProduct_definition_formation *)registry->ObjCreate("PRODUCT_DEFINITION_FORMATION");
