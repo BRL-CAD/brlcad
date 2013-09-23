@@ -35,7 +35,7 @@
 void usage()
 {
     bu_log("\
-            [-h] [-f fraction ]\n\
+	    [-h] [-f fraction ]\n\
 	    [-p -d -m] \n\
 	    [-o out_file] [file] > [out_file]\n");
 
@@ -101,7 +101,7 @@ int main(int argc, char* argv[])
 
     bif = icv_read(in_file, format, inx, iny);
     if(icv_saturate(bif, fraction) < 0)
-        return 1;
+	return 1;
     icv_write(bif,out_file, format);
     icv_destroy(bif);
 

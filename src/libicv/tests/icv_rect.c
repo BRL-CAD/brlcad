@@ -57,67 +57,67 @@ int main(int argc, char* argv[])
     ICV_IMAGE_FORMAT format=ICV_IMAGE_AUTO;
 
     if (argc<2) {
-        usage();
-        return 1;
+	usage();
+	return 1;
     }
 
     while ((c = bu_getopt(argc, argv, "s:W:w:N:n:S:x:y:o:bpdmh?")) != -1) {
-        switch (c) {
+	switch (c) {
 	     case 's':
-	        inx = iny = atoi(bu_optarg);
-	        break;
+		inx = iny = atoi(bu_optarg);
+		break;
 	    case 'W':
-	        outx = atoi(bu_optarg);
-	        break;
+		outx = atoi(bu_optarg);
+		break;
 	    case 'w':
-	        inx = atoi(bu_optarg);
-	        break;
+		inx = atoi(bu_optarg);
+		break;
 	    case 'N':
-	        outy = atoi(bu_optarg);
-	        break;
+		outy = atoi(bu_optarg);
+		break;
 	    case 'n':
-	        iny = atoi(bu_optarg);
-	        break;
+		iny = atoi(bu_optarg);
+		break;
 	    case 'S':
-	        outy = outx = atoi(bu_optarg);
-	        break;
+		outy = outx = atoi(bu_optarg);
+		break;
 	    case 'x':
-	        xorig = atoi(bu_optarg);
-	        break;
+		xorig = atoi(bu_optarg);
+		break;
 	    case 'y':
-	        yorig = atoi(bu_optarg);
-	        break;
+		yorig = atoi(bu_optarg);
+		break;
 	    case 'o':
-	        out_file = bu_optarg;
-	        break;
+		out_file = bu_optarg;
+		break;
 	    case 'b' :
-	        format = ICV_IMAGE_BW;
-	        break;
+		format = ICV_IMAGE_BW;
+		break;
 	    case 'p' :
-	        format = ICV_IMAGE_PIX;
-	        break;
+		format = ICV_IMAGE_PIX;
+		break;
 	    case 'd' :
-	        format = ICV_IMAGE_DPIX;
-	        break;
+		format = ICV_IMAGE_DPIX;
+		break;
 	    case 'm' :
-	        format = ICV_IMAGE_PPM;
-	        break;
+		format = ICV_IMAGE_PPM;
+		break;
 	    case 'h':
 	    default:
-	        usage();
-	        return 1;
+		usage();
+		return 1;
 
-        }
+	}
     }
     if (bu_optind >= argc) {
-        if (isatty(fileno(stdin))) {
+	if (isatty(fileno(stdin))) {
 	    usage();
 	    return 1;
-        }
+	}
     }
     else {
-        in_file = argv[bu_optind];
-        bu_optind++;
+	in_file = argv[bu_optind];
+	bu_optind++;
     }
 
     bif = icv_read(in_file, format, inx, iny);

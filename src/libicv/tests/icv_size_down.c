@@ -69,17 +69,17 @@ int main(int argc, char* argv[])
     while ((c = bu_getopt(argc, argv, "s:w:n:M:f:o:bpdmh?")) != -1) {
 	switch (c) {
 	    case 's':
-	        inx = iny = atoi(bu_optarg);
-	        break;
+		inx = iny = atoi(bu_optarg);
+		break;
 	    case 'w':
-	        inx = atoi(bu_optarg);
-	        break;
+		inx = atoi(bu_optarg);
+		break;
 	    case 'n':
-	        iny = atoi(bu_optarg);
-	        break;
+		iny = atoi(bu_optarg);
+		break;
 	    case 'o':
-	        out_file = bu_optarg;
-	        break;
+		out_file = bu_optarg;
+		break;
 	    case 'M':
 		if (BU_STR_EQUAL(bu_optarg, "under_sample"))
 		    method = ICV_RESIZE_UNDERSAMPLE;
@@ -91,8 +91,8 @@ int main(int argc, char* argv[])
 		}
 	    break;
 	    case 'f':
-	        factor = atoi(bu_optarg);
-            break;
+		factor = atoi(bu_optarg);
+	    break;
 	    case 'b':
 		format = ICV_IMAGE_BW;
 		break;
@@ -126,13 +126,13 @@ int main(int argc, char* argv[])
     bif = icv_read(in_file, format, inx, iny);
     icv_resize(bif, method, 0, 0, (unsigned int) factor);
     bu_log("File information width %d height%d\n", bif->width, bif->height);
-    
+
     for(index = 0; index < 65536; index++)
-        bu_log("index = %ld, data = %f\n", index, bif->data[index]);
-    
-    
+	bu_log("index = %ld, data = %f\n", index, bif->data[index]);
+
+
     icv_write(bif,out_file, format);
-    bu_log("File information width %d height%d channels = %d\n", bif->width, bif->height, bif->channels);   
+    bu_log("File information width %d height%d channels = %d\n", bif->width, bif->height, bif->channels);
     icv_destroy(bif);
 
     return 0;

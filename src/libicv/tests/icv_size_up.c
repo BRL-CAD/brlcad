@@ -68,26 +68,26 @@ int main(int argc, char* argv[])
     while ((c = bu_getopt(argc, argv, "s:w:n:S:W:N:M:o:bpdmh?")) != -1) {
 	switch (c) {
 	    case 's':
-	        inx = iny = atoi(bu_optarg);
-	        break;
+		inx = iny = atoi(bu_optarg);
+		break;
 	    case 'w':
-	        inx = atoi(bu_optarg);
-	        break;
+		inx = atoi(bu_optarg);
+		break;
 	    case 'n':
-	        iny = atoi(bu_optarg);
-	        break;
+		iny = atoi(bu_optarg);
+		break;
 	    case 'S':
-	        outx = outy = atoi(bu_optarg);
-	        break;
+		outx = outy = atoi(bu_optarg);
+		break;
 	    case 'W':
-	        outx = atoi(bu_optarg);
-	        break;
+		outx = atoi(bu_optarg);
+		break;
 	    case 'N':
-	        outy = atoi(bu_optarg);
-	        break;
+		outy = atoi(bu_optarg);
+		break;
 	    case 'o':
-	        out_file = bu_optarg;
-	        break;
+		out_file = bu_optarg;
+		break;
 	    case 'M':
 		if (BU_STR_EQUAL(bu_optarg, "binterp"))
 		    method = ICV_RESIZE_BINTERP;

@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
     ICV_IMAGE_FORMAT format=ICV_IMAGE_AUTO;
     int urx, ury, ulx, uly, llx, lly, lrx, lry;
     int ret;
-    
+
     if (argc<2) {
 	    usage();
 	    return 1;
@@ -39,67 +39,67 @@ int main(int argc, char* argv[])
 
     while ((c = bu_getopt(argc, argv, "s:W:w:N:n:s:S:o:bpdmh?")) != -1) {
 	    switch (c) {
-	        case 's':
-		        inx = iny = atoi(bu_optarg);
-		        break;
-	        case 'W':
-		        outx = atoi(bu_optarg);
-		        break;
-	        case 'w':
-		        inx = atoi(bu_optarg);
-		        break;
-	        case 'N':
-		        outy = atoi(bu_optarg);
-		        break;
-	        case 'n':
-		        iny = atoi(bu_optarg);
-		        break;
-	        case 'S':
-		        outy = outx = atoi(bu_optarg);
-		        break;
-	        case 'o':
-		        out_file = bu_optarg;
-		        break;
-	        case 'b' :
-		        format = ICV_IMAGE_BW;
-		        break;
-	        case 'p' :
-		        format = ICV_IMAGE_PIX;
-		        break;
-	        case 'd' :
-		        format = ICV_IMAGE_DPIX;
-		        break;
-	        case 'm' :
-		        format = ICV_IMAGE_PPM;
-		        break;
-	        case 'h':
-	        default:
-		        usage();
-		        return 1;
+		case 's':
+			inx = iny = atoi(bu_optarg);
+			break;
+		case 'W':
+			outx = atoi(bu_optarg);
+			break;
+		case 'w':
+			inx = atoi(bu_optarg);
+			break;
+		case 'N':
+			outy = atoi(bu_optarg);
+			break;
+		case 'n':
+			iny = atoi(bu_optarg);
+			break;
+		case 'S':
+			outy = outx = atoi(bu_optarg);
+			break;
+		case 'o':
+			out_file = bu_optarg;
+			break;
+		case 'b' :
+			format = ICV_IMAGE_BW;
+			break;
+		case 'p' :
+			format = ICV_IMAGE_PIX;
+			break;
+		case 'd' :
+			format = ICV_IMAGE_DPIX;
+			break;
+		case 'm' :
+			format = ICV_IMAGE_PPM;
+			break;
+		case 'h':
+		default:
+			usage();
+			return 1;
 
 	    }
     }
-    
+
     if (bu_optind < argc) {
-        in_file = argv[bu_optind];
+	in_file = argv[bu_optind];
     } else {
-        usage();
-        return 1;
+	usage();
+	return 1;
     }
 
     bu_log("\t          (ulx,uly)         (urx,ury)\n\
-            \t           __________________\n\
-            \t          /                 |\n\
-            \t         /                  |\n\
-            \t        /                   |\n\
-            \t       /                    |\n\
-            \t      /                     |\n\
-            \t     /______________________|\n\
-            \t   (llx,lly)             (lrx,lry)\n");
-    
-    
+	    \t           __________________\n\
+	    \t          /                 |\n\
+	    \t         /                  |\n\
+	    \t        /                   |\n\
+	    \t       /                    |\n\
+	    \t      /                     |\n\
+	    \t     /______________________|\n\
+	    \t   (llx,lly)             (lrx,lry)\n");
+
+
     bu_log("Prompting Input Paramters\n");
-    
+
     bu_log("\tUpper left corner in input file (ulx, uly)?: ");
 	ret = scanf("%d%d", &ulx, &uly);
 	if (ret != 2)
@@ -119,8 +119,8 @@ int main(int argc, char* argv[])
 	ret = scanf("%d%d", &llx, &lly);
 	if (ret != 2)
 	    perror("scanf");
-	    
- 
+
+
     bif = icv_read(in_file, format, inx, iny);
     icv_crop(bif, ulx, uly, urx, ury, lrx, lry, llx, lly, outy, outx);
     icv_write(bif,out_file, format);

@@ -35,7 +35,7 @@
 void usage()
 {
     bu_log("\
-            [-h] [ -O +|-|/|* ]\n\
+	    [-h] [ -O +|-|/|* ]\n\
 	    [-b -p -d -m] \n\
 	    [-o out_file]  file_1 file_2 > [out_file]\n");
 
@@ -91,45 +91,45 @@ int main(int argc, char* argv[])
 	}
     }
     if (bu_optind <= argc) {
-    	in_file1 = argv[bu_optind];
+	in_file1 = argv[bu_optind];
 	bu_optind++;
     }
     else {
-        usage();
-        return 1;
+	usage();
+	return 1;
     }
-    
+
     if (bu_optind <= argc) {
-    	in_file2 = argv[bu_optind];
+	in_file2 = argv[bu_optind];
     }
     else {
-        usage();
-        return 1;
-    } 
+	usage();
+	return 1;
+    }
 
     bif1 = icv_read(in_file1, format, inx, iny);
     bif2 = icv_read(in_file2, format, inx, iny);
 
     if( bif1 == NULL || bif2 == NULL ) {
-        bu_log("Error loading the image.\n");
-        return 1;
+	bu_log("Error loading the image.\n");
+	return 1;
     }
 
-    if(BU_STR_EQUAL(operation, "+"))    
-        out_bif = icv_add(bif1, bif1);
-    else if(BU_STR_EQUAL(operation, "-"))    
-        out_bif = icv_sub(bif1, bif2);
-    else if(BU_STR_EQUAL(operation, "/"))    
-        out_bif = icv_multiply(bif1, bif2);
-    else if(BU_STR_EQUAL(operation, "*"))    
-        out_bif = icv_divide(bif1, bif2);
+    if(BU_STR_EQUAL(operation, "+"))
+	out_bif = icv_add(bif1, bif1);
+    else if(BU_STR_EQUAL(operation, "-"))
+	out_bif = icv_sub(bif1, bif2);
+    else if(BU_STR_EQUAL(operation, "/"))
+	out_bif = icv_multiply(bif1, bif2);
+    else if(BU_STR_EQUAL(operation, "*"))
+	out_bif = icv_divide(bif1, bif2);
     else {
-        bu_log("Using Default operation (+)");
-        out_bif = icv_add(bif1, bif2);
+	bu_log("Using Default operation (+)");
+	out_bif = icv_add(bif1, bif2);
     }
 
     if(!out_bif) {
-        bu_log("Error in Operations\n");
+	bu_log("Error in Operations\n");
     }
 
     icv_write(out_bif,out_file, format);
