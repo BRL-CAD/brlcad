@@ -6,6 +6,7 @@ BRLCAD_ADDEXEC(tester_icv_fade icv_fade.c libicv libbu NO_INSTALL)
 BRLCAD_ADDEXEC(tester_icv_size_up icv_size_up.c libicv libbu NO_INSTALL)
 BRLCAD_ADDEXEC(tester_icv_size_down icv_size_down.c libicv libbu NO_INSTALL)
 BRLCAD_ADDEXEC(tester_icv_saturate icv_saturate.c libicv libbu NO_INSTALL)
+BRLCAD_ADDEXEC(tester_icv_operations icv_operations.c libicv libbu NO_INSTALL)
 
 # Local Variables:
 # tab-width: 8
