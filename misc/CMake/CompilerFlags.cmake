@@ -86,7 +86,7 @@ endmacro(CHECK_COMPILER_FLAG LANG NEW_FLAG RESULTVAR)
 # is the language to test (C or C++ currently).  The second entry is the flag (without
 # preliminary dash).
 #
-# If the first two mandatory options are the only ones provided, the a successful test
+# If the first two mandatory options are the only ones provided, a successful test
 # of the flag will result in its being assigned to *all* compilations using the appropriate global
 # C/C++ CMake variable.  If optional parameters are included, they tell the macro what to do with the
 # test results instead of doing the default global assignment.  Options include assigning the
