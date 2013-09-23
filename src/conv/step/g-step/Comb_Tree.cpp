@@ -91,8 +91,8 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, struct rt_db_intern
 {
     STEPentity *toplevel_comb = NULL;
 
-    std::map<struct directory *, STEPentity *> brep_to_step;
-    std::map<struct directory *, STEPentity *> comb_to_step;
+    std::map<struct directory *, STEPentity *> *brep_to_step = new std::map<struct directory *, STEPentity *>;
+    std::map<struct directory *, STEPentity *> *comb_to_step = new std::map<struct directory *, STEPentity *>;
     std::set<struct directory *> non_wrapper_combs;
 
 
@@ -104,7 +104,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, struct rt_db_intern
 	struct rt_db_internal brep_intern;
 	rt_db_get_internal(&brep_intern, curr_dp, wdbp->dbip, bn_mat_identity, &rt_uniresource);
 	RT_CK_DB_INTERNAL(&brep_intern);
-	brep_to_step[curr_dp] = ON_BRep_to_STEP(curr_dp, &brep_intern, registry, instance_list);
+	(*brep_to_step)[curr_dp] = ON_BRep_to_STEP(curr_dp, &brep_intern, registry, instance_list);
 	bu_log("Brep: %s\n", curr_dp->d_namep);
     }
 
@@ -113,7 +113,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, struct rt_db_intern
     struct bu_ptbl *combs = db_search_path_obj(comb_search, dp, wdbp);
     for (int j = (int)BU_PTBL_LEN(combs) - 1; j >= 0; j--){
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(combs, j);
-	comb_to_step[curr_dp] = Comb_to_STEP(curr_dp, registry, instance_list);
+	(*comb_to_step)[curr_dp] = Comb_to_STEP(curr_dp, registry, instance_list);
 	non_wrapper_combs.insert(curr_dp);
 	bu_log("Comb non-wrapper: %s\n", curr_dp->d_namep);
     }
@@ -137,10 +137,10 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, struct rt_db_intern
 	bu_free(comb_child, "free search result");
 	union tree *curr_node = db_find_named_leaf(comb->tree, child->d_namep);
 	if (!(curr_node->tr_l.tl_mat)) {
-	    comb_to_step[curr_dp] = brep_to_step.find(child)->second;
+	    (*comb_to_step)[curr_dp] = brep_to_step->find(child)->second;
 	    bu_log("Comb wrapper: %s\n", curr_dp->d_namep);
 	}else{
-	    comb_to_step[curr_dp] = Comb_to_STEP(curr_dp, registry, instance_list);
+	    (*comb_to_step)[curr_dp] = Comb_to_STEP(curr_dp, registry, instance_list);
 	    non_wrapper_combs.insert(curr_dp);
 	    bu_log("Comb non-wrapper (matrix over primitive): %s\n", curr_dp->d_namep);
 	}
@@ -157,7 +157,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, struct rt_db_intern
     for (std::set<struct directory *>::iterator it=non_wrapper_combs.begin(); it != non_wrapper_combs.end(); ++it) {
 	bu_log("look for matrices in %s\n", (*it)->d_namep);
 	struct bu_ptbl *comb_children = db_search_path_obj(comb_children_search, (*it), wdbp);
-	Add_Assembly_Product((*it), wdbp->dbip, comb_children, &comb_to_step, registry, instance_list);
+	Add_Assembly_Product((*it), wdbp->dbip, comb_children, comb_to_step, registry, instance_list);
 	bu_ptbl_free(comb_children);
 	bu_free(comb_children, "free search result");
     }

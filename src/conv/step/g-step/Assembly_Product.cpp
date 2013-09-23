@@ -216,6 +216,8 @@ Add_Assembly_Product(struct directory *dp, struct db_i *dbip, struct bu_ptbl *ch
     RT_CK_DB_INTERNAL(&comb_intern);
     struct rt_comb_internal *comb = (struct rt_comb_internal *)(comb_intern.idb_ptr);
     for (int j = (int)BU_PTBL_LEN(children) - 1; j >= 0; j--){
+	STEPentity *orig_transform = Identity_AXIS2_PLACEMENT_3D(registry, instance_list);
+	STEPentity *curr_transform = NULL;
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(children, j);
 	bu_log("%s under %s: ", curr_dp->d_namep, dp->d_namep);
 	union tree *curr_node = db_find_named_leaf(comb->tree, curr_dp->d_namep);
@@ -223,9 +225,34 @@ Add_Assembly_Product(struct directory *dp, struct db_i *dbip, struct bu_ptbl *ch
 	if(curr_matrix) {
 	    bu_log(" - found matrix over %s in %s\n", curr_dp->d_namep, dp->d_namep);
 	    bn_mat_print(curr_dp->d_namep, curr_matrix);
-	    (void)Mat_to_Rep(curr_matrix, registry, instance_list);
+	    curr_transform = Mat_to_Rep(curr_matrix, registry, instance_list);
 	} else {
+	    curr_transform = Identity_AXIS2_PLACEMENT_3D(registry, instance_list);
 	    bu_log("identity matrix\n");
+	}
+	if (curr_transform) {
+	    SdaiItem_defined_transformation *item_transform = (SdaiItem_defined_transformation *)registry->ObjCreate("ITEM_DEFINED_TRANSFORMATION");
+	    item_transform->name_("''");
+	    item_transform->description_("''");
+	    item_transform->transform_item_1_((SdaiRepresentation_item_ptr)orig_transform);
+	    item_transform->transform_item_2_((SdaiRepresentation_item_ptr)curr_transform);
+	    instance_list->Append((STEPentity *)item_transform, completeSE);
+	    SdaiNext_assembly_usage_occurrence *usage = (SdaiNext_assembly_usage_occurrence *)registry->ObjCreate("NEXT_ASSEMBLY_USAGE_OCCURRENCE");
+	    usage->id_("''");
+	    usage->name_("''");
+	    usage->description_("''");
+	    usage->reference_designator_("''");
+	    usage->relating_product_definition_((SdaiProduct_definition *)comb_to_step->find(dp)->second);
+	    usage->related_product_definition_((SdaiProduct_definition *)comb_to_step->find(curr_dp)->second);
+	    instance_list->Append((STEPentity *)usage, completeSE);
+	    SdaiProduct_definition_shape *pshape = (SdaiProduct_definition_shape *)registry->ObjCreate("PRODUCT_DEFINITION_SHAPE");
+	    pshape->name_("''");
+	    pshape->description_("''");
+	    SdaiCharacterized_product_definition *cpd = new SdaiCharacterized_product_definition(usage);
+	    pshape->definition_(new SdaiCharacterized_definition(cpd));
+	    instance_list->Append((STEPentity *)pshape, completeSE);
+	} else {
+	    bu_log("non-uniform scaling detected: %s/%s\n", dp->d_namep, curr_dp->d_namep);
 	}
     }
     rt_db_free_internal(&comb_intern);
