@@ -28,8 +28,28 @@
 #include <set>
 #include "bu.h"
 #include "raytrace.h"
+#include "G_STEP_internal.h"
 #include "STEPWrapper.h"
 #include "ON_Brep.h"
+
+STEPentity *
+Identity_AXIS2_PLACEMENT_3D(Registry *registry, InstMgr *instance_list) {
+    SdaiCartesian_point *pnt = (SdaiCartesian_point *)registry->ObjCreate("CARTESIAN_POINT");
+    XYZ_to_Cartesian_point(0.0, 0.0, 0.0, pnt);
+    SdaiDirection *axis = (SdaiDirection *)registry->ObjCreate("DIRECTION");
+    XYZ_to_Direction(0.0, 0.0, 1.0, axis);
+    SdaiDirection *ref = (SdaiDirection *)registry->ObjCreate("DIRECTION");
+    XYZ_to_Direction(1.0, 0.0, 0.0, ref);
+    SdaiAxis2_placement_3d *placement = (SdaiAxis2_placement_3d *)registry->ObjCreate("AXIS2_PLACEMENT_3D");
+    placement->location_(pnt);
+    placement->axis_(axis);
+    placement->ref_direction_(ref);
+    instance_list->Append((STEPentity *)pnt, completeSE);
+    instance_list->Append((STEPentity *)axis, completeSE);
+    instance_list->Append((STEPentity *)ref, completeSE);
+    instance_list->Append((STEPentity *)placement, completeSE);
+    return (STEPentity *)placement;
+}
 
 STEPentity *
 Comb_to_STEP(struct directory *dp, Registry *registry, InstMgr *instance_list) {
