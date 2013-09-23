@@ -35,7 +35,7 @@ HIDDEN int shrink_image(icv_image_t* bif, unsigned int factor)
     unsigned int facsq, py, px;
     int x, y, c;
     size_t widthstep =  bif->width*bif->channels;
-
+bu_log("icv : factor = %u", factor);
     if (UNLIKELY(factor < 1)) {
 	bu_log("Cannot shrink image to 0 factor, factor should be a positive value.");
 	return -1;
@@ -79,6 +79,7 @@ HIDDEN int under_sample(icv_image_t* bif, unsigned int factor)
     double *data_p, *res_p;
     int x, y, widthstep;
 
+    bu_log("icv : factor = %u", factor);
     if (UNLIKELY(factor < 1)) {
 	bu_log("Cannot shrink image to 0 factor, factor should be a positive value.");
 	return -1;
