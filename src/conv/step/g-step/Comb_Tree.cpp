@@ -174,6 +174,29 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, struct rt_db_intern
 		MAT4X3VEC(outv, curr_matrix, inv);
 		VUNITIZE(outv);
 		bu_log("AXIS2_PLACEMENT_3D ref axis: %f, %f, %f\n", outv[0], outv[1], outv[2]);
+
+		vect_t outx, outy, outz;
+		fastf_t xm, ym, zm;
+		VSET(inv, 0, 0, 0);
+		MAT4X3PNT(outv, curr_matrix, inv);
+		bu_log("CAERTESIAN_TRANSFORMATION_OPERATOR_3D local_origin: %f, %f, %f\n", outv[0], outv[1], outv[2]);
+		VSET(inv, 1, 0, 0);
+		MAT4X3VEC(outx, curr_matrix, inv);
+		xm = MAGNITUDE(outx);
+		VUNITIZE(outx);
+		bu_log("CAERTESIAN_TRANSFORMATION_OPERATOR_3D axis1: %f, %f, %f\n", outx[0], outx[1], outx[2]);
+		VSET(inv, 0, 1, 0);
+		MAT4X3VEC(outy, curr_matrix, inv);
+		ym = MAGNITUDE(outy);
+		VUNITIZE(outy);
+		bu_log("CAERTESIAN_TRANSFORMATION_OPERATOR_3D axis2: %f, %f, %f\n", outy[0], outy[1], outy[2]);
+		VSET(inv, 0, 0, 1);
+		MAT4X3VEC(outz, curr_matrix, inv);
+		zm = MAGNITUDE(outz);
+		VUNITIZE(outz);
+		bu_log("CAERTESIAN_TRANSFORMATION_OPERATOR_3D axis3: %f, %f, %f\n", outz[0], outz[1], outz[2]);
+		bu_log("Scaling: x: %f, y: %f, z: %f\n", xm, ym, zm);
+
 	    } else {
 		bu_log("identity matrix\n");
 	    }
