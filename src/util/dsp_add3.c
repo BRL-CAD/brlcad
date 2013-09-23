@@ -202,7 +202,7 @@ main(int ac, char *av[])
       );
 
     /* place the arg pointers in an array (note the array is of
-     * type void* to hold the heterogenous arg type structs)
+     * type void* to hold the heterogeneous arg type structs)
      */
     static void *args[] = {
       &h_arg, &f_arg,

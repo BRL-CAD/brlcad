@@ -1,4 +1,4 @@
-/*                            B U . H
+\a/*                            B U . H
  * BRL-CAD
  *
  * Copyright (c) 2004-2013 United States Government as represented by
@@ -138,7 +138,7 @@ typedef struct {
 {BU_ARG_MAGIC, BU_ARG_UnlabeledValueArg, _flag_str, _name_str, _desc_str, \
       _required_bool, _val_typ, _def_val_str}
 
-/* the getters (signature should ALMOST stay the same for atatic and pointer inits) */
+/* the getters (signature should ALMOST stay the same for static and pointer inits) */
 int bu_arg_get_bool(bu_arg_vars *arg);
 long bu_arg_get_long(bu_arg_vars *arg);
 double bu_arg_get_double(bu_arg_vars *arg);

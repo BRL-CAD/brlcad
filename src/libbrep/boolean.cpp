@@ -337,7 +337,7 @@ struct TrimmedFace {
 HIDDEN int
 compare_t(const IntersectPoint* a, const IntersectPoint* b)
 {
-    // Use for sorting an array. Use strict FP comparsion.
+    // Use for sorting an array. Use strict FP comparison.
     if (a->m_seg != b->m_seg)
 	return a->m_seg - b->m_seg;
     return a->m_t > b->m_t ? 1 : (a->m_t < b->m_t ? -1 : 0);
@@ -347,7 +347,7 @@ compare_t(const IntersectPoint* a, const IntersectPoint* b)
 HIDDEN int
 compare_for_rank(IntersectPoint* const *a, IntersectPoint* const *b)
 {
-    // Use for sorting an array. Use strict FP comparsion.
+    // Use for sorting an array. Use strict FP comparison.
     return (*a)->m_t_for_rank > (*b)->m_t_for_rank ? 1 : ((*a)->m_t_for_rank < (*b)->m_t_for_rank ? -1 : 0);
 }
 
