@@ -31,8 +31,8 @@
 #include "icv.h"
 
 #include "bio.h"
+#include "vmath.h"
 
-#define EPS 0.000000000001
 
 int icv_sanitize(icv_image_t* img)
 {
@@ -252,7 +252,7 @@ icv_image_t *icv_divide(icv_image_t *img1, icv_image_t *img2)
     out_data = out_img->data;
 
     for (size = img1->width*img1->height*img1->channels; size>0; size--)
-	*out_data++ = *data1++ / (*data2++ + EPS);
+	*out_data++ = *data1++ / (*data2++ + VDIVIDE_TOL);
 
     icv_sanitize(out_img);
 
