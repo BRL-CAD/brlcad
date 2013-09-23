@@ -154,6 +154,58 @@ Identity_AXIS2_PLACEMENT_3D(Registry *registry, InstMgr *instance_list) {
     return Create_AXIS2_PLACEMENT_3D(0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, registry, instance_list);
 }
 
+// Returns either an AXIS2_PLACEMENT_3D, a CARTESIAN_TRANSFORMATION_OPERATOR_3D, or NULL
+// If NULL, geometry is being deformed in a way not supported by AP203
+STEPentity *
+Mat_to_Rep(matp_t curr_matrix, Registry *registry, InstMgr *instance_list)
+{
+    // TODO - investigate CARTESIAN_TRANSFORMATION_OPERATOR_3D, which seems to
+    // allow uniform scaling as well and appears to be compatible with the
+    // same slot used for AXIS2_PLACEMENT_3D - may be able to use the latter
+    // for simple cases without scaling (i.e. VUNITIZE doesn't change the length
+    // of X, Y or Z unit vectors after the matrix is applied), the former when
+    // the there is uniform scaling (X, Y and Z lengths all change by the same
+    // amount) and in the worst case (non-uniform scaling) will have to create
+    // a new Brep and abandon the attempt to preserve the comb-level operation.
+
+    point_t origin, outorig;
+    vect_t x_axis, y_axis, z_axis;
+    vect_t outx, outy, outz;
+    fastf_t xm, ym, zm;
+    VSET(origin, 0, 0, 0);
+    VSET(x_axis, 1, 0, 0);
+    VSET(y_axis, 0, 1, 0);
+    VSET(z_axis, 0, 0, 1);
+    MAT4X3PNT(outorig, curr_matrix, origin);
+    MAT4X3VEC(outx, curr_matrix, x_axis);
+    MAT4X3VEC(outy, curr_matrix, y_axis);
+    MAT4X3VEC(outz, curr_matrix, z_axis);
+    xm = MAGNITUDE(outx);
+    ym = MAGNITUDE(outy);
+    zm = MAGNITUDE(outz);
+    VUNITIZE(outx);
+    VUNITIZE(outy);
+    VUNITIZE(outz);
+    if (NEAR_ZERO(xm - 1.0, RT_LEN_TOL) && NEAR_ZERO(ym - 1.0, RT_LEN_TOL) && NEAR_ZERO(zm - 1.0, RT_LEN_TOL)) {
+	bu_log("AXIS2_PLACEMENT_3D cartesian_point: %f, %f, %f\n", outorig[0], outorig[1], outorig[2]);
+	bu_log("AXIS2_PLACEMENT_3D axis: %f, %f, %f\n", outz[0], outz[1], outz[2]);
+	bu_log("AXIS2_PLACEMENT_3D ref axis: %f, %f, %f\n", outx[0], outx[1], outx[2]);
+	return Create_AXIS2_PLACEMENT_3D(outorig[0], outorig[1], outorig[2],
+		outz[0], outz[1], outz[2], outx[0], outx[1], outx[2], registry, instance_list);
+    } else {
+	if (NEAR_ZERO(xm - ym, RT_LEN_TOL) && NEAR_ZERO(xm - zm, RT_LEN_TOL)) {
+	    bu_log("CAERTESIAN_TRANSFORMATION_OPERATOR_3D local_origin: %f, %f, %f\n", outorig[0], outorig[1], outorig[2]);
+	    bu_log("CAERTESIAN_TRANSFORMATION_OPERATOR_3D axis1: %f, %f, %f\n", outx[0], outx[1], outx[2]);
+	    bu_log("CAERTESIAN_TRANSFORMATION_OPERATOR_3D axis2: %f, %f, %f\n", outy[0], outy[1], outy[2]);
+	    bu_log("CAERTESIAN_TRANSFORMATION_OPERATOR_3D axis3: %f, %f, %f\n", outz[0], outz[1], outz[2]);
+	    bu_log("Scaling: %f\n", xm);
+	    return NULL;
+	} else {
+	    return NULL;
+	}
+    }
+}
+
 void
 Add_Assembly_Product(struct directory *dp, struct db_i *dbip, struct bu_ptbl *children,
 	std::map<struct directory *, STEPentity *> *comb_to_step,
@@ -171,51 +223,7 @@ Add_Assembly_Product(struct directory *dp, struct db_i *dbip, struct bu_ptbl *ch
 	if(curr_matrix) {
 	    bu_log(" - found matrix over %s in %s\n", curr_dp->d_namep, dp->d_namep);
 	    bn_mat_print(curr_dp->d_namep, curr_matrix);
-
-	    //TODO - investigate CARTESIAN_TRANSFORMATION_OPERATOR_3D, which seems to
-	    // allow uniform scaling as well and appears to be compatible with the
-	    // same slot used for AXIS2_PLACEMENT_3D - may be able to use the latter
-	    // for simple cases without scaling (i.e. VUNITIZE doesn't change the length
-	    // of X, Y or Z unit vectors after the matrix is applied), the former when
-	    // the there is uniform scaling (X, Y and Z lengths all change by the same
-	    // amount) and in the worst case (non-uniform scaling) will have to create
-	    // a new Brep and abandon the attempt to preserve the comb-level operation.
-
-	    vect_t inv, outv;
-	    VSET(inv, 0, 0, 0);
-	    MAT4X3PNT(outv, curr_matrix, inv);
-	    bu_log("AXIS2_PLACEMENT_3D cartesian_point: %f, %f, %f\n", outv[0], outv[1], outv[2]);
-	    VSET(inv, 0, 0, 1);
-	    MAT4X3VEC(outv, curr_matrix, inv);
-	    VUNITIZE(outv);
-	    bu_log("AXIS2_PLACEMENT_3D axis: %f, %f, %f\n", outv[0], outv[1], outv[2]);
-	    VSET(inv, 1, 0, 0);
-	    MAT4X3VEC(outv, curr_matrix, inv);
-	    VUNITIZE(outv);
-	    bu_log("AXIS2_PLACEMENT_3D ref axis: %f, %f, %f\n", outv[0], outv[1], outv[2]);
-
-	    vect_t outx, outy, outz;
-	    fastf_t xm, ym, zm;
-	    VSET(inv, 0, 0, 0);
-	    MAT4X3PNT(outv, curr_matrix, inv);
-	    bu_log("CAERTESIAN_TRANSFORMATION_OPERATOR_3D local_origin: %f, %f, %f\n", outv[0], outv[1], outv[2]);
-	    VSET(inv, 1, 0, 0);
-	    MAT4X3VEC(outx, curr_matrix, inv);
-	    xm = MAGNITUDE(outx);
-	    VUNITIZE(outx);
-	    bu_log("CAERTESIAN_TRANSFORMATION_OPERATOR_3D axis1: %f, %f, %f\n", outx[0], outx[1], outx[2]);
-	    VSET(inv, 0, 1, 0);
-	    MAT4X3VEC(outy, curr_matrix, inv);
-	    ym = MAGNITUDE(outy);
-	    VUNITIZE(outy);
-	    bu_log("CAERTESIAN_TRANSFORMATION_OPERATOR_3D axis2: %f, %f, %f\n", outy[0], outy[1], outy[2]);
-	    VSET(inv, 0, 0, 1);
-	    MAT4X3VEC(outz, curr_matrix, inv);
-	    zm = MAGNITUDE(outz);
-	    VUNITIZE(outz);
-	    bu_log("CAERTESIAN_TRANSFORMATION_OPERATOR_3D axis3: %f, %f, %f\n", outz[0], outz[1], outz[2]);
-	    bu_log("Scaling: x: %f, y: %f, z: %f\n", xm, ym, zm);
-
+	    (void)Mat_to_Rep(curr_matrix, registry, instance_list);
 	} else {
 	    bu_log("identity matrix\n");
 	}
