@@ -744,7 +744,7 @@ endif(NOT CMAKE_CONFIGURATION_TYPES)
 # changes would not automatically propagate back up.
 #
 # We also allow for multiple projects with this macro, in case
-# subprojects are also managing a config.h.in file of their own.
+# subprojects are also managing a config.h.in a file of their own.
 
 set(CONFIG_H_FILE "${BRLCAD_BINARY_DIR}/include/brlcad_config.h.in")
 set_source_files_properties(${CONFIG_H_FILE} PROPERTIES GENERATED TRUE)
