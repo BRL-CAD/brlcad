@@ -128,13 +128,16 @@
 
 /* TODO - generic, move to the internal utility file */
 STEPentity *
-Identity_AXIS2_PLACEMENT_3D(Registry *registry, InstMgr *instance_list) {
+Create_AXIS2_PLACEMENT_3D(fastf_t pt_x, fastf_t pt_y, fastf_t pt_z,
+	fastf_t d1_x, fastf_t d1_y, fastf_t d1_z,
+	fastf_t d2_x, fastf_t d2_y, fastf_t d2_z,
+	Registry *registry, InstMgr *instance_list) {
     SdaiCartesian_point *pnt = (SdaiCartesian_point *)registry->ObjCreate("CARTESIAN_POINT");
-    XYZ_to_Cartesian_point(0.0, 0.0, 0.0, pnt);
+    XYZ_to_Cartesian_point(pt_x, pt_y, pt_z, pnt);
     SdaiDirection *axis = (SdaiDirection *)registry->ObjCreate("DIRECTION");
-    XYZ_to_Direction(0.0, 0.0, 1.0, axis);
+    XYZ_to_Direction(d1_x, d1_y, d1_z, axis);
     SdaiDirection *ref = (SdaiDirection *)registry->ObjCreate("DIRECTION");
-    XYZ_to_Direction(1.0, 0.0, 0.0, ref);
+    XYZ_to_Direction(d2_x, d2_y, d2_z, ref);
     SdaiAxis2_placement_3d *placement = (SdaiAxis2_placement_3d *)registry->ObjCreate("AXIS2_PLACEMENT_3D");
     placement->location_(pnt);
     placement->axis_(axis);
@@ -144,6 +147,11 @@ Identity_AXIS2_PLACEMENT_3D(Registry *registry, InstMgr *instance_list) {
     instance_list->Append((STEPentity *)ref, completeSE);
     instance_list->Append((STEPentity *)placement, completeSE);
     return (STEPentity *)placement;
+}
+
+STEPentity *
+Identity_AXIS2_PLACEMENT_3D(Registry *registry, InstMgr *instance_list) {
+    return Create_AXIS2_PLACEMENT_3D(0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, registry, instance_list);
 }
 
 void
