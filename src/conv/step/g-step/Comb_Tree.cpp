@@ -24,6 +24,7 @@
  *
  */
 
+#include <sstream>
 #include <map>
 #include <set>
 #include "bu.h"
@@ -53,6 +54,10 @@ Identity_AXIS2_PLACEMENT_3D(Registry *registry, InstMgr *instance_list) {
 
 STEPentity *
 Comb_to_STEP(struct directory *dp, Registry *registry, InstMgr *instance_list) {
+    std::ostringstream ss;
+    ss << "'" << dp->d_namep << "'";
+    std::string str = ss.str();
+
     // MECHANICAL_CONTEXT
     SdaiMechanical_context *mech_context = (SdaiMechanical_context *)registry->ObjCreate("MECHANICAL_CONTEXT");
     instance_list->Append((STEPentity *)mech_context, completeSE);
@@ -91,7 +96,7 @@ Comb_to_STEP(struct directory *dp, Registry *registry, InstMgr *instance_list) {
     instance_list->Append((STEPentity *)prod, completeSE);
     prod_def_form->of_product_(prod);
     prod->id_("''");
-    prod->name_(dp->d_namep);
+    prod->name_(str.c_str());
     prod->description_("''");
     prod->frame_of_reference_()->AddNode(new EntityNode((SDAI_Application_instance *)mech_context));
 
