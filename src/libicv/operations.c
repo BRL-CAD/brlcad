@@ -151,7 +151,7 @@ icv_image_t *icv_add(icv_image_t *img1, icv_image_t *img2)
     ICV_IMAGE_VAL_PTR(img1);
     ICV_IMAGE_VAL_PTR(img2);
 
-    if ((img1->width == img2->width) && (img1->height == img2->height) && (img1->channels == img2->channels)) {
+    if ((img1->width != img2->width) || (img1->height != img2->height) || (img1->channels != img2->channels)) {
 	bu_log("icv_add : Image Parameters not Equal");
 	return NULL;
     }
@@ -180,7 +180,7 @@ icv_image_t *icv_sub(icv_image_t *img1, icv_image_t *img2)
     ICV_IMAGE_VAL_PTR(img1);
     ICV_IMAGE_VAL_PTR(img2);
 
-    if ((img1->width == img2->width) && (img1->height == img2->height) && (img1->channels == img2->channels)) {
+    if ((img1->width != img2->width) || (img1->height != img2->height) || (img1->channels != img2->channels)) {
 	bu_log("icv_add : Image Parameters not Equal");
 	return NULL;
     }
@@ -209,7 +209,7 @@ icv_image_t *icv_multiply(icv_image_t *img1, icv_image_t *img2)
     ICV_IMAGE_VAL_PTR(img1);
     ICV_IMAGE_VAL_PTR(img2);
 
-    if ((img1->width == img2->width) && (img1->height == img2->height) && (img1->channels == img2->channels)) {
+    if ((img1->width != img2->width) || (img1->height != img2->height) || (img1->channels != img2->channels)) {
 	bu_log("icv_add : Image Parameters not Equal");
 	return NULL;
     }
@@ -239,7 +239,7 @@ icv_image_t *icv_divide(icv_image_t *img1, icv_image_t *img2)
     ICV_IMAGE_VAL_PTR(img1);
     ICV_IMAGE_VAL_PTR(img2);
 
-    if ((img1->width == img2->width) && (img1->height == img2->height) && (img1->channels == img2->channels)) {
+    if ((img1->width != img2->width) || (img1->height != img2->height) || (img1->channels != img2->channels)) {
 	bu_log("icv_add : Image Parameters not Equal");
 	return NULL;
     }

@@ -456,7 +456,7 @@ ICV_EXPORT icv_image_t *icv_multiply(icv_image_t *img1, icv_image_t *img2);
  * @return New icv_image (img1 / img2)
  *
  */
-ICV_EXPORT icv_image_t *icv_divides(icv_image_t *img1, icv_image_t *img2);
+ICV_EXPORT icv_image_t *icv_divide(icv_image_t *img1, icv_image_t *img2);
 
 /**
  * Change the saturation of image pixels.  If sat is set to 0.0 the
