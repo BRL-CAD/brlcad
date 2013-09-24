@@ -1383,9 +1383,9 @@ endif(BRLCAD_ENABLE_DTRACE)
 # *******************************************************************
 
 # load our compiler testing macro definitions
-include(${BRLCAD_CMAKE_DIR}/CompilerFlags.cmake)
 if(NOT MSVC)
-  # alas, we heavily assume and test for gcc-style flags
+  # alas, we heavily assume and test for gcc-style flags in both
+  include(${BRLCAD_CMAKE_DIR}/CompilerFlags.cmake)
   include(${BRLCAD_CMAKE_DIR}/BRLCAD_CompilerFlags.cmake)
 endif(NOT MSVC)
 
