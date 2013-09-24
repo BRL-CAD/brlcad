@@ -1215,9 +1215,9 @@ endif(BRLCAD_ENABLE_VERBOSE_PROGRESS)
 option(BRLCAD_ENABLE_PROFILING "Build with profiling support" OFF)
 mark_as_advanced(BRLCAD_ENABLE_PROFILING)
 
-# Build with strict C89 checking
-option(BRLCAD_ENABLE_STRICT_C89 "Build with strict C89 checking" OFF)
-mark_as_advanced(BRLCAD_ENABLE_STRICT_C89)
+# Build with strict POSIX compliance checking
+option(ENABLE_POSIX_COMPLIANCE "Build with strict POSIX compliance checking" OFF)
+mark_as_advanced(ENABLE_POSIX_COMPLIANCE)
 
 # Build with dtrace support
 option(BRLCAD_ENABLE_DTRACE "Build with dtrace support" OFF)
@@ -1762,7 +1762,7 @@ if("${HAVE_PROGRAM_INVOCATION_NAME}" MATCHES "^${HAVE_PROGRAM_INVOCATION_NAME}$"
 endif("${HAVE_PROGRAM_INVOCATION_NAME}" MATCHES "^${HAVE_PROGRAM_INVOCATION_NAME}$")
 
 
-# On Windows, we need to check for hypot etc..  This test pertains
+# On Windows, we need to check for hypot etc.  This test pertains
 # to the windows specific config file, not CONFIG_H_FILE - hence,
 # just run the test and it will be handled by configure_file later.
 include(CheckSymbolExists)

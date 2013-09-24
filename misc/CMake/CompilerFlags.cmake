@@ -254,12 +254,14 @@ BRLCAD_CHECK_C_FLAG(msse3 BUILD_TYPES Debug)
 # a release so we get more broad portability testing.  Since the
 # default is debug, it will be the more difficult to keep working
 # given it's the lesser feature-rich C standard.
-if(NOT BRLCAD_ENABLE_STRICT_C89)
+if(NOT ENABLE_POSIX_COMPLIANCE)
   BRLCAD_CHECK_C_FLAG("std=gnu89" BUILD_TYPES Debug)
 else()
-  #=== strict C89 support =======
+  #=== strict POSIX support =======
+  #== C89 ==
   BRLCAD_CHECK_C_FLAG("std=c89")
   BRLCAD_CHECK_C_FLAG("pedantic")
+  #== CXX TBA
 endif()
 
 # Check for c99 support with gnu extensions when we are building for a
