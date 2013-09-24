@@ -43,6 +43,7 @@ include(CheckIncludeFileCXX)
 include(CheckTypeSize)
 include(CheckLibraryExists)
 include(CheckStructHasMember)
+include(CheckCInline)
 
 
 ###
