@@ -45,8 +45,14 @@ bu_argv0_full_path(void)
 {
     static char buffer[MAXPATHLEN] = {0};
 
-    const char *argv0 = bu_getprogname();
-    const char *which = bu_which(argv0);
+    const char *argv0 = bu_progname;
+    const char *which;
+
+#ifdef HAVE_PROGRAM_INVOCATION_NAME
+    /* GLIBC provides a way */
+    if (argv0[0] == BU_DIR_SEPARATOR && program_invocation_name)
+	argv0 = program_invocation_name;
+#endif
 
     if (argv0[0] == BU_DIR_SEPARATOR) {
 	/* seems to already be a full path */
@@ -55,9 +61,9 @@ bu_argv0_full_path(void)
     }
 
     /* running from PATH */
-    if (which) {
-	snprintf(buffer, MAXPATHLEN, "%s", which);
-	return buffer;
+    which = bu_which(argv0);
+    if (which && which[0] != '\0') {
+	argv0 = which;
     }
 
     while (argv0[0] == '.' && argv0[1] == BU_DIR_SEPARATOR) {
