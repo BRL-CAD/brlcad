@@ -45,9 +45,9 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
 TEST=vls_vprintf
 TESTSCRIPT=$TEST.sh
-TESTEXE=test_vls_vprintf
+TESTEXE=tester_bu_vls_vprintf
 TESTLOG=${TEST}_test.log
-TESTCMD="`ensearch $TESTEXE`"
+TESTCMD="`ensearch ../src/libbu/tests/$TESTEXE`"
 if test ! -f "$TESTCMD" ; then
     echo "Unable to find $TESTEXE, aborting"
     exit 1
