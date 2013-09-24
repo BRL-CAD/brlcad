@@ -38,7 +38,7 @@ private:
 
 	Str	name;
 
-#if defined(PEDANTIC) && (PEDANTIC==1)
+#if defined(PEDANTIC) && (PEDANTIC>0)
 	Symbol(const Symbol& oth)
 		: re(oth.re)
 		, name(oth.name)
