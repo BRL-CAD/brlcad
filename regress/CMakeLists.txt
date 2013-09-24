@@ -61,10 +61,6 @@ if(SH_EXEC)
     ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/red.sh ${CMAKE_SOURCE_DIR}
     DEPENDS mged
     )
-  #add_custom_target(regress-vls_vprintf
-  #  ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/vls_vprintf.sh ${CMAKE_SOURCE_DIR}
-  #  DEPENDS test_vls_vprintf
-  #  )
   add_custom_target(regress-nirt
     ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/nirt.sh ${CMAKE_SOURCE_DIR}
     DEPENDS mged nirt
@@ -185,7 +181,6 @@ CMAKEFILES(
   tgms/m35.cg.gz
   tgms/solids-simple.mged
   tgms/solids.mged
-  vls_vprintf.sh
   weight.sh
   )
 
