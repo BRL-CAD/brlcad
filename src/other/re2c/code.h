@@ -27,7 +27,7 @@ public:
 	BitMap(const Go*, const State*);
 	~BitMap();
 
-#if PEDANTIC
+#if defined(PEDANTIC) && (PEDANTIC==1)
 	BitMap(const BitMap& oth)
 		: go(oth.go)
 		, on(oth.on)
