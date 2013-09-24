@@ -3179,7 +3179,7 @@ BU_EXPORT extern char * bu_realpath(const char *path, char *resolved_path);
  * routine will set argv0 if path is provided and should generally be
  * set early on by bu_setprogname().
  *
- * this routine will return "(unknown)" if argv[0] cannot be
+ * this routine will return "(BRL-CAD)" if argv[0] cannot be
  * identified but should never return NULL.
  */
 DEPRECATED BU_EXPORT extern const char *bu_argv0(void);
@@ -3191,8 +3191,9 @@ DEPRECATED BU_EXPORT extern const char *bu_argv0(void);
  * returns the full path to argv0, regardless of how the application
  * was invoked.
  *
- * this routine will return "(unknown)" if argv[0] cannot be
- * identified but should never return NULL.
+ * this routine will return "(BRL-CAD)" if argv[0] cannot be
+ * identified but should never return NULL.  this routine is not
+ * thread-safe.
  */
 BU_EXPORT extern const char *bu_argv0_full_path(void);
 
