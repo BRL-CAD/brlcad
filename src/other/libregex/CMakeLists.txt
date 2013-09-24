@@ -2,13 +2,6 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${${CMAKE_PROJECT_NAME}_SOURCE_DIR}/include)
 
-include(${CMAKE_CURRENT_SOURCE_DIR}/CheckCInline.cmake)
-CHECK_C_INLINE(C_INLINE)
-if(NOT C_INLINE STREQUAL "inline")
-  add_definitions("-Dinline=${C_INLINE}")
-endif(NOT C_INLINE STREQUAL "inline")
-
-
 set(LIBREGEX_PUBLIC_HDRS
   regex.h
   )
