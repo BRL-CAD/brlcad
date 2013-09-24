@@ -260,7 +260,9 @@ ENDIF(TCL_DEBUG)
 
 OPTION(TCL_COMPILE_DEBUG "Bytecode debugging" OFF)
 IF(TCL_COMPILE_DEBUG)
-  ADD_TCL_CFLAG(TCL_COMPILE_DEBUG)
+  ADD_TCL_CFLAG(TCL_COMPILE_DEBUG=1)
+else(TCL_COMPILE_DEBUG)
+  add_definitions(-DTCL_COMPILE_DEBUG=0)
 ENDIF(TCL_COMPILE_DEBUG)
 
 OPTION(TCL_COMPILE_STATS "Bytecode statistics" OFF)
@@ -268,6 +270,8 @@ IF(TCL_COMPILE_STATS)
   ADD_TCL_CFLAG(TCL_COMPILE_STATS)
 ENDIF(TCL_COMPILE_STATS)
 
+add_definitions(-DUSE_TCLALLOC=0)
+add_definitions(-DYYENABLE_NLS=0)
 
 #--------------------------------------------------------------------
 #       Check endianness because we can optimize comparisons of

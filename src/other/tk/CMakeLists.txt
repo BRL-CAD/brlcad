@@ -428,6 +428,11 @@ int main ()	{return 0;}
   ENDIF(HAVE_AVAILABILITYMACROS_H)
 ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
 
+add_definitions(-DTK_LAYOUT_WITH_BASE_CHUNKS=0)
+add_definitions(-DTK_DRAW_IN_CONTEXT=0)
+add_definitions(-DTILE_07_COMPAT=0)
+add_definitions(-DDEBUG_FONTSEL=0)
+
 ADD_SUBDIRECTORY(library)
 
 SET(TK_GENERIC_SRCS
