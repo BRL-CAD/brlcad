@@ -1,4 +1,4 @@
-\a/*                            B U . H
+/*                            B U . H
  * BRL-CAD
  *
  * Copyright (c) 2004-2013 United States Government as represented by
