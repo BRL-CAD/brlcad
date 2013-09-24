@@ -65,16 +65,8 @@ macro(CHECK_C_INLINE RESULT)
   # initialize to empty
   set(${RESULT} "")
 
-  # provision for strict C89 testing
-  if (NOT BRLCAD_ENABLE_STRICT_C89)
-                      # C99      C89          other       
-    set(INLINE_STRINGS "inline" "__inline__" "__inline")
-  else()              # C89          other       
-    set(INLINE_STRINGS "__inline__" "__inline")
-  endif()
-
   # test candidates to find one that works
-  foreach(INLINE ${INLINE_STRINGS})
+  foreach(INLINE "inline" "__inline__" "__inline")
     if(NOT HAVE_INLINE)
       string(TOUPPER "HAVE_${INLINE}_KEYWORD" HAVE_INLINE_KEYWORD)
 
