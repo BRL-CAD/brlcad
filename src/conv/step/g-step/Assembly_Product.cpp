@@ -194,10 +194,10 @@ Mat_to_Rep(matp_t curr_matrix, Registry *registry, InstMgr *instance_list)
 		outz[0], outz[1], outz[2], outx[0], outx[1], outx[2], registry, instance_list);
     } else {
 	if (NEAR_ZERO(xm - ym, RT_LEN_TOL) && NEAR_ZERO(xm - zm, RT_LEN_TOL)) {
-	    bu_log("CAERTESIAN_TRANSFORMATION_OPERATOR_3D local_origin: %f, %f, %f\n", outorig[0], outorig[1], outorig[2]);
-	    bu_log("CAERTESIAN_TRANSFORMATION_OPERATOR_3D axis1: %f, %f, %f\n", outx[0], outx[1], outx[2]);
-	    bu_log("CAERTESIAN_TRANSFORMATION_OPERATOR_3D axis2: %f, %f, %f\n", outy[0], outy[1], outy[2]);
-	    bu_log("CAERTESIAN_TRANSFORMATION_OPERATOR_3D axis3: %f, %f, %f\n", outz[0], outz[1], outz[2]);
+	    bu_log("CARTESIAN_TRANSFORMATION_OPERATOR_3D local_origin: %f, %f, %f\n", outorig[0], outorig[1], outorig[2]);
+	    bu_log("CARTESIAN_TRANSFORMATION_OPERATOR_3D axis1: %f, %f, %f\n", outx[0], outx[1], outx[2]);
+	    bu_log("CARTESIAN_TRANSFORMATION_OPERATOR_3D axis2: %f, %f, %f\n", outy[0], outy[1], outy[2]);
+	    bu_log("CARTESIAN_TRANSFORMATION_OPERATOR_3D axis3: %f, %f, %f\n", outz[0], outz[1], outz[2]);
 	    bu_log("Scaling: %f\n", xm);
 	    return NULL;
 	} else {
