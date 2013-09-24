@@ -18,6 +18,10 @@
  * information.
  */
 
+#ifndef _GNU_SOURCE
+#  define _GNU_SOURCE /* must come before common.h */
+#endif
+
 #include "common.h"
 
 #ifdef HAVE_SYS_PARAM_H /* for MAXPATHLEN */
@@ -26,38 +30,14 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include "bio.h"
 
 #include "bu.h"
 
 /* internal storage for bu_getprogname/bu_setprogname */
-static char bu_argv0_buffer[MAXPATHLEN] = {0};
 static char bu_progname[MAXPATHLEN] = {0};
-
-
-HIDDEN const char *
-progname_argv0(void)
-{
-    /* private stash */
-    static const char *argv0 = NULL;
-
-    if (bu_argv0_buffer[0] != '\0') {
-	argv0 = bu_argv0_buffer;
-    }
-
-#ifdef HAVE_GETPROGNAME
-    if (!argv0) {
-	/* do not call bu_getgrogname() */
-	argv0 = getprogname(); /* not malloc'd memory */
-    }
-#endif
-
-    if (!argv0 || *argv0 == '\0') {
-	argv0 = "(BRL-CAD)";
-    }
-
-    return argv0;
-}
+const char *DEFAULT_PROGNAME = "(BRL-CAD)";
 
 
 const char *
@@ -65,8 +45,7 @@ bu_argv0_full_path(void)
 {
     static char buffer[MAXPATHLEN] = {0};
 
-    const char *argv0 = progname_argv0();
-
+    const char *argv0 = bu_getprogname();
     const char *which = bu_which(argv0);
 
     if (argv0[0] == BU_DIR_SEPARATOR) {
@@ -102,24 +81,37 @@ bu_argv0_full_path(void)
 const char *
 bu_getprogname(void)
 {
-    const char *name = NULL;
+    const char *name = bu_progname;
     char *tmp_basename = NULL;
 
-#ifdef HAVE_GETPROGNAME
-    name = getprogname(); /* not malloc'd memory */
+#ifdef HAVE_PROGRAM_INVOCATION_NAME
+    /* GLIBC provides a way */
+    if (name[0] == '\0' && program_invocation_name)
+	name = program_invocation_name;
 #endif
 
-    if (!name || *name == '\0') {
-	name = progname_argv0();
+#ifdef HAVE_GETPROGNAME
+    /* BSD's libc provides a way */
+    if (name[0] == '\0') {
+	name = getprogname(); /* not malloc'd memory, may return NULL */
+	if (!name)
+	    name = bu_progname;
     }
+#endif
 
     tmp_basename = bu_basename(name);
-    if (!BU_STR_EQUAL(tmp_basename, ".") && !BU_STR_EQUAL(tmp_basename, "/")) {
-	bu_strlcpy(bu_progname, tmp_basename, MAXPATHLEN);
-	bu_free(tmp_basename, "tmp_basename free");
+
+    if (BU_STR_EQUAL(tmp_basename, ".") || BU_STR_EQUAL(tmp_basename, "/")) {
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
+	bu_strlcpy(bu_progname, DEFAULT_PROGNAME, MAXPATHLEN);
+	bu_semaphore_release(BU_SEM_SYSCALL);
     } else {
-	bu_strlcpy(bu_progname, name, MAXPATHLEN);
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
+	bu_strlcpy(bu_progname, tmp_basename, MAXPATHLEN);
+	bu_semaphore_release(BU_SEM_SYSCALL);
     }
+
+    bu_free(tmp_basename, "tmp_basename free");
 
     return bu_progname;
 }
@@ -128,18 +120,13 @@ bu_getprogname(void)
 void
 bu_setprogname(const char *argv0)
 {
-#ifdef HAVE_SETPROGNAME
-    setprogname(argv0 ? argv0 : "");
-#endif
-
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
     if (argv0) {
-	memset(&bu_progname[0], '\0', sizeof(bu_progname));
-	snprintf(bu_progname, MAXPATHLEN, "%s", argv0);
-	if (strlen(bu_argv0_buffer) == 0)
-	    snprintf(bu_argv0_buffer, MAXPATHLEN, "%s", argv0);
+	bu_strlcpy(bu_progname, argv0, MAXPATHLEN);
     } else {
-	bu_progname[0] = '\0';
+	bu_progname[0] = '\0'; /* zap */
     }
+    bu_semaphore_release(BU_SEM_SYSCALL);
 
     return;
 }
@@ -149,7 +136,7 @@ bu_setprogname(const char *argv0)
 const char *
 bu_argv0(void)
 {
-    return progname_argv0();
+    return bu_getprogname();
 }
 
 
