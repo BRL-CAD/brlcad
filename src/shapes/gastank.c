@@ -37,6 +37,8 @@
 #include "raytrace.h"
 #include "wdb.h"
 
+static const char explain[]   = "This program constructs a solid gas tank with all\n\
+edges and corners rounded.\n";
 
 int
 main(int argc, char **argv)
@@ -102,8 +104,7 @@ main(int argc, char **argv)
 	/* START # 3 */
 
 	/* Print info about the window. */
-	printf("\nThis program constructs a solid gas tank with all\n");
-	printf("edges and corners rounded.\n\n");
+	printf("\n%s\n",explain);
 
 	/* Find name of mged file to be created. */
 	printf("Enter the mged file to be created (25 char max).\n\t");
@@ -159,9 +160,10 @@ main(int argc, char **argv)
     else {
 	/* START # 4 */
 	/* List options. */
+	/* -h or -? help page */
 	/* -fname - name = mged file name. */
 	/* -n# - # = number of gas tanks. */
-	/* -h# - # = height of gas tank in mm. */
+	/* -H# - # = height of gas tank in mm. */
 	/* -w# - # = width of gas tank in mm. */
 	/* -d# - # = depth of gas tank in mm. */
 	/* -r# - # = radius of corners in mm. */
@@ -170,6 +172,13 @@ main(int argc, char **argv)
 	    /* START # 5 */
 	    /* Put argument in temporary character string. */
 	    temp = argv[i];
+
+	    if (temp[1] == 'h' || temp[1] == '?') {
+	    	fprintf(stderr,"%s",explain);
+		fprintf(stderr,"Usage: gastank -fname [-f mged_file_name] [-n #_of_gastanks] [-H gas_tank_height]\n");
+		fprintf(stderr,"       [-w gas_tank_width] [-d gas_tank_depth] [-r radius_of_corners]");
+		bu_exit(2,     "       (units of mm)\n");
+	    }
 
 	    /* -f - mged file. */
 	    if (temp[1] == 'f') {
@@ -204,7 +213,7 @@ main(int argc, char **argv)
 			numtnk = 1;
 		    else if (numtnk > 26)
 			numtnk = 26;
-		} else if (temp[1] == 'h') {
+		} else if (temp[1] == 'H') {
 		    sscanf(temp1, "%lf", &hgt);
 		} else if (temp[1] == 'w') {
 		    sscanf(temp1, "%lf", &wid);
