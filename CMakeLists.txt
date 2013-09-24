@@ -1216,7 +1216,19 @@ option(BRLCAD_ENABLE_PROFILING "Build with profiling support" OFF)
 mark_as_advanced(BRLCAD_ENABLE_PROFILING)
 
 # Build with strict POSIX compliance checking
-option(ENABLE_POSIX_COMPLIANCE "Build with strict POSIX compliance checking" OFF)
+set(ENABLE_POSIX_COMPLIANCE_DESCRIPTION_ALIASES
+ ENABLE_POSIX)
+set(ENABLE_POSIX_COMPLIANCE_DESCRIPTION "
+Build with strict POSIX compliance checking.  Defaults to OFF.
+
+Causes compiler options to be set for strict compliance with the
+minumum C and C++ standards acceptable according to current BRL-CAD
+policy.  The current minimum C standard is C89.  There is no currently
+defined minimum C++ standard.
+")
+BRLCAD_OPTION(OFF ENABLE_POSIX_COMPLIANCE
+  ENABLE_POSIX_COMPLIANCE_DESCRIPTION_ALIASES
+  ENABLE_POSIX_COMPLIANCE_DESCRIPTION)
 mark_as_advanced(ENABLE_POSIX_COMPLIANCE)
 
 # Build with dtrace support
