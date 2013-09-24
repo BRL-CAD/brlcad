@@ -99,17 +99,18 @@ bu_getprogname(void)
     }
 #endif
 
+    /* want just the basename from paths, otherwise default result */
     tmp_basename = bu_basename(name);
-
     if (BU_STR_EQUAL(tmp_basename, ".") || BU_STR_EQUAL(tmp_basename, "/")) {
-	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	bu_strlcpy(bu_progname, DEFAULT_PROGNAME, MAXPATHLEN);
-	bu_semaphore_release(BU_SEM_SYSCALL);
+	name = DEFAULT_PROGNAME;
     } else {
-	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	bu_strlcpy(bu_progname, tmp_basename, MAXPATHLEN);
-	bu_semaphore_release(BU_SEM_SYSCALL);
+	name = tmp_basename;
     }
+
+    /* stash for return since we need to free the basename */
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
+    bu_strlcpy(bu_progname, name, MAXPATHLEN);
+    bu_semaphore_release(BU_SEM_SYSCALL);
 
     bu_free(tmp_basename, "tmp_basename free");
 
