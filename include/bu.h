@@ -3193,27 +3193,33 @@ DEPRECATED BU_EXPORT extern const char *bu_argv0(void);
  *
  * this routine will return "(unknown)" if argv[0] cannot be
  * identified but should never return NULL.
- *
  */
 BU_EXPORT extern const char *bu_argv0_full_path(void);
 
 /**
- * get the name of the running application if they ran
- * bu_setprogname() first or if we know what it's supposed to be
- * anyways.
+ * Get the name of the running application.  application codes should
+ * call bu_setprogname() first to ensure that the program name is
+ * stored appropriately on platforms that do not have an intrinsic
+ * method for tracking the program name automatically.
+ *
+ * while this routine is thread-safe and reentrant, the static string
+ * returned is shared amongst all threads.
  */
 BU_EXPORT extern const char *bu_getprogname(void);
 
 /**
- * Set the name of the running application.  This isn't necessary on
- * modern systems that support getprogname() and call setprogname()
- * before main() for you, but necessary otherwise for portability.
+ * Set the name of the running application.  This isn't strictly
+ * necessary on platforms that have an intrinsic method for tracking
+ * the program name automatically, but is still recommended for
+ * portability and is necessary on some strict modes of compilation.
+ *
+ * while the implementation relies on a static string shared across
+ * all threads, this routine is thread-safe and reentrant.
  */
 BU_EXPORT extern void bu_setprogname(const char *path);
 
 /**
  * returns the pathname for the current working directory.
- *
  */
 BU_EXPORT extern char *bu_getcwd(char *buf, size_t size);
 
