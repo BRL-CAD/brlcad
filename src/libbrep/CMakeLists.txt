@@ -27,6 +27,9 @@ set(LIBBREP_SOURCES
   px_event.cpp
   PullbackCurve.cpp
   ssx_event.cpp
+  libbrep_curvetree.cpp
+  libbrep_surfacetree.cpp
+  libbrep_util.cpp
   )
 
 set(libbrep_ignored_files
@@ -34,6 +37,9 @@ set(libbrep_ignored_files
   opennurbs_fit.h
   opennurbs_fit.cpp
   PullbackCurve.h
+  libbrep_curvetree.h
+  libbrep_surfacetree.h
+  libbrep_util.h
   )
 CMAKEFILES(${libbrep_ignored_files})
 
