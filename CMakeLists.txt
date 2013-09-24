@@ -1343,6 +1343,17 @@ CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PDF_MAN "Build PDF output from DocBook d
 CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_VALIDATE "Perform validation for DocBook documentation" ON "BRLCAD_EXTRADOCS;BRLCAD_ENABLE_STRICT" OFF)
 mark_as_advanced(BRLCAD_EXTRADOCS_VALIDATE)
 
+# Load various wrapper macros for checking libraries, headers and
+# functions, some in use by src/other build logic
+include(${BRLCAD_CMAKE_DIR}/BRLCAD_CheckFunctions.cmake)
+
+# The src/other subdirectory does not share (at least, not universally)
+# certain definitions common to all other directories in BRL-CAD.  Also,
+# we don't want flags that are otherwise global to BRL-CAD to be passed
+# to the src/other directory (particularly things like strict compiler
+# flags) so add src/other before any of that setup occurs.
+add_subdirectory(src/other)
+
 
 # *******************************************************************
 # ***            Check for Programs - Stage 2 of 9                ***
@@ -1360,46 +1371,30 @@ include(${BRLCAD_CMAKE_DIR}/FindShellDeps.cmake)
 include(${BRLCAD_CMAKE_DIR}/FindLEX.cmake)
 include(${BRLCAD_CMAKE_DIR}/FindYACC.cmake)
 
-
 # If using dtrace, we will need to find it
 if(BRLCAD_ENABLE_DTRACE)
   find_program(DTRACE_EXEC NAMES dtrace DOC "path to dtrace executable")
 endif(BRLCAD_ENABLE_DTRACE)
 
 
-# Load various wrapper macros for checking libraries, headers and
-# functions
-include(${BRLCAD_CMAKE_DIR}/BRLCAD_CheckFunctions.cmake)
-
 
 # *******************************************************************
 # ***      Check for Compiler Characteristics - Stage 3 of 9      ***
 # *******************************************************************
 
-# at this stage only the gcc compiler is supported
+# load our compiler testing macro definitions
+include(${BRLCAD_CMAKE_DIR}/CompilerFlags.cmake)
 if(NOT MSVC)
-  include(${BRLCAD_CMAKE_DIR}/CompilerFlags.cmake)
+  # alas, we heavily assume and test for gcc-style flags
+  include(${BRLCAD_CMAKE_DIR}/BRLCAD_CompilerFlags.cmake)
 endif(NOT MSVC)
-
-# The src/other subdirectory does not share (at least, not universally)
-# certain definitions common to all other directories in BRL-CAD.  Also,
-# we don't want flags that are otherwise global to BRL-CAD to be passed
-# to the src/other directory (particularly things like strict compiler
-# flags) so add src/other before any of that setup occurs.
-add_subdirectory(src/other)
 
 # Most of the src/other projects have their own logic for handling
 # the C inline issue - BRL-CAD needs a fine-grained approach.  Mixed
 # C and C++ sources require different treatment for the same build
 # target, since C++11 doesn't allow inline to be re-defined. See
 # misc/CMake/BRLCAD_Targets.cmake for handling of C_INLINE.
-include(${BRLCAD_CMAKE_DIR}/CheckCInline.cmake)
 CHECK_C_INLINE(C_INLINE)
-
-# Requires that CompilerFlags.cmake already be loaded
-if(NOT MSVC)
-  include(${BRLCAD_CMAKE_DIR}/BRLCAD_CompilerFlags.cmake)
-endif(NOT MSVC)
 
 # If doing an optimized build, set _FORTIFY_SOURCE to 2.  Provides
 # compile-time best-practice error checking on certain libc functions
