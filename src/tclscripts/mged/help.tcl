@@ -246,6 +246,7 @@ set mged_help_data(press)	{{button_label}	{emulate button press}}
 set mged_help_data(prj_add)	{{ [-t] [-b] [-n] shaderfile [image_file] [image_width] [image_height]} {Appends image filename + current view parameters to shaderfile}}
 set mged_help_data(preview)	{{[-v] [-o imagename.ext] [-d sec_delay] [-D start frame] [-K last frame] rt_script_file}	{preview new style RT animation script}}
 set mged_help_data(ps)		{{[-f font] [-t title] [-c creator] [-s size in inches] [-l linewidth] file}	{creates a postscript file of the current view}}
+set mged_help_data(pull)       $helplib_data(wdb_pull)
 set mged_help_data(push)	$helplib_data(wdb_push)
 set mged_help_data(put)		$helplib_data(wdb_put)
 set mged_help_data(putmat)	{{a/b {I | m0 m1 ... m16}}	{replace matrix on combination's arc}}

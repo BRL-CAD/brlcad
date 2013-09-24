@@ -111,6 +111,7 @@ set helplib_data(wdb_observer)		{{cmd [args]} {Attach/detach observer to/from li
 set helplib_data(wdb_pathlist)		{{name(s)}	{list all paths from name(s) to leaves}}
 set helplib_data(wdb_paths)		{{pattern}	{lists all paths matching input path}}
 set helplib_data(wdb_prcolor)		{{} {print color table}}
+set helplib_data(wdb_pull)             {{object(s)} {pull object(s) path transformations from solids}}
 set helplib_data(wdb_push)		{{object(s)} {push object(s) path transformations to solids}}
 set helplib_data(wdb_put)		{{object type attrs} {create a database object}}
 set helplib_data(wdb_region)		{{object(s)} {create or append objects to a region}}

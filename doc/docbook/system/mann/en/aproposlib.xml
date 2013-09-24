@@ -58,7 +58,7 @@ mat_ae_vec mat_aet_vec mat_angles mat_arb_rot mat_eigen2x2 mat_fromto mat_inv
 mat_lookat mat_mul mat_scale_about_pt mat_trn mat_vec_ortho mat_vec_perp
 mat_xform_about_pt mat_xrot mat_yrot mat_zrot quat_mat2quat quat_quat2mat
 vo_model2view vo_pmat vo_pmodel2view vo_rmat vo_view2model wdb_attr wdb_bot_decimate
-wdb_list wdb_match wdb_nmg_collapse wdb_paths wdb_push wdb_search wdb_showmats
+wdb_list wdb_match wdb_nmg_collapse wdb_paths wdb_pull wdb_push wdb_search wdb_showmats
 wdb_xpush
 	</literallayout>
       </para>

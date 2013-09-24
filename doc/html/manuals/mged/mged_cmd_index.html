@@ -331,6 +331,8 @@
 <TD WIDTH="19%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#ps"><FONT SIZE=2>ps</FONT></A></TD>
 <TD WIDTH="20%" VALIGN="MIDDLE">
+<FONT SIZE=2><P></FONT><A HREF="#pull"><FONT SIZE=2>pull</FONT></A></TD>
+<TD WIDTH="21%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#push"><FONT SIZE=2>push</FONT></A></TD>
 <TD WIDTH="22%" VALIGN="MIDDLE">
 <FONT SIZE=2><P></FONT><A HREF="#putmat"><FONT SIZE=2>putmat</FONT></A></TD>
@@ -2515,6 +2517,17 @@ foo.r_xpand/R
 <P><BR>
 </FONT><TT>mged&gt;</TT><FONT SIZE=2> <B>ps -l 10 -t "Test Fat Lines" fat_lines.ps</B> <BR>
 -- This time use fat lines. </P></DIR>
+
+<P><HR ALIGN="RIGHT"></P>
+</FONT><B><DL>
+<DT><A NAME="pull"></A>pull</B> &lt;<I>objects</I>&gt;</DT>
+<DD>The &quot;pull&quot; command pulls the effects of all transformation matrices that appear in any <A HREF="#SOLID">primitive shapes</A> or <A HREF="#COMBINATION">combinations</A> in the trees up to the specified <I>objects</I> heading the tree. This will restore the original the parameters of the <I>primitive shapes</I> if any of the transformation matrices are not identity matrices.  All the transformation matrices visited up the tree will be set to the current transformation matrix.  This command will fail, and no changes will be made, if the head is referenced by a <I>primitive shape</I>.</DD>
+<FONT SIZE=4><DT>Examples:</DT>
+</FONT><TT><DD>mged&gt;</TT> <B>pull group1 regiona</DD>
+</DL><DIR>
+
+</B><FONT SIZE=2><P>-- Pull  the effects of any transformation matrices from the <I>primitive shapes.</I> in the trees up to the heads indicated by <I>group1</I> and <I>regiona</I> </P>
+</DIR>
 
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>

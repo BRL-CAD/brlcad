@@ -271,6 +271,7 @@ namespace eval ArcherCore {
 	method protate             {args}
 	method pscale              {args}
 	method ptranslate          {args}
+	method pull                {args}
 	method push                {args}
 	method put                 {args}
 	method put_comb            {args}
@@ -582,7 +583,7 @@ namespace eval ArcherCore {
 	    killtree l ls make make_bb make_name make_pnts man mater mirror move \
 	    move_arb_edge move_arb_face mv mvall nmg_collapse \
 	    nmg_simplify ocenter opendb orotate oscale otranslate p q \
-	    quit packTree prefix protate pscale ptranslate push put \
+	    quit packTree prefix protate pscale ptranslate pull push put \
 	    put_comb putmat pwd r rcodes red rfarb rm rmater rotate \
 	    rotate_arb_face scale search sed shader shells tire title \
 	    track translate unhide units unpackTree vmake wmater xpush \
@@ -6724,6 +6725,10 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::ptranslate {args} {
     eval gedWrapper ptranslate 0 0 1 0 $args
+}
+
+::itcl::body ArcherCore::pull {args} {
+    eval gedWrapper pull 0 1 1 0 $args
 }
 
 ::itcl::body ArcherCore::push {args} {
