@@ -84,7 +84,7 @@ macro(CHECK_C_INLINE RESULT)
 			       }
 			       int
 			       main(int argc, char *argv[]) {
-			         return 0;
+			         return (argc > 0 || argv)?0:1;
 			       }" ${HAVE_INLINE_KEYWORD})
 
       set(CMAKE_REQUIRED_FLAGS "${PRE_CMAKE_REQUIRED_FLAGS}")

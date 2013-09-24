@@ -66,7 +66,7 @@ macro(CHECK_C_INLINE RESULT)
     set(${RESULT} "")
 
     # test candidates to find one that works
-    foreach(INLINE "flubber" "inline" "__inline__" "__inline")
+    foreach(INLINE "inline" "__inline__" "__inline")
 
       string(TOUPPER "HAVE_${INLINE}_KEYWORD" HAVE_INLINE_KEYWORD)
 
@@ -84,7 +84,7 @@ macro(CHECK_C_INLINE RESULT)
 			       }
 			       int
 			       main(int argc, char *argv[]) {
-			         return 0;
+			         return (argc > 0 || argv)?0:1;
 			       }" ${HAVE_INLINE_KEYWORD})
 
       set(CMAKE_REQUIRED_FLAGS "${PRE_CMAKE_REQUIRED_FLAGS}")
