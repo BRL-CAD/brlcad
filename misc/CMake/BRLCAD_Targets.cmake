@@ -52,7 +52,7 @@ endmacro(CHECK_OPT)
 # Take a target definition and find out what definitions its libraries
 # are using
 macro(GET_TARGET_DEFINES targetname target_libs)
-# Take care of compile flags and definitions
+  # Take care of compile flags and definitions
   foreach(libitem ${target_libs})
     list(FIND BRLCAD_LIBS ${libitem} FOUNDIT)
     if(NOT ${FOUNDIT} STREQUAL "-1")
@@ -113,26 +113,26 @@ endmacro(GET_TARGET_FLAGS)
 # When a build target source file list contains files that are NOT all
 # one language, we need to apply flags on a per-file basis
 macro(FLAGS_TO_FILES srcslist targetname)
-	foreach(srcfile ${srcslist})
-		get_property(file_language SOURCE ${srcfile} PROPERTY LANGUAGE)
-		if(NOT file_language)
-			get_filename_component(srcfile_ext ${srcfile} EXT)
-			if(${srcfile_ext} STREQUAL ".cxx" OR ${srcfile_ext} STREQUAL ".cpp" OR ${srcfile_ext} STREQUAL ".cc")
-				set(file_language CXX)
-			endif(${srcfile_ext} STREQUAL ".cxx" OR ${srcfile_ext} STREQUAL ".cpp" OR ${srcfile_ext} STREQUAL ".cc")
-			if(${srcfile_ext} STREQUAL ".c")
-				set(file_language C)
-			endif(${srcfile_ext} STREQUAL ".c")
-		endif(NOT file_language)
-		if(file_language)
-			foreach(lib_flag ${${targetname}_${file_language}_FLAGS})
-				set_property(SOURCE ${srcfile} APPEND PROPERTY COMPILE_FLAGS "${lib_flag}")
-			endforeach(lib_flag ${${targetname}_${file_language}_FLAGS})
-		endif(file_language)
-		if("${file_language}" STREQUAL "C" AND NOT "${C_INLINE}" STREQUAL "inline")
-			set_property(SOURCE ${srcfile} APPEND PROPERTY COMPILE_DEFINITIONS "inline=${C_INLINE}")
-		endif("${file_language}" STREQUAL "C" AND NOT "${C_INLINE}" STREQUAL "inline")
-	endforeach(srcfile ${srcslist})
+  foreach(srcfile ${srcslist})
+    get_property(file_language SOURCE ${srcfile} PROPERTY LANGUAGE)
+    if(NOT file_language)
+      get_filename_component(srcfile_ext ${srcfile} EXT)
+      if(${srcfile_ext} STREQUAL ".cxx" OR ${srcfile_ext} STREQUAL ".cpp" OR ${srcfile_ext} STREQUAL ".cc")
+	set(file_language CXX)
+      endif(${srcfile_ext} STREQUAL ".cxx" OR ${srcfile_ext} STREQUAL ".cpp" OR ${srcfile_ext} STREQUAL ".cc")
+      if(${srcfile_ext} STREQUAL ".c")
+	set(file_language C)
+      endif(${srcfile_ext} STREQUAL ".c")
+    endif(NOT file_language)
+    if(file_language)
+      foreach(lib_flag ${${targetname}_${file_language}_FLAGS})
+	set_property(SOURCE ${srcfile} APPEND PROPERTY COMPILE_FLAGS "${lib_flag}")
+      endforeach(lib_flag ${${targetname}_${file_language}_FLAGS})
+    endif(file_language)
+    if("${file_language}" STREQUAL "C" AND NOT "${C_INLINE}" STREQUAL "inline")
+      set_property(SOURCE ${srcfile} APPEND PROPERTY COMPILE_DEFINITIONS "inline=${C_INLINE}")
+    endif("${file_language}" STREQUAL "C" AND NOT "${C_INLINE}" STREQUAL "inline")
+  endforeach(srcfile ${srcslist})
 endmacro(FLAGS_TO_FILES)
 
 # Handle C++ NO_STRICT settings
@@ -211,17 +211,17 @@ macro(BRLCAD_ADDEXEC execname srcslist libslist)
     foreach(lib_flag ${${execname}_${exec_type}_FLAGS})
       set_property(TARGET ${execname} APPEND PROPERTY COMPILE_FLAGS "${lib_flag}")
     endforeach(lib_flag ${${execname}_${exec_type}_FLAGS})
-	 if(NOT "${C_INLINE}" STREQUAL "inline" AND "${exec_type}" STREQUAL "C")
-		 set_property(TARGET ${execname} APPEND PROPERTY COMPILE_DEFINITIONS "inline=${C_INLINE}")
-	 endif(NOT "${C_INLINE}" STREQUAL "inline" AND "${exec_type}" STREQUAL "C")
+    if(NOT "${C_INLINE}" STREQUAL "inline" AND "${exec_type}" STREQUAL "C")
+      set_property(TARGET ${execname} APPEND PROPERTY COMPILE_DEFINITIONS "inline=${C_INLINE}")
+    endif(NOT "${C_INLINE}" STREQUAL "inline" AND "${exec_type}" STREQUAL "C")
   endif(${exec_type} STREQUAL "MIXED")
 
   # If this target is marked as incompatible with the strict flags, disable them
   foreach(extraarg ${ARGN})
     if(${extraarg} MATCHES "NO_STRICT$" AND BRLCAD_ENABLE_STRICT)
       if(NOERROR_FLAG)
-			set_property(TARGET ${execname} APPEND PROPERTY COMPILE_FLAGS "-Wno-error")
-		endif(NOERROR_FLAG)
+	set_property(TARGET ${execname} APPEND PROPERTY COMPILE_FLAGS "-Wno-error")
+      endif(NOERROR_FLAG)
     endif(${extraarg} MATCHES "NO_STRICT$" AND BRLCAD_ENABLE_STRICT)
   endforeach(extraarg ${ARGN})
 
@@ -307,13 +307,13 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
     # If we haven't already taken care of the flags on a per-file basis,
     # apply them to the target now that we have one.
     if(NOT ${lib_type} STREQUAL "MIXED")
-		 # All one language - we can apply the flags to the target
-		 foreach(lib_flag ${${libname}_${lib_type}_FLAGS})
-			 set_property(TARGET ${libname} APPEND PROPERTY COMPILE_FLAGS "${lib_flag}")
-		 endforeach(lib_flag ${${libname}_${lib_type}_FLAGS})
-		 if(NOT "${C_INLINE}" STREQUAL "inline" AND "${lib_type}" STREQUAL "C")
-			 set_property(TARGET ${libname} APPEND PROPERTY COMPILE_DEFINITIONS "inline=${C_INLINE}")
-		 endif(NOT "${C_INLINE}" STREQUAL "inline" AND "${lib_type}" STREQUAL "C")
+      # All one language - we can apply the flags to the target
+      foreach(lib_flag ${${libname}_${lib_type}_FLAGS})
+	set_property(TARGET ${libname} APPEND PROPERTY COMPILE_FLAGS "${lib_flag}")
+      endforeach(lib_flag ${${libname}_${lib_type}_FLAGS})
+      if(NOT "${C_INLINE}" STREQUAL "inline" AND "${lib_type}" STREQUAL "C")
+	set_property(TARGET ${libname} APPEND PROPERTY COMPILE_DEFINITIONS "inline=${C_INLINE}")
+      endif(NOT "${C_INLINE}" STREQUAL "inline" AND "${lib_type}" STREQUAL "C")
     endif(NOT ${lib_type} STREQUAL "MIXED")
 
     foreach(extraarg ${ARGN})
@@ -503,7 +503,7 @@ endmacro(BRLCAD_LIB_INCLUDE_DIRS)
 # to copy/symlink as dependencies, there is a potential for file names to
 # conflict with build target names. (This has actually been observed with
 # MSVC - our file INSTALL in the toplevel source directory conflicts with the
-# MSVC target named INSTALL.)  To avoid conflicts and make the dependencies
+# MSVC target named INSTALL.) To avoid conflicts and make the dependencies
 # of the custom commands robust we supply full file paths as dependencies to
 # the file copying custom commands.
 
