@@ -2029,6 +2029,86 @@ struct rt_view_info {
 };
 
 /**
+ * R T _ S E L E C T I O N
+ *
+ * Specifies a subset of a primitive's geometry as the target for
+ * an operation.
+ *
+ * TODO: This structure is tentative and subject to change or removal
+ *       without notice.
+ */
+struct rt_selection {
+    void *s; /**< @brief primitive-specific selection object */
+};
+
+/**
+ * R T _ S E L E C T I O N _ L I S T
+ *
+ * TODO: This structure is tentative and subject to change or removal
+ *       without notice.
+ */
+struct rt_selection_list {
+    struct bu_list l;
+    struct rt_selection *obj;
+};
+
+/**
+ * R T _ S E L E C T I O N _ Q U E R Y
+ *
+ * Analagous to a database query. Specifies how to filter and sort
+ * the selectable components of a primitive in order to find the most
+ * relevant selections for a particular application.
+ *
+ * TODO: This structure is tentative and subject to change or removal
+ *       without notice.
+ */
+struct rt_selection_query {
+    point_t start;     /**< @brief start point of query ray */
+    vect_t dir;        /**< @brief direction of query ray */
+
+    /** Comparison function to specify a sort order for matching
+     * selections. Should return <0 if the first selection should come
+     * before the second selection, >0 if the second selection should
+     * come before the first selection, and 0 otherwise.
+     *
+     * If cmp is NULL, selections are sorted by proximity to the start
+     * point of the query ray.
+     */
+    int (*cmp)(const struct rt_selection *, const struct rt_selection *);
+};
+
+/**
+ * R T _ S E L E C T I O N _ T R A N S L A T I O N
+ *
+ * Paramters of a translation applied to a selection.
+ *
+ * TODO: This structure is tentative and subject to change or removal
+ *       without notice.
+ */
+struct rt_selection_translation {
+    fastf_t dx;
+    fastf_t dy;
+    fastf_t dz;
+};
+
+/**
+ * R T _ S E L E C T I O N _ O P E R A T I O N
+ *
+ * Describes an operation that can be applied to a selection.
+ *
+ * TODO: This structure is tentative and subject to change or removal
+ *       without notice.
+ */
+struct rt_selection_operation {
+#define RT_SELECTION_NOP	 0
+#define RT_SELECTION_TRANSLATION 1
+    int type;
+    union {
+	struct rt_selection_translation tran;
+    } parameters;
+};
+
+/**
  * R T _ F U N C T A B
  *
  * Object-oriented interface to BRL-CAD geometry.
@@ -2155,7 +2235,20 @@ struct rt_functab {
     int (*ft_oriented_bbox)(struct rt_arb_internal * /* bounding arb8 */,
 		   struct rt_db_internal * /*ip*/,
 		   const fastf_t);
-
+    /** get a list of the selections matching a query */
+    struct rt_selection_list *(*ft_find_selections)(const struct rt_db_internal *,
+						   const struct rt_selection_query *);
+    /** evaluate a logical selection expression (e.g. a INTERSECT b,
+     *  NOT a) to create a new selection
+     */
+    struct rt_selection *(*ft_evaluate_selection)(const struct rt_db_internal *,
+						 int op,
+						 const struct rt_selection *,
+						 const struct rt_selection *);
+    /** apply an operation to a selected subset of a primitive */
+    int (*ft_process_selection)(struct rt_db_internal *,
+				const struct rt_selection *,
+				const struct rt_selection_operation *);
 };
 
 

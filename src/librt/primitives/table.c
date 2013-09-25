@@ -75,7 +75,10 @@
     extern void rt_##name##_volume(fastf_t *vol, const struct rt_db_internal *ip); \
     extern void rt_##name##_surf_area(fastf_t *area, const struct rt_db_internal *ip); \
     extern void rt_##name##_centroid(point_t *cent, const struct rt_db_internal *ip); \
-    extern int rt_##name##_oriented_bbox(struct rt_arb_internal *bbox, struct rt_db_internal *ip, const fastf_t tol)
+    extern int rt_##name##_oriented_bbox(struct rt_arb_internal *bbox, struct rt_db_internal *ip, const fastf_t tol); \
+    extern struct rt_selection_list *rt_##name##_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query); \
+    extern struct rt_selection *rt_##name##_evaluate_selection(const struct rt_db_internal *ip, int op, const struct rt_selection *a, const struct rt_selection *b); \
+    extern int rt_##name##_process_selection(struct rt_db_internal *ip, const struct rt_selection *selection, const struct rt_selection_operation *op)
 
 RT_DECLARE_INTERFACE(tor);
 RT_DECLARE_INTERFACE(tgc);
@@ -193,6 +196,9 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -235,6 +241,9 @@ const struct rt_functab OBJ[] = {
 	rt_tor_surf_area,
 	rt_tor_centroid,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -277,6 +286,9 @@ const struct rt_functab OBJ[] = {
 	rt_tgc_surf_area,
 	rt_tgc_centroid,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -319,6 +331,9 @@ const struct rt_functab OBJ[] = {
 	rt_ell_surf_area,
 	rt_ell_centroid,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -361,6 +376,9 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	rt_arb_centroid,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -403,6 +421,9 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -445,6 +466,9 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -487,6 +511,9 @@ const struct rt_functab OBJ[] = {
 	rt_tgc_surf_area,
 	rt_tgc_centroid,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -529,6 +556,9 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -571,6 +601,9 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -613,6 +646,9 @@ const struct rt_functab OBJ[] = {
 	rt_ell_surf_area,
 	rt_ell_centroid,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -655,6 +691,9 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -697,6 +736,9 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	rt_ebm_centroid,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -739,6 +781,9 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -781,6 +826,9 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -823,6 +871,9 @@ const struct rt_functab OBJ[] = {
 	rt_pipe_surf_area,
 	rt_pipe_centroid,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -865,6 +916,9 @@ const struct rt_functab OBJ[] = {
 	rt_part_surf_area,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -907,6 +961,9 @@ const struct rt_functab OBJ[] = {
 	rt_rpc_surf_area,
 	rt_rpc_centroid,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -949,6 +1006,9 @@ const struct rt_functab OBJ[] = {
 	rt_rhc_surf_area,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -991,6 +1051,9 @@ const struct rt_functab OBJ[] = {
 	rt_epa_surf_area,
 	rt_epa_centroid,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -1033,6 +1096,9 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -1075,6 +1141,9 @@ const struct rt_functab OBJ[] = {
 	rt_eto_surf_area,
 	rt_eto_centroid,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -1117,6 +1186,9 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -1159,6 +1231,9 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -1201,6 +1276,9 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -1243,6 +1321,9 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -1285,6 +1366,9 @@ const struct rt_functab OBJ[] = {
 	rt_sketch_surf_area,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -1327,6 +1411,9 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -1369,6 +1456,9 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -1411,6 +1501,9 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -1453,6 +1546,9 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	rt_bot_centroid,
 	rt_bot_oriented_bbox,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -1495,6 +1591,9 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -1539,6 +1638,9 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -1581,6 +1683,9 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -1625,6 +1730,9 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -1667,6 +1775,9 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -1709,6 +1820,9 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
 #if OBJ_BREP
@@ -1752,6 +1866,9 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 #else
     {
@@ -1793,6 +1910,9 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 #endif
 
@@ -1836,6 +1956,9 @@ const struct rt_functab OBJ[] = {
 	rt_hyp_surf_area,
 	rt_hyp_centroid,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -1878,6 +2001,9 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -1920,6 +2046,9 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -1962,6 +2091,9 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -2004,6 +2136,9 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -2046,6 +2181,9 @@ const struct rt_functab OBJ[] = {
 	rt_hrt_surf_area,
 	rt_hrt_centroid,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -2088,6 +2226,9 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
+	NULL
     }
 };
 
