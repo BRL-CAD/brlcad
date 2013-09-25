@@ -49,18 +49,19 @@
 # As best as is reasonably possible, proper ordering and
 # separation of tests and settings should be maintained per the
 # recommended standard layout.  The tests should be added to the
-# labeled sections below so that they are organized as follows:
+# labeled sections below so that they are organized in stages as
+# follows:
 #
-#     0) information on the package and toplevel CMake settings
-#     1) define top level options
-#     2) check programs
-#     3) check compiler characteristics
-#     4) check libraries
-#     5) check headers
-#     6) check types/structures
-#     7) check functions
-#     8) check system services
-#     9) output a summary
+#   Stage 0 - information on the package and toplevel CMake settings
+#   Stage 1 - define top level options
+#   Stage 2 - check programs
+#   Stage 3 - check compiler characteristics
+#   Stage 4 - check libraries
+#   Stage 5 - check headers
+#   Stage 6 - check types/structures
+#   Stage 7 - check functions
+#   Stage 8 - check system services
+#   Stage 9 - output a summary
 #
 # The output summary should report key information about the final
 # configuration of the build.  Comprehensive information is available
