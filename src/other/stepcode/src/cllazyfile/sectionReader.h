@@ -85,3 +85,4 @@ class SC_LAZYFILE_EXPORT sectionReader {
 };
 
 #endif //SECTIONREADER_H
+

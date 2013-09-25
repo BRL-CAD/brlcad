@@ -23,3 +23,4 @@ class SC_LAZYFILE_EXPORT lazyP21DataSectionReader: public lazyDataSectionReader 
 };
 
 #endif //LAZYP21DATASECTIONREADER_H
+

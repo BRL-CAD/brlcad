@@ -17,3 +17,4 @@ class SC_LAZYFILE_EXPORT p21HeaderSectionReader: public headerSectionReader {
 };
 
 #endif //P21HEADERSECTIONREADER_H
+
