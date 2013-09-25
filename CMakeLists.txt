@@ -1223,7 +1223,7 @@ set(ENABLE_POSIX_COMPLIANCE_DESCRIPTION "
 Build with strict POSIX compliance checking.  Defaults to OFF.
 
 Causes compiler options to be set for strict compliance with the
-minumum C and C++ standards acceptable according to current BRL-CAD
+minimum C and C++ standards acceptable according to current BRL-CAD
 policy.  The current minimum C standard is C89.  There is no currently
 defined minimum C++ standard.
 ")

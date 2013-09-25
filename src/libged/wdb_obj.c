@@ -1021,7 +1021,7 @@ wdb_bot_decimate_cmd(struct rt_wdb *wdbp,
 		min_edge_length = atof(bu_optarg);
 		if (min_edge_length < 0.0) {
 		    Tcl_AppendResult(wdbp->wdb_interp,
-				     "minumum edge length cannot be less than zero",
+				     "minimum edge length cannot be less than zero",
 				     (char *)NULL);
 		    return TCL_ERROR;
 		}
@@ -6555,8 +6555,8 @@ void
 wdb_pull_comb(struct db_i *dbip,
 	  struct directory *dp,
 	  genptr_t mp);
-	  
-/* This restores the matrix transformation at a combination by taking leaf matrix tranformations, inverting
+
+/* This restores the matrix transformation at a combination by taking leaf matrix transformations, inverting
  * and storing the changes at the combinations.
  */
 static void
@@ -6669,7 +6669,7 @@ wdb_pull_cmd(struct rt_wdb *wdbp,
     rt_init_resource( &rt_uniresource, 0, NULL );
 
     WDB_TCL_CHECK_READ_ONLY;
-    
+
     /* must be wanting help */
     if (argc == 1) {
 	Tcl_AppendResult(wdbp->wdb_interp,"helplib_alias wdb_pull Usage: %s %s", argv[0], usage);
@@ -6714,9 +6714,9 @@ wdb_pull_cmd(struct rt_wdb *wdbp,
      * All new changes are immediately written to database
      */
     db_functree(wdbp->dbip, dp, wdb_pull_comb, wdb_pull_leaf, resp, &mat);
-    
+
     RTG.debug = debug;
-    
+
 
    return TCL_OK;
 }
@@ -6730,14 +6730,14 @@ wdb_pull_cmd(struct rt_wdb *wdbp,
  *
  * Usage:
  * procname pull object(s)
- */    
+ */
 int
-wdb_pull_tcl(void *clientData, 
-             int argc,  
+wdb_pull_tcl(void *clientData,
+             int argc,
              const char *argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
-    
+
     return wdb_pull_cmd(wdbp, argc-1, argv+1);
 }
 

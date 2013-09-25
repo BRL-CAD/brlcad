@@ -44,7 +44,7 @@ pull_comb(struct db_i *dbip,
 	  genptr_t mp);
 
 
-/* This restores the matrix transformation at a combination by taking leaf matrix tranformations, inverting
+/* This restores the matrix transformation at a combination by taking leaf matrix transformations, inverting
  * and storing the changes at the combinations.
  */
 static void
@@ -169,7 +169,7 @@ pull_leaf(struct db_i *dbip, struct directory *dp, genptr_t mp)
     struct rt_db_internal intern;
     struct bn_tol tol;
     struct resource *resp;
-    point_t min;             /* mininum point of bbox */
+    point_t min;             /* minimum point of bbox */
     point_t max;             /* maximum point of bbox */
     matp_t mat = (matp_t)mp; /* current transformation matrix */
     mat_t matrix, invXform;

@@ -1251,13 +1251,13 @@ Release steps are as follows:
     svn log --stop-on-copy https://svn.code.sf.net/p/brlcad/code/brlcad/branches/RELEASE | grep -E 'r[0-9]{5}'
     PREV=[[last_trunk_rev]]
     echo "PREV=$PREV"
-   
+
     svn co svn://svn.code.sf.net/p/brlcad/code/brlcad/branches/RELEASE brlcad.RELEASE
     cd brlcad.RELEASE
     svn merge https://svn.code.sf.net/p/brlcad/code/brlcad/trunk@$PREV https://svn.code.sf.net/p/brlcad/code/brlcad/trunk@HEAD .
 
 #####################################################################
-# 02: Test the merge.  
+# 02: Test the merge.
 
     mkdir -p .build && cd .build
     cmake .. -DBRLCAD_BUNDLED_LIBS=ON -DCMAKE_BUILD_TYPE=Release && make
