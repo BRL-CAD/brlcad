@@ -26,6 +26,33 @@
 #
 #-----------------------------------------------------------------------
 
+# Clear all pre-defined CMake flags
+
+set(CMAKE_C_FLAGS "")
+set(CMAKE_CXX_FLAGS "")
+set(CMAKE_SHARED_LINKER_FLAGS "")
+set(CMAKE_EXE_LINKER_FLAGS "")
+
+if(CMAKE_BUILD_TYPE)
+  string(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE_UPPER)
+  set(CMAKE_C_FLAGS_${BUILD_TYPE_UPPER} "")
+  set(CMAKE_CXX_FLAGS_${BUILD_TYPE_UPPER} "")
+  set(CMAKE_SHARED_LINKER_FLAGS_${BUILD_TYPE_UPPER} "")
+  set(CMAKE_EXE_LINKER_FLAGS_${BUILD_TYPE_UPPER} "")
+endif(CMAKE_BUILD_TYPE)
+
+foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+  string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+  set(CMAKE_C_FLAGS_${CFG_TYPE_UPPER} "")
+  set(CMAKE_CXX_FLAGS_${CFG_TYPE_UPPER} "")
+  set(CMAKE_SHARED_LINKER_FLAGS_${CFG_TYPE_UPPER} "")
+  set(CMAKE_EXE_LINKER_FLAGS_${CFG_TYPE_UPPER} "")
+endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+
+set(CMAKE_C_FLAGS "$ENV{CFLAGS}")
+set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS}")
+set(CMAKE_SHARED_LINKER_FLAGS "$ENV{LDFLAGS}")
+
 # Quiet all warnings in this directory
 if(BRLCAD_DISABLE_SRC_OTHER_WARN)
   add_definitions(-w)
