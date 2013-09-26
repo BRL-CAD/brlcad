@@ -66,10 +66,9 @@ main(int ac, char *av[])
 	bu_file_delete(DEFAULT_COIL_FILENAME);
 	bu_log("%s\n", bu_vls_addr(ged.ged_result_str));
 	return -1;
-    } else {
-	/* Close database */
-	wdb_close(db_fp);
     }
+    /* Close database */
+    wdb_close(db_fp);
     bu_log("%s\n", bu_vls_addr(ged.ged_result_str));
     return 0;
 }
