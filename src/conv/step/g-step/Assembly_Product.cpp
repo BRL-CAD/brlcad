@@ -208,7 +208,7 @@ Mat_to_Rep(matp_t curr_matrix, Registry *registry, InstMgr *instance_list)
 
 // Representation relationships are a complex type
 STEPentity *
-Build_Representation_Relationship(STEPentity *transformation, Registry *registry, InstMgr *instance_list) {
+Build_Representation_Relationship(STEPentity *input_transformation, Registry *registry, InstMgr *instance_list) {
     STEPattribute *attr;
     STEPcomplex *stepcomplex;
     const char *entNmArr[4] = {"representation_relationship", "representation_relationship_with_transformation", "shape_representation_relationship", "*"};
@@ -229,9 +229,11 @@ Build_Representation_Relationship(STEPentity *transformation, Registry *registry
     stepcomplex->ResetAttributes();
     while ((attr = stepcomplex->NextAttribute()) != NULL) {
 	std::cout << attr->Name() << "\n";
-	/*
-	if (!bu_strcmp(attr->Name(), "transformation_operator")) attr->ptr.i = new SDAI_Integer(nsurface->Degree(0));
-	*/
+	if (!bu_strcmp(attr->Name(), "transformation_operator")) {
+	    std::cout << "  " << attr->Name() << "," << attr->NonRefType() << "\n";
+	    SdaiTransformation *transformation = new SdaiTransformation((SdaiItem_defined_transformation *)input_transformation);
+	    attr->ptr.sh = transformation;
+	}
     }
 
     instance_list->Append((STEPentity *)complex_entity, completeSE);
@@ -288,7 +290,7 @@ Add_Assembly_Product(struct directory *dp, struct db_i *dbip, struct bu_ptbl *ch
 	    SdaiCharacterized_product_definition *cpd = new SdaiCharacterized_product_definition(usage);
 	    pshape->definition_(new SdaiCharacterized_definition(cpd));
 	    instance_list->Append((STEPentity *)pshape, completeSE);
-	    STEPentity *rep_rel = Build_Representation_Relationship(curr_transform, registry, instance_list);
+	    STEPentity *rep_rel = Build_Representation_Relationship(item_transform, registry, instance_list);
 	    SdaiContext_dependent_shape_representation *cshape = (SdaiContext_dependent_shape_representation *)registry->ObjCreate("CONTEXT_DEPENDENT_SHAPE_REPRESENTATION");
 	    cshape->representation_relation_((SdaiShape_representation_relationship *)rep_rel);
 	    cshape->represented_product_relation_(pshape);
