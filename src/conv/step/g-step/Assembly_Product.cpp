@@ -206,6 +206,39 @@ Mat_to_Rep(matp_t curr_matrix, Registry *registry, InstMgr *instance_list)
     }
 }
 
+// Representation relationships are a complex type
+STEPentity *
+Build_Representation_Relationship(STEPentity *transformation, Registry *registry, InstMgr *instance_list) {
+    STEPattribute *attr;
+    STEPcomplex *stepcomplex;
+    const char *entNmArr[4] = {"representation_relationship", "representation_relationship_with_transformation", "shape_representation_relationship", "*"};
+    STEPcomplex *complex_entity = new STEPcomplex(registry, (const char **)entNmArr, registry->GetEntityCnt() + 1);
+    /* REPRESENTATION_RELATIONSHIP */
+    stepcomplex = complex_entity->EntityPart("representation_relationship");
+    stepcomplex->ResetAttributes();
+    while ((attr = stepcomplex->NextAttribute()) != NULL) {
+	std::cout << attr->Name() << "\n";
+	/*
+	if (!bu_strcmp(attr->Name(), "rep_1")) attr->ptr.i = new SDAI_Integer(nsurface->Degree(0));
+	if (!bu_strcmp(attr->Name(), "rep_2")) attr->ptr.i = new SDAI_Integer(nsurface->Degree(1));
+	*/
+    }
+
+    /* REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION */
+    stepcomplex = complex_entity->EntityPart("representation_relationship_with_transformation");
+    stepcomplex->ResetAttributes();
+    while ((attr = stepcomplex->NextAttribute()) != NULL) {
+	std::cout << attr->Name() << "\n";
+	/*
+	if (!bu_strcmp(attr->Name(), "transformation_operator")) attr->ptr.i = new SDAI_Integer(nsurface->Degree(0));
+	*/
+    }
+
+    instance_list->Append((STEPentity *)complex_entity, completeSE);
+
+    return complex_entity;
+}
+
 void
 Add_Assembly_Product(struct directory *dp, struct db_i *dbip, struct bu_ptbl *children,
 	std::map<struct directory *, STEPentity *> *comb_to_step,
@@ -255,6 +288,11 @@ Add_Assembly_Product(struct directory *dp, struct db_i *dbip, struct bu_ptbl *ch
 	    SdaiCharacterized_product_definition *cpd = new SdaiCharacterized_product_definition(usage);
 	    pshape->definition_(new SdaiCharacterized_definition(cpd));
 	    instance_list->Append((STEPentity *)pshape, completeSE);
+	    STEPentity *rep_rel = Build_Representation_Relationship(curr_transform, registry, instance_list);
+	    SdaiContext_dependent_shape_representation *cshape = (SdaiContext_dependent_shape_representation *)registry->ObjCreate("CONTEXT_DEPENDENT_SHAPE_REPRESENTATION");
+	    cshape->representation_relation_((SdaiShape_representation_relationship *)rep_rel);
+	    cshape->represented_product_relation_(pshape);
+	    instance_list->Append((STEPentity *)cshape, completeSE);
 	} else {
 	    bu_log("non-uniform scaling detected: %s/%s\n", dp->d_namep, curr_dp->d_namep);
 	}
