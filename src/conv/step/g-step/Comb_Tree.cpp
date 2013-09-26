@@ -100,11 +100,14 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, Registry *registry,
     const char *brep_search = "-type brep";
     struct bu_ptbl *breps = db_search_path_obj(brep_search, dp, wdbp);
     for (int j = (int)BU_PTBL_LEN(breps) - 1; j >= 0; j--){
+	STEPentity *brep_shape;
+	STEPentity *brep_product;
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(breps, j);
 	struct rt_db_internal brep_intern;
 	rt_db_get_internal(&brep_intern, curr_dp, wdbp->dbip, bn_mat_identity, &rt_uniresource);
 	RT_CK_DB_INTERNAL(&brep_intern);
-	(*brep_to_step)[curr_dp] = ON_BRep_to_STEP(curr_dp, &brep_intern, registry, instance_list);
+	ON_BRep_to_STEP(curr_dp, &brep_intern, registry, instance_list, &brep_shape, &brep_product);
+	(*brep_to_step)[curr_dp] = brep_product;
 	bu_log("Brep: %s\n", curr_dp->d_namep);
     }
 

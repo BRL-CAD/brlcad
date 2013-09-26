@@ -200,10 +200,9 @@ Populate_Instance_List(ON_Brep_Info_AP203 *info)
     ON_NurbsSurfaceCV_Finalize_GenericAggregates(info);
 }
 
-STEPentity *
-ON_BRep_to_STEP(struct directory *dp, struct rt_db_internal *intern, Registry *registry, InstMgr *instance_list)
+void
+ON_BRep_to_STEP(struct directory *dp, struct rt_db_internal *intern, Registry *registry, InstMgr *instance_list, STEPentity **brep_shape, STEPentity **brep_product)
 {
-    STEPentity *brep_shape = NULL;
     RT_CK_DB_INTERNAL(intern);
     struct rt_brep_internal *bi = (struct rt_brep_internal*)(intern->idb_ptr);
     RT_BREP_TEST_MAGIC(bi);
@@ -481,14 +480,12 @@ ON_BRep_to_STEP(struct directory *dp, struct rt_db_internal *intern, Registry *r
     items->AddNode(new EntityNode((SDAI_Application_instance *)info->manifold_solid_brep));
     info->advanced_brep->context_of_items_((SdaiRepresentation_context *) context);
 
-    // Top level structures
-    brep_shape = Add_Shape_Definition_Representation(info->registry, info->instance_list, info->advanced_brep);
+    (*brep_product) = Add_Shape_Definition_Representation(info->registry, info->instance_list, info->advanced_brep);
+    (*brep_shape) = info->advanced_brep;
 
     Populate_Instance_List(info);
 
     delete info;
-
-    return brep_shape;
 }
 
 

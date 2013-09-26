@@ -68,6 +68,8 @@ usage()
 int
 main(int argc, char *argv[])
 {
+    STEPentity *brep_shape;
+    STEPentity *brep_product;
     int ret = 0;
 
     // process command line arguments
@@ -181,7 +183,7 @@ main(int argc, char *argv[])
     /* Now, add actual DATA */
     switch (intern.idb_minor_type) {
 	case DB5_MINORTYPE_BRLCAD_BREP:
-	    (void)ON_BRep_to_STEP(dp, &intern, registry, &instance_list);
+	    (void)ON_BRep_to_STEP(dp, &intern, registry, &instance_list, &brep_shape, &brep_product);
 	    break;
 	case DB5_MINORTYPE_BRLCAD_COMBINATION:
 	    (void)Comb_Tree_to_STEP(dp, wdbp, registry, &instance_list);
