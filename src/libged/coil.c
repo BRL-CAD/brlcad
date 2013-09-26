@@ -337,10 +337,6 @@ ReadArgs(struct ged *gedp, int argc, const char *argv[], struct bu_vls *name, st
     }
     while ((c=bu_getopt(argc, (char * const *)argv, options)) != -1) {
 	switch (c) {
-	    case 'h' :
-		usage(gedp);
-                return GED_ERROR;
-		break;
 	    case 'd' :
 		sscanf(bu_optarg, "%f", &mean_od);
 		*mean_outer_diameter = mean_od;
@@ -385,11 +381,10 @@ ReadArgs(struct ged *gedp, int argc, const char *argv[], struct bu_vls *name, st
 		coil_data->wd = d3;
 		coil_data->ha = d4;
 		coil_data->p = d5;
-		if (d6 == 1) {
+		if (d6 == 1)
 		    coil_data->lhf = 1;
-		} else {
+		else
 		    coil_data->lhf = -1;
-		}
 		BU_LIST_INSERT(&(*sections), &((*coil_data).l));
 		break;
 	    default:
