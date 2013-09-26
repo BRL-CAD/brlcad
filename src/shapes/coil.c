@@ -49,13 +49,12 @@ main(int ac, char *av[])
     struct ged ged;
 
     /* make sure file doesn't already exist and opens for writing */
-    if (bu_file_exists(DEFAULT_COIL_FILENAME, NULL)) {
+    if (bu_file_exists(DEFAULT_COIL_FILENAME, NULL))
 	bu_exit(2, "%s: refusing to overwrite pre-existing file %s\n", av[0], DEFAULT_COIL_FILENAME);
-    }
+
     db_fp = wdb_fopen(DEFAULT_COIL_FILENAME);
-    if (!db_fp) {
+    if (!db_fp)
 	bu_exit(2, "%s: unable to open %s for writing\n", av[0], DEFAULT_COIL_FILENAME);
-    }
 
     /* do it. */
     mk_id(db_fp, "coil");
