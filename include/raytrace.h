@@ -2055,7 +2055,7 @@ struct rt_selection_list {
 /**
  * R T _ S E L E C T I O N _ Q U E R Y
  *
- * Analagous to a database query. Specifies how to filter and sort
+ * Analogous to a database query. Specifies how to filter and sort
  * the selectable components of a primitive in order to find the most
  * relevant selections for a particular application.
  *
