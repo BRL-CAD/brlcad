@@ -11,8 +11,8 @@ int
 main ()
 {
   int s;
-  wait (&s);
-  s = WIFEXITED (s) ? WEXITSTATUS (s) : 1;
-  ;
+  wait(&s);
+  s = WIFEXITED(s) ? WEXITSTATUS(s) : 1;
+
   return 0;
 }
