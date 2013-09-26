@@ -231,6 +231,7 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
 
     const char *bin;
     char rt[256] = {0};
+    char rtscript[256] = {0};
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -241,21 +242,21 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (gedp->ged_gvp->gv_perspective > 0)
-	/* rtwizard --no_gui -perspective p -i db.g --viewsize size --orientation "A B C D} --eye_pt "X Y Z" */
-	args = argc + 1 + 1 + 2 + 2 + 2 + 2 + 2;
+	/* btclsh rtwizard --no_gui -perspective p -i db.g --viewsize size --orientation "A B C D} --eye_pt "X Y Z" */
+	args = argc + 1 + 1 + 1 + 2 + 2 + 2 + 2 + 2;
     else
-	/* rtwizard --no_gui -i db.g --viewsize size --orientation "A B C D} --eye_pt "X Y Z" */
-	args = argc + 1 + 1 + 2 + 2 + 2 + 2;
+	/* btclsh rtwizard --no_gui -i db.g --viewsize size --orientation "A B C D} --eye_pt "X Y Z" */
+	args = argc + 1 + 1 + 1 + 2 + 2 + 2 + 2;
 
     gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
     bin = bu_brlcad_root("bin", 1);
     if (bin) {
-#ifdef _WIN32
-	snprintf(rt, 256, "%s/rtwizard.bat", bin);
-#else
-	snprintf(rt, 256, "%s/rtwizard", bin);
-#endif
+	snprintf(rt, 256, "%s/btclsh", bin);
+	snprintf(rtscript, 256, "%s/rtwizard", bin);
+    } else {
+	snprintf(rt, 256, "btclsh");
+	snprintf(rtscript, 256, "rtwizard");
     }
 
     _ged_rt_set_eye_model(gedp, eye_model);
@@ -267,6 +268,7 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
 
     vp = &gedp->ged_gdp->gd_rt_cmd[0];
     *vp++ = rt;
+    *vp++ = rtscript;
     *vp++ = "--no-gui";
     *vp++ = "--viewsize";
     *vp++ = bu_vls_addr(&size_vls);
@@ -282,17 +284,7 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     }
 
     *vp++ = "-i";
-    /* XXX why is this different for win32 only? */
-#ifdef _WIN32
-    {
-	char buf[512];
-
-	snprintf(buf, 512, "\"%s\"", gedp->ged_wdbp->dbip->dbi_filename);
-	*vp++ = buf;
-    }
-#else
     *vp++ = gedp->ged_wdbp->dbip->dbi_filename;
-#endif
 
     /* Append all args */
     for (i = 1; i < argc; i++)
