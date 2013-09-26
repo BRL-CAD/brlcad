@@ -87,7 +87,7 @@ Comb_to_STEP(struct directory *dp, Registry *registry, InstMgr *instance_list) {
 }
 
 STEPentity *
-Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, struct rt_db_internal *intern, Registry *registry, InstMgr *instance_list)
+Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, Registry *registry, InstMgr *instance_list)
 {
     STEPentity *toplevel_comb = NULL;
 
@@ -137,8 +137,12 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, struct rt_db_intern
 	bu_free(comb_child, "free search result");
 	union tree *curr_node = db_find_named_leaf(comb->tree, child->d_namep);
 	if (!(curr_node->tr_l.tl_mat)) {
+	    std::ostringstream ss;
+	    ss << "'" << curr_dp->d_namep << "'";
+	    std::string str = ss.str();
 	    (*comb_to_step)[curr_dp] = brep_to_step->find(child)->second;
 	    bu_log("Comb wrapper: %s\n", curr_dp->d_namep);
+	    ((SdaiProduct_definition *)((*comb_to_step)[curr_dp]))->formation_()->of_product_()->name_(str.c_str());
 	}else{
 	    (*comb_to_step)[curr_dp] = Comb_to_STEP(curr_dp, registry, instance_list);
 	    non_wrapper_combs.insert(curr_dp);
@@ -157,7 +161,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, struct rt_db_intern
     for (std::set<struct directory *>::iterator it=non_wrapper_combs.begin(); it != non_wrapper_combs.end(); ++it) {
 	bu_log("look for matrices in %s\n", (*it)->d_namep);
 	struct bu_ptbl *comb_children = db_search_path_obj(comb_children_search, (*it), wdbp);
-	Add_Assembly_Product((*it), wdbp->dbip, comb_children, comb_to_step, registry, instance_list);
+	Add_Assembly_Product((*it), wdbp->dbip, comb_children, comb_to_step, brep_to_step, registry, instance_list);
 	bu_ptbl_free(comb_children);
 	bu_free(comb_children, "free search result");
     }

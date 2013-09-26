@@ -32,6 +32,7 @@ STEPentity *Add_Assembly_Product(struct directory *dp,
                                  struct db_i *dbip,
                                  struct bu_ptbl *children,
 				 std::map<struct directory *, STEPentity *> *comb_to_step,
+				 std::map<struct directory *, STEPentity *> *brep_to_step,
 				 Registry *registry,
 				 InstMgr *instance_list);
 

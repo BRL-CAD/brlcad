@@ -184,7 +184,7 @@ main(int argc, char *argv[])
 	    (void)ON_BRep_to_STEP(dp, &intern, registry, &instance_list);
 	    break;
 	case DB5_MINORTYPE_BRLCAD_COMBINATION:
-	    (void)Comb_Tree_to_STEP(dp, wdbp, &intern, registry, &instance_list);
+	    (void)Comb_Tree_to_STEP(dp, wdbp, registry, &instance_list);
 	    break;
 	default:
 	    bu_log("Primitive type of %s is not yet supported\n", argv[1]);

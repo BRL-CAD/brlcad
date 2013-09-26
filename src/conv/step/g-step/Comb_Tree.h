@@ -30,7 +30,6 @@
 
 STEPentity *Comb_Tree_to_STEP(struct directory *dp,
                               struct rt_wdb *wdbp,
-	                      struct rt_db_internal *intern,
                               Registry *registry,
                               InstMgr *instance_list);
 
