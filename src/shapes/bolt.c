@@ -41,6 +41,7 @@ printusage(void)
     printf("Usage: bolt  <-- (if no arguments, go into interactive mode)\n");
     printf("or\n");
     printf("Usage: bolt -o# -f name.g -n# -hd# -hh# -wd# -wh# -sd# -sh#\n");
+    printf("       (units mm)\n");
 }
 
 
@@ -118,7 +119,7 @@ main(int argc, char **argv)
     /* If there are no arguments ask questions. */
     if (argc == 1) {
 	printusage();
-	printf("       Program continues running:\n");
+	printf("\n       Program continues running:\n\n");
 	/* START # 1 */
 
 	/* Find type of bolt to build. */
