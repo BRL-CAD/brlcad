@@ -35,8 +35,8 @@
 #include "Assembly_Product.h"
 
 
-STEPentity *
-Comb_to_STEP(struct directory *dp, Registry *registry, InstMgr *instance_list) {
+void
+Comb_to_STEP(struct directory *dp, Registry *registry, InstMgr *instance_list, STEPentity **shape, STEPentity **product) {
     std::ostringstream ss;
     ss << "'" << dp->d_namep << "'";
     std::string str = ss.str();
@@ -102,7 +102,8 @@ Comb_to_STEP(struct directory *dp, Registry *registry, InstMgr *instance_list) {
     shape_def_rep->used_representation_(shape_rep);
 
 
-    return (STEPentity *)prod_def;
+    (*product) = (STEPentity *)prod_def;
+    (*shape) = (STEPentity *)shape_rep;
 }
 
 STEPentity *
@@ -135,7 +136,10 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, Registry *registry,
     struct bu_ptbl *combs = db_search_path_obj(comb_search, dp, wdbp);
     for (int j = (int)BU_PTBL_LEN(combs) - 1; j >= 0; j--){
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(combs, j);
-	(*comb_to_step)[curr_dp] = Comb_to_STEP(curr_dp, registry, instance_list);
+	STEPentity *comb_shape;
+	STEPentity *comb_product;
+	Comb_to_STEP(curr_dp, registry, instance_list, &comb_shape, &comb_product);
+	(*comb_to_step)[curr_dp] = comb_product;
 	non_wrapper_combs.insert(curr_dp);
 	bu_log("Comb non-wrapper: %s\n", curr_dp->d_namep);
     }
@@ -166,7 +170,10 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, Registry *registry,
 	    bu_log("Comb wrapper: %s\n", curr_dp->d_namep);
 	    ((SdaiProduct_definition *)((*comb_to_step)[curr_dp]))->formation_()->of_product_()->name_(str.c_str());
 	}else{
-	    (*comb_to_step)[curr_dp] = Comb_to_STEP(curr_dp, registry, instance_list);
+	    STEPentity *comb_shape;
+	    STEPentity *comb_product;
+	    Comb_to_STEP(curr_dp, registry, instance_list, &comb_shape, &comb_product);
+	    (*comb_to_step)[curr_dp] = comb_product;
 	    non_wrapper_combs.insert(curr_dp);
 	    bu_log("Comb non-wrapper (matrix over primitive): %s\n", curr_dp->d_namep);
 	}
