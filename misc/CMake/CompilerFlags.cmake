@@ -258,9 +258,9 @@ if(NOT ENABLE_POSIX_COMPLIANCE)
   BRLCAD_CHECK_C_FLAG("std=gnu89" BUILD_TYPES Debug)
 else()
   #=== strict POSIX support =======
+  BRLCAD_CHECK_C_FLAG("pedantic")
   #== C89 ==
   BRLCAD_CHECK_C_FLAG("std=c89")
-  BRLCAD_CHECK_C_FLAG("pedantic")
   #== CXX TBA
 endif()
 
