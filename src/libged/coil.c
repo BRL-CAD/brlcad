@@ -40,7 +40,7 @@
 #define D2R(x) (x * DEG2RAD)
 #define DEFAULT_COIL_OBJECT "coil"
 
-int usedefaults = 0;
+int usedefaults;
 
 struct coil_data_t {
     struct bu_list l;
@@ -315,6 +315,7 @@ void usage(struct ged *gedp)
     bu_vls_printf(gedp->ged_result_str, "Usage: coil [-d mean_outer_diameter] [-w wire_diameter] [-H helix_angle] [-p pitch]\n");
     bu_vls_printf(gedp->ged_result_str, "            [-n number_of_turns] [-s start_cap_type] [-e end_cap_type]\n");
     bu_vls_printf(gedp->ged_result_str, "            [-S coil_data_structure] [-l overall_length] [-L]\n");
+    bu_vls_printf(gedp->ged_result_str, "       (units mm)\n");
 }
 
 
@@ -332,9 +333,8 @@ ReadArgs(struct ged *gedp, int argc, const char *argv[], struct bu_vls *name, st
     int have_name = 0;
     struct coil_data_t *coil_data;
 
-    if (argc == 1) {
-	usedefaults=1;
-    }
+    usedefaults = (argc == 1) ;
+
     while ((c=bu_getopt(argc, (char * const *)argv, options)) != -1) {
 	switch (c) {
 	    case 'd' :
@@ -448,9 +448,8 @@ ged_coil(struct ged *gedp, int argc, const char *argv[])
 
     if (BU_LIST_IS_EMPTY(&sections)) {
 
-	if (usedefaults) {
+	if (usedefaults)
 	    bu_vls_printf(gedp->ged_result_str, "Creating a coil with default parameters.\n");
-	}
 
 	if (mean_outer_diameter < 0 || wire_diameter < 0 || helix_angle < 0 || pitch < 0 || nt < 0 || start_cap_type < 0 || end_cap_type < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "negative value in one or more arguments supplied to coil");
