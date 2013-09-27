@@ -2005,23 +2005,22 @@ endif(NOT BRLCAD_IS_SUBBUILD)
 
 # Generate the include/conf files
 
-# HOST
+# HOST (note gethostname is NOT a c89 function)
 configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/report_hostname.c.in ${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c)
 if(NOT MSVC)
   TRY_RUN(TIME_RESULT TIME_COMPILED
     ${CMAKE_BINARY_DIR}/CMakeTmp
     ${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c
-    CMAKE_FLAGS "-std=c89"
-    COMPILE_OUTPUT_VARIABLE comp_res
-    RUN_OUTPUT_VARIABLE run_res
+    #CMAKE_FLAGS "-std=c89"
+    OUTPUT_VARIABLE COMPILEMESSAGES
   )
   # test results
   if(NOT TIME_COMPILED)
-    message(INFO ${comp_res})
+    message(INFO ${COMPILEMESSAGES})
     message(FATAL_ERROR "CMakeTmp/report_hostname.c failed to compile")
   endif()
   if(TIME_RESULT)
-    message(INFO ${run_res})
+    message(INFO ${COMPILEMESSAGES})
     message(FATAL_ERROR "CMakeTmp/report_hostname.c failed to run")
   endif()
 else(NOT MSVC)
