@@ -63,9 +63,9 @@ _path_scrub(struct bu_vls *path)
     normalized = db_normalize(bu_vls_addr(path));
 
     if (normalized && !BU_STR_EQUAL(normalized, "/")) {
-	char *basename = bu_basename(normalized);
-	bu_vls_sprintf(&tmp, "%s", basename);
-	bu_free(basename, "free bu_basename string (caller's responsibility per bu.h)");
+	char *tbasename = bu_basename(normalized);
+	bu_vls_sprintf(&tmp, "%s", tbasename);
+	bu_free(tbasename, "free bu_basename string (caller's responsibility per bu.h)");
 	bu_vls_sprintf(path, "%s", bu_vls_addr(&tmp));
 	bu_vls_free(&tmp);
     } else {
