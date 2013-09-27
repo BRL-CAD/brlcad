@@ -83,6 +83,25 @@ Comb_to_STEP(struct directory *dp, Registry *registry, InstMgr *instance_list) {
     prod->description_("''");
     prod->frame_of_reference_()->AddNode(new EntityNode((SDAI_Application_instance *)mech_context));
 
+    // PRODUCT_DEFINITION_SHAPE
+    SdaiProduct_definition_shape *pshape = (SdaiProduct_definition_shape *)registry->ObjCreate("PRODUCT_DEFINITION_SHAPE");
+    instance_list->Append((STEPentity *)pshape, completeSE);
+    pshape->name_("''");
+    pshape->description_("'Comb shape definition'");
+    SdaiCharacterized_product_definition *cpd = new SdaiCharacterized_product_definition(prod_def);
+    pshape->definition_(new SdaiCharacterized_definition(cpd));
+
+    // SHAPE_DEFINITION_REPRESENTATION
+    SdaiShape_definition_representation *shape_def_rep = (SdaiShape_definition_representation*)registry->ObjCreate("SHAPE_DEFINITION_REPRESENTATION");
+    instance_list->Append((STEPentity *)shape_def_rep, completeSE);
+    shape_def_rep->definition_(pshape);
+
+    // SHAPE_REPRESENTATION
+    SdaiShape_representation*shape_rep = (SdaiShape_representation*)registry->ObjCreate("SHAPE_REPRESENTATION");
+    instance_list->Append((STEPentity *)shape_rep, completeSE);
+    shape_def_rep->used_representation_(shape_rep);
+
+
     return (STEPentity *)prod_def;
 }
 
