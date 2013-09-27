@@ -28,6 +28,13 @@
 
 #include "ON_Brep.h"
 
+struct comb_maps {
+    std::map<struct directory *, STEPentity *> brep_to_step;
+    std::map<struct directory *, STEPentity *> brep_to_step_shape;
+    std::map<struct directory *, STEPentity *> comb_to_step;
+    std::map<struct directory *, STEPentity *> comb_to_step_shape;
+};
+
 STEPentity *Comb_Tree_to_STEP(struct directory *dp,
                               struct rt_wdb *wdbp,
                               Registry *registry,

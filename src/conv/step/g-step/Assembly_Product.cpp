@@ -25,6 +25,7 @@
 #include "common.h"
 
 #include "raytrace.h"
+#include "Comb_Tree.h"
 #include "G_STEP_internal.h"
 #include "ON_Brep.h"
 
@@ -243,8 +244,7 @@ Build_Representation_Relationship(STEPentity *input_transformation, Registry *re
 
 void
 Add_Assembly_Product(struct directory *dp, struct db_i *dbip, struct bu_ptbl *children,
-	std::map<struct directory *, STEPentity *> *comb_to_step,
-	std::map<struct directory *, STEPentity *> *brep_to_step,
+	struct comb_maps *maps,
 	Registry *registry, InstMgr *instance_list)
 {
     struct rt_db_internal comb_intern;
@@ -278,10 +278,10 @@ Add_Assembly_Product(struct directory *dp, struct db_i *dbip, struct bu_ptbl *ch
 	    usage->name_("''");
 	    usage->description_("''");
 	    usage->reference_designator_("''");
-	    usage->relating_product_definition_((SdaiProduct_definition *)comb_to_step->find(dp)->second);
-	    SdaiProduct_definition *child_def = (SdaiProduct_definition *)comb_to_step->find(curr_dp)->second;
+	    usage->relating_product_definition_((SdaiProduct_definition *)maps->comb_to_step.find(dp)->second);
+	    SdaiProduct_definition *child_def = (SdaiProduct_definition *)maps->comb_to_step.find(curr_dp)->second;
 	    if (!child_def)
-		child_def = (SdaiProduct_definition *)brep_to_step->find(curr_dp)->second;
+		child_def = (SdaiProduct_definition *)maps->brep_to_step.find(curr_dp)->second;
 	    usage->related_product_definition_(child_def);
 	    instance_list->Append((STEPentity *)usage, completeSE);
 	    SdaiProduct_definition_shape *pshape = (SdaiProduct_definition_shape *)registry->ObjCreate("PRODUCT_DEFINITION_SHAPE");
