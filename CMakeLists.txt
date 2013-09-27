@@ -1217,8 +1217,6 @@ option(BRLCAD_ENABLE_PROFILING "Build with profiling support" OFF)
 mark_as_advanced(BRLCAD_ENABLE_PROFILING)
 
 # Build with strict POSIX compliance checking
-set(ENABLE_POSIX_COMPLIANCE_DESCRIPTION_ALIASES
- ENABLE_POSIX)
 set(ENABLE_POSIX_COMPLIANCE_DESCRIPTION "
 Build with strict POSIX compliance checking.  Defaults to OFF.
 
@@ -2011,7 +2009,6 @@ if(NOT MSVC)
   TRY_RUN(TIME_RESULT TIME_COMPILED
     ${CMAKE_BINARY_DIR}/CMakeTmp
     ${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c
-    #CMAKE_FLAGS "-std=c89"
     OUTPUT_VARIABLE COMPILEMESSAGES
   )
   # test results
