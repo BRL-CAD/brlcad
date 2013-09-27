@@ -7256,6 +7256,7 @@ to_mouse_move_botpt(struct ged *gedp,
 	    return GED_ERROR;
 	}
 
+	/* FIXME: the z modifier was introduced in C99 */
 	if (sscanf(argv[3], "%zu", &vertex_i) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: bad bot vertex index - %s", cmd, argv[3]);
 	    return GED_ERROR;
