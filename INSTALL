@@ -411,10 +411,30 @@ Build with strict POSIX compliance checking.  Defaults to OFF.
 
 Causes compiler options to be set for strict compliance with the
 minimum C and C++ standards acceptable according to current BRL-CAD
-policy.  The current minimum C standard is C89.  There is no currently
-defined minimum C++ standard.
+policy.  The current minimum C standard is POSIX 200112 plus C99.
+There is no currently defined minimum C++ standard.
 
 Aliases:  ENABLE_POSIX
+
+
+--- ENABLE_C99_COMPLIANCE ---
+
+Build with strict C99 compliance checking.  Defaults to OFF.
+
+Causes C compiler options to be set for strict compliance with the C99
+standard.
+
+Aliases:  ENABLE_C99
+
+
+--- ENABLE_C89_COMPLIANCE ---
+
+Build with strict C89 compliance checking.  Defaults to OFF.
+
+Causes C compiler options to be set for strict compliance with the C89
+standard.
+
+Aliases:  ENABLE_C89
 
 
 --- BRLCAD_EXTRADOCS ---

@@ -70,6 +70,14 @@ do
                                   shift;;
      --disable-posix)                options="$options -DENABLE_POSIX_COMPLIANCE=OFF";
                                   shift;;
+     --enable-c99)                options="$options -DENABLE_C99_COMPLIANCE=ON";
+                                  shift;;
+     --disable-c99)                options="$options -DENABLE_C99_COMPLIANCE=OFF";
+                                  shift;;
+     --enable-c89)                options="$options -DENABLE_C89_COMPLIANCE=ON";
+                                  shift;;
+     --disable-c89)                options="$options -DENABLE_C89_COMPLIANCE=OFF";
+                                  shift;;
      --enable-docs)                options="$options -DBRLCAD_EXTRADOCS=ON";
                                   shift;;
      --disable-docs)                options="$options -DBRLCAD_EXTRADOCS=OFF";

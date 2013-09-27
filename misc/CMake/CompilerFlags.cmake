@@ -254,14 +254,32 @@ BRLCAD_CHECK_C_FLAG(msse3 BUILD_TYPES Debug)
 # a release so we get more broad portability testing.  Since the
 # default is debug, it will be the more difficult to keep working
 # given it's the lesser feature-rich C standard.
-if(NOT ENABLE_POSIX_COMPLIANCE)
+if(NOT ENABLE_POSIX_COMPLIANCE AND
+   NOT ENABLE_C89_COMPLIANCE AND
+   NOT ENABLE_C99_COMPLIANCE)
   BRLCAD_CHECK_C_FLAG("std=gnu89" BUILD_TYPES Debug)
-else()
-  #=== strict POSIX support =======
+elseif(ENABLE_POSIX_COMPLIANCE)
+  #=== strict POSIX (200112) and C99 support =======
   BRLCAD_CHECK_C_FLAG("pedantic")
-  #== C89 ==
-  BRLCAD_CHECK_C_FLAG("std=c89")
+  #== C99 ==
+  BRLCAD_CHECK_C_FLAG("std=c99")
+  BRLCAD_CHECK_C_FLAG("D_POSIX_C_SOURCE=200112L")
+  BRLCAD_CHECK_C_FLAG("D_XOPEN_SOURCE=500")
   #== CXX TBA
+  #== turn off others (not working in main CMakeLists.txt)
+  set(ENABLE_C89_COMPLIANCE OFF)
+  set(ENABLE_C99_COMPLIANCE OFF)
+elseif(ENABLE_C99_COMPLIANCE)
+  BRLCAD_CHECK_C_FLAG("pedantic")
+  BRLCAD_CHECK_C_FLAG("std=c99")
+  BRLCAD_CHECK_C_FLAG("D_POSIX_C_SOURCE")
+  set(ENABLE_POSIX_COMPLIANCE OFF)
+  set(ENABLE_C89_COMPLIANCE OFF)
+elseif(ENABLE_C89_COMPLIANCE)
+  BRLCAD_CHECK_C_FLAG("pedantic")
+  BRLCAD_CHECK_C_FLAG("std=c89")
+  set(ENABLE_POSIX_COMPLIANCE OFF)
+  set(ENABLE_C99_COMPLIANCE OFF)
 endif()
 
 # Check for c99 support with gnu extensions when we are building for a
@@ -271,7 +289,9 @@ endif()
 # environments require it due to c99-specific system headers (e.g.,
 # /System/Library/Frameworks/OpenGL.framework/Headers/gl.h on Mac OS X
 # having '//' comments embedded).
-if(NOT ENABLE_POSIX_COMPLIANCE)
+if(NOT ENABLE_POSIX_COMPLIANCE AND
+   NOT ENABLE_C89_COMPLIANCE AND
+   NOT ENABLE_C99_COMPLIANCE)
   BRLCAD_CHECK_C_FLAG("std=gnu99" BUILD_TYPES Release VARS C99_FLAG)
 endif()
 

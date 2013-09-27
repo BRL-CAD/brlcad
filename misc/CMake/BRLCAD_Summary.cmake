@@ -238,6 +238,8 @@ set(BRLCAD_OPTIMIZED_BUILD_LABEL "Build optimized release ")
 set(BRLCAD_FLAGS_DEBUG_LABEL "Build debuggable release")
 set(BRLCAD_ENABLE_PROFILING_LABEL "Build profile release ")
 set(ENABLE_POSIX_COMPLIANCE_LABEL "Build with strict POSIX compliance checking ")
+set(ENABLE_C99_COMPLIANCE_LABEL "Build with strict C99 compliance checking ")
+set(ENABLE_C89_COMPLIANCE_LABEL "Build with strict C89 compliance checking ")
 set(BRLCAD_ENABLE_SMP_LABEL "Build SMP-capable release ")
 set(BUILD_STATIC_LIBS_LABEL "Build static libraries ")
 set(BUILD_SHARED_LIBS_LABEL "Build dynamic libraries ")
@@ -261,7 +263,7 @@ set(OTHER_REPORT_ITEMS
     BRLCAD_ENABLE_SMP BUILD_STATIC_LIBS BUILD_SHARED_LIBS
     BRLCAD_ENABLE_COMPILER_WARNINGS BRLCAD_ENABLE_VERBOSE_PROGRESS
     BRLCAD_INSTALL_EXAMPLE_GEOMETRY BRLCAD_DOCBOOK_BUILD
-    ENABLE_POSIX_COMPLIANCE)
+    ENABLE_POSIX_COMPLIANCE ENABLE_C99_COMPLIANCE ENABLE_C89_COMPLIANCE)
 
 # Construct list of all items
 set(ALL_ITEMS)
