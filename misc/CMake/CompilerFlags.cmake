@@ -271,7 +271,7 @@ endif()
 # environments require it due to c99-specific system headers (e.g.,
 # /System/Library/Frameworks/OpenGL.framework/Headers/gl.h on Mac OS X
 # having '//' comments embedded).
-if(NOT BRLCAD_ENABLE_STRICT_C89)
+if(NOT ENABLE_POSIX_COMPLIANCE)
   BRLCAD_CHECK_C_FLAG("std=gnu99" BUILD_TYPES Release VARS C99_FLAG)
 endif()
 
