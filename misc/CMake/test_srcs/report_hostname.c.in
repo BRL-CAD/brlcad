@@ -1,6 +1,8 @@
 #include <stdio.h>
 #ifdef _WIN32
   #include <WinSock2.h>
+#else
+  #include <unistd.h>
 #endif
 #define chararraysize 2048
 int main(void) {
@@ -19,7 +21,7 @@ int main(void) {
 
 #if defined(_BSD_SOURCE) \
     || defined(_XOPEN_SOURCE) && _XOPEN_SOURCE  >= 500 \
-    || defined(_XOPEN_SOURCE) &&_POSIX_C_SOURCE >= 200112L
+    || defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112
   res = gethostname(hostname, chararraysize - 1);
   if (!res && hostname[0] != ' ')
     fprintf(outfp, "\"%s\"", hostname);
