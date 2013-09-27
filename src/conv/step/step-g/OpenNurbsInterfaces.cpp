@@ -1613,7 +1613,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
     }
 
     while (!curve_pullback_samples.empty()) {
-	PBCData *data = curve_pullback_samples.front();
+	data = curve_pullback_samples.front();
 	while (!data->segments.empty()) {
 	    delete data->segments.front();
 	    data->segments.pop_front();
