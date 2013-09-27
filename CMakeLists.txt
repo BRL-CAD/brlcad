@@ -2011,7 +2011,19 @@ if(NOT MSVC)
   TRY_RUN(TIME_RESULT TIME_COMPILED
     ${CMAKE_BINARY_DIR}/CMakeTmp
     ${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c
-    OUTPUT_VARIABLE COMPILEMESSAGES)
+    CMAKE_FLAGS "-std=c89"
+    COMPILE_OUTPUT_VARIABLE comp_res
+    RUN_OUTPUT_VARIABLE run_res
+  )
+  # test results
+  if(NOT TIME_COMPILED)
+    message(INFO ${comp_res})
+    message(FATAL_ERROR "CMakeTmp/report_hostname.c failed to compile")
+  endif()
+  if(TIME_RESULT)
+    message(INFO ${run_res})
+    message(FATAL_ERROR "CMakeTmp/report_hostname.c failed to run")
+  endif()
 else(NOT MSVC)
   set(CMAKE_REQUIRED_LIBRARIES ws2_32.lib)
   TRY_RUN(TIME_RESULT TIME_COMPILED
