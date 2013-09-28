@@ -43,8 +43,73 @@ defs:   _BSD_SOURCE || _XOPEN_SOURCE >= 500 || _XOPEN_SOURCE && _XOPEN_SOURCE_EX
 ------------------------------------------------------------------
 defs: _BSD_SOURCE || _SVID_SOURCE || _XOPEN_SOURCE || _ISOC99_SOURCE || _POSIX_C_SOURCE >= 200112L;
            or cc -std=c99
+
   #include <math.h>
   double hypot(double x, double y);
+------------------------------------------------------------------
+defs:
+
+  #include <stdlib.h>
+  srand48(), drand()
+
+  fix: replace with rand()
+------------------------------------------------------------------
+defs: _SVID_SOURCE || _BSD_SOURCE || _XOPEN_SOURCE >= 500 || _XOPEN_SOURCE && _XOPEN_SOURCE_EXTENDED
+
+  #include <stdlib.h>
+  random(), srandom()
+------------------------------------------------------------------
+
+defs: _BSD_SOURCE || !(_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600)
+
+  #include <unistd.h>
+  getpagesize_compat.h
+------------------------------------------------------------------
+defs: _BSD_SOURCE || _SVID_SOURCE || _XOPEN_SOURCE
+
+  #include <ctype.h>
+  isascii_compat.h
+------------------------------------------------------------------
+defs: _BSD_SOURCE || _SVID_SOURCE || _XOPEN_SOURCE >= 600 || _ISOC99_SOURCE || _POSIX_C_SOURCE >= 200112L;
+           or cc -std=c99
+
+  #include <math.h>
+  isinf_compat.h
+------------------------------------------------------------------
+defs: _BSD_SOURCE || _SVID_SOURCE || _XOPEN_SOURCE || _ISOC99_SOURCE || _POSIX_C_SOURCE >= 200112L;
+           or cc -std=c99
+
+  #include <math.h>
+  isnan_compat.h
+------------------------------------------------------------------
+std: C99, POSIX.1-2001.
+
+  #include <math.h>
+  modff_compat.h
+------------------------------------------------------------------
+defs: _BSD_SOURCE || _SVID_SOURCE || _XOPEN_SOURCE >= 500 || _XOPEN_SOURCE && _XOPEN_SOURCE_EXTENDED || _ISOC99_SOURCE ||
+           _POSIX_C_SOURCE >= 200112L;
+           or cc -std=c99
+
+  #include <math.h>
+  nextafter_compat.h
+------------------------------------------------------------------
+defs: _BSD_SOURCE || _SVID_SOURCE || _XOPEN_SOURCE >= 600 || _ISOC99_SOURCE || _POSIX_C_SOURCE >= 200112L;
+           or cc -std=c99
+
+  #include <math.h>
+  nextafterf_compat.h
+------------------------------------------------------------------
+defs: _BSD_SOURCE || _SVID_SOURCE || _XOPEN_SOURCE >= 500 || _XOPEN_SOURCE && _XOPEN_SOURCE_EXTENDED || _ISOC99_SOURCE ||
+           _POSIX_C_SOURCE >= 200112L;
+           or cc -std=c99
+
+  #include <math.h>
+  rint_compat.h
+------------------------------------------------------------------
+stds: SVr4, 4.3BSD, POSIX.1-2001.
+
+  strdup_compat.h
 ------------------------------------------------------------------
 
 OTHER C89 FIXES documented here:
