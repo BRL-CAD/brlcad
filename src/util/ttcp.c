@@ -549,7 +549,7 @@ main(int argc, char **argv)
 	    if ((addr=(struct hostent *)gethostbyname(host)) == NULL)
 		err("bad hostname");
 	    sinhim.sin_family = addr->h_addrtype;
-	    memcpy((char*)&addr_tmp, addr->h_addr, addr->h_length);
+	    memcpy((char*)&addr_tmp, addr->h_addr_list[0], addr->h_length);
 	    sinhim.sin_addr.s_addr = addr_tmp;
 	}
 	sinhim.sin_port = htons(port);
