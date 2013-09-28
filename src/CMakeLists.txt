@@ -177,6 +177,7 @@ endwhile(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
 #endif(${HIGHEST_TARGET_LEVEL} GREATER 1)
 
 CMAKEFILES(README external)
+CMAKEFILES(compat)
 
 # Local Variables:
 # tab-width: 8
