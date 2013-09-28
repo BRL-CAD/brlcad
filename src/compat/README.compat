@@ -1,0 +1,82 @@
+Following are declarations of C functions available in libc but hidden
+by various standards after C89 or hidden by other undefined macros.
+
+See man feature_test_macros(7) for a definitive list of all such
+macros.
+ 
+==================================================================
+
+#include <stdio.h>
+/* _POSIX_C_SOURCE >= 1 || _XOPEN_SOURCE || _POSIX_SOURCE
+ */
+int fileno(FILE *stream);
+FILE *fdopen(int fd, const char *mode);
+/* _BSD_SOURCE || _XOPEN_SOURCE >= 500 || _ISOC99_SOURCE || _POSIX_C_SOURCE >= 200112L;
+           or cc -std=c99
+ */
+int snprintf(char *str, size_t size, const char *format, ...);
+
+/* #include <strings.h>
+   4.4BSD, POSIX.1-2001.
+ */
+int strcasecmp(const char *s1, const char *s2);
+int strncasecmp(const char *s1, const char *s2, size_t n);
+
+/* #include <unistd.h> */
+   _BSD_SOURCE || _XOPEN_SOURCE >= 500 || _POSIX_C_SOURCE >= 200112L
+ */
+int gethostname(char *name, size_t len);
+
+/* #include <stdlib.h>
+   _POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600
+ */
+int posix_memalign(void **memptr, size_t alignment, size_t size);
+
+/* #include <limits.h>
+   #include <stdlib.h>
+   _BSD_SOURCE || _XOPEN_SOURCE >= 500 || _XOPEN_SOURCE && _XOPEN_SOURCE_EXTENDED
+ */
+char *realpath(const char *path, char *resolved_path);
+
+OTHER C89 FIXES documented here:
+===============================
+
+/* #include <netdb.h>
+   struct hostent member 'h_addr' is defined as actual member
+   'h_addr_list[0]' (for backward compatibility); that define is
+   hidden by macros
+     __USE_MISC || defined __USE_GNU
+
+   fix is to substitute 'h_addr_list[0]' for 'h_addr'
+*/
+/* #include <signal.h>
+   signal handler struct __sighandler_t is typedef'd differently by several macros:
+
+#ifdef __USE_GNU
+typedef __sighandler_t sighandler_t;
+#endif
+
+
+#ifdef __USE_BSD
+typedef __sighandler_t sig_t;
+#endif
+
+fix is to substitute '__sighandler_t' for sig_t or define __USE_BSD for that file
+
+*/
+
+/*
+
+#define _GNU_SOURCE
+#include <errno.h>
+
+extern char *program_invocation_name;
+extern char *program_invocation_short_name;
+
+not portable
+
+proper fix is to use a bu_* function that does not use them
+
+*/
+
+#endif /* BRLCAD_SRC_COMPAT_H */
