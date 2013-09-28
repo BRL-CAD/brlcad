@@ -6,37 +6,46 @@ macros.
  
 ==================================================================
 
-#include <stdio.h>
-/* _POSIX_C_SOURCE >= 1 || _XOPEN_SOURCE || _POSIX_SOURCE
- */
-int fileno(FILE *stream);
-FILE *fdopen(int fd, const char *mode);
-/* _BSD_SOURCE || _XOPEN_SOURCE >= 500 || _ISOC99_SOURCE || _POSIX_C_SOURCE >= 200112L;
+------------------------------------------------------------------
+defs: _POSIX_C_SOURCE >= 1 || _XOPEN_SOURCE || _POSIX_SOURCE
+
+   #include <stdio.h>
+   int fileno(FILE *stream);
+   FILE *fdopen(int fd, const char *mode);
+------------------------------------------------------------------
+defs:_BSD_SOURCE || _XOPEN_SOURCE >= 500 || _ISOC99_SOURCE || _POSIX_C_SOURCE >= 200112L;
            or cc -std=c99
- */
-int snprintf(char *str, size_t size, const char *format, ...);
 
-/* #include <strings.h>
-   4.4BSD, POSIX.1-2001.
- */
-int strcasecmp(const char *s1, const char *s2);
-int strncasecmp(const char *s1, const char *s2, size_t n);
+  #include <stdio.h>
+  int snprintf(char *str, size_t size, const char *format, ...);
+------------------------------------------------------------------
+std: 4.4BSD, POSIX.1-2001.
 
-/* #include <unistd.h> */
-   _BSD_SOURCE || _XOPEN_SOURCE >= 500 || _POSIX_C_SOURCE >= 200112L
- */
-int gethostname(char *name, size_t len);
+  #include <strings.h>
+  int strcasecmp(const char *s1, const char *s2);
+  int strncasecmp(const char *s1, const char *s2, size_t n);
+------------------------------------------------------------------
+defs: _BSD_SOURCE || _XOPEN_SOURCE >= 500 || _POSIX_C_SOURCE >= 200112L
 
-/* #include <stdlib.h>
-   _POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600
- */
-int posix_memalign(void **memptr, size_t alignment, size_t size);
+  #include <unistd.h>
+  int gethostname(char *name, size_t len);
+------------------------------------------------------------------
+defs:_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600
 
-/* #include <limits.h>
-   #include <stdlib.h>
-   _BSD_SOURCE || _XOPEN_SOURCE >= 500 || _XOPEN_SOURCE && _XOPEN_SOURCE_EXTENDED
- */
-char *realpath(const char *path, char *resolved_path);
+  #include <stdlib.h>
+  int posix_memalign(void **memptr, size_t alignment, size_t size);
+------------------------------------------------------------------
+defs:   _BSD_SOURCE || _XOPEN_SOURCE >= 500 || _XOPEN_SOURCE && _XOPEN_SOURCE_EXTENDED
+
+  #include <limits.h>
+  #include <stdlib.h>
+  char *realpath(const char *path, char *resolved_path);
+------------------------------------------------------------------
+defs: _BSD_SOURCE || _SVID_SOURCE || _XOPEN_SOURCE || _ISOC99_SOURCE || _POSIX_C_SOURCE >= 200112L;
+           or cc -std=c99
+  #include <math.h>
+  double hypot(double x, double y);
+------------------------------------------------------------------
 
 OTHER C89 FIXES documented here:
 ===============================
