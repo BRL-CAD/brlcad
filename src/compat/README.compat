@@ -50,42 +50,48 @@ defs: _BSD_SOURCE || _SVID_SOURCE || _XOPEN_SOURCE || _ISOC99_SOURCE || _POSIX_C
 OTHER C89 FIXES documented here:
 ===============================
 
-/* #include <netdb.h>
+------------------------------------------------------------------
+   #include <netdb.h>
    struct hostent member 'h_addr' is defined as actual member
    'h_addr_list[0]' (for backward compatibility); that define is
    hidden by macros
      __USE_MISC || defined __USE_GNU
 
    fix is to substitute 'h_addr_list[0]' for 'h_addr'
-*/
-/* #include <signal.h>
-   signal handler struct __sighandler_t is typedef'd differently by several macros:
+   affected several files (fixed):
+     ./src/util/ttcp.c
+     ./src/libpkg/pkg.c
+   also affects (not fixed!):
+     ./src/other/tcl/win/tclWinSock.c 
+------------------------------------------------------------------
 
-#ifdef __USE_GNU
-typedef __sighandler_t sighandler_t;
-#endif
+  #include <signal.h>
+  signal handler struct __sighandler_t is typedef'd differently by several macros:
 
+  #ifdef __USE_GNU
+  typedef __sighandler_t sighandler_t;
+  #endif
 
-#ifdef __USE_BSD
-typedef __sighandler_t sig_t;
-#endif
+  #ifdef __USE_BSD
+  typedef __sighandler_t sig_t;
+  #endif
 
-fix is to substitute '__sighandler_t' for sig_t or define __USE_BSD for that file
+  fix is to substitute '__sighandler_t' for sig_t or define __USE_BSD for that file
 
-*/
+------------------------------------------------------------------
 
-/*
+  #define _GNU_SOURCE
+  #include <errno.h>
 
-#define _GNU_SOURCE
-#include <errno.h>
+  extern char *program_invocation_name;
+  extern char *program_invocation_short_name;
 
-extern char *program_invocation_name;
-extern char *program_invocation_short_name;
+  not portable
 
-not portable
+  proper fix is to use a bu_* function that does not use them
 
-proper fix is to use a bu_* function that does not use them
+  fixed by turning off its use for strict compatibility checks
 
-*/
+------------------------------------------------------------------
 
 #endif /* BRLCAD_SRC_COMPAT_H */
