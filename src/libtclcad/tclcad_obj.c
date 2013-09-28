@@ -7256,11 +7256,18 @@ to_mouse_move_botpt(struct ged *gedp,
 	    return GED_ERROR;
 	}
 
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
 	/* FIXME: the z modifier was introduced in C99 */
 	if (sscanf(argv[3], "%zu", &vertex_i) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: bad bot vertex index - %s", cmd, argv[3]);
 	    return GED_ERROR;
 	}
+#else
+	if (sscanf(argv[3], "%lu", (unsigned long *)&vertex_i) != 1) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: bad bot vertex index - %s", cmd, argv[3]);
+	    return GED_ERROR;
+	}
+#endif
 
 	if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[2], gedp->ged_wdbp, mat) == GED_ERROR) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", cmd, argv[2]);
