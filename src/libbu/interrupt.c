@@ -20,10 +20,21 @@
 
 #include "common.h"
 
+
+/* need this define to get sig_t out of signal.h */
+#ifndef __USE_BSD
+#define __USE_BSD
+#define __UNDO_BSD
+#endif
+
 #include <signal.h>
 
-#include "bu.h"
+/* reset if need be */
+#ifdef __UNDO_BSD
+#undef __USE_BSD
+#endif
 
+#include "bu.h"
 
 #ifndef HAVE_SIG_T
 typedef void (*sig_t)(int);
