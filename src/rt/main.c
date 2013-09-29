@@ -198,7 +198,7 @@ int main(int argc, const char **argv)
     if (rt_verbosity & VERBOSE_LIBVERSIONS) {
 	char	hostname[512] = {0};
 #ifndef _WIN32
-	if (gethostname(hostname, sizeof(hostname)) >= 0 &&
+	if (bu_gethostname(hostname, sizeof(hostname)) >= 0 &&
 	    hostname[0] != '\0' )
 	    fprintf(stderr, "Running on %s\n", hostname);
 #else
