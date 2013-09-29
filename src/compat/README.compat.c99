@@ -1,0 +1,82 @@
+Following are declarations of C functions available in libc but hidden
+by various standards after C99 or hidden by other undefined macros.
+
+See man feature_test_macros(7) for a definitive list of all such
+macros.
+
+The fix is to use libbu/bu_* versions of those functions.  Those bu_*
+functions not yet available are so marked.
+
+Note that some bu_* functions use non-C99 solutions so they need to be
+fixed.  Those functions are so marked.
+
+==================================================================
+
+------------------------------------------------------------------
+error: implicit declaration of function 'fdopen'
+error: implicit declaration of function 'fileno'
+
+defs: _POSIX_C_SOURCE >= 1 || _XOPEN_SOURCE || _POSIX_SOURCE
+stds: POSIX.1-1990 (fdopen)
+
+   #include <stdio.h>
+   int fileno(FILE *stream);
+   FILE *fdopen(int fd, const char *mode);
+
+fix:
+
+  use bu_fileno (not yet available)
+  use bu_fdopen (not yet available)
+------------------------------------------------------------------
+error: implicit declaration of function 'posix_memalign'
+
+defs: _POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600
+stds: POSIX.1d
+
+  #include <stdlib.h>
+  int posix_memalign(void **memptr, size_t alignment, size_t size);
+
+fix:
+
+  use bu_posix_memalign (not yet available)
+------------------------------------------------------------------
+error: implicit declaration of function 'gethostname'
+
+defs: _BSD_SOURCE || _XOPEN_SOURCE >= 500 || _POSIX_C_SOURCE >= 200112L (since glibc 2.12)
+defs: _BSD_SOURCE || _XOPEN_SOURCE >= 500 (before glibc 2.12)
+stds: POSIX.1-2001
+
+  #include <unistd.h>
+  int gethostname(char *name, size_t len);
+
+fix:
+
+  use bu_gethostname (needs to be made C99-usable)
+------------------------------------------------------------------
+error: implicit declaration of function 'realpath'
+
+defs:  _BSD_SOURCE || _XOPEN_SOURCE >= 500 || _XOPEN_SOURCE && _XOPEN_SOURCE_EXTENDED
+stds: 4.4BSD, POSIX.1-2001.
+
+  #include <limits.h>
+  #include <stdlib.h>
+  char *realpath(const char *path, char *resolved_path);
+
+fix:
+
+  use bu_realpath (needs to be made C99-usable)
+------------------------------------------------------------------
+error: implicit declaration of function 'strcasecmp'
+error: implicit declaration of function 'strncasecmp'
+
+stds: 4.4BSD, POSIX.1-2001.
+
+  #include <strings.h>
+  int strcasecmp(const char *s1, const char *s2);
+  int strncasecmp(const char *s1, const char *s2, size_t n);
+
+fix:
+
+  use bu_strcasecmp (needs to be made C99-usable)
+  use bu_strncasecmp (needs to be made C99-usable)
+------------------------------------------------------------------
