@@ -37,6 +37,7 @@ bu_gethostname(char *hostname, size_t hostlen)
     WSAStartup(MAKEWORD(2, 2), &wsaData);
 #endif
 
+    /* FIXME: gethostname is not a C99 function so this is not a valid replacement for strict C99 */
     status = gethostname(hostname, hostlen);
 
 #if defined(WIN32)
