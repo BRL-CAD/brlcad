@@ -20,19 +20,25 @@
 
 #include "common.h"
 
+/* attempted fix: using sigaction: */
+/* #define BRLCAD_USE_SIGACTION */
 
+/* FIXME: need to convert to sigaction(2) instead of BSD signal semantics for portability */
 /* need this define to get sig_t out of signal.h */
+#ifndef BRLCAD_USE_SIGACTION
 #ifndef __USE_BSD
 #define __USE_BSD
-#define __UNDO_BSD
 #endif
+#endif /* BRLCAD_USE_SIGACTION */
 
 #include <signal.h>
 
+#ifndef BRLCAD_USE_SIGACTION
 /* reset if need be */
 #ifdef __UNDO_BSD
 #undef __USE_BSD
 #endif
+#endif /* BRLCAD_USE_SIGACTION */
 
 #include "bu.h"
 
@@ -117,7 +123,13 @@ interrupt_suspend_signal(int signum)
 	return 1;
     }
 
+
+#if !defined(BRLCAD_USE_SIGACTION)
     interrupt_signal_func[signum] = signal(signum, interrupt_suspend_signal_handler);
+#else
+    interrupt_signal_func[signum] = signal(signum, interrupt_suspend_signal_handler);
+#endif
+
     if (interrupt_signal_func[signum] == SIG_ERR) {
 	interrupt_signal_func[signum] = (sig_t)0;
 	return 2;
@@ -159,7 +171,11 @@ interrupt_restore_signal(int signum)
 	    return 1;
 	}
 
+#if !defined(BRLCAD_USE_SIGACTION)
 	ret = signal(signum, interrupt_signal_func[signum]);
+#else
+#endif
+
 	interrupt_signal_func[signum] = (sig_t)0;
 	interrupt_signal_pending[signum] = 0;
 
