@@ -141,8 +141,13 @@ OTHER C89 FIXES documented here:
   typedef __sighandler_t sig_t;
   #endif
 
-  fix is to substitute '__sighandler_t' for sig_t or define __USE_BSD for that file
+  fix is to (1) substitute '__sighandler_t' for sig_t or (2) define
+  __USE_BSD for that file or (3) use portable function sigaction(2)
+  instead of signal(2)
 
+  only file affected:
+    ./src/libbu/interrupt.c
+    
 ------------------------------------------------------------------
 
   #define _GNU_SOURCE
