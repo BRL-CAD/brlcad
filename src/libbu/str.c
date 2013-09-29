@@ -213,6 +213,7 @@ bu_strcasecmp(const char *string1, const char *string2)
     if (string2)
 	s2 = string2;
 
+    /* FIXME: strcasecmp is not a C99 function so this is not a valid replacement for strict C99 */
     return strcasecmp(s1, s2);
 }
 
@@ -231,6 +232,7 @@ bu_strncasecmp(const char *string1, const char *string2, size_t n)
     if (string2)
 	s2 = string2;
 
+    /* FIXME: strncasecmp is not a C99 function so this is not a valid replacement for strict C99 */
     return strncasecmp(s1, s2, n);
 }
 
