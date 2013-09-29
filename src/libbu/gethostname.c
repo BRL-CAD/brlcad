@@ -25,7 +25,7 @@
 #include "bu.h"
 
 /**
- * Windows requires some initialisations before gethostname() can be used.
+ * Windows requires some initializations before gethostname() can be used.
  */
 int
 bu_gethostname(char *hostname, size_t hostlen)
