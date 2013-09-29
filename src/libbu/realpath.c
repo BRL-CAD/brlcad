@@ -35,6 +35,7 @@ bu_realpath(const char *path, char *resolved_path)
 	resolved_path = (char *) bu_calloc(MAXPATHLEN, sizeof(char),
 		"resolved_path alloc");
 #ifdef HAVE_REALPATH
+    /* FIXME: realpath is not a C99 function so this is not a valid replacement for strict C99 */
     dirpath = realpath(path, resolved_path);
     if (!dirpath) {
 	/* if path lookup failed, resort to simple copy */
