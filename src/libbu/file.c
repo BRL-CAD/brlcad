@@ -50,6 +50,25 @@
 #  define X_OK 1
 #endif
 
+/* an incomplete (no file locking) version of a POSIX/XOPEN function fileno(3):
+int
+bu_fileno(FILE *stream)
+{
+    /* the fd number is member '_fileno' of the FILE struct (see
+     * /usr/include/stdio.h) which is actually struct _IO_FILE which
+     * is defined in /usr/include/libio.h
+     */
+    return stream->_fileno;
+}
+*/
+
+/* a place-holder for a version of the POSIX.1-1990 function fdopen(3):
+FILE *
+bu_fdopen(int fd, const char *mode)
+{
+
+}
+*/
 
 int
 bu_file_exists(const char *path, int *fd)
