@@ -37,8 +37,18 @@ bu_gethostname(char *hostname, size_t hostlen)
     WSAStartup(MAKEWORD(2, 2), &wsaData);
 #endif
 
-    /* FIXME: gethostname is not a C99 function so this is not a valid replacement for strict C99 */
+#if defined(WIN32)
     status = gethostname(hostname, hostlen);
+#else
+  #if defined(__STD_VERSION__) && __STD_VERSION >= 199901L
+    status = gethostname(hostname, hostlen);
+  #else
+    /* gethostname is not a C99 function so this is for C99 compliance */
+    bu_assert(hostlen > 10);
+    sprintf(hostname, "%s", "unknown");
+    status = 0; /* no error */
+  #endif
+#endif
 
 #if defined(WIN32)
     WSACleanup();
