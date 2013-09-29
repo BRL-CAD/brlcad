@@ -51,7 +51,7 @@ stds: POSIX.1-2001
 
 fix:
 
-  use bu_gethostname (needs to be made C99-usable)
+  use bu_gethostname
 ------------------------------------------------------------------
 error: implicit declaration of function 'realpath'
 
