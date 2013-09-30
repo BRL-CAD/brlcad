@@ -247,7 +247,9 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
     } else if (scmd == ATTR_GET) {
 	if (argc == 3) {
 	    /* just list all the attributes */
-	    _list_attrs(gedp, &avs, max_attr_name_len, max_attr_value_len);
+           for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
+	       bu_vls_printf(gedp->ged_result_str, "%s {%s} ", avpp->name, avpp->value);
+	   }
 	} else {
 	    const char *val;
 	    int do_separators=argc-4; /* if more than one attribute */
