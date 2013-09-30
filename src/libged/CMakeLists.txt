@@ -61,6 +61,7 @@ set(LIBGED_SOURCES
   comb_std.c
   combmem.c
   concat.c
+  constraint/constraint.c
   copy.c
   copyeval.c
   copymat.c
