@@ -30,15 +30,16 @@
 #include "bu.h"
 
 
-/**
- * Windows requires some initializations before gethostname() can be used.
- */
 int
-bu_hostname(char *hostname, size_t hostlen)
+bu_gethostname(char *hostname, size_t hostlen)
 {
     int status;
 
 #ifdef HAVE_WINSOCK_H
+    /**
+     * Windows requires winsock networking library be initialized
+     * before the hostname can be retrieved.
+     */
     WSADATA wsaData;
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
 	bu_log("ERROR: unable to initialize networking\n");
