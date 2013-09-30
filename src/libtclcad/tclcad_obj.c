@@ -964,6 +964,7 @@ static struct to_cmdtab to_cmds[] = {
     {"configure",	"vname", TO_UNLIMITED, to_configure, GED_FUNC_PTR_NULL},
     {"constrain_rmode",	"x|y|z x y", TO_UNLIMITED, to_constrain_rmode, GED_FUNC_PTR_NULL},
     {"constrain_tmode",	"x|y|z x y", TO_UNLIMITED, to_constrain_tmode, GED_FUNC_PTR_NULL},
+    {"constraint", (char *)0, TO_UNLIMITED, to_pass_through_func, ged_constraint},
     {"copyeval",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_copyeval},
     {"copymat",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_copymat},
     {"cp",	"[-f] from to", TO_UNLIMITED, to_copy, GED_FUNC_PTR_NULL},
