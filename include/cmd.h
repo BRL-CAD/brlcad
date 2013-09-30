@@ -55,6 +55,16 @@
 
 #define BU_CMD_NULL (int (*)(void *, int, const char **))NULL
 
+
+/**
+ * Generic keyword-to-command callback interface intended for use with
+ * bu_cmd().
+ */
+struct bu_cmdtab {
+    char *ct_name;
+    int (*ct_func)(void *data, int argc, const char *argv[]);
+};
+
 struct bu_cmdhist {
     struct bu_list l;
     struct bu_vls h_command;

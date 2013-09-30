@@ -2651,17 +2651,6 @@ typedef struct bu_observer bu_observer_t;
 #define BU_OBSERVER_IS_INITIALIZED(_op) (((struct bu_observer *)(_op) != BU_OBSERVER_NULL) && LIKELY((_op)->magic == BU_OBSERVER_MAGIC))
 
 
-/**
- * DEPRECATED.
- *
- * Usage not recommended due to k&r callback (provides no type
- * checking)
- */
-struct bu_cmdtab {
-    char *ct_name;
-    int (*ct_func)(void *data, int argc, const char *argv[]);
-};
-
 /**@}*/
 
 
