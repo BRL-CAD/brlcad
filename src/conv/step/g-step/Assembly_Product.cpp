@@ -134,12 +134,16 @@ Create_AXIS2_PLACEMENT_3D(fastf_t pt_x, fastf_t pt_y, fastf_t pt_z,
 	fastf_t d2_x, fastf_t d2_y, fastf_t d2_z,
 	Registry *registry, InstMgr *instance_list) {
     SdaiCartesian_point *pnt = (SdaiCartesian_point *)registry->ObjCreate("CARTESIAN_POINT");
+    pnt->name_("''");
     XYZ_to_Cartesian_point(pt_x, pt_y, pt_z, pnt);
     SdaiDirection *axis = (SdaiDirection *)registry->ObjCreate("DIRECTION");
+    axis->name_("''");
     XYZ_to_Direction(d1_x, d1_y, d1_z, axis);
     SdaiDirection *ref = (SdaiDirection *)registry->ObjCreate("DIRECTION");
+    ref->name_("''");
     XYZ_to_Direction(d2_x, d2_y, d2_z, ref);
     SdaiAxis2_placement_3d *placement = (SdaiAxis2_placement_3d *)registry->ObjCreate("AXIS2_PLACEMENT_3D");
+    placement->name_("''");
     placement->location_(pnt);
     placement->axis_(axis);
     placement->ref_direction_(ref);
