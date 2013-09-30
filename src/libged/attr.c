@@ -30,6 +30,17 @@
 #include "./ged_private.h"
 
 
+typedef enum {
+    ATTR_APPEND,
+    ATTR_GET,
+    ATTR_RM,
+    ATTR_SET,
+    ATTR_SHOW,
+    ATTR_SORT,
+    ATTR_UNKNOWN
+} attr_cmd_t;
+
+
 /*
  * avs attribute comparison function, e.g. for qsort
  */
@@ -60,6 +71,7 @@ _ged_cmpattr_value_nocase(const void *p1, const void *p2)
     return bu_strcasecmp(((struct bu_attribute_value_pair *)p1)->value,
 			 ((struct bu_attribute_value_pair *)p2)->value);
 }
+
 
 HIDDEN int
 attr_pretty_print(struct ged *gedp, struct directory *dp, const char *name)
@@ -93,18 +105,9 @@ attr_pretty_print(struct ged *gedp, struct directory *dp, const char *name)
     return GED_OK;
 }
 
-typedef enum {
-    ATTR_APPEND,
-    ATTR_GET,
-    ATTR_RM,
-    ATTR_SET,
-    ATTR_SHOW,
-    ATTR_SORT,
-    ATTR_UNKNOWN
-} _attr_subcmd_t;
 
-_attr_subcmd_t
-_get_subcmd(const char* arg)
+HIDDEN attr_cmd_t
+attr_cmd(const char* arg)
 {
     /* sub-commands */
     const char APPEND[] = "append";
@@ -131,8 +134,9 @@ _get_subcmd(const char* arg)
       return ATTR_UNKNOWN;
 }
 
-void
-_list_attrs(struct ged *gedp, struct bu_attribute_value_set *avs,
+
+HIDDEN void
+attr_print(struct ged *gedp, struct bu_attribute_value_set *avs,
 	    const int max_attr_name_len, const int max_attr_value_len)
 {
     struct bu_attribute_value_pair *avpp;
@@ -148,6 +152,7 @@ _list_attrs(struct ged *gedp, struct bu_attribute_value_set *avs,
     }
 }
 
+
 int
 ged_attr(struct ged *gedp, int argc, const char *argv[])
 {
@@ -156,7 +161,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
     struct bu_attribute_value_set avs;
     struct bu_attribute_value_pair *avpp;
     static const char *usage = "{set|get|show|rm|append|sort} object [key [value] ... ]";
-    _attr_subcmd_t scmd;
+    attr_cmd_t scmd;
 
     /* sort types */
     const char CASE[]         = "case";
@@ -202,7 +207,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    scmd = _get_subcmd(argv[1]);
+    scmd = attr_cmd(argv[1]);
 
     if ((scmd == ATTR_SHOW && argc == 3) || scmd == ATTR_SORT) {
 	/* get a jump on calculating name and value lengths */
@@ -228,7 +233,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	if (argc == 3) {
 	    /* just list the already sorted attribute-value pairs */
-	    _list_attrs(gedp, &avs, max_attr_name_len, max_attr_value_len);
+	    attr_print(gedp, &avs, max_attr_name_len, max_attr_value_len);
 	} else {
 	    /* argv[3] is the sort type: 'case', 'nocase', 'value', 'value-nocase' */
 	    if (BU_STR_EQUIV(argv[3], NOCASE)) {
@@ -241,7 +246,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	      ; /* don't need to do anything since this is the existing (default) sort */
 	    }
 	    /* just list the already sorted attribute-value pairs */
-	    _list_attrs(gedp, &avs, max_attr_name_len, max_attr_value_len);
+	    attr_print(gedp, &avs, max_attr_name_len, max_attr_value_len);
 	}
     } else if (scmd == ATTR_GET) {
 	if (argc == 3) {
@@ -366,7 +371,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	if (argc == 3) {
 	    /* just display all attributes */
-	    _list_attrs(gedp, &avs, max_attr_name_len, max_attr_value_len);
+	    attr_print(gedp, &avs, max_attr_name_len, max_attr_value_len);
 	} else {
 	    const char *val;
 	    int len;
