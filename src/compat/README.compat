@@ -3,7 +3,7 @@ by various standards after C89 or hidden by other undefined macros.
 
 See man feature_test_macros(7) for a definitive list of all such
 macros.
- 
+
 ==================================================================
 
 ------------------------------------------------------------------
@@ -127,7 +127,7 @@ OTHER C89 FIXES documented here:
      ./src/util/ttcp.c
      ./src/libpkg/pkg.c
    also affects (not fixed!):
-     ./src/other/tcl/win/tclWinSock.c 
+     ./src/other/tcl/win/tclWinSock.c
 ------------------------------------------------------------------
 
   #include <signal.h>
@@ -146,7 +146,7 @@ OTHER C89 FIXES documented here:
 
   only file affected:
     ./src/libbu/interrupt.c
-    
+
 ------------------------------------------------------------------
 
   #define _GNU_SOURCE

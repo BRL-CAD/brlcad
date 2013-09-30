@@ -111,7 +111,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, Registry *registry,
 {
     STEPentity *toplevel_comb = NULL;
     struct comb_maps *maps = new comb_maps;
- 
+
     std::set<struct directory *> non_wrapper_combs;
 
 
