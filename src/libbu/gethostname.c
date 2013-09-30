@@ -20,6 +20,10 @@
 
 #include "common.h"
 
+#ifdef HAVE_WINSOCK_H
+#  include <winsock.h>
+#endif
+
 #include "bio.h"
 #include "bin.h"
 
@@ -30,28 +34,27 @@
  * Windows requires some initializations before gethostname() can be used.
  */
 int
-bu_gethostname(char *hostname, size_t hostlen)
+bu_hostname(char *hostname, size_t hostlen)
 {
     int status;
 
-#if defined(WIN32)
+#ifdef HAVE_WINSOCK_H
     WSADATA wsaData;
-    WSAStartup(MAKEWORD(2, 2), &wsaData);
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+	bu_log("ERROR: unable to initialize networking\n");
 #endif
 
-#if defined(WIN32)
+#ifdef HAVE_GETHOSTNAME
     status = gethostname(hostname, hostlen);
 #else
-  #if defined(__STD_VERSION__) && __STD_VERSION >= 199901L
-    status = gethostname(hostname, hostlen);
-  #else
-    /* gethostname is POSIX but not a C99.  this is fallback behavior. */
+
+    /* gethostname is POSIX but not a C99.  fallback to nothing. */
     bu_strlcpy(hostname, "unknown", hostlen)
     status = 0; /* no error */
-  #endif
+
 #endif
 
-#if defined(WIN32)
+#ifdef HAVE_WINSOCK_H
     WSACleanup();
 #endif
 
