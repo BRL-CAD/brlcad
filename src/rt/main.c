@@ -196,15 +196,9 @@ int main(int argc, const char **argv)
 
     /* Identify what host we're running on */
     if (rt_verbosity & VERBOSE_LIBVERSIONS) {
-	char	hostname[512] = {0};
-#ifndef _WIN32
-	if (bu_gethostname(hostname, sizeof(hostname)) >= 0 &&
-	    hostname[0] != '\0' )
+	char hostname[512] = {0};
+	if (bu_gethostname(hostname, sizeof(hostname)) >= 0)
 	    fprintf(stderr, "Running on %s\n", hostname);
-#else
-	sprintf(hostname, "Microsoft Windows");
-	fprintf(stderr, "Running on %s\n", hostname);
-#endif
     }
 
     if (bu_optind >= argc) {
