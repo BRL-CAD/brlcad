@@ -51,6 +51,7 @@ _ged_cmpattr(const void *p1, const void *p2)
 		     ((struct bu_attribute_value_pair *)p2)->name);
 }
 
+
 int
 _ged_cmpattr_nocase(const void *p1, const void *p2)
 {
@@ -58,12 +59,14 @@ _ged_cmpattr_nocase(const void *p1, const void *p2)
 			 ((struct bu_attribute_value_pair *)p2)->name);
 }
 
+
 int
 _ged_cmpattr_value(const void *p1, const void *p2)
 {
     return bu_strcmp(((struct bu_attribute_value_pair *)p1)->value,
 		     ((struct bu_attribute_value_pair *)p2)->value);
 }
+
 
 int
 _ged_cmpattr_value_nocase(const void *p1, const void *p2)
@@ -99,7 +102,7 @@ attr_pretty_print(struct ged *gedp, struct directory *dp, const char *name)
 		bu_vls_printf(gedp->ged_result_str, "%s %s:\n", name,
 			      binu_types[dp->d_minor_type]);
 		break;
-       }
+	}
     }
 
     return GED_OK;
@@ -119,25 +122,25 @@ attr_cmd(const char* arg)
 
     /* in one user's predicted order of frequency: */
     if (BU_STR_EQUIV(SHOW, arg))
-      return ATTR_SHOW;
+	return ATTR_SHOW;
     else if (BU_STR_EQUIV(SET, arg))
-      return ATTR_SET;
+	return ATTR_SET;
     else if (BU_STR_EQUIV(SORT, arg))
-      return ATTR_SORT;
+	return ATTR_SORT;
     else if (BU_STR_EQUIV(RM, arg))
-      return ATTR_RM;
+	return ATTR_RM;
     else if (BU_STR_EQUIV(APPEND, arg))
-      return ATTR_APPEND;
+	return ATTR_APPEND;
     else if (BU_STR_EQUIV(GET, arg))
-      return ATTR_GET;
+	return ATTR_GET;
     else
-      return ATTR_UNKNOWN;
+	return ATTR_UNKNOWN;
 }
 
 
 HIDDEN void
 attr_print(struct ged *gedp, struct bu_attribute_value_set *avs,
-	    const int max_attr_name_len, const int max_attr_value_len)
+	   const int max_attr_name_len, const int max_attr_value_len)
 {
     struct bu_attribute_value_pair *avpp;
     size_t i;
@@ -148,7 +151,7 @@ attr_print(struct ged *gedp, struct bu_attribute_value_set *avs,
 		      "\t%-*.*s\n",
 		      max_attr_name_len, max_attr_name_len, avpp->name,
 		      max_attr_value_len, max_attr_value_len, avpp->value
-		      );
+	    );
     }
 }
 
@@ -243,7 +246,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	    } else if (BU_STR_EQUIV(argv[3], VALUE_NOCASE)) {
 		qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmpattr_value_nocase);
 	    } else if (BU_STR_EQUIV(argv[3], CASE)) {
-	      ; /* don't need to do anything since this is the existing (default) sort */
+		; /* don't need to do anything since this is the existing (default) sort */
 	    }
 	    /* just list the already sorted attribute-value pairs */
 	    attr_print(gedp, &avs, max_attr_name_len, max_attr_value_len);
@@ -251,9 +254,9 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
     } else if (scmd == ATTR_GET) {
 	if (argc == 3) {
 	    /* just list all the attributes */
-           for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
-	       bu_vls_printf(gedp->ged_result_str, "%s {%s} ", avpp->name, avpp->value);
-	   }
+	    for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
+		bu_vls_printf(gedp->ged_result_str, "%s {%s} ", avpp->name, avpp->value);
+	    }
 	} else {
 	    const char *val;
 	    int do_separators=argc-4; /* if more than one attribute */
