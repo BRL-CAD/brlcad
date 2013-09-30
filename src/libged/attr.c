@@ -61,8 +61,8 @@ _ged_cmpattr_value_nocase(const void *p1, const void *p2)
 			 ((struct bu_attribute_value_pair *)p2)->value);
 }
 
-int
-_ged_pretty_print(struct ged *gedp, struct directory *dp, const char *name)
+HIDDEN int
+attr_pretty_print(struct ged *gedp, struct directory *dp, const char *name)
 {
     if (dp->d_flags & RT_DIR_COMB) {
 	if (dp->d_flags & RT_DIR_REGION) {
@@ -223,7 +223,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
     if (scmd == ATTR_SORT) {
 	/* pretty print */
-	if ((_ged_pretty_print(gedp, dp, argv[2])) != GED_OK)
+	if ((attr_pretty_print(gedp, dp, argv[2])) != GED_OK)
 	    return GED_ERROR;
 
 	if (argc == 3) {
@@ -361,7 +361,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	int tabs1 = 0;
 
 	/* pretty print */
-	if ((_ged_pretty_print(gedp, dp, argv[2])) != GED_OK)
+	if ((attr_pretty_print(gedp, dp, argv[2])) != GED_OK)
 	    return GED_ERROR;
 
 	if (argc == 3) {
