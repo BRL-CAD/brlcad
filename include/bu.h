@@ -6241,7 +6241,7 @@ BU_EXPORT extern int bu_str_isprint(const char *cp);
 /** @file libbu/gethostname.c
  *
  * Portable gethostname()
- *
+ * NEW: DO NOT USE.
  */
 BU_EXPORT extern int bu_gethostname(char *, size_t);
 
