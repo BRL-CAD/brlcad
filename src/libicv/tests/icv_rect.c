@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
 {
     char *out_file = NULL;
     char *in_file = NULL;
-    char c;
+    int c;
     int inx=0, iny=0;
     int xorig=0, yorig=0;
     int outx=0, outy=0;

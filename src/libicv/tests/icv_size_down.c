@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
 {
     char *out_file = NULL;
     char *in_file = NULL;
-    char c;
+    int c;
     int inx=0, iny=0;
     int factor=2;
     icv_image_t *bif;

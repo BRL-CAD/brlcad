@@ -51,7 +51,7 @@ int main(int argc, char* argv[])
 {
     char *out_file = NULL;
     char *in_file1 = NULL, *in_file2 = NULL;
-    char c;
+    int c;
     int inx=0, iny=0;
     char *operation = NULL;
     icv_image_t *bif1, *bif2, *out_bif;
