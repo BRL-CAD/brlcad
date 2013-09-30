@@ -20,24 +20,73 @@
 
 #include "common.h"
 
+#include "bu.h"
+#include "cmd.h"
 #include "ged.h"
 
 
-typedef enum {
-    PC_EVAL,
-    PC_GET,
-    PC_RM,
-    PC_SET,
-    PC_SHOW
-} constraint_cmd_t;
-
-
-constraint_cmd_t
-constraint_cmd(const char *arg)
+HIDDEN int
+constraint_set(void *datap, int argc, const char *argv[])
 {
-    if (arg)
-	return PC_EVAL;
-    return PC_EVAL;
+    struct ged *gedp = (struct ged *)datap;
+    if (!gedp || argc < 1 || !argv)
+	return BRLCAD_ERROR;
+
+    bu_vls_printf(gedp->ged_result_str, "set called\n");
+
+    return BRLCAD_OK;
+}
+
+
+HIDDEN int
+constraint_get(void *datap, int argc, const char *argv[])
+{
+    struct ged *gedp = (struct ged *)datap;
+    if (!gedp || argc < 1 || !argv)
+	return BRLCAD_ERROR;
+
+    bu_vls_printf(gedp->ged_result_str, "get called\n");
+
+    return BRLCAD_OK;
+}
+
+
+HIDDEN int
+constraint_show(void *datap, int argc, const char *argv[])
+{
+    struct ged *gedp = (struct ged *)datap;
+    if (!gedp || argc < 1 || !argv)
+	return BRLCAD_ERROR;
+
+    bu_vls_printf(gedp->ged_result_str, "show called\n");
+
+    return BRLCAD_OK;
+}
+
+
+HIDDEN int
+constraint_rm(void *datap, int argc, const char *argv[])
+{
+    struct ged *gedp = (struct ged *)datap;
+    if (!gedp || argc < 1 || !argv)
+	return BRLCAD_ERROR;
+
+    bu_vls_printf(gedp->ged_result_str, "rm called\n");
+
+    return BRLCAD_OK;
+}
+
+
+HIDDEN int
+constraint_eval(void *datap, int argc, const char *argv[])
+{
+    struct ged *gedp = (struct ged *)datap;
+    if (!gedp || argc < 1 || !argv)
+	return BRLCAD_ERROR;
+
+    bu_vls_printf(gedp->ged_result_str, "eval called\n");
+
+    return BRLCAD_OK;
 }
 
 
@@ -46,7 +95,17 @@ ged_constraint(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "{set|get|show|rm|eval} [constraint_name] [key [value] ...]";
 
-    constraint_cmd_t cmd;
+    static struct bu_cmdtab pc_cmds[] = {
+	{"set", constraint_set},
+	{"get", constraint_get},
+	{"show", constraint_show},
+	{"rm", constraint_rm},
+	{"eval", constraint_eval},
+	{(char *)0, (int (*)())0}
+    };
+
+    int ret;
+    int cmdret;
 
     /* intialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -67,7 +126,11 @@ ged_constraint(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    cmd = constraint_cmd(argv[1]);
+    ret = bu_cmd(pc_cmds, argc-1, argv+1, 0, gedp, &cmdret);
+    if (ret != BRLCAD_OK) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n", argv[0], usage);
+	return GED_ERROR;
+    }
 
     return 0;
 }
