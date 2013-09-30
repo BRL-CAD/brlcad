@@ -298,7 +298,6 @@ Add_Assembly_Product(struct directory *dp, struct db_i *dbip, struct bu_ptbl *ch
 	    SdaiCharacterized_product_definition *cpd = new SdaiCharacterized_product_definition(usage);
 	    pshape->definition_(new SdaiCharacterized_definition(cpd));
 	    instance_list->Append((STEPentity *)pshape, completeSE);
-	    // TODO -the function below is where the two shape representations need to be used
 	    STEPentity *rep_rel = Build_Representation_Relationship(item_transform, parent_shape, child_shape, registry, instance_list);
 	    SdaiContext_dependent_shape_representation *cshape = (SdaiContext_dependent_shape_representation *)registry->ObjCreate("CONTEXT_DEPENDENT_SHAPE_REPRESENTATION");
 	    cshape->representation_relation_((SdaiShape_representation_relationship *)rep_rel);
