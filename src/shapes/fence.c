@@ -126,9 +126,8 @@ void argumentHelp(FILE *fp, char *progname, char *message)
 {
 
     fflush(stdout);
-    if (message) {
+    if (message)
 	fprintf(fp, "%s\n", message);
-    }
     fflush(stdout);
 
     fprintf(fp, "Usage: %s %s\n       (units mm)\n\n", progname, \
@@ -271,7 +270,8 @@ int parseArguments(int argc, char **argv)
 	bu_strlcpy(progname, argv[0], (strlen(argv[0])+1>DEFAULT_MAXNAMELENGTH?DEFAULT_MAXNAMELENGTH:strlen(argv[0])+1));
     } else {
 	bu_strlcpy(progname, "fence\0", 6);
-	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Command-line argument assistance");
+/*	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Command-line argument assistance"); */
+	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, NULL);
 	bu_log("\n       Program continues running:\n\n");
     }
     fflush(stdout);
@@ -566,9 +566,9 @@ int parseArguments(int argc, char **argv)
 
 	    default  :
 		fflush(stdout);
-		(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Command-line argument assistance");
+/*		(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Command-line argument assistance"); */
+		(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, NULL);
 		bu_exit(1, NULL);
-		break;
 	}
     }
     fflush(stdout);
