@@ -133,17 +133,16 @@ OTHER C89 FIXES documented here:
   #include <signal.h>
   signal handler struct __sighandler_t is typedef'd differently by several macros:
 
-  #ifdef __USE_GNU
+  #ifdef HAVE_SIGHANDLER_T
   typedef __sighandler_t sighandler_t;
   #endif
 
-  #ifdef __USE_BSD
+  #ifdef HAVE_SIG_T
   typedef __sighandler_t sig_t;
   #endif
 
-  fix is to (1) substitute '__sighandler_t' for sig_t or (2) define
-  __USE_BSD for that file or (3) use portable function sigaction(2)
-  instead of signal(2)
+  fix is to leverage portable function sigaction(2) in addition to
+  signal(2) for platforms that have one but not the other.
 
   only file affected:
     ./src/libbu/interrupt.c
