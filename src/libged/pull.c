@@ -131,9 +131,9 @@ pull_comb(struct db_i *dbip,
 void
 translate(matp_t matrix, mat_t tm, point_t min, point_t max)
 {
-    vect_t c_pt; /* centre point */
-    mat_t t_mat; /* temp matrix */
-    vect_t t_vec; /* translation vector */
+    vect_t c_pt = VINIT_ZERO; /* centre point */
+    mat_t t_mat = MAT_INIT_ZERO; /* temp matrix */
+    vect_t t_vec = VINIT_ZERO; /* translation vector */
 
     /* computes the centrepoint from both minimum and maximum point
      * following this algorithm: cen[i] = bbx_min[i] + bbx_max[i]) / 2.0
