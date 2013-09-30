@@ -6245,12 +6245,13 @@ BU_EXPORT extern off_t bu_ftell(FILE *stream);
  */
 BU_EXPORT extern int bu_str_isprint(const char *cp);
 
-/** @file libbu/gethostname.c
- *
- * Portable gethostname()
- *
+/**
+ * Get the current operating host's name.  This is usually also the
+ * network name of the current host.  The name is written into the
+ * provided hostname buffer of at least len size.  The hostname is
+ * always null-terminated and should be sized accordingly.
  */
-BU_EXPORT extern int bu_gethostname(char *, size_t);
+BU_EXPORT extern int bu_gethostname(char *hostname, size_t len);
 
 __END_DECLS
 
