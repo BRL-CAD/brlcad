@@ -389,7 +389,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
     int c;
 
     struct bu_vls fbuf = BU_VLS_INIT_ZERO; /* % format buffer */
-    const char *fbufp  = NULL;
+    char *fbufp  = NULL;
 
     if (UNLIKELY(!vls || !fmt || fmt[0] == '\0')) {
 	/* nothing to print to or from */
