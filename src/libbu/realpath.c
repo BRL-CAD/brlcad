@@ -30,28 +30,27 @@
 char *
 bu_realpath(const char *path, char *resolved_path)
 {
-    char *dirpath;
     if (!resolved_path)
-	resolved_path = (char *) bu_calloc(MAXPATHLEN, sizeof(char),
-		"resolved_path alloc");
-#ifdef HAVE_REALPATH
-    /* FIXME: realpath is not a C99 function so this is not a valid replacement for strict C99 */
-    dirpath = realpath(path, resolved_path);
-    if (!dirpath) {
-	/* if path lookup failed, resort to simple copy */
-	bu_strlcpy(resolved_path, path, (size_t)MAXPATHLEN);
+	resolved_path = (char *) bu_calloc(MAXPATHLEN, sizeof(char), "resolved_path alloc");
+
+#if defined(HAVE_REALPATH)
+    {
+	char *dirpath = NULL;
+	dirpath = realpath(path, resolved_path);
+	if (!dirpath) {
+	    /* if path lookup failed, resort to simple copy */
+	    bu_strlcpy(resolved_path, path, (size_t)MAXPATHLEN);
+	}
     }
-#else
+#elif defined(HAVE_GETFULLPATHNAME)
     /* Best solution currently available for Windows
      * See https://www.securecoding.cert.org/confluence/display/seccode/FIO02-C.+Canonicalize+path+names+originating+from+untrusted+sources */
-#  ifdef HAVE_GETFULLPATHNAME
     GetFullPathName(path, MAXPATHLEN, resolved_path, NULL);
-
-#  else
+#else
     /* Last resort - if NOTHING is defined, do a simple copy */
     bu_strlcpy(resolved_path, path, (size_t)MAXPATHLEN);
-#  endif
 #endif
+
     return resolved_path;
 }
 
