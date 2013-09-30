@@ -56,7 +56,13 @@ if(MSVC)
   set_target_properties(g-step PROPERTIES COMPILE_DEFINITIONS "${gstep_IMPORTS}")
 endif(MSVC)
 
-CMAKEFILES(ON_Brep.h Comb_Tree.h)
+set(IGNORE_FILES
+  Assembly_Product.h
+  ON_Brep.h
+  Comb_Tree.h
+  G_STEP_internal.h
+  )
+CMAKEFILES(${IGNORE_FILES})
 
 # Local Variables:
 # tab-width: 8
