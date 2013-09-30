@@ -52,7 +52,7 @@ int main(int argc, char* argv[])
     int inx=0, iny=0;
     icv_image_t *bif;
     ICV_IMAGE_FORMAT format=ICV_IMAGE_AUTO;
-    char c;
+    int c;
 
     if (argc<2) {
 	usage();
