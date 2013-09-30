@@ -72,13 +72,6 @@ static struct bu_list bu_memqhd = BU_LIST_INIT_ZERO;
 extern const char bu_vls_message[];
 extern const char bu_strdup_message[];
 
-/* a place-holder for a version of the POSIX.1d function posix_memalign(3):
-int
-bu_posix_memalign(void **memptr, size_t alignment, size_t size)
-{
-
-}
-*/
 
 /**
  * Add another entry to the memory debug table
