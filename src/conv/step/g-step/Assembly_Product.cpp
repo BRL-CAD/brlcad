@@ -218,7 +218,8 @@ Build_Representation_Relationship(STEPentity *input_transformation, STEPentity *
     stepcomplex = complex_entity->EntityPart("representation_relationship");
     stepcomplex->ResetAttributes();
     while ((attr = stepcomplex->NextAttribute()) != NULL) {
-	std::cout << "  " << attr->Name() << "," << attr->NonRefType() << "\n";
+	//std::cout << "  " << attr->Name() << "," << attr->NonRefType() << "\n";
+	if (!bu_strcmp(attr->Name(), "name")) attr->StrToVal("''");
 	if (!bu_strcmp(attr->Name(), "rep_1")) {
 	    attr->ptr.c = new (STEPentity *);
 	    *(attr->ptr.c) = parent;
@@ -233,9 +234,7 @@ Build_Representation_Relationship(STEPentity *input_transformation, STEPentity *
     stepcomplex = complex_entity->EntityPart("representation_relationship_with_transformation");
     stepcomplex->ResetAttributes();
     while ((attr = stepcomplex->NextAttribute()) != NULL) {
-	std::cout << attr->Name() << "\n";
 	if (!bu_strcmp(attr->Name(), "transformation_operator")) {
-	    std::cout << "  " << attr->Name() << "," << attr->NonRefType() << "\n";
 	    SdaiTransformation *transformation = new SdaiTransformation((SdaiItem_defined_transformation *)input_transformation);
 	    attr->ptr.sh = transformation;
 	}

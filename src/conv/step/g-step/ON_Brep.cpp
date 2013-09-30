@@ -243,7 +243,6 @@ ON_BRep_to_STEP(struct directory *dp, struct rt_db_internal *intern, Registry *r
     }
 
     // 3D curves
-    std::cout << "Have " << brep->m_C3.Count() << " curves\n";
     for (int i = 0; i < brep->m_C3.Count(); ++i) {
 	bool curve_converted = false;
 	ON_Curve* curve = brep->m_C3[i];
@@ -255,15 +254,12 @@ ON_BRep_to_STEP(struct directory *dp, struct rt_db_internal *intern, Registry *r
 	ON_PolyCurve *p_curve = ON_PolyCurve::Cast(curve);
 
 	if (a_curve && !curve_converted) {
-	    std::cout << "Have ArcCurve\n";
-
 	    ON_NurbsCurve arc_nurb;
 	    a_curve->GetNurbForm(arc_nurb);
 	    curve_converted = ON_NurbsCurve_to_STEP(&arc_nurb, info, i);
 	}
 
 	if (l_curve && !curve_converted) {
-	    std::cout << "Have LineCurve\n";
 	    ON_Line *m_line = &(l_curve->m_line);
 
 	    /* In STEP, a line consists of a cartesian point and a 3D
@@ -295,7 +291,9 @@ ON_BRep_to_STEP(struct directory *dp, struct rt_db_internal *intern, Registry *r
 	}
 
 	if (p_curve && !curve_converted) {
-	    std::cout << "Have PolyCurve\n";
+	    ON_NurbsCurve poly_nurb;
+	    p_curve->GetNurbForm(poly_nurb);
+	    curve_converted = ON_NurbsCurve_to_STEP(&poly_nurb, info, i);
 	}
 
 	if (n_curve && !curve_converted) {
@@ -305,7 +303,12 @@ ON_BRep_to_STEP(struct directory *dp, struct rt_db_internal *intern, Registry *r
 	/* Whatever this is, if it's not a supported type and it does
 	 * have a NURBS form, use that
 	 */
-	if (!curve_converted) std::cout << "Curve not converted! " << i << "\n";
+	if (!curve_converted) {
+	    ON_NurbsCurve nurb_form;
+	    curve->GetNurbForm(nurb_form);
+	    curve_converted = ON_NurbsCurve_to_STEP(&nurb_form, info, i);
+	    if (!curve_converted) std::cout << "Curve not converted! " << i << "\n";
+	}
 
     }
 
@@ -329,7 +332,6 @@ ON_BRep_to_STEP(struct directory *dp, struct rt_db_internal *intern, Registry *r
     // the _edge_list for the loop.
     for (int i = 0; i < brep->m_L.Count(); ++i) {
 	ON_BrepLoop *loop= &(brep->m_L[i]);
-	std::cout << "Loop " << i << "\n";
 	info->edge_loops.at(i) = info->registry->ObjCreate("EDGE_LOOP");
 	((SdaiEdge_loop *)info->edge_loops.at(i))->name_("''");
 
@@ -346,7 +348,6 @@ ON_BRep_to_STEP(struct directory *dp, struct rt_db_internal *intern, Registry *r
 
     // surfaces - TODO - need to handle cylindrical, conical,
     // toroidal, etc. types that are enumerated
-    std::cout << "Have " << brep->m_S.Count() << " surfaces\n";
     for (int i = 0; i < brep->m_S.Count(); ++i) {
 	bool surface_converted = false;
 	ON_Surface* surface = brep->m_S[i];
@@ -360,14 +361,12 @@ ON_BRep_to_STEP(struct directory *dp, struct rt_db_internal *intern, Registry *r
 	ON_SurfaceProxy *surface_proxy = ON_SurfaceProxy::Cast(surface);
 
 	if (o_surface && !surface_converted) {
-	    std::cout << "Have OffsetSurface\n";
 	    ON_NurbsSurface o_nurb;
 	    o_surface->GetNurbForm(o_nurb);
 	    surface_converted = ON_NurbsSurface_to_STEP(&o_nurb, info, i);
 	}
 
 	if (p_surface && !surface_converted) {
-	    std::cout << "Have PlaneSurface\n";
 	    ON_NurbsSurface p_nurb;
 	    p_surface->GetNurbForm(p_nurb);
 	    surface_converted = ON_NurbsSurface_to_STEP(&p_nurb, info, i);
@@ -382,12 +381,10 @@ ON_BRep_to_STEP(struct directory *dp, struct rt_db_internal *intern, Registry *r
 	}
 
 	if (n_surface && !surface_converted) {
-	    std::cout << "Have NurbsSurface\n";
 	    surface_converted = ON_NurbsSurface_to_STEP(n_surface, info, i);
 	}
 
 	if (rev_surface && !surface_converted) {
-	    std::cout << "Have RevSurface\n";
 	    ON_NurbsSurface rev_nurb;
 	    rev_surface->GetNurbForm(rev_nurb);
 	    surface_converted = ON_NurbsSurface_to_STEP(&rev_nurb, info, i);
@@ -412,7 +409,6 @@ ON_BRep_to_STEP(struct directory *dp, struct rt_db_internal *intern, Registry *r
 	}
 
 	if (sum_surface && !surface_converted) {
-	    std::cout << "Have SumSurface\n";
 	    ON_NurbsSurface sum_nurb;
 	    sum_surface->GetNurbForm(sum_nurb);
 	    surface_converted = ON_NurbsSurface_to_STEP(&sum_nurb, info, i);
