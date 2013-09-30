@@ -17,12 +17,14 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 #include "common.h"
 
 #include "bio.h"
 #include "bin.h"
 
 #include "bu.h"
+
 
 /**
  * Windows requires some initializations before gethostname() can be used.
@@ -43,9 +45,8 @@ bu_gethostname(char *hostname, size_t hostlen)
   #if defined(__STD_VERSION__) && __STD_VERSION >= 199901L
     status = gethostname(hostname, hostlen);
   #else
-    /* gethostname is not a C99 function so this is for C99 compliance */
-    bu_assert(hostlen > 10);
-    sprintf(hostname, "%s", "unknown");
+    /* gethostname is POSIX but not a C99.  this is fallback behavior. */
+    bu_strlcpy(hostname, "unknown", hostlen)
     status = 0; /* no error */
   #endif
 #endif
