@@ -141,10 +141,6 @@ main(int argc, char **argv)
 	    perror("scanf");
 	    numhan = 1;
 	}
-	else if (numhan < 1)
-	    numhan = 1;
-	else if (numhan > 26)
-	    numhan = 26;
 
 	/* Find dimensions of handle. */
 	printf("Enter the length and height of handle in mm.\n\t");
@@ -225,7 +221,6 @@ main(int argc, char **argv)
 		}					/* END # 9 */
 		temp1[k] = '\0';
 		sscanf(temp1, "%d", &numhan);
-		if (numhan > 26) numhan = 26;
 	    }						/* END # 8 */
 
 	    /* -l or -h - length and height of handle in mm. */
@@ -264,6 +259,11 @@ main(int argc, char **argv)
 	}						/* END # 5 */
     }							/* END # 4 */
 
+    if (numhan < 1)
+	numhan = 1;
+    else if (numhan > 26)
+	numhan = 26;
+
     /* Print out dimensions of the handle. */
     printf("\nmged file name:  %s\n", filemged);
     printf("length:  %f mm\n", len);
@@ -275,6 +275,8 @@ main(int argc, char **argv)
 
     /* Open mged file for writing to. */
     fpw = wdb_fopen(filemged);
+    if (!fpw)
+	bu_exit(1, "file-open failed");
 
     /* Write ident record. */
     mk_id(fpw, "handles");
