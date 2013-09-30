@@ -184,6 +184,8 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
+    /* Verify that this wdb supports lookup operations
+       (non-null dbip) */
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
 
     /* this is only valid for v5 databases */
@@ -191,10 +193,6 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Attributes are not available for this database format.\nPlease upgrade your database format using \"dbupgrade\" to enable attributes.");
 	return GED_ERROR;
     }
-
-    /* Verify that this wdb supports lookup operations
-       (non-null dbip) */
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
 
     GED_DB_LOOKUP(gedp, dp, argv[2], LOOKUP_QUIET, GED_ERROR);
 
