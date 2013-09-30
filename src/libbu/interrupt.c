@@ -23,25 +23,14 @@
 /* attempted fix: using sigaction: */
 /* #define BRLCAD_USE_SIGACTION */
 
-/* FIXME: need to convert to sigaction(2) instead of BSD signal semantics for portability */
-/* need this define to get sig_t out of signal.h */
-#ifndef BRLCAD_USE_SIGACTION
-#ifndef __USE_BSD
-#define __USE_BSD
-#endif
-#endif /* BRLCAD_USE_SIGACTION */
+/* NOTE: can leverage sigaction(2) instead of BSD signal semantics for conformance/portability. */
 
 #include <signal.h>
 
-#ifndef BRLCAD_USE_SIGACTION
-/* reset if need be */
-#ifdef __UNDO_BSD
-#undef __USE_BSD
-#endif
-#endif /* BRLCAD_USE_SIGACTION */
-
 #include "bu.h"
 
+
+/* FIXME: need a configure test to provide this when needed */
 #ifndef HAVE_SIG_T
 typedef void (*sig_t)(int);
 #endif
@@ -174,6 +163,7 @@ interrupt_restore_signal(int signum)
 #if !defined(BRLCAD_USE_SIGACTION)
 	ret = signal(signum, interrupt_signal_func[signum]);
 #else
+	ret = signal(signum, interrupt_signal_func[signum]);
 #endif
 
 	interrupt_signal_func[signum] = (sig_t)0;
