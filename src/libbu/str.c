@@ -24,6 +24,7 @@
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
+#include <ctype.h>
 
 #include "bu.h"
 
@@ -213,8 +214,17 @@ bu_strcasecmp(const char *string1, const char *string2)
     if (string2)
 	s2 = string2;
 
-    /* FIXME: strcasecmp is not a C99 function so this is not a valid replacement for strict C99 */
+#if defined(strcasecmp) || defined(HAVE_STRCASECMP)
     return strcasecmp(s1, s2);
+#else
+    while(tolower((unsigned char)*s1) == tolower((unsigned char)*s2)) {
+	if (*s1 == '\0')
+	    return 0;
+	s1++;
+	s2++;
+    }
+    return tolower((unsigned char)*s1) - tolower((unsigned char)*s2);
+#endif
 }
 
 
