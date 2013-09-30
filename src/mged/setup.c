@@ -109,6 +109,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"color", cmd_ged_plain_wrapper, ged_color},
     {"comb", cmd_ged_plain_wrapper, ged_comb},
     {"comb_color", cmd_ged_plain_wrapper, ged_comb_color},
+    {"constraint", cmd_ged_plain_wrapper, ged_constraint},
     {"copyeval", cmd_ged_plain_wrapper, ged_copyeval},
     {"copymat", cmd_ged_plain_wrapper, ged_copymat},
     {"cp", cmd_ged_plain_wrapper, ged_copy},
