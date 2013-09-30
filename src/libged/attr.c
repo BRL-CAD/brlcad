@@ -44,32 +44,32 @@ typedef enum {
 /*
  * avs attribute comparison function, e.g. for qsort
  */
-int
-_ged_cmpattr(const void *p1, const void *p2)
+HIDDEN int
+attr_cmp(const void *p1, const void *p2)
 {
     return bu_strcmp(((struct bu_attribute_value_pair *)p1)->name,
 		     ((struct bu_attribute_value_pair *)p2)->name);
 }
 
 
-int
-_ged_cmpattr_nocase(const void *p1, const void *p2)
+HIDDEN int
+attr_cmp_nocase(const void *p1, const void *p2)
 {
     return bu_strcasecmp(((struct bu_attribute_value_pair *)p1)->name,
 			 ((struct bu_attribute_value_pair *)p2)->name);
 }
 
 
-int
-_ged_cmpattr_value(const void *p1, const void *p2)
+HIDDEN int
+attr_cmp_value(const void *p1, const void *p2)
 {
     return bu_strcmp(((struct bu_attribute_value_pair *)p1)->value,
 		     ((struct bu_attribute_value_pair *)p2)->value);
 }
 
 
-int
-_ged_cmpattr_value_nocase(const void *p1, const void *p2)
+HIDDEN int
+attr_cmp_value_nocase(const void *p1, const void *p2)
 {
     return bu_strcasecmp(((struct bu_attribute_value_pair *)p1)->value,
 			 ((struct bu_attribute_value_pair *)p2)->value);
@@ -227,7 +227,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* default: sort attribute-value set array by attribute name (case sensitive) */
-    qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmpattr);
+    qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp);
 
     if (scmd == ATTR_SORT) {
 	/* pretty print */
@@ -240,11 +240,11 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	} else {
 	    /* argv[3] is the sort type: 'case', 'nocase', 'value', 'value-nocase' */
 	    if (BU_STR_EQUIV(argv[3], NOCASE)) {
-		qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmpattr_nocase);
+		qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp_nocase);
 	    } else if (BU_STR_EQUIV(argv[3], VALUE)) {
-		qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmpattr_value);
+		qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp_value);
 	    } else if (BU_STR_EQUIV(argv[3], VALUE_NOCASE)) {
-		qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmpattr_value_nocase);
+		qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp_value_nocase);
 	    } else if (BU_STR_EQUIV(argv[3], CASE)) {
 		; /* don't need to do anything since this is the existing (default) sort */
 	    }
