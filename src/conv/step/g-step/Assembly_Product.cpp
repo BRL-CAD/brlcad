@@ -209,7 +209,7 @@ Mat_to_Rep(matp_t curr_matrix, Registry *registry, InstMgr *instance_list)
 
 // Representation relationships are a complex type
 STEPentity *
-Build_Representation_Relationship(STEPentity *input_transformation, Registry *registry, InstMgr *instance_list) {
+Build_Representation_Relationship(STEPentity *input_transformation, STEPentity *parent, STEPentity *child, Registry *registry, InstMgr *instance_list) {
     STEPattribute *attr;
     STEPcomplex *stepcomplex;
     const char *entNmArr[4] = {"representation_relationship", "representation_relationship_with_transformation", "shape_representation_relationship", "*"};
@@ -218,11 +218,15 @@ Build_Representation_Relationship(STEPentity *input_transformation, Registry *re
     stepcomplex = complex_entity->EntityPart("representation_relationship");
     stepcomplex->ResetAttributes();
     while ((attr = stepcomplex->NextAttribute()) != NULL) {
-	std::cout << attr->Name() << "\n";
-	/*
-	if (!bu_strcmp(attr->Name(), "rep_1")) attr->ptr.i = new SDAI_Integer(nsurface->Degree(0));
-	if (!bu_strcmp(attr->Name(), "rep_2")) attr->ptr.i = new SDAI_Integer(nsurface->Degree(1));
-	*/
+	std::cout << "  " << attr->Name() << "," << attr->NonRefType() << "\n";
+	if (!bu_strcmp(attr->Name(), "rep_1")) {
+	    attr->ptr.c = new (STEPentity *);
+	    *(attr->ptr.c) = parent;
+	}
+	if (!bu_strcmp(attr->Name(), "rep_2")) {
+	    attr->ptr.c = new (STEPentity *);
+	    *(attr->ptr.c) = child;
+	}
     }
 
     /* REPRESENTATION_RELATIONSHIP_WITH_TRANSFORMATION */
@@ -248,6 +252,7 @@ Add_Assembly_Product(struct directory *dp, struct db_i *dbip, struct bu_ptbl *ch
 	Registry *registry, InstMgr *instance_list)
 {
     struct rt_db_internal comb_intern;
+    STEPentity *parent_shape = maps->comb_to_step_shape.find(dp)->second;
     rt_db_get_internal(&comb_intern, dp, dbip, bn_mat_identity, &rt_uniresource);
     RT_CK_DB_INTERNAL(&comb_intern);
     struct rt_comb_internal *comb = (struct rt_comb_internal *)(comb_intern.idb_ptr);
@@ -255,6 +260,9 @@ Add_Assembly_Product(struct directory *dp, struct db_i *dbip, struct bu_ptbl *ch
 	STEPentity *orig_transform = Identity_AXIS2_PLACEMENT_3D(registry, instance_list);
 	STEPentity *curr_transform = NULL;
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(children, j);
+	STEPentity *child_shape = maps->comb_to_step_shape.find(curr_dp)->second;
+	if (!child_shape)
+	    child_shape = maps->brep_to_step_shape.find(curr_dp)->second;
 	bu_log("%s under %s: ", curr_dp->d_namep, dp->d_namep);
 	union tree *curr_node = db_find_named_leaf(comb->tree, curr_dp->d_namep);
 	matp_t curr_matrix = curr_node->tr_l.tl_mat;
@@ -290,7 +298,8 @@ Add_Assembly_Product(struct directory *dp, struct db_i *dbip, struct bu_ptbl *ch
 	    SdaiCharacterized_product_definition *cpd = new SdaiCharacterized_product_definition(usage);
 	    pshape->definition_(new SdaiCharacterized_definition(cpd));
 	    instance_list->Append((STEPentity *)pshape, completeSE);
-	    STEPentity *rep_rel = Build_Representation_Relationship(item_transform, registry, instance_list);
+	    // TODO -the function below is where the two shape representations need to be used
+	    STEPentity *rep_rel = Build_Representation_Relationship(item_transform, parent_shape, child_shape, registry, instance_list);
 	    SdaiContext_dependent_shape_representation *cshape = (SdaiContext_dependent_shape_representation *)registry->ObjCreate("CONTEXT_DEPENDENT_SHAPE_REPRESENTATION");
 	    cshape->representation_relation_((SdaiShape_representation_relationship *)rep_rel);
 	    cshape->represented_product_relation_(pshape);
