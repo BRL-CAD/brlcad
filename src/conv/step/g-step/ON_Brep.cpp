@@ -418,6 +418,14 @@ ON_BRep_to_STEP(struct directory *dp, struct rt_db_internal *intern, Registry *r
 	    std::cout << "Have SurfaceProxy\n";
 	}
 
+	if (!surface_converted) {
+	    ON_NurbsSurface nurb_surf_form;
+	    surface->GetNurbForm(nurb_surf_form);
+	    surface_converted = ON_NurbsSurface_to_STEP(&nurb_surf_form, info, i);
+	    if (!surface_converted) std::cout << "Failed to convert surface!\n";
+	}
+
+
     }
 
     // faces
