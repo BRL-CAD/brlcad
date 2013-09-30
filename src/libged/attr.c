@@ -115,17 +115,17 @@ _get_subcmd(const char* arg)
     const char SORT[]   = "sort";
 
     /* in one user's predicted order of frequency: */
-    if (BU_STR_EQUAL(SHOW, arg))
+    if (BU_STR_EQUIV(SHOW, arg))
       return ATTR_SHOW;
-    else if (BU_STR_EQUAL(SET, arg))
+    else if (BU_STR_EQUIV(SET, arg))
       return ATTR_SET;
-    else if (BU_STR_EQUAL(SORT, arg))
+    else if (BU_STR_EQUIV(SORT, arg))
       return ATTR_SORT;
-    else if (BU_STR_EQUAL(RM, arg))
+    else if (BU_STR_EQUIV(RM, arg))
       return ATTR_RM;
-    else if (BU_STR_EQUAL(APPEND, arg))
+    else if (BU_STR_EQUIV(APPEND, arg))
       return ATTR_APPEND;
-    else if (BU_STR_EQUAL(GET, arg))
+    else if (BU_STR_EQUIV(GET, arg))
       return ATTR_GET;
     else
       return ATTR_UNKNOWN;
@@ -231,13 +231,13 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	    _list_attrs(gedp, &avs, max_attr_name_len, max_attr_value_len);
 	} else {
 	    /* argv[3] is the sort type: 'case', 'nocase', 'value', 'value-nocase' */
-	    if (BU_STR_EQUAL(argv[3], NOCASE)) {
+	    if (BU_STR_EQUIV(argv[3], NOCASE)) {
 		qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmpattr_nocase);
-	    } else if (BU_STR_EQUAL(argv[3], VALUE)) {
+	    } else if (BU_STR_EQUIV(argv[3], VALUE)) {
 		qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmpattr_value);
-	    } else if (BU_STR_EQUAL(argv[3], VALUE_NOCASE)) {
+	    } else if (BU_STR_EQUIV(argv[3], VALUE_NOCASE)) {
 		qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmpattr_value_nocase);
-	    } else if (BU_STR_EQUAL(argv[3], CASE)) {
+	    } else if (BU_STR_EQUIV(argv[3], CASE)) {
 	      ; /* don't need to do anything since this is the existing (default) sort */
 	    }
 	    /* just list the already sorted attribute-value pairs */
