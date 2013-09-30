@@ -168,7 +168,6 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
     int max_attr_name_len  = 0;
     int max_attr_value_len = 0;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
@@ -184,6 +183,8 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
 
     /* this is only valid for v5 databases */
     if (db_version(gedp->ged_wdbp->dbip) < 5) {
