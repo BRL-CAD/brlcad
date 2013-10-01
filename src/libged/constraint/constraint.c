@@ -153,7 +153,7 @@ ged_constraint(struct ged *gedp, int argc, const char *argv[])
      * constraint set c3 tangent car terrain.r
      * constraint set c4 equal ell.R[1] arb8.E[2]
      * constraint set p0 expression ell.R[0]=10.0
-     * constriant set p1 expression eto.A=40.2
+     * constraint set p1 expression eto.A=40.2
      * constraint set p2 expression 4
      * constraint set p3 expression ell.R[1] * p2
      * constraint set p4 expression sph.R[0]=p3-10.5*magnitude(ell.V)
@@ -199,7 +199,7 @@ ged_constraint(struct ged *gedp, int argc, const char *argv[])
     int cmdret;
     struct directory *dp;
 
-    /* intialize result */
+    /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
