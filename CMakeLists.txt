@@ -1259,15 +1259,19 @@ BRLCAD_OPTION(OFF ENABLE_C89_COMPLIANCE
 mark_as_advanced(ENABLE_C89_COMPLIANCE)
 
 # only one of the three C options is allowed
+set(STD_COMPLIANCE OFF)
 if (ENABLE_POSIX_COMPLIANCE)
   set(ENABLE_C89_COMPLIANCE OFF)
   set(ENABLE_C99_COMPLIANCE OFF)
+  set(STD_COMPLIANCE ON)
 elseif(ENABLE_C99_COMPLIANCE)
   set(ENABLE_POSIX_COMPLIANCE OFF)
   set(ENABLE_C89_COMPLIANCE OFF)
+  set(STD_COMPLIANCE ON)
 elseif(ENABLE_C89_COMPLIANCE)
   set(ENABLE_POSIX_COMPLIANCE OFF)
   set(ENABLE_C99_COMPLIANCE OFF)
+  set(STD_COMPLIANCE ON)
 endif()
 
 #====== POSIX, C89, C99 ===================
@@ -1441,6 +1445,11 @@ if(NOT MSVC)
   include(${BRLCAD_CMAKE_DIR}/CompilerFlags.cmake)
   include(${BRLCAD_CMAKE_DIR}/BRLCAD_CompilerFlags.cmake)
 endif(NOT MSVC)
+
+# need to ensure all checks use the same compiler settings (but it
+# doesn't seem to work in wrapped CMake checking functions as it is
+# documented to do)
+set(CMAKE_REQUIRED_FLAGS "${CMAKE_C_FLAGS}")
 
 # Most of the src/other projects have their own logic for handling
 # the C inline issue - BRL-CAD needs a fine-grained approach.  Mixed
