@@ -77,6 +77,12 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* 'about' command to display version, contents of various doc files,
+  customizable brlcad.msg file
+
+* 'align' command taking a from 3d pt and a to 3d pt target.
+  moves/rotates the source object into alignment.
+
 * Update the comb "region lift" capability to handle automatic duplication
   and substitution of the duplicate into the tree of combs who can't have
   their definitions changed without impacting other geometry in the .g file.
