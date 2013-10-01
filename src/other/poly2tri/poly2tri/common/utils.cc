@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <exception>
-#ifdef WIN32
+#ifdef _WIN32
 // Otherwise #defines like M_PI are undeclared under Visual Studio
 # define _USE_MATH_DEFINES
 #endif

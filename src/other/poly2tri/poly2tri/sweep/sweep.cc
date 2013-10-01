@@ -28,7 +28,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifdef WIN32
+#ifdef _WIN32
 // Otherwise #defines like M_PI are undeclared under Visual Studio
 # define _USE_MATH_DEFINES
 #endif
