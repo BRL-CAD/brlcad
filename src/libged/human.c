@@ -26,11 +26,11 @@
  * pivoting for each joint during articulation:
  *
  * head.r and neck.r
- * - the pivot point is located on the XY center of the top of the
- *   neck.r.
+ * - The pivot point is located on the XY center of the top of the
+ *   neck.r .
  *
  * neck.r and upperchest.r
- * - The neck.r pivots from the top XY center of the upperchest.r.
+ * - The neck.r pivots from the top XY center of the upperchest.r .
  *
  * shoulder*.r
  * - The shoulder*.r pivots around the X-axis in its XYZ center (half
@@ -38,22 +38,22 @@
  *
  * upperchest.r and lowerchest.r
  * - No movement, but the upperchest.r is specifically centered above
- *   the lowerchest.r.
+ *   the lowerchest.r .
  *
  * shoulder*.r and lowerchest.r
  * - No movement, but the shoulder*.r and upperchest.r align
  *   horizontally (along the X-axis) and are together centered over
- *   the lowerchest.r.
+ *   the lowerchest.r .
  *
  * lowerchest.r and hips.r
  * - No movement, but the lowerchest.r is aligned specifically
- *   centered above the hips.r.
+ *   centered above the hips.r .
  *
  * hips.r and thigh*.r
  * - There are two pivot points, one for the thighL.r and the other
- *   for the thighR.r Divide the hips.r box in half in the X
+ *   for the thighR.r . Divide the hips.r box in half in the X
  *   direction, and find the XY centers of each.  These pivot points
- *   are at the base of the hips.r.
+ *   are at the base of the hips.r .
  *
  * thigh*.r and calf*.r
  * - The pivot point occurs at the XY center of the thigh*.r base.
@@ -65,7 +65,7 @@
  *
  * shoulder*.r and upperarm*.r
  * - The pivot point occurs at the XY center of the top of the
- *   upperarm*.r.
+ *   upperarm*.r .
  *
  * upperarm*.r and forearm*.r
  * - The pivot point occurs at the XY center of the upperarm*.r base.
@@ -1530,8 +1530,6 @@ show_help(const char *name, const char *optstr)
 
     bu_log("Usage: %s [%s]\n", name, bu_vls_addr(&str));
     bu_log("options:\n");
-    bu_log("\t-h\t\tShow help\n");
-    bu_log("\t-?\t\tShow help\n");
     bu_log("\t-A\t\tAutoMake defaults\n");
     bu_log("\t-m\t\tManual sizing mode\n");
     bu_log("\t-H\t\tSet Height in inches\n");
