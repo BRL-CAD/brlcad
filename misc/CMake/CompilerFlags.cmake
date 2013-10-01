@@ -253,37 +253,22 @@ CHECK_C_FLAG(msse3 BUILD_TYPES Debug)
 # Check for c90 support with gnu extensions if we're not building for
 # a release so we get more broad portability testing.  Since the
 # default is debug, it will be the more difficult to keep working
-# given it's the lesser feature-rich C standard.
-if(NOT ENABLE_POSIX_COMPLIANCE AND
-   NOT ENABLE_C99_COMPLIANCE)
+# given it's the lesser feature-rich C standard.  If we're going for
+# a strictly standard compliant build, use the c** options instead
+# of the gnu variations
+if(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE)
+  CHECK_C_FLAG("std=c89" BUILD_TYPES Debug)
+  CHECK_C_FLAG("std=c99" BUILD_TYPES Release VARS C99_FLAG)
+else(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE)
   CHECK_C_FLAG("std=gnu89" BUILD_TYPES Debug)
-elseif(ENABLE_POSIX_COMPLIANCE)
-  #=== strict POSIX (200112) and C99 support =======
-  CHECK_C_FLAG("pedantic")
-  #== C99 ==
-  CHECK_C_FLAG("std=c99")
-  CHECK_C_FLAG("D_POSIX_C_SOURCE=200112L")
-  #CHECK_C_FLAG("D_XOPEN_SOURCE=500")
-  #== CXX TBA
-  #== turn off others (not working in main CMakeLists.txt)
-  set(ENABLE_C99_COMPLIANCE OFF)
-elseif(ENABLE_C99_COMPLIANCE)
-  CHECK_C_FLAG("pedantic")
-  CHECK_C_FLAG("std=c99")
-  #CHECK_C_FLAG("D_POSIX_C_SOURCE")
-  set(ENABLE_POSIX_COMPLIANCE OFF)
-endif()
-
-# Check for c99 support with gnu extensions when we are building for a
-# release so we get to leverage more system features where available.
-#
-# Also check for c99 conformance (with extensions) since some platform
-# environments require it due to c99-specific system headers (e.g.,
-# /System/Library/Frameworks/OpenGL.framework/Headers/gl.h on Mac OS X
-# having '//' comments embedded).
-if(NOT ENABLE_POSIX_COMPLIANCE AND
-   NOT ENABLE_C99_COMPLIANCE)
   CHECK_C_FLAG("std=gnu99" BUILD_TYPES Release VARS C99_FLAG)
+endif(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE)
+
+# What POSIX do we want to target, initially?  See
+# http://www.gnu.org/software/libc/manual/html_node/Feature-Test-Macros.html
+# for options...
+if(ENABLE_POSIX_COMPLIANCE)
+  CHECK_C_FLAG("D_POSIX_C_SOURCE=1")
 endif()
 
 # Silence check for unused arguments (used to silence clang warnings about

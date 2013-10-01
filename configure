@@ -70,9 +70,9 @@ do
                                   shift;;
      --disable-posix)                options="$options -DENABLE_POSIX_COMPLIANCE=OFF";
                                   shift;;
-     --enable-c99)                options="$options -DENABLE_C99_COMPLIANCE=ON";
+     --strict-iso-c)                options="$options -DENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE=ON";
                                   shift;;
-     --disable-c99)                options="$options -DENABLE_C99_COMPLIANCE=OFF";
+     --strict-iso-c)                options="$options -DENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE=OFF";
                                   shift;;
      --enable-docs)                options="$options -DBRLCAD_EXTRADOCS=ON";
                                   shift;;

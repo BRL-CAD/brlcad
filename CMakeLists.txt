@@ -1216,7 +1216,7 @@ endif(BRLCAD_ENABLE_VERBOSE_PROGRESS)
 option(BRLCAD_ENABLE_PROFILING "Build with profiling support" OFF)
 mark_as_advanced(BRLCAD_ENABLE_PROFILING)
 
-#====== POSIX, C99 ===================
+#====== POSIX ===================
 # Build with strict POSIX compliance checking
 set(ENABLE_POSIX_COMPLIANCE_ALIASES "ENABLE_POSIX")
 set(ENABLE_POSIX_COMPLIANCE_DESCRIPTION "
@@ -1224,7 +1224,7 @@ Build with strict POSIX compliance checking.  Defaults to OFF.
 
 Causes compiler options to be set for strict compliance with the
 minimum C and C++ standards acceptable according to current BRL-CAD
-policy.  The current minimum C standard is POSIX 200112 plus C99.
+policy.  The current minimum C standard is ??.
 There is no currently defined minimum C++ standard.
 ")
 BRLCAD_OPTION(OFF ENABLE_POSIX_COMPLIANCE
@@ -1232,30 +1232,19 @@ BRLCAD_OPTION(OFF ENABLE_POSIX_COMPLIANCE
   ENABLE_POSIX_COMPLIANCE_DESCRIPTION)
 mark_as_advanced(ENABLE_POSIX_COMPLIANCE)
 
-#== C99 ==
-set(ENABLE_C99_COMPLIANCE_ALIASES "ENABLE_C99")
-set(ENABLE_C99_COMPLIANCE_DESCRIPTION "
-Build with strict C99 compliance checking.  Defaults to OFF.
+#== ISO C ==
+set(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE_ALIASES "STRICT_ISO_C")
+set(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE_DESCRIPTION "
+Build with strict ISO C compliance checking.  Defaults to OFF.
 
-Causes C compiler options to be set for strict compliance with the C99
+Causes C compiler options to be set for strict compliance with the appropriate
+ISO C standard
 standard.
 ")
-BRLCAD_OPTION(OFF ENABLE_C99_COMPLIANCE
-  ENABLE_C99_COMPLIANCE_ALIASES
-  ENABLE_C99_COMPLIANCE_DESCRIPTION)
-mark_as_advanced(ENABLE_C99_COMPLIANCE)
-
-# only one of the two C std options is allowed
-set(STD_COMPLIANCE OFF)
-if (ENABLE_POSIX_COMPLIANCE)
-  set(ENABLE_C99_COMPLIANCE OFF)
-  set(STD_COMPLIANCE ON)
-elseif(ENABLE_C99_COMPLIANCE)
-  set(ENABLE_POSIX_COMPLIANCE OFF)
-  set(STD_COMPLIANCE ON)
-endif()
-
-#====== POSIX, C99 ===================
+BRLCAD_OPTION(OFF ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE
+  ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE_ALIASES
+  ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE_DESCRIPTION)
+mark_as_advanced(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE)
 
 # Build with dtrace support
 option(BRLCAD_ENABLE_DTRACE "Build with dtrace support" OFF)
