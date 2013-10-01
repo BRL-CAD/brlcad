@@ -9,7 +9,7 @@ main(void)
 {
   char *nam = tmpnam(NULL);
   int fd = open(nam, O_WRONLY);
-  FILE *fp __attribute((unused))__ = fdopen(fd, "w");
+  FILE *fp __attribute__((unused)) = fdopen(fd, "w");
 
   return 0;
 }
