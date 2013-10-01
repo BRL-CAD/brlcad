@@ -1827,6 +1827,37 @@ if("${HAVE_PROGRAM_INVOCATION_NAME}" MATCHES "^${HAVE_PROGRAM_INVOCATION_NAME}$"
   endif(HAVE_PROGRAM_INVOCATION_NAME)
 endif("${HAVE_PROGRAM_INVOCATION_NAME}" MATCHES "^${HAVE_PROGRAM_INVOCATION_NAME}$")
 
+#-----------------------------------------------------------------------
+# check C99 missing functions with a more rigourously-controlled compiler envirinment
+if(STD_COMPLIANCE)
+
+  set(needed_FUNCS
+    test_fdopen
+    test_fileno
+    test_realpath
+    test_gethostname
+    test_posix_memalign
+    test_strcasecmp
+    test_strncasecmp
+  )
+
+  foreach(tprog ${needed_FUNCS})
+    # remove "test_" from tprog
+    STRING(REGEX REPLACE "test_" "" func ${tprog})
+    STRING(TOUPPER "${prog}" func)
+    try_compile(success
+      "${CMAKE_BINARY_DIR}/test_funcs"
+      "${CMAKE_SOURCE_DIR}/src/compat/${tprog}.c"
+      CMAKE_FLAGS "${CMAKE_C_FLAGS}"
+      OUTPUT_VARIABLE log
+    )
+    if(success)
+      CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_WORKING_${func}_FUNCTION 1\n")
+    endif()
+  endforeach()
+
+endif()
+#-----------------------------------------------------------------------
 
 # On Windows, we need to check for hypot etc.  This test pertains
 # to the windows specific config file, not CONFIG_H_FILE - hence,
