@@ -1216,7 +1216,7 @@ endif(BRLCAD_ENABLE_VERBOSE_PROGRESS)
 option(BRLCAD_ENABLE_PROFILING "Build with profiling support" OFF)
 mark_as_advanced(BRLCAD_ENABLE_PROFILING)
 
-#====== POSIX, C99, C89 ===================
+#====== POSIX, C99 ===================
 # Build with strict POSIX compliance checking
 set(ENABLE_POSIX_COMPLIANCE_ALIASES "ENABLE_POSIX")
 set(ENABLE_POSIX_COMPLIANCE_DESCRIPTION "
@@ -1245,36 +1245,17 @@ BRLCAD_OPTION(OFF ENABLE_C99_COMPLIANCE
   ENABLE_C99_COMPLIANCE_DESCRIPTION)
 mark_as_advanced(ENABLE_C99_COMPLIANCE)
 
-#== C89 ==
-set(ENABLE_C89_COMPLIANCE_ALIASES "ENABLE_C89")
-set(ENABLE_C89_COMPLIANCE_DESCRIPTION "
-Build with strict C89 compliance checking.  Defaults to OFF.
-
-Causes C compiler options to be set for strict compliance with the C89
-standard.
-")
-BRLCAD_OPTION(OFF ENABLE_C89_COMPLIANCE
-  ENABLE_C89_COMPLIANCE_ALIASES
-  ENABLE_C89_COMPLIANCE_DESCRIPTION)
-mark_as_advanced(ENABLE_C89_COMPLIANCE)
-
-# only one of the three C options is allowed
+# only one of the two C std options is allowed
 set(STD_COMPLIANCE OFF)
 if (ENABLE_POSIX_COMPLIANCE)
-  set(ENABLE_C89_COMPLIANCE OFF)
   set(ENABLE_C99_COMPLIANCE OFF)
   set(STD_COMPLIANCE ON)
 elseif(ENABLE_C99_COMPLIANCE)
   set(ENABLE_POSIX_COMPLIANCE OFF)
-  set(ENABLE_C89_COMPLIANCE OFF)
-  set(STD_COMPLIANCE ON)
-elseif(ENABLE_C89_COMPLIANCE)
-  set(ENABLE_POSIX_COMPLIANCE OFF)
-  set(ENABLE_C99_COMPLIANCE OFF)
   set(STD_COMPLIANCE ON)
 endif()
 
-#====== POSIX, C89, C99 ===================
+#====== POSIX, C99 ===================
 
 # Build with dtrace support
 option(BRLCAD_ENABLE_DTRACE "Build with dtrace support" OFF)
