@@ -10,6 +10,9 @@ functions not yet available are so marked.
 Note that some bu_* functions use non-C99 solutions so they need to be
 fixed.  Those functions are so marked.
 
+There are currently seven functions NOT in C99.  Of those seven, only
+three have no working bu_* solution.
+
 ==================================================================
 
 ------------------------------------------------------------------
@@ -64,7 +67,7 @@ stds: 4.4BSD, POSIX.1-2001.
 
 fix:
 
-  use bu_realpath (needs to be made C99-usable)
+  use bu_realpath
 ------------------------------------------------------------------
 error: implicit declaration of function 'strcasecmp'
 error: implicit declaration of function 'strncasecmp'
@@ -77,6 +80,6 @@ stds: 4.4BSD, POSIX.1-2001.
 
 fix:
 
-  use bu_strcasecmp (needs to be made C99-usable)
-  use bu_strncasecmp (needs to be made C99-usable)
+  use bu_strcasecmp
+  use bu_strncasecmp
 ------------------------------------------------------------------
