@@ -1522,7 +1522,7 @@ show_help(const char *name, const char *optstr)
     const char *cp = optstr;
 
     while (cp && *cp != '\0') {
-	if (*cp == ':') {
+	if (*cp == ':' || *cp == 'h' || *cp == '?') {
 	    cp++;
 	    continue;
 	}
