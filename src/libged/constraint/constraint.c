@@ -124,13 +124,27 @@ ged_constraint(struct ged *gedp, int argc, const char *argv[])
      * constraint set c2 colinear arb8.E[1] rpc.E[0]
      * constraint set c3 tangent car terrain.r
      * constraint set c4 equal ell.R[1] arb8.E[2]
+     * constraint set p0 expression ell.R[0]=10.0
+     * constriant set p1 expression eto.A=40.2
+     * constraint set p2 expression 4
+     * constraint set p3 expression ell.R[1] * p2
+     * constraint set p4 expression sph.R[0]=p3-10.5*magnitude(ell.V)
      * constraint get c1 c3
      * constraint show c1 c2 c3 c4
      * constraint rm c1 tangent
      *
+     * functions:
+     *   magnitude(vector)
+     *   length(curve)
+     *   angle(curve1, curve2)
+     *   area(surface)
+     *   radius(arccurve)
+     *   diameter(arccurve)
+     *
      * attr set c1 cad:description "this keeps our car on the ground"
      * attr set c1 cad:plot 0|1
      * attr set c1 cad:reference 0|1
+     * attr set c1 cad:format value|name|expression (name=value)
      */
 
     static struct bu_cmdtab pc_cmds[] = {
