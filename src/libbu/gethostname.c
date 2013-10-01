@@ -45,12 +45,12 @@ bu_gethostname(char *hostname, size_t hostlen)
 	bu_log("ERROR: unable to initialize networking\n");
 #endif
 
-#ifdef HAVE_GETHOSTNAME
+#if defined(HAVE_WORKING_GETHOSTNAME_FUNCTION)
     status = gethostname(hostname, hostlen);
 #else
 
     /* gethostname is POSIX but not a C99.  fallback to nothing. */
-    bu_strlcpy(hostname, "unknown", hostlen)
+    bu_strlcpy(hostname, "unknown", hostlen);
     status = 0; /* no error */
 
 #endif

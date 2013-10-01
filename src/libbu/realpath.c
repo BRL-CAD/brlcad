@@ -33,7 +33,7 @@ bu_realpath(const char *path, char *resolved_path)
     if (!resolved_path)
 	resolved_path = (char *) bu_calloc(MAXPATHLEN, sizeof(char), "resolved_path alloc");
 
-#if defined(HAVE_REALPATH)
+#if defined(HAVE_WORKING_REALPATH_FUNCTION)
     {
 	char *dirpath = NULL;
 	dirpath = realpath(path, resolved_path);
