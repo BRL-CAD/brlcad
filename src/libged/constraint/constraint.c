@@ -28,11 +28,15 @@
 HIDDEN int
 constraint_set(void *datap, int argc, const char *argv[])
 {
+    struct directory *dp;
     struct ged *gedp = (struct ged *)datap;
     if (!gedp || argc < 1 || !argv)
 	return BRLCAD_ERROR;
 
-    bu_vls_printf(gedp->ged_result_str, "set called\n");
+    /* load the constraint object */
+    GED_DB_LOOKUP(gedp, dp, argv[2], LOOKUP_QUIET, BRLCAD_ERROR);
+
+    bu_vls_printf(gedp->ged_result_str, "<<constraint set here>>\n");
 
     return BRLCAD_OK;
 }
@@ -41,11 +45,15 @@ constraint_set(void *datap, int argc, const char *argv[])
 HIDDEN int
 constraint_get(void *datap, int argc, const char *argv[])
 {
+    struct directory *dp;
     struct ged *gedp = (struct ged *)datap;
     if (!gedp || argc < 1 || !argv)
 	return BRLCAD_ERROR;
 
-    bu_vls_printf(gedp->ged_result_str, "get called\n");
+    /* load the constraint object */
+    GED_DB_LOOKUP(gedp, dp, argv[2], LOOKUP_QUIET, BRLCAD_ERROR);
+
+    bu_vls_printf(gedp->ged_result_str, "<<constraint get here>>\n");
 
     return BRLCAD_OK;
 }
@@ -54,11 +62,16 @@ constraint_get(void *datap, int argc, const char *argv[])
 HIDDEN int
 constraint_show(void *datap, int argc, const char *argv[])
 {
+    struct directory *dp;
     struct ged *gedp = (struct ged *)datap;
     if (!gedp || argc < 1 || !argv)
 	return BRLCAD_ERROR;
 
-    bu_vls_printf(gedp->ged_result_str, "show called\n");
+    /* load the constraint object */
+    GED_DB_LOOKUP(gedp, dp, argv[2], LOOKUP_QUIET, BRLCAD_ERROR);
+
+    bu_vls_printf(gedp->ged_result_str, "Constraint %s:\n", argv[2]);
+    bu_vls_printf(gedp->ged_result_str, "<<constraint show here>>\n");
 
     return BRLCAD_OK;
 }
@@ -67,11 +80,15 @@ constraint_show(void *datap, int argc, const char *argv[])
 HIDDEN int
 constraint_rm(void *datap, int argc, const char *argv[])
 {
+    struct directory *dp;
     struct ged *gedp = (struct ged *)datap;
     if (!gedp || argc < 1 || !argv)
 	return BRLCAD_ERROR;
 
-    bu_vls_printf(gedp->ged_result_str, "rm called\n");
+    /* load the constraint object */
+    GED_DB_LOOKUP(gedp, dp, argv[2], LOOKUP_QUIET, BRLCAD_ERROR);
+
+    bu_vls_printf(gedp->ged_result_str, "Removing %s constraint\n", argv[2]);
 
     return BRLCAD_OK;
 }
@@ -80,11 +97,16 @@ constraint_rm(void *datap, int argc, const char *argv[])
 HIDDEN int
 constraint_eval(void *datap, int argc, const char *argv[])
 {
+    struct directory *dp;
     struct ged *gedp = (struct ged *)datap;
     if (!gedp || argc < 1 || !argv)
 	return BRLCAD_ERROR;
 
-    bu_vls_printf(gedp->ged_result_str, "eval called\n");
+    /* load the constraint object */
+    GED_DB_LOOKUP(gedp, dp, argv[2], LOOKUP_QUIET, BRLCAD_ERROR);
+
+    bu_vls_printf(gedp->ged_result_str, "Evaluating %s constraint\n", argv[2]);
+    bu_vls_printf(gedp->ged_result_str, "<<constraint eval here>>\n");
 
     return BRLCAD_OK;
 }
@@ -93,13 +115,28 @@ constraint_eval(void *datap, int argc, const char *argv[])
 HIDDEN int
 constraint_auto(void *datap, int argc, const char *argv[])
 {
+    struct directory *dp;
     struct ged *gedp = (struct ged *)datap;
     if (!gedp || argc < 1 || !argv)
 	return BRLCAD_ERROR;
 
-    bu_vls_printf(gedp->ged_result_str, "auto called\n");
+    /* load the constraint object */
+    GED_DB_LOOKUP(gedp, dp, argv[2], LOOKUP_QUIET, BRLCAD_ERROR);
+
+    bu_vls_printf(gedp->ged_result_str, "Autoconstraining %s\n", argv[2]);
+    bu_vls_printf(gedp->ged_result_str, "<<constraint auto here>>\n");
 
     return BRLCAD_OK;
+}
+
+
+HIDDEN void
+constraint_usage(struct bu_vls *vp, const char *argv0)
+{
+    static const char *usage = "{set|get|show|rm|eval|auto} constraint_name [expression[=value] ...]";
+
+    bu_vls_printf(vp, "Usage: %s %s\n", argv0, usage);
+    bu_vls_printf(vp, "  or   %s help [command]\n", argv0);
 }
 
 
@@ -110,7 +147,64 @@ constraint_help(void *datap, int argc, const char *argv[])
     if (!gedp || argc < 1 || !argv)
 	return BRLCAD_ERROR;
 
-    bu_vls_printf(gedp->ged_result_str, "help called\n");
+    bu_vls_printf(gedp->ged_result_str, "Help for the %s command\n\n", argv[0]);
+
+    constraint_usage(gedp->ged_result_str, argv[0]);
+
+    bu_vls_printf(gedp->ged_result_str, "\nConstraint Expressions:\n");
+    bu_vls_printf(gedp->ged_result_str, "\tcoincident {{point point}|{point edge}|{edge edge}}\n");
+    bu_vls_printf(gedp->ged_result_str, "\t\tspecified entities stay connected\n");
+    bu_vls_printf(gedp->ged_result_str, "\tcolinear {line line}\n");
+    bu_vls_printf(gedp->ged_result_str, "\t\tstraight edges are segments along the same line\n");
+    bu_vls_printf(gedp->ged_result_str, "\tconcentric {circle circle}\n");
+    bu_vls_printf(gedp->ged_result_str, "\t\tcircle/arc curves maintain equal center point\n");
+    bu_vls_printf(gedp->ged_result_str, "\tfixed {point|edge|face|object}\n");
+    bu_vls_printf(gedp->ged_result_str, "\t\tspecified entity is immutable w.r.t. global coordinate system\n");
+    bu_vls_printf(gedp->ged_result_str, "\tparallel {{edge edge}|{face face}|{object object}}\n");
+    bu_vls_printf(gedp->ged_result_str, "\t\tspecified entities are parallel to each other\n");
+    bu_vls_printf(gedp->ged_result_str, "\tperpendicular {{edge edge}|{face face}|{object object}}\n");
+    bu_vls_printf(gedp->ged_result_str, "\t\tspecified entities are perpendicular (90 degrees angle to each other\n");
+    bu_vls_printf(gedp->ged_result_str, "\thorizontal {{point point}|edge|vector}\n");
+    bu_vls_printf(gedp->ged_result_str, "\t\tspecified entities have X/Y values all set to match each other\n");
+    bu_vls_printf(gedp->ged_result_str, "\tvertical {{point point}|edge|vector}\n");
+    bu_vls_printf(gedp->ged_result_str, "\t\tspecified entities have Z values all set to match each other\n");
+    bu_vls_printf(gedp->ged_result_str, "\ttangent {point|edge|face|object} {point|edge|face|object}\n");
+    bu_vls_printf(gedp->ged_result_str, "\t\tspecified entities maintain contact (point sets overlap without intersecting)\n");
+    bu_vls_printf(gedp->ged_result_str, "\tsymmetric {{point point}|{curve curve}} line\n");
+    bu_vls_printf(gedp->ged_result_str, "\t\tspecified symmetry about an axis\n");
+    bu_vls_printf(gedp->ged_result_str, "\tequal {point|edge|face|object} {point|edge|face|object}\n");
+    bu_vls_printf(gedp->ged_result_str, "\t\tspecified values are set equal in magnitude/length/area to each other\n");
+
+    bu_vls_printf(gedp->ged_result_str, "\nEntity Functions:\n");
+    bu_vls_printf(gedp->ged_result_str, "\tbisect(curve) => point\n");
+    bu_vls_printf(gedp->ged_result_str, "\tcenter(surface) => point\n");
+    bu_vls_printf(gedp->ged_result_str, "\tcentroid(object) => point\n");
+    bu_vls_printf(gedp->ged_result_str, "\tcurvature(curve1, t) => vector\n");
+
+    bu_vls_printf(gedp->ged_result_str, "\nValue Functions:\n");
+    bu_vls_printf(gedp->ged_result_str, "\tangle(curve1, curve2) => value\n");
+    bu_vls_printf(gedp->ged_result_str, "\tarea(surface) => value\n");
+    bu_vls_printf(gedp->ged_result_str, "\tdiameter(arccurve) => value\n");
+    bu_vls_printf(gedp->ged_result_str, "\tdistance(entity, entity) => value\n");
+    bu_vls_printf(gedp->ged_result_str, "\thdistance(entity, entity) => value\n");
+    bu_vls_printf(gedp->ged_result_str, "\tlength(curve) => value\n");
+    bu_vls_printf(gedp->ged_result_str, "\tmagnitude(vector) => value\n");
+    bu_vls_printf(gedp->ged_result_str, "\tradius(arccurve) => value\n");
+    bu_vls_printf(gedp->ged_result_str, "\tvdistance(entity, entity) => value\n");
+
+    bu_vls_printf(gedp->ged_result_str, "\nExamples:\n");
+    bu_vls_printf(gedp->ged_result_str, "\t%s set c1 coincident ell.V arb8.P[4]\n", argv[0]);
+    bu_vls_printf(gedp->ged_result_str, "\t%s set c2 colinear arb8.E[1] rpc.E[0]\n", argv[0]);
+    bu_vls_printf(gedp->ged_result_str, "\t%s set c3 tangent car terrain.r\n", argv[0]);
+    bu_vls_printf(gedp->ged_result_str, "\t%s set c4 equal ell.R[1] arb8.E[2]\n", argv[0]);
+    bu_vls_printf(gedp->ged_result_str, "\t%s set p0 expression ell.R[0]=10.0\n", argv[0]);
+    bu_vls_printf(gedp->ged_result_str, "\t%s set p1 expression eto.A=40.2\n", argv[0]);
+    bu_vls_printf(gedp->ged_result_str, "\t%s set p2 expression 4\n", argv[0]);
+    bu_vls_printf(gedp->ged_result_str, "\t%s set p3 expression ell.R[1] * p2\n", argv[0]);
+    bu_vls_printf(gedp->ged_result_str, "\t%s set p4 expression sph.R[0]=p3-10.5*magnitude(ell.V, argv[0])\n", argv[0]);
+    bu_vls_printf(gedp->ged_result_str, "\t%s get c1 c3\n", argv[0]);
+    bu_vls_printf(gedp->ged_result_str, "\t%s show c1 c2 c3 c4\n", argv[0]);
+    bu_vls_printf(gedp->ged_result_str, "\t%s rm c1 tangent\n", argv[0]);
 
     return BRLCAD_OK;
 }
@@ -119,64 +213,7 @@ constraint_help(void *datap, int argc, const char *argv[])
 int
 ged_constraint(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char *usage = "{set|get|show|rm|eval|auto|help} constraint_name [expression[=value] ...]";
-
-#if 0
-    /* specified points/edges stay equal */
-    static const char *coincident = "coincident {{point point}|{point edge}|{edge edge}}";
-    /* two straight edges are segments on the same line */
-    static const char *colinear = "colinear {line line}";
-    /* circle/arc curves maintain equal center point */
-    static const char *concentric = "concentric {circle circle}";
-    /* specified entity is immutable w.r.t. global coordinate system */
-    static const char *fixed = "fixed {point|edge|face|object}";
-    /* specified entities are parallel to each other */
-    static const char *parallel = "parallel {{edge edge}|{face face}|{object object}}";
-    /* specified entities are perpendicular (90 degrees angle to each other */
-    static const char *perpendicular = "perpendicular {{edge edge}|{face face}|{object object}}";
-    /* specified entities have X/Y values all set to match each other */
-    static const char *horizontal = "horizontal {{point point}|edge|vector}";
-    /* specified entities have Z values all set to match each other */
-    static const char *vertical = "vertical {{point point}|edge|vector}";
-    /* specified entities maintain contact (point sets overlap without intersecting) */
-    static const char *tangent = "tangent {point|edge|face|object} {point|edge|face|object}";
-    /* specified symmetry about an axis */
-    static const char *symmetric = "symmetric {{point point}|{curve curve}} line";
-    /* specified values are set equal in magnitude/length/area to each other */
-    static const char *equal = "equal {point|edge|face|object} {point|edge|face|object}";
-#endif
-
-    /* Examples:
-     *
-     * constraint set c1 coincident ell.V arb8.P[4]
-     * constraint set c2 colinear arb8.E[1] rpc.E[0]
-     * constraint set c3 tangent car terrain.r
-     * constraint set c4 equal ell.R[1] arb8.E[2]
-     * constraint set p0 expression ell.R[0]=10.0
-     * constraint set p1 expression eto.A=40.2
-     * constraint set p2 expression 4
-     * constraint set p3 expression ell.R[1] * p2
-     * constraint set p4 expression sph.R[0]=p3-10.5*magnitude(ell.V)
-     * constraint get c1 c3
-     * constraint show c1 c2 c3 c4
-     * constraint rm c1 tangent
-     *
-     * 3d functions:
-     *   bisect(curve)=>point
-     *   centroid(object)=>point
-     *   center(surface)=>point
-     *   curvature(curve1, t)
-     *
-     * 1d functions:
-     *   magnitude(vector)
-     *   length(curve)
-     *   angle(curve1, curve2)
-     *   area(surface)
-     *   radius(arccurve)
-     *   diameter(arccurve)
-     *   distance(entity, entity)
-     *   hdistance(entity, entity)
-     *   vdistance(entity, entity)
+    /* Potential constrainat attributes:
      *
      * attr set c1 cad:description "this keeps our car on the ground"
      * attr set c1 cad:plot 0|1
@@ -197,16 +234,25 @@ ged_constraint(struct ged *gedp, int argc, const char *argv[])
 
     int ret;
     int cmdret;
-    struct directory *dp;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
-    if (argc < 3) {
+    if (argc < 2) {
 	/* must be wanting help */
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n", argv[0], usage);
+	constraint_usage(gedp->ged_result_str, argv[0]);
+	return GED_HELP;
+    }
+    if (BU_STR_EQUIV(argv[1], "help")) {
+        constraint_help(gedp, argc, argv);
+	return GED_OK;
+    }
+
+    if (argc < 3) {
+	/* must be confused */
+	constraint_usage(gedp->ged_result_str, argv[0]);
 	return GED_HELP;
     }
 
@@ -218,13 +264,10 @@ ged_constraint(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    /* load the constraint object */
-    GED_DB_LOOKUP(gedp, dp, argv[2], LOOKUP_QUIET, GED_ERROR);
-
     /* run our command */
-    ret = bu_cmd(pc_cmds, argc-1, argv+1, 0, gedp, &cmdret);
+    ret = bu_cmd(pc_cmds, argc, argv, 1, gedp, &cmdret);
     if (ret != BRLCAD_OK) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n", argv[0], usage);
+	constraint_usage(gedp->ged_result_str, argv[0]);
 	return GED_ERROR;
     }
     if (cmdret != BRLCAD_OK)
