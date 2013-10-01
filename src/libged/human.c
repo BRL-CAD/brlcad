@@ -390,9 +390,8 @@ makeHead(struct rt_wdb (*file), char *name, struct human_data_t *dude, fastf_t *
 
     VSET(headFix, dude->joints.headJoint[X], dude->joints.headJoint[Y], dude->joints.headJoint[Z]+head);
 
-    if (showBoxes) {
+    if (showBoxes)
 	boundingBox(file, name, headFix, lengthVector, (lengthVector[Z]/2), rotMatrix);
-    }
     return 0;
 }
 
@@ -407,9 +406,8 @@ makeNeck(struct rt_wdb *file, char *name, struct human_data_t *dude, fastf_t *di
     VADD2(dude->joints.neckJoint, dude->joints.headJoint, dude->head.neckVector);
     mk_rcc(file, name, dude->joints.headJoint, dude->head.neckVector, dude->head.neckWidth);
 
-    if (showBoxes) {
+    if (showBoxes)
 	boundingBox(file, name, dude->joints.headJoint, startVector, dude->head.neckWidth, rotMatrix);
-    }
     return dude->head.neckWidth;
 }
 
@@ -443,9 +441,8 @@ makeUpperTorso(struct rt_wdb *file, char *name, struct human_data_t *dude, fastf
     /* Torso will be an ellipsoidal tgc, for more realistic shape */
     mk_tgc(file, name, dude->joints.neckJoint, dude->torso.topTorsoVector, a, b, c, d);
 
-    if (showBoxes) {
+    if (showBoxes)
 	boundingRectangle(file, name, dude->joints.neckJoint, startVector, dude->torso.shoulderWidth, (dude->torso.shoulderWidth/2), rotMatrix);
-    }
     return dude->torso.abWidth;
 }
 
@@ -476,9 +473,8 @@ makeLowerTorso(struct rt_wdb *file, char *name, struct human_data_t *dude, fastf
 /*
  *	mk_trc_h(file, name, abdomenJoint, lowTorsoVector, abWidth, pelvisWidth);
  */
-    if (showBoxes) {
+    if (showBoxes)
 	boundingRectangle(file, name, dude->joints.abdomenJoint, startVector, dude->torso.pelvisWidth, (dude->torso.pelvisWidth/2), rotMatrix);
-    }
     return dude->torso.pelvisWidth;
 }
 
@@ -504,7 +500,7 @@ makeShoulderJoint(struct rt_wdb *file, int isLeft, char *name, struct human_data
 	    setDirection(startVector, lengthVector, rotMatrix, dude->arms.lArmDirection[X], dude->arms.lArmDirection[Y], dude->arms.lArmDirection[Z]);
 	    VSET(leftFix, dude->joints.leftShoulderJoint[X], dude->joints.leftShoulderJoint[Y], (dude->joints.leftShoulderJoint[Z]-shoulder));
 	    boundingBox(file, name, leftFix, lengthVector, (lengthVector[Z]/2), rotMatrix);
-	} else{
+	} else {
 	    setDirection(startVector, lengthVector, rotMatrix, dude->arms.rArmDirection[X], dude->arms.rArmDirection[Y], dude->arms.rArmDirection[Z]);
 	    VSET(rightFix, dude->joints.rightShoulderJoint[X], dude->joints.rightShoulderJoint[Y], (dude->joints.rightShoulderJoint[Z]-shoulder));
 	    boundingBox(file, name, rightFix, lengthVector, (lengthVector[Z]/2), rotMatrix);
@@ -2431,9 +2427,8 @@ ged_human(struct ged *gedp, int ac, const char *av[])
 	    bu_log("Adding Members\n");
 	    BU_LIST_INIT(&human.l);
 	    BU_LIST_INIT(&crowd.l);
-	    if (showBoxes) {
+	    if (showBoxes)
 		BU_LIST_INIT(&boxes.l);
-	    }
 
 	    /*This value is the number of items in char names */
 	    while (x<28) {
