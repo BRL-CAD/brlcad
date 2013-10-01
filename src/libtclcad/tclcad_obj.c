@@ -10393,7 +10393,7 @@ to_poly_cont_build_end(struct ged *gedp,
     if (argv[0][0] == 's')
 	gdvp->gdv_view->gv_sdata_polygons.gdps_cflag = 0;
     else
-	gdvp->gdv_view->gv_data_polygons.gdps_cflag = 0;;
+	gdvp->gdv_view->gv_data_polygons.gdps_cflag = 0;
 
     gedp->ged_gvp = gdvp->gdv_view;
     to_refresh_view(gdvp);

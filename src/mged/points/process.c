@@ -165,7 +165,7 @@ process_type(point_line_t *plt, const char *type, int code) {
     }
 
     plt->type = type;
-    plt->code = code;;
+    plt->code = code;
 
     return;
 }

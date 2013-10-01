@@ -890,7 +890,7 @@ utah_isTrimmed(ON_2dPoint uv, const ON_BrepFace *face) {
 	// for each trim
 	ON_3dPoint closestPoint;
 	ON_3dVector tangent, kappa;
-	double currentDistance = -10000.0;;
+	double currentDistance = -10000.0;
 	ON_3dPoint hitPoint(uv.x, uv.y, 0.0);
 	for (int lti = 0; lti < loop->TrimCount(); lti++) {
 	    const ON_BrepTrim* trim = loop->Trim(lti);

@@ -1274,7 +1274,7 @@ main(int argc, char **argv)
 
 	g_pts[grid_used].gid = gid;
 	g_pts[grid_used].cid = cid;
-	g_pts[grid_used].v = (struct vertex **)bu_calloc(pshell_count + 1, sizeof(struct vertex *), "g_pts vertex array");;
+	g_pts[grid_used].v = (struct vertex **)bu_calloc(pshell_count + 1, sizeof(struct vertex *), "g_pts vertex array");
 	VMOVE(g_pts[grid_used].pt, tmp);
 	grid_used++;
     }

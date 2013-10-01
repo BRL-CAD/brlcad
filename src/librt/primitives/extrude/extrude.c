@@ -1944,7 +1944,7 @@ classify_sketch_loops(struct bu_ptbl *loopa, struct bu_ptbl *loopb, struct rt_sk
     tol.magic = BN_TOL_MAGIC;
     tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;
-    tol.perp = 1.0e-6;;
+    tol.perp = 1.0e-6;
     tol.para = 1.0 - tol.perp;
 
     /* find points on a midpoint of a segment for each loop */

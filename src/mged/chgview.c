@@ -342,7 +342,7 @@ edit_com(int argc,
 	char **new_argv = NULL;
 	struct bu_ptbl *tbl;
 
-	remaining_args = argc - last_opt - 1;;
+	remaining_args = argc - last_opt - 1;
 
 	if (remaining_args < 2 || remaining_args % 2) {
 	    bu_log("Error: must have even number of arguments (name/value pairs)\n");

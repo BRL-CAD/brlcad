@@ -469,9 +469,9 @@ promote_ints(struct bu_list *head,
 		    a->seg_stp = ON_SURF;
 		    tmp = b;
 		    b = BU_LIST_PNEXT(seg, &b->l);
-		    BU_LIST_DEQUEUE(&tmp->l)
-			RT_FREE_SEG(tmp, dgcdp->ap->a_resource)
-			continue;;
+		    BU_LIST_DEQUEUE(&tmp->l);
+		    RT_FREE_SEG(tmp, dgcdp->ap->a_resource);
+		    continue;
 		}
 
 		if (ZERO(a->seg_out.hit_dist - b->seg_out.hit_dist))

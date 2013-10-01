@@ -416,7 +416,7 @@ _handle_UnlabeledValueArg2(bu_arg_unlabeled_value_t *a, CmdLine &cmd)
   Arg *A = 0;
   switch (val_type) {
       case BU_ARG_BOOL: {
-        bool val = bu_str_true(a->def_val);;
+        bool val = bu_str_true(a->def_val);
         type_desc = "bool";
         A = new UnlabeledValueArg<bool>(a->name, a->desc, a->req, val, type_desc);
       }

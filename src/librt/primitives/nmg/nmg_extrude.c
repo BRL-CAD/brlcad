@@ -627,7 +627,7 @@ nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
 	    bu_log("nmg_fix_overlapping_loops: cannot find start point for new loops\n");
 	    bu_log("lu1=x%x, lu2=x%x\n", lu1, lu2);
 	    nmg_pr_fu_briefly(fu, (char *)NULL);
-	    continue;;
+	    continue;
 	}
 
 	bu_ptbl_reset(&loops);

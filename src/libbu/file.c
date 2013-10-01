@@ -215,7 +215,7 @@ file_access(const char *path, int access_level)
 #endif
 
     /* check other */
-    return sb.st_mode & (mask & oth_mask);;
+    return sb.st_mode & (mask & oth_mask);
 }
 
 
