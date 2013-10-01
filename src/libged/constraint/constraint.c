@@ -157,7 +157,7 @@ constraint_help(void *datap, int argc, const char *argv[])
     bu_vls_printf(gedp->ged_result_str, "\tcolinear {line line}\n");
     bu_vls_printf(gedp->ged_result_str, "\t\tstraight edges are segments along the same line\n");
     bu_vls_printf(gedp->ged_result_str, "\tconcentric {circle circle}\n");
-    bu_vls_printf(gedp->ged_result_str, "\t\tcircle/arc curves maintain equal center point\n");
+    bu_vls_printf(gedp->ged_result_str, "\t\tcircle/arc curves maintain same center point\n");
     bu_vls_printf(gedp->ged_result_str, "\tfixed {point|edge|face|object}\n");
     bu_vls_printf(gedp->ged_result_str, "\t\tspecified entity is immutable w.r.t. global coordinate system\n");
     bu_vls_printf(gedp->ged_result_str, "\tparallel {{edge edge}|{face face}|{object object}}\n");
@@ -174,6 +174,8 @@ constraint_help(void *datap, int argc, const char *argv[])
     bu_vls_printf(gedp->ged_result_str, "\t\tspecified symmetry about an axis\n");
     bu_vls_printf(gedp->ged_result_str, "\tequal {point|edge|face|object} {point|edge|face|object}\n");
     bu_vls_printf(gedp->ged_result_str, "\t\tspecified values are set equal in magnitude/length/area to each other\n");
+    bu_vls_printf(gedp->ged_result_str, "\tformula {value}\n");
+    bu_vls_printf(gedp->ged_result_str, "\t\tdefines parametric equations, values, and variables\n");
 
     bu_vls_printf(gedp->ged_result_str, "\nEntity Functions:\n");
     bu_vls_printf(gedp->ged_result_str, "\tbisect(curve) => point\n");
@@ -197,11 +199,11 @@ constraint_help(void *datap, int argc, const char *argv[])
     bu_vls_printf(gedp->ged_result_str, "\t%s set c2 colinear arb8.E[1] rpc.E[0]\n", argv[0]);
     bu_vls_printf(gedp->ged_result_str, "\t%s set c3 tangent car terrain.r\n", argv[0]);
     bu_vls_printf(gedp->ged_result_str, "\t%s set c4 equal ell.R[1] arb8.E[2]\n", argv[0]);
-    bu_vls_printf(gedp->ged_result_str, "\t%s set p0 expression ell.R[0]=10.0\n", argv[0]);
-    bu_vls_printf(gedp->ged_result_str, "\t%s set p1 expression eto.A=40.2\n", argv[0]);
-    bu_vls_printf(gedp->ged_result_str, "\t%s set p2 expression 4\n", argv[0]);
-    bu_vls_printf(gedp->ged_result_str, "\t%s set p3 expression ell.R[1] * p2\n", argv[0]);
-    bu_vls_printf(gedp->ged_result_str, "\t%s set p4 expression sph.R[0]=p3-10.5*magnitude(ell.V, argv[0])\n", argv[0]);
+    bu_vls_printf(gedp->ged_result_str, "\t%s set p0 formula ell.R[0]=10.0\n", argv[0]);
+    bu_vls_printf(gedp->ged_result_str, "\t%s set p1 formula eto.A=40.2\n", argv[0]);
+    bu_vls_printf(gedp->ged_result_str, "\t%s set p2 formula 4\n", argv[0]);
+    bu_vls_printf(gedp->ged_result_str, "\t%s set p3 formula ell.R[1] * p2\n", argv[0]);
+    bu_vls_printf(gedp->ged_result_str, "\t%s set p4 formula sph.R[0]=p3-10.5*magnitude(ell.V, argv[0])\n", argv[0]);
     bu_vls_printf(gedp->ged_result_str, "\t%s get c1 c3\n", argv[0]);
     bu_vls_printf(gedp->ged_result_str, "\t%s show c1 c2 c3 c4\n", argv[0]);
     bu_vls_printf(gedp->ged_result_str, "\t%s rm c1 tangent\n", argv[0]);
