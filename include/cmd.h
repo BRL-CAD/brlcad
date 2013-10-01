@@ -61,7 +61,7 @@
  * bu_cmd().
  */
 struct bu_cmdtab {
-    char *ct_name;
+    const char *ct_name;
     int (*ct_func)(void *data, int argc, const char *argv[]);
 };
 
