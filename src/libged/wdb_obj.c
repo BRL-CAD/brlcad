@@ -9696,7 +9696,7 @@ static struct bu_cmdtab wdb_newcmds[] = {
     {"rmater",		(int (*)(void *, int, const char **))ged_rmater},
     {"shader",		(int (*)(void *, int, const char **))ged_shader},
     {"wmater",		(int (*)(void *, int, const char **))ged_wmater},
-    {(char *)NULL,	BU_CMD_NULL}
+    {(const char *)NULL, BU_CMD_NULL}
 };
 
 
@@ -9836,7 +9836,7 @@ static struct bu_cmdtab wdb_cmds[] = {
     {"whichid",		wdb_which_tcl},
     {"wmater",		wdb_newcmds_tcl},
     {"xpush",		wdb_xpush_tcl},
-    {(char *)NULL,	(int (*)())0 }
+    {(const char *)NULL, BU_CMD_NULL}
 };
 
 

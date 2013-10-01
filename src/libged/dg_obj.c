@@ -4480,7 +4480,7 @@ dgo_cmd(void *clientData, Tcl_Interp *UNUSED(interp), int argc, const char **arg
 	{"vnirt",		dgo_vnirt_tcl},
 	{"who",			dgo_who_tcl},
 	{"zap",			dgo_zap_tcl},
-	{(char *)0,		(int (*)())0}
+	{(const char *)NULL, BU_CMD_NULL}
     };
 
     if (bu_cmd(dgo_cmds, argc, argv, 1, clientData, &ret) == BRLCAD_OK)

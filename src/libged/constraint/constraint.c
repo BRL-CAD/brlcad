@@ -101,7 +101,7 @@ ged_constraint(struct ged *gedp, int argc, const char *argv[])
 	{"show", constraint_show},
 	{"rm", constraint_rm},
 	{"eval", constraint_eval},
-	{(char *)0, (int (*)())0}
+	{(const char *)NULL, BU_CMD_NULL}
     };
 
     int ret;

@@ -733,7 +733,7 @@ vdraw_cmd_tcl(struct dg_obj *dgop,
 	{"params",		vdraw_params_tcl},
 	{"open",		vdraw_open_tcl},
 	{"vlist",		vdraw_vlist_tcl},
-	{(char *)0,		(int (*)())0 }
+	{(const char *)NULL, BU_CMD_NULL}
     };
 
     if (bu_cmd(vdraw_cmds, argc-1, argv+1, 0, (ClientData)dgop, &ret) == BRLCAD_OK)

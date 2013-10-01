@@ -428,7 +428,7 @@ Bu_Init(void *p)
 	{"bu_get_value_by_keyword",	tcl_bu_get_value_by_keyword},
 	{"bu_rgb_to_hsv",		tcl_bu_rgb_to_hsv},
 	{"bu_hsv_to_rgb",		tcl_bu_hsv_to_rgb},
-	{(char *)NULL,			NULL }
+	{(const char *)NULL, BU_CMD_NULL}
     };
 
     /*XXX Use of brlcad_interp is temporary */

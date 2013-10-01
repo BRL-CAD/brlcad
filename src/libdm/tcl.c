@@ -129,9 +129,9 @@ int
 Dm_Init(void *interp)
 {
     static struct bu_cmdtab cmdtab[] = {
-	{"dm_validXType",	dm_validXType_tcl},
-	{"dm_bestXType",	dm_bestXType_tcl},
-	{(char *)0,		(int (*)())0}
+	{"dm_validXType", dm_validXType_tcl},
+	{"dm_bestXType", dm_bestXType_tcl},
+	{(const char *)NULL, BU_CMD_NULL}
     };
 
     struct bu_vls vls = BU_VLS_INIT_ZERO;

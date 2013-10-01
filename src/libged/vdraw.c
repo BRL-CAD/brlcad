@@ -747,7 +747,7 @@ vdraw_cmd(struct ged *gedp, int argc, const char *argv[])
 	{"params",		vdraw_params},
 	{"open",		vdraw_open},
 	{"vlist",		vdraw_vlist},
-	{(char *)0,		(int (*)())0 }
+	{(const char *)NULL, BU_CMD_NULL}
     };
 
     static const char *usage = "write|insert|delete|read|send|params|open|vlist [args]";

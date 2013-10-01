@@ -91,6 +91,7 @@ int main(int argc, char* argv[])
     icv_image_t *bif;
     ICV_IMAGE_FORMAT format=ICV_IMAGE_AUTO;
     ICV_FILTER filter = ICV_FILTER_LOW_PASS;
+
     if (argc<2) {
 	usage();
 	return 1;

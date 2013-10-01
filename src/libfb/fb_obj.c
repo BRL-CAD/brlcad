@@ -758,7 +758,7 @@ fbo_cmd(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char 
 	{"listen",	fbo_listen_tcl},
 	{"rect",	fbo_rect_tcl},
 	{"refresh",	fbo_refresh_tcl},
-	{(char *)0,	(int (*)())0}
+	{(const char *)NULL, BU_CMD_NULL}
     };
 
     if (bu_cmd(fbo_cmds, argc, argv, 1, clientData, &ret) == BRLCAD_OK)
