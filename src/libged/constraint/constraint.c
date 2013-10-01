@@ -91,6 +91,19 @@ constraint_eval(void *datap, int argc, const char *argv[])
 
 
 HIDDEN int
+constraint_auto(void *datap, int argc, const char *argv[])
+{
+    struct ged *gedp = (struct ged *)datap;
+    if (!gedp || argc < 1 || !argv)
+	return BRLCAD_ERROR;
+
+    bu_vls_printf(gedp->ged_result_str, "auto called\n");
+
+    return BRLCAD_OK;
+}
+
+
+HIDDEN int
 constraint_help(void *datap, int argc, const char *argv[])
 {
     struct ged *gedp = (struct ged *)datap;
@@ -106,11 +119,11 @@ constraint_help(void *datap, int argc, const char *argv[])
 int
 ged_constraint(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char *usage = "{set|get|show|rm|eval|help} constraint_name [expression[=value] ...]";
+    static const char *usage = "{set|get|show|rm|eval|auto|help} constraint_name [expression[=value] ...]";
 
 #if 0
     /* specified points/edges stay equal */
-    static const char *coincident = "coincident {{point point}|{edge edge}}";
+    static const char *coincident = "coincident {{point point}|{point edge}|{edge edge}}";
     /* two straight edges are segments on the same line */
     static const char *colinear = "colinear {line line}";
     /* circle/arc curves maintain equal center point */
@@ -122,11 +135,13 @@ ged_constraint(struct ged *gedp, int argc, const char *argv[])
     /* specified entities are perpendicular (90 degrees angle to each other */
     static const char *perpendicular = "perpendicular {{edge edge}|{face face}|{object object}}";
     /* specified entities have X/Y values all set to match each other */
-    static const char *horizontal = "horizontal {edge|face|object}";
+    static const char *horizontal = "horizontal {{point point}|edge|vector}";
     /* specified entities have Z values all set to match each other */
-    static const char *vertical = "vertical {edge|face|object}";
+    static const char *vertical = "vertical {{point point}|edge|vector}";
     /* specified entities maintain contact (point sets overlap without intersecting) */
     static const char *tangent = "tangent {point|edge|face|object} {point|edge|face|object}";
+    /* specified symmetry about an axis */
+    static const char *symmetric = "symmetric {{point point}|{curve curve}} line";
     /* specified values are set equal in magnitude/length/area to each other */
     static const char *equal = "equal {point|edge|face|object} {point|edge|face|object}";
 #endif
@@ -146,13 +161,22 @@ ged_constraint(struct ged *gedp, int argc, const char *argv[])
      * constraint show c1 c2 c3 c4
      * constraint rm c1 tangent
      *
-     * functions:
+     * 3d functions:
+     *   bisect(curve)=>point
+     *   centroid(object)=>point
+     *   center(surface)=>point
+     *   curvature(curve1, t)
+     *
+     * 1d functions:
      *   magnitude(vector)
      *   length(curve)
      *   angle(curve1, curve2)
      *   area(surface)
      *   radius(arccurve)
      *   diameter(arccurve)
+     *   distance(entity, entity)
+     *   hdistance(entity, entity)
+     *   vdistance(entity, entity)
      *
      * attr set c1 cad:description "this keeps our car on the ground"
      * attr set c1 cad:plot 0|1
@@ -166,6 +190,7 @@ ged_constraint(struct ged *gedp, int argc, const char *argv[])
 	{"show", constraint_show},
 	{"rm", constraint_rm},
 	{"eval", constraint_eval},
+	{"auto", constraint_auto},
 	{"help", constraint_help},
 	{(const char *)NULL, BU_CMD_NULL}
     };
