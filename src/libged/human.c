@@ -104,6 +104,8 @@ char *progname = "Human Model";
 char filename[MAXLENGTH]=DEFAULT_FILENAME;
 char humanName[MAXLENGTH]=DEFAULT_HUMANNAME;
 
+char *humanoptions="AbH:Llmn:N:O:o:p:s:tTvVw1:2:3:4:5:6:7:8:9:0:=:+:_:*:^:%:$:#:@:!:Q:~:Z:Y:X:h?";
+
 /** Human information structures */
 /** Location of all joints on the body located here */
 struct jointInfo
@@ -1586,8 +1588,7 @@ getLocation(fastf_t *location)
 HIDDEN int
 read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude, fastf_t *percentile, fastf_t *location, int *stance, int *troops, int *showBoxes)
 {
-    int c = 'A';
-    char *options="AbH:Llmn:N:O:o:p:s:tTvVw1:2:3:4:5:6:7:8:9:0:=:+:_:*:^:%:$:#:@:!:Q:~:Z:Y:X:h?";
+    int c;
     float height=0;
     int soldiers=0;
     int pose=0;
@@ -1595,10 +1596,10 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
     double x = 0; /* for stashing user input */
     int have_name = 0;
 
-    /* don't report errors (this is before bu_opterr was changed to 1 immed. below)*/
+    /* don't report errors (this is before bu_opterr was changed to 1 immed. below) */
     bu_opterr = 1;
     bu_optind = 1;
-    while ((c=bu_getopt(argc, (char * const *)argv, options)) != -1) {
+    while ((c=bu_getopt(argc, (char * const *)argv, humanoptions)) != -1) {
 	/*bu_log("%c \n", c); Testing to see if args are getting read */
 	switch (c) {
 	    case 'A':
@@ -1620,11 +1621,9 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
 		    bu_log("Impossible height, setting default height!\n");
 		    height = DEFAULT_HEIGHT_INCHES;
 		    dude->height = DEFAULT_HEIGHT_INCHES;
-		    bu_log("%.2f = height in inches\n", height);
-		} else {
+		} else
 		    dude->height = height;
-		    bu_log("%.2f = height in inches\n", height);
-		}
+		bu_log("%.2f = height in inches\n", height);
 		fflush(stdin);
 		Auto(dude);
 		break;
@@ -1840,7 +1839,7 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
 		break;
 
 	    default:
-		show_help(*argv, options);
+		show_help(*argv, humanoptions);
 		bu_exit(EXIT_SUCCESS, NULL);
 		fflush(stdin);
 		break;
@@ -1849,7 +1848,7 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
     dude->height = (dude->legs.legLength + dude->torso.torsoLength + dude->head.headSize) / IN2MM;
 
     if ((argc - bu_optind) == 1) {
-	/* Yes, there is a top-level name at the end of this argument chain, lets dump it into the file*/
+	/* Yes, there is a top-level name at the end of this argument chain, let's dump it into the file*/
 	have_name = 1;
 	memset(humanName, 0, MAXLENGTH);
 	memset(topLevel, 0, MAXLENGTH);
@@ -2200,6 +2199,11 @@ ged_human(struct ged *gedp, int ac, const char *av[])
     int is_region = 0;
     unsigned char rgb[3], rgb2[3], rgb3[3];
     char topLevel[MAXLENGTH]="";
+
+    if (ac == 1 ) {
+	show_help(*av, humanoptions);
+	printf("\n       Program continues running:\n\n");
+    }
 
     bu_log("Entering Human Builder\n");
     srand(time(NULL));
