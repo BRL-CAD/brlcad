@@ -90,10 +90,23 @@ constraint_eval(void *datap, int argc, const char *argv[])
 }
 
 
+HIDDEN int
+constraint_help(void *datap, int argc, const char *argv[])
+{
+    struct ged *gedp = (struct ged *)datap;
+    if (!gedp || argc < 1 || !argv)
+	return BRLCAD_ERROR;
+
+    bu_vls_printf(gedp->ged_result_str, "help called\n");
+
+    return BRLCAD_OK;
+}
+
+
 int
 ged_constraint(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char *usage = "{set|get|show|rm|eval} constraint_name [expression[=value] ...]";
+    static const char *usage = "{set|get|show|rm|eval|help} constraint_name [expression[=value] ...]";
 
 #if 0
     /* specified points/edges stay equal */
@@ -153,6 +166,7 @@ ged_constraint(struct ged *gedp, int argc, const char *argv[])
 	{"show", constraint_show},
 	{"rm", constraint_rm},
 	{"eval", constraint_eval},
+	{"help", constraint_help},
 	{(const char *)NULL, BU_CMD_NULL}
     };
 
