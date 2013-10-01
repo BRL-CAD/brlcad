@@ -1446,10 +1446,12 @@ if(NOT MSVC)
   include(${BRLCAD_CMAKE_DIR}/BRLCAD_CompilerFlags.cmake)
 endif(NOT MSVC)
 
-# need to ensure all checks use the same compiler settings (but it
-# doesn't seem to work in wrapped CMake checking functions as it is
-# documented to do)
-set(CMAKE_REQUIRED_FLAGS "${CMAKE_C_FLAGS}")
+# when strict standards compliance is in effect, we need to ensure
+# all checks use the same compiler settings (but it doesn't seem to
+# work in wrapped CMake checking functions as it is documented to do)
+if(STD_COMPLIANCE)
+  set(CMAKE_REQUIRED_FLAGS "${CMAKE_C_FLAGS}")
+endif()
 
 # Most of the src/other projects have their own logic for handling
 # the C inline issue - BRL-CAD needs a fine-grained approach.  Mixed
