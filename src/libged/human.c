@@ -104,8 +104,6 @@ char *progname = "Human Model";
 char filename[MAXLENGTH]=DEFAULT_FILENAME;
 char humanName[MAXLENGTH]=DEFAULT_HUMANNAME;
 
-char *humanoptions="AbH:Llmn:N:O:o:p:s:tTvVw1:2:3:4:5:6:7:8:9:0:=:+:_:*:^:%:$:#:@:!:Q:~:Z:Y:X:h?";
-
 /** Human information structures */
 /** Location of all joints on the body located here */
 struct jointInfo
@@ -1595,6 +1593,12 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
     int percent=50;
     double x = 0; /* for stashing user input */
     int have_name = 0;
+    char *humanoptions="AbH:Llmn:N:O:o:p:s:tTvVw1:2:3:4:5:6:7:8:9:0:=:+:_:*:^:%:$:#:@:!:Q:~:Z:Y:X:h?";
+
+    if (argc == 1 ) {
+	show_help(*argv, humanoptions);
+	printf("\n       Program continues running:\n\n");
+    }
 
     /* don't report errors (this is before bu_opterr was changed to 1 immed. below) */
     bu_opterr = 1;
@@ -2199,11 +2203,6 @@ ged_human(struct ged *gedp, int ac, const char *av[])
     int is_region = 0;
     unsigned char rgb[3], rgb2[3], rgb3[3];
     char topLevel[MAXLENGTH]="";
-
-    if (ac == 1 ) {
-	show_help(*av, humanoptions);
-	printf("\n       Program continues running:\n\n");
-    }
 
     bu_log("Entering Human Builder\n");
     srand(time(NULL));
