@@ -1587,7 +1587,7 @@ HIDDEN int
 read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude, fastf_t *percentile, fastf_t *location, int *stance, int *troops, int *showBoxes)
 {
     int c = 'A';
-    char *options="AbH:hLlmn:N:O:o:p:s:tTvVw1:2:3:4:5:6:7:8:9:0:=:+:_:*:^:%:$:#:@:!:Q:~:Z:Y:X:";
+    char *options="AbH:Llmn:N:O:o:p:s:tTvVw1:2:3:4:5:6:7:8:9:0:=:+:_:*:^:%:$:#:@:!:Q:~:Z:Y:X:h?";
     float height=0;
     int soldiers=0;
     int pose=0;
@@ -1595,8 +1595,8 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
     double x = 0; /* for stashing user input */
     int have_name = 0;
 
-    /* don't report errors */
-    bu_opterr = 0;
+    /* don't report errors (this is before bu_opterr was changed to 1 immed. below)*/
+    bu_opterr = 1;
     bu_optind = 1;
     while ((c=bu_getopt(argc, (char * const *)argv, options)) != -1) {
 	/*bu_log("%c \n", c); Testing to see if args are getting read */
@@ -1627,13 +1627,6 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
 		}
 		fflush(stdin);
 		Auto(dude);
-		break;
-
-	    case 'h':
-	    case '?':
-		show_help(*argv, options);
-		bu_exit(EXIT_SUCCESS, NULL);
-		fflush(stdin);
 		break;
 
 	    case 'L':
@@ -1848,7 +1841,6 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
 
 	    default:
 		show_help(*argv, options);
-		bu_log("%s: illegal option, yes, there is a couple. -- %c\n", bu_getprogname(), c);
 		bu_exit(EXIT_SUCCESS, NULL);
 		fflush(stdin);
 		break;
