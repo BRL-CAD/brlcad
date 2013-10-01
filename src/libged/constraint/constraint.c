@@ -93,7 +93,45 @@ constraint_eval(void *datap, int argc, const char *argv[])
 int
 ged_constraint(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char *usage = "{set|get|show|rm|eval} [constraint_name] [key [value] ...]";
+    static const char *usage = "{set|get|show|rm|eval} constraint_name [expression[=value] ...]";
+
+#if 0
+    /* specified points/edges stay equal */
+    static const char *coincident = "coincident {{point point}|{edge edge}}";
+    /* two straight edges are segments on the same line */
+    static const char *colinear = "colinear {line line}";
+    /* circle/arc curves maintain equal center point */
+    static const char *concentric = "concentric {circle circle}";
+    /* specified entity is immutable w.r.t. global coordinate system */
+    static const char *fixed = "fixed {point|edge|face|object}";
+    /* specified entities are parallel to each other */
+    static const char *parallel = "parallel {{edge edge}|{face face}|{object object}}";
+    /* specified entities are perpendicular (90 degrees angle to each other */
+    static const char *perpendicular = "perpendicular {{edge edge}|{face face}|{object object}}";
+    /* specified entities have X/Y values all set to match each other */
+    static const char *horizontal = "horizontal {edge|face|object}";
+    /* specified entities have Z values all set to match each other */
+    static const char *vertical = "vertical {edge|face|object}";
+    /* specified entities maintain contact (point sets overlap without intersecting) */
+    static const char *tangent = "tangent {point|edge|face|object} {point|edge|face|object}";
+    /* specified values are set equal in magnitude/length/area to each other */
+    static const char *equal = "equal {point|edge|face|object} {point|edge|face|object}";
+#endif
+
+    /* Examples:
+     *
+     * constraint set c1 coincident ell.V arb8.P[4]
+     * constraint set c2 colinear arb8.E[1] rpc.E[0]
+     * constraint set c3 tangent car terrain.r
+     * constraint set c4 equal ell.R[1] arb8.E[2]
+     * constraint get c1 c3
+     * constraint show c1 c2 c3 c4
+     * constraint rm c1 tangent
+     *
+     * attr set c1 cad:description "this keeps our car on the ground"
+     * attr set c1 cad:plot 0|1
+     * attr set c1 cad:reference 0|1
+     */
 
     static struct bu_cmdtab pc_cmds[] = {
 	{"set", constraint_set},
@@ -106,13 +144,14 @@ ged_constraint(struct ged *gedp, int argc, const char *argv[])
 
     int ret;
     int cmdret;
+    struct directory *dp;
 
     /* intialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
-    if (argc < 2) {
+    if (argc < 3) {
 	/* must be wanting help */
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n", argv[0], usage);
 	return GED_HELP;
@@ -126,13 +165,19 @@ ged_constraint(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
+    /* load the constraint object */
+    GED_DB_LOOKUP(gedp, dp, argv[2], LOOKUP_QUIET, GED_ERROR);
+
+    /* run our command */
     ret = bu_cmd(pc_cmds, argc-1, argv+1, 0, gedp, &cmdret);
     if (ret != BRLCAD_OK) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n", argv[0], usage);
 	return GED_ERROR;
     }
+    if (cmdret != BRLCAD_OK)
+	return GED_ERROR;
 
-    return 0;
+    return GED_OK;
 }
 
 
