@@ -427,16 +427,6 @@ standard.
 Aliases:  ENABLE_C99
 
 
---- ENABLE_C89_COMPLIANCE ---
-
-Build with strict C89 compliance checking.  Defaults to OFF.
-
-Causes C compiler options to be set for strict compliance with the C89
-standard.
-
-Aliases:  ENABLE_C89
-
-
 --- BRLCAD_EXTRADOCS ---
 
 The core option that enables and disables building of BRL-CAD's DocBook
