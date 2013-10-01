@@ -81,9 +81,9 @@ macro(CHECK_COMPILER_FLAG FLAG_LANG NEW_FLAG RESULTVAR)
 endmacro(CHECK_COMPILER_FLAG LANG NEW_FLAG RESULTVAR)
 
 
-# Synopsis:  BRLCAD_CHECK_FLAG(LANG flag [BUILD_TYPES type1 type2 ...] [GROUPS group1 group2 ...] [VARS var1 var2 ...] )
+# Synopsis:  CHECK_FLAG(LANG flag [BUILD_TYPES type1 type2 ...] [GROUPS group1 group2 ...] [VARS var1 var2 ...] )
 #
-# BRLCAD_CHECK_FLAG is BRL-CAD's core macro for C/C++ flag testing.
+# CHECK_FLAG is BRL-CAD's core macro for C/C++ flag testing.
 # The first value is the language to test (C or C++ currently).  The
 # second entry is the flag (without preliminary dash).
 #
@@ -102,21 +102,21 @@ endmacro(CHECK_COMPILER_FLAG LANG NEW_FLAG RESULTVAR)
 # For example, to test a flag and add it to the C Debug configuration
 # flags:
 #
-# BRLCAD_CHECK_FLAG(C ggdb3 BUILD_TYPES Debug)
+# CHECK_FLAG(C ggdb3 BUILD_TYPES Debug)
 #
 # To assign a C flag to a unique variable:
 #
-# BRLCAD_CHECK_FLAG(C c99 VARS C99_FLAG)
+# CHECK_FLAG(C c99 VARS C99_FLAG)
 #
 # To do all assignments at once, for multiple configs and vars:
 #
-# BRLCAD_CHECK_FLAG(C ggdb3
+# CHECK_FLAG(C ggdb3
 #                   BUILD_TYPES Debug Release
 #                   GROUPS DEBUG_FLAGS
 #                   VARS DEBUG1 DEBUG2)
 
 include (CMakeParseArguments)
-macro(BRLCAD_CHECK_FLAG)
+macro(CHECK_FLAG)
   # Set up some variables and names
   set(FLAG_LANG ${ARGV0})
   set(flag ${ARGV1})
@@ -172,16 +172,16 @@ macro(BRLCAD_CHECK_FLAG)
     endforeach(flag_var ${FLAG_VARS})
   endif(${ARGC} LESS 3)
 
-endmacro(BRLCAD_CHECK_FLAG)
+endmacro(CHECK_FLAG)
 
 # Convenience wrappers to call the primary checking function with a
 # default language.
-macro(BRLCAD_CHECK_C_FLAG)
-  BRLCAD_CHECK_FLAG(C ${ARGN})
-endmacro(BRLCAD_CHECK_C_FLAG)
-macro(BRLCAD_CHECK_CXX_FLAG)
-  BRLCAD_CHECK_FLAG(CXX ${ARGN})
-endmacro(BRLCAD_CHECK_CXX_FLAG)
+macro(CHECK_C_FLAG)
+  CHECK_FLAG(C ${ARGN})
+endmacro(CHECK_C_FLAG)
+macro(CHECK_CXX_FLAG)
+  CHECK_FLAG(CXX ${ARGN})
+endmacro(CHECK_CXX_FLAG)
 
 # Clear out most CMake-assigned defaults - We're managing
 # our own compile flags, and don't (for example) want NDEBUG
@@ -216,39 +216,39 @@ set(CMAKE_SHARED_LINKER_FLAGS "$ENV{LDFLAGS}")
 #set(CMAKE_EXE_LINKER_FLAGS "")
 
 # try to use -pipe to speed up the compiles
-BRLCAD_CHECK_C_FLAG(pipe)
-BRLCAD_CHECK_CXX_FLAG(pipe)
+CHECK_C_FLAG(pipe)
+CHECK_CXX_FLAG(pipe)
 
 # check for -fno-strict-aliasing
 # XXX - THIS FLAG IS REQUIRED if any level of optimization is
 # enabled with GCC as we do use aliasing and type-punning.
-BRLCAD_CHECK_C_FLAG(fno-strict-aliasing)
-BRLCAD_CHECK_CXX_FLAG(fno-strict-aliasing)
+CHECK_C_FLAG(fno-strict-aliasing)
+CHECK_CXX_FLAG(fno-strict-aliasing)
 
 # check for -fno-common (libtcl needs it on darwin)
-BRLCAD_CHECK_C_FLAG(fno-common)
-BRLCAD_CHECK_CXX_FLAG(fno-common)
+CHECK_C_FLAG(fno-common)
+CHECK_CXX_FLAG(fno-common)
 
 # check for -fexceptions
 # this is needed to resolve __Unwind_Resume when compiling and
 # linking against openNURBS in librt for some binaries, for
 # example rttherm (i.e. any -static binaries)
-BRLCAD_CHECK_C_FLAG(fexceptions)
-BRLCAD_CHECK_CXX_FLAG(fexceptions)
+CHECK_C_FLAG(fexceptions)
+CHECK_CXX_FLAG(fexceptions)
 
 # check for -ftemplate-depth-NN this is needed in libpc and
 # other code using boost where the template instantiation depth
 # needs to be increased from the default ANSI minimum of 17.
-BRLCAD_CHECK_CXX_FLAG(ftemplate-depth-128)
+CHECK_CXX_FLAG(ftemplate-depth-128)
 
 # dynamic SSE optimizations for NURBS processing
 #
 # XXX disable the SSE flags for now as they can cause illegal instructions.
 #     the test needs to also be tied to run-time functionality since gcc
 #     may still output SSE instructions (e.g., for cross-compiling).
-# BRLCAD_CHECK_C_FLAG(msse)
-# BRLCAD_CHECK_C_FLAG(msse2)
-BRLCAD_CHECK_C_FLAG(msse3 BUILD_TYPES Debug)
+# CHECK_C_FLAG(msse)
+# CHECK_C_FLAG(msse2)
+CHECK_C_FLAG(msse3 BUILD_TYPES Debug)
 
 # Check for c90 support with gnu extensions if we're not building for
 # a release so we get more broad portability testing.  Since the
@@ -256,21 +256,21 @@ BRLCAD_CHECK_C_FLAG(msse3 BUILD_TYPES Debug)
 # given it's the lesser feature-rich C standard.
 if(NOT ENABLE_POSIX_COMPLIANCE AND
    NOT ENABLE_C99_COMPLIANCE)
-  BRLCAD_CHECK_C_FLAG("std=gnu89" BUILD_TYPES Debug)
+  CHECK_C_FLAG("std=gnu89" BUILD_TYPES Debug)
 elseif(ENABLE_POSIX_COMPLIANCE)
   #=== strict POSIX (200112) and C99 support =======
-  BRLCAD_CHECK_C_FLAG("pedantic")
+  CHECK_C_FLAG("pedantic")
   #== C99 ==
-  BRLCAD_CHECK_C_FLAG("std=c99")
-  BRLCAD_CHECK_C_FLAG("D_POSIX_C_SOURCE=200112L")
-  #BRLCAD_CHECK_C_FLAG("D_XOPEN_SOURCE=500")
+  CHECK_C_FLAG("std=c99")
+  CHECK_C_FLAG("D_POSIX_C_SOURCE=200112L")
+  #CHECK_C_FLAG("D_XOPEN_SOURCE=500")
   #== CXX TBA
   #== turn off others (not working in main CMakeLists.txt)
   set(ENABLE_C99_COMPLIANCE OFF)
 elseif(ENABLE_C99_COMPLIANCE)
-  BRLCAD_CHECK_C_FLAG("pedantic")
-  BRLCAD_CHECK_C_FLAG("std=c99")
-  #BRLCAD_CHECK_C_FLAG("D_POSIX_C_SOURCE")
+  CHECK_C_FLAG("pedantic")
+  CHECK_C_FLAG("std=c99")
+  #CHECK_C_FLAG("D_POSIX_C_SOURCE")
   set(ENABLE_POSIX_COMPLIANCE OFF)
 endif()
 
@@ -283,25 +283,25 @@ endif()
 # having '//' comments embedded).
 if(NOT ENABLE_POSIX_COMPLIANCE AND
    NOT ENABLE_C99_COMPLIANCE)
-  BRLCAD_CHECK_C_FLAG("std=gnu99" BUILD_TYPES Release VARS C99_FLAG)
+  CHECK_C_FLAG("std=gnu99" BUILD_TYPES Release VARS C99_FLAG)
 endif()
 
 # Silence check for unused arguments (used to silence clang warnings about
 # unused options on the command line). By default clang generates a lot of
 # warnings about such arguments, and we don't really care.
-BRLCAD_CHECK_C_FLAG(Qunused-arguments)
-BRLCAD_CHECK_CXX_FLAG(Qunused-arguments)
+CHECK_C_FLAG(Qunused-arguments)
+CHECK_CXX_FLAG(Qunused-arguments)
 
 # 64bit compilation flags
 if(${CMAKE_WORD_SIZE} MATCHES "64BIT")
-  BRLCAD_CHECK_C_FLAG(m64 VARS 64BIT_FLAG)
-  BRLCAD_CHECK_C_FLAG("arch x86_64" VARS 64BIT_FLAG)
-  BRLCAD_CHECK_C_FLAG(64 VARS 64BIT_FLAG)
-  BRLCAD_CHECK_C_FLAG("mabi=64" VARS  64BIT_FLAG)
+  CHECK_C_FLAG(m64 VARS 64BIT_FLAG)
+  CHECK_C_FLAG("arch x86_64" VARS 64BIT_FLAG)
+  CHECK_C_FLAG(64 VARS 64BIT_FLAG)
+  CHECK_C_FLAG("mabi=64" VARS  64BIT_FLAG)
   if(NOT 64BIT_FLAG AND ${CMAKE_WORD_SIZE} MATCHES "64BIT")
     message(FATAL_ERROR "Trying to compile 64BIT but all 64 bit compiler flag tests failed!")
   endif(NOT 64BIT_FLAG AND ${CMAKE_WORD_SIZE} MATCHES "64BIT")
-  BRLCAD_CHECK_C_FLAG(q64 VARS 64BIT_FLAG)
+  CHECK_C_FLAG(q64 VARS 64BIT_FLAG)
   ADD_NEW_FLAG(C 64BIT_FLAG ALL)
   ADD_NEW_FLAG(CXX 64BIT_FLAG ALL)
   ADD_NEW_FLAG(SHARED_LINKER 64BIT_FLAG ALL)
@@ -310,11 +310,11 @@ endif(${CMAKE_WORD_SIZE} MATCHES "64BIT")
 
 # 32 bit compilation flags
 if(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND NOT ${BRLCAD_WORD_SIZE} MATCHES "AUTO")
-  BRLCAD_CHECK_C_FLAG(m32 VARS 32BIT_FLAG)
-  BRLCAD_CHECK_C_FLAG("arch i686" VARS 32BIT_FLAG)
-  BRLCAD_CHECK_C_FLAG(32 VARS 32BIT_FLAG)
-  BRLCAD_CHECK_C_FLAG("mabi=32" VARS 32BIT_FLAG)
-  BRLCAD_CHECK_C_FLAG(q32 VARS 32BIT_FLAG)
+  CHECK_C_FLAG(m32 VARS 32BIT_FLAG)
+  CHECK_C_FLAG("arch i686" VARS 32BIT_FLAG)
+  CHECK_C_FLAG(32 VARS 32BIT_FLAG)
+  CHECK_C_FLAG("mabi=32" VARS 32BIT_FLAG)
+  CHECK_C_FLAG(q32 VARS 32BIT_FLAG)
   if(NOT 32BIT_FLAG AND ${CMAKE_WORD_SIZE} MATCHES "32BIT")
     message(FATAL_ERROR "Trying to compile 32BIT but all 32 bit compiler flag tests failed!")
   endif(NOT 32BIT_FLAG AND ${CMAKE_WORD_SIZE} MATCHES "32BIT")
@@ -325,9 +325,9 @@ if(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND NOT ${BRLCAD_WORD_SIZE} MATCHES "AUTO"
 endif(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND NOT ${BRLCAD_WORD_SIZE} MATCHES "AUTO")
 
 if(BRLCAD_ENABLE_PROFILING)
-  BRLCAD_CHECK_C_FLAG(pg VARS PROFILE_FLAG)
-  BRLCAD_CHECK_C_FLAG(p VARS PROFILE_FLAG)
-  BRLCAD_CHECK_C_FLAG(prof_gen VARS PROFILE_FLAG)
+  CHECK_C_FLAG(pg VARS PROFILE_FLAG)
+  CHECK_C_FLAG(p VARS PROFILE_FLAG)
+  CHECK_C_FLAG(prof_gen VARS PROFILE_FLAG)
   if(NOT PROFILE_FLAG)
     message("Warning - profiling requested, but don't know how to profile with this compiler - disabling.")
     set(BRLCAD_ENABLE_PROFILING OFF)
@@ -339,13 +339,13 @@ endif(BRLCAD_ENABLE_PROFILING)
 
 # Debugging flags
 if(BRLCAD_FLAGS_DEBUG)
-  BRLCAD_CHECK_C_FLAG(g GROUPS DEBUG_C_FLAGS)
-  BRLCAD_CHECK_CXX_FLAG(g GROUPS DEBUG_CXX_FLAGS)
+  CHECK_C_FLAG(g GROUPS DEBUG_C_FLAGS)
+  CHECK_CXX_FLAG(g GROUPS DEBUG_CXX_FLAGS)
   if(APPLE)
     EXEC_PROGRAM(sw_vers ARGS -productVersion OUTPUT_VARIABLE MACOSX_VERSION)
     if(${MACOSX_VERSION} VERSION_LESS "10.5")
-      BRLCAD_CHECK_C_FLAG(ggdb3 GROUPS DEBUG_C_FLAGS)
-      BRLCAD_CHECK_CXX_FLAG(ggdb3 GROUPS DEBUG_CXX_FLAGS)
+      CHECK_C_FLAG(ggdb3 GROUPS DEBUG_C_FLAGS)
+      CHECK_CXX_FLAG(ggdb3 GROUPS DEBUG_CXX_FLAGS)
     else(${MACOSX_VERSION} VERSION_LESS "10.5")
       # CHECK_C_COMPILER_FLAG silently eats gstabs+ - also, compiler
       # apparently doesn't like mixing stabs with another debug flag.
@@ -353,8 +353,8 @@ if(BRLCAD_FLAGS_DEBUG)
       set(DEBUG_CXX_FLAGS "-ggdb")
     endif(${MACOSX_VERSION} VERSION_LESS "10.5")
   else(APPLE)
-    BRLCAD_CHECK_C_FLAG(ggdb3 GROUPS DEBUG_C_FLAGS)
-    BRLCAD_CHECK_CXX_FLAG(ggdb3 GROUPS DEBUG_CXX_FLAGS)
+    CHECK_C_FLAG(ggdb3 GROUPS DEBUG_C_FLAGS)
+    CHECK_CXX_FLAG(ggdb3 GROUPS DEBUG_CXX_FLAGS)
   endif(APPLE)
   if(CMAKE_CONFIGURATION_TYPES)
     set(debug_config_list "${CMAKE_CONFIGURATION_TYPES}")
@@ -379,16 +379,16 @@ if(APPLE)
   endif(NOT MACOSX_DEPLOYMENT_TARGET)
 
   if(MACOSX_DEPLOYMENT_TARGET STREQUAL "10.3")
-    BRLCAD_CHECK_C_FLAG("mmacosx-version-min=10.3 -isysroot /Developer/SDKs/MacOSX10.3.9.sdk" VARS SDK_FLAG)
+    CHECK_C_FLAG("mmacosx-version-min=10.3 -isysroot /Developer/SDKs/MacOSX10.3.9.sdk" VARS SDK_FLAG)
   endif(MACOSX_DEPLOYMENT_TARGET STREQUAL "10.3")
   if(MACOSX_DEPLOYMENT_TARGET STREQUAL "10.4")
-    BRLCAD_CHECK_C_FLAG("mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk" VARS SDK_FLAG)
+    CHECK_C_FLAG("mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk" VARS SDK_FLAG)
   endif(MACOSX_DEPLOYMENT_TARGET STREQUAL "10.4")
   if(MACOSX_DEPLOYMENT_TARGET STREQUAL "10.5")
-    BRLCAD_CHECK_C_FLAG("mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk" VARS SDK_FLAG)
+    CHECK_C_FLAG("mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk" VARS SDK_FLAG)
   endif(MACOSX_DEPLOYMENT_TARGET STREQUAL "10.5")
   if(MACOSX_DEPLOYMENT_TARGET STREQUAL "10.6")
-    BRLCAD_CHECK_C_FLAG("mmacosx-version-min=10.6 -isysroot /Developer/SDKs/MacOSX10.6.sdk" VARS SDK_FLAG)
+    CHECK_C_FLAG("mmacosx-version-min=10.6 -isysroot /Developer/SDKs/MacOSX10.6.sdk" VARS SDK_FLAG)
   endif(MACOSX_DEPLOYMENT_TARGET STREQUAL "10.6")
 
   ADD_NEW_FLAG(C SDK_FLAG ALL)
