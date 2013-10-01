@@ -200,7 +200,7 @@ constraint_help(void *datap, int argc, const char *argv[])
     bu_vls_printf(gedp->ged_result_str, "\t%s set c3 tangent car terrain.r\n", argv[0]);
     bu_vls_printf(gedp->ged_result_str, "\t%s set c4 equal ell.R[1] arb8.E[2]\n", argv[0]);
     bu_vls_printf(gedp->ged_result_str, "\t%s set p0 formula ell.R[0]=10.0\n", argv[0]);
-    bu_vls_printf(gedp->ged_result_str, "\t%s set p1 formula eto.A=40.2\n", argv[0]);
+    bu_vls_printf(gedp->ged_result_str, "\t%s set p1 formula eto.A<40.2\n", argv[0]);
     bu_vls_printf(gedp->ged_result_str, "\t%s set p2 formula 4\n", argv[0]);
     bu_vls_printf(gedp->ged_result_str, "\t%s set p3 formula ell.R[1] * p2\n", argv[0]);
     bu_vls_printf(gedp->ged_result_str, "\t%s set p4 formula sph.R[0]=p3-10.5*magnitude(ell.V, argv[0])\n", argv[0]);
