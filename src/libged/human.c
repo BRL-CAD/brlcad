@@ -1671,7 +1671,7 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
 		sscanf(bu_optarg, "%d", &percent);
 		if (percent < 1)
 		    percent=1;
-		if (percent > 99)
+		else if (percent > 99)
 		    percent=99;
 		*percentile=percent;
 		fflush(stdin);
