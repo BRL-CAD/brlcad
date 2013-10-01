@@ -1374,13 +1374,6 @@ mark_as_advanced(BRLCAD_EXTRADOCS_VALIDATE)
 # functions, some in use by src/other build logic
 include(${BRLCAD_CMAKE_DIR}/BRLCAD_CheckFunctions.cmake)
 
-# The src/other subdirectory does not share (at least, not universally)
-# certain definitions common to all other directories in BRL-CAD.  Also,
-# we don't want flags that are otherwise global to BRL-CAD to be passed
-# to the src/other directory (particularly things like strict compiler
-# flags) so add src/other before any of that setup occurs.
-add_subdirectory(src/other)
-
 
 # *******************************************************************
 # ***            Check for Programs - Stage 2 of 9                ***
@@ -1881,6 +1874,16 @@ if(MSVC)
   set(CMAKE_MODULE_LINKER_FLAGS_INIT ${CMAKE_EXE_LINKER_FLAGS_INIT} /NOLOGO)
 endif(MSVC)
 
+# *******************************************************************
+
+# Now that we've done the system tests with BRL-CAD's compile flags,
+# add src/other to pick up any tests it needs.  We must add src/other
+# before the main BRL-CAD directories to provide the necessary build
+# targets.  Remember that src/other wipes the top level flags generated
+# by BRL-CAD for its own subdirectories - it is added after the BRL-CAD
+# tests so the CACHE reflects BRL-CAD's test results.
+add_subdirectory(src/other)
+
 # Enable CTest Testing support - this is done after src/other is
 # added to avoid incorporating src/other CTests into BRL-CAD's own
 # testing.  TODO - probably should control this with an option.
@@ -1899,6 +1902,8 @@ if(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
 else(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
   CMAKEFILES(doc bench regress db)
 endif(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
+
+# *******************************************************************
 
 # If we're building on Windows, use config_win.h file
 if(WIN32)

@@ -322,6 +322,7 @@ disabled. Windows does not support the termlib API.)
 THIRD_PARTY(termlib libtermlib "HAVE_TERMLIB;BRLCAD_LEVEL2" termlib_ALIASES termlib_DESCRIPTION)
 if(BRLCAD_TERMLIB_BUILD)
   set(HAVE_TERMCAP_H ON CACHE BOOL "src/other termlib is on" FORCE)
+  CONFIG_H_APPEND(BRLCAD "#undef HAVE_TERMCAP_H\n#cmakedefine HAVE_TERMCAP_H 1\n")
   mark_as_advanced(HAVE_TERMCAP_H)
 endif(BRLCAD_TERMLIB_BUILD)
 
