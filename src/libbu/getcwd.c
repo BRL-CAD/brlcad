@@ -41,9 +41,7 @@ bu_getcwd(char *buf, size_t size)
 {
     char *cwd = NULL;
     char *pwd = NULL;
-    char *rwd = NULL;
     char cbuf[MAXPATHLEN] = {0};
-    char rbuf[MAXPATHLEN] = {0};
     size_t sz = size;
 
     /* NULL buf means allocate */
@@ -61,7 +59,8 @@ bu_getcwd(char *buf, size_t size)
     {
 #if defined(HAVE_WORKING_REALPATH_FUNCTION)
 	/* FIXME: shouldn't have gotten here with -std=c99 (HAVE_REALPATH test not working right?) */
-	rwd = bu_realpath(cbuf, rbuf);
+	char rbuf[MAXPATHLEN] = {0};
+	char *rwd = bu_realpath(cbuf, rbuf);
 	if (rwd
 	    && strlen(rwd) > 0
 	    && bu_file_exists(rwd, NULL))
@@ -88,7 +87,8 @@ bu_getcwd(char *buf, size_t size)
 	&& bu_file_exists(pwd, NULL))
     {
 #if defined(HAVE_WORKING_REALPATH_FUNCTION)
-	rwd = realpath(pwd, rbuf);
+	char rbuf[MAXPATHLEN] = {0};
+	char *rwd = realpath(pwd, rbuf);
 	if (rwd
 	    && strlen(rwd) > 0
 	    && bu_file_exists(rwd, NULL))
