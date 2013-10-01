@@ -40,23 +40,23 @@
 # -fast-math results in non-IEEE floating point math among a handful
 # of other optimizations that cause substantial error in ray tracing
 # and tessellation (and probably more).
-BRLCAD_CHECK_C_FLAG(O3 GROUPS OPTIMIZE_C_FLAGS)
-BRLCAD_CHECK_C_FLAG(fstrength-reduce GROUPS OPTIMIZE_C_FLAGS)
-BRLCAD_CHECK_C_FLAG(fexpensive-optimizations GROUPS OPTIMIZE_C_FLAGS)
-BRLCAD_CHECK_C_FLAG(finline-functions GROUPS OPTIMIZE_C_FLAGS)
-BRLCAD_CHECK_C_FLAG("finline-limit=10000 --param inline-unit-growth=300 --param large-function-growth=300" GROUPS OPTIMIZE_C_FLAGS)
-BRLCAD_CHECK_CXX_FLAG(O3 GROUPS OPTIMIZE_CXX_FLAGS)
-BRLCAD_CHECK_CXX_FLAG(fstrength-reduce GROUPS OPTIMIZE_CXX_FLAGS)
-BRLCAD_CHECK_CXX_FLAG(fexpensive-optimizations GROUPS OPTIMIZE_CXX_FLAGS)
-BRLCAD_CHECK_CXX_FLAG(finline-functions GROUPS OPTIMIZE_CXX_FLAGS)
-BRLCAD_CHECK_CXX_FLAG("finline-limit=10000 --param inline-unit-growth=300 --param large-function-growth=300" GROUPS OPTIMIZE_CXX_FLAGS)
+CHECK_C_FLAG(O3 GROUPS OPTIMIZE_C_FLAGS)
+CHECK_C_FLAG(fstrength-reduce GROUPS OPTIMIZE_C_FLAGS)
+CHECK_C_FLAG(fexpensive-optimizations GROUPS OPTIMIZE_C_FLAGS)
+CHECK_C_FLAG(finline-functions GROUPS OPTIMIZE_C_FLAGS)
+CHECK_C_FLAG("finline-limit=10000 --param inline-unit-growth=300 --param large-function-growth=300" GROUPS OPTIMIZE_C_FLAGS)
+CHECK_CXX_FLAG(O3 GROUPS OPTIMIZE_CXX_FLAGS)
+CHECK_CXX_FLAG(fstrength-reduce GROUPS OPTIMIZE_CXX_FLAGS)
+CHECK_CXX_FLAG(fexpensive-optimizations GROUPS OPTIMIZE_CXX_FLAGS)
+CHECK_CXX_FLAG(finline-functions GROUPS OPTIMIZE_CXX_FLAGS)
+CHECK_CXX_FLAG("finline-limit=10000 --param inline-unit-growth=300 --param large-function-growth=300" GROUPS OPTIMIZE_CXX_FLAGS)
 if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
   if(NOT BRLCAD_ENABLE_PROFILING AND NOT BRLCAD_FLAGS_DEBUG)
-    BRLCAD_CHECK_C_FLAG(fomit-frame-pointer GROUPS OPTIMIZE_C_FLAGS)
-    BRLCAD_CHECK_CXX_FLAG(fomit-frame-pointer GROUPS OPTIMIZE_CXX_FLAGS)
+    CHECK_C_FLAG(fomit-frame-pointer GROUPS OPTIMIZE_C_FLAGS)
+    CHECK_CXX_FLAG(fomit-frame-pointer GROUPS OPTIMIZE_CXX_FLAGS)
   else(NOT BRLCAD_ENABLE_PROFILING AND NOT BRLCAD_FLAGS_DEBUG)
-    BRLCAD_CHECK_C_FLAG(fno-omit-frame-pointer GROUPS OPTIMIZE_C_FLAGS)
-    BRLCAD_CHECK_CXX_FLAG(fno-omit-frame-pointer GROUPS OPTIMIZE_CXX_FLAGS)
+    CHECK_C_FLAG(fno-omit-frame-pointer GROUPS OPTIMIZE_C_FLAGS)
+    CHECK_CXX_FLAG(fno-omit-frame-pointer GROUPS OPTIMIZE_CXX_FLAGS)
   endif(NOT BRLCAD_ENABLE_PROFILING AND NOT BRLCAD_FLAGS_DEBUG)
 endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
 
@@ -83,11 +83,11 @@ endif(opt_conf_list)
 # only when compiling unoptimized (because the extra barrier checks
 # can affect the memory footprint and runtime performance.
 if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG)
-  BRLCAD_CHECK_C_FLAG(fstack-protector-all)
-  BRLCAD_CHECK_CXX_FLAG(fstack-protector-all)
+  CHECK_C_FLAG(fstack-protector-all)
+  CHECK_CXX_FLAG(fstack-protector-all)
   # checking both in case compiling c/c++ with different compilers
-  BRLCAD_CHECK_C_FLAG(qstackprotect)
-  BRLCAD_CHECK_CXX_FLAG(qstackprotect)
+  CHECK_C_FLAG(qstackprotect)
+  CHECK_CXX_FLAG(qstackprotect)
 endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG)
 
 # verbose warning flags.  we intentionally try to turn on as many as
@@ -97,57 +97,57 @@ if(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
   # also of interest:
   # -Wunreachable-code -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -ansi
   # -Wformat=2 (after bu_fopen_uniq() is obsolete) -Wdocumentation (for Doxygen comments)
-  BRLCAD_CHECK_C_FLAG(pedantic)
-  BRLCAD_CHECK_CXX_FLAG(pedantic)
+  CHECK_C_FLAG(pedantic)
+  CHECK_CXX_FLAG(pedantic)
 
   # FIXME: The Wall warnings are too verbose with Visual C++ (for
   # now).  we have a lot to clean up.
   if(NOT MSVC)
-    BRLCAD_CHECK_C_FLAG(Wall)
-    BRLCAD_CHECK_CXX_FLAG(Wall)
+    CHECK_C_FLAG(Wall)
+    CHECK_CXX_FLAG(Wall)
   else(NOT MSVC)
-    BRLCAD_CHECK_C_FLAG(W4)
-    BRLCAD_CHECK_CXX_FLAG(W4)
+    CHECK_C_FLAG(W4)
+    CHECK_CXX_FLAG(W4)
   endif(NOT MSVC)
 
-  BRLCAD_CHECK_C_FLAG(Wextra)
-  BRLCAD_CHECK_CXX_FLAG(Wextra)
+  CHECK_C_FLAG(Wextra)
+  CHECK_CXX_FLAG(Wextra)
 
-  BRLCAD_CHECK_C_FLAG(Wundef)
-  BRLCAD_CHECK_CXX_FLAG(Wundef)
+  CHECK_C_FLAG(Wundef)
+  CHECK_CXX_FLAG(Wundef)
 
-  BRLCAD_CHECK_C_FLAG(Wfloat-equal)
-  BRLCAD_CHECK_CXX_FLAG(Wfloat-equal)
+  CHECK_C_FLAG(Wfloat-equal)
+  CHECK_CXX_FLAG(Wfloat-equal)
 
-  BRLCAD_CHECK_C_FLAG(Wshadow)
-  BRLCAD_CHECK_CXX_FLAG(Wshadow)
+  CHECK_C_FLAG(Wshadow)
+  CHECK_CXX_FLAG(Wshadow)
 
 # report where we throw away const
-#  BRLCAD_CHECK_C_FLAG(Wcast-qual)
-#  BRLCAD_CHECK_CXX_FLAG(Wcast-qual)
+#  CHECK_C_FLAG(Wcast-qual)
+#  CHECK_CXX_FLAG(Wcast-qual)
 
 # check for redundant declarations
-#  BRLCAD_CHECK_C_FLAG(Wredundant-decls)
-#  BRLCAD_CHECK_CXX_FLAG(Wredundant-decls)
+#  CHECK_C_FLAG(Wredundant-decls)
+#  CHECK_CXX_FLAG(Wredundant-decls)
 
   # want C inline warnings, but versions of g++ (circa 4.7) spew
   # unquellable bogus warnings on default constructors that we don't
   # have access to (e.g., in opennurbs and boost), so turn them off
-  BRLCAD_CHECK_C_FLAG(Winline)
-  BRLCAD_CHECK_CXX_FLAG(Wno-inline)
+  CHECK_C_FLAG(Winline)
+  CHECK_CXX_FLAG(Wno-inline)
 
   # Need this for tcl.h
-  BRLCAD_CHECK_C_FLAG(Wno-long-long)
-  BRLCAD_CHECK_CXX_FLAG(Wno-long-long)
+  CHECK_C_FLAG(Wno-long-long)
+  CHECK_CXX_FLAG(Wno-long-long)
 
   # Need this for X11 headers using variadic macros
-  BRLCAD_CHECK_C_FLAG(Wno-variadic-macros)
-  BRLCAD_CHECK_CXX_FLAG(Wno-variadic-macros)
+  CHECK_C_FLAG(Wno-variadic-macros)
+  CHECK_CXX_FLAG(Wno-variadic-macros)
 endif(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
 
 if(BRLCAD_ENABLE_STRICT)
-  BRLCAD_CHECK_C_FLAG(Werror)
-  BRLCAD_CHECK_CXX_FLAG(Werror)
+  CHECK_C_FLAG(Werror)
+  CHECK_CXX_FLAG(Werror)
 endif(BRLCAD_ENABLE_STRICT)
 
 # End detection of flags intended for BRL-CAD use.  Make sure all variables have
