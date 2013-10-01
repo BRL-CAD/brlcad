@@ -1535,7 +1535,7 @@ show_help(const char *name, const char *optstr)
     bu_log("\t-A\t\tAutoMake defaults\n");
     bu_log("\t-m\t\tManual sizing mode\n");
     bu_log("\t-H\t\tSet Height in inches\n");
-    bu_log("\t-L\t\tSet Center Point in inches, at feet (default 0 0 0)\n");
+    bu_log("\t-L or -l\tSet Center Point in inches, at feet (default 0 0 0)\n");
     /* bu_log("\t-o\t\tSet output file name\n" */
     bu_log("\t-b\t\tShow bounding Boxes\n");
     bu_log("\t-n\t\tSet bounding region name, default Body.c\n");
