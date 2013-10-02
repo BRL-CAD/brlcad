@@ -1793,7 +1793,7 @@ if("${HAVE_PROGRAM_INVOCATION_NAME}" MATCHES "^${HAVE_PROGRAM_INVOCATION_NAME}$"
 endif("${HAVE_PROGRAM_INVOCATION_NAME}" MATCHES "^${HAVE_PROGRAM_INVOCATION_NAME}$")
 
 #-----------------------------------------------------------------------
-# check C99 missing functions with a more rigourously-controlled compiler envirinment
+# check C99 missing functions with a more rigourously-controlled compiler environment
 if(STD_COMPLIANCE)
 
   set(needed_FUNCS

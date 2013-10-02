@@ -204,7 +204,7 @@ constraint_help(void *datap, int argc, const char *argv[])
     bu_vls_printf(gedp->ged_result_str,
 		  "\nThis command lets you specify dimensional and geometric constraints.\n"
 		  "These constraints and any specified parameters define explicit\n"
-		  "relationships between geoemtry objects.  Parametric constraints are\n"
+		  "relationships between geometry objects.  Parametric constraints are\n"
 		  "enforced during geometry editing when they are included in the boolean\n"
 		  "recipe for a combination.\n\n");
 
@@ -275,7 +275,7 @@ constraint_help(void *datap, int argc, const char *argv[])
 int
 ged_constraint(struct ged *gedp, int argc, const char *argv[])
 {
-    /* Potential constrainat attributes:
+    /* Potential constraint attributes:
      *
      * attr set c1 cad:description "this keeps our car on the ground"
      * attr set c1 cad:plot 0|1
