@@ -268,6 +268,8 @@ endif()
 # http://www.gnu.org/software/libc/manual/html_node/Feature-Test-Macros.html
 # for options...
 if(ENABLE_POSIX_COMPLIANCE)
+  # use this version so three non-C99 functions (without bu*
+  # replacements) will work:
   CHECK_C_FLAG("D_POSIX_C_SOURCE=200112L")
 endif()
 
