@@ -93,6 +93,7 @@ extern "C" {
     int rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *ip);
     RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, const char* operation);
     struct rt_selection_list *rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query);
+    int rt_brep_process_selection(struct rt_db_internal *ip, const struct rt_selection *selection, const struct rt_selection_operation *op);
 #ifdef __cplusplus
 }
 #endif
@@ -3824,6 +3825,47 @@ rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selecti
     return selection_list;
 }
 
+int
+rt_brep_process_selection(
+	struct rt_db_internal *ip,
+	const struct rt_selection *selection,
+	const struct rt_selection_operation *op)
+{
+    if (op->type == RT_SELECTION_NOP) {
+	return 0;
+    }
+
+    if (op->type != RT_SELECTION_TRANSLATION) {
+	return -1;
+    }
+
+    RT_CK_DB_INTERNAL(ip);
+    struct rt_brep_internal *bip = (struct rt_brep_internal *)ip->idb_ptr;
+    RT_BREP_CK_MAGIC(bip);
+    ON_Brep *brep = bip->brep;
+
+    brep_selection *bs = (brep_selection *)selection->obj;
+    if (!brep || !bs || bs->control_vertexes->empty()) {
+	return -1;
+    }
+
+    fastf_t dx = op->parameters.tran.dx;
+    fastf_t dy = op->parameters.tran.dy;
+    fastf_t dz = op->parameters.tran.dz;
+
+    std::list<brep_cv *>::iterator cv = bs->control_vertexes->begin();
+    for (; cv != bs->control_vertexes->end(); ++cv) {
+	// TODO: if another face references the same surface, the
+	// surface needs to be duplicated
+	int surface_index = brep->Face((*cv)->face_index)->SurfaceOf()->ComponentIndex().m_index;
+	int ret = brep_translate_scv(brep, surface_index, (*cv)->i, (*cv)->j, dx, dy, dz);
+	if (ret < 0) {
+	    return ret;
+	}
+    }
+
+    return 0;
+}
 
 /** @} */
 

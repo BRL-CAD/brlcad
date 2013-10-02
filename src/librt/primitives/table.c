@@ -1868,7 +1868,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	rt_brep_find_selections,
 	NULL,
-	NULL
+	rt_brep_process_selection
     },
 #else
     {

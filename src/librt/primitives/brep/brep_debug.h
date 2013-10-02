@@ -119,6 +119,8 @@ void plottrim(ON_BrepFace &face, struct bn_vlblock *vbp);
 void plottrim(const ON_Curve &curve, double from, double to);
 void plottrim(ON_Curve &curve);
 
+int brep_translate_scv(ON_Brep *brep, int surface_index, int i, int j, fastf_t dx, fastf_t dy, fastf_t dz);
+
 #endif
 /** @} */
 
