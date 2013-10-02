@@ -419,8 +419,6 @@ set(stepg_LIBS
   )
 list(APPEND stepg_LIBS ${stepg_LIBS})
 
-#add_definitions(-DAP203e2)
-
 BRLCAD_ADDEXEC(step-g "${stepg_SOURCES}" "${stepg_LIBS}" NO_STRICT)
 add_dependencies(step-g step-express-${SCHEMA_NAME}-stepg)
 

@@ -27,6 +27,7 @@ include_directories(
 
 set(STEP_SCHEMA_FILE ${BRLCAD_SOURCE_DIR}/src/other/stepcode/data/ap203/ap203.exp)
 #set(STEP_SCHEMA_FILE ${BRLCAD_SOURCE_DIR}/src/other/stepcode/data/ap203e2/ap203e2_mim_lf.exp)
+#add_definitions(-DAP203e2)
 
 macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
   # This Schema determines which version of STEP the command will support

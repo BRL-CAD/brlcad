@@ -36,8 +36,6 @@ set(gstep_LIBS
   )
 list(APPEND gstep_LIBS ${gstep_LIBS})
 
-#add_definitions(-DAP203e2)
-
 BRLCAD_ADDEXEC(g-step "${gstep_SOURCES}" "${gstep_LIBS}" NO_STRICT)
 add_dependencies(g-step step-express-${SCHEMA_NAME}-gstep)
 
