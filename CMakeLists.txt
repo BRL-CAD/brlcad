@@ -1411,11 +1411,15 @@ if(NOT MSVC)
   include(${BRLCAD_CMAKE_DIR}/BRLCAD_CompilerFlags.cmake)
 endif(NOT MSVC)
 
-# when strict standards compliance is in effect, we need to ensure
-# all checks use the same compiler settings (but it doesn't seem to
-# work in wrapped CMake checking functions as it is documented to do)
-if(STD_COMPLIANCE)
+# when strict standards compliance is in effect, we need to ensure all
+# checks use the same compiler settings (but it doesn't seem to work
+# in wrapped CMake checking functions as it is documented to do); also
+# set flag for special function checks farther down
+set(STD_COMPLIANCE OFF)
+if(ENABLE_POSIX_COMPLIANCE
+   OR ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE)
   set(CMAKE_REQUIRED_FLAGS "${CMAKE_C_FLAGS}")
+  set(STD_COMPLIANCE ON)
 endif()
 
 # Most of the src/other projects have their own logic for handling
@@ -1793,7 +1797,8 @@ if("${HAVE_PROGRAM_INVOCATION_NAME}" MATCHES "^${HAVE_PROGRAM_INVOCATION_NAME}$"
 endif("${HAVE_PROGRAM_INVOCATION_NAME}" MATCHES "^${HAVE_PROGRAM_INVOCATION_NAME}$")
 
 #-----------------------------------------------------------------------
-# check C99 missing functions with a more rigourously-controlled compiler environment
+# check C99 and POSIX 200112L missing functions with a more
+# rigorously-controlled compiler environment
 if(STD_COMPLIANCE)
 
   set(needed_FUNCS
