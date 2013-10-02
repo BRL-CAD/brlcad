@@ -89,7 +89,10 @@ add_subdirectory(g-step)
 CMAKEFILES(
   BRLCADWrapper.h
   STEPWrapper.h
-)
+  ap203_elements.txt
+  ap203e2_elements.txt
+  ap214e3_elements.txt
+  )
 
 DISTCLEAN(${SCHEMA_OUT_DIR}/make_schema)
 
