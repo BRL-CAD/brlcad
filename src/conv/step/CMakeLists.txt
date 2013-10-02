@@ -9,25 +9,29 @@ set(STEP_INCLUDE_DIRS
 LIST(REMOVE_DUPLICATES STEP_INCLUDE_DIRS)
 include_directories(${STEP_INCLUDE_DIRS})
 
+set(STEPCODE_DIR ${BRLCAD_SOURCE_DIR}/src/other/stepcode)
+
 # local includes
 include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${BRLCAD_SOURCE_DIR}/src/other/stepcode/include
-  ${BRLCAD_SOURCE_DIR}/src/other/stepcode/src/base
-  ${BRLCAD_SOURCE_DIR}/src/other/stepcode/src/clstepcore
-  ${BRLCAD_SOURCE_DIR}/src/other/stepcode/src/cleditor
-  ${BRLCAD_SOURCE_DIR}/src/other/stepcode/src/clutils
-  ${BRLCAD_SOURCE_DIR}/src/other/stepcode/src/cldai
-  ${BRLCAD_SOURCE_DIR}/src/other/stepcode/src/test
+  ${STEPCODE_DIR}/include
+  ${STEPCODE_DIR}/src/base
+  ${STEPCODE_DIR}/src/clstepcore
+  ${STEPCODE_DIR}/src/cleditor
+  ${STEPCODE_DIR}/src/clutils
+  ${STEPCODE_DIR}/src/cldai
+  ${STEPCODE_DIR}/src/test
   ${CMAKE_BINARY_DIR}/src/other/stepcode/include
   ${TNT_INCLUDE_DIR}
   ${BRLCAD_SOURCE_DIR}/src/libbrep #Temporary until headers reworked
   )
 
-set(STEP_SCHEMA_FILE ${BRLCAD_SOURCE_DIR}/src/other/stepcode/data/ap203/ap203.exp)
-#set(STEP_SCHEMA_FILE ${BRLCAD_SOURCE_DIR}/src/other/stepcode/data/ap203e2/ap203e2_mim_lf.exp)
+set(STEP_SCHEMA_FILE ${STEPCODE_DIR}/data/ap203/ap203.exp)
+#set(STEP_SCHEMA_FILE ${STEPCODE_DIR}/data/ap203e2/ap203e2_mim_lf.exp)
 #add_definitions(-DAP203e2)
+#set(STEP_SCHEMA_FILE ${STEPCODE_DIR}/data/ap214e3/AP214E3_2010.exp)
+#add_definitions(-DAP214e3)
 
 macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
   # This Schema determines which version of STEP the command will support
