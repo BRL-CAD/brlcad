@@ -1525,21 +1525,21 @@ show_help(const char *name, const char *optstr)
     }
 
     bu_log("Usage: %s [%s]\n", name, bu_vls_addr(&str));
-    bu_log("options:\n");
+    bu_log("options ('Set' means 1 argument required unless otherwise noted):\n");
     bu_log("\t-A\t\tAutoMake defaults\n");
     bu_log("\t-m\t\tManual sizing mode\n");
-    bu_log("\t-H\t\tSet Height (inches) (requires 1 argument)\n");
-    bu_log("\t-L or -l\tSet Center Point (inches), at body's feet (default 0 0 0; interactive input)\n");
+    bu_log("\t-H\t\tSet height (inches)\n");
+    bu_log("\t-L or -l\tSet center point (inches), at body's feet (default 0 0 0; interactive input)\n");
     /* bu_log("\t-o\t\tSet output file name\n" */
     bu_log("\t-b\t\tShow bounding Boxes\n");
-    bu_log("\t-n\t\tSet bounding region name (default Body.c ; requires 1 argument)\n");
-    bu_log("\t-N\t\tNumber to make (square)\n");
-    bu_log("\t-s\t\tStance to take 0-Stand 1-Sit 2-Drive 3-Arms out 4-Letterman 5-Captain 999-Custom\n");
-    bu_log("\t-p\t\tSet Percentile (not implemented yet) 1-99\n");
+    bu_log("\t-n\t\tSet bounding region name (default Body.c )\n");
+    bu_log("\t-N\t\tSet number to make (input will be squared by the program)\n");
+    bu_log("\t-s\t\tSet stance to take; 0-Stand 1-Sit 2-Drive 3-Arms out 4-Letterman 5-Captain 999-Custom\n");
+    bu_log("\t-p\t\tSet percentile (not implemented yet) 1-99\n");
     bu_log("\t-t\t\tSave bounding box information to file Stats.txt\n");
     bu_log("\t-T\t\tRead bounding box information from file Stats.txt\n");
-    bu_log("\t-v\t\tGenerate verbose output of all data used to build human model, to Verbose.txt\n");
-    bu_log("\t-V\t\tRead verbose input of all data and build a human model, using Verbose.txt\n");
+    bu_log("\t-v\t\tSave verbose output of all data used to build human model, to file Verbose.txt\n");
+    bu_log("\t-V\t\tRead verbose input of all data used to build human model, from file Verbose.txt\n");
     bu_log("\t 1 - 9, 0, Q, and special characters are used for wizard purposes, ignore them.\n");
     bu_log("\t Last word on command line is also top level object. No argument needed!\n");
 
