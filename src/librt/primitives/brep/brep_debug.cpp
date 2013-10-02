@@ -2549,6 +2549,43 @@ brep_conversion_comb(struct rt_db_internal *old_internal, const char *name, cons
     return ret;
 }
 
+int
+brep_translate_scv(
+	ON_Brep *brep,
+	int surface_index,
+	int i,
+	int j,
+	fastf_t dx,
+	fastf_t dy,
+	fastf_t dz)
+{
+    ON_NurbsSurface *nurbsSurface = NULL;
+    ON_Surface *surface = brep->m_S[surface_index];
+    if (surface) {
+	nurbsSurface = dynamic_cast<ON_NurbsSurface *>(surface);
+    } else {
+	return -1;
+    }
+
+    double *cv = NULL;
+    if (nurbsSurface) {
+	cv = nurbsSurface->CV(i, j);
+    } else {
+	return -2;
+    }
+
+    if (cv) {
+	ON_3dPoint newPt;
+	newPt.x = cv[X] + dx;
+	newPt.y = cv[Y] + dy;
+	newPt.z = cv[Z] + dz;
+	nurbsSurface->SetCV(i, j, newPt);
+    } else {
+	return -3;
+    }
+
+    return 0;
+}
 
 int
 translate_command(
@@ -2568,34 +2605,22 @@ translate_command(
 	int surface_index = atoi(argv[4]);
 	int i = atoi(argv[5]);
 	int j = atoi(argv[6]);
+	fastf_t dx = atof(argv[7]);
+	fastf_t dy = atof(argv[8]);
+	fastf_t dz = atof(argv[9]);
 
-	ON_NurbsSurface *nurbsSurface = NULL;
-	ON_Surface *surface = brep->m_S[surface_index];
-	if (surface) {
-	    nurbsSurface = dynamic_cast<ON_NurbsSurface *>(surface);
-	} else {
-	    bu_vls_printf(result, "No surface %d.\n", surface_index);
-	    return -1;
+	int ret = brep_translate_scv(brep, surface_index, i, j, dx, dy, dz);
+	switch (ret) {
+	    case -1:
+		bu_vls_printf(result, "No surface %d.\n", surface_index);
+		break;
+	    case -2:
+		bu_vls_printf(result, "Surface %d is not a NURBS surface.\n", surface_index);
+		break;
+	    case -3:
+		bu_vls_printf(result, "No control vertex (%d, %d).\n", i, j);
 	}
-
-	double *cv = NULL;
-	if (nurbsSurface) {
-	    cv = nurbsSurface->CV(i, j);
-	} else {
-	    bu_vls_printf(result, "Surface %d is not a NURBS surface.\n", surface_index);
-	    return -1;
-	}
-
-	if (cv) {
-	    ON_3dPoint newPt;
-	    newPt.x = cv[X] + atof(argv[7]);
-	    newPt.y = cv[Y] + atof(argv[8]);
-	    newPt.z = cv[Z] + atof(argv[9]);
-	    nurbsSurface->SetCV(i, j, newPt);
-	} else {
-	    bu_vls_printf(result, "No control vertex (%d, %d).\n", i, j);
-	    return -1;
-	}
+	return ret;
     } else {
 	return -1;
     }
