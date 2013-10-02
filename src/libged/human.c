@@ -1555,9 +1555,9 @@ HIDDEN void
 getLocation(fastf_t *location)
 {
     int ret;
-    double x, y, z;
+    double x = 0.0 , y = 0.0 , z = 0.0 ;
 
-    bu_log("Enter center point\n");
+    bu_log("Enter center point (inches)\n");
     bu_log("X: ");
     ret = scanf("%lf", &x);
     if (ret != 1)
@@ -1574,7 +1574,6 @@ getLocation(fastf_t *location)
     y*= IN2MM;
     z*= IN2MM;
     VSET(location, x, y, z);
-    fflush(stdin);
 }
 
 
