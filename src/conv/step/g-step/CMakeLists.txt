@@ -61,8 +61,12 @@ set(IGNORE_FILES
   ON_Brep.h
   Comb_Tree.h
   G_STEP_internal.h
+  list_elements.cpp
   )
 CMAKEFILES(${IGNORE_FILES})
+
+set(list_elements_srcs ${express_srcs} list_elements.cpp)
+BRLCAD_ADDEXEC(list_elements "${list_elements_srcs}" "${gstep_LIBS}" NO_STRICT NO_INSTALL)
 
 # Local Variables:
 # tab-width: 8
