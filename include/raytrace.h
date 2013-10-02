@@ -2038,7 +2038,7 @@ struct rt_view_info {
  *       without notice.
  */
 struct rt_selection {
-    void *s; /**< @brief primitive-specific selection object */
+    void *obj; /**< @brief primitive-specific selection object */
 };
 
 /**
@@ -2049,7 +2049,7 @@ struct rt_selection {
  */
 struct rt_selection_list {
     struct bu_list l;
-    struct rt_selection *obj;
+    struct rt_selection *s;
 };
 
 /**
@@ -2066,15 +2066,9 @@ struct rt_selection_query {
     point_t start;     /**< @brief start point of query ray */
     vect_t dir;        /**< @brief direction of query ray */
 
-    /** Comparison function to specify a sort order for matching
-     * selections. Should return <0 if the first selection should come
-     * before the second selection, >0 if the second selection should
-     * come before the first selection, and 0 otherwise.
-     *
-     * If cmp is NULL, selections are sorted by proximity to the start
-     * point of the query ray.
-     */
-    int (*cmp)(const struct rt_selection *, const struct rt_selection *);
+#define RT_SORT_UNSORTED	 0
+#define RT_SORT_CLOSEST_TO_START 1
+    int sorting;
 };
 
 /**
