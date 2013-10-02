@@ -87,9 +87,11 @@ bu_avs_add(struct bu_attribute_value_set *avsp, const char *name, const char *va
 	return 0;
     }
 
+    /* does this attribute already exist? */
     if (avsp->count) {
 	for (BU_AVS_FOR(app, avsp)) {
-	    if (!BU_STR_EQUAL(app->name, name)) continue;
+	    if (!BU_STR_EQUAL(app->name, name))
+		continue;
 
 	    /* found a match, replace it fully */
 	    if (app->name && AVS_IS_FREEABLE(avsp, app->name))
@@ -120,6 +122,7 @@ bu_avs_add(struct bu_attribute_value_set *avsp, const char *name, const char *va
 	}
     }
 
+    /* add the new attribute */
     app = &avsp->avp[avsp->count++];
     app->name = bu_strdup(name);
     if (value) {
@@ -149,10 +152,12 @@ bu_avs_merge(struct bu_attribute_value_set *dest, const struct bu_attribute_valu
     BU_CK_AVS(dest);
     BU_CK_AVS(src);
 
-    if (src->count) {
-	for (BU_AVS_FOR(app, src)) {
-	    (void)bu_avs_add(dest, app->name, app->value);
-	}
+    if (src->count < 1) {
+	return;
+    }
+
+    for (BU_AVS_FOR(app, src)) {
+	(void)bu_avs_add(dest, app->name, app->value);
     }
 }
 
@@ -191,27 +196,32 @@ bu_avs_remove(struct bu_attribute_value_set *avsp, const char *name)
 	return -1;
     }
 
-    if (avsp->count) {
-	for (BU_AVS_FOR(app, avsp)) {
-	    if (!BU_STR_EQUAL(app->name, name))  continue;
-	    if (app->name && AVS_IS_FREEABLE(avsp, app->name))
-		bu_free((genptr_t)app->name, "app->name");
-	    app->name = NULL;	/* sanity */
-	    if (app->value && AVS_IS_FREEABLE(avsp, app->value))
-		bu_free((genptr_t)app->value, "app->value");
-	    app->value = NULL;	/* sanity */
-
-	    /* Move last one down to replace it */
-	    epp = &avsp->avp[--avsp->count];
-	    if (app != epp) {
-		*app = *epp;		/* struct copy */
-	    }
-	    epp->name = NULL;			/* sanity */
-	    epp->value = NULL;
-	    return 0;
-	}
+    if (avsp->count < 1) {
+	return -1;
     }
-    return -1;
+
+    for (BU_AVS_FOR(app, avsp)) {
+	if (!BU_STR_EQUAL(app->name, name))
+	    continue;
+	if (app->name && AVS_IS_FREEABLE(avsp, app->name))
+	    bu_free((genptr_t)app->name, "app->name");
+	app->name = NULL;	/* sanity */
+	if (app->value && AVS_IS_FREEABLE(avsp, app->value))
+	    bu_free((genptr_t)app->value, "app->value");
+	app->value = NULL;	/* sanity */
+
+	/* Move last one down to replace it */
+	epp = &avsp->avp[--avsp->count];
+	if (app != epp) {
+	    *app = *epp; /* struct copy */
+	}
+
+	/* sanity */
+	epp->name = NULL;
+	epp->value = NULL;
+    }
+
+    return 0;
 }
 
 
@@ -304,6 +314,7 @@ bu_avs_add_nonunique(struct bu_attribute_value_set *avsp, const char *name, cons
 	app->value = (char *)NULL;
     }
 }
+
 
 /*
  * Local Variables:
