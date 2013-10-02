@@ -45,35 +45,85 @@ constraint_set(void *datap, int argc, const char *argv[])
 HIDDEN int
 constraint_get(void *datap, int argc, const char *argv[])
 {
+    size_t i, obj;
     struct directory *dp;
+    struct bu_attribute_value_set avs;
+    struct bu_attribute_value_pair *avpp;
+    int ret = BRLCAD_OK;
+
     struct ged *gedp = (struct ged *)datap;
+
     if (!gedp || argc < 1 || !argv)
 	return BRLCAD_ERROR;
 
-    /* load the constraint object */
-    GED_DB_LOOKUP(gedp, dp, argv[2], LOOKUP_QUIET, BRLCAD_ERROR);
+    /* multiple arguments assumed to be multiple objects */
+    for (obj = 0; 2+obj < (size_t)argc; obj++) {
 
-    bu_vls_printf(gedp->ged_result_str, "<<constraint get here>>\n");
+	/* load the constraint object */
+	dp = db_lookup(gedp->ged_wdbp->dbip, argv[2+obj], LOOKUP_QUIET);
+	if (dp == RT_DIR_NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "Unable to find %s in the database.\n", argv[2+obj]);
+	    ret = BRLCAD_ERROR;
+	    continue;
+	}
 
-    return BRLCAD_OK;
+	bu_avs_init_empty(&avs);
+	if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+	    bu_vls_printf(gedp->ged_result_str, "Cannot get constraints for %s\n", dp->d_namep);
+	    ret = BRLCAD_ERROR;
+	}
+
+	for (i=0, avpp = avs.avp; i < avs.count; i++, avpp++) {
+	    bu_vls_printf(gedp->ged_result_str, "%s %s %s\n", argv[2+obj], avpp->name, avpp->value);
+	}
+
+	bu_avs_free(&avs);
+    }
+
+    return ret;
 }
 
 
 HIDDEN int
 constraint_show(void *datap, int argc, const char *argv[])
 {
+    size_t i, obj;
     struct directory *dp;
+    struct bu_attribute_value_set avs;
+    struct bu_attribute_value_pair *avpp;
+    int ret = BRLCAD_OK;
+
     struct ged *gedp = (struct ged *)datap;
+
     if (!gedp || argc < 1 || !argv)
 	return BRLCAD_ERROR;
 
-    /* load the constraint object */
-    GED_DB_LOOKUP(gedp, dp, argv[2], LOOKUP_QUIET, BRLCAD_ERROR);
+    /* multiple arguments assumed to be multiple objects */
+    for (obj = 0; 2+obj < (size_t)argc; obj++) {
+	bu_vls_printf(gedp->ged_result_str, "%s:\n", argv[2+obj]);
 
-    bu_vls_printf(gedp->ged_result_str, "Constraint %s:\n", argv[2]);
-    bu_vls_printf(gedp->ged_result_str, "<<constraint show here>>\n");
+	/* load the constraint object */
+	dp = db_lookup(gedp->ged_wdbp->dbip, argv[2+obj], LOOKUP_QUIET);
+	if (dp == RT_DIR_NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "\tUnable to find %s in the database.\n", argv[2+obj]);
+	    ret = BRLCAD_ERROR;
+	    continue;
+	}
 
-    return BRLCAD_OK;
+	bu_avs_init_empty(&avs);
+	if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+	    bu_vls_printf(gedp->ged_result_str, "\tCannot get constraints for %s\n", dp->d_namep);
+	    ret = BRLCAD_ERROR;
+	}
+
+	for (i=0, avpp = avs.avp; i < avs.count; i++, avpp++) {
+	    bu_vls_printf(gedp->ged_result_str, "\t%s = %s\n", avpp->name, avpp->value);
+	}
+
+	bu_avs_free(&avs);
+    }
+
+    return ret;
 }
 
 
