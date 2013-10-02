@@ -145,29 +145,11 @@ constraint_eval(void *datap, int argc, const char *argv[])
 }
 
 
-HIDDEN int
-constraint_auto(void *datap, int argc, const char *argv[])
-{
-    struct directory *dp;
-    struct ged *gedp = (struct ged *)datap;
-    if (!gedp || argc < 1 || !argv)
-	return BRLCAD_ERROR;
-
-    /* load the constraint object */
-    GED_DB_LOOKUP(gedp, dp, argv[2], LOOKUP_QUIET, BRLCAD_ERROR);
-
-    bu_vls_printf(gedp->ged_result_str, "Autoconstraining %s\n", argv[2]);
-    bu_vls_printf(gedp->ged_result_str, "<<constraint auto here>>\n");
-
-    return BRLCAD_OK;
-}
-
-
 HIDDEN void
 constraint_usage(struct bu_vls *vp, const char *argv0)
 {
     static const char *usage1 = "set constraint_name [expression]";
-    static const char *usage2 = "{get|show|eval|auto} constraint_name1 [constraint_name2 ...]";
+    static const char *usage2 = "{get|show|eval} constraint_name1 [constraint_name2 ...]";
 
     bu_vls_printf(vp, "Usage: %s %s\n", argv0, usage1);
     bu_vls_printf(vp, "  or   %s %s\n", argv0, usage2);
@@ -251,7 +233,7 @@ constraint_help(void *datap, int argc, const char *argv[])
     bu_vls_printf(gedp->ged_result_str, "\t%s set p4 formula sph.R[0]=p3-10.5*magnitude(ell.V, argv[0])\n", argv[0]);
     bu_vls_printf(gedp->ged_result_str, "\t%s get c1 c3\n", argv[0]);
     bu_vls_printf(gedp->ged_result_str, "\t%s show c1 c2 c3 c4\n", argv[0]);
-    bu_vls_printf(gedp->ged_result_str, "\t%s rm c1 tangent\n", argv[0]);
+    bu_vls_printf(gedp->ged_result_str, "\t%s eval c3 p4\n", argv[0]);
 
     return BRLCAD_OK;
 }
@@ -273,9 +255,7 @@ ged_constraint(struct ged *gedp, int argc, const char *argv[])
 	{"set", constraint_set},
 	{"get", constraint_get},
 	{"show", constraint_show},
-	{"rm", constraint_rm},
 	{"eval", constraint_eval},
-	{"auto", constraint_auto},
 	{"help", constraint_help},
 	{(const char *)NULL, BU_CMD_NULL}
     };
