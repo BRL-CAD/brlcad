@@ -151,6 +151,13 @@ constraint_help(void *datap, int argc, const char *argv[])
 
     constraint_usage(gedp->ged_result_str, argv[0]);
 
+    bu_vls_printf(gedp->ged_result_str,
+		  "\nThis command lets you specify dimensional and geometric constraints.\n"
+		  "These constraints and any specified parameters define explicit\n"
+		  "relationships between geoemtry objects.  Parametric constraints are\n"
+		  "enforced during geometry editing when they are included in the boolean\n"
+		  "recipe for a combination.\n\n");
+
     /* face may need to be a planar face */
     /* objects will need to define a principle axis */
 
