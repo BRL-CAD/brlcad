@@ -489,6 +489,8 @@ endif(BRLCAD_IS_SUBBUILD)
 include(${BRLCAD_CMAKE_DIR}/BRLCAD_Options.cmake)
 include(${BRLCAD_CMAKE_DIR}/BRLCAD_Targets.cmake)
 include(CheckTypeSize)
+include(CheckCSourceCompiles)
+include(CheckCXXSourceCompiles)
 
 #---------------------------------------------------------------------
 # Save the current LC_ALL, LC_MESSAGES, and LANG environment variables
