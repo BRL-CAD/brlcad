@@ -128,23 +128,6 @@ constraint_show(void *datap, int argc, const char *argv[])
 
 
 HIDDEN int
-constraint_rm(void *datap, int argc, const char *argv[])
-{
-    struct directory *dp;
-    struct ged *gedp = (struct ged *)datap;
-    if (!gedp || argc < 1 || !argv)
-	return BRLCAD_ERROR;
-
-    /* load the constraint object */
-    GED_DB_LOOKUP(gedp, dp, argv[2], LOOKUP_QUIET, BRLCAD_ERROR);
-
-    bu_vls_printf(gedp->ged_result_str, "Removing %s constraint\n", argv[2]);
-
-    return BRLCAD_OK;
-}
-
-
-HIDDEN int
 constraint_eval(void *datap, int argc, const char *argv[])
 {
     struct directory *dp;
@@ -183,9 +166,11 @@ constraint_auto(void *datap, int argc, const char *argv[])
 HIDDEN void
 constraint_usage(struct bu_vls *vp, const char *argv0)
 {
-    static const char *usage = "{set|get|show|rm|eval|auto} constraint_name [expression[=value] ...]";
+    static const char *usage1 = "set constraint_name [expression]";
+    static const char *usage2 = "{get|show|eval|auto} constraint_name1 [constraint_name2 ...]";
 
-    bu_vls_printf(vp, "Usage: %s %s\n", argv0, usage);
+    bu_vls_printf(vp, "Usage: %s %s\n", argv0, usage1);
+    bu_vls_printf(vp, "  or   %s %s\n", argv0, usage2);
     bu_vls_printf(vp, "  or   %s help [command]\n", argv0);
 }
 
@@ -234,8 +219,8 @@ constraint_help(void *datap, int argc, const char *argv[])
     bu_vls_printf(gedp->ged_result_str, "\t\tspecified symmetry about an axis\n");
     bu_vls_printf(gedp->ged_result_str, "\tequal {point|edge|face|object} {point|edge|face|object}\n");
     bu_vls_printf(gedp->ged_result_str, "\t\tspecified values are set equal in magnitude/length/area to each other\n");
-    bu_vls_printf(gedp->ged_result_str, "\tformula {value}\n");
-    bu_vls_printf(gedp->ged_result_str, "\t\tdefines parametric equations, values, and variables\n");
+    bu_vls_printf(gedp->ged_result_str, "\tformula {relationship}\n");
+    bu_vls_printf(gedp->ged_result_str, "\t\tgeneral parametric relationships using functions, variables, and values\n");
 
     bu_vls_printf(gedp->ged_result_str, "\nEntity Functions:\n");
     bu_vls_printf(gedp->ged_result_str, "\tbisect(curve) => point\n");
