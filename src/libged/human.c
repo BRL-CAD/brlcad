@@ -1540,7 +1540,7 @@ show_help(const char *name, const char *optstr)
     bu_log("\t-T\t\tRead bounding box information from file Stats.txt\n");
     bu_log("\t-v\t\tSave verbose output of all data used to build human model, to file Verbose.txt\n");
     bu_log("\t-V\t\tRead verbose input of all data used to build human model, from file Verbose.txt\n");
-    bu_log("\t 1 - 9, 0, Q, and special characters are used for wizard purposes, ignore them.\n");
+    bu_log("\t 1 - 9, 0, =, and succeeding characters are used for wizard purposes, ignore them.\n");
     bu_log("\t Last word on command line is also top level object. No argument needed!\n");
 
     bu_vls_free(&str);
@@ -1588,7 +1588,7 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
     int percent=50;
     double x = 0; /* for stashing user input */
     int have_name = 0;
-    char *options="AbH:Llmn:N:O:o:p:s:tTvVw1:2:3:4:5:6:7:8:9:0:=:+:_:*:^:%:$:#:@:!:Q:~:Z:Y:X:h?";
+    char *options="AbH:Llmn:N:O:o:p:s:tTvVw1:2:3:4:5:6:7:8:9:0:=:+:_:*:^:%:$:#:@:!:Q:~:Z:Y:W:h?";
 
     if (argc == 1 ) {
 	show_help(*argv, options);
