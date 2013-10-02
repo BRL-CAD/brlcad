@@ -92,6 +92,7 @@ extern "C" {
     int rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, const char **argv);
     int rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *ip);
     RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, const char* operation);
+    struct rt_selection_list *rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query);
 #ifdef __cplusplus
 }
 #endif
@@ -3689,6 +3690,138 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
     out->idb_minor_type = ID_BREP;
 
     return 0;
+}
+
+struct brep_selectable_cv {
+    int face_index;
+    int i;
+    int j;
+    double sqdist_to_start;
+    double sqdist_to_line;
+};
+
+struct brep_cv {
+    int face_index;
+    int i;
+    int j;
+};
+
+struct brep_selection {
+    std::list<brep_cv *> *control_vertexes; /**< brep_cv_list */
+};
+
+bool
+cmp_cv_startdist(brep_selectable_cv *c1, brep_selectable_cv *c2)
+{
+    if (c1->sqdist_to_start < c2->sqdist_to_start) {
+	return true;
+    }
+
+    return false;
+}
+
+struct rt_selection_list *
+new_cv_item(brep_selectable_cv *s)
+{
+    // make new brep selection w/ cv list
+    brep_selection *bs = new brep_selection;
+    bs->control_vertexes = new std::list<brep_cv *>();
+
+    // add referenced cv to cv list
+    brep_cv *cvitem = new brep_cv;
+    cvitem->face_index = s->face_index;
+    cvitem->i = s->i;
+    cvitem->j = s->j;
+    bs->control_vertexes->push_back(cvitem);
+
+    // wrap and return
+    struct rt_selection *selection;
+    BU_ALLOC(selection, struct rt_selection);
+    selection->obj = (void *)bs;
+
+    struct rt_selection_list *item;
+    BU_ALLOC(item, struct rt_selection_list);
+    item->s = selection;
+
+    return item;
+}
+
+struct rt_selection_list *
+rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query)
+{
+    struct rt_brep_internal *bip;
+    ON_Brep *brep;
+ 
+    RT_CK_DB_INTERNAL(ip);
+    bip = (struct rt_brep_internal *)ip->idb_ptr;
+    RT_BREP_CK_MAGIC(bip);
+    brep = bip->brep;
+
+    int num_faces = brep->m_F.Count();
+    if (num_faces == 0) {
+	return NULL;
+    }
+
+    // get a list of all the selectable control vertexes and
+    // simultaneously find the distance from the closest vertex to the
+    // query line
+    std::list<brep_selectable_cv *> selectable;
+    double min_distsq = INFINITY;
+    for (int face_index = 0; face_index < num_faces; ++face_index) {
+	ON_BrepFace *face = brep->Face(face_index);
+	const ON_Surface *surface = face->SurfaceOf();
+	const ON_NurbsSurface *nurbs_surface = dynamic_cast<const ON_NurbsSurface *>(surface);
+
+	if (!nurbs_surface) {
+	    continue;
+	}
+
+	// TODO: should only consider vertices in untrimmed regions
+	int num_rows = nurbs_surface->m_cv_count[0];
+	int num_cols = nurbs_surface->m_cv_count[1];
+	for (int i = 0; i < num_rows; ++i) {
+	    for (int j = 0; j < num_cols; ++j) {
+		double *cv = nurbs_surface->CV(i, j);
+
+		brep_selectable_cv *scv = new brep_selectable_cv;
+		scv->face_index = face_index;
+		scv->i = i;
+		scv->j = j;
+		scv->sqdist_to_start = DIST_PT_PT_SQ(query->start, cv);
+		scv->sqdist_to_line = 
+		    bn_distsq_line3_pt3(query->start, query->dir, cv);
+
+		selectable.push_back(scv);
+
+		if (scv->sqdist_to_line < min_distsq) {
+		    min_distsq = scv->sqdist_to_line;
+		}
+	    }
+	}
+    }
+
+    // narrow down the list to just the control vertexes closest to
+    // the query line, and sort them by proximity to the query start
+    std::list<brep_selectable_cv *>::iterator s;
+    for (s = selectable.begin(); s != selectable.end(); ++s) {
+	if ((*s)->sqdist_to_line > min_distsq) {
+	    selectable.erase(s);
+	}
+    }
+    selectable.sort(cmp_cv_startdist);
+
+    // build and return list of selections
+    struct rt_selection_list *selection_list;
+    BU_ALLOC(selection_list, struct rt_selection_list);
+    BU_LIST_INIT(&selection_list->l);
+
+    for (s = selectable.begin(); s != selectable.end(); ++s) {
+	struct rt_selection_list *item = new_cv_item(*s);
+	BU_LIST_INSERT(&selection_list->l, &item->l);
+    }
+    selectable.clear();
+
+    return selection_list;
 }
 
 
