@@ -1528,11 +1528,11 @@ show_help(const char *name, const char *optstr)
     bu_log("options:\n");
     bu_log("\t-A\t\tAutoMake defaults\n");
     bu_log("\t-m\t\tManual sizing mode\n");
-    bu_log("\t-H\t\tSet Height in inches\n");
-    bu_log("\t-L or -l\tSet Center Point in inches, at feet (default 0 0 0)\n");
+    bu_log("\t-H\t\tSet Height (inches) (requires 1 argument)\n");
+    bu_log("\t-L or -l\tSet Center Point (inches), at body's feet (default 0 0 0; interactive input)\n");
     /* bu_log("\t-o\t\tSet output file name\n" */
     bu_log("\t-b\t\tShow bounding Boxes\n");
-    bu_log("\t-n\t\tSet bounding region name, default Body.c\n");
+    bu_log("\t-n\t\tSet bounding region name (default Body.c ; requires 1 argument)\n");
     bu_log("\t-N\t\tNumber to make (square)\n");
     bu_log("\t-s\t\tStance to take 0-Stand 1-Sit 2-Drive 3-Arms out 4-Letterman 5-Captain 999-Custom\n");
     bu_log("\t-p\t\tSet Percentile (not implemented yet) 1-99\n");
@@ -1588,17 +1588,17 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
     int percent=50;
     double x = 0; /* for stashing user input */
     int have_name = 0;
-    char *humanoptions="AbH:Llmn:N:O:o:p:s:tTvVw1:2:3:4:5:6:7:8:9:0:=:+:_:*:^:%:$:#:@:!:Q:~:Z:Y:X:h?";
+    char *options="AbH:Llmn:N:O:o:p:s:tTvVw1:2:3:4:5:6:7:8:9:0:=:+:_:*:^:%:$:#:@:!:Q:~:Z:Y:X:h?";
 
     if (argc == 1 ) {
-	show_help(*argv, humanoptions);
+	show_help(*argv, options);
 	printf("\n       Program continues running:\n\n");
     }
 
     /* don't report errors (this is before bu_opterr was changed to 1 immed. below) */
     bu_opterr = 1;
     bu_optind = 1;
-    while ((c=bu_getopt(argc, (char * const *)argv, humanoptions)) != -1) {
+    while ((c=bu_getopt(argc, (char * const *)argv, options)) != -1) {
 	/*bu_log("%c \n", c); Testing to see if args are getting read */
 	switch (c) {
 	    case 'A':
@@ -1837,7 +1837,7 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
 		break;
 
 	    default:
-		show_help(*argv, humanoptions);
+		show_help(*argv, options);
 		bu_exit(EXIT_SUCCESS, NULL);
 		fflush(stdin);
 		break;
