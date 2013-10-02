@@ -151,18 +151,21 @@ constraint_help(void *datap, int argc, const char *argv[])
 
     constraint_usage(gedp->ged_result_str, argv[0]);
 
+    /* face may need to be a planar face */
+    /* objects will need to define a principle axis */
+
     bu_vls_printf(gedp->ged_result_str, "\nConstraint Expressions:\n");
-    bu_vls_printf(gedp->ged_result_str, "\tcoincident {{point point}|{point edge}|{edge edge}}\n");
+    bu_vls_printf(gedp->ged_result_str, "\tcoincident {{point point}|{point edge}|{edge edge}}\n"); /* mate */
     bu_vls_printf(gedp->ged_result_str, "\t\tspecified entities stay connected\n");
-    bu_vls_printf(gedp->ged_result_str, "\tcolinear {line line}\n");
-    bu_vls_printf(gedp->ged_result_str, "\t\tstraight edges are segments along the same line\n");
-    bu_vls_printf(gedp->ged_result_str, "\tconcentric {circle circle}\n");
+    bu_vls_printf(gedp->ged_result_str, "\tcolinear {line line}\n"); /* align */
+    bu_vls_printf(gedp->ged_result_str, "\t\tstraight edges are aligned along the same line\n");
+    bu_vls_printf(gedp->ged_result_str, "\tconcentric {circle circle}\n"); /* center */
     bu_vls_printf(gedp->ged_result_str, "\t\tcircle/arc curves maintain same center point\n");
     bu_vls_printf(gedp->ged_result_str, "\tfixed {point|edge|face|object}\n");
     bu_vls_printf(gedp->ged_result_str, "\t\tspecified entity is immutable w.r.t. global coordinate system\n");
-    bu_vls_printf(gedp->ged_result_str, "\tparallel {{edge edge}|{face face}|{object object}}\n");
+    bu_vls_printf(gedp->ged_result_str, "\tparallel {{edge edge}|{edge face}|{face face}|{object object}}\n");
     bu_vls_printf(gedp->ged_result_str, "\t\tspecified entities are parallel to each other\n");
-    bu_vls_printf(gedp->ged_result_str, "\tperpendicular {{edge edge}|{face face}|{object object}}\n");
+    bu_vls_printf(gedp->ged_result_str, "\tperpendicular {{edge edge}|{edge face}|{face face}|{object object}}\n");
     bu_vls_printf(gedp->ged_result_str, "\t\tspecified entities are perpendicular (90 degrees angle to each other\n");
     bu_vls_printf(gedp->ged_result_str, "\thorizontal {{point point}|edge|vector}\n");
     bu_vls_printf(gedp->ged_result_str, "\t\tspecified entities have X/Y values all set to match each other\n");
@@ -184,7 +187,7 @@ constraint_help(void *datap, int argc, const char *argv[])
     bu_vls_printf(gedp->ged_result_str, "\tcurvature(curve1, t) => vector\n");
 
     bu_vls_printf(gedp->ged_result_str, "\nValue Functions:\n");
-    bu_vls_printf(gedp->ged_result_str, "\tangle(curve1, curve2) => value\n");
+    bu_vls_printf(gedp->ged_result_str, "\tangle(curve1, curve2) => value\n"); /* orient */
     bu_vls_printf(gedp->ged_result_str, "\tarea(surface) => value\n");
     bu_vls_printf(gedp->ged_result_str, "\tdiameter(arccurve) => value\n");
     bu_vls_printf(gedp->ged_result_str, "\tdistance(entity, entity) => value\n");
@@ -221,6 +224,7 @@ ged_constraint(struct ged *gedp, int argc, const char *argv[])
      * attr set c1 cad:plot 0|1
      * attr set c1 cad:reference 0|1
      * attr set c1 cad:format value|name|expression (name=value)
+     * attr set c1 cad:disabled 0|1
      */
 
     static struct bu_cmdtab pc_cmds[] = {
