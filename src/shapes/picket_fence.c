@@ -97,20 +97,18 @@ int main(int argc, char *argv[])
 
     int post = 0;
 
-    if (argc < 11) {
+    if (argc < 11)
 	bu_exit(1, "Usage: picket_fence <filename> <prefix> <height_in_mm> <spacing> [-r] <x0> <y0> <z0> ... <xn> <yn> <zn>\n");
-    }
+
     bu_strlcpy(prefix, argv[2], sizeof(prefix));
 
     height = (fastf_t)atof(argv[3]);
-    if (height <= 0) {
+    if (height <= 0)
 	bu_exit(1, "Invalid argument, height must be a positive value\n");
-    }
 
     ps = atof(argv[4]);
-    if (ps < 0) {
+    if (ps < 0)
 	bu_exit(1, "Invalid argument, spacing must be non-negative\n");
-    }
 
     if (BU_STR_EQUAL(argv[5], "-r")) {
 	post = 1;
@@ -138,9 +136,8 @@ int main(int argc, char *argv[])
 	x_1 = (fastf_t)atof(argv[3 + (3 * j)]);
 	y_1 = (fastf_t)atof(argv[4 + (3 * j)]);
 	z_1 = (fastf_t)atof(argv[5 + (3 * j)]);
-	if (isnan(x_0) || isnan(y_0) || isnan(z_0) || isnan(x_1) || isnan(y_1) || isnan(z_1)) {
+	if (isnan(x_0) || isnan(y_0) || isnan(z_0) || isnan(x_1) || isnan(y_1) || isnan(z_1))
 	    bu_exit(1, "Invalid argument, position is not a valid coordinate\n");
-	}
 
 	width = sqrt(((x_1 - x_0) * (x_1 - x_0)) + ((y_1 - y_0) * (y_1 - y_0)));
 	pwidth = ((fastf_t)width /
