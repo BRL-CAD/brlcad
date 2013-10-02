@@ -2694,27 +2694,37 @@ BU_EXPORT extern int bu_avs_add(struct bu_attribute_value_set *avp,
 				const char *value);
 
 /**
- * Add a bu_vls string as an attribute to a given attribute set.
+ * Add a bu_vls string as an attribute to a given attribute set,
+ * updating the value if it already exists.
  */
 BU_EXPORT extern int bu_avs_add_vls(struct bu_attribute_value_set *avp,
 				    const char *attribute,
 				    const struct bu_vls *value_vls);
 
 /**
+ * Add a name/value pair even if the name already exists in the set.
+ */
+BU_EXPORT extern void bu_avs_add_nonunique(struct bu_attribute_value_set *avsp,
+					   const char *attribute,
+					   const char *value);
+/**
  * Take all the attributes from 'src' and merge them into 'dest' by
- * replacing an attribute if it already exists.
+ * replacing an attribute if it already exists in the set.
  */
 BU_EXPORT extern void bu_avs_merge(struct bu_attribute_value_set *dest,
 				   const struct bu_attribute_value_set *src);
 
 /**
- * Get the value of a given attribute from an attribute set.
+ * Get the value of a given attribute from an attribute set.  The
+ * behavior is not currently well-defined for AVS containing
+ * non-unique attributes, but presently returns the first encountered.
  */
 BU_EXPORT extern const char *bu_avs_get(const struct bu_attribute_value_set *avp,
 					const char *attribute);
 
 /**
- * Remove the given attribute from an attribute set.
+ * Remove all occurances of an attribute from the provided attribute
+ * set.
  *
  * @return
  *	-1	attribute not found in set
@@ -2725,7 +2735,7 @@ BU_EXPORT extern int bu_avs_remove(struct bu_attribute_value_set *avp,
 				   const char *attribute);
 
 /**
- * Release all attributes in an attribute set.
+ * Release all attributes in the provided attribute set.
  */
 BU_EXPORT extern void bu_avs_free(struct bu_attribute_value_set *avp);
 
@@ -2736,12 +2746,6 @@ BU_EXPORT extern void bu_avs_free(struct bu_attribute_value_set *avp);
 BU_EXPORT extern void bu_avs_print(const struct bu_attribute_value_set *avp,
 				   const char *title);
 
-/**
- * Add a name/value pair even if the name already exists in this AVS.
- */
-BU_EXPORT extern void bu_avs_add_nonunique(struct bu_attribute_value_set *avsp,
-					   const char *attribute,
-					   const char *value);
 /** @} */
 
 /** @addtogroup bitv */
