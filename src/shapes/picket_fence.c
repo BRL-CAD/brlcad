@@ -97,8 +97,11 @@ int main(int argc, char *argv[])
 
     int post = 0;
 
-    if (argc < 11)
-	bu_exit(1, "Usage: picket_fence <filename> <prefix> <height_in_mm> <spacing> [-r] <x0> <y0> <z0> ... <xn> <yn> <zn>\n");
+    if (argc < 11) {
+	fprintf(stderr, "Usage: picket_fence <filename> <prefix> <height> <spacing> [-r] <x0> <y0> <z0> ... <xn> <yn> <zn>\n");
+	fprintf(stderr, "       (for <xn> <yn> <zn>, need n >= 1)");
+	bu_exit(1,      "       (units mm)\n");
+    }
 
     bu_strlcpy(prefix, argv[2], sizeof(prefix));
 
