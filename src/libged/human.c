@@ -1620,12 +1620,11 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
 		if (height < 1) {
 		    bu_log("Impossible height, setting default height!\n");
 		    height = DEFAULT_HEIGHT_INCHES;
-		    dude->height = DEFAULT_HEIGHT_INCHES;
-		} else
-		    dude->height = height;
+		}
+		dude->height = height;
 		bu_log("%.2f = height in inches\n", height);
-		fflush(stdin);
 		Auto(dude);
+		fflush(stdin);
 		break;
 
 	    case 'L':
@@ -1644,8 +1643,8 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
 		memset(humanName, 0, MAXLENGTH);
 		bu_strlcpy(humanName, bu_optarg, MAXLENGTH);
 		bu_strlcpy(topLevel, humanName, MAXLENGTH);
-		fflush(stdin);
 		have_name = 1;
+		fflush(stdin);
 		break;
 
 	    case 'N':
