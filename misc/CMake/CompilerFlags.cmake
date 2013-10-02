@@ -259,16 +259,16 @@ CHECK_C_FLAG(msse3 BUILD_TYPES Debug)
 if(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE)
   CHECK_C_FLAG("std=c89" BUILD_TYPES Debug)
   CHECK_C_FLAG("std=c99" BUILD_TYPES Release VARS C99_FLAG)
-else(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE)
+else()
   CHECK_C_FLAG("std=gnu89" BUILD_TYPES Debug)
   CHECK_C_FLAG("std=gnu99" BUILD_TYPES Release VARS C99_FLAG)
-endif(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE)
+endif()
 
 # What POSIX do we want to target, initially?  See
 # http://www.gnu.org/software/libc/manual/html_node/Feature-Test-Macros.html
 # for options...
 if(ENABLE_POSIX_COMPLIANCE)
-  CHECK_C_FLAG("D_POSIX_C_SOURCE=1")
+  CHECK_C_FLAG("D_POSIX_C_SOURCE=200112L")
 endif()
 
 # Silence check for unused arguments (used to silence clang warnings about
