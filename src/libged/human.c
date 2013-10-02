@@ -1588,7 +1588,8 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
     int percent=50;
     double x = 0; /* for stashing user input */
     int have_name = 0;
-    char *options="AbH:Llmn:N:O:o:p:s:tTvVw1:2:3:4:5:6:7:8:9:0:=:+:_:*:^:%:$:#:@:!:Q:~:Z:Y:W:h?";
+/*  char *options="AbH:Llmn:N:O:o:p:s:tTvVw1:2:3:4:5:6:7:8:9:0:=:+:_:*:^:%:$:#:@:!:Q:~:Z:Y:W:h?"; */
+    char *options="AbH:Llmn:N:p:s:tTvVw1:2:3:4:5:6:7:8:9:0:=:+:_:*:^:%:$:#:@:!:Q:~:Z:Y:W:h?";
 
     if (argc == 1 ) {
 	show_help(*argv, options);
