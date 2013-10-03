@@ -20,8 +20,8 @@
 /** @file libdm/dm-qt.cpp
  *
  */
-#include <locale.h>
 #include "common.h"
+#include <locale.h>
 
 #ifdef DM_QT
 

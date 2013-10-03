@@ -24,8 +24,8 @@
 #ifndef ON_BREP_H_
 #define ON_BREP_H_
 
+#include "common.h"
 #include <map>
-
 #include "STEPWrapper.h"
 
 struct ON_Brep_Info_AP203 {

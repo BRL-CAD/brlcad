@@ -24,8 +24,8 @@
 #ifndef ASSEMBLY_PRODUCT_H_
 #define ASSEMBLY_PRODUCT_H_
 
+#include "common.h"
 #include <map>
-
 #include "ON_Brep.h"
 
 STEPentity *Add_Assembly_Product(struct directory *dp,

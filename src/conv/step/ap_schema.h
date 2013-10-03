@@ -25,6 +25,8 @@
 #ifndef AP_SCHEMA_H_
 #define AP_SCHEMA_H_
 
+#include "common.h"
+
 #ifdef AP203
 #  define SCHEMA_NAMESPACE config_control_design
 #  include <SdaiCONFIG_CONTROL_DESIGN.h>

@@ -24,6 +24,7 @@
  *
  */
 
+#include "common.h"
 #include <sstream>
 #include <map>
 #include <set>

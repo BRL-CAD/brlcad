@@ -5,6 +5,8 @@
  * Based on treg.cc from stepcode.  Public Domain.
  */
 
+#include "common.h"
+
 /* C++ Stuff */
 #include <iostream>
 

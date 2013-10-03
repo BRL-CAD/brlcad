@@ -24,8 +24,8 @@
 #ifndef COMB_TREE_H_
 #define COMB_TREE_H_
 
+#include "common.h"
 #include <map>
-
 #include "ON_Brep.h"
 
 struct comb_maps {
