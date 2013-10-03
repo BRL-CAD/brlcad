@@ -822,7 +822,7 @@ _read_bool(void *addr)
 
   // normally we no longer need this file
   if (!_debug)
-    unlink(fname.c_str());
+    bu_file_delete(fname.c_str());
 
   return b;
 }
@@ -839,7 +839,7 @@ _read_long(void *addr)
 
   // normally we no longer need this file
   if (!_debug)
-    unlink(fname.c_str());
+    bu_file_delete(fname.c_str());
 
   return l;
 }
@@ -856,7 +856,7 @@ _read_double(void *addr)
 
   // normally we no longer need this file
   if (!_debug)
-    unlink(fname.c_str());
+    bu_file_delete(fname.c_str());
 
   return d;
 }
@@ -873,7 +873,7 @@ _read_string(void *addr)
 
   // normally we no longer need this file
   if (!_debug)
-    unlink(fname.c_str());
+    bu_file_delete(fname.c_str());
 
   return s;
 }
