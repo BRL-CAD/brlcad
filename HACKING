@@ -1069,7 +1069,8 @@ number follows a common convention where the three numbers represent:
     {MAJOR_VERSION}.{MINOR_VERSION}.{PATCH_VERSION}
 
 All "development" builds use an odd number for the minor version.  All
-"release" builds use an even number for the minor version.  Patched versions should include a release count:
+"release" builds use an even number for the minor version.  Patched
+versions should include a release count:
 
     {MAJOR_VERSION}.{MINOR_VERSION}.{PATCH_VERSION}[-{RELEASE_COUNT}]
 
