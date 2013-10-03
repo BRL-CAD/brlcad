@@ -852,7 +852,7 @@ mark_as_advanced(SC_ENABLE_COVERAGE)
 mark_as_advanced(SC_ENABLE_TESTING)
 mark_as_advanced(SC_PYTHON_GENERATOR)
 mark_as_advanced(SC_MEMMGR_ENABLE_CHECKS)
-mark_as_advanced(SC_SDAI_ADDITIONAL_EXECS_SRCS)
+mark_as_advanced(SC_SDAI_ADDITIONAL_EXES_SRCS)
 mark_as_advanced(SC_TRACE_FPRINTF)
 
 # Clipper polygon clipping library - for now, we're going to use our copy
