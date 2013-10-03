@@ -43,7 +43,7 @@
 #define ROWS 5
 #define COLS 5
 
-static char *options="an:c:d:W:R:D:g:j:p:s:t:u:w:h";
+static char *options="an:c:d:W:R:D:g:j:p:s:t:u:w:h?";
 
 /**
  * Help message printed when -h option is supplied
@@ -55,7 +55,7 @@ show_help(struct ged *gedp, const char *name)
     const char *cp = options;
 
     while (cp && *cp != '\0') {
-	if (*cp == ':') {
+	if (*cp == ':' || *cp == 'h' || *cp == '?') {
 	    cp++;
 	    continue;
 	}
@@ -81,7 +81,6 @@ show_help(struct ged *gedp, const char *name)
     bu_vls_printf(gedp->ged_result_str, "\t-t <type>\n\t\tGenerate tread with tread type as specified\n");
     bu_vls_printf(gedp->ged_result_str, "\t-u <thickness>\n\t\tSpecify tire thickness in mm\n");
     bu_vls_printf(gedp->ged_result_str, "\t-w <0|1>\n\t\tWhether to include the wheel or not\n");
-    bu_vls_printf(gedp->ged_result_str, "\t-h\n\t\tShow help\n\n");
 
     bu_vls_free(&str);
     return;
@@ -409,9 +408,8 @@ SolveEchelon(fastf_t **mat, fastf_t *result1)
     fastf_t inter;
     for (i = 4; i >= 0; i--) {
 	inter = mat[i][5];
-	for (j = 4; j > i; j--) {
+	for (j = 4; j > i; j--)
 	    inter -= mat[i][j] * result1[j];
-	}
 	result1[i]=inter;
     }
 }
@@ -1625,11 +1623,10 @@ MakeTire(struct rt_wdb (*file), char *suffix, fastf_t dytred,
     /* Set Tire color */
     VSET(rgb, 40, 40, 40);
 
-    if (tread_type != 0) {
+    if (tread_type != 0)
 	ztire_with_offset = ztire - tread_depth*bu_units_conversion("in");
-    } else {
+    else
 	ztire_with_offset = ztire;
-    }
 
     matrixell1 = (fastf_t **)bu_malloc(5 * sizeof(fastf_t *), "matrixrows");
     for (i = 0; i < 5; i++)
@@ -1858,10 +1855,11 @@ ReadArgs(struct ged *gedp,
     /* skip command name */
     bu_optind = 1;
 
-    /* don't report errors */
-    bu_opterr = 0;
+    bu_opterr = 1;
 
     while ((c=bu_getopt(argc, (char * const *)argv, options)) != -1) {
+    	if (bu_optopt == '?')
+    	    c='h';
 	switch (c) {
 	    case 'a' :
 		*gen_name = 1;
@@ -1924,12 +1922,10 @@ ReadArgs(struct ged *gedp,
 		*usewheel = usewheelc;
 		break;
 	    default:
-		bu_vls_printf(gedp->ged_result_str, "%s: illegal option -- %c\n", argv[0], c);
 		show_help(gedp, argv[0]);
-		return GED_ERROR;
-	    case 'h':
-		show_help(gedp, argv[0]);
-		return GED_HELP;
+		if (c=='h')
+		    return GED_HELP;
+  	    	return GED_ERROR;
 	}
     }
 
@@ -2046,11 +2042,10 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     dytred = .8 * width;
     d1 = (ztire-zhub)/2.5;
 
-    if (ZERO(hub_width)) {
+    if (ZERO(hub_width))
 	dyhub = dytred;
-    } else {
+    else
 	dyhub = hub_width*bu_units_conversion("in");
-    }
 
     if (ZERO(zside1))
 	zside1 = ztire-((ztire-zhub)/2*1.2);
@@ -2083,11 +2078,11 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     rim_thickness = tire_thickness/2.0;
 
     /* Make the wheel region*/
-    if (usewheel != 0) {
+    if (usewheel != 0)
 	MakeWheelRims(gedp->ged_wdbp, bu_vls_addr(&dimen),
 		      dyhub, zhub, bolts, bolt_diam, bolt_circ_diam,
 		      spigot_diam, fixing_offset, bead_height, bead_width, rim_thickness);
-    }
+
     /* Make the air region*/
     MakeAirRegion(gedp->ged_wdbp, bu_vls_addr(&dimen), dyhub, zhub, usewheel);
 
@@ -2097,10 +2092,10 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     (void)mk_addmember(bu_vls_addr(&str), &wheel_and_tire.l, NULL, WMOP_UNION);
     bu_vls_sprintf(&str, "air%s.r", bu_vls_addr(&dimen));
     (void)mk_addmember(bu_vls_addr(&str), &wheel_and_tire.l, NULL, WMOP_UNION);
-    if (usewheel != 0) {
+    if (usewheel != 0)
 	bu_vls_sprintf(&str, "wheel%s.r", bu_vls_addr(&dimen));
 	(void)mk_addmember(bu_vls_addr(&str), &wheel_and_tire.l, NULL, WMOP_UNION);
-    }
+
     mk_lcomb(gedp->ged_wdbp, bu_vls_addr(&name), &wheel_and_tire, 0,  NULL, NULL, NULL, 0);
 
     bu_vls_free(&str);
