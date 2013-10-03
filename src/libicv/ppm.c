@@ -124,7 +124,7 @@ ppm_read(const char *filename)
 	return NULL;
     }
 
-    if (!fgets(buff, sizeof(buff), fp)) {
+    if (!bu_fgets(buff, sizeof(buff), fp)) {
 	bu_log("ERROR : Invalid Image");
 	return NULL;
     }
