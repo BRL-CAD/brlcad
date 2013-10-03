@@ -924,8 +924,11 @@ if("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
 endif("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
 
 # *******************************************************************
-# ***        Top Level Configure Options - Stage 1 of 9           ***
-# *******************************************************************
+if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
+message("***********************************************************")
+message("*       Stage 1 of 10 - Top Level Configure Options       *")
+message("***********************************************************")
+endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 #
 # Now we define the various options for BRL-CAD - ways to enable and
 # disable features, select which parts of the system to build, etc.
@@ -1399,8 +1402,11 @@ include(${BRLCAD_CMAKE_DIR}/BRLCAD_CheckFunctions.cmake)
 
 
 # *******************************************************************
-# ***            Check for Programs - Stage 2 of 9                ***
-# *******************************************************************
+if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
+message("***********************************************************")
+message("*             Stage 2 of 10 - Check for Programs          *")
+message("***********************************************************")
+endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 
 # A variety of tools, such as the benchmark utilities, need
 # a Bourne shell and other commands - check for them.
@@ -1422,8 +1428,11 @@ endif(BRLCAD_ENABLE_DTRACE)
 
 
 # *******************************************************************
-# ***      Check for Compiler Characteristics - Stage 3 of 9      ***
-# *******************************************************************
+if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
+message("***********************************************************")
+message("*    Stage 3 of 10 - Check for Compiler Characteristics   *")
+message("***********************************************************")
+endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 
 # load our compiler testing macro definitions
 if(NOT MSVC)
@@ -1453,8 +1462,11 @@ endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
 
 
 # *******************************************************************
-# ***            Check for Libraries - Stage 4 of 9               ***
-# *******************************************************************
+if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
+message("***********************************************************")
+message("*            Stage 4 of 10 - Check for Libraries          *")
+message("***********************************************************")
+endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 
 # While the primary purpose of this section is to identify libraries,
 # some of the headers we are looking for are associated with the
@@ -1549,8 +1561,11 @@ BRLCAD_CHECK_LIBRARY(WINMM winmm timeSetEvent)
 
 
 # *******************************************************************
-# ***             Check for Headers - Stage 5 of 9                ***
-# *******************************************************************
+if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
+message("***********************************************************")
+message("*              Stage 5 of 10 - Check for Headers          *")
+message("***********************************************************")
+endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 
 # C89 headers: assert.h, ctype.h, errno.h, float.h, limits.h, locale.h,
 # math.h, setjmp.h, signal.h, stdarg.h, stddef.h, stdio.h, stdlib.h,
@@ -1678,8 +1693,12 @@ endif(HAVE_EMMINTRIN_H)
 
 
 # *******************************************************************
-# ***         Check for Types/Structures - Stage 6 of 9           ***
-# *******************************************************************
+if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
+message("***********************************************************")
+message("*         Stage 6 of 10 - Check for Types/Structures      *")
+message("***********************************************************")
+endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
+
 
 BRLCAD_STRUCT_MEMBER("struct stat" st_blksize sys/stat.h STRUCT_STAT_ST_BLKSIZE)
 BRLCAD_STRUCT_MEMBER("struct stat" st_blocks sys/stat.h STRUCT_STAT_ST_BLOCKS)
@@ -1725,8 +1744,12 @@ BRLCAD_CHECK_C99_FORMAT_SPECIFIERS()
 
 
 # *******************************************************************
-# ***             Check for Functions - Stage 7 of 9              ***
-# *******************************************************************
+if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
+message("***********************************************************")
+message("*             Stage 7 of 10 - Check for Functions         *")
+message("***********************************************************")
+endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
+
 
 # ALLOCA test - based on AC_FUNC_ALLOCA
 BRLCAD_ALLOCA()
@@ -1874,8 +1897,11 @@ if(MSVC)
 endif(MSVC)
 
 # *******************************************************************
-# ***          Check for System Services - Stage 8 of 9           ***
-# *******************************************************************
+if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
+message("***********************************************************")
+message("*         Stage 8 of 10 - Check for System Services       *")
+message("***********************************************************")
+endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 
 # For Windows, we need some dlls to be redistributed with the
 # installer
@@ -1896,6 +1922,11 @@ if(MSVC)
 endif(MSVC)
 
 # *******************************************************************
+if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
+message("***********************************************************")
+message("*       Stage 9 of 10 - Configure Third Party Sources     *")
+message("***********************************************************")
+endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 
 # Now that we've done the system tests with BRL-CAD's compile flags,
 # add src/other to pick up any tests it needs.  We must add src/other
@@ -1905,21 +1936,47 @@ endif(MSVC)
 # tests so the CACHE reflects BRL-CAD's test results.
 add_subdirectory(src/other)
 
+
+# *******************************************************************
+if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
+message("***********************************************************")
+message("*       Stage 10 of 10 - Define BRL-CAD Build Targets     *")
+message("***********************************************************")
+endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
+
 # Enable CTest Testing support - this is done after src/other is
 # added to avoid incorporating src/other CTests into BRL-CAD's own
 # testing.  TODO - probably should control this with an option.
 ENABLE_TESTING()
 
 # We've done the toplevel configure steps, now add the subdirectories
-add_subdirectory(src)
-add_subdirectory(include)
-add_subdirectory(sh)
-add_subdirectory(misc)
+macro(verbose_add_subdirectory root dir)
+  if(NOT EXISTS ${BRLCAD_BINARY_DIR}/CMakeCache.txt.prev)
+    if(NOT "${root}" STREQUAL "")
+      message("-- Adding ${root}/${dir}...")
+    else(NOT "${root}" STREQUAL "")
+      message("-- Adding ${dir}...")
+    endif(NOT "${root}" STREQUAL "")
+  endif(NOT EXISTS ${BRLCAD_BINARY_DIR}/CMakeCache.txt.prev)
+  add_subdirectory(${dir})
+  if(NOT EXISTS ${BRLCAD_BINARY_DIR}/CMakeCache.txt.prev)
+    if(NOT "${root}" STREQUAL "")
+      message("-- Adding ${root}/${dir} - done")
+    else(NOT "${root}" STREQUAL "")
+      message("-- Adding ${dir} - done")
+    endif(NOT "${root}" STREQUAL "")
+  endif(NOT EXISTS ${BRLCAD_BINARY_DIR}/CMakeCache.txt.prev)
+endmacro()
+
+verbose_add_subdirectory("" src)
+verbose_add_subdirectory("" include)
+verbose_add_subdirectory("" sh)
+verbose_add_subdirectory("" misc)
 if(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
-  add_subdirectory(doc)
-  add_subdirectory(db)
-  add_subdirectory(bench)
-  add_subdirectory(regress)
+  verbose_add_subdirectory("" doc)
+  verbose_add_subdirectory("" db)
+  verbose_add_subdirectory("" bench)
+  verbose_add_subdirectory("" regress)
 else(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
   CMAKEFILES(doc bench regress db)
 endif(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
@@ -1955,7 +2012,7 @@ if(WIN32)
 endif(WIN32)
 
 # *******************************************************************
-# ***              Summarize Results - Stage 9 of 9               ***
+# ***                     Summarize Results                       ***
 # *******************************************************************
 
 # Now that everything is configured, print a summary of the build
