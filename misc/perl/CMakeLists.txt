@@ -1,9 +1,6 @@
 set(misc_ignore_files rt.i)
 CMAKEFILES(${misc_ignore_files})
 
-find_package(SWIG)
-mark_as_advanced(SWIG_EXECUTABLE)
-
 # see p. 48 in CMake book
 if(SWIG_FOUND)
 

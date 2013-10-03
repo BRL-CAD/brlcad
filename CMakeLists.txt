@@ -1425,6 +1425,16 @@ if(BRLCAD_ENABLE_DTRACE)
   find_program(DTRACE_EXEC NAMES dtrace DOC "path to dtrace executable")
 endif(BRLCAD_ENABLE_DTRACE)
 
+# SWIG is an automatic generator of wrappers for various
+# software languages
+find_package(SWIG)
+mark_as_advanced(SWIG_EXECUTABLE)
+mark_as_advanced(SWIG_DIR)
+mark_as_advanced(SWIG_VERSION)
+
+# Doxygen is a tool for generating formatted documentation
+# from structured source code coments.
+find_package(Doxygen)
 
 
 # *******************************************************************
