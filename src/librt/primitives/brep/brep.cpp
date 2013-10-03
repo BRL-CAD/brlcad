@@ -3035,7 +3035,7 @@ rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info
 	    int min_linear_seg_count = crv->Degree() + 1;
 	    double max_domain_step = 1.0 / min_linear_seg_count;
 
-	    // specifiy first tentative segment t1 to t2
+	    // specify first tentative segment t1 to t2
 	    double t2 = max_domain_step;
 	    double t1 = 0.0;
 	    p = crv->PointAt(dom.ParameterAt(t1));
@@ -3752,7 +3752,7 @@ rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selecti
 {
     struct rt_brep_internal *bip;
     ON_Brep *brep;
- 
+
     RT_CK_DB_INTERNAL(ip);
     bip = (struct rt_brep_internal *)ip->idb_ptr;
     RT_BREP_CK_MAGIC(bip);
@@ -3789,7 +3789,7 @@ rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selecti
 		scv->i = i;
 		scv->j = j;
 		scv->sqdist_to_start = DIST_PT_PT_SQ(query->start, cv);
-		scv->sqdist_to_line = 
+		scv->sqdist_to_line =
 		    bn_distsq_line3_pt3(query->start, query->dir, cv);
 
 		selectable.push_back(scv);

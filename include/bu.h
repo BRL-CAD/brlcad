@@ -2723,7 +2723,7 @@ BU_EXPORT extern const char *bu_avs_get(const struct bu_attribute_value_set *avp
 					const char *attribute);
 
 /**
- * Remove all occurances of an attribute from the provided attribute
+ * Remove all occurrences of an attribute from the provided attribute
  * set.
  *
  * @return

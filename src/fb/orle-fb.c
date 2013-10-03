@@ -38,7 +38,7 @@ static char *usage[] =
 {
     "Usage: orle-fb [-Otdv] [-b (rgbwBG)] [-F Frame_buffer] [-p X Y] [file.rle]",
     "",
-    "If no rle file is specifed, orle-fb will read its standard input.",
+    "If no rle file is specified, orle-fb will read its standard input.",
     "If the environment variable FB_FILE is set, its value will be used",
     "to specify the framebuffer file or device to write to.",
     0

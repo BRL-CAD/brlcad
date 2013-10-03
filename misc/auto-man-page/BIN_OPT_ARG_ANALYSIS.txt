@@ -98,7 +98,7 @@ Attributes per program
 
 ***** begin 3dm-g ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -108,7 +108,7 @@ Usage: 3dm-g [-v vmode] [-r] [-u] -o output_file.g input_file.3dm
 ***** end 3dm-g ***********************************
 ***** begin a-d ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -120,7 +120,7 @@ Usage: a-d [values] < ascii > doubles
 ***** end a-d ***********************************
 ***** begin alias-pix ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -132,7 +132,7 @@ Usage: /usr/local/src2/brlcad-build/bin/alias-pix [ -v ] < ALIASpixfile >BRLpixf
 ***** end alias-pix ***********************************
 ***** begin aliastorle ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -140,7 +140,7 @@ Usage: /usr/local/src2/brlcad-build/bin/alias-pix [ -v ] < ALIASpixfile >BRLpixf
 ***** end aliastorle ***********************************
 ***** begin all_sf ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 0
 ----- begin usage -----------------------------------
 
@@ -152,7 +152,7 @@ Usage:  /usr/local/src2/brlcad-build/bin/all_sf file.g objects
 ***** end all_sf ***********************************
 ***** begin anim_cascade ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 
@@ -162,7 +162,7 @@ Usage: anim_cascade [-s] [-o(f|r|a)] [-(f|r|a)(c|y) # # #] input.table output.ta
 ***** end anim_cascade ***********************************
 ***** begin anim_fly ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 0
 ----- begin usage -----------------------------------
 Usage: anim_fly [-f factor] [-r] [-p integer] [-b max_bank_angle] [-s step] in.table out.table
@@ -171,7 +171,7 @@ Usage: anim_fly [-f factor] [-r] [-p integer] [-b max_bank_angle] [-s step] in.t
 ***** end anim_fly ***********************************
 ***** begin anim_hardtrack ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 0
 ----- begin usage -----------------------------------
 
@@ -181,7 +181,7 @@ Usage: anim_hardtrack [-l num_linkslinkname] [-w wheelname] [options] wheelfile 
 ***** end anim_hardtrack ***********************************
 ***** begin anim_keyread ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 0
 ----- begin usage -----------------------------------
 Usage: anim_keyread [-y|z] key.file key.table
@@ -190,7 +190,7 @@ Usage: anim_keyread [-y|z] key.file key.table
 ***** end anim_keyread ***********************************
 ***** begin anim_lookat ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 0
 ----- begin usage -----------------------------------
 Usage: anim_lookat [-f #] [-v] in.table out.script
@@ -200,7 +200,7 @@ Usage: anim_lookat [-f #] [-v] in.table out.script
 ***** end anim_lookat ***********************************
 ***** begin anim_offset ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 0
 ----- begin usage -----------------------------------
 
@@ -210,7 +210,7 @@ Usage: anim_offset -o # # # [-r] in.table out.table
 ***** end anim_offset ***********************************
 ***** begin anim_orient ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 0
 ----- begin usage -----------------------------------
 Usage: anim_orient [q | y | a | z | m] [vri] [q | y | a | z | m] [vriu] in.table out.table
@@ -219,7 +219,7 @@ Usage: anim_orient [q | y | a | z | m] [vri] [q | y | a | z | m] [vriu] in.table
 ***** end anim_orient ***********************************
 ***** begin anim_script ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 0
 ----- begin usage -----------------------------------
 Usage: anim_script [-v #] [-r|t|s] [-q][-p] [-a|b # # #] [-c|d # # #] [-f #] [-m cmd] [objectname] < in.table > out.script
@@ -228,7 +228,7 @@ Usage: anim_script [-v #] [-r|t|s] [-q][-p] [-a|b # # #] [-c|d # # #] [-f #] [-m
 ***** end anim_script ***********************************
 ***** begin anim_sort ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 0
 ----- begin usage -----------------------------------
 
@@ -238,7 +238,7 @@ Usage: anim_sort [-ic] < mixed.script > ordered.script
 ***** end anim_sort ***********************************
 ***** begin anim_time ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 0
 ----- begin usage -----------------------------------
 Usage: anim_time [-s#] [-e#] [-d] < in.table
@@ -248,7 +248,7 @@ Usage: anim_time [-s#] [-e#] [-d] < in.table
 ***** end anim_time ***********************************
 ***** begin anim_track ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 0
 ----- begin usage -----------------------------------
 Usage: /usr/local/src2/brlcad-build/bin/anim_track [options] wheelfile < in.table > out.script
@@ -276,7 +276,7 @@ Usage: /usr/local/src2/brlcad-build/bin/anim_track [options] wheelfile < in.tabl
 ***** end anim_track ***********************************
 ***** begin anim_turn ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 0
 ----- begin usage -----------------------------------
 Usage: anim_turn -l length [-a angle] [-r radius] [-f factor] [-p integer] < in.table > out.table
@@ -285,7 +285,7 @@ Usage: anim_turn -l length [-a angle] [-r radius] [-f factor] [-p integer] < in.
 ***** end anim_turn ***********************************
 ***** begin ap-pix ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -296,7 +296,7 @@ Usage: /usr/local/src2/brlcad-build/bin/ap-pix [-v] file.ap > file.pix (3456 x ?
 ***** end ap-pix ***********************************
 ***** begin applymap ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -304,7 +304,7 @@ Usage: /usr/local/src2/brlcad-build/bin/ap-pix [-v] file.ap > file.pix (3456 x ?
 ***** end applymap ***********************************
 ***** begin archer ***********************************
 	result : (window)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -325,7 +325,7 @@ Usage: asc-nmg [filein] [fileout] ; use - for stdin
 ***** end asc-nmg ***********************************
 ***** begin asc-plot3 ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -338,7 +338,7 @@ Usage: asc-plot3 [file.in [file.plot3]]
 ***** end asc-plot3 ***********************************
 ***** begin asc2dsp ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -351,7 +351,7 @@ Convert an ASCII DSP file to DSP binary form
 ***** end asc2dsp ***********************************
 ***** begin asc2g ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -364,7 +364,7 @@ Usage: asc2g file.asc file.g
 ***** end asc2g ***********************************
 ***** begin asc2pix ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -372,7 +372,7 @@ Usage: asc2g file.asc file.g
 ***** end asc2pix ***********************************
 ***** begin avg4 ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -380,7 +380,7 @@ Usage: asc2g file.asc file.g
 ***** end avg4 ***********************************
 ***** begin azel ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -394,7 +394,7 @@ azel:  Premature end-of-line on line 1, file stdin
 ***** end azel ***********************************
 ***** begin bary ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 Usage: bary [-nt] [-s "x y z"] [file]
@@ -405,7 +405,7 @@ Usage: bary [-nt] [-s "x y z"] [file]
 ***** end bary ***********************************
 ***** begin benchmark ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -415,7 +415,7 @@ Type '/usr/local/src2/brlcad-build/bin/benchmark help' for usage.
 ***** end benchmark ***********************************
 ***** begin bolt ***********************************
 	result : (interactive)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -433,7 +433,7 @@ Enter option:
 ***** end bolt ***********************************
 ***** begin bombardier ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -445,7 +445,7 @@ Usage: /usr/local/src2/brlcad-build/bin/bombardier logfile(s)
 ***** end bombardier ***********************************
 ***** begin bot-bldxf ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -455,7 +455,7 @@ Usage: bot-bldxf [-d] [<] geom.g [> file.dxf] [bot1 bot2 bot3...]
 ***** end bot-bldxf ***********************************
 ***** begin bot_dump ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -467,7 +467,7 @@ Usage: /usr/local/src2/brlcad-build/bin/bot_dump [-b] [-n] [-m directory] [-o fi
 ***** end bot_dump ***********************************
 ***** begin bot_shell-vtk ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -534,7 +534,7 @@ ON_BrepVertex[7]: (1, 1, 0)
 ***** end brep_simple ***********************************
 ***** begin brepintersect ***********************************
 	result : (UNKNOWN)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 0
 ----- begin usage -----------------------------------
 
@@ -568,7 +568,7 @@ curve2d[ 3]: ON_LineCurve domain(0,1) start(0,1) end(0,0)
 ***** end breplicator ***********************************
 ***** begin brickwall ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -584,7 +584,7 @@ Usage: (noname)   [ -u units ] [ -s(tandalone) ] [-t tolerance ]
 ***** end brickwall ***********************************
 ***** begin brlcad-config ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage: brlcad-config [OPTIONS] [LIBRARIES]
@@ -619,7 +619,7 @@ Libraries:
 ***** end brlcad-config ***********************************
 ***** begin brlman ***********************************
 	result : (UNKNOWN)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 0
 ----- begin usage -----------------------------------
 
@@ -627,7 +627,7 @@ Libraries:
 ***** end brlman ***********************************
 ***** begin btclsh ***********************************
 	result : (shell)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -635,7 +635,7 @@ Libraries:
 ***** end btclsh ***********************************
 ***** begin buffer ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -643,7 +643,7 @@ Libraries:
 ***** end buffer ***********************************
 ***** begin buildtimeend ***********************************
 	result : (core)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 0 from signal 11; dumped core
 ----- begin usage -----------------------------------
 
@@ -651,7 +651,7 @@ Libraries:
 ***** end buildtimeend ***********************************
 ***** begin buildtimestart ***********************************
 	result : (UNKNOWN)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 0
 ----- begin usage -----------------------------------
 
@@ -659,7 +659,7 @@ Libraries:
 ***** end buildtimestart ***********************************
 ***** begin burst ***********************************
 	result : (window)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -667,7 +667,7 @@ Libraries:
 ***** end burst ***********************************
 ***** begin bw-a ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -678,7 +678,7 @@ Usage: bw-a [-a] [-s squarefilesize] [-w file_width] [-n file_height]
 ***** end bw-a ***********************************
 ***** begin bw-d ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 bad argument
@@ -691,7 +691,7 @@ Usage: bw-d [-n || scale] < unsigned_chars > doubles
 ***** end bw-d ***********************************
 ***** begin bw-fb ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -704,7 +704,7 @@ Usage: bw-fb [-a -i -c -z -R -G -B] [-F framebuffer]
 ***** end bw-fb ***********************************
 ***** begin bw-imp ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage: bw-imp [-D] [-s squaresize] [-w width] [-n height]
@@ -714,7 +714,7 @@ Usage: bw-imp [-D] [-s squaresize] [-w width] [-n height]
 ***** end bw-imp ***********************************
 ***** begin bw-pix ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage: bw-pix [-h] [[-s squaresize] [-w width] [-n height]]
@@ -724,7 +724,7 @@ Usage: bw-pix [-h] [[-s squaresize] [-w width] [-n height]]
 ***** end bw-pix ***********************************
 ***** begin bw-png ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -735,7 +735,7 @@ Usage: bw-png [-a] [-w file_width] [-n file_height]
 ***** end bw-png ***********************************
 ***** begin bw-ps ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage: bw-ps [-e] [-c] [-L]
@@ -746,7 +746,7 @@ Usage: bw-ps [-e] [-c] [-L]
 ***** end bw-ps ***********************************
 ***** begin bw-rle ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage: bw-rle [-s squarefilesize]  [-C bg]
@@ -759,7 +759,7 @@ and the .rle file is written to stdout
 ***** end bw-rle ***********************************
 ***** begin bw3-pix ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -770,7 +770,7 @@ Usage: bw3-pix redin greenin bluein > file.pix (use - for stdin, . for /dev/null
 ***** end bw3-pix ***********************************
 ***** begin bwcrop ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -783,7 +783,7 @@ Usage: bwcrop in.bw out.bw (I prompt!)
 ***** end bwcrop ***********************************
 ***** begin bwdiff ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -795,7 +795,7 @@ Usage: bwdiff [-b -m -g -l -e -n] file1.bw file2.bw > diff.bw
 ***** end bwdiff ***********************************
 ***** begin bwfilter ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage: bwfilter [-f type] [-v] [-d div] [-O offset]
@@ -812,7 +812,7 @@ Possible arguments for -f (type):
 ***** end bwfilter ***********************************
 ***** begin bwhist ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -823,7 +823,7 @@ Usage: bwhist [-v] [file.bw]
 ***** end bwhist ***********************************
 ***** begin bwhisteq ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -835,7 +835,7 @@ Usage: bwhisteq [-v] file.bw > file.equalized
 ***** end bwhisteq ***********************************
 ***** begin bwish ***********************************
 	result : (window)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -843,7 +843,7 @@ Usage: bwhisteq [-v] file.bw > file.equalized
 ***** end bwish ***********************************
 ***** begin bwmod ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 Usage: bwmod [-c] {-a add -s sub -m mult -d div -A -e exp -r root
@@ -853,7 +853,7 @@ Usage: bwmod [-c] {-a add -s sub -m mult -d div -A -e exp -r root
 ***** end bwmod ***********************************
 ***** begin bwrect ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 Usage:  bwrect [-h] [squaresize] [-w width] [-n height] [-W out_width ] [-N out_height]
@@ -863,7 +863,7 @@ Usage:  bwrect [-h] [squaresize] [-w width] [-n height] [-W out_width ] [-N out_
 ***** end bwrect ***********************************
 ***** begin bwrot ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 
@@ -875,7 +875,7 @@ Usage: bwrot [-rifb | -a angle] [-s squaresize] [-w width] [-n height] [-o outpu
 ***** end bwrot ***********************************
 ***** begin bwscale ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage: bwscale [-r] [-s squareinsize] [-w inwidth] [-n inheight]
@@ -885,7 +885,7 @@ Usage: bwscale [-r] [-s squareinsize] [-w inwidth] [-n inheight]
 ***** end bwscale ***********************************
 ***** begin bwshrink ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage: /bwshrink [-u] [-w width] [-n scanlines] [-s squaresize]
@@ -895,7 +895,7 @@ Usage: /bwshrink [-u] [-w width] [-n scanlines] [-s squaresize]
 ***** end bwshrink ***********************************
 ***** begin bwstat ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -907,7 +907,7 @@ Usage: bwstat [-v] [file.bw]
 ***** end bwstat ***********************************
 ***** begin bwthresh ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -918,7 +918,7 @@ Usage: bwthresh values ...
 ***** end bwthresh ***********************************
 ***** begin c-d ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -930,7 +930,7 @@ Usage: c-d -r -i -m -p -z < complex_data > doubles
 ***** end c-d ***********************************
 ***** begin cad_boundp ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 5
 ----- begin usage -----------------------------------
 Usage: cad_boundp [-i input] [-o output] [-t tolerance] [-v]
@@ -948,7 +948,7 @@ input:
 ***** end cad_boundp ***********************************
 ***** begin cad_parea ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 2
 ----- begin usage -----------------------------------
 
@@ -962,7 +962,7 @@ cad_parea: bad input:
 ***** end cad_parea ***********************************
 ***** begin canonize ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -991,7 +991,7 @@ Options:
 ***** end cchannel ***********************************
 ***** begin cell-fb ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -999,7 +999,7 @@ Options:
 ***** end cell-fb ***********************************
 ***** begin chan_add ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 255
 ----- begin usage -----------------------------------
 
@@ -1009,7 +1009,7 @@ Usage: chan_add value num_columns column [column ...] < in.file > out.file
 ***** end chan_add ***********************************
 ***** begin chan_mult ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 255
 ----- begin usage -----------------------------------
 
@@ -1019,7 +1019,7 @@ Usage: chan_mult factor num_columns column [col ... ] < in.file > out.file
 ***** end chan_mult ***********************************
 ***** begin chan_permute ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 
@@ -1029,7 +1029,7 @@ Usage: chan_permute -i infile1 id id id ... [-i infile2 ...] -o outfile1 id id .
 ***** end chan_permute ***********************************
 ***** begin check-express ***********************************
 	result : (core)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 0 from signal 6; dumped core
 ----- begin usage -----------------------------------
 
@@ -1045,7 +1045,7 @@ Usage: chan_permute -i infile1 id id id ... [-i infile2 ...] -o outfile1 id id .
 ***** end clutter ***********************************
 ***** begin cmap-fb ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -1066,7 +1066,7 @@ ogl_getmem:  Unable to attach to shared memory.
 ***** end coil ***********************************
 ***** begin comgeom-g ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 
@@ -1080,18 +1080,18 @@ Options:
 ***** end comgeom-g ***********************************
 ***** begin contours ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
 Usage: /usr/local/src2/brlcad-build/bin/contours
 
-S € € €ÿÿÿ
+S€€€ÿÿÿ
 ----- end usage -----------------------------------
 ***** end contours ***********************************
 ***** begin conv-vg2g ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 11
 ----- begin usage -----------------------------------
 
@@ -1102,7 +1102,7 @@ Usage: conv-vg2g file.vg file.g
 ***** end conv-vg2g ***********************************
 ***** begin crop ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -1143,7 +1143,7 @@ REVOLVE
 ***** end csgbrep ***********************************
 ***** begin cubitorle ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -1156,7 +1156,7 @@ usage : cubitorle [-o outfile] inprefix
 ***** end cubitorle ***********************************
 ***** begin cv ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage: cv in_pat out_pat [[infile] outfile]
@@ -1168,7 +1168,7 @@ e.g., hui is host unsigned int, nl is network (signed) long
 ***** end cv ***********************************
 ***** begin cy-g ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -1181,7 +1181,7 @@ Usage:
 ***** end cy-g ***********************************
 ***** begin d-a ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -1192,7 +1192,7 @@ Usage: d-a [-n] < doubles > ascii
 ***** end d-a ***********************************
 ***** begin d-bw ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 bad argument
@@ -1204,7 +1204,7 @@ Usage: d-bw [-n || scale] < doubles > unsigned_chars
 ***** end d-bw ***********************************
 ***** begin d-f ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -1216,7 +1216,7 @@ Usage: d-f [-n || scale] < doubles > floats
 ***** end d-f ***********************************
 ***** begin d-i ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -1227,7 +1227,7 @@ Usage: d-i [-n || scale] < doubles > shorts
 ***** end d-i ***********************************
 ***** begin d-u ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -1239,7 +1239,7 @@ Usage: d-u [-n || scale] < doubles > unsigned_shorts
 ***** end d-u ***********************************
 ***** begin d2-c ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -1251,7 +1251,7 @@ Usage: d2-c real_file imag_file > complex (- stdin, . skip)
 ***** end d2-c ***********************************
 ***** begin damdf ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -1262,7 +1262,7 @@ Usage: damdf [window_size (512)] < doubles >outputfile
 ***** end damdf ***********************************
 ***** begin dauto ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -1273,7 +1273,7 @@ Usage: dauto [window_size (512)] < doubles >outputfile
 ***** end dauto ***********************************
 ***** begin dauto2 ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -1284,7 +1284,7 @@ Usage: dauto2 [window_size (512)] < doubles >outputfile
 ***** end dauto2 ***********************************
 ***** begin dbcp ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 2
 ----- begin usage -----------------------------------
 
@@ -1298,7 +1298,7 @@ Usage:  dbcp [-v] blocksize < input > output
 ***** end dbcp ***********************************
 ***** begin dbupgrade ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -1308,7 +1308,7 @@ Usage: /usr/local/src2/brlcad-build/bin/dbupgrade input.g output.g
 ***** end dbupgrade ***********************************
 ***** begin dconv ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -1321,7 +1321,7 @@ Usage: dconv filterfile < doubles > doubles
 ***** end dconv ***********************************
 ***** begin ddisp ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -1333,7 +1333,7 @@ Usage: ddisp [-v -b -p -c -H] [width (512)] < inputfile
 ***** end ddisp ***********************************
 ***** begin decimate ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -1344,7 +1344,7 @@ Usage: decimate nbytes/pixel width height [outwidth outheight]
 ***** end decimate ***********************************
 ***** begin dem-g ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -1358,7 +1358,7 @@ Usage: /usr/local/src2/brlcad-build/bin/dem-g dem_file
 ***** end dem-g ***********************************
 ***** begin dfft ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -1378,7 +1378,7 @@ Options:
 ***** end dfft ***********************************
 ***** begin dmod ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -1389,7 +1389,7 @@ Usage: dmod [-a add | -s sub | -m mult | -d div | -A | -e exp | -r root] [double
 ***** end dmod ***********************************
 ***** begin double-asc ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -1402,7 +1402,7 @@ OK, file is 512 wide and 512 high
 ***** end double-asc ***********************************
 ***** begin dpeak ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -1414,7 +1414,7 @@ Usage: dpeak [window_size (512)] < doubles
 ***** end dpeak ***********************************
 ***** begin dpix-pix ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -1426,7 +1426,7 @@ Usage: dpix-pix file.dpix > file.pix
 ***** end dpix-pix ***********************************
 ***** begin dsel ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -1442,7 +1442,7 @@ Usage: dsel keep ...
 ***** end dsel ***********************************
 ***** begin dsp_add ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage: dsp_add dsp_1 dsp_2 > dsp_3
@@ -1452,7 +1452,7 @@ Usage: dsp_add dsp_1 dsp_2 > dsp_3
 ***** end dsp_add ***********************************
 ***** begin dsp_add_t ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -1471,7 +1471,7 @@ For complete usage and HELP type:
 ***** end dsp_add_t ***********************************
 ***** begin dstats ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -1482,7 +1482,7 @@ Usage: dstats [file.doubles]
 ***** end dstats ***********************************
 ***** begin dunncolor ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 10
 ----- begin usage -----------------------------------
 
@@ -1496,7 +1496,7 @@ dunnopen: can't open /dev/camera
 ***** end dunncolor ***********************************
 ***** begin dunnsnap ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 10
 ----- begin usage -----------------------------------
 
@@ -1512,7 +1512,7 @@ dunnopen: can't open /dev/camera
 ***** end dunnsnap ***********************************
 ***** begin dwin ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -1532,7 +1532,7 @@ Options:
 ***** end dwin ***********************************
 ***** begin dxf-g ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -1544,7 +1544,7 @@ Usage: dxf-g [-c] [-d] [-v] [-t tolerance] [-s scale_factor] input_file.dxf outp
 ***** end dxf-g ***********************************
 ***** begin enf-g ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -1563,7 +1563,7 @@ Usage: enf-g [-i starting_ident] [-t tolerance] [-l name_length_limit] [-n part_
 ***** end euclid-g ***********************************
 ***** begin euclid_format ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -1571,7 +1571,7 @@ Usage: enf-g [-i starting_ident] [-t tolerance] [-l name_length_limit] [-n part_
 ***** end euclid_format ***********************************
 ***** begin euclid_unformat ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -1579,7 +1579,7 @@ Usage: enf-g [-i starting_ident] [-t tolerance] [-l name_length_limit] [-n part_
 ***** end euclid_unformat ***********************************
 ***** begin exp2cxx ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 2
 ----- begin usage -----------------------------------
 
@@ -1593,7 +1593,7 @@ where	-s or -S uses only single inheritance in the generated C++ classes
 ***** end exp2cxx ***********************************
 ***** begin exppp ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 2
 ----- begin usage -----------------------------------
 usage: /usr/local/src2/brlcad-build/bin/exppp [-a|A] [-v] [-d #] [-p <object_type>] {-w|-i <warning>} express_file
@@ -1610,7 +1610,7 @@ and <warning> is one of:
 ***** end exppp ***********************************
 ***** begin f-d ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -1621,7 +1621,7 @@ Usage: f-d [-n || scale] < floats > doubles
 ***** end f-d ***********************************
 ***** begin f-i ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -1633,7 +1633,7 @@ Usage: f-i [-n || scale] < floats > shorts
 ***** end f-i ***********************************
 ***** begin fant ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -1641,7 +1641,7 @@ Usage: f-i [-n || scale] < floats > shorts
 ***** end fant ***********************************
 ***** begin fast4-g ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -1659,7 +1659,7 @@ Usage: fast4-g [-dwq] [-c component_list] [-m muves_file] [-o plot_file] [-b BU_
 ***** end fast4-g ***********************************
 ***** begin fb-bw ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -1671,7 +1671,7 @@ Usage: fb-bw [-i] [-F framebuffer]
 ***** end fb-bw ***********************************
 ***** begin fb-cmap ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -1684,7 +1684,7 @@ ogl_getmem:  Unable to attach to shared memory.
 ***** end fb-cmap ***********************************
 ***** begin fb-fb ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 
@@ -1695,7 +1695,7 @@ Usage: fb-fb [-v] [-F output_framebuffer]
 ***** end fb-fb ***********************************
 ***** begin fb-orle ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 
@@ -1708,7 +1708,7 @@ If the environment variable FB_FILE is set, its value will be used.
 ***** end fb-orle ***********************************
 ***** begin fb-pix ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -1719,7 +1719,7 @@ Usage: fb-pix [-i -c] [-F framebuffer]
 ***** end fb-pix ***********************************
 ***** begin fb-png ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage: fb-png [-i -c] [-# nbytes/pixel] [-F framebuffer] [-g gamma]
@@ -1729,7 +1729,7 @@ Usage: fb-png [-i -c] [-# nbytes/pixel] [-F framebuffer] [-g gamma]
 ***** end fb-png ***********************************
 ***** begin fb-rle ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 Usage: fb-rle [-c -d] [-F framebuffer] [-C r/g/b]
@@ -1744,7 +1744,7 @@ If omitted, the .rle file is written to stdout
 ***** end fb-rle ***********************************
 ***** begin fbanim ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage: fbanim [-i -r -v] [-p passes]
@@ -1757,7 +1757,7 @@ Usage: fbanim [-i -r -v] [-p passes]
 ***** end fbanim ***********************************
 ***** begin fbcbars ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -1771,7 +1771,7 @@ Usage: fbcbars [-fes] [-F framebuffer]
 ***** end fbcbars ***********************************
 ***** begin fbclear ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -1779,7 +1779,7 @@ Usage: fbcbars [-fes] [-F framebuffer]
 ***** end fbclear ***********************************
 ***** begin fbcmap ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 
@@ -1803,7 +1803,7 @@ Color map #12, 18% neutral grey.
 ***** end fbcmap ***********************************
 ***** begin fbcmrot ***********************************
 	result : (window)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -1816,7 +1816,7 @@ ogl_getmem:  Unable to attach to shared memory.
 ***** end fbcmrot ***********************************
 ***** begin fbcolor ***********************************
 	result : (window)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -1831,7 +1831,7 @@ ogl_getmem:  Unable to attach to shared memory.
 ***** end fbcolor ***********************************
 ***** begin fbed ***********************************
 	result : (window)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -1839,7 +1839,7 @@ ogl_getmem:  Unable to attach to shared memory.
 ***** end fbed ***********************************
 ***** begin fbfade ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 
@@ -1850,7 +1850,7 @@ ogl_getmem:  Unable to attach to shared memory.
 ***** end fbfade ***********************************
 ***** begin fbframe ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 
@@ -1861,7 +1861,7 @@ Usage: /usr/local/src2/brlcad-build/bin/fbframe [-F framebuffer] [-s squareframe
 ***** end fbframe ***********************************
 ***** begin fbfree ***********************************
 	result : (UNKNOWN)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 0
 ----- begin usage -----------------------------------
 
@@ -1869,7 +1869,7 @@ Usage: /usr/local/src2/brlcad-build/bin/fbframe [-F framebuffer] [-s squareframe
 ***** end fbfree ***********************************
 ***** begin fbgamma ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 
@@ -1881,7 +1881,7 @@ Usage: fbgamma [-H -o -i] [-F framebuffer] val [gval bval]
 ***** end fbgamma ***********************************
 ***** begin fbgammamod ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 
@@ -1894,7 +1894,7 @@ Usage: fbgammamod [-v] [-f in_file] [-F framebuffer] 	r+ r* r_gam g+ g* g_gam b+
 ***** end fbgammamod ***********************************
 ***** begin fbgrid ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 
@@ -1905,7 +1905,7 @@ Usage: fbgrid [-c] [-b | -d | -o] [-F framebuffer]
 ***** end fbgrid ***********************************
 ***** begin fbhelp ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 A Frame Buffer display device is selected by
@@ -1918,7 +1918,7 @@ setting the environment variable FB_FILE:
 ***** end fbhelp ***********************************
 ***** begin fblabel ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 
@@ -1930,7 +1930,7 @@ Usage: fblabel [-c -a] [-F framebuffer] [-C r/g/b]
 ***** end fblabel ***********************************
 ***** begin fbline ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 Usage: fbline [-c ] [-F framebuffer]
@@ -1941,7 +1941,7 @@ Usage: fbline [-c ] [-F framebuffer]
 ***** end fbline ***********************************
 ***** begin fbpoint ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -1952,7 +1952,7 @@ Usage: fbpoint [-H] [-x[prefix]] [-y[prefix]] [initx inity]
 ***** end fbpoint ***********************************
 ***** begin fbscanplot ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -1965,7 +1965,7 @@ Usage: fbscanplot [-h] [-v] [-c] [-o] [-r]
 ***** end fbscanplot ***********************************
 ***** begin fbserv ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 
@@ -1981,7 +1981,7 @@ Usage: fbserv port_num
 ***** end fbserv ***********************************
 ***** begin fbstretch ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -1995,7 +1995,7 @@ Usage: fbstretch [ -s size ] [ -w width ] [ -n height ]
 ***** end fbstretch ***********************************
 ***** begin fbzoom ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2029,7 +2029,7 @@ Writing fence object to file fence.g
 ***** end fence ***********************************
 ***** begin fftc ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage: fftc length > fftlength.c
@@ -2038,7 +2038,7 @@ Usage: fftc length > fftlength.c
 ***** end fftc ***********************************
 ***** begin fftest ***********************************
 	result : (ascii)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 
@@ -2046,7 +2046,7 @@ Usage: fftc length > fftlength.c
 ***** end fftest ***********************************
 ***** begin fhor ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2058,7 +2058,7 @@ Usage: fhor [width] < doubles
 ***** end fhor ***********************************
 ***** begin firpass ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 0
 ----- begin usage -----------------------------------
 
@@ -2070,7 +2070,7 @@ Usage:  firpass file.g objects
 ***** end firpass ***********************************
 ***** begin fix_polysolids ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2086,7 +2086,7 @@ Options:
 ***** end fix_polysolids ***********************************
 ***** begin g-acad ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2097,7 +2097,7 @@ Usage: /usr/local/src2/brlcad-build/bin/g-acad [-v][-i][-xX lvl][-a abs_tess_tol
 ***** end g-acad ***********************************
 ***** begin g-dot ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2111,7 +2111,7 @@ Usage: /usr/local/src2/brlcad-build/bin/g-dot [-o output.dot] input.g [object1 .
 ***** end g-dot ***********************************
 ***** begin g-dxf ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2148,7 +2148,7 @@ BRL-CAD Release 7.24.1  BRL-CAD to DXF Exporter
 ***** end g-dxf ***********************************
 ***** begin g-egg ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2160,7 +2160,7 @@ Usage: /usr/local/src2/brlcad-build/bin/g-egg [-bv89] [-xX lvl] [-a abs_tess_tol
 ***** end g-egg ***********************************
 ***** begin g-euclid ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2170,7 +2170,7 @@ Usage: /usr/local/src2/brlcad-build/bin/g-euclid [-v] [-xX lvl] [-a abs_tol] [-r
 ***** end g-euclid ***********************************
 ***** begin g-euclid1 ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2182,7 +2182,7 @@ Usage: /usr/local/src2/brlcad-build/bin/g-euclid1 [-v] [-s alarm_seconds] [-xX l
 ***** end g-euclid1 ***********************************
 ***** begin g-iges ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2205,7 +2205,7 @@ Usage: /usr/local/src2/brlcad-build/bin/g-iges [-f|t|m] [-v] [-s] [-xX lvl] [-a 
 ***** end g-iges ***********************************
 ***** begin g-jack ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2220,7 +2220,7 @@ Usage: /usr/local/src2/brlcad-build/bin/g-jack [-v] [-d] [-f] [-xX lvl] [-u eu_d
 ***** end g-jack ***********************************
 ***** begin g-nff ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2233,7 +2233,7 @@ Usage: /usr/local/src2/brlcad-build/bin/g-nff [-v] [-i] [-xX lvl] [-a abs_tess_t
 ***** end g-nff ***********************************
 ***** begin g-nmg ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2245,7 +2245,7 @@ Usage: /usr/local/src2/brlcad-build/bin/g-nmg [-v] [-b] [-xX lvl] [-a abs_tol] [
 ***** end g-nmg ***********************************
 ***** begin g-obj ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2258,7 +2258,7 @@ Usage: /usr/local/src2/brlcad-build/bin/g-obj [-m][-v][-i][-u][-xX lvl][-a abs_t
 ***** end g-obj ***********************************
 ***** begin g-off ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2270,7 +2270,7 @@ Usage: /usr/local/src2/brlcad-build/bin/g-off [-v] [-d] [-xX lvl] [-a abs_tol] [
 ***** end g-off ***********************************
 ***** begin g-raw ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 /usr/local/src2/brlcad-build/bin/g-raw: missing .g file and object(s)
@@ -2283,7 +2283,7 @@ Usage: /usr/local/src2/brlcad-build/bin/g-raw [-vi8] [-xX lvl] [-P num_cpus] [-a
 ***** end g-raw ***********************************
 ***** begin g-shell-rect ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2296,7 +2296,7 @@ Usage:
 ***** end g-shell-rect ***********************************
 ***** begin g-step ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2307,7 +2307,7 @@ Usage: g-step -o outfile.stp infile.g
 ***** end g-step ***********************************
 ***** begin g-stl ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2320,7 +2320,7 @@ Usage: /usr/local/src2/brlcad-build/bin/g-stl [-bvi8] [-xX lvl] [-P num_cpus] [-
 ***** end g-stl ***********************************
 ***** begin g-tankill ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2342,7 +2342,7 @@ Usage:
 ***** end g-tankill ***********************************
 ***** begin g-var ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2354,7 +2354,7 @@ Usage: /usr/local/src2/brlcad-build/bin/g-var [-v] [-y] [-s scale] [-f] [-o out_
 ***** end g-var ***********************************
 ***** begin g-voxel ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2366,7 +2366,7 @@ Usage: /usr/local/src2/brlcad-build/bin/g-voxel [-s \"dx dy dz\"] [-d n] [-t f] 
 ***** end g-voxel ***********************************
 ***** begin g-vrml ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2378,7 +2378,7 @@ Usage: /usr/local/src2/brlcad-build/bin/g-vrml [-b] [-e] [-v] [-xX lvl] [-d tole
 ***** end g-vrml ***********************************
 ***** begin g-x3d ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2390,7 +2390,7 @@ Usage: /usr/local/src2/brlcad-build/bin/g-x3d [-v] [-xX lvl] [-d tolerance_dista
 ***** end g-x3d ***********************************
 ***** begin g2asc ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2403,7 +2403,7 @@ Usage: g2asc file.g file.asc
 ***** end g2asc ***********************************
 ***** begin g_diff ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2413,7 +2413,7 @@ Usage: /usr/local/src2/brlcad-build/bin/g_diff [-emfv] file1.g file2.g
 ***** end g_diff ***********************************
 ***** begin g_lint ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2435,7 +2435,7 @@ Options (defaults in parentheses):
 ***** end g_lint ***********************************
 ***** begin g_qa ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2447,7 +2447,7 @@ Usage: /usr/local/src2/brlcad-build/bin/g_qa [-A A|a|b|e|g|o|v|w] [-a az] [-d] [
 ***** end g_qa ***********************************
 ***** begin gastank ***********************************
 	result : (interactive)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -2455,7 +2455,7 @@ Usage: /usr/local/src2/brlcad-build/bin/g_qa [-A A|a|b|e|g|o|v|w] [-a az] [-d] [
 ***** end gastank ***********************************
 ***** begin gencolor ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2475,7 +2475,7 @@ Usage: gencolor [-r#] [val1 .. valN] > output_file
 ***** end gif-fb ***********************************
 ***** begin gif2fb ***********************************
 	result : (UNKNOWN)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2483,7 +2483,7 @@ Usage: gencolor [-r#] [val1 .. valN] > output_file
 ***** end gif2fb ***********************************
 ***** begin giftorle ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -2491,7 +2491,7 @@ Usage: gencolor [-r#] [val1 .. valN] > output_file
 ***** end giftorle ***********************************
 ***** begin globe ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -2499,7 +2499,7 @@ Usage: gencolor [-r#] [val1 .. valN] > output_file
 ***** end globe ***********************************
 ***** begin graytorle ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 255
 ----- begin usage -----------------------------------
 missing decimal argument
@@ -2515,7 +2515,7 @@ usage : graytorle [-a] [-h hdrsize] [-o outfile] xsize ysize files ...
 ***** end graytorle ***********************************
 ***** begin halftone ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2532,7 +2532,7 @@ Usage: halftone [ -h -R -S -a] [-D Debug Level]
 ***** end halftone ***********************************
 ***** begin handle ***********************************
 	result : (interactive)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -2540,7 +2540,7 @@ Usage: halftone [ -h -R -S -a] [-D Debug Level]
 ***** end handle ***********************************
 ***** begin hex ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2558,7 +2558,7 @@ Usage: /usr/local/src2/brlcad-build/bin/hex [-o offset] [file...]
 ***** end human ***********************************
 ***** begin i-a ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -2566,7 +2566,7 @@ Usage: /usr/local/src2/brlcad-build/bin/hex [-o offset] [file...]
 ***** end i-a ***********************************
 ***** begin i-d ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2578,7 +2578,7 @@ Usage: i-d [-n || scale] < shorts > doubles
 ***** end i-d ***********************************
 ***** begin i-f ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2590,7 +2590,7 @@ Usage: i-f [-n || scale] < shorts > floats
 ***** end i-f ***********************************
 ***** begin ifftc ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage: ifftc length > fftlength.c
@@ -2600,7 +2600,7 @@ Usage: ifftc length > fftlength.c
 ***** end ifftc ***********************************
 ***** begin iges-g ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2616,7 +2616,7 @@ Usage:  /usr/local/src2/brlcad-build/bin/iges-g [-N solid_name] [-X nmg_debug_fl
 ***** end iges-g ***********************************
 ***** begin ihist ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2627,7 +2627,7 @@ Usage: ihist [-v] < shorts
 ***** end ihist ***********************************
 ***** begin imgdims ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2639,7 +2639,7 @@ Usage: 'imgdims [-ns] [-# bytes/pixel] file_name'
 ***** end imgdims ***********************************
 ***** begin imod ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2650,7 +2650,7 @@ Usage: imod {-a add -s sub -m mult -d div -A(abs) -e exp -r root} [file.s]
 ***** end imod ***********************************
 ***** begin into ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage: into [ -f ] file
@@ -2659,7 +2659,7 @@ Usage: into [ -f ] file
 ***** end into ***********************************
 ***** begin ir-X ***********************************
 	result : (core)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 0 from signal 11; dumped core
 ----- begin usage -----------------------------------
 
@@ -2667,7 +2667,7 @@ Usage: into [ -f ] file
 ***** end ir-X ***********************************
 ***** begin irdisp ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -2675,7 +2675,7 @@ Usage: into [ -f ] file
 ***** end irdisp ***********************************
 ***** begin isst ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -2683,7 +2683,7 @@ Usage: into [ -f ] file
 ***** end isst ***********************************
 ***** begin istats ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 
@@ -2695,7 +2695,7 @@ Usage: (noname) [ file ]
 ***** end istats ***********************************
 ***** begin jack-g ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 
@@ -2716,7 +2716,7 @@ Usage: /usr/local/src2/brlcad-build/bin/kurt
 ***** end kurt ***********************************
 ***** begin lazy_test ***********************************
 	result : (UNKNOWN)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 
@@ -2724,7 +2724,7 @@ Usage: /usr/local/src2/brlcad-build/bin/kurt
 ***** end lazy_test ***********************************
 ***** begin lemon ***********************************
 	result : (UNKNOWN)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2740,7 +2740,7 @@ Usage: /usr/local/src2/brlcad-build/bin/kurt
 ***** end lens ***********************************
 ***** begin lgt ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2757,7 +2757,7 @@ Press \"Enter\" to continue
 ***** end lgt ***********************************
 ***** begin loop ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 9
 ----- begin usage -----------------------------------
 
@@ -2768,7 +2768,7 @@ Usage:  loop [-c] start finish [incr]
 ***** end loop ***********************************
 ***** begin lowp ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage: lowp file1.pix file2.pix file3.pix [width] > out.pix
@@ -2777,7 +2777,7 @@ Usage: lowp file1.pix file2.pix file3.pix [width] > out.pix
 ***** end lowp ***********************************
 ***** begin mac-pix ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage: mac-pix [-c -l -b]
@@ -2790,7 +2790,7 @@ Usage: mac-pix [-c -l -b]
 ***** end mac-pix ***********************************
 ***** begin masonry ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 
@@ -2804,7 +2804,7 @@ Usage: masonry [ -u units ] -w(all) width, height [-o(pening) lx, lz, hx, hz ...
 ***** end masonry ***********************************
 ***** begin mcut ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 missing string argument
@@ -2822,7 +2822,7 @@ usage : mcut [-n colors] [-d] [-o outfile] infile
 ***** end menger ***********************************
 ***** begin mergechan ***********************************
 	result : (UNKNOWN)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 255
 ----- begin usage -----------------------------------
 
@@ -2838,7 +2838,7 @@ usage : mcut [-n colors] [-d] [-o outfile] infile
 ***** end metaball ***********************************
 ***** begin mged ***********************************
 	result : (window)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -2846,7 +2846,7 @@ usage : mcut [-n colors] [-d] [-o outfile] infile
 ***** end mged ***********************************
 ***** begin mkbuilding ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 
@@ -2856,7 +2856,7 @@ Usage: mkbuilding db_file.g
 ***** end mkbuilding ***********************************
 ***** begin molecule ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 
@@ -2874,7 +2874,7 @@ Usage: molecule db_title < mol-cube.dat > mol.g
 ***** end nastran-g ***********************************
 ***** begin nirt ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2892,7 +2892,7 @@ Options:
 ***** end nirt ***********************************
 ***** begin nmg-bot ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2905,7 +2905,7 @@ Usage:
 ***** end nmg-bot ***********************************
 ***** begin nmg-rib ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 No extra args specified
@@ -2918,7 +2918,7 @@ Usage: nmg-rib [-t] file.g nmg_solid [ nmg_solid ... ]
 ***** end nmg-rib ***********************************
 ***** begin nmg-sgp ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -2961,7 +2961,7 @@ Usage: /usr/local/src2/brlcad-build/bin/obj-g [options] input.obj output.g
 ***** end obj-g ***********************************
 ***** begin off-g ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 2
 ----- begin usage -----------------------------------
 
@@ -2973,12 +2973,12 @@ Usage: off-g file.off file.g
 ***** end off-g ***********************************
 ***** begin orle-fb ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage: orle-fb [-Otdv] [-b (rgbwBG)] [-F Frame_buffer] [-p X Y] [file.rle]
 
-If no rle file is specifed, orle-fb will read its standard input.
+If no rle file is specified, orle-fb will read its standard input.
 If the environment variable FB_FILE is set, its value will be used
 to specify the framebuffer file or device to write to.
 
@@ -2986,7 +2986,7 @@ to specify the framebuffer file or device to write to.
 ***** end orle-fb ***********************************
 ***** begin orle-pix ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 DEPRECATED: orle-pix is no longer being maintained.  Use rle-pix instead.
@@ -3000,7 +3000,7 @@ Pix(5B) format is written to the standard output.
 ***** end orle-pix ***********************************
 ***** begin painttorle ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -3008,7 +3008,7 @@ Pix(5B) format is written to the standard output.
 ***** end painttorle ***********************************
 ***** begin patch-g ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3022,7 +3022,7 @@ Usage: /usr/local/src2/brlcad-build/bin/patch-g [options] model.g
 ***** end patch-g ***********************************
 ***** begin pdb-g ***********************************
 	result : (UNKNOWN)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3030,7 +3030,7 @@ Usage: /usr/local/src2/brlcad-build/bin/patch-g [options] model.g
 ***** end pdb-g ***********************************
 ***** begin perplex ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 0
 ----- begin usage -----------------------------------
 Usage: perplex [options] input
@@ -3048,7 +3048,7 @@ Usage: perplex [options] input
 ***** end perplex ***********************************
 ***** begin picket_fence ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3060,7 +3060,7 @@ Usage: picket_fence <filename> <prefix> <height_in_mm> <spacing> [-r] <x0> <y0> 
 ***** end picket_fence ***********************************
 ***** begin pictx ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -3068,7 +3068,7 @@ Usage: picket_fence <filename> <prefix> <height_in_mm> <spacing> [-r] <x0> <y0> 
 ***** end pictx ***********************************
 ***** begin pipe ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3093,7 +3093,7 @@ Usage: pipe [-tsmnc] tag filename
 ***** end pipetest ***********************************
 ***** begin pix-alias ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage: /usr/local/src2/brlcad-build/bin/pix-alias [ -s squaresize ] [-w file_width ] [-n file_height ]
@@ -3103,7 +3103,7 @@ Usage: /usr/local/src2/brlcad-build/bin/pix-alias [ -s squaresize ] [-w file_wid
 ***** end pix-alias ***********************************
 ***** begin pix-bw ***********************************
 	result : (UNKNOWN)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3111,7 +3111,7 @@ Usage: /usr/local/src2/brlcad-build/bin/pix-alias [ -s squaresize ] [-w file_wid
 ***** end pix-bw ***********************************
 ***** begin pix-bw3 ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3122,7 +3122,7 @@ Usage: pix-bw3 redout greenout blueout < file.pix
 ***** end pix-bw3 ***********************************
 ***** begin pix-fb ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage: pix-fb [-a -i -c -z -1] [-m #lines] [-F framebuffer]
@@ -3135,7 +3135,7 @@ Usage: pix-fb [-a -i -c -z -1] [-m #lines] [-F framebuffer]
 ***** end pix-fb ***********************************
 ***** begin pix-orle ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3149,7 +3149,7 @@ and the .rle file is written to stdout
 ***** end pix-orle ***********************************
 ***** begin pix-png ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3163,7 +3163,7 @@ Usage: pix-png [-a] [-w file_width] [-n file_height] [-g gamma]
 ***** end pix-png ***********************************
 ***** begin pix-ppm ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3175,7 +3175,7 @@ Usage: pix-ppm [-a] [-#bytes] [-w file_width] [-n file_height]
 ***** end pix-ppm ***********************************
 ***** begin pix-ps ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3187,7 +3187,7 @@ Usage: pix-ps [-e] [-c|-l] [-L]
 ***** end pix-ps ***********************************
 ***** begin pix-rle ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3201,7 +3201,7 @@ and the .rle file is written to stdout
 ***** end pix-rle ***********************************
 ***** begin pix-spm ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3212,7 +3212,7 @@ Usage: pix-spm file.pix size > file.spm
 ***** end pix-spm ***********************************
 ***** begin pix-sun ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3223,7 +3223,7 @@ Usage: /usr/local/src2/brlcad-build/bin/pix-sun [-s squaresize] [-w width] [-n h
 ***** end pix-sun ***********************************
 ***** begin pix-yuv ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3234,7 +3234,7 @@ Usage: pix-yuv [-h] [-a]
 ***** end pix-yuv ***********************************
 ***** begin pix2asc ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -3242,7 +3242,7 @@ Usage: pix-yuv [-h] [-a]
 ***** end pix2asc ***********************************
 ***** begin pix2g ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 255
 ----- begin usage -----------------------------------
 
@@ -3252,7 +3252,7 @@ Usage: /usr/local/src2/brlcad-build/bin/pix2g image_file.pix db_file.g [pixelWid
 ***** end pix2g ***********************************
 ***** begin pix3filter ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 pix3filter: must supply a file name
@@ -3268,7 +3268,7 @@ s         Animation Smear
 ***** end pix3filter ***********************************
 ***** begin pixautosize ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3279,7 +3279,7 @@ or	pixautosize [-b bytes_per_sample] [-l file_length]
 ***** end pixautosize ***********************************
 ***** begin pixbackgnd ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage:  pixbackgnd [-h -i] [-s squaresize] [-w width] [-n height]
@@ -3291,7 +3291,7 @@ or	r g b
 ***** end pixbackgnd ***********************************
 ***** begin pixbgstrip ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3303,7 +3303,7 @@ Usage: pixbgstrip [-a -h] [-t thresh] [-x x_off for bg pixel]
 ***** end pixbgstrip ***********************************
 ***** begin pixblend ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage: pixblend [-{r|i} value] [-s [seed]] file1.pix file2.pix > out.pix
@@ -3312,7 +3312,7 @@ Usage: pixblend [-{r|i} value] [-s [seed]] file1.pix file2.pix > out.pix
 ***** end pixblend ***********************************
 ***** begin pixborder ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3327,7 +3327,7 @@ Usage: pixborder [-b 'R G B'] [-e 'R G B'] [-i 'R G B'] [-t 'R G B']
 ***** end pixborder ***********************************
 ***** begin pixbustup ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage: pixbustup basename width [image_offset] [first_number] <input.pix
@@ -3336,7 +3336,7 @@ Usage: pixbustup basename width [image_offset] [first_number] <input.pix
 ***** end pixbustup ***********************************
 ***** begin pixclump ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3350,7 +3350,7 @@ Usage: 'pixclump [-c R/G/B] [-f color_file] [-x debug_flags]
 ***** end pixclump ***********************************
 ***** begin pixcmp ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 127
 ----- begin usage -----------------------------------
 ERROR: incorrect number of arguments provided
@@ -3367,7 +3367,7 @@ Compare two PIX image files pixel by pixel.
 ***** end pixcmp ***********************************
 ***** begin pixcolors ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage: /usr/local/src2/brlcad-build/bin/pixcolors [ -v ] < PIXfile
@@ -3376,7 +3376,7 @@ Usage: /usr/local/src2/brlcad-build/bin/pixcolors [ -v ] < PIXfile
 ***** end pixcolors ***********************************
 ***** begin pixcount ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 FATAL: pixcount reads only from file or pipe
@@ -3388,7 +3388,7 @@ Usage: pixcount [-# bytes_per_pixel] [infile.pix [outfile]]
 ***** end pixcount ***********************************
 ***** begin pixcut ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 pixcut: Copyright (C) 1992 Paladin Software
@@ -3402,7 +3402,7 @@ pixcut: Usage:	[-v] [-h] [-H] [-a] [-# num_bytes] [-C red/green/blue]
 ***** end pixcut ***********************************
 ***** begin pixdiff ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3413,7 +3413,7 @@ Usage: pixdiff f1.pix f2.pix >file.pix
 ***** end pixdiff ***********************************
 ***** begin pixdsplit ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -3421,7 +3421,7 @@ Usage: pixdiff f1.pix f2.pix >file.pix
 ***** end pixdsplit ***********************************
 ***** begin pixelswap ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3432,7 +3432,7 @@ Usage: pixelswap [ -hd: ] r g b R G B [ < infile > outfile]
 ***** end pixelswap ***********************************
 ***** begin pixembed ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3444,7 +3444,7 @@ Usage: pixembed [-h] [-b border_inset]
 ***** end pixembed ***********************************
 ***** begin pixfade ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 
@@ -3455,7 +3455,7 @@ Usage: pixfade [-h] [-p percentage] [-f fraction] [-s squaresize] [-w width] [-n
 ***** end pixfade ***********************************
 ***** begin pixfields ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3494,7 +3494,7 @@ Possible arguments for -f (type):
 ***** end pixfilter ***********************************
 ***** begin pixflip-fb ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3509,7 +3509,7 @@ Usage: pixflip-fb [-h]
 ***** end pixflip-fb ***********************************
 ***** begin pixhalve ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3520,7 +3520,7 @@ Usage: pixhalve [-h] [-a]
 ***** end pixhalve ***********************************
 ***** begin pixhist ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3532,7 +3532,7 @@ Usage: pixhist [-v] [file.pix]
 ***** end pixhist ***********************************
 ***** begin pixhist3d ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 2
 ----- begin usage -----------------------------------
 
@@ -3544,7 +3544,7 @@ Usage: pixhist3d [file.pix]
 ***** end pixhist3d ***********************************
 ***** begin pixhist3d-plot3 ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 2
 ----- begin usage -----------------------------------
 
@@ -3554,7 +3554,7 @@ Usage: pixhist3d-plot3 [file.pix] | plot
 ***** end pixhist3d-plot3 ***********************************
 ***** begin pixinterp2x ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage: pixinterp2x [-h] [-s squarefilesize]
@@ -3565,7 +3565,7 @@ Usage: pixinterp2x [-h] [-s squarefilesize]
 ***** end pixinterp2x ***********************************
 ***** begin pixmatte ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 0
@@ -3573,7 +3573,7 @@ Usage: pixinterp2x [-h] [-s squarefilesize]
 ***** end pixmatte ***********************************
 ***** begin pixmerge ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage: pixmerge [-g -l -e -n] [-w bytes_wide] [-C r/g/b]
@@ -3583,7 +3583,7 @@ Usage: pixmerge [-g -l -e -n] [-w bytes_wide] [-C r/g/b]
 ***** end pixmerge ***********************************
 ***** begin pixmorph ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3593,7 +3593,7 @@ Usage: pixmorph [-w width] [-n height] picA.pix picB.pix linesfile warpfrac diss
 ***** end pixmorph ***********************************
 ***** begin pixpaste ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 0
@@ -3601,7 +3601,7 @@ Usage: pixmorph [-w width] [-n height] picA.pix picB.pix linesfile warpfrac diss
 ***** end pixpaste ***********************************
 ***** begin pixrect ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3612,7 +3612,7 @@ Usage:  pixrect [-h] [squaresize] [-w width] [-n height] [-W out_width ] [-N out
 ***** end pixrect ***********************************
 ***** begin pixrot ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3624,7 +3624,7 @@ Usage: pixrot [-f -b -r -i -#bytes] [-s squaresize]
 ***** end pixrot ***********************************
 ***** begin pixsaturate ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3635,7 +3635,7 @@ Usage: pixsaturate saturation
 ***** end pixsaturate ***********************************
 ***** begin pixscale ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3647,7 +3647,7 @@ Usage: pixscale [-r] [-s squareinsize] [-w inwidth] [-n inheight]
 ***** end pixscale ***********************************
 ***** begin pixshrink ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage: /pixshrink [-u] [-w width] [-n scanlines] [-s squaresize]
@@ -3657,7 +3657,7 @@ Usage: /pixshrink [-u] [-w width] [-n scanlines] [-s squaresize]
 ***** end pixshrink ***********************************
 ***** begin pixstat ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3668,7 +3668,7 @@ Usage: pixstat [-v] [file.pix]
 ***** end pixstat ***********************************
 ***** begin pixsubst ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage:
@@ -3680,7 +3680,7 @@ Usage:
 ***** end pixsubst ***********************************
 ***** begin pixtile ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3692,7 +3692,7 @@ Usage: pixtile [-h] [-s squareinsize] [-w file_width] [-n file_height]
 ***** end pixtile ***********************************
 ***** begin pixuntile ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3704,7 +3704,7 @@ Usage: pixuntile [-h] [-s squareinsize] [-w in_width] [-n in_height]
 ***** end pixuntile ***********************************
 ***** begin plot3-X ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3716,7 +3716,7 @@ Usage: plot3-X [-v] < unix_plot
 ***** end plot3-X ***********************************
 ***** begin plot3-asc ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3727,7 +3727,7 @@ Usage: plot3-asc [-v] [unix_plot]
 ***** end plot3-asc ***********************************
 ***** begin plot3-dm ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3739,7 +3739,7 @@ Usage: plot3-dm [-t o|X] plot_file(s)
 ***** end plot3-dm ***********************************
 ***** begin plot3-fb ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage: plot3-fb [-h -d -o -i] [-t thickness] [-F framebuffer]
@@ -3749,7 +3749,7 @@ Usage: plot3-fb [-h -d -o -i] [-t thickness] [-F framebuffer]
 ***** end plot3-fb ***********************************
 ***** begin plot3-hpgl ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -3757,7 +3757,7 @@ Usage: plot3-fb [-h -d -o -i] [-t thickness] [-F framebuffer]
 ***** end plot3-hpgl ***********************************
 ***** begin plot3-plot3 ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3769,7 +3769,7 @@ Usage: plot3-plot3 [-v] [-S] < unix_plot > unix_plot
 ***** end plot3-plot3 ***********************************
 ***** begin plot3-ps ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3780,7 +3780,7 @@ Usage: plot3-ps [-e] [-c] [-S inches_square]
 ***** end plot3-ps ***********************************
 ***** begin plot3-tek ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 
@@ -3792,7 +3792,7 @@ Usage: plot3-tek [-e] [-v] < file.plot3 > file.tek
 ***** end plot3-tek ***********************************
 ***** begin plot3color ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3804,7 +3804,7 @@ Usage: plot3color r g b
 ***** end plot3color ***********************************
 ***** begin plot3debug ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 
@@ -3815,7 +3815,7 @@ Usage: plot3debug [-v] [unix_plot]
 ***** end plot3debug ***********************************
 ***** begin plot3getframe ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3827,7 +3827,7 @@ Usage: plot3getframe [-v] desired_frame < unix_plot
 ***** end plot3getframe ***********************************
 ***** begin plot3line2 ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3839,7 +3839,7 @@ Usage: plot3line2 x1 y1 x2 y2 [r g b]
 ***** end plot3line2 ***********************************
 ***** begin plot3rot ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3859,7 +3859,7 @@ Usage: plot3rot [options] [file1 ... fileN] > file.plot3
 ***** end plot3rot ***********************************
 ***** begin plot3stat ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3871,7 +3871,7 @@ Usage: plot3stat [-v] [unix_plot]
 ***** end plot3stat ***********************************
 ***** begin ply-g ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3884,7 +3884,7 @@ Usage:
 ***** end ply-g ***********************************
 ***** begin png-bw ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage:
@@ -3897,7 +3897,7 @@ Are you intending to type in a PNG format file??
 ***** end png-bw ***********************************
 ***** begin png-fb ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3911,7 +3911,7 @@ Usage: png-fb [-H -h -i -c -v -z -1] [-m #lines] [-F framebuffer]
 ***** end png-fb ***********************************
 ***** begin png-pix ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3924,7 +3924,7 @@ png-pix: Are you intending to type in a PNG format file??
 ***** end png-pix ***********************************
 ***** begin png_info ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage:
@@ -3937,7 +3937,7 @@ Incorrect number of arguments!!
 ***** end png_info ***********************************
 ***** begin pngstest ***********************************
 	result : (UNKNOWN)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 127
 ----- begin usage -----------------------------------
 
@@ -3945,7 +3945,7 @@ Incorrect number of arguments!!
 ***** end pngstest ***********************************
 ***** begin pngtest ***********************************
 	result : (UNKNOWN)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 127
 ----- begin usage -----------------------------------
 
@@ -3953,7 +3953,7 @@ Incorrect number of arguments!!
 ***** end pngtest ***********************************
 ***** begin pngvalid ***********************************
 	result : (UNKNOWN)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 127
 ----- begin usage -----------------------------------
 
@@ -3961,7 +3961,7 @@ Incorrect number of arguments!!
 ***** end pngvalid ***********************************
 ***** begin polar-fb ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -3969,7 +3969,7 @@ Incorrect number of arguments!!
 ***** end polar-fb ***********************************
 ***** begin poly-bot ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -3983,7 +3983,7 @@ Usage: poly-bot < file_poly.g > file_bot.g
 ***** end poly-bot ***********************************
 ***** begin pp-fb ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 10
 ----- begin usage -----------------------------------
 
@@ -3999,7 +3999,7 @@ Options:
 ***** end pp-fb ***********************************
 ***** begin print_attrs ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 2
 ----- begin usage -----------------------------------
 usage: /usr/local/src2/brlcad-build/bin/print_attrs [-v] [-d #] [-p <object_type>] {-w|-i <warning>} express_file
@@ -4015,7 +4015,7 @@ http://github.com/stepcode/stepcode
 ***** end print_attrs ***********************************
 ***** begin print_schemas ***********************************
 	result : (core)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 0 from signal 6; dumped core
 ----- begin usage -----------------------------------
 
@@ -4023,7 +4023,7 @@ http://github.com/stepcode/stepcode
 ***** end print_schemas ***********************************
 ***** begin printtimestamp ***********************************
 	result : (UNKNOWN)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 0
 ----- begin usage -----------------------------------
 
@@ -4031,7 +4031,7 @@ http://github.com/stepcode/stepcode
 ***** end printtimestamp ***********************************
 ***** begin proe-g ***********************************
 	result : (UNKNOWN)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -4039,7 +4039,7 @@ http://github.com/stepcode/stepcode
 ***** end proe-g ***********************************
 ***** begin pyramid ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -4049,7 +4049,7 @@ Usage:  pyramid recursion
 ***** end pyramid ***********************************
 ***** begin pyrmask ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 missing string argument
@@ -4059,7 +4059,7 @@ usage : pyrmask [-l levels] [-o outfile] inmask outmask maskfile
 ***** end pyrmask ***********************************
 ***** begin random ***********************************
 	result : (UNKNOWN)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -4067,7 +4067,7 @@ usage : pyrmask [-l levels] [-o outfile] inmask outmask maskfile
 ***** end random ***********************************
 ***** begin raw-g ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -4078,7 +4078,7 @@ Over all size: 0
 ***** end raw-g ***********************************
 ***** begin rawbot ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 255
 ----- begin usage -----------------------------------
 
@@ -4088,7 +4088,7 @@ Usage: /usr/local/src2/brlcad-build/bin/rawbot raw_vertex_file
 ***** end rawbot ***********************************
 ***** begin rawtorle ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -4096,7 +4096,7 @@ Usage: /usr/local/src2/brlcad-build/bin/rawbot raw_vertex_file
 ***** end rawtorle ***********************************
 ***** begin re2c ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 usage: re2c [-bcdDefFghirsuvVw1] [-o of] [-t th] file
@@ -4115,7 +4115,7 @@ usage: re2c [-bcdDefFghirsuvVw1] [-o of] [-t th] file
 ***** end re2c ***********************************
 ***** begin re2c_bootstrap ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 2
 ----- begin usage -----------------------------------
 usage: re2c [-bcdDefFghirsuvVw1] [-o of] [-t th] file
@@ -4138,7 +4138,7 @@ usage: re2c [-bcdDefFghirsuvVw1] [-o of] [-t th] file
 ***** end re2c_bootstrap ***********************************
 ***** begin remapid ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -4152,7 +4152,7 @@ Usage: 'remapid [-{g|t}] {file.g|file.tankill} [spec_file]'
 ***** end remapid ***********************************
 ***** begin remrt ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -4160,7 +4160,7 @@ Usage: 'remapid [-{g|t}] {file.g|file.tankill} [spec_file]'
 ***** end remrt ***********************************
 ***** begin repos ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -4168,7 +4168,7 @@ Usage: 'remapid [-{g|t}] {file.g|file.tankill} [spec_file]'
 ***** end repos ***********************************
 ***** begin reshoot ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -4189,7 +4189,7 @@ Usage: /usr/local/src2/brlcad-build/bin/reshoot geom.g obj [obj...] < rayfile
 ***** end ringworld ***********************************
 ***** begin rle-fb ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -4201,7 +4201,7 @@ Usage: rle-fb [-c -d -O] [-F framebuffer]  [-C r/g/b]
 ***** end rle-fb ***********************************
 ***** begin rle-pix ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -4215,7 +4215,7 @@ Usage: rle-pix [-c -d -h -H] [-C r/g/b]
 ***** end rle-pix ***********************************
 ***** begin rleClock ***********************************
 	result : (binary)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 0
 ----- begin usage -----------------------------------
 
@@ -4223,7 +4223,7 @@ Usage: rle-pix [-c -d -h -H] [-C r/g/b]
 ***** end rleClock ***********************************
 ***** begin rleaddcom ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 missing string argument
@@ -4233,7 +4233,7 @@ usage : rleaddcom [-d] [-i] [-o outfile] infile comments ...
 ***** end rleaddcom ***********************************
 ***** begin rlebg ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 missing decimal argument
@@ -4244,7 +4244,7 @@ usage : rlebg [-s xsize ysize] [-l] [-v [top] [bottom]] [-o outfile]
 ***** end rlebg ***********************************
 ***** begin rlebox ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -4252,7 +4252,7 @@ usage : rlebg [-s xsize ysize] [-l] [-v [top] [bottom]] [-o outfile]
 ***** end rlebox ***********************************
 ***** begin rlecat ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -4260,7 +4260,7 @@ usage : rlebg [-s xsize ysize] [-l] [-v [top] [bottom]] [-o outfile]
 ***** end rlecat ***********************************
 ***** begin rleccube ***********************************
 	result : (UNKNOWN)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 0
 ----- begin usage -----------------------------------
 
@@ -4268,7 +4268,7 @@ usage : rlebg [-s xsize ysize] [-l] [-v [top] [bottom]] [-o outfile]
 ***** end rleccube ***********************************
 ***** begin rlecomp ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 255
 ----- begin usage -----------------------------------
 missing string argument
@@ -4278,7 +4278,7 @@ usage : rlecomp [-o outfile] Afile op Bfile
 ***** end rlecomp ***********************************
 ***** begin rledither ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 flag argument missing
@@ -4289,7 +4289,7 @@ usage : rledither [-e edge_factor] [-l nchan length]
 ***** end rledither ***********************************
 ***** begin rleflip ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 255
 ----- begin usage -----------------------------------
 flag argument missing
@@ -4299,7 +4299,7 @@ usage : rleflip -{rlhv} [-o outfile] [infile]
 ***** end rleflip ***********************************
 ***** begin rlegrid ***********************************
 	result : (binary)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 0
 ----- begin usage -----------------------------------
 
@@ -4307,7 +4307,7 @@ usage : rleflip -{rlhv} [-o outfile] [infile]
 ***** end rlegrid ***********************************
 ***** begin rlehdr ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -4315,7 +4315,7 @@ usage : rleflip -{rlhv} [-o outfile] [infile]
 ***** end rlehdr ***********************************
 ***** begin rlehisto ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -4331,7 +4331,7 @@ usage : rleflip -{rlhv} [-o outfile] [infile]
 ***** end rleinterp ***********************************
 ***** begin rleldmap ***********************************
 	result : (UNKNOWN)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 255
 ----- begin usage -----------------------------------
 
@@ -4339,7 +4339,7 @@ usage : rleflip -{rlhv} [-o outfile] [infile]
 ***** end rleldmap ***********************************
 ***** begin rlemandl ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 254
 ----- begin usage -----------------------------------
 missing floating argument
@@ -4350,7 +4350,7 @@ usage : rlemandl [-v] [-s xsize ysize] [-b band-scale [band-offset]]
 ***** end rlemandl ***********************************
 ***** begin rlenoise ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -4358,7 +4358,7 @@ usage : rlemandl [-v] [-s xsize ysize] [-b band-scale [band-offset]]
 ***** end rlenoise ***********************************
 ***** begin rlepatch ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 255
 ----- begin usage -----------------------------------
 missing string argument
@@ -4369,7 +4369,7 @@ usage : rlepatch [-o outfile] infile [patchfiles ...]
 ***** end rlepatch ***********************************
 ***** begin rleprint ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -4377,7 +4377,7 @@ usage : rlepatch [-o outfile] infile [patchfiles ...]
 ***** end rleprint ***********************************
 ***** begin rlequant ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -4385,7 +4385,7 @@ usage : rlepatch [-o outfile] infile [patchfiles ...]
 ***** end rlequant ***********************************
 ***** begin rlescale ***********************************
 	result : (binary)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 0
 ----- begin usage -----------------------------------
 
@@ -4393,7 +4393,7 @@ usage : rlepatch [-o outfile] infile [patchfiles ...]
 ***** end rlescale ***********************************
 ***** begin rleselect ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 missing decimal argument
@@ -4408,7 +4408,7 @@ usage : rleselect [-i [infile]] [-o outfile] [-v] image-numbers ...
 ***** end rleselect ***********************************
 ***** begin rlesetbg ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -4416,7 +4416,7 @@ usage : rleselect [-i [infile]] [-o outfile] [-v] image-numbers ...
 ***** end rlesetbg ***********************************
 ***** begin rlesortmap ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -4424,7 +4424,7 @@ usage : rleselect [-i [infile]] [-o outfile] [-v] image-numbers ...
 ***** end rlesortmap ***********************************
 ***** begin rlespiff ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -4432,7 +4432,7 @@ usage : rleselect [-i [infile]] [-o outfile] [-v] image-numbers ...
 ***** end rlespiff ***********************************
 ***** begin rlesplice ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 flag argument missing
@@ -4442,7 +4442,7 @@ usage : rlesplice -{hv} [-c] [-o outfile] infile1 infile2
 ***** end rlesplice ***********************************
 ***** begin rlesplit ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -4450,7 +4450,7 @@ usage : rlesplice -{hv} [-c] [-o outfile] infile1 infile2
 ***** end rlesplit ***********************************
 ***** begin rlestereo ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 255
 ----- begin usage -----------------------------------
 
@@ -4462,7 +4462,7 @@ usage : rlestereo [-g] [-l leftscale] [-r rightscale] [-o outfile]
 ***** end rlestereo ***********************************
 ***** begin rleswap ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 /usr/local/src2/brlcad-build/bin/rleswap: You must specify exactly one of -d, -f, -t, or -p
@@ -4480,7 +4480,7 @@ usage : rleswap [-v] [-{Mm}] [-f from-channels,...] [-t to-channels,...]
 ***** end rleswap ***********************************
 ***** begin rletoabA60 ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -4488,7 +4488,7 @@ usage : rleswap [-v] [-{Mm}] [-f from-channels,...] [-t to-channels,...]
 ***** end rletoabA60 ***********************************
 ***** begin rletoabA62 ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -4496,7 +4496,7 @@ usage : rleswap [-v] [-{Mm}] [-f from-channels,...] [-t to-channels,...]
 ***** end rletoabA62 ***********************************
 ***** begin rletoalias ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -4504,7 +4504,7 @@ usage : rleswap [-v] [-{Mm}] [-f from-channels,...] [-t to-channels,...]
 ***** end rletoalias ***********************************
 ***** begin rletoascii ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -4512,7 +4512,7 @@ usage : rleswap [-v] [-{Mm}] [-f from-channels,...] [-t to-channels,...]
 ***** end rletoascii ***********************************
 ***** begin rletogif ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -4520,7 +4520,7 @@ usage : rleswap [-v] [-{Mm}] [-f from-channels,...] [-t to-channels,...]
 ***** end rletogif ***********************************
 ***** begin rletogray ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -4528,7 +4528,7 @@ usage : rleswap [-v] [-{Mm}] [-f from-channels,...] [-t to-channels,...]
 ***** end rletogray ***********************************
 ***** begin rletopaint ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -4536,7 +4536,7 @@ usage : rleswap [-v] [-{Mm}] [-f from-channels,...] [-t to-channels,...]
 ***** end rletopaint ***********************************
 ***** begin rletops ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -4544,7 +4544,7 @@ usage : rleswap [-v] [-{Mm}] [-f from-channels,...] [-t to-channels,...]
 ***** end rletops ***********************************
 ***** begin rletoraw ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -4552,7 +4552,7 @@ usage : rleswap [-v] [-{Mm}] [-f from-channels,...] [-t to-channels,...]
 ***** end rletoraw ***********************************
 ***** begin rletorla ***********************************
 	result : (core)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 0 from signal 11; dumped core
 ----- begin usage -----------------------------------
 
@@ -4560,7 +4560,7 @@ usage : rleswap [-v] [-{Mm}] [-f from-channels,...] [-t to-channels,...]
 ***** end rletorla ***********************************
 ***** begin rletotarga ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 flag argument missing
@@ -4572,7 +4572,7 @@ usage : rletotarga -o outfile [infile]
 ***** end rletotarga ***********************************
 ***** begin rletovcr ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -4580,7 +4580,7 @@ usage : rletotarga -o outfile [infile]
 ***** end rletovcr ***********************************
 ***** begin rlezoom ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 missing floating argument
@@ -4601,7 +4601,7 @@ Usage: /usr/local/src2/brlcad-build/bin/room
 ***** end room ***********************************
 ***** begin rpatch ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -4609,7 +4609,7 @@ Usage: /usr/local/src2/brlcad-build/bin/room
 ***** end rpatch ***********************************
 ***** begin rt ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -4625,7 +4625,7 @@ BRL-CAD Release 7.24.1  The BRL-CAD Ray-Tracing Library
 ***** end rt ***********************************
 ***** begin rt_bot_faces ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -4644,7 +4644,7 @@ BRL-CAD Release 7.24.1  The BRL-CAD Numerical Computation Library
 ***** end rt_bot_faces ***********************************
 ***** begin rtarea ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -4663,7 +4663,7 @@ BRL-CAD Release 7.24.1  The BRL-CAD Numerical Computation Library
 ***** end rtarea ***********************************
 ***** begin rtcell ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -4682,7 +4682,7 @@ BRL-CAD Release 7.24.1  The BRL-CAD Numerical Computation Library
 ***** end rtcell ***********************************
 ***** begin rtcheck ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -4701,7 +4701,7 @@ BRL-CAD Release 7.24.1  The BRL-CAD Numerical Computation Library
 ***** end rtcheck ***********************************
 ***** begin rtedge ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 
@@ -4720,7 +4720,7 @@ BRL-CAD Release 7.24.1  The BRL-CAD Numerical Computation Library
 ***** end rtedge ***********************************
 ***** begin rtfrac ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 
@@ -4739,7 +4739,7 @@ BRL-CAD Release 7.24.1  The BRL-CAD Numerical Computation Library
 ***** end rtfrac ***********************************
 ***** begin rtg3 ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -4758,7 +4758,7 @@ BRL-CAD Release 7.24.1  The BRL-CAD Numerical Computation Library
 ***** end rtg3 ***********************************
 ***** begin rthide ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -4777,7 +4777,7 @@ BRL-CAD Release 7.24.1  The BRL-CAD Numerical Computation Library
 ***** end rthide ***********************************
 ***** begin rtpp ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -4796,7 +4796,7 @@ BRL-CAD Release 7.24.1  The BRL-CAD Numerical Computation Library
 ***** end rtpp ***********************************
 ***** begin rtrad ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -4815,7 +4815,7 @@ BRL-CAD Release 7.24.1  The BRL-CAD Numerical Computation Library
 ***** end rtrad ***********************************
 ***** begin rtrange ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -4834,7 +4834,7 @@ BRL-CAD Release 7.24.1  The BRL-CAD Numerical Computation Library
 ***** end rtrange ***********************************
 ***** begin rtray ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 
@@ -4853,7 +4853,7 @@ BRL-CAD Release 7.24.1  The BRL-CAD Numerical Computation Library
 ***** end rtray ***********************************
 ***** begin rtregis ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 
@@ -4863,7 +4863,7 @@ Usage:  rtregis plot3.log pix.log
 ***** end rtregis ***********************************
 ***** begin rtscale ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 255
 ----- begin usage -----------------------------------
 
@@ -4878,7 +4878,7 @@ Usage:  rtscale (width) (units) (interval) filename [string] >  file.plot3
 ***** end rtscale ***********************************
 ***** begin rtshot ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -4894,7 +4894,7 @@ Usage:  /usr/local/src2/brlcad-build/bin/rtshot [options] model.g objects...
 ***** end rtshot ***********************************
 ***** begin rtsil ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -4913,7 +4913,7 @@ BRL-CAD Release 7.24.1  The BRL-CAD Numerical Computation Library
 ***** end rtsil ***********************************
 ***** begin rtsrv ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 Usage: rtsrv [-d] control-host tcp-port [cmd]
@@ -4922,7 +4922,7 @@ Usage: rtsrv [-d] control-host tcp-port [cmd]
 ***** end rtsrv ***********************************
 ***** begin rttherm ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -4941,7 +4941,7 @@ BRL-CAD Release 7.24.1  The BRL-CAD Numerical Computation Library
 ***** end rttherm ***********************************
 ***** begin rtwalk ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -4959,7 +4959,7 @@ Usage:  rtwalk [options] startXYZ destXYZ model.g objects...
 ***** end rtwalk ***********************************
 ***** begin rtweight ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -4978,7 +4978,7 @@ BRL-CAD Release 7.24.1  The BRL-CAD Numerical Computation Library
 ***** end rtweight ***********************************
 ***** begin rtwizard ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -4986,7 +4986,7 @@ BRL-CAD Release 7.24.1  The BRL-CAD Numerical Computation Library
 ***** end rtwizard ***********************************
 ***** begin rtxray ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 
@@ -5005,7 +5005,7 @@ BRL-CAD Release 7.24.1  The BRL-CAD Numerical Computation Library
 ***** end rtxray ***********************************
 ***** begin script-tab ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 
@@ -5015,7 +5015,7 @@ Usage: /usr/local/src2/brlcad-build/bin/script-tab < script > table
 ***** end script-tab ***********************************
 ***** begin scriptsort ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -5023,7 +5023,7 @@ Usage: /usr/local/src2/brlcad-build/bin/script-tab < script > table
 ***** end scriptsort ***********************************
 ***** begin secpass ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 0
 ----- begin usage -----------------------------------
 
@@ -5035,7 +5035,7 @@ Usage:  secpass file.g objects
 ***** end secpass ***********************************
 ***** begin shapefact ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 0
 ----- begin usage -----------------------------------
 
@@ -5047,7 +5047,7 @@ Usage:  /usr/local/src2/brlcad-build/bin/shapefact file.g objects
 ***** end shapefact ***********************************
 ***** begin showshot ***********************************
 	result : (UNKNOWN)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -5055,7 +5055,7 @@ Usage:  /usr/local/src2/brlcad-build/bin/shapefact file.g objects
 ***** end showshot ***********************************
 ***** begin showtherm ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 0
 ----- begin usage -----------------------------------
 
@@ -5066,7 +5066,7 @@ Usage:  showtherm file.g objects
 ***** end showtherm ***********************************
 ***** begin shp-g ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -5089,7 +5089,7 @@ Usage: /usr/local/src2/brlcad-build/bin/shp-g [-v] [-d] [-x rt_debug_flag] shape
 ***** end sketch ***********************************
 ***** begin smod ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -5100,7 +5100,7 @@ Usage: smod [-a add | -s sub | -m mult | -d div | -A | -e exp | -r root] [file.s
 ***** end smod ***********************************
 ***** begin smush ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -5124,7 +5124,7 @@ Usage: smod [-a add | -s sub | -m mult | -d div | -A | -e exp | -r root] [file.s
 ***** end spltest ***********************************
 ***** begin spm-fb ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage: spm-fb [-h -s] [-F framebuffer]
@@ -5136,7 +5136,7 @@ Usage: spm-fb [-h -s] [-F framebuffer]
 ***** end spm-fb ***********************************
 ***** begin ssamp-bw ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -5149,7 +5149,7 @@ Usage: ssamp-bw [-s squarefilesize] [-w file_width] [-n file_height]
 ***** end ssamp-bw ***********************************
 ***** begin ssampview ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -5176,7 +5176,7 @@ Usage: ssampview [-t] [-s squarefilesize] [-w file_width] [-n file_height]
 ***** end ssampview ***********************************
 ***** begin step-g ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -5187,7 +5187,7 @@ Usage: step-g -o outfile.g infile.stp
 ***** end step-g ***********************************
 ***** begin stl-g ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage: /usr/local/src2/brlcad-build/bin/stl-g [-db] [-t tolerance] [-N forced_name] [-i initial_ident] [-I constant_ident] [-m material_code] [-c units_str] [-x rt_debug_flag] input.stl output.g
@@ -5203,7 +5203,7 @@ Usage: /usr/local/src2/brlcad-build/bin/stl-g [-db] [-t tolerance] [-N forced_na
 ***** end stl-g ***********************************
 ***** begin sun-pix ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage: sun-pix [-b -h -i -P -v -C] [sun.bitmap]
@@ -5212,7 +5212,7 @@ Usage: sun-pix [-b -h -i -P -v -C] [sun.bitmap]
 ***** end sun-pix ***********************************
 ***** begin surfaceintersect ***********************************
 	result : (core)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 0 from signal 11; dumped core
 ----- begin usage -----------------------------------
 
@@ -5220,7 +5220,7 @@ Usage: sun-pix [-b -h -i -P -v -C] [sun.bitmap]
 ***** end surfaceintersect ***********************************
 ***** begin tabinterp ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -5228,7 +5228,7 @@ Usage: sun-pix [-b -h -i -P -v -C] [sun.bitmap]
 ***** end tabinterp ***********************************
 ***** begin tabsub ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 12
 ----- begin usage -----------------------------------
 
@@ -5246,7 +5246,7 @@ Usage:  tabsub prototype_file [table_file]
 ***** end tankill-g ***********************************
 ***** begin targatorle ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -5254,7 +5254,7 @@ Usage:  tabsub prototype_file [table_file]
 ***** end targatorle ***********************************
 ***** begin tclsh ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -5300,7 +5300,7 @@ Flags:
 ***** end terrain ***********************************
 ***** begin texturescale ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -5313,7 +5313,7 @@ Usage: texturescale [-T 'r1 r2' | -S]
 ***** end texturescale ***********************************
 ***** begin tgf-g ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -5323,7 +5323,7 @@ Usage: /usr/local/src2/brlcad-build/bin/tgf-g <DRA-mat> <DRA-geo> <BRL-g>
 ***** end tgf-g ***********************************
 ***** begin tire ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -5348,7 +5348,7 @@ options:
 ***** end tire ***********************************
 ***** begin to8 ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -5356,7 +5356,7 @@ options:
 ***** end to8 ***********************************
 ***** begin tobw ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -5364,7 +5364,7 @@ options:
 ***** end tobw ***********************************
 ***** begin torii ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 255
 ----- begin usage -----------------------------------
 
@@ -5374,7 +5374,7 @@ Usage: /usr/local/src2/brlcad-build/bin/torii db_file.g
 ***** end torii ***********************************
 ***** begin ttcp ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage: ttcp -t [-options] host <in
@@ -5401,12 +5401,12 @@ Usage: ttcp -r [-options] >out
 Usage: /usr/local/src2/brlcad-build/bin/tube
 pos.dat: No such file or directory
 inner radius=62.5mm, outer radius=73.4982mm
-0, 
+0,
 ----- end usage -----------------------------------
 ***** end tube ***********************************
 ***** begin u-a ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -5414,7 +5414,7 @@ inner radius=62.5mm, outer radius=73.4982mm
 ***** end u-a ***********************************
 ***** begin u-bw ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 255
 ----- begin usage -----------------------------------
 
@@ -5424,7 +5424,7 @@ Usage: /usr/local/src2/brlcad-build/bin/u-bw < u_shorts > bwfile
 ***** end u-bw ***********************************
 ***** begin u-d ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -5436,7 +5436,7 @@ Usage: u-d [-n || scale] < shorts > doubles
 ***** end u-d ***********************************
 ***** begin u-f ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -5448,7 +5448,7 @@ Usage: i-f [-n || scale] < shorts > floats
 ***** end u-f ***********************************
 ***** begin umod ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -5459,7 +5459,7 @@ Usage: umod [-a add | -s sub | -m mult | -d div | -A | -e exp | -r root] [file.s
 ***** end umod ***********************************
 ***** begin unexp ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 255
 ----- begin usage -----------------------------------
 missing string argument
@@ -5469,7 +5469,7 @@ usage : unexp [-v] [-p] [-s] [-m maxval] [-o outfile] infile
 ***** end unexp ***********************************
 ***** begin unslice ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 missing string argument
@@ -5479,7 +5479,7 @@ usage : unslice [-y ymax] [-f ctlfile] files ... [-o outfile]
 ***** end unslice ***********************************
 ***** begin ustats ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -5490,7 +5490,7 @@ Usage: ustats [ file ]
 ***** end ustats ***********************************
 ***** begin vcrtorle ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -5498,7 +5498,7 @@ Usage: ustats [ file ]
 ***** end vcrtorle ***********************************
 ***** begin vdeck ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -5523,7 +5523,7 @@ Usage: vdeck file.g
 ***** end vegetation ***********************************
 ***** begin viewpoint-g ***********************************
 	result : (UNKNOWN)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -5531,7 +5531,7 @@ Usage: vdeck file.g
 ***** end viewpoint-g ***********************************
 ***** begin wasatchrle ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 255
 ----- begin usage -----------------------------------
 missing string argument
@@ -5541,7 +5541,7 @@ usage : wasatchrle [-o outfile] basename
 ***** end wasatchrle ***********************************
 ***** begin wavelet ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -5565,7 +5565,7 @@ Usage:
 ***** end wavy ***********************************
 ***** begin wdb_example ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -5576,7 +5576,7 @@ Usage: wdb_example db_file.g
 ***** end wdb_example ***********************************
 ***** begin window ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -5584,7 +5584,7 @@ Usage: wdb_example db_file.g
 ***** end window ***********************************
 ***** begin window_frame ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -5592,7 +5592,7 @@ Usage: wdb_example db_file.g
 ***** end window_frame ***********************************
 ***** begin wire ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -5600,7 +5600,7 @@ Usage: wdb_example db_file.g
 ***** end wire ***********************************
 ***** begin wish ***********************************
 	result : (window)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -5608,7 +5608,7 @@ Usage: wdb_example db_file.g
 ***** end wish ***********************************
 ***** begin xbmtorle ***********************************
 	result : (wait)
-	file(s): 
+	file(s):
 	error  : 1:TIMEOUT
 ----- begin usage -----------------------------------
 
@@ -5616,7 +5616,7 @@ Usage: wdb_example db_file.g
 ***** end xbmtorle ***********************************
 ***** begin xmllint ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 Usage : /usr/local/src2/brlcad-build/bin/xmllint [options] XMLfiles ...
@@ -5634,7 +5634,7 @@ Usage : /usr/local/src2/brlcad-build/bin/xmllint [options] XMLfiles ...
 ***** end xmllint ***********************************
 ***** begin xsltproc ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 1
 ----- begin usage -----------------------------------
 
@@ -5652,7 +5652,7 @@ Usage: /usr/local/src2/brlcad-build/bin/xsltproc [options] stylesheet file [file
 ***** end xsltproc ***********************************
 ***** begin xyz-plot3 ***********************************
 	result : (UNKNOWN)
-	file(s): 
+	file(s):
 	error  : 3:exit status: exit code 0
 ----- begin usage -----------------------------------
 
@@ -5660,7 +5660,7 @@ Usage: /usr/local/src2/brlcad-build/bin/xsltproc [options] stylesheet file [file
 ***** end xyz-plot3 ***********************************
 ***** begin yuv-pix ***********************************
 	result : (usage)
-	file(s): 
+	file(s):
 	error  : 2:EOF
 ----- begin usage -----------------------------------
 
