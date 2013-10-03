@@ -67,7 +67,9 @@ show_help(struct ged *gedp, const char *name)
     bu_vls_printf(gedp->ged_result_str, "options:\n");
     bu_vls_printf(gedp->ged_result_str, "\t-a\n\t\tAuto-generate top-level object name using\n");
     bu_vls_printf(gedp->ged_result_str, "\t\t(tire-<width>-<aspect>R<rim size>)\n");
+    bu_vls_printf(gedp->ged_result_str, "\t\t(\"tire\" overridden by -n argument, and ultimately by tire_name , if that is supplied)\n");
     bu_vls_printf(gedp->ged_result_str, "\t-n <name>\n\t\tSpecify custom top-level object name\n");
+    bu_vls_printf(gedp->ged_result_str, "\t\t(overridden by tire_name , if that is supplied)\n");
     bu_vls_printf(gedp->ged_result_str, "\t-c <count>\n\t\tSpecify number of tread patterns around tire\n");
     bu_vls_printf(gedp->ged_result_str, "\t-d <width>/<aspect>R<rim size>\n\t\tSpecify tire dimensions\n");
     bu_vls_printf(gedp->ged_result_str, "\t\t(U.S. customary units, integer values only)\n");
@@ -2004,23 +2006,23 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     /* Calculate floating point value for tread depth */
     tread_depth_float = tread_depth/32.0;
 
-    /* Based on arguments, assign name for toplevel object Default of
-     * "tire" is respected unless overridden by user supplied options.
+    /* Based on arguments, assign name for toplevel object; default of
+     * "tire" is used unless overridden by user supplied options.
+     * If -a option was not used, toplevel object keeps its entire name from -n argument (which is
+     * overridden by the last argument on command line).
      */
-    if (bu_vls_strlen(&name) != 0 && gen_name == 1) {
-	bu_vls_printf(&name, "-%d-%dR%d", (int)isoarray[0], (int)isoarray[1], (int)isoarray[2]);
-    }
-
-    if (bu_vls_strlen(&name) == 0 && gen_name == 1) {
-	bu_vls_printf(&name, "tire-%d-%dR%d", (int)isoarray[0], (int)isoarray[1], (int)isoarray[2]);
+    if (gen_name == 1) {
+	    if (bu_vls_strlen(&name) == 0)
+		bu_vls_printf(&name,"tire-%d-%dR%d", (int)isoarray[0], (int)isoarray[1], (int)isoarray[2]);
+    	    else
+		bu_vls_printf(&name,    "-%d-%dR%d", (int)isoarray[0], (int)isoarray[1], (int)isoarray[2]);
     }
 
     /* Use default dimensional info to create a suffix for names, if
      * not supplied in args.
      */
-    if (bu_vls_strlen(&dimen) == 0) {
+    if (bu_vls_strlen(&dimen) == 0)
 	bu_vls_printf(&dimen, "-%d-%dR%d", (int)isoarray[0], (int)isoarray[1], (int)isoarray[2]);
-    }
 
     mk_id(gedp->ged_wdbp, "Tire");
 
