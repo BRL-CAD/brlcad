@@ -56,17 +56,18 @@ sideSurface(const ON_3dPoint& SW, const ON_3dPoint& SE, const ON_3dPoint& NE, co
  * 1.  Determine if the NMG is convex - try nmg_lu_is_convex, and if that doesn't work start here:
  * http://stackoverflow.com/questions/471962/how-do-determine-if-a-polygon-is-complex-convex-nonconvex/1881201#1881201
  *
- * 2.  If it is convex, go to step 3 with the points on the loop as the inputs.  If not, use the
- * Monotone Chain Algorithm to compute the 2D convex hull and use that as the input for step 3.
- * http://geomalgorithms.com/a10-_hull-1.html
+ * 2.  If it is convex, go to step 3 with the points on the loop as the inputs.  If not, since
+ * the outer NMG boundary (lu->orientation == OT_SAME) should be a simple polyline, use the Melkman Algorithm
+ * to construct a convex hull in order N time.  If concave NMG outer polylines prove to be common
+ * and/or the constant overhead of Melkman proves small compared to that of nmg_lu_is_convex, may
+ * be worth simplifying to just perform the Meklman hull assembly for all inputs - worth testing.
+ * http://geomalgorithms.com/a12-_hull-3.html
  *
- * There is an interesting alternative possibility here - MCA is order NlogN, but there exists an
- * approximation technique with bounded error that is order N:  http://geomalgorithms.com/a11-_hull-2.html
- * Since the error is bounded based on the number of subranges and the xmin-xmax distance, it should
- * be possible to calculate the center point and construct a scaled up approximate hull that would be
- * guaranteed to contain the points (which is the key point for the next step.)  It's not clear if
- * this would be faster in practice for usefully large numbers of subranges, but if step 2 ends up
- * adding significant processing time for real models it's worth considering.
+ * If the NMG outer polyline can be a non-simple polyline (i.e. it self intersects), we'll have to either use the
+ * Monotone Chain Algorithm to compute the 2D convex hull, or (*possibly* faster at the expense of a somewhat larger
+ * surface) use the BFP bounded error approximation and scale it to ensure it contains all points.
+ * http://geomalgorithms.com/a10-_hull-1.html
+ * http://geomalgorithms.com/a11-_hull-2.html
  *
  * 3.  Calculate the minimal rectangle using rotating calipers - see:
  * http://geomalgorithms.com/a08-_containers.html#Minimal%20Rectangle
