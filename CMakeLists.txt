@@ -61,12 +61,16 @@
 #   Stage 6 - check types/structures
 #   Stage 7 - check functions
 #   Stage 8 - check system services
-#   Stage 9 - output a summary
+#   Stage 9 - define the BRL-CAD build targets
 #
 # The output summary should report key information about the final
 # configuration of the build.  Comprehensive information is available
 # in the CMake cache file in the build directory, so just hit the
 # high points in the summary.
+#
+# After the main configure process is finished, a summary is printed 
+# and various settings and configuration files that require full
+# knowledge of the main configure results are handled.
 
 
 # *******************************************************************
@@ -926,7 +930,7 @@ endif("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
 # *******************************************************************
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 message("***********************************************************")
-message("*       Stage 1 of 10 - Top Level Configure Options       *")
+message("*        Stage 1 of 9 - Top Level Configure Options       *")
 message("***********************************************************")
 endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 #
@@ -1404,7 +1408,7 @@ include(${BRLCAD_CMAKE_DIR}/BRLCAD_CheckFunctions.cmake)
 # *******************************************************************
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 message("***********************************************************")
-message("*             Stage 2 of 10 - Check for Programs          *")
+message("*             Stage 2 of 9 - Check for Programs           *")
 message("***********************************************************")
 endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 
@@ -1440,7 +1444,7 @@ find_package(Doxygen)
 # *******************************************************************
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 message("***********************************************************")
-message("*    Stage 3 of 10 - Check for Compiler Characteristics   *")
+message("*     Stage 3 of 9 - Check for Compiler Characteristics   *")
 message("***********************************************************")
 endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 
@@ -1474,7 +1478,7 @@ endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
 # *******************************************************************
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 message("***********************************************************")
-message("*            Stage 4 of 10 - Check for Libraries          *")
+message("*             Stage 4 of 9 - Check for Libraries          *")
 message("***********************************************************")
 endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 
@@ -1573,7 +1577,7 @@ BRLCAD_CHECK_LIBRARY(WINMM winmm timeSetEvent)
 # *******************************************************************
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 message("***********************************************************")
-message("*              Stage 5 of 10 - Check for Headers          *")
+message("*               Stage 5 of 9 - Check for Headers          *")
 message("***********************************************************")
 endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 
@@ -1705,7 +1709,7 @@ endif(HAVE_EMMINTRIN_H)
 # *******************************************************************
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 message("***********************************************************")
-message("*         Stage 6 of 10 - Check for Types/Structures      *")
+message("*          Stage 6 of 9 - Check for Types/Structures      *")
 message("***********************************************************")
 endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 
@@ -1756,7 +1760,7 @@ BRLCAD_CHECK_C99_FORMAT_SPECIFIERS()
 # *******************************************************************
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 message("***********************************************************")
-message("*             Stage 7 of 10 - Check for Functions         *")
+message("*              Stage 7 of 9 - Check for Functions         *")
 message("***********************************************************")
 endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 
@@ -1909,7 +1913,7 @@ endif(MSVC)
 # *******************************************************************
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 message("***********************************************************")
-message("*         Stage 8 of 10 - Check for System Services       *")
+message("*          Stage 8 of 9 - Check for System Services       *")
 message("***********************************************************")
 endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 
@@ -1931,13 +1935,6 @@ if(MSVC)
   set(CMAKE_MODULE_LINKER_FLAGS_INIT ${CMAKE_EXE_LINKER_FLAGS_INIT} /NOLOGO)
 endif(MSVC)
 
-# *******************************************************************
-if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
-message("***********************************************************")
-message("*       Stage 9 of 10 - Configure Third Party Sources     *")
-message("***********************************************************")
-endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
-
 # Now that we've done the system tests with BRL-CAD's compile flags,
 # add src/other to pick up any tests it needs.  We must add src/other
 # before the main BRL-CAD directories to provide the necessary build
@@ -1950,7 +1947,7 @@ add_subdirectory(src/other)
 # *******************************************************************
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 message("***********************************************************")
-message("*       Stage 10 of 10 - Define BRL-CAD Build Targets     *")
+message("*        Stage 9 of 9 - Define BRL-CAD Build Targets      *")
 message("***********************************************************")
 endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 
