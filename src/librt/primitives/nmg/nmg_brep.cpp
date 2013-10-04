@@ -53,14 +53,10 @@ sideSurface(const ON_3dPoint& SW, const ON_3dPoint& SE, const ON_3dPoint& NE, co
 /* TODO - the approach for creating surfaces for NMG faces below is horribly non-optimal.
  * A better approach would be along the lines of:
  *
- * 1.  Determine if the NMG is convex - try nmg_lu_is_convex, and if that doesn't work start here:
- * http://stackoverflow.com/questions/471962/how-do-determine-if-a-polygon-is-complex-convex-nonconvex/1881201#1881201
- *
- * 2.  If it is convex, go to step 3 with the points on the loop as the inputs.  If not, since
- * the outer NMG boundary (lu->orientation == OT_SAME) should be a simple polyline, use the Melkman Algorithm
- * to construct a convex hull in order N time.  If concave NMG outer polylines prove to be common
- * and/or the constant overhead of Melkman proves small compared to that of nmg_lu_is_convex, may
- * be worth simplifying to just perform the Meklman hull assembly for all inputs - worth testing.
+ * 1.  Since the outer NMG boundary (lu->orientation == OT_SAME) should be a simple polyline, use the Melkman Algorithm
+ * to construct a convex hull in order N time.  The Geometric Tools implementation of step 3 indicates we can't
+ * have three colinear points in the input to that step, so (since the NMG itself makes no such guarantees) we run
+ * all input face outer loops through the hull building process.
  * http://geomalgorithms.com/a12-_hull-3.html
  *
  * If the NMG outer polyline can be a non-simple polyline (i.e. it self intersects), we'll have to either use the
