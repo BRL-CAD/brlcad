@@ -68,7 +68,7 @@
 # in the CMake cache file in the build directory, so just hit the
 # high points in the summary.
 #
-# After the main configure process is finished, a summary is printed 
+# After the main configure process is finished, a summary is printed
 # and various settings and configuration files that require full
 # knowledge of the main configure results are handled.
 
@@ -1437,7 +1437,7 @@ mark_as_advanced(SWIG_DIR)
 mark_as_advanced(SWIG_VERSION)
 
 # Doxygen is a tool for generating formatted documentation
-# from structured source code coments.
+# from structured source code comments.
 find_package(Doxygen)
 
 
