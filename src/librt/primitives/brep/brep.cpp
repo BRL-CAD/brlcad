@@ -3493,6 +3493,10 @@ bool trim_GetClosestPoint3dFirstOrder(
 	  if (max_distance[span_index] < max_dist_to_closest_pt) {
 	      max_dist_to_closest_pt = max_distance[span_index];
 	  }
+	  if (max_distance[span_index] < min_distance[span_index]) {
+	      // should only be here for near equal fuzz
+	      min_distance[span_index] = max_distance[span_index];
+	  }
 	}
 	for ( int span_index = 0; span_index <= N.m_cv_count - N.m_order; span_index++ )
 	{
@@ -3688,14 +3692,14 @@ void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
 			     std::cerr << "     tp2d: < " << tp2d.x << ", " << tp2d.y << ", 0 >" << std::endl;
 			     }
 			     */
-
+#if 0
 			     if (!NEAR_ZERO(tp2d.DistanceTo(p2d),tol->dist)) {
 			     std::cerr << "2d First Order failed for Face - " << fi << std::endl;
 			     std::cerr << "     tp2d.DistanceTo(p2d): " << tp2d.DistanceTo(p2d) << std::endl;
 			     std::cerr << "     p2d: < " << p2d.x << ", " << p2d.y << ", 0 >" << std::endl;
 			     std::cerr << "     tp2d: < " << tp2d.x << ", " << tp2d.y << ", 0 >" << std::endl;
 			     }
-
+#endif
 			    double test_dist = p3d->DistanceTo(tp3d);
 			    double test_dist2 = p3d->DistanceTo(tp3d2);
 			    double test_dist3 = p3d->DistanceTo(tp3d3);
