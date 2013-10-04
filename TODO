@@ -1826,6 +1826,11 @@ DOCUMENTATION
   common options are documented.  update usage statements to reflect
   commonality as well.
 
+* Categorize the entity types from STEP * IGES into geometry,
+  relationship definitions, metadata, etc., add any missing types
+  of interest (like, say, metaballs) - try to create a comprehensive
+  list of things we might need to consider when writing converters.
+
 * document the saveview/loadview options.
 
 * BRL-CAD Overview Diagram
