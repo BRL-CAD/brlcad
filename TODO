@@ -18,27 +18,20 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* Archer GUI needs to remember the last size of the command
-  window when it is in detached (2 window) mode
-
-* address the ctest failure of bu_progname_tests (seen on ia64 linux)
-
-* address the ctest failure of bu_heap_test_1 (seen on ia32 fbsd)
-
-* heap unit test needs to actually compare performance against system
-  allocation, not just do some work
-
-* re-do the sh/enumerate.sh script for CMake
-
-* attempt to replicate the GTK+ ISST interface in TCL
-
-* provide a viable FindBRLCAD.cmake
-
-* investigate thread affinity locking on Linux
+* nada.
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* address the ctest failure of bu_heap_test_1 (seen on ia32 fbsd)
+
+* investigate thread affinity locking on Linux
+
+* re-do the sh/enumerate.sh script for CMake
+
+* heap unit test needs to actually compare performance against system
+  allocation, not just do some work
 
 * bundle primary rays in rt front end into postage stamps, shoot via
   rt_shootrays(), modify to pass all rays down through the spatial
@@ -84,6 +77,12 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* 'about' command to display version, contents of various doc files,
+  customizable brlcad.msg file
+
+* 'align' command taking a from 3d pt and a to 3d pt target.
+  moves/rotates the source object into alignment.
+
 * Update the comb "region lift" capability to handle automatic duplication
   and substitution of the duplicate into the tree of combs who can't have
   their definitions changed without impacting other geometry in the .g file.
@@ -110,6 +109,13 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   combining up the hierarchy to a prescribed tree depth.  however, it
   model includes BoTs/NURBS, more advanced spatial logic will be
   needed.
+
+* provide a viable FindBRLCAD.cmake
+
+* replicate the GTK+ ISST interface in TCL
+
+* Archer GUI needs to remember the last size of the command
+  window when it is in detached (2 window) mode
 
 * fix nurbs_ssi and nurbs_tester unit tests
 
@@ -1819,6 +1825,11 @@ DOCUMENTATION
   include directives so that there is one place where all of the
   common options are documented.  update usage statements to reflect
   commonality as well.
+
+* Categorize the entity types from STEP * IGES into geometry,
+  relationship definitions, metadata, etc., add any missing types
+  of interest (like, say, metaballs) - try to create a comprehensive
+  list of things we might need to consider when writing converters.
 
 * document the saveview/loadview options.
 

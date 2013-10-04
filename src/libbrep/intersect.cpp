@@ -35,6 +35,7 @@
 
 #include "brep.h"
 
+// Whether to output the debug messages about b-rep intersections.
 #define DEBUG_BREP_INTERSECT 0
 
 

@@ -629,7 +629,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 
 	if (comb->region_flag) {
 	    comb->region_flag = 1;
-	    comb->region_id = gedp->ged_wdbp->wdb_item_default++;;
+	    comb->region_id = gedp->ged_wdbp->wdb_item_default++;
 	    comb->aircode = gedp->ged_wdbp->wdb_air_default;
 	    comb->los = gedp->ged_wdbp->wdb_los_default;
 	    comb->GIFTmater = gedp->ged_wdbp->wdb_mat_default;

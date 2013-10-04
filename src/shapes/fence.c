@@ -126,14 +126,13 @@ void argumentHelp(FILE *fp, char *progname, char *message)
 {
 
     fflush(stdout);
-    if (message) {
+    if (message)
 	fprintf(fp, "%s\n", message);
-    }
     fflush(stdout);
 
-    fprintf(fp, "Usage: %s %s\n\n", progname, \
-	    "-[ivdIVDoOkKuUnNkKlLrRaAjJtTbBcCfFpPmMwWsSeEgGxXzZ]" \
-	);
+    fprintf(fp, "Usage: %s %s\n       (units mm)\n\n", progname, \
+	    "-[ivdIVDoOkKuUnNkKlLrRaAjJtTbBcCfFpPmMwWsSeEgGxXzZ]");
+
     fprintf(fp, "\t-[ivd]\n\t\tspecifies interactive, verbose, and debug modes respectively\n");
     fprintf(fp, "\t-[IVD]\n\t\ttoggles interactive, verbose, and debug modes respectively\n");
     fprintf(fp, "\t-[oO] filename\n\t\tspecifies the name of the file to output to\n");
@@ -157,7 +156,6 @@ void argumentHelp(FILE *fp, char *progname, char *message)
     fprintf(fp, "\t-[gG] [fpm]\n\t\tspecifies which parts of the fence object(s) to generate\n\t\t'g' specifies to generate the object(s)\n\t\t'G' specifies to do the opposite of the default(s)\n");
     fprintf(fp, "\t-[xX]\n\t\tdisplays some command-line parameter examples\n");
     fprintf(fp, "\t-[zZ]\n\t\tdisplays the default settings\n");
-    fprintf(fp, "\n");
 
     fflush(stdout);
 
@@ -272,8 +270,8 @@ int parseArguments(int argc, char **argv)
 	bu_strlcpy(progname, argv[0], (strlen(argv[0])+1>DEFAULT_MAXNAMELENGTH?DEFAULT_MAXNAMELENGTH:strlen(argv[0])+1));
     } else {
 	bu_strlcpy(progname, "fence\0", 6);
-	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Command-line argument assistance");
-	bu_log("       Program continues running:\n");
+	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, NULL);
+	bu_log("\n       Program continues running:\n\n");
     }
     fflush(stdout);
 
@@ -567,9 +565,8 @@ int parseArguments(int argc, char **argv)
 
 	    default  :
 		fflush(stdout);
-		(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Command-line argument assistance");
+		(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, NULL);
 		bu_exit(1, NULL);
-		break;
 	}
     }
     fflush(stdout);

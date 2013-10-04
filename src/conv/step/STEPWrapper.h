@@ -48,11 +48,7 @@
 
 #include <BRLCADWrapper.h>
 
-#ifdef AP203e2
-#  include <SdaiAP203_CONFIGURATION_CONTROLLED_3D_DESIGN_OF_MECHANICAL_PARTS_AND_ASSEMBLIES_MIM_LF.h>
-#else
-#  include <SdaiCONFIG_CONTROL_DESIGN.h>
-#endif
+#include "ap_schema.h"
 
 /*
 class SDAI_Application_instance;

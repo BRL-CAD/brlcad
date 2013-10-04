@@ -379,6 +379,14 @@ _ged_open_dbip(const char *filename, int existing_only)
 }
 
 
+HIDDEN int
+_ged_cmp_attr(const void *p1, const void *p2)
+{
+    return bu_strcmp(((struct bu_attribute_value_pair *)p1)->name,
+		     ((struct bu_attribute_value_pair *)p2)->name);
+}
+
+
 void
 _ged_print_node(struct ged *gedp,
 		struct directory *dp,
@@ -449,13 +457,15 @@ _ged_print_node(struct ged *gedp,
 	    return;
 	}
 
-	/* list all the attributes, if any */
+	/* FIXME: manually list all the attributes, if any.  should be
+	 * calling ged_attr() show so output formatting is consistent.
+	 */
 	if (avs.count) {
 	    struct bu_attribute_value_pair *avpp;
 	    int max_attr_name_len = 0;
 
 	    /* sort attribute-value set array by attribute name */
-	    qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmpattr);
+	    qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmp_attr);
 
 	    for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
 		int len = (int)strlen(avpp->name);

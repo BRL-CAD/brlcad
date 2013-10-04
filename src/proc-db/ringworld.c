@@ -129,7 +129,7 @@ main(int argc, char *argv[])
     while ((optc = bu_getopt(argc, argv, "Hho:n:")) != -1) {
 	switch (optc) {
 	    case 'o':
-		snprintf(outfile, MAXPATHLEN, "%s", bu_optarg);;
+		snprintf(outfile, MAXPATHLEN, "%s", bu_optarg);
 		break;
 	    case 'h' :
 	    case 'H' :

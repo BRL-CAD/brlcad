@@ -396,7 +396,7 @@ tcl_bu_units_conversion(void *clientData,
 static int
 wrapper_func(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    struct bu_cmdtab *ctp = (struct bu_cmdtab *)data;;
+    struct bu_cmdtab *ctp = (struct bu_cmdtab *)data;
 
     return ctp->ct_func(interp, argc, argv);
 }
@@ -428,7 +428,7 @@ Bu_Init(void *p)
 	{"bu_get_value_by_keyword",	tcl_bu_get_value_by_keyword},
 	{"bu_rgb_to_hsv",		tcl_bu_rgb_to_hsv},
 	{"bu_hsv_to_rgb",		tcl_bu_hsv_to_rgb},
-	{(char *)NULL,			NULL }
+	{(const char *)NULL, BU_CMD_NULL}
     };
 
     /*XXX Use of brlcad_interp is temporary */

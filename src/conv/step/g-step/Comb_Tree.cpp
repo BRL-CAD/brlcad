@@ -24,15 +24,24 @@
  *
  */
 
+#include "common.h"
+#include <sstream>
 #include <map>
 #include <set>
 #include "bu.h"
 #include "raytrace.h"
+#include "G_STEP_internal.h"
 #include "STEPWrapper.h"
 #include "ON_Brep.h"
+#include "Assembly_Product.h"
+#include "Comb_Tree.h"
 
-STEPentity *
-Comb_to_STEP(struct directory *dp, Registry *registry, InstMgr *instance_list) {
+void
+Comb_to_STEP(struct directory *dp, Registry *registry, InstMgr *instance_list, STEPentity **shape, STEPentity **product) {
+    std::ostringstream ss;
+    ss << "'" << dp->d_namep << "'";
+    std::string str = ss.str();
+
     // MECHANICAL_CONTEXT
     SdaiMechanical_context *mech_context = (SdaiMechanical_context *)registry->ObjCreate("MECHANICAL_CONTEXT");
     instance_list->Append((STEPentity *)mech_context, completeSE);
@@ -43,13 +52,21 @@ Comb_to_STEP(struct directory *dp, Registry *registry, InstMgr *instance_list) {
     SdaiApplication_context *app_context = (SdaiApplication_context *)registry->ObjCreate("APPLICATION_CONTEXT");
     instance_list->Append((STEPentity *)app_context, completeSE);
     mech_context->frame_of_reference_(app_context);
-    app_context->application_("''");
+    app_context->application_("'CONFIGURATION CONTROLLED 3D DESIGNS OF MECHANICAL PARTS AND ASSEMBLIES'");
+
+    // DESIGN_CONTEXT - TODO, should be one of these per file?
+    SdaiDesign_context *design_context = (SdaiDesign_context *)registry->ObjCreate("DESIGN_CONTEXT");
+    instance_list->Append((STEPentity *)design_context, completeSE);
+    design_context->name_("''");
+    design_context->life_cycle_stage_("'design'");
+    design_context->frame_of_reference_(app_context);
 
     // PRODUCT_DEFINITION
     SdaiProduct_definition *prod_def = (SdaiProduct_definition *)registry->ObjCreate("PRODUCT_DEFINITION");
     instance_list->Append((STEPentity *)prod_def, completeSE);
     prod_def->id_("''");
     prod_def->description_("''");
+    prod_def->frame_of_reference_(design_context);
 
     // PRODUCT_DEFINITION_FORMATION
     SdaiProduct_definition_formation *prod_def_form = (SdaiProduct_definition_formation *)registry->ObjCreate("PRODUCT_DEFINITION_FORMATION");
@@ -63,20 +80,39 @@ Comb_to_STEP(struct directory *dp, Registry *registry, InstMgr *instance_list) {
     instance_list->Append((STEPentity *)prod, completeSE);
     prod_def_form->of_product_(prod);
     prod->id_("''");
-    prod->name_(dp->d_namep);
+    prod->name_(str.c_str());
     prod->description_("''");
     prod->frame_of_reference_()->AddNode(new EntityNode((SDAI_Application_instance *)mech_context));
 
-    return (STEPentity *)prod_def;
+    // PRODUCT_DEFINITION_SHAPE
+    SdaiProduct_definition_shape *pshape = (SdaiProduct_definition_shape *)registry->ObjCreate("PRODUCT_DEFINITION_SHAPE");
+    instance_list->Append((STEPentity *)pshape, completeSE);
+    pshape->name_("''");
+    pshape->description_("'Comb shape definition'");
+    SdaiCharacterized_product_definition *cpd = new SdaiCharacterized_product_definition(prod_def);
+    pshape->definition_(new SdaiCharacterized_definition(cpd));
+
+    // SHAPE_DEFINITION_REPRESENTATION
+    SdaiShape_definition_representation *shape_def_rep = (SdaiShape_definition_representation*)registry->ObjCreate("SHAPE_DEFINITION_REPRESENTATION");
+    instance_list->Append((STEPentity *)shape_def_rep, completeSE);
+    shape_def_rep->definition_(pshape);
+
+    // SHAPE_REPRESENTATION
+    SdaiShape_representation*shape_rep = (SdaiShape_representation*)registry->ObjCreate("SHAPE_REPRESENTATION");
+    instance_list->Append((STEPentity *)shape_rep, completeSE);
+    shape_def_rep->used_representation_(shape_rep);
+
+
+    (*product) = (STEPentity *)prod_def;
+    (*shape) = (STEPentity *)shape_rep;
 }
 
 STEPentity *
-Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, struct rt_db_internal *intern, Registry *registry, InstMgr *instance_list)
+Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, Registry *registry, InstMgr *instance_list)
 {
     STEPentity *toplevel_comb = NULL;
+    struct comb_maps *maps = new comb_maps;
 
-    std::map<struct directory *, STEPentity *> brep_to_step;
-    std::map<struct directory *, STEPentity *> comb_to_step;
     std::set<struct directory *> non_wrapper_combs;
 
 
@@ -84,11 +120,15 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, struct rt_db_intern
     const char *brep_search = "-type brep";
     struct bu_ptbl *breps = db_search_path_obj(brep_search, dp, wdbp);
     for (int j = (int)BU_PTBL_LEN(breps) - 1; j >= 0; j--){
+	STEPentity *brep_shape;
+	STEPentity *brep_product;
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(breps, j);
 	struct rt_db_internal brep_intern;
 	rt_db_get_internal(&brep_intern, curr_dp, wdbp->dbip, bn_mat_identity, &rt_uniresource);
 	RT_CK_DB_INTERNAL(&brep_intern);
-	brep_to_step[curr_dp] = ON_BRep_to_STEP(curr_dp, &brep_intern, registry, instance_list);
+	ON_BRep_to_STEP(curr_dp, &brep_intern, registry, instance_list, &brep_shape, &brep_product);
+	maps->brep_to_step[curr_dp] = brep_product;
+	maps->brep_to_step_shape[curr_dp] = brep_shape;
 	bu_log("Brep: %s\n", curr_dp->d_namep);
     }
 
@@ -97,7 +137,11 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, struct rt_db_intern
     struct bu_ptbl *combs = db_search_path_obj(comb_search, dp, wdbp);
     for (int j = (int)BU_PTBL_LEN(combs) - 1; j >= 0; j--){
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(combs, j);
-	comb_to_step[curr_dp] = Comb_to_STEP(curr_dp, registry, instance_list);
+	STEPentity *comb_shape;
+	STEPentity *comb_product;
+	Comb_to_STEP(curr_dp, registry, instance_list, &comb_shape, &comb_product);
+	maps->comb_to_step[curr_dp] = comb_product;
+	maps->comb_to_step_shape[curr_dp] = comb_shape;
 	non_wrapper_combs.insert(curr_dp);
 	bu_log("Comb non-wrapper: %s\n", curr_dp->d_namep);
     }
@@ -121,13 +165,23 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, struct rt_db_intern
 	bu_free(comb_child, "free search result");
 	union tree *curr_node = db_find_named_leaf(comb->tree, child->d_namep);
 	if (!(curr_node->tr_l.tl_mat)) {
-	    comb_to_step[curr_dp] = brep_to_step.find(child)->second;
+	    std::ostringstream ss;
+	    ss << "'" << curr_dp->d_namep << "'";
+	    std::string str = ss.str();
+	    maps->comb_to_step[curr_dp] = maps->brep_to_step.find(child)->second;
+	    maps->comb_to_step_shape[curr_dp] = maps->brep_to_step_shape.find(child)->second;
 	    bu_log("Comb wrapper: %s\n", curr_dp->d_namep);
+	    ((SdaiProduct_definition *)(maps->comb_to_step[curr_dp]))->formation_()->of_product_()->name_(str.c_str());
 	}else{
-	    comb_to_step[curr_dp] = Comb_to_STEP(curr_dp, registry, instance_list);
+	    STEPentity *comb_shape;
+	    STEPentity *comb_product;
+	    Comb_to_STEP(curr_dp, registry, instance_list, &comb_shape, &comb_product);
+	    maps->comb_to_step[curr_dp] = comb_product;
+	    maps->comb_to_step_shape[curr_dp] = comb_shape;
 	    non_wrapper_combs.insert(curr_dp);
 	    bu_log("Comb non-wrapper (matrix over primitive): %s\n", curr_dp->d_namep);
 	}
+	rt_db_free_internal(&comb_intern);
     }
 
     /* For each non-wrapper comb, get list of immediate children and call Assembly Product,
@@ -138,46 +192,9 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, struct rt_db_intern
      * where to associate them.*/
     const char *comb_children_search = "-mindepth 1 -maxdepth 1";
     for (std::set<struct directory *>::iterator it=non_wrapper_combs.begin(); it != non_wrapper_combs.end(); ++it) {
-	bu_log("look for matricies in %s\n", (*it)->d_namep);
+	bu_log("look for matrices in %s\n", (*it)->d_namep);
 	struct bu_ptbl *comb_children = db_search_path_obj(comb_children_search, (*it), wdbp);
-	struct rt_db_internal comb_intern;
-	rt_db_get_internal(&comb_intern, (*it), wdbp->dbip, bn_mat_identity, &rt_uniresource);
-	RT_CK_DB_INTERNAL(&comb_intern);
-	struct rt_comb_internal *comb = (struct rt_comb_internal *)(comb_intern.idb_ptr);
-	for (int j = (int)BU_PTBL_LEN(comb_children) - 1; j >= 0; j--){
-	    struct directory *curr_dp = (struct directory *)BU_PTBL_GET(comb_children, j);
-	    bu_log("%s under %s: ", curr_dp->d_namep, (*it)->d_namep);
-	    union tree *curr_node = db_find_named_leaf(comb->tree, curr_dp->d_namep);
-	    matp_t curr_matrix = curr_node->tr_l.tl_mat;
-	    if(curr_matrix) {
-		bu_log(" - found matrix over %s in %s\n", curr_dp->d_namep, (*it)->d_namep);
-		bn_mat_print(curr_dp->d_namep, curr_matrix);
-
-		//TODO - investigate CARTESIAN_TRANSFORMATION_OPERATOR_3D, which seems to
-		// allow uniform scaling as well and appears to be compatible with the
-		// same slot used for AXIS2_PLACEMENT_3D - may be able to use the latter
-		// for simple cases without scaling (i.e. VUNITIZE doesn't change the length
-		// of X, Y or Z unit vectors after the matrix is applied), the former when
-		// the there is uniform scaling (X, Y and Z lengths all change by the same
-		// amount) and in the worst case (non-uniform scaling) will have to create
-		// a new Brep and abandon the attempt to preserve the comb-level operation.
-
-		vect_t inv, outv;
-		VSET(inv, 0, 0, 0);
-		MAT4X3PNT(outv, curr_matrix, inv);
-		bu_log("AXIS2_PLACEMENT_3D cartesian_point: %f, %f, %f\n", outv[0], outv[1], outv[2]);
-		VSET(inv, 0, 0, 1);
-		MAT4X3VEC(outv, curr_matrix, inv);
-		VUNITIZE(outv);
-		bu_log("AXIS2_PLACEMENT_3D axis: %f, %f, %f\n", outv[0], outv[1], outv[2]);
-		VSET(inv, 1, 0, 0);
-		MAT4X3VEC(outv, curr_matrix, inv);
-		VUNITIZE(outv);
-		bu_log("AXIS2_PLACEMENT_3D ref axis: %f, %f, %f\n", outv[0], outv[1], outv[2]);
-	    } else {
-		bu_log("identity matrix\n");
-	    }
-	}
+	Add_Assembly_Product((*it), wdbp->dbip, comb_children, maps, registry, instance_list);
 	bu_ptbl_free(comb_children);
 	bu_free(comb_children, "free search result");
     }

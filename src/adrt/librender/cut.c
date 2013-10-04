@@ -195,7 +195,7 @@ render_cut_init(render_t *render, const char *buf)
 	vect_t v;
 
 	VSUB2(v, ray_pos, render->tie->mid);
-	shot_len = 2.0 * render->tie->radius + MAGNITUDE(v) - render->tie->radius;;
+	shot_len = 2.0 * render->tie->radius + MAGNITUDE(v) - render->tie->radius;
     }
 
     /*

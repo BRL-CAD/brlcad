@@ -811,7 +811,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 				    if (ZERO(m)) {
 					hitp->hit_vpriv[Z] = 0.0;
 				    } else {
-					hitp->hit_vpriv[Z] = (hit2d[X]>0) ? 1.0/m : -1.0/m;;
+					hitp->hit_vpriv[Z] = (hit2d[X]>0) ? 1.0/m : -1.0/m;
 				    }
 				    hitp->hit_magic = RT_HIT_MAGIC;
 				    hitp->hit_dist = k1;

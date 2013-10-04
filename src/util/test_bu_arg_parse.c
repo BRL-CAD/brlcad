@@ -162,7 +162,7 @@ main(int ac, char *av[])
     if (!stat(dsp3_fname, &sb)) {
       if (has_force) {
         printf("WARNING: overwriting an existing file...\n");
-        unlink(dsp3_fname);
+        bu_file_delete(dsp3_fname);
       }
       else {
         bu_arg_free(args);

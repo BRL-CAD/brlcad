@@ -23,6 +23,11 @@
 
 #include "bu.h"
 
+enum { BU_TRUE  = 1 };
+enum { BU_FALSE = 0 };
+
+enum { BU_ARG_MAGIC = 0x2189165c }; /**< arg structs */
+
 /* all in this part of the header MUST have "C" linkage */
 #ifdef __cplusplus
 extern "C" {
@@ -37,6 +42,7 @@ typedef enum {
 
 /* types of arg values */
 typedef enum {
+  BU_ARG_UNDEFINED,
   BU_ARG_BOOL,
   BU_ARG_DOUBLE,
   BU_ARG_LONG,
@@ -91,14 +97,63 @@ bu_arg_unlabeled_value(const char *name,
                        const char *def_val,
                        const bu_arg_req_t required,
                        const bu_arg_valtype_t val_typ);
-/* the getters */
+
+/* structs for static initialization */
+/* TCLAP::Arg */
+typedef struct bu_arg_vars_type2 {
+  bu_arg_t arg_type;              /* enum: type of TCLAP arg                   */
+  const char *flag;               /* the "short" option, may be empty ("")     */
+  const char *name;               /* the "long" option                         */
+  const char *desc;               /* a brief description                       */
+  const bu_arg_req_t req;         /* bool: is arg required?                    */
+  const bu_arg_valtype_t val_typ; /* enum: value type                          */
+  const char *def_val;            /* default value (if any)                    */
+} bu_arg_vars2;
+
+typedef struct {
+  const uint32_t magic;           /* BU_ARG_MAGIC                              */
+  bu_arg_t arg_type;              /* enum: type of TCLAP arg                   */
+  const char *flag;               /* the "short" option, may be empty ("")     */
+  const char *name;               /* the "long" option                         */
+  const char *desc;               /* a brief description                       */
+  int def_val;                    /* always false on init                      */
+} bu_arg_switch_t;
+
+typedef struct {
+  const uint32_t magic;           /* BU_ARG_MAGIC                              */
+  bu_arg_t arg_type;              /* enum: type of TCLAP arg                   */
+  const char *flag;               /* the "short" option, may be empty ("")     */
+  const char *name;               /* the "long" option                         */
+  const char *desc;               /* a brief description                       */
+  const bu_arg_req_t req;         /* bool: is arg required?                    */
+  const bu_arg_valtype_t val_typ; /* enum: value type                          */
+  const char *def_val;            /* default value (if any)                    */
+} bu_arg_unlabeled_value_t;
+
+#define BU_ARG_SWITCH_INIT(_flag_str, _name_str, _desc_str) \
+{BU_ARG_MAGIC, BU_ARG_SwitchArg, _flag_str, _name_str, _desc_str, BU_FALSE}
+
+#define BU_ARG_UNLABELED_VALUE_INIT(_flag_str, _name_str, _desc_str,      \
+                        _required_bool, _val_typ, _def_val_str)           \
+{BU_ARG_MAGIC, BU_ARG_UnlabeledValueArg, _flag_str, _name_str, _desc_str, \
+      _required_bool, _val_typ, _def_val_str}
+
+/* the getters (signature should ALMOST stay the same for static and pointer inits) */
 int bu_arg_get_bool(bu_arg_vars *arg);
 long bu_arg_get_long(bu_arg_vars *arg);
 double bu_arg_get_double(bu_arg_vars *arg);
 const char *bu_arg_get_string(bu_arg_vars *arg);
 
+/* but use tmp  names while dual use in effect */
+int bu_arg_get_bool2(void *arg);
+long bu_arg_get_long2(void *arg);
+double bu_arg_get_double2(void *arg);
+void bu_arg_get_string2(void *arg, char buf[], const size_t buflen);
+
 /* the action: all in one function */
 int bu_arg_parse(bu_ptbl_t *args, int argc, char * const argv[]);
+/* for use with static struct init (tmp name) */
+int bu_arg_parse2(void *args[], int argc, char * const argv[]);
 
 /* free arg memory for any strings */
 void bu_arg_free(bu_ptbl_t *args);

@@ -132,7 +132,6 @@ Create_Rational_Surface_Aggregate(ON_NurbsSurface *nsurface, ON_Brep_Info_AP203 
     /* Set b_spline_surface data */
     stepcomplex = complex_entity->EntityPart("b_spline_surface");
     stepcomplex->ResetAttributes();
-    std::cout << "b_spline_surface\n";
     while ((attr = stepcomplex->NextAttribute()) != NULL) {
 	if (!bu_strcmp(attr->Name(), "u_degree")) attr->ptr.i = new SDAI_Integer(nsurface->Degree(0));
 	if (!bu_strcmp(attr->Name(), "v_degree")) attr->ptr.i = new SDAI_Integer(nsurface->Degree(1));
@@ -152,7 +151,6 @@ Create_Rational_Surface_Aggregate(ON_NurbsSurface *nsurface, ON_Brep_Info_AP203 
     /* Set knots */
     stepcomplex = complex_entity->EntityPart("b_spline_surface_with_knots");
     stepcomplex->ResetAttributes();
-    std::cout << "b_spline_surface_with_knots\n";
     IntAggregate *u_multiplicities = new IntAggregate();
     IntAggregate *v_multiplicities = new IntAggregate();
     RealAggregate *u_knots = new RealAggregate();
@@ -174,7 +172,6 @@ Create_Rational_Surface_Aggregate(ON_NurbsSurface *nsurface, ON_Brep_Info_AP203 
     /* Set weights */
     stepcomplex = complex_entity->EntityPart("rational_b_spline_surface");
     stepcomplex->ResetAttributes();
-    std::cout << "rational_b_spline_surface\n";
     while ((attr = stepcomplex->NextAttribute()) != NULL) {
 	if (!bu_strcmp(attr->Name(), "weights_data")) {
 	    GenericAggregate *weights = new GenericAggregate();
@@ -197,9 +194,8 @@ Create_Rational_Surface_Aggregate(ON_NurbsSurface *nsurface, ON_Brep_Info_AP203 
     /* Representation item */
     stepcomplex = complex_entity->EntityPart("representation_item");
     stepcomplex->ResetAttributes();
-    std::cout << "representation_item\n";
     while ((attr = stepcomplex->NextAttribute()) != NULL) {
-	std::cout << "  " << attr->Name() << "," << attr->NonRefType() << "\n";
+	//std::cout << "  " << attr->Name() << "," << attr->NonRefType() << "\n";
 	if (!bu_strcmp(attr->Name(), "name")) attr->StrToVal("''");
     }
 
@@ -238,9 +234,7 @@ bool
 ON_NurbsSurface_to_STEP(ON_NurbsSurface *n_surface, ON_Brep_Info_AP203 *info, int i)
 {
     bool surface_converted = true;
-    std::cout << "Have NurbsSurface\n";
     if (n_surface->IsRational()) {
-	std::cout << "Have Rational NurbsSurface\n";
 	info->surfaces.at(i) = Create_Rational_Surface_Aggregate(n_surface, info);
     } else {
 	info->surfaces.at(i) = info->registry->ObjCreate("B_SPLINE_SURFACE_WITH_KNOTS");

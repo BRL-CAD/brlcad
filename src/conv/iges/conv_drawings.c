@@ -464,7 +464,7 @@ Draw_entities(struct model *m, int de_list[], int no_of_des, fastf_t x, fastf_t 
 
 		    tmp_ptr = ptr->next;
 		    bu_free((char *)ptr, "Draw_entities: ptr");
-		    ptr = tmp_ptr;;
+		    ptr = tmp_ptr;
 		}
 		break;
 	}

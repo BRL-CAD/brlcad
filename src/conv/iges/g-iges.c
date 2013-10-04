@@ -566,7 +566,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 
 		    /* not unique, try adding a suffix */
 		    len = strlen(suffix);
-		    i = len - 1;;
+		    i = len - 1;
 		    suffix[i]++;
 		    while (suffix[i] > 'z' && i > 0) {
 			suffix[i] = 'a';

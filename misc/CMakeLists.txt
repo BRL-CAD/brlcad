@@ -46,7 +46,6 @@ BRLCAD_ADDDATA(density_DATAFILES data)
 BRLCAD_ADDDATA(nsis/brlcad.ico icons)
 BRLCAD_ADDDATA(nsis/archer.ico icons)
 
-find_package(Doxygen)
 if(DOXYGEN_FOUND)
   configure_file(Doxyfile.in ${CMAKE_BINARY_DIR}/CMakeTmp/Doxyfile @ONLY)
   add_custom_command(

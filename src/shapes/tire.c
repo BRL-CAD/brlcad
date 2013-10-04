@@ -48,11 +48,9 @@ int main(int ac, char *av[])
     filename = DEFAULT_TIRE_FILENAME;
 
     /* Just using "tire.g" for now. */
-    if (!bu_file_exists(filename, NULL)) {
-	db_fp = wdb_fopen(filename);
-    } else {
+    if (bu_file_exists(filename, NULL))
 	bu_exit(1, "ERROR - refusing to overwrite existing [%s] file.", filename);
-    }
+    db_fp = wdb_fopen(filename);
     mk_id(db_fp, "Tire");
 
     GED_INIT(&ged, db_fp);
@@ -66,14 +64,11 @@ int main(int ac, char *av[])
     if (ret) {
 	bu_file_delete(filename);
 	bu_log("%s", bu_vls_addr(ged.ged_result_str));
-	ged_free(&ged);
-	return 1;
     }
 
     /* release our ged instance memory */
     ged_free(&ged);
-
-    return 0;
+    return ret;
 }
 
 

@@ -4026,7 +4026,7 @@ nmg_split_loops_handler(uint32_t *fu_p, genptr_t sl_state, int UNUSED(unused))
 			    /* Yes, lu1 is within lu2, so lu1 is not
 			     * a hole in lu
 			     */
-			    hole_in_lu = 0;;
+			    hole_in_lu = 0;
 			    break;
 			}
 		    }
@@ -4825,7 +4825,7 @@ nmg_find_isect_faces(const struct vertex *new_v, struct bu_ptbl *faces, int *fre
 	NMG_CK_VERTEXUSE(vu);
 	fu = nmg_find_fu_of_vu(vu);
 	if (fu->orientation != OT_SAME)
-	    continue;;
+	    continue;
 
 	NMG_CK_FACEUSE(fu);
 	fg = fu->f_p->g.plane_p;

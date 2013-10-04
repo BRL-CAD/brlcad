@@ -405,6 +405,29 @@ mode.
 Aliases:  ENABLE_STRICT, ENABLE_STRICT_COMPILE, ENABLE_STRICT_COMPILE_FLAGS
 
 
+--- ENABLE_POSIX_COMPLIANCE ---
+
+Build with strict POSIX compliance checking.  Defaults to OFF.
+
+Causes compiler options to be set for strict compliance with the
+minimum C and C++ standards acceptable according to current BRL-CAD
+policy.  The current minimum C standard is ??.
+There is no currently defined minimum C++ standard.
+
+Aliases:  ENABLE_POSIX
+
+
+--- ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE ---
+
+Build with strict ISO C compliance checking.  Defaults to OFF.
+
+Causes C compiler options to be set for strict compliance with the appropriate
+ISO C standard
+standard.
+
+Aliases:  STRICT_ISO_C
+
+
 --- BRLCAD_EXTRADOCS ---
 
 The core option that enables and disables building of BRL-CAD's DocBook

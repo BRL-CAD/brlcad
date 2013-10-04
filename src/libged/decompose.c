@@ -177,7 +177,7 @@ ged_decompose(struct ged *gedp, int argc, const char *argv[])
 		if (new_dp == RT_DIR_NULL) {
 		    bu_vls_free(&solid_name);
 		    bu_vls_printf(gedp->ged_result_str, "%s: Database alloc error, aborting", argv[0]);
-		    return GED_ERROR;;
+		    return GED_ERROR;
 		}
 
 		if (rt_db_put_internal(new_dp, gedp->ged_wdbp->dbip, &new_intern, &rt_uniresource) < 0) {

@@ -931,6 +931,11 @@ GED_EXPORT extern int ged_comb_std(struct ged *gedp, int argc, const char *argv[
 GED_EXPORT extern int ged_combmem(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * create, update, remove, and list geometric and dimensional constraints.
+ */
+GED_EXPORT extern int ged_constraint(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Import a database into the current database using an auto-incrementing or custom affix
  */
 GED_EXPORT extern int ged_concat(struct ged *gedp, int argc, const char *argv[]);

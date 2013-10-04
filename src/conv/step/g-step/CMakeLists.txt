@@ -36,8 +36,6 @@ set(gstep_LIBS
   )
 list(APPEND gstep_LIBS ${gstep_LIBS})
 
-#add_definitions(-DAP203e2)
-
 BRLCAD_ADDEXEC(g-step "${gstep_SOURCES}" "${gstep_LIBS}" NO_STRICT)
 add_dependencies(g-step step-express-${SCHEMA_NAME}-gstep)
 
@@ -56,7 +54,17 @@ if(MSVC)
   set_target_properties(g-step PROPERTIES COMPILE_DEFINITIONS "${gstep_IMPORTS}")
 endif(MSVC)
 
-CMAKEFILES(ON_Brep.h Comb_Tree.h)
+set(IGNORE_FILES
+  Assembly_Product.h
+  ON_Brep.h
+  Comb_Tree.h
+  G_STEP_internal.h
+  list_elements.cpp
+  )
+CMAKEFILES(${IGNORE_FILES})
+
+set(list_elements_srcs ${express_srcs} list_elements.cpp)
+BRLCAD_ADDEXEC(list_elements "${list_elements_srcs}" "${gstep_LIBS}" NO_STRICT NO_INSTALL)
 
 # Local Variables:
 # tab-width: 8

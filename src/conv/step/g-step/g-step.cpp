@@ -50,12 +50,6 @@
 //
 #include <sdai.h>
 #include <STEPfile.h>
-#ifdef AP203e2
-#  include <SdaiAP203_CONFIGURATION_CONTROLLED_3D_DESIGN_OF_MECHANICAL_PARTS_AND_ASSEMBLIES_MIM_LF.h>
-#else
-#  include <SdaiCONFIG_CONTROL_DESIGN.h>
-#endif
-
 #include "schema.h"
 
 void
@@ -68,6 +62,8 @@ usage()
 int
 main(int argc, char *argv[])
 {
+    STEPentity *shape;
+    STEPentity *product;
     int ret = 0;
 
     // process command line arguments
@@ -181,10 +177,10 @@ main(int argc, char *argv[])
     /* Now, add actual DATA */
     switch (intern.idb_minor_type) {
 	case DB5_MINORTYPE_BRLCAD_BREP:
-	    (void)ON_BRep_to_STEP(dp, &intern, registry, &instance_list);
+	    (void)ON_BRep_to_STEP(dp, &intern, registry, &instance_list, &shape, &product);
 	    break;
 	case DB5_MINORTYPE_BRLCAD_COMBINATION:
-	    (void)Comb_Tree_to_STEP(dp, wdbp, &intern, registry, &instance_list);
+	    (void)Comb_Tree_to_STEP(dp, wdbp, registry, &instance_list);
 	    break;
 	default:
 	    bu_log("Primitive type of %s is not yet supported\n", argv[1]);

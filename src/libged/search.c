@@ -63,9 +63,9 @@ _path_scrub(struct bu_vls *path)
     normalized = db_normalize(bu_vls_addr(path));
 
     if (normalized && !BU_STR_EQUAL(normalized, "/")) {
-	char *basename = bu_basename(normalized);
-	bu_vls_sprintf(&tmp, "%s", basename);
-	bu_free(basename, "free bu_basename string (caller's responsibility per bu.h)");
+	char *tbasename = bu_basename(normalized);
+	bu_vls_sprintf(&tmp, "%s", tbasename);
+	bu_free(tbasename, "free bu_basename string (caller's responsibility per bu.h)");
 	bu_vls_sprintf(path, "%s", bu_vls_addr(&tmp));
 	bu_vls_free(&tmp);
     } else {
@@ -79,10 +79,12 @@ _path_scrub(struct bu_vls *path)
 HIDDEN void
 _ged_free_search_set(struct bu_ptbl *search_set)
 {
+    int i;
+
     if (!search_set)
 	return;
 
-    for (int i = (int)BU_PTBL_LEN(search_set) - 1; i >= 0; i--) {
+    for (i = (int)BU_PTBL_LEN(search_set) - 1; i >= 0; i--) {
 	struct ged_search *search = (struct ged_search *)BU_PTBL_GET(search_set, i);
 
 	if (search && search->paths)
@@ -387,8 +389,9 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 	    struct ged_search *search = (struct ged_search *)BU_PTBL_GET(search_set, i);
 	    if (search && (search->path_cnt > 0 || search->search_type == 2)) {
 		if (search->search_type == 2) {
+		    struct bu_ptbl *search_results;
 		    if (aflag) flags = DB_LS_HIDDEN;
-		    struct bu_ptbl *search_results = db_search_flat(bu_vls_addr(&search_string), gedp->ged_wdbp, flags);
+		    search_results = db_search_flat(bu_vls_addr(&search_string), gedp->ged_wdbp, flags);
 		    if (search_results) {
 			for (j = (int)BU_PTBL_LEN(search_results) - 1; j >= 0; j--) {
 			    struct directory *uniq_dp = (struct directory *)BU_PTBL_GET(search_results, j);

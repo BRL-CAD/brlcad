@@ -536,6 +536,7 @@ package provide cadwidgets::Ged 1.0
 	method preview {args}
 	method prim_label {args}
 	method ps {args}
+	method pull {args}
 	method push {args}
 	method put {args}
 	method put_comb {args}

@@ -33,6 +33,7 @@
 #define __TCLCAD_H__
 
 #include "common.h"
+#include "cmd.h"
 #include "tcl.h"
 #include "ged.h"
 

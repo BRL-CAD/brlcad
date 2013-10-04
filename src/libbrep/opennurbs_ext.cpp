@@ -1630,7 +1630,8 @@ try_again:
 	}
     }
 
-    if (delete_tree) delete a_tree;
+    if (delete_tree)
+	delete a_tree;
     return found;
 }
 

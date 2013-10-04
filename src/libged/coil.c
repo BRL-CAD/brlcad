@@ -39,8 +39,9 @@
 
 #define D2R(x) (x * DEG2RAD)
 #define DEFAULT_COIL_OBJECT "coil"
+#define DEFAULT_COIL_FILENAME "coil.g"
 
-int usedefaults = 0;
+int usedefaults;
 
 struct coil_data_t {
     struct bu_list l;
@@ -315,6 +316,7 @@ void usage(struct ged *gedp)
     bu_vls_printf(gedp->ged_result_str, "Usage: coil [-d mean_outer_diameter] [-w wire_diameter] [-H helix_angle] [-p pitch]\n");
     bu_vls_printf(gedp->ged_result_str, "            [-n number_of_turns] [-s start_cap_type] [-e end_cap_type]\n");
     bu_vls_printf(gedp->ged_result_str, "            [-S coil_data_structure] [-l overall_length] [-L]\n");
+    bu_vls_printf(gedp->ged_result_str, "       (units mm)\n");
 }
 
 
@@ -332,15 +334,10 @@ ReadArgs(struct ged *gedp, int argc, const char *argv[], struct bu_vls *name, st
     int have_name = 0;
     struct coil_data_t *coil_data;
 
-    if (argc == 1) {
-	usedefaults=1;
-    }
+    usedefaults = (argc == 1) ;
+
     while ((c=bu_getopt(argc, (char * const *)argv, options)) != -1) {
 	switch (c) {
-	    case 'h' :
-		usage(gedp);
-                return GED_ERROR;
-		break;
 	    case 'd' :
 		sscanf(bu_optarg, "%f", &mean_od);
 		*mean_outer_diameter = mean_od;
@@ -385,17 +382,20 @@ ReadArgs(struct ged *gedp, int argc, const char *argv[], struct bu_vls *name, st
 		coil_data->wd = d3;
 		coil_data->ha = d4;
 		coil_data->p = d5;
-		if (d6 == 1) {
+		if (d6 == 1)
 		    coil_data->lhf = 1;
-		} else {
+		else
 		    coil_data->lhf = -1;
-		}
 		BU_LIST_INSERT(&(*sections), &((*coil_data).l));
 		break;
 	    default:
 		usage(gedp);
                 return GED_ERROR;
 	}
+    }
+    if (argc == 1) {
+	usage(gedp);
+	bu_vls_printf(gedp->ged_result_str,"\n       Program continues running:\n\n");
     }
     if ((argc - bu_optind) == 1) {
 	have_name = 1;
@@ -445,7 +445,7 @@ ged_coil(struct ged *gedp, int argc, const char *argv[])
 
     /* Process arguments */
     if (ReadArgs(gedp, argc, argv, &name, &sections, &mean_outer_diameter, &wire_diameter, &helix_angle, &pitch, &nt, &start_cap_type, &end_cap_type, &overall_length, &lhf) != GED_OK) {
-	bu_vls_printf(gedp->ged_result_str, "Nothing created");
+/*	bu_vls_printf(gedp->ged_result_str, "Nothing created"); */
 	return GED_ERROR;
     }
 
@@ -453,9 +453,8 @@ ged_coil(struct ged *gedp, int argc, const char *argv[])
 
     if (BU_LIST_IS_EMPTY(&sections)) {
 
-	if (usedefaults) {
-	    bu_vls_printf(gedp->ged_result_str, "Creating a coil with default parameters.\n");
-	}
+	if (usedefaults)
+	    bu_vls_printf(gedp->ged_result_str, "Creating %s with default parameters.\n",DEFAULT_COIL_FILENAME);
 
 	if (mean_outer_diameter < 0 || wire_diameter < 0 || helix_angle < 0 || pitch < 0 || nt < 0 || start_cap_type < 0 || end_cap_type < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "negative value in one or more arguments supplied to coil");
@@ -467,26 +466,22 @@ ged_coil(struct ged *gedp, int argc, const char *argv[])
 	    wire_diameter = 100;
 	}
 
-	if (ZERO(wire_diameter) && mean_outer_diameter > 0) {
+	if (ZERO(wire_diameter) && mean_outer_diameter > 0)
 	    wire_diameter = mean_outer_diameter/10;
-	}
 
-	if (ZERO(mean_outer_diameter) && wire_diameter > 0) {
+	if (ZERO(mean_outer_diameter) && wire_diameter > 0)
 	    mean_outer_diameter = wire_diameter * 10;
-	}
 
-	if (ZERO(pitch)) {
+	if (ZERO(pitch))
 	    pitch = wire_diameter;
-	}
 
 	if (pitch < wire_diameter) {
 	    bu_vls_printf(gedp->ged_result_str, "WARNING:  Pitch less than wire diameter.  Setting pitch to wire diameter: %f mm\n", wire_diameter);
 	    pitch = wire_diameter;
 	}
 
-	if (nt == 0) {
+	if (nt == 0)
 	    nt = 30;
-	}
 
 	BU_ALLOC(coil_data, struct coil_data_t);
 	coil_data->nt = nt;

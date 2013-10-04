@@ -2651,17 +2651,6 @@ typedef struct bu_observer bu_observer_t;
 #define BU_OBSERVER_IS_INITIALIZED(_op) (((struct bu_observer *)(_op) != BU_OBSERVER_NULL) && LIKELY((_op)->magic == BU_OBSERVER_MAGIC))
 
 
-/**
- * DEPRECATED.
- *
- * Usage not recommended due to k&r callback (provides no type
- * checking)
- */
-struct bu_cmdtab {
-    char *ct_name;
-    int (*ct_func)(void *data, int argc, const char *argv[]);
-};
-
 /**@}*/
 
 
@@ -2705,27 +2694,37 @@ BU_EXPORT extern int bu_avs_add(struct bu_attribute_value_set *avp,
 				const char *value);
 
 /**
- * Add a bu_vls string as an attribute to a given attribute set.
+ * Add a bu_vls string as an attribute to a given attribute set,
+ * updating the value if it already exists.
  */
 BU_EXPORT extern int bu_avs_add_vls(struct bu_attribute_value_set *avp,
 				    const char *attribute,
 				    const struct bu_vls *value_vls);
 
 /**
+ * Add a name/value pair even if the name already exists in the set.
+ */
+BU_EXPORT extern void bu_avs_add_nonunique(struct bu_attribute_value_set *avsp,
+					   const char *attribute,
+					   const char *value);
+/**
  * Take all the attributes from 'src' and merge them into 'dest' by
- * replacing an attribute if it already exists.
+ * replacing an attribute if it already exists in the set.
  */
 BU_EXPORT extern void bu_avs_merge(struct bu_attribute_value_set *dest,
 				   const struct bu_attribute_value_set *src);
 
 /**
- * Get the value of a given attribute from an attribute set.
+ * Get the value of a given attribute from an attribute set.  The
+ * behavior is not currently well-defined for AVS containing
+ * non-unique attributes, but presently returns the first encountered.
  */
 BU_EXPORT extern const char *bu_avs_get(const struct bu_attribute_value_set *avp,
 					const char *attribute);
 
 /**
- * Remove the given attribute from an attribute set.
+ * Remove all occurrences of an attribute from the provided attribute
+ * set.
  *
  * @return
  *	-1	attribute not found in set
@@ -2736,7 +2735,7 @@ BU_EXPORT extern int bu_avs_remove(struct bu_attribute_value_set *avp,
 				   const char *attribute);
 
 /**
- * Release all attributes in an attribute set.
+ * Release all attributes in the provided attribute set.
  */
 BU_EXPORT extern void bu_avs_free(struct bu_attribute_value_set *avp);
 
@@ -2747,12 +2746,6 @@ BU_EXPORT extern void bu_avs_free(struct bu_attribute_value_set *avp);
 BU_EXPORT extern void bu_avs_print(const struct bu_attribute_value_set *avp,
 				   const char *title);
 
-/**
- * Add a name/value pair even if the name already exists in this AVS.
- */
-BU_EXPORT extern void bu_avs_add_nonunique(struct bu_attribute_value_set *avsp,
-					   const char *attribute,
-					   const char *value);
 /** @} */
 
 /** @addtogroup bitv */
@@ -3179,7 +3172,7 @@ BU_EXPORT extern char * bu_realpath(const char *path, char *resolved_path);
  * routine will set argv0 if path is provided and should generally be
  * set early on by bu_setprogname().
  *
- * this routine will return "(unknown)" if argv[0] cannot be
+ * this routine will return "(BRL-CAD)" if argv[0] cannot be
  * identified but should never return NULL.
  */
 DEPRECATED BU_EXPORT extern const char *bu_argv0(void);
@@ -3191,29 +3184,36 @@ DEPRECATED BU_EXPORT extern const char *bu_argv0(void);
  * returns the full path to argv0, regardless of how the application
  * was invoked.
  *
- * this routine will return "(unknown)" if argv[0] cannot be
- * identified but should never return NULL.
- *
+ * this routine will return "(BRL-CAD)" if argv[0] cannot be
+ * identified but should never return NULL.  this routine is not
+ * thread-safe.
  */
 BU_EXPORT extern const char *bu_argv0_full_path(void);
 
 /**
- * get the name of the running application if they ran
- * bu_setprogname() first or if we know what it's supposed to be
- * anyways.
+ * Get the name of the running application.  application codes should
+ * call bu_setprogname() first to ensure that the program name is
+ * stored appropriately on platforms that do not have an intrinsic
+ * method for tracking the program name automatically.
+ *
+ * while this routine is thread-safe and reentrant, the static string
+ * returned is shared amongst all threads.
  */
 BU_EXPORT extern const char *bu_getprogname(void);
 
 /**
- * Set the name of the running application.  This isn't necessary on
- * modern systems that support getprogname() and call setprogname()
- * before main() for you, but necessary otherwise for portability.
+ * Set the name of the running application.  This isn't strictly
+ * necessary on platforms that have an intrinsic method for tracking
+ * the program name automatically, but is still recommended for
+ * portability and is necessary on some strict modes of compilation.
+ *
+ * while the implementation relies on a static string shared across
+ * all threads, this routine is thread-safe and reentrant.
  */
 BU_EXPORT extern void bu_setprogname(const char *path);
 
 /**
  * returns the pathname for the current working directory.
- *
  */
 BU_EXPORT extern char *bu_getcwd(char *buf, size_t size);
 
@@ -6238,12 +6238,13 @@ BU_EXPORT extern off_t bu_ftell(FILE *stream);
  */
 BU_EXPORT extern int bu_str_isprint(const char *cp);
 
-/** @file libbu/gethostname.c
- *
- * Portable gethostname()
- *
+/**
+ * Get the current operating host's name.  This is usually also the
+ * network name of the current host.  The name is written into the
+ * provided hostname buffer of at least len size.  The hostname is
+ * always null-terminated and should be sized accordingly.
  */
-BU_EXPORT extern int bu_gethostname(char *, size_t);
+BU_EXPORT extern int bu_gethostname(char *hostname, size_t len);
 
 __END_DECLS
 

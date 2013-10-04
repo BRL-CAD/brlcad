@@ -412,7 +412,7 @@ fb_cmd_common_file_size(ClientData clientData, int argc, const char **argv)
 static int
 wrapper_func(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    struct bu_cmdtab *ctp = (struct bu_cmdtab *)data;;
+    struct bu_cmdtab *ctp = (struct bu_cmdtab *)data;
 
     return ctp->ct_func(interp, argc, argv);
 }
@@ -444,7 +444,7 @@ Fb_Init(Tcl_Interp *interp)
 	{"fb_open_existing",	 fb_cmd_open_existing},
 	{"fb_close_existing",	 fb_cmd_close_existing},
 	{"fb_common_file_size",	 fb_cmd_common_file_size},
-	{(char *)0, (int (*)())0}
+	{(const char *)NULL, BU_CMD_NULL}
     };
 
     /* register commands */

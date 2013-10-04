@@ -24,13 +24,19 @@
 #ifndef COMB_TREE_H_
 #define COMB_TREE_H_
 
+#include "common.h"
 #include <map>
-
 #include "ON_Brep.h"
+
+struct comb_maps {
+    std::map<struct directory *, STEPentity *> brep_to_step;
+    std::map<struct directory *, STEPentity *> brep_to_step_shape;
+    std::map<struct directory *, STEPentity *> comb_to_step;
+    std::map<struct directory *, STEPentity *> comb_to_step_shape;
+};
 
 STEPentity *Comb_Tree_to_STEP(struct directory *dp,
                               struct rt_wdb *wdbp,
-	                      struct rt_db_internal *intern,
                               Registry *registry,
                               InstMgr *instance_list);
 

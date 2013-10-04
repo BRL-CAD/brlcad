@@ -38,9 +38,22 @@
 #include "brep.h"
 #include "raytrace.h"
 
-#define DEBUG_BREP_BOOLEAN 1
-#define USE_CONNECTIVITY_GRAPH 1
+// Whether to output the debug messages about b-rep booleans.
+#define DEBUG_BREP_BOOLEAN 0
+
+// Using connectivity graphs can reduce the number of inside/outside tests,
+// which is considered time-consuming in some research papers. But in practice
+// we find that the performance of inside/outside tests is not so critical,
+// and the implementation of connectivity graphs is still in beta (some cases
+// with SSI overlaps seem to be wrong), so we mark this flag as 0
+#define USE_CONNECTIVITY_GRAPH 0
+
+// tol value used in ON_Intersect()s. We use a smaller tolerance than the
+// default one 0.001.
 #define INTERSECTION_TOL 1e-4
+
+// tol value used in ON_3dVector::IsParallelTo(). We use a smaller tolerance
+// than the default one ON_PI/180.
 #define ANGLE_TOL ON_PI/1800.0
 
 
@@ -76,6 +89,8 @@ struct SSICurveInfo {
 #endif
 
 
+// A structure to represent the curve segments generated from surface-surface
+// intersections, including some information needed by the connectivity graph
 struct SSICurve {
     ON_Curve* m_curve;
 #if USE_CONNECTIVITY_GRAPH
@@ -105,10 +120,14 @@ struct SSICurve {
 
 
 void AppendToPolyCurve(ON_Curve* curve, ON_PolyCurve& polycurve);
+// We link the SSICurves that share an endpoint, and form this new structure,
+// which has many similar behaviors as ON_Curve, e.g. PointAt(), Reverse().
 struct LinkedCurve {
 private:
-    ON_Curve* m_curve;
+    ON_Curve* m_curve;	// an explicit storage of the whole curve
 public:
+    // The curves contained in this LinkedCurve, including
+    // the information needed by the connectivity graph
     ON_SimpleArray<SSICurve> m_ssi_curves;
 
     // Default constructor
@@ -156,6 +175,7 @@ public:
 
     bool IsValid() const
     {
+	// Check whether the curve has "gaps".
 	for (int i = 1; i < m_ssi_curves.Count(); i++) {
 	    if (m_ssi_curves[i].m_curve->PointAtStart().DistanceTo(m_ssi_curves[i-1].m_curve->PointAtEnd()) >= ON_ZERO_TOLERANCE) {
 		bu_log("The LinkedCurve is not valid.\n");
@@ -241,7 +261,9 @@ public:
 
 
 struct TrimmedFace {
+    // curve segments in the face's outer loop
     ON_SimpleArray<ON_Curve*> m_outerloop;
+    // several inner loops, each has some curves
     std::vector<ON_SimpleArray<ON_Curve*> > m_innerloop;
     const ON_BrepFace *m_face;
     enum {
@@ -271,6 +293,7 @@ struct TrimmedFace {
     // Destructor
     ~TrimmedFace()
     {
+	// Delete the curve segments if it's not belong to the result.
 	if (m_belong_to_final != BELONG) {
 	    for (int i = 0; i < m_outerloop.Count(); i++) {
 		if (m_outerloop[i]) {
@@ -314,6 +337,7 @@ struct TrimmedFace {
 HIDDEN int
 compare_t(const IntersectPoint* a, const IntersectPoint* b)
 {
+    // Use for sorting an array. Use strict FP comparison.
     if (a->m_seg != b->m_seg)
 	return a->m_seg - b->m_seg;
     return a->m_t > b->m_t ? 1 : (a->m_t < b->m_t ? -1 : 0);
@@ -323,6 +347,7 @@ compare_t(const IntersectPoint* a, const IntersectPoint* b)
 HIDDEN int
 compare_for_rank(IntersectPoint* const *a, IntersectPoint* const *b)
 {
+    // Use for sorting an array. Use strict FP comparison.
     return (*a)->m_t_for_rank > (*b)->m_t_for_rank ? 1 : ((*a)->m_t_for_rank < (*b)->m_t_for_rank ? -1 : 0);
 }
 
@@ -1400,6 +1425,9 @@ build_connectivity_graph(const ON_Brep* brep, ON_SimpleArray<TrimmedFace*>& trim
 HIDDEN bool
 IsPointOnBrepSurface(const ON_3dPoint& pt, const ON_Brep* brep, ON_SimpleArray<Subsurface*>& surf_tree)
 {
+    // Decide whether a point is on a brep's surface.
+    // Basic approach: use PSI on the point with all the surfaces.
+
     if (brep == NULL || pt.IsUnsetPoint()) {
 	bu_log("IsPointOnBrepSurface(): brep == NULL || pt.IsUnsetPoint()\n");
 	return false;
@@ -1442,6 +1470,9 @@ IsPointOnBrepSurface(const ON_3dPoint& pt, const ON_Brep* brep, ON_SimpleArray<S
 HIDDEN bool
 IsPointInsideBrep(const ON_3dPoint& pt, const ON_Brep* brep, ON_SimpleArray<Subsurface*>& surf_tree)
 {
+    // Decide whether a point is inside a brep's surface.
+    // Basic approach: intersect a ray with the brep, and count the number of
+    // intersections (like the raytrace)
     // Returns true (inside) or false (outside) provided the pt is not on the
     // surfaces. (See also IsPointOnBrepSurface())
 
@@ -1976,7 +2007,6 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
     for (int i = 0; i < surf_treeB.Count(); i++)
 	delete surf_treeB[i];
 
-    // WIP
     return 0;
 }
 

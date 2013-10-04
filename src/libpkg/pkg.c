@@ -468,7 +468,7 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
 	    return PKC_ERROR;
 	}
 	sinhim.sin_family = hp->h_addrtype;
-	memcpy((char *)&sinhim.sin_addr, hp->h_addr, (size_t)hp->h_length);
+	memcpy((char *)&sinhim.sin_addr, hp->h_addr_list[0], (size_t)hp->h_length);
     }
     addr = (struct sockaddr *) &sinhim;
     addrlen = sizeof(struct sockaddr_in);
@@ -720,7 +720,7 @@ pkg_permserver_ip(const char *ipOrHostname, const char *service, const char *pro
 	} else {
 	    /* XXX gethostbyname is deprecated on Windows */
 	    host = gethostbyname(ipOrHostname);
-	    iface = *(struct in_addr*)host->h_addr;
+	    iface = *(struct in_addr*)host->h_addr_list[0];
 	}
 	return _pkg_permserver_impl(iface, service, protocol, backlog, errlog);
     } else {

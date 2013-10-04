@@ -58,7 +58,7 @@ SYSV_EXPORT extern void *memset(void *s, int c, size_t n);
 #endif
 
 #ifndef HAVE_STRCHR
-SYSV_EXPORT extern char *strchr(char *sp, char c);
+SYSV_EXPORT extern char *strchr(const char *sp, int c);
 #endif
 
 #ifndef HAVE_STRDUP

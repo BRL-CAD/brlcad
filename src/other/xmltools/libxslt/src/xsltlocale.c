@@ -25,7 +25,7 @@
 #define strxfrm_l __strxfrm_l
 #endif
 
-#ifndef LC_COLATE_MASK
+#ifndef LC_COLLATE_MASK
 #  define LC_COLLATE_MASK (1 << LC_COLLATE)
 #endif
 

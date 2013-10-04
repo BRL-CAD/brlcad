@@ -41,9 +41,7 @@ bu_getcwd(char *buf, size_t size)
 {
     char *cwd = NULL;
     char *pwd = NULL;
-    char *rwd = NULL;
     char cbuf[MAXPATHLEN] = {0};
-    char rbuf[MAXPATHLEN] = {0};
     size_t sz = size;
 
     /* NULL buf means allocate */
@@ -59,8 +57,10 @@ bu_getcwd(char *buf, size_t size)
 	&& strlen(cwd) > 0
 	&& bu_file_exists(cwd, NULL))
     {
-#ifdef HAVE_REALPATH
-	rwd = realpath(cbuf, rbuf);
+#if defined(HAVE_WORKING_REALPATH_FUNCTION)
+	/* FIXME: shouldn't have gotten here with -std=c99 (HAVE_REALPATH test not working right?) */
+	char rbuf[MAXPATHLEN] = {0};
+	char *rwd = bu_realpath(cbuf, rbuf);
 	if (rwd
 	    && strlen(rwd) > 0
 	    && bu_file_exists(rwd, NULL))
@@ -69,7 +69,7 @@ bu_getcwd(char *buf, size_t size)
 	    bu_strlcpy(buf, rwd, strlen(rwd)+1);
 	    return buf;
 	}
-#endif /* HAVE_REALPATH */
+#endif /* HAVE_WORKING_REALPATH_FUNCTION */
 	BU_ASSERT(sz > strlen(cwd)+1);
 	bu_strlcpy(buf, cwd, strlen(cwd)+1);
 	return buf;
@@ -86,8 +86,9 @@ bu_getcwd(char *buf, size_t size)
 	&& strlen(pwd) > 0
 	&& bu_file_exists(pwd, NULL))
     {
-#ifdef HAVE_REALPATH
-	rwd = realpath(pwd, rbuf);
+#if defined(HAVE_WORKING_REALPATH_FUNCTION)
+	char rbuf[MAXPATHLEN] = {0};
+	char *rwd = realpath(pwd, rbuf);
 	if (rwd
 	    && strlen(rwd) > 0
 	    && bu_file_exists(rwd, NULL))
@@ -96,7 +97,7 @@ bu_getcwd(char *buf, size_t size)
 	    bu_strlcpy(buf, rwd, strlen(rwd)+1);
 	    return buf;
 	}
-#endif /* HAVE_REALPATH */
+#endif /* HAVE_WORKING_REALPATH_FUNCTION */
 	BU_ASSERT(sz > strlen(pwd)+1);
 	bu_strlcpy(buf, pwd, strlen(pwd)+1);
 	return buf;

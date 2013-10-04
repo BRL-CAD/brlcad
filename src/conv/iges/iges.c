@@ -1791,7 +1791,7 @@ write_shell_face_loop(char *name,
 	    dir_entry[15] = 1;
 	    dir_entry[14] = write_freeform(fp_param, bu_vls_addr(&str), dir_seq+1, 'P');
 
-	    face_list[face_count++] = write_dir_entry(fp_dir, dir_entry);;
+	    face_list[face_count++] = write_dir_entry(fp_dir, dir_entry);
 
 	    bu_free((char *)loop_list, "loop list");
 	    bu_vls_free(&str);

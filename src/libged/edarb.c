@@ -1018,7 +1018,7 @@ ged_edarb(struct ged *gedp, int argc, const char *argv[])
 	{"facedef",		edarb_facedef},
 	{"mirface",		edarb_mirface},
 	{"permute",		edarb_permute},
-	{(char *)0,		(int (*)())0 }
+	{(const char *)NULL, BU_CMD_NULL}
     };
     static const char *usage = "edgedir|extrude|mirror|permute arb [args]";
 

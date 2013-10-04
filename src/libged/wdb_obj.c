@@ -1021,7 +1021,7 @@ wdb_bot_decimate_cmd(struct rt_wdb *wdbp,
 		min_edge_length = atof(bu_optarg);
 		if (min_edge_length < 0.0) {
 		    Tcl_AppendResult(wdbp->wdb_interp,
-				     "minumum edge length cannot be less than zero",
+				     "minimum edge length cannot be less than zero",
 				     (char *)NULL);
 		    return TCL_ERROR;
 		}
@@ -6551,6 +6551,197 @@ wdb_tol_tcl(void *clientData,
 }
 
 
+void
+wdb_pull_comb(struct db_i *dbip,
+	  struct directory *dp,
+	  genptr_t mp);
+
+/* This restores the matrix transformation at a combination by taking leaf matrix transformations, inverting
+ * and storing the changes at the combinations.
+ */
+static void
+wdb_pull_comb_mat(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, matp_t mp, genptr_t UNUSED(usr_ptr2),
+	      genptr_t UNUSED(usr_ptr3), genptr_t UNUSED(usr_ptr4))
+{
+    struct directory *dp;
+    mat_t inv_mat;
+    matp_t mat = mp;
+
+    RT_CK_DBI(dbip);
+    RT_CK_TREE(comb_leaf);
+
+    if ((dp = db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
+	return;
+
+    if (!comb_leaf->tr_l.tl_mat) {
+	comb_leaf->tr_l.tl_mat = (matp_t)bu_malloc(sizeof(mat_t), "tl_mat");
+	MAT_COPY(comb_leaf->tr_l.tl_mat, mat);
+
+	return;
+    }
+
+    /* invert the matrix transformation of the leaf and store new matrix  at comb */
+    bn_mat_inverse(inv_mat, comb_leaf->tr_l.tl_mat );
+
+    /* multiply inverse and store at combination */
+    bn_mat_mul2(inv_mat,mat);
+    MAT_COPY(comb_leaf->tr_l.tl_mat, mat);
+    wdb_pull_comb(dbip, dp, mp);
+}
+
+
+/* pull_comb(): This routine enters a comb restoring the matrix transformation at the combination
+ *              calls and calls pull_comb_mat() which updates current matrix transformation and moves up tree.
+ * Note:        the generic pointer points to a matrix if successful or a string if unsuccessful.
+ */
+void
+wdb_pull_comb(struct db_i *dbip,
+	  struct directory *dp,
+	  genptr_t mp)
+{
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb;
+    matp_t mat = (matp_t)mp;
+    mat_t m;
+    mat_t invMat;
+
+    if (dp->d_flags & RT_DIR_SOLID)
+	return;
+    if (rt_db_get_internal(&intern, dp, dbip, m, &rt_uniresource) < 0) {
+	Tcl_AppendResult(dbip->dbi_wdbp->wdb_interp,"Database read error, aborting\n");
+	return;
+    }
+
+    comb = (struct rt_comb_internal *)intern.idb_ptr;
+
+    /* checks if matrix pointer is valid */
+    if (mat == NULL) {
+	mat = (matp_t)bu_malloc(sizeof(mat_t), "cur_mat");
+	MAT_IDN(mat);
+    }
+
+    bn_mat_inverse(invMat, mat);
+    bn_mat_mul2(mat,m);
+    MAT_COPY(mat, m);/* updates current matrix pointer */
+
+    if (comb->tree) {
+	db_tree_funcleaf(dbip, comb, comb->tree, wdb_pull_comb_mat,
+			 &m, (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL);
+
+	if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+	    Tcl_AppendResult(dbip->dbi_wdbp->wdb_interp,"Cannot write modified combination (%s) to database\n", dp->d_namep);
+	    return;
+	}
+    }
+}
+
+
+/**
+ * P U L L _ L E A F
+ *
+ * @brief
+ * This routine takes the internal database representation of a leaf node or
+ * primitive object and builds  a matrix transformation, closest to this node's,
+ * sets these values to default and returns matrix.
+ */
+static void
+wdb_pull_leaf(struct db_i *UNUSED(dbip),
+	  struct directory *UNUSED(dp),
+	  genptr_t UNUSED(mp))
+{
+    return;
+}
+
+
+int
+wdb_pull_cmd(struct rt_wdb *wdbp,
+	     int argc,
+	     const char *argv[])
+{
+    struct directory *dp;
+    struct resource *resp;
+    mat_t mat;
+    int c;
+    int debug;
+    static const char *usage = "object";
+
+    resp = &rt_uniresource;
+    rt_init_resource( &rt_uniresource, 0, NULL );
+
+    WDB_TCL_CHECK_READ_ONLY;
+
+    /* must be wanting help */
+    if (argc == 1) {
+	Tcl_AppendResult(wdbp->wdb_interp,"helplib_alias wdb_pull Usage: %s %s", argv[0], usage);
+	return TCL_ERROR;
+    }
+
+    if (argc != 2) {
+	Tcl_AppendResult(wdbp->wdb_interp, "Usage: %s %s", argv[0], usage);
+	return TCL_ERROR;
+    }
+
+    debug = RT_G_DEBUG;
+
+    /* get directory pointer for arg */
+    if ((dp = db_lookup(wdbp->dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
+	return GED_ERROR;
+
+    /* Checks whether the object is a primitive.*/
+    if (dp->d_flags & RT_DIR_SOLID) {
+	Tcl_AppendResult(wdbp->wdb_interp,"Attempt to pull primitive, aborting.\n");
+	return TCL_ERROR;
+    }
+
+    /* Parse options */
+    bu_optind = 1;	/* re-init bu_getopt() */
+    while ((c = bu_getopt(argc, (char * const *)argv, "d")) != -1) {
+	switch (c) {
+	   case 'd':
+		RTG.debug |= DEBUG_TREEWALK;
+		break;
+	  case '?':
+	  default:
+		Tcl_AppendResult(wdbp->wdb_interp, "pull: usage pull [-d] root \n");
+		break;
+	}
+    }
+
+    /*
+     * uses a no frills walk routine recursively moving up the tree
+     * from the leaves performing the necessary matrix transformations moving up
+     * right to the the head of the tree pulling objects.
+     * All new changes are immediately written to database
+     */
+    db_functree(wdbp->dbip, dp, wdb_pull_comb, wdb_pull_leaf, resp, &mat);
+
+    RTG.debug = debug;
+
+
+   return TCL_OK;
+}
+
+/**
+ * @brief
+ * The pull command is used to move matrices from combinations
+ * and leaves up to the head of the tree defined by the object.
+ *
+ * the -d flag turns on the treewalker debugging output.
+ *
+ * Usage:
+ * procname pull object(s)
+ */
+int
+wdb_pull_tcl(void *clientData,
+             int argc,
+             const char *argv[])
+{
+    struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+
+    return wdb_pull_cmd(wdbp, argc-1, argv+1);
+}
+
+
 /** structure to hold all solids that have been pushed. */
 struct wdb_push_id {
     uint32_t magic;
@@ -9505,7 +9696,7 @@ static struct bu_cmdtab wdb_newcmds[] = {
     {"rmater",		(int (*)(void *, int, const char **))ged_rmater},
     {"shader",		(int (*)(void *, int, const char **))ged_shader},
     {"wmater",		(int (*)(void *, int, const char **))ged_wmater},
-    {(char *)NULL,	BU_CMD_NULL}
+    {(const char *)NULL, BU_CMD_NULL}
 };
 
 
@@ -9645,7 +9836,7 @@ static struct bu_cmdtab wdb_cmds[] = {
     {"whichid",		wdb_which_tcl},
     {"wmater",		wdb_newcmds_tcl},
     {"xpush",		wdb_xpush_tcl},
-    {(char *)NULL,	(int (*)())0 }
+    {(const char *)NULL, BU_CMD_NULL}
 };
 
 

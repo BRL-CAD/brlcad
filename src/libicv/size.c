@@ -35,7 +35,6 @@ HIDDEN int shrink_image(icv_image_t* bif, unsigned int factor)
     unsigned int facsq, py, px;
     int x, y, c;
     size_t widthstep =  bif->width*bif->channels;
-
     if (UNLIKELY(factor < 1)) {
 	bu_log("Cannot shrink image to 0 factor, factor should be a positive value.");
 	return -1;
@@ -95,7 +94,7 @@ HIDDEN int under_sample(icv_image_t* bif, unsigned int factor)
 
     bif->width = (int) bif->width/factor;
     bif->height = (int) bif->height/factor;
-    bif->data = bu_realloc(bif->data, (size_t) (bif->width*bif->height*bif->channels), "under_sample : Reallocation");
+    bif->data = bu_realloc(bif->data, (size_t) (bif->width*bif->height*bif->channels)*sizeof(double), "under_sample : Reallocation");
 
     return 0;
 }
@@ -208,9 +207,9 @@ int icv_resize(icv_image_t *bif, ICV_RESIZE_METHOD method, unsigned int out_widt
 
     switch (method) {
 	case ICV_RESIZE_UNDERSAMPLE :
-	    return shrink_image(bif, factor);
-	case ICV_RESIZE_SHRINK :
 	    return under_sample(bif, factor);
+	case ICV_RESIZE_SHRINK :
+	    return shrink_image(bif, factor);
 	case ICV_RESIZE_NINTERP :
 	    return ninterp(bif, out_width, out_height);
 	case ICV_RESIZE_BINTERP :

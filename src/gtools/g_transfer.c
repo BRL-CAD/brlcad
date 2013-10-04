@@ -194,7 +194,7 @@ server_args(struct pkg_conn *connection, char *buf)
     bu_strlcpy(stash->srv_argv[stash->srv_argc - 1], buf, strlen(buf)+1);
 
     bu_log("Planning to shoot at %s\n", buf);
-    connection->pkc_server_data = stash;;
+    connection->pkc_server_data = stash;
     free(buf);
 }
 

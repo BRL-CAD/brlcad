@@ -24,8 +24,8 @@
 #ifndef ON_BREP_H_
 #define ON_BREP_H_
 
+#include "common.h"
 #include <map>
-
 #include "STEPWrapper.h"
 
 struct ON_Brep_Info_AP203 {
@@ -59,7 +59,8 @@ bool ON_NurbsCurve_to_STEP(ON_NurbsCurve *n_curve, ON_Brep_Info_AP203 *info, int
 void ON_NurbsSurfaceCV_Finalize_GenericAggregates(ON_Brep_Info_AP203 *info);
 bool ON_NurbsSurface_to_STEP(ON_NurbsSurface *n_surface, ON_Brep_Info_AP203 *info, int i);
 
-STEPentity *ON_BRep_to_STEP(struct directory *dp, struct rt_db_internal *intern, Registry *registry, InstMgr *instance_list);
+void ON_BRep_to_STEP(struct directory *dp, struct rt_db_internal *intern, Registry *registry,
+       	InstMgr *instance_list, STEPentity **brep_shape, STEPentity **brep_product);
 
 #endif /* ON_BREP_H_ */
 

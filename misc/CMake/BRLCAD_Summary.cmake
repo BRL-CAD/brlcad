@@ -57,7 +57,7 @@ set(CMAKE_INSTALL_PREFIX_LABEL "Prefix")
 set(BIN_DIR_LABEL "Binaries")
 set(LIB_DIR_LABEL "Libraries")
 set(MAN_DIR_LABEL "Manual pages")
-set(DATA_DIR_LABEL "Data resource files")
+set(DATA_DIR_LABEL "Data resources")
 set(PATH_LABELS CMAKE_INSTALL_PREFIX BIN_DIR LIB_DIR MAN_DIR DATA_DIR)
 
 # Initialize length var
@@ -244,6 +244,8 @@ set(BRLCAD_ENABLE_COMPILER_WARNINGS_LABEL "Print verbose compilation warnings ")
 set(BRLCAD_ENABLE_VERBOSE_PROGRESS_LABEL "Print verbose compilation progress ")
 set(BRLCAD_INSTALL_EXAMPLE_GEOMETRY_LABEL "Install example geometry models ")
 set(BRLCAD_DOCBOOK_BUILD_LABEL "Generate extra docs ")
+set(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE_LABEL "Build with strict ISO C compliance checking ")
+set(ENABLE_POSIX_COMPLIANCE_LABEL "Build with strict POSIX compliance checking ")
 
 # Make sets to use for iteration over all report items
 set(BUILD_REPORT_ITEMS
@@ -259,6 +261,7 @@ set(OTHER_REPORT_ITEMS
     BRLCAD_FLAGS_DEBUG BRLCAD_ENABLE_PROFILING
     BRLCAD_ENABLE_SMP BUILD_STATIC_LIBS BUILD_SHARED_LIBS
     BRLCAD_ENABLE_COMPILER_WARNINGS BRLCAD_ENABLE_VERBOSE_PROGRESS
+    ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE ENABLE_POSIX_COMPLIANCE
     BRLCAD_INSTALL_EXAMPLE_GEOMETRY BRLCAD_DOCBOOK_BUILD)
 
 # Construct list of all items

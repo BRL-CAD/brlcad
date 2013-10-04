@@ -24,12 +24,6 @@
  *
  */
 
-#ifdef AP203e2
-#  define SCHEMA_NAMESPACE ap203_configuration_controlled_3d_design_of_mechanical_parts_and_assemblies_mim_lf
-#else
-#  define SCHEMA_NAMESPACE config_control_design
-#endif
-
 #include "STEPWrapper.h"
 #include "Factory.h"
 #include "Surface.h"

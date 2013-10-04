@@ -156,9 +156,8 @@ main(int argc, char **argv)
 	perror(argv[0]);
 	bu_exit(1, "ERROR: Unable to open geometry database file (%s)\n", argv[0]);
     }
-    if (db_dirbuild(dbip)) {
+    if (db_dirbuild(dbip))
 	bu_exit(1, "db_dirbuild failed\n");
-    }
 
     BN_CK_TOL(tree_state.ts_tol);
     RT_CK_TESS_TOL(tree_state.ts_ttol);
@@ -270,18 +269,16 @@ output_nmg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 		    continue;
 
 		/* loop through the edges in this loop (facet) */
-		if (verbose) {
+		if (verbose)
 		    printf("\tfacet:\n");
-		}
 		for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd))
 		{
 		    NMG_CK_EDGEUSE(eu);
 
 		    v = eu->vu_p->v_p;
 		    NMG_CK_VERTEX(v);
-		    if (verbose) {
+		    if (verbose)
 			printf("\t\t(%g %g %g)\n", V3ARGS(v->vg_p->coord));
-		    }
 		}
 		tot_polygons++;
 	    }
@@ -421,9 +418,8 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 	r = ret_tree->tr_d.td_r;
     else
     {
-	if (verbose) {
+	if (verbose)
 	    bu_log("\tNothing left of this region after Boolean evaluation\n");
-	}
 	regions_written++; /* don't count as a failure */
 	r = (struct nmgregion *)NULL;
     }

@@ -580,7 +580,7 @@ main(int argc, char **argv)
 	bu_exit(1, NULL);
     }
 
-    datafile_basename = bu_realpath(argv[bu_optind], NULL);;
+    datafile_basename = bu_realpath(argv[bu_optind], NULL);
     if (BU_STR_EQUAL(datafile_basename, ""))
 	datafile_basename = bu_strdup("ssampview");
 

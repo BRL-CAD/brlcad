@@ -200,7 +200,7 @@ icv_filter(icv_image_t *img, ICV_FILTER filter_type)
     img->data = out_data = (double*)bu_malloc(size*sizeof(double), "icv_filter : out_image_data");
 
     index = -1;
-    /* Kernel Dimension is always considered to be */
+    /* Kernel Dimension is always considered to be odd*/
     k_dim_half = k_dim/2*img->channels;
     k_dim_half_ceil = (k_dim - k_dim/2)*img->channels;
     index = 0;
@@ -228,6 +228,7 @@ icv_filter(icv_image_t *img, ICV_FILTER filter_type)
 		}
 	    }
 	    *out_data = c_val + offset;
+	    out_data++;
 	    index++;
 	}
 	index = (h+1)*widthstep;

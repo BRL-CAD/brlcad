@@ -314,3 +314,4 @@ STEPcomplex * sectionReader::CreateSubSuperInstance( const Registry * reg, insta
     //TODO still need the schema name
     return new STEPcomplex( ( const_cast<Registry *>( reg ) ), ( const char ** ) names, ( int ) fileid /*, schnm*/ );
 }
+

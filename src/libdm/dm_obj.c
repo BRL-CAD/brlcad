@@ -3023,7 +3023,7 @@ dmo_cmd(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char 
 	{"transparency",	dmo_transparency_tcl},
 	{"zbuffer",		dmo_zbuffer_tcl},
 	{"zclip",		dmo_zclip_tcl},
-	{(char *)0,		(int (*)())0}
+	{(const char *)NULL, BU_CMD_NULL}
     };
 
     if (bu_cmd(dmo_cmds, argc, argv, 1, clientData, &ret) == BRLCAD_OK)

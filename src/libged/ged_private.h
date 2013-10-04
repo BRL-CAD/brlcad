@@ -119,9 +119,6 @@ extern int edarb_facedef(void *data, int argc, const char *argv[]);
 /* defined in globals.c */
 extern struct solid _FreeSolid;
 
-/* defined in attr.c */
-extern int _ged_cmpattr(const void *p1,
-			const void *p2);
 
 /* defined in ged.c */
 extern void _ged_print_node(struct ged *gedp,

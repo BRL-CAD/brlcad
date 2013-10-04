@@ -26,11 +26,11 @@
  * pivoting for each joint during articulation:
  *
  * head.r and neck.r
- * - the pivot point is located on the XY center of the top of the
- *   neck.r.
+ * - The pivot point is located on the XY center of the top of the
+ *   neck.r .
  *
  * neck.r and upperchest.r
- * - The neck.r pivots from the top XY center of the upperchest.r.
+ * - The neck.r pivots from the top XY center of the upperchest.r .
  *
  * shoulder*.r
  * - The shoulder*.r pivots around the X-axis in its XYZ center (half
@@ -38,22 +38,22 @@
  *
  * upperchest.r and lowerchest.r
  * - No movement, but the upperchest.r is specifically centered above
- *   the lowerchest.r.
+ *   the lowerchest.r .
  *
  * shoulder*.r and lowerchest.r
  * - No movement, but the shoulder*.r and upperchest.r align
  *   horizontally (along the X-axis) and are together centered over
- *   the lowerchest.r.
+ *   the lowerchest.r .
  *
  * lowerchest.r and hips.r
  * - No movement, but the lowerchest.r is aligned specifically
- *   centered above the hips.r.
+ *   centered above the hips.r .
  *
  * hips.r and thigh*.r
  * - There are two pivot points, one for the thighL.r and the other
- *   for the thighR.r Divide the hips.r box in half in the X
+ *   for the thighR.r . Divide the hips.r box in half in the X
  *   direction, and find the XY centers of each.  These pivot points
- *   are at the base of the hips.r.
+ *   are at the base of the hips.r .
  *
  * thigh*.r and calf*.r
  * - The pivot point occurs at the XY center of the thigh*.r base.
@@ -65,7 +65,7 @@
  *
  * shoulder*.r and upperarm*.r
  * - The pivot point occurs at the XY center of the top of the
- *   upperarm*.r.
+ *   upperarm*.r .
  *
  * upperarm*.r and forearm*.r
  * - The pivot point occurs at the XY center of the upperarm*.r base.
@@ -390,9 +390,8 @@ makeHead(struct rt_wdb (*file), char *name, struct human_data_t *dude, fastf_t *
 
     VSET(headFix, dude->joints.headJoint[X], dude->joints.headJoint[Y], dude->joints.headJoint[Z]+head);
 
-    if (showBoxes) {
+    if (showBoxes)
 	boundingBox(file, name, headFix, lengthVector, (lengthVector[Z]/2), rotMatrix);
-    }
     return 0;
 }
 
@@ -407,9 +406,8 @@ makeNeck(struct rt_wdb *file, char *name, struct human_data_t *dude, fastf_t *di
     VADD2(dude->joints.neckJoint, dude->joints.headJoint, dude->head.neckVector);
     mk_rcc(file, name, dude->joints.headJoint, dude->head.neckVector, dude->head.neckWidth);
 
-    if (showBoxes) {
+    if (showBoxes)
 	boundingBox(file, name, dude->joints.headJoint, startVector, dude->head.neckWidth, rotMatrix);
-    }
     return dude->head.neckWidth;
 }
 
@@ -443,9 +441,8 @@ makeUpperTorso(struct rt_wdb *file, char *name, struct human_data_t *dude, fastf
     /* Torso will be an ellipsoidal tgc, for more realistic shape */
     mk_tgc(file, name, dude->joints.neckJoint, dude->torso.topTorsoVector, a, b, c, d);
 
-    if (showBoxes) {
+    if (showBoxes)
 	boundingRectangle(file, name, dude->joints.neckJoint, startVector, dude->torso.shoulderWidth, (dude->torso.shoulderWidth/2), rotMatrix);
-    }
     return dude->torso.abWidth;
 }
 
@@ -476,9 +473,8 @@ makeLowerTorso(struct rt_wdb *file, char *name, struct human_data_t *dude, fastf
 /*
  *	mk_trc_h(file, name, abdomenJoint, lowTorsoVector, abWidth, pelvisWidth);
  */
-    if (showBoxes) {
+    if (showBoxes)
 	boundingRectangle(file, name, dude->joints.abdomenJoint, startVector, dude->torso.pelvisWidth, (dude->torso.pelvisWidth/2), rotMatrix);
-    }
     return dude->torso.pelvisWidth;
 }
 
@@ -504,7 +500,7 @@ makeShoulderJoint(struct rt_wdb *file, int isLeft, char *name, struct human_data
 	    setDirection(startVector, lengthVector, rotMatrix, dude->arms.lArmDirection[X], dude->arms.lArmDirection[Y], dude->arms.lArmDirection[Z]);
 	    VSET(leftFix, dude->joints.leftShoulderJoint[X], dude->joints.leftShoulderJoint[Y], (dude->joints.leftShoulderJoint[Z]-shoulder));
 	    boundingBox(file, name, leftFix, lengthVector, (lengthVector[Z]/2), rotMatrix);
-	} else{
+	} else {
 	    setDirection(startVector, lengthVector, rotMatrix, dude->arms.rArmDirection[X], dude->arms.rArmDirection[Y], dude->arms.rArmDirection[Z]);
 	    VSET(rightFix, dude->joints.rightShoulderJoint[X], dude->joints.rightShoulderJoint[Y], (dude->joints.rightShoulderJoint[Z]-shoulder));
 	    boundingBox(file, name, rightFix, lengthVector, (lengthVector[Z]/2), rotMatrix);
@@ -1520,7 +1516,7 @@ show_help(const char *name, const char *optstr)
     const char *cp = optstr;
 
     while (cp && *cp != '\0') {
-	if (*cp == ':') {
+	if (*cp == ':' || *cp == 'h' || *cp == '?') {
 	    cp++;
 	    continue;
 	}
@@ -1529,24 +1525,22 @@ show_help(const char *name, const char *optstr)
     }
 
     bu_log("Usage: %s [%s]\n", name, bu_vls_addr(&str));
-    bu_log("options:\n");
-    bu_log("\t-h\t\tShow help\n");
-    bu_log("\t-?\t\tShow help\n");
+    bu_log("options ('Set' means 1 argument required unless otherwise noted):\n");
     bu_log("\t-A\t\tAutoMake defaults\n");
     bu_log("\t-m\t\tManual sizing mode\n");
-    bu_log("\t-H\t\tSet Height in inches\n");
-    bu_log("\t-L\t\tSet Center Point in inches, at feet (default 0 0 0)\n");
+    bu_log("\t-H\t\tSet height (inches)\n");
+    bu_log("\t-L or -l\tSet center point (inches), at body's feet (default 0 0 0; interactive input)\n");
     /* bu_log("\t-o\t\tSet output file name\n" */
     bu_log("\t-b\t\tShow bounding Boxes\n");
-    bu_log("\t-n\t\tSet bounding region name, default Body.c\n");
-    bu_log("\t-N\t\tNumber to make (square)\n");
-    bu_log("\t-s\t\tStance to take 0-Stand 1-Sit 2-Drive 3-Arms out 4-Letterman 5-Captain 999-Custom\n");
-    bu_log("\t-p\t\tSet Percentile (not implemented yet) 1-99\n");
+    bu_log("\t-n\t\tSet bounding region name (default Body.c )\n");
+    bu_log("\t-N\t\tSet number to make (input will be squared by the program)\n");
+    bu_log("\t-s\t\tSet stance to take; 0-Stand 1-Sit 2-Drive 3-Arms out 4-Letterman 5-Captain 999-Custom\n");
+    bu_log("\t-p\t\tSet percentile (not implemented yet) 1-99\n");
     bu_log("\t-t\t\tSave bounding box information to file Stats.txt\n");
     bu_log("\t-T\t\tRead bounding box information from file Stats.txt\n");
-    bu_log("\t-v\t\tGenerate verbose output of all data used to build human model, to Verbose.txt\n");
-    bu_log("\t-V\t\tRead verbose input of all data and build a human model, using Verbose.txt\n");
-    bu_log("\t 1 - 9, 0, Q, and special characters are used for wizard purposes, ignore them.\n");
+    bu_log("\t-v\t\tSave verbose output of all data used to build human model, to file Verbose.txt\n");
+    bu_log("\t-V\t\tRead verbose input of all data used to build human model, from file Verbose.txt\n");
+    bu_log("\t 1 - 9, 0, =, and succeeding characters are used for wizard purposes, ignore them.\n");
     bu_log("\t Last word on command line is also top level object. No argument needed!\n");
 
     bu_vls_free(&str);
@@ -1561,9 +1555,9 @@ HIDDEN void
 getLocation(fastf_t *location)
 {
     int ret;
-    double x, y, z;
+    double x = 0.0 , y = 0.0 , z = 0.0 ;
 
-    bu_log("Enter center point\n");
+    bu_log("Enter center point (inches)\n");
     bu_log("X: ");
     ret = scanf("%lf", &x);
     if (ret != 1)
@@ -1580,7 +1574,6 @@ getLocation(fastf_t *location)
     y*= IN2MM;
     z*= IN2MM;
     VSET(location, x, y, z);
-    fflush(stdin);
 }
 
 
@@ -1588,17 +1581,23 @@ getLocation(fastf_t *location)
 HIDDEN int
 read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude, fastf_t *percentile, fastf_t *location, int *stance, int *troops, int *showBoxes)
 {
-    int c = 'A';
-    char *options="AbH:hLlmn:N:O:o:p:s:tTvVw1:2:3:4:5:6:7:8:9:0:=:+:_:*:^:%:$:#:@:!:Q:~:Z:Y:X:";
+    int c;
     float height=0;
     int soldiers=0;
     int pose=0;
     int percent=50;
     double x = 0; /* for stashing user input */
     int have_name = 0;
+/*  char *options="AbH:Llmn:N:O:o:p:s:tTvVw1:2:3:4:5:6:7:8:9:0:=:+:_:*:^:%:$:#:@:!:Q:~:Z:Y:W:h?"; */
+    char *options="AbH:Llmn:N:p:s:tTvVw1:2:3:4:5:6:7:8:9:0:=:+:_:*:^:%:$:#:@:!:Q:~:Z:Y:W:h?";
 
-    /* don't report errors */
-    bu_opterr = 0;
+    if (argc == 1 ) {
+	show_help(*argv, options);
+	printf("\n       Program continues running:\n\n");
+    }
+
+    /* don't report errors (this is before bu_opterr was changed to 1 immed. below) */
+    bu_opterr = 1;
     bu_optind = 1;
     while ((c=bu_getopt(argc, (char * const *)argv, options)) != -1) {
 	/*bu_log("%c \n", c); Testing to see if args are getting read */
@@ -1621,20 +1620,10 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
 		if (height < 1) {
 		    bu_log("Impossible height, setting default height!\n");
 		    height = DEFAULT_HEIGHT_INCHES;
-		    dude->height = DEFAULT_HEIGHT_INCHES;
-		    bu_log("%.2f = height in inches\n", height);
-		} else {
-		    dude->height = height;
-		    bu_log("%.2f = height in inches\n", height);
 		}
-		fflush(stdin);
+		dude->height = height;
+		bu_log("%.2f = height in inches\n", height);
 		Auto(dude);
-		break;
-
-	    case 'h':
-	    case '?':
-		show_help(*argv, options);
-		bu_exit(EXIT_SUCCESS, NULL);
 		fflush(stdin);
 		break;
 
@@ -1654,8 +1643,8 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
 		memset(humanName, 0, MAXLENGTH);
 		bu_strlcpy(humanName, bu_optarg, MAXLENGTH);
 		bu_strlcpy(topLevel, humanName, MAXLENGTH);
-		fflush(stdin);
 		have_name = 1;
+		fflush(stdin);
 		break;
 
 	    case 'N':
@@ -1681,7 +1670,7 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
 		sscanf(bu_optarg, "%d", &percent);
 		if (percent < 1)
 		    percent=1;
-		if (percent > 99)
+		else if (percent > 99)
 		    percent=99;
 		*percentile=percent;
 		fflush(stdin);
@@ -1850,7 +1839,6 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
 
 	    default:
 		show_help(*argv, options);
-		bu_log("%s: illegal option, yes, there is a couple. -- %c\n", bu_getprogname(), c);
 		bu_exit(EXIT_SUCCESS, NULL);
 		fflush(stdin);
 		break;
@@ -1859,7 +1847,7 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
     dude->height = (dude->legs.legLength + dude->torso.torsoLength + dude->head.headSize) / IN2MM;
 
     if ((argc - bu_optind) == 1) {
-	/* Yes, there is a top-level name at the end of this argument chain, lets dump it into the file*/
+	/* Yes, there is a top-level name at the end of this argument chain, let's dump it into the file*/
 	have_name = 1;
 	memset(humanName, 0, MAXLENGTH);
 	memset(topLevel, 0, MAXLENGTH);
@@ -2438,9 +2426,8 @@ ged_human(struct ged *gedp, int ac, const char *av[])
 	    bu_log("Adding Members\n");
 	    BU_LIST_INIT(&human.l);
 	    BU_LIST_INIT(&crowd.l);
-	    if (showBoxes) {
+	    if (showBoxes)
 		BU_LIST_INIT(&boxes.l);
-	    }
 
 	    /*This value is the number of items in char names */
 	    while (x<28) {

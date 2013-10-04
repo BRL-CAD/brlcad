@@ -84,7 +84,6 @@ Create_Rational_Curve_Aggregate(ON_NurbsCurve *ncurve, ON_Brep_Info_AP203 *info)
     /* Set b_spline_curve data */
     stepcomplex = complex_entity->EntityPart("b_spline_curve");
     stepcomplex->ResetAttributes();
-    std::cout << "b_spline_curve\n";
     while ((attr = stepcomplex->NextAttribute()) != NULL) {
 	if (!bu_strcmp(attr->Name(), "degree")) {
 	    attr->ptr.i = new SDAI_Integer(ncurve->Degree());
@@ -102,7 +101,6 @@ Create_Rational_Curve_Aggregate(ON_NurbsCurve *ncurve, ON_Brep_Info_AP203 *info)
     /* Set knots */
     stepcomplex = complex_entity->EntityPart("b_spline_curve_with_knots");
     stepcomplex->ResetAttributes();
-    std::cout << "b_spline_curve_with_knots\n";
     IntAggregate *knot_multiplicities = new IntAggregate();
     RealAggregate *knots = new RealAggregate();
     ON_NurbsCurveKnots_to_Aggregates(knot_multiplicities, knots, ncurve);
@@ -119,9 +117,8 @@ Create_Rational_Curve_Aggregate(ON_NurbsCurve *ncurve, ON_Brep_Info_AP203 *info)
     /* Set weights */
     stepcomplex = complex_entity->EntityPart("rational_b_spline_curve");
     stepcomplex->ResetAttributes();
-    std::cout << "rational_b_spline_curve\n";
     while ((attr = stepcomplex->NextAttribute()) != NULL) {
-	std::cout << "  " << attr->Name() << "," << attr->NonRefType() << "\n";
+	//std::cout << "  " << attr->Name() << "," << attr->NonRefType() << "\n";
 	RealAggregate *weights = new RealAggregate();
 	for (int i = 0; i < ncurve->CVCount(); i++) {
 	    RealNode *wnode = new RealNode();
@@ -134,9 +131,7 @@ Create_Rational_Curve_Aggregate(ON_NurbsCurve *ncurve, ON_Brep_Info_AP203 *info)
     /* Representation item */
     stepcomplex = complex_entity->EntityPart("representation_item");
     stepcomplex->ResetAttributes();
-    std::cout << "representation_item\n";
     while ((attr = stepcomplex->NextAttribute()) != NULL) {
-	std::cout << "  " << attr->Name() << "," << attr->NonRefType() << "\n";
 	if (!bu_strcmp(attr->Name(), "name")) attr->StrToVal("''");
     }
 

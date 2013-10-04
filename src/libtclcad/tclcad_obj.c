@@ -964,6 +964,7 @@ static struct to_cmdtab to_cmds[] = {
     {"configure",	"vname", TO_UNLIMITED, to_configure, GED_FUNC_PTR_NULL},
     {"constrain_rmode",	"x|y|z x y", TO_UNLIMITED, to_constrain_rmode, GED_FUNC_PTR_NULL},
     {"constrain_tmode",	"x|y|z x y", TO_UNLIMITED, to_constrain_tmode, GED_FUNC_PTR_NULL},
+    {"constraint", (char *)0, TO_UNLIMITED, to_pass_through_func, ged_constraint},
     {"copyeval",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_copyeval},
     {"copymat",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_copymat},
     {"cp",	"[-f] from to", TO_UNLIMITED, to_copy, GED_FUNC_PTR_NULL},
@@ -7256,7 +7257,7 @@ to_mouse_move_botpt(struct ged *gedp,
 	    return GED_ERROR;
 	}
 
-	if (sscanf(argv[3], "%zu", &vertex_i) != 1) {
+	if (bu_sscanf(argv[3], "%zu", &vertex_i) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: bad bot vertex index - %s", cmd, argv[3]);
 	    return GED_ERROR;
 	}
@@ -10392,7 +10393,7 @@ to_poly_cont_build_end(struct ged *gedp,
     if (argv[0][0] == 's')
 	gdvp->gdv_view->gv_sdata_polygons.gdps_cflag = 0;
     else
-	gdvp->gdv_view->gv_data_polygons.gdps_cflag = 0;;
+	gdvp->gdv_view->gv_data_polygons.gdps_cflag = 0;
 
     gedp->ged_gvp = gdvp->gdv_view;
     to_refresh_view(gdvp);

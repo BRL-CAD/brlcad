@@ -2910,7 +2910,7 @@ vo_cmd(ClientData clientData,
 	{"viewDir",		vo_viewDir_tcl},
 	{"vrot",		vo_vrot_tcl},
 	{"zoom",		vo_zoom_tcl},
-	{(char *)0,		(int (*)())0}
+	{(const char *)NULL, BU_CMD_NULL}
     };
 
     if (bu_cmd(vo_cmds, argc, argv, 1, clientData, &ret) == BRLCAD_OK)

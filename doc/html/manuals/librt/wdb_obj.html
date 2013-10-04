@@ -364,6 +364,18 @@ its entries will override any color assigned using the <a href="#mater">mater</a
 when drawing wireframe.
 </DD>
 <P>
+<DT><I>dbName</I> <A NAME="pull"><B>pull</B></A> &lt;<I>objects</I>&gt</DT>
+<DD>Pulls the effects of all transformation
+matrices that appear in the
+<a href="../mged/brlcad_glossary.html#SOLID">primitive solids</a> in the trees
+to  the specified <I>objects</I> head up the tree. This will restore
+the parameters of the <I>primitive solids</I> if any of the
+transformation matrices are present. All the transformation
+matrices visited will correspond to the current matrix transformation for that node. This command will fail,
+and no changes will be made, if any <I>primitive solid</I> referenced as
+the list of <I>objects</I>.
+</DD>
+<P>
 <DT><I>dbName</I> <A NAME="push"><B>push</B></A> &lt;<I>objects</I>&gt</DT>
 <DD>Force the effects of all transformation
 matrices that appear in any

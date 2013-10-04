@@ -95,6 +95,7 @@
 	method pathlist {args}
 	method paths {args}
 	method prcolor {args}
+	method pull {args}
 	method push {args}
 	method put {args}
 	method r {args}

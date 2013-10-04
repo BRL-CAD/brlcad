@@ -159,6 +159,7 @@ set(docbook_mann_EN
   preview.xml
   prj_add.xml
   ps.xml
+  pull.xml
   push.xml
   put_comb.xml
   putmat.xml
