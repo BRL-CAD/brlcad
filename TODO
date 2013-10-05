@@ -610,8 +610,8 @@ comp.r4 ID 5678 material code 5 LOS 75
 * fully implement analyze for all primitives
 
 * implement general analyze estimate (perhaps just raytrace it) for
-  primitives where values like surface area are very difficult to
-  calculate.
+  primitives where values like surface area or volume are very
+  difficult to calculate.
 
 * move analyze logic into librt (with their respective primitives).
 
@@ -619,6 +619,12 @@ comp.r4 ID 5678 material code 5 LOS 75
     (for arbs, it should be fixed as of revision 48900)
 
 * extend analyze output formatting to user-specified formats ala nirt
+
+* calculate products of inertia in 'analyze' and/or gqa output
+
+* calculate radii of gyration in 'analyze' and/or gqa output
+
+* implement 'analyze' command option to write output to a file
 
 * implement make, ted, edsol, mirror, and analyze for revolve
   primitive.  implement tess() too.
