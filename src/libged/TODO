@@ -1,23 +1,30 @@
-* 'about' command to display version, contents of various doc files,
+These are new command ideas for LIBGED.
+Keep them sorted alphabetically.
+They are not all vetted.
+Be specific.
+
+---
+
+* 'about' command: display version, contents of various doc files,
   customizable brlcad.msg file.  should also report summary
   information about the currently displayed geometry including number
   of objects, types of objects, classes of geometry representation
   types used, and potentially more.  options to disable version or
   object info.  consider merging with 'summary' command.
 
-* 'align' command taking a from 3d pt and a to 3d pt target.
+* 'align' command: taking a from 3d pt and a to 3d pt target.
   moves/rotates the source object into alignment.
 
-* 'array' command to create a shallow copy of geometry in a
+* 'array' command: to create a shallow copy of geometry in a
   rectangular or polar pattern.  similar to clone, perhaps mergable
   with clone as an option.  takes #rows+dist and #cols+dist, or
   centerpt+#items and angle <360 to fill, angle between items, rotate
   each item boolean.
 
-* a "batch" command for libged to apply a given command template to
-  all lines in a given input text file.  could be very similar to exec
-  but instead of inspecting the current .g, it walks lines in file(s).
-  this would let you do things like:
+* "batch" command: apply a given command template to all lines in a
+  given input text file.  could be very similar to exec but instead of
+  inspecting the current .g, it walks lines in file(s).  this would
+  let you do things like:
 
   # same as mvall -f file.txt
   batch file.txt -exec "mvall \$*"
@@ -50,8 +57,8 @@
   represent file columns (in a poor man's awk fashion) and search
   simply using "{}" as the object name replacement marker.
 
-* implement new 'reduce' command to perform model reduction.  should
-  perform automatic simplification of geometry to reduce complexity by
+* 'reduce' command: to perform model reduction.  should perform
+  automatic simplification of geometry to reduce complexity by
   (potentially) orders of magnitude.  this is level of detail for
   non-viewing purposes, for export.  possibly automatable by replacing
   leave-node geometry with bounding box (arb8s), but collapsing and
@@ -59,16 +66,17 @@
   model includes BoTs/NURBS, more advanced spatial logic will be
   needed.
 
-* implement a "select" command in LIBGED that creates a selection set
-  based on specified sampling parameters or object lists.  example
-  could be "select -point 12.3 23.1 31.2 -dist 100.0" to
-  select objects within a given distance of a point; "select foo bar"
-  to select specific objects and create/return a temporary reference
-  name. this provides a command-line mechanism for implementing band
-  selection in the GUI, area-based selections, and object highlighting
-	- can replace unpublished 'sphgroup' command with this
+* "select" command: creates a selection set based on specified
+  sampling parameters or object lists.  example could be "select
+  -point 12.3 23.1 31.2 -dist 100.0" to select objects within a given
+  distance of a point; "select foo bar" to select specific objects and
+  create/return a temporary reference name. this provides a
+  command-line mechanism for implementing band selection in the GUI,
+  area-based selections, and object highlighting - can replace
+  unpublished 'sphgroup' command with this
 
 * implement a region anointment command where the user can turn an
   assembly into a region and change all lower or higher regions into
-  combinations
+  combinations.  this may already be options to the 'comb' command but
+  needs review.
 
