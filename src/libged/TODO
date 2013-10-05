@@ -107,7 +107,9 @@ Be specific.
   leave-node geometry with bounding box (arb8s), but collapsing and
   combining up the hierarchy to a prescribed tree depth.  however, it
   model includes BoTs/NURBS, more advanced spatial logic will be
-  needed.
+  needed.  should/could also detect any unused/unrefernced geometry
+  objects with options to select on a specific type (prims, combs,
+  regions, all), perhaps as a purge or unused subcommand.
 
 # 'render' command: to perform different kinds of rendering.  this may
   simply be a renaming of rtwizard, but the intent would be to make
