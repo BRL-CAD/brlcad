@@ -96,6 +96,11 @@ Be specific.
   default to a view-oriented "underlay" but permanently stored in the
   .g file as a proper image object (top-level TODO entry).
 
+* 'layer' command: to create, select, delete, list enable/disable
+  on/off, lock/unlock, and set other properties (e.g., color, style).
+  need subcommand(s) to move geometry to/from layers, perhaps
+  implemented as combs with a special flag like regions.
+
 * 'menu' command: to load/unload menu descriptions from a file
   (e.g. file.mnu) where we bind text, icons, images, descriptions, and
   key bindings to actions.  would serve as a place to move
