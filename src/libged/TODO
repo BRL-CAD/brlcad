@@ -61,6 +61,15 @@ Be specific.
   represent file columns (in a poor man's awk fashion) and search
   simply using "{}" as the object name replacement marker.
 
+* 'cal' command: geometry calculator for scalar values, points,
+  vectors, and maybe matrices.  units aware with options for
+  converting between units, angles, with support for std funcs like
+  sin, cos, log, abs.  also supporting view values, points on a line,
+  normals, distances, ... powerful calculator for those places where
+  the user needs some value we don't display for them (like needing to
+  calculate a distance between two nirt rays, or something that always
+  prints mm, or a command that print radians instead of degrees).
+
 * 'reduce' command: to perform model reduction.  should perform
   automatic simplification of geometry to reduce complexity by
   (potentially) orders of magnitude.  this is level of detail for
