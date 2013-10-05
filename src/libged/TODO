@@ -15,6 +15,10 @@ Be specific.
 * 'align' command: taking a from 3d pt and a to 3d pt target.
   moves/rotates the source object into alignment.
 
+* 'audit' command: determine if the model is valid, provide option(s)
+  to fix any errors encountered.  this could be a refactoring or
+  calling of g_lint and/or other tools.
+
 * 'array' command: to create a shallow copy of geometry in a
   rectangular or polar pattern.  similar to clone, perhaps mergable
   with clone as an option.  takes #rows+dist and #cols+dist, or
