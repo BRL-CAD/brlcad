@@ -21,7 +21,7 @@ Be specific.
   centerpt+#items and angle <360 to fill, angle between items, rotate
   each item boolean.
 
-* "batch" command: apply a given command template to all lines in a
+* 'batch' command: apply a given command template to all lines in a
   given input text file.  could be very similar to exec but instead of
   inspecting the current .g, it walks lines in file(s).  this would
   let you do things like:
@@ -66,7 +66,7 @@ Be specific.
   model includes BoTs/NURBS, more advanced spatial logic will be
   needed.
 
-* "select" command: creates a selection set based on specified
+* 'select' command: creates a selection set based on specified
   sampling parameters or object lists.  example could be "select
   -point 12.3 23.1 31.2 -dist 100.0" to select objects within a given
   distance of a point; "select foo bar" to select specific objects and
