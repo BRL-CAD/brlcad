@@ -1090,6 +1090,13 @@ NEW OBJECTS
 
 	      (custom label specified via format specifier: "Length of %target: %size")
 
+  Point properties:
+       styles, for interface familiarity, provide option to describe
+       points as [empty] . + x * ! as well as all 6: in a circle, in a
+       box, and in a circle in a box.  that's 24 styles altogether.
+       non-arrow annotations that lead to/from a point should allow
+       source and target point styles to get set separately.
+
   Text properties:
        font name
        font size (height)
