@@ -1,8 +1,18 @@
 * 'about' command to display version, contents of various doc files,
-  customizable brlcad.msg file
+  customizable brlcad.msg file.  should also report summary
+  information about the currently displayed geometry including number
+  of objects, types of objects, classes of geometry representation
+  types used, and potentially more.  options to disable version or
+  object info.  consider merging with 'summary' command.
 
 * 'align' command taking a from 3d pt and a to 3d pt target.
   moves/rotates the source object into alignment.
+
+* 'array' command to create a shallow copy of geometry in a
+  rectangular or polar pattern.  similar to clone, perhaps mergable
+  with clone as an option.  takes #rows+dist and #cols+dist, or
+  centerpt+#items and angle <360 to fill, angle between items, rotate
+  each item boolean.
 
 * a "batch" command for libged to apply a given command template to
   all lines in a given input text file.  could be very similar to exec
@@ -57,10 +67,6 @@
   name. this provides a command-line mechanism for implementing band
   selection in the GUI, area-based selections, and object highlighting
 	- can replace unpublished 'sphgroup' command with this
-
-* implement a new tool/command that reports summary information about
-  a geometry file including number of objects, types of objects,
-  classes of geometry representation types used, and potentially more.
 
 * implement a region anointment command where the user can turn an
   assembly into a region and change all lower or higher regions into
