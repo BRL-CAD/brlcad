@@ -70,6 +70,13 @@ Be specific.
   calculate a distance between two nirt rays, or something that always
   prints mm, or a command that print radians instead of degrees).
 
+* 'compile' command: evaluate and cache results of geometry
+  computations for improved performance.  this could be a variety of
+  cache-worthy actions such as wireframes at given levels of detail,
+  raytrace prep results, default tessellations, simple geometry
+  validation (see 'audit' command), or shape analysis (surface area,
+  volume, moments of inertia, etc).
+
 * 'reduce' command: to perform model reduction.  should perform
   automatic simplification of geometry to reduce complexity by
   (potentially) orders of magnitude.  this is level of detail for
