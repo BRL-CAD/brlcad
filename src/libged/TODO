@@ -154,6 +154,25 @@ Be specific.
   an object is written or the file is explicitly "saved", we'd write
   out time information.
 
+* 'transact' command: describes a transaction as a series of commands
+  to be run in succession which must all succeed for any to apply.
+  this can be viewed as a meta-command or basic user script which can
+  have parameterized arguments (providing a basic macro system).
+
+  # basic export transaction, stateful (bleh, but familiar)
+  transact begin dump_geometry
+  make {sph} {sph}
+  facetize {sph}.bot {sph}
+  bot_dump {sph}.{dxf} {sph}.bot
+  transact end dump_geometry
+  transact run dump_geometry
+  transact run dump_geometry sph=tor dxf=obj
+  transact rm dump_geometry
+  transact ls
+
+  # non-stateful transaction
+  transact run -exec "make {sph} {sph}" -exec "facetize {sph}.bot {sph}" -exec "bot_dump {sph}.{dxf} {sph}.bot"
+
 * 'undo' command: undo the previous command or previous N commands.
   Should be stored as a chain or tree of events so you can cycle
   forwards or backwards vim/emacs style.  See redo command above.
