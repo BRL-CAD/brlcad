@@ -1866,7 +1866,7 @@ if(ENABLE_POSIX_COMPLIANCE
 
     TRY_COMPILE(success
       "${CMAKE_BINARY_DIR}/test_funcs"
-      "${CMAKE_SOURCE_DIR}/src/compat/${tprog}.c"
+      "${CMAKE_SOURCE_DIR}/misc/CMake/compat/${tprog}.c"
       CMAKE_FLAGS "${CMAKE_C_FLAGS}"
       OUTPUT_VARIABLE log
     )
