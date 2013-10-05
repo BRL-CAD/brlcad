@@ -95,6 +95,12 @@ Be specific.
   model includes BoTs/NURBS, more advanced spatial logic will be
   needed.
 
+# 'render' command: to perform different kinds of rendering.  this may
+  simply be a renaming of rtwizard, but the intent would be to make
+  sure rt, rtedge, and rtwizard are encapsulated under one simplified
+  command.  options for quick preview and full-detail rendering,
+  without or with shaders, in color or B&W.
+
 * 'repeat' command: perform an action multiple times.  this is similar
   to the search -exec option but instead of being limited to object
   substitutions, it lets you run the same action with any
