@@ -337,14 +337,15 @@ BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;librt;libfb;libbu;libicv;libana
 SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 set(ged_ignore_files
+  TODO
   ged_private.h
   joint.h
   qray.h
-  wdb_qray.h
   simulate/simcollisionalgo.h
   simulate/simrt.h
   simulate/simulate.h
   simulate/simutils.h
+  wdb_qray.h
   )
 CMAKEFILES(${ged_ignore_files})
 
