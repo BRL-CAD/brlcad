@@ -124,13 +124,17 @@ Be specific.
   argv processing will be handled.
 
 * 'select' command: creates a selection set based on specified
-  sampling parameters or object lists.  example could be "select
-  -point 12.3 23.1 31.2 -dist 100.0" to select objects within a given
-  distance of a point; "select foo bar" to select specific objects and
-  create/return a temporary reference name. this provides a
-  command-line mechanism for implementing band selection in the GUI,
-  area-based selections, and object highlighting - can replace
-  unpublished 'sphgroup' command with this
+  sampling parameters or object lists.  Should also provide a basic
+  command-line mechanism for implementing band selection based on
+  current view, volume-based selections, and object highlighting.
+  Would encapsulate or replace the unpublished 'sphgroup' command.
+  Some examples:
+
+  # select objects within a given distance from a 3d point
+  select -point 12.3 23.1 31.2 -dist 100.0
+
+  # select two objects,  create/return a temporary reference name
+  select foo bar
 
 * 'text' command: imports a text file (as geometry).  have options to
   specify the spacing between lines, first line, #lines,
