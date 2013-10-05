@@ -146,6 +146,14 @@ Be specific.
   (described in top-level TODO).  need some convention for symbols,
   degree, +-tol, null diam, etc.
 
+* 'time' command: reports the current date and time, a user timer,
+  file creation time, last modification time, #writes, and accumulated
+  editing time.  the user timer is a generic stopwatch for scripting
+  use.  The rest requires the timestamping architecture and a runtime
+  clock to track accumulation between writes.  basically, every time
+  an object is written or the file is explicitly "saved", we'd write
+  out time information.
+
 * 'undo' command: undo the previous command or previous N commands.
   Should be stored as a chain or tree of events so you can cycle
   forwards or backwards vim/emacs style.  See redo command above.
