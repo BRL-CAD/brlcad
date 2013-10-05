@@ -31,35 +31,38 @@ Be specific.
   let you do things like:
 
   # same as mvall -f file.txt
-  batch file.txt -exec "mvall \$*"
+  batch file.txt -exec "mvall {*}"
 
   # create an alternate hierarchy based on some mapping file
-  batch file.txt -exec "g \$*"
+  batch -m line file.txt -exec "g {line}"
 
   # for all lines in 3 files, kill first symbol, rename second to it
-  batch A.txt B.txt C.txt -exec "kill \$1" -exec "mv \$2 \$1"
+  batch A.txt B.txt C.txt -exec "kill {1}" -exec "mv {2} {1}"
 
   # keep all objects in an edcodes file with region ID > 1000
-  batch A.txt -field 2 -ne 1000 -exec "keep subset.g \$5"
+  batch A.txt -field 2 -ne 1000 -exec "keep subset.g {5}"
 
   # for all regions, if they are listed in file.txt, add them to a
   # parent assembly and set a specified material ID
-  search . -name "*.r" -exec batch file.txt -field 1 -eq {} -exec "g \$1 {}" -exec "mater {} \$3" \;
+  search . -name "*.r" -exec batch -m line file.txt -field 1 -eq {} -exec "g {1} {}" -exec "mater {} {3}" ;
 
-  # run awk, get 4th column, run sed to change name,
-  batch file.txt -awk '{print $4}' -sed 's/^r\.(.*)/\1\.r/g' -exec "mv \$1 \$$"
+  # run awk, get 4th column, run sed to change name from r123 to 123.r,
+  batch file.txt -awk '{print $4}' -sed 's/^r(.*)/\1\.r/g' -exec "mv {1} {$}"
 
   # outside of MGED, the above would have been similar to:
-  cat file.txt | awk '{print $4}' | sed 's/^r\.(.*)/r\.\1 \1\.r/g' | xargs mged test.g mv
+  cat file.txt | awk '{print $4}' | sed 's/^r(.*)/r\1 \1\.r/g' | xargs mged test.g mv
 
   The command becomes more of a stream processor on the input file, as
   if piped on the shell line.  To embed awk, sed, cut, see qse:
 	  http://code.google.com/p/qse/
 
-  The search and batch commands probably can't nor shouldn't use the
-  same replacement markers, with batch using $*, $1, $2, etc., to
+  Batch needs some syntax like $*, $1, $2, or {*}, {1}, {2}, etc., to
   represent file columns (in a poor man's awk fashion) and search
-  simply using "{}" as the object name replacement marker.
+  simply using "{}" as the object name replacement marker (unless we
+  specify a -m {marker_name}).  Using the same positional markers will
+  help keep the interface consistent for the user, but it will require
+  forethought on how batch interfacts with the search and repeat
+  commands.
 
 * 'cal' command: geometry calculator for scalar values, points,
   vectors, and maybe matrices.  units aware with options for
@@ -91,6 +94,25 @@ Be specific.
   combining up the hierarchy to a prescribed tree depth.  however, it
   model includes BoTs/NURBS, more advanced spatial logic will be
   needed.
+
+* 'repeat' command: perform an action multiple times.  this is similar
+  to the search -exec option but instead of being limited to object
+  substitutions, it lets you run the same action with any
+  substitution.  it's basically a for loop construct over one command.
+
+  # create a bunch of spheres
+  repeat 1 2 3 -exec make sph sph.{}
+
+  # create 9 objects
+  repeat -m obj sph arb8 tor -exec "repeat -m cnt 1 2 3 -exec \"make {obj} {obj}.{cnt}\""
+
+  # create 3 separate tessellations of an object
+  repeat 0.1 0.01 0.001 -exec "tol abs {}" -exec "facetize sph.bot sph"
+
+  Need to make sure that the repeat, search, and batch commands all
+  have consistent/compatible marker syntax.  Also need to consider
+  arguments or objects with '-' at the beginning of the name and how
+  argv processing will be handled.
 
 * 'select' command: creates a selection set based on specified
   sampling parameters or object lists.  example could be "select
