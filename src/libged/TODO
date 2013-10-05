@@ -102,6 +102,24 @@ Be specific.
   existing menu-related commands (e.g., press command becomes
   subcommand) and allow for interface customization.  
 
+* 'offset' command: given an input 3D volume, constructs an interior
+  or exterior surface.  this can be used to expand or hollow out an
+  object.  probably implementable as 1) get brep tree, 2) evaluate
+  brep, 3) expand/shrink per offset, 4) optionally apply boolean.
+
+  # expand and hollow a sphere
+  make sph sph
+  offset sph 1.0 sph.bigger
+  comb hollow_sph.c u sph.bigger - sph
+
+  # hollow an object
+  offset piston -5.0 piston.interior
+  comb hollow_piston u piston - piston.interior
+
+  # hollow object, perform edit
+  offset piston -1.0 piston.interior piston.old
+  # piston is now "u piston.old - piston.interior"
+
 * 'redo' command: redoes the previous undone command(s).  Basically
   move forward in an undo chain.  See undo below.
 
