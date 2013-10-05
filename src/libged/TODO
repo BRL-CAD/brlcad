@@ -143,7 +143,8 @@ Be specific.
   specify the spacing between lines, first line, #lines,
   underline/overline each line, convert to all upper/lower, position.
   probably best to create either a 'plot' or 'annotation' object
-  (described in top-level TODO).
+  (described in top-level TODO).  need some convention for symbols,
+  degree, +-tol, null diam, etc.
 
 * 'undo' command: undo the previous command or previous N commands.
   Should be stored as a chain or tree of events so you can cycle
