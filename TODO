@@ -24,6 +24,14 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
+* implement a region anointment feature where the user can turn an
+  assembly into a region and change all lower or higher regions into
+  combinations.  basically consolidate or distribute region flags.
+  this is partially covered by the 'comb' command but it tries hard to
+  ensure geometry isn't left in a broken state.  needs to be a way to
+  do the simple consolidate/distribute operation regardless of
+  resulting state.
+
 * address the ctest failure of bu_heap_test_1 (seen on ia32 fbsd)
 
 * investigate thread affinity locking on Linux

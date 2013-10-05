@@ -75,8 +75,3 @@ Be specific.
   area-based selections, and object highlighting - can replace
   unpublished 'sphgroup' command with this
 
-* implement a region anointment command where the user can turn an
-  assembly into a region and change all lower or higher regions into
-  combinations.  this may already be options to the 'comb' command but
-  needs review.
-
