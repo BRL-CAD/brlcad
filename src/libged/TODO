@@ -77,6 +77,12 @@ Be specific.
   validation (see 'audit' command), or shape analysis (surface area,
   volume, moments of inertia, etc).
 
+* 'menu' command: to load/unload menu descriptions from a file
+  (e.g. file.mnu) where we bind text, icons, images, descriptions, and
+  key bindings to actions.  would serve as a place to move
+  existing menu-related commands (e.g., press command becomes
+  subcommand) and allow for interface customization.  
+
 * 'reduce' command: to perform model reduction.  should perform
   automatic simplification of geometry to reduce complexity by
   (potentially) orders of magnitude.  this is level of detail for
