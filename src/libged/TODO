@@ -76,6 +76,14 @@ Be specific.
   calculate a distance between two nirt rays, or something that always
   prints mm, or a command that print radians instead of degrees).
 
+* 'memory' command: reports memory and disk usage statistics.  for
+  out-of-core memory (disk), report amount of available disk space,
+  cache object / scratch space, and geometry file size.  for in-core
+  memory, report virtual memory allocation size, % resident, total
+  memory available, swap size, page faults, swap writes, etc.
+  Obviously need a lot of libbu infrastructure for many of these
+  features.
+
 * 'compile' command: evaluate and cache results of geometry
   computations for improved performance.  this could be a variety of
   cache-worthy actions such as wireframes at given levels of detail,
