@@ -75,3 +75,8 @@ Be specific.
   area-based selections, and object highlighting - can replace
   unpublished 'sphgroup' command with this
 
+* 'text' command: imports a text file (as geometry).  have options to
+  specify the spacing between lines, first line, #lines,
+  underline/overline each line, convert to all upper/lower, position.
+  probably best to create either a 'plot' or 'annotation' object
+  (described in top-level TODO).
