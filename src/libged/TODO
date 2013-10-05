@@ -91,6 +91,11 @@ Be specific.
   validation (see 'audit' command), or shape analysis (surface area,
   volume, moments of inertia, etc).
 
+* 'image' command: import/export an image.  similar to 'text' command,
+  need option to crop, position, scale, and orient the image.  should
+  default to a view-oriented "underlay" but permanently stored in the
+  .g file as a proper image object (top-level TODO entry).
+
 * 'menu' command: to load/unload menu descriptions from a file
   (e.g. file.mnu) where we bind text, icons, images, descriptions, and
   key bindings to actions.  would serve as a place to move
