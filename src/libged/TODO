@@ -6,11 +6,14 @@ Be specific.
 ---
 
 * 'about' command: display version, contents of various doc files,
-  customizable brlcad.msg file.  should also report summary
-  information about the currently displayed geometry including number
-  of objects, types of objects, classes of geometry representation
-  types used, and potentially more.  options to disable version or
-  object info.  consider merging with 'summary' command.
+  customizable brlcad.msg file.  could also report summary information
+  about the currently displayed geometry (possibly as a 'stats'
+  command alternatively).  this would include the number of objects,
+  types of objects, triangle counts, surface counts, extents, classes
+  of geometry representation types used, and potentially more.
+  options to disable version or object info.  consider merging with
+  'summary' command.  provide option for writing results out to a
+  file.
 
 * 'align' command: taking a from 3d pt and a to 3d pt target.
   moves/rotates the source object into alignment.
