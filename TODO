@@ -93,6 +93,9 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   after, so that you can mirror intuitively over a specified point
   along a given axis.
 
+* add option to 'mirror' command to delete the source object.  support
+  specification of a plane as the view plane, 3 points, XY, YZ, XZ.
+ 
 * refactor rt_mirror (src/librt/primitives/mirror.c) into the functab
 
 * refactor rt_functab accessors to go through an api call or calls so
