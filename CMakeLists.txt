@@ -1474,6 +1474,12 @@ endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
 
 #CHECK_C_COMPILER_FLAG("Wl,--no-undefined" NO_UNDEFINED_LINKER_FLAG)
 
+# Non-gcc compilers may need their own options--report details.
+set(C_ID "${CMAKE_C_COMPILER_ID}")
+set(C_VERSION "${CMAKE_C_COMPILER_VERSION}")
+set(CXX_ID "${CMAKE_CXX_COMPILER_ID}")
+set(CXX_VERSION "${CMAKE_CXX_COMPILER_VERSION}")
+
 
 # *******************************************************************
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
