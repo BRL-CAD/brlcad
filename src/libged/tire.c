@@ -1995,6 +1995,10 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
 		   &tread_depth, &tire_thickness, &hub_width,
 		   &pattern_type, &zside1, &usewheel);
 
+    if (overridearray[0] > 0) isoarray[0] = overridearray[0];
+    if (overridearray[1] > 0) isoarray[1] = overridearray[1];
+    if (overridearray[2] > 0) isoarray[2] = overridearray[2];
+
     if (ret != GED_OK) {
 	bu_vls_free(&name);
 	bu_vls_free(&dimen);
@@ -2025,10 +2029,6 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&dimen, "-%d-%dR%d", (int)isoarray[0], (int)isoarray[1], (int)isoarray[2]);
 
     mk_id(gedp->ged_wdbp, "Tire");
-
-    if (overridearray[0] > 0) isoarray[0] = overridearray[0];
-    if (overridearray[1] > 0) isoarray[1] = overridearray[1];
-    if (overridearray[2] > 0) isoarray[2] = overridearray[2];
 
     bu_vls_printf(gedp->ged_result_str, "width = %f\n", isoarray[0]);
     bu_vls_printf(gedp->ged_result_str, "ratio = %f\n", isoarray[1]);
