@@ -247,9 +247,9 @@ set(BRLCAD_DOCBOOK_BUILD_LABEL "Generate extra docs ")
 set(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE_LABEL "Build with strict ISO C compliance checking ")
 set(ENABLE_POSIX_COMPLIANCE_LABEL "Build with strict POSIX compliance checking ")
 set(C_ID_LABEL "C compiler ID ")
-set(C_VERSION_LABEL "C compiler version ")
+set(C_VER_LABEL "C compiler version ")
 set(CXX_ID_LABEL "C++ compiler ID ")
-set(CXX_VERSION_LABEL "C++ compiler version")
+set(CXX_VER_LABEL "C++ compiler version")
 
 # Make sets to use for iteration over all report items
 set(BUILD_REPORT_ITEMS
@@ -267,7 +267,7 @@ set(OTHER_REPORT_ITEMS
     BRLCAD_ENABLE_COMPILER_WARNINGS BRLCAD_ENABLE_VERBOSE_PROGRESS
     BRLCAD_INSTALL_EXAMPLE_GEOMETRY BRLCAD_DOCBOOK_BUILD
     ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE ENABLE_POSIX_COMPLIANCE
-    C_ID C_VERSION CXX_ID CXX_VERSION
+    C_ID C_VER CXX_ID CXX_VER
     )
 
 # Construct list of all items

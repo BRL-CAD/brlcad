@@ -1476,10 +1476,31 @@ endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
 
 # Non-gcc compilers may need their own options--report details.
 set(C_ID "${CMAKE_C_COMPILER_ID}")
-set(C_VERSION "${CMAKE_C_COMPILER_VERSION}")
+set(C_VER "${CMAKE_C_COMPILER_VERSION}")
 set(CXX_ID "${CMAKE_CXX_COMPILER_ID}")
-set(CXX_VERSION "${CMAKE_CXX_COMPILER_VERSION}")
-
+set(CXX_VER "${CMAKE_CXX_COMPILER_VERSION}")
+# error to have mismatching C/C++ compilers
+if(NOT "${C_ID}" STREQUAL  "${CXX_ID}")
+  message(FATAL_ERROR "C/C++ compiler mismatch: C = '${C_ID}'; C++ = '${CXX_ID}'")
+else()
+  string(TOUPPER "${C_ID}" "${C_ID}")
+  string(TOUPPER "${CXX_ID}" "${CXX_ID}")
+  string(TOUPPER "${C_VER}" "${C_VER}")
+  string(TOUPPER "${CXX_VER}" "${CXX_VER}")
+endif()
+# Need flags for various compiler settings and checks later.  (Add
+# more compiler flags as they are needed.)
+set(INTEL OFF)
+set(CLANG OFF)
+set(GNU OFF)
+if("${C_ID}" STREQUAL "INTEL")
+  set(INTEL ON)
+elseif("${C_ID}" STREQUAL "CLANG")
+  set(CLANG ON)
+elseif("${C_ID}" STREQUAL "GNU")
+  set(GNU ON)
+endif()
+message(FATAL_ERROR "debug: C = '${C_ID}'; C++ = '${CXX_ID}'")
 
 # *******************************************************************
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
