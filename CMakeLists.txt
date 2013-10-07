@@ -1500,7 +1500,6 @@ elseif("${C_ID}" STREQUAL "CLANG")
 elseif("${C_ID}" STREQUAL "GNU")
   set(GNU ON)
 endif()
-message(FATAL_ERROR "debug: C = '${C_ID}'; C++ = '${CXX_ID}'")
 
 # *******************************************************************
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
