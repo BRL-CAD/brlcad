@@ -262,7 +262,7 @@ NameIsUnique(ON_wString &name, ONX_Model &model)
 		found_once = true;
 	    }
 	}
-    } 
+    }
     return true;
 }
 

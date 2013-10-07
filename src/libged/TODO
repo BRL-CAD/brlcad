@@ -23,7 +23,7 @@ Be specific.
   calling of g_lint and/or other tools.
 
 * 'array' command: to create a shallow copy of geometry in a
-  rectangular or polar pattern.  similar to clone, perhaps mergable
+  rectangular or polar pattern.  similar to clone, perhaps mergeable
   with clone as an option.  takes #rows+dist and #cols+dist, or
   centerpt+#items and angle <360 to fill, angle between items, rotate
   each item boolean.
@@ -105,7 +105,7 @@ Be specific.
   (e.g. file.mnu) where we bind text, icons, images, descriptions, and
   key bindings to actions.  would serve as a place to move
   existing menu-related commands (e.g., press command becomes
-  subcommand) and allow for interface customization.  
+  subcommand) and allow for interface customization.
 
 * 'offset' command: given an input 3D volume, constructs an interior
   or exterior surface.  this can be used to expand or hollow out an
@@ -135,7 +135,7 @@ Be specific.
   leave-node geometry with bounding box (arb8s), but collapsing and
   combining up the hierarchy to a prescribed tree depth.  however, it
   model includes BoTs/NURBS, more advanced spatial logic will be
-  needed.  should/could also detect any unused/unrefernced geometry
+  needed.  should/could also detect any unused/unreferenced geometry
   objects with options to select on a specific type (prims, combs,
   regions, all), perhaps as a purge or unused subcommand.
 
