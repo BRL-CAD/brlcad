@@ -24,6 +24,14 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
+* implement a region anointment feature where the user can turn an
+  assembly into a region and change all lower or higher regions into
+  combinations.  basically consolidate or distribute region flags.
+  this is partially covered by the 'comb' command but it tries hard to
+  ensure geometry isn't left in a broken state.  needs to be a way to
+  do the simple consolidate/distribute operation regardless of
+  resulting state.
+
 * address the ctest failure of bu_heap_test_1 (seen on ia32 fbsd)
 
 * investigate thread affinity locking on Linux
@@ -77,11 +85,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
-* 'about' command to display version, contents of various doc files,
-  customizable brlcad.msg file
-
-* 'align' command taking a from 3d pt and a to 3d pt target.
-  moves/rotates the source object into alignment.
+* change _mged_ command prefix to a simple '.' prefix to hide/protect
+  the built-in commands.
 
 * Update the comb "region lift" capability to handle automatic duplication
   and substitution of the duplicate into the tree of combs who can't have
@@ -90,6 +95,9 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * change 'mirror' command offset to be prior to mirror instead of
   after, so that you can mirror intuitively over a specified point
   along a given axis.
+
+* add option to 'mirror' command to delete the source object.  support
+  specification of a plane as the view plane, 3 points, XY, YZ, XZ.
 
 * refactor rt_mirror (src/librt/primitives/mirror.c) into the functab
 
@@ -100,15 +108,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   rt_shot(), rt_describe(), etc.).
 
 * review proc-db for promotion to src/shapes
-
-* implement new 'reduce' command to perform model reduction.  should
-  perform automatic simplification of geometry to reduce complexity by
-  (potentially) orders of magnitude.  this is level of detail for
-  non-viewing purposes, for export.  possibly automatable by replacing
-  leave-node geometry with bounding box (arb8s), but collapsing and
-  combining up the hierarchy to a prescribed tree depth.  however, it
-  model includes BoTs/NURBS, more advanced spatial logic will be
-  needed.
 
 * provide a viable FindBRLCAD.cmake
 
@@ -136,13 +135,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * investigate integrating Pixar's OpenSubdiv for subdivision surfaces:
   http://graphics.pixar.com/opensubdiv/
-
-* Extract bounding box code from both autoview.c and get_autoview.c
-  into a general bounding rpp function in libged (or perhaps librt if
-  it generalizes sufficiently), and use accordingly.  Should combin
-  autoview.c with get_autoview.c (perhaps as a flag) and utilize the
-  general function in lots of libged places (e.g., the ged_arb()
-  function).
 
 * the scale structure in bn_cmd_noise_slice (bn_tcl.c) was never
   initialized. it looks like somebody has planned to extend the
@@ -224,8 +216,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * eliminate dbi_filepath (perhaps replace with dbi_filedir) as we
   shouldn't need to search.  we were told where the database was.
 
-* hook marching cubes into libged facetize
-
 * check libbu implementation of red-black trees (see note in bu.h
   referencing an error in the Cormen book used as a basis)
 
@@ -239,10 +229,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * make libbn/plot3.c functions parallel-safe so callers do not have to
   manually wrap with bu_semaphore_acquire().
-
-* fix ged 'joint' command, need to figure out how libged should handle
-  non-object additions to the wireframe (or maybe they should be
-  objects, but not mged's faked solids ala cvt_vlblock_to_solids()).
 
 * implement a "bu_locate" function to consolidate bu_brlcad_root,
   bu_brlcad_data, and bu_brlcad_dir.  Pass in a bu_locate_t enum,
@@ -293,14 +279,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * improve sse run-time detection so illegal instruction crashes are
   avoided.  presently, adding -msse* to compilation will result in a
   crash if that binary is run on non-sse hardware (e.g., Pentium M)
-
-* break cyclic dependency between libdm and libged.  libged should not
-  be aware of libdm (screengrab command).  to implement a ged command
-  that updates the display, the gedp could provide a means to
-  register a callback so (for example) mged could register a function
-  that gets passed a dmp, and libged would call back into that
-  front-end client function instead of a direct call so library
-  encapsulation is maintained.
 
 * implement uv-mapping callback so we can texture-map BoT, NMG, and
   NURBS geometry
@@ -387,21 +365,8 @@ comp.r4 ID 5678 material code 5 LOS 75
   of the versioning details (such as described from "gcc -v" if we
   compiled with gcc) too.
 
-* implement oed+tra/sca/rot functionality consistently in libged as
-  translate/scale/rotate with a signature similar to:
-
-  {translate|rotate|scale} [--keypoint {bb_corner|bb_center}:{object_name} | {3d position}] [--relative xdist [ydist [zdist]] | --absolute xpos [ypos [zpos]]] object_name(s)
-
-  where 'oed' is basically converted into the --keypoint option and
-  object(s) to work on.
-
 * make bu_basename/bu_dirname not allocation memory.  have caller pass
   buffer in as a parameter with size ala snprintf/memcpy.
-
-* restore libged axis/grid commands code made in r44153 but with
-  libged decoupled from libdm/libfb.
-
-* migrate / update screengrab command in libged (libfb/libdm dep)
 
 * provide libdm mechanism for drawing spline curves (to help visualize
   flight paths, show object trajectories, etc.).
@@ -494,11 +459,6 @@ comp.r4 ID 5678 material code 5 LOS 75
   a "progress report" for longer runs that provides some notion of
   how much of the total job is done.
 
-* refactor .density file and density database reading code in files
-  src/rt/viewweight.c, src/libged/analyze.c and src/libged/gqa.c into
-  common code in src/libanalyze (there may be more candidates around
-  the tree)
-
 * make loadview still load the view if the database doesn't match the
   currently open database, only load geometry as an option (and then
   just ignore the db).
@@ -508,51 +468,6 @@ comp.r4 ID 5678 material code 5 LOS 75
 
 * convert non-planar arb's to brep objects for ray-tracing.  see how
   well it works to see if we can remove an arb limitation.
-
-* the 'l' and 'analyze' commands now require an object be specified
-  and won't use the currently highlighted solid.  undoubtedly related
-  to libged refactoring.  this is related to sf request 2954409.
-
-* a "batch" command for libged to apply a given command template to
-  all lines in a given input text file.  could be very similar to exec
-  but instead of inspecting the current .g, it walks lines in file(s).
-  this would let you do things like:
-
-  # same as mvall -f file.txt
-  batch file.txt -exec "mvall \$*"
-
-  # create an alternate hierarchy based on some mapping file
-  batch file.txt -exec "g \$*"
-
-  # for all lines in 3 files, kill first symbol, rename second to it
-  batch A.txt B.txt C.txt -exec "kill \$1" -exec "mv \$2 \$1"
-
-  # keep all objects in an edcodes file with region ID > 1000
-  batch A.txt -field 2 -ne 1000 -exec "keep subset.g \$5"
-
-  # for all regions, if they are listed in file.txt, add them to a
-  # parent assembly and set a specified material ID
-  search . -name "*.r" -exec batch file.txt -field 1 -eq {} -exec "g \$1 {}" -exec "mater {} \$3" \;
-
-  # run awk, get 4th column, run sed to change name,
-  batch file.txt -awk '{print $4}' -sed 's/^r\.(.*)/\1\.r/g' -exec "mv \$1 \$$"
-
-  # outside of MGED, the above would have been similar to:
-  cat file.txt | awk '{print $4}' | sed 's/^r\.(.*)/r\.\1 \1\.r/g' | xargs mged test.g mv
-
-  The command becomes more of a stream processor on the input file, as
-  if piped on the shell line.  To embed awk, sed, cut, see qse:
-	  http://code.google.com/p/qse/
-
-  The search and batch commands probably can't nor shouldn't use the
-  same replacement markers, with batch using $*, $1, $2, etc., to
-  represent file columns (in a poor man's awk fashion) and search
-  simply using "{}" as the object name replacement marker.
-
-* fix !!! in src/libged/tables.c where a temporary file is getting
-  used.  needs to call bu_temp_file().
-
-* make the 'tree' command accept a full path, not just a combination
 
 * clean up new rt -l8 heat graph lighting model so that it works in
   parallel and with no "splotches"
@@ -583,10 +498,6 @@ comp.r4 ID 5678 material code 5 LOS 75
   tables, or some hybrid storage arrangement.  Idea inspired by:
   http://math.ucr.edu/home/baez/roots/
 
-* make the 'tables' ged command not call system() on the "sort" unix
-  command.  It should perform all sorting on the data directly in
-  memory, at least without creating another process.
-
 * libbn's tri_specific structure requires user-provided memory for
   normals.. this certainly saves memory if the triangles don't have
   normals but at a rather expensive malloc cost (which is being seen
@@ -608,19 +519,6 @@ comp.r4 ID 5678 material code 5 LOS 75
 * make rtarea display a cross-hair and perhaps coordinates for the
   center of area if run from within mged.
 
-* implement a "select" command in LIBGED that creates a selection set
-  based on specified sampling parameters or object lists.  example
-  could be "select -point 12.3 23.1 31.2 -dist 100.0" to
-  select objects within a given distance of a point; "select foo bar"
-  to select specific objects and create/return a temporary reference
-  name. this provides a command-line mechanism for implementing band
-  selection in the GUI, area-based selections, and object highlighting
-	- can replace unpublished 'sphgroup' command with this
-
-* refactor the libtclcad go_*() functions and invocation wrappers
-  (also in mged) into libged where appropriate. the 'png' command
-  comes to mind.
-
 * refactor and manage libbn tolerance uses by providing an interface
   default (e.g., an init macro) and making everyone use that where it
   is hardcoded to 0.0005 presently (and a few places where it's
@@ -629,10 +527,6 @@ comp.r4 ID 5678 material code 5 LOS 75
 * add a default phong 'metal' shader.  annoying to keep making plastic
   more reflective or mirror less reflective when it's such a common
   material appearance to want.
-
-* implement a new tool/command that reports summary information about
-  a geometry file including number of objects, types of objects,
-  classes of geometry representation types used, and potentially more.
 
 * consider adding an option to reid/remat and edcodes (and others?) to
   ignore negative regions (regions subtracted from regions or
@@ -676,10 +570,6 @@ comp.r4 ID 5678 material code 5 LOS 75
 * make _plot() callbacks fill in plot objects instead of returning
   line segments.
 
-* refactor wdb_obj and view_obj in libged.  with the de-tcl'ing of the
-  base libs, it should disappear but shouldn't have wdb_*() funcs in
-  libged regardless.  work in progress.
-
 * implement a jitter-style option to rt that makes it average the ray
   results to take a weighted light contribution for a given
   resolution.  saves more memory over rendering at 2x/4x/8x/whatever
@@ -702,12 +592,6 @@ comp.r4 ID 5678 material code 5 LOS 75
 
 * implement -param support for 'search' command
 
-* make ged command names aware of object arguments for automatic
-  globbing and regular expression expansion:
-	attr set [regex .*\.r] t 1
-	attr set [glob *.r] t 1
-	attr set *.r t 1
-
 * mged crashes on Mac if using system Tcl/Tk with our incrTcl.
   crashes with the following stack (same whether dm-X or dm-ogl):
 	XQueryExtension
@@ -716,11 +600,6 @@ comp.r4 ID 5678 material code 5 LOS 75
 	ogl_choose_visual (dm-ogl.c:1359)
 	ogl_open (dm-ogl.c:401)
 	dm_open (dm-generic:82)
-
-* review adding support for infix and postfix CSG operators for
-  libged/mged.  be sure to revive or at least check out the previous
-  effort in src/mged/comb_bool_parse.y that already has support that
-  recognizes the classical infix notation.
 
 * readd support for vrml v1 to g-vrml so that users can select whether
   they want v2 (default) or previous v1 output format via a
@@ -731,8 +610,8 @@ comp.r4 ID 5678 material code 5 LOS 75
 * fully implement analyze for all primitives
 
 * implement general analyze estimate (perhaps just raytrace it) for
-  primitives where values like surface area are very difficult to
-  calculate.
+  primitives where values like surface area or volume are very
+  difficult to calculate.
 
 * move analyze logic into librt (with their respective primitives).
 
@@ -740,6 +619,12 @@ comp.r4 ID 5678 material code 5 LOS 75
     (for arbs, it should be fixed as of revision 48900)
 
 * extend analyze output formatting to user-specified formats ala nirt
+
+* calculate products of inertia in 'analyze' and/or gqa output
+
+* calculate radii of gyration in 'analyze' and/or gqa output
+
+* implement 'analyze' command option to write output to a file
 
 * implement make, ted, edsol, mirror, and analyze for revolve
   primitive.  implement tess() too.
@@ -828,10 +713,6 @@ comp.r4 ID 5678 material code 5 LOS 75
 * preserve an arb8 as an arb8 (instead of writing as arb6 or arb5) and
   similarly for the other arb# sizes
 
-* implement a region anointment command where the user can turn an
-  assembly into a region and change all lower or higher regions into
-  combinations
-
 * enhance dxf-g to create more than just one combination per layer,
   creating multiple objects for the individual objects in the dxf file
   (instead of one conglomerate BoT)
@@ -895,9 +776,6 @@ comp.r4 ID 5678 material code 5 LOS 75
 
 * optimize CSG structures automatically: automatic simplification,
   tree contraction, null object detection.
-
-* option to mged make command or new command that enters solid edit
-  mode, "med", "smake", "makes", "msed", etc.  same for cp command.
 
 * have libbu report memory allocation statistics so the exact amount
   of memory requirements for a geometry database can be computed on
@@ -1001,12 +879,92 @@ comp.r4 ID 5678 material code 5 LOS 75
   we need a libbu API on top of any other code - at such a core level,
   we can't introduce an external API.
 
-* add per-face analysis of primitives like tgc, arb to their respective
-  analyze commands in libged
-
 * investigate the libngpcore and libngput libraries from the ngPlant
   project as a possible means of procedurally generating plant models
   in BRL-CAD (libraries are BSD licensed: http://ngplant.sourceforge.net)
+
+
+LIBGED
+------
+
+* See src/libged/TODO for new command ideas.
+
+* Extract bounding box code from both autoview.c and get_autoview.c
+  into a general bounding rpp function in libged (or perhaps librt if
+  it generalizes sufficiently), and use accordingly.  Should combin
+  autoview.c with get_autoview.c (perhaps as a flag) and utilize the
+  general function in lots of libged places (e.g., the ged_arb()
+  function).
+
+* hook marching cubes into libged facetize
+
+* fix ged 'joint' command, need to figure out how libged should handle
+  non-object additions to the wireframe (or maybe they should be
+  objects, but not mged's faked solids ala cvt_vlblock_to_solids()).
+
+* break cyclic dependency between libdm and libged.  libged should not
+  be aware of libdm (screengrab command).  to implement a ged command
+  that updates the display, the gedp could provide a means to
+  register a callback so (for example) mged could register a function
+  that gets passed a dmp, and libged would call back into that
+  front-end client function instead of a direct call so library
+  encapsulation is maintained.
+
+* implement oed+tra/sca/rot functionality consistently in libged as
+  translate/scale/rotate with a signature similar to:
+
+  {translate|rotate|scale} [--keypoint {bb_corner|bb_center}:{object_name} | {3d position}] [--relative xdist [ydist [zdist]] | --absolute xpos [ypos [zpos]]] object_name(s)
+
+  where 'oed' is basically converted into the --keypoint option and
+  object(s) to work on.
+
+* restore libged axis/grid commands code made in r44153 but with
+  libged decoupled from libdm/libfb.
+
+* migrate / update screengrab command in libged (libfb/libdm dep)
+
+* the 'l' and 'analyze' commands now require an object be specified
+  and won't use the currently highlighted solid.  undoubtedly related
+  to libged refactoring.  this is related to sf request 2954409.
+
+* fix !!! in src/libged/tables.c where a temporary file is getting
+  used.  needs to call bu_temp_file().
+
+* make the 'tree' command accept a full path, not just a combination
+
+* make the 'tables' ged command not call system() on the "sort" unix
+  command.  It should perform all sorting on the data directly in
+  memory, at least without creating another process.
+
+* refactor the libtclcad go_*() functions and invocation wrappers
+  (also in mged) into libged where appropriate. the 'png' command
+  comes to mind.
+
+* refactor wdb_obj and view_obj in libged.  with the de-tcl'ing of the
+  base libs, it should disappear but shouldn't have wdb_*() funcs in
+  libged regardless.  work in progress.
+
+* make ged command names aware of object arguments for automatic
+  globbing and regular expression expansion:
+	attr set [regex .*\.r] t 1
+	attr set [glob *.r] t 1
+	attr set *.r t 1
+
+* review adding support for infix and postfix CSG operators for
+  libged/mged.  be sure to revive or at least check out the previous
+  effort in src/mged/comb_bool_parse.y that already has support that
+  recognizes the classical infix notation.
+
+* option to mged make command or new command that enters solid edit
+  mode, "med", "smake", "makes", "msed", etc.  same for cp command.
+
+* add per-face analysis of primitives like tgc, arb to their respective
+  analyze commands in libged
+
+* refactor .density file and density database reading code in files
+  src/rt/viewweight.c, src/libged/analyze.c and src/libged/gqa.c into
+  common code in src/libanalyze (there may be more candidates around
+  the tree)
 
 
 SHADED DISPLAYS
@@ -1018,7 +976,7 @@ SHADED DISPLAYS
 ARCHER
 ------
 
-* See src/archer/TODO.
+* See src/archer/TODO
 
 
 ATTRIBUTES
@@ -1131,6 +1089,13 @@ NEW OBJECTS
 						 \ Length of hull.r1: 5.4mm
 
 	      (custom label specified via format specifier: "Length of %target: %size")
+
+  Point properties:
+       styles, for interface familiarity, provide option to describe
+       points as [empty] . + x * ! as well as all 6: in a circle, in a
+       box, and in a circle in a box.  that's 24 styles altogether.
+       non-arrow annotations that lead to/from a point should allow
+       source and target point styles to get set separately.
 
   Text properties:
        font name
