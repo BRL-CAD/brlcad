@@ -278,7 +278,7 @@ proc main {} {
 	}
         set width [expr {$w - 8}]
         set height [expr {$h - 40}]
-	wm geometry $::ArcherCore::application "$width\x$height+0+0"
+	$::ArcherCore::application configure -geometry "$width\x$height+0+0"
 	wm protocol $::ArcherCore::application WM_DELETE_WINDOW {exitArcher $::ArcherCore::application}
     } else {
 	wm title . "Archer $brlcad_version"
@@ -299,7 +299,7 @@ proc main {} {
         set width [expr {$w - 8}]
         set height [expr {$h - 40}]
 	pack $::ArcherCore::application -expand yes -fill both
-	wm geometry . "$width\x$height+0+0"
+	$::ArcherCore::application configure -geometry "$width\x$height+0+0"
 	wm protocol . WM_DELETE_WINDOW [list exitArcher $::ArcherCore::application]
     }
 

@@ -40,6 +40,7 @@ namespace eval ArcherCore {
 
     itk_option define -quitcmd quitCmd Command {}
     itk_option define -master master Master "."
+    itk_option define -geometry geometry Geometry ""
 
     constructor {{_viewOnly 0} {_noCopy 0} {_noTree 0} {_noToolbar 0} args} {}
     destructor {}
@@ -394,6 +395,7 @@ namespace eval ArcherCore {
 
 	# variables for preference state
 	variable mWindowGeometry ""
+	variable mCmdWindowGeometry ""
 	variable mEnableAffectedNodeHighlight 0
 	variable mEnableAffectedNodeHighlightPref ""
 	variable mEnableListView 0

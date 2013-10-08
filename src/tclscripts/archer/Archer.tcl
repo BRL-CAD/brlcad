@@ -254,7 +254,7 @@ package provide Archer 1.0
 	method buildViewAxesPreferences {}
 	method doAboutArcher {}
 	method doarcherHelp {}
-	method handleConfigure {}
+	method handleMap {}
 	method handleDisplayEscape {_dm}
 	method launchDisplayMenuBegin {_dm _m _x _y}
 	method launchDisplayMenuEnd {}
@@ -543,8 +543,8 @@ package provide Archer 1.0
 	gedCmd lod off
     }
 
-
-    bind [namespace tail $this] <Configure> [::itcl::code $this handleConfigure]
+    # resize and position window after it's drawn 
+    bind [namespace tail $this] <Map> [::itcl::code $this handleMap]
 }
 
 
@@ -2123,8 +2123,12 @@ package provide Archer 1.0
 	    set mHPaneFraction1 80
 	    set mHPaneFraction2 20
 	} else {
-	    set xy [winfo pointerxy [namespace tail $this]]
-	    wm geometry $itk_component(sepcmdT) "+[lindex $xy 0]+[lindex $xy 1]"
+	    if {$mCmdWindowGeometry != ""} {
+		wm geometry $itk_component(sepcmdT) $mCmdWindowGeometry
+	    } else {
+		set xy [winfo pointerxy [namespace tail $this]]
+		wm geometry $itk_component(sepcmdT) "+[lindex $xy 0]+[lindex $xy 1]"
+	    }
 	}
 
 	after idle "$itk_component(cmd) configure -cmd_prefix \"[namespace tail $this] cmd\""
@@ -4215,12 +4219,18 @@ proc title_node_handler {node} {
 
 }
 
-::itcl::body Archer::handleConfigure {} {
+::itcl::body Archer::handleMap {} {
     if {$mWindowGeometry != ""} {
-	wm geometry [namespace tail $this] $mWindowGeometry
+	after idle "wm geometry [namespace tail $this] $mWindowGeometry"
+    } else {
+	after idle "wm geometry [namespace tail $this] $itk_option(-geometry)"
     }
 
-    bind [namespace tail $this] <Configure> {}
+    if {$mSeparateCommandWindow && $mCmdWindowGeometry != ""} {
+	after idle [::itcl::code wm geometry $itk_component(sepcmdT) $mCmdWindowGeometry]
+    }
+
+    bind [namespace tail $this] <Map> {}
 }
 
 ::itcl::body Archer::handleDisplayEscape {_dm} {
@@ -9380,6 +9390,10 @@ proc title_node_handler {node} {
     puts $_pfile "set mVPaneToggle5 $mVPaneToggle5"
 
     puts $_pfile "set mWindowGeometry [winfo geometry [namespace tail $this]]"
+
+    if {$mSeparateCommandWindow} {
+	puts $_pfile "set mCmdWindowGeometry [winfo geometry $itk_component(sepcmdT)]"
+    }
 
     puts $_pfile "set mShowViewAxes $mShowViewAxes"
     puts $_pfile "set mShowModelAxes $mShowModelAxes"
