@@ -646,6 +646,20 @@
 	</para>
   </example>
 
+  <example><title>Finding all Regions with RGB color 180 180 180</title>
+
+	<para>
+		<userinput>search -type region ( -attr color=180/180/180 -or -attr rgb=180/180/180 ) </userinput>
+	</para>
+	<para>
+		Prints all regions with their color attribute set to 180/180/180.  Some
+		files may use <emphasis>rgb</emphasis> instead of color, so to be
+		comprehensive an <emphasis>-or</emphasis> option is used to check
+		both possibilities.
+	</para>
+  </example>
+
+
   <example><title>Using <command>search</command> Results</title>
 	<para>
 	  While the <command>search</command> command as currently implemented
