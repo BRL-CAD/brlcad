@@ -3323,7 +3323,13 @@ bool surface_GetClosestPoint3dFirstOrder(
         const ON_3dPoint& p,
         ON_2dPoint& p2d,
         ON_3dPoint& p3d,
-        double tol
+        int quadrant = 0,	// optional - determines which quadrant to evaluate from
+				//         0 = default
+				//         1 from NE quadrant
+				//         2 from NW quadrant
+				//         3 from SW quadrant
+				//         4 from SE quadrant
+        double tol = 0.0
         )
 {
     ON_3dPoint p0;
@@ -3337,41 +3343,933 @@ bool surface_GetClosestPoint3dFirstOrder(
 
     int u_spancnt = surf->SpanCount(0);
     int v_spancnt = surf->SpanCount(1);
-    double *uspan = new double[u_spancnt + 1];
-    double *vspan = new double[v_spancnt + 1];
+    double *uspan = new double[u_spancnt + 2];// adding 2 here because going to divide at midpoint
+    double *vspan = new double[v_spancnt + 2];
     double current_distance = DBL_MAX;
     //ON_2dPoint working_p2d;
     //ON_3dPoint working_p3d;
     if (surf->GetSpanVector(0, uspan) && surf->GetSpanVector(1, vspan)) {
 	ON_3dPoint P;
 	ON_3dVector normal[4], Ds, Dt, Dss, Dst, Dtt;
-	for (int u_span_index = 1; u_span_index < u_spancnt + 1;
-	        u_span_index++) {
-	    for (int v_span_index = 1; v_span_index < v_spancnt + 1;
-		    v_span_index++) {
-		ON_Interval u_interval(uspan[u_span_index - 1],
-		        uspan[u_span_index]);
-		ON_Interval v_interval(vspan[v_span_index - 1],
-		        vspan[v_span_index]);
-		double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
-		double min_distance,max_distance;
 
-		int level = 1;
-		if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
-		    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
-			/////////////////////////////////////////
-			// Could check normals and CV angles here
-			/////////////////////////////////////////
-			double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
-			if (distance < current_distance) {
-			    current_distance = distance;
-			    if (current_distance < tol)
-				return true;
+	double umid = surf->Domain(0).Mid();
+	int umid_index = u_spancnt/2;
+	for (int u_span_index = 0; u_span_index < u_spancnt + 1;u_span_index++) {
+	    if (uspan[u_span_index] == umid) {
+		umid_index = u_span_index;
+		break;
+	    } else if (uspan[u_span_index] > umid) {
+		for (u_span_index = u_spancnt + 1; u_span_index > 0;u_span_index--) {
+		    if (uspan[u_span_index-1] < umid) {
+			uspan[u_span_index] = umid;
+			umid_index = u_span_index;
+			u_spancnt++;
+			u_span_index = u_spancnt+1;
+			break;
+		    } else {
+			uspan[u_span_index] = uspan[u_span_index-1];
+		    }
+		}
+	    }
+	}
+	double vmid = surf->Domain(1).Mid();
+	int vmid_index = v_spancnt/2;
+	for (int v_span_index = 0; v_span_index < v_spancnt + 1;v_span_index++) {
+	    if (vspan[v_span_index] == vmid) {
+		vmid_index = v_span_index;
+		break;
+	    } else if (vspan[v_span_index] > vmid) {
+		for (v_span_index = v_spancnt + 1; v_span_index > 0;v_span_index--) {
+		    if (vspan[v_span_index-1] < vmid) {
+			vspan[v_span_index] = vmid;
+			vmid_index = v_span_index;
+			v_spancnt++;
+			v_span_index = v_spancnt+1;
+			break;
+		    } else {
+			vspan[v_span_index] = vspan[v_span_index-1];
+		    }
+		}
+	    }
+	}
+	if (quadrant == 0) {
+	    for (int u_span_index = 1; u_span_index < u_spancnt + 1;
+		    u_span_index++) {
+		for (int v_span_index = 1; v_span_index < v_spancnt + 1;
+			v_span_index++) {
+		    ON_Interval u_interval(uspan[u_span_index - 1],
+			    uspan[u_span_index]);
+		    ON_Interval v_interval(vspan[v_span_index - 1],
+			    vspan[v_span_index]);
+		    double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
+		    double min_distance,max_distance;
+
+		    int level = 1;
+		    if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
+			if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+			    /////////////////////////////////////////
+			    // Could check normals and CV angles here
+			    /////////////////////////////////////////
+			    double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
+			    if (distance < current_distance) {
+				current_distance = distance;
+				if (current_distance < tol)
+				    return true;
+			    }
+			}
+		    }
+		}
+	    }
+	} else if (quadrant == 1) {
+	    if (surf->IsClosed(0)) { //NE,SE,NW.SW
+		//         1 from NE quadrant
+		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
+		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+				uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+				vspan[v_span_index]);
+			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
+			double min_distance,max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
+			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < tol)
+					return true;
+				}
+			    }
+			}
+		    }
+		}
+		//         4 from SE quadrant
+		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
+		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+				uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+				vspan[v_span_index]);
+			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
+			double min_distance,max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
+			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < tol)
+					return true;
+				}
+			    }
+			}
+		    }
+		}
+		//         2 from NW quadrant
+		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
+		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+				uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+				vspan[v_span_index]);
+			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
+			double min_distance,max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
+			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < tol)
+					return true;
+				}
+			    }
+			}
+		    }
+		}
+		//         3 from SW quadrant
+		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
+		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+				uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+				vspan[v_span_index]);
+			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
+			double min_distance,max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
+			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < tol)
+					return true;
+				}
+			    }
+			}
+		    }
+		}
+	    } else { //NE,NW,SW,SE
+		//         1 from NE quadrant
+		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
+		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+				uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+				vspan[v_span_index]);
+			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
+			double min_distance,max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
+			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < tol)
+					return true;
+				}
+			    }
+			}
+		    }
+		}
+		//         2 from NW quadrant
+		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
+		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+				uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+				vspan[v_span_index]);
+			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
+			double min_distance,max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
+			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < tol)
+					return true;
+				}
+			    }
+			}
+		    }
+		}
+		//         3 from SW quadrant
+		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
+		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+				uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+				vspan[v_span_index]);
+			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
+			double min_distance,max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
+			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < tol)
+					return true;
+				}
+			    }
+			}
+		    }
+		}
+		//         4 from SE quadrant
+		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
+		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+				uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+				vspan[v_span_index]);
+			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
+			double min_distance,max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
+			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < tol)
+					return true;
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	} else if (quadrant == 2) {
+	    if (surf->IsClosed(0)) { // NW,SW,NE,SE
+		//         2 from NW quadrant
+		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
+		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+				uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+				vspan[v_span_index]);
+			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
+			double min_distance,max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
+			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < tol)
+					return true;
+				}
+			    }
+			}
+		    }
+		}
+		//         3 from SW quadrant
+		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
+		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+				uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+				vspan[v_span_index]);
+			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
+			double min_distance,max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
+			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < tol)
+					return true;
+				}
+			    }
+			}
+		    }
+		}
+		//         1 from NE quadrant
+		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
+		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+				uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+				vspan[v_span_index]);
+			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
+			double min_distance,max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
+			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < tol)
+					return true;
+				}
+			    }
+			}
+		    }
+		}
+		//         4 from SE quadrant
+		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
+		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+				uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+				vspan[v_span_index]);
+			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
+			double min_distance,max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
+			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < tol)
+					return true;
+				}
+			    }
+			}
+		    }
+		}
+	    } else { // NW,NE,SW,SE
+		//         2 from NW quadrant
+		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
+		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+				uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+				vspan[v_span_index]);
+			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
+			double min_distance,max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
+			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < tol)
+					return true;
+				}
+			    }
+			}
+		    }
+		}
+		//         1 from NE quadrant
+		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
+		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+				uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+				vspan[v_span_index]);
+			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
+			double min_distance,max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
+			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < tol)
+					return true;
+				}
+			    }
+			}
+		    }
+		}
+		//         3 from SW quadrant
+		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
+		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+				uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+				vspan[v_span_index]);
+			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
+			double min_distance,max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
+			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < tol)
+					return true;
+				}
+			    }
+			}
+		    }
+		}
+		//         4 from SE quadrant
+		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
+		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+				uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+				vspan[v_span_index]);
+			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
+			double min_distance,max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
+			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < tol)
+					return true;
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	} else if (quadrant == 3) {
+	    if (surf->IsClosed(0)) { // SW,NW,SE,NE
+		//         3 from SW quadrant
+		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
+		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+				uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+				vspan[v_span_index]);
+			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
+			double min_distance,max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
+			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < tol)
+					return true;
+				}
+			    }
+			}
+		    }
+		}
+		//         2 from NW quadrant
+		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
+		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+				uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+				vspan[v_span_index]);
+			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
+			double min_distance,max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
+			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < tol)
+					return true;
+				}
+			    }
+			}
+		    }
+		}
+		//         4 from SE quadrant
+		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
+		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+				uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+				vspan[v_span_index]);
+			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
+			double min_distance,max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
+			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < tol)
+					return true;
+				}
+			    }
+			}
+		    }
+		}
+		//         1 from NE quadrant
+		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
+		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+				uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+				vspan[v_span_index]);
+			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
+			double min_distance,max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
+			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < tol)
+					return true;
+				}
+			    }
+			}
+		    }
+		}
+	    } else { // SW,SE,NW,NE
+		//         3 from SW quadrant
+		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
+		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+				uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+				vspan[v_span_index]);
+			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
+			double min_distance,max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
+			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < tol)
+					return true;
+				}
+			    }
+			}
+		    }
+		}
+		//         4 from SE quadrant
+		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
+		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+				uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+				vspan[v_span_index]);
+			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
+			double min_distance,max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
+			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < tol)
+					return true;
+				}
+			    }
+			}
+		    }
+		}
+		//         2 from NW quadrant
+		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
+		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+				uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+				vspan[v_span_index]);
+			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
+			double min_distance,max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
+			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < tol)
+					return true;
+				}
+			    }
+			}
+		    }
+		}
+		//         1 from NE quadrant
+		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
+		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+				uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+				vspan[v_span_index]);
+			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
+			double min_distance,max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
+			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < tol)
+					return true;
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	} else if (quadrant == 4) {
+	    if (surf->IsClosed(0)) { // SE,NE,SW,NW
+		//         4 from SE quadrant
+		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
+		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+				uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+				vspan[v_span_index]);
+			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
+			double min_distance,max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
+			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < tol)
+					return true;
+				}
+			    }
+			}
+		    }
+		}
+		//         1 from NE quadrant
+		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
+		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+				uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+				vspan[v_span_index]);
+			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
+			double min_distance,max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
+			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < tol)
+					return true;
+				}
+			    }
+			}
+		    }
+		}
+		//         3 from SW quadrant
+		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
+		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+				uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+				vspan[v_span_index]);
+			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
+			double min_distance,max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
+			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < tol)
+					return true;
+				}
+			    }
+			}
+		    }
+		}
+		//         2 from NW quadrant
+		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
+		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+				uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+				vspan[v_span_index]);
+			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
+			double min_distance,max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
+			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < tol)
+					return true;
+				}
+			    }
+			}
+		    }
+		}
+	    } else { // SE,SW,NE,NW
+		//         4 from SE quadrant
+		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
+		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+				uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+				vspan[v_span_index]);
+			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
+			double min_distance,max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
+			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < tol)
+					return true;
+				}
+			    }
+			}
+		    }
+		}
+		//         3 from SW quadrant
+		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
+		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+				uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+				vspan[v_span_index]);
+			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
+			double min_distance,max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
+			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < tol)
+					return true;
+				}
+			    }
+			}
+		    }
+		}
+		//         1 from NE quadrant
+		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
+		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+				uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+				vspan[v_span_index]);
+			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
+			double min_distance,max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
+			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < tol)
+					return true;
+				}
+			    }
+			}
+		    }
+		}
+		//         2 from NW quadrant
+		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
+		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
+			ON_Interval u_interval(uspan[u_span_index - 1],
+				uspan[u_span_index]);
+			ON_Interval v_interval(vspan[v_span_index - 1],
+				vspan[v_span_index]);
+			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
+			double min_distance,max_distance;
+
+			int level = 1;
+			if (surface_GetIntervalMinMaxDistance(surf,p,u_interval,v_interval,min_distance,max_distance)) {
+			    if (NEAR_ZERO(min_distance,tol)) { //(min_distance < current_closest_dist-tol) {
+				/////////////////////////////////////////
+				// Could check normals and CV angles here
+				/////////////////////////////////////////
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
+				if (distance < current_distance) {
+				    current_distance = distance;
+				    if (current_distance < tol)
+					return true;
+				}
+			    }
 			}
 		    }
 		}
 	    }
 	}
+
     }
     delete[] uspan;
     delete[] vspan;
@@ -3393,6 +4291,7 @@ bool trim_GetClosestPoint3dFirstOrder(
 {
     bool rc = false;
     const ON_Surface *surf = trim.SurfaceOf();
+
     double t0 = interval->Mid();
     ON_3dPoint p3d;
     ON_3dPoint p0;
@@ -3401,7 +4300,7 @@ bool trim_GetClosestPoint3dFirstOrder(
     int prec = std::cerr.precision();
     ON_BoundingBox tight_bbox;
     std::vector<ON_BoundingBox> bbox;
-
+    ON_2dPoint origp2d = p2d;
     std::cerr.precision(15);
 
     ON_Curve *c = trim.Brep()->m_C2[trim.m_c2i];
@@ -3412,10 +4311,58 @@ bool trim_GetClosestPoint3dFirstOrder(
       return false;
 
     p2d = trim.PointAt(t);
-    if (surface_GetClosestPoint3dFirstOrder(surf,p,p2d,p3d,tol)) {
+    int quadrant = 0;     // optional - determines which quadrant to evaluate from
+                          //         0 = default
+                          //         1 from NE quadrant
+                          //         2 from NW quadrant
+                          //         3 from SW quadrant
+                          //         4 from SE quadrant
+    ON_Interval u_interval = surf->Domain(0);
+    ON_Interval v_interval = surf->Domain(1);
+    if (p2d.y > v_interval.Mid()) {
+	// North quadrants -> 1 or 2;
+	if (p2d.x > u_interval.Mid()) {
+	    quadrant = 1; // NE
+	} else {
+	    quadrant = 2; //NW
+	}
+    } else {
+	// South quadrants -> 3 or 4;
+	if (p2d.x > u_interval.Mid()) {
+	    quadrant = 4; // SE
+	} else {
+	    quadrant = 3; //SW
+	}
+    }
+    if (surface_GetClosestPoint3dFirstOrder(surf,p,p2d,p3d,quadrant,tol)) {
 #if 0
 	    bool special = true;
 	    if (special) return special;
+#endif
+#if 1
+	    double test2d_dist = p2d.DistanceTo(origp2d);
+	    if ((!surf->IsAtSingularity(p2d.x,p2d.y,false)) && ((test2d_dist > u_interval.Length()/2.0) || (test2d_dist > v_interval.Length()/2.0))) { // !NEAR_ZERO(test2d_dist,tol)) {
+		std::cerr << "2d First Order failed:" << std::endl;
+		std::cerr << "     test2d_dist: " << test2d_dist << std::endl;
+		std::cerr << "     p2d: < " << p2d.x << ", " << p2d.y << ", 0 >" << std::endl;
+		std::cerr << "     origp2d: < " << origp2d.x << ", " << origp2d.y << ", 0 >" << std::endl;
+		std::cerr << "     p: < " << p.x << ", " << p.y << ", " << p.z << " >" << std::endl;
+		std::cerr << "     p3d: < " << p3d.x << ", " << p3d.y << ", " << p3d.z << " >" << std::endl;
+	    }
+#endif
+#if 1
+			    double test3d_dist = p.DistanceTo(p3d);
+			    if (!NEAR_ZERO(test3d_dist,tol)) {
+				////////////////////
+				int prec = std::cerr.precision();
+				std::cerr.precision(15);
+				////////////////////
+				std::cerr << "First Order failed for Surf - " << std::endl;
+				std::cerr << "     test_dist: " << test3d_dist << std::endl;
+				std::cerr << "     p: < " << p.x << ", " << p.y << ", " << p.z << " >" << std::endl;
+				std::cerr << "     p3d: < " << p3d.x << ", " << p3d.y << ", " << p3d.z << " >" << std::endl;
+				std::cerr.precision(prec);
+			    }
 #endif
 	ON_3dPoint test2dp = surf->PointAt(p2d.x,p2d.y);
 	ON_BezierCurve B;
@@ -3573,9 +4520,13 @@ bool trim_GetClosestPoint3dFirstOrder(
 
     return rc;
 }
-#if 0
+#if 1
 static int lfi = -1;
-static int hfi = 0;
+static int hfi = 10000;
+static int dl_li = -1;
+static int dh_li = 10000;
+static int dl_lti = -1;
+static int dh_lti = 10000;
 #endif
 void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
 	const struct rt_tess_tol *ttol, const struct bn_tol *tol,
@@ -3592,7 +4543,7 @@ void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
     p2t::CDT* cdt = NULL;
     ON_BoundingBox loop_bb;
 
-#if 0
+#if 1
     if ((fi > hfi) || (fi < lfi))
 	return;
 #endif
@@ -3611,11 +4562,19 @@ void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
 	ON_2dPointArray on_loop_points;
 	std::vector<p2t::Point*> polyline;
 	ON_BrepLoop *loop = face.Loop(li);
+#if 1
+	if ((li > dh_li) || (li < dl_li))
+	    continue;
+#endif
 
 	for (int lti = 0; lti < loop->TrimCount(); lti++) {
 	    ON_BrepTrim *trim = loop->Trim(lti);
 	    ON_Interval d = trim->Domain();
 	    //ON_BrepEdge *edge = trim->Edge();
+#if 1
+		if ((lti > dh_lti) || (lti < dl_lti))
+		continue;
+#endif
 
 	    if (trim->m_type == ON_BrepTrim::singular) {
 		ON_BrepVertex& v1 = face.Brep()->m_V[trim->m_vi[0]];
@@ -3656,8 +4615,10 @@ void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
 #define PULLBACK_TESTING
 #ifdef PULLBACK_TESTING
 			double tpercent = t;
+			t = d.ParameterAt(t);
 			ON_Interval interval = trim->Domain();
 			if (trim->Edge()->IsClosed()) {
+			    /*
 			    if (NEAR_EQUAL(t, 0.0, tol->dist_sq)) {
 				t = interval.m_t[0];
 				//interval.m_t[1] = interval.Mid();
@@ -3667,8 +4628,19 @@ void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
 			    } else {
 				t = interval.Mid();
 			    }
+			    */
+			    if (t < interval.Mid()) {
+				t = interval.m_t[0];
+			    } else {
+				t = interval.m_t[1];
+			    }
 			} else {
-			    t = interval.Mid();
+			    //t = interval.Mid();
+			    if (t < interval.Mid()) {
+				t = (interval.m_t[0] + interval.Mid())/2.0;
+			    } else {
+				t = (interval.Mid() + interval.m_t[1])/2.0;
+			    }
 			}
 			bool print = false;
 			ON_2dPoint new2d = p2d;
@@ -3702,7 +4674,8 @@ void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
 			     std::cerr << "     tp2d: < " << tp2d.x << ", " << tp2d.y << ", 0 >" << std::endl;
 			     }
 #endif
-			    double test_dist = p3d->DistanceTo(tp3d);
+#if 0
+			     double test_dist = p3d->DistanceTo(tp3d);
 			    double test_dist2 = p3d->DistanceTo(tp3d2);
 			    double test_dist3 = p3d->DistanceTo(tp3d3);
 			    if (!NEAR_ZERO(test_dist,tol->dist)) {
@@ -3732,6 +4705,7 @@ void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
 				        << tp2d.y << ", 0 >" << std::endl;
 				std::cerr.precision(prec);
 			    }
+#endif
 			} else {
 			    p2d = trim->PointAt(t);
 			}
