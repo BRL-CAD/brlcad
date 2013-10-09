@@ -543,7 +543,7 @@ package provide Archer 1.0
 	gedCmd lod off
     }
 
-    # resize and position window after it's drawn 
+    # resize and position window after it's drawn
     bind [namespace tail $this] <Map> [::itcl::code $this handleMap]
 }
 
