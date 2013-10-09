@@ -2057,6 +2057,229 @@ void plot_face_from_surface_tree(struct bu_list *vhead, SurfaceTree* st,
     plot_BBNode(vhead, st, root, isocurveres, gridres);
 }
 
+void getEdgePoints(const ON_BrepEdge &edge, fastf_t t1, ON_3dPoint &start_3d, ON_3dVector &start_tang, fastf_t t2, ON_3dPoint &end_3d, ON_3dVector &end_tang, fastf_t min_dist, fastf_t max_dist, fastf_t within_dist, fastf_t cos_within_ang, std::map<double,ON_3dPoint *> &param_points)
+{
+    ON_Interval range = edge.Domain();
+    ON_3dPoint mid_3d;
+    ON_3dVector mid_tang;
+    fastf_t t = (t1 + t2) / 2.0;
+
+    if ( edge.EvTangent(t,mid_3d,mid_tang) ) {
+	ON_Line line3d(start_3d, end_3d);
+	double dist3d;
+	if ((line3d.Length() > max_dist)
+		|| ((dist3d=mid_3d.DistanceTo(line3d.ClosestPointTo(mid_3d))) > within_dist + ON_ZERO_TOLERANCE)
+		|| (((start_tang * end_tang) < cos_within_ang - ON_ZERO_TOLERANCE) && (dist3d > min_dist + ON_ZERO_TOLERANCE))) {
+	    getEdgePoints(edge, t1, start_3d, start_tang, t, mid_3d, mid_tang, min_dist, max_dist, within_dist, cos_within_ang, param_points);
+	    param_points[(t - range.m_t[0])/(range.m_t[1] - range.m_t[0])] = new ON_3dPoint(mid_3d);
+	    getEdgePoints(edge, t, mid_3d, mid_tang, t2, end_3d, end_tang, min_dist, max_dist, within_dist, cos_within_ang, param_points);
+	}
+    }
+
+}
+
+std::map<double, ON_3dPoint *> *getEdgePoints(ON_BrepEdge &edge,
+        fastf_t max_dist, const struct rt_tess_tol *ttol,
+        const struct bn_tol *tol, const struct rt_view_info *UNUSED(info))
+{
+    std::map<double,ON_3dPoint *> *param_points = NULL;
+    fastf_t min_dist, within_dist, cos_within_ang;
+
+    double dist = 1000.0;
+#if 1
+    for(int eti = 0; eti < edge.TrimCount(); eti++) {
+	ON_BrepTrim *trim = edge.Trim(eti);
+
+	    ON_3dPoint min,max;
+
+	    if (eti == 0) {
+#ifdef BY_ADJACENT_SURFACES
+		const ON_Surface *s = trim->SurfaceOf();
+		ON_BrepFace *face = trim->Face();
+		bool bGrowBox = false;
+		for (int ti = 0; ti < face->Loop(0)->TrimCount(); ti++) {
+		    ON_BrepTrim *trim = face->Loop(0)->Trim(ti);
+		    trim->GetBoundingBox(min, max, bGrowBox);
+		    bGrowBox = true;
+		}
+		ON_Interval x_interval(min.x,max.x);
+		ON_Interval y_interval(min.y,max.y);
+		ON_Surface *s2 = s->Duplicate();
+		if ((s2->Trim(0,x_interval)) && (s2->Trim(1,y_interval))) {
+		    if (s2->GetBoundingBox(min,max,false)) {
+			dist = DIST_PT_PT(min,max);
+		    }
+		}
+#elif defined BY_FACE_SIZE
+		ON_BrepFace *face = trim->Face();
+		if (face->GetBoundingBox(min,max,false)) {
+		    dist = DIST_PT_PT(min,max);
+		}
+#elif defined BY_BREP_SIZE
+		ON_Brep *brep = trim->Brep();
+		ON_BoundingBox tight_bbox;
+		if (brep->GetTightBoundingBox(tight_bbox)) {
+		    dist = DIST_PT_PT(tight_bbox.m_min,tight_bbox.m_max);
+		}
+#elif defined BY_LOOP_SIZE
+		bool bGrowBox = false;
+		ON_BrepFace *face = trim->Face();
+		for (int ti = 0; ti < face->Loop(0)->TrimCount(); ti++) {
+		    ON_BrepTrim *trim = face->Loop(0)->Trim(ti);
+		    trim->GetBoundingBox(min, max, bGrowBox);
+		    bGrowBox = true;
+		}
+		dist = DIST_PT_PT(min,max);
+#elif !defined BY_TRIM_SIZE
+		if (trim->GetBoundingBox(min,max,false)) {
+		    dist = DIST_PT_PT(min,max);
+		}
+#endif
+	    } else {
+#ifdef BY_ADJACENT_SURFACES
+		bool bGrowBox = false;
+		const ON_Surface *s = trim->SurfaceOf();
+		ON_BrepFace *face = trim->Face();
+		for (int ti = 0; ti < face->Loop(0)->TrimCount(); ti++) {
+		    ON_BrepTrim *trim = face->Loop(0)->Trim(ti);
+		    trim->GetBoundingBox(min, max, bGrowBox);
+		    bGrowBox = true;
+		}
+		ON_Interval x_interval(min.x,max.x);
+		ON_Interval y_interval(min.y,max.y);
+		ON_Surface *s2 = s->Duplicate();
+		if ((s2->Trim(0,x_interval)) && (s2->Trim(1,y_interval))) {
+		    if (s2->GetBoundingBox(min,max,false)) {
+			double surfacesize = DIST_PT_PT(min,max);
+			V_MIN(dist,surfacesize);
+		    }
+		}
+#elif defined BY_FACE_SIZE
+		ON_BrepFace *face = trim->Face();
+		if (face->GetBoundingBox(min,max,false)) {
+		    double facesize = DIST_PT_PT(min,max);
+		    V_MIN(dist,facesize);
+		}
+#elif defined BY_BREP_SIZE
+		ON_Brep *brep = trim->Brep();
+		if (brep->GetTightBoundingBox(tight_bbox)) {
+		    double brepsize = DIST_PT_PT(min,max);
+		    V_MIN(dist,brepsize);
+		}
+#elif defined BY_LOOP_SIZE
+		bool bGrowBox = false;
+		ON_BrepFace *face = trim->Face();
+		for (int ti = 0; ti < face->Loop(0)->TrimCount(); ti++) {
+		    ON_BrepTrim *trim = face->Loop(0)->Trim(ti);
+		    trim->GetBoundingBox(min, max, bGrowBox);
+		    bGrowBox = true;
+		}
+		V_MIN(dist,DIST_PT_PT(min,max));
+#elif !defined BY_TRIM_SIZE
+		if (trim->GetBoundingBox(min,max,false)) {
+		    double trimsize = DIST_PT_PT(min,max);
+		    V_MIN(dist,trimsize);
+		}
+#endif
+	    }
+    }
+#else
+    for(int ti = 0; ti < edge.TrimCount(); ti++) {
+	ON_BrepTrim *trim = edge.Trim(ti);
+	const ON_Surface *s = trim->SurfaceOf();
+	double width,height,diag;
+	if (s->GetSurfaceSize(&width, &height)) {
+	    ON_BrepFace *face = trim->Face();
+	    face->SetDomain(0, 0.0, width);
+	    face->SetDomain(1, 0.0, height);
+	    ON_Interval range;
+	    double trim_width, trim_height;
+	    bool bGrowBox = false;
+	    trim->GetBBox(&trim_width, &trim_height, bGrowBox);
+	    diag = sqrt(trim_width*trim_width + trim_height*trim_height);
+	    V_MIN(dist, diag);
+	}
+    }
+#endif
+
+    if (ttol->abs < tol->dist + ON_ZERO_TOLERANCE) {
+	min_dist = tol->dist;
+    } else {
+	min_dist = ttol->abs;
+    }
+
+    double rel = 0.0;
+    if (ttol->rel > 0.0 + ON_ZERO_TOLERANCE) {
+	rel = ttol->rel*dist;
+	if (max_dist < rel * 10.0) {
+	    max_dist = rel * 10.0;
+	}
+	within_dist = rel < min_dist ? min_dist : rel;
+	//if (ttol->abs < tol->dist + ON_ZERO_TOLERANCE) {
+	//    min_dist = within_dist;
+	//}
+    } else if (ttol->abs > 0.0 + ON_ZERO_TOLERANCE)  {
+	within_dist = min_dist;
+    } else {
+	within_dist = 0.01 * dist; // default to 1% minimum surface distance
+    }
+
+    if (ttol->norm > 0.0 + ON_ZERO_TOLERANCE) {
+	cos_within_ang = cos(ttol->norm);
+    } else {
+	cos_within_ang = cos(ON_PI/2.0);
+    }
+
+    if (edge.m_edge_user.p == NULL) {
+	param_points = new std::map<double,ON_3dPoint *>();
+	edge.m_edge_user.p = (void *)param_points;
+	ON_Interval range = edge.Domain();
+
+#ifdef BYKNOTS
+	int knotcnt = edge.SpanCount();
+	double *knots = new double[knotcnt + 1];
+	edge.GetSpanVector(knots);
+
+	//(*param_points)[0.0] = new ON_3dPoint(edge.PointAt(knots[0]));
+	for(int ki = 1; ki < knotcnt+1; ki++) {
+	    (*param_points)[(knots[ki-1]-range.m_t[0])/(range.m_t[1] - range.m_t[0])] = new ON_3dPoint(edge.PointAt(knots[ki-1]));
+	    getEdgePoints(edge, knots[ki-1], knots[ki], min_dist, within_dist, cos_within_ang, *param_points);
+	}
+	(*param_points)[1.0] = new ON_3dPoint(edge.PointAt(knots[knotcnt]));
+	delete [] knots;
+#else
+	if (edge.IsClosed()) {
+	    ON_3dPoint start_3d, mid_3d, end_3d;
+	    ON_3dVector start_tang, mid_tang, end_tang;
+	    double mid_range = (range.m_t[0] + range.m_t[1])/2.0;
+
+	    if ( edge.EvTangent(range.m_t[0],start_3d,start_tang)
+		    && edge.EvTangent(mid_range,mid_3d,mid_tang)
+		    && edge.EvTangent(range.m_t[1],end_3d,end_tang) ) {
+		(*param_points)[0.0] = new ON_3dPoint(edge.PointAt(range.m_t[0]));
+		getEdgePoints(edge, range.m_t[0], start_3d, start_tang, mid_range, mid_3d, mid_tang, min_dist, max_dist, within_dist, cos_within_ang, *param_points);
+		(*param_points)[0.5] = new ON_3dPoint(edge.PointAt(mid_range));
+		getEdgePoints(edge, mid_range, mid_3d, mid_tang, range.m_t[1], end_3d, end_tang, min_dist, max_dist, within_dist, cos_within_ang, *param_points);
+		(*param_points)[1.0] = new ON_3dPoint(edge.PointAt(range.m_t[1]));
+	    }
+	} else {
+	    ON_3dPoint start_3d,end_3d;
+	    ON_3dVector start_tang,end_tang;
+	    if ( edge.EvTangent(range.m_t[0],start_3d,start_tang)
+	    	    && edge.EvTangent(range.m_t[1],end_3d,end_tang)) {
+		(*param_points)[0.0] = new ON_3dPoint(start_3d);
+		getEdgePoints(edge, range.m_t[0], start_3d, start_tang, range.m_t[1], end_3d, end_tang, min_dist, max_dist, within_dist, cos_within_ang, *param_points);
+		(*param_points)[1.0] = new ON_3dPoint(end_3d);
+	    }
+	}
+#endif
+    } else {
+	param_points = (std::map<double,ON_3dPoint *> *)edge.m_edge_user.p;
+    }
+
+    return param_points;
+}
+
 void getEdgePoints(const ON_BrepTrim &trim, fastf_t t1, ON_3dPoint &start_2d,
 	ON_3dVector &start_tang, ON_3dPoint &start_3d, ON_3dVector &start_norm,
 	fastf_t t2, ON_3dPoint &end_2d, ON_3dVector &end_tang,
@@ -3291,7 +3514,7 @@ surface_GetClosestPoint3dFirstOrderByRange(
 		// Subdivide and go again
 		///////////////////////////
 		notdone = false;
-		double distance =
+		distance =
 		        surface_GetClosestPoint3dFirstOrderSubdivision(surf, p,
 		                u_range, u_range.Mid(), v_range, v_range.Mid(),
 		                current_closest_dist, p2d, p3d, tol, level++);
@@ -3355,7 +3578,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 	double umid = surf->Domain(0).Mid();
 	int umid_index = u_spancnt/2;
 	for (int u_span_index = 0; u_span_index < u_spancnt + 1;u_span_index++) {
-	    if (uspan[u_span_index] == umid) {
+	    if (NEAR_EQUAL(uspan[u_span_index],umid,tol)) {
 		umid_index = u_span_index;
 		break;
 	    } else if (uspan[u_span_index] > umid) {
@@ -3375,7 +3598,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 	double vmid = surf->Domain(1).Mid();
 	int vmid_index = v_spancnt/2;
 	for (int v_span_index = 0; v_span_index < v_spancnt + 1;v_span_index++) {
-	    if (vspan[v_span_index] == vmid) {
+	    if (NEAR_EQUAL(vspan[v_span_index],vmid,tol)) {
 		vmid_index = v_span_index;
 		break;
 	    } else if (vspan[v_span_index] > vmid) {
@@ -3401,7 +3624,6 @@ bool surface_GetClosestPoint3dFirstOrder(
 			    uspan[u_span_index]);
 		    ON_Interval v_interval(vspan[v_span_index - 1],
 			    vspan[v_span_index]);
-		    double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
 		    double min_distance,max_distance;
 
 		    int level = 1;
@@ -3429,7 +3651,6 @@ bool surface_GetClosestPoint3dFirstOrder(
 				uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
 				vspan[v_span_index]);
-			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
 			double min_distance,max_distance;
 
 			int level = 1;
@@ -3455,7 +3676,6 @@ bool surface_GetClosestPoint3dFirstOrder(
 				uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
 				vspan[v_span_index]);
-			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
 			double min_distance,max_distance;
 
 			int level = 1;
@@ -3481,7 +3701,6 @@ bool surface_GetClosestPoint3dFirstOrder(
 				uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
 				vspan[v_span_index]);
-			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
 			double min_distance,max_distance;
 
 			int level = 1;
@@ -3507,7 +3726,6 @@ bool surface_GetClosestPoint3dFirstOrder(
 				uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
 				vspan[v_span_index]);
-			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
 			double min_distance,max_distance;
 
 			int level = 1;
@@ -3534,7 +3752,6 @@ bool surface_GetClosestPoint3dFirstOrder(
 				uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
 				vspan[v_span_index]);
-			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
 			double min_distance,max_distance;
 
 			int level = 1;
@@ -3560,7 +3777,6 @@ bool surface_GetClosestPoint3dFirstOrder(
 				uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
 				vspan[v_span_index]);
-			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
 			double min_distance,max_distance;
 
 			int level = 1;
@@ -3586,7 +3802,6 @@ bool surface_GetClosestPoint3dFirstOrder(
 				uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
 				vspan[v_span_index]);
-			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
 			double min_distance,max_distance;
 
 			int level = 1;
@@ -3612,7 +3827,6 @@ bool surface_GetClosestPoint3dFirstOrder(
 				uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
 				vspan[v_span_index]);
-			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
 			double min_distance,max_distance;
 
 			int level = 1;
@@ -3641,7 +3855,6 @@ bool surface_GetClosestPoint3dFirstOrder(
 				uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
 				vspan[v_span_index]);
-			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
 			double min_distance,max_distance;
 
 			int level = 1;
@@ -3667,7 +3880,6 @@ bool surface_GetClosestPoint3dFirstOrder(
 				uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
 				vspan[v_span_index]);
-			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
 			double min_distance,max_distance;
 
 			int level = 1;
@@ -3693,7 +3905,6 @@ bool surface_GetClosestPoint3dFirstOrder(
 				uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
 				vspan[v_span_index]);
-			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
 			double min_distance,max_distance;
 
 			int level = 1;
@@ -3719,7 +3930,6 @@ bool surface_GetClosestPoint3dFirstOrder(
 				uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
 				vspan[v_span_index]);
-			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
 			double min_distance,max_distance;
 
 			int level = 1;
@@ -3746,7 +3956,6 @@ bool surface_GetClosestPoint3dFirstOrder(
 				uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
 				vspan[v_span_index]);
-			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
 			double min_distance,max_distance;
 
 			int level = 1;
@@ -3772,7 +3981,6 @@ bool surface_GetClosestPoint3dFirstOrder(
 				uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
 				vspan[v_span_index]);
-			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
 			double min_distance,max_distance;
 
 			int level = 1;
@@ -3798,7 +4006,6 @@ bool surface_GetClosestPoint3dFirstOrder(
 				uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
 				vspan[v_span_index]);
-			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
 			double min_distance,max_distance;
 
 			int level = 1;
@@ -3824,7 +4031,6 @@ bool surface_GetClosestPoint3dFirstOrder(
 				uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
 				vspan[v_span_index]);
-			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
 			double min_distance,max_distance;
 
 			int level = 1;
@@ -3853,7 +4059,6 @@ bool surface_GetClosestPoint3dFirstOrder(
 				uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
 				vspan[v_span_index]);
-			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
 			double min_distance,max_distance;
 
 			int level = 1;
@@ -3879,7 +4084,6 @@ bool surface_GetClosestPoint3dFirstOrder(
 				uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
 				vspan[v_span_index]);
-			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
 			double min_distance,max_distance;
 
 			int level = 1;
@@ -3905,7 +4109,6 @@ bool surface_GetClosestPoint3dFirstOrder(
 				uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
 				vspan[v_span_index]);
-			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
 			double min_distance,max_distance;
 
 			int level = 1;
@@ -3931,7 +4134,6 @@ bool surface_GetClosestPoint3dFirstOrder(
 				uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
 				vspan[v_span_index]);
-			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
 			double min_distance,max_distance;
 
 			int level = 1;
@@ -3958,7 +4160,6 @@ bool surface_GetClosestPoint3dFirstOrder(
 				uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
 				vspan[v_span_index]);
-			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
 			double min_distance,max_distance;
 
 			int level = 1;
@@ -3984,7 +4185,6 @@ bool surface_GetClosestPoint3dFirstOrder(
 				uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
 				vspan[v_span_index]);
-			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
 			double min_distance,max_distance;
 
 			int level = 1;
@@ -4010,7 +4210,6 @@ bool surface_GetClosestPoint3dFirstOrder(
 				uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
 				vspan[v_span_index]);
-			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
 			double min_distance,max_distance;
 
 			int level = 1;
@@ -4036,7 +4235,6 @@ bool surface_GetClosestPoint3dFirstOrder(
 				uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
 				vspan[v_span_index]);
-			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
 			double min_distance,max_distance;
 
 			int level = 1;
@@ -4065,7 +4263,6 @@ bool surface_GetClosestPoint3dFirstOrder(
 				uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
 				vspan[v_span_index]);
-			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
 			double min_distance,max_distance;
 
 			int level = 1;
@@ -4091,7 +4288,6 @@ bool surface_GetClosestPoint3dFirstOrder(
 				uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
 				vspan[v_span_index]);
-			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
 			double min_distance,max_distance;
 
 			int level = 1;
@@ -4117,7 +4313,6 @@ bool surface_GetClosestPoint3dFirstOrder(
 				uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
 				vspan[v_span_index]);
-			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
 			double min_distance,max_distance;
 
 			int level = 1;
@@ -4143,7 +4338,6 @@ bool surface_GetClosestPoint3dFirstOrder(
 				uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
 				vspan[v_span_index]);
-			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
 			double min_distance,max_distance;
 
 			int level = 1;
@@ -4170,7 +4364,6 @@ bool surface_GetClosestPoint3dFirstOrder(
 				uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
 				vspan[v_span_index]);
-			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
 			double min_distance,max_distance;
 
 			int level = 1;
@@ -4196,7 +4389,6 @@ bool surface_GetClosestPoint3dFirstOrder(
 				uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
 				vspan[v_span_index]);
-			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
 			double min_distance,max_distance;
 
 			int level = 1;
@@ -4222,7 +4414,6 @@ bool surface_GetClosestPoint3dFirstOrder(
 				uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
 				vspan[v_span_index]);
-			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
 			double min_distance,max_distance;
 
 			int level = 1;
@@ -4248,7 +4439,6 @@ bool surface_GetClosestPoint3dFirstOrder(
 				uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
 				vspan[v_span_index]);
-			double distance = DBL_MAX; //surface_GetClosestPoint3dFirstOrderByRange(surf,p,u_interval,v_interval,working_p2d,working_p3d,tol);
 			double min_distance,max_distance;
 
 			int level = 1;
@@ -4339,7 +4529,7 @@ bool trim_GetClosestPoint3dFirstOrder(
 	    bool special = true;
 	    if (special) return special;
 #endif
-#if 1
+#if 0
 	    double test2d_dist = p2d.DistanceTo(origp2d);
 	    if ((!surf->IsAtSingularity(p2d.x,p2d.y,false)) && ((test2d_dist > u_interval.Length()/2.0) || (test2d_dist > v_interval.Length()/2.0))) { // !NEAR_ZERO(test2d_dist,tol)) {
 		std::cerr << "2d First Order failed:" << std::endl;
@@ -4350,7 +4540,7 @@ bool trim_GetClosestPoint3dFirstOrder(
 		std::cerr << "     p3d: < " << p3d.x << ", " << p3d.y << ", " << p3d.z << " >" << std::endl;
 	    }
 #endif
-#if 1
+#if 0
 			    double test3d_dist = p.DistanceTo(p3d);
 			    if (!NEAR_ZERO(test3d_dist,tol)) {
 				////////////////////
@@ -4570,7 +4760,7 @@ void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
 	for (int lti = 0; lti < loop->TrimCount(); lti++) {
 	    ON_BrepTrim *trim = loop->Trim(lti);
 	    ON_Interval d = trim->Domain();
-	    //ON_BrepEdge *edge = trim->Edge();
+	    ON_BrepEdge *edge = trim->Edge();
 #if 1
 		if ((lti > dh_lti) || (lti < dl_lti))
 		continue;
@@ -4589,135 +4779,271 @@ void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
 		continue;
 	    }
 
-	    if (!trim->m_trim_user.p) {
-		(void) getEdgePoints(*trim, max_dist, ttol, tol, info);
+	    std::map<double, ON_3dPoint *> *param_points3d = NULL;
+	    if (watertight) {
+		if (!edge->m_edge_user.p) {
+		    (void) getEdgePoints(*edge, max_dist, ttol, tol, info);
+		}
+		if (edge->m_edge_user.p) {
+		    param_points3d = (std::map<double, ON_3dPoint *> *) edge->m_edge_user.p;
+		}
+	    } else {
+		if (!trim->m_trim_user.p) {
+		    (void) getEdgePoints(*trim, max_dist, ttol, tol, info);
+		}
+		if (trim->m_trim_user.p) {
+		    param_points3d = (std::map<double, ON_3dPoint *> *) trim->m_trim_user.p;
+		}
 	    }
-	    if (trim->m_trim_user.p) {
-		std::map<double, ON_3dPoint *> *param_points3d = (std::map<
-			double, ON_3dPoint *> *) trim->m_trim_user.p;
-
+	    if (param_points3d != NULL) {
 		ON_3dPoint boxmin;
 		ON_3dPoint boxmax;
 
 		if (trim->GetBoundingBox(boxmin, boxmax, false)) {
-		    double t0, t1;
-		    trim->GetDomain(&t0, &t1);
-		    ON_2dPoint p2d = trim->PointAtStart();
-		    std::map<double, ON_3dPoint*>::const_iterator i;
-		    int count=0;
-		    for (i = param_points3d->begin();
-			    i != param_points3d->end();) {
-			double t = (*i).first;
-			ON_3dPoint *p3d = (*i).second;
-			p2d = trim->PointAt(d.ParameterAt(t));
-			if (++i == param_points3d->end())
-			    continue;
+		    if (!trim->m_bRev3d || !watertight) {
+			double t0, t1;
+			trim->GetDomain(&t0, &t1);
+			ON_2dPoint p2d = trim->PointAtStart();
+			std::map<double, ON_3dPoint*>::const_iterator i;
+			int count=0;
+			for (i = param_points3d->begin();
+				i != param_points3d->end();) {
+			    double t = (*i).first;
+			    ON_3dPoint *p3d = (*i).second;
+			    p2d = trim->PointAt(d.ParameterAt(t));
+			    if (++i == param_points3d->end())
+				continue;
 #define PULLBACK_TESTING
 #ifdef PULLBACK_TESTING
-			double tpercent = t;
-			t = d.ParameterAt(t);
-			ON_Interval interval = trim->Domain();
-			if (trim->Edge()->IsClosed()) {
-			    /*
-			    if (NEAR_EQUAL(t, 0.0, tol->dist_sq)) {
-				t = interval.m_t[0];
-				//interval.m_t[1] = interval.Mid();
-			    } else if (NEAR_EQUAL(t, 1.0, tol->dist_sq)) {
-				t = interval.m_t[1];
-				//interval.m_t[0] = interval.Mid();
-			    } else {
-				t = interval.Mid();
-			    }
-			    */
-			    if (t < interval.Mid()) {
-				t = interval.m_t[0];
-			    } else {
-				t = interval.m_t[1];
-			    }
-			} else {
-			    //t = interval.Mid();
-			    if (t < interval.Mid()) {
-				t = (interval.m_t[0] + interval.Mid())/2.0;
-			    } else {
-				t = (interval.Mid() + interval.m_t[1])/2.0;
-			    }
-			}
-			bool print = false;
-			ON_2dPoint new2d = p2d;
-			if (trim_GetClosestPoint3dFirstOrder(*trim, *p3d, new2d,
-			        t, tol->dist, &interval, print)) {
+			    double tpercent = t;
+			    t = d.ParameterAt(t);
+			    ON_Interval interval = trim->Domain();
 #if 0
-			    bool special = true;
-			    count++;
-			    if (special && (count > 3)) return;
-#endif
-			    ON_2dPoint tp2d = trim->PointAt(t);
-			    ON_3dPoint tp3d = s->PointAt(tp2d.x, tp2d.y);
-			    ON_3dPoint tp3d2 = s->PointAt(p2d.x, p2d.y);
-			    ON_3dPoint tp3d3 = s->PointAt(new2d.x, new2d.y);
-			    /*
-			     if (!NEAR_EQUAL(t,(t0 + (t1 - t0) * tpercent),tol->dist_sq)) {
-			     std::cerr << "First Order failed for Face - " << fi << std::endl;
-			     std::cerr << "     tpercent: " << tpercent << " (li=" << li << ")" << " (lti=" << lti << ")"<< std::endl;
-			     std::cerr << "     found: " << t << " should be: " << (t0 + (t1 - t0) * tpercent) << ")" << std::endl;
-			     std::cerr << "     p3d: < " << p3d->x << ", " << p3d->y << ", " << p3d->z << " >" << std::endl;
-			     std::cerr << "     tp3d: < " << tp3d.x << ", " << tp3d.y << ", " << tp3d.z << " >" << std::endl;
-			     std::cerr << "     p2d: < " << p2d.x << ", " << p2d.y << ", 0 >" << std::endl;
-			     std::cerr << "     tp2d: < " << tp2d.x << ", " << tp2d.y << ", 0 >" << std::endl;
-			     }
-			     */
-#if 0
-			     if (!NEAR_ZERO(tp2d.DistanceTo(p2d),tol->dist)) {
-			     std::cerr << "2d First Order failed for Face - " << fi << std::endl;
-			     std::cerr << "     tp2d.DistanceTo(p2d): " << tp2d.DistanceTo(p2d) << std::endl;
-			     std::cerr << "     p2d: < " << p2d.x << ", " << p2d.y << ", 0 >" << std::endl;
-			     std::cerr << "     tp2d: < " << tp2d.x << ", " << tp2d.y << ", 0 >" << std::endl;
-			     }
-#endif
-#if 0
-			     double test_dist = p3d->DistanceTo(tp3d);
-			    double test_dist2 = p3d->DistanceTo(tp3d2);
-			    double test_dist3 = p3d->DistanceTo(tp3d3);
-			    if (!NEAR_ZERO(test_dist,tol->dist)) {
-				////////////////////
-				int prec = std::cerr.precision();
-				std::cerr.precision(15);
-				////////////////////
-				std::cerr << "First Order failed for Face - "
-				        << fi << std::endl;
-				std::cerr << "     test_dist: " << test_dist << std::endl;
-				std::cerr << "     tpercent: " << tpercent
-				        << " (li=" << li << ")" << " (lti="
-				        << lti << ")" << std::endl;
-				std::cerr << "     found: " << t
-				        << " should be: "
-				        << (t0 + (t1 - t0) * tpercent) << ")"
-				        << std::endl;
-				std::cerr << "     p3d: < " << p3d->x << ", "
-				        << p3d->y << ", " << p3d->z << " >"
-				        << std::endl;
-				std::cerr << "     tp3d: < " << tp3d.x << ", "
-				        << tp3d.y << ", " << tp3d.z << " >"
-				        << std::endl;
-				std::cerr << "     p2d: < " << p2d.x << ", "
-				        << p2d.y << ", 0 >" << std::endl;
-				std::cerr << "     tp2d: < " << tp2d.x << ", "
-				        << tp2d.y << ", 0 >" << std::endl;
-				std::cerr.precision(prec);
+			    if (trim->Edge()->IsClosed()) {
+				/*
+				if (NEAR_EQUAL(t, 0.0, tol->dist_sq)) {
+				    t = interval.m_t[0];
+				    //interval.m_t[1] = interval.Mid();
+				} else if (NEAR_EQUAL(t, 1.0, tol->dist_sq)) {
+				    t = interval.m_t[1];
+				    //interval.m_t[0] = interval.Mid();
+				} else {
+				    t = interval.Mid();
+				}
+				*/
+				if (t < interval.Mid()) {
+				    t = interval.m_t[0];
+				} else {
+				    t = interval.m_t[1];
+				}
+			    } else {
+				//t = interval.Mid();
+				if (t < interval.Mid()) {
+				    t = (interval.m_t[0] + interval.Mid())/2.0;
+				} else {
+				    t = (interval.Mid() + interval.m_t[1])/2.0;
+				}
 			    }
 #endif
-			} else {
-			    p2d = trim->PointAt(t);
-			}
+			    bool print = false;
+			    ON_2dPoint p2dorig = p2d;
+			    if (trim_GetClosestPoint3dFirstOrder(*trim, *p3d, p2d,
+				    t, tol->dist, &interval, print)) {
+#if 0
+				bool special = true;
+				count++;
+				if (special && (count > 3)) return;
+#endif
+				ON_2dPoint tp2d = trim->PointAt(t);
+				ON_3dPoint tp3d = s->PointAt(tp2d.x, tp2d.y);
+				ON_3dPoint tp3d2 = s->PointAt(p2d.x, p2d.y);
+				ON_3dPoint tp3d3 = s->PointAt(p2dorig.x, p2dorig.y);
+				/*
+				 if (!NEAR_EQUAL(t,(t0 + (t1 - t0) * tpercent),tol->dist_sq)) {
+				 std::cerr << "First Order failed for Face - " << fi << std::endl;
+				 std::cerr << "     tpercent: " << tpercent << " (li=" << li << ")" << " (lti=" << lti << ")"<< std::endl;
+				 std::cerr << "     found: " << t << " should be: " << (t0 + (t1 - t0) * tpercent) << ")" << std::endl;
+				 std::cerr << "     p3d: < " << p3d->x << ", " << p3d->y << ", " << p3d->z << " >" << std::endl;
+				 std::cerr << "     tp3d: < " << tp3d.x << ", " << tp3d.y << ", " << tp3d.z << " >" << std::endl;
+				 std::cerr << "     p2d: < " << p2d.x << ", " << p2d.y << ", 0 >" << std::endl;
+				 std::cerr << "     tp2d: < " << tp2d.x << ", " << tp2d.y << ", 0 >" << std::endl;
+				 }
+				 */
+#if 0
+				 if (!NEAR_ZERO(tp2d.DistanceTo(p2d),tol->dist)) {
+				 std::cerr << "2d First Order failed for Face - " << fi << std::endl;
+				 std::cerr << "     tp2d.DistanceTo(p2d): " << tp2d.DistanceTo(p2d) << std::endl;
+				 std::cerr << "     p2d: < " << p2d.x << ", " << p2d.y << ", 0 >" << std::endl;
+				 std::cerr << "     tp2d: < " << tp2d.x << ", " << tp2d.y << ", 0 >" << std::endl;
+				 }
+#endif
+#if 0
+				 double test_dist = p3d->DistanceTo(tp3d);
+				double test_dist2 = p3d->DistanceTo(tp3d2);
+				double test_dist3 = p3d->DistanceTo(tp3d3);
+				if (!NEAR_ZERO(test_dist,tol->dist)) {
+				    ////////////////////
+				    int prec = std::cerr.precision();
+				    std::cerr.precision(15);
+				    ////////////////////
+				    std::cerr << "First Order failed for Face - "
+					    << fi << std::endl;
+				    std::cerr << "     test_dist: " << test_dist << std::endl;
+				    std::cerr << "     tpercent: " << tpercent
+					    << " (li=" << li << ")" << " (lti="
+					    << lti << ")" << std::endl;
+				    std::cerr << "     found: " << t
+					    << " should be: "
+					    << (t0 + (t1 - t0) * tpercent) << ")"
+					    << std::endl;
+				    std::cerr << "     p3d: < " << p3d->x << ", "
+					    << p3d->y << ", " << p3d->z << " >"
+					    << std::endl;
+				    std::cerr << "     tp3d: < " << tp3d.x << ", "
+					    << tp3d.y << ", " << tp3d.z << " >"
+					    << std::endl;
+				    std::cerr << "     p2d: < " << p2d.x << ", "
+					    << p2d.y << ", 0 >" << std::endl;
+				    std::cerr << "     tp2d: < " << tp2d.x << ", "
+					    << tp2d.y << ", 0 >" << std::endl;
+				    std::cerr.precision(prec);
+				}
+#endif
+			    } else {
+				p2d = trim->PointAt(t);
+			    }
 #else
-			p2d = trim->PointAt(t0 + (t1 - t0) * t);
+			    p2d = trim->PointAt(t0 + (t1 - t0) * t);
 #endif
 
-			// map point to last entry to 3d point
-			p2t::Point *p = new p2t::Point(p2d.x, p2d.y);
-			polyline.push_back(p);
-			on_loop_points.Append(p2d);
-			(*pointmap)[p] = p3d;
+			    // map point to last entry to 3d point
+			    p2t::Point *p = new p2t::Point(p2d.x, p2d.y);
+			    polyline.push_back(p);
+			    on_loop_points.Append(p2d);
+			    (*pointmap)[p] = p3d;
+			}
+		    } else {
+			double t0, t1;
+			trim->GetDomain(&t0, &t1);
+			ON_2dPoint p2d = trim->PointAtStart();
+			std::map<double, ON_3dPoint*>::const_reverse_iterator i;
+			int count=0;
+			for (i = param_points3d->rbegin();
+				i != param_points3d->rend();) {
+			    double t = 1.0 - (*i).first;
+			    ON_3dPoint *p3d = (*i).second;
+			    p2d = trim->PointAt(d.ParameterAt(t));
+			    if (++i == param_points3d->rend())
+				continue;
+#define PULLBACK_TESTING
+#ifdef PULLBACK_TESTING
+			    double tpercent = t;
+			    t = d.ParameterAt(t);
+			    ON_Interval interval = trim->Domain();
+#if 0
+			    if (trim->Edge()->IsClosed()) {
+				/*
+				if (NEAR_EQUAL(t, 0.0, tol->dist_sq)) {
+				    t = interval.m_t[0];
+				    //interval.m_t[1] = interval.Mid();
+				} else if (NEAR_EQUAL(t, 1.0, tol->dist_sq)) {
+				    t = interval.m_t[1];
+				    //interval.m_t[0] = interval.Mid();
+				} else {
+				    t = interval.Mid();
+				}
+				*/
+				if (t < interval.Mid()) {
+				    t = interval.m_t[0];
+				} else {
+				    t = interval.m_t[1];
+				}
+			    } else {
+				//t = interval.Mid();
+				if (t < interval.Mid()) {
+				    t = (interval.m_t[0] + interval.Mid())/2.0;
+				} else {
+				    t = (interval.Mid() + interval.m_t[1])/2.0;
+				}
+			    }
+#endif
+			    bool print = false;
+			    ON_2dPoint p2dorig = p2d;
+			    if (trim_GetClosestPoint3dFirstOrder(*trim, *p3d, p2d,
+				    t, tol->dist, &interval, print)) {
+#if 0
+				bool special = true;
+				count++;
+				if (special && (count > 3)) return;
+#endif
+				ON_2dPoint tp2d = trim->PointAt(t);
+				ON_3dPoint tp3d = s->PointAt(tp2d.x, tp2d.y);
+				ON_3dPoint tp3d2 = s->PointAt(p2d.x, p2d.y);
+				ON_3dPoint tp3d3 = s->PointAt(p2dorig.x, p2dorig.y);
+				/*
+				 if (!NEAR_EQUAL(t,(t0 + (t1 - t0) * tpercent),tol->dist_sq)) {
+				 std::cerr << "First Order failed for Face - " << fi << std::endl;
+				 std::cerr << "     tpercent: " << tpercent << " (li=" << li << ")" << " (lti=" << lti << ")"<< std::endl;
+				 std::cerr << "     found: " << t << " should be: " << (t0 + (t1 - t0) * tpercent) << ")" << std::endl;
+				 std::cerr << "     p3d: < " << p3d->x << ", " << p3d->y << ", " << p3d->z << " >" << std::endl;
+				 std::cerr << "     tp3d: < " << tp3d.x << ", " << tp3d.y << ", " << tp3d.z << " >" << std::endl;
+				 std::cerr << "     p2d: < " << p2d.x << ", " << p2d.y << ", 0 >" << std::endl;
+				 std::cerr << "     tp2d: < " << tp2d.x << ", " << tp2d.y << ", 0 >" << std::endl;
+				 }
+				 */
+#if 0
+				 if (!NEAR_ZERO(tp2d.DistanceTo(p2d),tol->dist)) {
+				 std::cerr << "2d First Order failed for Face - " << fi << std::endl;
+				 std::cerr << "     tp2d.DistanceTo(p2d): " << tp2d.DistanceTo(p2d) << std::endl;
+				 std::cerr << "     p2d: < " << p2d.x << ", " << p2d.y << ", 0 >" << std::endl;
+				 std::cerr << "     tp2d: < " << tp2d.x << ", " << tp2d.y << ", 0 >" << std::endl;
+				 }
+#endif
+#if 0
+				 double test_dist = p3d->DistanceTo(tp3d);
+				double test_dist2 = p3d->DistanceTo(tp3d2);
+				double test_dist3 = p3d->DistanceTo(tp3d3);
+				if (!NEAR_ZERO(test_dist,tol->dist)) {
+				    ////////////////////
+				    int prec = std::cerr.precision();
+				    std::cerr.precision(15);
+				    ////////////////////
+				    std::cerr << "First Order failed for Face - "
+					    << fi << std::endl;
+				    std::cerr << "     test_dist: " << test_dist << std::endl;
+				    std::cerr << "     tpercent: " << tpercent
+					    << " (li=" << li << ")" << " (lti="
+					    << lti << ")" << std::endl;
+				    std::cerr << "     found: " << t
+					    << " should be: "
+					    << (t0 + (t1 - t0) * tpercent) << ")"
+					    << std::endl;
+				    std::cerr << "     p3d: < " << p3d->x << ", "
+					    << p3d->y << ", " << p3d->z << " >"
+					    << std::endl;
+				    std::cerr << "     tp3d: < " << tp3d.x << ", "
+					    << tp3d.y << ", " << tp3d.z << " >"
+					    << std::endl;
+				    std::cerr << "     p2d: < " << p2d.x << ", "
+					    << p2d.y << ", 0 >" << std::endl;
+				    std::cerr << "     tp2d: < " << tp2d.x << ", "
+					    << tp2d.y << ", 0 >" << std::endl;
+				    std::cerr.precision(prec);
+				}
+#endif
+			    } else {
+				p2d = trim->PointAt(t);
+			    }
+#else
+			    p2d = trim->PointAt(t0 + (t1 - t0) * t);
+#endif
+
+			    // map point to last entry to 3d point
+			    p2t::Point *p = new p2t::Point(p2d.x, p2d.y);
+			    polyline.push_back(p);
+			    on_loop_points.Append(p2d);
+			    (*pointmap)[p] = p3d;
+			}
 		    }
 		}
 	    }
@@ -4748,7 +5074,15 @@ void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
 	} else {
 	    return;
 	}
-
+#if DEBUG_MY
+	std::vector<p2t::Point*>::const_iterator i;
+	int count = 0;
+	for (i = polyline.begin(); i != polyline.end(); i++) {
+	    p2t::Point* cp = *i;
+	    std::cerr << "in p" << count++ << " sph " <<  cp->x << " " << cp->y << " " << 0.0 << " 1.5" << std::endl;
+	}
+	return;
+#endif
 	if (li == 0) {
 	    cdt = new p2t::CDT(polyline);
 	} else {
