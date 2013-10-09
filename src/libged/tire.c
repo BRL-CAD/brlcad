@@ -83,7 +83,7 @@ show_help(struct ged *gedp, const char *name)
     bu_vls_printf(gedp->ged_result_str, "\t-s <radius>\n\t\tSpecify radius of the maximum sidewall width, in mm\n");
     bu_vls_printf(gedp->ged_result_str, "\t-t <type>\n\t\tGenerate tread with tread type as specified\n");
     bu_vls_printf(gedp->ged_result_str, "\t-u <thickness>\n\t\tSpecify tire thickness in mm\n");
-    bu_vls_printf(gedp->ged_result_str, "\t-w <0|1>\n\t\tWhether to include the wheel or not\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-w <0|1>\n\t\tWhether to include the wheel or not (default is 1, yes)\n");
 
     bu_vls_free(&str);
     return;
