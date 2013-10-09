@@ -241,7 +241,7 @@ constraint_help(void *datap, int argc, const char *argv[])
     bu_vls_printf(gedp->ged_result_str, "\tparallel {{edge edge}|{edge face}|{face face}|{object object}}\n");
     bu_vls_printf(gedp->ged_result_str, "\t\tspecified entities are parallel to each other\n");
     bu_vls_printf(gedp->ged_result_str, "\tperpendicular {{edge edge}|{edge face}|{face face}|{object object}}\n");
-    bu_vls_printf(gedp->ged_result_str, "\t\tspecified entities are perpendicular (90 degrees angle to each other\n");
+    bu_vls_printf(gedp->ged_result_str, "\t\tspecified entities are perpendicular (90 degrees angle to each other)\n");
     bu_vls_printf(gedp->ged_result_str, "\thorizontal {{point point}|edge|vector}\n");
     bu_vls_printf(gedp->ged_result_str, "\t\tspecified entities have X/Y values all set to match each other\n");
     bu_vls_printf(gedp->ged_result_str, "\tvertical {{point point}|edge|vector}\n");
