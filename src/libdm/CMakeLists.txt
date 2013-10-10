@@ -55,7 +55,7 @@ if(BRLCAD_ENABLE_TK AND NOT WIN32)
 endif(BRLCAD_ENABLE_TK AND NOT WIN32)
 
 if(BRLCAD_ENABLE_QT)
-  BRLCAD_CHECK_CXX_FLAG(Wno-float-equal)
+  CHECK_CXX_FLAG(Wno-float-equal)
 
   list(APPEND libdm_DEFINES DM_QT)
   set(dmqt_srcs dm-qt.cpp)
