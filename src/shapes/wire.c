@@ -147,9 +147,9 @@ main(int argc, char *argv[])
     printf("Enter mged file name (25 char max).\n\t");
     (void)fflush(stdout);
     ret = scanf("%26s", filemged);
-    if (ret == 0) {
+    if (ret == 0)
 	perror("scanf");
-    }
+
     if (BU_STR_EQUAL(filemged, ""))
 	bu_strlcpy(filemged, "wire.g", sizeof(filemged));
 
@@ -179,7 +179,7 @@ main(int argc, char *argv[])
     /* sanitize user-provided/taintable inputs */
     if (scanseg < 1.0)
 	numseg = 1.0;
-    if (scanseg > (float)MAXWIRESEG)
+    else if (scanseg > (float)MAXWIRESEG)
 	numseg = (float)MAXWIRESEG;
 
     /* Enter starting & ending points of segments & radi. */
@@ -384,9 +384,8 @@ main(int argc, char *argv[])
 
 	(void)mk_addmember(solcyl, &comb.l, NULL, WMOP_INTERSECT);
 
-	if (i < (numseg - 1)) {
+	if (i < (numseg - 1))
 	    (void)mk_addmember(solsub1, &comb.l, NULL, WMOP_SUBTRACT);
-	}
 
 	mk_lfcomb(fpw, regcyl, &comb, 1);
     }
