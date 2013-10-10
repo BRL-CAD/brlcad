@@ -19,11 +19,11 @@
  */
 /** @file shapes/window_frame.c
  *
- * Program to make a window frame using libwdb.  The objects will be
- * in millimeters.  The window frames are composed of four arb8s and *
- * eight cylinders.  The front of the window frame is centered at *
- * (0, 0, 0) and extends in the negative x-direction the depth of the
- * * window frame.
+ * Program to make a window frame using libwdb.  The objects will be in
+ * millimeters.  The window frames are composed of four arb8s and eight
+ * cylinders.  The front of the window frame is centered at (0, 0, 0) and
+ * extends in the negative x-direction the depth of the window frame.
+ *
  */
 
 #include "common.h"
@@ -38,6 +38,8 @@
 #include "raytrace.h"
 #include "wdb.h"
 
+static const char explain[]   = "This program constructs a windowframe with all\n\
+edges and corners rounded.\n";
 
 int
 main(int argc, char **argv)
@@ -61,7 +63,7 @@ main(int argc, char **argv)
     char solnam[9];		/* Solid name. */
     char regnam[8];		/* Region name. */
     char grpnam[5];		/* Group name. */
-    int numwin = 0;		/* Number of windows to be created (<=26). */
+    int numwin = 0;		/* Number of windowframess to be created (<=26). */
 
     struct wmember comb;	/* Used to make regions. */
     struct wmember comb1;	/* Used to make groups. */
@@ -97,7 +99,8 @@ main(int argc, char **argv)
     if (argc == 1) {
 	/* START # 3 */
 
-	/* Print info about the window. */
+	/* Print info about the windowframe. */
+	printf("\n%s\n",explain);
 	printf("\nThe window frames are composed of 4 arb8s and 8\n");
 	printf("cylinders.  The front of the window frame is centered\n");
 	printf("at (0, 0, 0) and extends in the negative x-direction\n");
@@ -107,9 +110,8 @@ main(int argc, char **argv)
 	printf("Enter the mged file to be created (25 char max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%26s", filemged);
-	if (ret == 0) {
+	if (ret == 0)
 	    perror("scanf");
-	}
 	if (BU_STR_EQUAL(filemged, ""))
 	    bu_strlcpy(filemged, "window_frame.g", sizeof(filemged));
 
@@ -121,9 +123,9 @@ main(int argc, char **argv)
 	    perror("scanf");
 	    numwin = 1;
 	}
-	if (numwin < 1)
+	else if (numwin < 1)
 	    numwin = 1;
-	if (numwin > 26)
+	else if (numwin > 26)
 	    numwin = 26;
 
 	/* Find the dimensions of the window frames. */
@@ -168,18 +170,26 @@ main(int argc, char **argv)
     else {
 	/* START # 4 */
 	/* List options. */
+	/* -h or -? help page */
 	/* -fname - name = mged file name. */
 	/* -n# - # = number of window frames. */
-	/* -h# - # = height of window frame in mm. */
+	/* -H# - # = height of window frame in mm. */
 	/* -w# - # = width of window frame in mm. */
 	/* -d# - # = depth of window frame in mm. */
 	/* -r# - # = radius of window frame corner in mm. */
 	/* -i# - # = width of frame itself in mm. */
 
-	for (i = 1; i < argc; i++) {
+	for (i=1; i<argc; i++) {
 	    /* START # 5 */
 	    /* Put argument in temporary character string. */
 	    temp = argv[i];
+
+	    if (temp[1] == 'h' || temp[1] == '?') {
+	    	fprintf(stderr,"%s",explain);
+		fprintf(stderr,"Usage: windowframe -fname [-f mged_file_name] [-n #_of_windowframes] [-H windowframe_height]\n");
+		fprintf(stderr,"       [-w windowframe_width] [-d windowframe_depth] [-r radius_of_corners][-i width_of_frame_itself");
+		bu_exit(2,     "       (units of mm)\n");
+	    }
 
 	    /* -f - mged file. */
 	    if (temp[1] == 'f') {
@@ -211,7 +221,7 @@ main(int argc, char **argv)
 		if (temp[1] == 'n') {
 		    sscanf(temp1, "%d", &numwin);
 		    if (numwin > 26) numwin = 26;
-		} else if (temp[1] == 'h') {
+		} else if (temp[1] == 'H') {
 		    sscanf(temp1, "%lf", &hgt);
 		} else if (temp[1] == 'w') {
 		    sscanf(temp1, "%lf", &wid);
@@ -492,6 +502,7 @@ main(int argc, char **argv)
 
     /* Close file. */
     wdb_close(fpw);
+
     return 0;
 }							/* END # 1 */
 
