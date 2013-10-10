@@ -38,6 +38,8 @@
 #include "raytrace.h"
 #include "wdb.h"
 
+static const char explain[]   = "This program constructs a window with all\n\
+edges and corners rounded.\n";
 
 int
 main(int argc, char **argv)
@@ -95,7 +97,8 @@ main(int argc, char **argv)
 	/* START # 3 */
 
 	/* Print info about the window. */
-	printf("\nThe windows are composed of 2 arb8s and 4 cylinders.\n");
+	printf("\n%s\n",explain);
+	printf("The windows are composed of 2 arb8s and 4 cylinders.\n");
 	printf("The front of the window is centered at (0, 0, 0) and\n");
 	printf("extends in the negative x-direction the depth of the\n");
 	printf("window.\n\n");
@@ -104,9 +107,8 @@ main(int argc, char **argv)
 	printf("Enter the mged file to be created (25 char max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%26s", filemged);
-	if (ret == 0) {
+	if (ret == 0)
 	    perror("scanf");
-	}
 	if (BU_STR_EQUAL(filemged, ""))
 	    bu_strlcpy(filemged, "window.g", sizeof(filemged));
 
@@ -118,9 +120,9 @@ main(int argc, char **argv)
 	    perror("scanf");
 	    numwin = 1;
 	}
-	if (numwin < 1)
+	else if (numwin < 1)
 	    numwin = 1;
-	if (numwin > 26)
+	else if (numwin > 26)
 	    numwin = 26;
 
 	/* Find the dimensions of the windows. */
@@ -156,9 +158,10 @@ main(int argc, char **argv)
     else {
 	/* START # 4 */
 	/* List options. */
+	/* -h or -? help page */
 	/* -fname - name = mged file name. */
 	/* -n# - # = number of windows. */
-	/* -h# - # = height of window in mm. */
+	/* -H# - # = height of window in mm. */
 	/* -w# - # = width of window in mm. */
 	/* -d# - # = depth of window in mm. */
 	/* -r# - # = radius of window corner in mm. */
@@ -167,6 +170,13 @@ main(int argc, char **argv)
 	    /* START # 5 */
 	    /* Put argument in temporary character string. */
 	    temp = argv[i];
+
+	    if (temp[1] == 'h' || temp[1] == '?') {
+	    	fprintf(stderr,"%s",explain);
+		fprintf(stderr,"Usage: window -fname [-f mged_file_name] [-n #_of_windows] [-H window_height]\n");
+		fprintf(stderr,"       [-w window_width] [-d window_depth] [-r radius_of_corners]");
+		bu_exit(2,     "       (units of mm)\n");
+	    }
 
 	    /* -f - mged file. */
 	    if (temp[1] == 'f') {
@@ -198,7 +208,7 @@ main(int argc, char **argv)
 		if (temp[1] == 'n') {
 		    sscanf(temp1, "%d", &numwin);
 		    if (numwin > 26) numwin = 26;
-		} else if (temp[1] == 'h') {
+		} else if (temp[1] == 'H') {
 		    sscanf(temp1, "%lf", &hgt);
 		} else if (temp[1] == 'w') {
 		    sscanf(temp1, "%lf", &wid);
