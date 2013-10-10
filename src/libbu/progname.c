@@ -87,6 +87,12 @@ bu_argv0_full_path(void)
 const char *
 bu_getprogname(void)
 {
+    /* this static buffer is needed so we don't have to write into
+     * bu_progname[], which potentially holds a full path.  we have to
+     * free the bu_basename() memory, so we need to copy the string
+     * somewhere before returning.
+     */
+    static char buffer[MAXPATHLEN] = {0};
     const char *name = bu_progname;
     char *tmp_basename = NULL;
 
@@ -115,12 +121,12 @@ bu_getprogname(void)
 
     /* stash for return since we need to free the basename */
     bu_semaphore_acquire(BU_SEM_SYSCALL);
-    bu_strlcpy(bu_progname, name, MAXPATHLEN);
+    bu_strlcpy(buffer, name, MAXPATHLEN);
     bu_semaphore_release(BU_SEM_SYSCALL);
 
     bu_free(tmp_basename, "tmp_basename free");
 
-    return bu_progname;
+    return buffer;
 }
 
 
