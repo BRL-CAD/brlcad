@@ -38,7 +38,7 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-static const char explain[]   = "This program constructs a windowframe with all\n\
+static const char explain[]   = "This program constructs a window frame with all\n\
 edges and corners rounded.\n";
 
 int
@@ -63,7 +63,7 @@ main(int argc, char **argv)
     char solnam[9];		/* Solid name. */
     char regnam[8];		/* Region name. */
     char grpnam[5];		/* Group name. */
-    int numwin = 0;		/* Number of windowframess to be created (<=26). */
+    int numwin = 0;		/* Number of window frames to be created (<=26). */
 
     struct wmember comb;	/* Used to make regions. */
     struct wmember comb1;	/* Used to make groups. */
@@ -99,7 +99,7 @@ main(int argc, char **argv)
     if (argc == 1) {
 	/* START # 3 */
 
-	/* Print info about the windowframe. */
+	/* Print info about the window frame. */
 	printf("\n%s\n",explain);
 	printf("\nThe window frames are composed of 4 arb8s and 8\n");
 	printf("cylinders.  The front of the window frame is centered\n");
@@ -186,8 +186,8 @@ main(int argc, char **argv)
 
 	    if (temp[1] == 'h' || temp[1] == '?') {
 	    	fprintf(stderr,"%s",explain);
-		fprintf(stderr,"Usage: windowframe -fname [-f mged_file_name] [-n #_of_windowframes] [-H windowframe_height]\n");
-		fprintf(stderr,"       [-w windowframe_width] [-d windowframe_depth] [-r radius_of_corners][-i width_of_frame_itself");
+		fprintf(stderr,"Usage: window_frame -fname [-f mged_file_name] [-n #_of_window_frames] [-H window_frame_height]\n");
+		fprintf(stderr,"       [-w window_frame_width] [-d window_frame_depth] [-r radius_of_corners][-i width_of_frame_itself");
 		bu_exit(2,     "       (units of mm)\n");
 	    }
 
