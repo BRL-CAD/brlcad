@@ -359,7 +359,11 @@ mark_as_advanced(CMAKE_SYSTEM_IGNORE_PATH)
 # For cleaning files as part of the distclean command, CMake needs
 # to be aware of what various generators will (or might) write out
 # in each build directory.
-set(DISTCLEAN_OUTFILES CTestTestfile.cmake)
+set(DISTCLEAN_OUTFILES
+  CTestTestfile.cmake
+  CTestCostData.txt
+  LastTest.log
+  )
 if("${CMAKE_GENERATOR}" MATCHES "Make")
   set(DISTCLEAN_OUTFILES ${DISTCLEAN_OUTFILES} Makefile)
 endif("${CMAKE_GENERATOR}" MATCHES "Make")
