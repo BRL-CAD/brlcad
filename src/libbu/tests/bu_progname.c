@@ -146,6 +146,19 @@ main(int ac, char *av[])
 	fail++;
     }
 
+    /* CASE 8: make sure bu_getprogname leaves a full path */
+    label = "CASE 8";
+    bu_setprogname("/monkey/see/monkey/do");
+    res = bu_getprogname();
+    res = bu_argv0_full_path();
+    if (res[0] == BU_DIR_SEPARATOR) {
+	printf("%s: %24s -> %24s [PASSED]\n", label, "/monkey/see/monkey/do", res);
+    } else {
+	printf("%24s -> %24s (should start with %c) [FAIL]\n", label, res, BU_DIR_SEPARATOR);
+	fail++;
+    }
+
+
     return fail;
 }
 
