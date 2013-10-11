@@ -361,8 +361,8 @@ mark_as_advanced(CMAKE_SYSTEM_IGNORE_PATH)
 # in each build directory.
 set(DISTCLEAN_OUTFILES
   CTestTestfile.cmake
-  CTestCostData.txt
-  LastTest.log
+  Testing/Temporary/CTestCostData.txt
+  Testing/Temporary/LastTest.log
   )
 if("${CMAKE_GENERATOR}" MATCHES "Make")
   set(DISTCLEAN_OUTFILES ${DISTCLEAN_OUTFILES} Makefile)
