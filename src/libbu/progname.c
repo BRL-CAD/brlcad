@@ -50,7 +50,7 @@ bu_argv0_full_path(void)
 
 #ifdef HAVE_PROGRAM_INVOCATION_NAME
     /* GLIBC provides a way */
-    if (argv0[0] != BU_DIR_SEPARATOR && program_invocation_name)
+    if (argv0[0] == '\0' && program_invocation_name)
 	argv0 = program_invocation_name;
 #endif
 
