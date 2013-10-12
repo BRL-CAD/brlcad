@@ -28,6 +28,10 @@
 #include "vmath.h"
 #include "bn.h"
 
+/* FIXME: should be in bn.h */
+extern int bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2, point_t *p3, point_t *p4);
+
+
 int
 main()
 {
@@ -35,12 +39,12 @@ main()
     point_t pnts[4+1] = {{0}};
     int n = 4;
 
-    pnts[0][X] = 1.5; pnts[0][Y] = 1.5; pnts[0][Z] = 0;
-    pnts[1][X] = 3.0; pnts[1][Y] = 2.0; pnts[1][Z] = 0;
-    pnts[2][X] = 2.0; pnts[2][Y] = 2.5; pnts[2][Z] = 0;
-    pnts[3][X] = 1.0; pnts[3][Y] = 2.0; pnts[3][Z] = 0;
+    VSET(pnts[0], 1.5, 1.5, 0.0);
+    VSET(pnts[1], 3.0, 2.0, 0.0);
+    VSET(pnts[2], 2.0, 2.5, 0.0);
+    VSET(pnts[3], 1.0, 2.0, 0.0);
 
-    (void)bn_obr((const point_t *)pnts, n, &p0, &p1, &p2, &p3);
+    bn_obr((const point_t *)pnts, n, &p0, &p1, &p2, &p3);
 
     bu_log("result: P1 (%f, %f, %f)\n", V3ARGS(p0));
     bu_log("        P2 (%f, %f, %f)\n", V3ARGS(p1));
