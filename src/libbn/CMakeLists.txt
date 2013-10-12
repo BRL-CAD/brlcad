@@ -18,6 +18,7 @@ set(LIBBN_SOURCES
   msr.c
   multipoly.c
   noise.c
+  obr.c
   plane.c
   plot3.c
   poly.c
