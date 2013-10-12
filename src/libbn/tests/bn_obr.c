@@ -32,26 +32,27 @@ int
 main()
 {
     point_t p0, p1, p2, p3;
-    point_t *pnts = (point_t *)bu_calloc(4+1, sizeof(fastf_t)*3, "pnt array");
+    point_t pnts[4+1] = {{0}};
     int n = 4;
-    pnts[0][0] = 1.5; pnts[0][1] = 1.5; pnts[0][2] = 0;
-    pnts[1][0] = 3.0; pnts[1][1] = 2.0; pnts[1][2] = 0;
-    pnts[2][0] = 2.0; pnts[2][1] = 2.5; pnts[2][2] = 0;
-    pnts[3][0] = 1.0; pnts[3][1] = 2.0; pnts[3][2] = 0;
+
+    pnts[0][X] = 1.5; pnts[0][Y] = 1.5; pnts[0][Z] = 0;
+    pnts[1][X] = 3.0; pnts[1][Y] = 2.0; pnts[1][Z] = 0;
+    pnts[2][X] = 2.0; pnts[2][Y] = 2.5; pnts[2][Z] = 0;
+    pnts[3][X] = 1.0; pnts[3][Y] = 2.0; pnts[3][Z] = 0;
 
     (void)bn_obr((const point_t *)pnts, n, &p0, &p1, &p2, &p3);
 
-    bu_log("result: P1 (%f, %f, %f)\n", p0[0], p0[1], p0[2]);
-    bu_log("        P2 (%f, %f, %f)\n", p1[0], p1[1], p1[2]);
-    bu_log("        P3 (%f, %f, %f)\n", p2[0], p2[1], p2[2]);
-    bu_log("        P4 (%f, %f, %f)\n", p3[0], p3[1], p3[2]);
+    bu_log("result: P1 (%f, %f, %f)\n", V3ARGS(p0));
+    bu_log("        P2 (%f, %f, %f)\n", V3ARGS(p1));
+    bu_log("        P3 (%f, %f, %f)\n", V3ARGS(p2));
+    bu_log("        P4 (%f, %f, %f)\n", V3ARGS(p3));
 /*
-    if(expected_result == actual_result) {
+    if (expected_result == actual_result) {
 	return 0;
     } else {
 	return -1;
     }
-    */
+*/
     return 0;
 }
 
