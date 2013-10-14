@@ -45,3 +45,9 @@
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
+/* There is no config.h for MSVC++ in standard TCLAP,
+ * remove defines which come from BRL-CAD's CMake
+ * and stand in the way now */
+#if defined(_MSC_VER) && defined(_M_X64)
+#   undef HAVE_LONG_LONG
+#endif
