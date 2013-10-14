@@ -65,7 +65,7 @@
 HIDDEN int
 pnt2d_array_get_dimension(const point_t *pnts, int pnt_cnt, point_t *p_center, point_t *p1, point_t *p2) {
     int i = 0;
-    point_t min, max, center;
+    point_t min = {0}, max = {0}, center = {0};
     point_t curr_pnt;
     point_t min_x_pt;
     point_t min_y_pt;
@@ -75,8 +75,7 @@ pnt2d_array_get_dimension(const point_t *pnts, int pnt_cnt, point_t *p_center, p
     point_t B;
     fastf_t d[4];
     fastf_t dmax = 0.0;
-    center[0] = 0;
-    center[1] = 0;
+
     VMOVE(curr_pnt, pnts[0]);
     VMOVE(min_x_pt, curr_pnt);
     VMOVE(min_y_pt, curr_pnt);
