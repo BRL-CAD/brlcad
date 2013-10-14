@@ -2160,15 +2160,6 @@ if(NOT MSVC)
     ${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c
     OUTPUT_VARIABLE COMPILEMESSAGES
   )
-  # test results
-  if(NOT TIME_COMPILED)
-    message(INFO ${COMPILEMESSAGES})
-    message(FATAL_ERROR "CMakeTmp/report_hostname.c failed to compile")
-  endif()
-  if(TIME_RESULT)
-    message(INFO ${COMPILEMESSAGES})
-    message(FATAL_ERROR "CMakeTmp/report_hostname.c failed to run")
-  endif()
 else(NOT MSVC)
   set(CMAKE_REQUIRED_LIBRARIES ws2_32.lib)
   TRY_RUN(TIME_RESULT TIME_COMPILED
@@ -2177,6 +2168,17 @@ else(NOT MSVC)
     OUTPUT_VARIABLE COMPILEMESSAGES
     CMAKE_FLAGS "-DLINK_LIBRARIES:STRING=ws2_32.lib")
 endif(NOT MSVC)
+
+# test results
+if(NOT TIME_COMPILED)
+  message(INFO ${COMPILEMESSAGES})
+  message(FATAL_ERROR "CMakeTmp/report_hostname.c failed to compile")
+endif()
+if(TIME_RESULT)
+  message(INFO ${COMPILEMESSAGES})
+  message(FATAL_ERROR "CMakeTmp/report_hostname.c failed to run")
+endif()
+
 # Let CMake give us the proper newline character(s) for the current platform
 file(APPEND ${BRLCAD_BINARY_DIR}/include/conf/HOST.tmp "\n")
 execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BRLCAD_BINARY_DIR}/include/conf/HOST.tmp ${BRLCAD_BINARY_DIR}/include/conf/HOST)

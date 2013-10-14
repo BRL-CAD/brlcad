@@ -1,36 +1,45 @@
 #include <stdio.h>
 #ifdef _WIN32
   #include <WinSock2.h>
+  #define GETHOSTNAME_ERROR SOCKET_ERROR
 #else
   #include <unistd.h>
+  #define GETHOSTNAME_ERROR -1
 #endif
-#define chararraysize 2048
-int main(void) {
-  int res __attribute__((unused)) = 0;
-  char hostname[chararraysize] __attribute__((unused));
-  FILE *outfp = NULL;
-  #ifdef _WIN32
-  LPHOSTENT lpHostEntry;
-  WORD wVersionRequested;
-  WSADATA wsaData;
-  wVersionRequested = MAKEWORD(1, 1);
-  WSAStartup(wVersionRequested, &wsaData);
-  #endif
 
-  outfp = fopen("${BRLCAD_BINARY_DIR}/include/conf/HOST.tmp", "w");
-
-#if defined(_BSD_SOURCE) \
+#define MAX_HOSTNAME 2048
+#if defined (_WIN32) || defined(_BSD_SOURCE) \
     || defined(_XOPEN_SOURCE) && _XOPEN_SOURCE  >= 500 \
     || defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112
-  res = gethostname(hostname, chararraysize - 1);
-  if (!res && hostname[0] != ' ')
-    fprintf(outfp, "\"%s\"", hostname);
-  else
-    fprintf(outfp, "\"%s\"", "unknown");
-#else
-  fprintf(outfp, "\"%s\"", "unknown");
+  #define HAVE_GETHOSTNAME 1
 #endif
 
-  fclose(outfp);
-  return 0;
+int
+main(void)
+{
+    FILE *outfp = fopen("${BRLCAD_BINARY_DIR}/include/conf/HOST.tmp", "w");
+    if (!outfp) {
+	return -1;
+    }
+#if defined(HAVE_GETHOSTNAME)
+{
+    int ret;
+    char hostname[MAX_HOSTNAME];
+  #if defined(_WIN32)
+    WORD wVersionRequested;
+    WSADATA wsaData;
+    wVersionRequested = MAKEWORD(1, 1);
+    WSAStartup(wVersionRequested, &wsaData);
+  #endif
+    ret = gethostname(hostname, MAX_HOSTNAME);
+    if (ret != GETHOSTNAME_ERROR)
+	fprintf(outfp, "\"%s\"", hostname);
+    else
+	fprintf(outfp, "\"unkown\"");
+}
+#else
+    fprintf(outfp, "\"unkown\"");
+#endif
+    fclose(outfp);
+    return 0;
 }
