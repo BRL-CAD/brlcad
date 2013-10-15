@@ -35,10 +35,10 @@ main(void)
     if (ret != GETHOSTNAME_ERROR)
 	fprintf(outfp, "\"%s\"", hostname);
     else
-	fprintf(outfp, "\"unkown\"");
+	fprintf(outfp, "\"unknown\"");
 }
 #else
-    fprintf(outfp, "\"unkown\"");
+    fprintf(outfp, "\"unknown\"");
 #endif
     fclose(outfp);
     return 0;
