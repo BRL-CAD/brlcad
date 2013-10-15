@@ -888,8 +888,8 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 	    } else if (split_called) {
 		bu_log("Split failed.\n");
 		if (curve_on_loop) {
-		    bu_log("Domain: [%lf, %lf]\n", curve_on_loop->Domain().Min(), curve_on_loop->Domain().Max());
-		    bu_log("m_t: %lf\n", isect_pt.m_t);
+		    bu_log("Domain: [%f, %f]\n", curve_on_loop->Domain().Min(), curve_on_loop->Domain().Max());
+		    bu_log("m_t: %f\n", isect_pt.m_t);
 		}
 	    }
 	    intersect[isect_iter].m_pos = outerloop.Count() - 1;

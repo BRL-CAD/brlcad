@@ -106,7 +106,7 @@ main(int, char**)
 	ON_Circle circleB(plane, centerB, radius);
 	ON_NurbsCurve *curveB = ON_NurbsCurve::New();
 	circleB.GetNurbForm(*curveB);
-	bu_log("Center of circleB: (%lf,%lf,%lf):\n", centerB.x, centerB.y, centerB.z);
+	bu_log("Center of circleB: (%f,%f,%f):\n", centerB.x, centerB.y, centerB.z);
 	test_cci(curveA, curveB);
 	delete curveB;
     }
@@ -152,7 +152,7 @@ main(int, char**)
 	ON_Circle circleB(plane, centerB, radius);
 	ON_NurbsCurve *curveB = ON_NurbsCurve::New();
 	circleB.GetNurbForm(*curveB);
-	bu_log("Center of circleB: (%lf,%lf,%lf):\n", centerB.x, centerB.y, centerB.z);
+	bu_log("Center of circleB: (%f,%f,%f):\n", centerB.x, centerB.y, centerB.z);
 	test_csi(curveB, surfA);
 	delete curveB;
     }

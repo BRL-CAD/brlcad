@@ -38,7 +38,7 @@ test_ppi(ON_3dPoint &p1, ON_3dPoint &p2)
     ON_ClassArray<ON_PX_EVENT> x;
     // Use default tolerance
     ON_Intersect(p1, p2, x);
-    bu_log("(%lf,%lf,%lf) and (%lf,%lf,%lf):\n", p1[0], p1[1], p1[2], p2[0], p2[1], p2[2]);
+    bu_log("(%f,%f,%f) and (%f,%f,%f):\n", p1[0], p1[1], p1[2], p2[0], p2[1], p2[2]);
     if (x.Count() == 0) {
 	bu_log("No intersection.\n");
     } else {
@@ -61,7 +61,7 @@ test_pci(ON_3dPoint &p, ON_Curve &c)
 
     ON_3dPoint start = c.PointAtStart();
     ON_3dPoint end = c.PointAtEnd();
-    bu_log("(%lf,%lf,%lf) and [(%lf,%lf,%lf) to (%lf,%lf,%lf)]:\n",
+    bu_log("(%f,%f,%f) and [(%f,%f,%f) to (%f,%f,%f)]:\n",
 	   p[0], p[1], p[2], start[0], start[1], start[2], end[0], end[1], end[2]);
     if (x.Count() == 0) {
 	bu_log("No intersection.\n");
@@ -84,7 +84,7 @@ test_psi(ON_3dPoint &p, ON_Surface &s)
     ON_Intersect(p, s, x);
 
     // XXX: How to simply show a surface?
-    bu_log("(%lf,%lf,%lf) and a surface:\n", p[0], p[1], p[2]);
+    bu_log("(%f,%f,%f) and a surface:\n", p[0], p[1], p[2]);
     if (x.Count() == 0) {
 	bu_log("No intersection.\n");
     } else {
@@ -128,7 +128,7 @@ main(int, char**)
     ON_Curve *curve = brep->m_C3[0];
 
     ON_3dPoint mid = curve->PointAt(curve->Domain().Mid());
-    bu_log("debug: %lf %lf %lf\n", mid[0], mid[1], mid[2]);
+    bu_log("debug: %f %f %f\n", mid[0], mid[1], mid[2]);
 
     bu_log("** Part 1 **\n");
     test_pci(p1, *curve);

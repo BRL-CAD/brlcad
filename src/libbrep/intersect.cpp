@@ -3179,11 +3179,11 @@ ON_Intersect(const ON_Surface* surfA,
     double max_dis_s = surfB->Domain(0).Length() * 0.05;
     double max_dis_t = surfB->Domain(1).Length() * 0.05;
     if (DEBUG_BREP_INTERSECT) {
-	bu_log("max_dis: %lf\n", max_dis);
-	bu_log("max_dis_u: %lf\n", max_dis_u);
-	bu_log("max_dis_v: %lf\n", max_dis_v);
-	bu_log("max_dis_s: %lf\n", max_dis_s);
-	bu_log("max_dis_t: %lf\n", max_dis_t);
+	bu_log("max_dis: %f\n", max_dis);
+	bu_log("max_dis_u: %f\n", max_dis_u);
+	bu_log("max_dis_v: %f\n", max_dis_v);
+	bu_log("max_dis_s: %f\n", max_dis_s);
+	bu_log("max_dis_t: %f\n", max_dis_t);
     }
     // NOTE: More tests are needed to find a better threshold.
 
