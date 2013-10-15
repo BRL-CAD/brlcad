@@ -320,7 +320,8 @@ bool ON_Surface_Quad_Split(
 
     // All four output surfaces should be NULL - the point of this function is to create them
     if ((*q0) || (*q1) || (*q2) || (*q3)) {
-	bu_log("ON_Surface_Quad_Split was supplied non-NULL surfaces as output targets: q0: %p, q1: %p, q2: %p, q3: %p\n", (*q0), (*q1), (*q2), (*q3));
+	bu_log("ON_Surface_Quad_Split was supplied non-NULL surfaces as output targets: q0: %p, q1: %p, q2: %p, q3: %p\n",
+	       static_cast<void *>(*q0), static_cast<void *>(*q1), static_cast<void *>(*q2), static_cast<void *>(*q3));
 	return false;
     }
 
