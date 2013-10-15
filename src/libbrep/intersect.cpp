@@ -3007,7 +3007,7 @@ ON_Intersect(const ON_Surface* surfA,
 	candidates = next_candidates;
     }
     if (DEBUG_BREP_INTERSECT)
-	bu_log("We get %d intersection bounding boxes.\n", candidates.size());
+	bu_log("We get %lu intersection bounding boxes.\n", candidates.size());
 
     /* Third step: get the intersection points using triangular approximation,
      * and then Newton iterations.
