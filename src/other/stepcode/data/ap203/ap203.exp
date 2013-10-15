@@ -1,6 +1,6 @@
 (* This is a MODIFIED version of AP203 Amd. 1.
    The change was to remove a useless IF...ELSE...ENDIF statement that always evaluated
-   the same way. Statements in the branch that was never executed caused problems with
+   the same way. Statements in the branch that were never executed caused problems with
    libexpress, and it was easier to modify the schema than to come up with a generic
    fix for libexpress. This change does *not* affect the behavior of the schema.
 
