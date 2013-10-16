@@ -57,7 +57,7 @@ db_read(const struct db_i *dbip, genptr_t addr, size_t count, off_t offset)
 
     RT_CK_DBI(dbip);
     if (RT_G_DEBUG&DEBUG_DB) {
-	bu_log("db_read(dbip=x%x, addr=x%x, count=%zu., offset=x%x)\n",
+	bu_log("db_read(dbip=%p, addr=%p, count=%zu., offset=x%lx)\n",
 	       dbip, addr, count, offset);
     }
     if (count == 0) {
@@ -105,7 +105,7 @@ db_getmrec(const struct db_i *dbip, const struct directory *dp)
 	return (union record *)NULL;
     }
 
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_getmrec(%s) x%x, x%x\n",
+    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_getmrec(%s) %p, %p\n",
 				    dp->d_namep, dbip, dp);
 
     if (dp->d_addr == RT_DIR_PHONY_ADDR)
@@ -135,7 +135,7 @@ db_get(const struct db_i *dbip, const struct directory *dp, union record *where,
 
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_get(%s) x%x, x%x x%x off=%d len=%zu\n",
+    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_get(%s) %p, %p %p off=%ld len=%zu\n",
 				    dp->d_namep, dbip, dp, where, offset, len);
 
     if (dp->d_addr == RT_DIR_PHONY_ADDR) {
@@ -143,7 +143,7 @@ db_get(const struct db_i *dbip, const struct directory *dp, union record *where,
 	return -1;
     }
     if (offset < 0 || len+(size_t)offset > dp->d_len) {
-	bu_log("db_get(%s):  xfer %d..%lu exceeds 0..%zu\n",
+	bu_log("db_get(%s):  xfer %lu..%lu exceeds 0..%zu\n",
 	       dp->d_namep, offset, offset+len, dp->d_len);
 	where->u_id = '\0';	/* undefined id */
 	return -1;
@@ -172,7 +172,7 @@ db_write(struct db_i *dbip, const genptr_t addr, size_t count, off_t offset)
 
     RT_CK_DBI(dbip);
     if (RT_G_DEBUG&DEBUG_DB) {
-	bu_log("db_write(dbip=x%x, addr=x%x, count=%zu., offset=x%x)\n",
+	bu_log("db_write(dbip=%p, addr=%p, count=%zu., offset=x%lx)\n",
 	       dbip, addr, count, offset);
     }
     if (dbip->dbi_read_only) {
@@ -213,11 +213,11 @@ db_put(struct db_i *dbip, const struct directory *dp, union record *where, off_t
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
 
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_put(%s) x%x, x%x x%x off=%d len=%zu\n",
+    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_put(%s) %p, %p %p off=%ld len=%zu\n",
 				    dp->d_namep, dbip, dp, where, offset, len);
 
     if ((len+(size_t)offset) > dp->d_len) {
-	bu_log("db_put(%s):  xfer %d..%lu exceeds 0..%zu\n",
+	bu_log("db_put(%s):  xfer %ld..%lu exceeds 0..%zu\n",
 	       dp->d_namep, offset, offset+len, dp->d_len);
 	return -1;
     }
@@ -248,7 +248,7 @@ db_get_external(register struct bu_external *ep, const struct directory *dp, con
 {
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_get_external(%s) ep=x%x, dbip=x%x, dp=x%x\n",
+    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_get_external(%s) ep=%p, dbip=%p, dp=%p\n",
 				    dp->d_namep, ep, dbip, dp);
 
     if ((dp->d_flags & RT_DIR_INMEM) == 0 && dp->d_addr == RT_DIR_PHONY_ADDR)
@@ -283,7 +283,7 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
     BU_CK_EXTERNAL(ep);
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_put_external(%s) ep=x%x, dbip=x%x, dp=x%x\n",
+    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_put_external(%s) ep=%p, dbip=%p, dp=%p\n",
 				    dp->d_namep, ep, dbip, dp);
 
 
@@ -336,7 +336,7 @@ int
 db_fwrite_external(FILE *fp, const char *name, struct bu_external *ep)
 {
 
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_fwrite_external(%s) ep=x%x\n", name, ep);
+    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_fwrite_external(%s) ep=%p\n", name, ep);
 
     BU_CK_EXTERNAL(ep);
 

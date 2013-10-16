@@ -47,7 +47,7 @@ rt_pr_soltab(register const struct soltab *stp)
     register int id = stp->st_id;
 
     if (id <= 0 || id > ID_MAX_SOLID) {
-	bu_log("stp=x%x, id=%d.\n", stp, id);
+	bu_log("stp=%p, id=%d.\n", stp, id);
 	bu_bomb("rt_pr_soltab:  bad id");
     }
     bu_log("------------ %s (bit %ld) %s ------------\n",
@@ -86,9 +86,9 @@ rt_pr_region(register const struct region *rp)
     }
     if (rp->reg_mater.ma_color_valid)
 	bu_log("Color %d %d %d\n",
-	       (int)rp->reg_mater.ma_color[0]*255.,
-	       (int)rp->reg_mater.ma_color[1]*255.,
-	       (int)rp->reg_mater.ma_color[2]*255.);
+	       (int)rp->reg_mater.ma_color[0]*255,
+	       (int)rp->reg_mater.ma_color[1]*255,
+	       (int)rp->reg_mater.ma_color[2]*255);
     if (rp->reg_mater.ma_temperature > 0)
 	bu_log("Temperature %g degrees K\n", INTCLAMP(rp->reg_mater.ma_temperature));
     if (rp->reg_mater.ma_shader && rp->reg_mater.ma_shader[0] != '\0')
@@ -316,7 +316,7 @@ rt_pr_tree(register const union tree *tp, int lvl)
 
     RT_CK_TREE(tp);
 
-    bu_log("%.8x ", tp);
+    bu_log("%p ", tp);
     for (i=lvl; i>0; i--)
 	bu_log("  ");
 
@@ -338,7 +338,7 @@ rt_pr_tree(register const union tree *tp, int lvl)
 	    return;
 
 	case OP_REGION:
-	    bu_log("REGION ctsp=x%x\n", tp->tr_c.tc_ctsp);
+	    bu_log("REGION ctsp=%p\n", tp->tr_c.tc_ctsp);
 	    db_pr_combined_tree_state(tp->tr_c.tc_ctsp);
 	    return;
 
@@ -749,7 +749,7 @@ rt_pr_tol(const struct bn_tol *tol)
 {
     BN_CK_TOL(tol);
 
-    bu_log("%8.8x TOL %e (sq=%e) perp=%e, para=%e\n",
+    bu_log("%p TOL %e (sq=%e) perp=%e, para=%e\n",
 	   tol, tol->dist, tol->dist_sq,
 	   tol->perp, tol->para);
 }

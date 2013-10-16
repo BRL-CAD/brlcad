@@ -1102,7 +1102,7 @@ rt_arb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	rt_db_free_internal(&intern);
 
 	if (ret != 0 || arbp->arb_opt == (struct oface *)0) {
-	    bu_log("rt_arb_uv(%s) dynamic setup failure st_specific=x%x, optp=x%x\n",
+	    bu_log("rt_arb_uv(%s) dynamic setup failure st_specific=%p, optp=%p\n",
 		   stp->st_name,
 		   stp->st_specific, arbp->arb_opt);
 	    return;
