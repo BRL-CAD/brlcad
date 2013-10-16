@@ -128,7 +128,7 @@ if(BRLCAD_EXTRADOCS_PDF)
       COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
       DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} docbook_books_EN_IMAGES_cp
       )
-    set(outfile ${bin_root}/${DATA_DIR}/${DOC_DIR}/${targetdir}/${filename_root}.pdf)
+    set(outfile ${bin_root}/${DOC_DIR}/${targetdir}/${filename_root}.pdf)
     set(targetname "${filename_root}_book_pdf")
     DB_SCRIPT("${targetname}" "${targetdir}" "${PDF_CONV_EXECUTABLE}")
     add_custom_command(
@@ -142,7 +142,7 @@ if(BRLCAD_EXTRADOCS_PDF)
     if(CMAKE_CONFIGURATION_TYPES)
       string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" outfile "${outfile}")
     endif(CMAKE_CONFIGURATION_TYPES)
-    install(FILES ${outfile} DESTINATION ${DATA_DIR}/${DOC_DIR}/pdf/books/en)
+    install(FILES ${outfile} DESTINATION ${DOC_DIR}/pdf/books/en)
     get_property(BRLCAD_EXTRADOCS_PDF_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_PDF_TARGETS)
     set(BRLCAD_EXTRADOCS_PDF_TARGETS ${BRLCAD_EXTRADOCS_PDF_TARGETS} ${targetname})
     set_property(GLOBAL PROPERTY BRLCAD_EXTRADOCS_PDF_TARGETS "${BRLCAD_EXTRADOCS_PDF_TARGETS}")
