@@ -617,7 +617,7 @@ main(int argc, char **argv)
     char units[16], fname[80];
     int optc;
 
-    while ((optc = bu_getopt(argc, argv, "tsmnc")) != -1) {
+    while ((optc = bu_getopt(argc, argv, "tsmnch?")) != -1) {
 	/* Set joint type and cable option */
 	switch (optc) {
 	    case 't':
@@ -635,11 +635,9 @@ main(int argc, char **argv)
 	    case 'c':
 		cable = 1;
 		break;
-	    case '?':
-		fprintf(stderr, "Illegal option %c\n", optc);
+	    default:
 		Usage();
 		return 1;
-		break;
 
 	}
     }
@@ -649,14 +647,15 @@ main(int argc, char **argv)
 	Usage();
 	fprintf(stderr, "Options t, s, m, n are mutually exclusive\n");
 	return 1;
-    } else if ((torus + sphere + mitre + nothing) == 0) {
-	torus = 1;		/* default */
     }
 
     if ((argc - bu_optind) != 2) {
 	Usage();
 	return 1;
     }
+
+    if ((torus + sphere + mitre + nothing) == 0)
+	torus = 1;		/* default */
 
     bu_strlcpy(name, argv[bu_optind++], sizeof(name)); /* Base name for objects */
 
