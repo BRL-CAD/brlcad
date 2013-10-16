@@ -744,8 +744,8 @@ db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip
     RT_CK_DIR(dp);
     BU_CK_EXTERNAL(ep);
 
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_put_external5(%s) ep=x%lx, dbip=x%lx, dp=x%lx\n",
-				    dp->d_namep, (unsigned long int)ep, (unsigned long int)dbip, (unsigned long int)dp);
+    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_put_external5(%s) ep=%p, dbip=%p, dp=%p\n",
+				    dp->d_namep, ep, dbip, dp);
 
     if (dbip->dbi_read_only) {
 	bu_log("db_put_external5(%s):  READ-ONLY file\n",

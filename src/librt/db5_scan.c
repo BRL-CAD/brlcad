@@ -46,8 +46,8 @@ db5_scan(
     off_t addr;
 
     RT_CK_DBI(dbip);
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db5_scan(x%lx, x%lx)\n",
-				    (unsigned long int)dbip, (unsigned long int)handler);
+    if (RT_G_DEBUG&DEBUG_DB) bu_log("db5_scan(%p, %p)\n",
+				    dbip, handler);
 
     raw.magic = DB5_RAW_INTERNAL_MAGIC;
     nrec = 0L;
@@ -287,8 +287,8 @@ db5_diradd_handler(
     if (rip->name.ext_buf == NULL) return;
 
     if (RT_G_DEBUG&DEBUG_DB) {
-	bu_log("db5_diradd_handler(dbip=x%lx, name='%s', addr=x%lx, len=%zu)\n",
-	       dbip, (unsigned long int)rip->name.ext_buf, (unsigned long int)laddr, rip->object_length);
+	bu_log("db5_diradd_handler(dbip=%p, name='%s', addr=%p, len=%zu)\n",
+	       dbip, rip->name.ext_buf, laddr, rip->object_length);
     }
 
     db5_diradd(dbip, rip, laddr, client_data);

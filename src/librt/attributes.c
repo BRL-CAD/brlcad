@@ -173,8 +173,8 @@ db5_replace_attributes(struct directory *dp, struct bu_attribute_value_set *avsp
     RT_CK_DBI(dbip);
 
     if (RT_G_DEBUG&DEBUG_DB) {
-	bu_log("db5_replace_attributes(%s) dbip=x%lx\n",
-	       dp->d_namep, (unsigned long int)dbip);
+	bu_log("db5_replace_attributes(%s) dbip=%p\n",
+	       dp->d_namep, dbip);
 	bu_avs_print(avsp, "new attributes");
     }
 
@@ -236,8 +236,8 @@ db5_update_attributes(struct directory *dp, struct bu_attribute_value_set *avsp,
     RT_CK_DBI(dbip);
 
     if (RT_G_DEBUG&DEBUG_DB) {
-	bu_log("db5_update_attributes(%s) dbip=x%lx\n",
-	       dp->d_namep, (unsigned long int)dbip);
+	bu_log("db5_update_attributes(%s) dbip=%p\n",
+	       dp->d_namep, dbip);
 	bu_avs_print(avsp, "new attributes");
     }
 
