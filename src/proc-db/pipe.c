@@ -685,7 +685,7 @@ main(int argc, char **argv)
 		break;
 
 	    case 'f':
-		k = 12*25.4;
+		k = 304.8; /* That's 12.*25.4 . */
 		break;
 
 	    case 'i':
@@ -702,8 +702,8 @@ main(int argc, char **argv)
 		break;
 
 	    default:
-		printf("\n\t%s is not a legal choice for units\n", units);
-		printf("\tTry again\n");
+		printf("\n%c is not a legal choice for units\n", units[0]);
+		printf("Try again\n");
 		break;
 	}
     }
@@ -717,8 +717,8 @@ main(int argc, char **argv)
 		done = 1;
 	    else {
 		printf(" *** bad input!\n\n");
-		printf("\tradius must be larger than wall thickness\n");
-		printf("\tTry again\n");
+		printf("radius must be larger than wall thickness\n");
+		printf("Try again\n");
 	    }
 	} else {
 	    printf("radius: ");
