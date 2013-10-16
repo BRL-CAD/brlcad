@@ -559,12 +559,12 @@ bn.h, part of libbn).  Examples:
 
   For known tolerances:
 
-  * instead of "foo == 2.0" use "NEAR_EQUAL(foo,2.0,tol)"
-  * instead of "foo != 0.0" use "foo !NEAR_ZERO(foo,tol)"
+  * instead of "foo == 2.0" use "NEAR_EQUAL(foo, 2.0, tol)"
+  * instead of "foo != 0.0" use "foo !NEAR_ZERO(foo, tol)"
 
   For indeterminate tolerances:
 
-  * instead of "foo == 2.0" use "EQUAL(foo,2.0)"
+  * instead of "foo == 2.0" use "EQUAL(foo, 2.0)"
   * instead of "foo != 0.0" use "foo !ZERO(foo)"
 
 There are several functions whose functionality are either wrapped or
