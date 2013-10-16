@@ -73,7 +73,7 @@ struct points
 };
 
 
-double radius, wall, pi, k;
+double radius, wall, pi, unit_conversion_factor;
 struct points *root;
 char name[16];
 float delta=10.0;		/* 10mm excess in ARB sizing for cutting tubes */
@@ -134,7 +134,7 @@ Readpoints(void)
 	ptr->next = NULL;
 	ptr->prev = prev;
 	prev = ptr;
-	VSET(ptr->p, k*x, k*y, k*z);
+	VSET(ptr->p, unit_conversion_factor*x, unit_conversion_factor*y, unit_conversion_factor*z);
 	ptr->tube[0] = '\0';
 	ptr->tubflu[0] = '\0';
 	ptr->elbow[0] = '\0';
@@ -613,7 +613,6 @@ Groups(void)
 int
 main(int argc, char **argv)
 {
-#define carriagereturn 10
     int done = 0;
     char units[16], fname[80];
     int optc;
@@ -674,40 +673,49 @@ main(int argc, char **argv)
     printf("FLUID & PIPING V%d.%d 10 Mar 89\n\n", VERSION, RELEASE);
     printf("append %s to your target description using 'concat' in mged\n", argv[bu_optind]);
 
-    k = 0.0;
-    while (ZERO(k)) {
+#define MM_TO_CM 10.0
+#define MM_TO_M  1000.0
+#define MM_TO_IN 25.4
+#define MM_TO_FT 304.8
+
+    unit_conversion_factor = 0.0;
+    while (ZERO(unit_conversion_factor)) {
 	printf("UNITS? (ft, in, m, cm, default is millimeters) ");
 	bu_fgets(units, sizeof(units), stdin);
 	switch (units[0]) {
-
-	    case carriagereturn:
-		k = 1.0;
+	    case '\0':
+	    case '\n':
+	    case '\r':
+		unit_conversion_factor=1.0;
 		break;
 
 	    case 'f':
-		k = 304.8; /* That's 12.*25.4 . */
+		unit_conversion_factor=MM_TO_FT;
 		break;
 
 	    case 'i':
-		k=25.4;
+		unit_conversion_factor=MM_TO_IN;
 		break;
 
 	    case 'm':
-		if (units[1] == carriagereturn) k=1000.0;
-		else k=1.0;
+		if (units[1] != 'm')
+		    unit_conversion_factor=MM_TO_M;
+		else
+		    unit_conversion_factor=1.0;
 		break;
 
 	    case 'c':
-		k=10.0;
+		unit_conversion_factor=MM_TO_CM;
 		break;
 
 	    default:
-		printf("\n%c is not a legal choice for units\n", units[0]);
+		printf("\n%s is not a legal choice for units\n", units);
 		printf("Try again\n");
 		break;
 	}
     }
 
+    done = 0;
     while (!done) {
 	if (!cable) {
 	    printf("radius and wall thickness: ");
@@ -730,8 +738,8 @@ main(int argc, char **argv)
     if (radius < SMALL_FASTF)
 	radius = SMALL_FASTF;
 
-    radius=k*radius;
-    wall=k*wall;
+    radius=unit_conversion_factor*radius;
+    wall=unit_conversion_factor*wall;
 
     Readpoints();	/* Read data points */
 
