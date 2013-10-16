@@ -613,7 +613,8 @@ Groups(void)
 int
 main(int argc, char **argv)
 {
-    int done;
+#define carriagereturn 10
+    int done = 0;
     char units[16], fname[80];
     int optc;
 
@@ -679,7 +680,7 @@ main(int argc, char **argv)
 	bu_fgets(units, sizeof(units), stdin);
 	switch (units[0]) {
 
-	    case '\0':
+	    case carriagereturn:
 		k = 1.0;
 		break;
 
@@ -692,7 +693,7 @@ main(int argc, char **argv)
 		break;
 
 	    case 'm':
-		if (units[1] == '\0') k=1000.0;
+		if (units[1] == carriagereturn) k=1000.0;
 		else k=1.0;
 		break;
 
@@ -701,14 +702,12 @@ main(int argc, char **argv)
 		break;
 
 	    default:
-		k=0.0;
 		printf("\n\t%s is not a legal choice for units\n", units);
 		printf("\tTry again\n");
 		break;
 	}
     }
 
-    done = 0;
     while (!done) {
 	if (!cable) {
 	    printf("radius and wall thickness: ");
