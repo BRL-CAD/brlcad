@@ -1786,7 +1786,7 @@ dmo_lineStyle_tcl(void *clientData, int argc, const char **argv)
     }
 
     /* wrong number of arguments */
-    bu_vls_printf(&vls, "helplib_alias dm_linestyle %1", argv[1]);
+    bu_vls_printf(&vls, "helplib_alias dm_linestyle %s", argv[1]);
     Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
