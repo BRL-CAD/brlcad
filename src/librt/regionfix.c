@@ -86,7 +86,7 @@ rt_regionfix(struct rt_i *rtip)
 	*tabp++ = '\0';
 	while (*tabp && isspace((int)*tabp)) tabp++;
 	if ((ret = regcomp(&re_space, line, 0)) != 0) {
-	    bu_log("%s: line %d, regcomp error '%d'\n", file, line, ret);
+	    bu_log("%s: line %d, regcomp error '%d'\n", file, linenum, ret);
 	    continue;		/* just ignore it */
 	}
 
