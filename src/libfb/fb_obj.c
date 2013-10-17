@@ -628,14 +628,12 @@ fbo_rect_tcl(void *clientData, int argc, const char **argv)
     }
 
     if (sscanf(argv[2], "%d", &xmin) != 1) {
-	bu_log("fb_rect: bad xmin value - %s",
-			 argv[2], (char *)NULL);
+	bu_log("fb_rect: bad xmin value - %s", argv[2]);
 	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[3], "%d", &ymin) != 1) {
-	bu_log("fb_rect: bad ymin value - %s",
-			 argv[3], (char *)NULL);
+	bu_log("fb_rect: bad ymin value - %s", argv[3]);
 	return BRLCAD_ERROR;
     }
 
@@ -820,19 +818,18 @@ fbo_open_tcl(void *UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 		break;
 	    case '?':
 	    default:
-		bu_log("fb_open: bad option - %s",
-				 bu_optarg, (char *)NULL);
+		bu_log("fb_open: bad option - %s", bu_optarg);
 		return BRLCAD_ERROR;
 	}
     }
 
     if ((ifp = fb_open(argv[2], width, height)) == FBIO_NULL) {
-	bu_log("fb_open: bad device - %s", argv[2], (char *)NULL);
+	bu_log("fb_open: bad device - %s", argv[2]);
 	return BRLCAD_ERROR;
     }
 
     if (fb_ioinit(ifp) != 0) {
-	bu_log("fb_open: fb_ioinit() failed.", (char *) NULL);
+	bu_log("fb_open: fb_ioinit() failed.");
 	return BRLCAD_ERROR;
     }
 
