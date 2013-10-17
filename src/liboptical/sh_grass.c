@@ -737,7 +737,7 @@ isect_blade(const struct blade *bl, const fastf_t *root, struct grass_ray *r, st
 		case  0: bu_log("lines intersect "); break;
 		case  1: bu_log("lines miss      "); break;
 	    }
-	    bu_log("d1:%d d2:%g\n", cond, V2ARGS(ldist));
+	    bu_log("d1:%d d2:%g %g\n", cond, V2ARGS(ldist));
 	}
 	if (ldist[0] < 0.0 		/* behind ray */ ||
 	    ldist[0] >= r->d_max	/* beyond out point */ ||
