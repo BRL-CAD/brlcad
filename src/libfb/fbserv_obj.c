@@ -139,11 +139,13 @@ existing_client_handler(ClientData clientData, int UNUSED(mask))
 HIDDEN void
 setup_socket(int fd)
 {
-    int on = 1;
+    int on     = 1;
+    int retval = 0;
 
 #if defined(SO_KEEPALIVE)
-    if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (char *)&on, sizeof(on)) < 0) {
-	bu_log("setsockopt (SO_KEEPALIVE): %m");
+    /* FIXME: better to show an error message but need thread considerations for strerror */
+    if ((retval = setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (char *)&on, sizeof(on))) < 0) {
+	bu_log("setsockopt (SO_KEEPALIVE) error return: %d", retval);
     }
 #endif
 #if defined(SO_RCVBUF)
