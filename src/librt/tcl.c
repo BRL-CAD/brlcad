@@ -154,9 +154,9 @@ rt_tcl_pr_cutter(Tcl_Interp *interp, const union cutter *cutp)
 			      cutp->nugn.nu_axis[i]->nu_epos,
 			      cutp->nugn.nu_axis[i]->nu_width);
 		bu_vls_printf(&str, " cells_per_axis %ld",
-			      cutp->nugn.nu_cells_per_axis);
+			      cutp->nugn.nu_cells_per_axis[i]);
 		bu_vls_printf(&str, " stepsize %ld}",
-			      cutp->nugn.nu_stepsize);
+			      cutp->nugn.nu_stepsize[i]);
 	    }
 	    break;
 	default:
