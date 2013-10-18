@@ -1868,7 +1868,7 @@ to_axes(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "tick_interval")) {
 	if (argc == 3) {
-	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->gas_tick_interval);
+	    bu_vls_printf(gedp->ged_result_str, "%f", gasp->gas_tick_interval);
 	    return GED_OK;
 	}
 
@@ -3172,7 +3172,7 @@ to_data_labels(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "size")) {
 	if (argc == 3) {
-	    bu_vls_printf(gedp->ged_result_str, "%lf", gdlsp->gdls_size);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gdlsp->gdls_size);
 	    return GED_OK;
 	}
 
@@ -9130,8 +9130,8 @@ to_move_arb_edge_mode(struct ged *gedp,
 
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_move_arb_edge %V %s %s %%x %%y}",
 		  &gdvp->gdv_dmp->dm_pathName,
-		  &current_top->to_gop->go_name,
-		  &gdvp->gdv_name,
+		  bu_vls_addr(&current_top->to_gop->go_name),
+		  bu_vls_addr(&gdvp->gdv_name),
 		  argv[2],
 		  argv[3]);
     Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
