@@ -916,7 +916,8 @@ envmap_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *UNUSE
 	optical_shader_init(&shaders);
     }
     if (mlib_setup(&shaders, &env_region, rtip) < 0)
-	bu_log("envmap_setup() material '%s' failed\n", env_region.reg_mater);
+	bu_log("envmap_setup() material '%s' failed\n",
+	       env_region.reg_mater.ma_shader);
 
 
     return 0;		/* This region should be dropped */
