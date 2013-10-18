@@ -121,7 +121,7 @@ mmenu_set(int index, struct menu_item *value)
 
     Tcl_DStringInit(&ds_menu);
 
-    bu_vls_printf(&menu_string, "mmenu_set %V %d ", &curr_cmd_list->cl_name, index);
+    bu_vls_printf(&menu_string, "mmenu_set %s %d ", bu_vls_addr(&curr_cmd_list->cl_name), index);
 
     (void)Tcl_Eval(INTERP, bu_vls_addr(&menu_string));
 
