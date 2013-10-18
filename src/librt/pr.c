@@ -47,7 +47,7 @@ rt_pr_soltab(register const struct soltab *stp)
     register int id = stp->st_id;
 
     if (id <= 0 || id > ID_MAX_SOLID) {
-	bu_log("stp=%p, id=%d.\n", stp, id);
+	bu_log("stp=%p, id=%d.\n", (void *)stp, id);
 	bu_bomb("rt_pr_soltab:  bad id");
     }
     bu_log("------------ %s (bit %ld) %s ------------\n",
@@ -316,7 +316,7 @@ rt_pr_tree(register const union tree *tp, int lvl)
 
     RT_CK_TREE(tp);
 
-    bu_log("%p ", tp);
+    bu_log("%p ", (void *)tp);
     for (i=lvl; i>0; i--)
 	bu_log("  ");
 
@@ -338,7 +338,7 @@ rt_pr_tree(register const union tree *tp, int lvl)
 	    return;
 
 	case OP_REGION:
-	    bu_log("REGION ctsp=%p\n", tp->tr_c.tc_ctsp);
+	    bu_log("REGION ctsp=%p\n", (void *)tp->tr_c.tc_ctsp);
 	    db_pr_combined_tree_state(tp->tr_c.tc_ctsp);
 	    return;
 
@@ -750,7 +750,7 @@ rt_pr_tol(const struct bn_tol *tol)
     BN_CK_TOL(tol);
 
     bu_log("%p TOL %e (sq=%e) perp=%e, para=%e\n",
-	   tol, tol->dist, tol->dist_sq,
+	   (void *)tol, tol->dist, tol->dist_sq,
 	   tol->perp, tol->para);
 }
 

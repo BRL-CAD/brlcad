@@ -100,8 +100,11 @@ db_preorder_traverse(struct directory *dp,
     }
 
     if (RT_G_DEBUG & DEBUG_DB)
-	bu_log("db_preorder_traverse(%s) %p, %p, comb_enter=%p, comb_exit=%p, leaf=%p, client_data=%p\n",
-	       dp->d_namep, dtp->dbip, dp, dtp->comb_enter_func, dtp->comb_exit_func, dtp->leaf_func, dtp->client_data);
+	bu_log("db_preorder_traverse(%s) %p, %p, comb_enter=%lx, comb_exit=%lx, leaf=%lx, client_data=%p\n",
+	       dp->d_namep,
+	       (void *)dtp->dbip, (void *)dp,
+	       (long unsigned int)dtp->comb_enter_func, (long unsigned int)dtp->comb_exit_func, (long unsigned int)dtp->leaf_func,
+	       dtp->client_data);
 
     if (dp->d_flags & RT_DIR_COMB) {
 	/* entering region */
@@ -216,8 +219,10 @@ db_functree(struct db_i *dbip,
     }
 
     if (RT_G_DEBUG&DEBUG_DB) {
-	bu_log("db_functree(%s) %p, %p, comb=%p, leaf=%p, client_data=%p\n",
-	       dp->d_namep, dbip, dp, comb_func, leaf_func, client_data);
+	bu_log("db_functree(%s) %p, %p, comb=%lx, leaf=%lx, client_data=%p\n",
+	       dp->d_namep, (void *)dbip, (void *)dp,
+	       (long unsigned int)comb_func, (long unsigned int)leaf_func,
+	       client_data);
     }
 
     if (dp->d_flags & RT_DIR_COMB) {

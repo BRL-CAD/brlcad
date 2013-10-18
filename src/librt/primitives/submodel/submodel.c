@@ -261,7 +261,7 @@ rt_submodel_print(const struct soltab *stp)
     bn_mat_print("m2subm", submodel->m2subm);
 
     bu_log_indent_delta(4);
-    bu_log("submodel->rtip=x%x\n", submodel->rtip);
+    bu_log("submodel->rtip=%p\n", (void *)submodel->rtip);
 
     /* Loop through submodel's solid table printing them too. */
     RT_VISIT_ALL_SOLTABS_START(stp, submodel->rtip) {

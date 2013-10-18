@@ -568,8 +568,8 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		}
 		if (RT_G_DEBUG & DEBUG_ADVANCE) {
 		    bu_log(
-			"rt_advance_to_next_cell()=x%x lastcut=x%x\n",
-			cutp, ssp->lastcut);
+			"rt_advance_to_next_cell()=%p lastcut=%p\n",
+			(void *)cutp, (void *)ssp->lastcut);
 		}
 
 		ssp->newray.r_pt[X] = px;
@@ -933,7 +933,7 @@ rt_shootray(register struct application *ap)
 
     if (!BU_LIST_IS_INITIALIZED(&resp->re_parthead)) {
 	/* XXX This shouldn't happen any more */
-	bu_log("rt_shootray() resp=x%x uninitialized, fixing it\n", resp);
+	bu_log("rt_shootray() resp=%p uninitialized, fixing it\n", (void *)resp);
 	/*
 	 * We've been handed a mostly un-initialized resource struct,
 	 * with only a magic number and a cpu number filled in.  Init
@@ -1607,7 +1607,7 @@ rt_cell_n_on_ray(register struct application *ap, int n)
 
     if (!BU_LIST_IS_INITIALIZED(&resp->re_parthead)) {
 	/* XXX This shouldn't happen any more */
-	bu_log("rt_cell_n_on_ray() resp=x%x uninitialized, fixing it\n", resp);
+	bu_log("rt_cell_n_on_ray() resp=%p uninitialized, fixing it\n", (void *)resp);
 	/*
 	 * We've been handed a mostly un-initialized resource struct,
 	 * with only a magic number and a cpu number filled in.

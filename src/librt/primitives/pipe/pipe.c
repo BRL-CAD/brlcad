@@ -2658,7 +2658,7 @@ tesselate_pipe_linear(
 			    nmg_vertexuse_nv(eu_opp_use->vu_p, reverse_norm);
 			} else {
 			    bu_log("No vu_normal assigned at (%g %g %g)\n", V3ARGS(eu->vu_p->v_p->vg_p->coord));
-			    bu_log("\ti=%d, arc_segs=%d, fu_prev = x%x\n", i, arc_segs, fu_prev);
+			    bu_log("\ti=%d, arc_segs=%d, fu_prev = %p\n", i, arc_segs, (void *)fu_prev);
 			}
 		    }
 		}
@@ -2716,7 +2716,7 @@ tesselate_pipe_linear(
 			nmg_vertexuse_nv(eu_opp_use->vu_p, reverse_norm);
 		    } else {
 			bu_log("No vu_normal assigned at (%g %g %g)\n", V3ARGS(eu->vu_p->v_p->vg_p->coord));
-			bu_log("\ti=%d, arc_segs=%d, fu = x%x\n", i, arc_segs, fu);
+			bu_log("\ti=%d, arc_segs=%d, fu = %p\n", i, arc_segs, (void *)fu);
 		    }
 		}
 	    }
@@ -2803,7 +2803,7 @@ tesselate_pipe_linear(
 			nmg_vertexuse_nv(eu_opp_use->vu_p, reverse_norm);
 		    } else {
 			bu_log("No vu_normal assigned at (%g %g %g)\n", V3ARGS(eu->vu_p->v_p->vg_p->coord));
-			bu_log("\ti=%d, j=%d, arc_segs=%d, fu = x%x\n", i, j, arc_segs, fu);
+			bu_log("\ti=%d, j=%d, arc_segs=%d, fu = %p\n", i, j, arc_segs, (void *)fu);
 		    }
 		}
 	    }
@@ -2891,7 +2891,7 @@ tesselate_pipe_linear(
 			nmg_vertexuse_nv(eu_opp_use->vu_p, reverse_norm);
 		    } else {
 			bu_log("No vu_normal assigned at (%g %g %g)\n", V3ARGS(eu->vu_p->v_p->vg_p->coord));
-			bu_log("\ti=%d, j=%d, arc_segs=%d, fu = x%x\n", i, j, arc_segs, fu);
+			bu_log("\ti=%d, j=%d, arc_segs=%d, fu = %p\n", i, j, arc_segs, (void *)fu);
 		    }
 		}
 	    }
@@ -2970,7 +2970,7 @@ tesselate_pipe_linear(
 			    nmg_vertexuse_nv(eu_opp_use->vu_p, reverse_norm);
 			} else {
 			    bu_log("No vu_normal assigned at (%g %g %g)\n", V3ARGS(eu->vu_p->v_p->vg_p->coord));
-			    bu_log("\ti=%d, arc_segs=%d, fu_prev = x%x\n", i, arc_segs, fu_prev);
+			    bu_log("\ti=%d, arc_segs=%d, fu_prev = %p\n", i, arc_segs, (void *)fu_prev);
 			}
 		    }
 		}
@@ -3028,7 +3028,7 @@ tesselate_pipe_linear(
 			nmg_vertexuse_nv(eu_opp_use->vu_p, reverse_norm);
 		    } else {
 			bu_log("No vu_normal assigned at (%g %g %g)\n", V3ARGS(eu->vu_p->v_p->vg_p->coord));
-			bu_log("\ti=%d, arc_segs=%d, fu = x%x\n", i, arc_segs, fu);
+			bu_log("\ti=%d, arc_segs=%d, fu = %p\n", i, arc_segs, (void *)fu);
 		    }
 		}
 	    }
@@ -3123,7 +3123,7 @@ tesselate_pipe_linear(
 			nmg_vertexuse_nv(eu_opp_use->vu_p, reverse_norm);
 		    } else {
 			bu_log("No vu_normal assigned at (%g %g %g)\n", V3ARGS(eu->vu_p->v_p->vg_p->coord));
-			bu_log("\ti=%d, j=%d, arc_segs=%d, fu = x%x\n", i, j, arc_segs, fu);
+			bu_log("\ti=%d, j=%d, arc_segs=%d, fu = %p\n", i, j, arc_segs, (void *)fu);
 		    }
 		}
 	    }
@@ -3211,7 +3211,7 @@ tesselate_pipe_linear(
 			nmg_vertexuse_nv(eu_opp_use->vu_p, reverse_norm);
 		    } else {
 			bu_log("No vu_normal assigned at (%g %g %g)\n", V3ARGS(eu->vu_p->v_p->vg_p->coord));
-			bu_log("\ti=%d, j=%d, arc_segs=%d, fu = x%x\n", i, j, arc_segs, fu);
+			bu_log("\ti=%d, j=%d, arc_segs=%d, fu = %p\n", i, j, arc_segs, (void *)fu);
 		    }
 		}
 	    }
@@ -3411,7 +3411,7 @@ tesselate_pipe_bend(
 			    nmg_vertexuse_nv(eu_opp_use->vu_p, norm);
 			} else {
 			    bu_log("No vu_normal assigned at (%g %g %g)\n", V3ARGS(eu->vu_p->v_p->vg_p->coord));
-			    bu_log("\ti=%d, j=%d, arc_segs=%d, fu = x%x\n", i, j, arc_segs, fu);
+			    bu_log("\ti=%d, j=%d, arc_segs=%d, fu = %p\n", i, j, arc_segs, (void *)fu);
 			}
 		    }
 		}
@@ -3480,7 +3480,7 @@ tesselate_pipe_bend(
 			    nmg_vertexuse_nv(eu_opp_use->vu_p, norm);
 			} else {
 			    bu_log("No vu_normal assigned at (%g %g %g)\n", V3ARGS(eu->vu_p->v_p->vg_p->coord));
-			    bu_log("\ti=%d, j=%d, arc_segs=%d, fu = x%x\n", i, j, arc_segs, fu);
+			    bu_log("\ti=%d, j=%d, arc_segs=%d, fu = %p\n", i, j, arc_segs, (void *)fu);
 			}
 		    }
 		}
@@ -3588,7 +3588,7 @@ tesselate_pipe_bend(
 			nmg_vertexuse_nv(eu_opp_use->vu_p, norm);
 		    } else {
 			bu_log("No vu_normal assigned at (%g %g %g)\n", V3ARGS(eu->vu_p->v_p->vg_p->coord));
-			bu_log("\ti=%d, j=%d, arc_segs=%d, fu = x%x\n", i, j, arc_segs, fu);
+			bu_log("\ti=%d, j=%d, arc_segs=%d, fu = %p\n", i, j, arc_segs, (void *)fu);
 		    }
 		}
 	    }
@@ -3648,7 +3648,7 @@ tesselate_pipe_bend(
 			nmg_vertexuse_nv(eu_opp_use->vu_p, norm);
 		    } else {
 			bu_log("No vu_normal assigned at (%g %g %g)\n", V3ARGS(eu->vu_p->v_p->vg_p->coord));
-			bu_log("\ti=%d, j=%d, arc_segs=%d, fu = x%x\n", i, j, arc_segs, fu);
+			bu_log("\ti=%d, j=%d, arc_segs=%d, fu = %p\n", i, j, arc_segs, (void *)fu);
 		    }
 		}
 	    }

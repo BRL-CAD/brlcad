@@ -1104,7 +1104,7 @@ rt_arb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	if (ret != 0 || arbp->arb_opt == (struct oface *)0) {
 	    bu_log("rt_arb_uv(%s) dynamic setup failure st_specific=%p, optp=%p\n",
 		   stp->st_name,
-		   stp->st_specific, arbp->arb_opt);
+		   stp->st_specific, (void *)arbp->arb_opt);
 	    return;
 	}
 	if (RT_G_DEBUG&DEBUG_SOLIDS) rt_pr_soltab(stp);

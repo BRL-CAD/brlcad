@@ -527,7 +527,7 @@ dsp_print_v4(struct bu_vls *vls, const struct rt_dsp_internal *dsp_ip)
     BU_CK_VLS(&dsp_ip->dsp_name);
     BU_CK_VLS(vls);
 
-    bu_vls_printf(vls, "Displacement Map\n  file='%s' w=%zu n=%zu sm=%d",
+    bu_vls_printf(vls, "Displacement Map\n  file='%s' w=%u n=%u sm=%d",
 		  bu_vls_addr(&dsp_ip->dsp_name),
 		  dsp_ip->dsp_xcnt,
 		  dsp_ip->dsp_ycnt,
@@ -586,7 +586,7 @@ dsp_print_v5(struct bu_vls *vls,
 	    break;
     }
 
-    bu_vls_printf(vls, "='%s'\n  w=%zu n=%zu sm=%d ",
+    bu_vls_printf(vls, "='%s'\n  w=%u n=%u sm=%d ",
 		  bu_vls_addr(&dsp_ip->dsp_name),
 		  dsp_ip->dsp_xcnt,
 		  dsp_ip->dsp_ycnt,
@@ -862,7 +862,7 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 #ifdef PLOT_LAYERS
     if (RT_G_DEBUG & DEBUG_HF) {
 	plot_layers(dsp);
-	bu_log("_  x:%zu y:%zu min %d max %d\n",
+	bu_log("_  x:%u y:%u min %d max %d\n",
 	       XCNT(dsp), YCNT(dsp), dsp_min, dsp_max);
     }
 #endif
@@ -3141,7 +3141,7 @@ rt_dsp_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	uvp->uv_dv = min_r_V;
 
     if (RT_G_DEBUG & DEBUG_HF)
-	bu_log("rt_dsp_uv(pt:%g, %g siz:%zu, %zu)\n U_len=%g V_len=%g\n r=%g rbeam=%g diverge=%g dist=%g\n u=%g v=%g du=%g dv=%g\n",
+	bu_log("rt_dsp_uv(pt:%g, %g siz:%u, %u)\n U_len=%g V_len=%g\n r=%g rbeam=%g diverge=%g dist=%g\n u=%g v=%g du=%g dv=%g\n",
 	       pt[X], pt[Y], XSIZ(dsp), YSIZ(dsp),
 	       U_len, V_len,
 	       r, ap->a_rbeam, ap->a_diverge, hitp->hit_dist,
@@ -4098,8 +4098,8 @@ get_file_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
     }
 
     if ((size_t)dsp_ip->dsp_mp->buflen != (size_t)(dsp_ip->dsp_xcnt*dsp_ip->dsp_ycnt*2)) {
-	bu_log("DSP buffer wrong size: %zu s/b %zu ",
-	       dsp_ip->dsp_mp->buflen, dsp_ip->dsp_xcnt*dsp_ip->dsp_ycnt*2);
+	bu_log("DSP buffer wrong size: %lu s/b %u ",
+	       (long unsigned int)dsp_ip->dsp_mp->buflen, dsp_ip->dsp_xcnt*dsp_ip->dsp_ycnt*2);
 	return -1;
     }
 
@@ -4429,7 +4429,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     dsp_ip->dsp_xcnt = ntohl(*(uint32_t *)cp);
     cp += SIZEOF_NETWORK_LONG;
     if (dsp_ip->dsp_xcnt < 1) {
-	bu_log("%s:%d DSP X dimension (%zu) < 1 \n",
+	bu_log("%s:%d DSP X dimension (%u) < 1 \n",
 	       __FILE__, __LINE__,
 	       dsp_ip->dsp_xcnt);
     }
@@ -4437,7 +4437,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     dsp_ip->dsp_ycnt = ntohl(*(uint32_t *)cp);
     cp += SIZEOF_NETWORK_LONG;
     if (dsp_ip->dsp_ycnt < 1) {
-	bu_log("%s:%d DSP Y dimension (%zu) < 1 \n",
+	bu_log("%s:%d DSP Y dimension (%u) < 1 \n",
 	       __FILE__, __LINE__,
 	       dsp_ip->dsp_ycnt);
     }

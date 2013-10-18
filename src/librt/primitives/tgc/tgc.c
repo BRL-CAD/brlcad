@@ -919,12 +919,13 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	if (tgc_msgs++ < 100) {
 	    bu_log("tgc(%s):  %d intersects != {0, 2, 4}\n", stp->st_name, npts);
 	    bu_log("\tray: pt = (%g %g %g), dir = (%g %g %g), units in mm\n", V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir));
-	    for (i=0; i<npts; i++) {
+	    for (i = 0; i < npts; i++) {
 		bu_log("\t%g", k[i]*t_scale);
 	    }
 	    bu_log("\n");
 	} else if (tgc_msgs == 100) {
-	    bu_log("tgc(%s):  too many grazing intersections encountered.  further reporting suppressed.\n");
+	    bu_log("tgc(%s):  too many grazing intersections encountered.  further reporting suppressed.\n",
+		stp->st_name);
 	    tgc_msgs++;
 	}
 

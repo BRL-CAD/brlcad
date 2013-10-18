@@ -174,7 +174,7 @@ db5_replace_attributes(struct directory *dp, struct bu_attribute_value_set *avsp
 
     if (RT_G_DEBUG&DEBUG_DB) {
 	bu_log("db5_replace_attributes(%s) dbip=%p\n",
-	       dp->d_namep, dbip);
+	       dp->d_namep, (void *)dbip);
 	bu_avs_print(avsp, "new attributes");
     }
 
@@ -237,7 +237,7 @@ db5_update_attributes(struct directory *dp, struct bu_attribute_value_set *avsp,
 
     if (RT_G_DEBUG&DEBUG_DB) {
 	bu_log("db5_update_attributes(%s) dbip=%p\n",
-	       dp->d_namep, dbip);
+	       dp->d_namep, (void *)dbip);
 	bu_avs_print(avsp, "new attributes");
     }
 

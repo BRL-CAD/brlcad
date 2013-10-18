@@ -509,13 +509,13 @@ nmg_uv_in_lu(const fastf_t u, const fastf_t v, const struct loopuse *lu)
 	struct edge_g_cnurb *eg;
 
 	if (!eu->g.magic_p) {
-	    bu_log("nmg_uv_in_lu: eu (%p) has no geometry!!!\n", eu);
+	    bu_log("nmg_uv_in_lu: eu (%p) has no geometry!!!\n", (void *)eu);
 	    bu_bomb("nmg_uv_in_lu: eu has no geometry!!!\n");
 	}
 
 	if (*eu->g.magic_p != NMG_EDGE_G_CNURB_MAGIC) {
 	    bu_log("nmg_uv_in_lu: Called with lu (%p) containing eu (%p) that is not CNURB!!!!\n",
-		   lu, eu);
+		   (void *)lu, (void *)eu);
 	    bu_bomb("nmg_uv_in_lu: Called with lu containing eu that is not CNURB!!!\n");
 	}
 
@@ -533,7 +533,7 @@ nmg_uv_in_lu(const fastf_t u, const fastf_t v, const struct loopuse *lu)
 
 	    if (!vu1->a.magic_p || !vu2->a.magic_p) {
 		bu_log("nmg_uv_in_lu: Called with lu (%p) containing vu with no attribute!!!!\n",
-		       lu);
+		       (void *)lu);
 		bu_bomb("nmg_uv_in_lu: Called with lu containing vu with no attribute!!!\n");
 	    }
 
@@ -541,7 +541,7 @@ nmg_uv_in_lu(const fastf_t u, const fastf_t v, const struct loopuse *lu)
 		|| *vu2->a.magic_p != NMG_VERTEXUSE_A_CNURB_MAGIC)
 	    {
 		bu_log("nmg_uv_in_lu: Called with lu (%p) containing vu that is not CNURB!!!!\n",
-		       lu);
+		       (void *)lu);
 		bu_bomb("nmg_uv_in_lu: Called with lu containing vu that is not CNURB!!!\n");
 	    }
 

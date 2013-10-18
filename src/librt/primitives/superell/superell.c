@@ -531,7 +531,7 @@ rt_superell_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
     }
 
     if (counter > 0) {
-	bu_log("rt_superell_shot():  realroot in %d out %d\n", realRoot[1], realRoot[0]);
+	bu_log("rt_superell_shot():  realroot in %f out %f\n", realRoot[1], realRoot[0]);
 	counter--;
     }
 

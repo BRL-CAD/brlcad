@@ -41,7 +41,7 @@
 
 
 #define DEBUG_PR(aaa, rrr) {\
-	if (RT_G_DEBUG&DEBUG_DB) bu_log("db_scan %p %c (0%o)\n", \
+	if (RT_G_DEBUG&DEBUG_DB) bu_log("db_scan %ld %c (0%o)\n", \
 					aaa, rrr.u_id, rrr.u_id); }
 
 /**
@@ -84,7 +84,8 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
     register long j;
 
     RT_CK_DBI(dbip);
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_scan(%p, %p)\n", dbip, handler);
+    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_scan(%p, %lx)\n",
+				    (void *)dbip, (long unsigned int)handler);
 
     /* XXXX Note that this ignores dbip->dbi_inmem */
     /* In a portable way, read the header (even if not rewound) */
@@ -334,7 +335,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 		handler(dbip, record.c.c_name, addr, nrec, j, client_data);
 		break;
 	    default:
-		bu_log("db_scan ERROR:  bad record %c (0%o), addr=x%lld\n",
+		bu_log("db_scan ERROR:  bad record %c (0%o), addr=%ld\n",
 		       record.u_id, record.u_id, addr);
 		/* skip this record */
 		break;
@@ -377,7 +378,7 @@ db_update_ident(struct db_i *dbip, const char *new_title, double local2mm)
 	new_title = "";
 
     if (RT_G_DEBUG&DEBUG_DB)
-	bu_log("db_update_ident(%p, '%s', %g)\n", dbip, new_title, local2mm);
+	bu_log("db_update_ident(%p, '%s', %g)\n", (void *)dbip, new_title, local2mm);
 
     /* make sure dbip is a valid version */
     if (db_version(dbip) <= 0) {
@@ -449,7 +450,7 @@ db_fwrite_ident(FILE *fp, const char *title, double local2mm)
     code = db_v4_get_units_code(bu_units_string(local2mm));
 
     if (RT_G_DEBUG&DEBUG_DB) bu_log("db_fwrite_ident(%p, '%s', %g) code=%d\n",
-				    fp, title, local2mm, code);
+				    (void *)fp, title, local2mm, code);
 
     memset((char *)&rec, 0, sizeof(rec));
     rec.i.i_id = ID_IDENT;

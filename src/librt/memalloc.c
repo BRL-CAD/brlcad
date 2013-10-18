@@ -343,9 +343,9 @@ rt_memprint(struct mem_map **pp)
 {
     register struct mem_map *curp;
 
-    bu_log("rt_memprint(%p):  address, length\n", *pp);
+    bu_log("rt_memprint(%p):  address, length\n", (void *)*pp);
     for (curp = *pp; curp; curp = curp->m_nxtp)
-	bu_log(" a=%p, l=%.5zu\n", curp->m_addr, curp->m_size);
+	bu_log(" a=%ld, l=%.5zu\n", curp->m_addr, curp->m_size);
 }
 
 

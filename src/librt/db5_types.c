@@ -582,7 +582,9 @@ db5_sync_attr_to_comb(struct rt_comb_internal *comb, const struct bu_attribute_v
     /* los */
     bu_vls_sprintf(&newval, "%s", bu_avs_get(avs, db5_standard_attribute(ATTR_LOS)));
     bu_vls_trimspace(&newval);
-    if (bu_vls_strlen(&newval) != 0 && !BU_STR_EQUAL(bu_vls_addr(&newval), "(null)") && !BU_STR_EQUAL(bu_vls_addr(&newval), "del")) {
+    if (bu_vls_strlen(&newval) != 0
+	&& !BU_STR_EQUAL(bu_vls_addr(&newval), "(null)")
+	&& !BU_STR_EQUAL(bu_vls_addr(&newval), "del")) {
 	/* Currently, struct rt_comb_internal lists los as a long.  Probably should allow
 	 * floating point, but as it's DEPRECATED anyway I suppose we can wait for that? */
 	/* attr_float_val = strtod(bu_vls_addr(&newval), &endptr); */
@@ -590,7 +592,8 @@ db5_sync_attr_to_comb(struct rt_comb_internal *comb, const struct bu_attribute_v
 	if (endptr == bu_vls_addr(&newval) + strlen(bu_vls_addr(&newval))) {
 	    comb->los = attr_num_val;
 	} else {
-	    bu_log("WARNING: [%s] has invalid los value\nlos remains at %d\n", name, bu_vls_addr(&newval), comb->los);
+	    bu_log("WARNING: [%s] has invalid los value %s\nlos remains at %ld\n",
+		   name, bu_vls_addr(&newval), comb->los);
 	}
     } else {
 	/* no los */

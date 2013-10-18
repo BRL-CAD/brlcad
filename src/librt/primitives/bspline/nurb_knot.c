@@ -94,7 +94,7 @@ rt_nurb_kvmult(struct knot_vector *new_kv, const struct knot_vector *kv, int num
     check.k_size = num - n;
     if (check.k_size <= 0) {
 	bu_log("rt_nurb_kvmult(new_kv=%p, kv=%p, num=%d, val=%g)\n",
-	       new_kv, kv, num, val);
+	       (void *)new_kv, (void *)kv, num, val);
 	rt_nurb_pr_kv(kv);
 	bu_bomb("rt_nurb_kvmult\n");
     }

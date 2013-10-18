@@ -215,7 +215,7 @@ rt_binunif_import5_minor_type(struct rt_db_internal *ip,
 void
 rt_binunif_dump( struct rt_binunif_internal *bip) {
     RT_CK_BINUNIF(bip);
-    bu_log("rt_bin_unif_internal <%p>...\n", bip);
+    bu_log("rt_bin_unif_internal <%p>...\n", (void *)bip);
     bu_log("  type = x%x = %d", bip->type, bip->type);
     bu_log("  count = %ld  first = 0x%02x", bip->count,
 	   bip->u.uint8[0] & 0x0ff);

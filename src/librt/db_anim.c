@@ -49,7 +49,7 @@ db_add_anim(struct db_i *dbip, register struct animate *anp, int root)
     anp->an_forw = ANIM_NULL;
     if (root) {
 	if (RT_G_DEBUG&DEBUG_ANIM)
-	    bu_log("db_add_anim(%p) root\n", anp);
+	    bu_log("db_add_anim(%p) root\n", (void *)anp);
 
 	if (!dbip)
 	    bu_bomb("Unexpected NULL dbip encountered in db_add_anim\n");
@@ -60,7 +60,7 @@ db_add_anim(struct db_i *dbip, register struct animate *anp, int root)
 	if (!dp)
 	    return 1;
 	if (RT_G_DEBUG&DEBUG_ANIM)
-	    bu_log("db_add_anim(%p) arc %s\n", anp,
+	    bu_log("db_add_anim(%p) arc %s\n", (void *)anp,
 		   dp->d_namep);
 	headp = &(dp->d_animate);
     }
@@ -92,7 +92,7 @@ db_do_anim(register struct animate *anp, mat_t stack, mat_t arc, struct mater_in
     mat_t temp;
 
     if (RT_G_DEBUG&DEBUG_ANIM)
-	bu_log("db_do_anim(%p) ", anp);
+	bu_log("db_do_anim(%p) ", (void *)anp);
     if (RT_G_DEBUG&DEBUG_ANIM && !materp) bu_log("(null materp) ");
     RT_CK_ANIMATE(anp);
     switch (anp->an_type) {

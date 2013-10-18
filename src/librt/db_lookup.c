@@ -175,7 +175,7 @@ db_lookup(const struct db_i *dbip, const char *name, int noisy)
 	/* first two checks are for speed */
 	if ((n0 == *(this=dp->d_namep)) && (n1 == this[1]) && (BU_STR_EQUAL(name, this))) {
 	    if (RT_G_DEBUG&DEBUG_DB)
-		bu_log("db_lookup(%s) %p\n", name, dp);
+		bu_log("db_lookup(%s) %p\n", name, (void *)dp);
 	    return dp;
 	}
     }
@@ -199,7 +199,7 @@ db_diradd(struct db_i *dbip, const char *name, off_t laddr, size_t len, int flag
 
     if (RT_G_DEBUG&DEBUG_DB) {
 	bu_log("db_diradd(dbip=%p, name='%s', addr=%ld, len=%zu, flags=0x%x, ptr=%p)\n",
-	       dbip, name, laddr, len, flags, ptr);
+	       (void *)dbip, name, laddr, len, flags, ptr);
     }
 
     if ((tmp_ptr=strchr(name, '/')) != NULL) {
@@ -347,7 +347,7 @@ db_pr_dir(const struct db_i *dbip)
     RT_CK_DBI(dbip);
 
     bu_log("db_pr_dir(%p):  Dump of directory for file %s [%s]\n",
-	   dbip, dbip->dbi_filename,
+	   (void *)dbip, dbip->dbi_filename,
 	   dbip->dbi_read_only ? "READ-ONLY" : "Read/Write");
 
     bu_log("Title = %s\n", dbip->dbi_title);
@@ -365,8 +365,8 @@ db_pr_dir(const struct db_i *dbip)
 		flags = "COM";
 	    else
 		flags = "Bad";
-	    bu_log("%p %s %s=x%.8x len=%.5ld use=%.2ld nref=%.2ld %s",
-		   dp,
+	    bu_log("%p %s %s=%ld len=%.5ld use=%.2ld nref=%.2ld %s",
+		   (void *)dp,
 		   flags,
 		   dp->d_flags & RT_DIR_INMEM ? "  ptr " : "d_addr",
 		   dp->d_addr,
@@ -375,7 +375,7 @@ db_pr_dir(const struct db_i *dbip)
 		   dp->d_nref,
 		   dp->d_namep);
 	    if (dp->d_animate)
-		bu_log(" anim=%p\n", dp->d_animate);
+		bu_log(" anim=%p\n", (void *)dp->d_animate);
 	    else
 		bu_log("\n");
 	}

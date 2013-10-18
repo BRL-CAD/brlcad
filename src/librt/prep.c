@@ -316,10 +316,10 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 	/* Ensure bit numbers are unique */
 	register struct soltab **ssp = &rtip->rti_Solids[stp->st_bit];
 	if (*ssp != SOLTAB_NULL) {
-	    bu_log("rti_Solids[%ld] is non-empty! rtip=%p\n", stp->st_bit, rtip);
-	    bu_log("Existing entry is (st_rtip=%p):\n", (*ssp)->st_rtip);
+	    bu_log("rti_Solids[%ld] is non-empty! rtip=%p\n", stp->st_bit, (void *)rtip);
+	    bu_log("Existing entry is (st_rtip=%p):\n", (void *)(*ssp)->st_rtip);
 	    rt_pr_soltab(*ssp);
-	    bu_log("2nd soltab also claiming that bit is (st_rtip=%p):\n", stp->st_rtip);
+	    bu_log("2nd soltab also claiming that bit is (st_rtip=%p):\n", (void *)stp->st_rtip);
 	    rt_pr_soltab(stp);
 	}
 	BU_ASSERT_PTR(*ssp, ==, SOLTAB_NULL);
@@ -660,8 +660,8 @@ rt_init_resource(struct resource *resp,
 	if (ores != NULL && ores != resp) {
 	    bu_log("rt_init_resource(cpu=%d) re-registering resource, had %p, new=%p\n",
 		   cpu_num,
-		   ores,
-		   resp);
+		   (void *)ores,
+		   (void *)resp);
 	    return;
 	}
 	BU_PTBL_SET(&rtip->rti_resources, cpu_num, resp);

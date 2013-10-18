@@ -662,8 +662,9 @@ _rt_tree_kill_dead_solid_refs(union tree *tp)
 		stp = tp->tr_a.tu_stp;
 		RT_CK_SOLTAB(stp);
 		if (stp->st_aradius <= 0) {
-		    if (RT_G_DEBUG&DEBUG_TREEWALK)bu_log("encountered dead solid '%s' stp=x%x, tp=x%x\n",
-							 stp->st_dp->d_namep, stp, tp);
+		    if (RT_G_DEBUG&DEBUG_TREEWALK)
+			bu_log("encountered dead solid '%s' stp=%p, tp=%p\n",
+			       stp->st_dp->d_namep, (void *)stp, (void *)tp);
 		    rt_free_soltab(stp);
 		    tp->tr_a.tu_stp = SOLTAB_NULL;
 		    tp->tr_op = OP_NOP;	/* Convert to NOP */
@@ -672,8 +673,8 @@ _rt_tree_kill_dead_solid_refs(union tree *tp)
 	    }
 
 	default:
-	    bu_log("_rt_tree_kill_dead_solid_refs(x%x): unknown op=x%x\n",
-		   tp, tp->tr_op);
+	    bu_log("_rt_tree_kill_dead_solid_refs(%p): unknown op=%x\n",
+		   (void *)tp, tp->tr_op);
 	    return;
 
 	case OP_XOR:
@@ -912,8 +913,8 @@ top:
 	    return 0;		/* Retain */
 
 	default:
-	    bu_log("rt_tree_elim_nops(x%x): unknown op=x%x\n",
-		   tp, tp->tr_op);
+	    bu_log("rt_tree_elim_nops(%p): unknown op=%x\n",
+		   (void *)tp, tp->tr_op);
 	    return -1;
 
 	case OP_XOR:

@@ -171,7 +171,7 @@ db5_realloc(struct db_i *dbip, struct directory *dp, struct bu_external *ep)
     /* Start by zapping existing database object into a free object */
     if (dp->d_addr != RT_DIR_PHONY_ADDR) {
 	if (RT_G_DEBUG&DEBUG_DB)
-	    bu_log("db5_realloc(%s) releasing storage at %p, len=%zu\n",
+	    bu_log("db5_realloc(%s) releasing storage at %ld, len=%zu\n",
 		   dp->d_namep, dp->d_addr, dp->d_len);
 
 	rt_memfree(&(dbip->dbi_freep), dp->d_len, dp->d_addr);
@@ -189,7 +189,7 @@ db5_realloc(struct db_i *dbip, struct directory *dp, struct bu_external *ep)
 
 	if ((mmp = rt_memalloc_nosplit(&(dbip->dbi_freep), ep->ext_nbytes)) != MAP_NULL) {
 	    if (RT_G_DEBUG&DEBUG_DB)
-		bu_log("db5_realloc(%s) obtained free block at %p, len=%zu\n",
+		bu_log("db5_realloc(%s) obtained free block at %ld, len=%zu\n",
 		       dp->d_namep, mmp->m_addr, mmp->m_size);
 	    BU_ASSERT_LONG((size_t)mmp->m_size, >=, (size_t)ep->ext_nbytes);
 	    if ((size_t)mmp->m_size == (size_t)ep->ext_nbytes) {
@@ -204,7 +204,7 @@ db5_realloc(struct db_i *dbip, struct directory *dp, struct bu_external *ep)
 		dp->d_addr = mmp->m_addr + (off_t)ep->ext_nbytes;
 		dp->d_len = mmp->m_size - ep->ext_nbytes;
 		if (RT_G_DEBUG&DEBUG_DB)
-		    bu_log("db5_realloc(%s) returning surplus at %p, len=%zu\n",
+		    bu_log("db5_realloc(%s) returning surplus at %ld, len=%zu\n",
 			   dp->d_namep, dp->d_addr, dp->d_len);
 		if (db5_write_free(dbip, dp, dp->d_len) < 0) return -1;
 		rt_memfree(&(dbip->dbi_freep), dp->d_len, dp->d_addr);
@@ -214,8 +214,8 @@ db5_realloc(struct db_i *dbip, struct directory *dp, struct bu_external *ep)
 	    dp->d_len = ep->ext_nbytes;
 	    /* Erase the new place */
 	    if (RT_G_DEBUG&DEBUG_DB)
-		bu_log("db5_realloc(%s) utilizing free block at addr=x%x, len=%zu\n",
-		       dp->d_namep, (unsigned long int)dp->d_addr, dp->d_len);
+		bu_log("db5_realloc(%s) utilizing free block at addr=%ld, len=%zu\n",
+		       dp->d_namep, dp->d_addr, dp->d_len);
 	    if (db5_write_free(dbip, dp, dp->d_len) < 0) return -1;
 	    return 0;
 	}
@@ -226,8 +226,8 @@ db5_realloc(struct db_i *dbip, struct directory *dp, struct bu_external *ep)
     dbip->dbi_eof += (off_t)ep->ext_nbytes;
     dp->d_len = ep->ext_nbytes;
     if (RT_G_DEBUG&DEBUG_DB)
-	bu_log("db5_realloc(%s) extending database addr=x%x, len=%zu\n",
-	       dp->d_namep, (unsigned long int)dp->d_addr, dp->d_len);
+	bu_log("db5_realloc(%s) extending database addr=%ld, len=%zu\n",
+	       dp->d_namep, dp->d_addr, dp->d_len);
     return 0;
 }
 

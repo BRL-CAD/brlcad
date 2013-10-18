@@ -67,7 +67,7 @@ rt_bound_tree(const union tree *tp, fastf_t *tree_min, fastf_t *tree_max)
 
 	default:
 	    bu_log("rt_bound_tree(%p): unknown op=x%x\n",
-		   tp, tp->tr_op);
+		   (void *)tp, tp->tr_op);
 	    return -1;
 
 	case OP_XOR:
@@ -283,7 +283,7 @@ rt_traverse_tree(struct rt_i *rtip, const union tree *tp, fastf_t *tree_min, fas
 	    }
 
 	default:
-	    bu_log("rt_traverse_tree(%p): unknown op=x%x\n", tp, (tp->tr_op));
+	    bu_log("rt_traverse_tree(%p): unknown op=x%x\n", (void *)tp, (tp->tr_op));
 	    return -1;
 
 	case OP_XOR:

@@ -603,7 +603,7 @@ rt_ebm_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     }
     eip->mp = mp;
     if (mp->buflen < (size_t)(eip->xdim*eip->ydim)) {
-	bu_log("rt_ebm_import4() file '%s' is too short %zu < %zu\n",
+	bu_log("rt_ebm_import4() file '%s' is too short %zu < %u\n",
 	       eip->file, mp->buflen, eip->xdim*eip->ydim);
 	goto fail;
     }
@@ -749,7 +749,7 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     }
     eip->mp = mp;
     if (mp->buflen < (size_t)(eip->xdim*eip->ydim)) {
-	bu_log("rt_ebm_import4() file '%s' is too short %zu < %zu\n",
+	bu_log("rt_ebm_import4() file '%s' is too short %zu < %u\n",
 	       eip->file, mp->buflen, eip->xdim*eip->ydim);
 	goto fail;
     }
@@ -845,7 +845,7 @@ rt_ebm_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
     if (!verbose)
 	return 0;
 
-    bu_vls_printf(&substr, "  file=\"%s\" w=%zu n=%zu depth=%g\n   mat=",
+    bu_vls_printf(&substr, "  file=\"%s\" w=%u n=%u depth=%g\n   mat=",
 		  eip->file, eip->xdim, eip->ydim, INTCLAMP(eip->tallness*mm2local));
     bu_vls_vlscat(str, &substr);
     for (i=0; i<15; i++) {
@@ -989,7 +989,7 @@ rt_ebm_print(register const struct soltab *stp)
 	(struct rt_ebm_specific *)stp->st_specific;
 
     bu_log("ebm file = %s\n", ebmp->ebm_i.file);
-    bu_log("dimensions = (%zu, %zu, %g)\n",
+    bu_log("dimensions = (%u, %u, %g)\n",
 	   ebmp->ebm_i.xdim, ebmp->ebm_i.ydim,
 	   ebmp->ebm_i.tallness);
     VPRINT("model cellsize", ebmp->ebm_cellsize);
@@ -1624,7 +1624,7 @@ rt_ebm_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 
     if (attr == (char *)NULL) {
 	bu_vls_strcpy(logstr, "ebm");
-	bu_vls_printf(logstr, " F %s W %zu N %zu H %.25g",
+	bu_vls_printf(logstr, " F %s W %u N %u H %.25g",
 		      ebm->file, ebm->xdim, ebm->ydim, ebm->tallness);
 	bu_vls_printf(logstr, " M {");
 	for (i=0; i<16; i++)
@@ -1633,9 +1633,9 @@ rt_ebm_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
     } else if (BU_STR_EQUAL(attr, "F") || BU_STR_EQUAL(attr, "file")) {
 	bu_vls_printf(logstr, "%s", ebm->file);
     } else if (BU_STR_EQUAL(attr, "W")) {
-	bu_vls_printf(logstr, "%zu", ebm->xdim);
+	bu_vls_printf(logstr, "%u", ebm->xdim);
     } else if (BU_STR_EQUAL(attr, "N")) {
-	bu_vls_printf(logstr, "%zu", ebm->ydim);
+	bu_vls_printf(logstr, "%u", ebm->ydim);
     } else if (BU_STR_EQUAL(attr, "H")) {
 	bu_vls_printf(logstr, "%.25g", ebm->tallness);
     } else if (BU_STR_EQUAL(attr, "M")) {

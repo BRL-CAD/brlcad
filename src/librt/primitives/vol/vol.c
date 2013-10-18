@@ -700,8 +700,9 @@ rt_vol_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 /* bu_vls_struct_print(str, rt_vol_parse, (char *)vip);
    bu_vls_strcat(str, "\n"); */
 
-    bu_vls_printf(&substr, "  file=\"%s\" w=%zu n=%zu d=%zu lo=%zu hi=%zu size=%g %g %g\n   mat=",
-		  vip->file, vip->xdim, vip->ydim, vip->zdim, vip->lo, vip->hi,
+    bu_vls_printf(&substr, "  file=\"%s\" w=%u n=%u d=%u lo=%u hi=%u size=%g %g %g\n   mat=",
+		  vip->file,
+		  vip->xdim, vip->ydim, vip->zdim, vip->lo, vip->hi,
 		  V3INTCLAMPARGS(local));
     bu_vls_vlscat(str, &substr);
     for (i=0; i<15; i++) {
@@ -839,7 +840,7 @@ rt_vol_print(register const struct soltab *stp)
 	(struct rt_vol_specific *)stp->st_specific;
 
     bu_log("vol file = %s\n", volp->vol_i.file);
-    bu_log("dimensions = (%zu, %zu, %zu)\n",
+    bu_log("dimensions = (%u, %u, %u)\n",
 	   volp->vol_i.xdim, volp->vol_i.ydim,
 	   volp->vol_i.zdim);
     VPRINT("model cellsize", volp->vol_i.cellsize);

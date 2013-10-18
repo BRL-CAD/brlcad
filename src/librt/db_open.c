@@ -93,7 +93,7 @@ db_open(const char *name, const char *mode)
 	    bu_close_mapped_file(mfp);
 
 	    if (RT_G_DEBUG & DEBUG_DB) {
-		bu_log("db_open(%s) dbip=%p: reused previously mapped file\n", name, dbip);
+		bu_log("db_open(%s) dbip=%p: reused previously mapped file\n", name, (void *)dbip);
 	    }
 
 	    return dbip;
@@ -213,7 +213,7 @@ db_open(const char *name, const char *mode)
     }
 
     if (RT_G_DEBUG & DEBUG_DB) {
-	bu_log("db_open(%s) dbip=%p version=%d\n", dbip->dbi_filename, dbip, dbip->dbi_version);
+	bu_log("db_open(%s) dbip=%p version=%d\n", dbip->dbi_filename, (void *)dbip, dbip->dbi_version);
     }
 
     return dbip;
@@ -291,7 +291,7 @@ db_close(register struct db_i *dbip)
 
     RT_CK_DBI(dbip);
     if (RT_G_DEBUG&DEBUG_DB) bu_log("db_close(%s) %p uses=%d\n",
-				    dbip->dbi_filename, dbip, dbip->dbi_uses);
+				    dbip->dbi_filename, (void *)dbip, dbip->dbi_uses);
 
     bu_semaphore_acquire(BU_SEM_LISTS);
     if ((--dbip->dbi_uses) > 0) {
