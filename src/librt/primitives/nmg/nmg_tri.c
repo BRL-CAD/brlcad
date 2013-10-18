@@ -56,12 +56,12 @@
 #define NMG_CK_PT2D(_p) NMG_CKMAG(_p, NMG_PT2D_MAGIC, "pt2d")
 #define NMG_CK_TRAP(_p) {NMG_CKMAG(_p, NMG_TRAP_MAGIC, "trap");\
 	if (! BU_LIST_PREV(bu_list, &(_p)->l)) {\
-		bu_log("%s %d bad prev pointer of trapezoid 0x%08x\n", \
-			__FILE__, __LINE__, &(_p)->l);\
+		bu_log("%s %d bad prev pointer of trapezoid %p\n", \
+		       __FILE__, __LINE__, (void *)&(_p)->l);	     \
 		bu_bomb("NMG_CK_TRAP: aborting");\
 	} else if (! BU_LIST_NEXT(bu_list, &(_p)->l)) {\
-		bu_log("%s %d bad next pointer of trapezoid 0x%08x\n", \
-			__FILE__, __LINE__, &(_p)->l);\
+		bu_log("%s %d bad next pointer of trapezoid %p\n", \
+		       __FILE__, __LINE__, (void *)&(_p)->l);	     \
 		bu_bomb("NMG_CL_TRAP: aborting");\
 	}}
 
@@ -306,8 +306,8 @@ map_vu_to_2d(struct vertexuse *vu, struct bu_list *tbl2d, fastf_t *mat, struct f
 
 
     if (RTG.NMG_debug & DEBUG_TRI && flatten_debug) bu_log(
-	"Transforming 0x%x 3D(%g, %g, %g) to 2D(%g, %g, %g)\n",
-	vu, V3ARGS(vg->coord), V3ARGS(np->coord));
+	"Transforming %p 3D(%g, %g, %g) to 2D(%g, %g, %g)\n",
+	(void *)vu, V3ARGS(vg->coord), V3ARGS(np->coord));
 
     /* find location in scanline ordered list for vertex */
     for (BU_LIST_FOR(p, pt2d, tbl2d)) {
@@ -336,12 +336,12 @@ map_vu_to_2d(struct vertexuse *vu, struct bu_list *tbl2d, fastf_t *mat, struct f
 	if (fu_of_vu != fu) continue;
 
 	if (RTG.NMG_debug & DEBUG_TRI && flatten_debug)
-	    bu_log("transform 0x%x... ", vu_p);
+	    bu_log("transform %p... ", (void *)vu_p);
 
 	/* if vertexuse already transformed, skip it */
 	if (find_pt2d(tbl2d, vu_p)) {
 	    if (RTG.NMG_debug & DEBUG_TRI && flatten_debug) {
-		bu_log("%x vertexuse already transformed\n", vu);
+		bu_log("%p vertexuse already transformed\n", (void *)vu);
 		nmg_pr_vu(vu, NULL);
 	    }
 	    continue;
@@ -597,8 +597,8 @@ pick_edges(struct vertex *v, struct vertexuse **vu_first, int *min_dir, struct v
 		    bu_log("\t\t\teu_dir %g %g %g\n",
 			   V3ARGS(eu_dir));
 
-		    bu_log("\t\t\tnew_last/max 0x%08x %g %g %g -> %g %g %g vdot %g\n",
-			   vu,
+		    bu_log("\t\t\tnew_last/max %p %g %g %g -> %g %g %g vdot %g\n",
+			   (void *)vu,
 			   V3ARGS(vu->v_p->vg_p->coord),
 			   V3ARGS(vu_next->v_p->vg_p->coord),
 			   vu_dot);
@@ -610,8 +610,8 @@ pick_edges(struct vertex *v, struct vertexuse **vu_first, int *min_dir, struct v
 	    if (vu_dot < dot_min) {
 		if (RTG.NMG_debug & DEBUG_TRI) {
 		    bu_log("\t\t\teu_dir %g %g %g\n", V3ARGS(eu_dir));
-		    bu_log("\t\t\tnew_first/min 0x%08x %g %g %g -> %g %g %g vdot %g\n",
-			   vu,
+		    bu_log("\t\t\tnew_first/min %p %g %g %g -> %g %g %g vdot %g\n",
+			   (void *)vu,
 			   V3ARGS(vu->v_p->vg_p->coord),
 			   V3ARGS(vu_next->v_p->vg_p->coord),
 			   vu_dot);
@@ -647,8 +647,8 @@ pick_edges(struct vertex *v, struct vertexuse **vu_first, int *min_dir, struct v
 		if (RTG.NMG_debug & DEBUG_TRI) {
 		    bu_log("\t\t\t-eu_dir %g %g %g\n",
 			   V3ARGS(eu_dir));
-		    bu_log("\t\t\tnew_last/max 0x%08x %g %g %g <- %g %g %g vdot %g\n",
-			   vu,
+		    bu_log("\t\t\tnew_last/max %p %g %g %g <- %g %g %g vdot %g\n",
+			   (void *)vu,
 			   V3ARGS(vu->v_p->vg_p->coord),
 			   V3ARGS(vu_prev->v_p->vg_p->coord),
 			   vu_dot);
@@ -660,8 +660,8 @@ pick_edges(struct vertex *v, struct vertexuse **vu_first, int *min_dir, struct v
 	    if (vu_dot < dot_min) {
 		if (RTG.NMG_debug & DEBUG_TRI) {
 		    bu_log("\t\t\teu_dir %g %g %g\n", V3ARGS(eu_dir));
-		    bu_log("\t\t\tnew_first/min 0x%08x %g %g %g <- %g %g %g vdot %g\n",
-			   vu,
+		    bu_log("\t\t\tnew_first/min %p %g %g %g <- %g %g %g vdot %g\n",
+			   (void *)vu,
 			   V3ARGS(vu->v_p->vg_p->coord),
 			   V3ARGS(vu_prev->v_p->vg_p->coord),
 			   vu_dot);
@@ -1426,7 +1426,8 @@ nmg_plot_fu(const char *prefix, const struct faceuse *fu, const struct bn_tol *U
 
 	faceuse_loopuse_count++;
 
-	bu_vls_sprintf(&plot_file_name, "%s_faceuse_%x_loopuse_%x.pl", prefix, fu, lu);
+	bu_vls_sprintf(&plot_file_name, "%s_faceuse_%p_loopuse_%p.pl",
+		       prefix, (void *)fu, (void *)lu);
 	plotfp = fopen(bu_vls_addr(&plot_file_name), "wb");
 
 	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
@@ -2106,9 +2107,10 @@ nmg_triangulate_rm_degen_loopuse(struct faceuse *fu, const struct bn_tol *tol)
 					int cnt = 0;
 					for (BU_LIST_FOR(eu1, edgeuse, &lu->down_hd)) {
 					    cnt++;
-					    bu_log("%d -- vu_p = %x vg_p = %x dup_vu_p = %x dup_vg_p = %x\n",
-						   cnt, eu1->vu_p, eu1->vu_p->v_p->vg_p,
-						   eu->vu_p, eu->vu_p->v_p->vg_p);
+					    bu_log("%d -- vu_p = %p vg_p = %p dup_vu_p = %p dup_vg_p = %p\n",
+						   cnt,
+						   (void *)eu1->vu_p, (void *)eu1->vu_p->v_p->vg_p,
+						   (void *)eu->vu_p, (void *)eu->vu_p->v_p->vg_p);
 					}
 				    }
 				    bu_bomb("nmg_triangulate_rm_degen_loopuse(): found duplicate vertex\n");
@@ -2268,8 +2270,8 @@ nmg_tri_kill_accordions(struct loopuse *lu, struct bu_list *tbl2d)
 	if ((eu_prev->vu_p->v_p == eu_next->vu_p->v_p) && (eu_curr != eu_prev)) {
 	    if (eu_prev != eu_next) {
 		if ((RTG.NMG_debug & DEBUG_BASIC) || (RTG.NMG_debug & DEBUG_CUTLOOP)) {
-		    bu_log("nmg_tri_kill_accordions(): killing jaunt in accordion eu's x%x and x%x\n",
-			   eu_curr, eu_prev);
+		    bu_log("nmg_tri_kill_accordions(): killing jaunt in accordion eu's %p and %p\n",
+			   (void *)eu_curr, (void *)eu_prev);
 		}
 		if (tbl2d) {
 		    if ((tmp = find_pt2d(tbl2d, eu_curr->vu_p))) {
@@ -2288,7 +2290,7 @@ nmg_tri_kill_accordions(struct loopuse *lu, struct bu_list *tbl2d)
 		vert_cnt -= 2;
 	    } else {
 		if ((RTG.NMG_debug & DEBUG_BASIC) || (RTG.NMG_debug & DEBUG_CUTLOOP)) {
-		    bu_log("nmg_tri_kill_accordions(): killing jaunt in accordion eu x%x\n", eu_curr);
+		    bu_log("nmg_tri_kill_accordions(): killing jaunt in accordion eu %p\n", (void *)eu_curr);
 		}
 		if (tbl2d) {
 		    if ((tmp = find_pt2d(tbl2d, eu_curr->vu_p))) {
@@ -2327,10 +2329,11 @@ validate_tbl2d(const char *str, struct bu_list *tbl2d, struct faceuse *fu)
 	    NMG_CK_EDGEUSE(eu);
 	    if (!(pt = find_pt2d(tbl2d, eu->vu_p))) {
 		error_cnt++;
-		bu_log("validate_tbl2d(): %d: fu = %x fu_orient = %d lu = %x lu_orient = %d missing vu = %x coord = %f %f %f \n",
-			error_cnt, fu, fu->orientation, lu,
-			lu->orientation, eu->vu_p,
-			V3ARGS(eu->vu_p->v_p->vg_p->coord));
+		bu_log("validate_tbl2d(): %d: fu = %p fu_orient = %d lu = %p lu_orient = %d missing vu = %p coord = %f %f %f \n",
+		       error_cnt,
+		       (void *)fu, fu->orientation,
+		       (void *)lu, lu->orientation,
+		       (void *)eu->vu_p, V3ARGS(eu->vu_p->v_p->vg_p->coord));
 	    } else {
 		NMG_CK_VERTEXUSE(pt->vu_p);
 		NMG_CK_VERTEX(pt->vu_p->v_p);
@@ -2428,9 +2431,9 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
     first = max;
 
     if (RTG.NMG_debug & DEBUG_TRI) {
-	bu_log("cut_unimonotone(): %d verts, min: %g %g  max: %g %g first:%g %g 0x%08x\n", verts,
+	bu_log("cut_unimonotone(): %d verts, min: %g %g  max: %g %g first:%g %g %p\n", verts,
 	       min->coord[X], min->coord[Y], max->coord[X], max->coord[Y],
-	       first->coord[X], first->coord[Y], first);
+	       first->coord[X], first->coord[Y], (void *)first);
     }
 
     excess_loop_count = verts * verts;
@@ -2446,7 +2449,7 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 		nmg_pr_lu(current->vu_p->up.eu_p->up.lu_p, "cut_unimonotone_loopuse");
 		nmg_plot_fu("cut_unimonotone_infinite_loopuse", current->vu_p->up.eu_p->up.lu_p->up.fu_p, tol);
 	    }
-	    bu_log("cut_unimonotone(): infinite loop %x\n", current->vu_p->up.eu_p->up.lu_p);
+	    bu_log("cut_unimonotone(): infinite loop %p\n", (void *)current->vu_p->up.eu_p->up.lu_p);
 	    bu_bomb("cut_unimonotone(): infinite loop\n");
 	}
 
@@ -2507,14 +2510,14 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 		    if ((u > SMALL_FASTF) && (v > SMALL_FASTF) && ((u + v) < (1.0 - SMALL_FASTF))) {
 			/* true if point inside triangle */
 			if (RTG.NMG_debug & DEBUG_TRI) {
-			    bu_log("cut_unimonotone(): point inside triangle, lu_p = %x, point = %g %g %g\n",
-				    lu, V3ARGS(pt->vu_p->v_p->vg_p->coord));
+			    bu_log("cut_unimonotone(): point inside triangle, lu_p = %p, point = %g %g %g\n",
+				   (void *)lu, V3ARGS(pt->vu_p->v_p->vg_p->coord));
 			}
 			inside_triangle = 1;
 		    } else {
 			if (RTG.NMG_debug & DEBUG_TRI) {
-			    bu_log("cut_unimonotone(): outside triangle, lu_p = %x, 3Dprev = %g %g %g 3Dcurr = %g %g %g 3Dnext = %g %g %g 3Dpoint = %g %g %g is_convex = %d\n",
-				    lu, V3ARGS(prev->vu_p->v_p->vg_p->coord),
+			    bu_log("cut_unimonotone(): outside triangle, lu_p = %p, 3Dprev = %g %g %g 3Dcurr = %g %g %g 3Dnext = %g %g %g 3Dpoint = %g %g %g is_convex = %d\n",
+				   (void *)lu, V3ARGS(prev->vu_p->v_p->vg_p->coord),
 				    V3ARGS(current->vu_p->v_p->vg_p->coord),
 				    V3ARGS(next->vu_p->v_p->vg_p->coord),
 				    V3ARGS(pt->vu_p->v_p->vg_p->coord),
@@ -2574,12 +2577,12 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 	    }
 
 	    if (RTG.NMG_debug & DEBUG_TRI) {
-		bu_log("cut_unimonotone(): before cut orig_lu_p = %x prev lu_p = %x 3D %g %g %g curr lu_p = %x 3D %g %g %g next lu_p = %x 3D %g %g %g\n",
-			orig_lu_p, prev->vu_p->up.eu_p->up.lu_p,
+		bu_log("cut_unimonotone(): before cut orig_lu_p = %p prev lu_p = %p 3D %g %g %g curr lu_p = %p 3D %g %g %g next lu_p = %p 3D %g %g %g\n",
+		       (void *)orig_lu_p, (void *)prev->vu_p->up.eu_p->up.lu_p,
 			V3ARGS(prev->vu_p->v_p->vg_p->coord),
-			current->vu_p->up.eu_p->up.lu_p,
+		       (void *)current->vu_p->up.eu_p->up.lu_p,
 			V3ARGS(current->vu_p->v_p->vg_p->coord),
-			next->vu_p->up.eu_p->up.lu_p,
+		       (void *)next->vu_p->up.eu_p->up.lu_p,
 			V3ARGS(next->vu_p->v_p->vg_p->coord));
 	    }
 
@@ -2741,10 +2744,10 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 	    }
 
 	    if (RTG.NMG_debug & DEBUG_TRI) {
-		bu_log("cut_unimonotone(): after cut orig_lu_p = %x lu_p = %x 3D %g %g %g --> lu_p = %x 3D %g %g %g\n",
-		    orig_lu_p, prev->vu_p->up.eu_p->up.lu_p,
+		bu_log("cut_unimonotone(): after cut orig_lu_p = %p lu_p = %p 3D %g %g %g --> lu_p = %p 3D %g %g %g\n",
+		       (void *)orig_lu_p, (void *)prev->vu_p->up.eu_p->up.lu_p,
 		    V3ARGS(prev->vu_p->v_p->vg_p->coord),
-		    next->vu_p->up.eu_p->up.lu_p,
+		       (void *)next->vu_p->up.eu_p->up.lu_p,
 		    V3ARGS(next->vu_p->v_p->vg_p->coord));
 	    }
 
@@ -2774,28 +2777,28 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 	    if (current->vu_p == first->vu_p) {
 		t = PT2D_NEXT(tbl2d, first);
 		if (RTG.NMG_debug & DEBUG_TRI) {
-		    bu_log("cut_unimonotone(): first(0x%08x -> %g %g\n",
-			    first, t->coord[X], t->coord[Y]);
+		    bu_log("cut_unimonotone(): first(%p -> %g %g\n",
+			   (void *)first, t->coord[X], t->coord[Y]);
 		}
 
 		t = PT2D_NEXT(tbl2d, current);
 		if (RTG.NMG_debug & DEBUG_TRI) {
-		    bu_log("cut_unimonotone(): current(0x%08x) -> %g %g\n",
-			    current, t->coord[X], t->coord[Y]);
+		    bu_log("cut_unimonotone(): current(%p) -> %g %g\n",
+			   (void *)current, t->coord[X], t->coord[Y]);
 		}
 
 		current = PT2D_NEXT(tbl2d, current);
 		if (RTG.NMG_debug & DEBUG_TRI) {
-		    bu_log("cut_unimonotone(): current(0x%08x) -> %g %g\n",
-			    current, t->coord[X], t->coord[Y]);
+		    bu_log("cut_unimonotone(): current(%p) -> %g %g\n",
+			   (void *)current, t->coord[X], t->coord[Y]);
 		}
 	    }
 	} else {
 	    if (RTG.NMG_debug & DEBUG_TRI) {
-		bu_log("cut_unimonotone(): not-cut orig_lu_p = %x lu_p = %x 3D %g %g %g --> lu_p = %x 3D %g %g %g\n",
-		     orig_lu_p, prev->vu_p->up.eu_p->up.lu_p,
+		bu_log("cut_unimonotone(): not-cut orig_lu_p = %p lu_p = %p 3D %g %g %g --> lu_p = %p 3D %g %g %g\n",
+		       (void *)orig_lu_p, (void *)prev->vu_p->up.eu_p->up.lu_p,
 		     V3ARGS(prev->vu_p->v_p->vg_p->coord),
-		     next->vu_p->up.eu_p->up.lu_p,
+		       (void *)next->vu_p->up.eu_p->up.lu_p,
 		     V3ARGS(next->vu_p->v_p->vg_p->coord));
 	    }
 
@@ -2825,13 +2828,14 @@ print_loopuse_tree(struct bu_list *head, struct loopuse_tree_node *parent, const
     node_first = BU_LIST_FIRST(loopuse_tree_node, head);
     NMG_CK_LOOPUSE(node_first->lu);
 
-    bu_vls_sprintf(&plot_file_desc, "parent_%x_", parent);
+    bu_vls_sprintf(&plot_file_desc, "parent_%p_", (void *)parent);
     nmg_plot_fu(bu_vls_addr(&plot_file_desc), node_first->lu->up.fu_p, tol);
     bu_vls_free(&plot_file_desc);
 
     for (BU_LIST_FOR(node, loopuse_tree_node, head)) {
-	bu_log("print_loopuse_tree() parent ptr %x head ptr = %x siblings node %x lu %x %d child_hd ptr %x\n",
-		parent, head, node, node->lu, node->lu->orientation, &(node->children_hd));
+	bu_log("print_loopuse_tree() parent ptr %p head ptr = %p siblings node %p lu %p %d child_hd ptr %p\n",
+	       (void *)parent, (void *)head, (void *)node, (void *)node->lu, node->lu->orientation,
+	       (void *)&(node->children_hd));
 	if (BU_LIST_NON_EMPTY(&(node->children_hd))) {
 	    print_loopuse_tree(&(node->children_hd), node, tol);
 	}
@@ -2960,8 +2964,8 @@ nmg_classify_pt_loop_new(const struct vertex *line1_pt1_v_ptr, const struct loop
 
 			if (NEAR_ZERO(line1_dist, tol->dist)) {
 			    /* true when start point of ray is within distance tolerance of edgeuse */
-			    bu_log("normal intercept, pt on loopuse but not vertexuse, lu_ptr = %x pt = %g %g %g line1_dist = %g line2_dist = %g edgeuse pt1 %g %g %g pt2 %g %g %g\n",
-				   lu, V3ARGS(line1_pt1), line1_dist, line2_dist, V3ARGS(line2_pt1), V3ARGS(line2_pt2));
+			    bu_log("normal intercept, pt on loopuse but not vertexuse, lu_ptr = %p pt = %g %g %g line1_dist = %g line2_dist = %g edgeuse pt1 %g %g %g pt2 %g %g %g\n",
+				   (void *)lu, V3ARGS(line1_pt1), line1_dist, line2_dist, V3ARGS(line2_pt1), V3ARGS(line2_pt2));
 			    bu_bomb("normal intercept, pt on loopuse but not vertexuse\n");
 			    return NMG_CLASS_AonBshared;
 			}
@@ -2987,16 +2991,16 @@ nmg_classify_pt_loop_new(const struct vertex *line1_pt1_v_ptr, const struct loop
 			if (on_vertex) {
 			    if (angle1 > M_PI) {
 				/* count hit only when non-hit vertex of edgeuse lies below ray */
-				bu_log("hit-on-edgeuse-vertex ... ray = %g %g %g -> %g %g %g edge = %g %g %g -> %g %g %g edge lu_ptr = %x ang1 = %g vec1 = %g %g %g N = %g %g %g %g, x_dir = %g %g %g y_dir = %g %g %g\n",
-				      V3ARGS(line1_pt1), V3ARGS(line1_pt2), V3ARGS(line2_pt1),
-				      V3ARGS(line2_pt2), lu, angle1, V3ARGS(vec1), V4ARGS(N),
-				      V3ARGS(x_dir), V3ARGS(y_dir));
+				bu_log("hit-on-edgeuse-vertex ... ray = %g %g %g -> %g %g %g edge = %g %g %g -> %g %g %g edge lu_ptr = %p ang1 = %g vec1 = %g %g %g N = %g %g %g %g, x_dir = %g %g %g y_dir = %g %g %g\n",
+				       V3ARGS(line1_pt1), V3ARGS(line1_pt2), V3ARGS(line2_pt1),
+				       V3ARGS(line2_pt2), (void *)lu, angle1, V3ARGS(vec1), V4ARGS(N),
+				       V3ARGS(x_dir), V3ARGS(y_dir));
 				hit_cnt++;
 			    }
 			} else {
-			    bu_log("hit-on-edgeuse-non-vertex ray = %g %g %g -> %g %g %g edge = %g %g %g -> %g %g %g edge lu_ptr = %x N = %g %g %g %g\n",
+			    bu_log("hit-on-edgeuse-non-vertex ray = %g %g %g -> %g %g %g edge = %g %g %g -> %g %g %g edge lu_ptr = %p N = %g %g %g %g\n",
 				  V3ARGS(line1_pt1), V3ARGS(line1_pt2), V3ARGS(line2_pt1),
-				  V3ARGS(line2_pt2), lu, V4ARGS(N));
+				   V3ARGS(line2_pt2), (void *)lu, V4ARGS(N));
 			    hit_cnt++;
 			}
 		    }
@@ -3004,9 +3008,9 @@ nmg_classify_pt_loop_new(const struct vertex *line1_pt1_v_ptr, const struct loop
 		}
 
 		if (status == 0) {
-		    bu_log("nmg_classify_pt_loop_new(): co-linear, ray = %g %g %g -> %g %g %g edge = %g %g %g -> %g %g %g lu_ptr = %x line1_dist = %g line2_dist = %g\n",
+		    bu_log("nmg_classify_pt_loop_new(): co-linear, ray = %g %g %g -> %g %g %g edge = %g %g %g -> %g %g %g lu_ptr = %p line1_dist = %g line2_dist = %g\n",
 			   V3ARGS(line1_pt1), V3ARGS(line1_pt2), V3ARGS(line2_pt1),
-			   V3ARGS(line2_pt2), lu, line1_dist, line2_dist);
+			   V3ARGS(line2_pt2), (void *)lu, line1_dist, line2_dist);
 		    VSUB2(line1_dir, line1_pt2, line1_pt1);
 		    VSUB2(line2_dir, line2_pt2, line2_pt1);
 
@@ -3020,8 +3024,8 @@ nmg_classify_pt_loop_new(const struct vertex *line1_pt1_v_ptr, const struct loop
 			 * inconclusive if the point is on the edgeuse.
 			 */
 
-			bu_log("co-linear, pt on loopuse but not vertexuse, lu_ptr = %x pt = %g %g %g line1_dist = %g line2_dist = %g edgeuse pt1 %g %g %g pt2 %g %g %g\n",
-			       lu, V3ARGS(line1_pt1), line1_dist, line2_dist,
+			bu_log("co-linear, pt on loopuse but not vertexuse, lu_ptr = %p pt = %g %g %g line1_dist = %g line2_dist = %g edgeuse pt1 %g %g %g pt2 %g %g %g\n",
+			       (void *)lu, V3ARGS(line1_pt1), line1_dist, line2_dist,
 			       V3ARGS(line2_pt1), V3ARGS(line2_pt2));
 			bu_bomb("co-linear, pt on loopuse but not vertexuse\n");
 			return NMG_CLASS_AonBshared;
@@ -3031,9 +3035,9 @@ nmg_classify_pt_loop_new(const struct vertex *line1_pt1_v_ptr, const struct loop
 			 * this is not a hit but we need to keep track of these
 			 * future hits on these vertices are inconclusive
 			 */
-			bu_log("nmg_classify_pt_loop_new(): co-linear ON RAY, ray = %g %g %g -> %g %g %g edge = %g %g %g -> %g %g %g lu_ptr = %x line1_dist = %g line2_dist = %g\n",
+			bu_log("nmg_classify_pt_loop_new(): co-linear ON RAY, ray = %g %g %g -> %g %g %g edge = %g %g %g -> %g %g %g lu_ptr = %p line1_dist = %g line2_dist = %g\n",
 			       V3ARGS(line1_pt1), V3ARGS(line1_pt2), V3ARGS(line2_pt1),
-			       V3ARGS(line2_pt2), lu, line1_dist, line2_dist);
+			       V3ARGS(line2_pt2), (void *)lu, line1_dist, line2_dist);
 			eu2 = BU_LIST_PNEXT(edgeuse, eu2);
 		    } else {
 			eu2 = BU_LIST_PNEXT(edgeuse, eu2);
@@ -3061,8 +3065,8 @@ nmg_classify_pt_loop_new(const struct vertex *line1_pt1_v_ptr, const struct loop
     }
 
     if (((out_cnt > 0) && (in_cnt != 0)) || ((in_cnt > 0) && (out_cnt != 0))) {
-	bu_log("lu ptr = %x pt = %g %g %g in_cnt = %d out_cnt = %d on_cnt = %d\n",
-	       lu, V3ARGS(line1_pt1), in_cnt, out_cnt, on_cnt);
+	bu_log("lu ptr = %p pt = %g %g %g in_cnt = %d out_cnt = %d on_cnt = %d\n",
+	       (void *)lu, V3ARGS(line1_pt1), in_cnt, out_cnt, on_cnt);
 	bu_log("nmg_classify_pt_loop_new(): inconsistent result, point both inside and outside loopuse\n");
     }
 
@@ -3125,8 +3129,8 @@ nmg_classify_lu_lu_new(const struct loopuse *lu1, const struct loopuse *lu2, con
 	return NMG_CLASS_AinB;
     }
 
-    bu_log("lu1_ptr = %x lu2_ptr = %x in_cnt = %d out_cnt = %d on_cnt = %d\n",
-	    lu1, lu2, in_cnt, out_cnt, on_cnt);
+    bu_log("lu1_ptr = %p lu2_ptr = %p in_cnt = %d out_cnt = %d on_cnt = %d\n",
+	   (void *)lu1, (void *)lu2, in_cnt, out_cnt, on_cnt);
     bu_bomb("nmg_classify_lu_lu_new(): should not be here\n");
 
     return NMG_CLASS_Unknown; /* error */
@@ -3159,7 +3163,8 @@ insert_above(struct loopuse *lu, struct loopuse_tree_node *node, const struct bn
     BU_LIST_APPEND(&(new_node->children_hd), &(node->l));
 
 
-    bu_log("insert_above(): lu_p = %x node ptr = %x new_node ptr = %x\n", lu, node, new_node);
+    bu_log("insert_above(): lu_p = %p node ptr = %p new_node ptr = %p\n",
+	   (void *)lu, (void *)node, (void *)new_node);
 
     if (node_idx->l.magic == BU_LIST_HEAD_MAGIC) {
 	return;
@@ -3177,7 +3182,8 @@ insert_above(struct loopuse *lu, struct loopuse_tree_node *node, const struct bn
 		BU_LIST_DEQUEUE(&(node_idx->l));
 		node_idx->parent = new_node;
 		BU_LIST_APPEND(&(new_node->children_hd), &(node_idx->l));
-		bu_log("insert_above(): adjust lu_p = %x node ptr = %x new_node ptr = %x\n", lu, node_idx, new_node);
+		bu_log("insert_above(): adjust lu_p = %p node ptr = %p new_node ptr = %p\n",
+		       (void *)lu, (void *)node_idx, (void *)new_node);
 		node_idx = node_tmp;
 	    } else {
 		node_idx = BU_LIST_PNEXT(loopuse_tree_node, node_idx);
@@ -3215,22 +3221,25 @@ insert_node(struct loopuse *lu, struct bu_list *head,
 	    result1 = nmg_classify_lu_lu(lu, node->lu, tol);
 	    lu->orientation = orientation_tmp_a;
 	    node->lu->orientation = orientation_tmp_b;
-	    bu_log("---- lu %x %d vs lu %x %d result1 = %d\n",
-		   lu, lu->orientation, node->lu, node->lu->orientation, result1);
+	    bu_log("---- lu %p %d vs lu %p %d result1 = %d\n",
+		   (void *)lu, lu->orientation,
+		   (void *)node->lu, node->lu->orientation, result1);
 
 	    orientation_tmp_a = node->lu->orientation;
 	    orientation_tmp_b = lu->orientation;
 	    node->lu->orientation = 1;
 	    lu->orientation = 1;
 	    result_tmp = nmg_classify_lu_lu_new(node->lu, lu, tol);
-	    bu_log("NEW FUNCTION ---- lu %x lu-orient = %d vs lu %x lu-orient = %d result_tmp = %d\n",
-		   node->lu, node->lu->orientation, lu, lu->orientation, result_tmp);
+	    bu_log("NEW FUNCTION ---- lu %p lu-orient = %d vs lu %p lu-orient = %d result_tmp = %d\n",
+		   (void *)node->lu, node->lu->orientation,
+		   (void *)lu, lu->orientation, result_tmp);
 	    result2 = nmg_classify_lu_lu(node->lu, lu, tol);
 
 	    node->lu->orientation = orientation_tmp_a;
 	    lu->orientation = orientation_tmp_b;
-	    bu_log("OLD FUNCTION ---- lu %x lu-orient = %d vs lu %x lu-orient = %d ...result2 = %d\n",
-		   node->lu, node->lu->orientation, lu, lu->orientation, result2);
+	    bu_log("OLD FUNCTION ---- lu %p lu-orient = %d vs lu %p lu-orient = %d ...result2 = %d\n",
+		   (void *)node->lu, node->lu->orientation,
+		   (void *)lu, lu->orientation, result2);
 
 	    if (result_tmp != result2) {
 		bu_log("nmg_classify_lu_lu_new != nmg_classify_lu_lu\n");
@@ -3239,21 +3248,21 @@ insert_node(struct loopuse *lu, struct bu_list *head,
 	    if (result1 == NMG_CLASS_AinB) {
 		/* insert new node below current node */
 		found = 1;
-		bu_log("lu %x in lu %x\n", lu, node->lu);
+		bu_log("lu %p in lu %p\n", (void *)lu, (void *)node->lu);
 		insert_node(lu, &(node->children_hd), parent, tol);
 		break;
 	    }
 	    if (result2 == NMG_CLASS_AinB) {
 		/* insert new node above current node */
 		found = 1;
-		bu_log("lu %x in lu %x\n", node->lu, lu);
+		bu_log("lu %p in lu %p\n", (void *)node->lu, (void *)lu);
 		break;
 	    }
 	}
     }
 
     if (!found) {
-	bu_log("lu %x in lu %x\n", lu, parent->lu);
+	bu_log("lu %p in lu %p\n", (void *)lu, (void *)parent->lu);
     }
 
     if (!found || (result2 == NMG_CLASS_AinB)) {
@@ -3268,8 +3277,8 @@ insert_node(struct loopuse *lu, struct bu_list *head,
 	new_node->parent = parent;
 	BU_LIST_INIT(&(new_node->children_hd));  /* also sets magic to BU_LIST_HEAD_MAGIC */
 	BU_LIST_APPEND(head, &(new_node->l));
-	bu_log("insert-node, insert-node ptr = %x, lu_p = %x parent ptr = %x\n",
-		&(new_node->l), new_node->lu, new_node->parent);
+	bu_log("insert-node, insert-node ptr = %p, lu_p = %p parent ptr = %p\n",
+	       (void *)&(new_node->l), (void *)new_node->lu, (void *)new_node->parent);
     }
 
     if (found) {
@@ -3298,21 +3307,24 @@ nmg_build_loopuse_tree(struct faceuse *fu, struct loopuse_tree_node **root, cons
     BU_LIST_INIT(&((*root)->children_hd));
     (*root)->parent = (struct loopuse_tree_node *)NULL;
     (*root)->lu = (struct loopuse *)NULL;
-    bu_log("root node addr = %x\n", &((*root)->l));
+    bu_log("root node addr = %p\n", (void *)&((*root)->l));
 
     loopuse_cnt = 0;
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 	NMG_CK_LOOPUSE(lu);
 	loopuse_cnt++;
-	bu_log("nmg_build_loopuse_tree(): %d fu_p = %x lu_p = %x\n", loopuse_cnt, fu, lu);
+	bu_log("nmg_build_loopuse_tree(): %d fu_p = %p lu_p = %p\n",
+	       loopuse_cnt, (void *)fu, (void *)lu);
     }
 
     loopuse_cnt = 0;
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 	NMG_CK_LOOPUSE(lu);
 	loopuse_cnt++;
-	bu_log("nmg_build_loopuse_tree(): %d fu_p = %x lu_p = %x\n", loopuse_cnt, fu, lu);
-	bu_log("nmg_build_loopuse_tree(): root child ptr = %x root ptr = %x\n", &((*root)->children_hd), *root);
+	bu_log("nmg_build_loopuse_tree(): %d fu_p = %p lu_p = %p\n",
+	       loopuse_cnt, (void *)fu, (void *)lu);
+	bu_log("nmg_build_loopuse_tree(): root child ptr = %p root ptr = %p\n",
+	       (void *)&((*root)->children_hd), (void *)*root);
 	insert_node(lu, &((*root)->children_hd), *root, tol);
     }
 }
@@ -3478,8 +3490,9 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
 		    vert_count = 0;
 		    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 			vert_count++;
-			bu_log("nmg_triangulate_fu(): %d ccw_result = %d lu = %x coord = %g %g %g\n",
-			       vert_count, ccw_result, lu, V3ARGS(eu->vu_p->v_p->vg_p->coord));
+			bu_log("nmg_triangulate_fu(): %d ccw_result = %d lu = %p coord = %g %g %g\n",
+			       vert_count, ccw_result,
+			       (void *)lu, V3ARGS(eu->vu_p->v_p->vg_p->coord));
 		    }
 		    bu_bomb("nmg_triangulate_fu(): attempted to cut problem loopuse\n");
 		} else {

@@ -223,11 +223,11 @@ nmg_radial_join_eu(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn_tol
 			 eu1->eumate_p->vu_p->v_p->vg_p->coord, tol))
     {
 	bu_log("vertices should have been fused:\n");
-	bu_log("\tvertex x%x (%.12f %.12f %.12f)\n",
-	       eu1->vu_p->v_p,
+	bu_log("\tvertex %p (%.12f %.12f %.12f)\n",
+	       (void *)eu1->vu_p->v_p,
 	       V3ARGS(eu1->vu_p->v_p->vg_p->coord));
-	bu_log("\tvertex x%x (%.12f %.12f %.12f)\n",
-	       eu1->eumate_p->vu_p->v_p,
+	bu_log("\tvertex %p (%.12f %.12f %.12f)\n",
+	       (void *)eu1->eumate_p->vu_p->v_p,
 	       V3ARGS(eu1->eumate_p->vu_p->v_p->vg_p->coord));
 	bu_bomb("nmg_radial_join_eu(): 0 length edge (geometry)\n");
     }
@@ -259,9 +259,9 @@ nmg_radial_join_eu(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn_tol
     nmg_eu_2vecs_perp(xvec, yvec, zvec, original_eu1, tol);
 
     if (RTG.NMG_debug & DEBUG_MESH_EU) {
-	bu_log("nmg_radial_join_eu(eu1=x%x, eu2=x%x) e1=x%x, e2=x%x\n",
-	       eu1, eu2,
-	       eu1->e_p, eu2->e_p);
+	bu_log("nmg_radial_join_eu(eu1=%p, eu2=%p) e1=%p, e2=%p\n",
+	       (void *)eu1, (void *)eu2,
+	       (void *)eu1->e_p, (void *)eu2->e_p);
 	nmg_euprint("\tJoining", eu1);
 	nmg_euprint("\t     to", eu2);
 	bu_log("Faces around eu1:\n");
@@ -290,20 +290,20 @@ nmg_radial_join_eu(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn_tol
 	    fu2 = nmg_find_fu_of_eu(eu2);
 	    if (fu2 == (struct faceuse *)NULL) {
 		/* eu2 is a wire, it can go anywhere */
-		bu_log("eu2=x%x is a wire, insert after eu1=x%x\n", eu2, eu1);
+		bu_log("eu2=%p is a wire, insert after eu1=%p\n", (void *)eu2, (void *)eu1);
 		goto insert;
 	    }
 	    fu1 = nmg_find_fu_of_eu(eu1);
 	    if (fu1 == (struct faceuse *)NULL) {
 		/* eu1 is a wire, skip on to real face eu */
-		bu_log("eu1=x%x is a wire, skipping on\n", eu1);
+		bu_log("eu1=%p is a wire, skipping on\n", (void *)eu1);
 		wire_skip++;
 		goto cont;
 	    }
 	    fur = nmg_find_fu_of_eu(eur);
 	    while (fur == (struct faceuse *)NULL) {
 		/* eur is wire, advance eur */
-		bu_log("eur=x%x is a wire, advancing to non-wire eur\n", eur);
+		bu_log("eur=%p is a wire, advancing to non-wire eur\n", (void *)eur);
 		eur = eur->eumate_p->radial_p;
 		wire_skip++;
 		if (eur == eu1->eumate_p) {
@@ -339,20 +339,20 @@ nmg_radial_join_eu(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn_tol
 		if (fu1->f_p->g.plane_p == fur->f_p->g.plane_p) {
 		    /* abs1 == absr, faces are fused, don't insert here. */
 		    if (RTG.NMG_debug & DEBUG_MESH_EU) {
-			bu_log("fu1 and fur share face geometry x%x (flip1=%d, flip2=%d), skip\n",
-			       fu1->f_p->g.plane_p, fu1->f_p->flip, fur->f_p->flip);
+			bu_log("fu1 and fur share face geometry %p (flip1=%d, flip2=%d), skip\n",
+			       (void *)fu1->f_p->g.plane_p, fu1->f_p->flip, fur->f_p->flip);
 		    }
 		    goto cont;
 		}
 
 		bu_log("nmg_radial_join_eu: WARNING 2 faces should have been fused, may be ambiguous.\n  abs1=%e, absr=%e, asb2=%e\n",
 		       abs1*bn_radtodeg, absr*bn_radtodeg, abs2*bn_radtodeg);
-		bu_log("  fu1=x%x, f1=x%x, f1->flip=%d, fg1=x%x\n",
-		       fu1, fu1->f_p, fu1->f_p->flip, fu1->f_p->g.plane_p);
-		bu_log("  fu2=x%x, f2=x%x, f2->flip=%d, fg2=x%x\n",
-		       fu2, fu2->f_p, fu2->f_p->flip, fu2->f_p->g.plane_p);
-		bu_log("  fur=x%x, fr=x%x, fr->flip=%d, fgr=x%x\n",
-		       fur, fur->f_p, fur->f_p->flip, fur->f_p->g.plane_p);
+		bu_log("  fu1=%p, f1=%p, f1->flip=%d, fg1=%p\n",
+		       (void *)fu1, (void *)fu1->f_p, fu1->f_p->flip, (void *)fu1->f_p->g.plane_p);
+		bu_log("  fu2=%p, f2=%p, f2->flip=%d, fg2=%p\n",
+		       (void *)fu2, (void *)fu2->f_p, fu2->f_p->flip, (void *)fu2->f_p->g.plane_p);
+		bu_log("  fur=%p, fr=%p, fr->flip=%d, fgr=%p\n",
+		       (void *)fur, (void *)fur->f_p, fur->f_p->flip, (void *)fur->f_p->g.plane_p);
 		PLPRINT("  fu1", fu1->f_p->g.plane_p->N);
 		PLPRINT("  fu2", fu2->f_p->g.plane_p->N);
 		PLPRINT("  fur", fur->f_p->g.plane_p->N);
@@ -431,8 +431,8 @@ nmg_radial_join_eu(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn_tol
 
 	if (RTG.NMG_debug & DEBUG_MESH_EU) {
 	    bu_log("  Inserting.  code=%d\n", code);
-	    bu_log("joining eu1=x%x eu2=x%x with abs1=%g, absr=%g\n",
-		   eu1, eu2,
+	    bu_log("joining eu1=%p eu2=%p with abs1=%g, absr=%g\n",
+		   (void *)eu1, (void *)eu2,
 		   abs1*bn_radtodeg, absr*bn_radtodeg);
 	}
 
@@ -511,8 +511,8 @@ nmg_mesh_two_faces(register struct faceuse *fu1, register struct faceuse *fu2, c
 	    if (RTG.NMG_debug & DEBUG_MESH) {
 		pt1 = v1a->vg_p->coord;
 		pt2 = v1b->vg_p->coord;
-		bu_log("ref_e=%8x v:%8x--%8x (%g, %g, %g)->(%g, %g, %g)\n",
-		       e1, v1a, v1b,
+		bu_log("ref_e=%8p v:%8p--%8p (%g, %g, %g)->(%g, %g, %g)\n",
+		       (void *)e1, (void *)v1a, (void *)v1b,
 		       V3ARGS(pt1), V3ARGS(pt2));
 	    }
 
@@ -526,10 +526,10 @@ nmg_mesh_two_faces(register struct faceuse *fu1, register struct faceuse *fu2, c
 		    if (RTG.NMG_debug & DEBUG_MESH) {
 			pt1 = eu2->vu_p->v_p->vg_p->coord;
 			pt2 = eu2->eumate_p->vu_p->v_p->vg_p->coord;
-			bu_log("\te:%8x v:%8x--%8x (%g, %g, %g)->(%g, %g, %g)\n",
-			       eu2->e_p,
-			       eu2->vu_p->v_p,
-			       eu2->eumate_p->vu_p->v_p,
+			bu_log("\te:%8p v:%8p--%8p (%g, %g, %g)->(%g, %g, %g)\n",
+			       (void *)eu2->e_p,
+			       (void *)eu2->vu_p->v_p,
+			       (void *)eu2->eumate_p->vu_p->v_p,
 			       V3ARGS(pt1), V3ARGS(pt2));
 		    }
 
@@ -573,15 +573,15 @@ nmg_mesh_faces(struct faceuse *fu1, struct faceuse *fu2, const struct bn_tol *to
     }
 
     if (RTG.NMG_debug & DEBUG_MESH_EU)
-	bu_log("meshing self (fu1 %8x)\n", fu1);
+	bu_log("meshing self (fu1 %8p)\n", (void *)fu1);
     count += nmg_mesh_two_faces(fu1, fu1, tol);
 
     if (RTG.NMG_debug & DEBUG_MESH_EU)
-	bu_log("meshing self (fu2 %8x)\n", fu2);
+	bu_log("meshing self (fu2 %8p)\n", (void *)fu2);
     count += nmg_mesh_two_faces(fu2, fu2, tol);
 
     if (RTG.NMG_debug & DEBUG_MESH_EU)
-	bu_log("meshing to other (fu1:%8x fu2:%8x)\n", fu1, fu2);
+	bu_log("meshing to other (fu1:%8p fu2:%8p)\n", (void *)fu1, (void *)fu2);
     count += nmg_mesh_two_faces(fu1, fu2, tol);
 
     if (RTG.NMG_debug & DEBUG_MESH_EU && RTG.NMG_debug & DEBUG_PLOTEM) {

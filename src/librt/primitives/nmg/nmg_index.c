@@ -102,7 +102,7 @@ nmg_index_of_struct(register const uint32_t *p)
 	    return -1;
     }
     /* default */
-    bu_log("nmg_index_of_struct: magicp = x%x, magic = x%x\n", p, *p);
+    bu_log("nmg_index_of_struct: magicp = %p, magic = %x\n", (void *)p, *p);
     return -2;	/* indicate error */
 }
 
@@ -554,7 +554,7 @@ nmg_m_struct_count(register struct nmg_struct_counts *ctr, const struct model *m
 
 #define NMG_UNIQ_INDEX(_p, _type)	\
 	if ((_p)->index > m->maxindex) { \
-		bu_log("x%x (%s) has index %ld, m->maxindex=%ld\n", (_p), \
+	    bu_log("%p (%s) has index %ld, m->maxindex=%ld\n", (void *)(_p), \
 			bu_identify_magic(*((uint32_t *)(_p))), (_p)->index, m->maxindex); \
 		bu_bomb("nmg_m_struct_count index overflow\n"); \
 	} \

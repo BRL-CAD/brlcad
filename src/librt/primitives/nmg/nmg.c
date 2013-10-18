@@ -1004,12 +1004,12 @@ reindex(genptr_t p, struct nmg_exp_counts *ecnt)
 	} else {
 	    ret = ecnt[idx].new_subscript;
 	    if (ecnt[idx].kind < 0) {
-		bu_log("reindex(p=x%x), p->index=%ld, ret=%ld, kind=%d\n", p, idx, ret, ecnt[idx].kind);
+		bu_log("reindex(p=%p), p->index=%ld, ret=%ld, kind=%d\n", p, idx, ret, ecnt[idx].kind);
 		bu_bomb("reindex() This index not found in ecnt[]\n");
 	    }
 	    /* ret == 0 on suppressed loop_g ptrs, etc. */
 	    if (ret < 0 || ret > ecnt[0].byte_offset) {
-		bu_log("reindex(p=x%x) %s, p->index=%ld, ret=%ld, maxindex=%ld\n",
+		bu_log("reindex(p=%p) %s, p->index=%ld, ret=%ld, maxindex=%ld\n",
 		       p,
 		       bu_identify_magic(*(uint32_t *)p),
 		       idx, ret, ecnt[0].byte_offset);

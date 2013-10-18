@@ -121,7 +121,7 @@ nmg_plot_open_edges(const uint32_t *magic_p, const char *prefix)
 			    VMOVE(pt1, eu->vu_p->v_p->vg_p->coord);
 			    VMOVE(pt2, eu->eumate_p->vu_p->v_p->vg_p->coord);
 			    if (!plotfp) {
-				bu_vls_sprintf(&plot_file_name, "%s.%zu.pl", prefix, magic_p);
+				bu_vls_sprintf(&plot_file_name, "%s.%p.pl", prefix, (void *)magic_p);
 				if ((plotfp = fopen(bu_vls_addr(&plot_file_name), "wb")) == (FILE *)NULL) {
 				    bu_log("nmg_plot_open_edges(): Unable to create plot file (%s)\n", bu_vls_addr(&plot_file_name));
 				    bu_bomb("nmg_plot_open_edges(): Unable to create plot file.");
@@ -282,7 +282,7 @@ nmg_kill_non_common_cracks(struct shell *sA, struct shell *sB)
     struct faceuse *fu_next;
 
     if (RTG.NMG_debug & DEBUG_BASIC)
-	bu_log("nmg_kill_non_common_cracks(s=%x and %x)\n", sA, sB);
+	bu_log("nmg_kill_non_common_cracks(s=%p and %p)\n", (void *)sA, (void *)sB);
 
     NMG_CK_SHELL(sA);
     NMG_CK_SHELL(sB);
@@ -444,7 +444,7 @@ nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, char **class
     int i;
 
     if (RTG.NMG_debug & DEBUG_CLASSIFY)
-	bu_log("nmg_classify_shared_edges_verts(sA=x%x, sB=x%x)\n", sA, sB);
+	bu_log("nmg_classify_shared_edges_verts(sA=%p, sB=%p)\n", (void *)sA, (void *)sB);
 
     NMG_CK_SHELL(sA);
     NMG_CK_SHELL(sB);
@@ -466,7 +466,7 @@ nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, char **class
 		NMG_INDEX_SET(classlist[4 + NMG_CLASS_AonBshared], v);
 
 		if (RTG.NMG_debug & DEBUG_CLASSIFY)
-		    bu_log("nmg_classify_shared_edges_verts: v=x%x is shared\n", v);
+		    bu_log("nmg_classify_shared_edges_verts: v=%p is shared\n", (void *)v);
 
 		break;
 	    }
@@ -493,7 +493,7 @@ nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, char **class
 		NMG_INDEX_SET(classlist[4 + NMG_CLASS_AonBshared], e);
 
 		if (RTG.NMG_debug & DEBUG_CLASSIFY)
-		    bu_log("nmg_classify_shared_edges_verts: e=x%x is shared\n", e);
+		    bu_log("nmg_classify_shared_edges_verts: e=%p is shared\n", (void *)e);
 
 		break;
 	    }
@@ -1554,8 +1554,8 @@ nmg_boolean(union tree *tp, struct model *m, const struct bn_tol *tol, struct re
     RT_CK_RESOURCE(resp);
 
     if (RTG.NMG_debug & (DEBUG_BOOL|DEBUG_BASIC)) {
-	bu_log("\n\nnmg_boolean(tp=x%x, m=x%x) START\n",
-	       tp, m);
+	bu_log("\n\nnmg_boolean(tp=%p, m=%p) START\n",
+	       (void *)tp, (void *)m);
     }
 
     /* The nmg_model_fuse function was removed from this point in the
@@ -1607,8 +1607,8 @@ nmg_boolean(union tree *tp, struct model *m, const struct bn_tol *tol, struct re
 
  out:
     if (RTG.NMG_debug & (DEBUG_BOOL|DEBUG_BASIC)) {
-	bu_log("nmg_boolean(tp=x%x, m=x%x) END, ret=%d\n\n",
-	       tp, m, ret);
+	bu_log("nmg_boolean(tp=%p, m=%p) END, ret=%d\n\n",
+	       (void *)tp, (void *)m, ret);
     }
 
     return ret;

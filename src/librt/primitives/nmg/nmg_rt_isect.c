@@ -215,13 +215,13 @@ nmg_rt_print_hitmiss(struct hitmiss *a_hit)
 {
     NMG_CK_HITMISS(a_hit);
 
-    bu_log("   dist:%12g pt=(%f %f %f) %s=x%x\n",
+    bu_log("   dist:%12g pt=(%f %f %f) %s=%p\n",
 	   a_hit->hit.hit_dist,
 	   a_hit->hit.hit_point[0],
 	   a_hit->hit.hit_point[1],
 	   a_hit->hit.hit_point[2],
 	   bu_identify_magic(*(uint32_t *)a_hit->hit.hit_private),
-	   a_hit->hit.hit_private
+	   (void *)a_hit->hit.hit_private
 	);
     bu_log("\tstate:%s", nmg_rt_inout_str(a_hit->in_out));
 
@@ -949,7 +949,7 @@ vertex_neighborhood(struct ray_data *rd, struct vertexuse *vu_p, struct hitmiss 
 	    myhit->hit.hit_private = (genptr_t)North_vu;
 	    break;
 	default:
-	    bu_log("%s %d: vertex_neighborhood() Bad vertex in_out state = x%x\n",
+	    bu_log("%s %d: vertex_neighborhood() Bad vertex in_out state = %d\n",
 		   __FILE__, __LINE__, myhit->in_out);
 	    bu_bomb("vertex_neighborhood() bad vertex in_out state\n");
 	    break;
@@ -973,8 +973,8 @@ ray_hit_vertex(struct ray_data *rd, struct vertexuse *vu_p, int status)
     VUNITIZE(r_dir_unit);
 
     if (RTG.NMG_debug & DEBUG_RT_ISECT)
-	bu_log("ray_hit_vertex x%x (%g %g %g) status=%d\n",
-	       vu_p->v_p, V3ARGS(vu_p->v_p->vg_p->coord), status);
+	bu_log("ray_hit_vertex %p (%g %g %g) status=%d\n",
+	       (void *)vu_p->v_p, V3ARGS(vu_p->v_p->vg_p->coord), status);
 
     myhit = NMG_INDEX_GET(rd->hitmiss, vu_p->v_p);
     if (myhit) {
@@ -1353,7 +1353,8 @@ edge_hit_ray_state(struct ray_data *rd, struct edgeuse *eu, struct hitmiss *myhi
 	    myhit->hit.hit_private = (genptr_t)inb_eu;
 	    break;
 	default:
-	    bu_log("%s %d: Bad edge in/out state = x%x\n", __FILE__, __LINE__, myhit->in_out);
+	    bu_log("%s %d: Bad edge in/out state = %d\n",
+		   __FILE__, __LINE__, myhit->in_out);
 	    bu_bomb("edge_hit_ray_state() bad edge in_out state\n");
 	    break;
     }
@@ -1370,7 +1371,8 @@ ray_hit_edge(struct ray_data *rd, struct edgeuse *eu_p, double dist_along_ray, f
     ray_miss_vertex(rd, eu_p->vu_p);
     ray_miss_vertex(rd, eu_p->eumate_p->vu_p);
 
-    if (RTG.NMG_debug & DEBUG_RT_ISECT) bu_log("\t - HIT edge 0x%08x (edgeuse=x%x)\n", eu_p->e_p, eu_p);
+    if (RTG.NMG_debug & DEBUG_RT_ISECT)
+	bu_log("\t - HIT edge %p (edgeuse=%p)\n", (void *)eu_p->e_p, (void *)eu_p);
 
     myhit = NMG_INDEX_GET(rd->hitmiss, eu_p->e_p);
     if (myhit) {
@@ -1562,8 +1564,8 @@ isect_ray_edgeuse(struct ray_data *rd, struct edgeuse *eu_p)
 	bu_bomb("isect_ray_edgeuse() edgeuse mate has step-father\n");
 
     if (RTG.NMG_debug & DEBUG_RT_ISECT)
-	bu_log("\n\tLooking for previous hit on edge 0x%08x ...\n",
-	       eu_p->e_p);
+	bu_log("\n\tLooking for previous hit on edge %p ...\n",
+	       (void *)eu_p->e_p);
 
     myhit = NMG_INDEX_GET(rd->hitmiss, eu_p->e_p);
     if (myhit) {
@@ -1612,7 +1614,7 @@ isect_ray_loopuse(struct ray_data *rd, struct loopuse *lu_p)
     struct edgeuse *eu_p;
 
     if (RTG.NMG_debug & DEBUG_RT_ISECT)
-	bu_log("isect_ray_loopuse(0x%08x, loop:0x%08x)\n", rd, lu_p->l_p);
+	bu_log("isect_ray_loopuse(%p, loop:%p)\n", (void *)rd, (void *)lu_p->l_p);
 
     NMG_CK_LOOPUSE(lu_p);
     NMG_CK_LOOP(lu_p->l_p);
@@ -1712,7 +1714,8 @@ record_face_hit(struct ray_data *rd, struct hitmiss *myhit, fastf_t *plane_pt, d
     if (RTG.NMG_debug & DEBUG_RT_ISECT) {
 	VPRINT("face Normal", norm);
 	bu_log("cos_angle wrt ray direction: %g\n", cos_angle);
-	bu_log("fu x%x manifoldness = %d\n", fu_p, NMG_MANIFOLDS(rd->manifolds, fu_p));
+	bu_log("fu %p manifoldness = %d\n",
+	       (void *)fu_p, NMG_MANIFOLDS(rd->manifolds, fu_p));
     }
 
 
@@ -1864,11 +1867,11 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
 		}
 		if (rational) {
 		    for (j = 0; j < coords-1; j++)
-                       /* FIXME: gcc 4.8.1 reports error here (rel build):
+		       /* FIXME: gcc 4.8.1 reports error here (rel build):
 /disk3/extsrc/brlcad-svn-trunk/src/librt/primitives/nmg/nmg_rt_isect.c:1867:41: error: array subscript is above array bounds [-Werror=array-bounds]
     ctl_pt[i][j] = ctl_pt[i][j]/ctl_pt[i][coords-1];
-                                         ^
-                       */
+					 ^
+		       */
 			ctl_pt[i][j] = ctl_pt[i][j]/ctl_pt[i][coords-1];
 		}
 	    }
@@ -2108,14 +2111,16 @@ isect_ray_planar_face(struct ray_data *rd, struct faceuse *fu_p)
 
 	new_dist=DIST_PT_PLANE(plane_pt, norm);
 
-	bu_log("\tDIST_PT_PLANE(%16.10e) 0x%08lx 0x%08lx\n", new_dist, plane_pt, norm);
+	bu_log("\tDIST_PT_PLANE(%16.10e) %p %p\n",
+	       new_dist, (void *)plane_pt, (void *)norm);
 
 	bn_isect_line3_plane(&new_dist, plane_pt, rd->rp->r_dir,
 			     norm, rd->tol);
 
 	bu_log("Normal %16.10e %16.10e %16.10e %16.10e)\n",
 	       V4ARGS(norm));
-	bu_log("recalculated plane/pt dist as %16.10e 0x%08lx 0x%08lx\n", new_dist, plane_pt, norm);
+	bu_log("recalculated plane/pt dist as %16.10e %p %p\n",
+	       new_dist, (void *)plane_pt, (void *)norm);
 	bu_log("distance tol = %16.10e\n", rd->tol->dist);
     }
 
@@ -2214,8 +2219,8 @@ isect_ray_faceuse(struct ray_data *rd, struct faceuse *fu_p)
     if (fu_p->orientation == OT_OPPOSITE) return;
 
     if (RTG.NMG_debug & DEBUG_RT_ISECT)
-	bu_log("isect_ray_faceuse(0x%08x, faceuse:0x%08x/face:0x%08x)\n",
-	       rd, fu_p, fu_p->f_p);
+	bu_log("isect_ray_faceuse(%p, faceuse:%p/face:%p)\n",
+	       (void *)rd, (void *)fu_p, (void *)fu_p->f_p);
 
     NMG_CK_FACEUSE(fu_p);
     NMG_CK_FACEUSE(fu_p->fumate_p);
@@ -2239,9 +2244,9 @@ isect_ray_faceuse(struct ray_data *rd, struct faceuse *fu_p)
 	    if (RTG.NMG_debug & DEBUG_RT_ISECT)
 		bu_log(" previously missed\n");
 	} else {
-	    bu_log("%s %d:\n\tBad magic %ld (0x%08x) for hitmiss struct for faceuse 0x%08x\n",
+	    bu_log("%s %d:\n\tBad magic %u (%08x) for hitmiss struct for faceuse %p\n",
 		   __FILE__, __LINE__,
-		   myhit->l.magic, myhit->l.magic, fu_p);
+		   myhit->l.magic, myhit->l.magic, (void *)fu_p);
 	    nmg_bu_bomb(rd, "Was I hit or not?\n");
 	}
 	return;
@@ -2326,7 +2331,7 @@ nmg_isect_ray_shell(struct ray_data *rd, const struct shell *s_p)
     struct edgeuse *eu_p;
 
     if (RTG.NMG_debug & DEBUG_RT_ISECT)
-	bu_log("nmg_isect_ray_shell(0x%08x, 0x%08x)\n", rd, s_p);
+	bu_log("nmg_isect_ray_shell(%p, %p)\n", (void *)rd, (void *)s_p);
 
     NMG_CK_SHELL(s_p);
     NMG_CK_SHELL_A(s_p->sa_p);
@@ -2338,7 +2343,7 @@ nmg_isect_ray_shell(struct ray_data *rd, const struct shell *s_p)
     if (!rt_in_rpp(rd->rp, rd->rd_invdir,
 		   s_p->sa_p->min_pt, s_p->sa_p->max_pt)) {
 	if (RTG.NMG_debug & DEBUG_RT_ISECT)
-	    bu_log("nmg_isect_ray_shell(no RPP overlap) 0x%08x, 0x%08x\n", rd, s_p);
+	    bu_log("nmg_isect_ray_shell(no RPP overlap) %p, %p\n", (void *)rd, (void *)s_p);
 	return;
     }
 
@@ -2357,7 +2362,7 @@ nmg_isect_ray_shell(struct ray_data *rd, const struct shell *s_p)
 	(void)isect_ray_vertexuse(rd, s_p->vu_p);
 
     if (RTG.NMG_debug & DEBUG_RT_ISECT)
-	bu_log("nmg_isect_ray_shell(done) 0x%08x, 0x%08x\n", rd, s_p);
+	bu_log("nmg_isect_ray_shell(done) %p, %p\n", (void *)rd, (void *)s_p);
 }
 
 
@@ -2705,7 +2710,7 @@ nmg_class_ray_vs_shell(struct xray *rp, const struct shell *s, const int in_or_o
 	    if (fu->orientation != OT_SAME)
 		continue;
 
-	    bu_log("fu x%x: %d\n", fu, NMG_MANIFOLDS(rd.manifolds, fu));
+	    bu_log("fu %p: %d\n", (void *)fu, NMG_MANIFOLDS(rd.manifolds, fu));
 	}
     }
 

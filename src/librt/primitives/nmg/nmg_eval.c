@@ -108,8 +108,8 @@ nmg_ck_lu_orientation(struct loopuse *lu, const struct bn_tol *tolp)
 
 
     if (dot < 0.0) {
-	bu_log("nmg_ck_lu_orientation() lu=x%x, dot=%g, fu_orient=%s, lu_orient=%s\n", lu,
-	       dot,
+	bu_log("nmg_ck_lu_orientation() lu=%p, dot=%g, fu_orient=%s, lu_orient=%s\n",
+	       (void *)lu, dot,
 	       nmg_orientation(fu->orientation),
 	       nmg_orientation(lu->orientation)
 	    );
@@ -203,8 +203,8 @@ nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, char **classlis
     BN_CK_TOL(tol);
 
     if (RTG.NMG_debug & DEBUG_BOOLEVAL) {
-	bu_log("nmg_evaluate_boolean(sA=x%x, sB=x%x, op=%d) START\n",
-	       sA, sB, op);
+	bu_log("nmg_evaluate_boolean(sA=%p, sB=%p, op=%d) START\n",
+	       (void *)sA, (void *)sB, op);
     }
 
     switch (op) {
@@ -237,8 +237,8 @@ nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, char **classlis
     nmg_eval_shell(sB, &bool_state);
 
     if (RTG.NMG_debug & DEBUG_BOOLEVAL) {
-	bu_log("nmg_evaluate_boolean(sA=x%x, sB=x%x, op=%d), evaluations done\n",
-	       sA, sB, op);
+	bu_log("nmg_evaluate_boolean(sA=%p, sB=%p, op=%d), evaluations done\n",
+	       (void *)sA, (void *)sB, op);
     }
     /* Write sA and sB into separate files, if wanted? */
 
@@ -305,8 +305,8 @@ nmg_eval_action(uint32_t *ptr, register struct nmg_bool_state *bs)
 	    ret = bs->bs_actions[NMG_CLASS_AoutB];
 	    goto out;
 	}
-	bu_log("nmg_eval_action(ptr=x%x) %s has no A classification, retaining\n",
-	       ptr, bu_identify_magic(*((uint32_t *)ptr)));
+	bu_log("nmg_eval_action(ptr=%p) %s has no A classification, retaining\n",
+	       (void *)ptr, bu_identify_magic(*((uint32_t *)ptr)));
 	class = NMG_CLASS_BAD;
 	ret = BACTION_RETAIN;
 	goto out;
@@ -333,14 +333,14 @@ nmg_eval_action(uint32_t *ptr, register struct nmg_bool_state *bs)
 	ret = bs->bs_actions[NMG_CLASS_BoutA];
 	goto out;
     }
-    bu_log("nmg_eval_action(ptr=x%x) %s has no B classification, retaining\n",
-	   ptr, bu_identify_magic(*((uint32_t *)ptr)));
+    bu_log("nmg_eval_action(ptr=%p) %s has no B classification, retaining\n",
+	   (void *)ptr, bu_identify_magic(*((uint32_t *)ptr)));
     class = NMG_CLASS_BAD;
     ret = BACTION_RETAIN;
 out:
     if (RTG.NMG_debug & DEBUG_BOOLEVAL) {
-	bu_log("nmg_eval_action(ptr=x%x) index=%d %s %s %s %s\n",
-	       ptr, index,
+	bu_log("nmg_eval_action(ptr=%p) index=%d %s %s %s %s\n",
+	       (void *)ptr, index,
 	       bs->bs_isA ? "A" : "B",
 	       bu_identify_magic(*((uint32_t *)ptr)),
 	       nmg_class_name(class),
@@ -429,8 +429,8 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 	}
 
 	if (RTG.NMG_debug & DEBUG_BOOLEVAL)
-	    bu_log("faceuse x%x loops retained=%d\n",
-		   fu, loops_retained);
+	    bu_log("faceuse %p loops retained=%d\n",
+		   (void *)fu, loops_retained);
 	if (RTG.NMG_debug & DEBUG_VERIFY)
 	    nmg_vshell(&s->r_p->s_hd, s->r_p);
 
@@ -443,7 +443,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 	    if (loops_retained) bu_bomb("nmg_eval_shell() empty faceuse with retained loops?\n");
 	    /* faceuse is empty, face & mate die */
 	    if (RTG.NMG_debug & DEBUG_BOOLEVAL)
-		bu_log("faceuse x%x empty, kill\n", fu);
+		bu_log("faceuse %p empty, kill\n", (void *)fu);
 	    nmg_kfu(fu);	/* kill face & mate, dequeue from shell */
 	    if (RTG.NMG_debug & DEBUG_VERIFY)
 		nmg_vshell(&s->r_p->s_hd, s->r_p);

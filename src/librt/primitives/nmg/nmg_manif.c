@@ -44,10 +44,10 @@
 	    BU_LIST_PLAST_PNEXT(bu_list, p) != p) { \
 		bu_log("%s[%d]: linked list integrity check failed\n", \
 				__FILE__, __LINE__); \
-		bu_log("0x%08x->forw(0x%08x)->back = 0x%08x\n", \
-			(p), (p)->forw, (p)->forw->back); \
-		bu_log("0x%08x->back(0x%08x)->forw = 0x%08x\n", \
-			(p), (p)->back, (p)->back->forw); \
+		bu_log("%p->forw(%p)->back = %p\n", \
+		       (void *)(p), (void *)(p)->forw, (void *)(p)->forw->back); \
+		bu_log("%p->back(%p)->forw = %p\n", \
+		       (void *)(p), (void *)(p)->back, (void *)(p)->back->forw); \
 		bu_bomb("Goodbye\n"); \
 	}
 
@@ -71,7 +71,7 @@ nmg_dangling_face(const struct faceuse *fu, register const char *manifolds)
     NMG_CK_FACEUSE(fu);
 
     if (RTG.NMG_debug & DEBUG_MANIF)
-	bu_log("nmg_dangling_face(0x%08x 0x%08x)\n", fu, manifolds);
+	bu_log("nmg_dangling_face(%p %s)\n", (void *)fu, manifolds);
 
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 	NMG_CK_LOOPUSE(lu);
@@ -120,11 +120,11 @@ nmg_dangling_face(const struct faceuse *fu, register const char *manifolds)
 	tol.perp = 1e-5;
 	tol.para = 1 - tol.perp;
 
-	bu_log("nmg_dangling_face(fu=x%x, manifolds=x%x) dangling_eu=x%x\n", fu, manifolds, eur);
+	bu_log("nmg_dangling_face(fu=%p, manifolds=%s) dangling_eu=%p\n", (void *)fu, manifolds, (void *)eur);
 	if (eur) nmg_pr_fu_around_eu(eur, &tol);
     }
     if ((RTG.NMG_debug & DEBUG_MANIF) && (eur != (const struct edgeuse *)NULL))
-	bu_log("\tdangling eu x%x\n", eur);
+	bu_log("\tdangling eu %p\n", (void *)eur);
 
     return eur != (const struct edgeuse *)NULL;
 }
@@ -142,7 +142,7 @@ static void paint_face(struct faceuse *fu, long *paint_table, long paint_color, 
     const struct edgeuse *eur;
 
     if (RTG.NMG_debug & DEBUG_MANIF)
-	bu_log("nmg_paint_face(%08x, %ld)\n", fu, paint_color);
+	bu_log("nmg_paint_face(%p, %ld)\n", (void *)fu, paint_color);
 
     if (NMG_INDEX_VALUE(paint_table, fu->index) != 0)
 	return;
@@ -152,7 +152,7 @@ static void paint_face(struct faceuse *fu, long *paint_table, long paint_color, 
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 
 	if (RTG.NMG_debug & DEBUG_MANIF)
-	    bu_log("\tlu=x%x\n", lu);
+	    bu_log("\tlu=%p\n", (void *)lu);
 
 	NMG_CK_LOOPUSE(lu);
 	BU_LIST_LINK_CHECK(&lu->l);
@@ -162,7 +162,7 @@ static void paint_face(struct faceuse *fu, long *paint_table, long paint_color, 
 
 	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 	    if (RTG.NMG_debug & DEBUG_MANIF)
-		bu_log("\t\teu=x%x\n", eu);
+		bu_log("\t\teu=%p\n", (void *)eu);
 	    NMG_CK_EDGEUSE(eu);
 	    NMG_CK_EDGEUSE(eu->eumate_p);
 	    eur = nmg_radial_face_edge_in_shell(eu);
@@ -171,7 +171,7 @@ static void paint_face(struct faceuse *fu, long *paint_table, long paint_color, 
 	    newfu = eur->up.lu_p->up.fu_p;
 
 	    if (RTG.NMG_debug & DEBUG_MANIF)
-		bu_log("\t\t\teur=x%x, newfu=x%x\n", eur, newfu);
+		bu_log("\t\t\teur=%p, newfu=%p\n", (void *)eur, (void *)newfu);
 
 	    BU_LIST_LINK_CHECK(&eu->l);
 	    BU_LIST_LINK_CHECK(&eur->l);
@@ -183,7 +183,7 @@ static void paint_face(struct faceuse *fu, long *paint_table, long paint_color, 
 		newfu = eur->up.lu_p->up.fu_p;
 
 		if (RTG.NMG_debug & DEBUG_MANIF)
-		    bu_log("\t\t\teur=x%x, newfu=x%x\n", eur, newfu);
+		    bu_log("\t\t\teur=%p, newfu=%p\n", (void *)eur, (void *)newfu);
 	    }
 
 	    if (newfu == fu->fumate_p)
@@ -196,7 +196,8 @@ static void paint_face(struct faceuse *fu, long *paint_table, long paint_color, 
 		paint_meaning[paint_color] = PAINT_INTERIOR;
 
 		if (RTG.NMG_debug & DEBUG_MANIF)
-		    bu_log("\t---- Painting fu x%x as interior, new_fu = x%x, eu=x%x, eur=x%x\n", fu, newfu, eu, eur);
+		    bu_log("\t---- Painting fu %p as interior, new_fu = %p, eu=%p, eur=%p\n",
+			   (void *)fu, (void *)newfu, (void *)eu, (void *)eur);
 	    }
 	}
     }
@@ -268,7 +269,7 @@ nmg_shell_manifolds(struct shell *sp, char *tbl)
     int found;
 
     if (RTG.NMG_debug & DEBUG_MANIF)
-	bu_log("nmg_shell_manifolds(%08x)\n", sp);
+	bu_log("nmg_shell_manifolds(%p)\n", (void *)sp);
 
     NMG_CK_SHELL(sp);
 
@@ -420,7 +421,7 @@ nmg_manifolds(struct model *m)
 
     NMG_CK_MODEL(m);
     if (RTG.NMG_debug & DEBUG_MANIF)
-	bu_log("nmg_manifolds(%08x)\n", m);
+	bu_log("nmg_manifolds(%p)\n", (void *)m);
 
     tbl = bu_calloc(m->maxindex, 1, "manifold table");
 

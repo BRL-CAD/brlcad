@@ -71,18 +71,18 @@ print_seg_list(struct seg *seghead, int seg_count, char *s)
 
     bu_log("Segment List (%d segments) (%s):\n", seg_count, s);
     /* print debugging data before returning */
-    bu_log("Seghead:\n0x%08x magic: 0x%08x forw:0x%08x back:0x%08x\n\n",
-	   seghead,
+    bu_log("Seghead:\n%p magic: %08x forw:%p back:%p\n\n",
+	   (void *)seghead,
 	   seghead->l.magic,
-	   seghead->l.forw,
-	   seghead->l.back);
+	   (void *)seghead->l.forw,
+	   (void *)seghead->l.back);
 
     for (BU_LIST_FOR(seg_p, seg, &seghead->l)) {
-	bu_log("0x%08x magic: 0x%08x forw:0x%08x back:0x%08x\n",
-	       seg_p,
+	bu_log("%p magic: %08x forw:%p back:%p\n",
+	       (void *)seg_p,
 	       seg_p->l.magic,
-	       seg_p->l.forw,
-	       seg_p->l.back);
+	       (void *)seg_p->l.forw,
+	       (void *)seg_p->l.back);
 	bu_log("dist %g  pt(%g, %g, %g) N(%g, %g, %g)  =>\n",
 	       seg_p->seg_in.hit_dist,
 	       seg_p->seg_in.hit_point[0],
@@ -1012,13 +1012,13 @@ unresolved(struct hitmiss *next_hit, struct bu_ptbl *a_tbl, struct bu_ptbl *next
     b = &a_tbl->buffer[a_tbl->end];
     l_p = &a_tbl->buffer[0];
     for (; l_p < b; l_p ++)
-	bu_log("\t%p %s\n", **l_p, bu_identify_magic(**l_p));
+	bu_log("\t%ld %s\n", **l_p, bu_identify_magic(**l_p));
 
     bu_log("topo table NEXT\n");
     b = &next_tbl->buffer[next_tbl->end];
     l_p = &next_tbl->buffer[0];
     for (; l_p < b; l_p ++)
-	bu_log("\t%p %s\n", **l_p, bu_identify_magic(**l_p));
+	bu_log("\t%ld %s\n", **l_p, bu_identify_magic(**l_p));
 
     bu_log("<---Unable to fix state transition\n");
     pl_ray(rd);

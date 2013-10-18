@@ -1882,7 +1882,8 @@ nmg_show_broken_classifier_stuff(uint32_t *p, char **classlist, int all_new, int
 	    show_broken_vu(vbp, (struct vertexuse *)p);
 	    break;
 	default:
-	    bu_log("Unknown magic number %ld %0lx %zu %p\n", *p, *p, (size_t)p, (void *)p);
+	    bu_log("Unknown magic number %u %x %zu %p\n",
+		   (unsigned)*p, (unsigned)*p, (size_t)p, (void *)p);
 	    break;
     }
 
@@ -2369,8 +2370,8 @@ nmg_cnurb_to_vlist(struct bu_list *vhead, const struct edgeuse *eu, int n_interi
     fu = nmg_find_fu_of_eu(eu);	/* may return NULL */
     NMG_CK_FACEUSE(fu);
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_cnurb_to_vlist() eu=x%x, n=%d, order=%d\n",
-	       eu, n_interior, eg->order);
+	bu_log("nmg_cnurb_to_vlist() eu=%p, n=%d, order=%d\n",
+	       (void *)eu, n_interior, eg->order);
     }
 
     if (eg->order <= 0) {

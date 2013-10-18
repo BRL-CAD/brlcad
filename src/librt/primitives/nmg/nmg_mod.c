@@ -1,4 +1,3 @@
-
 /*                       N M G _ M O D . C
  * BRL-CAD
  *
@@ -198,8 +197,8 @@ nmg_shell_coplanar_face_merge(struct shell *s, const struct bn_tol *tol, const i
     nmg_shell_a(s, tol);
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_shell_coplanar_face_merge(s=x%x, tol=x%x, simplify=%d)\n",
-	       s, tol, simplify);
+	bu_log("nmg_shell_coplanar_face_merge(s=%p, tol=%p, simplify=%d)\n",
+	       (void *)s, (void *)tol, simplify);
     }
 }
 
@@ -233,7 +232,7 @@ nmg_simplify_shell(struct shell *s)
     ret_val = nmg_shell_is_empty(s);
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_simplify_shell(s=x%x) returns %d\n", s, ret_val);
+	bu_log("nmg_simplify_shell(s=%p) returns %d\n", (void *)s, ret_val);
     }
 
     return ret_val;
@@ -561,7 +560,7 @@ nmg_rm_redundancies(struct shell *s, const struct bn_tol *tol)
     }
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_rm_redundancies(s=x%x)\n", s);
+	bu_log("nmg_rm_redundancies(s=%p)\n", (void *)s);
     }
 }
 
@@ -643,7 +642,7 @@ nmg_sanitize_s_lv(struct shell *s, int orient)
     }
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_sanitize_s_lv(s=x%x, orient=%d)\n",	s, orient);
+	bu_log("nmg_sanitize_s_lv(s=%p, orient=%d)\n", (void *)s, orient);
     }
 }
 
@@ -667,7 +666,8 @@ nmg_s_split_touchingloops(struct shell *s, const struct bn_tol *tol)
     BN_CK_TOL(tol);
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_s_split_touching_loops(s=x%x, tol=x%x) START\n", s, tol);
+	bu_log("nmg_s_split_touching_loops(s=%p, tol=%p) START\n",
+	       (void *)s, (void *)tol);
     }
 
     /* First, handle any splitting */
@@ -691,7 +691,8 @@ nmg_s_split_touchingloops(struct shell *s, const struct bn_tol *tol)
     }
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_s_split_touching_loops(s=x%x, tol=x%x) END\n", s, tol);
+	bu_log("nmg_s_split_touching_loops(s=%p, tol=%p) END\n",
+	       (void *)s, (void *)tol);
     }
 }
 
@@ -711,7 +712,8 @@ nmg_s_join_touchingloops(struct shell *s, const struct bn_tol *tol)
     BN_CK_TOL(tol);
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_s_join_touching_loops(s=x%x, tol=x%x) START\n", s, tol);
+	bu_log("nmg_s_join_touching_loops(s=%p, tol=%p) START\n",
+	       (void *)s, (void *)tol);
     }
 
     /* First, handle any joining */
@@ -733,7 +735,8 @@ nmg_s_join_touchingloops(struct shell *s, const struct bn_tol *tol)
     }
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_s_join_touching_loops(s=x%x, tol=x%x) END\n", s, tol);
+	bu_log("nmg_s_join_touching_loops(s=%p, tol=%p) END\n",
+	       (void *)s, (void *)tol);
     }
 }
 
@@ -770,7 +773,7 @@ nmg_js(register struct shell *s1, register struct shell *s2, const struct bn_tol
     BN_CK_TOL(tol);
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_js(s1=x%x, s2=x%x) START\n", s1, s2);
+	bu_log("nmg_js(s1=%p, s2=%p) START\n", (void *)s1, (void *)s2);
     }
 
     if (RTG.NMG_debug & DEBUG_VERIFY)
@@ -885,7 +888,7 @@ nmg_js(register struct shell *s1, register struct shell *s2, const struct bn_tol
 	nmg_vshell(&s1->r_p->s_hd, s1->r_p);
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_js(s1=x%x, s2=x%x) END\n", s1, s2);
+	bu_log("nmg_js(s1=%p, s2=%p) END\n", (void *)s1, (void *)s2);
     }
 }
 
@@ -915,7 +918,7 @@ nmg_invert_shell(struct shell *s)
     NMG_CK_MODEL(m);
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_invert_shell(x%x)\n", s);
+	bu_log("nmg_invert_shell(%p)\n", (void *)s);
     }
 
     /* Allocate map of faces visited */
@@ -1006,28 +1009,28 @@ nmg_cmface(struct shell *s, struct vertex ***verts, int n)
     NMG_CK_SHELL(s);
 
     if (n < 1) {
-	bu_log("nmg_cmface(s=x%x, verts=x%x, n=%d.)\n",
-	       s, verts, n);
+	bu_log("nmg_cmface(s=%p, verts=%p, n=%d.)\n",
+	       (void *)s, (void *)verts, n);
 	bu_bomb("nmg_cmface() trying to make bogus face\n");
     }
 
     /* make sure verts points to some real storage */
     if (!verts) {
-	bu_log("nmg_cmface(s=x%x, verts=x%x, n=%d.) null pointer to array start\n",
-	       s, verts, n);
+	bu_log("nmg_cmface(s=%p, verts=%p, n=%d.) null pointer to array start\n",
+	       (void *)s, (void *)verts, n);
 	bu_bomb("nmg_cmface\n");
     }
 
     /* validate each of the pointers in verts */
-    for (i=0; i < n; ++i) {
+    for (i = 0; i < n; ++i) {
 	if (verts[i]) {
 	    if (*verts[i]) {
 		/* validate the vertex pointer */
 		NMG_CK_VERTEX(*verts[i]);
 	    }
 	} else {
-	    bu_log("nmg_cmface(s=x%x, verts=x%x, n=%d.) verts[%d]=NULL\n",
-		   s, verts, n, i);
+	    bu_log("nmg_cmface(s=%p, verts=%p, n=%d.) verts[%d]=NULL\n",
+		   (void *)s, (void *)verts, n, i);
 	    bu_bomb("nmg_cmface\n");
 	}
     }
@@ -1053,7 +1056,7 @@ nmg_cmface(struct shell *s, struct vertex ***verts, int n)
 	NMG_CK_EDGEUSE(euold);
 
 	if (RTG.NMG_debug & DEBUG_CMFACE)
-	    bu_log("nmg_cmface() euold: %8x\n", euold);
+	    bu_log("nmg_cmface() euold: %8p\n", (void *)euold);
 
 	/* look for pre-existing edge between these vertices */
 	if (*verts[i]) {
@@ -1064,20 +1067,21 @@ nmg_cmface(struct shell *s, struct vertex ***verts, int n)
 		nmg_je(eur, eu);
 
 		if (RTG.NMG_debug & DEBUG_CMFACE)
-		    bu_log("nmg_cmface() found another edgeuse (%8x) between %8x and %8x\n",
-			   eur, *verts[(i+1)%n], *verts[i]);
+		    bu_log("nmg_cmface() found another edgeuse (%8p) between %8p and %8p\n",
+			   (void *)eur, (void *)*verts[(i+1)%n], (void *)*verts[i]);
 	    } else {
 		if (RTG.NMG_debug & DEBUG_CMFACE)
-		    bu_log("nmg_cmface() didn't find edge from verts[%d]%8x to verts[%d]%8x\n",
-			   i+1, *verts[(i+1)%n], i, *verts[i]);
+		    bu_log("nmg_cmface() didn't find edge from verts[%d]%8p to verts[%d]%8p\n",
+			   i+1, (void *)*verts[(i+1)%n],
+			   i, (void *)*verts[i]);
 	    }
 	} else {
 	    eu = nmg_eusplit(*verts[i], euold, 0);
 	    *verts[i] = eu->vu_p->v_p;
 
 	    if (RTG.NMG_debug & DEBUG_CMFACE) {
-		bu_log("nmg_cmface() *verts[%d] was null, is now %8x\n",
-		       i, *verts[i]);
+		bu_log("nmg_cmface() *verts[%d] was null, is now %8p\n",
+		       i, (void *)*verts[i]);
 	    }
 	}
     }
@@ -1088,8 +1092,9 @@ nmg_cmface(struct shell *s, struct vertex ***verts, int n)
 	    nmg_je(eur, euold);
 	} else {
 	    if (RTG.NMG_debug & DEBUG_CMFACE)
-		bu_log("nmg_cmface() didn't find edge from verts[%d]%8x to verts[%d]%8x\n",
-		       0, *verts[0], 1, *verts[1]);
+		bu_log("nmg_cmface() didn't find edge from verts[%d]%8p to verts[%d]%8p\n",
+		       0, (void *)*verts[0],
+		       1, (void *)*verts[1]);
 	}
     }
 
@@ -1098,11 +1103,11 @@ nmg_cmface(struct shell *s, struct vertex ***verts, int n)
 	euold = BU_LIST_FIRST(edgeuse, &lu->down_hd);
 	NMG_CK_EDGEUSE(euold);
 	if (euold->vu_p->v_p != *verts[0]) {
-	    bu_log("ERROR nmg_cmface() lu first vert s/b x%x, was x%x\n",
-		   *verts[0], euold->vu_p->v_p);
-	    for (i=0; i < n; i++) {
-		bu_log("  *verts[%2d]=x%x, eu->vu_p->v_p=x%x\n",
-		       i, *verts[i], euold->vu_p->v_p);
+	    bu_log("ERROR nmg_cmface() lu first vert s/b %p, was %p\n",
+		   (void *)*verts[0], (void *)euold->vu_p->v_p);
+	    for (i = 0; i < n; i++) {
+		bu_log("  *verts[%2d]=%p, eu->vu_p->v_p=%p\n",
+		       i, (void *)*verts[i], (void *)euold->vu_p->v_p);
 		euold = BU_LIST_PNEXT_CIRC(edgeuse, &euold->l);
 	    }
 	    bu_bomb("nmg_cmface() bogus eu ordering\n");
@@ -1110,8 +1115,9 @@ nmg_cmface(struct shell *s, struct vertex ***verts, int n)
     }
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_cmface(s=x%x, verts[]=x%x, n=%d) fu=x%x\n",
-	       s, verts, n, fu);
+	bu_log("nmg_cmface(s=%p, verts[]=%p, n=%d) fu=%p\n",
+	       (void *)s, (void *)verts, n,
+	       (void *)fu);
     }
     return fu;
 }
@@ -1155,13 +1161,13 @@ nmg_cface(struct shell *s, struct vertex **verts, int n)
 
     NMG_CK_SHELL(s);
     if (n < 1) {
-	bu_log("nmg_cface(s=x%x, verts=x%x, n=%d.)\n",
-	       s, verts, n);
+	bu_log("nmg_cface(s=%p, verts=%p, n=%d.)\n",
+	       (void *)s, (void *)verts, n);
 	bu_bomb("nmg_cface() trying to make bogus face\n");
     }
 
     if (verts) {
-	for (i=0; i < n; ++i) {
+	for (i = 0; i < n; ++i) {
 	    if (verts[i]) {
 		NMG_CK_VERTEX(verts[i]);
 	    }
@@ -1191,8 +1197,9 @@ nmg_cface(struct shell *s, struct vertex **verts, int n)
 	}
     }
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_cface(s=x%x, verts[]=x%x, n=%d) fu=x%x\n",
-	       s, verts, n, fu);
+	bu_log("nmg_cface(s=%p, verts[]=%p, n=%d) fu=%p\n",
+	       (void *)s, (void *)verts, n,
+	       (void *)fu);
     }
     return fu;
 }
@@ -1236,8 +1243,8 @@ nmg_add_loop_to_face(struct shell *s, struct faceuse *fu, struct vertex **verts,
 
     NMG_CK_SHELL(s);
     if (n < 1) {
-	bu_log("nmg_add_loop_to_face(s=x%x, verts=x%x, n=%d.)\n",
-	       s, verts, n);
+	bu_log("nmg_add_loop_to_face(s=%p, verts=%p, n=%d.)\n",
+	       (void *)s, (void *)verts, n);
 	bu_bomb("nmg_add_loop_to_face: request to make 0 faces\n");
     }
 
@@ -1273,9 +1280,9 @@ nmg_add_loop_to_face(struct shell *s, struct faceuse *fu, struct vertex **verts,
 	}
     }
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_add_loop_to_face(s=x%x, fu=x%x, verts[]=x%x, n=%d, %s) fu=x%x\n",
-	       s, fu, verts, n,
-	       nmg_orientation(dir), fu);
+	bu_log("nmg_add_loop_to_face(s=%p, fu=%p, verts[]=%p, n=%d, %s) fu=%p\n",
+	       (void *)s, (void *)fu, (void *)verts, n, nmg_orientation(dir),
+	       (void *)fu);
     }
     return fu;
 }
@@ -1408,12 +1415,12 @@ nmg_fu_planeeqn(struct faceuse *fu, const struct bn_tol *tol)
 
     /* Check and make sure all verts are within tol->dist of face */
     if (nmg_ck_fu_verts(fu, fu->f_p, tol) != 0) {
-	bu_log("nmg_fu_planeeqn(fu=x%x) ERROR, verts are not within tol of face\n", fu);
+	bu_log("nmg_fu_planeeqn(fu=%p) ERROR, verts are not within tol of face\n", (void *)fu);
 	return -1;
     }
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_fu_planeeqn(fu=x%x, tol=x%x)\n", fu, tol);
+	bu_log("nmg_fu_planeeqn(fu=%p, tol=%p)\n", (void *)fu, (void *)tol);
     }
     return 0;
 }
@@ -1451,7 +1458,7 @@ nmg_gluefaces(struct faceuse **fulist, int n, const struct bn_tol *tol)
     bu_ptbl_free(&ftab);
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_gluefaces(fulist=x%x, n=%d)\n", fulist, n);
+	bu_log("nmg_gluefaces(fulist=%p, n=%d)\n", (void *)fulist, n);
     }
 }
 
@@ -1490,7 +1497,7 @@ nmg_simplify_face(struct faceuse *fu)
     ret_val = BU_LIST_IS_EMPTY(&fu->lu_hd);
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_simplify_face(fut=x%x) return=%d\n", fu, ret_val);
+	bu_log("nmg_simplify_face(fut=%p) return=%d\n", (void *)fu, ret_val);
     }
 
     return ret_val;
@@ -1551,8 +1558,8 @@ nmg_reverse_face(register struct faceuse *fu)
     /* switch which face is "outside" face */
     if (fu->orientation == OT_SAME) {
 	if (fumate->orientation != OT_OPPOSITE) {
-	    bu_log("nmg_reverse_face(fu=x%x) fu:SAME, fumate:%d\n",
-		   fu, fumate->orientation);
+	    bu_log("nmg_reverse_face(fu=%p) fu:SAME, fumate:%d\n",
+		   (void *)fu, fumate->orientation);
 	    bu_bomb("nmg_reverse_face() orientation clash\n");
 	} else {
 	    fu->orientation = OT_OPPOSITE;
@@ -1560,8 +1567,8 @@ nmg_reverse_face(register struct faceuse *fu)
 	}
     } else if (fu->orientation == OT_OPPOSITE) {
 	if (fumate->orientation != OT_SAME) {
-	    bu_log("nmg_reverse_face(fu=x%x) fu:OPPOSITE, fumate:%d\n",
-		   fu, fumate->orientation);
+	    bu_log("nmg_reverse_face(fu=%p) fu:OPPOSITE, fumate:%d\n",
+		   (void *)fu, fumate->orientation);
 	    bu_bomb("nmg_reverse_face() orientation clash\n");
 	} else {
 	    fu->orientation = OT_SAME;
@@ -1569,12 +1576,12 @@ nmg_reverse_face(register struct faceuse *fu)
 	}
     } else {
 	/* Unoriented face? */
-	bu_log("ERROR nmg_reverse_face(fu=x%x), orientation=%d.\n",
-	       fu, fu->orientation);
+	bu_log("ERROR nmg_reverse_face(fu=%p), orientation=%d.\n",
+	       (void *)fu, fu->orientation);
     }
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_reverse_face(fu=x%x) fumate=x%x\n", fu, fumate);
+	bu_log("nmg_reverse_face(fu=%p) fumate=%p\n", (void *)fu, (void *)fumate);
     }
 }
 
@@ -1710,14 +1717,14 @@ nmg_face_fix_radial_parity(struct faceuse *fu, const struct bn_tol *tol)
 	    eu->radial_p = after;
 	    count++;
 	    if (RTG.NMG_debug & DEBUG_BASIC) {
-		bu_log("nmg_face_fix_radial_parity() exchanging eu=x%x & eumate=x%x on edge x%x\n",
-		       eu, eumate, eu->e_p);
+		bu_log("nmg_face_fix_radial_parity() exchanging eu=%p & eumate=%p on edge %p\n",
+		       (void *)eu, (void *)eumate, (void *)eu->e_p);
 	    }
 	}
     }
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_face_fix_radial_parity(fu=x%x) returns %ld\n", fu, count);
+	bu_log("nmg_face_fix_radial_parity(fu=%p) returns %ld\n", (void *)fu, count);
     }
 
     return count;
@@ -1739,13 +1746,13 @@ nmg_mv_fu_between_shells(struct shell *dest, register struct shell *src, registe
     NMG_CK_FACEUSE(fumate);
 
     if (fu->s_p != src) {
-	bu_log("nmg_mv_fu_between_shells(dest=x%x, src=x%x, fu=x%x), fu->s_p=x%x isn't src shell\n",
-	       dest, src, fu, fu->s_p);
+	bu_log("nmg_mv_fu_between_shells(dest=%p, src=%p, fu=%p), fu->s_p=%p isn't src shell\n",
+	       (void *)dest, (void *)src, (void *)fu, (void *)fu->s_p);
 	bu_bomb("fu->s_p isn't source shell\n");
     }
     if (fumate->s_p != src) {
-	bu_log("nmg_mv_fu_between_shells(dest=x%x, src=x%x, fu=x%x), fumate->s_p=x%x isn't src shell\n",
-	       dest, src, fu, fumate->s_p);
+	bu_log("nmg_mv_fu_between_shells(dest=%p, src=%p, fu=%p), fumate->s_p=%p isn't src shell\n",
+	       (void *)dest, (void *)src, (void *)fu, (void *)fumate->s_p);
 	bu_bomb("fumate->s_p isn't source shell\n");
     }
 
@@ -1753,8 +1760,8 @@ nmg_mv_fu_between_shells(struct shell *dest, register struct shell *src, registe
     BU_LIST_DEQUEUE(&fu->l);
     if (BU_LIST_IS_EMPTY(&src->fu_hd)) {
 	/* This was the last fu in the list, bad news */
-	bu_log("nmg_mv_fu_between_shells(dest=x%x, src=x%x, fu=x%x), fumate=x%x not in src shell\n",
-	       dest, src, fu, fumate);
+	bu_log("nmg_mv_fu_between_shells(dest=%p, src=%p, fu=%p), fumate=%p not in src shell\n",
+	       (void *)dest, (void *)src, (void *)fu, (void *)fumate);
 	bu_bomb("src shell emptied before finding fumate\n");
     }
 
@@ -1777,7 +1784,8 @@ nmg_mv_fu_between_shells(struct shell *dest, register struct shell *src, registe
     fumate->s_p = dest;
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_mv_fu_between_shells(dest=x%x, src=x%x, fu=x%x)\n", dest, src, fu);
+	bu_log("nmg_mv_fu_between_shells(dest=%p, src=%p, fu=%p)\n",
+	       (void *)dest, (void *)src, (void *)fu);
     }
 }
 
@@ -1808,7 +1816,7 @@ nmg_move_fu_fu(register struct faceuse *dest_fu, register struct faceuse *src_fu
     /* The src_fu is invalid here, with an empty lu_hd list */
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_move_fu_fu(dest_fu=x%x, src_fu=x%x)\n", dest_fu, src_fu);
+	bu_log("nmg_move_fu_fu(dest_fu=%p, src_fu=%p)\n", (void *)dest_fu, (void *)src_fu);
     }
 }
 
@@ -1828,7 +1836,7 @@ nmg_jf(register struct faceuse *dest_fu, register struct faceuse *src_fu)
     NMG_CK_FACEUSE(src_fu);
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_jf(dest_fu=x%x, src_fu=x%x)\n", dest_fu, src_fu);
+	bu_log("nmg_jf(dest_fu=%p, src_fu=%p)\n", (void *)dest_fu, (void *)src_fu);
     }
 
     if (src_fu->f_p == dest_fu->f_p)
@@ -1950,8 +1958,8 @@ nmg_dup_face(struct faceuse *fu, struct shell *s)
     bu_free((char *)trans_tbl, "nmg_dup_face trans_tbl");
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_dup_face(fu=x%x, s=x%x) new_fu=x%x\n",
-	       fu, s, new_fu);
+	bu_log("nmg_dup_face(fu=%p, s=%p) new_fu=%p\n",
+	       (void *)fu, (void *)s, (void *)new_fu);
     }
 
     return new_fu;
@@ -1998,7 +2006,7 @@ nmg_jl(struct loopuse *lu, struct edgeuse *eu)
     NMG_CK_LOOPUSE(lu2);
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_jl(lu=x%x, eu=x%x) lu2=x%x\n", lu, eu, lu2);
+	bu_log("nmg_jl(lu=%p, eu=%p) lu2=%p\n", (void *)lu, (void *)eu, (void *)lu2);
     }
 
     if (eu->up.lu_p != lu)
@@ -2100,8 +2108,8 @@ nmg_join_2loops(struct vertexuse *vu1, struct vertexuse *vu2)
     NMG_CK_LOOPUSE(lu2);
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_join_2loops(vu1=x%x, vu2=x%x) lu1=x%x, lu2=x%x\n",
-	       vu1, vu2, lu1, lu2);
+	bu_log("nmg_join_2loops(vu1=%p, vu2=%p) lu1=%p, lu2=%p\n",
+	       (void *)vu1, (void *)vu2, (void *)lu1, (void *)lu2);
     }
 
     if (lu1 == lu2 || lu1->l_p == lu2->l_p)
@@ -2186,8 +2194,8 @@ nmg_join_singvu_loop(struct vertexuse *vu1, struct vertexuse *vu2)
     NMG_CK_VERTEXUSE(vu2);
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_join_singvu_loop(vu1=x%x, vu2=x%x) lu1=x%x, lu2=x%x\n",
-	       vu1, vu2, vu1->up.lu_p, vu2->up.lu_p);
+	bu_log("nmg_join_singvu_loop(vu1=%p, vu2=%p) lu1=%p, lu2=%p\n",
+	       (void *)vu1, (void *)vu2, (void *)vu1->up.lu_p, (void *)vu2->up.lu_p);
     }
 
     if (*vu2->up.magic_p != NMG_LOOPUSE_MAGIC ||
@@ -2233,8 +2241,8 @@ nmg_join_2singvu_loops(struct vertexuse *vu1, struct vertexuse *vu2)
     struct loopuse *lu1, *lu2;
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_join_2singvu_loops(vu1=x%x, vu2=x%x) lu1=x%x, lu2=x%x\n",
-	       vu1, vu2, vu1->up.lu_p, vu2->up.lu_p);
+	bu_log("nmg_join_2singvu_loops(vu1=%p, vu2=%p) lu1=%p, lu2=%p\n",
+	       (void *)vu1, (void *)vu2, (void *)vu1->up.lu_p, (void *)vu2->up.lu_p);
     }
 
     NMG_CK_VERTEXUSE(vu1);
@@ -2459,8 +2467,8 @@ nmg_cut_loop(struct vertexuse *vu1, struct vertexuse *vu2)
     }
  out:
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_cut_loop(vu1=x%x, vu2=x%x) old_lu=x%x, new_lu=x%x\n",
-	       vu1, vu2, oldlu, lu);
+	bu_log("nmg_cut_loop(vu1=%p, vu2=%p) old_lu=%p, new_lu=%p\n",
+	       (void *)vu1, (void *)vu2, (void *)oldlu, (void *)lu);
     }
 
     return lu;
@@ -2560,8 +2568,8 @@ nmg_split_lu_at_vu(struct loopuse *lu, struct vertexuse *split_vu)
     if (iteration >= 10000) bu_bomb("nmg_split_lu_at_vu:  infinite loop\n");
  out:
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_split_lu_at_vu(lu=x%x, split_vu=x%x) newlu=x%x\n",
-	       lu, split_vu, newlu);
+	bu_log("nmg_split_lu_at_vu(lu=%p, split_vu=%p) newlu=%p\n",
+	       (void *)lu, (void *)split_vu, (void *)newlu);
     }
     return newlu;
 }
@@ -2644,7 +2652,7 @@ nmg_split_touchingloops(struct loopuse *lu, const struct bn_tol *tol)
     NMG_CK_LOOPUSE(lu);
     BN_CK_TOL(tol);
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_split_touchingloops(lu=x%x)\n", lu);
+	bu_log("nmg_split_touchingloops(lu=%p)\n", (void *)lu);
     }
  top:
     if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
@@ -2738,7 +2746,7 @@ nmg_join_touchingloops(struct loopuse *lu)
     int count = 0;
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_join_touchingloops(lu=x%x)\n", lu);
+	bu_log("nmg_join_touchingloops(lu=%p)\n", (void *)lu);
     }
     NMG_CK_LOOPUSE(lu);
     fu = lu->up.fu_p;
@@ -2787,7 +2795,8 @@ nmg_join_touchingloops(struct loopuse *lu)
 	     * XXX Call nmg_simplify_loop()?
 	     */
 	    if (RTG.NMG_debug & DEBUG_BASIC) {
-		bu_log("nmg_join_touchingloops(): lu=x%x, vu=x%x, tvu=x%x\n", lu, vu, tvu);
+		bu_log("nmg_join_touchingloops(): lu=%p, vu=%p, tvu=%p\n",
+		       (void *)lu, (void *)vu, (void *)tvu);
 	    }
 	    tvu = nmg_join_2loops(vu, tvu);
 	    NMG_CK_VERTEXUSE(tvu);
@@ -2972,7 +2981,7 @@ nmg_check_proposed_loop(struct edgeuse *start_eu, struct edgeuse **next_start_eu
      * proposed loop will split the jaunt, so set its status to
      * JS_SPLIT.
      */
-    for (j=0; j<BU_PTBL_END(jaunt_tbl); j++) {
+    for (j = 0; j < BU_PTBL_END(jaunt_tbl); j++) {
 	struct edgeuse *jaunt_eu;
 	struct edgeuse *jaunt_eu2;
 
@@ -3018,15 +3027,15 @@ nmg_kill_accordions(struct loopuse *lu)
 	if ((eu_prev->vu_p->v_p == eu_next->vu_p->v_p) && (eu_curr != eu_prev)) {
 	    if (eu_prev != eu_next) {
 		if ((RTG.NMG_debug & DEBUG_BASIC) || (RTG.NMG_debug & DEBUG_CUTLOOP)) {
-		    bu_log("nmg_kill_accordions(): killing jaunt in accordion eu's x%x and x%x\n",
-			   eu_curr, eu_prev);
+		    bu_log("nmg_kill_accordions(): killing jaunt in accordion eu's %p and %p\n",
+			   (void *)eu_curr, (void *)eu_prev);
 		}
 		(void)nmg_keu(eu_curr);
 		(void)nmg_keu(eu_prev);
 		vert_cnt -= 2;
 	    } else {
 		if ((RTG.NMG_debug & DEBUG_BASIC) || (RTG.NMG_debug & DEBUG_CUTLOOP)) {
-		    bu_log("nmg_kill_accordions(): killing jaunt in accordion eu x%x\n", eu_curr);
+		    bu_log("nmg_kill_accordions(): killing jaunt in accordion eu %p\n", (void *)eu_curr);
 		}
 		(void)nmg_keu(eu_curr);
 		vert_cnt--;
@@ -3059,10 +3068,10 @@ nmg_loop_split_at_touching_jaunt(struct loopuse *lu, const struct bn_tol *tol)
     struct loopuse *new_lu;
     struct edgeuse *eu;
     struct edgeuse *eu2;
-    int count=0;
+    int count = 0;
     int jaunt_count;
     int jaunt_no;
-    int need_init=1;
+    int need_init = 1;
     int *visit_count;
     int *jaunt_status;
     int i;
@@ -3071,7 +3080,7 @@ nmg_loop_split_at_touching_jaunt(struct loopuse *lu, const struct bn_tol *tol)
     BN_CK_TOL(tol);
 
     if ((RTG.NMG_debug & DEBUG_BASIC) || (RTG.NMG_debug & DEBUG_CUTLOOP)) {
-	bu_log("nmg_loop_split_at_touching_jaunt(lu=x%x) START\n", lu);
+	bu_log("nmg_loop_split_at_touching_jaunt(lu=%p) START\n", (void *)lu);
 	nmg_pr_lu_briefly(lu, "");
     }
 
@@ -3084,17 +3093,19 @@ nmg_loop_split_at_touching_jaunt(struct loopuse *lu, const struct bn_tol *tol)
  top:
     jaunt_count = nmg_get_touching_jaunts(lu, &jaunt_tbl, &need_init);
     if (RTG.NMG_debug & DEBUG_CUTLOOP) {
-	bu_log("nmg_loop_split_at_touching_jaunt: found %d touching jaunts in lu x%x\n", jaunt_count, lu);
+	bu_log("nmg_loop_split_at_touching_jaunt: found %d touching jaunts in lu %p\n",
+	       jaunt_count, (void *)lu);
 	if (jaunt_count) {
-	    for (i=0; i<BU_PTBL_END(&jaunt_tbl); i++) {
+	    for (i = 0; i < BU_PTBL_END(&jaunt_tbl); i++) {
 		eu = (struct edgeuse *)BU_PTBL_GET(&jaunt_tbl, i);
-		bu_log("\tx%x\n", eu);
+		bu_log("\t%p\n", (void *)eu);
 	    }
 	}
     }
 
     if (jaunt_count < 0) {
-	bu_log("nmg_loop_split_at_touching_jaunt: nmg_get_touching_jaunts() returned %d for lu x%x\n", jaunt_count, lu);
+	bu_log("nmg_loop_split_at_touching_jaunt: nmg_get_touching_jaunts() returned %d for lu %p\n",
+	       jaunt_count, (void *)lu);
 	bu_bomb("nmg_loop_split_at_touching_jaunt: bad jaunt count\n");
     }
 
@@ -3107,8 +3118,8 @@ nmg_loop_split_at_touching_jaunt(struct loopuse *lu, const struct bn_tol *tol)
 	    bu_ptbl_free(&jaunt_tbl);
 
 	if ((RTG.NMG_debug & DEBUG_BASIC) || (RTG.NMG_debug & DEBUG_CUTLOOP)) {
-	    bu_log("nmg_loop_split_at_touching_jaunt(lu=x%x) END count=%d\n",
-		   lu, count);
+	    bu_log("nmg_loop_split_at_touching_jaunt(lu=%p) END count=%d\n",
+		   (void *)lu, count);
 	}
 	return count;
     }
@@ -3134,8 +3145,8 @@ nmg_loop_split_at_touching_jaunt(struct loopuse *lu, const struct bn_tol *tol)
 	    bu_free((char *)jaunt_status, "nmg_loop_split_at_touching_jaunt: jaunt_status[]\n");
 
 	if ((RTG.NMG_debug & DEBUG_BASIC) || (RTG.NMG_debug & DEBUG_CUTLOOP)) {
-	    bu_log("nmg_loop_split_at_touching_jaunt(lu=x%x) END count=%d\n",
-		   lu, count);
+	    bu_log("nmg_loop_split_at_touching_jaunt(lu=%p) END count=%d\n",
+		   (void *)lu, count);
 	}
 	return count;
     }
@@ -3177,7 +3188,7 @@ nmg_loop_split_at_touching_jaunt(struct loopuse *lu, const struct bn_tol *tol)
 	int do_split=1;			/* flag: 1 -> this jaunt is a good choice for making the split */
 
 	/* initialize the status of each jaunt to unknown */
-	for (i=0; i<BU_PTBL_END(&jaunt_tbl); i++)
+	for (i = 0; i < BU_PTBL_END(&jaunt_tbl); i++)
 	    jaunt_status[i] = JS_UNKNOWN;
 
 	/* consider splitting lu at this touching jaunt */
@@ -3188,7 +3199,7 @@ nmg_loop_split_at_touching_jaunt(struct loopuse *lu, const struct bn_tol *tol)
 	start_eu1 = BU_LIST_PNEXT_CIRC(edgeuse, &eu->l);
 
 	if (RTG.NMG_debug & DEBUG_CUTLOOP) {
-	    bu_log("\tConsider splitting lu x%x at vu=x%x\n", lu, start_eu1->vu_p);
+	    bu_log("\tConsider splitting lu %p at vu=%p\n", (void *)lu, (void *)start_eu1->vu_p);
 	    bu_log("\t\t(jaunt number %d\n", jaunt_no);
 	}
 
@@ -3201,11 +3212,11 @@ nmg_loop_split_at_touching_jaunt(struct loopuse *lu, const struct bn_tol *tol)
 				jaunt_status, &jaunt_tbl, jaunt_no, 1);
 
 	if (RTG.NMG_debug & DEBUG_CUTLOOP) {
-	    for (i=0; i<BU_PTBL_END(&jaunt_tbl); i++) {
+	    for (i = 0; i < BU_PTBL_END(&jaunt_tbl); i++) {
 		struct edgeuse *tmp_eu;
 
 		tmp_eu = (struct edgeuse *)BU_PTBL_GET(&jaunt_tbl, i);
-		bu_log("\t\tpredicted status of jaunt at eu x%x is ", tmp_eu);
+		bu_log("\t\tpredicted status of jaunt at eu %p is ", (void *)tmp_eu);
 		switch (jaunt_status[i]) {
 		    case JS_UNKNOWN:
 			bu_log("unknown\n");
@@ -3230,7 +3241,7 @@ nmg_loop_split_at_touching_jaunt(struct loopuse *lu, const struct bn_tol *tol)
 	 * one must be either split or still a touching jaunt.  Any
 	 * other status will create loops of two edgeuses!!!
 	 */
-	for (i=0; i<BU_PTBL_END(&jaunt_tbl); i++) {
+	for (i = 0; i < BU_PTBL_END(&jaunt_tbl); i++) {
 	    if (jaunt_status[i] != JS_SPLIT && jaunt_status[i] != JS_TOUCHING_JAUNT) {
 		do_split = 0;
 		break;
@@ -3240,7 +3251,7 @@ nmg_loop_split_at_touching_jaunt(struct loopuse *lu, const struct bn_tol *tol)
 	/* if splitting lu at this touching jaunt is not desirable, check the next one */
 	if (!do_split) {
 	    if (RTG.NMG_debug & DEBUG_CUTLOOP) {
-		bu_log("\t\tCannot split lu x%x at proposed vu\n", lu);
+		bu_log("\t\tCannot split lu %p at proposed vu\n", (void *)lu);
 	    }
 	    continue;
 	}
@@ -3251,8 +3262,8 @@ nmg_loop_split_at_touching_jaunt(struct loopuse *lu, const struct bn_tol *tol)
 	new_lu = nmg_split_lu_at_vu(lu, eu2->vu_p);
 
 	if (RTG.NMG_debug & DEBUG_CUTLOOP) {
-	    bu_log("\tnmg_loop_split_at_touching_jaunt: splitting lu x%x at vu x%x\n", lu, eu2->vu_p);
-	    bu_log("\t\tnew_lu is x%x\n", new_lu);
+	    bu_log("\tnmg_loop_split_at_touching_jaunt: splitting lu %p at vu %p\n", (void *)lu, (void *)eu2->vu_p);
+	    bu_log("\t\tnew_lu is %p\n", (void *)new_lu);
 	}
 
 	count++;
@@ -3269,7 +3280,7 @@ nmg_loop_split_at_touching_jaunt(struct loopuse *lu, const struct bn_tol *tol)
     }
 
     /* If we ever get here, we have failed to find a way to split this loop!!!! */
-    bu_log("nmg_loop_split_at_touching_jaunt: Could not find a way to split lu x%x\n", lu);
+    bu_log("nmg_loop_split_at_touching_jaunt: Could not find a way to split lu %p\n", (void *)lu);
     nmg_pr_lu_briefly(lu, " ");
     nmg_stash_model_to_file("jaunt.g", nmg_find_model(&lu->l.magic), "Can't split lu");
     bu_bomb("nmg_loop_split_at_touching_jaunt: Can't split lu\n");
@@ -3292,7 +3303,7 @@ nmg_simplify_loop(struct loopuse *lu)
 
     NMG_CK_LOOPUSE(lu);
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_simplify_loop(lu=x%x)\n", lu);
+	bu_log("nmg_simplify_loop(lu=%p)\n", (void *)lu);
     }
 
     if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
@@ -3368,7 +3379,7 @@ nmg_kill_snakes(struct loopuse *lu)
 
     NMG_CK_LOOPUSE(lu);
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_kill_snakes(lu=x%x)\n", lu);
+	bu_log("nmg_kill_snakes(lu=%p)\n", (void *)lu);
     }
     if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 	return 0;
@@ -3442,13 +3453,13 @@ nmg_mv_lu_between_shells(struct shell *dest, register struct shell *src, registe
     NMG_CK_LOOPUSE(lumate);
 
     if (lu->up.s_p != src) {
-	bu_log("nmg_mv_lu_between_shells(dest=x%x, src=x%x, lu=x%x), lu->up.s_p=x%x isn't source shell\n",
-	       dest, src, lu, lu->up.s_p);
+	bu_log("nmg_mv_lu_between_shells(dest=%p, src=%p, lu=%p), lu->up.s_p=%p isn't source shell\n",
+	       (void *)dest, (void *)src, (void *)lu, (void *)lu->up.s_p);
 	bu_bomb("lu->up.s_p isn't source shell\n");
     }
     if (lumate->up.s_p != src) {
-	bu_log("nmg_mv_lu_between_shells(dest=x%x, src=x%x, lu=x%x), lumate->up.s_p=x%x isn't source shell\n",
-	       dest, src, lu, lumate->up.s_p);
+	bu_log("nmg_mv_lu_between_shells(dest=%p, src=%p, lu=%p), lumate->up.s_p=%p isn't source shell\n",
+	       (void *)dest, (void *)src, (void *)lu, (void *)lumate->up.s_p);
 	bu_bomb("lumate->up.s_p isn't source shell\n");
     }
 
@@ -3456,8 +3467,8 @@ nmg_mv_lu_between_shells(struct shell *dest, register struct shell *src, registe
     BU_LIST_DEQUEUE(&lu->l);
     if (BU_LIST_IS_EMPTY(&src->lu_hd)) {
 	/* This was the last lu in the list */
-	bu_log("nmg_mv_lu_between_shells(dest=x%x, src=x%x, lu=x%x), lumate=x%x not in src shell\n",
-	       dest, src, lu, lumate);
+	bu_log("nmg_mv_lu_between_shells(dest=%p, src=%p, lu=%p), lumate=%p not in src shell\n",
+	       (void *)dest, (void *)src, (void *)lu, (void *)lumate);
 	bu_bomb("src shell emptied before finding lumate\n");
     }
 
@@ -3472,8 +3483,8 @@ nmg_mv_lu_between_shells(struct shell *dest, register struct shell *src, registe
     lumate->up.s_p = dest;
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_mv_lu_between_shells(dest=x%x, src=x%x, lu=x%x)\n",
-	       dest, src, lu);
+	bu_log("nmg_mv_lu_between_shells(dest=%p, src=%p, lu=%p)\n",
+	       (void *)dest, (void *)src, (void *)lu);
     }
 }
 
@@ -3509,8 +3520,8 @@ void nmg_moveltof(struct faceuse *fu, struct shell *s)
     /* XXX What about loopuse "up" pointers? */
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_moveltof(fu=x%x, s=x%x)\n",
-	       fu, s);
+	bu_log("nmg_moveltof(fu=%p, s=%p)\n",
+	       (void *)fu, (void *)s);
     }
 }
 
@@ -3575,8 +3586,8 @@ nmg_dup_loop(struct loopuse *lu, uint32_t *parent, long int **trans_tbl)
 	    nmg_vertex_gv(new_v, old_v->vg_p->coord);
 	}
 	if (RTG.NMG_debug & DEBUG_BASIC) {
-	    bu_log("nmg_dup_loop(lu=x%x, parent=x%x, trans_tbl=x%x) new_lu=x%x\n",
-		   lu, parent, trans_tbl, new_lu);
+	    bu_log("nmg_dup_loop(lu=%p, parent=%p, trans_tbl=%p) new_lu=%p\n",
+		   (void *)lu, (void *)parent, (void *)trans_tbl, (void *)new_lu);
 	}
 	return new_lu;
     }
@@ -3670,10 +3681,10 @@ nmg_dup_loop(struct loopuse *lu, uint32_t *parent, long int **trans_tbl)
     }
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_dup_loop(lu=x%x(%s), parent=x%x, trans_tbl=x%x) new_lu=x%x(%s)\n",
-	       lu, nmg_orientation(lu->orientation),
-	       parent, trans_tbl, new_lu,
-	       nmg_orientation(new_lu->orientation));
+	bu_log("nmg_dup_loop(lu=%p(%s), parent=%p, trans_tbl=%p) new_lu=%p(%s)\n",
+	       (void *)lu, nmg_orientation(lu->orientation),
+	       (void *)parent, (void *)trans_tbl,
+	       (void *)new_lu, nmg_orientation(new_lu->orientation));
     }
     return new_lu;
 }
@@ -3691,8 +3702,8 @@ nmg_set_lu_orientation(struct loopuse *lu, int is_opposite)
     NMG_CK_LOOPUSE(lu);
     NMG_CK_LOOPUSE(lu->lumate_p);
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_set_lu_orientation(lu=x%x, %s)\n",
-	       lu, is_opposite?"OT_OPPOSITE":"OT_SAME");
+	bu_log("nmg_set_lu_orientation(lu=%p, %s)\n",
+	       (void *)lu, is_opposite?"OT_OPPOSITE":"OT_SAME");
     }
     if (is_opposite) {
 	/* Interior (crack) loop */
@@ -3727,7 +3738,7 @@ nmg_lu_reorient(struct loopuse *lu)
     NMG_CK_LOOPUSE(lu);
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_lu_reorient(lu=x%x)\n", lu);
+	bu_log("nmg_lu_reorient(lu=%p)\n", (void *)lu);
     }
 
     /* Don't harm the OT_BOOLPLACE self-loop marker vertices */
@@ -3743,7 +3754,7 @@ nmg_lu_reorient(struct loopuse *lu)
 	fu = lu->up.fu_p;
 	NMG_CK_FACEUSE(fu);
 	if (RTG.NMG_debug & DEBUG_BASIC)
-	    bu_log("nmg_lu_reorient() selecting other fu=x%x, lu=x%x\n", fu, lu);
+	    bu_log("nmg_lu_reorient() selecting other fu=%p, lu=%p\n", (void *)fu, (void *)lu);
 	if (fu->orientation != OT_SAME)
 	    bu_bomb("nmg_lu_reorient() no OT_SAME fu?\n");
     }
@@ -3767,8 +3778,8 @@ nmg_lu_reorient(struct loopuse *lu)
 
     if (lu->orientation == geom_orient) return;
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_lu_reorient(x%x):  changing orientation: %s to %s\n",
-	       lu, nmg_orientation(lu->orientation),
+	bu_log("nmg_lu_reorient(%p):  changing orientation: %s to %s\n",
+	       (void *)lu, nmg_orientation(lu->orientation),
 	       nmg_orientation(geom_orient));
     }
 
@@ -4035,9 +4046,9 @@ nmg_eusplit(struct vertex *v, struct edgeuse *oldeu, int share_geom)
 
  out:
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_eusplit(v=x%x, eu=x%x, share=%d) new_eu=x%x, mate=x%x\n",
-	       v, oldeu, share_geom,
-	       eu1, eu1->eumate_p);
+	bu_log("nmg_eusplit(v=%p, eu=%p, share=%d) new_eu=%p, mate=%p\n",
+	       (void *)v, (void *)oldeu, share_geom,
+	       (void *)eu1, (void *)eu1->eumate_p);
     }
     return eu1;
 }
@@ -4127,7 +4138,7 @@ nmg_esplit(struct vertex *v, struct edgeuse *eu, int share_geom)
     NMG_CK_VERTEX(vB);
 
     if (v && (v == vA || v == vB)) {
-	bu_log("WARNING: nmg_esplit(v=x%x) vertex is already an edge vertex\n", v);
+	bu_log("WARNING: nmg_esplit(v=%p) vertex is already an edge vertex\n", (void *)v);
 	bu_bomb("nmg_esplit() new vertex is already an edge vertex\n");
     }
 
@@ -4177,8 +4188,9 @@ nmg_esplit(struct vertex *v, struct edgeuse *eu, int share_geom)
 	    neu2 = teuX->eumate_p;
 	    neu1 = teuY->eumate_p;
 	} else {
-	    bu_log("nmg_esplit(v=x%x, e=x%x)\n", v, e);
-	    bu_log("nmg_esplit: teuX->vu_p->v_p=x%x, vA=x%x, vB=x%x\n", teuX->vu_p->v_p, vA, vB);
+	    bu_log("nmg_esplit(v=%p, e=%p)\n", (void *)v, (void *)e);
+	    bu_log("nmg_esplit: teuX->vu_p->v_p=%p, vA=%p, vB=%p\n",
+		   (void *)teuX->vu_p->v_p, (void *)vA, (void *)vB);
 	    bu_bomb("nmg_esplit() teuX->vu_p->v_p is neither vA nor vB\n");
 	}
     } while (notdone);
@@ -4187,14 +4199,14 @@ nmg_esplit(struct vertex *v, struct edgeuse *eu, int share_geom)
     /* Find an edgeuse that runs from v to vB */
     if (neu2->vu_p->v_p == v && neu2->eumate_p->vu_p->v_p == vB) {
 	if (RTG.NMG_debug & DEBUG_BASIC) {
-	    bu_log("nmg_esplit(v=x%x, eu=x%x, share=%d) neu2=x%x\n",
-		   v, eu, share_geom, neu2);
+	    bu_log("nmg_esplit(v=%p, eu=%p, share=%d) neu2=%p\n",
+		   (void *)v, (void *)eu, share_geom, (void *)neu2);
 	}
 	return neu2;
     } else if (neu1->vu_p->v_p == v && neu1->eumate_p->vu_p->v_p == vB) {
 	if (RTG.NMG_debug & DEBUG_BASIC) {
-	    bu_log("nmg_esplit(v=x%x, eu=x%x, share=%d) neu1=x%x\n",
-		   v, eu, share_geom, neu1);
+	    bu_log("nmg_esplit(v=%p, eu=%p, share=%d) neu1=%p\n",
+		   (void *)v, (void *)eu, share_geom, (void *)neu1);
 	}
 	return neu1;
     }
@@ -4234,8 +4246,8 @@ nmg_ebreak(struct vertex *v, struct edgeuse *eu)
     if (eu->e_p == new_eu->e_p) bu_bomb("nmb_ebreak() same edges?\n");
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_ebreak(v=x%x, eu=x%x) new_eu=x%x\n",
-	       v, eu, new_eu);
+	bu_log("nmg_ebreak(v=%p, eu=%p) new_eu=%p\n",
+	       (void *)v, (void *)eu, (void *)new_eu);
     }
     return new_eu;
 }
@@ -4278,8 +4290,8 @@ nmg_ebreaker(struct vertex *v, struct edgeuse *eu, const struct bn_tol *tol)
 			     (struct shell *)NULL, eu->e_p);
 	    if (!oeu) break;
 	    if (RTG.NMG_debug & DEBUG_BASIC) {
-		bu_log("nmg_ebreaker() joining eu=x%x to oeu=x%x\n",
-		       eu, oeu);
+		bu_log("nmg_ebreaker() joining eu=%p to oeu=%p\n",
+		       (void *)eu, (void *)oeu);
 	    }
 	    nmg_radial_join_eu(eu, oeu, tol);
 	}
@@ -4290,17 +4302,19 @@ nmg_ebreaker(struct vertex *v, struct edgeuse *eu, const struct bn_tol *tol)
 			     (struct shell *)NULL, new_eu->e_p);
 	    if (!oeu) break;
 	    if (RTG.NMG_debug & DEBUG_BASIC) {
-		bu_log("nmg_ebreaker() joining new_eu=x%x to oeu=x%x\n",
-		       new_eu, oeu);
+		bu_log("nmg_ebreaker() joining new_eu=%p to oeu=%p\n",
+		       (void *)new_eu, (void *)oeu);
 	    }
 	    nmg_radial_join_eu(new_eu, oeu, tol);
 	}
 
-	if (nmg_check_radial(eu, tol)) bu_log("ERROR ebreaker eu=x%x bad\n", eu);
-	if (nmg_check_radial(new_eu, tol)) bu_log("ERROR ebreaker new_eu=x%x bad\n", new_eu);
+	if (nmg_check_radial(eu, tol))
+	    bu_log("ERROR ebreaker eu=%p bad\n", (void *)eu);
+	if (nmg_check_radial(new_eu, tol))
+	    bu_log("ERROR ebreaker new_eu=%p bad\n", (void *)new_eu);
     }
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_ebreaker(v=x%x, eu=x%x) new_eu=x%x\n", v, eu, new_eu);
+	bu_log("nmg_ebreaker(v=%p, eu=%p) new_eu=%p\n", (void *)v, (void *)eu, (void *)new_eu);
     }
     return new_eu;
 }
@@ -4328,7 +4342,7 @@ nmg_e2break(struct edgeuse *eu1, struct edgeuse *eu2)
     (void)nmg_ebreak(v, eu2);
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_e2break(eu1=x%x, eu2=x%x) v=x%x\n", eu1, eu2, v);
+	bu_log("nmg_e2break(eu1=%p, eu2=%p) v=%p\n", (void *)eu1, (void *)eu2, (void *)v);
     }
     return v;
 }
@@ -4397,7 +4411,7 @@ nmg_unbreak_edge(struct edgeuse *eu1_first)
 
     eg = eu1_first->g.lseg_p;
     if (!eg) {
-	bu_log("nmg_unbreak_edge: no geometry for edge1 x%x\n", e1);
+	bu_log("nmg_unbreak_edge: no geometry for edge1 %p\n", (void *)e1);
 	ret = -1;
 	goto out;
     }
@@ -4416,8 +4430,8 @@ nmg_unbreak_edge(struct edgeuse *eu1_first)
     eu1 = eu1_first;
     eu2 = BU_LIST_PNEXT_CIRC(edgeuse, eu1);
     if (eu2->g.lseg_p != eg) {
-	bu_log("nmg_unbreak_edge: second eu geometry x%x does not match geometry x%x of edge1 x%x\n" ,
-	       eu2->g.magic_p, eg, e1);
+	bu_log("nmg_unbreak_edge: second eu geometry %p does not match geometry %p of edge1 %p\n" ,
+	       (void *)eu2->g.magic_p, (void *)eg, (void *)e1);
 	ret = -3;
 	goto out;
     }
@@ -4480,8 +4494,8 @@ nmg_unbreak_edge(struct edgeuse *eu1_first)
 
     /* All preconditions are met, begin the unbreak operation */
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_unbreak_edge va=x%x, vb=x%x, vc=x%x\n",
-	       va, vb, vc);
+	bu_log("nmg_unbreak_edge va=%p, vb=%p, vc=%p\n",
+	       (void *)va, (void *)vb, (void *)vc);
 	bu_log("nmg_unbreak_edge A:(%g, %g, %g), B:(%g, %g, %g), C:(%g, %g, %g)\n",
 	       V3ARGS(va->vg_p->coord),
 	       V3ARGS(vb->vg_p->coord),
@@ -4489,7 +4503,7 @@ nmg_unbreak_edge(struct edgeuse *eu1_first)
     }
 
     if (va == vc) {
-	/* bu_log("nmg_unbreak_edge(eu=%x): Trying to break a jaunt, va==vc (%x)\n", eu1_first, va); */
+	/* bu_log("nmg_unbreak_edge(eu=%p): Trying to break a jaunt, va==vc (%p)\n", (void *)eu1_first, (void *)va); */
 	ret = -9;
 	goto out;
     }
@@ -4499,8 +4513,8 @@ nmg_unbreak_edge(struct edgeuse *eu1_first)
     for (;;) {
 	/* Recheck initial conditions */
 	if (eu1->vu_p->v_p != va || eu1->eumate_p->vu_p->v_p != vb) {
-	    bu_log("nmg_unbreak_edge: eu1 does not got to/from correct vertices, x%x, %x\n",
-		   eu1->vu_p->v_p, eu1->eumate_p->vu_p->v_p);
+	    bu_log("nmg_unbreak_edge: eu1 does not got to/from correct vertices, %p, %p\n",
+		   (void *)eu1->vu_p->v_p, (void *)eu1->eumate_p->vu_p->v_p);
 	    nmg_pr_eu_briefly(eu1, " ");
 	    bu_bomb("nmg_unbreak_edge 1\n");
 	}
@@ -4510,8 +4524,8 @@ nmg_unbreak_edge(struct edgeuse *eu1_first)
 	    bu_bomb("nmg_unbreak_edge:  eu2 geometry is wrong\n");
 	}
 	if (eu2->vu_p->v_p != vb || eu2->eumate_p->vu_p->v_p != vc) {
-	    bu_log("nmg_unbreak_edge: about to kill eu2, but does not got to/from correct vertices, x%x, x%x\n",
-		   eu2->vu_p->v_p, eu2->eumate_p->vu_p->v_p);
+	    bu_log("nmg_unbreak_edge: about to kill eu2, but does not got to/from correct vertices, %p, %p\n",
+		   (void *)eu2->vu_p->v_p, (void *)eu2->eumate_p->vu_p->v_p);
 	    nmg_pr_eu_briefly(eu2, " ");
 	    bu_bomb("nmg_unbreak_edge 3\n");
 	}
@@ -4520,8 +4534,8 @@ nmg_unbreak_edge(struct edgeuse *eu1_first)
 	nmg_movevu(eu1->eumate_p->vu_p, vc);
 
 	if (eu1->vu_p->v_p != va || eu1->eumate_p->vu_p->v_p != vc) {
-	    bu_log("nmg_unbreak_edge: extended eu1 does not got to/from correct vertices, x%x, x%x\n",
-		   eu1->vu_p->v_p, eu1->eumate_p->vu_p->v_p);
+	    bu_log("nmg_unbreak_edge: extended eu1 does not got to/from correct vertices, %p, %p\n",
+		   (void *)eu1->vu_p->v_p, (void *)eu1->eumate_p->vu_p->v_p);
 	    nmg_pr_eu_briefly(eu1, " ");
 	    bu_bomb("nmg_unbreak_edge 2\n");
 	}
@@ -4534,8 +4548,8 @@ nmg_unbreak_edge(struct edgeuse *eu1_first)
 	    bu_bomb("nmg_unbreak_edge: edgeuse parent is now empty!!\n");
 
 	if (eu1->vu_p->v_p != va || eu1->eumate_p->vu_p->v_p != vc) {
-	    bu_log("nmg_unbreak_edge: unbroken eu1 (after eu2 killed) does not got to/from correct vertices, x%x, x%x\n",
-		   eu1->vu_p->v_p, eu1->eumate_p->vu_p->v_p);
+	    bu_log("nmg_unbreak_edge: unbroken eu1 (after eu2 killed) does not got to/from correct vertices, %p, %p\n",
+		   (void *)eu1->vu_p->v_p, (void *)eu1->eumate_p->vu_p->v_p);
 	    nmg_pr_eu_briefly(eu1, " ");
 	    bu_bomb("nmg_unbreak_edge 4\n");
 	}
@@ -4544,8 +4558,8 @@ nmg_unbreak_edge(struct edgeuse *eu1_first)
     }
  out:
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_unbreak_edge(eu=x%x, vb=x%x) ret = %d\n",
-	       eu1_first, vb, ret);
+	bu_log("nmg_unbreak_edge(eu=%p, vb=%p) ret = %d\n",
+	       (void *)eu1_first, (void *)vb, ret);
     }
     return ret;
 }
@@ -4629,8 +4643,8 @@ nmg_unbreak_shell_edge_unsafe(struct edgeuse *eu1_first)
     eu1 = eu1_first;
     eu2 = BU_LIST_PNEXT_CIRC(edgeuse, eu1);
     if (eu2->g.lseg_p != eg) {
-	bu_log("nmg_unbreak_edge: second eu geometry x%x does not match geometry x%x of edge1 x%x\n" ,
-	       eu2->g.magic_p, eg, e1);
+	bu_log("nmg_unbreak_edge: second eu geometry %p does not match geometry %p of edge1 %p\n" ,
+	       (void *)eu2->g.magic_p, (void *)eg, (void *)e1);
 	ret = -3;
 	goto out;
     }
@@ -4695,8 +4709,8 @@ nmg_unbreak_shell_edge_unsafe(struct edgeuse *eu1_first)
 
     /* All preconditions are met, begin the unbreak operation */
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_unbreak_edge va=x%x, vb=x%x, vc=x%x\n",
-	       va, vb, vc);
+	bu_log("nmg_unbreak_edge va=%p, vb=%p, vc=%p\n",
+	       (void *)va, (void *)vb, (void *)vc);
 	bu_log("nmg_unbreak_edge A:(%g, %g, %g), B:(%g, %g, %g), C:(%g, %g, %g)\n",
 	       V3ARGS(va->vg_p->coord),
 	       V3ARGS(vb->vg_p->coord),
@@ -4704,7 +4718,7 @@ nmg_unbreak_shell_edge_unsafe(struct edgeuse *eu1_first)
     }
 
     if (va == vc) {
-	/* bu_log("nmg_unbreak_edge(eu=%x): Trying to break a jaunt, va==vc (%x)\n", eu1_first, va); */
+	/* bu_log("nmg_unbreak_edge(eu=%p): Trying to break a jaunt, va==vc (%p)\n", (void *)eu1_first, (void *)va); */
 	ret = -9;
 	goto out;
     }
@@ -4714,8 +4728,8 @@ nmg_unbreak_shell_edge_unsafe(struct edgeuse *eu1_first)
     for (;;) {
 	/* Recheck initial conditions */
 	if (eu1->vu_p->v_p != va || eu1->eumate_p->vu_p->v_p != vb) {
-	    bu_log("nmg_unbreak_edge: eu1 does not got to/from correct vertices, x%x, %x\n",
-		   eu1->vu_p->v_p, eu1->eumate_p->vu_p->v_p);
+	    bu_log("nmg_unbreak_edge: eu1 does not got to/from correct vertices, %p, %p\n",
+		   (void *)eu1->vu_p->v_p, (void *)eu1->eumate_p->vu_p->v_p);
 	    nmg_pr_eu_briefly(eu1, " ");
 	    bu_bomb("nmg_unbreak_edge 1\n");
 	}
@@ -4725,8 +4739,8 @@ nmg_unbreak_shell_edge_unsafe(struct edgeuse *eu1_first)
 	    bu_bomb("nmg_unbreak_edge:  eu2 geometry is wrong\n");
 	}
 	if (eu2->vu_p->v_p != vb || eu2->eumate_p->vu_p->v_p != vc) {
-	    bu_log("nmg_unbreak_edge: about to kill eu2, but does not got to/from correct vertices, x%x, x%x\n",
-		   eu2->vu_p->v_p, eu2->eumate_p->vu_p->v_p);
+	    bu_log("nmg_unbreak_edge: about to kill eu2, but does not got to/from correct vertices, %p, %p\n",
+		   (void *)eu2->vu_p->v_p, (void *)eu2->eumate_p->vu_p->v_p);
 	    nmg_pr_eu_briefly(eu2, " ");
 	    bu_bomb("nmg_unbreak_edge 3\n");
 	}
@@ -4735,8 +4749,8 @@ nmg_unbreak_shell_edge_unsafe(struct edgeuse *eu1_first)
 	nmg_movevu(eu1->eumate_p->vu_p, vc);
 
 	if (eu1->vu_p->v_p != va || eu1->eumate_p->vu_p->v_p != vc) {
-	    bu_log("nmg_unbreak_edge: extended eu1 does not got to/from correct vertices, x%x, x%x\n",
-		   eu1->vu_p->v_p, eu1->eumate_p->vu_p->v_p);
+	    bu_log("nmg_unbreak_edge: extended eu1 does not got to/from correct vertices, %p, %p\n",
+		   (void *)eu1->vu_p->v_p, (void *)eu1->eumate_p->vu_p->v_p);
 	    nmg_pr_eu_briefly(eu1, " ");
 	    bu_bomb("nmg_unbreak_edge 2\n");
 	}
@@ -4749,8 +4763,8 @@ nmg_unbreak_shell_edge_unsafe(struct edgeuse *eu1_first)
 	    bu_bomb("nmg_unbreak_edge: edgeuse parent is now empty!!\n");
 
 	if (eu1->vu_p->v_p != va || eu1->eumate_p->vu_p->v_p != vc) {
-	    bu_log("nmg_unbreak_edge: unbroken eu1 (after eu2 killed) does not got to/from correct vertices, x%x, x%x\n",
-		   eu1->vu_p->v_p, eu1->eumate_p->vu_p->v_p);
+	    bu_log("nmg_unbreak_edge: unbroken eu1 (after eu2 killed) does not got to/from correct vertices, %p, %p\n",
+		   (void *)eu1->vu_p->v_p, (void *)eu1->eumate_p->vu_p->v_p);
 	    nmg_pr_eu_briefly(eu1, " ");
 	    bu_bomb("nmg_unbreak_edge 4\n");
 	}
@@ -4759,8 +4773,8 @@ nmg_unbreak_shell_edge_unsafe(struct edgeuse *eu1_first)
     }
  out:
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_unbreak_edge(eu=x%x, vb=x%x) ret = %d\n",
-	       eu1_first, vb, ret);
+	bu_log("nmg_unbreak_edge(eu=%p, vb=%p) ret = %d\n",
+	       (void *)eu1_first, (void *)vb, ret);
     }
     return ret;
 }
@@ -4838,7 +4852,7 @@ nmg_eins(struct edgeuse *eu)
 	bu_bomb("nmg_eins() Cannot yet insert null edge in shell\n");
     }
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_eins(eu=x%x) eu1=x%x\n", eu, eu1);
+	bu_log("nmg_eins(eu=%p) eu1=%p\n", (void *)eu, (void *)eu1);
     }
     return eu1;
 }
@@ -4859,13 +4873,13 @@ nmg_mv_eu_between_shells(struct shell *dest, register struct shell *src, registe
     NMG_CK_EDGEUSE(eumate);
 
     if (eu->up.s_p != src) {
-	bu_log("nmg_mv_eu_between_shells(dest=x%x, src=x%x, eu=x%x), eu->up.s_p=x%x isn't src shell\n",
-	       dest, src, eu, eu->up.s_p);
+	bu_log("nmg_mv_eu_between_shells(dest=%p, src=%p, eu=%p), eu->up.s_p=%p isn't src shell\n",
+	       (void *)dest, (void *)src, (void *)eu, (void *)eu->up.s_p);
 	bu_bomb("eu->up.s_p isn't source shell\n");
     }
     if (eumate->up.s_p != src) {
-	bu_log("nmg_mv_eu_between_shells(dest=x%x, src=x%x, eu=x%x), eumate->up.s_p=x%x isn't src shell\n",
-	       dest, src, eu, eumate->up.s_p);
+	bu_log("nmg_mv_eu_between_shells(dest=%p, src=%p, eu=%p), eumate->up.s_p=%p isn't src shell\n",
+	       (void *)dest, (void *)src, (void *)eu, (void *)eumate->up.s_p);
 	bu_bomb("eumate->up.s_p isn't source shell\n");
     }
 
@@ -4873,8 +4887,8 @@ nmg_mv_eu_between_shells(struct shell *dest, register struct shell *src, registe
     BU_LIST_DEQUEUE(&eu->l);
     if (BU_LIST_IS_EMPTY(&src->eu_hd)) {
 	/* This was the last eu in the list, bad news */
-	bu_log("nmg_mv_eu_between_shells(dest=x%x, src=x%x, eu=x%x), eumate=x%x not in src shell\n",
-	       dest, src, eu, eumate);
+	bu_log("nmg_mv_eu_between_shells(dest=%p, src=%p, eu=%p), eumate=%p not in src shell\n",
+	       (void *)dest, (void *)src, (void *)eu, (void *)eumate);
 	bu_bomb("src shell emptied before finding eumate\n");
     }
 
@@ -4889,8 +4903,8 @@ nmg_mv_eu_between_shells(struct shell *dest, register struct shell *src, registe
     eumate->up.s_p = dest;
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_mv_eu_between_shells(dest=x%x, src=x%x, eu=x%x) new_eu=x%x\n",
-	       dest, src, eu, eumate);
+	bu_log("nmg_mv_eu_between_shells(dest=%p, src=%p, eu=%p) new_eu=%p\n",
+	       (void *)dest, (void *)src, (void *)eu, (void *)eumate);
     }
 }
 
@@ -4916,8 +4930,8 @@ nmg_mv_vu_between_shells(struct shell *dest, register struct shell *src, registe
     NMG_CK_VERTEX(vu->v_p);
 
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_mv_vu_between_shells(dest_s=x%x, src_s=x%x, vu=x%x)\n",
-	       dest, src, vu);
+	bu_log("nmg_mv_vu_between_shells(dest_s=%p, src_s=%p, vu=%p)\n",
+	       (void *)dest, (void *)src, (void *)vu);
     }
     (void) nmg_mlv(&(dest->l.magic), vu->v_p, OT_SAME);
     if (vu->v_p->vg_p) {
