@@ -9130,8 +9130,8 @@ to_move_arb_edge_mode(struct ged *gedp,
 
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_move_arb_edge %V %s %s %%x %%y}",
 		  &gdvp->gdv_dmp->dm_pathName,
-		  bu_vls_addr(&current_top->to_gop->go_name),
-		  bu_vls_addr(&gdvp->gdv_name),
+		  &current_top->to_gop->go_name,
+		  &gdvp->gdv_name,
 		  argv[2],
 		  argv[3]);
     Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
