@@ -283,7 +283,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		} else {
 		    /* FIXME: confirm 'argvls' is the desired string to print */
 		    bu_vls_printf(gedp->ged_result_str,  "Search path error:\n input: '%s' normalized: '%s' \n",
-				  argv[plan_argv], argvls.vls_str);
+				  argv[plan_argv], bu_vls_addr(&argvls));
 		    bu_vls_free(&argvls);
 		    bu_free_argv(argc, argv);
 		    _ged_free_search_set(search_set);
