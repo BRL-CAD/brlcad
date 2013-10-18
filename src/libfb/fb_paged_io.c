@@ -183,8 +183,8 @@ fb_tell(register FBIO *ifp, int *xp, int *yp)
     *xp = (int) (ifp->if_pixcur % ifp->if_width);
 
     if (ifp->if_debug & FB_DEBUG_BIO) {
-	fb_log("fb_tell(%p, 0x%x, 0x%x) => (%4d, %4d)\n",
-	       (void *)ifp, xp, yp, *xp, *yp);
+	fb_log("fb_tell(%p, %p, %p) => (%4d, %4d)\n",
+	       (void *)ifp, (void *)xp, (void *)yp, *xp, *yp);
     }
 
     return 0;
