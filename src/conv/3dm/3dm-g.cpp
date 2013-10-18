@@ -286,7 +286,7 @@ MakeCleanUniqueNames(ONX_Model &model)
 		base = "noname";
 	    }
 	    obj_counter++;
-	    bu_vls_printf(&num_str, "%zx", obj_counter);
+	    bu_vls_printf(&num_str, "%lu", (long unsigned int)obj_counter);
 	    name = base + "." + ON_wString(bu_vls_addr(&num_str));
 	    bu_vls_trunc(&num_str, 0);
 	    changed = true;
@@ -461,12 +461,12 @@ main(int argc, char** argv)
 		 * instead of global region count
 		 */
 		if (genName.compare(GENERIC_NAME) == 0) {
-		    bu_vls_printf(&name, "%zd", mcount++);
+		    bu_vls_printf(&name, "%lu", (long unsigned int)mcount++);
 		    genName += bu_vls_addr(&name);
 		    geom_base = genName.c_str();
 		} else {
 		    size_t region_cnt = RegionCnt(genName);
-		    bu_vls_printf(&name, "%zd", region_cnt);
+		    bu_vls_printf(&name, "%lu", (long unsigned int)region_cnt);
 		    genName += bu_vls_addr(&name);
 		    geom_base = genName.c_str();
 		}
