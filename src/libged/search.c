@@ -281,7 +281,9 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		if (search_path_type) {
 		    BU_ALLOC(new_search, struct ged_search);
 		} else {
-		    bu_vls_printf(gedp->ged_result_str,  "Search path error:\n input: %s normalized: %s \n", argv[plan_argv]);
+		    /* FIXME: confirm 'argvls' is the desired string to print */
+		    bu_vls_printf(gedp->ged_result_str,  "Search path error:\n input: '%s' normalized: '%s' \n",
+				  argv[plan_argv], argvls.vls_str);
 		    bu_vls_free(&argvls);
 		    bu_free_argv(argc, argv);
 		    _ged_free_search_set(search_set);
@@ -338,7 +340,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 	bu_vls_free(&search_string);
 	bu_free_argv(argc, argv);
 	_ged_free_search_set(search_set);
-	bu_vls_sprintf(gedp->ged_result_str, "");
+	bu_vls_trunc(gedp->ged_result_str, 0);
 	return GED_ERROR;
     }
 
