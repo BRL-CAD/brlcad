@@ -162,7 +162,9 @@ HIDDEN int img_load_datasource(struct img_specific *image, struct db_i *dbInstan
 	    if (image->i_binunifp->count < size) {
 		bu_log("\nWARNING: %V needs %d bytes, binary object only has %zu\n", &image->i_name, size, image->i_binunifp->count);
 	    } else if (image->i_binunifp->count > size) {
-		bu_log("\nWARNING: Binary object is larger than specified image size\n\tBinary Object: %zu pixels\n\tSpecified Image Size: %zu pixels\n...continuing to load using image subsection...", image->i_binunifp->count);
+		bu_log("\nWARNING: Binary object is larger than specified image size\n\tBinary Object: %lu pixels\n"
+		       "\tSpecified Image Size: %zu pixels\n...continuing to load using image subsection...",
+		       (unsigned long)image->i_binunifp->count);
 	    }
 	    image->i_img = (unsigned char *) image->i_binunifp->u.uint8;
 
