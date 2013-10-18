@@ -14,6 +14,9 @@
 SCHEMA config_control_design;
 
   CONSTANT
+(* FIXME: gcc error on next statement with c99/POSIX:
+     Syntax error: "(" unexpected
+*)
   dummy_gri : geometric_representation_item := representation_item('') ||
                  geometric_representation_item();
   dummy_tri : topological_representation_item := representation_item('')
