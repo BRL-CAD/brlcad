@@ -252,7 +252,7 @@ clone_get_name(struct directory *dp, struct ged_clone_state *state, size_t iter)
 		    snprintf(buf, CLONE_BUFSIZE, "%s%d", prefix, num);	/* save the name for the next pass */
 		    /* clear and set the name */
 		    bu_vls_trunc(newname, 0);
-		    bu_vls_printf(newname, "%s%s", obj_list.names[j].dest[iter], suffix);
+		    bu_vls_printf(newname, "%s%s", bu_vls_addr(&(obj_list.names[j].dest[iter])), suffix);
 		} else
 		    bu_vls_printf(newname, "%d%s", num+i*state->incr, suffix);
 	    else
@@ -419,7 +419,8 @@ copy_v5_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
 	argv[3] = (char *)0;
 	ret = ged_copy(state->gedp, 3, (const char **)argv);
 	if (ret != GED_OK)
-	    bu_vls_printf(state->gedp->ged_result_str, "WARNING: failure cloning \"%s\" to \"%s\"\n", proto->d_namep, name);
+	    bu_vls_printf(state->gedp->ged_result_str, "WARNING: failure cloning \"%s\" to \"%s\"\n",
+			  proto->d_namep, bu_vls_addr(name));
 
 	/* get the original objects matrix */
 	if (rt_db_get_internal(&intern, dp, dbip, matrix, &rt_uniresource) < 0) {
