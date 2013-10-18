@@ -2892,7 +2892,7 @@ wdb_dbip_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    bu_vls_printf(&vls, "%p", wdbp->dbip);
+    bu_vls_printf(&vls, "%p", (void *)wdbp->dbip);
     Tcl_AppendResult(wdbp->wdb_interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
     return TCL_OK;

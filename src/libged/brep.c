@@ -249,7 +249,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_init(&bname_suffix);
 	    bu_vls_sprintf(&bname_suffix, "%s%s", solid_name, bu_vls_addr(&suffix));
 	    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&bname_suffix), LOOKUP_QUIET) != RT_DIR_NULL) {
-		bu_vls_printf(gedp->ged_result_str, "%s already exists.", bname_suffix);
+		bu_vls_printf(gedp->ged_result_str, "%s already exists.", bu_vls_addr(&bname_suffix));
 		bu_vls_free(&bname);
 		bu_vls_free(&suffix);
 		bu_vls_free(&bname_suffix);
