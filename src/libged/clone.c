@@ -765,7 +765,8 @@ copy_tree(struct directory *dp, struct resource *resp, struct ged_clone_state *s
 
     nextname = clone_get_name(dp, state, 0);
     if (bu_vls_strcmp(copyname, nextname) == 0)
-	bu_vls_printf(state->gedp->ged_result_str, "ERROR: unable to successfully clone \"%s\" to \"%s\"\n", dp->d_namep, copyname);
+	bu_vls_printf(state->gedp->ged_result_str, "ERROR: unable to successfully clone \"%s\" to \"%s\"\n",
+		      dp->d_namep, bu_vls_addr(copyname));
     else
 	copy = db_lookup(state->gedp->ged_wdbp->dbip, bu_vls_addr(copyname), LOOKUP_QUIET);
 
