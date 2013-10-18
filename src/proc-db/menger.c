@@ -288,7 +288,7 @@ mengerize(struct rt_wdb *fp, point_t origin, fastf_t extent, axes xyz, const cha
 	    BU_ALLOC(levels[slot], struct wmember);
 	    BU_LIST_INIT(&(levels[slot]->l));
 
-	    bu_log("%s %.2zu: %s%s%s width=%lf\n",
+	    bu_log("%s %.2d: %s%s%s width=%lf\n",
 		   (pattern[j] != 'i') ? "EXTERIOR" : "INTERIOR",
 		   slot,
 		   (xyz & XDIR) ? "X" : "",
@@ -296,12 +296,12 @@ mengerize(struct rt_wdb *fp, point_t origin, fastf_t extent, axes xyz, const cha
 		   (xyz & ZDIR) ? "Z" : "",
 		   extent / pow(3.0, slot));
 	    bu_vls_trunc(&cut, 0);
-	    bu_vls_printf(&cut, "box%zu_", slot);
+	    bu_vls_printf(&cut, "box%d_", slot);
 	    slice(fp, origin, extent, extent, extent, xyz, (pattern[j] != 'i'), /* !!! previous/solid, */ slot, bu_vls_addr(&cut), &(levels[slot]->l));
 
 	    /* group each xyz pattern together */
 	    bu_vls_trunc(&cut, 0);
-	    bu_vls_printf(&cut, "level%zu.c", slot);
+	    bu_vls_printf(&cut, "level%d.c", slot);
 	    mk_comb(fp, bu_vls_addr(&cut), &(levels[slot]->l), 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0);
 
 	    /* stash this pattern for the final combination */
