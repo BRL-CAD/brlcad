@@ -154,7 +154,7 @@ spm_print(register struct region *rp, genptr_t dp)
 
     spm = (struct spm_specific *)dp;
 
-    bu_log("spm_print(rp=x%x, dp = x%x)\n", rp, dp);
+    bu_log("spm_print(rp=%p, dp = %p)\n", (void *)rp, dp);
     (void)bu_struct_print("spm_print", spm_parse, (char *)dp);
     if (spm->sp_map) bn_spm_dump(spm->sp_map, 0);
 }
