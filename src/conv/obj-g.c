@@ -2091,10 +2091,10 @@ populate_fuse_map(struct ga_t *ga,
 			bn_pt3_pt3_equal(tmp_v1, tmp_v2, tol)) {
 			if (debug) {
 			    distance_between_vertices = DIST_PT_PT(tmp_v1, tmp_v2);
-			    bu_log("found equal i1=(%zu)vi1=(%zu)v1=(%f)(%f)(%f), i2=(%zu)vi2=(%zu)v2=(%f)(%f)(%f), dist = (%fmm)\n",
+			    bu_log("found equal i1=(%zu)vi1=(%zu)v1=(%f)(%f)(%f), i2=(%zu)vi2=(%zu)v2=(%f)(%f)(%f), dist = (%lumm)\n",
 				   idx1, unique_index_list[idx1], tmp_v1[0], tmp_v1[1], tmp_v1[2],
 				   idx2, unique_index_list[idx2], tmp_v2[0], tmp_v2[1], tmp_v2[2],
-				   unique_index_list[idx2], distance_between_vertices);
+				   (unsigned long)distance_between_vertices);
 			}
 			fuse_map[unique_index_list[idx2] - fuse_offset] = unique_index_list[idx1];
 			fuse_flag[unique_index_list[idx2] - fuse_offset] = 1;
@@ -2976,7 +2976,8 @@ output_to_nmg(struct ga_t *ga,
 	num_entities_fused = nmg_model_fuse(m, tol);
 	if ((verbose > 1) || debug) {
 	    bu_log("Completed nmg_model_fuse for obj file face grouping name (%s), obj file face grouping index (%zu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
-	    bu_log("Fused (%d) entities in obj file face grouping name (%s), obj file face grouping index (%zu)\n", num_entities_fused, bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
+	    bu_log("Fused (%d) entities in obj file face grouping name (%s), obj file face grouping index (%zu)\n",
+		   (int)num_entities_fused, bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	}
 
 	/* run nmg_gluefaces, run nmg_vertex_fuse before nmg_gluefaces */
@@ -3704,8 +3705,8 @@ main(int argc, char **argv)
 			       "Facetype: (%d) "
 			       "Grouping name: (%s) Primitive name: (%s)\n",
 			       timep->tm_hour, timep->tm_min, timep->tm_sec,
-			       elapsed_time/3600, (elapsed_time%3600)/60,
-			       (elapsed_time%60), face_type_idx,
+			       (int)elapsed_time/3600, (int)(elapsed_time%3600)/60, (int)(elapsed_time%60),
+			       face_type_idx,
 			       bu_vls_addr(gfi->raw_grouping_name),
 			       bu_vls_addr(gfi->primitive_name));
 		    }
@@ -3754,7 +3755,7 @@ main(int argc, char **argv)
 			    elapsed_time = end_time - start_time;
 			    bu_log("Grouping end time: %02d:%02d:%02d Duration: %02dh %02dm %02ds Grouping index: (%zu of %zu) Facetype: (%d) Grouping name: (%s) Primitive name: (%s)\n",
 				   timep->tm_hour, timep->tm_min, timep->tm_sec,
-				   elapsed_time/3600, (elapsed_time%3600)/60, (elapsed_time%60),
+				   (int)elapsed_time/3600, (int)(elapsed_time%3600)/60, (int)(elapsed_time%60),
 				   gfi->grouping_index + 1, ga.numGroups, face_type_idx,
 				   bu_vls_addr(gfi->raw_grouping_name), bu_vls_addr(gfi->primitive_name));
 			}
@@ -3801,7 +3802,7 @@ main(int argc, char **argv)
 			    elapsed_time = end_time - start_time;
 			    bu_log("Grouping end time: %02d:%02d:%02d Duration: %02dh %02dm %02ds Grouping index: (%zu of %zu) Facetype: (%d) Grouping name: (%s) Primitive name: (%s)\n",
 				   timep->tm_hour, timep->tm_min, timep->tm_sec,
-				   elapsed_time/3600, (elapsed_time%3600)/60, (elapsed_time%60),
+				   (int)elapsed_time/3600, (int)(elapsed_time%3600)/60, (int)(elapsed_time%60),
 				   gfi->grouping_index + 1, ga.numObjects, face_type_idx,
 				   bu_vls_addr(gfi->raw_grouping_name), bu_vls_addr(gfi->primitive_name));
 			}
@@ -3848,7 +3849,7 @@ main(int argc, char **argv)
 			    elapsed_time = end_time - start_time;
 			    bu_log("Grouping end time: %02d:%02d:%02d Duration: %02dh %02dm %02ds Grouping index: (%zu of %zu) Facetype: (%d) Grouping name: (%s) Primitive name: (%s)\n",
 				   timep->tm_hour, timep->tm_min, timep->tm_sec,
-				   elapsed_time/3600, (elapsed_time%3600)/60, (elapsed_time%60),
+				   (int)elapsed_time/3600, (int)(elapsed_time%3600)/60, (int)(elapsed_time%60),
 				   gfi->grouping_index + 1, ga.numMaterials, face_type_idx,
 				   bu_vls_addr(gfi->raw_grouping_name), bu_vls_addr(gfi->primitive_name));
 			}
@@ -3895,7 +3896,7 @@ main(int argc, char **argv)
 			    elapsed_time = end_time - start_time;
 			    bu_log("Grouping end time: %02d:%02d:%02d Duration: %02dh %02dm %02ds Grouping index: (%zu of %zu) Facetype: (%d) Grouping name: (%s) Primitive name: (%s)\n",
 				   timep->tm_hour, timep->tm_min, timep->tm_sec,
-				   elapsed_time/3600, (elapsed_time%3600)/60, (elapsed_time%60),
+				   (int)elapsed_time/3600, (int)(elapsed_time%3600)/60, (int)(elapsed_time%60),
 				   gfi->grouping_index + 1, ga.numTexmaps, face_type_idx,
 				   bu_vls_addr(gfi->raw_grouping_name), bu_vls_addr(gfi->primitive_name));
 			}
@@ -3948,8 +3949,8 @@ main(int argc, char **argv)
 
     bu_log("\nDone\n");
 
-    bu_log("Duration %02dh %02dm %02ds\n", overall_elapsed_time/3600,
-	   (overall_elapsed_time%3600)/60, (overall_elapsed_time%60));
+    bu_log("Duration %02dh %02dm %02ds\n", (int)overall_elapsed_time/3600,
+	   (int)(overall_elapsed_time%3600)/60, (int)(overall_elapsed_time%60));
 
     bu_log("End time %s", asctime(localtime(&overall_end_time)));
 

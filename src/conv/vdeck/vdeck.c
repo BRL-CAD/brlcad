@@ -371,7 +371,7 @@ flatten_tree(struct bu_vls *vls, union tree *tp, char *op, int neg)
 	    return;
 
 	case OP_REGION:
-	    bu_log("REGION 'stp'=x%x\n", (size_t)tp->tr_a.tu_stp);
+	    bu_log("REGION 'stp'=%lx\n", (size_t)tp->tr_a.tu_stp);
 	    return;
 
 	default:

@@ -144,9 +144,9 @@ static int	bot=0;
 	if (debug > 3) \
 	{ \
 		bu_log("\t\tMaking face:\n"); \
-		bu_log("\t\t\tx%x (%g %g %g)\n", _ep0, V3ARGS(_ep0->pt)); \
-		bu_log("\t\t\tx%x (%g %g %g)\n", _ep1, V3ARGS(_ep1->pt)); \
-		bu_log("\t\t\tx%x (%g %g %g)\n", _ep2, V3ARGS(_ep2->pt)); \
+		bu_log("\t\t\t%p (%g %g %g)\n", (void *)_ep0, V3ARGS(_ep0->pt)); \
+		bu_log("\t\t\t%p (%g %g %g)\n", (void *)_ep1, V3ARGS(_ep1->pt)); \
+		bu_log("\t\t\t%p (%g %g %g)\n", (void *)_ep2, V3ARGS(_ep2->pt)); \
 	} \
 	_v[0] = &_ep0->v; \
 	_v[1] = &_ep1->v; \
@@ -177,10 +177,10 @@ static int	bot=0;
 	if (debug > 3) \
 	{ \
 		bu_log("\t\tMaking face:\n"); \
-		bu_log("\t\t\tx%x (%g %g %g)\n", _ep0, V3ARGS(_ep0->pt)); \
-		bu_log("\t\t\tx%x (%g %g %g)\n", _ep1, V3ARGS(_ep1->pt)); \
-		bu_log("\t\t\tx%x (%g %g %g)\n", _ep2, V3ARGS(_ep2->pt)); \
-		bu_log("\t\t\tx%x (%g %g %g)\n", _ep3, V3ARGS(_ep3->pt)); \
+		bu_log("\t\t\t%p (%g %g %g)\n", (void *)_ep0, V3ARGS(_ep0->pt)); \
+		bu_log("\t\t\t%p (%g %g %g)\n", (void *)_ep1, V3ARGS(_ep1->pt)); \
+		bu_log("\t\t\t%p (%g %g %g)\n", (void *)_ep2, V3ARGS(_ep2->pt)); \
+		bu_log("\t\t\t%p (%g %g %g)\n", (void *)_ep3, V3ARGS(_ep3->pt)); \
 	} \
 	_v[0] = &_ep0->v; \
 	_v[1] = &_ep1->v; \
@@ -238,7 +238,7 @@ miss(struct application *UNUSED(ap))
 static void
 pr_part(struct local_part *ptr)
 {
-    bu_log("local_part: x%x\n", ptr);
+    bu_log("local_part: %p\n", (void *)ptr);
     if (!ptr)
 	return;
     if (ptr->is_void == YES)
@@ -250,11 +250,11 @@ pr_part(struct local_part *ptr)
     else
 	bu_log("\tERROR: in_coord=%g, out_coord=%g\n", ptr->in_coord, ptr->out_coord);
     if (ptr->in)
-	bu_log("\tin = x%x (%g %g %g), v=x%x\n", ptr->in, V3ARGS(ptr->in->pt), ptr->in->v);
+	bu_log("\tin = %p (%g %g %g), v=%p\n", (void *)ptr->in, V3ARGS(ptr->in->pt), (void *)ptr->in->v);
     else
 	bu_log("\tin = NULL\n");
     if (ptr->out)
-	bu_log("\tout = x%x (%g %g %g), v=x%x\n", ptr->out, V3ARGS(ptr->out->pt), ptr->out->v);
+	bu_log("\tout = %p (%g %g %g), v=%p\n", (void *)ptr->out, V3ARGS(ptr->out->pt), (void *)ptr->out->v);
     else
 	bu_log("\tout = NULL\n");
 }
@@ -653,7 +653,8 @@ shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 	struct vertexuse *vu;
 
 	if (debug)
-	    bu_log("Moving first hit vg x%x from (%g %g %g) to (%g %g %g)\n", hit1_v->vg_p,
+	    bu_log("Moving first hit vg %p from (%g %g %g) to (%g %g %g)\n",
+		   (void *)hit1_v->vg_p,
 		   V3ARGS(hit1_v->vg_p->coord), V3ARGS(mhit1));
 	VMOVE(hit1_v->vg_p->coord, mhit1);
 	for (BU_LIST_FOR(vu, vertexuse, &hit1_v->vu_hd)) {
@@ -697,7 +698,8 @@ shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 	struct vertexuse *vu;
 
 	if (debug)
-	    bu_log("Moving last hit vg x%x from (%g %g %g) to (%g %g %g)\n", hit2_v->vg_p,
+	    bu_log("Moving last hit vg %p from (%g %g %g) to (%g %g %g)\n",
+		   (void *)hit2_v->vg_p,
 		   V3ARGS(hit2_v->vg_p->coord), V3ARGS(mhit2));
 	VMOVE(hit2_v->vg_p->coord, mhit2);
 	for (BU_LIST_FOR(vu, vertexuse, &hit2_v->vu_hd)) {

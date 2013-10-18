@@ -37,8 +37,8 @@ Add_loop_to_face(s, fu, entityno, face_orient)
 	fu = fu->fumate_p;
     if (fu->orientation != OT_SAME) {
 	bu_log("fu %p (%s) and mate %p (%s) have no OT_SAME use\n" ,
-	       fu, nmg_orientation(fu->orientation) ,
-	       fu->fumate_p, nmg_orientation(fu->fumate_p->orientation));
+	       (void *)fu, nmg_orientation(fu->orientation) ,
+	       (void *)fu->fumate_p, nmg_orientation(fu->fumate_p->orientation));
 	bu_exit(1, "Faceuse and mate have no OT_SAME use\n");
 
     }
@@ -53,8 +53,8 @@ Add_loop_to_face(s, fu, entityno, face_orient)
 	fu_tmp = fu_tmp->fumate_p;
     if (fu_tmp->orientation != OT_SAME) {
 	bu_log("fu_tmp %p (%s) nad mate %p (%s) have no OT_SAME use\n" ,
-	       fu_tmp, nmg_orientation(fu_tmp->orientation) ,
-	       fu_tmp->fumate_p, nmg_orientation(fu_tmp->fumate_p->orientation));
+	       (void *)fu_tmp, nmg_orientation(fu_tmp->orientation),
+	       (void *)fu_tmp->fumate_p, nmg_orientation(fu_tmp->fumate_p->orientation));
 	bu_exit(1, "Faceuse and mate have no OT_SAME use\n");
 
     }

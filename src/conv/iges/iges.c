@@ -270,7 +270,7 @@ nmg_to_winged_edge(struct nmgregion *r)
 
 		    /* move the other edgeuse to the same edge */
 		    if (eu2 == eu1 || eu2 == eu1->eumate_p)
-			bu_log("nmg_to_winged_edge: couldn't find second radial face for eu %p in shell %p\n", eu1, s);
+			bu_log("nmg_to_winged_edge: couldn't find second radial face for eu %p in shell %p\n", (void *)eu1, (void *)s);
 		    else
 			nmg_je(eu1, eu2);
 		}
@@ -1186,7 +1186,7 @@ write_vertex_list(struct nmgregion *r,
 	NMG_CK_VERTEX(v);
 	vg = v->vg_p;
 	if (!vg) {
-	    bu_log("No geometry for vertex %p #%d in table\n", v, i);
+	    bu_log("No geometry for vertex %p #%d in table\n", (void *)v, i);
 	} else {
 	    NMG_CK_VERTEX_G(vg);
 	    bu_vls_printf(&str, ", %g, %g, %g",
