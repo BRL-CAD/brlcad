@@ -121,24 +121,32 @@ main(int argc, char **argv)
     VSET(vert, 1, 0, 0);
     VSET(h, 0, 0, 0);
     mk_particle(outfp, "p1", vert, h, 0.5, 0.5);
+printf("Just did the spherical part\n");
 
     /* Cylindrical part */
     VSET(vert, 3, 0, 0);
     VSET(h, 2, 0, 0);
     mk_particle(outfp, "p2", vert, h, 0.5, 0.5);
+printf("Just did the Cylindrical part\n");
 
     /* Conical particle */
     VSET(vert, 7, 0, 0);
     VSET(h, 2, 0, 0);
     mk_particle(outfp, "p3", vert, h, 0.5, 1.0);
+printf("Just did the Conical particle\n");
+printf("pipeA_npts %d\n",pipeA_npts);
 
     /* Make a piece of pipe */
     BU_LIST_INIT(&head);
     for (i=0; i<pipeA_npts; i++) {
+printf("in loop, i= %d\n",i);
 	BU_LIST_INSERT(&head, &pipeA[i].l);
     }
     pr_pipe("pipe1", (struct wdb_pipept *)&head);
-    if ((i = mk_pipe(outfp, "pipe1", &head)) < 0)
+printf("Just did pr_pipe\n");
+    i = mk_pipe(outfp, "pipe1", &head);
+printf("i=%d\n",i);
+    if (i < 0)
 	fprintf(stderr, "mk_pipe(%s) returns %d\n", "pipe1", i);
 
     do_bending(outfp, "pipe2", pipeB, pipeB_npts, 0.1, 0.05);

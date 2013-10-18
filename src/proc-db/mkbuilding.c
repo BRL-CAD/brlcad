@@ -28,6 +28,7 @@
 void mkbdlg_usage(void)
 {
     fprintf(stderr, "Usage: mkbuilding db_file.g\n");
+    fprintf(stderr, "      (if db_file.g is omitted, 'mkbuilding.g' is assumed)\n");
 }
 
 
@@ -38,6 +39,14 @@ main(int ac, char *av[])
     point_t p1, p2;
 
     if (ac < 2) {
+	mkbdlg_usage();
+	return 1;
+    }
+
+/* Try to disallow file names starting with - . */
+    if (av[1][0] == '-') {
+    	if (av[1][1] != 'h' && av[1][1] !='?')
+    		fprintf(stderr,"mkbuilding accepts no options except h or ? for help\n");
 	mkbdlg_usage();
 	return 1;
     }
