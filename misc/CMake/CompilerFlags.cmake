@@ -257,7 +257,7 @@ CHECK_C_FLAG(msse3 BUILD_TYPES Debug)
 # a strictly standard compliant build, use the c** options instead
 # of the gnu variations
 if(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE)
-  CHECK_C_FLAG("std=c89" BUILD_TYPES Debug)
+  CHECK_C_FLAG("std=c99" BUILD_TYPES Debug)
   CHECK_C_FLAG("std=c99" BUILD_TYPES Release VARS C99_FLAG)
 else()
   CHECK_C_FLAG("std=gnu89" BUILD_TYPES Debug)
@@ -271,6 +271,8 @@ if(ENABLE_POSIX_COMPLIANCE)
   # use this version so three non-C99 functions (without bu*
   # replacements) will work:
   CHECK_C_FLAG("D_POSIX_C_SOURCE=200112L")
+  # need this for glibc < 2.12 (for gethostname):
+  CHECK_C_FLAG("D_XOPEN_SOURCE=500")
 endif()
 
 # Silence check for unused arguments (used to silence clang warnings about
