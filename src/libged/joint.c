@@ -692,7 +692,7 @@ skip_group(struct ged *gedp, FILE *fip, struct bu_vls *str)
 	}
     }
     if (joint_debug & DEBUG_J_PARSE) {
-	bu_vls_printf(gedp->ged_result_str, "skip_group: Done....\n", (char *)NULL);
+	bu_vls_printf(gedp->ged_result_str, "skip_group: Done....\n");
     }
 
 }
@@ -2229,8 +2229,8 @@ hold_point_location(struct ged *gedp, fastf_t *loc, struct hold_point *hp)
 	 * this prints an error message instead of crashing MGED.
 	 */
 	if (!hp->path.fp_names) {
-	    bu_vls_printf(gedp->ged_result_str, "hold_point_location(): null pointer! %s not found!\n",
-			  hp->path.fp_names);
+	    bu_vls_printf(gedp->ged_result_str, "hold_point_location(): null pointer! '%s' not found!\n",
+			  "hp->path.fp_names");
 	    return 0;
 	}
 	    if (rt_db_get_internal(&intern, hp->path.fp_names[hp->path.fp_maxlen-1], dbip, NULL, &rt_uniresource) < 0)
