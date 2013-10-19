@@ -96,6 +96,14 @@ bu_vls_vlsinit(void)
 
 
 char *
+bu_vls_cstr(const struct bu_vls *vp)
+{
+    /* a wrapper for bu_vls_addr, but name is intended to be more intuitive to use */
+    return bu_vls_addr(vp);
+}
+
+
+char *
 bu_vls_addr(const struct bu_vls *vp)
 {
     static char nullbuf[4] = {0, 0, 0, 0};
