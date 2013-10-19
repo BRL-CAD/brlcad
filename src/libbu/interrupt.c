@@ -18,23 +18,33 @@
  * information.
  */
 
+/* FIXME:  Should use sigaction(2) instead of BSD signal semantics for
+ * conformance, portability, and safety. */
+#if defined(BRLCAD_USE_BSD_FOR_SIGNAL)
+/* defining _BSD_SOURCE should ensure BSD signal semantics as well
+ * as sig_t for glibc on Linux according to 'man signal(2)'
+ */
+#if !defined(_BSD_SOURCE)
+#define _BSD_SOURCE
+#endif
+#endif
+
 #include "common.h"
-
-/* attempted fix: using sigaction: */
-/* #define BRLCAD_USE_SIGACTION */
-
-/* NOTE: can leverage sigaction(2) instead of BSD signal semantics for conformance/portability. */
 
 #include <signal.h>
 
 #include "bu.h"
 
+/*
+ */
 
-/* FIXME: need a configure test to provide this when needed */
+/* wrap for hack above */
+#if !defined(BRLCAD_USE_BSD_FOR_SIGNAL)
+/* orig code: */
 #ifndef HAVE_SIG_T
 typedef void (*sig_t)(int);
 #endif
-
+#endif
 
 /* hard-coded maximum signal number we can defer due to array we're
  * using for quick O(1) access in a single container for all signals.
