@@ -170,9 +170,15 @@ __BEGIN_DECLS
 /**
  * shorthand declaration of a printf-style functions
  */
+#if !defined(_BU_ATTR_PRINTF12)
 #define _BU_ATTR_PRINTF12 __attribute__ ((__format__ (__printf__, 1, 2)))
+#endif
+#if !defined(_BU_ATTR_PRINTF23)
 #define _BU_ATTR_PRINTF23 __attribute__ ((__format__ (__printf__, 2, 3)))
+#endif
+#if !defined(_BU_ATTR_SCANF23)
 #define _BU_ATTR_SCANF23 __attribute__ ((__format__ (__scanf__, 2, 3)))
+#endif
 
 /**
  * shorthand declaration of a function that doesn't return
@@ -4903,6 +4909,14 @@ BU_EXPORT extern struct bu_vls *bu_vls_vlsinit();
  * If no storage has been allocated yet, give back a valid string.
  */
 BU_EXPORT extern char *bu_vls_addr(const struct bu_vls *vp);
+
+/**
+ * Return a pointer to the null-terminated string in the vls array.
+ * If no storage has been allocated yet, give back a valid string.
+ * (At the moment this function is a mnemonically-named convenience
+ * function which returns a call to bu_vls_addr.)
+ */
+BU_EXPORT extern char *bu_vls_cstr(const struct bu_vls *vp);
 
 /**
  * Ensure that the provided VLS has at least 'extra' characters of
