@@ -20,7 +20,7 @@
 
 /* FIXME:  Should use sigaction(2) instead of BSD signal semantics for
  * conformance, portability, and safety. */
-#if defined(BRLCAD_USE_BSD_FOR_SIGNAL)
+#if defined(C99_POSIX_USE_BSD)
 /* defining _BSD_SOURCE should ensure BSD signal semantics as well
  * as sig_t for glibc on Linux according to 'man signal(2)'
  */
@@ -39,7 +39,7 @@
  */
 
 /* wrap for hack above */
-#if !defined(BRLCAD_USE_BSD_FOR_SIGNAL)
+#if !defined(C99_POSIX_USE_BSD)
 /* orig code: */
 #ifndef HAVE_SIG_T
 typedef void (*sig_t)(int);
