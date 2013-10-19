@@ -1870,7 +1870,7 @@ if(ENABLE_POSIX_COMPLIANCE
   foreach(tprog ${needed_FUNCS})
     # remove "test_" from tprog
     STRING(REGEX REPLACE "test_" "" func ${tprog})
-    STRING(TOUPPER "${tprog}" func)
+    STRING(TOUPPER "${func}" FUNC)
 
     TRY_COMPILE(success
       "${CMAKE_BINARY_DIR}/test_funcs"
@@ -1879,10 +1879,10 @@ if(ENABLE_POSIX_COMPLIANCE
     )
 
     if(success)
-      CONFIG_H_APPEND(BRLCAD "#define HAVE_WORKING_${func}_FUNCTION 1\n")
-      message("Try compile '${func}' SUCCESS")
+      CONFIG_H_APPEND(BRLCAD "#define HAVE_WORKING_${FUNC}_FUNCTION 1\n")
+      message("Try compile '${tprog}.c' (function ${func}) SUCCESS")
     else()
-      message("Try compile '${func}' FAIL")
+      message("Try compile '${tprog}.c' (function ${func}) FAIL")
     endif()
 
   endforeach()
