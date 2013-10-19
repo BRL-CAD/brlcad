@@ -1825,22 +1825,6 @@ BRLCAD_FUNCTION_EXISTS(writev HAVE_WRITEV)
 #
 # FIXME: wrap these into a BRLCAD_CHECK_SYMBOL() macro or similar.
 
-# test for __sighandler_t ('sighandler_t' is a GNU extension)
-if(HAVE_SIGNAL_H AND "${HAVE___SIGHANDLER_T}" MATCHES "^${HAVE___SIGHANDLER_T}$")
-  check_c_source_compiles("#include <signal.h>\nint main() { __sighandler_t t; return 0; }" HAVE_SIGHANDLER_T)
-  if(HAVE_SIGHANDLER_T)
-    CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE___SIGHANDLER_T 1\n")
-  endif()
-endif()
-
-# test for sig_t
-if(HAVE_SIGNAL_H AND "${HAVE_SIG_T}" MATCHES "^${HAVE_SIG_T}$")
-  check_c_source_compiles("#include <signal.h>\nint main() { sig_t t; return 0; }" HAVE_SIG_T)
-  if(HAVE_SIG_T)
-    CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_SIG_T 1\n")
-  endif()
-endif()
-
 # test for kill()
 if("${HAVE_DECL_KILL}" MATCHES "^${HAVE_DECL_KILL}$")
   check_c_source_compiles("#include <sys/types.h>\n#include <signal.h>\nint main() { (void)kill; return 0; }" HAVE_DECL_KILL)
