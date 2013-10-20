@@ -168,26 +168,36 @@ void
 strsolbld(void)
 {
     const struct rt_functab *ftp;
-    char	*type = NULL;
-    char	*name = NULL;
-    char	*args = NULL;
+    const char delim[]     = " ";
+    const char end_delim[] = "\n";
+    char *type    = NULL;
+    char *name    = NULL;
+    char *args    = NULL;
+#if defined(HAVE_WORKING_STRTOK_R_FUNCTION)
+    char *saveptr = NULL;
+#endif
     struct bu_vls	str = BU_VLS_INIT_ZERO;
     char *buf2 = (char *)bu_malloc(sizeof(char) * BUFSIZE, "strsolbld temporary buffer");
     char *bufp = buf2;
 
     memcpy(buf2, buf, sizeof(char) * BUFSIZE);
 
-
-#if defined (HAVE_STRSEP)
-    (void)strsep(&buf2, " ");		/* skip stringsolid_id */
-    type = strsep(&buf2, " ");
-    name = strsep(&buf2, " ");
-    args = strsep(&buf2, "\n");
+#if defined(HAVE_WORKING_STRTOK_R_FUNCTION)
+    /* this function is reentrant */
+    (void)strtok_r(buf2, delim, &saveptr);  /* skip stringsolid_id */
+    type = strtok(NULL, delim, &saveptr);
+    name = strtok(NULL, delim, &saveptr);
+    args = strtok(NULL, end_delim, &saveptr);
+#elif defined(HAVE_STRSEP)
+    (void)strsep(&buf2, delim);		/* skip stringsolid_id */
+    type = strsep(&buf2, delim);
+    name = strsep(&buf2, delim);
+    args = strsep(&buf2, end_delim);
 #else
-    (void)strtok(buf, " ");		/* skip stringsolid_id */
-    type = strtok(NULL, " ");
-    name = strtok(NULL, " ");
-    args = strtok(NULL, "\n");
+    (void)strtok(buf2, delim);		/* skip stringsolid_id */
+    type = strtok(NULL, delim);
+    name = strtok(NULL, delim);
+    args = strtok(NULL, end_delim);
 #endif
 
     if (BU_STR_EQUAL(type, "dsp")) {
@@ -1568,7 +1578,7 @@ main(int argc, char *argv[])
     struct bu_vls	line = BU_VLS_INIT_ZERO;
     int                 isComment=1;
 
-    if ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?"))
+    if (BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?"))
 	bu_exit(1, "%s", usage);
 
     if (argc != 3)
@@ -1673,8 +1683,7 @@ main(int argc, char *argv[])
 	    Tcl_CreateAlias(safe_interp, "find", interp, db_name, ac, av);
 	}
 
-	while ((gettclblock(&line,ifp)) >= 0)
-	{
+	while ((gettclblock(&line,ifp)) >= 0) {
 	    if (Tcl_Eval(safe_interp, (const char *)bu_vls_addr(&line)) != TCL_OK) {
 		fclose(ifp);
 		bu_log("Failed to process input file (%s)!\n", argv[1]);
