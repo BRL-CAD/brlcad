@@ -21,6 +21,9 @@
 #include "common.h"
 
 #include <string.h>
+#if defined(HAVE_WORKING_STRCASECMP_FUNCTION) ||  defined(HAVE_WORKING_STRNCASECMP_FUNCTION)
+#include <strings.h>
+#endif
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
