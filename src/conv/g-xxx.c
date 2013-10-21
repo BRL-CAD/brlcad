@@ -49,7 +49,7 @@
  * functions for your application use as a client_data pointer.
  */
 struct user_data {
-    int data;
+    long int data;
     struct bn_tol tol;
 };
 
@@ -161,7 +161,7 @@ region_start(struct db_tree_state *tsp,
     bu_log("region_start %s\n", name);
     bu_free(name, "reg_start name");
 
-    bu_log("data = %d\n", your_stuff->data);
+    bu_log("data = %ld\n", your_stuff->data);
     rt_pr_tol(&your_stuff->tol);
 
     dp = DB_FULL_PATH_CUR_DIR(pathp);
