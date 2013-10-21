@@ -1,4 +1,4 @@
-/*              B U _ A R G _ P A R S E _ P R I V A T E.H
+/*              B U _ A R G _ P A R S E _ P R I V A T E . H
  * BRL-CAD
  *
  * Copyright (c) 2013 United States Government as represented by
