@@ -73,9 +73,14 @@ main(int ac, char *av[])
 	bu_exit(-1, NULL);
     }
 
-    if (ac > 4) initialSize=(double)atof(av[4]);
-    else if (ac > 3) finalSize=(double)atof(av[3]);
-    else if (ac > 2) stepSize=(double)atof(av[2]);
+    if (ac > 2) {
+	stepSize=(double)atof(av[2]);
+	if (ac > 3) {
+	    finalSize=(double)atof(av[3]);
+	    if (ac > 4)
+		initialSize=(double)atof(av[4]);
+	}
+    }
 
     mk_id(db_fp, "Globe Database"); /* create the database header record */
 
