@@ -152,10 +152,9 @@ main(int ac, char *av[])
     int arg_err            = 0;
     int has_force          = 0;
     int has_help           = 0;
-    #define ARGBUF_SIZ 256
-    char dsp1_fname[ARGBUF_SIZ] = {0};
-    char dsp2_fname[ARGBUF_SIZ] = {0};
-    char dsp3_fname[ARGBUF_SIZ] = {0};
+    char dsp1_fname[BU_ARG_PARSE_BUFSZ] = {0};
+    char dsp2_fname[BU_ARG_PARSE_BUFSZ] = {0};
+    char dsp3_fname[BU_ARG_PARSE_BUFSZ] = {0};
 
     /* FIXME: this '-?' arg doesn't work correctly due to some TCLAPisms */
     static bu_arg_switch_t h_arg = BU_ARG_SWITCH_INIT(
