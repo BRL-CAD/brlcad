@@ -21,6 +21,10 @@
 #ifndef BU_ARG_PARSE_H
 #define BU_ARG_PARSE_H
 
+#ifdef HAVE_STRING_H
+#  include <string.h>
+#endif
+
 #include "bu.h"
 
 #define BU_ARG_PARSE_BUFSZ 256
@@ -113,34 +117,47 @@ typedef struct bu_arg_vars_type2 {
 } bu_arg_vars2;
 
 typedef struct {
-  const uint32_t magic;                  /* BU_ARG_MAGIC                              */
+  uint32_t magic;                  	 /* BU_ARG_MAGIC                              */
   bu_arg_t arg_type;                     /* enum: type of TCLAP arg                   */
   const char *flag;                      /* the "short" option, may be empty ("")     */
   const char *name;                      /* the "long" option                         */
   const char *desc;                      /* a brief description                       */
   int def_val;                           /* always false on init                      */
-  char xfrbuf[BU_ARG_PARSE_BUFSZ] = {0}; /* use for data transfer with TCLAP code     */
+  char xfrbuf[BU_ARG_PARSE_BUFSZ]; /* use for data transfer with TCLAP code     */
 } bu_arg_switch_t;
 
 typedef struct {
-  const uint32_t magic;                  /* BU_ARG_MAGIC                              */
+  uint32_t magic;                  	 /* BU_ARG_MAGIC                              */
   bu_arg_t arg_type;                     /* enum: type of TCLAP arg                   */
   const char *flag;                      /* the "short" option, may be empty ("")     */
   const char *name;                      /* the "long" option                         */
   const char *desc;                      /* a brief description                       */
-  const bu_arg_req_t req;                /* bool: is arg required?                    */
-  const bu_arg_valtype_t val_typ;        /* enum: value type                          */
+  bu_arg_req_t req;                /* bool: is arg required?                    */
+  bu_arg_valtype_t val_typ;        /* enum: value type                          */
   const char *def_val;                   /* default value (if any)                    */
-  char xfrbuf[BU_ARG_PARSE_BUFSZ] = {0}; /* use for data transfer with TCLAP code     */
+  char xfrbuf[BU_ARG_PARSE_BUFSZ]; /* use for data transfer with TCLAP code     */
 } bu_arg_unlabeled_value_t;
 
-#define BU_ARG_SWITCH_INIT(_flag_str, _name_str, _desc_str) \
-{BU_ARG_MAGIC, BU_ARG_SwitchArg, _flag_str, _name_str, _desc_str, BU_FALSE}
+#define BU_ARG_SWITCH_INIT(_struct, _flag_str, _name_str, _desc_str) \
+ _struct.magic = BU_ARG_MAGIC; \
+ _struct.arg_type = BU_ARG_SwitchArg; \
+ _struct.flag = _flag_str; \
+ _struct.name = _name_str; \
+ _struct.desc = _desc_str; \
+ _struct.def_val = BU_FALSE; \
+ memset(_struct.xfrbuf, 0, sizeof(char) * BU_ARG_PARSE_BUFSZ);
 
-#define BU_ARG_UNLABELED_VALUE_INIT(_flag_str, _name_str, _desc_str,      \
+#define BU_ARG_UNLABELED_VALUE_INIT(_struct, _flag_str, _name_str, _desc_str,      \
                         _required_bool, _val_typ, _def_val_str)           \
-{BU_ARG_MAGIC, BU_ARG_UnlabeledValueArg, _flag_str, _name_str, _desc_str, \
-      _required_bool, _val_typ, _def_val_str}
+ _struct.magic = BU_ARG_MAGIC; \
+ _struct.arg_type = BU_ARG_UnlabeledValueArg; \
+ _struct.flag = _flag_str; \
+ _struct.name = _name_str; \
+ _struct.desc = _desc_str; \
+ _struct.req = _required_bool;\
+ _struct.val_typ = _val_typ; \
+ _struct.def_val = _def_val_str; \
+ memset(_struct.xfrbuf, 0, sizeof(char) * BU_ARG_PARSE_BUFSZ);
 
 /* the getters (signature should ALMOST stay the same for static and pointer inits) */
 int bu_arg_get_bool(bu_arg_vars *arg);

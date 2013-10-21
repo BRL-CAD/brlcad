@@ -157,48 +157,15 @@ main(int ac, char *av[])
     char dsp3_fname[BU_ARG_PARSE_BUFSZ] = {0};
 
     /* FIXME: this '-?' arg doesn't work correctly due to some TCLAPisms */
-    static bu_arg_switch_t h_arg = BU_ARG_SWITCH_INIT(
-      "?",
-      "short-help",
-      "Same as '-h' or '--help'"
-      );
-
+    static bu_arg_switch_t h_arg;
     /* define a force option to allow user to shoot himself in the foot */
-    static bu_arg_switch_t f_arg = BU_ARG_SWITCH_INIT(
-      "f",
-      "force",
-      "Allow overwriting existing files."
-      );
-
+    static bu_arg_switch_t f_arg;
     /* need two file names */
-    static bu_arg_unlabeled_value_t dsp1_arg = BU_ARG_UNLABELED_VALUE_INIT(
-      "",
-      "dsp_infile1",
-      "first dsp input file name",
-      BU_ARG_REQUIRED,
-      BU_ARG_STRING,
-      ""
-      );
-
+    static bu_arg_unlabeled_value_t dsp1_arg;
     /* need two file names */
-    static bu_arg_unlabeled_value_t dsp2_arg = BU_ARG_UNLABELED_VALUE_INIT(
-      "",
-      "dsp_infile2",
-      "second dsp input file name",
-      BU_ARG_REQUIRED,
-      BU_ARG_STRING,
-      ""
-      );
-
+    static bu_arg_unlabeled_value_t dsp2_arg;
     /* the output file name */
-    static bu_arg_unlabeled_value_t dsp3_arg = BU_ARG_UNLABELED_VALUE_INIT(
-      "",
-      "dsp_outfile",
-      "dsp output file name",
-      BU_ARG_REQUIRED,
-      BU_ARG_STRING,
-      ""
-      );
+    static bu_arg_unlabeled_value_t dsp3_arg;
 
     /* place the arg pointers in an array (note the array is of
      * type void* to hold the heterogeneous arg type structs)
@@ -208,6 +175,51 @@ main(int ac, char *av[])
       &dsp1_arg, &dsp2_arg, &dsp3_arg,
       NULL
     };
+
+
+    BU_ARG_SWITCH_INIT(
+      h_arg,
+      "?",
+      "short-help",
+      "Same as '-h' or '--help'"
+      );
+
+    BU_ARG_SWITCH_INIT(
+      f_arg,
+      "f",
+      "force",
+      "Allow overwriting existing files."
+      );
+
+    BU_ARG_UNLABELED_VALUE_INIT(
+      dsp1_arg,
+      "",
+      "dsp_infile1",
+      "first dsp input file name",
+      BU_ARG_REQUIRED,
+      BU_ARG_STRING,
+      ""
+      );
+
+    BU_ARG_UNLABELED_VALUE_INIT(
+      dsp2_arg,
+      "",
+      "dsp_infile2",
+      "second dsp input file name",
+      BU_ARG_REQUIRED,
+      BU_ARG_STRING,
+      ""
+      );
+
+    BU_ARG_UNLABELED_VALUE_INIT(
+      dsp3_arg,
+      "",
+      "dsp_outfile",
+      "dsp output file name",
+      BU_ARG_REQUIRED,
+      BU_ARG_STRING,
+      ""
+      );
 
     /* parse the args */
     arg_err = bu_arg_parse2(args, ac, av);
