@@ -50,7 +50,7 @@ main(int ac, char *av[])
 {
     struct rt_wdb *db_fp;
     point_t p1;
-    int is_region;
+    int is_region=0;
     unsigned char rgb[3];
     struct wmember wm_hd; /* defined in wdb.h */
     struct wmember bigList;
@@ -151,7 +151,7 @@ main(int ac, char *av[])
     /* Create the master globe region
      *
      * In this case we are going to make it a region (hence the
-     * is_region flag is set, and we provide shader parameter information.
+     * is_region flag is set), and we provide shader parameter information.
      *
      * When making a combination that is NOT a region, the region flag
      * argument is 0, and the strings for optical shader, and shader
