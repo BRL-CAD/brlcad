@@ -23,6 +23,8 @@
 
 #include "bu.h"
 
+#define BU_ARG_PARSE_BUFSZ 256
+
 enum { BU_TRUE  = 1 };
 enum { BU_FALSE = 0 };
 
@@ -111,23 +113,25 @@ typedef struct bu_arg_vars_type2 {
 } bu_arg_vars2;
 
 typedef struct {
-  const uint32_t magic;           /* BU_ARG_MAGIC                              */
-  bu_arg_t arg_type;              /* enum: type of TCLAP arg                   */
-  const char *flag;               /* the "short" option, may be empty ("")     */
-  const char *name;               /* the "long" option                         */
-  const char *desc;               /* a brief description                       */
-  int def_val;                    /* always false on init                      */
+  const uint32_t magic;                  /* BU_ARG_MAGIC                              */
+  bu_arg_t arg_type;                     /* enum: type of TCLAP arg                   */
+  const char *flag;                      /* the "short" option, may be empty ("")     */
+  const char *name;                      /* the "long" option                         */
+  const char *desc;                      /* a brief description                       */
+  int def_val;                           /* always false on init                      */
+  char xfrbuf[BU_ARG_PARSE_BUFSZ] = {0}; /* use for data transfer with TCLAP code     */
 } bu_arg_switch_t;
 
 typedef struct {
-  const uint32_t magic;           /* BU_ARG_MAGIC                              */
-  bu_arg_t arg_type;              /* enum: type of TCLAP arg                   */
-  const char *flag;               /* the "short" option, may be empty ("")     */
-  const char *name;               /* the "long" option                         */
-  const char *desc;               /* a brief description                       */
-  const bu_arg_req_t req;         /* bool: is arg required?                    */
-  const bu_arg_valtype_t val_typ; /* enum: value type                          */
-  const char *def_val;            /* default value (if any)                    */
+  const uint32_t magic;                  /* BU_ARG_MAGIC                              */
+  bu_arg_t arg_type;                     /* enum: type of TCLAP arg                   */
+  const char *flag;                      /* the "short" option, may be empty ("")     */
+  const char *name;                      /* the "long" option                         */
+  const char *desc;                      /* a brief description                       */
+  const bu_arg_req_t req;                /* bool: is arg required?                    */
+  const bu_arg_valtype_t val_typ;        /* enum: value type                          */
+  const char *def_val;                   /* default value (if any)                    */
+  char xfrbuf[BU_ARG_PARSE_BUFSZ] = {0}; /* use for data transfer with TCLAP code     */
 } bu_arg_unlabeled_value_t;
 
 #define BU_ARG_SWITCH_INIT(_flag_str, _name_str, _desc_str) \
@@ -144,16 +148,24 @@ long bu_arg_get_long(bu_arg_vars *arg);
 double bu_arg_get_double(bu_arg_vars *arg);
 const char *bu_arg_get_string(bu_arg_vars *arg);
 
-/* but use tmp  names while dual use in effect */
+/* but use tmp  names while dual/triple use in effect */
+/* using file transfer */
 int bu_arg_get_bool2(void *arg);
 long bu_arg_get_long2(void *arg);
 double bu_arg_get_double2(void *arg);
 void bu_arg_get_string2(void *arg, char buf[], const size_t buflen);
+/* using stack buf transfer */
+int bu_arg_get_bool3(void *arg);
+long bu_arg_get_long3(void *arg);
+double bu_arg_get_double3(void *arg);
+void bu_arg_get_string3(void *arg);
 
 /* the action: all in one function */
 int bu_arg_parse(bu_ptbl_t *args, int argc, char * const argv[]);
-/* for use with static struct init (tmp name) */
+/* for use with static struct init (tmp name) and file transfer */
 int bu_arg_parse2(void *args[], int argc, char * const argv[]);
+/* for use with static struct init (tmp name) and stack buf transfer */
+int bu_arg_parse3(void *args[], int argc, char * const argv[]);
 
 /* free arg memory for any strings */
 void bu_arg_free(bu_ptbl_t *args);
