@@ -2091,7 +2091,7 @@ populate_fuse_map(struct ga_t *ga,
 			bn_pt3_pt3_equal(tmp_v1, tmp_v2, tol)) {
 			if (debug) {
 			    distance_between_vertices = DIST_PT_PT(tmp_v1, tmp_v2);
-			    bu_log("found equal i1=(%zu)vi1=(%zu)v1=(%f)(%f)(%f), i2=(%zu)vi2=(%zu)v2=(%f)(%f)(%f), dist = (%lumm)\n",
+			    bu_log("found equal i1=(%zu)vi1=(%zu)v1=(%f)(%f)(%f), i2=(%zu)vi2=(%zu)v2=(%f)(%f)(%f), dist = (%lu mm)\n",
 				   idx1, unique_index_list[idx1], tmp_v1[0], tmp_v1[1], tmp_v1[2],
 				   idx2, unique_index_list[idx2], tmp_v2[0], tmp_v2[1], tmp_v2[2],
 				   (unsigned long)distance_between_vertices);

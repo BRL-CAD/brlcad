@@ -259,7 +259,7 @@ CHECK_C_FLAG(msse3 BUILD_TYPES Debug)
 if(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE)
   CHECK_C_FLAG("std=c99" BUILD_TYPES Debug)
   CHECK_C_FLAG("std=c99" BUILD_TYPES Release VARS C99_FLAG)
-  # we need to define some things as "empty" to avoid false positives 
+  # we need to define some things as "empty" to avoid false positives
   # for bu_* functions using varargs and print specifiers
   CHECK_C_FLAG("D_BU_ATTR_PRINTF12=''")
   CHECK_C_FLAG("D_BU_ATTR_PRINTF23=''")

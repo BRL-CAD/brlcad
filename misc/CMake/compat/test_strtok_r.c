@@ -31,7 +31,7 @@ main(int argc, char *argv[])
         }
     }
 
-    /* origina line in example:
+    /* original line in example:
     exit(EXIT_SUCCESS);
     */
 
