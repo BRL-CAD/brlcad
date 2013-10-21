@@ -222,9 +222,9 @@ main(int ac, char *av[])
     /* Get the value parsed by each arg. */
     has_force  = bu_arg_get_bool2(&f_arg);
     has_help   = bu_arg_get_bool2(&h_arg);
-    bu_arg_get_string2(&dsp1_arg, dsp1_fname, ARGBUF_SIZ);
-    bu_arg_get_string2(&dsp2_arg, dsp2_fname, ARGBUF_SIZ);
-    bu_arg_get_string2(&dsp3_arg, dsp3_fname, ARGBUF_SIZ);
+    bu_arg_get_string2(&dsp1_arg, dsp1_fname, BU_ARG_PARSE_BUFSZ);
+    bu_arg_get_string2(&dsp2_arg, dsp2_fname, BU_ARG_PARSE_BUFSZ);
+    bu_arg_get_string2(&dsp3_arg, dsp3_fname, BU_ARG_PARSE_BUFSZ);
 
     /* take appropriate action... */
 
