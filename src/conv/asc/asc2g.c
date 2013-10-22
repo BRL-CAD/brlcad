@@ -185,9 +185,9 @@ strsolbld(void)
 #if defined(HAVE_WORKING_STRTOK_R_FUNCTION)
     /* this function is reentrant */
     (void)strtok_r(buf2, delim, &saveptr);  /* skip stringsolid_id */
-    type = strtok(NULL, delim, &saveptr);
-    name = strtok(NULL, delim, &saveptr);
-    args = strtok(NULL, end_delim, &saveptr);
+    type = strtok_r(NULL, delim, &saveptr);
+    name = strtok_r(NULL, delim, &saveptr);
+    args = strtok_r(NULL, end_delim, &saveptr);
 #elif defined(HAVE_STRSEP)
     (void)strsep(&buf2, delim);		/* skip stringsolid_id */
     type = strsep(&buf2, delim);
