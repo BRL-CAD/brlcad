@@ -55,7 +55,7 @@ void usage(void){
 int
 main(int argc, char **argv)
 {
-    char		*afile, *bfile = "nmg.g";
+    char		*afile = "-", *bfile = "nmg.g";
     FILE		*fpin;
     struct rt_wdb	*fpout;
 
@@ -73,7 +73,6 @@ main(int argc, char **argv)
 
     /* Get ascii NMG input file name. */
     if (bu_optind >= argc || (int)(*argv[1]) == '-') {
-	afile = "-";
 	fpin = stdin;
 #if defined(_WIN32) && !defined(__CYGWIN__)
 	setmode(fileno(fpin), O_BINARY);
@@ -90,14 +89,10 @@ main(int argc, char **argv)
     bu_log("%s: will be reading from file %s\n",argv[0],afile);
     }
 
-
     /* Get BRL-CAD output data base name. */
     bu_optind++;
-    if (bu_optind >= argc) {
-	bfile = "nmg.g";
-    } else {
+    if (bu_optind < argc)
 	bfile = argv[bu_optind];
-    }
     if ((fpout = wdb_fopen(bfile)) == NULL) {
 	fprintf(stderr, "%s: cannot open %s for writing\n",
 		argv[0], bfile);
