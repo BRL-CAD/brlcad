@@ -62,7 +62,7 @@ main(int argc, char **argv)
 
     if (argc > 0) {
 	bu_log("Usage: %s\n", argv[0]);
-	bu_log("       Program continues running:\n");
+	bu_log("       Program continues running (will create file kurt.g):\n");
     }
 
     outfp = wdb_fopen("kurt.g");
