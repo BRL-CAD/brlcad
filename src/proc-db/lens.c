@@ -109,7 +109,7 @@ void MakeP(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_
 	    bu_log("Warning - specified thickness too thin for lens\n");
 
 	VSET(origin, 0, -rcc_h, 0);
-	VSET(height, 0, -1*lens_type*epa_H, 0);
+	VSET(height, 0, -lens_type*epa_H, 0);
 	VSET(breadth, 0, 0, 1);
 	bu_vls_trunc(&str, 0);
 	bu_vls_printf(&str, "%s-epa.s", prefix);
@@ -127,9 +127,8 @@ void MakeP(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_
 	bu_vls_trunc(&str, 0);
 	bu_vls_printf(&str, "%s.r", prefix);
 	mk_lcomb(file, bu_vls_addr(&str), &lens, 1, "glass", "ri=1.5", NULL, 0);
-    } else {
+    } else
 	bu_log("Error - specified parameters result in non-physical geometry");
-    }
 }
 
 
@@ -161,7 +160,6 @@ void MakeD(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_
     BU_LIST_INIT(&lens.l);
 
     if (epa_R > 0 && epa_H > 0) {
-
 	if (rcc_h >= 0) {
 	    VSET(origin, 0, -rcc_h/2, 0);
 	    VSET(height, 0, rcc_h, 0);
@@ -173,7 +171,7 @@ void MakeD(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_
 	    bu_log("Warning - specified thickness too thin for lens\n");
 
 	VSET(origin, 0, -rcc_h/2, 0);
-	VSET(height, 0, -1 * lens_type * epa_H, 0);
+	VSET(height, 0, -lens_type*epa_H, 0);
 	VSET(breadth, 0, 0, 1);
 	bu_vls_trunc(&str, 0);
 	bu_vls_printf(&str, "%s-epa1.s", prefix);
