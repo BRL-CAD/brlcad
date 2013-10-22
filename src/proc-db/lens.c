@@ -161,7 +161,6 @@ void MakeD(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_
     BU_LIST_INIT(&lens.l);
 
     if (epa_R > 0 && epa_H > 0) {
-	if (rcc_h < 0) bu_log("Warning - specified thickness too thin for lens\n");
 
 	if (rcc_h >= 0) {
 	    VSET(origin, 0, -rcc_h/2, 0);
@@ -170,7 +169,8 @@ void MakeD(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_
 	    bu_vls_printf(&str, "%s-cyl.s", prefix);
 	    mk_rcc(file, bu_vls_addr(&str), origin, height, diameter/2);
 	    (void)mk_addmember(bu_vls_addr(&str), &lensglass.l, NULL, WMOP_UNION);
-	}
+	} else
+	    bu_log("Warning - specified thickness too thin for lens\n");
 
 	VSET(origin, 0, -rcc_h/2, 0);
 	VSET(height, 0, -1 * lens_type * epa_H, 0);
