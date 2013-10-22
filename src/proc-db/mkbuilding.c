@@ -40,10 +40,9 @@ main(int ac, char *av[])
 
     if (ac < 2) {
 	mkbdlg_usage();
-	fprintf(stderr, "       Program continues running\n");
+	fprintf(stderr, "       Program continues running:\n");
 	av[1]="mkbuilding.g";
     }
-printf("av[1] %s\n",av[1]);
 
 /* Try to disallow file names starting with - . */
     if (av[1][0] == '-') {
