@@ -80,11 +80,10 @@ void MakeP(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_
     vect_t height;
     vect_t breadth;
 
-    if (focal_length > 0) {
+    if (focal_length > 0)
 	lens_type = 1;
-    } else {
+    else
 	lens_type = -1;
-    }
 
     sph_R = lens_type*focal_length*(ref_ind - 1);
     bu_log("sph_R = %f\n", sph_R);
@@ -116,11 +115,10 @@ void MakeP(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_
 	bu_vls_trunc(&str, 0);
 	bu_vls_printf(&str, "%s-epa.s", prefix);
 	mk_epa(file, bu_vls_addr(&str), origin, height, breadth, epa_R, epa_R);
-	if (lens_type == 1) {
+	if (lens_type == 1)
 	    (void)mk_addmember(bu_vls_addr(&str), &lensglass.l, NULL, WMOP_UNION);
-	} else {
+	else
 	    (void)mk_addmember(bu_vls_addr(&str), &lensglass.l, NULL, WMOP_SUBTRACT);
-	}
 
 	bu_vls_trunc(&str, 0);
 	bu_vls_printf(&str, "%s.c", prefix);
@@ -146,11 +144,10 @@ void MakeD(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_
     vect_t height;
     vect_t breadth;
 
-    if (focal_length > 0) {
+    if (focal_length > 0)
 	lens_type = 1;
-    } else {
+    else
 	lens_type = -1;
-    }
 
     sph_R = ((ref_ind - 1) * sqrt(focal_length * lens_type * focal_length * lens_type * ref_ind * ref_ind - thickness * focal_length * lens_type * ref_ind) + focal_length * lens_type * ref_ind * ref_ind - focal_length * lens_type * ref_ind)/ref_ind;
     bu_log("sph_R = %f\n", sph_R);
@@ -182,22 +179,20 @@ void MakeD(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_
 	bu_vls_trunc(&str, 0);
 	bu_vls_printf(&str, "%s-epa1.s", prefix);
 	mk_epa(file, bu_vls_addr(&str), origin, height, breadth, epa_R, epa_R);
-	if (lens_type == 1) {
+	if (lens_type == 1)
 	    (void)mk_addmember(bu_vls_addr(&str), &lensglass.l, NULL, WMOP_UNION);
-	} else {
+	else
 	    (void)mk_addmember(bu_vls_addr(&str), &lensglass.l, NULL, WMOP_SUBTRACT);
-	}
 	VSET(origin, 0, rcc_h/2, 0);
 	VSET(height, 0, lens_type * epa_H, 0);
 	VSET(breadth, 0, 0, 1);
 	bu_vls_trunc(&str, 0);
 	bu_vls_printf(&str, "%s-epa2.s", prefix);
 	mk_epa(file, bu_vls_addr(&str), origin, height, breadth, epa_R, epa_R);
-	if (lens_type == 1) {
+	if (lens_type == 1)
 	    (void)mk_addmember(bu_vls_addr(&str), &lensglass.l, NULL, WMOP_UNION);
-	} else {
+	else
 	    (void)mk_addmember(bu_vls_addr(&str), &lensglass.l, NULL, WMOP_SUBTRACT);
-	}
 
 	bu_vls_trunc(&str, 0);
 	bu_vls_printf(&str, "%s.c", prefix);
@@ -207,9 +202,8 @@ void MakeD(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_
 	bu_vls_trunc(&str, 0);
 	bu_vls_printf(&str, "%s.r", prefix);
 	mk_lcomb(file, bu_vls_addr(&str), &lens, 1, "glass", "ri=1.5", NULL, 0);
-    } else {
+    } else
 	bu_log("Error - specified parameters result in non-physical geometry");
-    }
 }
 
 
@@ -279,19 +273,15 @@ int main(int ac, char *av[])
 
     /* Create file name if supplied, else use "lens.g" */
     if (av[bu_optind]) {
-	if (!bu_file_exists(av[bu_optind], NULL)) {
-	    db_fp = wdb_fopen(av[bu_optind]);
-	} else {
+	if (bu_file_exists(av[bu_optind], NULL))
 	    bu_exit(-1, "Error - refusing to overwrite pre-existing file %s", av[bu_optind]);
-	}
-    }
-    if (!av[bu_optind]) {
-	if (!bu_file_exists(DEFAULT_LENS_FILENAME, NULL)) {
-	    db_fp = wdb_fopen(DEFAULT_LENS_FILENAME);
-	} else {
+	db_fp = wdb_fopen(av[bu_optind]);
+    } else {
+	if (bu_file_exists(DEFAULT_LENS_FILENAME, NULL))
 	    bu_exit(-1, "Error - no filename supplied and lens.g exists.");
-	}
+	db_fp = wdb_fopen(DEFAULT_LENS_FILENAME);
     }
+
     /* Make the requested lens*/
     if (lens_1side_2side == 1 && focal_length > 0) {
 	bu_log("Making Plano-Convex lens...\n");
@@ -309,7 +299,6 @@ int main(int ac, char *av[])
 	bu_vls_printf(&name, "lens_%s_f%.1f_d%.1f", bu_vls_addr(&lens_type), focal_length, diameter);
 	MakeP(db_fp, bu_vls_addr(&name), diameter, focal_length, ref_ind, thickness);
     }
-
     if (lens_1side_2side == 2 && focal_length > 0) {
 	bu_log("Making BiConvex lens...\n");
 	bu_vls_trunc(&lens_type, 0);
