@@ -28,9 +28,6 @@
 #include "vmath.h"
 #include "bn.h"
 
-/* FIXME: should be in bn.h */
-extern int bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2, point_t *p3, point_t *p4);
-
 
 int
 main()

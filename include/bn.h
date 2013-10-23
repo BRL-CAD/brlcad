@@ -2384,6 +2384,19 @@ BN_EXPORT extern double bn_dist_pt_lseg(point_t pca,
 					const struct bn_tol *tol);
 
 /**
+ * B N _ O B R
+ *@brief
+ * Rotating Calipers algorithm for finding the
+ * minimum oriented bounding rectangle for a convex hull.
+ */
+BN_EXPORT extern bn_obr(const point_t *pnts,
+			int pnt_cnt,
+			point_t *p1,
+			point_t *p2,
+			point_t *p3,
+			point_t *p4);
+
+/**
  * B N _ R O T A T E _ B B O X
  *@brief
  * Transform a bounding box (RPP) by the given 4x4 matrix.  There are
