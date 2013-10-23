@@ -259,25 +259,33 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
     FLAGS_TO_FILES("${srcslist}" ${libname})
   endif(${lib_type} STREQUAL "MIXED")
 
+  # BRL-CAD style checking test
+  if(ENABLE_STYLE_VALIDATION)
+    make_directory(${CMAKE_CURRENT_BINARY_DIR}/validation)
+    foreach(srcfile ${srcslist})
+      get_filename_component(root_name ${srcfile} NAME_WE)
+      string(MD5 path_md5 "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
+      set(stampfile "${CMAKE_CURRENT_BINARY_DIR}/validation/${root_name}_${path_md5}.checked")
+      set(scriptfile "${CMAKE_CURRENT_BINARY_DIR}/validation/${root_name}_${path_md5}.cmake")
+      set(srcfile_tmp "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
+      set(outfile_tmp "${CMAKE_CURRENT_BINARY_DIR}/validation/${path_md5}")
+      set(stampfile_tmp "${stampfile}")
+      configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/astyle.cmake.in ${scriptfile})
+      add_custom_command(
+	OUTPUT ${stampfile}
+	COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
+	DEPENDS ${srcfile} ${ASTYLE_EXECUTABLE_TARGET}
+	COMMENT "Validating style of ${srcfile}"
+	)
+      set_source_files_properties(${srcfile} PROPERTIES OBJECT_DEPENDS ${stampfile})
+    endforeach(srcfile ${srcslist})
+  endif(ENABLE_STYLE_VALIDATION)
+
+
   # Handle "shared" libraries (with MSVC, these would be dynamic libraries)
   if(BUILD_SHARED_LIBS)
 
     add_library(${libname} SHARED ${srcslist})
-
-    # BRL-CAD style checking test
-    if(ENABLE_STYLE_VALIDATION)
-      add_dependencies(${libname} ${ASTYLE_EXECUTABLE_TARGET})
-      make_directory(${CMAKE_CURRENT_BINARY_DIR}/validation)
-      set(srcslist_tmp "${srcslist}")
-      set(target_name "${libname}")
-      set(scriptfile ${CMAKE_CURRENT_BINARY_DIR}/${libname}_validate.cmake)
-      configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/astyle.cmake.in ${scriptfile} @ONLY)
-      add_custom_command(
-	TARGET ${libname} POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
-	COMMENT "Validating style of ${libname} srcs"
-	)
-    endif(ENABLE_STYLE_VALIDATION)
 
     # Make sure we don't end up with outputs named liblib...
     if(${libname} MATCHES "^lib*")
