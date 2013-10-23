@@ -259,10 +259,39 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
     FLAGS_TO_FILES("${srcslist}" ${libname})
   endif(${lib_type} STREQUAL "MIXED")
 
+  # BRL-CAD style checking test
+  if(ENABLE_STYLE_VALIDATION)
+    set(stampfiles)
+    make_directory(${CMAKE_CURRENT_BINARY_DIR}/validation)
+    foreach(srcfile ${srcslist})
+      get_filename_component(root_name ${srcfile} NAME_WE)
+      string(MD5 path_md5 "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
+      set(stampfile "${CMAKE_CURRENT_BINARY_DIR}/validation/${root_name}_${path_md5}.checked")
+      set(scriptfile "${CMAKE_CURRENT_BINARY_DIR}/validation/${root_name}_${path_md5}.cmake")
+      set(srcfile_tmp "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
+      set(outfile_tmp "${CMAKE_CURRENT_BINARY_DIR}/validation/${path_md5}")
+      set(stampfile_tmp "${stampfile}")
+      configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/astyle.cmake.in ${scriptfile})
+      add_custom_command(
+	OUTPUT ${stampfile}
+	COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
+	DEPENDS ${srcfile} ${ASTYLE_EXECUTABLE_TARGET}
+	COMMENT "Validating style of ${srcfile}"
+	)
+      set(stampfiles ${stampfiles} ${stampfile})
+    endforeach(srcfile ${srcslist})
+    add_custom_target(validate_${libname} DEPENDS ${stampfiles})
+  endif(ENABLE_STYLE_VALIDATION)
+
+
   # Handle "shared" libraries (with MSVC, these would be dynamic libraries)
   if(BUILD_SHARED_LIBS)
 
     add_library(${libname} SHARED ${srcslist})
+
+    if(ENABLE_STYLE_VALIDATION)
+      add_dependencies(${libname} validate_${libname})
+    endif(ENABLE_STYLE_VALIDATION)
 
     # Make sure we don't end up with outputs named liblib...
     if(${libname} MATCHES "^lib*")

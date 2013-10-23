@@ -175,6 +175,23 @@ DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/libz/CTestTestfile.cmake)
 # situations, CMake provides a variable CMAKE_CFG_INTDIR that will
 # insert the correct logic for config-dependent paths.
 
+
+# To enforce style guidelines rigorously, BRL-CAD bundles the
+# Artistic Style code formatter.  This tool is LGPLv3 licensed
+# and its code can *not* be used in BRL-CAD itself - it
+# is present striclty and only to be used as a tool in the
+# compilation process.
+set(astyle_ALIASES ENABLE_RE2C)
+set(astyle_DESCRIPTION "
+Option for enabling and disabling compilation of the Artistic Style
+(astyle) utility provided with BRL-CAD's source distribution.  Default is AUTO,
+responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
+first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+THIRD_PARTY_EXECUTABLE(astyle astyle "BRLCAD_LEVEL2" astyle_ALIASES astyle_DESCRIPTION)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/astyle/Makefile)
+
+
 # For those wanting to use a system version of the LEMON parser
 # generator from sqlite, remember that the presence of /usr/bin/lemon
 # is not enough.  LEMON needs a template file, lempar.c, and by

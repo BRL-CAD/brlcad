@@ -1,0 +1,54 @@
+#                A S T Y L E . C M A K E . I N
+# BRL-CAD
+#
+# Copyright (c) 2012-2013 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+###
+execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "@stampfile_tmp@")
+execute_process(COMMAND "@CMAKE_COMMAND@" -E copy "@srcfile_tmp@" "@outfile_tmp@")
+execute_process(COMMAND "@ASTYLE_EXECUTABLE@" --options=@BRLCAD_SOURCE_DIR@/misc/astyle.opt "@outfile_tmp@" OUTPUT_QUIET ERROR_QUIET)
+execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "@outfile_tmp@.orig")
+execute_process(COMMAND "@CMAKE_COMMAND@" -E compare_files  "@srcfile_tmp@"  "@outfile_tmp@" RESULT_VARIABLE CMDRESULT OUTPUT_QUIET ERROR_QUIET)
+if(CMDRESULT)
+  message(FATAL_ERROR "Style failure: compare @srcfile_tmp@ with @outfile_tmp@ to see differences")
+else(CMDRESULT)
+  execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "@outfile_tmp@")
+  execute_process(COMMAND "@CMAKE_COMMAND@" -E touch "@stampfile_tmp@")
+endif(CMDRESULT)
+
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

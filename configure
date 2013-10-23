@@ -98,6 +98,10 @@ do
                                   shift;;
      --disable-libz)                options="$options -DBRLCAD_ZLIB=SYSTEM";
                                   shift;;
+     --enable-re2c)                options="$options -DBRLCAD_ASTYLE=BUNDLED";
+                                  shift;;
+     --disable-re2c)                options="$options -DBRLCAD_ASTYLE=SYSTEM";
+                                  shift;;
      --enable-lemon)                options="$options -DBRLCAD_LEMON=BUNDLED";
                                   shift;;
      --disable-lemon)                options="$options -DBRLCAD_LEMON=SYSTEM";
