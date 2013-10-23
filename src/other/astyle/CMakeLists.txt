@@ -16,8 +16,6 @@ set(ASTYLE_SRCS
   ASResource.cpp
   )
 
-include(${CMAKE_CURRENT_SOURCE_DIR})
-
 add_executable(astyle ${ASTYLE_SRCS})
 
 # Local Variables:
