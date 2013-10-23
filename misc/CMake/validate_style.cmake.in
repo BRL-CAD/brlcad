@@ -1,4 +1,4 @@
-#                A S T Y L E . C M A K E . I N
+#          V A L I D A T E _  S T Y L E . C M A K E . I N
 # BRL-CAD
 #
 # Copyright (c) 2012-2013 United States Government as represented by
@@ -33,27 +33,15 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ###
-set(outfiles_root @outfiles_root@)
-set(stamp_file ${outfiles_root}.checked)
-set(stamp_valid ${outfiles_root}.valid)
-set(stamp_invalid ${outfiles_root}.invalid)
-set(outfile_tmp ${outfiles_root}.tmp)
-execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${stamp_file}")
-execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${stamp_valid}")
-execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${stamp_invalid}")
-execute_process(COMMAND "@CMAKE_COMMAND@" -E copy "@srcfile_tmp@" "${outfile_tmp}")
-execute_process(COMMAND "@ASTYLE_EXECUTABLE@" --options=@BRLCAD_SOURCE_DIR@/misc/astyle.opt "${outfile_tmp}" OUTPUT_QUIET ERROR_QUIET)
-execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${outfile_tmp}.orig")
-execute_process(COMMAND "@CMAKE_COMMAND@" -E compare_files  "@srcfile_tmp@"  "${outfile_tmp}" RESULT_VARIABLE CMDRESULT OUTPUT_QUIET ERROR_QUIET)
-execute_process(COMMAND "@CMAKE_COMMAND@" -E touch "${stamp_file}")
-if(CMDRESULT)
-  message(WARNING "Style failure: compare @srcfile_tmp@ with ${outfile_tmp} to see differences")
-  file(WRITE "${stamp_invalid}" "@srcfile_tmp@")
-else(CMDRESULT)
-  execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${outfile_tmp}")
-  execute_process(COMMAND "@CMAKE_COMMAND@" -E touch "${stamp_valid}")
-endif(CMDRESULT)
-
+file(GLOB invalid_files "@CMAKE_CURRENT_BINARY_DIR@/validation/*.invalid")
+if(invalid_files)
+  message("Compilation failure due to style errors:")
+  foreach(invalid_file ${invalid_files})
+    file(READ "${invalid_file}" src_file)
+    message("   ${src_file}")
+  endforeach(invalid_file ${invalid_files})
+  message(FATAL_ERROR "Build failed.")
+endif(invalid_files)
 
 # Local Variables:
 # tab-width: 8

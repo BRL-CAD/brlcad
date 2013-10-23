@@ -265,19 +265,17 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
     foreach(srcfile ${srcslist})
       get_filename_component(root_name ${srcfile} NAME_WE)
       string(MD5 path_md5 "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
-      set(stampfile "${CMAKE_CURRENT_BINARY_DIR}/validation/${root_name}_${path_md5}.checked")
-      set(scriptfile "${CMAKE_CURRENT_BINARY_DIR}/validation/${root_name}_${path_md5}.cmake")
+      set(outfiles_root "${CMAKE_CURRENT_BINARY_DIR}/validation/${root_name}_${path_md5}")
       set(srcfile_tmp "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
-      set(outfile_tmp "${CMAKE_CURRENT_BINARY_DIR}/validation/${path_md5}")
       set(stampfile_tmp "${stampfile}")
-      configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/astyle.cmake.in ${scriptfile})
+      configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/astyle.cmake.in ${outfiles_root}.cmake @ONLY)
       add_custom_command(
-	OUTPUT ${stampfile}
-	COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
+	OUTPUT ${outfiles_root}.checked
+	COMMAND ${CMAKE_COMMAND} -P ${outfiles_root}.cmake
 	DEPENDS ${srcfile} ${ASTYLE_EXECUTABLE_TARGET}
 	COMMENT "Validating style of ${srcfile}"
 	)
-      set_source_files_properties(${srcfile} PROPERTIES OBJECT_DEPENDS ${stampfile})
+      set_source_files_properties(${srcfile} PROPERTIES OBJECT_DEPENDS ${outfiles_root}.checked)
     endforeach(srcfile ${srcslist})
   endif(ENABLE_STYLE_VALIDATION)
 
@@ -286,6 +284,15 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
   if(BUILD_SHARED_LIBS)
 
     add_library(${libname} SHARED ${srcslist})
+  if(ENABLE_STYLE_VALIDATION)
+      configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/validate_style.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/${libname}_validate.cmake @ONLY)
+      add_custom_command(
+	TARGET ${libname} PRE_LINK
+	COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/${libname}_validate.cmake
+	COMMENT "Checking validation status of ${libname} srcs"
+	)
+  endif(ENABLE_STYLE_VALIDATION)
+
 
     # Make sure we don't end up with outputs named liblib...
     if(${libname} MATCHES "^lib*")
