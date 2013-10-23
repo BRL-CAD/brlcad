@@ -152,16 +152,55 @@ macro(CXX_NO_STRICT cxx_srcslist args)
   endif(NOERROR_FLAG)
 endmacro(CXX_NO_STRICT cxx_srcslist)
 
+# BRL-CAD style checking test
+macro(VALIDATE_STYLE srcslist)
+if(ENABLE_STYLE_VALIDATION)
+  make_directory(${CMAKE_CURRENT_BINARY_DIR}/validation)
+  foreach(srcfile ${srcslist})
+    # Generated files won't conform to our style guidelines
+    get_property(IS_GENERATED SOURCE ${srcfile} PROPERTY GENERATED)
+    if(NOT IS_GENERATED)
+      get_filename_component(root_name ${srcfile} NAME_WE)
+      string(MD5 path_md5 "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
+      set(outfiles_root "${CMAKE_CURRENT_BINARY_DIR}/validation/${root_name}_${path_md5}")
+      set(srcfile_tmp "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
+      set(stampfile_tmp "${stampfile}")
+      configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/astyle.cmake.in ${outfiles_root}.cmake @ONLY)
+      add_custom_command(
+	OUTPUT ${outfiles_root}.checked
+	COMMAND ${CMAKE_COMMAND} -P ${outfiles_root}.cmake
+	DEPENDS ${srcfile} ${ASTYLE_EXECUTABLE_TARGET}
+	COMMENT "Validating style of ${srcfile}"
+	)
+      set_source_files_properties(${srcfile} PROPERTIES OBJECT_DEPENDS ${outfiles_root}.checked)
+    endif(NOT IS_GENERATED)
+  endforeach(srcfile ${srcslist})
+endif(ENABLE_STYLE_VALIDATION)
+endmacro(VALIDATE_STYLE)
+
+macro(VALIDATE_TARGET_STYLE targetname)
+  if(ENABLE_STYLE_VALIDATION)
+      configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/validate_style.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/${targetname}_validate.cmake @ONLY)
+      add_custom_command(
+	TARGET ${targetname} PRE_LINK
+	COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/${targetname}_validate.cmake
+	COMMENT "Checking validation status of ${targetname} srcs"
+	)
+  endif(ENABLE_STYLE_VALIDATION)
+endmacro(VALIDATE_TARGET_STYLE targetname)
 
 #-----------------------------------------------------------------------------
 # Core routines for adding executables and libraries to the build and
 # install lists of CMake
 macro(BRLCAD_ADDEXEC execname srcslist libslist)
 
+  # Check at comple time the standard BRL-CAD style rules
+  VALIDATE_STYLE("${srcslist}")
+
   # Call standard CMake commands
   add_executable(${execname} ${srcslist})
   target_link_libraries(${execname} ${libslist})
-
+  VALIDATE_TARGET_STYLE(${execname})
 
   # In some situations (usually test executables) we want to be able
   # to force the executable to remain in the local compilation
@@ -259,43 +298,14 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
     FLAGS_TO_FILES("${srcslist}" ${libname})
   endif(${lib_type} STREQUAL "MIXED")
 
-  # BRL-CAD style checking test
-  if(ENABLE_STYLE_VALIDATION)
-    make_directory(${CMAKE_CURRENT_BINARY_DIR}/validation)
-    foreach(srcfile ${srcslist})
-      get_property(IS_GENERATED SOURCE ${srcfile} PROPERTY GENERATED)
-      if(NOT IS_GENERATED)
-	get_filename_component(root_name ${srcfile} NAME_WE)
-	string(MD5 path_md5 "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
-	set(outfiles_root "${CMAKE_CURRENT_BINARY_DIR}/validation/${root_name}_${path_md5}")
-	set(srcfile_tmp "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
-	set(stampfile_tmp "${stampfile}")
-	configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/astyle.cmake.in ${outfiles_root}.cmake @ONLY)
-	add_custom_command(
-	  OUTPUT ${outfiles_root}.checked
-	  COMMAND ${CMAKE_COMMAND} -P ${outfiles_root}.cmake
-	  DEPENDS ${srcfile} ${ASTYLE_EXECUTABLE_TARGET}
-	  COMMENT "Validating style of ${srcfile}"
-	  )
-	set_source_files_properties(${srcfile} PROPERTIES OBJECT_DEPENDS ${outfiles_root}.checked)
-      endif(NOT IS_GENERATED)
-    endforeach(srcfile ${srcslist})
-  endif(ENABLE_STYLE_VALIDATION)
-
+  # Check at comple time the standard BRL-CAD style rules
+  VALIDATE_STYLE("${srcslist}")
 
   # Handle "shared" libraries (with MSVC, these would be dynamic libraries)
   if(BUILD_SHARED_LIBS)
 
     add_library(${libname} SHARED ${srcslist})
-  if(ENABLE_STYLE_VALIDATION)
-      configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/validate_style.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/${libname}_validate.cmake @ONLY)
-      add_custom_command(
-	TARGET ${libname} PRE_LINK
-	COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/${libname}_validate.cmake
-	COMMENT "Checking validation status of ${libname} srcs"
-	)
-  endif(ENABLE_STYLE_VALIDATION)
-
+    VALIDATE_TARGET_STYLE(${libname})
 
     # Make sure we don't end up with outputs named liblib...
     if(${libname} MATCHES "^lib*")
@@ -362,6 +372,7 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
   # respect standard naming conventions.)
   if(BUILD_STATIC_LIBS)
     add_library(${libname}-static STATIC ${srcslist})
+    VALIDATE_TARGET_STYLE(${libname}-static)
 
     # Make sure we don't end up with outputs named liblib...
     if(${libname}-static MATCHES "^lib*")
