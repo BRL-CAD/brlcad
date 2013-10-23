@@ -2389,7 +2389,7 @@ BN_EXPORT extern double bn_dist_pt_lseg(point_t pca,
  * Rotating Calipers algorithm for finding the
  * minimum oriented bounding rectangle for a convex hull.
  */
-BN_EXPORT extern bn_obr(const point_t *pnts,
+BN_EXPORT extern int bn_obr(const point_t *pnts,
 			int pnt_cnt,
 			point_t *p1,
 			point_t *p2,
