@@ -71,6 +71,12 @@
 #define DEFAULT_LENS_FILENAME "lens.g"
 
 static void
+printusage(void) {
+    fprintf(stderr,"Usage: [-T lens_type] [-r refractive_index] [-d diameter]\n");
+    fprintf(stderr,"       [-t thickness] [-f focal_length] [filename]\n");
+}
+
+static void
 MakeP(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_length, fastf_t ref_ind, fastf_t thickness)
 {
     struct wmember lensglass, lens;
@@ -214,13 +220,16 @@ MakeD(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_lengt
 static int
 ReadArgs(int argc, char **argv, int *lens_1side_2side, fastf_t *ref_ind, fastf_t *diameter, fastf_t *thickness, fastf_t *focal_length)
 {
-    int c = 0;
-    char *options="T:r:d:t:f:";
+    int c;
+    char *options="T:r:d:t:f:h?";
     int ltype;
     float refractive, diam, thick, focal;
 
-    /* don't report errors */
-    bu_opterr = 0;
+    if (argc == 1) {
+    	printusage();
+	fprintf(stderr,"       Program continues running (will create file lens.g if no name supplied):\n");
+    	return 0;
+    }
 
     while ((c=bu_getopt(argc, argv, options)) != -1) {
 	switch (c) {
@@ -245,7 +254,7 @@ ReadArgs(int argc, char **argv, int *lens_1side_2side, fastf_t *ref_ind, fastf_t
 		*focal_length = focal;
 		break;
 	    default:
-		bu_log("%s: illegal option -- %c\n", bu_getprogname(), c);
+		printusage();
 		bu_exit(EXIT_SUCCESS, NULL);
 	}
     }
