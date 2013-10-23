@@ -154,7 +154,7 @@ endmacro(CXX_NO_STRICT cxx_srcslist)
 
 # BRL-CAD style checking test
 macro(VALIDATE_STYLE srcslist)
-if(ENABLE_STYLE_VALIDATION)
+if(BRLCAD_STYLE_VALIDATE)
   make_directory(${CMAKE_CURRENT_BINARY_DIR}/validation)
   foreach(srcfile ${srcslist})
     # Generated files won't conform to our style guidelines
@@ -175,18 +175,18 @@ if(ENABLE_STYLE_VALIDATION)
       set_source_files_properties(${srcfile} PROPERTIES OBJECT_DEPENDS ${outfiles_root}.checked)
     endif(NOT IS_GENERATED)
   endforeach(srcfile ${srcslist})
-endif(ENABLE_STYLE_VALIDATION)
+endif(BRLCAD_STYLE_VALIDATE)
 endmacro(VALIDATE_STYLE)
 
 macro(VALIDATE_TARGET_STYLE targetname)
-  if(ENABLE_STYLE_VALIDATION)
+  if(BRLCAD_STYLE_VALIDATE)
       configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/validate_style.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/${targetname}_validate.cmake @ONLY)
       add_custom_command(
 	TARGET ${targetname} PRE_LINK
 	COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/${targetname}_validate.cmake
 	COMMENT "Checking validation status of ${targetname} srcs"
 	)
-  endif(ENABLE_STYLE_VALIDATION)
+  endif(BRLCAD_STYLE_VALIDATE)
 endmacro(VALIDATE_TARGET_STYLE targetname)
 
 #-----------------------------------------------------------------------------
