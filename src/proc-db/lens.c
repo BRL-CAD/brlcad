@@ -70,7 +70,8 @@
 #define R2D(x) (x / DEG2RAD)
 #define DEFAULT_LENS_FILENAME "lens.g"
 
-void MakeP(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_length, fastf_t ref_ind, fastf_t thickness)
+static void
+MakeP(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_length, fastf_t ref_ind, fastf_t thickness)
 {
     struct wmember lensglass, lens;
     struct bu_vls str = BU_VLS_INIT_ZERO;
@@ -134,7 +135,8 @@ void MakeP(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_
 }
 
 
-void MakeD(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_length, fastf_t ref_ind, fastf_t thickness)
+static void
+MakeD(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_length, fastf_t ref_ind, fastf_t thickness)
 {
     struct wmember lensglass, lens;
     struct bu_vls str = BU_VLS_INIT_ZERO;
@@ -209,7 +211,8 @@ void MakeD(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_
 
 
 /* Process command line arguments */
-int ReadArgs(int argc, char **argv, int *lens_1side_2side, fastf_t *ref_ind, fastf_t *diameter, fastf_t *thickness, fastf_t *focal_length)
+static int
+ReadArgs(int argc, char **argv, int *lens_1side_2side, fastf_t *ref_ind, fastf_t *diameter, fastf_t *thickness, fastf_t *focal_length)
 {
     int c = 0;
     char *options="T:r:d:t:f:";
@@ -250,7 +253,8 @@ int ReadArgs(int argc, char **argv, int *lens_1side_2side, fastf_t *ref_ind, fas
 }
 
 
-int main(int ac, char *av[])
+int
+main(int ac, char *av[])
 {
     struct rt_wdb *db_fp = NULL;
     struct bu_vls lens_type = BU_VLS_INIT_ZERO;
