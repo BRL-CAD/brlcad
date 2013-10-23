@@ -263,19 +263,22 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
   if(ENABLE_STYLE_VALIDATION)
     make_directory(${CMAKE_CURRENT_BINARY_DIR}/validation)
     foreach(srcfile ${srcslist})
-      get_filename_component(root_name ${srcfile} NAME_WE)
-      string(MD5 path_md5 "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
-      set(outfiles_root "${CMAKE_CURRENT_BINARY_DIR}/validation/${root_name}_${path_md5}")
-      set(srcfile_tmp "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
-      set(stampfile_tmp "${stampfile}")
-      configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/astyle.cmake.in ${outfiles_root}.cmake @ONLY)
-      add_custom_command(
-	OUTPUT ${outfiles_root}.checked
-	COMMAND ${CMAKE_COMMAND} -P ${outfiles_root}.cmake
-	DEPENDS ${srcfile} ${ASTYLE_EXECUTABLE_TARGET}
-	COMMENT "Validating style of ${srcfile}"
-	)
-      set_source_files_properties(${srcfile} PROPERTIES OBJECT_DEPENDS ${outfiles_root}.checked)
+      get_property(IS_GENERATED SOURCE ${srcfile} PROPERTY GENERATED)
+      if(NOT IS_GENERATED)
+	get_filename_component(root_name ${srcfile} NAME_WE)
+	string(MD5 path_md5 "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
+	set(outfiles_root "${CMAKE_CURRENT_BINARY_DIR}/validation/${root_name}_${path_md5}")
+	set(srcfile_tmp "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
+	set(stampfile_tmp "${stampfile}")
+	configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/astyle.cmake.in ${outfiles_root}.cmake @ONLY)
+	add_custom_command(
+	  OUTPUT ${outfiles_root}.checked
+	  COMMAND ${CMAKE_COMMAND} -P ${outfiles_root}.cmake
+	  DEPENDS ${srcfile} ${ASTYLE_EXECUTABLE_TARGET}
+	  COMMENT "Validating style of ${srcfile}"
+	  )
+	set_source_files_properties(${srcfile} PROPERTIES OBJECT_DEPENDS ${outfiles_root}.checked)
+      endif(NOT IS_GENERATED)
     endforeach(srcfile ${srcslist})
   endif(ENABLE_STYLE_VALIDATION)
 
