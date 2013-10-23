@@ -706,7 +706,8 @@ braces should line up with that same statement.  Functions, however,
 are treated specially and we place their opening braces on separate
 lines.  See http://en.wikipedia.org/wiki/Indent_style for details.
 
-  int some_function(char *j)
+  int
+  some_function(char *j)
   {
       for (i = 0; i < 100; i++) {
 	  if (i % 10 == 0) {
