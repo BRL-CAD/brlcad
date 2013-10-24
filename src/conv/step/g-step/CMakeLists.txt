@@ -65,6 +65,9 @@ CMAKEFILES(${IGNORE_FILES})
 
 set(list_elements_srcs ${express_srcs} list_elements.cpp)
 BRLCAD_ADDEXEC(list_elements "${list_elements_srcs}" "${gstep_LIBS}" NO_STRICT NO_INSTALL)
+if(MSVC)
+  set_target_properties(list_elements PROPERTIES COMPILE_DEFINITIONS "${gstep_IMPORTS}")
+endif(MSVC)
 
 # Local Variables:
 # tab-width: 8
