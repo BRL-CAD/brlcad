@@ -73,6 +73,7 @@ set(misc_ignore_files
   Doxyfile
   Doxyfile.in
   DoxyfileLibs.in
+  DoxyfileLibs-defaults.in
   Makefile.defs
   archlinux
   astyle.opt
