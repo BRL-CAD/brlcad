@@ -28,7 +28,7 @@
 #include <map>
 #include "ON_Brep.h"
 
-STEPentity *Add_Assembly_Product(struct directory *dp,
+void Add_Assembly_Product(struct directory *dp,
                                  struct db_i *dbip,
                                  struct bu_ptbl *children,
 				 struct comb_maps *maps,
