@@ -749,6 +749,7 @@ bu_arg_parse2(void *args[], int argc, char * const argv[])
 std::string
 _get_fname(void *addr)
 {
+#ifdef HAVE_UNISTD_H
   // get file name from address and pid of parent process
   static pid_t pid = getppid();
 
@@ -761,6 +762,16 @@ _get_fname(void *addr)
   str2 >> num2;
 
   return "tmp" + num1 + num2;
+#else
+
+  std::string num1;
+  std::stringstream str1;
+
+  str1 << addr;
+  str1 >> num1;
+
+  return "tmp" + num1;
+#endif
 }
 
 
