@@ -21,6 +21,8 @@
 #ifndef BU_ARG_PARSE_H
 #define BU_ARG_PARSE_H
 
+#include "common.h"
+
 #ifdef HAVE_STRING_H
 #  include <string.h>
 #endif
