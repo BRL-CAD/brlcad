@@ -1605,7 +1605,7 @@ aname1 NULL value1 NULL ... anameN NULL valueN NULL NULL
      AFlags = 0000xx00 (1 byte)
      BFlags = 0000xx00 (1 byte)
      ObjType = Free (2 bytes)
-     ObjLen = 7 (1 byte)
+     ObjLen = 8 (1 byte)
      Magic2 (1 byte).
 	</literallayout>
 	This is why we have chosen the 8-bit size for our chunks. Pad bytes are inserted as necessary in the Object Footer
@@ -1619,7 +1619,7 @@ Magic1 (1byte)
 HFlags = 00000010 (1 byte), Wid=00, N=0, DLI=02
 IFlags????? = 00000000 (1 byte), Wid=00, A=0, B=0, ZZZ=000
 Object_Type = RESERVED (2 bytes)
-Object_Length = 1 (1 byte)
+Object_Length = 8 (1 byte)
 Pad (1byte)
 Magic2 (1 byte).
 	</literallayout>
@@ -1631,7 +1631,7 @@ Magic1 (1byte)
 HFlags = 000xxx01 (1 byte), Wid=00, N=0, DLI=01
 IFlags????? = 0000x000 (1 byte), Wid=00, A=0, B=0, ZZZ=000
 Object_Type = RESERVED (2 bytes)
-Object_Length = 1 (1 byte)
+Object_Length = 8 (1 byte)
 Pad (1byte)
 Magic2 (1 byte)
 The hex and ASCII dump of this object would look something this:
@@ -1646,7 +1646,7 @@ Magic1 (1byte)
 HFlags = 001xxxxx (1 byte), Wid=00, N=1, DLI=00
 IFlags ?????= 0000xxxx (1 byte), Wid=00, A=0, B=0, ZZZ=000
 Object_Type = OPAQUE?????_BINARY (2 bytes)
-Object_Length = 8 (1 byte)
+Object_Length = 16 (1 byte)
 Name_Length = 2 (1 byte)
 Object Name (1 character + null byte) (2 bytes)
 Pad (6 bytes)
