@@ -33,8 +33,11 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ###
+
 include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
+include(CMakeParseArguments)
+
 
 # To reduce verbosity in this file, determine up front which
 # build configuration type (if any) we are using and stash
@@ -69,8 +72,9 @@ macro(ADD_NEW_FLAG FLAG_TYPE NEW_FLAG CONFIG_LIST)
   endif(${NEW_FLAG})
 endmacro(ADD_NEW_FLAG)
 
-# Convenience language based wrapper for calling the correct compiler
-# flag test macro
+
+# This macro tests for a specified C or C++ compiler flag, setting the
+# result in the specified variable.
 macro(CHECK_COMPILER_FLAG FLAG_LANG NEW_FLAG RESULTVAR)
   if("${FLAG_LANG}" STREQUAL "C")
     CHECK_C_COMPILER_FLAG(${NEW_FLAG} ${RESULTVAR})
@@ -114,8 +118,6 @@ endmacro(CHECK_COMPILER_FLAG LANG NEW_FLAG RESULTVAR)
 #                   BUILD_TYPES Debug Release
 #                   GROUPS DEBUG_FLAGS
 #                   VARS DEBUG1 DEBUG2)
-
-include (CMakeParseArguments)
 macro(CHECK_FLAG)
   # Set up some variables and names
   set(FLAG_LANG ${ARGV0})
@@ -174,14 +176,20 @@ macro(CHECK_FLAG)
 
 endmacro(CHECK_FLAG)
 
-# Convenience wrappers to call the primary checking function with a
-# default language.
+
+# This macro checks whether a specified C flag is available.  See
+# CHECK_FLAG() for arguments.
 macro(CHECK_C_FLAG)
   CHECK_FLAG(C ${ARGN})
 endmacro(CHECK_C_FLAG)
+
+
+# This macro checks whether a specified C++ flag is available.  See
+# CHECK_FLAG() for arguments.
 macro(CHECK_CXX_FLAG)
   CHECK_FLAG(CXX ${ARGN})
 endmacro(CHECK_CXX_FLAG)
+
 
 # Local Variables:
 # tab-width: 8
