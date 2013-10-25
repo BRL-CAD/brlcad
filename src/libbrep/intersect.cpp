@@ -2943,6 +2943,9 @@ ON_Intersect(const ON_Surface* surfA,
     if (DEBUG_BREP_INTERSECT)
 	bu_log("%d overlap events.\n", overlapevents.Count());
 
+    if (surfA->IsPlanar() && surfB->IsPlanar() && overlapevents.Count())
+	return x.Count() - original_count;
+
     /* Second step: calculate the intersection of the bounding boxes.
      * Only the children of intersecting b-box pairs need to be considered.
      * The children will be generated only when they are needed, using the
