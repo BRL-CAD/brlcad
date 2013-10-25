@@ -100,15 +100,8 @@ if(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
   CHECK_C_FLAG(pedantic)
   CHECK_CXX_FLAG(pedantic)
 
-  # FIXME: The Wall warnings are too verbose with Visual C++ (for
-  # now).  we have a lot to clean up.
-  if(NOT MSVC)
-    CHECK_C_FLAG(Wall)
-    CHECK_CXX_FLAG(Wall)
-  else(NOT MSVC)
-    CHECK_C_FLAG(W4)
-    CHECK_CXX_FLAG(W4)
-  endif(NOT MSVC)
+  CHECK_C_FLAG(Wall)
+  CHECK_CXX_FLAG(Wall)
 
   CHECK_C_FLAG(Wextra)
   CHECK_CXX_FLAG(Wextra)
