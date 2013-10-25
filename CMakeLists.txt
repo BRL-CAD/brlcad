@@ -1476,7 +1476,9 @@ if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
   CONFIG_H_APPEND(BRLCAD "#define _FORTIFY_SOURCE 2\n")
 endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
 
-#CHECK_C_COMPILER_FLAG("Wl, --no-undefined" NO_UNDEFINED_LINKER_FLAG)
+# Enable this flag for additional reporting of undefined symbols.
+# TODO: Fixing these is a work in progress.
+# CHECK_C_COMPILER_FLAG("Wl,--no-undefined" NO_UNDEFINED_LINKER_FLAG)
 
 # *******************************************************************
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
