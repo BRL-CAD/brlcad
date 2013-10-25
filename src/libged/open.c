@@ -36,7 +36,7 @@
 int
 ged_reopen(struct ged *gedp, int argc, const char *argv[])
 {
-    struct db_i *dbip;
+    struct db_i *new_dbip;
     static const char *usage = "[filename]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -54,11 +54,24 @@ ged_reopen(struct ged *gedp, int argc, const char *argv[])
     /* set database filename */
     if (argc == 2) {
 	char *av[2];
+	struct db_i *old_dbip = gedp->ged_wdbp->dbip;
+	struct mater *old_materp = rt_material_head();
+        struct mater *new_materp;
 
-	if ((dbip = _ged_open_dbip(argv[1], 0)) == DBI_NULL) {
+	rt_new_material_head(MATER_NULL);
+
+	if ((new_dbip = _ged_open_dbip(argv[1], 0)) == DBI_NULL) {
+	    /* Restore RT's material head */
+	    rt_new_material_head(old_materp);
+
 	    bu_vls_printf(gedp->ged_result_str, "ged_reopen: failed to open %s\n", argv[1]);
 	    return GED_ERROR;
 	}
+
+	new_materp = rt_material_head();
+
+	gedp->ged_wdbp->dbip = old_dbip;
+        rt_new_material_head(old_materp);
 
 	av[0] = "zap";
 	av[1] = (char *)0;
@@ -67,7 +80,8 @@ ged_reopen(struct ged *gedp, int argc, const char *argv[])
 	/* close current database */
 	db_close(gedp->ged_wdbp->dbip);
 
-	gedp->ged_wdbp->dbip = dbip;
+	gedp->ged_wdbp->dbip = new_dbip;
+	rt_new_material_head(new_materp);
 
 	bu_vls_printf(gedp->ged_result_str, "%s", gedp->ged_wdbp->dbip->dbi_filename);
 	return GED_OK;
