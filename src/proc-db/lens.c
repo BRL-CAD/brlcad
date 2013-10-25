@@ -74,6 +74,8 @@ static void
 printusage(void) {
     fprintf(stderr,"Usage: [-T lens_type] [-r refractive_index] [-d diameter]\n");
     fprintf(stderr,"       [-t thickness] [-f focal_length] [filename]\n");
+    fprintf(stderr,"defaults: T = 2 (the other possible value is 1), r = 1.5, d = 200, t = 40, f = 600\n");
+    fprintf(stderr,"(units mm)\n");
 }
 
 static void
@@ -268,7 +270,7 @@ main(int ac, char *av[])
     struct rt_wdb *db_fp = NULL;
     struct bu_vls lens_type = BU_VLS_INIT_ZERO;
     struct bu_vls name = BU_VLS_INIT_ZERO;
-    int lens_1side_2side;
+    int lens_1side_2side = 2;
     fastf_t ref_ind, thickness, diameter, focal_length;
 
     bu_vls_trunc(&lens_type, 0);
@@ -278,7 +280,6 @@ main(int ac, char *av[])
     diameter = 200;
     thickness = diameter/5;
     focal_length = 600;
-    lens_1side_2side = 2;
     bu_vls_printf(&lens_type, "DCX");
     bu_vls_printf(&name, "lens_%s_f%.1f_d%.1f", bu_vls_addr(&lens_type), focal_length, diameter);
 
