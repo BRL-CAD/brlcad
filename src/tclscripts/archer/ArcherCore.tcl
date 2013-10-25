@@ -1601,7 +1601,7 @@ namespace eval ArcherCore {
 	set rmode [lindex $rdata 0]
 	set rtrans [lindex $rdata 1]
 
-	if [ $rmode == $DISPLAY_MODE_HIDDEN ] {
+	if {$rmode == $DISPLAY_MODE_HIDDEN} {
 	    gedCmd draw -h $obj
 	} else {
 	    gedCmd draw -m$rmode -x$rtrans $obj
