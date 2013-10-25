@@ -51,7 +51,6 @@
  * soda-lime glass (1.5) and to 1/5 of the diameter
  * of the lens if not specified.
  *
- *
  */
 
 #include "common.h"
@@ -298,35 +297,32 @@ main(int ac, char *av[])
     }
 
     /* Make the requested lens*/
-    if (lens_1side_2side == 1 && focal_length > 0) {
-	bu_log("Making Plano-Convex lens...\n");
-	bu_vls_trunc(&lens_type, 0);
-	bu_vls_trunc(&name, 0);
-	bu_vls_printf(&lens_type, "PCX");
+    if (lens_1side_2side == 1) {
+	if (focal_length > 0) {
+		bu_log("Making Plano-Convex lens...\n");
+		bu_vls_trunc(&lens_type, 0);
+		bu_vls_trunc(&name, 0);
+		bu_vls_printf(&lens_type, "PCX");
+	} else if (focal_length < 0) {
+		bu_log("Making Plano-Concave lens...\n");
+		bu_vls_trunc(&lens_type, 0);
+		bu_vls_trunc(&name, 0);
+		bu_vls_printf(&lens_type, "PCV");
+	}
 	bu_vls_printf(&name, "lens_%s_f%.1f_d%.1f", bu_vls_addr(&lens_type), focal_length, diameter);
 	MakeP(db_fp, bu_vls_addr(&name), diameter, focal_length, ref_ind, thickness);
-    }
-    if (lens_1side_2side == 1 && focal_length < 0) {
-	bu_log("Making Plano-Concave lens...\n");
-	bu_vls_trunc(&lens_type, 0);
-	bu_vls_trunc(&name, 0);
-	bu_vls_printf(&lens_type, "PCV");
-	bu_vls_printf(&name, "lens_%s_f%.1f_d%.1f", bu_vls_addr(&lens_type), focal_length, diameter);
-	MakeP(db_fp, bu_vls_addr(&name), diameter, focal_length, ref_ind, thickness);
-    }
-    if (lens_1side_2side == 2 && focal_length > 0) {
-	bu_log("Making BiConvex lens...\n");
-	bu_vls_trunc(&lens_type, 0);
-	bu_vls_trunc(&name, 0);
-	bu_vls_printf(&lens_type, "DCX");
-	bu_vls_printf(&name, "lens_%s_f%.1f_d%.1f", bu_vls_addr(&lens_type), focal_length, diameter);
-	MakeD(db_fp, bu_vls_addr(&name), diameter, focal_length, ref_ind, thickness);
-    }
-    if (lens_1side_2side == 2 && focal_length < 0) {
-	bu_log("Making BiConcave lens...\n");
-	bu_vls_trunc(&lens_type, 0);
-	bu_vls_trunc(&name, 0);
-	bu_vls_printf(&lens_type, "DCV");
+    } else if (lens_1side_2side == 2) {
+	if (focal_length > 0) {
+		bu_log("Making BiConvex lens...\n");
+		bu_vls_trunc(&lens_type, 0);
+		bu_vls_trunc(&name, 0);
+		bu_vls_printf(&lens_type, "DCX");
+	} else if (focal_length < 0) {
+		bu_log("Making BiConcave lens...\n");
+		bu_vls_trunc(&lens_type, 0);
+		bu_vls_trunc(&name, 0);
+		bu_vls_printf(&lens_type, "DCV");
+	}
 	bu_vls_printf(&name, "lens_%s_f%.1f_d%.1f", bu_vls_addr(&lens_type), focal_length, diameter);
 	MakeD(db_fp, bu_vls_addr(&name), diameter, focal_length, ref_ind, thickness);
     }
@@ -336,7 +332,6 @@ main(int ac, char *av[])
 
     return 0;
 }
-
 
 /*
  * Local Variables:
