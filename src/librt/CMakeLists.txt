@@ -147,6 +147,33 @@ set(LIBRT_SOURCES
   primitives/metaball/metaball.c
   primitives/metaball/metaball_tri.c
   primitives/mirror.c
+  primitives/nmg/nmg.c
+  primitives/nmg/nmg_bool.c
+  primitives/nmg/nmg_brep.cpp
+  primitives/nmg/nmg_ck.c
+  primitives/nmg/nmg_class.c
+  primitives/nmg/nmg_copy.c
+  primitives/nmg/nmg_eval.c
+  primitives/nmg/nmg_extrude.c
+  primitives/nmg/nmg_fcut.c
+  primitives/nmg/nmg_fuse.c
+  primitives/nmg/nmg_index.c
+  primitives/nmg/nmg_info.c
+  primitives/nmg/nmg_inter.c
+  primitives/nmg/nmg_manif.c
+  primitives/nmg/nmg_mesh.c
+  primitives/nmg/nmg_mirror.c
+  primitives/nmg/nmg_misc.c
+  primitives/nmg/nmg_mk.c
+  primitives/nmg/nmg_mod.c
+  primitives/nmg/nmg_plot.c
+  primitives/nmg/nmg_pr.c
+  primitives/nmg/nmg_pt_fu.c
+  primitives/nmg/nmg_rt_isect.c
+  primitives/nmg/nmg_rt_segs.c
+  primitives/nmg/nmg_tri.c
+  primitives/nmg/nmg_tri_mc.c
+  primitives/nmg/nmg_visit.c
   primitives/obj_adjust.c
   primitives/obj_curve.c
   primitives/obj_describe.c
@@ -244,6 +271,7 @@ set(librt_ignored_files
   primitives/dsp/dsp.h
   primitives/fixpt.h
   primitives/metaball/metaball.h
+  primitives/nmg/nmg_junk.c
   primitives/revolve/revolve.h
   primitives/xxx/xxx.c
   primitives/xxx/xxx.h
@@ -264,7 +292,7 @@ else(MSVC)
   set(LIBRT_SOURCES ${LIBRT_SOURCES} timer42.c)
 endif(MSVC)
 
-BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${LIBGDIAM_LIBRARY};${LIBVDS_LIBRARY};libnmg;libbn;libbu;${OPENNURBS_LIBRARY};${P2T_LIBRARY};libbrep;${REGEX_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NO_STRICT_CXX)
+BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${LIBGDIAM_LIBRARY};${LIBVDS_LIBRARY};libbn;libbu;${OPENNURBS_LIBRARY};${P2T_LIBRARY};libbrep;${REGEX_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NO_STRICT_CXX)
 
 SET_TARGET_PROPERTIES(librt PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(CPP_DLL_DEFINES)

@@ -33,7 +33,6 @@ set(level_1_dirs
   libbn
   libsysv
   libbrep
-  libnmg
   librt
   )
 
