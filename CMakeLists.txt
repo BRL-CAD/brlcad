@@ -181,13 +181,13 @@ set(BRLCAD_ROOT "$ENV{BRLCAD_ROOT}")
 if(BRLCAD_ROOT)
   if(NOT BRLCAD_ROOT_OVERRIDE)
     message(WARNING "}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}\nBRLCAD_ROOT should only be used to override an install directory at runtime. BRLCAD_ROOT is presently set to \"${BRLCAD_ROOT}\"  It is *highly* recommended that BRLCAD_ROOT be unset and not used.\n}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}")
-    if(CMAKE_INSTALL_PREFIX AND NOT CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
+    if(CMAKE_INSTALL_PREFIX AND NOT CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
       if(${BRLCAD_ROOT} STREQUAL "${CMAKE_INSTALL_PREFIX}")
 	message("BRLCAD_ROOT is not necessary and may cause unexpected behavior")
       else(${BRLCAD_ROOT} STREQUAL "${CMAKE_INSTALL_PREFIX}")
 	message(FATAL_ERROR "BRLCAD_ROOT environment variable conflicts with CMAKE_INSTALL_PREFIX")
       endif(${BRLCAD_ROOT} STREQUAL "${CMAKE_INSTALL_PREFIX}")
-    endif(CMAKE_INSTALL_PREFIX AND NOT CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
+    endif(CMAKE_INSTALL_PREFIX AND NOT CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     if(SLEEP_EXEC)
       execute_process(COMMAND ${SLEEP_EXEC} 2)
     endif(SLEEP_EXEC)
@@ -676,10 +676,10 @@ endif("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND ${CMAKE_INSTALL_PREFIX} STREQUAL
 # the build directory AND install directory.  Thanks to plplot for
 # identifying the necessity of setting CMAKE_INSTALL_NAME_DIR on OSX.
 # Documentation of these options is available at
-#   http://www.cmake.org/Wiki/CMake_RPATH_handling
+# http://www.cmake.org/Wiki/CMake_RPATH_handling
 
 # use, i.e. don't skip the full RPATH for the build tree
-set(CMAKE_SKIP_BUILD_RPATH  FALSE)
+set(CMAKE_SKIP_BUILD_RPATH FALSE)
 
 # when building, don't use the install RPATH already
 # (but later on when installing)
@@ -1036,7 +1036,7 @@ endif(${BRLCAD_BUNDLED_LIBS} MATCHES "OFF")
 if(NOT BRLCAD_BUNDLED_LIBS MATCHES "AUTO" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "BUNDLED" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "SYSTEM")
   message(WARNING "Unknown value BRLCAD_BUNDLED_LIBS supplied for BRLCAD_BUNDLED_LIBS - defaulting to AUTO")
   message(WARNING "Valid options are AUTO, BUNDLED and SYSTEM")
-  set(BRLCAD_BUNDLED_LIBS "AUTO" CACHE STRING "Build	bundled libraries." FORCE)
+  set(BRLCAD_BUNDLED_LIBS "AUTO" CACHE STRING "Build bundled libraries." FORCE)
 endif(NOT BRLCAD_BUNDLED_LIBS MATCHES "AUTO" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "BUNDLED" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "SYSTEM")
 
 # Enable Aqua widgets on Mac OSX.  This impacts Tcl/Tk building and OpenGL
@@ -1110,7 +1110,7 @@ Enable support for OpenGL based Display Managers in BRL-CAD.
 Default depends on whether OpenGL is successfully detected -
 if it is, default is to enable.
 ")
-BRLCAD_OPTION(${OPENGL_FOUND} BRLCAD_ENABLE_OPENGL	BRLCAD_ENABLE_OPENGL_ALIASES BRLCAD_ENABLE_OPENGL_DESCRIPTION)
+BRLCAD_OPTION(${OPENGL_FOUND} BRLCAD_ENABLE_OPENGL BRLCAD_ENABLE_OPENGL_ALIASES BRLCAD_ENABLE_OPENGL_DESCRIPTION)
 
 # Enable RTGL.  Requires an enabled OpenGL.
 option(BRLCAD_ENABLE_RTGL "Enable experimental RTGL code." OFF)
@@ -1304,7 +1304,7 @@ endif(BRLCAD_ENABLE_SMP)
 #----------------------------------------------------------------------
 # There are extra documentation files available requiring DocBook
 # They are quite useful in graphical interfaces, but also add considerably
-# to the overall build time.  If necessary BRL-CAD  provides its own
+# to the overall build time.  If necessary BRL-CAD provides its own
 # xsltproc (see src/other/xmltools), so the html and man page
 # outputs are always potentially available.  PDF output, on the other hand,
 # needs Apache FOP.  FOP is not a candidate for bundling with BRL-CAD for
@@ -1348,7 +1348,7 @@ set(BRLCAD_EXTRADOCS_ALIASES
 set(BRLCAD_EXTRADOCS_DESCRIPTION "
 The core option that enables and disables building of BRL-CAD's DocBook
 based documentation (includes manuals and man pages for commands, among
-other things.)  Defaults to ON, but only HTML and MAN formats are enabled
+other things.) Defaults to ON, but only HTML and MAN formats are enabled
 by default - PDF must be enabled separately by use of this option or one
 of its aliases.  Note that you may set environment variable APACHE_FOP
 to point to your locally installed fop executable file (which on Linux is
@@ -1380,7 +1380,7 @@ mark_as_advanced(BRLCAD_EXTRADOCS_MAN)
 set(BRLCAD_EXTRADOCS_PDF_DESCRIPTION "
 Option that enables building of BRL-CAD's DocBook PDF-based documentation
 (includes manuals and man pages for commands, among
-other things.)  Defaults to OFF.
+other things.) Defaults to OFF.
 Note that you may set environment variable APACHE_FOP
 to point to your locally installed fop executable file (which on Linux is
 usually a shell script with 0755 permissions).
@@ -1476,7 +1476,7 @@ if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
   CONFIG_H_APPEND(BRLCAD "#define _FORTIFY_SOURCE 2\n")
 endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
 
-#CHECK_C_COMPILER_FLAG("Wl,--no-undefined" NO_UNDEFINED_LINKER_FLAG)
+#CHECK_C_COMPILER_FLAG("Wl, --no-undefined" NO_UNDEFINED_LINKER_FLAG)
 
 # *******************************************************************
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
@@ -1853,7 +1853,7 @@ endif("${HAVE_PROGRAM_INVOCATION_NAME}" MATCHES "^${HAVE_PROGRAM_INVOCATION_NAME
 # check C99 and POSIX 200112L missing functions with a more
 # rigorously-controlled compiler environment
 if(ENABLE_POSIX_COMPLIANCE
-   OR ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE)
+    OR ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE)
 
   set(needed_FUNCS
     test_fdopen
@@ -1865,7 +1865,7 @@ if(ENABLE_POSIX_COMPLIANCE
     test_strncasecmp
     test_sigaction
     test_strtok_r
-  )
+    )
 
   foreach(tprog ${needed_FUNCS})
     # remove "test_" from tprog
@@ -1876,7 +1876,7 @@ if(ENABLE_POSIX_COMPLIANCE
       "${CMAKE_BINARY_DIR}/test_funcs"
       "${CMAKE_SOURCE_DIR}/misc/CMake/compat/${tprog}.c"
       CMAKE_FLAGS "${CMAKE_C_FLAGS}"
-    )
+      )
 
     if(success)
       CONFIG_H_APPEND(BRLCAD "#define HAVE_WORKING_${FUNC}_FUNCTION 1\n")
@@ -2166,7 +2166,7 @@ if(NOT MSVC)
     ${CMAKE_BINARY_DIR}/CMakeTmp
     ${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c
     OUTPUT_VARIABLE COMPILEMESSAGES
-  )
+    )
 else(NOT MSVC)
   set(CMAKE_REQUIRED_LIBRARIES ws2_32.lib)
   TRY_RUN(TIME_RESULT TIME_COMPILED
@@ -2442,7 +2442,7 @@ mark_as_advanced(CMAKE_C_COMPILER)
 # pristine after configuration and compilation, the INSTALL and configure files
 # represent one of two cases where the default behavior is to alter the files
 # if changes have occurred.  (The other is cached generated outputs from tools
-# such as re2c and lemon.)  For the purposes of this project, a given
+# such as re2c and lemon.) For the purposes of this project, a given
 # option's documentation is defined in the CMakeLists.txt source file with
 # the option definition logic - the text in INSTALL is simply an output from
 # that, and is never the correct place for manual changes.
@@ -2453,7 +2453,7 @@ mark_as_advanced(CMAKE_C_COMPILER)
 # place in the source tree.
 
 file(READ ${BRLCAD_SOURCE_DIR}/INSTALL SRC_INSTALL_STR)
-string(REGEX REPLACE "${CONFIG_OPT_STRING}.*" "" INSTALL_PREFIX	"${SRC_INSTALL_STR}")
+string(REGEX REPLACE "${CONFIG_OPT_STRING}.*" "" INSTALL_PREFIX "${SRC_INSTALL_STR}")
 file(WRITE ${BRLCAD_BINARY_DIR}/INSTALL.new "${INSTALL_PREFIX}")
 file(READ ${BRLCAD_BINARY_DIR}/OPTIONS INSTALL_OPTS)
 file(APPEND ${BRLCAD_BINARY_DIR}/INSTALL.new "${INSTALL_OPTS}")
