@@ -31,6 +31,14 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  *
+ *
+ * Copyright 2001 softSurfer, 2012 Dan Sunday
+ * This code may be freely used and modified for any purpose
+ * providing that this copyright notice is included with it.
+ * SoftSurfer makes no warranty for this code, and cannot be held
+ * liable for any real or imagined damage resulting from its use.
+ * Users of this code must verify correctness for their application.
+ *
  */
 /** @file obr.c
  *
@@ -48,6 +56,10 @@
  * This is a translation of the Geometric Tools MinBox2 implementation:
  * http://www.geometrictools.com/LibMathematics/Containment/Wm5ContMinBox2.cpp
  * http://www.geometrictools.com/LibMathematics/Algebra/Wm5Vector2.inl
+ *
+ * The implementation of Melkman's algorithm for convex hulls of simple
+ * polylines is a translation of softSurfer's implementation:
+ * http://geomalgorithms.com/a12-_hull-3.html
  *
  */
 
@@ -132,6 +144,79 @@ pnt2d_array_get_dimension(const point_t *pnts, int pnt_cnt, point_t *p_center, p
     return 1;
 }
 
+/* isLeft(): test if a point is Left|On|Right of an infinite line.
+ *    Input:  three points L0, L1, and p
+ *    Return: >0 for p left of the line through L0 and L1
+ *            =0 for p on the line
+ *            <0 for p right of the line
+ */
+#define isLeft(L0, L1, p) ((L1[X] - L0[X])*(p[Y] - L0[Y]) - (p[X] - L0[X])*(L1[Y] - L0[Y]))
+
+
+/* melkman_hull(): Melkman's 2D simple polyline O(n) convex hull algorithm
+ *    Input:  polyline[] = array of 2D vertex points for a simple polyline
+ *            n   = the number of points in V[]
+ *    Output: hull[] = output convex hull array of vertices in ccw orientation (max is n)
+ *    Return: h   = the number of points in hull[]
+ */
+int
+melkman_hull(point_t* polyline, int n, point_t* hull)
+{
+    int i;
+
+    /* initialize a deque D[] from bottom to top so that the
+       1st three vertices of P[] are a ccw triangle */
+    point_t* D = (point_t *)bu_calloc(2*n+1, sizeof(fastf_t)*3, "dequeue");
+
+    /* hull vertex counter */
+    int h;
+
+    /* initial bottom and top deque indices */
+    int bot = n-2;
+    int top = bot+3;
+
+    /* 3rd vertex is a both bot and top */
+    VMOVE(D[top], polyline[2]);
+    VMOVE(D[bot], D[top]);
+    if (isLeft(polyline[0], polyline[1], polyline[2]) > 0) {
+        VMOVE(D[bot+1],polyline[0]);
+        VMOVE(D[bot+2],polyline[1]);   /* ccw vertices are: 2,0,1,2 */
+    }
+    else {
+        VMOVE(D[bot+1],polyline[1]);
+        VMOVE(D[bot+2],polyline[0]);   /* ccw vertices are: 2,1,0,2 */
+    }
+
+    /* compute the hull on the deque D[] */
+    for (i = 3; i < n; i++) {   /* process the rest of vertices */
+        /* test if next vertex is inside the deque hull */
+        if ((isLeft(D[bot], D[bot+1], polyline[i]) > 0) &&
+            (isLeft(D[top-1], D[top], polyline[i]) > 0) )
+                 continue;         /* skip an interior vertex */
+
+        /* incrementally add an exterior vertex to the deque hull
+           get the rightmost tangent at the deque bot */
+        while (isLeft(D[bot], D[bot+1], polyline[i]) <= 0)
+            ++bot;                      /* remove bot of deque */
+        VMOVE(D[--bot],polyline[i]);    /* insert P[i] at bot of deque */
+
+        /* get the leftmost tangent at the deque top */
+        while (isLeft(D[top-1], D[top], polyline[i]) <= 0)
+            --top;                      /* pop top of deque */
+        VMOVE(D[++top],polyline[i]);    /* push P[i] onto top of deque */
+    }
+
+    /* transcribe deque D[] to the output hull array hull[] */
+
+    hull = bu_calloc(top - bot + 2, sizeof(fastf_t)*3, "hull");
+    for (h=0; h <= (top-bot); h++)
+        VMOVE(hull[h],D[bot + h]);
+
+    bu_free(D, "free queue");
+    return h-1;
+}
+
+
 /* TODO - if three consecutive colinear points are a no-no as documented in the original code,
  * we're going to have to build the convex hull for all inputs in order to make sure we don't
  * get large colinear sets from the NMG inputs.*/
@@ -147,7 +232,7 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
     point_t **edge_unit_vects = NULL;
     int **visited = NULL; */
     point_t center, pmin, pmax;
-    /*vect_t vline, vz;*/
+    vect_t vline, vz, vdelta, neg_vdelta, neg_vline;
     if (!pnts || !p1 || !p2 || !p3 || !p4) return -1;
     /* Need 2d points for this to work */
     while (i < pnt_cnt) {
@@ -155,31 +240,30 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 	i++;
     }
     dim = pnt2d_array_get_dimension(pnts, pnt_cnt, &center, &pmin, &pmax);
-#if 0
     switch (dim) {
 	case 0:
 	    /* Bound point */
-	    p1[0] = center[0] - BN_TOL_DIST;
-	    p1[1] = center[1] - BN_TOL_DIST;
-	    p2[0] = center[0] + BN_TOL_DIST;
-	    p2[1] = center[1] - BN_TOL_DIST;
-	    p3[0] = center[0] + BN_TOL_DIST;
-	    p3[1] = center[1] + BN_TOL_DIST;
-	    p4[0] = center[0] - BN_TOL_DIST;
-	    p4[1] = center[1] + BN_TOL_DIST;
+	    VSET(*p1, center[0] - BN_TOL_DIST, center[1] - BN_TOL_DIST, 0);
+	    VSET(*p2, center[0] + BN_TOL_DIST, center[1] - BN_TOL_DIST, 0);
+	    VSET(*p3, center[0] + BN_TOL_DIST, center[1] + BN_TOL_DIST, 0);
+	    VSET(*p4, center[0] - BN_TOL_DIST, center[1] + BN_TOL_DIST, 0);
 	    break;
 	case 1:
 	    /* Bound line */
 	    VSET(vz, 0, 0, 1);
-	    VSUB(pmax, pmin, vline);
-	    VCROSS(vline, vz, vdelta);
-	    VSCALE(vdelta, BN_TOL_DIST);
+	    VSUB2(vline, pmax, pmin);
+	    VUNITIZE(vline);
+	    VCROSS(vdelta, vline, vz);
+	    VUNITIZE(vdelta);
+	    VSCALE(vdelta, vdelta, BN_TOL_DIST);
 	    VSET(neg_vdelta, -vdelta[0], -vdelta[1], 0);
-	    VADD(pmin, neg_vdelta, p1);
-	    VADD(pmax, neg_vdelta, p2);
-	    VADD(pmax, vdelta, p3);
-	    VADD(pmin, vdelta, p4);
+	    VSET(neg_vline, -vline[0], -vline[1], 0);
+	    VADD3(*p1, pmin, neg_vline, neg_vdelta);
+	    VADD3(*p2, pmax, vline, neg_vdelta);
+	    VADD3(*p3, pmax, vline, vdelta);
+	    VADD3(*p4, pmin, neg_vline, vdelta);
 	    break;
+#if 0
 	case 2:
 	    /* Bound convex hull using rotating calipers */
 
@@ -354,11 +438,11 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 			break;
 		}
 	    }
-	    bu_free(visited, "free visited");
-	    bu_free(edge_unit_vects, "free visited");
-	    bu_free(hull_pnts, "free visited");
-    }
 #endif
+/*	    bu_free(visited, "free visited");
+	    bu_free(edge_unit_vects, "free visited");
+	    bu_free(hull_pnts, "free visited");*/
+    }
     return dim;
 }
 
