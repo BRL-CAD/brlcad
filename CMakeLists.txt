@@ -933,9 +933,9 @@ endif("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
 
 # *******************************************************************
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
-message("***********************************************************")
-message("*        Stage 1 of 9 - Top Level Configure Options       *")
-message("***********************************************************")
+  message("***********************************************************")
+  message("*        Stage 1 of 9 - Top Level Configure Options       *")
+  message("***********************************************************")
 endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 #
 # Now we define the various options for BRL-CAD - ways to enable and
@@ -1411,9 +1411,9 @@ include(${BRLCAD_CMAKE_DIR}/BRLCAD_CheckFunctions.cmake)
 
 # *******************************************************************
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
-message("***********************************************************")
-message("*             Stage 2 of 9 - Check for Programs           *")
-message("***********************************************************")
+  message("***********************************************************")
+  message("*             Stage 2 of 9 - Check for Programs           *")
+  message("***********************************************************")
 endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 
 # A variety of tools, such as the benchmark utilities, need
@@ -1447,9 +1447,9 @@ find_package(Doxygen)
 
 # *******************************************************************
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
-message("***********************************************************")
-message("*     Stage 3 of 9 - Check for Compiler Characteristics   *")
-message("***********************************************************")
+  message("***********************************************************")
+  message("*     Stage 3 of 9 - Check for Compiler Characteristics   *")
+  message("***********************************************************")
 endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 
 # load our compiler testing macro definitions
@@ -1480,9 +1480,9 @@ endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
 
 # *******************************************************************
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
-message("***********************************************************")
-message("*             Stage 4 of 9 - Check for Libraries          *")
-message("***********************************************************")
+  message("***********************************************************")
+  message("*             Stage 4 of 9 - Check for Libraries          *")
+  message("***********************************************************")
 endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 
 # While the primary purpose of this section is to identify libraries,
@@ -1579,9 +1579,9 @@ BRLCAD_CHECK_LIBRARY(WINMM winmm timeSetEvent)
 
 # *******************************************************************
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
-message("***********************************************************")
-message("*               Stage 5 of 9 - Check for Headers          *")
-message("***********************************************************")
+  message("***********************************************************")
+  message("*               Stage 5 of 9 - Check for Headers          *")
+  message("***********************************************************")
 endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 
 # C89 headers: assert.h, ctype.h, errno.h, float.h, limits.h, locale.h,
@@ -1712,9 +1712,9 @@ endif(HAVE_EMMINTRIN_H)
 
 # *******************************************************************
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
-message("***********************************************************")
-message("*          Stage 6 of 9 - Check for Types/Structures      *")
-message("***********************************************************")
+  message("***********************************************************")
+  message("*          Stage 6 of 9 - Check for Types/Structures      *")
+  message("***********************************************************")
 endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 
 
@@ -1765,9 +1765,9 @@ BRLCAD_CHECK_C99_FORMAT_SPECIFIERS()
 
 # *******************************************************************
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
-message("***********************************************************")
-message("*              Stage 7 of 9 - Check for Functions         *")
-message("***********************************************************")
+  message("***********************************************************")
+  message("*              Stage 7 of 9 - Check for Functions         *")
+  message("***********************************************************")
 endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 
 
@@ -1922,9 +1922,9 @@ endif(MSVC)
 
 # *******************************************************************
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
-message("***********************************************************")
-message("*          Stage 8 of 9 - Check for System Services       *")
-message("***********************************************************")
+  message("***********************************************************")
+  message("*          Stage 8 of 9 - Check for System Services       *")
+  message("***********************************************************")
 endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 
 # For Windows, we need some dlls to be redistributed with the
@@ -1956,9 +1956,9 @@ add_subdirectory(src/other)
 
 # *******************************************************************
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
-message("***********************************************************")
-message("*        Stage 9 of 9 - Define BRL-CAD Build Targets      *")
-message("***********************************************************")
+  message("***********************************************************")
+  message("*        Stage 9 of 9 - Define BRL-CAD Build Targets      *")
+  message("***********************************************************")
 endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 
 # Enable CTest Testing support - this is done after src/other is
