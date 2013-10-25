@@ -1454,10 +1454,6 @@ endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 
 # load our compiler testing macro definitions
 include(${BRLCAD_CMAKE_DIR}/CompilerFlags.cmake)
-if(NOT MSVC)
-  # alas, we heavily assume and test for gcc-style flags in both
-  include(${BRLCAD_CMAKE_DIR}/BRLCAD_CompilerFlags.cmake)
-endif(NOT MSVC)
 
 # Clear out most CMake-assigned defaults - We're managing
 # our own compile flags, and don't (for example) want NDEBUG
@@ -1689,6 +1685,14 @@ endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
 # Enable this flag for additional reporting of undefined symbols.
 # TODO: Fixing these is a work in progress.
 # CHECK_C_COMPILER_FLAG("Wl,--no-undefined" NO_UNDEFINED_LINKER_FLAG)
+
+if(NOT MSVC)
+  # We could include this, but these tests are almost entirely for
+  # gcc-style flags.  This file is intentionally included after we
+  # wipe out the various FLAGS variables.
+  include(${BRLCAD_CMAKE_DIR}/BRLCAD_CompilerFlags.cmake)
+endif(NOT MSVC)
+
 
 # *******************************************************************
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
