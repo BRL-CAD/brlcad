@@ -35,7 +35,6 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-
 #define HEIGHT 4000		/* 4 meter high walls */
 
 #define EAST 1
@@ -44,7 +43,6 @@
 #define SOUTH 8
 
 mat_t identity;
-double degtorad = 0.0174532925199433;
 double sin60;
 
 struct mtab {
