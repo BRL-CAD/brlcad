@@ -53,8 +53,8 @@ print_matrices(char *rb_namep, mat_t t, btScalar *m)
     sprintf(buffer, "------------Phy : Transformation matrices(%s)--------------\n",
 	    rb_namep);
 
-    for (i=0 ; i<4 ; i++) {
-	    for (j=0 ; j<4 ; j++) {
+    for (i = 0; i < 4; i++) {
+	    for (j = 0; j < 4; j++) {
 		sprintf(buffer, "%st[%d]: %f\t", buffer, (j*4 + i), t[j*4 + i]);
 	    }
 	    sprintf(buffer, "%s\n", buffer);
@@ -62,8 +62,8 @@ print_matrices(char *rb_namep, mat_t t, btScalar *m)
 
     sprintf(buffer, "%s\n", buffer);
 
-    for (i=0 ; i<4 ; i++) {
-	    for (j=0 ; j<4 ; j++) {
+    for (i = 0; i < 4; i++) {
+	    for (j = 0; j < 4; j++) {
 		sprintf(buffer, "%sm[%d]: %f\t", buffer, (j*4 + i), m[j*4 + i]);
 	    }
 	    sprintf(buffer, "%s\n", buffer);
@@ -222,7 +222,7 @@ get_transforms(btDiscreteDynamicsWorld* dynamicsWorld)
     const int num_bodies = dynamicsWorld->getNumCollisionObjects();
 
 
-    for (i=0; i < num_bodies; i++) {
+    for (i = 0; i < num_bodies; i++) {
 
 	    //Common properties among all rigid bodies
 	    btCollisionObject* bb_ColObj = dynamicsWorld->getCollisionObjectArray()[i];
@@ -297,7 +297,7 @@ cleanup(btDiscreteDynamicsWorld* dynamicsWorld,
     //remove the rigid bodies from the dynamics world and delete them
     int i;
 
-    for (i=dynamicsWorld->getNumCollisionObjects()-1; i>=0; i--) {
+    for (i = dynamicsWorld->getNumCollisionObjects()-1; i >= 0; i--) {
 
 	btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[i];
 	btRigidBody* body = btRigidBody::upcast(obj);
@@ -309,7 +309,7 @@ cleanup(btDiscreteDynamicsWorld* dynamicsWorld,
     }
 
     //delete collision shapes
-    for (i=0; i<collision_shapes.size(); i++) {
+    for (i = 0; i < collision_shapes.size(); i++) {
 	btCollisionShape* shape = collision_shapes[i];
 	delete shape;
     }
@@ -503,7 +503,7 @@ run_simulation(struct simulation_params *sp)
 
 	sim_params = sp;
 
-	//for (i=0 ; i < sim_params->duration ; i++) {
+	//for (i = 0 ; i < sim_params->duration ; i++) {
 
     //Initialize the physics world
     btDiscreteDynamicsWorld* dynamicsWorld;

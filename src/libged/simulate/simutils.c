@@ -59,8 +59,8 @@ print_matrix(char *rb_namep, mat_t t)
     bu_vls_sprintf(&buffer, "------------Transformation matrix(%s)--------------\n",
 		   rb_namep);
 
-    for (i=0 ; i<4 ; i++) {
-	for (j=0 ; j<4 ; j++) {
+    for (i = 0; i < 4; i++) {
+	for (j = 0; j < 4; j++) {
 	    bu_vls_sprintf(&buffer, "t[%d]: %f\t", (i*4 + j), t[i*4 + j]);
 	}
 	bu_vls_strcat(&buffer, "\n");
@@ -86,7 +86,7 @@ print_manifold_list(struct rigid_body *rb)
 
     bu_log("print_manifold_list: %s\n", rb->rb_namep);
 
-    for (i=0; i<rb->num_bt_manifolds; i++) {
+    for (i = 0; i < rb->num_bt_manifolds; i++) {
 
 	bu_log("--Manifold %d between %s & %s has %d contacts--\n",
 		   i+1,
@@ -94,7 +94,7 @@ print_manifold_list(struct rigid_body *rb)
 	       rb->bt_manifold[i].rbB->rb_namep,
 	       rb->bt_manifold[i].num_contacts);
 
-	for (j=0; j<rb->bt_manifold[i].num_contacts; j++) {
+	for (j = 0; j < rb->bt_manifold[i].num_contacts; j++) {
 	    bu_log("%d, (%f, %f, %f):(%f, %f, %f), n(%f, %f, %f)\n",
 		   j+1,
 		   V3ARGS(rb->bt_manifold[i].contacts[j].ptA),
@@ -110,7 +110,7 @@ print_command(char* cmd_args[], int argc)
 {
     int i;
     char buffer[500] = "";
-    for (i=0; i<argc; i++) {
+    for (i = 0; i < argc; i++) {
 	sprintf(buffer, "%s %s", buffer, cmd_args[i]);
     }
 
@@ -164,7 +164,7 @@ check_tree_funcleaf(
 	case OP_SUBTRACT:
 	case OP_XOR:
 	    rv = check_tree_funcleaf(dbip, comb, comb_tree->tr_b.tb_left, leaf_func, user_ptr1);
-	    if(rv == NOT_FOUND)
+	    if (rv == NOT_FOUND)
 		rv = check_tree_funcleaf(dbip, comb, comb_tree->tr_b.tb_right, leaf_func, user_ptr1);
 	    break;
 	default:
@@ -725,10 +725,10 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
     point_t from = VINIT_ZERO;
     point_t to = VINIT_ZERO;
 
-    for (i=0; i<rb->num_bt_manifolds; i++) {
+    for (i = 0; i < rb->num_bt_manifolds; i++) {
 
 
-	if(rb->bt_manifold[i].num_contacts > 0){
+	if (rb->bt_manifold[i].num_contacts > 0){
 
 	    /* Prepare prefixed bounding box primitive name */
 	    bu_vls_sprintf(&name, "%s_%s", rb->bt_manifold[i].rbA->rb_namep, rb->bt_manifold[i].rbB->rb_namep);
@@ -811,7 +811,7 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 
 		case 4:
 		    cmd_args[2] = bu_strdup("arb8");
-		    for (j=0; j<4; j++) {
+		    for (j = 0; j < 4; j++) {
 			sprintf(buffer, "%f", rb->bt_manifold[i].contacts[j].ptA[0]);
 			cmd_args[3+j*3] = bu_strdup(buffer);
 			sprintf(buffer, "%f", rb->bt_manifold[i].contacts[j].ptA[1]);

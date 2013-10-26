@@ -99,7 +99,7 @@ btRTCollisionAlgorithm::processCollision(btCollisionObject* col0,
 	   struct sim_manifold *rt_mf = &(rbB->rt_manifold);
 
 	   // Now add the RT contact pairs
-	   for (i=0; i<rt_mf->num_contacts; i++){
+	   for (i = 0; i < rt_mf->num_contacts; i++){
 
 		   btVector3 ptA, ptB, normalWorldOnB;
 

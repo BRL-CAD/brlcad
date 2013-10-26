@@ -159,7 +159,7 @@ add_regions(struct ged *gedp, struct simulation_params *sim_params)
 
     bu_vls_free(&dp_name_vls);
 
-    if(sim_params->num_bodies == 0){
+    if (sim_params->num_bodies == 0){
 	    bu_vls_printf(gedp->ged_result_str, "add_regions: ERROR No objects were added\n");
 	    return GED_ERROR;
     }
@@ -429,7 +429,7 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
 		return GED_ERROR;
     }
 
-    for (i=0 ; i < sim_params.duration ; i++) {
+    for (i = 0 ; i < sim_params.duration ; i++) {
 
 		bu_log("%s: ------------------------- Iteration %d -----------------------\n", argv[0], i+1);
 
