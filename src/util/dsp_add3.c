@@ -191,6 +191,7 @@ main(int ac, char *av[])
       "Allow overwriting existing files."
       );
 
+    /* need two file names */
     BU_ARG_UNLABELED_VALUE_INIT(
       dsp1_arg,
       "",
@@ -201,6 +202,7 @@ main(int ac, char *av[])
       ""
       );
 
+    /* need two file names */
     BU_ARG_UNLABELED_VALUE_INIT(
       dsp2_arg,
       "",
@@ -211,6 +213,7 @@ main(int ac, char *av[])
       ""
       );
 
+    /* the output file name */
     BU_ARG_UNLABELED_VALUE_INIT(
       dsp3_arg,
       "",
