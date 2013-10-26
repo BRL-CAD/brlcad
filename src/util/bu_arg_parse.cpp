@@ -39,11 +39,6 @@
 using namespace std;
 using namespace TCLAP;
 
-// local vars
-//static bool _debug(false);
-//static bool _debug(true);
-
-// using ideas from Cliff and Sean...
 // local funcs
 static bu_arg_t _get_arg_type(void *arg);
 
@@ -53,47 +48,26 @@ static void _insert_long(void *addr, const long l);
 static void _insert_double(void *addr, const double d);
 static void _insert_string(void *addr, const std::string& s);
 
-/* not yet ready
-static Arg *_handle_MultiArg(bu_arg_vars *a, CmdLine &cmd);
-static Arg *_handle_MultiSwitchArg(bu_arg_vars *a, CmdLine &cmd);
-static Arg *_handle_UnlabeledMultiArg(bu_arg_vars *a, CmdLine &cmd);
-static Arg *_handle_ValueArg(bu_arg_vars *a, CmdLine &cmd);
-*/
-
-/* not yet ready
-static void _extract_MultiArg_data(bu_arg_vars *a, Arg *A);
-static void _extract_MultiSwitchArg_data(bu_arg_vars *a, Arg *A);
-static void _extract_UnlabeledMultiArg_data(bu_arg_vars *a, Arg *A);
-static void _extract_ValueArg_data(bu_arg_vars *a, Arg *A);
-*/
-
 static void _extract_SwitchArg_data(bu_arg_switch_t *a, Arg *A);
 static void _extract_UnlabeledValueArg_data(bu_arg_unlabeled_value_t *a, Arg *A);
+
+static Arg *_handle_UnlabeledValueArg(bu_arg_unlabeled_value_t *a, CmdLine &cmd);
+static Arg *_handle_SwitchArg(bu_arg_switch_t *a, CmdLine &cmd);
+
+// not yet ready
+//static Arg *_handle_MultiArg(bu_arg_vars *a, CmdLine &cmd);
+//static Arg *_handle_MultiSwitchArg(bu_arg_vars *a, CmdLine &cmd);
+//static Arg *_handle_UnlabeledMultiArg(bu_arg_vars *a, CmdLine &cmd);
+//static Arg *_handle_ValueArg(bu_arg_vars *a, CmdLine &cmd);
+//static void _extract_MultiArg_data(bu_arg_vars *a, Arg *A);
+//static void _extract_MultiSwitchArg_data(bu_arg_vars *a, Arg *A);
+//static void _extract_UnlabeledMultiArg_data(bu_arg_vars *a, Arg *A);
+//static void _extract_ValueArg_data(bu_arg_vars *a, Arg *A);
 
 /**
  * need vec for deleting Arg pointers when done
  */
 static vector<Arg*> _Arg_pointers;
-
-/**
- * get a value for an arg
- */
-
-/**
- * general constructor for bu_arg_vars
- */
-
-/**
- * C constructor for SwitchArg
- */
-
-/**
- * C constructor for UnlabeledValueArg
- */
-
-/**
- * construct all for TCLAP handling, ensure input args get proper values for the caller
- */
 
 Arg *
 _handle_SwitchArg(bu_arg_switch_t *a, CmdLine &cmd)
