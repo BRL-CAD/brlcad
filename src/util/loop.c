@@ -250,10 +250,10 @@ main(int argc, char *argv[])
 		cincr = 1;
 	}
 	if (cincr > 0)
-	    for (c=cstart;  c <= cfinish; c += cincr)
+	    for (c = cstart;  c <= cfinish; c += cincr)
 		printf("%c\n", (char)c);
 	else if (cincr < 0)
-	    for (c=cstart; c >= cfinish; c +=cincr)
+	    for (c = cstart; c >= cfinish; c += cincr)
 		printf("%c\n", (char)c);
 	else {
 	    bu_log("loop 'incr' can not be zero.\n");
