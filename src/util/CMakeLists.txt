@@ -89,12 +89,6 @@ BRLCAD_ADDEXEC(dsp_add dsp_add.c libbu)
 BRLCAD_ADDEXEC(dsp_add_t dsp_add_t.cpp libbu NO_INSTALL)
 
 # tmp def for testing C wrapper for TCLAP
-BRLCAD_ADDEXEC(dsp_add2 "dsp_add2.c;bu_arg_parse.cpp" libbu NO_INSTALL)
-
-# another tmp def for testing C wrapper for TCLAP
-BRLCAD_ADDEXEC(dsp_add3 "dsp_add3.c;bu_arg_parse.cpp" libbu NO_INSTALL)
-
-# another tmp def for testing C wrapper for TCLAP
 BRLCAD_ADDEXEC(dsp_add4 "dsp_add4.c;bu_arg_parse.cpp" libbu NO_INSTALL)
 
 # a test file for the entire TCLAP wrapper interface

@@ -40,18 +40,20 @@ using namespace std;
 using namespace TCLAP;
 
 // local vars
-static bool _debug(false);
+//static bool _debug(false);
 //static bool _debug(true);
 
 // using ideas from Cliff and Sean...
 // local funcs
 static bu_arg_t _get_arg_type(void *arg);
+/* OBSOLETE
 static bu_arg_vars *bu_arg_init();
 static std::string _get_fname(void *arg);
 static void _write_bool(void *addr, const bool b);
 static void _write_long(void *addr, const long l);
 static void _write_double(void *addr, const double d);
 static void _write_string(void *addr, const std::string& s);
+*/
 
 // for static data handling
 static void _insert_bool(void *addr, const bool b);
@@ -59,10 +61,12 @@ static void _insert_long(void *addr, const long l);
 static void _insert_double(void *addr, const double d);
 static void _insert_string(void *addr, const std::string& s);
 
+/* OBSOLETE
 static bool _read_bool(void *addr);
 static long _read_long(void *addr);
 static double _read_double(void *addr);
 static std::string _read_string(void *addr);
+*/
 
 /* not yet ready
 static Arg *_handle_MultiArg(bu_arg_vars *a, CmdLine &cmd);
@@ -71,11 +75,12 @@ static Arg *_handle_UnlabeledMultiArg(bu_arg_vars *a, CmdLine &cmd);
 static Arg *_handle_ValueArg(bu_arg_vars *a, CmdLine &cmd);
 */
 
+/* OBSOLETE
 static Arg *_handle_SwitchArg(bu_arg_vars *a, CmdLine &cmd);
 static Arg *_handle_UnlabeledValueArg(bu_arg_vars *a, CmdLine &cmd);
-
 static Arg *_handle_SwitchArg2(bu_arg_switch_t *a, CmdLine &cmd);
 static Arg *_handle_UnlabeledValueArg2(bu_arg_unlabeled_value_t *a, CmdLine &cmd);
+*/
 
 /* not yet ready
 static void _extract_MultiArg_data(bu_arg_vars *a, Arg *A);
@@ -84,12 +89,15 @@ static void _extract_UnlabeledMultiArg_data(bu_arg_vars *a, Arg *A);
 static void _extract_ValueArg_data(bu_arg_vars *a, Arg *A);
 */
 
+/* OBSOLETE
 static void _extract_SwitchArg_data(bu_arg_vars *a, Arg *A);
 static void _extract_UnlabeledValueArg_data(bu_arg_vars *a, Arg *A);
-
 static void _extract_SwitchArg_data2(bu_arg_switch_t *a, Arg *A);
 static void _extract_UnlabeledValueArg_data2(bu_arg_unlabeled_value_t *a, Arg *A);
+*/
 
+static void _extract_SwitchArg_data4(bu_arg_switch_t *a, Arg *A);
+static void _extract_UnlabeledValueArg_data4(bu_arg_unlabeled_value_t *a, Arg *A);
 
 /**
  * need vec for deleting Arg pointers when done
@@ -99,6 +107,7 @@ static vector<Arg*> _Arg_pointers;
 /**
  * get a value for an arg
  */
+/* OBSOLETE
 int
 bu_arg_get_bool(bu_arg_vars *arg)
 {
@@ -122,10 +131,12 @@ bu_arg_get_string(bu_arg_vars *arg)
 {
   return arg->val.u.s.vls_str;
 }
+*/
 
 /**
  * general constructor for bu_arg_vars
  */
+/* OBSOLETE
 bu_arg_vars *
 bu_arg_init()
 {
@@ -142,10 +153,12 @@ bu_arg_init()
   // return to caller
   return arg;
 }
+*/
 
 /**
  * C constructor for SwitchArg
  */
+/* OBSOLETE
 extern "C"
 bu_arg_vars *
 bu_arg_switch(const char *flag,
@@ -167,10 +180,12 @@ bu_arg_switch(const char *flag,
 
   return arg;
 }
+*/
 
 /**
  * C constructor for UnlabeledValueArg
  */
+/* OBSOLETE
 extern "C"
 bu_arg_vars *
 bu_arg_unlabeled_value(const char *name,
@@ -210,10 +225,12 @@ bu_arg_unlabeled_value(const char *name,
 
   return arg;
 }
+*/
 
 /**
  * construct all for TCLAP handling, ensure input args get proper values for the caller
  */
+/* OBSOLETE
 extern "C"
 int
 bu_arg_parse(bu_ptbl_t *ptbl_args, int argc, char * const argv[])
@@ -261,20 +278,20 @@ bu_arg_parse(bu_ptbl_t *ptbl_args, int argc, char * const argv[])
           case BU_ARG_UnlabeledValueArg:
             A = _handle_UnlabeledValueArg(a, cmd);
             break;
-/* not yet ready
-          case BU_ARG_MultiArg:
-            A = _handle_MultiArg(a, cmd);
-            break;
-          case BU_ARG_MultiSwitchArg:
-            A = _handle_MultiSwitchArg(a, cmd);
-            break;
-          case BU_ARG_UnlabeledMultiArg:
-            A = _handle_UnlabeledMultiArg(a, cmd);
-            break;
-          case BU_ARG_ValueArg:
-            A = _handle_ValueArg(a, cmd);
-            break;
-*/
+// not yet ready
+//          case BU_ARG_MultiArg:
+//            A = _handle_MultiArg(a, cmd);
+//            break;
+//          case BU_ARG_MultiSwitchArg:
+//            A = _handle_MultiSwitchArg(a, cmd);
+//            break;
+//          case BU_ARG_UnlabeledMultiArg:
+//            A = _handle_UnlabeledMultiArg(a, cmd);
+//            break;
+//          case BU_ARG_ValueArg:
+//            A = _handle_ValueArg(a, cmd);
+//            break;
+
           default:
              // error
             BU_ASSERT(0 && "tried to use non-handled BU_ARG type\n");
@@ -298,20 +315,20 @@ bu_arg_parse(bu_ptbl_t *ptbl_args, int argc, char * const argv[])
           case BU_ARG_UnlabeledValueArg:
             _extract_UnlabeledValueArg_data(a, A);
             break;
-/* not yet ready
-          case BU_ARG_MultiArg:
-            _extract_MultiArg_data(a, cmd);
-            break;
-          case BU_ARG_MultiSwitchArg:
-            _extract_MultiSwitchArg_data(a, A);
-            break;
-          case BU_ARG_UnlabeledMultiArg:
-            _extract_UnlabeledMultiArg_data(a, A);
-            break;
-          case BU_ARG_ValueArg:
-            _extract_ValueArg_data(a, A);
-            break;
-*/
+// not yet ready
+//          case BU_ARG_MultiArg:
+//            _extract_MultiArg_data(a, cmd);
+//            break;
+//          case BU_ARG_MultiSwitchArg:
+//            _extract_MultiSwitchArg_data(a, A);
+//            break;
+//          case BU_ARG_UnlabeledMultiArg:
+//            _extract_UnlabeledMultiArg_data(a, A);
+//            break;
+//          case BU_ARG_ValueArg:
+//            _extract_ValueArg_data(a, A);
+//            break;
+
           default:
              // error
             BU_ASSERT(0 && "tried to use non-existent BU_ARG type\n");
@@ -343,8 +360,10 @@ bu_arg_parse(bu_ptbl_t *ptbl_args, int argc, char * const argv[])
 
   return retval;
 
-} // bu_opt_parse
+} // bu_arg_parse
+*/
 
+/* OBSOLETE
 Arg *
 _handle_SwitchArg(bu_arg_vars *a, CmdLine &cmd)
 {
@@ -366,6 +385,7 @@ _handle_SwitchArg2(bu_arg_switch_t *a, CmdLine &cmd)
 
   return A;
 }
+*/
 
 Arg *
 _handle_SwitchArg4(bu_arg_switch_t *a, CmdLine &cmd)
@@ -378,6 +398,7 @@ _handle_SwitchArg4(bu_arg_switch_t *a, CmdLine &cmd)
   return A;
 }
 
+/* OBSOLETE
 Arg *
 _handle_UnlabeledValueArg(bu_arg_vars *a, CmdLine &cmd)
 {
@@ -467,6 +488,7 @@ _handle_UnlabeledValueArg2(bu_arg_unlabeled_value_t *a, CmdLine &cmd)
   _Arg_pointers.push_back(A);
   return A;
 } // _handle_UnlabeledValueArg2
+*/
 
 Arg *
 _handle_UnlabeledValueArg4(bu_arg_unlabeled_value_t *a, CmdLine &cmd)
@@ -552,6 +574,7 @@ _handle_ValueArg(bu_arg_vars *a, CmdLine &cmd)
 }
 */
 
+/* OBSOLETE
 void
 _extract_SwitchArg_data(bu_arg_vars *a, Arg *A)
 {
@@ -600,6 +623,7 @@ _extract_UnlabeledValueArg_data(bu_arg_vars *a, Arg *A)
         break;
   }
 }
+*/
 
 /* not yet ready
 void
@@ -629,6 +653,7 @@ _extract_ValueArg_data(bu_arg_vars *a, Arg *A)
 
 */
 
+/* OBSOLETE
 extern "C" void
 bu_arg_vls_free(bu_arg_vars *arg)
 {
@@ -647,7 +672,7 @@ extern "C" void
 bu_arg_free(bu_ptbl_t *args)
 {
   BU_CK_PTBL(args);
-  /* pointer to access args table; */
+  // pointer to access args table;
   bu_arg_vars **ap;
   for (BU_PTBL_FOR(ap, (bu_arg_vars **), args)) {
     bu_arg_vars *a = *ap;
@@ -670,9 +695,11 @@ bu_arg_exit(const int status, const char *msg, bu_ptbl_t *args)
   bu_arg_free(args);
   bu_exit(status, msg);
 }
+*/
 
 // funcs below are for the static init API
 // type 2 ================================
+/* OBSOLETE
 extern "C" int
 bu_arg_get_bool2(void *arg)
 {
@@ -736,21 +763,21 @@ bu_arg_parse2(void *args[], int argc, char * const argv[])
           case BU_ARG_UnlabeledValueArg:
             A = _handle_UnlabeledValueArg2((bu_arg_unlabeled_value_t *)a, cmd);
             break;
-/* not yet ready
-          case BU_ARG_MultiArg:
-            A = _handle_MultiArg(a, cmd);
-            break;
-          case BU_ARG_MultiSwitchArg:
-            A = _handle_MultiSwitchArg(a, cmd);
-            break;
-          case BU_ARG_UnlabeledMultiArg:
-            A = _handle_UnlabeledMultiArg(a, cmd);
-            break;
-          case BU_ARG_ValueArg:
-            A = _handle_ValueArg(a, cmd);
-            break;
-*/
-          default:
+// not yet ready
+//          case BU_ARG_MultiArg:
+//            A = _handle_MultiArg(a, cmd);
+//            break;
+//          case BU_ARG_MultiSwitchArg:
+//            A = _handle_MultiSwitchArg(a, cmd);
+//            break;
+//          case BU_ARG_UnlabeledMultiArg:
+//            A = _handle_UnlabeledMultiArg(a, cmd);
+//            break;
+//          case BU_ARG_ValueArg:
+//            A = _handle_ValueArg(a, cmd);
+//            break;
+
+    default:
              // error
             BU_ASSERT(0 && "tried to use non-handled BU_ARG type\n");
             break;
@@ -777,20 +804,20 @@ bu_arg_parse2(void *args[], int argc, char * const argv[])
           case BU_ARG_UnlabeledValueArg:
             _extract_UnlabeledValueArg_data2((bu_arg_unlabeled_value_t *)a, A);
             break;
-/* not yet ready
-          case BU_ARG_MultiArg:
-            _extract_MultiArg_data(a, cmd);
-            break;
-          case BU_ARG_MultiSwitchArg:
-            _extract_MultiSwitchArg_data(a, A);
-            break;
-          case BU_ARG_UnlabeledMultiArg:
-            _extract_UnlabeledMultiArg_data(a, A);
-            break;
-          case BU_ARG_ValueArg:
-            _extract_ValueArg_data(a, A);
-            break;
-*/
+// not yet ready
+//          case BU_ARG_MultiArg:
+//            _extract_MultiArg_data(a, cmd);
+//            break;
+//          case BU_ARG_MultiSwitchArg:
+//            _extract_MultiSwitchArg_data(a, A);
+//            break;
+//          case BU_ARG_UnlabeledMultiArg:
+//            _extract_UnlabeledMultiArg_data(a, A);
+//            break;
+//          case BU_ARG_ValueArg:
+//            _extract_ValueArg_data(a, A);
+//            break;
+
           default:
              // error
             BU_ASSERT(0 && "tried to use non-existent BU_ARG type\n");
@@ -809,6 +836,7 @@ bu_arg_parse2(void *args[], int argc, char * const argv[])
   return retval;
 
 } // bu_arg_parse2
+*/
 
 // type 4 ================================
 extern "C" int
@@ -877,20 +905,20 @@ bu_arg_parse4(void *args[], int argc, char * const argv[])
           case BU_ARG_UnlabeledValueArg:
             A = _handle_UnlabeledValueArg4((bu_arg_unlabeled_value_t *)a, cmd);
             break;
-/* not yet ready
-          case BU_ARG_MultiArg:
-            A = _handle_MultiArg(a, cmd);
-            break;
-          case BU_ARG_MultiSwitchArg:
-            A = _handle_MultiSwitchArg(a, cmd);
-            break;
-          case BU_ARG_UnlabeledMultiArg:
-            A = _handle_UnlabeledMultiArg(a, cmd);
-            break;
-          case BU_ARG_ValueArg:
-            A = _handle_ValueArg(a, cmd);
-            break;
-*/
+// not yet ready
+//          case BU_ARG_MultiArg:
+//            A = _handle_MultiArg(a, cmd);
+//            break;
+//          case BU_ARG_MultiSwitchArg:
+//            A = _handle_MultiSwitchArg(a, cmd);
+//            break;
+//          case BU_ARG_UnlabeledMultiArg:
+//            A = _handle_UnlabeledMultiArg(a, cmd);
+//            break;
+//          case BU_ARG_ValueArg:
+//            A = _handle_ValueArg(a, cmd);
+//            break;
+
           default:
              // error
             BU_ASSERT(0 && "tried to use non-handled BU_ARG type\n");
@@ -913,25 +941,25 @@ bu_arg_parse4(void *args[], int argc, char * const argv[])
       bu_arg_t arg_type = _get_arg_type(a);
       switch (arg_type) {
           case BU_ARG_SwitchArg:
-            _extract_SwitchArg_data2((bu_arg_switch_t *)a, A);
+            _extract_SwitchArg_data4((bu_arg_switch_t *)a, A);
             break;
           case BU_ARG_UnlabeledValueArg:
-            _extract_UnlabeledValueArg_data2((bu_arg_unlabeled_value_t *)a, A);
+            _extract_UnlabeledValueArg_data4((bu_arg_unlabeled_value_t *)a, A);
             break;
-/* not yet ready
-          case BU_ARG_MultiArg:
-            _extract_MultiArg_data(a, cmd);
-            break;
-          case BU_ARG_MultiSwitchArg:
-            _extract_MultiSwitchArg_data(a, A);
-            break;
-          case BU_ARG_UnlabeledMultiArg:
-            _extract_UnlabeledMultiArg_data(a, A);
-            break;
-          case BU_ARG_ValueArg:
-            _extract_ValueArg_data(a, A);
-            break;
-*/
+// not yet ready
+//          case BU_ARG_MultiArg:
+//            _extract_MultiArg_data(a, cmd);
+//            break;
+//          case BU_ARG_MultiSwitchArg:
+//            _extract_MultiSwitchArg_data(a, A);
+//            break;
+//          case BU_ARG_UnlabeledMultiArg:
+//            _extract_UnlabeledMultiArg_data(a, A);
+//            break;
+//          case BU_ARG_ValueArg:
+//            _extract_ValueArg_data(a, A);
+//            break;
+
           default:
              // error
             BU_ASSERT(0 && "tried to use non-existent BU_ARG type\n");
@@ -951,6 +979,7 @@ bu_arg_parse4(void *args[], int argc, char * const argv[])
 
 } // bu_arg_parse4
 
+/* OBSOLETE
 std::string
 _get_fname(void *addr)
 {
@@ -978,9 +1007,10 @@ _get_fname(void *addr)
   return "tmp" + num1;
 #endif
 }
-
+*/
 
 //====== for static init ==========
+/* OBSOLETE
 void
 _extract_SwitchArg_data2(bu_arg_switch_t *a, Arg *A)
 {
@@ -988,6 +1018,8 @@ _extract_SwitchArg_data2(bu_arg_switch_t *a, Arg *A)
   bool val = B->getValue();
   _write_bool(a, val);
 }
+*/
+
 void
 _extract_SwitchArg_data4(bu_arg_switch_t *a, Arg *A)
 {
@@ -996,6 +1028,7 @@ _extract_SwitchArg_data4(bu_arg_switch_t *a, Arg *A)
   _insert_bool(a, val);
 }
 
+/* OBSOLETE
 void
 _extract_UnlabeledValueArg_data2(bu_arg_unlabeled_value_t *a, Arg *A)
 {
@@ -1032,6 +1065,7 @@ _extract_UnlabeledValueArg_data2(bu_arg_unlabeled_value_t *a, Arg *A)
         break;
   }
 } // _extract_UnlabeledValueArg_data2
+*/
 
 void
 _extract_UnlabeledValueArg_data4(bu_arg_unlabeled_value_t *a, Arg *A)
@@ -1070,6 +1104,7 @@ _extract_UnlabeledValueArg_data4(bu_arg_unlabeled_value_t *a, Arg *A)
   }
 } // _extract_UnlabeledValueArg_data4
 
+/* OBSOLETE
 bool
 _read_bool(void *addr)
 {
@@ -1137,6 +1172,7 @@ _read_string(void *addr)
 
   return s;
 }
+*/
 
 void
 _insert_bool(void *addr, const bool b)
@@ -1169,6 +1205,7 @@ _insert_string(void *addr, const std::string& s)
   bu_strlcpy(t->retval.buf, s.c_str(), BU_ARG_PARSE_BUFSZ);
 }
 
+/* OBSOLETE
 void
 _write_bool(void *addr, const bool b)
 {
@@ -1208,6 +1245,7 @@ _write_string(void *addr, const std::string& s)
 
   fo << s;
 }
+*/
 
 bu_arg_t
 _get_arg_type(void *arg)
