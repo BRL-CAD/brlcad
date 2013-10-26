@@ -246,7 +246,7 @@ math(EXPR BRLCAD_VERSION_NUMBER "${BRLCAD_MAJOR_VERSION} * 10000 + ${BRLCAD_MINO
 #---------------------------------------------------------------------
 # Define relative install locations.  Don't set these if they have already
 # been set by some other means (like a higher level CMakeLists.txt file
-# including this one.)
+# including this one).
 
 # The location in which to install BRL-CAD executables.
 if(NOT BIN_DIR)
@@ -1271,9 +1271,8 @@ set(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE_ALIASES "STRICT_ISO_C")
 set(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE_DESCRIPTION "
 Build with strict ISO C compliance checking.  Defaults to OFF.
 
-Causes C compiler options to be set for strict compliance with the appropriate
-ISO C standard
-standard.
+Causes C compiler options to be set for strict compliance with the
+appropriate ISO C standard.
 ")
 BRLCAD_OPTION(OFF ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE
   ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE_ALIASES
@@ -1346,13 +1345,14 @@ set(BRLCAD_EXTRADOCS_ALIASES
   ENABLE_DOCBOOK
   )
 set(BRLCAD_EXTRADOCS_DESCRIPTION "
-The core option that enables and disables building of BRL-CAD's DocBook
-based documentation (includes manuals and man pages for commands, among
-other things.) Defaults to ON, but only HTML and MAN formats are enabled
-by default - PDF must be enabled separately by use of this option or one
-of its aliases.  Note that you may set environment variable APACHE_FOP
-to point to your locally installed fop executable file (which on Linux is
-usually a shell script with 0755 permissions).
+The core option that enables and disables building of BRL-CAD's
+DocBook based documentation (includes manuals and man pages for
+commands, among other things).  Defaults to ON, but only HTML and MAN
+formats are enabled by default - PDF must be enabled separately by use
+of this option or one of its aliases.  Note that you may set
+environment variable APACHE_FOP to point to your locally installed fop
+executable file (which on Linux is usually a shell script with 0755
+permissions).
 ")
 BRLCAD_OPTION(${EXTRADOCS_DEFAULT} BRLCAD_EXTRADOCS BRLCAD_EXTRADOCS_ALIASES BRLCAD_EXTRADOCS_DESCRIPTION)
 
