@@ -71,14 +71,14 @@ typedef enum {
   BU_ARG_REQUIRED = 1
 } bu_arg_req_t;
 
-typedef struct bu_arg_value4 {
-  union u_typ4 {
+typedef struct bu_arg_value {
+  union u_typ {
     /* important that first field is integral type */
     long l; /* also use as bool */
     double d;
-  } u4;
+  } u;
   char buf[BU_ARG_PARSE_BUFSZ];
-} bu_arg_value4_t;
+} bu_arg_value_t;
 
 /* TCLAP::Arg */
 /* structs for static initialization */
@@ -87,14 +87,14 @@ typedef struct {
   uint32_t magic;                  	 /* BU_ARG_MAGIC                              */
   bu_arg_t arg_type;                     /* enum: type of TCLAP arg                   */
   /* return data */
-  bu_arg_value4_t retval;                /* use for data transfer with TCLAP code     */
+  bu_arg_value_t retval;                /* use for data transfer with TCLAP code     */
 } bu_arg_general_t;
 
 typedef struct {
   uint32_t magic;                  	 /* BU_ARG_MAGIC                              */
   bu_arg_t arg_type;                     /* enum: type of TCLAP arg                   */
   /* return data */
-  bu_arg_value4_t retval;                /* use for data transfer with TCLAP code     */
+  bu_arg_value_t retval;                /* use for data transfer with TCLAP code     */
 
   const char *flag;                      /* the "short" option, may be empty ("")     */
   const char *name;                      /* the "long" option                         */
@@ -106,7 +106,7 @@ typedef struct {
   uint32_t magic;                  	 /* BU_ARG_MAGIC                              */
   bu_arg_t arg_type;                     /* enum: type of TCLAP arg                   */
   /* return data */
-  bu_arg_value4_t retval;                /* use for data transfer with TCLAP code     */
+  bu_arg_value_t retval;                /* use for data transfer with TCLAP code     */
 
   const char *flag;                      /* the "short" option, may be empty ("")     */
   const char *name;                      /* the "long" option                         */
@@ -139,13 +139,13 @@ typedef struct {
 
 /* the getters */
 /* using stack buf transfer */
-int bu_arg_get_bool4(void *arg);
-long bu_arg_get_long4(void *arg);
-double bu_arg_get_double4(void *arg);
-void bu_arg_get_string4(void *arg, char buf[]);
+int bu_arg_get_bool(void *arg);
+long bu_arg_get_long(void *arg);
+double bu_arg_get_double(void *arg);
+void bu_arg_get_string(void *arg, char buf[]);
 
 /* the action: all in one function */
-int bu_arg_parse4(void *args[], int argc, char * const argv[]);
+int bu_arg_parse(void *args[], int argc, char * const argv[]);
 
 
 /* all in this header MUST have "C" linkage */

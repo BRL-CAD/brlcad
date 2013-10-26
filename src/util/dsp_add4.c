@@ -225,7 +225,7 @@ main(int ac, char *av[])
       );
 
     /* parse the args */
-    arg_err = bu_arg_parse4(args, ac, av);
+    arg_err = bu_arg_parse(args, ac, av);
 
     if (arg_err == BU_ARG_PARSE_ERR) {
         /* the TCLAP exception handler has fired with its own message
@@ -235,11 +235,11 @@ main(int ac, char *av[])
     }
 
     /* Get the value parsed by each arg. */
-    has_force  = bu_arg_get_bool4(&f_arg);
-    has_help   = bu_arg_get_bool4(&h_arg);
-    bu_arg_get_string4(&dsp1_arg, dsp1_fname);
-    bu_arg_get_string4(&dsp2_arg, dsp2_fname);
-    bu_arg_get_string4(&dsp3_arg, dsp3_fname);
+    has_force  = bu_arg_get_bool(&f_arg);
+    has_help   = bu_arg_get_bool(&h_arg);
+    bu_arg_get_string(&dsp1_arg, dsp1_fname);
+    bu_arg_get_string(&dsp2_arg, dsp2_fname);
+    bu_arg_get_string(&dsp3_arg, dsp3_fname);
 
     /* take appropriate action... */
 

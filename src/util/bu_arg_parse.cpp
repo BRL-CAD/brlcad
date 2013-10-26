@@ -67,8 +67,8 @@ static void _extract_UnlabeledMultiArg_data(bu_arg_vars *a, Arg *A);
 static void _extract_ValueArg_data(bu_arg_vars *a, Arg *A);
 */
 
-static void _extract_SwitchArg_data4(bu_arg_switch_t *a, Arg *A);
-static void _extract_UnlabeledValueArg_data4(bu_arg_unlabeled_value_t *a, Arg *A);
+static void _extract_SwitchArg_data(bu_arg_switch_t *a, Arg *A);
+static void _extract_UnlabeledValueArg_data(bu_arg_unlabeled_value_t *a, Arg *A);
 
 /**
  * need vec for deleting Arg pointers when done
@@ -96,7 +96,7 @@ static vector<Arg*> _Arg_pointers;
  */
 
 Arg *
-_handle_SwitchArg4(bu_arg_switch_t *a, CmdLine &cmd)
+_handle_SwitchArg(bu_arg_switch_t *a, CmdLine &cmd)
 {
   SwitchArg *A = new SwitchArg(a->flag, a->name, a->desc);
 
@@ -107,7 +107,7 @@ _handle_SwitchArg4(bu_arg_switch_t *a, CmdLine &cmd)
 }
 
 Arg *
-_handle_UnlabeledValueArg4(bu_arg_unlabeled_value_t *a, CmdLine &cmd)
+_handle_UnlabeledValueArg(bu_arg_unlabeled_value_t *a, CmdLine &cmd)
 {
 
   // this is a templated type
@@ -149,7 +149,7 @@ _handle_UnlabeledValueArg4(bu_arg_unlabeled_value_t *a, CmdLine &cmd)
   cmd.add(A);
   _Arg_pointers.push_back(A);
   return A;
-} // _handle_UnlabeledValueArg4
+} // _handle_UnlabeledValueArg
 
 
 /* not yet ready
@@ -220,38 +220,36 @@ _extract_ValueArg_data(bu_arg_vars *a, Arg *A)
 */
 
 
-
-// type 4 ================================
 extern "C" int
-bu_arg_get_bool4(void *arg)
+bu_arg_get_bool(void *arg)
 {
   bu_arg_general_t *t = (bu_arg_general_t *)arg;
-  return t->retval.u4.l;
+  return t->retval.u.l;
 }
 
 extern "C" long
-bu_arg_get_long4(void *arg)
+bu_arg_get_long(void *arg)
 {
   bu_arg_general_t *t = (bu_arg_general_t *)arg;
-  return t->retval.u4.l;
+  return t->retval.u.l;
 }
 
 extern "C" double
-bu_arg_get_double4(void *arg)
+bu_arg_get_double(void *arg)
 {
   bu_arg_general_t *t = (bu_arg_general_t *)arg;
-  return t->retval.u4.d;
+  return t->retval.u.d;
 }
 
 extern "C" void
-bu_arg_get_string4(void *arg, char buf[])
+bu_arg_get_string(void *arg, char buf[])
 {
   bu_arg_general_t *t = (bu_arg_general_t *)arg;
   bu_strlcpy(buf, t->retval.buf, BU_ARG_PARSE_BUFSZ);
 }
 
 extern "C" int
-bu_arg_parse4(void *args[], int argc, char * const argv[])
+bu_arg_parse(void *args[], int argc, char * const argv[])
 {
 
   // need a local collection to extract TCLAP data after a successful
@@ -283,10 +281,10 @@ bu_arg_parse4(void *args[], int argc, char * const argv[])
       bu_arg_t arg_type = _get_arg_type(a);
       switch (arg_type) {
           case BU_ARG_SwitchArg:
-            A = _handle_SwitchArg4((bu_arg_switch_t *)a, cmd);
+            A = _handle_SwitchArg((bu_arg_switch_t *)a, cmd);
             break;
           case BU_ARG_UnlabeledValueArg:
-            A = _handle_UnlabeledValueArg4((bu_arg_unlabeled_value_t *)a, cmd);
+            A = _handle_UnlabeledValueArg((bu_arg_unlabeled_value_t *)a, cmd);
             break;
 // not yet ready
 //          case BU_ARG_MultiArg:
@@ -324,10 +322,10 @@ bu_arg_parse4(void *args[], int argc, char * const argv[])
       bu_arg_t arg_type = _get_arg_type(a);
       switch (arg_type) {
           case BU_ARG_SwitchArg:
-            _extract_SwitchArg_data4((bu_arg_switch_t *)a, A);
+            _extract_SwitchArg_data((bu_arg_switch_t *)a, A);
             break;
           case BU_ARG_UnlabeledValueArg:
-            _extract_UnlabeledValueArg_data4((bu_arg_unlabeled_value_t *)a, A);
+            _extract_UnlabeledValueArg_data((bu_arg_unlabeled_value_t *)a, A);
             break;
 // not yet ready
 //          case BU_ARG_MultiArg:
@@ -360,12 +358,12 @@ bu_arg_parse4(void *args[], int argc, char * const argv[])
 
   return retval;
 
-} // bu_arg_parse4
+} // bu_arg_parse
 
 
 
 void
-_extract_SwitchArg_data4(bu_arg_switch_t *a, Arg *A)
+_extract_SwitchArg_data(bu_arg_switch_t *a, Arg *A)
 {
   SwitchArg *B = dynamic_cast<SwitchArg*>(A);
   bool val = B->getValue();
@@ -373,7 +371,7 @@ _extract_SwitchArg_data4(bu_arg_switch_t *a, Arg *A)
 }
 
 void
-_extract_UnlabeledValueArg_data4(bu_arg_unlabeled_value_t *a, Arg *A)
+_extract_UnlabeledValueArg_data(bu_arg_unlabeled_value_t *a, Arg *A)
 {
   // this is a templated type
   bu_arg_valtype_t val_type = a->val_typ;
@@ -407,7 +405,7 @@ _extract_UnlabeledValueArg_data4(bu_arg_unlabeled_value_t *a, Arg *A)
         BU_ASSERT(0 && "tried to use non-existent BU_ARG value type\n");
         break;
   }
-} // _extract_UnlabeledValueArg_data4
+} // _extract_UnlabeledValueArg_data
 
 
 void
@@ -415,23 +413,23 @@ _insert_bool(void *addr, const bool b)
 {
   bu_arg_general_t *t = (bu_arg_general_t *)addr;
   if (b)
-    t->retval.u4.l = 1L;
+    t->retval.u.l = 1L;
   else
-    t->retval.u4.l = 0L;
+    t->retval.u.l = 0L;
 }
 
 void
 _insert_long(void *addr, const long l)
 {
   bu_arg_general_t *t = (bu_arg_general_t *)addr;
-  t->retval.u4.l = l;
+  t->retval.u.l = l;
 }
 
 void
 _insert_double(void *addr, const double d)
 {
   bu_arg_general_t *t = (bu_arg_general_t *)addr;
-  t->retval.u4.d = d;
+  t->retval.u.d = d;
 }
 
 void
