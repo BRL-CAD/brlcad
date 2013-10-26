@@ -53,6 +53,12 @@ static void _write_long(void *addr, const long l);
 static void _write_double(void *addr, const double d);
 static void _write_string(void *addr, const std::string& s);
 
+// for static data handling
+static void _insert_bool(void *addr, const bool b);
+static void _insert_long(void *addr, const long l);
+static void _insert_double(void *addr, const double d);
+static void _insert_string(void *addr, const std::string& s);
+
 static bool _read_bool(void *addr);
 static long _read_long(void *addr);
 static double _read_double(void *addr);
@@ -362,6 +368,17 @@ _handle_SwitchArg2(bu_arg_switch_t *a, CmdLine &cmd)
 }
 
 Arg *
+_handle_SwitchArg4(bu_arg_switch_t *a, CmdLine &cmd)
+{
+  SwitchArg *A = new SwitchArg(a->flag, a->name, a->desc);
+
+  _Arg_pointers.push_back(A);
+  cmd.add(A);
+
+  return A;
+}
+
+Arg *
 _handle_UnlabeledValueArg(bu_arg_vars *a, CmdLine &cmd)
 {
 
@@ -449,7 +466,53 @@ _handle_UnlabeledValueArg2(bu_arg_unlabeled_value_t *a, CmdLine &cmd)
   cmd.add(A);
   _Arg_pointers.push_back(A);
   return A;
-}
+} // _handle_UnlabeledValueArg2
+
+Arg *
+_handle_UnlabeledValueArg4(bu_arg_unlabeled_value_t *a, CmdLine &cmd)
+{
+
+  // this is a templated type
+  bu_arg_valtype_t val_type = a->val_typ;
+  string type_desc;
+  Arg *A = 0;
+  switch (val_type) {
+      case BU_ARG_BOOL: {
+        bool val = bu_str_true(a->def_val);
+        type_desc = "bool";
+        A = new UnlabeledValueArg<bool>(a->name, a->desc, a->req, val, type_desc);
+      }
+        break;
+      case BU_ARG_DOUBLE: {
+        double val = strtod(a->def_val, NULL);
+        type_desc = "double";
+        A = new UnlabeledValueArg<double>(a->name, a->desc, a->req, val, type_desc);
+      }
+        break;
+      case BU_ARG_LONG: {
+        long val = strtol(a->def_val, NULL, 10);
+        type_desc = "long";
+        A = new UnlabeledValueArg<long>(a->name, a->desc, a->req, val, type_desc);
+      }
+        break;
+      case BU_ARG_STRING: {
+        string val = a->def_val;
+        type_desc = "string";
+        A = new UnlabeledValueArg<string>(a->name, a->desc, a->req, val, type_desc);
+      }
+        break;
+      default: {
+        string val = a->def_val;
+        type_desc = "string";
+        A = new UnlabeledValueArg<string>(a->name, a->desc, a->req, val, type_desc);
+      }
+        break;
+  }
+  cmd.add(A);
+  _Arg_pointers.push_back(A);
+  return A;
+} // _handle_UnlabeledValueArg4
+
 
 /* not yet ready
 Arg *
@@ -609,6 +672,7 @@ bu_arg_exit(const int status, const char *msg, bu_ptbl_t *args)
 }
 
 // funcs below are for the static init API
+// type 2 ================================
 extern "C" int
 bu_arg_get_bool2(void *arg)
 {
@@ -746,6 +810,147 @@ bu_arg_parse2(void *args[], int argc, char * const argv[])
 
 } // bu_arg_parse2
 
+// type 4 ================================
+extern "C" int
+bu_arg_get_bool4(void *arg)
+{
+  bu_arg_general_t *t = (bu_arg_general_t *)arg;
+  return t->retval.u4.l;
+}
+
+extern "C" long
+bu_arg_get_long4(void *arg)
+{
+  bu_arg_general_t *t = (bu_arg_general_t *)arg;
+  return t->retval.u4.l;
+}
+
+extern "C" double
+bu_arg_get_double4(void *arg)
+{
+  bu_arg_general_t *t = (bu_arg_general_t *)arg;
+  return t->retval.u4.d;
+}
+
+extern "C" void
+bu_arg_get_string4(void *arg, char buf[])
+{
+  bu_arg_general_t *t = (bu_arg_general_t *)arg;
+  bu_strlcpy(buf, t->retval.buf, BU_ARG_PARSE_BUFSZ);
+}
+
+extern "C" int
+bu_arg_parse4(void *args[], int argc, char * const argv[])
+{
+
+  // need a local collection to extract TCLAP data after a successful
+  // parse
+  vector<Arg*> tclap_results;
+
+  int retval = BU_ARG_PARSE_SUCCESS;
+
+  try {
+
+    // form the command line
+    // note help (-h and --help) and version (-v and --version) are
+    // automatic
+    TCLAP::CmdLine cmd("<usage or purpose>", ' ',
+                       "[BRL_CAD_VERSION]"); // help and version are automatic
+
+    // use our subclassed stdout
+    BRLCAD_StdOutput brlstdout;
+    cmd.setOutput(&brlstdout);
+
+    // proceed normally ...
+
+    int i = 0;
+    while (args[i]) {
+      // handle this arg and fill in the values
+      // map inputs to TCLAP:
+      Arg *A         = 0;
+      void *a = args[i];
+      bu_arg_t arg_type = _get_arg_type(a);
+      switch (arg_type) {
+          case BU_ARG_SwitchArg:
+            A = _handle_SwitchArg4((bu_arg_switch_t *)a, cmd);
+            break;
+          case BU_ARG_UnlabeledValueArg:
+            A = _handle_UnlabeledValueArg4((bu_arg_unlabeled_value_t *)a, cmd);
+            break;
+/* not yet ready
+          case BU_ARG_MultiArg:
+            A = _handle_MultiArg(a, cmd);
+            break;
+          case BU_ARG_MultiSwitchArg:
+            A = _handle_MultiSwitchArg(a, cmd);
+            break;
+          case BU_ARG_UnlabeledMultiArg:
+            A = _handle_UnlabeledMultiArg(a, cmd);
+            break;
+          case BU_ARG_ValueArg:
+            A = _handle_ValueArg(a, cmd);
+            break;
+*/
+          default:
+             // error
+            BU_ASSERT(0 && "tried to use non-handled BU_ARG type\n");
+            break;
+      }
+
+      // save results for later
+      tclap_results.push_back(A);
+
+      // next arg
+      ++i;
+    }
+
+    // parse the args
+    cmd.parse(argc, argv);
+
+    for (unsigned j = 0; j < tclap_results.size(); ++j) {
+      Arg *A         = tclap_results[j];
+      void *a = args[i];
+      bu_arg_t arg_type = _get_arg_type(a);
+      switch (arg_type) {
+          case BU_ARG_SwitchArg:
+            _extract_SwitchArg_data2((bu_arg_switch_t *)a, A);
+            break;
+          case BU_ARG_UnlabeledValueArg:
+            _extract_UnlabeledValueArg_data2((bu_arg_unlabeled_value_t *)a, A);
+            break;
+/* not yet ready
+          case BU_ARG_MultiArg:
+            _extract_MultiArg_data(a, cmd);
+            break;
+          case BU_ARG_MultiSwitchArg:
+            _extract_MultiSwitchArg_data(a, A);
+            break;
+          case BU_ARG_UnlabeledMultiArg:
+            _extract_UnlabeledMultiArg_data(a, A);
+            break;
+          case BU_ARG_ValueArg:
+            _extract_ValueArg_data(a, A);
+            break;
+*/
+          default:
+             // error
+            BU_ASSERT(0 && "tried to use non-existent BU_ARG type\n");
+            break;
+      }
+    }
+
+  } catch (TCLAP::ArgException &e) {
+    // catch and handle any exceptions
+
+    cerr << "error: " << e.error() << " for arg " << e.argId() << endl;
+
+    return BU_ARG_PARSE_ERR;
+  }
+
+  return retval;
+
+} // bu_arg_parse4
+
 std::string
 _get_fname(void *addr)
 {
@@ -783,6 +988,13 @@ _extract_SwitchArg_data2(bu_arg_switch_t *a, Arg *A)
   bool val = B->getValue();
   _write_bool(a, val);
 }
+void
+_extract_SwitchArg_data4(bu_arg_switch_t *a, Arg *A)
+{
+  SwitchArg *B = dynamic_cast<SwitchArg*>(A);
+  bool val = B->getValue();
+  _insert_bool(a, val);
+}
 
 void
 _extract_UnlabeledValueArg_data2(bu_arg_unlabeled_value_t *a, Arg *A)
@@ -819,7 +1031,44 @@ _extract_UnlabeledValueArg_data2(bu_arg_unlabeled_value_t *a, Arg *A)
         BU_ASSERT(0 && "tried to use non-existent BU_ARG value type\n");
         break;
   }
-}
+} // _extract_UnlabeledValueArg_data2
+
+void
+_extract_UnlabeledValueArg_data4(bu_arg_unlabeled_value_t *a, Arg *A)
+{
+  // this is a templated type
+  bu_arg_valtype_t val_type = a->val_typ;
+  switch (val_type) {
+      case BU_ARG_BOOL: {
+        UnlabeledValueArg<bool> *B = dynamic_cast<UnlabeledValueArg<bool> *>(A);
+        bool val = B->getValue();
+        _insert_bool(a, val);
+      }
+        break;
+      case BU_ARG_DOUBLE: {
+        UnlabeledValueArg<double> *B = dynamic_cast<UnlabeledValueArg<double> *>(A);
+        double val = B->getValue();
+        _insert_double(a, val);
+      }
+        break;
+      case BU_ARG_LONG: {
+        UnlabeledValueArg<long> *B = dynamic_cast<UnlabeledValueArg<long> *>(A);
+        long val = B->getValue();
+        _insert_long(a, val);
+      }
+        break;
+      case BU_ARG_STRING: {
+        UnlabeledValueArg<string> *B = dynamic_cast<UnlabeledValueArg<string> *>(A);
+        string val = B->getValue();
+        _insert_string(a, val);
+      }
+        break;
+      default:
+        // error
+        BU_ASSERT(0 && "tried to use non-existent BU_ARG value type\n");
+        break;
+  }
+} // _extract_UnlabeledValueArg_data4
 
 bool
 _read_bool(void *addr)
@@ -887,6 +1136,37 @@ _read_string(void *addr)
     bu_file_delete(fname.c_str());
 
   return s;
+}
+
+void
+_insert_bool(void *addr, const bool b)
+{
+  bu_arg_general_t *t = (bu_arg_general_t *)addr;
+  if (b)
+    t->retval.u4.l = 1L;
+  else
+    t->retval.u4.l = 0L;
+}
+
+void
+_insert_long(void *addr, const long l)
+{
+  bu_arg_general_t *t = (bu_arg_general_t *)addr;
+  t->retval.u4.l = l;
+}
+
+void
+_insert_double(void *addr, const double d)
+{
+  bu_arg_general_t *t = (bu_arg_general_t *)addr;
+  t->retval.u4.d = d;
+}
+
+void
+_insert_string(void *addr, const std::string& s)
+{
+  bu_arg_general_t *t = (bu_arg_general_t *)addr;
+  bu_strlcpy(t->retval.buf, s.c_str(), BU_ARG_PARSE_BUFSZ);
 }
 
 void
