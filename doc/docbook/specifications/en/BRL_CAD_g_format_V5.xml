@@ -1,6 +1,11 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 
-<article xmlns="http://docbook.org/ns/docbook" version="5.0" class="specification">
+<article
+  xmlns="http://docbook.org/ns/docbook"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  version="5.0"
+  class="specification"
+>
   <info>
     <title>BRL-CAD Database Format</title>
     <subtitle>Version 5 (DRAFT)</subtitle>
@@ -251,27 +256,49 @@
 	      An object may optionally have an Object_Attributes element consisting of a
 	      pair of fields: Attribute_Length and Attribute_Data. From the point of view
 	      of the database interface specification, the names and values of these attributes
-	      are opaque????; a standardized import/export encoding API will be provided.
+	      are opaque (but a standardized import/export encoding API will be provided).
 	    </para>
 	  </listitem>
 	  <listitem>
 	    <para>
 	      An object may optionally have an Object_Body element consisting of a pair of
 	      fields, Body_Length and Body_Data. From the point of view of the database
-	      interface specification, the format of the data is opaque??.
+	      interface specification, the format of the data is opaque.
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      PROPOSED: An object may optionally have a Time_Stamp
+	      element consisting of a pair of fields, TS_Length and
+	      TS_Data. From the point of view of the database
+	      interface specification, the format of the data is
+	      opaque.
 	    </para>
 	  </listitem>
 	</itemizedlist>
       </para>
+
       <para>
-	The on-disk version of each object consists of three distinct parts: Object Header,
-	Object Interior, and Object Footer. This is called the external format of the object.
+	Note that an object can now have (1) either an attribute or a
+	body, (2) both an attribute and a body, or (3) neither an
+	attribute nor a body.  The proposed Time_Stamp element would
+	also be optional in the same manner.
       </para>
 
+      <para>
+	The on-disk version of each object consists of three distinct
+	parts: Object Header, Object Interior, and Object Footer. This
+	is called the external format of the object.
+      </para>
+
+<!-- ======================================================== -->
       <table frame="all">
 	<title>On-Disk BRL-CAD Object Structure</title>
 
 	<tgroup cols="3" align="center" colsep="1" rowsep="1">
+          <colspec colnum="1" colname="col1" colwidth="0.8*" align="center" />
+          <colspec colnum="2" colname="col2" colwidth="1.0*" align="center" />
+          <colspec colnum="3" colname="col3" colwidth="0.8*" align="center" />
 	  <thead>
 	    <row>
 	      <entry>Part</entry>
@@ -300,6 +327,8 @@
 		<para>
 		  <informaltable frame="none">
 		    <tgroup cols="2" align="center">
+                      <colspec colnum="1" colname="col1" colwidth="0.8*" align="center" />
+                      <colspec colnum="2" colname="col2" colwidth="1.0*" align="center" />
 		      <tbody>
 			<row>
 			  <entry>Object Name:</entry>
@@ -321,7 +350,10 @@
 		  </informaltable>
 		</para>
 	      </entry>
-	      <entry><para>Conditional on flag bit N,</para><para>Required for Application Data</para></entry>
+	      <entry>
+                 <para>Conditional on flag bit N</para>
+                 <para>Required for Application Data</para>
+              </entry>
 	    </row>
 	    <row>
 	      <entry morerows="1" valign="middle"><para>Object Interior:</para><para>(individually compressible)</para></entry>
@@ -329,6 +361,8 @@
 		<para>
 		  <informaltable frame="none">
 		    <tgroup cols="2" align="center">
+                      <colspec colnum="1" colname="col1" colwidth="0.8*" align="center" />
+                      <colspec colnum="2" colname="col2" colwidth="1.0*" align="center" />
 		      <tbody>
 			<row>
 			  <entry>Object Attributes:</entry>
@@ -357,6 +391,8 @@
 		<para>
 		<informaltable frame="none">
 		  <tgroup cols="2" align="center">
+                    <colspec colnum="1" colname="col1" colwidth="0.8*" align="center" />
+                    <colspec colnum="2" colname="col2" colwidth="1.0*" align="center" />
 		    <tbody>
 		      <row>
 			<entry>Object Body:</entry>
@@ -378,12 +414,16 @@
 		</informaltable>
 		</para>
 	      </entry>
-	      <entry><para>Conditional on flag bit B</para><para>(ZZZ compression)</para></entry>
+	      <entry><para>Conditional on flag bit B</para>
+                     <para>(ZZZ compression)</para>
+              </entry>
 	    </row>
 	    <row>
-	      <entry morerows="1" valign="middle"><para>Object Footer:</para><para>(not compressible)</para></entry>
+	      <entry morerows="1" valign="middle">
+                <para>Object Footer:</para>
+                <para>(not compressible)</para></entry>
 	      <entry>Padding</entry>
-	      <entry><para>As required to maintain 8-byte</para><para>object boundaries</para></entry>
+	      <entry><para>As required to maintain 8-byte object boundaries</para></entry>
 	    </row>
 	    <row>
 	      <entry>Magic2</entry>
@@ -392,16 +432,211 @@
 	  </tbody>
 	</tgroup>
       </table>
+<!-- ======================================================== -->
+      <table frame="all">
+	<title>PROPOSED: On-Disk BRL-CAD Object Structure</title>
+
+	<tgroup cols="3" align="center" colsep="1" rowsep="1">
+          <colspec colnum="1" colname="col1" colwidth="0.8*" align="center" />
+          <colspec colnum="2" colname="col2" colwidth="1.0*" align="center" />
+          <colspec colnum="3" colname="col3" colwidth="0.8*" align="center" />
+	  <thead>
+	    <row>
+	      <entry>Part</entry>
+	      <entry>Element</entry>
+	      <entry>Comments</entry>
+	    </row>
+	  </thead>
+
+	  <tbody>
+
+	    <row>
+	      <entry morerows="4" valign="middle"><para>Object Header:</para><para>(not compressible)</para></entry>
+	      <entry>Magic1</entry>
+	      <entry morerows="2" valign="middle">Required</entry>
+	    </row>
+	    <row>
+	      <entry>HFlags, IFlags</entry>
+	    </row>
+	    <row>
+	      <entry><para>Object_Type</para><para>(Major_Type, Minor_Type)</para></entry>
+	    </row>
+	    <row>
+	      <entry>Object_Length</entry>
+	      <entry>Required</entry>
+	    </row>
+
+	    <row>
+	      <entry align="center">
+		<para>
+		  <informaltable frame="none">
+		    <tgroup cols="2" align="center">
+                      <colspec colnum="1" colname="col1" colwidth="0.8*" align="center" />
+                      <colspec colnum="2" colname="col2" colwidth="1.0*" align="center" />
+		      <tbody>
+			<row>
+			  <entry>Object Name:</entry>
+			  <entry>
+			    <para>
+			      <informaltable frame="all">
+				<tgroup cols="1" align="center">
+				  <tbody>
+				    <row><entry>Name_Length</entry></row>
+				    <row><entry>Name_Data</entry></row>
+				  </tbody>
+				</tgroup>
+			      </informaltable>
+			    </para>
+			  </entry>
+			</row>
+		      </tbody>
+		    </tgroup>
+		  </informaltable>
+		</para>
+	      </entry>
+	      <entry>
+                 <para>Conditional on flag bit NP</para>
+                 <para>Required for application data</para>
+              </entry>
+	    </row>
+
+  <!-- === Object Interior row === -->
+
+	    <row>
+	      <entry morerows="2" valign="middle">
+                 <para>Object Interior:</para>
+                 <para>(individually compressible)</para>
+              </entry>
+
+  <!-- === Object Attributes row === -->
+
+	      <entry align="center">
+		<para>
+		  <informaltable frame="none">
+		    <tgroup cols="2" align="center">
+                      <colspec colnum="1" colname="col1" colwidth="0.8*" align="center" />
+                      <colspec colnum="2" colname="col2" colwidth="1.0*" align="center" />
+		      <tbody>
+			<row>
+			  <entry>Object Attributes:</entry>
+			  <entry>
+			    <para>
+			      <informaltable frame="all">
+				<tgroup cols="1" align="center">
+				  <tbody>
+				    <row><entry>Attribute_Length</entry></row>
+				    <row><entry>Attribute_Data</entry></row>
+				</tbody>
+			      </tgroup>
+			    </informaltable>
+			  </para>
+			</entry>
+		      </row>
+		    </tbody>
+		  </tgroup>
+		</informaltable>
+		</para>
+	      </entry>
+	      <entry><para>Conditional on flag bit AP</para><para>(AZ compression)</para></entry>
+	    </row>
+
+  <!-- === Object Body row === -->
+
+	    <row>
+	      <entry align="center">
+		<para>
+		<informaltable frame="none">
+		  <tgroup cols="2" align="center">
+                    <colspec colnum="1" colname="col1" colwidth="0.8*" align="center" />
+                    <colspec colnum="2" colname="col2" colwidth="1.0*" align="center" />
+		    <tbody>
+		      <row>
+			<entry>Object Body:</entry>
+			<entry>
+			  <para>
+			    <informaltable frame="all">
+			      <tgroup cols="1" align="center">
+				<tbody>
+				  <row><entry>Body_Length</entry></row>
+				  <row><entry>Body_Data</entry></row>
+				</tbody>
+			      </tgroup>
+			    </informaltable>
+			  </para>
+			</entry>
+		      </row>
+		    </tbody>
+		  </tgroup>
+		</informaltable>
+		</para>
+	      </entry>
+	      <entry><para>Conditional on flag bit BP</para>
+                     <para>(BZ compression)</para>
+              </entry>
+	    </row>
+
+  <!-- === Object Time Stamp row === -->
+
+	    <row>
+	      <entry align="center">
+		<para>
+		<informaltable frame="none">
+		  <tgroup cols="2" align="center">
+                    <colspec colnum="1" colname="col1" colwidth="0.8*" align="center" />
+                    <colspec colnum="2" colname="col2" colwidth="1.0*" align="center" />
+		    <tbody>
+		      <row>
+			<entry>Object Time Stamps:</entry>
+			<entry>
+			  <para>
+			    <informaltable frame="all">
+			      <tgroup cols="1" align="center">
+				<tbody>
+				  <row><entry>TS_Length</entry></row>
+				  <row><entry>TS_Data</entry></row>
+				</tbody>
+			      </tgroup>
+			    </informaltable>
+			  </para>
+			</entry>
+		      </row>
+		    </tbody>
+		  </tgroup>
+		</informaltable>
+		</para>
+	      </entry>
+	      <entry><para>Conditional on flag bit TP</para>
+                     <para>(TZ compression)</para>
+              </entry>
+	    </row>
+
+  <!-- === Object Footer row === -->
+
+	    <row>
+	      <entry morerows="1" valign="middle">
+                <para>Object Footer:</para>
+                <para>(not compressible)</para></entry>
+	      <entry>Padding</entry>
+	      <entry><para>As required to maintain 8-byte object boundaries</para></entry>
+	    </row>
+
+	    <row>
+	      <entry>Magic2</entry>
+	      <entry>Required</entry>
+	    </row>
+
+	  </tbody>
+	</tgroup>
+      </table>
+<!-- ======================================================== -->
 
       <para>
-	????Need a description that says that an object can now have (1) EITHER an attribute OR a
-	body, (2) BOTH an attribute and a body, or (3) NEITHER an attribute nor a body.
-      </para>
-      <para>
-	The routines db_get_external() and db_put_external() are used to move objects in external
-	format between memory and the database disk file. The routines db_wrap_external() and
-	db_unwrap_external() are used to wrap and unwrap the (??? Object_Body or Object_Interior ???)
-	(already in external form) in a standardized database object's wrapper.
+	The routines db_get_external() and db_put_external() are used
+	to move objects in external format between memory and the
+	database disk file. The routines db_wrap_external() and
+	db_unwrap_external() are used to wrap and unwrap the
+	Object_Interior (already in external form) in a standardized
+	database object's wrapper.
       </para>
     </section>
 
@@ -409,14 +644,26 @@
       <title>Flags</title>
 
       <para>
-	The Flags element consists of three 8-bit fields: HFlags, AFlags, and BFlags. The HFlags
-	field is 1 byte containing flag bits that pertain to the noncompressible basic header and
-	the database object as a whole. The AFlags and BFlags fields are each single bytes containing
-	flag bits that pertain to the (potentially compressed) attributes and body, respectively, in
+	The Flags element consists of three 8-bit fields: HFlags,
+	AFlags, and BFlags. The HFlags field is 1 byte containing flag
+	bits that pertain to the noncompressible basic header and the
+	database object as a whole. The AFlags and BFlags fields are
+	each single bytes containing flag bits that pertain to the
+	(potentially compressed) attributes and body, respectively, in
 	the object interior.
       </para>
 
+      <para>
+	PROPOSED: The Flags element consists of one 8-bit and one
+	16-bit field: HFlags and IFlags. The HFlags field is 1 byte
+	containing flag bits that pertain to the noncompressible basic
+	header and the database object as a whole. The IFlags field
+	containing flag bits that pertain to the (potentially
+	compressed) object interior.
+      </para>
+
       <table frame="all">
+        <?dbhtml table-width="60%" ?>
 	<title>BRL-CAD Flags Structure</title>
 
 	<tgroup cols="26" align="center">
@@ -505,22 +752,116 @@
 	</tgroup>
       </table>
 
+      <table frame="all">
+        <?dbhtml table-width="60%" ?>
+	<title>PROPOSED: BRL-CAD Flags Structure</title>
+
+	<tgroup cols="25" align="center">
+	  <colspec colname="h1"/>
+	  <colspec colname="h2"/>
+	  <colspec colname="h3"/>
+	  <colspec colname="h4"/>
+	  <colspec colname="h5"/>
+	  <colspec colname="h6"/>
+	  <colspec colname="h7"/>
+	  <colspec colname="h8"/>
+
+	  <colspec colname="s1"/>
+
+	  <colspec colname="i1"/>
+	  <colspec colname="i2"/>
+	  <colspec colname="i3"/>
+	  <colspec colname="i4"/>
+	  <colspec colname="i5"/>
+	  <colspec colname="i6"/>
+	  <colspec colname="i7"/>
+	  <colspec colname="i8"/>
+	  <colspec colname="i9"/>
+	  <colspec colname="i10"/>
+	  <colspec colname="i11"/>
+	  <colspec colname="i12"/>
+	  <colspec colname="i13"/>
+	  <colspec colname="i14"/>
+	  <colspec colname="i15"/>
+	  <colspec colname="i16"/>
+	  <thead>
+	    <row>
+	      <entry namest="h1" nameend="h8" align="center">HFlags</entry>
+	      <entry/>
+	      <entry namest="i1" nameend="i16" align="center">IFlags</entry>
+	    </row>
+	  </thead>
+	  <tbody>
+	    <row>
+	      <entry>7</entry>
+	      <entry>6</entry>
+	      <entry>5</entry>
+	      <entry>4</entry>
+	      <entry>3</entry>
+	      <entry>2</entry>
+	      <entry>1</entry>
+	      <entry>0</entry>
+	      <entry morerows="1"> </entry>
+	      <entry>15</entry>
+	      <entry>14</entry>
+	      <entry>13</entry>
+	      <entry>12</entry>
+	      <entry>11</entry>
+	      <entry>10</entry>
+	      <entry>9</entry>
+	      <entry>8</entry>
+	      <entry>7</entry>
+	      <entry>6</entry>
+	      <entry>5</entry>
+	      <entry>4</entry>
+	      <entry>3</entry>
+	      <entry>2</entry>
+	      <entry>1</entry>
+	      <entry>0</entry>
+	    </row>
+	    <row>
+
+	      <entry namest="h1" nameend="h2">OWid</entry>
+	      <entry>NP</entry>
+	      <entry namest="h4" nameend="h5">NWid</entry>
+	      <entry>r</entry>
+	      <entry namest="h7" nameend="h8">DLI</entry>
+
+	      <entry namest="i1" nameend="i2">AWid</entry>
+	      <entry>AP</entry>
+	      <entry namest="i4" nameend="i6">AZ</entry>
+	      <entry namest="i7" nameend="i8">BWid</entry>
+	      <entry>BP</entry>
+	      <entry namest="i10" nameend="i12">BZ</entry>
+	      <entry>TP</entry>
+	      <entry namest="i14" nameend="i16">TZ</entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </table>
+
       <section>
 	<title>Wid Flags</title>
 
 	<para>
-	  The length of an object or subelement in the database is recorded using an
-	  unsigned integer. These are variable-width fields based on the magnitude of the
-	  maximum number needed. The Wid bits specify the size of the unsigned integer
-	  employed in each instance. There are four 2-bit width (Wid) flags: Object_Wid
-	  and Name_Wid (stored in HFlags), Attribute_Wid (stored in AFlags), and Body_Wid
-	  (stored in BFlags). The Wid fields are interpreted in this manner:
+	  The length of an object or sub-element in the database is
+	  recorded using an unsigned integer. These are variable-width
+	  fields based on the magnitude of the maximum number
+	  needed. The Wid bits specify the size of the unsigned
+	  integer employed in each instance. There are four 2-bit
+	  width (Wid) flags: Object_Wid (OWid) and Name_Wid (NWid)
+	  (stored in HFlags), Attribute_Wid (AWid) (stored in AFlags),
+	  and Body_Wid (BWid) (stored in BFlags). The Wid fields are
+	  interpreted in this manner:
 	</para>
 
 	<table frame="all">
+          <?dbfo centered-table-width="3.0in" ?>
+          <?dbhtml table-width="60%" ?>
 	  <title>Wid Flag Definitions</title>
-
 	  <tgroup cols="2" align="center">
+            <colspec colnum="1" colname="col1" colwidth="1.0in"/>
+            <colspec colnum="2" colname="col2" colwidth="2.0in"/>
 	    <thead>
 	      <row>
 		<entry>Wid Bits</entry>
@@ -549,28 +890,44 @@
       </table>
 
       <para>
-	The Object_Wid flag, at the high end of HFlags, encodes the
-	width of the Object_Length field. The Name_Wid flag, in bits 3
+	The OWid flag, at the high end of HFlags, encodes the
+	width of the Object_Length field. The NWid flag, in bits 3
 	and 4 of HFlags, encodes the width of the Name_Length field
 	(when the name element is present; see the N bit, shown
-	later.). Attribute_Wid (or Body_Wid, as the case may be)
+	later). AWid (or BWid, as the case may be)
 	encodes the width of the Attribute_Length field (when the
-	Object_Attributes (or Object_Attributes) element is present.
-	http://ftp.arl.mil/~mike/papers/brlcad5.0/newdb.html - bbitSee
-	the P bit, below.)??????????.
+	Object_Attributes or Object_Body element is present; see
+        the AP and BP bits below).
       </para>
 
       <para>
-	The rationale for allowing the width of the Object_Length field to be specified independently
-	of the other widths is to save space on objects in which the values in many of the length
-	fields nearly overflow the specified field width, so that their sum requires a wider field.
-	For example, for four 255-byte interior fields, the corresponding length fields need be no
-	more than 8 bits wide, so the choice Interior_Wid=00 suffices, but their combined length of
-	1020 bytes would require Object_Wid=01. Because all of the length fields besides Object_Length
-	must have the same width, the largest of the values stored in these length fields determines
-	the value of Interior_Wid required. Both Object_Wid and Interior_Wid may vary from object to
-	object. It is expected that the routines that write an object to the disk will use the
-	narrowest width possible for each object.
+	(See the original draft at
+<emphasis xlink:href="http://ftp.arl.mil/~mike/papers/brlcad5.0/newdb.html">
+</emphasis>.)
+      </para>
+
+      <para>
+        PROPOSED: The Time_Stamp length field is not explicitly
+        stated, but it will use the same size unsigned integer as the
+        attribute (AWid).
+      </para>
+
+      <para>
+	The rationale for allowing the width of the Object_Length
+	field to be specified independently of the other widths is to
+	save space on objects in which the values in many of the
+	length fields nearly overflow the specified field width, so
+	that their sum requires a wider field.  For example, for four
+	255-byte interior fields, the corresponding length fields need
+	be no more than 8 bits wide, so the choice Interior_Wid=00
+	suffices, but their combined length of 1020 bytes would
+	require Object_Wid=01. Because all of the length fields
+	besides Object_Length must have the same width (FIXME: is that
+	true?), the largest of the values stored in these length
+	fields determines the value of Interior_Wid required. Both
+	Object_Wid and Interior_Wid may vary from object to object. It
+	is expected that the routines that write an object to the disk
+	will use the narrowest width possible for each object.
       </para>
 
       </section>
@@ -592,10 +949,12 @@
 	  Data Object or a Database Layer Internal Object. The bits are interpreted as follows:
 	</para>
 
-	<table frame="all" pgwide="1">
+	<table frame="all">
 	  <title>DLI Flag Structure</title>
 
 	  <tgroup cols="2" align="center">
+            <colspec colnum="1" colname="col1" colwidth="0.5*"/>
+            <colspec colnum="2" colname="col2" colwidth="2.5*"/>
 	    <thead>
 	      <row>
 		<entry>DLI Bits</entry>
@@ -658,31 +1017,38 @@
       </para>
       <note>
 	<para>
-	  Implementation note: Before writing a new object into the database in a free area,
-	  the library should read the object header from the database and confirm that the space
-	  is indeed free. Similarly, additions to the end should be checked by ensuring that the
-	  file hasn't been extended. In case the check fails, the database write should fail, the
-	  user should be notified, and the internal library mode (not the operating system file
-	  access permissions) should be changed over to read-only access so that no further attempts
-	  to write will be issued. These checks will provide protection against two or more users
-	  trying to modify the same database simultaneously and accidentally stepping on each
-	  other. In the NFS world, file locking isn't a strong enough assurance.
+	  Implementation note: Before writing a new object into the
+	  database in a free area, the library should read the object
+	  header from the database and confirm that the space is
+	  indeed free. Similarly, additions to the end should be
+	  checked by ensuring that the file hasn't been extended. In
+	  case the check fails, the database write should fail, the
+	  user should be notified, and the internal library mode (not
+	  the operating system file access permissions) should be
+	  changed over to read-only access so that no further attempts
+	  to write will be issued. These checks will provide
+	  protection against two or more users trying to modify the
+	  same database simultaneously and accidentally stepping on
+	  each other. In the NFS world, file locking isn't a strong
+	  enough assurance.
 	</para>
       </note>
       </section>
 
       <section>
-	<title>HFlags - the N Bit</title>
+	<title>HFlags - the NP Bit</title>
 
 	<para>
-	  The "N" bit indicates whether the Name element (consisting of Name_Length and Object_Name
-	  fields) is present (1) or absent (0) in the noncompressible basic header immediately following the
-	  Object_Length field. The width of the Name_Length field is specified by the Name_Wid field.
+	  The "N" bit indicates whether the Name element (consisting
+	  of Name_Length and Object_Name fields) is present (1) or
+	  absent (0) in the noncompressible basic header immediately
+	  following the Object_Length field. The width of the
+	  Name_Length field is specified by the Name_Wid field.
 	</para>
       </section>
 
       <section>
-	<title>AFlags/BFlags - the P Bit</title>
+	<title>AFlags/BFlags - the AP/BP Bit</title>
 
 	<para>
 	  The ``P'' bit indicates whether the Attributes (or, alternatively, Body) element consisting
@@ -692,19 +1058,23 @@
       </section>
 
       <section>
-	<title>AFlags/BFlags - the ZZZ Flag</title>
+	<title>AFlags/BFlags - the AZ/BZ Flag</title>
 
 	<para>
-	  The 3-bit ``ZZZ'' flag indicates the compression, if any, of the object Attributes (or Body):
+	  The 3-bit ``Z'' flag indicates the compression, if any, of the object Attributes (or Body):
 	</para>
 
 	<table frame="all">
-	  <title>ZZZ Flag Definitions</title>
+          <?dbfo centered-table-width="3.25in" ?>
+          <?dbhtml table-width="60%" ?>
+	  <title>AZ/BZ Flag Definitions</title>
 
 	  <tgroup cols="2" align="center">
+            <colspec colnum="1" colname="col1" colwidth="1.00in"/>
+            <colspec colnum="2" colname="col2" colwidth="2.25in"/>
 	    <thead>
 	      <row>
-		<entry>ZZZ Bits</entry>
+		<entry>AZ/BZ Bits</entry>
 		<entry>Compression Algorithm</entry>
 	    </row>
 	  </thead>
@@ -755,25 +1125,27 @@
 	fields: the Major_Type and the Minor_Type.
       </para>
       <table frame="all">
+        <?dbfo centered-table-width="3.2in" ?>
+        <?dbhtml table-width="60%" ?>
 	<title>Object_Type Element Structure</title>
 
 	<tgroup cols="16" align="center">
-	  <colspec colname="0"/>
-	  <colspec colname="1"/>
-	  <colspec colname="2"/>
-	  <colspec colname="3"/>
-	  <colspec colname="4"/>
-	  <colspec colname="5"/>
-	  <colspec colname="6"/>
-	  <colspec colname="7"/>
-	  <colspec colname="8"/>
-	  <colspec colname="9"/>
-	  <colspec colname="10"/>
-	  <colspec colname="11"/>
-	  <colspec colname="12"/>
-	  <colspec colname="13"/>
-	  <colspec colname="14"/>
-	  <colspec colname="15"/>
+	  <colspec colname="0" colwidth="0.2in" />
+	  <colspec colname="1" colwidth="0.2in" />
+	  <colspec colname="2" colwidth="0.2in" />
+	  <colspec colname="3" colwidth="0.2in" />
+	  <colspec colname="4" colwidth="0.2in" />
+	  <colspec colname="5" colwidth="0.2in" />
+	  <colspec colname="6" colwidth="0.2in" />
+	  <colspec colname="7" colwidth="0.2in" />
+	  <colspec colname="8" colwidth="0.2in" />
+	  <colspec colname="9" colwidth="0.2in" />
+	  <colspec colname="10" colwidth="0.2in" />
+	  <colspec colname="11" colwidth="0.2in" />
+	  <colspec colname="12" colwidth="0.2in" />
+	  <colspec colname="13" colwidth="0.2in" />
+	  <colspec colname="14" colwidth="0.2in" />
+	  <colspec colname="15" colwidth="0.2in" />
 	  <thead>
 	    <row>
 	      <entry namest="0" nameend="15" align="center">Object_Type</entry>
@@ -810,9 +1182,13 @@
 	The following values are defined in this specification:
       </para>
       <table frame="all">
+        <?dbfo centered-table-width="3.75in" ?>
+        <?dbhtml table-width="60%" ?>
 	<title>Major_Type Values and Meanings</title>
 
 	<tgroup cols="2" align="center">
+            <colspec colnum="1" colname="col1" colwidth="1.00in"/>
+            <colspec colnum="2" colname="col2" colwidth="2.75in"/>
 	  <thead>
 	    <row>
 	      <entry>Value</entry>
@@ -882,9 +1258,13 @@
 	  the library. For this Major_Type, the following Minor_Type values are defined:
 	</para>
 	<table frame="all">
+          <?dbfo centered-table-width="3.5in" ?>
+          <?dbhtml table-width="60%" ?>
 	  <title>Major_Type = 1:  Minor_Type Values and Meanings</title>
 
 	  <tgroup cols="2" align="center">
+            <colspec colnum="1" colname="col1" colwidth="1.5in"/>
+            <colspec colnum="2" colname="col2" colwidth="2.0in"/>
 	    <thead>
 	    <row>
 	      <entry>Minor_Type Value</entry>
@@ -928,9 +1308,13 @@
 	  For this Major_Type, the following Minor_Type values are defined:
 	</para>
 	<table frame="all">
+          <?dbfo centered-table-width="3.75in" ?>
+          <?dbhtml table-width="60%" ?>
 	  <title>Major_Type = 2:  Minor_Type Values and Meanings</title>
 
 	  <tgroup cols="2" align="center">
+            <colspec colnum="1" colname="col1" colwidth="1.50in"/>
+            <colspec colnum="2" colname="col2" colwidth="2.25in"/>
 	    <thead>
 	    <row>
 	      <entry>Minor_Type Value</entry>
@@ -1254,17 +1638,19 @@
 	    message) that there is a potential type mismatch.
 	  </para>
 	  <table frame="all">
+          <?dbfo centered-table-width="1.6in" ?>
+          <?dbhtml table-width="60%" ?>
 	    <title>Uniform Array Binary Objects Minor_Type Structure</title>
 
 	    <tgroup cols="8" align="center">
-	      <colspec colname="h1"/>
-	      <colspec colname="h2"/>
-	      <colspec colname="h3"/>
-	      <colspec colname="h4"/>
-	      <colspec colname="h5"/>
-	      <colspec colname="h6"/>
-	      <colspec colname="h7"/>
-	      <colspec colname="h8"/>
+	      <colspec colname="h1" colwidth="0.2in" />
+	      <colspec colname="h2" colwidth="0.2in" />
+	      <colspec colname="h3" colwidth="0.2in" />
+	      <colspec colname="h4" colwidth="0.2in" />
+	      <colspec colname="h5" colwidth="0.2in" />
+	      <colspec colname="h6" colwidth="0.2in" />
+	      <colspec colname="h7" colwidth="0.2in" />
+	      <colspec colname="h8" colwidth="0.2in" />
 	      <thead>
 		<row>
 		  <entry namest="h1" nameend="h8" align="center">Minor_Type</entry>
@@ -1296,9 +1682,13 @@
 	    in the array according to the following scheme:
 	  </para>
 	  <table frame="all">
+            <?dbfo centered-table-width="3.3in" ?>
+            <?dbhtml table-width="60%" ?>
 	    <title>Atom Flag Definitions</title>
 
 	    <tgroup cols="2" align="center">
+              <colspec colnum="1" colname="col1" colwidth="1.0in"/>
+              <colspec colnum="2" colname="col2" colwidth="2.3in"/>
 	      <thead>
 		<row>
 		  <entry>Atom Bits</entry>
@@ -1351,9 +1741,13 @@
 	    The 2-bit ``Wid'' flag specifies the length (in atomic elements) of the array elements:
 	  </para>
 	  <table frame="all">
+            <?dbfo centered-table-width="3.3in" ?>
+            <?dbhtml table-width="60%" ?>
 	    <title>Wid Flag Definitions</title>
 
 	    <tgroup cols="2" align="center">
+              <colspec colnum="1" colname="col1" colwidth="1.0in"/>
+              <colspec colnum="2" colname="col2" colwidth="2.3in"/>
 	      <thead>
 		<row>
 		  <entry>Wid Bits</entry>
@@ -1471,9 +1865,7 @@
 
       <para>
 	An object may optionally have an Object_Attributes element, which stores an association list
-	<literallayout class="normal">
-aname1=value1, aname2=value2, ..., anameN=valueN
-	</literallayout>
+	<literallayout class="normal">aname1=value1, aname2=value2, ..., anameN=valueN</literallayout>
 	binding attributes to values.
       </para>
       <para>
@@ -1484,9 +1876,7 @@ aname1=value1, aname2=value2, ..., anameN=valueN
       <para>
 	For attribute names and attribute values, The decision was taken to support 8-bit ASCII only. The
 	on-disk encoding of this will simply be:
-	<literallayout class="normal">
-aname1 NULL value1 NULL ... anameN NULL valueN NULL NULL
-	</literallayout>
+	<literallayout class="normal">aname1 NULL value1 NULL ... anameN NULL valueN NULL NULL</literallayout>
 	where NULL represents a byte with all bits zero. The NULL in place of anameN+1 signals the end of the
 	attribute data, simplifying the job of the reader.
       </para>
@@ -1599,66 +1989,76 @@ aname1 NULL value1 NULL ... anameN NULL valueN NULL NULL
 
       <para>
 	The minimal object is a Free object (with no name) 8 bytes long:
-	<literallayout class="normal">
-     Magic1 (1byte)
-     HFlags = 000xxxxx (1 byte)
-     AFlags = 0000xx00 (1 byte)
-     BFlags = 0000xx00 (1 byte)
-     ObjType = Free (2 bytes)
-     ObjLen = 8 (1 byte)
-     Magic2 (1 byte).
-	</literallayout>
+	<literallayout class="normal">Magic1 (1 byte)
+HFlags = 000xxxxx (1 byte)
+AFlags = 0000xx00 (1 byte)
+BFlags = 0000xx00 (1 byte)
+ObjType = Free (2 bytes)
+ObjLen = 8 (1 byte)
+Magic2 (1 byte)</literallayout>
 	This is why we have chosen the 8-bit size for our chunks. Pad bytes are inserted as necessary in the Object Footer
 	immediately before the second magic number so that the final byte of the object is the Magic2 byte. The pad bytes are
 	not counted as part of the Body_Length, but are counted as part of the Object_Length.
       </para>
       <para>
 	The minimal valid object is thus the following Free object:
-	<literallayout class="normal">
-Magic1 (1byte)
-HFlags = 00000010 (1 byte), Wid=00, N=0, DLI=02
-IFlags????? = 00000000 (1 byte), Wid=00, A=0, B=0, ZZZ=000
+	<literallayout class="normal">Magic1 (1 byte)
+HFlags = 00000x10 (1 byte), OWid=00, NP=0, NWid=00, DLI=10
+AFlags = 000xx000 (1 byte), AWid=00, AP=0, AZ=000
+BFlags = 000xx000 (1 byte), BWid=00, BP=0, BZ=000
 Object_Type = RESERVED (2 bytes)
 Object_Length = 8 (1 byte)
-Pad (1byte)
-Magic2 (1 byte).
-	</literallayout>
+Magic2 (1 byte)</literallayout>
       </para>
       <para>
 	The header of the database will always look like this:
-	<literallayout class="normal">
-Magic1 (1byte)
-HFlags = 000xxx01 (1 byte), Wid=00, N=0, DLI=01
-IFlags????? = 0000x000 (1 byte), Wid=00, A=0, B=0, ZZZ=000
+	<literallayout class="normal">Magic1 (1 byte)
+HFlags = 000xxx01 (1 byte), HWid=00, NP=0, DLI=01
+AFlags = 00000000 (1 byte), AWid=00, AP=0, AZ=000
+BFlags = 00000000 (1 byte), BWid=00, BP=0, BZ=000
 Object_Type = RESERVED (2 bytes)
 Object_Length = 8 (1 byte)
-Pad (1byte)
-Magic2 (1 byte)
+Magic2 (1 byte)</literallayout>
+
+      </para>
+
+      <para>
 The hex and ASCII dump of this object would look something this:
 
-76 01 00 00 00 01 00 35 |v......5|
-	</literallayout>
+	<literallayout class="normal">76 01 00 00 00 01 00 35 |v......5|</literallayout>
       </para>
+
       <para>
-	The minimal valid allocated database storage object (with an Object_Name, no Object_Attributes or Object_Body) would thus be:
-	<literallayout class="normal">
-Magic1 (1byte)
-HFlags = 001xxxxx (1 byte), Wid=00, N=1, DLI=00
-IFlags ?????= 0000xxxx (1 byte), Wid=00, A=0, B=0, ZZZ=000
+	The minimal valid allocated database storage object (with an
+	Object_Name, no Object_Attributes or Object_Body) would thus
+	be:
+
+	<literallayout class="normal">Magic1 (1 byte)
+HFlags = 00100x00 (1 byte), OWid=00, NP=1, NWid=00, DLI=00
+AFlags = 000xx000 (1 byte), AWid=00, AP=0, AZ=000
+BFlags = 000xx000 (1 byte), BWid=00, BP=0, BZ=000
 Object_Type = OPAQUE?????_BINARY (2 bytes)
 Object_Length = 16 (1 byte)
 Name_Length = 2 (1 byte)
 Object Name (1 character + null byte) (2 bytes)
-Pad (6 bytes)
-Magic2 (1 byte).
-	</literallayout>
+Pad (5 bytes)
+Magic2 (1 byte)</literallayout>
+
       </para>
+
       <para>
-	Without the padding, this (rather useless) object would be 10 bytes long. Given the rounding requirements, it is clear that all allocated storage objects in the database must be at least 16 bytes long. A database object with a minimal Object_Body would need 12 bytes, which would need to be padded out to 16 bytes as well:
-	<literallayout class="normal">
-Magic1 (1 byte)
+	Without the padding, that (rather useless) object would be 11
+	bytes long. Given the rounding requirements, it is clear that
+	all allocated storage objects in the database must be at least
+	16 bytes long. A database object with a minimal Object_Body
+	would need 12 bytes, which would need to be padded out to 16
+	bytes as well:
+
+	<literallayout class="normal">Magic1 (1 byte)
 HFlags = 001xxxxx (1 byte)
-IFlags???? = 00x1xxxx (1 byte)
+?? correctly xfer these data to A/B flags: IFlags???? = 00x1xxxx (1 byte)
+AFlags = 00000000 (1 byte), AWid=00, AP=0, AZ=000
+BFlags = 00000000 (1 byte), BWid=00, BP=0, BZ=000
 Object Type (2 bytes)
 Object Length = 16 (1 byte)
 Name Length = 2 (1 byte)
@@ -1666,21 +2066,7 @@ Object Name (1 character + null byte) (2 bytes)
 Body Length = 1 (1 byte)
 Body Data (1 byte)
 Pad (4 bytes)
-Magic2 (1 byte).
-	</literallayout>
-
-      </para>
-      <para>
-	<literallayout class="normal">
-	</literallayout>
-      </para>
-      <para>
-	<literallayout class="normal">
-	</literallayout>
-      </para>
-      <para>
-	<literallayout class="normal">
-	</literallayout>
+Magic2 (1 byte)</literallayout>
       </para>
 
   </section>
