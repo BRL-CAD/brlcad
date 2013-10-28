@@ -244,15 +244,13 @@ int parse_args(int ac, char **av)
 		set_rotate(bu_optarg);
 		break;
 	    case 'b':
-		if (sscanf(bu_optarg, "%lf, %lf, %lf", &width, &height, &dy) == 3) {
-		    brick_width = width * unit_conv;
-		    brick_height = height * unit_conv;
-		    brick_depth = dy * unit_conv;
-		    units_lock = 1;
-		} else {
-		    usage("error parsing -b option\n");
-		}
+		if (sscanf(bu_optarg, "%lf, %lf, %lf", &width, &height, &dy) != 3)
+			usage("error parsing -b option\n");
 
+		brick_width = width * unit_conv;
+		brick_height = height * unit_conv;
+		brick_depth = dy * unit_conv;
+		units_lock = 1;
 		break;
 	    case 'c':
 		if (sscanf(bu_optarg, "%d %d %d", &R, &G, &B) == 3) {
@@ -269,41 +267,41 @@ int parse_args(int ac, char **av)
 		log_cmds = !log_cmds;
 		break;
 	    case 'm':
-		if ((dx=atof(bu_optarg)) > 0.0) {
-		    min_mortar = dx * unit_conv;
-		    units_lock = 1;
-		    make_mortar = 1;
-		} else {
+		if ((dx=atof(bu_optarg)) <= 0.0)
 		    usage("error parsing -m option\n");
-		}
+
+		min_mortar = dx * unit_conv;
+		units_lock = 1;
+		make_mortar = 1;
 
 		break;
 	    case 'n':
 		obj_name = bu_optarg;
 		break;
 	    case 'o':
-		if (ZERO(ol_hd.ex)) {
+		if (ZERO(ol_hd.ex))
 		    usage("set wall dim before openings\n");
-		} else if (sscanf(bu_optarg, "%lf, %lf, %lf, %lf", &dx, &dy, &width, &height) == 4) {
-		    BU_ALLOC(op, struct opening);
-		    BU_LIST_INSERT(&ol_hd.l, &op->l);
-		    op->sx = dx * unit_conv;
-		    op->sz = dy * unit_conv;
-		    op->ex = width * unit_conv;
-		    op->ez = height * unit_conv;
+		if (sscanf(bu_optarg, "%lf, %lf, %lf, %lf", &dx, &dy, &width, &height) != 4)
+		    usage("error parsing -o option\n");
+		    
+		BU_ALLOC(op, struct opening);
+		BU_LIST_INSERT(&ol_hd.l, &op->l);
+		op->sx = dx * unit_conv;
+		op->sz = dy * unit_conv;
+		op->ex = width * unit_conv;
+		op->ez = height * unit_conv;
 
-		    /* do bounds checking */
-		    if (op->sx < 0.0) op->sx = 0.0;
-		    if (op->sz < 0.0) op->sz = 0.0;
-		    if (op->ex > WALL_WIDTH)
+		/* do bounds checking */
+		if (op->sx < 0.0)
+			op->sx = 0.0;
+		if (op->sz < 0.0)
+			op->sz = 0.0;
+		if (op->ex > WALL_WIDTH)
 			op->ex = WALL_WIDTH;
-		    if (op->ez > WALL_HEIGHT)
+		if (op->ez > WALL_HEIGHT)
 			op->ez = WALL_HEIGHT;
 
-		    units_lock = 1;
-		} else {
-		    usage("error parsing -o option\n");
-		}
+		units_lock = 1;
 		break;
 	    case 'r':
 		rand_brick_color = !rand_brick_color;
@@ -316,21 +314,19 @@ int parse_args(int ac, char **av)
 		    bu_log("Warning: attempting to change units in mid-parse\n");
 
 		dx=bu_units_conversion(bu_optarg);
-		if (!ZERO(dx)) {
-		    unit_conv = dx;
-		    units = bu_optarg;
-		} else {
+		if (ZERO(dx))
 		    usage("error parsing -u (units)\n");
-		}
+
+		unit_conv = dx;
+		units = bu_optarg;
 		break;
 	    case 'w':
-		if (sscanf(bu_optarg, "%lf, %lf", &width, &height) == 2) {
-		    WALL_WIDTH = width * unit_conv;
-		    WALL_HEIGHT = height * unit_conv;
-		    units_lock = 1;
-		} else {
+		if (sscanf(bu_optarg, "%lf, %lf", &width, &height) != 2)
 		    usage("error parsing -w (wall dimensions)\n");
-		}
+
+		WALL_WIDTH = width * unit_conv;
+		WALL_HEIGHT = height * unit_conv;
+		units_lock = 1;
 		break;
 	    default:
 		usage((char *)NULL);
