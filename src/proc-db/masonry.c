@@ -39,7 +39,7 @@
 
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "w:o:n:t:b:u:c:rlhdm:T:R:";
+char *options = "w:o:n:t:b:u:c:rlhdm:T:R:h?";
 
 int debug = 0;
 char *progname = "masonry";
@@ -50,7 +50,6 @@ char *type = "frame";
 char *units = "mm";
 double unit_conv = 1.0;
 matp_t trans_matrix = (matp_t)NULL;
-const double degtorad =  0.01745329251994329573;
 
 int log_cmds = 0;	/* log sessions to a log file */
 /* standard construction brick:
@@ -210,7 +209,7 @@ set_rotate(char *s)
 					 "rotation matrix");
 	MAT_IDN(trans_matrix);
     }
-    buildHrot(trans_matrix, rx*degtorad, ry*degtorad, rz*degtorad);
+    buildHrot(trans_matrix, rx*DEG2RAD, ry*DEG2RAD, rz*DEG2RAD);
 }
 
 
@@ -233,9 +232,6 @@ int parse_args(int ac, char **av)
 
 
     BU_LIST_INIT(&ol_hd.l);
-
-    /* Turn off bu_getopt's error messages */
-    bu_opterr = 0;
 
     /* get all the option flags from the command line */
     while ((c=bu_getopt(ac, av, options)) != -1) {
@@ -336,10 +332,8 @@ int parse_args(int ac, char **av)
 		    usage("error parsing -w (wall dimensions)\n");
 		}
 		break;
-	    case '?':
-	    case 'h':
 	    default:
-		usage("Bad or help flag specified\n");
+		usage((char *)NULL);
 		break;
 	}
     }
