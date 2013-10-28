@@ -69,6 +69,7 @@
 
 #include "bn.h"
 
+#define F_NONE -1
 #define F_BOTTOM 0
 #define F_RIGHT 1
 #define F_TOP 2
@@ -160,7 +161,7 @@ pnt2d_array_get_dimension(const point_t *pnts, int pnt_cnt, point_t *p_center, p
  *    Return: h   = the number of points in hull[]
  */
 int
-melkman_hull(point_t* polyline, int n, point_t* hull)
+melkman_hull(const point_t* polyline, int n, point_t* hull)
 {
     int i;
 
@@ -208,7 +209,7 @@ melkman_hull(point_t* polyline, int n, point_t* hull)
 
     /* transcribe deque D[] to the output hull array hull[] */
 
-    hull = bu_calloc(top - bot + 2, sizeof(fastf_t)*3, "hull");
+    hull = (point_t *)bu_calloc(top - bot + 2, sizeof(fastf_t)*3, "hull");
     for (h=0; h <= (top-bot); h++)
         VMOVE(hull[h],D[bot + h]);
 
@@ -216,23 +217,47 @@ melkman_hull(point_t* polyline, int n, point_t* hull)
     return h-1;
 }
 
+#if 0
+HIDDEN void
+UpdateBox(point_t LPoint, point_t RPoint, point_t BPoint, point_t TPoint, vect_t u, vect_t v, fastf_t minarea)
+{
+    vect_t RLDiff, TBDiff;
+    fastf_t extent0, extent1, area;
+    VSUB2(RLDiff, RPoint, LPoint);
+    VSUB2(TBDiff, TPoint, BPoint);
+    extent0 = 0.5*VDOT(u,RLDiff);
+    extent1 = 0.5*VDOT(v,TBDiff);
+    area = extent0*extent1;
+    if (area < minArea)
+    {
+	minArea = area;
+	mMinBox.Axis[0] = U;
+	mMinBox.Axis[1] = V;
+	mMinBox.Extent[0] = extent0;
+	mMinBox.Extent[1] = extent1;
+	Vector2<Real> LBDiff = LPoint - BPoint;
+	mMinBox.Center = LPoint + U*extent0 + V*(extent1 - V.Dot(LBDiff));
+    }
+}
+#endif
 
-/* TODO - if three consecutive colinear points are a no-no as documented in the original code,
- * we're going to have to build the convex hull for all inputs in order to make sure we don't
- * get large colinear sets from the NMG inputs.*/
+/* Three consecutive colinear points will cause a problem (per a comment in the original code)
+ * Consequently, we're going to have to build the convex hull for all inputs in order to
+ * make sure we don't get colinear points from the NMG inputs.*/
 int
 bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 	point_t *p3, point_t *p4)
 {
     int i = 0;
     int dim = 0;
-  /*  int done = 0;
+    int done = 0;
     int hull_pnt_cnt = 0;
-    point_t **hull_pnts = NULL;
-    point_t **edge_unit_vects = NULL;
-    int **visited = NULL; */
+    point_t *hull_pnts = NULL;
+    vect_t *edge_unit_vects = NULL;
+    int *visited = NULL;
     point_t center, pmin, pmax;
     vect_t vline, vz, vdelta, neg_vdelta, neg_vline;
+    VSET(vz, 0, 0, 1);
     if (!pnts || !p1 || !p2 || !p3 || !p4) return -1;
     /* Need 2d points for this to work */
     while (i < pnt_cnt) {
@@ -250,7 +275,6 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 	    break;
 	case 1:
 	    /* Bound line */
-	    VSET(vz, 0, 0, 1);
 	    VSUB2(vline, pmax, pmin);
 	    VUNITIZE(vline);
 	    VCROSS(vdelta, vline, vz);
@@ -263,72 +287,77 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 	    VADD3(*p3, pmax, vline, vdelta);
 	    VADD3(*p4, pmin, neg_vline, vdelta);
 	    break;
-#if 0
 	case 2:
 	    /* Bound convex hull using rotating calipers */
 
 	    /* 1.  Get convex hull */
-	    hull_pnt_cnt = convex_hull_melkman(pnts, hull_pnts);
+	    hull_pnt_cnt = melkman_hull(pnts, pnt_cnt, hull_pnts);
 
 	    /* 2.  Get edge unit vectors */
-	    edge_unit_vects = (point_t **)bu_calloc(sizeof(point_t *), hull_pnt_cnt + 1, "unit vects for edges");
-	    visited = (int **)bu_calloc(sizeof(int), hull_pnt_cnt + 1, "visited flags");
+	    edge_unit_vects = (vect_t *)bu_calloc(hull_pnt_cnt + 1, sizeof(fastf_t) * 3, "unit vects for edges");
+	    visited = (int *)bu_calloc(hull_pnt_cnt + 1, sizeof(int), "visited flags");
 	    for (i = 0; i < hull_pnt_cnt - 1; ++i) {
-		VSUB(hull_pnts[i + 1], hull_pnts[i], edge_unit_vects[i]);
+		VSUB2(edge_unit_vects[i], hull_pnts[i + 1], hull_pnts[i]);
 		VUNITIZE(edge_unit_vects[i]);
 	    }
-	    VSUB(hull_pnts[0], hull_pnts[hull_pnt_cnt - 1], edge_unit_vects[hull_pnt_cnt - 1]);
+	    VSUB2(edge_unit_vects[hull_pnt_cnt - 1], hull_pnts[0], hull_pnts[hull_pnt_cnt - 1]);
 	    VUNITIZE(edge_unit_vects[hull_pnt_cnt - 1]);
 
 	    /* 3. Find the points involved with the AABB */
 	    /* Find the smallest axis-aligned box containing the points.  Keep track */
 	    /* of the extremum indices, L (left), R (right), B (bottom), and T (top) */
 	    /* so that the following constraints are met:                            */
-	    /*   V[L].X() <= V[i].X() for all i and V[(L+1)%N].X() > V[L].X()        */
-	    /*   V[R].X() >= V[i].X() for all i and V[(R+1)%N].X() < V[R].X()        */
-	    /*   V[B].Y() <= V[i].Y() for all i and V[(B+1)%N].Y() > V[B].Y()        */
-	    /*   V[T].Y() >= V[i].Y() for all i and V[(T+1)%N].Y() < V[T].Y()        */
-	    fastf_t xmin = hull_pnts[0].X(), xmax = xmin;
-	    fastf_t ymin = hull_pnts[0].Y(), ymax = ymin;
-	    int LIndex = 0, RIndex = 0, BIndex = 0, TIndex = 0;
-	    for (i = 1; i < numPoints; ++i) {
-		if (hull_pnts[i].X() <= xmin) {
-		    xmin = hull_pnts[i].X();
+	    /*   V[L][0] <= V[i][0] for all i and V[(L+1)%N][0] > V[L][0]        */
+	    /*   V[R][0] >= V[i][0] for all i and V[(R+1)%N][0] < V[R][0]        */
+	    /*   V[B][1] <= V[i][1] for all i and V[(B+1)%N][1] > V[B][1]        */
+	    /*   V[T][1] >= V[i][1] for all i and V[(T+1)%N][1] < V[T][1]        */
+	    {
+	    fastf_t xmin = hull_pnts[0][0];
+	    fastf_t xmax = xmin;
+	    fastf_t ymin = hull_pnts[0][1];
+	    fastf_t ymax = ymin;
+	    int LIndex = 0;
+	    int RIndex = 0;
+	    int BIndex = 0;
+	    int TIndex = 0;
+	    for (i = 1; i < hull_pnt_cnt; ++i) {
+		if (hull_pnts[i][0] <= xmin) {
+		    xmin = hull_pnts[i][0];
 		    LIndex = i;
 		}
-		if (hull_pnts[i].X() >= xmax) {
-		    xmax = hull_pnts[i].X();
+		if (hull_pnts[i][0] >= xmax) {
+		    xmax = hull_pnts[i][0];
 		    RIndex = i;
 		}
 
-		if (hull_pnts[i].Y() <= ymin) {
-		    ymin = hull_pnts[i].Y();
+		if (hull_pnts[i][1] <= ymin) {
+		    ymin = hull_pnts[i][1];
 		    BIndex = i;
 		}
-		if (hull_pnts[i].Y() >= ymax) {
-		    ymax = hull_pnts[i].Y();
+		if (hull_pnts[i][1] >= ymax) {
+		    ymax = hull_pnts[i][1];
 		    TIndex = i;
 		}
 	    }
 
 	    /* Apply wrap-around tests to ensure the constraints mentioned above are satisfied.*/
-	    if ((LIndex == numPointsM1) && (hull_pnts[0].X() <= xmin)) {
-		xmin = hull_pnts[0].X();
+	    if ((LIndex == (hull_pnt_cnt - 1)) && (hull_pnts[0][0] <= xmin)) {
+		xmin = hull_pnts[0][0];
 		LIndex = 0;
 	    }
 
-	    if ((RIndex == numPointsM1) && (hull_pnts[0].X() >= xmax)) {
-		xmax = hull_pnts[0].X();
+	    if ((RIndex == (hull_pnt_cnt - 1)) && (hull_pnts[0][0] >= xmax)) {
+		xmax = hull_pnts[0][0];
 		RIndex = 0;
 	    }
 
-	    if ((BIndex == numPointsM1) && (hull_pnts[0].Y() <= ymin)) {
-		ymin = hull_pnts[0].Y();
+	    if ((BIndex == (hull_pnt_cnt - 1)) && (hull_pnts[0][1] <= ymin)) {
+		ymin = hull_pnts[0][1];
 		BIndex = 0;
 	    }
 
-	    if ((TIndex == numPointsM1) && (hullPoints[0].Y() >= ymax)) {
-		ymax = hullPoints[0].Y();
+	    if ((TIndex == (hull_pnt_cnt - 1)) && (hull_pnts[0][1] >= ymax)) {
+		ymax = hull_pnts[0][1];
 		TIndex = 0;
 	    }
 
@@ -339,29 +368,33 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 		   box edges. */
 		int flag = F_NONE;
 		vect_t u, v;
+		vect_t negu, negv;
 		fastf_t maxDot = 0.0;
+		fastf_t dot = 0.0;
 		VSET(u, 1, 0, 0);
 		VSET(v, 0, 1, 0);
+		VSET(negu, -1, 0, 0);
+		VSET(negv, 0, -1, 0);
 
-		fastf_t dot = VDOT(u,edge_unit_vects[BIndex]);
+		dot = VDOT(u,edge_unit_vects[BIndex]);
 		if (dot > maxDot) {
 		    maxDot = dot;
 		    flag = F_BOTTOM;
 		}
 
-		dot = V.Dot(edge_unit_vects[RIndex]);
+		dot = VDOT(v,edge_unit_vects[RIndex]);
 		if (dot > maxDot) {
 		    maxDot = dot;
 		    flag = F_RIGHT;
 		}
 
-		dot = -U.Dot(edge_unit_vects[TIndex]);
+		dot = VDOT(negu, edge_unit_vects[TIndex]);
 		if (dot > maxDot) {
 		    maxDot = dot;
 		    flag = F_TOP;
 		}
 
-		dot = -V.Dot(edge_unit_vects[LIndex]);
+		dot = VDOT(negv, edge_unit_vects[LIndex]);
 		if (dot > maxDot) {
 		    maxDot = dot;
 		    flag = F_LEFT;
@@ -370,78 +403,82 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 		switch (flag) {
 		    case F_BOTTOM:
 			if (visited[BIndex]) {
-			    done = true;
+			    done = 1;
 			} else {
 			    /* Compute box axes with E[B] as an edge.*/
-			    U = edge_unit_vects[BIndex];
-			    V = -U.Perp();
-			    UpdateBox(hullPoints[LIndex], hullPoints[RIndex],
+			    VMOVE(u,edge_unit_vects[BIndex]);
+			    VCROSS(v,u,vz);
+			    VSCALE(v,v,-1);
+			    /*UpdateBox(hullPoints[LIndex], hullPoints[RIndex],
 				    hullPoints[BIndex], hullPoints[TIndex], U, V,
-				    minAreaDiv4);
+				    minAreaDiv4);*/
 
 			    /* Mark edge visited and rotate the calipers. */
-			    visited[BIndex] = true;
-			    if (++BIndex == numPoints) BIndex = 0;
+			    visited[BIndex] = 1;
+			    if (++BIndex == hull_pnt_cnt) BIndex = 0;
 			}
 			break;
 		    case F_RIGHT:
 			if (visited[RIndex]) {
-			    done = true;
+			    done = 1;
 			} else {
 			    /* Compute box axes with E[R] as an edge. */
-			    V = edge_unit_vects[RIndex];
-			    U = V.Perp();
-			    UpdateBox(hullPoints[LIndex], hullPoints[RIndex],
+			    VMOVE(v,edge_unit_vects[RIndex]);
+			    VCROSS(u,v,vz);
+			    /*UpdateBox(hullPoints[LIndex], hullPoints[RIndex],
 				    hullPoints[BIndex], hullPoints[TIndex], U, V,
-				    minAreaDiv4);
+				    minAreaDiv4);*/
 
 			    /* Mark edge visited and rotate the calipers. */
-			    visited[RIndex] = true;
-			    if (++RIndex == numPoints) RIndex = 0;
+			    visited[RIndex] = 1;
+			    if (++RIndex == hull_pnt_cnt) RIndex = 0;
 			}
 			break;
 		    case F_TOP:
 			if (visited[TIndex]) {
-			    done = true;
+			    done = 1;
 			} else {
 			    /* Compute box axes with E[T] as an edge. */
-			    U = -edge_unit_vects[TIndex];
-			    V = -U.Perp();
-			    UpdateBox(hullPoints[LIndex], hullPoints[RIndex],
+			    VMOVE(u,edge_unit_vects[TIndex]);
+			    VSCALE(u,u,-1);
+			    VCROSS(v,u,vz);
+			    VSCALE(v,v,-1);
+			    /*UpdateBox(hullPoints[LIndex], hullPoints[RIndex],
 				    hullPoints[BIndex], hullPoints[TIndex], U, V,
-				    minAreaDiv4);
+				    minAreaDiv4);*/
 
 			    /* Mark edge visited and rotate the calipers. */
-			    visited[TIndex] = true;
-			    if (++TIndex == numPoints) TIndex = 0;
+			    visited[TIndex] = 1;
+			    if (++TIndex == hull_pnt_cnt) TIndex = 0;
 			}
 			break;
 		    case F_LEFT:
 			if (visited[LIndex]) {
-			    done = true;
+			    done = 1;
 			} else {
 			    /* Compute box axes with E[L] as an edge. */
-			    V = -edge_unit_vects[LIndex];
-			    U = V.Perp();
-			    UpdateBox(hullPoints[LIndex], hullPoints[RIndex],
+			    VMOVE(v,edge_unit_vects[LIndex]);
+			    VSCALE(v,v,-1);
+			    VCROSS(u,v,vz);
+			    /*UpdateBox(hullPoints[LIndex], hullPoints[RIndex],
 				    hullPoints[BIndex], hullPoints[TIndex], U, V,
-				    minAreaDiv4);
+				    minAreaDiv4);*/
 
 			    /* Mark edge visited and rotate the calipers. */
-			    visited[LIndex] = true;
-			    if (++LIndex == numPoints) LIndex = 0;
+			    visited[LIndex] = 1;
+			    if (++LIndex == hull_pnt_cnt) LIndex = 0;
 			}
 			break;
 		    case F_NONE:
 			/* The polygon is a rectangle. */
-			done = true;
+			done = 1;
 			break;
 		}
 	    }
-#endif
-/*	    bu_free(visited, "free visited");
+	    bu_free(visited, "free visited");
 	    bu_free(edge_unit_vects, "free visited");
-	    bu_free(hull_pnts, "free visited");*/
+	    bu_free(hull_pnts, "free visited");
+	    }
     }
     return dim;
 }
