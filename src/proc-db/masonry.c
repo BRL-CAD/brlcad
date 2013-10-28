@@ -39,7 +39,7 @@
 
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "w:o:n:t:b:u:c:rlhdm:T:R:h?";
+char *options = "w:o:n:t:b:u:c:rldm:T:R:h?";
 
 int debug = 0;
 char *progname = "masonry";
@@ -55,10 +55,10 @@ int log_cmds = 0;	/* log sessions to a log file */
 /* standard construction brick:
  * 8" by 2 1/4" by 3 3/8"
  */
-double brick_height = 8.0 * 25.4;
-double brick_width = 2.25 * 25.4;
-double brick_depth = 3.25 * 25.4;
-double min_mortar = 0.25 * 25.4;
+double brick_height = 203.2; /* 8.0  * 25.4 */
+double brick_width =  57.15; /* 2.25 * 25.4 */
+double brick_depth =  82.55; /* 3.25 * 25.4 */
+double min_mortar =    6.35; /* 0.25 * 25.4 */
 
 unsigned char *color;
 unsigned char def_color[3];
@@ -110,7 +110,7 @@ void usage(char *s)
 
     bu_exit(1, "Usage: %s %s\n%s\n%s\n%s\n%s\n",
 	    progname,
-	    "[-u units] -w(all) width, height [-o(pening) lx, lz, hx, hz ...]",
+	    "[-u units] [-w(all) width, height] [-o(pening) lx, lz, hx, hz ...]",
 	    " [-n name] [ -d(ebug) ] [-t {frame|brick|block|sheetrock} ] [-c R/G/B]",
 	    " [-l(og_commands)] [-R(otate) rx/ry/rz] [-T(ranslate) dx/dy/dz]",
 	    " brick sub-options: [-r(and_color)] [-b width, height, depth ] [-m min_mortar]",
