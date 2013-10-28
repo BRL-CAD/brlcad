@@ -161,7 +161,7 @@ pnt2d_array_get_dimension(const point_t *pnts, int pnt_cnt, point_t *p_center, p
  *    Return: h   = the number of points in hull[]
  */
 int
-melkman_hull(const point_t* polyline, int n, point_t* hull)
+melkman_hull(const point_t* polyline, int n, point_t** hull)
 {
     int i;
 
@@ -211,9 +211,9 @@ melkman_hull(const point_t* polyline, int n, point_t* hull)
 
     /* transcribe deque D[] to the output hull array hull[] */
 
-    hull = (point_t *)bu_calloc(top - bot + 2, sizeof(fastf_t)*3, "hull");
+    (*hull) = (point_t *)bu_calloc(top - bot + 2, sizeof(fastf_t)*3, "hull");
     for (h=0; h <= (top-bot); h++)
-        VMOVE(hull[h],D[bot + h]);
+        VMOVE((*hull)[h],D[bot + h]);
 
     bu_free(D, "free queue");
     return h-1;
@@ -293,7 +293,7 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 	    /* Bound convex hull using rotating calipers */
 
 	    /* 1.  Get convex hull */
-	    hull_pnt_cnt = melkman_hull(pnts, pnt_cnt, hull_pnts);
+	    hull_pnt_cnt = melkman_hull(pnts, pnt_cnt, &hull_pnts);
 
 	    /* 2.  Get edge unit vectors */
 	    edge_unit_vects = (vect_t *)bu_calloc(hull_pnt_cnt + 1, sizeof(fastf_t) * 3, "unit vects for edges");
