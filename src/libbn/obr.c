@@ -382,6 +382,7 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 	    /* initialize with AABB */
 	    obr.center[0] = 0.5 * (xmin + xmax);
 	    obr.center[1] = 0.5 * (ymin + ymax);
+	    obr.center[2] = 0.0;
 	    VSET(obr.u, 1, 0, 0);
 	    VSET(obr.v, 0, 1, 0);
 	    obr.extent0 = (xmax - xmin);
@@ -436,9 +437,8 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 			    VMOVE(u,edge_unit_vects[BIndex]);
 			    VCROSS(v,u,vz);
 			    VSCALE(v,v,-1);
-			    /*UpdateBox(hullPoints[LIndex], hullPoints[RIndex],
-				    hullPoints[BIndex], hullPoints[TIndex], U, V,
-				    minAreaDiv4);*/
+			    UpdateBox(&obr, hull_pnts[LIndex], hull_pnts[RIndex],
+				    hull_pnts[BIndex], hull_pnts[TIndex], u, v);
 
 			    /* Mark edge visited and rotate the calipers. */
 			    visited[BIndex] = 1;
@@ -452,9 +452,8 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 			    /* Compute box axes with E[R] as an edge. */
 			    VMOVE(v,edge_unit_vects[RIndex]);
 			    VCROSS(u,v,vz);
-			    /*UpdateBox(hullPoints[LIndex], hullPoints[RIndex],
-				    hullPoints[BIndex], hullPoints[TIndex], U, V,
-				    minAreaDiv4);*/
+			    UpdateBox(&obr, hull_pnts[LIndex], hull_pnts[RIndex],
+				    hull_pnts[BIndex], hull_pnts[TIndex], u, v);
 
 			    /* Mark edge visited and rotate the calipers. */
 			    visited[RIndex] = 1;
@@ -470,9 +469,8 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 			    VSCALE(u,u,-1);
 			    VCROSS(v,u,vz);
 			    VSCALE(v,v,-1);
-			    /*UpdateBox(hullPoints[LIndex], hullPoints[RIndex],
-				    hullPoints[BIndex], hullPoints[TIndex], U, V,
-				    minAreaDiv4);*/
+			    UpdateBox(&obr, hull_pnts[LIndex], hull_pnts[RIndex],
+				    hull_pnts[BIndex], hull_pnts[TIndex], u, v);
 
 			    /* Mark edge visited and rotate the calipers. */
 			    visited[TIndex] = 1;
@@ -487,9 +485,8 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 			    VMOVE(v,edge_unit_vects[LIndex]);
 			    VSCALE(v,v,-1);
 			    VCROSS(u,v,vz);
-			    /*UpdateBox(hullPoints[LIndex], hullPoints[RIndex],
-				    hullPoints[BIndex], hullPoints[TIndex], U, V,
-				    minAreaDiv4);*/
+			    UpdateBox(&obr, hull_pnts[LIndex], hull_pnts[RIndex],
+				    hull_pnts[BIndex], hull_pnts[TIndex], u, v);
 
 			    /* Mark edge visited and rotate the calipers. */
 			    visited[LIndex] = 1;
