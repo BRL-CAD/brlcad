@@ -219,29 +219,44 @@ melkman_hull(const point_t* polyline, int n, point_t** hull)
     return h-1;
 }
 
-#if 0
+struct obr_vals {
+    fastf_t area;
+    vect_t u;
+    vect_t v;
+    fastf_t extent0;
+    fastf_t extent1;
+    point_t center;
+};
+
+/* The oriented bounding rectangle must be calculated from the points and 2D vectors provided by
+ * the rotating calipers, and the smallest resultant area tracked.  Those functions are handled
+ * by this routine.*/
 HIDDEN void
-UpdateBox(point_t LPoint, point_t RPoint, point_t BPoint, point_t TPoint, vect_t u, vect_t v, fastf_t minarea)
+UpdateBox(struct obr_vals *obr, point_t LPoint, point_t RPoint, point_t BPoint, point_t TPoint, vect_t u, vect_t v)
 {
-    vect_t RLDiff, TBDiff;
+    vect_t RLDiff, TBDiff, LBDiff;
+    vect_t U, V;
     fastf_t extent0, extent1, area;
     VSUB2(RLDiff, RPoint, LPoint);
     VSUB2(TBDiff, TPoint, BPoint);
-    extent0 = 0.5*VDOT(u,RLDiff);
-    extent1 = 0.5*VDOT(v,TBDiff);
+    extent0 = VDOT(u,RLDiff);
+    extent1 = VDOT(v,TBDiff);
     area = extent0*extent1;
-    if (area < minArea)
+    if (area < obr->area)
     {
-	minArea = area;
-	mMinBox.Axis[0] = U;
-	mMinBox.Axis[1] = V;
-	mMinBox.Extent[0] = extent0;
-	mMinBox.Extent[1] = extent1;
-	Vector2<Real> LBDiff = LPoint - BPoint;
-	mMinBox.Center = LPoint + U*extent0 + V*(extent1 - V.Dot(LBDiff));
+	obr->area = area;
+	VMOVE(obr->u, u);
+	VMOVE(obr->v, v);
+	obr->extent0 = extent0;
+	obr->extent1 = extent1;
+	/* TODO translate this to vmath.h routines...
+	mMinBox.Center = LPoint + U*extent0 + V*(extent1 - V.Dot(LBDiff));*/
+	VSUB2(LBDiff, BPoint, LPoint);
+	VSCALE(U, u, extent0);
+	VSCALE(V, v, extent1 + VDOT(V,LBDiff));
+	VADD3(obr->center, LPoint, U, V);
     }
 }
-#endif
 
 /* Three consecutive colinear points will cause a problem (per a comment in the original code)
  * Consequently, we're going to have to build the convex hull for all inputs in order to
@@ -259,6 +274,7 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
     int *visited = NULL;
     point_t center, pmin, pmax;
     vect_t vline, vz, vdelta, neg_vdelta, neg_vline;
+    struct obr_vals obr;
     VSET(vz, 0, 0, 1);
     if (!pnts || !p1 || !p2 || !p3 || !p4) return -1;
     /* Need 2d points for this to work */
@@ -362,6 +378,15 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 		ymax = hull_pnts[0][1];
 		TIndex = 0;
 	    }
+
+	    /* initialize with AABB */
+	    obr.center[0] = 0.5 * (xmin + xmax);
+	    obr.center[1] = 0.5 * (ymin + ymax);
+	    VSET(obr.u, 1, 0, 0);
+	    VSET(obr.v, 0, 1, 0);
+	    obr.extent0 = (xmax - xmin);
+	    obr.extent1 = (ymax - ymin);
+	    obr.area = obr.extent0 * obr.extent1;
 
 	    /* 3. The rotating calipers algorithm */
 	    done = 0;
