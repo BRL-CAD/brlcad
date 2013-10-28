@@ -198,13 +198,15 @@ melkman_hull(const point_t* polyline, int n, point_t* hull)
         /* incrementally add an exterior vertex to the deque hull
            get the rightmost tangent at the deque bot */
         while (isLeft(D[bot], D[bot+1], polyline[i]) <= 0)
-            ++bot;                      /* remove bot of deque */
-        VMOVE(D[--bot],polyline[i]);    /* insert P[i] at bot of deque */
+            bot = bot + 1;                      /* remove bot of deque */
+        VMOVE(D[bot-1],polyline[i]);    /* insert P[i] at bot of deque */
+	bot = bot - 1;
 
         /* get the leftmost tangent at the deque top */
         while (isLeft(D[top-1], D[top], polyline[i]) <= 0)
-            --top;                      /* pop top of deque */
-        VMOVE(D[++top],polyline[i]);    /* push P[i] onto top of deque */
+            top = top - 1;                      /* pop top of deque */
+        VMOVE(D[top+1],polyline[i]);    /* push P[i] onto top of deque */
+	top = top + 1;
     }
 
     /* transcribe deque D[] to the output hull array hull[] */
