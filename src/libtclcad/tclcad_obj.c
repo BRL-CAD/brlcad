@@ -13341,12 +13341,13 @@ go_draw_faceplate(struct ged_obj *gop, struct ged_dm_view *gdvp)
 	gdvp->gdv_view->gv_view_axes.gas_axes_pos[Y] = save_ypos;
     }
 
+
     /* View scale */
     if (gdvp->gdv_view->gv_view_scale.gos_draw)
 	dm_draw_scale(gdvp->gdv_dmp,
 		      gdvp->gdv_view->gv_size*gop->go_gedp->ged_wdbp->dbip->dbi_base2local,
 		      gdvp->gdv_view->gv_view_scale.gos_line_color,
-		      gdvp->gdv_view->gv_view_scale.gos_text_color);
+		      gdvp->gdv_view->gv_view_params.gos_text_color);
 
     /* View parameters */
     if (gdvp->gdv_view->gv_view_params.gos_draw) {
