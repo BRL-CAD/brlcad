@@ -237,11 +237,24 @@ UpdateBox(struct obr_vals *obr, point_t LPoint, point_t RPoint, point_t BPoint, 
     vect_t RLDiff, TBDiff, LBDiff;
     vect_t U, V;
     fastf_t extent0, extent1, area;
+
+    bu_log("LPoint: %f, %f, %f\n", LPoint[0], LPoint[1], LPoint[2]);
+    bu_log("BPoint: %f, %f, %f\n", BPoint[0], BPoint[1], BPoint[2]);
+    bu_log("RPoint: %f, %f, %f\n", RPoint[0], RPoint[1], RPoint[2]);
+    bu_log("TPoint: %f, %f, %f\n", TPoint[0], TPoint[1], TPoint[2]);
+    bu_log("u: %f, %f, %f\n", u[0], u[1], u[2]);
+    bu_log("v: %f, %f, %f\n", v[0], u[1], u[2]);
+
     VSUB2(RLDiff, RPoint, LPoint);
+    bu_log("RLDiff: %f, %f, %f\n", RLDiff[0], RLDiff[1], RLDiff[2]);
     VSUB2(TBDiff, TPoint, BPoint);
-    extent0 = VDOT(u,RLDiff);
-    extent1 = VDOT(v,TBDiff);
-    area = extent0*extent1;
+    bu_log("TBDiff: %f, %f, %f\n", TBDiff[0], TBDiff[1], TBDiff[2]);
+    extent0 = 0.5 * VDOT(u,RLDiff);
+    bu_log("extent0: %f\n", extent0);
+    extent1 = 0.5 * VDOT(v,TBDiff);
+    bu_log("extent1: %f\n", extent1);
+    area = extent0 * extent1 * 4;
+    bu_log("area: %f\n", area);
     if (area < obr->area)
     {
 	obr->area = area;
@@ -251,11 +264,16 @@ UpdateBox(struct obr_vals *obr, point_t LPoint, point_t RPoint, point_t BPoint, 
 	obr->extent1 = extent1;
 	/* TODO translate this to vmath.h routines...
 	mMinBox.Center = LPoint + U*extent0 + V*(extent1 - V.Dot(LBDiff));*/
-	VSUB2(LBDiff, BPoint, LPoint);
+	VSUB2(LBDiff, LPoint, BPoint);
+	bu_log("LBDiff: %f, %f, %f\n", LBDiff[0], LBDiff[1], LBDiff[2]);
 	VSCALE(U, u, extent0);
-	VSCALE(V, v, extent1 + VDOT(V,LBDiff));
+	bu_log("U: %f, %f, %f\n", U[0], U[1], U[2]);
+	bu_log("VDOT(v, LBDiff): %f\n", VDOT(v,LBDiff));
+	VSCALE(V, v, extent1 - VDOT(v,LBDiff));
+	bu_log("V: %f, %f, %f\n", V[0], V[1], V[2]);
 	VADD3(obr->center, LPoint, U, V);
     }
+    bu_log("center: %f, %f, %f\n\n", obr->center[0], obr->center[1], obr->center[2]);
 }
 
 /* Three consecutive colinear points will cause a problem (per a comment in the original code)
@@ -273,6 +291,7 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
     vect_t *edge_unit_vects = NULL;
     int *visited = NULL;
     point_t center, pmin, pmax;
+    vect_t u, v;
     vect_t vline, vz, vdelta, neg_vdelta, neg_vline;
     struct obr_vals obr;
     VSET(vz, 0, 0, 1);
@@ -391,18 +410,18 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 
 	    /* 3. The rotating calipers algorithm */
 	    done = 0;
+	    VSET(u, 1, 0, 0);
+	    VSET(v, 0, 1, 0);
+
 	    while (!done) {
 		/* Determine the edge that forms the smallest angle with the current
 		   box edges. */
 		int flag = F_NONE;
-		vect_t u, v;
 		vect_t negu, negv;
 		fastf_t maxDot = 0.0;
 		fastf_t dot = 0.0;
-		VSET(u, 1, 0, 0);
-		VSET(v, 0, 1, 0);
-		VSET(negu, -1, 0, 0);
-		VSET(negv, 0, -1, 0);
+		VSCALE(negu, u, -1);
+		VSCALE(negv, v, -1);
 
 		dot = VDOT(u,edge_unit_vects[BIndex]);
 		if (dot > maxDot) {
@@ -442,7 +461,11 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 
 			    /* Mark edge visited and rotate the calipers. */
 			    visited[BIndex] = 1;
-			    if (++BIndex == hull_pnt_cnt) BIndex = 0;
+			    if ((BIndex + 1) == hull_pnt_cnt) {
+			       	BIndex = 0;
+			    } else {
+			       	BIndex = BIndex + 1;
+			    }
 			}
 			break;
 		    case F_RIGHT:
@@ -457,7 +480,11 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 
 			    /* Mark edge visited and rotate the calipers. */
 			    visited[RIndex] = 1;
-			    if (++RIndex == hull_pnt_cnt) RIndex = 0;
+			    if ((RIndex + 1) == hull_pnt_cnt) {
+				RIndex = 0;
+			    } else {
+				RIndex = RIndex + 1;
+			    }
 			}
 			break;
 		    case F_TOP:
@@ -474,7 +501,12 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 
 			    /* Mark edge visited and rotate the calipers. */
 			    visited[TIndex] = 1;
-			    if (++TIndex == hull_pnt_cnt) TIndex = 0;
+			    if ((TIndex + 1) == hull_pnt_cnt) {
+				TIndex = 0;
+			    } else {
+				TIndex = TIndex + 1;
+			    }
+
 			}
 			break;
 		    case F_LEFT:
@@ -490,7 +522,12 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 
 			    /* Mark edge visited and rotate the calipers. */
 			    visited[LIndex] = 1;
-			    if (++LIndex == hull_pnt_cnt) LIndex = 0;
+			    if ((LIndex + 1) == hull_pnt_cnt) {
+				LIndex = 0;
+			    } else {
+				LIndex = LIndex + 1;
+			    }
+
 			}
 			break;
 		    case F_NONE:
