@@ -1,3 +1,4 @@
+
 /*                       M A S O N R Y . C
  * BRL-CAD
  *
@@ -110,10 +111,10 @@ void usage(char *s)
 
     bu_exit(1, "Usage: %s %s\n%s\n%s\n%s\n%s\n",
 	    progname,
-	    "[-u units] [-w(all) width, height] [-o(pening) lx, lz, hx, hz ...]",
-	    " [-n name] [ -d(ebug) ] [-t {frame|brick|block|sheetrock} ] [-c R/G/B]",
+	    "[-u units] [-w(all) width, height] [-o(pening) lx, lz, hx, hz]",
+	    " [-n name_mged_object] [-d(ebug)] [-t {frame|brick|block|sheetrock}] [-c R/G/B]",
 	    " [-l(og_commands)] [-R(otate) rx/ry/rz] [-T(ranslate) dx/dy/dz]",
-	    " brick sub-options: [-r(and_color)] [-b width, height, depth ] [-m min_mortar]",
+	    " (brick sub-options:) [-r(and_color)] [-b width, height, depth] [-m min_mortar]",
 	    " (default units=mm)"
 	);
 }
