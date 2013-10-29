@@ -61,9 +61,8 @@ slice(struct rt_wdb *fp, point_t origin, fastf_t depth, fastf_t width, fastf_t h
     vect_t cell[27];
     point_t minpt, maxpt;
 
-    if (!fp || depth < SMALL_FASTF || width < SMALL_FASTF) {
+    if (!fp || depth < SMALL_FASTF || width < SMALL_FASTF)
 	return;
-    }
 
     if (level > 0) {
 	struct bu_vls celfix = BU_VLS_INIT_ZERO;
@@ -271,9 +270,8 @@ mengerize(struct rt_wdb *fp, point_t origin, fastf_t extent, axes xyz, const cha
     struct wmember *final = NULL;
     struct bu_vls cut = BU_VLS_INIT_ZERO;
 
-    if (!fp || !pattern || extent < SMALL_FASTF || xyz == 0) {
+    if (!fp || !pattern || extent < SMALL_FASTF || xyz == 0)
 	return NULL; /* nothing to do */
-    }
 
     /* initialize */
     levels = bu_calloc(repeat * strlen(pattern), sizeof(struct wmember *), "alloc uts array");
@@ -384,26 +382,23 @@ main(int ac, char *av[])
 		/* scan for valid pattern characters */
 		bu_vls_trunc(&pattern, 0);
 		for (i=0; i < strlen(bu_optarg); i++) {
-		    if (bu_optarg[i] == 'i'
-			|| bu_optarg[i] == 'o')
-		    {
-			bu_vls_putc(&pattern, bu_optarg[i]);
-		    } else {
+		    if (bu_optarg[i] != 'i' && bu_optarg[i] != 'o')
 			bu_exit(5, "ERROR: Invalid pattern character encountered\nExpecting combinations of 'o' and 'i' (e.g., \"oiio\")\n");
-		    }
+
+		    bu_vls_putc(&pattern, bu_optarg[i]);
 		}
 		break;
 	    }
 	    case 'r':
 	    case 'R': {
 		long val = repeat;
-		if (!bu_optarg) {
+		if (!bu_optarg)
 		    bu_exit(3, "ERROR: missing repeat count after -r option\n");
-		}
+
 		val = strtol(bu_optarg, NULL, 0);
-		if (val <= 0) {
+		if (val <= 0)
 		    bu_exit(3, "ERROR: invalid repeat specification [%ld <= 0]\n", val);
-		}
+
 		repeat = (size_t)val;
 		break;
 	    }
@@ -443,16 +438,15 @@ main(int ac, char *av[])
     bu_log("Writing geometry to [%V]\n\n", &filename);
 
     fp = wdb_fopen(bu_vls_addr(&filename));
-    if (!fp) {
+    if (!fp)
 	bu_exit(6, "ERROR: Unable to open %V\n", &filename);
-    }
+
     (void)mk_id_units(fp, "Menger Sponge", "m");
 
     /* DO IT! */
     boxes = mengerize(fp, origin, EXTENT, xyz, bu_vls_addr(&pattern), repeat);
-    if (!boxes) {
+    if (!boxes)
 	bu_exit(7, "ERROR: Unable to create sponge\n");
-    }
 
     /* make the top-level scene:
      *
