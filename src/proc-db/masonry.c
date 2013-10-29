@@ -67,13 +67,13 @@ unsigned char brick_color[3] = {160, 40, 40};
 unsigned char mortar_color[3] = {190, 190, 190};
 
 int rand_brick_color = 0;
-int make_mortar = 1;
+int make_mortar = 0;
 
 /* real dimensions of a "2 by 4" board */
-double bd_thick = 3.25 * 25.4;
-double bd_thin = 1.5 * 25.4;
-double beam_height = 5.5 * 25.4;
-double sr_thick = 0.75 * 25.4;	/* sheetrock thickness */
+double bd_thick =     3.25 * 25.4;
+double bd_thin =      1.5  * 25.4;
+double beam_height =  5.5  * 25.4;
+double sr_thick =     0.75 * 25.4; /* sheetrock thickness */
 double stud_spacing = 16.0 * 25.4; /* spacing between vertical studs */
 
 unsigned char sheetrock_color[3] = { 200, 200, 200 };
@@ -114,7 +114,7 @@ void usage(char *s)
 	    "[-u units] [-w(all) width, height] [-o(pening) lx, lz, hx, hz]",
 	    " [-n name_mged_object] [-d(ebug)] [-t {frame|brick|block|sheetrock}] [-c R/G/B]",
 	    " [-l(og_commands)] [-R(otate) rx/ry/rz] [-T(ranslate) dx/dy/dz]",
-	    " (brick sub-options:) [-r(and_color)] [-b width, height, depth] [-m min_mortar]",
+	    " (brick options:) [-r(and_color)] [-b width, height, depth] [-m min_mortar_width]",
 	    " (default units=mm)"
 	);
 }
@@ -856,13 +856,12 @@ mortar_brick(struct rt_wdb *fd)
     mortar_width = WALL_WIDTH -
 	(horiz_bricks * (brick_width + min_mortar) +
 	 brick_depth);
-
     mortar_width = min_mortar + mortar_width / (double)horiz_bricks;
 
     vert_bricks = WALL_HEIGHT / (brick_height+min_mortar);
+
     mortar_height = WALL_HEIGHT - vert_bricks * (brick_height+min_mortar);
     mortar_height = min_mortar + mortar_height/vert_bricks;
-
 
     /* make prototype brick */
 
@@ -945,6 +944,7 @@ brick(struct rt_wdb *fd)
 	color = brick_color;
 
     horiz_bricks = (WALL_WIDTH-brick_depth) / brick_width;
+
     mortar_width = WALL_WIDTH - horiz_bricks * brick_width;
     mortar_width /= horiz_bricks;
 
