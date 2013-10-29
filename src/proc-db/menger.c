@@ -337,7 +337,7 @@ main(int ac, char *av[])
     /* maximum extent in positive xyz directions (i.e., it's a cube) */
     static const fastf_t EXTENT = 1000000.0;
 
-    static const char optstring[] = "hHo:O:p:P:r:R:xXyYzZ";
+    static const char optstring[] = "o:O:p:P:r:R:xXyYzZh?";
     const char *av0 = av[0];
 
     struct bu_vls filename = BU_VLS_INIT_ZERO;
@@ -351,7 +351,6 @@ main(int ac, char *av[])
     struct bu_vls *boxes = NULL;
 
     bu_optind = 1;
-    bu_opterr = 0;
 
     /* set up defaults */
     bu_vls_strcpy(&filename, "menger.g");
@@ -408,18 +407,8 @@ main(int ac, char *av[])
 		repeat = (size_t)val;
 		break;
 	    }
-	    case '?':
-	    case 'h':
-	    case 'H':
 	    default:
 		usage(av[0]);
-		if (c == '?' && bu_optopt != '?' && tolower(bu_optopt) != 'h') {
-		    char *opt = strchr(optstring, bu_optopt);
-		    if (opt && opt[1] == ':') {
-			bu_exit(2, "ERROR: Missing option argument [-%c ARG]\n", bu_optopt);
-		    }
-		    bu_exit(1, "ERROR: Unrecognized option [-%c]\n", bu_optopt);
-		}
 		bu_exit(0, NULL);
 	}
     }
