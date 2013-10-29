@@ -281,10 +281,10 @@ int parse_args(int ac, char **av)
 		break;
 	    case 'o':
 		if (ZERO(ol_hd.ex))
-		    usage("set wall dim before openings\n");
+		    usage("set wall dimensions (-w) ahead of openings (-o)\n");
 		if (sscanf(bu_optarg, "%lf, %lf, %lf, %lf", &dx, &dy, &width, &height) != 4)
 		    usage("error parsing -o option\n");
-		    
+
 		BU_ALLOC(op, struct opening);
 		BU_LIST_INSERT(&ol_hd.l, &op->l);
 		op->sx = dx * unit_conv;
