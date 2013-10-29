@@ -995,6 +995,7 @@ int main(int ac, char **av)
 	perror(sol_name);
 	return -1;
     }
+    bu_log("Have created file %s.g .\n",progname);
 
     if (debug) {
 	bu_log("Wall \"%s\"(%g) %g by %g\n", units, unit_conv,
