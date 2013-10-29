@@ -184,9 +184,8 @@ make_spaghetti(const char *filename, const char *name, long count)
 
     /* get a write-only handle */
     fp = wdb_fopen(filename);
-    if (fp == RT_WDB_NULL) {
+    if (fp == RT_WDB_NULL)
 	bu_exit(EXIT_FAILURE, "ERROR: unable to open file for writing.\n");
-    }
 
     mk_id(fp, title);
 
@@ -234,7 +233,8 @@ main(int argc, char *argv[])
     int optc = 0;
     long count = 555;
 
-    while ((optc = bu_getopt(argc, argv, "Hho:n:")) != -1) {
+    while ((optc = bu_getopt(argc, argv, "o:n:h?")) != -1) {
+        if (bu_optopt == '?') optc='h';
 	switch (optc) {
 	    case 'o':
 		snprintf(outfile, MAXPATHLEN, "%s", bu_optarg);
@@ -242,21 +242,17 @@ main(int argc, char *argv[])
 	    case 'n':
 		count = atoi(bu_optarg);
 		break;
-	    case 'h' :
-	    case 'H' :
-	    case '?' :
+	    default:
 		printf(usage, *argv);
 		return optc == '?' ? EXIT_FAILURE : EXIT_SUCCESS;
 	}
     }
 
-    if (count <= 0) {
+    if (count <= 0)
 	bu_exit(EXIT_FAILURE, "ERROR: count must be greater than zero");
-    }
 
-    if (bu_file_exists(outfile, NULL)) {
+    if (bu_file_exists(outfile, NULL))
 	bu_exit(EXIT_FAILURE, "ERROR: %s already exists.  Remove file and try again.", outfile);
-    }
 
     bu_log("Writing metaballs out to [%s]\n", outfile);
 
