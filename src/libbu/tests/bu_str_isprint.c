@@ -33,17 +33,16 @@ test_str_isprint(char *inp , int exp)
     int res;
     res = bu_str_isprint(inp);
     if (res == exp) {
-	if (res) {
+
+	if (res)
 	    printf("Testing with string : %10s is printable->PASSED!\n", inp);
-	    return 1;
-	} else {
+	else
 	    printf("Given string not printable->PASSED!\n");
-	    return 1;
-	}
-    } else {
-	printf("Failed\n");
-	return 0;
+
+	return 1;
     }
+    printf("Failed\n");
+    return 0;
 }
 
 
@@ -53,7 +52,7 @@ main(int argc, char **argv)
     int test_num = 0;
 
     if (argc < 2) {
-       printf("Usage: %s test_num\n", argv[0]);
+       fprintf(stderr,"Usage: %s test_num\n", argv[0]);
        return 1;
     }
 
