@@ -256,21 +256,14 @@
 	      An object may optionally have an Object_Attributes element consisting of a
 	      pair of fields: Attribute_Length and Attribute_Data. From the point of view
 	      of the database interface specification, the names and values of these attributes
-	      are opaque (but a standardized import/export encoding API will be provided).
+	      are opaque (but a standardized import and export encoding API is provided).
 	    </para>
 	  </listitem>
 	  <listitem>
 	    <para>
-	      An object may optionally have an Object_Body element consisting of a pair of
-	      fields, Body_Length and Body_Data. From the point of view of the database
-	      interface specification, the format of the data is opaque.
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-	      PROPOSED: An object may optionally have a Time_Stamp
-	      element consisting of a pair of fields, TS_Length and
-	      TS_Data. From the point of view of the database
+	      An object may optionally have an Object_Body element
+	      consisting of a pair of fields, Body_Length and
+	      Body_Data. From the point of view of the database
 	      interface specification, the format of the data is
 	      opaque.
 	    </para>
@@ -281,8 +274,7 @@
       <para>
 	Note that an object can now have (1) either an attribute or a
 	body, (2) both an attribute and a body, or (3) neither an
-	attribute nor a body.  The proposed Time_Stamp element would
-	also be optional in the same manner.
+	attribute nor a body.
       </para>
 
       <para>
@@ -432,211 +424,12 @@
 	  </tbody>
 	</tgroup>
       </table>
-<!-- ======================================================== -->
-      <table frame="all">
-	<title>PROPOSED: On-Disk BRL-CAD Object Structure</title>
-
-	<tgroup cols="3" align="center" colsep="1" rowsep="1">
-          <colspec colnum="1" colname="col1" colwidth="0.8*" align="center" />
-          <colspec colnum="2" colname="col2" colwidth="1.0*" align="center" />
-          <colspec colnum="3" colname="col3" colwidth="0.8*" align="center" />
-	  <thead>
-	    <row>
-	      <entry>Part</entry>
-	      <entry>Element</entry>
-	      <entry>Comments</entry>
-	    </row>
-	  </thead>
-
-	  <tbody>
-
-	    <row>
-	      <entry morerows="4" valign="middle"><para>Object Header:</para><para>(not compressible)</para></entry>
-	      <entry>Magic1</entry>
-	      <entry morerows="2" valign="middle">Required</entry>
-	    </row>
-	    <row>
-	      <entry>HFlags, IFlags</entry>
-	    </row>
-	    <row>
-	      <entry><para>Object_Type</para><para>(Major_Type, Minor_Type)</para></entry>
-	    </row>
-	    <row>
-	      <entry>Object_Length</entry>
-	      <entry>Required</entry>
-	    </row>
-
-	    <row>
-	      <entry align="center">
-		<para>
-		  <informaltable frame="none">
-		    <tgroup cols="2" align="center">
-                      <colspec colnum="1" colname="col1" colwidth="0.8*" align="center" />
-                      <colspec colnum="2" colname="col2" colwidth="1.0*" align="center" />
-		      <tbody>
-			<row>
-			  <entry>Object Name:</entry>
-			  <entry>
-			    <para>
-			      <informaltable frame="all">
-				<tgroup cols="1" align="center">
-				  <tbody>
-				    <row><entry>Name_Length</entry></row>
-				    <row><entry>Name_Data</entry></row>
-				  </tbody>
-				</tgroup>
-			      </informaltable>
-			    </para>
-			  </entry>
-			</row>
-		      </tbody>
-		    </tgroup>
-		  </informaltable>
-		</para>
-	      </entry>
-	      <entry>
-                 <para>Conditional on flag bit NP</para>
-                 <para>Required for application data</para>
-              </entry>
-	    </row>
-
-  <!-- === Object Interior row === -->
-
-	    <row>
-	      <entry morerows="2" valign="middle">
-                 <para>Object Interior:</para>
-                 <para>(individually compressible)</para>
-              </entry>
-
-  <!-- === Object Attributes row === -->
-
-	      <entry align="center">
-		<para>
-		  <informaltable frame="none">
-		    <tgroup cols="2" align="center">
-                      <colspec colnum="1" colname="col1" colwidth="0.8*" align="center" />
-                      <colspec colnum="2" colname="col2" colwidth="1.0*" align="center" />
-		      <tbody>
-			<row>
-			  <entry>Object Attributes:</entry>
-			  <entry>
-			    <para>
-			      <informaltable frame="all">
-				<tgroup cols="1" align="center">
-				  <tbody>
-				    <row><entry>Attribute_Length</entry></row>
-				    <row><entry>Attribute_Data</entry></row>
-				</tbody>
-			      </tgroup>
-			    </informaltable>
-			  </para>
-			</entry>
-		      </row>
-		    </tbody>
-		  </tgroup>
-		</informaltable>
-		</para>
-	      </entry>
-	      <entry><para>Conditional on flag bit AP</para><para>(AZ compression)</para></entry>
-	    </row>
-
-  <!-- === Object Body row === -->
-
-	    <row>
-	      <entry align="center">
-		<para>
-		<informaltable frame="none">
-		  <tgroup cols="2" align="center">
-                    <colspec colnum="1" colname="col1" colwidth="0.8*" align="center" />
-                    <colspec colnum="2" colname="col2" colwidth="1.0*" align="center" />
-		    <tbody>
-		      <row>
-			<entry>Object Body:</entry>
-			<entry>
-			  <para>
-			    <informaltable frame="all">
-			      <tgroup cols="1" align="center">
-				<tbody>
-				  <row><entry>Body_Length</entry></row>
-				  <row><entry>Body_Data</entry></row>
-				</tbody>
-			      </tgroup>
-			    </informaltable>
-			  </para>
-			</entry>
-		      </row>
-		    </tbody>
-		  </tgroup>
-		</informaltable>
-		</para>
-	      </entry>
-	      <entry><para>Conditional on flag bit BP</para>
-                     <para>(BZ compression)</para>
-              </entry>
-	    </row>
-
-  <!-- === Object Time Stamp row === -->
-
-	    <row>
-	      <entry align="center">
-		<para>
-		<informaltable frame="none">
-		  <tgroup cols="2" align="center">
-                    <colspec colnum="1" colname="col1" colwidth="0.8*" align="center" />
-                    <colspec colnum="2" colname="col2" colwidth="1.0*" align="center" />
-		    <tbody>
-		      <row>
-			<entry>Object Time Stamps:</entry>
-			<entry>
-			  <para>
-			    <informaltable frame="all">
-			      <tgroup cols="1" align="center">
-				<tbody>
-				  <row><entry>TS_Length</entry></row>
-				  <row><entry>TS_Data</entry></row>
-				</tbody>
-			      </tgroup>
-			    </informaltable>
-			  </para>
-			</entry>
-		      </row>
-		    </tbody>
-		  </tgroup>
-		</informaltable>
-		</para>
-	      </entry>
-	      <entry><para>Conditional on flag bit TP</para>
-                     <para>(TZ compression)</para>
-              </entry>
-	    </row>
-
-  <!-- === Object Footer row === -->
-
-	    <row>
-	      <entry morerows="1" valign="middle">
-                <para>Object Footer:</para>
-                <para>(not compressible)</para></entry>
-	      <entry>Padding</entry>
-	      <entry><para>As required to maintain 8-byte object boundaries</para></entry>
-	    </row>
-
-	    <row>
-	      <entry>Magic2</entry>
-	      <entry>Required</entry>
-	    </row>
-
-	  </tbody>
-	</tgroup>
-      </table>
-<!-- ======================================================== -->
 
       <para>
-	The routines db_get_external() and db_put_external() are used
-	to move objects in external format between memory and the
-	database disk file. The routines db_wrap_external() and
-	db_unwrap_external() are used to wrap and unwrap the
-	Object_Interior (already in external form) in a standardized
-	database object's wrapper.
+	The routines rt_db_get_internal() and rt_db_put_internal() are
+	used to move objects between their format in the database disk
+	file and their internal format in memory. The routines are
+	defined in <code>librt</code>.)
       </para>
     </section>
 
@@ -651,15 +444,6 @@
 	each single bytes containing flag bits that pertain to the
 	(potentially compressed) attributes and body, respectively, in
 	the object interior.
-      </para>
-
-      <para>
-	PROPOSED: The Flags element consists of one 8-bit and one
-	16-bit field: HFlags and IFlags. The HFlags field is 1 byte
-	containing flag bits that pertain to the noncompressible basic
-	header and the database object as a whole. The IFlags field
-	containing flag bits that pertain to the (potentially
-	compressed) object interior.
       </para>
 
       <table frame="all">
@@ -732,109 +516,21 @@
 	      <entry>0</entry>
 	    </row>
 	    <row>
-	      <entry namest="h1" nameend="h2">Wid</entry>
-	      <entry>N</entry>
-	      <entry namest="h4" nameend="h5">Wid</entry>
-	      <entry>r</entry>
-	      <entry namest="h7" nameend="h8">DLI</entry>
-	      <entry namest="a1" nameend="a2">Wid</entry>
-	      <entry>P</entry>
-	      <entry>r</entry>
-	      <entry>r</entry>
-	      <entry namest="a6" nameend="a8">ZZZ</entry>
-	      <entry namest="b1" nameend="b2">Wid</entry>
-	      <entry>P</entry>
-	      <entry>r</entry>
-	      <entry>r</entry>
-	      <entry namest="b6" nameend="b8">ZZZ</entry>
-	    </row>
-	  </tbody>
-	</tgroup>
-      </table>
-
-      <table frame="all">
-        <?dbhtml table-width="60%" ?>
-	<title>PROPOSED: BRL-CAD Flags Structure</title>
-
-	<tgroup cols="25" align="center">
-	  <colspec colname="h1"/>
-	  <colspec colname="h2"/>
-	  <colspec colname="h3"/>
-	  <colspec colname="h4"/>
-	  <colspec colname="h5"/>
-	  <colspec colname="h6"/>
-	  <colspec colname="h7"/>
-	  <colspec colname="h8"/>
-
-	  <colspec colname="s1"/>
-
-	  <colspec colname="i1"/>
-	  <colspec colname="i2"/>
-	  <colspec colname="i3"/>
-	  <colspec colname="i4"/>
-	  <colspec colname="i5"/>
-	  <colspec colname="i6"/>
-	  <colspec colname="i7"/>
-	  <colspec colname="i8"/>
-	  <colspec colname="i9"/>
-	  <colspec colname="i10"/>
-	  <colspec colname="i11"/>
-	  <colspec colname="i12"/>
-	  <colspec colname="i13"/>
-	  <colspec colname="i14"/>
-	  <colspec colname="i15"/>
-	  <colspec colname="i16"/>
-	  <thead>
-	    <row>
-	      <entry namest="h1" nameend="h8" align="center">HFlags</entry>
-	      <entry/>
-	      <entry namest="i1" nameend="i16" align="center">IFlags</entry>
-	    </row>
-	  </thead>
-	  <tbody>
-	    <row>
-	      <entry>7</entry>
-	      <entry>6</entry>
-	      <entry>5</entry>
-	      <entry>4</entry>
-	      <entry>3</entry>
-	      <entry>2</entry>
-	      <entry>1</entry>
-	      <entry>0</entry>
-	      <entry morerows="1"> </entry>
-	      <entry>15</entry>
-	      <entry>14</entry>
-	      <entry>13</entry>
-	      <entry>12</entry>
-	      <entry>11</entry>
-	      <entry>10</entry>
-	      <entry>9</entry>
-	      <entry>8</entry>
-	      <entry>7</entry>
-	      <entry>6</entry>
-	      <entry>5</entry>
-	      <entry>4</entry>
-	      <entry>3</entry>
-	      <entry>2</entry>
-	      <entry>1</entry>
-	      <entry>0</entry>
-	    </row>
-	    <row>
-
 	      <entry namest="h1" nameend="h2">OWid</entry>
 	      <entry>NP</entry>
 	      <entry namest="h4" nameend="h5">NWid</entry>
 	      <entry>r</entry>
 	      <entry namest="h7" nameend="h8">DLI</entry>
-
-	      <entry namest="i1" nameend="i2">AWid</entry>
+	      <entry namest="a1" nameend="a2">AWid</entry>
 	      <entry>AP</entry>
-	      <entry namest="i4" nameend="i6">AZ</entry>
-	      <entry namest="i7" nameend="i8">BWid</entry>
+	      <entry>r</entry>
+	      <entry>r</entry>
+	      <entry namest="a6" nameend="a8">AZ</entry>
+	      <entry namest="b1" nameend="b2">BWid</entry>
 	      <entry>BP</entry>
-	      <entry namest="i10" nameend="i12">BZ</entry>
-	      <entry>TP</entry>
-	      <entry namest="i14" nameend="i16">TZ</entry>
+	      <entry>r</entry>
+	      <entry>r</entry>
+	      <entry namest="b6" nameend="b8">BZ</entry>
 	    </row>
 	  </tbody>
 	</tgroup>
@@ -907,12 +603,6 @@
       </para>
 
       <para>
-        PROPOSED: The Time_Stamp length field is not explicitly
-        stated, but it will use the same size unsigned integer as the
-        attribute (AWid).
-      </para>
-
-      <para>
 	The rationale for allowing the width of the Object_Length
 	field to be specified independently of the other widths is to
 	save space on objects in which the values in many of the
@@ -982,7 +672,7 @@
 		  order to support direct concatenation of two existing databases into one new
 		  database, additional header objects may appear elsewhere in the database The
 		  header object has no object name, object attributes, or object body (e.g.,
-		  N=0, A=0, B=0). Major_Type=RESERVED, Minor_Type=0.
+		  NP=0, AP=0, BP=0). Major_Type=RESERVED, Minor_Type=0.
 		</para>
 	      </entry>
 	    </row>
@@ -994,7 +684,7 @@
 		  Unused space in the database is kept using a special Free DB Storage object
 		  that has no object name or object attributes. The object body is null-filled
 		  and of the proper size for the storage to be represented. Like all other objects,
-		  the total length of the object will be a multiple of 8 bytes. N=0, A=0, B=1.
+		  the total length of the object will be a multiple of 8 bytes. NP=0, AP=0, BP=1.
 		  Major_Type=RESERVED, Minor_Type=0.
 		</para>
 	      </entry>
@@ -1039,7 +729,7 @@
 	<title>HFlags - the NP Bit</title>
 
 	<para>
-	  The "N" bit indicates whether the Name element (consisting
+	  The "NP" bit indicates whether the Name element (consisting
 	  of Name_Length and Object_Name fields) is present (1) or
 	  absent (0) in the noncompressible basic header immediately
 	  following the Object_Length field. The width of the
@@ -1051,9 +741,10 @@
 	<title>AFlags/BFlags - the AP/BP Bit</title>
 
 	<para>
-	  The ``P'' bit indicates whether the Attributes (or, alternatively, Body) element consisting
-	  of Attribute_Length and Attribute_Data (or Body_Length and Body_Data) fields, is present (1)
-	  or absent (0) in the Object_Interior.
+	  The ``(A|B)P'' bit indicates whether the Attributes (or,
+	  alternatively, Body) element consisting of Attribute_Length
+	  and Attribute_Data (or Body_Length and Body_Data) fields, is
+	  present (1) or absent (0) in the Object_Interior.
 	</para>
       </section>
 
@@ -1061,7 +752,8 @@
 	<title>AFlags/BFlags - the AZ/BZ Flag</title>
 
 	<para>
-	  The 3-bit ``Z'' flag indicates the compression, if any, of the object Attributes (or Body):
+	  The 3-bit ``(A|B)Z'' flag indicates the compression, if any,
+	  of the object Attributes (or Body):
 	</para>
 
 	<table frame="all">
@@ -1236,17 +928,19 @@
 	</tgroup>
       </table>
       <para>
-	The remainder are available for extending the types of objects that may be stored in
-	the database, allowing BRL-CAD users to extend the database for their own particular
-	purposes far beyond what the "attribute" method permits.
+	The remainder are available for extending the types of objects
+	that may be stored in the database, allowing BRL-CAD users to
+	extend the database for their own particular purposes far
+	beyond what the "attribute" method permits.
       </para>
 
       <section>
 	<title>Major_Type = 0: Reserved</title>
 
 	<para>
-	  Major Type 0 is illegal.  The rationale is to provide the library an opportunity to
-	  detect incompletely filled in data structures.
+	  Major Type 0 is illegal.  The rationale is to provide the
+	  library an opportunity to detect incompletely filled in data
+	  structures.
 	</para>
       </section>
 
@@ -1254,8 +948,9 @@
 	<title>Major_Type = 1: BRL-CAD Nongeometry Objects</title>
 
 	<para>
-	  This class of objects is private to librt, concerning all nongeometric objects needed by
-	  the library. For this Major_Type, the following Minor_Type values are defined:
+	  This class of objects is private to librt and concerns all
+	  nongeometric objects needed by the library. For this
+	  Major_Type, the following Minor_Type values are defined:
 	</para>
 	<table frame="all">
           <?dbfo centered-table-width="3.5in" ?>
@@ -1303,9 +998,11 @@
 	<title>Major_Type = 2: BRL-CAD Geometry Objects</title>
 
 	<para>
-	  This class of objects is private to librt, concerning all geometric objects needed
-	  by the library. Typically, there will be one xxx/xxx.c module in librt for each minor type.
-	  For this Major_Type, the following Minor_Type values are defined:
+	  This class of objects is private to librt and concerns all
+	  geometric objects needed by the library. Typically, there
+	  will be one xxx/xxx.c module in librt for each minor type.
+	  For this Major_Type, the following Minor_Type values are
+	  defined:
 	</para>
 	<table frame="all">
           <?dbfo centered-table-width="3.75in" ?>
@@ -1506,38 +1203,50 @@
 	  object body elements.
 	</para>
 	<para>
-	  For example, if several objects need to have the same shader parameters, it would be
-	  possible to create one attribute-only object to hold these common attributes and serve as a
-	  simple form of "macro". Objects that needed to share these attributes could all reference the
-	  same attribute object. If the attribute object is altered, then all of the objects that
-	  reference it would be updated together. Without this capability, the user would have to
+	  For example, if several objects need to have the same shader
+	  parameters, it would be possible to create one
+	  attribute-only object to hold these common attributes and
+	  serve as a simple form of "macro". Objects that needed to
+	  share these attributes could all reference the same
+	  attribute object. If the attribute object is altered, then
+	  all of the objects that reference it would be updated
+	  together. Without this capability, the user would have to
 	  update each element individually to alter the attributes.
 	</para>
 	<para>
-	  Conventions will have to be established regarding which attributes of an attribute-only
-	  object will be used when a macro reference is performed. For example, rt shaders will
-	  only be interested in the value of the "oshader=" attribute, while librt's tree-walker
-	  might also be interested in the "rgb=", "giftmater=", "nsn=", "material=", and "los="
-	  attributes (assuming that a convention was developed so that a combination could
-	  macro-reference an attribute-only object too).
+	  Conventions will have to be established regarding which
+	  attributes of an attribute-only object will be used when a
+	  macro reference is performed. For example, rt shaders will
+	  only be interested in the value of the "oshader=" attribute,
+	  while librt's tree-walker might also be interested in the
+	  "rgb=", "giftmater=", "nsn=", "material=", and "los="
+	  attributes (assuming that a convention was developed so that
+	  a combination could macro-reference an attribute-only object
+	  too).
 	</para>
 	<para>
-	  An attribute-only object may not have an object body; thus, flag bit B must always be
-	  zero for this type of object.
+	  An attribute-only object may not have an object body; thus,
+	  flag bit B must always be zero for this type of object.
 	</para>
 	<para>
-	  As used by the rt family of applications codes, these attribute-only objects will
-	  contain "macros" for shaders. The shader name and its parameters shall be encoded as a
-	  single ASCII string, which is the value of the "oshader=" attribute. An rt shader named
-	  "macro" (or equivalent) would take a single parameter "obj=", which would specify the
-	  name of the attribute-only object in the database from which the actual shader and
-	  shader parameter information would be extracted.
+	  As used by the rt family of applications codes, these
+	  attribute-only objects will contain "macros" for
+	  shaders. The shader name and its parameters shall be encoded
+	  as a single ASCII string, which is the value of the
+	  "oshader=" attribute. An rt shader named "macro" (or
+	  equivalent) would take a single parameter "obj=", which
+	  would specify the name of the attribute-only object in the
+	  database from which the actual shader and shader parameter
+	  information would be extracted.
 	</para>
 	<para>
-	  There will be one attribute-only object with a reserved object name of "_GLOBAL" that
-	  will be used to contain various kinds of states that are global to the entire ".g" database
-	  and that had previously been found in the database header itself. There will be the
-	  following BRL-CAD-specific attributes whose meaning is predefined for the _GLOBAL object:
+	  There will be one attribute-only object with a reserved
+	  object name of "_GLOBAL" that will be used to contain
+	  various kinds of states that are global to the entire ".g"
+	  database and that had previously been found in the database
+	  header itself. There will be the following BRL-CAD-specific
+	  attributes whose meaning is predefined for the _GLOBAL
+	  object:
 	  <itemizedlist>
 	    <listitem>
 	      <para>
@@ -1579,12 +1288,15 @@
 	  been placed in auxiliary files.
 	</para>
 	<para>
-	  MGED and standalone commands must be built to store/extract these opaque?? binary
-	  objects between a ".g" file and stdin/stdout/auxiliary files. A user might want to use
-	  those same MGED commands to store/extract the binary object body of any object for external
-	  processing. An easy example to imagine is the importing and exporting of texture maps for
-	  external processing, but the same commands could be used for importing and exporting
-	  solid parameters in their external binary form.
+	  MGED and stand-alone commands must be built to store/extract
+	  these opaque binary objects between a ".g" file and
+	  other files. A user might want to use those
+	  same MGED commands to store or extract the binary object body
+	  of any object for external processing. An easy example to
+	  imagine is the importing and exporting of texture maps for
+	  external processing, but the same commands could be used for
+	  importing and exporting solid parameters in their external
+	  binary form.
 	</para>
 	<para>
 	  These objects may be referenced in combination nodes, for organizational purposes, but
@@ -1597,19 +1309,25 @@
 	  table/registry of presently known values for this attribute.)
 	</para>
 	<para>
-	  Routines that retrieve bulk binary objects should check the minor type and the
-	  "purpose=" attribute and send a warning message in the event of a mismatch, but
-	  best-effort processing of the object should continue. This will permit some degree
-	  of error checking, which should benefit novice users without standing in the way of
-	  "creatively" reusing one set of data, (e.g., using one array of values as both a height
-	  field and a bwtexture). This allows common data perversion practices, such as interpreting
-	  an array of floats as an array of bytes, to continue.
+	  Routines that retrieve bulk binary objects should check the
+	  minor type and the "purpose=" attribute and send a warning
+	  message in the event of a mismatch, but best-effort
+	  processing of the object should continue. This will permit
+	  some degree of error checking, which should benefit novice
+	  users without standing in the way of "creatively" reusing
+	  one set of data, (e.g., using one array of values as both a
+	  height field and a bwtexture). This allows common data
+	  perversion practices, such as interpreting an array of
+	  floats as an array of bytes, to continue.
 	</para>
 	<para>
-	  Each application will need to have its own syntax for the user to specify whether the data
-	  source is an outboard file or a raw-binary object. For example, the current RT sh_texture
-	  module uses the keyword file="name" to indicate an outboard file; that might be supplemented
-	  with an additional obj="name" possibility for retrieving from an inboard raw-binary object.
+	  Each application will need to have its own syntax for the
+	  user to specify whether the data source is an outboard file
+	  or a raw-binary object. For example, the current RT
+	  sh_texture module uses the keyword file="name" to indicate
+	  an outboard file; that might be supplemented with an
+	  additional obj="name" possibility for retrieving from an
+	  inboard raw-binary object.
 	</para>
 
 	<section>
@@ -1864,25 +1582,38 @@
       <title>Object Attributes</title>
 
       <para>
-	An object may optionally have an Object_Attributes element, which stores an association list
-	<literallayout class="normal">aname1=value1, aname2=value2, ..., anameN=valueN</literallayout>
-	binding attributes to values.
+	An object may optionally have an Object_Attributes element
+	which stores an association list (key=value) binding
+	attributes to values: <literallayout class="normal">aname1=value1, aname2=value2, ..., anameN=valueN</literallayout>
       </para>
       <para>
-	These are ASCII strings of unlimited length. These attributes are intended for direct use by programs.
-	There will be a WWW registry of attribute names presently in use to prevent two application developers
-	from using the same attribute_name for different purposes.
+	The keys are ASCII strings of unlimited length. These attributes
+	are intended for direct use by programs.  There will be a WWW
+	registry of attribute names presently in use to prevent two
+	application developers from using the same attribute name for
+	different purposes.
       </para>
+
       <para>
-	For attribute names and attribute values, The decision was taken to support 8-bit ASCII only. The
-	on-disk encoding of this will simply be:
-	<literallayout class="normal">aname1 NULL value1 NULL ... anameN NULL valueN NULL NULL</literallayout>
-	where NULL represents a byte with all bits zero. The NULL in place of anameN+1 signals the end of the
-	attribute data, simplifying the job of the reader.
+	For attribute names and ASCII attribute values, The decision
+	was taken to support 8-bit ASCII only. The on-disk encoding of
+	this will simply be: <literallayout class="normal">aname1 NULL value1 NULL ... anameN NULL valueN NULL NULL</literallayout>
+	where NULL represents a byte with all bits zero. The NULL in
+	place of anameN+1 signals the end of the ASCII attribute data.
       </para>
+
       <para>
-	Every object in the database may have zero or more attributes attached to it; the meaning of these attributes
-	will vary depending on which application or library processes them.
+	PROPOSED: A second type of attribute has an ASCII key but a binary value.
+        Such attributes follow the ASCII-valued ones after the double NULLs:
+	<literallayout class="normal">anameN+1 NULL uintN &lt;uintN  binary bytes&gt; [...0 or more binary attribute pairs]</literallayout>
+        where, for each binary attribute pair, the uintN is of size AWid and is
+        the length of the binary value for its ASCII key.
+      </para>
+
+      <para>
+	Every object in the database may have zero or more attributes
+	attached to it; the meaning of these attributes will vary
+	depending on which application or library processes them.
       </para>
       <para>
 	There are several aname conventions that all BRL-CAD applications are expected to respect. There will be a
