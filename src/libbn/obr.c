@@ -222,7 +222,6 @@ melkman_hull(const point_t* polyline, int n, point_t** hull)
 struct obr_vals {
     fastf_t area;
     vect_t u;
-    vect_t v;
     fastf_t extent0;
     fastf_t extent1;
     point_t center;
@@ -232,18 +231,20 @@ struct obr_vals {
  * the rotating calipers, and the smallest resultant area tracked.  Those functions are handled
  * by this routine.*/
 HIDDEN void
-UpdateBox(struct obr_vals *obr, point_t LPoint, point_t RPoint, point_t BPoint, point_t TPoint, vect_t u, vect_t v)
+UpdateBox(struct obr_vals *obr, point_t LPoint, point_t RPoint, point_t BPoint, point_t TPoint, vect_t u)
 {
     vect_t RLDiff, TBDiff, LBDiff;
-    vect_t U, V;
+    vect_t U, V, v, vz;
     fastf_t extent0, extent1, area;
+    VSET(vz, 0, 0, -1);
+    VCROSS(v, u, vz);
 
     bu_log("LPoint: %f, %f, %f\n", LPoint[0], LPoint[1], LPoint[2]);
     bu_log("BPoint: %f, %f, %f\n", BPoint[0], BPoint[1], BPoint[2]);
     bu_log("RPoint: %f, %f, %f\n", RPoint[0], RPoint[1], RPoint[2]);
     bu_log("TPoint: %f, %f, %f\n", TPoint[0], TPoint[1], TPoint[2]);
     bu_log("u: %f, %f, %f\n", u[0], u[1], u[2]);
-    bu_log("v: %f, %f, %f\n", v[0], u[1], u[2]);
+    bu_log("v: %f, %f, %f\n", v[0], v[1], v[2]);
 
     VSUB2(RLDiff, RPoint, LPoint);
     bu_log("RLDiff: %f, %f, %f\n", RLDiff[0], RLDiff[1], RLDiff[2]);
@@ -259,7 +260,6 @@ UpdateBox(struct obr_vals *obr, point_t LPoint, point_t RPoint, point_t BPoint, 
     {
 	obr->area = area;
 	VMOVE(obr->u, u);
-	VMOVE(obr->v, v);
 	obr->extent0 = extent0;
 	obr->extent1 = extent1;
 	/* TODO translate this to vmath.h routines...
@@ -291,7 +291,7 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
     vect_t *edge_unit_vects = NULL;
     int *visited = NULL;
     point_t center, pmin, pmax;
-    vect_t u, v;
+    vect_t u;
     vect_t vline, vz, vdelta, neg_vdelta, neg_vline;
     struct obr_vals obr;
     VSET(vz, 0, 0, 1);
@@ -403,7 +403,6 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 	    obr.center[1] = 0.5 * (ymin + ymax);
 	    obr.center[2] = 0.0;
 	    VSET(obr.u, 1, 0, 0);
-	    VSET(obr.v, 0, 1, 0);
 	    obr.extent0 = (xmax - xmin);
 	    obr.extent1 = (ymax - ymin);
 	    obr.area = obr.extent0 * obr.extent1;
@@ -411,37 +410,53 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 	    /* 3. The rotating calipers algorithm */
 	    done = 0;
 	    VSET(u, 1, 0, 0);
-	    VSET(v, 0, 1, 0);
 
 	    while (!done) {
 		/* Determine the edge that forms the smallest angle with the current
 		   box edges. */
 		int flag = F_NONE;
-		vect_t negu, negv;
 		fastf_t maxDot = 0.0;
 		fastf_t dot = 0.0;
-		VSCALE(negu, u, -1);
-		VSCALE(negv, v, -1);
+		vect_t t, tmp;
+		VMOVE(t, u);
 
-		dot = VDOT(u,edge_unit_vects[BIndex]);
+
+		dot = VDOT(t,edge_unit_vects[BIndex]);
+		bu_log("t: %f, %f\n", t[0], t[1]);
+		bu_log("edge_unit_vects[%d]: %f, %f\n", BIndex, edge_unit_vects[BIndex][0], edge_unit_vects[BIndex][1]);
+		bu_log("b_dot: %f\n", dot);
 		if (dot > maxDot) {
 		    maxDot = dot;
 		    flag = F_BOTTOM;
 		}
 
-		dot = VDOT(v,edge_unit_vects[RIndex]);
+		VSET(t, -u[1], u[0], 0);
+		dot = VDOT(t,edge_unit_vects[RIndex]);
+		bu_log("t: %f, %f\n", t[0], t[1]);
+		bu_log("edge_unit_vects[%d]: %f, %f\n", BIndex, edge_unit_vects[RIndex][0], edge_unit_vects[RIndex][1]);
+		bu_log("r_dot: %f\n", dot);
 		if (dot > maxDot) {
 		    maxDot = dot;
 		    flag = F_RIGHT;
 		}
 
-		dot = VDOT(negu, edge_unit_vects[TIndex]);
+		VSET(tmp, -t[1], t[0], 0);
+		VMOVE(t, tmp);
+		dot = VDOT(t, edge_unit_vects[TIndex]);
+		bu_log("t: %f, %f\n", t[0], t[1]);
+		bu_log("edge_unit_vects[%d]: %f, %f\n", BIndex, edge_unit_vects[TIndex][0], edge_unit_vects[TIndex][1]);
+		bu_log("t_dot: %f\n", dot);
 		if (dot > maxDot) {
 		    maxDot = dot;
 		    flag = F_TOP;
 		}
 
-		dot = VDOT(negv, edge_unit_vects[LIndex]);
+		VSET(tmp, -t[1], t[0], 0);
+		VMOVE(t, tmp);
+		dot = VDOT(t, edge_unit_vects[LIndex]);
+		bu_log("t: %f, %f\n", t[0], t[1]);
+		bu_log("edge_unit_vects[%d]: %f, %f\n", BIndex, edge_unit_vects[LIndex][0], edge_unit_vects[LIndex][1]);
+		bu_log("l_dot: %f\n", dot);
 		if (dot > maxDot) {
 		    maxDot = dot;
 		    flag = F_LEFT;
@@ -449,15 +464,15 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 
 		switch (flag) {
 		    case F_BOTTOM:
+			bu_log("F_BOTTOM: %d\n", BIndex);
 			if (visited[BIndex]) {
 			    done = 1;
 			} else {
 			    /* Compute box axes with E[B] as an edge.*/
-			    VMOVE(u,edge_unit_vects[BIndex]);
-			    VCROSS(v,u,vz);
-			    VSCALE(v,v,-1);
+			    VMOVE(t,edge_unit_vects[BIndex]);
+			    VMOVE(u, t);
 			    UpdateBox(&obr, hull_pnts[LIndex], hull_pnts[RIndex],
-				    hull_pnts[BIndex], hull_pnts[TIndex], u, v);
+				    hull_pnts[BIndex], hull_pnts[TIndex], u);
 
 			    /* Mark edge visited and rotate the calipers. */
 			    visited[BIndex] = 1;
@@ -469,14 +484,15 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 			}
 			break;
 		    case F_RIGHT:
+			bu_log("F_RIGHT: %d\n", RIndex);
 			if (visited[RIndex]) {
 			    done = 1;
 			} else {
 			    /* Compute box axes with E[R] as an edge. */
-			    VMOVE(v,edge_unit_vects[RIndex]);
-			    VCROSS(u,v,vz);
+			    VMOVE(t,edge_unit_vects[RIndex]);
+			    VSET(u, t[1], -t[0], 0);
 			    UpdateBox(&obr, hull_pnts[LIndex], hull_pnts[RIndex],
-				    hull_pnts[BIndex], hull_pnts[TIndex], u, v);
+				    hull_pnts[BIndex], hull_pnts[TIndex], u);
 
 			    /* Mark edge visited and rotate the calipers. */
 			    visited[RIndex] = 1;
@@ -488,16 +504,16 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 			}
 			break;
 		    case F_TOP:
+			bu_log("F_TOP: %d\n", TIndex);
 			if (visited[TIndex]) {
 			    done = 1;
 			} else {
 			    /* Compute box axes with E[T] as an edge. */
-			    VMOVE(u,edge_unit_vects[TIndex]);
-			    VSCALE(u,u,-1);
-			    VCROSS(v,u,vz);
-			    VSCALE(v,v,-1);
+			    VMOVE(t,edge_unit_vects[TIndex]);
+			    VSCALE(t,t,-1);
+			    VMOVE(u,t);
 			    UpdateBox(&obr, hull_pnts[LIndex], hull_pnts[RIndex],
-				    hull_pnts[BIndex], hull_pnts[TIndex], u, v);
+				    hull_pnts[BIndex], hull_pnts[TIndex], u);
 
 			    /* Mark edge visited and rotate the calipers. */
 			    visited[TIndex] = 1;
@@ -510,15 +526,15 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 			}
 			break;
 		    case F_LEFT:
+			bu_log("F_LEFT: %d\n", LIndex);
 			if (visited[LIndex]) {
 			    done = 1;
 			} else {
 			    /* Compute box axes with E[L] as an edge. */
-			    VMOVE(v,edge_unit_vects[LIndex]);
-			    VSCALE(v,v,-1);
-			    VCROSS(u,v,vz);
+			    VMOVE(t,edge_unit_vects[LIndex]);
+			    VSET(u, -t[1], t[0], 0);
 			    UpdateBox(&obr, hull_pnts[LIndex], hull_pnts[RIndex],
-				    hull_pnts[BIndex], hull_pnts[TIndex], u, v);
+				    hull_pnts[BIndex], hull_pnts[TIndex], u);
 
 			    /* Mark edge visited and rotate the calipers. */
 			    visited[LIndex] = 1;
