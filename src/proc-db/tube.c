@@ -39,7 +39,7 @@
 
 
 mat_t identity;
-double degtorad = 0.0174532925199433;
+double degtorad = DEG2RAD;
 double inches2mm = 25.4;
 
 void build_spline(char *name, int npts, double radius), read_pos(FILE *fp), build_cyl(char *cname, int npts, double radius), xfinddir(fastf_t *dir, double x, fastf_t *loc);

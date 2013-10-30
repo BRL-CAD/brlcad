@@ -623,7 +623,7 @@ light_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
     }
 
     if (lsp->lt_angle > 180) lsp->lt_angle = 180;
-    lsp->lt_cosangle = cos((double) lsp->lt_angle * 0.0174532925199433);
+    lsp->lt_cosangle = cos((double) lsp->lt_angle * DEG2RAD);
 
     /* Determine position and size */
     if (rp->reg_treetop->tr_op == OP_SOLID) {
