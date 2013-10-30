@@ -227,11 +227,17 @@ make_spaghetti(const char *filename, const char *name, long count)
 int
 main(int argc, char *argv[])
 {
-    static const char usage[] = "Usage:\n%s [-o outfile] [-n count]\n\n  -o file \tFile to write out (default: metaball.g)\n  -n count\tTotal metaball point count (default 555)\n\n";
+    static const char usage[] = "Usage:\n%s [-o outfile] [-n count]\n\n  -o file \tFile to write out (default: metaball.g)\n  -n count\tTotal metaball point count (default %d)\n\n";
+#define countmax 555
 
     char outfile[MAXPATHLEN] = "metaball.g";
-    int optc = 0;
-    long count = 555;
+    int optc;
+    long count = countmax;
+
+    if (argc == 1) {
+	fprintf(stderr,usage, *argv,countmax);
+    	fprintf(stderr,"       Program continues running:\n");
+    }
 
     while ((optc = bu_getopt(argc, argv, "o:n:h?")) != -1) {
         if (bu_optopt == '?') optc='h';
@@ -243,7 +249,7 @@ main(int argc, char *argv[])
 		count = atoi(bu_optarg);
 		break;
 	    default:
-		fprintf(stderr,usage, *argv);
+		fprintf(stderr,usage, *argv,countmax);
 		return optc == '?' ? EXIT_FAILURE : EXIT_SUCCESS;
 	}
     }
