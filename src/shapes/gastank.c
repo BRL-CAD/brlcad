@@ -66,7 +66,8 @@ main(int argc, char **argv)
     char regnam[9];		/* Region name. */
     char grpnam[5];		/* Group name. */
     int numtnk=0;		/* Number of gas tanks to be created */
-				/* (<=26). */
+				/* (<=maxnumtnk). */
+    int maxnumtnk = 26;
 
     struct wmember comb;	/* Used to make regions. */
     struct wmember comb1;	/* Used to make groups. */
@@ -116,7 +117,7 @@ main(int argc, char **argv)
 	    bu_strlcpy(filemged, "gastank.g", sizeof(filemged));
 
 	/* Find the number of gas tanks to create. */
-	printf("Enter the number of gas tanks to create (26 max).\n\t");
+	printf("Enter the number of gas tanks to create (%d max).\n\t",maxnumtnk);
 	(void)fflush(stdout);
 	ret = scanf("%d", &numtnk);
 	if (ret == 0) {
@@ -125,8 +126,8 @@ main(int argc, char **argv)
 	}
 	else if (numtnk < 1)
 	    numtnk = 1;
-	else if (numtnk > 26)
-	    numtnk = 26;
+	else if (numtnk > maxnumtnk)
+	    numtnk = maxnumtnk;
 
 	/* Find the dimensions of the gas tanks. */
 	printf("Enter the height, width, and depth of the gas tank.\n\t");
@@ -211,8 +212,8 @@ main(int argc, char **argv)
 		    sscanf(temp1, "%d", &numtnk);
 		    if (numtnk < 1)
 			numtnk = 1;
-		    else if (numtnk > 26)
-			numtnk = 26;
+		    else if (numtnk > maxnumtnk)
+			numtnk = maxnumtnk;
 		} else if (temp[1] == 'H') {
 		    sscanf(temp1, "%lf", &hgt);
 		} else if (temp[1] == 'w') {
