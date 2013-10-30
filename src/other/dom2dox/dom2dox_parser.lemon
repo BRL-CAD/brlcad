@@ -1,0 +1,192 @@
+%include {
+#include <assert.h>
+#include <string.h>
+#include "dom2dox.h"
+}
+
+%token_type {token_t *}
+%extra_argument {app_data_t *appData}
+
+%right CODE_TEXT COMMENT_TEXT PARAM_TEXT.
+%right CPP_COMMENT_START C_COMMENT_START.
+
+start_symbol ::= source.
+
+source ::= /* empty */.
+source ::= source block.
+
+block ::= code.
+block ::= doc_comment.
+
+code ::= code_text. [CODE_TEXT]
+
+doc_comment ::= c_doc_comment.
+{
+    END_EXAMPLE;
+    appData->return_text = 0;
+    if (appData->doc_comment) {
+	fprintf(appData->outfile, "/**");
+	fprintf(appData->outfile, "%s", bu_vls_addr(&appData->description));
+	fprintf(appData->outfile, "%s\n", bu_vls_addr(&appData->tags));
+	fprintf(appData->outfile, "*/\n");
+    }
+    appData->doc_comment = 0;
+    bu_vls_trunc(&appData->description, 0);
+    bu_vls_trunc(&appData->tags, 0);
+}
+
+doc_comment ::= cpp_doc_comment. [CPP_COMMENT_START]
+{
+    END_EXAMPLE;
+    appData->return_text = 0;
+    if (appData->doc_comment) {
+	fprintf(appData->outfile, "/**");
+	fprintf(appData->outfile, "%s", bu_vls_addr(&appData->description));
+	fprintf(appData->outfile, "%s\n", bu_vls_addr(&appData->tags));
+	fprintf(appData->outfile, "*/\n");
+    }
+    appData->doc_comment = 0;
+    bu_vls_trunc(&appData->description, 0);
+    bu_vls_trunc(&appData->tags, 0);
+}
+
+c_doc_comment ::= C_COMMENT_START C_COMMENT_END.
+c_doc_comment ::= C_COMMENT_START doc_text C_COMMENT_END.
+
+cpp_doc_comment ::= cpp_doc_line.
+cpp_doc_comment ::= cpp_doc_comment cpp_doc_line.
+
+cpp_doc_line ::= CPP_COMMENT_START CPP_COMMENT_END.
+cpp_doc_line ::= CPP_COMMENT_START doc_text CPP_COMMENT_END.
+{
+    size_t len = bu_vls_strlen(&appData->description);
+
+    if (len == 0 || bu_vls_addr(&appData->description)[len - 1] != '\n') {
+	bu_vls_putc(&appData->description, '\n');
+    }
+}
+
+doc_text ::= doc_component.
+doc_text ::= doc_text doc_component.
+
+doc_component ::= comment_text. [COMMENT_TEXT]
+doc_component ::= doc_specific_text.
+{
+    appData->doc_comment = 1;
+}
+
+doc_specific_text ::= DESCRIPTION_START.
+{
+    appData->tag_text = 0;
+    appData->return_text = 0;
+    END_EXAMPLE;
+}
+
+doc_specific_text ::= EXAMPLE_START.
+{
+    bu_vls_strcat(&appData->description, "\n###Example\n\n\\code");
+    appData->tag_text = 0;
+    appData->return_text = 0;
+    appData->example_text = 1;
+}
+
+doc_specific_text ::= REMARKS_START.
+{
+    END_EXAMPLE;
+    bu_vls_strcat(&appData->description, "\n###Note\n");
+    appData->tag_text = 0;
+    appData->return_text = 0;
+}
+
+doc_specific_text ::= PARAMS_START.
+{
+    appData->tag_text = 0;
+    appData->return_text = 0;
+    END_EXAMPLE;
+}
+
+doc_specific_text ::= RETURNS_START.
+{
+    END_EXAMPLE;
+    bu_vls_strcat(&appData->tags, "@return ");
+    appData->tag_text = 1;
+    appData->return_text = 1;
+}
+
+doc_specific_text ::= SEE_ALSO_START.
+{
+    END_EXAMPLE;
+    bu_vls_strcat(&appData->tags, "@see ");
+    appData->tag_text = 1;
+    appData->return_text = 0;
+}
+
+doc_specific_text ::= param_name.
+doc_specific_text ::= param_text. [PARAM_TEXT]
+
+param_name ::= PARAM_NAME(A).
+{
+    bu_vls_printf(&appData->tags, "\n@param %s ", bu_vls_addr(&A->value));
+    bu_vls_free(&A->value);
+    BU_PUT(A, token_t);
+}
+
+param_text ::= param_text_fragment.
+param_text ::= param_text param_text_fragment.
+
+param_text_fragment ::= PARAM_TEXT(A).
+{
+    bu_vls_strcat(&appData->tags, bu_vls_addr(&A->value));
+    bu_vls_free(&A->value);
+    BU_PUT(A, token_t);
+}
+
+code_text ::= code_text_fragment.
+code_text ::= code_text code_text_fragment.
+code_text_fragment ::= CODE_TEXT(A). {
+    END_EXAMPLE;
+    fprintf(appData->outfile, "%s", bu_vls_addr(&A->value));
+    bu_vls_free(&A->value);
+    BU_PUT(A, token_t);
+}
+
+comment_text ::= comment_text_fragment.
+comment_text ::= comment_text comment_text_fragment.
+comment_text_fragment ::= COMMENT_TEXT(A). {
+    if (appData->tag_text) {
+	if (appData->return_text) {
+	    size_t i, len = bu_vls_strlen(&A->value);
+	    char *frag = bu_vls_addr(&A->value);
+	    struct bu_vls tmp;
+	    bu_vls_init(&tmp);
+
+	    /* turn newlines into line breaks */
+	    for (i = 0; i < len; ++i) {
+		if (frag[i] == '\n') {
+		    bu_vls_strcat(&tmp, "<br />");
+		} else {
+		    bu_vls_putc(&tmp, frag[i]);
+		}
+	    }
+	    bu_vls_vlscat(&appData->tags, &tmp);
+	    bu_vls_free(&tmp);
+	} else {
+	    bu_vls_strcat(&appData->tags, bu_vls_addr(&A->value));
+	}
+    } else {
+	if (bu_vls_strlen(&appData->description) == 0) {
+	    size_t i, len = bu_vls_strlen(&A->value);
+	    char *frag = bu_vls_addr(&A->value);
+
+	    /* omit leading ws from description */
+	    i = strspn(frag, " \t");
+	    if (i < len) {
+		bu_vls_strcat(&appData->description, &frag[i]);
+	    }
+	} else {
+	    bu_vls_strcat(&appData->description, bu_vls_addr(&A->value));
+	}
+    }
+    bu_vls_free(&A->value);
+    BU_PUT(A, token_t);
+}

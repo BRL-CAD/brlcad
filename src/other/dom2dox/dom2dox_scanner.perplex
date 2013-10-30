@@ -1,0 +1,200 @@
+/* perplex input file */
+#include "dom2dox.h"
+
+/* condition states */
+enum {INITIAL, code, c_comment, cpp_comment, param_text};
+
+%%
+<> => code { continue; }
+
+cpp_comment_lead = '/''/'+;
+c_comment_lead = '/'?'*'+;
+c_comment_end = '*'+'/';
+optional_ws = [ \t]*;
+comment_lead = ((cpp_comment_lead)|(c_comment_lead));
+
+<code> {
+(optional_ws)(cpp_comment_lead) { 
+    YYSETCONDITION(cpp_comment);
+    appData->comment_type = cpp_comment;
+    return CPP_COMMENT_START;
+}
+(optional_ws)'/''*'+ {
+    YYSETCONDITION(c_comment);
+    appData->comment_type = c_comment;
+    return C_COMMENT_START;
+}
+[^] {
+    bu_vls_putc(&tokenData->value, yytext[0]);
+    return CODE_TEXT;
+}
+}
+
+<c_comment> {
+'\n'(optional_ws)(c_comment_end)(optional_ws) {
+    YYSETCONDITION(code);
+    return C_COMMENT_END;
+}
+'\n'(optional_ws) {
+    bu_vls_putc(&tokenData->value, '\n');
+    return COMMENT_TEXT;
+}
+(optional_ws)(c_comment_end)(optional_ws) {
+    YYSETCONDITION(code);
+    return C_COMMENT_END;
+}
+}
+
+<cpp_comment> {
+'\n'(optional_ws)(cpp_comment_lead)(optional_ws) {
+    /* remove leads from lines */
+    bu_vls_putc(&tokenData->value, '\n');
+    return COMMENT_TEXT;
+}
+'\n'(optional_ws) {
+    YYSETCONDITION(code);
+    return CPP_COMMENT_END;
+}
+}
+
+<c_comment,cpp_comment> {
+'\n'(optional_ws)(c_comment_lead)(optional_ws) {
+    if (YYGETCONDITION == cpp_comment) {
+	YYSETCONDITION(code);
+	return CPP_COMMENT_END;
+    }
+    /* remove leads from lines */
+    bu_vls_putc(&tokenData->value, '\n');
+    return COMMENT_TEXT;
+}
+[ \t]+ {
+    /* condense ws */
+    bu_vls_putc(&tokenData->value, ' ');
+    return COMMENT_TEXT;
+}
+[^] {
+    bu_vls_putc(&tokenData->value, yytext[0]);
+    return COMMENT_TEXT;
+}
+}
+
+<c_comment,cpp_comment,param_text> {
+(optional_ws)(comment_lead)?(optional_ws)"Description"':'?(optional_ws) {
+    if (YYGETCONDITION == param_text) {
+	YYSETCONDITION(appData->comment_type);
+    }
+    return DESCRIPTION_START;
+}
+(optional_ws)(comment_lead)?(optional_ws)"Example"':'?(optional_ws) {
+    if (YYGETCONDITION == param_text) {
+	YYSETCONDITION(appData->comment_type);
+    }
+    return EXAMPLE_START;
+}
+(optional_ws)(comment_lead)?(optional_ws)"Remarks"':'?(optional_ws) {
+    if (YYGETCONDITION == param_text) {
+	YYSETCONDITION(appData->comment_type);
+    }
+    return REMARKS_START;
+}
+(optional_ws)(comment_lead)?(optional_ws)"Param"'e'?"ters"[:;]?(optional_ws) {
+    YYSETCONDITION(param_text);
+    return PARAMS_START;
+}
+(optional_ws)(comment_lead)?(optional_ws)("Returns"|"Result")':'(optional_ws) {
+    if (YYGETCONDITION == param_text) {
+	YYSETCONDITION(appData->comment_type);
+    }
+    return RETURNS_START;
+}
+(optional_ws)(comment_lead)?(optional_ws)"See Also"':'?(optional_ws) {
+    if (YYGETCONDITION == param_text) {
+	YYSETCONDITION(appData->comment_type);
+    }
+    return SEE_ALSO_START;
+}
+}
+
+<param_text> {
+'\n'(optional_ws)(comment_lead)?(optional_ws)[_a-zA-Z][_a-zA-Z0-9]*[ \t]*"-" {
+    int i, start, end;
+
+    /* trim everything but the actual name */
+    start = end = 0;
+    for (i = 0; start == 0 && i < strlen(yytext); ++i) {
+	switch (yytext[i]) {
+	    case ' ':
+	    case '\t':
+	    case '/':
+	    case '*':
+		break;
+	    default:
+		start = i;
+	}
+    }
+    for (i = strlen(yytext) - 1; end == 0 && i >= start; --i) {
+	switch (yytext[i]) {
+	    case ' ':
+	    case '\t':
+	    case '-':
+		break;
+	    default:
+		end = i;
+	}
+    }
+    bu_vls_putc(&tokenData->value, '\n');
+    bu_vls_strncat(&tokenData->value, &yytext[start], end - start + 1);
+
+    return PARAM_NAME;
+}
+'\n'(optional_ws)(comment_lead)(optional_ws) {
+    int i, start, end;
+
+    /* trim everything but the indent ws */
+    end = strlen(yytext);
+    start = 0;
+    for (i = end - 1; start == 0 && i >= 0; --i) {
+	switch (yytext[i]) {
+	    case ' ':
+	    case '\t':
+		break;
+	    default:
+		start = i + 1;
+	}
+    }
+    bu_vls_putc(&tokenData->value, '\n');
+    bu_vls_strncat(&tokenData->value, &yytext[start], end - start + 1);
+
+    return PARAM_TEXT;
+}
+'\n'(optional_ws)(c_comment_end)(optional_ws) {
+    if (appData->comment_type == c_comment) {
+	YYSETCONDITION(code);
+	return C_COMMENT_END;
+    }
+    bu_vls_strcat(&tokenData->value, yytext);
+    return PARAM_TEXT;
+}
+'\n'(optional_ws) {
+    if (appData->comment_type == cpp_comment) {
+	/* in a cpp style comment, a newline not followed by another cpp
+         * comment line ends the comment and the parameter text
+	 */
+	YYSETCONDITION(code);
+	return CPP_COMMENT_END;
+    }
+    bu_vls_putc(&tokenData->value, '\n');
+    return PARAM_TEXT;
+}
+(optional_ws)(c_comment_end) {
+    if (appData->comment_type == c_comment) {
+	YYSETCONDITION(code);
+	return C_COMMENT_END;
+    }
+}
+[^] {
+    bu_vls_putc(&tokenData->value, yytext[0]);
+
+    return PARAM_TEXT;
+}
+}
