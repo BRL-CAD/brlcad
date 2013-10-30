@@ -225,6 +225,10 @@ struct obr_vals {
     fastf_t extent0;
     fastf_t extent1;
     point_t center;
+    point_t p1;
+    point_t p2;
+    point_t p3;
+    point_t p4;
 };
 
 /* The oriented bounding rectangle must be calculated from the points and 2D vectors provided by
@@ -239,25 +243,25 @@ UpdateBox(struct obr_vals *obr, point_t LPoint, point_t RPoint, point_t BPoint, 
     VSET(vz, 0, 0, -1);
     VCROSS(v, u, vz);
 
-    bu_log("LPoint: %f, %f, %f\n", LPoint[0], LPoint[1], LPoint[2]);
-    bu_log("BPoint: %f, %f, %f\n", BPoint[0], BPoint[1], BPoint[2]);
-    bu_log("RPoint: %f, %f, %f\n", RPoint[0], RPoint[1], RPoint[2]);
-    bu_log("TPoint: %f, %f, %f\n", TPoint[0], TPoint[1], TPoint[2]);
-    bu_log("u: %f, %f, %f\n", u[0], u[1], u[2]);
-    bu_log("v: %f, %f, %f\n", v[0], v[1], v[2]);
-
     VSUB2(RLDiff, RPoint, LPoint);
-    bu_log("RLDiff: %f, %f, %f\n", RLDiff[0], RLDiff[1], RLDiff[2]);
     VSUB2(TBDiff, TPoint, BPoint);
-    bu_log("TBDiff: %f, %f, %f\n", TBDiff[0], TBDiff[1], TBDiff[2]);
     extent0 = 0.5 * VDOT(u,RLDiff);
-    bu_log("extent0: %f\n", extent0);
     extent1 = 0.5 * VDOT(v,TBDiff);
-    bu_log("extent1: %f\n", extent1);
     area = extent0 * extent1 * 4;
-    bu_log("area: %f\n", area);
-    if (area < obr->area)
-    {
+    if (area < obr->area) {
+	/*
+	bu_log("LPoint: %f, %f, %f\n", LPoint[0], LPoint[1], LPoint[2]);
+	bu_log("BPoint: %f, %f, %f\n", BPoint[0], BPoint[1], BPoint[2]);
+	bu_log("RPoint: %f, %f, %f\n", RPoint[0], RPoint[1], RPoint[2]);
+	bu_log("TPoint: %f, %f, %f\n", TPoint[0], TPoint[1], TPoint[2]);
+	bu_log("u: %f, %f, %f\n", u[0], u[1], u[2]);
+	bu_log("v: %f, %f, %f\n", v[0], v[1], v[2]);
+	bu_log("RLDiff: %f, %f, %f\n", RLDiff[0], RLDiff[1], RLDiff[2]);
+	bu_log("TBDiff: %f, %f, %f\n", TBDiff[0], TBDiff[1], TBDiff[2]);
+	bu_log("extent0: %f\n", extent0);
+	bu_log("extent1: %f\n", extent1);
+	bu_log("area: %f\n", area);
+*/
 	obr->area = area;
 	VMOVE(obr->u, u);
 	obr->extent0 = extent0;
@@ -265,15 +269,23 @@ UpdateBox(struct obr_vals *obr, point_t LPoint, point_t RPoint, point_t BPoint, 
 	/* TODO translate this to vmath.h routines...
 	mMinBox.Center = LPoint + U*extent0 + V*(extent1 - V.Dot(LBDiff));*/
 	VSUB2(LBDiff, LPoint, BPoint);
-	bu_log("LBDiff: %f, %f, %f\n", LBDiff[0], LBDiff[1], LBDiff[2]);
+	/*bu_log("LBDiff: %f, %f, %f\n", LBDiff[0], LBDiff[1], LBDiff[2]);*/
 	VSCALE(U, u, extent0);
-	bu_log("U: %f, %f, %f\n", U[0], U[1], U[2]);
-	bu_log("VDOT(v, LBDiff): %f\n", VDOT(v,LBDiff));
+	/*bu_log("U: %f, %f, %f\n", U[0], U[1], U[2]);*/
+	/*bu_log("VDOT(v, LBDiff): %f\n", VDOT(v,LBDiff));*/
 	VSCALE(V, v, extent1 - VDOT(v,LBDiff));
-	bu_log("V: %f, %f, %f\n", V[0], V[1], V[2]);
+	/*bu_log("V: %f, %f, %f\n", V[0], V[1], V[2]);*/
 	VADD3(obr->center, LPoint, U, V);
+	bu_log("center: %f, %f, %f\n\n", obr->center[0], obr->center[1], obr->center[2]);
+	VSCALE(V, v, extent1);
+	VADD3(obr->p3, obr->center, U, V);
+	VSCALE(U, U, -1);
+	VADD3(obr->p4, obr->center, U, V);
+	VSCALE(V, V, -1);
+	VADD3(obr->p1, obr->center, U, V);
+	VSCALE(U, U, -1);
+	VADD3(obr->p2, obr->center, U, V);
     }
-    bu_log("center: %f, %f, %f\n\n", obr->center[0], obr->center[1], obr->center[2]);
 }
 
 /* Three consecutive colinear points will cause a problem (per a comment in the original code)
@@ -422,9 +434,9 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 
 
 		dot = VDOT(t,edge_unit_vects[BIndex]);
-		bu_log("t: %f, %f\n", t[0], t[1]);
+		/*bu_log("t: %f, %f\n", t[0], t[1]);
 		bu_log("edge_unit_vects[%d]: %f, %f\n", BIndex, edge_unit_vects[BIndex][0], edge_unit_vects[BIndex][1]);
-		bu_log("b_dot: %f\n", dot);
+		bu_log("b_dot: %f\n", dot);*/
 		if (dot > maxDot) {
 		    maxDot = dot;
 		    flag = F_BOTTOM;
@@ -432,9 +444,9 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 
 		VSET(t, -u[1], u[0], 0);
 		dot = VDOT(t,edge_unit_vects[RIndex]);
-		bu_log("t: %f, %f\n", t[0], t[1]);
+		/*bu_log("t: %f, %f\n", t[0], t[1]);
 		bu_log("edge_unit_vects[%d]: %f, %f\n", BIndex, edge_unit_vects[RIndex][0], edge_unit_vects[RIndex][1]);
-		bu_log("r_dot: %f\n", dot);
+		bu_log("r_dot: %f\n", dot);*/
 		if (dot > maxDot) {
 		    maxDot = dot;
 		    flag = F_RIGHT;
@@ -443,9 +455,9 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 		VSET(tmp, -t[1], t[0], 0);
 		VMOVE(t, tmp);
 		dot = VDOT(t, edge_unit_vects[TIndex]);
-		bu_log("t: %f, %f\n", t[0], t[1]);
+		/*bu_log("t: %f, %f\n", t[0], t[1]);
 		bu_log("edge_unit_vects[%d]: %f, %f\n", BIndex, edge_unit_vects[TIndex][0], edge_unit_vects[TIndex][1]);
-		bu_log("t_dot: %f\n", dot);
+		bu_log("t_dot: %f\n", dot);*/
 		if (dot > maxDot) {
 		    maxDot = dot;
 		    flag = F_TOP;
@@ -454,9 +466,9 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 		VSET(tmp, -t[1], t[0], 0);
 		VMOVE(t, tmp);
 		dot = VDOT(t, edge_unit_vects[LIndex]);
-		bu_log("t: %f, %f\n", t[0], t[1]);
+		/*bu_log("t: %f, %f\n", t[0], t[1]);
 		bu_log("edge_unit_vects[%d]: %f, %f\n", BIndex, edge_unit_vects[LIndex][0], edge_unit_vects[LIndex][1]);
-		bu_log("l_dot: %f\n", dot);
+		bu_log("l_dot: %f\n", dot);*/
 		if (dot > maxDot) {
 		    maxDot = dot;
 		    flag = F_LEFT;
@@ -557,6 +569,10 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 	    bu_free(hull_pnts, "free visited");
 	    }
     }
+    VMOVE((*p1), obr.p1);
+    VMOVE((*p2), obr.p2);
+    VMOVE((*p3), obr.p3);
+    VMOVE((*p4), obr.p4);
     return dim;
 }
 
