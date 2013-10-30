@@ -46,7 +46,7 @@ main(int ac, char *av[])
     char buffer[32];
 
     if (ac < 3)
-	printf("Usage: %s function_to_test test_number\n", av[0]);
+	fprintf(stderr,"Usage: %s function_to_test test_number\n", av[0]);
 
     sscanf(av[1], "%d", &function_num);
     sscanf(av[2], "%d", &test_num);

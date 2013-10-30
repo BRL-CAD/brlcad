@@ -134,13 +134,13 @@ main(int argc, char **argv)
     printf("GIFT-PRETTY File painted on Generic Framebuffer\n");
 /* check invocation */
     if (argc<2) {
-	printf("Usage: pp-fb [options] PPfilename\n");
-	printf("(See BRL-CAD Package Documentation for more info)\n");
-	printf("Options:\n");
-	printf("  -F framebuffer");
-	printf(" (Alternatively set environment variable FB_FILE)\n");
-	printf("  -W screen_width\n");
-	printf("  -N screen_height\n");
+	fprintf(stderr,"Usage: pp-fb [options] PPfilename\n");
+	fprintf(stderr,"(See BRL-CAD Package Documentation for more info)\n");
+	fprintf(stderr,"Options:\n");
+	fprintf(stderr,"  -F framebuffer");
+	fprintf(stderr," (Alternatively set environment variable FB_FILE)\n");
+	fprintf(stderr,"  -W screen_width\n");
+	fprintf(stderr,"  -N screen_height\n");
 	bu_exit(10, NULL);
     }
     for (i=1;i<argc;i++) {

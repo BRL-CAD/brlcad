@@ -426,7 +426,7 @@ printPoints(struct rt_brep_internal* bi)
 
 static void
 printusage(void) {
-    printf("Usage: brep_cube (takes no arguments)\n");
+    fprintf(stderr,"Usage: brep_cube (takes no arguments)\n");
 }
 
 
@@ -445,7 +445,7 @@ main(int argc, char** argv)
     }
     if (argc >= 1) {
     	printusage();
-    	printf("       Program continues running (will create file brep_cube.g):\n");
+    	fprintf(stderr,"       Program continues running (will create file brep_cube.g):\n");
     }
 
     ON::Begin();
@@ -456,9 +456,8 @@ main(int argc, char** argv)
     mk_id(outfp, id_name);
 
     brep = MakeTwistedCube(error_log);
-    if (!brep) {
+    if (!brep)
 	bu_exit(1, "ERROR: unable to make the cube\n");
-    }
 
     mk_brep(outfp, geom_name, brep);
 
@@ -482,11 +481,12 @@ main(int argc, char** argv)
 	struct rt_db_internal ip;
 	mat_t mat;
 	MAT_IDN(mat);
-	if (rt_db_get_internal(&ip, dirp, dbip, mat, &rt_uniresource) >= 0) {
+
+	if (rt_db_get_internal(&ip, dirp, dbip, mat, &rt_uniresource) >= 0)
 	    printPoints((struct rt_brep_internal*)ip.idb_ptr);
-	} else {
+	else
 	    bu_log("problem getting internal object rep\n");
-	}
+
     }
     db_close(dbip);
 

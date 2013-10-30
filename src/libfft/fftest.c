@@ -54,7 +54,7 @@ main(int ac, char *av[])
     int i;
 
     if (ac > 1)
-	printf("Usage: %s\n", av[0]);
+	fprintf(stderr,"Usage: %s\n", av[0]);
 
     for (i = 0; i < 64; i++) {
 /* Original and simplified expressions in next 4 lines of file you are reading. */

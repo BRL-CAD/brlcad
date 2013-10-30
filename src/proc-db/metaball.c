@@ -243,7 +243,7 @@ main(int argc, char *argv[])
 		count = atoi(bu_optarg);
 		break;
 	    default:
-		printf(usage, *argv);
+		fprintf(stderr,usage, *argv);
 		return optc == '?' ? EXIT_FAILURE : EXIT_SUCCESS;
 	}
     }

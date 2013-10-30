@@ -431,7 +431,7 @@ printPoints(struct rt_brep_internal* bi)
 
 static void
 printusage(void) {
-    printf("Usage: brep_simple (takes no arguments)\n");
+    fprintf(stderr,"Usage: brep_simple (takes no arguments)\n");
 }
 
 
@@ -450,7 +450,7 @@ main(int argc, char** argv)
     }
     if (argc >= 1) {
     	printusage();
-    	printf("       Program continues running (will create file brep_simple.g):\n");
+    	fprintf(stderr,"       Program continues running (will create file brep_simple.g):\n");
     }
 
     ON::Begin();

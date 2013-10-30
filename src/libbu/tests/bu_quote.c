@@ -86,7 +86,7 @@ main(int ac, char *av[])
 {
     int test_num = 0;
     if (ac != 2)
-	printf("Usage: %s test_number\n", av[0]);
+	fprintf(stderr,"Usage: %s test_number\n", av[0]);
 
     sscanf(av[1], "%d", &test_num);
 

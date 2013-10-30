@@ -36,7 +36,7 @@ main(int ac, char *av[])
     const char *res;
 
     if (ac > 1) {
-	printf("Usage: %s\n", av[0]);
+	fprintf(stderr,"Usage: %s\n", av[0]);
 	return 1;
     }
 

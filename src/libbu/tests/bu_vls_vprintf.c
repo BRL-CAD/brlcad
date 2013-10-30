@@ -116,7 +116,7 @@ main(int argc, char *argv[])
     const char *word = "Lawyer";
 
     if (argc < 2) {
-	printf("Usage: %s test_num\n", argv[0]);
+	fprintf(stderr,"Usage: %s test_num\n", argv[0]);
 	return 1;
     }
 

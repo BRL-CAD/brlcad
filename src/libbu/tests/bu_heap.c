@@ -49,7 +49,7 @@ main (int ac, char *av[])
     size_t freecalls = 0;
 
     if (ac > 1) {
-	printf("Usage: %s\n", av[0]);
+	fprintf(stderr,"Usage: %s\n", av[0]);
 	return 1;
     }
 

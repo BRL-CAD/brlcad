@@ -71,7 +71,7 @@ main(int argc, char *argv[])
     int i, j;
 
     if (argc > 1)
-	printf("Usage: %s\n", argv[0]);
+	fprintf(stderr,"Usage: %s\n", argv[0]);
 
     hscale = 2.5;
 

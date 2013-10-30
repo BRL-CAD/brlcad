@@ -93,18 +93,16 @@ int main(int argc, char *argv[])
 {
     int pass = 0;
 
-    if (argc > 2) {
-       printf("Usage: %s test_string\n", argv[0]);
-    }
+    if (argc > 2)
+       fprintf(stderr,"Usage: %s test_string\n", argv[0]);
 
     if (argc == 1) {
        pass = automatic_test(NULL);
        return !pass;
     }
 
-    if (argc > 1) {
+    if (argc > 1)
        pass = automatic_test(argv[1]);
-    }
 
     return !pass;
 }

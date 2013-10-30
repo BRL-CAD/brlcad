@@ -37,7 +37,7 @@
 
 static void
 printusage(void) {
-    printf("Usage: bottest [filename]\n");
+    fprintf(stderr,"Usage: bottest [filename]\n");
 }
 
 
@@ -57,7 +57,7 @@ main(int argc, char **argv)
     }
     if (argc == 1) {
 	printusage();
-	printf("       Program continues running (will create file bot-test.g because 'filename' was blank):\n");
+	fprintf(stderr,"       Program continues running (will create file bot-test.g because 'filename' was blank):\n");
     }
     else if (argc > 1)
 	filename = argv[1];

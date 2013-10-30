@@ -63,7 +63,7 @@ main(int argc, char **argv)
     bu_setprogname(argv[0]);
 
     if ( argc != 3 )  {
-	printf("Usage: conv-vg2g file.vg file.g\n(I prompt as necessary)\n");
+	fprintf(stderr,"Usage: conv-vg2g file.vg file.g\n(I prompt as necessary)\n");
 	return 11;
     }
 
@@ -172,7 +172,7 @@ main(int argc, char **argv)
 	    factor = 304.8;			/* from FT to MM */
 	    break;
 	default:
-	    printf("eh?\n");
+	    fprintf(stderr,"eh?\n");
     }
 
  top:
