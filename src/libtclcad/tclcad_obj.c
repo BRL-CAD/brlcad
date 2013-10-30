@@ -13183,7 +13183,7 @@ go_dm_draw_lines(struct dm *dmp, struct ged_data_line_state *gdlsp)
 				      (_gdpsp)->gdps_polygons.gp_polygon[_i].gp_contour[_j].gpc_point[_last], \
 				      (_gdpsp)->gdps_polygons.gp_polygon[_i].gp_contour[_j].gpc_point[0]); \
 	    } \
-	}}	
+	}}
 
 
 HIDDEN void
