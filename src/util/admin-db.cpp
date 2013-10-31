@@ -40,7 +40,11 @@ main(int argc, char** argv)
     int res = 0; /* for function returns */
     int nobj = 0;
     int fobj = 0;
-
+    size_t free_bytes = 0;
+    int M0m0  = 0;
+    int M1m3  = 0;
+    int M1m31 = 0;
+    int M2m0  = 0;
 
     struct stat sb;
     const char DBSUF[] = ".compressed";
@@ -152,8 +156,8 @@ main(int argc, char** argv)
 
     /* open the db file read-only */
     /* TCLAP doesn't check for existing files (FIXME: add to TCLAP) */
-    if (!stat(db_fname, &sb)) {
-        bu_exit(EXIT_FAILURE, "non-existent input file\n");
+    if (stat(db_fname, &sb)) {
+        bu_exit(EXIT_FAILURE, "non-existent input file '%s'\n", db_fname);
     }
     in = fopen(db_fname, "r");
     if (!in) {
@@ -184,17 +188,58 @@ main(int argc, char** argv)
     }
 
     /* start reading the input file */
-    while ((res = db5_get_raw_internal_fp(&r, in)) != 0) {
+    r.magic = DB5_RAW_INTERNAL_MAGIC;
+
+    while ((res = db5_get_raw_internal_fp(&r, in)) == 0) {
+      RT_CK_RIP(&r);
       ++nobj;
 
       /* get major and minor type */
       unsigned char M = r.major_type;
       unsigned char m = r.minor_type;
-      printf("Object major/minor type: %8x/%8x\n", M, m);
+      printf("Object major/minor type: %3u/%3u\n", (unsigned)M, (unsigned)m);
+      if (M == 0) {
+        if (m == 0)
+          ++M0m0;
+        else
+          bu_bomb("duh");
+      }
+      else if (M == 1) {
+        if (m == 3)
+          ++M1m3;
+        else if (m == 31)
+          ++M1m31;
+        else
+          bu_bomb("duh");
+      }
+      else if (M == 2) {
+        if (m == 0)
+          ++M2m0;
+        else
+          bu_bomb("duh");
+      };
+
+      if (M == 0 && m == 0) {
+        /* free space, count object and bytes */
+        ++fobj;
+        free_bytes += r.object_length;
+      }
+      /* free the heap stuff */
+      if (r.buf) {
+        bu_free(r.buf, "r.buf");
+      }
     }
-
-    printf("Found %d objects, %d of which are free\n", nobj, fobj);
-
+    printf("Found %d objects, %d of which are free space\n", nobj, fobj);
+    printf("Objecttypes:\n");
+    printf("  0/0  (RESERVED/RESERVED)       : %5d\n", M0m0);
+    printf("  1/3  (BRLCAD/ELL)              : %5d\n", M1m3);
+    printf("  1/31 (BRLCAD/COMBINATION)      : %5d\n", M1m31);
+    printf("  2/0  (ATTRIBUTE_ONLY/RESERVED) : %5d\n", M2m0);
+    if (fobj) {
+        printf("  Free space: %d bytes (assumes 0/0 is free space)\n", (int)free_bytes);
+        printf("  Free space: %d Mb \n", (int)free_bytes/(1024*1000));
+    }
+    printf("Note res = %d (-1 = EOF)\n", res);
 
     return 0;
 
