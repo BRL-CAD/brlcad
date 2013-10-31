@@ -292,7 +292,7 @@ bu_arg_parse(void *args[], int argc, char * const argv[])
 
     for (unsigned j = 0; j < tclap_results.size(); ++j) {
       Arg *A         = tclap_results[j];
-      void *a = args[i];
+      void *a = args[j];
       bu_arg_t arg_type = _get_arg_type(a);
       switch (arg_type) {
           case BU_ARG_SwitchArg:
