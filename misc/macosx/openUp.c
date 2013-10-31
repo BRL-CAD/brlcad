@@ -57,7 +57,6 @@ struct volumeinfo {
     u_int32_t finderinfo[8];
 };
 
-
 int main(int argc, char *argv[]) {
 
     char *path = NULL;
@@ -72,7 +71,7 @@ int main(int argc, char *argv[]) {
     }
 
     path = argv[1];
-    
+
     memset(&alist, 0, sizeof(alist));
     alist.bitmapcount = 5;
     alist.commonattr = ATTR_CMN_OBJID;
