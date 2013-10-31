@@ -68,7 +68,8 @@ typedef enum {
 
 typedef enum {
   BU_ARG_NOT_REQUIRED = 0,
-  BU_ARG_REQUIRED = 1
+  BU_ARG_OPTIONAL     = 0, /* an alias */
+  BU_ARG_REQUIRED     = 1
 } bu_arg_req_t;
 
 typedef struct bu_arg_value {
