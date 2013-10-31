@@ -19,6 +19,12 @@ static const char usage[] = "Example: admin-db [...options] db.g [db2.g]\n";
  * unused free space which accumulates during the construction of a BRL-CAD model.
  * The shortened copy of the input DB is written to a new file which may be named
  * by the user, otherwise the new file is name "<input file name>.compressed".
+ *
+ * As an example of how much a DB can grow during construction, creating a model
+ * consisting of 1,000 spheres and killing all of them, and doing that 10 times,
+ * creates a 45 Mb file.  Then converting it to ASCII and back reduces
+ * the file size to 250 Kb.  (Note the use of g2asc and asc2g may allow mathmatical
+ * errors to creep in so their use is not recommended for production models.)
  */
 
 
