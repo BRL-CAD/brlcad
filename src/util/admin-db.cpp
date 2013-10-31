@@ -230,14 +230,16 @@ main(int argc, char** argv)
       }
     }
     printf("Found %d objects, %d of which are free space\n", nobj, fobj);
-    printf("Objecttypes:\n");
+    printf("Object types:\n");
     printf("  0/0  (RESERVED/RESERVED)       : %5d\n", M0m0);
     printf("  1/3  (BRLCAD/ELL)              : %5d\n", M1m3);
     printf("  1/31 (BRLCAD/COMBINATION)      : %5d\n", M1m31);
     printf("  2/0  (ATTRIBUTE_ONLY/RESERVED) : %5d\n", M2m0);
     if (fobj) {
+        const int mb = 1024*1000;
         printf("  Free space: %d bytes (assumes 0/0 is free space)\n", (int)free_bytes);
-        printf("  Free space: %d Mb \n", (int)free_bytes/(1024*1000));
+        if ((int)free_bytes > mb)
+          printf("  Free space: %d Mb \n", (int)free_bytes/mb);
     }
     printf("Note res = %d (-1 = EOF)\n", res);
 
