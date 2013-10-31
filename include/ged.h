@@ -555,6 +555,7 @@ struct ged {
     struct ged_drawable		*ged_gdp;
     struct ged_view		*ged_gvp;
     struct fbserv_obj		*ged_fbsp; /* FIXME: this shouldn't be here */
+    struct bu_hash_tbl		*ged_selections; /**< @brief object name -> struct rt_object_selections */
 
     void			*ged_dmp;
     void			*ged_refresh_clientdata;	/**< @brief  client data passed to refresh handler */

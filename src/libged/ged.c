@@ -84,6 +84,63 @@ ged_close(struct ged *gedp)
     ged_free(gedp);
 }
 
+static void
+free_selection_list(struct rt_selection_list *head, void (*free_selection)(struct rt_selection *))
+{
+    struct rt_selection_list *item;
+    while (BU_LIST_WHILE(item, rt_selection_list, &head->l)) {
+	BU_LIST_DEQUEUE(&item->l);
+	free_selection(item->s);
+	bu_free(item, "selection list item");
+    }
+    bu_free(head, "selection list head");
+}
+
+static void
+free_object_selections(struct rt_object_selections *obj_selections)
+{
+    struct bu_hash_record rec;
+    struct bu_hash_entry *entry;
+    unsigned char *value;
+    struct rt_selection_list *selections;
+
+    /* free entries - one list for each kind of selection */
+    entry = bu_hash_tbl_first(obj_selections->selections, &rec);
+    while (entry) {
+	value = bu_get_hash_value(entry);
+	if (value) {
+	    selections = (struct rt_selection_list *)value;
+	    free_selection_list(selections, obj_selections->free_selection);
+	    bu_free(selections, "object selections entry");
+	}
+	entry = bu_hash_tbl_next(&rec);
+    }
+
+    bu_hash_tbl_free(obj_selections->selections);
+}
+
+static void
+free_selections(struct ged *gedp)
+{
+    struct bu_hash_record rec;
+    struct bu_hash_entry *entry;
+    unsigned char *value;
+    struct rt_object_selections *object_selections;
+
+    /* free entries - one for each object with selections */
+    entry = bu_hash_tbl_first(gedp->ged_selections, &rec);
+    while (entry) {
+	value = bu_get_hash_value(entry);
+	if (value) {
+	    object_selections = (struct rt_object_selections *)value;
+	    free_object_selections(object_selections);
+	    bu_free(object_selections, "ged selections entry");
+	}
+	entry = bu_hash_tbl_next(&rec);
+    }
+
+    bu_hash_tbl_free(gedp->ged_selections);
+}
 
 void
 ged_free(struct ged *gedp)
@@ -112,6 +169,7 @@ ged_free(struct ged *gedp)
 	BU_PUT(gedp->ged_result_str, struct bu_vls);
     }
 
+    free_selections(gedp);
 }
 
 
@@ -145,6 +203,8 @@ ged_init(struct ged *gedp)
     gedp->ged_gdp->gd_freeSolids = &_FreeSolid;
     gedp->ged_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
     qray_init(gedp->ged_gdp);
+
+    gedp->ged_selections = bu_create_hash_tbl(0);
 
     /* (in)sanity */
     gedp->ged_gvp = NULL;

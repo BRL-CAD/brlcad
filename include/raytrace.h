@@ -2053,6 +2053,27 @@ struct rt_selection_list {
 };
 
 /**
+ *  R T _ O B J E C T _ S E L E C T I O N S
+ *
+ * Stores selections associated with an object. There is an entry in
+ * the selections table for each kind of selection (e.g. "active",
+ * "option"). The table entries are lists to allow more than one
+ * selection of the same type (e.g. multiple "option" selections).
+ *
+ * TODO: This structure is tentative and subject to change or removal
+ *       without notice.
+ */
+struct rt_object_selections {
+    /** selection type -> struct rt_selection_list */
+    struct bu_hash_tbl *selections;
+
+    /** selection-object specific routine that will free all memory
+     *  associated with any of the stored selections
+     */
+    void (*free_selection)(struct rt_selection *);
+};
+
+/**
  * R T _ S E L E C T I O N _ Q U E R Y
  *
  * Analogous to a database query. Specifies how to filter and sort
