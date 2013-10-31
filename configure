@@ -98,10 +98,6 @@ do
                                   shift;;
      --disable-libz)                options="$options -DBRLCAD_ZLIB=SYSTEM";
                                   shift;;
-     --enable-re2c)                options="$options -DBRLCAD_ASTYLE=BUNDLED";
-                                  shift;;
-     --disable-re2c)                options="$options -DBRLCAD_ASTYLE=SYSTEM";
-                                  shift;;
      --enable-lemon)                options="$options -DBRLCAD_LEMON=BUNDLED";
                                   shift;;
      --disable-lemon)                options="$options -DBRLCAD_LEMON=SYSTEM";
@@ -189,6 +185,10 @@ do
      --enable-gdiam)                options="$options -DBRLCAD_LIBGDIAM=BUNDLED";
                                   shift;;
      --disable-gdiam)                options="$options -DBRLCAD_LIBGDIAM=SYSTEM";
+                                  shift;;
+     --enable-astyle)                options="$options -DBRLCAD_ASTYLE=BUNDLED";
+                                  shift;;
+     --disable-astyle)                options="$options -DBRLCAD_ASTYLE=SYSTEM";
                                   shift;;
      --prefix=*)   	          inputstr=$1;
 				  options="$options -DCMAKE_INSTALL_PREFIX=${inputstr#--prefix=}";

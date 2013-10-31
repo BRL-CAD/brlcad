@@ -2145,6 +2145,10 @@ endif(MSVC)
 # tests so the CACHE reflects BRL-CAD's test results.
 add_subdirectory(src/other)
 
+# Add misc/tools for tools that are used in BRL-CAD's build process
+# but are not otherwise usable in BRL-CAD (due to licensing, design
+# intent, etc.)
+add_subdirectory(misc/tools)
 
 # *******************************************************************
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)

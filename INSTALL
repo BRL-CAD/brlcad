@@ -462,16 +462,6 @@ first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 Aliases:  ENABLE_ZLIB, ENABLE_LIBZ
 
 
---- BRLCAD_ASTYLE ---
-
-Option for enabling and disabling compilation of the Artistic Style
-(astyle) utility provided with BRL-CAD's source distribution.  Default is AUTO,
-responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
-first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
-
-Aliases:  ENABLE_RE2C
-
-
 --- BRLCAD_LEMON ---
 
 Option for enabling and disabling compilation of the lemon parser
@@ -702,6 +692,17 @@ testing first for a system version if BRLCAD_BUNDLED_LIBS is also
 AUTO.
 
 Aliases:  ENABLE_GDIAM
+
+
+--- BRLCAD_ASTYLE ---
+
+Option for enabling and disabling compilation of the Artistic Style
+(astyle) utility provided with BRL-CAD's source distribution.  Default is
+AUTO,
+responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
+first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
+
+Aliases:  ENABLE_ASTYLE
 
 
 
