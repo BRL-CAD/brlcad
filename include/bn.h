@@ -2386,15 +2386,29 @@ BN_EXPORT extern double bn_dist_pt_lseg(point_t pca,
 /**
  * B N _ O B R
  *@brief
- * Rotating Calipers algorithm for finding the
- * minimum oriented bounding rectangle for a convex hull.
+ * Implements Rotating Calipers algorithm for finding the
+ * minimum oriented bounding rectangle for a set of coplanar
+ * points.
+ *
+ * If the input point array is 2D (x,y,0) the center point
+ * and vectors returned will also be 2D.  If the points are
+ * 3D (x,y,z) but coplanar, the resulting center and vectors
+ * will also be 3D.  If the points are *not* coplanar, an
+ * error will be returned.
+ *
+ * @param pnts		array of 2D or coplanar 3D points
+ * @param pnt_cnt	number of points in pnts array
+ * @param[out] center	center of oriented bounding rectangle
+ * @param[out] x	vector in the direction of obr x with
+ * 			vector length of 0.5 * obr length
+ * @param[out] y	vector in the obr y direction with vector
+ * 			length of 0.5 * obr width
  */
 BN_EXPORT extern int bn_obr(const point_t *pnts,
 			int pnt_cnt,
-			point_t *p1,
-			point_t *p2,
-			point_t *p3,
-			point_t *p4);
+			point_t *center,
+			vect_t *x,
+			vect_t *y);
 
 /**
  * B N _ R O T A T E _ B B O X
