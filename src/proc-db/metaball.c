@@ -228,14 +228,14 @@ int
 main(int argc, char *argv[])
 {
     static const char usage[] = "Usage:\n%s [-o outfile] [-n count]\n\n  -o file \tFile to write out (default: metaball.g)\n  -n count\tTotal metaball point count (default %d)\n\n";
-#define countmax 555
+    static const int COUNTMAX = 555;
 
     char outfile[MAXPATHLEN] = "metaball.g";
     int optc;
-    long count = countmax;
+    long count = COUNTMAX;
 
     if (argc == 1) {
-	fprintf(stderr,usage, *argv,countmax);
+	fprintf(stderr,usage, *argv, COUNTMAX);
     	fprintf(stderr,"       Program continues running:\n");
     }
 
@@ -249,7 +249,7 @@ main(int argc, char *argv[])
 		count = atoi(bu_optarg);
 		break;
 	    default:
-		fprintf(stderr,usage, *argv,countmax);
+		fprintf(stderr,usage, *argv, COUNTMAX);
 		return optc == '?' ? EXIT_FAILURE : EXIT_SUCCESS;
 	}
     }
