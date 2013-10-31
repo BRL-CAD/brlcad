@@ -5,6 +5,7 @@
 #include "bio.h"
 
 #include "bu_arg_parse.h" /* includes bu.h */
+#include "raytrace.h"
 
 static const char usage[] = "Example: admin-db [...options] db.g [db2.g]\n";
 
@@ -31,8 +32,16 @@ static const char usage[] = "Example: admin-db [...options] db.g [db2.g]\n";
 int
 main(int argc, char** argv)
 {
-    FILE *in  = NULL;
+    /* db pointers */
+    FILE *in = NULL;
     FILE *out = NULL;
+    /* a struct to hold a raw db object (see db5.h) */
+    struct db5_raw_internal r;
+    int res = 0; /* for function returns */
+    int nobj = 0;
+    int fobj = 0;
+
+
     struct stat sb;
     const char DBSUF[] = ".compressed";
 
@@ -60,7 +69,7 @@ main(int argc, char** argv)
      * type void* to hold the heterogeneous arg type structs)
      */
     static void *args[] = {
-      &h_arg, &f_arg,
+      &h_arg, &f_arg, &c_arg,
       &db_arg, &db2_arg,
       NULL
     };
@@ -151,11 +160,6 @@ main(int argc, char** argv)
       perror(db_fname);
       bu_exit(EXIT_FAILURE, "ERROR: input file open failure\n");
     }
-    if (fstat(fileno(in), &sb)) {
-      perror(db_fname);
-      fclose(in);
-      bu_exit(EXIT_FAILURE, "ERROR: input file stat failure\n");
-    }
 
     if (has_compress) {
       /* TCLAP doesn't check for confusion in file names */
@@ -174,15 +178,22 @@ main(int argc, char** argv)
       }
       out = fopen(db2_fname, "w");
       if (!out) {
-        perror(db_fname);
+        perror(db2_fname);
         bu_exit(EXIT_FAILURE, "ERROR: output file open failure\n");
       }
-      if (fstat(fileno(out), &sb)) {
-        perror(db2_fname);
-        fclose(out);
-        bu_exit(EXIT_FAILURE, "ERROR: output file stat failure\n");
-      }
     }
+
+    /* start reading the input file */
+    while ((res = db5_get_raw_internal_fp(&r, in)) != 0) {
+      ++nobj;
+
+      /* get major and minor type */
+      unsigned char M = r.major_type;
+      unsigned char m = r.minor_type;
+      printf("Object major/minor type: %8x/%8x\n", M, m);
+    }
+
+    printf("Found %d objects, %d of which are free\n", nobj, fobj);
 
 
     return 0;
