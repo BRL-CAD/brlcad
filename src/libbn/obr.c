@@ -145,6 +145,11 @@ pnt2d_array_get_dimension(const point_t *pnts, int pnt_cnt, point_t *p_center, p
     return 1;
 }
 
+
+/* TODO - the melkman algorithm isn't going to be enough if we accept generic coplanar point sets
+ * as valid input - need to do the full convex hull algorithm, maybe exposing this option as a
+ * special purpose faster function when the input properties can be guaranteed */
+
 /* isLeft(): test if a point is Left|On|Right of an infinite line.
  *    Input:  three points L0, L1, and p
  *    Return: >0 for p left of the line through L0 and L1
@@ -222,13 +227,10 @@ melkman_hull(const point_t* polyline, int n, point_t** hull)
 struct obr_vals {
     fastf_t area;
     vect_t u;
+    vect_t v;
     fastf_t extent0;
     fastf_t extent1;
     point_t center;
-    point_t p1;
-    point_t p2;
-    point_t p3;
-    point_t p4;
 };
 
 /* The oriented bounding rectangle must be calculated from the points and 2D vectors provided by
@@ -278,22 +280,14 @@ UpdateBox(struct obr_vals *obr, point_t LPoint, point_t RPoint, point_t BPoint, 
 	VADD3(obr->center, LPoint, U, V);
 	bu_log("center: %f, %f, %f\n\n", obr->center[0], obr->center[1], obr->center[2]);
 	VSCALE(V, v, extent1);
-	VADD3(obr->p3, obr->center, U, V);
-	VSCALE(U, U, -1);
-	VADD3(obr->p4, obr->center, U, V);
-	VSCALE(V, V, -1);
-	VADD3(obr->p1, obr->center, U, V);
-	VSCALE(U, U, -1);
-	VADD3(obr->p2, obr->center, U, V);
     }
 }
 
 /* Three consecutive colinear points will cause a problem (per a comment in the original code)
  * Consequently, we're going to have to build the convex hull for all inputs in order to
  * make sure we don't get colinear points from the NMG inputs.*/
-int
-bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
-	point_t *p3, point_t *p4)
+HIDDEN int
+bn_obr_calc(const point_t *pnts, int pnt_cnt, struct obr_vals *obr)
 {
     int i = 0;
     int dim = 0;
@@ -304,37 +298,30 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
     int *visited = NULL;
     point_t center, pmin, pmax;
     vect_t u;
-    vect_t vline, vz, vdelta, neg_vdelta, neg_vline;
-    struct obr_vals obr;
+    vect_t vline, vz, vdelta;
     VSET(vz, 0, 0, 1);
-    if (!pnts || !p1 || !p2 || !p3 || !p4) return -1;
-    /* Need 2d points for this to work */
-    while (i < pnt_cnt) {
-	if (!NEAR_ZERO(pnts[i][2], BN_TOL_DIST)) return -1;
-	i++;
-    }
     dim = pnt2d_array_get_dimension(pnts, pnt_cnt, &center, &pmin, &pmax);
     switch (dim) {
 	case 0:
 	    /* Bound point */
-	    VSET(*p1, center[0] - BN_TOL_DIST, center[1] - BN_TOL_DIST, 0);
-	    VSET(*p2, center[0] + BN_TOL_DIST, center[1] - BN_TOL_DIST, 0);
-	    VSET(*p3, center[0] + BN_TOL_DIST, center[1] + BN_TOL_DIST, 0);
-	    VSET(*p4, center[0] - BN_TOL_DIST, center[1] + BN_TOL_DIST, 0);
+	    VSET(obr->center, center[0] - BN_TOL_DIST, center[1] - BN_TOL_DIST, 0);
+	    VSET(obr->u, 1 , 0, 0);
+	    VSET(obr->v, 0, 1, 0);
+	    obr->extent0 = BN_TOL_DIST;
+	    obr->extent1 = BN_TOL_DIST;
 	    break;
 	case 1:
 	    /* Bound line */
 	    VSUB2(vline, pmax, pmin);
+	    obr->extent0 = MAGNITUDE(vline) * 0.5;
+	    obr->extent1 = BN_TOL_DIST;
+	    VSET(obr->center, vline[0]/2, vline[1]/2, vline[2]/2);
+	    VSUB2(vline, pmax, obr->center);
 	    VUNITIZE(vline);
+	    VMOVE(obr->u,vline);
 	    VCROSS(vdelta, vline, vz);
 	    VUNITIZE(vdelta);
-	    VSCALE(vdelta, vdelta, BN_TOL_DIST);
-	    VSET(neg_vdelta, -vdelta[0], -vdelta[1], 0);
-	    VSET(neg_vline, -vline[0], -vline[1], 0);
-	    VADD3(*p1, pmin, neg_vline, neg_vdelta);
-	    VADD3(*p2, pmax, vline, neg_vdelta);
-	    VADD3(*p3, pmax, vline, vdelta);
-	    VADD3(*p4, pmin, neg_vline, vdelta);
+	    VMOVE(obr->v,vdelta);
 	    break;
 	case 2:
 	    /* Bound convex hull using rotating calipers */
@@ -411,13 +398,13 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 	    }
 
 	    /* initialize with AABB */
-	    obr.center[0] = 0.5 * (xmin + xmax);
-	    obr.center[1] = 0.5 * (ymin + ymax);
-	    obr.center[2] = 0.0;
-	    VSET(obr.u, 1, 0, 0);
-	    obr.extent0 = (xmax - xmin);
-	    obr.extent1 = (ymax - ymin);
-	    obr.area = obr.extent0 * obr.extent1;
+	    obr->center[0] = 0.5 * (xmin + xmax);
+	    obr->center[1] = 0.5 * (ymin + ymax);
+	    obr->center[2] = 0.0;
+	    VSET(obr->u, 1, 0, 0);
+	    obr->extent0 = (xmax - xmin);
+	    obr->extent1 = (ymax - ymin);
+	    obr->area = obr->extent0 * obr->extent1;
 
 	    /* 3. The rotating calipers algorithm */
 	    done = 0;
@@ -483,7 +470,7 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 			    /* Compute box axes with E[B] as an edge.*/
 			    VMOVE(t,edge_unit_vects[BIndex]);
 			    VMOVE(u, t);
-			    UpdateBox(&obr, hull_pnts[LIndex], hull_pnts[RIndex],
+			    UpdateBox(obr, hull_pnts[LIndex], hull_pnts[RIndex],
 				    hull_pnts[BIndex], hull_pnts[TIndex], u);
 
 			    /* Mark edge visited and rotate the calipers. */
@@ -503,7 +490,7 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 			    /* Compute box axes with E[R] as an edge. */
 			    VMOVE(t,edge_unit_vects[RIndex]);
 			    VSET(u, t[1], -t[0], 0);
-			    UpdateBox(&obr, hull_pnts[LIndex], hull_pnts[RIndex],
+			    UpdateBox(obr, hull_pnts[LIndex], hull_pnts[RIndex],
 				    hull_pnts[BIndex], hull_pnts[TIndex], u);
 
 			    /* Mark edge visited and rotate the calipers. */
@@ -524,7 +511,7 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 			    VMOVE(t,edge_unit_vects[TIndex]);
 			    VSCALE(t,t,-1);
 			    VMOVE(u,t);
-			    UpdateBox(&obr, hull_pnts[LIndex], hull_pnts[RIndex],
+			    UpdateBox(obr, hull_pnts[LIndex], hull_pnts[RIndex],
 				    hull_pnts[BIndex], hull_pnts[TIndex], u);
 
 			    /* Mark edge visited and rotate the calipers. */
@@ -545,7 +532,7 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 			    /* Compute box axes with E[L] as an edge. */
 			    VMOVE(t,edge_unit_vects[LIndex]);
 			    VSET(u, -t[1], t[0], 0);
-			    UpdateBox(&obr, hull_pnts[LIndex], hull_pnts[RIndex],
+			    UpdateBox(obr, hull_pnts[LIndex], hull_pnts[RIndex],
 				    hull_pnts[BIndex], hull_pnts[TIndex], u);
 
 			    /* Mark edge visited and rotate the calipers. */
@@ -569,11 +556,93 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *p1, point_t *p2,
 	    bu_free(hull_pnts, "free visited");
 	    }
     }
-    VMOVE((*p1), obr.p1);
-    VMOVE((*p2), obr.p2);
-    VMOVE((*p3), obr.p3);
-    VMOVE((*p4), obr.p4);
     return dim;
+}
+
+int
+bn_obr(const point_t *pnts, int pnt_cnt, point_t *center, vect_t *x, vect_t *y){
+    struct obr_vals obr;
+    vect_t a1;
+    int i = 0;
+    int dim = 0;
+    int points_2d = 1;
+    const point_t *pnts2d;
+
+    if (!pnts) return -1;
+
+    /* See if we already have 2D points */
+    i = 0;
+    while (i < pnt_cnt) {
+	if (!NEAR_ZERO(pnts[i][2], BN_TOL_DIST)) points_2d = 0;
+	i++;
+    }
+    if (!points_2d) {
+	/* Test for coplanar 3D pnts */
+	point_t center_pnt, dmax, dmax2;
+	fastf_t dist = 0.0;
+	fastf_t dist2 = 0.0;
+	fastf_t curr_dist = 0.0;
+	/*plane_t plane;*/
+	VSET(dmax, 0, 0, 0);
+	VSET(dmax2, 0, 0, 0);
+	for (i = 0; i < pnt_cnt; i++) {
+	    VADD2(center_pnt, center_pnt, pnts[i]);
+	}
+	VSCALE(center_pnt, center_pnt, 1/pnt_cnt);
+	for (i = 0; i < pnt_cnt; i++) {
+	    curr_dist = DIST_PT_PT(center_pnt, pnts[i]);
+	    if (curr_dist > dist) {
+		VMOVE(dmax, pnts[i]);
+		dist = curr_dist;
+	    } else {
+		if (curr_dist > dist2) {
+		    VMOVE(dmax2, pnts[i]);
+		    dist2 = curr_dist;
+		}
+	    }
+	}
+	/*
+	if (bn_mk_plane_3pts(center_pnt, dmax, dmax2, )) return -1;
+	for (i = 0; i < pnt_cnt; i++) {
+	    IF (DIST_PT_PLANE(PT, PLANE) > ) RETURN -1;
+	}*/
+	/* If we've gotten this far, we're coplanar - prepare a
+	 * 2D point array by projecting points onto the plane */
+	VSUB2(a1, dmax, center_pnt);
+	VUNITIZE(a1);
+	/*
+	pnts2d = bu_malloc();
+	for (i = 0; i < pnt_cnt; i++) {
+	    vect_t tmp;
+	    VSUB2(tmp, pnts[i], center_pnt);
+	    VPROJECT(tmp,a1,v1,u1);
+	    VSET(pnts2d[i],MAG(u1),MAG(v1),0);
+	}
+	*/
+
+    } else {
+	/* Don't need a new array - just re-use existing one */
+	pnts2d = pnts;
+    }
+
+    dim = bn_obr_calc(pnts, pnt_cnt, &obr);
+
+    if (!points_2d) {
+    } else {
+	/* If we started with 2D, we can just report the results */
+	VMOVE((*center), obr.center);
+	VMOVE((*x), obr.u);
+	VUNITIZE((*x));
+	VSCALE((*x), (*x), obr.extent0);
+	VMOVE((*y), obr.v);
+	VUNITIZE((*y));
+	VSCALE((*y), (*y), obr.extent1);
+    }
+
+    if (!points_2d)
+	bu_free(pnts2d, "free array holding 2D projections of coplanar points");
+
+    return 0;
 }
 
 /*

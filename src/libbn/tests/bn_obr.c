@@ -32,7 +32,8 @@
 int
 main()
 {
-    point_t p0, p1, p2, p3;
+    point_t center;
+    point_t u,v;
     point_t pnts[4+1] = {{0}};
     int n = 4;
 
@@ -41,12 +42,12 @@ main()
     VSET(pnts[2], 2.0, 2.5, 0.0);
     VSET(pnts[3], 1.0, 2.0, 0.0);
 
-    bn_obr((const point_t *)pnts, n, &p0, &p1, &p2, &p3);
-
+    bn_obr((const point_t *)pnts, n, &center, &u, &v);
+/*
     bu_log("result: P1 (%f, %f, %f)\n", V3ARGS(p0));
     bu_log("        P2 (%f, %f, %f)\n", V3ARGS(p1));
     bu_log("        P3 (%f, %f, %f)\n", V3ARGS(p2));
-    bu_log("        P4 (%f, %f, %f)\n", V3ARGS(p3));
+    bu_log("        P4 (%f, %f, %f)\n", V3ARGS(p3));*/
 /*
     if (expected_result == actual_result) {
 	return 0;
