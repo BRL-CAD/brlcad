@@ -97,22 +97,22 @@ get_args(int argc, const char *argv[])
 {
     register int c;
 
-    while ( (c=bu_getopt( argc, (char * const *)argv, "x:X:n:v:" )) != -1 )  {
-	switch ( c )  {
+    while ((c=bu_getopt(argc, (char * const *)argv, "x:X:n:v:")) != -1) {
+	switch (c) {
 	    case 'x':
-		sscanf( bu_optarg, "%x", (unsigned int *)&RTG.debug );
+		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
 		fprintf(stderr, "librt RTG.debug=x%x\n", RTG.debug);
 		break;
 	    case 'X':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rdebug );
+		sscanf(bu_optarg, "%x", (unsigned int *)&rdebug);
 		fprintf(stderr, "rt rdebug=x%x\n", rdebug);
 		break;
 
 	    case 'n':
-		nsteps = atoi( bu_optarg );
+		nsteps = atoi(bu_optarg);
 		break;
 	    case 'v':
-		viewsize = atof( bu_optarg );
+		viewsize = atof(bu_optarg);
 		break;
 
 	    default:		/* '?' */
@@ -138,13 +138,13 @@ main(int argc, char **argv)
     int	curstep;
     int	i;
 
-    bu_semaphore_init( RT_SEM_LAST );
+    bu_semaphore_init(RT_SEM_LAST);
 
-    if ( !get_args( argc, (const char **)argv ) )  {
+    if (!get_args(argc, (const char **)argv)) {
 	(void)fputs(usage, stderr);
 	bu_exit(1, NULL);
     }
-    if ( bu_optind+7 >= argc )  {
+    if (bu_optind+7 >= argc) {
 	(void)fputs(usage, stderr);
 	bu_exit(1, NULL);
     }
@@ -152,28 +152,28 @@ main(int argc, char **argv)
     RT_APPLICATION_INIT(&ap);
 
     /* Start point */
-    start_point[X] = atof( argv[bu_optind] );
-    start_point[Y] = atof( argv[bu_optind+1] );
-    start_point[Z] = atof( argv[bu_optind+2] );
+    start_point[X] = atof(argv[bu_optind]);
+    start_point[Y] = atof(argv[bu_optind+1]);
+    start_point[Z] = atof(argv[bu_optind+2]);
 
     /* Destination point */
-    goal_point[X] = atof( argv[bu_optind+3] );
-    goal_point[Y] = atof( argv[bu_optind+4] );
-    goal_point[Z] = atof( argv[bu_optind+5] );
+    goal_point[X] = atof(argv[bu_optind+3]);
+    goal_point[Y] = atof(argv[bu_optind+4]);
+    goal_point[Z] = atof(argv[bu_optind+5]);
     bu_optind += 6;
 
-    VSUB2( first_dir, goal_point, start_point );
+    VSUB2(first_dir, goal_point, start_point);
     incr_dist = MAGNITUDE(first_dir) / nsteps;
-    VMOVE( ap.a_ray.r_pt, start_point );
-    VMOVE( ap.a_ray.r_dir, first_dir );
-    VUNITIZE( ap.a_ray.r_dir );	/* initial dir, for dir_prev_step */
+    VMOVE(ap.a_ray.r_pt, start_point);
+    VMOVE(ap.a_ray.r_dir, first_dir);
+    VUNITIZE(ap.a_ray.r_dir);	/* initial dir, for dir_prev_step */
 
-    fprintf(stderr, "nsteps = %d, incr_dist = %gmm\n", nsteps, incr_dist );
+    fprintf(stderr, "nsteps = %d, incr_dist = %gmm\n", nsteps, incr_dist);
     fprintf(stderr, "viewsize = %gmm\n", viewsize);
 
     /* Load database */
     title_file = argv[bu_optind++];
-    if ( (rtip=rt_dirbuild(title_file, idbuf, sizeof(idbuf))) == RTI_NULL ) {
+    if ((rtip=rt_dirbuild(title_file, idbuf, sizeof(idbuf))) == RTI_NULL) {
 	fprintf(stderr, "rtwalk:  rt_dirbuild failure\n");
 	bu_exit(2, NULL);
     }
@@ -181,8 +181,8 @@ main(int argc, char **argv)
     fprintf(stderr, "db title:  %s\n", idbuf);
 
     /* Walk trees */
-    for ( i=bu_optind; i < argc; i++ )  {
-	if ( rt_gettree(rtip, argv[bu_optind]) < 0 )
+    for (i = bu_optind; i < argc; i++) {
+	if (rt_gettree(rtip, argv[bu_optind]) < 0)
 	    fprintf(stderr, "rt_gettree(%s) FAILED\n", argv[bu_optind]);
 	bu_optind++;
     }
@@ -194,20 +194,20 @@ main(int argc, char **argv)
      *  With stdout for the plot file, and stderr for
      *  remarks, the output must go into a file.
      */
-    if ( (outfp=fopen("rtwalk.mats", "w")) == NULL )  {
+    if ((outfp = fopen("rtwalk.mats", "w")) == NULL) {
 	perror("rtwalk.mats");
 	bu_exit(1, NULL);
     }
     plotfp = stdout;
 
     /* Plot all of the solids */
-    if ( R_DEBUG > 0 )  {
-	pl_color( plotfp, 150, 150, 150 );
-	rt_plot_all_solids( plotfp, rtip, &rt_uniresource );
+    if (R_DEBUG > 0) {
+	pl_color(plotfp, 150, 150, 150);
+	rt_plot_all_solids(plotfp, rtip, &rt_uniresource);
     }
 
     /* Take a walk */
-    for ( curstep = 0; curstep < nsteps*4; curstep++ )  {
+    for (curstep = 0; curstep < nsteps*4; curstep++) {
 	mat_t	mat;
 	int	failed_try;
 
@@ -217,27 +217,27 @@ main(int argc, char **argv)
 	 *  the results of the last iteration.
 	 *  The first and last iterations result in no output
 	 */
-	if (R_DEBUG>=3) {
+	if (R_DEBUG >= 3) {
 	    VPRINT("pos", ap.a_ray.r_pt);
 	}
-	if ( curstep > 0 )  {
-	    if ( R_DEBUG > 0 )  {
-		if ( curstep&1 )
-		    pl_color( plotfp, 0, 255, 0 );
+	if (curstep > 0) {
+	    if (R_DEBUG > 0) {
+		if (curstep&1)
+		    pl_color(plotfp, 0, 255, 0);
 		else
-		    pl_color( plotfp, 0, 0, 255 );
-		pdv_3line( plotfp,
-			   pt_prev_step, ap.a_ray.r_pt );
+		    pl_color(plotfp, 0, 0, 255);
+		pdv_3line(plotfp,
+			   pt_prev_step, ap.a_ray.r_pt);
 	    }
 	    write_matrix(curstep);
 	}
-	VMOVE( pt_prev_step, ap.a_ray.r_pt );
-	VMOVE( dir_prev_step, ap.a_ray.r_dir );
-	VSETALL( norm_cur_try, 0 );	/* sanity */
+	VMOVE(pt_prev_step, ap.a_ray.r_pt);
+	VMOVE(dir_prev_step, ap.a_ray.r_dir);
+	VSETALL(norm_cur_try, 0);	/* sanity */
 
 	/* See if goal has been reached */
-	VSUB2( first_dir, goal_point, ap.a_ray.r_pt );
-	if ( (max_dist_togo=MAGNITUDE(first_dir)) < 1.0 )  {
+	VSUB2(first_dir, goal_point, ap.a_ray.r_pt);
+	if ((max_dist_togo=MAGNITUDE(first_dir)) < 1.0) {
 	    fprintf(stderr, "Complete in %d steps\n", curstep);
 	    bu_exit(0, NULL);
 	}
@@ -245,126 +245,126 @@ main(int argc, char **argv)
 	/*  See if there is significant clear space ahead
 	 *  Avoid taking small steps.
 	 */
-	if ( clear_dist < incr_dist * 0.25 )
+	if (clear_dist < incr_dist * 0.25)
 	    clear_dist = 0.0;
-	if ( clear_dist > 0.0 )
+	if (clear_dist > 0.0)
 	    goto advance;
 
 	/*
 	 * Initial direction:  Head directly towards the goal.
 	 */
-	VUNITIZE( first_dir );
-	VMOVE( ap.a_ray.r_dir, first_dir );
+	VUNITIZE(first_dir);
+	VMOVE(ap.a_ray.r_dir, first_dir);
 
-	for ( failed_try=0; failed_try<100; failed_try++ )  {
+	for (failed_try = 0; failed_try < 100; failed_try++) {
 	    vect_t	out;
 
 	    /* Shoot Ray */
-	    if (R_DEBUG>=3)fprintf(stderr, "try=%d, maxtogo=%g  ",
-				   failed_try, max_dist_togo);
+	    if (R_DEBUG >= 3) fprintf(stderr, "try=%d, maxtogo=%g  ",
+				      failed_try, max_dist_togo);
 	    ap.a_hit = hit;
 	    ap.a_miss = miss;
 	    ap.a_onehit = 1;
-	    if ( rt_shootray( &ap ) == 0 )  {
+	    if (rt_shootray(&ap) == 0) {
 		/* A miss, the way is clear all the way */
 		clear_dist = max_dist_togo*2;
 		break;
 	    }
 	    /* Hit, check distance to closest obstacle */
-	    if ( clear_dist >= incr_dist )  {
+	    if (clear_dist >= incr_dist) {
 		/* Clear for at least one more step.
 		 * Zap memory of prev normal --
 		 * this probe ahead does not count.
 		 * Current normal has no significance,
 		 * because object is more than one step away.
 		 */
-		VSETALL( norm_cur_try, 0 );
+		VSETALL(norm_cur_try, 0);
 		break;
 	    }
 	    /*
 	     * Failed, try another direction
 	     */
 
-	    if (R_DEBUG > 2 )   {
+	    if (R_DEBUG > 2)   {
 		/* Log attempted ray in Red */
-		VJOIN1( out, ap.a_ray.r_pt,
-			incr_dist*4, ap.a_ray.r_dir );
-		pl_color( plotfp, 255, 0, 0 );
-		pdv_3line( plotfp,
-			   pt_prev_step, out );
+		VJOIN1(out, ap.a_ray.r_pt,
+		       incr_dist*4, ap.a_ray.r_dir);
+		pl_color(plotfp, 255, 0, 0);
+		pdv_3line(plotfp,
+			  pt_prev_step, out);
 	    }
 
 	    /* Initial try was in direction of goal, it failed. */
-	    if ( failed_try == 0 )  {
+	    if (failed_try == 0) {
 		/*  First recovery attempt.
 		 *  If hit normal has not changed, continue
 		 *  the direction of the last step.
 		 *  Otherwise, head on tangent plane.
 		 */
-		if ( VEQUAL( norm_cur_try, norm_prev_step ) )  {
-		    if (R_DEBUG>=3)fprintf(stderr,
-					   "Try prev dir\n");
-		    VMOVE( ap.a_ray.r_dir, dir_prev_step );
+		if (VEQUAL(norm_cur_try, norm_prev_step)) {
+		    if (R_DEBUG >= 3) fprintf(stderr,
+					      "Try prev dir\n");
+		    VMOVE(ap.a_ray.r_dir, dir_prev_step);
 		    continue;
 		}
-		if (R_DEBUG>=3)fprintf(stderr, "Try tangent\n");
+		if (R_DEBUG >= 3) fprintf(stderr, "Try tangent\n");
 		proj_goal(&ap);
 		continue;
-	    } else if ( failed_try <= 7 )  {
+	    } else if (failed_try <= 7) {
 		/* Try 7 azimuthal escapes, 1..7 */
 		i = failed_try-1+1;	/*  1..7 */
-		if (R_DEBUG>=3)fprintf(stderr, "Try az %d\n", i);
-		bn_mat_ae( mat, i*45.0, 0.0 );
-	    } else if ( failed_try <= 14 ) {
+		if (R_DEBUG >= 3) fprintf(stderr, "Try az %d\n", i);
+		bn_mat_ae(mat, i*45.0, 0.0);
+	    } else if (failed_try <= 14) {
 		/* Try 7 Elevations to escape, 8..14 */
 		i = failed_try-8+1;	/*     1..7 */
-		if (R_DEBUG>=3)fprintf(stderr, "Try el %d\n", i);
-		bn_mat_ae( mat, 0.0, i*45.0 );
+		if (R_DEBUG >= 3) fprintf(stderr, "Try el %d\n", i);
+		bn_mat_ae(mat, 0.0, i*45.0);
 	    } else {
 		fprintf(stderr, "trapped, giving up on escape\n");
 		bu_exit(1, NULL);
 	    }
-	    MAT4X3VEC( ap.a_ray.r_dir, mat, first_dir );
+	    MAT4X3VEC(ap.a_ray.r_dir, mat, first_dir);
 
 	    /*
 	     *  If new ray is nearly perpendicular to
 	     *  the tangent plane, it is doomed to failure;
 	     *  pick any tangent and use that instead.
 	     */
-	    if ( (VDOT( ap.a_ray.r_dir, norm_cur_try )) < -0.9995 )  {
+	    if ((VDOT(ap.a_ray.r_dir, norm_cur_try)) < -0.9995) {
 		vect_t	olddir;
 
-		VMOVE( olddir, ap.a_ray.r_dir );
-		VCROSS( ap.a_ray.r_dir, olddir, norm_cur_try );
+		VMOVE(olddir, ap.a_ray.r_dir);
+		VCROSS(ap.a_ray.r_dir, olddir, norm_cur_try);
 	    }
 	}
-	if ( failed_try > 0 )  {
+	if (failed_try > 0) {
 	    /* Extra trys were required, prevent runaways */
-	    if ( clear_dist > incr_dist )
+	    if (clear_dist > incr_dist)
 		clear_dist = incr_dist;
 	}
 
 	/* One simple attempt at not overshooting the goal.
 	 * Really should measure distance point-to-line
 	 */
-	if ( clear_dist > max_dist_togo )
+	if (clear_dist > max_dist_togo)
 	    clear_dist = max_dist_togo;
 
 	/* Advance position along ray */
     advance:	;
-	if ( clear_dist > 0.0 )  {
+	if (clear_dist > 0.0) {
 	    fastf_t	step;
-	    if ( clear_dist < incr_dist )
+	    if (clear_dist < incr_dist)
 		step = clear_dist;
 	    else
 		step = incr_dist;
-	    VJOIN1( ap.a_ray.r_pt, ap.a_ray.r_pt,
-		    step, ap.a_ray.r_dir );
+	    VJOIN1(ap.a_ray.r_pt, ap.a_ray.r_pt,
+		    step, ap.a_ray.r_dir);
 	    clear_dist -= step;
 	}
 
 	/* Save status */
-	VMOVE( norm_prev_step, norm_cur_try );
+	VMOVE(norm_prev_step, norm_cur_try);
     }
     fprintf(stderr, "%d steps used without reaching goal by %gmm\n", curstep, max_dist_togo);
 
@@ -379,17 +379,17 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *UN
     register struct soltab *stp;
     register struct hit *hitp;
 
-    for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
-	if ( pp->pt_outhit->hit_dist >= 0.0 )  break;
-    if ( pp == PartHeadp )  {
+    for (pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw)
+	if (pp->pt_outhit->hit_dist >= 0.0)  break;
+    if (pp == PartHeadp) {
 	bu_log("hit:  no hit out front?\n");
 	return 0;
     }
     hitp = pp->pt_inhit;
     stp = pp->pt_inseg->seg_stp;
-    VJOIN1( hit_cur_try, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir );
-    RT_HIT_NORMAL( norm_cur_try, hitp, stp, &(ap->a_ray), pp->pt_inflip );
-    RT_CURVATURE( &curve_cur, hitp, pp->pt_inflip, stp );
+    VJOIN1(hit_cur_try, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
+    RT_HIT_NORMAL(norm_cur_try, hitp, stp, &(ap->a_ray), pp->pt_inflip);
+    RT_CURVATURE(&curve_cur, hitp, pp->pt_inflip, stp);
 
     clear_dist = hitp->hit_dist - 1;	/* Decrease 1mm */
 
@@ -420,22 +420,22 @@ proj_goal(struct application *ap)
     vect_t	newdir;
     fastf_t	k;
 
-    if ( VDOT( ap->a_ray.r_dir, norm_cur_try ) < -0.9995 )  {
+    if (VDOT(ap->a_ray.r_dir, norm_cur_try) < -0.9995) {
 	/* Projected goal will be right where we are now.
 	 * Pick any tangent at all.
 	 * Use principle dir of curvature.
 	 */
-	VMOVE( ap->a_ray.r_dir, curve_cur.crv_pdir );
+	VMOVE(ap->a_ray.r_dir, curve_cur.crv_pdir);
 	return;
     }
 
-    VSUB2( goal_dir, hit_cur_try, goal_point );
-    k = VDOT( goal_dir, norm_cur_try );
-    VJOIN1( goal_proj, goal_point,
-	    k, norm_cur_try );
-    VSUB2( newdir, goal_proj, hit_cur_try );
-    VUNITIZE( newdir );
-    VMOVE( ap->a_ray.r_dir, newdir );
+    VSUB2(goal_dir, hit_cur_try, goal_point);
+    k = VDOT(goal_dir, norm_cur_try);
+    VJOIN1(goal_proj, goal_point,
+	   k, norm_cur_try);
+    VSUB2(newdir, goal_proj, hit_cur_try);
+    VUNITIZE(newdir);
+    VMOVE(ap->a_ray.r_dir, newdir);
 }
 
 /*
@@ -447,9 +447,9 @@ write_matrix(int frame)
     fprintf(outfp, "start %d;\n", frame);
     fprintf(outfp, "clean;\n");
     fprintf(outfp, "viewsize %g;\n", viewsize);
-    fprintf(outfp, "eye_pt %g %g %g;\n", V3ARGS(pt_prev_step) );
-    fprintf(outfp, "lookat_pt %g %g %g  0;\n", V3ARGS(goal_point) );
-    fprintf(outfp, "end;\n\n" );
+    fprintf(outfp, "eye_pt %g %g %g;\n", V3ARGS(pt_prev_step));
+    fprintf(outfp, "lookat_pt %g %g %g  0;\n", V3ARGS(goal_point));
+    fprintf(outfp, "end;\n\n");
 }
 
 /*
