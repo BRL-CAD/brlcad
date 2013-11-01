@@ -473,7 +473,6 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *center, vect_t *x, vect_t *y){
     struct obr_vals obr;
     vect_t a1;
     int i = 0;
-    int dim = 0;
     int points_2d = 1;
     const point_t *pnts2d;
 
@@ -487,13 +486,12 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *center, vect_t *x, vect_t *y){
     }
     if (!points_2d) {
 	/* Test for coplanar 3D pnts */
-	point_t center_pnt, dmax, dmax2;
+	point_t center_pnt, dmax;
 	fastf_t dist = 0.0;
 	fastf_t dist2 = 0.0;
 	fastf_t curr_dist = 0.0;
 	/*plane_t plane;*/
 	VSET(dmax, 0, 0, 0);
-	VSET(dmax2, 0, 0, 0);
 	for (i = 0; i < pnt_cnt; i++) {
 	    VADD2(center_pnt, center_pnt, pnts[i]);
 	}
@@ -505,7 +503,7 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *center, vect_t *x, vect_t *y){
 		dist = curr_dist;
 	    } else {
 		if (curr_dist > dist2) {
-		    VMOVE(dmax2, pnts[i]);
+		    /* VMOVE(dmax2, pnts[i]); */
 		    dist2 = curr_dist;
 		}
 	    }
@@ -534,7 +532,7 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *center, vect_t *x, vect_t *y){
 	pnts2d = pnts;
     }
 
-    dim = bn_obr_calc(pnts, pnt_cnt, &obr);
+    bn_obr_calc(pnts, pnt_cnt, &obr);
 
     if (!points_2d) {
     } else {
