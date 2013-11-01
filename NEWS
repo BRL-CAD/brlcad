@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2013-0X-XX  Release 7.24.2                                     ---
 ----------------------------------------------------------------------
 
+* search command now recognizes hyp and metaball types - Cliff Yapp
 * fix z-clipping bug in MGED's X display manager - Cliff Yapp
 * added -depth option to MGED 'search' command - Cliff Yapp
 * improved 'search' with 'flat' search path modifier - Cliff Yapp

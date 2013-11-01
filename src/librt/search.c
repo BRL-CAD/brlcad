@@ -1297,6 +1297,12 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
 	case DB5_MINORTYPE_BRLCAD_BREP:
 	    type_match = (!bu_fnmatch(plan->type_data, "brep", 0));
 	    break;
+	case DB5_MINORTYPE_BRLCAD_METABALL:
+	    type_match = (!bu_fnmatch(plan->type_data, "metaball", 0));
+	    break;
+	case DB5_MINORTYPE_BRLCAD_HYP:
+	    type_match = (!bu_fnmatch(plan->type_data, "hyp", 0));
+	    break;
 	default:
 	    type_match = (!bu_fnmatch(plan->type_data, "other", 0));
 	    break;
