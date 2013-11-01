@@ -1160,30 +1160,16 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
     int type;
 
     dp = DB_FULL_PATH_CUR_DIR(db_node->path);
-    if (!dp)
-	return 0;
-
+    if (!dp) return 0;
     if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) return 0;
+    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || !intern.idb_meth->ft_label) {
+	rt_db_free_internal(&intern);
+	return 0;
+    }
 
-    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) return 0;
-
-    /* Eventually this whole switch statement needs to go away in
-     * favor of a function to query the primitive's short name and use
-     * that for the comparison - will be MUCH shorter and simpler.
-     */
     switch (intern.idb_minor_type) {
-	case DB5_MINORTYPE_BRLCAD_TOR:
-	    type_match = (!bu_fnmatch(plan->type_data, "tor", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_TGC:
-	    type_match = (!bu_fnmatch(plan->type_data, "tgc", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_ELL:
-	    type_match = (!bu_fnmatch(plan->type_data, "ell", 0));
-	    break;
 	case DB5_MINORTYPE_BRLCAD_ARB8:
 	    type = rt_arb_std_type(&intern, &wdbp->wdb_tol);
-
 	    switch (type) {
 		case 4:
 		    type_match = (!bu_fnmatch(plan->type_data, "arb4", 0));
@@ -1204,85 +1190,6 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
 		    type_match = (!bu_fnmatch(plan->type_data, "invalid", 0));
 		    break;
 	    }
-
-	    break;
-	case DB5_MINORTYPE_BRLCAD_ARS:
-	    type_match = (!bu_fnmatch(plan->type_data, "ars", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_HALF:
-	    type_match = (!bu_fnmatch(plan->type_data, "half", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_REC:
-	    type_match = (!bu_fnmatch(plan->type_data, "rec", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_POLY:
-	    type_match = (!bu_fnmatch(plan->type_data, "poly", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_BSPLINE:
-	    type_match = (!bu_fnmatch(plan->type_data, "spline", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_SPH:
-	    type_match = (!bu_fnmatch(plan->type_data, "sph", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_NMG:
-	    type_match = (!bu_fnmatch(plan->type_data, "nmg", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_EBM:
-	    type_match = (!bu_fnmatch(plan->type_data, "ebm", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_VOL:
-	    type_match = (!bu_fnmatch(plan->type_data, "vol", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_ARBN:
-	    type_match = (!bu_fnmatch(plan->type_data, "arbn", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_PIPE:
-	    type_match = (!bu_fnmatch(plan->type_data, "pipe", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_PARTICLE:
-	    type_match = (!bu_fnmatch(plan->type_data, "part", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_RPC:
-	    type_match = (!bu_fnmatch(plan->type_data, "rpc", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_RHC:
-	    type_match = (!bu_fnmatch(plan->type_data, "rhc", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_EPA:
-	    type_match = (!bu_fnmatch(plan->type_data, "epa", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_EHY:
-	    type_match = (!bu_fnmatch(plan->type_data, "ehy", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_ETO:
-	    type_match = (!bu_fnmatch(plan->type_data, "eto", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_GRIP:
-	    type_match = (!bu_fnmatch(plan->type_data, "grip", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_JOINT:
-	    type_match = (!bu_fnmatch(plan->type_data, "joint", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_HF:
-	    type_match = (!bu_fnmatch(plan->type_data, "hf", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_DSP:
-	    type_match = (!bu_fnmatch(plan->type_data, "dsp", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_SKETCH:
-	    type_match = (!bu_fnmatch(plan->type_data, "sketch", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_EXTRUDE:
-	    type_match = (!bu_fnmatch(plan->type_data, "extrude", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_SUBMODEL:
-	    type_match = (!bu_fnmatch(plan->type_data, "submodel", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_CLINE:
-	    type_match = (!bu_fnmatch(plan->type_data, "cline", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_BOT:
-	    type_match = (!bu_fnmatch(plan->type_data, "bot", 0));
 	    break;
 	case DB5_MINORTYPE_BRLCAD_COMBINATION:
 	    if (dp->d_flags & RT_DIR_REGION) {
@@ -1294,17 +1201,12 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
 		type_match = 1;
 	    }
 	    break;
-	case DB5_MINORTYPE_BRLCAD_BREP:
-	    type_match = (!bu_fnmatch(plan->type_data, "brep", 0));
-	    break;
 	case DB5_MINORTYPE_BRLCAD_METABALL:
+	    /* Because ft_label is only 8 characters, ft_label doesn't work in fnmatch for metaball*/
 	    type_match = (!bu_fnmatch(plan->type_data, "metaball", 0));
 	    break;
-	case DB5_MINORTYPE_BRLCAD_HYP:
-	    type_match = (!bu_fnmatch(plan->type_data, "hyp", 0));
-	    break;
 	default:
-	    type_match = (!bu_fnmatch(plan->type_data, "other", 0));
+	    type_match = !bu_fnmatch(plan->type_data, intern.idb_meth->ft_label, 0);
 	    break;
     }
 
