@@ -190,6 +190,8 @@ main(int argc, char** argv)
     /* start reading the input file */
     r.magic = DB5_RAW_INTERNAL_MAGIC;
 
+    bool first = true;
+
     while ((res = db5_get_raw_internal_fp(&r, in)) == 0) {
       RT_CK_RIP(&r);
       ++nobj;
@@ -219,14 +221,30 @@ main(int argc, char** argv)
           bu_bomb("duh");
       };
 
-      if (M == 0 && m == 0) {
-        /* free space, count object and bytes */
-        ++fobj;
-        free_bytes += r.object_length;
-      }
-      /* free the heap stuff */
+      // free the heap stuff
       if (r.buf) {
         bu_free(r.buf, "r.buf");
+      }
+
+      if (M == 0 && m == 0) {
+        if (first && has_compress) {
+          // assume it's a header
+          first = false;
+          // write the object to the output file
+          size_t nw = fwrite(&r, 1, r.object_length, out);
+          if (nw != r.object_length)
+            bu_bomb("nw != r.object_length");
+        }
+        else {
+          // free space, count object and bytes
+          ++fobj;
+          free_bytes += r.object_length;
+        }
+      } else if (has_compress) {
+        // write the object to the output file
+        size_t nw = fwrite(&r, 1, r.object_length, out);
+        if (nw != r.object_length)
+          bu_bomb("nw != r.object_length");
       }
     }
     printf("Found %d objects, %d of which are free space\n", nobj, fobj);
@@ -242,6 +260,9 @@ main(int argc, char** argv)
           printf("  Free space: %d Mb \n", (int)free_bytes/mb);
     }
     printf("Note res = %d (-1 = EOF)\n", res);
+
+    if (has_compress)
+      printf("See compressed file '%s'.\n", db2_fname);
 
     return 0;
 
