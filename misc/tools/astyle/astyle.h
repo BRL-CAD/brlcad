@@ -678,7 +678,7 @@ class ASFormatter : public ASBeautifier
 		int  getFormatterFileType() const;
 
 	private:  // functions
-		ASFormatter(const ASFormatter &copy);       // copy constructor not to be imlpemented
+		ASFormatter(const ASFormatter &copy);       // copy constructor not to be implemented
 		ASFormatter &operator=(ASFormatter &);      // assignment operator not to be implemented
 		template<typename T> void deleteContainer(T &container);
 		template<typename T> void initContainer(T &container, T value);

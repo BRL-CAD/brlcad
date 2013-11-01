@@ -279,7 +279,7 @@ ASBeautifier::~ASBeautifier()
  * This init() should be called every time a ABeautifier object is to start
  * beautifying a NEW source file.
  * It is called only when a new ASFormatter object is created.
- * init() recieves a pointer to a ASSourceIterator object that will be
+ * init() receives a pointer to a ASSourceIterator object that will be
  * used to iterate through the source code.
  *
  * @param iter     a pointer to the ASSourceIterator or ASStreamIterator object.
@@ -449,7 +449,7 @@ void ASBeautifier::setModeManuallySet(bool state)
 
 /**
  * set tabLength equal to indentLength.
- * This is done when tabLength is not explicitely set by
+ * This is done when tabLength is not explicitly set by
  * "indent=force-tab-x"
  *
  */
@@ -2038,7 +2038,7 @@ void ASBeautifier::adjustParsedLineIndentation(size_t iPrelim, bool isInExtraHea
 	if (indentCount < 0)
 		indentCount = 0;
 
-	// take care of extra bracket indentatation option...
+	// take care of extra bracket indentation option...
 	if (!lineStartsInComment
 	        && bracketIndent
 	        && shouldIndentBrackettedLine
@@ -2370,7 +2370,7 @@ void ASBeautifier::parseCurrentLine(const string &line)
 			}
 		}
 
-		// handle parenthesies
+		// handle parentheses
 		if (ch == '(' || ch == '[' || ch == ')' || ch == ']')
 		{
 			if (ch == '(' || ch == '[')
@@ -3009,7 +3009,7 @@ void ASBeautifier::parseCurrentLine(const string &line)
 
 		if (isPotentialHeader)
 		{
-			// check for preBlockStatements in C/C++ ONLY if not within parenthesies
+			// check for preBlockStatements in C/C++ ONLY if not within parentheses
 			// (otherwise 'struct XXX' statements would be wrongly interpreted...)
 			if (!isInTemplate && !(isCStyle() && parenDepth > 0))
 			{
@@ -3129,7 +3129,7 @@ void ASBeautifier::parseCurrentLine(const string &line)
 			if (isInTemplate && foundNonAssignmentOp == &AS_GR_GR)
 				foundNonAssignmentOp = NULL;
 
-			// Since findHeader's boundry checking was not used above, it is possible
+			// Since findHeader's boundary checking was not used above, it is possible
 			// that both an assignment op and a non-assignment op where found,
 			// e.g. '>>' and '>>='. If this is the case, treat the LONGER one as the
 			// found operator.

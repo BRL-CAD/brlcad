@@ -597,8 +597,8 @@ Italian::Italian()	// Italiano
 	addPair("Invalid option file options:", L"Opzione non valida file delle opzioni:");
 	addPair("Invalid command line options:", L"Opzioni della riga di comando non valido:");
 	addPair("For help on options type 'astyle -h'", L"Per informazioni sulle opzioni di tipo 'astyle-h'");
-	addPair("Cannot open options file", L"Impossibile aprire il file opzioni");
-	addPair("Cannot open directory", L"Impossibile aprire la directory");
+	addPair("Cannot open options file", L"Impossible aprire il file opzioni");
+	addPair("Cannot open directory", L"Impossible aprire la directory");
 	addPair("Missing filename in %s\n", L"Nome del file mancante in %s\n");
 	addPair("Recursive option with no wildcard", L"Opzione ricorsiva senza jolly");
 	addPair("Did you intend quote the filename", L"Avete intenzione citare il nome del file");

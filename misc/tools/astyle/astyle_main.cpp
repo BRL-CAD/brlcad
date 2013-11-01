@@ -1062,7 +1062,7 @@ void ASConsole::getFileNames(const string &directory, const string &wildcard)
  * This formats positive integers only, no float.
  *
  * @param num		The number to be formatted.
- * @param			For compatability with the Windows function.
+ * @param			For compatibility with the Windows function.
  * @return			The formatted number.
  */
 string ASConsole::getNumberFormat(int num, size_t) const
@@ -2428,7 +2428,7 @@ void ASConsole::writeFile(const string &fileName_, FileEncoding encoding, ostrin
 		{
 			struct utimbuf outBuf;
 			outBuf.actime = stBuf.st_atime;
-			// add ticks so 'make' will recoginze a change
+			// add ticks so 'make' will recognize a change
 			// Visual Studio 2008 needs more than 1
 			outBuf.modtime = stBuf.st_mtime + 10;
 			if (utime(fileName_.c_str(), &outBuf) == -1)

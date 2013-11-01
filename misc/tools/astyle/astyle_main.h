@@ -112,7 +112,7 @@ class ASStreamIterator : public ASSourceIterator
 		void saveLastInputLine();
 
 	private:
-		ASStreamIterator(const ASStreamIterator &copy);       // copy constructor not to be imlpemented
+		ASStreamIterator(const ASStreamIterator &copy);       // copy constructor not to be implemented
 		ASStreamIterator &operator=(ASStreamIterator &);      // assignment operator not to be implemented
 		T* inStream;           // pointer to the input stream
 		string buffer;         // current input line

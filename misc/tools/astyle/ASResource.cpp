@@ -525,7 +525,7 @@ void ASResource::buildPreDefinitionHeaders(vector<const string*>* preDefinitionH
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- *                             ASBase Funtions
+ *                             ASBase Functions
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 // check if a specific line position contains a keyword.

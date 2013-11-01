@@ -378,7 +378,7 @@ bool ASEnhancer::isEndDeclareSectionSQL(string  &line, size_t index) const
 /**
  * check if a one-line bracket has been reached,
  * i.e. if the currently reached '{' character is closed
- * with a complimentry '}' elsewhere on the current line,
+ * with a complimentary '}' elsewhere on the current line,
  *.
  * @return     false = one-line bracket has not been reached.
  *             true  = one-line bracket has been reached.
