@@ -10,6 +10,7 @@ set(LIBBN_SOURCES
   anim.c
   axis.c
   complex.c
+  chull.c
   font.c
   globals.c
   list.c
