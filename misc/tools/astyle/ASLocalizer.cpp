@@ -91,7 +91,7 @@ ASLocalizer::ASLocalizer()
 	// Not all compilers support the C++ function locale::global(locale(""));
 	// For testing on Windows change the "Region and Language" settings or use AppLocale.
 	// For testing on Linux change the LANG environment variable: LANG=fr_FR.UTF-8.
-	// setlocale() will use the LANG environment valiable on Linux.
+	// setlocale() will use the LANG environment variable on Linux.
 
 	char* localeName = setlocale(LC_ALL, "");
 	if (localeName == NULL)		// use the english (ascii) defaults

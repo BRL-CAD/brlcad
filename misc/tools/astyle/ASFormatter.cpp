@@ -426,7 +426,7 @@ string ASFormatter::nextLine()
 		}
 		else // stuff to do when reading a new character...
 		{
-			// make sure that a virgin '{' at the begining of the file will be treated as a block...
+			// make sure that a virgin '{' at the beginning of the file will be treated as a block...
 			if (isInVirginLine && currentChar == '{'
 			        && currentLineBeginsWithBracket
 			        && previousCommandChar == ' ')
@@ -558,7 +558,7 @@ string ASFormatter::nextLine()
 		/* not in MIDDLE of quote or comment or SQL or white-space of any type ... */
 
 		// check if in preprocessor
-		// ** isInPreprocessor will be automatically reset at the begining
+		// ** isInPreprocessor will be automatically reset at the beginning
 		//    of a new line in getnextChar()
 		if (currentChar == '#')
 		{

@@ -200,7 +200,7 @@ class ASConsole
 		string targetFilename;              // file name being processed
 
 		vector<string> excludeVector;       // exclude from wildcard hits
-		vector<bool>   excludeHitsVector;   // exclude flags for eror reporting
+		vector<bool>   excludeHitsVector;   // exclude flags for error reporting
 		vector<string> fileNameVector;      // file paths and names from the command line
 		vector<string> optionsVector;       // options from the command line
 		vector<string> fileOptionsVector;   // options from the options file

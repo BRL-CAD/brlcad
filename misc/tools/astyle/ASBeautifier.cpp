@@ -987,7 +987,7 @@ string ASBeautifier::beautify(const string &originalLine)
 	// handle special cases of indentation
 	adjustParsedLineIndentation(iPrelim, isInExtraHeaderIndent);
 
-	// continuation line begining with a dot
+	// continuation line beginning with a dot
 //	if (!isInComment && spaceIndentCount == 0 && line.length() > 0 && line[0] == '.')
 //		spaceIndentCount += indentLength;
 
@@ -1055,7 +1055,7 @@ string ASBeautifier::beautify(const string &originalLine)
 	if (lineCommentNoBeautify || blockCommentNoBeautify || isInQuoteContinuation)
 		indentCount = spaceIndentCount = 0;
 
-	// finally, insert indentations into begining of line
+	// finally, insert indentations into beginning of line
 
 	string outBuffer = preLineWS(indentCount, spaceIndentCount) + line;
 
@@ -2975,7 +2975,7 @@ void ASBeautifier::parseCurrentLine(const string &line)
 			/*
 			 * Create a temporary snapshot of the current block's header-list in the
 			 * uppermost inner stack in tempStacks, and clear the headerStack up to
-			 * the begining of the block.
+			 * the beginning of the block.
 			 * Thus, the next future statement will think it comes one indent past
 			 * the block's '{' unless it specifically checks for a companion-header
 			 * (such as a previous 'if' for an 'else' header) within the tempStacks,
