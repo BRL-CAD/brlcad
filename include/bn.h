@@ -509,12 +509,32 @@ BN_EXPORT extern void bn_tcl_mat_print();
  *
  * See also <a href="http://geomalgorithms.com/a12-_hull-3.html">http://geomalgorithms.com/a12-_hull-3.html</a>
  *
- * @param[out]	hull output convex hull array of vertices in ccw orientation (max is n)
+ * @param[out]	hull convex hull array vertices in ccw orientation (max is n)
  * @param	polyline The points defining the input polyline, stored with ccw orientation
  * @param	n the number of points in polyline
  * @return the number of points in the output hull array
  */
 BN_EXPORT int bn_polyline_2D_hull(point_t** hull, const point_t* polyline, int n);
+
+/**
+ * @brief
+ * Monotone Chain 2D convex hull algorithm for unordered co-planar point sets
+ *
+ * Another efficient algorithm for convex hulls in two dimensions.
+ * Andrew, A. M. Information Processing Letters 9.5 (1979): 216-219.
+ *
+ * See also <a href="http://geomalgorithms.com/a10-_hull-1.html">http://geomalgorithms.com/a10-_hull-1.html</a>
+ *
+ * The monotone chain algorithm is used here primarily due to its simpler, coordinate based
+ * comparison function.
+ *
+ * @param[out]	hull convex hull array vertices in ccw orientation (max is n)
+ * @param	pnts The input points for which a convex hull will be built
+ * @param	n the number of points in the input set 
+ * @return the number of points in the output hull array
+ */
+BN_EXPORT int bn_2D_hull(point_t** hull, const point_t* polyline, int n);
+
 
 /*----------------------------------------------------------------------*/
 
