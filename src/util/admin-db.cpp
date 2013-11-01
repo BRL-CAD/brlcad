@@ -221,17 +221,12 @@ main(int argc, char** argv)
           bu_bomb("duh");
       };
 
-      // free the heap stuff
-      if (r.buf) {
-        bu_free(r.buf, "r.buf");
-      }
-
       if (M == 0 && m == 0) {
         if (first && has_compress) {
           // assume it's a header
           first = false;
           // write the object to the output file
-          size_t nw = fwrite(&r, 1, r.object_length, out);
+          size_t nw = fwrite(r.buf, 1, r.object_length, out);
           if (nw != r.object_length)
             bu_bomb("nw != r.object_length");
         }
@@ -242,9 +237,14 @@ main(int argc, char** argv)
         }
       } else if (has_compress) {
         // write the object to the output file
-        size_t nw = fwrite(&r, 1, r.object_length, out);
+        size_t nw = fwrite(r.buf, 1, r.object_length, out);
         if (nw != r.object_length)
           bu_bomb("nw != r.object_length");
+      }
+
+      // free the heap stuff
+      if (r.buf) {
+        bu_free(r.buf, "r.buf");
       }
     }
     printf("Found %d objects, %d of which are free space\n", nobj, fobj);
