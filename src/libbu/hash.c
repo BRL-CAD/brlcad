@@ -91,7 +91,6 @@ bu_create_hash_tbl(unsigned long tbl_size)
     return hsh_tbl;
 }
 
-
 struct bu_hash_entry *
 bu_find_hash_entry(struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len, struct bu_hash_entry **prev, unsigned long *idx)
 {
@@ -354,6 +353,25 @@ bu_hash_tbl_next(struct bu_hash_record *rec)
     /* no more entries, return NULL */
     return (struct bu_hash_entry *)NULL;
 }
+
+struct bu_hash_entry *
+bu_hash_tbl_traverse(struct bu_hash_tbl *hsh_tbl, int (*func)(struct bu_hash_entry *, void *), void *func_arg)
+{
+    int ret;
+    struct bu_hash_record rec;
+    struct bu_hash_entry *entry;
+
+    entry = bu_hash_tbl_first(hsh_tbl, &rec);
+    while (entry) {
+	ret = func(entry, func_arg);
+	if (ret) {
+	    return entry;
+	}
+	entry = bu_hash_tbl_next(&rec);
+    }
+    return NULL;
+}
+
 
 /*
  * Local Variables:

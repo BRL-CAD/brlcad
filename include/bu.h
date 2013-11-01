@@ -6031,6 +6031,32 @@ BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_first(struct bu_hash_tbl *hsh
  */
 BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_next(struct bu_hash_record *rec);
 
+/**
+ * Pass each table entry to a supplied function, along with an
+ * additional argument (which may be NULL).
+ *
+ * Returns when func returns !0 or every entry has been visited.
+ *
+ * Example, freeing all memory associated with a table whose values
+ * are dynamically allocated ints:
+ @code
+ static int
+ free_entry(struct bu_hash_entry *entry, void *UNUSED(arg))
+ {
+     bu_free(bu_get_hash_value(entry), "table value");
+     return 0;
+ }
+
+ bu_hash_table_traverse(table, free_entry, NULL);
+ bu_hash_table_free(table);
+ @endcode
+ *
+ * @return
+ * If func returns !0 for an entry, that entry is returned.
+ * Otherwise NULL is returned.
+ */
+BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_traverse(struct bu_hash_tbl *hsh_tbl, int (*func)(struct bu_hash_entry *, void *), void *func_arg);
+
 
 /** @} */
 
