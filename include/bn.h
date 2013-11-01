@@ -505,7 +505,7 @@ BN_EXPORT extern void bn_tcl_mat_print();
  * Melkman's 2D simple polyline O(n) convex hull algorithm
  *
  * On-line construction of the convex hull of a simple polyline
- * AA Melkman - Information Processing Letters, 1987
+ * Melkman, Avraham A. Information Processing Letters 25.1 (1987): 11-12.
  *
  * See also <a href="http://geomalgorithms.com/a12-_hull-3.html">http://geomalgorithms.com/a12-_hull-3.html</a>
  *
@@ -515,8 +515,6 @@ BN_EXPORT extern void bn_tcl_mat_print();
  * @return the number of points in the output hull array
  */
 BN_EXPORT int bn_polyline_2D_hull(point_t** hull, const point_t* polyline, int n);
-
-
 
 /*----------------------------------------------------------------------*/
 
