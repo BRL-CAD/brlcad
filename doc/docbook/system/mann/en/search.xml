@@ -326,27 +326,36 @@
 				<row>
 				  <entry>half</entry>
 				  <entry>hf</entry>
+				  <entry>hyp</entry>
 				  <entry>joint</entry>
+				  <entry>metaball</entry>
 				  <entry>nmg</entry>
-				  <entry>part</entry>
-				  <entry>pipe</entry>
 				</row>
 				<row>
+				  <entry>part</entry>
+				  <entry>pipe</entry>
 				  <entry>poly</entry>
 				  <entry>rec</entry>
 				  <entry>rhc</entry>
 				  <entry>rpc</entry>
-				  <entry>sketch</entry>
-				  <entry>sph</entry>
 				</row>
 				<row>
+				  <entry>sketch</entry>
+				  <entry>sph</entry>
 				  <entry>spline</entry>
 				  <entry>submodel</entry>
 				  <entry>tgc</entry>
 				  <entry>tor</entry>
+			        </row>
+				<row>
 				  <entry>vol</entry>
 				  <entry></entry>
+				  <entry></entry>
+				  <entry></entry>
+				  <entry></entry>
+				  <entry></entry>
 				</row>
+
 			  </tbody>
 			</tgroup>
 		  </table>
