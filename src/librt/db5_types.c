@@ -325,6 +325,7 @@ db5_standardize_attribute(const char *attr)
     if (!attr)
 	return ATTR_NULL;
 
+    /* begin-registered-attributes-list */
     if (BU_STR_EQUIV(attr, "region"))
 	return ATTR_REGION;
 
@@ -360,6 +361,8 @@ db5_standardize_attribute(const char *attr)
 
     if (BU_STR_EQUIV(attr, "inherit"))
 	return ATTR_INHERIT;
+
+    /* end-registered-attributes-list */
 
     return ATTR_NULL;
 }
