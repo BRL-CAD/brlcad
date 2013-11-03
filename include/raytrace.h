@@ -8175,6 +8175,22 @@ enum {
  */
 RT_EXPORT extern const char *db5_standard_attribute(int idx);
 
+
+/**
+ * D B 5 _ S T A N D A R D _ A T T R I B U T E _ DEF
+ *
+ * Function returns the string definiton for a given standard
+ * attribute index.  Index values returned from
+ * db5_standardize_attribute_def() correspond to the definition
+ * returned from this function, returning the "standard" definition.
+ * Callers may also iterate over all names starting with an index of
+ * zero until a NULL is returned.
+ *
+ * PRIVATE: this is new API and should be considered private for the
+ * time being.
+ */
+RT_EXPORT extern const char *db5_standard_attribute_def(int idx);
+
 /**
  * D B 5 _ I S _ S T A N D A R D _ A T T R I B U T E
  *

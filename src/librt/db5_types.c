@@ -302,6 +302,34 @@ db5_standard_attribute(int idx)
 }
 
 
+const char *
+db5_standard_attribute_def(int idx)
+{
+    switch (idx) {
+	case ATTR_REGION:
+	    return "true or false"; /* "region"; */
+	case ATTR_REGION_ID:
+	    return "a positive integer"; /* "region_id"; */
+	case ATTR_MATERIAL_ID:
+	    return  "a positive integer (user-defined)"; /* "material_id"; */
+	case ATTR_AIR:
+	    return "an integer (application defined)"; /* "aircode"; */
+	case ATTR_LOS:
+	    return "an integer in the inclusive range: 0 to 100"; /*  "los"; */
+	case ATTR_COLOR:
+	    return "a 3-tuple of RGB values"; /* "color"; */
+	case ATTR_SHADER:
+	    return "a string of shader characteristics in a standard format"; /* "shader"; */
+	case ATTR_INHERIT:
+	    return "true or false"; /* "inherit"; */
+	case ATTR_NULL:
+	    return "(unknown)"; /* NULL; */
+    }
+    /* no match */
+    return NULL;
+}
+
+
 int
 db5_is_standard_attribute(const char *attr_want)
 {
