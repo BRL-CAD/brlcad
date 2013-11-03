@@ -342,7 +342,7 @@ db5_is_standard_attribute(const char *attr_want)
 	return 0;
 
     for (i = 0; (attr_have = db5_standard_attribute(i)) != NULL; i++) {
-	if (BU_STR_EQUAL(attr_want, attr_have)) return 1;
+	if (BU_STR_EQUIV(attr_want, attr_have)) return 1;
     }
 
     return 0;
