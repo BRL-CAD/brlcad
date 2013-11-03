@@ -274,6 +274,7 @@ db5_type_sizeof_n_binu(const int minor)
 }
 
 
+/* FIXME: make attrs into a const struct for name/definition */
 const char *
 db5_standard_attribute(int idx)
 {
@@ -302,6 +303,7 @@ db5_standard_attribute(int idx)
 }
 
 
+/* FIXME: make attrs into a const struct for name/definition */
 const char *
 db5_standard_attribute_def(int idx)
 {
