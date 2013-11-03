@@ -269,6 +269,13 @@ main(int argc, char** argv)
         }
     }
 
+    int fnsiz = strlen(db_fname);
+    string eqs = "";
+    for (int i = 0; i < fnsiz; ++i)
+        eqs += '=';
+    printf("=================================%s\n", eqs.c_str());
+    printf("Summary for BRL-CAD V5 database: %s\n", db_fname);
+    printf("=================================%s\n", eqs.c_str());
     printf("Found %d objects:\n", nobj);
     printf("  free space: %6d\n", fobj);
     printf("  named     : %6d\n", named_obj);
@@ -311,12 +318,19 @@ main(int argc, char** argv)
     }
 
     if (fobj) {
-        const int mb = 1024*1000;
-        printf("Free space: %d bytes\n", free_bytes);
+        const double kb = 1024;
+        const double mb = kb * 1000;
+        printf("Free space: %d bytes", free_bytes);
         if (free_bytes > mb)
-            printf("          (%d Mb)\n", free_bytes/mb);
+            printf(" (%.3f Mb)", free_bytes/mb);
+        else if (free_bytes > kb)
+            printf(" (%.3f Kb)", free_bytes/kb);
+        printf("\n");
     }
-    printf("Note res = %d (-1 = EOF)\n", res);
+    if (res == -1)
+        printf("\nNote file read ended normally at EOF.\n");
+    else
+        printf("\nNote file read ended early with an error!\n");
 
     if (has_compress)
         printf("See compressed file '%s'.\n", db2_fname);
