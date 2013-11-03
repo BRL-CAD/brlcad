@@ -22,15 +22,14 @@ using namespace std;
 
 // local struct
 struct attr_t {
-    const string alias; // as found in the original list
-    string sname;       // the  "standard" name
-    string sdef;
-    int sindex;          // the official index number for he "standard" name
-    attr_t(const string& a)
-        : alias(a)
-        , sname("")
-        , sdef("")
-        , sindex(-1) // indicates unknown
+    const string name;   // the  "standard" name
+    int index;           // the official index number for he "standard" name
+    string def;
+    set<string> aliases; // as found in the original list
+    attr_t(const string& a, const int idx, const string& d)
+        : name(a)
+        , index(idx)
+        , def(d)
         {}
 };
 
@@ -38,13 +37,14 @@ struct attr_t {
 static bool file_exists(const std::string& fname);
 static void gen_attr_html_page(const std::string& fname,
                                map<string,attr_t>& sttrs, map<string,attr_t>& rttrs);
-static void get_registered_attrs(const string& fname, map<string,attr_t>& attrs);
 static void get_standard_attrs(const string& fname, map<string,attr_t>& attrs);
 static void open_file_read(ifstream& fs, const string& f);
 static void open_file_write(ofstream& fs, const string& f);
+// FIXME: following to be added later (see rough function body below):
+//static void get_registered_attrs(const string& fname, map<string,attr_t>& attrs);
 
 // local vars
-static bool debug(false);
+static bool debug(true);
 
 int
 main()
@@ -54,7 +54,7 @@ main()
     string fname("db5_types.c");
 
     get_standard_attrs(fname, sattrs);
-    get_registered_attrs(fname, rattrs);
+    //get_registered_attrs(fname, rattrs);
 
     // write the html file
     string ofil("t.html");
@@ -68,13 +68,15 @@ get_standard_attrs(const string& fname, map<string,attr_t>& attrs)
     ifstream fi;
     open_file_read(fi, fname.c_str());
 
+    set<string> aliases;
+
     bool found_list(false);
     int linenum(0);
     string line;
     while (!getline(fi, line).eof()) {
         ++linenum;
 
-        if (debug) {
+        if (0 && debug) {
             printf("DEBUG(%s, %u): line %u:\n", __FILE__, __LINE__, linenum);
             printf("  {{%s}}\n", line.c_str());
         }
@@ -104,13 +106,50 @@ get_standard_attrs(const string& fname, map<string,attr_t>& attrs)
         // ensure it's lower case
         for (size_t i = 0; i < attr.size(); ++i)
             attr[i] = tolower(attr[i]);
-        printf("Found attribute '%s'\n", attr.c_str());
-        // need a definition or format (empty for now)
-        attr_t d(attr);
-        attrs.insert(make_pair(attr,d));
+        if (debug)
+            printf("DEBUG: Found attribute '%s'\n", attr.c_str());
+        aliases.insert(attr);
     }
 
     // now associate names with standard name
+    for (set<string>::iterator i = aliases.begin(); i != aliases.end(); ++i) {
+        if (debug)
+            printf("DEBUG: found alias in list '%s'\n", (*i).c_str());
+        const string& alias(*i);
+        // get info on standard name and index
+        int idx = db5_standardize_attribute(alias.c_str());
+        if (idx == ATTR_NULL) {
+            bu_log("unexpected ATTR_NULL for attr alias '%s'", alias.c_str());
+            bu_bomb("unexpected ATTR_NULL for attr alias\n");
+        }
+
+        string std_attr = db5_standard_attribute(idx);
+        if (debug)
+            printf("DEBUG:  Standard attr for index %d is '%s'\n", idx, std_attr.c_str());
+        // need a definition or format
+        string def = db5_standard_attribute_def(idx);
+
+        // so is this an alias or the real deal?
+        if (attrs.find(std_attr) == attrs.end()) {
+            attr_t d(std_attr, idx, def);
+            attrs.insert(make_pair(std_attr,d));
+        }
+
+        if (alias == std_attr) {
+            ; // do nothing
+        } else {
+            map<string,attr_t>::iterator j = attrs.find(std_attr);
+            if (j != attrs.end()) {
+                attr_t& d = j->second;
+                d.aliases.insert(alias);
+            } else {
+                bu_log("unexpected no-find for std attr '%s'", std_attr.c_str());
+                bu_bomb("unexpected no-find for std_attr\n");
+            }
+        }
+    }
+    if (debug)
+        printf("DEBUG:  Finished collecting attrs...\n");
 
 } // get_standard_attrs
 
@@ -163,44 +202,97 @@ gen_attr_html_page(const std::string& fname,
         "<!doctype html>\n"
         "<html lang=\"en\">\n"
         "<head>\n"
+        "  <title>brlcad-attributes.html</title>\n"
+        "  <meta charset = \"UTF-8\" />\n"
+        "  <style type = \"text/css\">\n"
+        "  table, td, th {\n"
+        "    border: 1px solid black;\n"
+        "  }\n"
+        "  </style>\n"
         "</head>\n"
         "<body>\n"
-        "  <h1>Standard Attributes</h2>\n"
+        "  <h1>Standard and Registered Attributes</h2>\n"
         "  <p>Following is a list of the BRL-CAD standard attributes.  Users should\n"
         "  not assign values to them in other than their example format.</p>\n"
 
         "  <p>If a user wishes to register an attribute to protect its use for models\n"
         "  transferred to other BRL-CAD users, submit the attribute along with a description\n"
-        "  of its intended use to <mailto>...\n"
-        "  Its approval will be formal when it appears in a separate list following the\n"
-        "  standard attributes.</p>\n"
-
+        "  of its intended use to the <a href=\"mailto:brlcad-devel@lists.sourceforge.net\">BRL-CAD developers</a>.\n"
+        "  Its approval will be formal when it appears in the separate registered attribute table following the\n"
+        "  standard attribute table.</p>\n"
         ;
 
-    // the list
-    fo << "  <h3>Standard Attributes</h3>\n";
-    fo << "  <ol>\n";
-
     // need a table here
+    fo <<
+        "  <h3>Standard Attributes</h3>\n"
+        "  <table>\n"
+        "    <tr>\n"
+        "      <th>Attribute</th>\n"
+        "      <th>Definition</th>\n"
+        "      <th>Aliases</th>\n"
+        "    </tr>\n"
+        ;
+
     for (map<string,attr_t>::iterator i = sattrs.begin(); i != sattrs.end(); ++i) {
         const string& a(i->first);
         attr_t& d(i->second);
-        fo << "    <li>" << a << " (" << d.alias << ")</li>\n";
+        fo <<
+            "    <tr>\n"
+            "      <td>" << a     << "</td>\n"
+            "      <td>" << d.def << "</td>\n"
+            "      <td>"
+            ;
+        if (!d.aliases.empty()) {
+            for (set<string>::iterator j = d.aliases.begin();
+                 j != d.aliases.end(); ++j) {
+                if (j != d.aliases.begin())
+                    fo << ", ";
+                fo << *j;
+            }
+        }
+        fo <<
+            "</td>\n"
+            "    </tr>\n"
+            ;
     }
-    fo << "  </ol>\n";
+    fo << "  </table>\n";
 
     fo << "  <h3>Registered Attributes</h3>\n";
     if (rattrs.empty()) {
         fo << "    <p>None at this time.</p>\n";
     } else {
-        fo << "  <ol>\n";
         // need a table here
+        fo <<
+            "  <table>\n"
+            "    <tr>\n"
+            "      <th>Attribute</th>\n"
+            "      <th>Definition</th>\n"
+            "      <th>Aliases</th>\n"
+            "    </tr>\n"
+            ;
         for (map<string,attr_t>::iterator i = rattrs.begin(); i != rattrs.end(); ++i) {
             const string& a(i->first);
             attr_t& d(i->second);
-            fo << "    <li>" << a << " (" << d.alias << ")</li>\n";
+            fo <<
+                "    <tr>\n"
+                "      <td>" << a     << "</td>\n"
+                "      <td>" << d.def << "</td>\n"
+                "      <td>"
+                ;
+            if (!d.aliases.empty()) {
+                for (set<string>::iterator j = d.aliases.begin();
+                     j != d.aliases.end(); ++i) {
+                    if (j != d.aliases.begin())
+                        fo << ", ";
+                    fo << *j;
+                }
+            }
+            fo <<
+                "</td>\n"
+                "    </tr>\n"
+                ;
         }
-        fo << "  </ol>\n";
+        fo << "  </table>\n";
     }
 
     fo <<
@@ -208,11 +300,19 @@ gen_attr_html_page(const std::string& fname,
         "</html>\n"
         ;
 
+    fo.close();
+
+    if (debug)
+        printf("DEBUG:  see output file '%s'\n", fname.c_str());
+
 } // gen_attr_html_page
 
+// FIXME: complete this function later when supporting functions in db5_types.c are ready
+/*
 void
 get_registered_attrs(const string& fname, map<string,attr_t>& attrs)
 {
+
     ifstream fi;
     open_file_read(fi, fname.c_str());
 
@@ -258,3 +358,4 @@ get_registered_attrs(const string& fname, map<string,attr_t>& attrs)
         attrs.insert(make_pair(attr,def));
     }
 } // get_registered_attrs
+*/
