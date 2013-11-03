@@ -96,8 +96,11 @@ BRLCAD_ADDEXEC(dsp_add4 "dsp_add4.c;bu_arg_parse.cpp" libbu NO_INSTALL)
 # ignore it for now
 CMAKEFILES(test_bu_arg_parse.c)
 
-# another test for attributes
+# a new admin file
 BRLCAD_ADDEXEC(admin-db "admin-db.cpp;bu_arg_parse.cpp" "libbu;librt" NO_INSTALL)
+
+# a new html-gen file
+BRLCAD_ADDEXEC(gen-registered-attributes-html gen-registered-attributes-html.cpp "libbu;librt" NO_INSTALL)
 
 # tmp header to stand-in for bu.h (ignore it)
 CMAKEFILES(bu_arg_parse.h)
