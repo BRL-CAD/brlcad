@@ -213,13 +213,17 @@ gen_attr_html_page(const std::string& fname,
         "<body>\n"
         "  <h1>Standard and Registered Attributes</h2>\n"
         "  <p>Following is a list of the BRL-CAD standard attributes.  Users should\n"
-        "  not assign values to them in other than their example format.</p>\n"
+        "  not assign values to them in other than their defined format.</p>\n"
 
         "  <p>If a user wishes to register an attribute to protect its use for models\n"
         "  transferred to other BRL-CAD users, submit the attribute along with a description\n"
-        "  of its intended use to the <a href=\"mailto:brlcad-devel@lists.sourceforge.net\">BRL-CAD developers</a>.\n"
-        "  Its approval will be formal when it appears in the separate registered attribute table following the\n"
-        "  standard attribute table.</p>\n"
+        "  of its intended use to the\n"
+        "  <a href=\"mailto:brlcad-devel@lists.sourceforge.net\">BRL-CAD developers</a>.\n"
+        "  Its approval will be formal when it appears in the separate, registered attribute\n"
+        "  table following the standard attribute table.</p>\n"
+
+        "  <p>Note that attributes are not case-sensitive although their canonical form is\n"
+        "  lower-case.</p>\n"
         ;
 
     // need a table here
