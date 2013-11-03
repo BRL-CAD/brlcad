@@ -251,6 +251,11 @@ main(int argc, char** argv)
         }
         printf("Object DLI type/major/minor type: %3d/%3d/%3d name: %s\n",
                typ, M, m, name.c_str());
+        // has attributes?
+        if (r.a_present)
+            printf("  Has one or more attributes.\n");
+        // if combination, is it a region?
+        // FIXME: (will have to do more decoding for that answer)
 
         if (typ == 2) {
             // free space, count bytes (object counted above)
