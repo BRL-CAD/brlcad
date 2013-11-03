@@ -322,72 +322,43 @@ db5_is_standard_attribute(const char *attr_want)
 int
 db5_standardize_attribute(const char *attr)
 {
-    /* FIXME: these should all be converted to case-insensitive
-     * comparisons for the standard attribute names.
-     */
-
     if (!attr)
 	return ATTR_NULL;
 
-    if (BU_STR_EQUAL(attr, "region"))
-	return ATTR_REGION;
-    if (BU_STR_EQUAL(attr, "REGION"))
+    if (BU_STR_EQUIV(attr, "region"))
 	return ATTR_REGION;
 
-    if (BU_STR_EQUAL(attr, "region_id"))
+    if (BU_STR_EQUIV(attr, "region_id"))
 	return ATTR_REGION_ID;
-    if (BU_STR_EQUAL(attr, "REGION_ID"))
-	return ATTR_REGION_ID;
-    if (BU_STR_EQUAL(attr, "id"))
-	return ATTR_REGION_ID;
-    if (BU_STR_EQUAL(attr, "ID"))
+    if (BU_STR_EQUIV(attr, "id"))
 	return ATTR_REGION_ID;
 
-    if (BU_STR_EQUAL(attr, "material_id"))
+    if (BU_STR_EQUIV(attr, "material_id"))
 	return ATTR_MATERIAL_ID;
-    if (BU_STR_EQUAL(attr, "MATERIAL_ID"))
+    if (BU_STR_EQUIV(attr, "GIFTmater"))
 	return ATTR_MATERIAL_ID;
-    if (BU_STR_EQUAL(attr, "GIFTmater"))
-	return ATTR_MATERIAL_ID;
-    if (BU_STR_EQUAL(attr, "GIFT_MATERIAL"))
-	return ATTR_MATERIAL_ID;
-    if (BU_STR_EQUAL(attr, "mat"))
+    if (BU_STR_EQUIV(attr, "mat"))
 	return ATTR_MATERIAL_ID;
 
-    if (BU_STR_EQUAL(attr, "air"))
+    if (BU_STR_EQUIV(attr, "air"))
 	return ATTR_AIR;
-    if (BU_STR_EQUAL(attr, "AIR"))
-	return ATTR_AIR;
-    if (BU_STR_EQUAL(attr, "AIRCODE"))
-	return ATTR_AIR;
-    if (BU_STR_EQUAL(attr, "aircode"))
+    if (BU_STR_EQUIV(attr, "aircode"))
 	return ATTR_AIR;
 
-
-    if (BU_STR_EQUAL(attr, "los"))
-	return ATTR_LOS;
-    if (BU_STR_EQUAL(attr, "LOS"))
+    if (BU_STR_EQUIV(attr, "los"))
 	return ATTR_LOS;
 
-    if (BU_STR_EQUAL(attr, "color"))
+    if (BU_STR_EQUIV(attr, "color"))
 	return ATTR_COLOR;
-    if (BU_STR_EQUAL(attr, "COLOR"))
-	return ATTR_COLOR;
-    if (BU_STR_EQUAL(attr, "rgb"))
-	return ATTR_COLOR;
-    if (BU_STR_EQUAL(attr, "RGB"))
+    if (BU_STR_EQUIV(attr, "rgb"))
 	return ATTR_COLOR;
 
-    if (BU_STR_EQUAL(attr, "shader"))
+    if (BU_STR_EQUIV(attr, "shader"))
 	return ATTR_SHADER;
-    if (BU_STR_EQUAL(attr, "oshader"))
-	return ATTR_SHADER;
-    if (BU_STR_EQUAL(attr, "SHADER"))
+    if (BU_STR_EQUIV(attr, "oshader"))
 	return ATTR_SHADER;
 
-    if (BU_STR_EQUAL(attr, "inherit"))
-	return ATTR_INHERIT;
-    if (BU_STR_EQUAL(attr, "INHERIT"))
+    if (BU_STR_EQUIV(attr, "inherit"))
 	return ATTR_INHERIT;
 
     return ATTR_NULL;
