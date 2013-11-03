@@ -194,6 +194,20 @@ main(int argc, char** argv)
     int nsiz = 0;
     int free_bytes = 0;
     int named_obj = 0;
+    int ncombs = 0;
+    int nregs = 0;
+    int wattrs = 0;
+
+    // write an output header
+    int fnsiz = strlen(db_fname);
+    string eqs = "";
+    for (int i = 0; i < fnsiz; ++i)
+        eqs += '=';
+
+    printf("=======================================%s=\n", eqs.c_str());
+    printf(" Objects found in BRL-CAD V5 database: %s \n", db_fname);
+    printf("=======================================%s=\n", eqs.c_str());
+    printf("\n");
 
     // start reading the input file
     r.magic = DB5_RAW_INTERNAL_MAGIC;
@@ -229,7 +243,6 @@ main(int argc, char** argv)
             name = "";
             for (size_t i = 0; i < len; ++i)
                 name += r.name.ext_buf[i];
-
         }
         if (major_count.find(M) != major_count.end())
             ++major_count[M];
@@ -252,12 +265,34 @@ main(int argc, char** argv)
         printf("Object DLI type/major/minor type: %3d/%3d/%3d name: %s\n",
                typ, M, m, name.c_str());
         // has attributes?
-        if (r.a_present)
+        if (r.a_present) {
             printf("  Has one or more attributes.\n");
-        // if combination, is it a region?
+            ++wattrs;
+        }
+        if (m == DB5_MINORTYPE_BRLCAD_COMBINATION) {
+            ++ncombs;
+            printf("  Is a combination");
+            // is it a region?
+            // extract attributes
+            size_t len = r.attributes.ext_nbytes;
+            string a= "";
+            for (size_t i = 0; i < len; ++i) {
+                if (r.attributes.ext_buf[i]) {
+                    char c = tolower(r.attributes.ext_buf[i]);
+                    if (a.empty() && c != 'r')
+                        continue;
+                    a += c;
+                }
+            }
+            if (a.find("region") != string::npos) {
+                printf(" (a region)");
+                ++nregs;
+            }
+            printf(".\n");
+        }
         // FIXME: (will have to do more decoding for that answer)
 
-        if (typ == 2) {
+        if (typ == DB5HDR_HFLAGS_DLI_FREE_STORAGE) {
             // free space, count bytes (object counted above)
             free_bytes += static_cast<int>(r.object_length);
             ++fobj;
@@ -274,18 +309,33 @@ main(int argc, char** argv)
         }
     }
 
-    int fnsiz = strlen(db_fname);
-    string eqs = "";
-    for (int i = 0; i < fnsiz; ++i)
-        eqs += '=';
-    printf("=================================%s\n", eqs.c_str());
-    printf("Summary for BRL-CAD V5 database: %s\n", db_fname);
-    printf("=================================%s\n", eqs.c_str());
+    printf("\n");
+    printf("==================================%s=\n", eqs.c_str());
+    printf(" Summary for BRL-CAD V5 database: %s\n", db_fname);
+    printf("==================================%s=\n", eqs.c_str());
+    printf("\n");
     printf("Found %d objects:\n", nobj);
     printf("  free space: %6d\n", fobj);
     printf("  named     : %6d\n", named_obj);
     printf("  other     : %6d\n", nobj - fobj - named_obj);
-    printf("Object DLI types (the main category: defined in H Flags) :\n");
+
+    bool sepr(false);
+    if (ncombs) {
+        sepr = true;
+        printf("\n");
+        printf("%d objects are combinations (%d of which are regions).\n",
+               ncombs, nregs);
+    }
+    if (wattrs) {
+        if (!sepr) {
+            sepr = true;
+            printf("\n");
+        }
+        printf("%d objects have one or more attributes.\n",
+               wattrs);
+    }
+    printf("\n");
+    printf("Object DLI types (the main category: defined in H Flags):\n");
     for (map<int,int>::iterator i = dli_count.begin(); i != dli_count.end(); ++i) {
         // get name of dli type
         string tname = get_dli_type_name(i->first);
@@ -321,6 +371,7 @@ main(int argc, char** argv)
                bsiz, bsiz, " ",
                i->second);
     }
+    printf("\n");
 
     if (fobj) {
         const double kb = 1024;
@@ -333,9 +384,9 @@ main(int argc, char** argv)
         printf("\n");
     }
     if (res == -1)
-        printf("\nNote file read ended normally at EOF.\n");
+        printf("\nNote: file read ended normally at EOF.\n");
     else
-        printf("\nNote file read ended early with an error!\n");
+        printf("\nNote: file read ended early with an error!\n");
 
     if (has_compress)
         printf("See compressed file '%s'.\n", db2_fname);
