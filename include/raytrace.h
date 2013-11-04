@@ -1890,7 +1890,7 @@ struct rt_i {
     struct bu_hist	rti_hist_cutdepth; /**< @brief  depth of cut tree */
     struct soltab **	rti_Solids;	/**< @brief  ptrs to soltab [st_bit] */
     struct bu_list	rti_solidheads[RT_DBNHASH]; /**< @brief  active solid lists */
-    struct bu_ptbl	rti_resources;	/**< @brief  list of 'struct resource'es encountered */
+    struct bu_ptbl	rti_resources;	/**< @brief  list of 'struct resource's encountered */
     double		rti_nu_gfactor;	/**< @brief  constant in numcells computation */
     size_t		rti_cutlen;	/**< @brief  goal for # solids per boxnode */
     size_t		rti_cutdepth;	/**< @brief  goal for depth of NUBSPT cut tree */
@@ -2095,7 +2095,7 @@ struct rt_selection_query {
 /**
  * R T _ S E L E C T I O N _ T R A N S L A T I O N
  *
- * Paramters of a translation applied to a selection.
+ * Parameters of a translation applied to a selection.
  *
  * TODO: This structure is tentative and subject to change or removal
  *       without notice.
@@ -8183,7 +8183,7 @@ RT_EXPORT extern const char *db5_standard_attribute(int idx);
 /**
  * D B 5 _ S T A N D A R D _ A T T R I B U T E _ DEF
  *
- * Function returns the string definiton for a given standard
+ * Function returns the string definition for a given standard
  * attribute index.  Index values returned from
  * db5_standardize_attribute_def() correspond to the definition
  * returned from this function, returning the "standard" definition.

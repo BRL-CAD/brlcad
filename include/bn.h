@@ -530,7 +530,7 @@ BN_EXPORT int bn_polyline_2D_hull(point_t** hull, const point_t* polyline, int n
  *
  * @param[out]	hull convex hull array vertices in ccw orientation (max is n)
  * @param	pnts The input points for which a convex hull will be built
- * @param	n the number of points in the input set 
+ * @param	n the number of points in the input set
  * @return the number of points in the output hull array
  */
 BN_EXPORT int bn_2D_hull(point_t** hull, const point_t* polyline, int n);
@@ -1704,7 +1704,7 @@ BN_EXPORT extern int bn_dist_pt3_lseg3(fastf_t *dist,
  *		A      PCA	B
  *
  * There are six distinct cases, with these return codes -
- * Return code presidence: 1, 2, 0, 3, 4, 5
+ * Return code precedence: 1, 2, 0, 3, 4, 5
  *
  *	0	P is within tolerance of lseg AB.  *dist =  0.
  *	1	P is within tolerance of point A.  *dist = 0.

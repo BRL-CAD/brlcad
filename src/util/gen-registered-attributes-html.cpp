@@ -22,8 +22,8 @@ using namespace std;
 
 // local struct
 struct attr_t {
-    const string name;   // the  "standard" name
-    int index;           // the official index number for he "standard" name
+    const string name;   // the "standard" name
+    int index;           // the official index number for the "standard" name
     string def;
     bool binary;
 
@@ -85,7 +85,7 @@ get_standard_attrs(const string& fname, map<string,attr_t>& attrs)
             printf("  {{%s}}\n", line.c_str());
         }
 
-        // check for begining of list
+        // check for beginning of list
         if (!found_list) {
             if (line.find("begin-standard-attributes-list") == string::npos)
                 continue;
@@ -350,7 +350,7 @@ get_registered_attrs(const string& fname, map<string,attr_t>& attrs)
             printf("  {{%s}}\n", line.c_str());
         }
 
-        // check for begining of list
+        // check for beginning of list
         if (!found_list) {
             if (line.find("begin-registered-attributes-list") == string::npos)
                 continue;
@@ -359,7 +359,7 @@ get_registered_attrs(const string& fname, map<string,attr_t>& attrs)
         }
 
         // quit at end of list
-        size_t idx = line.find("end-registerd-attributes-list");
+        size_t idx = line.find("end-registered-attributes-list");
         if (idx != string::npos)
             break;
 
