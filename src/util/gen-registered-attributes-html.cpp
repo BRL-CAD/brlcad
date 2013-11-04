@@ -25,11 +25,15 @@ struct attr_t {
     const string name;   // the  "standard" name
     int index;           // the official index number for he "standard" name
     string def;
+    bool binary;
+
+    string example;
     set<string> aliases; // as found in the original list
     attr_t(const string& a, const int idx, const string& d)
         : name(a)
         , index(idx)
         , def(d)
+        , binary(false)
         {}
 };
 
@@ -128,13 +132,16 @@ get_standard_attrs(const string& fname, map<string,attr_t>& attrs)
             printf("DEBUG:  Standard attr for index %d is '%s'\n", idx, std_attr.c_str());
         // need a definition or format
         string def = db5_standard_attribute_def(idx);
+        // is it binary? (a kludge for now)
+        bool binary = def.find("binary") == string::npos ? false : true;
 
-        // so is this an alias or the real deal?
         if (attrs.find(std_attr) == attrs.end()) {
             attr_t d(std_attr, idx, def);
+            d.binary = binary;
             attrs.insert(make_pair(std_attr,d));
         }
 
+        // so is this an alias or the real deal?
         if (alias == std_attr) {
             ; // do nothing
         } else {
@@ -211,9 +218,16 @@ gen_attr_html_page(const std::string& fname,
         "  </style>\n"
         "</head>\n"
         "<body>\n"
-        "  <h1>Standard and Registered Attributes</h2>\n"
-        "  <p>Following is a list of the BRL-CAD standard attributes.  Users should\n"
-        "  not assign values to them in other than their defined format.</p>\n"
+        "  <h1>BRL-CAD Standard and User-Registered Attributes</h2>\n"
+        "  <p>Following are lists of the BRL-CAD standard and user-registered attribute names\n"
+        "  along with their value definitions and aliases (if any).  Users should\n"
+        "  not assign values to them in other than their defined format.\n"
+        "  (Note that attribute names are not case-sensitive although their canonical form is\n"
+        "  lower-case.)</p>\n"
+
+        "  <p>Some attributes have ASCII names but binary values (e.g., 'mtime').  Their values cannot\n"
+        "  be modifed by a user with the 'attr' command.  In some cases, but not all, their\n"
+        "  values may be shown in a human readable form with the 'attr' command.)</p>\n"
 
         "  <p>If a user wishes to register an attribute to protect its use for models\n"
         "  transferred to other BRL-CAD users, submit the attribute along with a description\n"
@@ -221,18 +235,17 @@ gen_attr_html_page(const std::string& fname,
         "  <a href=\"mailto:brlcad-devel@lists.sourceforge.net\">BRL-CAD developers</a>.\n"
         "  Its approval will be formal when it appears in the separate, registered attribute\n"
         "  table following the standard attribute table.</p>\n"
-
-        "  <p>Note that attributes are not case-sensitive although their canonical form is\n"
-        "  lower-case.</p>\n"
         ;
 
-    // need a table here
+    // need a table here (5 columns at the moment)
     fo <<
-        "  <h3>Standard Attributes</h3>\n"
+        "  <h3>BRL-CAD Standard Attributes</h3>\n"
         "  <table>\n"
         "    <tr>\n"
         "      <th>Attribute</th>\n"
+        "      <th>Binary?</th>\n"
         "      <th>Definition</th>\n"
+        "      <th>Example</th>\n"
         "      <th>Aliases</th>\n"
         "    </tr>\n"
         ;
@@ -243,7 +256,9 @@ gen_attr_html_page(const std::string& fname,
         fo <<
             "    <tr>\n"
             "      <td>" << a     << "</td>\n"
+            "      <td>" << (d.binary ? "yes" : "")     << "</td>\n"
             "      <td>" << d.def << "</td>\n"
+            "      <td>" << d.example << "</td>\n"
             "      <td>"
             ;
         if (!d.aliases.empty()) {
@@ -261,7 +276,7 @@ gen_attr_html_page(const std::string& fname,
     }
     fo << "  </table>\n";
 
-    fo << "  <h3>Registered Attributes</h3>\n";
+    fo << "  <h3>User-Registered Attributes</h3>\n";
     if (rattrs.empty()) {
         fo << "    <p>None at this time.</p>\n";
     } else {
@@ -270,7 +285,9 @@ gen_attr_html_page(const std::string& fname,
             "  <table>\n"
             "    <tr>\n"
             "      <th>Attribute</th>\n"
+            "      <th>Binary?</th>\n"
             "      <th>Definition</th>\n"
+            "      <th>Example</th>\n"
             "      <th>Aliases</th>\n"
             "    </tr>\n"
             ;
@@ -280,7 +297,9 @@ gen_attr_html_page(const std::string& fname,
             fo <<
                 "    <tr>\n"
                 "      <td>" << a     << "</td>\n"
+                "      <td>" << (d.binary ? "yes" : "")     << "</td>\n"
                 "      <td>" << d.def << "</td>\n"
+                "      <td>" << d.example << "</td>\n"
                 "      <td>"
                 ;
             if (!d.aliases.empty()) {
