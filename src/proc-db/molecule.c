@@ -92,16 +92,17 @@ main(int argc, char **argv)
 
 
 /* File format from stdin
+ * 1st value on the line is the data_type (integer).
  *
- * For a ATOM DATA_TYPE ATOM_ID ATOM_NAME RED GREEN BLUE
- * For a Sphere DATA_TYPE SPH_ID CENTER (X, Y, Z) RADIUS ATOM_TYPE
- * For a Bond   DATA_TYPE SPH_ID SPH_ID
- * DATA_TYPE = 0 - Atom1 - Sphere 2 - Bond
- * SPH_ID = integer
- * CENTER = three float values x, y, z
- * RADIUS = Float
- * ATOM_TYPE = integer
- * ATOM_NAME = Character pointer to name value.
+ * For ATOM DATA_TYPE (i.e., data_type = 0)
+ *     0   ATOM_INDEX ATOM_NAME RED GREEN BLUE
+ *    (int int       string    int int   int)
+ * For Sphere DATA_TYPE (i.e., data_type = 1)
+ *     1   SPH_ID CENTER_X CENTER_Y CENTER_Z RADIUS ATOM_TYPE
+ *    (int int    float    float    float    float  int)
+ * For Bond DATA_TYPE (i.e., data_type = 2)
+ *     2   SPH_ID SPH_ID
+ *    (int int    int)
  */
 void
 read_data(void)
@@ -118,7 +119,7 @@ read_data(void)
     int i = 0;
     int ret;
 
-    while (scanf(" %d", &data_type) != 0) {
+    while (scanf("%d", &data_type) != EOF) {
 
 	switch (data_type) {
 	    case (0):
@@ -178,7 +179,6 @@ read_data(void)
 		(void)make_bond(b_1, b_2);
 		break;
 	    default:
-	    case (4):
 		return;
 	}
     }
