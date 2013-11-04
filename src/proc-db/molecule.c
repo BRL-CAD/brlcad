@@ -73,7 +73,7 @@ int
 main(int argc, char **argv)
 {
 
-    if (argc != 2) {
+    if (argc != 2 || (argc == 2 && (BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")))) {
 	fputs(usage, stderr);
 	return 1;
     }
