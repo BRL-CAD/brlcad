@@ -295,6 +295,8 @@ db5_standard_attribute(int idx)
 	    return "shader";
 	case ATTR_INHERIT:
 	    return "inherit";
+	case ATTR_TIMESTAMP:
+	    return "mtime";
 	case ATTR_NULL:
 	    return NULL;
     }
@@ -324,6 +326,8 @@ db5_standard_attribute_def(int idx)
 	    return "a string of shader characteristics in a standard format"; /* "shader"; */
 	case ATTR_INHERIT:
 	    return "true or false"; /* "inherit"; */
+	case ATTR_TIMESTAMP:
+	    return "a binary time stamp for an object's last mod time"; /* "inherit"; */
 	case ATTR_NULL:
 	    return "(unknown)"; /* NULL; */
     }
@@ -391,6 +395,9 @@ db5_standardize_attribute(const char *attr)
 
     if (BU_STR_EQUIV(attr, "inherit"))
 	return ATTR_INHERIT;
+
+    if (BU_STR_EQUIV(attr, "mtime"))
+	return ATTR_TIMESTAMP;
 
     /* end-standard-attributes-list */
 
