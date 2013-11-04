@@ -46,6 +46,8 @@ struct db5_type {
     char *description;
 };
 
+/* FIXME: change var 'attr_type' to what it is: 'attr_index' (or 'attr_idx');
+ * terminology important to allow for two types of attr: ascii and binary */
 
 /**
  * In order to support looking up Major_Types as well as (Major_Type,
