@@ -54,8 +54,8 @@ struct atoms  {
     unsigned char red, green, blue;
 };
 
-#define MAXATOMINDEX 50
-struct atoms atom_list[MAXATOMINDEX];
+#define MAX_ATOMS 50
+struct atoms atom_list[MAX_ATOMS];
 
 char * matname = "plastic";
 char * matparm = "shine=100.0 diffuse=.8 specular=.2";
@@ -126,8 +126,8 @@ read_data(void)
 		ret = scanf("%d", &i);
 		if (ret == 0)
 		    perror("scanf");
-		if (i < 0 || i >= MAXATOMINDEX) {
-		    fprintf(stderr, "Atom index value %d is out of bounds [0, %d]\n",i,MAXATOMINDEX);
+		if (i < 0 || i >= MAX_ATOMS) {
+		    fprintf(stderr, "Atom index value %d is out of bounds [0, %d]\n", i, MAX_ATOMS - 1);
 		    return;
 		}
 		ret = scanf("%128s", atom_list[i].a_name);
