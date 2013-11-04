@@ -8148,6 +8148,9 @@ RT_EXPORT extern size_t db5_type_sizeof_n_binu(const int minor);
  * starting from 0 and increasing without any gaps in the numbers so
  * db5_standard_attribute() can be used as an index-based iterator.
  */
+/* FIXME: should binary attrs be enumerated the same way as binary
+ * attrs?  certainly the user needs to be forbidden to hijack their
+ * key names */
 enum {
     ATTR_REGION = 0,
     ATTR_REGION_ID,
@@ -8157,6 +8160,7 @@ enum {
     ATTR_COLOR,
     ATTR_SHADER,
     ATTR_INHERIT,
+    ATTR_TIMESTAMP, /* a binary attribute */
     ATTR_NULL
 };
 
