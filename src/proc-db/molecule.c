@@ -65,7 +65,7 @@ int make_bond(int sp1, int sp2);
 
 struct wmember head;
 
-static const char usage[] = "Usage: molecule db_title < mol-cube.dat > mol.g\n";
+static const char usage[] = "Usage: molecule db_title < mol-cube.dat\n      (output file molecule.g)\n";
 
 struct rt_wdb *outfp;
 
@@ -84,7 +84,7 @@ main(int argc, char **argv)
     read_data();
 
     /* Build the overall combination */
-    mk_lfcomb(outfp, "mol.g", &head, 0);
+    mk_lfcomb(outfp, "molecule", &head, 0);
 
     wdb_close(outfp);
     return 0;
