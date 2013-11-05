@@ -226,7 +226,7 @@ gen_attr_html_page(const std::string& fname,
         "  lower-case.)</p>\n"
 
         "  <p>Some attributes have ASCII names but binary values (e.g., 'mtime').  Their values cannot\n"
-        "  be modifed by a user with the 'attr' command.  In some cases, but not all, their\n"
+        "  be modified by a user with the 'attr' command.  In some cases, but not all, their\n"
         "  values may be shown in a human readable form with the 'attr' command.)</p>\n"
 
         "  <p>If a user wishes to register an attribute to protect its use for models\n"

@@ -1919,7 +1919,7 @@ typedef enum {
  * on usage.
  */
 /* FIXME: can this be made to include a union (or a struct pointer) to allow for a binary attr?
- * if so, some (if not all) attr functions will need to be mofified; maybe add an artifical
+ * if so, some (if not all) attr functions will need to be modified; maybe add an artificial
  * const string value to indicate the binary attr which will probably never be allowed to be changed
  * other than programmatically (don't list, i.e., keep them hidden?) */
 struct bu_attribute_value_pair {
