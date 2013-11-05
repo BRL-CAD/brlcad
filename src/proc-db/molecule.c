@@ -92,17 +92,19 @@ main(int argc, char **argv)
 
 
 /* File format from stdin
- * 1st value on the line is the data_type (integer).
  *
- * For ATOM DATA_TYPE (i.e., data_type = 0)
- *     0   ATOM_INDEX ATOM_NAME RED GREEN BLUE
- *    (int int       string    int int   int)
- * For Sphere DATA_TYPE (i.e., data_type = 1)
- *     1   SPH_ID CENTER_X CENTER_Y CENTER_Z RADIUS ATOM_TYPE
- *    (int int    float    float    float    float  int)
- * For Bond DATA_TYPE (i.e., data_type = 2)
- *     2   SPH_ID SPH_ID
- *    (int int    int)
+ *   Atom definition line: 0 atom_id name red green blue
+ * Sphere definition line: 1 sph_id center_x center_y center_z radius atom_id
+ *   Bond definition line: 2 sph_id sph_id
+ *
+ * Example File (Water):
+ * 0 0 Oxygen   255 0   0
+ * 0 1 Hydrogen 255 255 255
+ * 1 0  0.0  0.0 0.0 1.5 0
+ * 1 1 -3.0 -2.0 0.0 1.0 1
+ * 1 2  3.0 -2.0 0.0 1.0 1
+ * 2 0 1
+ * 2 0 2
  */
 void
 read_data(void)
