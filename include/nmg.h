@@ -25,6 +25,9 @@
  * Modelling."  Developed from "Non-Manifold Geometric Boundary
  * Modeling" by Kevin Weiler, 5/7/87 (SIGGraph 1989 Course #20 Notes)
  *
+ * See also "Topological Structures for Geometric Modeling"
+ * by Kevin J. Weiler - RPI Phd thesis from 1986.
+ *
  */
 
 #ifndef __NMG_H__
