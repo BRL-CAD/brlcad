@@ -13011,7 +13011,7 @@ to_output_handler(struct ged *gedp, char *line)
 }
 
 
-HIDDEN void go_dm_draw_arrows(struct dm *dmp, struct ged_data_arrow_state *gdasp);
+HIDDEN void go_dm_draw_arrows(struct dm *dmp, struct ged_data_arrow_state *gdasp, fastf_t sf);
 HIDDEN void go_dm_draw_labels(struct dm *dmp, struct ged_data_label_state *gdlsp, matp_t m2vmat);
 HIDDEN void go_dm_draw_lines(struct dm *dmp, struct ged_data_line_state *gdlsp);
 HIDDEN void go_dm_draw_polys(struct dm *dmp, ged_data_polygon_state *gdpsp, int mode);
@@ -13023,7 +13023,7 @@ HIDDEN void go_draw_solid(struct ged_obj *gop, struct dm *dmp, struct solid *sp)
 
 
 HIDDEN void
-go_dm_draw_arrows(struct dm *dmp, struct ged_data_arrow_state *gdasp)
+go_dm_draw_arrows(struct dm *dmp, struct ged_data_arrow_state *gdasp, fastf_t sf)
 {
     register int i;
     int saveLineWidth;
@@ -13062,7 +13062,7 @@ go_dm_draw_arrows(struct dm *dmp, struct ged_data_arrow_state *gdasp)
 	VSUB2(BmA, B, A);
 
 	VUNITIZE(BmA);
-	VSCALE(offset, BmA, -gdasp->gdas_tip_length);
+	VSCALE(offset, BmA, -gdasp->gdas_tip_length * sf);
 
 	bn_vec_perp(perp1, BmA);
 	VUNITIZE(perp1);
@@ -13070,8 +13070,8 @@ go_dm_draw_arrows(struct dm *dmp, struct ged_data_arrow_state *gdasp)
 	VCROSS(perp2, BmA, perp1);
 	VUNITIZE(perp2);
 
-	VSCALE(perp1, perp1, gdasp->gdas_tip_width);
-	VSCALE(perp2, perp2, gdasp->gdas_tip_width);
+	VSCALE(perp1, perp1, gdasp->gdas_tip_width * sf);
+	VSCALE(perp2, perp2, gdasp->gdas_tip_width * sf);
 
 	VADD2(a_base, B, offset);
 	VADD2(a_pt1, a_base, perp1);
@@ -13425,21 +13425,22 @@ go_draw_solid(struct ged_obj *gop, struct dm *dmp, struct solid *sp)
 HIDDEN void
 go_draw_other(struct ged_obj *gop, struct ged_dm_view *gdvp)
 {
+    fastf_t sf = gdvp->gdv_view->gv_size * gop->go_gedp->ged_wdbp->dbip->dbi_local2base / gdvp->gdv_dmp->dm_width;
 
     if (gdvp->gdv_view->gv_data_arrows.gdas_draw)
-	go_dm_draw_arrows(gdvp->gdv_dmp, &gdvp->gdv_view->gv_data_arrows);
+	go_dm_draw_arrows(gdvp->gdv_dmp, &gdvp->gdv_view->gv_data_arrows, sf);
 
     if (gdvp->gdv_view->gv_sdata_arrows.gdas_draw)
-	go_dm_draw_arrows(gdvp->gdv_dmp, &gdvp->gdv_view->gv_sdata_arrows);
+	go_dm_draw_arrows(gdvp->gdv_dmp, &gdvp->gdv_view->gv_sdata_arrows, sf);
 
     if (gdvp->gdv_view->gv_data_axes.gdas_draw)
 	dm_draw_data_axes(gdvp->gdv_dmp,
-			  gdvp->gdv_view->gv_size,
+			  sf,
 			  &gdvp->gdv_view->gv_data_axes);
 
     if (gdvp->gdv_view->gv_sdata_axes.gdas_draw)
 	dm_draw_data_axes(gdvp->gdv_dmp,
-			  gdvp->gdv_view->gv_size,
+			  sf,
 			  &gdvp->gdv_view->gv_sdata_axes);
 
     if (gdvp->gdv_view->gv_data_lines.gdls_draw)

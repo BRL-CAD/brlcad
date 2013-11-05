@@ -39,7 +39,7 @@
 
 void
 dm_draw_data_axes(struct dm *dmp,
-		  fastf_t UNUSED(viewSize), /* in mm */
+		  fastf_t sf,
 		  struct ged_data_axes_state *gdasp)
 {
     int i, j;
@@ -74,7 +74,7 @@ dm_draw_data_axes(struct dm *dmp,
 #endif
 
     points = (point_t *)bu_calloc(npoints, sizeof(point_t), "data axes points");
-    halfAxesSize = gdasp->gdas_size * 0.5;
+    halfAxesSize = gdasp->gdas_size * 0.5 * sf;
 
     /* set linewidth */
     DM_SET_LINE_ATTR(dmp, gdasp->gdas_line_width, 0);  /* solid lines */
