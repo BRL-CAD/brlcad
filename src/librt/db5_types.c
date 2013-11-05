@@ -365,48 +365,38 @@ db5_standardize_attribute(const char *attr)
     if (BU_STR_EQUIV(attr, "region"))
 	return ATTR_REGION;
 
-    if (BU_STR_EQUIV(attr, "region_id"))
-	return ATTR_REGION_ID;
-    if (BU_STR_EQUIV(attr, "id"))
+    if (BU_STR_EQUIV(attr, "region_id")
+	|| BU_STR_EQUIV(attr, "id"))
 	return ATTR_REGION_ID;
 
-    if (BU_STR_EQUIV(attr, "material_id"))
-	return ATTR_MATERIAL_ID;
-    if (BU_STR_EQUIV(attr, "GIFTmater"))
-	return ATTR_MATERIAL_ID;
-    if (BU_STR_EQUIV(attr, "mat"))
+    if (BU_STR_EQUIV(attr, "material_id")
+	|| BU_STR_EQUIV(attr, "GIFTmater")
+	|| BU_STR_EQUIV(attr, "mat"))
 	return ATTR_MATERIAL_ID;
 
-    if (BU_STR_EQUIV(attr, "air"))
-	return ATTR_AIR;
-    if (BU_STR_EQUIV(attr, "aircode"))
+    if (BU_STR_EQUIV(attr, "air")
+	|| BU_STR_EQUIV(attr, "aircode"))
 	return ATTR_AIR;
 
     if (BU_STR_EQUIV(attr, "los"))
 	return ATTR_LOS;
 
-    if (BU_STR_EQUIV(attr, "color"))
-	return ATTR_COLOR;
-    if (BU_STR_EQUIV(attr, "rgb"))
+    if (BU_STR_EQUIV(attr, "color")
+	|| BU_STR_EQUIV(attr, "rgb"))
 	return ATTR_COLOR;
 
-    if (BU_STR_EQUIV(attr, "shader"))
-	return ATTR_SHADER;
-    if (BU_STR_EQUIV(attr, "oshader"))
+    if (BU_STR_EQUIV(attr, "shader")
+	|| BU_STR_EQUIV(attr, "oshader"))
 	return ATTR_SHADER;
 
     if (BU_STR_EQUIV(attr, "inherit"))
 	return ATTR_INHERIT;
 
-    if (BU_STR_EQUIV(attr, "mtime"))
-	return ATTR_TIMESTAMP;
-    if (BU_STR_EQUIV(attr, "timestamp"))
-	return ATTR_TIMESTAMP;
-    if (BU_STR_EQUIV(attr, "time_stamp"))
-	return ATTR_TIMESTAMP;
-    if (BU_STR_EQUIV(attr, "modtime"))
-	return ATTR_TIMESTAMP;
-    if (BU_STR_EQUIV(attr, "mod_time"))
+    if (BU_STR_EQUIV(attr, "mtime")
+	|| BU_STR_EQUIV(attr, "timestamp")
+	|| BU_STR_EQUIV(attr, "time_stamp")
+	|| BU_STR_EQUIV(attr, "modtime")
+	||B U_STR_EQUIV(attr, "mod_time"))
 	return ATTR_TIMESTAMP;
 
     /* end-standard-attributes-list */
