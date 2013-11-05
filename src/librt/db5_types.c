@@ -396,7 +396,7 @@ db5_standardize_attribute(const char *attr)
 	|| BU_STR_EQUIV(attr, "timestamp")
 	|| BU_STR_EQUIV(attr, "time_stamp")
 	|| BU_STR_EQUIV(attr, "modtime")
-	||B U_STR_EQUIV(attr, "mod_time"))
+	|| BU_STR_EQUIV(attr, "mod_time"))
 	return ATTR_TIMESTAMP;
 
     /* end-standard-attributes-list */
