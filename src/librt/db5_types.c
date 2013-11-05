@@ -400,6 +400,14 @@ db5_standardize_attribute(const char *attr)
 
     if (BU_STR_EQUIV(attr, "mtime"))
 	return ATTR_TIMESTAMP;
+    if (BU_STR_EQUIV(attr, "timestamp"))
+	return ATTR_TIMESTAMP;
+    if (BU_STR_EQUIV(attr, "time_stamp"))
+	return ATTR_TIMESTAMP;
+    if (BU_STR_EQUIV(attr, "modtime"))
+	return ATTR_TIMESTAMP;
+    if (BU_STR_EQUIV(attr, "mod_time"))
+	return ATTR_TIMESTAMP;
 
     /* end-standard-attributes-list */
 
