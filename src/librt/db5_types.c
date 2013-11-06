@@ -46,9 +46,6 @@ struct db5_type {
     char *description;
 };
 
-/* FIXME: change var 'attr_type' to what it is: 'attr_index' (or 'attr_idx');
- * terminology important to allow for two types of attr: ascii and binary */
-
 /**
  * In order to support looking up Major_Types as well as (Major_Type,
  * Minor_Type) pairs, every Major_Type needs an entry with
@@ -109,6 +106,61 @@ static const struct db5_type type_table[] = {
     /* Following entry must be at end of table */
     { DB5_MAJORTYPE_RESERVED, 0, 0, 0, 0 },
 };
+
+/* FIXME: change var 'attr_type' to what it is: 'attr_index' (or 'attr_idx');
+ * terminology important to allow for two types of attr: ascii and binary */
+#if defined(USE_BINARY_ATTRIBUTES)
+struct db5_attr_type {
+    int index; /* from enum in raytrace.h */
+    int is_binary; /* 0 for ASCII attributes; 1 for binary attributes */
+    /* names should be specified with alphanumeric charcters
+     * (lower-case letters, no white space) and will act as unique
+     * keys to an object's attribute list */
+    char *name; /* the "standard" name */
+    char *description;
+    char *aliases; /* comma-delimited list of alternative names for this attribute */
+};
+/* this will be the master source of standard and registered attributes */
+static const struct db5_attr_type attr_type_table[] = {
+    { ATTR_REGION, 0,
+      "region",
+      "true or false",
+      ""},
+    { ATTR_REGION_ID, 0,
+      "region_id",
+      "a positive integer",
+      "id"},
+    { ATTR_MATERIAL_ID, 0,
+      "material_id",
+      "a positive integer (user-defined)",
+      "giftmater,mat"},
+    { ATTR_AIR, 0,
+      "aircode",
+      "an integer (application defined)",
+      "air"},
+    { ATTR_LOS, 0,
+      "los",
+      "an integer in the inclusive range: 0 to 100",
+      ""},
+    { ATTR_COLOR, 0,
+      "color",
+      "a 3-tuple of RGB values (e.g., \"0 255 255\")",
+      "rgb"},
+    { ATTR_SHADER, 0,
+      "shader",
+      "a string of shader characteristics in a standard format",
+      "oshader"},
+    { ATTR_INHERIT, 0,
+      "inherit", "", ""},
+    { ATTR_TIMESTAMP, 1, /* first binary attribute */
+      "mtime",
+      "a binary time stamp for an object's last mod time (the time is displayed in human-readable form with the 'attr' command)",
+      "timestamp,time_stamp,modtime,mod_time"},
+    /* this must end the list: */
+    { ATTR_NULL, 0, 0, 0, 0},
+};
+
+#endif
 
 
 int
