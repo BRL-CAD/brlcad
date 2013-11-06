@@ -294,7 +294,7 @@ void ASConsole::convertLineEnds(ostringstream &out, int lineEnd)
 {
 	assert(lineEnd == LINEEND_WINDOWS || lineEnd == LINEEND_LINUX || lineEnd == LINEEND_MACOLD);
 	const string &inStr = out.str();	// avoids strange looking syntax
-	string outStr;						// the converted ouput
+	string outStr;						// the converted output
 	int inLength = inStr.length();
 	for (int pos = 0; pos < inLength; pos++)
 	{
