@@ -2355,7 +2355,9 @@ struct bu_external  {
     uint32_t ext_magic;
     size_t ext_nbytes;
 #if defined(USE_BINARY_ATTRIBUTES)
-    int intwidth; /* need for decoding binary attributes */
+    unsigned char widcode; /* needed for decoding binary attributes,
+			    * same type as 'struct
+			    * db5_raw_internal.a_width' */
 #endif
     uint8_t *ext_buf;
 };
