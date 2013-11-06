@@ -48,14 +48,15 @@ main(int argc, char **argv)
 {
     int depth;
 
-    if (argc != 2) {
-	fprintf(stderr, "Usage:  pyramid recursion\n");
+    if (argc != 2 || BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) {
+	fprintf(stderr, "Usage: pyramid recursion\n      (the argument is of type integer)\n");
 	return 1;
     }
     depth = atoi(argv[1]);
     sin60 = sin(60.0 * DEG2RAD);
 
     outfp = wdb_fopen("pyramid.g");
+    printf("Creating file pyramid.g\n");
 
     mk_id(outfp, "3-D Pyramids");
 
