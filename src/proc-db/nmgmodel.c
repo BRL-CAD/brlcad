@@ -50,7 +50,7 @@ static struct vertex **f_vertl[256];
 
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "h3210";
+char *options = "h?3210";
 
 char *progname = "(noname)";
 char plotfilename[1024] = {0};
@@ -94,9 +94,6 @@ parse_args(int ac, char **av)
     bu_strlcpy(mfilename, progname, sizeof(mfilename));
     bu_strlcat(mfilename, ".g", sizeof(mfilename));
 
-    /* Turn off bu_getopt's error messages */
-    bu_opterr = 0;
-
     /* get all the option flags from the command line */
     while ((c=bu_getopt(ac, av, options)) != -1)
 	switch (c) {
@@ -104,8 +101,6 @@ parse_args(int ac, char **av)
 	    case '2'	: manifold[2] = 0; break;
 	    case '1'	: manifold[1] = 0; break;
 	    case '0'	: manifold[0] = 0; break;
-	    case '?'	:
-	    case 'h'	:
 	    default		: usage((char *)NULL,1); break;
 	}
 
