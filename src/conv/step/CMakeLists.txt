@@ -80,7 +80,7 @@ macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
     COMMENT "Generating C++ code to express ${SCHEMA_NAME}..."
     VERBATIM)
   add_custom_target(step-express-${SCHEMA_NAME}-${TARGET_SUFFIX}
-    DEPENDS ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done)
+    DEPENDS ${EXPRESS_OUTPUT} ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done)
 endmacro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE)
 
 add_subdirectory(step-g)
