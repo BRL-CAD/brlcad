@@ -24,7 +24,7 @@
  *
  */
 
-/* inteface header */
+/* interface header */
 #include "ShapeRepresentation.h"
 
 /* implementation headers */

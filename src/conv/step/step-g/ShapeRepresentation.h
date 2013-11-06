@@ -28,7 +28,7 @@
 
 #include "common.h"
 
-/* inteface header */
+/* interface header */
 #include "Representation.h"
 
 /* system headers */

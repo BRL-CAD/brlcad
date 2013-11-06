@@ -34,7 +34,7 @@
 #include <vector>
 #include <string>
 
-/* inteface headers */
+/* interface headers */
 #include "STEPWrapper.h"
 
 

@@ -27,7 +27,7 @@
 #include <cctype>
 #include <algorithm>
 
-/* inteface header */
+/* interface header */
 #include "./STEPWrapper.h"
 
 /* implementation headers */

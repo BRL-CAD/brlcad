@@ -23,7 +23,7 @@
  *
  */
 
-/* inteface header */
+/* interface header */
 #include "STEPEntity.h"
 #include "Factory.h"
 

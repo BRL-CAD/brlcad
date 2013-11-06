@@ -31,7 +31,7 @@
 /* system headers */
 #include <list>
 
-/* inteface headers */
+/* interface headers */
 #include "STEPEntity.h"
 #include "STEPWrapper.h"
 
