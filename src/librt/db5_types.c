@@ -107,8 +107,6 @@ static const struct db5_type type_table[] = {
     { DB5_MAJORTYPE_RESERVED, 0, 0, 0, 0 },
 };
 
-/* FIXME: change var 'attr_type' to what it is: 'attr_index' (or 'attr_idx');
- * terminology important to allow for two types of attr: ascii and binary */
 #if defined(USE_BINARY_ATTRIBUTES)
 struct db5_attr_type {
     int index; /* from enum in raytrace.h */
@@ -470,12 +468,12 @@ boolean_attribute(int attr) {
 
 HIDDEN
 void
-attr_add(struct bu_attribute_value_set *newavs, int attr_type, const char *stdattr, const char *value)
+attr_add(struct bu_attribute_value_set *newavs, int attr_index, const char *stdattr, const char *value)
 {
-    if (boolean_attribute(attr_type)) {
+    if (boolean_attribute(attr_index)) {
 	if (bu_str_true(value)) {
 	    /* Use R for region, otherwise go with 1 */
-	    if (attr_type == ATTR_REGION) {
+	    if (attr_index == ATTR_REGION) {
 		(void)bu_avs_add(newavs, stdattr, "R\0");
 	    } else {
 		(void)bu_avs_add(newavs, stdattr, "1\0");
@@ -493,7 +491,7 @@ size_t
 db5_standardize_avs(struct bu_attribute_value_set *avs)
 {
     size_t conflict = 0;
-    int attr_type;
+    int attr_index;
 
     const char *stdattr;
     const char *added;
@@ -514,14 +512,14 @@ db5_standardize_avs(struct bu_attribute_value_set *avs)
      */
     for (BU_AVS_FOR(avpp, avs)) {
 	/* see if this is a standardizable attribute name */
-	attr_type = db5_standardize_attribute(avpp->name);
+	attr_index = db5_standardize_attribute(avpp->name);
 
 	/* get the standard name for this type */
-	stdattr = db5_standard_attribute(attr_type);
+	stdattr = db5_standard_attribute(attr_index);
 
 	/* name is already in standard form, add it */
-	if (attr_type != ATTR_NULL && BU_STR_EQUAL(stdattr, avpp->name))
-	    (void)attr_add(&newavs, attr_type, stdattr, avpp->value);
+	if (attr_index != ATTR_NULL && BU_STR_EQUAL(stdattr, avpp->name))
+	    (void)attr_add(&newavs, attr_index, stdattr, avpp->value);
     }
 
     /* SECOND PASS: check for duplicates and non-standard
@@ -529,36 +527,36 @@ db5_standardize_avs(struct bu_attribute_value_set *avs)
      */
     for (BU_AVS_FOR(avpp, avs)) {
 	/* see if this is a standardizable attribute name */
-	attr_type = db5_standardize_attribute(avpp->name);
+	attr_index = db5_standardize_attribute(avpp->name);
 
 	/* get the standard name for this type */
-	stdattr = db5_standard_attribute(attr_type);
+	stdattr = db5_standard_attribute(attr_index);
 
 	/* see if we already added this attribute */
 	added = bu_avs_get(&newavs, stdattr);
 
-	if (attr_type != ATTR_NULL && added == NULL) {
+	if (attr_index != ATTR_NULL && added == NULL) {
 
 	    /* case 1: name is "standardizable" and not added */
 
-	    (void)attr_add(&newavs, attr_type, stdattr, avpp->value);
-	} else if (attr_type != ATTR_NULL && BU_STR_EQUAL(added, avpp->value)) {
+	    (void)attr_add(&newavs, attr_index, stdattr, avpp->value);
+	} else if (attr_index != ATTR_NULL && BU_STR_EQUAL(added, avpp->value)) {
 
 	    /* case 2: name is "standardizable", but we already added the same value */
 
 	    /* ignore/skip it (because it's the same value) */
-	} else if (attr_type != ATTR_NULL && !BU_STR_EQUAL(added, avpp->value)) {
+	} else if (attr_index != ATTR_NULL && !BU_STR_EQUAL(added, avpp->value)) {
 
 	    /* case 3: name is "standardizable", but we already added something else */
 
 	    /* preserve the conflict, keep the old value too */
-	    (void)attr_add(&newavs, attr_type, avpp->name, avpp->value);
+	    (void)attr_add(&newavs, attr_index, avpp->name, avpp->value);
 	    conflict++;
 	} else {
 
 	    /* everything else: add it */
 
-	    (void)attr_add(&newavs, attr_type, avpp->name, avpp->value);
+	    (void)attr_add(&newavs, attr_index, avpp->name, avpp->value);
 	}
     }
     bu_avs_free(avs);
