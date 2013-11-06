@@ -26,7 +26,7 @@
  * lattice points.  The functions should be evaluated at non-integer
  * locations for their nature to be realized.
  *
- * Conatins contributed code from:
+ * Contains contributed code from:
  * F. Kenton Musgrave
  * Robert Skinner
  *
@@ -671,7 +671,7 @@ bn_noise_ridged(fastf_t *point, double h_val, double lacunarity, double octaves,
     /* get absolute value of noise_signal (this creates the ridges) */
     if (noise_signal < 0.0) noise_signal = -noise_signal;
 
-    /* invert and translate (note that "offset shoudl be ~= 1.0 */
+    /* invert and translate (note that "offset should be ~= 1.0 */
     noise_signal = offset - noise_signal;
 
     /* square the noise_signal, to increase "sharpness" of ridges */

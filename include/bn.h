@@ -1393,7 +1393,7 @@ BN_EXPORT extern double bn_gauss_fill(struct bn_gauss *p);
  * lattice points.  The functions should be evaluated at non-integer
  * locations for their nature to be realized.
  *
- * Conatins contributed code from:
+ * Contains contributed code from:
  * F. Kenton Musgrave
  * Robert Skinner
  *
