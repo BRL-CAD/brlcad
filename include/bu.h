@@ -2354,6 +2354,9 @@ typedef struct bu_structparse bu_structparse_t;
 struct bu_external  {
     uint32_t ext_magic;
     size_t ext_nbytes;
+#if defined(USE_BINARY_ATTRIBUTES)
+    int intwidth; /* need for decoding binary attributes */
+#endif
     uint8_t *ext_buf;
 };
 typedef struct bu_external bu_external_t;
