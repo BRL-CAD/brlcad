@@ -209,7 +209,7 @@ rt_comb_import4(
     else
 	rt_tree_array = (struct rt_tree_array *)NULL;
 
-    for (j=0; j<node_count; j++) {
+    for (j = 0; j < node_count; j++) {
 	if (rp[j+1].u_id != ID_MEMB) {
 	    bu_free((genptr_t)rt_tree_array, "rt_comb_import4: rt_tree_array");
 	    bu_log("rt_comb_import4(): granule in external buffer is not ID_MEMB, id=%d\n", rp[j+1].u_id);
@@ -973,7 +973,7 @@ db_mkbool_tree(
 	return TREE_NULL;
 
     /* Count number of non-null sub-trees to do */
-    for (i=howfar, inuse=0, tlp=rt_tree_array; i>0; i--, tlp++) {
+    for (i = howfar, inuse = 0, tlp = rt_tree_array; i > 0; i--, tlp++) {
 	if (tlp->tl_tree == TREE_NULL)
 	    continue;
 	if (inuse++ == 0)
