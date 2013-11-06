@@ -40,6 +40,7 @@ first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 THIRD_PARTY_EXECUTABLE(astyle astyle "BRLCAD_LEVEL2" astyle_ALIASES astyle_DESCRIPTION)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/astyle/Makefile)
 
+CMAKEFILES(astyle.dist)
 
 # Locac Variables:
 # tab-width: 8
