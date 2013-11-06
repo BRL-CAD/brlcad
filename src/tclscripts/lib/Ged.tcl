@@ -6152,7 +6152,7 @@ package provide cadwidgets::Ged 1.0
     $help add mat_zrot		{{sina cosa} {returns a rotation matrix}}
     $help add mat_lookat	{{dir yflip} {}}
     $help add mat_vec_ortho	{{vec} {returns a vector orthogonal to vec}}
-    $help add mat_vec_perp	{{vec} {returns a vector perpandicular to vec}}
+    $help add mat_vec_perp	{{vec} {returns a vector perpendicular to vec}}
     $help add mat_scale_about_pt {{pt scale} {}}
     $help add mat_xform_about_pt {{xform pt} {}}
     $help add mat_arb_rot	{{pt dir angle} {returns a rotation matrix}}
