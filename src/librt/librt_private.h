@@ -134,6 +134,7 @@ extern void plot_ellipse(
 __END_DECLS
 
 #endif /* LIBRT_PRIVATE_H */
+
 /*
  * Local Variables:
  * tab-width: 8
