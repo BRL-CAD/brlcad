@@ -43,7 +43,7 @@ typedef struct pbc_data {
 typedef struct _bspline {
     int p; // degree
     int m; // num_knots-1
-    int n; // num_samples-1 (aka number of control points)
+    int n; // num_samples-1 (a/k/a number of control points)
     vector<double> params;
     vector<double> knots;
     ON_2dPointArray controls;

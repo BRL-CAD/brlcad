@@ -36,7 +36,7 @@
 ###
 #
 # The purpose of this script is to update source files in a project so
-# that they have more consistent whitespace (aka "ws") formatting.
+# that they have more consistent whitespace (a/k/a "ws") formatting.
 #
 # The list of things the script can perform are as follows:
 #

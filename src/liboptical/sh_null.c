@@ -20,7 +20,7 @@
 /** @file liboptical/sh_null.c
  *
  * Notes -
- * This is the null, aka invisible, shader.  It is potentially useful as a performance
+ * This is the null, a/k/a invisible, shader.  It is potentially useful as a performance
  * metric as well as to hide objects from a scene rendering.  It simply does nothing.
  *
  * This is the most basic shader.
