@@ -393,7 +393,7 @@ man page for more information.</para>
 would be to make an animation of a tank rolling across
 bumpy ground. By some method (such as physical simulation)
 you obtain the position of the center of
-the tank and its orientation at each time. You also nead to obtain the
+the tank and its orientation at each time. You also need to obtain the
 position of the each wheel relative to the vehicle center at each time.
 All of this information is placed in
 <emphasis remap='B'>in.table</emphasis>
