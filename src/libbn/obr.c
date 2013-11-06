@@ -474,7 +474,8 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *center, vect_t *x, vect_t *y){
     vect_t a1;
     int i = 0;
     int points_2d = 1;
-    const point_t *pnts2d;
+    const point_t *pnts2d = NULL;
+    VSET(obr.v, 0.0, 0.0, 0.0);
 
     if (!pnts) return -1;
 
@@ -492,6 +493,7 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *center, vect_t *x, vect_t *y){
 	fastf_t curr_dist = 0.0;
 	/*plane_t plane;*/
 	VSET(dmax, 0, 0, 0);
+	VSET(center_pnt, 0.0, 0.0, 0.0);
 	for (i = 0; i < pnt_cnt; i++) {
 	    VADD2(center_pnt, center_pnt, pnts[i]);
 	}
