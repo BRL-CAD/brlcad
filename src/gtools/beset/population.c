@@ -141,7 +141,7 @@ pop_spawn (struct population *p)
     }
 
 /*
- * reload the db so we dont
+ * reload the db so we don't
  * have to do any extra checks
  * in the main loop
  */
@@ -153,7 +153,7 @@ pop_spawn (struct population *p)
 }
 
 /**
- *	P O P _ A D D --- add an parent to othe database
+ *	P O P _ A D D --- add a parent to other database
  *	TODO: Don't overwrite previous parents, one .g file per generation
  */
 /*
@@ -331,7 +331,7 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
     switch ( tp->tr_op )  {
 
 	case OP_DB_LEAF:
-	    /* dont need to do any processing if crossing over */
+	    /* don't need to do any processing if crossing over */
 	    if (crossover) {
 		return;
 	    }
