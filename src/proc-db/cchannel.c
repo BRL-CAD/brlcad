@@ -59,7 +59,7 @@ usage(char *s)
 	bu_log("%s\n", s);
     bu_exit(1, "Usage: %s %s\n%s\n",
 	    "cchannel", "-l length -d diameter -x X coordinate -y Y coordinate \n-z Z coordinate -H hole radius",
-	    "-t thickness -s slope -r corner-radius -R top-radius \n-u conversion factor from milimeters -f filename");
+	    "-t thickness -s slope -r corner-radius -R top-radius \n-u conversion factor from millimeters -f filename");
 }
 
 static void
