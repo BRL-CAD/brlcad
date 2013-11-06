@@ -1575,7 +1575,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
     if (rdebug & RDEBUG_LIGHT)
 	bu_log("shooting level %d from %d\n", sub_ap.a_level, __LINE__);
 
-    /* see if weare in the dark. */
+    /* see if we are in the dark. */
     shot_status = rt_shootray(&sub_ap);
 
     if (shot_status > 0) {
