@@ -1928,7 +1928,7 @@ typedef enum {
 struct bu_attribute_value_pair {
     const char *name;	    /**< attribute name           */
     const char *value;      /**< attribute value          */
-#id defined(USE_BINARY_ATTRIBUTES)
+#if defined(USE_BINARY_ATTRIBUTES)
     /* trying a solution to include binary attributes */
     unsigned int binvaluelen;
     const unsigned char *binvalue;
