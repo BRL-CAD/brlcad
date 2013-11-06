@@ -424,8 +424,8 @@ db5_standardize_attribute(const char *attr)
 	|| BU_STR_EQUIV(attr, "mat"))
 	return ATTR_MATERIAL_ID;
 
-    if (BU_STR_EQUIV(attr, "air")
-	|| BU_STR_EQUIV(attr, "aircode"))
+    if (BU_STR_EQUIV(attr, "aircode")
+	|| BU_STR_EQUIV(attr, "air"))
 	return ATTR_AIR;
 
     if (BU_STR_EQUIV(attr, "los"))
