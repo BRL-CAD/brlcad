@@ -285,6 +285,9 @@ db5_get_raw_internal_ptr(struct db5_raw_internal *rip, const unsigned char *ip)
 	cp += db5_decode_length(&rip->attributes.ext_nbytes,
 				cp, rip->a_width);
 	rip->attributes.ext_buf = (genptr_t)cp;	/* discard const */
+#if defined(USE_BINARY_ATTRIBUTES)
+	rip->attributes.widcode = rip->a_width;
+#endif
 	cp += rip->attributes.ext_nbytes;
     }
 
@@ -399,6 +402,9 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
 	cp += db5_decode_length(&rip->attributes.ext_nbytes,
 				cp, rip->a_width);
 	rip->attributes.ext_buf = (genptr_t)cp;	/* discard const */
+#if defined(USE_BINARY_ATTRIBUTES)
+	rip->attributes.widcode = rip->a_width;
+#endif
 	cp += rip->attributes.ext_nbytes;
     }
 
