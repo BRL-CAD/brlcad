@@ -348,8 +348,11 @@ ELSE(BRLCAD_PNG_BUILD)
   # The PNG CMake file seems to set PNG_PNG_INCLUDE_DIR rather than
   # PNG_INCLUDE_DIR, so a generic macro won't pick up the setting -
   # handle it here.
-
   set(PNG_INCLUDE_DIR ${PNG_PNG_INCLUDE_DIR} CACHE STRING "PNG include directory" FORCE)
+
+  # Newer CMake versions don't automatically put this value in the Cache,
+  # but we need it
+  set(PNG_LIBRARY "${PNG_LIBRARY}" CACHE STRING "PNG library" FORCE)
 endif(BRLCAD_PNG_BUILD)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/libpng/CTestTestfile.cmake)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/libpng/libpng.pc)
