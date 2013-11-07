@@ -84,8 +84,11 @@ main(int argc, char **argv)
     vect_t lwh;		/* length, width, height */
     vect_t pbase;
 
-    if (argc > 0)
-	bu_log("Usage: %s\n       Program continues running:\n", argv[0]);
+    if (argc > 0) {
+	bu_log("Usage: %s\n",argv[0]);
+    	if (argc == 1)
+	    bu_log("       Program continues running:\n");
+    }
 
     BU_LIST_INIT(&head.l);
 
