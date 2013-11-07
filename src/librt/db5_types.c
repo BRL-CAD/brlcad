@@ -276,163 +276,20 @@ db5_type_sizeof_n_binu(const int minor)
 const char *
 db5_standard_attribute(int idx)
 {
-    /* FIXME: turn this into a C++ wrapper
-     *
-     * it is called in:
-     *   ./src/librt/comb/comb.c
-     *   ./src/librt/db5_types.c
-     *   ./src/libged/red.c
-     *   ./src/nirt/if.c
-     *   ./src/nirt/nirt.c
-     */
-#if 1 /* new version */
     return db5_attr_standard_attribute(idx);
-#else
-    switch (idx) {
-	case ATTR_REGION:
-	    return "region";
-	case ATTR_REGION_ID:
-	    return "region_id";
-	case ATTR_MATERIAL_ID:
-	    return "material_id";
-	case ATTR_AIR:
-	    return "aircode";
-	case ATTR_LOS:
-	    return "los";
-	case ATTR_COLOR:
-	    return "color";
-	case ATTR_SHADER:
-	    return "shader";
-	case ATTR_INHERIT:
-	    return "inherit";
-	case ATTR_TIMESTAMP:
-	    return "mtime";
-	case ATTR_NULL:
-	    return NULL;
-    }
-    /* no match */
-    return NULL;
-#endif
 }
-
-
-#if 0 /* no longer used */
-/* FIXME: make attrs into a const struct for name, definition, etc (DONE */
-const char *
-db5_standard_attribute_def(int idx)
-{
-    switch (idx) {
-	case ATTR_REGION:
-	    return "true or false"; /* "region"; */
-	case ATTR_REGION_ID:
-	    return "a positive integer"; /* "region_id"; */
-	case ATTR_MATERIAL_ID:
-	    return  "a positive integer (user-defined)"; /* "material_id"; */
-	case ATTR_AIR:
-	    return "an integer (application defined)"; /* "aircode"; */
-	case ATTR_LOS:
-	    return "an integer in the inclusive range: 0 to 100"; /*  "los"; */
-	case ATTR_COLOR:
-	    return "a 3-tuple of RGB values"; /* "color"; */
-	case ATTR_SHADER:
-	    return "a string of shader characteristics in a standard format"; /* "shader"; */
-	case ATTR_INHERIT:
-	    return "true or false"; /* "inherit"; */
-	case ATTR_TIMESTAMP:
-	    return "a binary time stamp for an object's last mod time"; /* "inherit"; */
-	case ATTR_NULL:
-	    return "(unknown)"; /* NULL; */
-    }
-    /* no match */
-    return NULL;
-}
-#endif /* no longer used */
 
 int
 db5_is_standard_attribute(const char *attr_want)
 {
-    /* FIXME: turn this into a C++ wrapper
-     *
-     * it is called in:
-     *   ./src/librt/db5_types.c
-     *   ./src/libged/red.c
-     */
-#if 1 /* new version */
     return db5_attr_is_standard_attribute(attr_want);
-#else
-    int i = 0;
-    const char *attr_have = NULL;
-
-    if (!attr_want)
-	return 0;
-
-    for (i = 0; (attr_have = db5_standard_attribute(i)) != NULL; i++) {
-	if (BU_STR_EQUIV(attr_want, attr_have)) return 1;
-    }
-    return 0;
-#endif
 }
 
 
 int
 db5_standardize_attribute(const char *attr)
 {
-    /* FIXME: turn this into a C++ wrapper
-     *
-     * it is called in:
-     *   ./src/librt/comb/comb.c
-     *   ./src/librt/db5_types.c
-     *   ./src/nirt/if.c
-     */
-#if 1 /* new version */
     return db5_attr_standardize_attribute(attr);
-#else
-    if (!attr)
-	return ATTR_NULL;
-
-    /* begin-standard-attributes-list */
-    if (BU_STR_EQUIV(attr, "region"))
-	return ATTR_REGION;
-
-    if (BU_STR_EQUIV(attr, "region_id")
-	|| BU_STR_EQUIV(attr, "id"))
-	return ATTR_REGION_ID;
-
-    if (BU_STR_EQUIV(attr, "material_id")
-	|| BU_STR_EQUIV(attr, "GIFTmater")
-	|| BU_STR_EQUIV(attr, "mat"))
-	return ATTR_MATERIAL_ID;
-
-    if (BU_STR_EQUIV(attr, "aircode")
-	|| BU_STR_EQUIV(attr, "air"))
-	return ATTR_AIR;
-
-    if (BU_STR_EQUIV(attr, "los"))
-	return ATTR_LOS;
-
-    if (BU_STR_EQUIV(attr, "color")
-	|| BU_STR_EQUIV(attr, "rgb"))
-	return ATTR_COLOR;
-
-    if (BU_STR_EQUIV(attr, "shader")
-	|| BU_STR_EQUIV(attr, "oshader"))
-	return ATTR_SHADER;
-
-    if (BU_STR_EQUIV(attr, "inherit"))
-	return ATTR_INHERIT;
-
-    if (BU_STR_EQUIV(attr, "mtime")
-	|| BU_STR_EQUIV(attr, "timestamp")
-	|| BU_STR_EQUIV(attr, "time_stamp")
-	|| BU_STR_EQUIV(attr, "modtime")
-	|| BU_STR_EQUIV(attr, "mod_time"))
-	return ATTR_TIMESTAMP;
-
-    /* end-standard-attributes-list */
-
-    return ATTR_NULL;
-#endif
-
 }
 
 
