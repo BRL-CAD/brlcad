@@ -36,6 +36,7 @@ set(LIBRT_SOURCES
   constraint.c
   cut.c
   db5_alloc.c
+  db5_attrs.cpp
   db5_io.c
   db5_scan.c
   db5_types.c
@@ -253,6 +254,7 @@ set(LIBRT_SOURCES
 
 set(librt_ignored_files
   columnparse.c
+  db5_attrs_private.h
   librt_private.h
   namegen.c
   test_nurbsfit.cpp
@@ -307,6 +309,9 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/src/other/Eigen
   ${CMAKE_CURRENT_SOURCE_DIR}/../libbrep
   )
+
+# a new html-gen file
+BRLCAD_ADDEXEC(gen-registered-attributes-html gen-registered-attributes-html.cpp "libbu;librt" NO_INSTALL)
 
 #BRLCAD_ADDEXEC(test_bot2nurbs test_bot2nurbs.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_nurbsfit test_nurbsfit.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)

@@ -99,9 +99,6 @@ CMAKEFILES(test_bu_arg_parse.c)
 # a new admin file
 BRLCAD_ADDEXEC(admin-db "admin-db.cpp;bu_arg_parse.cpp" "libbu;librt" NO_INSTALL)
 
-# a new html-gen file
-BRLCAD_ADDEXEC(gen-registered-attributes-html gen-registered-attributes-html.cpp "libbu;librt" NO_INSTALL)
-
 # tmp header to stand-in for bu.h (ignore it)
 CMAKEFILES(bu_arg_parse.h)
 # permanent private header for TCLAP customizations (ignore it)

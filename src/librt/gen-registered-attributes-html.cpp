@@ -1,11 +1,9 @@
-// see db5_types.c for registered attribute info
-
-// scheme: parse guts of function "int db5_standardize_attribute"
-//  in file "db5_types.c"
+// see db5_attrs.cpp (and raytrace.h)  for registered attribute info
 
 #include "common.h"
 
 #include "raytrace.h"
+#include "db5_attrs_private.h"
 
 #include <cstdlib>
 #include <cctype>
@@ -20,32 +18,11 @@
 
 using namespace std;
 
-// local struct
-struct attr_t {
-    const string name;   // the "standard" name
-    int index;           // the official index number for the "standard" name
-    string def;
-    bool binary;
-
-    string example;
-    set<string> aliases; // as found in the original list
-    attr_t(const string& a, const int idx, const string& d)
-        : name(a)
-        , index(idx)
-        , def(d)
-        , binary(false)
-        {}
-};
+using namespace db5_attrs_private;
 
 // local funcs
-static bool file_exists(const std::string& fname);
-static void gen_attr_html_page(const std::string& fname,
-                               map<string,attr_t>& sttrs, map<string,attr_t>& rttrs);
-static void get_standard_attrs(const string& fname, map<string,attr_t>& attrs);
-static void open_file_read(ifstream& fs, const string& f);
+static void gen_attr_html_page(const std::string& fname);
 static void open_file_write(ofstream& fs, const string& f);
-// FIXME: following to be added later (see rough function body below):
-//static void get_registered_attrs(const string& fname, map<string,attr_t>& attrs);
 
 // local vars
 static bool debug(true);
@@ -53,112 +30,13 @@ static bool debug(true);
 int
 main()
 {
-    map<string,attr_t> sattrs; // standard attributes
-    map<string,attr_t> rattrs; // registered attributes
     string fname("db5_types.c");
-
-    get_standard_attrs(fname, sattrs);
-    //get_registered_attrs(fname, rattrs);
 
     // write the html file
     string ofil("t.html");
-    gen_attr_html_page(ofil, sattrs, rattrs);
+    gen_attr_html_page(ofil);
     return 0;
 }
-
-void
-get_standard_attrs(const string& fname, map<string,attr_t>& attrs)
-{
-    ifstream fi;
-    open_file_read(fi, fname.c_str());
-
-    set<string> aliases;
-
-    bool found_list(false);
-    int linenum(0);
-    string line;
-    while (!getline(fi, line).eof()) {
-        ++linenum;
-
-        if (0 && debug) {
-            printf("DEBUG(%s, %u): line %u:\n", __FILE__, __LINE__, linenum);
-            printf("  {{%s}}\n", line.c_str());
-        }
-
-        // check for beginning of list
-        if (!found_list) {
-            if (line.find("begin-standard-attributes-list") == string::npos)
-                continue;
-            found_list = true;
-            continue;
-        }
-
-        // quit at end of list
-        size_t idx = line.find("end-standard-attributes-list");
-        if (idx != string::npos)
-            break;
-
-        // look for attr def lines
-        idx = line.find("BU_STR_EQUIV");
-        if (idx == string::npos)
-            continue;
-
-        // extract the attribute between the double quotes
-        idx = line.find_first_of('"', idx+1);
-        size_t ridx = line.find_last_of('"');
-        string attr = line.substr(idx+1, ridx - idx - 1);
-        // ensure it's lower case
-        for (size_t i = 0; i < attr.size(); ++i)
-            attr[i] = tolower(attr[i]);
-        if (debug)
-            printf("DEBUG: Found attribute '%s'\n", attr.c_str());
-        aliases.insert(attr);
-    }
-
-    // now associate names with standard name
-    for (set<string>::iterator i = aliases.begin(); i != aliases.end(); ++i) {
-        if (debug)
-            printf("DEBUG: found alias in list '%s'\n", (*i).c_str());
-        const string& alias(*i);
-        // get info on standard name and index
-        int idx = db5_standardize_attribute(alias.c_str());
-        if (idx == ATTR_NULL) {
-            bu_log("unexpected ATTR_NULL for attr alias '%s'", alias.c_str());
-            bu_bomb("unexpected ATTR_NULL for attr alias\n");
-        }
-
-        string std_attr = db5_standard_attribute(idx);
-        if (debug)
-            printf("DEBUG:  Standard attr for index %d is '%s'\n", idx, std_attr.c_str());
-        // need a definition or format
-        string def = db5_standard_attribute_def(idx);
-        // is it binary? (a kludge for now)
-        bool binary = def.find("binary") == string::npos ? false : true;
-
-        if (attrs.find(std_attr) == attrs.end()) {
-            attr_t d(std_attr, idx, def);
-            d.binary = binary;
-            attrs.insert(make_pair(std_attr,d));
-        }
-
-        // so is this an alias or the real deal?
-        if (alias == std_attr) {
-            ; // do nothing
-        } else {
-            map<string,attr_t>::iterator j = attrs.find(std_attr);
-            if (j != attrs.end()) {
-                attr_t& d = j->second;
-                d.aliases.insert(alias);
-            } else {
-                bu_log("unexpected no-find for std attr '%s'", std_attr.c_str());
-                bu_bomb("unexpected no-find for std_attr\n");
-            }
-        }
-    }
-    if (debug)
-        printf("DEBUG:  Finished collecting attrs...\n");
-
-} // get_standard_attrs
 
 void
 open_file_write(ofstream& fs, const string& f)
@@ -172,35 +50,7 @@ open_file_write(ofstream& fs, const string& f)
 } // open_file_write
 
 void
-open_file_read(ifstream& fs, const string& f)
-{
-  if (!file_exists(f)) {
-      printf("File '%s' not found.\n", f.c_str());
-      exit(1);
-  }
-
-  fs.open(f.c_str());
-  if (fs.bad()) {
-    fs.close();
-    printf("File '%s' close error.\n", f.c_str());
-    exit(1);
-  }
-} // open_file_read
-
-bool
-file_exists(const std::string& fname)
-{
-    // see <bits/stat.h>
-    struct stat buf;
-    return (!stat(fname.c_str(), &buf)
-            && (S_ISREG(buf.st_mode)|S_ISDIR(buf.st_mode)));
-} // file_exists
-
-void
-gen_attr_html_page(const std::string& fname,
-                   map<string,attr_t>& sattrs,
-                   map<string,attr_t>& rattrs
-                   )
+gen_attr_html_page(const std::string& fname)
 {
     ofstream fo;
     open_file_write(fo, fname);
@@ -250,21 +100,27 @@ gen_attr_html_page(const std::string& fname,
         "    </tr>\n"
         ;
 
-    for (map<string,attr_t>::iterator i = sattrs.begin(); i != sattrs.end(); ++i) {
-        const string& a(i->first);
-        attr_t& d(i->second);
+    // track ATTR_REGISTERED type
+    map<string,db5_attr_t> rattrs;
+    for (map<string,db5_attr_t>::iterator i = name2attr.begin(); i != name2attr.end(); ++i) {
+        const string& name(i->first);
+        db5_attr_t& a(i->second);
+        if (a.atype == ATTR_REGISTERED) {
+            rattrs.insert(make_pair(name,a));
+            continue;
+        }
         fo <<
             "    <tr>\n"
-            "      <td>" << a     << "</td>\n"
-            "      <td>" << (d.binary ? "yes" : "")     << "</td>\n"
-            "      <td>" << d.def << "</td>\n"
-            "      <td>" << d.example << "</td>\n"
+            "      <td>" << name                       << "</td>\n"
+            "      <td>" << (a.is_binary ? "yes" : "") << "</td>\n"
+            "      <td>" << a.description              << "</td>\n"
+            "      <td>" << a.examples                 << "</td>\n"
             "      <td>"
             ;
-        if (!d.aliases.empty()) {
-            for (set<string>::iterator j = d.aliases.begin();
-                 j != d.aliases.end(); ++j) {
-                if (j != d.aliases.begin())
+        if (!a.aliases.empty()) {
+            for (set<string>::iterator j = a.aliases.begin();
+                 j != a.aliases.end(); ++j) {
+                if (j != a.aliases.begin())
                     fo << ", ";
                 fo << *j;
             }
@@ -291,21 +147,21 @@ gen_attr_html_page(const std::string& fname,
             "      <th>Aliases</th>\n"
             "    </tr>\n"
             ;
-        for (map<string,attr_t>::iterator i = rattrs.begin(); i != rattrs.end(); ++i) {
-            const string& a(i->first);
-            attr_t& d(i->second);
+        for (map<string,db5_attr_t>::iterator i = rattrs.begin(); i != rattrs.end(); ++i) {
+            const string& name(i->first);
+            db5_attr_t& a(i->second);
             fo <<
                 "    <tr>\n"
-                "      <td>" << a     << "</td>\n"
-                "      <td>" << (d.binary ? "yes" : "")     << "</td>\n"
-                "      <td>" << d.def << "</td>\n"
-                "      <td>" << d.example << "</td>\n"
+                "      <td>" << name                       << "</td>\n"
+                "      <td>" << (a.is_binary ? "yes" : "") << "</td>\n"
+                "      <td>" << a.description              << "</td>\n"
+                "      <td>" << a.examples                 << "</td>\n"
                 "      <td>"
                 ;
-            if (!d.aliases.empty()) {
-                for (set<string>::iterator j = d.aliases.begin();
-                     j != d.aliases.end(); ++i) {
-                    if (j != d.aliases.begin())
+            if (!a.aliases.empty()) {
+                for (set<string>::iterator j = a.aliases.begin();
+                     j != a.aliases.end(); ++i) {
+                    if (j != a.aliases.begin())
                         fo << ", ";
                     fo << *j;
                 }
