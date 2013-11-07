@@ -1,0 +1,19 @@
+The procedures for getting a minimum subset of the Boost library were
+tried as documented in the script file:
+
+  update-brlcad-boost.sh
+
+but the resulting subset was 36 Mb as opposed to the current subset of
+about 1.2 Mb, so another solution will be attempted:
+
+1. Start with the trunk Boost subset that is working (Boost version
+   1.47).
+
+2. Add any new using files.
+
+3. Copy files from the new Boost version (1.54.0) that match the
+   existing trunk version (using a Perl script).
+
+4. Repeat building, adding new files as necessary, and fixing error
+   until a new subset of the new Boost version is found.
+
