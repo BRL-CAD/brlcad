@@ -192,7 +192,7 @@ ged_init(struct ged *gedp)
     gedp->ged_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
     qray_init(gedp->ged_gdp);
 
-    gedp->ged_selections = bu_create_hash_tbl(0);
+    gedp->ged_selections = bu_hash_tbl_create(0);
 
     /* (in)sanity */
     gedp->ged_gvp = NULL;

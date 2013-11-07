@@ -5943,7 +5943,7 @@ BU_EXPORT extern unsigned long bu_hash(const unsigned char *str,
  * The input is the number of desired hash bins.  This number will be
  * rounded up to the nearest power of two.
  */
-BU_EXPORT extern struct bu_hash_tbl *bu_create_hash_tbl(unsigned long tbl_size);
+BU_EXPORT extern struct bu_hash_tbl *bu_hash_tbl_create(unsigned long tbl_size);
 
 /**
  * Find the hash table entry corresponding to the provided key
@@ -5960,11 +5960,11 @@ BU_EXPORT extern struct bu_hash_tbl *bu_create_hash_tbl(unsigned long tbl_size);
  * the hash table entry corresponding to the provided key, or NULL if
  * not found.
  */
-BU_EXPORT extern struct bu_hash_entry *bu_find_hash_entry(const struct bu_hash_tbl *hsh_tbl,
-							  const unsigned char *key,
-							  int key_len,
-							  struct bu_hash_entry **prev,
-							  unsigned long *idx);
+BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_find(const struct bu_hash_tbl *hsh_tbl,
+							const unsigned char *key,
+							int key_len,
+							struct bu_hash_entry **prev,
+							unsigned long *idx);
 
 /**
  * Set the value for a hash table entry
@@ -6001,18 +6001,18 @@ BU_EXPORT extern unsigned char *bu_get_hash_key(const struct bu_hash_entry *hsh_
  * returned.  if "new" is zero, the returned entry is the one matching
  * the specified key and key_len.
  */
-BU_EXPORT extern struct bu_hash_entry *bu_hash_add_entry(struct bu_hash_tbl *hsh_tbl,
-							 const unsigned char *key,
-							 int key_len,
-							 int *new_entry);
+BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_add(struct bu_hash_tbl *hsh_tbl,
+						       const unsigned char *key,
+						       int key_len,
+						       int *new_entry);
 
 /**
  * Print the specified hash table to stderr.
  *
  * (Note that the keys and values are printed as pointers)
  */
-BU_EXPORT extern void bu_hash_tbl_pr(const struct bu_hash_tbl *hsh_tbl,
-				     const char *str);
+BU_EXPORT extern void bu_hash_tbl_print(const struct bu_hash_tbl *hsh_tbl,
+					const char *str);
 
 /**
  * Free all the memory associated with the specified hash table.

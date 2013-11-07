@@ -1109,7 +1109,7 @@ addInfo(struct application *app, struct hit *hit, struct soltab *soltab, char fl
 
     /* find the table bin for this color */
     colorKey = getColorKey(partColor);
-    entry = bu_find_hash_entry(rtgljob.colorTable, colorKey, KEY_LENGTH, &prev, &index);
+    entry = bu_hash_tbl_find(rtgljob.colorTable, colorKey, KEY_LENGTH, &prev, &index);
 
     /* look for the correct color bin in the found entries */
     newColor = 1;
@@ -1143,7 +1143,7 @@ addInfo(struct application *app, struct hit *hit, struct soltab *soltab, char fl
 	rtgljob.currItem->used = 0;
 
 	/* add the new bin to the table */
-	entry = bu_hash_add_entry(rtgljob.colorTable, colorKey, KEY_LENGTH, &newColor);
+	entry = bu_hash_tbl_add(rtgljob.colorTable, colorKey, KEY_LENGTH, &newColor);
 	bu_set_hash_value(entry, (unsigned char *)bin);
     } else {
 	/* found existing color bin */
@@ -1620,7 +1620,7 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *UNUSED(vp))
     if (rtgljob.calls == 1 || rtgljob.colorTable == NULL) {
 
 	/* create color hash table */
-	rtgljob.colorTable = bu_create_hash_tbl(START_TABLE_SIZE);
+	rtgljob.colorTable = bu_hash_tbl_create(START_TABLE_SIZE);
     }
 
     /* allocate our visible trees */

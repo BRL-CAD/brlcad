@@ -622,7 +622,7 @@ get_brlcad_name( char *part_name )
     }
 
     /* find name for this part in hash table */
-    entry = bu_find_hash_entry( name_hash, (unsigned char *)name_copy, strlen( name_copy ), &prev, &index );
+    entry = bu_hash_tbl_find( name_hash, (unsigned char *)name_copy, strlen( name_copy ), &prev, &index );
 
     if ( entry ) {
 	if ( logger_type == LOGGER_TYPE_ALL ) {
@@ -634,7 +634,7 @@ get_brlcad_name( char *part_name )
 
 	/* must create a new name */
 	brlcad_name = create_unique_name( name_copy );
-	entry = bu_hash_add_entry( name_hash, (unsigned char *)name_copy, strlen( name_copy ), &new_entry );
+	entry = bu_hash_tbl_add( name_hash, (unsigned char *)name_copy, strlen( name_copy ), &new_entry );
 	bu_set_hash_value( entry, (unsigned char *)brlcad_name );
 	if ( logger_type == LOGGER_TYPE_ALL ) {
 	    fprintf( logger, "\tCreating new brlcad name (%s) for part (%s)\n", brlcad_name, name_copy );
@@ -2879,7 +2879,7 @@ create_name_hash( FILE *name_fd )
     int new_entry=0;
     long line_no=0;
 
-    htbl = bu_create_hash_tbl( NUM_HASH_TABLE_BINS );
+    htbl = bu_hash_tbl_create( NUM_HASH_TABLE_BINS );
 
     if ( logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( logger, "name hash created, now filling it:\n" );
@@ -2908,7 +2908,7 @@ create_name_hash( FILE *name_fd )
 	    bu_log( "\tIgnoring\n" );
 	    continue;
 	}
-	entry = bu_hash_add_entry( htbl, (unsigned char *)part_no, strlen( part_no ), &new_entry );
+	entry = bu_hash_tbl_add( htbl, (unsigned char *)part_no, strlen( part_no ), &new_entry );
 	if ( !new_entry ) {
 	    if ( logger_type == LOGGER_TYPE_ALL ) {
 		fprintf( logger, "\t\t\tHash table entry already exists for part number (%s)\n", part_no );
@@ -3306,7 +3306,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	    fprintf( logger, "No name hash used\n" );
 	}
 	/* create an empty hash table */
-	name_hash = bu_create_hash_tbl( 512 );
+	name_hash = bu_hash_tbl_create( 512 );
     }
 
     /* get the currently displayed model in Pro/E */

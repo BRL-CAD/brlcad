@@ -950,3 +950,8 @@ s/redraw_vlist/draw/g
 s/RT_BADNUM/INVALID/g
 s/RT_BADVAL/VINVALID/g
         moved RT_BADNUM and RT_BADVEC to vmath.h as INVALID and VINVALID [7.24]
+s/bu_create_hash_tbl/bu_hash_tbl_create/g
+s/bu_find_hash_entry/bu_hash_tbl_find/g
+s/bu_hash_add_entry/bu_hash_tbl_add/g
+s/bu_hash_tbl_pr/bu_hash_tbl_print/g
+	renamed for better consistency in hash table API and with other libbu API [7.24]
