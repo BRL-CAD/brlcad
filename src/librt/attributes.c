@@ -32,6 +32,9 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
     const char *cp;
     const char *ep;
     int count = 0;
+#if defined(USE_BINARY_ATTRIBUTES)
+    int bcount = 0; /* for the subset of binary attributes */
+#endif
 
     BU_CK_EXTERNAL(ap);
 
@@ -41,7 +44,8 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
     cp = (const char *)ap->ext_buf;
     ep = (const char *)ap->ext_buf+ap->ext_nbytes;
 
-    /* Null "name" string indicates end of attribute list */
+    /* Null "name" string (a pair of NULLs) indicates end of attribute
+     * list (for the original ASCII-valued attributes) */
     while (*cp != '\0') {
 	if (cp >= ep) {
 	    bu_log("db5_import_attributes() ran off end of buffer, database is probably corrupted\n");
@@ -51,8 +55,40 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
 	cp += strlen(cp)+1;	/* next name */
 	count++;
     }
+#if defined(USE_BINARY_ATTRIBUTES)
+    /* Do we have binary attributes?  If so, they are after the last
+     * ASCII attribute. */
+    if (ep > (cp+1)) {
+	/* Count binary attrs. */
+	/* format is: <ascii name> NULL <binary length [network order, must be decoded]> <bytes...> */
+	size_t abinlen;
+	cp += 2; /* We are now at the first byte of the first binary attribute... */
+	while (cp != ep) {
+	    ++bcount
+	    cp += strlen(cp)+1;	/* name */
+	    /* The next value is an unsigned integer of variable width
+	     * (a_width: DB5HDR_WIDTHCODE_x) so how do we get its
+	     * width?  We now have a new member of struct bu_external:
+	     * 'unsigned char intwid'.  Note that the integer
+	     * is in network order and must be properly decoded for
+	     * the local architecture.
+	     */
+	    cp += db5_decode_length(&abinlen, cp, ap->intwid);
+	    /* account for the abinlen bytes */
+	    cp += abinlen;
+	}
+	/* now cp should be at the end */
+	count += bcount;
+    } else {
+	/* step to the end for the sanity check */
+	++cp;
+    }
+    /* Ensure we're exactly at the end */
+    BU_ASSERT_PTR(cp, ==, ep);
+#else
     /* Ensure we're exactly at the end */
     BU_ASSERT_PTR(cp+1, ==, ep);
+#endif
 
     /* not really needed for AVS_ADD since bu_avs_add will
      * incrementally allocate as it needs it. but one alloc is better
@@ -74,8 +110,34 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
 	bu_avs_add(avs, name, cp);
 	cp += strlen(cp)+1; /* next name */
     }
-
+#if defined(USE_BINARY_ATTRIBUTES)
+    /* Do we have binary attributes?  If so, they are after the last
+     * ASCII attribute. */
+    if (ep > (cp+1)) {
+	/* Count binary attrs. */
+	/* format is: <ascii name> NULL <binary length [network order, must be decoded]> <bytes...> */
+	size_t abinlen;
+	cp += 2; /* We are now at the first byte of the first binary attribute... */
+	while (cp != ep) {
+	    const char *name = cp;  /* name */
+	    cp += strlen(cp)+1;	/* name */
+	    cp += db5_decode_length(&abinlen, cp, ap->intwid);
+	    /* now decode for the abinlen bytes */
+	    decode_binary_attribute(const size_t len, const char *cp)
+	    decod
+	    cp += abinlen;
+	}
+	/* now cp should be at the end */
+    } else {
+	/* step to the end for the sanity check */
+	++cp;
+    }
+    /* Ensure we're exactly at the end */
+    BU_ASSERT_PTR(cp, ==, ep);
+#else
     BU_ASSERT_PTR(cp+1, ==, ep);
+#endif
+
     BU_ASSERT_LONG(avs->count, <=, avs->max);
     BU_ASSERT_LONG((size_t)avs->count, ==, (size_t)count);
 
@@ -428,6 +490,13 @@ db5_fwrite_ident(FILE *fp, const char *title, double local2mm)
     return 0;
 }
 
+
+#if defined(USE_BINARY_ATTRIBUTES)
+void
+decode_binary_attribute(const size_t len, const char *cp)
+{
+}
+#endif
 
 /*
  * Local Variables:
