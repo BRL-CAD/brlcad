@@ -346,6 +346,7 @@ set(ged_ignore_files
   simulate/simulate.h
   simulate/simutils.h
   wdb_qray.h
+  osg.cpp
   )
 CMAKEFILES(${ged_ignore_files})
 
