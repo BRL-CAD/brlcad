@@ -187,7 +187,7 @@ Add_Default_Geometric_Context(Registry *registry, InstMgr *instance_list)
 		    EntityAggregate *unit_assigned_agg = new EntityAggregate();
 		    unit_assigned_agg->AddNode(new EntityNode((SDAI_Application_instance *)unit_complex));
 		    unit_assigned_agg->AddNode(new EntityNode((SDAI_Application_instance *)ua_entry_2));
-		    unit_assigned_agg->AddNode(new EntityNode((SDAI_Application_instance *)ua_entry_3));
+		    unit_assigned_agg->AddNode(new EntityNode((SDAI_Application_instance *)ua_entry_1));
 		    attr->ptr.a = unit_assigned_agg;
 		}
 	    }
