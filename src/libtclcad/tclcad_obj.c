@@ -488,6 +488,12 @@ HIDDEN int to_mouse_rotate_arb_face(struct ged *gedp,
 				    ged_func_ptr func,
 				    const char *usage,
 				    int maxargs);
+HIDDEN int to_mouse_data_scale(struct ged *gedp,
+			       int argc,
+			       const char *argv[],
+			       ged_func_ptr func,
+			       const char *usage,
+			       int maxargs);
 HIDDEN int to_mouse_scale(struct ged *gedp,
 			  int argc,
 			  const char *argv[],
@@ -720,6 +726,12 @@ HIDDEN int to_pscale_mode(struct ged *gedp,
 			  const char *usage,
 			  int maxargs);
 HIDDEN int to_ptranslate_mode(struct ged *gedp,
+			      int argc,
+			      const char *argv[],
+			      ged_func_ptr func,
+			      const char *usage,
+			      int maxargs);
+HIDDEN int to_data_scale_mode(struct ged *gedp,
 			      int argc,
 			      const char *argv[],
 			      ged_func_ptr func,
@@ -979,6 +991,7 @@ static struct to_cmdtab to_cmds[] = {
     {"data_move_object_mode",	"x y", TO_UNLIMITED, to_data_move_object_mode, GED_FUNC_PTR_NULL},
     {"data_move_point_mode",	"x y", TO_UNLIMITED, to_data_move_point_mode, GED_FUNC_PTR_NULL},
     {"data_pick",	"???", TO_UNLIMITED, to_data_pick, GED_FUNC_PTR_NULL},
+    {"data_scale_mode",	"x y", TO_UNLIMITED, to_data_scale_mode, GED_FUNC_PTR_NULL},
     {"dbconcat",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_concat},
     {"dbfind",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_find},
     {"dbip",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_dbip},
@@ -1104,6 +1117,7 @@ static struct to_cmdtab to_cmds[] = {
     {"mouse_append_pipept",	"obj mx my", TO_UNLIMITED, to_mouse_append_pt_common, ged_append_pipept},
     {"mouse_constrain_rot",	"coord mx my", TO_UNLIMITED, to_mouse_constrain_rot, GED_FUNC_PTR_NULL},
     {"mouse_constrain_trans",	"coord mx my", TO_UNLIMITED, to_mouse_constrain_trans, GED_FUNC_PTR_NULL},
+    {"mouse_data_scale",	"mx my", TO_UNLIMITED, to_mouse_data_scale, GED_FUNC_PTR_NULL},
     {"mouse_find_arb_edge",	"obj mx my ptol", TO_UNLIMITED, to_mouse_find_arb_edge, GED_FUNC_PTR_NULL},
     {"mouse_find_bot_edge",	"obj mx my", TO_UNLIMITED, to_mouse_find_bot_edge, GED_FUNC_PTR_NULL},
     {"mouse_find_botpt",	"obj mx my", TO_UNLIMITED, to_mouse_find_botpt, GED_FUNC_PTR_NULL},
@@ -4641,6 +4655,92 @@ bad:
     return GED_ERROR;
 }
 
+/*
+ * Usage: data_scale vname dtype sf
+ */
+HIDDEN int
+to_data_scale(struct ged *gedp,
+	     int argc,
+	     const char *argv[],
+	     ged_func_ptr UNUSED(func),
+	     const char *usage,
+	     int UNUSED(maxargs))
+{
+    register int i;
+    struct ged_dm_view *gdvp;
+    fastf_t sf;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc != 3) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
+	return GED_ERROR;
+    }
+
+    if (bu_sscanf(argv[2], "%lf", &sf) != 1 || sf < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Invalid scale factor - %s", argv[2]);
+	return GED_ERROR;
+    }
+
+    /* scale data arrows */
+    {
+	struct ged_data_arrow_state *gdasp = &gdvp->gdv_view->gv_data_arrows;
+	point_t vcenter = {0, 0, 0};
+
+	/* Scale the length of each arrow */
+	for (i = 0; i < gdasp->gdas_num_points; i += 2) {
+	    vect_t diff;
+	    point_t vpoint;
+
+	    MAT4X3PNT(vpoint, gedp->ged_gvp->gv_model2view, gdasp->gdas_points[i]);
+	    vcenter[Z] = vpoint[Z];
+	    VSUB2(diff, vpoint, vcenter);
+	    VSCALE(diff, diff, sf);
+	    VADD2(vpoint, vcenter, diff);
+	    MAT4X3PNT(gdasp->gdas_points[i], gedp->ged_gvp->gv_view2model, vpoint);
+	}
+    }
+
+    /* scale data labels */
+    {
+	struct ged_data_label_state *gdlsp = &gdvp->gdv_view->gv_data_labels;
+	point_t vcenter = {0, 0, 0};
+	point_t vpoint;
+
+	/* Scale the location of each label WRT the view center */
+	for (i = 0; i < gdlsp->gdls_num_labels; ++i) {
+	    vect_t diff;
+	    
+	    MAT4X3PNT(vpoint, gedp->ged_gvp->gv_model2view, gdlsp->gdls_points[i]);
+	    vcenter[Z] = vpoint[Z];
+	    VSUB2(diff, vpoint, vcenter);
+	    VSCALE(diff, diff, sf);
+	    VADD2(vpoint, vcenter, diff);
+	    MAT4X3PNT(gdlsp->gdls_points[i], gedp->ged_gvp->gv_view2model, vpoint);
+	}
+    }
+
+
+    to_refresh_view(gdvp);
+    return GED_OK;
+}
 
 HIDDEN int
 to_data_move_object_mode(struct ged *gedp,
@@ -8593,6 +8693,98 @@ to_mouse_rotate_arb_face(struct ged *gedp,
     return GED_OK;
 }
 
+#define TO_COMMON_MOUSE_SCALE(_gdvp, _zoom_vls, _argc, _argv, _usage) { \
+    fastf_t _dx, _dy; \
+    fastf_t _inv_width; \
+    fastf_t _sf; \
+ \
+    /* must be double for scanf */ \
+    double _x, _y; \
+ \
+    /* initialize result */ \
+    bu_vls_trunc(gedp->ged_result_str, 0); \
+ \
+    /* must be wanting help */ \
+    if ((_argc) == 1) { \
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", (_argv)[0], (_usage)); \
+	return GED_HELP; \
+    } \
+ \
+    if ((_argc) != 4) { \
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", (_argv)[0], (_usage)); \
+	return GED_ERROR; \
+    } \
+ \
+    for (BU_LIST_FOR((_gdvp), ged_dm_view, &current_top->to_gop->go_head_views.l)) { \
+	if (BU_STR_EQUAL(bu_vls_addr(&(_gdvp)->gdv_name), (_argv)[1])) \
+	    break; \
+    } \
+ \
+    if (BU_LIST_IS_HEAD(&(_gdvp)->l, &current_top->to_gop->go_head_views.l)) { \
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", (_argv)[1]); \
+	return GED_ERROR; \
+    } \
+ \
+    if (bu_sscanf((_argv)[2], "%lf", &_x) != 1 || \
+	bu_sscanf((_argv)[3], "%lf", &_y) != 1) { \
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", (_argv)[0], (_usage)); \
+	return GED_ERROR; \
+    } \
+ \
+    _dx = _x - (_gdvp)->gdv_view->gv_prevMouseX; \
+    _dy = (_gdvp)->gdv_view->gv_prevMouseY - _y; \
+ \
+    (_gdvp)->gdv_view->gv_prevMouseX = _x; \
+    (_gdvp)->gdv_view->gv_prevMouseY = _y; \
+ \
+    if (_dx < (_gdvp)->gdv_view->gv_minMouseDelta) \
+	_dx = (_gdvp)->gdv_view->gv_minMouseDelta; \
+    else if ((_gdvp)->gdv_view->gv_maxMouseDelta < _dx) \
+	_dx = (_gdvp)->gdv_view->gv_maxMouseDelta; \
+ \
+    if (_dy < (_gdvp)->gdv_view->gv_minMouseDelta) \
+	_dy = (_gdvp)->gdv_view->gv_minMouseDelta; \
+    else if ((_gdvp)->gdv_view->gv_maxMouseDelta < _dy) \
+	_dy = (_gdvp)->gdv_view->gv_maxMouseDelta; \
+ \
+    _inv_width = 1.0 / (fastf_t)(_gdvp)->gdv_dmp->dm_width; \
+    _dx *= _inv_width * (_gdvp)->gdv_view->gv_sscale; \
+    _dy *= _inv_width * (_gdvp)->gdv_view->gv_sscale; \
+ \
+    if (fabs(_dx) > fabs(_dy)) \
+	_sf = 1.0 + _dx; \
+    else \
+	_sf = 1.0 + _dy; \
+ \
+    bu_vls_printf(&(_zoom_vls), "%lf", _sf);	\
+}
+
+HIDDEN int
+to_mouse_data_scale(struct ged *gedp,
+		    int argc,
+		    const char *argv[],
+		    ged_func_ptr UNUSED(func),
+		    const char *usage,
+		    int UNUSED(maxargs))
+{
+    int ret;
+    char *av[4];
+    struct bu_vls scale_vls = BU_VLS_INIT_ZERO;
+    struct ged_dm_view *gdvp;
+
+    TO_COMMON_MOUSE_SCALE(gdvp, scale_vls, argc, argv, usage);
+    gedp->ged_gvp = gdvp->gdv_view;
+
+    av[0] = "to_data_scale";
+    av[1] = (char *)argv[1];
+    av[2] = bu_vls_addr(&scale_vls);
+    av[3] = (char *)0;
+    ret = to_data_scale(gedp, 3, (const char **)av, (ged_func_ptr)NULL, "whatever", 4);
+    bu_vls_free(&scale_vls);
+
+    return GED_OK;
+}
+
 HIDDEN int
 to_mouse_scale(struct ged *gedp,
 	       int argc,
@@ -8603,77 +8795,15 @@ to_mouse_scale(struct ged *gedp,
 {
     int ret;
     char *av[3];
-    fastf_t dx, dy;
-    fastf_t sf;
-    fastf_t inv_width;
     struct bu_vls zoom_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
 
-    /* must be double for scanf */
-    double x, y;
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    /* must be wanting help */
-    if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
-    }
-
-    if (argc != 4) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
-    }
-
-    if (bu_sscanf(argv[2], "%lf", &x) != 1 ||
-	bu_sscanf(argv[3], "%lf", &y) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
-    dx = x - gdvp->gdv_view->gv_prevMouseX;
-    dy = gdvp->gdv_view->gv_prevMouseY - y;
-
-    gdvp->gdv_view->gv_prevMouseX = x;
-    gdvp->gdv_view->gv_prevMouseY = y;
-
-    if (dx < gdvp->gdv_view->gv_minMouseDelta)
-	dx = gdvp->gdv_view->gv_minMouseDelta;
-    else if (gdvp->gdv_view->gv_maxMouseDelta < dx)
-	dx = gdvp->gdv_view->gv_maxMouseDelta;
-
-    if (dy < gdvp->gdv_view->gv_minMouseDelta)
-	dy = gdvp->gdv_view->gv_minMouseDelta;
-    else if (gdvp->gdv_view->gv_maxMouseDelta < dy)
-	dy = gdvp->gdv_view->gv_maxMouseDelta;
-
-    inv_width = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
-    dx *= inv_width * gdvp->gdv_view->gv_sscale;
-    dy *= inv_width * gdvp->gdv_view->gv_sscale;
-
-    if (fabs(dx) > fabs(dy))
-	sf = 1.0 + dx;
-    else
-	sf = 1.0 + dy;
-
-    bu_vls_printf(&zoom_vls, "%lf", sf);
-
+    TO_COMMON_MOUSE_SCALE(gdvp, zoom_vls, argc, argv, usage);
     gedp->ged_gvp = gdvp->gdv_view;
+
     av[0] = "zoom";
     av[1] = bu_vls_addr(&zoom_vls);
     av[2] = (char *)0;
-
     ret = ged_zoom(gedp, 2, (const char **)av);
     bu_vls_free(&zoom_vls);
 
@@ -11251,6 +11381,64 @@ to_ptranslate_mode(struct ged *gedp,
 		  &gdvp->gdv_name,
 		  argv[2],
 		  argv[3]);
+    Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
+    bu_vls_free(&bindings);
+
+    return GED_OK;
+}
+
+HIDDEN int
+to_data_scale_mode(struct ged *gedp,
+		   int argc,
+		   const char *argv[],
+		   ged_func_ptr UNUSED(func),
+		   const char *usage,
+		   int UNUSED(maxargs))
+{
+    struct bu_vls bindings = BU_VLS_INIT_ZERO;
+    struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc != 4) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
+	return GED_ERROR;
+    }
+
+    if (bu_sscanf(argv[2], "%lf", &x) != 1 ||
+	bu_sscanf(argv[3], "%lf", &y) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    gdvp->gdv_view->gv_prevMouseX = x;
+    gdvp->gdv_view->gv_prevMouseY = y;
+    gdvp->gdv_view->gv_mode = TCLCAD_DATA_SCALE_MODE;
+
+    bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_data_scale %V %%x %%y}",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &current_top->to_gop->go_name,
+		  &gdvp->gdv_name);
     Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     bu_vls_free(&bindings);
 
