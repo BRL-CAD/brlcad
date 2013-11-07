@@ -52,6 +52,7 @@ struct rt_wdb *outfp;
 void usage(const char *progname)
 {
     fprintf(stderr, "Usage: %s raw_vertex_file\n", progname);
+    fprintf(stderr, "      (raw_vertex_file also serves as part of .g file object names)\n");
     bu_exit(-1, NULL);
 }
 
@@ -64,21 +65,21 @@ int main(int argc, char *argv[])
     int *faces;
     fastf_t *thickness;
     FILE *inputFile;
-    short int triangleAvailable;
-    long int triangleCount;
-    long int maxTriangleCapacity;
+    short int triangleAvailable = 1;
+    long int triangleCount = 0;
+    long int maxTriangleCapacity = 100;
     long int j;
     char *outputObjectName;
 
-    if (argc != 2) {
+    if (argc != 2 || BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?"))
 	usage(argv[0]);
-    }
 
     outfp = wdb_fopen("rawbot.g");
     if (outfp == NULL) {
 	fprintf(stderr, "Unable to open the output file rawbot.g\n");
 	return 1;
     }
+    printf("Creating file rawbot.g\n");
     /* units would be nice... */
     mk_id(outfp, "RAW BOT");
 
@@ -90,10 +91,7 @@ int main(int argc, char *argv[])
     }
 
     vertices = bu_calloc(128 * 3, sizeof(fastf_t), "vertices");
-    maxTriangleCapacity = 128;
 
-    triangleCount=0;
-    triangleAvailable = 1;
     while (triangleAvailable == 1) {
 	/* read a set of input values -- input data should be a 3-tuple
 	 * of floating points.
@@ -153,9 +151,9 @@ int main(int argc, char *argv[])
     }
 
     /*
-      for (j=0; j < triangleCount * 3; j++) {
-      printf("%f\n", vertices[j]);
-      }
+    for (j=0; j < triangleCount * 3; j++)
+	printf("%f\n", vertices[j]);
+
     */
 
     outputObjectName = (char *)bu_calloc(512, sizeof(char), "outputObjectName");
