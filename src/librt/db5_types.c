@@ -36,6 +36,7 @@
 #include "vmath.h"
 #include "db5.h"
 #include "raytrace.h"
+#include "db5_attrs_private.h"
 
 
 struct db5_type {
@@ -106,59 +107,6 @@ static const struct db5_type type_table[] = {
     /* Following entry must be at end of table */
     { DB5_MAJORTYPE_RESERVED, 0, 0, 0, 0 },
 };
-
-#if defined(USE_BINARY_ATTRIBUTES)
-struct db5_attr_type {
-    int index; /* from enum in raytrace.h */
-    int is_binary; /* 0 for ASCII attributes; 1 for binary attributes */
-    /* names should be specified with alphanumeric charcters
-     * (lower-case letters, no white space) and will act as unique
-     * keys to an object's attribute list */
-    char *name; /* the "standard" name */
-    char *description;
-    char *aliases; /* comma-delimited list of alternative names for this attribute */
-};
-/* this will be the master source of standard and registered attributes */
-static const struct db5_attr_type attr_type_table[] = {
-    { ATTR_REGION, 0,
-      "region",
-      "true or false",
-      ""},
-    { ATTR_REGION_ID, 0,
-      "region_id",
-      "a positive integer",
-      "id"},
-    { ATTR_MATERIAL_ID, 0,
-      "material_id",
-      "a positive integer (user-defined)",
-      "giftmater,mat"},
-    { ATTR_AIR, 0,
-      "aircode",
-      "an integer (application defined)",
-      "air"},
-    { ATTR_LOS, 0,
-      "los",
-      "an integer in the inclusive range: 0 to 100",
-      ""},
-    { ATTR_COLOR, 0,
-      "color",
-      "a 3-tuple of RGB values (e.g., \"0 255 255\")",
-      "rgb"},
-    { ATTR_SHADER, 0,
-      "shader",
-      "a string of shader characteristics in a standard format",
-      "oshader"},
-    { ATTR_INHERIT, 0,
-      "inherit", "", ""},
-    { ATTR_TIMESTAMP, 1, /* first binary attribute */
-      "mtime",
-      "a binary time stamp for an object's last mod time (the time is displayed in human-readable form with the 'attr' command)",
-      "timestamp,time_stamp,modtime,mod_time"},
-    /* this must end the list: */
-    { ATTR_NULL, 0, 0, 0, 0},
-};
-
-#endif
 
 
 int
@@ -325,11 +273,21 @@ db5_type_sizeof_n_binu(const int minor)
     return 0;
 }
 
-
-/* FIXME: make attrs into a const struct for name/definition */
 const char *
 db5_standard_attribute(int idx)
 {
+    /* FIXME: turn this into a C++ wrapper
+     *
+     * it is called in:
+     *   ./src/librt/comb/comb.c
+     *   ./src/librt/db5_types.c
+     *   ./src/libged/red.c
+     *   ./src/nirt/if.c
+     *   ./src/nirt/nirt.c
+     */
+#if 1 /* new version */
+    return db5_attr_standard_attribute(idx);
+#else
     switch (idx) {
 	case ATTR_REGION:
 	    return "region";
@@ -354,10 +312,12 @@ db5_standard_attribute(int idx)
     }
     /* no match */
     return NULL;
+#endif
 }
 
 
-/* FIXME: make attrs into a const struct for name/definition */
+#if 0 /* no longer used */
+/* FIXME: make attrs into a const struct for name, definition, etc (DONE */
 const char *
 db5_standard_attribute_def(int idx)
 {
@@ -386,11 +346,20 @@ db5_standard_attribute_def(int idx)
     /* no match */
     return NULL;
 }
-
+#endif /* no longer used */
 
 int
 db5_is_standard_attribute(const char *attr_want)
 {
+    /* FIXME: turn this into a C++ wrapper
+     *
+     * it is called in:
+     *   ./src/librt/db5_types.c
+     *   ./src/libged/red.c
+     */
+#if 1 /* new version */
+    return db5_attr_is_standard_attribute(attr_want);
+#else
     int i = 0;
     const char *attr_have = NULL;
 
@@ -400,14 +369,24 @@ db5_is_standard_attribute(const char *attr_want)
     for (i = 0; (attr_have = db5_standard_attribute(i)) != NULL; i++) {
 	if (BU_STR_EQUIV(attr_want, attr_have)) return 1;
     }
-
     return 0;
+#endif
 }
 
 
 int
 db5_standardize_attribute(const char *attr)
 {
+    /* FIXME: turn this into a C++ wrapper
+     *
+     * it is called in:
+     *   ./src/librt/comb/comb.c
+     *   ./src/librt/db5_types.c
+     *   ./src/nirt/if.c
+     */
+#if 1 /* new version */
+    return db5_attr_standardize_attribute(attr);
+#else
     if (!attr)
 	return ATTR_NULL;
 
@@ -452,6 +431,8 @@ db5_standardize_attribute(const char *attr)
     /* end-standard-attributes-list */
 
     return ATTR_NULL;
+#endif
+
 }
 
 
