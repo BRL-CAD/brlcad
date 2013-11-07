@@ -115,6 +115,7 @@ set(libdm_ignore_files
   dm-qt.cpp
   dm-rtgl.c
   dm-tk.c
+  osg.cpp
   TODO
   )
 CMAKEFILES(${libdm_ignore_files})
