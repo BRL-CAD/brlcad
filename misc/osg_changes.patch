@@ -1,0 +1,591 @@
+Index: include/dm.h
+===================================================================
+--- include/dm.h	(revision 48081)
++++ include/dm.h	(working copy)
+@@ -282,6 +282,7 @@
+     int dm_clearBufferAfter;	/**< @brief 1 means clear back buffer after drawing and swap */
+     int dm_fontsize;		/**< @brief !0 override's the auto font size */
+     Tcl_Interp *dm_interp;	/**< @brief Tcl interpreter */
++    void *dm_osgData;		/**< @brief */
+ };
+ 
+ 
+Index: src/mged/dozoom.c
+===================================================================
+--- src/mged/dozoom.c	(revision 48081)
++++ src/mged/dozoom.c	(working copy)
+@@ -39,6 +39,8 @@
+ #include "./sedit.h"
+ #include "./mged_dm.h"
+ 
++#define USE_OSG 1
++
+ mat_t perspective_mat;
+ mat_t incr_change;
+ mat_t modelchanges;
+@@ -47,7 +49,7 @@
+ /* This is a holding place for the current display managers default wireframe color */
+ extern unsigned char geometry_default_color[];		/* defined in dodraw.c */
+ 
+-
++#if 0
+ /*
+  * P E R S P _ M A T
+  *
+@@ -247,6 +249,7 @@
+         }
+     }
+ }
++#endif
+ 
+ 
+ /*
+@@ -258,8 +261,12 @@
+  * screen position for the object.
+  */
+ void
+-dozoom(int which_eye)
++dozoom(int UNUSED(which_eye))
+ {
++#if USE_OSG
++    DM_LOADMATRIX(dmp, view_state->vs_gvp->gv_model2view, 0);
++    DM_DRAWDLIST(dmp, 0);
++#else
+     struct ged_display_list *gdlp;
+     struct ged_display_list *next_gdlp;
+     struct solid *sp;
+@@ -352,6 +359,10 @@
+ 	}
+ 	bn_mat_mul(new, perspective_mat, mat);
+ 	mat = new;
++#if USE_OSG
++	/*XXX temporary for osg testing */
++	mat = view_state->vs_gvp->gv_model2view;
++#endif
+     }
+ 
+     DM_LOADMATRIX(dmp, mat, which_eye);
+@@ -536,6 +547,7 @@
+ 	bn_mat_mul(new, perspective_mat, view_state->vs_model2objview);
+ 	mat = new;
+     }
++
+     DM_LOADMATRIX(dmp, mat, which_eye);
+     inv_viewsize /= modelchanges[15];
+     DM_SET_FGCOLOR(dmp,
+@@ -595,6 +607,7 @@
+      */
+     if (curr_dm_list != save_dm_list)
+ 	curr_dm_list = save_dm_list;
++#endif
+ }
+ 
+ 
+Index: src/mged/chgview.c
+===================================================================
+--- src/mged/chgview.c	(revision 48081)
++++ src/mged/chgview.c	(working copy)
+@@ -42,6 +42,12 @@
+ #include "./cmd.h"
+ 
+ 
++#define USE_OSG 1
++
++#if USE_OSG
++void ged_osgLoadScene(struct bu_list *hdlp, void *osgData);
++#endif
++
+ extern struct db_tree_state mged_initial_tree_state;	/* dodraw.c */
+ 
+ extern void color_soltab(void);
+@@ -422,6 +428,10 @@
+ 	}
+     }
+ 
++#if USE_OSG
++    ged_osgLoadScene(&gedp->ged_gdp->gd_headDisplay, curr_dm_list->dml_dmp->dm_osgData);
++#endif
++
+     update_views = 1;
+ 
+     if (flag_R_noresize) {
+Index: src/libdm/dm-Null.c
+===================================================================
+--- src/libdm/dm-Null.c	(revision 48081)
++++ src/libdm/dm-Null.c	(working copy)
+@@ -164,7 +164,8 @@
+     0,				/* no zclipping */
+     1,                          /* clear back buffer after drawing and swap */
+     0,                          /* not overriding the auto font size */
+-    0				/* Tcl interpreter */
++    0,				/* Tcl interpreter */
++    0				/* other */
+ };
+ 
+ 
+Index: src/libdm/dm-ogl.c
+===================================================================
+--- src/libdm/dm-ogl.c	(revision 48081)
++++ src/libdm/dm-ogl.c	(working copy)
+@@ -79,7 +79,6 @@
+ #include "dm_xvars.h"
+ #include "solid.h"
+ 
+-
+ #define VIEWFACTOR      (1.0/(*dmp->dm_vp))
+ #define VIEWSIZE        (2.0*(*dmp->dm_vp))
+ 
+@@ -96,6 +95,16 @@
+ #define IRBOUND 4095.9	/* Max magnification in Rot matrix */
+ #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
+ 
++#define USE_OSG 1
++
++#if USE_OSG
++extern void dm_osgInit(struct dm *dmp);
++extern void dm_osgReshape(struct dm *dmp);
++extern void dm_osgPaint(struct dm *dmp);
++extern void dm_osgLoadMatrix(struct dm *dmp, matp_t mp);
++extern void dm_osgLoadScene(struct dm *dmp, struct bu_list *hdlp);
++#endif
++
+ struct dm *ogl_open(Tcl_Interp *interp, int argc, char **argv);
+ HIDDEN int ogl_close(struct dm *dmp);
+ HIDDEN int ogl_drawBegin(struct dm *dmp);
+@@ -197,7 +206,8 @@
+     0,				/* no zclipping */
+     0,                          /* clear back buffer after drawing and swap */
+     0,                          /* not overriding the auto font size */
+-    0				/* Tcl interpreter */
++    0,				/* Tcl interpreter */
++    0				/* other */
+ };
+ 
+ 
+@@ -232,6 +242,10 @@
+     if (dmp->dm_debugLevel)
+ 	bu_log("ogl_setBGColor()\n");
+ 
++#if USE_OSG
++    return TCL_OK;
++#endif
++
+     dmp->dm_bg[0] = r;
+     dmp->dm_bg[1] = g;
+     dmp->dm_bg[2] = b;
+@@ -276,6 +290,10 @@
+     XWindowAttributes xwa;
+     XFontStruct *newfontstruct;
+ 
++#if USE_OSG
++    return TCL_OK;
++#endif
++
+     if (dmp->dm_debugLevel)
+ 	bu_log("ogl_configureWin_guts()\n");
+ 
+@@ -416,7 +434,9 @@
+ HIDDEN void
+ ogl_reshape(struct dm *dmp, int width, int height)
+ {
++#if !USE_OSG
+     GLint mm;
++#endif
+ 
+     dmp->dm_height = height;
+     dmp->dm_width = width;
+@@ -427,6 +447,7 @@
+ 	bu_log("width = %d, height = %d\n", dmp->dm_width, dmp->dm_height);
+     }
+ 
++#if !USE_OSG
+     glViewport(0, 0, dmp->dm_width, dmp->dm_height);
+ 
+     glClearColor(((struct ogl_vars *)dmp->dm_vars.priv_vars)->r,
+@@ -440,6 +461,10 @@
+     glLoadIdentity();
+     glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
+     glMatrixMode(mm);
++
++#else
++    dm_osgReshape(dmp);
++#endif
+ }
+ 
+ 
+@@ -453,6 +478,10 @@
+ HIDDEN int
+ ogl_setLight(struct dm *dmp, int lighting_on)
+ {
++#if USE_OSG
++    return TCL_OK;
++#endif
++
+     if (dmp->dm_debugLevel)
+ 	bu_log("ogl_setLight()\n");
+ 
+@@ -638,6 +667,10 @@
+ HIDDEN int
+ ogl_close(struct dm *dmp)
+ {
++#if USE_OSG
++    return TCL_OK;
++#endif
++
+     if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy) {
+ 	if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc) {
+ 	    glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy, None, NULL);
+@@ -963,6 +996,7 @@
+ 
+     Tk_MapWindow(pubvars->xtkwin);
+ 
++#if !USE_OSG
+     if (!glXMakeCurrent(pubvars->dpy, pubvars->win, privvars->glxc)) {
+ 	bu_log("ogl_open: Couldn't make context current\n");
+ 	(void)ogl_close(dmp);
+@@ -1019,6 +1053,11 @@
+     ogl_setZBuffer(dmp, dmp->dm_zbuffer);
+     ogl_setLight(dmp, dmp->dm_light);
+ 
++#else
++    backgnd[0] = backgnd[1] = backgnd[2] = backgnd[3] = 0.0;
++    dm_osgInit(dmp);
++#endif
++
+     return dmp;
+ }
+ 
+@@ -1032,6 +1071,10 @@
+     GLfloat vf;
+     GLXContext old_glxContext;
+ 
++#if USE_OSG
++    return TCL_OK;
++#endif
++
+     if (dmp1 == (struct dm *)NULL)
+ 	return TCL_ERROR;
+ 
+@@ -1199,6 +1242,10 @@
+ {
+     GLfloat fogdepth;
+ 
++#if USE_OSG
++    return TCL_OK;
++#endif
++
+     if (dmp->dm_debugLevel) {
+ 	bu_log("ogl_drawBegin\n");
+ 
+@@ -1256,6 +1303,10 @@
+ HIDDEN int
+ ogl_drawEnd(struct dm *dmp)
+ {
++#if USE_OSG
++    return TCL_OK;
++#endif
++
+     if (dmp->dm_debugLevel)
+ 	bu_log("ogl_drawEnd\n");
+ 
+@@ -1373,9 +1424,18 @@
+     gtmat[11] = *(mptr++);
+     gtmat[15] = *(mptr++);
+ 
++#if USE_OSG
++#if 1
++    /*bn_mat_print("from ogl_loadMatrix", mat); */
++    dm_osgLoadMatrix(dmp, (matp_t)mat);
++#else
++    dm_osgLoadMatrix(dmp, (matp_t)gtmat);
++#endif
++#else
+     glMatrixMode(GL_MODELVIEW);
+     glLoadIdentity();
+     glLoadMatrixf(gtmat);
++#endif
+ 
+     return TCL_OK;
+ }
+@@ -1391,6 +1451,10 @@
+     register struct bn_vlist	*tvp;
+     int				first;
+ 
++#if USE_OSG
++    return TCL_OK;
++#endif
++
+     if (dmp->dm_debugLevel)
+ 	bu_log("ogl_drawVList()\n");
+ 
+@@ -1543,6 +1607,10 @@
+     int mflag = 1;
+     static float black[4] = {0.0, 0.0, 0.0, 0.0};
+ 
++#if USE_OSG
++    return TCL_OK;
++#endif
++
+     if (dmp->dm_debugLevel)
+ 	bu_log("ogl_drawVList()\n");
+ 
+@@ -1645,6 +1713,10 @@
+ HIDDEN int
+ ogl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data)
+ {
++#if USE_OSG
++    return TCL_OK;
++#endif
++
+     struct bn_vlist *vp;
+     if (!callback_function) {
+ 	if (data) {
+@@ -1675,6 +1747,10 @@
+     if (dmp->dm_debugLevel)
+ 	bu_log("ogl_normal\n");
+ 
++#if USE_OSG
++    return TCL_OK;
++#endif
++
+     if (!((struct ogl_vars *)dmp->dm_vars.priv_vars)->face_flag) {
+ 	glMatrixMode(GL_PROJECTION);
+ 	glPushMatrix();
+@@ -1702,6 +1778,10 @@
+ HIDDEN int
+ ogl_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
+ {
++#if USE_OSG
++    return TCL_OK;
++#endif
++
+     if (dmp->dm_debugLevel)
+ 	bu_log("ogl_drawString2D()\n");
+ 
+@@ -1725,6 +1805,10 @@
+ ogl_drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2)
+ {
+ 
++#if USE_OSG
++    return TCL_OK;
++#endif
++
+     if (dmp->dm_debugLevel)
+ 	bu_log("ogl_drawLine2D()\n");
+ 
+@@ -1763,6 +1847,10 @@
+ {
+     static float black[4] = {0.0, 0.0, 0.0, 0.0};
+ 
++#if USE_OSG
++    return TCL_OK;
++#endif
++
+     if (dmp->dm_debugLevel)
+ 	bu_log("ogl_drawLine3D()\n");
+ 
+@@ -1812,6 +1900,10 @@
+     int i;
+     static float black[4] = {0.0, 0.0, 0.0, 0.0};
+ 
++#if USE_OSG
++    return TCL_OK;
++#endif
++
+     if (dmp->dm_debugLevel)
+ 	bu_log("ogl_drawLine3D()\n");
+ 
+@@ -1862,6 +1954,10 @@
+ HIDDEN int
+ ogl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
+ {
++#if USE_OSG
++    return TCL_OK;
++#endif
++
+     if (dmp->dm_debugLevel) {
+ 	bu_log("ogl_drawPoint2D():\n");
+ 	bu_log("\tdmp: %p\tx - %lf\ty - %lf\n", (void *)dmp, x, y);
+@@ -1885,6 +1981,10 @@
+     dmp->dm_fg[1] = g;
+     dmp->dm_fg[2] = b;
+ 
++#if USE_OSG
++    return TCL_OK;
++#endif
++
+     /* wireColor gets the full rgb */
+     wireColor[0] = r / 255.0;
+     wireColor[1] = g / 255.0;
+@@ -1944,6 +2044,10 @@
+     if (dmp->dm_debugLevel)
+ 	bu_log("ogl_setLineAttr()\n");
+ 
++#if USE_OSG
++    return TCL_OK;
++#endif
++
+     dmp->dm_lineWidth = width;
+     dmp->dm_lineStyle = style;
+ 
+@@ -1972,6 +2076,10 @@
+ {
+     GLint mm;
+ 
++#if USE_OSG
++    return TCL_OK;
++#endif
++
+     if (dmp->dm_debugLevel)
+ 	bu_log("ogl_setWinBounds()\n");
+ 
+@@ -2008,6 +2116,10 @@
+     if (dmp->dm_debugLevel)
+ 	bu_log("ogl_setTransparency()\n");
+ 
++#if USE_OSG
++    return TCL_OK;
++#endif
++
+     dmp->dm_transparency = transparency_on;
+     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.transparency_on = dmp->dm_transparency;
+ 
+@@ -2037,6 +2149,10 @@
+     if (dmp->dm_debugLevel)
+ 	bu_log("ogl_setDepthMask()\n");
+ 
++#if USE_OSG
++    return TCL_OK;
++#endif
++
+     dmp->dm_depthMask = enable;
+ 
+     if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+@@ -2061,6 +2177,10 @@
+     if (dmp->dm_debugLevel)
+ 	bu_log("ogl_setZBuffer:\n");
+ 
++#if USE_OSG
++    return TCL_OK;
++#endif
++
+     dmp->dm_zbuffer = zbuffer_on;
+     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on = dmp->dm_zbuffer;
+ 
+@@ -2090,6 +2210,10 @@
+ HIDDEN int
+ ogl_beginDList(struct dm *dmp, unsigned int list)
+ {
++#if USE_OSG
++    return TCL_OK;
++#endif
++
+     if (dmp->dm_debugLevel)
+ 	bu_log("ogl_beginDList()\n");
+ 
+@@ -2108,6 +2232,10 @@
+ HIDDEN int
+ ogl_endDList(struct dm *dmp)
+ {
++#if USE_OSG
++    return TCL_OK;
++#endif
++
+     if (dmp->dm_debugLevel)
+ 	bu_log("ogl_endDList()\n");
+ 
+@@ -2119,10 +2247,16 @@
+ HIDDEN int
+ ogl_drawDList(struct dm *dmp, unsigned int list)
+ {
++#if USE_OSG
+     if (dmp->dm_debugLevel)
++	bu_log("shut up %d\n", list);
++    dm_osgPaint(dmp);
++#else
++    if (dmp->dm_debugLevel)
+ 	bu_log("ogl_drawDList()\n");
+ 
+     glCallList(dmp->dm_displaylist + list);
++#endif
+     return TCL_OK;
+ }
+ 
+@@ -2130,6 +2264,10 @@
+ HIDDEN int
+ ogl_freeDLists(struct dm *dmp, unsigned int list, int range)
+ {
++#if USE_OSG
++    return TCL_OK;
++#endif
++
+     if (dmp->dm_debugLevel)
+ 	bu_log("ogl_freeDLists()\n");
+ 
+@@ -2163,6 +2301,10 @@
+     int big_endian;
+     int swap_bytes;
+ 
++#if USE_OSG
++    return TCL_OK;
++#endif
++
+     if ((bu_byteorder() == BU_BIG_ENDIAN))
+ 	big_endian = 1;
+     else
+Index: src/libdm/dm-plot.c
+===================================================================
+--- src/libdm/dm-plot.c	(revision 48081)
++++ src/libdm/dm-plot.c	(working copy)
+@@ -559,7 +559,8 @@
+     0,				/* no zclipping */
+     1,                          /* clear back buffer after drawing and swap */
+     0,                          /* not overriding the auto font size */
+-    NULL			/* Tcl interpreter */
++    NULL,			/* Tcl interpreter */
++    0				/* other */
+ };
+ 
+ 
+Index: src/libdm/dm-ps.c
+===================================================================
+--- src/libdm/dm-ps.c	(revision 48081)
++++ src/libdm/dm-ps.c	(working copy)
+@@ -563,7 +563,8 @@
+     0,				/* no zclipping */
+     1,                          /* clear back buffer after drawing and swap */
+     0,                          /* not overriding the auto font size */
+-    0				/* Tcl interpreter */
++    0,				/* Tcl interpreter */
++    0				/* other */
+ };
+ 
+ 
+Index: src/libdm/dm-tk.c
+===================================================================
+--- src/libdm/dm-tk.c	(revision 48081)
++++ src/libdm/dm-tk.c	(working copy)
+@@ -863,7 +863,8 @@
+     0,				/* no zclipping */
+     1,                          /* clear back buffer after drawing and swap */
+     0,                          /* not overriding the auto font size */
+-    0				/* Tcl interpreter */
++    0,				/* Tcl interpreter */
++    0				/* other */
+ };
+ 
+ 
+Index: src/libdm/dm-X.c
+===================================================================
+--- src/libdm/dm-X.c	(revision 48081)
++++ src/libdm/dm-X.c	(working copy)
+@@ -1686,7 +1686,8 @@
+     0,				/* no zclipping */
+     1,                          /* clear back buffer after drawing and swap */
+     0,                          /* not overriding the auto font size */
+-    0				/* Tcl interpreter */
++    0,				/* Tcl interpreter */
++    0				/* other */
+ };
+ 
+ 

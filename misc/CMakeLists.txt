@@ -89,6 +89,7 @@ set(misc_ignore_files
   macosx
   nsis
   win32-msvc
+  osg_changes.patch
   )
 CMAKEFILES(${misc_ignore_files})
 
