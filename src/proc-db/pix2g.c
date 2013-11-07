@@ -182,14 +182,14 @@ main(int ac, char *av[])
     snprintf(imageFileName, MAXSIZE, "%s", av[1]);
     snprintf(databaseFileName, MAXSIZE, "%s", av[2]);
 
-    if (ac > 6) {
-	objectSize=(double)atof(av[6]);
-	if (ac > 5) {
-	    cellSize=(double)atof(av[5]);
-	    if (ac > 4) {
-		height=(int)atoi(av[4]);
-		if (ac > 3)
-		     width=(int)atoi(av[3]);
+    if (ac > 3) {
+	width=(int)atoi(av[3]);
+	if (ac > 4) {
+	    height=(int)atoi(av[4]);
+	    if (ac > 5) {
+		cellSize=(double)atof(av[5]);
+		if (ac > 6)
+		    objectSize=(double)atof(av[6]);
 	    }
 	}
     }
