@@ -5897,7 +5897,7 @@ typedef struct bu_hash_tbl bu_hash_tbl_t;
  */
 struct bu_hash_record {
     uint32_t magic;
-    struct bu_hash_tbl *tbl;
+    const struct bu_hash_tbl *tbl;
     unsigned long index;
     struct bu_hash_entry *hsh_entry;
 };
@@ -5934,7 +5934,7 @@ typedef struct bu_hash_record bu_hash_record_t;
 /**
  * the hashing function
  */
-BU_EXPORT extern unsigned long bu_hash(unsigned char *str,
+BU_EXPORT extern unsigned long bu_hash(const unsigned char *str,
 				       int len);
 
 /**
@@ -5960,8 +5960,8 @@ BU_EXPORT extern struct bu_hash_tbl *bu_create_hash_tbl(unsigned long tbl_size);
  * the hash table entry corresponding to the provided key, or NULL if
  * not found.
  */
-BU_EXPORT extern struct bu_hash_entry *bu_find_hash_entry(struct bu_hash_tbl *hsh_tbl,
-							  unsigned char *key,
+BU_EXPORT extern struct bu_hash_entry *bu_find_hash_entry(const struct bu_hash_tbl *hsh_tbl,
+							  const unsigned char *key,
 							  int key_len,
 							  struct bu_hash_entry **prev,
 							  unsigned long *idx);
@@ -5978,12 +5978,12 @@ BU_EXPORT extern void bu_set_hash_value(struct bu_hash_entry *hsh_entry,
 /**
  * get the value pointer stored for the specified hash table entry
  */
-BU_EXPORT extern unsigned char *bu_get_hash_value(struct bu_hash_entry *hsh_entry);
+BU_EXPORT extern unsigned char *bu_get_hash_value(const struct bu_hash_entry *hsh_entry);
 
 /**
  * get the key pointer stored for the specified hash table entry
  */
-BU_EXPORT extern unsigned char *bu_get_hash_key(struct bu_hash_entry *hsh_entry);
+BU_EXPORT extern unsigned char *bu_get_hash_key(const struct bu_hash_entry *hsh_entry);
 
 /**
  * Add an new entry to a hash table
@@ -6002,7 +6002,7 @@ BU_EXPORT extern unsigned char *bu_get_hash_key(struct bu_hash_entry *hsh_entry)
  * the specified key and key_len.
  */
 BU_EXPORT extern struct bu_hash_entry *bu_hash_add_entry(struct bu_hash_tbl *hsh_tbl,
-							 unsigned char *key,
+							 const unsigned char *key,
 							 int key_len,
 							 int *new_entry);
 
@@ -6011,8 +6011,8 @@ BU_EXPORT extern struct bu_hash_entry *bu_hash_add_entry(struct bu_hash_tbl *hsh
  *
  * (Note that the keys and values are printed as pointers)
  */
-BU_EXPORT extern void bu_hash_tbl_pr(struct bu_hash_tbl *hsh_tbl,
-				     char *str);
+BU_EXPORT extern void bu_hash_tbl_pr(const struct bu_hash_tbl *hsh_tbl,
+				     const char *str);
 
 /**
  * Free all the memory associated with the specified hash table.
@@ -6033,7 +6033,7 @@ BU_EXPORT extern void bu_hash_tbl_free(struct bu_hash_tbl *hsh_tbl);
  * entries (Note that the order of entries is not likely to have any
  * significance)
  */
-BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_first(struct bu_hash_tbl *hsh_tbl,
+BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_first(const struct bu_hash_tbl *hsh_tbl,
 							 struct bu_hash_record *rec);
 
 /**

@@ -29,7 +29,7 @@
 
 
 unsigned long
-bu_hash(unsigned char *str, int len)
+bu_hash(const unsigned char *str, int len)
 {
     unsigned long hash = 5381;
     int i, c;
@@ -92,7 +92,7 @@ bu_create_hash_tbl(unsigned long tbl_size)
 }
 
 struct bu_hash_entry *
-bu_find_hash_entry(struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len, struct bu_hash_entry **prev, unsigned long *idx)
+bu_find_hash_entry(const struct bu_hash_tbl *hsh_tbl, const unsigned char *key, int key_len, struct bu_hash_entry **prev, unsigned long *idx)
 {
     struct bu_hash_entry *hsh_entry=NULL;
     int found=0;
@@ -114,7 +114,7 @@ bu_find_hash_entry(struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len,
 	*prev = NULL;
 	hsh_entry = hsh_tbl->lists[*idx];
 	while (hsh_entry) {
-	    unsigned char *c1, *c2;
+	    const unsigned char *c1, *c2;
 	    int i;
 
 	    /* compare key lengths first for performance */
@@ -167,7 +167,7 @@ bu_set_hash_value(struct bu_hash_entry *hsh_entry, unsigned char *value)
 
 
 unsigned char *
-bu_get_hash_value(struct bu_hash_entry *hsh_entry)
+bu_get_hash_value(const struct bu_hash_entry *hsh_entry)
 {
     BU_CK_HASH_ENTRY(hsh_entry);
 
@@ -176,7 +176,7 @@ bu_get_hash_value(struct bu_hash_entry *hsh_entry)
 
 
 unsigned char *
-bu_get_hash_key(struct bu_hash_entry *hsh_entry)
+bu_get_hash_key(const struct bu_hash_entry *hsh_entry)
 {
     BU_CK_HASH_ENTRY(hsh_entry);
 
@@ -185,7 +185,7 @@ bu_get_hash_key(struct bu_hash_entry *hsh_entry)
 
 
 struct bu_hash_entry *
-bu_hash_add_entry(struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len, int *new_entry)
+bu_hash_add_entry(struct bu_hash_tbl *hsh_tbl, const unsigned char *key, int key_len, int *new_entry)
 {
     struct bu_hash_entry *hsh_entry, *prev;
     unsigned long idx;
@@ -237,7 +237,7 @@ bu_hash_add_entry(struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len, 
 
 
 void
-bu_hash_tbl_pr(struct bu_hash_tbl *hsh_tbl, char *str)
+bu_hash_tbl_pr(const struct bu_hash_tbl *hsh_tbl, const char *str)
 {
     unsigned long idx;
     struct bu_hash_entry *hsh_entry;
@@ -293,7 +293,7 @@ bu_hash_tbl_free(struct bu_hash_tbl *hsh_tbl)
 
 
 struct bu_hash_entry *
-bu_hash_tbl_first(struct bu_hash_tbl *hsh_tbl, struct bu_hash_record *rec)
+bu_hash_tbl_first(const struct bu_hash_tbl *hsh_tbl, struct bu_hash_record *rec)
 {
     BU_CK_HASH_TBL(hsh_tbl);
 
@@ -326,7 +326,7 @@ bu_hash_tbl_first(struct bu_hash_tbl *hsh_tbl, struct bu_hash_record *rec)
 struct bu_hash_entry *
 bu_hash_tbl_next(struct bu_hash_record *rec)
 {
-    struct bu_hash_tbl *hsh_tbl;
+    const struct bu_hash_tbl *hsh_tbl;
 
     BU_CK_HASH_RECORD(rec);
     hsh_tbl = rec->tbl;
