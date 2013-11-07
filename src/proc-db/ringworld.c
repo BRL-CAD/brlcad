@@ -138,6 +138,11 @@ main(int argc, char *argv[])
 	}
     }
 
+    if (argc == 1) {
+	fprintf(stderr,usage, *argv);
+    	fprintf(stderr,"       Program continues running:\n");
+    }
+
     if (bu_file_exists(outfile, NULL))
 	bu_exit(EXIT_FAILURE, "ERROR: %s already exists.  Remove file and try again.", outfile);
 

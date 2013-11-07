@@ -85,7 +85,7 @@ main(int argc, char **argv)
     vect_t pbase;
 
     if (argc > 0)
-	bu_log("Usage: %s\n", argv[0]);
+	bu_log("Usage: %s\n       Program continues running:\n", argv[0]);
 
     BU_LIST_INIT(&head.l);
 
