@@ -8767,7 +8767,7 @@ to_mouse_data_scale(struct ged *gedp,
 		    const char *usage,
 		    int UNUSED(maxargs))
 {
-    int ret;
+    /* int ret; */
     char *av[4];
     struct bu_vls scale_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
@@ -8779,7 +8779,12 @@ to_mouse_data_scale(struct ged *gedp,
     av[1] = (char *)argv[1];
     av[2] = bu_vls_addr(&scale_vls);
     av[3] = (char *)0;
+    /* compiler warning: ret set but not used */
+    /*
     ret = to_data_scale(gedp, 3, (const char **)av, (ged_func_ptr)NULL, "whatever", 4);
+    */
+    (void)to_data_scale(gedp, 3, (const char **)av, (ged_func_ptr)NULL, "whatever", 4);
+
     bu_vls_free(&scale_vls);
 
     return GED_OK;
