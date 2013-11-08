@@ -15,6 +15,8 @@ my $binc = 'boost';
 my $blib = 'libs';
 
 my $prog = basename($0);
+my $log = 'update-boost-tree.log';
+
 if (!@ARGV) {
   print<<"HERE";
 Usage: $prog <new Boost source dir> [-force]
@@ -26,6 +28,8 @@ Replaces all files in the existing Boost directories:
 
 and replaces them with the new versions in the new
 Boost source directory.
+
+All actions are written to the log file '$log'.
 HERE
   exit;
 }
@@ -48,6 +52,18 @@ foreach my $arg (@ARGV) {
 if (! -d $Bdir) {
   die "ERROR:  Non-existent directory '$Bdir'.\n";
 }
+
+if (-e $log) {
+  if (!$force) {
+    die "ERROR:  Log file '$log' exists.  Move it or use the '-force' option.\n";
+  }
+  print "WARNING:  Log file '$log' is being overwritten.\n";
+}
+open my $fp, '>', $log
+  or die "$log: $!";
+
+print $fp "Updating BRL-CAD Boost directory from new source directory:\n";
+print $fp "\n  $Bdir\n\n";
 
 my @bincfils = qx( find $binc -type f );
 my @blibfils = qx( find $blib -type f );
@@ -102,19 +118,31 @@ foreach my $f (@Bfils) {
 my %deletes = ();
 foreach my $f (keys %ofils) {
   if (!exists $nfils{$f}) {
-    print "WARNING:  File '$f' not found in directory '$Bdir'.\n";
+    print $fp "WARNING:  File '$f' not found in directory '$Bdir'.\n";
     $deletes{$f} = 1;
     if (-f $f) {
-      print "          Deleting old file '$f'.\n";
+      print $fp "          Deleting old file '$f'.\n";
       unlink $f;
     }
     else {
-      print "          Old file '$f' already deleted.\n";
+      print $fp "          Old file '$f' already deleted.\n";
     }
     next;
   }
   my $nf = sprintf "$Bdir/%s", $f;
   my $cmd = "cp $nf $f";
-  print "Cmd: $cmd\n";
+  print $fp "Cmd: $cmd\n";
   qx($cmd);
 }
+
+# relist removed files
+my @f = (sort keys %deletes);
+if (@f) {
+  my $n = @f;
+  my $s = $n > 1 ? 's' : '';
+  print $fp "\nDeleted $n files:\n";
+  print $fp "  $_\n" for @f;
+}
+
+print "Normal end.  See log file '$log'.\n";
+
