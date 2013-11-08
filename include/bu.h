@@ -85,8 +85,8 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdarg.h>
 #include <sys/types.h>
+#include <stdarg.h>
 
 __BEGIN_DECLS
 
