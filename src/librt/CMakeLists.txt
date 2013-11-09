@@ -7,7 +7,7 @@ set(RT_INCLUDE_DIRS
   ${P2T_INCLUDE_DIR}
   ${OPENNURBS_INCLUDE_DIR}
   ${ZLIB_INCLUDE_DIR}
-  "${CMAKE_SOURCE_DIR}/src/other/boost"
+  ${BOOST_INCLUDE_DIR}
   )
 
 # locally used but not needed by users of the library
