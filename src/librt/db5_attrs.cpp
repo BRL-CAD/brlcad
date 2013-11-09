@@ -37,11 +37,11 @@ using namespace std;
 namespace db5_attrs_private {
 
     struct db5_attr_ctype {
-        int index;      // from enum in raytrace.h
-        int atype;      // from enum above
-        bool is_binary; // false for ASCII attributes; true for binary attributes
+        int attr_type;    // from enum in 'raytrace.h'
+        bool is_binary;   // false for ASCII attributes; true for binary attributes
+        int attr_subtype; // from enum in 'db5_attrs_private.h'
 
-        // names should be specified with alphanumeric charcters
+        // names should be specified with alphanumeric characters
         // (lower-case letters, no white space) and will act as unique
         // keys to an object's attribute list
         const char *name;         // the "standard" name
@@ -63,43 +63,43 @@ namespace db5_attrs_private {
         { ATTR_REGION_ID, false, ATTR_STANDARD,
           "region_id",
           "a positive integer",
-          "", // example
+          "", // examples
           "id"  // aliases, if any
         },
         { ATTR_MATERIAL_ID, false, ATTR_STANDARD,
           "material_id",
           "a positive integer (user-defined)",
-          "", // example
+          "", // examples
           "giftmater,mat"  // aliases, if any
         },
         { ATTR_AIR, false, ATTR_STANDARD,
           "aircode",
           "an integer (application defined)",
-          "'0' or '-1'", // example
+          "'0' or '-1'", // examples
           "air"  // aliases, if any
         },
         { ATTR_LOS, false, ATTR_STANDARD,
           "los",
           "an integer in the inclusive range: 0 to 100",
-          "'24' or '100'", // example
+          "'24' or '100'", // examples
           ""  // aliases, if any
         },
         { ATTR_COLOR, false, ATTR_STANDARD,
           "color",
           "a 3-tuple of RGB values",
-          "\"0 255 255\"", // example
+          "\"0 255 255\"", // examples
           "rgb"  // aliases, if any
         },
         { ATTR_SHADER, false, ATTR_STANDARD,
           "shader",
           "a string of shader characteristics in a standard format",
-          "", // example
+          "", // examples
           "oshader"  // aliases, if any
         },
         { ATTR_INHERIT, false, ATTR_STANDARD,
           "inherit",
           "",
-          "", // example
+          "", // examples
           ""  // aliases, if any
         },
         { ATTR_TIMESTAMP, true, ATTR_STANDARD, /* first binary attribute */
@@ -107,7 +107,8 @@ namespace db5_attrs_private {
 
           "a binary time stamp for an object's last mod time (the"
           " time is displayed in human-readable form with the 'attr' command)",
-          "", // example
+
+          "", // examples
           "timestamp,time_stamp,modtime,mod_time"  // aliases, if any
         },
     };
@@ -131,7 +132,10 @@ db5_attrs_private::load_maps()
     if (!int2attr.empty())
         return;
 
-    set<string> used;
+    // don't allow duplicate names
+    set<string> used_names;
+    // don't allow duplicate attr_types
+    set<int> used_types;
     for (size_t i = 0; i < nattrs; ++i) {
         const db5_attr_ctype &a = db5_attr_ctype_table[i];
         const string name      = a.name;
@@ -139,33 +143,41 @@ db5_attrs_private::load_maps()
         const string examp     = a.examples;
         const string Aliases   = a.aliases;
 
-        if (used.find(name) == used.end()) {
-            used.insert(name);
+        if (used_names.find(name) == used_names.end()) {
+            used_names.insert(name);
         } else {
             bu_log("duplicate attr name '%s'\n", name.c_str());
-            bu_bomb("duplicate attr name");
+            bu_bomb("duplicate attr name\n");
         }
+
+        if (used_types.find(a.attr_type) == used_types.end()) {
+            used_types.insert(a.attr_type);
+        } else {
+            bu_log("duplicate attr_type '%d'\n", a.attr_type);
+            bu_bomb("duplicate attr_type\n");
+        }
+
         set<string> aliases;
         get_tokens(aliases, Aliases, my_sep);
         for (set<string>::iterator j = aliases.begin(); j != aliases.end(); ++j) {
             const string& n(*j);
-            if (used.find(n) == used.end()) {
-                used.insert(n);
+            if (used_names.find(n) == used_names.end()) {
+                used_names.insert(n);
             } else {
                 bu_log("duplicate attr alias '%s'\n", n.c_str());
-                bu_bomb("duplicate attr alias");
+                bu_bomb("duplicate attr alias\n");
             }
         }
-        db5_attr_t ap(a.is_binary, a.atype, name, desc, examp, aliases);
+        db5_attr_t ap(a.is_binary, a.attr_subtype, name, desc, examp, aliases);
 
         // prepare the maps
-        name2int.insert(make_pair(name, a.index));
+        name2int.insert(make_pair(name, a.attr_type));
 
         // also include aliases
         for (set<string>::iterator j = ap.aliases.begin(); j != ap.aliases.end(); ++j)
-            name2int.insert(make_pair(*j, a.index));
+            name2int.insert(make_pair(*j, a.attr_type));
 
-        int2attr.insert(make_pair(a.index, ap));
+        int2attr.insert(make_pair(a.attr_type, ap));
         name2attr.insert(make_pair(name, ap));
     }
 
