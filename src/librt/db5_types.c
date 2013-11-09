@@ -306,12 +306,12 @@ boolean_attribute(int attr) {
 
 HIDDEN
 void
-attr_add(struct bu_attribute_value_set *newavs, int attr_index, const char *stdattr, const char *value)
+attr_add(struct bu_attribute_value_set *newavs, int attr_type, const char *stdattr, const char *value)
 {
-    if (boolean_attribute(attr_index)) {
+    if (boolean_attribute(attr_type)) {
 	if (bu_str_true(value)) {
 	    /* Use R for region, otherwise go with 1 */
-	    if (attr_index == ATTR_REGION) {
+	    if (attr_type == ATTR_REGION) {
 		(void)bu_avs_add(newavs, stdattr, "R\0");
 	    } else {
 		(void)bu_avs_add(newavs, stdattr, "1\0");
@@ -329,7 +329,7 @@ size_t
 db5_standardize_avs(struct bu_attribute_value_set *avs)
 {
     size_t conflict = 0;
-    int attr_index;
+    int attr_type;
 
     const char *stdattr;
     const char *added;
@@ -350,14 +350,14 @@ db5_standardize_avs(struct bu_attribute_value_set *avs)
      */
     for (BU_AVS_FOR(avpp, avs)) {
 	/* see if this is a standardizable attribute name */
-	attr_index = db5_standardize_attribute(avpp->name);
+	attr_type = db5_standardize_attribute(avpp->name);
 
 	/* get the standard name for this type */
-	stdattr = db5_standard_attribute(attr_index);
+	stdattr = db5_standard_attribute(attr_type);
 
 	/* name is already in standard form, add it */
-	if (attr_index != ATTR_NULL && BU_STR_EQUAL(stdattr, avpp->name))
-	    (void)attr_add(&newavs, attr_index, stdattr, avpp->value);
+	if (attr_type != ATTR_NULL && BU_STR_EQUAL(stdattr, avpp->name))
+	    (void)attr_add(&newavs, attr_type, stdattr, avpp->value);
     }
 
     /* SECOND PASS: check for duplicates and non-standard
@@ -365,36 +365,36 @@ db5_standardize_avs(struct bu_attribute_value_set *avs)
      */
     for (BU_AVS_FOR(avpp, avs)) {
 	/* see if this is a standardizable attribute name */
-	attr_index = db5_standardize_attribute(avpp->name);
+	attr_type = db5_standardize_attribute(avpp->name);
 
 	/* get the standard name for this type */
-	stdattr = db5_standard_attribute(attr_index);
+	stdattr = db5_standard_attribute(attr_type);
 
 	/* see if we already added this attribute */
 	added = bu_avs_get(&newavs, stdattr);
 
-	if (attr_index != ATTR_NULL && added == NULL) {
+	if (attr_type != ATTR_NULL && added == NULL) {
 
 	    /* case 1: name is "standardizable" and not added */
 
-	    (void)attr_add(&newavs, attr_index, stdattr, avpp->value);
-	} else if (attr_index != ATTR_NULL && BU_STR_EQUAL(added, avpp->value)) {
+	    (void)attr_add(&newavs, attr_type, stdattr, avpp->value);
+	} else if (attr_type != ATTR_NULL && BU_STR_EQUAL(added, avpp->value)) {
 
 	    /* case 2: name is "standardizable", but we already added the same value */
 
 	    /* ignore/skip it (because it's the same value) */
-	} else if (attr_index != ATTR_NULL && !BU_STR_EQUAL(added, avpp->value)) {
+	} else if (attr_type != ATTR_NULL && !BU_STR_EQUAL(added, avpp->value)) {
 
 	    /* case 3: name is "standardizable", but we already added something else */
 
 	    /* preserve the conflict, keep the old value too */
-	    (void)attr_add(&newavs, attr_index, avpp->name, avpp->value);
+	    (void)attr_add(&newavs, attr_type, avpp->name, avpp->value);
 	    conflict++;
 	} else {
 
 	    /* everything else: add it */
 
-	    (void)attr_add(&newavs, attr_index, avpp->name, avpp->value);
+	    (void)attr_add(&newavs, attr_type, avpp->name, avpp->value);
 	}
     }
     bu_avs_free(avs);
