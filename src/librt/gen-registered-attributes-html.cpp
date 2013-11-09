@@ -105,7 +105,7 @@ gen_attr_html_page(const std::string& fname)
     for (map<string,db5_attr_t>::iterator i = name2attr.begin(); i != name2attr.end(); ++i) {
         const string& name(i->first);
         db5_attr_t& a(i->second);
-        if (a.atype == ATTR_REGISTERED) {
+        if (a.attr_subtype == ATTR_REGISTERED) {
             rattrs.insert(make_pair(name,a));
             continue;
         }
