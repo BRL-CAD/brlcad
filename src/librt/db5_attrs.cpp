@@ -143,6 +143,13 @@ db5_attrs_private::load_maps()
         const string examp     = a.examples;
         const string Aliases   = a.aliases;
 
+        // check for invalid subtype
+        const int st = a.attr_subtype;
+        if (st != ATTR_STANDARD && st != ATTR_REGISTERED) {
+            bu_log("unknown attr_subtype '%d'\n", st);
+            bu_bomb("unknown attr_subtype\n");
+        }
+
         if (used_names.find(name) == used_names.end()) {
             used_names.insert(name);
         } else {
