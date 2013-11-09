@@ -45,7 +45,7 @@ extern "C" {
 
     int db5_attr_is_standard_attribute(const char *attr_want);
     int db5_attr_standardize_attribute(const char *attr_want);
-    const char *db5_attr_standard_attribute(const int attr_index);
+    const char *db5_attr_standard_attribute(const int attr_type);
 
 #if defined(__cplusplus)
 }
@@ -54,11 +54,11 @@ extern "C" {
 #if defined(__cplusplus)
 namespace db5_attrs_private {
 
-    enum { ATTR_STANDARD, ATTR_REGISTERED };
+    enum { ATTR_STANDARD = 44, ATTR_REGISTERED = 55 }; /* "large" integers to assist error checking */
 
     struct db5_attr_t {
-        bool is_binary; /* false for ASCII attributes; true for binary attributes */
-        int atype;      /* from enum above */
+        bool is_binary;   /* false for ASCII attributes; true for binary attributes */
+        int attr_subtype; /* from enum above */
 
 	/*
 	  names should be specified with alphanumeric charcters
@@ -76,7 +76,7 @@ namespace db5_attrs_private {
 		   const std::string& d, const std::string& e,
 		   const std::set<std::string>& s)
 	: is_binary(b ? true : false)
-	, atype(a)
+	, attr_subtype(a)
 	, name(n)
 	, description(d)
 	, examples(e)
