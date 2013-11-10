@@ -220,7 +220,7 @@ condense_points(point_line_t **plta, int count) {
 	return 0;
     }
 
-    for (i=0; i < count; i++) {
+    for (i = 0; i < count; i++) {
 	plt = &(*plta)[i];
 
 	if (plt && plt->type) {
@@ -265,7 +265,7 @@ delete_points(point_line_t **plta, int count, double tolerance) {
     /*    INITIALIZE_POINT_LINE_T(average_plt); */
     previous_plt = &(*plta)[0];
 
-    for (i=1; i < count; i++) {
+    for (i = 1; i < count; i++) {
 	plt = &(*plta)[i];
 
 	if (DIST_PT_PT(previous_plt->val, plt->val) < tolerance) {

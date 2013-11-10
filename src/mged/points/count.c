@@ -79,7 +79,7 @@ void tabulate(long int id, const char *text)
 	INIT_COUNTER_T(*counter);
     }
 
-    for (i=0; text[i] != '\0'; i++) {
+    for (i = 0; text[i] != '\0'; i++) {
 	if ((text[i] == '\n') || (text[i] == '\r')) {
 	    counter->lines++;
 	    counter->column = 0;
