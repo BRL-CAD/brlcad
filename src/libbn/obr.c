@@ -474,7 +474,9 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *center, vect_t *x, vect_t *y){
     vect_t a1;
     int i = 0;
     int points_2d = 1;
+    /* var not being used at the moment
     point_t *pnts2d = NULL;
+    */
     VSET(obr.v, 0.0, 0.0, 0.0);
 
     if (!pnts) return -1;
@@ -510,11 +512,13 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *center, vect_t *x, vect_t *y){
 		}
 	    }
 	}
+
 	/*
 	if (bn_mk_plane_3pts(center_pnt, dmax, dmax2, )) return -1;
 	for (i = 0; i < pnt_cnt; i++) {
 	    IF (DIST_PT_PLANE(PT, PLANE) > ) RETURN -1;
 	}*/
+
 	/* If we've gotten this far, we're coplanar - prepare a
 	 * 2D point array by projecting points onto the plane */
 	VSUB2(a1, dmax, center_pnt);
@@ -531,7 +535,9 @@ bn_obr(const point_t *pnts, int pnt_cnt, point_t *center, vect_t *x, vect_t *y){
 
     } else {
 	/* Don't need a new array - just re-use existing one */
+    /* var not being used at the moment
 	pnts2d = pnts;
+    */
     }
 
     bn_obr_calc(pnts, pnt_cnt, &obr);
