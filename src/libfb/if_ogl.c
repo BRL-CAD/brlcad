@@ -74,7 +74,7 @@
 #endif
 
 #ifdef HAVE_UNISTD_H
-#  include <unistd.h>	/* for getpagesize */
+#  include <unistd.h>	/* for getpagesize and sysconf */
 #endif
 
 #ifdef HAVE_SYS_WAIT_H
@@ -537,6 +537,7 @@ ogl_getmem(FBIO *ifp)
 #define SHMEM_KEY 42
     int pixsize;
     int size;
+    long psize = sysconf(_SC_PAGESIZE);
     int i;
     char *sp;
     int new = 0;
@@ -572,7 +573,11 @@ ogl_getmem(FBIO *ifp)
 	sizeof(struct ogl_pixel);
 
     size = pixsize + sizeof(struct ogl_cmap);
+
+    /* make more portable
     size = (size + getpagesize()-1) & ~(getpagesize()-1);
+    */
+    size = (size + psize - 1) & ~(psize - 1);
 
     /* First try to attach to an existing one */
     if ((SGI(ifp)->mi_shmid = shmget(SHMEM_KEY, size, 0)) < 0) {
