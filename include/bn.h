@@ -2447,11 +2447,11 @@ BN_EXPORT extern double bn_dist_pt_lseg(point_t pca,
  * @param[out] y	vector in the obr y direction with vector
  * 			length of 0.5 * obr width
  */
-BN_EXPORT extern int bn_obr(point_t *pnts,
-			int pnt_cnt,
-			point_t *center,
-			vect_t *x,
-			vect_t *y);
+BN_EXPORT extern int bn_obr(const point_t *pnts,
+			    int pnt_cnt,
+			    point_t *center,
+			    vect_t *x,
+			    vect_t *y);
 
 /**
  * B N _ R O T A T E _ B B O X

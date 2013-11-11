@@ -469,7 +469,7 @@ bn_obr_calc(const point_t *pnts, int pnt_cnt, struct obr_vals *obr)
 }
 
 int
-bn_obr(point_t *pnts, int pnt_cnt, point_t *center, vect_t *x, vect_t *y){
+bn_obr(const point_t *pnts, int pnt_cnt, point_t *center, vect_t *x, vect_t *y){
     struct obr_vals obr;
     vect_t a1;
     int i = 0;
@@ -548,8 +548,10 @@ bn_obr(point_t *pnts, int pnt_cnt, point_t *center, vect_t *x, vect_t *y){
 	VSCALE((*y), (*y), obr.extent1);
     }
 
+    /* pnts2d is no longer heap allocated
     if (!points_2d)
 	bu_free(pnts2d, "free array holding 2D projections of coplanar points");
+    */
 
     return 0;
 }
