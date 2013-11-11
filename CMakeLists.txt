@@ -1528,7 +1528,7 @@ endif()
 # for options...
 if(ENABLE_POSIX_COMPLIANCE)
   # use this version so three non-C99 functions (without bu*
-  # replacements) will work:
+  # replacements) will work (fileno, fdopen, and posix_memalign):
   CHECK_C_FLAG("D_POSIX_C_SOURCE=200112L")
   # need this for glibc < 2.12 (for gethostname):
   CHECK_C_FLAG("D_XOPEN_SOURCE=500")
