@@ -13,8 +13,16 @@ include_directories(
 
 YACC_TARGET(MGEDPointsParser points_parse.y
   ${CMAKE_CURRENT_BINARY_DIR}/points_parse.c)
-LEX_TARGET(MGEDPointsScanner points_scan.l
-  ${CMAKE_CURRENT_BINARY_DIR}/points_scan.c COMPILE_FLAGS "-l")
+
+if(ENABLE_POSIX_COMPLIANCE)
+  # need something special here for fileno:
+  LEX_TARGET(MGEDPointsScanner points_scan.l
+    ${CMAKE_CURRENT_BINARY_DIR}/points_scan.c COMPILE_FLAGS "-l -D_POSIX_C_SOURCE=200112L")
+else()
+  LEX_TARGET(MGEDPointsScanner points_scan.l
+    ${CMAKE_CURRENT_BINARY_DIR}/points_scan.c COMPILE_FLAGS "-l")
+endif()
+
 ADD_LEX_YACC_DEPENDENCY(MGEDPointsScanner MGEDPointsParser)
 
 set(MGED_POINTS_SRCS
