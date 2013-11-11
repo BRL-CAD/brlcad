@@ -469,12 +469,12 @@ bn_obr_calc(const point_t *pnts, int pnt_cnt, struct obr_vals *obr)
 }
 
 int
-bn_obr(const point_t *pnts, int pnt_cnt, point_t *center, vect_t *x, vect_t *y){
+bn_obr(point_t *pnts, int pnt_cnt, point_t *center, vect_t *x, vect_t *y){
     struct obr_vals obr;
     vect_t a1;
     int i = 0;
     int points_2d = 1;
-    const point_t *pnts2d = NULL;
+    point_t *pnts2d = NULL;
     VSET(obr.v, 0.0, 0.0, 0.0);
 
     if (!pnts) return -1;

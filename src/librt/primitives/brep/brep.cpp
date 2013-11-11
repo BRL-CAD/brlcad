@@ -537,12 +537,12 @@ public:
 	return *this;
     }
 
-    bool operator==(const brep_hit& h)
+    bool operator==(const brep_hit& h) const
     {
 	return NEAR_ZERO(dist - h.dist, BREP_SAME_POINT_TOLERANCE);
     }
 
-    bool operator<(const brep_hit& h)
+    bool operator<(const brep_hit& h) const
     {
 	return dist < h.dist;
     }
