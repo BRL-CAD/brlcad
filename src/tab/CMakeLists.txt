@@ -9,17 +9,17 @@ LIST(REMOVE_DUPLICATES HALFTONE_INCLUDE_DIRS)
 include_directories(${HALFTONE_INCLUDE_DIRS})
 
 if(LEX_EXECUTABLE)
+  LEX_TARGET(SS_Scanner script.l
+    ${CMAKE_CURRENT_BINARY_DIR}/script.c COMPILE_FLAGS "-l")
+  BRLCAD_ADDEXEC(scriptsort "scriptsort.c;${LEX_SS_Scanner_OUTPUTS}" librt)
+
   if(ENABLE_POSIX_COMPLIANCE)
     # need something special here for label find_rule:
-    LEX_TARGET(SS_Scanner script.l
-      ${CMAKE_CURRENT_BINARY_DIR}/script.c COMPILE_FLAGS "-l -Wno-unused-label")
+    SET_TARGET_PROPERTIES(scriptsort PROPERTIES COMPILE_FLAGS "-Wno-error -Wno-unused-label")
   else()
-    LEX_TARGET(SS_Scanner script.l
-      ${CMAKE_CURRENT_BINARY_DIR}/script.c COMPILE_FLAGS "-l")
+    SET_TARGET_PROPERTIES(scriptsort PROPERTIES COMPILE_FLAGS "-Wno-error")
   endif()
 
-  BRLCAD_ADDEXEC(scriptsort "scriptsort.c;${LEX_SS_Scanner_OUTPUTS}" librt)
-  SET_TARGET_PROPERTIES(scriptsort PROPERTIES COMPILE_FLAGS "-Wno-error")
 else(LEX_EXECUTABLE)
   CMAKEFILES(scriptsort.c)
 endif(LEX_EXECUTABLE)
