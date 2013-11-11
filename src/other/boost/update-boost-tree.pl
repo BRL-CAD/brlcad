@@ -116,6 +116,7 @@ foreach my $f (@Bfils) {
 # step through all the old files and replace them with new ones (or
 # delete the old ones which do not have a replacement)
 my %deletes = ();
+my %same = ();
 foreach my $f (keys %ofils) {
   if (!exists $nfils{$f}) {
     print $fp "WARNING:  File '$f' not found in directory '$Bdir'.\n";
@@ -129,20 +130,40 @@ foreach my $f (keys %ofils) {
     }
     next;
   }
+  else {
+    $same{$f} = 1;
+  }
   my $nf = sprintf "$Bdir/%s", $f;
   my $cmd = "cp $nf $f";
   print $fp "Cmd: $cmd\n";
   qx($cmd);
 }
 
-# relist removed files
-my @f = (sort keys %deletes);
-if (@f) {
-  my $n = @f;
-  my $s = $n > 1 ? 's' : '';
-  print $fp "\nDeleted $n files:\n";
-  print $fp "  $_\n" for @f;
+# relist copied files
+my @cf = (sort keys %same);
+my $ncf = @cf;
+my $ncs = $ncf > 1 ? 's' : '';
+if (@cf) {
+  print $fp "\nCopied $ncf file$ncs:\n";
+  print $fp "  $_\n" for @cf;
 }
 
-print "Normal end.  See log file '$log'.\n";
+# relist removed files
+my @df = (sort keys %deletes);
+my $ndf = @df;
+my $nds = $ndf > 1 ? 's' : '';
+if (@df) {
+  print $fp "\nDeleted $ndf file$nds:\n";
+  print $fp "  $_\n" for @cf;
+}
+
+print "\nSummary:\n";
+print "  Copied $ncf file$ncs.\n";
+print "  Deleted $ndf file$nds.\n";
+
+print $fp "\nSummary:\n";
+print $fp "  Copied $ncf file$ncs.\n";
+print $fp "  Deleted $ndf file$nds.\n";
+
+print "\nNormal end.  See log file '$log'.\n";
 
