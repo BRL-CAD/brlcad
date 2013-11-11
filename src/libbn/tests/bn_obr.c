@@ -42,7 +42,7 @@ main()
     VSET(pnts[2], 2.0, 2.5, 0.0);
     VSET(pnts[3], 1.0, 2.0, 0.0);
 
-    bn_obr((point_t *)pnts, n, &center, &u, &v);
+    bn_obr(pnts, n, &center, &u, &v);
 /*
     bu_log("result: P1 (%f, %f, %f)\n", V3ARGS(p0));
     bu_log("        P2 (%f, %f, %f)\n", V3ARGS(p1));
