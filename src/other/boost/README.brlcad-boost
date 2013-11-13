@@ -1,3 +1,6 @@
+Upgrading BRL-CAD Boost
+=======================
+
 The procedures for getting a minimum subset of the Boost library were
 tried as documented in the script file:
 
@@ -16,4 +19,27 @@ about 1.2 Mb, so another solution will be attempted:
 
 4. Repeat building, adding new files as necessary, and fixing error
    until a new subset of the new Boost version is found.
+
+All the above can be done with the Perl script:
+
+  update-boost-tree.pl
+
+-Wshadow warnings from Boost
+============================
+
+Note that some Boost headers generate -Wshadow warnings.  Discussion
+with the Boost developers was not always fruitful, but some developers
+agreed to accept patches to cure the problems.  In the meantime,
+gcc/g++ users can use pragmas to eliminate those warnings from
+offending header.  The following example is from
+src/libpc/pcNetwork.h:
+
+/* for g++ to quell -Wshadow warnings */
+#pragma GCC diagnostic ignored "-Wshadow"
+#include <boost/graph/graph_traits.hpp>
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/graphviz.hpp>
+#pragma GCC diagnostic pop /* end ignoring -Wshadow */
+
+
 

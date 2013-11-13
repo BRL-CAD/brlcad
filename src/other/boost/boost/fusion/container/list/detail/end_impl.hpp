@@ -1,5 +1,5 @@
 /*=============================================================================
-    Copyright (c) 2005 Joel de Guzman
+    Copyright (c) 2001-2011 Joel de Guzman
     Copyright (c) 2005 Eric Niebler
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying 
@@ -13,7 +13,7 @@
 
 namespace boost { namespace fusion
 {
-    struct nil;
+    struct nil_;
 
     struct cons_tag;
 
@@ -35,7 +35,7 @@ namespace boost { namespace fusion
             struct apply 
             {
                 typedef cons_iterator<
-                    typename mpl::if_<is_const<Sequence>, nil const, nil>::type>
+                    typename mpl::if_<is_const<Sequence>, nil_ const, nil_>::type>
                 type;
     
                 static type

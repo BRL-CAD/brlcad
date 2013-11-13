@@ -148,6 +148,7 @@ namespace date_time {
             day = boost::lexical_cast<unsigned short>(*beg);
             break;
           }
+          default: break;
         } //switch
       }
       return date_type(year, month, day);
@@ -180,6 +181,7 @@ namespace date_time {
         case 0: y = i; break;
         case 1: m = i; break;
         case 2: d = i; break;
+        default:       break;
         }
         pos++;
       }
