@@ -273,10 +273,10 @@ make_pillar(char *prefix, int ix, int iy, fastf_t *center, fastf_t *lwh, struct 
 
     BU_LIST_INIT(&head.l);
 
-    snprintf(pilname, 32, "%s%d, %d", prefix, ix, iy);
+    snprintf(pilname, 32, "%s%d,_%d", prefix, ix, iy);
     snprintf(rname, 32, "%s.r", pilname);
     snprintf(sname, 32, "%s.s", pilname);
-    snprintf(oname, 32, "Obj%d, %d", ix, iy);
+    snprintf(oname, 32, "Obj%d,_%d", ix, iy);
 
     VMOVE(min, center);
     min[X] -= lwh[X];
