@@ -27,7 +27,7 @@
 #ifndef DB5_ATTRS_PRIVATE_H
 #define DB5_ATTRS_PRIVATE_H
 
-#include "raytrace.h" /* for the ATTR_x enum definitons, the master source */
+#include "raytrace.h" /* for the ATTR_x enum definitions, the master source */
 
 #if defined(__cplusplus)
   #include <map>
