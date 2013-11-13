@@ -61,7 +61,7 @@ namespace db5_attrs_private {
         int attr_subtype; /* from enum above */
 
 	/*
-	  names should be specified with alphanumeric charcters
+	  names should be specified with alphanumeric characters
 	  (lower-case letters, no white space) and will act as unique
 	  keys to an object's attribute list
         */

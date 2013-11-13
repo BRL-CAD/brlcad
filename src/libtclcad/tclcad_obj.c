@@ -4728,7 +4728,7 @@ to_data_scale(struct ged *gedp,
 	/* Scale the location of each label WRT the view center */
 	for (i = 0; i < gdlsp->gdls_num_labels; ++i) {
 	    vect_t diff;
-	    
+
 	    MAT4X3PNT(vpoint, gedp->ged_gvp->gv_model2view, gdlsp->gdls_points[i]);
 	    vcenter[Z] = vpoint[Z];
 	    VSUB2(diff, vpoint, vcenter);

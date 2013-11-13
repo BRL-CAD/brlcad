@@ -237,8 +237,8 @@ class Teapot : public osg::Drawable
 	    // of OpenGL primitives.
 	    virtual void drawImplementation(osg::RenderInfo&) const
 	    {
-		// teapot(..) doens't use vertex arrays at all so we don't need to toggle their state
-		// if we did we'd need to something like following call
+		// teapot(..) doesn't use vertex arrays at all so we don't need to toggle their state
+		// if we did we'd need to do something like the following call
 		// state.disableAllVertexArrays(), see src/osg/Geometry.cpp for the low down.
 
 		// just call the OpenGL code.
@@ -247,12 +247,12 @@ class Teapot : public osg::Drawable
 
 
 	// we need to set up the bounding box of the data too, so that the scene graph knows where this
-	// objects is, for both positioning the camera at start up, and most importantly for culling.
+	// object is, for both positioning the camera at start up, and most importantly for culling.
 	virtual osg::BoundingBox computeBound() const
 	{
 	    osg::BoundingBox bbox;
 
-	    // follow is some truely horrible code required to calculate the
+	    // following is some truly horrible code required to calculate the
 	    // bounding box of the teapot.  Have used the original code above to do
 	    // help compute it.
 	    float p[4][4][3], q[4][4][3], r[4][4][3], s[4][4][3];
@@ -345,7 +345,7 @@ dm_osgInit(struct dm *dmp)
 
     win = ((struct dm_xvars *)(dmp->dm_vars.pub_vars))->win;
 
-    //create our graphics context directly so we can pass our own window 
+    //create our graphics context directly so we can pass our own window
     osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits;
 
     // Init the Windata Variable that holds the handle for the Window to display OSG in.
@@ -526,7 +526,7 @@ dm_osgLoadMatrix(struct dm *dmp, matp_t mp)
 
     // Set the distance from eye to center
     //XXX the current use of dm_perspective is only temporary. At the moment, if dm_perspective is non zero
-    //    a perpective matrix from brlcad is passed in. We don't want this.
+    //    a perspective matrix from brlcad is passed in. We don't want this.
     if (dmp->dm_perspective == 0) {
 	tbmp->setDistance(mp[MSA]);
 
