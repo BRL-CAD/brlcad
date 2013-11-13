@@ -31,7 +31,11 @@
 
 #include <string>
 #include <iostream>
+
+/* for g++ to quell -Wshadow warnings */
+#pragma GCC diagnostic ignored "-Wshadow"
 #include <boost/spirit/include/classic.hpp>	/* deprecated header */
+#pragma GCC diagnostic pop /* end ignoring -Wshadow */
 
 #include "pcVCSet.h"
 #include "pcGenerator.h"
