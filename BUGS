@@ -15,6 +15,14 @@ on-going issues.
 Recent Bugs
 -----------
 
+* When running Archer from the build directory, bu_brlcad_root becomes
+  corrupted by the "cd $mLastSelectedDir" command in ArcherCore::openDb
+  if (and apparently only if) starting archer using the ./bin/archer
+  script (running bwish and then sourcing bin/archer results in different
+  behavior.)  Is the script launch resulting in some sort of incorrect
+  argv0 initialization?  Why would a Tcl cd command corrupt the
+  results of bu_brlcad_root?
+
 * calling "attr set obj key value" should always result in key getting
   set to value, no matter what, as it is the lowest-level attribute
   management interface and what the command (correctly) documents.
