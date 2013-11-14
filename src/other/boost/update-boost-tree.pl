@@ -149,6 +149,8 @@ print $fp "\n  $Bdir\n\n";
 # step through all the old files and replace them with new ones (or
 # delete the old ones which do not have a replacement)
 foreach my $f (keys %original_files) {
+  # ignore CMakeLists.txt for the comparison
+  next if ($f =~ m{\A CMake}xms);
   if (!exists $boost_files{$f}) {
     print $fp "WARNING:  File '$f' not found in directory '$Bdir'.\n";
     $deleted_files{$f} = 1;
