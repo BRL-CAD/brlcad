@@ -94,17 +94,44 @@ bn_polyline_2D_hull(point_t** hull, const point_t* polyline, int n)
     return h-1;
 }
 
+/* QSort functions for points */
+HIDDEN int
+pnt_compare(const void *pnt1, const void *pnt2)
+{
+    point_t *p1 = (point_t *)pnt1;
+    point_t *p2 = (point_t *)pnt2;
+    if (UNLIKELY(NEAR_ZERO((*p2)[0] - (*p1)[0], SMALL_FASTF) && NEAR_ZERO((*p2)[1] - (*p1)[1], SMALL_FASTF) && NEAR_ZERO((*p2)[2] - (*p1)[2], SMALL_FASTF))) return 0;
+    if ((*p1)[0] < (*p2)[0]) return -1;
+    if ((*p1)[0] > (*p2)[0]) return 1;
+    if ((*p1)[1] < (*p2)[1]) return -1;
+    if ((*p1)[1] > (*p2)[1]) return 1;
+    if ((*p1)[2] < (*p2)[2]) return -1;
+    if ((*p1)[2] > (*p2)[2]) return 1;
+    /* should never get here */
+    return 0;
+}
+
+
 /* The implementation of the Monotone Chain algorithm for
  * convex hulls of 2D point sets is a translation of
  * softSurfer's C++ implementation:
  * http://geomalgorithms.com/a10-_hull-1.html
  */
 int
-bn_2D_hull(point_t **UNUSED(hull), const point_t *UNUSED(pnts), int UNUSED(n))
+bn_2D_hull(point_t **UNUSED(hull), const point_t *pnts, int n)
 {
-#if 0
-    /* TODO - first thing, need to copy pnts array to something
+    int i = 0;
+    point_t *points = (point_t *)bu_calloc(n + 1, sizeof(point_t), "sorted pnts");
+
+    /* first thing, copy pnts array to something
        that can be sorted and sort it */
+    for(i = 0; i < n; i++) {
+	VMOVE(points[i], pnts[i]);
+    }
+
+    qsort((genptr_t)points, n, sizeof(point_t), pnt_compare);
+    bu_free(points, "free sorted points");
+#if 0
 
     /* the output array H[] will be used as the stack */
     int    bot=0, top=(-1);   /* indices for bottom and top of the stack */
