@@ -75,8 +75,14 @@ main(int argc, char **argv)
     /* bezier */
     int ctrl_points[5] = {0, 0, 0, 0, 0};
 
-    if (argc > 1)
-	bu_log("Usage: %s\nWarning - ignored unsupported argument \"%s\"\n", argv[0], argv[1]);
+    bu_log("Usage: %s\n",argv[0]);
+    if (argc > 1) {
+	if ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?"))
+	    bu_exit(1, NULL);
+	bu_log("Warning - ignored unsupported argument \"%s\"\n",argv[1]);
+    } else
+	bu_log("       Program continues running:\n");
+	
 
     VSET(V, 10, 20, 30);
     VSET(u_vec, 1, 0, 0);
