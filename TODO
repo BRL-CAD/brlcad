@@ -88,6 +88,13 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* Need to eliminate bu_argv0_full_path and rework the bu_brlcad_* functions
+  that currently rely on it to take that path as a parameter from the
+  calling application.  The library shouldn't be responsible for managing
+  that path - there are too many issues with doing so.  The current approach
+  fixes some concerns but breaks if an application changes its notion of
+  the current working directory after initialization, for example.
+
 * change _mged_ command prefix to a simple '.' prefix to hide/protect
   the built-in commands.
 
