@@ -86,8 +86,9 @@ main(int argc, char **argv)
 
     if (argc > 0) {
 	bu_log("Usage: %s\n",argv[0]);
-    	if (argc == 1)
-	    bu_log("       Program continues running:\n");
+    	if (argc != 1)
+	    bu_exit(1, NULL);
+	bu_log("       Program continues running:\n");
     }
 
     BU_LIST_INIT(&head.l);
