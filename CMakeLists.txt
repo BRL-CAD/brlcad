@@ -1020,7 +1020,7 @@ as expected.
 ")
 
 # Set the location of the BRL-CAD bundled Boost header directory:
-set(BOOST_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/src/other/boost")
+set(BRLCAD_BOOST_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/src/other/boost")
 
 if(MSVC)
   set(BRLCAD_BUNDLED_LIBS_DEFAULT "BUNDLED")
