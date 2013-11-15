@@ -59,7 +59,7 @@ of BSD. If the above variants is detected the corresponding macro is also set.]
 #define BOOST_OS_BSD BOOST_VERSION_NUMBER_NOT_AVAILABLE
 #endif
 
-#if !BOOST_PREDEF_DETAIL_OS_DETECTED && ( \
+#if !defined(BOOST_PREDEF_DETAIL_OS_DETECTED) && (  \
     defined(BSD) || \
     defined(_SYSTYPE_BSD) \
     )
