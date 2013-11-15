@@ -1518,9 +1518,20 @@ if(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE)
   CHECK_C_FLAG("D_BU_ATTR_SCANF23=''")
   # a hack to temp work around signal() handling in interrupt.c
   CHECK_C_FLAG("DC99_POSIX_USE_BSD")
+  #=== C++
+  CHECK_CXX_FLAG("std=c++03" BUILD_TYPES Debug)
+  CHECK_CXX_FLAG("std=c++03" BUILD_TYPES Release VARS CXX03_FLAG)
+  # for bu_* functions using varargs and print specifiers
+  CHECK_CXX_FLAG("D_BU_ATTR_PRINTF12=''")
+  CHECK_CXX_FLAG("D_BU_ATTR_PRINTF23=''")
+  CHECK_CXX_FLAG("D_BU_ATTR_SCANF23=''")
+  # a hack to temp work around signal() handling in interrupt.c
+  CHECK_CXX_FLAG("DC99_POSIX_USE_BSD")
 else()
   CHECK_C_FLAG("std=gnu89" BUILD_TYPES Debug)
   CHECK_C_FLAG("std=gnu99" BUILD_TYPES Release VARS C99_FLAG)
+  CHECK_CXX_FLAG("std=gnu++98" BUILD_TYPES Debug)
+  CHECK_CXX_FLAG("std=gnu++98" BUILD_TYPES Release VARS CXX03_FLAG)
 endif()
 
 # What POSIX do we want to target, initially?  See
@@ -1532,6 +1543,9 @@ if(ENABLE_POSIX_COMPLIANCE)
   CHECK_C_FLAG("D_POSIX_C_SOURCE=200112L")
   # need this for glibc < 2.12 (for gethostname):
   CHECK_C_FLAG("D_XOPEN_SOURCE=500")
+  #=== same for C++
+  CHECK_CXX_FLAG("D_POSIX_C_SOURCE=200112L")
+  CHECK_CXX_FLAG("D_XOPEN_SOURCE=500")
 endif()
 
 # Silence check for unused arguments (used to silence clang warnings about
