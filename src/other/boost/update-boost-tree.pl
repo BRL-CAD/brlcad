@@ -209,7 +209,7 @@ for (;;) {
 	qx(mkdir -p $dir) if (! -d $dir);
 	my $nf = sprintf "$Bdir/%s", $f;
 	copy($nf, $dir);
-	print "WARNING:  Nnexpected dup new file '$f' (must have been missing).\n"
+	print "WARNING:  Unexpected dup new file '$f' (must have been missing).\n"
 	  if (exists $new_files{$f});
 	$new_files{$f} = 1;
 	next RUN;
