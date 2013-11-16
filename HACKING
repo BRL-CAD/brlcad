@@ -648,7 +648,7 @@ main(int ac, char *av[])
 ....int i;
 ....int foo = 0;
 
-....for (i=0; i<10; i++) {
+....for (i = 0 ; i < 10; i++) {
 [      ]foo += 1;
 [      ]if (foo % 2) {
 [      ]....printf("hello\n");
@@ -675,6 +675,12 @@ No space immediately inside parentheses.
 Commas and semicolons are followed by whitespace.
   int main(int argc, char *argv[]); /* ok */
   for (i = 0; i < max; i++) { ...   /* ok */
+
+Operators and arguments generally are separated with whitespace.
+  if (FLAG & MORE_FLAGS) { ...      /* ok */
+  for (i = 0; i < max; i++) { ...   /* ok */
+  if (FLAG&MORE_FLAGS) { ...        /* discouraged */
+  for (i=0; i<max; i++) { ...       /* discouraged */
 
 No space on arrow operators.
   structure->member = 5;            /* ok */
