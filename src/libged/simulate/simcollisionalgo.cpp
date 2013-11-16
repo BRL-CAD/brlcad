@@ -28,10 +28,17 @@
 #ifdef HAVE_BULLET
 
 /* system headers */
+
+/* for g++ to quell -Wshadow warnings */
+#pragma GCC diagnostic ignored "-Wshadow"
+/* for g++ to quell -Wfloat-equal warnings */
+#pragma GCC diagnostic ignored "-Wfloat-equal"
 #include <BulletCollision/CollisionDispatch/btCollisionDispatcher.h>
 #include <BulletCollision/CollisionShapes/btBoxShape.h>
 #include <BulletCollision/CollisionDispatch/btCollisionObject.h>
 #include <BulletCollision/CollisionDispatch/btBoxBoxDetector.h>
+#pragma GCC diagnostic pop /* end ignoring -Wfloat-equal */
+#pragma GCC diagnostic pop /* end ignoring -Wshadow */
 
 /* private headers */
 #include "./simcollisionalgo.h"
@@ -77,7 +84,8 @@ btRTCollisionAlgorithm::processCollision(btCollisionObject* col0,
 	return;
 
     //quellage
-    //bu_log("%d", dispatchInfo.m_stepCount);
+    // unquell: otherwise get unused param dispatchInfo warning
+    bu_log("%d", dispatchInfo.m_stepCount);
 
     /// report a contact. internally this will be kept persistent, and contact reduction is done
     resultOut->setPersistentManifold(m_manifoldPtr);
