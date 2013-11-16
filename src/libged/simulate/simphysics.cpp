@@ -27,7 +27,14 @@
 
 /* system headers */
 #include <iostream>
+
+/* for g++ to quell -Wshadow warnings */
+#pragma GCC diagnostic ignored "-Wshadow"
+/* for g++ to quell -Wfloat-equal warnings */
+#pragma GCC diagnostic ignored "-Wfloat-equal"
 #include <btBulletDynamicsCommon.h>
+#pragma GCC diagnostic pop /* end ignoring -Wfloat-equal */
+#pragma GCC diagnostic pop /* end ignoring -Wshadow */
 
 /* public headers */
 #include "db.h"
@@ -86,7 +93,8 @@ add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld,
 				 btAlignedObjectArray<btCollisionShape*> collision_shapes)
 {
     struct rigid_body *current_node;
-    fastf_t volume;
+    // quell unused var warning
+    //fastf_t volume;
     btScalar mass;
     btScalar m[16];
     btVector3 v;
@@ -140,7 +148,9 @@ add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld,
 		    //btCollisionShape* bb_Shape = new btSphereShape(0.5);
 		collision_shapes.push_back(bb_Shape);
 
-		volume = current_node->bb_dims[0] * current_node->bb_dims[1] * current_node->bb_dims[2];
+		// quell unused var warning
+		// volume = current_node->bb_dims[0] * current_node->bb_dims[1] * current_node->bb_dims[2];
+
 		mass = 1.0; //volume; // density is 1
 
 		btVector3 bb_Inertia(0, 0, 0);
