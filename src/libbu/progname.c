@@ -72,6 +72,10 @@ bu_argv0_full_path(void)
     }
 
     /* running from relative dir */
+
+    /* FIXME: this is technically wrong.  if the current working
+     * directory is changed, we'll get the wrong path for argv0.
+     */
     bu_getcwd(buffer, MAXPATHLEN);
     snprintf(buffer+strlen(buffer), MAXPATHLEN-strlen(buffer), "%c%s", BU_DIR_SEPARATOR, argv0);
     if (bu_file_exists(buffer, NULL)) {
