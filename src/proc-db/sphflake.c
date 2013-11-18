@@ -139,15 +139,9 @@ int main(int argc, char **argv)
 
     int inter = 0;
     char fileName[MAX_INPUT_LENGTH];
-    int depth;
+    int depth = DEFAULT_MAXDEPTH;
 
-    memset(fileName, 0, MAX_INPUT_LENGTH);
-    depth = DEFAULT_MAXDEPTH;
-    bu_strlcpy(fileName, DEFAULT_FILENAME, sizeof(fileName));
-
-    bu_opterr = 0;
-
-    while ((optc = bu_getopt(argc, argv, "hHiIDd:f:F:")) != -1) {
+    while ((optc = bu_getopt(argc, argv, "iIDd:f:F:h?")) != -1) {
 	switch (optc) {
 	    case 'I' :
 	    case 'i' : /* interactive mode */
@@ -160,26 +154,25 @@ int main(int argc, char **argv)
 		break;
 	    case 'd':  /* Use a user-defined depth */
 		depth = atoi(bu_optarg);
-		if (depth > 5) {
+		if (depth > 5)
 		    printf("\nWARNING: Depths greater than 5 produce extremely large numbers of objects.\n");
-		}
 		break;
 	    case 'F':
 	    case 'f':  /* Use a user-defined filename */
 		memset(fileName, 0, MAX_INPUT_LENGTH);
 		bu_strlcpy(fileName, bu_optarg, sizeof(fileName));
 		break;
-	    case 'h':
-	    case 'H':
-	    case '?':
+	    default:
 		usage(argv[0]);
 		bu_exit(0, NULL);
-	    default:
-		break;
 	}
     }
     if (bu_optind <= 1) {
-	printf("Using all default parameters. Try %s -h for assistance\n", argv[0]);
+	fprintf(stderr,"Using all default parameters.\n");
+	fprintf(stderr,"       Program continues running:\n");
+	memset(fileName, 0, MAX_INPUT_LENGTH);
+	bu_strlcpy(fileName, DEFAULT_FILENAME, sizeof(fileName));
+/*	depth = DEFAULT_MAXDEPTH;	*/ /* It remains this value. */
 	inter = 0;
     }
 
@@ -235,8 +228,8 @@ int main(int argc, char **argv)
 
 void usage(char *n)
 {
-    printf(
-	"\nUSAGE: %s -D -d# -i -f fileName\n\
+    fprintf(stderr,
+	"\nUsage: %s -D -d# -i -f fileName\n\
 	  D -- use default parameters\n\
 	  d -- set the recursive depth of the procedure\n\
 	  i -- use interactive mode\n\
@@ -247,15 +240,15 @@ void usage(char *n)
 void initializeInfo(params_t *p, int inter, char *name, int depth)
 {
     char input[MAX_INPUT_LENGTH];
-    int i = 0;
+    int i;
     size_t len = 0;
     unsigned int c[3];
 
-    if (name == NULL) {
+    if (name == NULL)
 	bu_strlcpy(p->fileName, DEFAULT_FILENAME, sizeof(p->fileName));
-    } else {
+    else
 	bu_strlcpy(p->fileName, name, sizeof(p->fileName));
-    }
+
     p->maxRadius = DEFAULT_MAXRADIUS;
     p->maxDepth =  (depth > 0) ? (depth) : (DEFAULT_MAXDEPTH);
     p->deltaRadius = DEFAULT_DELTARADIUS;
@@ -287,9 +280,8 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 	} else {
 	    len = strlen(input);
 	    if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-	    if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+	    if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0)
 		sscanf(input, "%48s", p->fileName); /* MAX_INPUT_LENGTH */
-	    }
 	}
 	fflush(stdin);
 
@@ -315,9 +307,8 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 	} else {
 	    len = strlen(input);
 	    if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-	    if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+	    if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0)
 		sscanf(input, "%d", &(p->maxRadius));
-	    }
 	}
 	fflush(stdin);
 
@@ -328,9 +319,8 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 	} else {
 	    len = strlen(input);
 	    if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-	    if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+	    if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0)
 		sscanf(input, "%lg", &(p->deltaRadius));
-	    }
 	}
 	fflush(stdin);
 
@@ -341,9 +331,8 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 	} else {
 	    len = strlen(input);
 	    if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-	    if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+	    if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0)
 		sscanf(input, "%d", &(p->maxDepth));
-	    }
 	}
 	fflush(stdin);
 
@@ -356,9 +345,8 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 	    } else {
 		len = strlen(input);
 		if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-		if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+		if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0)
 		    sscanf(input, "%48s", p->matArray[i].name); /* MAX_INPUT_LENGTH */
-		}
 	    }
 	    fflush(stdin);
 
@@ -369,9 +357,8 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 	    } else {
 		len = strlen(input);
 		if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-		if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+		if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0)
 		    sscanf(input, "%48s", p->matArray[i].params); /* MAX_INPUT_LENGTH */
-		}
 	    }
 	    fflush(stdin);
 
