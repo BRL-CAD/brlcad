@@ -82,7 +82,7 @@ main(int argc, char **argv)
 	bu_log("Warning - ignored unsupported argument \"%s\"\n",argv[1]);
     } else
 	bu_log("       Program continues running:\n");
-	
+
 
     VSET(V, 10, 20, 30);
     VSET(u_vec, 1, 0, 0);
