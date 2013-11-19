@@ -166,6 +166,7 @@ int main(int argc, char **argv)
 	}
     }
     if (bu_optind <= 1) {
+	usage(argv[0]);
 	fprintf(stderr,"Using all default parameters.\n");
 	fprintf(stderr,"       Program continues running:\n");
 	memset(fileName, 0, MAX_INPUT_LENGTH);
