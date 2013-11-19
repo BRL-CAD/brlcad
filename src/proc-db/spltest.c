@@ -97,15 +97,13 @@ main(int argc, char *argv[])
     point_t a, b, c, d;
     struct rt_wdb *fp;
     struct rt_nurb_internal *si;
-    char *filename;
+    char *filename = "spltest.g";
 
     if (argc < 1 || argc > 2)
 	bu_exit(1, "Usage: %s [filename, default to spltest.g]", argv[0]);
 
     if (argc == 2)
 	filename = argv[1];
-    else
-	filename = "spltest.g";
 
     if ((fp = wdb_fopen(filename)) == NULL) {
 	perror("unable to open geometry database for writing");
@@ -128,6 +126,7 @@ main(int argc, char *argv[])
 
     /* wdb_export */
     mk_export_fwrite(fp, "spltest", (genptr_t)si, ID_BSPLINE);
+    bu_log("Saving file %s\n",filename);
 
     return 0;
 }
