@@ -99,15 +99,13 @@ main(int argc, char *argv[])
     struct rt_nurb_internal *si;
     char *filename;
 
-    if (argc < 1 || argc > 2) {
-	bu_exit(1, "Usage: %s [spltest.g]", argv[0]);
-    }
+    if (argc < 1 || argc > 2)
+	bu_exit(1, "Usage: %s [filename, default to spltest.g]", argv[0]);
 
-    if (argc == 2) {
+    if (argc == 2)
 	filename = argv[1];
-    } else {
+    else
 	filename = "spltest.g";
-    }
 
     if ((fp = wdb_fopen(filename)) == NULL) {
 	perror("unable to open geometry database for writing");
