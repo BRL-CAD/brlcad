@@ -41,24 +41,24 @@ main(int argc, char *argv[])
     point_t U2 = VINIT_ZERO;
 
     if (argc != 9)
-	bu_exit(1, "ERROR: input format is V0x, V0y, V0z V1x, V1y, V1z V2x, V2y, V2z U0x, U0y, U0z U1x, U1y, U1z U2x, U2y, U2z area_flag expected_result [%s]\n", argv[0]);
+	bu_exit(1, "ERROR: input format is V0x,V0y,V0z V1x,V1y,V1z V2x,V2y,V2z U0x,U0y,U0z U1x,U1y,U1z U2x,U2y,U2z area_flag expected_result [%s]\n", argv[0]);
 
-    sscanf(argv[1], "%f, %f, %f", &f1, &f2, &f3);
+    sscanf(argv[1], "%f,%f,%f", &f1, &f2, &f3);
     VSET(V0, f1, f2, f3);
 
-    sscanf(argv[2], "%f, %f, %f", &f1, &f2, &f3);
+    sscanf(argv[2], "%f,%f,%f", &f1, &f2, &f3);
     VSET(V1, f1, f2, f3);
 
-    sscanf(argv[3], "%f, %f, %f", &f1, &f2, &f3);
+    sscanf(argv[3], "%f,%f,%f", &f1, &f2, &f3);
     VSET(V2, f1, f2, f3);
 
-    sscanf(argv[4], "%f, %f, %f", &f1, &f2, &f3);
+    sscanf(argv[4], "%f,%f,%f", &f1, &f2, &f3);
     VSET(U0, f1, f2, f3);
 
-    sscanf(argv[5], "%f, %f, %f", &f1, &f2, &f3);
+    sscanf(argv[5], "%f,%f,%f", &f1, &f2, &f3);
     VSET(U1, f1, f2, f3);
 
-    sscanf(argv[6], "%f, %f, %f", &f1, &f2, &f3);
+    sscanf(argv[6], "%f,%f,%f", &f1, &f2, &f3);
     VSET(U2, f1, f2, f3);
 
     sscanf(argv[7], "%d", &area_flag);
