@@ -116,7 +116,6 @@ int dir[9][2] = {  {0, -90},
 		   {240, -30},
 		   {360, -30} };
 
-/****** Function Prototypes ******/
 extern void initializeInfo(params_t *p, int inter, char *name, int depth);
 extern void createSphereflake(params_t *p);
 extern void createLights(params_t *p);
@@ -128,7 +127,6 @@ extern void getZRotMat(mat_t *mat, fastf_t phi);
 extern void getTrans(mat_t *trans, int i, int j, fastf_t v);
 extern void makeFlake(int depth, mat_t *trans, point_t center, fastf_t radius, double delta, int maxDepth);
 extern void usage(char *n);
-
 
 int main(int argc, char **argv)
 {
@@ -172,7 +170,6 @@ int main(int argc, char **argv)
 	fprintf(stderr,"       Program continues running:\n");
 	memset(fileName, 0, MAX_INPUT_LENGTH);
 	bu_strlcpy(fileName, DEFAULT_FILENAME, sizeof(fileName));
-/*	depth = DEFAULT_MAXDEPTH;	*/ /* It remains this value. */
 	inter = 0;
     }
 
@@ -192,30 +189,11 @@ int main(int argc, char **argv)
 	BU_LIST_INIT(&(wmemberArray[i].l));
     }
 
-    /****** Create the SphereFlake ******/
-
     createSphereflake(&params);
-
-    /*
-      now that the entire sphereflake has been created, we can create the
-      additional objects needed to complete the scene.
-    */
-    /****** Create the Lights ******/
-
     createLights(&params);
-
-    /****** Create the Plane ******/
-
     createPlane(&params);
-
-    /****** Create the Environment map ******/
-
     createEnvironMap(&params);
-
-    /****** Create the entire Scene combination ******/
-
     createScene(&params);
-
 
     /* clean up */
     wdb_close(fp);
@@ -295,7 +273,7 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 	    if (bu_strncmp(input, "", MAX_INPUT_LENGTH) == 0) {
 		double scan[3];
 		sscanf(input, "%lg %lg %lg", &scan[X], &scan[Y], &scan[Z]);
-		VMOVE(p->pos, scan); /* double to fastf_t */
+		VMOVE(p->pos, scan);
 	    }
 	}
 	fflush(stdin);
@@ -574,12 +552,6 @@ void getZRotMat(mat_t (*t), fastf_t phi)
     r[15] = 1;
     memcpy(*t, r, sizeof(*t));
 }
-
-
-/*
-  void makeFlake(int depth, mat_t *trans, point_t center, fastf_t radius, float delta, int maxDepth)
-*/
-
 
 void makeFlake(int depth, mat_t (*trans), fastf_t *center, fastf_t radius, double delta, int maxDepth)
 {
