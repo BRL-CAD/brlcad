@@ -90,6 +90,10 @@ make_face(struct rt_nurb_internal *s, fastf_t *a, fastf_t *b, fastf_t *c, fastf_
     s->srfs[s->nsrf++] = srf;
 }
 
+void
+printusage(char *argv[]) {
+	bu_log("Usage: %s [filename, default to spltest.g]\n", argv[0]);
+}
 
 int
 main(int argc, char *argv[])
@@ -98,9 +102,20 @@ main(int argc, char *argv[])
     struct rt_wdb *fp;
     struct rt_nurb_internal *si;
     char *filename = "spltest.g";
+    int helpflag;
 
-    if (argc < 1 || argc > 2)
-	bu_exit(1, "Usage: %s [filename, default to spltest.g]", argv[0]);
+    if (argc < 1 || argc > 2) {
+    	printusage(argv);
+	bu_exit(1,NULL);
+    }
+
+    helpflag = (argc == 2 && ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")));
+    if (argc == 1 || helpflag) {
+    	printusage(argv);
+	if (helpflag)
+		bu_exit(1,NULL);
+	bu_log("       Program continues running:\n");
+    }
 
     if (argc == 2)
 	filename = argv[1];
