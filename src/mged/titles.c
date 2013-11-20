@@ -258,9 +258,11 @@ dotitles(struct bu_vls *overlay_vls)
 	RT_CK_FULL_PATH(dbfp);
 
 	for (i = 0; i < (size_t)ipathpos; i++) {
-	    dp = DB_FULL_PATH_GET(dbfp, i);
-	    if (dp && dp->d_namep) {
-		bu_vls_printf(&path_lhs, "/%s", dp->d_namep);
+	    if ((size_t)i < (size_t)dbfp->fp_len) {
+		dp = DB_FULL_PATH_GET(dbfp, i);
+		if (dp && dp->d_namep) {
+		    bu_vls_printf(&path_lhs, "/%s", dp->d_namep);
+		}
 	    }
 	}
 	for (; i < dbfp->fp_len; i++) {
