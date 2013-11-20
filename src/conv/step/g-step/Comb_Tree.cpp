@@ -138,25 +138,38 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, Registry *registry,
     /* Find all solids that aren't already breps, convert them, insert them, and stick in dp->STEPentity map */
     /* NOTE: this is a temporary measure until evaluated booleans are working - after that, it will be needed
      * only for unevaluated boolean export via more advanced forms of STEP */
-#if 0
     const char *non_brep_search = "! -type comb ! -type brep";
-    struct bu_ptbl *non_breps = db_search_path_obj(brep_search, dp, wdbp);
+    struct bu_ptbl *non_breps = db_search_path_obj(non_brep_search, dp, wdbp);
     for (int j = (int)BU_PTBL_LEN(non_breps) - 1; j >= 0; j--){
 	STEPentity *brep_shape;
 	STEPentity *brep_product;
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(non_breps, j);
-	// Get brep form of solid - if that fails, try something else like oriented bounding box as a last resort?
-	// (triangle meshes probably should go as is?)
-	ON_BRep_to_STEP(curr_dp, brep, registry, instance_list, &brep_shape, &brep_product);
-	maps->brep_to_step[curr_dp] = brep_product;
-	maps->brep_to_step_shape[curr_dp] = brep_shape;
-	bu_log("Brep: %s\n", curr_dp->d_namep);
+	// Get brep form of solid
+	// if that fails, try something else like oriented bounding box as a last resort?
+	// triangle meshes probably should go as is?
+	struct bn_tol tol;
+	tol.magic = BN_TOL_MAGIC;
+	tol.dist = BN_TOL_DIST;
+	tol.dist_sq = tol.dist * tol.dist;
+	tol.perp = SMALL_FASTF;
+	tol.para = 1.0 - tol.perp;
+	struct rt_db_internal solid_intern;
+	rt_db_get_internal(&solid_intern, curr_dp, wdbp->dbip, bn_mat_identity, &rt_uniresource);
+	RT_CK_DB_INTERNAL(&solid_intern);
+	if (solid_intern.idb_meth->ft_brep != NULL) {
+	    ON_Brep *brep_obj = ON_Brep::New();
+	    ON_Brep **brep = &brep_obj;
+	    solid_intern.idb_meth->ft_brep(brep, &solid_intern, &tol);
+	    ON_BRep_to_STEP(curr_dp, *brep, registry, instance_list, &brep_shape, &brep_product);
+	    maps->brep_to_step[curr_dp] = brep_product;
+	    maps->brep_to_step_shape[curr_dp] = brep_shape;
+	    bu_log("solid to Brep: %s\n", curr_dp->d_namep);
+	}
     }
-#endif
 
 
-    /* Find all combs that are not already brep wrappers, make instances of them, insert them, and stick in *dp to STEPentity* map */
-    const char *comb_search = "-type comb ! ( -nnodes 1 -below=1 -type brep )";
+    /* Find all combs that are not already wrappers, make instances of them, insert them, and stick in *dp to STEPentity* map */
+    const char *comb_search = "-type comb ! ( -nnodes 1 -below=1 ! -type comb )";
     struct bu_ptbl *combs = db_search_path_obj(comb_search, dp, wdbp);
     for (int j = (int)BU_PTBL_LEN(combs) - 1; j >= 0; j--){
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(combs, j);
@@ -171,8 +184,8 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, Registry *registry,
 
     /* Find the combs that *are* wrappers, and point them to the product associated with their brep.
      * Change the name of the product, if appropriate */
-    const char *comb_wrapper_search = "-type comb -nnodes 1 -below=1 -type brep";
-    const char *comb_child_search = "-mindepth 1 -type brep";
+    const char *comb_wrapper_search = "-type comb -nnodes 1 -below=1 ! -type comb";
+    const char *comb_child_search = "-mindepth 1 ! -type comb";
     struct bu_ptbl *comb_wrappers = db_search_path_obj(comb_wrapper_search, dp, wdbp);
     for (int j = (int)BU_PTBL_LEN(comb_wrappers) - 1; j >= 0; j--){
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(comb_wrappers, j);
