@@ -177,7 +177,8 @@ main(int argc, char *argv[])
     /* Now, add actual DATA */
     switch (intern.idb_minor_type) {
 	case DB5_MINORTYPE_BRLCAD_BREP:
-	    (void)ON_BRep_to_STEP(dp, &intern, registry, &instance_list, &shape, &product);
+	    RT_BREP_TEST_MAGIC((struct rt_brep_internal *)(intern.idb_ptr));
+	    (void)ON_BRep_to_STEP(dp, ((struct rt_brep_internal *)(intern.idb_ptr))->brep, registry, &instance_list, &shape, &product);
 	    break;
 	case DB5_MINORTYPE_BRLCAD_COMBINATION:
 	    (void)Comb_Tree_to_STEP(dp, wdbp, registry, &instance_list);

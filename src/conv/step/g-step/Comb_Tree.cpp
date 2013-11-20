@@ -116,7 +116,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, Registry *registry,
     std::set<struct directory *> non_wrapper_combs;
 
 
-    /* Find all solids, make instances of them, insert them, and stick in *dp to STEPentity* map */
+    /* Find all brep solids, make instances of them, insert them, and stick in *dp to STEPentity* map */
     const char *brep_search = "-type brep";
     struct bu_ptbl *breps = db_search_path_obj(brep_search, dp, wdbp);
     for (int j = (int)BU_PTBL_LEN(breps) - 1; j >= 0; j--){
@@ -126,11 +126,34 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, Registry *registry,
 	struct rt_db_internal brep_intern;
 	rt_db_get_internal(&brep_intern, curr_dp, wdbp->dbip, bn_mat_identity, &rt_uniresource);
 	RT_CK_DB_INTERNAL(&brep_intern);
-	ON_BRep_to_STEP(curr_dp, &brep_intern, registry, instance_list, &brep_shape, &brep_product);
+	struct rt_brep_internal *bi = (struct rt_brep_internal*)(brep_intern.idb_ptr);
+	RT_BREP_TEST_MAGIC(bi);
+	ON_Brep *brep = bi->brep;
+	ON_BRep_to_STEP(curr_dp, brep, registry, instance_list, &brep_shape, &brep_product);
 	maps->brep_to_step[curr_dp] = brep_product;
 	maps->brep_to_step_shape[curr_dp] = brep_shape;
 	bu_log("Brep: %s\n", curr_dp->d_namep);
     }
+
+    /* Find all solids that aren't already breps, convert them, insert them, and stick in dp->STEPentity map */
+    /* NOTE: this is a temporary measure until evaluated booleans are working - after that, it will be needed
+     * only for unevaluated boolean export via more advanced forms of STEP */
+#if 0
+    const char *non_brep_search = "! -type comb ! -type brep";
+    struct bu_ptbl *non_breps = db_search_path_obj(brep_search, dp, wdbp);
+    for (int j = (int)BU_PTBL_LEN(non_breps) - 1; j >= 0; j--){
+	STEPentity *brep_shape;
+	STEPentity *brep_product;
+	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(non_breps, j);
+	// Get brep form of solid - if that fails, try something else like oriented bounding box as a last resort?
+	// (triangle meshes probably should go as is?)
+	ON_BRep_to_STEP(curr_dp, brep, registry, instance_list, &brep_shape, &brep_product);
+	maps->brep_to_step[curr_dp] = brep_product;
+	maps->brep_to_step_shape[curr_dp] = brep_shape;
+	bu_log("Brep: %s\n", curr_dp->d_namep);
+    }
+#endif
+
 
     /* Find all combs that are not already brep wrappers, make instances of them, insert them, and stick in *dp to STEPentity* map */
     const char *comb_search = "-type comb ! ( -nnodes 1 -below=1 -type brep )";

@@ -201,12 +201,8 @@ Populate_Instance_List(ON_Brep_Info_AP203 *info)
 }
 
 void
-ON_BRep_to_STEP(struct directory *dp, struct rt_db_internal *intern, Registry *registry, InstMgr *instance_list, STEPentity **brep_shape, STEPentity **brep_product)
+ON_BRep_to_STEP(struct directory *dp, ON_Brep *brep, Registry *registry, InstMgr *instance_list, STEPentity **brep_shape, STEPentity **brep_product)
 {
-    RT_CK_DB_INTERNAL(intern);
-    struct rt_brep_internal *bi = (struct rt_brep_internal*)(intern->idb_ptr);
-    RT_BREP_TEST_MAGIC(bi);
-    ON_Brep *brep = bi->brep;
     //ON_wString wstr;
     //ON_TextLog dump(wstr);
     //brep->Dump(dump);
