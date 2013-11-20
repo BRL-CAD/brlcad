@@ -1325,6 +1325,95 @@ rt_arbn_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
+
+/* plane used by ccw to compare 2 points */
+static plane_t *cmp_plane = NULL;
+
+/* qsort helper function, used to sort points into
+ * counter-clockwise order */
+HIDDEN int
+ccw(const void *x, const void *y)
+{
+    vect_t tmp;
+    VCROSS(tmp, ((fastf_t *)x), ((fastf_t *)y));
+    return VDOT(*cmp_plane, tmp);
+}
+
+
+
+void
+rt_arbn_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    /* contains information used to analyze a polygonal face */
+    struct poly_face
+    {
+	char label[5];
+	size_t npts;
+	point_t *pts;
+	plane_t plane_eqn;
+	fastf_t area;
+    };
+    struct poly_face *faces;
+    struct rt_arbn_internal *aip = (struct rt_arbn_internal *)ip->idb_ptr;
+    size_t i, j, k, l;
+
+    /* allocate array of face structs */
+    faces = (struct poly_face *)bu_calloc(aip->neqn, sizeof(struct poly_face), "arbn_surf_area: faces");
+    for (i = 0; i < aip->neqn; i++) {
+	HMOVE(faces[i].plane_eqn, aip->eqn[i]);
+	VUNITIZE(faces[i].plane_eqn);
+	/* allocate array of pt structs, max number of verts per faces = (# of faces) - 1 */
+	faces[i].pts = (point_t *)bu_calloc(aip->neqn - 1, sizeof(point_t), "arbn_surf_area: pts");
+    }
+
+    /* find all vertices */
+    for (i = 0; i < aip->neqn - 2; i++) {
+    for (j = i + 1; j < aip->neqn - 1; j++) {
+	for (k = j + 1; k < aip->neqn; k++) {
+	    point_t pt;
+	    int keep_point = 1;
+	    if (bn_mkpoint_3planes(pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]) < 0) {
+		continue;
+	    }
+	    /* discard pt if it is outside the arbn */
+	    for (l = 0; l < aip->neqn; l++) {
+		if (l == i || l == j || l == k) {
+		    continue;
+		}
+		if (DIST_PT_PLANE(pt, aip->eqn[l]) >  BN_TOL_DIST) {
+		    keep_point = 0;
+		    break;
+		}
+	    }
+	    /* found a good point, add it to each of the intersecting faces */
+	    if (keep_point) {
+		VMOVE((faces[i]).pts[(faces[i]).npts], (pt)); (faces[i]).npts++;
+		VMOVE((faces[j]).pts[(faces[j]).npts], (pt)); (faces[j]).npts++;
+		VMOVE((faces[k]).pts[(faces[k]).npts], (pt)); (faces[k]).npts++;
+	    }
+	}
+    }
+    }
+    for (i = 0; i < aip->neqn; i++) {
+	vect_t tmp, tot = VINIT_ZERO;
+	/* sort points */
+	cmp_plane = &faces[i].plane_eqn;
+	qsort(faces[i].pts, faces[i].npts, sizeof(point_t), ccw);
+	cmp_plane = NULL;
+	/* N-Sided Face - compute area using Green's Theorem */
+	for (j = 0; j < faces[i].npts; j++) {
+	    VCROSS(tmp, faces[i].pts[j], faces[i].pts[j + 1 == faces[i].npts ? 0 : j + 1]);
+	    VADD2(tot, tot, tmp);
+	}
+	*area += (fabs(VDOT(faces[i].plane_eqn, tot)) * 0.5);
+    }
+    for (i = 0; i < aip->neqn; i++) {
+	bu_free((char *)faces[i].pts, "analyze_arbn: pts");
+    }
+    bu_free((char *)faces, "analyze_arbn: faces");
+}
+
+
 /** @} */
 /*
  * Local Variables:

@@ -823,7 +823,7 @@ const struct rt_functab OBJ[] = {
 	rt_arbn_params,
 	rt_arbn_bbox,
 	NULL,
-	NULL,
+	rt_arbn_surf_area,
 	NULL,
 	NULL,
 	NULL,
