@@ -141,7 +141,7 @@ bn_2d_hull(point_t **hull, const point_t *pnts, int n)
     qsort((genptr_t)points, n, sizeof(point_t), pnt_compare);
 
     /* the output hull array will be used as the stack */
-    hull = (point_t **)bu_calloc(n + 1, sizeof(point_t), "hull array");
+    (*hull) = (point_t *)bu_calloc(n + 1, sizeof(point_t), "hull array");
 
     /* Get the indices of points with min x-coord and min|max y-coord */
     xmin = points[0][0];
@@ -150,13 +150,13 @@ bn_2d_hull(point_t **hull, const point_t *pnts, int n)
     minmax = i - 1;
     if (minmax == n-1) {       /* degenerate case: all x-coords == xmin */
 	top = top + 1;
-        VMOVE(*(hull[top]), points[minmin]);
+        VMOVE((*hull)[top], points[minmin]);
         if (!NEAR_ZERO(points[minmax][1] - points[minmin][1], SMALL_FASTF)){ /* a  nontrivial segment */
 	    top = top + 1;
-	    VMOVE(*(hull[top]),points[minmax]);
+	    VMOVE((*hull)[top],points[minmax]);
 	}
 	top = top + 1;
-	VMOVE(*(hull[top]),points[minmax]);
+	VMOVE((*hull)[top],points[minmax]);
 	return top+1;
     }
 
@@ -168,10 +168,11 @@ bn_2d_hull(point_t **hull, const point_t *pnts, int n)
 
     /* Compute the lower hull on the stack H */
     top = top + 1;
-    VMOVE(*(hull[top]),points[minmin]);      /* push  minmin point onto stack */
-    i = minmax + 1;
+    VMOVE((*hull)[top],points[minmin]);      /* push  minmin point onto stack */
+    i = minmax;
     while (i <= maxmin)
     {
+	i = i + 1;
         /* the lower line joins points[minmin]  with points[maxmin] */
         if (isLeft( points[minmin], points[maxmin], points[i])  >= 0 && i < maxmin)
             continue;           /* ignore points[i] above or on the lower line */
@@ -179,25 +180,25 @@ bn_2d_hull(point_t **hull, const point_t *pnts, int n)
         while (top > 0)         /* there are at least 2 points on the stack */
         {
             /* test if  points[i] is left of the line at the stack top */
-            if (isLeft(  *(hull[top-1]), *(hull[top]), points[i]) > 0)
+            if (isLeft(  (*hull)[top-1], (*hull)[top], points[i]) > 0)
                  break;         /* points[i] is a new hull  vertex */
             else
                  top--;         /* pop top point off  stack */
         }
 	top = top + 1;
-	VMOVE(*(hull[top]),points[i]);        /* push points[i] onto stack */
-	i = i + 1;
+	VMOVE((*hull)[top],points[i]);        /* push points[i] onto stack */
     }
 
     /* Next, compute the upper hull on the stack H above  the bottom hull */
     if (maxmax != maxmin) {     /* if  distinct xmax points */
 	top = top + 1;
-	VMOVE(*(hull[top]),points[maxmax]);  /* push maxmax point onto stack */
+	VMOVE((*hull)[top],points[maxmax]);  /* push maxmax point onto stack */
     }
     bot = top;                  /* the bottom point of the upper hull stack */
-    i = maxmin - 1;
+    i = maxmin;
     while (i >= minmax)
     {
+	i = i - 1;
         /* the upper line joins points[maxmax]  with points[minmax] */
         if (isLeft( points[maxmax], points[minmax], points[i])  >= 0 && i > minmax)
             continue;           /* ignore points[i] below or on the upper line */
@@ -205,18 +206,17 @@ bn_2d_hull(point_t **hull, const point_t *pnts, int n)
         while (top > bot)     /* at least 2 points on the upper stack */
         {
             /* test if  points[i] is left of the line at the stack top */
-            if (isLeft(  *(hull[top-1]), *(hull[top]), points[i]) > 0)
+            if (isLeft(  (*hull)[top-1], (*hull)[top], points[i]) > 0)
                  break;         /* points[i] is a new hull  vertex */
             else
 		top = top - 1;  /* pop top point off stack */
         }
 	top = top + 1;
-        VMOVE(*(hull[top]),points[i]);        /* push points[i] onto stack */
-	i = i - 1;
+        VMOVE((*hull)[top],points[i]);        /* push points[i] onto stack */
     }
     if (minmax != minmin) {
 	top = top + 1;
-        VMOVE(*(hull[top]),points[minmin]);  /* push  joining endpoint onto stack */
+        VMOVE((*hull)[top],points[minmin]);  /* push  joining endpoint onto stack */
     }
 
     bu_free(points, "free sorted points");

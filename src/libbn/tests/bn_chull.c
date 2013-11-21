@@ -35,16 +35,16 @@ main()
     /* FIXME: finish this */
     point_t pnts[4+1] = {{0}};
     int n = 4;
-    point_t **hull_polyline = NULL;
-    point_t **hull_pnts = NULL;
+    point_t *hull_polyline = NULL;
+    point_t *hull_pnts = NULL;
 
     VSET(pnts[0], 1.5, 1.5, 0.0);
     VSET(pnts[1], 3.0, 2.0, 0.0);
     VSET(pnts[2], 2.0, 2.5, 0.0);
     VSET(pnts[3], 1.0, 2.0, 0.0);
 
-    bn_polyline_2d_hull(hull_polyline, (const point_t *)pnts, n);
-    bn_2d_hull(hull_pnts, (const point_t *)pnts, n);
+    bn_polyline_2d_hull(&hull_polyline, (const point_t *)pnts, n);
+    bn_2d_hull(&hull_pnts, (const point_t *)pnts, n);
 
     return 0;
 }
