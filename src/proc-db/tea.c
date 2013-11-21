@@ -97,19 +97,25 @@ main(int argc, char **argv)
     struct rt_wdb *outfp;
     struct face_g_snurb **surfaces;
 
-    rt_init_resource(&rt_uniresource, 0, NULL);
-
-    outfp = wdb_fopen("teapot.g");
-
-    while ((i=bu_getopt(argc, argv, "d")) != -1) {
+    while ((i=bu_getopt(argc, argv, "dh?")) != -1) {
 	switch (i) {
 	    case 'd':
 		RTG.debug |= DEBUG_MEM | DEBUG_MEM_FULL;
 		break;
 	    default:
-		bu_exit(-1, "Usage: %s [-d]\n", *argv);
+		bu_log("Usage: %s [-d]\n", *argv);
+		bu_exit(-1, NULL);
 	}
     }
+
+    if (argc == 1) {
+	bu_log("Usage: %s [-d]\n", *argv);
+    	bu_log("       Program continues running:\n");
+    }
+
+    rt_init_resource(&rt_uniresource, 0, NULL);
+
+    outfp = wdb_fopen("teapot.g");
 
     /* Setup information
      * Database header record
