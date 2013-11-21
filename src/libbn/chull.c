@@ -118,9 +118,18 @@ pnt_compare(const void *pnt1, const void *pnt2)
  * http://geomalgorithms.com/a10-_hull-1.html
  */
 int
-bn_2D_hull(point_t **UNUSED(hull), const point_t *pnts, int n)
+bn_2D_hull(point_t **hull, const point_t *pnts, int n)
 {
     int i = 0;
+    int bot = 0;
+    int top = -1;
+    int minmin = 0;
+    int minmax = 0;
+    int maxmin = n-1;
+    int maxmax = n-1;
+    float xmin = 0.0;
+    float xmax = 0.0;
+
     point_t *points = (point_t *)bu_calloc(n + 1, sizeof(point_t), "sorted pnts");
 
     /* first thing, copy pnts array to something
@@ -130,81 +139,89 @@ bn_2D_hull(point_t **UNUSED(hull), const point_t *pnts, int n)
     }
 
     qsort((genptr_t)points, n, sizeof(point_t), pnt_compare);
-    bu_free(points, "free sorted points");
-#if 0
 
-    /* the output array H[] will be used as the stack */
-    int    bot=0, top=(-1);   /* indices for bottom and top of the stack */
-    int    i;                 /* array scan index */
+    /* the output hull array will be used as the stack */
+    hull = (point_t **)bu_calloc(n + 1, sizeof(point_t), "hull array");
 
     /* Get the indices of points with min x-coord and min|max y-coord */
-    int minmin = 0, minmax;
-    float xmin = P[0].x;
-    for (i=1; i<n; i++)
-        if (P[i].x != xmin) break;
-    minmax = i-1;
+    xmin = points[0][0];
+    for (i = 1; i < n; i++)
+        if (!NEAR_ZERO(points[i][0] - xmin, SMALL_FASTF)) break;
+    minmax = i - 1;
     if (minmax == n-1) {       /* degenerate case: all x-coords == xmin */
-        H[++top] = P[minmin];
-        if (P[minmax].y != P[minmin].y) /* a  nontrivial segment */
-            H[++top] =  P[minmax];
-        H[++top] = P[minmin];            /* add polygon endpoint */
-        return top+1;
+	top = top + 1;
+        VMOVE(*(hull[top]), points[minmin]);
+        if (!NEAR_ZERO(points[minmax][1] - points[minmin][1], SMALL_FASTF)){ /* a  nontrivial segment */
+	    top = top + 1;
+	    VMOVE(*(hull[top]),points[minmax]);
+	}
+	top = top + 1;
+	VMOVE(*(hull[top]),points[minmax]);
+	return top+1;
     }
 
     /* Get the indices of points with max x-coord and min|max y-coord */
-    int maxmin, maxmax = n-1;
-    float xmax = P[n-1].x;
-    for (i=n-2; i>=0; i--)
-        if (P[i].x != xmax) break;
+    xmax = points[n-1][0];
+    for (i = n-2; i >= 0; i--)
+        if (!NEAR_ZERO(points[i][0] - xmax, SMALL_FASTF)) break;
     maxmin = i+1;
 
     /* Compute the lower hull on the stack H */
-    H[++top] = P[minmin];      /* push  minmin point onto stack */
-    i = minmax;
-    while (++i <= maxmin)
+    top = top + 1;
+    VMOVE(*(hull[top]),points[minmin]);      /* push  minmin point onto stack */
+    i = minmax + 1;
+    while (i <= maxmin)
     {
-        /* the lower line joins P[minmin]  with P[maxmin] */
-        if (isLeft( P[minmin], P[maxmin], P[i])  >= 0 && i < maxmin)
-            continue;           /* ignore P[i] above or on the lower line */
+        /* the lower line joins points[minmin]  with points[maxmin] */
+        if (isLeft( points[minmin], points[maxmin], points[i])  >= 0 && i < maxmin)
+            continue;           /* ignore points[i] above or on the lower line */
 
         while (top > 0)         /* there are at least 2 points on the stack */
         {
-            /* test if  P[i] is left of the line at the stack top */
-            if (isLeft(  H[top-1], H[top], P[i]) > 0)
-                 break;         /* P[i] is a new hull  vertex */
+            /* test if  points[i] is left of the line at the stack top */
+            if (isLeft(  *(hull[top-1]), *(hull[top]), points[i]) > 0)
+                 break;         /* points[i] is a new hull  vertex */
             else
                  top--;         /* pop top point off  stack */
         }
-        H[++top] = P[i];        /* push P[i] onto stack */
+	top = top + 1;
+	VMOVE(*(hull[top]),points[i]);        /* push points[i] onto stack */
+	i = i + 1;
     }
 
     /* Next, compute the upper hull on the stack H above  the bottom hull */
-    if (maxmax != maxmin)      /* if  distinct xmax points */
-         H[++top] = P[maxmax];  /* push maxmax point onto stack */
+    if (maxmax != maxmin) {     /* if  distinct xmax points */
+	top = top + 1;
+	VMOVE(*(hull[top]),points[maxmax]);  /* push maxmax point onto stack */
+    }
     bot = top;                  /* the bottom point of the upper hull stack */
-    i = maxmin;
-    while (--i >= minmax)
+    i = maxmin - 1;
+    while (i >= minmax)
     {
-        /* the upper line joins P[maxmax]  with P[minmax] */
-        if (isLeft( P[maxmax], P[minmax], P[i])  >= 0 && i > minmax)
-            continue;           /* ignore P[i] below or on the upper line */
+        /* the upper line joins points[maxmax]  with points[minmax] */
+        if (isLeft( points[maxmax], points[minmax], points[i])  >= 0 && i > minmax)
+            continue;           /* ignore points[i] below or on the upper line */
 
         while (top > bot)     /* at least 2 points on the upper stack */
         {
-            /* test if  P[i] is left of the line at the stack top */
-            if (isLeft(  H[top-1], H[top], P[i]) > 0)
-                 break;         /* P[i] is a new hull  vertex */
+            /* test if  points[i] is left of the line at the stack top */
+            if (isLeft(  *(hull[top-1]), *(hull[top]), points[i]) > 0)
+                 break;         /* points[i] is a new hull  vertex */
             else
-                 top--;         /* pop top point off  stack */
+		top = top - 1;  /* pop top point off stack */
         }
-        H[++top] = P[i];        /* push P[i] onto stack */
+	top = top + 1;
+        VMOVE(*(hull[top]),points[i]);        /* push points[i] onto stack */
+	i = i - 1;
     }
-    if (minmax != minmin)
-        H[++top] = P[minmin];  /* push  joining endpoint onto stack */
+    if (minmax != minmin) {
+	top = top + 1;
+        VMOVE(*(hull[top]),points[minmin]);  /* push  joining endpoint onto stack */
+    }
+
+    bu_free(points, "free sorted points");
 
     return top+1;
-#endif
-return 0;
 }
 
 /*
