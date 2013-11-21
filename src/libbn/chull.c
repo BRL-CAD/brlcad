@@ -36,7 +36,7 @@
  * http://geomalgorithms.com/a12-_hull-3.html
  */
 int
-bn_polyline_2D_hull(point_t** hull, const point_t* polyline, int n)
+bn_polyline_2d_hull(point_t** hull, const point_t* polyline, int n)
 {
     int i;
 
@@ -118,7 +118,7 @@ pnt_compare(const void *pnt1, const void *pnt2)
  * http://geomalgorithms.com/a10-_hull-1.html
  */
 int
-bn_2D_hull(point_t **hull, const point_t *pnts, int n)
+bn_2d_hull(point_t **hull, const point_t *pnts, int n)
 {
     int i = 0;
     int bot = 0;

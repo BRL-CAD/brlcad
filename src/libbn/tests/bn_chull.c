@@ -42,7 +42,8 @@ main()
     VSET(pnts[2], 2.0, 2.5, 0.0);
     VSET(pnts[3], 1.0, 2.0, 0.0);
 
-    bn_2D_hull(hull, (const point_t *)pnts, n);
+    bn_polyline_2d_hull(hull, (const point_t *)pnts, n);
+    bn_2d_hull(hull, (const point_t *)pnts, n);
 
     return 0;
 }

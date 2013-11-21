@@ -236,7 +236,7 @@ bn_obr_calc(const point_t *pnts, int pnt_cnt, struct obr_vals *obr)
 	    /* Bound convex hull using rotating calipers */
 
 	    /* 1.  Get convex hull */
-	    hull_pnt_cnt = bn_polyline_2D_hull(&hull_pnts, pnts, pnt_cnt);
+	    hull_pnt_cnt = bn_polyline_2d_hull(&hull_pnts, pnts, pnt_cnt);
 
 	    /* 2.  Get edge unit vectors */
 	    edge_unit_vects = (vect_t *)bu_calloc(hull_pnt_cnt + 1, sizeof(fastf_t) * 3, "unit vects for edges");
