@@ -514,7 +514,7 @@ BN_EXPORT extern void bn_tcl_mat_print();
  * @param	n the number of points in polyline
  * @return the number of points in the output hull array
  */
-BN_EXPORT int bn_polyline_2d_chull(point_t** hull, const point_t* polyline, int n);
+BN_EXPORT int bn_polyline_2d_chull(point2d_t** hull, const point2d_t* polyline, int n);
 
 /**
  * @brief
@@ -541,7 +541,7 @@ BN_EXPORT int bn_polyline_2d_chull(point_t** hull, const point_t* polyline, int 
  * @param	n the number of points in the input set
  * @return the number of points in the output hull array or zero if error.
  */
-BN_EXPORT int bn_2d_chull(point_t** hull, const point_t* points_2d, int n);
+BN_EXPORT int bn_2d_chull(point2d_t** hull, const point2d_t* points_2d, int n);
 
 /**
  * @brief

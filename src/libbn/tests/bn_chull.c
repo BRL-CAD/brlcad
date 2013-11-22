@@ -34,47 +34,45 @@ main()
 {
     int i = 0;
     int retval = 0;
-    point_t test1_points[4+1] = {{0}};
-    point_t test1_results[5+1] = {{0}};
+    point2d_t test1_points[4+1] = {{0}};
+    point2d_t test1_results[5+1] = {{0}};
     int n = 4;
-    point_t *hull_polyline = NULL;
-    point_t *hull_pnts = NULL;
+    point2d_t *hull_polyline = NULL;
+    point2d_t *hull_pnts = NULL;
 
-    VSET(test1_points[0], 1.5, 1.5, 0.0);
-    VSET(test1_points[1], 3.0, 2.0, 0.0);
-    VSET(test1_points[2], 2.0, 2.5, 0.0);
-    VSET(test1_points[3], 1.0, 2.0, 0.0);
+    V2SET(test1_points[0], 1.5, 1.5);
+    V2SET(test1_points[1], 3.0, 2.0);
+    V2SET(test1_points[2], 2.0, 2.5);
+    V2SET(test1_points[3], 1.0, 2.0);
 
-    VSET(test1_results[0], 1.0, 2.0, 0.0);
-    VSET(test1_results[1], 1.5, 1.5, 0.0);
-    VSET(test1_results[2], 3.0, 2.0, 0.0);
-    VSET(test1_results[3], 2.0, 2.5, 0.0);
-    VSET(test1_results[4], 1.0, 2.0, 0.0);
+    V2SET(test1_results[0], 1.0, 2.0);
+    V2SET(test1_results[1], 1.5, 1.5);
+    V2SET(test1_results[2], 3.0, 2.0);
+    V2SET(test1_results[3], 2.0, 2.5);
+    V2SET(test1_results[4], 1.0, 2.0);
 
-    retval = bn_polyline_2d_chull(&hull_polyline, (const point_t *)test1_points, n);
+    retval = bn_polyline_2d_chull(&hull_polyline, (const point2d_t *)test1_points, n);
     if (!retval) return -1;
     bu_log("Test #001:  polyline_2d_hull - 4 point test:\n");
     for (i = 0; i < retval; i++) {
-	bu_log("    expected[%d]: (%f, %f, %f)\n", i, test1_results[i][0], test1_results[i][1], test1_results[i][2]);
-	bu_log("      actual[%d]: (%f, %f, %f)\n", i, hull_polyline[i][0], hull_polyline[i][1], hull_polyline[i][2]);
+	bu_log("    expected[%d]: (%f, %f)\n", i, test1_results[i][0], test1_results[i][1]);
+	bu_log("      actual[%d]: (%f, %f)\n", i, hull_polyline[i][0], hull_polyline[i][1]);
 	if (!NEAR_ZERO(test1_results[i][0] - hull_polyline[i][0], SMALL_FASTF) ||
-	    !NEAR_ZERO(test1_results[i][1] - hull_polyline[i][1], SMALL_FASTF) ||
-	    !NEAR_ZERO(test1_results[i][2] - hull_polyline[i][2], SMALL_FASTF) ) {
+	    !NEAR_ZERO(test1_results[i][1] - hull_polyline[i][1], SMALL_FASTF)) {
 	    retval = 0;
 	}
     }
     if (!retval) {return -1;} else {bu_log("Test #001 Passed!\n");}
 
 
-    retval = bn_2d_chull(&hull_pnts, (const point_t *)test1_points, n);
+    retval = bn_2d_chull(&hull_pnts, (const point2d_t *)test1_points, n);
     if (!retval) return -1;
     bu_log("Test #002:  2d_hull - 4 point test:\n");
     for (i = 0; i < retval; i++) {
-	bu_log("    expected[%d]: (%f, %f, %f)\n", i, test1_results[i][0], test1_results[i][1], test1_results[i][2]);
-	bu_log("      actual[%d]: (%f, %f, %f)\n", i, hull_pnts[i][0], hull_pnts[i][1], hull_pnts[i][2]);
+	bu_log("    expected[%d]: (%f, %f)\n", i, test1_results[i][0], test1_results[i][1]);
+	bu_log("      actual[%d]: (%f, %f)\n", i, hull_pnts[i][0], hull_pnts[i][1]);
 	if (!NEAR_ZERO(test1_results[i][0] - hull_pnts[i][0], SMALL_FASTF) ||
-	    !NEAR_ZERO(test1_results[i][1] - hull_pnts[i][1], SMALL_FASTF) ||
-	    !NEAR_ZERO(test1_results[i][2] - hull_pnts[i][2], SMALL_FASTF) ) {
+	    !NEAR_ZERO(test1_results[i][1] - hull_pnts[i][1], SMALL_FASTF) ) {
 	    retval = 0;
 	}
     }
