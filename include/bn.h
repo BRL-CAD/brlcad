@@ -556,7 +556,7 @@ BN_EXPORT int bn_2d_chull(point2d_t** hull, const point2d_t* points_2d, int n);
  * @param	n the number of points in the input set
  * @return 0 if successful
  */
-BN_EXPORT int bn_3dpnts_to_2dpnts(
+BN_EXPORT int bn_coplanar_3d_to_2d(
 	point2d_t **points_2d,
 	const point_t *origin_pnt,
 	const vect_t *x_axis,
@@ -576,7 +576,7 @@ BN_EXPORT int bn_3dpnts_to_2dpnts(
  * @param	n the number of points in the input set
  * @return 0 if successful
  */
-BN_EXPORT int bn_2dpnts_to_3dpnts(
+BN_EXPORT int bn_coplanar_2d_to_3d(
 	point_t **points_3d,
 	const point_t *origin_pnt,
 	const vect_t *x_axis,
@@ -586,7 +586,7 @@ BN_EXPORT int bn_2dpnts_to_3dpnts(
 
 /**
  * @brief
- * Find a 2D coordinate system for a set of 3D points
+ * Find a 2D coordinate system for a set of co-planar 3D points
  *
  * Based on the planar normal and the vector from the center of the points to the
  * point furthest from that center, find vectors describing a 2D coordinate system.
@@ -598,7 +598,7 @@ BN_EXPORT int bn_2dpnts_to_3dpnts(
  * @param	n the number of points in the input set
  * @return 0 if successful
  */
-BN_EXPORT int bn_2d_coordinate_system(
+BN_EXPORT int bn_coplanar_2d_coord_sys(
 	point_t *origin_pnt,
 	vect_t *x_axis,
 	vect_t *y_axis,
