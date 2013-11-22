@@ -80,7 +80,10 @@
     <figure><info><title>Basic pipe with parameters.</title></info>
 
       <mediaobject>
-	<imageobject>
+	<imageobject role="html">
+	  <imagedata align="center" fileref="../../articles/en/images/pipes_fig01.png" format="PNG"/>
+	</imageobject>
+	<imageobject role="fo">
 	  <imagedata align="center" fileref="../../articles/en/images/pipes_fig01.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
@@ -89,7 +92,10 @@
     <figure><info><title>Various bend radii.</title></info>
 
       <mediaobject>
-	<imageobject>
+	<imageobject role="html">
+	  <imagedata align="center" fileref="../../articles/en/images/pipes_fig02.png" format="PNG"/>
+	</imageobject>
+	<imageobject role="fo">
 	  <imagedata align="center" fileref="../../articles/en/images/pipes_fig02.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
@@ -98,7 +104,10 @@
     <figure><info><title>Example of special uses of the pipe.</title></info>
 
       <mediaobject>
-	<imageobject>
+	<imageobject role="html">
+	  <imagedata align="center" fileref="../../articles/en/images/pipes_fig03.png" format="PNG"/>
+	</imageobject>
+	<imageobject role="fo">
 	  <imagedata align="center" fileref="../../articles/en/images/pipes_fig03.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
@@ -181,7 +190,10 @@
     <figure><info><title>Determining the point positions for the copper coil.</title></info>
 
       <mediaobject>
-	<imageobject>
+	<imageobject role="html">
+	  <imagedata align="center" fileref="../../articles/en/images/pipes_fig04.png" format="PNG"/>
+	</imageobject>
+	<imageobject role="fo">
 	  <imagedata align="center" fileref="../../articles/en/images/pipes_fig04.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
@@ -328,7 +340,10 @@
     <figure><info><title>Raytraced coil segment.</title></info>
 
       <mediaobject>
-	<imageobject>
+	<imageobject role="html">
+	  <imagedata align="center" fileref="../../articles/en/images/pipes_fig13.png" format="PNG"/>
+	</imageobject>
+	<imageobject role="fo">
 	  <imagedata align="center" fileref="../../articles/en/images/pipes_fig13.png" format="PNG"/>
 	</imageobject>
       </mediaobject>

@@ -66,7 +66,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged15_truck_design.pNG" format="png"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged15_truck_design.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -133,7 +136,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged15_truck_cab1s.pNG" format="png"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged15_truck_cab1s.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -236,7 +242,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged15_truck_cab_cutoff.pNG" format="png"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged15_truck_cab_cutoff.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -280,7 +289,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged15_truck_multipane_1stwheel.pNG" format="png"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged15_truck_multipane_1stwheel.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -354,7 +366,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged15_prim_ed_wheel_well.pNG" format="png"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged15_prim_ed_wheel_well.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -377,7 +392,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged15_truck_2nd_wheel_wheel_place.pNG" format="png"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged15_truck_2nd_wheel_wheel_place.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -484,7 +502,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged15_truck_cab_body.pNG" format="png"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged15_truck_cab_body.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -513,7 +534,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged15_truck_wheel_wells_wireframe.pNG" format="png"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged15_truck_wheel_wells_wireframe.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -619,7 +643,10 @@
 	similar a la siguiente:
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged15_truck_wheels.pNG" format="png"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged15_truck_wheels.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -674,7 +701,10 @@
 	tener este aspecto:
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged15_cameo_shader.pNG" format="png"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged15_cameo_shader.png" format="PNG"/>
 	  </imageobject>
 	  <caption>

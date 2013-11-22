@@ -109,7 +109,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged02_defaultradio.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged02_defaultradio.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -465,7 +468,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged02_coordsys.png" scale="60" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged02_coordsys.png" scale="60" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -540,7 +546,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged02_multipane.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged02_multipane.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
