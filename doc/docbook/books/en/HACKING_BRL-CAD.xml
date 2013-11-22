@@ -85,7 +85,7 @@ Want to Be a Contributor?
 
 With BRL-CAD being a part of the open source community since 2004, contributors from all over the world are able to enhance the features and functions of the package in many different ways. In return, these contributors have had a unique opportunity to:
 
-    Join a team of passionate and talented contributors who share the common values of open source development. Open source emphasizes free redistribution; openly available source code; full, open participation; and nondescrimination against individuals, groups, technologies, or fields of interest. (To learn more, see http://opensource.org.)
+    Join a team of passionate and talented contributors who share the common values of open source development. Open source emphasizes free redistribution; openly available source code; full, open participation; and nondiscrimination against individuals, groups, technologies, or fields of interest. (To learn more, see http://opensource.org.)
     Drive needed improvements in the open source software community's support for solid modeling and CAD software capabilities.
     Experiment with new and state-of-the-art algorithms and ideas within the context of a fully open CAD system that is in production use and has an established user community.
     Become a better developer. Whether you're a newbie or a seasoned developer with decades of experience, you can always work on a BRL-CAD project that is catered toward improving your abilities.
@@ -101,7 +101,7 @@ If you would like to be a BRL-CAD contributor, the primary areas currently ident
     Improved hybrid boundary representation geometry support to support all 3D CAD models regardless of whether they use implicit or explicit geometric representation.  Geometry formats we are particularly focusing on include:
         volumetric models (VOL)
         spline-surface (for example, NURBS) and polygonal (for example, triangle mesh) boundary representations (BREP)
-        implicit primitives. 
+        implicit primitives.
 
     Improved geometry services and functionality, including the ability to provide:
         multiuser access controls
@@ -131,7 +131,7 @@ Solid Geometry
 BRL-CAD focuses on solid modeling CAD. Solid modeling is distinguished from other forms of geometric modeling by an emphasis on being physically accurate, fully describing 3D space. Shown is a 3D model of a Goliath tracked mine, a German-engineered remote controlled vehicle used during World War II. This model was created by students new to BRL-CAD in the span of about 2 weeks, starting from actual measurements in a museum.
 Raytracing
 
-Raytracing is central to BRL-CAD as a means for performing geometric analysis (e.g., calculating weights and moments of inertia) and for rendering images for visualization purposes. The image shown is a BRL-CAD 2D framebuffer screenshot displaying the rendering of a ball bearing. The bearing is modeled with a material appearance resembling acrylic glass, and this raytracing result shows reflection, refraction, shadowing, and some caustic effects. 
+Raytracing is central to BRL-CAD as a means for performing geometric analysis (e.g., calculating weights and moments of inertia) and for rendering images for visualization purposes. The image shown is a BRL-CAD 2D framebuffer screenshot displaying the rendering of a ball bearing. The bearing is modeled with a material appearance resembling acrylic glass, and this raytracing result shows reflection, refraction, shadowing, and some caustic effects.
 Geometry Conversion
 
 As shown, a BRL-CAD target description can be converted to a finite element mesh (FEM) using the BRL-CAD g-sat exporter and Cubit from Sandia National Laboratories.
@@ -144,9 +144,9 @@ Procedural Geometry
 BRL-CAD provides a comprehensive procedural geometry interface as a means for creating models algorithmically instead of manually.  This screenshot shows a classic "Sphere Flake" model with five levels of recursion, specular reflections, multiple light sources, environment mapping, checkered texture synthesis, ambient occlusion, and soft shadows.
 Boundary Representation
 
- 
 
-Boundary representation NURBS surface geometry is one of the dominant geometric representation formats in CAD.  BRL-CAD is one of the few 3D solid modeling systems that not only support geometry in boundary representation NURBS format but also provide extensive support for robust solid ray tracing of NURBS geometry.  The image shown is the classic computer graphics Utah teapot model prepared for 3D printing and rendered via BRL-CAD ray tracing.  
+
+Boundary representation NURBS surface geometry is one of the dominant geometric representation formats in CAD.  BRL-CAD is one of the few 3D solid modeling systems that not only support geometry in boundary representation NURBS format but also provide extensive support for robust solid ray tracing of NURBS geometry.  The image shown is the classic computer graphics Utah teapot model prepared for 3D printing and rendered via BRL-CAD ray tracing.
 Path Tracing
 
 
@@ -156,11 +156,11 @@ Constructive Solid Geometry (CSG)
 
 While now a fully hybrid modeling system, BRL-CAD has its roots in CSG modeling with implicit primitives.  This image, provided courtesy of GSI Solutions, Inc., depicts a detailed M1A1 tank on a pedestal in a mirrored showcase room.  The model is entirely constructed from implicit primitives and CSG boolean operations.
 
- 
+
 Hidden Line Rendering
 
 
-This raytrace image is a multiple-view hidden line rendering of an Mi28 Havoc Russian attack helicopter using BRL-CAD's rtedge utility.  The model is entirely composed of implicit primitives combined together with CSG boolean operations.  
+This raytrace image is a multiple-view hidden line rendering of an Mi28 Havoc Russian attack helicopter using BRL-CAD's rtedge utility.  The model is entirely composed of implicit primitives combined together with CSG boolean operations.
 Scripting Interface
 
 
@@ -168,12 +168,12 @@ BRL-CAD can run series of commands piped in or redirected to it via standard inp
 More Cowbell
 
 Not all of BRL-CAD's capabilities lend themselves well to pretty pictures, but some are definitely worth mentioning.  Among the thousands of features in BRL-CAD, here are some additional capabilities that are central to our project ethos.
-Geometric Analysis 
+Geometric Analysis
 
 A particular strength of the BRL-CAD software lies in its ability to build and analyze realistic models of complex objects. There are a number of features aimed at inspecting, preparing, verifying, and validating geometry models. Single-ray sampling can be used for measuring thicknesses or distances, and certain 3D analyses are possible (such as calculating volume, centroids, and moments of inertia). BRL-CAD also has numerous facilities for detecting and resolving assembly or part interferences where two objects spatially overlap each other.
 High-Performance Design
 
-BRL-CAD is designed from the ground up with performance in mind. Considerable attention has been put into in-memory and on-disk data storage efficiency. BRL-CAD is capable of handling complex geometry models that are often impossible to open with other systems without changing hardware requirements. BRL-CAD's ray tracing infrastructure is one of the fastest in the world for implicit geometry representations and is continually seeking performance advancements for other explicit representation types, such as polygonal mesh geometry and NURBS surface models. BRL-CAD's distributed ray tracing support is recognized as the world's first "real-time" ray tracing implementation, achieving several frames per second in the 1980s. 
+BRL-CAD is designed from the ground up with performance in mind. Considerable attention has been put into in-memory and on-disk data storage efficiency. BRL-CAD is capable of handling complex geometry models that are often impossible to open with other systems without changing hardware requirements. BRL-CAD's ray tracing infrastructure is one of the fastest in the world for implicit geometry representations and is continually seeking performance advancements for other explicit representation types, such as polygonal mesh geometry and NURBS surface models. BRL-CAD's distributed ray tracing support is recognized as the world's first "real-time" ray tracing implementation, achieving several frames per second in the 1980s.
 Symmetric Multi-Processing
 
 BRL-CAD efficiently leverages symmetric multi-processing (SMP) capabilities of desktop, server, and supercomputing systems, where an arbitrary number of processing cores can be put to work on a computational task. BRL-CAD's ray tracing library is commonly leveraged for performing highly detailed geometric analysis, driving third-party simulations, and producing animations.
@@ -212,7 +212,7 @@ As mentioned previously, the initial architecture and design of BRL-CAD began in
 
 BRL-CAD is a mature code base that has remained active over decades due to continual attention on design and maintainability. Since the project's inception, more than 200 people have directly contributed to BRL-CAD. The project has historically received support from numerous organizations within academia, commercial industry, various government agencies, and from various independent contributors. We credit all contributors in BRL-CAD's authorship documentation6.
 
-The following diagram illustrates how the number of lines of code in BRL-CAD has changed over time: 
+The following diagram illustrates how the number of lines of code in BRL-CAD has changed over time:
 System Architecture
 
 BRL-CAD is designed based on a UNIX7 methodology of the command-line services, providing many tools that work in harmony to complete a specific task. These tools include geometry and image converters, signal and image processing tools, various raytrace applications, geometry manipulators, and much more.
@@ -220,7 +220,7 @@ BRL-CAD is designed based on a UNIX7 methodology of the command-line services, p
 To support what has grown into a relatively large software system, BRL-CAD takes advantage of a variety of support libraries that encapsulate and simplify application development. At the heart of BRL-CAD is a multi-representation ray tracing library named LIBRT. BRL-CAD specifies its own file format (files with the extension .g or .asc) for storing information on disk. The ray tracing library uses a suite of other libraries for other basic application functionality.
 Tenets of Good Software
 
-BRL-CAD's architecture is designed to be as cross-platform and portable as is realistically and reasonably possible. As such, BRL-CAD maintains support for many legacy systems and devices provided that maintaining such support is not a significant burden on new development. 
+BRL-CAD's architecture is designed to be as cross-platform and portable as is realistically and reasonably possible. As such, BRL-CAD maintains support for many legacy systems and devices provided that maintaining such support is not a significant burden on new development.
 
 The code adheres to a published change deprecation and obsolescence policy8 whereby features that have been made publicly available are not removed without appropriate notification. Generally there should be a compelling motivation to remove any existing functionality, but improvements are encouraged.
 
@@ -288,7 +288,7 @@ Libraries
 
     src/libbn/
 
-    Numerics library: vector/matrix math, random number generators, polynomial math, root solving, noise functions, and more 
+    Numerics library: vector/matrix math, random number generators, polynomial math, root solving, noise functions, and more
 
     src/libbu
 
@@ -300,7 +300,7 @@ Libraries
 
     src/libged/
 
-    Geometry editing library containing the majority of our command API 
+    Geometry editing library containing the majority of our command API
 
     src/libicv/
 
@@ -312,7 +312,7 @@ Libraries
 
     src/librt/
 
-    Ray tracing library including routines for reading, processing, and writing geometry 
+    Ray tracing library including routines for reading, processing, and writing geometry
 
     src/libwdb/
 
@@ -329,7 +329,7 @@ Languages
 
 The majority of BRL-CAD is written in ANSI/POSIX C with the intent of strictly conforming with the C standard. The core libraries are all C API, though several--such as the LIBBU and LIBRT libraries--use C++ for implementation details. Our C libraries can use C++ for implementation detail, but they cannot expose C++ in the public API.
 
-Major components of the system are written in the following languages: 
+Major components of the system are written in the following languages:
 
     STEP and NURBS boundary representation support: C++
     The MGED geometry editor: a combination of C, Tcl/Tk, and Incr Tcl/Tk
@@ -344,7 +344,7 @@ Source code files use the following extensions:
     PHP files: .php
     Tcl/Tk files: .tcl or .tk
     POSIX Bourne-style shell scripts: .sh
-    Perl files: .pl (program) or .pm (module) 
+    Perl files: .pl (program) or .pm (module)
 
 With release 7.0, BRL-CAD has moved forward and worked toward making all of the software's C code conform strictly with the ANSI/ISO standard for C language compilation (ISO/IEC 9899:1990, or c89). Support for older compilers and older K&R-based system facilities is being migrated to build system declarations or preprocessor defines, or is being removed outright. You can, however, make modifications that assume compiler conformance with the ANSI C standard (c89).
 Coding Style
@@ -499,9 +499,9 @@ Two-Week Tasks
 
 If you have few hours to spare each day, check our TODO list (http://brlcad.org/xref/source/TODO). These tasks can help potential developers do modifications and submit patches to gain commit access to our code repository. You should be able to complete the tasks on this list within 14 days. Before starting on a task, however, you should discuss it with other developers on our mailing list.
 
-We also have a BUGS file, included in each binary and source distribution, which lists the application bugs that developers are invited to fix. If you plan to tackle a bug, remember to report it in our bug tracker.  
+We also have a BUGS file, included in each binary and source distribution, which lists the application bugs that developers are invited to fix. If you plan to tackle a bug, remember to report it in our bug tracker.
 
-Students participating in Google Code-in can view tasks on the BRL-CAD website (http://brlcad.org/wiki/GCI_Tasks). Each task is described in a little detail, and students are directed to relevant BRL-CAD source code or websites to help them complete these tasks. 
+Students participating in Google Code-in can view tasks on the BRL-CAD website (http://brlcad.org/wiki/GCI_Tasks). Each task is described in a little detail, and students are directed to relevant BRL-CAD source code or websites to help them complete these tasks.
 Two-Month Tasks
 
 If you want to become more deeply involved in the BRL-CAD project, then you should take the time to check our ideas page (http://brlcad.org/~sean/ideas.html). Students who are participating in Google Summer Of Code should explore our projects page (http://brlcad.org/~sean/ideas.html) and the ideas page to get a feel for the tasks that are available. These tasks should take about 60 days to complete.
@@ -510,17 +510,17 @@ If you want to become more deeply involved in the BRL-CAD project, then you shou
 
 How to Contribute
 
-Developing code for BRL-CAD becomes easier when you understand how to obtain and modify the code. 
+Developing code for BRL-CAD becomes easier when you understand how to obtain and modify the code.
 Obtaining the Code
 
 You can get the development code for BRL-CAD from our Subversion code repository using the following command:
 
-svn checkout svn://svn.code.sf.net/p/brlcad/code/brlcad/trunk brlcad-code 
+svn checkout svn://svn.code.sf.net/p/brlcad/code/brlcad/trunk brlcad-code
 
 The code will be saved in your /home directory, and you can compile it by following the instructions HACKING file located in top-level code directory. That said, the following are a few useful tips to help get you going.
 Obtaining the Development Tools
 
-BRL-CAD uses the CMake build system and will compile with most compilers. Download CMake and install it. If necessary, compile it from the source code. 
+BRL-CAD uses the CMake build system and will compile with most compilers. Download CMake and install it. If necessary, compile it from the source code.
 Configuring the Environment
 
 Next, set up the build directory and configure the compilation. At compilation time, BRL-CAD considers most warnings to be errors, so it's best if you lower the level of error logging to debug. To do that, run the following command:
@@ -534,9 +534,9 @@ make; make test;
 
 If the build fails, run make again and capture the output to a log file by running the following command:
 
-make >build.log 2>&1 
+make >build.log 2>&1
 
-Note: If you have a quad-core CPU, you can run make -j4 to request compilation in parallel.  
+Note: If you have a quad-core CPU, you can run make -j4 to request compilation in parallel.
 Installing BRL-CAD
 
 Depending on the version of the source code that you started with, BRL-CAD should install into the following folder:
@@ -544,7 +544,7 @@ Depending on the version of the source code that you started with, BRL-CAD shoul
 /usr/brlcad/SUBDIR
 
 Where SUBDIR is either rel-version or dev-VERSION.
-Performing a Quick Test 
+Performing a Quick Test
 
 You don't have to install BRL-CAD. Instead, you can just run the binaries that are found in the brlcad_build/bin directory by running the following commands:
 
@@ -553,7 +553,7 @@ bin/benchmark; bin/mged ;
 That's it! If you have a Release compile, you can submit your benchmark results to benchmark@brlcad.org.
 Discussing Code
 
-After obtaining the source code, you should to join the BRL-CAD developer mailing list (http://lists.sourceforge.net/lists/listinfo/brlcad-devel) and the #brlcad IRC channel at irc.freenode.net.   
+After obtaining the source code, you should to join the BRL-CAD developer mailing list (http://lists.sourceforge.net/lists/listinfo/brlcad-devel) and the #brlcad IRC channel at irc.freenode.net.
 
 Joining both lists helps introduce yourself to the BRL-CAD community and gives you the opportunity to regularly communicate with other experienced contributors. You can also ask questions on the mailing list or the IRC channel.
 
@@ -585,11 +585,11 @@ What is DocBook?
 DocBook is a schema (a structured approach to organization of information) that uses the eXtensible Markup Language standard (XML) as its fundamental framework and builds atop that framework a vocabulary for describing the content and structure of technical documentation. BRL-CAD uses the DocBook 5.0 documentation format to describe its documentation. For detailed documentation for DocBook 5.0, see http://www.docbook.org/tdg5/en/html/docbook.html.
 Tools for Working with DocBook
 
-While you can write documentation in DocBook using WYSIWYG (What You See Is What You Get) editors, we require that a document saved to DocBook from an editing tool should be inspected for human readability and, if necessary, reformatted for simplicity.  
+While you can write documentation in DocBook using WYSIWYG (What You See Is What You Get) editors, we require that a document saved to DocBook from an editing tool should be inspected for human readability and, if necessary, reformatted for simplicity.
 
 If you are comfortable with working with DocBook XML directly, we recommend that you use the Emacs editor and its nXML module. nXML can automatically recognize and highlight mistakes in the structure of a document while you are editing. The following image illustrates nXML identifying an incorrect closing tag for an informal figure object:
 
- 
+
 
 Aside from error checking tools like nXML, the ability to pinpoint errors in a document's formatting is built into the BRL-CAD compilation process. That process uses a tool called xmllint to report incorrect formatting. When, for example, the error illustrated in the image above is encountered during BRL-CAD's build, xmllint produces the following error:
 
@@ -620,7 +620,7 @@ While BRL-CAD provides enough DocBook support to guarantee that HTML files and U
 For more information, including how to use alternative tools for other DocBook processing steps besides validation, see the file doc/docbook/README in the BRL-CAD source code archive.
 Adding a New Document to BRL-CAD
 
-Because creating and editing DocBook documentation is greatly simplified by BRL-CAD's management of the conversion process, it is usually a good idea to add a new document to the build system at the beginning of the document creation and editing process. To do this, copy a template file from the source directories to the file name to be used for the new document. 
+Because creating and editing DocBook documentation is greatly simplified by BRL-CAD's management of the conversion process, it is usually a good idea to add a new document to the build system at the beginning of the document creation and editing process. To do this, copy a template file from the source directories to the file name to be used for the new document.
 
 For example, if you are writing a new DocBook article in English about the ellipsoid, use the following command to copy the article template to the filename ellipsoid.xml in the English articles directory:
 
@@ -628,7 +628,7 @@ For example, if you are writing a new DocBook article in English about the ellip
 
 Next, open the file doc/docbook/articles/en/CMakeLists.txt in a text editor. Then, add the name of the new document to the file to alert the build system of its existence:
 
- 
+
 
 BRL-CAD now knows about the new file and can generate output for it.
 
@@ -664,11 +664,11 @@ Scanning dependencies of target ellipsoid_article_html
 /home/user/brlcad/doc/docbook/articles/en/ellipsoid.xml validates
 [100%] Generating ../../../../share/doc/html/articles/en/ellipsoid.html
 [100%] Built target ellipsoid_article_html
-~/brlcad/build $ 
+~/brlcad/build $
 
 This generates a file named brlcad/build/share/doc/html/articles/en/ellipsoid.html. Open this document in a web browser to view the HTML output:
 
- 
+
 
 Now that all the pieces are in place, you can begin the documentation cycle:
 
@@ -678,7 +678,7 @@ Now that all the pieces are in place, you can begin the documentation cycle:
 
 In the following example, all of the previous elements are combined into a DocBook editing workflow. The title of the article was changed from the default (Article Title) to the article's actual title (A Guide to Modeling with the Ellipsoid Primitive), the build target was remade, and the results are seen in a web browser.
 
- 
+
 Adding a Translated Document to BRL-CAD
 
 By and large, adding translations of BRL-CAD documents follows the same process as adding English documents. However, you must select the correct subdirectory for the language of the translation.
@@ -687,12 +687,12 @@ BRL-CAD uses the ISO 639-1 language codes (http://www-01.sil.org/iso639-3/codes.
 
 Currently, all translations are manually created and manually maintained. If you are working with translated documents, you are not limited to the ASCII character set; you can use Unicode characters in a document. The following example is the Armenian translation of the BRL-CAD introduction documentation:
 
- 
+
 Selecting Output Formats
 
 Although you can produce HTML, UNIX man pages, and PDF files from the DocBook sources, you don't have to produce all of them. By default, PDF output is not produced because it takes longer to generate than other formats. UNIX man pages are not generated by default for Windows (where they generally are of little use) to avoid wasting configuration and compilation time.
 
-You can use the following configuration options to turn the compilation of various formats on and off: 
+You can use the following configuration options to turn the compilation of various formats on and off:
 BRL-CAD DocBook Configuration Options Option 	Description 	Setting
  BRLCAD_EXTRADOCS 	Enable DocBook documentation  	 ON
  BRLCAD_EXTRADOCS_HTML 	Enable HTML output 	 ON
@@ -726,31 +726,31 @@ However, some documents have unique formatting requirements. DocBook's toolchain
 
 One of the best examples of DocBook output customization in BRL-CAD is work done by Tom Browder to format the PDF covers of the BRL-CAD Tutorial Series volumes, as shown below:
 
- 
+
 
 A number of elements are needed to achieve this result:
 
-    A custom XML Stylesheet Language (XSL) file (named doc/docbook/resources/brlcad/tutorial-template.xsl.in) that defines the layout of the document. 
+    A custom XML Stylesheet Language (XSL) file (named doc/docbook/resources/brlcad/tutorial-template.xsl.in) that defines the layout of the document.
     A custom CMake build logic file (name doc/docbook/books/en/CMakeLists.txt) that further customizes the template file for each individual book.
     The Deja-Vu and STIX fonts (located in doc/docbook/resources/other/fonts) to ensure uniform, high-quality text rendering.
 
 Although each case of special formatting is likely to be unique, the preceding example can serve as a starting point. Another useful resource for information about customizing DocBook output is the book DocBook XSL: The Complete Guide (http://www.sagehill.net/docbookxsl).
 
-Now that you have an idea about how to format documentation for the BRL-CAD project, let's take a look at the types of documentation that the project maintains. 
+Now that you have an idea about how to format documentation for the BRL-CAD project, let's take a look at the types of documentation that the project maintains.
 
 Types of Documentation We Maintain
 
 BRL-CAD provides developers, users, and others with a range of documentation covering the basics of the software, its usage, and development APIs. This chapter briefly introduces the types of documentation that the BRL-CAD project maintains, as well as the purpose of each document.
 BRL-CAD Wiki
 
-The easiest way to contribute as a documenter is through BRL-CAD's wiki (a website that users can edit) at http://brlcad.org/wiki/Main_Page. The wiki is not currently integrated with any of the other documentation systems in BRL-CAD, although this remains one of BRL-CAD's project goals. 
+The easiest way to contribute as a documenter is through BRL-CAD's wiki (a website that users can edit) at http://brlcad.org/wiki/Main_Page. The wiki is not currently integrated with any of the other documentation systems in BRL-CAD, although this remains one of BRL-CAD's project goals.
 
- 
+
 Man Pages
 
 Man pages are command-specific or program-specific documentation which thoroughly document and demonstrate the use of that command or program. Man pages may reference other man pages, but they are intended to be the primary source of documentation for a specific tool and should be written with a very tight focus.
 
- 
+
 API Documentation
 
 Most of the project's documentation is maintained in the BRL-CAD source code repository as DocBook files (see the chapter Working with Our Documentation for more information about DocBook). API documentation, on the other hand, is automatically generated from the headers in the application's source code. Specially formatted source code comments in the headers are converted to HTML documentation by Doxygen (http://www.doxygen.org), a tool for generating source code documentation.
@@ -761,22 +761,22 @@ Lessons
 
 Lessons are documents that are used to train a user to master a particular aspect of BRL-CAD. Unlike other documents, lessons focus on step-by-step teaching.
 
- 
+
 Reports and Articles
 
 These can be technical reports, journal articles, conference papers, and/or similar focused descriptions of specific aspects of the package. Unlike lessons, reports and articles are primarily designed to inform rather than train. They are generally less comprehensive in scope and/or detail than a full-blown book.
 
- 
+
 Books
 
-Books are typically large documents that cover many aspects of BRL-CAD. In some cases, books can be collections of lessons, reports, articles, and/or other forms of documentation that are compiled between one set of covers. 
+Books are typically large documents that cover many aspects of BRL-CAD. In some cases, books can be collections of lessons, reports, articles, and/or other forms of documentation that are compiled between one set of covers.
 
- 
+
 Specifications
 
 Specifications are formal documents that define formats or protocols that others can independently implement. Currently, the only specification in the BRL-CAD documentation set is a draft specification of the .g file format.
 
- 
+
 Presentations
 
 Presentations can range from an overview of the entire BRL-CAD package to an in-depth review of a specific feature or technical algorithm. Presentations are often used when marketing or explaining some aspect of BRL-CAD to people who are not familiar with it.
@@ -794,7 +794,7 @@ Two-Day Tasks
 
 If you have a little more time to devote to the documentation, we maintain a list of tasks that will take you anywhere from a few hours to a few days to complete. You can find that list on the BRL-CAD website (http://brlcad.org/wiki/Contributor_Quickies). These tasks have roughly the same complexity and require no prior experience with BRL-CAD.
 
-We also have a list of bugs in our BUGS file. While most of the bugs in the list focus on the BRL-CAD code, there are a few related to the documentation. If you plan to tackle a documentation bug, remember to report it in our bug tracker (http://sourceforge.net/p/brlcad/bugs/).  
+We also have a list of bugs in our BUGS file. While most of the bugs in the list focus on the BRL-CAD code, there are a few related to the documentation. If you plan to tackle a documentation bug, remember to report it in our bug tracker (http://sourceforge.net/p/brlcad/bugs/).
 Two-Week Tasks
 
 If you are familiar with CAD in general and BRL-CAD in particular, then you might want to try creating some tutorial and training material. Check out our list of training material that we need (http://brlcad.org/wiki/Contributor_Quickies#Training).
@@ -802,9 +802,9 @@ If you are familiar with CAD in general and BRL-CAD in particular, then you migh
 
 Contributing Documentation
 
-Writing and updating BRL-CAD's documentation becomes easier when you understand how to obtain and modify the source files for the documentation. 
+Writing and updating BRL-CAD's documentation becomes easier when you understand how to obtain and modify the source files for the documentation.
 
-Note: For more information about creating and modifying documentation, refer to the chapter Working with Our Documentation earlier in this book. 
+Note: For more information about creating and modifying documentation, refer to the chapter Working with Our Documentation earlier in this book.
 Obtaining the Documentation
 
 The documentation and the toolchain required to generate the documentation is part of the software's development code. You should download the source code from the Subversion version control system using the following command:
@@ -820,7 +820,7 @@ Configure
 Next, you must set up the build directory and configure the compilation. This will also set up the tools that you need to generate the documentation. Do that by running the following command.
 
 cmake ../brlcad_build -DBRLCAD_BUILD_TYPE=Debug
-Generate the Documentation 
+Generate the Documentation
 
 Once you've configured the compilation, you'll need to run the following build targets to generate the documentation:
 
@@ -833,11 +833,11 @@ Where to Find the Documentation
 
 You can find the source files for the documentation in the following directories in the BRL-CAD source code repository:
 
-    doc/ 
+    doc/
 
     Project documentation
 
-    doc/docbook 
+    doc/docbook
 
     User documentation in XML format
     See the file doc/docbook/README for more details
@@ -847,11 +847,11 @@ You can find more information about editing the documentation in the chapter Wor
 Remember to:
 
     Get in touch with experienced contributors if you have any questions.
-    Compile your changes before committing them. 
+    Compile your changes before committing them.
 
 Discussing the Documentation
 
-Before undertaking a documentation task, you should join the BRL-CAD developer mailing list (http://lists.sourceforge.net/lists/listinfo/brlcad-devel) and the #brlcad IRC channel irc.freenode.net.   
+Before undertaking a documentation task, you should join the BRL-CAD developer mailing list (http://lists.sourceforge.net/lists/listinfo/brlcad-devel) and the #brlcad IRC channel irc.freenode.net.
 
 Joining both lists helps introduce you the the BRL-CAD community and gives you the opportunity to regularly communicate with other experienced contributors. You can also ask questions on the mailing list or the IRC channel.
 
@@ -873,7 +873,7 @@ So you don't code or write documentation? That doesn't matter. You can still con
 Most of the tasks in these areas don't require deep technical skills, but they are definitely important. They need your time, your commitment, and your passion. If find any of these areas interesting, then BRL-CAD has a place for you.
 
 Let's take a look at a few other ways that you can contribute to the BRL-CAD project.
-Bug Reporting and Feature Requests 
+Bug Reporting and Feature Requests
 
 Finding bugs in software is often a challenging task for developers. If you find a problem with the software, file a bug report on BRL-CAD's official bug tracking page on SourceForge (http://sourceforge.net/p/brlcad/bugs/). Please remember to provide enough detail so that we can reproduce the problem. You can also post to our developer mailing list at brlcad-devel@lists.sourceforge.net.
 
@@ -893,7 +893,7 @@ Testing is a vital part of the software development process. As Eric Raymond sai
 
 What can you do? Create testing frameworks and tests for specific portions of the code. Or go through BRL-CAD's graphical user interface and find and report any bugs. You can help make BRL-CAD better by reporting any problems you encounter.
 
-You can find a list of quality assurance tasks that will get you started at the BRL-CAD website (http://brlcad.org/wiki/Contributor_Quickies#Quality_Assurance). 
+You can find a list of quality assurance tasks that will get you started at the BRL-CAD website (http://brlcad.org/wiki/Contributor_Quickies#Quality_Assurance).
 Research
 
 BRL-CAD improves not just through rigorous coding and quality assurance but also through research. We need contributors who can study problems with the software and recommend solutions based on their research. This is an area which typically requires a solid level of technical ability, but contributions here can have an enormous positive impact on the software.
@@ -903,29 +903,29 @@ Translations
 
 We want to make BRL-CAD available to as many users as possible, regardless of what language they speak. To that end, we're steadily making the software available in a number of languages. But there's still work to do. If you have a knowledge or one or more languages other than English, we can use your skills.
 
-You can find a list of translation tasks that will get you started at the BRL-CAD website (http://brlcad.org/wiki/Contributor_Quickies#Translation). 
+You can find a list of translation tasks that will get you started at the BRL-CAD website (http://brlcad.org/wiki/Contributor_Quickies#Translation).
 User Experience
 
-BRL-CAD is a large, powerful, and complex piece of software. And as with any software package, it can always be made more consistent, usable, and user friendly. If you're willing to learn the user interface and to approach the package with a critical eye, then you can help make the BRL-CAD user interface friendlier and more consistent. 
+BRL-CAD is a large, powerful, and complex piece of software. And as with any software package, it can always be made more consistent, usable, and user friendly. If you're willing to learn the user interface and to approach the package with a critical eye, then you can help make the BRL-CAD user interface friendlier and more consistent.
 
 You can find a list of user experience tasks that will get you started at the BRL-CAD website (http://brlcad.org/wiki/Contributor_Quickies#User_Interface).
 
 
 Further References and Resources
 
-In addition to the resources provided previously in this book, the following resources are available to provide additional help and guidance to BRL-CAD contributors: 
+In addition to the resources provided previously in this book, the following resources are available to provide additional help and guidance to BRL-CAD contributors:
 
     Wiki: http://brlcad.org/wiki/Main_Page
     FAQs: http://brlcad.org/wiki/FAQ
     Online documentation resources: http://brlcad.org/wiki/Documentation
-    Venerated developers' guide (HACKING File): http://svn.code.sf.net/p/brlcad/code/brlcad/trunk/HACKING 
+    Venerated developers' guide (HACKING File): http://svn.code.sf.net/p/brlcad/code/brlcad/trunk/HACKING
     BRL-CAD commands: http://brlcad.org/wiki/BRL-CAD_Commands
-    MGED command reference: http://brlcad.org/wiki/MGED_Commands 
+    MGED command reference: http://brlcad.org/wiki/MGED_Commands
     BRL-CAD primitives reference: http://brlcad.org/wiki/BRL-CAD_Primitives
     SVN: http://brlcad.org/wiki/SVN
     BRL-CAD patch submission: http://brlcad.org/wiki/Patches
     Image gallery: http://brlcad.org/gallery/
-    BRL-CAD SourceForge page (since we use SVN for version control): http://sourceforge.net/projects/brlcad/  
+    BRL-CAD SourceForge page (since we use SVN for version control): http://sourceforge.net/projects/brlcad/
     SourceForge registration page (for contributors to submit patches): https://sourceforge.net/user/registration
     Application requirements for Google Summer of Code (GSoC) participants: http://brlcad.org/wiki/Google_Summer_of_Code/Application_Guidelines
     Acceptance requirements for Google Summer of Code (GSoC) participants: http://brlcad.org/wiki/Google_Summer_of_Code/Acceptance
@@ -1044,7 +1044,7 @@ The following DocBook XML template illustrates the general structure that is use
 
 Code Example: Shooting Rays
 
-Shooting rays at models is one of the more common operations performed with BRL-CAD models. The following example illustrates how to use librt's C API to shoot a ray at a model and how to work with the results. 
+Shooting rays at models is one of the more common operations performed with BRL-CAD models. The following example illustrates how to use librt's C API to shoot a ray at a model and how to work with the results.
 
 #include "common.h"
 #include <stdlib.h>
