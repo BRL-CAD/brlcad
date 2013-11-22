@@ -113,16 +113,21 @@ pnt_compare(const void *pnt1, const void *pnt2)
 
 
 int
-bn_2d_chull(point_t **hull, const point_t *pnts, int n)
+bn_2d_chull(point_t **hull, const point_t *points_2d, int n)
 {
     int i = 0;
     int retval = 0;
-    point_t *points = (point_t *)bu_calloc(n + 1, sizeof(point_t), "sorted pnts");
+    point_t *points = (point_t *)bu_calloc(n + 1, sizeof(point_t), "sorted points_2d");
 
-    /* first thing, copy pnts array to something
+    /* Make sure the array is in fact 2D points */
+    for(i = 0; i < n; i++) {
+	if (points_2d[i][2]) return retval;
+    }
+
+    /* copy points_2d array to something
        that can be sorted and sort it */
     for(i = 0; i < n; i++) {
-	VMOVE(points[i], pnts[i]);
+	VMOVE(points[i], points_2d[i]);
     }
 
     qsort((genptr_t)points, n, sizeof(point_t), pnt_compare);
