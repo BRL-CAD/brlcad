@@ -151,6 +151,36 @@ endif(BRLCAD_EXTRADOCS_PDF)
 
 CMAKEFILES(tutorial_series_authors.xml)
 
+set(hacking_brlcad_images
+   images/hacking_brlcad_article_tire_pdf.png
+   images/hacking_brlcad_bearing_cc.png
+   images/hacking_brlcad_book_vol3_pdf.png
+   images/hacking_brlcad_brlcad_intro_hy.png
+   images/hacking_brlcad_brlcad-wiki.png
+   images/hacking_brlcad_csg.png
+   images/hacking_brlcad_cubit.png
+   images/hacking_brlcad_docbook_CMakeLists.png
+   images/hacking_brlcad_docbook_working_session.png
+   images/hacking_brlcad_doxygen_output.png
+   images/hacking_brlcad_emacs-nxml.png
+   images/hacking_brlcad_example_docbook_default_output.png
+   images/hacking_brlcad_g_spec_pdf.png
+   images/hacking_brlcad_havoc_c.png
+   images/hacking_brlcad_havoc_views_c.png
+   images/hacking_brlcad_M1A1_9x10_300dpi_cc.png
+   images/hacking_brlcad_man_page_search.png
+   images/hacking_brlcad_sflake2_cc.png
+   images/hacking_brlcad_Sgi_cube_cc.png
+   images/hacking_brlcad_stryker_slat.png
+   images/hacking_brlcad_tcl_tk_presentation.png
+   images/hacking_brlcad_teapot.png
+   images/hacking_brlcad_tracked_mine.png
+   images/hacking_brlcad_tutorial_1_pdf.png
+   images/hacking_brlcad_xyz.png
+   )
+CMAKEFILES(${hacking_brlcad_images})
+CMAKEFILES(HACKING_BRL-CAD.xml)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake
