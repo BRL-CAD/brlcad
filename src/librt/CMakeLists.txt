@@ -312,7 +312,7 @@ include_directories(
   )
 
 # a new html-gen file
-BRLCAD_ADDEXEC(gen-registered-attributes-html gen-registered-attributes-html.cpp "libbu;librt" NO_INSTALL)
+BRLCAD_ADDEXEC(gen-registered-attributes-html gen-registered-attributes-html.cpp "libbu;librt" NO_INSTALL NO_STRICT)
 
 #BRLCAD_ADDEXEC(test_bot2nurbs test_bot2nurbs.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_nurbsfit test_nurbsfit.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
