@@ -543,6 +543,68 @@ BN_EXPORT int bn_polyline_2d_chull(point2d_t** hull, const point2d_t* polyline, 
  */
 BN_EXPORT int bn_2d_chull(point2d_t** hull, const point2d_t* points_2d, int n);
 
+
+/**
+ * @brief
+ * Find 2D coordinates for a set of co-planar points
+ *
+ * @param[out]	points_2d Array of parameterized 2D points
+ * @param	origin_pnt Origin of 2D coordinate system in 3 space
+ * @param	x_axis 3D vector describing the X axis of the 2D coordinate system in 3 space
+ * @param	y_axis 3D vector describing the Y axis of the 2D coordinate system in 3 space
+ * @param	points_3d 3D input points
+ * @param	n the number of points in the input set
+ * @return 0 if successful
+ */
+BN_EXPORT int bn_3dpnts_to_2dpnts(
+	point2d_t **points_2d,
+	const point_t *origin_pnt,
+	const vect_t *x_axis,
+	const vect_t *y_axis,
+	const point_t *points_3d,
+       	int n);
+
+/**
+ * @brief
+ * Find 3D coordinates for a set of 2D points given a 3-space coordinate system
+ *
+ * @param[out]	points_3d Array of 3D points
+ * @param	origin_pnt Origin of 2D coordinate system in 3 space
+ * @param	x_axis 3D vector describing the X axis of the 2D coordinate system in 3 space
+ * @param	y_axis 3D vector describing the Y axis of the 2D coordinate system in 3 space
+ * @param	points_2d 2D input points
+ * @param	n the number of points in the input set
+ * @return 0 if successful
+ */
+BN_EXPORT int bn_2dpnts_to_3dpnts(
+	point_t **points_3d,
+	const point_t *origin_pnt,
+	const vect_t *x_axis,
+	const vect_t *y_axis,
+	const point2d_t* points_2d,
+       	int n);
+
+/**
+ * @brief
+ * Find a 2D coordinate system for a set of 3D points
+ *
+ * Based on the planar normal and the vector from the center of the points to the
+ * point furthest from that center, find vectors describing a 2D coordinate system.
+ *
+ * @param[out]	origin_pnt Origin of 2D coordinate system in 3 space
+ * @param[out]	x_axis 3D vector describing the X axis of the 2D coordinate system in 3 space
+ * @param[out]	y_axis 3D vector describing the Y axis of the 2D coordinate system in 3 space
+ * @param	points_3d Array of 3D points
+ * @param	n the number of points in the input set
+ * @return 0 if successful
+ */
+BN_EXPORT int bn_2d_coordinate_system(
+	point_t *origin_pnt,
+	vect_t *x_axis,
+	vect_t *y_axis,
+	const point_t *points_3d,
+       	int n);
+
 /**
  * @brief
  * Find 3D coplanar point convex hull for unordered co-planar point sets
@@ -557,8 +619,8 @@ BN_EXPORT int bn_2d_chull(point2d_t** hull, const point2d_t* points_2d, int n);
  *    contains the bounding hull expressed in the 3D coordinate space of the
  *    original points.
  *
- * @param[out]	hull convex hull array vertices in ccw orientation (max is n)
- * @param	pnts The input points for which a convex hull will be built
+ * @param[out]	hull_3d convex hull array vertices using 3-space coordinates in ccw orientation (max is n)
+ * @param	points_3d The input points for which a convex hull will be built
  * @param	n the number of points in the input set
  * @return the number of points in the output hull array
  */
