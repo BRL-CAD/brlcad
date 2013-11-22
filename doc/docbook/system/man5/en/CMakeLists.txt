@@ -14,6 +14,8 @@ if(BRLCAD_EXTRADOCS_PDF_MAN)
   DOCBOOK_TO_PDF(man5 docbook_man5_EN pdf/man5/en "")
 endif(BRLCAD_EXTRADOCS_PDF_MAN)
 
+CMAKEFILES(attributes_table.xml)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

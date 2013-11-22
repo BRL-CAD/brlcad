@@ -1,0 +1,99 @@
+<article xmlns="http://docbook.org/ns/docbook" version="5.0"
+  xmlns:xi="http://www.w3.org/2001/XInclude"
+>
+  <info><title>Attributes Table</title></info>
+
+  <para xml:id="attributes_table">
+	<table><title>Core Attributes</title>
+
+	   <tgroup cols="7">
+	     <colspec colname="c1"/>
+	     <colspec colname="c2"/>
+	     <colspec colname="c3"/>
+	     <colspec colname="c4"/>
+	     <colspec colname="c5"/>
+	     <colspec colname="c6"/>
+	     <colspec colname="c7"/>
+	     <tbody>
+	       <row>
+		 <entry>Property</entry>
+		 <entry namest="c2" nameend="c6" align="center">Attribute Name(s)</entry>
+		 <entry>Typical Value(s)</entry>
+	       </row>
+	       <row>
+		 <entry>Region Flag</entry>
+		 <entry>region</entry>
+		 <entry>REGION</entry>
+		 <entry/>
+		 <entry/>
+		 <entry/>
+		 <entry>Yes, R or 1</entry>
+	       </row>
+	       <row>
+		 <entry>Region Identifier Number</entry>
+		 <entry>region_id</entry>
+		 <entry>REGION_ID</entry>
+		 <entry>id</entry>
+		 <entry>ID</entry>
+		 <entry/>
+		 <entry>-1, 0, and positive integers</entry>
+	       </row>
+	       <row>
+		 <entry>Material Identifier Number</entry>
+		 <entry>material_id</entry>
+		 <entry>MATERIAL_ID</entry>
+		 <entry>GIFTmater</entry>
+		 <entry>GIFT_MATERIAL</entry>
+		 <entry>mat</entry>
+		 <entry>0 and positive integers</entry>
+	       </row>
+	       <row>
+		 <entry>Air Code</entry>
+		 <entry>air</entry>
+		 <entry>AIR</entry>
+		 <entry>AIRCODE</entry>
+		 <entry/>
+		 <entry/>
+		 <entry>0 or 1</entry>
+	       </row>
+	       <row>
+		 <entry>Line Of Sight Thickness Equivalence</entry>
+		 <entry>los</entry>
+		 <entry>LOS</entry>
+		 <entry/>
+		 <entry/>
+		 <entry/>
+		 <entry/>
+	       </row>
+	       <row>
+		 <entry>Color (Red Green Blue)</entry>
+		 <entry>color</entry>
+		 <entry>rgb</entry>
+		 <entry>RGB</entry>
+		 <entry>COLOR</entry>
+		 <entry/>
+		 <entry>###/###/###</entry>
+	       </row>
+	       <row>
+		 <entry>Shader Name</entry>
+		 <entry>oshader</entry>
+		 <entry>SHADER</entry>
+		 <entry/>
+		 <entry/>
+		 <entry/>
+		 <entry>string</entry>
+	       </row>
+	       <row>
+		 <entry>Inherit Properties</entry>
+		 <entry>inherit</entry>
+		 <entry>INHERIT</entry>
+		 <entry/>
+		 <entry/>
+		 <entry/>
+		 <entry>Yes or 1</entry>
+	       </row>
+	     </tbody>
+	   </tgroup>
+	 </table>
+   </para>
+</article>
