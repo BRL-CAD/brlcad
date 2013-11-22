@@ -98,7 +98,10 @@ Options:
       <para>
 	<informalfigure>
 	  <mediaobject>
-	    <imageobject>
+	    <imageobject role="html">
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig01.png" format="PNG"/>
+	    </imageobject>
+	    <imageobject role="fo">
 	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig01.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
@@ -551,7 +554,10 @@ mged&gt;
 
 	<informalfigure>
 	  <mediaobject>
-	    <imageobject>
+	    <imageobject role="html">
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig02.png" format="PNG"/>
+	    </imageobject>
+	    <imageobject role="fo">
 	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig02.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
@@ -566,7 +572,10 @@ mged&gt;
 
 	<informalfigure>
 	  <mediaobject>
-	    <imageobject>
+	    <imageobject role="html">
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig03.png" format="PNG"/>
+	    </imageobject>
+	    <imageobject role="fo">
 	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig03.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
@@ -620,7 +629,10 @@ mged&gt;
 
 	<informalfigure>
 	  <mediaobject>
-	    <imageobject>
+	    <imageobject role="html">
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig04.png" format="PNG"/>
+	    </imageobject>
+	    <imageobject role="fo">
 	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig04.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
@@ -651,7 +663,10 @@ mged&gt; ae 90 0
 
 	<informalfigure>
 	  <mediaobject>
-	    <imageobject>
+	    <imageobject role="html">
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig05.png" format="PNG"/>
+	    </imageobject>
+	    <imageobject role="fo">
 	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig05.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
@@ -708,7 +723,10 @@ mged&gt; ae 90 0
 
 	<informalfigure>
 	  <mediaobject>
-	    <imageobject>
+	    <imageobject role="html">
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig06.png" format="PNG"/>
+	    </imageobject>
+	    <imageobject role="fo">
 	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig06.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
@@ -751,7 +769,10 @@ mged&gt; ae 90 0
 
 	<informalfigure>
 	  <mediaobject>
-	    <imageobject>
+	    <imageobject role="html">
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig07.png" format="PNG"/>
+	    </imageobject>
+	    <imageobject role="fo">
 	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig07.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
@@ -794,7 +815,10 @@ mged&gt; ae 90 0
 
 	<informalfigure>
 	  <mediaobject>
-	    <imageobject>
+	    <imageobject role="html">
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig08.png" format="PNG"/>
+	    </imageobject>
+	    <imageobject role="fo">
 	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig08.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
@@ -826,7 +850,10 @@ mged&gt; ae 90 0
 
 	<informalfigure>
 	  <mediaobject>
-	    <imageobject>
+	    <imageobject role="html">
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig09.png" format="PNG"/>
+	    </imageobject>
+	    <imageobject role="fo">
 	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig09.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
@@ -865,7 +892,10 @@ mged&gt;
 
 	<informalfigure>
 	  <mediaobject>
-	    <imageobject>
+	    <imageobject role="html">
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig10.png" format="PNG"/>
+	    </imageobject>
+	    <imageobject role="fo">
 	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig10.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
@@ -953,7 +983,10 @@ right_cube.r         (    2.000    -1.000     0.000)     2.00    0.000
 
 	<informalfigure>
 	  <mediaobject>
-	    <imageobject>
+	    <imageobject role="html">
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig11.png" format="PNG"/>
+	    </imageobject>
+	    <imageobject role="fo">
 	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig11.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
@@ -975,7 +1008,10 @@ right_cube.r         (    2.000    -1.000     0.000)     2.00    0.000
 
 	<informalfigure>
 	  <mediaobject>
-	    <imageobject>
+	    <imageobject role="html">
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig12.png" format="PNG"/>
+	    </imageobject>
+	    <imageobject role="fo">
 	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig12.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
@@ -995,7 +1031,10 @@ right_cube.r         (    2.000    -1.000     0.000)     2.00    0.000
 
 	<informalfigure>
 	  <mediaobject>
-	    <imageobject>
+	    <imageobject role="html">
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig13.png" format="PNG"/>
+	    </imageobject>
+	    <imageobject role="fo">
 	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig13.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
@@ -1014,7 +1053,10 @@ right_cube.r         (    2.000    -1.000     0.000)     2.00    0.000
 
 	<informalfigure>
 	  <mediaobject>
-	    <imageobject>
+	    <imageobject role="html">
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig14.png" format="PNG"/>
+	    </imageobject>
+	    <imageobject role="fo">
 	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig14.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
@@ -1039,7 +1081,10 @@ right_cube.r         (    2.000    -1.000     0.000)     2.00    0.000
 
 	<informalfigure>
 	  <mediaobject>
-	    <imageobject>
+	    <imageobject role="html">
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig08.png" format="PNG"/>
+	    </imageobject>
+	    <imageobject role="fo">
 	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig08.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
@@ -1078,7 +1123,10 @@ mged&gt; erase query_rayff00ff
 
 	<informalfigure>
 	  <mediaobject>
-	    <imageobject>
+	    <imageobject role="html">
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig15.png" format="PNG"/>
+	    </imageobject>
+	    <imageobject role="fo">
 	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig15.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
@@ -1105,7 +1153,10 @@ mged&gt; who p
 
 	<informalfigure>
 	  <mediaobject>
-	    <imageobject>
+	    <imageobject role="html">
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig16.png" format="PNG"/>
+	    </imageobject>
+	    <imageobject role="fo">
 	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig16.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
@@ -1128,7 +1179,10 @@ mged&gt; who p
 
 	<informalfigure>
 	  <mediaobject>
-	    <imageobject>
+	    <imageobject role="html">
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig17.png" format="PNG"/>
+	    </imageobject>
+	    <imageobject role="fo">
 	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig17.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
@@ -1183,7 +1237,10 @@ left_cube.r          (   -1.000     0.022     0.011)     2.00    0.000
 
 	<informalfigure>
 	  <mediaobject>
-	    <imageobject>
+	    <imageobject role="html">
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig18.png" format="PNG"/>
+	    </imageobject>
+	    <imageobject role="fo">
 	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig18.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
@@ -1537,7 +1594,10 @@ left_and_right_cubes.r (  -1.0000    0.0000    0.0000)   2.0000   0.0000
 	The Query Ray Control Panel also offers a way to select the Use Air option:
 <informalfigure>
 	  <mediaobject>
-	    <imageobject>
+	    <imageobject role="html">
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig20.png" format="PNG"/>
+	    </imageobject>
+	    <imageobject role="fo">
 	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig20.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
@@ -1853,7 +1913,10 @@ center_cube.r        (   1.0000,   0.0000,   0.0000)   2.0000   0.0000
 
 	<informalfigure>
 	  <mediaobject>
-	    <imageobject>
+	    <imageobject role="html">
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig22.png" format="PNG"/>
+	    </imageobject>
+	    <imageobject role="fo">
 	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig22.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
@@ -1895,7 +1958,10 @@ center_cube.r        (   1.0000,   0.0000,   0.0000)   2.0000   0.0000
 
 	<informalfigure>
 	  <mediaobject>
-	    <imageobject>
+	    <imageobject role="html">
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig23.png" format="PNG"/>
+	    </imageobject>
+	    <imageobject role="fo">
 	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig23.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
@@ -1916,7 +1982,10 @@ center_cube.r        (   1.0000,   0.0000,   0.0000)   2.0000   0.0000
 
 	<informalfigure>
 	  <mediaobject>
-	    <imageobject>
+	    <imageobject role="html">
+	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig24.png" format="PNG"/>
+	    </imageobject>
+	    <imageobject role="fo">
 	      <imagedata align="center" fileref="../../articles/en/images/nirt_fig24.png" format="PNG"/>
 	    </imageobject>
 	    <caption>
