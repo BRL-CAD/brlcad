@@ -38,14 +38,14 @@ main()
     gen_attr_html_page(ofil);
 
     // write the xml table for file 'attributes.xml'
-    string adir("../../doc/docbook/system/man5/en");
+    string adir("../../doc/docbook/system/man5/en/");
 
     // these two files are included in the manually generated
     // 'attributes.xml' file:
     string stable(adir + "attributes-standard-table.xml");
     string utable(adir + "attributes-user-table.xml");
 
-    gen_attr_xml_tables(stable, utable);
+    //gen_attr_xml_tables(stable, utable);
 
     return 0;
 }
