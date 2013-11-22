@@ -65,62 +65,62 @@ namespace db5_attrs_private {
         },
         { ATTR_REGION_ID, false, ATTR_STANDARD,
           "region_id",
-          "Region Identifier Number: an integer",
+          "an integer",
           "0, -1, and positive integers", // examples
           "id",  // aliases, if any
-          ""  // property, if any
+          "Region Identifier Number"  // property, if any
         },
         { ATTR_MATERIAL_ID, false, ATTR_STANDARD,
           "material_id",
-          "Material Identifier Number: zero or positive integer (user-defined)",
+          "zero or positive integer (user-defined)",
           "", // examples
           "giftmater,mat",  // aliases, if any
-          ""  // property, if any
+          "Material Identifier Number"  // property, if any
         },
         { ATTR_AIR, false, ATTR_STANDARD,
           "aircode",
-          "Air Code: an integer (application defined)",
+          "an integer (application defined)",
           "'0', '1', or '-2'", // examples
           "air",  // aliases, if any
-          ""  // property, if any
+          "Air Code"  // property, if any
         },
         { ATTR_LOS, false, ATTR_STANDARD,
           "los",
-          "Line of Sight Thickness Equivalence: an integer in the inclusive range: 0 to 100",
+          "an integer in the inclusive range: 0 to 100",
           "'24' or '100'", // examples
           "",  // aliases, if any
-          ""  // property, if any
+          "Line of Sight Thickness Equivalence"  // property, if any
         },
         { ATTR_COLOR, false, ATTR_STANDARD,
           "color",
-          "Color: a 3-tuple of RGB values",
+          "a 3-tuple of RGB values",
           "\"0 255 255\"", // examples
           "rgb",  // aliases, if any
-          ""  // property, if any
+          "Color"  // property, if any
         },
         { ATTR_SHADER, false, ATTR_STANDARD,
           "shader",
-          "Shader Name: a string of shader characteristics in a standard format",
+          "a string of shader characteristics in a standard format",
           "", // examples
           "oshader",  // aliases, if any
-          ""  // property, if any
+          "Shader Name"  // property, if any
         },
         { ATTR_INHERIT, false, ATTR_STANDARD,
           "inherit",
-          "Inherit Poperties: boolean",
+          "boolean",
           "Yes, 1, 0", // examples
           "",  // aliases, if any
-          ""  // property, if any
+          "Inherit Properties"  // property, if any
         },
         { ATTR_TIMESTAMP, true, ATTR_STANDARD, /* first binary attribute */
           "mtime",
 
-          "Time Stamp: a binary time stamp for an object's last mod time (the"
+          "a binary time stamp for an object's last mod time (the"
           " time is displayed in human-readable form with the 'attr' command)",
 
           "", // examples
           "timestamp,time_stamp,modtime,mod_time",  // aliases, if any
-          ""  // property, if any
+          "Time Stamp"  // property, if any
         },
     };
 
