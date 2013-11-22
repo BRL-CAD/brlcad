@@ -70,7 +70,7 @@
 	the value in question get a consistent answer.
   </para>
 
-   <xi:include href="../../man5/en/attributes_table.xml" xpointer="attributes_table"/>
+   <xi:include href="./attributes_table.xml" xpointer="attributes_table"/>
 
    <para>
      Given the importance of these attributes, it is appropriate to briefly outline the
