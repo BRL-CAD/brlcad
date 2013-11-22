@@ -36,7 +36,7 @@
  * http://geomalgorithms.com/a12-_hull-3.html
  */
 int
-bn_polyline_2d_hull(point_t** hull, const point_t* polyline, int n)
+bn_polyline_2d_chull(point_t** hull, const point_t* polyline, int n)
 {
     int i;
 
@@ -113,7 +113,7 @@ pnt_compare(const void *pnt1, const void *pnt2)
 
 
 int
-bn_2d_hull(point_t **hull, const point_t *pnts, int n)
+bn_2d_chull(point_t **hull, const point_t *pnts, int n)
 {
     int i = 0;
     int retval = 0;
@@ -130,7 +130,7 @@ bn_2d_hull(point_t **hull, const point_t *pnts, int n)
     /* Once sorted, the points can be viewed as describing a simple polyline
      * and the Melkman algorithm works for a simple polyline even if it
      * isn't closed. */
-    retval = bn_polyline_2d_hull(hull, (const point_t *)points, n);
+    retval = bn_polyline_2d_chull(hull, (const point_t *)points, n);
 
     bu_free(points, "free sorted points");
 

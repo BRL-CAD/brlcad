@@ -51,7 +51,7 @@ main()
     VSET(test1_results[3], 2.0, 2.5, 0.0);
     VSET(test1_results[4], 1.0, 2.0, 0.0);
 
-    retval = bn_polyline_2d_hull(&hull_polyline, (const point_t *)test1_points, n);
+    retval = bn_polyline_2d_chull(&hull_polyline, (const point_t *)test1_points, n);
     if (!retval) return -1;
     bu_log("Test #001:  polyline_2d_hull - 4 point test:\n");
     for (i = 0; i < retval; i++) {
@@ -66,7 +66,7 @@ main()
     if (!retval) {return -1;} else {bu_log("Test #001 Passed!\n");}
 
 
-    retval = bn_2d_hull(&hull_pnts, (const point_t *)test1_points, n);
+    retval = bn_2d_chull(&hull_pnts, (const point_t *)test1_points, n);
     if (!retval) return -1;
     bu_log("Test #002:  2d_hull - 4 point test:\n");
     for (i = 0; i < retval; i++) {
