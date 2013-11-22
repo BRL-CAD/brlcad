@@ -47,69 +47,80 @@ namespace db5_attrs_private {
         const char *name;         // the "standard" name
         const char *description;
         const char *examples;
-        const char *aliases;      // comma-delimited list of
-        // alternative names for this
-        // attribute
+        // comma-delimited list of alternative names for this attribute:
+        const char *aliases;
+        // property name as found in file 'attributes.xml'; user-defined attrs may not have this defined:
+        const char *property;
+
     };
 
     // this is the master source of standard and registered attributes
     static const db5_attr_ctype db5_attr_ctype_table[] = {
         { ATTR_REGION, false, ATTR_STANDARD,
           "region",
-          "true or false",
-          "", // example
-          ""  // aliases, if any
+          "Region Flag: boolean",
+          "Yes, R, 1, 0", // example
+          "", // aliases, if any
+          ""  // property, if any
         },
         { ATTR_REGION_ID, false, ATTR_STANDARD,
           "region_id",
-          "a positive integer",
-          "", // examples
-          "id"  // aliases, if any
+          "Region Identifier Number: an integer",
+          "0, -1, and positive integers", // examples
+          "id",  // aliases, if any
+          ""  // property, if any
         },
         { ATTR_MATERIAL_ID, false, ATTR_STANDARD,
           "material_id",
-          "a positive integer (user-defined)",
+          "Material Identifier Number: zero or positive integer (user-defined)",
           "", // examples
-          "giftmater,mat"  // aliases, if any
+          "giftmater,mat",  // aliases, if any
+          ""  // property, if any
         },
         { ATTR_AIR, false, ATTR_STANDARD,
           "aircode",
-          "an integer (application defined)",
-          "'0' or '-1'", // examples
-          "air"  // aliases, if any
+          "Air Code: an integer (application defined)",
+          "'0', '1', or '-2'", // examples
+          "air",  // aliases, if any
+          ""  // property, if any
         },
         { ATTR_LOS, false, ATTR_STANDARD,
           "los",
-          "an integer in the inclusive range: 0 to 100",
+          "Line of Sight Thickness Equivalence: an integer in the inclusive range: 0 to 100",
           "'24' or '100'", // examples
-          ""  // aliases, if any
+          "",  // aliases, if any
+          ""  // property, if any
         },
         { ATTR_COLOR, false, ATTR_STANDARD,
           "color",
-          "a 3-tuple of RGB values",
+          "Color: a 3-tuple of RGB values",
           "\"0 255 255\"", // examples
-          "rgb"  // aliases, if any
+          "rgb",  // aliases, if any
+          ""  // property, if any
         },
         { ATTR_SHADER, false, ATTR_STANDARD,
           "shader",
-          "a string of shader characteristics in a standard format",
+          "Shader Name: a string of shader characteristics in a standard format",
           "", // examples
-          "oshader"  // aliases, if any
+          "oshader",  // aliases, if any
+          ""  // property, if any
         },
         { ATTR_INHERIT, false, ATTR_STANDARD,
           "inherit",
-          "",
-          "", // examples
-          ""  // aliases, if any
+          "Inherit Poperties: boolean",
+          "Yes, 1, 0", // examples
+          "",  // aliases, if any
+          ""  // property, if any
         },
         { ATTR_TIMESTAMP, true, ATTR_STANDARD, /* first binary attribute */
           "mtime",
 
-          "a binary time stamp for an object's last mod time (the"
+          "Time Stamp: a binary time stamp for an object's last mod time (the"
           " time is displayed in human-readable form with the 'attr' command)",
 
           "", // examples
-          "timestamp,time_stamp,modtime,mod_time"  // aliases, if any
+          "timestamp,time_stamp,modtime,mod_time",  // aliases, if any
+          ""  // property, if any
         },
     };
 
@@ -142,6 +153,7 @@ db5_attrs_private::load_maps()
         const string desc      = a.description;
         const string examp     = a.examples;
         const string Aliases   = a.aliases;
+        const string prop      = a.property;
 
         // check for invalid subtype
         const int st = a.attr_subtype;
@@ -175,7 +187,7 @@ db5_attrs_private::load_maps()
                 bu_bomb("duplicate attr alias\n");
             }
         }
-        db5_attr_t ap(a.is_binary, a.attr_subtype, name, desc, examp, aliases);
+        db5_attr_t ap(a.is_binary, a.attr_subtype, name, desc, examp, aliases, prop);
 
         // prepare the maps
         name2int.insert(make_pair(name, a.attr_type));
