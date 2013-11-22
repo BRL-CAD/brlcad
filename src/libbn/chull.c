@@ -101,12 +101,12 @@ pnt_compare(const void *pnt1, const void *pnt2)
     point_t *p1 = (point_t *)pnt1;
     point_t *p2 = (point_t *)pnt2;
     if (UNLIKELY(NEAR_ZERO((*p2)[0] - (*p1)[0], SMALL_FASTF) && NEAR_ZERO((*p2)[1] - (*p1)[1], SMALL_FASTF) && NEAR_ZERO((*p2)[2] - (*p1)[2], SMALL_FASTF))) return 0;
-    if ((*p1)[0] < (*p2)[0]) return -1;
-    if ((*p1)[0] > (*p2)[0]) return 1;
-    if ((*p1)[1] < (*p2)[1]) return -1;
-    if ((*p1)[1] > (*p2)[1]) return 1;
-    if ((*p1)[2] < (*p2)[2]) return -1;
-    if ((*p1)[2] > (*p2)[2]) return 1;
+    if ((*p1)[0] < (*p2)[0]) return 1;
+    if ((*p1)[0] > (*p2)[0]) return -1;
+    if ((*p1)[1] < (*p2)[1]) return 1;
+    if ((*p1)[1] > (*p2)[1]) return -1;
+    if ((*p1)[2] < (*p2)[2]) return 1;
+    if ((*p1)[2] > (*p2)[2]) return -1;
     /* should never get here */
     return 0;
 }
