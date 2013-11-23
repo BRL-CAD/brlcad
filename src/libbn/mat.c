@@ -76,7 +76,7 @@ void
 bn_mat_print(const char *title,
 	     const mat_t m)
 {
-    char obuf[1024];	/* sprintf may be non-PARALLEL */
+    char obuf[1024];	/* snprintf may be non-PARALLEL */
 
     bn_mat_print_guts(title, m, obuf, 1024);
     bu_log("%s\n", obuf);
@@ -1011,7 +1011,7 @@ bn_mat_ck(const char *title, const mat_t m)
 
     /* NOTE: this tolerance cannot be any more tight than 0.00001 due
      * to default calculation tolerancing used by models.  Matrices
-     * exported to disk outside of tolerance and will fail import if
+     * exported to disk outside of tolerance will fail import if
      * set too restrictive.
      */
     if (!NEAR_ZERO(fx, 0.00001)

@@ -51,7 +51,7 @@ bn_polyline_2d_chull(point2d_t** hull, const point2d_t* polyline, int n)
     int bot = n-2;
     int top = bot+3;
 
-    /* 3rd vertex is a both bot and top */
+    /* 3rd vertex is a both bottom and top */
     V2MOVE(D[top], polyline[2]);
     V2MOVE(D[bot], D[top]);
     if (isLeft(polyline[0], polyline[1], polyline[2]) > 0) {

@@ -966,7 +966,7 @@ bn_tcl_mat_print(Tcl_Interp *interp,
 		 const char *title,
 		 const mat_t m)
 {
-    char obuf[1024];	/* sprintf may be non-PARALLEL */
+    char obuf[1024];	/* snprintf may be non-PARALLEL */
 
     bn_mat_print_guts(title, m, obuf, 1024);
     Tcl_AppendResult(interp, obuf, "\n", (char *)NULL);

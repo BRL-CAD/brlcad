@@ -676,7 +676,7 @@ bn_tabdata_resample_avg(const struct bn_table *newtable, const struct bn_tabdata
 	} else {
 	    /*
 	     *  Complex case: find average value.
-	     *  Interpolate both end, and consider all
+	     *  Interpolate both ends, and consider all
 	     *  intermediate old spans.
 	     *  There are three parts to sum:
 	     *	Partial interval from newx[i] to j+1

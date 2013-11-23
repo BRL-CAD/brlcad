@@ -192,7 +192,7 @@ UpdateBox(struct obr_vals *obr, point_t LPoint, point_t RPoint, point_t BPoint, 
     }
 }
 
-/* Three consecutive colinear points will cause a problem (per a comment in the original code)
+/* Three consecutive colinear points will cause a problem (as per a comment in the original code)
  * Consequently, we're going to have to build the convex hull for all inputs in order to
  * make sure we don't get colinear points from the NMG inputs.*/
 HIDDEN int

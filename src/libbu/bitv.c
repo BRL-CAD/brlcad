@@ -29,10 +29,10 @@
 
 
 /**
- * private 32-bit recursive reduction using "SIMD Within A Register"
- * (SWAR) to count the number of one bits in a given integer.  the
+ * Private 32-bit recursive reduction using "SIMD Within A Register"
+ * (SWAR) to count the number of one bits in a given integer. The
  * first step is mapping 2-bit values into sum of 2 1-bit values in
- * sneaky way.  this technique was taken from the University of
+ * sneaky way. This technique was taken from the University of
  * Kentucky's Aggregate Magic Algorithms collection.
  *
  * LLVM 3.2 complains about a static inline function here, so use a macro instead
@@ -48,9 +48,9 @@
 
 
 /**
- * private 32-bit recursive reduction using "SIMD Within A Register"
+ * Private 32-bit recursive reduction using "SIMD Within A Register"
  * (SWAR) to compute a base-2 integer logarithm for a given integer.
- * this technique was taken from the University of Kentucky's
+ * This technique was taken from the University of Kentucky's
  * Aggregate Magic Algorithms collection.
  *
  * LLVM 3.2 complains about a static inline function here, so use a macro instead
@@ -67,8 +67,8 @@
 
 
 /**
- * wrap the above private routines for computing the bitv shift size.
- * users should not call this directly, instead calling the
+ * Wrap the above private routines for computing the bitv shift size.
+ * Users should not call this directly, instead calling the
  * BU_BITV_SHIFT macro instead.
  */
 inline size_t

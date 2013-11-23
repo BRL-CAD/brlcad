@@ -29,7 +29,7 @@
  *				16 March 1979
  *
  *	This routine is designed to simplify the creation of
- * X, Y plots for user. The user need only furnish this program
+ * X, Y plots for user. The user need only furnish this program with
  * the data arrays to be plotted, the lengths of the respective
  * axis, titles for the axis, and the point on the page corresponding
  * to data point (0, 0).
@@ -77,7 +77,7 @@
 /**			T P _ S E P
  *@brief
  *  tp_sep() divides a floating point number into a coefficient
- *  and an exponent. works in base ten.
+ *  and an exponent. Works in base ten.
  */
 void
 tp_sep(float x, float *coef, int *ex)
@@ -153,7 +153,7 @@ double tp_ipow (double x, int n)
  * @param	npts	the number of elements in x[]
  * @param	size	the length into which x[] is supposed to be fitted
  * 			(in inches)
- * @param	xs	the returned scale facter to integer space
+ * @param	xs	the returned scale factor to integer space
  * @param	xmin	the new minimum value for the data array (a returned
  *			value)
  * @param	xmax	the new maximum value for the data array (a returned

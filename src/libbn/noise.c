@@ -59,7 +59,7 @@
  *
  *@n x, y, z are set to the noise space location for the source point.
  *@n ix, iy, iz are the integer lattice point (integer portion of x, y, z)
- *@n fx, fy, fz are the fractional lattice distance above ix, iy, iz
+ *@n fx, fy, fz are the fractional lattice distances above ix, iy, iz
  *
  * The noise function has a finite domain, which can be exceeded when
  * using fractal textures with very high frequencies.  This routine is
@@ -479,7 +479,7 @@ build_spec_tbl(double h_val, double lacunarity, double octaves)
 /**
  * The first order of business is to see if we have pre-computed the
  * spectral weights table for these parameters in a previous
- * invocation.  If not, the we compute them and save them for possible
+ * invocation.  If not, then we compute them and save them for possible
  * future use
  */
 struct fbm_spec *
@@ -538,7 +538,7 @@ bn_noise_fbm(fastf_t *point, double h_val, double lacunarity, double octaves)
 
     /* The first order of business is to see if we have pre-computed
      * the spectral weights table for these parameters in a previous
-     * invocation.  If not, the we compute them and save them for
+     * invocation.  If not, then we compute them and save them for
      * possible future use
      */
 
@@ -583,7 +583,7 @@ bn_noise_turb(fastf_t *point, double h_val, double lacunarity, double octaves)
 
     /* The first order of business is to see if we have pre-computed
      * the spectral weights table for these parameters in a previous
-     * invocation.  If not, the we compute them and save them for
+     * invocation.  If not, then we compute them and save them for
      * possible future use
      */
 
@@ -652,7 +652,7 @@ bn_noise_ridged(fastf_t *point, double h_val, double lacunarity, double octaves,
 
     /* The first order of business is to see if we have pre-computed
      * the spectral weights table for these parameters in a previous
-     * invocation.  If not, the we compute them and save them for
+     * invocation.  If not, then we compute them and save them for
      * possible future use
      */
 
@@ -708,7 +708,7 @@ bn_noise_mf(fastf_t *point, double h_val, double lacunarity, double octaves, dou
 
     /* The first order of business is to see if we have pre-computed
      * the spectral weights table for these parameters in a previous
-     * invocation.  If not, the we compute them and save them for
+     * invocation.  If not, then we compute them and save them for
      * possible future use
      */
 

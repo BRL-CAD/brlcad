@@ -637,7 +637,7 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 	in = ((char *) in) + work_count * insize;
 
 	/*
-	 * If the input is in net format convert it host format.
+	 * If the input is in net format convert it to host format.
 	 * Because we know that the input format is not equal to the
 	 * output this means that there will be at least two
 	 * conversions taking place if the input is in net format.

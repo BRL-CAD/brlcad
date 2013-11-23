@@ -716,7 +716,7 @@ bn_isect_line2_line2(fastf_t *dist, const fastf_t *p, const fastf_t *d, const fa
     if (parallel || NEAR_ZERO(det, DETERMINANT_TOL)) {
 	/* Lines are parallel */
 	if (!parallel1 && !NEAR_ZERO(det1, DETERMINANT_TOL)) {
-	    /* Lines are NOT co-linear, just parallel */
+	    /* Lines are NOT collinear, just parallel */
 	    if (bu_debug & BU_DEBUG_MATH) {
 		bu_log("\tparallel, not co-linear.  det=%e, det1=%g\n", det, det1);
 	    }
@@ -724,7 +724,7 @@ bn_isect_line2_line2(fastf_t *dist, const fastf_t *p, const fastf_t *d, const fa
 	}
 
 	/*
-	 * Lines are co-linear.
+	 * Lines are collinear.
 	 * Determine t as distance from P to A.
 	 * Determine u as distance from P to (A+C).  [special!]
 	 * Use largest direction component, for numeric stability
@@ -740,7 +740,7 @@ bn_isect_line2_line2(fastf_t *dist, const fastf_t *p, const fastf_t *d, const fa
 	if (bu_debug & BU_DEBUG_MATH) {
 	    bu_log("\tcolinear, t = %g, u = %g\n", dist[0], dist[1]);
 	}
-	return 0;	/* Lines co-linear */
+	return 0;	/* Lines collinear */
     }
     if (bu_debug & BU_DEBUG_MATH) {
 	/* XXX This print is temporary */
@@ -786,7 +786,7 @@ bn_isect_line2_lseg2(fastf_t *dist,
 	goto out;
     }
 
-    /* Detecting colinearity is difficult, and very very important.
+    /* Detecting collinearity is difficult, and very very important.
      * As a first step, check to see if both points A and B lie within
      * tolerance of the line.  If so, then the line segment AC is ON
      * the line.
@@ -801,18 +801,18 @@ bn_isect_line2_lseg2(fastf_t *dist,
 	/* Find the parametric distance along the ray */
 	dist[0] = bn_dist_pt2_along_line2(p, d, a);
 	dist[1] = bn_dist_pt2_along_line2(p, d, b);
-	ret = 0;		/* Colinear */
+	ret = 0;		/* Collinear */
 	goto out;
     }
 
     if ((ret = bn_isect_line2_line2(dist, p, d, a, c, tol)) < 0) {
-	/* Lines are parallel, non-colinear */
+	/* Lines are parallel, non-collinear */
 	ret = -3;		/* No intersection found */
 	goto out;
     }
     if (ret == 0) {
 	fastf_t dtol;
-	/* Lines are colinear */
+	/* Lines are collinear */
 	/* If P within tol of either endpoint (0, 1), make exact. */
 	dtol = tol->dist / sqrt(MAGSQ_2D(d));
 	if (bu_debug & BU_DEBUG_MATH) {
@@ -824,7 +824,7 @@ bn_isect_line2_lseg2(fastf_t *dist,
 
 	if (dist[1] > -dtol && dist[1] < dtol) dist[1] = 0;
 	else if (dist[1] > 1-dtol && dist[1] < 1+dtol) dist[1] = 1;
-	ret = 0;		/* Colinear */
+	ret = 0;		/* Collinear */
 	goto out;
     }
 
@@ -947,12 +947,12 @@ bn_isect_lseg2_lseg2(fastf_t *dist,
 
     status = bn_isect_line2_line2(dist, p, pdir, q, qdir, tol);
     if (status < 0) {
-	/* Lines are parallel, non-colinear */
+	/* Lines are parallel, non-collinear */
 	return -1;	/* No intersection */
     }
     if (status == 0) {
 	int nogood = 0;
-	/* Lines are colinear */
+	/* Lines are collinear */
 	/* If P within tol of either endpoint (0, 1), make exact. */
 	ptol = tol->dist / sqrt(MAGSQ_2D(pdir));
 	if (bu_debug & BU_DEBUG_MATH) {
@@ -967,11 +967,11 @@ bn_isect_lseg2_lseg2(fastf_t *dist,
 	if (dist[1] < 0 || dist[1] > 1) nogood = 1;
 	if (dist[0] < 0 || dist[0] > 1) nogood++;
 	if (nogood >= 2)
-	    return -1;	/* colinear, but not overlapping */
+	    return -1;	/* collinear, but not overlapping */
 	if (bu_debug & BU_DEBUG_MATH) {
 	    bu_log("  HIT colinear!\n");
 	}
-	return 0;		/* colinear and overlapping */
+	return 0;		/* collinear and overlapping */
     }
     /* Lines intersect */
     /* If within tolerance of an endpoint (0, 1), make exact. */
@@ -1066,8 +1066,8 @@ bn_isect_lseg3_lseg3(fastf_t *dist,
     ptol = tol->dist / pmag;
     qtol = tol->dist / qmag;
     dist[0] = dist[0] / pmag;
-    if (status == 0) {  /* infinite lines are colinear */
-	/* When line segments are colinear, dist[1] has an alternate
+    if (status == 0) {  /* infinite lines are collinear */
+	/* When line segments are collinear, dist[1] has an alternate
 	 * interpretation: it's the parameter along p (not q)
 	 * therefore dist[1] must be scaled by pmag not qmag.
 	 */
@@ -1087,8 +1087,8 @@ bn_isect_lseg3_lseg3(fastf_t *dist,
 	dist[0] = 1.0;
     }
 
-    if (status == 0) {  /* infinite lines are colinear */
-	/* When line segments are colinear, dist[1] has an alternate
+    if (status == 0) {  /* infinite lines are collinear */
+	/* When line segments are collinear, dist[1] has an alternate
 	 * interpretation: it's the parameter along p (not q)
 	 * therefore dist[1] must use tolerance ptol not qtol.
 	 * If 'q' within tol of either endpoint (0.0, 1.0), make exact.
@@ -1107,13 +1107,13 @@ bn_isect_lseg3_lseg3(fastf_t *dist,
 	}
     }
 
-    if (status == 0) {  /* infinite lines are colinear */
+    if (status == 0) {  /* infinite lines are collinear */
 	/* Lines are colinear */
 	if ((dist[0] > 1.0+ptol && dist[1] > 1.0+ptol) || (dist[0] < -ptol && dist[1] < -ptol)) {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_MATH)) {
 		bu_log("bn_isect_lseg3_lseg3(): MISS, line segments are colinear but not overlapping!\n");
 	    }
-	    ret = -1;   /* line segments are colinear but not overlapping */
+	    ret = -1;   /* line segments are collinear but not overlapping */
 	    goto out;
 	}
 
@@ -1121,11 +1121,11 @@ bn_isect_lseg3_lseg3(fastf_t *dist,
 	    bu_log("bn_isect_lseg3_lseg3(): HIT, line segments are colinear and overlapping!\n");
 	}
 
-	ret = 0; /* line segments are colinear and overlapping */
+	ret = 0; /* line segments are collinear and overlapping */
 	goto out;
     }
 
-    /* At this point we know the infinite lines intersect and are not colinear */
+    /* At this point we know the infinite lines intersect and are not collinear */
 
 
     if (dist[0] < -ptol || dist[0] > 1.0+ptol || dist[1] < -qtol || dist[1] > 1.0+qtol) {
@@ -1224,7 +1224,7 @@ bn_isect_line3_line3(fastf_t *pdist,        /* see above */
 
     if (parallel && colinear) {
 
-	/* when colinear pdist has a different meaning, it is the
+	/* when collinear pdist has a different meaning, it is the
 	 * distance from p0 to q0
 	 */
 	*pdist = MAGNITUDE(w0); /* w0 is opposite direction of p0 to q0 */
@@ -1233,7 +1233,7 @@ bn_isect_line3_line3(fastf_t *pdist,        /* see above */
 	    *pdist = -(*pdist);
 	}
 
-	/* when colinear qdist has a different meaning, it is the
+	/* when collinear qdist has a different meaning, it is the
 	 * distance from p0 to q1
 	 */
 	*qdist = MAGNITUDE(p0_to_q1);
@@ -1246,7 +1246,7 @@ bn_isect_line3_line3(fastf_t *pdist,        /* see above */
 	    *qdist = -(*qdist);
 	}
 
-	return 0; /* colinear intersection */
+	return 0; /* collinear intersection */
     }
 
     sc_numerator = (b * e - qdir_mag_sq * d);
@@ -1346,8 +1346,8 @@ bn_isect_line_lseg(fastf_t *t, const fastf_t *p, const fastf_t *d, const fastf_t
 	return 2;
     }
 
-    /* just check that the vertices of the line segment are
-     * within distance tolerance of the ray. it may cause problems
+    /* Just check that the vertices of the line segment are
+     * within distance tolerance of the ray. It may cause problems
      * to also require the ray start and end points to be within
      * distance tolerance of the infinite line associated with
      * the line segment.
@@ -1382,12 +1382,12 @@ bn_isect_line_lseg(fastf_t *t, const fastf_t *p, const fastf_t *d, const fastf_t
     }
 
     if (colinear && dist1 < SMALL_FASTF && dist2 < SMALL_FASTF) {
-	/* lines are colinear but 'a' and 'b' are not on the ray */
+	/* lines are collinear but 'a' and 'b' are not on the ray */
 	return -1; /* no intersection */
     }
 
     if (colinear && (dist1 > SMALL_FASTF) && (dist2 > SMALL_FASTF)) {
-	/* lines are colinear and both points 'a' and 'b' are on the ray. */
+	/* lines are collinear and both points 'a' and 'b' are on the ray. */
 	/* return the distance to the closest point */
 	if (dist2 > dist1) {
 	    *t = dist1;
@@ -1398,14 +1398,14 @@ bn_isect_line_lseg(fastf_t *t, const fastf_t *p, const fastf_t *d, const fastf_t
     }
 
     if (colinear && (dist1 > SMALL_FASTF) && (dist2 < SMALL_FASTF)) {
-	/* lines are colinear and 'a' is on the ray but 'b' is not. */
+	/* lines are collinear and 'a' is on the ray but 'b' is not. */
 	/* return the distance to 'a' */
 	*t = dist1;
 	return 0;
     }
 
     if (colinear && (dist1 < SMALL_FASTF) && (dist2 > SMALL_FASTF)) {
-	/* lines are colinear and 'b' is on the ray but 'a' is not. */
+	/* lines are collinear and 'b' is on the ray but 'a' is not. */
 	/* return the distance to 'b' */
 	*t = dist2;
 	return 0;
@@ -1967,7 +1967,7 @@ bn_dist_pt3_lseg3(fastf_t *dist,
 	param_dist = t / B_A;		/* Range 0..1 */
 	VJOIN1(pca, a, param_dist, AtoB);
 
-	/* Find distance from PCA to line segment (Pythagorus) */
+	/* Find distance from PCA to line segment (Pythagoras) */
 	if ((dsq = P_A_sq - t * t) <= tol->dist_sq) {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_MATH)) bu_log("  ON lseg\n");
 	    /* Distance from PCA to lseg is zero, give param instead */
@@ -2056,7 +2056,7 @@ bn_dist_pt2_lseg2(fastf_t *dist_sq, fastf_t *pca, const fastf_t *a, const fastf_
 	param_dist = t / B_A;		/* Range 0..1 */
 	V2JOIN1(pca, a, param_dist, AtoB);
 
-	/* Find distance from PCA to line segment (Pythagorus) */
+	/* Find distance from PCA to line segment (Pythagoras) */
 	if ((dsq = P_A_sq - t * t) <= tol->dist_sq) {
 	    if (bu_debug & BU_DEBUG_MATH) bu_log("  ON lseg\n");
 	    /* Distance from PCA to lseg is zero, give param instead */

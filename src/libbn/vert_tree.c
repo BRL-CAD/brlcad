@@ -251,7 +251,7 @@ Add_vert( double x, double y, double z, struct vert_root *vert_root, fastf_t loc
 	new_node->vnode.cut_val = (vertex[new_node->vnode.coord] +
 				   vert_root->the_array[ptr->vleaf.index * 3 + new_node->vnode.coord]) * 0.5;
 
-	/* set the node "lower" nad "higher" pointers */
+	/* set the node "lower" and "higher" pointers */
 	if ( vertex[new_node->vnode.coord] >=
 	     vert_root->the_array[ptr->vleaf.index * 3 + new_node->vnode.coord] ) {
 	    new_node->vnode.higher = new_leaf;
@@ -387,7 +387,7 @@ Add_vert_and_norm( double x, double y, double z, double nx, double ny, double nz
 	new_node->vnode.cut_val = (vertex[new_node->vnode.coord] +
 				   vert_root->the_array[ptr->vleaf.index * 3 + new_node->vnode.coord]) * 0.5;
 
-	/* set the node "lower" nad "higher" pointers */
+	/* set the node "lower" and "higher" pointers */
 	if ( vertex[new_node->vnode.coord] >=
 	     vert_root->the_array[ptr->vleaf.index * 3 + new_node->vnode.coord] ) {
 	    new_node->vnode.higher = new_leaf;

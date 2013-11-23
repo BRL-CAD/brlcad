@@ -172,7 +172,7 @@ backtrace(char * const *args, int fd)
     } else if (write(input[1], "bt full\n", 8) != 8) {
 	perror("write [bt full] failed");
     }
-    /* can add additional gdb commands here.  output will contain
+    /* can add additional gdb commands here. Output will contain
      * everything up to the "Detaching from process" statement from
      * quit.
      */
@@ -353,8 +353,8 @@ bu_backtrace(FILE *fp)
     }
     fflush(fp);
 
-    /* could probably do something better than this to avoid hanging
-     * indefinitely.  keeps the trace clean, though, and allows for a
+    /* Could probably do something better than this to avoid hanging
+     * indefinitely. Keeps the trace clean, though, and allows for a
      * debugger to be attached interactively if needed.
      */
     interrupt_wait = 0;
