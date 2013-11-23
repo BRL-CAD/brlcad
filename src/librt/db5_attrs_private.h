@@ -70,13 +70,15 @@ namespace db5_attrs_private {
         std::string examples;
         std::set<std::string> aliases; /* comma-delimited list of alternative names for this attribute */
         std::string property;
+        std::string long_description;
 
 	db5_attr_t()
 	    {}
         db5_attr_t(const int b, const int a, const std::string& n,
 		   const std::string& d, const std::string& e,
 		   const std::set<std::string>& s,
-		   const std::string& p)
+		   const std::string& p,
+		   const std::string& ld)
 	: is_binary(b ? true : false)
 	, attr_subtype(a)
 	, name(n)
@@ -84,6 +86,7 @@ namespace db5_attrs_private {
 	, examples(e)
 	, aliases(s)
 	, property(p)
+	, long_description(ld)
 	    {}
     };
 

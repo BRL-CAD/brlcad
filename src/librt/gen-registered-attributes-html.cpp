@@ -21,7 +21,7 @@ using namespace std;
 using namespace db5_attrs_private;
 
 // local funcs
-static void gen_attr_xml_tables(const std::string& fname, const std::string& fname2);
+//static void gen_attr_xml_tables(const std::string& fname, const std::string& fname2);
 static void gen_attr_html_page(const std::string& fname);
 static void open_file_write(ofstream& fs, const string& f);
 
@@ -38,12 +38,12 @@ main()
     gen_attr_html_page(ofil);
 
     // write the xml table for file 'attributes.xml'
-    string adir("../../doc/docbook/system/man5/en/");
+    //string adir("../../doc/docbook/system/man5/en/");
 
     // these two files are included in the manually generated
     // 'attributes.xml' file:
-    string stable(adir + "attributes-standard-table.xml");
-    string utable(adir + "attributes-user-table.xml");
+    //string stable(adir + "attributes-standard-table.xml");
+    //string utable(adir + "attributes-user-table.xml");
 
     //gen_attr_xml_tables(stable, utable);
 
@@ -61,6 +61,7 @@ open_file_write(ofstream& fs, const string& f)
   }
 } // open_file_write
 
+/*
 void
 gen_attr_xml_tables(const std::string& fname, const std::string& fname2)
 {
@@ -68,41 +69,16 @@ gen_attr_xml_tables(const std::string& fname, const std::string& fname2)
     open_file_write(fo, fname);
     open_file_write(fo2, fname2);
 
+    // the table files will be included in a parent DocBook xml file
+    // for man pages and will be child elements of a DB <para>
+
+    // the standard (core) attributes
     fo <<
-        "<!doctype html>\n"
-        "<html lang=\"en\">\n"
-        "<head>\n"
-        "  <title>brlcad-attributes.html</title>\n"
-        "  <meta charset = \"UTF-8\" />\n"
-        "  <style type = \"text/css\">\n"
-        "  table, td, th {\n"
-        "    border: 1px solid black;\n"
-        "  }\n"
-        "  </style>\n"
-        "</head>\n"
-        "<body>\n"
-        "  <h1>BRL-CAD Standard and User-Registered Attributes</h2>\n"
-        "  <p>Following are lists of the BRL-CAD standard and user-registered attribute names\n"
-        "  along with their value definitions and aliases (if any).  Users should\n"
-        "  not assign values to them in other than their defined format.\n"
-        "  (Note that attribute names are not case-sensitive although their canonical form is\n"
-        "  lower-case.)</p>\n"
+        "<article xmlns='http://docbook.org/ns/docbook' version='5.0'\n"
+        "  xmlns:xi='http://www.w3.org/2001/XInclude'\n"
+        ">\n"
 
-        "  <p>Some attributes have ASCII names but binary values (e.g., 'mtime').  Their values cannot\n"
-        "  be modified by a user with the 'attr' command.  In some cases, but not all, their\n"
-        "  values may be shown in a human readable form with the 'attr' command.)</p>\n"
 
-        "  <p>If a user wishes to register an attribute to protect its use for models\n"
-        "  transferred to other BRL-CAD users, submit the attribute along with a description\n"
-        "  of its intended use to the\n"
-        "  <a href=\"mailto:brlcad-devel@lists.sourceforge.net\">BRL-CAD developers</a>.\n"
-        "  Its approval will be formal when it appears in the separate, registered attribute\n"
-        "  table following the standard attribute table.</p>\n"
-        ;
-
-    // need a table here (5 columns at the moment)
-    fo <<
-        "  <h3>BRL-CAD Standard Attributes</h3>\n"
         "  <table>\n"
         "    <tr>\n"
         "      <th>Attribute</th>\n"
@@ -199,6 +175,7 @@ gen_attr_xml_tables(const std::string& fname, const std::string& fname2)
         printf("DEBUG:  see output file '%s'\n", fname.c_str());
 
 } // gen_attr_xml_table
+*/
 
 void
 gen_attr_html_page(const std::string& fname)
@@ -226,23 +203,28 @@ gen_attr_html_page(const std::string& fname)
         "  (Note that attribute names are not case-sensitive although their canonical form is\n"
         "  lower-case.)</p>\n"
 
+        "  <p>Any code setting or reading the value of one of these attributes\n"
+        "  must handle all aliases to ensure all functions asking for\n"
+        "  the value in question get a consistent answer.</p>\n"
+
         "  <p>Some attributes have ASCII names but binary values (e.g., 'mtime').  Their values cannot\n"
         "  be modified by a user with the 'attr' command.  In some cases, but not all, their\n"
         "  values may be shown in a human readable form with the 'attr' command.)</p>\n"
 
         "  <p>If a user wishes to register an attribute to protect its use for models\n"
-        "  transferred to other BRL-CAD users, submit the attribute along with a description\n"
-        "  of its intended use to the\n"
+        "  transferred to other BRL-CAD users, submit the attribute, along with a description\n"
+        "  of its intended use, to the\n"
         "  <a href=\"mailto:brlcad-devel@lists.sourceforge.net\">BRL-CAD developers</a>.\n"
-        "  Its approval will be formal when it appears in the separate, registered attribute\n"
+        "  Its approval will be formal when it appears in the separate, registered-attribute\n"
         "  table following the standard attribute table.</p>\n"
         ;
 
     // need a table here (5 columns at the moment)
     fo <<
-        "  <h3>BRL-CAD Standard Attributes</h3>\n"
+        "  <h3>BRL-CAD Standard (Core) Attributes</h3>\n"
         "  <table>\n"
         "    <tr>\n"
+        "      <th>Property</th>\n"
         "      <th>Attribute</th>\n"
         "      <th>Binary?</th>\n"
         "      <th>Definition</th>\n"
@@ -262,6 +244,7 @@ gen_attr_html_page(const std::string& fname)
         }
         fo <<
             "    <tr>\n"
+            "      <td>" << a.property                 << "</td>\n"
             "      <td>" << name                       << "</td>\n"
             "      <td>" << (a.is_binary ? "yes" : "") << "</td>\n"
             "      <td>" << a.description              << "</td>\n"
@@ -292,6 +275,7 @@ gen_attr_html_page(const std::string& fname)
         fo <<
             "  <table>\n"
             "    <tr>\n"
+            "      <th>Property</th>\n"
             "      <th>Attribute</th>\n"
             "      <th>Binary?</th>\n"
             "      <th>Definition</th>\n"
@@ -304,6 +288,7 @@ gen_attr_html_page(const std::string& fname)
             db5_attr_t& a(i->second);
             fo <<
                 "    <tr>\n"
+                "      <td>" << a.property                 << "</td>\n"
                 "      <td>" << name                       << "</td>\n"
                 "      <td>" << (a.is_binary ? "yes" : "") << "</td>\n"
                 "      <td>" << a.description              << "</td>\n"

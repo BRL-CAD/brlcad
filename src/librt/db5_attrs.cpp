@@ -51,6 +51,8 @@ namespace db5_attrs_private {
         const char *aliases;
         // property name as found in file 'attributes.xml'; user-defined attrs may not have this defined:
         const char *property;
+        // a longer description for lists outside a table
+        const char *long_description;
 
     };
 
@@ -61,56 +63,64 @@ namespace db5_attrs_private {
           "Region Flag: boolean",
           "Yes, R, 1, 0", // example
           "", // aliases, if any
-          ""  // property, if any
+          "", // property, if any
+          ""  // long_description, if any
         },
         { ATTR_REGION_ID, false, ATTR_STANDARD,
           "region_id",
           "an integer",
           "0, -1, and positive integers", // examples
           "id",  // aliases, if any
-          "Region Identifier Number"  // property, if any
+          "Region Identifier Number",  // property, if any
+          ""  // long_description, if any
         },
         { ATTR_MATERIAL_ID, false, ATTR_STANDARD,
           "material_id",
           "zero or positive integer (user-defined)",
           "", // examples
           "giftmater,mat",  // aliases, if any
-          "Material Identifier Number"  // property, if any
+          "Material Identifier Number",  // property, if any
+          ""  // long_description, if any
         },
         { ATTR_AIR, false, ATTR_STANDARD,
           "aircode",
           "an integer (application defined)",
           "'0', '1', or '-2'", // examples
           "air",  // aliases, if any
-          "Air Code"  // property, if any
+          "Air Code",  // property, if any
+          ""  // long_description, if any
         },
         { ATTR_LOS, false, ATTR_STANDARD,
           "los",
           "an integer in the inclusive range: 0 to 100",
           "'24' or '100'", // examples
           "",  // aliases, if any
-          "Line of Sight Thickness Equivalence"  // property, if any
+          "Line of Sight Thickness Equivalence",  // property, if any
+          ""  // long_description, if any
         },
         { ATTR_COLOR, false, ATTR_STANDARD,
           "color",
           "a 3-tuple of RGB values",
           "\"0 255 255\"", // examples
           "rgb",  // aliases, if any
-          "Color"  // property, if any
+          "Color",  // property, if any
+          ""  // long_description, if any
         },
         { ATTR_SHADER, false, ATTR_STANDARD,
           "shader",
           "a string of shader characteristics in a standard format",
           "", // examples
           "oshader",  // aliases, if any
-          "Shader Name"  // property, if any
+          "Shader Name",  // property, if any
+          ""  // long_description, if any
         },
         { ATTR_INHERIT, false, ATTR_STANDARD,
           "inherit",
           "boolean",
           "Yes, 1, 0", // examples
           "",  // aliases, if any
-          "Inherit Properties"  // property, if any
+          "Inherit Properties",  // property, if any
+          ""  // long_description, if any
         },
         { ATTR_TIMESTAMP, true, ATTR_STANDARD, /* first binary attribute */
           "mtime",
@@ -120,7 +130,8 @@ namespace db5_attrs_private {
 
           "", // examples
           "timestamp,time_stamp,modtime,mod_time",  // aliases, if any
-          "Time Stamp"  // property, if any
+          "Time Stamp",  // property, if any
+          ""  // long_description, if any
         },
     };
 
@@ -154,6 +165,7 @@ db5_attrs_private::load_maps()
         const string examp     = a.examples;
         const string Aliases   = a.aliases;
         const string prop      = a.property;
+        const string l_desc    = a.long_description;
 
         // check for invalid subtype
         const int st = a.attr_subtype;
@@ -187,7 +199,7 @@ db5_attrs_private::load_maps()
                 bu_bomb("duplicate attr alias\n");
             }
         }
-        db5_attr_t ap(a.is_binary, a.attr_subtype, name, desc, examp, aliases, prop);
+        db5_attr_t ap(a.is_binary, a.attr_subtype, name, desc, examp, aliases, prop, l_desc);
 
         // prepare the maps
         name2int.insert(make_pair(name, a.attr_type));
