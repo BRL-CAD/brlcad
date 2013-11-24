@@ -102,17 +102,13 @@ gen_attr_xml_list(const std::string& fname,
         "  <info><title>" << title << "</title></info>\n"
 
         "  <para xml:id='" << id << "'>\n"
-
-        "    Given the importance of these attributes, it is appropriate to briefly outline the\n"
-        "    meaning and purpose of each of them:\n"
-
         "    <variablelist remap='TP'>\n"
         ;
 
     // watch for an empty list
     bool list_written(false);
-    for (map<string,db5_attr_t>::iterator i = name2attr.begin(); i != name2attr.end(); ++i) {
-        const string& name(i->first);
+    for (map<int,db5_attr_t>::iterator i = int2attr.begin();
+         i != int2attr.end(); ++i) {
         db5_attr_t& a(i->second);
         if (a.attr_subtype != typ
             || a.long_description.empty()) {
@@ -123,7 +119,7 @@ gen_attr_xml_list(const std::string& fname,
             list_written = true;
         fo <<
             "       <varlistentry>\n"
-            "	      <term><emphasis remap='B' role='bold'>" << name << "</emphasis></term>\n"
+            "	      <term><emphasis remap='B' role='bold'>" << a.name << ":</emphasis></term>\n"
             "	      <listitem>\n"
             "	        <para>" << a.long_description << "</para>\n"
             "	      </listitem>\n"
@@ -159,7 +155,7 @@ gen_attr_xml_table(const std::string& fname,
     // for man pages and will be child elements of a DB <para>
 
     string title;
-    if (typ == ATTR_REGISTERED) {
+    if (typ == ATTR_STANDARD) {
         title = "Standard (Core) Attributes";
     }
     else {
@@ -179,7 +175,7 @@ gen_attr_xml_table(const std::string& fname,
     if (typ == ATTR_REGISTERED && !has_registered_attrs) {
 
         fo <<
-            "    None at this time.\n"
+            "    Note:  There are no user-resistered attributes at this time.\n"
             "  </para>\n"
             "</article>\n"
             ;
@@ -204,8 +200,8 @@ gen_attr_xml_table(const std::string& fname,
         "        </row>\n"
         ;
 
-    for (map<string,db5_attr_t>::iterator i = name2attr.begin(); i != name2attr.end(); ++i) {
-        const string& name(i->first);
+    for (map<int,db5_attr_t>::iterator i = int2attr.begin();
+         i != int2attr.end(); ++i) {
         db5_attr_t& a(i->second);
         if (a.attr_subtype != typ) {
             continue;
@@ -213,7 +209,7 @@ gen_attr_xml_table(const std::string& fname,
         fo <<
             "        <row>\n"
             "          <entry>" << a.property                 << "</entry>\n"
-            "          <entry>" << name                       << "</entry>\n"
+            "          <entry>" << a.name                     << "</entry>\n"
             "          <entry>" << (a.is_binary ? "yes" : "") << "</entry>\n"
             "          <entry>" << a.description              << "</entry>\n"
             "          <entry>" << a.examples                 << "</entry>\n"
@@ -303,18 +299,18 @@ gen_attr_html_page(const std::string& fname)
         ;
 
     // track ATTR_REGISTERED type for separate listing
-    map<string,db5_attr_t> rattrs;
-    for (map<string,db5_attr_t>::iterator i = name2attr.begin(); i != name2attr.end(); ++i) {
-        const string& name(i->first);
+    map<int,db5_attr_t> rattrs;
+    for (map<int,db5_attr_t>::iterator i = int2attr.begin();
+         i != int2attr.end(); ++i) {
         db5_attr_t& a(i->second);
         if (a.attr_subtype == ATTR_REGISTERED) {
-            rattrs.insert(make_pair(name,a));
+            rattrs.insert(make_pair(i->first,a));
             continue;
         }
         fo <<
             "    <tr>\n"
             "      <td>" << a.property                 << "</td>\n"
-            "      <td>" << name                       << "</td>\n"
+            "      <td>" << a.name                     << "</td>\n"
             "      <td>" << (a.is_binary ? "yes" : "") << "</td>\n"
             "      <td>" << a.description              << "</td>\n"
             "      <td>" << a.examples                 << "</td>\n"
@@ -352,13 +348,12 @@ gen_attr_html_page(const std::string& fname)
             "      <th>Aliases</th>\n"
             "    </tr>\n"
             ;
-        for (map<string,db5_attr_t>::iterator i = rattrs.begin(); i != rattrs.end(); ++i) {
-            const string& name(i->first);
+        for (map<int,db5_attr_t>::iterator i = rattrs.begin(); i != rattrs.end(); ++i) {
             db5_attr_t& a(i->second);
             fo <<
                 "    <tr>\n"
                 "      <td>" << a.property                 << "</td>\n"
-                "      <td>" << name                       << "</td>\n"
+                "      <td>" << a.name                     << "</td>\n"
                 "      <td>" << (a.is_binary ? "yes" : "") << "</td>\n"
                 "      <td>" << a.description              << "</td>\n"
                 "      <td>" << a.examples                 << "</td>\n"
