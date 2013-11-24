@@ -61,96 +61,32 @@
   </para>
 </refsection>
 
-<refsection xml:id="core_attributes"><info><title>CORE ATTRIBUTES</title></info>
+<refsection xml:id="core_attributes"><info><title>STANDARD AND REGISTERED ATTRIBUTES</title></info>
 
   <para>
-	The following table lists all known core BRL-CAD attributes and
+	The following table lists all known standard (core) BRL-CAD attributes and
 	aliases.  Any code setting or reading the value of one of these attributes
 	must handle all aliases, to ensure all functions asking for
 	the value in question get a consistent answer.
   </para>
 
-   <xi:include href="./attributes_table.xml" xpointer="attributes_table"/>
+  <xi:include href="./attr-std-tab-inc.xml" xpointer="std_attr_tbl"/>
 
-   <para>
-     Given the importance of these attributes, it is appropriate to briefly outline the
-     meaning and purpose of each of them:
+  <para>
+	The following table lists all known user-registered BRL-CAD attributes and
+	aliases.  Any code setting or reading the value of one of these attributes
+	must also handle all aliases, to ensure all functions asking for
+	the value in question get a consistent answer.
+  </para>
 
-     <variablelist remap="TP">
-       <varlistentry>
-	 <term><emphasis remap="B" role="bold">Region Flag:</emphasis></term>
-	 <listitem>
-	   <para>
-	   The Region Flag identifies a particular geometric combination as being a solid material -
-	   in other words, any geometry below this combination in the tree can overlap without the
-	   overlap being regarded as a non-physical description, since it is the combination of all
-	   descriptions in the region object that define the physical volume in space.
-	   </para>
-	 </listitem>
-       </varlistentry>
-       <varlistentry>
-	 <term><emphasis remap="B" role="bold">Region ID Flag:</emphasis></term>
-	 <listitem>
-	   <para>
-	   The Region ID Flag identifies a particular region with a unique number.  This allows
-	   multiple region objects to be regarded as being the same type of region, without
-	   requiring that they be included in the same combination object.
-	   </para>
-	 </listitem>
-       </varlistentry>
-	<varlistentry>
-	 <term><emphasis remap="B" role="bold">Material ID Number:</emphasis></term>
-	 <listitem>
-	   <para>
-	   The Material ID Number corresponds to an entry in a DENSITIES table, usually
-	   contained in a text file.  This table associates numbers with material names and density
-	   information, used by analytical programs such as rtweight.
-	   </para>
-	 </listitem>
-       </varlistentry>
-       <varlistentry>
-	 <term><emphasis remap="B" role="bold">Air Flag:</emphasis></term>
-	 <listitem>
-	   <para>
-	   The Air Flag alerts the raytracer that the region in question is modeling air,
-	   which is handled by specialized rules in LIBRT.
-	   </para>
-	 </listitem>
-       </varlistentry>
-       <varlistentry>
-	 <term><emphasis remap="B" role="bold">Line of Sight:</emphasis></term>
-	 <listitem>
-	   <para>
-	   </para>
-	 </listitem>
-       </varlistentry>
-       <varlistentry>
-	 <term><emphasis remap="B" role="bold">Color:</emphasis></term>
-	 <listitem>
-	   <para>
-	   </para>
-	 </listitem>
-       </varlistentry>
-       <varlistentry>
-	 <term><emphasis remap="B" role="bold">Shader Name:</emphasis></term>
-	 <listitem>
-	   <para>
-	   LIBRT can utilize a variety of shaders when rendering - this attribute holds a
-	   text string which corresponds to the name of the shader to be used.
-	   </para>
-	 </listitem>
-       </varlistentry>
-       <varlistentry>
-	 <term><emphasis remap="B" role="bold">Inherit:</emphasis></term>
-	 <listitem>
-	   <para>
-	   </para>
-	 </listitem>
-       </varlistentry>
+  <xi:include href="./attr-usr-tab-inc.xml" xpointer="usr_attr_tbl"/>
 
-     </variablelist>
-   </para>
+  <para>
+        Given the importance of these attributes, it is appropriate to
+        briefly outline the meaning and purpose of each of them:
+  </para>
 
+  <xi:include href="./attr-std-list-inc.xml" xpointer="std_attr_info"/>
 
 </refsection>
 
