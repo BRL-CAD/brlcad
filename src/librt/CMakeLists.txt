@@ -311,8 +311,8 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/../libbrep
   )
 
-# a new html-gen file
-BRLCAD_ADDEXEC(gen-registered-attributes-html gen-registered-attributes-html.cpp "libbu;librt" NO_INSTALL NO_STRICT)
+# a new html and xml generation file
+BRLCAD_ADDEXEC(gen-attributes-files gen-attributes-files.cpp "libbu;librt" NO_INSTALL NO_STRICT)
 
 #BRLCAD_ADDEXEC(test_bot2nurbs test_bot2nurbs.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_nurbsfit test_nurbsfit.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)

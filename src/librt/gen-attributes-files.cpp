@@ -72,7 +72,7 @@ open_file_write(ofstream& fs, const string& f)
   fs.open(f.c_str());
   if (fs.bad()) {
     fs.close();
-    bu_exit(1, "gen-attributes-pages: File '%s' open error.\n", f.c_str());
+    bu_exit(1, "gen-attributes-files: File '%s' open error.\n", f.c_str());
   }
 } // open_file_write
 
@@ -138,7 +138,7 @@ gen_attr_xml_list(const std::string& fname,
         ;
 
     if (!list_written) {
-        bu_exit(1, "gen-attributes-pages: Empty list!\n");
+        bu_exit(1, "gen-attributes-files: Empty list!\n");
     }
 
     if (debug)
