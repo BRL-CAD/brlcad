@@ -16,7 +16,6 @@ endif(BRLCAD_EXTRADOCS_PDF_MAN)
 
 # local files to be ignored
 CMAKEFILES(
-  attributes_table.xml
   attr-std-list-inc.xml
   attr-usr-tab-inc.xml
   attr-std-tab-inc.xml
