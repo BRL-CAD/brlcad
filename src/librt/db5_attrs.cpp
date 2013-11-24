@@ -60,11 +60,16 @@ namespace db5_attrs_private {
     static const db5_attr_ctype db5_attr_ctype_table[] = {
         { ATTR_REGION, false, ATTR_STANDARD,
           "region",
-          "Region Flag: boolean",
+          "boolean",
           "Yes, R, 1, 0", // example
           "", // aliases, if any
-          "", // property, if any
-          ""  // long_description, if any
+          "Region Flag", // property, if any
+          // long_description, if any:
+          "The Region Flag identifies a particular geometric combination as being a solid material;"
+          "in other words, any geometry below this combination in the tree can overlap without the"
+          "overlap being regarded as a non-physical description, since it is the combination of all"
+          "descriptions in the region object that define the physical volume in space."
+
         },
         { ATTR_REGION_ID, false, ATTR_STANDARD,
           "region_id",
@@ -72,7 +77,10 @@ namespace db5_attrs_private {
           "0, -1, and positive integers", // examples
           "id",  // aliases, if any
           "Region Identifier Number",  // property, if any
-          ""  // long_description, if any
+          // long_description, if any:
+          "The Region Identifier Number identifies a particular region with a unique number."
+          "This allows multiple region objects to be regarded as being the same type of region,"
+          "without requiring that they be included in the same combination object."
         },
         { ATTR_MATERIAL_ID, false, ATTR_STANDARD,
           "material_id",
@@ -80,7 +88,10 @@ namespace db5_attrs_private {
           "", // examples
           "giftmater,mat",  // aliases, if any
           "Material Identifier Number",  // property, if any
-          ""  // long_description, if any
+          // long_description, if any:
+          "The Material ID Number corresponds to an entry in a DENSITIES table, usually contained"
+          "in a text file.  This table associates numbers with material names and density"
+          "information used by analytical programs such as 'rtweight'."
         },
         { ATTR_AIR, false, ATTR_STANDARD,
           "aircode",
@@ -88,7 +99,9 @@ namespace db5_attrs_private {
           "'0', '1', or '-2'", // examples
           "air",  // aliases, if any
           "Air Code",  // property, if any
-          ""  // long_description, if any
+          // long_description, if any:
+          "Any non-zero Air Code alerts the raytracer that the region in question is modeling air"
+          "which is handled by specialized rules in LIBRT."
         },
         { ATTR_LOS, false, ATTR_STANDARD,
           "los",
@@ -96,7 +109,8 @@ namespace db5_attrs_private {
           "'24' or '100'", // examples
           "",  // aliases, if any
           "Line of Sight Thickness Equivalence",  // property, if any
-          ""  // long_description, if any
+          // long_description, if any:
+          ""
         },
         { ATTR_COLOR, false, ATTR_STANDARD,
           "color",
@@ -112,7 +126,9 @@ namespace db5_attrs_private {
           "", // examples
           "oshader",  // aliases, if any
           "Shader Name",  // property, if any
-          ""  // long_description, if any
+          // long_description, if any:
+          "LIBRT can use a variety of shaders when rendering.  This attribute holds a"
+          "text string which corresponds to the name and other details of the shader to be used."
         },
         { ATTR_INHERIT, false, ATTR_STANDARD,
           "inherit",
@@ -120,7 +136,9 @@ namespace db5_attrs_private {
           "Yes, 1, 0", // examples
           "",  // aliases, if any
           "Inherit Properties",  // property, if any
-          ""  // long_description, if any
+          // long_description, if any:
+          "The Inherit Properties value, if true, indicate all child objects inherit the"
+          "attributes of this parent object."
         },
         { ATTR_TIMESTAMP, true, ATTR_STANDARD, /* first binary attribute */
           "mtime",
@@ -131,7 +149,8 @@ namespace db5_attrs_private {
           "", // examples
           "timestamp,time_stamp,modtime,mod_time",  // aliases, if any
           "Time Stamp",  // property, if any
-          ""  // long_description, if any
+          // long_description, if any:
+          ""
         },
     };
 
