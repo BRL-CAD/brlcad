@@ -1,0 +1,103 @@
+<article xmlns='http://docbook.org/ns/docbook' version='5.0'
+  xmlns:xi='http://www.w3.org/2001/XInclude'
+>
+  <info><title>Standard (Core) Attributes</title></info>
+  <para xml:id='std_attr_tbl'>
+  <table><title>Standard (Core) Attributes</title>
+    <tgroup cols='7'>
+      <tbody>
+        <row>
+          <entry>Attr Type</entry>
+          <entry>Property</entry>
+          <entry>Attribute</entry>
+          <entry>Binary?</entry>
+          <entry>Definition</entry>
+          <entry>Example</entry>
+          <entry>Aliases</entry>
+        </row>
+        <row>
+          <entry>0</entry>
+          <entry>Region Flag</entry>
+          <entry>region</entry>
+          <entry></entry>
+          <entry>boolean</entry>
+          <entry>Yes, R, 1, 0</entry>
+          <entry></entry>
+        </row>
+        <row>
+          <entry>1</entry>
+          <entry>Region Identifier Number</entry>
+          <entry>region_id</entry>
+          <entry></entry>
+          <entry>an integer</entry>
+          <entry>0, -1, and positive integers</entry>
+          <entry>id</entry>
+        </row>
+        <row>
+          <entry>2</entry>
+          <entry>Material Identifier Number</entry>
+          <entry>material_id</entry>
+          <entry></entry>
+          <entry>zero or positive integer (user-defined)</entry>
+          <entry></entry>
+          <entry>giftmater, mat</entry>
+        </row>
+        <row>
+          <entry>3</entry>
+          <entry>Air Code</entry>
+          <entry>aircode</entry>
+          <entry></entry>
+          <entry>an integer (application defined)</entry>
+          <entry>'0', '1', or '-2'</entry>
+          <entry>air</entry>
+        </row>
+        <row>
+          <entry>4</entry>
+          <entry>Line of Sight Thickness Equivalence</entry>
+          <entry>los</entry>
+          <entry></entry>
+          <entry>an integer in the inclusive range: 0 to 100</entry>
+          <entry>'24' or '100'</entry>
+          <entry></entry>
+        </row>
+        <row>
+          <entry>5</entry>
+          <entry>Color</entry>
+          <entry>color</entry>
+          <entry></entry>
+          <entry>a 3-tuple of RGB values</entry>
+          <entry>"0 255 255"</entry>
+          <entry>rgb</entry>
+        </row>
+        <row>
+          <entry>6</entry>
+          <entry>Shader Name</entry>
+          <entry>shader</entry>
+          <entry></entry>
+          <entry>a string of shader characteristics in a standard format</entry>
+          <entry></entry>
+          <entry>oshader</entry>
+        </row>
+        <row>
+          <entry>7</entry>
+          <entry>Inherit Properties</entry>
+          <entry>inherit</entry>
+          <entry></entry>
+          <entry>boolean</entry>
+          <entry>Yes, 1, 0</entry>
+          <entry></entry>
+        </row>
+        <row>
+          <entry>8</entry>
+          <entry>Time Stamp</entry>
+          <entry>mtime</entry>
+          <entry>yes</entry>
+          <entry>a binary time stamp for an object's last mod time (the time is displayed in human-readable form with the 'attr' command)</entry>
+          <entry></entry>
+          <entry>mod_time, modtime, time_stamp, timestamp</entry>
+        </row>
+      </tbody>
+    </tgroup>
+  </table>
+  </para>
+</article>
