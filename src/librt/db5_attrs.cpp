@@ -218,7 +218,13 @@ db5_attrs_private::load_maps()
                 bu_bomb("duplicate attr alias\n");
             }
         }
-        db5_attr_t ap(a.is_binary, a.attr_subtype, name, desc, examp, aliases, prop, l_desc);
+        db5_attr_t ap(a.is_binary,
+                      a.attr_subtype,
+                      name,
+                      desc,
+                      examp,
+                      aliases, prop,
+                      l_desc);
 
         // prepare the maps
         name2int.insert(make_pair(name, a.attr_type));
