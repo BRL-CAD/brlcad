@@ -59,7 +59,6 @@ namespace db5_attrs_private {
     struct db5_attr_t {
         bool is_binary;   /* false for ASCII attributes; true for binary attributes */
         int attr_subtype; /* from enum above */
-
 	/*
 	  names should be specified with alphanumeric characters
 	  (lower-case letters, no white space) and will act as unique
@@ -74,8 +73,11 @@ namespace db5_attrs_private {
 
 	db5_attr_t()
 	    {}
-        db5_attr_t(const int b, const int a, const std::string& n,
-		   const std::string& d, const std::string& e,
+        db5_attr_t(const int b,
+		   const int a,
+		   const std::string& n,
+		   const std::string& d,
+		   const std::string& e,
 		   const std::set<std::string>& s,
 		   const std::string& p,
 		   const std::string& ld)
