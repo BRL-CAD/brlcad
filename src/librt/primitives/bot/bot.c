@@ -5259,6 +5259,89 @@ rt_bot_list_free(struct rt_bot_list *headRblp, int fbflag)
 }
 
 
+/* plane used by ccw to compare 2 points */
+static plane_t *cmp_plane = NULL;
+
+/* qsort helper function, used to sort points into
+ * counter-clockwise order */
+HIDDEN int
+ccw_algo(const void *x, const void *y)
+{
+    vect_t tmp;
+    VCROSS(tmp, ((fastf_t *)x), ((fastf_t *)y));
+    return VDOT(*cmp_plane, tmp);
+}
+
+
+void
+rt_bot_volume(fastf_t *volume, const struct rt_db_internal *ip)
+{
+    /* contains information used to analyze a polygonal face */
+    struct poly_face
+    {
+	char label[5];
+	size_t npts;
+	point_t *pts;
+	plane_t plane_eqn;
+	fastf_t area;
+    };
+    size_t i;
+    struct poly_face face = { { 0, 0, 0, 0, 0 }, 0, NULL, HINIT_ZERO, 0.0 };
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
+    struct bn_tol tol;
+    RT_BOT_CK_MAGIC(bot);
+
+    *volume = 0.0;
+
+    /* allocate pts array, 3 vertices per bot face */
+    face.pts = (point_t *)bu_calloc(3, sizeof(point_t), "rt_bot_volume: pts");
+    BN_TOL_INIT(&tol);
+    tol.dist_sq = BN_TOL_DIST * BN_TOL_DIST;
+
+
+    for (face.npts = 0, i = 0; i < bot->num_faces; face.npts = 0, i++) {
+	int a, b, c;
+	vect_t tmp, v1, v2, tot = VINIT_ZERO;
+
+
+	/* find indices of the 3 vertices that make up this face */
+	a = bot->faces[i * ELEMENTS_PER_POINT + 0];
+	b = bot->faces[i * ELEMENTS_PER_POINT + 1];
+	c = bot->faces[i * ELEMENTS_PER_POINT + 2];
+
+	/* find normal, needed to calculate volume later */
+	if (bot->bot_flags == RT_BOT_HAS_SURFACE_NORMALS && bot->normals) {
+	    /* bot->normals array already exists, use those instead */
+	    VMOVE(face.plane_eqn, &bot->normals[i * ELEMENTS_PER_VECT]);
+	} else if (UNLIKELY(bn_mk_plane_3pts(face.plane_eqn, (&bot->vertices[(a) * ELEMENTS_PER_POINT]), (&bot->vertices[(b) * ELEMENTS_PER_POINT]), (&bot->vertices[(c) * ELEMENTS_PER_POINT]), &tol) < 0)) {
+	    continue;
+	}
+
+	VMOVE((face).pts[(face).npts], (&bot->vertices[(a) * ELEMENTS_PER_POINT])); (face).npts++;
+	VMOVE((face).pts[(face).npts], (&bot->vertices[(b) * ELEMENTS_PER_POINT])); (face).npts++;
+	VMOVE((face).pts[(face).npts], (&bot->vertices[(c) * ELEMENTS_PER_POINT])); (face).npts++;
+
+	/* SURFACE AREA */
+
+	/* sort points */
+	cmp_plane = &face.plane_eqn;
+	qsort(face.pts, face.npts, sizeof(point_t), ccw_algo);
+	cmp_plane = NULL;
+	/* Triangular Face - for triangular face T:V0, V1, V2,
+	 * area = 0.5 * [(V2 - V0) x (V1 - V0)] */
+	VSUB2(v1, face.pts[1], face.pts[0]);
+	VSUB2(v2, face.pts[2], face.pts[0]);
+	VCROSS(tot, v2, v1);
+	face.area = fabs(VDOT(face.plane_eqn, tot)) * 0.5;
+
+	/* VOLUME */
+	VSCALE(tmp, face.plane_eqn, face.area);
+	*volume += fabs(VDOT(face.pts[0], tmp));
+    }
+    *volume /= 3.0;
+    bu_free((char *)face.pts, "rt_bot_volume: pts");
+}
+
 /** @} */
 /*
  * Local Variables:
