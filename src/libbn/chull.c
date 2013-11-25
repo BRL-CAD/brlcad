@@ -170,7 +170,7 @@ bn_polyline_2d_chull(point2d_t** hull, const point2d_t* polyline, int n)
 
 /* QSort functions for points */
 HIDDEN int
-pnt_compare(const void *pnt1, const void *pnt2)
+pnt_compare_2d(const void *pnt1, const void *pnt2)
 {
     point2d_t *p1 = (point2d_t *)pnt1;
     point2d_t *p2 = (point2d_t *)pnt2;
@@ -179,8 +179,6 @@ pnt_compare(const void *pnt1, const void *pnt2)
     if ((*p1)[0] > (*p2)[0]) return -1;
     if ((*p1)[1] < (*p2)[1]) return 1;
     if ((*p1)[1] > (*p2)[1]) return -1;
-    if ((*p1)[2] < (*p2)[2]) return 1;
-    if ((*p1)[2] > (*p2)[2]) return -1;
     /* should never get here */
     return 0;
 }
@@ -199,7 +197,7 @@ bn_2d_chull(point2d_t **hull, const point2d_t *points_2d, int n)
 	V2MOVE(points[i], points_2d[i]);
     }
 
-    qsort((genptr_t)points, n, sizeof(point2d_t), pnt_compare);
+    qsort((genptr_t)points, n, sizeof(point2d_t), pnt_compare_2d);
 
     /* Once sorted, the points can be viewed as describing a simple polyline
      * and the Melkman algorithm works for a simple polyline even if it
