@@ -1873,7 +1873,8 @@ rt_rhc_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     if (cent != NULL && ip != NULL) {
 	struct rt_rhc_internal *rip;
-	fastf_t totalArea, guessArea, a, b, magB, sqrt_xa, sqrt_ga, xf, epsilon, high, low, guess, scale_factor;
+	fastf_t totalArea, guessArea, a, b, magB, sqrt_xa, sqrt_ga, xf, epsilon, high, low, scale_factor;
+	fastf_t guess = 0.0;
 	vect_t shift_h;
 
 	RT_CK_DB_INTERNAL(ip);
