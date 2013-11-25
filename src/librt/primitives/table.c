@@ -1093,7 +1093,7 @@ const struct rt_functab OBJ[] = {
 	rt_ehy_params,
 	rt_ehy_bbox,
 	NULL,
-	NULL,
+	rt_ehy_surf_area,
 	NULL,
 	NULL,
 	NULL,

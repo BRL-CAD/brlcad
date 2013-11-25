@@ -1991,6 +1991,27 @@ ehy_is_valid(struct rt_ehy_internal *ehy)
     return 1;
 }
 
+void
+rt_ehy_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    struct rt_ehy_internal *eip;
+    fastf_t a, b, h, integralArea, sqrt_rb;
+    RT_CK_DB_INTERNAL(ip);
+    eip = (struct rt_ehy_internal *)ip->idb_ptr;
+    RT_EHY_CK_MAGIC(eip);
+
+    a = eip->ehy_c;
+    h = MAGNITUDE(eip->ehy_H);
+    b = (eip->ehy_r1 * a) / sqrt(h * (h - 2 * a));
+
+    /** Formula taken from : https://docs.google.com/file/d/0BydeQ6BPlVejRWt6NlJLVDl0d28/edit
+     * Area can be calculated by substracting integral of hyperbola from the area of the bounding rectangle
+     */
+    sqrt_rb = sqrt(eip->ehy_r1 * eip->ehy_r1 + b * b);
+    integralArea = (a / b) * ((eip->ehy_r1 * sqrt_rb) + ((b * b / 2) * (log(sqrt_rb + eip->ehy_r1) - log(sqrt_rb - eip->ehy_r1))));
+    *area = 2 * eip->ehy_r1 * (a + h) - integralArea;
+}
+
 /** @} */
 /*
  * Local Variables:
