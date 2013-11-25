@@ -125,8 +125,16 @@ main(int argc, char **argv)
     vect_t from, to;
     vect_t offset;
 
-    if (argc > 0)
+    if (argc > 0) {
 	bu_log("Usage: %s\n", argv[0]);
+    	bu_log("       (Program expects ./pos.dat file to be present)\n");
+    	if (argc == 2) {
+	    if ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?"))
+		bu_exit(1,NULL);
+    	}
+	else if (argc == 1)
+	    bu_log("       Program continues running:\n");
+    }
 
     BU_LIST_INIT(&head.l);
     BU_LIST_INIT(&ghead.l);
