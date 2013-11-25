@@ -23,6 +23,41 @@
 
 #include "bn.h"
 
+#if 0
+int
+bn_coplanar_2d_coord_sys(point_t *origin_pnt, vect_t *u_axis, vect_t *v_axis, const point_t *points_3d, int n)
+{
+    /* Step 1 - find center point */
+    /* Step 2 - find furthest point from center point */
+    /* Step 3 - find normal vector of plane holding points */
+    /* Step 4 - use vectors from steps 2 and 3 to find y axis vector */
+}
+
+
+int
+bn_coplanar_3d_to_2d(point2d_t **points_2d, const point_t *origin_pnt,
+	             const vect_t *u_axis, const vect_t *v_axis,
+		     const ponit_t *points_3d, int n)
+{
+    /* Step 1 - for each 3D point, construct the 3D vector from the origin_pt to that point */
+    /* Step 2 - for each 3D point, project its vector onto the u and v axis vectors.  The
+     * relative lengths of the two projects should be the UV coordinates */
+
+}
+
+
+int
+bn_coplanar_2d_to_3d(point_t **points_3d, const point_t *origin_pnt,
+	             const vect_t *u_axis, const vect_t *v_axis,
+		     const ponit2d_t *points_2d, int n)
+{
+    /* Step 1 - find the 3d X, Y and Z components of u_axis and v_axis */
+    /* Step 2 - for each 2D point, calculate the (x,y,z) coordinates as follows:
+     * (http://math.stackexchange.com/questions/525829/how-to-find-the-3d-coordinate-of-a-2d-point-on-a-known-plane)
+     */
+}
+#endif
+
 /* isLeft(): test if a point is Left|On|Right of an infinite line.
  *    Input:  three points L0, L1, and p
  *    Return: >0 for p left of the line through L0 and L1
