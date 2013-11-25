@@ -546,7 +546,7 @@ BN_EXPORT int bn_2d_chull(point2d_t** hull, const point2d_t* points_2d, int n);
 
 /**
  * @brief
- * Find 2D coordinates for a set of co-planar points
+ * Find 2D coordinates for a set of co-planar 3D points
  *
  * @param[out]	points_2d Array of parameterized 2D points
  * @param	origin_pnt Origin of 2D coordinate system in 3 space
@@ -566,7 +566,7 @@ BN_EXPORT int bn_coplanar_3d_to_2d(
 
 /**
  * @brief
- * Find 3D coordinates for a set of 2D points given a 3-space coordinate system
+ * Find 3D coordinates for a set of 2D points given a coordinate system
  *
  * @param[out]	points_3d Array of 3D points
  * @param	origin_pnt Origin of 2D coordinate system in 3 space
@@ -588,8 +588,8 @@ BN_EXPORT int bn_coplanar_2d_to_3d(
  * @brief
  * Find a 2D coordinate system for a set of co-planar 3D points
  *
- * Based on the planar normal and the vector from the center of the points to the
- * point furthest from that center, find vectors describing a 2D coordinate system.
+ * Based on the planar normal and the vector from the origin point to the
+ * point furthest from that origin, find vectors describing a 2D coordinate system.
  *
  * @param[out]	origin_pnt Origin of 2D coordinate system in 3 space
  * @param[out]	x_axis 3D vector describing the X axis of the 2D coordinate system in 3 space
