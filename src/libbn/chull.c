@@ -23,17 +23,56 @@
 
 #include "bn.h"
 
-#if 0
 int
 bn_coplanar_2d_coord_sys(point_t *origin_pnt, vect_t *u_axis, vect_t *v_axis, const point_t *points_3d, int n)
 {
+    int i = 0;
+    fastf_t dist_pt_pt = 0.0;
+    fastf_t dist_pt_pt_2 = 0.0;
+    point_t p_farthest;
+    point_t p_second_farthest;
+    vect_t vtmp, normal;
+    VSET(p_farthest, 0, 0, 0);
+    VSET(p_second_farthest, 0, 0, 0);
+
     /* Step 1 - find center point */
-    /* Step 2 - find furthest point from center point */
+    for (i = 0; i < n; i++) {
+	VADD2(*origin_pnt, *origin_pnt, points_3d[i]);
+    }
+    VSCALE(*origin_pnt, *origin_pnt, 1.0/n);
+
+    /* Step 2 - find furthest points from the center point */
+    for (i = 0; i < n; i++) {
+	fastf_t curr_dist = DIST_PT_PT_SQ(*origin_pnt, points_3d[i]);
+	if (curr_dist > dist_pt_pt) {
+	    dist_pt_pt = curr_dist;
+	    VMOVE(p_farthest, points_3d[i]);
+	}
+    }
+    VSUB2(*u_axis, p_farthest, *origin_pnt);
+    VUNITIZE(*u_axis);
+
+    for (i = 0; i < n; i++) {
+	fastf_t curr_dist = DIST_PT_PT_SQ(*origin_pnt, points_3d[i]);
+	if (curr_dist > dist_pt_pt_2 && curr_dist < dist_pt_pt) {
+	    dist_pt_pt_2 = curr_dist;
+	    VMOVE(p_second_farthest, points_3d[i]);
+	}
+    }
+
     /* Step 3 - find normal vector of plane holding points */
+    VSUB2(vtmp, p_second_farthest, *origin_pnt);
+    VCROSS(normal, *u_axis, vtmp);
+    VUNITIZE(normal);
+
     /* Step 4 - use vectors from steps 2 and 3 to find y axis vector */
+    VCROSS(*v_axis, *u_axis, normal);
+    VUNITIZE(*v_axis);
+
+    return 0;
 }
 
-
+#if 0
 int
 bn_coplanar_3d_to_2d(point2d_t **points_2d, const point_t *origin_pnt,
 	             const vect_t *u_axis, const vect_t *v_axis,
