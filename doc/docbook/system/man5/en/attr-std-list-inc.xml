@@ -7,7 +7,7 @@
        <varlistentry>
 	      <term><emphasis remap='B' role='bold'>region:</emphasis></term>
 	      <listitem>
-	        <para>The Region Flag identifies a particular geometric combination as being a solid material;in other words, any geometry below this combination in the tree can overlap without theoverlap being regarded as a non-physical description, since it is the combination of alldescriptions in the region object that define the physical volume in space.</para>
+	        <para>The Region Flag identifies a particular geometric combination as being a solid material;in other words, any geometry below this combination in the tree can overlap without the overlap being regarded as a non-physical description, since it is the combination of all descriptions in the region object that define the physical volume in space.</para>
 	      </listitem>
        </varlistentry>
        <varlistentry>
@@ -19,25 +19,25 @@
        <varlistentry>
 	      <term><emphasis remap='B' role='bold'>material_id:</emphasis></term>
 	      <listitem>
-	        <para>The Material ID Number corresponds to an entry in a DENSITIES table, usually containedin a text file.  This table associates numbers with material names and densityinformation used by analytical programs such as 'rtweight'.</para>
+	        <para>The Material ID Number corresponds to an entry in a DENSITIES table, usually contained in a text file.  This table associates numbers with material names and density information used by analytical programs such as 'rtweight'.</para>
 	      </listitem>
        </varlistentry>
        <varlistentry>
 	      <term><emphasis remap='B' role='bold'>aircode:</emphasis></term>
 	      <listitem>
-	        <para>Any non-zero Air Code alerts the raytracer that the region in question is modeling airwhich is handled by specialized rules in LIBRT.</para>
+	        <para>Any non-zero Air Code alerts the raytracer that the region in question is modeling air which is handled by specialized rules in LIBRT.</para>
 	      </listitem>
        </varlistentry>
        <varlistentry>
 	      <term><emphasis remap='B' role='bold'>shader:</emphasis></term>
 	      <listitem>
-	        <para>LIBRT can use a variety of shaders when rendering.  This attribute holds atext string which corresponds to the name and other details of the shader to be used.</para>
+	        <para>LIBRT can use a variety of shaders when rendering.  This attribute holds a text string which corresponds to the name and other details of the shader to be used.</para>
 	      </listitem>
        </varlistentry>
        <varlistentry>
 	      <term><emphasis remap='B' role='bold'>inherit:</emphasis></term>
 	      <listitem>
-	        <para>The Inherit Properties value, if true, indicate all child objects inherit theattributes of this parent object.</para>
+	        <para>The Inherit Properties value, if true, indicate all child objects inherit the attributes of this parent object.</para>
 	      </listitem>
        </varlistentry>
     </variablelist>
