@@ -66,9 +66,9 @@ namespace db5_attrs_private {
           "Region Flag", // property, if any
           // long_description, if any:
           "The Region Flag identifies a particular geometric combination as being a solid material;"
-          "in other words, any geometry below this combination in the tree can overlap without the"
-          "overlap being regarded as a non-physical description, since it is the combination of all"
-          "descriptions in the region object that define the physical volume in space."
+          " in other words, any geometry below this combination in the tree can overlap without the"
+          " overlap being regarded as a non-physical description, since it is the combination of all"
+          " descriptions in the region object that define the physical volume in space."
 
         },
         { ATTR_REGION_ID, false, ATTR_STANDARD,
@@ -79,8 +79,8 @@ namespace db5_attrs_private {
           "Region Identifier Number",  // property, if any
           // long_description, if any:
           "The Region Identifier Number identifies a particular region with a unique number."
-          "This allows multiple region objects to be regarded as being the same type of region,"
-          "without requiring that they be included in the same combination object."
+          " This allows multiple region objects to be regarded as being the same type of region,"
+          " without requiring that they be included in the same combination object."
         },
         { ATTR_MATERIAL_ID, false, ATTR_STANDARD,
           "material_id",
@@ -90,8 +90,8 @@ namespace db5_attrs_private {
           "Material Identifier Number",  // property, if any
           // long_description, if any:
           "The Material ID Number corresponds to an entry in a DENSITIES table, usually contained"
-          "in a text file.  This table associates numbers with material names and density"
-          "information used by analytical programs such as 'rtweight'."
+          " in a text file.  This table associates numbers with material names and density"
+          " information used by analytical programs such as 'rtweight'."
         },
         { ATTR_AIR, false, ATTR_STANDARD,
           "aircode",
@@ -101,7 +101,7 @@ namespace db5_attrs_private {
           "Air Code",  // property, if any
           // long_description, if any:
           "Any non-zero Air Code alerts the raytracer that the region in question is modeling air"
-          "which is handled by specialized rules in LIBRT."
+          " which is handled by specialized rules in LIBRT."
         },
         { ATTR_LOS, false, ATTR_STANDARD,
           "los",
@@ -128,7 +128,7 @@ namespace db5_attrs_private {
           "Shader Name",  // property, if any
           // long_description, if any:
           "LIBRT can use a variety of shaders when rendering.  This attribute holds a"
-          "text string which corresponds to the name and other details of the shader to be used."
+          " text string which corresponds to the name and other details of the shader to be used."
         },
         { ATTR_INHERIT, false, ATTR_STANDARD,
           "inherit",
@@ -138,7 +138,7 @@ namespace db5_attrs_private {
           "Inherit Properties",  // property, if any
           // long_description, if any:
           "The Inherit Properties value, if true, indicate all child objects inherit the"
-          "attributes of this parent object."
+          " attributes of this parent object."
         },
         { ATTR_TIMESTAMP, true, ATTR_STANDARD, /* first binary attribute */
           "mtime",
