@@ -38,14 +38,16 @@ static bool debug(true);
 int
 main()
 {
+
     load_maps();
 
-    // write the html file
+    // write the html file (in librt local for now)
+    // FIXME: determine desired location of the html file:
     string ofil("brlcad-attributes.html");
     gen_attr_html_page(ofil);
 
     // write the xml include files 'attributes.xml'
-    string adir("../../doc/docbook/system/man5/en/");
+    string adir("@CMAKE_SOURCE_DIR@/doc/docbook/system/man5/en/");
 
     // these three files are included in the manually generated
     // 'attributes.xml' file:
