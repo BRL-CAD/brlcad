@@ -312,7 +312,8 @@ include_directories(
   )
 
 # a new html and xml generation file
-BRLCAD_ADDEXEC(gen-attributes-files gen-attributes-files.cpp "libbu;librt" NO_INSTALL NO_STRICT)
+configure_file(gen-attributes-files.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/gen-attributes-files.cpp @ONLY)
+BRLCAD_ADDEXEC(gen-attributes-files ${CMAKE_CURRENT_BINARY_DIR}/gen-attributes-files.cpp "libbu;librt" NO_INSTALL NO_STRICT)
 
 #BRLCAD_ADDEXEC(test_bot2nurbs test_bot2nurbs.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_nurbsfit test_nurbsfit.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
