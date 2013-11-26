@@ -151,7 +151,7 @@ namespace db5_attrs_private {
           "Time Stamp",  // property, if any
           // long_description, if any:
           ""
-        },
+        }
     };
 
     static const size_t nattrs = sizeof(db5_attr_ctype_table)/sizeof(db5_attr_ctype);
@@ -223,7 +223,8 @@ db5_attrs_private::load_maps()
                       name,
                       desc,
                       examp,
-                      aliases, prop,
+                      aliases,
+                      prop,
                       l_desc);
 
         // prepare the maps
