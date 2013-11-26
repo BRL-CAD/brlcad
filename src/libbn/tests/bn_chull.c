@@ -29,6 +29,29 @@
 #include "bn.h"
 #include "plot3.h"
 
+HIDDEN
+void plot_chull(int test_num, const point_t *pnt_array, int pnt_cnt)
+{
+    int i = 0;
+    struct bu_vls name;
+    FILE *plot_file = NULL;
+    bu_vls_init(&name);
+    bu_vls_printf(&name, "chull_test_%.3d.pl", test_num);
+    plot_file = fopen(bu_vls_addr(&name), "w");
+    pl_color(plot_file, 0, 255, 0);
+    for (i = 0; i < pnt_cnt; i++) {
+	pdv_3move(plot_file, pnt_array[i]);
+	if (i < pnt_cnt - 1) {
+	    pdv_3cont(plot_file, pnt_array[i+1]);
+	} else {
+	    pdv_3cont(plot_file, pnt_array[0]);
+	}
+    }
+    fclose(plot_file);
+    bu_vls_free(&name);
+}
+
+
 int
 main(int argc, const char **argv)
 {
@@ -139,19 +162,7 @@ main(int argc, const char **argv)
 	for (i = 0; i < retval; i++) {
 	    bu_log("      actual[%d]: (%f, %f, %f)\n", i, test4_hull_pnts[i][0], test4_hull_pnts[i][1], test4_hull_pnts[i][2]);
 	}
-	if (do_plotting) {
-	    FILE* plot_file = fopen("test004.pl", "w");
-	    pl_color(plot_file, 0, 255, 0);
-	    for (i = 0; i < retval; i++) {
-		pdv_3move(plot_file, test4_hull_pnts[i]);
-		if (i < retval - 1) {
-		    pdv_3cont(plot_file, test4_hull_pnts[i+1]);
-		} else {
-		    pdv_3cont(plot_file, test4_hull_pnts[0]);
-		}
-	    }
-	    fclose(plot_file);
-	}
+	if (do_plotting) plot_chull(4, (const point_t *)test4_hull_pnts, retval);
     }
 
     {
@@ -171,20 +182,7 @@ main(int argc, const char **argv)
 	for (i = 0; i < retval; i++) {
 	    bu_log("      actual[%d]: (%f, %f, %f)\n", i, test5_hull_pnts[i][0], test5_hull_pnts[i][1], test5_hull_pnts[i][2]);
 	}
-	if (do_plotting) {
-	    FILE* plot_file = fopen("test005.pl", "w");
-	    pl_color(plot_file, 0, 255, 0);
-	    for (i = 0; i < retval; i++) {
-		pdv_3move(plot_file, test5_hull_pnts[i]);
-		if (i < retval - 1) {
-		    pdv_3cont(plot_file, test5_hull_pnts[i+1]);
-		} else {
-		    pdv_3cont(plot_file, test5_hull_pnts[0]);
-		}
-	    }
-	    fclose(plot_file);
-	}
-
+	if (do_plotting) plot_chull(5, (const point_t *)test5_hull_pnts, retval);
 
     }
 
