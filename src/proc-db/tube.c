@@ -128,6 +128,7 @@ main(int argc, char **argv)
     if (argc > 0) {
 	bu_log("Usage: %s\n", argv[0]);
     	bu_log("       (Program expects ./pos.dat file to be present)\n");
+    	bu_log("       (Will generate file tube.g)\n");
     	if (argc == 2) {
 	    if ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?"))
 		bu_exit(1,NULL);
@@ -236,7 +237,7 @@ main(int argc, char **argv)
 	mk_lcomb(outfp, gname, &ghead, 0,
 		 (char *)0, "", (unsigned char *)0, 0);
 
-	fprintf(stderr, "%d, ", frame);  fflush(stderr);
+	fprintf(stderr, "frame %d\n", frame);  fflush(stderr);
     }
     wdb_close(outfp);
     fflush(stderr);
