@@ -137,7 +137,7 @@ namespace db5_attrs_private {
           "",  // aliases, if any
           "Inherit Properties",  // property, if any
           // long_description, if any:
-          "The Inherit Properties value, if true, indicate all child objects inherit the"
+          "The Inherit Properties value, if true, indicates all child objects inherit the"
           " attributes of this parent object."
         },
         { ATTR_TIMESTAMP, true, ATTR_STANDARD, /* first binary attribute */
