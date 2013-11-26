@@ -27,13 +27,16 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-
+#include "plot3.h"
 
 int
-main()
+main(int argc, const char **argv)
 {
     int i = 0;
     int retval = 0;
+    int do_plotting = 0;
+
+    if (argc == 2 && BU_STR_EQUAL(argv[1], "-p")) do_plotting = 1;
 
     /* 2D input */
     {
@@ -104,7 +107,7 @@ main()
 	VSET(test3_points[15], 0.3518518518518518600757261, 0.2407407407407407273769451, 0.5);
 	VSET(test3_points[16], -0.05555555555555555247160271, -0.05555555555555555247160271, 0.5);
 	retval = bn_3d_coplanar_chull(&test3_hull_pnts, (const point_t *)test3_points, 17);
-	bu_log("Test #003:  3d_hull - points in XY plane at Z=0.5:\n");
+	bu_log("Test #003:  3d_hull - points in XY plane at Z=0.5, duplicate points:\n");
 	for (i = 0; i < retval; i++) {
 	    bu_log("      actual[%d]: (%f, %f, %f)\n", i, test3_hull_pnts[i][0], test3_hull_pnts[i][1], test3_hull_pnts[i][2]);
 	}
@@ -132,12 +135,23 @@ main()
 	VSET(test4_points[15],-0.1662792526892814537475829,0.1913008340623683078973727,0.6907551004674108430236856);
 	VSET(test4_points[16],-0.5419274794409739692824246,0.3255440939851655945957987,0.9983903515569694242515197);
 	retval = bn_3d_coplanar_chull(&test4_hull_pnts, (const point_t *)test4_points, 17);
-	bu_log("Test #004:  3d_hull - points in tilted plane:\n");
+	bu_log("Test #004:  3d_hull - points in tilted plane, duplicate points:\n");
 	for (i = 0; i < retval; i++) {
 	    bu_log("      actual[%d]: (%f, %f, %f)\n", i, test4_hull_pnts[i][0], test4_hull_pnts[i][1], test4_hull_pnts[i][2]);
 	}
-
-
+	if (do_plotting) {
+	    FILE* plot_file = fopen("test004.pl", "w");
+	    pl_color(plot_file, 0, 255, 0);
+	    for (i = 0; i < retval; i++) {
+		pdv_3move(plot_file, test4_hull_pnts[i]);
+		if (i < retval - 1) {
+		    pdv_3cont(plot_file, test4_hull_pnts[i+1]);
+		} else {
+		    pdv_3cont(plot_file, test4_hull_pnts[0]);
+		}
+	    }
+	    fclose(plot_file);
+	}
     }
 
     {
@@ -153,10 +167,24 @@ main()
 	VSET(test5_points[7],-0.1662792526892814537475829,0.1913008340623683078973727,0.6907551004674108430236856);
 	VSET(test5_points[8],-0.5419274794409739692824246,0.3255440939851655945957987,0.9983903515569694242515197);
 	retval = bn_3d_coplanar_chull(&test5_hull_pnts, (const point_t *)test5_points, 9);
-	bu_log("Test #005:  3d_hull - points from test 4 sans square corners:\n");
+	bu_log("Test #005:  3d_hull - points from test 4 sans square corners, no duplicate points:\n");
 	for (i = 0; i < retval; i++) {
 	    bu_log("      actual[%d]: (%f, %f, %f)\n", i, test5_hull_pnts[i][0], test5_hull_pnts[i][1], test5_hull_pnts[i][2]);
 	}
+	if (do_plotting) {
+	    FILE* plot_file = fopen("test005.pl", "w");
+	    pl_color(plot_file, 0, 255, 0);
+	    for (i = 0; i < retval; i++) {
+		pdv_3move(plot_file, test5_hull_pnts[i]);
+		if (i < retval - 1) {
+		    pdv_3cont(plot_file, test5_hull_pnts[i+1]);
+		} else {
+		    pdv_3cont(plot_file, test5_hull_pnts[0]);
+		}
+	    }
+	    fclose(plot_file);
+	}
+
 
     }
 
