@@ -69,9 +69,16 @@ bn_coplanar_2d_coord_sys(point_t *origin_pnt, vect_t *u_axis, vect_t *v_axis, co
     /* Step 3 - find normal vector of plane holding points */
     i = 0;
     while (!have_normal && i < n){
-	if (!bn_mk_plane_3pts(plane, *origin_pnt, p_farthest, points_3d[i], &tol)) {
-	    VSET(normal, plane[0], plane[1], plane[2]);
-	    have_normal = 1;
+	vect_t temp_vect;
+	fastf_t vdot;
+	VSUB2(temp_vect, points_3d[i], *origin_pnt);
+	VUNITIZE(temp_vect);
+	vdot = fabs(VDOT(temp_vect, *u_axis));
+	if (vdot < 0.6) {
+	    if (!bn_mk_plane_3pts(plane, *origin_pnt, p_farthest, points_3d[i], &tol)) {
+		VSET(normal, plane[0], plane[1], plane[2]);
+		have_normal = 1;
+	    }
 	}
 	i++;
     }
