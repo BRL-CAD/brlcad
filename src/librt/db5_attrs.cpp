@@ -68,7 +68,7 @@ namespace db5_attrs_private {
           "The Region Flag identifies a particular geometric combination as being a solid material;"
           " in other words, any geometry below this combination in the tree can overlap without the"
           " overlap being regarded as a non-physical description, since it is the combination of all"
-          " descriptions in the region object that define the physical volume in space."
+          " descriptions in the region object that defines the physical volume in space."
 
         },
         { ATTR_REGION_ID, false, ATTR_STANDARD,
