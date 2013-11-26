@@ -37,49 +37,60 @@
 
   <para>
 	The earliest ancestor of BRL-CAD was the MAGIC code, written by
-	the Mathematical Applications Group, Inc in 1967 to implement geometric
+	the Mathematical Applications Group, Inc. in 1967 to implement geometric
 	modeling ideas developed by BRL and AMSAA from 1958-1967.  That system,
-	which was entirely non-graphical, was followed some years later by the GIFT program -
-	Geometric Information From Targets.  LIBRT, appearing around 1983, became the successor to GIFT.
+	which was entirely non-graphical, was followed some years later by the GIFT 
+        program&#x2014;Geometric Information From Targets.  LIBRT, appearing around 1983, 
+        became the successor to GIFT.
 	Today it is the core library of the BRL-CAD solid modeling package.  (For more background
 	see http://ftp.arl.army.mil/~mike/papers/96thebook/).  LIBRT inherited
-	both geometric primitives and attributes from GIFT - this heritage
+	both geometric primitives and attributes from GIFT--this heritage
 	is occasionally apparent in attribute names.
   </para>
   <para>
-	Note that with the introduction of support for arbitrary attribute/value pairs,
+	Note that with the introduction of support for arbitrary attribute/value pairs
 	it becomes much simpler for both developers and users to formulate new standards of their
 	own for storage of metadata in attributes.  Attributes should only
 	be documented in this file if one or more core BRL-CAD tools has implemented
 	one or more features that require specific attributes to be present.  Conventions
 	for attribute names that do not involve tool support should be documented
 	in appropriate user-level documentation.  In documenting attributes, one
-	additional distinction is made.  Attributes that exist only as post-v5 attribute/value
+	additional distinction is made:  attributes that exist only as post-v5 attribute/value
 	pairs are referred to as non-core attributes; older
 	attributes (which may also be represented in core data structures) are referred
 	to as core attributes.
   </para>
 </refsection>
 
-<refsection xml:id="core_attributes"><info><title>STANDARD AND REGISTERED ATTRIBUTES</title></info>
+<refsection xml:id="core_attributes"><info><title>STANDARD (CORE) AND REGISTERED ATTRIBUTES</title></info>
 
   <para>
 	The following table lists all known standard (core) BRL-CAD attributes and
 	aliases.  Any code setting or reading the value of one of these attributes
-	must handle all aliases, to ensure all functions asking for
+	must handle all aliases to ensure all functions asking for
 	the value in question get a consistent answer.
   </para>
 
   <xi:include href="@CMAKE_BINARY_DIR@/auto-gen-attr-std-tab-inc.xml" xpointer="std_attr_tbl"/>
 
+  <!-- need a blank line -->
+  <literallayout>
+
+  </literallayout>
+
   <para>
 	The following table lists all known user-registered BRL-CAD attributes and
 	aliases.  Any code setting or reading the value of one of these attributes
-	must also handle all aliases, to ensure all functions asking for
+	must also handle all aliases to ensure all functions asking for
 	the value in question get a consistent answer.
   </para>
 
   <xi:include href="@CMAKE_BINARY_DIR@/auto-gen-attr-usr-tab-inc.xml" xpointer="usr_attr_tbl"/>
+
+  <!-- need a blank line -->
+  <literallayout>
+
+  </literallayout>
 
   <para>
         Given the importance of these attributes, it is appropriate to

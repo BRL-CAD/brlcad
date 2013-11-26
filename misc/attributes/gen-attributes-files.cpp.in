@@ -35,13 +35,12 @@ static void gen_attr_html_page(const std::string& f);
 // local vars
 static bool debug(true);
 
-static string bname;
+static const string bname("gen-attributes-files");
 
 int
-main(int argc, char **argv)
+main()
 {
 
-    bname = argv[0];
     load_maps();
 
     // write the html file (in librt local for now)
@@ -87,7 +86,7 @@ gen_attr_xml_list(const std::string& fname,
                    const std::string& id,
                    const int typ)
 {
-    if (typ == ATTR_REGISTERED) {
+    if (typ != ATTR_STANDARD) {
         return;
     }
 
@@ -179,23 +178,15 @@ gen_attr_xml_table(const std::string& fname,
         "  <para xml:id='" << id << "'>\n"
         ;
 
-    if (typ == ATTR_REGISTERED && !has_registered_attrs) {
-
-        fo <<
-            "    Note:  There are no user-resistered attributes at this time.\n"
-            "  </para>\n"
-            "</article>\n"
-            ;
-
-        if (debug)
-            printf("DEBUG:  see output file '%s'\n", fname.c_str());
-
-        return;
-    }
-
     fo <<
         "  <table><title>" << title << "</title>\n"
         "    <tgroup cols='6'>\n"
+        "    <colspec colname='c1'/>\n"
+        "    <colspec colname='c2'/>\n"
+        "    <colspec colname='c3'/>\n"
+        "    <colspec colname='c4'/>\n"
+        "    <colspec colname='c5'/>\n"
+        "    <colspec colname='c6'/>\n"
         "      <tbody>\n"
         "        <row>\n"
         "          <entry>Property</entry>\n"
@@ -205,7 +196,26 @@ gen_attr_xml_table(const std::string& fname,
         "          <entry>Example</entry>\n"
         "          <entry>Aliases</entry>\n"
         "        </row>\n"
-        ;
+	;
+
+    if (typ == ATTR_REGISTERED && !has_registered_attrs) {
+
+        fo <<
+            "        <row>\n"
+            "          <entry namest='c1' nameend='c6'>Note:  There are no user-resistered attributes at this time.</entry>\n"
+            "        </row>\n"
+	    "      </tbody>\n"
+            "    </tgroup>\n"
+            "  </table>\n"
+            "  </para>\n"
+            "</article>\n"
+            ;
+
+        if (debug)
+            printf("DEBUG:  see output file '%s'\n", fname.c_str());
+
+        return;
+    }
 
     for (map<int,db5_attr_t>::iterator i = int2attr.begin();
          i != int2attr.end(); ++i) {
