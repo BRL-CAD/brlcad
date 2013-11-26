@@ -1,5 +1,11 @@
+# ensure no stale copy of auto-generated file 'attributes.xml' exists
+set(attr_xml_fil ${CMAKE_CURRENT_SOURCE_DIR}/attributes.xml)
+if(EXISTS ${attr_xml_fil})
+  file(REMOVE ${attr_xml_fil})
+endif()
+
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/attributes.xml.in
-  ${CMAKE_CURRENT_SOURCE_DIR}/attributes.xml @ONLY)
+  ${attr_xml_fil} @ONLY)
 
 set(docbook_man5_EN
   dsp.xml
