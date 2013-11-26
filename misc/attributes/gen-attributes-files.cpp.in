@@ -181,13 +181,13 @@ gen_attr_xml_table(const std::string& fname,
     fo <<
         "  <table><title>" << title << "</title>\n"
         "    <tgroup cols='6'>\n"
-        "    <colspec colname='c1'/>\n"
-        "    <colspec colname='c2'/>\n"
-        "    <colspec colname='c3'/>\n"
-        "    <colspec colname='c4'/>\n"
-        "    <colspec colname='c5'/>\n"
-        "    <colspec colname='c6'/>\n"
-        "      <tbody>\n"
+        "      <colspec colname='c1'/>\n"
+        "      <colspec colname='c2'/>\n"
+        "      <colspec colname='c3'/>\n"
+        "      <colspec colname='c4'/>\n"
+        "      <colspec colname='c5'/>\n"
+        "      <colspec colname='c6'/>\n"
+        "      <thead>\n"
         "        <row>\n"
         "          <entry>Property</entry>\n"
         "          <entry>Attribute</entry>\n"
@@ -196,6 +196,8 @@ gen_attr_xml_table(const std::string& fname,
         "          <entry>Example</entry>\n"
         "          <entry>Aliases</entry>\n"
         "        </row>\n"
+        "      </thead>\n"
+        "      <tbody>\n"
 	;
 
     if (typ == ATTR_REGISTERED && !has_registered_attrs) {
