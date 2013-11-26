@@ -8145,11 +8145,9 @@ RT_EXPORT extern size_t db5_type_sizeof_n_binu(const int minor);
 /**
  * Define standard attribute types in BRL-CAD geometry.  (See the
  * attributes manual page.)  These should be a collective enumeration
- * starting from 0 and increasing without any gaps in the numbers so
- * db5_standard_attribute() can be used as an index-based iterator
- * (note that the number is no longer directly used as an index,
- * merely as a unique type).  Details of the attributes are defined in
- * file 'src/librt/db5_attrs.cpp' and 'db5_attr_ctype_table'.
+ * starting from 0 and increasing in the desired sort order.  Details
+ * of the attributes are defined in file 'src/librt/db5_attrs.cpp' and
+ * 'db5_attr_ctype_table'.
  */
 enum {
     ATTR_REGION = 0,
