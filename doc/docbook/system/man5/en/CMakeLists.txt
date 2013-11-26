@@ -1,3 +1,6 @@
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/attributes.xml.in
+  ${CMAKE_CURRENT_SOURCE_DIR}/attributes.xml @ONLY)
+
 set(docbook_man5_EN
   dsp.xml
   attributes.xml
@@ -7,19 +10,15 @@ set(docbook_man5_EN
   plot3.xml
   )
 
-DOCBOOK_TO_HTML(man5 docbook_man5_EN html/man5/en "")
-DOCBOOK_TO_MAN(man5 docbook_man5_EN 5 5 man5 "")
+# special dependencies (gen-attributes-files.cpp is in misc/attributes)
+set(attributes_DEPS ${gen_attr_xml_fils} gen-attributes-files)
+
+DOCBOOK_TO_HTML(man5 docbook_man5_EN html/man5/en "${attributes_DEPS}")
+DOCBOOK_TO_MAN(man5 docbook_man5_EN 5 5 man5 "${attributes_DEPS}")
 
 if(BRLCAD_EXTRADOCS_PDF_MAN)
-  DOCBOOK_TO_PDF(man5 docbook_man5_EN pdf/man5/en "")
+  DOCBOOK_TO_PDF(man5 docbook_man5_EN pdf/man5/en "${attributes_DEPS}")
 endif(BRLCAD_EXTRADOCS_PDF_MAN)
-
-# local files to be ignored
-CMAKEFILES(
-  attr-std-list-inc.xml
-  attr-usr-tab-inc.xml
-  attr-std-tab-inc.xml
-)
 
 # Local Variables:
 # tab-width: 8
