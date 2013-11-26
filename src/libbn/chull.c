@@ -283,6 +283,26 @@ bn_2d_chull(point2d_t **hull, const point2d_t *points_2d, int n)
     return retval;
 }
 
+int
+bn_3d_coplanar_chull(point_t **hull, const point_t *points_3d, int n)
+{
+    int ret = 0;
+    int hull_cnt = 0;
+    point_t origin_pnt;
+    vect_t u_axis, v_axis;
+    point2d_t *hull_2d = (point2d_t *)bu_malloc(sizeof(point2d_t *), "hull pointer");
+    point2d_t *points_tmp = (point2d_t *)bu_calloc(n + 1, sizeof(point2d_t), "points_2d");
+
+    ret += bn_coplanar_2d_coord_sys(&origin_pnt, &u_axis, &v_axis, points_3d, n);
+    ret += bn_coplanar_3d_to_2d(&points_tmp, (const point_t *)&origin_pnt, (const vect_t *)&u_axis, (const vect_t *)&v_axis, points_3d, n);
+    if (ret) return 0;
+    hull_cnt = bn_2d_chull(&hull_2d, (const point2d_t *)points_tmp, n);
+    (*hull) = (point_t *)bu_calloc(hull_cnt + 1, sizeof(point_t), "hull array");
+    ret = bn_coplanar_2d_to_3d(hull, (const point_t *)&origin_pnt, (const vect_t *)&u_axis, (const vect_t *)&v_axis, (const point2d_t *)hull_2d, hull_cnt);
+    if (ret) return 0;
+    return hull_cnt;
+}
+
 /*
  * Local Variables:
  * mode: C
