@@ -71,12 +71,11 @@ bn_coplanar_2d_coord_sys(point_t *origin_pnt, vect_t *u_axis, vect_t *v_axis, co
     dist_pt_pt = DIST_PT_PT(*origin_pnt, p_farthest);
     while (!have_normal && i < n){
 	vect_t temp_vect;
-	fastf_t vdot, d;
+	fastf_t vdot;
 	VSUB2(temp_vect, points_3d[i], *origin_pnt);
 	VUNITIZE(temp_vect);
 	vdot = fabs(VDOT(temp_vect, *u_axis));
-	d = DIST_PT_PT(*origin_pnt, points_3d[i]);
-	if (vdot < 0.6 && d > (dist_pt_pt * 0.01)) {
+	if (vdot < 0.6) {
 	    if (!bn_mk_plane_3pts(plane, *origin_pnt, p_farthest, points_3d[i], &tol)) {
 		VSET(normal, plane[0], plane[1], plane[2]);
 		have_normal = 1;
