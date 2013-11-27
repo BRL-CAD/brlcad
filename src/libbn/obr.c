@@ -84,11 +84,12 @@ pnt2d_array_get_dimension(const point2d_t *pnts, int pnt_cnt, point2d_t *p_cente
     V2MOVE(min_y_pt, curr_pnt);
     V2MOVE(max_x_pt, curr_pnt);
     V2MOVE(max_y_pt, curr_pnt);
+
     while (i < pnt_cnt) {
 	V2MOVE(curr_pnt,pnts[i]);
 	center[0] += curr_pnt[0];
 	center[1] += curr_pnt[1];
-	VMINMAX(min, max, curr_pnt);
+	V2MINMAX(min, max, curr_pnt);
 	if (min_x_pt[0] > curr_pnt[0]) V2MOVE(min_x_pt, curr_pnt);
 	if (min_y_pt[1] > curr_pnt[1]) V2MOVE(min_y_pt, curr_pnt);
 	if (max_x_pt[0] < curr_pnt[0]) V2MOVE(max_x_pt, curr_pnt);
@@ -201,7 +202,7 @@ UpdateBox(struct obr_vals *obr, point2d_t left_pnt, point2d_t right_pnt, point2d
 	V2SCALE(V, v, extent1 - VDOT(v,left_bottom_diff));
 	/*bu_log("V: %f, %f, %f\n", V[0], V[1], V[2]);*/
 	V2ADD3(obr->center, left_pnt, U, V);
-	bu_log("center: %f, %f, %f\n\n", obr->center[0], obr->center[1], obr->center[2]);
+	bu_log("center: %f, %f\n\n", obr->center[0], obr->center[1]);
 	V2SCALE(V, v, extent1);
     }
 }
@@ -321,7 +322,6 @@ bn_obr_calc(const point2d_t *pnts, int pnt_cnt, struct obr_vals *obr)
 	    /* initialize with AABB */
 	    obr->center[0] = 0.5 * (xmin + xmax);
 	    obr->center[1] = 0.5 * (ymin + ymax);
-	    obr->center[2] = 0.0;
 	    V2SET(obr->u, 1, 0);
 	    obr->extent0 = (xmax - xmin);
 	    obr->extent1 = (ymax - ymin);

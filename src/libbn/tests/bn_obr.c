@@ -32,7 +32,6 @@
 int
 main()
 {
-#if 0
     /* FIXME: finish this */
     point2d_t center;
     vect2d_t u, v;
@@ -44,20 +43,11 @@ main()
     V2SET(pnts[2], 2.0, 2.5);
     V2SET(pnts[3], 1.0, 2.0);
 
-    bn_2d_obr(&center, &u, &v, const point2d_t *)pnts, n);
-/*
-    bu_log("result: P1 (%f, %f, %f)\n", V3ARGS(p0));
-    bu_log("        P2 (%f, %f, %f)\n", V3ARGS(p1));
-    bu_log("        P3 (%f, %f, %f)\n", V3ARGS(p2));
-    bu_log("        P4 (%f, %f, %f)\n", V3ARGS(p3));*/
-/*
-    if (expected_result == actual_result) {
-	return 0;
-    } else {
-	return -1;
-    }
-*/
-#endif
+    bn_2d_obr(&center, &u, &v, (const point2d_t *)pnts, n);
+
+    bu_log("result: center (%f, %f)\n", V2ARGS(center));
+    bu_log("        u      (%f, %f)\n", V2ARGS(u));
+    bu_log("        v      (%f, %f)\n", V2ARGS(v));
     return 0;
 }
 
