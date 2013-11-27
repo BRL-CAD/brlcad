@@ -1034,6 +1034,20 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	} \
     } while (0)
 
+/** @brief Normalize 2D vector `a' to be a unit vector. */
+#define V2UNITIZE(a) do { \
+	register double _f = MAG2SQ(a); \
+	if (! NEAR_EQUAL(_f, 1.0, VUNITIZE_TOL)) { \
+		_f = sqrt(_f); \
+		if (_f < VDIVIDE_TOL) { \
+			V2SETALL((a), 0.0); \
+		} else { \
+			_f = 1.0/_f; \
+			(a)[X] *= _f; (a)[Y] *= _f; \
+		} \
+	} \
+    } while (0)
+
 /**
  * @brief Find the sum of two points, and scale the result.  Often
  * used to find the midpoint.
