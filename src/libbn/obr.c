@@ -496,10 +496,10 @@ bn_2d_obr(point2d_t *center, vect2d_t *u, vect2d_t *v, const point2d_t *pnts, in
 
     V2SET(*center, obr.center[0], obr.center[1]);
     V2SET(*u, obr.u[0], obr.u[1]);
-    VUNITIZE(*u);
+    V2UNITIZE(*u);
     V2SCALE(*u, *u, obr.extent0);
     V2SET(*v, obr.v[0], obr.v[1]);
-    VUNITIZE(*v);
+    V2UNITIZE(*v);
     V2SCALE(*v, *v, obr.extent1);
 
     return 0;
