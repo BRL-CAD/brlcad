@@ -239,27 +239,26 @@ bn_obr_calc(const point2d_t *pnts, int pnt_cnt, struct obr_vals *obr)
 	    obr->extent1 = BN_TOL_DIST;
 	    V2SET(obr->center, center[0]/2, center[1]/2);
 	    V2SUB2(vline, pmax, center);
-	    VUNITIZE(vline);
+	    V2UNITIZE(vline);
 	    V2SET(obr->u, vline[0], vline[1]);
 	    V2SET(obr->v, -vline[1], vline[0]);
-	    VUNITIZE(obr->v);
+	    V2UNITIZE(obr->v);
 	    break;
 	case 2:
 	    /* Bound convex hull using rotating calipers */
 
 	    /* 1.  Get convex hull */
-	    /* TODO - need 2d point list in plane parametric space */
-	    /* hull_pnt_cnt = bn_polyline_2d_chull(&hull_pnts_2d, pnts_2d, pnt_cnt);*/
+	    hull_pnt_cnt = bn_2d_chull(&hull_pnts, pnts, pnt_cnt);
 
 	    /* 2.  Get edge unit vectors */
 	    edge_unit_vects = (vect2d_t *)bu_calloc(hull_pnt_cnt + 1, sizeof(fastf_t) * 3, "unit vects for edges");
 	    visited = (int *)bu_calloc(hull_pnt_cnt + 1, sizeof(int), "visited flags");
 	    for (i = 0; i < hull_pnt_cnt - 1; ++i) {
-		VSUB2(edge_unit_vects[i], hull_pnts[i + 1], hull_pnts[i]);
-		VUNITIZE(edge_unit_vects[i]);
+		V2SUB2(edge_unit_vects[i], hull_pnts[i + 1], hull_pnts[i]);
+		V2UNITIZE(edge_unit_vects[i]);
 	    }
-	    VSUB2(edge_unit_vects[hull_pnt_cnt - 1], hull_pnts[0], hull_pnts[hull_pnt_cnt - 1]);
-	    VUNITIZE(edge_unit_vects[hull_pnt_cnt - 1]);
+	    V2SUB2(edge_unit_vects[hull_pnt_cnt - 1], hull_pnts[0], hull_pnts[hull_pnt_cnt - 1]);
+	    V2UNITIZE(edge_unit_vects[hull_pnt_cnt - 1]);
 
 	    /* 3. Find the points involved with the AABB */
 	    /* Find the smallest axis-aligned box containing the points.  Keep track */
