@@ -81,7 +81,6 @@ bn_coplanar_2d_coord_sys(point_t *origin_pnt, vect_t *u_axis, vect_t *v_axis, co
 	    VUNITIZE(temp_vect);
 	    curr_vdot = fabs(VDOT(temp_vect, *u_axis));
 	    if ((!have_normal) || (curr_vdot < vdot)) {
-		printf("vdot: %f, curr_vdot: %f\n", vdot, curr_vdot);
 		if (!bn_mk_plane_3pts(plane, *origin_pnt, p_farthest, points_3d[i], &tol)) {
 		    VSET(normal, plane[0], plane[1], plane[2]);
 		    have_normal = 1;
