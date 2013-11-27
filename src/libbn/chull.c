@@ -44,11 +44,14 @@ bn_coplanar_2d_coord_sys(point_t *origin_pnt, vect_t *u_axis, vect_t *v_axis, co
     int have_normal = 0;
     plane_t plane;
     fastf_t dist_pt_pt = 0.0;
+    fastf_t vdot = 1.0;
     point_t p_farthest;
+    int p_farthest_index = 0;
     vect_t normal;
     const struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST/2, BN_TOL_DIST*BN_TOL_DIST/4, 1e-6, 1-1e-6};
 
     /* Step 1 - find center point */
+    VSET(*origin_pnt, 0, 0, 0);
     for (i = 0; i < n; i++) {
 	VADD2(*origin_pnt, *origin_pnt, points_3d[i]);
     }
@@ -61,6 +64,7 @@ bn_coplanar_2d_coord_sys(point_t *origin_pnt, vect_t *u_axis, vect_t *v_axis, co
 	if (curr_dist > dist_pt_pt) {
 	    dist_pt_pt = curr_dist;
 	    VMOVE(p_farthest, points_3d[i]);
+	    p_farthest_index = i;
 	}
     }
     VSUB2(*u_axis, p_farthest, *origin_pnt);
@@ -69,16 +73,20 @@ bn_coplanar_2d_coord_sys(point_t *origin_pnt, vect_t *u_axis, vect_t *v_axis, co
     /* Step 3 - find normal vector of plane holding points */
     i = 0;
     dist_pt_pt = DIST_PT_PT(*origin_pnt, p_farthest);
-    while (!have_normal && i < n){
-	vect_t temp_vect;
-	fastf_t vdot;
-	VSUB2(temp_vect, points_3d[i], *origin_pnt);
-	VUNITIZE(temp_vect);
-	vdot = fabs(VDOT(temp_vect, *u_axis));
-	if (vdot < 0.6) {
-	    if (!bn_mk_plane_3pts(plane, *origin_pnt, p_farthest, points_3d[i], &tol)) {
-		VSET(normal, plane[0], plane[1], plane[2]);
-		have_normal = 1;
+    while (i < n){
+	if (i != p_farthest_index) {
+	    vect_t temp_vect;
+	    fastf_t curr_vdot;
+	    VSUB2(temp_vect, points_3d[i], *origin_pnt);
+	    VUNITIZE(temp_vect);
+	    curr_vdot = fabs(VDOT(temp_vect, *u_axis));
+	    if ((!have_normal) || (curr_vdot < vdot)) {
+		printf("vdot: %f, curr_vdot: %f\n", vdot, curr_vdot);
+		if (!bn_mk_plane_3pts(plane, *origin_pnt, p_farthest, points_3d[i], &tol)) {
+		    VSET(normal, plane[0], plane[1], plane[2]);
+		    have_normal = 1;
+		    vdot = curr_vdot;
+		}
 	    }
 	}
 	i++;
