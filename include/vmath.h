@@ -1551,6 +1551,23 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
     } while (0)
 
 /**
+ * @brief Included below are macros to update min and max X, Y
+ * values to contain a point
+ */
+
+#define V2MIN(r, s) do { \
+	V_MIN((r)[X], (s)[X]); V_MIN((r)[Y], (s)[Y]); \
+    } while (0)
+
+#define V2MAX(r, s) do { \
+	V_MAX((r)[X], (s)[X]); V_MAX((r)[Y], (s)[Y]); \
+    } while (0)
+
+#define V2MINMAX(min, max, pt) do { \
+	V2MIN((min), (pt)); V2MAX((max), (pt)); \
+    } while (0)
+
+/**
  * @brief Divide out homogeneous parameter from hvect_t, creating
  * vect_t.
  */
