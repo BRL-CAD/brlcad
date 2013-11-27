@@ -14,7 +14,8 @@
     </authorgroup>
   </info>
 
-
+  <chapter>
+    <para><programlisting>
     Getting Started
     A Call to Arms
     Feature Overview
@@ -228,7 +229,7 @@ BRL-CAD has a longstanding heritage of maintaining verifiable, validated, and re
 Code Layout
 
 The basic layout of BRL-CAD's source code places public API headers in the top-level include directory and source code for both applications and libraries in the src directory. The following is a partial listing of how the code is organized in a checkout or source distribution. Note that some subdirectories contain a README file with more details on the content in that directory.
-Applications & Resources
+Applications &amp; Resources
 
     db/
 
@@ -346,7 +347,7 @@ Source code files use the following extensions:
     POSIX Bourne-style shell scripts: .sh
     Perl files: .pl (program) or .pm (module)
 
-With release 7.0, BRL-CAD has moved forward and worked toward making all of the software's C code conform strictly with the ANSI/ISO standard for C language compilation (ISO/IEC 9899:1990, or c89). Support for older compilers and older K&R-based system facilities is being migrated to build system declarations or preprocessor defines, or is being removed outright. You can, however, make modifications that assume compiler conformance with the ANSI C standard (c89).
+With release 7.0, BRL-CAD has moved forward and worked toward making all of the software's C code conform strictly with the ANSI/ISO standard for C language compilation (ISO/IEC 9899:1990, or c89). Support for older compilers and older K&amp;R-based system facilities is being migrated to build system declarations or preprocessor defines, or is being removed outright. You can, however, make modifications that assume compiler conformance with the ANSI C standard (c89).
 Coding Style
 
 To ensure consistency, the coherence of the project, and the long-term maintainability of BRL-CAD, we use a defined coding style and conventions that contributors are expected to follow. Our coding style is documented in the HACKING file of any source distribution.
@@ -357,14 +358,14 @@ Here are some highlights of our style:
 
     Global variables, structures, classes, and other public data containers are discouraged within application code. Do not add any new global variables to existing libraries. Global variables are often a quick solution to some deeper coding problem. However, they carry significant maintenance costs, introduce complexity to the code, make multi-threading support more costly, pollute the public API (symbol-wise at a minimum), increase security risks, are error-prone to use, and usually complicate future efforts to refactor and restructure the code. Using static variables (whether function- or static/file-scoped) is a viable alternative. Restructuring the logic to not be stateful is even better.
     Exact floating point comparisons are unreliable without requiring IEEE-compliant floating point math, but BRL-CAD does not require such math for portability and for performance reasons. When floating point comparisons are necessary, use the NEAR_EQUAL and NEAR_ZERO macros with a specified tolerance or the EQUAL and ZERO macros where a tolerance is indeterminate. All the macros are available by including bn.h, part of libbn.
-    The code should strive to achieve conformance with the GNU coding standard with a few exceptions. One such exception is not using the GNU indentation style, but instead using the BSD KNF indentation style, which is basically the K&R indentation style with character indentation consistent with the file that you're editing. If this is confusing, use spaces to indent and run the sh/ws.sh script to convert spaces to tabs. We value consistency to preserve maintainability.
+    The code should strive to achieve conformance with the GNU coding standard with a few exceptions. One such exception is not using the GNU indentation style, but instead using the BSD KNF indentation style, which is basically the K&amp;R indentation style with character indentation consistent with the file that you're editing. If this is confusing, use spaces to indent and run the sh/ws.sh script to convert spaces to tabs. We value consistency to preserve maintainability.
     Stylistic whitespace
 
         No space immediately inside parentheses.
 
           while (1) { ...                   /* ok */
 
-          for (i = 0; i < max; i++) { ...   /* ok */
+          for (i = 0; i &lt; max; i++) { ...   /* ok */
 
           while ( max ) { ...               /* discouraged */
 
@@ -373,14 +374,14 @@ Here are some highlights of our style:
 
           int main(int argc, char *argv[]); /* ok */
 
-          for (i = 0; i < max; i++) { ...   /* ok */
+          for (i = 0; i &lt; max; i++) { ...   /* ok */
 
 
         No space on arrow operators.
 
-          structure->member = 5;            /* ok */
+          structure-&gt;member = 5;            /* ok */
 
-          structure -> member = 5;          /* bad */
+          structure -&gt; member = 5;          /* bad */
 
 
         Native language statements (if, while, for, switch, and return) have a separating space; functions do not.
@@ -452,7 +453,7 @@ Here are some highlights of our style:
 
         Naming exceptions are allowed where the API intentionally mirrors some other familiar programming construct--for example, bu_malloc()+bu_free())--but be as consistent as possible within a file and across a library's API.
 
-    BRL-CAD uses The One True Brace Style from BSD KNF and K&R9. Opening braces should be on the same line as their statement; closing braces should line up with that same statement. Functions, however, are treated specially, and we place their opening braces on separate lines.
+    BRL-CAD uses The One True Brace Style from BSD KNF and K&amp;R9. Opening braces should be on the same line as their statement; closing braces should line up with that same statement. Functions, however, are treated specially, and we place their opening braces on separate lines.
 
           static int
 
@@ -460,7 +461,7 @@ Here are some highlights of our style:
 
           {
 
-              for (i = 0; i < 100; i++) {
+              for (i = 0; i &lt; 100; i++) {
 
                   if (i % 10 == 0) {
 
@@ -534,7 +535,7 @@ make; make test;
 
 If the build fails, run make again and capture the output to a log file by running the following command:
 
-make >build.log 2>&1
+make &gt;build.log 2&gt;&amp;1
 
 Note: If you have a quad-core CPU, you can run make -j4 to request compilation in parallel.
 Installing BRL-CAD
@@ -597,7 +598,7 @@ Aside from error checking tools like nXML, the ability to pinpoint errors in a d
 
 /home/user/brlcad/doc/docbook/articles/en/tire.xml:65: parser error : Opening and ending tag mismatch: informalfigure line 54 and informafigure
 
-    </informafigure>
+    &lt;/informafigure&gt;
 
                     ^
 
@@ -707,11 +708,11 @@ Just as different documentation formats are needed to display the same content i
 
 For example, volume II of the BRL-CAD Tutorial Series makes extensive use of the XInclude mechanism. The majority of the original content in that tutorial was split up into individual lessons, each which exist as separate documents. To provide those individual documents and at the same time preserve the original Volume II, without duplicating content, the file BRL-CAD_Tutorial_Series-VolumeII.xml pulls in the content of the lessons using XInclude:
 
- <xi:include href="/lessons/en/mged01_creating_primitive_shapes.xml" xpointer="creating_primitive_shapes_overviewlist"/>
+ &lt;xi:include href="/lessons/en/mged01_creating_primitive_shapes.xml" xpointer="creating_primitive_shapes_overviewlist"/&gt;
 
 For this reference to work, the lesson mged01_creating_primitive_shapes.xml must provide matching identifying labels. The matching label for the reference above is:
 
- <para xml:id="creating_primitive_shapes_overviewlist">
+ &lt;para xml:id="creating_primitive_shapes_overviewlist"&gt;
 
 The drawbacks to this mechanism are that:
 
@@ -960,85 +961,85 @@ Doc Template: New MGED Command
 
 The following DocBook XML template illustrates the general structure that is used when defining a man page for MGED commands, along with examples of how elements such as paragraphs, lists, and examples are included. If you haven't worked with DocBook before, refer to the section What is DocBook? in the chapter Working with our Documentation.
 
-<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="">
+&lt;refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id=""&gt;
 
-<refmeta>
-  <refentrytitle> <refentrytitle/>
-  <manvolnum>nged</manvolnum>
-  <refmiscinfo class="source">BRL-CAD</refmiscinfo>
-  <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
-</refmeta>
+&lt;refmeta&gt;
+  &lt;refentrytitle&gt; &lt;refentrytitle/&gt;
+  &lt;manvolnum&gt;nged&lt;/manvolnum&gt;
+  &lt;refmiscinfo class="source"&gt;BRL-CAD&lt;/refmiscinfo&gt;
+  &lt;refmiscinfo class="manual"&gt;BRL-CAD User Commands&lt;/refmiscinfo&gt;
+&lt;/refmeta&gt;
 
-<refnamediv xml:id="name">
-  <refname><refname/>
-  <refpurpose>
+&lt;refnamediv xml:id="name"&gt;
+  &lt;refname&gt;&lt;refname/&gt;
+  &lt;refpurpose&gt;
 
-  </refpurpose>
-</refnamediv>
+  &lt;/refpurpose&gt;
+&lt;/refnamediv&gt;
 
-<!-- body begins here -->
-<refsynopsisdiv xml:id="synopsis">
-  <cmdsynopsis sepchar=" ">
-    <command/>
-    <arg choice="opt" rep="norepeat"/>
-  </cmdsynopsis>
-</refsynopsisdiv>
+&lt;!-- body begins here --&gt;
+&lt;refsynopsisdiv xml:id="synopsis"&gt;
+  &lt;cmdsynopsis sepchar=" "&gt;
+    &lt;command/&gt;
+    &lt;arg choice="opt" rep="norepeat"/&gt;
+  &lt;/cmdsynopsis&gt;
+&lt;/refsynopsisdiv&gt;
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-  <para>
+&lt;refsection xml:id="description"&gt;&lt;info&gt;&lt;title&gt;DESCRIPTION&lt;/title&gt;&lt;/info&gt;
+  &lt;para&gt;
 
-  </para>
-</refsection>
+  &lt;/para&gt;
+&lt;/refsection&gt;
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+&lt;refsection xml:id="examples"&gt;&lt;info&gt;&lt;title&gt;EXAMPLES&lt;/title&gt;&lt;/info&gt;
 
-  <para>
+  &lt;para&gt;
 
-  </para>
-  <example><info><title/></info>
+  &lt;/para&gt;
+  &lt;example&gt;&lt;info&gt;&lt;title/&gt;&lt;/info&gt;
 
-    <variablelist>
-      <varlistentry>
-           <term><prompt/> <userinput/></term>
-           <listitem>
-             <para>
+    &lt;variablelist&gt;
+      &lt;varlistentry&gt;
+           &lt;term&gt;&lt;prompt/&gt; &lt;userinput/&gt;&lt;/term&gt;
+           &lt;listitem&gt;
+             &lt;para&gt;
 
-             </para>
-           </listitem>
-      </varlistentry>
-      <varlistentry>
-           <term><prompt/> <userinput/></term>
-           <listitem>
-             <para>
+             &lt;/para&gt;
+           &lt;/listitem&gt;
+      &lt;/varlistentry&gt;
+      &lt;varlistentry&gt;
+           &lt;term&gt;&lt;prompt/&gt; &lt;userinput/&gt;&lt;/term&gt;
+           &lt;listitem&gt;
+             &lt;para&gt;
 
-             </para>
-           </listitem>
-      </varlistentry>
-    </variablelist>
-  </example>
+             &lt;/para&gt;
+           &lt;/listitem&gt;
+      &lt;/varlistentry&gt;
+    &lt;/variablelist&gt;
+  &lt;/example&gt;
 
-  <example><info><title/></info>
+  &lt;example&gt;&lt;info&gt;&lt;title/&gt;&lt;/info&gt;
 
-    <para>
-      <prompt/><userinput/>
-    </para>
-    <para>
+    &lt;para&gt;
+      &lt;prompt/&gt;&lt;userinput/&gt;
+    &lt;/para&gt;
+    &lt;para&gt;
 
-    </para>
-  </example>
+    &lt;/para&gt;
+  &lt;/example&gt;
 
-</refsection>
+&lt;/refsection&gt;
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+&lt;info&gt;&lt;corpauthor&gt;BRL-CAD Team&lt;/corpauthor&gt;&lt;/info&gt;
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+&lt;refsection xml:id="bug_reports"&gt;&lt;info&gt;&lt;title&gt;BUG REPORTS&lt;/title&gt;&lt;/info&gt;
 
-  <para>
+  &lt;para&gt;
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
-  </para>
-</refsection>
-</refentry>
+  &lt;/para&gt;
+&lt;/refsection&gt;
+&lt;/refentry&gt;
 
 
 
@@ -1047,10 +1048,10 @@ Code Example: Shooting Rays
 Shooting rays at models is one of the more common operations performed with BRL-CAD models. The following example illustrates how to use librt's C API to shoot a ray at a model and how to work with the results.
 
 #include "common.h"
-#include <stdlib.h>
-#include <math.h>
-#include <string.h>
-#include <stdio.h>
+#include &lt;stdlib.h&gt;
+#include &lt;math.h&gt;
+#include &lt;string.h&gt;
+#include &lt;stdio.h&gt;
 #include "vmath.h"              /* vector math macros */
 #include "raytrace.h"           /* librt interface definitions */
 
@@ -1096,31 +1097,31 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
      * each partition corresponds to a specific homogeneous region of
      * material.
      */
-    for (pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
+    for (pp=PartHeadp-&gt;pt_forw; pp != PartHeadp; pp = pp-&gt;pt_forw) {
 
         /* print the name of the region we hit as well as the name of
          * the primitives encountered on entry and exit.
          */
         bu_log("\n--- Hit region %s (in %s, out %s)\n",
-               pp->pt_regionp->reg_name,
-               pp->pt_inseg->seg_stp->st_name,
-               pp->pt_outseg->seg_stp->st_name );
+               pp-&gt;pt_regionp-&gt;reg_name,
+               pp-&gt;pt_inseg-&gt;seg_stp-&gt;st_name,
+               pp-&gt;pt_outseg-&gt;seg_stp-&gt;st_name );
 
         /* entry hit point, so we type less */
-        hitp = pp->pt_inhit;
+        hitp = pp-&gt;pt_inhit;
 
         /* construct the actual (entry) hit-point from the ray and the
          * distance to the intersection point (i.e., the 't' value).
          */
-        VJOIN1(pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
+        VJOIN1(pt, ap-&gt;a_ray.r_pt, hitp-&gt;hit_dist, ap-&gt;a_ray.r_dir);
 
         /* primitive we encountered on entry */
-        stp = pp->pt_inseg->seg_stp;
+        stp = pp-&gt;pt_inseg-&gt;seg_stp;
 
         /* compute the normal vector at the entry point, flipping the
          * normal if necessary.
          */
-        RT_HIT_NORMAL(inormal, hitp, stp, &(ap->a_ray), pp->pt_inflip);
+        RT_HIT_NORMAL(inormal, hitp, stp, &amp;(ap-&gt;a_ray), pp-&gt;pt_inflip);
 
         /* print the entry hit point info */
         rt_pr_hit("  In", hitp);
@@ -1133,7 +1134,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
          * to it.  Positive curvature bends toward the outward
          * pointing normal.
          */
-        RT_CURVATURE(&cur, hitp, pp->pt_inflip, stp);
+        RT_CURVATURE(&amp;cur, hitp, pp-&gt;pt_inflip, stp);
 
         /* print the entry curvature information */
         VPRINT("PDir", cur.crv_pdir);
@@ -1141,20 +1142,20 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
         bu_log(" c2=%g\n", cur.crv_c2);
 
         /* exit point, so we type less */
-        hitp = pp->pt_outhit;
+        hitp = pp-&gt;pt_outhit;
 
         /* construct the actual (exit) hit-point from the ray and the
          * distance to the intersection point (i.e., the 't' value).
          */
-        VJOIN1(pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
+        VJOIN1(pt, ap-&gt;a_ray.r_pt, hitp-&gt;hit_dist, ap-&gt;a_ray.r_dir);
 
         /* primitive we exited from */
-        stp = pp->pt_outseg->seg_stp;
+        stp = pp-&gt;pt_outseg-&gt;seg_stp;
 
         /* compute the normal vector at the exit point, flipping the
          * normal if necessary.
          */
-        RT_HIT_NORMAL(onormal, hitp, stp, &(ap->a_ray), pp->pt_outflip);
+        RT_HIT_NORMAL(onormal, hitp, stp, &amp;(ap-&gt;a_ray), pp-&gt;pt_outflip);
 
         /* print the exit hit point info */
         rt_pr_hit("  Out", hitp);
@@ -1210,7 +1211,7 @@ main(int argc, char **argv)
     /* Check for command-line arguments.  Make sure we have at least a
      * geometry file and one geometry object on the command line.
      */
-    if (argc < 3) {
+    if (argc &lt; 3) {
         bu_exit(1, "Usage: %s model.g objects...\n", argv[0]);
     }
 
@@ -1236,8 +1237,8 @@ main(int argc, char **argv)
      * database that you want included in the ray trace by iterating
      * of the object names that were specified on the command-line.
      */
-    while (argc > 2)  {
-        if (rt_gettree(rtip, argv[2]) < 0)
+    while (argc &gt; 2)  {
+        if (rt_gettree(rtip, argv[2]) &lt; 0)
             bu_log("Loading the geometry for [%s] FAILED\n", argv[2]);
         argc--;
         argv++;
@@ -1250,7 +1251,7 @@ main(int argc, char **argv)
     rt_prep_parallel(rtip, 1);
 
     /* initialize all values in application structure to zero */
-    RT_APPLICATION_INIT(&ap);
+    RT_APPLICATION_INIT(&amp;ap);
 
     /* your application uses the raytrace instance containing the
      * geometry we loaded.  this describes what we're shooting at.
@@ -1285,7 +1286,7 @@ main(int argc, char **argv)
     ap.a_miss = miss;
 
     /* Shoot the ray. */
-    (void)rt_shootray(&ap);
+    (void)rt_shootray(&amp;ap);
 
     /* A real application would probably set up another ray and fire
      * again or do something a lot more complex in the callbacks.
@@ -1321,7 +1322,7 @@ main(int argc, char *argv[])
   int counter = 0;
   struct db_tree_state state = rt_initial_tree_state;
 
-  if (argc < 2) {
+  if (argc &lt; 2) {
     bu_exit(0, "need more, db.g obj\n");
   }
 
@@ -1332,13 +1333,13 @@ main(int argc, char *argv[])
   }
 
   /* build a directory of objects */
-  if (db_dirbuild(dbip) < 0) {
+  if (db_dirbuild(dbip) &lt; 0) {
     db_close(dbip);
     bu_exit(1, "Unable to load %s\n", argv[1]);
   }
 
-  bu_log("Database title is:\n%s\n", dbip->dbi_title);
-  bu_log("Units: %s\n", bu_units_string(dbip->dbi_local2base));
+  bu_log("Database title is:\n%s\n", dbip-&gt;dbi_title);
+  bu_log("Units: %s\n", bu_units_string(dbip-&gt;dbi_local2base));
 
   /* load a particular combination object */
   if (db_lookup(dbip, argv[2], 1) == NULL) {
@@ -1347,14 +1348,14 @@ main(int argc, char *argv[])
   }
 
   state.ts_dbip = dbip;
-  state.ts_resp = &rt_uniresource;
-  rt_init_resource( &rt_uniresource, 0, NULL );
+  state.ts_resp = &amp;rt_uniresource;
+  rt_init_resource( &amp;rt_uniresource, 0, NULL );
 
   /* walk that combination object's hierarchy,
    * calling our incr_region() callback function.
    * we pass a pointer to our counter variable.
    */
-  db_walk_tree(dbip, 1, (const char **)argv+2, 1, &state, incr_region, NULL, NULL, &counter);
+  db_walk_tree(dbip, 1, (const char **)argv+2, 1, &amp;state, incr_region, NULL, NULL, &amp;counter);
 
   bu_log("counter is %d\n", counter);
 
@@ -1375,12 +1376,12 @@ The Geometry Editing Library (libged) defines commands for working with BRL-CAD 
 HIDDEN int
 zoom(struct ged *gedp, double sf)
 {
-    gedp->ged_gvp->gv_scale /= sf;
-    if (gedp->ged_gvp->gv_scale < RT_MINVIEWSCALE)
-        gedp->ged_gvp->gv_scale = RT_MINVIEWSCALE;
-    gedp->ged_gvp->gv_size = 2.0 * gedp->ged_gvp->gv_scale;
-    gedp->ged_gvp->gv_isize = 1.0 / gedp->ged_gvp->gv_size;
-    ged_view_update(gedp->ged_gvp);
+    gedp-&gt;ged_gvp-&gt;gv_scale /= sf;
+    if (gedp-&gt;ged_gvp-&gt;gv_scale &lt; RT_MINVIEWSCALE)
+        gedp-&gt;ged_gvp-&gt;gv_scale = RT_MINVIEWSCALE;
+    gedp-&gt;ged_gvp-&gt;gv_size = 2.0 * gedp-&gt;ged_gvp-&gt;gv_scale;
+    gedp-&gt;ged_gvp-&gt;gv_isize = 1.0 / gedp-&gt;ged_gvp-&gt;gv_size;
+    ged_view_update(gedp-&gt;ged_gvp);
 
     return GED_OK;
 }
@@ -1396,14 +1397,14 @@ ged_zoom(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc != 2) {
-        bu_vls_printf(gedp->ged_result_str, "Usage: %s scale_factor", argv[0]);
+        bu_vls_printf(gedp-&gt;ged_result_str, "Usage: %s scale_factor", argv[0]);
         return (argc == 1) ? GED_HELP : GED_ERROR;
     }
 
     /* get the scale factor */
-    ret = bu_sscanf(argv[1], "%lf", &sf);
-    if (ret != 1 || sf < SMALL_FASTF || sf > INFINITY) {
-        bu_vls_printf(gedp->ged_result_str, "ERROR: bad scale factor [%s]", argv[1]);
+    ret = bu_sscanf(argv[1], "%lf", &amp;sf);
+    if (ret != 1 || sf &lt; SMALL_FASTF || sf &gt; INFINITY) {
+        bu_vls_printf(gedp-&gt;ged_result_str, "ERROR: bad scale factor [%s]", argv[1]);
         return GED_ERROR;
     }
 
@@ -1430,13 +1431,13 @@ main(int argc, char *argv[])
     bn_complex_t roots[BN_MAX_POLY_DEGREE]; /* stash up to six roots */
     int num_roots;
 
-    if (argc > 1)
+    if (argc &gt; 1)
         bu_exit(1, "%s: unexpected argument(s)\n", argv[0]);
 
     /*********************************************
      * Linear polynomial (1st degree equation):
      *  A*X + B = 0
-     * [0]   [1]     <= coefficients
+     * [0]   [1]     &lt;= coefficients
      */
     equation.dgr = 1;
     equation.cf[0] = 1;  /* A */
@@ -1444,13 +1445,13 @@ main(int argc, char *argv[])
 
     /* print the equation */
     bu_log("\n*** LINEAR ***\n");
-    bn_pr_poly("Solving for Linear", &equation);
+    bn_pr_poly("Solving for Linear", &amp;equation);
     /* solve for the roots */
-    num_roots = rt_poly_roots(&equation, roots, "My Linear Polynomial");
+    num_roots = rt_poly_roots(&amp;equation, roots, "My Linear Polynomial");
     if (num_roots == 0) {
         bu_log("No roots found!\n");
         return 0;
-    } else if (num_roots < 0) {
+    } else if (num_roots &lt; 0) {
         bu_log("The root solver failed to converge on a solution\n");
         return 1;
     }
@@ -1467,7 +1468,7 @@ main(int argc, char *argv[])
     /*********************************************
      * Quadratic polynomial (2nd degree equation):
      *  A*X^2 + B*X + C = 0
-     * [0]     [1]   [2]     <=coefficients
+     * [0]     [1]   [2]     &lt;=coefficients
      */
     equation.dgr = 2;
     equation.cf[0] = 1;  /* A */
@@ -1476,14 +1477,14 @@ main(int argc, char *argv[])
 
     /* print the equation */
     bu_log("\n*** QUADRATIC ***\n");
-    bn_pr_poly("Solving for Quadratic", &equation);
+    bn_pr_poly("Solving for Quadratic", &amp;equation);
 
     /* solve for the roots */
-    num_roots = rt_poly_roots(&equation, roots, "My Quadratic Polynomial");
+    num_roots = rt_poly_roots(&amp;equation, roots, "My Quadratic Polynomial");
     if (num_roots == 0) {
         bu_log("No roots found!\n");
         return 0;
-    } else if (num_roots < 0) {
+    } else if (num_roots &lt; 0) {
         bu_log("The root solver failed to converge on a solution\n");
         return 1;
     }
@@ -1502,7 +1503,7 @@ main(int argc, char *argv[])
     /*****************************************
      * Cubic polynomial (3rd degree equation):
      *  A*X^3 + B*X^2 + C*X + D = 0
-     * [0]     [1]     [2]   [3]     <=coefficients
+     * [0]     [1]     [2]   [3]     &lt;=coefficients
      */
     equation.dgr = 3;
     equation.cf[0] = 45;
@@ -1512,14 +1513,14 @@ main(int argc, char *argv[])
 
     /* print the equation */
     bu_log("\n*** CUBIC ***\n");
-    bn_pr_poly("Solving for Cubic", &equation);
+    bn_pr_poly("Solving for Cubic", &amp;equation);
 
     /* solve for the roots */
-    num_roots = rt_poly_roots(&equation, roots, "My Cubic Polynomial");
+    num_roots = rt_poly_roots(&amp;equation, roots, "My Cubic Polynomial");
     if (num_roots == 0) {
         bu_log("No roots found!\n");
         return 0;
-    } else if (num_roots < 0) {
+    } else if (num_roots &lt; 0) {
         bu_log("The root solver failed to converge on a solution\n");
         return 1;
     }
@@ -1531,7 +1532,7 @@ main(int argc, char *argv[])
     /*******************************************
      * Quartic polynomial (4th degree equation):
      *  A*X^4 + B*X^3 + C*X^2 + D*X + E = 0
-     * [0]     [1]     [2]     [3]   [4]     <=coefficients
+     * [0]     [1]     [2]     [3]   [4]     &lt;=coefficients
      */
     equation.dgr = 4;
     equation.cf[0] = 2;
@@ -1542,14 +1543,14 @@ main(int argc, char *argv[])
 
     /* print the equation */
     bu_log("\n*** QUARTIC ***\n");
-    bn_pr_poly("Solving for Quartic", &equation);
+    bn_pr_poly("Solving for Quartic", &amp;equation);
 
     /* solve for the roots */
-    num_roots = rt_poly_roots(&equation, roots, "My Quartic Polynomial");
+    num_roots = rt_poly_roots(&amp;equation, roots, "My Quartic Polynomial");
     if (num_roots == 0) {
         bu_log("No roots found!\n");
         return 0;
-    } else if (num_roots < 0) {
+    } else if (num_roots &lt; 0) {
         bu_log("The root solver failed to converge on a solution\n");
         return 1;
     }
@@ -1560,7 +1561,7 @@ main(int argc, char *argv[])
     /*******************************************
      * Sextic polynomial (6th degree equation):
      *  A*X^6 + B*X^5 + C*X^4 + D*X^3 + E*X^2 + F*X + G = 0
-     * [0]     [1]     [2]     [3]     [4]     [5]   [6]  <=coefficients
+     * [0]     [1]     [2]     [3]     [4]     [5]   [6]  &lt;=coefficients
      */
 
     equation.dgr = 6;
@@ -1574,14 +1575,14 @@ main(int argc, char *argv[])
 
     /* print the equation */
     bu_log("\n*** SEXTIC ***\n");
-    bn_pr_poly("Solving for Sextic", &equation);
+    bn_pr_poly("Solving for Sextic", &amp;equation);
 
     /* solve for the roots */
-    num_roots = rt_poly_roots(&equation, roots, "My Sextic Polynomial");
+    num_roots = rt_poly_roots(&amp;equation, roots, "My Sextic Polynomial");
     if (num_roots == 0) {
         bu_log("No roots found!\n");
         return 0;
-    } else if (num_roots < 0) {
+    } else if (num_roots &lt; 0) {
         bu_log("The root solver failed to converge on a solution\n");
         return 1;
     }
@@ -1593,7 +1594,7 @@ main(int argc, char *argv[])
     return 0;
 }
 
-
-
+    </programlisting></para>
+  </chapter>
 
 </book>
