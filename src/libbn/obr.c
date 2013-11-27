@@ -190,6 +190,7 @@ UpdateBox(struct obr_vals *obr, point2d_t left_pnt, point2d_t right_pnt, point2d
 */
 	obr->area = area;
 	V2MOVE(obr->u, u);
+	V2MOVE(obr->v, v);
 	obr->extent0 = extent0;
 	obr->extent1 = extent1;
 	/* TODO translate this to vmath.h routines...

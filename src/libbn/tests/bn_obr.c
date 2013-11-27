@@ -45,6 +45,10 @@ main()
 
     bn_2d_obr(&center, &u, &v, (const point2d_t *)pnts, n);
 
+    bu_log("input : p1     (%f, %f)\n", V2ARGS(pnts[0]));
+    bu_log("      : p2     (%f, %f)\n", V2ARGS(pnts[1]));
+    bu_log("      : p3     (%f, %f)\n", V2ARGS(pnts[2]));
+    bu_log("      : p4     (%f, %f)\n", V2ARGS(pnts[3]));
     bu_log("result: center (%f, %f)\n", V2ARGS(center));
     bu_log("        u      (%f, %f)\n", V2ARGS(u));
     bu_log("        v      (%f, %f)\n", V2ARGS(v));
