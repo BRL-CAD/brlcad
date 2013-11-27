@@ -39,8 +39,8 @@
 	The earliest ancestor of BRL-CAD was the MAGIC code, written by
 	the Mathematical Applications Group, Inc. in 1967 to implement geometric
 	modeling ideas developed by BRL and AMSAA from 1958-1967.  That system,
-	which was entirely non-graphical, was followed some years later by the GIFT 
-        program&#x2014;Geometric Information From Targets.  LIBRT, appearing around 1983, 
+	which was entirely non-graphical, was followed some years later by the GIFT
+        program&#x2014;Geometric Information From Targets.  LIBRT, appearing around 1983,
         became the successor to GIFT.
 	Today it is the core library of the BRL-CAD solid modeling package.  (For more background
 	see http://ftp.arl.army.mil/~mike/papers/96thebook/).  LIBRT inherited
