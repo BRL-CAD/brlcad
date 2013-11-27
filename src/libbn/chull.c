@@ -48,17 +48,17 @@ bn_coplanar_2d_coord_sys(point_t *origin_pnt, vect_t *u_axis, vect_t *v_axis, co
     point_t p_farthest;
     int p_farthest_index = 0;
     vect_t normal;
-    const struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST/2, BN_TOL_DIST*BN_TOL_DIST/4, 1e-6, 1-1e-6};
+    const struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST/2.0, BN_TOL_DIST*BN_TOL_DIST/4.0, 1.0e-6, 1.0-1.0e-6};
 
     /* Step 1 - find center point */
-    VSET(*origin_pnt, 0, 0, 0);
+    VSETALL(*origin_pnt, 0.0);
     for (i = 0; i < n; i++) {
 	VADD2(*origin_pnt, *origin_pnt, points_3d[i]);
     }
     VSCALE(*origin_pnt, *origin_pnt, 1.0/n);
 
     /* Step 2 - find furthest points from the center point */
-    VSET(p_farthest, 0, 0, 0);
+    VSETALL(p_farthest, 0.0);
     for (i = 0; i < n; i++) {
 	fastf_t curr_dist = DIST_PT_PT_SQ(*origin_pnt, points_3d[i]);
 	if (curr_dist > dist_pt_pt) {
@@ -123,8 +123,8 @@ bn_coplanar_3d_to_2d(point2d_t **points_2d, const point_t *origin_pnt,
 	fastf_t u, v;
 	VSUB2(temp, points_3d[i], *origin_pnt);
 	VPROJECT(temp, *u_axis, c, d);
-	u = (VDOT(c, *u_axis) > 0) ? (MAGNITUDE(c)) : (-1 * MAGNITUDE(c));
-	v = (VDOT(d, *v_axis) > 0) ? (MAGNITUDE(d)) : (-1 * MAGNITUDE(d));
+	u = (VDOT(c, *u_axis) > 0.0) ? (MAGNITUDE(c)) : (-1.0 * MAGNITUDE(c));
+	v = (VDOT(d, *v_axis) > 0.0) ? (MAGNITUDE(d)) : (-1.0 * MAGNITUDE(d));
         V2SET((*points_2d)[i], u, v);
     }
 
@@ -156,20 +156,20 @@ int i;
     vect_t temp;
     fastf_t mag_u_x, mag_u_y, mag_u_z;
     fastf_t mag_v_x, mag_v_y, mag_v_z;
-    VSET(x_axis, 1, 0, 0);
-    VSET(y_axis, 0, 1, 0);
-    VSET(z_axis, 0, 0, 1);
+    VSET(x_axis, 1.0, 0.0, 0.0);
+    VSET(y_axis, 0.0, 1.0, 0.0);
+    VSET(z_axis, 0.0, 0.0, 1.0);
     /* Step 1 - find the 3d X, Y and Z components of u_axis and v_axis */
     VPROJECT(*u_axis, x_axis, u_x_component, temp);
     VPROJECT(temp, y_axis, u_y_component, u_z_component);
     VPROJECT(*v_axis, x_axis, v_x_component, temp);
     VPROJECT(temp, y_axis, v_y_component, v_z_component);
-    mag_u_x = (VDOT(u_x_component, x_axis) > 0) ? (MAGNITUDE(u_x_component)) : (-1 * MAGNITUDE(u_x_component));
-    mag_u_y = (VDOT(u_y_component, y_axis) > 0) ? (MAGNITUDE(u_y_component)) : (-1 * MAGNITUDE(u_y_component));
-    mag_u_z = (VDOT(u_z_component, z_axis) > 0) ? (MAGNITUDE(u_z_component)) : (-1 * MAGNITUDE(u_z_component));
-    mag_v_x = (VDOT(v_x_component, x_axis) > 0) ? (MAGNITUDE(v_x_component)) : (-1 * MAGNITUDE(v_x_component));
-    mag_v_y = (VDOT(v_y_component, y_axis) > 0) ? (MAGNITUDE(v_y_component)) : (-1 * MAGNITUDE(v_y_component));
-    mag_v_z = (VDOT(v_z_component, z_axis) > 0) ? (MAGNITUDE(v_z_component)) : (-1 * MAGNITUDE(v_z_component));
+    mag_u_x = (VDOT(u_x_component, x_axis) > 0.0) ? (MAGNITUDE(u_x_component)) : (-1.0 * MAGNITUDE(u_x_component));
+    mag_u_y = (VDOT(u_y_component, y_axis) > 0.0) ? (MAGNITUDE(u_y_component)) : (-1.0 * MAGNITUDE(u_y_component));
+    mag_u_z = (VDOT(u_z_component, z_axis) > 0.0) ? (MAGNITUDE(u_z_component)) : (-1.0 * MAGNITUDE(u_z_component));
+    mag_v_x = (VDOT(v_x_component, x_axis) > 0.0) ? (MAGNITUDE(v_x_component)) : (-1.0 * MAGNITUDE(v_x_component));
+    mag_v_y = (VDOT(v_y_component, y_axis) > 0.0) ? (MAGNITUDE(v_y_component)) : (-1.0 * MAGNITUDE(v_y_component));
+    mag_v_z = (VDOT(v_z_component, z_axis) > 0.0) ? (MAGNITUDE(v_z_component)) : (-1.0 * MAGNITUDE(v_z_component));
 
     /* Step 2 - for each 2D point, calculate the (x,y,z) coordinates as follows:
      * (http://math.stackexchange.com/questions/525829/how-to-find-the-3d-coordinate-of-a-2d-point-on-a-known-plane)
