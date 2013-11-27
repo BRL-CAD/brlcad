@@ -34,17 +34,17 @@ main()
 {
 #if 0
     /* FIXME: finish this */
-    point_t center;
-    point_t u, v;
-    point_t pnts[4+1] = {{0}};
+    point2d_t center;
+    vect2d_t u, v;
+    point2d_t pnts[4+1] = {{0}};
     int n = 4;
 
-    VSET(pnts[0], 1.5, 1.5, 0.0);
-    VSET(pnts[1], 3.0, 2.0, 0.0);
-    VSET(pnts[2], 2.0, 2.5, 0.0);
-    VSET(pnts[3], 1.0, 2.0, 0.0);
+    V2SET(pnts[0], 1.5, 1.5);
+    V2SET(pnts[1], 3.0, 2.0);
+    V2SET(pnts[2], 2.0, 2.5);
+    V2SET(pnts[3], 1.0, 2.0);
 
-    bn_obr(const point_t *)pnts, n, &center, &u, &v);
+    bn_2d_obr(&center, &u, &v, const point2d_t *)pnts, n);
 /*
     bu_log("result: P1 (%f, %f, %f)\n", V3ARGS(p0));
     bu_log("        P2 (%f, %f, %f)\n", V3ARGS(p1));
