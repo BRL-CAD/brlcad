@@ -114,10 +114,10 @@ pnt2d_array_get_dimension(const point2d_t *pnts, int pnt_cnt, point2d_t *p_cente
 	VSET(min_y_pt_3D, min_y_pt[0], min_y_pt[1], 0.0);
 	VSET(max_x_pt_3D, max_x_pt[0], max_x_pt[1], 0.0);
 	VSET(max_y_pt_3D, max_y_pt[0], max_y_pt[1], 0.0);
-	d[0] = DIST_PT_PT(min_x_pt, max_x_pt);
-	d[1] = DIST_PT_PT(min_x_pt, max_y_pt);
-	d[2] = DIST_PT_PT(min_y_pt, max_x_pt);
-	d[3] = DIST_PT_PT(min_y_pt, max_y_pt);
+	d[0] = DIST_PT_PT(min_x_pt_3D, max_x_pt_3D);
+	d[1] = DIST_PT_PT(min_x_pt_3D, max_y_pt_3D);
+	d[2] = DIST_PT_PT(min_y_pt_3D, max_x_pt_3D);
+	d[3] = DIST_PT_PT(min_y_pt_3D, max_y_pt_3D);
     }
     for (i = 0; i < 4; i++) {
 	if (d[i] > dmax) {
@@ -508,9 +508,6 @@ bn_2d_obr(point2d_t *center, vect2d_t *u, vect2d_t *v, const point2d_t *pnts, in
 
 int
 bn_3d_coplanar_obr(point_t *center, vect_t *v1, vect_t *v2, const point_t *pnts, int pnt_cnt){
-    struct obr_vals obr;
-    V2SET(obr.v, 0.0, 0.0);
-
     VSET(*center, 0.0, 0.0, 0.0);
     VSET(*v1, 0.0, 0.0, 0.0);
     VSET(*v2, 0.0, 0.0, 0.0);
