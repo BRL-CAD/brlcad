@@ -105,20 +105,10 @@ pnt2d_array_get_dimension(const point2d_t *pnts, int pnt_cnt, point2d_t *p_cente
     if (NEAR_ZERO(max[0] - min[0], BN_TOL_DIST) && NEAR_ZERO(max[1] - min[1], BN_TOL_DIST)) return 0;
 
     /* Test if the point set is (nearly) a line */
-    {
-	point_t min_x_pt_3D;
-	point_t min_y_pt_3D;
-	point_t max_x_pt_3D;
-	point_t max_y_pt_3D;
-	VSET(min_x_pt_3D, min_x_pt[0], min_x_pt[1], 0.0);
-	VSET(min_y_pt_3D, min_y_pt[0], min_y_pt[1], 0.0);
-	VSET(max_x_pt_3D, max_x_pt[0], max_x_pt[1], 0.0);
-	VSET(max_y_pt_3D, max_y_pt[0], max_y_pt[1], 0.0);
-	d[0] = DIST_PT_PT(min_x_pt_3D, max_x_pt_3D);
-	d[1] = DIST_PT_PT(min_x_pt_3D, max_y_pt_3D);
-	d[2] = DIST_PT_PT(min_y_pt_3D, max_x_pt_3D);
-	d[3] = DIST_PT_PT(min_y_pt_3D, max_y_pt_3D);
-    }
+    d[0] = DIST_PT2_PT2(min_x_pt, max_x_pt);
+    d[1] = DIST_PT2_PT2(min_x_pt, max_y_pt);
+    d[2] = DIST_PT2_PT2(min_y_pt, max_x_pt);
+    d[3] = DIST_PT2_PT2(min_y_pt, max_y_pt);
     for (i = 0; i < 4; i++) {
 	if (d[i] > dmax) {
 	    dmax = d[i];
