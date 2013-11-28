@@ -76,8 +76,7 @@ pnt2d_array_get_dimension(const point2d_t *pnts, int pnt_cnt, point2d_t *p_cente
     point2d_t max_y_pt;
     point2d_t A;
     point2d_t B;
-    fastf_t d[4];
-    fastf_t dmax = 0.0;
+    fastf_t dmax, dist_minmax;
 
     V2MOVE(curr_pnt, pnts[0]);
     V2MOVE(min_x_pt, curr_pnt);
@@ -105,19 +104,27 @@ pnt2d_array_get_dimension(const point2d_t *pnts, int pnt_cnt, point2d_t *p_cente
     if (NEAR_ZERO(max[0] - min[0], BN_TOL_DIST) && NEAR_ZERO(max[1] - min[1], BN_TOL_DIST)) return 0;
 
     /* Test if the point set is (nearly) a line */
-    d[0] = DIST_PT2_PT2(min_x_pt, max_x_pt);
-    d[1] = DIST_PT2_PT2(min_x_pt, max_y_pt);
-    d[2] = DIST_PT2_PT2(min_y_pt, max_x_pt);
-    d[3] = DIST_PT2_PT2(min_y_pt, max_y_pt);
-    for (i = 0; i < 4; i++) {
-	if (d[i] > dmax) {
-	    dmax = d[i];
-	    if (i == 1) {V2MOVE(A,min_x_pt); V2MOVE(B,max_x_pt);}
-	    if (i == 2) {V2MOVE(A,min_x_pt); V2MOVE(B,max_y_pt);}
-	    if (i == 3) {V2MOVE(A,min_y_pt); V2MOVE(B,max_x_pt);}
-	    if (i == 4) {V2MOVE(A,min_y_pt); V2MOVE(B,max_y_pt);}
-	}
+
+    /* find the min A and max B with the greatest distance between them */
+    dmax = 0.0;
+    dist_minmax = DIST_PT2_PT2(min_x_pt, max_x_pt);
+    if (dist_minmax > dmax) {
+	V2MOVE(A, min_x_pt);
+	V2MOVE(B, min_x_pt);
     }
+#define MAXDIST_AB(_minpt, _maxpt) { \
+    fastf_t md_dist = DIST_PT2_PT2(_minpt, _maxpt); \
+    if (md_dist > dmax) { \
+	dmax = md_dist; \
+	V2MOVE(A, _minpt); \
+	V2MOVE(B, _maxpt); \
+    } \
+}
+    MAXDIST_AB(min_x_pt, max_x_pt);
+    MAXDIST_AB(min_x_pt, max_y_pt);
+    MAXDIST_AB(min_y_pt, max_x_pt);
+    MAXDIST_AB(min_y_pt, max_y_pt);
+
     i = 0;
     while (i < pnt_cnt) {
 	const struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST/2, BN_TOL_DIST*BN_TOL_DIST/4, 1e-6, 1-1e-6};
