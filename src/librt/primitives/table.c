@@ -689,7 +689,7 @@ const struct rt_functab OBJ[] = {
 	rt_nmg_bbox,
 	NULL,
 	rt_nmg_surf_area,
-	NULL,
+	rt_nmg_centroid,
 	NULL,
 	NULL,
 	NULL,

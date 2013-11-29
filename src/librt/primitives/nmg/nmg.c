@@ -3136,20 +3136,23 @@ nmg_ccw(const void *x, const void *y)
 }
 
 
+/* contains information used to analyze a polygonal face */
+struct poly_face
+{
+    char label[5];
+    size_t npts;
+    point_t *pts;
+    plane_t plane_eqn;
+    fastf_t area;
+    fastf_t vol_pyramid;
+    point_t cent_pyramid;
+    point_t cent;
+};
+
+
 void
 rt_nmg_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
-    /* contains information used to analyze a polygonal face */
-    struct poly_face
-    {
-	char label[5];
-	size_t npts;
-	point_t *pts;
-	plane_t plane_eqn;
-	fastf_t area;
-    };
-
-
     struct model *m;
     struct nmgregion* r;
 
@@ -3241,6 +3244,172 @@ rt_nmg_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	r = BU_LIST_PNEXT(nmgregion, r);
     }
 }
+
+
+void
+rt_nmg_centroid(point_t *cent, const struct rt_db_internal *ip)
+{
+    struct model *m;
+    struct nmgregion* r;
+    struct shell* s;
+    struct poly_face *faces;
+    struct bu_ptbl nmg_faces;
+    fastf_t volume;
+    point_t arbit_point = VINIT_ZERO;
+    unsigned int num_faces, i, j, k, l;
+
+    *cent[0] = 0.0;
+    *cent[1] = 0.0;
+    *cent[2] = 0.0;
+    m = (struct model *)ip->idb_ptr;
+    r = BU_LIST_FIRST(nmgregion, &m->r_hd);
+    s = BU_LIST_FIRST(shell, &r->s_hd);
+
+    /*get faces*/
+    nmg_face_tabulate(&nmg_faces, &s->l.magic);
+    num_faces = BU_PTBL_LEN(&nmg_faces);
+    faces = (struct poly_face *)bu_calloc(num_faces, sizeof(struct poly_face), "nmg_surf_area: faces");
+
+    for(i = 0; i < num_faces; i++) {
+	struct face *f;
+	f = (struct face *)BU_PTBL_GET(&nmg_faces, i);
+	HMOVE(faces[i].plane_eqn, f->g.plane_p->N);
+	VUNITIZE(faces[i].plane_eqn);
+	/* allocate array of pt structs, max number of verts per faces = (# of faces) - 1 */
+	faces[i].pts = (point_t *)bu_calloc(num_faces - 1, sizeof(point_t), "nmg_surf_area: pts");
+    }
+    /* find all vertices */
+    for (i = 0; i < num_faces - 2; i++) {
+	for (j = i + 1; j < num_faces - 1; j++) {
+	    for (k = j + 1; k < num_faces; k++) {
+		point_t pt;
+		int keep_point = 1;
+		if (bn_mkpoint_3planes(pt, faces[i].plane_eqn, faces[j].plane_eqn, faces[k].plane_eqn) < 0) {
+		    continue;
+		}
+		/* discard pt if it is outside the arbn */
+		for (l = 0; l < num_faces; l++) {
+		    if (l == i || l == j || l == k) {
+			continue;
+		    }
+		    if (DIST_PT_PLANE(pt, faces[l].plane_eqn) >  BN_TOL_DIST) {
+			keep_point = 0;
+			break;
+		    }
+		}
+		/* found a good point, add it to each of the intersecting faces */
+		if (keep_point) {
+		    VMOVE((faces[i]).pts[(faces[i]).npts], (pt)); (faces[i]).npts++;
+		    VMOVE((faces[j]).pts[(faces[j]).npts], (pt)); (faces[j]).npts++;
+		    VMOVE((faces[k]).pts[(faces[k]).npts], (pt)); (faces[k]).npts++;
+		}
+	    }
+	}
+    }
+    for (i = 0; i < num_faces; i++){
+	fastf_t x_0, x_1, y_0, y_1, z_0, z_1, a, signedArea = 0.0;
+	struct sortable_point *sort_points;
+	sort_points = (struct sortable_point *)bu_calloc(faces[i].npts, sizeof(struct sortable_point), "nmg_surf_area: sort_points");
+
+	for(j = 0; j < faces[i].npts; i++) {
+	    sort_points[j].pt[0] =  faces[i].pts[j][0];
+	    sort_points[j].pt[1] =  faces[i].pts[j][1];
+	    sort_points[j].pt[2] =  faces[i].pts[j][2];
+	    sort_points[j].cmp_plane = &faces[i].plane_eqn;
+	}
+	/* sort points */
+	qsort(sort_points, faces[i].npts, sizeof(struct sortable_point), nmg_ccw);
+	for(j = 0; j < faces[i].npts; i++) {
+	    faces[i].pts[j][0] = sort_points[j].pt[0];
+	    faces[i].pts[j][1] = sort_points[j].pt[1];
+	    faces[i].pts[j][2] = sort_points[j].pt[2];
+	}
+	bu_free((char *)sort_points, "nmg_surf_area: sort_points");
+
+	/* Calculate Centroid projection for face for x-y-plane */
+	for (j = 0; j < faces[i].npts-1; j++){
+	    x_0 = faces[i].pts[j][0];
+	    y_0 = faces[i].pts[j][1];
+	    x_1 = faces[i].pts[j+1][0];
+	    y_1 = faces[i].pts[j+1][1];
+	    a = x_0 *y_1 - x_1*y_0;
+	    signedArea += a;
+	    faces[i].cent[0] += (x_0 + x_1)*a;
+	    faces[i].cent[1] += (y_0 + y_1)*a;
+	}
+	x_0 = faces[i].pts[j][0];
+	y_0 = faces[i].pts[j][1];
+	x_1 = faces[i].pts[0][0];
+	y_1 = faces[i].pts[0][1];
+	a = x_0 *y_1 - x_1*y_0;
+	signedArea += a;
+	faces[i].cent[0] += (x_0 + x_1)*a;
+	faces[i].cent[1] += (y_0 + y_1)*a;
+
+	signedArea *= 0.5;
+	faces[i].cent[0] /= (6.0*signedArea);
+	faces[i].cent[1] /= (6.0*signedArea);
+
+	/* calculate Centroid projection for face for x-z-plane */
+
+	signedArea = 0.0;
+	for (j = 0; j < faces[i].npts-1; j++){
+	    x_0 = faces[i].pts[j][0];
+	    z_0 = faces[i].pts[j][2];
+	    x_1 = faces[i].pts[j+1][0];
+	    z_1 = faces[i].pts[j+1][2];
+	    a = x_0 *z_1 - x_1*z_0;
+	    signedArea += a;
+	    faces[i].cent[2] += (z_0 + z_1)*a;
+	}
+	x_0 = faces[i].pts[j][0];
+	z_0 = faces[i].pts[j][2];
+	x_1 = faces[i].pts[0][0];
+	z_0 = faces[i].pts[0][2];
+	a = x_0 *z_1 - x_1*z_0;
+	signedArea += a;
+	faces[i].cent[2] += (z_0 + z_1)*a;
+
+	signedArea *= 0.5;
+	faces[i].cent[2] /= (6.0*signedArea);
+	VADD2(arbit_point, arbit_point, faces[i].cent);
+
+    }
+    VSCALE(arbit_point, arbit_point, (1/num_faces));
+
+    for (i = 0; i < num_faces; i++) {
+	vect_t tmp, tot = VINIT_ZERO;
+
+	/* N-Sided Face - compute area using Green's Theorem */
+	for (j = 0; j < faces[i].npts; j++) {
+	    VCROSS(tmp, faces[i].pts[j], faces[i].pts[j + 1 == faces[i].npts ? 0 : j + 1]);
+	    VADD2(tot, tot, tmp);
+	}
+	faces[i].area = (fabs(VDOT(faces[i].plane_eqn, tot)) * 0.5);
+
+	/* calculate volume */
+	VSCALE(tmp, faces[i].plane_eqn, faces[i].area);
+	faces[i].vol_pyramid = (VDOT(faces[i].pts[0], tmp)/3);
+	volume += faces[i].vol_pyramid;
+	/*Vector from arbit_point to centroid of face, results in h of pyramid */
+	VSUB2(faces[i].cent_pyramid, faces[i].cent, arbit_point);
+	/*centroid of pyramid is 1/4 up from the bottom */
+	VSCALE(faces[i].cent_pyramid, faces[i].cent_pyramid, 0.75f);
+	/* now cent_pyramid is back in the polyhedron */
+	VADD2(faces[i].cent_pyramid, faces[i].cent_pyramid, arbit_point);
+	/* weight centroid of pyramid by pyramid's volume */
+	VSCALE(faces[i].cent_pyramid, faces[i].cent_pyramid, faces[i].vol_pyramid);
+	/* add cent_pyramid to the centroid of the polyhedron */
+	VADD2(*cent, *cent, faces[i].cent_pyramid);
+    }
+    /* reverse the weighting */
+    VSCALE(*cent, *cent, (1/volume));
+    for (i = 0; i < num_faces; i++) {
+	bu_free((char *)faces[i].pts, "rt_nmg_surf_area: pts");
+    }
+    bu_free((char *)faces, "rt_nmg_surf_area: faces");
+}
+
 
 /*
  * Local Variables:
