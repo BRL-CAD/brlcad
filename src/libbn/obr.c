@@ -197,7 +197,7 @@ UpdateBox(struct obr_vals *obr, point2d_t left_pnt, point2d_t right_pnt, point2d
 	V2SCALE(U, u, extent0);
 	/*bu_log("U: %f, %f, %f\n", U[0], U[1], U[2]);*/
 	/*bu_log("VDOT(v, left_bottom_diff): %f\n", VDOT(v,left_bottom_diff));*/
-	V2SCALE(V, v, extent1 - VDOT(v,left_bottom_diff));
+	V2SCALE(V, v, extent1 - V2DOT(v,left_bottom_diff));
 	/*bu_log("V: %f, %f, %f\n", V[0], V[1], V[2]);*/
 	V2ADD3(obr->center, left_pnt, U, V);
 	bu_log("center: %f, %f\n\n", obr->center[0], obr->center[1]);
@@ -234,7 +234,7 @@ bn_obr_calc(const point2d_t *pnts, int pnt_cnt, struct obr_vals *obr)
 	case 1:
 	    /* Bound line */
 	    V2SUB2(vline, pmax, pmin);
-	    obr->extent0 = MAGNITUDE(vline) * 0.5;
+	    obr->extent0 = MAGNITUDE2(vline) * 0.5;
 	    obr->extent1 = BN_TOL_DIST;
 	    V2SET(obr->center, center[0]/2, center[1]/2);
 	    V2SUB2(vline, pmax, center);

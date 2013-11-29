@@ -1276,7 +1276,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 /** @brief Return scalar magnitude of vector at `a' */
 #define MAGNITUDE(a) sqrt(MAGSQ(a))
-
+#define MAGNITUDE2(a) sqrt(MAG2SQ(a))
 
 /**
  * Store cross product of 3D vectors at `b' and `c' in vector at `a'.

@@ -54,11 +54,11 @@ main()
     bu_log("        u      (%f, %f)\n", V2ARGS(u));
     bu_log("        v      (%f, %f)\n", V2ARGS(v));
     V2ADD3(output_pnts[2], center, u, v);
-    VSCALE(u, u, -1);
+    V2SCALE(u, u, -1);
     V2ADD3(output_pnts[3], center, u, v);
-    VSCALE(v, v, -1);
+    V2SCALE(v, v, -1);
     V2ADD3(output_pnts[0], center, u, v);
-    VSCALE(u, u, -1);
+    V2SCALE(u, u, -1);
     V2ADD3(output_pnts[1], center, u, v);
     bu_log("        op1    (%f, %f)\n", V2ARGS(output_pnts[0]));
     bu_log("        op2    (%f, %f)\n", V2ARGS(output_pnts[1]));
