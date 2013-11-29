@@ -3388,6 +3388,7 @@ rt_nmg_centroid(point_t *cent, const struct rt_db_internal *ip)
 	faces[i].area = (fabs(VDOT(faces[i].plane_eqn, tot)) * 0.5);
 
 	/* calculate volume */
+	volume = 0.0;
 	VSCALE(tmp, faces[i].plane_eqn, faces[i].area);
 	faces[i].vol_pyramid = (VDOT(faces[i].pts[0], tmp)/3);
 	volume += faces[i].vol_pyramid;
