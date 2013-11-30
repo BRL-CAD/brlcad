@@ -61,6 +61,7 @@ struct tmp_v {
     struct vertex *v;
 };
 
+
 /**
  * R T _ N M G _ B B O X
  *
@@ -151,9 +152,9 @@ rt_nmg_print(const struct soltab *stp)
 int
 rt_nmg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 
-    /* info about the ray */
+/* info about the ray */
 
-    /* intersection w/ ray */
+/* intersection w/ ray */
 {
     struct ray_data rd;
     int status;
@@ -393,11 +394,11 @@ rt_nmg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 
 #define NMG_CK_DISKMAGIC(_cp, _magic)	\
-	if (ntohl(*(uint32_t*)_cp) != _magic) { \
-		bu_log("NMG_CK_DISKMAGIC: magic mis-match, got x%x, s/b x%x, file %s, line %d\n", \
-			ntohl(*(uint32_t*)_cp), _magic, __FILE__, __LINE__); \
-		bu_bomb("bad magic\n"); \
-	}
+    if (ntohl(*(uint32_t*)_cp) != _magic) { \
+	bu_log("NMG_CK_DISKMAGIC: magic mis-match, got x%x, s/b x%x, file %s, line %d\n", \
+	       ntohl(*(uint32_t*)_cp), _magic, __FILE__, __LINE__); \
+	bu_bomb("bad magic\n"); \
+    }
 
 
 /* ----------------------------------------------------------------------
@@ -842,7 +843,7 @@ int
 rt_nmg_export4_fastf(const fastf_t *fp, int count, int pt_type, double scale)
 
 
-    /* If zero, means literal array of values */
+/* If zero, means literal array of values */
 
 {
     int i;
@@ -1041,8 +1042,8 @@ reindex(genptr_t p, struct nmg_exp_counts *ecnt)
  */
 void
 rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, double local2mm)
-    /* base of disk array */
-    /* ptr to in-memory structure */
+/* base of disk array */
+/* ptr to in-memory structure */
 
 
 {
@@ -1412,11 +1413,11 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, dou
 #define INDEXL_HD(oo, ii, elem, hd) { \
 	int sub; \
 	if ((sub = ntohl(*(uint32_t*)((oo)->elem.forw))) < 0) \
-		(ii)->elem.forw = &(hd); \
-	else	(ii)->elem.forw = (struct bu_list *)ptrs[sub]; \
+	    (ii)->elem.forw = &(hd); \
+	else (ii)->elem.forw = (struct bu_list *)ptrs[sub]; \
 	if ((sub = ntohl(*(uint32_t*)((oo)->elem.back))) < 0) \
-		(ii)->elem.back = &(hd); \
-	else	(ii)->elem.back = (struct bu_list *)ptrs[sub]; }
+	    (ii)->elem.back = &(hd); \
+	else (ii)->elem.back = (struct bu_list *)ptrs[sub]; }
 
 /* For use with the edgeuse l2 / edge_g eu2_hd secondary list */
 /* The subscripts will point to the edgeuse, not the edgeuse's l2 rt_list */
@@ -1424,18 +1425,18 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, dou
 	int sub; \
 	struct edgeuse *eu2; \
 	if ((sub = ntohl(*(uint32_t*)((oo)->elem.forw))) < 0) { \
-		(ii)->elem.forw = &(hd); \
+	    (ii)->elem.forw = &(hd); \
 	} else { \
-		eu2 = (struct edgeuse *)ptrs[sub]; \
-		NMG_CK_EDGEUSE(eu2); \
-		(ii)->elem.forw = &eu2->l2; \
+	    eu2 = (struct edgeuse *)ptrs[sub]; \
+	    NMG_CK_EDGEUSE(eu2); \
+	    (ii)->elem.forw = &eu2->l2; \
 	} \
 	if ((sub = ntohl(*(uint32_t*)((oo)->elem.back))) < 0) { \
-		(ii)->elem.back = &(hd); \
+	    (ii)->elem.back = &(hd); \
 	} else { \
-		eu2 = (struct edgeuse *)ptrs[sub]; \
-		NMG_CK_EDGEUSE(eu2); \
-		(ii)->elem.back = &eu2->l2; \
+	    eu2 = (struct edgeuse *)ptrs[sub]; \
+	    NMG_CK_EDGEUSE(eu2); \
+	    (ii)->elem.back = &eu2->l2; \
 	} }
 
 
@@ -1448,11 +1449,11 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, dou
  */
 int
 rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uint32_t **ptrs, const fastf_t *mat, const unsigned char *basep)
-    /* ptr to in-memory structure */
-    /* base of disk array */
+/* ptr to in-memory structure */
+/* base of disk array */
 
 
-    /* base of whole import record */
+/* base of whole import record */
 {
     int iindex;		/* index in ip */
 
@@ -2171,7 +2172,7 @@ rt_nmg_import4_internal(struct rt_db_internal *ip, const struct bu_external *ep,
     ecnt = (struct nmg_exp_counts *)bu_calloc(maxindex+3,
 					      sizeof(struct nmg_exp_counts), "ecnt[]");
     real_ptrs = (uint32_t **)bu_calloc(maxindex+3,
-					    sizeof(uint32_t *), "ptrs[]");
+				       sizeof(uint32_t *), "ptrs[]");
     /* So that indexing [-1] gives an appropriately bogus magic # */
     ptrs = real_ptrs+1;
     ptrs[-1] = &bad_magic;		/* [-1] gives bad magic */
@@ -3131,7 +3132,7 @@ nmg_ccw(const void *x, const void *y)
     vect_t tmp;
     const struct sortable_point *xp1 = x;
     const struct sortable_point *yp1 = y;
-    VCROSS(tmp,(fastf_t *)xp1->pt, (fastf_t *)yp1->pt);
+    VCROSS(tmp, (fastf_t *)xp1->pt, (fastf_t *)yp1->pt);
     return VDOT(*xp1->cmp_plane, tmp);
 }
 
@@ -3163,7 +3164,7 @@ rt_nmg_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	struct shell* s;
 
 	s = BU_LIST_FIRST(shell, &r->s_hd);
-	while(BU_LIST_NOT_HEAD(s, &r->s_hd)){
+	while(BU_LIST_NOT_HEAD(s, &r->s_hd)) {
 	    struct bu_ptbl nmg_faces;
 	    unsigned int num_faces, i, j, k, l;
 	    struct poly_face *faces;
@@ -3195,7 +3196,7 @@ rt_nmg_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 			    if (l == i || l == j || l == k) {
 				continue;
 			    }
-			    if (DIST_PT_PLANE(pt, faces[l].plane_eqn) >  BN_TOL_DIST) {
+			    if (DIST_PT_PLANE(pt, faces[l].plane_eqn) > BN_TOL_DIST) {
 				keep_point = 0;
 				break;
 			    }
@@ -3292,7 +3293,7 @@ rt_nmg_centroid(point_t *cent, const struct rt_db_internal *ip)
 		    if (l == i || l == j || l == k) {
 			continue;
 		    }
-		    if (DIST_PT_PLANE(pt, faces[l].plane_eqn) >  BN_TOL_DIST) {
+		    if (DIST_PT_PLANE(pt, faces[l].plane_eqn) > BN_TOL_DIST) {
 			keep_point = 0;
 			break;
 		    }
@@ -3306,7 +3307,7 @@ rt_nmg_centroid(point_t *cent, const struct rt_db_internal *ip)
 	    }
 	}
     }
-    for (i = 0; i < num_faces; i++){
+    for (i = 0; i < num_faces; i++) {
 	fastf_t x_0, x_1, y_0, y_1, z_0, z_1, a, signedArea = 0.0;
 	struct sortable_point *sort_points;
 	sort_points = (struct sortable_point *)bu_calloc(faces[i].npts, sizeof(struct sortable_point), "nmg_surf_area: sort_points");
@@ -3327,7 +3328,7 @@ rt_nmg_centroid(point_t *cent, const struct rt_db_internal *ip)
 	bu_free((char *)sort_points, "nmg_surf_area: sort_points");
 
 	/* Calculate Centroid projection for face for x-y-plane */
-	for (j = 0; j < faces[i].npts-1; j++){
+	for (j = 0; j < faces[i].npts-1; j++) {
 	    x_0 = faces[i].pts[j][0];
 	    y_0 = faces[i].pts[j][1];
 	    x_1 = faces[i].pts[j+1][0];
@@ -3353,7 +3354,7 @@ rt_nmg_centroid(point_t *cent, const struct rt_db_internal *ip)
 	/* calculate Centroid projection for face for x-z-plane */
 
 	signedArea = 0.0;
-	for (j = 0; j < faces[i].npts-1; j++){
+	for (j = 0; j < faces[i].npts-1; j++) {
 	    x_0 = faces[i].pts[j][0];
 	    z_0 = faces[i].pts[j][2];
 	    x_1 = faces[i].pts[j+1][0];
