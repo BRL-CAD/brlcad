@@ -8,6 +8,7 @@ BRLCAD_ADDEXEC(tester_bn_poly_sub bn_poly_sub.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_poly_synthetic_div bn_poly_synthetic_div.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_obr bn_obr.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_chull bn_chull.c "libbu;libbn" NO_INSTALL)
+BRLCAD_ADDEXEC(tester_bn_plane_pt bn_plane_pt.c "libbu;libbn" NO_INSTALL)
 CMAKEFILES(bn_chull_test003_bot.asc)
 CMAKEFILES(bn_chull_test004_bot.asc)
 CMAKEFILES(bn_poly_cubic_roots.c bn_poly_quartic_roots.c bn_obr.c)
@@ -86,6 +87,97 @@ add_test(bn_poly_synthetic_div               tester_bn_poly_synthetic_div)
 #
 #  ************ obr.c tests *************
 #add_test(bn_obr_simple			tester_bn_obr) # Default points
+
+#
+#  ************ plane.c tests *************
+
+# For tester_bn_plane_pt, the input format is as follows:
+#
+# tester_bn_plane_pt <function number> <args>
+
+# For function #1 (bn_3pts_collinear), the <args> format is as follows:
+#
+# P0 P1 P2 <expected result>
+#
+# where P0-P2 are the points in question. An individual point is three
+# integer or floating point numbers separated by commas.
+
+add_test(bn_plane_3pts_collinear_false_1        tester_bn_plane_pt 1  0,0,0 1,1,1 6,3,8 0)
+add_test(bn_plane_3pts_collinear_false_2        tester_bn_plane_pt 1 0,0,0 6,3,8 1,1,1 0)
+add_test(bn_plane_3pts_collinear_false_3        tester_bn_plane_pt 1 1,1,1 0,0,0 6,3,8 0)
+add_test(bn_plane_3pts_collinear_false_4        tester_bn_plane_pt 1 1,1,1 6,3,8 0,0,0 0)
+add_test(bn_plane_3pts_collinear_false_5        tester_bn_plane_pt 1 6,3,8 1,1,1 0,0,0  0)
+add_test(bn_plane_3pts_collinear_false_6        tester_bn_plane_pt 1 6,3,8 0,0,0 1,1,1 0)
+add_test(bn_plane_3pts_collinear_same           tester_bn_plane_pt 1 5.3,8.1,9.6 5.3,8.1,9.6 5.3,8.1,9.6 0)
+add_test(bn_plane_3pts_collinear_partial_same_1 tester_bn_plane_pt 1 6,2,4 6,2,4 9.3,8.1,4.6 1)
+# This test fails, but I think that it shouldn't --- it seems to be
+# showing that point order matters since it is the same three points
+# as the preceding and following tests, but makes a different result.
+add_test(bn_plane_3pts_collinear_partial_same_2 tester_bn_plane_pt 1 9.3,8.1,4.6 6,2,4 6,2,4 1)
+add_test(bn_plane_3pts_collinear_partial_same_3 tester_bn_plane_pt 1 6,2,4 9.3,8.1,4.6 6,2,4 1)
+add_test(bn_plane_3pts_collinear_true_1         tester_bn_plane_pt 1 1.8,4.6,2.2 5.4,13.8,6.6 16.2,41.4,19.8 1)
+add_test(bn_plane_3pts_collinear_true_2         tester_bn_plane_pt 1 1.8,4.6,2.2 16.2,41.4,19.8 5.4,13.8,6.6 1)
+add_test(bn_plane_3pts_collinear_true_3         tester_bn_plane_pt 1 5.4,13.8,6.6 1.8,4.6,2.2 16.2,41.4,19.8 1)
+add_test(bn_plane_3pts_collinear_true_4         tester_bn_plane_pt 1 5.4,13.8,6.6 16.2,41.4,19.8 1.8,4.6,2.2 1)
+add_test(bn_plane_3pts_collinear_true_5         tester_bn_plane_pt 1 16.2,41.4,19.8 1.8,4.6,2.2 5.4,13.8,6.6 1)
+add_test(bn_plane_3pts_collinear_true_6         tester_bn_plane_pt 1 16.2,41.4,19.8 5.4,13.8,6.6 1.8,4.6,2.2 1)
+
+# For function #2 (bn_3pts_distinct), the <args> format is as follows:
+#
+#  P0 P1 P2 <expected result>
+#
+# where P0-P2 are the points in question. An individual point
+# is three integer or floating point numbers separated by commas.
+
+add_test(bn_plane_3pts_distinct_false_all       tester_bn_plane_pt 2 5.3,8.6,9.1 5.3,8.6,9.1 5.3,8.6,9.1 0)
+add_test(bn_plane_3pts_distinct_false_1         tester_bn_plane_pt 2 5.3,8.6,9.1 5.3,8.6,9.1 8.7,4.1,9.3 0)
+add_test(bn_plane_3pts_distinct_false_2         tester_bn_plane_pt 2 5.3,8.6,9.1 8.7,4.1,9.3 5.3,8.6,9.1 0)
+add_test(bn_plane_3pts_distinct_false_3         tester_bn_plane_pt 2 8.7,4.1,9.3 5.3,8.6,9.1 5.3,8.6,9.1 0)
+add_test(bn_plane_3pts_distinct_true_1          tester_bn_plane_pt 2 8.7,4.1,9.3 7.5,9.2,4.1 5.3,8.6,9.1 1)
+add_test(bn_plane_3pts_distinct_true_2          tester_bn_plane_pt 2 8.7,4.1,9.3 5.3,8.6,9.1 7.5,9.2,4.1 1)
+add_test(bn_plane_3pts_distinct_true_3          tester_bn_plane_pt 2 5.3,8.6,9.1 8.7,4.1,9.3 7.5,9.2,4.1 1)
+add_test(bn_plane_3pts_distinct_true_4          tester_bn_plane_pt 2 5.3,8.6,9.1 7.5,9.2,4.1 8.7,4.1,9.3 1)
+add_test(bn_plane_3pts_distinct_true_5          tester_bn_plane_pt 2 7.5,9.2,4.1 8.7,4.1,9.3 5.3,8.6,9.1 1)
+add_test(bn_plane_3pts_distinct_true_6          tester_bn_plane_pt 2 7.5,9.2,4.1 5.3,8.6,9.1 8.7,4.1,9.3 1)
+
+# For function #3 (bn_distsq_line3_pt3), the <args> format is as follows:
+#
+#  PT DIR A <expected result>
+#
+# Where PT and DIR define the parametric line in question and A is the
+# point in question.
+
+add_test(bn_plane_distsq_line3_pt3_1            tester_bn_plane_pt 3 0,0,0 1,1,1 0,0,0 0) 
+add_test(bn_plane_distsq_line3_pt3_2            tester_bn_plane_pt 3 -1,-1,-1 1,1,1 0,0,0 0)
+add_test(bn_plane_distsq_line3_pt3_3            tester_bn_plane_pt 3 0,0,0 1,1,1 0,5,0 16.666666)
+add_test(bn_plane_distsq_line3_pt3_4            tester_bn_plane_pt 3 5,6,4 9,3,8 -5,2,4 48.441558)
+
+# For function #4 (bn_distsq_pt3_lseg3_v2), the <args> format is as follows:
+#
+#  A B P <expected return> <expected distance>
+#
+# Where A and B are the endpoints of the line segment, and P is the
+# point in question.
+
+add_test(bn_plane_distsq_pt3_lseg3_v2_case0_1   tester_bn_plane_pt 4 -5,-5,-5 5,5,5 0,0,0 0 0)
+add_test(bn_plane_distsq_pt3_lseg3_v2_case1_1   tester_bn_plane_pt 4 -5,-5,-5 5,5,5 -5,-5,-5 1 0)
+add_test(bn_plane_distsq_pt3_lseg3_v2_case2_1   tester_bn_plane_pt 4 -5,-5,-5 5,5,5 5,5,5 2 0)
+add_test(bn_plane_distsq_pt3_lseg3_v2_case3_1   tester_bn_plane_pt 4 -5,-5,-5 5,5,5 -10,-5,-10 3 50)
+add_test(bn_plane_distsq_pt3_lseg3_v2_case4_1   tester_bn_plane_pt 4 -5,-5,-5 5,5,5 5,10,10 4 50)
+add_test(bn_plane_distsq_pt3_lseg3_v2_case5_1   tester_bn_plane_pt 4 -5,-5,-5 5,5,5 0,-5,-5 5 16.666666)
+
+# For function #5 (bn_mk_plane_3pts), the <args> format is as follows:
+#
+#  A B C <expected return
+#
+# Where A, B, and C are the points in question. This test function
+# does not currently support checking the resultant plane.
+
+add_test(bn_plane_mk_plane_3pts_fail_same       tester_bn_plane_pt 5 0,0,0 0,0,0 0,0,0 -1)
+add_test(bn_plane_mk_plane_3pts_fail_colinear_1 tester_bn_plane_pt 5 0,0,0 5,8,2 0,0,0 -1)
+add_test(bn_plane_mk_plane_3pts_fail_colinear_2 tester_bn_plane_pt 5 5,8,2 0,0,0 0,0,0 -1)
+add_test(bn_plane_mk_plane_3pts_fail_colinear_3 tester_bn_plane_pt 5 -10,-10,-10 0,0,0 5,5,5 -1)
+add_test(bn_plane_mk_plane_3pts_succeed         tester_bn_plane_pt 5 -10,-10,-10 7,3,8 19,4,2 0)
 
 # Local Variables:
 # tab-width: 8
