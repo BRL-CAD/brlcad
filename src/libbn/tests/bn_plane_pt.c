@@ -55,6 +55,7 @@ test_bn_3pts_collinear(int argc, char **argv)
     return !(expected_result == actual_result);
 }
 
+
 static int
 test_bn_3pts_distinct(int argc, char **argv)
 {
@@ -81,6 +82,7 @@ test_bn_3pts_distinct(int argc, char **argv)
     return !(expected_result == actual_result);
 }
 
+
 static int
 test_bn_distsq_line3_pt3(int argc, char **argv)
 {
@@ -105,6 +107,7 @@ test_bn_distsq_line3_pt3(int argc, char **argv)
 
     return !EQUAL(expected_result, actual_result);
 }
+
 
 static int
 test_bn_distsq_pt3_lseg3_v2(int argc, char **argv)
@@ -140,6 +143,7 @@ test_bn_distsq_pt3_lseg3_v2(int argc, char **argv)
     }
 }
 
+
 static int
 test_bn_mk_plane_3pts(int argc, char **argv)
 {
@@ -167,8 +171,9 @@ test_bn_mk_plane_3pts(int argc, char **argv)
     return !(expected_return == actual_return);
 }
 
+
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
     int function_num = 0;
 
