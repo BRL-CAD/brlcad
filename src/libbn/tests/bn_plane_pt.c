@@ -27,7 +27,9 @@
 #include "bu.h"
 #include "bn.h"
 
+
 #define TOL_INIT { BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 }
+
 
 static int
 test_bn_3pts_collinear(int argc, char **argv)
@@ -52,7 +54,7 @@ test_bn_3pts_collinear(int argc, char **argv)
 
     bu_log("result: %d\n", actual_result);
 
-    return !(expected_result == actual_result);
+    return (expected_result != actual_result);
 }
 
 
@@ -79,7 +81,7 @@ test_bn_3pts_distinct(int argc, char **argv)
 
     bu_log("result: %d\n", actual_result);
 
-    return !(expected_result == actual_result);
+    return (expected_result != actual_result);
 }
 
 
@@ -136,7 +138,7 @@ test_bn_distsq_pt3_lseg3_v2(int argc, char **argv)
     bu_log("return: %d\n", actual_return);
     bu_log("dist: %f\n", actual_dist);
 
-    if(expected_return == actual_return && NEAR_EQUAL(expected_dist, actual_dist, BN_TOL_DIST)) {
+    if (expected_return == actual_return && NEAR_EQUAL(expected_dist, actual_dist, BN_TOL_DIST)) {
 	return 0;
     } else {
 	return -1;
@@ -168,7 +170,7 @@ test_bn_mk_plane_3pts(int argc, char **argv)
 
     bu_log("return: %f\n", actual_return);
 
-    return !(expected_return == actual_return);
+    return (expected_return != actual_return);
 }
 
 
@@ -177,11 +179,14 @@ main(int argc, char *argv[])
 {
     int function_num = 0;
 
-    if (argc < 1) {
+    if (argc < 3) {
 	bu_exit(1, "ERROR: input format is function_num function_test_args [%s]\n", argv[0]);
     }
 
     sscanf(argv[1], "%d", &function_num);
+    if (function_num < 1 || function_num > 5)
+	function_num = 0;
+
     switch (function_num) {
         case 1:
 	    return test_bn_3pts_collinear(argc, argv);
