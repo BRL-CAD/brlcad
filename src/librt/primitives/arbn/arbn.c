@@ -49,7 +49,7 @@
  */
 int
 rt_arbn_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
-    size_t i,j,k;
+    size_t i, j, k;
     struct rt_arbn_internal *aip;
     RT_CK_DB_INTERNAL(ip);
     aip = (struct rt_arbn_internal *)ip->idb_ptr;
@@ -95,6 +95,7 @@ rt_arbn_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct
 
     return 0;
 }
+
 
 /**
  * R T _ A R B N _ P R E P
@@ -651,10 +652,10 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     /* Check for duplicate points */
     for (i=0; i<point_count; i++) {
 	for (j=i+1; j<point_count; j++) {
-	if (DIST_PT_PT_SQ(pts[i].pt, pts[j].pt) < tol->dist_sq) {
-		    /* These two points should point to the same vertex */
-		    pts[j].vp = pts[i].vp;
-		}
+	    if (DIST_PT_PT_SQ(pts[i].pt, pts[j].pt) < tol->dist_sq) {
+		/* These two points should point to the same vertex */
+		pts[j].vp = pts[i].vp;
+	    }
 	}
     }
 
@@ -677,8 +678,7 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 
 		for (l=0; l<3; l++) {
 		    for (n=0; n<3; n++) {
-			if (pts[j].plane_no[l] == pts[k].plane_no[n] && pts[j].plane_no[l] != (int)i)
-			{
+			if (pts[j].plane_no[l] == pts[k].plane_no[n] && pts[j].plane_no[l] != (int)i) {
 			    match = pts[j].plane_no[l];
 			    break;
 			}
@@ -1237,8 +1237,8 @@ rt_arbn_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 		goto cont;
 
 	    arbn->eqn = (plane_t *)bu_realloc(arbn->eqn,
-						  i * sizeof(plane_t),
-						  "arbn->eqn");
+					      i * sizeof(plane_t),
+					      "arbn->eqn");
 	    for (j=arbn->neqn; j<i; j++) {
 		HSETALL(arbn->eqn[j], 0.0);
 	    }
@@ -1353,7 +1353,6 @@ ccw(const void *x, const void *y)
 }
 
 
-
 void
 rt_arbn_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
@@ -1372,31 +1371,31 @@ rt_arbn_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 
     /* find all vertices */
     for (i = 0; i < aip->neqn - 2; i++) {
-    for (j = i + 1; j < aip->neqn - 1; j++) {
-	for (k = j + 1; k < aip->neqn; k++) {
-	    point_t pt;
-	    int keep_point = 1;
-	    if (bn_mkpoint_3planes(pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]) < 0) {
-		continue;
-	    }
-	    /* discard pt if it is outside the arbn */
-	    for (l = 0; l < aip->neqn; l++) {
-		if (l == i || l == j || l == k) {
+	for (j = i + 1; j < aip->neqn - 1; j++) {
+	    for (k = j + 1; k < aip->neqn; k++) {
+		point_t pt;
+		int keep_point = 1;
+		if (bn_mkpoint_3planes(pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]) < 0) {
 		    continue;
 		}
-		if (DIST_PT_PLANE(pt, aip->eqn[l]) >  BN_TOL_DIST) {
-		    keep_point = 0;
-		    break;
+		/* discard pt if it is outside the arbn */
+		for (l = 0; l < aip->neqn; l++) {
+		    if (l == i || l == j || l == k) {
+			continue;
+		    }
+		    if (DIST_PT_PLANE(pt, aip->eqn[l]) > BN_TOL_DIST) {
+			keep_point = 0;
+			break;
+		    }
+		}
+		/* found a good point, add it to each of the intersecting faces */
+		if (keep_point) {
+		    VMOVE((faces[i]).pts[(faces[i]).npts], (pt)); (faces[i]).npts++;
+		    VMOVE((faces[j]).pts[(faces[j]).npts], (pt)); (faces[j]).npts++;
+		    VMOVE((faces[k]).pts[(faces[k]).npts], (pt)); (faces[k]).npts++;
 		}
 	    }
-	    /* found a good point, add it to each of the intersecting faces */
-	    if (keep_point) {
-		VMOVE((faces[i]).pts[(faces[i]).npts], (pt)); (faces[i]).npts++;
-		VMOVE((faces[j]).pts[(faces[j]).npts], (pt)); (faces[j]).npts++;
-		VMOVE((faces[k]).pts[(faces[k]).npts], (pt)); (faces[k]).npts++;
-	    }
 	}
-    }
     }
     for (i = 0; i < aip->neqn; i++) {
 	vect_t tmp, tot = VINIT_ZERO;
@@ -1445,40 +1444,40 @@ rt_arbn_centroid(point_t *cent, const struct rt_db_internal *ip)
 
     /* find all vertices */
     for (i = 0; i < aip->neqn - 2; i++) {
-    for (j = i + 1; j < aip->neqn - 1; j++) {
-	for (k = j + 1; k < aip->neqn; k++) {
-	    point_t pt;
-	    int keep_point = 1;
-	    if (bn_mkpoint_3planes(pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]) < 0) {
-		continue;
-	    }
-	    /* discard pt if it is outside the arbn */
-	    for (l = 0; l < aip->neqn; l++) {
-		if (l == i || l == j || l == k) {
+	for (j = i + 1; j < aip->neqn - 1; j++) {
+	    for (k = j + 1; k < aip->neqn; k++) {
+		point_t pt;
+		int keep_point = 1;
+		if (bn_mkpoint_3planes(pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]) < 0) {
 		    continue;
 		}
-		if (DIST_PT_PLANE(pt, aip->eqn[l]) >  BN_TOL_DIST) {
-		    keep_point = 0;
-		    break;
+		/* discard pt if it is outside the arbn */
+		for (l = 0; l < aip->neqn; l++) {
+		    if (l == i || l == j || l == k) {
+			continue;
+		    }
+		    if (DIST_PT_PLANE(pt, aip->eqn[l]) > BN_TOL_DIST) {
+			keep_point = 0;
+			break;
+		    }
 		}
-	    }
-	    /* found a good point, add it to each of the intersecting faces */
-	    if (keep_point) {
-		VMOVE((faces[i]).pts[(faces[i]).npts], (pt)); (faces[i]).npts++;
-		VMOVE((faces[j]).pts[(faces[j]).npts], (pt)); (faces[j]).npts++;
-		VMOVE((faces[k]).pts[(faces[k]).npts], (pt)); (faces[k]).npts++;
+		/* found a good point, add it to each of the intersecting faces */
+		if (keep_point) {
+		    VMOVE((faces[i]).pts[(faces[i]).npts], (pt)); (faces[i]).npts++;
+		    VMOVE((faces[j]).pts[(faces[j]).npts], (pt)); (faces[j]).npts++;
+		    VMOVE((faces[k]).pts[(faces[k]).npts], (pt)); (faces[k]).npts++;
+		}
 	    }
 	}
     }
-    }
-    for (i = 0; i < aip->neqn; i++){
+    for (i = 0; i < aip->neqn; i++) {
 	fastf_t x_0, x_1, y_0, y_1, z_0, z_1, a, signedArea = 0.0;
 	/* sort points */
 	cmp_plane = &faces[i].plane_eqn;
 	qsort(faces[i].pts, faces[i].npts, sizeof(point_t), ccw);
 	cmp_plane = NULL;
 	/* Calculate Centroid projection for face for x-y-plane */
-	for (j = 0; j < faces[i].npts-1; j++){
+	for (j = 0; j < faces[i].npts-1; j++) {
 	    x_0 = faces[i].pts[j][0];
 	    y_0 = faces[i].pts[j][1];
 	    x_1 = faces[i].pts[j+1][0];
@@ -1504,7 +1503,7 @@ rt_arbn_centroid(point_t *cent, const struct rt_db_internal *ip)
 	/* calculate Centroid projection for face for x-z-plane */
 
 	signedArea = 0.0;
-	for (j = 0; j < faces[i].npts-1; j++){
+	for (j = 0; j < faces[i].npts-1; j++) {
 	    x_0 = faces[i].pts[j][0];
 	    z_0 = faces[i].pts[j][2];
 	    x_1 = faces[i].pts[j+1][0];
@@ -1558,6 +1557,7 @@ rt_arbn_centroid(point_t *cent, const struct rt_db_internal *ip)
     }
     bu_free((char *)faces, "rt_arbn_centroid: faces");
 }
+
 
 /** @} */
 /*
