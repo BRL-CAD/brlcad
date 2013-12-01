@@ -18,11 +18,12 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* add a proper tgamma (c99) check, see superell.c
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* add a proper tgamma (c99) check, see superell.c
 
 * libnmg: eliminate the nmgregion and model structures, rename shell
   to model (consider naming consistency of all public structs).
