@@ -214,11 +214,11 @@ output_elevation(long int in_value, FILE *fp)
  */
 void remove_whitespace(char *input_string)
 {
-    char *idx = '\0';
+    char *idx = NULL;
     int idx2 = 0;
     int input_string_length = 0;
-    char *firstp = '\0';
-    char *lastp = '\0';
+    char *firstp = NULL;
+    char *lastp = NULL;
     int found_start = 0;
     int found_end = 0;
     int cleaned_string_length = 0;
@@ -245,7 +245,7 @@ void remove_whitespace(char *input_string)
     }
     /* if found_start is 0 then string must be all whitespace */
     if (found_start == 0) {
-	/* set null to first character a do nothing more */
+	/* set null to first character and do nothing more */
 	input_string[0] = '\0';
 	return;
     }
@@ -298,7 +298,7 @@ int read_element(ResultStruct *io_struct)
     char *search_result_uppercase;
     char *search_result_lowercase;
     char *endp;
-    char *buf = '\0';
+    char *buf = NULL;
     int status = BRLCAD_ERROR;
     logical_record_type record_type ;
     int start_character = 0;
