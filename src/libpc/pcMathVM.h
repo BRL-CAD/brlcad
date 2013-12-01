@@ -35,9 +35,10 @@
 #include <boost/iterator/indirect_iterator.hpp>
 
 /* for g++ to quell -Wshadow warnings */
+#pragma GCC diagnostic push /* start ignoring warnings */
 #pragma GCC diagnostic ignored "-Wshadow"
 #include <boost/spirit/include/classic.hpp>
-#pragma GCC diagnostic pop /* end ignoring -Wshadow */
+#pragma GCC diagnostic pop /* end ignoring warnings */
 
 #include <iostream>
 #include <string>
