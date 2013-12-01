@@ -3412,6 +3412,7 @@ rt_nmg_centroid(point_t *cent, const struct rt_db_internal *ip)
     bu_free((char *)faces, "rt_nmg_surf_area: faces");
 }
 
+
 void
 rt_nmg_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
@@ -3509,6 +3510,7 @@ rt_nmg_volume(fastf_t *volume, const struct rt_db_internal *ip)
 	r = BU_LIST_PNEXT(nmgregion, r);
     }
 }
+
 
 /*
  * Local Variables:
