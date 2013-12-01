@@ -80,7 +80,7 @@ db_ls(const struct db_i *dbip, int flags, struct directory ***dpv)
 		}
 	    }
 	}
-	(*dpv)[objcount] = '\0';
+	(*dpv)[objcount] = NULL;
     }
     return objcount;
 }
