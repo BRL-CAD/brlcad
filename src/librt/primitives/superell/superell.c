@@ -1104,15 +1104,16 @@ rt_superell_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip
 void
 rt_superell_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
+#ifdef HAVE_TGAMMA
     struct rt_superell_internal *sip;
     double mag_a, mag_b, mag_c;
+#endif
 
     if (volume == NULL || ip == NULL) {
 	return;
     }
 
 #ifdef HAVE_TGAMMA
-
     RT_CK_DB_INTERNAL(ip);
     sip = (struct rt_superell_internal *)ip->idb_ptr;
     RT_SUPERELL_CK_MAGIC(sip);
