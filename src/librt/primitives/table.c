@@ -1771,7 +1771,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	rt_superell_params,
 	rt_superell_bbox,
-	NULL,
+	rt_superell_volume,
 	NULL,
 	NULL,
 	NULL,

@@ -1093,6 +1093,34 @@ rt_superell_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip
 }
 
 
+/**
+ * R T _ S U P E R E L L _ V O L U M E
+ *
+ * Computes the volume of a superellipsoid
+ *
+ * Volume equation from http://lrv.fri.uni-lj.si/~franc/SRSbook/geometry.pdf
+ * which also includes a derivation on page 32.
+ */
+void
+rt_superell_volume(fastf_t *volume, const struct rt_db_internal *ip)
+{
+    struct rt_superell_internal *sip;
+    double mag_a, mag_b, mag_c;
+    if (volume == NULL || ip == NULL) {
+	return;
+    }
+    RT_CK_DB_INTERNAL(ip);
+    sip = (struct rt_superell_internal *)ip->idb_ptr;
+    RT_SUPERELL_CK_MAGIC(sip);
+
+    mag_a = MAGNITUDE(sip->a);
+    mag_b = MAGNITUDE(sip->b);
+    mag_c = MAGNITUDE(sip->c);
+
+    *volume = 2.0 * mag_a * mag_b * mag_c * sip->e * sip->n * (tgamma(sip->n/2.0 + 1.0) * tgamma(sip->n) / tgamma(3.0 * sip->n/2.0 + 1.0)) * (tgamma(sip->e / 2.0) * tgamma(sip->e / 2.0) / tgamma(sip->e));
+}
+
+
 /*
  * Local Variables:
  * mode: C
