@@ -29,16 +29,15 @@
 
 /* system headers */
 
-/* for g++ to quell -Wshadow warnings */
+/* quell warnings */
+#pragma GCC diagnostic push /* begin ignoring warnings */
 #pragma GCC diagnostic ignored "-Wshadow"
-/* for g++ to quell -Wfloat-equal warnings */
 #pragma GCC diagnostic ignored "-Wfloat-equal"
 #include <BulletCollision/CollisionDispatch/btCollisionDispatcher.h>
 #include <BulletCollision/CollisionShapes/btBoxShape.h>
 #include <BulletCollision/CollisionDispatch/btCollisionObject.h>
 #include <BulletCollision/CollisionDispatch/btBoxBoxDetector.h>
-#pragma GCC diagnostic pop /* end ignoring -Wfloat-equal */
-#pragma GCC diagnostic pop /* end ignoring -Wshadow */
+#pragma GCC diagnostic pop /* end ignoring warnings */
 
 /* private headers */
 #include "./simcollisionalgo.h"

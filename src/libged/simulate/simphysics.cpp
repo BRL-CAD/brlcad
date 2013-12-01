@@ -28,13 +28,12 @@
 /* system headers */
 #include <iostream>
 
-/* for g++ to quell -Wshadow warnings */
+/* quell warnings */
+#pragma GCC diagnostic push /* begin ignoring warnings */
 #pragma GCC diagnostic ignored "-Wshadow"
-/* for g++ to quell -Wfloat-equal warnings */
 #pragma GCC diagnostic ignored "-Wfloat-equal"
 #include <btBulletDynamicsCommon.h>
-#pragma GCC diagnostic pop /* end ignoring -Wfloat-equal */
-#pragma GCC diagnostic pop /* end ignoring -Wshadow */
+#pragma GCC diagnostic pop /* end ignoring warnings */
 
 /* public headers */
 #include "db.h"
