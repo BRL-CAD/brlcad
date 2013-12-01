@@ -1381,7 +1381,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		 * view size for plotting.
 		 */
 		if (dgcdp.autoview) {
-		    const char *autoview_args[2] = {"autoview", '\0'};
+		    const char *autoview_args[2] = {"autoview", NULL};
 		    ged_autoview(gedp, 1, autoview_args);
 		}
 
