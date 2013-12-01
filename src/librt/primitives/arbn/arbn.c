@@ -1424,7 +1424,7 @@ rt_arbn_centroid(point_t *cent, const struct rt_db_internal *ip)
     struct rt_arbn_internal *aip = (struct rt_arbn_internal *)ip->idb_ptr;
     size_t i, j, k, l;
     point_t arbit_point = VINIT_ZERO;
-    fastf_t volume;
+    fastf_t volume = 0.0;
 
     *cent[0] = 0.0;
     *cent[1] = 0.0;
