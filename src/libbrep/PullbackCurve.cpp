@@ -2417,7 +2417,7 @@ pullback_curve(const brlcad::SurfaceTree* surfacetree,
     ON_3dPoint p = curve->PointAt(tmin);
     ON_3dPoint from = curve->PointAt(tmin + 0.0001);
     brlcad::SurfaceTree *st = (brlcad::SurfaceTree *)surfacetree;
-    if (!st->getSurfacePoint((const ON_3dPoint&)p, uv, (const ON_3dPoint&)from) > 0) {
+    if (!st->getSurfacePoint((const ON_3dPoint&)p, uv, (const ON_3dPoint&)from)) {
 	std::cerr << "Error: Can not get surface point." << std::endl;
     }
 
@@ -2440,7 +2440,7 @@ pullback_curve(const brlcad::SurfaceTree* surfacetree,
 
 	p = curve->PointAt(tmax);
 	from = curve->PointAt(tmax - 0.0001);
-	if (!st->getSurfacePoint((const ON_3dPoint&)p, uv, (const ON_3dPoint&)from) > 0) {
+	if (!st->getSurfacePoint((const ON_3dPoint&)p, uv, (const ON_3dPoint&)from)) {
 	    std::cerr << "Error: Can not get surface point." << std::endl;
 	}
 
