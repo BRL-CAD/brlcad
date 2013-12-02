@@ -32,6 +32,7 @@
 #pragma GCC diagnostic push /* begin ignoring warnings */
 #pragma GCC diagnostic ignored "-Wshadow"
 #pragma GCC diagnostic ignored "-Wfloat-equal"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #include <btBulletDynamicsCommon.h>
 #pragma GCC diagnostic pop /* end ignoring warnings */
 
