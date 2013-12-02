@@ -37,6 +37,7 @@
 /* for g++ to quell -Wshadow warnings */
 #pragma GCC diagnostic push /* start ignoring warnings */
 #pragma GCC diagnostic ignored "-Wshadow"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #include <boost/spirit/include/classic.hpp>
 #pragma GCC diagnostic pop /* end ignoring warnings */
 
