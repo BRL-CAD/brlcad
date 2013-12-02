@@ -40,7 +40,11 @@
 #include  <vector>
 #include  <algorithm>
 
+/* for g++ to quell warnings */
+#pragma GCC diagnostic push /* start new diagnostic pragma */
+#pragma GCC diagnostic ignored "-Wfloat-equal"
 #include  "gdiam.hpp"
+#pragma GCC diagnostic pop /* end ignoring warnings */
 
 /*--- Constants ---*/
 
