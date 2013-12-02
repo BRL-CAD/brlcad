@@ -10,8 +10,12 @@
 
 #include "common.h"
 
+/* quell warnings */
+#pragma GCC diagnostic push /* begin ignoring warnings */
+#pragma GCC diagnostic ignored "-Wunused-const-variable"
 /* quell empty-compilation unit warnings */
 static const int unused = 0;
+#pragma GCC diagnostic pop /* end ignoring warnings */
 
 /*
  *  This public domain version of strtok() made available to systems that

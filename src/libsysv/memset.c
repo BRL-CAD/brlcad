@@ -26,8 +26,12 @@
 
 #include "common.h"
 
+/* quell warnings */
+#pragma GCC diagnostic push /* begin ignoring warnings */
+#pragma GCC diagnostic ignored "-Wunused-const-variable"
 /* quell empty-compilation unit warnings */
 static const int unused = 0;
+#pragma GCC diagnostic pop /* end ignoring warnings */
 
 /*
  * defined for the folks that don't seem to have a system memset()
