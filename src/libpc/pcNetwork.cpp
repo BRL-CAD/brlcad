@@ -43,12 +43,12 @@ BinaryNetwork<T>::BinaryNetwork(std::vector<Variable<T> *> V, std::vector<Constr
     typename std::vector<Variable<T> *>::iterator i = V.begin();
     typename std::vector<Constraint *>::iterator j = C.begin();
 
-    while (i!=V.end()) {
+    while (i != V.end()) {
 	add_vertex(*i, G);
 	++i;
     }
 
-    while (j!=C.end()) {
+    while (j != C.end()) {
 	add_edge(*j, G);
 	++i;
     }
