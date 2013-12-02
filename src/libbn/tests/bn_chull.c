@@ -134,6 +134,7 @@ main(int argc, const char **argv)
 	for (i = 0; i < retval; i++) {
 	    bu_log("      actual[%d]: (%f, %f, %f)\n", i, test3_hull_pnts[i][0], test3_hull_pnts[i][1], test3_hull_pnts[i][2]);
 	}
+	if (do_plotting) plot_chull(3, (const point_t *)test3_hull_pnts, retval);
 
     }
 
