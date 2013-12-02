@@ -147,7 +147,7 @@ add_test(bn_plane_3pts_distinct_true_6          tester_bn_plane_pt 2 7.5,9.2,4.1
 # Where PT and DIR define the parametric line in question and A is the
 # point in question.
 
-add_test(bn_plane_distsq_line3_pt3_1            tester_bn_plane_pt 3 0,0,0 1,1,1 0,0,0 0) 
+add_test(bn_plane_distsq_line3_pt3_1            tester_bn_plane_pt 3 0,0,0 1,1,1 0,0,0 0)
 add_test(bn_plane_distsq_line3_pt3_2            tester_bn_plane_pt 3 -1,-1,-1 1,1,1 0,0,0 0)
 add_test(bn_plane_distsq_line3_pt3_3            tester_bn_plane_pt 3 0,0,0 1,1,1 0,5,0 16.666666)
 add_test(bn_plane_distsq_line3_pt3_4            tester_bn_plane_pt 3 5,6,4 9,3,8 -5,2,4 48.441558)
