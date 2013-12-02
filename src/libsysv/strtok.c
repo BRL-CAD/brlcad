@@ -11,7 +11,7 @@
 #include "common.h"
 
 /* quell warnings */
-#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
+#if HAVE_DIAG_PRAGMAS
 #  pragma GCC diagnostic push /* begin ignoring warnings */
 #  pragma GCC diagnostic ignored "-Wunused-const-variable"
 #endif
@@ -19,7 +19,7 @@
 /* quell empty-compilation unit warnings */
 static const int unused = 0;
 
-#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
+#if HAVE_DIAG_PRAGMAS
 #  pragma GCC diagnostic pop /* end ignoring warnings */
 #endif
 

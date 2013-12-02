@@ -34,12 +34,18 @@
 #include <vector>
 
 /* for g++ to quell warnings */
-#pragma GCC diagnostic push /* start new diagnostic pragma */
-#pragma GCC diagnostic ignored "-Wshadow"
+#if HAVE_DIAG_PRAGMAS
+#  pragma GCC diagnostic push /* start new diagnostic pragma */
+#  pragma GCC diagnostic ignored "-Wshadow"
+#endif
+
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graphviz.hpp>
-#pragma GCC diagnostic pop /* end ignoring warnings */
+
+#if HAVE_DIAG_PRAGMAS
+#  pragma GCC diagnostic pop /* end ignoring warnings */
+#endif
 
 #include "pcBasic.h"
 #include "pcVariable.h"

@@ -33,11 +33,17 @@
 #include <iostream>
 
 /* for g++ to quell warnings */
-#pragma GCC diagnostic push /* start new diagnostic pragma */
-#pragma GCC diagnostic ignored "-Wshadow"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
+#if HAVE_DIAG_PRAGMAS
+#  pragma GCC diagnostic push /* start new diagnostic pragma */
+#  pragma GCC diagnostic ignored "-Wshadow"
+#  pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif
+
 #include <boost/spirit/include/classic.hpp>	/* deprecated header */
-#pragma GCC diagnostic pop /* end ignoring warnings */
+
+#if HAVE_DIAG_PRAGMAS
+#  pragma GCC diagnostic pop /* end ignoring warnings */
+#endif
 
 #include "pcVCSet.h"
 #include "pcGenerator.h"

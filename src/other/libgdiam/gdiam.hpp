@@ -43,6 +43,9 @@ typedef  gdiam_real  * gdiam_point_2d;
 typedef  gdiam_real  * gdiam_point;
 typedef  const gdiam_real  * gdiam_point_cnt;
 
+/* for HAVE_DIAG_PRAGMAS (see below): */
+#include "common.h"
+
 #ifndef __MINMAX_DEFINED
 #define __MINMAX_DEFINED
 
@@ -170,8 +173,11 @@ inline void  pnt_init_normalize( gdiam_point  pnt,
 }
 
 /* for g++ to quell warnings */
-#pragma GCC diagnostic push /* start new diagnostic pragma */
-#pragma GCC diagnostic ignored "-Wfloat-equal"
+#if HAVE_DIAG_PRAGMAS
+#  pragma GCC diagnostic push /* start new diagnostic pragma */
+#  pragma GCC diagnostic ignored "-Wfloat-equal"
+#endif
+
 inline bool  pnt_isEqual( const gdiam_point  p,
                           const gdiam_point  q ) 
 {
@@ -180,7 +186,9 @@ inline bool  pnt_isEqual( const gdiam_point  p,
               &&  ( p[ 1 ] == q[ 1 ] )
               &&  ( p[ 2 ] == q[ 2 ] ) );
 }
-#pragma GCC diagnostic pop /* end ignoring warnings */
+#if HAVE_DIAG_PRAGMAS
+#  pragma GCC diagnostic pop /* end ignoring warnings */
+#endif
 
 inline void  pnt_scale_and_add( gdiam_point  dest,
                          gdiam_real  coef,
