@@ -56,6 +56,7 @@
 #include <stdlib.h>
 
 #include "bn.h"
+#include "bn_private.h"
 
 #define F_NONE -1
 #define F_BOTTOM 0
@@ -505,12 +506,39 @@ bn_2d_obr(point2d_t *center, vect2d_t *u, vect2d_t *v, const point2d_t *pnts, in
 
 int
 bn_3d_coplanar_obr(point_t *center, vect_t *v1, vect_t *v2, const point_t *pnts, int pnt_cnt){
-    VSET(*center, 0.0, 0.0, 0.0);
-    VSET(*v1, 0.0, 0.0, 0.0);
-    VSET(*v2, 0.0, 0.0, 0.0);
+    int ret = 0;
+    point_t origin_pnt;
+    vect_t u_axis, v_axis;
+    point2d_t obr_2d_center;
+    point2d_t obr_2d_v1, obr_2d_v2;
+    point2d_t *points_obr = NULL;
+    point_t *points_obr_3d = NULL;
+    point2d_t *points_tmp = NULL;
 
-    if (!pnts) return -1;
-    if (pnt_cnt <= 0) return -1;
+    if (!pnts || pnt_cnt <= 0) return -1;
+
+    points_obr = (point2d_t *)bu_calloc(3 + 1, sizeof(point2d_t), "points_2d");
+    points_obr_3d = (point_t *)bu_calloc(3 + 1, sizeof(point_t), "points_3d");
+    points_tmp = (point2d_t *)bu_calloc(pnt_cnt + 1, sizeof(point2d_t), "points_2d");
+
+    ret += bn_coplanar_2d_coord_sys(&origin_pnt, &u_axis, &v_axis, pnts, pnt_cnt);
+    ret += bn_coplanar_3d_to_2d(&points_tmp, (const point_t *)&origin_pnt, (const vect_t *)&u_axis, (const vect_t *)&v_axis, pnts, pnt_cnt);
+    if (ret) return 0;
+    ret = bn_2d_obr(&obr_2d_center, &obr_2d_v1, &obr_2d_v2, (const point2d_t *)points_tmp, pnt_cnt);
+
+    V2MOVE(points_obr[0], obr_2d_center);
+    V2MOVE(points_obr[1], obr_2d_v1);
+    V2MOVE(points_obr[2], obr_2d_v2);
+
+    ret = bn_coplanar_2d_to_3d(&points_obr_3d, (const point_t *)&origin_pnt, (const vect_t *)&u_axis, (const vect_t *)&v_axis, (const point2d_t *)points_obr, 3);
+
+    VMOVE(*center, points_obr_3d[0]);
+    VMOVE(*v1, points_obr_3d[1]);
+    VMOVE(*v2, points_obr_3d[2]);
+
+    bu_free(points_obr, "free 2d obr pnts");
+    bu_free(points_obr_3d, "free 3d obr pnts");
+    bu_free(points_tmp, "free 2d pnt projections");
 
     return 0;
 }

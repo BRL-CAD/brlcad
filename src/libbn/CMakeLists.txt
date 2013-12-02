@@ -34,6 +34,7 @@ set(LIBBN_SOURCES
   tplot.c
   tri_tri.c
   ulp.c
+  util.c
   vectfont.c
   vector.c
   vers.c
@@ -51,6 +52,7 @@ add_subdirectory(tests)
 
 CMAKEFILES(
   README
+  bn_private.h
   bntester.dat
   )
 
