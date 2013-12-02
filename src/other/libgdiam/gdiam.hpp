@@ -169,6 +169,9 @@ inline void  pnt_init_normalize( gdiam_point  pnt,
     pnt_normalize( pnt );
 }
 
+/* for g++ to quell warnings */
+#pragma GCC diagnostic push /* start new diagnostic pragma */
+#pragma GCC diagnostic ignored "-Wfloat-equal"
 inline bool  pnt_isEqual( const gdiam_point  p,
                           const gdiam_point  q ) 
 {
@@ -177,6 +180,7 @@ inline bool  pnt_isEqual( const gdiam_point  p,
               &&  ( p[ 1 ] == q[ 1 ] )
               &&  ( p[ 2 ] == q[ 2 ] ) );
 }
+#pragma GCC diagnostic pop /* end ignoring warnings */
 
 inline void  pnt_scale_and_add( gdiam_point  dest,
                          gdiam_real  coef,
