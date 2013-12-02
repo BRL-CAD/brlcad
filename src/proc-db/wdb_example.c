@@ -52,9 +52,8 @@ main(int ac, char *av[])
     unsigned char rgb[3];
     struct wmember wm_hd; /* defined in wdb.h */
 
-    if (ac < 2) {
+    if (ac < 2)
 	bu_exit(1, usage);
-    }
 
     if ((db_fp = wdb_fopen(av[1])) == NULL) {
 	perror(av[1]);
@@ -65,7 +64,7 @@ main(int ac, char *av[])
 
     /* all units in the database file are stored in millimeters.  This
      * constrains the arguments to the mk_* routines to also be in
-     * millimeters
+     * millimeters.
      */
 
 
@@ -82,7 +81,7 @@ main(int ac, char *av[])
     VSET(p2, 2.0, 4.0, 2.5);
     mk_rpp(db_fp, "box.s", p1, p2);
 
-    /* make a region that is the union of these two objects To
+    /* make a region that is the union of these two objects. To
      * accomplish this, we need to create a linked list of the items
      * that make up the combination.  The wm_hd structure serves as
      * the head of the list of items.
@@ -91,7 +90,7 @@ main(int ac, char *av[])
 
     /* Create a wmember structure for each of the items that we want
      * in the combination.  The return from mk_addmember is a pointer
-     * to the wmember structure
+     * to the wmember structure.
      */
     (void)mk_addmember("box.s", &wm_hd.l, NULL, WMOP_UNION);
 
