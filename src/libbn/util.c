@@ -21,7 +21,6 @@
 #include <stdlib.h>
 
 #include "bn.h"
-#include "bn_private.h"
 
 int
 bn_coplanar_2d_coord_sys(point_t *origin_pnt, vect_t *u_axis, vect_t *v_axis, const point_t *points_3d, int n)

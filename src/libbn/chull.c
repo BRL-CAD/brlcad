@@ -22,7 +22,6 @@
 #include <stdlib.h>
 
 #include "bn.h"
-#include "bn_private.h"
 
 /* isLeft(): test if a point is Left|On|Right of an infinite line.
  *    Input:  three points L0, L1, and p

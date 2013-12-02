@@ -56,7 +56,6 @@
 #include <stdlib.h>
 
 #include "bn.h"
-#include "bn_private.h"
 
 #define F_NONE -1
 #define F_BOTTOM 0
