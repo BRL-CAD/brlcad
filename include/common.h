@@ -335,6 +335,13 @@ typedef ptrdiff_t ssize_t;
 #  define __STDC_VERSION__ 0
 #endif
 
+/* Provide a macro to indicate availability of diagnostic pragmas for
+ * GCC and Clang.
+ */
+#define HAVE_DIAG_PRAGMAS \
+    (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))) \
+    || (defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 3)))
+
 #endif  /* __COMMON_H__ */
 /** @} */
 /*
