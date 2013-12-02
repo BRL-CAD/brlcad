@@ -32,11 +32,17 @@
 #include "common.h"
 
 /* quell warnings */
-#pragma GCC diagnostic push /* begin ignoring warnings */
-#pragma GCC diagnostic ignored "-Wunused-const-variable"
+#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
+#  pragma GCC diagnostic push /* begin ignoring warnings */
+#  pragma GCC diagnostic ignored "-Wunused-const-variable"
+#endif
+
 /* quell empty-compilation unit warnings */
 static const int unused = 0;
-#pragma GCC diagnostic pop /* end ignoring warnings */
+
+#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
+#  pragma GCC diagnostic pop /* end ignoring warnings */
+#endif
 
 /*
  * defined for folks that don't have a system strchr()
