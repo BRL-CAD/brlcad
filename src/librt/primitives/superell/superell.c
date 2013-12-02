@@ -1071,6 +1071,7 @@ rt_superell_ifree(struct rt_db_internal *ip)
 /* The U parameter runs south to north.  In order to orient loop CCW,
  * need to start with 0, 1-->0, 0 transition at the south pole.
  */
+/* unused var:
 static const fastf_t rt_superell_uvw[5*ELEMENTS_PER_VECT] = {
     0, 1, 0,
     0, 0, 0,
@@ -1078,7 +1079,7 @@ static const fastf_t rt_superell_uvw[5*ELEMENTS_PER_VECT] = {
     1, 1, 0,
     0, 1, 0
 };
-
+*/
 
 /**
  * R T _ S U P E R E L L _ P A R A M S
