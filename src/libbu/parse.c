@@ -1826,7 +1826,7 @@ bu_key_eq_to_key_val(const char *in, const char **next, struct bu_vls *vls)
     *next = NULL;
 
     while (iptr && *iptr) {
-	const char *prev='\0';
+	const char *prev = NULL;
 
 	switch (state) {
 	    case STATE_IN_KEYWORD:

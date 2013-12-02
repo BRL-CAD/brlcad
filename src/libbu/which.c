@@ -82,7 +82,7 @@ bu_which(const char *cmd)
 	if (!BU_STR_EQUAL(PATH, gotpath)) {
 	    position = strrchr(PATH, BU_PATH_SEPARATOR);
 	    if (position) {
-		position = '\0';
+		position = NULL;
 	    } else {
 		/* too much and no separator? wtf. */
 		if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
