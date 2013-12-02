@@ -175,13 +175,8 @@ nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol) {
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 	int edges=0;
 	if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) continue; // loop is a single vertex
-	ON_BrepLoop::TYPE looptype;
 	// Check if this is an inner or outer loop
-	if (lu->orientation == OT_SAME) {
-	    looptype = ON_BrepLoop::outer;
-	} else {
-	    looptype = ON_BrepLoop::inner;
-	}
+	ON_BrepLoop::TYPE looptype = (lu->orientation == OT_SAME) ? ON_BrepLoop::outer : ON_BrepLoop::inner;
 	ON_BrepLoop& loop = (*b)->NewLoop(looptype, face);
 	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 	    ++edges;
