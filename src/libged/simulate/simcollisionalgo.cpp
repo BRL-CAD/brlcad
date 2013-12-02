@@ -37,10 +37,10 @@
 #include <BulletCollision/CollisionShapes/btBoxShape.h>
 #include <BulletCollision/CollisionDispatch/btCollisionObject.h>
 #include <BulletCollision/CollisionDispatch/btBoxBoxDetector.h>
-#pragma GCC diagnostic pop /* end ignoring warnings */
 
 /* private headers */
 #include "./simcollisionalgo.h"
+#pragma GCC diagnostic pop /* end ignoring warnings */
 
 
 #define USE_PERSISTENT_CONTACTS 1
