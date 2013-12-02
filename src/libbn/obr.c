@@ -191,17 +191,12 @@ UpdateBox(struct obr_vals *obr, point2d_t left_pnt, point2d_t right_pnt, point2d
 	V2MOVE(obr->v, v);
 	obr->extent0 = extent0;
 	obr->extent1 = extent1;
-	/* TODO translate this to vmath.h routines...
+	/* Note: translated the following to vmath.h routines...
 	mMinBox.Center = left_pnt + U*extent0 + V*(extent1 - V.Dot(left_bottom_diff));*/
 	V2SUB2(left_bottom_diff, left_pnt, bottom_pnt);
-	/*bu_log("left_bottom_diff: %f, %f, %f\n", left_bottom_diff[0], left_bottom_diff[1], left_bottom_diff[2]);*/
 	V2SCALE(U, u, extent0);
-	/*bu_log("U: %f, %f, %f\n", U[0], U[1], U[2]);*/
-	/*bu_log("VDOT(v, left_bottom_diff): %f\n", VDOT(v,left_bottom_diff));*/
 	V2SCALE(V, v, extent1 - V2DOT(v,left_bottom_diff));
-	/*bu_log("V: %f, %f, %f\n", V[0], V[1], V[2]);*/
 	V2ADD3(obr->center, left_pnt, U, V);
-	bu_log("center: %f, %f\n\n", obr->center[0], obr->center[1]);
 	V2SCALE(V, v, extent1);
     }
 }
@@ -383,7 +378,6 @@ bn_obr_calc(const point2d_t *pnts, int pnt_cnt, struct obr_vals *obr)
 
 		switch (flag) {
 		    case F_BOTTOM:
-			bu_log("F_BOTTOM: %d\n", BIndex);
 			if (visited[BIndex]) {
 			    done = 1;
 			} else {
@@ -403,7 +397,6 @@ bn_obr_calc(const point2d_t *pnts, int pnt_cnt, struct obr_vals *obr)
 			}
 			break;
 		    case F_RIGHT:
-			bu_log("F_RIGHT: %d\n", RIndex);
 			if (visited[RIndex]) {
 			    done = 1;
 			} else {
@@ -423,7 +416,6 @@ bn_obr_calc(const point2d_t *pnts, int pnt_cnt, struct obr_vals *obr)
 			}
 			break;
 		    case F_TOP:
-			bu_log("F_TOP: %d\n", TIndex);
 			if (visited[TIndex]) {
 			    done = 1;
 			} else {
@@ -445,7 +437,6 @@ bn_obr_calc(const point2d_t *pnts, int pnt_cnt, struct obr_vals *obr)
 			}
 			break;
 		    case F_LEFT:
-			bu_log("F_LEFT: %d\n", LIndex);
 			if (visited[LIndex]) {
 			    done = 1;
 			} else {
@@ -514,6 +505,7 @@ bn_3d_coplanar_obr(point_t *center, vect_t *v1, vect_t *v2, const point_t *pnts,
     point2d_t *points_obr = NULL;
     point_t *points_obr_3d = NULL;
     point2d_t *points_tmp = NULL;
+    point_t tmp3d;
 
     if (!pnts || pnt_cnt <= 0) return -1;
 
@@ -526,15 +518,21 @@ bn_3d_coplanar_obr(point_t *center, vect_t *v1, vect_t *v2, const point_t *pnts,
     if (ret) return 0;
     ret = bn_2d_obr(&obr_2d_center, &obr_2d_v1, &obr_2d_v2, (const point2d_t *)points_tmp, pnt_cnt);
 
+    /* Set up the 2D point list so converting it will result in useful 3D points */
     V2MOVE(points_obr[0], obr_2d_center);
-    V2MOVE(points_obr[1], obr_2d_v1);
-    V2MOVE(points_obr[2], obr_2d_v2);
+    V2ADD2(points_obr[1], obr_2d_v1, obr_2d_center);
+    V2ADD2(points_obr[2], obr_2d_v2, obr_2d_center);
 
     ret = bn_coplanar_2d_to_3d(&points_obr_3d, (const point_t *)&origin_pnt, (const vect_t *)&u_axis, (const vect_t *)&v_axis, (const point2d_t *)points_obr, 3);
 
     VMOVE(*center, points_obr_3d[0]);
-    VMOVE(*v1, points_obr_3d[1]);
-    VMOVE(*v2, points_obr_3d[2]);
+
+    /* Want to be able to add v1 and v2 to the 3D center to get obr points,
+     * so subtract the center out up front */
+    VSUB2(tmp3d, points_obr_3d[1], *center);
+    VMOVE(*v1, tmp3d);
+    VSUB2(tmp3d, points_obr_3d[2], *center);
+    VMOVE(*v2, tmp3d);
 
     bu_free(points_obr, "free 2d obr pnts");
     bu_free(points_obr_3d, "free 3d obr pnts");

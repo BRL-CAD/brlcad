@@ -113,7 +113,9 @@ main(int argc, const char **argv)
 	    VSET(output_3d_pnts[2], output_pnts[2][0], output_pnts[2][1], 0);
 	    VSET(output_3d_pnts[2], output_pnts[2][0], output_pnts[2][1], 0);
 	    VSET(output_3d_pnts[3], output_pnts[3][0], output_pnts[3][1], 0);
-	    plot_obr(1, (const point_t *)output_3d_pnts, 4);
+	    if (do_plotting) {
+		plot_obr(1, (const point_t *)output_3d_pnts, 4);
+	    }
 	}
     }
 
@@ -141,6 +143,10 @@ main(int argc, const char **argv)
 	VSET(test2_points[14], 0.3888888888888888950567946, 0.05555555555555555247160271, 0.5);
 	VSET(test2_points[15], 0.3518518518518518600757261, 0.2407407407407407273769451, 0.5);
 	VSET(test2_points[16], -0.05555555555555555247160271, -0.05555555555555555247160271, 0.5);
+	VSET(expected[0], 0.5, 0.5, 0.5);
+	VSET(expected[1], 0.5, -0.5, 0.5);
+	VSET(expected[2], -0.5, -0.5, 0.5);
+	VSET(expected[3], -0.5, 0.5, 0.5);
 	retval = bn_3d_coplanar_obr(&center, &u, &v, (const point_t *)test2_points, 17);
 	if (retval) return -1;
 	VADD3(output_pnts[2], center, u, v);
@@ -150,22 +156,126 @@ main(int argc, const char **argv)
 	VADD3(output_pnts[0], center, u, v);
 	VSCALE(u, u, -1);
 	VADD3(output_pnts[1], center, u, v);
-	bu_log("Test #002:  3d_hull - points in XY plane at Z=0.5, duplicate points:\n");
+	bu_log("Test #002:  3d obr - points in XY plane at Z=0.5, duplicate points:\n");
 	for (i = 0; i < 4; i++) {
 	    bu_log("    expected[%d]: (%f, %f, %f)\n", i, V3ARGS(expected[i]));
 	    bu_log("      actual[%d]: (%f, %f, %f)\n", i, V3ARGS(output_pnts[i]));
-	    if (!NEAR_ZERO(output_pnts[i][0] - expected[i][0], SMALL_FASTF) ||
-		!NEAR_ZERO(output_pnts[i][1] - expected[i][1], SMALL_FASTF) ||
-		!NEAR_ZERO(output_pnts[i][2] - expected[i][2], SMALL_FASTF)) {
+	    if (!NEAR_ZERO(output_pnts[i][0] - expected[i][0], VUNITIZE_TOL) ||
+		!NEAR_ZERO(output_pnts[i][1] - expected[i][1], VUNITIZE_TOL) ||
+		!NEAR_ZERO(output_pnts[i][2] - expected[i][2], VUNITIZE_TOL)) {
 		retval += 1;
 	    }
 	}
 	if (retval) {return -1;} else {bu_log("Test #002 Passed!\n");}
 	if (do_plotting) {
-	    plot_obr(1, (const point_t *)output_pnts, 4);
+	    plot_obr(2, (const point_t *)output_pnts, 4);
 	}
 
     }
+
+    {
+	point_t center;
+	vect_t u, v;
+	point_t output_pnts[4+1] = {{0}};
+	point_t test3_points[17+1] = {{0}};
+	point_t expected[4+1] = {{0}};
+
+	VSET(test3_points[0],-0.2615997126297299746333636,0.9692719821506950994560725,1.113297221058902053414386);
+	VSET(test3_points[1],-0.6960082873702697625617475,-0.3376479821506951362053428,0.791972778941099408989146);
+	VSET(test3_points[2],0.08930731496876459507561208,0.2282231541335035251982788,0.5408368359872989250547448);
+	VSET(test3_points[3],-1.046915314968769772363544,0.4034008458664972707197194,1.364433164012702537348787);
+	VSET(test3_points[4],0.08930731496876459507561208,0.2282231541335035251982788,0.5408368359872989250547448);
+	VSET(test3_points[5],-1.046915314968769772363544,0.4034008458664972707197194,1.364433164012702537348787);
+	VSET(test3_points[6],-0.2615997126297299746333636,0.9692719821506950994560725,1.113297221058902053414386);
+	VSET(test3_points[7],-0.6960082873702697625617475,-0.3376479821506951362053428,0.791972778941099408989146);
+	VSET(test3_points[8],-0.2894335616770786212548217,0.2866157180445003671565019,0.8153689453291005362345345);
+	VSET(test3_points[9],-0.6681744383229220041187091,0.3450082819554983748489008,1.089901054670902258436627);
+	VSET(test3_points[10],-0.6588964886404735654679143,0.5725603699908965449338893,1.189210479914168061554847);
+	VSET(test3_points[11],-0.5295568798643752739252477,0.628946878032363931865234,1.13080291854799019901634);
+	VSET(test3_points[12],-0.6558038387463227536500199,0.6484110660026961570068238,1.222313621661925475692101);
+	VSET(test3_points[13],-0.1539086531126804824332055,0.4947036181095669227225642,0.823167667458433838234555);
+	VSET(test3_points[14],-0.2987115113595283921732459,0.05906363000910182931013637,0.7160595200858336228932899);
+	VSET(test3_points[15],-0.1662792526892814537475829,0.1913008340623683078973727,0.6907551004674108430236856);
+	VSET(test3_points[16],-0.5419274794409739692824246,0.3255440939851655945957987,0.9983903515569694242515197);
+	VSET(expected[0], 0.089307314968765, 0.228223154133504, 0.540836835987299);
+	VSET(expected[1], -0.696008287370264, -0.337647982150691, 0.791972778941097);
+	VSET(expected[2], -1.046915314968751, 0.403400845866492, 1.364433164012691);
+	VSET(expected[3], -0.261599712629723, 0.969271982150686, 1.113297221058893);
+
+	retval = bn_3d_coplanar_obr(&center, &u, &v, (const point_t *)test3_points, 17);
+	if (retval) return -1;
+	VADD3(output_pnts[2], center, u, v);
+	VSCALE(u, u, -1);
+	VADD3(output_pnts[3], center, u, v);
+	VSCALE(v, v, -1);
+	VADD3(output_pnts[0], center, u, v);
+	VSCALE(u, u, -1);
+	VADD3(output_pnts[1], center, u, v);
+	bu_log("Test #003:  3d obr - points in tilted plane, duplicate points:\n");
+	for (i = 0; i < 4; i++) {
+	    bu_log("    expected[%d]: (%.15f, %.15f, %.15f)\n", i, V3ARGS(expected[i]));
+	    bu_log("      actual[%d]: (%.15f, %.15f, %.15f)\n", i, V3ARGS(output_pnts[i]));
+	    if (!NEAR_ZERO(output_pnts[i][0] - expected[i][0], VUNITIZE_TOL) ||
+		!NEAR_ZERO(output_pnts[i][1] - expected[i][1], VUNITIZE_TOL) ||
+		!NEAR_ZERO(output_pnts[i][2] - expected[i][2], VUNITIZE_TOL)) {
+		retval += 1;
+	    }
+	}
+	if (retval) {return -1;} else {bu_log("Test #003 Passed!\n");}
+	if (do_plotting) {
+	    plot_obr(3, (const point_t *)output_pnts, 4);
+	}
+
+
+    }
+
+    {
+	point_t center;
+	vect_t u, v;
+	point_t output_pnts[4+1] = {{0}};
+	point_t test4_points[9+1] = {{0}};
+	point_t expected[4+1] = {{0}};
+
+	VSET(test4_points[0],-0.2894335616770786212548217,0.2866157180445003671565019,0.8153689453291005362345345);
+	VSET(test4_points[1],-0.6681744383229220041187091,0.3450082819554983748489008,1.089901054670902258436627);
+	VSET(test4_points[2],-0.6588964886404735654679143,0.5725603699908965449338893,1.189210479914168061554847);
+	VSET(test4_points[3],-0.5295568798643752739252477,0.628946878032363931865234,1.13080291854799019901634);
+	VSET(test4_points[4],-0.6558038387463227536500199,0.6484110660026961570068238,1.222313621661925475692101);
+	VSET(test4_points[5],-0.1539086531126804824332055,0.4947036181095669227225642,0.823167667458433838234555);
+	VSET(test4_points[6],-0.2987115113595283921732459,0.05906363000910182931013637,0.7160595200858336228932899);
+	VSET(test4_points[7],-0.1662792526892814537475829,0.1913008340623683078973727,0.6907551004674108430236856);
+	VSET(test4_points[8],-0.5419274794409739692824246,0.3255440939851655945957987,0.9983903515569694242515197);
+	VSET(expected[0], -0.804068848240491, 0.450183326349575, 1.227405986932079);
+	VSET(expected[1], -0.277478009809908, 0.042630029322528, 0.694574374420025);
+	VSET(expected[2], -0.018014243195113, 0.389528573715492, 0.685662735197256);
+	VSET(expected[3], -0.544605081625695, 0.797081870742539, 1.218494347709310);
+
+	retval = bn_3d_coplanar_obr(&center, &u, &v, (const point_t *)test4_points, 9);
+	if (retval) return -1;
+	VADD3(output_pnts[2], center, u, v);
+	VSCALE(u, u, -1);
+	VADD3(output_pnts[3], center, u, v);
+	VSCALE(v, v, -1);
+	VADD3(output_pnts[0], center, u, v);
+	VSCALE(u, u, -1);
+	VADD3(output_pnts[1], center, u, v);
+	bu_log("Test #004:  3d obr - points from test 4 sans square corners, no duplicate points:\n");
+	for (i = 0; i < 4; i++) {
+	    bu_log("    expected[%d]: (%.15f, %.15f, %.15f)\n", i, V3ARGS(expected[i]));
+	    bu_log("      actual[%d]: (%.15f, %.15f, %.15f)\n", i, V3ARGS(output_pnts[i]));
+	    if (!NEAR_ZERO(output_pnts[i][0] - expected[i][0], VUNITIZE_TOL) ||
+		!NEAR_ZERO(output_pnts[i][1] - expected[i][1], VUNITIZE_TOL) ||
+		!NEAR_ZERO(output_pnts[i][2] - expected[i][2], VUNITIZE_TOL)) {
+		retval += 1;
+	    }
+	}
+	if (retval) {return -1;} else {bu_log("Test #004 Passed!\n");}
+	if (do_plotting) {
+	    plot_obr(4, (const point_t *)output_pnts, 4);
+	}
+
+    }
+
 
 
     return 0;
