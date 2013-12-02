@@ -2283,7 +2283,7 @@ to_configure(struct ged *gedp,
 	av[1] = "cdim";
 	av[2] = cdimX;
 	av[3] = cdimY;
-	av[4] = '\0';
+	av[4] = NULL;
 
 	gedp->ged_gvp = gdvp->gdv_view;
 	(void)ged_rect(gedp, 4, (const char **)av);
@@ -6038,7 +6038,7 @@ to_idle_mode(struct ged *gedp,
 	gedp->ged_gvp = gdvp->gdv_view;
 	av[0] = "grid";
 	av[1] = "vsnap";
-	av[2] = '\0';
+	av[2] = NULL;
 	ged_grid(gedp, 2, (const char **)av);
 
 	if (0 < bu_vls_strlen(&gdvp->gdv_callback)) {
@@ -12307,7 +12307,7 @@ to_vslew(struct ged *gedp,
 	    gedp->ged_gvp = gdvp->gdv_view;
 	    av[0] = "grid";
 	    av[1] = "vsnap";
-	    av[2] = '\0';
+	    av[2] = NULL;
 	    ged_grid(gedp, 2, (const char **)av);
 	}
 
