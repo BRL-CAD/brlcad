@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef __DM_OGL__
-#define __DM_OGL__
+#ifndef __DM_OGL_H__
+#define __DM_OGL_H__
 
 #include "common.h"
 
@@ -70,9 +70,13 @@ struct ogl_vars {
     struct modifiable_ogl_vars mvars;
 };
 
+__BEGIN_DECLS
+
 extern void ogl_fogHint();
 
-#endif /* __DM_OGL__ */
+__END_DECLS
+
+#endif /* __DM_OGL_H__ */
 
 /** @} */
 /*
