@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @addtogroup cmd */
 /** @ingroup data */
 /** @{ */
@@ -82,6 +83,7 @@ struct bu_cmdhist_obj {
 };
 #define BU_CMDHIST_OBJ_NULL (struct bu_cmdhist_obj *)NULL
 
+__BEGIN_DECLS
 
 /**
  * This function is intended to be used for parsing subcommands.  If
@@ -142,7 +144,10 @@ BU_EXPORT extern int bu_cmdhist_next(void *data, int argc, const char **argv);
  */
 BU_EXPORT extern int bu_cmdhist_prev(void *data, int argc, const char **argv);
 
+__END_DECLS
+
 #endif  /* __CMD_H__ */
+
 /** @} */
 /*
  * Local Variables:
