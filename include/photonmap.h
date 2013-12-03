@@ -26,6 +26,9 @@
  *
  */
 
+#ifndef __PHOTONMAP_H__
+#define __PHOTONMAP_H__
+
 #include "common.h"
 
 #include <stdio.h>
@@ -122,6 +125,7 @@ struct IrradCache {
     struct	IrradNode	*List;
 };
 
+__BEGIN_DECLS
 
 OPTICAL_EXPORT extern int PM_Activated;	/**< @brief Photon Mapping Activated, 0=off, 1=on */
 OPTICAL_EXPORT extern int PM_Visualize;	/**< @brief Photon Mapping Visualization of Irradiance Cache */
@@ -146,6 +150,11 @@ OPTICAL_EXPORT extern void IrradianceEstimate(struct application *ap,
 					      vect_t irrad,
 					      point_t pos,
 					      vect_t normal);
+
+__END_DECLS
+
+#endif /* __PHOTONMAP_H__ */
+
 /** @} */
 /*
  * Local Variables:
