@@ -10,6 +10,9 @@
  * Copyright (c) 1982 Spencer W. Thomas
  */
 
+#ifndef __ORLE_H__
+#define __ORLE_H__
+
 #include "common.h"
 
 #ifndef ORLE_EXPORT
@@ -132,6 +135,8 @@ extern RLEpixel	_bg_pixel;
 ORLE_EXPORT extern int	rle_debug;
 ORLE_EXPORT extern int	rle_verbose;
 
+__BEGIN_DECLS
+
 /* Entry points.							*/
 ORLE_EXPORT extern void rle_rlen();
 ORLE_EXPORT extern void rle_wlen(int, int, int);
@@ -143,6 +148,10 @@ ORLE_EXPORT extern int rle_rmap();
 ORLE_EXPORT extern int rle_wmap(FILE *, RLEColorMap *);
 ORLE_EXPORT extern int rle_decode_ln();
 ORLE_EXPORT extern int rle_encode_ln();
+
+__END_DECLS
+
+#endif /* __ORLE_H__ */
 
 /** @} */
 /*
