@@ -109,6 +109,8 @@ typedef struct attributes {
 
 extern attr_table a_tab;
 
+__BEGIN_DECLS
+
 extern void ae2dir(void);
 extern void attrib_add(char *a, int *prep);
 extern void attrib_flush(void);
@@ -150,6 +152,7 @@ extern void cm_libdebug();
 extern void cm_debug();
 extern void cm_attr();
 
+__END_DECLS
 
 #endif /* __NIRT_H__ */
 

@@ -24,6 +24,11 @@
  *
  */
 
+#ifndef  __SOUP_H__
+#define  __SOUP_H__
+
+#include "common.h"
+
 /* hijack the top four bits of mode. For these operations, the mode should
  * necessarily be 0x02 */
 #define INSIDE		0x01
@@ -47,6 +52,8 @@ struct soup_s {
     unsigned long int nfaces, maxfaces;
 };
 
+__BEGIN_DECLS
+
 GCV_EXPORT int soup_add_face(struct soup_s *s, point_t a, point_t b, point_t c, const struct bn_tol *tol);
 GCV_EXPORT int split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], struct face_s *opp_face, const struct bn_tol *tol);
 GCV_EXPORT int split_face(struct soup_s *left, unsigned long int left_face, struct soup_s *right, unsigned long int right_face, const struct bn_tol *tol);
@@ -54,6 +61,10 @@ GCV_EXPORT int gcv_tri_tri_intersect_with_isectline(struct soup_s *left, struct 
 GCV_EXPORT union tree *compose(union tree *left_tree, union tree *right_tree, unsigned long int face_status1, unsigned long int face_status2, unsigned long int face_status3);
 GCV_EXPORT union tree *invert(union tree *tree);
 GCV_EXPORT union tree *evaluate(union tree *tr, const struct rt_tess_tol *ttol, const struct bn_tol *tol);
+
+__END_DECLS
+
+#endif /* __SOUP_H__ */
 
 /*
  * Local Variables:

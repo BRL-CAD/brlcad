@@ -23,6 +23,10 @@
  * Intersect 2 triangles using a modified Möller routine.
  */
 
+#ifndef __TRI_INTERSECT_H__
+#define __TRI_INTERSECT_H__
+
+__BEGIN_DECLS
 
 int gcv_tri_tri_intersect_with_isectline(
 		struct soup_s *UNUSED(left),
@@ -32,6 +36,10 @@ int gcv_tri_tri_intersect_with_isectline(
 		int *coplanar,
 		point_t *isectpt,
 		const struct bn_tol *tol);
+
+__END_DECLS
+
+#endif /* __TRI_INTERSECT_H__ */
 
 /*
  * Local Variables:

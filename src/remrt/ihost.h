@@ -23,6 +23,9 @@
  *
  */
 
+#ifndef __IHOST_H__
+#define __IHOST_H__
+
 #include "common.h"
 
 #ifdef HAVE_NETDB_H
@@ -67,6 +70,8 @@ extern struct ihost	*host_lookup_by_hostent(const struct hostent * addr, int ent
 extern struct ihost	*make_default_host(const char* name);
 extern char		*get_our_hostname(void);
 extern struct ihost	*host_lookup_of_fd(int fd);
+
+#endif /* __IHOST_H__ */
 
 /*
  * Local Variables:
