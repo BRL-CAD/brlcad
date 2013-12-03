@@ -17,14 +17,15 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @addtogroup libdm */
 /** @{ */
 /** @file dm-ps.h
  *
  */
 
-#ifndef __DM_PS__
-#define __DM_PS__
+#ifndef __DM_PS_H__
+#define __DM_PS_H__
 
 /*
  * Display coordinate conversion:
@@ -51,7 +52,7 @@ struct ps_vars {
 
 extern struct ps_vars head_ps_vars;
 
-#endif /* __DM_PS__ */
+#endif /* __DM_PS_H__ */
 
 /** @} */
 /*
