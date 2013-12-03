@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @addtogroup libdm */
 /** @{ */
 /** @file dm-wgl.h
@@ -32,6 +33,7 @@
 #  include <GL/gl.h>
 #endif
 
+__BEGIN_DECLS
 
 #define CMAP_BASE 40
 
@@ -70,6 +72,8 @@ struct wgl_vars {
 };
 
 extern void wgl_fogHint();
+
+__END_DECLS
 
 #endif /* __DM_WGL__ */
 
