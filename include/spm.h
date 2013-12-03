@@ -53,6 +53,7 @@ typedef struct {
 #define BN_SPM_MAP_NULL (bn_spm_map_t *)0
 #define BN_CK_SPM_MAP(_p) BU_CKMAG(_p, BN_SPM_MAGIC, "bn_spm_map_t")
 
+__BEGIN_DECLS
 
 /**
  * S P M _ I N I T
@@ -150,6 +151,8 @@ BN_EXPORT extern int bn_spm_pix_save(bn_spm_map_t *mapp, char *filename, int nx,
  * Display a sphere structure on stderr.  Used for debugging.
  */
 BN_EXPORT extern void bn_spm_dump(bn_spm_map_t *mp, int verbose);
+
+__END_DECLS
 
 #endif /* __SPM_H__ */
 
