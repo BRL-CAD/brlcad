@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @file tol.h
  *
  * These routines provide access to the default tolerance values
@@ -27,11 +28,15 @@
  *
  */
 
+#ifndef __TOL_H__
+#define __TOL_H__
+
 #include "raytrace.h" /* FIXME: need to reverse dependency but need
 		       * RT_EXPORT broken out to do that.
 		       */
 #include "bn.h"
 
+__BEGIN_DECLS
 
 /**
  * Fills in the provided bn_tol structure with compile-time default
@@ -42,6 +47,9 @@
  */
 RT_EXPORT extern struct bn_tol *rt_tol_default(struct bn_tol *tol);
 
+__END_DECLS
+
+#endif /* __TOL_H__ */
 
 /*
  * Local Variables:
