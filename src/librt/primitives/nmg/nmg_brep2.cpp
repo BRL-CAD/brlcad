@@ -174,16 +174,11 @@ nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, l
 	    struct vertex_g *vg2 = eu->eumate_p->vu_p->v_p->vg_p;
 	    NMG_CK_VERTEX_G(vg1);
 	    NMG_CK_VERTEX_G(vg2);
-	    int vert1 = brepi[vg1->index];
-	    int vert2 = brepi[vg2->index];
 	    // Add edge if not already added
 	    if (brepi[eu->e_p->index] == -INT_MAX) {
 		/* always add edges with the small vertex index as from */
-		if (vg1->index > vg2->index) {
-		    int tmpvert = vert1;
-		    vert1 = vert2;
-		    vert2 = tmpvert;
-		}
+		int vert1 = (vg1->index <= vg2->index) ? brepi[vg1->index] : brepi[vg2->index];
+		int vert2 = (vg1->index > vg2->index) ? brepi[vg1->index] : brepi[vg2->index];
 		// Create and add 3D curve
 		ON_Curve* c3d = new ON_LineCurve((*b)->m_V[vert1].Point(), (*b)->m_V[vert2].Point());
 		c3d->SetDomain(0.0, 1.0);
