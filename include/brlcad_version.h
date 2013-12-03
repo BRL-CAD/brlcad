@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @file brlcad_version.h
  *
  * PRIVATE container header for determining compile-time version
@@ -27,6 +28,9 @@
  * (e.g. bu_version())
  *
  */
+
+#ifndef __BRLCAD_VERSION_H__
+#define __BRLCAD_VERSION_H__
 
 #include "common.h"
 
@@ -127,6 +131,7 @@ static const char BRLCAD_USER[256] = {
 };
 #endif
 
+__BEGIN_DECLS
 
 static const char *brlcad_ident(const char *title);
 
@@ -183,6 +188,9 @@ brlcad_ident(const char *title)
     return ident;
 }
 
+__END_DECLS
+
+#endif /* __BRLCAD_VERSION_H__ */
 
 /*
  * Local Variables:
