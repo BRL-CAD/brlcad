@@ -52,6 +52,11 @@
  *
  */
 
+#ifndef __SEARCH_H__
+#define __SEARCH_H__
+
+#include "common.h"
+
 #include "regex.h"
 #include "raytrace.h"
 
@@ -154,6 +159,7 @@ typedef struct _option {
 
 extern int isdepth, isoutput;
 
+__BEGIN_DECLS
 
 static int c_attr(char *, char ***, int, struct db_plan_t **, int *);
 static int c_iname(char *, char ***, int, struct db_plan_t **, int *);
@@ -176,6 +182,9 @@ static int c_or(char *, char ***, int, struct db_plan_t **, int *);
 static int c_above(char *, char ***, int, struct db_plan_t **, int *);
 static int c_below(char *, char ***, int, struct db_plan_t **, int *);
 
+__END_DECLS
+
+#endif /* __SEARCH_H__ */
 
 /*
  * Local Variables:
