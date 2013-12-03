@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @addtogroup vfont */
 /** @ingroup io */
 /** @{ */
@@ -63,6 +64,9 @@
  *
  */
 
+#ifndef __VFONT_IF_H__
+#define __VFONT_IF_H__
+
 #include "bu.h"
 
 #define SXT(c) ((c)|((c&0x80)?(~0xFF):0))
@@ -95,6 +99,8 @@ struct vfont {
  *
  */
 
+__BEGIN_DECLS
+
 /**
  * V F O N T _ G E T
  *
@@ -119,6 +125,10 @@ BU_EXPORT extern struct vfont *vfont_get(char *font);
  * Return the storage associated with a struct vfont
  */
 BU_EXPORT extern void vfont_free(struct vfont *font);
+
+__END_DECLS
+
+#endif /* __VFONT_IF_H__ */
 
 /** @} */
 /*
