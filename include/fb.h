@@ -76,6 +76,8 @@
 #define fb_bwreadrect(_ifp, _xmin, _ymin, _width, _height, _pp) 	(*_ifp->if_bwreadrect)(_ifp, _xmin, _ymin, _width, _height, _pp)
 #define fb_bwwriterect(_ifp, _xmin, _ymin, _width, _height, _pp)	(*_ifp->if_bwwriterect)(_ifp, _xmin, _ymin, _width, _height, _pp)
 
+__BEGIN_DECLS
+
 /* Library entry points which are true functions. */
 FB_EXPORT extern void fb_configureWindow(FBIO *, int, int);
 FB_EXPORT extern FBIO *fb_open(const char *file, int _width, int _height);
@@ -204,6 +206,8 @@ FB_EXPORT extern int fb_refresh(FBIO *ifp, int x, int y, int w, int h);
  * report version information about LIBFB
  */
 FB_EXPORT extern const char *fb_version(void);
+
+__END_DECLS
 
 #endif /* __FB_H__ */
 
