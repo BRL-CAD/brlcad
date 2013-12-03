@@ -26,6 +26,8 @@
 #ifndef SHADEFUNCS_H
 #define SHADEFUNCS_H
 
+#include "common.h"
+
 #include "shadework.h"
 
 #ifndef OPTICAL_EXPORT

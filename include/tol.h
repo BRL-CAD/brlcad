@@ -31,6 +31,8 @@
 #ifndef __TOL_H__
 #define __TOL_H__
 
+#include "common.h"
+
 #include "raytrace.h" /* FIXME: need to reverse dependency but need
 		       * RT_EXPORT broken out to do that.
 		       */

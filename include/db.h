@@ -65,6 +65,8 @@
 #ifndef __DB_H__
 #define __DB_H__
 
+#include "common.h"
+
 #include "bu.h"
 
 __BEGIN_DECLS

@@ -30,6 +30,8 @@
 #ifndef __RTSERVER_H__
 #define __RTSERVER_H__
 
+#include "common.h"
+
 /* Attempt to handle different sizes of the TCL ClientData on differing architectures */
 #if SIZEOF_VOID_P == SIZEOF_INT
 typedef int CLIENTDATA_INT;

@@ -26,6 +26,8 @@
 #ifndef __GCV_H__
 #define __GCV_H__
 
+#include "common.h"
+
 #include "raytrace.h"
 
 __BEGIN_DECLS

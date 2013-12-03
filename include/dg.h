@@ -30,6 +30,8 @@
 #ifndef __DG_H__
 #define __DG_H__
 
+#include "common.h"
+
 #include "ged.h"
 #include "obj.h"
 

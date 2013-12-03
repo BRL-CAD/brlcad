@@ -30,6 +30,8 @@
 #ifndef __BOT_H__
 #define __BOT_H__
 
+#include "common.h"
+
 __BEGIN_DECLS
 
 struct bot_specific {

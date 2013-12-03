@@ -26,6 +26,8 @@
 #ifndef __ICV_H__
 #define __ICV_H__
 
+#include "common.h"
+
 __BEGIN_DECLS
 
 #ifndef ICV_EXPORT

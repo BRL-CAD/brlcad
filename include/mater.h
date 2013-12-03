@@ -29,6 +29,8 @@
 #ifndef __MATER_H__
 #define __MATER_H__
 
+#include "common.h"
+
 #include "bu.h"
 #include "raytrace.h"
 

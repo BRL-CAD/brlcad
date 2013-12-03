@@ -26,6 +26,8 @@
 #ifndef __DM_GLX_H__
 #define __DM_GLX_H__
 
+#include "common.h"
+
 /* Map +/-2048 GED space into -1.0..+1.0 :: x/2048*/
 #define GED2IRIS(x)	(((float)(x))*0.00048828125)
 

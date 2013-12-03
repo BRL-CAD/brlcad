@@ -29,6 +29,8 @@
 #ifndef __DB5_H__
 #define __DB5_H__
 
+#include "common.h"
+
 __BEGIN_DECLS
 
 #ifndef RT_EXPORT

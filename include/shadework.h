@@ -26,6 +26,8 @@
 #ifndef SHADEWORK_H
 #define SHADEWORK_H
 
+#include "common.h"
+
 /* for light_specific, cyclic dependency */
 /* # include "light.h" */
 

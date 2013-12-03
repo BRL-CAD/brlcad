@@ -27,6 +27,8 @@
 #ifndef __PC_H__
 #define __PC_H__
 
+#include "common.h"
+
 #include "bu.h"
 #include "bn.h"
 

@@ -24,6 +24,9 @@
  */
 #ifndef __DM_NULL__
 #define __DM_NULL__
+
+#include "common.h"
+
 #include "dm.h"
 
 __BEGIN_DECLS

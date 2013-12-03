@@ -33,6 +33,8 @@
 #ifndef __WDB_H__
 #define __WDB_H__
 
+#include "common.h"
+
 #include "bu.h"
 #include "bn.h"
 #include "raytrace.h"

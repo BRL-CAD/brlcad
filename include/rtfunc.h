@@ -33,6 +33,7 @@
 #ifndef __RTFUNC_H__
 #define __RTFUNC_H__
 
+#include "common.h"
 
 #include "bu.h"
 #include "raytrace.h"

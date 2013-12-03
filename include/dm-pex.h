@@ -27,6 +27,8 @@
 #ifndef __DM_PEX_H__
 #define __DM_PEX_H__
 
+#include "common.h"
+
 /*
  * Display coordinate conversion:
  *  GED is using -2048..+2048,

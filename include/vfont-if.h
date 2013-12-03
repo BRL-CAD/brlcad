@@ -67,6 +67,8 @@
 #ifndef __VFONT_IF_H__
 #define __VFONT_IF_H__
 
+#include "common.h"
+
 #include "bu.h"
 
 #define SXT(c) ((c)|((c&0x80)?(~0xFF):0))
