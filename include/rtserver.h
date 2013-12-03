@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @addtogroup rtserver */
 /** @{ */
 /** @file rtserver.h
@@ -25,6 +26,9 @@
  *	header file for the rtserver
  *
  */
+
+#ifndef __RTSERVER_H__
+#define __RTSERVER_H__
 
 /* Attempt to handle different sizes of the TCL ClientData on differing architectures */
 #if SIZEOF_VOID_P == SIZEOF_INT
@@ -37,6 +41,7 @@ typedef long long CLIENTDATA_INT;
 #define CLIENTDATA_INT "ERROR: could not determine size of void*";
 #endif
 
+__BEGIN_DECLS
 
 extern void getApplication(struct application **ap);
 extern void freeApplication(struct application *ap);
@@ -53,6 +58,10 @@ extern int rts_load_geometry( char *filename, int num_trees, char **objects );
 extern void printHits(struct bu_vlb *vlb);
 extern void get_model_extents( int sessionid, point_t min, point_t max );
 extern void rts_shootray( struct application *ap );
+
+__END_DECLS
+
+#endif /* __RTSERVER_H__ */
 
 /** @} */
 /*
