@@ -20,9 +20,15 @@
 /** @file libdm/dm_util.h
  */
 
+#ifndef __DM_UTIL_H__
+#define __DM_UTIL_H__
+
+#include "common.h"
+
 #include "vmath.h"
 #include "dm.h"
 
+__BEGIN_DECLS
 
 int
 drawLine3D(struct dm *dmp, point_t pt1, point_t pt2, char *log_bu, float *wireColor);
@@ -35,6 +41,10 @@ drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2, char 
 
 int
 draw_Line3D(struct dm *dmp, point_t pt1, point_t pt2);
+
+__END_DECLS
+
+#endif /* __DM_UTIL_H__ */
 
 /*
  * Local Variables:
