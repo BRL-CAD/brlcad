@@ -30,16 +30,13 @@
 #ifndef	PLOT3_H
 #define	PLOT3_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "common.h"
 
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 
+__BEGIN_DECLS
 
 #define	pl_mat_idn( _mat )		MAT_IDN( _mat )
 #define pl_mat_zero( _mat )		MAT_ZERO( _mat )
@@ -480,12 +477,10 @@ BN_EXPORT extern void BU_FORTRAN(f3vect, F3VECT)(FILE **fp,
 		     float *fl,
 		     float *tl);
 
-#ifdef __cplusplus
-}
-#endif
-
+__END_DECLS
 
 #endif /* PLOT3_H */
+
 /** @} */
 /*
  * Local Variables:
