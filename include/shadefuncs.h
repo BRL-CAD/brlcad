@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef SHADEFUNCS
-#define SHADEFUNCS
+#ifndef SHADEFUNCS_H
+#define SHADEFUNCS_H
 
 #include "shadework.h"
 
@@ -83,6 +83,8 @@ struct mfuncs {
 /* mf_flags lists important details about individual shaders */
 #define MFF_PROC	0x01		/**< @brief  shader is procedural, computes tr/re/hits */
 
+__BEGIN_DECLS
+
 /* defined in material.c */
 OPTICAL_EXPORT extern void mlib_add_shader(struct mfuncs **headp,
 					   struct mfuncs *mfp1);
@@ -101,7 +103,11 @@ OPTICAL_EXPORT extern void mlib_free(struct region *rp);
  */
 OPTICAL_EXPORT extern struct mfuncs *load_dynamic_shader(const char *material);
 
-#endif
+__END_DECLS
+
+#endif /* SHADEFUNCS_H */
+
+
 /** @} */
 /*
  * Local Variables:
