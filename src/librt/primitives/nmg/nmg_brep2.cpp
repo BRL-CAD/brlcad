@@ -140,8 +140,6 @@ nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, l
     ret = bn_coplanar_2d_to_3d(&points_obr_3d, (const point_t *)&origin_pnt, (const vect_t *)&u_axis, (const vect_t *)&v_axis, (const point2d_t *)points_obr_2d, 3);
     VSUB2(v1, points_obr_3d[1], points_obr_3d[0]);
     VSUB2(v2, points_obr_3d[2], points_obr_3d[0]);
-    VSCALE(v1, v1, 1.001);
-    VSCALE(v2, v2, 1.001);
     VADD3(obr_output_pnts[2], points_obr_3d[0], v1, v2);
     VSCALE(v1, v1, -1);
     VADD3(obr_output_pnts[3], points_obr_3d[0], v1, v2);
