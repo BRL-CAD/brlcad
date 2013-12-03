@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @addtogroup g_ */
 /** @{ */
 /** @file bot.h
@@ -26,6 +27,10 @@
  */
 /** @} */
 
+#ifndef __BOT_H__
+#define __BOT_H__
+
+__BEGIN_DECLS
 
 struct bot_specific {
     unsigned char bot_mode;
@@ -52,6 +57,10 @@ RT_EXPORT extern size_t rt_botface(struct soltab		*stp,
 				   fastf_t			*cp,
 				   size_t			face_no,
 				   const struct bn_tol	*tol);
+
+__END_DECLS
+
+#endif /* __BOT_H__ */
 
 /*
  * Local Variables:
