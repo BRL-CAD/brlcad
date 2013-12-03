@@ -25,6 +25,8 @@
 #ifndef __FBSERV_OBJ_H__
 #define __FBSERV_OBJ_H__
 
+#include "common.h"
+
 #include "fb.h"
 #include "pkg.h"
 
@@ -66,11 +68,15 @@ struct fbserv_obj {
     int fbs_mode;			/**< @brief 0-off, 1-underlay, 2-interlay, 3-overlay */
 };
 
+__BEGIN_DECLS
 
 FB_EXPORT extern int fbs_open(struct fbserv_obj *fbsp, int port);
 FB_EXPORT extern int fbs_close(struct fbserv_obj *fbsp);
 
+__END_DECLS
+
 #endif  /* __FBSERV_OBJ_H__ */
+
 /** @} */
 /*
  * Local Variables:
