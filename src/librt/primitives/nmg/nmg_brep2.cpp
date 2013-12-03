@@ -58,9 +58,8 @@ nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, l
     struct vertex **pt;
     int ret = 0;
     int pnt_cnt = 0;
-    int edge_index = 0;
     point_t origin_pnt;
-    vect_t u_axis, v_axis, v1, v2;
+    vect_t u_axis, v_axis;
     point2d_t obr_2d_center;
     point2d_t obr_2d_v1, obr_2d_v2;
     point_t *points_3d = NULL;
@@ -163,7 +162,6 @@ nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, l
 		brepi[eu->e_p->index] = e.m_edge_index;
 	    }
 	    // Regardless of whether the edge existed as an object, it needs to be added to the trimming loop
-	    vect_t u_component, v_component;
 	    ON_3dPoint vg1pt(vg1->coord);
 	    int orientation = ((vg1pt != (*b)->m_V[(*b)->m_E[(int)brepi[eu->e_p->index]].m_vi[0]].Point())) ? 1 : 0;
 	    // Make a 2d trimming curve, create a trim, and add the trim to the loop
