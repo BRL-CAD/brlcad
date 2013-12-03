@@ -25,6 +25,13 @@
  *
  */
 
+#ifndef __LIBTERMIO_H__
+#define __LIBTERMIO_H__
+
+#include "common.h"
+
+__BEGIN_DECLS
+
 void clr_Cbreak( int fd );
 void set_Cbreak( int fd );
 void clr_Raw( int fd );
@@ -42,6 +49,11 @@ int save_Fil_Stat( int fd );
 int reset_Fil_Stat( int	fd );
 int set_O_NDELAY( int fd );
 void prnt_Tio();	/* misc. types of args */
+
+__END_DECLS
+
+#endif /* __LIBTERMIO_H__ */
+
 /** @} */
 /*
  * Local Variables:
