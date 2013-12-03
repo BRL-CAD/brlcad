@@ -28,6 +28,9 @@
  */
 /** @} */
 
+#ifndef __FBMSG_H__
+#define __FBMSG_H__
+
 #define	MSG_FBOPEN	1
 #define	MSG_FBCLOSE	2
 #define	MSG_FBCLEAR	3
@@ -58,6 +61,8 @@
 #define	MSG_ERROR	23
 
 #define	MSG_NORETURN	100
+
+#endif /* __FBMSG_H__ */
 
 /*
  * Local Variables:
