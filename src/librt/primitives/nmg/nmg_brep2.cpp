@@ -84,6 +84,7 @@ nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, l
     struct vertex **pt;
     int ret = 0;
     int pnt_cnt = 0;
+    int edge_index = 0;
     point_t origin_pnt;
     vect_t u_axis, v_axis, v1, v2;
     point2d_t obr_2d_center;
@@ -92,7 +93,6 @@ nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, l
     point2d_t *points_2d = NULL;
     point2d_t *points_obr_2d = NULL;
     point_t *points_obr_3d = NULL;
-    point_t obr_output_pnts[4+1] = {{0}};
     std::map<int, int> nmg_to_array;
     struct loopuse *lu;
     struct edgeuse *eu;
@@ -131,57 +131,107 @@ nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, l
     ret = bn_2d_obr(&obr_2d_center, &obr_2d_v1, &obr_2d_v2, (const point2d_t *)points_2d, pnt_cnt);
     if (ret) return 0;
 
-    /* Use the obr to define the NURBS surface */
+    /* Use the obr to define the 3D corner points of the NURBS surface */
     points_obr_2d = (point2d_t *)bu_calloc(3 + 1, sizeof(point2d_t), "points_2d");
     points_obr_3d = (point_t *)bu_calloc(3 + 1, sizeof(point_t), "points_3d");
-    V2MOVE(points_obr_2d[0], obr_2d_center);
-    V2ADD2(points_obr_2d[1], obr_2d_v1, obr_2d_center);
-    V2ADD2(points_obr_2d[2], obr_2d_v2, obr_2d_center);
+    V2ADD3(points_obr_2d[2], obr_2d_center, obr_2d_v1, obr_2d_v2);
+    V2SCALE(obr_2d_v1, obr_2d_v1, -1);
+    V2ADD3(points_obr_2d[3], obr_2d_center, obr_2d_v1, obr_2d_v2);
+    V2SCALE(obr_2d_v2, obr_2d_v2, -1);
+    V2ADD3(points_obr_2d[0], obr_2d_center, obr_2d_v1, obr_2d_v2);
+    V2SCALE(obr_2d_v1, obr_2d_v1, -1);
+    V2ADD3(points_obr_2d[1], obr_2d_center, obr_2d_v1, obr_2d_v2);
+
     ret = bn_coplanar_2d_to_3d(&points_obr_3d, (const point_t *)&origin_pnt, (const vect_t *)&u_axis, (const vect_t *)&v_axis, (const point2d_t *)points_obr_2d, 3);
-    VSUB2(v1, points_obr_3d[1], points_obr_3d[0]);
-    VSUB2(v2, points_obr_3d[2], points_obr_3d[0]);
-    VADD3(obr_output_pnts[2], points_obr_3d[0], v1, v2);
-    VSCALE(v1, v1, -1);
-    VADD3(obr_output_pnts[3], points_obr_3d[0], v1, v2);
-    VSCALE(v2, v2, -1);
-    VADD3(obr_output_pnts[0], points_obr_3d[0], v1, v2);
-    VSCALE(v1, v1, -1);
-    VADD3(obr_output_pnts[1], points_obr_3d[0], v1, v2);
-    ON_3dPoint p1 = ON_3dPoint(obr_output_pnts[0]);
-    ON_3dPoint p2 = ON_3dPoint(obr_output_pnts[1]);
-    ON_3dPoint p3 = ON_3dPoint(obr_output_pnts[2]);
-    ON_3dPoint p4 = ON_3dPoint(obr_output_pnts[3]);
-    (*b)->m_S.Append(sideSurface2(p1, p4, p3, p2));
+
+    ON_3dPoint p1 = ON_3dPoint(points_obr_3d[0]);
+    ON_3dPoint p2 = ON_3dPoint(points_obr_3d[1]);
+    ON_3dPoint p3 = ON_3dPoint(points_obr_3d[2]);
+    ON_3dPoint p4 = ON_3dPoint(points_obr_3d[3]);
+
+    (*b)->m_S.Append(sideSurface2(p1, p2, p3, p4));
     ON_Surface *surf = (*(*b)->m_S.Last());
     int surfindex = (*b)->m_S.Count();
     ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
+
     /* Set surface UV domain to match the 2D domain above */
     point2d_t min2d, max2d;
+    V2MINMAX(min2d, max2d, points_obr_2d[0]);
     V2MINMAX(min2d, max2d, points_obr_2d[1]);
     V2MINMAX(min2d, max2d, points_obr_2d[2]);
+    V2MINMAX(min2d, max2d, points_obr_2d[3]);
     surf->SetDomain(0, min2d[0], max2d[0]);
     surf->SetDomain(1, min2d[1], max2d[1]);
 
-    /* TODO - activate handling of cw outer loop orientation */
-    /*for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-      if (lu->orientation == OT_SAME && nmg_loop_is_ccw(lu, fg->N, tol) == -1) ccw = -1;
-      }
-      if (ccw != -1) {
-      VSET(vnormal, fg->N[0], fg->N[1], fg->N[2]);
-      } else {
-      VSET(vnormal, -fg->N[0], -fg->N[1], -fg->N[2]);
-      }
-      if (fu->f_p->flip)
-      VSET(vnormal, -vnormal[0], -vnormal[1], -vnormal[2]);
-      */
-
     /* Now that we have the surface and the face, add the loops */
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-	int edges=0;
 	if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) continue; // loop is a single vertex
 	// Check if this is an inner or outer loop
 	ON_BrepLoop::TYPE looptype = (lu->orientation == OT_SAME) ? ON_BrepLoop::outer : ON_BrepLoop::inner;
 	ON_BrepLoop& loop = (*b)->NewLoop(looptype, face);
+	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+	    struct vertex_g *vg1 = eu->vu_p->v_p->vg_p;
+	    struct vertex_g *vg2 = eu->eumate_p->vu_p->v_p->vg_p;
+	    NMG_CK_VERTEX_G(vg1);
+	    NMG_CK_VERTEX_G(vg2);
+	    int vert1 = brepi[vg1->index];
+	    int vert2 = brepi[vg2->index];
+	    // Add edge if not already added
+	    if (brepi[eu->e_p->index] == -INT_MAX) {
+		/* always add edges with the small vertex index as from */
+		if (vg1->index > vg2->index) {
+		    int tmpvert = vert1;
+		    vert1 = vert2;
+		    vert2 = tmpvert;
+		}
+		// Create and add 3D curve
+		ON_Curve* c3d = new ON_LineCurve((*b)->m_V[vert1].Point(), (*b)->m_V[vert2].Point());
+		c3d->SetDomain(0.0, 1.0);
+		(*b)->m_C3.Append(c3d);
+		// Create and add 3D edge
+		ON_BrepEdge& e = (*b)->NewEdge((*b)->m_V[vert1], (*b)->m_V[vert2] , (*b)->m_C3.Count() - 1);
+		e.m_tolerance = 0.0;
+		brepi[eu->e_p->index] = e.m_edge_index;
+	    }
+	    // Regardless of whether the edge existed as
+	    // an object, it needs to be added to the
+	    // trimming loop
+	    vect_t u_component, v_component;
+	    ON_3dPoint vg1pt(vg1->coord);
+	    int orientation = ((vg1pt != (*b)->m_V[(*b)->m_E[(int)brepi[eu->e_p->index]].m_vi[0]].Point())) ? 1 : 0;
+	    // Now, make 2d trimming curves
+	    int p1_index = nmg_to_array.find(vg1->index)->second;
+	    int p2_index = nmg_to_array.find(vg2->index)->second;
+	    ON_2dPoint from_uv(points_2d[p1_index][0], points_2d[p1_index][1]);
+	    ON_2dPoint to_uv(points_2d[p2_index][0], points_2d[p2_index][1]);
+	    ON_Curve* c2d =  new ON_LineCurve(from_uv, to_uv);
+	    c2d->SetDomain(0.0, 1.0);
+	    int c2i = (*b)->m_C2.Count();
+	    (*b)->m_C2.Append(c2d);
+	    ON_BrepTrim& trim = (*b)->NewTrim((*b)->m_E[(int)brepi[eu->e_p->index]], orientation, loop, c2i);
+	    trim.m_type = ON_BrepTrim::mated;
+	    trim.m_tolerance[0] = 0.0;
+	    trim.m_tolerance[1] = 0.0;
+	}
+
+    }
+
+    /* Decide whether to flip face - check NMG face normal
+     * and whether the outer loop is ccw */
+    bool ccw, do_flip;
+    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+	if (lu->orientation == OT_SAME)
+	    ccw = (nmg_loop_is_ccw(lu, fg->N, tol) == -1) ? false : true;
+    }
+    do_flip = ((!ccw && fu->f_p->flip) || (ccw && !fu->f_p->flip)) ? false : true;
+
+    ON_3dVector surface_normal;
+    ON_3dVector face_normal(fg->N[0], fg->N[1], fg->N[2]);
+    surf->EvNormal(surf->Domain(0).Mid(), surf->Domain(1).Mid(), surface_normal);
+    if (((ON_DotProduct(surface_normal, face_normal) > 0) && do_flip) ||
+        ((ON_DotProduct(surface_normal, face_normal) < 0) && !do_flip)) 
+    {
+	(*b)->FlipFace(face);
     }
 
     return 0;
