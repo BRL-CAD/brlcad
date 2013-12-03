@@ -21,9 +21,14 @@
  *
  */
 
+#ifndef __FFT_H__
+#define __FFT_H__
+
 #include "common.h"
 
 #include <math.h>
+
+__BEGIN_DECLS
 
 #ifndef M_PI
 #  define M_PI 3.14159265358979323846264338328
@@ -65,6 +70,10 @@ FFT_EXPORT extern void cdiv(COMPLEX *result, COMPLEX *val1, COMPLEX *val2);
  * CMake is live we'll just add the ones used by our current code */
 FFT_EXPORT extern void rfft256(register double X[]);
 FFT_EXPORT extern void irfft256(register double X[]);
+
+__END_DECLS
+
+#endif /* __FFT_H__ */
 
 /*
  * Local Variables:
