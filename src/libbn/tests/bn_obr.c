@@ -101,16 +101,15 @@ main(int argc, const char **argv)
 	for (i = 0; i < 4; i++) {
 	    bu_log("    expected[%d]: (%f, %f)\n", i, V2ARGS(expected[i]));
 	    bu_log("      actual[%d]: (%f, %f)\n", i, V2ARGS(output_pnts[i]));
-	    if (!NEAR_ZERO(output_pnts[i][0] - expected[i][0], SMALL_FASTF) ||
-		    !NEAR_ZERO(output_pnts[i][1] - expected[i][1], SMALL_FASTF)) {
+	    if (!NEAR_ZERO(output_pnts[i][0] - expected[i][0], VUNITIZE_TOL) ||
+		    !NEAR_ZERO(output_pnts[i][1] - expected[i][1], VUNITIZE_TOL)) {
 		retval += 1;
 	    }
 	}
-	if (!retval) {return -1;} else {bu_log("Test #001 Passed!\n");}
+	if (retval) {return -1;} else {bu_log("Test #001 Passed!\n");}
 	if (do_plotting) {
 	    VSET(output_3d_pnts[0], output_pnts[0][0], output_pnts[0][1], 0);
 	    VSET(output_3d_pnts[1], output_pnts[1][0], output_pnts[1][1], 0);
-	    VSET(output_3d_pnts[2], output_pnts[2][0], output_pnts[2][1], 0);
 	    VSET(output_3d_pnts[2], output_pnts[2][0], output_pnts[2][1], 0);
 	    VSET(output_3d_pnts[3], output_pnts[3][0], output_pnts[3][1], 0);
 	    if (do_plotting) {
@@ -118,6 +117,61 @@ main(int argc, const char **argv)
 	    }
 	}
     }
+
+    /* Triangle input */
+    {
+	point2d_t center;
+	vect2d_t u, v;
+	point2d_t pnts[3+1] = {{0}};
+	point2d_t expected[4+1] = {{0}};
+	point2d_t output_pnts[4+1] = {{0}};
+	point_t output_3d_pnts[4+1] = {{0}};
+	int n = 3;
+
+	V2SET(pnts[0], 1.0, 0.0);
+	V2SET(pnts[1], 3.0, 0.0);
+	V2SET(pnts[2], 2.0, 4.0);
+
+	V2SET(expected[0], 1.2, 1.4);
+	V2SET(expected[1], 3.0, 2.0);
+	V2SET(expected[2], 2.75, 2.75);
+	V2SET(expected[3], 0.95, 2.15);
+
+
+	retval = bn_2d_obr(&center, &u, &v, (const point2d_t *)pnts, n);
+	if (retval) return -1;
+	V2ADD3(output_pnts[2], center, u, v);
+	V2SCALE(u, u, -1);
+	V2ADD3(output_pnts[3], center, u, v);
+	V2SCALE(v, v, -1);
+	V2ADD3(output_pnts[0], center, u, v);
+	V2SCALE(u, u, -1);
+	V2ADD3(output_pnts[1], center, u, v);
+	bu_log("Test #001:  polyline_2d_hull - triangle test:\n");
+	bu_log("bn_2d_obr: center (%f, %f)\n", V2ARGS(center));
+	bu_log("           u      (%f, %f)\n", V2ARGS(u));
+	bu_log("           v      (%f, %f)\n", V2ARGS(v));
+
+	for (i = 0; i < 4; i++) {
+	    bu_log("    expected[%d]: (%f, %f)\n", i, V2ARGS(expected[i]));
+	    bu_log("      actual[%d]: (%f, %f)\n", i, V2ARGS(output_pnts[i]));
+	    if (!NEAR_ZERO(output_pnts[i][0] - expected[i][0], SMALL_FASTF) ||
+		    !NEAR_ZERO(output_pnts[i][1] - expected[i][1], SMALL_FASTF)) {
+		retval += 1;
+	    }
+	}
+	if (do_plotting) {
+	    VSET(output_3d_pnts[0], output_pnts[0][0], output_pnts[0][1], 0);
+	    VSET(output_3d_pnts[1], output_pnts[1][0], output_pnts[1][1], 0);
+	    VSET(output_3d_pnts[2], output_pnts[2][0], output_pnts[2][1], 0);
+	    VSET(output_3d_pnts[3], output_pnts[3][0], output_pnts[3][1], 0);
+	    if (do_plotting) {
+		plot_obr(8, (const point_t *)output_3d_pnts, 4);
+	    }
+	}
+	if (retval) {return -1;} else {bu_log("Triangle Test Passed!\n");}
+    }
+
 
     /* 3D input */
     {
