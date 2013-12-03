@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @addtogroup libmultispectral */
 /** @{ */
 /** @file spectrum.h
@@ -87,10 +88,15 @@
  *
  */
 
+#ifndef __SPECTRUM_H__
+#define __SPECTRUM_H__
+
 #include "common.h"
 
 #include "bn.h"
 #include "raytrace.h"
+
+__BEGIN_DECLS
 
 /*
  * Routines
@@ -108,6 +114,9 @@ RT_EXPORT extern void			rt_spect_black_body_fast(struct bn_tabdata		*data,
 
 RT_EXPORT extern void			rt_spect_reflectance_rgb(struct bn_tabdata		*curve,
 								 const float		rgb[3]);
+__END_DECLS
+
+#endif /* __SPECTRUM_H__ */
 
 /** @} */
 /*
