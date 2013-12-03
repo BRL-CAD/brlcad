@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef __DM_GLX__
-#define __DM_GLX__
+#ifndef __DM_GLX_H__
+#define __DM_GLX_H__
 
 /* Map +/-2048 GED space into -1.0..+1.0 :: x/2048*/
 #define GED2IRIS(x)	(((float)(x))*0.00048828125)
@@ -64,10 +64,14 @@ struct glx_vars {
     struct modifiable_glx_vars mvars;
 };
 
+__BEGIN_DECLS
+
 extern void glx_clearToBlack();
 extern struct glx_vars head_glx_vars;
 
-#endif /* __DM_GLX__ */
+__END_DECLS
+
+#endif /* __DM_GLX_H__ */
 
 /** @} */
 /*
