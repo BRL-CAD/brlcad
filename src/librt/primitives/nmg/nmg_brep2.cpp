@@ -51,32 +51,6 @@ sideSurface2(const ON_3dPoint& SW, const ON_3dPoint& SE, const ON_3dPoint& NE, c
     return surf;
 }
 
-
-/* TODO - the approach for creating surfaces for NMG faces below is horribly non-optimal.
- * A better approach would be along the lines of:
- *
- * 1.  Since the outer NMG boundary (lu->orientation == OT_SAME) should be a simple polyline, use the Melkman Algorithm
- * to construct a convex hull in order N time.  The Geometric Tools implementation of step 3 indicates we can't
- * have three colinear points in the input to that step, so (since the NMG itself makes no such guarantees) we run
- * all input face outer loops through the hull building process.
- * http://geomalgorithms.com/a12-_hull-3.html
- *
- * If the NMG outer polyline can be a non-simple polyline (i.e. it self intersects), we'll have to either use the
- * Monotone Chain Algorithm to compute the 2D convex hull, or (*possibly* faster at the expense of a somewhat larger
- * surface) use the BFP bounded error approximation and scale it to ensure it contains all points.
- * http://geomalgorithms.com/a10-_hull-1.html
- * http://geomalgorithms.com/a11-_hull-2.html
- *
- * 3.  Calculate the minimal rectangle using rotating calipers - see:
- * http://geomalgorithms.com/a08-_containers.html#Minimal%20Rectangle
- * http://www.geometrictools.com/LibMathematics/Containment/Containment.html
- * http://code.google.com/p/replay/source/browse/trunk/include/replay/bounding_rectangle.hpp
- *
- * 4.  Translate the resulting minimal rectangle into a NURBS surface and define the in-surface
- * 2D loop based on the 3D nmg loop.  This should be very similar to what is done below...
- */
-
-
 HIDDEN int
 nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, long *brepi) {
     const struct face_g_plane *fg = fu->f_p->g.plane_p;
@@ -188,13 +162,11 @@ nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, l
 		e.m_tolerance = 0.0;
 		brepi[eu->e_p->index] = e.m_edge_index;
 	    }
-	    // Regardless of whether the edge existed as
-	    // an object, it needs to be added to the
-	    // trimming loop
+	    // Regardless of whether the edge existed as an object, it needs to be added to the trimming loop
 	    vect_t u_component, v_component;
 	    ON_3dPoint vg1pt(vg1->coord);
 	    int orientation = ((vg1pt != (*b)->m_V[(*b)->m_E[(int)brepi[eu->e_p->index]].m_vi[0]].Point())) ? 1 : 0;
-	    // Now, make 2d trimming curves
+	    // Make a 2d trimming curve, create a trim, and add the trim to the loop
 	    int p1_index = nmg_to_array.find(vg1->index)->second;
 	    int p2_index = nmg_to_array.find(vg2->index)->second;
 	    ON_2dPoint from_uv(points_2d[p1_index][0], points_2d[p1_index][1]);
