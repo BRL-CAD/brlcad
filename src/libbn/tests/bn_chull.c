@@ -29,10 +29,6 @@
 #include "bn.h"
 #include "plot3.h"
 
-/* TODO - need to test triangles - either this, the obr logic, or
- * both aren't handling triangles correctly */
-
-
 HIDDEN
 void plot_chull(int test_num, const point_t *pnt_array, int pnt_cnt)
 {
