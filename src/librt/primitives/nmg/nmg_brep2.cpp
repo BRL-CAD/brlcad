@@ -155,7 +155,12 @@ nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, l
     ON_Surface *surf = (*(*b)->m_S.Last());
     int surfindex = (*b)->m_S.Count();
     ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
-    /* TODO - set surface UV domain to match the 2D domain above */
+    /* Set surface UV domain to match the 2D domain above */
+    point2d_t min2d, max2d;
+    V2MINMAX(min2d, max2d, points_obr_2d[1]);
+    V2MINMAX(min2d, max2d, points_obr_2d[2]);
+    surf->SetDomain(0, min2d[0], max2d[0]);
+    surf->SetDomain(1, min2d[1], max2d[1]);
 
     /* TODO - activate handling of cw outer loop orientation */
     /*for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
