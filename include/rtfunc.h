@@ -37,6 +37,7 @@
 #include "bu.h"
 #include "raytrace.h"
 
+__BEGIN_DECLS
 
 /**
  * prep an object for ray tracing
@@ -158,7 +159,10 @@ RT_EXPORT extern int rt_obj_params(struct pc_pc_set *ps, const struct rt_db_inte
  */
 RT_EXPORT extern int rt_obj_mirror(struct rt_db_internal *ip, const plane_t *plane);
 
+__END_DECLS
+
 #endif  /* __RTFUNC_H__ */
+
 /** @} */
 
 /*
