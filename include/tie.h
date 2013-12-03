@@ -29,9 +29,7 @@
 
 #include "vmath.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+__BEGIN_DECLS
 
 #define TIE_SINGLE_PRECISION 0
 #define TIE_DOUBLE_PRECISION 1
@@ -154,9 +152,7 @@ RT_EXPORT extern void TIE_VAL(tie_push)(struct tie_s *tie, TIE_3 **tlist, unsign
 #define tie_work TIE_VAL(tie_work)
 #define tie_push TIE_VAL(tie_push)
 
-#ifdef __cplusplus
-}
-#endif
+__END_DECLS
 
 #endif /* _TIE_H */
 
