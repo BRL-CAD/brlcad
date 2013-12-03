@@ -27,6 +27,8 @@
 #ifndef DB5_ATTRS_PRIVATE_H
 #define DB5_ATTRS_PRIVATE_H
 
+#include "common.h"
+
 #include "raytrace.h" /* for the ATTR_x enum definitions, the master source */
 
 #if defined(__cplusplus)
@@ -39,17 +41,13 @@
 */
 #endif
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
+__BEGIN_DECLS
 
-    int db5_attr_is_standard_attribute(const char *attr_want);
-    int db5_attr_standardize_attribute(const char *attr_want);
-    const char *db5_attr_standard_attribute(const int attr_type);
+int db5_attr_is_standard_attribute(const char *attr_want);
+int db5_attr_standardize_attribute(const char *attr_want);
+const char *db5_attr_standard_attribute(const int attr_type);
 
-#if defined(__cplusplus)
-}
-#endif
+__END_DECLS
 
 #if defined(__cplusplus)
 namespace db5_attrs_private {
@@ -97,9 +95,9 @@ namespace db5_attrs_private {
     extern std::map<int,db5_attr_t>         int2attr;
     extern std::map<std::string,db5_attr_t> name2attr;
 }
-#endif
+#endif /* __cplusplus */
 
-#endif /* #ifndef DB5_ATTRS_PRIVATE_H */
+#endif /* DB5_ATTRS_PRIVATE_H */
 
 /*
  * Local Variables:
