@@ -87,9 +87,14 @@ struct shadework {
  */
 };
 
+__BEGIN_DECLS
+
 extern void pr_shadework(const char *str, const struct shadework *swp);
 
-#endif
+__END_DECLS
+
+#endif /* SHADEWORK_H */
+
 /** @} */
 /*
  * Local Variables:
