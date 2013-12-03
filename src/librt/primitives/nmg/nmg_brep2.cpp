@@ -77,7 +77,7 @@ sideSurface2(const ON_3dPoint& SW, const ON_3dPoint& SE, const ON_3dPoint& NE, c
  */
 
 
-HIDDEN void
+HIDDEN int
 nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, long *brepi) {
     const struct face_g_plane *fg = fu->f_p->g.plane_p;
     struct bu_ptbl vert_table;
@@ -181,6 +181,7 @@ nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, l
 	ON_BrepLoop& loop = (*b)->NewLoop(looptype, face);
     }
 
+    return 0;
 }
 
 
