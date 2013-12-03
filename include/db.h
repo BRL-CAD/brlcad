@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @addtogroup db4 */
 /** @{ */
 /** @file db.h
@@ -66,6 +67,7 @@
 
 #include "bu.h"
 
+__BEGIN_DECLS
 
 #define NAMESIZE		16
 
@@ -447,6 +449,8 @@ DEPRECATED void rt_mat_dbmat(fastf_t *ff, const dbfloat_t *dbp, int flip);
 
 /* DEPRECATED: do not use. */
 DEPRECATED void rt_dbmat_mat(dbfloat_t *dbp, const fastf_t *ff);
+
+__END_DECLS
 
 #endif	/* __DB_H__ */
 
