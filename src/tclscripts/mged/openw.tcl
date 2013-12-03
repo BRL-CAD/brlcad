@@ -1968,7 +1968,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 
     .$id.menubar.tools add separator
 
-    .$id.menubar.tools add command -label "Command Window" -underline 6\
+    .$id.menubar.tools add command -label "Command Window (c)" -underline 16\
 	-command "open_cmd_win $id"
     hoc_register_menu_data "Tools" "Command Window" "Command Window"\
 	{ { summary "Raise the command window." } }
