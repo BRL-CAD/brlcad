@@ -29,17 +29,24 @@
 #include <iostream>
 
 /* quell warnings */
-#if HAVE_DIAG_PRAGMAS
+#if HAVE_GCC_DIAG_PRAGMAS
 #  pragma GCC diagnostic push /* begin ignoring warnings */
 #  pragma GCC diagnostic ignored "-Wshadow"
 #  pragma GCC diagnostic ignored "-Wfloat-equal"
 #  pragma GCC diagnostic ignored "-Wunused-parameter"
+#elif HAVE_CLANG_DIAG_PRAGMAS
+#  pragma clang diagnostic push /* begin ignoring warnings */
+#  pragma clang diagnostic ignored "-Wshadow"
+#  pragma clang diagnostic ignored "-Wfloat-equal"
+#  pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
 #include <btBulletDynamicsCommon.h>
 
-#if HAVE_DIAG_PRAGMAS
+#if HAVE_GCC_DIAG_PRAGMAS
 #  pragma GCC diagnostic pop /* end ignoring warnings */
+#elif HAVE_CLANG_DIAG_PRAGMAS
+#  pragma clang diagnostic pop /* end ignoring warnings */
 #endif
 
 /* public headers */

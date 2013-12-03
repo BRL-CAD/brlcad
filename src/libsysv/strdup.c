@@ -29,16 +29,21 @@
 #include "common.h"
 
 /* quell warnings */
-#if HAVE_DIAG_PRAGMAS
+#if HAVE_GCC_DIAG_PRAGMAS
 #  pragma GCC diagnostic push /* begin ignoring warnings */
 #  pragma GCC diagnostic ignored "-Wunused-const-variable"
+#elif HAVE_CLANG_DIAG_PRAGMAS
+#  pragma clang diagnostic push /* begin ignoring warnings */
+#  pragma clang diagnostic ignored "-Wunused-const-variable"
 #endif
 
 /* quell empty-compilation unit warnings */
 static const int unused = 0;
 
-#if HAVE_DIAG_PRAGMAS
+#if HAVE_GCC_DIAG_PRAGMAS
 #  pragma GCC diagnostic pop /* end ignoring warnings */
+#elif HAVE_CLANG_DIAG_PRAGMAS
+#  pragma clang diagnostic pop /* end ignoring warnings */
 #endif
 
 #ifndef HAVE_STRDUP

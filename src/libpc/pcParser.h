@@ -33,16 +33,22 @@
 #include <iostream>
 
 /* for g++ to quell warnings */
-#if HAVE_DIAG_PRAGMAS
+#if HAVE_GCC_DIAG_PRAGMAS
 #  pragma GCC diagnostic push /* start new diagnostic pragma */
 #  pragma GCC diagnostic ignored "-Wshadow"
 #  pragma GCC diagnostic ignored "-Wunused-parameter"
+#elif HAVE_CLANG_DIAG_PRAGMAS
+#  pragma clang diagnostic push /* start new diagnostic pragma */
+#  pragma clang diagnostic ignored "-Wshadow"
+#  pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
 #include <boost/spirit/include/classic.hpp>	/* deprecated header */
 
-#if HAVE_DIAG_PRAGMAS
+#if HAVE_GCC_DIAG_PRAGMAS
 #  pragma GCC diagnostic pop /* end ignoring warnings */
+#elif HAVE_CLANG_DIAG_PRAGMAS
+#  pragma clang diagnostic pop /* end ignoring warnings */
 #endif
 
 #include "pcVCSet.h"

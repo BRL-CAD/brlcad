@@ -30,10 +30,14 @@
 /* system headers */
 
 /* quell warnings */
-#if HAVE_DIAG_PRAGMAS
+#if HAVE_GCC_DIAG_PRAGMAS
 #  pragma GCC diagnostic push /* begin ignoring warnings */
 #  pragma GCC diagnostic ignored "-Wshadow"
 #  pragma GCC diagnostic ignored "-Wfloat-equal"
+#elif HAVE_CLANG_DIAG_PRAGMAS
+#  pragma clang diagnostic push /* begin ignoring warnings */
+#  pragma clang diagnostic ignored "-Wshadow"
+#  pragma clang diagnostic ignored "-Wfloat-equal"
 #endif
 
 #include <BulletCollision/CollisionDispatch/btCollisionDispatcher.h>
@@ -44,8 +48,10 @@
 /* private headers */
 #include "./simcollisionalgo.h"
 
-#if HAVE_DIAG_PRAGMAS
+#if HAVE_GCC_DIAG_PRAGMAS
 #  pragma GCC diagnostic pop /* end ignoring warnings */
+#elif HAVE_CLANG_DIAG_PRAGMAS
+#  pragma clang diagnostic pop /* end ignoring warnings */
 #endif
 
 #define USE_PERSISTENT_CONTACTS 1

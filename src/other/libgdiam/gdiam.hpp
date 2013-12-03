@@ -43,9 +43,6 @@ typedef  gdiam_real  * gdiam_point_2d;
 typedef  gdiam_real  * gdiam_point;
 typedef  const gdiam_real  * gdiam_point_cnt;
 
-/* for HAVE_DIAG_PRAGMAS (see below): */
-#include "common.h"
-
 #ifndef __MINMAX_DEFINED
 #define __MINMAX_DEFINED
 
@@ -173,9 +170,12 @@ inline void  pnt_init_normalize( gdiam_point  pnt,
 }
 
 /* for g++ to quell warnings */
-#if HAVE_DIAG_PRAGMAS
+#if (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__))
 #  pragma GCC diagnostic push /* start new diagnostic pragma */
 #  pragma GCC diagnostic ignored "-Wfloat-equal"
+#elif (defined(__clang__) && (__clang_major__ > 2 || (__clang_major__ == 2 && __clang_minor__ >= 8)))
+#  pragma clang diagnostic push /* start new diagnostic pragma */
+#  pragma clang diagnostic ignored "-Wfloat-equal"
 #endif
 
 inline bool  pnt_isEqual( const gdiam_point  p,
@@ -186,8 +186,10 @@ inline bool  pnt_isEqual( const gdiam_point  p,
               &&  ( p[ 1 ] == q[ 1 ] )
               &&  ( p[ 2 ] == q[ 2 ] ) );
 }
-#if HAVE_DIAG_PRAGMAS
+#if (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__))
 #  pragma GCC diagnostic pop /* end ignoring warnings */
+#elif (defined(__clang__) && (__clang_major__ > 2 || (__clang_major__ == 2 && __clang_minor__ >= 8)))
+#  pragma clang diagnostic pop /* end ignoring warnings */
 #endif
 
 inline void  pnt_scale_and_add( gdiam_point  dest,
