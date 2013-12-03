@@ -78,7 +78,7 @@ sideSurface2(const ON_3dPoint& SW, const ON_3dPoint& SE, const ON_3dPoint& NE, c
 
 
 HIDDEN int
-nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol) {
+nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, long *brepi) {
     const struct face_g_plane *fg = fu->f_p->g.plane_p;
     struct bu_ptbl vert_table;
     struct vertex **pt;
@@ -94,18 +94,19 @@ nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol) {
     point_t *points_obr_3d = NULL;
     point_t obr_output_pnts[4+1] = {{0}};
     std::map<int, int> nmg_to_array;
-    std::map<int, int> nmg_to_brep;
     struct loopuse *lu;
     struct edgeuse *eu;
 
-    /* Find out how many points we have and set up the initial ON_Brep vertex
-     * structures */
+    /* Find out how many points we have, set up any uninitialized ON_Brep vertex
+     * structures, and prepare a map of NMG index values to the point array indices */
     nmg_tabulate_face_g_verts(&vert_table, fg);
 
     for (BU_PTBL_FOR(pt, (struct vertex **), &vert_table)) {
 	if (nmg_to_array.find((*pt)->vg_p->index) == nmg_to_array.end()) {
-	    ON_BrepVertex& vert = (*b)->NewVertex((*pt)->vg_p->coord, SMALL_FASTF);
-	    nmg_to_brep[(*pt)->vg_p->index] = vert.m_vertex_index;
+	    if (brepi[(*pt)->vg_p->index] == -INT_MAX) {
+		ON_BrepVertex& vert = (*b)->NewVertex((*pt)->vg_p->coord, SMALL_FASTF);
+		brepi[(*pt)->vg_p->index] = vert.m_vertex_index;
+	    }
 	    nmg_to_array[(*pt)->vg_p->index] = pnt_cnt;
 	    pnt_cnt++;
 	}
@@ -178,21 +179,6 @@ nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol) {
 	// Check if this is an inner or outer loop
 	ON_BrepLoop::TYPE looptype = (lu->orientation == OT_SAME) ? ON_BrepLoop::outer : ON_BrepLoop::inner;
 	ON_BrepLoop& loop = (*b)->NewLoop(looptype, face);
-	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-	    ++edges;
-	    vect_t ev1, ev2;
-	    struct vertex_g *vg1, *vg2;
-	    vg1 = eu->vu_p->v_p->vg_p;
-	    NMG_CK_VERTEX_G(vg1);
-	    int vert1 = nmg_to_array.find(vg1->index)->second;
-	    VMOVE(ev1, vg1->coord);
-	    vg2 = eu->eumate_p->vu_p->v_p->vg_p;
-	    NMG_CK_VERTEX_G(vg2);
-	    int vert2 = nmg_to_array.find(vg2->index)->second;
-	    VMOVE(ev2, vg2->coord);
-
-	    /* ... */
-	}
     }
 
     return 0;
@@ -207,16 +193,23 @@ rt_nmg_brep2(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     struct shell *s;
     struct faceuse *fu;
 
+    // Verify NMG
     RT_CK_DB_INTERNAL(ip);
     m = (struct model *)ip->idb_ptr;
     NMG_CK_MODEL(m);
 
+    // Both NMG and brep structures re-use components between faces.  In order to track
+    // when the conversion routine has already handled an NMG element, use an array.
+    long *brepi = static_cast<long*>(bu_malloc(m->maxindex * sizeof(long), "rt_nmg_brep: brepi[]"));
+    for (int i = 0; i < m->maxindex; i++) brepi[i] = -INT_MAX;
+
+    // Iterate over all faces in the NMG
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
 	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 		NMG_CK_FACEUSE(fu);
 		if (fu->orientation != OT_SAME) continue;
-
+		nmg_brep_face(b, fu, tol, brepi);
 	    }
 	    (*b)->SetTrimIsoFlags();
 	}
