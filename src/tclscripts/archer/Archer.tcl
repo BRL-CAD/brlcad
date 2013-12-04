@@ -3128,13 +3128,18 @@ proc title_node_handler {node} {
     grid $itk_component(maxcombmembL) -column 0 -row $i -sticky e
     grid $itk_component(maxcombmembE) -column 1 -row $i -sticky ew
     incr i
-    set i [buildOtherGeneralPreferences $i]
+    set ilist [buildOtherGeneralPreferences $i]
+    set i [lindex $ilist 0]
+    set ri [lindex $ilist 1]
+    if {$ri == ""} {
+	set ri $i
+    }
     grid $itk_component(affectedTreeNodesModeCB) \
 	-columnspan 2 \
 	-column 0 \
 	-row $i \
 	-sticky sw
-    grid rowconfigure $itk_component(generalF) $i -weight 1
+    grid rowconfigure $itk_component(generalF) $ri -weight 1
     incr i
     grid $itk_component(listViewAllAffectedCB) \
 	-columnspan 2 \
