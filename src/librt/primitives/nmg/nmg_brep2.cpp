@@ -194,7 +194,7 @@ nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, l
     ON_3dVector face_normal(fg->N[0], fg->N[1], fg->N[2]);
     surf->EvNormal(surf->Domain(0).Mid(), surf->Domain(1).Mid(), surface_normal);
     if (((ON_DotProduct(surface_normal, face_normal) > 0) && do_flip) ||
-        ((ON_DotProduct(surface_normal, face_normal) < 0) && !do_flip)) 
+        ((ON_DotProduct(surface_normal, face_normal) < 0) && !do_flip))
     {
 	(*b)->FlipFace(face);
     }
