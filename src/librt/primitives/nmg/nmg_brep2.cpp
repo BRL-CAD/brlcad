@@ -115,7 +115,7 @@ nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, l
     V2SCALE(obr_2d_v1, obr_2d_v1, -1);
     V2ADD3(points_obr_2d[1], obr_2d_center, obr_2d_v1, obr_2d_v2);
 
-    ret = bn_coplanar_2d_to_3d(&points_obr_3d, (const point_t *)&origin_pnt, (const vect_t *)&u_axis, (const vect_t *)&v_axis, (const point2d_t *)points_obr_2d, 3);
+    ret = bn_coplanar_2d_to_3d(&points_obr_3d, (const point_t *)&origin_pnt, (const vect_t *)&u_axis, (const vect_t *)&v_axis, (const point2d_t *)points_obr_2d, 4);
 
     ON_3dPoint p1 = ON_3dPoint(points_obr_3d[0]);
     ON_3dPoint p2 = ON_3dPoint(points_obr_3d[1]);
