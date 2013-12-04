@@ -1795,6 +1795,12 @@ GED_EXPORT extern int ged_search(struct ged *gedp, int argc, const char *argv[])
  */
 GED_EXPORT extern int ged_select(struct ged *gedp, int argc, const char *argv[]);
 
+/**
+ * Return ged selections of specified kind for specified object.
+ */
+GED_EXPORT struct rt_selection_list *ged_selection(struct ged *gedp,
+						   const char *object_name,
+						   const char *selection_name);
 
 /**
  * Get/set the output handler script
