@@ -226,9 +226,6 @@ nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, l
 	}
     }
 
-    // Make sure the outer loop ended up oriented correctly
-    //if ((*b)->LoopDirection(*face.OuterLoop()) != -1) (*b)->FlipLoop(*face.OuterLoop());
-
     return 0;
 }
 
