@@ -64,7 +64,8 @@
 #define F_LEFT 3
 
 HIDDEN int
-pnt2d_array_get_dimension(const point2d_t *pnts, int pnt_cnt, point2d_t *p_center, point2d_t *p1, point2d_t *p2) {
+pnt2d_array_get_dimension(const point2d_t *pnts, int pnt_cnt, point2d_t *p_center, point2d_t *p1, point2d_t *p2)
+{
     int i = 0;
     point2d_t min = V2INIT_ZERO;
     point2d_t max = V2INIT_ZERO;
@@ -85,7 +86,7 @@ pnt2d_array_get_dimension(const point2d_t *pnts, int pnt_cnt, point2d_t *p_cente
     V2MOVE(max_y_pt, curr_pnt);
 
     while (i < pnt_cnt) {
-	V2MOVE(curr_pnt,pnts[i]);
+	V2MOVE(curr_pnt, pnts[i]);
 	center[0] += curr_pnt[0];
 	center[1] += curr_pnt[1];
 	V2MINMAX(min, max, curr_pnt);
@@ -127,14 +128,14 @@ pnt2d_array_get_dimension(const point2d_t *pnts, int pnt_cnt, point2d_t *p_cente
 
     i = 0;
     while (i < pnt_cnt) {
-	const struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST/2, BN_TOL_DIST*BN_TOL_DIST/4, 1e-6, 1-1e-6};
+	const struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST / 2, BN_TOL_DIST *BN_TOL_DIST / 4, 1e-6, 1 - 1e-6};
 	fastf_t dist_sq;
 	fastf_t pca[2];
 	point_t A_3D, B_3D, curr_pnt_3D;
 	i++;
 	VSET(A_3D, A[0], A[1], 0.0);
 	VSET(B_3D, B[0], B[1], 0.0);
-	V2MOVE(curr_pnt,pnts[i]);
+	V2MOVE(curr_pnt, pnts[i]);
 	VSET(curr_pnt_3D, curr_pnt[0], curr_pnt[1], 0.0);
 	/* If we're off the line, it's 2D. */
 	if (bn_dist_pt2_lseg2(&dist_sq, pca, A_3D, B_3D, curr_pnt_3D, &tol) > 2) return 2;
@@ -168,8 +169,8 @@ UpdateBox(struct obr_vals *obr, point2d_t left_pnt, point2d_t right_pnt, point2d
 
     V2SUB2(right_left_diff, right_pnt, left_pnt);
     V2SUB2(top_bottom_diff, top_pnt, bottom_pnt);
-    extent0 = 0.5 * V2DOT(u,right_left_diff);
-    extent1 = 0.5 * V2DOT(v,top_bottom_diff);
+    extent0 = 0.5 * V2DOT(u, right_left_diff);
+    extent1 = 0.5 * V2DOT(v, top_bottom_diff);
     area = extent0 * extent1 * 4;
 
     if (area < obr->area) {
@@ -182,7 +183,7 @@ UpdateBox(struct obr_vals *obr, point2d_t left_pnt, point2d_t right_pnt, point2d
 	mMinBox.Center = left_pnt + U*extent0 + V*(extent1 - V.Dot(left_bottom_diff));*/
 	V2SUB2(left_bottom_diff, left_pnt, bottom_pnt);
 	V2SCALE(U, u, extent0);
-	V2SCALE(V, v, extent1 - V2DOT(v,left_bottom_diff));
+	V2SCALE(V, v, extent1 - V2DOT(v, left_bottom_diff));
 	V2ADD3(obr->center, left_pnt, U, V);
 	V2SCALE(V, v, extent1);
     }
@@ -219,7 +220,7 @@ bn_obr_calc(const point2d_t *pnts, int pnt_cnt, struct obr_vals *obr)
 	    V2SUB2(vline, pmax, pmin);
 	    obr->extent0 = MAGNITUDE2(vline) * 0.5;
 	    obr->extent1 = BN_TOL_DIST;
-	    V2SET(obr->center, center[0]/2, center[1]/2);
+	    V2SET(obr->center, center[0] / 2, center[1] / 2);
 	    V2SUB2(vline, pmax, center);
 	    V2UNITIZE(vline);
 	    V2SET(obr->u, vline[0], vline[1]);
@@ -325,7 +326,7 @@ bn_obr_calc(const point2d_t *pnts, int pnt_cnt, struct obr_vals *obr)
 		V2MOVE(t, u);
 
 
-		dot = V2DOT(t,edge_unit_vects[BIndex]);
+		dot = V2DOT(t, edge_unit_vects[BIndex]);
 		/*bu_log("t: %f, %f\n", t[0], t[1]);
 		bu_log("edge_unit_vects[%d]: %f, %f\n", BIndex, edge_unit_vects[BIndex][0], edge_unit_vects[BIndex][1]);
 		bu_log("b_dot: %f\n", dot);*/
@@ -335,7 +336,7 @@ bn_obr_calc(const point2d_t *pnts, int pnt_cnt, struct obr_vals *obr)
 		}
 
 		V2SET(t, -u[1], u[0]);
-		dot = V2DOT(t,edge_unit_vects[RIndex]);
+		dot = V2DOT(t, edge_unit_vects[RIndex]);
 		/*bu_log("t: %f, %f\n", t[0], t[1]);
 		bu_log("edge_unit_vects[%d]: %f, %f\n", BIndex, edge_unit_vects[RIndex][0], edge_unit_vects[RIndex][1]);
 		bu_log("r_dot: %f\n", dot);*/
@@ -372,17 +373,17 @@ bn_obr_calc(const point2d_t *pnts, int pnt_cnt, struct obr_vals *obr)
 			    done = 1;
 			} else {
 			    /* Compute box axes with E[B] as an edge.*/
-			    V2MOVE(t,edge_unit_vects[BIndex]);
+			    V2MOVE(t, edge_unit_vects[BIndex]);
 			    V2MOVE(u, t);
 			    UpdateBox(obr, hull_pnts[LIndex], hull_pnts[RIndex],
-				    hull_pnts[BIndex], hull_pnts[TIndex], u);
+				      hull_pnts[BIndex], hull_pnts[TIndex], u);
 
 			    /* Mark edge visited and rotate the calipers. */
 			    visited[BIndex] = 1;
 			    if ((BIndex + 1) == hull_pnt_cnt) {
-			       	BIndex = 0;
+				BIndex = 0;
 			    } else {
-			       	BIndex = BIndex + 1;
+				BIndex = BIndex + 1;
 			    }
 			}
 			break;
@@ -391,10 +392,10 @@ bn_obr_calc(const point2d_t *pnts, int pnt_cnt, struct obr_vals *obr)
 			    done = 1;
 			} else {
 			    /* Compute box axes with E[R] as an edge. */
-			    V2MOVE(t,edge_unit_vects[RIndex]);
+			    V2MOVE(t, edge_unit_vects[RIndex]);
 			    V2SET(u, t[1], -t[0]);
 			    UpdateBox(obr, hull_pnts[LIndex], hull_pnts[RIndex],
-				    hull_pnts[BIndex], hull_pnts[TIndex], u);
+				      hull_pnts[BIndex], hull_pnts[TIndex], u);
 
 			    /* Mark edge visited and rotate the calipers. */
 			    visited[RIndex] = 1;
@@ -410,11 +411,11 @@ bn_obr_calc(const point2d_t *pnts, int pnt_cnt, struct obr_vals *obr)
 			    done = 1;
 			} else {
 			    /* Compute box axes with E[T] as an edge. */
-			    V2MOVE(t,edge_unit_vects[TIndex]);
-			    V2SCALE(t,t,-1);
-			    V2MOVE(u,t);
+			    V2MOVE(t, edge_unit_vects[TIndex]);
+			    V2SCALE(t, t, -1);
+			    V2MOVE(u, t);
 			    UpdateBox(obr, hull_pnts[LIndex], hull_pnts[RIndex],
-				    hull_pnts[BIndex], hull_pnts[TIndex], u);
+				      hull_pnts[BIndex], hull_pnts[TIndex], u);
 
 			    /* Mark edge visited and rotate the calipers. */
 			    visited[TIndex] = 1;
@@ -431,10 +432,10 @@ bn_obr_calc(const point2d_t *pnts, int pnt_cnt, struct obr_vals *obr)
 			    done = 1;
 			} else {
 			    /* Compute box axes with E[L] as an edge. */
-			    V2MOVE(t,edge_unit_vects[LIndex]);
+			    V2MOVE(t, edge_unit_vects[LIndex]);
 			    V2SET(u, -t[1], t[0]);
 			    UpdateBox(obr, hull_pnts[LIndex], hull_pnts[RIndex],
-				    hull_pnts[BIndex], hull_pnts[TIndex], u);
+				      hull_pnts[BIndex], hull_pnts[TIndex], u);
 
 			    /* Mark edge visited and rotate the calipers. */
 			    visited[LIndex] = 1;
@@ -461,7 +462,8 @@ bn_obr_calc(const point2d_t *pnts, int pnt_cnt, struct obr_vals *obr)
 }
 
 int
-bn_2d_obr(point2d_t *center, vect2d_t *u, vect2d_t *v, const point2d_t *pnts, int pnt_cnt){
+bn_2d_obr(point2d_t *center, vect2d_t *u, vect2d_t *v, const point2d_t *pnts, int pnt_cnt)
+{
     struct obr_vals obr;
     V2SET(obr.v, 0.0, 0.0);
 
@@ -486,7 +488,8 @@ bn_2d_obr(point2d_t *center, vect2d_t *u, vect2d_t *v, const point2d_t *pnts, in
 }
 
 int
-bn_3d_coplanar_obr(point_t *center, vect_t *v1, vect_t *v2, const point_t *pnts, int pnt_cnt){
+bn_3d_coplanar_obr(point_t *center, vect_t *v1, vect_t *v2, const point_t *pnts, int pnt_cnt)
+{
     int ret = 0;
     point_t origin_pnt;
     vect_t u_axis, v_axis;
