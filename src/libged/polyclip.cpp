@@ -51,11 +51,12 @@ struct contour_node {
 };
 
 
-static void
+static fastf_t
 load_polygon(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, ged_polygon *gpoly, fastf_t sf, matp_t mat)
 {
     register size_t j, k, n;
     ClipperLib::Polygon curr_poly;
+    fastf_t vZ = 1.0;
 
     for (j = 0; j < gpoly->gp_num_contours; ++j) {
 	n = gpoly->gp_contour[j].gpc_num_points;
@@ -65,6 +66,7 @@ load_polygon(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, ged_polyg
 
 	    /* Convert to view coordinates */
 	    MAT4X3PNT(vpoint, mat, gpoly->gp_contour[j].gpc_point[k]);
+	    vZ = vpoint[Z];
 
 	    curr_poly[k].X = (ClipperLib::long64)(vpoint[X] * sf);
 	    curr_poly[k].Y = (ClipperLib::long64)(vpoint[Y] * sf);
@@ -76,15 +78,20 @@ load_polygon(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, ged_polyg
 	    bu_log("Exception thrown by clipper\n");
 	}
     }
+
+    return vZ;
 }
 
-static void
+static fastf_t
 load_polygons(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, ged_polygons *subj, fastf_t sf, matp_t mat)
 {
     register size_t i;
+    fastf_t vZ = 1.0;
 
     for (i = 0; i < subj->gp_num_polygons; ++i)
-	load_polygon(clipper, ptype, &subj->gp_polygon[i], sf, mat);
+	vZ = load_polygon(clipper, ptype, &subj->gp_polygon[i], sf, mat);
+
+    return vZ;
 }
 
 
@@ -92,7 +99,7 @@ load_polygons(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, ged_poly
  * Process/extract the clipper_polys into a ged_polygon.
  */
 static ged_polygon *
-extract(ClipperLib::ExPolygons &clipper_polys, fastf_t sf, matp_t mat)
+extract(ClipperLib::ExPolygons &clipper_polys, fastf_t sf, matp_t mat, fastf_t vZ)
 {
     register size_t i, j, k, n;
     size_t num_contours = 0;
@@ -123,7 +130,7 @@ extract(ClipperLib::ExPolygons &clipper_polys, fastf_t sf, matp_t mat)
 				 sizeof(point_t), "gpc_point");
 
 	for (j = 0; j < result_poly->gp_contour[n].gpc_num_points; ++j) {
-	    VSET(vpoint, (fastf_t)(clipper_polys[i].outer[j].X) * sf, (fastf_t)(clipper_polys[i].outer[j].Y) * sf, 1.0);
+	    VSET(vpoint, (fastf_t)(clipper_polys[i].outer[j].X) * sf, (fastf_t)(clipper_polys[i].outer[j].Y) * sf, vZ);
 
 	    /* Convert to model coordinates */
 	    MAT4X3PNT(result_poly->gp_contour[n].gpc_point[j], mat, vpoint);
@@ -138,7 +145,7 @@ extract(ClipperLib::ExPolygons &clipper_polys, fastf_t sf, matp_t mat)
 				     sizeof(point_t), "gpc_point");
 
 	    for (k = 0; k < result_poly->gp_contour[n].gpc_num_points; ++k) {
-		VSET(vpoint, (fastf_t)(clipper_polys[i].holes[j][k].X) * sf, (fastf_t)(clipper_polys[i].holes[j][k].Y) * sf, 1.0);
+		VSET(vpoint, (fastf_t)(clipper_polys[i].holes[j][k].X) * sf, (fastf_t)(clipper_polys[i].holes[j][k].Y) * sf, vZ);
 
 		/* Convert to model coordinates */
 		MAT4X3PNT(result_poly->gp_contour[n].gpc_point[k], mat, vpoint);
@@ -156,6 +163,7 @@ ged_polygon *
 ged_clip_polygon(GedClipType op, ged_polygon *subj, ged_polygon *clip, fastf_t sf, matp_t model2view, matp_t view2model)
 {
     fastf_t inv_sf;
+    fastf_t vZ;
     ClipperLib::Clipper clipper;
     ClipperLib::ExPolygons result_clipper_polys;
     ClipperLib::ClipType ctOp;
@@ -168,7 +176,7 @@ ged_clip_polygon(GedClipType op, ged_polygon *subj, ged_polygon *clip, fastf_t s
     load_polygon(clipper, ClipperLib::ptSubject, subj, sf, model2view);
 
     /* Load clip polygon into clipper */
-    load_polygon(clipper, ClipperLib::ptClip, clip, sf, model2view);
+    vZ = load_polygon(clipper, ClipperLib::ptClip, clip, sf, model2view);
 
     /* Convert op from BRL-CAD to Clipper */
     switch (op) {
@@ -190,7 +198,7 @@ ged_clip_polygon(GedClipType op, ged_polygon *subj, ged_polygon *clip, fastf_t s
     clipper.Execute(ctOp, result_clipper_polys, ClipperLib::pftEvenOdd, ClipperLib::pftEvenOdd);
 
     inv_sf = 1.0/sf;
-    return extract(result_clipper_polys, inv_sf, view2model);
+    return extract(result_clipper_polys, inv_sf, view2model, vZ);
 }
 
 
@@ -198,6 +206,7 @@ ged_polygon *
 ged_clip_polygons(GedClipType op, ged_polygons *subj, ged_polygons *clip, fastf_t sf, matp_t model2view, matp_t view2model)
 {
     fastf_t inv_sf;
+    fastf_t vZ;
     ClipperLib::Clipper clipper;
     ClipperLib::ExPolygons result_clipper_polys;
     ClipperLib::ClipType ctOp;
@@ -210,7 +219,7 @@ ged_clip_polygons(GedClipType op, ged_polygons *subj, ged_polygons *clip, fastf_
     load_polygons(clipper, ClipperLib::ptSubject, subj, sf, model2view);
 
     /* Load clip polygons into clipper */
-    load_polygons(clipper, ClipperLib::ptClip, clip, sf, model2view);
+    vZ = load_polygons(clipper, ClipperLib::ptClip, clip, sf, model2view);
 
     /* Convert op from BRL-CAD to Clipper */
     switch (op) {
@@ -232,8 +241,9 @@ ged_clip_polygons(GedClipType op, ged_polygons *subj, ged_polygons *clip, fastf_
     clipper.Execute(ctOp, result_clipper_polys, ClipperLib::pftEvenOdd, ClipperLib::pftEvenOdd);
 
     inv_sf = 1.0/sf;
-    return extract(result_clipper_polys, inv_sf, view2model);
+    return extract(result_clipper_polys, inv_sf, view2model, vZ);
 }
+
 
 int
 ged_export_polygon(struct ged *gedp, ged_data_polygon_state *gdpsp, size_t polygon_i, const char *sname)
