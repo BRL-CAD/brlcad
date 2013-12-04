@@ -171,20 +171,8 @@ UpdateBox(struct obr_vals *obr, point2d_t left_pnt, point2d_t right_pnt, point2d
     extent0 = 0.5 * V2DOT(u,right_left_diff);
     extent1 = 0.5 * V2DOT(v,top_bottom_diff);
     area = extent0 * extent1 * 4;
+
     if (area < obr->area) {
-	/*
-	bu_log("left_pnt: %f, %f\n", left_pnt[0], left_pnt[1]);
-	bu_log("bottom_pnt: %f, %f\n", bottom_pnt[0], bottom_pnt[1]);
-	bu_log("right_pnt: %f, %f\n", right_pnt[0], right_pnt[1]);
-	bu_log("top_pnt: %f, %f\n", top_pnt[0], top_pnt[1]);
-	bu_log("u: %f, %f\n", u[0], u[1]);
-	bu_log("v: %f, %f\n", v[0], v[1]);
-	bu_log("right_left_diff: %f, %f\n", right_left_diff[0], right_left_diff[1]);
-	bu_log("top_bottom_diff: %f, %f\n", top_bottom_diff[0], top_bottom_diff[1]);
-	bu_log("extent0: %f\n", extent0);
-	bu_log("extent1: %f\n", extent1);
-	bu_log("area: %f\n", area);
-*/
 	obr->area = area;
 	V2MOVE(obr->u, u);
 	V2MOVE(obr->v, v);
@@ -315,10 +303,13 @@ bn_obr_calc(const point2d_t *pnts, int pnt_cnt, struct obr_vals *obr)
 	    /* initialize with AABB */
 	    obr->center[0] = 0.5 * (xmin + xmax);
 	    obr->center[1] = 0.5 * (ymin + ymax);
-	    V2SET(obr->u, 1, 0);
-	    obr->extent0 = (xmax - xmin);
-	    obr->extent1 = (ymax - ymin);
-	    obr->area = obr->extent0 * obr->extent1;
+	    V2SET(obr->u, obr->center[0], 0);
+	    V2UNITIZE(obr->u);
+	    V2SET(obr->v, -obr->u[1], obr->u[0]);
+	    V2UNITIZE(obr->v);
+	    obr->extent0 = 0.5 * (xmax - xmin);
+	    obr->extent1 = 0.5 * (ymax - ymin);
+	    obr->area = obr->extent0 * obr->extent1 * 4;
 
 	    /* 3. The rotating calipers algorithm */
 	    done = 0;
