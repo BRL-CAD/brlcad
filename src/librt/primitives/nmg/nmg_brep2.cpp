@@ -127,14 +127,16 @@ nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, l
     int surfindex = (*b)->m_S.Count();
     ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
 
-    /* Set surface UV domain to match the 2D domain above */
-    point2d_t min2d, max2d;
-    V2MINMAX(min2d, max2d, points_obr_2d[0]);
-    V2MINMAX(min2d, max2d, points_obr_2d[1]);
-    V2MINMAX(min2d, max2d, points_obr_2d[2]);
-    V2MINMAX(min2d, max2d, points_obr_2d[3]);
-    surf->SetDomain(0, min2d[0], max2d[0]);
-    surf->SetDomain(1, min2d[1], max2d[1]);
+    // With the surface and the face defined, make
+    // trimming loops and create faces.  To generate UV
+    // coordinates for each from and to for the
+    // edgecurves, the UV origin is defined to be v1,
+    // v1->v2 is defined as the U domain, and v1->v4 is
+    // defined as the V domain.
+    VSUB2(u_axis, points_obr_3d[2], points_obr_3d[1]);
+    VSUB2(v_axis, points_obr_3d[0], points_obr_3d[1]);
+    fastf_t u_axis_dist = MAGNITUDE(u_axis);
+    fastf_t v_axis_dist = MAGNITUDE(v_axis);
 
     /* Now that we have the surface and the face, add the loops */
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
@@ -143,10 +145,13 @@ nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, l
 	ON_BrepLoop::TYPE looptype = (lu->orientation == OT_SAME) ? ON_BrepLoop::outer : ON_BrepLoop::inner;
 	ON_BrepLoop& loop = (*b)->NewLoop(looptype, face);
 	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+	    vect_t ev1, ev2;
 	    struct vertex_g *vg1 = eu->vu_p->v_p->vg_p;
 	    struct vertex_g *vg2 = eu->eumate_p->vu_p->v_p->vg_p;
 	    NMG_CK_VERTEX_G(vg1);
 	    NMG_CK_VERTEX_G(vg2);
+	    VMOVE(ev1, vg1->coord);
+	    VMOVE(ev2, vg2->coord);
 	    // Add edge if not already added
 	    if (brepi[eu->e_p->index] == -INT_MAX) {
 		/* always add edges with the small vertex index as from */
@@ -165,10 +170,19 @@ nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, l
 	    ON_3dPoint vg1pt(vg1->coord);
 	    int orientation = ((vg1pt != (*b)->m_V[(*b)->m_E[(int)brepi[eu->e_p->index]].m_vi[0]].Point())) ? 1 : 0;
 	    // Make a 2d trimming curve, create a trim, and add the trim to the loop
-	    int p1_index = nmg_to_array.find(vg1->index)->second;
-	    int p2_index = nmg_to_array.find(vg2->index)->second;
-	    ON_2dPoint from_uv(points_2d[p1_index][0], points_2d[p1_index][1]);
-	    ON_2dPoint to_uv(points_2d[p2_index][0], points_2d[p2_index][1]);
+	    vect_t vect1, vect2, u_component, v_component;
+	    double u0, u1, v0, v1;
+	    ON_2dPoint from_uv, to_uv;
+	    VSUB2(vect1, ev1, points_obr_3d[0]);
+	    VSUB2(vect2, ev2, points_obr_3d[0]);
+	    surf->GetDomain(0, &u0, &u1);
+	    surf->GetDomain(1, &v0, &v1);
+	    VPROJECT(vect1, u_axis, u_component, v_component);
+	    from_uv.y = u0 + MAGNITUDE(u_component)/u_axis_dist*(u1-u0);
+	    from_uv.x = v0 + MAGNITUDE(v_component)/v_axis_dist*(v1-v0);
+	    VPROJECT(vect2, u_axis, u_component, v_component);
+	    to_uv.y = u0 + MAGNITUDE(u_component)/u_axis_dist*(u1-u0);
+	    to_uv.x = v0 + MAGNITUDE(v_component)/v_axis_dist*(v1-v0);
 	    ON_Curve* c2d =  new ON_LineCurve(from_uv, to_uv);
 	    c2d->SetDomain(0.0, 1.0);
 	    int c2i = (*b)->m_C2.Count();
