@@ -221,6 +221,12 @@ HIDDEN int to_data_pick(struct ged *gedp,
 			ged_func_ptr func,
 			const char *usage,
 			int maxargs);
+HIDDEN int to_data_vZ(struct ged *gedp,
+		      int argc,
+		      const char *argv[],
+		      ged_func_ptr func,
+		      const char *usage,
+		      int maxargs);
 HIDDEN int to_dlist_on(struct ged *gedp,
 		       int argc,
 		       const char *argv[],
@@ -992,6 +998,7 @@ static struct to_cmdtab to_cmds[] = {
     {"data_move_point_mode",	"x y", TO_UNLIMITED, to_data_move_point_mode, GED_FUNC_PTR_NULL},
     {"data_pick",	"???", TO_UNLIMITED, to_data_pick, GED_FUNC_PTR_NULL},
     {"data_scale_mode",	"x y", TO_UNLIMITED, to_data_scale_mode, GED_FUNC_PTR_NULL},
+    {"data_vZ",	"[z]", TO_UNLIMITED, to_data_vZ, GED_FUNC_PTR_NULL},
     {"dbconcat",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_concat},
     {"dbfind",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_find},
     {"dbip",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_dbip},
@@ -5229,6 +5236,62 @@ bad:
     return GED_ERROR;
 }
 
+
+HIDDEN int
+to_data_vZ(struct ged *gedp,
+	       int argc,
+	       const char *argv[],
+	       ged_func_ptr UNUSED(func),
+	       const char *usage,
+	       int UNUSED(maxargs))
+{
+    struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double vZ;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc != 2 && argc != 3) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
+	return GED_ERROR;
+    }
+
+    /* Get the data vZ */
+    if (argc == 2) {
+	bu_vls_printf(gedp->ged_result_str, "%lf", gdvp->gdv_view->gv_data_vZ);
+	return GED_OK;
+    }
+
+    /* Set the data vZ */
+    if (bu_sscanf(argv[2], "%lf", &vZ) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    gdvp->gdv_view->gv_data_vZ = vZ;
+
+    return GED_OK;
+}
+
+
 HIDDEN void
 to_deleteViewProc(ClientData clientData)
 {
@@ -5242,6 +5305,7 @@ to_deleteViewProc(ClientData clientData)
     bu_free((genptr_t)gdvp->gdv_view, "ged_view");
     bu_free((genptr_t)gdvp, "ged_dm_view");
 }
+
 
 HIDDEN void
 to_init_default_bindings(struct ged_dm_view *gdvp)
@@ -8044,7 +8108,7 @@ to_mouse_poly_circ(struct ged *gedp,
 	fastf_t curr_fx, curr_fy;
 	register int nsegs, n;
 
-	VSET(v_pt, fx, fy, 1.0);
+	VSET(v_pt, fx, fy, gdvp->gdv_view->gv_data_vZ);
 	VSUB2(vdiff, v_pt, gdpsp->gdps_prev_point);
 	r = MAGNITUDE(vdiff);
 
@@ -8067,7 +8131,7 @@ to_mouse_poly_circ(struct ged *gedp,
 
 	    curr_fx = cos(ang*bn_degtorad) * r + gdpsp->gdps_prev_point[X];
 	    curr_fy = sin(ang*bn_degtorad) * r + gdpsp->gdps_prev_point[Y];
-	    VSET(v_pt, curr_fx, curr_fy, 1.0);
+	    VSET(v_pt, curr_fx, curr_fy, gdvp->gdv_view->gv_data_vZ);
 	    MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, v_pt);
 	    bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
 	}
@@ -8151,7 +8215,7 @@ to_mouse_poly_cont(struct ged *gedp,
 
     fx = screen_to_view_x(gdvp->gdv_dmp, x);
     fy = screen_to_view_y(gdvp->gdv_dmp, y);
-    VSET(v_pt, fx, fy, 1.0);
+    VSET(v_pt, fx, fy, gdvp->gdv_view->gv_data_vZ);
 
     MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, v_pt);
     gedp->ged_gvp = gdvp->gdv_view;
@@ -8265,8 +8329,8 @@ to_mouse_poly_ell(struct ged *gedp,
 	 * note that sin(alpha) is cos(90-alpha).
 	 */
 
-	VSET(A, a, 0, 0);
-	VSET(B, 0, b, 0);
+	VSET(A, a, 0, gdvp->gdv_view->gv_data_vZ);
+	VSET(B, 0, b, gdvp->gdv_view->gv_data_vZ);
 
 	/* use a variable number of segments based on the size of the
 	 * circle being created so small circles have few segments and
@@ -8395,15 +8459,14 @@ to_mouse_poly_rect(struct ged *gedp,
     MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, gdpsp->gdps_prev_point);
     bu_vls_printf(&plist, "{0 {%lf %lf %lf} ",  V3ARGS(m_pt));
 
-    VSET(v_pt, gdpsp->gdps_prev_point[X], fy, 1.0);
+    VSET(v_pt, gdpsp->gdps_prev_point[X], fy, gdvp->gdv_view->gv_data_vZ);
     MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, v_pt);
     bu_vls_printf(&plist, "{%lf %lf %lf} ",  V3ARGS(m_pt));
 
-    VSET(v_pt, fx, fy, 1.0);
+    VSET(v_pt, fx, fy, gdvp->gdv_view->gv_data_vZ);
     MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, v_pt);
     bu_vls_printf(&plist, "{%lf %lf %lf} ",  V3ARGS(m_pt));
-
-    VSET(v_pt, fx, gdpsp->gdps_prev_point[Y], 1.0);
+    VSET(v_pt, fx, gdpsp->gdps_prev_point[Y], gdvp->gdv_view->gv_data_vZ);
     MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, v_pt);
     bu_vls_printf(&plist, "{%lf %lf %lf} }",  V3ARGS(m_pt));
 
@@ -10316,7 +10379,7 @@ to_poly_circ_mode(struct ged *gedp,
 
     fx = screen_to_view_x(gdvp->gdv_dmp, x);
     fy = screen_to_view_y(gdvp->gdv_dmp, y);
-    VSET(v_pt, fx, fy, 1.0);
+    VSET(v_pt, fx, fy, gdvp->gdv_view->gv_data_vZ);
     if (gedp->ged_gvp->gv_grid.ggs_snap)
 	ged_snap_to_grid(gedp, &v_pt[X], &v_pt[Y]);
 
@@ -10418,7 +10481,7 @@ to_poly_cont_build(struct ged *gedp,
 
     fx = screen_to_view_x(gdvp->gdv_dmp, x);
     fy = screen_to_view_y(gdvp->gdv_dmp, y);
-    VSET(v_pt, fx, fy, 1.0);
+    VSET(v_pt, fx, fy, gdvp->gdv_view->gv_data_vZ);
     if (gedp->ged_gvp->gv_grid.ggs_snap)
 	ged_snap_to_grid(gedp, &v_pt[X], &v_pt[Y]);
 
@@ -10602,7 +10665,7 @@ to_poly_ell_mode(struct ged *gedp,
 
     fx = screen_to_view_x(gdvp->gdv_dmp, x);
     fy = screen_to_view_y(gdvp->gdv_dmp, y);
-    VSET(v_pt, fx, fy, 1.0);
+    VSET(v_pt, fx, fy, gdvp->gdv_view->gv_data_vZ);
     if (gedp->ged_gvp->gv_grid.ggs_snap)
 	ged_snap_to_grid(gedp, &v_pt[X], &v_pt[Y]);
 
@@ -10719,7 +10782,7 @@ to_poly_rect_mode(struct ged *gedp,
 
     fx = screen_to_view_x(gdvp->gdv_dmp, x);
     fy = screen_to_view_y(gdvp->gdv_dmp, y);
-    VSET(v_pt, fx, fy, 1.0);
+    VSET(v_pt, fx, fy, gdvp->gdv_view->gv_data_vZ);
     if (gedp->ged_gvp->gv_grid.ggs_snap)
 	ged_snap_to_grid(gedp, &v_pt[X], &v_pt[Y]);
 
@@ -11447,6 +11510,7 @@ to_data_scale_mode(struct ged *gedp,
 
     return GED_OK;
 }
+
 
 HIDDEN int
 to_scale_mode(struct ged *gedp,

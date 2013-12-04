@@ -195,6 +195,7 @@ package provide cadwidgets::Ged 1.0
 	method data_move_point_mode {_pane _x _y}
 	method data_pick {args}
 	method data_scale_mode {args}
+	method data_vZ {args}
 	method dbconcat {args}
 	method dbfind {args}
 	method dbip {args}
@@ -399,6 +400,7 @@ package provide cadwidgets::Ged 1.0
 	method pane_constrain_rmode {_pane args}
 	method pane_constrain_tmode {_pane args}
 	method pane_data_scale_mode {_pane args}
+	method pane_data_vZ {_pane args}
 	method pane_eye {_pane args}
 	method pane_eye_pos {_pane args}
 	method pane_fb2pix {_pane args}
@@ -1556,6 +1558,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed data_scale_mode $itk_component($itk_option(-pane)) $args
 }
 
+::itcl::body cadwidgets::Ged::data_vZ {args} {
+    eval $mGed data_vZ $itk_component($itk_option(-pane)) $args
+}
+
 ::itcl::body cadwidgets::Ged::dbconcat {args} {
     eval $mGed dbconcat $args
 }
@@ -2565,6 +2571,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::pane_data_scale_mode {_pane args} {
     eval $mGed data_scale_mode $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_data_vZ {_pane args} {
+    eval $mGed data_vZ $itk_component($_pane) $args
 }
 
 ::itcl::body cadwidgets::Ged::pane_eye {_pane args} {

@@ -537,6 +537,7 @@ struct ged_view {
     int				gv_y_samples;
     fastf_t			gv_point_scale;
     fastf_t			gv_curve_scale;
+    fastf_t			gv_data_vZ;
 };
 
 
