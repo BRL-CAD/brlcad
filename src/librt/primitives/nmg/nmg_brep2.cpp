@@ -117,6 +117,38 @@ nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, l
 
     ret = bn_coplanar_2d_to_3d(&points_obr_3d, (const point_t *)&origin_pnt, (const vect_t *)&u_axis, (const vect_t *)&v_axis, (const point2d_t *)points_obr_2d, 4);
 
+    int ccw = 0;
+    vect_t vtmp, uv1, uv2, vnormal;
+    point_t center;
+    VADD2(center, points_obr_3d[0], points_obr_3d[1]);
+    VADD2(center, center, points_obr_3d[2]);
+    VADD2(center, center, points_obr_3d[3]);
+    VSCALE(center, center, 0.25);
+    // If an outer loop is found in the nmg with a cw
+    // orientation, use a flipped normal to form the NURBS
+    // surface
+    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+	if (lu->orientation == OT_SAME && nmg_loop_is_ccw(lu, fg->N, tol) == -1) ccw = -1;
+    }
+    if (ccw != -1) {
+	VSET(vnormal, fg->N[0], fg->N[1], fg->N[2]);
+    } else {
+	VSET(vnormal, -fg->N[0], -fg->N[1], -fg->N[2]);
+    }
+    if (fu->f_p->flip)
+	VSET(vnormal, -vnormal[0], -vnormal[1], -vnormal[2]);
+    VSUB2(uv1, points_obr_3d[0], center);
+    VSUB2(uv2, points_obr_3d[1], center);
+    VCROSS(vtmp, uv1, uv2);
+    if (VDOT(vtmp, vnormal) < 0) {
+	VMOVE(vtmp, points_obr_3d[0]);
+	VMOVE(points_obr_3d[0], points_obr_3d[1]);
+	VMOVE(points_obr_3d[1], vtmp);
+	VMOVE(vtmp, points_obr_3d[3]);
+	VMOVE(points_obr_3d[3], points_obr_3d[2]);
+	VMOVE(points_obr_3d[2], vtmp);
+    }
+
     ON_3dPoint p1 = ON_3dPoint(points_obr_3d[0]);
     ON_3dPoint p2 = ON_3dPoint(points_obr_3d[1]);
     ON_3dPoint p3 = ON_3dPoint(points_obr_3d[2]);
@@ -192,26 +224,10 @@ nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, l
 	    trim.m_tolerance[0] = 0.0;
 	    trim.m_tolerance[1] = 0.0;
 	}
-
     }
 
-    /* Decide whether to flip face - check NMG face normal
-     * and whether the outer loop is ccw */
-    bool ccw, do_flip;
-    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-	if (lu->orientation == OT_SAME)
-	    ccw = (nmg_loop_is_ccw(lu, fg->N, tol) == -1) ? false : true;
-    }
-    do_flip = ((!ccw && fu->f_p->flip) || (ccw && !fu->f_p->flip)) ? false : true;
-
-    ON_3dVector surface_normal;
-    ON_3dVector face_normal(fg->N[0], fg->N[1], fg->N[2]);
-    surf->EvNormal(surf->Domain(0).Mid(), surf->Domain(1).Mid(), surface_normal);
-    if (((ON_DotProduct(surface_normal, face_normal) > 0) && do_flip) ||
-        ((ON_DotProduct(surface_normal, face_normal) < 0) && !do_flip))
-    {
-	(*b)->FlipFace(face);
-    }
+    // Make sure the outer loop ended up oriented correctly
+    //if ((*b)->LoopDirection(*face.OuterLoop()) != -1) (*b)->FlipLoop(*face.OuterLoop());
 
     return 0;
 }
