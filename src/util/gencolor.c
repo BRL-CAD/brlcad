@@ -51,9 +51,8 @@ main(int argc, char **argv)
     int32_t count;
     unsigned char *bp;
 
-    if (argc < 1 || isatty(fileno(stdout))) {
+    if (argc == 1 || isatty(fileno(stdout)))
 	bu_exit(1, "%s", Usage);
-    }
 
     count = -1;
     if (argc > 1 && bu_strncmp(argv[1], "-r", 2) == 0) {
@@ -76,9 +75,8 @@ main(int argc, char **argv)
     } else if (!isatty(fileno(stdin))) {
 	/* get values from stdin */
 	len = fread((char *)buf, 1, MAX_BYTES, stdin);
-	if (len <= 0) {
+	if (len <= 0)
 	    bu_exit(2, "%s", Usage);
-	}
     } else {
 	/* assume black */
 	buf[0] = 0;
