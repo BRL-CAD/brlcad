@@ -71,8 +71,7 @@
 # After the main configure process is finished, a summary is printed
 # and various settings and configuration files that require full
 # knowledge of the main configure results are handled.
-
-
+#
 # *******************************************************************
 # ***                 Top Level Settings                          ***
 # *******************************************************************
@@ -1253,6 +1252,19 @@ endif(BRLCAD_ENABLE_VERBOSE_PROGRESS)
 # Build with profiling support
 option(BRLCAD_ENABLE_PROFILING "Build with profiling support" OFF)
 mark_as_advanced(BRLCAD_ENABLE_PROFILING)
+
+#====== ALL CXX COMPILE ===================
+# Build all C and C++ files with a C++ compiler
+set(ENABLE_ALL_CXX_COMPILE_ALIASES "ENABLE_ALL_CXX")
+set(ENABLE_ALL_CXX_COMPILE_DESCRIPTION "
+Build all C and C++ files with a C++ compiler.  Defaults to OFF.
+
+EXPERIMENTAL!
+")
+BRLCAD_OPTION(OFF ENABLE_ALL_CXX_COMPILE
+  ENABLE_ALL_CXX_COMPILE_ALIASES
+  ENABLE_ALL_CXX_COMPILE_DESCRIPTION)
+mark_as_advanced(ENABLE_ALL_CXX_COMPILE)
 
 #====== POSIX ===================
 # Build with strict POSIX compliance checking

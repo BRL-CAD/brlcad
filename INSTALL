@@ -405,6 +405,15 @@ mode.
 Aliases:  ENABLE_STRICT, ENABLE_STRICT_COMPILE, ENABLE_STRICT_COMPILE_FLAGS
 
 
+--- ENABLE_ALL_CXX_COMPILE ---
+
+Build all C and C++ files with a C++ compiler.  Defaults to OFF.
+
+EXPERIMENTAL!
+
+Aliases:  ENABLE_ALL_CXX
+
+
 --- ENABLE_POSIX_COMPLIANCE ---
 
 Build with strict POSIX compliance checking.  Defaults to OFF.
