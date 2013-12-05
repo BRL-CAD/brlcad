@@ -61,7 +61,7 @@ bu_basename(const char *str)
 	len--;
 
     /* Create a new string */
-    base_str = bu_calloc(len + 2, sizeof(char), "bu_basename alloc");
+    base_str = (char *)bu_calloc(len + 2, sizeof(char), "bu_basename alloc");
     if (len > 0) {
 	bu_strlcpy(base_str, str, len+1);
     } else {
