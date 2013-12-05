@@ -58,15 +58,11 @@ nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, l
     struct vertex **pt;
     int ret = 0;
     int pnt_cnt = 0;
-    point_t origin_pnt;
+    int pnt_index = 0;
     vect_t u_axis, v_axis;
-    point2d_t obr_2d_center;
-    point2d_t obr_2d_v1, obr_2d_v2;
+    point_t obr_center;
     point_t *points_3d = NULL;
-    point2d_t *points_2d = NULL;
-    point2d_t *points_obr_2d = NULL;
-    point_t *points_obr_3d = NULL;
-    std::map<int, int> nmg_to_array;
+    point_t *points_obr = NULL;
     struct loopuse *lu;
     struct edgeuse *eu;
 
@@ -75,58 +71,47 @@ nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, l
     nmg_tabulate_face_g_verts(&vert_table, fg);
 
     for (BU_PTBL_FOR(pt, (struct vertex **), &vert_table)) {
-	if (nmg_to_array.find((*pt)->vg_p->index) == nmg_to_array.end()) {
-	    if (brepi[(*pt)->vg_p->index] == -INT_MAX) {
-		ON_BrepVertex& vert = (*b)->NewVertex((*pt)->vg_p->coord, SMALL_FASTF);
-		brepi[(*pt)->vg_p->index] = vert.m_vertex_index;
-	    }
-	    nmg_to_array[(*pt)->vg_p->index] = pnt_cnt;
-	    pnt_cnt++;
+	if (brepi[(*pt)->vg_p->index] == -INT_MAX) {
+	    ON_BrepVertex& vert = (*b)->NewVertex((*pt)->vg_p->coord, SMALL_FASTF);
+	    brepi[(*pt)->vg_p->index] = vert.m_vertex_index;
 	}
+	pnt_cnt++;
     }
 
     /* Prepare the 3D obr input array */
     points_3d = (point_t *)bu_calloc(pnt_cnt + 1, sizeof(point_t), "nmg points");
     for (BU_PTBL_FOR(pt, (struct vertex **), &vert_table)) {
-	int pnt_index = nmg_to_array.find((*pt)->vg_p->index)->second;
 	VSET(points_3d[pnt_index], (*pt)->vg_p->coord[0],(*pt)->vg_p->coord[1],(*pt)->vg_p->coord[2]);
+	pnt_index++;
     }
     bu_ptbl_free(&vert_table);
 
-    /* Translate the 3D array to a 2D array */
 
-    ret += bn_coplanar_2d_coord_sys(&origin_pnt, &u_axis, &v_axis, points_3d, pnt_cnt);
-    points_2d = (point2d_t *)bu_calloc(pnt_cnt + 1, sizeof(point2d_t), "points_2d");
-    ret += bn_coplanar_3d_to_2d(&points_2d, (const point_t *)&origin_pnt, (const vect_t *)&u_axis, (const vect_t *)&v_axis, points_3d, pnt_cnt);
-    if (ret) return 0;
-
-    /* Find the 2D oriented bounding rectangle */
-    ret = bn_2d_obr(&obr_2d_center, &obr_2d_v1, &obr_2d_v2, (const point2d_t *)points_2d, pnt_cnt);
-    if (ret) return 0;
+    /* Calculate the 3D coplanar oriented bounding rectangle (obr) */
+    ret += bn_3d_coplanar_obr(&obr_center, &u_axis, &v_axis, (const point_t *)points_3d, pnt_cnt);
+    bu_free(points_3d, "done with obr 3d point inputs");
 
     /* Use the obr to define the 3D corner points of the NURBS surface */
-    points_obr_2d = (point2d_t *)bu_calloc(3 + 1, sizeof(point2d_t), "points_2d");
-    points_obr_3d = (point_t *)bu_calloc(3 + 1, sizeof(point_t), "points_3d");
-    V2ADD3(points_obr_2d[2], obr_2d_center, obr_2d_v1, obr_2d_v2);
-    V2SCALE(obr_2d_v1, obr_2d_v1, -1);
-    V2ADD3(points_obr_2d[3], obr_2d_center, obr_2d_v1, obr_2d_v2);
-    V2SCALE(obr_2d_v2, obr_2d_v2, -1);
-    V2ADD3(points_obr_2d[0], obr_2d_center, obr_2d_v1, obr_2d_v2);
-    V2SCALE(obr_2d_v1, obr_2d_v1, -1);
-    V2ADD3(points_obr_2d[1], obr_2d_center, obr_2d_v1, obr_2d_v2);
+    points_obr = (point_t *)bu_calloc(3 + 1, sizeof(point_t), "points_3d");
+    VADD3(points_obr[2], obr_center, u_axis, v_axis);
+    VSCALE(u_axis, u_axis, -1);
+    VADD3(points_obr[3], obr_center, u_axis, v_axis);
+    VSCALE(v_axis, v_axis, -1);
+    VADD3(points_obr[0], obr_center, u_axis, v_axis);
+    VSCALE(u_axis, u_axis, -1);
+    VADD3(points_obr[1], obr_center, u_axis, v_axis);
 
-    ret = bn_coplanar_2d_to_3d(&points_obr_3d, (const point_t *)&origin_pnt, (const vect_t *)&u_axis, (const vect_t *)&v_axis, (const point2d_t *)points_obr_2d, 4);
-
+    /* We need to orient our surface correctly according to the NMG - using
+     * the openNURBS FlipFace function later does not seem to work very
+     * well. If an outer loop is found in the NMG with a cw orientation,
+     * factor that in in additon to the fu->f_p->flip flag. */
     int ccw = 0;
     vect_t vtmp, uv1, uv2, vnormal;
     point_t center;
-    VADD2(center, points_obr_3d[0], points_obr_3d[1]);
-    VADD2(center, center, points_obr_3d[2]);
-    VADD2(center, center, points_obr_3d[3]);
+    VADD2(center, points_obr[0], points_obr[1]);
+    VADD2(center, center, points_obr[2]);
+    VADD2(center, center, points_obr[3]);
     VSCALE(center, center, 0.25);
-    // If an outer loop is found in the nmg with a cw
-    // orientation, use a flipped normal to form the NURBS
-    // surface
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 	if (lu->orientation == OT_SAME && nmg_loop_is_ccw(lu, fg->N, tol) == -1) ccw = -1;
     }
@@ -137,22 +122,24 @@ nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, l
     }
     if (fu->f_p->flip)
 	VSET(vnormal, -vnormal[0], -vnormal[1], -vnormal[2]);
-    VSUB2(uv1, points_obr_3d[0], center);
-    VSUB2(uv2, points_obr_3d[1], center);
+    VSUB2(uv1, points_obr[0], center);
+    VSUB2(uv2, points_obr[1], center);
     VCROSS(vtmp, uv1, uv2);
     if (VDOT(vtmp, vnormal) < 0) {
-	VMOVE(vtmp, points_obr_3d[0]);
-	VMOVE(points_obr_3d[0], points_obr_3d[1]);
-	VMOVE(points_obr_3d[1], vtmp);
-	VMOVE(vtmp, points_obr_3d[3]);
-	VMOVE(points_obr_3d[3], points_obr_3d[2]);
-	VMOVE(points_obr_3d[2], vtmp);
+	VMOVE(vtmp, points_obr[0]);
+	VMOVE(points_obr[0], points_obr[1]);
+	VMOVE(points_obr[1], vtmp);
+	VMOVE(vtmp, points_obr[3]);
+	VMOVE(points_obr[3], points_obr[2]);
+	VMOVE(points_obr[2], vtmp);
     }
 
-    ON_3dPoint p1 = ON_3dPoint(points_obr_3d[0]);
-    ON_3dPoint p2 = ON_3dPoint(points_obr_3d[1]);
-    ON_3dPoint p3 = ON_3dPoint(points_obr_3d[2]);
-    ON_3dPoint p4 = ON_3dPoint(points_obr_3d[3]);
+    /* Now that we've got our points correctly oriented for
+     * the NURBS surface, proceed to create it. */
+    ON_3dPoint p1 = ON_3dPoint(points_obr[0]);
+    ON_3dPoint p2 = ON_3dPoint(points_obr[1]);
+    ON_3dPoint p3 = ON_3dPoint(points_obr[2]);
+    ON_3dPoint p4 = ON_3dPoint(points_obr[3]);
 
     (*b)->m_S.Append(sideSurface2(p1, p2, p3, p4));
     ON_Surface *surf = (*(*b)->m_S.Last());
@@ -165,8 +152,8 @@ nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, l
     // edgecurves, the UV origin is defined to be v1,
     // v1->v2 is defined as the U domain, and v1->v4 is
     // defined as the V domain.
-    VSUB2(u_axis, points_obr_3d[2], points_obr_3d[1]);
-    VSUB2(v_axis, points_obr_3d[0], points_obr_3d[1]);
+    VSUB2(u_axis, points_obr[2], points_obr[1]);
+    VSUB2(v_axis, points_obr[0], points_obr[1]);
     fastf_t u_axis_dist = MAGNITUDE(u_axis);
     fastf_t v_axis_dist = MAGNITUDE(v_axis);
 
@@ -205,8 +192,8 @@ nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, l
 	    vect_t vect1, vect2, u_component, v_component;
 	    double u0, u1, v0, v1;
 	    ON_2dPoint from_uv, to_uv;
-	    VSUB2(vect1, ev1, points_obr_3d[0]);
-	    VSUB2(vect2, ev2, points_obr_3d[0]);
+	    VSUB2(vect1, ev1, points_obr[0]);
+	    VSUB2(vect2, ev2, points_obr[0]);
 	    surf->GetDomain(0, &u0, &u1);
 	    surf->GetDomain(1, &v0, &v1);
 	    VPROJECT(vect1, u_axis, u_component, v_component);
@@ -225,6 +212,8 @@ nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, l
 	    trim.m_tolerance[1] = 0.0;
 	}
     }
+
+    bu_free(points_obr, "Done with obr");
 
     return 0;
 }
