@@ -58,15 +58,15 @@ vfont_get(char *font)
     unsigned char dispatch[10*256];	/* 256 10-byte structs */
     uint16_t magic;
     int size;
+    const char *const_font;
 
-    if (font == NULL)
-	font = DEFAULT_FONT;
+    const_font = (font == NULL) ? DEFAULT_FONT : (const char *)font;
 
     /* Open the file and read in the header information. */
     if ((fp = fopen(font, "rb")) == NULL) {
-	snprintf(fname, FONTNAMESZ, "%s/%s", (char *)bu_brlcad_data("vfont", 0), font);
+	snprintf(fname, FONTNAMESZ, "%s/%s", (char *)bu_brlcad_data("vfont", 0), const_font);
 	if ((fp = fopen(fname, "rb")) == NULL) {
-	    snprintf(fname, FONTNAMESZ, "%s/%s", FONTDIR2, font);
+	    snprintf(fname, FONTNAMESZ, "%s/%s", FONTDIR2, const_font);
 	    if ((fp = fopen(fname, "rb")) == NULL) {
 		return VFONT_NULL;
 	    }
