@@ -279,7 +279,7 @@ bu_vls_strdup(const struct bu_vls *vp)
     BU_CK_VLS(vp);
 
     len = bu_vls_strlen(vp);
-    str = bu_malloc(len+1, bu_strdup_message);
+    str = (char *)bu_malloc(len+1, bu_strdup_message);
     bu_strlcpy(str, bu_vls_addr(vp), len+1);
 
     return str;
