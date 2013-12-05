@@ -22,7 +22,7 @@
 #include <stdlib.h>
 
 #include "bn.h"
-#include "bn_private.h"
+#include "./bn_private.h"
 
 /* isLeft(): test if a point is Left|On|Right of an infinite line.
  *    Input:  three points L0, L1, and p
@@ -146,12 +146,12 @@ bn_3d_coplanar_chull(point_t **hull, const point_t *points_3d, int n)
     point2d_t *hull_2d = (point2d_t *)bu_malloc(sizeof(point2d_t *), "hull pointer");
     point2d_t *points_tmp = (point2d_t *)bu_calloc(n + 1, sizeof(point2d_t), "points_2d");
 
-    ret += bn_coplanar_2d_coord_sys(&origin_pnt, &u_axis, &v_axis, points_3d, n);
-    ret += bn_coplanar_3d_to_2d(&points_tmp, (const point_t *)&origin_pnt, (const vect_t *)&u_axis, (const vect_t *)&v_axis, points_3d, n);
+    ret += coplanar_2d_coord_sys(&origin_pnt, &u_axis, &v_axis, points_3d, n);
+    ret += coplanar_3d_to_2d(&points_tmp, (const point_t *)&origin_pnt, (const vect_t *)&u_axis, (const vect_t *)&v_axis, points_3d, n);
     if (ret) return 0;
     hull_cnt = bn_2d_chull(&hull_2d, (const point2d_t *)points_tmp, n);
     (*hull) = (point_t *)bu_calloc(hull_cnt + 1, sizeof(point_t), "hull array");
-    ret = bn_coplanar_2d_to_3d(hull, (const point_t *)&origin_pnt, (const vect_t *)&u_axis, (const vect_t *)&v_axis, (const point2d_t *)hull_2d, hull_cnt);
+    ret = coplanar_2d_to_3d(hull, (const point_t *)&origin_pnt, (const vect_t *)&u_axis, (const vect_t *)&v_axis, (const point2d_t *)hull_2d, hull_cnt);
     if (ret) return 0;
     return hull_cnt;
 }

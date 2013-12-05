@@ -23,7 +23,7 @@
 #include "bn.h"
 
 int
-bn_coplanar_2d_coord_sys(point_t *origin_pnt, vect_t *u_axis, vect_t *v_axis, const point_t *points_3d, int n)
+coplanar_2d_coord_sys(point_t *origin_pnt, vect_t *u_axis, vect_t *v_axis, const point_t *points_3d, int n)
 {
     int i = 0;
     int have_normal = 0;
@@ -87,7 +87,7 @@ bn_coplanar_2d_coord_sys(point_t *origin_pnt, vect_t *u_axis, vect_t *v_axis, co
 
 
 int
-bn_coplanar_3d_to_2d(point2d_t **points_2d, const point_t *origin_pnt,
+coplanar_3d_to_2d(point2d_t **points_2d, const point_t *origin_pnt,
 	             const vect_t *u_axis, const vect_t *v_axis,
 		     const point_t *points_3d, int n)
 {
@@ -108,7 +108,7 @@ bn_coplanar_3d_to_2d(point2d_t **points_2d, const point_t *origin_pnt,
 
 
 int
-bn_coplanar_2d_to_3d(point_t **points_3d, const point_t *origin_pnt,
+coplanar_2d_to_3d(point_t **points_3d, const point_t *origin_pnt,
 	             const vect_t *u_axis, const vect_t *v_axis,
 		     const point2d_t *points_2d, int n)
 {
