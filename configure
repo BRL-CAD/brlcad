@@ -66,6 +66,10 @@ do
                                   shift;;
      --disable-strict-compile-flags)                options="$options -DBRLCAD_ENABLE_STRICT=OFF";
                                   shift;;
+     --enable-all-cxx)                options="$options -DENABLE_ALL_CXX_COMPILE=ON";
+                                  shift;;
+     --disable-all-cxx)                options="$options -DENABLE_ALL_CXX_COMPILE=OFF";
+                                  shift;;
      --enable-posix)                options="$options -DENABLE_POSIX_COMPLIANCE=ON";
                                   shift;;
      --disable-posix)                options="$options -DENABLE_POSIX_COMPLIANCE=OFF";

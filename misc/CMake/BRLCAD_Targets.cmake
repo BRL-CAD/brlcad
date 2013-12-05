@@ -89,6 +89,19 @@ macro(GET_TARGET_DLL_DEFINES targetname target_libs)
   endif(CPP_DLL_DEFINES)
 endmacro(GET_TARGET_DLL_DEFINES)
 
+# For BRL-CAD targets, use CXX as the language if the user requests it
+macro(SET_CXX_LANG SRC_FILES)
+  if(ENABLE_ALL_CXX_COMPILE)
+    foreach(srcfile ${SRC_FILES})
+      if(NOT ${CMAKE_CURRENT_SOURCE_DIR}/${srcfile} MATCHES "src/other")
+	if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${srcfile})
+	  set_source_files_properties(${srcfile} PROPERTIES LANGUAGE CXX)
+	endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${srcfile})
+      endif(NOT ${CMAKE_CURRENT_SOURCE_DIR}/${srcfile} MATCHES "src/other")
+    endforeach(srcfile ${SRC_FILES})
+  endif(ENABLE_ALL_CXX_COMPILE)
+endmacro(SET_CXX_LANG SRC_FILES)
+
 # Take a target definition and find out what compilation flags its libraries
 # are using
 macro(GET_TARGET_FLAGS targetname target_libs)
@@ -197,6 +210,9 @@ macro(BRLCAD_ADDEXEC execname srcslist libslist)
   # Check at comple time the standard BRL-CAD style rules
   VALIDATE_STYLE("${srcslist}")
 
+  # Go all C++ if the settings request it
+  SET_CXX_LANG("${srcslist}")
+
   # Call standard CMake commands
   add_executable(${execname} ${srcslist})
   target_link_libraries(${execname} ${libslist})
@@ -276,6 +292,9 @@ endmacro(BRLCAD_ADDEXEC execname srcslist libslist)
 # Library macro handles both shared and static libs, so one "BRLCAD_ADDLIB"
 # statement will cover both automatically
 macro(BRLCAD_ADDLIB libname srcslist libslist)
+
+  # Go all C++ if the settings request it
+  SET_CXX_LANG("${srcslist}")
 
   # Add ${libname} to the list of BRL-CAD libraries
   list(APPEND BRLCAD_LIBS ${libname})
