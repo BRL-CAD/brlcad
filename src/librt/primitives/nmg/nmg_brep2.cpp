@@ -89,6 +89,10 @@ nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, l
 
     /* Calculate the 3D coplanar oriented bounding rectangle (obr) */
     ret += bn_3d_coplanar_obr(&obr_center, &u_axis, &v_axis, (const point_t *)points_3d, pnt_cnt);
+    if (ret) {
+	bu_log("Failed to get oriented bounding rectangle for NMG faceuse #%d\n", fu->index);
+	return -1;
+    }
     bu_free(points_3d, "done with obr 3d point inputs");
 
     /* Use the obr to define the 3D corner points of the NURBS surface */
@@ -243,7 +247,7 @@ rt_nmg_brep2(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 		NMG_CK_FACEUSE(fu);
 		if (fu->orientation != OT_SAME) continue;
-		nmg_brep_face(b, fu, tol, brepi);
+		if (nmg_brep_face(b, fu, tol, brepi)) return;
 	    }
 	    (*b)->SetTrimIsoFlags();
 	}
