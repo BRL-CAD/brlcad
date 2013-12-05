@@ -47,7 +47,7 @@ bu_getcwd(char *buf, size_t size)
     /* NULL buf means allocate */
     if (!buf) {
 	sz = MAXPATHLEN;
-	buf = bu_calloc(1, sz, "alloc bu_getcwd");
+	buf = (char *)bu_calloc(1, sz, "alloc bu_getcwd");
     }
 
     /* FIRST: try getcwd */
