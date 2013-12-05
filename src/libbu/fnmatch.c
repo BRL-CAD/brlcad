@@ -163,7 +163,7 @@ fnxdigit(int c)
 
 
 typedef struct _charclass {
-    char *idstring;		/* identifying string */
+    const char *idstring;	/* identifying string */
     int (*checkfun)(int);	/* testing function */
 } CHARCLASS;
 
