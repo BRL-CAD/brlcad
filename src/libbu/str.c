@@ -150,7 +150,7 @@ bu_strdupm(register const char *cp, const char *label)
     }
 
     len = strlen(cp)+1;
-    base = bu_malloc(len, label);
+    base = (char *)bu_malloc(len, label);
 
     if (UNLIKELY(bu_debug&BU_DEBUG_MEM_LOG)) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
