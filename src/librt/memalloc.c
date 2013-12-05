@@ -271,10 +271,6 @@ rt_memfree(struct mem_map **pp, size_t size, off_t addr)
 	return;
     }
 
-    /* nothing to do */
-    if (!prevp || !curp)
-	return;
-
     /*
      * Now we do the surgery:
      * If there are no matches on boundaries we allocate a buffer
