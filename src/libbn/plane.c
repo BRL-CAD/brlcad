@@ -2456,7 +2456,7 @@ bn_isect_lseg_rpp(fastf_t *a,
 		  register fastf_t *min,
 		  register fastf_t *max)
 {
-    auto vect_t diff;
+    vect_t diff;
     register fastf_t *pt = &a[0];
     register fastf_t *dir = &diff[0];
     register int i;

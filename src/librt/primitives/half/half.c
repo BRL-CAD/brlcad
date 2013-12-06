@@ -327,7 +327,7 @@ rt_hlf_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 
     vect_t P_A;
     fastf_t f;
-    auto double ival;
+    double ival;
 
     f = hitp->hit_dist;
     if (f <= -INFINITY || f >= INFINITY) {

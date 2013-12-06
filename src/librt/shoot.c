@@ -859,8 +859,8 @@ rt_shootray(register struct application *ap)
 					   the ray start point */
     struct bu_ptbl *regionbits;	/* table of all involved regions */
     char *status;
-    auto struct partition InitialPart;	/* Head of Initial Partitions */
-    auto struct partition FinalPart;	/* Head of Final Partitions */
+    struct partition InitialPart;	/* Head of Initial Partitions */
+    struct partition FinalPart;	/* Head of Final Partitions */
     struct soltab **stpp;
     register const union cutter *cutp;
     struct resource *resp;

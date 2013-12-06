@@ -44,10 +44,10 @@
 		ext->ext_nbytes <<= 1;					\
 	    } while (offset < 0);					\
 	    offset = cp - (char *)ext->ext_buf;				\
-	    ext->ext_buf = (genptr_t)bu_realloc((char *) ext->ext_buf,	\
+	    ext->ext_buf = (uint8_t *)bu_realloc((char *) ext->ext_buf,	\
 						ext->ext_nbytes, "bu_struct_export"); \
-	    ep = (char *) ext->ext_buf + ext->ext_nbytes;		\
-	    cp = (char *) ext->ext_buf + offset;			\
+	    ep = (char *)ext->ext_buf + ext->ext_nbytes;		\
+	    cp = (char *)ext->ext_buf + offset;			\
 	}								\
     }
 
@@ -126,7 +126,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 	return 0;
 
     ext->ext_nbytes = 480;
-    ext->ext_buf = (genptr_t)bu_malloc(ext->ext_nbytes, "bu_struct_export output ext->ext_buf");
+    ext->ext_buf = (uint8_t *)bu_malloc(ext->ext_nbytes, "bu_struct_export output ext->ext_buf");
     PARSE_INIT_GETPUT_1(ext);
     cp = (char *) ext->ext_buf + 6; /* skip magic and length */
     ep = cp + ext->ext_nbytes;
@@ -469,10 +469,10 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
 	return 0;
 
     BU_EXTERNAL_INIT(ext);
-    ext->ext_buf = (genptr_t) bu_malloc(6, "bu_struct_get buffer head");
+    ext->ext_buf = (uint8_t *)bu_malloc(6, "bu_struct_get buffer head");
     bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
 
-    i = fread((char *) ext->ext_buf, 1, 6, fp);	/* res_syscall */
+    i = fread((char *)ext->ext_buf, 1, 6, fp);	/* res_syscall */
     bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
 
     if (i != 6) {
@@ -500,10 +500,10 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
 	bu_bomb("bad getput buffer");
     }
     ext->ext_nbytes = len;
-    ext->ext_buf = (genptr_t) bu_realloc((char *) ext->ext_buf, len,
+    ext->ext_buf = (uint8_t *)bu_realloc((char *) ext->ext_buf, len,
 					 "bu_struct_get full buffer");
     bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
-    i = fread((char *) ext->ext_buf + 6, 1, len-6, fp);	/* res_syscall */
+    i = fread((char *)ext->ext_buf + 6, 1, len-6, fp);	/* res_syscall */
     bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
 
     if (UNLIKELY(i != len-6)) {
@@ -541,7 +541,7 @@ bu_struct_wrap_buf(struct bu_external *ext, genptr_t buf)
 	return;
 
     BU_EXTERNAL_INIT(ext);
-    ext->ext_buf = buf;
+    ext->ext_buf = (uint8_t *)buf;
     i = ((long)((unsigned char *)(ext->ext_buf))[0] << 8) |
 	((long)((unsigned char *)(ext->ext_buf))[1]);
     len =
@@ -2440,7 +2440,7 @@ bu_free_external(register struct bu_external *ep)
 	return;
 
     bu_free(ep->ext_buf, "bu_external ext_buf");
-    ep->ext_buf = GENPTR_NULL;
+    ep->ext_buf = NULL;
 }
 
 
@@ -2454,7 +2454,7 @@ bu_copy_external(struct bu_external *op, const struct bu_external *ip)
 	return;
 
     op->ext_nbytes = ip->ext_nbytes;
-    op->ext_buf = bu_malloc(ip->ext_nbytes, "bu_copy_external");
+    op->ext_buf = (uint8_t *)bu_malloc(ip->ext_nbytes, "bu_copy_external");
     memcpy(op->ext_buf, ip->ext_buf, ip->ext_nbytes);
 }
 

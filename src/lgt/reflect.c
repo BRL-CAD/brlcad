@@ -839,7 +839,7 @@ f_Model(struct application *ap, struct partition *pt_headp, struct seg *UNUSED(u
 	/* Compute contribution from this surface. */
 	fastf_t f;
 	int i;
-	auto fastf_t view_dir[3];
+	fastf_t view_dir[3];
 
 	/* Calculate view direction. */
 	VREVERSE(view_dir, ap->a_ray.r_dir);
@@ -1241,7 +1241,7 @@ f_Backgr(struct application *ap)
 	    )
 	    mdb_entry = &mat_dfl_entry;
 	for (i = 1; i < lgt_db_size; i++) {
-	    auto fastf_t real_l_1[3];
+	    fastf_t real_l_1[3];
 	    fastf_t specular;
 	    fastf_t cos_s;
 	    if (lgts[i].energy <= 0.0)
@@ -1511,7 +1511,7 @@ model_Reflectance(struct application *ap, struct partition *pp, Mat_Db_Entry *md
     fastf_t ff;		/* temporary */
     fastf_t lgt_energy;
     fastf_t cos_il; 	/* cosine incident angle */
-    auto fastf_t lgt_dir[3];
+    fastf_t lgt_dir[3];
 
     if (RT_G_DEBUG & DEBUG_RGB)
 	bu_log("\nmodel_Reflectance(): level %d grid <%d, %d>\n",
@@ -1563,7 +1563,7 @@ model_Reflectance(struct application *ap, struct partition *pp, Mat_Db_Entry *md
 	   Reflected ray = (2 * cos(i) * Normal) - Incident ray.
 	   Cos(s) = dot product of Reflected ray with Incident ray.
 	*/ {
-	auto fastf_t lgt_reflect[3], tmp_dir[3];
+	fastf_t lgt_reflect[3], tmp_dir[3];
 	fastf_t specular;
 	fastf_t cos_s;
 	ff = 2.0 * cos_il;

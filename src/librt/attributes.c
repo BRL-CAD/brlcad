@@ -191,7 +191,7 @@ db5_export_attributes(struct bu_external *ext, const struct bu_attribute_value_s
     }
 
     ext->ext_nbytes = need;
-    ext->ext_buf = bu_calloc(1, need, "external attributes");
+    ext->ext_buf = (uint8_t*)bu_calloc(1, need, "external attributes");
 
     /* Second pass -- store in external form */
     cp = (char *)ext->ext_buf;

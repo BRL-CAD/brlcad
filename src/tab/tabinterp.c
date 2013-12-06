@@ -168,7 +168,7 @@ cm_file(int argc, char **argv)
     int nlines;		/* number of lines in input file */
     int nwords;		/* number of words on each input line */
     fastf_t *times;
-    auto double d;
+    double d;
     int errors = 0;
     struct bu_vls buf = BU_VLS_INIT_ZERO;	/* unlimited size input line buffer */
 

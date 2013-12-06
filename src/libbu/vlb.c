@@ -31,7 +31,7 @@
 void
 bu_vlb_init(struct bu_vlb *vlb)
 {
-    vlb->buf = bu_calloc(1, VLB_BLOCK_SIZE, "bu_vlb");
+    vlb->buf = (uint8_t *)bu_calloc(1, VLB_BLOCK_SIZE, "bu_vlb");
     vlb->bufCapacity = VLB_BLOCK_SIZE;
     vlb->nextByte = 0;
     vlb->magic = BU_VLB_MAGIC;
@@ -46,7 +46,7 @@ bu_vlb_initialize(struct bu_vlb *vlb, size_t initialSize)
 	bu_vlb_init(vlb);
 	return;
     }
-    vlb->buf = bu_calloc(1, initialSize, "bu_vlb");
+    vlb->buf = (uint8_t *)bu_calloc(1, initialSize, "bu_vlb");
     vlb->bufCapacity = initialSize;
     vlb->nextByte = 0;
     vlb->magic = BU_VLB_MAGIC;
@@ -67,7 +67,7 @@ bu_vlb_write(struct bu_vlb *vlb, unsigned char *start, size_t len)
     }
 
     if (addBlocks) {
-	vlb->buf = bu_realloc(vlb->buf, currCapacity, "enlarging vlb");
+	vlb->buf = (uint8_t *)bu_realloc(vlb->buf, currCapacity, "enlarging vlb");
 	vlb->bufCapacity = currCapacity;
     }
 

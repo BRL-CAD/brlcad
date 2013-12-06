@@ -231,10 +231,10 @@ host_lookup_by_name(const char* name, int enter)
 struct ihost *
 host_lookup_of_fd(int fd)
 {
-    auto socklen_t	fromlen;
+    socklen_t	fromlen;
     struct sockaddr_in from;
 
-    fromlen = sizeof (from);
+    fromlen = sizeof(from);
     if (getpeername(fd, (struct sockaddr *)&from, &fromlen) < 0) {
 	perror("getpeername");
 	return IHOST_NULL;

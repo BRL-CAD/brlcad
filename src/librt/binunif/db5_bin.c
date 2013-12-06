@@ -125,17 +125,17 @@ rt_binunif_import5_minor_type(struct rt_db_internal *ip,
     int in_cookie, out_cookie;
     size_t gotten;
 
-    BU_CK_EXTERNAL( ep );
+    BU_CK_EXTERNAL(ep);
     if (dbip) RT_CK_DBI(dbip);
     if (resp) RT_CK_RESOURCE(resp);
 
     /*
      * There's no particular size to expect
      *
-     * BU_ASSERT_LONG( ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 3*4 );
+     * BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 3*4);
      */
 
-    RT_CK_DB_INTERNAL( ip );
+    RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BINARY_UNIF;
     ip->idb_minor_type = minor_type;
     ip->idb_meth = &OBJ[ID_BINUNIF];
@@ -151,29 +151,29 @@ rt_binunif_import5_minor_type(struct rt_db_internal *ip,
     switch (bip->type) {
 	case DB5_MINORTYPE_BINU_FLOAT:
 	    bip->count = ep->ext_nbytes/SIZEOF_NETWORK_FLOAT;
-	    bip->u.uint8 = (unsigned char *) bu_malloc( bip->count * sizeof(float),
-							"rt_binunif_internal" );
-	    bu_cv_ntohf( (unsigned char *) bip->u.uint8,
-		   ep->ext_buf, bip->count );
+	    bip->u.uint8 = (unsigned char *) bu_malloc(bip->count * sizeof(float),
+							"rt_binunif_internal");
+	    bu_cv_ntohf((unsigned char *) bip->u.uint8,
+		   ep->ext_buf, bip->count);
 	    break;
 	case DB5_MINORTYPE_BINU_DOUBLE:
 	    bip->count = ep->ext_nbytes/SIZEOF_NETWORK_DOUBLE;
-	    bip->u.uint8 = (unsigned char *) bu_malloc( bip->count * sizeof(double),
-							"rt_binunif_internal" );
-	    bu_cv_ntohd( (unsigned char *) bip->u.uint8, ep->ext_buf, bip->count );
+	    bip->u.uint8 = (unsigned char *) bu_malloc(bip->count * sizeof(double),
+							"rt_binunif_internal");
+	    bu_cv_ntohd((unsigned char *) bip->u.uint8, ep->ext_buf, bip->count);
 	    break;
 	case DB5_MINORTYPE_BINU_8BITINT:
 	case DB5_MINORTYPE_BINU_8BITINT_U:
 	    bip->count = ep->ext_nbytes;
-	    bip->u.uint8 = (unsigned char *) bu_malloc( ep->ext_nbytes,
-							"rt_binunif_internal" );
+	    bip->u.uint8 = (unsigned char *) bu_malloc(ep->ext_nbytes,
+							"rt_binunif_internal");
 	    memcpy((char *) bip->u.uint8, (char *) ep->ext_buf, ep->ext_nbytes);
 	    break;
 	case DB5_MINORTYPE_BINU_16BITINT:
 	case DB5_MINORTYPE_BINU_16BITINT_U:
 	    bip->count = ep->ext_nbytes/2;
-	    bip->u.uint8 = (unsigned char *) bu_malloc( ep->ext_nbytes,
-							"rt_binunif_internal" );
+	    bip->u.uint8 = (unsigned char *) bu_malloc(ep->ext_nbytes,
+							"rt_binunif_internal");
 	    in_cookie = bu_cv_cookie("nus");
 	    out_cookie = bu_cv_cookie("hus");
 	    if (bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie)) {
@@ -189,17 +189,17 @@ rt_binunif_import5_minor_type(struct rt_db_internal *ip,
 	    } else
 		memcpy((char *) bip->u.uint8,
 		       (char *) ep->ext_buf,
-		       ep->ext_nbytes );
+		       ep->ext_nbytes);
 	    break;
 	case DB5_MINORTYPE_BINU_32BITINT:
 	case DB5_MINORTYPE_BINU_32BITINT_U:
 	    bip->count = ep->ext_nbytes/4;
-	    bip->u.uint8 = (unsigned char *) bu_malloc( ep->ext_nbytes,
-							"rt_binunif_internal" );
+	    bip->u.uint8 = (unsigned char *) bu_malloc(ep->ext_nbytes,
+							"rt_binunif_internal");
 	    srcp = (unsigned char *) ep->ext_buf;
 	    ldestp = (unsigned long *) bip->u.uint8;
 	    for (i = 0; i < bip->count; ++i, ++ldestp, srcp += 4) {
-		*ldestp = ntohl( *(uint32_t *)&srcp[0] );
+		*ldestp = ntohl(*(uint32_t *)&srcp[0]);
 	    }
 	    break;
 	case DB5_MINORTYPE_BINU_64BITINT:
@@ -213,7 +213,7 @@ rt_binunif_import5_minor_type(struct rt_db_internal *ip,
 
 
 void
-rt_binunif_dump( struct rt_binunif_internal *bip) {
+rt_binunif_dump(struct rt_binunif_internal *bip) {
     RT_CK_BINUNIF(bip);
     bu_log("rt_bin_unif_internal <%p>...\n", (void *)bip);
     bu_log("  type = x%x = %d", bip->type, bip->type);
@@ -229,7 +229,7 @@ rt_binunif_dump( struct rt_binunif_internal *bip) {
  * Create the "body" portion of external form
  */
 int
-rt_binunif_export5( struct bu_external		*ep,
+rt_binunif_export5(struct bu_external		*ep,
 		    const struct rt_db_internal	*ip,
 		    double			UNUSED(local2mm), /* we ignore */
 		    const struct db_i		*dbip,
@@ -257,27 +257,27 @@ rt_binunif_export5( struct bu_external		*ep,
     switch (bip->type) {
 	case DB5_MINORTYPE_BINU_FLOAT:
 	    ep->ext_nbytes = bip->count * SIZEOF_NETWORK_FLOAT;
-	    ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes,
-					       "binunif external");
-	    bu_cv_htonf( ep->ext_buf, (unsigned char *) bip->u.uint8, bip->count );
+	    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes,
+					      "binunif external");
+	    bu_cv_htonf(ep->ext_buf, (unsigned char *) bip->u.uint8, bip->count);
 	    break;
 	case DB5_MINORTYPE_BINU_DOUBLE:
 	    ep->ext_nbytes = bip->count * SIZEOF_NETWORK_DOUBLE;
-	    ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes,
-					       "binunif external");
-	    bu_cv_htond( ep->ext_buf, (unsigned char *) bip->u.uint8, bip->count );
+	    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes,
+					      "binunif external");
+	    bu_cv_htond(ep->ext_buf, (unsigned char *)bip->u.uint8, bip->count);
 	    break;
 	case DB5_MINORTYPE_BINU_8BITINT:
 	case DB5_MINORTYPE_BINU_8BITINT_U:
 	    ep->ext_nbytes = bip->count;
-	    ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes,
-					       "binunif external");
-	    memcpy((char *) ep->ext_buf, (char *) bip->u.uint8, bip->count);
+	    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes,
+					      "binunif external");
+	    memcpy((char *)ep->ext_buf, (char *)bip->u.uint8, bip->count);
 	    break;
 	case DB5_MINORTYPE_BINU_16BITINT:
 	case DB5_MINORTYPE_BINU_16BITINT_U:
 	    ep->ext_nbytes = bip->count * 2;
-	    ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "binunif external");
+	    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "binunif external");
 	    in_cookie = bu_cv_cookie("hus");
 	    out_cookie = bu_cv_cookie("nus");
 	    if (bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie)) {
@@ -295,18 +295,18 @@ rt_binunif_export5( struct bu_external		*ep,
 	    } else {
 		memcpy((char *) ep->ext_buf,
 		       (char *) bip->u.uint8,
-		       ep->ext_nbytes );
+		       ep->ext_nbytes);
 	    }
 	    break;
 	case DB5_MINORTYPE_BINU_32BITINT:
 	case DB5_MINORTYPE_BINU_32BITINT_U:
 	    ep->ext_nbytes = bip->count * 4;
-	    ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "binunif external");
+	    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "binunif external");
 
 	    lsrcp = (unsigned long *) bip->u.uint8;
 	    destp = (unsigned char *) ep->ext_buf;
 	    for (i = 0; i < bip->count; ++i, ++destp, ++lsrcp) {
-		*(uint32_t *)&destp[0] = htonl( *lsrcp );
+		*(uint32_t *)&destp[0] = htonl(*lsrcp);
 	    }
 	    break;
 	case DB5_MINORTYPE_BINU_64BITINT:
@@ -326,7 +326,7 @@ rt_binunif_export5( struct bu_external		*ep,
  * tab, and give parameter values.
  */
 int
-rt_binunif_describe( struct bu_vls *str,
+rt_binunif_describe(struct bu_vls *str,
 		     const struct rt_db_internal *ip,
 		     int UNUSED(verbose),
 		     double UNUSED(mm2local))
@@ -337,40 +337,40 @@ rt_binunif_describe( struct bu_vls *str,
 
     bip = (struct rt_binunif_internal *) ip->idb_ptr;
     RT_CK_BINUNIF(bip);
-    bu_vls_strcat( str, "uniform-array binary object (BINUNIF)\n");
+    bu_vls_strcat(str, "uniform-array binary object (BINUNIF)\n");
     wid = (bip->type & DB5_MINORTYPE_BINU_WID_MASK) >> 4;
     switch (wid) {
 	case 0:
-	    sprintf( buf, "%llu ", (unsigned long long)bip->count ); break;
+	    sprintf(buf, "%llu ", (unsigned long long)bip->count); break;
 	case 1:
-	    sprintf( buf, "%llu pairs of ", (unsigned long long)(bip->count / 2) ); break;
+	    sprintf(buf, "%llu pairs of ", (unsigned long long)(bip->count / 2)); break;
 	case 2:
-	    sprintf( buf, "%llu triples of ", (unsigned long long)(bip->count / 3) ); break;
+	    sprintf(buf, "%llu triples of ", (unsigned long long)(bip->count / 3)); break;
 	case 3:
-	    sprintf( buf, "%llu quadruples of ", (unsigned long long)(bip->count / 4) ); break;
+	    sprintf(buf, "%llu quadruples of ", (unsigned long long)(bip->count / 4)); break;
     }
-    bu_vls_strcat( str, buf );
+    bu_vls_strcat(str, buf);
     switch (bip->type & DB5_MINORTYPE_BINU_ATM_MASK) {
 	case DB5_MINORTYPE_BINU_FLOAT:
-	    bu_vls_strcat( str, "floats\n"); break;
+	    bu_vls_strcat(str, "floats\n"); break;
 	case DB5_MINORTYPE_BINU_DOUBLE:
-	    bu_vls_strcat( str, "doubles\n"); break;
+	    bu_vls_strcat(str, "doubles\n"); break;
 	case DB5_MINORTYPE_BINU_8BITINT:
-	    bu_vls_strcat( str, "8-bit ints\n"); break;
+	    bu_vls_strcat(str, "8-bit ints\n"); break;
 	case DB5_MINORTYPE_BINU_16BITINT:
-	    bu_vls_strcat( str, "16-bit ints\n"); break;
+	    bu_vls_strcat(str, "16-bit ints\n"); break;
 	case DB5_MINORTYPE_BINU_32BITINT:
-	    bu_vls_strcat( str, "32-bit ints\n"); break;
+	    bu_vls_strcat(str, "32-bit ints\n"); break;
 	case DB5_MINORTYPE_BINU_64BITINT:
-	    bu_vls_strcat( str, "64-bit ints\n"); break;
+	    bu_vls_strcat(str, "64-bit ints\n"); break;
 	case DB5_MINORTYPE_BINU_8BITINT_U:
-	    bu_vls_strcat( str, "unsigned 8-bit ints\n"); break;
+	    bu_vls_strcat(str, "unsigned 8-bit ints\n"); break;
 	case DB5_MINORTYPE_BINU_16BITINT_U:
-	    bu_vls_strcat( str, "unsigned 16-bit ints\n"); break;
+	    bu_vls_strcat(str, "unsigned 16-bit ints\n"); break;
 	case DB5_MINORTYPE_BINU_32BITINT_U:
-	    bu_vls_strcat( str, "unsigned 32-bit ints\n"); break;
+	    bu_vls_strcat(str, "unsigned 32-bit ints\n"); break;
 	case DB5_MINORTYPE_BINU_64BITINT_U:
-	    bu_vls_strcat( str, "unsigned 64-bit ints\n"); break;
+	    bu_vls_strcat(str, "unsigned 64-bit ints\n"); break;
 	default:
 	    bu_log("%s:%d: This shouldn't happen", __FILE__, __LINE__);
 	    return 1;
@@ -380,11 +380,11 @@ rt_binunif_describe( struct bu_vls *str,
 }
 
 void
-rt_binunif_free( struct rt_binunif_internal *bip) {
+rt_binunif_free(struct rt_binunif_internal *bip) {
     RT_CK_BINUNIF(bip);
-    bu_free( (genptr_t) bip->u.uint8, "binunif free uint8" );
-    bu_free( bip, "binunif free");
-    bip = GENPTR_NULL; /* sanity */
+    bu_free((genptr_t) bip->u.uint8, "binunif free uint8");
+    bu_free(bip, "binunif free");
+    bip = NULL; /* sanity */
 }
 
 
@@ -402,8 +402,8 @@ rt_binunif_ifree(struct rt_db_internal *ip)
     RT_CK_DB_INTERNAL(ip);
     bip = (struct rt_binunif_internal *)ip->idb_ptr;
     RT_CK_BINUNIF(bip);
-    bu_free( (genptr_t) bip->u.uint8, "binunif ifree" );
-    bu_free( ip->idb_ptr, "binunif ifree" );
+    bu_free((genptr_t) bip->u.uint8, "binunif ifree");
+    bu_free(ip->idb_ptr, "binunif ifree");
     ip->idb_ptr = GENPTR_NULL;
 }
 
@@ -422,17 +422,17 @@ rt_retrieve_binunif(struct rt_db_internal *intern,
     /*
      *Find the guy we're told to write
      */
-    if ( (dp = db_lookup( dbip, name, LOOKUP_NOISY)) == RT_DIR_NULL )
+    if ((dp = db_lookup(dbip, name, LOOKUP_NOISY)) == RT_DIR_NULL)
 	return -1;
 
     RT_DB_INTERNAL_INIT(intern);
-    if ( rt_db_get_internal5( intern, dp, dbip, NULL, &rt_uniresource)
-	 != ID_BINUNIF     || db_get_external( &ext, dp, dbip ) < 0 )
+    if (rt_db_get_internal5(intern, dp, dbip, NULL, &rt_uniresource)
+	 != ID_BINUNIF     || db_get_external(&ext, dp, dbip) < 0)
 	return -1;
 
     if (db5_get_raw_internal_ptr(&raw, ext.ext_buf) == NULL) {
 	bu_log("%s:%d\n", __FILE__, __LINE__);
-	bu_free_external( &ext );
+	bu_free_external(&ext);
 	return -1;
     }
     if (db5_type_descrip_from_codes(&tmp, raw.major_type, raw.minor_type))
@@ -445,7 +445,7 @@ rt_retrieve_binunif(struct rt_db_internal *intern,
     if (raw.major_type != DB5_MAJORTYPE_BINARY_UNIF)
 	return -1;
 
-    bip = intern->idb_ptr;
+    bip = (struct rt_binunif_internal *)intern->idb_ptr;
     RT_CK_BINUNIF(bip);
     if (RT_G_DEBUG & DEBUG_HF)
 	rt_binunif_dump(bip);
@@ -495,7 +495,7 @@ rt_retrieve_binunif(struct rt_db_internal *intern,
 	    break;
     }
 
-    bu_free_external( &ext );
+    bu_free_external(&ext);
 
     return 0;
 }
@@ -527,43 +527,43 @@ rt_binunif_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const
     size_t		i;
     unsigned char	*c;
 
-    RT_CHECK_BINUNIF( bip );
+    RT_CHECK_BINUNIF(bip);
 
     if (attr == (char *)NULL) {
 	/* export the object to get machine independent form */
-	if ( rt_binunif_export5( &ext, intern, 1.0, NULL, NULL ) ) {
-	    bu_vls_strcpy( logstr, "Failed to export binary object!!\n" );
+	if (rt_binunif_export5(&ext, intern, 1.0, NULL, NULL)) {
+	    bu_vls_strcpy(logstr, "Failed to export binary object!!\n");
 	    return BRLCAD_ERROR;
 	} else {
-	    bu_vls_strcpy( logstr, "binunif" );
-	    bu_vls_printf( logstr, " T %d D {", bip->type );
+	    bu_vls_strcpy(logstr, "binunif");
+	    bu_vls_printf(logstr, " T %d D {", bip->type);
 	    c = ext.ext_buf;
-	    for ( i=0; i<ext.ext_nbytes; i++, c++ ) {
-		if ( i%40 == 0 ) bu_vls_strcat( logstr, "\n" );
-		bu_vls_printf( logstr, "%2.2x", *c );
+	    for (i = 0; i < ext.ext_nbytes; i++, c++) {
+		if (i%40 == 0) bu_vls_strcat(logstr, "\n");
+		bu_vls_printf(logstr, "%2.2x", *c);
 	    }
-	    bu_vls_strcat( logstr, "}" );
-	    bu_free_external( &ext );
+	    bu_vls_strcat(logstr, "}");
+	    bu_free_external(&ext);
 	}
 
     } else {
-	if ( BU_STR_EQUAL( attr, "T" ) ) {
-	    bu_vls_printf( logstr, "%d", bip->type );
-	} else if ( BU_STR_EQUAL( attr, "D" ) ) {
+	if (BU_STR_EQUAL(attr, "T")) {
+	    bu_vls_printf(logstr, "%d", bip->type);
+	} else if (BU_STR_EQUAL(attr, "D")) {
 	    /* export the object to get machine independent form */
-	    if ( rt_binunif_export5( &ext, intern, 1.0, NULL, NULL ) ) {
-		bu_vls_strcpy( logstr, "Failed to export binary object!!\n" );
+	    if (rt_binunif_export5(&ext, intern, 1.0, NULL, NULL)) {
+		bu_vls_strcpy(logstr, "Failed to export binary object!!\n");
 		return BRLCAD_ERROR;
 	    } else {
 		c = ext.ext_buf;
-		for ( i=0; i<ext.ext_nbytes; i++, c++ ) {
-		    if ( i != 0 && i%40 == 0 ) bu_vls_strcat( logstr, "\n" );
-		    bu_vls_printf( logstr, "%2.2x", *c );
+		for (i = 0; i < ext.ext_nbytes; i++, c++) {
+		    if (i != 0 && i%40 == 0) bu_vls_strcat(logstr, "\n");
+		    bu_vls_printf(logstr, "%2.2x", *c);
 		}
-		bu_free_external( &ext );
+		bu_free_external(&ext);
 	    }
 	} else {
-	    bu_vls_printf( logstr, "Binary object has no attribute '%s'", attr );
+	    bu_vls_printf(logstr, "Binary object has no attribute '%s'", attr);
 	    return BRLCAD_ERROR;
 	}
     }
@@ -572,40 +572,40 @@ rt_binunif_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const
 }
 
 int
-rt_binunif_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv )
+rt_binunif_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
 {
     struct rt_binunif_internal *bip;
     size_t i;
 
-    RT_CK_DB_INTERNAL( intern );
+    RT_CK_DB_INTERNAL(intern);
     bip = (struct rt_binunif_internal *)intern->idb_ptr;
-    RT_CHECK_BINUNIF( bip );
+    RT_CHECK_BINUNIF(bip);
 
-    while ( argc >= 2 ) {
-	if ( BU_STR_EQUAL( argv[0], "T" ) ) {
+    while (argc >= 2) {
+	if (BU_STR_EQUAL(argv[0], "T")) {
 	    int new_type=-1;
 	    char *c;
 	    int type_is_digit=1;
 
 	    c = argv[1];
-	    while ( *c != '\0' ) {
-		if ( !isdigit( (int)*c ) ) {
+	    while (*c != '\0') {
+		if (!isdigit((int)*c)) {
 		    type_is_digit = 0;
 		    break;
 		}
 		c++;
 	    }
 
-	    if ( type_is_digit ) {
-		new_type = atoi( argv[1] );
+	    if (type_is_digit) {
+		new_type = atoi(argv[1]);
 	    } else {
-		if ( argv[1][1] != '\0' ) {
+		if (argv[1][1] != '\0') {
 		    bu_vls_printf(logstr,
 				  "Illegal type: %s, must be 'f', 'd', 'c', 'i', 'l', 'C', 'S', 'I', or 'L'",
 				  argv[1]);
 		    return BRLCAD_ERROR;
 		}
-		switch ( argv[1][0] ) {
+		switch (argv[1][0]) {
 		    case 'f':
 			new_type = 2;
 			break;
@@ -638,14 +638,14 @@ rt_binunif_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
 			break;
 		}
 	    }
-	    if ( new_type < 0 ||
+	    if (new_type < 0 ||
 		 new_type > DB5_MINORTYPE_BINU_64BITINT ||
-		 binu_types[new_type] == NULL ) {
+		 binu_types[new_type] == NULL) {
 		/* Illegal value for type */
 		bu_vls_printf(logstr, "Illegal value for binary type: %s", argv[1]);
 		return BRLCAD_ERROR;
 	    } else {
-		if ( bip->u.uint8 ) {
+		if (bip->u.uint8) {
 		    size_t new_count;
 		    size_t old_byte_count, new_byte_count;
 		    size_t remainder_count;
@@ -653,19 +653,19 @@ rt_binunif_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
 		    old_byte_count = bip->count * binu_sizes[bip->type];
 		    new_count = old_byte_count / binu_sizes[new_type];
 		    remainder_count = old_byte_count % binu_sizes[new_type];
-		    if ( remainder_count ) {
+		    if (remainder_count) {
 			new_count++;
 			new_byte_count = new_count * binu_sizes[new_type];
 		    } else {
 			new_byte_count = old_byte_count;
 		    }
 
-		    if ( new_byte_count != old_byte_count ) {
-			bip->u.uint8 = bu_realloc( bip->u.uint8,
-						   new_byte_count,
-						   "new bytes for binunif" );
+		    if (new_byte_count != old_byte_count) {
+			bip->u.uint8 = (unsigned char *)bu_realloc(bip->u.uint8,
+								  new_byte_count,
+								  "new bytes for binunif");
 			/* zero out the new bytes */
-			for ( i=old_byte_count; i<new_byte_count; i++ ) {
+			for (i = old_byte_count; i < new_byte_count; i++) {
 			    bip->u.uint8[i] = 0;
 			}
 		    }
@@ -674,7 +674,7 @@ rt_binunif_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
 		bip->type = new_type;
 		intern->idb_type = new_type;
 	    }
-	} else if ( BU_STR_EQUAL( argv[0], "D" ) ) {
+	} else if (BU_STR_EQUAL(argv[0], "D")) {
 	    Tcl_Obj *obj, *list, **obj_array;
 	    int list_len;
 	    unsigned char *buf, *d;
@@ -682,35 +682,35 @@ rt_binunif_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
 	    int hexlen;
 	    unsigned int h;
 
-	    obj = Tcl_NewStringObj( argv[1], -1 );
-	    list = Tcl_NewListObj( 0, NULL );
-	    Tcl_ListObjAppendList( brlcad_interp, list, obj );
-	    (void)Tcl_ListObjGetElements( brlcad_interp, list, &list_len, &obj_array );
+	    obj = Tcl_NewStringObj(argv[1], -1);
+	    list = Tcl_NewListObj(0, NULL);
+	    Tcl_ListObjAppendList(brlcad_interp, list, obj);
+	    (void)Tcl_ListObjGetElements(brlcad_interp, list, &list_len, &obj_array);
 
 	    hexlen = 0;
-	    for ( i=0; i<(size_t)list_len; i++ ) {
-		hexlen += Tcl_GetCharLength( obj_array[i] );
+	    for (i = 0; i < (size_t)list_len; i++) {
+		hexlen += Tcl_GetCharLength(obj_array[i]);
 	    }
 
-	    if ( hexlen % 2 ) {
+	    if (hexlen % 2) {
 		bu_vls_printf(logstr, "Hex form of binary data must have an even number of hex digits");
 		return BRLCAD_ERROR;
 	    }
 
-	    buf = (unsigned char *)bu_malloc( hexlen / 2, "tcladjust binary data" );
+	    buf = (unsigned char *)bu_malloc(hexlen / 2, "tcladjust binary data");
 	    d = buf;
-	    for ( i=0; i<(size_t)list_len; i++ ) {
-		s = Tcl_GetString( obj_array[i] );
-		while ( *s ) {
-		    sscanf( s, "%2x", &h );
+	    for (i = 0; i < (size_t)list_len; i++) {
+		s = Tcl_GetString(obj_array[i]);
+		while (*s) {
+		    sscanf(s, "%2x", &h);
 		    *d++ = h;
 		    s += 2;
 		}
 	    }
-	    Tcl_DecrRefCount( list );
+	    Tcl_DecrRefCount(list);
 
-	    if ( bip->u.uint8 ) {
-		bu_free( bip->u.uint8, "binary data" );
+	    if (bip->u.uint8) {
+		bu_free(bip->u.uint8, "binary data");
 	    }
 	    bip->u.uint8 = buf;
 	    bip->count = hexlen / 2 / binu_sizes[bip->type];

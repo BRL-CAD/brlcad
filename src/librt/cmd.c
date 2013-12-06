@@ -50,7 +50,7 @@ rt_read_cmd(register FILE *fp)
 
     curpos = 0;
     curlen = 400;
-    buf = bu_malloc(curlen, "rt_read_cmd command buffer");
+    buf = (char *)bu_malloc(curlen, "rt_read_cmd command buffer");
 
     do {
 	c = fgetc(fp);
@@ -80,7 +80,7 @@ rt_read_cmd(register FILE *fp)
 	}
 	if (curpos >= curlen) {
 	    curlen *= 2;
-	    buf = bu_realloc(buf, curlen, "rt_read_cmd command buffer");
+	    buf = (char *)bu_realloc(buf, curlen, "rt_read_cmd command buffer");
 	}
 	buf[curpos++] = c;
     } while (c != '\0');

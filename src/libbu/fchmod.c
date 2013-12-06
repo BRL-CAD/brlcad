@@ -40,7 +40,9 @@
 
 
 #ifdef HAVE_FCHMOD
-extern int fchmod(int, mode_t);
+/* extern int fchmod(int, mode_t); */
+/* use correct fchmod decl: */
+#  include <sys/stat.h>
 #else
 
 /* Presumably Windows, pulled from MSDN sample code */

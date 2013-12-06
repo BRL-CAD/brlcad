@@ -70,6 +70,14 @@
  *
  * XXX maybe parameter with NORM, UV, CURVE bits?
  */
+
+ /*
+static const char status_1[] = "MISS model";
+static const char status_2[] = "MISS primitives";
+static const char status_3[] = "MISS bool";
+static const char status_4[] = "HIT";
+*/
+
 int
 rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays)
 {
@@ -80,9 +88,9 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
     fastf_t last_bool_start;
     struct bu_bitv *solidbits;	/* bits for all solids shot so far */
     struct bu_ptbl *regionbits;	/* table of all involved regions */
-    char *status;
-    auto struct partition InitialPart;	/* Head of Initial Partitions */
-    auto struct partition FinalPart;	/* Head of Final Partitions */
+    const char *status;
+    struct partition InitialPart;	/* Head of Initial Partitions */
+    struct partition FinalPart;	/* Head of Final Partitions */
     struct soltab **stpp;
     register const union cutter *cutp;
     struct resource *resp;
