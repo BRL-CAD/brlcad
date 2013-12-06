@@ -52,6 +52,7 @@ add_subdirectory(tests)
 
 CMAKEFILES(
   README
+  bn_private.h
   bntester.dat
   )
 
