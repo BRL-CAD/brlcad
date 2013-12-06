@@ -1729,24 +1729,19 @@ find_package(STL)
 BRLCAD_CHECK_LIBRARY(BSD bsd daemon)
 BRLCAD_CHECK_LIBRARY(BSD c daemon)
 
-# Check for CoreFoundation, Carbon and Cocoa on Apple
+# Check for CoreFoundation and Cocoa on Apple
 if(APPLE)
   include(CMakeFindFrameworks)
   CMAKE_FIND_FRAMEWORKS(CoreFoundation)
   if(CoreFoundation_FRAMEWORKS)
     set(CoreFoundation_LIBRARIES "-framework CoreFoundation" CACHE FILEPATH "CoreFoundation framework" FORCE)
   endif(CoreFoundation_FRAMEWORKS)
-  CMAKE_FIND_FRAMEWORKS(Carbon)
-  if(Carbon_FRAMEWORKS)
-    set(Carbon_LIBRARIES "-framework Carbon" CACHE FILEPATH "Carbon framework" FORCE)
-  endif(Carbon_FRAMEWORKS)
-  BRLCAD_INCLUDE_FILE(Carbon/Carbon.h HAVE_CARBON_CARBON_H)
   CMAKE_FIND_FRAMEWORKS(Cocoa)
   if(Cocoa_FRAMEWORKS)
     set(Cocoa_LIBRARIES "-framework Cocoa" CACHE FILEPATH "Cocoa framework" FORCE)
   endif(Cocoa_FRAMEWORKS)
   mark_as_advanced(CMAKE_OSX_ARCHITECTURES CMAKE_OSX_DEPLOYMENT_TARGET CMAKE_OSX_SYSROOT)
-  mark_as_advanced(CoreFoundation_LIBRARIES Carbon_LIBRARIES Cocoa_LIBRARIES)
+  mark_as_advanced(CoreFoundation_LIBRARIES Cocoa_LIBRARIES)
 endif(APPLE)
 
 # Do some extra Java related checks.

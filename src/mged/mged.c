@@ -1411,11 +1411,6 @@ main(int argc, char *argv[])
 		mged_finish(1);
 	    }
 	    bu_vls_free(&error);
-
-#if !defined(_WIN32)
-	    /* bring application to focus if needed (Mac OS X only) */
-	    dm_applicationfocus();
-#endif
 	}
     }
 

@@ -32,8 +32,6 @@
 #  include <X11/Xutil.h>
 #endif
 #include "bio.h"
-
-#include "dm.h" /* for dm_applicationfocus() */
 #include "bu.h"
 
 
@@ -331,8 +329,6 @@ xsetup(int argc, char **argv)
 	}
     }
     XSetInputFocus(dpy, win, RevertToNone, CurrentTime);
-
-    dm_applicationfocus();
 }
 
 

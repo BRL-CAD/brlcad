@@ -389,9 +389,6 @@ DM_EXPORT extern int vclip(fastf_t *,
 			   fastf_t *,
 			   fastf_t *);
 
-/* focus.c */
-DM_EXPORT extern void dm_applicationfocus(void);
-
 /* grid.c */
 DM_EXPORT extern void dm_draw_grid(struct dm *dmp,
 				   struct ged_grid_state *ggsp,
