@@ -586,7 +586,7 @@ parse_floating(const char *str, size_t count, fastf_t *floc, double *dloc)
     if (UNLIKELY(str == NULL))
 	return -1;
 
-    for (i=0; i < count && *str; ++i) {
+    for (i = 0; i < count && *str; ++i) {
 	numstart = str;
 
 	/* skip sign */
@@ -719,7 +719,7 @@ parse_struct_lookup(register const struct bu_structparse *sdp, register const ch
 		    /* copy the string, converting escaped double
 		     * quotes to just double quotes
 		     */
-		    for (i=j=0;
+		    for (i = j = 0;
 			 j < sdp->sp_count && value[i] != '\0';
 			 loc[j++] = value[i++])
 			if (value[i] == '\\' &&
@@ -749,7 +749,7 @@ parse_struct_lookup(register const struct bu_structparse *sdp, register const ch
 		    register const char *cp;
 		    register const char *pv = value;
 
-		    for (i=0; i < sdp->sp_count && *pv; ++i) {
+		    for (i = 0; i < sdp->sp_count && *pv; ++i) {
 			tmpi = atoi(pv);
 
 			cp = pv;
@@ -800,7 +800,7 @@ parse_struct_lookup(register const struct bu_structparse *sdp, register const ch
 			break;
 		    }
 		    /* Normal case: an integer */
-		    for (i=0; i < sdp->sp_count && *pv; ++i) {
+		    for (i = 0; i < sdp->sp_count && *pv; ++i) {
 			tmpi = atoi(pv);
 
 			cp = pv;
@@ -1285,7 +1285,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 
 		    bu_log("\t%s=%d", sdp->sp_name, *sp++);
 
-		    for (i=1; i < sdp->sp_count; i++) {
+		    for (i = 1; i < sdp->sp_count; i++) {
 			bu_log("%c%d", COMMA, *sp++);
 		    }
 
@@ -1298,7 +1298,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 
 		    bu_log("\t%s=%d", sdp->sp_name, *dp++);
 
-		    for (i=1; i < sdp->sp_count; i++) {
+		    for (i = 1; i < sdp->sp_count; i++) {
 			bu_log("%c%d", COMMA, *dp++);
 		    }
 
@@ -1314,7 +1314,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 		    } else if (sdp->sp_count <= 3) {
 			bu_log("\t%s=%.25G", sdp->sp_name, *dp++);
 
-			for (i=1; i < sdp->sp_count; i++) {
+			for (i = 1; i < sdp->sp_count; i++) {
 			    bu_log("%c%.25G", COMMA, *dp++);
 			}
 
@@ -1329,7 +1329,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 			/* print first and last value individually, so
 			 * don't iterate over them.
 			 */
-			for (i=1; i < sdp->sp_count-1; i++) {
+			for (i = 1; i < sdp->sp_count-1; i++) {
 			    bu_log("%.25G\n", *dp++);
 			}
 
@@ -1347,7 +1347,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 		    } else if (sdp->sp_count <= 3) {
 			bu_log("\t%s=%.25G", sdp->sp_name, *dp++);
 
-			for (i=1; i < sdp->sp_count; i++) {
+			for (i = 1; i < sdp->sp_count; i++) {
 			    bu_log("%c%.25G", COMMA, *dp++);
 			}
 
@@ -1362,7 +1362,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 			/* print first and last value individually, so
 			 * don't iterate over them.
 			 */
-			for (i=1; i < sdp->sp_count-1; i++) {
+			for (i = 1; i < sdp->sp_count-1; i++) {
 			    bu_log("%.25G\n", *dp++);
 			}
 
@@ -1377,7 +1377,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 
 		    bu_log("\t%s=%08x", sdp->sp_name, *dp++);
 
-		    for (i=1; i < sdp->sp_count; i++) {
+		    for (i = 1; i < sdp->sp_count; i++) {
 			bu_log("%c%08x", COMMA, *dp++);
 		    }
 
@@ -2237,7 +2237,7 @@ parse_key_val_to_vls(struct bu_vls *vls, char *params)
 	return 1;
     }
 
-    for (j=0; j<len; j += 2) {
+    for (j = 0; j < len; j += 2) {
 	char *keyword;
 	char *value;
 
@@ -2333,7 +2333,7 @@ bu_shader_to_key_eq(const char *in, struct bu_vls *vls)
 	len = parse_list_length(params);
 
 	/* process each shader in the stack */
-	for (i=0; i<len; i++) {
+	for (i = 0; i < len; i++) {
 	    char *shader1;
 
 	    /* each parameter must be a shader specification in itself */
@@ -2404,11 +2404,11 @@ bu_hexdump_external(FILE *fp, const struct bu_external *ep, const char *str)
 
     cp = (const unsigned char *)ep->ext_buf;
     endp = cp + ep->ext_nbytes;
-    for (i=0; i < ep->ext_nbytes; i += 16) {
+    for (i = 0; i < ep->ext_nbytes; i += 16) {
 	const unsigned char *sp = cp;
 
-	for (j=0; j < 4; j++) {
-	    for (k=0; k < 4; k++) {
+	for (j = 0; j < 4; j++) {
+	    for (k = 0; k < 4; k++) {
 		if (cp >= endp)
 		    fprintf(fp, "   ");
 		else
@@ -2418,7 +2418,7 @@ bu_hexdump_external(FILE *fp, const struct bu_external *ep, const char *str)
 	}
 	fprintf(fp, " |");
 
-	for (j=0; j < 16; j++, sp++) {
+	for (j = 0; j < 16; j++, sp++) {
 	    if (sp >= endp) break;
 	    if (isprint(*sp))
 		putc(*sp, fp);
