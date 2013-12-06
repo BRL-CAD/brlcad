@@ -479,7 +479,7 @@ view_pixel(struct application *ap)
 		/* Scanline buffered mode */
 		bu_semaphore_acquire(RT_SEM_RESULTS);
 
-		tmp_pixel = (unsigned char *)bu_calloc(pwidth, sizeof(fastf_t), "tmp_pixel");
+		tmp_pixel = (fastf_t *)bu_calloc(pwidth, sizeof(fastf_t), "tmp_pixel");
 		VMOVE(tmp_pixel, ap->a_color);
 		if (rpt_dist) {
 		    for (i = 0; i < 8; i++)
@@ -1673,7 +1673,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
     /* On fully incremental mode, allocate the scanline as the total
        size of the image */
     if (full_incr_mode && !psum_buffer)
-	psum_buffer = (unsigned char *)bu_calloc(height*width*pwidth, sizeof(fastf_t), "partial sums buffer");
+	psum_buffer = (fastf_t *)bu_calloc(height*width*pwidth, sizeof(fastf_t), "partial sums buffer");
 
 #ifdef RTSRV
     buf_mode = BUFMODE_RTSRV;		/* multi-pixel buffering */
