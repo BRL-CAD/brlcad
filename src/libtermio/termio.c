@@ -382,7 +382,7 @@ copy_Tio(
     struct sgttyb *to, struct sgttyb *from
 #elif defined(SYSV)
     struct termio *to, struct termio *from
-#elif HAVE_TERMIOS_H
+#elif defined(HAVE_TERMIOS_H)
     struct termios *to, struct termios*from
 #endif
 )
@@ -423,7 +423,7 @@ reset_Tty(int fd)
 #ifdef SYSV
     (void) ioctl(fd, TCSETA, &save_tio[fd]); /* Write setting.		*/
 #endif
-#if HAVE_TERMIOS_H
+#ifdef HAVE_TERMIOS_H
     (void)tcsetattr(fd, TCSAFLUSH, &save_tio[fd]);
 #endif
     return;
@@ -457,9 +457,9 @@ set_O_NDELAY(int fd)
 #if defined(O_NDELAY)
     return fcntl(fd, F_SETFL, O_NDELAY);
 #else
-#if HAVE_TERMIOS_H
+#  if defined(HAVE_TERMIOS_H)
     return fcntl(fd, F_SETFL, FNDELAY);
-#endif
+#  endif
 #endif
 }
 
@@ -471,7 +471,7 @@ prnt_Tio(
     struct sgttyb *tio_ptr
 #elif defined(SYSV)
     struct termio *tio_ptr
-#elif HAVE_TERMIOS_H
+#elif defined(HAVE_TERMIOS_H)
     struct termios *tio_ptr
 #endif
 )
@@ -497,7 +497,7 @@ prnt_Tio(
 		       tio_ptr->c_cc[i]
 	    );
     }
-#elif HAVE_TERMIOS_H
+#elif defined(HAVE_TERMIOS_H)
     (void) fprintf(stderr, "\tc_iflag=0x%x\n\r", (unsigned int)tio_ptr->c_iflag);
     (void) fprintf(stderr, "\tc_oflag=0x%x\n\r", (unsigned int)tio_ptr->c_oflag);
     (void) fprintf(stderr, "\tc_cflag=0x%x\n\r", (unsigned int)tio_ptr->c_cflag);
