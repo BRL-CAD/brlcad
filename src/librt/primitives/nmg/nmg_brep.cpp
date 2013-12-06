@@ -106,7 +106,7 @@ nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, l
     /* We need to orient our surface correctly according to the NMG - using
      * the openNURBS FlipFace function later does not seem to work very
      * well. If an outer loop is found in the NMG with a cw orientation,
-     * factor that in in additon to the fu->f_p->flip flag. */
+     * factor that in in addition to the fu->f_p->flip flag. */
     int ccw = 0;
     vect_t vtmp, uv1, uv2, vnormal;
     point_t center;
