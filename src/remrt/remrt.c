@@ -236,29 +236,6 @@ int fbheight;			/* fb height - S command */
 int running = 0;		/* actually working on it */
 int detached = 0;		/* continue after EOF */
 
-/*
- * Package Handlers.
- */
-void	ph_default(struct pkg_conn *pc, char *buf);	/* foobar message handler */
-void	ph_pixels(struct pkg_conn *pc, char *buf);
-void	ph_print(struct pkg_conn *pc, char *buf);
-void	ph_dirbuild_reply(struct pkg_conn *pc, char *buf);
-void	ph_gettrees_reply(struct pkg_conn *pc, char *buf);
-void	ph_version(struct pkg_conn *pc, char *buf);
-void	ph_cmd(struct pkg_conn *pc, char *buf);
-struct pkg_switch pkgswitch[] = {
-    { MSG_DIRBUILD_REPLY,	ph_dirbuild_reply,	"Dirbuild ACK", NULL },
-    { MSG_GETTREES_REPLY,	ph_gettrees_reply,	"gettrees ACK", NULL },
-    { MSG_MATRIX,		ph_default,		"Set Matrix", NULL },
-    { MSG_LINES,		ph_default,		"Compute lines", NULL },
-    { MSG_END,			ph_default,		"End", NULL },
-    { MSG_PIXELS,		ph_pixels,		"Pixels", NULL },
-    { MSG_PRINT,		ph_print,		"Log Message", NULL },
-    { MSG_VERSION,		ph_version,		"Protocol version check", NULL },
-    { MSG_CMD,			ph_cmd,			"Run one command", NULL },
-    { 0,			0,			(char *)0, NULL }
-};
-
 fd_set clients;
 int print_on = 1;
 
@@ -376,7 +353,8 @@ extern char	*framebuffer;
 
 extern struct rt_g	rt_g;
 
-extern struct command_tab cmd_tab[];	/* given at end */
+extern struct pkg_switch pkgswitch[]; /* given at end */
+extern struct command_tab cmd_tab[];  /* given at end */
 
 char	file_basename[128];	/* contains last component of file name */
 char	file_fullname[128];	/* contains full file name */
@@ -3752,6 +3730,19 @@ cd_exit(int UNUSED(argc), char **UNUSED(argv))
     return 0;
 }
 
+
+struct pkg_switch pkgswitch[] = {
+    { MSG_DIRBUILD_REPLY,	ph_dirbuild_reply,	"Dirbuild ACK", NULL },
+    { MSG_GETTREES_REPLY,	ph_gettrees_reply,	"gettrees ACK", NULL },
+    { MSG_MATRIX,		ph_default,		"Set Matrix", NULL },
+    { MSG_LINES,		ph_default,		"Compute lines", NULL },
+    { MSG_END,			ph_default,		"End", NULL },
+    { MSG_PIXELS,		ph_pixels,		"Pixels", NULL },
+    { MSG_PRINT,		ph_print,		"Log Message", NULL },
+    { MSG_VERSION,		ph_version,		"Protocol version check", NULL },
+    { MSG_CMD,			ph_cmd,			"Run one command", NULL },
+    { 0,			0,			(char *)0, NULL }
+};
 
 struct command_tab cmd_tab[] = {
     {"load",	"file obj(s)",	"specify database and treetops",
