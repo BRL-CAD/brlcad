@@ -44,7 +44,6 @@ if(CMAKE_BUILD_TYPE)
 else(CMAKE_BUILD_TYPE)
   message("------------------ BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} ---------------------")
 endif(CMAKE_BUILD_TYPE)
-message("\n")
 
 ###################################################
 #                                                 #
