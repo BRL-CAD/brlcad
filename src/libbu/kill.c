@@ -29,7 +29,7 @@
 
 
 /* c99 doesn't declare these */
-#ifdef HAVE_KILL
+#if defined(HAVE_KILL) && !defined(__cplusplus)
 extern int kill(pid_t, int);
 #endif
 
