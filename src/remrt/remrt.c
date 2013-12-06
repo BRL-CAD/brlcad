@@ -107,6 +107,7 @@ struct frame {
     struct bu_vls	fr_after_cmd;	/* local commands, after frame done */
 };
 
+
 /*
  *  In order to preserve asynchrony, each server is marched through
  *  a series of state transitions.
@@ -146,9 +147,9 @@ struct frame {
  */
 #define NFD 32
 #ifdef FD_SETSIZE
-#define MAXSERVERS	FD_SETSIZE
+#  define MAXSERVERS	FD_SETSIZE
 #else
-#define MAXSERVERS	NFD		/* No relay function yet */
+#  define MAXSERVERS	NFD		/* No relay function yet */
 #endif
 
 
@@ -188,8 +189,6 @@ struct servers {
     double		sr_l_percent;	/* last: percent of CPU */
 } servers[MAXSERVERS];
 
-void		read_rc_file(void);
-void		check_input(int waittime);
 void		addclient(struct pkg_conn *pc);
 void		start_servers(struct timeval *nowp);
 void		eat_script(FILE *fp);
@@ -219,6 +218,15 @@ void		send_do_lines(struct servers *sp, int start, int stop, int framenum);
 void		do_work(int auto_start);
 void		source(FILE *fp);
 
+int init_fb(char *name);
+int create_outputfilename(struct frame *fr);
+int cd_frames(int argc, char **argv);
+int cd_stat(int argc, char **argv);
+int is_hackers_night(struct timeval *tv);
+int is_night(struct timeval *tv);
+int task_server(struct servers *sp, struct frame *fr, struct timeval *nowp);
+int server_q_len(struct servers *sp);
+int cd_stop(int argc, char **argv);
 
 FBIO *fbp = FBIO_NULL;		/* Current framebuffer ptr */
 int cur_fbwidth;		/* current fb width */
@@ -393,49 +401,40 @@ char *allocate_method[] = {
     "One per Frame"};
 
 
-int init_fb(char *name);
-int create_outputfilename(struct frame *fr);
-int cd_frames(int argc, char **argv);
-int cd_stat(int argc, char **argv);
-int is_hackers_night(struct timeval *tv);
-int is_night(struct timeval *tv);
-int task_server(struct servers *sp, struct frame *fr, struct timeval *nowp);
-int server_q_len(struct servers *sp);
-int cd_stop(int argc, char **argv);
-
-
 /*
- *			T V S U B
+ *  Read a .remrt file.  While this file can contain any valid commands,
+ *  the intention is primarily to permit "automatic" registration of
+ *  server hosts via "host" commands.
  */
-void
-tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0)
+static void
+read_rc_file(void)
 {
+    FILE	*fp;
+    char	*home;
+    char	path[128];
 
-    tdiff->tv_sec = t1->tv_sec - t0->tv_sec;
-    tdiff->tv_usec = t1->tv_usec - t0->tv_usec;
-    if (tdiff->tv_usec < 0)
-	tdiff->tv_sec--, tdiff->tv_usec += 1000000;
+    if ((fp = fopen(".remrtrc", "r")) != NULL)  {
+	source(fp);
+	fclose(fp);
+	return;
+    }
+
+    if ((home = getenv("HOME")) != NULL)  {
+	snprintf(path, 128, "%s/.remrtrc", home);
+	if ((fp = fopen(path, "r")) != NULL)  {
+	    source(fp);
+	    fclose(fp);
+	    return;
+	}
+    }
 }
 
-/*
- *			T V D I F F
- *
- *  Return t1 - t0, as a floating-point number of seconds.
- */
-double
-tvdiff(struct timeval *t1, struct timeval *t0)
-{
-    return((t1->tv_sec - t0->tv_sec) +
-	    (t1->tv_usec - t0->tv_usec) / 1000000.);
-}
 
 /*
- *			S T A M P
- *
  *  Return a string suitable for use as a timestamp.
  *  Mostly for stamping log messages with.
  */
-char *
+static char *
 stamp(void)
 {
     static char	buf[128];
@@ -451,9 +450,104 @@ stamp(void)
     return buf;
 }
 
+
+static void
+check_input(int waittime)
+{
+    static fd_set	ifdset;
+    int	i;
+    struct pkg_conn *pc;
+    static struct timeval tv;
+    int	val;
+
+    /* First, handle any packages waiting in internal buffers */
+    for (i=0; i<(int)MAXSERVERS; i++)  {
+	pc = servers[i].sr_pc;
+	if (pc == PKC_NULL)  continue;
+	if ((val = pkg_process(pc)) < 0)
+	    drop_server(&servers[i], "pkg_process() error");
+    }
+
+    /* Second, hang in select() waiting for something to happen */
+    tv.tv_sec = waittime;
+    tv.tv_usec = 0;
+
+    FD_MOVE(&ifdset, &clients);	/* ibits = clients */
+    FD_SET(tcp_listen_fd, &ifdset);	/* ibits |= tcp_listen_fd */
+    val = select(32, &ifdset, (fd_set *)0, (fd_set *)0, &tv);
+    if (val < 0)  {
+	perror("select");
+	return;
+    }
+    if (val==0)  {
+	/* At this point, ibits==0 */
+	if (rem_debug>1) bu_log("%s select timed out after %d seconds\n", stamp(), waittime);
+	return;
+    }
+
+    /* Third, accept any pending connections */
+    if (FD_ISSET(tcp_listen_fd, &ifdset))  {
+	pc = pkg_getclient(tcp_listen_fd, pkgswitch, (void(*)())bu_log, 1);
+	if (pc != PKC_NULL && pc != PKC_ERROR)
+	    addclient(pc);
+	FD_CLR(tcp_listen_fd, &ifdset);
+    }
+
+    /* Fourth, get any new traffic off the network into libpkg buffers */
+    for (i=0; i<(int)MAXSERVERS; i++)  {
+	if (!feof(stdin) && i == fileno(stdin))  continue;
+	if (!FD_ISSET(i, &ifdset))  continue;
+	pc = servers[i].sr_pc;
+	if (pc == PKC_NULL)  continue;
+	val = pkg_suckin(pc);
+	if (val < 0) {
+	    drop_server(&servers[i], "pkg_suckin() error");
+	} else if (val == 0)  {
+	    drop_server(&servers[i], "EOF");
+	}
+	FD_CLR(i, &ifdset);
+    }
+
+    /* Fifth, handle any new packages now waiting in internal buffers */
+    for (i=0; i<(int)MAXSERVERS; i++)  {
+	pc = servers[i].sr_pc;
+	if (pc == PKC_NULL)  continue;
+	if (pkg_process(pc) < 0)
+	    drop_server(&servers[i], "pkg_process() error");
+    }
+
+    /* Finally, handle any command input (This can recurse via "read") */
+    if (waittime>0 &&
+	 !feof(stdin) &&
+	 FD_ISSET(fileno(stdin), &ifdset))  {
+	interactive_cmd(stdin);
+    }
+}
+
+
+void
+tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0)
+{
+
+    tdiff->tv_sec = t1->tv_sec - t0->tv_sec;
+    tdiff->tv_usec = t1->tv_usec - t0->tv_usec;
+    if (tdiff->tv_usec < 0)
+	tdiff->tv_sec--, tdiff->tv_usec += 1000000;
+}
+
+
 /*
- *			S T A T E _ T O _ S T R I N G
- *
+ *  Return t1 - t0, as a floating-point number of seconds.
+ */
+double
+tvdiff(struct timeval *t1, struct timeval *t0)
+{
+    return((t1->tv_sec - t0->tv_sec) +
+	    (t1->tv_usec - t0->tv_usec) / 1000000.);
+}
+
+
+/*
  *  Return a pointer to a string, generally less than 8 bytes,
  *  that describes this state.
  */
@@ -486,9 +580,7 @@ state_to_string(int state)
     return buf;
 }
 
-/*
- *			S T A T E C H A N G E
- */
+
 void
 statechange(struct servers *sp, int newstate)
 {
@@ -510,9 +602,6 @@ remrt_log(char *msg)
 }
 
 
-/*
- *			M A I N
- */
 int
 main(int argc, char *argv[])
 {
@@ -636,9 +725,7 @@ main(int argc, char *argv[])
     return 0;			/* bu_exit(0, NULL; */
 }
 
-/*
- *			D O _ W O R K
- */
+
 void
 do_work(int auto_start)
 {
@@ -685,115 +772,7 @@ do_work(int auto_start)
     }
 }
 
-/*
- *			R E A D _ R C _ F I L E
- *
- *  Read a .remrt file.  While this file can contain any valid commands,
- *  the intention is primarily to permit "automatic" registration of
- *  server hosts via "host" commands.
- */
-void
-read_rc_file(void)
-{
-    FILE	*fp;
-    char	*home;
-    char	path[128];
 
-    if ((fp = fopen(".remrtrc", "r")) != NULL)  {
-	source(fp);
-	fclose(fp);
-	return;
-    }
-
-    if ((home = getenv("HOME")) != NULL)  {
-	snprintf(path, 128, "%s/.remrtrc", home);
-	if ((fp = fopen(path, "r")) != NULL)  {
-	    source(fp);
-	    fclose(fp);
-	    return;
-	}
-    }
-}
-
-/*
- *			C H E C K _ I N P U T
- */
-void
-check_input(int waittime)
-{
-    static fd_set	ifdset;
-    int	i;
-    struct pkg_conn *pc;
-    static struct timeval tv;
-    int	val;
-
-    /* First, handle any packages waiting in internal buffers */
-    for (i=0; i<(int)MAXSERVERS; i++)  {
-	pc = servers[i].sr_pc;
-	if (pc == PKC_NULL)  continue;
-	if ((val = pkg_process(pc)) < 0)
-	    drop_server(&servers[i], "pkg_process() error");
-    }
-
-    /* Second, hang in select() waiting for something to happen */
-    tv.tv_sec = waittime;
-    tv.tv_usec = 0;
-
-    FD_MOVE(&ifdset, &clients);	/* ibits = clients */
-    FD_SET(tcp_listen_fd, &ifdset);	/* ibits |= tcp_listen_fd */
-    val = select(32, &ifdset, (fd_set *)0, (fd_set *)0, &tv);
-    if (val < 0)  {
-	perror("select");
-	return;
-    }
-    if (val==0)  {
-	/* At this point, ibits==0 */
-	if (rem_debug>1) bu_log("%s select timed out after %d seconds\n", stamp(), waittime);
-	return;
-    }
-
-    /* Third, accept any pending connections */
-    if (FD_ISSET(tcp_listen_fd, &ifdset))  {
-	pc = pkg_getclient(tcp_listen_fd, pkgswitch, (void(*)())bu_log, 1);
-	if (pc != PKC_NULL && pc != PKC_ERROR)
-	    addclient(pc);
-	FD_CLR(tcp_listen_fd, &ifdset);
-    }
-
-    /* Fourth, get any new traffic off the network into libpkg buffers */
-    for (i=0; i<(int)MAXSERVERS; i++)  {
-	if (!feof(stdin) && i == fileno(stdin))  continue;
-	if (!FD_ISSET(i, &ifdset))  continue;
-	pc = servers[i].sr_pc;
-	if (pc == PKC_NULL)  continue;
-	val = pkg_suckin(pc);
-	if (val < 0) {
-	    drop_server(&servers[i], "pkg_suckin() error");
-	} else if (val == 0)  {
-	    drop_server(&servers[i], "EOF");
-	}
-	FD_CLR(i, &ifdset);
-    }
-
-    /* Fifth, handle any new packages now waiting in internal buffers */
-    for (i=0; i<(int)MAXSERVERS; i++)  {
-	pc = servers[i].sr_pc;
-	if (pc == PKC_NULL)  continue;
-	if (pkg_process(pc) < 0)
-	    drop_server(&servers[i], "pkg_process() error");
-    }
-
-    /* Finally, handle any command input (This can recurse via "read") */
-    if (waittime>0 &&
-	 !feof(stdin) &&
-	 FD_ISSET(fileno(stdin), &ifdset))  {
-	interactive_cmd(stdin);
-    }
-}
-
-/*
- *			A D D C L I E N T
- */
 void
 addclient(struct pkg_conn *pc)
 {
@@ -844,8 +823,6 @@ addclient(struct pkg_conn *pc)
 }
 
 /*
- *			D R O P _ S E R V E R
- *
  *  Note that final connection closeout is handled in schedule(),
  *  to prevent recursion problems.
  */
@@ -905,8 +882,6 @@ drop_server(struct servers *sp, char *why)
 }
 
 /*
- *			S T A R T _ S E R V E R S
- *
  *  Scan the ihost table.  For all eligible hosts that don't
  *  presently have a server running, try to start a server.
  */
@@ -995,9 +970,8 @@ start_servers(struct timeval *nowp)
     last_server_check_time = *nowp;		/* struct copy */
 }
 
+
 /*
- *			I S _ N I G H T
- *
  *  Indicate whether the given time is "night", i.e., off-peak time.
  *  The simple algorithm used here does not take into account
  *  using machines in another time zone, nor is it nice to
@@ -1019,9 +993,8 @@ is_night(struct timeval *tv)
     return 0;
 }
 
+
 /*
- *			I S _ H A C K E R S _ N I G H T
- *
  *  Indicate whether the given time is "night", i.e., off-peak time,
  *  for a computer hacker, who stays up late.
  *  The simple algorithm used here does not take into account
@@ -1044,8 +1017,6 @@ is_hackers_night(struct timeval *tv)
 }
 
 /*
- *			E A T _ S C R I P T
- *
  *  The general layout of an RT animation script is:
  *
  *	a once-only prelude that may give viewsize, etc.
@@ -1169,9 +1140,8 @@ eat_script(FILE *fp)
     bu_log("%s Animation script loaded\n", stamp());
 }
 
+
 /*
- *  			S T R I N G 2 I N T
- *
  *  Convert a string to an integer.
  *  A leading "0x" implies HEX.
  *  If needed, octal might be done, but it seems unwise...
@@ -1194,9 +1164,7 @@ string2int(char *str)
     return ret;
 }
 
-/*
- *			G E T _ S E R V E R _ B Y _ N A M E
- */
+
 struct servers *
 get_server_by_name(char *str)
 {
@@ -1220,9 +1188,7 @@ get_server_by_name(char *str)
     return SERVERS_NULL;
 }
 
-/*
- *			I N T E R A C T I V E _ C M D
- */
+
 void
 interactive_cmd(FILE *fp)
 {
@@ -1273,9 +1239,8 @@ interactive_cmd(FILE *fp)
     (void)rt_do_cmd((struct rt_i *)0, buf, cmd_tab);
 }
 
+
 /*
- *			P R E P _ F R A M E
- *
  * Fill in frame structure after reading MAT
  *  fr_number must have been set by caller.
  */
@@ -1324,9 +1289,7 @@ prep_frame(struct frame *fr)
     BU_LIST_INSERT(&fr->fr_todo, &lp->l);
 }
 
-/*
- *			D O _ A _ F R A M E
- */
+
 void
 do_a_frame(void)
 {
@@ -1348,8 +1311,6 @@ do_a_frame(void)
 }
 
 /*
- *			S C A N _ F R A M E _ F O R _ F I N I S H E D _ P I X E L S
- *
  *  The .pix file for this frame already has some pixels stored in it
  *  from some earlier, aborted run.
  *  view_pixel() is always careful to write (0, 0, 1) or some other
@@ -1422,9 +1383,8 @@ scan_frame_for_finished_pixels(struct frame *fr)
     return 0;
 }
 
+
 /*
- *			C R E A T E _ O U T P U T F I L E N A M E
- *
  *  Build and save the file name.
  *  If the file will not be able to be written,
  *  signal error here.
@@ -1486,9 +1446,7 @@ create_outputfilename(struct frame *fr)
     return 0;				/* OK */
 }
 
-/*
- *			F R A M E _ I S _ D O N E
- */
+
 void
 frame_is_done(struct frame *fr)
 {
@@ -1540,9 +1498,7 @@ frame_is_done(struct frame *fr)
     destroy_frame(fr);
 }
 
-/*
- *			D E S T R O Y _ F R A M E
- */
+
 void
 destroy_frame(struct frame *fr)
 {
@@ -1575,8 +1531,6 @@ destroy_frame(struct frame *fr)
 }
 
 /*
- *			T H I S _ F R A M E _ D O N E
- *
  *  All work on this frame is done when there is no more work to be sent out,
  *  and none of the servers have outstanding assignments for this frame.
  *
@@ -1605,9 +1559,8 @@ this_frame_done(struct frame *fr)
     return 1;			/* All done */
 }
 
+
 /*
- *			A L L _ S E R V E R S _ I D L E
- *
  *  Returns -
  *	!0	All servers are idle
  *	 0	Some servers still busy
@@ -1627,9 +1580,8 @@ all_servers_idle(void)
     return 1;			/* All done */
 }
 
+
 /*
- *			A L L _ D O N E
- *
  *  All work is done when there is no more work to be sent out,
  *  and there is no more work pending in any of the servers.
  *
@@ -1655,9 +1607,8 @@ all_done(void)
     return 0;			/* nope, still more work */
 }
 
+
 /*
- *			S C H E D U L E
- *
  *  This routine is called by the main loop, after each batch of PKGs
  *  have arrived.
  *
@@ -1801,8 +1752,6 @@ schedule(struct timeval *nowp)
 #define N_SERVER_ASSIGNMENTS	3		/* desired # of assignments */
 
 /*
- *			N U M B E R _ O F _ R E A D Y _ S E R V E R S
- *
  *  Returns the number of servers that are ready (or busy) with
  *  computing frames.
  */
@@ -1821,9 +1770,8 @@ number_of_ready_servers(void)
     return  count;
 }
 
+
 /*
- *			A S S I G N M E N T _ T I M E
- *
  *  Determine how many seconds of work should be assigned to
  *  a worker, given the current configuration of workers.
  *  One overall goal is to keep the dispatcher (us) from
@@ -1843,9 +1791,8 @@ assignment_time(void)
     return  sec;
 }
 
+
 /*
- *			T A S K _ S E R V E R
- *
  *  If this server is ready, and has fewer than N_SERVER_ASSIGNMENTS,
  *  dispatch one unit of work to it.
  *  The return code indicates if the server is sated or not.
@@ -2006,9 +1953,8 @@ task_server(struct servers *sp, struct frame *fr, struct timeval *nowp)
     return 0;
 }
 
+
 /*
- *			S E R V E R _ Q _ L E N
- *
  *  Report number of assignments that a server has
  */
 int
@@ -2024,9 +1970,8 @@ server_q_len(struct servers *sp)
     return count;
 }
 
+
 /*
- *			R E A D _ M A T R I X
- *
  *  Read an old-style matrix.
  *
  *  Returns -
@@ -2075,9 +2020,7 @@ read_matrix(FILE *fp, struct frame *fr)
     return -1;
 }
 
-/*
- *			P H _ D E F A U L T
- */
+
 void
 ph_default(struct pkg_conn *pc, char *buf)
 {
@@ -2092,9 +2035,8 @@ ph_default(struct pkg_conn *pc, char *buf)
     (void)free(buf);
 }
 
+
 /*
- *			P H _ D I R B U I L D _ R E P L Y
- *
  *  The server answers our MSG_DIRBUILD with various prints, etc.,
  *  and then responds with a MSG_DIRBUILD_REPLY in return, which indicates
  *  that he is ready to accept work now.
@@ -2122,9 +2064,8 @@ ph_dirbuild_reply(struct pkg_conn *pc, char *buf)
     statechange(sp, SRST_NEED_TREE);
 }
 
+
 /*
- *			P H _ G E T T R E E S _ R E P L Y
- *
  *  The server answers our MSG_GETTREES with various prints, etc.,
  *  and then responds with a MSG_GETTREES_REPLY in return, which indicates
  *  that he is ready to accept work now.
@@ -2153,9 +2094,7 @@ ph_gettrees_reply(struct pkg_conn *pc, char *buf)
     statechange(sp, SRST_READY);
 }
 
-/*
- *			P H _ P R I N T
- */
+
 void
 ph_print(struct pkg_conn *pc, char *buf)
 {
@@ -2170,9 +2109,7 @@ ph_print(struct pkg_conn *pc, char *buf)
     if (buf) (void)free(buf);
 }
 
-/*
- *			P H _ V E R S I O N
- */
+
 void
 ph_version(struct pkg_conn *pc, char *buf)
 {
@@ -2195,9 +2132,7 @@ ph_version(struct pkg_conn *pc, char *buf)
     if (buf) (void)free(buf);
 }
 
-/*
- *			P H _ C M D
- */
+
 void
 ph_cmd(struct pkg_conn *pc, char *buf)
 {
@@ -2210,9 +2145,8 @@ ph_cmd(struct pkg_conn *pc, char *buf)
     drop_server(sp, "one-shot command");
 }
 
+
 /*
- *			P H _ P I X E L S
- *
  *  When a scanline is received from a server, file it away.
  */
 void
@@ -2433,9 +2367,8 @@ ph_pixels(struct pkg_conn *pc, char *buf)
     if (buf) (void)free(buf);
 }
 
+
 /*
- *			L I S T _ R E M O V E
- *
  * Given pointer to head of list of ranges, remove the range that's done
  */
 void
@@ -2477,9 +2410,8 @@ list_remove(struct bu_list *lhp, int a, int b)
     }
 }
 
+
 /*
- *			W R I T E _ F B
- *
  *  Buffer 'pp' contains pixels numbered 'a' through (not including) 'b'.
  *  Write them out, clipping them to the current screen.
  */
@@ -2534,9 +2466,8 @@ write_fb(unsigned char *pp, struct frame *fr, int a, int b)
     }
 }
 
+
 /*
- *		R E P A I N T _ F B
- *
  *  Repaint the frame buffer from the stored file.
  *  Sort of a cheap "pix-fb", built in.
  */
@@ -2577,9 +2508,7 @@ repaint_fb(struct frame *fr)
     fclose(fp);
 }
 
-/*
- *			I N I T _ F B
- */
+
 int
 init_fb(char *name)
 {
@@ -2610,9 +2539,7 @@ init_fb(char *name)
     return 0;
 }
 
-/*
- *			S I Z E _ D I S P L A Y
- */
+
 void
 size_display(struct frame *fr)
 {
@@ -2636,9 +2563,7 @@ size_display(struct frame *fr)
 	     fb_getheight(fbp)/fr->fr_height);
 }
 
-/*
- *			S E N D _ D I R B U I L D
- */
+
 void
 send_dirbuild(struct servers *sp)
 {
@@ -2673,9 +2598,7 @@ send_dirbuild(struct servers *sp)
     statechange(sp, SRST_DOING_DIRBUILD);
 }
 
-/*
- *			S E N D _ R E S T A R T
- */
+
 void
 send_restart(struct servers *sp)
 {
@@ -2686,9 +2609,7 @@ send_restart(struct servers *sp)
     statechange(sp, SRST_RESTART);
 }
 
-/*
- *			S E N D _ L O G L V L
- */
+
 void
 send_loglvl(struct servers *sp)
 {
@@ -2698,9 +2619,8 @@ send_loglvl(struct servers *sp)
 	drop_server(sp, "MSG_LOGLVL pkg_send error");
 }
 
+
 /*
- *			S E N D _ M A T R I X
- *
  *  Send current options, and the view matrix information.
  */
 void
@@ -2714,9 +2634,8 @@ send_matrix(struct servers *sp, struct frame *fr)
 	drop_server(sp, "MSG_MATRIX pkg_send error");
 }
 
+
 /*
- *			S E N D _ G E T T R E E S
- *
  *  Send args for rt_gettrees.
  */
 void
@@ -2733,9 +2652,7 @@ send_gettrees(struct servers *sp, struct frame *fr)
     statechange(sp, SRST_DOING_GETTREES);
 }
 
-/*
- *			S E N D _ D O _ L I N E S
- */
+
 void
 send_do_lines(struct servers *sp, int start, int stop, int framenum)
 {
@@ -2750,9 +2667,7 @@ send_do_lines(struct servers *sp, int start, int stop, int framenum)
     (void)gettimeofday(&sp->sr_sendtime, (struct timezone *)0);
 }
 
-/*
- *			P R _ L I S T
- */
+
 void
 pr_list(struct bu_list *lhp)
 {
@@ -2770,15 +2685,15 @@ pr_list(struct bu_list *lhp)
     }
 }
 
+
 void
 mathtab_constant(void)
 {
     /* Called on -B (benchmark) flag, by get_args() */
 }
 
+
 /*
- *			A D D _ H O S T
- *
  *  There are two message formats:
  *	HT_CD		host, port, rem_dir
  *	HT_CONVERT	host, port, rem_dir, loc_db, rem_db
@@ -2821,9 +2736,8 @@ add_host(struct ihost *ihp)
 #	define RSH	"/usr/ucb/rsh"
 #endif
 
+
 /*
- *			H O S T _ H E L P E R
- *
  *  This loop runs in the child process of the real REMRT, and is directed
  *  to initiate contact with new hosts via a one-way pipe from the parent.
  *  In some cases, starting RTSRV on the indicated host is sufficient;
@@ -2928,9 +2842,7 @@ host_helper(FILE *fp)
     }
 }
 
-/*
- *			S T A R T _ H E L P E R
- */
+
 void
 start_helper(void)
 {
@@ -2967,9 +2879,7 @@ start_helper(void)
     (void)close(fds[0]);
 }
 
-/*
- *			B U I L D _ S T A R T _ C M D
- */
+
 void
 build_start_cmd(int argc, char **argv, int startc)
 {
@@ -3028,9 +2938,8 @@ cd_load(int argc, char **argv)
     return 0;
 }
 
+
 /*
- *			C D _ D E B U G
- *
  *  Set/toggle the local (dispatcher) debugging flag
  */
 int
@@ -3045,9 +2954,8 @@ cd_debug(int argc, char **argv)
     return 0;
 }
 
+
 /*
- *			C D _ R D E B U G
- *
  *  Send a string to the command processor on all the remote workers.
  *  Typically this would be of the form "opt -x42;"
  */
@@ -3072,6 +2980,7 @@ cd_rdebug(int argc, char **argv)
     return 0;
 }
 
+
 int
 cd_f(int argc, char **argv)
 {
@@ -3086,6 +2995,7 @@ cd_f(int argc, char **argv)
 	   width, height);
     return 0;
 }
+
 
 int
 cd_S(int argc, char **argv)
@@ -3103,6 +3013,7 @@ cd_S(int argc, char **argv)
     return 0;
 }
 
+
 int
 cd_N(int argc, char **argv)
 {
@@ -3117,6 +3028,7 @@ cd_N(int argc, char **argv)
     return 0;
 }
 
+
 int
 cd_hyper(int argc, char **argv)
 {
@@ -3127,6 +3039,7 @@ cd_hyper(int argc, char **argv)
     bu_log("hypersample=%d, takes effect after next MAT\n", hypersample);
     return 0;
 }
+
 
 int
 cd_bench(int argc, char **argv)
@@ -3139,6 +3052,7 @@ cd_bench(int argc, char **argv)
     return 0;
 }
 
+
 int
 cd_persp(int argc, char **argv)
 {
@@ -3150,6 +3064,7 @@ cd_persp(int argc, char **argv)
     bu_log("perspective angle=%g, takes effect after next MAT\n", rt_perspective);
     return 0;
 }
+
 
 int
 cd_read(int argc, char **argv)
@@ -3169,6 +3084,7 @@ cd_read(int argc, char **argv)
     return 0;
 }
 
+
 void
 source(FILE *fp)
 {
@@ -3180,6 +3096,7 @@ source(FILE *fp)
     }
 }
 
+
 int
 cd_detach(int UNUSED(argc), char **UNUSED(argv))
 {
@@ -3188,6 +3105,7 @@ cd_detach(int UNUSED(argc), char **UNUSED(argv))
     close(0);
     return 0;
 }
+
 
 int
 cd_file(int argc, char **argv)
@@ -3200,9 +3118,8 @@ cd_file(int argc, char **argv)
     return 0;
 }
 
+
 /*
- *			C D _ M A T
- *
  *  Read one specific matrix from an old-format eyepoint file.
  */
 int
@@ -3242,6 +3159,7 @@ cd_mat(int argc, char **argv)
     }
     return 0;
 }
+
 
 int
 cd_movie(int argc, char **argv)
@@ -3300,6 +3218,7 @@ cd_movie(int argc, char **argv)
     return 0;
 }
 
+
 int
 cd_add(int argc, char **argv)
 {
@@ -3314,6 +3233,7 @@ cd_add(int argc, char **argv)
     return 0;
 }
 
+
 int
 cd_drop(int argc, char **argv)
 {
@@ -3327,6 +3247,7 @@ cd_drop(int argc, char **argv)
     drop_server(sp, "drop command issued");
     return 0;
 }
+
 
 int
 cd_hold(int argc, char **argv)
@@ -3347,6 +3268,7 @@ cd_hold(int argc, char **argv)
     return 0;
 }
 
+
 int
 cd_resume(int argc, char **argv)
 {
@@ -3361,6 +3283,7 @@ cd_resume(int argc, char **argv)
     add_host(ihp);
     return 0;
 }
+
 
 int
 cd_allocate(int argc, char **argv)
@@ -3381,6 +3304,7 @@ cd_allocate(int argc, char **argv)
 
     return 0;
 }
+
 
 int
 cd_restart(int argc, char **argv)
@@ -3403,6 +3327,7 @@ cd_restart(int argc, char **argv)
     return 0;
 }
 
+
 int
 cd_stop(int UNUSED(argc), char **UNUSED(argv))
 {
@@ -3410,6 +3335,7 @@ cd_stop(int UNUSED(argc), char **UNUSED(argv))
     running = 0;
     return 0;
 }
+
 
 int
 cd_reset(int UNUSED(argc), char **UNUSED(argv))
@@ -3427,6 +3353,7 @@ cd_reset(int UNUSED(argc), char **UNUSED(argv))
     } while (FrameHead.fr_forw != &FrameHead);
     return 0;
 }
+
 
 int
 cd_attach(int argc, char **argv)
@@ -3448,6 +3375,7 @@ cd_attach(int argc, char **argv)
     return 0;
 }
 
+
 int
 cd_release(int UNUSED(argc), char **UNUSED(argv))
 {
@@ -3458,8 +3386,6 @@ cd_release(int UNUSED(argc), char **UNUSED(argv))
 
 
 /*
- *			C D _ F R A M E S
- *
  *  Summarize frames waiting
  *	Usage: frames [-v]
  */
@@ -3489,6 +3415,7 @@ cd_frames(int argc, char **UNUSED(argv))
     return 0;
 }
 
+
 int
 cd_memprint(int argc, char **argv)
 {
@@ -3505,9 +3432,8 @@ cd_memprint(int argc, char **argv)
     return 0;
 }
 
+
 /*
- *			C D _ S T A T
- *
  *  Brief version
  */
 int
@@ -3559,9 +3485,8 @@ cd_stat(int UNUSED(argc), char **UNUSED(argv))
     return 0;
 }
 
+
 /*
- *			C D _ S T A T U S
- *
  *  Full status version
  */
 int
@@ -3629,6 +3554,7 @@ cd_status(int UNUSED(argc), char **UNUSED(argv))
     return 0;
 }
 
+
 int
 cd_clear(int UNUSED(argc), char **UNUSED(argv))
 {
@@ -3637,6 +3563,7 @@ cd_clear(int UNUSED(argc), char **UNUSED(argv))
     cur_fbwidth = 0;
     return 0;
 }
+
 
 int
 cd_print(int argc, char **argv)
@@ -3658,12 +3585,14 @@ cd_print(int argc, char **argv)
     return 0;
 }
 
+
 int
 cd_go(int UNUSED(argc), char **UNUSED(argv))
 {
     do_a_frame();
     return 0;
 }
+
 
 int
 cd_wait(int UNUSED(argc), char **UNUSED(argv))
@@ -3701,6 +3630,7 @@ cd_wait(int UNUSED(argc), char **UNUSED(argv))
     return 0;
 }
 
+
 int
 cd_help(int UNUSED(argc), char **UNUSED(argv))
 {
@@ -3713,6 +3643,7 @@ cd_help(int UNUSED(argc), char **UNUSED(argv))
     }
     return 0;
 }
+
 
 /*
  * host name always|night|passive cd|convert path
@@ -3812,9 +3743,7 @@ cd_host(int argc, char **argv)
     return 0;
 }
 
-/*
- *			C D _ E X I T
- */
+
 int
 cd_exit(int UNUSED(argc), char **UNUSED(argv))
 {
@@ -3822,6 +3751,7 @@ cd_exit(int UNUSED(argc), char **UNUSED(argv))
     /*NOTREACHED*/
     return 0;
 }
+
 
 struct command_tab cmd_tab[] = {
     {"load",	"file obj(s)",	"specify database and treetops",
