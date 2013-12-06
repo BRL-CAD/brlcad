@@ -40,10 +40,19 @@
 # Beginning line of summary
 message("\n")
 if(CMAKE_BUILD_TYPE)
-  message("----- BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} - ${CMAKE_BUILD_TYPE} Build  -----\n")
+  set(BRLCAD_SUMMARY_BANNER " BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} - ${CMAKE_BUILD_TYPE} Build ")
 else(CMAKE_BUILD_TYPE)
-  message("------------------ BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} ---------------------\n")
+  set(BRLCAD_SUMMARY_BANNER " BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} ")
 endif(CMAKE_BUILD_TYPE)
+
+# Standardize width of summary line for an 80 column termainal
+string(LENGTH "${BRLCAD_SUMMARY_BANNER}" CURRENT_LENGTH)
+while(${CURRENT_LENGTH} LESS 79)
+  set(BRLCAD_SUMMARY_BANNER "-${BRLCAD_SUMMARY_BANNER}-")
+  string(LENGTH "${BRLCAD_SUMMARY_BANNER}" CURRENT_LENGTH)
+endwhile(${CURRENT_LENGTH} LESS 79)
+set(BRLCAD_SUMMARY_BANNER "${BRLCAD_SUMMARY_BANNER}\n")
+message("${BRLCAD_SUMMARY_BANNER}")
 
 ###################################################
 #                                                 #
