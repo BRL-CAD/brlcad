@@ -380,7 +380,7 @@ view_pixel(struct application *ap)
 	    slp = &scanline[ap->a_y];
 	    bu_semaphore_acquire(RT_SEM_RESULTS);
 	    if (slp->sl_buf == (unsigned char *)0) {
-		slp->sl_buf = bu_calloc(width, pwidth, "sl_buf scanline buffer");
+		slp->sl_buf = (unsigned char *)bu_calloc(width, pwidth, "sl_buf scanline buffer");
 	    }
 	    pixelp = slp->sl_buf+(ap->a_x*pwidth);
 	    *pixelp++ = r;
@@ -408,7 +408,7 @@ view_pixel(struct application *ap)
 	case BUFMODE_SCANLINE:
 	    slp = &scanline[ap->a_y];
 	    if (slp->sl_buf == (unsigned char *)0) {
-		slp->sl_buf = bu_calloc(width, pwidth, "sl_buf scanline buffer");
+		slp->sl_buf = (unsigned char *)bu_calloc(width, pwidth, "sl_buf scanline buffer");
 	    }
 	    pixelp = slp->sl_buf+(ap->a_x*pwidth);
 	    *pixelp++ = r;
@@ -440,8 +440,8 @@ view_pixel(struct application *ap)
 		    if ((size_t)ap->a_y+dy >= height) break;
 		    slp = &scanline[ap->a_y+dy];
 		    if (slp->sl_buf == (unsigned char *)0)
-			slp->sl_buf = bu_calloc(width+32,
-						pwidth, "sl_buf scanline buffer");
+			slp->sl_buf = (unsigned char *)bu_calloc(width+32,
+								 pwidth, "sl_buf scanline buffer");
 
 		    pixelp = slp->sl_buf+(ap->a_x*pwidth);
 		    for (dx=0; dx<spread; dx++) {
@@ -479,7 +479,7 @@ view_pixel(struct application *ap)
 		/* Scanline buffered mode */
 		bu_semaphore_acquire(RT_SEM_RESULTS);
 
-		tmp_pixel = bu_calloc(pwidth, sizeof(fastf_t), "tmp_pixel");
+		tmp_pixel = (unsigned char *)bu_calloc(pwidth, sizeof(fastf_t), "tmp_pixel");
 		VMOVE(tmp_pixel, ap->a_color);
 		if (rpt_dist) {
 		    for (i = 0; i < 8; i++)
@@ -489,7 +489,7 @@ view_pixel(struct application *ap)
 		psum_p = &psum_buffer[ap->a_y*width*pwidth + ap->a_x*pwidth];
 		slp = &scanline[ap->a_y];
 		if (slp->sl_buf == (unsigned char *)0) {
-		    slp->sl_buf = bu_calloc(width, pwidth, "sl_buf scanline buffer");
+		    slp->sl_buf = (unsigned char *)bu_calloc(width, pwidth, "sl_buf scanline buffer");
 		}
 		pixelp = slp->sl_buf+(ap->a_x*pwidth);
 		/* Update the partial sums and the scanline */
@@ -1673,7 +1673,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
     /* On fully incremental mode, allocate the scanline as the total
        size of the image */
     if (full_incr_mode && !psum_buffer)
-	psum_buffer = bu_calloc(height*width*pwidth, sizeof(fastf_t), "partial sums buffer");
+	psum_buffer = (unsigned char *)bu_calloc(height*width*pwidth, sizeof(fastf_t), "partial sums buffer");
 
 #ifdef RTSRV
     buf_mode = BUFMODE_RTSRV;		/* multi-pixel buffering */

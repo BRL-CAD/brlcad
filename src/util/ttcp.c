@@ -141,7 +141,7 @@ mread(int fd, char *bufp, unsigned n)
 
 
 static void
-err(char *s)
+err(const char *s)
 {
     fprintf(stderr, "ttcp%s: ", trans?"-t":"-r");
     perror(s);
@@ -151,7 +151,7 @@ err(char *s)
 
 
 void
-mes(char *s)
+mes(const char *s)
 {
     fprintf(stderr, "ttcp%s: %s\n", trans?"-t":"-r", s);
 }
@@ -263,7 +263,7 @@ prusage(struct rusage *r0,
 {
     struct timeval tdiff;
     time_t t;
-    char *cp;
+    const char *cp;
     int i;
     int ms;
 
@@ -271,7 +271,7 @@ prusage(struct rusage *r0,
 	(r1->ru_utime.tv_usec-r0->ru_utime.tv_usec)/10000+
 	(r1->ru_stime.tv_sec-r0->ru_stime.tv_sec)*100+
 	(r1->ru_stime.tv_usec-r0->ru_stime.tv_usec)/10000;
-    ms =  (e->tv_sec-b->tv_sec)*100 + (e->tv_usec-b->tv_usec)/10000;
+    ms = (e->tv_sec-b->tv_sec)*100 + (e->tv_usec-b->tv_usec)/10000;
 
 #define END(x) {while (*x) x++;}
     cp = "%Uuser %Ssys %Ereal %P %Xi+%Dd %Mmaxrss %F+%Rpf %Ccsw";
