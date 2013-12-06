@@ -27,21 +27,25 @@
 #include "common.h"
 
 /* quell warnings */
-#if HAVE_GCC_DIAG_PRAGMAS
-#  pragma GCC diagnostic push /* begin ignoring warnings */
-#  pragma GCC diagnostic ignored "-Wunused-const-variable"
-#elif HAVE_CLANG_DIAG_PRAGMAS
-#  pragma clang diagnostic push /* begin ignoring warnings */
-#  pragma clang diagnostic ignored "-Wunused-const-variable"
+#if defined(HAVE_WUNUSED_CONST_VARIABLE)
+#  if HAVE_GCC_DIAG_PRAGMAS
+#    pragma GCC diagnostic push /* begin ignoring warnings */
+#    pragma GCC diagnostic ignored "-Wunused-const-variable"
+#  elif HAVE_CLANG_DIAG_PRAGMAS
+#    pragma clang diagnostic push /* begin ignoring warnings */
+#    pragma clang diagnostic ignored "-Wunused-const-variable"
+#  endif
 #endif
 
 /* quell empty-compilation unit warnings */
 static const int unused = 0;
 
-#if HAVE_GCC_DIAG_PRAGMAS
-#  pragma GCC diagnostic pop
-#elif HAVE_CLANG_DIAG_PRAGMAS
-#  pragma clang diagnostic pop
+#if defined(HAVE_WUNUSED_CONST_VARIABLE)
+#  if HAVE_GCC_DIAG_PRAGMAS
+#    pragma GCC diagnostic pop
+#  elif HAVE_CLANG_DIAG_PRAGMAS
+#    pragma clang diagnostic pop
+#  endif
 #endif
 
 /*
