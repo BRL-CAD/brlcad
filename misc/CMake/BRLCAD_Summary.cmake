@@ -40,9 +40,9 @@
 # Beginning line of summary
 message("\n")
 if(CMAKE_BUILD_TYPE)
-  message("----- BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} - ${CMAKE_BUILD_TYPE} Build  -----")
+  message("----- BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} - ${CMAKE_BUILD_TYPE} Build  -----\n")
 else(CMAKE_BUILD_TYPE)
-  message("------------------ BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} ---------------------")
+  message("------------------ BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} ---------------------\n")
 endif(CMAKE_BUILD_TYPE)
 
 ###################################################
