@@ -37,7 +37,15 @@
 # This file contains the CMake routines that summarize the results
 # of the BRL-CAD configure process.
 
-# Beginning line of summary
+# By default, tailor the summary for an 80 column terminal
+set(MAX_LINE_LENGTH 80)
+
+###################################################
+#                                                 #
+#               Print Summary Banner              #
+#                                                 #
+###################################################
+
 message("\n")
 if(CMAKE_BUILD_TYPE)
   set(BRLCAD_SUMMARY_BANNER " BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} - ${CMAKE_BUILD_TYPE} Build ")
@@ -45,13 +53,16 @@ else(CMAKE_BUILD_TYPE)
   set(BRLCAD_SUMMARY_BANNER " BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} ")
 endif(CMAKE_BUILD_TYPE)
 
-# Standardize width of summary line for an 80 column termainal
+# Standardize width of summary line
+math(EXPR BANNER_LINE_TRIGGER "${MAX_LINE_LENGTH} - 1")
 string(LENGTH "${BRLCAD_SUMMARY_BANNER}" CURRENT_LENGTH)
-while(${CURRENT_LENGTH} LESS 79)
+while(${CURRENT_LENGTH} LESS ${BANNER_LINE_TRIGGER})
   set(BRLCAD_SUMMARY_BANNER "-${BRLCAD_SUMMARY_BANNER}-")
   string(LENGTH "${BRLCAD_SUMMARY_BANNER}" CURRENT_LENGTH)
-endwhile(${CURRENT_LENGTH} LESS 79)
+endwhile(${CURRENT_LENGTH} LESS ${BANNER_LINE_TRIGGER})
+
 set(BRLCAD_SUMMARY_BANNER "${BRLCAD_SUMMARY_BANNER}\n")
+
 message("${BRLCAD_SUMMARY_BANNER}")
 
 ###################################################
@@ -147,8 +158,6 @@ endif(NOT MSVC)
 list(GET ALL_FLAG_LABELS 0 LABEL_LENGTH_STR)
 string(LENGTH "${LABEL_LENGTH_STR}" LABEL_LENGTH)
 
-set(MAX_LINE_LENGTH 80)
-
 function(print_flags flag_type flags FLAGS_MAXLINE)
   set(LINE_STR "${${flag_type}_LABEL}")
   string(REPLACE " " ";" ${flag_type}_LIST "${flags}")
@@ -214,6 +223,9 @@ else(CMAKE_CONFIGURATION_TYPES)
     endforeach(flag_type ${ALL_FLAG_TYPES})
   endif(CMAKE_BUILD_TYPE)
 endif(CMAKE_CONFIGURATION_TYPES)
+
+# Spacer between flags and compilation status lists
+message(" ")
 
 ###################################################
 #                                                 #
