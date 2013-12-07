@@ -147,9 +147,9 @@ timeTable_init(int x, int y)
 	if (timeTable == NULL) {
 	    bu_log("X is %d, Y is %d\n", x, y);
 	    bu_log("Making time Table\n");
-	    timeTable = (fastf_t **)bu_malloc(x * sizeof(double *), "timeTable");
+	    timeTable = (fastf_t **)bu_malloc(x * sizeof(fastf_t *), "timeTable");
 	    for (i = 0; i < x; i++) {
-		timeTable[i] = (fastf_t *)bu_malloc(y * sizeof(double), "timeTable[i]");
+		timeTable[i] = (fastf_t *)bu_malloc(y * sizeof(fastf_t), "timeTable[i]");
 	    }
 	    for (i = 0; i < x; i++) {
 		for (w = 0; w < y; w++) {
