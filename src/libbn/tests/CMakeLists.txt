@@ -9,6 +9,7 @@ BRLCAD_ADDEXEC(tester_bn_poly_synthetic_div bn_poly_synthetic_div.c "libbu;libbn
 BRLCAD_ADDEXEC(tester_bn_obr bn_obr.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_chull bn_chull.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_plane_pt bn_plane_pt.c "libbu;libbn" NO_INSTALL)
+BRLCAD_ADDEXEC(tester_bn_plane_dist bn_plane_dist.c "libbu;libbn" NO_INSTALL)
 CMAKEFILES(bn_chull_test003_bot.asc)
 CMAKEFILES(bn_chull_test004_bot.asc)
 CMAKEFILES(bn_poly_cubic_roots.c bn_poly_quartic_roots.c bn_obr.c)
@@ -178,6 +179,48 @@ add_test(bn_plane_mk_plane_3pts_fail_colinear_1 tester_bn_plane_pt 5 0,0,0 5,8,2
 add_test(bn_plane_mk_plane_3pts_fail_colinear_2 tester_bn_plane_pt 5 5,8,2 0,0,0 0,0,0 -1)
 add_test(bn_plane_mk_plane_3pts_fail_colinear_3 tester_bn_plane_pt 5 -10,-10,-10 0,0,0 5,5,5 -1)
 add_test(bn_plane_mk_plane_3pts_succeed         tester_bn_plane_pt 5 -10,-10,-10 7,3,8 19,4,2 0)
+
+
+# For tester_bn_plane_dist, the input format is as follows:
+#
+# tester_bn_plane_dist <function number> <args>
+
+# For function #1 (bn_dist_pt3_line3), the <args> format is as follows:
+#
+# Ax,Ay,Az DIRx,DIRy,DIRz Px,Py,Pz expected_return expected_dist PCAx,PCAy,PCAz
+#
+# where A and DIR define the line segment, and P is the point in
+# question. An individual point is three integer or floating point
+# numbers separated by commas.
+
+add_test(bn_plane_dist_pt3_line3_case0_1   tester_bn_plane_dist 2 -5,-5,-5 1,1,1 -5,-5,-5 0 0 -5,-5,-5)
+add_test(bn_plane_dist_pt3_line3_case1_1   tester_bn_plane_dist 2 -5,-5,-5 1,1,1 0,0,0 1 0.5 0,0,0)
+add_test(bn_plane_dist_pt3_line3_case2_1   tester_bn_plane_dist 2 -5,-5,-5 5,5,5 0,-5,-5 2 4.08248 -3.33333,-3.33333,-3.33333)
+
+# For function #2 (bn_dist_pt3_lseg3), the <args> format is as follows:
+#
+# Ax,Ay,Az Bx,By,Bz Px,Py,Pz expected_return expected_dist PCAx,PCAy,PCAz
+#
+# where A and B define the line segment, and P is the point in
+# question. An individual point is three integer or floating point
+# numbers separated by commas.
+
+add_test(bn_plane_dist_pt3_lseg3_case0_1   tester_bn_plane_dist 2 -5,-5,-5 5,5,5 0,0,0 0 0.5 0,0,0)
+add_test(bn_plane_dist_pt3_lseg3_case1_1   tester_bn_plane_dist 2 -5,-5,-5 5,5,5 -5,-5,-5 1 0 -5,-5,-5)
+add_test(bn_plane_dist_pt3_lseg3_case2_1   tester_bn_plane_dist 2 -5,-5,-5 5,5,5 5,5,5 2 0 5,5,5)
+add_test(bn_plane_dist_pt3_lseg3_case3_1   tester_bn_plane_dist 2 -5,-5,-5 5,5,5 -10,-5,-10 3 7.07107 -5,-5,-5)
+add_test(bn_plane_dist_pt3_lseg3_case4_1   tester_bn_plane_dist 2 -5,-5,-5 5,5,5 5,10,10 4 7.07107 5,5,5)
+add_test(bn_plane_dist_pt3_lseg3_case5_1   tester_bn_plane_dist 2 -5,-5,-5 5,5,5 0,-5,-5 5 4.08248 -3.33333,-3.33333,-3.33333)
+
+# For function #3 (bn_dist_pt3_pt3), the <args> format is as follows:
+#
+# Ax,Ay,Az Bx,By,Bz expected_return
+#
+# where A and B are the points in question. An individual point is
+# three integer or floating point numbers separated by commas.
+
+add_test(bn_plane_dist_pt3_pt3_same   tester_bn_plane_dist 3 0,0,0 0,0,0 0)
+add_test(bn_plane_dist_pt3_pt3_1      tester_bn_plane_dist 3 0,0,0 1,1,1 1.732051)
 
 # Local Variables:
 # tab-width: 8
