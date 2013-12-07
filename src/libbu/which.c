@@ -40,6 +40,7 @@ const char *
 bu_which(const char *cmd)
 {
     static const char *gotpath = NULL;
+    char curr_dir[] = ".";
 
     char PATH[MAXPATHENV];
 
@@ -112,7 +113,7 @@ bu_which(const char *cmd)
 
 	/* empty means use current dir */
 	if (strlen(directory) == 0) {
-	    directory = ".";
+	    directory = curr_dir; /* "."; */
 	}
 
 	snprintf(bu_which_result, MAXPATHLEN, "%s/%s", directory, cmd);
