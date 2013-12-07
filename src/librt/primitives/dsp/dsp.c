@@ -389,7 +389,7 @@ plot_layers(struct dsp_specific *dsp_sp)
     int r, g, b, c;
     struct dsp_bb *d_bb;
 
-    for (l=0; l < dsp_sp->layers; l++) {
+    for (l = 0; l < dsp_sp->layers; l++) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	sprintf(buf, "Dsp_layer%d.plot3", l);
 	fp=fopen(buf, "wb");
@@ -834,9 +834,9 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 
 
 		tot = 0;
-		i=0;
-		for (j=0; j<DIM_BB_CHILDREN && (yp+j)<prev->dim[Y]; j++) {
-		    for (i=0; i<DIM_BB_CHILDREN && (xp+i)<prev->dim[X]; i++) {
+		i = 0;
+		for (j = 0; j < DIM_BB_CHILDREN && (yp+j)<prev->dim[Y]; j++) {
+		    for (i = 0; i < DIM_BB_CHILDREN && (xp+i)<prev->dim[X]; i++) {
 
 			idx = (yp+j) * prev->dim[X] + xp+i;
 
@@ -1983,7 +1983,7 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 	bu_log("hitcount: %d flags: 0x%0x\n", hitcount, hitf);
 
 	plot_cell_top(isect, dsp_bb, A, B, C, D, hits, hitf, 1);
-	for (i=0; i < 4; i++) {
+	for (i = 0; i < 4; i++) {
 	    if (hitf & (1<<i)) {
 		fastf_t v = VDOT(isect->r.r_dir, hits[i].hit_normal);
 
