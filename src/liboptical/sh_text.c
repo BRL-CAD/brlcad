@@ -66,7 +66,7 @@ struct bu_structparse txt_parse[] = {
     {"%V",	1, "file", TX_O(tx_name),		txt_source_hook, NULL, NULL },
     {"%V",	1, "obj", TX_O(tx_name),		txt_source_hook, NULL, NULL },
     {"%V",	1, "object", TX_O(tx_name),		txt_source_hook, NULL, NULL },
-    {"%V",	1, "texture", TX_O(tx_name),	 BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%V",	1, "texture", TX_O(tx_name),	        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "w",		TX_O(tx_w),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "n",		TX_O(tx_n),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "l",		TX_O(tx_n),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -692,8 +692,6 @@ ckr_render(struct application *ap, const struct partition *pp, register struct s
  */
 HIDDEN int
 ckr_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
-
-
 /* New since 4.4 release */
 {
     register struct ckr_specific *ckp;

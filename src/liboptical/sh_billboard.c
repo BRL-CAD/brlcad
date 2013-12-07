@@ -99,10 +99,11 @@ struct bbd_specific bbd_defaults = {
 #define SHDR_NULL ((struct bbd_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct bbd_specific, m)
 
-void new_image(register const struct bu_structparse *sdp,
-	       register const char *name,
-	       char *base,
-	       const char *value);
+void
+new_image(register const struct bu_structparse *sdp,
+	  register const char *name,
+	  char *base,
+	  const char *value);
 
 
 /* description of how to parse/print the arguments to the shader
@@ -123,10 +124,11 @@ struct bu_structparse bbd_parse_tab[] = {
 };
 
 
-void new_image(register const struct bu_structparse *UNUSED(sdp),	/*struct desc*/
-	       register const char *UNUSED(name),	/*member name*/
-	       char *base,	/*struct base*/
-	       const char *UNUSED(value)) /*string value */
+void
+new_image(register const struct bu_structparse *UNUSED(sdp),	/*struct desc*/
+	  register const char *UNUSED(name),	/*member name*/
+	  char *base,	/*struct base*/
+	  const char *UNUSED(value)) /*string value */
 {
     struct bbd_specific *bbd_sp = (struct bbd_specific *)base;
     struct bbd_img *bbdi;
@@ -504,6 +506,8 @@ imgdist_compare(const void *a, const void *b)
 {
     return (int)(((struct imgdist *)a)->dist - ((struct imgdist *)b)->dist);
 }
+
+
 /*
  * B I L L B O A R D _ R E N D E R
  *
@@ -558,7 +562,7 @@ bbd_render(struct application *ap, const struct partition *pp, struct shadework 
 
     qsort(id, bbd_sp->img_count, sizeof(id[0]), &imgdist_compare);
 
-    for (i=0; i < bbd_sp->img_count && swp->sw_transmit > 0.0; i++) {
+    for (i = 0; i < bbd_sp->img_count && swp->sw_transmit > 0.0; i++) {
 	if (id[i].status > 0) do_ray_image(ap, pp, swp, bbd_sp, id[i].bi, id[i].dist);
     }
     if (rdebug&RDEBUG_SHADE) {

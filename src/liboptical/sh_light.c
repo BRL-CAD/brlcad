@@ -145,7 +145,7 @@ struct light_obs_stuff {
  * is encountered, and causes lt_exaim to be set.
  */
 HIDDEN void
-aim_set (const struct bu_structparse *UNUSED(sdp), const char *UNUSED(name), const char *base, char *UNUSED(value))
+aim_set(const struct bu_structparse *UNUSED(sdp), const char *UNUSED(name), const char *base, char *UNUSED(value))
 {
     register struct light_specific *lsp = (struct light_specific *)base;
     if (rdebug & RDEBUG_LIGHT) {
@@ -1791,7 +1791,7 @@ light_maker(int num, mat_t v2m)
 #endif
 
     /* Determine the Light location(s) in view space */
-    for (i=0; i<num; i++) {
+    for (i = 0; i < num; i++) {
 	switch (i) {
 	    case 0:
 		/* 0:  At left edge, 1/2 high */

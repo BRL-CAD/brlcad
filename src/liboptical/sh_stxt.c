@@ -64,7 +64,7 @@ struct stxt_specific {
 #define SOL_O(m) bu_offsetof(struct stxt_specific, m)
 
 struct bu_structparse stxt_parse[] = {
-    {"%d",	1, "transp",	SOL_O(stx_transp),	stxt_transp_hook, NULL, NULL },
+    {"%d",	1, "transp",	        SOL_O(stx_transp),	stxt_transp_hook, NULL, NULL },
     {"%s",	STX_NAME_LEN, "file",	SOL_O(stx_file),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "w",			SOL_O(stx_w),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "n",			SOL_O(stx_n),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -129,7 +129,7 @@ stxt_read(register struct stxt_specific *stp)
     rd = 0;
 
     /* LOOP: through list of basename.n files */
-    for (frame=0; frame <= stp->stx_d-1; frame++) {
+    for (frame = 0; frame <= stp->stx_d-1; frame++) {
 
 	snprintf(name, 256, "%s.%d", stp->stx_file, frame);
 
@@ -164,8 +164,6 @@ stxt_read(register struct stxt_specific *stp)
  */
 HIDDEN int
 stxt_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
-
-
 /* New since 4.4 release */
 {
     register struct stxt_specific *stp;

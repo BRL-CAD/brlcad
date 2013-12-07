@@ -175,10 +175,7 @@ struct bu_structparse noise_parse_tab[] = {
  */
 HIDDEN int
 noise_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip)
-
-
 /* pointer to reg_udata in *rp */
-
 /* New since 4.4 release */
 {
     register struct noise_specific *noise_sp;
@@ -283,10 +280,7 @@ noise_free(genptr_t cp)
  */
 static void
 norm_noise(fastf_t *pt, double val, struct noise_specific *noise_sp, double (*func) (/* ??? */), struct shadework *swp, int rescale)
-
-
 /* defined in material.h */
-
 {
     vect_t N, tmp;
     point_t u_pt, v_pt;
@@ -358,8 +352,6 @@ norm_noise(fastf_t *pt, double val, struct noise_specific *noise_sp, double (*fu
  */
 int
 fractal_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
-
-
 /* defined in material.h */
 /* ptr to the shader-specific struct */
 {

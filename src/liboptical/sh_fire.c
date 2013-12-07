@@ -205,10 +205,7 @@ const double flame_colors[18][3] = {
  */
 HIDDEN int
 fire_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
-
-
 /* pointer to reg_udata in *rp */
-
 /* New since 4.4 release */
 {
     register struct fire_specific *fire_sp;
@@ -299,8 +296,6 @@ fire_free(genptr_t cp)
  */
 int
 fire_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
-
-
 /* defined in material.h */
 /* ptr to the shader-specific struct */
 {

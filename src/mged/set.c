@@ -41,13 +41,13 @@ extern void fbserv_set_port(void);
 
 extern void set_perspective(void);
 
-static void set_dirty_flag(void);
-static void nmg_eu_dist_set(void);
-static void set_dlist(void);
 static void establish_perspective(void);
-static void toggle_perspective(void);
+static void nmg_eu_dist_set(void);
 static void set_coords(void);
+static void set_dirty_flag(void);
+static void set_dlist(void);
 static void set_rotate_about(void);
+static void toggle_perspective(void);
 
 static char *read_var(ClientData clientData, Tcl_Interp *interp, const char *name1, const char *name2, int flags);
 static char *write_var(ClientData clientData, Tcl_Interp *interp, const char *name1, const char *name2, int flags);
@@ -127,8 +127,8 @@ struct bu_structparse mged_vparse[] = {
     {"%d", 1, "toggle_perspective",	MV_O(mv_toggle_perspective),	toggle_perspective, NULL, NULL },
     {"%g", 1, "nmg_eu_dist",		MV_O(mv_nmg_eu_dist),		nmg_eu_dist_set, NULL, NULL },
     {"%g", 1, "eye_sep_dist",		MV_O(mv_eye_sep_dist),		set_dirty_flag, NULL, NULL },
-    {"%s", LINE, "union_op",		MV_O(mv_union_lexeme),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%s", LINE, "intersection_op",	MV_O(mv_intersection_lexeme),BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s", LINE, "union_op",		MV_O(mv_union_lexeme),	        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s", LINE, "intersection_op",	MV_O(mv_intersection_lexeme),   BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%s", LINE, "difference_op",	MV_O(mv_difference_lexeme),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, NULL,			0,				BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
@@ -164,7 +164,6 @@ nmg_eu_dist_set(void)
  ** command or the Tcl dereference operator '$'.
  **
  **/
-
 static char *
 read_var(ClientData clientData, Tcl_Interp *interp, const char *UNUSED(name1), const char *UNUSED(name2), int flags)
     /* Contains pointer to bu_struct_parse entry */

@@ -94,6 +94,7 @@ struct mfuncs air_mfuncs[] = {
     {0,		(char *)0,	0,		0,	0,
      0,		0,		0,		0 }
 };
+
 static void
 dpm_hook(register const struct bu_structparse *UNUSED(sdp), register const char *UNUSED(name), char *base, const char *UNUSED(value))
 /* structure description */
@@ -106,6 +107,7 @@ dpm_hook(register const struct bu_structparse *UNUSED(sdp), register const char 
 
     air_sp->d_p_mm *= meters_to_millimeters;
 }
+
 /* A I R _ S E T U P
  *
  * This routine is called (at prep time)
@@ -114,10 +116,7 @@ dpm_hook(register const struct bu_structparse *UNUSED(sdp), register const char 
  */
 HIDDEN int
 air_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip)
-
-
 /* pointer to reg_udata in *rp */
-
 /* New since 4.4 release */
 {
     register struct air_specific *air_sp;
@@ -273,6 +272,8 @@ tmist_hit(register struct application *UNUSED(ap), struct partition *UNUSED(Part
      */
     return 0;
 }
+
+
 int
 tmist_miss(register struct application *UNUSED(ap))
 {

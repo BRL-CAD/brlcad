@@ -163,10 +163,7 @@ struct mfuncs xxx_mfuncs[] = {
  */
 HIDDEN int
 xxx_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
-
-
 /* pointer to reg_udata in *rp */
-
 /* New since 4.4 release */
 {
     register struct xxx_specific *xxx_sp;
@@ -252,8 +249,6 @@ xxx_free(genptr_t cp)
  */
 int
 xxx_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
-
-
 /* defined in ../h/shadework.h */
 /* ptr to the shader-specific struct */
 {

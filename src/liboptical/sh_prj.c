@@ -94,7 +94,9 @@ struct prj_specific {
  * so that the image may be loaded automatically as needed from either a file or
  * from a database-embedded binary object.
  */
-HIDDEN void img_source_hook(const struct bu_structparse *UNUSED(ip), const char *sp_name, genptr_t base, char *UNUSED(p)) {
+HIDDEN void
+img_source_hook(const struct bu_structparse *UNUSED(ip), const char *sp_name, genptr_t base, char *UNUSED(p))
+{
     struct img_specific *imageSpecific = (struct img_specific *)base;
     if (bu_strncmp(sp_name, "file", 4) == 0) {
 	imageSpecific->i_datasrc=IMG_SRC_FILE;
@@ -112,7 +114,9 @@ HIDDEN void img_source_hook(const struct bu_structparse *UNUSED(ip), const char 
  * This is a helper routine used in prj_setup() to load a projection image
  * either from a file or from a db object.
  */
-HIDDEN int img_load_datasource(struct img_specific *image, struct db_i *dbInstance, const unsigned long int size) {
+HIDDEN int
+img_load_datasource(struct img_specific *image, struct db_i *dbInstance, const unsigned long int size)
+{
     struct directory *dirEntry;
 
     RT_CK_DBI(dbInstance);
@@ -425,10 +429,7 @@ struct mfuncs prj_mfuncs[] = {
  */
 HIDDEN int
 prj_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
-
-
 /* pointer to reg_udata in *rp */
-
 /* New since 4.4 release */
 {
     /* we use this to initialize new img_specific objects */
@@ -638,8 +639,8 @@ project_point(point_t sh_color, struct img_specific *img_sp, struct prj_specific
 	|| (x*3 + y*img_sp->i_width*3) < 0
 	|| (x*3 + y*img_sp->i_width*3) > (img_sp->i_width * img_sp->i_height * 3))
     {
-	static int count=0;
-	static int suppressed=0;
+	static int count = 0;
+	static int suppressed = 0;
 	if (count++ < 10) {
 	    bu_log("INTERNAL ERROR: projection point is invalid\n");
 	} else {
@@ -686,8 +687,6 @@ project_point(point_t sh_color, struct img_specific *img_sp, struct prj_specific
  */
 int
 prj_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
-
-
 /* defined in material.h */
 /* ptr to the shader-specific struct */
 {
@@ -745,7 +744,7 @@ prj_render(struct application *ap, const struct partition *pp, struct shadework 
 	 */
 
 	/* compute region coordinates for pixel extent */
-	for (i=0; i < CORNER_PTS; i++) {
+	for (i = 0; i < CORNER_PTS; i++) {
 	    MAT4X3PNT(r_pe.corner[i].r_pt,
 		      prj_sp->prj_m_to_sh,
 		      ap->a_pixelext->corner[i].r_pt);
@@ -759,7 +758,7 @@ prj_render(struct application *ap, const struct partition *pp, struct shadework 
 	r_N[H] = VDOT(r_N, r_pt);
 
 	/* project corner points into plane of hit point */
-	for (i=0; i < CORNER_PTS; i++) {
+	for (i = 0; i < CORNER_PTS; i++) {
 	    dist = 0.0;
 	    status = bn_isect_line3_plane(
 		&dist,
