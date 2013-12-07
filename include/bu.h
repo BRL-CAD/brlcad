@@ -2299,20 +2299,17 @@ struct bu_structparse {
     size_t sp_count;		/**< number of elements */
     const char *sp_name;		/**< Element's symbolic name */
     size_t sp_offset;		/**< Byte offset in struct */
-    void (*sp_hook)(const struct bu_structparse *,
-		    const char *,
-		    const char *,
-		    const char *);	/**< Optional hooked function, or indir ptr */
+    void (*sp_hook)();		/**< Optional hooked function, or indir ptr */
     const char *sp_desc;		/**< description of element */
-    void *sp_default;		       /**< ptr to default value */
+    void *sp_default;		/**< ptr to default value */
 };
 typedef struct bu_structparse bu_structparse_t;
 #define BU_STRUCTPARSE_NULL ((struct bu_structparse *)0)
 
-#define BU_STRUCTPARSE_FUNC_NULL ((void (*)(const struct bu_structparse *, \
-		    const char *, \
-		    const char *, \
-		    const char *))0)
+/* FIXME: parameterless k&r-style function declarations are not proper
+ * with ansi.  need to declare the callback completely.
+ */
+#define BU_STRUCTPARSE_FUNC_NULL ((void (*)())0)
 
 /**
  * assert the integrity of a bu_structparse struct.
