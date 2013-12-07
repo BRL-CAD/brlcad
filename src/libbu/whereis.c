@@ -50,9 +50,8 @@ bu_whereis(const char *cmd)
 {
     static const char *gotpath = NULL;
     char PATH[MAXPATHENV];
-    char curr_dir[] = ".";
 
-    char *directory = NULL;
+    const char *directory = NULL;
     char *position = NULL;
 
     if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
@@ -111,7 +110,7 @@ bu_whereis(const char *cmd)
 
 	/* empty means use current dir */
 	if (strlen(directory) == 0) {
-	    directory = curr_dir; /* "."; */
+	    directory = ".";
 	}
 
 	snprintf(bu_whereis_result, MAXPATHLEN, "%s/%s", directory, cmd);
