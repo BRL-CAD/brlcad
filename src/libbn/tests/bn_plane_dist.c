@@ -30,6 +30,7 @@
 
 #define TOL_INIT { BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 }
 
+
 static int
 test_bn_dist_pt3_line3(int argc, char **argv)
 {
@@ -67,6 +68,7 @@ test_bn_dist_pt3_line3(int argc, char **argv)
 	    && !NEAR_EQUAL(expected_pca[Y], actual_pca[Y], BN_TOL_DIST)
 	    && !NEAR_EQUAL(expected_pca[Z], actual_pca[Z], BN_TOL_DIST));
 }
+
 
 static int
 test_bn_dist_pt3_lseg3(int argc, char **argv)
@@ -106,6 +108,7 @@ test_bn_dist_pt3_lseg3(int argc, char **argv)
 	    && !NEAR_EQUAL(expected_pca[Z], actual_pca[Z], BN_TOL_DIST));
 }
 
+
 static int
 test_bn_dist_pt3_pt3(int argc, char **argv)
 {
@@ -131,6 +134,7 @@ test_bn_dist_pt3_pt3(int argc, char **argv)
 
     return !NEAR_EQUAL(expected_return, actual_return, BN_TOL_DIST);
 }
+
 
 int
 main(int argc, char *argv[])
