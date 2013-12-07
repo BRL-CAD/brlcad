@@ -70,14 +70,6 @@
  *
  * XXX maybe parameter with NORM, UV, CURVE bits?
  */
-
- /*
-static const char status_1[] = "MISS model";
-static const char status_2[] = "MISS primitives";
-static const char status_3[] = "MISS bool";
-static const char status_4[] = "HIT";
-*/
-
 int
 rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays)
 {
