@@ -407,8 +407,8 @@ plot_layers(struct dsp_specific *dsp_sp)
 	g = colors[c][1];
 	b = colors[c][2];
 
-	for (y=0; y < dsp_sp->layer[l].dim[Y]; y+= 2) {
-	    for (x=0; x < dsp_sp->layer[l].dim[X]; x+= 2) {
+	for (y = 0; y < dsp_sp->layer[l].dim[Y]; y+= 2) {
+	    for (x = 0; x < dsp_sp->layer[l].dim[X]; x+= 2) {
 		n = y * dsp_sp->layer[l].dim[X] + x;
 		d_bb = &dsp_sp->layer[l].p[n];
 		plot_dsp_bb(fp, d_bb, dsp_sp, r, g, b, 0);
@@ -721,12 +721,12 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
     dsp_min = 0xffff;
     dsp_max = 0;
 
-    for (y=0; y < YSIZ(dsp); y++) {
+    for (y = 0; y < YSIZ(dsp); y++) {
 
 	cell_min = 0xffff;
 	cell_max = 0;
 
-	for (x=0; x < XSIZ(dsp); x++) {
+	for (x = 0; x < XSIZ(dsp); x++) {
 
 	    elev = DSP(&dsp->dsp_i, x, y);
 	    cell_min = cell_max = elev;
@@ -810,8 +810,8 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 	    bu_log("layer %d  subcell size %d\n", curr_layer, subcell_size);
 
 	/* walk the grid and fill in the values for this layer */
-	for (y=0; y < curr->dim[Y]; y++) {
-	    for (x=0; x < curr->dim[X]; x++) {
+	for (y = 0; y < curr->dim[Y]; y++) {
+	    for (x = 0; x < curr->dim[X]; x++) {
 		int n, xp, yp;
 		/* x, y are in the coordinates in the current
 		 * layer.  xp, yp are the coordinates of the
@@ -1823,9 +1823,9 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
     point_t bbmin, bbmax;
     fastf_t dot, dot2;
 
-    for(x=0;x<4;x++)
+    for(x = 0; x < 4; x++)
 	memset(hits+x, 0, sizeof(struct hit));
-    x=0;
+    x = 0;
 
     dlog("isect_ray_cell_top\n");
     DSP_BB_CK(dsp_bb);
@@ -3299,11 +3299,11 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
      * top at full resolution.  This helps edge matching.  The inside
      * of the top, we draw somewhat coarser
      */
-    for (y=0; y < dsp_ip->dsp_ycnt; y += ylim) {
+    for (y = 0; y < dsp_ip->dsp_ycnt; y += ylim) {
 	VSET(s_pt, 0.0, y, DSP(dsp_ip, 0, y));
 	MOVE(s_pt);
 
-	for (x=0; x < dsp_ip->dsp_xcnt; x++) {
+	for (x = 0; x < dsp_ip->dsp_xcnt; x++) {
 	    s_pt[X] = x;
 	    s_pt[Z] = DSP(dsp_ip, x, y);
 	    DRAW(s_pt);
@@ -3311,11 +3311,11 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     }
 
 
-    for (x=0; x < dsp_ip->dsp_xcnt; x += xlim) {
+    for (x = 0; x < dsp_ip->dsp_xcnt; x += xlim) {
 	VSET(s_pt, x, 0.0, DSP(dsp_ip, x, 0));
 	MOVE(s_pt);
 
-	for (y=0; y < dsp_ip->dsp_ycnt; y++) {
+	for (y = 0; y < dsp_ip->dsp_ycnt; y++) {
 	    s_pt[Y] = y;
 	    s_pt[Z] = DSP(dsp_ip, x, y);
 	    DRAW(s_pt);
@@ -3351,7 +3351,7 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     if (yfudge < 1) yfudge = 1;
 
     /* draw the horizontal (y==const) lines */
-    for (y=yfudge; y < ylim; y += step) {
+    for (y = yfudge; y < ylim; y += step) {
 	VSET(s_pt, 0.0, y, DSP(dsp_ip, 0, y));
 	VMOVE(o_pt, s_pt);
 	if (!ZERO(o_pt[Z])) {
@@ -3361,7 +3361,7 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	    drawing = 0;
 	}
 
-	for (x=xfudge; x < xlim; x+=step) {
+	for (x = xfudge; x < xlim; x+=step) {
 	    s_pt[X] = x;
 
 	    s_pt[Z] = DSP(dsp_ip, x, y);
@@ -3402,7 +3402,7 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
     }
 
-    for (x=xfudge; x < xlim; x += step) {
+    for (x = xfudge; x < xlim; x += step) {
 	VSET(s_pt, x, 0.0, DSP(dsp_ip, x, 0));
 	VMOVE(o_pt, s_pt);
 	if (!ZERO(o_pt[Z])) {
@@ -3413,7 +3413,7 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	}
 
 
-	for (y=yfudge; y < ylim; y+=step) {
+	for (y = yfudge; y < ylim; y+=step) {
 	    s_pt[Y] = y;
 
 	    s_pt[Z] = DSP(dsp_ip, x, y);
@@ -3669,25 +3669,25 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* assign geometry to the base_verts */
     /* start with x=0 edge */
-    for (y=0 ; y<=ylim ; y++) {
+    for (y = 0; y <= ylim; y++) {
 	VSET(tmp_pt, 0, y, 0);
 	MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
 	nmg_vertex_gv(base_verts[y], pt[0]);
     }
     /* now do y=ylim edge */
-    for (x=1 ; x<=xlim ; x++) {
+    for (x = 1; x <= xlim; x++) {
 	VSET(tmp_pt, x, ylim, 0);
 	MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
 	nmg_vertex_gv(base_verts[ylim+x], pt[0]);
     }
     /* now do x=xlim edge */
-    for (y=0 ; y<ylim ; y++) {
+    for (y = 0; y < ylim; y++) {
 	VSET(tmp_pt, xlim, y, 0);
 	MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
 	nmg_vertex_gv(base_verts[2*ylim+xlim-y], pt[0]);
     }
     /* now do y=0 edge */
-    for (x=1 ; x<xlim ; x++) {
+    for (x = 1; x < xlim; x++) {
 	VSET(tmp_pt, x, 0, 0);
 	MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
 	nmg_vertex_gv(base_verts[2*(xlim+ylim)-x], pt[0]);
@@ -3703,14 +3703,14 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* if a displacement on the edge (x=0) is zero then strip1Verts at
      * that point is the corresponding base_vert
      */
-    for (y=0 ; y<=ylim ; y++) {
+    for (y = 0; y <= ylim; y++) {
 	if (DSP(dsp_ip, 0, y) == 0) {
 	    strip1Verts[y] = base_verts[y];
 	}
     }
 
     /* make faces along x=0 plane */
-    for (y=1 ; y<=ylim ; y++) {
+    for (y= 1; y <= ylim; y++) {
 	verts[0] = &base_verts[y-1];
 	verts[1] = &strip1Verts[y-1];
 	verts[2] = &strip1Verts[y];
@@ -3758,12 +3758,12 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
      * (x, y)<->(x+1, y+1). Also make the vertical faces at y=0 and
      * y=ylim.
      */
-    for (x=0 ; x<xlim ; x++) {
+    for (x = 0; x < xlim; x++) {
 	/* set strip2Verts to base_verts values where the strip2Vert
 	 * is above a base_vert and DSP value is 0
 	 */
 	if ((x+1) == xlim) {
-	    for (y=0 ; y<=ylim ; y++) {
+	    for (y = 0; y <= ylim; y++) {
 		if (DSP(dsp_ip, xlim, y) == 0) {
 		    strip2Verts[y] = base_verts[2*ylim + xlim - y];
 		}
@@ -3823,7 +3823,7 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
 
 	/* make the top faces for this strip */
-	for (y=0 ; y<ylim ; y++) {
+	for (y = 0; y < ylim; y++) {
 	    int dir;
 	    /* get the cut direction for this cell */
 	    dir = get_cut_dir(dsp_ip, x, y, xlim, ylim);
@@ -3977,14 +3977,14 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
 
 	/* copy strip2 to strip1, set strip2 to all NULLs */
-	for (y=0 ; y<=ylim ; y++) {
+	for (y = 0; y <= ylim; y++) {
 	    strip1Verts[y] = strip2Verts[y];
 	    strip2Verts[y] = (struct vertex *)NULL;
 	}
     }
 
     /* make faces at x=xlim plane */
-    for (y=0 ; y<ylim ; y++) {
+    for (y = 0; y < ylim; y++) {
 	base_vert_no1 = 2*ylim+xlim-y;
 	verts[0] = &base_verts[base_vert_no1];
 	verts[1] = &base_verts[base_vert_no1-1];
