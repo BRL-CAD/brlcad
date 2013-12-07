@@ -1,4 +1,4 @@
-/*         B N _ P L A N E _ P T . C
+/*                 B N _ P L A N E _ D I S T . C
  * BRL-CAD
  *
  * Copyright (c) 2013 United States Government as represented by
