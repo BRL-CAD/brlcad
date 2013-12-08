@@ -14,6 +14,7 @@ set(docbook_man1_EN
   benchmark.xml
   bot_dump.xml
   bot_shell-vtk.xml
+  brep_simple.xml
   brlcad-config.xml
   brlcad.xml
   buffer.xml
