@@ -10,6 +10,7 @@ BRLCAD_ADDEXEC(tester_bn_obr bn_obr.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_chull bn_chull.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_plane_pt bn_plane_pt.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_plane_dist bn_plane_dist.c "libbu;libbn" NO_INSTALL)
+BRLCAD_ADDEXEC(tester_bn_plane_isect bn_plane_isect.c "libbu;libbn" NO_INSTALL)
 CMAKEFILES(bn_chull_test003_bot.asc)
 CMAKEFILES(bn_chull_test004_bot.asc)
 CMAKEFILES(bn_poly_cubic_roots.c bn_poly_quartic_roots.c bn_obr.c)
@@ -221,6 +222,56 @@ add_test(bn_plane_dist_pt3_lseg3_case5_1   tester_bn_plane_dist 2 -5,-5,-5 5,5,5
 
 add_test(bn_plane_dist_pt3_pt3_same   tester_bn_plane_dist 3 0,0,0 0,0,0 0)
 add_test(bn_plane_dist_pt3_pt3_1      tester_bn_plane_dist 3 0,0,0 1,1,1 1.732051)
+
+# For tester_bn_plane_isect, the input format is as follows:
+#
+# tester_bn_plane_isect <function number> <args>
+
+# For function #1 (bn_isect_line_lseg), the <args> format is as follows:
+#
+# Px,Py,Pz Dx,Dy,Dz Ax,Ay,Az Bx,By,Bz expected_return expected_t
+#
+# where P and D define the parametric line, and A and B define the
+# line segment. An individual point is three integer or floating point
+# numbers separated by commas.
+
+add_test(bn_plane_isect_line_lseg_case-4_1   tester_bn_plane_isect 1 -5,-5,-5 1,1,1 0,0,0 0,0,0 -4 0)
+# This test fails because it thinks that there is an intersection
+# between a and b, even though the intersection is less than a.
+add_test(bn_plane_isect_line_lseg_case-3_1   tester_bn_plane_isect 1 -5,-5,-5 1,1,1 0,0,1 0,0,5 -3 6)
+# This test fails because it does not return the correct t.
+add_test(bn_plane_isect_line_lseg_case-2_1   tester_bn_plane_isect 1 -5,-5,-5 1,1,1 0,0,-5 0,0,1 -2 6)
+add_test(bn_plane_isect_line_lseg_case-1_1   tester_bn_plane_isect 1 -5,-5,-5 1,1,1 -5,-5,-6 0,0,-1 -1 0)
+# This test fails because it does not return the correct t for a
+add_test(bn_plane_isect_line_lseg_case0_1    tester_bn_plane_isect 1 -5,-5,-5 1,1,1 1,1,1 5,5,5 0 6)
+# This test fails because it thinks that there is an intersection
+# between a and be even though they intersect at a
+add_test(bn_plane_isect_line_lseg_case1_1    tester_bn_plane_isect 1 -5,-5,-5 1,1,1 0,0,0 0,0,5 1 5)
+# This test fails because it thinks that the intersection is past b
+# even though it is at b
+add_test(bn_plane_isect_line_lseg_case2_1    tester_bn_plane_isect 1 -5,-5,-5 1,1,1 0,0,-5 0,0,0 2 5)
+# This test fails because it does not return the correct t for the intersection
+add_test(bn_plane_isect_line_lseg_case3_1    tester_bn_plane_isect 1 -5,-5,-5 1,1,1 0,0,-5 0,0,5 3 5)
+
+# For function #2 (bn_isect_lseg3_lseg3), the <args> format is as follows:
+#
+# Px,Py,Pz PDIRx,PDIRy,PDIRz Qx,Qy,Qz QDIRx,QDIRy,QDIRz expected_return expected_dist_0 expected_dist_1
+#
+# Where P and PDIR define the first segment, and Q and QDIR define the
+# second. expected_dist_0 and expected_dist_1 are the expected values
+# of the two components of the dist[] array output by the function. An
+# individual point is three integer or floating point numbers
+# separated by commas.
+
+add_test(bn_plane_isect_lseg3_lseg3_case-3_1   tester_bn_plane_isect 2 0,0,0 0,1,1 0,0,1 0,-1,1 -3 0.5 -0.5)
+add_test(bn_plane_isect_lseg3_lseg3_case-3_2   tester_bn_plane_isect 2 0,0,0 0,1,1 0,1,0 0,-0.25,0.25 -3 0.5 2)
+add_test(bn_plane_isect_lseg3_lseg3_case-2_1   tester_bn_plane_isect 2 0,0,0 0,1,1 1,1,1 0,1,1 -2 0 0)
+add_test(bn_plane_isect_lseg3_lseg3_case-1_1   tester_bn_plane_isect 2 -5,-5,-5 3,3,3 0,0,0 -1,-1,-1 -1 1.666667 1.333333)
+add_test(bn_plane_isect_lseg3_lseg3_case0_1    tester_bn_plane_isect 2 -5,-5,-5 3,3,3 0,0,0 -2,-2,-2 0 1.666667 1)
+add_test(bn_plane_isect_lseg3_lseg3_case0_2    tester_bn_plane_isect 2 -5,-5,-5 3,3,3 0,0,0 -3,-3,-3 0 1.666667 0.666667)
+add_test(bn_plane_isect_lseg3_lseg3_case0_3    tester_bn_plane_isect 2 -5,-5,-5 5,5,5 -4,-4,-4 2,2,2 0 0.2 0.6)
+add_test(bn_plane_isect_lseg3_lseg3_case1_1    tester_bn_plane_isect 2 0,0,0 0,1,1 0,1,0 0,-1,1 1 0.5 0.5)
+
 
 # Local Variables:
 # tab-width: 8
