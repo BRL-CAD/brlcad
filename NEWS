@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2013-0X-XX  Release 7.24.2                                     ---
 ----------------------------------------------------------------------
 
+* new manual pages for rtexample and brep_simple - Shardul Chiplunkar
 * added key binding to reopen/focus mged command window - Emory Huff
 * added menu option to restore mged command window - Cezar Elnazli
 * search command now recognizes hyp and metaball types - Cliff Yapp
