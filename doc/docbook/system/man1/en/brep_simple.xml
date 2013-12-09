@@ -14,20 +14,20 @@
     <!-- body begins here -->
     <refsynopsisdiv xml:id="synopsis">
         <cmdsynopsis sepchar=" ">
-            <command>brep_simple</command>    
+            <command>brep_simple</command>
         </cmdsynopsis>
     </refsynopsisdiv>
-    
-    
+
+
     <refsect1 xml:id="description">
         <title>DESCRIPTION</title>
-        <para><command>brep_simple</command> constucts a simple b-rep twisted cube directly using the
+        <para><command>brep_simple</command> constructs a simple b-rep twisted cube directly using the
         openNURBS API. The constructed twisted cube is written to a geometry database,
-        <emphasis remap="I">brep_simple.g</emphasis> using the wdb interface. The cube is constucted by first
+        <emphasis remap="I">brep_simple.g</emphasis> using the wdb interface. The cube is constructed by first
         defining and creating the vertices, then the twisted edges (using trimming
         curves), and finally the faces to get a final topology like the following --</para>
         <literallayout remap=".nf">
-        
+
                        H-------e6-------G
                       /                /|
                      / |              / |
@@ -48,12 +48,12 @@
              A-------e0-------B
         </literallayout> <!-- .fi -->
     </refsect1>
-    
+
     <refsect1 xml:id="see_also">
         <title>SEE ALSO</title>
         <para><citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>libwdb</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
     </refsect1>
-    
+
     <refsect1 xml:id="author">
         <title>AUTHORS</title>
         <para>BRL-CAD Team</para>

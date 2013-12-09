@@ -23,16 +23,16 @@
 
     <refsect1 xml:id="description"><title>DESCRIPTION</title>
         <literallayout remap='.nf'>
-        This is an example of a program that uses librt to shoot a single ray at some 
+        This is an example of a program that uses librt to shoot a single ray at some
         geometry in a geometry (.g) database.
-        
+
         librt is a big library with lots of code, but basically all that the programmer
         needs to do is include `raytrace.h` and specify the following:
           a_rt_i    a raytrace instance, from 'rt_dirbuild()'
           a_ray     ray origin and direction
           a_hit     function to be called if ray hits something
           a_miss    function to be called if ray misses everything
-        
+
         <command>rtexample</command> defines simple functions for a_hit and a_miss which simply
         output information about hit region (if hit) and log misses. Applications will
         typically define more complex tasks to fo if the ray hits, such as describing a
@@ -71,7 +71,7 @@
     <refsect1 xml:id="author"><title>AUTHORS</title>
       <para>BRL-CAD Team</para>
     </refsect1>
-    
+
     <refsect1 xml:id="copyright"><title>COPYRIGHT</title>
         <para>This software is Copyright (c) 2004-2013 United States Government as
         represented by the U.S. Army Research Laboratory. All rights reserved.</para>
