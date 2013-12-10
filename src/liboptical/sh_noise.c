@@ -45,29 +45,6 @@
 #define noise_MAGIC 0x1847
 #define CK_noise_SP(_p) BU_CKMAG(_p, noise_MAGIC, "noise_specific")
 
-/* This allows us to specify the "size" parameter as values like ".5m"
- * or "27in" rather than using mm all the time.
- */
-void
-noise_cvt_parse(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
-/* structure description */
-/* struct member name */
-/* beginning of structure */
-/* string containing value */
-{
-    double *p = (double *)(base+sdp->sp_offset);
-
-    if (rdebug&RDEBUG_SHADE)
-	bu_log("%s value %s ", name, value);
-    /* reconvert with optional units */
-    *p = bu_mm_value(value);
-
-    if (rdebug&RDEBUG_SHADE)
-	bu_log(" %g\n", *p);
-
-}
-
-
 void
 noise_deg_to_rad(register const struct bu_structparse *sdp, const char *UNUSED(name), char *base, const char *UNUSED(value))
 /* structure description */
