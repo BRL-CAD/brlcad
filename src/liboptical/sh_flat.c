@@ -56,9 +56,10 @@ HIDDEN int flat_render(struct application *ap, const struct partition *pp, struc
 HIDDEN void flat_print(register struct region *rp, genptr_t dp);
 HIDDEN void flat_free(genptr_t cp);
 
+/* local sp_hook functions */
 /* these are two helper functions to process input color and transparency values */
-void normalizedInput_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value);
-void singleNormalizedInput_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value);
+void normalizedInput_hook(const struct bu_structparse *, const char *, void *, const char *);
+void singleNormalizedInput_hook(const struct bu_structparse *, const char *, void *, const char *);
 
 /*
  * the shader specific structure contains all variables which are unique
@@ -135,9 +136,12 @@ struct mfuncs flat_mfuncs[] = {
  * value == string containing value
  */
 void
-normalizedInput_hook(register const struct bu_structparse *sdp, register const char *UNUSED(name), char *base, const char *UNUSED(value))
+normalizedInput_hook(const struct bu_structparse *sdp,
+		     const char *UNUSED(name),
+		     void *base,
+		     const char *UNUSED(value))
 {
-    register double *p = (double *)(base+sdp->sp_offset);
+    register double *p = (double *)((char *)base + sdp->sp_offset);
     size_t i;
     int ok;
 
@@ -150,7 +154,7 @@ normalizedInput_hook(register const struct bu_structparse *sdp, register const c
     /* user specified colors in the range [0..255] (or negative) so we need to
      * map those into [0..1]
      */
-    p = (double *)(base+sdp->sp_offset);
+    p = (double *)((char *)base + sdp->sp_offset);
     for (i = 0; i < sdp->sp_count; i++, p++) {
 	*p /= 255.0;
     }
@@ -169,10 +173,13 @@ normalizedInput_hook(register const struct bu_structparse *sdp, register const c
  * it three times.  the value is normalized from 0.0 to 1.0
  */
 void
-singleNormalizedInput_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
+singleNormalizedInput_hook(const struct bu_structparse *sdp,
+			   const char *name,
+			   void *base,
+			   const char *value)
 {
 
-    register double *p = (double *)(base+sdp->sp_offset);
+    register double *p = (double *)((char *)base + sdp->sp_offset);
 
     normalizedInput_hook(sdp, name, base, value);
 

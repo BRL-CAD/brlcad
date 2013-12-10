@@ -55,7 +55,8 @@ static struct air_specific air_defaults = {
 #define SHDR_NULL ((struct air_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct air_specific, m)
 
-static void dpm_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value);
+/* local sp_hook function */
+static void dpm_hook(const struct bu_structparse *, const char *name, void *, const char *);
 
 struct bu_structparse air_parse[] = {
     {"%g",  1, "dpm",		SHDR_O(d_p_mm),		dpm_hook, NULL, NULL },
@@ -96,7 +97,10 @@ struct mfuncs air_mfuncs[] = {
 };
 
 static void
-dpm_hook(register const struct bu_structparse *UNUSED(sdp), register const char *UNUSED(name), char *base, const char *UNUSED(value))
+dpm_hook(const struct bu_structparse *UNUSED(sdp),
+	 const char *UNUSED(name),
+	 void *base,
+	 const char *UNUSED(value))
 /* structure description */
 /* struct member name */
 /* beginning of structure */

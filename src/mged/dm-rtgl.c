@@ -60,16 +60,18 @@ extern void cs_set_bg();		/* defined in color_scheme.c */
 
 static int Rtgl_dm();
 static int Rtgl_doevent();
-static void Rtgl_colorchange();
-static void establish_zbuffer();
-static void establish_lighting();
-static void establish_transparency();
-static void dirty_hook();
-static void zclip_hook();
-static void debug_hook();
-static void bound_hook();
-static void boundFlag_hook();
-static void do_fogHint();
+
+/* local sp_hook functions */
+static void Rtgl_colorchange(const struct bu_structparse *, const char *, void *, const char *);
+static void zclip_hook(const struct bu_structparse *, const char *, void *, const char *);
+static void establish_zbuffer(const struct bu_structparse *, const char *, void *, const char *)
+static void establish_lighting(const struct bu_structparse *, const char *, void *, const char *);
+static void establish_transparency(const struct bu_structparse *, const char *, void *, const char *);
+static void do_fogHint(const struct bu_structparse *, const char *, void *, const char *);
+static void dirty_hook(const struct bu_structparse *, const char *, void *, const char *);
+static void debug_hook(const struct bu_structparse *, const char *, void *, const char *);
+static void bound_hook(const struct bu_structparse *, const char *, void *, const char *);
+static void boundFlag_hook(const struct bu_structparse *, const char *, void *, const char *);
 
 struct bu_structparse Rtgl_vparse[] = {
     {"%d", 1, "depthcue",	  Rtgl_MV_O(cueing_on),       Rtgl_colorchange },
@@ -226,7 +228,10 @@ Rtgl_dm(int argc,
 
 
 static void
-Rtgl_colorchange()
+Rtgl_colorchange(const struct bu_structparse *UNUSED(sdp),
+		 const char *UNUSED(name),
+		 void *UNUSED(base),
+		 const char *UNUSED(value))
 {
     if (((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.cueing_on) {
 	glEnable(GL_FOG);
@@ -239,7 +244,10 @@ Rtgl_colorchange()
 
 
 static void
-establish_zbuffer()
+establish_zbuffer(const struct bu_structparse *UNUSED(sdp),
+		  const char *UNUSED(name),
+		  void *UNUSED(base),
+		  const char *UNUSED(value))
 {
     (void)DM_SET_ZBUFFER(dmp, ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on);
     view_state->vs_flag = 1;
@@ -247,7 +255,10 @@ establish_zbuffer()
 
 
 static void
-establish_lighting()
+establish_lighting(const struct bu_structparse *UNUSED(sdp),
+		   const char *UNUSED(name),
+		   void *UNUSED(base),
+		   const char *UNUSED(value))
 {
     (void)DM_SET_LIGHT(dmp, ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.lighting_on);
     view_state->vs_flag = 1;
@@ -255,7 +266,10 @@ establish_lighting()
 
 
 static void
-establish_transparency()
+establish_transparency(const struct bu_structparse *UNUSED(sdp),
+		       const char *UNUSED(name),
+		       void *UNUSED(base),
+		       const char *UNUSED(value))
 {
     (void)DM_SET_TRANSPARENCY(dmp, ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.transparency_on);
     view_state->vs_flag = 1;
@@ -263,7 +277,10 @@ establish_transparency()
 
 
 static void
-do_fogHint()
+do_fogHint(const struct bu_structparse *UNUSED(sdp),
+	   const char *UNUSED(name),
+	   void *UNUSED(base),
+	   const char *UNUSED(value))
 {
     dm_fogHint(dmp, ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.fastfog);
     view_state->vs_flag = 1;
@@ -271,20 +288,26 @@ do_fogHint()
 
 
 static void
-dirty_hook()
+dirty_hook(const struct bu_structparse *UNUSED(sdp),
+	   const char *UNUSED(name),
+	   void *UNUSED(base),
+	   const char *UNUSED(value))
 {
     dirty = 1;
 }
 
 
 static void
-zclip_hook()
+zclip_hook(const struct bu_structparse *sdp,
+	   const char *name,
+	   void *base,
+	   const char *value)
 {
     fastf_t bounds[6] = { GED_MIN, GED_MAX, GED_MIN, GED_MAX, GED_MIN, GED_MAX };
 
     dmp->dm_zclip = ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.zclipping_on;
     view_state->vs_gvp->gv_zclip = dmp->dm_zclip;
-    dirty_hook();
+    dirty_hook(sdp, name, base, value);
 
     if (dmp->dm_zclip) {
 	bounds[4] = -1.0;
@@ -296,27 +319,36 @@ zclip_hook()
 
 
 static void
-debug_hook()
+debug_hook(const struct bu_structparse *UNUSED(sdp),
+	   const char *UNUSED(name),
+	   void *UNUSED(base),
+	   const char *UNUSED(value))
 {
     DM_DEBUG(dmp, ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.debug);
 }
 
 
 static void
-bound_hook()
+bound_hook(const struct bu_structparse *sdp,
+	   const char *name,
+	   void *base,
+	   const char *value)
 {
     dmp->dm_bound =
 	((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.bound;
-    dirty_hook();
+    dirty_hook(sdp, name, base, value);
 }
 
 
 static void
-boundFlag_hook()
+boundFlag_hook(const struct bu_structparse *sdp,
+	       const char *name,
+	       void *base,
+	       const char *value)
 {
     dmp->dm_boundFlag =
 	((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.boundFlag;
-    dirty_hook();
+    dirty_hook(sdp, name, base, value);
 }
 
 

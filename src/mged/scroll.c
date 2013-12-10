@@ -145,7 +145,14 @@ sl_toggle_scroll(void)
 {
     mged_variables->mv_sliders = mged_variables->mv_sliders ? 0 : 1;
 
-    set_scroll_private();
+    {
+	/* need dummy values for func signature--they are unused in the func */
+	const struct bu_structparse *sdp = 0;
+	const char name[] = "name";
+	void *base = 0;
+	const char value[] = "value";
+	set_scroll_private(sdp, name, base, value);
+    }
 }
 
 

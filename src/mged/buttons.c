@@ -36,12 +36,13 @@
 #include "./mged_dm.h"
 #include "./sedit.h"
 
+/* external sp_hook function */
+extern void set_scroll_private(const struct bu_structparse *, const char *, void *, const char *);	/* defined in set.c */
 
 extern int mged_svbase(void);
 extern void set_e_axes_pos(int both);
 extern int mged_zoom(double val);
 extern void set_absolute_tran(void);	/* defined in set.c */
-extern void set_scroll_private(void);	/* defined in set.c */
 extern void adc_set_scroll(void);	/* defined in adc.c */
 
 /* forward declarations for the buttons table */
@@ -371,7 +372,16 @@ int
 bv_rate_toggle()
 {
     mged_variables->mv_rateknobs = !mged_variables->mv_rateknobs;
-    set_scroll_private();
+
+    {
+	/* need dummy values for func signature--they are unused in the func */
+	const struct bu_structparse *sdp = 0;
+	const char name[] = "name";
+	void *base = 0;
+	const char value[] = "value";
+	set_scroll_private(sdp, name, base, value);
+    }
+
     return TCL_OK;
 }
 

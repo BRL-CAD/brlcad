@@ -43,7 +43,9 @@ HIDDEN int mbound_render(struct application *ap, const struct partition *pp, str
 HIDDEN int rbound_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
 HIDDEN void stxt_print(register struct region *rp, genptr_t dp);
 HIDDEN void stxt_free(genptr_t cp);
-HIDDEN void stxt_transp_hook(struct bu_structparse *ptab, char *name, char *cp, char *value);
+
+/* local sp_hook function */
+HIDDEN void stxt_transp_hook(const struct bu_structparse *, const char *, void *, const char *);
 
 #define STX_NAME_LEN 128
 struct stxt_specific {
@@ -89,7 +91,10 @@ struct mfuncs stxt_mfuncs[] = {
  * Hooked function, called by bu_structparse.
  */
 HIDDEN void
-stxt_transp_hook(struct bu_structparse *ptab, char *name, char *cp, char *UNUSED(value))
+stxt_transp_hook(const struct bu_structparse *ptab,
+		 const char *name,
+		 void *cp,
+		 const char *UNUSED(value))
 {
     register struct stxt_specific *stp =
 	(struct stxt_specific *)cp;

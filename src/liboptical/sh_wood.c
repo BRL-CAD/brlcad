@@ -89,8 +89,9 @@ HIDDEN int wood_render(struct application *ap, const struct partition *partp, st
 HIDDEN void wood_print(register struct region *rp, genptr_t dp);
 HIDDEN void wood_free(genptr_t cp);
 
-HIDDEN void wood_V_set(const struct bu_structparse *, const char *, const char *, char *);
-HIDDEN void wood_D_set(const struct bu_structparse *, const char *, const char *, char *);
+/* local sp_hook functions */
+HIDDEN void wood_V_set(const struct bu_structparse *, const char *, void *, const char *);
+HIDDEN void wood_D_set(const struct bu_structparse *, const char *, void *, const char *);
 
 /*
  * functions block for the shader
@@ -213,7 +214,10 @@ struct bu_structparse wood_parse[] = {
  */
 
 HIDDEN void
-wood_V_set(const struct bu_structparse *UNUSED(sdp), const char *UNUSED(name), const char *base, char *UNUSED(value))
+wood_V_set(const struct bu_structparse *UNUSED(sdp),
+	   const char *UNUSED(name),
+	   void *base,
+	   const char *UNUSED(value))
 {
     register struct wood_specific *wd =
 	(struct wood_specific *)base;
@@ -223,7 +227,10 @@ wood_V_set(const struct bu_structparse *UNUSED(sdp), const char *UNUSED(name), c
 
 
 HIDDEN void
-wood_D_set(const struct bu_structparse *UNUSED(sdp), const char *UNUSED(name), const char *base, char *UNUSED(value))
+wood_D_set(const struct bu_structparse *UNUSED(sdp),
+	   const char *UNUSED(name),
+	   void *base,
+	   const char *UNUSED(value))
 {
     register struct wood_specific *wd =
 	(struct wood_specific *)base;

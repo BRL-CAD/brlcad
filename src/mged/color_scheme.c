@@ -240,7 +240,10 @@ struct bu_structparse color_scheme_vparse[] = {
 
 
 void
-cs_set_dirty_flag(void)
+cs_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
+		  const char *UNUSED(name),
+		  void *UNUSED(base),
+		  const char *UNUSED(value))
 {
     struct dm_list *dmlp;
 
@@ -251,7 +254,10 @@ cs_set_dirty_flag(void)
 
 
 void
-cs_update(void)
+cs_update(const struct bu_structparse *sdp,
+	  const char *name,
+	  void *base,
+	  const char *value)
 {
     struct bu_structparse *sp;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -268,13 +274,17 @@ cs_update(void)
 	Tcl_Eval(INTERP, bu_vls_addr(&vls));
     }
 
-    cs_set_bg();
+    cs_set_bg(sdp, name, base, value);
+
     bu_vls_free(&vls);
 }
 
 
 void
-cs_set_bg(void)
+cs_set_bg(const struct bu_structparse *UNUSED(sdp),
+	  const char *UNUSED(name),
+	  void *UNUSED(base),
+	  const char *UNUSED(value))
 {
     struct dm_list *dmlp;
     struct dm_list *save_curr_dmlp = curr_dm_list;

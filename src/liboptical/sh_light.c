@@ -48,11 +48,11 @@
 /** Heads linked list of lights */
 struct light_specific LightHead;
 
-
+/* local sp_hook functions */
 /* for light_print_tab and light_parse callbacks */
-HIDDEN void aim_set(const struct bu_structparse *sdp, const char *name, const char *base, char *value);
-HIDDEN void light_cvt_visible(const struct bu_structparse *sdp, const char *name, char *base, const char *value);
-HIDDEN void light_pt_set(const struct bu_structparse *sdp, const char *name, char *base, const char *value);
+HIDDEN void aim_set(const struct bu_structparse *, const char *, void *, const char *);
+HIDDEN void light_cvt_visible(const struct bu_structparse *, const char *, void *, const char *);
+HIDDEN void light_pt_set(const struct bu_structparse *, const char *, void *, const char *);
 
 HIDDEN int light_setup(struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
 HIDDEN int light_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
@@ -145,7 +145,10 @@ struct light_obs_stuff {
  * is encountered, and causes lt_exaim to be set.
  */
 HIDDEN void
-aim_set(const struct bu_structparse *UNUSED(sdp), const char *UNUSED(name), const char *base, char *UNUSED(value))
+aim_set(const struct bu_structparse *UNUSED(sdp),
+	const char *UNUSED(name),
+	void *base,
+	const char *UNUSED(value))
 {
     register struct light_specific *lsp = (struct light_specific *)base;
     if (rdebug & RDEBUG_LIGHT) {
@@ -161,7 +164,10 @@ aim_set(const struct bu_structparse *UNUSED(sdp), const char *UNUSED(name), cons
  * Convert "visible" flag to "invisible" variable
  */
 HIDDEN void
-light_cvt_visible(register const struct bu_structparse *sdp, register const char *name, char *base, const char *UNUSED(value))
+light_cvt_visible(const struct bu_structparse *sdp,
+		  const char *name,
+		  void *base,
+		  const char *UNUSED(value))
 /* structure description */
 /* struct member name */
 /* beginning of structure */
@@ -212,14 +218,17 @@ light_pt_allocate(register struct light_specific *lsp)
  * (for points and points with normals respectively)
  */
 HIDDEN void
-light_pt_set(register const struct bu_structparse *sdp, register const char *name, char *base, const char *UNUSED(value))
+light_pt_set(const struct bu_structparse *sdp,
+	     const char *name,
+	     void *base,
+	     const char *UNUSED(value))
 /* structure description */
 /* struct member name */
 /* beginning of structure */
 /* string containing value */
 {
     struct light_specific *lsp = (struct light_specific *)base;
-    fastf_t *p = (fastf_t *)(base+sdp->sp_offset);
+    fastf_t *p = (fastf_t *)((char *)base + sdp->sp_offset);
 
     if (BU_STR_EQUAL("pt", name)) {
 	/* user just specified point, set normal to zeros */

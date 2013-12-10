@@ -437,7 +437,7 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 		return -1;
 	}
 	if (ip->sp_hook) {
-	    ip->sp_hook(ip, ip->sp_name, (const char *)base, NULL);
+	    ip->sp_hook(ip, ip->sp_name, base, NULL);
 	}
     }
 
@@ -860,7 +860,7 @@ parse_struct_lookup(register const struct bu_structparse *sdp, register const ch
 		return -1;
 	}
 	if (sdp->sp_hook) {
-	    sdp->sp_hook(sdp, name, base, value);
+	    sdp->sp_hook(sdp, name, (void *)base, value);
 	}
 	return retval;		/* OK or parse error */
     }

@@ -216,8 +216,8 @@ HIDDEN void
 hook_mtos_from_stom(
     const struct bu_structparse *sp,
     const char *sp_name,
-    genptr_t base,
-    char *UNUSED(p))
+    void *base,
+    const char *UNUSED(p))
 {
     struct rt_dsp_internal *dsp_ip = (struct rt_dsp_internal *)base;
 
@@ -233,8 +233,8 @@ HIDDEN void
 hook_file(
     const struct bu_structparse *sp,
     const char *sp_name,
-    genptr_t base,
-    char *UNUSED(p))
+    void *base,
+    const char *UNUSED(p))
 {
     struct rt_dsp_internal *dsp_ip = (struct rt_dsp_internal *)base;
 
@@ -4692,8 +4692,8 @@ rt_dsp_ifree(struct rt_db_internal *ip)
 HIDDEN void
 hook_verify(const struct bu_structparse *sp,
 	    const char *sp_name,
-	    genptr_t base,
-	    char *UNUSED(p))
+	    void *base,
+	    const char *UNUSED(p))
 {
     struct rt_dsp_internal *dsp_ip = (struct rt_dsp_internal *)base;
 

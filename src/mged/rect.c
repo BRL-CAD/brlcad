@@ -68,7 +68,10 @@ struct bu_structparse rubber_band_vparse[] = {
 
 
 void
-rb_set_dirty_flag(void)
+rb_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
+		  const char *UNUSED(name),
+		  void *UNUSED(base),
+		  const char *UNUSED(value))
 {
     struct dm_list *dmlp;
 
@@ -107,10 +110,13 @@ rect_image2view(void)
 
 
 void
-set_rect(void)
+set_rect(const struct bu_structparse *sdp,
+	 const char *name,
+	 void *base,
+	 const char *value)
 {
     rect_image2view();
-    rb_set_dirty_flag();
+    rb_set_dirty_flag(sdp, name, base, value);
 }
 
 
@@ -307,7 +313,15 @@ zoom_rect_area(void)
     rubber_band->rb_height = 2.0 / dmp->dm_aspect;
 
     rect_view2image();
-    rb_set_dirty_flag();
+
+    {
+	/* need dummy values for func signature--they are unused in the func */
+	const struct bu_structparse *sdp = 0;
+	const char name[] = "name";
+	void *base = 0;
+	const char value[] = "value";
+	rb_set_dirty_flag(sdp, name, base, value);
+    }
 }
 
 

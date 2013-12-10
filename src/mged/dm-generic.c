@@ -108,8 +108,14 @@ common_dm(int argc, const char *argv[])
 	if (rubber_band->rb_active) {
 	    rubber_band->rb_active = 0;
 
-	    if (mged_variables->mv_mouse_behavior == 'p')
-		rb_set_dirty_flag();
+	    if (mged_variables->mv_mouse_behavior == 'p') {
+		/* need dummy values for func signature--they are unused in the func */
+		const struct bu_structparse *sdp = 0;
+		const char name[] = "name";
+		void *base = 0;
+		const char value[] = "value";
+		rb_set_dirty_flag(sdp, name, base, value);
+	    }
 	    else if (mged_variables->mv_mouse_behavior == 'r')
 		rt_rect_area();
 	    else if (mged_variables->mv_mouse_behavior == 'z')
@@ -192,7 +198,14 @@ common_dm(int argc, const char *argv[])
 	    rubber_band->rb_width = 0.0;
 	    rubber_band->rb_height = 0.0;
 	    rect_view2image();
-	    rb_set_dirty_flag();
+	    {
+		/* need dummy values for func signature--they are unused in the func */
+		const struct bu_structparse *sdp = 0;
+		const char name[] = "name";
+		void *base = 0;
+		const char value[] = "value";
+		rb_set_dirty_flag(sdp, name, base, value);
+	    }
 	} else if (mged_variables->mv_mouse_behavior == 's' && !stolen) {
 	    bu_vls_printf(&vls, "mouse_solid_edit_select %d %d", x, y);
 	} else if (mged_variables->mv_mouse_behavior == 'm' && !stolen) {

@@ -53,17 +53,23 @@ extern void dm_var_init(struct dm_list *initial_dm_list);		/* defined in attach.
 
 
 static void
-dirty_hook(void)
+dirty_hook(const struct bu_structparse *UNUSED(sdp),
+	   const char *UNUSED(name),
+	   void *UNUSED(base),
+	   const char *UNUSED(value))
 {
     dirty = 1;
 }
 
 
 static void
-zclip_hook(void)
+zclip_hook(const struct bu_structparse *sdp,
+	   const char *name,
+	   void *base,
+	   const char *value)
 {
     view_state->vs_gvp->gv_zclip = dmp->dm_zclip;
-    dirty_hook();
+    dirty_hook(sdp, name, base, value);
 }
 
 

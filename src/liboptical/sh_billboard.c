@@ -99,11 +99,8 @@ struct bbd_specific bbd_defaults = {
 #define SHDR_NULL ((struct bbd_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct bbd_specific, m)
 
-void
-new_image(register const struct bu_structparse *sdp,
-	  register const char *name,
-	  char *base,
-	  const char *value);
+/* local sp_hook function */
+void new_image(const struct bu_structparse *, const char *, void *, const char *);
 
 
 /* description of how to parse/print the arguments to the shader
@@ -125,10 +122,10 @@ struct bu_structparse bbd_parse_tab[] = {
 
 
 void
-new_image(register const struct bu_structparse *UNUSED(sdp),	/*struct desc*/
-	  register const char *UNUSED(name),	/*member name*/
-	  char *base,	/*struct base*/
-	  const char *UNUSED(value)) /*string value */
+new_image(const struct bu_structparse *UNUSED(sdp),
+	  const char *UNUSED(name),
+	  void *base,
+	  const char *UNUSED(value))
 {
     struct bbd_specific *bbd_sp = (struct bbd_specific *)base;
     struct bbd_img *bbdi;

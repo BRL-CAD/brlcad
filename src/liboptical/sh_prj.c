@@ -95,7 +95,10 @@ struct prj_specific {
  * from a database-embedded binary object.
  */
 HIDDEN void
-img_source_hook(const struct bu_structparse *UNUSED(ip), const char *sp_name, genptr_t base, char *UNUSED(p))
+img_source_hook(const struct bu_structparse *UNUSED(sdp),
+		const char *sp_name,
+		void *base,
+		const char *UNUSED(value))
 {
     struct img_specific *imageSpecific = (struct img_specific *)base;
     if (bu_strncmp(sp_name, "file", 4) == 0) {
@@ -205,7 +208,10 @@ img_load_datasource(struct img_specific *image, struct db_i *dbInstance, const u
  * Bounds checking on perspective angle
  */
 HIDDEN void
-persp_hook(register const struct bu_structparse *UNUSED(sdp), register const char *UNUSED(name), char *base, const char *value)
+persp_hook(const struct bu_structparse *UNUSED(sdp),
+	   const char *UNUSED(name),
+	   void *base,
+	   const char *value)
 /* structure description */
 /* struct member name */
 /* beginning of structure */
@@ -232,7 +238,10 @@ persp_hook(register const struct bu_structparse *UNUSED(sdp), register const cha
  * Check for value < 0.0
  */
 HIDDEN void
-dimen_hook(register const struct bu_structparse *sdp, register const char *UNUSED(name), char *base, const char *value)
+dimen_hook(const struct bu_structparse *sdp,
+	   const char *UNUSED(name),
+	   void *base,
+	   const char *value)
 /* structure description */
 /* struct member name */
 /* beginning of structure */
@@ -240,7 +249,7 @@ dimen_hook(register const struct bu_structparse *sdp, register const char *UNUSE
 {
     if (BU_STR_EQUAL("%f", sdp->sp_fmt)) {
 	fastf_t *f;
-	f = (fastf_t *)(base + sdp->sp_offset);
+	f = (fastf_t *)((char *)base + sdp->sp_offset);
 	if (*f < 0.0) {
 	    bu_log("%s value %g(%s) < 0.0\n",
 		   sdp->sp_name, *f, value);
@@ -248,7 +257,7 @@ dimen_hook(register const struct bu_structparse *sdp, register const char *UNUSE
 	}
     } else if (BU_STR_EQUAL("%d", sdp->sp_fmt)) {
 	int *i;
-	i = (int *)(base + sdp->sp_offset);
+	i = (int *)((char *)base + sdp->sp_offset);
 	if (*i < 0) {
 	    bu_log("%s value %d(%s) < 0.0\n",
 		   sdp->sp_name, *i, value);
@@ -267,7 +276,10 @@ dimen_hook(register const struct bu_structparse *sdp, register const char *UNUSE
  * XXX "orient" MUST ALWAYS BE THE LAST PARAMETER SPECIFIED FOR EACH IMAGE.
  */
 static void
-orient_hook(register const struct bu_structparse *UNUSED(sdp), register const char *UNUSED(name), char *base, const char *UNUSED(value))
+orient_hook(const struct bu_structparse *UNUSED(sdp),
+	    const char *UNUSED(name),
+	    void *base,
+	    const char *UNUSED(value))
 /* structure description */
 /* struct member name */
 /* beginning of structure */
@@ -326,7 +338,7 @@ orient_hook(register const struct bu_structparse *UNUSED(sdp), register const ch
 	point_t pt;
 
 	prj_sp = (struct prj_specific *)
-	    (base - (bu_offsetof(struct prj_specific, prj_images)));
+	    ((struct prj_specific *)base - (bu_offsetof(struct prj_specific, prj_images)));
 	CK_prj_SP(prj_sp);
 
 	if (!prj_sp->prj_plfd)
