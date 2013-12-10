@@ -105,7 +105,8 @@ static struct camo_specific marble_defaults = {
 #define SHDR_NULL ((struct camo_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct camo_specific, m)
 
-void color_fix(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value);
+/* local sp_hook function */
+void color_fix(const struct bu_structparse *, const char *, void *, const char *);
 
 struct bu_structparse camo_print_tab[] = {
     {"%g", 1, "lacunarity",	SHDR_O(noise_lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -169,13 +170,16 @@ struct mfuncs camo_mfuncs[] = {
  * Used as a hooked function for input of color values
  */
 void
-color_fix(register const struct bu_structparse *sdp, register const char *UNUSED(name), char *base, const char *UNUSED(value))
+color_fix(const struct bu_structparse *sdp,
+	  const char *UNUSED(name),
+	  void *base,
+	  const char *UNUSED(value))
 /* structure description */
 /* struct member name */
 /* beginning of structure */
 /* string containing value */
 {
-    register double *p = (double *)(base+sdp->sp_offset);
+    register double *p = (double *)((char *)base + sdp->sp_offset);
     size_t i;
     int ok;
 
@@ -188,7 +192,7 @@ color_fix(register const struct bu_structparse *sdp, register const char *UNUSED
     /* user specified colors in the range [0..255] so we need to
      * map those into [0..1]
      */
-    p = (double *)(base+sdp->sp_offset);
+    p = (double *)((char *)base + sdp->sp_offset);
     for (i = 0; i < sdp->sp_count; i++, p++) {
 	*p /= 255.0;
     }

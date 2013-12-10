@@ -55,9 +55,10 @@ struct txt_specific {
 #define TX_NULL ((struct txt_specific *)0)
 #define TX_O(m) bu_offsetof(struct txt_specific, m)
 
+/* local sp_hook functions */
+HIDDEN void txt_transp_hook(const struct bu_structparse *, const char *, void *, const char *);
+HIDDEN void txt_source_hook(const struct bu_structparse *, const char *, void *, const char *);
 
-HIDDEN void txt_transp_hook(struct bu_structparse *ptab, char *name, char *cp, char *value);
-HIDDEN void txt_source_hook(const struct bu_structparse *ip, const char *sp_name, genptr_t base, char *p);
 HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInstance, const long unsigned int size);
 
 
@@ -85,7 +86,10 @@ struct bu_structparse txt_parse[] = {
  * fail.
  */
 HIDDEN void
-txt_source_hook(const struct bu_structparse *UNUSED(sdp), const char *name, genptr_t base, char *UNUSED(value))
+txt_source_hook(const struct bu_structparse *UNUSED(sdp),
+		const char *name,
+		void *base,
+		const char *UNUSED(value))
 {
     struct txt_specific *textureSpecific = (struct txt_specific *)base;
     if (bu_strncmp(name, "file", 4)==0) {
@@ -104,7 +108,10 @@ txt_source_hook(const struct bu_structparse *UNUSED(sdp), const char *name, genp
  * Hooked function, called by bu_structparse
  */
 HIDDEN void
-txt_transp_hook(struct bu_structparse *sdp, char *name, char *base, char *UNUSED(value))
+txt_transp_hook(const struct bu_structparse *sdp,
+		const char *name,
+		void *base,
+		const char *UNUSED(value))
 {
     register struct txt_specific *tp =
 	(struct txt_specific *)base;

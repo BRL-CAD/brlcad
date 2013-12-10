@@ -46,13 +46,16 @@
 #define CK_noise_SP(_p) BU_CKMAG(_p, noise_MAGIC, "noise_specific")
 
 void
-noise_deg_to_rad(register const struct bu_structparse *sdp, const char *UNUSED(name), char *base, const char *UNUSED(value))
+noise_deg_to_rad(const struct bu_structparse *sdp,
+		 const char *UNUSED(name),
+		 void *base,
+		 const char *UNUSED(value))
 /* structure description */
 /* struct member name */
 /* beginning of structure */
 /* string containing value */
 {
-    double *p = (double *)(base+sdp->sp_offset);
+    double *p = (double *)((char *)base + sdp->sp_offset);
 
     /* reconvert with optional units */
     *p = *p * (bn_pi / 180.0);
