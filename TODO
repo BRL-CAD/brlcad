@@ -301,24 +301,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * add support for a zoom/viewsize and twist options to rt so you can
   adjust the image without having to feed a view script.
 
-* implement some means (perhaps glint) to check a .g file for
-  duplicate region IDs and material inconsistencies.  perhaps exposed
-  as a new command, it should take an assembly/comb name as input,
-  walk the tree, and report duplicates.  if no arg, it walks all
-  top-level objects but processes them independently and only reports
-  sub-paths once (so you don't get the same object repeatedly reported
-  for all N top-level copies).  in the output, group together regions
-  with same and different material properties together:
-
-DUPLICATE ID NUMBERS
-comp.r1 ID 1234
-comp.r2 ID 1234
-
-DUPLICATE ID NUMBERS WITH DIFFERENT MATERIAL PROPERTIES
-comp.r3 ID 5678 material code 1 LOS 50
-comp.r4 ID 5678 material code 5 LOS 75
-
-
 * provide pkgIndex.tcl files for bu, bn, rt, fb, dm so we can properly
   package require the libs without an explicit 'load'
 
@@ -560,7 +542,7 @@ comp.r4 ID 5678 material code 5 LOS 75
 * make db_open modes behave the same as the fopen() modes (i.e.,
   create the .g if one doesn't exist when write mode)
 
-* fix the shaders.sh regression test case, failing dues to changes
+* fix the shaders.sh regression test case, failing due to changes
   with mged's view initialization.
 
 * inside support for ARS
@@ -673,13 +655,6 @@ comp.r4 ID 5678 material code 5 LOS 75
   segments)
 
 * address the TODO items in src/mged/clone.c
-
-* develop a low-level tool for investigating, reporting statistics on,
-  and repairing geometry database files.  the tool should nominally
-  perform big/little endian conversions, report number and types of
-  objects, allow deletion/undeletion/hiding/unhiding, provide some
-  general means to manipulate the packed and unpacked .g file data for
-  performing low-level modifications
 
 * fix rt parallel crash
   (true ; while [ $? -eq 0 ] ; do rt -o /dev/null moss.g all.g ; done)
@@ -897,6 +872,36 @@ comp.r4 ID 5678 material code 5 LOS 75
 * investigate the libngpcore and libngput libraries from the ngPlant
   project as a possible means of procedurally generating plant models
   in BRL-CAD (libraries are BSD licensed: http://ngplant.sourceforge.net)
+
+DATABASE MAINTENANCE/ADMINISTRATION
+-----------------------------------
+
+(Note: See src/util/admin-db.cpp for a starting admin tool which could
+be expanded to do the following tasks.)
+
+* implement some means (perhaps glint) to check a .g file for
+  duplicate region IDs and material inconsistencies.  perhaps exposed
+  as a new command, it should take an assembly/comb name as input,
+  walk the tree, and report duplicates.  if no arg, it walks all
+  top-level objects but processes them independently and only reports
+  sub-paths once (so you don't get the same object repeatedly reported
+  for all N top-level copies).  in the output, group together regions
+  with same and different material properties together:
+
+DUPLICATE ID NUMBERS
+comp.r1 ID 1234
+comp.r2 ID 1234
+
+DUPLICATE ID NUMBERS WITH DIFFERENT MATERIAL PROPERTIES
+comp.r3 ID 5678 material code 1 LOS 50
+comp.r4 ID 5678 material code 5 LOS 75
+
+* develop a low-level tool for investigating, reporting statistics on,
+  and repairing geometry database files.  the tool should nominally
+  perform big/little endian conversions, report number and types of
+  objects, allow deletion/undeletion/hiding/unhiding, provide some
+  general means to manipulate the packed and unpacked .g file data for
+  performing low-level modifications
 
 
 LIBGED
