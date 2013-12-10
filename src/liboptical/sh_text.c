@@ -90,7 +90,7 @@ txt_source_hook(const struct bu_structparse *UNUSED(sdp), const char *name, genp
     struct txt_specific *textureSpecific = (struct txt_specific *)base;
     if (bu_strncmp(name, "file", 4)==0) {
 	textureSpecific->tx_datasrc=TXT_SRC_FILE;
-    } else if (bu_strncmp(sp_name, "obj", 3)==0) {
+    } else if (bu_strncmp(name, "obj", 3)==0) {
 	textureSpecific->tx_datasrc=TXT_SRC_OBJECT;
     } else {
 	textureSpecific->tx_datasrc=TXT_SRC_AUTO;
