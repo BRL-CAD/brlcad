@@ -1266,6 +1266,10 @@ BRLCAD_OPTION(OFF ENABLE_ALL_CXX_COMPILE
   ENABLE_ALL_CXX_COMPILE_DESCRIPTION)
 mark_as_advanced(ENABLE_ALL_CXX_COMPILE)
 
+# Build with coverage enabled
+option(BRLCAD_ENABLE_COVERAGE "Build with coverage enabled" OFF)
+mark_as_advanced(BRLCAD_ENABLE_COVERAGE)
+
 #====== POSIX ===================
 # Build with strict POSIX compliance checking
 set(ENABLE_POSIX_COMPLIANCE_ALIASES "ENABLE_POSIX")
