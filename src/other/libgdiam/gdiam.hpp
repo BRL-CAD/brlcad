@@ -23,6 +23,15 @@
 #ifndef  __GDIAM__H
 #define  __GDIAM__H
 
+/* for g++ to quell warnings */
+#if (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__))
+#  pragma GCC diagnostic push /* start new diagnostic pragma */
+#  pragma GCC diagnostic ignored "-Wfloat-equal"
+#elif (defined(__clang__) && (__clang_major__ > 2 || (__clang_major__ == 2 && __clang_minor__ >= 8)))
+#  pragma clang diagnostic push /* start new diagnostic pragma */
+#  pragma clang diagnostic ignored "-Wfloat-equal"
+#endif
+
 #ifndef GDIAM_EXPORT
 #  if defined(GDIAM_DLL_EXPORTS) && defined(GDIAM_DLL_IMPORTS)
 #    error "Only GDIAM_DLL_EXPORTS or GDIAM_DLL_IMPORTS can be defined, not both."
@@ -169,15 +178,6 @@ inline void  pnt_init_normalize( gdiam_point  pnt,
     pnt_normalize( pnt );
 }
 
-/* for g++ to quell warnings */
-#if (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__))
-#  pragma GCC diagnostic push /* start new diagnostic pragma */
-#  pragma GCC diagnostic ignored "-Wfloat-equal"
-#elif (defined(__clang__) && (__clang_major__ > 2 || (__clang_major__ == 2 && __clang_minor__ >= 8)))
-#  pragma clang diagnostic push /* start new diagnostic pragma */
-#  pragma clang diagnostic ignored "-Wfloat-equal"
-#endif
-
 inline bool  pnt_isEqual( const gdiam_point  p,
                           const gdiam_point  q ) 
 {
@@ -186,11 +186,6 @@ inline bool  pnt_isEqual( const gdiam_point  p,
               &&  ( p[ 1 ] == q[ 1 ] )
               &&  ( p[ 2 ] == q[ 2 ] ) );
 }
-#if (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__))
-#  pragma GCC diagnostic pop /* end ignoring warnings */
-#elif (defined(__clang__) && (__clang_major__ > 2 || (__clang_major__ == 2 && __clang_minor__ >= 8)))
-#  pragma clang diagnostic pop /* end ignoring warnings */
-#endif
 
 inline void  pnt_scale_and_add( gdiam_point  dest,
                          gdiam_real  coef,
