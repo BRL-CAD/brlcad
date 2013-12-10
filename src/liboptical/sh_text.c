@@ -92,12 +92,12 @@ txt_source_hook(const struct bu_structparse *UNUSED(sdp),
 		const char *UNUSED(value))
 {
     struct txt_specific *textureSpecific = (struct txt_specific *)base;
-    if (bu_strncmp(name, "file", 4)==0) {
+    if (bu_strncmp(name, "file", 4) == 0) {
 	textureSpecific->tx_datasrc=TXT_SRC_FILE;
-    } else if (bu_strncmp(name, "obj", 3)==0) {
-	textureSpecific->tx_datasrc=TXT_SRC_OBJECT;
+    } else if (bu_strncmp(name, "obj", 3) == 0) {
+	textureSpecific->tx_datasrc = TXT_SRC_OBJECT;
     } else {
-	textureSpecific->tx_datasrc=TXT_SRC_AUTO;
+	textureSpecific->tx_datasrc = TXT_SRC_AUTO;
     }
 }
 
@@ -265,7 +265,7 @@ txt_render(struct application *ap, const struct partition *pp, struct shadework 
      * texture isn't and can't be read, give debug colors
      */
 
-    if ((bu_vls_strlen(&tp->tx_name)<=0) || (!tp->tx_mp && !tp->tx_binunifp)) {
+    if ((bu_vls_strlen(&tp->tx_name) <= 0) || (!tp->tx_mp && !tp->tx_binunifp)) {
 	bu_log("WARNING: texture [%V] could not be read\n", &tp->tx_name);
 	VSET(swp->sw_color, uvc.uv_u, 0, uvc.uv_v);
 	if (swp->sw_reflect > 0 || swp->sw_transmit > 0)
@@ -327,7 +327,7 @@ txt_render(struct application *ap, const struct partition *pp, struct shadework 
     } else {
 	/* Calculate weighted average of cells in footprint */
 
-	fastf_t tot_area=0.0;
+	fastf_t tot_area = 0.0;
 	fastf_t cell_area;
 	int start_line, stop_line, line;
 	int start_col, stop_col, col;
@@ -464,7 +464,7 @@ bwtxt_render(struct application *ap, const struct partition *pp, struct shadewor
      * If no texture file present, or if
      * texture isn't and can't be read, give debug colors
      */
-    if ((bu_vls_strlen(&tp->tx_name)<=0) || (!tp->tx_mp && !tp->tx_binunifp)) {
+    if ((bu_vls_strlen(&tp->tx_name) <= 0) || (!tp->tx_mp && !tp->tx_binunifp)) {
 	VSET(swp->sw_color, uvc.uv_u, 0, uvc.uv_v);
 	if (swp->sw_reflect > 0 || swp->sw_transmit > 0)
 	    (void)rr_render(ap, pp, swp);
@@ -516,7 +516,7 @@ bwtxt_render(struct application *ap, const struct partition *pp, struct shadewor
     if (dx < 1) dx = 1;
     if (dy < 1) dy = 1;
     bw = 0;
-    for (line=0; line<dy; line++) {
+    for (line = 0; line < dy; line++) {
 	register unsigned char *cp=NULL;
 	register unsigned char *ep;
 
@@ -598,7 +598,7 @@ txt_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
     if (tp->tx_n < 0) tp->tx_n = tp->tx_w;
     if (tp->tx_trans_valid) rp->reg_transmit = 1;
     BU_CK_VLS(&tp->tx_name);
-    if (bu_vls_strlen(&tp->tx_name)<=0) return -1;
+    if (bu_vls_strlen(&tp->tx_name) <= 0) return -1;
     /* !?! if (tp->tx_name[0] == '\0') return -1;	*/ /* FAIL, no file */
 
     if (BU_STR_EQUAL(mfp->mf_name, "bwtexture")) pixelbytes = 1;
@@ -830,7 +830,7 @@ bmp_render(struct application *ap, const struct partition *pp, struct shadework 
      * If no texture file present, or if
      * texture isn't and can't be read, give debug color.
      */
-    if ((bu_vls_strlen(&tp->tx_name)<=0) || (!tp->tx_mp && !tp->tx_binunifp)) {
+    if ((bu_vls_strlen(&tp->tx_name) <= 0) || (!tp->tx_mp && !tp->tx_binunifp)) {
 	VSET(swp->sw_color, swp->sw_uv.uv_u, 0, swp->sw_uv.uv_v);
 	if (swp->sw_reflect > 0 || swp->sw_transmit > 0)
 	    (void)rr_render(ap, pp, swp);
