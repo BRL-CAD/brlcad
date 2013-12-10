@@ -68,23 +68,6 @@ struct camo_specific {
 };
 #define CK_camo_SP(_p) BU_CKMAG(_p, camo_MAGIC, "camo_specific")
 
-/* This allows us to specify the "size" parameter as values like ".5m"
- * or "27in" rather than using mm all the time.
- */
-void
-camo_cvt_parse(register const struct bu_structparse *sdp, register const char *UNUSED(name), char *base, const char *value)
-/* structure description */
-/* struct member name */
-/* beginning of structure */
-/* string containing value */
-{
-    double *p = (double *)(base+sdp->sp_offset);
-
-    /* reconvert with optional units */
-    *p = bu_mm_value(value);
-}
-
-
 static struct camo_specific camo_defaults = {
     camo_MAGIC,
     2.1753974,		/* noise_lacunarity */
