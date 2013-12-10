@@ -704,6 +704,12 @@ GDIAM_EXPORT void  gdiam_generate_orthonormal_base( gdiam_point  in,
                                        gdiam_point  out1,
                                        gdiam_point  out2 );
 
+#if (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__))
+#  pragma GCC diagnostic pop /* end ignoring warnings */
+#elif (defined(__clang__) && (__clang_major__ > 2 || (__clang_major__ == 2 && __clang_minor__ >= 8)))
+#  pragma clang diagnostic pop /* end ignoring warnings */
+#endif
+
 #else   /* __GDIAM__H */
 #error  Header file gdiam.h included twice
 #endif  /* __GDIAM__H */
