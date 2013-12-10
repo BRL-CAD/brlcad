@@ -338,7 +338,7 @@ tmist_render(struct application *ap, const struct partition *pp, struct shadewor
     if (meters < 1) step_dist = dist;
     else step_dist = dist / (fastf_t)meters;
 
-    for (dt=0.0; dt <= dist; dt += step_dist) {
+    for (dt = 0.0; dt <= dist; dt += step_dist) {
 	memcpy((char *)&my_ap, (char *)ap, sizeof(struct application));
 	VJOIN1(my_ap.a_ray.r_pt, in_pt, dt, my_ap.a_ray.r_dir);
 	VSET(my_ap.a_ray.r_dir, 0.0, 0.0, -1.0);
@@ -491,7 +491,7 @@ emist_fbm_render(struct application *ap, const struct partition *pp, struct shad
     VSUB2(dist_v, out_pt, in_pt);
     dist = MAGNITUDE(dist_v);
 
-    for (delta=0; delta < dist; delta += 1.0) {
+    for (delta = 0; delta < dist; delta += 1.0) {
 	/* compute the current point in space */
 
 	/* Shoot a ray down the -Z axis to find our current height

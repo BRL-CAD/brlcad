@@ -293,9 +293,9 @@ f_press(ClientData clientData,
 	    goto next;
 	}
 
-	for (menu=0, m=menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++, menu++) {
+	for (menu = 0, m = menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++, menu++) {
 	    if (*m == MENU_NULL) continue;
-	    for (item=0, mptr = *m;
+	    for (item = 0, mptr = *m;
 		 mptr->menu_string[0] != '\0';
 		 mptr++, item++) {
 		if (!BU_STR_EQUAL(str, mptr->menu_string))
@@ -304,7 +304,7 @@ f_press(ClientData clientData,
 		menu_state->ms_cur_item = item;
 		menu_state->ms_cur_menu = menu;
 		menu_state->ms_flag = 1;
-		/* It's up to the menu_func to set menu_state->ms_flag=0
+		/* It's up to the menu_func to set menu_state->ms_flag = 0
 		 * if no arrow is desired */
 		if (mptr->menu_func != ((void (*)())0))
 		    (*(mptr->menu_func))(mptr->menu_arg, menu, item);

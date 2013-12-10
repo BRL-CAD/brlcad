@@ -276,7 +276,7 @@ const struct bu_structparse rt_dsp_ptab[] = {
  */
 
 
-static int plot_file_num=0;
+static int plot_file_num = 0;
 
 
 /**
@@ -758,7 +758,7 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 	    /* There are no "children" of a layer 0 element */
 	    dsp_bb->dspb_ch_dim[X] = 0;
 	    dsp_bb->dspb_ch_dim[Y] = 0;
-	    for (k=0; k < NUM_BB_CHILDREN; k++) {
+	    for (k = 0; k < NUM_BB_CHILDREN; k++) {
 		dsp_bb->dspb_children[k] =
 		    (struct dsp_bb *)NULL;
 	    }
@@ -1122,7 +1122,7 @@ plot_seg(struct isect_stuff *isect,
     struct bound_rpp rpp;
     char fname[32];
     FILE *fp;
-    static int segnum =0;
+    static int segnum = 0;
 
     /* plot the bounding box and the seg */
     bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -3591,7 +3591,7 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct vertex **strip2Verts;
     int base_vert_no1;
     int base_vert_no2;
-    int has_holes=0;
+    int has_holes = 0;
 
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("rt_dsp_tess()\n");
@@ -4492,7 +4492,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 		   ep->ext_nbytes - (cp - (unsigned char *)ep->ext_buf));
 
     if (mat == NULL) mat = bn_mat_identity;
-    if (dsp_get_data(dsp_ip, mat, dbip)!=0) {
+    if (dsp_get_data(dsp_ip, mat, dbip) != 0) {
 	IMPORT_FAIL("unable to load displacement map data");
     }
 

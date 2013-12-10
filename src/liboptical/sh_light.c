@@ -552,7 +552,7 @@ light_gen_sample_pts(struct application *upap,
 
 	bu_log("\t%d light sample points\n", lsp->lt_pt_count);
 
-	for (l=0; l < lsp->lt_pt_count; l++, lpt++) {
+	for (l = 0; l < lsp->lt_pt_count; l++, lpt++) {
 
 	    VJOIN1(p, lpt->lp_pt, 100.0, lpt->lp_norm);
 
@@ -1422,7 +1422,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
 	}
 
 	tryagain = 0;
-	for (k=0; k < los->lsp->lt_pt_count; k++) {
+	for (k = 0; k < los->lsp->lt_pt_count; k++) {
 	    if (flags[k] & VF_SEEN) {
 		/* this one was used, we can re-use it */
 		tryagain = 1;

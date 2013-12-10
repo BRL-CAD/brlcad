@@ -1959,7 +1959,7 @@ bu_shader_to_list(const char *in, struct bu_vls *vls)
 	if (shader_name_len == 5 && !bu_strncasecmp(shader, "stack", 5)) {
 
 	    /* stack shader, loop through all shaders in stack */
-	    int done=0;
+	    int done = 0;
 
 	    bu_vls_strcat(vls, "stack {");
 
@@ -2073,13 +2073,13 @@ bu_shader_to_list(const char *in, struct bu_vls *vls)
 HIDDEN char *
 parse_list_elem(const char *in, int idx)
 {
-    int depth=0;
-    int count=0;
-    int len=0;
-    const char *ptr=in;
-    const char *prev=NULL;
-    const char *start=NULL;
-    const char *end=NULL;
+    int depth = 0;
+    int count = 0;
+    int len = 0;
+    const char *ptr = in;
+    const char *prev = NULL;
+    const char *start = NULL;
+    const char *end = NULL;
 
     struct bu_vls out = BU_VLS_INIT_ZERO;
     char *ret = NULL;
@@ -2168,10 +2168,10 @@ parse_list_elem(const char *in, int idx)
 HIDDEN int
 parse_list_length(const char *in)
 {
-    int count=0;
-    int depth=0;
-    const char *ptr=in;
-    const char *prev=NULL;
+    int count = 0;
+    int depth = 0;
+    const char *ptr = in;
+    const char *prev = NULL;
 
     if (UNLIKELY(in == NULL))
 	return 0;
@@ -2273,7 +2273,7 @@ int
 bu_shader_to_key_eq(const char *in, struct bu_vls *vls)
 {
     int len;
-    int ret=0;
+    int ret = 0;
     char *shader;
     char *params;
 

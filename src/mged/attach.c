@@ -350,7 +350,7 @@ print_valid_dm(Tcl_Interp *interpreter)
     Tcl_AppendResult(interpreter, "qt", (char *)NULL);
     i++;
 #endif /* DM_QT */
-    if (i==0) {
+    if (i == 0) {
 	Tcl_AppendResult(interpreter, "NONE AVAILABLE", (char *)NULL);
     }
     Tcl_AppendResult(interpreter, "\n", (char *)NULL);
