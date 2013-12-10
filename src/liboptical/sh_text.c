@@ -85,10 +85,10 @@ struct bu_structparse txt_parse[] = {
  * fail.
  */
 HIDDEN void
-txt_source_hook(const struct bu_structparse *UNUSED(ip), const char *sp_name, genptr_t base, char *UNUSED(p))
+txt_source_hook(const struct bu_structparse *UNUSED(sdp), const char *name, genptr_t base, char *UNUSED(value))
 {
     struct txt_specific *textureSpecific = (struct txt_specific *)base;
-    if (bu_strncmp(sp_name, "file", 4)==0) {
+    if (bu_strncmp(name, "file", 4)==0) {
 	textureSpecific->tx_datasrc=TXT_SRC_FILE;
     } else if (bu_strncmp(sp_name, "obj", 3)==0) {
 	textureSpecific->tx_datasrc=TXT_SRC_OBJECT;
@@ -104,12 +104,12 @@ txt_source_hook(const struct bu_structparse *UNUSED(ip), const char *sp_name, ge
  * Hooked function, called by bu_structparse
  */
 HIDDEN void
-txt_transp_hook(struct bu_structparse *ptab, char *name, char *cp, char *UNUSED(value))
+txt_transp_hook(struct bu_structparse *sdp, char *name, char *base, char *UNUSED(value))
 {
     register struct txt_specific *tp =
-	(struct txt_specific *)cp;
+	(struct txt_specific *)base;
 
-    if (BU_STR_EQUAL(name, txt_parse[0].sp_name) && ptab == txt_parse) {
+    if (BU_STR_EQUAL(name, txt_parse[0].sp_name) && sdp == txt_parse) {
 	tp->tx_trans_valid = 1;
     } else {
 	bu_log("file:%s, line:%d txt_transp_hook name:(%s) instead of (%s)\n",
