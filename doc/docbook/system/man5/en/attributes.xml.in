@@ -71,21 +71,7 @@
 	the value in question get a consistent answer.
   </para>
 
-  <xi:include href="@CMAKE_BINARY_DIR@/auto-gen-attr-std-tab-inc.xml" xpointer="std_attr_tbl"/>
-
-  <!-- need a blank line -->
-  <literallayout>
-
-  </literallayout>
-
-  <para>
-	The following table lists all known user-registered BRL-CAD attributes and
-	aliases.  Any code setting or reading the value of one of these attributes
-	must also handle all aliases to ensure all functions asking for
-	the value in question get a consistent answer.
-  </para>
-
-  <xi:include href="@CMAKE_BINARY_DIR@/auto-gen-attr-usr-tab-inc.xml" xpointer="usr_attr_tbl"/>
+  <xi:include href="@CMAKE_CURRENT_BINARY_DIR@/attr_std_table.xml" xpointer="std_attr_tbl"/>
 
   <!-- need a blank line -->
   <literallayout>
@@ -97,7 +83,7 @@
         briefly outline the meaning and purpose of each of them:
   </para>
 
-  <xi:include href="@CMAKE_BINARY_DIR@/auto-gen-attr-std-list-inc.xml" xpointer="std_attr_info"/>
+  <xi:include href="@CMAKE_CURRENT_BINARY_DIR@/attr_std_list.xml" xpointer="std_attr_info"/>
 
 </refsection>
 

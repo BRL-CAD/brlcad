@@ -38,7 +38,7 @@ set(ENV{XML_DEBUG_CATALOG} 1)
 # when building in parallel, due to a bug/limitation in xsltproc
 get_filename_component(output_dir "@outfile@" PATH)
 execute_process(COMMAND "@CMAKE_COMMAND@" -E make_directory "${output_dir}/")
-execute_process(COMMAND "@XSLTPROC_EXECUTABLE@" -nonet -xinclude -o "@outfile@" "@CURRENT_XSL_STYLESHEET@" "@CMAKE_CURRENT_SOURCE_DIR@/@filename@" RESULT_VARIABLE CMDRESULT)
+execute_process(COMMAND "@XSLTPROC_EXECUTABLE@" -nonet -xinclude -o "@outfile@" "@CURRENT_XSL_STYLESHEET@" "@full_path_filename@" RESULT_VARIABLE CMDRESULT)
 
 # For some reason, xsltproc doesn't always seem to respect the
 # output variable when doing man pages.  Add a backup check

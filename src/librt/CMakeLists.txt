@@ -37,7 +37,7 @@ set(LIBRT_SOURCES
   constraint.c
   cut.c
   db5_alloc.c
-  db5_attrs.cpp
+  db5_attr.c
   db5_io.c
   db5_scan.c
   db5_types.c
@@ -255,7 +255,6 @@ set(LIBRT_SOURCES
 
 set(librt_ignored_files
   columnparse.c
-  db5_attrs_private.h
   librt_private.h
   namegen.c
   test_nurbsfit.cpp

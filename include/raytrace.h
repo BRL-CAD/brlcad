@@ -8142,12 +8142,12 @@ RT_EXPORT extern size_t db5_type_sizeof_h_binu(const int minor);
 RT_EXPORT extern size_t db5_type_sizeof_n_binu(const int minor);
 
 
+/* db5_attr.c */
 /**
  * Define standard attribute types in BRL-CAD geometry.  (See the
  * attributes manual page.)  These should be a collective enumeration
- * starting from 0 and increasing in the desired sort order.  Details
- * of the attributes are defined in file 'src/librt/db5_attrs.cpp' and
- * 'db5_attr_ctype_table'.
+ * starting from 0 and increasing without any gaps in the numbers so
+ * db5_standard_attribute() can be used as an index-based iterator.
  */
 enum {
     ATTR_REGION = 0,
@@ -8162,6 +8162,21 @@ enum {
     ATTR_NULL
 };
 
+/* Each attribute has a unique string associated with it, as
+ * well as a description.
+ * The actual arrays are defined in db5_types.c - the string
+ * "NULL" is the last string in the array in all cases */
+extern const char *db5_attr_std_strings[];
+extern const char *db5_attr_std_properties[];
+extern const char *db5_attr_std_datatypes[];
+extern const char *db5_attr_std_descriptions[];
+extern const char *db5_attr_std_examples[];
+
+/* Standard aliases are stored as an array of strings and an
+ * array of integers identifying how many aliases are present
+ * for each enum. */
+extern const int db5_attr_std_alias_cnt[];
+extern const char *db5_attr_std_aliases[];
 
 /**
  * D B 5 _ S T A N D A R D _ A T T R I B U T E
