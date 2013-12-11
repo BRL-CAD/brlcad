@@ -13680,7 +13680,7 @@ go_draw_solid(struct ged_obj *gop, struct dm *dmp, struct solid *sp)
 HIDDEN void
 go_draw_other(struct ged_obj *gop, struct ged_dm_view *gdvp)
 {
-    fastf_t sf = gdvp->gdv_view->gv_size * gop->go_gedp->ged_wdbp->dbip->dbi_local2base / gdvp->gdv_dmp->dm_width;
+    fastf_t sf = gdvp->gdv_view->gv_size / (fastf_t)gdvp->gdv_dmp->dm_width;
 
     if (gdvp->gdv_view->gv_data_arrows.gdas_draw)
 	go_dm_draw_arrows(gdvp->gdv_dmp, &gdvp->gdv_view->gv_data_arrows, sf);
