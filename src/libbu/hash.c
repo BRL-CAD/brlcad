@@ -45,7 +45,7 @@ bu_hash(unsigned char *str, int len)
 
 
 struct bu_hash_tbl *
-bu_create_hash_tbl(unsigned long tbl_size)
+bu_hash_tbl_create(unsigned long tbl_size)
 {
     struct bu_hash_tbl *hsh_tbl;
     unsigned long power_of_two=64;
@@ -93,7 +93,7 @@ bu_create_hash_tbl(unsigned long tbl_size)
 
 
 struct bu_hash_entry *
-bu_find_hash_entry(struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len, struct bu_hash_entry **prev, unsigned long *idx)
+bu_hash_tbl_find(struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len, struct bu_hash_entry **prev, unsigned long *idx)
 {
     struct bu_hash_entry *hsh_entry=NULL;
     int found=0;
@@ -186,7 +186,7 @@ bu_get_hash_key(struct bu_hash_entry *hsh_entry)
 
 
 struct bu_hash_entry *
-bu_hash_add_entry(struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len, int *new_entry)
+bu_hash_tbl_add(struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len, int *new_entry)
 {
     struct bu_hash_entry *hsh_entry, *prev;
     unsigned long idx;
@@ -198,7 +198,7 @@ bu_hash_add_entry(struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len, 
      * get the hash bin index for this key.
      * find the previous entry to link the new one to.
      */
-    hsh_entry = bu_find_hash_entry(hsh_tbl, key, key_len, &prev, &idx);
+    hsh_entry = bu_hash_tbl_find(hsh_tbl, key, key_len, &prev, &idx);
 
     if (hsh_entry) {
 	/* this key is already in the table, return the entry, with
@@ -238,7 +238,7 @@ bu_hash_add_entry(struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len, 
 
 
 void
-bu_hash_tbl_pr(struct bu_hash_tbl *hsh_tbl, char *str)
+bu_hash_tbl_print(struct bu_hash_tbl *hsh_tbl, char *str)
 {
     unsigned long idx;
     struct bu_hash_entry *hsh_entry;

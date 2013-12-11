@@ -5911,7 +5911,7 @@ BU_EXPORT extern unsigned long bu_hash(unsigned char *str,
  * The input is the number of desired hash bins.  This number will be
  * rounded up to the nearest power of two.
  */
-BU_EXPORT extern struct bu_hash_tbl *bu_create_hash_tbl(unsigned long tbl_size);
+BU_EXPORT extern struct bu_hash_tbl *bu_hash_tbl_create(unsigned long tbl_size);
 
 /**
  * Find the hash table entry corresponding to the provided key
@@ -5928,7 +5928,7 @@ BU_EXPORT extern struct bu_hash_tbl *bu_create_hash_tbl(unsigned long tbl_size);
  * the hash table entry corresponding to the provided key, or NULL if
  * not found.
  */
-BU_EXPORT extern struct bu_hash_entry *bu_find_hash_entry(struct bu_hash_tbl *hsh_tbl,
+BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_find(struct bu_hash_tbl *hsh_tbl,
 							  unsigned char *key,
 							  int key_len,
 							  struct bu_hash_entry **prev,
@@ -5969,7 +5969,7 @@ BU_EXPORT extern unsigned char *bu_get_hash_key(struct bu_hash_entry *hsh_entry)
  * returned.  if "new" is zero, the returned entry is the one matching
  * the specified key and key_len.
  */
-BU_EXPORT extern struct bu_hash_entry *bu_hash_add_entry(struct bu_hash_tbl *hsh_tbl,
+BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_add(struct bu_hash_tbl *hsh_tbl,
 							 unsigned char *key,
 							 int key_len,
 							 int *new_entry);
@@ -5979,7 +5979,7 @@ BU_EXPORT extern struct bu_hash_entry *bu_hash_add_entry(struct bu_hash_tbl *hsh
  *
  * (Note that the keys and values are printed as pointers)
  */
-BU_EXPORT extern void bu_hash_tbl_pr(struct bu_hash_tbl *hsh_tbl,
+BU_EXPORT extern void bu_hash_tbl_print(struct bu_hash_tbl *hsh_tbl,
 				     char *str);
 
 /**
