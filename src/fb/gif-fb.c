@@ -76,8 +76,8 @@
 #include "fb.h"
 
 
-#define USAGE "gif-fb [-F fb_file] [-c] [-i image#] [-o] [-v] [-z] [gif_file]"
-#define OPTSTR "F:ci:ovz"
+#define USAGE "Usage: gif-fb [-F fb_file] [-c] [-i image#] [-o] [-v] [-z] [gif_file]"
+#define OPTSTR "F:ci:ovzh?"
 
 typedef int bool_t;
 
@@ -489,13 +489,13 @@ main(int argc, char **argv)
 	    }
 
 	if (errors)
-	    Fatal(fbp, "Usage: %s", USAGE);
+	    Fatal(fbp, USAGE);
     }
 
     if (bu_optind < argc) {
 	/* gif_file */
 	if (bu_optind < argc - 1) {
-	    Message("Usage: %s", USAGE);
+	    Message(USAGE);
 	    Fatal(fbp, "Can't handle multiple GIF files");
 	}
 
