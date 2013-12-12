@@ -43,6 +43,14 @@ int bytes_in_buf, copies_per_buf;
 
 unsigned char buf[MAX_BYTES];
 
+void
+printusage(int i)
+{
+	bu_log("%s\n",Usage);
+	bu_log("       (No white space immed. after -r; must have at least 1 argument;\n");
+	bu_log("       must re-direct stdout)\n");
+	bu_exit(i,NULL);
+}
 
 int
 main(int argc, char **argv)
@@ -52,7 +60,7 @@ main(int argc, char **argv)
     unsigned char *bp;
 
     if (argc == 1 || isatty(fileno(stdout)))
-	bu_exit(1, "%s", Usage);
+	printusage(1);
 
     count = -1;
     if (argc > 1 && bu_strncmp(argv[1], "-r", 2) == 0) {
@@ -76,7 +84,7 @@ main(int argc, char **argv)
 	/* get values from stdin */
 	len = fread((char *)buf, 1, MAX_BYTES, stdin);
 	if (len <= 0)
-	    bu_exit(2, "%s", Usage);
+	    printusage(2);
     } else {
 	/* assume black */
 	buf[0] = 0;
