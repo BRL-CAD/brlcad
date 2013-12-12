@@ -37,155 +37,99 @@
 #include "db5.h"
 #include "raytrace.h"
 
-/* These strings must correspond to the ATTR enum
- * types in raytrace.h */
-const char *db5_attr_std_strings[] = {
-    "region",
-    "region_id",
-    "material_id",
-    "aircode",
-    "los",
-    "color",
-    "shader",
-    "inherit",
-    "mtime",
-    "NULL"
-};
+/* this is the master source of standard and registered attribute information */
+const struct db5_attr_ctype db5_attr_std[] = {
+    { ATTR_REGION, 0, ATTR_STANDARD,
+	"region",
+	"boolean",
+	"Yes, R, 1, 0", /* example */
+	"", /* aliases, if any */
+	"Region Flag", /* property, if any */
+	/* long_description, if any: */
+	"The Region Flag identifies a particular geometric combination as being a solid material; in other words, any geometry below this combination in the tree can overlap without the overlap being regarded as a non-physical description, since it is the combination of all descriptions in the region object that defines the physical volume in space."
 
-const char *db5_attr_std_properties[] = {
-    /*region*/
-    "Region Flag",
-    /*region_id*/
-    "Region Identifier Number",
-    /*material_id*/
-    "Material Identifier Number",
-    /*aircode*/
-    "Air Code",
-    /*los*/
-    "Line of Sight Thickness Equivalence",
-    /*color*/
-    "Color",
-    /*shader*/
-    "Shader Name",
-    /*inherit*/
-    "Inherit Properties",
-    /*mtime*/
-    "Time Stamp",
-    /*NULL*/
-    "NULL"
-};
+    },
+    { ATTR_REGION_ID, 0, ATTR_STANDARD,
+	"region_id",
+	"an integer",
+	"0, -1, and positive integers", /* examples */
+	"id",  /* aliases, if any */
+	"Region Identifier Number",  /* property, if any */
+	/* long_description, if any: */
+	"The Region Identifier Number identifies a particular region with a unique number. This allows multiple region objects to be regarded as being the same type of region, without requiring that they be included in the same combination object."
+    },
+    { ATTR_MATERIAL_ID, 0, ATTR_STANDARD,
+	"material_id",
+	"zero or positive integer (user-defined)",
+	"", /* examples */
+	"giftmater,mat",  /* aliases, if any */
+	"Material Identifier Number",  /* property, if any */
+	/* long_description, if any: */
+	"The Material ID Number corresponds to an entry in a DENSITIES table, usually contained in a text file.  This table associates numbers with material names and density information used by analytical programs such as 'rtweight'."
+    },
+    { ATTR_AIR, 0, ATTR_STANDARD,
+	"aircode",
+	"an integer (application defined)",
+	"'0', '1', or '-2'", /* examples */
+	"air",  /* aliases, if any */
+	"Air Code",  /* property, if any */
+	/* long_description, if any: */
+	"Any non-zero Air Code alerts the raytracer that the region in question is modeling air which is handled by specialized rules in LIBRT."
+    },
+    { ATTR_LOS, 0, ATTR_STANDARD,
+	"los",
+	"an integer in the inclusive range: 0 to 100",
+	"'24' or '100'", /* examples */
+	"",  /* aliases, if any */
+	"Line of Sight Thickness Equivalence",  /* property, if any */
+	/* long_description, if any: */
+	""
+    },
+    { ATTR_COLOR, 0, ATTR_STANDARD,
+	"color",
+	"a 3-tuple of RGB values",
+	"\"0 255 255\"", /* examples */
+	"rgb",  /* aliases, if any */
+	"Color",  /* property, if any */
+	""  /* long_description, if any */
+    },
+    { ATTR_SHADER, 0, ATTR_STANDARD,
+	"shader",
+	"a string of shader characteristics in a standard format",
+	"", /* examples */
+	"oshader",  /* aliases, if any */
+	"Shader Name",  /* property, if any */
+	/* long_description, if any: */
+	"LIBRT can use a variety of shaders when rendering.  This attribute holds a text string which corresponds to the name and other details of the shader to be used."
+    },
+    { ATTR_INHERIT, 0, ATTR_STANDARD,
+	"inherit",
+	"boolean",
+	"Yes, 1, 0", /* examples */
+	"",  /* aliases, if any */
+	"Inherit Properties",  /* property, if any */
+	/* long_description, if any: */
+	"The Inherit Properties value, if true, indicates all child objects inherit the attributes of this parent object."
+    },
+    { ATTR_TIMESTAMP, 1, ATTR_STANDARD, /* first binary attribute */
+	"mtime",
 
-const char *db5_attr_std_datatypes[] = {
-    /*region*/
-    "boolean",
-    /*region_id*/
-    "an integer",
-    /*material_id*/
-    "zero or positive integer (user-defined)",
-    /*aircode*/
-    "an integer (application defined)",
-    /*los*/
-    "an integer in the inclusive range: 0 to 100",
-    /*color*/
-    "a 3-tuple of RGB values",
-    /*shader*/
-    "a string of shader characteristics",
-    /*inherit*/
-    "boolean",
-    /*mtime*/
-    "a binary time stamp",
-    /*NULL*/
-    "NULL"
-};
+	"a binary time stamp for an object's last mod time (the time is displayed in human-readable form with the 'attr' command)",
 
-const char *db5_attr_std_examples[] = {
-    /*region*/
-    "Yes, R, 1, 0",
-    /*region_id*/
-    "0, -1, and positive integers",
-    /*material_id*/
-    "",
-    /*aircode*/
-    "0, 1, or -2",
-    /*los*/
-    "24 or 100",
-    /*color*/
-    "\"0 255 255\"",
-    /*shader*/
-    "",
-    /*inherit*/
-    "Yes, 1, 0",
-    /*mtime*/
-    "",
-    /*NULL*/
-    "NULL"
+	"", /* examples */
+	"timestamp,time_stamp,modtime,mod_time",  /* aliases, if any */
+	"Time Stamp",  /* property, if any */
+	/* long_description, if any: */
+	""
+    },
+    { ATTR_NULL, 0, ATTR_UNKNOWN_ORIGIN, "", "", "", "", "", "" }
 };
-
-const char *db5_attr_std_descriptions[] = {
-    /*region*/
-    "The Region Flag identifies a particular geometric combination as being a solid material; in other words, any geometry below this combination in the tree can overlap without the overlap being regarded as a non-physical description, since it is the combination of all descriptions in the region object that defines the physical volume in space.",
-    /*region_id*/
-    "The Region Identifier Number identifies a particular region with a unique number. This allows multiple region objects to be regarded as being the same type of region, without requiring that they be included in the same combination object.",
-    /*material_id*/
-    "The Material ID Number corresponds to an entry in a DENSITIES table, usually contained in a text file.  This table associates numbers with material names and density information used by analytical programs such as 'rtweight'.",
-    /*aircode*/
-    "Any non-zero Air Code alerts the raytracer that the region in question is modeling air which is handled by specialized rules in LIBRT.",
-    /*los*/
-    "",
-    /*color*/
-    "",
-    /*shader*/
-    "LIBRT can use a variety of shaders when rendering.  This attribute holds a text string which corresponds to the name and other details of the shader to be used.",
-    /*inherit*/
-    "The Inherit Properties value, if true, indicates all child objects inherit the attributes of this parent object.",
-    /*mtime*/
-    "",
-    /*NULL*/
-    "NULL"
-};
-
-const int db5_attr_std_alias_cnt[] = {
-    1,
-    2,
-    3,
-    2,
-    1,
-    2,
-    2,
-    1,
-    5,
-    0
-};
-
-const char *db5_attr_std_aliases[] = {
-    "region",		/* region */
-    "region_id",	/* region_id */
-    "id",
-    "material_id",	/* material_id */
-    "GIFTmater",
-    "mat",
-    "aircode",		/* aircode */
-    "air",
-    "los",		/* los */
-    "color",		/* color */
-    "rgb",
-    "shader",		/* shader */
-    "oshader",
-    "inherit",		/* inherit */
-    "mtime",		/* mtime */
-    "timestamp",
-    "time_stamp",
-    "modtime",
-    "mod_time",
-    "NULL"
-};
-
 
 const char *
 db5_standard_attribute(int idx)
 {
     if (idx >= ATTR_NULL) return NULL;
-    return db5_attr_std_strings[idx];
+    return db5_attr_std[idx].name;
 }
 
 int
@@ -207,20 +151,36 @@ db5_is_standard_attribute(const char *attr_want)
 int
 db5_standardize_attribute(const char *attr)
 {
-    int curr_str = 0;
     int curr_attr = 0;
-    int attr_offset = db5_attr_std_alias_cnt[0];
+    struct bu_vls alias;
+    const char *curr_pos, *next_pos;
     if (!attr) return ATTR_NULL;
-    while (!BU_STR_EQUAL(db5_attr_std_aliases[curr_str], "NULL")) {
-	while (curr_str < attr_offset) {
-	    if (BU_STR_EQUIV(attr, db5_attr_std_aliases[curr_str])) return curr_attr;
-	    curr_str++;
+    bu_vls_init(&alias);
+    while (db5_attr_std[curr_attr].attr_type != ATTR_NULL) {
+	curr_pos = db5_attr_std[curr_attr].aliases;
+	while (curr_pos && strlen(curr_pos) > 0) {
+	    next_pos = strchr(curr_pos+1, ',');
+	    if (next_pos) {
+		bu_vls_strncpy(&alias, curr_pos, next_pos - curr_pos);
+		bu_log("found %s\n", bu_vls_addr(&alias));
+		if (BU_STR_EQUIV(attr, bu_vls_addr(&alias))) {
+		    bu_vls_free(&alias);
+		    return db5_attr_std[curr_attr].attr_type;
+		}
+		curr_pos = next_pos + 1;
+	    } else {
+		bu_vls_strncpy(&alias, curr_pos, strlen(curr_pos));
+		bu_log("found %s\n", bu_vls_addr(&alias));
+		if (BU_STR_EQUIV(attr, bu_vls_addr(&alias))) {
+		    bu_vls_free(&alias);
+		    return db5_attr_std[curr_attr].attr_type;
+		}
+		curr_pos = NULL;
+	    }
 	}
-	if (!BU_STR_EQUAL(db5_attr_std_aliases[curr_str], "NULL")) {
-	    curr_attr++;
-	    attr_offset += db5_attr_std_alias_cnt[curr_attr];
-	}
+	curr_attr++;
     }
+    bu_vls_free(&alias);
     return ATTR_NULL;
 }
 

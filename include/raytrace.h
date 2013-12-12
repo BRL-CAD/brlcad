@@ -8162,21 +8162,33 @@ enum {
     ATTR_NULL
 };
 
-/* Each attribute has a unique string associated with it, as
- * well as a description.
- * The actual arrays are defined in db5_types.c - the string
- * "NULL" is the last string in the array in all cases */
-extern const char *db5_attr_std_strings[];
-extern const char *db5_attr_std_properties[];
-extern const char *db5_attr_std_datatypes[];
-extern const char *db5_attr_std_descriptions[];
-extern const char *db5_attr_std_examples[];
+/* Enum to characterize status of attributes */
+enum {
+    ATTR_STANDARD = 0,
+    ATTR_USER_DEFINED,
+    ATTR_UNKNOWN_ORIGIN
+};
 
-/* Standard aliases are stored as an array of strings and an
- * array of integers identifying how many aliases are present
- * for each enum. */
-extern const int db5_attr_std_alias_cnt[];
-extern const char *db5_attr_std_aliases[];
+struct db5_attr_ctype {
+    int attr_type;    /* ID from the main attr enum list */
+    int is_binary;   /* false for ASCII attributes; true for binary attributes */
+    int attr_subtype; /* ID from attribute status enum list */
+
+    /* names should be specified with alphanumeric characters
+     * (lower-case letters, no white space) and will act as unique
+     * keys to an object's attribute list */
+    const char *name;         /* the "standard" name */
+    const char *description;
+    const char *examples;
+    /* list of alternative names for this attribute: */
+    const char *aliases;
+    /* property name */
+    const char *property;
+    /* a longer description for lists outside a table */
+    const char *long_description;
+};
+
+extern const struct db5_attr_ctype db5_attr_std[];
 
 /**
  * D B 5 _ S T A N D A R D _ A T T R I B U T E

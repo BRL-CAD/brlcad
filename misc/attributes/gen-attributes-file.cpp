@@ -42,12 +42,12 @@ gen_attr_xml_list(const char *fname, const char *xref_id)
         ;
 
     // watch for an empty list
-    while (!BU_STR_EQUAL(db5_attr_std_strings[i], "NULL")) {
+    while (!BU_STR_EQUAL(db5_attr_std[i].name, "")) {
         fo <<
             "       <varlistentry>\n"
-            "	      <term><emphasis remap='B' role='bold'>" << db5_attr_std_strings[i] << ":</emphasis></term>\n"
+            "	      <term><emphasis remap='B' role='bold'>" << db5_attr_std[i].name << ":</emphasis></term>\n"
             "	      <listitem>\n"
-            "	        <para>" << db5_attr_std_descriptions[i] << "</para>\n"
+            "	        <para>" << db5_attr_std[i].long_description << "</para>\n"
             "	      </listitem>\n"
             "       </varlistentry>\n"
             ;
@@ -66,7 +66,6 @@ void
 gen_attr_xml_table(const char *fname, const char *xref_id)
 {
     int i = 0;
-    int alias_offset = 0;
     std::ofstream fo;
     fo.open(fname);
     if (fo.bad()) {
@@ -103,7 +102,7 @@ gen_attr_xml_table(const char *fname, const char *xref_id)
         "        <row>\n"
         "          <entry>Property</entry>\n"
         "          <entry>Attribute</entry>\n"
-        "          <entry>Data Type</entry>\n"
+        "          <entry>Is Binary</entry>\n"
         "          <entry>Definition</entry>\n"
         "          <entry>Example</entry>\n"
         "          <entry>Aliases</entry>\n"
@@ -112,26 +111,37 @@ gen_attr_xml_table(const char *fname, const char *xref_id)
         "      <tbody>\n"
 	;
 
-    while (!BU_STR_EQUAL(db5_attr_std_strings[i], "NULL")) {
+    while (!BU_STR_EQUAL(db5_attr_std[i].name, "")) {
         fo <<
             "        <row>\n"
-            "          <entry>" << db5_attr_std_properties[i]	<< "</entry>\n"
-            "          <entry>" << db5_attr_std_strings[i]	<< "</entry>\n"
-            "          <entry>" << db5_attr_std_datatypes[i]	<< "</entry>\n"
-            "          <entry>" << db5_attr_std_descriptions[i]	<< "</entry>\n"
-            "          <entry>" << db5_attr_std_examples[i]	<< "</entry>\n"
+            "          <entry>" << db5_attr_std[i].property	<< "</entry>\n"
+            "          <entry>" << db5_attr_std[i].name		<< "</entry>\n"
+            "          <entry>" << db5_attr_std[i].is_binary	<< "</entry>\n"
+            "          <entry>" << db5_attr_std[i].description	<< "</entry>\n"
+            "          <entry>" << db5_attr_std[i].examples	<< "</entry>\n"
             "          <entry>"
-            ;
-	if (db5_attr_std_alias_cnt[i] > 1) {
-	    int alias_cnt = 1;
-	    while (alias_cnt < db5_attr_std_alias_cnt[i]) {
-		if (alias_cnt != 1) fo << ", ";
-		fo << db5_attr_std_aliases[alias_offset + alias_cnt];
-		alias_cnt++;
+	    ;
+
+	{
+	    struct bu_vls alias;
+	    const char *curr_pos, *next_pos;
+	    bu_vls_init(&alias);
+	    curr_pos = db5_attr_std[i].aliases;
+	    while (curr_pos && strlen(curr_pos) > 0) {
+		next_pos = strchr(curr_pos+1, ',');
+		if (next_pos) {
+		    bu_vls_strncpy(&alias, curr_pos, next_pos - curr_pos);
+		    fo << bu_vls_addr(&alias) << ", ";
+		    curr_pos = next_pos + 1;
+		} else {
+		    bu_vls_strncpy(&alias, curr_pos, strlen(curr_pos));
+		    fo << bu_vls_addr(&alias);
+		    curr_pos = NULL;
+		}
 	    }
+	    bu_vls_free(&alias);
 	}
-	alias_offset += db5_attr_std_alias_cnt[i];
-	fo <<
+	 fo <<
 	    "</entry>\n"
             "        </row>\n"
             ;
