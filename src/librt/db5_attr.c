@@ -162,7 +162,6 @@ db5_standardize_attribute(const char *attr)
 	    next_pos = strchr(curr_pos+1, ',');
 	    if (next_pos) {
 		bu_vls_strncpy(&alias, curr_pos, next_pos - curr_pos);
-		bu_log("found %s\n", bu_vls_addr(&alias));
 		if (BU_STR_EQUIV(attr, bu_vls_addr(&alias))) {
 		    bu_vls_free(&alias);
 		    return db5_attr_std[curr_attr].attr_type;
@@ -170,7 +169,6 @@ db5_standardize_attribute(const char *attr)
 		curr_pos = next_pos + 1;
 	    } else {
 		bu_vls_strncpy(&alias, curr_pos, strlen(curr_pos));
-		bu_log("found %s\n", bu_vls_addr(&alias));
 		if (BU_STR_EQUIV(attr, bu_vls_addr(&alias))) {
 		    bu_vls_free(&alias);
 		    return db5_attr_std[curr_attr].attr_type;
