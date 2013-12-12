@@ -1760,6 +1760,103 @@ rt_ebm_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 }
 
 
+/*
+ * R T _ E B M _ S U R F _ A R E A
+ *
+ * Computes the surface area of the ebm.
+ *
+ * The vertices are numbered from left to right, front to back.
+ * This method calculates the position of all the 8 vertices of each cell and
+ * then calculates the area of the top and bottom faces, then any other
+ * necessary faces.
+ */
+void
+rt_ebm_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    struct rt_ebm_internal *eip;
+    unsigned int x, y;
+    point_t x0, x1, x2, x3, x4, x5, x6, x7;
+    point_t _x0, _x1, _x2, _x3, _x4, _x5, _x6, _x7;
+    vect_t d3_0, d2_1, d7_4, d6_5;
+    vect_t d6_0, d4_2, d4_1, d5_0, d5_3, d7_1, d7_2, d6_3, _cross;
+    fastf_t _x, _y, det, _area = 0.0;
+
+    if (area == NULL || ip == NULL) {
+	return;
+    }
+    RT_CK_DB_INTERNAL(ip);
+    eip = (struct rt_ebm_internal *)ip->idb_ptr;
+    RT_EBM_CK_MAGIC(eip);
+
+    det = fabs(bn_mat_determinant(eip->mat));
+    if (EQUAL(det, 0.0)) {
+	*area = -1.0;
+	return;
+    }
+
+    for (y = 0; y < eip->ydim; y++) {
+	for (x = 0; x < eip->xdim; x++) {
+	    if (BIT(eip, x, y) != 0) {
+		_x = (fastf_t)x;
+		_y = (fastf_t)y;
+		VSET(_x0, _x - 0.5, _y - 0.5, 0.0);
+		VSET(_x1, _x + 0.5, _y - 0.5, 0.0);
+		VSET(_x2, _x - 0.5, _y + 0.5, 0.0);
+		VSET(_x3, _x + 0.5, _y + 0.5, 0.0);
+		VSET(_x4, _x - 0.5, _y - 0.5, eip->tallness);
+		VSET(_x5, _x + 0.5, _y - 0.5, eip->tallness);
+		VSET(_x6, _x - 0.5, _y + 0.5, eip->tallness);
+		VSET(_x7, _x + 0.5, _y + 0.5, eip->tallness);
+		MAT4X3PNT(x0, eip->mat, _x0);
+		MAT4X3PNT(x1, eip->mat, _x1);
+		MAT4X3PNT(x2, eip->mat, _x2);
+		MAT4X3PNT(x3, eip->mat, _x3);
+		MAT4X3PNT(x4, eip->mat, _x4);
+		MAT4X3PNT(x5, eip->mat, _x5);
+		MAT4X3PNT(x6, eip->mat, _x6);
+		MAT4X3PNT(x7, eip->mat, _x7);
+
+		VSUB2(d3_0, x3, x0);
+		VSUB2(d2_1, x2, x1);
+		VSUB2(d7_4, x7, x4);
+		VSUB2(d6_5, x6, x5);
+
+		VCROSS(_cross, d3_0, d2_1);
+		_area += 0.5 * MAGNITUDE(_cross);
+		VCROSS(_cross, d7_4, d6_5);
+		_area += 0.5 * MAGNITUDE(_cross);
+
+		if (BIT(eip, x + 1, y) == 0) {
+		    VSUB2(d5_3, x5, x3);
+		    VSUB2(d7_1, x7, x1);
+		    VCROSS(_cross, d5_3, d7_1);
+		    _area += 0.5 * MAGNITUDE(_cross);
+		}
+		if (BIT(eip, x - 1, y) == 0) {
+		    VSUB2(d6_0, x6, x0);
+		    VSUB2(d4_2, x4, x2);
+		    VCROSS(_cross, d6_0, d4_2);
+		    _area += 0.5 * MAGNITUDE(_cross);
+		}
+		if (BIT(eip, x, y + 1) == 0) {
+		    VSUB2(d7_2, x7, x2);
+		    VSUB2(d6_3, x6, x3);
+		    VCROSS(_cross, d7_2, d6_3);
+		    _area += 0.5 * MAGNITUDE(_cross);
+		}
+		if (BIT(eip, x, y - 1) == 0) {
+		    VSUB2(d4_1, x4, x1);
+		    VSUB2(d5_0, x5, x0);
+		    VCROSS(_cross, d4_1, d5_0);
+		    _area += 0.5 * MAGNITUDE(_cross);
+		}
+	    }
+	}
+    }
+    *area = _area;
+}
+
+
 /** @} */
 /*
  * Local Variables:

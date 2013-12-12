@@ -733,7 +733,7 @@ const struct rt_functab OBJ[] = {
 	rt_ebm_params,
 	rt_ebm_bbox,
 	NULL,
-	NULL,
+	rt_ebm_surf_area,
 	rt_ebm_centroid,
 	NULL,
 	NULL,
