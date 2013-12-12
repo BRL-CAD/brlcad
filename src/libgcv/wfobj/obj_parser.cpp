@@ -59,8 +59,7 @@ static int set_stream(FILE *stream, basic_parser_state<ObjContentsT> &state)
     file_node_type node;
     node.dir = ".";
     node.lineno = 1;
-    node.file = stream;
-    //node.file.reset(stream, no_close());
+    node.file.reset(stream, no_close());
     state.file_stack.push_back(node);
 
     return 0;
@@ -95,8 +94,7 @@ static int open_file(
 	return errno;
     }
 
-    fclose(node.file);
-    //node.file.reset(file, fclose);
+    node.file.reset(file, fclose);
 
     state.file_stack.push_back(node);
 
@@ -211,7 +209,7 @@ int obj_parse(const char *filename, obj_parser_t parser,
 
 	yyscan_t scanner;
 
-	scanner = perplexFileScanner(state.parser_state.file_stack.back().file);
+	scanner = perplexFileScanner(state.parser_state.file_stack.back().file.get());
 	setScannerExtra(scanner, &state);
 
 	state.parser = NULL;
@@ -267,7 +265,7 @@ int obj_fparse(FILE *stream, obj_parser_t parser, obj_contents_t *contents)
 
 	yyscan_t scanner;
 
-	scanner = perplexFileScanner(state.parser_state.file_stack.back().file);
+	scanner = perplexFileScanner(state.parser_state.file_stack.back().file.get());
 	setScannerExtra(scanner, &state);
 
 	state.parser = NULL;

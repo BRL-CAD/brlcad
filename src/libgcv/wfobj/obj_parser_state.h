@@ -35,6 +35,9 @@
 #include <algorithm>
 #include <cstring>
 
+#include <boost/shared_ptr.hpp>
+using boost::shared_ptr;
+
 inline bool operator<(const obj_polygonal_attributes_t &lhs,
 		      const obj_polygonal_attributes_t &rhs)
 {
@@ -282,7 +285,7 @@ struct basic_parser_state {
 	string_type path;
 	string_type dir;
 	std::size_t lineno;
-	FILE *file;
+	shared_ptr<FILE> file;
     };
 
     std::vector<file_node> file_stack;
