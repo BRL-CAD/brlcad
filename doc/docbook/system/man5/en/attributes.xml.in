@@ -71,7 +71,7 @@
 	the value in question get a consistent answer.
   </para>
 
-  <xi:include href="@CMAKE_CURRENT_BINARY_DIR@/attr_std_table.xml" xpointer="std_attr_tbl"/>
+  <xi:include href="./attr_std_table.xml" xpointer="std_attr_tbl"/>
 
   <!-- need a blank line -->
   <literallayout>
@@ -83,7 +83,7 @@
         briefly outline the meaning and purpose of each of them:
   </para>
 
-  <xi:include href="@CMAKE_CURRENT_BINARY_DIR@/attr_std_list.xml" xpointer="std_attr_info"/>
+  <xi:include href="./attr_std_list.xml" xpointer="std_attr_info"/>
 
 </refsection>
 
