@@ -568,11 +568,11 @@ main(int argc, char **argv)
 	height = desc[3] << 8 | desc[2];
 	if (width < 0)
 	    width = 0;
-	if (width > INT_MAX-1)
+	else if (width > INT_MAX-1)
 	    width = INT_MAX-1;
 	if (height < 0)
 	    height = 0;
-	if (height > INT_MAX-1)
+	else if (height > INT_MAX-1)
 	    height = INT_MAX-1;
 
 	M_bit = (desc[4] & 0x80) != 0;
@@ -581,7 +581,7 @@ main(int argc, char **argv)
 	background = desc[5];
 	if (background < 0)
 	    background = 0;
-	if (background > CHAR_MAX)
+	else if (background > CHAR_MAX)
 	    background = CHAR_MAX;
 
 	if (verbose) {
