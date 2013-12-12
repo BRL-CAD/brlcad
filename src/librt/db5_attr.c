@@ -157,6 +157,10 @@ db5_standardize_attribute(const char *attr)
     if (!attr) return ATTR_NULL;
     bu_vls_init(&alias);
     while (db5_attr_std[curr_attr].attr_type != ATTR_NULL) {
+	if (BU_STR_EQUIV(attr, db5_attr_std[curr_attr].name)) {
+	    bu_vls_free(&alias);
+	    return db5_attr_std[curr_attr].attr_type;
+	}
 	curr_pos = db5_attr_std[curr_attr].aliases;
 	while (curr_pos && strlen(curr_pos) > 0) {
 	    next_pos = strchr(curr_pos+1, ',');
