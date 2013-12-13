@@ -1570,30 +1570,35 @@ HIDDEN int
 find_create(char ***argvp, struct db_plan_t **resultplan, struct bu_ptbl *UNUSED(results), int *db_search_isoutput, int quiet)
 {
     OPTION *p;
-    struct db_plan_t *newplan;
+    struct db_plan_t *newplan = NULL;
     char **argv;
     int checkval;
     struct bu_vls name = BU_VLS_INIT_ZERO;
     struct bu_vls value = BU_VLS_INIT_ZERO;
 
+    if (!argvp || !resultplan)
+	return BRLCAD_ERROR;
+
     argv = *argvp;
 
     checkval = string_to_name_and_val(argv[0], &name, &value);
 
-    if ((p = option(bu_vls_addr(&name))) == NULL) {
+    p = option(bu_vls_addr(&name));
+    if (!p) {
 	if (!quiet)
 	    bu_log("%s: unknown option passed to find_create\n", *argv);
 	return BRLCAD_ERROR;
     }
+
     ++argv;
     if (p->flags & (O_ARGV|O_ARGVP) && !*argv) {
 	if (!quiet)
 	    bu_log("%s: requires additional arguments\n", *--argv);
 	return BRLCAD_ERROR;
     }
-    switch(p->flags) {
+
+    switch (p->flags) {
 	case O_NONE:
-	    newplan = NULL;
 	    break;
 	case O_ZERO:
 	    (p->create)(NULL, NULL, 0, &newplan, db_search_isoutput);
@@ -2040,7 +2045,7 @@ db_search_form_plan(char **argv, int quiet) {
      */
     for (plan = tail = NULL; *argv;) {
 	if (find_create(&argv, &newplan, results, &db_search_isoutput, quiet) != BRLCAD_OK) return NULL;
-	if (!(newplan))
+	if (!newplan)
 	    continue;
 	if (plan == NULL)
 	    tail = plan = newplan;
