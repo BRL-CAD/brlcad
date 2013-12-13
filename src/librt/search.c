@@ -1608,38 +1608,39 @@ find_create(char ***argvp, struct db_plan_t **resultplan, struct bu_ptbl *UNUSED
 	    return BRLCAD_OK;
     }
 
-    if (bu_vls_strlen(&value) > 0 && isdigit((int)bu_vls_addr(&value)[0])) {
-	switch (checkval) {
-	    case 1:
-		newplan->min_depth = atol(bu_vls_addr(&value));
-		newplan->max_depth = atol(bu_vls_addr(&value));
-		break;
-	    case 2:
-		newplan->min_depth = atol(bu_vls_addr(&value)) + 1;
-		newplan->max_depth = INT_MAX;
-		break;
-	    case 3:
-		newplan->min_depth = 0;
-		newplan->max_depth = atol(bu_vls_addr(&value)) - 1;
-		break;
-	    case 4:
-		newplan->min_depth = atol(bu_vls_addr(&value));
-		newplan->max_depth = INT_MAX;
-		break;
-	    case 5:
-		newplan->min_depth = 0;
-		newplan->max_depth = atol(bu_vls_addr(&value));
-		break;
-	    default:
-		newplan->min_depth = 0;
-		newplan->max_depth = INT_MAX;
-		break;
+    if (newplan) {
+	if (bu_vls_strlen(&value) > 0 && isdigit((int)bu_vls_addr(&value)[0])) {
+	    switch (checkval) {
+		case 1:
+		    newplan->min_depth = atol(bu_vls_addr(&value));
+		    newplan->max_depth = atol(bu_vls_addr(&value));
+		    break;
+		case 2:
+		    newplan->min_depth = atol(bu_vls_addr(&value)) + 1;
+		    newplan->max_depth = INT_MAX;
+		    break;
+		case 3:
+		    newplan->min_depth = 0;
+		    newplan->max_depth = atol(bu_vls_addr(&value)) - 1;
+		    break;
+		case 4:
+		    newplan->min_depth = atol(bu_vls_addr(&value));
+		    newplan->max_depth = INT_MAX;
+		    break;
+		case 5:
+		    newplan->min_depth = 0;
+		    newplan->max_depth = atol(bu_vls_addr(&value));
+		    break;
+		default:
+		    newplan->min_depth = 0;
+		    newplan->max_depth = INT_MAX;
+		    break;
+	    }
+	} else {
+	    newplan->min_depth = 0;
+	    newplan->max_depth = INT_MAX;
 	}
-    } else {
-	newplan->min_depth = 0;
-	newplan->max_depth = INT_MAX;
     }
-
 
     *argvp = argv;
     (*resultplan) = newplan;
