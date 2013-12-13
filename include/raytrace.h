@@ -8190,6 +8190,48 @@ struct db5_attr_ctype {
 
 extern const struct db5_attr_ctype db5_attr_std[];
 
+/* Container for holding user-registered attributes */
+struct db5_registry{
+    void *internal; /**< @brief implementation-specific container for holding information*/
+};
+
+
+/**
+ * Register a user attribute
+ *
+ * PRIVATE: this is new API and should be considered private for the
+ * time being.
+ */
+RT_EXPORT extern int db5_attr_register(struct db5_registry *registery,
+	                               struct db5_attr_ctype *attribute);
+
+/**
+ * De-register a user attribute
+ *
+ * PRIVATE: this is new API and should be considered private for the
+ * time being.
+ */
+RT_EXPORT extern int db5_attr_deregister(struct db5_registry *registery,
+	                                 struct db5_attr_ctype *attribute);
+
+/**
+ * Look to see if a specific attribute is registered
+ *
+ * PRIVATE: this is new API and should be considered private for the
+ * time being.
+ */
+RT_EXPORT extern struct db5_attr_ctype *db5_attr_get(struct db5_registry *registery,
+	                                             const char *name);
+
+/**
+ * Get an array of pointers to all registered attributes
+ *
+ * PRIVATE: this is new API and should be considered private for the
+ * time being.
+ */
+RT_EXPORT extern struct db5_attr_ctype **db5_attr_dump(struct db5_registry *registery);
+
+
 /**
  * D B 5 _ S T A N D A R D _ A T T R I B U T E
  *
