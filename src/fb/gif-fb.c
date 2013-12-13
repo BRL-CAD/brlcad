@@ -81,8 +81,8 @@
 
 typedef int bool_t;
 
-static bool_t clear = 1;		/* set iff clear to background wanted */
-static bool_t ign_cr = 0;		/* set iff 8-bit color resoln. forced */
+static bool_t clear = 1;		/* set if clear to background wanted */
+static bool_t ign_cr = 0;		/* set if 8-bit color resoln. forced */
 static bool_t verbose = 0;		/* set for GIF-file info printout */
 static bool_t do_zoom = 0;		/* set to zoom framebuffer */
 static int image = 0;		/* # of image to display (0 => all) */
@@ -94,8 +94,8 @@ static int ht;			/* virtual frame buffer height */
 static int width, height;		/* overall "screen" size */
 static int write_width;		/* used width of screen, <= width */
 static int left, top, right, bottom;	/* image boundary */
-static bool_t M_bit;			/* set iff color map provided */
-static bool_t I_bit;			/* set iff image interlaced */
+static bool_t M_bit;			/* set if color map provided */
+static bool_t I_bit;			/* set if image interlaced */
 static int cr;			/* # bits of color resolution */
 static int cr_mask;		/* mask to strip all but high cr bits */
 static int g_pixel;		/* global # bits/pixel in image */
