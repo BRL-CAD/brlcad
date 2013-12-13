@@ -151,7 +151,7 @@ struct buttons {
 
 static mat_t sav_viewrot, sav_toviewcenter;
 static fastf_t sav_vscale;
-static int vsaved = 0;	/* set iff view saved */
+static int vsaved = 0;	/* set if view saved */
 
 extern void color_soltab(void);
 extern void sl_halt_scroll(void);	/* in scroll.c */

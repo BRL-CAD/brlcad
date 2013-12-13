@@ -58,7 +58,7 @@ struct stroke {
     struct coord pixel;	/* starting scan, nib */
     short xsign;	/* 0 or +1 */
     short ysign;	/* -1, 0, or +1 */
-    int ymajor; 	/* true iff Y is major dir. */
+    int ymajor; 	/* true if Y is major dir. */
     short major;	/* major dir delta (nonneg) */
     short minor;	/* minor dir delta (nonneg) */
     short e;		/* DDA error accumulator */
