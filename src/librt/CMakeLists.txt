@@ -38,6 +38,7 @@ set(LIBRT_SOURCES
   cut.c
   db5_alloc.c
   db5_attr.c
+  db5_attr_registry.cpp
   db5_io.c
   db5_scan.c
   db5_types.c

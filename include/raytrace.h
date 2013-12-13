@@ -8195,6 +8195,21 @@ struct db5_registry{
     void *internal; /**< @brief implementation-specific container for holding information*/
 };
 
+/**
+ * Initialize a user attribute registry
+ *
+ * PRIVATE: this is new API and should be considered private for the
+ * time being.
+ */
+RT_EXPORT extern void db5_attr_registry_init(struct db5_registry *registry);
+
+/**
+ * Free a user attribute registry
+ *
+ * PRIVATE: this is new API and should be considered private for the
+ * time being.
+ */
+RT_EXPORT extern void db5_attr_registry_free(struct db5_registry *registry);
 
 /**
  * Register a user attribute
@@ -8202,7 +8217,24 @@ struct db5_registry{
  * PRIVATE: this is new API and should be considered private for the
  * time being.
  */
-RT_EXPORT extern int db5_attr_register(struct db5_registry *registery,
+RT_EXPORT extern int db5_attr_create(struct db5_registry *registry,
+	                             int attr_type,
+				     int is_binary,
+				     int attr_subtype,
+				     const char *name,
+				     const char *description,
+				     const char *examples,
+				     const char *aliases,
+				     const char *property,
+				     const char *long_description);
+
+/**
+ * Register a user attribute
+ *
+ * PRIVATE: this is new API and should be considered private for the
+ * time being.
+ */
+RT_EXPORT extern int db5_attr_register(struct db5_registry *registry,
 	                               struct db5_attr_ctype *attribute);
 
 /**
@@ -8211,8 +8243,8 @@ RT_EXPORT extern int db5_attr_register(struct db5_registry *registery,
  * PRIVATE: this is new API and should be considered private for the
  * time being.
  */
-RT_EXPORT extern int db5_attr_deregister(struct db5_registry *registery,
-	                                 struct db5_attr_ctype *attribute);
+RT_EXPORT extern int db5_attr_deregister(struct db5_registry *registry,
+	                                 const char *name);
 
 /**
  * Look to see if a specific attribute is registered
@@ -8220,7 +8252,7 @@ RT_EXPORT extern int db5_attr_deregister(struct db5_registry *registery,
  * PRIVATE: this is new API and should be considered private for the
  * time being.
  */
-RT_EXPORT extern struct db5_attr_ctype *db5_attr_get(struct db5_registry *registery,
+RT_EXPORT extern struct db5_attr_ctype *db5_attr_get(struct db5_registry *registry,
 	                                             const char *name);
 
 /**
@@ -8229,7 +8261,7 @@ RT_EXPORT extern struct db5_attr_ctype *db5_attr_get(struct db5_registry *regist
  * PRIVATE: this is new API and should be considered private for the
  * time being.
  */
-RT_EXPORT extern struct db5_attr_ctype **db5_attr_dump(struct db5_registry *registery);
+RT_EXPORT extern struct db5_attr_ctype **db5_attr_dump(struct db5_registry *registry);
 
 
 /**
