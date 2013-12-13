@@ -46,11 +46,11 @@ unsigned char buf[MAX_BYTES];
 void
 printusage(int i)
 {
-	bu_log("%s\n", Usage);
-	bu_log("       (No white space immed. after -r; must have at least 1 argument;\n");
-	bu_log("       must re-direct stdout)\n");
-	bu_exit(i,NULL);
+    bu_log("%s\n", Usage);
+    bu_log("  (No whitespace immediately after -r and must redirect output)");
+    bu_exit(i, NULL);
 }
+
 
 int
 main(int argc, char **argv)
