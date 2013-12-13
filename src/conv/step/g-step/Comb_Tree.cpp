@@ -42,6 +42,8 @@ Comb_to_STEP(struct directory *dp, Registry *registry, InstMgr *instance_list, S
     ss << "'" << dp->d_namep << "'";
     std::string str = ss.str();
 
+    STEPcomplex *context = Add_Default_Geometric_Context(registry, instance_list);
+
     // MECHANICAL_CONTEXT
     SdaiMechanical_context *mech_context = (SdaiMechanical_context *)registry->ObjCreate("MECHANICAL_CONTEXT");
     instance_list->Append((STEPentity *)mech_context, completeSE);
@@ -98,10 +100,10 @@ Comb_to_STEP(struct directory *dp, Registry *registry, InstMgr *instance_list, S
     shape_def_rep->definition_(pshape);
 
     // SHAPE_REPRESENTATION
-    SdaiShape_representation*shape_rep = (SdaiShape_representation*)registry->ObjCreate("SHAPE_REPRESENTATION");
+    SdaiShape_representation* shape_rep = (SdaiShape_representation *)Add_Shape_Representation(registry, instance_list, (SdaiRepresentation_context *) context);
     instance_list->Append((STEPentity *)shape_rep, completeSE);
     shape_def_rep->used_representation_(shape_rep);
-
+    shape_rep->name_("''");
 
     (*product) = (STEPentity *)prod_def;
     (*shape) = (STEPentity *)shape_rep;
@@ -164,6 +166,8 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, Registry *registry,
 	    maps->brep_to_step[curr_dp] = brep_product;
 	    maps->brep_to_step_shape[curr_dp] = brep_shape;
 	    bu_log("solid to Brep: %s\n", curr_dp->d_namep);
+	} else {
+	    bu_log("WARNING: No Brep representation for solid %s!\n", curr_dp->d_namep);
 	}
     }
 
@@ -184,7 +188,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, Registry *registry,
 
     /* Find the combs that *are* wrappers, and point them to the product associated with their brep.
      * Change the name of the product, if appropriate */
-    const char *comb_wrapper_search = "-type comb -nnodes 1 -below=1 ! -type comb";
+    const char *comb_wrapper_search = "-type comb -nnodes 1 ! ( -below=1 -type comb )";
     const char *comb_child_search = "-mindepth 1 ! -type comb";
     struct bu_ptbl *comb_wrappers = db_search_path_obj(comb_wrapper_search, dp, wdbp);
     for (int j = (int)BU_PTBL_LEN(comb_wrappers) - 1; j >= 0; j--){
@@ -200,22 +204,26 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, Registry *registry,
 	bu_ptbl_free(comb_child);
 	bu_free(comb_child, "free search result");
 	union tree *curr_node = db_find_named_leaf(comb->tree, child->d_namep);
-	if (!(curr_node->tr_l.tl_mat)) {
-	    std::ostringstream ss;
-	    ss << "'" << curr_dp->d_namep << "'";
-	    std::string str = ss.str();
-	    maps->comb_to_step[curr_dp] = maps->brep_to_step.find(child)->second;
-	    maps->comb_to_step_shape[curr_dp] = maps->brep_to_step_shape.find(child)->second;
-	    bu_log("Comb wrapper: %s\n", curr_dp->d_namep);
-	    ((SdaiProduct_definition *)(maps->comb_to_step[curr_dp]))->formation_()->of_product_()->name_(str.c_str());
-	}else{
-	    STEPentity *comb_shape;
-	    STEPentity *comb_product;
-	    Comb_to_STEP(curr_dp, registry, instance_list, &comb_shape, &comb_product);
-	    maps->comb_to_step[curr_dp] = comb_product;
-	    maps->comb_to_step_shape[curr_dp] = comb_shape;
-	    non_wrapper_combs.insert(curr_dp);
-	    bu_log("Comb non-wrapper (matrix over primitive): %s\n", curr_dp->d_namep);
+	if (curr_node) {
+	    if (!(curr_node->tr_l.tl_mat)) {
+		std::ostringstream ss;
+		ss << "'" << curr_dp->d_namep << "'";
+		std::string str = ss.str();
+		maps->comb_to_step[curr_dp] = maps->brep_to_step.find(child)->second;
+		maps->comb_to_step_shape[curr_dp] = maps->brep_to_step_shape.find(child)->second;
+		bu_log("Comb wrapper: %s\n", curr_dp->d_namep);
+		((SdaiProduct_definition *)(maps->comb_to_step[curr_dp]))->formation_()->of_product_()->name_(str.c_str());
+	    } else {
+		STEPentity *comb_shape;
+		STEPentity *comb_product;
+		Comb_to_STEP(curr_dp, registry, instance_list, &comb_shape, &comb_product);
+		maps->comb_to_step[curr_dp] = comb_product;
+		maps->comb_to_step_shape[curr_dp] = comb_shape;
+		non_wrapper_combs.insert(curr_dp);
+		bu_log("Comb non-wrapper (matrix over primitive): %s\n", curr_dp->d_namep);
+	    }
+	} else {
+	    bu_log("WARNING: db_find_named_leaf could not find %s in the tree of %s\n", child->d_namep, curr_dp->d_namep);
 	}
 	rt_db_free_internal(&comb_intern);
     }
