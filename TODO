@@ -89,6 +89,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* Translate the poly2tri routines into libbn C code
+
+* Implement Shamos-Hoey test for checking whether a polygon is simple
+  in libbn: http://geomalgorithms.com/a09-_intersect-3.html
+
 * figure out what in f_matpick (or possibly some other related function)
   is causing ipathpos to get incremented to a number larger than the
   number of objects in the full path its supposed to be referencing.
