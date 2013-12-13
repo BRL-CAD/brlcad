@@ -24,7 +24,7 @@
  *
  * Parsing is done using the obj_parse() or obj_fparse() functions, which take
  * an input, a parser handle, and an obj_contents_t to return the parsed file
- * contents in.
+ * contents in.  These functions are not thread-safe.
  */
 
 #include "common.h"
@@ -45,9 +45,6 @@ namespace cad {
 namespace gcv {
 namespace obj {
 
-struct no_close {
-    void operator()(FILE*) {}
-};
 
 template<typename ObjContentsT>
 static int set_stream(FILE *stream, basic_parser_state<ObjContentsT> &state)
@@ -60,7 +57,6 @@ static int set_stream(FILE *stream, basic_parser_state<ObjContentsT> &state)
     node.dir = ".";
     node.lineno = 1;
     node.file = stream;
-    //node.file.reset(stream, no_close());
     state.file_stack.push_back(node);
 
     return 0;
@@ -78,6 +74,7 @@ static int open_file(
 
     file_node_type node;
     node.path = filename;
+    node.file = NULL;
 
     typename string_type::size_type loc = filename.find_last_of('/');
 
@@ -95,9 +92,7 @@ static int open_file(
 	return errno;
     }
 
-    fclose(node.file);
-    //node.file.reset(file, fclose);
-
+    node.file = file;
     state.file_stack.push_back(node);
 
     return 0;
@@ -223,6 +218,9 @@ int obj_parse(const char *filename, obj_parser_t parser,
 
 	destroyParser(&(state.parser));
 	destroyScanner(&scanner);
+
+	// FIXME: need to de-register the FILE* we created
+	// fclose(state.parser_state.file_stack.back().file);
 
 	if (err == 2) {
 	    return ENOMEM;
