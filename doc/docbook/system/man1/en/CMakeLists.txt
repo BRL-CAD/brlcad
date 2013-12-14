@@ -237,6 +237,7 @@ set(docbook_man1_EN
   vdeck.xml
   viewpoint-g.xml
   wavelet.xml
+  wdb_example.xml
   )
 
 # Some DocBook man pages generate multiple output files, if they
