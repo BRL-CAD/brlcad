@@ -20,6 +20,10 @@
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
     <command>saveview</command>
+    <arg choice="opt" rep="norepeat">-e <replaceable>command</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-l <replaceable>logfile</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-o <replaceable>outputfile</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-e <replaceable>inputfile</replaceable></arg>
     <arg choice="req" rep="norepeat"><replaceable>file</replaceable></arg>
     <arg choice="opt" rep="norepeat"><replaceable>args</replaceable></arg>
   </cmdsynopsis>
@@ -61,6 +65,35 @@ EOF
 <para>Related MGED commands are <command>preview</command>, for viewing the effects of an entire animation
 	script, and <command>savekey</command>.  Related BRL-CAD programs are <emphasis>tabsub</emphasis> and 	<emphasis>tabinterp</emphasis>.
 </para>
+
+<para> The following options are valid for this command:
+</para>
+<variablelist>
+  <varlistentry><term><emphasis>-e command</emphasis></term>
+	<listitem>
+	  <para>Makes the script run the specified <emphasis>command</emphasis> instead of the default of rt
+      </para>
+	</listitem>
+  </varlistentry>
+  <varlistentry><term><emphasis>-l logfile</emphasis></term>
+	<listitem>
+	  <para>Makes the script direct log output to the specified <emphasis>logfile</emphasis> instead of to the default of <emphasis>file</emphasis>.log (<emphasis>file</emphasis> is the inputfile basename).
+      </para>
+	</listitem>
+  </varlistentry>
+  <varlistentry><term><emphasis>-o outputfile</emphasis></term>
+	<listitem>
+	  <para>Makes the script output the image to the specified <emphasis>outputfile</emphasis> instead of to the default of <emphasis>file</emphasis>.pix (<emphasis>file</emphasis> is the inputfile basename).
+      </para>
+	</listitem>
+  </varlistentry>
+  <varlistentry><term><emphasis>-i inputfile</emphasis></term>
+	<listitem>
+	  <para>Makes the script load data from <emphasis>inputfile</emphasis> instead of from the default of the currently opened database.
+      </para>
+	</listitem>
+  </varlistentry>
+</variablelist>
 </refsection>
 
 <refsection xml:id="examples"><title>EXAMPLES</title>
