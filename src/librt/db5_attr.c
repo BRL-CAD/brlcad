@@ -117,7 +117,7 @@ const struct db5_attr_ctype db5_attr_std[] = {
 	"a binary time stamp for an object's last mod time (the time is displayed in human-readable form with the 'attr' command)",
 
 	"", /* examples */
-	"timestamp,time_stamp,modtime,mod_time",  /* aliases, if any */
+	"timestamp,time_stamp,modtime,mod_time,mtime",  /* aliases, if any */
 	"Time Stamp",  /* property, if any */
 	/* long_description, if any: */
 	""
