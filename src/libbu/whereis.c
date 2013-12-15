@@ -51,8 +51,9 @@ bu_whereis(const char *cmd)
     static const char *gotpath = NULL;
     char PATH[MAXPATHENV];
 
-    const char *directory = NULL;
+    char *directory = NULL;
     char *position = NULL;
+    char curr_dir[] = ".";
 
     if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	bu_log("bu_whereis: [%s]\n", cmd);
@@ -105,12 +106,13 @@ bu_whereis(const char *cmd)
     do {
 	position = strchr(directory, BU_PATH_SEPARATOR);
 	if (position) {
+	    /* 'directory' can't be const because we have to change a character here: */
 	    *position = '\0';
 	}
 
 	/* empty means use current dir */
 	if (strlen(directory) == 0) {
-	    directory = ".";
+	    directory = curr_dir; /* "."; */
 	}
 
 	snprintf(bu_whereis_result, MAXPATHLEN, "%s/%s", directory, cmd);
