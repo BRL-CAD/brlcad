@@ -1393,6 +1393,10 @@ analyze_do(struct ged *gedp, const struct rt_db_internal *ip)
 	    analyze_general(gedp, ip);
 	    break;
 
+	case ID_VOL:
+	    analyze_general(gedp, ip);
+	    break;
+
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "\nanalyze: unable to process %s solid\n",
 			  OBJ[ip->idb_type].ft_name);
