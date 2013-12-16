@@ -11,7 +11,7 @@
     <refnamediv xml:id="name">
         <refname>wdb_example</refname>
         <refpurpose>creates a BRL-CAD geometry database from C code</refpurpose>
-    </refnamediv> 
+    </refnamediv>
     <!-- body begins here -->
     <refsynopsisdiv xml:id="synopsis">
         <cmdsynopsis sepchar=" ">
@@ -36,7 +36,7 @@
             <emphasis remap="I">db.g</emphasis>
         </para>
     </refsect1>
-    
+
     <refsect1 xml:id="see_also">
         <title>SEE ALSO</title>
         <para>
@@ -46,7 +46,7 @@
             </citerefentry>
         </para>
     </refsect1>
-    
+
     <refsect1 xml:id="author">
         <title>AUTHORS</title>
         <para>BRL-CAD Team</para>
