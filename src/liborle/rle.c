@@ -137,7 +137,7 @@ static Xtnd_Rle_Header w_setup;	/* Header being written out.	*/
 static Xtnd_Rle_Header r_setup;	/* Header being read in.	*/
 
 /* Functions to read instructions, depending on format.			*/
-HIDDEN int (*_func_Get_Inst)();	/* Ptr to appropriate function.	*/
+HIDDEN int (*_func_Get_Inst)(FILE *, int *, int *);	/* Ptr to appropriate function.	*/
 
 
 void
@@ -187,7 +187,7 @@ rle_wpos(int xpos, int ypos, int mode)
 }
 
 HIDDEN int
-_get_Old_Inst(register FILE *fp, register int *op, register int *dat)
+_get_Old_Inst(FILE *fp, int *op, int *dat)
 {
     static Old_Inst instruction;
     register char *p;
@@ -207,7 +207,7 @@ _get_Old_Inst(register FILE *fp, register int *op, register int *dat)
 }
 
 HIDDEN int
-_get_New_Inst(register FILE *fp, register int *opcode, register int *datum)
+_get_New_Inst(FILE *fp, int *opcode, int *datum)
 {
     static short long_data;
 
@@ -570,7 +570,7 @@ rle_decode_ln(register FILE *fp, RLEpixel *scan_buf)
 	return dirty_flag;
     }
     pp = scan_buf[r_setup.h_xpos]; /* Pointer into pixel. */
-    while ((*_func_Get_Inst)(fp, &opcode, &datum) != EOF) {
+    while (_func_Get_Inst(fp, &opcode, &datum) != EOF) {
 	switch (opcode) {
 	    case RSkipLinesOp :
 		lines_to_skip = datum;
