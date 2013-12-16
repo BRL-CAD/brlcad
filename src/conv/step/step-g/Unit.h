@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef UNIT_H_
-#define UNIT_H_
+#ifndef CONV_STEP_STEP_G_UNIT_H
+#define CONV_STEP_STEP_G_UNIT_H
 
 #include "STEPEntity.h"
 
@@ -48,7 +48,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* UNIT_H_ */
+#endif /* CONV_STEP_STEP_G_UNIT_H */
 
 /*
  * Local Variables:

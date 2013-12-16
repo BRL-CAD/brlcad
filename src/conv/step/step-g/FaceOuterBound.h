@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef FACEOUTERBOUND_H_
-#define FACEOUTERBOUND_H_
+#ifndef CONV_STEP_STEP_G_FACEOUTERBOUND_H
+#define CONV_STEP_STEP_G_FACEOUTERBOUND_H
 
 #include "FaceBound.h"
 
@@ -49,7 +49,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* FACEOUTERBOUND_H_ */
+#endif /* CONV_STEP_STEP_G_FACEOUTERBOUND_H */
 
 /*
  * Local Variables:

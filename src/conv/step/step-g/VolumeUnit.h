@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef VOLUMEUNIT_H_
-#define VOLUMEUNIT_H_
+#ifndef CONV_STEP_STEP_G_VOLUMEUNIT_H
+#define CONV_STEP_STEP_G_VOLUMEUNIT_H
 
 #include "NamedUnit.h"
 
@@ -48,7 +48,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* VOLUMEUNIT_H_ */
+#endif /* CONV_STEP_STEP_G_VOLUMEUNIT_H */
 
 /*
  * Local Variables:

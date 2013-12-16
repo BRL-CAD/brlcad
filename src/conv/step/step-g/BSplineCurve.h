@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef BSPLINECURVE_H_
-#define BSPLINECURVE_H_
+#ifndef CONV_STEP_STEP_G_BSPLINECURVE_H
+#define CONV_STEP_STEP_G_BSPLINECURVE_H
 
 #include "BoundedCurve.h"
 
@@ -62,7 +62,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* BSPLINECURVE_H_ */
+#endif /* CONV_STEP_STEP_G_BSPLINECURVE_H */
 
 /*
  * Local Variables:

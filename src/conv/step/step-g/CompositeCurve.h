@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef COMPOSITECURVE_H_
-#define COMPOSITECURVE_H_
+#ifndef CONV_STEP_STEP_G_COMPOSITECURVE_H
+#define CONV_STEP_STEP_G_COMPOSITECURVE_H
 
 #include "BoundedCurve.h"
 
@@ -55,7 +55,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* COMPOSITECURVE_H_ */
+#endif /* CONV_STEP_STEP_G_COMPOSITECURVE_H */
 
 /*
  * Local Variables:

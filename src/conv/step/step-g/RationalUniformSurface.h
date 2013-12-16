@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef RATIONALUNIFORMSURFACE_H_
-#define RATIONALUNIFORMSURFACE_H_
+#ifndef CONV_STEP_STEP_G_RATIONALUNIFORMSURFACE_H
+#define CONV_STEP_STEP_G_RATIONALUNIFORMSURFACE_H
 
 #include "RationalBSplineSurface.h"
 #include "UniformSurface.h"
@@ -50,7 +50,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* RATIONALUNIFORMSURFACE_H_ */
+#endif /* CONV_STEP_STEP_G_RATIONALUNIFORMSURFACE_H */
 
 /*
  * Local Variables:

@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef SOLIDANGLESIUNIT_H_
-#define SOLIDANGLESIUNIT_H_
+#ifndef CONV_STEP_STEP_G_SOLIDANGLESIUNIT_H
+#define CONV_STEP_STEP_G_SOLIDANGLESIUNIT_H
 
 #include "SolidAngleUnit.h"
 #include "SiUnit.h"
@@ -49,7 +49,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* SOLIDANGLESIUNIT_H_ */
+#endif /* CONV_STEP_STEP_G_SOLIDANGLESIUNIT_H */
 
 /*
  * Local Variables:

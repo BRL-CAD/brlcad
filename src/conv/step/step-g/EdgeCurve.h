@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef EDGECURVE_H_
-#define EDGECURVE_H_
+#ifndef CONV_STEP_STEP_G_EDGECURVE_H
+#define CONV_STEP_STEP_G_EDGECURVE_H
 
 #include "Edge.h"
 #include "GeometricRepresentationItem.h"
@@ -54,7 +54,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* EDGECURVE_H_ */
+#endif /* CONV_STEP_STEP_G_EDGECURVE_H */
 
 /*
  * Local Variables:

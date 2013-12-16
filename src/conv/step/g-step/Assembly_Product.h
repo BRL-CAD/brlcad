@@ -21,8 +21,8 @@
  *
  */
 
-#ifndef ASSEMBLY_PRODUCT_H_
-#define ASSEMBLY_PRODUCT_H_
+#ifndef CONV_STEP_G_STEP_ASSEMBLY_PRODUCT_H
+#define CONV_STEP_G_STEP_ASSEMBLY_PRODUCT_H
 
 #include "common.h"
 #include <map>
@@ -35,7 +35,7 @@ void Add_Assembly_Product(struct directory *dp,
 				 Registry *registry,
 				 InstMgr *instance_list);
 
-#endif /* ASSEMBLY_PRODUCT_H_ */
+#endif /* CONV_STEP_G_STEP_ASSEMBLY_PRODUCT_H */
 /*
  * Local Variables:
  * tab-width: 8

@@ -21,8 +21,8 @@
  *
  */
 
-#ifndef COMB_TREE_H_
-#define COMB_TREE_H_
+#ifndef CONV_STEP_G_STEP_COMB_TREE_H
+#define CONV_STEP_G_STEP_COMB_TREE_H
 
 #include "common.h"
 #include <map>
@@ -40,7 +40,7 @@ STEPentity *Comb_Tree_to_STEP(struct directory *dp,
                               Registry *registry,
                               InstMgr *instance_list);
 
-#endif /* COMB_TREE_H_ */
+#endif /* CONV_STEP_G_STEP_COMB_TREE_H */
 /*
  * Local Variables:
  * tab-width: 8

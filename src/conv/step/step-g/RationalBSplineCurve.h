@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef RATIONALBSPLINECURVE_H_
-#define RATIONALBSPLINECURVE_H_
+#ifndef CONV_STEP_STEP_G_RATIONALBSPLINECURVE_H
+#define CONV_STEP_STEP_G_RATIONALBSPLINECURVE_H
 
 #include "BSplineCurve.h"
 
@@ -52,7 +52,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* RATIONALBSPLINECURVE_H_ */
+#endif /* CONV_STEP_STEP_G_RATIONALBSPLINECURVE_H */
 
 /*
  * Local Variables:

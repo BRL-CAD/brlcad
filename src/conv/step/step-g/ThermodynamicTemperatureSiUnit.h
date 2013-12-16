@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef THERMODYNAMICTEMPERATURESIUNIT_H_
-#define THERMODYNAMICTEMPERATURESIUNIT_H_
+#ifndef CONV_STEP_STEP_G_THERMODYNAMICTEMPERATURESIUNIT_H
+#define CONV_STEP_STEP_G_THERMODYNAMICTEMPERATURESIUNIT_H
 
 #include "ThermodynamicTemperatureUnit.h"
 #include "SiUnit.h"
@@ -49,7 +49,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* THERMODYNAMICTEMPERATURESIUNIT_H_ */
+#endif /* CONV_STEP_STEP_G_THERMODYNAMICTEMPERATURESIUNIT_H */
 
 /*
  * Local Variables:

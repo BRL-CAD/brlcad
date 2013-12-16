@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef RATIONALBSPLINESURFACE_H_
-#define RATIONALBSPLINESURFACE_H_
+#ifndef CONV_STEP_STEP_G_RATIONALBSPLINESURFACE_H
+#define CONV_STEP_STEP_G_RATIONALBSPLINESURFACE_H
 
 #include "BSplineSurface.h"
 
@@ -52,7 +52,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* RATIONALBSPLINESURFACE_H_ */
+#endif /* CONV_STEP_STEP_G_RATIONALBSPLINESURFACE_H */
 
 /*
  * Local Variables:

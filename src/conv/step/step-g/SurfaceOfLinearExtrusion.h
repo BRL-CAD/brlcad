@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef SURFACE_OF_LINEAR_EXTRUSION_H_
-#define SURFACE_OF_LINEAR_EXTRUSION_H_
+#ifndef CONV_STEP_STEP_G_SURFACEOFLINEAREXTRUSION_H
+#define CONV_STEP_STEP_G_SURFACEOFLINEAREXTRUSION_H
 
 #include "SweptSurface.h"
 
@@ -53,7 +53,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* SURFACE_OF_LINEAR_EXTRUSION_H_ */
+#endif /* CONV_STEP_STEP_G_SURFACEOFLINEAREXTRUSION_H */
 
 /*
  * Local Variables:

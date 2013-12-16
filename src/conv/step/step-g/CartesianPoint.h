@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef CARTESIANPOINT_H_
-#define CARTESIANPOINT_H_
+#ifndef CONV_STEP_STEP_G_CARTESIANPOINT_H
+#define CONV_STEP_STEP_G_CARTESIANPOINT_H
 
 #include "Point.h"
 
@@ -67,7 +67,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* CARTESIANPOINT_H_ */
+#endif /* CONV_STEP_STEP_G_CARTESIANPOINT_H */
 
 /*
  * Local Variables:

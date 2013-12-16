@@ -18,8 +18,8 @@
  * information.
  */
 
-#ifndef STEPENTITY_H_
-#define STEPENTITY_H_
+#ifndef CONV_STEP_STEP_G_STEPENTITY_H
+#define CONV_STEP_STEP_G_STEPENTITY_H
 
 #include "common.h"
 
@@ -79,7 +79,7 @@ public:
 };
 
 
-#endif /* STEPENTITY_H_ */
+#endif /* CONV_STEP_STEP_G_STEPENTITY_H */
 
 /*
  * Local Variables:

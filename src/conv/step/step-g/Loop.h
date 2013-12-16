@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef LOOP_H_
-#define LOOP_H_
+#ifndef CONV_STEP_STEP_G_LOOP_H
+#define CONV_STEP_STEP_G_LOOP_H
 
 #include "TopologicalRepresentationItem.h"
 
@@ -57,7 +57,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* LOOP_H_ */
+#endif /* CONV_STEP_STEP_G_LOOP_H */
 
 /*
  * Local Variables:

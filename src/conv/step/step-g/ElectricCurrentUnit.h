@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef ELECTRICCURRENTUNIT_H_
-#define ELECTRICCURRENTUNIT_H_
+#ifndef CONV_STEP_STEP_G_ELECTRICCURRENTUNIT_H
+#define CONV_STEP_STEP_G_ELECTRICCURRENTUNIT_H
 
 #include "NamedUnit.h"
 
@@ -48,7 +48,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* ELECTRICCURRENTUNIT_H_ */
+#endif /* CONV_STEP_STEP_G_ELECTRICCURRENTUNIT_H */
 
 /*
  * Local Variables:

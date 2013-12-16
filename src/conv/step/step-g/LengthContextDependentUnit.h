@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef LENGTHCONTEXTDEPENDENTUNIT_H_
-#define LENGTHCONTEXTDEPENDENTUNIT_H_
+#ifndef CONV_STEP_STEP_G_LENGTHCONTEXTDEPENDENTUNIT_H
+#define CONV_STEP_STEP_G_LENGTHCONTEXTDEPENDENTUNIT_H
 
 #include "LengthUnit.h"
 #include "ContextDependentUnit.h"
@@ -49,7 +49,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* LENGTHCONTEXTDEPENDENTUNIT_H_ */
+#endif /* CONV_STEP_STEP_G_LENGTHCONTEXTDEPENDENTUNIT_H */
 
 /*
  * Local Variables:

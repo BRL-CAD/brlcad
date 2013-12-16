@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef LENGTH_MEASURE_WITH_UNIT_H_
-#define LENGTH_MEASURE_WITH_UNIT_H_
+#ifndef CONV_STEP_STEP_G_LENGTHMEASUREWITHUNIT_H
+#define CONV_STEP_STEP_G_LENGTHMEASUREWITHUNIT_H
 
 #include "MeasureWithUnit.h"
 
@@ -48,7 +48,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* LENGTH_MEASURE_WITH_UNIT_H_ */
+#endif /* CONV_STEP_STEP_G_LENGTHMEASUREWITHUNIT_H */
 
 /*
  * Local Variables:

@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef VOLUMECONVERSIONBASEDUNIT_H_
-#define VOLUMECONVERSIONBASEDUNIT_H_
+#ifndef CONV_STEP_STEP_G_VOLUMECONVERSIONBASEDUNIT_H
+#define CONV_STEP_STEP_G_VOLUMECONVERSIONBASEDUNIT_H
 
 #include "VolumeUnit.h"
 #include "ConversionBasedUnit.h"
@@ -49,7 +49,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* VOLUMECONVERSIONBASEDUNIT_H_ */
+#endif /* CONV_STEP_STEP_G_VOLUMECONVERSIONBASEDUNIT_H */
 
 /*
  * Local Variables:

@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef MECHANICAL_CONTEXT_H_
-#define MECHANICAL_CONTEXT_H_
+#ifndef CONV_STEP_STEP_G_MECHANICALCONTEXT_H
+#define CONV_STEP_STEP_G_MECHANICALCONTEXT_H
 
 #include "ProductContext.h"
 
@@ -48,7 +48,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* MECHANICAL_CONTEXT_H_ */
+#endif /* CONV_STEP_STEP_G_MECHANICALCONTEXT_H */
 
 /*
  * Local Variables:

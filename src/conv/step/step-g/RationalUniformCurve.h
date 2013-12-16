@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef RATIONALUNIFORMCURVE_H_
-#define RATIONALUNIFORMCURVE_H_
+#ifndef CONV_STEP_STEP_G_RATIONALUNIFORMCURVE_H
+#define CONV_STEP_STEP_G_RATIONALUNIFORMCURVE_H
 
 #include "RationalBSplineCurve.h"
 #include "UniformCurve.h"
@@ -50,7 +50,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* RATIONALUNIFORMCURVE_H_ */
+#endif /* CONV_STEP_STEP_G_RATIONALUNIFORMCURVE_H */
 
 /*
  * Local Variables:

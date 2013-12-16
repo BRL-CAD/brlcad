@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef SURFACE_PATCH_H_
-#define SURFACE_PATCH_H_
+#ifndef CONV_STEP_STEP_G_SURFACEPATCH_H
+#define CONV_STEP_STEP_G_SURFACEPATCH_H
 
 #include "FoundedItem.h"
 
@@ -56,7 +56,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* SURFACE_PATCH_H_ */
+#endif /* CONV_STEP_STEP_G_SURFACEPATCH_H */
 
 /*
  * Local Variables:

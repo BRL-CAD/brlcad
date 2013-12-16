@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef RATIOUNIT_H_
-#define RATIOUNIT_H_
+#ifndef CONV_STEP_STEP_G_RATIOUNIT_H
+#define CONV_STEP_STEP_G_RATIOUNIT_H
 
 #include "NamedUnit.h"
 
@@ -48,7 +48,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* RATIOUNIT_H_ */
+#endif /* CONV_STEP_STEP_G_RATIOUNIT_H */
 
 /*
  * Local Variables:

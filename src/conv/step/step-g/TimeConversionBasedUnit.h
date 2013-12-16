@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef TIMECONVERSIONBASEDUNIT_H_
-#define TIMECONVERSIONBASEDUNIT_H_
+#ifndef CONV_STEP_STEP_G_TIMECONVERSIONBASEDUNIT_H
+#define CONV_STEP_STEP_G_TIMECONVERSIONBASEDUNIT_H
 
 #include "TimeUnit.h"
 #include "ConversionBasedUnit.h"
@@ -49,7 +49,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* TIMECONVERSIONBASEDUNIT_H_ */
+#endif /* CONV_STEP_STEP_G_TIMECONVERSIONBASEDUNIT_H */
 
 /*
  * Local Variables:

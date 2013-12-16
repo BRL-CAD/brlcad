@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef ELLIPSE_H_
-#define ELLIPSE_H_
+#ifndef CONV_STEP_STEP_G_ELLIPSE_H
+#define CONV_STEP_STEP_G_ELLIPSE_H
 
 #include "Conic.h"
 
@@ -59,7 +59,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* ELLIPSE_H_ */
+#endif /* CONV_STEP_STEP_G_ELLIPSE_H */
 
 /*
  * Local Variables:

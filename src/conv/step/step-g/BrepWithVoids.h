@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef BREPWITHVOIDS_H_
-#define BREPWITHVOIDS_H_
+#ifndef CONV_STEP_STEP_G_BREPWITHVOIDS_H
+#define CONV_STEP_STEP_G_BREPWITHVOIDS_H
 
 #include "ManifoldSolidBrep.h"
 
@@ -57,7 +57,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* BREPWITHVOIDS_H_ */
+#endif /* CONV_STEP_STEP_G_BREPWITHVOIDS_H */
 
 /*
  * Local Variables:

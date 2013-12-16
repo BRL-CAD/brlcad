@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef NAMEDUNIT_H_
-#define NAMEDUNIT_H_
+#ifndef CONV_STEP_STEP_G_NAMEDUNIT_H
+#define CONV_STEP_STEP_G_NAMEDUNIT_H
 
 #include "Unit.h"
 
@@ -51,7 +51,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* NAMEDUNIT_H_ */
+#endif /* CONV_STEP_STEP_G_NAMEDUNIT_H */
 
 /*
  * Local Variables:

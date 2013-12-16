@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef RATIOCONTEXTDEPENDENTUNIT_H_
-#define RATIOCONTEXTDEPENDENTUNIT_H_
+#ifndef CONV_STEP_STEP_G_RATIOCONTEXTDEPENDENTUNIT_H
+#define CONV_STEP_STEP_G_RATIOCONTEXTDEPENDENTUNIT_H
 
 #include "RatioUnit.h"
 #include "ContextDependentUnit.h"
@@ -49,7 +49,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* RATIOCONTEXTDEPENDENTUNIT_H_ */
+#endif /* CONV_STEP_STEP_G_RATIOCONTEXTDEPENDENTUNIT_H */
 
 /*
  * Local Variables:

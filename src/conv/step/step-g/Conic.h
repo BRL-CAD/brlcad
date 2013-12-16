@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef CONIC_H_
-#define CONIC_H_
+#ifndef CONV_STEP_STEP_G_CONIC_H
+#define CONV_STEP_STEP_G_CONIC_H
 
 #include "Curve.h"
 
@@ -73,7 +73,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* CONIC_H_ */
+#endif /* CONV_STEP_STEP_G_CONIC_H */
 
 /*
  * Local Variables:

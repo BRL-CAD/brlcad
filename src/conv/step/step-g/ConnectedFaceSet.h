@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef CONNECTEDFACESET_H_
-#define CONNECTEDFACESET_H_
+#ifndef CONV_STEP_STEP_G_CONNECTEDFACESET_H
+#define CONV_STEP_STEP_G_CONNECTEDFACESET_H
 
 #include "TopologicalRepresentationItem.h"
 
@@ -55,7 +55,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* CONNECTEDFACESET_H_ */
+#endif /* CONV_STEP_STEP_G_CONNECTEDFACESET_H */
 
 /*
  * Local Variables:

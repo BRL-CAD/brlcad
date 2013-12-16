@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef QUASIUNIFORMCURVE_H_
-#define QUASIUNIFORMCURVE_H_
+#ifndef CONV_STEP_STEP_G_QUASIUNIFORMCURVE_H
+#define CONV_STEP_STEP_G_QUASIUNIFORMCURVE_H
 
 #include "BSplineCurve.h"
 
@@ -49,7 +49,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* QUASIUNIFORMCURVE_H_ */
+#endif /* CONV_STEP_STEP_G_QUASIUNIFORMCURVE_H */
 
 /*
  * Local Variables:

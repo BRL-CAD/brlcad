@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef FACEBOUND_H_
-#define FACEBOUND_H_
+#ifndef CONV_STEP_STEP_G_FACEBOUND_H
+#define CONV_STEP_STEP_G_FACEBOUND_H
 
 #include "TopologicalRepresentationItem.h"
 
@@ -76,7 +76,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* FACEBOUND_H_ */
+#endif /* CONV_STEP_STEP_G_FACEBOUND_H */
 
 /*
  * Local Variables:

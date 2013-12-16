@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef TIMEUNIT_H_
-#define TIMEUNIT_H_
+#ifndef CONV_STEP_STEP_G_TIMEUNIT_H
+#define CONV_STEP_STEP_G_TIMEUNIT_H
 
 #include "NamedUnit.h"
 
@@ -48,7 +48,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* TIMEUNIT_H_ */
+#endif /* CONV_STEP_STEP_G_TIMEUNIT_H */
 
 /*
  * Local Variables:

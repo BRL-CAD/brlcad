@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef MANIFOLDSOLIDBREP_H_
-#define MANIFOLDSOLIDBREP_H_
+#ifndef CONV_STEP_STEP_G_MANIFOLDSOLIDBREP_H
+#define CONV_STEP_STEP_G_MANIFOLDSOLIDBREP_H
 
 #include "SolidModel.h"
 
@@ -55,7 +55,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* MANIFOLDSOLIDBREP_H_ */
+#endif /* CONV_STEP_STEP_G_MANIFOLDSOLIDBREP_H */
 
 /*
  * Local Variables:

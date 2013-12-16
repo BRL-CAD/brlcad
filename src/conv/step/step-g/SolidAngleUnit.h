@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef SOLIDANGLEUNIT_H_
-#define SOLIDANGLEUNIT_H_
+#ifndef CONV_STEP_STEP_G_SOLIDANGLEUNIT_H
+#define CONV_STEP_STEP_G_SOLIDANGLEUNIT_H
 
 #include "NamedUnit.h"
 
@@ -48,7 +48,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* SOLIDANGLEUNIT_H_ */
+#endif /* CONV_STEP_STEP_G_SOLIDANGLEUNIT_H */
 
 /*
  * Local Variables:

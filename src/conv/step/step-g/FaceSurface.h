@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef FACESURFACE_H_
-#define FACESURFACE_H_
+#ifndef CONV_STEP_STEP_G_FACESURFACE_H
+#define CONV_STEP_STEP_G_FACESURFACE_H
 
 #include "Face.h"
 #include "GeometricRepresentationItem.h"
@@ -57,7 +57,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* FACESURFACE_H_ */
+#endif /* CONV_STEP_STEP_G_FACESURFACE_H */
 
 /*
  * Local Variables:

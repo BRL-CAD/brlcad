@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef RATIONALBEZIERSURFACE_H_
-#define RATIONALBEZIERSURFACE_H_
+#ifndef CONV_STEP_STEP_G_RATIONALBEZIERSURFACE_H
+#define CONV_STEP_STEP_G_RATIONALBEZIERSURFACE_H
 
 #include "RationalBSplineSurface.h"
 #include "BezierSurface.h"
@@ -50,7 +50,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* RATIONALBEZIERSURFACE_H_ */
+#endif /* CONV_STEP_STEP_G_RATIONALBEZIERSURFACE_H */
 
 /*
  * Local Variables:

@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef FACE_H_
-#define FACE_H_
+#ifndef CONV_STEP_STEP_G_FACE_H
+#define CONV_STEP_STEP_G_FACE_H
 
 #include "common.h"
 
@@ -62,7 +62,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* FACE_H_ */
+#endif /* CONV_STEP_STEP_G_FACE_H */
 
 /*
  * Local Variables:

@@ -23,8 +23,8 @@
  * structures.
  *
  */
-#ifndef SHAPEREPRESENTATION_H_
-#define SHAPEREPRESENTATION_H_
+#ifndef CONV_STEP_STEP_G_SHAPEREPRESENTATION_H
+#define CONV_STEP_STEP_G_SHAPEREPRESENTATION_H
 
 #include "common.h"
 
@@ -57,7 +57,7 @@ public:
 };
 
 
-#endif /* SHAPEREPRESENTATION_H_ */
+#endif /* CONV_STEP_STEP_G_SHAPEREPRESENTATION_H */
 
 /*
  * Local Variables:

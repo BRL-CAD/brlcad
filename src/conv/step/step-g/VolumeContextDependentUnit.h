@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef VOLUMECONTEXTDEPENDENTUNIT_H_
-#define VOLUMECONTEXTDEPENDENTUNIT_H_
+#ifndef CONV_STEP_STEP_G_VOLUMECONTEXTDEPENDENTUNIT_H
+#define CONV_STEP_STEP_G_VOLUMECONTEXTDEPENDENTUNIT_H
 
 #include "VolumeUnit.h"
 #include "ContextDependentUnit.h"
@@ -49,7 +49,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* VOLUMECONTEXTDEPENDENTUNIT_H_ */
+#endif /* CONV_STEP_STEP_G_VOLUMECONTEXTDEPENDENTUNIT_H */
 
 /*
  * Local Variables:

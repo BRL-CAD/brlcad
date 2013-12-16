@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef TRIMMINGSELECT_H_
-#define TRIMMINGSELECT_H_
+#ifndef CONV_STEP_STEP_G_TRIMMINGSELECT_H
+#define CONV_STEP_STEP_G_TRIMMINGSELECT_H
 
 #include "STEPEntity.h"
 
@@ -63,7 +63,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* TRIMMINGSELECT_H_ */
+#endif /* CONV_STEP_STEP_G_TRIMMINGSELECT_H */
 
 /*
  * Local Variables:

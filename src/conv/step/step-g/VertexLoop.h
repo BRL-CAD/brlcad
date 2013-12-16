@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef VERTEX_LOOP_H_
-#define VERTEX_LOOP_H_
+#ifndef CONV_STEP_STEP_G_VERTEXLOOP_H
+#define CONV_STEP_STEP_G_VERTEXLOOP_H
 
 #include "Loop.h"
 
@@ -54,7 +54,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* VERTEX_LOOP_H_ */
+#endif /* CONV_STEP_STEP_G_VERTEXLOOP_H */
 
 /*
  * Local Variables:

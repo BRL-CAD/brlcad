@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef PCURVEORSURFACE_H_
-#define PCURVEORSURFACE_H_
+#ifndef CONV_STEP_STEP_G_PCURVEORSURFACE_H
+#define CONV_STEP_STEP_G_PCURVEORSURFACE_H
 
 #include "STEPEntity.h"
 
@@ -61,7 +61,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* PCURVEORSURFACE_H_ */
+#endif /* CONV_STEP_STEP_G_PCURVEORSURFACE_H */
 
 /*
  * Local Variables:

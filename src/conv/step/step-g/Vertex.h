@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef VERTEX_H_
-#define VERTEX_H_
+#ifndef CONV_STEP_STEP_G_VERTEX_H
+#define CONV_STEP_STEP_G_VERTEX_H
 
 #include "TopologicalRepresentationItem.h"
 
@@ -54,7 +54,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* VERTEX_H_ */
+#endif /* CONV_STEP_STEP_G_VERTEX_H */
 
 /*
  * Local Variables:

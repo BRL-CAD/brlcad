@@ -62,7 +62,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* AXIS2_PLACEMENT_2D_H_ */
+#endif /* CONV_STEP_STEP_G_AXIS2PLACEMENT2D_H */
 
 /*
  * Local Variables:

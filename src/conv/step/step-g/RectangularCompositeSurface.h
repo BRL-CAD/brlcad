@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef RECTANGULAR_COMPOSITE_SURFACE_H_
-#define RECTANGULAR_COMPOSITE_SURFACE_H_
+#ifndef CONV_STEP_STEP_G_RECTANGULARCOMPOSITESURFACE_H
+#define CONV_STEP_STEP_G_RECTANGULARCOMPOSITESURFACE_H
 
 #include "BoundedSurface.h"
 
@@ -55,7 +55,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* RECTANGULAR_COMPOSITE_SURFACE_H_ */
+#endif /* CONV_STEP_STEP_G_RECTANGULARCOMPOSITESURFACE_H */
 
 /*
  * Local Variables:

@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef BRLCADWRAPPER_H_
-#define BRLCADWRAPPER_H_
+#ifndef CONV_STEP_BRLCADWRAPPER_H
+#define CONV_STEP_BRLCADWRAPPER_H
 
 #include "common.h"
 
@@ -61,7 +61,7 @@ public:
 };
 
 
-#endif /* BRLCADWRAPPER_H_ */
+#endif /* CONV_STEP_BRLCADWRAPPER_H */
 
 /*
  * Local Variables:

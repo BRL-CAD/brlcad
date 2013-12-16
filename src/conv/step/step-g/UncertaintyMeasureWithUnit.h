@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef UNCERTAINTYMEASUREWITHUNIT_H_
-#define UNCERTAINTYMEASUREWITHUNIT_H_
+#ifndef CONV_STEP_STEP_G_UNCERTAINTYMEASUREWITHUNIT_H
+#define CONV_STEP_STEP_G_UNCERTAINTYMEASUREWITHUNIT_H
 
 #include "MeasureWithUnit.h"
 
@@ -50,7 +50,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* UNCERTAINTYMEASUREWITHUNIT_H_ */
+#endif /* CONV_STEP_STEP_G_UNCERTAINTYMEASUREWITHUNIT_H */
 
 /*
  * Local Variables:

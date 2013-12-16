@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef REPRESENTATION_RELATIONSHIP_H_
-#define REPRESENTATION_RELATIONSHIP_H_
+#ifndef CONV_STEP_STEP_G_REPRESENTATIONRELATIONSHIP_H
+#define CONV_STEP_STEP_G_REPRESENTATIONRELATIONSHIP_H
 
 #include "STEPEntity.h"
 
@@ -65,7 +65,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* REPRESENTATION_RELATIONSHIP_H_ */
+#endif /* CONV_STEP_STEP_G_REPRESENTATIONRELATIONSHIP_H */
 
 /*
  * Local Variables:

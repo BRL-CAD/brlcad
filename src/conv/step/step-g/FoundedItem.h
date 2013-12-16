@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef FOUNDEDITEM_H_
-#define FOUNDEDITEM_H_
+#ifndef CONV_STEP_STEP_G_FOUNDEDITEM_H
+#define CONV_STEP_STEP_G_FOUNDEDITEM_H
 
 #include "STEPEntity.h"
 
@@ -48,7 +48,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* FOUNDEDITEM_H_ */
+#endif /* CONV_STEP_STEP_G_FOUNDEDITEM_H */
 
 /*
  * Local Variables:

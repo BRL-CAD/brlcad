@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef PCURVE_H_
-#define PCURVE_H_
+#ifndef CONV_STEP_STEP_G_PCURVE_H
+#define CONV_STEP_STEP_G_PCURVE_H
 
 #include "Curve.h"
 
@@ -58,7 +58,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* PCURVE_H_ */
+#endif /* CONV_STEP_STEP_G_PCURVE_H */
 
 /*
  * Local Variables:

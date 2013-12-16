@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef BOUNDEDPCURVE_H_
-#define BOUNDEDPCURVE_H_
+#ifndef CONV_STEP_STEP_G_BOUNDEDPCURVE_H
+#define CONV_STEP_STEP_G_BOUNDEDPCURVE_H
 
 #include "PCurve.h"
 #include "BoundedCurve.h"
@@ -52,7 +52,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* BOUNDEDPCURVE_H_ */
+#endif /* CONV_STEP_STEP_G_BOUNDEDPCURVE_H */
 
 /*
  * Local Variables:

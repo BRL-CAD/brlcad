@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef HHYPERBOLA_H_
-#define HHYPERBOLA_H_
+#ifndef CONV_STEP_STEP_G_HYPERBOLA_H
+#define CONV_STEP_STEP_G_HYPERBOLA_H
 
 #include "Conic.h"
 
@@ -59,7 +59,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* HHYPERBOLA_H_ */
+#endif /* CONV_STEP_STEP_G_HYPERBOLA_H */
 
 /*
  * Local Variables:

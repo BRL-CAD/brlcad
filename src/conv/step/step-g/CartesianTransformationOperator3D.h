@@ -52,7 +52,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* CARTESIAN_TRANSFORMATION_OPERATOR_3D_H_ */
+#endif /* CONV_STEP_STEP_G_CARTESIANTRANSFORMATIONOPERATOR3D_H */
 
 /*
  * Local Variables:

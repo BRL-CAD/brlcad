@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef MASSCONTEXTDEPENDENTUNIT_H_
-#define MASSCONTEXTDEPENDENTUNIT_H_
+#ifndef CONV_STEP_STEP_G_MASSCONTEXTDEPENDENTUNIT_H
+#define CONV_STEP_STEP_G_MASSCONTEXTDEPENDENTUNIT_H
 
 #include "MassUnit.h"
 #include "ContextDependentUnit.h"
@@ -49,7 +49,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* MASSCONTEXTDEPENDENTUNIT_H_ */
+#endif /* CONV_STEP_STEP_G_MASSCONTEXTDEPENDENTUNIT_H */
 
 /*
  * Local Variables:

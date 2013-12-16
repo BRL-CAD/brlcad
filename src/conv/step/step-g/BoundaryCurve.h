@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef BOUNDARY_CURVE_H_
-#define BOUNDARY_CURVE_H_
+#ifndef CONV_STEP_STEP_G_BOUNDARYCURVE_H
+#define CONV_STEP_STEP_G_BOUNDARYCURVE_H
 
 #include "CompositeCurveOnSurface.h"
 
@@ -49,7 +49,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* BOUNDARY_CURVE_H_ */
+#endif /* CONV_STEP_STEP_G_BOUNDARYCURVE_H */
 
 /*
  * Local Variables:

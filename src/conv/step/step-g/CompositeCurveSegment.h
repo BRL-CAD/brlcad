@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef COMPOSITECURVESEGMENT_H_
-#define COMPOSITECURVESEGMENT_H_
+#ifndef CONV_STEP_STEP_G_COMPOSITECURVESEGMENT_H
+#define CONV_STEP_STEP_G_COMPOSITECURVESEGMENT_H
 
 #include "FoundedItem.h"
 
@@ -53,7 +53,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* COMPOSITECURVESEGMENT_H_ */
+#endif /* CONV_STEP_STEP_G_COMPOSITECURVESEGMENT_H */
 
 /*
  * Local Variables:

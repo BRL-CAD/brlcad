@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef SOLIDANGLECONVERSIONBASEDUNIT_H_
-#define SOLIDANGLECONVERSIONBASEDUNIT_H_
+#ifndef CONV_STEP_STEP_G_SOLIDANGLECONVERSIONBASEDUNIT_H
+#define CONV_STEP_STEP_G_SOLIDANGLECONVERSIONBASEDUNIT_H
 
 #include "SolidAngleUnit.h"
 #include "ConversionBasedUnit.h"
@@ -49,7 +49,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* SOLIDANGLECONVERSIONBASEDUNIT_H_ */
+#endif /* CONV_STEP_STEP_G_SOLIDANGLECONVERSIONBASEDUNIT_H */
 
 /*
  * Local Variables:

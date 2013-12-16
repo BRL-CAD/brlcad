@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef RATIONALQUASIUNIFORMCURVE_H_
-#define RATIONALQUASIUNIFORMCURVE_H_
+#ifndef CONV_STEP_STEP_G_RATIONALQUASIUNIFORMCURVE_H
+#define CONV_STEP_STEP_G_RATIONALQUASIUNIFORMCURVE_H
 
 #include "RationalBSplineCurve.h"
 #include "QuasiUniformCurve.h"
@@ -50,7 +50,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* RATIONALQUASIUNIFORMCURVE_H_ */
+#endif /* CONV_STEP_STEP_G_RATIONALQUASIUNIFORMCURVE_H */
 
 /*
  * Local Variables:

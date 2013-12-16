@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef UNIFORMSURFACE_H_
-#define UNIFORMSURFACE_H_
+#ifndef CONV_STEP_STEP_G_UNIFORMSURFACE_H
+#define CONV_STEP_STEP_G_UNIFORMSURFACE_H
 
 #include "BSplineSurface.h"
 
@@ -49,7 +49,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* UNIFORMSURFACE_H_ */
+#endif /* CONV_STEP_STEP_G_UNIFORMSURFACE_H */
 
 /*
  * Local Variables:

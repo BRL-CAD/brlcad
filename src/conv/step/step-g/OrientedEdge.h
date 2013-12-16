@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef ORIENTEDEDGE_H_
-#define ORIENTEDEDGE_H_
+#ifndef CONV_STEP_STEP_G_ORIENTEDEDGE_H
+#define CONV_STEP_STEP_G_ORIENTEDEDGE_H
 
 #include "Edge.h"
 
@@ -52,7 +52,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* ORIENTEDEDGE_H_ */
+#endif /* CONV_STEP_STEP_G_ORIENTEDEDGE_H */
 
 /*
  * Local Variables:

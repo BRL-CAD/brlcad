@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef REPRESENTATIONITEM_H_
-#define REPRESENTATIONITEM_H_
+#ifndef CONV_STEP_STEP_G_REPRESENTATIONITEM_H
+#define CONV_STEP_STEP_G_REPRESENTATIONITEM_H
 
 #include "STEPEntity.h"
 
@@ -56,7 +56,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* REPRESENTATIONITEM_H_ */
+#endif /* CONV_STEP_STEP_G_REPRESENTATIONITEM_H */
 
 /*
  * Local Variables:

@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef TIMECONTEXTDEPENDENTUNIT_H_
-#define TIMECONTEXTDEPENDENTUNIT_H_
+#ifndef CONV_STEP_STEP_G_TIMECONTEXTDEPENDENTUNIT_H
+#define CONV_STEP_STEP_G_TIMECONTEXTDEPENDENTUNIT_H
 
 #include "TimeUnit.h"
 #include "ContextDependentUnit.h"
@@ -49,7 +49,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* TIMECONTEXTDEPENDENTUNIT_H_ */
+#endif /* CONV_STEP_STEP_G_TIMECONTEXTDEPENDENTUNIT_H */
 
 /*
  * Local Variables:

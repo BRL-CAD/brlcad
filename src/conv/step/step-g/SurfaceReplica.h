@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef SURFACE_REPLICA_H_
-#define SURFACE_REPLICA_H_
+#ifndef CONV_STEP_STEP_G_SURFACEREPLICA_H
+#define CONV_STEP_STEP_G_SURFACEREPLICA_H
 
 #include "Surface.h"
 
@@ -53,7 +53,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* SURFACE_REPLICA_H_ */
+#endif /* CONV_STEP_STEP_G_SURFACEREPLICA_H */
 
 /*
  * Local Variables:

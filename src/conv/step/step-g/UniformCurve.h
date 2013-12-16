@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef UNIFORMCURVE_H_
-#define UNIFORMCURVE_H_
+#ifndef CONV_STEP_STEP_G_UNIFORMCURVE_H
+#define CONV_STEP_STEP_G_UNIFORMCURVE_H
 
 #include "BSplineCurve.h"
 
@@ -49,7 +49,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* UNIFORMCURVE_H_ */
+#endif /* CONV_STEP_STEP_G_UNIFORMCURVE_H */
 
 /*
  * Local Variables:

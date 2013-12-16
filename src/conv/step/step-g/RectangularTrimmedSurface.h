@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef RECTANGULAR_TRIMMED_SURFACE_H_
-#define RECTANGULAR_TRIMMED_SURFACE_H_
+#ifndef CONV_STEP_STEP_G_RECTANGULARTRIMMEDSURFACE_H
+#define CONV_STEP_STEP_G_RECTANGULARTRIMMEDSURFACE_H
 
 #include "BoundedSurface.h"
 
@@ -58,7 +58,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* RECTANGULAR_TRIMMED_SURFACE_H_ */
+#endif /* CONV_STEP_STEP_G_RECTANGULARTRIMMEDSURFACE_H */
 
 /*
  * Local Variables:

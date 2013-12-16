@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef ADVANCEDFACE_H_
-#define ADVANCEDFACE_H_
+#ifndef CONV_STEP_STEP_G_ADVANCEDFACE_H
+#define CONV_STEP_STEP_G_ADVANCEDFACE_H
 
 #include "FaceSurface.h"
 
@@ -49,7 +49,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* ADVANCEDFACE_H_ */
+#endif /* CONV_STEP_STEP_G_ADVANCEDFACE_H */
 
 /*
  * Local Variables:

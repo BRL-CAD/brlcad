@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef INTERSECTION_CURVE_H_
-#define INTERSECTION_CURVE_H_
+#ifndef CONV_STEP_STEP_G_INTERSECTIONCURVE_H
+#define CONV_STEP_STEP_G_INTERSECTIONCURVE_H
 
 #include "SurfaceCurve.h"
 
@@ -49,7 +49,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* INTERSECTION_CURVE_H_ */
+#endif /* CONV_STEP_STEP_G_INTERSECTIONCURVE_H */
 
 /*
  * Local Variables:

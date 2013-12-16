@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef DESIGN_CONTEXT_H_
-#define DESIGN_CONTEXT_H_
+#ifndef CONV_STEP_STEP_G_DESIGNCONTEXT_H
+#define CONV_STEP_STEP_G_DESIGNCONTEXT_H
 
 #include "ProductDefinitionContext.h"
 
@@ -48,7 +48,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* DESIGN_CONTEXT_H_ */
+#endif /* CONV_STEP_STEP_G_DESIGNCONTEXT_H */
 
 /*
  * Local Variables:

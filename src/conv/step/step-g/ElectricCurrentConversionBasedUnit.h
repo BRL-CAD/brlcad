@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef ELECTRICCURRENTCONVERSIONBASEDUNIT_H_
-#define ELECTRICCURRENTCONVERSIONBASEDUNIT_H_
+#ifndef CONV_STEP_STEP_G_ELECTRICCURRENTCONVERSIONBASEDUNIT_H
+#define CONV_STEP_STEP_G_ELECTRICCURRENTCONVERSIONBASEDUNIT_H
 
 #include "ElectricCurrentUnit.h"
 #include "ConversionBasedUnit.h"
@@ -49,7 +49,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* ELECTRICCURRENTCONVERSIONBASEDUNIT_H_ */
+#endif /* CONV_STEP_STEP_G_ELECTRICCURRENTCONVERSIONBASEDUNIT_H */
 
 /*
  * Local Variables:

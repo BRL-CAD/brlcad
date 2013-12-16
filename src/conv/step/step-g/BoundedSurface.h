@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef BOUNDEDSURFACE_H_
-#define BOUNDEDSURFACE_H_
+#ifndef CONV_STEP_STEP_G_BOUNDEDSURFACE_H
+#define CONV_STEP_STEP_G_BOUNDEDSURFACE_H
 
 #include "Surface.h"
 
@@ -48,7 +48,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* BOUNDEDSURFACE_H_ */
+#endif /* CONV_STEP_STEP_G_BOUNDEDSURFACE_H */
 
 /*
  * Local Variables:

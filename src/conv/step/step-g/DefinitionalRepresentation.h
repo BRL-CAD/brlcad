@@ -23,8 +23,8 @@
  * structures.
  *
  */
-#ifndef DEFINITIONALREPRESENTATION_H_
-#define DEFINITIONALREPRESENTATION_H_
+#ifndef CONV_STEP_STEP_G_DEFINITIONALREPRESENTATION_H
+#define CONV_STEP_STEP_G_DEFINITIONALREPRESENTATION_H
 
 #include "Representation.h"
 
@@ -47,7 +47,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* DEFINITIONALREPRESENTATION_H_ */
+#endif /* CONV_STEP_STEP_G_DEFINITIONALREPRESENTATION_H */
 
 /*
  * Local Variables:

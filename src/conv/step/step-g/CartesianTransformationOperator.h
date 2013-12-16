@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef CARTESIANTRANSFORMATIONOPERATOR_H_
-#define CARTESIANTRANSFORMATIONOPERATOR_H_
+#ifndef CONV_STEP_STEP_G_CARTESIANTRANSFORMATIONOPERATOR_H
+#define CONV_STEP_STEP_G_CARTESIANTRANSFORMATIONOPERATOR_H
 
 #include "GeometricRepresentationItem.h"
 #include "FunctionallyDefinedTransformation.h"
@@ -58,7 +58,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* CARTESIANTRANSFORMATIONOPERATOR_H_ */
+#endif /* CONV_STEP_STEP_G_CARTESIANTRANSFORMATIONOPERATOR_H */
 
 /*
  * Local Variables:

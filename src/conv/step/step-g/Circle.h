@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef CIRCLE_H_
-#define CIRCLE_H_
+#ifndef CONV_STEP_STEP_G_CIRCLE_H
+#define CONV_STEP_STEP_G_CIRCLE_H
 
 #include "Conic.h"
 
@@ -58,7 +58,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* CIRCLE_H_ */
+#endif /* CONV_STEP_STEP_G_CIRCLE_H */
 
 /*
  * Local Variables:

@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef LENGTHSIUNIT_H_
-#define LENGTHSIUNIT_H_
+#ifndef CONV_STEP_STEP_G_LENGTHSIUNIT_H
+#define CONV_STEP_STEP_G_LENGTHSIUNIT_H
 
 #include "LengthUnit.h"
 #include "SiUnit.h"
@@ -49,7 +49,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* LENGTHSIUNIT_H_ */
+#endif /* CONV_STEP_STEP_G_LENGTHSIUNIT_H */
 
 /*
  * Local Variables:

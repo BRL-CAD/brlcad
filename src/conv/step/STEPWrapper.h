@@ -23,8 +23,9 @@
  * functions.
  *
  */
-#ifndef STEPWRAPPER_H_
-#define STEPWRAPPER_H_
+
+#ifndef CONV_STEP_STEPWRAPPER_H
+#define CONV_STEP_STEPWRAPPER_H
 
 #include "common.h"
 
@@ -140,7 +141,7 @@ public:
     void printLoadStatistics();
 };
 
-#endif /* STEPWRAPPER_H_ */
+#endif /* CONV_STEP_STEPWRAPPER_H */
 
 /*
  * Local Variables:

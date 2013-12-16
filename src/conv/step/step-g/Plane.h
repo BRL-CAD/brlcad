@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef PLANE_H_
-#define PLANE_H_
+#ifndef CONV_STEP_STEP_G_PLANE_H
+#define CONV_STEP_STEP_G_PLANE_H
 
 #include "ElementarySurface.h"
 
@@ -54,7 +54,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* PLANE_H_ */
+#endif /* CONV_STEP_STEP_G_PLANE_H */
 
 /*
  * Local Variables:

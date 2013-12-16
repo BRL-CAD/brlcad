@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef FACTORY_H_
-#define FACTORY_H_
+#ifndef CONV_STEP_STEP_G_FACTORY_H
+#define CONV_STEP_STEP_G_FACTORY_H
 
 #include "common.h"
 
@@ -86,7 +86,7 @@ public:
 };
 
 
-#endif /* FACTORY_H_ */
+#endif /* CONV_STEP_STEP_G_FACTORY_H */
 
 /*
  * Local Variables:

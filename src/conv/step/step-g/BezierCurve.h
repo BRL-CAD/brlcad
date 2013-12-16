@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef BEZIERCURVE_H_
-#define BEZIERCURVE_H_
+#ifndef CONV_STEP_STEP_G_BEZIERCURVE_H
+#define CONV_STEP_STEP_G_BEZIERCURVE_H
 
 #include "BSplineCurve.h"
 
@@ -49,7 +49,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* BEZIERCURVE_H_ */
+#endif /* CONV_STEP_STEP_G_BEZIERCURVE_H */
 
 /*
  * Local Variables:

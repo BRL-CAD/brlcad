@@ -23,8 +23,8 @@
  * structures.
  *
  */
-#ifndef REPRESENTATION_H_
-#define REPRESENTATION_H_
+#ifndef CONV_STEP_STEP_G_REPRESENTATION_H
+#define CONV_STEP_STEP_G_REPRESENTATION_H
 
 #include "common.h"
 
@@ -69,7 +69,7 @@ public:
 };
 
 
-#endif /* REPRESENTATION_H_ */
+#endif /* CONV_STEP_STEP_G_REPRESENTATION_H */
 
 /*
  * Local Variables:

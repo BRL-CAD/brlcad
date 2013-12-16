@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef PARAMETRICREPRESENTATIONCONTEXT_H_
-#define PARAMETRICREPRESENTATIONCONTEXT_H_
+#ifndef CONV_STEP_STEP_G_PARAMETRICREPRESENTATIONCONTEXT_H
+#define CONV_STEP_STEP_G_PARAMETRICREPRESENTATIONCONTEXT_H
 
 #include "RepresentationContext.h"
 
@@ -48,7 +48,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* PARAMETRICREPRESENTATIONCONTEXT_H_ */
+#endif /* CONV_STEP_STEP_G_PARAMETRICREPRESENTATIONCONTEXT_H */
 
 /*
  * Local Variables:

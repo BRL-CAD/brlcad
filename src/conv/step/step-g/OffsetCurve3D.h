@@ -61,7 +61,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* OFFSETCURVE3D_H_ */
+#endif /* CONV_STEP_STEP_G_OFFSETCURVE3D_H */
 
 /*
  * Local Variables:

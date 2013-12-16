@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef AREACONVERSIONBASEDUNIT_H_
-#define AREACONVERSIONBASEDUNIT_H_
+#ifndef CONV_STEP_STEP_G_AREACONVERSIONBASEDUNIT_H
+#define CONV_STEP_STEP_G_AREACONVERSIONBASEDUNIT_H
 
 #include "AreaUnit.h"
 #include "ConversionBasedUnit.h"
@@ -49,7 +49,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* AREACONVERSIONBASEDUNIT_H_ */
+#endif /* CONV_STEP_STEP_G_AREACONVERSIONBASEDUNIT_H */
 
 /*
  * Local Variables:

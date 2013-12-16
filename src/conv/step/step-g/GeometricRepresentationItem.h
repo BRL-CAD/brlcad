@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef GEOMETRICREPRESENTATIONITEM_H_
-#define GEOMETRICREPRESENTATIONITEM_H_
+#ifndef CONV_STEP_STEP_G_GEOMETRICREPRESENTATIONITEM_H
+#define CONV_STEP_STEP_G_GEOMETRICREPRESENTATIONITEM_H
 
 #include "RepresentationItem.h"
 
@@ -49,7 +49,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* GEOMETRICREPRESENTATIONITEM_H_ */
+#endif /* CONV_STEP_STEP_G_GEOMETRICREPRESENTATIONITEM_H */
 
 /*
  * Local Variables:

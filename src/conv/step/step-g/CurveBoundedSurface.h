@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef CURVE_BOUNDED_SURFACE_H_
-#define CURVE_BOUNDED_SURFACE_H_
+#ifndef CONV_STEP_STEP_G_CURVEBOUNDEDSURFACE_H
+#define CONV_STEP_STEP_G_CURVEBOUNDEDSURFACE_H
 
 #include "BoundedSurface.h"
 
@@ -57,7 +57,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* CURVE_BOUNDED_SURFACE_H_ */
+#endif /* CONV_STEP_STEP_G_CURVEBOUNDEDSURFACE_H */
 
 /*
  * Local Variables:

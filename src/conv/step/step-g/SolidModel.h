@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef SOLIDMODEL_H_
-#define SOLIDMODEL_H_
+#ifndef CONV_STEP_STEP_G_SOLIDMODEL_H
+#define CONV_STEP_STEP_G_SOLIDMODEL_H
 
 #include "GeometricRepresentationItem.h"
 
@@ -51,7 +51,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* SOLIDMODEL_H_ */
+#endif /* CONV_STEP_STEP_G_SOLIDMODEL_H */
 
 /*
  * Local Variables:

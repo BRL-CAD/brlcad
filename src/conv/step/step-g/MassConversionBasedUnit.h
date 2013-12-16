@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef MASSCONVERSIONBASEDUNIT_H_
-#define MASSCONVERSIONBASEDUNIT_H_
+#ifndef CONV_STEP_STEP_G_MASSCONVERSIONBASEDUNIT_H
+#define CONV_STEP_STEP_G_MASSCONVERSIONBASEDUNIT_H
 
 #include "MassUnit.h"
 #include "ConversionBasedUnit.h"
@@ -49,7 +49,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* MASSCONVERSIONBASEDUNIT_H_ */
+#endif /* CONV_STEP_STEP_G_MASSCONVERSIONBASEDUNIT_H */
 
 /*
  * Local Variables:

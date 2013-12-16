@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef DIMENSIONALEXPONENTS_H_
-#define DIMENSIONALEXPONENTS_H_
+#ifndef CONV_STEP_STEP_G_DIMENSIONALEXPONENTS_H
+#define CONV_STEP_STEP_G_DIMENSIONALEXPONENTS_H
 
 #include "STEPEntity.h"
 
@@ -55,7 +55,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* DIMENSIONALEXPONENTS_H_ */
+#endif /* CONV_STEP_STEP_G_DIMENSIONALEXPONENTS_H */
 
 /*
  * Local Variables:

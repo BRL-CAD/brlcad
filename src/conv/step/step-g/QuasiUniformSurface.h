@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef QUASIUNIFORMSURFACE_H_
-#define QUASIUNIFORMSURFACE_H_
+#ifndef CONV_STEP_STEP_G_QUASIUNIFORMSURFACE_H
+#define CONV_STEP_STEP_G_QUASIUNIFORMSURFACE_H
 
 #include "BSplineSurface.h"
 
@@ -48,7 +48,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* QUASIUNIFORMSURFACE_H_ */
+#endif /* CONV_STEP_STEP_G_QUASIUNIFORMSURFACE_H */
 
 /*
  * Local Variables:

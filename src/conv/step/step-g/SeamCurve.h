@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef SEAM_CURVE_H_
-#define SEAM_CURVE_H_
+#ifndef CONV_STEP_STEP_G_SEAMCURVE_H
+#define CONV_STEP_STEP_G_SEAMCURVE_H
 
 #include "SurfaceCurve.h"
 
@@ -49,7 +49,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* SEAM_CURVE_H_ */
+#endif /* CONV_STEP_STEP_G_SEAMCURVE_H */
 
 /*
  * Local Variables:

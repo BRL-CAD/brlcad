@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef CONICAL_SURFACE_H_
-#define CONICAL_SURFACE_H_
+#ifndef CONV_STEP_STEP_G_CONICALSURFACE_H
+#define CONV_STEP_STEP_G_CONICALSURFACE_H
 
 #include "ElementarySurface.h"
 
@@ -55,7 +55,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* CONICAL_SURFACE_H_ */
+#endif /* CONV_STEP_STEP_G_CONICALSURFACE_H */
 
 /*
  * Local Variables:

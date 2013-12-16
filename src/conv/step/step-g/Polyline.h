@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef POLYLINE_H_
-#define POLYLINE_H_
+#ifndef CONV_STEP_STEP_G_POLYLINE_H
+#define CONV_STEP_STEP_G_POLYLINE_H
 
 #include "BoundedCurve.h"
 
@@ -54,7 +54,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* POLYLINE_H_ */
+#endif /* CONV_STEP_STEP_G_POLYLINE_H */
 
 /*
  * Local Variables:

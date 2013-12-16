@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef GLOBALUNITASSIGNEDCONTEXT_H_
-#define GLOBALUNITASSIGNEDCONTEXT_H_
+#ifndef CONV_STEP_STEP_G_GLOBALUNITASSIGNEDCONTEXT_H
+#define CONV_STEP_STEP_G_GLOBALUNITASSIGNEDCONTEXT_H
 
 #include "RepresentationContext.h"
 
@@ -55,7 +55,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* GLOBALUNITASSIGNEDCONTEXT_H_ */
+#endif /* CONV_STEP_STEP_G_GLOBALUNITASSIGNEDCONTEXT_H */
 
 /*
  * Local Variables:

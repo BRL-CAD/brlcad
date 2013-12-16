@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef AMOUNTOFSUBSTANCESIUNIT_H_
-#define AMOUNTOFSUBSTANCESIUNIT_H_
+#ifndef CONV_STEP_STEP_G_AMOUNTOFSUBSTANCESIUNIT_H
+#define CONV_STEP_STEP_G_AMOUNTOFSUBSTANCESIUNIT_H
 
 #include "AmountOfSubstanceUnit.h"
 #include "SiUnit.h"
@@ -49,7 +49,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* AMOUNTOFSUBSTANCESIUNIT_H_ */
+#endif /* CONV_STEP_STEP_G_AMOUNTOFSUBSTANCESIUNIT_H */
 
 /*
  * Local Variables:

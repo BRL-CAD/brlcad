@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef LOCALUNITS_H_
-#define LOCALUNITS_H_
+#ifndef CONV_STEP_STEP_G_LOCALUNITS_H
+#define CONV_STEP_STEP_G_LOCALUNITS_H
 
 class LocalUnits
 {
@@ -36,7 +36,7 @@ public:
     virtual ~LocalUnits();
 };
 
-#endif /* LOCALUNITS_H_ */
+#endif /* CONV_STEP_STEP_G_LOCALUNITS_H */
 
 /*
  * Local Variables:

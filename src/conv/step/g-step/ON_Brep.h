@@ -21,8 +21,8 @@
  *
  */
 
-#ifndef ON_BREP_H_
-#define ON_BREP_H_
+#ifndef CONV_STEP_G_STEP_ON_BREP_H
+#define CONV_STEP_G_STEP_ON_BREP_H
 
 #include "common.h"
 #include <map>
@@ -62,7 +62,7 @@ bool ON_NurbsSurface_to_STEP(ON_NurbsSurface *n_surface, ON_Brep_Info_AP203 *inf
 void ON_BRep_to_STEP(struct directory *dp, ON_Brep *brep, Registry *registry,
        	InstMgr *instance_list, STEPentity **brep_shape, STEPentity **brep_product);
 
-#endif /* ON_BREP_H_ */
+#endif /* CONV_STEP_G_STEP_ON_BREP_H */
 
 /*
  * Local Variables:

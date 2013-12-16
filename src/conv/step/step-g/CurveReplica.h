@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef CURVEREPLICA_H_
-#define CURVEREPLICA_H_
+#ifndef CONV_STEP_STEP_G_CURVEREPLICA_H
+#define CONV_STEP_STEP_G_CURVEREPLICA_H
 
 #include "Curve.h"
 
@@ -58,7 +58,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* CURVEREPLICA_H_ */
+#endif /* CONV_STEP_STEP_G_CURVEREPLICA_H */
 
 /*
  * Local Variables:

@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef MEASUREVALUE_H_
-#define MEASUREVALUE_H_
+#ifndef CONV_STEP_STEP_G_MEASUREVALUE_H
+#define CONV_STEP_STEP_G_MEASUREVALUE_H
 
 #include "STEPEntity.h"
 
@@ -82,7 +82,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* MEASUREVALUE_H_ */
+#endif /* CONV_STEP_STEP_G_MEASUREVALUE_H */
 
 /*
  * Local Variables:

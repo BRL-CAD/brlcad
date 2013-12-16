@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef BSPLINESURFACEWITHKNOTS_H_
-#define BSPLINESURFACEWITHKNOTS_H_
+#ifndef CONV_STEP_STEP_G_BSPLINESURFACEWITHKNOTS_H
+#define CONV_STEP_STEP_G_BSPLINESURFACEWITHKNOTS_H
 
 #include "BSplineSurface.h"
 
@@ -58,7 +58,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* BSPLINESURFACEWITHKNOTS_H_ */
+#endif /* CONV_STEP_STEP_G_BSPLINESURFACEWITHKNOTS_H */
 
 /*
  * Local Variables:

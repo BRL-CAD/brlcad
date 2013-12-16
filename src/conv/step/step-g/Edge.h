@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef EDGE_H_
-#define EDGE_H_
+#ifndef CONV_STEP_STEP_G_EDGE_H
+#define CONV_STEP_STEP_G_EDGE_H
 
 #include "TopologicalRepresentationItem.h"
 
@@ -60,7 +60,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* EDGE_H_ */
+#endif /* CONV_STEP_STEP_G_EDGE_H */
 
 /*
  * Local Variables:

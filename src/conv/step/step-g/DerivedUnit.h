@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef DERIVEDUNIT_H_
-#define DERIVEDUNIT_H_
+#ifndef CONV_STEP_STEP_G_DERIVEDUNIT_H
+#define CONV_STEP_STEP_G_DERIVEDUNIT_H
 
 #include "Unit.h"
 
@@ -52,7 +52,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* DERIVEDUNIT_H_ */
+#endif /* CONV_STEP_STEP_G_DERIVEDUNIT_H */
 
 /*
  * Local Variables:

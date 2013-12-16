@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef RATIONALBSPLINECURVEWITHKNOTS_H_
-#define RATIONALBSPLINECURVEWITHKNOTS_H_
+#ifndef CONV_STEP_STEP_G_RATIONALBSPLINECURVEWITHKNOTS_H
+#define CONV_STEP_STEP_G_RATIONALBSPLINECURVEWITHKNOTS_H
 
 #include "RationalBSplineCurve.h"
 #include "BSplineCurveWithKnots.h"
@@ -50,7 +50,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* RATIONALBSPLINECURVEWITHKNOTS_H_ */
+#endif /* CONV_STEP_STEP_G_RATIONALBSPLINECURVEWITHKNOTS_H */
 
 /*
  * Local Variables:

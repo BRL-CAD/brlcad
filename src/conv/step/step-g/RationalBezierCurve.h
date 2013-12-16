@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef RATIONALBEZIERCURVE_H_
-#define RATIONALBEZIERCURVE_H_
+#ifndef CONV_STEP_STEP_G_RATIONALBEZIERCURVE_H
+#define CONV_STEP_STEP_G_RATIONALBEZIERCURVE_H
 
 #include "RationalBSplineCurve.h"
 #include "BezierCurve.h"
@@ -50,7 +50,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* RATIONALBEZIERCURVE_H_ */
+#endif /* CONV_STEP_STEP_G_RATIONALBEZIERCURVE_H */
 
 /*
  * Local Variables:

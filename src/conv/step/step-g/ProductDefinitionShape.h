@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef PRODUCT_DEFINITION_SHAPE_H_
-#define PRODUCT_DEFINITION_SHAPE_H_
+#ifndef CONV_STEP_STEP_G_PRODUCTDEFINITIONSHAPE_H
+#define CONV_STEP_STEP_G_PRODUCTDEFINITIONSHAPE_H
 
 #include "STEPEntity.h"
 
@@ -57,7 +57,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* PRODUCT_DEFINITION_SHAPE_H_ */
+#endif /* CONV_STEP_STEP_G_PRODUCTDEFINITIONSHAPE_H */
 
 /*
  * Local Variables:

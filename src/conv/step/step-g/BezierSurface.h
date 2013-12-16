@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef BEZIERSURFACE_H_
-#define BEZIERSURFACE_H_
+#ifndef CONV_STEP_STEP_G_BEZIERSURFACE_H
+#define CONV_STEP_STEP_G_BEZIERSURFACE_H
 
 #include "BSplineSurface.h"
 
@@ -49,7 +49,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* BEZIERSURFACE_H_ */
+#endif /* CONV_STEP_STEP_G_BEZIERSURFACE_H */
 
 /*
  * Local Variables:

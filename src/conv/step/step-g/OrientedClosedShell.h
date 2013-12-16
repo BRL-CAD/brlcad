@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef ORIENTEDCLOSEDSHELL_H_
-#define ORIENTEDCLOSEDSHELL_H_
+#ifndef CONV_STEP_STEP_G_ORIENTEDCLOSEDSHELL_H
+#define CONV_STEP_STEP_G_ORIENTEDCLOSEDSHELL_H
 
 #include "ClosedShell.h"
 
@@ -51,7 +51,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* ORIENTEDCLOSEDSHELL_H_ */
+#endif /* CONV_STEP_STEP_G_ORIENTEDCLOSEDSHELL_H */
 
 /*
  * Local Variables:

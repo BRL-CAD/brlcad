@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef PLANEANGLEUNIT_H_
-#define PLANEANGLEUNIT_H_
+#ifndef CONV_STEP_STEP_G_PLANEANGLEUNIT_H
+#define CONV_STEP_STEP_G_PLANEANGLEUNIT_H
 
 #include "NamedUnit.h"
 
@@ -48,7 +48,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* PLANEANGLEUNIT_H_ */
+#endif /* CONV_STEP_STEP_G_PLANEANGLEUNIT_H */
 
 /*
  * Local Variables:

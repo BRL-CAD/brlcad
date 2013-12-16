@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef RATIOCONVERSIONBASEDUNIT_H_
-#define RATIOCONVERSIONBASEDUNIT_H_
+#ifndef CONV_STEP_STEP_G_RATIOCONVERSIONBASEDUNIT_H
+#define CONV_STEP_STEP_G_RATIOCONVERSIONBASEDUNIT_H
 
 #include "RatioUnit.h"
 #include "ConversionBasedUnit.h"
@@ -49,7 +49,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* RATIOCONVERSIONBASEDUNIT_H_ */
+#endif /* CONV_STEP_STEP_G_RATIOCONVERSIONBASEDUNIT_H */
 
 /*
  * Local Variables:
