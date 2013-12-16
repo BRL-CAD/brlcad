@@ -32,7 +32,7 @@ coplanar_2d_coord_sys(point_t *origin_pnt, vect_t *u_axis, vect_t *v_axis, const
     fastf_t vdot = 1.0;
     point_t p_farthest;
     int p_farthest_index = 0;
-    vect_t normal;
+    vect_t normal = VINIT_ZERO;
     const struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST/2.0, BN_TOL_DIST*BN_TOL_DIST/4.0, 1.0e-6, 1.0-1.0e-6};
 
     /* Step 1 - find center point */
