@@ -3255,7 +3255,7 @@ rt_nmg_centroid(point_t *cent, const struct rt_db_internal *ip)
     struct shell* s;
     struct poly_face *faces;
     struct bu_ptbl nmg_faces;
-    fastf_t volume;
+    fastf_t volume = 0.0;
     point_t arbit_point = VINIT_ZERO;
     unsigned int num_faces, i, j, k, l;
 
@@ -3308,7 +3308,14 @@ rt_nmg_centroid(point_t *cent, const struct rt_db_internal *ip)
 	}
     }
     for (i = 0; i < num_faces; i++) {
-	fastf_t x_0, x_1, y_0, y_1, z_0, z_1, a, signedArea = 0.0;
+	fastf_t x_0 = 0.0;
+	fastf_t x_1 = 0.0;
+	fastf_t y_0 = 0.0;
+	fastf_t y_1 = 0.0;
+	fastf_t z_0 = 0.0;
+	fastf_t z_1 = 0.0;
+	fastf_t a = 0.0;
+	fastf_t signedArea = 0.0;
 	struct sortable_point *sort_points;
 	sort_points = (struct sortable_point *)bu_calloc(faces[i].npts, sizeof(struct sortable_point), "nmg_surf_area: sort_points");
 

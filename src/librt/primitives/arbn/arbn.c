@@ -1471,7 +1471,14 @@ rt_arbn_centroid(point_t *cent, const struct rt_db_internal *ip)
 	}
     }
     for (i = 0; i < aip->neqn; i++) {
-	fastf_t x_0, x_1, y_0, y_1, z_0, z_1, a, signedArea = 0.0;
+	fastf_t x_0 = 0.0;
+	fastf_t x_1 = 0.0;
+        fastf_t y_0 = 0.0;
+	fastf_t y_1 = 0.0;
+	fastf_t z_0 = 0.0;
+	fastf_t z_1 = 0.0;
+	fastf_t a = 0.0;
+	fastf_t signedArea = 0.0;
 	/* sort points */
 	cmp_plane = &faces[i].plane_eqn;
 	qsort(faces[i].pts, faces[i].npts, sizeof(point_t), ccw);
