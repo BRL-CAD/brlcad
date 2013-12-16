@@ -2036,6 +2036,7 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 	    }
 
     brepO->ShrinkSurfaces();
+    brepO->Compact();
 
     // Check IsValid() and output the message.
     ON_wString ws;
