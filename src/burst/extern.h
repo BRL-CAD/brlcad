@@ -178,8 +178,6 @@ extern char tmpfname[];
 
 extern char *cmdptr;
 
-extern char **template;
-
 extern fastf_t bdist;
 extern fastf_t burstpoint[];
 extern fastf_t cellsz;
