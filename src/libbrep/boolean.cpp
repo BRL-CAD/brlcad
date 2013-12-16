@@ -1148,7 +1148,7 @@ bool IsSameSurface(const ON_Surface* surfA, const ON_Surface* surfB)
 
     if (surfA == NULL || surfB == NULL)
 	return false;
-
+/*
     // Deal with two planes, if that's what we have - in that case
     // the determination can be more general than the CV comparison
     ON_Plane surfA_plane, surfB_plane;
@@ -1165,6 +1165,7 @@ bool IsSameSurface(const ON_Surface* surfA, const ON_Surface* surfB)
 	    return false;
 	}
     }
+*/
 
     ON_NurbsSurface nurbsSurfaceA, nurbsSurfaceB;
     if (!surfA->GetNurbForm(nurbsSurfaceA) || !surfB->GetNurbForm(nurbsSurfaceB))
@@ -1641,6 +1642,18 @@ IsFaceInsideBrep(const TrimmedFace* tface, const ON_Brep* brep, ON_SimpleArray<S
 int
 ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type operation)
 {
+    /*
+    fastf_t disjoint = brepA->BoundingBox().MinimumDistanceTo(brepB->BoundingBox());
+
+    if (operation == BOOLEAN_INTERSECT && disjoint > ON_ZERO_TOLERANCE) {
+	return 0;
+    }
+    if (operation == BOOLEAN_DIFF && disjoint > ON_ZERO_TOLERANCE) {
+	brepO = brepA->Duplicate();
+	return 0;
+    }
+    */
+
     int facecount1 = brepA->m_F.Count();
     int facecount2 = brepB->m_F.Count();
     int surfcount1 = brepA->m_S.Count();
@@ -1661,10 +1674,18 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 	    surfB = brepB->m_S[brepB->m_F[j].m_si];
 	    if (IsSameSurface(surfA, surfB))
 		continue;
+	    /*
+	    fastf_t disjoint = brepA->m_F[i].BoundingBox().MinimumDistanceTo(brepB->m_F[j].BoundingBox());
+	    if (disjoint > ON_ZERO_TOLERANCE) {
+		continue;
+	    }
+	    */
+
 	    // Possible enhancement: Some faces may share the same surface.
 	    // We can store the result of SSI to avoid re-computation.
 	    ON_ClassArray<ON_SSX_EVENT> events;
-	    if (ON_Intersect(surfA,
+	    int results = 0;
+	    results = ON_Intersect(surfA,
 			     surfB,
 			     events,
 			     INTERSECTION_TOL,
@@ -1675,7 +1696,8 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 			     NULL,
 			     NULL,
 			     surf_treeA[brepA->m_F[i].m_si],
-			     surf_treeB[brepB->m_F[j].m_si]) <= 0)
+			     surf_treeB[brepB->m_F[j].m_si]);
+	    if (results <= 0)
 		continue;
 	    ON_SimpleArray<ON_Curve*> curve_uv, curve_st;
 	    for (int k = 0; k < events.Count(); k++) {
