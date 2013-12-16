@@ -421,7 +421,7 @@ rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
     if (rp->u_id != DBID_STRSOL) {
-	bu_log("rt_ebm_import4: defective strsol record\n");
+	bu_log("rt_vol_import4: defective strsol record\n");
 	return -1;
     }
 
@@ -758,7 +758,7 @@ rt_vol_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 
     RT_CK_DB_INTERNAL(ip);
     vip = (struct rt_vol_internal *)ip->idb_ptr;
-    RT_EBM_CK_MAGIC(vip);
+    RT_VOL_CK_MAGIC(vip);
 
     /* Find bounding RPP of rotated local RPP */
     VSETALL(v1, 0);
