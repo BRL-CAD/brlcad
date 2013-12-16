@@ -1149,6 +1149,23 @@ bool IsSameSurface(const ON_Surface* surfA, const ON_Surface* surfB)
     if (surfA == NULL || surfB == NULL)
 	return false;
 
+    // Deal with two planes, if that's what we have - in that case
+    // the determination can be more general than the CV comparison
+    ON_Plane surfA_plane, surfB_plane;
+    if (surfA->IsPlanar(&surfA_plane) && surfB->IsPlanar(&surfB_plane)) {
+	ON_3dVector surfA_normal = surfA_plane.Normal();
+	ON_3dVector surfB_normal = surfB_plane.Normal();
+	if (surfA_normal.IsParallelTo(surfB_normal) == 1) {
+	    if (surfA_plane.DistanceTo(surfB_plane.Origin()) < ON_ZERO_TOLERANCE) {
+		return true;
+	    } else {
+		return false;
+	    }
+	} else {
+	    return false;
+	}
+    }
+
     ON_NurbsSurface nurbsSurfaceA, nurbsSurfaceB;
     if (!surfA->GetNurbForm(nurbsSurfaceA) || !surfB->GetNurbForm(nurbsSurfaceB))
 	return false;
