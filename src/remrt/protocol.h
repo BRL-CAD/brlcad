@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef __PROTOCOL_H__
-#define __PROTOCOL_H__
+#ifndef REMRT_PROTOCOL_H
+#define REMRT_PROTOCOL_H
 
 /* For use in MSG_VERSION exchanges */
 #define PROTOCOL_VERSION	"BRL-CAD REMRT Protocol v2.0"
@@ -74,7 +74,7 @@ struct bu_structparse desc_line_info[] =  {
     {"",   0, NULL,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
-#endif  /* __PROTOCOL_H__ */
+#endif  /* REMRT_PROTOCOL_H */
 /*
  * Local Variables:
  * mode: C

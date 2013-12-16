@@ -22,8 +22,8 @@
  *
  */
 
-#ifndef __CANON_H__
-#define __CANON_H__
+#ifndef CANON_CANON_H
+#define CANON_CANON_H
 
 #include "common.h"
 
@@ -125,7 +125,7 @@ extern char *arg_v[];
 extern int arg_c;
 extern char *print_queue;
 
-#endif  /* __CANON_H__ */
+#endif  /* CANON_CANON_H */
 
 /*
  * Local Variables:

@@ -26,8 +26,8 @@ This code is derived in part from menuhit(9.3) in AT&T 9th Edition UNIX,
 Version 1 Programmer's Manual.
 
 */
-#ifndef INCL_HM
-#define INCL_HM
+#ifndef LGT_HMENU_H
+#define LGT_HMENU_H
 struct HMenu;
 
 /*	"dfn()" is called just before the submenu is invoked, and "bfn()"

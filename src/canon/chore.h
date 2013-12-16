@@ -24,6 +24,9 @@
  *
  */
 
+#ifndef CANON_CHORE_H
+#define CANON_CHORE_H
+
 struct chore {
     int		todo;
     int		buflen;
@@ -43,6 +46,8 @@ struct chore {
 	while ( queue != NULL )  sginap(1); \
 	queue = item; \
 	item = NULL;  }
+
+#endif /* CANON_CHORE_H */
 
 /*
  * Local Variables:

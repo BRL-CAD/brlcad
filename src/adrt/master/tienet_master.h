@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef _TIENET_MASTER_H
-#define _TIENET_MASTER_H
+#ifndef ADRT_MASTER_TIENET_MASTER_H
+#define ADRT_MASTER_TIENET_MASTER_H
 
 typedef struct tienet_sem_s {
     int val;

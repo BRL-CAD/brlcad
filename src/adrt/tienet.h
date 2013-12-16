@@ -22,8 +22,8 @@
  *
  */
 
-#ifndef _TIENET_H
-#define _TIENET_H
+#ifndef ADRT_TIENET_H
+#define ADRT_TIENET_H
 
 #include "adrt.h"
 

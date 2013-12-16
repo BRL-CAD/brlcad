@@ -24,9 +24,13 @@
 
 #include "rle.h"
 
+#ifndef UTIL_RLE_ARGS_H
+#define UTIL_RLE_ARGS_H
 
 extern int
 get_args(int argc, char **argv, rle_hdr *outrle, FILE** infp, char** infile, int **background, size_t* file_width, size_t* file_height);
+
+#endif /* UTIL_RLE_ARGS_H */
 
 /*
  * Local Variables:

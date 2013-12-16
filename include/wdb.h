@@ -30,8 +30,8 @@
  *
  */
 
-#ifndef __WDB_H__
-#define __WDB_H__
+#ifndef WDB_H
+#define WDB_H
 
 #include "common.h"
 

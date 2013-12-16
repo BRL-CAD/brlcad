@@ -22,8 +22,8 @@
  *
  */
 
-#ifndef __EXTERN_H__
-#define __EXTERN_H__
+#ifndef BURST_EXTERN_H
+#define BURST_EXTERN_H
 
 #include "common.h"
 
@@ -236,7 +236,7 @@ extern int zoom;
 
 extern struct rt_i *rtip;
 
-#endif  /* __EXTERN_H__ */
+#endif  /* BURST_EXTERN_H */
 
 /*
  * Local Variables:

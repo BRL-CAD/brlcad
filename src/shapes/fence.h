@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef __FENCE_H__
-#define __FENCE_H__
+#ifndef SHAPES_FENCE_H
+#define SHAPES_FENCE_H
 
 #include "common.h"
 
@@ -282,7 +282,7 @@ extern "C" {
 }
 #endif
 
-#endif /* __FENCE_H__ */
+#endif /* SHAPES_FENCE_H */
 
 
 /*

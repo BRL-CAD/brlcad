@@ -18,6 +18,8 @@
  * information.
  */
 
+#ifndef ADRT_ISST_H
+#define ADRT_ISST_H
 
 struct isst_s {
     struct tie_s *tie;
@@ -36,6 +38,8 @@ struct isst_s {
     int64_t t2;
     int dirty;
 };
+
+#endif /* ADRT_ISST_H */
 
 /*
  * Local Variables:

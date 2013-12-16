@@ -24,6 +24,9 @@
  *
  */
 
+#ifndef EXTERNAL_UNIGRAPHICS_UG_MISC_H
+#define EXTERNAL_UNIGRAPHICS_UG_MISC_H
+
 #define UF_func(X) report(#X, __FILE__, __LINE__, (X))
 
 extern int report(char *call, char *file, int line, int code);
@@ -33,6 +36,8 @@ extern tag_t Lee_open_part(char *p_name, const int level);
 extern tag_t ask_cset_of_unloaded_children(tag_t part, tag_t part_occ);
 extern void unload_sub_parts(tag_t loaded_child_cset);
 extern tag_t load_sub_parts(tag_t displayed_part);
+
+#endif /* EXTERNAL_UNIGRAPHICS_UG_MISC_H */
 
 /*
  * Local Variables:

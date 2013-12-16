@@ -23,8 +23,8 @@
  *      TIE Networking Slave Header
  *
  */
-#ifndef _TIENET_SLAVE_H
-#define _TIENET_SLAVE_H
+#ifndef ADRT_SLAVE_TIENET_SLAVE_H
+#define ADRT_SLAVE_TIENET_SLAVE_H
 
 extern	void	tienet_slave_init(int port, char *host, void fcb_work(tienet_buffer_t *buffer, tienet_buffer_t *result),
 				  void fcb_free(void),

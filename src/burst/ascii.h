@@ -21,6 +21,10 @@
 /** @file burst/ascii.h
  *
  */
+
+#ifndef BURST_ASCII_H
+#define BURST_ASCII_H
+
 #define NUL '\000'
 #define SOH '\001'
 #define STX '\002'
@@ -48,6 +52,8 @@
 #define DEL '\177'
 
 #define Ctrl(chr) ((int)chr&037)
+
+#endif /* BURST_ASCII_H */
 
 /*
  * Local Variables:

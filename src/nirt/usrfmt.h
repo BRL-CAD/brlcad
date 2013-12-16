@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef __USRFMT_H__
-#define __USRFMT_H__
+#ifndef NIRT_USRFMT_H
+#define NIRT_USRFMT_H
 
 #define OUTITEM_NULL ((outitem *) 0)
 #define OVERLAP_NULL ((overlap *) 0)
@@ -182,7 +182,7 @@ extern FILE *fopenrc(void);
 #define H 4
 #define V 5
 
-#endif /* __USRFMT_H__ */
+#endif /* NIRT_USRFMT_H */
 
 /*
  * Local Variables:

@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef __IHOST_H__
-#define __IHOST_H__
+#ifndef REMRT_IHOST_H
+#define REMRT_IHOST_H
 
 #include "common.h"
 
@@ -71,7 +71,7 @@ extern struct ihost	*make_default_host(const char* name);
 extern char		*get_our_hostname(void);
 extern struct ihost	*host_lookup_of_fd(int fd);
 
-#endif /* __IHOST_H__ */
+#endif /* REMRT_IHOST_H */
 
 /*
  * Local Variables:

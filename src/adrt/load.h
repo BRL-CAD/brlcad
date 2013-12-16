@@ -21,8 +21,8 @@
  *
  */
 
-#ifndef _SLAVE_LOAD_H
-#define _SLAVE_LOAD_H
+#ifndef ADRT_LOAD_H
+#define ADRT_LOAD_H
 
 #include "adrt.h"
 #include "adrt_struct.h"

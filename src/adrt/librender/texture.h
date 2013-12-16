@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef _TEXTURE_H
-#define _TEXTURE_H
+#ifndef ADRT_LIBRENDER_TEXTURE_H
+#define ADRT_LIBRENDER_TEXTURE_H
 
 #include "texture_internal.h"
 

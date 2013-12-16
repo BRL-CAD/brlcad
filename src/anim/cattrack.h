@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef __CATTRACK_H__
-#define __CATTRACK_H__
+#ifndef ANIM_CATTRACK_H
+#define ANIM_CATTRACK_H
 
 #include "common.h"
 
@@ -88,7 +88,7 @@ int getcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t *pth0, fastf_t *pth1
 
 __END_DECLS
 
-#endif /* __CATTRACK_H__ */
+#endif /* ANIM_CATTRACK_H */
 
 /*
  * Local Variables:

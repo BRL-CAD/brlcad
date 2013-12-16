@@ -21,6 +21,9 @@
  *
  */
 
+#ifndef PROC_DB_BREPINTERSECT_H
+#define PROC_DB_BREPINTERSECT_H
+
 #include "common.h"
 
 #include "raytrace.h"
@@ -73,6 +76,7 @@ int TriangleBrepIntersect(
     double tol
     );
 
+#endif /* PROC_DB_BREPINTERSECT_H */
 
 /** @} */
 /*

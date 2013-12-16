@@ -20,6 +20,10 @@
 /** @file fbed/try.h
  *	Author:		Gary S. Moss
  */
+
+#ifndef FBED_TRY_H
+#define FBED_TRY_H
+
 #define INCL_TRY
 typedef struct
 {
@@ -49,6 +53,8 @@ typedef union try
 }
 Try;
 #define TRY_NULL	(Try *) NULL
+
+#endif /* FBED_TRY_H */
 
 /*
  * Local Variables:

@@ -26,8 +26,8 @@
 
 /* private header */
 
-#ifndef __PROCESS_H__
-#define __PROCESS_H__
+#ifndef MGED_POINTS_PROCESS_H
+#define MGED_POINTS_PROCESS_H
 
 #include "common.h"
 
@@ -134,7 +134,7 @@ int create_cylinder(point_line_t **plta, int count);
 int create_pipe(point_line_t **plta, int count);
 
 
-#endif  /* __PROCESS_H__ */
+#endif  /* MGED_POINTS_PROCESS_H */
 
 /*
  * Local Variables:

@@ -18,8 +18,8 @@
  * information.
  */
 
-#ifndef _ISST_SLAVE_H
-#define _ISST_SLAVE_H
+#ifndef ADRT_SLAVE_SLAVE_H
+#define ADRT_SLAVE_SLAVE_H
 
 void adrt_slave(int port, char *host, int threads);
 

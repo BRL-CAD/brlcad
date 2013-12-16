@@ -23,6 +23,9 @@
  *
  */
 
+#ifndef RT_SCANLINE_H
+#define RT_SCANLINE_H
+
 #include "bu.h"
 
 struct scanline {
@@ -32,6 +35,8 @@ struct scanline {
 
 void free_scanlines(int, struct scanline*);
 struct scanline* alloc_scanlines(int);
+
+#endif /* RT_SCANLINE_H */
 
 /*
  * Local Variables:

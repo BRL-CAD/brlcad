@@ -52,8 +52,8 @@
  *
  */
 
-#ifndef __MGED_H__
-#define __MGED_H__
+#ifndef MGED_MGED_H
+#define MGED_MGED_H
 
 #include "common.h"
 
@@ -659,7 +659,7 @@ void color_soltab(void);
 int editit(const char *command, const char *tempfile);
 
 
-#endif  /* __GED_H__ */
+#endif  /* MGED_MGED_H */
 
 /*
  * Local Variables:

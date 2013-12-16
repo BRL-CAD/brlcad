@@ -23,6 +23,9 @@
  *
  */
 
+#ifndef PROC_DB_TEA_H
+#define PROC_DB_TEA_H
+
 #define DEGREE 4
 #define DUCK_COUNT 306
 #define PATCH_COUNT 32
@@ -381,6 +384,7 @@ pt patches[PATCH_COUNT] = {
     {{270, 270, 270, 270}, {300, 305, 306, 279}, {297, 303, 304, 275}, {294, 301, 302, 271}}
 };
 
+#endif /* PROC_DB_TEA_H */
 
 /*
  * Local Variables:

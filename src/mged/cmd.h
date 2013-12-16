@@ -21,6 +21,9 @@
  *
  */
 
+#ifndef MGED_CMD_H
+#define MGED_CMD_H
+
 #include "common.h"
 
 #include <tcl.h>
@@ -219,6 +222,7 @@ extern int f_bv_vsave(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_bv_zoomin(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_bv_zoomout(ClientData, Tcl_Interp *, int, const char *[]);
 
+#endif /* MGED_CMD_H */
 
 /*
  * Local Variables:

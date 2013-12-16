@@ -20,8 +20,8 @@
 /** @file mged/fbserv.h
  * Package Handlers.
  */
-#ifndef __FBSERV_H__
-#define __FBSERV_H__
+#ifndef MGED_FBSERV_H
+#define MGED_FBSERV_H
 
 #include "fbmsg.h"
 
@@ -73,7 +73,7 @@ static struct pkg_switch pkg_switch[] = {
 };
 
 
-#endif  /* __FBSERV_H__ */
+#endif  /* MGED_FBSERV_H */
 /*
  * Local Variables:
  * mode: C

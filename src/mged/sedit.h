@@ -25,6 +25,9 @@
  *
  */
 
+#ifndef MGED_SEDIT_H
+#define MGED_SEDIT_H
+
 #define MGED_SMALL_SCALE 1.0e-10
 
 /* These EDIT_CLASS_ values go in es_edclass. */
@@ -271,6 +274,9 @@ extern void get_solid_keypoint(fastf_t *pt,
 			       char **strp,
 			       struct rt_db_internal *ip,
 			       fastf_t *mat);
+
+#endif /* MGED_SEDIT_H */
+
 /*
  * Local Variables:
  * mode: C

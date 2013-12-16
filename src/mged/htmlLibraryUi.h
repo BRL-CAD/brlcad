@@ -22,6 +22,10 @@
     # Copyright (c) 1995 by Sun Microsystems
     # Version 0.1 Thu Jul 20 09:06:28 PDT 1995
 */
+
+#ifndef MGED_HTMLLIBRARYUI_H
+#define MGED_HTMLLIBRARYUI_H
+
 char *html_library_ui_str = "\
 array set HMtag_map {\
 	a	   {Tlink link}\
@@ -492,6 +496,8 @@ array set HMesc_map {\
 	yuml \\xff\
 };\
 ";
+
+#endif /* MGED_HTMLLIBRARYUI_H */
 
 /*
  * Local Variables:

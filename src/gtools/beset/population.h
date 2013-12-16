@@ -25,8 +25,8 @@
  *   Ben Poole
  */
 
-#ifndef __POPULATION_H__
-#define __POPULATION_H__
+#ifndef GTOOLS_BESET_POPULATION_H
+#define GTOOLS_BESET_POPULATION_H
 
 #define GEO_SPHERE 1
 
@@ -78,7 +78,7 @@ int pop_put_internal(const char *n, struct directory *dp, struct db_i *dbip, str
 		     struct resource *resp);
 
 
-#endif /* __POPULATION_H__ */
+#endif /* GTOOLS_BESET_POPULATION_H */
 
 /*
  * Local Variables:

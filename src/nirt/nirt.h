@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef __NIRT_H__
-#define __NIRT_H__
+#ifndef NIRT_NIRT_H
+#define NIRT_NIRT_H
 
 #include "common.h"
 
@@ -154,7 +154,7 @@ extern void cm_attr();
 
 __END_DECLS
 
-#endif /* __NIRT_H__ */
+#endif /* NIRT_NIRT_H */
 
 /*
  * Local Variables:

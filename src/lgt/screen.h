@@ -21,6 +21,9 @@
     Author:		Gary S. Moss
 */
 
+#ifndef LGT_SCREEN_H
+#define  LGT_SCREEN_H
+
 #define TITLE_PTR		&template[ 0][ 7]
 #define TIMER_PTR		&template[ 1][ 7]
 #define F_SCRIPT_PTR		&template[ 2][16]
@@ -59,6 +62,8 @@ extern int			LI; /* From "libcursor.a".		*/
 extern int			li; /* Actual # of lines in window.	*/
 
 extern char			template[][TEMPLATE_COLS+1];
+
+#endif /* LGT_SCREEN_H */
 
 /*
  * Local Variables:

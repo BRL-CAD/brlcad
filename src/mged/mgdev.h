@@ -35,6 +35,9 @@
 /*
  * Special Addresses in MEGATEK display list
  */
+#ifndef MGED_MGDEV_H
+#define MGED_MGDEV_H
+
 #define MDL_CONTROL	0x0000FFF1L	/* Graphics Engine control */
 #define MDL_COLORMAP	0x0000FEC0L	/* Color Lookup Table */
 #define MDL_LIST_START	0x00000001L	/* display list START address */
@@ -111,6 +114,8 @@
 #define MGP_PLOT 0x09		/*   "  Plot */
 #define MGP_SPEC 0x0A		/*   "  Special Function */
 #define MGP_COPY 0x0B		/*   "  Screen Copy Function */
+
+#endif /* MGED_MGDEV_H */
 
 /*
  * Local Variables:

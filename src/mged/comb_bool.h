@@ -21,6 +21,9 @@
  *
  */
 
+#ifndef MGED_COMB_BOOL_H
+#define MGED_COMB_BOOL_H
+
 struct bool_tree_node
 {
     uint32_t btn_magic;
@@ -95,6 +98,8 @@ extern void show_gift_bool (struct bool_tree_node *, int);
     } else {							\
 	show_tree_infix((t), 0);				\
     }
+
+#endif /* MGED_COMB_BOOL_H */
 
 /*
  * Local Variables:

@@ -24,6 +24,9 @@
  *
  */
 
+#ifndef UTIL_BOMBARDIER_H
+#define UTIL_BOMBARDIER_H
+
 #define bomb_icon_width 192
 #define bomb_icon_height 56
 
@@ -142,6 +145,7 @@ static unsigned char bomb_icon_bits[] = {
     0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
+#endif /* UTIL_BOMBARDIER_H */
 
 /*
  * Local Variables:

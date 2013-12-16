@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef SEEN_MGED_DM_H
-#define SEEN_MGED_DM_H
+#ifndef MGED_MGED_DM_H
+#define MGED_MGED_DM_H
 
 #include "common.h"
 
@@ -606,7 +606,7 @@ extern struct w_dm which_dm[];  /* defined in attach.c */
 #define DM_PLOT_INDEX 0
 #define DM_PS_INDEX 1
 
-#endif /* SEEN_MGED_DM_H */
+#endif /* MGED_MGED_DM_H */
 
 /*
  * Local Variables:

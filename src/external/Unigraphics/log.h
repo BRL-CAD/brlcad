@@ -18,6 +18,9 @@
  * information.
  */
 
+#ifndef EXTERNAL_UNIGRAPHICS_LOG_H
+#define EXTERNAL_UNIGRAPHICS_LOG_H
+
 #include "common.h"
 
 #include <stdarg.h>
@@ -25,6 +28,8 @@
 extern void log(const char *fmt, ...);
 extern void dialog(const char *fmt, ...);
 extern void log_init(void);
+
+#endif /* EXTERNAL_UNIGRAPHICS_LOG_H */
 
 /*
  * Local Variables:

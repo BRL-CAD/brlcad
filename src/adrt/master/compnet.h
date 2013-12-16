@@ -21,8 +21,8 @@
  *
  */
 
-#ifndef _ISST_COMPNET_H
-#define _ISST_COMPNET_H
+#ifndef ADRT_MASTER_COMPNET_H
+#define ADRT_MASTER_COMPNET_H
 
 #include "common.h"
 

@@ -19,6 +19,10 @@
  */
 /** @file tokens.h
  */
+
+#ifndef TAB_TOKENS_H
+#define TAB_TOKENS_H
+
 #define FLOAT	1
 #define INT	2
 #define	SHELL	3
@@ -50,6 +54,8 @@
 #define STRING	29
 #define SEMI	30
 #define PATH	31
+
+#endif /* TAB_TOKENS_H */
 
 /*
  * Local Variables:

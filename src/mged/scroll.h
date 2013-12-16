@@ -22,6 +22,10 @@
  * Data structures for "scroll-bar" support
  *
  */
+
+#ifndef MGED_SCROLL_H
+#define MGED_SCROLL_H
+
 struct scroll_item {
     char *scroll_string;
     void (*scroll_func)();
@@ -29,6 +33,8 @@ struct scroll_item {
     char *scroll_cmd;
 };
 #define SCROLL_NULL ((struct scroll_item *)0)
+
+#endif /* MGED_SCROLL_H */
 
 /*
  * Local Variables:

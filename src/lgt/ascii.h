@@ -20,6 +20,10 @@
 /** @file lgt/ascii.h
  *	Author:		Gary S. Moss
  */
+
+#ifndef LGT_ASCII_H
+#define LGT_ASCII_H
+
 #define NUL		'\000'
 #define SOH		'\001'
 #define	STX		'\002'
@@ -47,6 +51,8 @@
 #define DEL		'\177'
 
 #define Ctrl(chr)	((int)chr&037)
+
+#endif /* LGT_ASCII_H */
 
 /*
  * Local Variables:

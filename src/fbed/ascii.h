@@ -20,6 +20,10 @@
 /** @file fbed/ascii.h
  *	Author:		Gary S. Moss
  */
+
+#ifndef FBED_ASCII_H
+#define FBED_ASCII_H
+
 #define NUL		'\000'
 #define SOH		'\001'
 #define	STX		'\002'
@@ -47,6 +51,8 @@
 #define DEL		'\177'
 
 #define Ctrl(chr)	((int)chr&037)
+
+#endif /* FBED_ASCII_H */
 
 /*
  * Local Variables:

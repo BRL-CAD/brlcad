@@ -22,8 +22,8 @@
  *
  */
 
-#ifndef __BURST_H__
-#define __BURST_H__
+#ifndef BURST_BURST_H
+#define BURST_BURST_H
 
 #include "common.h"
 
@@ -217,7 +217,7 @@ struct pt_queue
 
 #define PT_Q_NULL (Pt_Queue *) 0
 
-#endif  /* __BURST_H__ */
+#endif  /* BURST_BURST_H */
 
 /*
  * Local Variables:

@@ -21,6 +21,9 @@
     Author:		Gary S. Moss
 */
 
+#ifndef LGT_TREE_H
+#define LGT_TREE_H
+
 #define INCL_TREE
 typedef struct octree		Octree;
 typedef struct octreeplist	OcList;
@@ -106,6 +109,8 @@ extern Trie		*add_Trie(const char *name, Trie **triepp);
 
 extern Octree		ir_octree;
 extern Trie		*reg_triep;
+
+#endif /* LGT_TREE_H */
 
 /*
  * Local Variables:

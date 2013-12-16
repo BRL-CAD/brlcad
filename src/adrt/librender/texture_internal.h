@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef _TEXTURE_INTERNAL_H
-#define _TEXTURE_INTERNAL_H
+#ifndef ADRT_LIBRENDER_TEXTURE_INTERNAL_H
+#define ADRT_LIBRENDER_TEXTURE_INTERNAL_H
 
 
 #include "tie.h"

@@ -20,8 +20,8 @@
 /** @file lgt/lgt.h
     Author:		Gary S. Moss
 */
-#ifndef INCL_LGT
-#define INCL_LGT
+#ifndef LGT_LGT_H
+#define LGT_LGT_H
 
 #include "common.h"
 
@@ -138,7 +138,7 @@ typedef struct
 extern Lgt_Source lgts[];
 extern Movie movie;
 
-#endif /* INCL_LGT */
+#endif /* LGT_LGT_H */
 char *get_Input();
 int setup_Lgts();
 void user_Input();

@@ -29,6 +29,10 @@
  *	Escape		"escp"	one per escaped ray (after last intersection)
  *	End
  */
+
+#ifndef RT_RAD_H
+#define RT_RAD_H
+
 union radrec {
     /* Header Record */
     struct {
@@ -94,6 +98,8 @@ union radrec {
 	float	pad[17];
     } p;
 };
+
+#endif /* RT_RAD_H */
 
 /*
  * Local Variables:

@@ -18,8 +18,8 @@
  * information.
  */
 
-#ifndef BU_ARG_PARSE_H
-#define BU_ARG_PARSE_H
+#ifndef UTIL_BU_ARG_PARSE_H
+#define UTIL_BU_ARG_PARSE_H
 
 #include "common.h"
 
@@ -154,4 +154,4 @@ int bu_arg_parse(void *args[], int argc, char * const argv[]);
 } /* extern "C" { */
 #endif
 
-#endif /* BU_ARG_PARSE_H */
+#endif /* UTIL_BU_ARG_PARSE_H */

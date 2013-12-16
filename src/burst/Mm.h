@@ -22,8 +22,8 @@
  *
  */
 
-#ifndef __MM_H__
-#define __MM_H__
+#ifndef BURST_MM_H
+#define BURST_MM_H
 
 /* Emulate MUVES Mm package using malloc. */
 
@@ -41,7 +41,7 @@
 #define MmStrDup(str) bu_strdup(str)
 #define MmStrFree(str) bu_free(str, BU_FLSTR)
 
-#endif  /* __MM_H__ */
+#endif  /* BURST_MM_H */
 
 /*
  * Local Variables:

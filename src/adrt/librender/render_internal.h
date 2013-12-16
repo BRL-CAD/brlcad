@@ -21,8 +21,8 @@
  *
  */
 
-#ifndef _RENDER_INTERNAL_H
-#define _RENDER_INTERNAL_H
+#ifndef ADRT_LIBRENDER_RENDER_INTERNAL_H
+#define ADRT_LIBRENDER_RENDER_INTERNAL_H
 
 #include "tie.h"
 

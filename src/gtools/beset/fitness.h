@@ -25,8 +25,8 @@
  *   Ben Poole
  */
 
-#ifndef __FITNESS_H__
-#define __FITNESS_H__
+#ifndef GTOOLS_BESET_FITNESS_H
+#define GTOOLS_BESET_FITNESS_H
 
 #define U_AXIS 0
 #define V_AXIS 1
@@ -114,7 +114,7 @@ void fit_diff(char *obj, struct db_i *db, struct fitness_state *fstate);
 /* clear the stored rays */
 void free_rays (struct fitness_state *fstate);
 
-#endif /* __FITNESS_H__ */
+#endif /* GTOOLS_BESET_FITNESS_H */
 
 /*
  * Local Variables:

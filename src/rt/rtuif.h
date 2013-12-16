@@ -30,8 +30,8 @@
  *
  */
 
-#ifndef __RTUIF_H__
-#define __RTUIF_H__
+#ifndef RT_RTUIF_H
+#define RT_RTUIF_H
 
 #include "common.h"
 
@@ -87,7 +87,7 @@ extern void view_end(struct application *ap);
  */
 extern void view_cleanup(struct rt_i *rtip);
 
-#endif  /* __RTUIF_H__ */
+#endif  /* RT_RTUIF_H */
 /*
  * Local Variables:
  * mode: C

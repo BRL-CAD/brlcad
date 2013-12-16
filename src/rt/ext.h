@@ -23,6 +23,9 @@
  *
  */
 
+#ifndef RT_EXT_H
+#define RT_EXT_H
+
 #include "optical.h"
 
 /***** Variables declared in opt.c *****/
@@ -134,6 +137,8 @@ extern int get_args(int argc, const char *argv[]);
 
 /* view.c */
 extern void usage(const char *argv0);
+
+#endif /* RT_EXT_H */
 /*
  * Local Variables:
  * mode: C

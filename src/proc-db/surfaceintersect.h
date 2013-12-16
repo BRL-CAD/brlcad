@@ -18,6 +18,9 @@
  * information.
  */
 
+#ifndef PROC_DB_SURFACEINTERSECT_H
+#define PROC_DB_SURFACEINTERSECT_H
+
 #include "common.h"
 
 /* common interface headers */
@@ -61,6 +64,7 @@ public:
     int Render_Curves();
 };
 
+#endif /* PROC_DB_SURFACEINTERSECT_H */
 
 /*
  * Local Variables:

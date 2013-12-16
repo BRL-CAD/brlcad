@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef VFONT_FONT_H
-#define VFONT_FONT_H
+#ifndef VFONT_VFONT_H
+#define VFONT_VFONT_H
 
 #include "common.h"
 
@@ -84,7 +84,7 @@ struct vfont
 get_font(const char* fontname, void (*vfont_log)(const char *fmt, ...));
 
 
-#endif /* VFONT_FONT_H */
+#endif /* VFONT_VFONT_H */
 
 /*
  * Local Variables:

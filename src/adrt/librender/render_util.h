@@ -21,8 +21,8 @@
  *
  */
 
-#ifndef _RENDER_UTIL_H
-#define _RENDER_UTIL_H
+#ifndef ADRT_LIBRENDER_RENDER_UTIL_H
+#define ADRT_LIBRENDER_RENDER_UTIL_H
 
 #include "render_internal.h"
 

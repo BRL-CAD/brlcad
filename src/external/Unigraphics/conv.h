@@ -21,6 +21,9 @@
  *
  */
 
+#ifndef EXTERNAL_UNIGRAPHICS_CONV_H
+#define EXTERNAL_UNIGRAPHICS_CONV_H
+
 /* default indentation for a single level in the DAG */
 #define LEVEL_INDENT 6
 #define FLAG_SUPPRESS		0
@@ -43,6 +46,8 @@ extern ug_tol ugtol;
 
 extern int debug;
 #define dprintf if (debug) printf
+
+#endif /* EXTERNAL_UNIGRAPHICS_CONV_H */
 
 /*
  * Local Variables:

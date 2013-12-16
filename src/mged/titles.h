@@ -22,6 +22,10 @@
  * Constants that describe the layout of the faceplate.
  *
  */
+
+#ifndef MGED_TITLES_H
+#define MGED_TITLES_H
+
 #define XMIN		(-2048)
 #define XMAX		(2047)
 #define YMIN		(-2048)
@@ -39,6 +43,8 @@
 #define SOLID_YBASE	(1920)		/* pixel pos of first solid line */
 #define TEXT0_DY	(-60)		/* #pixels per line, Size 0 */
 #define TEXT1_DY	(-90)		/* #pixels per line, Size 1 */
+
+#endif /* SRC_MGED_TITLES */
 
 /*
  * Local Variables:

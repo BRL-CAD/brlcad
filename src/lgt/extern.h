@@ -21,6 +21,9 @@
  *
  */
 
+#ifndef LGT_EXTERN_H
+#define LGT_EXTERN_H
+
 #include "common.h"
 
 extern void (*norml_sig)(), (*abort_sig)();
@@ -173,6 +176,8 @@ extern struct rt_i *rt_ip;
 #define C_QUERYREG	4
 #define XSCR2MEM(_x)	(_x)
 #define YSCR2MEM(_y)	(_y)
+
+#endif /* LGT_EXTERN_H */
 
 /*
  * Local Variables:

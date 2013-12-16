@@ -21,8 +21,8 @@
  *
  */
 
-#ifndef _MASTER_H
-#define _MASTER_H
+#ifndef ADRT_MASTER_MASTER_H
+#define ADRT_MASTER_MASTER_H
 
 #include "tie.h"
 

@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef _ADRT_H
-#define _ADRT_H
+#ifndef ADRT_ADRT_H
+#define ADRT_ADRT_H
 
 #include "common.h"
 

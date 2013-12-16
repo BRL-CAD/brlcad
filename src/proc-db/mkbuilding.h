@@ -18,8 +18,8 @@
  * information.
  */
 
-#ifndef __MKBUILDING_H__
-#define __MKBUILDING_H__
+#ifndef PROC_DB_MKBUILDING_H
+#define PROC_DB_MKBUILDING_H
 
 #include "common.h"
 

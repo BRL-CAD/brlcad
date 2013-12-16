@@ -25,8 +25,8 @@
  * for the menu, and the remaining items are individual menu entries.
  *
  */
-#ifndef SEEN_MENU_H
-#define SEEN_MENU_H
+#ifndef MGED_MENU_H
+#define MGED_MENU_H
 
 struct menu_item {
     char *menu_string;
@@ -43,7 +43,7 @@ struct menu_item {
 #define MENU_L2 1 /* second-level menu (unused) */
 #define MENU_GEN 2 /* general features (mouse buttons) */
 
-#endif /* SEEN_MENU_H */
+#endif /* MGED_MENU_H */
 
 /*
  * Local Variables:

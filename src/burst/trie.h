@@ -22,8 +22,8 @@
  *
  */
 
-#ifndef INCL_TRIE
-#define INCL_TRIE
+#ifndef BURST_TRIE_H
+#define BURST_TRIE_H
 
 #ifdef NULL_FUNC
 #  undef NULL_FUNC
@@ -58,7 +58,7 @@ union trie {
 	return TRIE_NULL;\
 }
 extern Trie *cmd_trie;
-#endif /* INCL_TRIE */
+#endif /* BURST_TRIE_H */
 
 /*
  * Local Variables:
