@@ -54,7 +54,7 @@ rt_vol_mirror(struct rt_db_internal *ip, register const plane_t plane)
     RT_CK_DB_INTERNAL(ip);
 
     vol = (struct rt_vol_internal *)ip->idb_ptr;
-    RT_EBM_CK_MAGIC(vol);
+    RT_VOL_CK_MAGIC(vol);
 
     MAT_IDN(mirmat);
 

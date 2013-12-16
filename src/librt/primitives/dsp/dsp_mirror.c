@@ -54,7 +54,7 @@ rt_dsp_mirror(struct rt_db_internal *ip, register const plane_t plane)
     RT_CK_DB_INTERNAL(ip);
 
     dsp = (struct rt_dsp_internal *)ip->idb_ptr;
-    RT_EBM_CK_MAGIC(dsp);
+    RT_DSP_CK_MAGIC(dsp);
 
     MAT_IDN(mirmat);
 

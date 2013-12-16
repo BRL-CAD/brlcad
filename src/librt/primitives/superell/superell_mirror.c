@@ -58,7 +58,7 @@ rt_superell_mirror(struct rt_db_internal *ip, register const plane_t plane)
     RT_CK_DB_INTERNAL(ip);
 
     superell = (struct rt_superell_internal *)ip->idb_ptr;
-    RT_EBM_CK_MAGIC(superell);
+    RT_SUPERELL_CK_MAGIC(superell);
 
     MAT_IDN(mirmat);
 
