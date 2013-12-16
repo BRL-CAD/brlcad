@@ -260,7 +260,9 @@ xsetup(int argc, char **argv)
 
     if ((envp = getenv("DISPLAY")) == NULL) {
 	/* Env not set, use local host */
-	gethostname(hostname, 80);
+	if (gethostname(hostname, 80) != 0) {
+	    bu_exit(2, "plot3-X: Can't get hostname.\n");
+	}
 	snprintf(display, 81, "%s:0", hostname);
 	envp = display;
     }
