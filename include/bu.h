@@ -4796,7 +4796,7 @@ BU_EXPORT extern void *bu_rb_search(struct bu_rb_tree *tree,
  *
  * Routines for traversal of red-black trees
  *
- * The function burb_walk() is defined in terms of the function
+ * The function bu_rb_walk() is defined in terms of the function
  * rb_walk(), which, in turn, calls any of the six functions
  *
  * @arg		- static void prewalknodes()
