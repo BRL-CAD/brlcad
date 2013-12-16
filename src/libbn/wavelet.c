@@ -151,7 +151,7 @@
 #include "bn.h"
 
 /**
- * This source file uses C-styple "templates" where functions specific
+ * This source file uses C-style "templates" where functions specific
  * to a set of specified data types are automatically
  * declared/provided via one single macro implementation.
  */
