@@ -456,7 +456,9 @@ main(int argc, char **argv)
 
     {
 	int c;
-	bool_t errors = 0;
+	bool_t errors;
+
+    	errors = argc == 1 && isatty(fileno(stdin));
 
 	while ((c = bu_getopt(argc, argv, OPTSTR)) != -1)
 	    switch (c) {
