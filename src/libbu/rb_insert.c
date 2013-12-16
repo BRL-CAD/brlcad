@@ -45,7 +45,7 @@ _rb_insert(struct bu_rb_tree *tree, int order, struct bu_rb_node *new_node)
     struct bu_rb_node *parent;
     struct bu_rb_node *grand_parent;
     struct bu_rb_node *y;
-    int (*compare)();
+    int (*compare)(void *, void *);
     int comparison=0xdeadbeef;
     int direction;
     int result = 0;
@@ -78,8 +78,8 @@ _rb_insert(struct bu_rb_tree *tree, int order, struct bu_rb_node *new_node)
 	if (UNLIKELY(tree->rbt_debug & BU_RB_DEBUG_OS))
 	    bu_log("_rb_insert(%p): size(%p, %d)=%d\n",
 		   (void*)new_node, (void*)parent, order, RB_SIZE(parent, order));
-	comparison = (*compare)(RB_DATA(new_node, order),
-				RB_DATA(node, order));
+	comparison = compare(RB_DATA(new_node, order),
+			     RB_DATA(node, order));
 	if (comparison < 0) {
 	    if (UNLIKELY(tree->rbt_debug & BU_RB_DEBUG_INSERT))
 		bu_log("_rb_insert(%p): <_%d <%p>, going left\n",
@@ -97,8 +97,8 @@ _rb_insert(struct bu_rb_tree *tree, int order, struct bu_rb_node *new_node)
     RB_PARENT(new_node, order) = parent;
     if (parent == RB_NULL(tree))
 	RB_ROOT(tree, order) = new_node;
-    else if ((*compare)(RB_DATA(new_node, order),
-			RB_DATA(parent, order)) < 0)
+    else if ((compare(RB_DATA(new_node, order),
+		      RB_DATA(parent, order))) < 0)
 	RB_LEFT_CHILD(parent, order) = new_node;
     else
 	RB_RIGHT_CHILD(parent, order) = new_node;

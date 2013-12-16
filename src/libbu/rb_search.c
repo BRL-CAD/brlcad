@@ -41,7 +41,7 @@
  * (tree->rbt_empty_node).
  */
 HIDDEN struct bu_rb_node *
-_rb_search(struct bu_rb_node *root, int order_nm, int (*order) (/* ??? */), void *data)
+_rb_search(struct bu_rb_node *root, int order_nm, int (*order)(void *, void *), void *data)
 {
     int result;
     struct bu_rb_tree *tree;
@@ -53,7 +53,7 @@ _rb_search(struct bu_rb_node *root, int order_nm, int (*order) (/* ??? */), void
     while (1) {
 	if (root == RB_NULL(root->rbn_tree))
 	    break;
-	if ((result = (*order)(data, RB_DATA(root, order_nm))) == 0)
+	if ((result = order(data, RB_DATA(root, order_nm))) == 0)
 	    break;
 	else if (result < 0)
 	    root = RB_LEFT_CHILD(root, order_nm);
@@ -69,7 +69,7 @@ _rb_search(struct bu_rb_node *root, int order_nm, int (*order) (/* ??? */), void
 void *bu_rb_search (struct bu_rb_tree *tree, int order, void *data)
 {
 
-    int (*compare)();
+    int (*compare)(void *, void *);
     struct bu_rb_node *node;
 
     BU_CKMAG(tree, BU_RB_TREE_MAGIC, "red-black tree");

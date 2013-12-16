@@ -2522,7 +2522,7 @@ struct bu_rb_tree {
 
     /*** CLASS III - Applications should NOT manipulate directly. ***/
     int rbt_nm_orders;                 /**< Number of simultaneous orders */
-    int (**rbt_order)();               /**< Comparison functions */
+    int (**rbt_order)(void *, void *); /**< Comparison functions */
     struct bu_rb_node **rbt_root;      /**< The actual trees */
     char *rbt_unique;                  /**< Uniqueness flags */
     struct bu_rb_node *rbt_current;    /**< Current node */

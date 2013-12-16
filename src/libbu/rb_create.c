@@ -27,7 +27,7 @@
 
 
 struct bu_rb_tree *
-bu_rb_create(char *description, int nm_orders, int (**order_funcs)())
+bu_rb_create(char *description, int nm_orders, int (**order_funcs)(void *, void *))
 {
     int order;
     struct bu_rb_tree *tree;
