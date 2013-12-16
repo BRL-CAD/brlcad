@@ -35,16 +35,26 @@
  * Perform a preorder traversal of a red-black tree
  */
 HIDDEN void
-prewalknodes(struct bu_rb_node *root, int order, void (*visit) (/* ??? */), int depth)
+prewalknodes(struct bu_rb_node *root,
+	     int order,
+	     void (*visit)(void),
+	     int depth)
 {
+    /* need function pointer for recasting visit for actual use as a function */
+    BU_RB_WALK_FUNC_NODE_DECL(_visit);
+    /* make the cast */
+    _visit = BU_RB_WALK_FUNC_CAST_AS_NODE_FUNC(visit);
+
     BU_CKMAG(root, BU_RB_NODE_MAGIC, "red-black node");
     RB_CKORDER(root->rbn_tree, order);
 
     if (root == RB_NULL(root->rbn_tree))
 	return;
-    visit(root, depth);
-    prewalknodes (RB_LEFT_CHILD(root, order), order, visit, depth + 1);
-    prewalknodes (RB_RIGHT_CHILD(root, order), order, visit, depth + 1);
+
+    _visit(root, depth);
+
+    prewalknodes(RB_LEFT_CHILD(root, order), order, visit, depth + 1);
+    prewalknodes(RB_RIGHT_CHILD(root, order), order, visit, depth + 1);
 }
 
 
@@ -54,16 +64,26 @@ prewalknodes(struct bu_rb_node *root, int order, void (*visit) (/* ??? */), int 
  * Perform an inorder traversal of a red-black tree
  */
 HIDDEN void
-inwalknodes(struct bu_rb_node *root, int order, void (*visit) (/* ??? */), int depth)
+inwalknodes(struct bu_rb_node *root,
+	    int order,
+	    void (*visit)(void),
+	    int depth)
 {
+    /* need function pointer for recasting visit for actual use as a function */
+    BU_RB_WALK_FUNC_NODE_DECL(_visit);
+    /* make the cast */
+    _visit = BU_RB_WALK_FUNC_CAST_AS_NODE_FUNC(visit);
+
     BU_CKMAG(root, BU_RB_NODE_MAGIC, "red-black node");
     RB_CKORDER(root->rbn_tree, order);
 
     if (root == RB_NULL(root->rbn_tree))
 	return;
-    inwalknodes (RB_LEFT_CHILD(root, order), order, visit, depth + 1);
-    visit(root, depth);
-    inwalknodes (RB_RIGHT_CHILD(root, order), order, visit, depth + 1);
+    inwalknodes(RB_LEFT_CHILD(root, order), order, visit, depth + 1);
+
+    _visit(root, depth);
+
+    inwalknodes(RB_RIGHT_CHILD(root, order), order, visit, depth + 1);
 }
 
 
@@ -73,16 +93,26 @@ inwalknodes(struct bu_rb_node *root, int order, void (*visit) (/* ??? */), int d
  * Perform a postorder traversal of a red-black tree
  */
 HIDDEN void
-postwalknodes(struct bu_rb_node *root, int order, void (*visit) (/* ??? */), int depth)
+postwalknodes(struct bu_rb_node *root,
+	      int order,
+	      void (*visit)(void),
+	      int depth)
 {
+    /* need function pointer for recasting visit for actual use as a function */
+    BU_RB_WALK_FUNC_NODE_DECL(_visit);
+    /* make the cast */
+    _visit = BU_RB_WALK_FUNC_CAST_AS_NODE_FUNC(visit);
+
     BU_CKMAG(root, BU_RB_NODE_MAGIC, "red-black node");
     RB_CKORDER(root->rbn_tree, order);
 
     if (root == RB_NULL(root->rbn_tree))
 	return;
-    postwalknodes (RB_LEFT_CHILD(root, order), order, visit, depth + 1);
-    postwalknodes (RB_RIGHT_CHILD(root, order), order, visit, depth + 1);
-    visit(root, depth);
+
+    postwalknodes(RB_LEFT_CHILD(root, order), order, visit, depth + 1);
+    postwalknodes(RB_RIGHT_CHILD(root, order), order, visit, depth + 1);
+
+    _visit(root, depth);
 }
 
 
@@ -92,16 +122,26 @@ postwalknodes(struct bu_rb_node *root, int order, void (*visit) (/* ??? */), int
  * Perform a preorder traversal of a red-black tree
  */
 HIDDEN void
-prewalkdata(struct bu_rb_node *root, int order, void (*visit) (/* ??? */), int depth)
+prewalkdata(struct bu_rb_node *root,
+	    int order,
+	    void (*visit)(void),
+	    int depth)
 {
+    /* need function pointer for recasting visit for actual use as a function */
+    BU_RB_WALK_FUNC_DATA_DECL(_visit);
+    /* make the cast */
+    _visit = BU_RB_WALK_FUNC_CAST_AS_DATA_FUNC(visit);
+
     BU_CKMAG(root, BU_RB_NODE_MAGIC, "red-black node");
     RB_CKORDER(root->rbn_tree, order);
 
     if (root == RB_NULL(root->rbn_tree))
 	return;
-    visit(RB_DATA(root, order), depth);
-    prewalkdata (RB_LEFT_CHILD(root, order), order, visit, depth + 1);
-    prewalkdata (RB_RIGHT_CHILD(root, order), order, visit, depth + 1);
+
+    _visit(RB_DATA(root, order), depth);
+
+    prewalkdata(RB_LEFT_CHILD(root, order), order, visit, depth + 1);
+    prewalkdata(RB_RIGHT_CHILD(root, order), order, visit, depth + 1);
 }
 
 
@@ -111,16 +151,26 @@ prewalkdata(struct bu_rb_node *root, int order, void (*visit) (/* ??? */), int d
  * Perform an inorder traversal of a red-black tree
  */
 HIDDEN void
-inwalkdata(struct bu_rb_node *root, int order, void (*visit) (/* ??? */), int depth)
+inwalkdata(struct bu_rb_node *root,
+	   int order,
+	   void (*visit)(void),
+	   int depth)
 {
+    /* need function pointer for recasting visit for actual use as a function */
+    BU_RB_WALK_FUNC_DATA_DECL(_visit);
+    /* make the cast */
+    _visit = BU_RB_WALK_FUNC_CAST_AS_DATA_FUNC(visit);
+
     BU_CKMAG(root, BU_RB_NODE_MAGIC, "red-black node");
     RB_CKORDER(root->rbn_tree, order);
 
     if (root == RB_NULL(root->rbn_tree))
 	return;
-    inwalkdata (RB_LEFT_CHILD(root, order), order, visit, depth + 1);
-    visit(RB_DATA(root, order), depth);
-    inwalkdata (RB_RIGHT_CHILD(root, order), order, visit, depth + 1);
+    inwalkdata(RB_LEFT_CHILD(root, order), order, visit, depth + 1);
+
+    _visit(RB_DATA(root, order), depth);
+
+    inwalkdata(RB_RIGHT_CHILD(root, order), order, visit, depth + 1);
 }
 
 
@@ -130,25 +180,44 @@ inwalkdata(struct bu_rb_node *root, int order, void (*visit) (/* ??? */), int de
  * Perform a postorder traversal of a red-black tree
  */
 HIDDEN void
-postwalkdata(struct bu_rb_node *root, int order, void (*visit) (/* ??? */), int depth)
+postwalkdata(struct bu_rb_node *root,
+	     int order,
+	     void (*visit)(void),
+	     int depth)
 {
+    /* need function pointer for recasting visit for actual use as a function */
+    BU_RB_WALK_FUNC_DATA_DECL(_visit);
+    /* make the cast */
+    _visit = BU_RB_WALK_FUNC_CAST_AS_DATA_FUNC(visit);
+
     BU_CKMAG(root, BU_RB_NODE_MAGIC, "red-black node");
     RB_CKORDER(root->rbn_tree, order);
 
     if (root == RB_NULL(root->rbn_tree))
 	return;
-    postwalkdata (RB_LEFT_CHILD(root, order), order, visit, depth + 1);
-    postwalkdata (RB_RIGHT_CHILD(root, order), order, visit, depth + 1);
-    visit(RB_DATA(root, order), depth);
+    postwalkdata(RB_LEFT_CHILD(root, order), order, visit, depth + 1);
+    postwalkdata(RB_RIGHT_CHILD(root, order), order, visit, depth + 1);
+
+    _visit(RB_DATA(root, order), depth);
 }
 
 
 void
-rb_walk(struct bu_rb_tree *tree, int order, void (*visit) (/* ??? */), int what_to_visit, int trav_type)
+rb_walk(struct bu_rb_tree *tree,
+	int order,
+	void (*visit)(void),
+	int what_to_visit,
+	int trav_type)
 {
     static void (*walk[][3])() = {
-	{ prewalknodes, inwalknodes, postwalknodes },
-	{ prewalkdata, inwalkdata, postwalkdata }
+	{ BU_RB_WALK_FUNC_CAST_AS_FUNC_ARG(prewalknodes),
+	  BU_RB_WALK_FUNC_CAST_AS_FUNC_ARG(inwalknodes),
+	  BU_RB_WALK_FUNC_CAST_AS_FUNC_ARG(postwalknodes)
+	},
+	{ BU_RB_WALK_FUNC_CAST_AS_FUNC_ARG(prewalkdata),
+	  BU_RB_WALK_FUNC_CAST_AS_FUNC_ARG(inwalkdata),
+	  BU_RB_WALK_FUNC_CAST_AS_FUNC_ARG(postwalkdata)
+	}
     };
 
     BU_CKMAG(tree, BU_RB_TREE_MAGIC, "red-black tree");
@@ -159,9 +228,11 @@ rb_walk(struct bu_rb_tree *tree, int order, void (*visit) (/* ??? */), int what_
 	case POSTORDER:
 	    switch (what_to_visit) {
 		case WALK_NODES:
-		case WALK_DATA:
-		    (*walk[what_to_visit][trav_type])
-			(RB_ROOT(tree, order), order, visit, 0);
+		case WALK_DATA: {
+		    BU_RB_WALK_FUNC_FUNC_DECL(_walk_func);
+		    _walk_func = BU_RB_WALK_FUNC_CAST_AS_FUNC_FUNC(walk[what_to_visit][trav_type]);
+		    _walk_func(RB_ROOT(tree, order), order, visit, 0);
+		}
 		    break;
 		default:
 		    bu_log("ERROR: rb_walk(): Illegal visitation object: %d\n",
@@ -177,7 +248,10 @@ rb_walk(struct bu_rb_tree *tree, int order, void (*visit) (/* ??? */), int what_
 }
 
 void
-bu_rb_walk(struct bu_rb_tree *tree, int order, void (*visit) (/* ??? */), int trav_type)
+bu_rb_walk(struct bu_rb_tree *tree,
+	   int order,
+	   void (*visit)(void),
+	   int trav_type)
 {
     BU_CKMAG(tree, BU_RB_TREE_MAGIC, "red-black tree");
     RB_CKORDER(tree, order);
