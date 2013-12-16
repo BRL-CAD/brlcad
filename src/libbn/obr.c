@@ -71,13 +71,13 @@ pnt2d_array_get_dimension(const point2d_t *pnts, int pnt_cnt, point2d_t *p_cente
     point2d_t min = V2INIT_ZERO;
     point2d_t max = V2INIT_ZERO;
     point2d_t center = V2INIT_ZERO;
-    point2d_t curr_pnt;
-    point2d_t min_x_pt;
-    point2d_t min_y_pt;
-    point2d_t max_x_pt;
-    point2d_t max_y_pt;
-    point2d_t A;
-    point2d_t B;
+    point2d_t curr_pnt = V2INIT_ZERO;
+    point2d_t min_x_pt = V2INIT_ZERO;
+    point2d_t min_y_pt = V2INIT_ZERO;
+    point2d_t max_x_pt = V2INIT_ZERO;
+    point2d_t max_y_pt = V2INIT_ZERO;
+    point2d_t A = V2INIT_ZERO;
+    point2d_t B = V2INIT_ZERO;
     fastf_t dmax, dist_minmax;
 
     V2MOVE(curr_pnt, pnts[0]);
