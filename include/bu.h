@@ -4661,8 +4661,8 @@ BU_EXPORT extern void *bu_rb_curr(struct bu_rb_tree *tree,
  * package's rbp_data member.  Otherwise, the application data is left
  * untouched.
  */
-BU_EXPORT extern void bu_rb_free(struct bu_rb_tree *tree, void (*free_data)());
-#define BU_RB_RETAIN_DATA ((void (*)()) 0)
+BU_EXPORT extern void bu_rb_free(struct bu_rb_tree *tree, void (*free_data)(void *data));
+#define BU_RB_RETAIN_DATA ((void (*)(void *data)) 0)
 #define bu_rb_free1(t, f)					\
     {							\
 	BU_CKMAG((t), BU_RB_TREE_MAGIC, "red-black tree");	\

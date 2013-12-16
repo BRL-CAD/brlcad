@@ -27,7 +27,7 @@
 
 
 void
-bu_rb_free(struct bu_rb_tree *tree, void (*free_data) (/* ??? */))
+bu_rb_free(struct bu_rb_tree *tree, void (*free_data)(void *))
 {
     struct bu_rb_list *rblp;
     struct bu_rb_node *node;
@@ -51,7 +51,7 @@ bu_rb_free(struct bu_rb_tree *tree, void (*free_data) (/* ??? */))
 	package = rblp->rbl_package;
 	BU_CKMAG(package, BU_RB_PKG_MAGIC, "red-black package");
 	if (free_data)
-	    (*free_data)(package->rbp_data);
+	    free_data(package->rbp_data);
 	rb_free_package(package);
     }
 
