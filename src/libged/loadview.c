@@ -147,16 +147,16 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 	if (ret != 1)
 	    bu_log("Failed to read buffer\n");
 
-	if (bu_strncmp(buffer, "-p", 2)==0) {
+	if (bu_strncmp(buffer, "-p", 2) == 0) {
 	    /* we found perspective */
 
-	    buffer[0]=' ';
-	    buffer[1]=' ';
+	    buffer[0] = ' ';
+	    buffer[1] = ' ';
 	    sscanf(buffer, "%d", &perspective);
 	    /* bu_log("perspective=%d\n", perspective);*/
 	    gedp->ged_gvp->gv_perspective = perspective;
 
-	} else if (bu_strncmp(buffer, "$*", 2)==0) {
+	} else if (bu_strncmp(buffer, "$*", 2) == 0) {
 	    /* the next read is the file name, the objects come
 	     * after that
 	     */
@@ -199,10 +199,10 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 		bu_log("Failed to read object names\n");
 
 	    /* bu_log("OBJECTS=%s\n", objects);*/
-	    while ((!feof(fp)) && (bu_strncmp(objects, "\\", 1)!=0)) {
+	    while ((!feof(fp)) && (bu_strncmp(objects, "\\", 1) != 0)) {
 
 		/* clean off the single quotes... */
-		if (bu_strncmp(objects, "'", 1)==0) {
+		if (bu_strncmp(objects, "'", 1) == 0) {
 		    objects[0]=' ';
 		    memset(objects+strlen(objects)-1, ' ', 1);
 		    sscanf(objects, "%10000s", objects);
@@ -222,7 +222,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    /* end iteration over reading in listed objects */
-	} else if (bu_strncmp(buffer, "<<EOF", 5)==0) {
+	} else if (bu_strncmp(buffer, "<<EOF", 5) == 0) {
 	    char *cmdBuffer = NULL;
 	    /* we are almost done .. read in the view commands */
 

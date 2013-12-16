@@ -212,7 +212,7 @@ int detached = 0;		/* continue after EOF */
 fd_set clients;
 int print_on = 1;
 
-int save_overlaps=0;
+int save_overlaps = 0;
 /*
  * Scan the ihost table.  For all eligible hosts that don't
  * presently have a server running, try to start a server.
@@ -616,7 +616,7 @@ check_input(int waittime)
     int val;
 
     /* First, handle any packages waiting in internal buffers */
-    for (i=0; i<(int)MAXSERVERS; i++) {
+    for (i = 0; i <(int)MAXSERVERS; i++) {
 	pc = servers[i].sr_pc;
 	if (pc == PKC_NULL) continue;
 	if ((val = pkg_process(pc)) < 0)
@@ -634,7 +634,7 @@ check_input(int waittime)
 	perror("select");
 	return;
     }
-    if (val==0) {
+    if (val == 0) {
 	/* At this point, ibits==0 */
 	if (rem_debug>1) bu_log("%s select timed out after %d seconds\n", stamp(), waittime);
 	return;
@@ -649,7 +649,7 @@ check_input(int waittime)
     }
 
     /* Fourth, get any new traffic off the network into libpkg buffers */
-    for (i=0; i<(int)MAXSERVERS; i++) {
+    for (i = 0; i < (int)MAXSERVERS; i++) {
 	if (!feof(stdin) && i == fileno(stdin)) continue;
 	if (!FD_ISSET(i, &ifdset)) continue;
 	pc = servers[i].sr_pc;
@@ -664,7 +664,7 @@ check_input(int waittime)
     }
 
     /* Fifth, handle any new packages now waiting in internal buffers */
-    for (i=0; i<(int)MAXSERVERS; i++) {
+    for (i = 0; i < (int)MAXSERVERS; i++) {
 	pc = servers[i].sr_pc;
 	if (pc == PKC_NULL) continue;
 	if (pkg_process(pc) < 0)
@@ -838,7 +838,7 @@ read_matrix(FILE *fp, struct frame *fr)
     snprintf(cmd, 128, "viewsize %s; eye_pt ", number);
     bu_vls_strcat(&(fr->fr_cmd), cmd);
 
-    for (i=0; i<3; i++) {
+    for (i = 0; i < 3; i++) {
 	if (fscanf(fp, "%128s", number) != 1) goto out;
 	snprintf(cmd, 128, "%s ", number);
 	bu_vls_strcat(&fr->fr_cmd, cmd);
@@ -847,7 +847,7 @@ read_matrix(FILE *fp, struct frame *fr)
     sprintf(cmd, "; viewrot ");
     bu_vls_strcat(&fr->fr_cmd, cmd);
 
-    for (i=0; i < 16; i++) {
+    for (i = 0; i < 16; i++) {
 	if (fscanf(fp, "%128s", number) != 1) goto out;
 	snprintf(cmd, 128, "%s ", number);
 	bu_vls_strcat(&fr->fr_cmd, cmd);
@@ -1228,7 +1228,7 @@ repaint_fb(struct frame *fr)
     w = fr->fr_width;
     if (w > fb_getwidth(fbp)) w = fb_getwidth(fbp);
 
-    for (y=0; y < fr->fr_height; y++) {
+    for (y = 0; y < fr->fr_height; y++) {
 	cnt = fread((char *)line, nby, 1, fp);
 	/* Write out even partial results, then quit */
 	fb_write(fbp, 0, y, line, w);
@@ -1745,7 +1745,7 @@ schedule(struct timeval *nowp)
     struct frame *fr;
     struct frame *fr2;
     int another_pass;
-    int nxt_frame=0;
+    int nxt_frame = 0;
     static int scheduler_going = 0;	/* recursion protection */
     int ret;
 
@@ -1815,7 +1815,7 @@ schedule(struct timeval *nowp)
 top:
     for (fr = FrameHead.fr_forw; fr != &FrameHead; fr = fr->fr_forw) {
 	CHECK_FRAME(fr);
-	nxt_frame=0;
+	nxt_frame = 0;
 	do {
 	    another_pass = 0;
 	    if (BU_LIST_IS_EMPTY(&fr->fr_todo))
@@ -1835,7 +1835,7 @@ top:
 		    goto top;
 		} else if (ret == 2) {
 		    /* This frame is assigned, move on */
-		    nxt_frame=1;
+		    nxt_frame = 1;
 		    break;
 		} else if (ret == 3) {
 		    /* we have a server that wants to move on */
@@ -2079,7 +2079,7 @@ cd_mat(const int argc, const char **argv)
     }
 
     /* Find the one desired frame */
-    for (i=fr->fr_number; i>=0; i--) {
+    for (i = fr->fr_number; i >= 0; i--) {
 	if (read_matrix(fp, fr) <= 0) {
 	    bu_log("mat: failure\n");
 	    fclose(fp);
@@ -2125,7 +2125,7 @@ cd_movie(const int argc, const char **argv)
 	return -1;
     }
     /* Skip over unwanted beginning frames */
-    for (i=0; i<a; i++) {
+    for (i = 0; i < a; i++) {
 	if (read_matrix(fp, &dummy_frame) <= 0) {
 	    bu_log("movie:  error in old style frame list\n");
 	    fclose(fp);
@@ -2161,7 +2161,7 @@ cd_add(const int argc, const char **argv)
     int i;
     struct ihost *ihp;
 
-    for (i=1; i<argc; i++) {
+    for (i = 1; i < argc; i++) {
 	if ((ihp = host_lookup_by_name(argv[i], 0)) != IHOST_NULL) {
 	    add_host(ihp);
 	}
@@ -2468,7 +2468,7 @@ cd_status(const int UNUSED(argc), const char **UNUSED(argv))
 	} else {
 	    bu_log("\n");
 	}
-	num = sp->sr_nsamp<=0 ? 1 : sp->sr_nsamp;
+	num = sp->sr_nsamp <= 0 ? 1 : sp->sr_nsamp;
 	bu_log("\tlast:  elapsed=%g, cpu=%g, lump=%d\n",
 	       sp->sr_l_elapsed,
 	       sp->sr_l_cpu,
@@ -2873,10 +2873,10 @@ eat_script(FILE *fp)
 		break;
 	    }
 	    if (bu_strncmp(ebuf, "clean", 5) == 0) {
-		needtree=1;
+		needtree = 1;
 	    }
 	    if (bu_strncmp(ebuf, "tree", 4) == 0) {
-		needtree=1;
+		needtree = 1;
 	    }
 	    bu_vls_strcat(&body, ebuf);
 	    bu_vls_strcat(&body, ";");
@@ -3002,7 +3002,7 @@ ph_default(struct pkg_conn *pc, char *buf)
 {
     int i;
 
-    for (i=0; pc->pkc_switch[i].pks_handler != NULL; i++) {
+    for (i = 0; pc->pkc_switch[i].pks_handler != NULL; i++) {
 	if (pc->pkc_switch[i].pks_type == pc->pkc_type) break;
     }
     bu_log("ctl: unable to handle %s message: len %zu",
@@ -3561,7 +3561,7 @@ main(int argc, char *argv[])
     if ((tcp_listen_fd = pkg_permserver("rtsrv", "tcp", 8, remrt_log)) < 0) {
 	char num[8];
 	/* Do it by the numbers */
-	for (i=0; i<10; i++) {
+	for (i = 0; i < 10; i++) {
 	    sprintf(num, "%d", 4446+i);
 	    if ((tcp_listen_fd = pkg_permserver(num, "tcp", 8, remrt_log)) < 0)
 		continue;

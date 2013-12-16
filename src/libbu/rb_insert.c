@@ -46,7 +46,7 @@ _rb_insert(struct bu_rb_tree *tree, int order, struct bu_rb_node *new_node)
     struct bu_rb_node *grand_parent;
     struct bu_rb_node *y;
     int (*compare)(void *, void *);
-    int comparison=0xdeadbeef;
+    int comparison = 0xdeadbeef;
     int direction;
     int result = 0;
 

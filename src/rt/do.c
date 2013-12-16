@@ -106,7 +106,7 @@ old_frame(FILE *fp)
     eye_model[Y] = atof(number);
     if (fscanf(fp, "%128s", number) != 1) return -1;
     eye_model[Z] = atof(number);
-    for (i=0; i < 16; i++) {
+    for (i = 0; i < 16; i++) {
 	if (fscanf(fp, "%128s", number) != 1)
 	    return -1;
 	Viewrotscale[i] = atof(number);
@@ -227,7 +227,7 @@ int cm_eyept(const int argc, const char **argv)
     if (argc < 2)
 	return 1;
 
-    for (i=0; i<3; i++)
+    for (i = 0; i < 3; i++)
 	eye_model[i] = atof(argv[i+1]);
     return 0;
 }
@@ -273,7 +273,7 @@ int cm_vrot(const int argc, const char **argv)
     if (argc < 16)
 	return 1;
 
-    for (i=0; i<16; i++)
+    for (i = 0; i < 16; i++)
 	Viewrotscale[i] = atof(argv[i+1]);
     return 0;
 }
@@ -287,7 +287,7 @@ int cm_orientation(const int argc, const char **argv)
     if (argc < 4)
 	return 1;
 
-    for (i=0; i<4; i++)
+    for (i = 0; i < 4; i++)
 	quat[i] = atof(argv[i+1]);
     quat_quat2mat(Viewrotscale, quat);
     orientflag = 1;
@@ -352,7 +352,7 @@ int cm_multiview(const int UNUSED(argc), const char **UNUSED(argv))
     if (rtip && BU_LIST_IS_EMPTY(&rtip->HeadRegion)) {
 	def_tree(rtip);		/* Load the default trees */
     }
-    for (i=0; i<(sizeof(a)/sizeof(a[0])); i++) {
+    for (i = 0; i < (sizeof(a)/sizeof(a[0])); i++) {
 	do_ae((double)a[i], (double)e[i]);
 	(void)do_frame(curframe++);
     }
@@ -840,7 +840,7 @@ do_frame(int framenumber)
 	/* Multiple frame buffer mode */
 	for(full_incr_sample = 1; full_incr_sample <= full_incr_nsamples;
 	    full_incr_sample++){
-	    if(full_incr_sample > 1) /* first sample was already initialized */
+	    if (full_incr_sample > 1) /* first sample was already initialized */
 		view_2init(&APP, framename);
 	    do_run(pix_start, pix_end);
 	}
@@ -903,7 +903,7 @@ do_frame(int framenumber)
 	bu_log("%zu solid/ray intersections: %zu hits + %zu miss\n",
 	       rtip->nshots, rtip->nhits, rtip->nmiss);
 	bu_log("pruned %.1f%%:  %zu model RPP, %zu dups skipped, %zu solid RPP\n",
-	       rtip->nshots>0?((double)rtip->nhits*100.0)/rtip->nshots:100.0,
+	       rtip->nshots > 0 ? ((double)rtip->nhits*100.0)/rtip->nshots : 100.0,
 	       rtip->nmiss_model, rtip->ndup, rtip->nmiss_solid);
 	bu_log("Frame %2d: %10zu pixels in %9.2f sec = %12.2f pixels/sec\n",
 	       framenumber,
@@ -1045,7 +1045,7 @@ res_pr(void)
 
     bu_log("\nResource use summary, by processor:\n");
     res = &resource[0];
-    for (i=0; i<npsw; i++, res++) {
+    for (i = 0; i < npsw; i++, res++) {
 	bu_log("---CPU %d:\n", i);
 	if (res->re_magic != RESOURCE_MAGIC) {
 	    bu_log("Bad magic number!\n");

@@ -79,7 +79,7 @@ cm_eyept(const int argc, const char **argv)
     if (argc < 3)
 	return -1;
 
-    for (i=0; i<3; i++) {
+    for (i = 0; i < 3; i++) {
 	eye_model[i] = atof(argv[i+1]);
     }
     return 0;
@@ -121,7 +121,7 @@ cm_vrot(const int argc, const char **argv)
 	return -1;
     }
 
-    for (i=0; i<16; i++) {
+    for (i = 0; i < 16; i++) {
 	Viewrotscale[i] = atof(argv[i+1]);
     }
     return 0;
@@ -137,7 +137,7 @@ cm_orientation(const int argc, const char **argv)
     if (argc < 4)
 	return -1;
 
-    for (i=0; i<4; i++)
+    for (i = 0; i < 4; i++)
 	quat[i] = atof(argv[i+1]);
     quat_quat2mat(Viewrotscale, quat);
     return 0;
