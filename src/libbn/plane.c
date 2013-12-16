@@ -2298,22 +2298,22 @@ bn_does_ray_isect_tri(
 int
 bn_hlf_class(const fastf_t *half_eqn, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
 {
-    int _class;	/* current classification */
+    int current_classification;
     fastf_t d;
 
-#define CHECK_PT(x, y, z)						\
+#define CHECK_PT(x, y, z)					\
     d = (x)*half_eqn[0] + (y)*half_eqn[1] + (z)*half_eqn[2] - half_eqn[3]; \
-    if (d < -tol->dist) {						\
-	if (_class == BN_CLASSIFY_OUTSIDE)				\
-	    return BN_CLASSIFY_OVERLAPPING;				\
-	else _class = BN_CLASSIFY_INSIDE;				\
-    } else if (d > tol->dist) {						\
-	if (_class == BN_CLASSIFY_INSIDE)				\
-	    return BN_CLASSIFY_OVERLAPPING;				\
-	else _class = BN_CLASSIFY_OUTSIDE;				\
+    if (d < -tol->dist) {					\
+	if (current_classification == BN_CLASSIFY_OUTSIDE)	\
+	    return BN_CLASSIFY_OVERLAPPING;			\
+	else current_classification = BN_CLASSIFY_INSIDE;	\
+    } else if (d > tol->dist) {					\
+	if (current_classification == BN_CLASSIFY_INSIDE)	\
+	    return BN_CLASSIFY_OVERLAPPING;			\
+	else current_classification = BN_CLASSIFY_OUTSIDE;	\
     } else return BN_CLASSIFY_OVERLAPPING
 
-    _class = BN_CLASSIFY_UNIMPLEMENTED;
+    current_classification = BN_CLASSIFY_UNIMPLEMENTED;
     CHECK_PT(min[X], min[Y], min[Z]);
     CHECK_PT(min[X], min[Y], max[Z]);
     CHECK_PT(min[X], max[Y], min[Z]);
@@ -2322,12 +2322,12 @@ bn_hlf_class(const fastf_t *half_eqn, const fastf_t *min, const fastf_t *max, co
     CHECK_PT(max[X], min[Y], max[Z]);
     CHECK_PT(max[X], max[Y], min[Z]);
     CHECK_PT(max[X], max[Y], max[Z]);
-    if (_class == BN_CLASSIFY_UNIMPLEMENTED)
+    if (current_classification == BN_CLASSIFY_UNIMPLEMENTED)
 	bu_log("bn_hlf_class: error in implementation\
 min = (%g, %g, %g), max = (%g, %g, %g), half_eqn = (%g, %g, %g, %g)\n",
 	       V3ARGS(min), V3ARGS(max), V3ARGS(half_eqn),
 	       half_eqn[3]);
-    return _class;
+    return current_classification;
 }
 
 
