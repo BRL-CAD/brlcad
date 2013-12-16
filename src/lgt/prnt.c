@@ -219,20 +219,20 @@ update_Screen(void)
 {
     int	tem_co, row, col;
     tem_co = FMIN(co, TEMPLATE_COLS);
-    for (row = 0; !BU_STR_EMPTY(_template[row]); row++) {
+    for (row = 0; !BU_STR_EMPTY(screen_template[row]); row++) {
 	int	lastcol = -2;
 
-	if (BU_STR_EMPTY(_template[row + 1])) {
+	if (BU_STR_EMPTY(screen_template[row + 1])) {
 	    SetStandout();
 	}
 
 	for (col = 0; col < tem_co; col++)
-	    if (screen[row][col] != _template[row][col]) {
+	    if (screen[row][col] != screen_template[row][col]) {
 		if (col != lastcol+1)
 		    MvCursor(col+1, row+1);
 		lastcol = col;
-		(void) putchar(_template[row][col]);
-		screen[row][col] = _template[row][col];
+		(void) putchar(screen_template[row][col]);
+		screen[row][col] = screen_template[row][col];
 	    }
     }
     (void) ClrStandout();
