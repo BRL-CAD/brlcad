@@ -258,7 +258,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 
 
 int
-_ged_cm_vsize(int argc, char **argv)
+_ged_cm_vsize(const int argc, const char **argv)
 {
     if (argc < 2)
 	return -1;
@@ -271,7 +271,7 @@ _ged_cm_vsize(int argc, char **argv)
 
 
 int
-_ged_cm_eyept(int argc, char **argv)
+_ged_cm_eyept(const int argc, const char **argv)
 {
     if (argc < 4)
 	return -1;
@@ -284,7 +284,7 @@ _ged_cm_eyept(int argc, char **argv)
 
 
 int
-_ged_cm_lookat_pt(int argc, char **argv)
+_ged_cm_lookat_pt(const int argc, const char **argv)
 {
     point_t pt;
     vect_t dir;
@@ -317,7 +317,7 @@ _ged_cm_lookat_pt(int argc, char **argv)
 
 
 int
-_ged_cm_vrot(int argc, char **argv)
+_ged_cm_vrot(const int argc, const char **argv)
 {
     int i;
 
@@ -331,7 +331,7 @@ _ged_cm_vrot(int argc, char **argv)
 
 
 int
-_ged_cm_orientation(int argc, char **argv)
+_ged_cm_orientation(const int argc, const char **argv)
 {
     int i;
     quat_t quat;
@@ -348,7 +348,7 @@ _ged_cm_orientation(int argc, char **argv)
 
 
 int
-_ged_cm_set(int UNUSED(argc), char **UNUSED(argv))
+_ged_cm_set(const int UNUSED(argc), const char **UNUSED(argv))
 {
     return -1;
 }
@@ -359,7 +359,7 @@ _ged_cm_set(int UNUSED(argc), char **UNUSED(argv))
  * routine to avoid rt_do_cmd() "command not found" error reporting
  */
 int
-_ged_cm_null(int argc, char **argv)
+_ged_cm_null(const int argc, const char **argv)
 {
     if (argc < 0 || argv == NULL)
 	return 1;

@@ -1971,7 +1971,7 @@ struct command_tab {
     const char *ct_cmd;
     const char *ct_parms;
     const char *ct_comment;
-    int	(*ct_func)();
+    int	(*ct_func)(const int, const char **);
     int	ct_min;		/**< @brief  min number of words in cmd */
     int	ct_max;		/**< @brief  max number of words in cmd */
 };

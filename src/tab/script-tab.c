@@ -50,7 +50,7 @@ int curframe;		/* current frame number */
  * Process "start" command in new format input stream
  */
 int
-cm_start(int argc, char **argv)
+cm_start(const int argc, const char **argv)
 {
     if (argc < 2)
 	return -1;
@@ -61,7 +61,7 @@ cm_start(int argc, char **argv)
 
 
 int
-cm_vsize(int argc, char **argv)
+cm_vsize(const int argc, const char **argv)
 {
     if (argc < 2)
 	return -1;
@@ -72,7 +72,7 @@ cm_vsize(int argc, char **argv)
 
 
 int
-cm_eyept(int argc, char **argv)
+cm_eyept(const int argc, const char **argv)
 {
     int i;
 
@@ -87,7 +87,7 @@ cm_eyept(int argc, char **argv)
 
 
 int
-cm_lookat_pt(int argc, char **argv)
+cm_lookat_pt(const int argc, const char **argv)
 {
     point_t pt;
     vect_t dir;
@@ -113,7 +113,7 @@ cm_lookat_pt(int argc, char **argv)
 
 
 int
-cm_vrot(int argc, char **argv)
+cm_vrot(const int argc, const char **argv)
 {
     int i;
 
@@ -129,7 +129,7 @@ cm_vrot(int argc, char **argv)
 
 
 int
-cm_orientation(int argc, char **argv)
+cm_orientation(const int argc, const char **argv)
 {
     int i;
     quat_t quat;
@@ -152,7 +152,7 @@ cm_orientation(int argc, char **argv)
  * framenumber, viewsize, eye x y z, orientation x y z w
  */
 int
-cm_end(int UNUSED(argc), char **UNUSED(argv))
+cm_end(const int UNUSED(argc), const char **UNUSED(argv))
 {
     quat_t orient;
 
@@ -174,7 +174,7 @@ cm_end(int UNUSED(argc), char **UNUSED(argv))
 
 
 int
-cm_tree(int UNUSED(argc), const char **UNUSED(argv))
+cm_tree(const int UNUSED(argc), const char **UNUSED(argv))
 {
     /* No-op */
     return 0;
@@ -182,7 +182,7 @@ cm_tree(int UNUSED(argc), const char **UNUSED(argv))
 
 
 int
-cm_multiview(int UNUSED(argc), char **UNUSED(argv))
+cm_multiview(const int UNUSED(argc), const char **UNUSED(argv))
 {
     bu_exit(EXIT_FAILURE, "cm_multiview: not supported\n");
     return 0;	/* for the compilers */
@@ -197,7 +197,7 @@ cm_multiview(int UNUSED(argc), char **UNUSED(argv))
  * Usage:  anim <path> <type> args
  */
 int
-cm_anim(int UNUSED(argc), char **UNUSED(argv))
+cm_anim(const int UNUSED(argc), const char **UNUSED(argv))
 {
     /* No-op */
     return 0;
@@ -210,7 +210,7 @@ cm_anim(int UNUSED(argc), char **UNUSED(argv))
  * Clean out results of last rt_prep(), and start anew.
  */
 int
-cm_clean(int UNUSED(argc), char **UNUSED(argv))
+cm_clean(const int UNUSED(argc), const char **UNUSED(argv))
 {
     /* No-op */
     return 0;
@@ -223,7 +223,7 @@ cm_clean(int UNUSED(argc), char **UNUSED(argv))
  * Allow variable values to be set or examined.
  */
 int
-cm_set(int UNUSED(argc), char **UNUSED(argv))
+cm_set(const int UNUSED(argc), const char **UNUSED(argv))
 {
     /* No-op */
     return 0;
@@ -234,7 +234,7 @@ cm_set(int UNUSED(argc), char **UNUSED(argv))
  * C M _ A E
  */
 int
-cm_ae(int UNUSED(argc), char **UNUSED(argv))
+cm_ae(const int UNUSED(argc), const char **UNUSED(argv))
 {
     bu_exit(EXIT_FAILURE, "cm_ae: Unable to compute model min/max RPP\n");
     return 0;
@@ -245,7 +245,7 @@ cm_ae(int UNUSED(argc), char **UNUSED(argv))
  * C M _ O P T
  */
 int
-cm_opt(int UNUSED(argc), char **UNUSED(argv))
+cm_opt(const int UNUSED(argc), const char **UNUSED(argv))
 {
     /* No-op */
     return 0;

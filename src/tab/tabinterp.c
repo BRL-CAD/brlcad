@@ -108,7 +108,7 @@ chan_not_loaded_or_specified(int ch)
  * C R E A T E _ C H A N
  */
 HIDDEN int
-create_chan(char *num, int len, char *itag)
+create_chan(const char *num, int len, const char *itag)
 {
     int n;
 
@@ -156,10 +156,10 @@ create_chan(char *num, int len, char *itag)
  * C M _ F I L E
  */
 HIDDEN int
-cm_file(int argc, char **argv)
+cm_file(const int argc, const char **argv)
 {
     FILE *fp;
-    char *file;
+    const char *file;
     char lbuf[512];	/* temporary label buffer */
     int *cnum;
     int i;
@@ -312,7 +312,7 @@ pr_ichan(int ch)
  * Dump the indicated input channels, or all, if none specified.
  */
 HIDDEN int
-cm_idump(int argc, char **argv)
+cm_idump(const int argc, const char **argv)
 {
     int ch;
     int i;
@@ -365,7 +365,7 @@ output()
  * C M _ T I M E S
  */
 HIDDEN int
-cm_times(int argc, char **argv)
+cm_times(const int argc, const char **argv)
 {
     double a, b;
     int i;
@@ -404,7 +404,7 @@ cm_times(int argc, char **argv)
  * C M _ I N T E R P
  */
 HIDDEN int
-cm_interp(int argc, char **argv)
+cm_interp(const int argc, const char **argv)
 {
     int interp = 0;
     int periodic = 0;
@@ -1044,13 +1044,13 @@ go()
  * values are meaningless.
  */
 HIDDEN int
-cm_rate(int argc, char **argv)
+cm_rate(const int argc, const char **argv)
 {
     struct chan *chp;
     int ch;
     int nvals = 2;
-
-    ch = create_chan(argv[1], nvals, argc>4?argv[4]:"rate chan");
+    const char rate_chan[] = "rate chan";
+    ch = create_chan(argv[1], nvals, (argc > 4 ? argv[4] : rate_chan));
     chp = &chan[ch];
     chp->c_interp = INTERP_RATE;
     chp->c_periodic = 0;
@@ -1070,13 +1070,13 @@ cm_rate(int argc, char **argv)
  * values are meaningless.
  */
 HIDDEN int
-cm_accel(int argc, char **argv)
+cm_accel(const int argc, const char **argv)
 {
     struct chan *chp;
     int ch;
     int nvals = 2;
-
-    ch = create_chan(argv[1], nvals, argc>4?argv[4]:"accel chan");
+    const char accel_chan[] = "accel chan";
+    ch = create_chan(argv[1], nvals, (argc > 4 ? argv[4] : accel_chan));
     chp = &chan[ch];
     chp->c_interp = INTERP_ACCEL;
     chp->c_periodic = 0;
@@ -1089,7 +1089,7 @@ cm_accel(int argc, char **argv)
 
 
 HIDDEN int
-cm_next(int argc, char **argv)
+cm_next(const int argc, const char **argv)
 {
     int ochan, ichan;
     int offset = 1;
@@ -1142,7 +1142,7 @@ get_args(int argc, char **argv)
     return 1;
 }
 
-HIDDEN int cm_help(int argc, char **argv);
+HIDDEN int cm_help(const int argc, const char **argv);
 
 struct command_tab cmdtab[] = {
     {"file", "filename chan_num(s)", "load channels from file",
@@ -1170,7 +1170,7 @@ struct command_tab cmdtab[] = {
  * XXX this really should go in librt/cmd.c as rt_help_cmd().
  */
 HIDDEN int
-cm_help(int argc, char **argv)
+cm_help(const int argc, const char **argv)
 {
     struct command_tab *ctp;
 

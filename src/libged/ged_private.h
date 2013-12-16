@@ -249,20 +249,20 @@ extern void _ged_do_list(struct ged *gedp,
 extern vect_t _ged_eye_model;
 extern mat_t _ged_viewrot;
 extern struct ged *_ged_current_gedp;
-extern int _ged_cm_vsize(int argc,
-			 char **argv);
-extern int _ged_cm_eyept(int argc,
-			 char **argv);
-extern int _ged_cm_lookat_pt(int argc,
-			     char **argv);
-extern int _ged_cm_vrot(int argc,
-			char **argv);
-extern int _ged_cm_orientation(int argc,
-			       char **argv);
-extern int _ged_cm_set(int argc,
-		       char **argv);
-extern int _ged_cm_null(int argc,
-			char **argv);
+extern int _ged_cm_vsize(const int argc,
+			 const char **argv);
+extern int _ged_cm_eyept(const int argc,
+			 const char **argv);
+extern int _ged_cm_lookat_pt(const int argc,
+			     const char **argv);
+extern int _ged_cm_vrot(const int argc,
+			const char **argv);
+extern int _ged_cm_orientation(const int argc,
+			       const char **argv);
+extern int _ged_cm_set(const int argc,
+		       const char **argv);
+extern int _ged_cm_null(const int argc,
+			const char **argv);
 
 
 /* defined in ls.c */

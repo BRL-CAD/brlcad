@@ -171,7 +171,7 @@ old_way(FILE *fp)
  *
  * Process "start" command in new format input stream
  */
-int cm_start(int argc, char **argv)
+int cm_start(const int argc, const char **argv)
 {
     char *buf = (char *)NULL;
     int frame;
@@ -210,7 +210,7 @@ int cm_start(int argc, char **argv)
 }
 
 
-int cm_vsize(int argc, char **argv)
+int cm_vsize(const int argc, const char **argv)
 {
     if (argc < 2)
 	return 1;
@@ -220,7 +220,7 @@ int cm_vsize(int argc, char **argv)
 }
 
 
-int cm_eyept(int argc, char **argv)
+int cm_eyept(const int argc, const char **argv)
 {
     register int i;
 
@@ -233,7 +233,7 @@ int cm_eyept(int argc, char **argv)
 }
 
 
-int cm_lookat_pt(int argc, char **argv)
+int cm_lookat_pt(const int argc, const char **argv)
 {
     point_t pt;
     vect_t dir;
@@ -266,7 +266,7 @@ int cm_lookat_pt(int argc, char **argv)
 }
 
 
-int cm_vrot(int argc, char **argv)
+int cm_vrot(const int argc, const char **argv)
 {
     register int i;
 
@@ -279,7 +279,7 @@ int cm_vrot(int argc, char **argv)
 }
 
 
-int cm_orientation(int argc, char **argv)
+int cm_orientation(const int argc, const char **argv)
 {
     register int i;
     quat_t quat;
@@ -295,7 +295,7 @@ int cm_orientation(int argc, char **argv)
 }
 
 
-int cm_end(int UNUSED(argc), char **UNUSED(argv))
+int cm_end(const int UNUSED(argc), const char **UNUSED(argv))
 {
     struct rt_i *rtip = APP.a_rt_i;
 
@@ -312,7 +312,7 @@ int cm_end(int UNUSED(argc), char **UNUSED(argv))
 }
 
 
-int cm_tree(int argc, const char **argv)
+int cm_tree(const int argc, const char **argv)
 {
     register struct rt_i *rtip = APP.a_rt_i;
     struct bu_vls times = BU_VLS_INIT_ZERO;
@@ -334,7 +334,7 @@ int cm_tree(int argc, const char **argv)
 }
 
 
-int cm_multiview(int UNUSED(argc), char **UNUSED(argv))
+int cm_multiview(const int UNUSED(argc), const char **UNUSED(argv))
 {
     register struct rt_i *rtip = APP.a_rt_i;
     size_t i;
@@ -367,7 +367,7 @@ int cm_multiview(int UNUSED(argc), char **UNUSED(argv))
  *
  * Usage: anim path type args
  */
-int cm_anim(int argc, const char **argv)
+int cm_anim(const int argc, const char **argv)
 {
 
     if (db_parse_anim(APP.a_rt_i->rti_dbip, argc, argv) < 0) {
@@ -383,7 +383,7 @@ int cm_anim(int argc, const char **argv)
  *
  * Clean out results of last rt_prep(), and start anew.
  */
-int cm_clean(int UNUSED(argc), char **UNUSED(argv))
+int cm_clean(const int UNUSED(argc), const char **UNUSED(argv))
 {
     /* Allow lighting model clean up (e.g. lights, materials, etc.) */
     view_cleanup(APP.a_rt_i);
@@ -404,7 +404,7 @@ int cm_clean(int UNUSED(argc), char **UNUSED(argv))
  * "leaks".  This terminates the program, as there is no longer a
  * database.
  */
-int cm_closedb(int UNUSED(argc), char **UNUSED(argv))
+int cm_closedb(const int UNUSED(argc), const char **UNUSED(argv))
 {
     db_close(APP.a_rt_i->rti_dbip);
     APP.a_rt_i->rti_dbip = DBI_NULL;
@@ -452,7 +452,7 @@ struct bu_structparse set_parse[] = {
  *
  * Allow variable values to be set or examined.
  */
-int cm_set(int argc, char **argv)
+int cm_set(const int argc, const char **argv)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
 
@@ -475,7 +475,7 @@ int cm_set(int argc, char **argv)
 /**
  * C M _ A E
  */
-int cm_ae(int argc, char **argv)
+int cm_ae(const int argc, const char **argv)
 {
     if (argc < 3)
 	return 1;
@@ -491,11 +491,11 @@ int cm_ae(int argc, char **argv)
 /**
  * C M _ O P T
  */
-int cm_opt(int argc, char **argv)
+int cm_opt(const int argc, const char **argv)
 {
     int old_bu_optind=bu_optind;	/* need to restore this value after calling get_args() */
 
-    if (get_args(argc, (const char **)argv) <= 0) {
+    if (get_args(argc, argv) <= 0) {
 	bu_optind = old_bu_optind;
 	return -1;
     }

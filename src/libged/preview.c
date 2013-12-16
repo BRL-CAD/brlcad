@@ -57,7 +57,7 @@ static char rt_cmd_storage[MAXARGS*9];
 
 
 int
-ged_cm_anim(int argc, char **argv)
+ged_cm_anim(const int argc, const char **argv)
 {
 
     if (_ged_current_gedp->ged_wdbp->dbip == DBI_NULL)
@@ -75,7 +75,7 @@ ged_cm_anim(int argc, char **argv)
 
 
 int
-ged_cm_clean(int UNUSED(argc), char **UNUSED(argv))
+ged_cm_clean(const int UNUSED(argc), const char **UNUSED(argv))
 {
     if (_ged_current_gedp->ged_wdbp->dbip == DBI_NULL)
 	return 0;
@@ -91,7 +91,7 @@ ged_cm_clean(int UNUSED(argc), char **UNUSED(argv))
 
 
 int
-ged_cm_end(int UNUSED(argc), char **UNUSED(argv))
+ged_cm_end(const int UNUSED(argc), const char **UNUSED(argv))
 {
     vect_t xlate;
     vect_t new_cent;
@@ -166,14 +166,14 @@ ged_cm_end(int UNUSED(argc), char **UNUSED(argv))
 
 
 int
-ged_cm_multiview(int UNUSED(argc), char **UNUSED(argv))
+ged_cm_multiview(const int UNUSED(argc), const char **UNUSED(argv))
 {
     return -1;
 }
 
 
 int
-ged_cm_start(int argc, char **argv)
+ged_cm_start(const int argc, const char **argv)
 {
     if (argc < 2)
 	return -1;
@@ -185,7 +185,7 @@ ged_cm_start(int argc, char **argv)
 
 
 int
-ged_cm_tree(int argc, char **argv)
+ged_cm_tree(const int argc, const char **argv)
 {
     int i = 1;
     char *cp = rt_cmd_storage;

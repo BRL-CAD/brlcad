@@ -733,7 +733,7 @@ tvdiff(struct timeval *t1, struct timeval *t0)
 
 
 static void
-build_start_cmd(int argc, char **argv, int startc)
+build_start_cmd(const int argc, const char **argv, const int startc)
 {
     char *cp;
     int i;
@@ -1087,7 +1087,7 @@ add_host(struct ihost *ihp)
 
 
 struct servers *
-get_server_by_name(char *str)
+get_server_by_name(const char *str)
 {
     struct servers *sp;
     struct ihost *ihp;
@@ -1143,7 +1143,7 @@ destroy_frame(struct frame *fr)
 
 
 static int
-init_fb(char *name)
+init_fb(const char *name)
 {
     size_t xx, yy;
 
@@ -1864,7 +1864,7 @@ out:
 /*** Commands ***/
 
 static int
-cd_load(int argc, char **argv)
+cd_load(const int argc, const char **argv)
 {
     struct servers *sp;
 
@@ -1891,7 +1891,7 @@ cd_load(int argc, char **argv)
  * Set/toggle the local (dispatcher) debugging flag
  */
 static int
-cd_debug(int argc, char **argv)
+cd_debug(const int argc, const char **argv)
 {
     if (argc <= 1) {
 	rem_debug = !rem_debug;
@@ -1908,7 +1908,7 @@ cd_debug(int argc, char **argv)
  * Typically this would be of the form "opt -x42;"
  */
 static int
-cd_rdebug(int argc, char **argv)
+cd_rdebug(const int argc, const char **argv)
 {
     struct servers *sp;
     int len;
@@ -1930,7 +1930,7 @@ cd_rdebug(int argc, char **argv)
 
 
 static int
-cd_f(int argc, char **argv)
+cd_f(const int argc, const char **argv)
 {
 
     if (argc < 2)
@@ -1946,7 +1946,7 @@ cd_f(int argc, char **argv)
 
 
 static int
-cd_S(int argc, char **argv)
+cd_S(const int argc, const char **argv)
 {
     if (argc < 2)
 	return 1;
@@ -1963,7 +1963,7 @@ cd_S(int argc, char **argv)
 
 
 static int
-cd_N(int argc, char **argv)
+cd_N(const int argc, const char **argv)
 {
     if (argc < 2)
 	return 1;
@@ -1978,7 +1978,7 @@ cd_N(int argc, char **argv)
 
 
 static int
-cd_hyper(int argc, char **argv)
+cd_hyper(const int argc, const char **argv)
 {
     if (argc < 2)
 	return 1;
@@ -1990,7 +1990,7 @@ cd_hyper(int argc, char **argv)
 
 
 static int
-cd_bench(int argc, char **argv)
+cd_bench(const int argc, const char **argv)
 {
     if (argc < 2)
 	return 1;
@@ -2002,7 +2002,7 @@ cd_bench(int argc, char **argv)
 
 
 static int
-cd_persp(int argc, char **argv)
+cd_persp(const int argc, const char **argv)
 {
     if (argc < 2)
 	return 1;
@@ -2015,7 +2015,7 @@ cd_persp(int argc, char **argv)
 
 
 static int
-cd_read(int argc, char **argv)
+cd_read(const int argc, const char **argv)
 {
     FILE *fp;
 
@@ -2034,7 +2034,7 @@ cd_read(int argc, char **argv)
 
 
 static int
-cd_detach(int UNUSED(argc), char **UNUSED(argv))
+cd_detach(const int UNUSED(argc), const char **UNUSED(argv))
 {
     detached = 1;
     FD_CLR(fileno(stdin), &clients);	/* drop stdin */
@@ -2044,7 +2044,7 @@ cd_detach(int UNUSED(argc), char **UNUSED(argv))
 
 
 static int
-cd_file(int argc, char **argv)
+cd_file(const int argc, const char **argv)
 {
     if (argc < 2)
 	return 1;
@@ -2059,7 +2059,7 @@ cd_file(int argc, char **argv)
  * Read one specific matrix from an old-format eyepoint file.
  */
 static int
-cd_mat(int argc, char **argv)
+cd_mat(const int argc, const char **argv)
 {
     FILE *fp;
     struct frame *fr;
@@ -2098,7 +2098,7 @@ cd_mat(int argc, char **argv)
 
 
 static int
-cd_movie(int argc, char **argv)
+cd_movie(const int argc, const char **argv)
 {
     FILE *fp;
     struct frame *fr;
@@ -2156,7 +2156,7 @@ cd_movie(int argc, char **argv)
 
 
 static int
-cd_add(int argc, char **argv)
+cd_add(const int argc, const char **argv)
 {
     int i;
     struct ihost *ihp;
@@ -2171,7 +2171,7 @@ cd_add(int argc, char **argv)
 
 
 static int
-cd_drop(int argc, char **argv)
+cd_drop(const int argc, const char **argv)
 {
     struct servers *sp;
 
@@ -2186,7 +2186,7 @@ cd_drop(int argc, char **argv)
 
 
 static int
-cd_hold(int argc, char **argv)
+cd_hold(const int argc, const char **argv)
 {
     struct servers *sp;
     struct ihost *ihp;
@@ -2206,7 +2206,7 @@ cd_hold(int argc, char **argv)
 
 
 static int
-cd_resume(int argc, char **argv)
+cd_resume(const int argc, const char **argv)
 {
     struct ihost *ihp;
 
@@ -2222,7 +2222,7 @@ cd_resume(int argc, char **argv)
 
 
 static int
-cd_allocate(int argc, char **argv)
+cd_allocate(const int argc, const char **argv)
 {
     if (argc < 2)
 	return 1;
@@ -2243,7 +2243,7 @@ cd_allocate(int argc, char **argv)
 
 
 static int
-cd_restart(int argc, char **argv)
+cd_restart(const int argc, const char **argv)
 {
     struct servers *sp;
 
@@ -2265,7 +2265,7 @@ cd_restart(int argc, char **argv)
 
 
 static int
-cd_stop(int UNUSED(argc), char **UNUSED(argv))
+cd_stop(const int UNUSED(argc), const char **UNUSED(argv))
 {
     bu_log("%s No more scanlines being scheduled, done soon\n", stamp());
     running = 0;
@@ -2274,7 +2274,7 @@ cd_stop(int UNUSED(argc), char **UNUSED(argv))
 
 
 static int
-cd_reset(int UNUSED(argc), char **UNUSED(argv))
+cd_reset(const int UNUSED(argc), const char **UNUSED(argv))
 {
     struct frame *fr;
 
@@ -2292,10 +2292,10 @@ cd_reset(int UNUSED(argc), char **UNUSED(argv))
 
 
 static int
-cd_attach(int argc, char **argv)
+cd_attach(const int argc, const char **argv)
 {
     struct frame *fr;
-    char *name;
+    const char *name;
 
     if (argc <= 1) {
 	name = (char *)0;
@@ -2313,7 +2313,7 @@ cd_attach(int argc, char **argv)
 
 
 static int
-cd_release(int UNUSED(argc), char **UNUSED(argv))
+cd_release(const int UNUSED(argc), const char **UNUSED(argv))
 {
     if (fbp != FBIO_NULL) fb_close(fbp);
     fbp = FBIO_NULL;
@@ -2326,7 +2326,7 @@ cd_release(int UNUSED(argc), char **UNUSED(argv))
  * Usage: frames [-v]
  */
 static int
-cd_frames(int argc, char **UNUSED(argv))
+cd_frames(const int argc, const char **UNUSED(argv))
 {
     struct frame *fr;
 
@@ -2353,7 +2353,7 @@ cd_frames(int argc, char **UNUSED(argv))
 
 
 static int
-cd_memprint(int argc, char **argv)
+cd_memprint(const int argc, const char **argv)
 {
     if (argc < 2)
 	return 1;
@@ -2370,7 +2370,7 @@ cd_memprint(int argc, char **argv)
 
 
 static int
-cd_stat(int UNUSED(argc), char **UNUSED(argv))
+cd_stat(const int UNUSED(argc), const char **UNUSED(argv))
 {
     struct servers *sp;
     int frame;
@@ -2423,7 +2423,7 @@ cd_stat(int UNUSED(argc), char **UNUSED(argv))
  * Full status version
  */
 static int
-cd_status(int UNUSED(argc), char **UNUSED(argv))
+cd_status(const int UNUSED(argc), const char **UNUSED(argv))
 {
     struct servers *sp;
     int num;
@@ -2489,7 +2489,7 @@ cd_status(int UNUSED(argc), char **UNUSED(argv))
 
 
 static int
-cd_clear(int UNUSED(argc), char **UNUSED(argv))
+cd_clear(const int UNUSED(argc), const char **UNUSED(argv))
 {
     if (fbp == FBIO_NULL) return -1;
     fb_clear(fbp, PIXEL_NULL);
@@ -2499,7 +2499,7 @@ cd_clear(int UNUSED(argc), char **UNUSED(argv))
 
 
 static int
-cd_print(int argc, char **argv)
+cd_print(const int argc, const char **argv)
 {
     struct servers *sp;
 
@@ -2520,7 +2520,7 @@ cd_print(int argc, char **argv)
 
 
 static int
-cd_go(int UNUSED(argc), char **UNUSED(argv))
+cd_go(const int UNUSED(argc), const char **UNUSED(argv))
 {
     do_a_frame();
     return 0;
@@ -2528,7 +2528,7 @@ cd_go(int UNUSED(argc), char **UNUSED(argv))
 
 
 static int
-cd_wait(int UNUSED(argc), char **UNUSED(argv))
+cd_wait(const int UNUSED(argc), const char **UNUSED(argv))
 {
     struct timeval now;
 
@@ -2565,7 +2565,7 @@ cd_wait(int UNUSED(argc), char **UNUSED(argv))
 
 
 static int
-cd_help(int UNUSED(argc), char **UNUSED(argv))
+cd_help(const int UNUSED(argc), const char **UNUSED(argv))
 {
     struct command_tab *tp;
 
@@ -2582,7 +2582,7 @@ cd_help(int UNUSED(argc), char **UNUSED(argv))
  * host name always|night|passive cd|convert path
  */
 static int
-cd_host(int argc, char **argv)
+cd_host(const int argc, const char **argv)
 {
     struct ihost *ihp;
     int argpoint = 1;
@@ -2678,7 +2678,7 @@ cd_host(int argc, char **argv)
 
 
 static int
-cd_exit(int UNUSED(argc), char **UNUSED(argv))
+cd_exit(const int UNUSED(argc), const char **UNUSED(argv))
 {
     bu_exit(0, NULL);
     /*NOTREACHED*/
@@ -2748,7 +2748,7 @@ start_servers(struct timeval *nowp)
 	return;
 
     /* Before seeking, note current (brief) status */
-    cd_stat(0, (char **)0);
+    cd_stat(0, (const char **)0);
 
     bu_log("%s Seeking servers to start\n", stamp());
     hackers_night = is_hackers_night(nowp);
@@ -3258,7 +3258,7 @@ ph_pixels(struct pkg_conn *pc, char *buf)
 	     */
 	    /* XXX should re-queue this assignment */
 	    bu_log("%s disk write error, preparing graceful STOP\n", stamp());
-	    cd_stop(0, (char **)0);
+	    cd_stop(0, (const char **)0);
 
 	    /* Dropping the (innocent) server will requeue the work */
 	    drop_server(sp, "disk write error");
@@ -3617,7 +3617,7 @@ main(int argc, char *argv[])
 	    fprintf(stderr, "remrt:  insufficient args\n");
 	    bu_exit(2, NULL);
 	}
-	build_start_cmd(argc, argv, bu_optind);
+	build_start_cmd(argc, (const char **)argv, bu_optind);
 
 	/* Read .remrtrc file to acquire servers */
 	read_rc_file();
@@ -3647,7 +3647,7 @@ main(int argc, char *argv[])
 	    FD_ZERO(&clients);
 	    eat_script(stdin);
 	}
-	if (rem_debug>1) cd_frames(0, (char **)0);
+	if (rem_debug>1) cd_frames(0, (const char **)0);
 
 	/* Compute until no work remains */
 	running = 1;

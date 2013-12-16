@@ -132,7 +132,7 @@ rt_do_cmd(struct rt_i *rtip, const char *ilp, register const struct command_tab 
 	if ((nwords >= tp->ct_min)
 	    && ((tp->ct_max < 0) || (nwords <= tp->ct_max)))
 	{
-	    retval = tp->ct_func(nwords, cmd_args);
+	    retval = tp->ct_func(nwords, (const char **)cmd_args);
 	    bu_free(lp, "rt_do_cmd lp");
 	    return retval;
 	}
