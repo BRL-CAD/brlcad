@@ -977,7 +977,7 @@ HIDDEN XVisualInfo *
 fb_ogl_choose_visual(FBIO *ifp)
 {
 
-    XVisualInfo *vip, *vibase, *maxvip, template;
+    XVisualInfo *vip, *vibase, *maxvip, _template;
 #define NGOOD 200
     int good[NGOOD];
     int num, i, j;
@@ -988,10 +988,10 @@ fb_ogl_choose_visual(FBIO *ifp)
     m_sing_buf  = ((ifp->if_mode & MODE_9MASK)==MODE_9SINGLEBUF);
     m_doub_buf =  !m_sing_buf;
 
-    memset((void *)&template, 0, sizeof(XVisualInfo));
+    memset((void *)&_template, 0, sizeof(XVisualInfo));
 
     /* get a list of all visuals on this display */
-    vibase = XGetVisualInfo(OGL(ifp)->dispp, 0, &template, &num);
+    vibase = XGetVisualInfo(OGL(ifp)->dispp, 0, &_template, &num);
     while (1) {
 
 	/* search for all visuals matching current criteria */

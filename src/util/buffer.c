@@ -45,7 +45,7 @@
 int
 main(int argc, char *argv[])
 {
-    char template[512] = {0};
+    char _template[512] = {0};
     char buf[SIZE] = {0};
 
     FILE *fp = NULL;
@@ -77,9 +77,9 @@ main(int argc, char *argv[])
     }
 
     /* Create temporary file to hold data, get r/w file descriptor */
-    fp = bu_temp_file(template, 512);
+    fp = bu_temp_file(_template, 512);
     if (fp == NULL || (tfd = fileno(fp)) < 0) {
-	perror(template);
+	perror(_template);
 	goto err;
     }
 
@@ -127,7 +127,7 @@ clean:
 	fclose(fp);
 	fp = NULL;
     }
-    bu_file_delete(template);
+    bu_file_delete(_template);
 
     return ret;
 }

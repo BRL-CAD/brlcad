@@ -62,7 +62,7 @@ static char scratchbuf[TEMPLATE_COLS+1];
 /* The strings in this array will be modified as the program runs,
  * so don't point to const strings, initialize as character arrays here.
  */
-char template[][TEMPLATE_COLS+1] = {
+char _template[][TEMPLATE_COLS+1] = {
 /*         1         2         3         4         5         6         7         8
 	   012345678901234567890123456789012345678901234567890123456789012345678901234567890*/
     "TITLE [                                                                       ]",
