@@ -27,8 +27,8 @@
  *	IABG mbH (Germany)
  */
 
-#ifndef WRITE_BRL_INCLUDED
-#define WRITE_BRL_INCLUDED
+#ifndef CONV_INTAVAL_WRITE_BRL_H
+#define CONV_INTAVAL_WRITE_BRL_H
 
 #include "glob.h"
 #include "regtab.h"
@@ -115,4 +115,4 @@ void writeArb8
 );
 
 
-#endif // WRITE_BRL_INCLUDED
+#endif /* CONV_INTAVAL_WRITE_BRL_H */

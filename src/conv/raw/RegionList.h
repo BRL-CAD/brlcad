@@ -26,8 +26,8 @@
  *	IABG mbH (Germany)
  */
 
-#ifndef REGIONLIST_INCLUDED
-#define REGIONLIST_INCLUDED
+#ifndef CONV_RAW_REGIONLIST_H
+#define CONV_RAW_REGIONLIST_H
 
 #include "common.h"
 
@@ -64,4 +64,4 @@ toValue(const char* string)
 }
 
 
-#endif // REGIONLIST_INCLUDED
+#endif /* CONV_RAW_REGIONLIST_H */

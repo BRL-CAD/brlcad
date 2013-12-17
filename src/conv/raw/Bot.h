@@ -26,8 +26,8 @@
  *	IABG mbH (Germany)
  */
 
-#ifndef BOT_INCLUDED
-#define BOT_INCLUDED
+#ifndef CONV_RAW_BOT_H
+#define CONV_RAW_BOT_H
 
 #include "common.h"
 #include <vector>
@@ -60,4 +60,4 @@ private:
 };
 
 
-#endif //BOT_INCLUDED
+#endif /* CONV_RAW_BOT_H */

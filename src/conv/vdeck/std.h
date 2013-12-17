@@ -31,8 +31,8 @@
     leader only.  Currently, this is Douglas A. Gwyn <Gwyn@BRL.ARPA>.
 */
 
-#ifndef	_VLD_STD_H_
-#define	_VLD_STD_H_			/* once-only latch */
+#ifndef	CONV_VDECK_STD_H
+#define	CONV_VDECK_STD_H			/* once-only latch */
 
 /* Extended data types */
 
@@ -72,7 +72,7 @@ typedef char *pointer;		/* generic pointer (void *) */
 #define tonumber(c)	((c) - '0')	/* convt digit char to number */
 #define todigit(n)	((n) + '0')	/* convt digit number to char */
 
-#endif	/* _VLD_STD_H_ */
+#endif	/* CONV_VDECK_STD_H */
 
 /*
  * Local Variables:

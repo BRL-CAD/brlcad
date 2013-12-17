@@ -18,6 +18,9 @@
  * information.
  */
 
+#ifndef CONV_PATCH_PATCH_G_H
+#define CONV_PATCH_PATCH_G_H
+
 #include "vmath.h"
 
 /* structures are currently using approximately this much memory:
@@ -141,6 +144,8 @@ struct bn_tol TOL;
 int scratch_num;
 
 struct rt_wdb *outfp;
+
+#endif /* CONV_PATCH_PATCH_G_H */
 
 
 /*

@@ -18,6 +18,9 @@
  * information.
  */
 
+#ifndef CONV_IGES_IGES_EXTERN_H
+#define CONV_IGES_IGES_EXTERN_H
+
 #define CARDLEN 71 /* length of data portion in Global records */
 #define PARAMLEN 63 /* length of data portion in Parameter records */
 
@@ -56,6 +59,8 @@ extern char *solid_name;
 extern struct file_list *curr_file;
 extern struct file_list iges_list;
 extern struct name_list *name_root;
+
+#endif /* CONV_IGES_IGES_EXTERN_H */
 
 /*
  * Local Variables:

@@ -21,6 +21,9 @@
  *	Author:		Gary Moss
  */
 
+#ifndef CONV_VDECK_VEXTERN_H
+#define CONV_VDECK_VEXTERN_H
+
 /* Special characters.							*/
 #define	LF		"\n"
 #define BLANKS	"                                                                          "
@@ -84,6 +87,8 @@ extern jmp_buf		env;
 #define CONV_EPSILON	0.01
 
 extern struct db_i	*dbip;		/* Database instance ptr */
+
+#endif /* CONV_VDECK_VEXTERN_H */
 
 /*
  * Local Variables:

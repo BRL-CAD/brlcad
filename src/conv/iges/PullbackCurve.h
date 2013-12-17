@@ -18,8 +18,8 @@
  * information.
  */
 
-#ifndef PULLBACK_CURVE
-#define PULLBACK_CURVE
+#ifndef CONV_IGES_PULLBACK_CURVE_H
+#define CONV_IGES_PULLBACK_CURVE_H
 
 #include "opennurbs.h"
 
@@ -57,7 +57,7 @@ double tolerance = 1.0e-6,
 double flatness = 1.0e-3);
 
 
-#endif
+#endif /* CONV_IGES_PULLBACK_CURVE_H */
 
 /*
  * Local Variables:

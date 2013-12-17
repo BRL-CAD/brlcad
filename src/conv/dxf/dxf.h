@@ -23,6 +23,8 @@
  *
  */
 
+#ifndef CONV_DXF_DXF_H
+#define CONV_DXF_DXF_H
 
 static unsigned char rgb[]={
     0, 0, 0,
@@ -282,6 +284,8 @@ static unsigned char rgb[]={
     221, 221, 221,
     255, 255, 255
 };
+
+#endif /* CONV_DXF_DXF_H */
 
 
 /*

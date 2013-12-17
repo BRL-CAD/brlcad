@@ -18,6 +18,9 @@
  * information.
  */
 
+#ifndef CONV_IGES_IGES_STRUCT_H
+#define CONV_IGES_IGES_STRUCT_H
+
 #include "common.h"
 
 #include <stdlib.h>
@@ -317,6 +320,8 @@ extern int brep(int entityno);
 extern void Readtime(char *id);
 extern void Readcols(char *id, int cols);
 extern void Readmatrix(int xform, mat_t rot);
+
+#endif /* CONV_IGES_IGES_STRUCT_H */
 
 /*
  * Local Variables:

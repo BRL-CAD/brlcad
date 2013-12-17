@@ -18,6 +18,9 @@
  * information.
  */
 
+#ifndef CONV_IGES_IGES_TYPES_H
+#define CONV_IGES_IGES_TYPES_H
+
 #define NTYPES 78
 
 struct types typecount[NTYPES+1]={
@@ -101,6 +104,8 @@ struct types typecount[NTYPES+1]={
     { 600, "MACRO Instance", 0 },
     { 700, "Transformation Matrix (4X4)", 0 }
 };
+
+#endif /* CONV_IGES_IGES_TYPES_H */
 
 
 /*

@@ -27,8 +27,8 @@
  *	IABG mbH (Germany)
  */
 
-#ifndef READ_DRA_INCLUDED
-#define READ_DRA_INCLUDED
+#ifndef CONV_INTAVAL_READ_DRA_H
+#define CONV_INTAVAL_READ_DRA_H
 
 #include "common.h"
 
@@ -43,4 +43,4 @@ void conv
 );
 
 
-#endif // READ_DRA_INCLUDED
+#endif /* CONV_INTAVAL_READ_DRA_H */

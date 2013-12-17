@@ -27,8 +27,8 @@
  *	IABG mbH (Germany)
  */
 
-#ifndef GLOB_INCLUDED
-#define GLOB_INCLUDED
+#ifndef CONV_INTAVAL_GLOB_H
+#define CONV_INTAVAL_GLOB_H
 
 #include "common.h"
 
@@ -66,4 +66,4 @@ struct Form {
 };
 
 
-#endif // GLOB_INCLUDED
+#endif /* CONV_INTAVAL_GLOB_H */

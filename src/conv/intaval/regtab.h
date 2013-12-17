@@ -27,8 +27,8 @@
  *	IABG mbH (Germany)
  */
 
-#ifndef REGTAB_INCLUDED
-#define REGTAB_INCLUDED
+#ifndef CONV_INTAVAL_REGTAB_H
+#define CONV_INTAVAL_REGTAB_H
 
 #include "common.h"
 
@@ -169,4 +169,4 @@ private:
 };
 
 
-#endif // REGTAB_INCLUDED
+#endif /* CONV_INTAVAL_REGTAB_H */

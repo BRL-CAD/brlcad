@@ -18,6 +18,9 @@
  * information.
  */
 
+#ifndef CONV_IGES_IGES_H
+#define CONV_IGES_IGES_H
+
 #define CSG_MODE 1
 #define FACET_MODE 2
 #define TRIMMED_SURF_MODE 3
@@ -39,6 +42,8 @@ struct iges_properties
     unsigned char color[3];
 
 };
+
+#endif /* CONV_IGES_IGES_H */
 
 
 /*
