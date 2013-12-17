@@ -134,13 +134,14 @@ Skip(void)					/* skip over raster data */
 	Fatal(fbp, "Error reading code size");
 
     while ((c = getc(gfp)) != 0)
-	if (c == EOF)
+	if (c == EOF) {
 	    Fatal(fbp, "Error reading block byte count");
-	else
-	    do
-		if (getc(gfp) == EOF)
-		    Fatal(fbp, "Error reading data byte");
-	    while (--c > 0);
+	}
+	do {
+	    if (getc(gfp) == EOF)
+		Fatal(fbp, "Error reading data byte");
+	}
+	while (--c > 0);
 }
 
 
@@ -717,10 +718,8 @@ main(int argc, char **argv)
     for (;;) {
 	int c;
 
-	if ((c = getc(gfp)) == EOF) {
+	if ((c = getc(gfp)) == EOF)
 	    Fatal(fbp, "Missing GIF terminator");
-	    break;
-	}
 
 	switch (c) {
 	    default:
@@ -739,9 +738,8 @@ main(int argc, char **argv)
 
 		fbp = FBIO_NULL;
 
-		if (image > 0) {
+		if (image > 0)
 		    Fatal(fbp, "Specified image not found");
-		}
 
 		/* release allocated memory */
 		bu_free(pixbuf, "pixbuf");
@@ -754,9 +752,8 @@ main(int argc, char **argv)
 		/* GIF extension block introducer */
 		int i;
 
-		if ((i = getc(gfp)) == EOF) {
+		if ((i = getc(gfp)) == EOF)
 		    Fatal(fbp, "Error reading extension function code");
-		}
 
 		Message("Extension function code %d unknown", i);
 
@@ -778,9 +775,8 @@ main(int argc, char **argv)
 		/* image separator */
 		unsigned char desc[9];  /* image descriptor */
 
-		if (fread(desc, 1, 9, gfp) != 9) {
+		if (fread(desc, 1, 9, gfp) != 9)
 		    Fatal(fbp, "Error reading image descriptor");
-		}
 
 		left = desc[1] << 8 | desc[0];
 		top = desc[3] << 8 | desc[2];
