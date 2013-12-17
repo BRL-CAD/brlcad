@@ -175,7 +175,6 @@ main(int argc, char *argv[])
 {
     unsigned int j, n;
     unsigned long clip_high, clip_low;
-    char *strrchr();
     short iobuf[BUFLEN];		/* input buffer */
 
     if (!(progname=strrchr(*argv, '/')))
