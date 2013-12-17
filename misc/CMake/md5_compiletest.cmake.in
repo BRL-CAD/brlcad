@@ -1,0 +1,74 @@
+# BRL-CAD
+#
+# Copyright (c) 2013 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+###
+
+macro(MD5 filename md5sum)
+  file(READ "${filename}" RAW_MD5_FILE)
+  string(REGEX REPLACE "\r" "" STRIPPED_MD5_FILE "${RAW_MD5_FILE}")
+  string(MD5 ${md5sum} "${STRIPPED_MD5_FILE}")
+endmacro(MD5)
+
+set(MD5_TEST_PASSED 0)
+while(NOT MD5_TEST_PASSED)
+  foreach(testfile @WATCHED_FILES@)
+    string(MD5 md5_name "${testfile}")
+    MD5(${testfile} ${md5name}_one)
+  endforeach(testfile @WATCHED_FILES@)
+
+  execute_process(COMMAND "@CMAKE_BINARY_DIR@/CMakeTmp/sleep.bin")
+
+  foreach(testfile @WATCHED_FILES@)
+    string(MD5 md5_name "${testfile}")
+    MD5(${testfile} ${md5name}_two)
+  endforeach(testfile @WATCHED_FILES@)
+
+  set(MD5_TEST_PASSED 1)
+
+  foreach(testfile @WATCHED_FILES@)
+    string(MD5 md5_name "${testfile}")
+    if (NOT "${${md5name}_one}" STREQUAL "${${md5name}_two}")
+      set(MD5_TEST_PASSED 0)
+    endif (NOT "${${md5name}_one}" STREQUAL "${${md5name}_two}")
+  endforeach(testfile @WATCHED_FILES@)
+endwhile()
+
+execute_process(COMMAND "@CMAKE_COMMAND@" -E touch "@STAMP_OUT_FILE@")
+
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
