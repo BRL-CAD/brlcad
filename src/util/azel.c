@@ -239,7 +239,6 @@ main (int argc, char **argv)
     }
 
 /* * * * * Filter Data * * * * */
-    Label = Invert ? "DHV" : "XYZ";
     Label = Invert ? dhv : xyz;
 
     while ((Ch = fpeek(inPtr)) != EOF) {
