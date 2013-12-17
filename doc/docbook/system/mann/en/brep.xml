@@ -1,38 +1,38 @@
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="brep">
-   
+
   <refmeta>
     <refentrytitle>BREP</refentrytitle>
     <manvolnum>n</manvolnum>
     <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
     <refmiscinfo class='manual'>BRL-CAD MGED User Commands</refmiscinfo>
   </refmeta>
-  
+
   <refnamediv xml:id='name'>
     <refname>brep</refname>
     <refpurpose>
     This command does a boundary representation which represents the solid geometry by describing the topology and corresponding geometry.
     </refpurpose>
   </refnamediv>
-  
+
   <!-- body begins here -->
   <refsynopsisdiv xml:id='synopsis'>
     <cmdsynopsis>
-      <command>brep</command>    
+      <command>brep</command>
       <arg>brep brep obj [command|brepname|suffix]</arg>
     </cmdsynopsis>
   </refsynopsisdiv>
-  
+
   <refsect1 xml:id='description'>
     <title>DESCRIPTION</title>
     <para>
-    The brep command will basically represent solid geometric chapes by
+    The brep command will basically represent solid geometric shapes by
 stating the data of the vertexes, edges, face, points, curves and surfaces
 of those elements. The command can output information for a specific shape test
 it.
-    </para> 
+    </para>
   </refsect1>
 
-  
+
   <refsect1 xml:id='examples'>
     <title>EXAMPLES</title>
     <example>
@@ -43,17 +43,17 @@ it.
            This would plot the 1st to 3rd surfaces of obj.randomobj
       brep sph1.randomobj intersect sph2.randomobj 2 4
            This would intersect sph1.randomobj's 2nd surface with sph2.randomobj's 4th surface.
-     
+
     </para>
     </example>
-   
+
   </refsect1>
-  
+
   <refsect1 xml:id='author'>
     <title>AUTHOR</title>
     <para>BRLCAD-TEAM</para>
   </refsect1>
-  
+
   <refsect1 xml:id='bug_reports'>
     <title>BUG REPORTS</title>
     <para>
@@ -62,4 +62,4 @@ it.
     </para>
   </refsect1>
   </refentry>
-  
+
