@@ -109,6 +109,10 @@ bn_3pts_collinear(fastf_t *a, fastf_t *b, fastf_t *c, const struct bn_tol *tol)
     mag_bc = MAGNITUDE(bc);
     mag_ca = MAGNITUDE(ca);
 
+    /* If two or more points are the same, by definition we're collinear */
+    if (NEAR_ZERO(mag_ab,tol->dist_sq) ||  NEAR_ZERO(mag_bc,tol->dist_sq) || NEAR_ZERO(mag_ca,tol->dist_sq))
+	return 1;
+
     /* find longest edge */
     max_len = mag_ab;
     max_edge_no = 1;
