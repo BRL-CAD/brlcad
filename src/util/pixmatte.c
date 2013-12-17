@@ -83,7 +83,7 @@ The default width is 3 bytes, suitable for processing .pix files.\n\
 
 
 void
-usage(char *s, int n)
+usage(const char *s, int n)
 {
     if (s && *s) (void)fputs(s, stderr);
 

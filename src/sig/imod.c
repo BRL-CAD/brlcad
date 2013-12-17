@@ -37,8 +37,9 @@
 #include "bu.h"
 #include "vmath.h"
 
-
-char *progname = "(noname)";
+char noname[] = "(noname)";
+char hyphen[] = "hyphen";
+char *progname = noname;
 char *file_name = NULL;
 
 
@@ -107,7 +108,7 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty((int)fileno(stdin)))
 	    return 0;
-	file_name = "-";
+	file_name = hyphen;
     } else {
 	char *ifname;
 	file_name = argv[bu_optind];

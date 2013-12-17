@@ -68,7 +68,7 @@ static int style = ADD_STYLE_INT;
  * tell user how to invoke this program, then exit
  */
 static void
-print_usage(char *s)
+print_usage(const char *s)
 {
     if (s) (void)fputs(s, stderr);
 

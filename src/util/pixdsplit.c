@@ -76,9 +76,15 @@ main (int argc, char *argv[])
     int cfd = -1;	/*   "       "     */
     int dfd = -1;	/*   "       "     */
     ssize_t ret;
+    char hyphen[] = "-";
+    char empty_string[] = "";
+    char Stdout[] = "stdout";
+    c_per_p = 3;
+    d_per_p = 1;
 
-    c_per_p = 3; cf_name = "-";
-    d_per_p = 1; df_name = "";
+    cf_name = hyphen;
+    df_name = empty_string;
+
     while ((ch = bu_getopt(argc, argv, OPT_STRING)) != -1)
 	switch (ch) {
 	    case 'd':
@@ -141,9 +147,9 @@ main (int argc, char *argv[])
      * Establish the output stream for chars
      */
     if (*cf_name == '\0') {
-	cf_name = 0;
+	cf_name = NULL;
     } else if ((*cf_name == '-') && (*(cf_name + 1) == '\0')) {
-	cf_name = "stdout";
+	cf_name = Stdout;
 	cfd = 1;
     } else if ((cfd = open(cf_name,  O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0644)) == -1) {
 	bu_log("Cannot open file '%s'\n", cf_name);
@@ -153,9 +159,9 @@ main (int argc, char *argv[])
      * Establish the output stream for doubles
      */
     if (*df_name == '\0') {
-	df_name = 0;
+	df_name = NULL;
     } else if ((*df_name == '-') && (*(df_name + 1) == '\0')) {
-	df_name = "stdout";
+	df_name = Stdout;
 	dfd = 1;
     } else if ((dfd = open(df_name, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0644)) == -1) {
 	bu_log("Cannot open file '%s'\n", df_name);

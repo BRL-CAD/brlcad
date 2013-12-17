@@ -67,7 +67,8 @@ static int dither[8][8] =		/* dither pattern */
 static int (*pattern)[8] = dither;	/* -> dither or halftone */
 
 static FILE *infp;			/* input file handle */
-static char *file_name = "-";	/* name of input file, for banner */
+static const char hyphen[] = "hyphen";
+static const char *file_name = hyphen;	/* name of input file, for banner */
 
 static size_t height;			/* input height */
 static size_t width;			/* input width */
@@ -134,7 +135,7 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
 	    return false;
-	file_name = "-";
+	file_name = hyphen;
 	infp = stdin;
     } else {
 	file_name = argv[bu_optind];

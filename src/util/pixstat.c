@@ -49,7 +49,7 @@ unsigned char buf[IBUFSIZE];	/* Input buffer */
 int verbose = 0;
 
 /* our statistics pool */
-struct {
+struct rgb {
     long bin[256];
     int max, min, mode, median;
     double mean, var, skew;

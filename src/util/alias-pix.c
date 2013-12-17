@@ -31,8 +31,8 @@
 
 #include "bu.h"
 
-
-char *progname = "(noname)";
+char noname[] = "(noname)";
+char *progname = noname;
 
 
 void usage(void)

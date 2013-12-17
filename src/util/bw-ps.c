@@ -48,6 +48,7 @@ static size_t ypoints;
 static size_t pagewidth = 612;	/* page size in points - 8.5 inches */
 static size_t pageheight = 792;	/* 11 inches */
 
+static char Stdin[] = "stdin";
 static char *file_name;
 static FILE *infp;
 
@@ -105,7 +106,7 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
 	    return 0;
-	file_name = "[stdin]";
+	file_name = Stdin;
 	infp = stdin;
     } else {
 	file_name = argv[bu_optind];

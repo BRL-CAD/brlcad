@@ -37,9 +37,10 @@
 
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "v";
+char options[] = "v";
 char verbose = 0;
-char *progname = "(noname)";
+char noname[] = "(noname)";
+char *progname = noname;
 
 #define PIXELS 1024
 unsigned char pixbuf[BUFSIZ*3];

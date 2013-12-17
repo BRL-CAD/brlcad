@@ -53,6 +53,8 @@ Usage: pixembed [-h] [-b border_inset] \n\
 	[-s squareinsize] [-w inwidth] [-n inheight]\n\
 	[-S squareoutsize] [-W outwidth] [-N outheight] [in.pix] > out.pix\n";
 
+char hyphen[] = "-";
+
 /*
  * G E T _ A R G S
  */
@@ -99,7 +101,7 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
 	    return 0;
-	file_name = "-";
+	file_name = hyphen;
 	buffp = stdin;
     } else {
 	file_name = argv[bu_optind];

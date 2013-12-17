@@ -43,7 +43,7 @@
 struct uplot {
     int targ;	/* type of args */
     int narg;	/* number or args */
-    char *desc;	/* description */
+    const char *desc;	/* description */
 };
 struct uplot uerror = { 0, 0, 0 };
 struct uplot letters[] = {

@@ -68,6 +68,8 @@ void reverse_buffer(void);
 static char *file_name;
 FILE *ifp, *ofp;
 
+static char hyphen[] = "-";
+
 int
 get_args(int argc, char **argv)
 {
@@ -117,7 +119,7 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
 	    return 0;
-	file_name = "-";
+	file_name = hyphen;
 	ifp = stdin;
     } else {
 	file_name = argv[bu_optind];
@@ -153,8 +155,8 @@ main(int argc, char **argv)
 	bu_exit(2, "pixrot: I'm not compiled to do a scanline that long!\n");
     }
     if (buflines > nyin) buflines = nyin;
-    buffer = malloc(buflines * scanbytes);
-    obuf = (nyin > nxin) ? malloc(nyin * pixbytes) : malloc(nxin * pixbytes);
+    buffer = (unsigned char *)malloc(buflines * scanbytes);
+    obuf = (nyin > nxin) ? (unsigned char *)malloc(nyin * pixbytes) : (unsigned char *)malloc(nxin * pixbytes);
     if (buffer == (unsigned char *)0 || obuf == (unsigned char *)0) {
 	bu_exit(3, "pixrot: malloc failed\n");
     }

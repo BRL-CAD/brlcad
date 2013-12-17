@@ -37,8 +37,9 @@
 
 
 /* declarations to support use of bu_getopt() system call */
-static char *options = "o:";
-static char *progname = "(noname)";
+static char options[] = "o:";
+static char noname[]  = "(noname)";
+static char *progname = noname;
 
 static off_t offset=0;	 /* offset from beginning of file from which to start */
 

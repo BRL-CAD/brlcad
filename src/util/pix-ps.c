@@ -132,6 +132,7 @@ hexout(FILE *fp, int byte)
     putc(symbol[low], fp);
 }
 
+char Stdin[] = "[stdin]";
 
 int
 get_args(int argc, char **argv)
@@ -182,7 +183,7 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
 	    return 0;
-	file_name = "[stdin]";
+	file_name = Stdin;
 	infp = stdin;
     } else {
 	file_name = argv[bu_optind];

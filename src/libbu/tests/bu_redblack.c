@@ -63,7 +63,7 @@ main(int ac, char *av[])
 {
     struct bu_rb_tree *testTree;
     void *searchedValue;
-    char *sources[] = {"h", "e", "a", "l", "l", "o"};
+    const char *sources[] = {"h", "e", "a", "l", "l", "o"};
     int i = 0;
     int passed = 0;
 
@@ -74,7 +74,7 @@ main(int ac, char *av[])
 
     testTree = bu_rb_create1("TestingTree", compareFunc);
     for (i = 0; i < 6; i++)
-	bu_rb_insert(testTree, sources[i]);
+	bu_rb_insert(testTree, (void *)sources[i]);
 
     printf("SEARCH TEST: \n\tSEARCHING AN EXISTING VALUE:\n");
     searchedValue = bu_rb_search(testTree, 0, "h");

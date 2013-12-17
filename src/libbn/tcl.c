@@ -184,7 +184,7 @@ static void bn_vblend(mat_t a, fastf_t b, mat_t c, fastf_t d, mat_t e)
 
 
 static struct math_func_link {
-    char *name;
+    const char *name;
     void (*func)();
 } math_funcs[] = {
     {"bn_dist_pt2_lseg2",	(void (*)())bn_dist_pt2_lseg2},

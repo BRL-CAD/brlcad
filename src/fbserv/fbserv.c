@@ -299,7 +299,7 @@ drop_client(int sub)
  *  Don't send one down the wire, this can cause loops.
  */
 static void
-comm_error(char *str)
+comm_error(const char *str)
 {
 #if defined(HAVE_SYSLOG_H)
     if ( use_syslog ) {

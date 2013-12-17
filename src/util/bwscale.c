@@ -63,6 +63,8 @@ static char usage[] = "\
 Usage: bwscale [-r] [-s squareinsize] [-w inwidth] [-n inheight]\n\
 	[-S squareoutsize] [-W outwidth] [-N outheight] [in.bw] > out.bw\n";
 
+static char hyphen[] = "hyphen";
+
 static int
 get_args(int argc, char **argv)
 {
@@ -122,7 +124,7 @@ get_args(int argc, char **argv)
 	if (isatty(fileno(stdin))) {
 	    return 0;
 	}
-	file_name = "-";
+	file_name = hyphen;
 	buffp = stdin;
     } else {
 	file_name = argv[bu_optind];

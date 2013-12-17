@@ -40,7 +40,7 @@ int
 main(void)
 {
     int ichoice;			/* Choice.  */
-    char *irX = "ir-X";		/* Calls ir-X program.  */
+    const char irX[] = "ir-X";		/* Calls ir-X program.  */
     char showtherm[125];		/* Calls showtherm program.  */
     char gfile[16];		/*  .g file.  */
     char group[26];		/* Group names.  */

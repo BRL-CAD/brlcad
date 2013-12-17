@@ -84,8 +84,8 @@ main(void)
     XRectangle rect[MAXARR];	/* Array for drawing rectangles.  */
     char **a=(char **)NULL;	/* Place holder for XSetStandard */
 				/* Properties.  */
-    char *winttl = "SEE";	/* Window title.  */
-    char *quit = "QUIT";		/* Exit label.  */
+    const char winttl[] = "SEE";	/* Window title.  */
+    const char quit[] = "QUIT";		/* Exit label.  */
     Font font;			/* Structure for setting font.  */
 
     /* Other variables.  */

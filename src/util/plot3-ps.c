@@ -45,7 +45,7 @@
 struct uplot {
     int targ;	/* type of args */
     int narg;	/* number or args */
-    char *desc;	/* description */
+    const char *desc;	/* description */
 };
 struct uplot uerror = { 0, 0, 0 };
 struct uplot letters[] = {
@@ -128,6 +128,7 @@ int xpoints;		/* output plot size in points */
 int ypoints;
 int page_dirty = 0;		/* to skip extra erases */
 
+static char Stdin[] = "[stdin]";
 static char *file_name;
 static FILE *infp;
 
@@ -390,7 +391,7 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
 	    return 0;
-	file_name = "[stdin]";
+	file_name = Stdin;
 	infp = stdin;
     } else {
 	file_name = argv[bu_optind];

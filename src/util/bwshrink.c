@@ -36,10 +36,11 @@
 
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "us:w:n:f:h?";
-
-char *progname = "(noname)";
-char *filename = "(stdin)";
+char options[] = "us:w:n:f:h?";
+char noname[]  = "(noname)";
+char Stdin[]   = "(stdin)";
+char *progname = noname;
+char *filename = Stdin;
 
 /* S H R I N K _ I M A G E
  */

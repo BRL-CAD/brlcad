@@ -65,7 +65,7 @@ static FBIO *curr_fbp;		/* current framebuffer pointer */
  * Communication error.  An error occurred on the PKG link.
  */
 HIDDEN void
-comm_error(char *str)
+comm_error(const char *str)
 {
     bu_log("%s", str);
 }

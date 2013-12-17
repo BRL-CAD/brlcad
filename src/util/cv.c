@@ -55,11 +55,14 @@ FILE *outfp;
 genptr_t ibuf;
 genptr_t obuf;
 
+const char huc[] = "huc";
+const char nuc[] = "nuc";
+
 int
 main(int argc, char **argv)
 {
-    char *in_pat;
-    char *out_pat;
+    const char *in_pat;
+    const char *out_pat;
     int m;
     int n;
 
@@ -70,7 +73,7 @@ main(int argc, char **argv)
 
     in_pat = argv[1];
     if (BU_STR_EQUAL(in_pat, "")) {
-	in_pat = "huc";
+	in_pat = huc;
     } else if (strlen(in_pat) > 4 || strlen(in_pat) < 1) {
 	fprintf(stderr, "cv: unrecognized input pattern\n");
 	return 1;
@@ -78,7 +81,7 @@ main(int argc, char **argv)
 
     out_pat = argv[2];
     if (BU_STR_EQUAL(out_pat, "")) {
-	out_pat = "nuc";
+	out_pat = nuc;
     } else if (strlen(out_pat) > 4 || strlen(out_pat) < 1) {
 	fprintf(stderr, "cv: unrecognized output pattern\n");
 	return 1;

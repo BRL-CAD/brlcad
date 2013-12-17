@@ -46,8 +46,8 @@ unsigned char *topnew, *middlenew, *bottomnew;
 
 /* The filter kernels */
 struct kernels {
-    char *name;
-    char *uname;		/* What is needed to recognize it */
+    const char *name;
+    const char *uname;		/* What is needed to recognize it */
     int kern[27];
     int kerndiv;	/* Divisor for kernel */
     int kernoffset;	/* To be added to result */
@@ -80,7 +80,7 @@ int oflag = 0;	/* Different offset specified */
 char *file_name;
 FILE *oldfp, *curfp, *newfp;
 
-void select_filter(char *str), dousage(void);
+void select_filter(const char *str), dousage(void);
 
 char usage[] = "\
 Usage: pix3filter [-f<type>] [-v] [-d#] [-o#]\n\
@@ -396,7 +396,7 @@ main(int argc, char **argv)
  * on it.
  */
 void
-select_filter(char *str)
+select_filter(const char *str)
 {
     int i;
 

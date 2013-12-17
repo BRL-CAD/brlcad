@@ -104,11 +104,16 @@ GetCoord (FILE *Whence, double *Coord, char Label, int LineNm, char *FileName)
 }
 
 
+char Stdin[]  = "stdin";
+char Stdout[] = "stdout";
+
 int
 main (int argc, char **argv)
 {
-    char *inFname = "stdin"; /* Name of input source */
-    char *outFname = "stdout";  /* Name of output destination */
+    char dhv[] = "DHV";
+    char xyz[] = "XYZ";
+    char *inFname  = Stdin; /* Name of input source */
+    char *outFname = Stdout;  /* Name of output destination */
     char *Label;             /* Names of input coordinates */
     char Tail[4096] = {0};   /* Rest of input line beyond coords */
     FILE *inPtr = stdin;     /* Pointer to input */
@@ -235,6 +240,7 @@ main (int argc, char **argv)
 
 /* * * * * Filter Data * * * * */
     Label = Invert ? "DHV" : "XYZ";
+    Label = Invert ? dhv : xyz;
 
     while ((Ch = fpeek(inPtr)) != EOF) {
 /* Read U1, V1, and W1 of next point in input frame of reference */

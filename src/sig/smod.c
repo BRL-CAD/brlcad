@@ -37,8 +37,8 @@
 #include "bu.h"
 #include "vmath.h"
 
-
-char *progname = "smod";
+char smod[]    = "smod";
+char *progname = smod;
 
 
 #define ADD 1
@@ -60,6 +60,7 @@ int
 get_args(int argc, char *argv[])
 {
     char *file_name;
+    char hyphen[] = "-";
     int c;
     double d;
 
@@ -110,7 +111,7 @@ get_args(int argc, char *argv[])
     if (bu_optind >= argc) {
 	if (isatty((int)fileno(stdin)))
 	    return 0;
-	file_name = "-";
+	file_name = hyphen;
     } else {
 	char *ifname;
 	file_name = argv[bu_optind];

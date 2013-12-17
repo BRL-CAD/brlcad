@@ -2518,7 +2518,7 @@ struct bu_rb_tree {
     /**** CLASS II - Applications may read/write directly. **********/
     void (*rbt_print)(void *);         /**< Data pretty-print function */
     int rbt_debug;                     /**< Debug bits */
-    char *rbt_description;             /**< Comment for diagnostics */
+    const char *rbt_description;       /**< Comment for diagnostics */
 
     /*** CLASS III - Applications should NOT manipulate directly. ***/
     int rbt_nm_orders;                 /**< Number of simultaneous orders */
@@ -4538,7 +4538,7 @@ BU_EXPORT extern void bu_ptbl_trunc(struct bu_ptbl *tbl,
  * and the comparison functions (one per order).  bu_rb_create()
  * returns a pointer to the red-black tree header record.
  */
-BU_EXPORT extern struct bu_rb_tree *bu_rb_create(char *description, int nm_orders, int (**order_funcs)());
+BU_EXPORT extern struct bu_rb_tree *bu_rb_create(const char *description, int nm_orders, int (**order_funcs)());
 
 /**
  * Create a single-order red-black tree
@@ -4553,7 +4553,7 @@ BU_EXPORT extern struct bu_rb_tree *bu_rb_create(char *description, int nm_order
  * function pointers, in order to avoid memory leaks on freeing the
  * tree, applications should call bu_rb_free1(), NOT bu_rb_free().
  */
-BU_EXPORT extern struct bu_rb_tree *bu_rb_create1(char *description, int (*order_func)());
+BU_EXPORT extern struct bu_rb_tree *bu_rb_create1(const char *description, int (*order_func)());
 
 /** @file libbu/rb_delete.c
  *

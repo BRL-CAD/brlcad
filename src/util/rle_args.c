@@ -23,6 +23,7 @@
 #include "bu.h"
 #include "bio.h"
 
+char hyphen[] = "hyphen";
 
 int
 get_args(int argc, char **argv, rle_hdr *outrle, FILE** infp, char** infile, int **background, size_t* file_width, size_t* file_height)
@@ -65,7 +66,7 @@ get_args(int argc, char **argv, rle_hdr *outrle, FILE** infp, char** infile, int
 	}
 	bu_optind++;
     } else {
-	*infile = "-";
+	*infile = hyphen;
     }
     if (argv[bu_optind] != NULL) {
 	if (bu_file_exists(argv[bu_optind], NULL)) {

@@ -28,7 +28,7 @@
 
 
 int
-test_str_isprint(char *inp , int exp)
+test_str_isprint(const char *inp , int exp)
 {
     int res;
     res = bu_str_isprint(inp);

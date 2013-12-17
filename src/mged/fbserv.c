@@ -58,7 +58,7 @@
  * Communication error.  An error occurred on the PKG link.
  */
 HIDDEN void
-communications_error(char *str)
+communications_error(const char *str)
 {
     bu_log(str);
 }

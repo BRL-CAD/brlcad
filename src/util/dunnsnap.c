@@ -40,7 +40,7 @@ extern int fd;
 extern char cmd;
 extern void dunnopen(void);
 extern int ready(int nsecs);
-extern void getexposure(char *title);
+extern void getexposure(const char *title);
 extern int dunnsend(char color, int val);
 extern int goodstatus(void);
 extern void hangten(void);

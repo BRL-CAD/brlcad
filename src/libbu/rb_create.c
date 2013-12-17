@@ -27,7 +27,7 @@
 
 
 struct bu_rb_tree *
-bu_rb_create(char *description, int nm_orders, int (**order_funcs)(void *, void *))
+bu_rb_create(const char *description, int nm_orders, int (**order_funcs)(void *, void *))
 {
     int order;
     struct bu_rb_tree *tree;
@@ -99,7 +99,7 @@ bu_rb_create(char *description, int nm_orders, int (**order_funcs)(void *, void 
 
 
 struct bu_rb_tree *
-bu_rb_create1(char *description, int (*order_func) (/* ??? */))
+bu_rb_create1(const char *description, int (*order_func) (/* ??? */))
 {
     int (**ofp)();
 

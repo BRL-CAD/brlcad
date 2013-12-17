@@ -194,7 +194,7 @@ done:
 
 
 HIDDEN void
-rem_log(char *msg)
+rem_log(const char *msg)
 {
     fb_log("%s", msg);
 }

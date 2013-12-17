@@ -238,7 +238,7 @@ _pkg_timestamp(void)
  * This is a private implementation function.
  */
 static void
-_pkg_errlog(char *s)
+_pkg_errlog(const char *s)
 {
     if (_pkg_debug) {
 	_pkg_timestamp();
@@ -257,7 +257,7 @@ _pkg_errlog(char *s)
  * This is a private implementation function.
  */
 static void
-_pkg_perror(void (*errlog) (char *msg), char *s)
+_pkg_perror(void (*errlog)(const char *msg), const char *s)
 {
     snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "%s: ", s);
 
@@ -285,7 +285,7 @@ _pkg_perror(void (*errlog) (char *msg), char *s)
  */
 static
 struct pkg_conn *
-_pkg_makeconn(int fd, const struct pkg_switch *switchp, void (*errlog) (char *msg))
+_pkg_makeconn(int fd, const struct pkg_switch *switchp, void (*errlog)(const char *msg))
 {
     struct pkg_conn *pc;
 
@@ -350,7 +350,7 @@ _pkg_ck_debug(void)
 
 
 struct pkg_conn *
-pkg_open(const char *host, const char *service, const char *protocol, const char *uname, const char *UNUSED(passwd), const struct pkg_switch *switchp, void (*errlog) (char *msg))
+pkg_open(const char *host, const char *service, const char *protocol, const char *uname, const char *UNUSED(passwd), const struct pkg_switch *switchp, void (*errlog)(const char *msg))
 {
 #ifdef HAVE_WINSOCK_H
     LPHOSTENT lpHostEntry;
@@ -508,7 +508,7 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
 
 
 struct pkg_conn *
-pkg_transerver(const struct pkg_switch *switchp, void (*errlog)(char *))
+pkg_transerver(const struct pkg_switch *switchp, void (*errlog)(const char *))
 {
     struct pkg_conn *conn;
 
@@ -534,7 +534,7 @@ pkg_transerver(const struct pkg_switch *switchp, void (*errlog)(char *))
  * This is a private implementation function.
  */
 static int
-_pkg_permserver_impl(struct in_addr iface, const char *service, const char *protocol, int backlog, void (*errlog)(char *msg))
+_pkg_permserver_impl(struct in_addr iface, const char *service, const char *protocol, int backlog, void (*errlog)(const char *msg))
 {
     struct servent *sp;
     int pkg_listenfd;
@@ -700,7 +700,7 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 
 
 int
-pkg_permserver(const char *service, const char *protocol, int backlog, void (*errlog) (char *msg))
+pkg_permserver(const char *service, const char *protocol, int backlog, void (*errlog)(const char *msg))
 {
     struct in_addr iface;
     iface.s_addr = INADDR_ANY;
@@ -709,7 +709,7 @@ pkg_permserver(const char *service, const char *protocol, int backlog, void (*er
 
 
 int
-pkg_permserver_ip(const char *ipOrHostname, const char *service, const char *protocol, int backlog, void (*errlog)(char *msg))
+pkg_permserver_ip(const char *ipOrHostname, const char *service, const char *protocol, int backlog, void (*errlog)(const char *msg))
 {
     struct hostent* host;
     struct in_addr iface;
@@ -731,7 +731,7 @@ pkg_permserver_ip(const char *ipOrHostname, const char *service, const char *pro
 
 
 struct pkg_conn *
-pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog) (char *msg), int nodelay)
+pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog)(const char *msg), int nodelay)
 {
     int s2;
 #ifdef HAVE_WINSOCK_H

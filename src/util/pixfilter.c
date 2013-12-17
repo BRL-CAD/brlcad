@@ -41,8 +41,8 @@ unsigned char *top, *middle, *bottom, *temp;
 
 /* The filter kernels */
 struct kernels {
-    char *name;
-    char *uname;		/* What is needed to recognize it */
+    const char *name;
+    const char *uname;		/* What is needed to recognize it */
     int kern[9];
     int kerndiv;	/* Divisor for kernel */
     int kernoffset;	/* To be added to result */
@@ -69,11 +69,13 @@ int oflag = 0;	/* Different offset specified */
 char *file_name;
 FILE *infp;
 
-void select_filter(char *str), dousage(void);
+void select_filter(const char *str), dousage(void);
 
 char usage[] = "\
 Usage: pixfilter [-f type] [-v] [-d div] [-o offset]\n\
 	[-s squaresize] [-w width] [-n height] [file.pix] > file.pix\n";
+
+char hyphen[] = "-";
 
 int
 get_args(int argc, char **argv)
@@ -113,7 +115,7 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
 	    return 0;
-	file_name = "-";
+	file_name = hyphen;
 	infp = stdin;
     } else {
 	file_name = argv[bu_optind];
@@ -242,7 +244,7 @@ main(int argc, char **argv)
  * based on it.
  */
 void
-select_filter(char *str)
+select_filter(const char *str)
 {
     int i;
 

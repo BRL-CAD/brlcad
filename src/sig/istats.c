@@ -33,6 +33,7 @@
 
 #include "bu.h"
 
+char noname[] = "(noname)";
 
 /*
  * U S A G E --- tell user how to invoke this program, then exit
@@ -108,7 +109,7 @@ void comp_stats(FILE *fd)
  */
 int main(int ac, char *av[])
 {
-    char *progname = "(noname)";
+    char *progname = noname;
     int arg_index;
 
     /* parse command flags

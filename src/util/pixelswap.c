@@ -33,8 +33,9 @@
 #include "fb.h"
 
 
-char *options = "hd:";
-char *progname = "(noname)";
+char options[] = "hd:";
+char noname[] = "(noname)";
+char *progname = noname;
 
 int depth = 3;
 unsigned char ibuf[32767 * 3];
@@ -46,7 +47,7 @@ unsigned char obuf[32767 * 3];
 /*
  * U S A G E --- tell user how to invoke this program, then exit
  */
-void usage(char *s)
+void usage(const char *s)
 {
     if (s) (void)fputs(s, stderr);
 

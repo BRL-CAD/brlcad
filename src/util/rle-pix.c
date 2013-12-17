@@ -39,6 +39,7 @@
  */
 #include "rle.h"
 
+static char hyphen[] = "-";
 static FILE *infp;
 static char *infile;
 static FILE *outfp;
@@ -127,7 +128,7 @@ get_args(int argc, char **argv)
 	}
 	bu_optind++;
     } else {
-	infile = "-";
+	infile = hyphen;
     }
     if (argv[bu_optind] != NULL) {
 	if (bu_file_exists(argv[bu_optind], NULL)) {

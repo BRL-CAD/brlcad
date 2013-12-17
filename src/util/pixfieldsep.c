@@ -39,8 +39,10 @@ size_t file_width = 720;
 size_t bytes_per_sample = 3;
 int doubleit = 0;
 
-char *even_file = "even.pix";
-char *odd_file = "odd.pix";
+char Even_file[] = "even.pix";
+char Odd_file[]  = "odd.pix";
+char *even_file  = Even_file;
+char *odd_file   = Odd_file;
 
 static char usage[] = "\
 Usage: pixfieldsep [-w file_width] [-s square_size] [-# nbytes/pixel] \n\

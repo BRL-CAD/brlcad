@@ -59,6 +59,7 @@ ssize_t yin, xout, yout;
 int plus90, minus90, reverse, invert;
 size_t pixbytes = 1;
 
+char hyphen[] = "-";
 
 int
 get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
@@ -129,7 +130,7 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
     }
 
     if (bu_optind >= argc) {
-	in_file_name = "-";
+	in_file_name = hyphen;
     } else {
 	in_file_name = argv[bu_optind];
     }

@@ -321,7 +321,7 @@ ready(int nsecs)
  * Get and print the current exposure
  */
 void
-getexposure(char *title)
+getexposure(const char *title)
 {
     struct timeval waittime;
     int readval;

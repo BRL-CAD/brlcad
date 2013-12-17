@@ -37,7 +37,7 @@
 struct uplot {
     int targ;	/* type of args */
     int narg;	/* number or args */
-    char *desc;	/* description */
+    const char *desc;	/* description */
     int t3d;	/* non-zero if 3D */
 };
 

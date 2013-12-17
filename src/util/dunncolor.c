@@ -41,7 +41,7 @@ extern int polaroid;
 
 extern void dunnopen(void);
 extern int ready(int nsecs);
-extern void getexposure(char *title);
+extern void getexposure(const char *title);
 extern int dunnsend(char color, int val);
 
 static char usage[] = "Usage: dunncolor [-p] baseval redval greenval blueval";

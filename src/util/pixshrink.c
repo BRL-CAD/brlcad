@@ -35,10 +35,12 @@
 #define UCHAR unsigned char
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "us:w:n:f:h?";
+char options[] = "us:w:n:f:h?";
 
-char *progname = "(noname)";
-char *filename = "(stdin)";
+char noname[]  = "(noname)";
+char Stdin[]   = "(stdin)";
+char *progname = noname;
+char *filename = Stdin;
 
 void shrink_image(int scanlen, int Width, int Height, unsigned char *buffer, int Factor), usample_image(int scanlen, int Width, int Height, unsigned char *buffer, int Factor);
 

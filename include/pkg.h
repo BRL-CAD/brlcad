@@ -52,7 +52,7 @@ extern "C" {
 struct pkg_conn;
 
 typedef void (*pkg_callback)(struct pkg_conn*, char*);
-typedef void (*pkg_errlog)(char *msg);
+typedef void (*pkg_errlog)(const char *msg);
 
 struct pkg_switch {
     unsigned short pks_type;	/**< @brief Type code */

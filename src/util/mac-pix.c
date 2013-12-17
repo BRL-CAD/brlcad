@@ -70,6 +70,7 @@ int scr_xoff;
 int scr_yoff;
 
 int bwflag;
+char hyphen[] = "-";
 char *file_name;
 FILE *infp;
 
@@ -163,7 +164,7 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
 	    return 0;
-	file_name = "-";
+	file_name = hyphen;
 	infp = stdin;
     } else {
 	file_name = argv[bu_optind];

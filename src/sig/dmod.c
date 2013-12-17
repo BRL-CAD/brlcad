@@ -37,7 +37,7 @@
 #include "vmath.h"
 
 
-char *progname = "dmod";
+const char progname[] = "dmod";
 
 
 char	*file_name = NULL;
@@ -54,7 +54,7 @@ int numop = 0;		/* number of operations */
 int op[256] = {0};		/* operations */
 double val[256] = {0.0};		/* arguments to operations */
 double buf[BUFLEN] = {0.0};		/* working buffer */
-
+char hyphen[] = "-";
 static const char usage[] = "Usage: dmod [-a add | -s sub | -m mult | -d div | -A | -e exp | -r root] [doubles]\n";
 
 int
@@ -110,7 +110,7 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
 	    return 0;
-	file_name = "-";
+	file_name = hyphen;
 	infp = stdin;
     } else {
 	file_name = argv[bu_optind];
