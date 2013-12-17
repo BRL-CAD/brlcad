@@ -1,5 +1,4 @@
 <!-- Converted by db4-upgrade version 1.0 -->
-
 <article xmlns="http://docbook.org/ns/docbook" version="5.0">
   <info><title>Using the Insert Command in <application>MGED</application> to Size and Place Shapes</title>
 
@@ -81,7 +80,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged03_wireframe_sph.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged03_wireframe_sph.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -110,7 +112,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged03_wireframe_sph_rcc.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged03_wireframe_sph_rcc.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -252,8 +257,8 @@
 	<tgroup cols="2">
 	  <tbody>
 	    <row>
-	      <entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/en/images/mged03_shapes_make_command.png"/></imageobject></inlinemediaobject></entry>
-	      <entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/en/images/mged03_shapes_in_command.png"/></imageobject></inlinemediaobject></entry>
+	      <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/en/images/mged03_shapes_make_command.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/en/images/mged03_shapes_make_command.png"/></imageobject></inlinemediaobject></entry>
+	      <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/en/images/mged03_shapes_in_command.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/en/images/mged03_shapes_in_command.png"/></imageobject></inlinemediaobject></entry>
 	    </row>
 	    <row>
 	      <entry>Shapes Created with Make Command</entry>

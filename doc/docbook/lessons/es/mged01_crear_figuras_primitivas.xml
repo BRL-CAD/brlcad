@@ -1,8 +1,5 @@
 <!-- Converted by db4-upgrade version 1.0 -->
-
-<article xmlns="http://docbook.org/ns/docbook" version="5.0"
-	 xmlns:xi="http://www.w3.org/2001/XInclude"
->
+<article xmlns="http://docbook.org/ns/docbook" xmlns:xi="http://www.w3.org/2001/XInclude" version="5.0">
   <info><title>Crear Figuras Primitivas with <application>MGED</application></title>
 
 
@@ -132,7 +129,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged01_terminal.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged01_terminal.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -165,7 +165,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged01_commandwindow.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged01_commandwindow.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -178,7 +181,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged01_graphicswindow.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged01_graphicswindow.png" format="PNG"/>
 	  </imageobject>
 	  <caption>

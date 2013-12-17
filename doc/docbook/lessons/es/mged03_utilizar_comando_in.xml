@@ -1,8 +1,5 @@
 <!-- Converted by db4-upgrade version 1.0 -->
-
-<article xmlns="http://docbook.org/ns/docbook" version="5.0"
-	 xmlns:xi="http://www.w3.org/2001/XInclude"
->
+<article xmlns="http://docbook.org/ns/docbook" xmlns:xi="http://www.w3.org/2001/XInclude" version="5.0">
   <info><title>Usar el comando Insert en <application>MGED</application> para
     dimensionar y ubicar figuras</title>
 
@@ -93,7 +90,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/mged/using_insert_command_images/wireframesphere.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/mged/using_insert_command_images/wireframesphere.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -121,7 +121,10 @@
 	previamente creada.
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged03_wireframespherecylinder.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged03_wireframespherecylinder.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -271,8 +274,8 @@
 	<tgroup cols="2">
 	  <tbody>
 	    <row>
-	      <entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged03_shapes_make_command.png"/></imageobject></inlinemediaobject></entry>
-	      <entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged03_shapes_in_command.png"/></imageobject></inlinemediaobject></entry>
+	      <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/es/images/mged03_shapes_make_command.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/es/images/mged03_shapes_make_command.png"/></imageobject></inlinemediaobject></entry>
+	      <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/es/images/mged03_shapes_in_command.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/es/images/mged03_shapes_in_command.png"/></imageobject></inlinemediaobject></entry>
 	    </row>
 	    <row>
 	      <entry>Figuras creadas con el comando make</entry>

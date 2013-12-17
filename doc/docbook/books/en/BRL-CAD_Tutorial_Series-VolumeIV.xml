@@ -1,5 +1,4 @@
 <!-- Converted by db4-upgrade version 1.0 -->
-
 <book xmlns="http://docbook.org/ns/docbook" version="5.0">
 
   <info>
@@ -150,7 +149,10 @@ Engineering Company, 2002):</para>
 	<figure xml:id="fig_die_extrusion"><info><title>CSG and BREP approaches to representing an extrusion die (Tanenbaum, 2001).</title></info>
 
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata fileref="foo.eps" format="EPS"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata fileref="foo.eps" format="EPS"/>
 	  </imageobject>
 	  <textobject>
@@ -164,14 +166,14 @@ Engineering Company, 2002):</para>
 	<para>Because most commercial CAD systems have the capability to produce tessellated approximations of their BREP objects, some converters to BRL-CAD (e.g., those with Pro/E and Unigraphics) take advantage of these capabilities. In addition, the previously mentioned STL format, which represents solid objects entirely with triangles, offers the community a universal (albeit crude) way to convert BRL-CAD geometry (via the <command>g-stl</command> converter) to nearly any commercial CAD system.</para>
 	<figure xml:id="fig_bot"><info><title>Approximating a smooth, curved surface (left) with a BOT (right) (Tanenbaum, 2001).</title></info>
 
-	  <mediaobject><imageobject><imagedata fileref="test_img.eps" format="EPS"/></imageobject></mediaobject>
+	  <mediaobject><imageobject role="html"><imagedata fileref="test_img.eps" format="EPS"/></imageobject><imageobject role="fo"><imagedata fileref="test_img.eps" format="EPS"/></imageobject></mediaobject>
 	</figure>
 	<table><title>BREP Terminology</title>
 
 	  <tgroup cols="2">
 	    <tbody>
 	      <row>
-		<entry><mediaobject><imageobject><imagedata fileref="test_img.eps" format="EPS" scale="10"/></imageobject></mediaobject></entry>
+		<entry><mediaobject><imageobject role="html"><imagedata fileref="test_img.eps" format="EPS" scale="10"/></imageobject><imageobject role="fo"><imagedata fileref="test_img.eps" format="EPS" scale="10"/></imageobject></mediaobject></entry>
 		<entry>
 <para>BREP Terminology</para>
 <para>Boundary representations can take several forms. Although the terms for these forms are sometimes used interchangeably, the following list provides some key distinctions:</para>
@@ -201,7 +203,7 @@ Engineering Company, 2002):</para>
 	<tgroup cols="2">
 	  <tbody>
 	    <row>
-	      <entry><mediaobject><imageobject><imagedata fileref="test_img.eps" format="EPS" scale="10"/></imageobject></mediaobject></entry>
+	      <entry><mediaobject><imageobject role="html"><imagedata fileref="test_img.eps" format="EPS" scale="10"/></imageobject><imageobject role="fo"><imagedata fileref="test_img.eps" format="EPS" scale="10"/></imageobject></mediaobject></entry>
 
 	      <entry><para>CSG or BREP?</para><para>Depending on one's point of view, there are advantages and disadvantages to using CSG vs. BREP. Although "the right" approach for a given project ultimately depends on many specifics (e.g., model purpose, hardware/software availability, and compatibility with other users), the following areas should be considered when choosing between CSG and BREP:</para><itemizedlist>
 		  <listitem>
@@ -229,7 +231,7 @@ Engineering Company, 2002):</para>
 	<tgroup cols="2">
 	  <tbody>
 	    <row>
-	      <entry><mediaobject><imageobject><imagedata fileref="test_img.eps" format="EPS" scale="10"/></imageobject></mediaobject></entry>
+	      <entry><mediaobject><imageobject role="html"><imagedata fileref="test_img.eps" format="EPS" scale="10"/></imageobject><imageobject role="fo"><imagedata fileref="test_img.eps" format="EPS" scale="10"/></imageobject></mediaobject></entry>
 	      <entry><para>What About Databases in the Old Format?</para><para>Although databases created with BRL-CAD release 6.0 or later are in the new format by default, BRL-CAD retains the ability to work in the old format. Thus, new-database users need not be concerned about losing databases in the old format. Also, whenever a new database format is implemented in the future (typically a rare event), the dbupgrade utility will be modified so that it will always be able to upgrade databases to the current format.</para></entry>
 	    </row>
 	  </tbody>
@@ -449,7 +451,7 @@ Engineering Company, 2002):</para>
 	<tgroup cols="2">
 	  <tbody>
 	    <row>
-	      <entry><mediaobject><imageobject><imagedata fileref="test_img.eps" format="EPS" scale="10"/></imageobject></mediaobject></entry>
+	      <entry><mediaobject><imageobject role="html"><imagedata fileref="test_img.eps" format="EPS" scale="10"/></imageobject><imageobject role="fo"><imagedata fileref="test_img.eps" format="EPS" scale="10"/></imageobject></mediaobject></entry>
 	      <entry><para>The NMG primitive represents geometry that is defined by points, lines, polygonal facets, and collections thereof. It is the primary BRL-CAD primitive for encoding one- or two-dimensional (2-D) data. For more information on the NMG, see Muuss and Butler (1991) and Weiler (1987).</para></entry>
 	    </row>
 	  </tbody>
@@ -562,7 +564,7 @@ Engineering Company, 2002):</para>
 	<tgroup cols="2">
 	  <tbody>
 	    <row>
-	      <entry><mediaobject><imageobject><imagedata fileref="test_img.eps" format="EPS" scale="10"/></imageobject></mediaobject></entry>
+	      <entry><mediaobject><imageobject role="html"><imagedata fileref="test_img.eps" format="EPS" scale="10"/></imageobject><imageobject role="fo"><imagedata fileref="test_img.eps" format="EPS" scale="10"/></imageobject></mediaobject></entry>
 	      <entry><para>Note that all header (.h) files-including <filename>raytrace.h</filename>, <filename>nmg.h</filename>, and <filename>bu.h</filename> - are accessible in both the source and binary distributions of BRL-CAD. In the binary distribution, these files are installed in the <!-- bch "user"? --><filename>/user/brlcad/include/brlcad</filename> directory.</para></entry>
 	    </row>
 	  </tbody>
@@ -770,7 +772,7 @@ Engineering Company, 2002):</para>
 	<tgroup cols="2">
 	  <tbody>
 	    <row>
-	      <entry><mediaobject><imageobject><imagedata fileref="test_img.eps" format="EPS" scale="10"/></imageobject></mediaobject></entry>
+	      <entry><mediaobject><imageobject role="html"><imagedata fileref="test_img.eps" format="EPS" scale="10"/></imageobject><imageobject role="fo"><imagedata fileref="test_img.eps" format="EPS" scale="10"/></imageobject></mediaobject></entry>
 	      <entry><para>To maximize the efficiency and effectiveness of converting Pro/E geometry, the BRL-CAD user should first acquire the following information from the Pro/E designer: A list of top-level assemblies - This information is vital in helping the BRL-CAD user gain an understanding of the overall model structure and know where to begin the conversion process. A mapping of part numbers to part names - Although part numbers can be an important aspect of design and manufacturing, they have little meaning for vulnerability analysts, who are more concerned with the descriptive names of the components than the numbers represent.</para></entry>
 	    </row>
 	  </tbody>
@@ -780,7 +782,7 @@ Engineering Company, 2002):</para>
       <para>The conversion process is started by selecting the <guimenuitem>ProE-BRL</guimenuitem> item in the Pro/E drop-down <guimenu>File</guimenu> menu. The converter dialog box, shown in <xref linkend="fig_converter_dialog_box"/>, will then appear.</para>
       <figure xml:id="fig_converter_dialog_box"><info><title>Converter dialog box</title></info>
 
-	<mediaobject><imageobject><imagedata fileref="test_img.eps" format="EPS" scale="40"/></imageobject></mediaobject>
+	<mediaobject><imageobject role="html"><imagedata fileref="test_img.eps" format="EPS" scale="40"/></imageobject><imageobject role="fo"><imagedata fileref="test_img.eps" format="EPS" scale="40"/></imageobject></mediaobject>
       </figure>
       <para>The following list provides a description of the use and functionality of the primary elements in the dialog box. Note that the box is preloaded with reasonable defaults for many of the inputs. In addition, if the user has a question about any of the entry windows, check boxes, or buttons, he can move the mouse over them to see a brief explanation of their use.</para>
       <itemizedlist>
@@ -1026,7 +1028,7 @@ Engineering Company, 2002):</para>
 	<tgroup cols="2">
 	  <tbody>
 	    <row>
-	      <entry><mediaobject><imageobject><imagedata fileref="test_img.eps" format="EPS" scale="10"/></imageobject></mediaobject></entry>
+	      <entry><mediaobject><imageobject role="html"><imagedata fileref="test_img.eps" format="EPS" scale="10"/></imageobject><imageobject role="fo"><imagedata fileref="test_img.eps" format="EPS" scale="10"/></imageobject></mediaobject></entry>
 	      <entry>Although these packages are often confused, ACAD was developed by <orgname>Lockheed Martin</orgname> and is not connected with AutoCAD, which was developed by <orgname>Autodesk Inc.</orgname></entry>
 	    </row>
 	  </tbody>
@@ -1128,7 +1130,7 @@ Engineering Company, 2002):</para>
 	<tgroup cols="2">
 	  <tbody>
 	    <row>
-	      <entry><mediaobject><imageobject><imagedata fileref="test_img.eps" format="EPS" scale="10"/></imageobject></mediaobject></entry>
+	      <entry><mediaobject><imageobject role="html"><imagedata fileref="test_img.eps" format="EPS" scale="10"/></imageobject><imageobject role="fo"><imagedata fileref="test_img.eps" format="EPS" scale="10"/></imageobject></mediaobject></entry>
 	      <entry>Note that different CAD packages seem to ``prefer'' certain options for the IGES converter. In particular, Pro/E works well with IGES files that use the <option>-m</option> option, and Unigraphics works well with IGES files that use the <option>-s</option> option.</entry>
 	    </row>
 	  </tbody>
@@ -1220,7 +1222,7 @@ Engineering Company, 2002):</para>
 	<tgroup cols="2">
 	  <tbody>
 	    <row>
-	      <entry><mediaobject><imageobject><imagedata fileref="test_img.eps" format="EPS" scale="10"/></imageobject></mediaobject></entry>
+	      <entry><mediaobject><imageobject role="html"><imagedata fileref="test_img.eps" format="EPS" scale="10"/></imageobject><imageobject role="fo"><imagedata fileref="test_img.eps" format="EPS" scale="10"/></imageobject></mediaobject></entry>
 	      <entry><para>The Web3D Consortium is a nonprofit organization promoting open standards for 3-D Web and broadcast applications. Members include leading corporate and educational institutions, including <orgname>3Dlabs</orgname>, <orgname>ATI Technologies</orgname>, <orgname>blaxxun</orgname>, <orgname>Nexternet</orgname>, <orgname>OpenWorlds</orgname>, <orgname>Sony</orgname>, <orgname>SGDL Systems</orgname>, <orgname>ParallelGraphics</orgname>, the Naval Postgraduate School, and the Army Simulation, Training, and Instrumentation Command (STRICOM). Notable efforts include developing VRML specifications and an improved, componentized new-generation specification for Web3D, including X3D (see subsection 5.11) (SURVICE Engineering Company, 2002).</para></entry>
 	    </row>
 	  </tbody>

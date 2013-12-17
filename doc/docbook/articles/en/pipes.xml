@@ -1,5 +1,4 @@
 <!-- Converted by db4-upgrade version 1.0 -->
-
 <article xmlns="http://docbook.org/ns/docbook" version="5.0">
   <info><title>Using the Pipe Primitive</title>
 
@@ -299,35 +298,35 @@
 	<tbody>
 	  <row>
 	    <entry>- mged&gt;p 500 -500 150</entry>
-	    <entry><inlinemediaobject><imageobject><imagedata fileref="../../articles/en/images/pipes_fig05.png"/></imageobject></inlinemediaobject></entry>
+	    <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../articles/en/images/pipes_fig05.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../articles/en/images/pipes_fig05.png"/></imageobject></inlinemediaobject></entry>
 	  </row>
 	  <row>
 	    <entry>- mged&gt;p -500 -500 250</entry>
-	    <entry><inlinemediaobject><imageobject><imagedata fileref="../../articles/en/images/pipes_fig06.png"/></imageobject></inlinemediaobject></entry>
+	    <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../articles/en/images/pipes_fig06.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../articles/en/images/pipes_fig06.png"/></imageobject></inlinemediaobject></entry>
 	  </row>
 	  <row>
 	    <entry>- mged&gt;p -500 500 350</entry>
-	    <entry><inlinemediaobject><imageobject><imagedata fileref="../../articles/en/images/pipes_fig07.png"/></imageobject></inlinemediaobject></entry>
+	    <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../articles/en/images/pipes_fig07.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../articles/en/images/pipes_fig07.png"/></imageobject></inlinemediaobject></entry>
 	  </row>
 	  <row>
 	    <entry>- mged&gt;p 500 500 450</entry>
-	    <entry><inlinemediaobject><imageobject><imagedata fileref="../../articles/en/images/pipes_fig08.png"/></imageobject></inlinemediaobject></entry>
+	    <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../articles/en/images/pipes_fig08.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../articles/en/images/pipes_fig08.png"/></imageobject></inlinemediaobject></entry>
 	  </row>
 	  <row>
 	    <entry>- mged&gt;p 500 -500 550</entry>
-	    <entry><inlinemediaobject><imageobject><imagedata fileref="../../articles/en/images/pipes_fig09.png"/></imageobject></inlinemediaobject></entry>
+	    <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../articles/en/images/pipes_fig09.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../articles/en/images/pipes_fig09.png"/></imageobject></inlinemediaobject></entry>
 	  </row>
 	  <row>
 	    <entry>- mged&gt;p -500 -500 650</entry>
-	    <entry><inlinemediaobject><imageobject><imagedata fileref="../../articles/en/images/pipes_fig10.png"/></imageobject></inlinemediaobject></entry>
+	    <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../articles/en/images/pipes_fig10.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../articles/en/images/pipes_fig10.png"/></imageobject></inlinemediaobject></entry>
 	  </row>
 	  <row>
 	    <entry>- mged&gt;p -500 500 750</entry>
-	    <entry><inlinemediaobject><imageobject><imagedata fileref="../../articles/en/images/pipes_fig11.png"/></imageobject></inlinemediaobject></entry>
+	    <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../articles/en/images/pipes_fig11.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../articles/en/images/pipes_fig11.png"/></imageobject></inlinemediaobject></entry>
 	  </row>
 	  <row>
 	    <entry>- mged&gt;p 0 500 800</entry>
-	    <entry><inlinemediaobject><imageobject><imagedata fileref="../../articles/en/images/pipes_fig12.png"/></imageobject></inlinemediaobject></entry>
+	    <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../articles/en/images/pipes_fig12.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../articles/en/images/pipes_fig12.png"/></imageobject></inlinemediaobject></entry>
 	  </row>
 	</tbody>
       </tgroup>

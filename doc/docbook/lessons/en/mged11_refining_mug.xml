@@ -1,5 +1,4 @@
 <!-- Converted by db4-upgrade version 1.0 -->
-
 <article xmlns="http://docbook.org/ns/docbook" version="5.0">
   <info><title>Refining a Mug Model</title>
 
@@ -107,7 +106,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged11_mug_raytraced_norim.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged11_mug_raytraced_norim.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -192,7 +194,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged11_mug_raytraced_rim.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged11_mug_raytraced_rim.png" format="PNG"/>
 	  </imageobject>
 	  <caption>

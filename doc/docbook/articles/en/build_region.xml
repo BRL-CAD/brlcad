@@ -1,8 +1,5 @@
 <!-- Converted by db4-upgrade version 1.0 -->
-
-<article xmlns="http://docbook.org/ns/docbook" version="5.0"
-  xmlns:xi="http://www.w3.org/2001/XInclude"
->
+<article xmlns="http://docbook.org/ns/docbook" xmlns:xi="http://www.w3.org/2001/XInclude" version="5.0">
   <info><title>Using the build_region Command</title>
 
 
@@ -51,7 +48,10 @@
   <figure xml:id="build_region5"><info><title>The rounded corners of a toy wagon.</title></info>
 
     <mediaobject>
-      <imageobject>
+      <imageobject role="html">
+	<imagedata align="center" fileref="../../articles/en/images/build_region_fig01.png" format="PNG"/>
+      </imageobject>
+    <imageobject role="fo">
 	<imagedata align="center" fileref="../../articles/en/images/build_region_fig01.png" format="PNG"/>
       </imageobject>
     </mediaobject>
@@ -70,7 +70,10 @@
   <figure xml:id="build_region7"><info><title>Arb8, cylinder, and two Boolean primitives.</title></info>
 
     <mediaobject>
-      <imageobject>
+      <imageobject role="html">
+	<imagedata align="center" fileref="../../articles/en/images/build_region_fig02.png" format="PNG"/>
+      </imageobject>
+    <imageobject role="fo">
 	<imagedata align="center" fileref="../../articles/en/images/build_region_fig02.png" format="PNG"/>
       </imageobject>
     </mediaobject>
@@ -104,7 +107,10 @@ u wgn.s2 + wgn.s2+1 - wgn.s2-1
   <figure xml:id="build_region9"><info><title>The region and the subtraction primitives.</title></info>
 
     <mediaobject>
-      <imageobject>
+      <imageobject role="html">
+	<imagedata align="center" fileref="../../articles/en/images/build_region_fig03.png" format="PNG"/>
+      </imageobject>
+    <imageobject role="fo">
 	<imagedata align="center" fileref="../../articles/en/images/build_region_fig03.png" format="PNG"/>
       </imageobject>
     </mediaobject>
@@ -119,7 +125,10 @@ u wgn.s2 + wgn.s2+1 - wgn.s2-1
   <figure xml:id="build_region11"><info><title>Raytraced image with hole.</title></info>
 
     <mediaobject>
-      <imageobject>
+      <imageobject role="html">
+	<imagedata align="center" fileref="../../articles/en/images/build_region_fig04.png" format="PNG"/>
+      </imageobject>
+    <imageobject role="fo">
 	<imagedata align="center" fileref="../../articles/en/images/build_region_fig04.png" format="PNG"/>
       </imageobject>
     </mediaobject>

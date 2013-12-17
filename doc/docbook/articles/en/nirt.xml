@@ -1,5 +1,4 @@
 <!-- Converted by db4-upgrade version 1.0 -->
-
 <article xmlns="http://docbook.org/ns/docbook" version="5.0">
   <info><title>Interactive Raytracing: The <command>nirt</command> Command</title>
 
@@ -1322,7 +1321,7 @@ reg_name,path_name,reg_id,x_in,y_in,z_in,d_in,x_out,y_out,z_out,d_out,los,scaled
 	test.csv) and imported into a spreadsheet:
 
 	<screenshot>
-	  <mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/nirt_fig19.png"/></imageobject></mediaobject>
+	  <mediaobject><imageobject role="html"><imagedata align="center" fileref="../../articles/en/images/nirt_fig19.png"/></imageobject><imageobject role="fo"><imagedata align="center" fileref="../../articles/en/images/nirt_fig19.png"/></imageobject></mediaobject>
 	</screenshot>
 
       </para>
@@ -1818,7 +1817,7 @@ reg_name,path_name,reg_id,x_in,y_in,z_in,d_in,x_out,y_out,z_out,d_out,los,scaled
 	As before, this format is trivially imported into a spreadsheet:
 
 	<screenshot>
-	  <mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/nirt_fig21.png"/></imageobject></mediaobject>
+	  <mediaobject><imageobject role="html"><imagedata align="center" fileref="../../articles/en/images/nirt_fig21.png"/></imageobject><imageobject role="fo"><imagedata align="center" fileref="../../articles/en/images/nirt_fig21.png"/></imageobject></mediaobject>
 	</screenshot>
 
       </para>

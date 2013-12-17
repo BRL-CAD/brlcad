@@ -1,8 +1,5 @@
 <!-- Converted by db4-upgrade version 1.0 -->
-
-<article xmlns="http://docbook.org/ns/docbook" version="5.0"
-  xmlns:xi="http://www.w3.org/2001/XInclude"
->
+<article xmlns="http://docbook.org/ns/docbook" xmlns:xi="http://www.w3.org/2001/XInclude" version="5.0">
   <info><title>Using the Build Pattern Tool</title>
 
 
@@ -80,7 +77,10 @@
     <figure><info><title>Example of pattern-generated assembly names.</title></info>
 
       <mediaobject>
-	<imageobject>
+	<imageobject role="html">
+	  <imagedata align="center" fileref="../../articles/en/images/build_pattern_fig01.png" format="PNG"/>
+	</imageobject>
+      <imageobject role="fo">
 	  <imagedata align="center" fileref="../../articles/en/images/build_pattern_fig01.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
@@ -132,7 +132,7 @@ part.s26 part.s26-1 part.s27 part.s28 part.s28+1 part.s28-1 part.s29
      thorough and name each primitive, region, and assembly properly. Consider
      the following example:
 
-     <inlinemediaobject><imageobject><imagedata fileref="../../articles/en/images/build_pattern_fig07.png"/></imageobject></inlinemediaobject>
+     <inlinemediaobject><imageobject role="html"><imagedata fileref="../../articles/en/images/build_pattern_fig07.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../articles/en/images/build_pattern_fig07.png"/></imageobject></inlinemediaobject>
     </para>
     <para>
       Top-level duplications copy the patterned object and reference its entire
@@ -186,7 +186,10 @@ part.s26 part.s26-1 part.s27 part.s28 part.s28+1 part.s28-1 part.s29
     <figure><info><title>The user interface for building rectangular patterns.</title></info>
 
       <mediaobject>
-	<imageobject>
+	<imageobject role="html">
+	  <imagedata align="center" fileref="../../articles/en/images/build_pattern_fig02.png" format="PNG"/>
+	</imageobject>
+      <imageobject role="fo">
 	  <imagedata align="center" fileref="../../articles/en/images/build_pattern_fig02.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
@@ -240,7 +243,10 @@ part.s26 part.s26-1 part.s27 part.s28 part.s28+1 part.s28-1 part.s29
     <figure><info><title>The user interface for building spherical patterns.</title></info>
 
       <mediaobject>
-	<imageobject>
+	<imageobject role="html">
+	  <imagedata align="center" fileref="../../articles/en/images/build_pattern_fig03.png" format="PNG"/>
+	</imageobject>
+      <imageobject role="fo">
 	  <imagedata align="center" fileref="../../articles/en/images/build_pattern_fig03.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
@@ -263,7 +269,10 @@ part.s26 part.s26-1 part.s27 part.s28 part.s28+1 part.s28-1 part.s29
     <figure><info><title>Examples of different spherical pattern orientations.</title></info>
 
       <mediaobject>
-	<imageobject>
+	<imageobject role="html">
+	  <imagedata align="center" fileref="../../articles/en/images/build_pattern_fig04.png" format="PNG"/>
+	</imageobject>
+      <imageobject role="fo">
 	  <imagedata align="center" fileref="../../articles/en/images/build_pattern_fig04.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
@@ -273,7 +282,10 @@ part.s26 part.s26-1 part.s27 part.s28 part.s28+1 part.s28-1 part.s29
     <figure><info><title>Implementation of spherical patterns.</title></info>
 
       <mediaobject>
-	<imageobject>
+	<imageobject role="html">
+	  <imagedata align="center" fileref="../../articles/en/images/build_pattern_fig05.png" format="PNG"/>
+	</imageobject>
+      <imageobject role="fo">
 	  <imagedata align="center" fileref="../../articles/en/images/build_pattern_fig05.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
@@ -298,7 +310,10 @@ part.s26 part.s26-1 part.s27 part.s28 part.s28+1 part.s28-1 part.s29
     <figure><info><title>The user interface for building cylindrical patterns.</title></info>
 
       <mediaobject>
-	<imageobject>
+	<imageobject role="html">
+	  <imagedata align="center" fileref="../../articles/en/images/build_pattern_fig06.png" format="PNG"/>
+	</imageobject>
+      <imageobject role="fo">
 	  <imagedata align="center" fileref="../../articles/en/images/build_pattern_fig06.png" format="PNG"/>
 	</imageobject>
       </mediaobject>

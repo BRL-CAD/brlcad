@@ -1,5 +1,4 @@
 <!-- Converted by db4-upgrade version 1.0 -->
-
 <article xmlns="http://docbook.org/ns/docbook" version="5.0">
   <info><title>Ubicar figuras en espacios 3-D</title>
 
@@ -48,7 +47,10 @@
       iluminación para hacer el diseño más realista.
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged13_candle_design.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged13_candle_design.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -90,7 +92,10 @@
 	siguiente imagen:
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged13_candle_tabletop_wireframe_front.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged13_candle_tabletop_wireframe_front.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -136,7 +141,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged13_candle_tabletop_eto1_wireframe_front.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged13_candle_tabletop_eto1_wireframe_front.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -201,7 +209,10 @@ Move End H
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged13_candle_tabletop_eto1_rcc_wireframe_front.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged13_candle_tabletop_eto1_rcc_wireframe_front.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -223,7 +234,10 @@ Move End H
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged13_candle_tabletop_base_front.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged13_candle_tabletop_base_front.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -266,7 +280,10 @@ Move End H
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged13_candle_tabletop_base_candle_front.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged13_candle_tabletop_base_candle_front.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -302,7 +319,10 @@ Move End H
 	figura hasta que su diseño se vea como el siguiente:
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged13_candle_complete_front.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged13_candle_complete_front.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -425,7 +445,10 @@ Move End H
 	cajas de texto, de la siguiente manera:
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged13_candle_comb_ed_checker.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged13_candle_comb_ed_checker.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -496,7 +519,10 @@ Move End H
 	La imagen de su vela debería ser similar a la siguiente:
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged13_candle_raytraced_overlay.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged13_candle_raytraced_overlay.png" format="PNG"/>
 	  </imageobject>
 	  <caption>

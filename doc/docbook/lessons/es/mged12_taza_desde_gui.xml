@@ -1,5 +1,4 @@
 <!-- Converted by db4-upgrade version 1.0 -->
-
 <article xmlns="http://docbook.org/ns/docbook" version="5.0">
   <info><title>
 	Crear el modelo de una taza utilizando la interfaz de
@@ -150,7 +149,10 @@
 	Su cilindros deben asemejarse a los del ejemplo siguiente:
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged12_cyls_frontview.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged12_cyls_frontview.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -230,10 +232,10 @@
 	    <tbody>
 	      <row>
 		<entry>
-		  <inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged12_mug_handle_frontview.png"/></imageobject></inlinemediaobject>
+		  <inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/es/images/mged12_mug_handle_frontview.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/es/images/mged12_mug_handle_frontview.png"/></imageobject></inlinemediaobject>
 		</entry>
 		<entry>
-		  <inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged12_mug_handle_topview.png"/></imageobject></inlinemediaobject>
+		  <inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/es/images/mged12_mug_handle_topview.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/es/images/mged12_mug_handle_topview.png"/></imageobject></inlinemediaobject>
 		</entry>
 	      </row>
 	      <row>
@@ -266,7 +268,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged12_mug_rim_frontview.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged12_mug_rim_frontview.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -387,7 +392,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged12_mug_gui_finished_raytraced.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged12_mug_gui_finished_raytraced.png" format="PNG"/>
 	  </imageobject>
 	  <caption>

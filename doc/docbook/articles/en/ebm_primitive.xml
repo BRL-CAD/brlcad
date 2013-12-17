@@ -1,5 +1,4 @@
 <!-- Converted by db4-upgrade version 1.0 -->
-
 <article xmlns="http://docbook.org/ns/docbook" version="5.0">
   <info><title>Using the Extruded Bitmap Primitive</title>
 
@@ -28,7 +27,10 @@
   <figure xml:id="ebm3"><info><title>Example of the .bw image used for ebm.</title></info>
 
     <mediaobject>
-      <imageobject>
+      <imageobject role="html">
+	<imagedata align="center" fileref="../../articles/en/images/ebm_primitive_fig01.png" format="PNG"/>
+      </imageobject>
+    <imageobject role="fo">
 	<imagedata align="center" fileref="../../articles/en/images/ebm_primitive_fig01.png" format="PNG"/>
       </imageobject>
     </mediaobject>
@@ -37,7 +39,10 @@
   <figure xml:id="ebm4"><info><title>Example of ebm.</title></info>
 
     <mediaobject>
-      <imageobject>
+      <imageobject role="html">
+	<imagedata align="center" fileref="../../articles/en/images/ebm_primitive_fig02.png" format="PNG"/>
+      </imageobject>
+    <imageobject role="fo">
 	<imagedata align="center" fileref="../../articles/en/images/ebm_primitive_fig02.png" format="PNG"/>
       </imageobject>
     </mediaobject>
@@ -46,7 +51,10 @@
   <figure xml:id="ebm5"><info><title>Example of the ebm with projection shader added.</title></info>
 
     <mediaobject>
-      <imageobject>
+      <imageobject role="html">
+	<imagedata align="center" fileref="../../articles/en/images/ebm_primitive_fig03.png" format="PNG"/>
+      </imageobject>
+    <imageobject role="fo">
 	<imagedata align="center" fileref="../../articles/en/images/ebm_primitive_fig03.png" format="PNG"/>
       </imageobject>
     </mediaobject>

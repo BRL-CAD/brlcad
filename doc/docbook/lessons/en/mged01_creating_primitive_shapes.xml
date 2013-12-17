@@ -1,8 +1,5 @@
 <!-- Converted by db4-upgrade version 1.0 -->
-
-<article xmlns="http://docbook.org/ns/docbook" version="5.0"
-  xmlns:xi="http://www.w3.org/2001/XInclude"
->
+<article xmlns="http://docbook.org/ns/docbook" xmlns:xi="http://www.w3.org/2001/XInclude" version="5.0">
   <info><title>Creating Primitive Shapes in <application>MGED</application></title>
 
 
@@ -141,22 +138,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata
-	       align="center"
-	       contentwidth="3.9in"
-	       scalefit="1"
-	       fileref="../../lessons/en/images/mged01_terminal.png"
-	       format="PNG"
-	     />
+	    <imagedata align="center" contentwidth="3.9in" scalefit="1" fileref="../../lessons/en/images/mged01_terminal.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata
-	       align="center"
-	       width="3.9in"
-	       scalefit="1"
-	       fileref="../../lessons/en/images/mged01_terminal.png"
-	       format="PNG"
-	     />
+	    <imagedata align="center" width="3.9in" scalefit="1" fileref="../../lessons/en/images/mged01_terminal.png" format="PNG"/>
 	  </imageobject>
 
 
@@ -195,7 +180,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged01_commandwindow.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged01_commandwindow.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -208,7 +196,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged01_graphicswindow.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged01_graphicswindow.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
