@@ -110,7 +110,7 @@ add_test(bn_plane_3pts_collinear_false_3        tester_bn_plane_pt 1 1,1,1 0,0,0
 add_test(bn_plane_3pts_collinear_false_4        tester_bn_plane_pt 1 1,1,1 6,3,8 0,0,0 0)
 add_test(bn_plane_3pts_collinear_false_5        tester_bn_plane_pt 1 6,3,8 1,1,1 0,0,0  0)
 add_test(bn_plane_3pts_collinear_false_6        tester_bn_plane_pt 1 6,3,8 0,0,0 1,1,1 0)
-add_test(bn_plane_3pts_collinear_same           tester_bn_plane_pt 1 5.3,8.1,9.6 5.3,8.1,9.6 5.3,8.1,9.6 0)
+add_test(bn_plane_3pts_collinear_same           tester_bn_plane_pt 1 5.3,8.1,9.6 5.3,8.1,9.6 5.3,8.1,9.6 1)
 add_test(bn_plane_3pts_collinear_partial_same_1 tester_bn_plane_pt 1 6,2,4 6,2,4 9.3,8.1,4.6 1)
 # This test fails, but I think that it shouldn't --- it seems to be
 # showing that point order matters since it is the same three points
