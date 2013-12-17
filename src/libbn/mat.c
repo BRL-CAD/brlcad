@@ -570,20 +570,20 @@ bn_eigen2x2(fastf_t *val1, fastf_t *val2, fastf_t *vec1, fastf_t *vec2, fastf_t 
 
 
 void
-bn_vec_perp(vect_t new, const vect_t old)
+bn_vec_perp(vect_t new_vec, const vect_t old_vec)
 {
     register int i;
-    vect_t another;	/* Another vector, different */
+    vect_t another_vec;	/* Another vector, different */
 
     i = X;
-    if (fabs(old[Y])<fabs(old[i])) i=Y;
-    if (fabs(old[Z])<fabs(old[i])) i=Z;
-    VSETALL(another, 0);
-    another[i] = 1.0;
-    if (ZERO(old[X]) && ZERO(old[Y]) && ZERO(old[Z])) {
-	VMOVE(new, another);
+    if (fabs(old_vec[Y])<fabs(old_vec[i])) i=Y;
+    if (fabs(old_vec[Z])<fabs(old_vec[i])) i=Z;
+    VSETALL(another_vec, 0);
+    another_vec[i] = 1.0;
+    if (ZERO(old_vec[X]) && ZERO(old_vec[Y]) && ZERO(old_vec[Z])) {
+	VMOVE(new_vec, another_vec);
     } else {
-	VCROSS(new, another, old);
+	VCROSS(new_vec, another_vec, old_vec);
     }
 }
 
