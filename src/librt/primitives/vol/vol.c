@@ -1346,6 +1346,40 @@ rt_vol_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
     return 0;			/* OK */
 }
 
+void
+rt_vol_centroid(point_t *cent, const struct rt_db_internal *ip)
+{
+    register struct rt_vol_internal *vip;
+    size_t x, y, z;
+    size_t cnt;
+    fastf_t x_tot, y_tot, z_tot;
+    point_t p;
+
+    RT_CK_DB_INTERNAL(ip);
+    vip = (struct rt_vol_internal *)ip->idb_ptr;
+    RT_VOL_CK_MAGIC(vip);
+    
+    cnt=0;
+
+    for (x=0; x<vip->xdim; x++) {
+	for (y=0; y<vip->ydim; y++) {
+	    for (z=0; z<vip->zdim; z++) {
+		if (OK(vip, VOL(vip, x, y, z))) {
+		    x_tot += (x+.5) * (vip->cellsize[X]);
+		    y_tot += (y+.5) * (vip->cellsize[Y]);
+		    z_tot += (z+.5) * (vip->cellsize[Z]);
+		    cnt++;
+		}
+	    }
+	}
+    }
+    
+    p[X]=x_tot/cnt;
+    p[Y]=y_tot/cnt;
+    p[Z]=z_tot/cnt;
+	
+    MAT4X3PNT(*cent, vip->mat, p);
+}
 
 /*
  * Local Variables:
