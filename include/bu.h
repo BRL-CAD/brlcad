@@ -2522,7 +2522,7 @@ struct bu_rb_tree {
 
     /*** CLASS III - Applications should NOT manipulate directly. ***/
     int rbt_nm_orders;                 /**< Number of simultaneous orders */
-    int (**rbt_order)(void *, void *); /**< Comparison functions */
+    int (**rbt_compar)(const void *, const void *); /**< Comparison functions */
     struct bu_rb_node **rbt_root;      /**< The actual trees */
     char *rbt_unique;                  /**< Uniqueness flags */
     struct bu_rb_node *rbt_current;    /**< Current node */
@@ -2548,7 +2548,7 @@ typedef struct bu_rb_tree bu_rb_tree_t;
 	(_rb)->rbt_debug = 0; \
 	(_rb)->rbt_description = NULL; \
 	(_rb)->rbt_nm_orders = 0; \
-	(_rb)->rbt_order = NULL; \
+	(_rb)->rbt_compar = NULL; \
 	(_rb)->rbt_root = (_rb)->rbt_unique = (_rb)->rbt_current = NULL; \
 	BU_LIST_INIT(&(_rb)->rbt_nodes.l); \
 	(_rb)->rbt_nodes.rbl_u.rbl_n = (_rb)->rbt_nodes.rbl_u.rbl_p = NULL; \
@@ -4538,7 +4538,9 @@ BU_EXPORT extern void bu_ptbl_trunc(struct bu_ptbl *tbl,
  * and the comparison functions (one per order).  bu_rb_create()
  * returns a pointer to the red-black tree header record.
  */
-BU_EXPORT extern struct bu_rb_tree *bu_rb_create(const char *description, int nm_orders, int (**order_funcs)());
+BU_EXPORT extern struct bu_rb_tree *bu_rb_create(const char *description, int nm_orders, int (**compare_funcs)());
+/* A macro for correct casting of a rb compare function for use a function argument: */
+#define BU_RB_COMPARE_FUNC_CAST_AS_FUNC_ARG(_func) ((int (*)(void))_func)
 
 /**
  * Create a single-order red-black tree
@@ -4553,7 +4555,7 @@ BU_EXPORT extern struct bu_rb_tree *bu_rb_create(const char *description, int nm
  * function pointers, in order to avoid memory leaks on freeing the
  * tree, applications should call bu_rb_free1(), NOT bu_rb_free().
  */
-BU_EXPORT extern struct bu_rb_tree *bu_rb_create1(const char *description, int (*order_func)());
+BU_EXPORT extern struct bu_rb_tree *bu_rb_create1(const char *description, int (*compare_func)());
 
 /** @file libbu/rb_delete.c
  *
@@ -4666,8 +4668,8 @@ BU_EXPORT extern void bu_rb_free(struct bu_rb_tree *tree, void (*free_data)(void
 #define bu_rb_free1(t, f)					\
     {							\
 	BU_CKMAG((t), BU_RB_TREE_MAGIC, "red-black tree");	\
-	bu_free((char *) ((t) -> rbt_order),		\
-		"red-black order function");		\
+	bu_free((char *) ((t) -> rbt_compar),		\
+		"red-black compare function");		\
 	bu_rb_free(t, f);					\
     }
 

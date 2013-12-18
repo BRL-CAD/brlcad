@@ -43,7 +43,7 @@
 /*
  * Access functions for fields of struct bu_rb_tree
  */
-#define RB_ORDER_FUNC(t, o) (((t)->rbt_order)[o])
+#define RB_COMPARE_FUNC(t, o) (((t)->rbt_compar)[o])
 #define RB_PRINT(t, p) (((t)->rbt_print)((p)->rbp_data))
 #define RB_ROOT(t, o) (((t)->rbt_root)[o])
 #define RB_CURRENT(t) ((t)->rbt_current)

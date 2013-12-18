@@ -27,7 +27,7 @@
 
 
 struct bu_rb_tree *
-bu_rb_create(const char *description, int nm_orders, int (**order_funcs)(void *, void *))
+bu_rb_create(const char *description, int nm_orders, int (**compare_funcs)(const void *, const void *))
 {
     int order;
     struct bu_rb_tree *tree;
@@ -70,7 +70,7 @@ bu_rb_create(const char *description, int nm_orders, int (**order_funcs)(void *,
     tree->rbt_magic = BU_RB_TREE_MAGIC;
     tree->rbt_description = description;
     tree->rbt_nm_orders = nm_orders;
-    tree->rbt_order = order_funcs;
+    tree->rbt_compar = compare_funcs;
     tree->rbt_print = 0;
     bu_rb_uniq_all_off(tree);
     tree->rbt_debug = 0x0;
@@ -99,14 +99,14 @@ bu_rb_create(const char *description, int nm_orders, int (**order_funcs)(void *,
 
 
 struct bu_rb_tree *
-bu_rb_create1(const char *description, int (*order_func) (/* ??? */))
+bu_rb_create1(const char *description, int (*compare_func)(void))
 {
-    int (**ofp)();
+    int (**cfp)();
 
-    ofp = (int (**)())
+    cfp = (int (**)())
 	bu_malloc(sizeof(int (*)()), "red-black function table");
-    *ofp = order_func;
-    return bu_rb_create(description, 1, ofp);
+    *cfp = compare_func;
+    return bu_rb_create(description, 1, cfp);
 }
 
 /*
