@@ -100,7 +100,8 @@ char *framebuffer=NULL;
 void
 usage(char **argv)
 {
-    fprintf(stderr, "Usage: %s [-H] [-v] [-F frame_buffer] [gif_file]\n", argv[0]);
+    fprintf(stderr,"Usage: %s [-H] [-v] [-F frame_buffer] [gif_file]\n", argv[0]);
+    fprintf(stderr,"       (stdin used with '<' construct if gif_file not supplied)\n");
 }
 
 int getByte(FILE *inp);
@@ -145,7 +146,6 @@ main(int argc, char **argv)
 
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin))) {
-	    (void) fprintf(stderr, "%s: No input file.\n", argv[0]);
 	    usage(argv);
 	    return 1;
 	}
