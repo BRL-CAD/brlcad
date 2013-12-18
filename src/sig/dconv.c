@@ -40,12 +40,9 @@
 
 #include "bu.h"
 
-#define MAXM 4096
+#include "fft.h"
 
-void rfft256();
-void rfft();
-void irfft256();
-void irfft();
+#define MAXM 4096
 
 double savebuffer[MAXM];
 double xbuf[2 * (MAXM + 1)];
