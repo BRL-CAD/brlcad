@@ -215,7 +215,7 @@ proc rtimage {rtimage_dict} {
 	#
 	catch {exec [file join $binpath pix-bw] $tgi > $tbw}
 	catch {exec [file join $binpath bwmod] -a 4 -d259 -r$_gamma -m255 $tbw > $tmod}
-	catch {exec [file join $binpath bw-pix] $tmod $tbwpix}
+	catch {exec [file join $binpath bw-pix] $tmod > $tbwpix}
 
 	set bgl "=[lindex $_bgcolor 0]/[lindex $_bgcolor 1]/[lindex $_bgcolor 2]"
 	catch {exec [file join $binpath pixmatte] -e $tfci $bgl $tbwpix $tfci > $tmi}
