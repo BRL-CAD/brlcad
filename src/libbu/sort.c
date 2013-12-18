@@ -133,7 +133,7 @@ bu_sort(void *array, size_t nummemb, size_t sizememb, int (*compare)(const void 
         }
         pm = med3(pl, pm, pn, compare, context);
     }
-    SWAP(array, pm);
+    SWAP((char *)array, pm);
     pa = pb = (char *)array + sizememb;
 
     pc = pd = (char *)array + (nummemb - 1) * sizememb;
@@ -172,7 +172,7 @@ bu_sort(void *array, size_t nummemb, size_t sizememb, int (*compare)(const void 
 
     pn = (char *)array + nummemb * sizememb;
     r = MIN(pa - (char *)array, pb - pa);
-    VECSWAP(array, pb - r, r);
+    VECSWAP((char *)array, pb - r, r);
     r = MIN(pd - pc, (signed) (pn - pd - sizememb));
     VECSWAP(pb, pn - r, r);
     if ((r = pb - pa) > sizememb)
