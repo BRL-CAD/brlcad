@@ -78,6 +78,7 @@ set(LIBBU_SOURCES
   realpath.c
   semaphore.c
   simd.c
+  sort.c
   sscanf.c
   str.c
   tcl.c
