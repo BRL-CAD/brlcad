@@ -122,7 +122,7 @@ loop:	SWAPINIT(array, sizememb);
     }
     pm = (char *)array + (nummemb / 2) * sizememb;
     if (nummemb > 7) {
-	pl = array;
+	pl = (char *)array;
 	pn = (char *)array + (nummemb - 1) * sizememb;
 	if (nummemb > 40) {
 	    d = (nummemb / 8) * sizememb;
