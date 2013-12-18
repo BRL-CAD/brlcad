@@ -4825,10 +4825,15 @@ BU_EXPORT extern void *bu_rb_search(struct bu_rb_tree *tree,
  *   void (*visit)(void)
  *
  * When used as a function the pointer should be cast back to one of its real
- * signatures:
+ * signatures depending on what it is operating on (node or data):
  *
- *   void (*visit)((bu_rb_node*, int)
- *   void (*visit)((bu_rb_node*, int)
+ *   node:
+ *
+ *     void (*visit)((struct bu_rb_node *, int)
+ *
+ *   data:
+ *
+ *     void (*visit)((void *, int)
  *
  * Use the macros below to ensure accurate casting.  See
  * libbu/rb_diag.c and libbu/rb_walk.c for examples of their use.
@@ -4844,13 +4849,6 @@ BU_EXPORT extern void bu_rb_walk(struct bu_rb_tree *tree, int order, void (*visi
 #define BU_RB_WALK_FUNC_NODE_DECL(_func) void (*_func)(struct bu_rb_node *, int)
 #define BU_RB_WALK_FUNC_DATA_DECL(_func) void (*_func)(void *, int)
 #define BU_RB_WALK_FUNC_FUNC_DECL(_func) void (*_func)(struct bu_rb_node *, int, void (*)(void), int)
-
-/**
- * This function has four parameters: the tree to traverse, the order
- * on which to do the walking, the function to apply to each node, and
- * the type of traversal (preorder, inorder, or postorder).
- */
-
 
 /** @} */
 /** @addtogroup thread */
