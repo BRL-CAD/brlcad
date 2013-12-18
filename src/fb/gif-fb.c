@@ -76,7 +76,7 @@
 #include "fb.h"
 
 
-#define USAGE "Usage: gif-fb [-F fb_file] [-c] [-i image#] [-o] [-v] [-z] [gif_file]"
+#define USAGE "Usage: gif-fb [-F fb_file] [-c] [-i image#] [-o] [-v] [-z] [gif_file]\n       (stdin used with '<' construct if gif_file not supplied)"
 #define OPTSTR "F:ci:ovzh?"
 
 typedef int bool_t;
