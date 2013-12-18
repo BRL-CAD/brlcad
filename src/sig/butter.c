@@ -36,7 +36,7 @@
 #include "vmath.h"
 #include "bn.h"
 
-void cdiv();
+#include "fft.h"
 
 /*
  * Returns the magnitude of the transfer function Hs(s) for a
