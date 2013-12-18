@@ -213,7 +213,7 @@ proc rtimage {rtimage_dict} {
 	#
 	# Convert to ghost image
 	#
-	catch {exec [file join $binpath pix-bw] $tgi > $tbw}
+	catch {exec [file join $binpath pix-bw] -e crt $tgi > $tbw}
 	catch {exec [file join $binpath bwmod] -a 4 -d259 -r$_gamma -m255 $tbw > $tmod}
 	catch {exec [file join $binpath bw-pix] $tmod > $tbwpix}
 
