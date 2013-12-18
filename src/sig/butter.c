@@ -67,7 +67,7 @@ butter(double w)
     denom.im = k2 * w - k4 * pow(w, 3.0)
 	+ k2 * pow(w, 5.0);
 
-    cdiv(&h, &num, &denom);
+    cdiv((COMPLEX *)(&h), (COMPLEX *)(&num), (COMPLEX *)(&denom));
 /* printf("(%f, %f)\n", h.re, h.im);*/
     return hypot(h.re, h.im);
 }
