@@ -97,7 +97,12 @@ struct GIF_Image Im;
 
 char *framebuffer=NULL;
 
-void usage(char **argv);
+void
+usage(char **argv)
+{
+    fprintf(stderr, "Usage: %s [-H] [-v] [-F frame_buffer] [gif_file]\n", argv[0]);
+}
+
 int getByte(FILE *inp);
 
 int
@@ -121,9 +126,9 @@ main(int argc, char **argv)
     FBIO *fbp;
     FILE *fp;
 
-    while ((code = bu_getopt(argc, argv, "vFh")) != -1) {
+    while ((code = bu_getopt(argc, argv, "HvFh?")) != -1) {
 	switch (code) {
-	    case 'h':
+	    case 'H':
 		headers=1;
 		break;
 	    case 'v':
@@ -492,12 +497,6 @@ int getByte(FILE *inp)
     }
     return code;
 }
-void
-usage(char **argv)
-{
-    fprintf(stderr, "%s [-h] [-v] [-F frame_buffer] [gif_file]\n", argv[0]);
-}
-
 
 /*
  * Local Variables:
