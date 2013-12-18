@@ -136,7 +136,7 @@
 #endif
 
 #if !defined(_WIN32) || defined(__CYGWIN__)
-extern int errno;
+#include <errno.h>
 #endif
 
 int pkg_nochecking = 0;	/* set to disable extra checking for input */
