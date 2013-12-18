@@ -33,15 +33,15 @@
 #include "vmath.h"
 #include "bn.h"
 
+
 static int _init_length = 0;	/* Internal: last initialized size */
 static int maxinitlen = 0;
 static double *coswintab = NULL;
 
+
 /*
- * I N I T _ C O S W I N T A B
- *
- * Internal routine to initialize the cosine window table for
- * a given effect length (number of sample at each end effected).
+ * Internal routine to initialize the cosine window table for a given
+ * effect length (number of sample at each end effected).
  */
 int
 init_coswintab(int size)

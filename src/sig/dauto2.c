@@ -32,16 +32,18 @@
 
 #include "bu.h"
 
-#define BSIZE 2048		/* Must be AT LEAST 2*Points in spectrum */
-double data[BSIZE];		/* Input buffer */
-int clip[BSIZE];		/* clipped buffer */
-int out[BSIZE];
-double r[BSIZE];
 
-static const char usage[] = "Usage: dauto2 [window_size (512)] < doubles >outputfile\n";
-
-int main(int argc, char **argv)
+int
+main(int argc, char *argv[])
 {
+    static const char usage[] = "Usage: dauto2 [window_size (512)] < doubles >outputfile\n";
+
+#define BSIZE 2048		/* Must be AT LEAST 2*Points in spectrum */
+    double data[BSIZE];		/* Input buffer */
+    int clip[BSIZE];		/* clipped buffer */
+    int out[BSIZE];
+    double r[BSIZE];
+
     int i, j, n, L;
     int *dp1, *dp2;
     double max1, max2, m, m2;

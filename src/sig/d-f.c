@@ -39,12 +39,12 @@
 #include "vmath.h"
 
 
-double ibuf[512] = { 0.0 };
-float obuf[512] = { 0.0f};
-
-
-int main(int argc, char **argv)
+int
+main(int argc, char *argv[])
 {
+    double ibuf[512] = { 0.0 };
+    float obuf[512] = { 0.0f};
+
     int i, num;
     double scale = 1.0;
     size_t ret;

@@ -35,14 +35,16 @@
 #include "bu.h"
 
 
-#define BSIZE 2048		/* Must be AT LEAST 2*Points in spectrum */
-double data[BSIZE];		/* Input buffer */
-double r[BSIZE];
 
-static const char usage[] = "Usage: damdf [window_size (512)] < doubles >outputfile\n";
-
-int main(int argc, char **argv)
+int
+main(int argc, char *argv[])
 {
+    static const char usage[] = "Usage: damdf [window_size (512)] < doubles >outputfile\n";
+
+#define BSIZE 2048		/* Must be AT LEAST 2*Points in spectrum */
+    double data[BSIZE];		/* Input buffer */
+    double r[BSIZE];
+
     int i, j, n, L;
     double *dp1, *dp2;
     double d;

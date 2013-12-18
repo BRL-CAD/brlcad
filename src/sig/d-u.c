@@ -38,12 +38,12 @@
 #include "vmath.h"
 
 
-double ibuf[512];
-unsigned short obuf[512];
-
-
-int main(int argc, char **argv)
+int
+main(int argc, char *argv[])
 {
+    double ibuf[512];
+    unsigned short obuf[512];
+
     int i, num;
     double scale = 1.0;
     double value;

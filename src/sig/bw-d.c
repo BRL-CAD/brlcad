@@ -36,17 +36,20 @@
 #include "bu.h"
 #include "vmath.h"
 
-unsigned char ibuf[512];
-double obuf[512];
 
-void
+static void
 printusage(void)
 {
     bu_exit(1, "Usage: bw-d [-n || scale] < unsigned_chars > doubles\n");
 }
 
-int main(int argc, char **argv)
+
+int
+main(int argc, char **argv)
 {
+    unsigned char ibuf[512];
+    double obuf[512];
+
     int i, num;
     double scale = 1.0;
     size_t ret;

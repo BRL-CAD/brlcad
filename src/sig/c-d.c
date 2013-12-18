@@ -31,21 +31,21 @@
 #include "vmath.h"
 
 
-static const char usage[] = "Usage: c-d -r -i -m -p -z < complex_data > doubles\n";
-
-int rflag = 0;
-int iflag = 0;
-int mflag = 0;
-int pflag = 0;
-int zflag = 0;
-
-double ibuf[512];
-double obuf[512];
-double *obp;
-
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
+    static const char usage[] = "Usage: c-d -r -i -m -p -z < complex_data > doubles\n";
+
+    int rflag = 0;
+    int iflag = 0;
+    int mflag = 0;
+    int pflag = 0;
+    int zflag = 0;
+
+    double ibuf[512];
+    double obuf[512];
+    double *obp;
+
     int i, num, onum;
     size_t ret;
 

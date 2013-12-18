@@ -42,12 +42,6 @@
 
 #include "fft.h"
 
-#define MAXM 4096
-
-double savebuffer[MAXM];
-double xbuf[2 * (MAXM + 1)];
-double ibuf[2 * (MAXM + 1)];		/* impulse response */
-
 
 /*
  * Multiply two "real valued" spectra of length n
@@ -55,7 +49,7 @@ double ibuf[2 * (MAXM + 1)];		/* impulse response */
  * The order is: [Re(0), Re(1)...Re(N/2), Im(N/2-1), ..., Im(1)]
  * so for: 0 < i < n/2, (x[i], x[n-i]) is a complex pair.
  */
-void
+static void
 mult(double *o, double *b, int n)
 {
     int i;
@@ -73,8 +67,15 @@ mult(double *o, double *b, int n)
 }
 
 
-int main(int argc, char **argv)
+int
+main(int argc, char *argv[])
 {
+
+#define MAXM 4096
+    double savebuffer[MAXM];
+    double xbuf[2 * (MAXM + 1)];
+    double ibuf[2 * (MAXM + 1)];		/* impulse response */
+
     int i;
     int M = 128;	/* kernel size */
     int N, L;

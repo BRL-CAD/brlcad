@@ -34,7 +34,7 @@
 #include "bu.h"
 
 
-void
+static void
 open_file(FILE **fp, char *name)
 {
     /* check for special names */
