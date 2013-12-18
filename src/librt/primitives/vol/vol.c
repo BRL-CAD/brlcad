@@ -146,19 +146,19 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
     /* Compute the inverse of the direction cosines */
     if (!ZERO(rp->r_dir[X])) {
-	invdir[X]=1.0/rp->r_dir[X];
+	invdir[X] = 1.0/rp->r_dir[X];
     } else {
 	invdir[X] = INFINITY;
 	rp->r_dir[X] = 0.0;
     }
     if (!ZERO(rp->r_dir[Y])) {
-	invdir[Y]=1.0/rp->r_dir[Y];
+	invdir[Y] = 1.0/rp->r_dir[Y];
     } else {
 	invdir[Y] = INFINITY;
 	rp->r_dir[Y] = 0.0;
     }
     if (!ZERO(rp->r_dir[Z])) {
-	invdir[Z]=1.0/rp->r_dir[Z];
+	invdir[Z] = 1.0/rp->r_dir[Z];
     } else {
 	invdir[Z] = INFINITY;
 	rp->r_dir[Z] = 0.0;
@@ -478,8 +478,8 @@ rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
 
     /* Because of in-memory padding, read each scanline separately */
-    for (z=0; z < vip->zdim; z++) {
-	for (y=0; y < vip->ydim; y++) {
+    for (z = 0; z < vip->zdim; z++) {
+	for (y = 0; y < vip->ydim; y++) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
 	    ret = fread(&VOL(vip, 0, y, z), vip->xdim, 1, fp); /* res_syscall */
 	    bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
@@ -616,8 +616,8 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
 
     /* Because of in-memory padding, read each scanline separately */
-    for (z=0; z < vip->zdim; z++) {
-	for (y=0; y < vip->ydim; y++) {
+    for (z = 0; z < vip->zdim; z++) {
+	for (y = 0; y < vip->ydim; y++) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
 	    ret = fread(&VOL(vip, 0, y, z), vip->xdim, 1, fp); /* res_syscall */
 	    bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
@@ -705,7 +705,7 @@ rt_vol_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 		  vip->xdim, vip->ydim, vip->zdim, vip->lo, vip->hi,
 		  V3INTCLAMPARGS(local));
     bu_vls_vlscat(str, &substr);
-    for (i=0; i<15; i++) {
+    for (i = 0; i < 15; i++) {
 	bu_vls_trunc2(&substr, 0);
 	bu_vls_printf(&substr, "%g, ", INTCLAMP(vip->mat[i]));
 	bu_vls_vlscat(str, &substr);
@@ -1114,9 +1114,9 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     r_tmp = nmg_mrsv(m_tmp);
     s = BU_LIST_FIRST(shell, &r_tmp->s_hd);
 
-    for (x=0; x<vip->xdim; x++) {
-	for (y=0; y<vip->ydim; y++) {
-	    for (z=0; z<vip->zdim; z++) {
+    for (x = 0; x < vip->xdim; x++) {
+	for (y = 0; y < vip->ydim; y++) {
+	    for (z = 0; z < vip->zdim; z++) {
 		point_t pt, pt1;
 
 		/* skip empty cells */
@@ -1127,7 +1127,7 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 		/* check z+1 */
 		if (!OK(vip, VOL(vip, x, y, z+1))) {
-		    for (i=0; i<4; i++)
+		    for (i = 0; i < 4; i++)
 			verts[i] = (struct vertex *)NULL;
 
 		    fu = nmg_cface(s, verts, 4);
@@ -1155,7 +1155,7 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 		/* check z-1 */
 		if (!OK(vip, VOL(vip, x, y, z-1))) {
-		    for (i=0; i<4; i++)
+		    for (i = 0; i < 4; i++)
 			verts[i] = (struct vertex *)NULL;
 
 		    fu = nmg_cface(s, verts, 4);
@@ -1183,7 +1183,7 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 		/* check y+1 */
 		if (!OK(vip, VOL(vip, x, y+1, z))) {
-		    for (i=0; i<4; i++)
+		    for (i = 0; i < 4; i++)
 			verts[i] = (struct vertex *)NULL;
 
 		    fu = nmg_cface(s, verts, 4);
@@ -1211,7 +1211,7 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 		/* check y-1 */
 		if (!OK(vip, VOL(vip, x, y-1, z))) {
-		    for (i=0; i<4; i++)
+		    for (i = 0; i < 4; i++)
 			verts[i] = (struct vertex *)NULL;
 
 		    fu = nmg_cface(s, verts, 4);
@@ -1239,7 +1239,7 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 		/* check x+1 */
 		if (!OK(vip, VOL(vip, x+1, y, z))) {
-		    for (i=0; i<4; i++)
+		    for (i = 0; i < 4; i++)
 			verts[i] = (struct vertex *)NULL;
 
 		    fu = nmg_cface(s, verts, 4);
@@ -1267,7 +1267,7 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 		/* check x-1 */
 		if (!OK(vip, VOL(vip, x-1, y, z))) {
-		    for (i=0; i<4; i++)
+		    for (i = 0; i < 4; i++)
 			verts[i] = (struct vertex *)NULL;
 
 		    fu = nmg_cface(s, verts, 4);
@@ -1359,11 +1359,11 @@ rt_vol_centroid(point_t *cent, const struct rt_db_internal *ip)
     vip = (struct rt_vol_internal *)ip->idb_ptr;
     RT_VOL_CK_MAGIC(vip);
 
-    cnt=0;
+    cnt = 0;
 
-    for (x=0; x<vip->xdim; x++) {
-	for (y=0; y<vip->ydim; y++) {
-	    for (z=0; z<vip->zdim; z++) {
+    for (x = 0; x < vip->xdim; x++) {
+	for (y = 0; y < vip->ydim; y++) {
+	    for (z = 0; z < vip->zdim; z++) {
 		if (OK(vip, VOL(vip, x, y, z))) {
 		    x_tot += (x+.5) * (vip->cellsize[X]);
 		    y_tot += (y+.5) * (vip->cellsize[Y]);
