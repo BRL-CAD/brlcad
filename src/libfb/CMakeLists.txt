@@ -82,7 +82,6 @@ endif(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
 set(libfb_ignore_files
   dmdfb.h
   if_TEMPLATE.c
-  nilcursor.h
   oglcursor.h
   if_X.c
   if_X24.c
