@@ -26,7 +26,6 @@
  *		-s	square size
  *		-n	number of lines
  *		-w	width
- *		-h	same as -s 1024
  *		-a	Automatic bw file sizing.
  *		-B	Beta for sharpening
  *		-I	number of intensity levels
@@ -98,7 +97,7 @@ int tone_simple(int pix, int x, int y, int nx, int ny, int newrow);
 int tone_classic(int pix, int x, int y, int nx, int ny, int newrow);
 
 static const char usage[] = "\
-Usage: halftone [ -h -R -S -a] [-D Debug Level]\n\
+Usage: halftone [-R -S -a] [-D Debug Level]\n\
 	[-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[-B contrast] [-I intensity_levels] [-T x y ... tone_curve]\n\
 	[-M Method] [file.bw]\n\
@@ -138,7 +137,7 @@ setup(int argc, char **argv)
     int *Xlist, *Ylist;
     int	autosize = 0;
 
-    while ((c = bu_getopt(argc, argv, "D:hsa:n:w:B:M:RSI:T:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "D:s:a:n:w:B:M:RSI:T:h?")) != -1) {
 	switch (c) {
 	    case 's':
 		width = height = atol(bu_optarg);
@@ -148,9 +147,6 @@ setup(int argc, char **argv)
 		break;
 	    case 'w':
 		width = atol(bu_optarg);
-		break;
-	    case 'h':
-		width = height = 1024;
 		break;
 	    case 'a':
 		autosize = 1;
@@ -210,9 +206,8 @@ setup(int argc, char **argv)
 	    case 'D':
 		Debug = atoi(bu_optarg);
 		break;
-	    case '?':
+	    default:
 		bu_exit(1, usage);
-		break;
 	}
     }
 /*
