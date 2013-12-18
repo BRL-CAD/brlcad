@@ -33,10 +33,9 @@
 #include <stdio.h>
 #include <math.h>
 #include "bu.h"
-#include "vmath.h"
-#include "bn.h"
 
 #include "fft.h"
+
 
 /*
  * Returns the magnitude of the transfer function Hs(s) for a
@@ -47,7 +46,7 @@ double
 butter(double w)
 /* relative frequency (1.0 = center freq) */
 {
-    bn_complex_t denom, num, h;
+    COMPLEX denom, num, h;
     double gammaval, k1, k2, k3, k4;
 
     /* 1/3 octave gammaval */
@@ -67,8 +66,10 @@ butter(double w)
     denom.im = k2 * w - k4 * pow(w, 3.0)
 	+ k2 * pow(w, 5.0);
 
-    cdiv((COMPLEX *)(&h), (COMPLEX *)(&num), (COMPLEX *)(&denom));
-/* printf("(%f, %f)\n", h.re, h.im);*/
+    cdiv(&h, &num, &denom);
+
+    /* printf("(%f, %f)\n", h.re, h.im);*/
+
     return hypot(h.re, h.im);
 }
 
