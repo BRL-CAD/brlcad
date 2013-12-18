@@ -55,16 +55,17 @@
 /*
  * Qsort routine from Bentley & McIlroy's "Engineering a Sort Function".
  */
-#define SWAPCODE(TYPE, parmi, parmj, n) { 	\
-    long i = (n) / sizeof (TYPE); 		\
-    TYPE *pi = (TYPE *) (parmi); 		\
-    TYPE *pj = (TYPE *) (parmj); 		\
-    do { 					\
-	TYPE	t = *pi;			\
-	*pi++ = *pj;				\
-	*pj++ = t;				\
-    } while (--i > 0);				\
-}
+#define SWAPCODE(TYPE, parmi, parmj, n)     \
+    {                                       \
+        long i = (n) / sizeof (TYPE); 		\
+        TYPE *pi = (TYPE *) (parmi); 		\
+        TYPE *pj = (TYPE *) (parmj); 		\
+        do {                                \
+            TYPE	t = *pi;                \
+            *pi++ = *pj;                    \
+            *pj++ = t;                      \
+        } while (--i > 0);                  \
+    }
 
 #define SWAPINIT(a, es) swaptype = ((char *)a - (char *)0) % sizeof(long) || \
     es % sizeof(long) ? 2 : es == sizeof(long)? 0 : 1;
@@ -73,20 +74,20 @@
 static void
 swapfunc(char *a, char *b, int n, int swaptype)
 {
-    if(swaptype <= 1)
-	SWAPCODE(long, a, b, n)
+    if (swaptype <= 1)
+        SWAPCODE(long, a, b, n)
     else
-	SWAPCODE(char, a, b, n)
+        SWAPCODE(char, a, b, n)
 }
 
 
 #define SWAP(a, b)				\
     if (swaptype == 0) {			\
-	long t = *(long *)(a);			\
-	*(long *)(a) = *(long *)(b);		\
-	*(long *)(b) = t;			\
-    } else					\
-	swapfunc(a, b, sizememb, swaptype)
+        long t = *(long *)(a);			\
+        *(long *)(a) = *(long *)(b);    \
+        *(long *)(b) = t;               \
+    } else 					\
+        swapfunc(a, b, sizememb, swaptype)
 
 #define VECSWAP(a, b, n) if ((n) > 0) swapfunc(a, b, n, swaptype)
 
@@ -110,63 +111,63 @@ bu_sort(void *array, size_t nummemb, size_t sizememb, int (*compare)(const void 
     int cmp_result;
     int swaptype, swap_cnt;
 
-loop:	SWAPINIT(array, sizememb);
+  loop:	SWAPINIT(array, sizememb);
     swap_cnt = 0;
     if (nummemb < 7) {
-	for (pm = (char *)array + sizememb; pm < (char *)array + nummemb * sizememb; pm += sizememb)
-	    for (pl = pm;
-	         pl > (char *)array && CMP(pl - sizememb, pl, context) > 0;
-	         pl -= sizememb)
-		SWAP(pl, pl - sizememb);
-	return;
+        for (pm = (char *)array + sizememb; pm < (char *)array + nummemb * sizememb; pm += sizememb)
+            for (pl = pm;
+                 pl > (char *)array && CMP(pl - sizememb, pl, context) > 0;
+                 pl -= sizememb)
+                SWAP(pl, pl - sizememb);
+        return;
     }
     pm = (char *)array + (nummemb / 2) * sizememb;
     if (nummemb > 7) {
-	pl = (char *)array;
-	pn = (char *)array + (nummemb - 1) * sizememb;
-	if (nummemb > 40) {
-	    d = (nummemb / 8) * sizememb;
-	    pl = med3(pl, pl + d, pl + 2 * d, compare, context);
-	    pm = med3(pm - d, pm, pm + d, compare, context);
-	    pn = med3(pn - 2 * d, pn - d, pn, compare, context);
-	}
-	pm = med3(pl, pm, pn, compare, context);
+        pl = (char *)array;
+        pn = (char *)array + (nummemb - 1) * sizememb;
+        if (nummemb > 40) {
+            d = (nummemb / 8) * sizememb;
+            pl = med3(pl, pl + d, pl + 2 * d, compare, context);
+            pm = med3(pm - d, pm, pm + d, compare, context);
+            pn = med3(pn - 2 * d, pn - d, pn, compare, context);
+        }
+        pm = med3(pl, pm, pn, compare, context);
     }
     SWAP(array, pm);
     pa = pb = (char *)array + sizememb;
 
     pc = pd = (char *)array + (nummemb - 1) * sizememb;
     for (;;) {
-	while (pb <= pc && (cmp_result = CMP(pb, array, context)) <= 0) {
-	    if (cmp_result == 0) {
-		swap_cnt = 1;
-		SWAP(pa, pb);
-		pa += sizememb;
-	    }
-	    pb += sizememb;
-	}
-	while (pb <= pc && (cmp_result = CMP(pc, array, context)) >= 0) {
-	    if (cmp_result == 0) {
-		swap_cnt = 1;
-		SWAP(pc, pd);
-		pd -= sizememb;
-	    }
-	    pc -= sizememb;
-	}
-	if (pb > pc)
-		break;
-	SWAP(pb, pc);
-	swap_cnt = 1;
-	pb += sizememb;
-	pc -= sizememb;
+        while (pb <= pc && (cmp_result = CMP(pb, array, context)) <= 0) {
+            if (cmp_result == 0) {
+                swap_cnt = 1;
+                SWAP(pa, pb);
+                pa += sizememb;
+            }
+            pb += sizememb;
+        }
+        while (pb <= pc && (cmp_result = CMP(pc, array, context)) >= 0) {
+            if (cmp_result == 0) {
+                swap_cnt = 1;
+                SWAP(pc, pd);
+                pd -= sizememb;
+            }
+            pc -= sizememb;
+        }
+        if (pb > pc)
+            break;
+        SWAP(pb, pc);
+        swap_cnt = 1;
+        pb += sizememb;
+        pc -= sizememb;
     }
     if (swap_cnt == 0) {  /* Switch to insertion sort */
-	for (pm = (char *)array + sizememb; pm < (char *)array + nummemb * sizememb; pm += sizememb)
-	    for (pl = pm;
-		 pl > (char *)array && CMP(pl - sizememb, pl, context) > 0;
-		 pl -= sizememb)
-		SWAP(pl, pl - sizememb);
-	return;
+        for (pm = (char *)array + sizememb; pm < (char *)array + nummemb * sizememb; pm += sizememb)
+            for (pl = pm;
+                 pl > (char *)array && CMP(pl - sizememb, pl, context) > 0;
+                 pl -= sizememb)
+                SWAP(pl, pl - sizememb);
+        return;
     }
 
     pn = (char *)array + nummemb * sizememb;
@@ -175,11 +176,11 @@ loop:	SWAPINIT(array, sizememb);
     r = MIN(pd - pc, (signed) (pn - pd - sizememb));
     VECSWAP(pb, pn - r, r);
     if ((r = pb - pa) > sizememb)
-	bu_sort(array, r / sizememb, sizememb, compare, context);
+        bu_sort(array, r / sizememb, sizememb, compare, context);
     if ((r = pd - pc) > sizememb) {
-	/* Iterate rather than recurse to save stack space */
-	array = pn - r;
-	nummemb = r / sizememb;
-	goto loop;
+        /* Iterate rather than recurse to save stack space */
+        array = pn - r;
+        nummemb = r / sizememb;
+        goto loop;
     }
 }
