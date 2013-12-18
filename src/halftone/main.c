@@ -84,7 +84,7 @@ double Beta=0.0;	/* Beta for sharpening */
 int Method=M_FLOYD;	/* Method of halftoning */
 
 int Surpent=0;		/* use serpentine scan lines */
-int Levels=1;		/* Number of levels-1 */
+int Levels=1;		/* Number of levels */
 int Debug=0;
 struct bn_unif *RandomFlag=0;	/* Use random numbers ? */
 
@@ -137,7 +137,7 @@ setup(int argc, char **argv)
     int *Xlist, *Ylist;
     int	autosize = 0;
 
-    while ((c = bu_getopt(argc, argv, "D:s:a:n:w:B:M:RSI:T:h?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "D:s:an:w:B:M:RSI:T:h?")) != -1) {
 	switch (c) {
 	    case 's':
 		width = height = atol(bu_optarg);
