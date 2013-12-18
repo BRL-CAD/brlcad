@@ -1358,7 +1358,7 @@ rt_vol_centroid(point_t *cent, const struct rt_db_internal *ip)
     RT_CK_DB_INTERNAL(ip);
     vip = (struct rt_vol_internal *)ip->idb_ptr;
     RT_VOL_CK_MAGIC(vip);
-    
+
     cnt=0;
 
     for (x=0; x<vip->xdim; x++) {
@@ -1373,11 +1373,11 @@ rt_vol_centroid(point_t *cent, const struct rt_db_internal *ip)
 	    }
 	}
     }
-    
+
     p[X]=x_tot/cnt;
     p[Y]=y_tot/cnt;
     p[Z]=z_tot/cnt;
-	
+
     MAT4X3PNT(*cent, vip->mat, p);
 }
 
