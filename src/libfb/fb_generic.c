@@ -1,4 +1,4 @@
-/*                    F B _ G E N E R I C . C
+/*                    F B _ `gG E N E R I C . C
  * BRL-CAD
  *
  * Copyright (c) 1986-2013 United States Government as represented by
@@ -507,7 +507,7 @@ fb_write_fp(FBIO *ifp, FILE *fp, int req_width, int req_height, int crunch, int 
 static int
 fb_skip_bytes(int fd, off_t num, int fileinput, int scanbytes, unsigned char *scanline)
 {
-    int n, try;
+    int n, tries;
 
     if (fileinput) {
 	(void)lseek(fd, num, 1);
@@ -515,8 +515,8 @@ fb_skip_bytes(int fd, off_t num, int fileinput, int scanbytes, unsigned char *sc
     }
 
     while (num > 0) {
-	try = num > scanbytes ? scanbytes : num;
-	n = read(fd, scanline, try);
+	tries = num > scanbytes ? scanbytes : num;
+	n = read(fd, scanline, tries);
 	if (n <= 0) {
 	    return -1;
 	}
