@@ -37,7 +37,7 @@ endif(BRLCAD_EXTRADOCS_PDF_MAN)
 add_dependencies(attributes_man5_html attr_std_list_xml attr_std_table_xml)
 add_dependencies(attributes_man5_man attr_std_list_xml attr_std_table_xml)
 if(BRLCAD_EXTRADOCS_PDF_MAN)
-  add_dependencies(attributes_man5_fo attr_std_list_xml attr_std_table_xml)
+  add_dependencies(attributes_man5_pdf attr_std_list_xml attr_std_table_xml)
 endif(BRLCAD_EXTRADOCS_PDF_MAN)
 
 # Local Variables:
