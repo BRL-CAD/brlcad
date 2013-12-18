@@ -335,7 +335,7 @@ init_buffer(int len)
 	buflines = iny;
 
     buf_start = (-buflines);
-    buffer = bu_malloc(buflines * len, "buffer");
+    buffer = (unsigned char *)bu_malloc(buflines * len, "buffer");
 }
 
 
@@ -429,7 +429,7 @@ main(int argc, char **argv)
     if (inx < outx) i = outx * 3;
     else i = inx * 3;
 
-    outbuf = bu_malloc(i, "outbuf");
+    outbuf = (unsigned char *)bu_malloc(i, "outbuf");
 
     /* Here we go */
     scale(stdout, inx, iny, outx, outy);

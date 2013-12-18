@@ -55,10 +55,10 @@ bn_multipoly_new(int dgrs, int dgrt)
     int    i, s, t;
 
     BU_ALLOC(newmp, struct bn_multipoly);
-    newmp->cf = bu_malloc(dgrs * sizeof(double *), FAILSTR);
+    newmp->cf = (double **)bu_malloc(dgrs * sizeof(double *), FAILSTR);
 
     for (i = 0; i < dgrs; i++) {
-	newmp->cf[i] = bu_malloc(dgrt * sizeof(double), FAILSTR);
+	newmp->cf[i] = (double *)bu_malloc(dgrt * sizeof(double), FAILSTR);
     }
 
     newmp->dgrs = dgrs;
@@ -81,9 +81,9 @@ bn_multipoly_grow(register struct bn_multipoly *P, int dgrs, int dgrt)
 {
     int i, j;
     if (dgrs > P->dgrs) {
-	P->cf = bu_realloc(P->cf, dgrs * sizeof(double *), FAILSTR);
+	P->cf = (double **)bu_realloc(P->cf, dgrs * sizeof(double *), FAILSTR);
 	for (i = P->dgrs; i < dgrs; i++) {
-	    P->cf[i] = bu_malloc(Max(P->dgrt, dgrt) * sizeof(double), FAILSTR);
+	    P->cf[i] = (double *)bu_malloc(Max(P->dgrt, dgrt) * sizeof(double), FAILSTR);
 	    for (j = 0; j < Max(P->dgrt, dgrt); j++) {
 		P->cf[i][j] = 0;
 	    }
@@ -91,7 +91,7 @@ bn_multipoly_grow(register struct bn_multipoly *P, int dgrs, int dgrt)
     }
     if (dgrt > P->dgrt) {
 	for (i = 0; i < P->dgrt; i++) {
-	    P->cf[i] = bu_realloc(P->cf, dgrt * sizeof(double *), FAILSTR);
+	    P->cf[i] = (double *)bu_realloc(P->cf, dgrt * sizeof(double *), FAILSTR);
 	    for (j = P->dgrt; j < dgrt; j++) {
 		P->cf[i][j] = 0;
 	    }
