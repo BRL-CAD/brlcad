@@ -121,9 +121,9 @@ func_fbm(unsigned short *buf)
     if (debug) bu_log("fbm\n");
 
     pt[Z] = 0.0;
-    for (y=0; y < ydim; y++) {
+    for (y = 0; y < ydim; y++) {
 	pt[Y] = y;
-	for (x=0; x < xdim; x++) {
+	for (x = 0; x < xdim; x++) {
 	    pt[X] = x;
 
 	    xform(t, pt);
@@ -154,9 +154,9 @@ func_turb(unsigned short *buf)
     if (debug) bu_log("turb\n");
 
     pt[Z] = 0.0;
-    for (y=0; y < ydim; y++) {
+    for (y = 0; y < ydim; y++) {
 	pt[Y] = y;
-	for (x=0; x < xdim; x++) {
+	for (x = 0; x < xdim; x++) {
 	    pt[X] = x;
 
 	    xform(t, pt);
@@ -190,9 +190,9 @@ func_turb_up(unsigned short *buf)
     if (debug) bu_log("1.0 - turb\n");
 
     pt[Z] = 0.0;
-    for (y=0; y < ydim; y++) {
+    for (y = 0; y < ydim; y++) {
 	pt[Y] = y;
-	for (x=0; x < xdim; x++) {
+	for (x = 0; x < xdim; x++) {
 	    pt[X] = x;
 
 	    xform(t, pt);
@@ -231,9 +231,9 @@ func_multi(unsigned short *buf)
     max_V =  -10.0;
 
     pt[Z] = 0.0;
-    for (y=0; y < ydim; y++) {
+    for (y = 0; y < ydim; y++) {
 	pt[Y] = y;
-	for (x=0; x < xdim; x++) {
+	for (x = 0; x < xdim; x++) {
 	    pt[X] = x;
 
 	    xform(t, pt);
@@ -278,9 +278,9 @@ func_ridged(unsigned short *buf)
     hi = -10.0;
 
     pt[Z] = 0.0;
-    for (y=0; y < ydim; y++) {
+    for (y = 0; y < ydim; y++) {
 	pt[Y] = y;
-	for (x=0; x < xdim; x++) {
+	for (x = 0; x < xdim; x++) {
 	    pt[X] = x;
 
 	    xform(t, pt);
@@ -490,9 +490,9 @@ func_lee(unsigned short *buf)
     hi = -10.0;
 
     pt[Z] = 0.0;
-    for (y=0; y < ydim; y++) {
+    for (y = 0; y < ydim; y++) {
 	pt[Y] = y;
-	for (x=0; x < xdim; x++) {
+	for (x = 0; x < xdim; x++) {
 	    pt[X] = x;
 
 	    xform(t, pt);
@@ -533,9 +533,9 @@ func_lunar(unsigned short *buf)
     hi = -10.0;
 
     pt[Z] = 0.0;
-    for (y=0; y < ydim; y++) {
+    for (y = 0; y < ydim; y++) {
 	pt[Y] = y;
-	for (x=0; x < xdim; x++) {
+	for (x = 0; x < xdim; x++) {
 	    pt[X] = x;
 
 	    xform(t, pt);
