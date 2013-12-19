@@ -34,6 +34,15 @@
 #include "bu.h"
 
 
+/* external functions */
+void hamwin(double *data, int length); /* in hamwin.c */
+void coswin(double *data, int length, double percent); /* in coswin.c */
+
+
+#define START_IN_BUFFER (xform_start < buf_start+buf_num)
+#define END_NOT_IN_BUFFER (xform_end >= buf_start+buf_num)
+
+
 /*
  * Buffering stuff
  */
@@ -46,42 +55,115 @@ int buf_start = 0;		/* sample number in buf[0] */
 int buf_num = 0;		/* number of samples currently in buffer */
 int buf_index = 0;		/* buffer offset for current window */
 
-int xform_start = 0;	/* current window start/end */
-int xform_end = 0;
 
-#define START_IN_BUFFER (xform_start < buf_start+buf_num)
-#define END_NOT_IN_BUFFER (xform_end >= buf_start+buf_num)
-
-int window = 0;
-int hamming = 0;
-int bias = 0;
-int bartlett = 0;
-static int endwin = 0;
-int midwin = 0;
-
-void fill_buffer(void);
-void seek_sample(int n);
-void biaswin(double *data, int L);
-void bartwin(double *data, int L);
-void hamwin(double *data, int length);
-void coswin(double *data, int length, double percent);
-
-static const char usage[] =
-  "Usage: dwin [options] [width (1024)] [step (width)] [start] <inputfile >outputfile\n"
-  "\n"
-  "Options:\n"
-  "  -w  apply window (80% split Cosine)\n"
-  "  -H  apply Hamming window\n"
-  "  -b  apply Bartlett window (triangle)\n"
-  "  -B  apply bias window (half triangle)\n"
-  "  -e  start first sample at end of buffer\n"
-  "  -m  start first sample at middle of buffer\n"
-  ;
-
-int main(int argc, char **argv)
+/*
+ * Move input pointer to sample n.
+ * Since we may be reading from a pipe, we actually
+ * read and discard the samples.
+ * Can only seek forward.
+ */
+static void
+seek_sample(int n)
 {
+    double foo;
+    size_t ret;
+
+    fprintf(stderr, "seeking sample %d\n", n);
+    while (input_sample < n) {
+	ret = fread(&foo, sizeof(foo), 1, stdin);
+	if (ret != 1)
+	    perror("fread");
+	input_sample++;
+    }
+}
+
+
+/*
+ * Fill the data buffer from the current input location.
+ */
+static void
+fill_buffer(void)
+{
+    int n, num_to_read;
+
+    num_to_read = BSIZE - buf_num;
+
+#ifdef DEBUG
+    fprintf(stderr, "fillbuffer: buf_start = %d, buf_num = %d, numtoread = %d, buf_index = %d\n",
+	    buf_start, buf_num, num_to_read, buf_index);
+#endif /* DEBUG */
+    n = fread(&buf[buf_num], sizeof(*buf), num_to_read, stdin);
+    if (n == 0) {
+	/*fprintf(stderr, "EOF\n");*/
+	memset((char *)&buf[buf_num], 0, sizeof(*buf)*num_to_read);
+	return;
+    }
+    input_sample += n;
+    buf_num += n;
+    if (n < num_to_read) {
+	memset((char *)&buf[buf_num], 0, sizeof(*buf)*(num_to_read-n));
+	clearerr(stdin);	/* XXX HACK */
+    }
+
+#ifdef DEBUG
+    fprintf(stderr, "filled buffer now has %d samples, [%d (%d)].  Input at %d\n", buf_num, buf_start, buf_start+buf_num-1, input_sample);
+#endif /* DEBUG */
+}
+
+
+/* Bias window (half triangle) */
+static void
+biaswin(double *data, int L)
+{
+    int i;
+
+    for (i = 0; i < L; i++) {
+	data[i] *= (double)(L-i)/(double)L;
+    }
+}
+
+
+/* Bartlett window (triangle) */
+static void
+bartwin(double *data, int L)
+{
+    int i;
+
+    for (i = 0; i < L/2; i++) {
+	data[i] *= (double)i/(L/2.0);
+    }
+    for (i = L/2; i < L; i++) {
+	data[i] *= (double)(L-i)/(L/2.0);
+    }
+}
+
+
+int
+main(int argc, char *argv[])
+{
+    static const char usage[] =
+	"Usage: dwin [options] [width (1024)] [step (width)] [start] <inputfile >outputfile\n"
+	"\n"
+	"Options:\n"
+	"  -w  apply window (80% split Cosine)\n"
+	"  -H  apply Hamming window\n"
+	"  -b  apply Bartlett window (triangle)\n"
+	"  -B  apply bias window (half triangle)\n"
+	"  -e  start first sample at end of buffer\n"
+	"  -m  start first sample at middle of buffer\n"
+	;
+
     int L, step;
     size_t ret;
+    int endwin = 0;
+    int xform_start = 0;	/* current window start/end */
+    int xform_end = 0;
+    int window = 0;
+
+    int hamming = 0;
+    int bias = 0;
+    int bartlett = 0;
+    int midwin = 0;
 
     if (isatty(fileno(stdin)) || isatty(fileno(stdout)))
 	bu_exit(1, "%s", usage);
@@ -103,8 +185,8 @@ int main(int argc, char **argv)
 	} else if (BU_STR_EQUAL(argv[1], "-m")) {
 	    midwin++;
 	} else {
-	    if ( ! BU_STR_EQUAL(argv[1], "-h") && ! BU_STR_EQUAL(argv[1], "-?") )
-		fprintf(stderr,"dwin: illegal option %s\n",argv[1]);
+	    if (! BU_STR_EQUAL(argv[1], "-h") && ! BU_STR_EQUAL(argv[1], "-?"))
+		fprintf(stderr, "dwin: illegal option %s\n", argv[1]);
 	    bu_exit(1, "%s", usage);
 	}
 	argc--;
@@ -195,88 +277,6 @@ int main(int argc, char **argv)
     }
 
     return 0;
-}
-
-
-/*
- * Move input pointer to sample n.
- * Since we may be reading from a pipe, we actually
- * read and discard the samples.
- * Can only seek forward.
- */
-void
-seek_sample(int n)
-{
-    double foo;
-    size_t ret;
-
-    fprintf(stderr, "seeking sample %d\n", n);
-    while (input_sample < n) {
-	ret = fread(&foo, sizeof(foo), 1, stdin);
-	if (ret != 1)
-	    perror("fread");
-	input_sample++;
-    }
-}
-
-
-/*
- * Fill the data buffer from the current input location.
- */
-void
-fill_buffer(void)
-{
-    int n, num_to_read;
-
-    num_to_read = BSIZE - buf_num;
-
-#ifdef DEBUG
-    fprintf(stderr, "fillbuffer: buf_start = %d, buf_num = %d, numtoread = %d, buf_index = %d\n",
-	    buf_start, buf_num, num_to_read, buf_index);
-#endif /* DEBUG */
-    n = fread(&buf[buf_num], sizeof(*buf), num_to_read, stdin);
-    if (n == 0) {
-	/*fprintf(stderr, "EOF\n");*/
-	memset((char *)&buf[buf_num], 0, sizeof(*buf)*num_to_read);
-	return;
-    }
-    input_sample += n;
-    buf_num += n;
-    if (n < num_to_read) {
-	memset((char *)&buf[buf_num], 0, sizeof(*buf)*(num_to_read-n));
-	clearerr(stdin);	/* XXX HACK */
-    }
-
-#ifdef DEBUG
-    fprintf(stderr, "filled buffer now has %d samples, [%d (%d)].  Input at %d\n", buf_num, buf_start, buf_start+buf_num-1, input_sample);
-#endif /* DEBUG */
-}
-
-
-/* Bias window (half triangle) */
-void
-biaswin(double *data, int L)
-{
-    int i;
-
-    for (i = 0; i < L; i++) {
-	data[i] *= (double)(L-i)/(double)L;
-    }
-}
-
-
-/* Bartlett window (triangle) */
-void
-bartwin(double *data, int L)
-{
-    int i;
-
-    for (i = 0; i < L/2; i++) {
-	data[i] *= (double)i/(L/2.0);
-    }
-    for (i = L/2; i < L; i++) {
-	data[i] *= (double)(L-i)/(L/2.0);
-    }
 }
 
 
