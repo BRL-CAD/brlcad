@@ -116,7 +116,7 @@ get_proto(char **buffer, char *file)
 	fprintf(stderr, "tabsub:  %s is empty\n", file );
 	bu_exit(1, NULL);
     }
-    *buffer = bu_malloc( (size_t)(sb.st_size+4), "prototype document");
+    *buffer = (char *)bu_malloc( (size_t)(sb.st_size+4), "prototype document");
     bytes_read = read( fd, *buffer, (size_t)sb.st_size );
     if ( bytes_read != sb.st_size )  {
 	if (bytes_read < 0) {
