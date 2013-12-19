@@ -33,11 +33,52 @@
 #include "vmath.h"
 #include "bn.h"
 
-int init_hamwintab(int size);
 
 static int _init_length = 0;	/* Internal: last initialized size */
-static int maxinitlen = 0;
 static double *hamwintab = NULL;
+
+
+/* Internal routine to initialize the hamming window table
+ * of a given length.
+ * Returns zero on failure.
+ */
+static int
+init_hamwintab(int size)
+{
+    static int maxinitlen = 0;
+
+    int i;
+    double theta;
+
+    if (size > maxinitlen) {
+	if (hamwintab != NULL) {
+	    free(hamwintab);
+	    maxinitlen = 0;
+	}
+	if ((hamwintab = (double *)malloc(size*sizeof(double))) == NULL) {
+	    fprintf(stderr, "coswin: couldn't malloc space for %d elements\n", size);
+	    return 0;
+	}
+	maxinitlen = size;
+    }
+
+    /* Check for odd lengths? XXX */
+
+    /*
+     * Size is okay.  Set up tables.
+     */
+    for (i = 0; i < size; i++) {
+	theta = 2 * M_PI * i / (double)(size);
+	hamwintab[ i ] = 0.54 - 0.46 * cos(theta);
+    }
+
+    /*
+     * Mark size and return success.
+     */
+    _init_length = size;
+    return 1;
+}
+
 
 void
 hamwin(double *data, int length)
@@ -79,49 +120,6 @@ chamwin(bn_complex_t *data, int length)
     for (i = 0; i < length; i++) {
 	data[i].re *= hamwintab[i];
     }
-}
-
-
-/*
- * I N I T _ H A M W I N T A B
- *
- * Internal routine to initialize the hamming window table
- * of a given length.
- * Returns zero on failure.
- */
-int
-init_hamwintab(int size)
-{
-    int i;
-    double theta;
-
-    if (size > maxinitlen) {
-	if (hamwintab != NULL) {
-	    free(hamwintab);
-	    maxinitlen = 0;
-	}
-	if ((hamwintab = (double *)malloc(size*sizeof(double))) == NULL) {
-	    fprintf(stderr, "coswin: couldn't malloc space for %d elements\n", size);
-	    return 0;
-	}
-	maxinitlen = size;
-    }
-
-    /* Check for odd lengths? XXX */
-
-    /*
-     * Size is okay.  Set up tables.
-     */
-    for (i = 0; i < size; i++) {
-	theta = 2 * M_PI * i / (double)(size);
-	hamwintab[ i ] = 0.54 - 0.46 * cos(theta);
-    }
-
-    /*
-     * Mark size and return success.
-     */
-    _init_length = size;
-    return 1;
 }
 
 
