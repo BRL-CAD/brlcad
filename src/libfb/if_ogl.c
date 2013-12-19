@@ -540,7 +540,7 @@ ogl_getmem(FBIO *ifp)
     long psize = sysconf(_SC_PAGESIZE);
     int i;
     char *sp;
-    int new = 0;
+    int new_mem = 0;
 
     errno = 0;
 
@@ -557,7 +557,7 @@ ogl_getmem(FBIO *ifp)
 	    fb_log("ogl_getmem: frame buffer memory malloc failed\n");
 	    goto fail;
 	}
-	new = 1;
+	new_mem = 1;
 	goto success;
     }
 
@@ -587,7 +587,7 @@ ogl_getmem(FBIO *ifp)
 	    fb_log("ogl_getmem: shmget failed, errno=%d\n", errno);
 	    goto fail;
 	}
-	new = 1;
+	new_mem = 1;
     }
 
     /* WWW this is unnecessary in this version? */
@@ -605,7 +605,7 @@ success:
     CMB(ifp)[255] = i;
 
     /* Provide non-black colormap on creation of new shared mem */
-    if (new)
+    if (new_mem)
 	ogl_cminit(ifp);
     return 0;
 fail:
@@ -614,7 +614,7 @@ fail:
 	fb_log("ogl_getmem:  malloc failure\n");
 	return -1;
     }
-    new = 1;
+    new_mem = 1;
     goto success;
 }
 
