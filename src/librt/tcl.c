@@ -62,13 +62,13 @@ struct dbcmdstruct {
 
 
 static struct dbcmdstruct rt_tcl_rt_cmds[] = {
-    {"shootray",	rt_tcl_rt_shootray},
-    {"onehit",		rt_tcl_rt_onehit},
-    {"no_bool",		rt_tcl_rt_no_bool},
-    {"check",		rt_tcl_rt_check},
-    {"prep",		rt_tcl_rt_prep},
-    {"cutter",		rt_tcl_rt_cutter},
-    {"set",		rt_tcl_rt_set},
+    {"shootray",	(int (*)())rt_tcl_rt_shootray},
+    {"onehit",		(int (*)())rt_tcl_rt_onehit},
+    {"no_bool",		(int (*)())rt_tcl_rt_no_bool},
+    {"check",		(int (*)())rt_tcl_rt_check},
+    {"prep",		(int (*)())rt_tcl_rt_prep},
+    {"cutter",		(int (*)())rt_tcl_rt_cutter},
+    {"set",		(int (*)())rt_tcl_rt_set},
     {(char *)0,		(int (*)())0}
 };
 
@@ -613,8 +613,11 @@ rt_tcl_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv
 
     for (dbcmd = rt_tcl_rt_cmds; dbcmd->cmdname != NULL; dbcmd++) {
 	if (BU_STR_EQUAL(dbcmd->cmdname, argv[1])) {
-	    return (*dbcmd->cmdfunc)(clientData, interp,
-				     argc, argv);
+	    /* need proper cmd func pointer for actual call */
+	    int (*_cmdfunc)(void*, Tcl_Interp*, int, const char* const*);
+	    /* cast to the actual caller */
+	    _cmdfunc = (int (*)(void*, Tcl_Interp*, int, const char* const*))dbcmd;
+	    return _cmdfunc(clientData, interp, argc, argv);
 	}
     }
 
