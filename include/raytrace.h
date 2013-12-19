@@ -8188,7 +8188,7 @@ struct db5_attr_ctype {
     const char *long_description;
 };
 
-extern const struct db5_attr_ctype db5_attr_std[];
+RT_EXPORT extern const struct db5_attr_ctype db5_attr_std[];
 
 /* Container for holding user-registered attributes */
 struct db5_registry{
