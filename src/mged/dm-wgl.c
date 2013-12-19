@@ -313,7 +313,7 @@ zclip_hook(const struct bu_structparse *UNUSED(sdp),
 
     dmp->dm_zclip = ((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.zclipping_on;
     view_state->vs_gvp->gv_zclip = dmp->dm_zclip;
-    dirty_hook();
+    dirty_hook(NULL, NULL, NULL, NULL);
 
     if (dmp->dm_zclip) {
 	bounds[4] = -1.0;
@@ -343,7 +343,7 @@ bound_hook(const struct bu_structparse *UNUSED(sdp),
 {
     dmp->dm_bound =
 	((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.bound;
-    dirty_hook();
+    dirty_hook(NULL, NULL, NULL, NULL);
 }
 
 
@@ -355,7 +355,7 @@ boundFlag_hook(const struct bu_structparse *UNUSED(sdp),
 {
     dmp->dm_boundFlag =
 	((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.boundFlag;
-    dirty_hook();
+    dirty_hook(NULL, NULL, NULL, NULL);
 }
 
 
