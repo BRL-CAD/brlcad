@@ -52,10 +52,11 @@ init_hamwintab(int size)
 
     if (size > maxinitlen) {
 	if (hamwintab != NULL) {
-	    free(hamwintab);
+	    bu_free(hamwintab, "free hamwintab");
 	    maxinitlen = 0;
 	}
-	if ((hamwintab = (double *)malloc(size*sizeof(double))) == NULL) {
+	hamwintab = (double *)bu_malloc(size*sizeof(double), "alloc hamwintab");
+	if (!hamwintab) {
 	    fprintf(stderr, "coswin: couldn't malloc space for %d elements\n", size);
 	    return 0;
 	}
