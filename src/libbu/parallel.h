@@ -38,7 +38,7 @@ extern int parallel_set_affinity(int cpu);
 extern void thread_set_cpu(int cpu);
 extern int thread_get_cpu(void);
 
-#endif LIBBU_PARALLEL_H
+#endif /* LIBBU_PARALLEL_H */
 
 /*
  * Local Variables:
