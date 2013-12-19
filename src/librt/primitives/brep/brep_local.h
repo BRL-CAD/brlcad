@@ -34,7 +34,7 @@ struct brep_specific {
     BrepBoundingVolume* bvh;
 };
 
-#endif LIBRT_PRIMITIVES_BREP_BREP_LOCAL_H
+#endif /* LIBRT_PRIMITIVES_BREP_BREP_LOCAL_H */
 
 /*
  * Local Variables:

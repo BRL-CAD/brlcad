@@ -32,7 +32,7 @@
 	    (_y) * ((struct rt_dsp_internal *)_p)->dsp_xcnt + (_x)	\
 	    ] : 0)
 
-#endif LIBRT_PRIMITIVES_DSP_DSP_H
+#endif /* LIBRT_PRIMITIVES_DSP_DSP_H */
 
 /*
  * Local Variables:
