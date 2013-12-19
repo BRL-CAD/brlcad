@@ -285,8 +285,8 @@ ptbl_vsort(struct bu_ptbl *b, fastf_t *pt, fastf_t *dir, fastf_t *mag, fastf_t d
 	}
     }
 
-    for (i=0; i < b->end - 1; ++i) {
-	for (j=i+1; j < b->end; ++j) {
+    for (i = 0; i < b->end - 1; ++i) {
+	for (j = i+1; j < b->end; ++j) {
 
 	    if (mag[i] < mag[j]) continue;
 	    if (ZERO(mag[i] - mag[j])) {
@@ -359,7 +359,7 @@ nmg_ck_vu_ptbl(struct bu_ptbl *p, struct faceuse *fu)
     NMG_CK_FACEUSE(fu);
 
  top:
-    for (i=0; i < BU_PTBL_END(p); i++) {
+    for (i = 0; i < BU_PTBL_END(p); i++) {
 	vu = (struct vertexuse *)BU_PTBL_GET(p, i);
 	NMG_CK_VERTEXUSE(vu);
 	v = vu->v_p;
@@ -1433,7 +1433,7 @@ nmg_face_vu_compare(const void *aa, const void *bb)
 	       (void *)a->vu, (void *)b->vu,
 	       WEDGECLASS2STR(a->wedge_class),
 	       WEDGECLASS2STR(b->wedge_class),
-	       ret==(-1) ? "A<B" : (ret==0 ? "A==B" : "A>B"));
+	       ret == (-1) ? "A<B" : (ret == 0 ? "A==B" : "A>B"));
     }
     return ret;
 }
@@ -1800,7 +1800,7 @@ nmg_face_coincident_vu_sort(struct nmg_ray_state *rs, int start, int end)
      * and walk the edges of the loop, marking off the vu sequence for
      * those vu's on the ray (those vu's found in vs[].vu).
      */
-    for (l=0; l < nloop; l++) {
+    for (l = 0; l < nloop; l++) {
 	register struct edgeuse *eu;
 	struct edgeuse *first_eu;
 	int seq = 0;
@@ -1812,7 +1812,7 @@ nmg_face_coincident_vu_sort(struct nmg_ray_state *rs, int start, int end)
 	do {
 	    register struct vertexuse *vu = eu->vu_p;
 	    NMG_CK_VERTEXUSE(vu);
-	    for (i=0; i < nvu; i++) {
+	    for (i = 0; i < nvu; i++) {
 		if (vs[i].vu == vu) {
 		    vs[i].seq = seq++;
 		    break;
@@ -1840,7 +1840,7 @@ nmg_face_coincident_vu_sort(struct nmg_ray_state *rs, int start, int end)
 
     if (RTG.NMG_debug&DEBUG_VU_SORT) {
 	bu_log("Loop table (before sort):\n");
-	for (l=0; l < nloop; l++) {
+	for (l = 0; l < nloop; l++) {
 	    bu_log("  index=%d, lu=%p, min_dot=%g, #vu=%d\n",
 		   l, (void *)ls[l].lu, ls[l].min_dot,
 		   ls[l].n_vu_in_loop);
@@ -1853,7 +1853,7 @@ nmg_face_coincident_vu_sort(struct nmg_ray_state *rs, int start, int end)
 
     if (RTG.NMG_debug&DEBUG_VU_SORT) {
 	bu_log("Vertexuse table (after sort):\n");
-	for (i=0; i < nvu; i++) {
+	for (i = 0; i < nvu; i++) {
 	    bu_log("  %p, l=%d, in/o=(%g, %g), lo/hi=(%g, %g), %s, sq=%d\n",
 		   (void *)vs[i].vu, vs[i].loop_index,
 		   vs[i].in_vu_angle, vs[i].out_vu_angle,
@@ -1865,12 +1865,12 @@ nmg_face_coincident_vu_sort(struct nmg_ray_state *rs, int start, int end)
 
     /* Copy new vu's back to main array */
     {
-	for (i=0; i < nvu; i++) {
+	for (i = 0; i < nvu; i++) {
 	    rs->vu[start+i] = vs[i].vu;
 	}
     }
     if (RTG.NMG_debug&DEBUG_VU_SORT) {
-	for (i=0; i < nvu; i++) {
+	for (i = 0; i < nvu; i++) {
 	    bu_log(" vu[%d]=%p, v=%p\n",
 		   start+i, (void *)rs->vu[start+i], (void *)rs->vu[start+i]->v_p);
 	}
@@ -2006,7 +2006,7 @@ nmg_face_rs_init(struct nmg_ray_state *rs, struct bu_ptbl *b, struct faceuse *fu
 			inv_len = 0.0;
 		    else
 			inv_len = 1.0/eu_len;
-		    for (i=0; i<3; i++)
+		    for (i = 0; i < 3; i++)
 			eu_dir[i] = eu_dir[i] * inv_len;
 		    bu_log("\t\t\teu_dir = (%g, %g, %g), length = %g\n", V3ARGS(eu_dir), eu_len);
 		}
@@ -2110,9 +2110,9 @@ find_loop_to_cut(int *index1, int *index2, int prior_start, int prior_end, int n
     struct loopuse *prior_lu, *next_lu;
     struct bu_ptbl *cuts=(struct bu_ptbl *)NULL;
     struct loop_cuts *lcut;
-    int count=0;
+    int count = 0;
     int i, j, k;
-    int done=0;
+    int done = 0;
 
     if (RTG.NMG_debug&DEBUG_FCUT)
 	bu_log("find_loop_to_cut: prior_start=%d, prior_end=%d, next_start=%d, next_end=%d, rs=%p\n",
@@ -2169,12 +2169,11 @@ find_loop_to_cut(int *index1, int *index2, int prior_start, int prior_end, int n
 		    class_lu = nmg_classify_lu_lu(next_lu, match_lu, rs->tol);
 
 		    if (class_lu == class_pt ||
-			class_lu == NMG_CLASS_AonBshared)
-		    {
-			int found=0;
+			class_lu == NMG_CLASS_AonBshared) {
+			int found = 0;
 
 			match_lu = next_lu;
-			for (k=0; k<BU_PTBL_END(cuts); k++) {
+			for (k = 0; k < BU_PTBL_END(cuts); k++) {
 			    lcut = (struct loop_cuts *)BU_PTBL_GET(cuts, k);
 			    if (lcut->lu == match_lu) {
 				found = 1;
@@ -2194,7 +2193,7 @@ find_loop_to_cut(int *index1, int *index2, int prior_start, int prior_end, int n
     }
 
     if (cuts) {
-	for (k=0; k<BU_PTBL_END(cuts); k++) {
+	for (k = 0; k < BU_PTBL_END(cuts); k++) {
 	    lcut = (struct loop_cuts *)BU_PTBL_GET(cuts, k);
 	    match_lu = lcut->lu;
 
@@ -2225,7 +2224,7 @@ find_loop_to_cut(int *index1, int *index2, int prior_start, int prior_end, int n
 	return (struct bu_ptbl *)NULL;
     }
 
-    for (k=0; k<BU_PTBL_END(cuts); k++) {
+    for (k = 0; k < BU_PTBL_END(cuts); k++) {
 	lcut = (struct loop_cuts *)BU_PTBL_GET(cuts, k);
 	lu1 = lcut->lu;
 	lu2 = lu1;
@@ -2307,7 +2306,7 @@ find_loop_to_cut(int *index1, int *index2, int prior_start, int prior_end, int n
 
 	/* Check for duplicate cuts (cutting two different loops across same two vertices) */
 	if (BU_PTBL_END(cuts) > 1) {
-	    for (i=0; i<BU_PTBL_END(cuts); i++) {
+	    for (i = 0; i < BU_PTBL_END(cuts); i++) {
 		struct loop_cuts *lcut1, *lcut2;
 		int class1, class2;
 
@@ -2764,7 +2763,7 @@ nmg_fcut_face(struct nmg_ray_state *rs)
 	}
 
 	if (cuts) {
-	    for (cut_no=0; cut_no<BU_PTBL_END(cuts); cut_no++) {
+	    for (cut_no = 0; cut_no < BU_PTBL_END(cuts); cut_no++) {
 		struct loop_cuts *lcut;
 
 		if (RTG.NMG_debug&DEBUG_FCUT)
@@ -2974,7 +2973,7 @@ nmg_unlist_v(struct bu_ptbl *b, fastf_t *mag, struct vertex *v)
 
     BU_CK_PTBL(b);
     NMG_CK_VERTEX(v);
-    for (i=0; i<BU_PTBL_END(b); i++) {
+    for (i = 0; i < BU_PTBL_END(b); i++) {
 	vu = (struct vertexuse *)BU_PTBL_GET(b, i);
 	if (!vu) continue;
 	if (vu->v_p == v) {
@@ -3014,7 +3013,7 @@ nmg_onon_fix(struct nmg_ray_state *rs, struct bu_ptbl *b, struct bu_ptbl *ob, fa
     BU_CK_PTBL(ob);
 
     zapped = 0;
-    for (i=0; i<BU_PTBL_END(b); i++) {
+    for (i = 0; i < BU_PTBL_END(b); i++) {
     again:
 	vu = (struct vertexuse *)BU_PTBL_GET(b, i);
 	if (!vu) continue;
@@ -3053,20 +3052,21 @@ nmg_onon_fix(struct nmg_ray_state *rs, struct bu_ptbl *b, struct bu_ptbl *ob, fa
 	bu_log("nmg_onon_fix(): removing %d dead vertexuses\n", zapped);
 	/* remove entries from distance list first */
 	removed = 0;
-	for (i=BU_PTBL_END(b); i>=0; i--) {
+	for (i= BU_PTBL_END(b); i >= 0; i--) {
 	    int count=0;
 	    int j, k;
 
 	    j = i;
-	    while (j>=0 && !BU_PTBL_GET(b, j)) --j;
+	    while (j >= 0 && !BU_PTBL_GET(b, j))
+		--j;
 	    count = i-j;
 	    removed += count;
-	    for (k=j+1; k<BU_PTBL_END(b)-removed; k++)
+	    for (k = j + 1; k < BU_PTBL_END(b)-removed; k++)
 		mag[k] = mag[k+count];
 	}
 	bu_ptbl_rm(b, 0);
 	removed = 0;
-	for (i=BU_PTBL_END(ob); i>=0; i--) {
+	for (i = BU_PTBL_END(ob); i >= 0; i--) {
 	    int count=0;
 	    int j, k;
 
@@ -3074,7 +3074,7 @@ nmg_onon_fix(struct nmg_ray_state *rs, struct bu_ptbl *b, struct bu_ptbl *ob, fa
 	    while (j>=0 && !BU_PTBL_GET(ob, j)) --j;
 	    count = i-j;
 	    removed += count;
-	    for (k=j+1; k<BU_PTBL_END(ob)-removed; k++)
+	    for (k = j + 1; k < BU_PTBL_END(ob)-removed; k++)
 		omag[k] = omag[k+count];
 	}
 	bu_ptbl_rm(ob, 0);
@@ -3143,11 +3143,11 @@ nmg_face_cutjoin(struct bu_ptbl *b1, struct bu_ptbl *b2, fastf_t *mag1, fastf_t 
     /* Print list of intersections */
     if (RTG.NMG_debug&DEBUG_FCUT) {
 	bu_log("Ray vu intersection list:\n");
-	for (i=0; i < b1->end; i++) {
+	for (i = 0; i < b1->end; i++) {
 	    bu_log(" %d %e ", i, mag1[i]);
 	    nmg_pr_vu_briefly(vu1[i], (char *)0);
 	}
-	for (i=0; i < b2->end; i++) {
+	for (i = 0; i < b2->end; i++) {
 	    bu_log(" %d %e ", i, mag2[i]);
 	    nmg_pr_vu_briefly(vu2[i], (char *)0);
 	}
@@ -3166,7 +3166,7 @@ nmg_face_cutjoin(struct bu_ptbl *b1, struct bu_ptbl *b2, fastf_t *mag1, fastf_t 
 	struct vertexuse *vu;
 
 	/* list b1 should contain vertexuses from faceuse fu1 */
-	for (i=0; i<BU_PTBL_END(b1); i++) {
+	for (i = 0; i < BU_PTBL_END(b1); i++) {
 	    tmp_found = 0;
 	    vu = (struct vertexuse *)BU_PTBL_GET(b1, i);
 	    fu = nmg_find_fu_of_vu(vu);
@@ -3182,7 +3182,7 @@ nmg_face_cutjoin(struct bu_ptbl *b1, struct bu_ptbl *b2, fastf_t *mag1, fastf_t 
 	}
 
 	/* and list b2 should contain vertexuses from faceuse fu2 */
-	for (i=0; i<BU_PTBL_END(b2); i++) {
+	for (i = 0; i < BU_PTBL_END(b2); i++) {
 	    tmp_found = 0;
 	    vu = (struct vertexuse *)BU_PTBL_GET(b2, i);
 	    fu = nmg_find_fu_of_vu(vu);
