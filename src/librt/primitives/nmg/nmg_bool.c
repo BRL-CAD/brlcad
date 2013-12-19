@@ -213,7 +213,7 @@ nmg_has_dangling_faces(uint32_t *magic_p, const char *manifolds)
  * edge.
  */
 void
-nmg_show_each_loop(struct shell *s, char **classlist, int new, int fancy, const char *str)
+nmg_show_each_loop(struct shell *s, char **classlist, int redraw, int fancy, const char *str)
 
 
     /* non-zero means flush previous vlist */
@@ -237,12 +237,12 @@ nmg_show_each_loop(struct shell *s, char **classlist, int new, int fancy, const 
 	    if (lu->orientation == OT_OPPOSITE) continue;
 
 	    snprintf(buf, 128, "%s=%p", str, (void *)lu);
-	    nmg_show_broken_classifier_stuff(&lu->l.magic, classlist, new, fancy, buf);
+	    nmg_show_broken_classifier_stuff(&lu->l.magic, classlist, redraw, fancy, buf);
 	}
     }
     for (BU_LIST_FOR(lu, loopuse, &s->lu_hd)) {
 	snprintf(buf, 128, "%s=%p (wire)", str, (void *)lu);
-	nmg_show_broken_classifier_stuff(&lu->l.magic, classlist, new, fancy, buf);
+	nmg_show_broken_classifier_stuff(&lu->l.magic, classlist, redraw, fancy, buf);
     }
     RTG.NMG_debug = save;		/* restore it */
 }
