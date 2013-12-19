@@ -616,7 +616,7 @@ rt_tcl_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv
 	    /* need proper cmd func pointer for actual call */
 	    int (*_cmdfunc)(void*, Tcl_Interp*, int, const char* const*);
 	    /* cast to the actual caller */
-	    _cmdfunc = (int (*)(void*, Tcl_Interp*, int, const char* const*))dbcmd;
+	    _cmdfunc = (int (*)(void*, Tcl_Interp*, int, const char* const*))(*dbcmd->cmdfunc);
 	    return _cmdfunc(clientData, interp, argc, argv);
 	}
     }
