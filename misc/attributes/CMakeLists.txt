@@ -4,6 +4,7 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/src/librt
   ${OPENNURBS_INCLUDE_DIR}
   ${BU_INCLUDE_DIRS}
+  ${RT_INCLUDE_DIRS}
   )
 
 # a new html and xml generation file
