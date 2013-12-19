@@ -1381,6 +1381,107 @@ rt_vol_centroid(point_t *cent, const struct rt_db_internal *ip)
     MAT4X3PNT(*cent, vip->mat, p);
 }
 
+
+/*
+ * R T _ V O L _ S U R F _ A R E A
+ *
+ * Computes the surface area of a volume by tranforming each of the vertices by
+ * the matrix and then summing the area of the faces of each cell neccessary.
+ * The vertices are numbered from left to right, front to back, bottom to top.
+ */
+void
+rt_vol_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    struct rt_vol_internal *vip;
+    unsigned int x, y, z;
+    point_t x0, x1, x2, x3, x4, x5, x6, x7;
+    point_t _x0, _x1, _x2, _x3, _x4, _x5, _x6, _x7;
+    vect_t d3_0, d2_1, d7_4, d6_5, d6_0, d4_2, d4_1, d5_0, d5_3, d7_1, d7_2, d6_3, _cross;
+    fastf_t _x, _y, _z, det, _area = 0.0;
+
+    if (area == NULL || ip == NULL) return;
+    RT_CK_DB_INTERNAL(ip);
+    vip = (struct rt_vol_internal *)ip->idb_ptr;
+    RT_VOL_CK_MAGIC(vip);
+
+    det = fabs(bn_mat_determinant(vip->mat));
+    if (EQUAL(det, 0.0)) {
+	*area = -1.0;
+	return;
+    }
+
+    for (x = 0; x < vip->xdim; x++) {
+	for (y = 0; y < vip->ydim; y++) {
+	    for (z = 0; z < vip->zdim; z++) {
+		if (OK(vip, VOL(vip, x, y, z))) {
+		    _x = (fastf_t)x;
+		    _y = (fastf_t)y;
+		    _z = (fastf_t)z;
+
+		    VSET(_x0, _x - 0.5 * vip->cellsize[X], _y - 0.5 * vip->cellsize[Y], _z - 0.5 * vip->cellsize[Z]);
+		    VSET(_x1, _x + 0.5 * vip->cellsize[X], _y - 0.5 * vip->cellsize[Y], _z - 0.5 * vip->cellsize[Z]);
+		    VSET(_x2, _x - 0.5 * vip->cellsize[X], _y + 0.5 * vip->cellsize[Y], _z - 0.5 * vip->cellsize[Z]);
+		    VSET(_x3, _x + 0.5 * vip->cellsize[X], _y + 0.5 * vip->cellsize[Y], _z - 0.5 * vip->cellsize[Z]);
+		    VSET(_x4, _x - 0.5 * vip->cellsize[X], _y - 0.5 * vip->cellsize[Y], _z + 0.5 * vip->cellsize[Z]);
+		    VSET(_x5, _x + 0.5 * vip->cellsize[X], _y - 0.5 * vip->cellsize[Y], _z + 0.5 * vip->cellsize[Z]);
+		    VSET(_x6, _x - 0.5 * vip->cellsize[X], _y + 0.5 * vip->cellsize[Y], _z + 0.5 * vip->cellsize[Z]);
+		    VSET(_x7, _x + 0.5 * vip->cellsize[X], _y + 0.5 * vip->cellsize[Y], _z + 0.5 * vip->cellsize[Z]);
+
+		    MAT4X3PNT(x0, vip->mat, _x0);
+		    MAT4X3PNT(x1, vip->mat, _x1);
+		    MAT4X3PNT(x2, vip->mat, _x2);
+		    MAT4X3PNT(x3, vip->mat, _x3);
+		    MAT4X3PNT(x4, vip->mat, _x4);
+		    MAT4X3PNT(x5, vip->mat, _x5);
+		    MAT4X3PNT(x6, vip->mat, _x6);
+		    MAT4X3PNT(x7, vip->mat, _x7);
+
+		    if (!OK(vip, VOL(vip, x + 1, y, z))) {
+			VSUB2(d5_3, x5, x3);
+			VSUB2(d7_1, x7, x1);
+			VCROSS(_cross, d5_3, d7_1);
+			_area += 0.5 * MAGNITUDE(_cross);
+		    }
+		    if (!OK(vip, VOL(vip, x - 1, y, z))) {
+			VSUB2(d6_0, x6, x0);
+			VSUB2(d4_2, x4, x2);
+			VCROSS(_cross, d6_0, d4_2);
+			_area += 0.5 * MAGNITUDE(_cross);
+		    }
+
+		    if (!OK(vip, VOL(vip, x, y + 1, z))) {
+			VSUB2(d7_2, x7, x2);
+			VSUB2(d6_3, x6, x3);
+			VCROSS(_cross, d7_2, d6_3);
+			_area += 0.5 * MAGNITUDE(_cross);
+		    }
+		    if (!OK(vip, VOL(vip, x, y - 1, z))) {
+			VSUB2(d4_1, x4, x1);
+			VSUB2(d5_0, x5, x0);
+			VCROSS(_cross, d4_1, d5_0);
+			_area += 0.5 * MAGNITUDE(_cross);
+		    }
+
+		    if (!OK(vip, VOL(vip, x, y, z + 1))) {
+			VSUB2(d3_0, x3, x0);
+			VSUB2(d2_1, x2, x1);
+			VCROSS(_cross, d3_0, d2_1);
+			_area += 0.5 * MAGNITUDE(_cross);
+		    }
+		    if (!OK(vip, VOL(vip, x, y, z - 1))) {
+			VSUB2(d7_4, x7, x4);
+			VSUB2(d6_5, x6, x5);
+			VCROSS(_cross, d7_4, d6_5);
+			_area += 0.5 * MAGNITUDE(_cross);
+		    }
+		}
+	    }
+	}
+    }
+    *area = _area;
+}
+
+
 /*
  * Local Variables:
  * mode: C
