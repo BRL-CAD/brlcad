@@ -29,7 +29,7 @@ rt_obj_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 {
     int id;
     const struct rt_functab *ft;
-    int (*export)(struct bu_external *, const struct rt_db_internal *, double, const struct db_i *, struct resource *);
+    int (*export_func)(struct bu_external *, const struct rt_db_internal *, double, const struct db_i *, struct resource *);
 
     if (!ep || !ip || !dbip || local2mm < 0.0)
 	return -1;
@@ -48,15 +48,15 @@ rt_obj_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	return -3;
 
     if (dbip->dbi_version < 5) {
-	export = ft->ft_export4;
+	export_func = ft->ft_export4;
     } else {
-	export = ft->ft_export5;
+	export_func = ft->ft_export5;
     }
 
-    if (!export)
+    if (!export_func)
 	return -4;
 
-    return export(ep, ip, local2mm, dbip, resp);
+    return export_func(ep, ip, local2mm, dbip, resp);
 }
 
 
