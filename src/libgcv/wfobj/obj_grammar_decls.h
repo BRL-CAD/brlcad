@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef OBJ_GRAMMAR_H
-#define OBJ_GRAMMAR_H
+#ifndef LIBGCV_WFOBJ_OBJ_GRAMMAR_DECLS_H
+#define LIBGCV_WFOBJ_OBJ_GRAMMAR_DECLS_H
 
 #include "common.h"
 #include "obj_grammar.hpp"

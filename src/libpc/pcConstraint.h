@@ -24,8 +24,8 @@
  * Constraint Class for Parametrics and Constraints Library
  *
  */
-#ifndef __PCCONSTRAINT_H__
-#define __PCCONSTRAINT_H__
+#ifndef LIBPC_PCCONSTRAINT_H
+#define LIBPC_PCCONSTRAINT_H
 
 #include "common.h"
 

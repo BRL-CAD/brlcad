@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef __GED_PRIVATE_H__
-#define __GED_PRIVATE_H__
+#ifndef LIBGED_GED_PRIVATE_H
+#define LIBGED_GED_PRIVATE_H
 
 #include "common.h"
 
@@ -474,7 +474,7 @@ extern int _ged_results_clear(struct ged *gedp);
 
 __END_DECLS
 
-#endif /* __GED_PRIVATE_H__ */
+#endif /* LIBGED_GED_PRIVATE_H */
 
 /** @} */
 /*

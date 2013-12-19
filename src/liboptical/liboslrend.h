@@ -25,8 +25,8 @@
  *
  */
 
-#ifndef LIB_OSL_RENDERER_H
-#define LIB_OSL_RENDERER_H
+#ifndef LIBOPTICAL_LIBOSLREND_H
+#define LIBOPTICAL_LIBOSLREND_H
 
 #include "common.h"
 

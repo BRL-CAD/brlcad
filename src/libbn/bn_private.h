@@ -26,6 +26,9 @@
  *
  */
 
+#ifndef LIBBN_BN_PRIVATE_H
+#define LIBBN_BN_PRIVATE_H
+
 /**
  * @brief
  * Find a 2D coordinate system for a set of co-planar 3D points
@@ -77,6 +80,8 @@ coplanar_2d_to_3d(point_t **points_3d, const point_t *origin_pnt,
                      const vect_t *u_axis, const vect_t *v_axis,
                      const point2d_t *points_2d, int n);
 
+
+#endif /* LIBBN_BN_PRIVATE_H */
 
 /** @} */
 /*

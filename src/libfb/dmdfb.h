@@ -24,6 +24,10 @@
  */
 /** @} */
 
+#ifndef LIBFB_DMDFB_H
+#define LIBFB_DMDFB_H
+
+
 #define BLACK		0
 #define WHITE		1
 #define CLR_BIT(word, bit) word &= ~(bit)
@@ -53,6 +57,8 @@
 #define SMALL_LAYER_SZ	51
 #define MIN_LAYER_SZ	80
 
+
+#endif /* LIBFB_DMDFB_H */
 /*
  * Local Variables:
  * mode: C

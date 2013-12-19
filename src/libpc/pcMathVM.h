@@ -26,8 +26,8 @@
  * Code is based on concepts from YAC by Angus Leeming
  *
  */
-#ifndef __PCMATHVM_H__
-#define __PCMATHVM_H__
+#ifndef LIBPC_PCMATHVM_H
+#define LIBPC_PCMATHVM_H
 
 #include "common.h"
 

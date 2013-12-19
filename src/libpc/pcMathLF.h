@@ -24,8 +24,8 @@
  * Lazy Function wrappers for Math VM
  *
  */
-#ifndef __PCMATHLF_H__
-#define __PCMATHLF_H__
+#ifndef LIBPC_PCMATHLF_H
+#define LIBPC_PCMATHLF_H
 
 #include "pcMathVM.h"
 

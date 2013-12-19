@@ -24,8 +24,8 @@
  *  Utility routines for working with geometry.
  */
 
-#ifndef __LIBBREP_BREP_TOOLS
-#define __LIBBREP_BREP_TOOLS
+#ifndef LIBBREP_LIBBREP_BREP_TOOLS_H
+#define LIBBREP_LIBBREP_BREP_TOOLS_H
 
 #include "common.h"
 
@@ -309,7 +309,7 @@ bool ON_Surface_Quad_Split(
 	);
 
 
-#endif /* __LIBBREP_BREP_TOOLS */
+#endif /* LIBBREP_LIBBREP_BREP_TOOLS_H */
 /** @} */
 
 // Local Variables:

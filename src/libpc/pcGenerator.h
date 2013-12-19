@@ -25,8 +25,8 @@
  * in the generation of constraints and parameters/variables
  *
  */
-#ifndef __PCGENERATOR_H__
-#define __PCGENERATOR_H__
+#ifndef LIBPC_PCGENERATOR_H
+#define LIBPC_PCGENERATOR_H
 
 #include "common.h"
 

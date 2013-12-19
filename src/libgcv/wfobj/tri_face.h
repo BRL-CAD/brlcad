@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef TRI_FACE_H
-#define TRI_FACE_H
+#ifndef LIBGCV_WFOBJ_TRI_FACE_H
+#define LIBGCV_WFOBJ_TRI_FACE_H
 
 struct faceuse*
 make_faceuse_from_face(const double points[], int numPoints);

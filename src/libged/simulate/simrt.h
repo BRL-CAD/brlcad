@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef SIMRT_H_
-#define SIMRT_H_
+#ifndef LIBGED_SIMULATE_SIMRT_H
+#define LIBGED_SIMULATE_SIMRT_H
 
 #if defined __cplusplus
 
@@ -324,7 +324,7 @@ init_rayshot_results(void);
 #endif
 
 
-#endif /* SIMRT_H_ */
+#endif /* LIBGED_SIMULATE_SIMRT_H */
 
 /*
  * Local Variables:

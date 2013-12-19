@@ -24,8 +24,8 @@
  * Parameter Class abstraction over the Variable class
  *
  */
-#ifndef __PCPARAMETER_H__
-#define __PCPARAMETER_H__
+#ifndef LIBPC_PCPARAMETER_H
+#define LIBPC_PCPARAMETER_H
 
 #include "common.h"
 

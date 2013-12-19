@@ -22,6 +22,9 @@
  * Local data structures for brep primitive
  */
 
+#ifndef LIBRT_PRIMITIVES_BREP_BREP_LOCAL_H
+#define LIBRT_PRIMITIVES_BREP_BREP_LOCAL_H
+
 /**
  * The b-rep specific data structure for caching the prepared
  * acceleration data structure.
@@ -31,6 +34,7 @@ struct brep_specific {
     BrepBoundingVolume* bvh;
 };
 
+#endif LIBRT_PRIMITIVES_BREP_BREP_LOCAL_H
 
 /*
  * Local Variables:

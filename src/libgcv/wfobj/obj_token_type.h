@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef OBJ_TOKEN_TYPE_H
-#define OBJ_TOKEN_TYPE_H
+#ifndef LIBGCV_WFOBJ_OBJ_TOKEN_TYPE_H
+#define LIBGCV_WFOBJ_OBJ_TOKEN_TYPE_H
 const int TOKEN_STRING_LEN = 80;
 
 typedef union YYSTYPE

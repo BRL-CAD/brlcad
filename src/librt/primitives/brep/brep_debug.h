@@ -25,8 +25,8 @@
  *
  */
 
-#ifndef __BREP_DEBUG
-#define __BREP_DEBUG
+#ifndef LIBRT_PRIMITIVES_BREP_BREP_DEBUG_H
+#define LIBRT_PRIMITIVES_BREP_BREP_DEBUG_H
 
 #include "common.h"
 

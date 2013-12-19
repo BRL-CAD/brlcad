@@ -52,8 +52,8 @@
  *
  */
 
-#ifndef __SEARCH_H__
-#define __SEARCH_H__
+#ifndef LIBRT_SEARCH_H
+#define LIBRT_SEARCH_H
 
 #include "common.h"
 
@@ -184,7 +184,7 @@ static int c_below(char *, char ***, int, struct db_plan_t **, int *);
 
 __END_DECLS
 
-#endif /* __SEARCH_H__ */
+#endif /* LIBRT_SEARCH_H */
 
 /*
  * Local Variables:

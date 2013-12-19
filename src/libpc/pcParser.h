@@ -24,8 +24,8 @@
  * EBNF Parser generation using boost:Spirit
  *
  */
-#ifndef __PCPARSER_H__
-#define __PCPARSER_H__
+#ifndef LIBPC_PCPARSER_H
+#define LIBPC_PCPARSER_H
 
 #include "common.h"
 

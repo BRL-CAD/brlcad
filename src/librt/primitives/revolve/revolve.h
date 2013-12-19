@@ -23,6 +23,9 @@
  *
  */
 
+#ifndef LIBRT_PRIMITIVES_REVOLVE_REVOLVE_H
+#define LIBRT_PRIMITIVES_REVOLVE_REVOLVE_H
+
 #include "common.h"
 
 #include "bu.h"
@@ -53,6 +56,7 @@ const struct bu_structparse rt_revolve_parse[] = {
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
+#endif /* LIBRT_PRIMITIVES_REVOLVE_REVOLVE_H */
 
 /*
  * Local Variables:

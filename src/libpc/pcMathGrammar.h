@@ -29,8 +29,8 @@
  *	3. lazy function evaluation
  *
  */
-#ifndef PC_MATH_GRAMMAR
-#define PC_MATH_GRAMMAR
+#ifndef LIBPC_PCMATHGRAMMAR_H
+#define LIBPC_PCMATHGRAMMAR_H
 #define PHOENIX_LIMIT 6
 
 #include "pcMathLF.h"

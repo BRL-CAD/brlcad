@@ -50,6 +50,9 @@
  *
  */
 
+#ifndef LIBRT_PRIMITIVES_XXX_XXX_H
+#define LIBRT_PRIMITIVES_XXX_XXX_H
+
 #include "common.h"
 
 #include "bu.h"
@@ -83,6 +86,7 @@ struct xxx_specific {
     vect_t xxx_V;
 };
 
+#endif /* LIBRT_PRIMITIVES_XXX_XXX_H */
 
 /*
  * Local Variables:

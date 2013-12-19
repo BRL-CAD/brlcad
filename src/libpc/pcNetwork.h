@@ -24,8 +24,8 @@
  * Class definition of Constraint Network
  *
  */
-#ifndef __PCNETWORK_H__
-#define __PCNETWORK_H__
+#ifndef LIBPC_PCNETWORK_H
+#define LIBPC_PCNETWORK_H
 
 #include "common.h"
 

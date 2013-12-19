@@ -25,8 +25,8 @@
  *
  */
 
-#ifndef SIMULATE_H_
-#define SIMULATE_H_
+#ifndef LIBGED_SIMULATE_SIMULATE_H
+#define LIBGED_SIMULATE_SIMULATE_H
 
 #include "common.h"
 
@@ -135,7 +135,7 @@ struct simulation_params {
     }   /* matches the linkage specification at the beginning. */
 #endif
 
-#endif /* SIMULATE_H_ */
+#endif /* LIBGED_SIMULATE_SIMULATE_H */
 
 
 /*

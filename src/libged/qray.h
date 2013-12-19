@@ -28,8 +28,8 @@
 
 #include "ged.h"
 
-#ifndef SEEN_QRAY_H
-#define SEEN_QRAY_H
+#ifndef LIBGED_QRAY_H
+#define LIBGED_QRAY_H
 
 #define DG_QRAY_TEXT(_dgop) ((_dgop)->gd_qray_effects == 't' || (_dgop)->gd_qray_effects == 'b')
 #define DG_QRAY_GRAPHICS(_dgop) ((_dgop)->gd_qray_effects == 'g' || (_dgop)->gd_qray_effects == 'b')

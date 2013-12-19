@@ -31,8 +31,8 @@
  */
 /** @} */
 
-#ifndef FIXPT_H
-#define FIXPT_H seen
+#ifndef LIBRT_PRIMITIVES_FIXPT_H
+#define LIBRT_PRIMITIVES_FIXPT_H seen
 
 #define FIXPT_SCALE ((1<<28)-1)
 struct fixpt {
@@ -77,7 +77,7 @@ struct fixpt {
 #define PR_FIX2(str, fp) bu_log("%s = (%2d+x%8.8x, %2d+x%8.8x)\n", \
 				str, fp[0].i, fp[0].f, fp[1].i, fp[1].f)
 
-#endif /* FIXPT_H */
+#endif /* LIBRT_PRIMITIVES_FIXPT_H */
 
 /*
  * Local Variables:

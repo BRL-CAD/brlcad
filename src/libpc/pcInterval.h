@@ -24,8 +24,8 @@
  * Class definition of Interval for Constraint Solution
  *
  */
-#ifndef __PCINTERVAL_H__
-#define __PCINTERVAL_H__
+#ifndef LIBPC_PCINTERVAL_H
+#define LIBPC_PCINTERVAL_H
 
 #include "common.h"
 

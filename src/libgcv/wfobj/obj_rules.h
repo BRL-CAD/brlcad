@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef OBJ_RULES_H
-#define OBJ_RULES_H
+#ifndef LIBGCV_WFOBJ_OBJ_RULES_H
+#define LIBGCV_WFOBJ_OBJ_RULES_H
 
 #include "common.h"
 #include "obj_token_type.h"
@@ -63,7 +63,7 @@ void obj_parser_set_extra(yyscan_t scanner, void *extra);
 
 __END_DECLS
 
-#endif /* OBJ_RULES_H */
+#endif /* LIBGCV_WFOBJ_OBJ_RULES_H */
 
 /*
  * Local Variables:

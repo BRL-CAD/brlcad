@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef __TCLCAD_PRIVATE_H__
-#define __TCLCAD_PRIVATE_H__
+#ifndef LIBTCLCAD_TCLCAD_PRIVATE_H
+#define LIBTCLCAD_TCLCAD_PRIVATE_H
 
 __BEGIN_DECLS
 
@@ -38,7 +38,7 @@ extern int library_initialized(int setit);
 
 __END_DECLS
 
-#endif /* __TCLCAD_PRIVATE_H__ */
+#endif /* LIBTCLCAD_TCLCAD_PRIVATE_H */
 
 /** @} */
 /*

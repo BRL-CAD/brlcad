@@ -53,6 +53,10 @@
  * of freedom is not used.
  */
 
+#ifndef LIBGED_JOINT_H
+#define LIBGED_JOINT_H
+
+
 #ifndef FALSE
 #  define FALSE 0
 #endif
@@ -193,6 +197,9 @@ struct funtab {
 
 void vls_col_item(struct bu_vls *str, const char *cp);
 void vls_col_eol(struct bu_vls *str);
+
+#endif /* LIBGED_JOINT_H */
+
 /*
  * Local Variables:
  * mode: C

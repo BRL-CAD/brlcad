@@ -18,8 +18,8 @@
  * information.
  */
 
-#ifndef BU_VLS_INTERNALS_H
-#define BU_VLS_INTERNALS_H seen
+#ifndef LIBBU_VLS_INTERNALS_H
+#define LIBBU_VLS_INTERNALS_H seen
 
 #include "bu.h"
 
@@ -60,7 +60,7 @@ BU_EXPORT extern int format_part_status(const char c);
 BU_EXPORT extern int handle_format_part(const int vp_part, vflags_t *f, const char c, const int print);
 BU_EXPORT extern int handle_obsolete_format_char(const char c, const int print);
 
-#endif /* BU_VLS_INTERNALS_H */
+#endif /* LIBBU_VLS_INTERNALS_H */
 
 /*
  * Local Variables:

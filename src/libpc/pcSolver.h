@@ -24,8 +24,8 @@
  * various constraint solving methods
  *
  */
-#ifndef __PCSOLVER_H__
-#define __PCSOLVER_H__
+#ifndef LIBPC_PCSOLVER_H
+#define LIBPC_PCSOLVER_H
 
 #include "common.h"
 

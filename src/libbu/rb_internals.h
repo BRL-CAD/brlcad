@@ -22,8 +22,8 @@
 
 #include "bu.h"
 
-#ifndef BU_RB_INTERNALS_H
-#define BU_RB_INTERNALS_H seen
+#ifndef LIBBU_RB_INTERNALS_H
+#define LIBBU_RB_INTERNALS_H seen
 
 
 /**
@@ -197,7 +197,7 @@ extern void rb_free_node(struct bu_rb_node *node);
  */
 extern void rb_free_package(struct bu_rb_package *package);
 
-#endif /* BU_RB_INTERNALS_H */
+#endif /* LIBBU_RB_INTERNALS_H */
 
 
 /*

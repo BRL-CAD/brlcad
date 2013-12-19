@@ -18,8 +18,8 @@
  * information.
  */
 
-#ifndef ARL_OBJ_PARSER_STATE_H
-#define ARL_OBJ_PARSER_STATE_H
+#ifndef LIBGCV_WFOBJ_OBJ_PARSER_STATE_H
+#define LIBGCV_WFOBJ_OBJ_PARSER_STATE_H
 
 #include "common.h"
 

@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef SIMULATE_COLL_ALGO_H_
-#define SIMULATE_COLL_ALGO_H_
+#ifndef LIBGED_SIMULATE_SIMCOLLISIONALGO_H_
+#define LIBGED_SIMULATE_SIMCOLLISIONALGO_H_
 
 #include "common.h"
 
@@ -91,7 +91,7 @@ public:
 
 #endif
 
-#endif /* SIMULATE_COLL_ALGO_H_ */
+#endif /* LIBGED_SIMULATE_SIMCOLLISIONALGO_H_ */
 
 // Local Variables:
 // tab-width: 8

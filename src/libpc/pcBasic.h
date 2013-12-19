@@ -24,8 +24,8 @@
  * Basic classes for Parametrics and Constraints Library
  *
  */
-#ifndef __PCBASIC_H__
-#define __PCBASIC_H__
+#ifndef LIBPC_PCBASIC_H
+#define LIBPC_PCBASIC_H
 
 #include "common.h"
 

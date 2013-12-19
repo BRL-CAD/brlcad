@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef _TIEPRIVATE_H
-#define _TIEPRIVATE_H
+#ifndef LIBRT_PRIMITIVES_BOT_TIEPRIVATE_H
+#define LIBRT_PRIMITIVES_BOT_TIEPRIVATE_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -58,7 +58,7 @@ struct tie_stack_s {
 }
 #endif
 
-#endif /* _TIEPRIVATE_H */
+#endif /* LIBRT_PRIMITIVES_BOT_TIEPRIVATE_H */
 
 /*
  * Local Variables:

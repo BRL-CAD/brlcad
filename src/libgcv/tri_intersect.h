@@ -23,8 +23,8 @@
  * Intersect 2 triangles using a modified Möller routine.
  */
 
-#ifndef __TRI_INTERSECT_H__
-#define __TRI_INTERSECT_H__
+#ifndef LIBGCV_TRI_INTERSECT_H
+#define LIBGCV_TRI_INTERSECT_H
 
 __BEGIN_DECLS
 
@@ -39,7 +39,7 @@ int gcv_tri_tri_intersect_with_isectline(
 
 __END_DECLS
 
-#endif /* __TRI_INTERSECT_H__ */
+#endif /* LIBGCV_TRI_INTERSECT_H */
 
 /*
  * Local Variables:

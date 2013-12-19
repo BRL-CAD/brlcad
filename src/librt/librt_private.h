@@ -28,8 +28,8 @@
  * accordingly (e.g., ell_*() for functions defined in primitives/ell)
  *
  */
-#ifndef LIBRT_PRIVATE_H
-#define LIBRT_PRIVATE_H
+#ifndef LIBRT_LIBRT_PRIVATE_H
+#define LIBRT_LIBRT_PRIVATE_H
 
 #include "common.h"
 
@@ -133,7 +133,7 @@ extern void plot_ellipse(
 
 __END_DECLS
 
-#endif /* LIBRT_PRIVATE_H */
+#endif /* LIBRT_LIBRT_PRIVATE_H */
 
 /*
  * Local Variables:

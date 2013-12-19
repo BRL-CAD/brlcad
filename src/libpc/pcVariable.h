@@ -24,8 +24,8 @@
  * Class definition of Variable & Domain
  *
  */
-#ifndef __PCVARIABLE_H__
-#define __PCVARIABLE_H__
+#ifndef LIBPC_PCVARIABLE_H
+#define LIBPC_PCVARIABLE_H
 
 #define VAR_ABS 0
 #define VAR_INT 1

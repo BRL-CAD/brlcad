@@ -45,8 +45,8 @@
  *
  */
 
-#ifndef PULLBACK_CURVE
-#define PULLBACK_CURVE
+#ifndef LIBBREP_PULLBACKCURVE_H
+#define LIBBREP_PULLBACKCURVE_H
 
 #include "opennurbs.h"
 

@@ -18,8 +18,8 @@
  * information.
  */
 
-#ifndef RENDER_SVC_H
-#define RENDER_SVC_H
+#ifndef LIBOPTICAL_RENDER_SVC_H
+#define LIBOPTICAL_RENDER_SVC_H
 
 #include "common.h"
 
@@ -88,7 +88,7 @@ using namespace OSL_NAMESPACE;
 #endif
 
 
-#endif /* RENDER_SVC_H */
+#endif /* LIBOPTICAL_RENDER_SVC_H */
 
 /*
  * Local Variables:

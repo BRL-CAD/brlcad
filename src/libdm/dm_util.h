@@ -20,8 +20,8 @@
 /** @file libdm/dm_util.h
  */
 
-#ifndef __DM_UTIL_H__
-#define __DM_UTIL_H__
+#ifndef LIBDM_DM_UTIL_H
+#define LIBDM_DM_UTIL_H
 
 #include "common.h"
 
@@ -44,7 +44,7 @@ draw_Line3D(struct dm *dmp, point_t pt1, point_t pt2);
 
 __END_DECLS
 
-#endif /* __DM_UTIL_H__ */
+#endif /* LIBDM_DM_UTIL_H */
 
 /*
  * Local Variables:

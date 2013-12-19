@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef  __SOUP_H__
-#define  __SOUP_H__
+#ifndef  LIBGCV_SOUP_H
+#define  LIBGCV_SOUP_H
 
 #include "common.h"
 
@@ -64,7 +64,7 @@ GCV_EXPORT union tree *evaluate(union tree *tr, const struct rt_tess_tol *ttol, 
 
 __END_DECLS
 
-#endif /* __SOUP_H__ */
+#endif /* LIBGCV_SOUP_H */
 
 /*
  * Local Variables:

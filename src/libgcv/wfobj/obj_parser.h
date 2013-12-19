@@ -22,8 +22,8 @@
  * Interface to Wavefront OBJ Parser.
  *
  */
-#ifndef ARL_OBJ_PARSER_H
-#define ARL_OBJ_PARSER_H
+#ifndef LIBGCV_WFOBJ_OBJ_PARSER_H
+#define LIBGCV_WFOBJ_OBJ_PARSER_H
 
 #include "common.h"
 #include <sys/types.h>

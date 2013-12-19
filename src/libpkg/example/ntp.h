@@ -23,6 +23,9 @@
  *
  */
 
+#ifndef LIBPKG_EXAMPLE_NTP_H
+#define LIBPKG_EXAMPLE_NTP_H
+
 /* simple network transport protocol. connection starts with a HELO,
  * then a variable number of GEOM/ARGS messages, then a CIAO to end.
  */
@@ -33,6 +36,8 @@
 
 /* maximum number of digits on a port number */
 #define MAX_DIGITS      5
+
+#endif /* LIBPKG_EXAMPLE_NTP_H */
 
 /*
  * Local Variables:
