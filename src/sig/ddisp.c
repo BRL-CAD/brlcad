@@ -33,18 +33,12 @@
 
 #define MAXPTS 4096
 
-int Clear = 0;
-int pause_time = 0;
-int mode = 0;
 #define VERT 1
 #define BARS 2
 
-FBIO *fbp;
-int fbsize = 512;
-
 
 static void
-lineout(double *dat, int n)
+lineout(FBIO *fbp, double *dat, int n)
 {
     static int y = 0;
     int i, value;
@@ -71,7 +65,7 @@ lineout(double *dat, int n)
  * +/- 1.0 in, becomes +/- 128 from center Y.
  */
 static void
-disp_inten(double *buf, int size)
+disp_inten(FBIO *fbp, double *buf, int size)
 {
     int x, y;
     RGBpixel color;
@@ -98,7 +92,7 @@ disp_inten(double *buf, int size)
  * +/- 1.0 in, becomes +/- 128 from center Y.
  */
 static void
-disp_bars(double *buf, int size)
+disp_bars(FBIO *fbp, double *buf, int size)
 {
     int x, y;
     RGBpixel color;
@@ -141,9 +135,14 @@ main(int argc, char **argv)
 {
     static const char usage[] = "Usage: ddisp [-v -b -p -c -H] [width (512)] < inputfile\n";
 
+    FBIO *fbp = NULL;
     double buf[MAXPTS];
 
     int n, L;
+    int Clear = 0;
+    int pause_time = 0;
+    int mode = 0;
+    int fbsize = 512;
 
     if (isatty(fileno(stdin))) {
 	bu_exit(1, "%s", usage);
@@ -186,11 +185,11 @@ main(int argc, char **argv)
 	if (Clear)
 	    fb_clear(fbp, PIXEL_NULL);
 	if (mode == VERT)
-	    disp_inten(buf, n);
+	    disp_inten(fbp, buf, n);
 	else if (mode == BARS)
-	    disp_bars(buf, n);
+	    disp_bars(fbp, buf, n);
 	else
-	    lineout(buf, n);
+	    lineout(fbp, buf, n);
 	if (pause_time)
 	    sleep(pause_time);
     }
