@@ -34,26 +34,55 @@
 #include "bu.h"
 #include "vmath.h"
 
-
-#define	BSIZE	2048		/* Must be AT LEAST 2*Points in spectrum */
-double	data[BSIZE];		/* Input buffer */
-
-int	numpeaks;
 struct peaks {
-    int	sample;
-    double	value;
-} peaks[BSIZE];
+    int sample;
+    double value;
+};
 
-static const char usage[] = "Usage: dpeak [window_size (512)] < doubles\n";
 
-void dumpmax(void);
-
-int main(int argc, char **argv)
+static void
+dumpmax(int numpeaks, struct peaks *peaks)
 {
-    int	i, n, L;
-    double	last1, last2;
+    int i, n;
+    struct peaks max;
+    double d;
+    size_t ret;
 
-    if (isatty(fileno(stdin)) /*|| isatty(fileno(stdout))*/ ) {
+#define NUMPEAKS 1
+    for (n = 0; n < NUMPEAKS; n++) {
+	max.value = -1000000;
+	max.sample = -1;
+	for (i = 0; i < numpeaks; i++) {
+	    if (peaks[i].value > max.value) {
+		max = peaks[i];
+		peaks[i].value = -1000000;
+	    }
+	}
+/*
+  printf("Sample %3d: %f\n", max.sample, max.value);
+*/
+	d = max.sample;
+	ret = fwrite(&d, sizeof(d), 1, stdout);
+	if (ret != 1)
+	    perror("fwrite");
+    }
+}
+
+
+int
+main(int argc, char **argv)
+{
+    static const char usage[] = "Usage: dpeak [window_size (512)] < doubles\n";
+
+#define BSIZE 2048		/* Must be AT LEAST 2*Points in spectrum */
+    struct peaks peaks[BSIZE];
+    double data[BSIZE];		/* Input buffer */
+
+    int i, n, L;
+    double last1, last2;
+    int numpeaks;
+
+    if (isatty(fileno(stdin)) /*|| isatty(fileno(stdout))*/) {
 	bu_exit(1, "%s", usage);
     }
 
@@ -81,40 +110,12 @@ int main(int argc, char **argv)
 	    last2 = last1;
 	    last1 = data[i];
 	}
-	dumpmax();
+	dumpmax(numpeaks, peaks);
     }
 
     return 0;
 }
 
-#define	NUMPEAKS 1
-
-void
-dumpmax(void)
-{
-    int	i, n;
-    struct	peaks max;
-    double	d;
-    size_t ret;
-
-    for (n = 0; n < NUMPEAKS; n++) {
-	max.value = -1000000;
-	max.sample = -1;
-	for (i = 0; i < numpeaks; i++) {
-	    if (peaks[i].value > max.value) {
-		max = peaks[i];
-		peaks[i].value = -1000000;
-	    }
-	}
-/*
-  printf("Sample %3d: %f\n", max.sample, max.value);
-*/
-	d = max.sample;
-	ret = fwrite(&d, sizeof(d), 1, stdout);
-	if (ret != 1)
-	    perror("fwrite");
-    }
-}
 
 /*
  * Local Variables:
