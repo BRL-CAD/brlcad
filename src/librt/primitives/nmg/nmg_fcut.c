@@ -1457,7 +1457,7 @@ nmg_face_vu_dot(struct nmg_vu_stuff *vsp, struct loopuse *lu, const struct nmg_r
     vect_t vec;
     fastf_t dot;
     struct vertexuse *vu;
-    int this;
+    int this_vertex;
 
     NMG_CK_RAYSTATE(rs);
     vu = vsp->vu;
@@ -1466,10 +1466,10 @@ nmg_face_vu_dot(struct nmg_vu_stuff *vsp, struct loopuse *lu, const struct nmg_r
     this_eu = nmg_find_eu_with_vu_in_lu(lu, vu);
 
     /* First, consider the edge inbound into this vertex */
-    this = NMG_V_ASSESSMENT_PREV(ass);
-    if (this == NMG_E_ASSESSMENT_ON_REV) {
+    this_vertex = NMG_V_ASSESSMENT_PREV(ass);
+    if (this_vertex == NMG_E_ASSESSMENT_ON_REV) {
 	vsp->min_vu_dot = -1;		/* straight back */
-    } else if (this == NMG_E_ASSESSMENT_ON_FORW) {
+    } else if (this_vertex == NMG_E_ASSESSMENT_ON_FORW) {
 	vsp->min_vu_dot = 1;		/* straight forw */
     } else {
 	othereu = BU_LIST_PPREV_CIRC(edgeuse, this_eu);
@@ -1485,11 +1485,11 @@ nmg_face_vu_dot(struct nmg_vu_stuff *vsp, struct loopuse *lu, const struct nmg_r
     }
 
     /* Second, consider the edge outbound from this vertex (forw) */
-    this = NMG_V_ASSESSMENT_NEXT(ass);
-    if (this == NMG_E_ASSESSMENT_ON_REV) {
+    this_vertex = NMG_V_ASSESSMENT_NEXT(ass);
+    if (this_vertex == NMG_E_ASSESSMENT_ON_REV) {
 	dot = -1;		/* straight back */
 	if (dot < vsp->min_vu_dot) vsp->min_vu_dot = dot;
-    } else if (this == NMG_E_ASSESSMENT_ON_FORW) {
+    } else if (this_vertex == NMG_E_ASSESSMENT_ON_FORW) {
 	dot = 1;		/* straight forw */
 	if (dot < vsp->min_vu_dot) vsp->min_vu_dot = dot;
     } else {
@@ -2489,7 +2489,7 @@ find_best_vu(int start, int end, struct vertex *other_vp, struct nmg_ray_state *
     fastf_t best_angle;
     int best_index;
     int other_is_in_best = -42;
-    int class;
+    int nmg_class;
     int i;
 
     if (RTG.NMG_debug&DEBUG_FCUT)
@@ -2517,12 +2517,12 @@ find_best_vu(int start, int end, struct vertex *other_vp, struct nmg_ray_state *
     } else if (nmg_loop_is_a_crack(best_lu)) {
 	other_is_in_best = 0;
     } else {
-	class = nmg_class_pt_lu_except(other_vp->vg_p->coord, best_lu, (struct edge *)NULL, rs->tol);
+	nmg_class = nmg_class_pt_lu_except(other_vp->vg_p->coord, best_lu, (struct edge *)NULL, rs->tol);
 
-	if ((class == NMG_CLASS_AinB && best_lu->orientation == OT_SAME) ||
-	    (class == NMG_CLASS_AoutB && best_lu->orientation == OT_OPPOSITE))
+	if ((nmg_class == NMG_CLASS_AinB && best_lu->orientation == OT_SAME) ||
+	    (nmg_class == NMG_CLASS_AoutB && best_lu->orientation == OT_OPPOSITE))
 	    other_is_in_best = 1;
-	else if (class == NMG_CLASS_AonBshared) {
+	else if (nmg_class == NMG_CLASS_AonBshared) {
 	    bu_log("find_best_vu: There is a loop to cut, lu=%p\n", (void *)best_lu);
 	    bu_bomb("find_best_vu: There is a loop to cut");
 	} else
@@ -2538,16 +2538,16 @@ find_best_vu(int start, int end, struct vertex *other_vp, struct nmg_ray_state *
 
 	lu = nmg_find_lu_of_vu(rs->vu[i]);
 	if (lu != best_lu) {
-	    class = nmg_classify_lu_lu(lu, best_lu, rs->tol);
+	    nmg_class = nmg_classify_lu_lu(lu, best_lu, rs->tol);
 	    if (RTG.NMG_debug&DEBUG_FCUT) {
 		bu_log("lu %p is %s\n", (void *)lu, nmg_orientation(lu->orientation));
 		bu_log("best_lu %p is %s\n", (void *)best_lu, nmg_orientation(best_lu->orientation));
 		bu_log("lu %p is %s w.r.t lu %p\n",
-		       (void *)lu, nmg_class_name(class), (void *)best_lu);
+		       (void *)lu, nmg_class_name(nmg_class), (void *)best_lu);
 	    }
 
 	    if (other_is_in_best) {
-		if (class == NMG_CLASS_AinB || (class == NMG_CLASS_AonBshared && lu->orientation == OT_SAME)) {
+		if (nmg_class == NMG_CLASS_AinB || (nmg_class == NMG_CLASS_AonBshared && lu->orientation == OT_SAME)) {
 
 		    best_vu = rs->vu[i];
 		    best_lu = lu;
@@ -2559,7 +2559,7 @@ find_best_vu(int start, int end, struct vertex *other_vp, struct nmg_ray_state *
 		    /* other_is_in_best can't change */
 		}
 	    } else {
-		if (class == NMG_CLASS_AoutB || (class == NMG_CLASS_AonBshared && lu->orientation == OT_OPPOSITE)) {
+		if (nmg_class == NMG_CLASS_AoutB || (nmg_class == NMG_CLASS_AonBshared && lu->orientation == OT_OPPOSITE)) {
 		    best_vu = rs->vu[i];
 		    best_lu = lu;
 		    best_index = i;
@@ -2570,13 +2570,13 @@ find_best_vu(int start, int end, struct vertex *other_vp, struct nmg_ray_state *
 		    } else if (nmg_loop_is_a_crack(best_lu)) {
 			other_is_in_best = 0;
 		    } else {
-			class = nmg_class_pt_lu_except(other_vp->vg_p->coord,
+			nmg_class = nmg_class_pt_lu_except(other_vp->vg_p->coord,
 						       best_lu, (struct edge *)NULL, rs->tol);
 
-			if ((class == NMG_CLASS_AinB && best_lu->orientation == OT_SAME) ||
-			    (class == NMG_CLASS_AoutB && best_lu->orientation == OT_OPPOSITE))
+			if ((nmg_class == NMG_CLASS_AinB && best_lu->orientation == OT_SAME) ||
+			    (nmg_class == NMG_CLASS_AoutB && best_lu->orientation == OT_OPPOSITE))
 			    other_is_in_best = 1;
-			else if (class == NMG_CLASS_AonBshared) {
+			else if (nmg_class == NMG_CLASS_AonBshared) {
 			    bu_log("find_best_vu: There is a loop to cut, lu=%p\n",
 				   (void *)best_lu);
 			    bu_bomb("find_best_vu: There is a loop to cut");
@@ -2661,7 +2661,7 @@ nmg_fcut_face(struct nmg_ray_state *rs)
 	struct loopuse *lu1 = (struct loopuse *)NULL;
 	struct loopuse *lu2 = (struct loopuse *)NULL;
 	point_t mid_pt;
-	int class;
+	int nmg_class;
 	int orient1 = 0;
 	int orient2 = 0;
 	int prior_end;
@@ -2721,7 +2721,7 @@ nmg_fcut_face(struct nmg_ray_state *rs)
 	 * Note that ON fu1 is not an option at this point
 	 */
 	VAVERAGE(mid_pt, vu1->v_p->vg_p->coord, vu2->v_p->vg_p->coord)
-	    class = nmg_class_pt_fu_except(mid_pt, rs->fu1, (struct loopuse *)NULL,
+	    nmg_class = nmg_class_pt_fu_except(mid_pt, rs->fu1, (struct loopuse *)NULL,
 					   (void (*)())NULL, (void (*)())NULL, (char *)NULL, 0, 1, rs->tol);
 
 	if (RTG.NMG_debug&DEBUG_FCUT) {
@@ -2729,19 +2729,19 @@ nmg_fcut_face(struct nmg_ray_state *rs)
 		   (void *)vu1, V3ARGS(vu1->v_p->vg_p->coord),
 		   (void *)vu2, V3ARGS(vu2->v_p->vg_p->coord));
 	    bu_log("\tmid_pt = (%g %g %g)\n", V3ARGS(mid_pt));
-	    bu_log("class for mid point is %s\n", nmg_class_name(class));
+	    bu_log("class for mid point is %s\n", nmg_class_name(nmg_class));
 	}
 
-	if (class == NMG_CLASS_AoutB)
+	if (nmg_class == NMG_CLASS_AoutB)
 	    continue;
 
 	/* Check if mid-point is in fu2. If fu2 is disjoint loops, this point
 	 * may be outside fu2, and we don't want to cut fu1 here.
 	 */
-	class = nmg_class_pt_fu_except(mid_pt, rs->fu2, (struct loopuse *)NULL,
+	nmg_class = nmg_class_pt_fu_except(mid_pt, rs->fu2, (struct loopuse *)NULL,
 				       (void (*)())NULL, (void (*)())NULL, (char *)NULL, 0, 0, rs->tol);
 
-	if (class == NMG_CLASS_AoutB)
+	if (nmg_class == NMG_CLASS_AoutB)
 	    continue;
 
 	/* See if there is an edge joining the 2 vertices already, this
