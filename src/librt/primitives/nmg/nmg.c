@@ -2408,7 +2408,7 @@ rt_nmg_export4_internal(struct bu_external *ep, const struct rt_db_internal *ip,
     additional_grans = (tot_size + sizeof(union record)-1) / sizeof(union record);
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = (1 + additional_grans) * sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "nmg external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "nmg external");
     rp = (union record *)ep->ext_buf;
     rp->nmg.N_id = DBID_NMG;
     rp->nmg.N_version = DISK_MODEL_VERSION;
@@ -2515,7 +2515,7 @@ rt_nmg_import5(struct rt_db_internal *ip,
     if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
-    dp = (genptr_t)ep->ext_buf;
+    dp = (unsigned char *)ep->ext_buf;
 
     tol.magic = BN_TOL_MAGIC;
     tol.dist = 0.0005;
@@ -2758,7 +2758,7 @@ rt_nmg_export5(
     tot_size += SIZEOF_NETWORK_LONG*(NMG_N_KINDS + 1); /* one for magic */
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = tot_size;
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "nmg external5");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "nmg external5");
     dp = ep->ext_buf;
     *(uint32_t *)dp = htonl(DISK_MODEL_VERSION);
     dp+=SIZEOF_NETWORK_LONG;
