@@ -558,7 +558,7 @@ again:
 
     /* Validate distance from point to plane */
     NMG_GET_FU_PLANE(n, fu);
-    if ((dist=fabs(DIST_PT_PLANE(vg->coord, n))) > tol->dist) {
+    if ((dist = fabs(DIST_PT_PLANE(vg->coord, n))) > tol->dist) {
 	bu_log("nmg_class_lu_fu() ERROR, point (%g, %g, %g) not on face, dist=%g\n",
 	       V3ARGS(vg->coord), dist);
     }
@@ -640,7 +640,7 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
     fastf_t region_diameter;
     int nmg_class = 0;
     vect_t projection_dir = VINIT_ZERO;
-    int tries=0;
+    int tries = 0;
     struct xray rp;
     fastf_t model_bb_max_width;
     point_t m_min_pt, m_max_pt; /* nmg model min and max points */
@@ -986,7 +986,7 @@ class_eu_vs_s(struct edgeuse *eu, struct shell *s, char **classlist, const struc
     /* sanity check */
     if ((euv_cl == INSIDE && matev_cl == OUTSIDE) ||
 	(euv_cl == OUTSIDE && matev_cl == INSIDE)) {
-	static int num=0;
+	static int num = 0;
 	char buf[128];
 	FILE *fp;
 
@@ -1447,7 +1447,7 @@ class_shared_lu(const struct loopuse *lu, const struct loopuse *lu_ref, const st
     fu_of_lu = nmg_find_fu_of_lu(lu);
 
     for (BU_LIST_FOR(eu_start, edgeuse, &lu->down_hd)) {
-	int use_this_eu=1;
+	int use_this_eu = 1;
 
 	eu_tmp = eu_start->eumate_p->radial_p;
 	while (eu_tmp != eu_start) {
@@ -2102,7 +2102,7 @@ nmg_classify_pt_loop(const point_t pt,
 
     /* Validate distance from point to plane */
     NMG_GET_FU_PLANE(n, fu);
-    if ((dist=fabs(DIST_PT_PLANE(pt, n))) > tol->dist) {
+    if ((dist = fabs(DIST_PT_PLANE(pt, n))) > tol->dist) {
 	bu_log("nmg_classify_pt_l() ERROR, point (%g, %g, %g) not on face, dist=%g\n",
 	       V3ARGS(pt), dist);
 	return -1;
@@ -2136,7 +2136,7 @@ int
 nmg_get_interior_pt(fastf_t *pt, const struct loopuse *lu, const struct bn_tol *tol)
 {
     struct edgeuse *eu;
-    fastf_t point_count=0.0;
+    fastf_t point_count = 0.0;
     double one_over_count;
     point_t test_pt;
     point_t average_pt;
@@ -2176,7 +2176,7 @@ nmg_get_interior_pt(fastf_t *pt, const struct loopuse *lu, const struct bn_tol *
 	return 0;
     }
 
-    for (i=0; i<3; i++) {
+    for (i = 0; i < 3; i++) {
 
 	double tol_mult;
 
@@ -2244,8 +2244,8 @@ nmg_classify_lu_lu(const struct loopuse *lu1, const struct loopuse *lu2, const s
     struct faceuse *fu1, *fu2;
     struct edgeuse *eu;
     int share_edges;
-    int lu1_eu_count=0;
-    int lu2_eu_count=0;
+    int lu1_eu_count = 0;
+    int lu2_eu_count = 0;
 
     NMG_CK_LOOPUSE(lu1);
     NMG_CK_LOOPUSE(lu2);
@@ -2620,7 +2620,7 @@ nmg_classify_s_vs_s(struct shell *s2, struct shell *s, const struct bn_tol *tol)
 
     /* classification returned NMG_CLASS_AonB, so need to try other points */
     nmg_vertex_tabulate(&verts, &s2->l.magic);
-    for (i=0; i<BU_PTBL_END(&verts); i++) {
+    for (i = 0; i < BU_PTBL_END(&verts); i++) {
 	struct vertex *v;
 
 	v = (struct vertex *)BU_PTBL_GET(&verts, i);
