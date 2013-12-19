@@ -10,6 +10,7 @@ include_directories(
 # a new html and xml generation file
 BRLCAD_ADDEXEC(gen-attributes-file gen-attributes-file.cpp "libbu;librt" NO_INSTALL NO_STRICT)
 
+CMAKEFILES(gen-attributes-files.cpp.in)
 # Local Variables:
 # tab-width: 8
 # mode: cmake
