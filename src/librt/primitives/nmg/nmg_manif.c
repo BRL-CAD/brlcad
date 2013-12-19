@@ -274,7 +274,7 @@ nmg_shell_manifolds(struct shell *sp, char *tbl)
     NMG_CK_SHELL(sp);
 
     if (tbl == (char *)NULL)
-	tbl = bu_calloc(sp->r_p->m_p->maxindex, 1, "manifold table");
+	tbl = (char *)bu_calloc(sp->r_p->m_p->maxindex, 1, "manifold table");
 
     /*
      * points in shells form 0-manifold objects.
@@ -423,7 +423,7 @@ nmg_manifolds(struct model *m)
     if (RTG.NMG_debug & DEBUG_MANIF)
 	bu_log("nmg_manifolds(%p)\n", (void *)m);
 
-    tbl = bu_calloc(m->maxindex, 1, "manifold table");
+    tbl = (char *)bu_calloc(m->maxindex, 1, "manifold table");
 
 
     for (BU_LIST_FOR(rp, nmgregion, &m->r_hd)) {
