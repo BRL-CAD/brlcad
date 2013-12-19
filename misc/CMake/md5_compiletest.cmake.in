@@ -43,14 +43,14 @@ set(MD5_TEST_PASSED 0)
 while(NOT MD5_TEST_PASSED)
   foreach(testfile @WATCHED_FILES@)
     string(MD5 md5_name "${testfile}")
-    MD5(${testfile} ${md5name}_one)
+    MD5("${testfile}" ${md5name}_one)
   endforeach(testfile @WATCHED_FILES@)
 
   execute_process(COMMAND "@CMAKE_BINARY_DIR@/CMakeTmp/sleep.bin")
 
   foreach(testfile @WATCHED_FILES@)
     string(MD5 md5_name "${testfile}")
-    MD5(${testfile} ${md5name}_two)
+    MD5("${testfile}" ${md5name}_two)
   endforeach(testfile @WATCHED_FILES@)
 
   set(MD5_TEST_PASSED 1)

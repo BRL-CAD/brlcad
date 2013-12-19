@@ -72,7 +72,8 @@ macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
   # subdirectories to avoid multiple build targets trying to run exp2cxx
   # simultaneously to generate identical inputs (unknown if that is problematic)
   # and to add extra robustness for parallel build target ordering.
-  set(WATCHED_FILES "${EXPRESS_OUTPUT}")
+  set(WATCHED_FILES ${EXPRESS_OUTPUT})
+  string(REPLACE " " "\\ " WATCHED_FILES "${WATCHED_FILES}")
   set(STAMP_OUT_FILE ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done)
   configure_file(${BRLCAD_CMAKE_DIR}/md5_compiletest.cmake.in
     ${SCHEMA_OUT_DIR}/md5_${SCHEMA_NAME}_test.cmake @ONLY)
