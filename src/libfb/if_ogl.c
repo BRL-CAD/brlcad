@@ -995,7 +995,7 @@ fb_ogl_choose_visual(FBIO *ifp)
     while (1) {
 
 	/* search for all visuals matching current criteria */
-	for (i=0, j=0, vip=vibase; i<num; i++, vip++) {
+	for (i = 0, j = 0, vip=vibase; i < num; i++, vip++) {
 	    /* requirements */
 	    glXGetConfig(OGL(ifp)->dispp, vip, GLX_USE_GL, &use);
 	    if (!use)
@@ -1014,10 +1014,10 @@ fb_ogl_choose_visual(FBIO *ifp)
 	     red, green, blue masks:    0xff0000, 0xff00, 0xff
 	     significant bits in color specification:    8 bits
 	    */
-	    if ((m_hard_cmap) && (vip->class!=DirectColor)) {
+	    if ((m_hard_cmap) && (vip->class != DirectColor)) {
 		continue;
 	    }
-	    if ((m_hard_cmap) && (vip->colormap_size<256)) {
+	    if ((m_hard_cmap) && (vip->colormap_size < 256)) {
 		continue;
 	    }
 	    glXGetConfig(OGL(ifp)->dispp, vip, GLX_DOUBLEBUFFER, &dbfr);
@@ -1036,9 +1036,9 @@ fb_ogl_choose_visual(FBIO *ifp)
 
 	/* from list of acceptable visuals,
 	 * choose the visual with the greatest depth */
-	if (j>=1) {
+	if (j >= 1) {
 	    maxvip = vibase + good[0];
-	    for (i=1; i<j; i++) {
+	    for (i = 1; i < j; i++) {
 		vip = vibase + good[i];
 		if (vip->depth > maxvip->depth) {
 		    maxvip = vip;
@@ -1088,7 +1088,7 @@ is_linear_cmap(register FBIO *ifp)
 {
     register int i;
 
-    for (i=0; i<256; i++) {
+    for (i = 0; i < 256; i++) {
 	if (CMR(ifp)[i] != i) return 0;
 	if (CMG(ifp)[i] != i) return 0;
 	if (CMB(ifp)[i] != i) return 0;
@@ -1703,10 +1703,10 @@ ogl_clear(FBIO *ifp, unsigned char *pp)
     }
 
     /* Flood rectangle in shared memory */
-    for (y=0; y < ifp->if_height; y++) {
+    for (y = 0; y < ifp->if_height; y++) {
 	oglp = (struct ogl_pixel *)&ifp->if_mem[
 	    (y*SGI(ifp)->mi_memwidth+0)*sizeof(struct ogl_pixel) ];
-	for (cnt=ifp->if_width-1; cnt >= 0; cnt--) {
+	for (cnt = ifp->if_width-1; cnt >= 0; cnt--) {
 	    *oglp++ = bg;	/* struct copy */
 	}
     }
