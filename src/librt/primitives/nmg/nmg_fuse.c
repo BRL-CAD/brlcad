@@ -2464,7 +2464,7 @@ nmg_is_crack_outie(const struct edgeuse *eu, const struct bn_tol *tol)
     const struct edge *e;
     point_t midpt;
     const fastf_t *a, *b;
-    int class;
+    int nmg_class;
 
     NMG_CK_EDGEUSE(eu);
     BN_CK_TOL(tol);
@@ -2508,23 +2508,23 @@ nmg_is_crack_outie(const struct edgeuse *eu, const struct bn_tol *tol)
 	    tmp_tol.dist = SMALL_FASTF;
 	    tmp_tol.dist_sq = SMALL_FASTF * SMALL_FASTF;
 	}
-	class = nmg_class_pt_lu_except(midpt, lu, e, &tmp_tol);
+	nmg_class = nmg_class_pt_lu_except(midpt, lu, e, &tmp_tol);
     }
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_is_crack_outie(eu=%p) lu=%p, e=%p, class=%s\n",
-	       (void *)eu, (void *)lu, (void *)e, nmg_class_name(class));
+	bu_log("nmg_is_crack_outie(eu=%p) lu=%p, e=%p, nmg_class=%s\n",
+	       (void *)eu, (void *)lu, (void *)e, nmg_class_name(nmg_class));
     }
 
     if (lu->orientation == OT_SAME) {
-	if (class == NMG_CLASS_AinB || class == NMG_CLASS_AonBshared)
+	if (nmg_class == NMG_CLASS_AinB || nmg_class == NMG_CLASS_AonBshared)
 	    return 0;		/* an "innie" */
-	if (class == NMG_CLASS_AoutB)
+	if (nmg_class == NMG_CLASS_AoutB)
 	    return 1;		/* an "outie" */
     } else {
 	/* It's a hole loop, things work backwards. */
-	if (class == NMG_CLASS_AinB || class == NMG_CLASS_AonBshared)
+	if (nmg_class == NMG_CLASS_AinB || nmg_class == NMG_CLASS_AonBshared)
 	    return 1;		/* an "outie" */
-	if (class == NMG_CLASS_AoutB)
+	if (nmg_class == NMG_CLASS_AoutB)
 	    return 0;		/* an "innie" */
     }
 
@@ -2532,7 +2532,7 @@ nmg_is_crack_outie(const struct edgeuse *eu, const struct bn_tol *tol)
     bu_log("nmg_is_crack_outie(eu=%p), lu=%p(%s)\n  midpt_class=%s, midpt=(%g, %g, %g)\n",
 	   (void *)eu,
 	   (void *)lu, nmg_orientation(lu->orientation),
-	   nmg_class_name(class),
+	   nmg_class_name(nmg_class),
 	   V3ARGS(midpt));
     nmg_pr_lu_briefly(lu, 0);
     bu_bomb("nmg_is_crack_outie() got unexpected midpt classification from nmg_class_pt_lu_except()\n");
