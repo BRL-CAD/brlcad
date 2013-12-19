@@ -179,6 +179,10 @@ foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
   set(CMAKE_EXE_LINKER_FLAGS_${CFG_TYPE_UPPER} "${CMAKE_EXE_LINKER_FLAGS_${CFG_TYPE_UPPER}}" CACHE STRING "Exe linker flags used for ${CFG_TYPE} builds" FORCE)
 endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
 
+# TODO - figure out if this should be integrated above
+CHECK_COMPILER_FLAG(C "Wunused-const-variable" HAVE_C_WUNUSED_CONST_VARIABLE)
+
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake
