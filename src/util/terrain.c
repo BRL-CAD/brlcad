@@ -562,21 +562,15 @@ func_lunar(unsigned short *buf)
 }
 
 
-/* function to call to generate the terrain.  Default noise pattern is fBm */
-void (*terrain_func)(unsigned short *);
-
 /*
  * P A R S E _ A R G S --- Parse through command line flags
  */
 int
-parse_args(int ac, char **av)
+parse_args(int ac, char **av, void (*terrain_func)(unsigned short *))
 {
     int c;
     char *strrchr(const char *, int);
     double v;
-
-    /* set default terrain function */
-    terrain_func = func_fbm;
 
     if (! (progname=strrchr(*av, '/')))
 	progname = *av;
@@ -689,7 +683,13 @@ main(int ac, char **av)
     int count;
     size_t ret;
 
-    arg_count = parse_args(ac, av);
+    /* function to call to generate the terrain.  Default noise pattern is fBm */
+    void (*terrain_func)(unsigned short *);
+
+    /* set default terrain function */
+    terrain_func = func_fbm;
+
+    arg_count = parse_args(ac, av, terrain_func );
 
     if (arg_count + 1 < ac)
 	usage("Excess arguments on cmd line\n");
