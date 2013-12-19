@@ -672,11 +672,11 @@ nmg_assoc_void_shells(const struct nmgregion *r, struct bu_ptbl *shells, const s
 		    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 			continue;
 		    for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
-			int class;
+			int nmg_class;
 
-			class = nmg_class_pt_s(eu->vu_p->v_p->vg_p->coord, outer_shell, 0, ttol);
+			nmg_class = nmg_class_pt_s(eu->vu_p->v_p->vg_p->coord, outer_shell, 0, ttol);
 
-			if (class == NMG_CLASS_AoutB) {
+			if (nmg_class == NMG_CLASS_AoutB) {
 			    breakout = 1;
 			    not_in_this_shell = 1;
 			    break;
@@ -3677,15 +3677,15 @@ nmg_fix_normals(struct shell *s_orig, const struct bn_tol *tol)
 	int stop = 0;
 
 	for (BU_LIST_FOR (s2, shell, &tmp_r->s_hd)) {
-	    int class;
+	    int nmg_class;
 
 	    if (s1 == s2)
 		continue;
 
-	    class = nmg_classify_s_vs_s(s1, s2, tol);
-	    if (class == NMG_CLASS_AinB)
+	    nmg_class = nmg_classify_s_vs_s(s1, s2, tol);
+	    if (nmg_class == NMG_CLASS_AinB)
 		inner_count++;
-	    else if (class == NMG_CLASS_Unknown) {
+	    else if (nmg_class == NMG_CLASS_Unknown) {
 		bu_log("nmg_fix_normals: nmg_classify_s_vs_s() failed for shells %p and %p\n",
 		       (void *)s1, (void *)s2);
 		bu_log("   Continuing anyway (shell is likely to have incorrectly oriented normals)\n");
@@ -9932,7 +9932,7 @@ nmg_lu_is_convex(struct loopuse *lu, const struct bn_tol *tol)
 	return 1;		/* triangle */
 
     while (eu3 != eu_start) {
-	int class;
+	int nmg_class;
 	struct vertex_g *vg1, *vg3;
 	point_t mid_pt;
 
@@ -9944,10 +9944,10 @@ nmg_lu_is_convex(struct loopuse *lu, const struct bn_tol *tol)
 
 	VBLEND2(mid_pt, 0.5, vg1->coord, 0.5, vg3->coord);
 
-	class = nmg_class_pt_lu_except(mid_pt, lu, NULL, tol);
+	nmg_class = nmg_class_pt_lu_except(mid_pt, lu, NULL, tol);
 
-	if ((class == NMG_CLASS_AoutB && lu->orientation == OT_SAME) ||
-	    (class == NMG_CLASS_AinB  && lu->orientation == OT_OPPOSITE))
+	if ((nmg_class == NMG_CLASS_AoutB && lu->orientation == OT_SAME) ||
+	    (nmg_class == NMG_CLASS_AinB  && lu->orientation == OT_OPPOSITE))
 	    return 0;
 	else {
 	    eu1 = BU_LIST_PNEXT_CIRC(edgeuse, &eu1->l);
