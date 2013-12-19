@@ -324,7 +324,7 @@ rt_comb_export5(
 
     BU_EXTERNAL_INIT(ep);
     ep->ext_nbytes = need;
-    ep->ext_buf = bu_calloc(1, need, "rt_comb_export5 ext_buf");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, need, "rt_comb_export5 ext_buf");
 
     /* Build combination's on-disk header section */
     cp = (unsigned char *)ep->ext_buf;
