@@ -34,8 +34,8 @@
 #include "icv.h"
 
 
-/* c99 doesn't declare these */
-#if !defined(_WIN32) || defined(__CYGWIN__)
+/* c99 doesn't declare these, but C++ does */
+#if (!defined(_WIN32) || defined(__CYGWIN__)) && !defined(__cplusplus)
 extern FILE *fdopen(int, const char *);
 #endif
 
@@ -188,7 +188,7 @@ icv_write(icv_image_t *bif, const char *filename, ICV_IMAGE_FORMAT format)
     char buf[BUFSIZ] = {0};
 
     if (format == ICV_IMAGE_AUTO) {
-	format = icv_guess_file_format(filename, buf);
+	format = (ICV_IMAGE_FORMAT)icv_guess_file_format(filename, buf);
     }
 
     ICV_IMAGE_VAL_INT(bif);
@@ -227,17 +227,17 @@ icv_writeline(icv_image_t *bif, int y, void *data, ICV_DATA type)
 
     ICV_IMAGE_VAL_INT(bif);
 
-    if(y > bif->height || y < 0)
+    if (y > bif->height || y < 0)
         return -1;
 
-    if(data == NULL)
+    if (data == NULL)
         return -1;
 
     width_size = (size_t) bif->width*bif->channels;
     dst = bif->data + width_size*y;
 
     if (type == ICV_DATA_UCHAR) {
-	p = data;
+	p = (unsigned char *)data;
 	for (; width_size > 0; width_size--) {
 		*dst = ICV_CONV_8BIT(*p);
 		p++;
@@ -258,13 +258,13 @@ icv_writepixel(icv_image_t *bif, int x, int y, double *data)
 
     ICV_IMAGE_VAL_INT(bif);
 
-    if(x > bif->width || x < 0)
+    if (x > bif->width || x < 0)
         return -1;
 
-    if(y > bif->height || y < 0)
+    if (y > bif->height || y < 0)
         return -1;
 
-    if(data == NULL)
+    if (data == NULL)
         return -1;
 
     dst = bif->data + (y*bif->width + x)*bif->channels;
@@ -313,7 +313,7 @@ icv_zero(icv_image_t *bif)
 
     data = bif->data;
     size = bif->width * bif->height * bif->channels;
-    for (i=0; i< size; i++)
+    for (i = 0; i < size; i++)
 	*data++ = 0;
 
     return bif;
