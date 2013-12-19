@@ -1387,8 +1387,8 @@ rt_vol_centroid(point_t *cent, const struct rt_db_internal *ip)
 /*
  * R T _ V O L _ S U R F _ A R E A
  *
- * Computes the surface area of a volume by tranforming each of the vertices by
- * the matrix and then summing the area of the faces of each cell neccessary.
+ * Computes the surface area of a volume by transforming each of the vertices by
+ * the matrix and then summing the area of the faces of each cell necessary.
  * The vertices are numbered from left to right, front to back, bottom to top.
  */
 void
