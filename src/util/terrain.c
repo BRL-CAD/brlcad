@@ -587,34 +587,57 @@ parse_args(int ac, char **av)
     bu_opterr = 0;
 
     /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac, av, options)) != -1) {
+    while ((c = bu_getopt(ac, av, options)) != -1) {
 	switch (c) {
-	    case 'v': debug = !debug; break;
-	    case 'c': do_convert = !do_convert; break;
-	    case 'w': if ((c=atoi(bu_optarg)) > 0) xdim = c;
+	    case 'v':
+		debug = !debug;
 		break;
-	    case 'n': if ((c=atoi(bu_optarg)) > 0) ydim = c;
+	    case 'c':
+		do_convert = !do_convert;
 		break;
-	    case 'q' : quiet = !quiet; break;
-	    case 's': if ((c=atoi(bu_optarg)) > 0) xdim = ydim = c;
+	    case 'w':
+		if ((c = atoi(bu_optarg)) > 0)
+		    xdim = c;
 		break;
-	    case 'L': if ((v=atof(bu_optarg)) > 0.0) fbm_lacunarity = v;
+	    case 'n':
+		if ((c = atoi(bu_optarg)) > 0)
+		    ydim = c;
 		break;
-	    case 'H': if ((v=atof(bu_optarg)) > 0.0) fbm_h = v;
+	    case 'q' :
+		quiet = !quiet;
 		break;
-	    case 'O': if ((v=atof(bu_optarg)) > 0.0) fbm_octaves = v;
+	    case 's':
+		if ((c = atoi(bu_optarg)) > 0)
+		    xdim = ydim = c;
+		break;
+	    case 'L':
+		if ((v = atof(bu_optarg)) > 0.0)
+		    fbm_lacunarity = v;
+		break;
+	    case 'H':
+		if ((v = atof(bu_optarg)) > 0.0)
+		    fbm_h = v;
+		break;
+	    case 'O':
+		if ((v = atof(bu_optarg)) > 0.0)
+		    fbm_octaves = v;
 		break;
 
-	    case 'S': if ((v=atof(bu_optarg)) > 0.0) { VSETALL(fbm_vscale, v); }
+	    case 'S':
+		if ((v = atof(bu_optarg)) > 0.0)
+		    VSETALL(fbm_vscale, v);
 		break;
 
-	    case 'V': sscanf(bu_optarg, "%lg, %lg, %lg",
-			     &fbm_vscale[0], &fbm_vscale[1], &fbm_vscale[2]);
+	    case 'V':
+		sscanf(bu_optarg, "%lg, %lg, %lg",
+		       &fbm_vscale[0], &fbm_vscale[1], &fbm_vscale[2]);
 		break;
-	    case 'D': sscanf(bu_optarg, "%lg, %lg, %lg",
-			     &fbm_delta[0], &fbm_delta[1], &fbm_delta[2]);
+	    case 'D':
+		sscanf(bu_optarg, "%lg, %lg, %lg",
+		       &fbm_delta[0], &fbm_delta[1], &fbm_delta[2]);
 		break;
-	    case 'o': fbm_offset = atof(bu_optarg);
+	    case 'o':
+		fbm_offset = atof(bu_optarg);
 		break;
 	    case 'f':
 		switch (*bu_optarg) {
@@ -642,7 +665,8 @@ parse_args(int ac, char **av)
 		break;
 	    case '?'	:
 	    case 'h'	:
-	    default		: usage("Bad or help flag specified\n"); break;
+	    default		: usage("Bad or help flag specified\n");
+		break;
 	}
     }
 
@@ -653,8 +677,8 @@ parse_args(int ac, char **av)
 /*
  * M A I N
  *
- * Call parse_args to handle command line arguments, then
- * produce the noise field selected.  Write out binary in network order.
+ * Call parse_args to handle command line arguments, then produce the
+ * noise field selected.  Write out binary in network order.
  */
 int
 main(int ac, char **av)
@@ -667,18 +691,21 @@ main(int ac, char **av)
 
     arg_count = parse_args(ac, av);
 
-    if (arg_count+1 < ac) usage("Excess arguments on cmd line\n");
+    if (arg_count + 1 < ac)
+	usage("Excess arguments on cmd line\n");
 
-    if (isatty(fileno(stdout))) usage("Redirect standard output\n");
+    if (isatty(fileno(stdout)))
+	usage("Redirect standard output\n");
 
     if (arg_count < ac)
 	fprintf(stderr, "Excess command line arguments ignored\n");
 
-    count = xdim*ydim;
+    count = xdim * ydim;
     buf = (unsigned short *)bu_malloc(sizeof(*buf) * count, "buf");
 
     if (! terrain_func) {
-	if (debug) bu_log("terrain func not specified\n");
+	if (debug)
+	    bu_log("terrain func not specified\n");
 	return 10;
     }
 
