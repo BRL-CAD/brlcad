@@ -25,8 +25,8 @@
  *
  */
 
-#ifndef __FBIO_H__
-#define __FBIO_H__
+#ifndef FBIO_H
+#define FBIO_H
 
 #include "common.h"
 
@@ -174,7 +174,7 @@ FB_EXPORT extern FBIO tk_interface;
 FB_EXPORT extern FBIO debug_interface, disk_interface, stk_interface;
 FB_EXPORT extern FBIO memory_interface, null_interface;
 
-#endif  /* __FBIO_H__ */
+#endif  /* FBIO_H */
 /** @} */
 /*
  * Local Variables:

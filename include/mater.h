@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef __MATER_H__
-#define __MATER_H__
+#ifndef MATER_H
+#define MATER_H
 
 #include "common.h"
 
@@ -79,7 +79,7 @@ RT_EXPORT extern void rt_color_free();
 
 __END_DECLS
 
-#endif /* __MATER_H__ */
+#endif /* MATER_H */
 
 /** @} */
 /*

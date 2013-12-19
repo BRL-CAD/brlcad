@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef __DM_PLOT__
-#define __DM_PLOT__
+#ifndef DM_PLOT_H
+#define DM_PLOT_H
 
 /*
  * Display coordinate conversion:
@@ -51,7 +51,7 @@ struct plot_vars {
 
 extern struct plot_vars head_plot_vars;
 
-#endif /* __DM_PLOT__ */
+#endif /* DM_PLOT_H */
 
 /** @} */
 /*

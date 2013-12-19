@@ -27,8 +27,8 @@
  *
  */
 
-#ifndef __DG_H__
-#define __DG_H__
+#ifndef DG_H
+#define DG_H
 
 #include "common.h"
 
@@ -250,7 +250,7 @@ GED_EXPORT extern int vdraw_cmd_tcl(struct dg_obj *dgop,
 
 __END_DECLS
 
-#endif /* __DG_H__ */
+#endif /* DG_H */
 
 /** @} */
 

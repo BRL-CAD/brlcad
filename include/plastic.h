@@ -22,8 +22,8 @@
 /** @file plastic.h
  *
  */
-#ifndef plastic_h
-#define plastic_h
+#ifndef PLASTIC_H
+#define PLASTIC_H
 
 #define PL_NULL ((struct phong_specific *)0)
 #define PL_O(m) offsetof(struct phong_specific, m)

@@ -30,8 +30,8 @@
  *
  */
 
-#ifndef __NMG_H__
-#define __NMG_H__
+#ifndef NMG_H
+#define NMG_H
 
 #include "common.h"
 
@@ -796,7 +796,7 @@ struct nmg_visit_handlers {
     void (*vis_vertex_g)(uint32_t *, genptr_t, int);
 };
 
-#endif /* __NMG_H__ */
+#endif /* NMG_H */
 
 /** @} */
 /*

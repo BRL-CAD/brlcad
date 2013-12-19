@@ -29,8 +29,8 @@
  *
  */
 
-#ifndef __TCLCAD_H__
-#define __TCLCAD_H__
+#ifndef TCLCAD_H
+#define TCLCAD_H
 
 #include "common.h"
 #include "cmd.h"
@@ -171,7 +171,7 @@ BU_EXPORT extern void tclcad_register_cmds(Tcl_Interp *interp, struct bu_cmdtab 
 
 __END_DECLS
 
-#endif /* __TCLCAD_H__ */
+#endif /* TCLCAD_H */
 /** @} */
 /*
  * Local Variables:

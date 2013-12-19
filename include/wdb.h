@@ -1034,7 +1034,7 @@ WDB_EXPORT extern int make_hole_in_prepped_regions(struct rt_wdb *wdbp,
 
 __END_DECLS
 
-#endif /* __WDB_H__ */
+#endif /* WDB_H */
 
 /** @} */
 

@@ -22,8 +22,8 @@
  *
  */
 
-#ifndef __VECTOR_FPU
-#define __VECTOR_FPU
+#ifndef VECTOR_FPU_H
+#define VECTOR_FPU_H
 
 #include "common.h"
 

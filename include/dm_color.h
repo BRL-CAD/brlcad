@@ -23,12 +23,12 @@
  *
  */
 
-#ifndef __DM_COLOR__
-#define __DM_COLOR__
+#ifndef DM_COLOR_H
+#define DM_COLOR_H
 
 #warning "The dm_color.h header is deprecated -- use dm.h instead"
 
-#endif /* __DM_COLOR__ */
+#endif /* DM_COLOR_H */
 
 /** @} */
 /*

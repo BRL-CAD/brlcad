@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef __DM_GLX_H__
-#define __DM_GLX_H__
+#ifndef DM_GLX_H
+#define DM_GLX_H
 
 #include "common.h"
 
@@ -73,7 +73,7 @@ extern struct glx_vars head_glx_vars;
 
 __END_DECLS
 
-#endif /* __DM_GLX_H__ */
+#endif /* DM_GLX_H */
 
 /** @} */
 /*

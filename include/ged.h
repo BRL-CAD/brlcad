@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef __GED_H__
-#define __GED_H__
+#ifndef GED_H
+#define GED_H
 
 #include "common.h"
 
@@ -2090,7 +2090,7 @@ GED_EXPORT extern int ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA,
 
 __END_DECLS
 
-#endif /* __GED_H__ */
+#endif /* GED_H */
 
 /*
  * Local Variables:

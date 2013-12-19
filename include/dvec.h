@@ -22,8 +22,8 @@
  *
  */
 
-#ifndef __DVEC_H__
-#define __DVEC_H__
+#ifndef DVEC_H
+#define DVEC_H
 
 #include "common.h"
 
@@ -197,7 +197,7 @@ extern "C++" {
     }
 }
 
-#endif /* __DVEC_H__ */
+#endif /* DVEC_H */
 
 /*
  * Local Variables:

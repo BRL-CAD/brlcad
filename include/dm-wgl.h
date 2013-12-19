@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef __DM_WGL__
-#define __DM_WGL__
+#ifndef DM_WGL_H
+#define DM_WGL_H
 
 #include "common.h"
 
@@ -75,7 +75,7 @@ extern void wgl_fogHint();
 
 __END_DECLS
 
-#endif /* __DM_WGL__ */
+#endif /* DM_WGL_H */
 
 /** @} */
 /*

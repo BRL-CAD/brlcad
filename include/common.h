@@ -33,8 +33,8 @@
  *
  */
 
-#ifndef __COMMON_H__
-#define __COMMON_H__
+#ifndef COMMON_H
+#define COMMON_H
 
 /* include the venerable config.h file.  use a pregenerated one for
  * windows when we cannot autogenerate it easily. do not include
@@ -344,7 +344,7 @@ typedef ptrdiff_t ssize_t;
 #define HAVE_CLANG_DIAG_PRAGMAS \
     (defined(__clang__) && (__clang_major__ > 2 || (__clang_major__ == 2 && __clang_minor__ >= 8)))
 
-#endif  /* __COMMON_H__ */
+#endif  /* COMMON_H */
 /** @} */
 /*
  * Local Variables:

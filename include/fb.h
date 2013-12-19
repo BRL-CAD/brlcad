@@ -25,8 +25,8 @@
  *
  */
 
-#ifndef __FB_H__
-#define __FB_H__
+#ifndef FB_H
+#define FB_H
 
 #include "common.h"
 
@@ -218,7 +218,7 @@ FB_EXPORT extern const char *fb_version(void);
 
 __END_DECLS
 
-#endif /* __FB_H__ */
+#endif /* FB_H */
 
 /** @} */
 /*

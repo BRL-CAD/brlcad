@@ -27,8 +27,8 @@
  *
  */
 
-#ifndef __RTSERVER_H__
-#define __RTSERVER_H__
+#ifndef RTSERVER_H
+#define RTSERVER_H
 
 #include "common.h"
 
@@ -63,7 +63,7 @@ extern void rts_shootray( struct application *ap );
 
 __END_DECLS
 
-#endif /* __RTSERVER_H__ */
+#endif /* RTSERVER_H */
 
 /** @} */
 /*

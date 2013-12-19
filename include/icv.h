@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef __ICV_H__
-#define __ICV_H__
+#ifndef ICV_H
+#define ICV_H
 
 #include "common.h"
 
@@ -726,7 +726,7 @@ ICV_EXPORT extern int icv_rot(int argv, char **argc);
 
 __END_DECLS
 
-#endif /* __ICV_H__ */
+#endif /* ICV_H */
 
 /*
  * Local Variables:

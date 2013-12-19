@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef __PHOTONMAP_H__
-#define __PHOTONMAP_H__
+#ifndef PHOTONMAP_H
+#define PHOTONMAP_H
 
 #include "common.h"
 
@@ -153,7 +153,7 @@ OPTICAL_EXPORT extern void IrradianceEstimate(struct application *ap,
 
 __END_DECLS
 
-#endif /* __PHOTONMAP_H__ */
+#endif /* PHOTONMAP_H */
 
 /** @} */
 /*

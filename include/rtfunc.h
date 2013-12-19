@@ -30,8 +30,8 @@
  *
  */
 
-#ifndef __RTFUNC_H__
-#define __RTFUNC_H__
+#ifndef RTFUNC_H
+#define RTFUNC_H
 
 #include "common.h"
 
@@ -162,7 +162,7 @@ RT_EXPORT extern int rt_obj_mirror(struct rt_db_internal *ip, const plane_t *pla
 
 __END_DECLS
 
-#endif  /* __RTFUNC_H__ */
+#endif  /* RTFUNC_H */
 
 /** @} */
 

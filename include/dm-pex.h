@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef __DM_PEX_H__
-#define __DM_PEX_H__
+#ifndef DM_PEX_H
+#define DM_PEX_H
 
 #include "common.h"
 
@@ -83,7 +83,7 @@ extern struct pex_vars head_pex_vars;
 
 __END_DECLS
 
-#endif /* __DM_PEX_H__ */
+#endif /* DM_PEX_H */
 
 /** @} */
 /*

@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef __ANALYZE_H__
-#define __ANALYZE_H__
+#ifndef ANALYZE_H
+#define ANALYZE_H
 
 #include "common.h"
 
@@ -128,7 +128,7 @@ voxelize(struct rt_i *rtip, fastf_t voxelSize[3], int levelOfDetail, void (*crea
 
 __END_DECLS
 
-#endif /* __ANALYZE_H__ */
+#endif /* ANALYZE_H */
 
 /*
  * Local Variables:

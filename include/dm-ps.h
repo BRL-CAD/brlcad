@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef __DM_PS_H__
-#define __DM_PS_H__
+#ifndef DM_PS_H
+#define DM_PS_H
 
 /*
  * Display coordinate conversion:
@@ -52,7 +52,7 @@ struct ps_vars {
 
 extern struct ps_vars head_ps_vars;
 
-#endif /* __DM_PS_H__ */
+#endif /* DM_PS_H */
 
 /** @} */
 /*

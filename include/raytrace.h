@@ -32,8 +32,8 @@
  *
  */
 
-#ifndef __RAYTRACE_H__
-#define __RAYTRACE_H__
+#ifndef RAYTRACE_H
+#define RAYTRACE_H
 
 #include "common.h"
 
@@ -6368,7 +6368,7 @@ RT_EXPORT extern struct hit *rt_htbl_get(struct rt_htbl *b);
  *			N M G Support Function Declarations		*
  *									*
  ************************************************************************/
-#if defined(__NMG_H__)
+#if defined(NMG_H)
 
 /* From file nmg_mk.c */
 /*	MAKE routines */
@@ -8417,7 +8417,7 @@ RT_EXPORT extern const char *rt_version(void);
 
 __END_DECLS
 
-#endif /* __RAYTRACE_H__ */
+#endif /* RAYTRACE_H */
 /** @} */
 /*
  * Local Variables:

@@ -25,8 +25,8 @@
  *
  */
 
-#ifndef __OBJ_H__
-#define __OBJ_H__
+#ifndef OBJ_H
+#define OBJ_H
 
 #include "common.h"
 
@@ -92,7 +92,7 @@ GED_EXPORT extern int wdb_rt_gettrees_cmd(struct rt_wdb *wdbp, int argc, const c
 
 __END_DECLS
 
-#endif /* __GED_H__ */
+#endif /* OBJ_H */
 
 /*
  * Local Variables:

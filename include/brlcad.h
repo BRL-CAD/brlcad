@@ -29,8 +29,8 @@
  *
  */
 
-#ifndef __BRLCAD_H__
-#define __BRLCAD_H__
+#ifndef BRLCAD_H
+#define BRLCAD_H
 
 #include "common.h"
 
@@ -71,7 +71,7 @@
  */
 #include "rtfunc.h"
 
-#endif  /* __BRLCAD_H__ */
+#endif  /* BRLCAD_H */
 /** @} */
 /*
  * Local Variables:

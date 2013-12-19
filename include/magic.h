@@ -49,8 +49,8 @@
  *
  */
 
-#ifndef __MAGIC_H__
-#define __MAGIC_H__
+#ifndef MAGIC_H
+#define MAGIC_H
 
 #include "common.h"
 
@@ -216,7 +216,7 @@
 #define ICV_IMAGE_MAGIC		0x6269666d /**< bifm */
 
 
-#endif /* __MAGIC_H__ */
+#endif /* MAGIC_H */
 
 /** @} */
 

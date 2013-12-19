@@ -31,8 +31,8 @@
  *
  */
 
-#ifndef __BIO_H__
-#define __BIO_H__
+#ifndef BIO_H
+#define BIO_H
 
 /* Do not rely on common.h's HAVE_* defines.  Do not include the
  * common.h header.  This is a stand-alone portability header intended
@@ -87,7 +87,7 @@
 #   define S_ISDIR(_st_mode) (((_st_mode) & S_IFMT) == S_IFDIR)
 #endif
 
-#endif /* __BIO_H__ */
+#endif /* BIO_H */
 
 /*
  * Local Variables:

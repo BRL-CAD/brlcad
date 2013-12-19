@@ -30,8 +30,8 @@
  *
  */
 
-#ifndef __RTGEOM_H__
-#define __RTGEOM_H__
+#ifndef RTGEOM_H
+#define RTGEOM_H
 
 #include "common.h"
 
@@ -825,7 +825,7 @@ struct rt_hrt_internal
 
 __END_DECLS
 
-#endif /* __RTGEOM_H__ */
+#endif /* RTGEOM_H */
 
 /** @} */
 /*

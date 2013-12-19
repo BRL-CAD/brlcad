@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef __DM_X__
-#define __DM_X__
+#ifndef DM_X_H
+#define DM_X_H
 
 #include "common.h"
 
@@ -43,7 +43,7 @@ struct x_vars {
     unsigned long pixels[NUM_PIXELS];
 };
 
-#endif /* __DM_X__ */
+#endif /* DM_X_H */
 /** @} */
 /*
  * Local Variables:

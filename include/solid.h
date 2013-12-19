@@ -25,8 +25,8 @@
  *
  */
 
-#ifndef __SOLID_H__
-#define __SOLID_H__
+#ifndef SOLID_H
+#define SOLID_H
 
 #include "bu.h"
 #include "raytrace.h"
@@ -100,7 +100,7 @@ struct solid  {
 	BU_LIST_NOT_HEAD(p1, hp);\
 	(p1)=BU_LIST_PNEXT(structure, p1)
 
-#endif /* __SOLID_H__ */
+#endif /* SOLID_H */
 
 /** @} */
 /*

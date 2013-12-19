@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef __DM_H__
-#define __DM_H__
+#ifndef DM_H
+#define DM_H
 
 #include "common.h"
 
@@ -457,7 +457,7 @@ __END_DECLS
     HIDDEN int _dmtype##_freeDLists(struct dm *dmp, unsigned int list, int range); \
     HIDDEN int _dmtype##_getDisplayImage(struct dm *dmp, unsigned char **image);
 
-#endif /* __DM_H__ */
+#endif /* DM_H */
 
 /** @} */
 /*

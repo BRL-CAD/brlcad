@@ -21,8 +21,8 @@
  *
  */
 
-#ifndef __FFT_H__
-#define __FFT_H__
+#ifndef FFT_H
+#define FFT_H
 
 #include "common.h"
 
@@ -73,7 +73,7 @@ FFT_EXPORT extern void irfft256(register double X[]);
 
 __END_DECLS
 
-#endif /* __FFT_H__ */
+#endif /* FFT_H */
 
 /*
  * Local Variables:

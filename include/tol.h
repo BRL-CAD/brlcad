@@ -28,8 +28,8 @@
  *
  */
 
-#ifndef __TOL_H__
-#define __TOL_H__
+#ifndef TOL_H
+#define TOL_H
 
 #include "common.h"
 
@@ -51,7 +51,7 @@ RT_EXPORT extern struct bn_tol *rt_tol_default(struct bn_tol *tol);
 
 __END_DECLS
 
-#endif /* __TOL_H__ */
+#endif /* TOL_H */
 
 /*
  * Local Variables:

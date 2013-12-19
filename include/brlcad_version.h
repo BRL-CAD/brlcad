@@ -29,8 +29,8 @@
  *
  */
 
-#ifndef __BRLCAD_VERSION_H__
-#define __BRLCAD_VERSION_H__
+#ifndef BRLCAD_VERSION_H
+#define BRLCAD_VERSION_H
 
 #include "common.h"
 
@@ -190,7 +190,7 @@ brlcad_ident(const char *title)
 
 __END_DECLS
 
-#endif /* __BRLCAD_VERSION_H__ */
+#endif /* BRLCAD_VERSION_H */
 
 /*
  * Local Variables:

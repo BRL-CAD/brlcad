@@ -22,8 +22,8 @@
 /** @file dm-Null.h
  *
  */
-#ifndef __DM_NULL__
-#define __DM_NULL__
+#ifndef DM_NULL_H
+#define DM_NULL_H
 
 #include "common.h"
 
@@ -187,7 +187,7 @@ null_processEvents(struct dm *dmp);
 
 __END_DECLS
 
-#endif  /* __DM_NULL__ */
+#endif  /* DM_NULL_H */
 
 /** @} */
 /*

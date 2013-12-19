@@ -28,8 +28,8 @@
  *
  */
 
-#ifndef __CMD_H__
-#define __CMD_H__
+#ifndef CMD_H
+#define CMD_H
 
 #include "common.h"
 
@@ -146,7 +146,7 @@ BU_EXPORT extern int bu_cmdhist_prev(void *data, int argc, const char **argv);
 
 __END_DECLS
 
-#endif  /* __CMD_H__ */
+#endif  /* CMD_H */
 
 /** @} */
 /*

@@ -31,6 +31,9 @@
  *
  * All characters reference absolute points within a 10 x 10 square
  */
+#ifndef VECTFONT_H
+#define VECTFONT_H
+
 #define	brt(x, y)	(11*x+y)
 #define drk(x, y)	-(11*x+y)
 #define	LAST		-128		/**< @brief  0200 Marks end of stroke list */
@@ -40,6 +43,9 @@
 
 extern int *tp_cindex[256];	/**< @brief  index to stroke tokens */
 extern int tp_ctable[];		/**< @brief  table of strokes */
+
+#endif /* VECTFONT_H */
+
 /** @} */
 /*
  * Local Variables:

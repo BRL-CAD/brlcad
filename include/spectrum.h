@@ -88,8 +88,8 @@
  *
  */
 
-#ifndef __SPECTRUM_H__
-#define __SPECTRUM_H__
+#ifndef SPECTRUM_H
+#define SPECTRUM_H
 
 #include "common.h"
 
@@ -116,7 +116,7 @@ RT_EXPORT extern void			rt_spect_reflectance_rgb(struct bn_tabdata		*curve,
 								 const float		rgb[3]);
 __END_DECLS
 
-#endif /* __SPECTRUM_H__ */
+#endif /* SPECTRUM_H */
 
 /** @} */
 /*

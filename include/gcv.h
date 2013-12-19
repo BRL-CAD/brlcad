@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef __GCV_H__
-#define __GCV_H__
+#ifndef GCV_H
+#define GCV_H
 
 #include "common.h"
 
@@ -85,7 +85,7 @@ GCV_EXPORT extern union tree *gcv_bottess(int argc, const char **argv, struct db
 
 __END_DECLS
 
-#endif /* __GCV_H__ */
+#endif /* GCV_H */
 
 /*
  * Local Variables:

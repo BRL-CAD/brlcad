@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef __DM_RTGL__
-#define __DM_RTGL__
+#ifndef DM_RTGL_H
+#define DM_RTGL_H
 
 #include "common.h"
 #include "vmath.h"
@@ -147,7 +147,7 @@ struct rtglJobs {
 };
 
 
-#endif /* __DM_RTGL__ */
+#endif /* DM_RTGL_H */
 
 /** @} */
 /*

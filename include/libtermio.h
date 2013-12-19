@@ -25,8 +25,8 @@
  *
  */
 
-#ifndef __LIBTERMIO_H__
-#define __LIBTERMIO_H__
+#ifndef LIBTERMIO_H
+#define LIBTERMIO_H
 
 #include "common.h"
 
@@ -52,7 +52,7 @@ void prnt_Tio();	/* misc. types of args */
 
 __END_DECLS
 
-#endif /* __LIBTERMIO_H__ */
+#endif /* LIBTERMIO_H */
 
 /** @} */
 /*

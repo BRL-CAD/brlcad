@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef __DM_OGL_H__
-#define __DM_OGL_H__
+#ifndef DM_OGL_H
+#define DM_OGL_H
 
 #include "common.h"
 
@@ -76,7 +76,7 @@ extern void ogl_fogHint();
 
 __END_DECLS
 
-#endif /* __DM_OGL_H__ */
+#endif /* DM_OGL_H */
 
 /** @} */
 /*

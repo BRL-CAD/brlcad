@@ -22,8 +22,8 @@
 /** @file fbserv_obj.h
  *
  */
-#ifndef __FBSERV_OBJ_H__
-#define __FBSERV_OBJ_H__
+#ifndef FBSERV_OBJ_H
+#define FBSERV_OBJ_H
 
 #include "common.h"
 
@@ -75,7 +75,7 @@ FB_EXPORT extern int fbs_close(struct fbserv_obj *fbsp);
 
 __END_DECLS
 
-#endif  /* __FBSERV_OBJ_H__ */
+#endif  /* FBSERV_OBJ_H */
 
 /** @} */
 /*

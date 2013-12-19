@@ -27,8 +27,8 @@
  */
 /** @} */
 
-#ifndef __BOT_H__
-#define __BOT_H__
+#ifndef BOT_H
+#define BOT_H
 
 #include "common.h"
 
@@ -62,7 +62,7 @@ RT_EXPORT extern size_t rt_botface(struct soltab		*stp,
 
 __END_DECLS
 
-#endif /* __BOT_H__ */
+#endif /* BOT_H */
 
 /*
  * Local Variables:

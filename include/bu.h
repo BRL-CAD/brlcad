@@ -79,8 +79,8 @@
  * from constantly having to check for NULL return codes.
  *
  */
-#ifndef __BU_H__
-#define __BU_H__
+#ifndef BU_H
+#define BU_H
 
 #include "common.h"
 
@@ -6350,7 +6350,7 @@ BU_EXPORT extern void bu_sort(void *array, size_t nummemb, size_t sizememb,
 
 __END_DECLS
 
-#endif  /* __BU_H__ */
+#endif  /* BU_H */
 
 /*
  * Local Variables:

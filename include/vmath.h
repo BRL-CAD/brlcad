@@ -87,8 +87,8 @@
  * preserve source code formatting.
  */
 
-#ifndef __VMATH_H__
-#define __VMATH_H__
+#ifndef VMATH_H
+#define VMATH_H
 
 #include "common.h"
 
@@ -1978,7 +1978,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 __END_DECLS
 
-#endif /* __VMATH_H__ */
+#endif /* VMATH_H */
 
 /** @} */
 /*

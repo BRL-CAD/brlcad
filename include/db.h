@@ -62,8 +62,8 @@
  *
  */
 
-#ifndef __DB_H__
-#define __DB_H__
+#ifndef DB_H
+#define DB_H
 
 #include "common.h"
 
@@ -454,7 +454,7 @@ DEPRECATED void rt_dbmat_mat(dbfloat_t *dbp, const fastf_t *ff);
 
 __END_DECLS
 
-#endif	/* __DB_H__ */
+#endif	/* DB_H */
 
 /** @} */
 /*

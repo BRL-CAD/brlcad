@@ -24,8 +24,8 @@
  * Structures required for implementing Parametrics and constraints
  *
  */
-#ifndef __PC_H__
-#define __PC_H__
+#ifndef PC_H
+#define PC_H
 
 #include "common.h"
 

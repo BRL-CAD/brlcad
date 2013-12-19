@@ -31,8 +31,8 @@
  *
  */
 
-#ifndef __SYSV_H__
-#define __SYSV_H__
+#ifndef SYSV_H
+#define SYSV_H
 
 #include "common.h"
 
@@ -75,7 +75,7 @@ SYSV_EXPORT extern char *strtok(char *s, const char *delim);
 
 __END_DECLS
 
-#endif /* __SYSV_H__ */
+#endif /* SYSV_H */
 
 /*
  * Local Variables:

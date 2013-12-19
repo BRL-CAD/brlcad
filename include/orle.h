@@ -10,8 +10,8 @@
  * Copyright (c) 1982 Spencer W. Thomas
  */
 
-#ifndef __ORLE_H__
-#define __ORLE_H__
+#ifndef ORLE_H
+#define ORLE_H
 
 #include "common.h"
 
@@ -151,7 +151,7 @@ ORLE_EXPORT extern int rle_encode_ln();
 
 __END_DECLS
 
-#endif /* __ORLE_H__ */
+#endif /* ORLE_H */
 
 /** @} */
 /*

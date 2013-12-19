@@ -27,8 +27,8 @@
  *
  */
 
-#ifndef	PLOT3_H
-#define	PLOT3_H
+#ifndef PLOT3_H
+#define PLOT3_H
 
 #include "common.h"
 
@@ -169,7 +169,7 @@ BN_EXPORT extern void pd_box(FILE *plotfp,
 		     double y_2);
 
 /* Double 3-D both in vector and enumerated versions */
-#ifdef __VMATH_H__
+#ifdef VMATH_H
 BN_EXPORT extern void pdv_3space(FILE *plotfp,
 		     const vect_t min,
 		     const vect_t max);
@@ -185,7 +185,7 @@ BN_EXPORT extern void pdv_3line(FILE *plotfp,
 BN_EXPORT extern void pdv_3box(FILE *plotfp,
 		     const vect_t a,
 		     const vect_t b);
-#endif /* __VMATH_H__ */
+#endif /* VMATH_H */
 BN_EXPORT extern void pd_3space(FILE *plotfp,
 		     double x_1,
 		     double y_1,

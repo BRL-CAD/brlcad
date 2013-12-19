@@ -23,8 +23,8 @@
  */
 
 
-#ifndef __VECTOR_X86
-#define __VECTOR_X86
+#ifndef VECTOR_X86_H
+#define VECTOR_X86_H
 
 #include "common.h"
 

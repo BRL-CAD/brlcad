@@ -31,8 +31,8 @@
  *
  */
 
-#ifndef __BSELECT_H__
-#define __BSELECT_H__
+#ifndef BSELECT_H
+#define BSELECT_H
 
 #include "common.h"
 
@@ -63,7 +63,7 @@
 
 #endif /* GCC_PREREQ */
 
-#endif /* __BSELECT_H__ */
+#endif /* BSELECT_H */
 
 /*
  * Local Variables:

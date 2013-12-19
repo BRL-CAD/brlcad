@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef __PKG_H__
-#define __PKG_H__
+#ifndef PKG_H
+#define PKG_H
 
 /* for size_t */
 #include <stddef.h>
@@ -332,7 +332,7 @@ PKG_EXPORT extern const char *pkg_version(void);
 }
 #endif
 
-#endif /* __PKG_H__ */
+#endif /* PKG_H */
 
 /** @} */
 /*

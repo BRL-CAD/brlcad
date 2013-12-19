@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef __DM_TK__
-#define __DM_TK__
+#ifndef DM_TK_H
+#define DM_TK_H
 
 #define CMAP_BASE 40
 #define CUBE_DIMENSION 6
@@ -40,7 +40,7 @@ struct tk_vars {
     unsigned long pixels[NUM_PIXELS];
 };
 
-#endif /* __DM_TK__ */
+#endif /* DM_TK_H */
 
 /** @} */
 /*

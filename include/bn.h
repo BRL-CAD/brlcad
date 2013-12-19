@@ -31,8 +31,8 @@
  *
  */
 
-#ifndef __BN_H__
-#define __BN_H__
+#ifndef BN_H
+#define BN_H
 
 #include "common.h"
 
@@ -4597,7 +4597,7 @@ struct tri_float_specific  {
 
 typedef struct tri_float_specific tri_specific_float;
 
-#endif /* __BN_H__ */
+#endif /* BN_H */
 
 /** @} */
 /*

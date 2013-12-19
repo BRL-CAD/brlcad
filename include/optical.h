@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef __OPTICAL_H__
-#define __OPTICAL_H__
+#ifndef OPTICAL_H
+#define OPTICAL_H
 
 #include "common.h"
 
@@ -196,7 +196,7 @@ struct floatpixel {
 
 __END_DECLS
 
-#endif /* __OPTICAL_H__ */
+#endif /* OPTICAL_H */
 
 /** @} */
 /*

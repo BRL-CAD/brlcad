@@ -28,8 +28,8 @@
  *
  */
 
-#ifndef __NURB_H__
-#define __NURB_H__
+#ifndef NURB_H
+#define NURB_H
 
 #include "common.h"
 
@@ -294,7 +294,7 @@ RT_EXPORT extern struct bezier_2d_list *subdivide_bezier(struct bezier_2d_list *
 
 __END_DECLS
 
-#endif /* __NURB_H__ */
+#endif /* NURB_H */
 
 /** @} */
 /*
