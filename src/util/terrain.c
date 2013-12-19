@@ -180,7 +180,7 @@ func_turb(unsigned short *buf)
  * Upside-down turbulence noise
  */
 void
-func_turb_up(short *buf)
+func_turb_up(unsigned short *buf)
 {
     point_t pt;
     size_t x, y;
@@ -217,7 +217,7 @@ func_turb_up(short *buf)
  * Multi-fractal
  */
 void
-func_multi(short *buf)
+func_multi(unsigned short *buf)
 {
     point_t pt;
     size_t x, y;
@@ -563,7 +563,7 @@ func_lunar(unsigned short *buf)
 
 
 /* function to call to generate the terrain.  Default noise pattern is fBm */
-void (*terrain_func)() = func_fbm;
+void (*terrain_func)(unsigned short *);
 
 /*
  * P A R S E _ A R G S --- Parse through command line flags
@@ -575,6 +575,9 @@ parse_args(int ac, char **av)
     char *strrchr(const char *, int);
     double v;
 
+    /* set default terrain function */
+    terrain_func = func_fbm;
+
     if (! (progname=strrchr(*av, '/')))
 	progname = *av;
     else
@@ -584,7 +587,7 @@ parse_args(int ac, char **av)
     bu_opterr = 0;
 
     /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac, av, options)) != -1)
+    while ((c=bu_getopt(ac, av, options)) != -1) {
 	switch (c) {
 	    case 'v': debug = !debug; break;
 	    case 'c': do_convert = !do_convert; break;
@@ -641,6 +644,7 @@ parse_args(int ac, char **av)
 	    case 'h'	:
 	    default		: usage("Bad or help flag specified\n"); break;
 	}
+    }
 
     return bu_optind;
 }
@@ -671,7 +675,7 @@ main(int ac, char **av)
 	fprintf(stderr, "Excess command line arguments ignored\n");
 
     count = xdim*ydim;
-    buf = bu_malloc(sizeof(*buf) * count, "buf");
+    buf = (unsigned short *)bu_malloc(sizeof(*buf) * count, "buf");
 
     if (! terrain_func) {
 	if (debug) bu_log("terrain func not specified\n");
