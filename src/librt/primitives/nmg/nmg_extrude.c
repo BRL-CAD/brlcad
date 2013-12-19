@@ -520,7 +520,7 @@ nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
 	    if (!nmg_find_vertex_in_lu(vu->v_p, lu1)) {
 		int nmg_class;
 
-		class = nmg_classify_pt_loop(vu->v_p->vg_p->coord, lu1, tol);
+		nmg_class = nmg_classify_pt_loop(vu->v_p->vg_p->coord, lu1, tol);
 		if (nmg_class == NMG_CLASS_AoutB)
 		    outside++;
 		else if (nmg_class == NMG_CLASS_AinB)
