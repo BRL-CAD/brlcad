@@ -1339,17 +1339,14 @@ struct poly_face
 };
 
 
-/* plane used by ccw to compare 2 points */
-static plane_t *cmp_plane = NULL;
-
-/* qsort helper function, used to sort points into
+/* bu_sort helper function, used to sort points into
  * counter-clockwise order */
 HIDDEN int
-ccw(const void *x, const void *y)
+ccw(const void *x, const void *y, void *cmp)
 {
     vect_t tmp;
     VCROSS(tmp, ((fastf_t *)x), ((fastf_t *)y));
-    return VDOT(*cmp_plane, tmp);
+    return VDOT(*((point_t *)cmp), tmp);
 }
 
 
@@ -1400,9 +1397,7 @@ rt_arbn_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     for (i = 0; i < aip->neqn; i++) {
 	vect_t tmp, tot = VINIT_ZERO;
 	/* sort points */
-	cmp_plane = &faces[i].plane_eqn;
-	qsort(faces[i].pts, faces[i].npts, sizeof(point_t), ccw);
-	cmp_plane = NULL;
+	bu_sort(faces[i].pts, faces[i].npts, sizeof(point_t), ccw, &faces[i].plane_eqn);
 	/* N-Sided Face - compute area using Green's Theorem */
 	for (j = 0; j < faces[i].npts; j++) {
 	    VCROSS(tmp, faces[i].pts[j], faces[i].pts[j + 1 == faces[i].npts ? 0 : j + 1]);
@@ -1480,9 +1475,7 @@ rt_arbn_centroid(point_t *cent, const struct rt_db_internal *ip)
 	fastf_t a = 0.0;
 	fastf_t signedArea = 0.0;
 	/* sort points */
-	cmp_plane = &faces[i].plane_eqn;
-	qsort(faces[i].pts, faces[i].npts, sizeof(point_t), ccw);
-	cmp_plane = NULL;
+	bu_sort(faces[i].pts, faces[i].npts, sizeof(point_t), ccw, &faces[i].plane_eqn);
 	/* Calculate Centroid projection for face for x-y-plane */
 	for (j = 0; j < faces[i].npts-1; j++) {
 	    x_0 = faces[i].pts[j][0];

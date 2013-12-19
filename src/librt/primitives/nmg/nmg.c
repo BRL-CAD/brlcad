@@ -3117,23 +3117,14 @@ rt_nmg_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
-struct sortable_point
-{
-    point_t pt;
-    plane_t *cmp_plane;
-};
-
-
-/* qsort helper function, used to sort points into
+/* bu_sort helper function, used to sort points into
  * counter-clockwise order */
 HIDDEN int
-nmg_ccw(const void *x, const void *y)
+nmg_ccw(const void *x, const void *y, void *cmp)
 {
     vect_t tmp;
-    const struct sortable_point *xp1 = x;
-    const struct sortable_point *yp1 = y;
-    VCROSS(tmp, (fastf_t *)xp1->pt, (fastf_t *)yp1->pt);
-    return VDOT(*xp1->cmp_plane, tmp);
+    VCROSS(tmp, ((fastf_t *)x), ((fastf_t *)y));
+    return VDOT(*((point_t *)cmp), tmp);
 }
 
 
@@ -3212,23 +3203,9 @@ rt_nmg_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	    }
 	    for (i = 0; i < num_faces; i++) {
 		vect_t tmp, tot = VINIT_ZERO;
-		struct sortable_point *sort_points;
-		sort_points = (struct sortable_point *)bu_calloc(faces[i].npts, sizeof(struct sortable_point), "nmg_surf_area: sort_points");
 
-		for(j = 0; j < faces[i].npts; i++) {
-		    sort_points[j].pt[0] =  faces[i].pts[j][0];
-		    sort_points[j].pt[1] =  faces[i].pts[j][1];
-		    sort_points[j].pt[2] =  faces[i].pts[j][2];
-		    sort_points[j].cmp_plane = &faces[i].plane_eqn;
-		}
 		/* sort points */
-		qsort(sort_points, faces[i].npts, sizeof(struct sortable_point), nmg_ccw);
-		for(j = 0; j < faces[i].npts; i++) {
-		    faces[i].pts[j][0] = sort_points[j].pt[0];
-		    faces[i].pts[j][1] = sort_points[j].pt[1];
-		    faces[i].pts[j][2] = sort_points[j].pt[2];
-		}
-		bu_free((char *)sort_points, "nmg_surf_area: sort_points");
+		bu_sort(faces[i].pts, faces[i].npts, sizeof(point_t), nmg_ccw, &faces[i].plane_eqn);
 		/* N-Sided Face - compute area using Green's Theorem */
 		for (j = 0; j < faces[i].npts; j++) {
 		    VCROSS(tmp, faces[i].pts[j], faces[i].pts[j + 1 == faces[i].npts ? 0 : j + 1]);
@@ -3316,23 +3293,8 @@ rt_nmg_centroid(point_t *cent, const struct rt_db_internal *ip)
 	fastf_t z_1 = 0.0;
 	fastf_t a = 0.0;
 	fastf_t signedArea = 0.0;
-	struct sortable_point *sort_points;
-	sort_points = (struct sortable_point *)bu_calloc(faces[i].npts, sizeof(struct sortable_point), "nmg_surf_area: sort_points");
-
-	for(j = 0; j < faces[i].npts; i++) {
-	    sort_points[j].pt[0] =  faces[i].pts[j][0];
-	    sort_points[j].pt[1] =  faces[i].pts[j][1];
-	    sort_points[j].pt[2] =  faces[i].pts[j][2];
-	    sort_points[j].cmp_plane = &faces[i].plane_eqn;
-	}
 	/* sort points */
-	qsort(sort_points, faces[i].npts, sizeof(struct sortable_point), nmg_ccw);
-	for(j = 0; j < faces[i].npts; i++) {
-	    faces[i].pts[j][0] = sort_points[j].pt[0];
-	    faces[i].pts[j][1] = sort_points[j].pt[1];
-	    faces[i].pts[j][2] = sort_points[j].pt[2];
-	}
-	bu_free((char *)sort_points, "nmg_surf_area: sort_points");
+	bu_sort(faces[i].pts, faces[i].npts, sizeof(point_t), nmg_ccw, &faces[i].plane_eqn);
 
 	/* Calculate Centroid projection for face for x-y-plane */
 	for (j = 0; j < faces[i].npts-1; j++) {
@@ -3481,23 +3443,9 @@ rt_nmg_volume(fastf_t *volume, const struct rt_db_internal *ip)
 	    }
 	    for (i = 0; i < num_faces; i++) {
 		vect_t tmp, tot = VINIT_ZERO;
-		struct sortable_point *sort_points;
-		sort_points = (struct sortable_point *)bu_calloc(faces[i].npts, sizeof(struct sortable_point), "nmg_volume: sort_points");
 
-		for(j = 0; j < faces[i].npts; i++) {
-		    sort_points[j].pt[0] =  faces[i].pts[j][0];
-		    sort_points[j].pt[1] =  faces[i].pts[j][1];
-		    sort_points[j].pt[2] =  faces[i].pts[j][2];
-		    sort_points[j].cmp_plane = &faces[i].plane_eqn;
-		}
 		/* sort points */
-		qsort(sort_points, faces[i].npts, sizeof(struct sortable_point), nmg_ccw);
-		for(j = 0; j < faces[i].npts; i++) {
-		    faces[i].pts[j][0] = sort_points[j].pt[0];
-		    faces[i].pts[j][1] = sort_points[j].pt[1];
-		    faces[i].pts[j][2] = sort_points[j].pt[2];
-		}
-		bu_free((char *)sort_points, "nmg_volume: sort_points");
+		bu_sort(faces[i].pts, faces[i].npts, sizeof(point_t), nmg_ccw, &faces[i].plane_eqn);
 		/* N-Sided Face - compute area using Green's Theorem */
 		for (j = 0; j < faces[i].npts; j++) {
 		    VCROSS(tmp, faces[i].pts[j], faces[i].pts[j + 1 == faces[i].npts ? 0 : j + 1]);
