@@ -31,16 +31,11 @@
 
 #include "bu.h"
 
-#define INTEGER_MAX (((int) ~0) >> 1)
 
-static char usage[]="Usage: dsel keep ...\n       or\n       dsel skip keep ...\n\n(must use <inputfile >outputfile)\n";
-
-double buf[4096] = {0};
-
-
-void
+static void
 skip(int num)
 {
+    double buf[4096] = {0};
     int n, m;
 
     while (num > 0) {
@@ -52,9 +47,10 @@ skip(int num)
 }
 
 
-void
+static void
 keep(int num)
 {
+    double buf[4096] = {0};
     int n, m;
     size_t ret;
 
@@ -70,8 +66,11 @@ keep(int num)
 }
 
 
-int main(int argc, char **argv)
+int
+main(int argc, char *argv[])
 {
+    static char usage[]="Usage: dsel keep ...\n       or\n       dsel skip keep ...\n\n(must use <inputfile >outputfile)\n";
+
     int nskip;	/* number to skip */
     int nkeep;	/* number to keep */
 
@@ -97,6 +96,7 @@ int main(int argc, char **argv)
 	    argc--;
 	    argv++;
 	} else {
+#define INTEGER_MAX (((int) ~0) >> 1)
 	    nkeep = INTEGER_MAX;
 	}
 

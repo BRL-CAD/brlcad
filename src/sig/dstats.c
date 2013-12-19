@@ -33,16 +33,20 @@
 
 #include "bu.h"
 
-#define IBUFSIZE 1024		/* Max read size */
-double buf[IBUFSIZE];		/* Input buffer */
 
-void printusage (void)
+static void
+printusage(void)
 {
-	bu_exit(1, "Usage: dstats [file.doubles]\n");
+    bu_exit(1, "Usage: dstats [file.doubles]\n");
 }
 
-int main(int ac, char *av[])
+
+int
+main(int ac, char *av[])
 {
+#define IBUFSIZE 1024		/* Max read size */
+    double buf[IBUFSIZE];		/* Input buffer */
+
     int i, n;
     long num_values;
     double *bp;
@@ -51,12 +55,12 @@ int main(int ac, char *av[])
     double mean, var;
     FILE *fp;
 
-    if ( ac == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)) )
+    if (ac == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
 	printusage();
 
     /* look for optional input file, after checking for -h and -? */
     if (ac > 1) {
-	if ( BU_STR_EQUAL(av[1], "-h") ||  BU_STR_EQUAL(av[1], "-?") )
+	if (BU_STR_EQUAL(av[1], "-h") ||  BU_STR_EQUAL(av[1], "-?"))
 	    printusage();
 	if ((fp = fopen(av[1], "r")) == 0) {
 	    bu_exit(1, "dstats: can't open \"%s\"\n", av[1]);
