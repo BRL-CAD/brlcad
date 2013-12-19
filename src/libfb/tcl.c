@@ -136,7 +136,7 @@ fb_cmd_open_existing(void *clientData, int argc, const char **argv)
 	found=1;
 	*ifp = X24_interface; /* struct copy */
 
-	ifp->if_name = malloc((unsigned)strlen(X_device_name) + 1);
+	ifp->if_name = (char *)malloc((unsigned)strlen(X_device_name) + 1);
 	bu_strlcpy(ifp->if_name, X_device_name, strlen(X_device_name)+1);
 
 	/* Mark OK by filling in magic number */
@@ -202,7 +202,7 @@ fb_cmd_open_existing(void *clientData, int argc, const char **argv)
 	found=1;
 	*ifp = ogl_interface; /* struct copy */
 
-	ifp->if_name = malloc((unsigned)strlen(ogl_device_name) + 1);
+	ifp->if_name = (char *)malloc((unsigned)strlen(ogl_device_name) + 1);
 	bu_strlcpy(ifp->if_name, ogl_device_name, strlen(ogl_device_name)+1);
 
 	/* Mark OK by filling in magic number */
