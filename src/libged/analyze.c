@@ -710,17 +710,14 @@ findang(fastf_t *angles, fastf_t *unitv)
 }
 
 
-/* plane used by ccw to compare 2 points */
-static plane_t *cmp_plane = NULL;
-
 /* qsort helper function, used to sort points into
  * counter-clockwise order */
 HIDDEN int
-ccw(const void *x, const void *y)
+ccw(const void *x, const void *y, void *cmp)
 {
     vect_t tmp;
     VCROSS(tmp, ((fastf_t *)x), ((fastf_t *)y));
-    return VDOT(*cmp_plane, tmp);
+    return VDOT(*((point_t *)cmp), tmp);
 }
 
 
@@ -749,9 +746,7 @@ analyze_poly_face(struct ged *gedp, struct poly_face *face, row_t *row)
     findang(angles, face->plane_eqn);
 
     /* sort points */
-    cmp_plane = &face->plane_eqn;
-    qsort(face->pts, face->npts, sizeof(point_t), ccw);
-    cmp_plane = NULL;
+    bu_sort(face->pts, face->npts, sizeof(point_t), ccw, &face->plane_eqn);
 
     switch (face->npts) {
 	case 3:

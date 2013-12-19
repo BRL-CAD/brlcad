@@ -42,12 +42,6 @@
 #include "nurb.h"
 
 
-/* The global variable edge_rr_xyp is used by function nmg_edge_g_fuse
- * and the compare function for qsort "e_rr_xyp_comp". This is an array
- * containing the rise over run ratios in the xy plane for each edge.
- */
-fastf_t *edge_rr_xyp;
-
 
 extern int debug_file_count;
 
@@ -1204,11 +1198,11 @@ nmg_edge_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
 
 /* compare function for qsort within function nmg_edge_g_fuse */
 static int
-e_rr_xyp_comp(const void *p1, const void *p2)
+e_rr_xyp_comp(const void *p1, const void *p2, void *arg)
 {
     fastf_t i, j;
-
-    i = edge_rr_xyp[(*((size_t *)p1))];
+    fastf_t *edge_rr_xyp = (fastf_t *)arg;
+    i = edge_rr_xyp[((*((size_t *)p1)))];
     j = edge_rr_xyp[(*((size_t *)p2))];
 
     if (EQUAL(i, j))
@@ -1237,7 +1231,7 @@ nmg_edge_g_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
     fastf_t tmp;
 
     /* rise over run arrays for the xz and yz planes */
-    fastf_t *edge_rr, *edge_rr_xzp, *edge_rr_yzp;
+    fastf_t *edge_rr, *edge_rr_xzp, *edge_rr_yzp, *edge_rr_xyp;
 
     /* index into all arrays sorted by the contents of array edge_rr_xyp */
     size_t *sort_idx_xyp;
@@ -1325,7 +1319,7 @@ nmg_edge_g_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
     }
 
     /* create sort index based on array edge_rr_xyp */
-    qsort(sort_idx_xyp, etab_cnt, sizeof(size_t), (int (*)(const void *a, const void *b))e_rr_xyp_comp);
+    bu_sort(sort_idx_xyp, etab_cnt, sizeof(size_t), e_rr_xyp_comp, edge_rr_xyp);
 
     /* main loop */
     total = 0;

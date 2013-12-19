@@ -125,7 +125,6 @@ usage(const char *argv0)
 
 
 /* global definition */
-size_t *tmp_ptr = NULL;
 static int NMG_debug; /* saved arg of -X, for longjmp handling */
 static int debug = 0;
 static int verbose = 0;
@@ -445,12 +444,13 @@ comp_b(const void *p1, const void *p2)
  * into a multi-dimensional array.
  */
 static int
-comp(const void *p1, const void *p2)
+comp(const void *p1, const void *p2, void *arg)
 {
     size_t i = * (size_t *) p1;
     size_t j = * (size_t *) p2;
+    size_t *array = (size_t *) arg;
 
-    return (int)(tmp_ptr[i] - tmp_ptr[j]);
+    return (int)(array[i] - array[j]);
 }
 
 
@@ -1558,23 +1558,17 @@ sort_indexes(struct ti_t *ti)
 {
     size_t num_indexes = ti->num_tri * 3;
 
-    /* tmp_ptr is global which is required for qsort */
-    tmp_ptr = (size_t *)ti->index_arr_tri;
-
     /* process vertex indexes */
-    qsort(ti->vsi, num_indexes, sizeof ti->vsi[0],
-	  (int (*)(const void *a, const void *b))comp);
+    bu_sort(ti->vsi, num_indexes, sizeof ti->vsi[0], comp, (size_t *)ti->index_arr_tri);
 
     /* process vertex normal indexes */
     if (ti->tri_type == FACE_NV || ti->tri_type == FACE_TNV) {
-	qsort(ti->vnsi, num_indexes, sizeof ti->vnsi[0],
-	      (int (*)(const void *a, const void *b))comp);
+	bu_sort(ti->vnsi, num_indexes, sizeof ti->vnsi[0], comp, (size_t *)ti->index_arr_tri);
     }
 
     /* process texture vertex indexes */
     if (ti->tri_type == FACE_TV || ti->tri_type == FACE_TNV) {
-	qsort(ti->tvsi, num_indexes, sizeof ti->tvsi[0],
-	      (int (*)(const void *a, const void *b))comp);
+	bu_sort(ti->tvsi, num_indexes, sizeof ti->tvsi[0], comp, (size_t *)ti->index_arr_tri);
     }
 
     return;

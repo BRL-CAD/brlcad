@@ -5276,17 +5276,14 @@ rt_bot_list_free(struct rt_bot_list *headRblp, int fbflag)
 }
 
 
-/* plane used by ccw to compare 2 points */
-static plane_t *cmp_plane = NULL;
-
 /* qsort helper function, used to sort points into
  * counter-clockwise order */
 HIDDEN int
-ccw_algo(const void *x, const void *y)
+ccw_algo(const void *x, const void *y, void *cmp)
 {
     vect_t tmp;
     VCROSS(tmp, ((fastf_t *)x), ((fastf_t *)y));
-    return VDOT(*cmp_plane, tmp);
+    return VDOT(*((point_t *)cmp), tmp);
 }
 
 
@@ -5341,9 +5338,7 @@ rt_bot_volume(fastf_t *volume, const struct rt_db_internal *ip)
 	/* SURFACE AREA */
 
 	/* sort points */
-	cmp_plane = &face.plane_eqn;
-	qsort(face.pts, face.npts, sizeof(point_t), ccw_algo);
-	cmp_plane = NULL;
+	bu_sort(face.pts, face.npts, sizeof(point_t), ccw_algo, &face.plane_eqn);
 	/* Triangular Face - for triangular face T:V0, V1, V2,
 	 * area = 0.5 * [(V2 - V0) x (V1 - V0)] */
 	VSUB2(v1, face.pts[1], face.pts[0]);
