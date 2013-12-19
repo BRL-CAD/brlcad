@@ -518,12 +518,12 @@ nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
 
 	    /* ignore vertices that are shared between the loops */
 	    if (!nmg_find_vertex_in_lu(vu->v_p, lu1)) {
-		int class;
+		int nmg_class;
 
 		class = nmg_classify_pt_loop(vu->v_p->vg_p->coord, lu1, tol);
-		if (class == NMG_CLASS_AoutB)
+		if (nmg_class == NMG_CLASS_AoutB)
 		    outside++;
-		else if (class == NMG_CLASS_AinB)
+		else if (nmg_class == NMG_CLASS_AinB)
 		    inside++;
 	    }
 	}
