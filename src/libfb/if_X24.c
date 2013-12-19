@@ -2014,7 +2014,7 @@ X24_getmem(FBIO *ifp)
 		    fb_log("X24_getmem: can't seek fb file, using private memory instead, errno %d\n", errno);
 		else if (lseek(fd, 0, SEEK_SET) < 0)
 		    fb_log("X24_getmem: can't seek fb file, using private memory instead, errno %d\n", errno);
-		else if ((mem = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0)) == (char *) -1)
+		else if ((mem = (char *)mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0)) == (char *) -1)
 		    fb_log("X24_getmem: can't mmap fb file, using private memory instead, errno %d\n", errno);
 		else {
 		    close(fd);

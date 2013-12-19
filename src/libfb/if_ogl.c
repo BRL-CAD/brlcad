@@ -552,7 +552,7 @@ ogl_getmem(FBIO *ifp)
 	pixsize = ifp->if_height * ifp->if_width * sizeof(struct ogl_pixel);
 	size = pixsize + sizeof(struct ogl_cmap);
 
-	sp = calloc(1, size);
+	sp = (char *)calloc(1, size);
 	if (sp == 0) {
 	    fb_log("ogl_getmem: frame buffer memory malloc failed\n");
 	    goto fail;
@@ -593,7 +593,7 @@ ogl_getmem(FBIO *ifp)
     /* WWW this is unnecessary in this version? */
     /* Open the segment Read/Write */
     /* This gets mapped to a high address on some platforms, so no problem. */
-    if ((sp = shmat(SGI(ifp)->mi_shmid, 0, 0)) == (char *)(-1L)) {
+    if ((sp = (char *)shmat(SGI(ifp)->mi_shmid, 0, 0)) == (char *)(-1L)) {
 	fb_log("ogl_getmem: shmat returned x%x, errno=%d\n", sp, errno);
 	goto fail;
     }
@@ -610,7 +610,7 @@ success:
     return 0;
 fail:
     fb_log("ogl_getmem:  Unable to attach to shared memory.\n");
-    if ((sp = calloc(1, size)) == NULL) {
+    if ((sp = (char *)calloc(1, size)) == NULL) {
 	fb_log("ogl_getmem:  malloc failure\n");
 	return -1;
     }
