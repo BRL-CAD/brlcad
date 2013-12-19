@@ -228,6 +228,7 @@ fit_plane(size_t UNUSED(patch_id), std::set<size_t> *faces, struct Manifold_Info
 	// 5.  Construct plane
 	ON_Plane new_plane(center, normal);
         (*plane) = new_plane;
+/* Uncomment to plot fitting planes */
 #if 0
 	struct bu_vls name;
 	bu_vls_init(&name);
@@ -1416,10 +1417,10 @@ PatchToVector3d(struct rt_bot_internal *bot, size_t curr_patch, struct Manifold_
         //pnts.Append(ON_3dPoint(V3ARGS(&bot->vertices[(*f_it)*3])));
     }
 
+    // Points on the edges of surfaces make problems for our current 2D uv pullback routine. Uncomment
+    // the following to try to force the surface edges away from the actual patch boundaries by adding
+    // "extension" points to the fit.
 #if 0
-    // Points on the edges of surfaces make problems for our current 2D uv pullback routine.
-    // Try to force the surface edges away from the actual patch boundaries by adding "extension"
-    // points to the fit.
     ON_BoundingBox bbox;
     pnts.GetTightBoundingBox(bbox);
     fastf_t diagonal = bbox.Diagonal().Length();
@@ -1639,10 +1640,6 @@ main(int argc, char *argv[])
 //#endif
 
 #if 0
-    // SSI intersection.  May need edge-based polycurves anyway to guide selection of "correct" intersection segment in the cases where
-    // fitted surfaces intersect multiple times - will want curves with at least the start and endpoints close to those
-    // of the polycurves, and the total absence of a candidate SSI curve for a given polycurve would give a local indication
-    // of a surface fitting problem.
     FILE* curve_plot = fopen("curve_plot.pl", "w");
     pl_color(curve_plot, 255, 255, 255);
     std::set<std::pair<size_t, size_t> > patch_interactions;
