@@ -31,21 +31,22 @@
 #include "bu.h"
 
 
-long bits[16] = {0};
-long values[65536] = {0};
-long *zerop;
-short ibuf[1024] = {0};
-
-int verbose = 0;
-
-static const char usage[] = "Usage: ihist [-v] < shorts\n";
-
-int main(int argc, char **argv)
+int
+main(int argc, char *argv[])
 {
+    static const char usage[] = "Usage: ihist [-v] < shorts\n";
+
     long i, bit;
     int n;
     int max, min;
     long num, levels=0;
+
+    long bits[16] = {0};
+    long values[65536] = {0};
+    long *zerop;
+    short ibuf[1024] = {0};
+
+    int verbose = 0;
 
     while (argc > 1) {
 	if (BU_STR_EQUAL(argv[1], "-v")) {

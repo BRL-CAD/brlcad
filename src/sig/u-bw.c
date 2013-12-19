@@ -28,11 +28,12 @@
 #include "bio.h"
 
 
-unsigned short ibuf[512];
-unsigned char obuf[512];
-
-int main(int ac, char **av)
+int
+main(int ac, char *av[])
 {
+    unsigned short ibuf[512];
+    unsigned char obuf[512];
+
     size_t num, i;
 
     if (isatty(fileno(stdin)) || isatty(fileno(stdout))) {
@@ -41,7 +42,7 @@ int main(int ac, char **av)
 	return -1;
     }
 
-    if (ac > 1 && *av[1] == '-' && *av[2] == 'l')
+    if (ac > 1 && *av[1] == '-' && *av[2] == 'l') {
 	while ((num = fread(&ibuf[0], sizeof(*ibuf), 512, stdin)) > 0) {
 	    for (i=0; i < num; i++)
 		obuf[i] = (unsigned char)ibuf[i];
@@ -51,7 +52,7 @@ int main(int ac, char **av)
 		return -1;
 	    }
 	}
-    else
+    } else {
 	while ((num = fread(&ibuf[0], sizeof(*ibuf), 512, stdin)) > 0) {
 	    for (i=0; i < num; i++)
 		obuf[i] = (unsigned char)(ibuf[i] >> 8);
@@ -61,6 +62,7 @@ int main(int ac, char **av)
 		return -1;
 	    }
 	}
+    }
     return 0;
 }
 

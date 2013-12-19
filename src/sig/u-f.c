@@ -23,7 +23,7 @@
  *
  *	% i-f [-n || scale]
  *
- *	-n will normalize the data (scale between -1.0 and +1.0).
+ * -n will normalize the data (scale between -1.0 and +1.0).
  *
  */
 
@@ -38,12 +38,12 @@
 #include "vmath.h"
 
 
-unsigned short ibuf[512];
-float obuf[512];
-
-
-int main(int argc, char **argv)
+int
+main(int argc, char *argv[])
 {
+    unsigned short ibuf[512];
+    float obuf[512];
+
     int i, num;
     double scale = 1.0;
     size_t ret;

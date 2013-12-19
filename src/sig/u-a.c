@@ -26,11 +26,12 @@
 #include <stdio.h>
 
 
-#define MAXBUF 16*1024
-unsigned short ibuf[MAXBUF];
-
-int main(void)
+int
+main(void)
 {
+#define MAXBUF 16*1024
+    unsigned short ibuf[MAXBUF];
+
     int n, i;
 
     while ((n=fread(ibuf, sizeof(*ibuf), MAXBUF, stdin)) > 0) {
