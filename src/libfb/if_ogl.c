@@ -1014,10 +1014,12 @@ fb_ogl_choose_visual(FBIO *ifp)
 	     red, green, blue masks:    0xff0000, 0xff00, 0xff
 	     significant bits in color specification:    8 bits
 	    */
-	    if ((m_hard_cmap) && (vip->class!=DirectColor))
+	    if ((m_hard_cmap) && (vip->class!=DirectColor)) {
 		continue;
-	    if ((m_hard_cmap) && (vip->colormap_size<256))
+	    }
+	    if ((m_hard_cmap) && (vip->colormap_size<256)) {
 		continue;
+	    }
 	    glXGetConfig(OGL(ifp)->dispp, vip, GLX_DOUBLEBUFFER, &dbfr);
 	    if ((m_doub_buf) && (!dbfr))
 		continue;
