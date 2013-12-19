@@ -1689,7 +1689,7 @@ CHECK_C_INLINE(C_INLINE)
 # an unquellable warning if optimization is disabled so we can't tie
 # the flag to debug builds.
 if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
-  CONFIG_H_APPEND(BRLCAD "#define _FORTIFY_SOURCE 2\n")
+  CONFIG_H_APPEND(BRLCAD "#ifndef _FORTIFY_SOURCE\n#  define _FORTIFY_SOURCE 2\n#endif\n")
 endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
 
 # Enable this flag for additional reporting of undefined symbols.
