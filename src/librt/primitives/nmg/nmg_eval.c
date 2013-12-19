@@ -124,11 +124,11 @@ nmg_ck_lu_orientation(struct loopuse *lu, const struct bn_tol *tolp)
  * Convert an NMG_CLASS_xxx token into a string name.
  */
 const char *
-nmg_class_name(int class)
+nmg_class_name(int nmg_class)
 {
-    if (class == NMG_CLASS_Unknown) return "Unknown";
-    if (class < 0 || class > NMG_CLASS_BAD) class = NMG_CLASS_BAD;
-    return nmg_class_names[class];
+    if (nmg_class == NMG_CLASS_Unknown) return "Unknown";
+    if (nmg_class < 0 || nmg_class > NMG_CLASS_BAD) nmg_class = NMG_CLASS_BAD;
+    return nmg_class_names[nmg_class];
 }
 
 
@@ -278,7 +278,7 @@ HIDDEN int
 nmg_eval_action(uint32_t *ptr, register struct nmg_bool_state *bs)
 {
     register int ret;
-    register int class;
+    register int nmg_class;
     int index;
 
     BN_CK_TOL(bs->bs_tol);
@@ -286,56 +286,56 @@ nmg_eval_action(uint32_t *ptr, register struct nmg_bool_state *bs)
     index = nmg_index_of_struct(ptr);
     if (bs->bs_isA) {
 	if (NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_AinB], index)) {
-	    class = NMG_CLASS_AinB;
+	    nmg_class = NMG_CLASS_AinB;
 	    ret = bs->bs_actions[NMG_CLASS_AinB];
 	    goto out;
 	}
 	if (NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_AonBshared], index)) {
-	    class = NMG_CLASS_AonBshared;
+	    nmg_class = NMG_CLASS_AonBshared;
 	    ret = bs->bs_actions[NMG_CLASS_AonBshared];
 	    goto out;
 	}
 	if (NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_AonBanti], index)) {
-	    class = NMG_CLASS_AonBanti;
+	    nmg_class = NMG_CLASS_AonBanti;
 	    ret = bs->bs_actions[NMG_CLASS_AonBanti];
 	    goto out;
 	}
 	if (NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_AoutB], index)) {
-	    class = NMG_CLASS_AoutB;
+	    nmg_class = NMG_CLASS_AoutB;
 	    ret = bs->bs_actions[NMG_CLASS_AoutB];
 	    goto out;
 	}
 	bu_log("nmg_eval_action(ptr=%p) %s has no A classification, retaining\n",
 	       (void *)ptr, bu_identify_magic(*((uint32_t *)ptr)));
-	class = NMG_CLASS_BAD;
+	nmg_class = NMG_CLASS_BAD;
 	ret = BACTION_RETAIN;
 	goto out;
     }
 
     /* is B */
     if (NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_BinA], index)) {
-	class = NMG_CLASS_BinA;
+	nmg_class = NMG_CLASS_BinA;
 	ret = bs->bs_actions[NMG_CLASS_BinA];
 	goto out;
     }
     if (NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_BonAshared], index)) {
-	class = NMG_CLASS_BonAshared;
+	nmg_class = NMG_CLASS_BonAshared;
 	ret = bs->bs_actions[NMG_CLASS_BonAshared];
 	goto out;
     }
     if (NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_BonAanti], index)) {
-	class = NMG_CLASS_BonAanti;
+	nmg_class = NMG_CLASS_BonAanti;
 	ret = bs->bs_actions[NMG_CLASS_BonAanti];
 	goto out;
     }
     if (NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_BoutA], index)) {
-	class = NMG_CLASS_BoutA;
+	nmg_class = NMG_CLASS_BoutA;
 	ret = bs->bs_actions[NMG_CLASS_BoutA];
 	goto out;
     }
     bu_log("nmg_eval_action(ptr=%p) %s has no B classification, retaining\n",
 	   (void *)ptr, bu_identify_magic(*((uint32_t *)ptr)));
-    class = NMG_CLASS_BAD;
+    nmg_class = NMG_CLASS_BAD;
     ret = BACTION_RETAIN;
 out:
     if (RTG.NMG_debug & DEBUG_BOOLEVAL) {
@@ -343,7 +343,7 @@ out:
 	       (void *)ptr, index,
 	       bs->bs_isA ? "A" : "B",
 	       bu_identify_magic(*((uint32_t *)ptr)),
-	       nmg_class_name(class),
+	       nmg_class_name(nmg_class),
 	       nmg_baction_names[ret]);
     }
     return ret;
