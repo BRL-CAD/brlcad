@@ -745,6 +745,7 @@ rt_vol_ifree(struct rt_db_internal *ip)
     ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
 
+
 /**
  * R T _ V O L _ B B O X
  *
@@ -1345,6 +1346,7 @@ rt_vol_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 
     return 0;			/* OK */
 }
+
 
 void
 rt_vol_centroid(point_t *cent, const struct rt_db_internal *ip)
