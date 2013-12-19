@@ -629,10 +629,14 @@ analyze_general(struct ged *gedp, const struct rt_db_internal *ip)
     fastf_t vol, area = -1;
     point_t centroid;
 
-    OBJ[ip->idb_minor_type].ft_volume(&vol, ip);
-    OBJ[ip->idb_minor_type].ft_surf_area(&area, ip);
+    if (OBJ[ip->idb_minor_type].ft_volume) {
+	OBJ[ip->idb_minor_type].ft_volume(&vol, ip);
+    }
+    if (OBJ[ip->idb_minor_type].ft_surf_area) {
+	OBJ[ip->idb_minor_type].ft_surf_area(&area, ip);
+    }
 
-    if (OBJ[ip->idb_minor_type].ft_centroid != NULL) {
+    if (OBJ[ip->idb_minor_type].ft_centroid) {
         OBJ[ip->idb_minor_type].ft_centroid(&centroid, ip);
 	bu_vls_printf(gedp->ged_result_str, "\n    Centroid: (%g, %g, %g)\n",
 		      centroid[X] * gedp->ged_wdbp->dbip->dbi_base2local,
@@ -924,7 +928,8 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
     /* TABLE 3 =========================================== */
     /* find the volume - break arb8 into 6 arb4s */
 
-    OBJ[ID_ARB8].ft_volume(&tot_vol, ip);
+    if (OBJ[ID_ARB8].ft_volume)
+	OBJ[ID_ARB8].ft_volume(&tot_vol, ip);
 
     print_volume_table(gedp,
 		       tot_vol
@@ -1309,13 +1314,18 @@ print_results:
 HIDDEN void
 analyze_sketch(struct ged *gedp, const struct rt_db_internal *ip)
 {
-    fastf_t area;
-    OBJ[ID_SKETCH].ft_surf_area(&area, ip);
-    bu_vls_printf(gedp->ged_result_str, "\nTotal Area: %10.8f",
-		  area
-		  * gedp->ged_wdbp->dbip->dbi_local2base
-		  * gedp->ged_wdbp->dbip->dbi_local2base
-	);
+    fastf_t area = -1;
+
+    if (OBJ[ID_SKETCH].ft_surf_area)
+	OBJ[ID_SKETCH].ft_surf_area(&area, ip);
+
+    if (area > 0.0) {
+	bu_vls_printf(gedp->ged_result_str, "\nTotal Area: %10.8f",
+		      area
+		      * gedp->ged_wdbp->dbip->dbi_local2base
+		      * gedp->ged_wdbp->dbip->dbi_local2base
+	    );
+    }
 }
 
 
