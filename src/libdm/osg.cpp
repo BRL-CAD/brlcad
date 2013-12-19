@@ -405,44 +405,6 @@ dm_osgInit(struct dm *dmp)
 
     bu_log("max frame rate - %lf\n", osp->viewer->getRunMaxFrameRate());
 
-#if 0
-    // add the state manipulator
-    osp->viewer->addEventHandler( new osgGA::StateSetManipulator(osp->viewer->getCamera()->getOrCreateStateSet()) );
-
-    // add the thread model handler
-    osp->viewer->addEventHandler(new osgViewer::ThreadingHandler);
-
-    // add the window size toggle handler
-    osp->viewer->addEventHandler(new osgViewer::WindowSizeHandler);
-
-    // add the record camera path handler
-    osp->viewer->addEventHandler(new osgViewer::RecordCameraPathHandler);
-
-    // add the LOD Scale handler
-    osp->viewer->addEventHandler(new osgViewer::LODScaleHandler);
-#endif
-
-#if 0
-    //osp->viewer->setSceneData(createTeapot());
-    //osp->viewer->setSceneData(osgDB::readNodeFile("cow.osg"));
-    //osp->viewer->setSceneData(osgDB::readNodeFile("/home/bparker/brlcad/bin/skippy_poly.osg"));
-
-    //osgDB::readNodeFile() appears to be setting something in viewer to improve performance
-    osp->viewer->setSceneData(osgDB::readNodeFile("/home/bparker/brlcad/bin/a10_skin.osg"));
-    //if (!osgDB::writeNodeFile(*osp->viewer->getSceneData(), "/home/bparker/brlcad/bin/a10_skin2.osg"))
-    //bu_log("d_osgInit: failed to write scene to /home/bparker/brlcad/bin/a10_skin2.osg\n");
-
-    //osp->viewer->setSceneData(osgDB::readNodeFile("cow.osg"));
-
-    //osg::ref_ptr<osg::Node> node = osgDB::readNodeFile("/home/bparker/brlcad/bin/a10_skin.osg");
-    //osg::ref_ptr<osg::Node> node = osgDB::readNodeFile("/home/bparker/brlcad/bin/skippy_poly.osg");
-    //osgUtil::Optimizer optimizer;
-    //optimizer.optimize(node.get());
-    //osp->viewer->setSceneData(node.get());
-
-    //osp->viewer->run();
-#endif
-
     dmp->dm_osgData = (void *)osp;
     bu_log("dm_osgInit: leave\n");
 }
