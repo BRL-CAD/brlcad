@@ -1483,6 +1483,7 @@ rt_vol_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     *area = _area;
 }
 
+
 /*
  * R T _ V O L _ V O L U M E
  *
