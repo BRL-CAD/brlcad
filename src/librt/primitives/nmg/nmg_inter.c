@@ -403,7 +403,7 @@ nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, c
     register fastf_t *pt2d;
     point_t pt;
     struct vertex_g *vg;
-    uint32_t *this;
+    uint32_t *this_obj;
 
     NMG_CK_INTER_STRUCT(is);
     NMG_CK_VERTEX(v);
@@ -414,20 +414,20 @@ nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, c
     }
 
     if (*assoc_use == NMG_FACEUSE_MAGIC) {
-	this = &((struct faceuse *)assoc_use)->f_p->l.magic;
-	if (this != is->twod)
+	this_obj = &((struct faceuse *)assoc_use)->f_p->l.magic;
+	if (this_obj != is->twod)
 	    goto bad;
     } else if (*assoc_use == NMG_EDGEUSE_MAGIC) {
-	this = &((struct edgeuse *)assoc_use)->e_p->magic;
-	if (this != is->twod)
+	this_obj = &((struct edgeuse *)assoc_use)->e_p->magic;
+	if (this_obj != is->twod)
 	    goto bad;
     } else {
-	this = NULL;
+	this_obj = NULL;
     bad:
-	if (this) {
-	  bu_log("nmg_get_2d_vertex(, assoc_use=%p %s) this=%p %s, is->twod=%p %s\n",
+	if (this_obj) {
+	  bu_log("nmg_get_2d_vertex(, assoc_use=%p %s) this_obj=%p %s, is->twod=%p %s\n",
 		 (void *)assoc_use, bu_identify_magic(*assoc_use),
-		 (void *)this, bu_identify_magic(*this),
+		 (void *)this_obj, bu_identify_magic(*this_obj),
 		 (void *)is->twod, bu_identify_magic(*(is->twod)));
 	} else {
 	  bu_log("nmg_get_2d_vertex - this is NULL\n");
@@ -908,8 +908,8 @@ nmg_break_3edge_at_plane(const fastf_t *hit_pt, struct faceuse *fu2, struct nmg_
 	 * XXX and then run the classifier to answer IN/OUT.
 	 * This is expensive.  For getting started, tolerate it.
 	 */
-	int class;
-	class = nmg_class_pt_fu_except(hit_pt, fu2,
+	int nmg_class;
+	nmg_class = nmg_class_pt_fu_except(hit_pt, fu2,
 				       (struct loopuse *)NULL,
 				       (void (*)())NULL, (void (*)())NULL, (char *)NULL, 0,
 				       0, &is->tol);
@@ -940,7 +940,7 @@ nmg_break_3edge_at_plane(const fastf_t *hit_pt, struct faceuse *fu2, struct nmg_
 		   V3ARGS(p1), V3ARGS(p2));
 	}
 
-	switch (class) {
+	switch (nmg_class) {
 	    case NMG_CLASS_AinB:
 		/* point inside a face loop, break edge */
 		break;
@@ -2698,7 +2698,7 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 
     for (i=0; i<BU_PTBL_END(&v_list); i++) {
 	struct vertex *v;
-	int class;
+	int nmg_class;
 
 	v = (struct vertex *)BU_PTBL_GET(&v_list, i);
 	NMG_CK_VERTEX(v);
@@ -2707,10 +2707,10 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 	    continue;
 
 	/* Check if this vertex is within other FU */
-	class = nmg_class_pt_fu_except(v->vg_p->coord, fu2, NULL, NULL, NULL,
+	nmg_class = nmg_class_pt_fu_except(v->vg_p->coord, fu2, NULL, NULL, NULL,
 				       (char *)NULL, 0, 0, &is->tol);
 
-	if (class == NMG_CLASS_AinB) {
+	if (nmg_class == NMG_CLASS_AinB) {
 	    if (UNLIKELY(RTG.NMG_debug & DEBUG_POLYSECT)) {
 		bu_log("Making dualvu of vertex %p in fu2 %p\n", (void *)v, (void *)fu2);
 	    }
@@ -2724,7 +2724,7 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 
     for (i=0; i<BU_PTBL_END(&v_list); i++) {
 	struct vertex *v;
-	int class;
+	int nmg_class;
 
 	v = (struct vertex *)BU_PTBL_GET(&v_list, i);
 	NMG_CK_VERTEX(v);
@@ -2733,10 +2733,10 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 	    continue;
 
 	/* Check if this vertex is within other FU */
-	class = nmg_class_pt_fu_except(v->vg_p->coord, fu1, NULL, NULL, NULL,
+	nmg_class = nmg_class_pt_fu_except(v->vg_p->coord, fu1, NULL, NULL, NULL,
 				       (char *)NULL, 0, 0, &is->tol);
 
-	if (class == NMG_CLASS_AinB) {
+	if (nmg_class == NMG_CLASS_AinB) {
 	    if (UNLIKELY(RTG.NMG_debug & DEBUG_POLYSECT)) {
 		bu_log("Making dualvu of vertex %p in fu1 %p\n", (void *)v, (void *)fu1);
 	    }
@@ -3746,7 +3746,7 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 
     if (BU_PTBL_END(&inters) == 0) {
 	struct vertex *v=(struct vertex *)NULL;
-	int class;
+	int nmg_class;
 	fastf_t dist_to_plane;
 
 	if (UNLIKELY(RTG.NMG_debug & DEBUG_POLYSECT))
@@ -3758,9 +3758,9 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 	dist_to_plane = fabs(DIST_PT_PLANE(vg1->coord, pl));
 	if (dist_to_plane < is->tol.dist) {
 	    /* check if hit point is within fu */
-	    class = nmg_class_pt_fu_except(vg1->coord, fu, (struct loopuse *)NULL,
+	    nmg_class = nmg_class_pt_fu_except(vg1->coord, fu, (struct loopuse *)NULL,
 					   0, 0, (char *)NULL, 0, 0, &is->tol);
-	    if (class != NMG_CLASS_AinB)
+	    if (nmg_class != NMG_CLASS_AinB)
 		goto out;
 
 	    v = eu->vu_p->v_p;
@@ -3776,9 +3776,9 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 	dist_to_plane = fabs(DIST_PT_PLANE(vg2->coord, pl));
 	if (dist_to_plane < is->tol.dist) {
 	    /* check if hit point is within fu */
-	    class = nmg_class_pt_fu_except(vg2->coord, fu, (struct loopuse *)NULL,
+	    nmg_class = nmg_class_pt_fu_except(vg2->coord, fu, (struct loopuse *)NULL,
 					   0, 0, (char *)NULL, 0, 0, &is->tol);
-	    if (class != NMG_CLASS_AinB)
+	    if (nmg_class != NMG_CLASS_AinB)
 		goto out;
 
 	    v = eu->eumate_p->vu_p->v_p;
@@ -3816,10 +3816,10 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 	}
 
 	/* check if hit point is within fu */
-	class = nmg_class_pt_fu_except(hit_pt, fu, (struct loopuse *)NULL,
+	nmg_class = nmg_class_pt_fu_except(hit_pt, fu, (struct loopuse *)NULL,
 				       0, 0, (char *)NULL, 0, 0, &is->tol);
 
-	if (class == NMG_CLASS_AinB) {
+	if (nmg_class == NMG_CLASS_AinB) {
 	    struct edgeuse *new_eu;
 
 	    /* may need to split eu */
@@ -4084,7 +4084,7 @@ nmg_isect_line2_face2pNEW(struct nmg_inter_struct *is, struct faceuse *fu1, stru
     struct edgeuse *new_eu;
     int eu1_index;
     int eu2_index;
-    int class;
+    int nmg_class;
     fastf_t distance;
 
     NMG_CK_INTER_STRUCT(is);
@@ -4343,12 +4343,12 @@ re_tabulate:
 		if (!NEAR_ZERO(dist1, is->tol.dist) || !NEAR_ZERO(dist2, is->tol.dist)) {
 		    continue;
 		}
-		if ((class=nmg_class_pt_fu_except(hit_v->vg_p->coord, fu1, (struct loopuse *)NULL, NULL, NULL, (char *)NULL, 0, 0, &(is->tol))) == NMG_CLASS_AoutB) {
+		if ((nmg_class=nmg_class_pt_fu_except(hit_v->vg_p->coord, fu1, (struct loopuse *)NULL, NULL, NULL, (char *)NULL, 0, 0, &(is->tol))) == NMG_CLASS_AoutB) {
 		    if (RTG.NMG_debug & DEBUG_POLYSECT) {
 			VPRINT("\t\tisect pt outside face fu1 (nmg_class_pt_fu_except):", hit_v->vg_p->coord);
 		    }
 		    continue;
-		} else if ((class=nmg_class_pt_fu_except(hit_v->vg_p->coord, fu2, (struct loopuse *)NULL, NULL, NULL, (char *)NULL, 0, 0, &(is->tol))) == NMG_CLASS_AoutB) {
+		} else if ((nmg_class=nmg_class_pt_fu_except(hit_v->vg_p->coord, fu2, (struct loopuse *)NULL, NULL, NULL, (char *)NULL, 0, 0, &(is->tol))) == NMG_CLASS_AoutB) {
 		    if (RTG.NMG_debug & DEBUG_POLYSECT) {
 			VPRINT("\t\tisect pt outside face fu2 (nmg_class_pt_fu_except):", hit_v->vg_p->coord);
 		    }
@@ -4400,18 +4400,18 @@ re_tabulate:
 	    continue;
 	}
 
-	if ((class=nmg_class_pt_fu_except(hit3d, fu1, (struct loopuse *)NULL, NULL, NULL, (char *)NULL, 0, 0, &(is->tol))) == NMG_CLASS_AoutB) {
+	if ((nmg_class=nmg_class_pt_fu_except(hit3d, fu1, (struct loopuse *)NULL, NULL, NULL, (char *)NULL, 0, 0, &(is->tol))) == NMG_CLASS_AoutB) {
 	    if (RTG.NMG_debug & DEBUG_POLYSECT) {
 		VPRINT("\t\tisect pt outside face fu1 (nmg_class_pt_fu_except):", hit3d);
 	    }
 	    continue;
-	} else if ((class=nmg_class_pt_fu_except(hit3d, fu2, (struct loopuse *)NULL, NULL, NULL, (char *)NULL, 0, 0, &(is->tol))) == NMG_CLASS_AoutB) {
+	} else if ((nmg_class=nmg_class_pt_fu_except(hit3d, fu2, (struct loopuse *)NULL, NULL, NULL, (char *)NULL, 0, 0, &(is->tol))) == NMG_CLASS_AoutB) {
 	    if (RTG.NMG_debug & DEBUG_POLYSECT) {
 		VPRINT("\t\tisect pt outside face fu2 (nmg_class_pt_fu_except):", hit3d);
 	    }
 	    continue;
 	} else if (RTG.NMG_debug & DEBUG_POLYSECT) {
-	    bu_log("\t\tnmg_class_pt_fu_except(fu1) returns %s\n", nmg_class_name(class));
+	    bu_log("\t\tnmg_class_pt_fu_except(fu1) returns %s\n", nmg_class_name(nmg_class));
 	}
 
 	VJOIN1_2D(hit2d, is->pt2d, dist[0], is->dir2d);
