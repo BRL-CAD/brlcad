@@ -77,7 +77,7 @@ double *icv_max(icv_image_t* img)
 
     ICV_IMAGE_VAL_PTR(img);
 
-    max = bu_malloc(sizeof(double)*img->channels, "max values");
+    max = (double *)bu_malloc(sizeof(double)*img->channels, "max values");
 
     for (i=0; i<img->channels; i++)
 	max[i] = 0.0;
@@ -102,7 +102,7 @@ double *icv_sum(icv_image_t* img)
 
     ICV_IMAGE_VAL_PTR(img);
 
-    sum = bu_malloc(sizeof(double)*img->channels, "sum values");
+    sum = (double *)bu_malloc(sizeof(double)*img->channels, "sum values");
 
     for (i=0; i<img->channels; i++)
 	sum[i] = 0.0;
@@ -143,7 +143,7 @@ double *icv_min(icv_image_t* img)
 
     ICV_IMAGE_VAL_PTR(img);
 
-    min = bu_malloc(sizeof(double)*img->channels, "min values");
+    min = (double *)bu_malloc(sizeof(double)*img->channels, "min values");
 
     for (i=0; i<img->channels; i++)
 	min[i] = 1.0;

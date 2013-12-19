@@ -42,7 +42,7 @@ HIDDEN int shrink_image(icv_image_t* bif, unsigned int factor)
 
     facsq = factor*factor;
     res_p = bif->data;
-    p = bu_malloc(bif->channels*sizeof(double), "shrink_image : Pixel Values Temp Buffer");
+    p = (double *)bu_malloc(bif->channels*sizeof(double), "shrink_image : Pixel Values Temp Buffer");
 
     for (y=0; y<bif->height; y+=factor)
 	for (x=0; x<bif->width; x+=factor) {
@@ -66,7 +66,7 @@ HIDDEN int shrink_image(icv_image_t* bif, unsigned int factor)
 
     bif->width = (int) bif->width/factor;
     bif->height = (int) bif->height/factor;
-    bif->data = bu_realloc(bif->data, (size_t) (bif->width*bif->height*bif->channels)*sizeof(double), "shrink_image : Reallocation");
+    bif->data = (double *)bu_realloc(bif->data, (size_t) (bif->width*bif->height*bif->channels)*sizeof(double), "shrink_image : Reallocation");
 
     return 0;
 
@@ -94,7 +94,7 @@ HIDDEN int under_sample(icv_image_t* bif, unsigned int factor)
 
     bif->width = (int) bif->width/factor;
     bif->height = (int) bif->height/factor;
-    bif->data = bu_realloc(bif->data, (size_t) (bif->width*bif->height*bif->channels)*sizeof(double), "under_sample : Reallocation");
+    bif->data = (double *)bu_realloc(bif->data, (size_t) (bif->width*bif->height*bif->channels)*sizeof(double), "under_sample : Reallocation");
 
     return 0;
 }
@@ -116,7 +116,7 @@ HIDDEN int ninterp(icv_image_t* bif, unsigned int out_width, unsigned int out_he
 	return -1;
     }
 
-    out_p = out_data = bu_malloc(out_width*out_height*bif->channels*sizeof(double), "ninterp : out_data");
+    out_p = out_data = (double *)bu_malloc(out_width*out_height*bif->channels*sizeof(double), "ninterp : out_data");
 
     widthstep= bif->width*bif->channels;
 
@@ -163,7 +163,7 @@ HIDDEN int binterp(icv_image_t *bif, unsigned int out_width, unsigned int out_he
 	return -1;
     }
 
-    out_p = out_data = bu_malloc(out_width*out_height*bif->channels*sizeof(double), "binterp : out data");
+    out_p = out_data = (double *)bu_malloc(out_width*out_height*bif->channels*sizeof(double), "binterp : out data");
 
     widthstep = bif->width*bif->channels;
 

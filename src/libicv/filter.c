@@ -186,7 +186,7 @@ icv_filter(icv_image_t *img, ICV_FILTER filter_type)
 
     ICV_IMAGE_VAL_INT(img);
 
-    kern = bu_malloc(k_dim*k_dim*sizeof(double), "icv_filter : Kernel Allocation");
+    kern = (double *)bu_malloc(k_dim*k_dim*sizeof(double), "icv_filter : Kernel Allocation");
     get_kernel(filter_type, kern, &offset);
 
     if (!kern)
@@ -243,7 +243,7 @@ icv_image_t *
 icv_filter3(icv_image_t *old_img, icv_image_t *curr_img, icv_image_t *new_img, ICV_FILTER3 filter_type)
 {
     icv_image_t *out_img;
-    double *kern=NULL;
+    double *kern = NULL;
     double *kern_old, *kern_curr, *kern_new;
     double c_val;
     double *out_data;
@@ -270,7 +270,7 @@ icv_filter3(icv_image_t *old_img, icv_image_t *curr_img, icv_image_t *new_img, I
 	return NULL;
     }
 
-    kern = bu_malloc(k_dim*k_dim*3*sizeof(double), "icv_filter3 : Kernel Allocation");
+    kern = (double *)bu_malloc(k_dim*k_dim*3*sizeof(double), "icv_filter3 : Kernel Allocation");
     get_kernel3(filter_type, kern, &offset);
 
     if (!kern)

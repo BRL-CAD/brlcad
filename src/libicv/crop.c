@@ -58,7 +58,7 @@ icv_rect(icv_image_t *img, int xorig, int yorig, int xnum, int ynum)
     widthstep_in = img->width*img->channels;
     widthstep_out = xnum*img->channels;
     bytes_row = widthstep_out*sizeof(double);
-    out_data = p = bu_malloc(ynum*bytes_row,"icv_rect : Cropped Image Data" );
+    out_data = p = (double *)bu_malloc(ynum*bytes_row,"icv_rect : Cropped Image Data" );
 
     /* Hopes to the initial point to be extracted on the first line */
     in_data = img->data + xorig*img->channels;
@@ -88,7 +88,7 @@ icv_crop(icv_image_t *img, int ulx, int uly, int urx, int ury, int lrx, int lry,
 
     /* Allocates output data and assigns to image*/
     data = img->data;
-    img->data = p = bu_malloc(ynum*xnum*img->channels*sizeof(double), "icv_crop: Out Image");
+    img->data = p = (double *)bu_malloc(ynum*xnum*img->channels*sizeof(double), "icv_crop: Out Image");
 
     for (row = 0; row < ynum; row++) {
 	/* calculate left point of row */
