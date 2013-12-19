@@ -65,36 +65,12 @@ _osgLoadSolid(osg::Geode *geode, osg::Geometry *geom, osg::Vec3dArray *vertices,
 {
     struct bn_vlist *tvp;
     int first;
-#if 0
-    int mflag = 1;
-    static float black[4] = {0.0, 0.0, 0.0, 0.0};
-#endif
     register struct bn_vlist *vp = (struct bn_vlist *)&sp->s_vlist;
     int begin;
     int nverts;
 
     bu_log("ged_osgLoadSolid: enter\n");
 
-#if 0
-    if (line_style != sp->s_soldash) {
-	line_style = sp->s_soldash;
-	DM_SET_LINE_ATTR(dmp, dmp->dm_lineWidth, line_style);
-    }
-
-    if (sp->s_iflag == UP)
-	DM_SET_FGCOLOR(dmp, 255, 255, 255, 0, sp->s_transparency);
-    else
-	DM_SET_FGCOLOR(dmp,
-		       (unsigned char)sp->s_color[0],
-		       (unsigned char)sp->s_color[1],
-		       (unsigned char)sp->s_color[2], 0, sp->s_transparency);
-
-    if (sp->s_hiddenLine) {
-	DM_DRAW_VLIST_HIDDEN_LINE(dmp, (struct bn_vlist *)&sp->s_vlist);
-    } else {
-	DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist);
-    }
-#endif
 
 
     /* Viewing region is from -1.0 to +1.0 */
@@ -109,26 +85,6 @@ _osgLoadSolid(osg::Geode *geode, osg::Geometry *geom, osg::Vec3dArray *vertices,
 	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    switch (*cmd) {
 		case BN_VLIST_LINE_MOVE:
-#if 0
-		    /* Move, start line */
-		    if (first == 0)
-			glEnd();
-		    first = 0;
-
-		    if (dmp->dm_light && mflag) {
-			mflag = 0;
-			glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, wireColor);
-			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
-			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
-			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
-
-			if (dmp->dm_transparency)
-			    glDisable(GL_BLEND);
-		    }
-
-		    glBegin(GL_LINE_STRIP);
-		    glVertex3dv(*pt);
-#else
 		    /* Move, start line */
 		    if (first == 0) {
 			geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINE_STRIP,begin,nverts));
@@ -146,44 +102,8 @@ _osgLoadSolid(osg::Geode *geode, osg::Geometry *geom, osg::Vec3dArray *vertices,
 		    begin += nverts;
 		    nverts = 1;
 		    //bu_log("ged_osgLoadSolid: loaded point - (%lf %lf %lf)\n", (*pt)[X], (*pt)[Y], (*pt)[Z]);
-#endif
 		    break;
 		case BN_VLIST_POLY_START:
-#if 0
-		    /* Start poly marker & normal */
-		    if (first == 0)
-			glEnd();
-		    first = 0;
-
-		    if (dmp->dm_light && mflag) {
-			mflag = 0;
-			glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, black);
-			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientColor);
-			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specularColor);
-			glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuseColor);
-
-			switch (dmp->dm_light) {
-			case 1:
-			    break;
-			case 2:
-			    glMaterialfv(GL_BACK, GL_DIFFUSE, diffuseColor);
-			    break;
-			case 3:
-			    glMaterialfv(GL_BACK, GL_DIFFUSE, backDiffuseColorDark);
-			    break;
-			default:
-			    glMaterialfv(GL_BACK, GL_DIFFUSE, backDiffuseColorLight);
-			    break;
-			}
-
-			if (dmp->dm_transparency)
-			    glEnable(GL_BLEND);
-		    }
-
-		    glBegin(GL_POLYGON);
-		    /* Set surface normal (vl_pnt points outward) */
-		    glNormal3dv(*pt);
-#endif
 		    normals->push_back(osg::Vec3d((*pt)[X], (*pt)[Y], (*pt)[Z]));
 		    begin += nverts;
 		    nverts = 0;
@@ -198,11 +118,6 @@ _osgLoadSolid(osg::Geode *geode, osg::Geometry *geom, osg::Vec3dArray *vertices,
 		    //bu_log("ged_osgLoadSolid: loaded point - (%lf %lf %lf)\n", (*pt)[X], (*pt)[Y], (*pt)[Z]);
 		    break;
 		case BN_VLIST_POLY_END:
-#if 0
-		    /* Draw, End Polygon */
-		    glVertex3dv(*pt);
-		    glEnd();
-#endif
 		    //vertices->push_back(osg::Vec3d((*pt)[X], (*pt)[Y], (*pt)[Z]));
 		    //++nverts;
 		    geom->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::POLYGON,begin,nverts));
@@ -212,10 +127,6 @@ _osgLoadSolid(osg::Geode *geode, osg::Geometry *geom, osg::Vec3dArray *vertices,
 
 		    break;
 		case BN_VLIST_POLY_VERTNORM:
-#if 0
-		    /* Set per-vertex normal.  Given before vert. */
-		    glNormal3dv(*pt);
-#endif
 		    break;
 	    }
 	}
@@ -242,17 +153,7 @@ ged_osgLoadScene(struct bu_list *hdlp, void *osgData)
     register struct ged_display_list *next_gdlp;
     struct solid *sp;
     struct osg_stuff *osp = (struct osg_stuff *)osgData;
-#if 0
-    int line_style = -1;
-#endif
 
-    //bu_log("ged_osgLoadScene: do nothing!\n");
-    //return;
-
-#if 0
-    bu_log("ged_osgLoadScene: part A\n");
-    osp->viewer->setSceneData(osgDB::readNodeFile("/home/bparker/brlcad/bin/a10_skin.osg"));
-#else
     bu_log("ged_osgLoadScene: part B\n");
     osg::Group* root = new osg::Group();
 
@@ -260,7 +161,6 @@ ged_osgLoadScene(struct bu_list *hdlp, void *osgData)
     osg::Geode* geode = new osg::Geode();
 
     bu_log("before: max frame rate - %lf\n", osp->viewer->getRunMaxFrameRate());
-#if 1
     bu_log("ged_osgLoadScene: enter\n");
     gdlp = BU_LIST_NEXT(ged_display_list, hdlp);
     while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
@@ -286,26 +186,13 @@ ged_osgLoadScene(struct bu_list *hdlp, void *osgData)
 
 	gdlp = next_gdlp;
     }
-#endif
 
-#if 1
-    //osp->viewer->setSceneData(osgDB::readNodeFile("/home/bparker/brlcad/bin/a10_skin.osg"));
     root->addChild(geode);
     osp->viewer->setSceneData(root);
-#else
-    // Made no difference
-    //osgUtil::Optimizer optimizer;
-    //optimizer.optimize(geode);
-
-    osp->viewer->setSceneData(geode);
-#endif
     bu_log("after: max frame rate - %lf\n", osp->viewer->getRunMaxFrameRate());
 
-//    if (!osgDB::writeNodeFile(*geode, "a10_skin.osg"))
-//	bu_log("ged_osgLoadScene: failed to write geode to a10.osg\n");
 
     bu_log("ged_osgLoadScene: loaded geode\n");
-#endif
 }
 
 
