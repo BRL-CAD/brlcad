@@ -366,7 +366,7 @@ print_display_info(Display *dpy)
 	printf("screen: %d\n", vp[i].screen);
 	printf("depth : %d\n", vp[i].depth);
 
-	switch (visual->class) {
+	switch (visual->FB_VISUAL_CLASS_VAR) {
 	    case DirectColor:
 		printf("DirectColor: Alterable RGB maps, pixel RGB subfield indices\n");
 		printf("RGB Masks: 0x%lx 0x%lx 0x%lx\n", visual->red_mask,
@@ -391,7 +391,7 @@ print_display_info(Display *dpy)
 		break;
 	    default:
 		printf("Unknown visual class %d\n",
-		       visual->class);
+		       visual->FB_VISUAL_CLASS_VAR);
 		break;
 	}
 	printf("Map Entries: %d\n", visual->map_entries);
@@ -2705,7 +2705,7 @@ _X24_open_existing(FBIO *ifp, Display *dpy, Window win, Window cwinp, Colormap c
     xi->xi_gc = gc;
     xi->xi_cgc = gc;
 
-    switch (vip->class) {
+    switch (vip->FB_VISUAL_CLASS_VAR) {
 	case TrueColor:
 	    if (vip->depth >= 24) {
 		xi->xi_mode = FLG_VT24 << 1;
@@ -3441,9 +3441,9 @@ X24_help(FBIO *ifp)
     fb_log("	xi_xheight=%d\n", xi->xi_xheight);
 
     fb_log("X11 Visual:\n");
-    fb_log("	class=%d\n", xi->xi_visinfo.class);
+    fb_log("	class=%d\n", xi->xi_visinfo.FB_VISUAL_CLASS_VAR);
 
-    switch (xi->xi_visinfo.class) {
+    switch (xi->xi_visinfo.FB_VISUAL_CLASS_VAR) {
 	case DirectColor:
 	    fb_log("\tDirectColor: Alterable RGB maps, pixel RGB subfield indices\n");
 	    fb_log("\tRGB Masks: 0x%lu 0x%lu 0x%lu\n", xi->xi_visinfo.red_mask,
@@ -3468,7 +3468,7 @@ X24_help(FBIO *ifp)
 	    break;
 	default:
 	    fb_log("\tUnknown visual class %d\n",
-		   xi->xi_visinfo.class);
+		   xi->xi_visinfo.FB_VISUAL_CLASS_VAR);
 	    break;
     }
     fb_log("\tColormap Size: %d\n", xi->xi_visinfo.colormap_size);

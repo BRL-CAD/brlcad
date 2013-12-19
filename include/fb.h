@@ -49,6 +49,15 @@
 #include "bu.h"
 #include "fbio.h"
 
+/* Need special macro for C++ since Xlib uses struct Visual member var
+ * name 'class' for C and 'c_class' for C++.  See usage in files
+ * src/libfb/if_X.c, src/libfb/if_X24.c, and src/libfb/if_ogl.c.
+ */
+#if defined(__cplusplus)
+#define FB_VISUAL_CLASS_VAR c_class
+#else
+#define FB_VISUAL_CLASS_VAR class
+#endif
 
 /* Library entry points which are macros.
  *

@@ -243,7 +243,7 @@ x_print_display_info(Display *dpy)
     visual = DefaultVisual(dpy, screen);
     printf("---- Visual 0x%lx ----\n", (unsigned long int)visual);
 
-    switch (visual->class) {
+    switch (visual->FB_VISUAL_CLASS_VAR) {
 	case DirectColor:
 	    printf("DirectColor: Alterable RGB maps, pixel RGB subfield indices\n");
 	    printf("RGB Masks: 0x%lx 0x%lx 0x%lx\n", visual->red_mask,
@@ -268,7 +268,7 @@ x_print_display_info(Display *dpy)
 	    break;
 	default:
 	    printf("Unknown visual class %d\n",
-		   visual->class);
+		   visual->FB_VISUAL_CLASS_VAR);
 	    break;
     }
     printf("Map Entries: %d\n", visual->map_entries);

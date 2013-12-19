@@ -1016,7 +1016,7 @@ fb_ogl_choose_visual(FBIO *ifp)
 	     red, green, blue masks:    0xff0000, 0xff00, 0xff
 	     significant bits in color specification:    8 bits
 	    */
-	    if ((m_hard_cmap) && (vip->class != DirectColor)) {
+	    if ((m_hard_cmap) && (vip->FB_VISUAL_CLASS_VAR != DirectColor)) {
 		continue;
 	    }
 	    if ((m_hard_cmap) && (vip->colormap_size < 256)) {
@@ -1318,7 +1318,7 @@ fb_ogl_open(FBIO *ifp, const char *file, int width, int height)
     swa.colormap = OGL(ifp)->xcmap;
 
 #define XCreateWindowDebug(display, parent, x, y, width, height,	\
-			   border_width, depth, class, visual, valuemask, \
+			   border_width, depth, FB_VISUAL_CLASS_VAR, visual, valuemask, \
 			   attributes)					\
     (printf("XCreateWindow(display = %08X, \n", (long)display),		\
      printf("                parent = %08X, \n", (long)parent),		\
@@ -1328,7 +1328,7 @@ fb_ogl_open(FBIO *ifp, const char *file, int width, int height)
      printf("                height = %d, \n", height),			\
      printf("          border_width = %d, \n", border_width),		\
      printf("                 depth = %d, \n", depth),			\
-     printf("                 class = %d, \n", class),			\
+     printf("                 class = %d, \n", FB_VISUAL_CLASS_VAR),			\
      printf("                visual = %08X, \n", (long)visual),		\
      printf("             valuemask = %08X, \n", valuemask),		\
      printf("            attributes = {"),				\
@@ -1347,7 +1347,7 @@ fb_ogl_open(FBIO *ifp, const char *file, int width, int height)
      (valuemask & CWDontPropagate) ? printf(" do_not_propagate_mask = %08X ", (attributes)->do_not_propagate_mask) : 0, \
      (valuemask & CWColormap) ? printf(" colormap = %08X ", (long)((attributes)->colormap)) : 0, \
      (valuemask & CWCursor) ? printf(" cursor = %08X ", (long)((attributes)->cursor)) : 0, \
-     printf(" }\n")) > 0 ? XCreateWindow(display, parent, x, y, width, height, border_width, depth, class, visual, valuemask, attributes) : -1;
+     printf(" }\n")) > 0 ? XCreateWindow(display, parent, x, y, width, height, border_width, depth, FB_VISUAL_CLASS_VAR, visual, valuemask, attributes) : -1;
 
     OGL(ifp)->wind = XCreateWindow(OGL(ifp)->dispp,
 				   RootWindow(OGL(ifp)->dispp,
@@ -2258,7 +2258,7 @@ ogl_help(FBIO *ifp)
 
     fb_log("X11 Visual:\n");
 
-    switch (visual->class) {
+    switch (visual->FB_VISUAL_CLASS_VAR) {
 	case DirectColor:
 	    fb_log("\tDirectColor: Alterable RGB maps, pixel RGB subfield indices\n");
 	    fb_log("\tRGB Masks: 0x%x 0x%x 0x%x\n", visual->red_mask,
@@ -2283,7 +2283,7 @@ ogl_help(FBIO *ifp)
 	    break;
 	default:
 	    fb_log("\tUnknown visual class %d\n",
-		   visual->class);
+		   visual->FB_VISUAL_CLASS_VAR);
 	    break;
     }
     fb_log("\tColormap Size: %d\n", visual->colormap_size);
