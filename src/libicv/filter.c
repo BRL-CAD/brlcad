@@ -166,7 +166,7 @@ get_kernel3(ICV_FILTER3 filter_type, double *kern, double *offset)
 int
 icv_filter(icv_image_t *img, ICV_FILTER filter_type)
 {
-    double *kern=NULL, *kern_p=NULL;
+    double *kern = NULL, *kern_p = NULL;
     double c_val;
     double *out_data, *in_data, *data_p;
     double offset = 0;

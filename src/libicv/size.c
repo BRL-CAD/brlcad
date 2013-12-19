@@ -28,7 +28,9 @@
 #include "icv.h"
 #include "vmath.h"
 
-HIDDEN int shrink_image(icv_image_t* bif, unsigned int factor)
+
+HIDDEN int
+shrink_image(icv_image_t* bif, unsigned int factor)
 {
     double *data_p, *res_p; /**< input and output pointers */
     double *p;
@@ -44,36 +46,37 @@ HIDDEN int shrink_image(icv_image_t* bif, unsigned int factor)
     res_p = bif->data;
     p = (double *)bu_malloc(bif->channels*sizeof(double), "shrink_image : Pixel Values Temp Buffer");
 
-    for (y=0; y<bif->height; y+=factor)
-	for (x=0; x<bif->width; x+=factor) {
+    for (y = 0; y < bif->height; y += factor)
+	for (x = 0; x < bif->width; x += factor) {
 
-	    for (c=0; c<bif->channels; c++) {
+	    for (c = 0; c < bif->channels; c++) {
 		p[c]= 0;
 	    }
 
 	    for (py = 0; py < factor; py++) {
 		data_p = bif->data + (y+py)*widthstep;
 		for (px = 0; px < factor; px++) {
-		    for (c=0; c<bif->channels; c++) {
+		    for (c = 0; c < bif->channels; c++) {
 			p[c] += *data_p++;
 		    }
 		}
 	    }
 
-	    for (c=0; c<bif->channels; c++)
+	    for (c = 0; c < bif->channels; c++)
 		*res_p++ = p[c]/facsq;
 	}
 
-    bif->width = (int) bif->width/factor;
-    bif->height = (int) bif->height/factor;
-    bif->data = (double *)bu_realloc(bif->data, (size_t) (bif->width*bif->height*bif->channels)*sizeof(double), "shrink_image : Reallocation");
+    bif->width = (int)bif->width/factor;
+    bif->height = (int)bif->height/factor;
+    bif->data = (double *)bu_realloc(bif->data, (size_t)(bif->width*bif->height*bif->channels)*sizeof(double), "shrink_image : Reallocation");
 
     return 0;
 
 }
 
 
-HIDDEN int under_sample(icv_image_t* bif, unsigned int factor)
+HIDDEN int
+under_sample(icv_image_t* bif, unsigned int factor)
 {
     double *data_p, *res_p;
     int x, y, widthstep;
@@ -86,21 +89,23 @@ HIDDEN int under_sample(icv_image_t* bif, unsigned int factor)
     widthstep = bif->width*bif->channels;
     res_p = data_p = bif->data;
 
-    for (y=0; y<bif->height; y+=factor) {
+    for (y = 0; y < bif->height; y += factor) {
 	data_p = bif->data + widthstep*y;
-	for (x=0; x<bif->width; x+=factor, res_p+=bif->channels, data_p+=factor*bif->channels)
+	for (x = 0; x < bif->width;
+	     x += factor, res_p += bif->channels, data_p += factor * bif->channels)
 	    VMOVEN(res_p, data_p, bif->channels);
     }
 
-    bif->width = (int) bif->width/factor;
-    bif->height = (int) bif->height/factor;
-    bif->data = (double *)bu_realloc(bif->data, (size_t) (bif->width*bif->height*bif->channels)*sizeof(double), "under_sample : Reallocation");
+    bif->width = (int)bif->width/factor;
+    bif->height = (int)bif->height/factor;
+    bif->data = (double *)bu_realloc(bif->data, (size_t)(bif->width*bif->height*bif->channels)*sizeof(double), "under_sample : Reallocation");
 
     return 0;
 }
 
 
-HIDDEN int ninterp(icv_image_t* bif, unsigned int out_width, unsigned int out_height)
+HIDDEN int
+ninterp(icv_image_t* bif, unsigned int out_width, unsigned int out_height)
 {
     double xstep, ystep;
     unsigned int i, j;
@@ -108,8 +113,8 @@ HIDDEN int ninterp(icv_image_t* bif, unsigned int out_width, unsigned int out_he
     int widthstep;
     double *in_r, *in_c; /*<< Pointer to row and col of input buffers*/
     double *out_data, *out_p;
-    xstep = (double) (bif->width-1) / (double) (out_width) - 1.0e-06;
-    ystep = (double) (bif->height-1) / (double) (out_height) - 1.0e-06;
+    xstep = (double)(bif->width-1) / (double)(out_width) - 1.0e-06;
+    ystep = (double)(bif->height-1) / (double)(out_height) - 1.0e-06;
 
     if ((xstep < 1.0 && ystep > 1.0) || (xstep > 1.0 && ystep < 1.0)) {
 	bu_log("Operation unsupported.  Cannot stretch one dimension while compressing the other.\n");
@@ -120,12 +125,12 @@ HIDDEN int ninterp(icv_image_t* bif, unsigned int out_width, unsigned int out_he
 
     widthstep= bif->width*bif->channels;
 
-    for (j=0; j<out_height; j++) {
-	y = (int) (j*ystep);
+    for (j = 0; j < out_height; j++) {
+	y = (int)(j*ystep);
 	in_r = bif->data + y*widthstep;
 
 	for (i = 0; i < out_width; i++) {
-	    x =  (int) (i*xstep);
+	    x = (int)(i*xstep);
 
 	    in_c = in_r + x*bif->channels;
 
@@ -144,7 +149,10 @@ HIDDEN int ninterp(icv_image_t* bif, unsigned int out_width, unsigned int out_he
     return 0;
 
 }
-HIDDEN int binterp(icv_image_t *bif, unsigned int out_width, unsigned int out_height)
+
+
+HIDDEN int
+binterp(icv_image_t *bif, unsigned int out_width, unsigned int out_height)
 {
     unsigned int i, j;
     int c;
@@ -155,8 +163,8 @@ HIDDEN int binterp(icv_image_t *bif, unsigned int out_width, unsigned int out_he
     double *upp_c, *low_c;
     int widthstep;
 
-    xstep = (double) (bif->width - 1) / (double)out_width - 1.0e-6;
-    ystep = (double) (bif->height -1) / (double)out_height - 1.0e-6;
+    xstep = (double)(bif->width - 1) / (double)out_width - 1.0e-6;
+    ystep = (double)(bif->height -1) / (double)out_height - 1.0e-6;
 
     if ((xstep < 1.0 && ystep > 1.0) || (xstep > 1.0 && ystep < 1.0)) {
 	bu_log("Operation unsupported.  Cannot stretch one dimension while compressing the other.\n");
@@ -172,7 +180,7 @@ HIDDEN int binterp(icv_image_t *bif, unsigned int out_width, unsigned int out_he
 	dy = y - (int)y;
 
 	low_r = bif->data + widthstep* (int)y;
-	upp_r = bif->data + widthstep* (int) (y+1);
+	upp_r = bif->data + widthstep* (int)(y+1);
 
 	for (i = 0; i < out_width; i++) {
 	    x = i*xstep;
@@ -181,9 +189,9 @@ HIDDEN int binterp(icv_image_t *bif, unsigned int out_width, unsigned int out_he
 	    upp_c = upp_r + (int)x*bif->channels;
 	    low_c = low_r + (int)x*bif->channels;
 
-	    for (c=0; c<bif->channels; c++) {
-		mid1 = low_c[0] + dx * ((double) low_c[bif->channels] - (double) low_c[0]);
-		mid2 = upp_c[0] + dx * ((double) upp_c[bif->channels] - (double) upp_c[0]);
+	    for (c = 0; c < bif->channels; c++) {
+		mid1 = low_c[0] + dx * ((double)low_c[bif->channels] - (double)low_c[0]);
+		mid2 = upp_c[0] + dx * ((double)upp_c[bif->channels] - (double)upp_c[0]);
 		*out_p = mid1 + dy * (mid2 - mid1);
 
 		out_p++;
@@ -201,7 +209,8 @@ HIDDEN int binterp(icv_image_t *bif, unsigned int out_width, unsigned int out_he
 }
 
 
-int icv_resize(icv_image_t *bif, ICV_RESIZE_METHOD method, unsigned int out_width, unsigned int out_height, unsigned int factor)
+int
+icv_resize(icv_image_t *bif, ICV_RESIZE_METHOD method, unsigned int out_width, unsigned int out_height, unsigned int factor)
 {
     ICV_IMAGE_VAL_INT(bif);
 
