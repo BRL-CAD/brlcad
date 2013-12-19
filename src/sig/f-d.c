@@ -39,15 +39,15 @@
 #include "vmath.h"
 
 
-float ibuf[512];
-double obuf[512];
-
-
-int main(int argc, char **argv)
+int
+main(int argc, char *argv[])
 {
     int i, num;
     double scale = 1.0;
     size_t ret;
+
+    float ibuf[512];
+    double obuf[512];
 
     if (argc > 1) {
 	if (!BU_STR_EQUAL(argv[1], "-n"))
