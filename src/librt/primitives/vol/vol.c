@@ -1483,6 +1483,83 @@ rt_vol_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     *area = _area;
 }
 
+/*
+ * R T _ V O L _ V O L U M E
+ *
+ * A paper at http://www.osti.gov/scitech/servlets/purl/632793 gives a method
+ * for calculating the volume of hexahedrens from the eight vertices.
+ *
+ * The eight vertices are calculated, then transformed by the matrix and the
+ * volume calculated from that.
+ */
+void
+rt_vol_volume(fastf_t *volume, const struct rt_db_internal *ip)
+{
+    struct rt_vol_internal *vip;
+    unsigned int x, y, z;
+    point_t x0, x1, x2, x3, x4, x5, x6, x7;
+    point_t _x0, _x1, _x2, _x3, _x4, _x5, _x6, _x7;
+    vect_t d7_0, d1_0, d3_5, d4_0, d5_6, d2_0, d6_3, cross1, cross2, cross3;
+    fastf_t _x, _y, _z, det, _vol = 0.0;
+
+    if (volume == NULL || ip == NULL) return;
+    RT_CK_DB_INTERNAL(ip);
+    vip = (struct rt_vol_internal *)ip->idb_ptr;
+    RT_VOL_CK_MAGIC(vip);
+
+    det = fabs(bn_mat_determinant(vip->mat));
+    if (EQUAL(det, 0.0)) {
+	*volume = -1.0;
+	return;
+    }
+
+    for (x = 0; x < vip->xdim; x++) {
+	for (y = 0; y < vip->ydim; y++) {
+	    for (z = 0; z < vip->zdim; z++) {
+		if (OK(vip, VOL(vip, x, y, z))) {
+		    _x = (fastf_t)x;
+		    _y = (fastf_t)y;
+		    _z = (fastf_t)z;
+
+		    VSET(_x0, _x - 0.5 * vip->cellsize[X], _y - 0.5 * vip->cellsize[Y], _z - 0.5 * vip->cellsize[Z]);
+		    VSET(_x1, _x + 0.5 * vip->cellsize[X], _y - 0.5 * vip->cellsize[Y], _z - 0.5 * vip->cellsize[Z]);
+		    VSET(_x2, _x - 0.5 * vip->cellsize[X], _y + 0.5 * vip->cellsize[Y], _z - 0.5 * vip->cellsize[Z]);
+		    VSET(_x3, _x + 0.5 * vip->cellsize[X], _y + 0.5 * vip->cellsize[Y], _z - 0.5 * vip->cellsize[Z]);
+		    VSET(_x4, _x - 0.5 * vip->cellsize[X], _y - 0.5 * vip->cellsize[Y], _z + 0.5 * vip->cellsize[Z]);
+		    VSET(_x5, _x + 0.5 * vip->cellsize[X], _y - 0.5 * vip->cellsize[Y], _z + 0.5 * vip->cellsize[Z]);
+		    VSET(_x6, _x - 0.5 * vip->cellsize[X], _y + 0.5 * vip->cellsize[Y], _z + 0.5 * vip->cellsize[Z]);
+		    VSET(_x7, _x + 0.5 * vip->cellsize[X], _y + 0.5 * vip->cellsize[Y], _z + 0.5 * vip->cellsize[Z]);
+
+		    MAT4X3PNT(x0, vip->mat, _x0);
+		    MAT4X3PNT(x1, vip->mat, _x1);
+		    MAT4X3PNT(x2, vip->mat, _x2);
+		    MAT4X3PNT(x3, vip->mat, _x3);
+		    MAT4X3PNT(x4, vip->mat, _x4);
+		    MAT4X3PNT(x5, vip->mat, _x5);
+		    MAT4X3PNT(x6, vip->mat, _x6);
+		    MAT4X3PNT(x7, vip->mat, _x7);
+
+		    VSUB2(d7_0, x7, x0);
+		    VSUB2(d1_0, x1, x0);
+		    VSUB2(d3_5, x3, x5);
+		    VCROSS(cross1, d1_0, d3_5);
+
+		    VSUB2(d4_0, x4, x0);
+		    VSUB2(d5_6, x5, x6);
+		    VCROSS(cross2, d4_0, d5_6);
+
+		    VSUB2(d2_0, x2, x0);
+		    VSUB2(d6_3, x6, x3);
+		    VCROSS(cross3, d2_0, d6_3);
+
+		    _vol += (1.0/6.0) * (VDOT(d7_0, cross1) + VDOT(d7_0, cross2) + VDOT(d7_0, cross3));
+		}
+	    }
+	}
+    }
+    *volume = fabs(_vol);
+}
+
 
 /*
  * Local Variables:

@@ -777,7 +777,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	rt_vol_params,
 	rt_vol_bbox,
-	NULL,
+	rt_vol_volume,
 	rt_vol_surf_area,
 	rt_vol_centroid,
 	NULL,
