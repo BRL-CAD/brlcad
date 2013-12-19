@@ -31,9 +31,9 @@
  *		-I	number of intensity levels
  *		-M	method
  *			0 Floyd-Steinberg
- *			1 45 degree classical halftone screen
+ *			1 45-degree classical halftone screen
  *			2 Threshold
- *			3 0 degree dispersed halftone screen.
+ *			3 0-degree dispersed halftone screen
  *		-R	Add some noise.
  *		-S	Surpent flag.
  *		-T	tonescale points
@@ -101,8 +101,11 @@ Usage: halftone [-R -S -a] [-D Debug Level]\n\
 	[-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[-B contrast] [-I intensity_levels] [-T x y ... tone_curve]\n\
 	[-M Method] [file.bw]\n\
-	Floyd-Steinberg=0	45 Degree Classic Screen=1\n\
-	Thresholding=2		0 Degree Dispersed Screen=3\n";
+	where Method is chosen from:\n\
+	    0  Floyd-Steinberg\n\
+	    1  45-Degree Classic Screen\n\
+	    2  Thresholding\n\
+	    3  0-Degree Dispersed Screen\n";
 
 /*	setup	process parameters and setup working environment
  *
@@ -117,9 +120,9 @@ Usage: halftone [-R -S -a] [-D Debug Level]\n\
  * Uses:
  *	width	- width of picture
  *	height	- height of picture
- *	Beta	- sharpening value.
+ *	Beta	- sharpening value
  *	surpent	- to surpenten rasters?
- *	Levels	- number of intensity levels.
+ *	Levels	- number of intensity levels
  *	Debug	- debug level
  *	RandomFlag - Add noise to processes.
  *
@@ -156,6 +159,10 @@ setup(int argc, char **argv)
 		break;
 	    case 'M':
 		Method = atoi(bu_optarg);
+		if (Method <0 || Method >3) {
+			fprintf(stderr,"halftone: Method must be 0,1,2,3; set to default (0)\n");
+			Method = 0;
+		}
 		break;
 	    case 'R':
 		RandomFlag = bn_unif_init(1, 0);
