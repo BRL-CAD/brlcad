@@ -998,11 +998,13 @@ fb_ogl_choose_visual(FBIO *ifp)
 	for (i = 0, j = 0, vip=vibase; i < num; i++, vip++) {
 	    /* requirements */
 	    glXGetConfig(OGL(ifp)->dispp, vip, GLX_USE_GL, &use);
-	    if (!use)
+	    if (!use) {
 		continue;
+	    }
 	    glXGetConfig(OGL(ifp)->dispp, vip, GLX_RGBA, &rgba);
-	    if (!rgba)
+	    if (!rgba) {
 		continue;
+	    }
 	    /* desires */
 	    /* X_CreateColormap needs a DirectColor visual */
 	    /* There should be some way of handling this with TrueColor,
@@ -1021,10 +1023,12 @@ fb_ogl_choose_visual(FBIO *ifp)
 		continue;
 	    }
 	    glXGetConfig(OGL(ifp)->dispp, vip, GLX_DOUBLEBUFFER, &dbfr);
-	    if ((m_doub_buf) && (!dbfr))
+	    if ((m_doub_buf) && (!dbfr)) {
 		continue;
-	    if ((m_sing_buf) && (dbfr))
+	    }
+	    if ((m_sing_buf) && (dbfr)) {
 		continue;
+	    }
 
 	    /* this visual meets criteria */
 	    if (j >= NGOOD-1) {
