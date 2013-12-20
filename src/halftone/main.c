@@ -35,8 +35,9 @@
  *			2 Threshold
  *			3 0-degree dispersed halftone screen
  *		-R	Add some noise.
- *		-S	Surpent flag.
+ *		-S	Surpent flag (set back to 0 if method is not Floyd-Steinberg)
  *		-T	tonescale points
+ *		-D	debug level
  *
  * Exit:
  *	writes a ht(bw) file.
@@ -107,7 +108,7 @@ Usage: halftone [-R -S -a] [-D Debug_Level]\n\
 	    2  Thresholding\n\
 	    3  0-Degree Dispersed Screen\n";
 
-/*	setup	process parameters and setup working environment
+/*	setup:	process parameters and setup working environment
  *
  * Entry:
  *	argc	- number of arguments.
