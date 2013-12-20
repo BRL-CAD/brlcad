@@ -159,10 +159,11 @@ again:
 	min = cur+1;
 	goto again;
     }
+
     if (val < nugnp->nu_axis[axis][cur].nu_epos)
 	return cur;
-    else
-	return cur+1;
+
+    return cur+1;
 }
 
 
