@@ -1674,10 +1674,24 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 	    surfB = brepB->m_S[brepB->m_F[j].m_si];
 	    if (IsSameSurface(surfA, surfB))
 		continue;
-	    /*
+
+	    /*  Doing some upfront testing - should probably be pushed lower, but
+	     *  currently this is the level where it is clear what's happening
+	     *
 	    fastf_t disjoint = brepA->m_F[i].BoundingBox().MinimumDistanceTo(brepB->m_F[j].BoundingBox());
 	    if (disjoint > ON_ZERO_TOLERANCE) {
 		continue;
+	    }
+	    ON_Plane surfA_plane, surfB_plane;
+	    int coplanar = 0;
+	    if (surfA->IsPlanar(&surfA_plane) && surfB->IsPlanar(&surfB_plane)) {
+		if (surfA_plane.Normal().IsParallelTo(surfB_plane.Normal())) {
+		    fastf_t disjoint = brepA->m_F[i].BoundingBox().MinimumDistanceTo(brepB->m_F[j].BoundingBox());
+		    if (disjoint < ON_ZERO_TOLERANCE) {
+			coplanar = 1;
+			bu_log("Faces brepA->%d and brepB->%d are coplanar\n", i, j);
+		    }
+		}
 	    }
 	    */
 
