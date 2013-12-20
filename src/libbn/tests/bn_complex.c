@@ -258,6 +258,8 @@ main(int argc, char *argv[])
 	    return test_bn_cx_parts(argc, argv);
     }
     bu_exit(1, "ERROR: function_num %d is not valid [%s]\n", function_num, argv[0]);
+    /* should never get here */
+    return 0;
 }
 
 
