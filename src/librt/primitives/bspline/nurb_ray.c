@@ -124,8 +124,9 @@ struct internal_convex_hull {
     fastf_t min, max;
 };
 
-
+#if !defined(SIGN)
 #define SIGN(a)	((a < 0.0)? -1 : 1)
+#endif
 
 void
 rt_nurb_clip_srf(const struct face_g_snurb *srf, int dir, fastf_t *min, fastf_t *max)
