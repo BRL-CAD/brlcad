@@ -1349,7 +1349,7 @@ rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	    normals = (double *)bu_malloc(bip->num_normals*ELEMENTS_PER_VECT*sizeof(double), "normals");
 
 	    /* convert fastf_t to double */
-	    for (i=0; i < bip->num_normals * ELEMENTS_PER_VECT; i++) {
+	    for (i = 0; i < bip->num_normals * ELEMENTS_PER_VECT; i++) {
 		normals[i] = bip->normals[i];
 	    }
 
@@ -1691,7 +1691,7 @@ size_t
 rt_bot_get_edge_list(const struct rt_bot_internal *bot, size_t **edge_list)
 {
     size_t i;
-    size_t edge_count=0;
+    size_t edge_count = 0;
     size_t v1, v2, v3;
 
     if (bot->num_faces < 1)
@@ -1762,7 +1762,7 @@ rt_bot_find_e_nearest_pt2(
     size_t i;
     fastf_t dist=MAX_FASTF, tmp_dist;
     size_t *edge_list;
-    size_t edge_count=0;
+    size_t edge_count = 0;
     struct bn_tol tol;
 
     RT_BOT_CK_MAGIC(bot);
@@ -2236,7 +2236,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		    BU_BITCLR(bot->face_mode, li);
 	    }
 	} else if (BU_STR_EQUAL(argv[0], "nn")) {
-	    long new_num=0;
+	    long new_num = 0;
 	    size_t old_num = bot->num_normals;
 
 	    new_num = atol(Tcl_GetStringFromObj(obj, NULL));
@@ -3117,7 +3117,7 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot, const struct bn_tol *tol)
     /* THE OLD WAY .. possibly O(n^3) with the vertex shifting */
 
     size_t i, j, k;
-    size_t count=0;
+    size_t count = 0;
 
     RT_BOT_CK_MAGIC(bot);
 
@@ -3151,7 +3151,7 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot, const struct bn_tol *tol)
     /* THE NEW WAY .. possibly O(n) with basic bin sorting */
 
     size_t i, j, k;
-    size_t count=0;
+    size_t count = 0;
 
     long slot;
     size_t total = 0;
@@ -3169,7 +3169,7 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot, const struct bn_tol *tol)
     RT_BOT_CK_MAGIC(bot);
 
     /* initialize a simple 256-slot integer bin space partitioning */
-    for (slot=0; slot<256; slot++) {
+    for (slot = 0; slot < 256; slot++) {
 	bin_todonext[slot] = 0;
 	bin_capacity[slot] = DEFAULT_CAPACITY;
 	bin[slot] = bu_calloc(DEFAULT_CAPACITY, sizeof(long *), "vertices bin");
@@ -3338,7 +3338,7 @@ rt_bot_face_fuse(struct rt_bot_internal *bot)
 {
     size_t num_faces;
     size_t i, j, k, l;
-    int count=0;
+    int count = 0;
 
     RT_BOT_CK_MAGIC(bot);
 
@@ -3350,7 +3350,7 @@ rt_bot_face_fuse(struct rt_bot_internal *bot)
 	    /* each pass through this loop either increments j or
 	     * decrements num_faces
 	     */
-	    int match=0;
+	    int match = 0;
 	    int elim;
 
 	    for (k = i * 3; k < (i+1) * 3; k++) {
@@ -3509,7 +3509,7 @@ find_closest_face(fastf_t **centers, int *piece, int *old_faces, size_t num_face
     size_t min_face=-1;
 
     if ((*centers) == NULL) {
-	int count_centers=0;
+	int count_centers = 0;
 
 	/* need to build the centers array */
 	(*centers) = (fastf_t *)bu_malloc(num_faces * 3 * sizeof(fastf_t), "center");
@@ -3592,7 +3592,7 @@ rt_bot_sort_faces(struct rt_bot_internal *bot, size_t tris_per_piece)
     int *piece_norms = (int *)NULL;	/* vertex normals for faces in the current piece */
     int *piece_verts = (int *)NULL;	/* a list of vertices in the current piece (each vertex appears only once) */
     unsigned char *vert_count;		/* an array used to hold the number of piece vertices that appear in each BOT face */
-    size_t new_face_count=0;		/* the current number of faces in the "new_faces" list */
+    size_t new_face_count = 0;		/* the current number of faces in the "new_faces" list */
     size_t faces_left;			/* the number of faces in the "old_faces" array that have not yet been used */
     size_t piece_len;			/* the current number of faces in the piece */
     size_t max_verts;			/* the maximum number of piece_verts found in a single unused face */
@@ -4158,7 +4158,7 @@ edge_can_be_decimated(struct rt_bot_internal *bot,
     size_t num_faces = bot->num_faces;
     size_t num_edges = bot->num_vertices;
     size_t count, v1_count;
-    size_t affected_count=0;
+    size_t affected_count = 0;
     vect_t v01, v02, v12;
     fastf_t *vertices = bot->vertices;
     size_t faces_affected[MAX_AFFECTED_FACES];
@@ -4335,7 +4335,7 @@ rt_bot_decimate(struct rt_bot_internal *bot,	/* BOT to be decimated */
     size_t edges_deleted = 0;
     size_t edge_count = 0;
     size_t face_count = 0;
-    size_t actual_count=0;
+    size_t actual_count = 0;
     size_t deleted = 0;
     size_t i = 0;
     int done;
@@ -4586,17 +4586,17 @@ rt_bot_smooth(struct rt_bot_internal *bot, const char *bot_name, struct db_i *db
 
 	    /* Compute the inverse of the direction cosines */
 	    if (ap.a_ray.r_dir[X] < -SQRT_SMALL_FASTF) {
-		inv_dir[X]=1.0/ap.a_ray.r_dir[X];
+		inv_dir[X] = 1.0/ap.a_ray.r_dir[X];
 	    } else if (ap.a_ray.r_dir[X] > SQRT_SMALL_FASTF) {
-		inv_dir[X]=1.0/ap.a_ray.r_dir[X];
+		inv_dir[X] = 1.0/ap.a_ray.r_dir[X];
 	    } else {
 		ap.a_ray.r_dir[X] = 0.0;
 		inv_dir[X] = INFINITY;
 	    }
 	    if (ap.a_ray.r_dir[Y] < -SQRT_SMALL_FASTF) {
-		inv_dir[Y]=1.0/ap.a_ray.r_dir[Y];
+		inv_dir[Y] = 1.0/ap.a_ray.r_dir[Y];
 	    } else if (ap.a_ray.r_dir[Y] > SQRT_SMALL_FASTF) {
-		inv_dir[Y]=1.0/ap.a_ray.r_dir[Y];
+		inv_dir[Y] = 1.0/ap.a_ray.r_dir[Y];
 	    } else {
 		ap.a_ray.r_dir[Y] = 0.0;
 		inv_dir[Y] = INFINITY;
@@ -5136,7 +5136,7 @@ rt_bot_patches(struct rt_bot_internal *bot)
 
     alltpp = (struct tri_pts *)bu_calloc(bot->num_faces, sizeof(struct tri_pts), "patches alltpp");
 
-    for (i=0; i < bot->num_faces; ++i) {
+    for (i = 0; i < bot->num_faces; ++i) {
 	vect_t a, b, norm_dir;
 	fastf_t results[6];
 	int result_max = 0;

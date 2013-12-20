@@ -1541,14 +1541,14 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Associate the face geometry */
-    for (i=0; i < face; i++) {
+    for (i = 0; i < face; i++) {
 	if (nmg_fu_planeeqn(outfaceuses[i], tol) < 0)
 	    goto fail;
     }
 
     /* Associate vertexuse normals */
-    for (i=0; i<nell; i++) {
-	for (j=0; j<segs_per_ell[i]; j++) {
+    for (i = 0; i < nell; i++) {
+	for (j = 0; j < segs_per_ell[i]; j++) {
 	    VREVERSE(rev_norm, &normals[i][j*3]);
 	    for (BU_LIST_FOR(vu, vertexuse, &vells[i][j]->vu_hd)) {
 

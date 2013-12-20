@@ -563,7 +563,7 @@ rt_arb_mk_planes(register struct prep_arb *pap, struct rt_arb_internal *aip, con
      * bug hunt!).
      */
     VSETALL(sum, 0);
-    for (i=0; i<8; i++) {
+    for (i = 0; i < 8; i++) {
 	VADD2(sum, sum, aip->pt[i]);
     }
     VSCALE(pap->pa_center, sum, 0.125);	/* sum/8 */
@@ -575,7 +575,7 @@ rt_arb_mk_planes(register struct prep_arb *pap, struct rt_arb_internal *aip, con
      * its own vertex number, if non-equivalent).
      */
     equiv_pts[0] = 0;
-    for (i=1; i<8; i++) {
+    for (i = 1; i < 8; i++) {
 	for (j = i-1; j >= 0; j--) {
 	    /* Compare vertices I and J */
 	    vect_t work;
@@ -598,11 +598,11 @@ rt_arb_mk_planes(register struct prep_arb *pap, struct rt_arb_internal *aip, con
     }
 
     pap->pa_faces = 0;
-    for (i=0; i<6; i++) {
+    for (i = 0; i < 6; i++) {
 	int npts;
 
 	npts = 0;
-	for (j=0; j<4; j++) {
+	for (j = 0; j < 4; j++) {
 	    int pt_index;
 
 	    pt_index = rt_arb_info[i].ai_sub[j];
@@ -811,7 +811,7 @@ rt_arb_print(register const struct soltab *stp)
 	return;
     }
     bu_log("%d faces:\n", arbp->arb_nmfaces);
-    for (i=0; i < arbp->arb_nmfaces; i++) {
+    for (i = 0; i < arbp->arb_nmfaces; i++) {
 	afp = &(arbp->arb_face[i]);
 	VPRINT("A", afp->A);
 	HPRINT("Peqn", afp->peqn);
@@ -1209,7 +1209,7 @@ rt_arb_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, c
 	return BN_CLASSIFY_UNIMPLEMENTED;
     }
 
-    for (i=0; i<arbp->arb_nmfaces; i++) {
+    for (i = 0; i < arbp->arb_nmfaces; i++) {
 	if (bn_hlf_class(arbp->arb_face[i].peqn, min, max, tol) ==
 	    BN_CLASSIFY_OUTSIDE)
 	    return BN_CLASSIFY_OUTSIDE;
@@ -1270,7 +1270,7 @@ rt_arb_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     if (mat == NULL) mat = bn_mat_identity;
     MAT4X3PNT(aip->pt[0], mat, &vec[0]);
 
-    for (i=1; i<8; i++) {
+    for (i = 1; i < 8; i++) {
 	VADD2(work, &vec[0*3], &vec[i*3]);
 	MAT4X3PNT(aip->pt[i], mat, work);
     }
@@ -1305,7 +1305,7 @@ rt_arb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     /* NOTE: This also converts to dbfloat_t */
     VSCALE(&rec->s.s_values[3*0], aip->pt[0], local2mm);
-    for (i=1; i < 8; i++) {
+    for (i = 1; i < 8; i++) {
 	VSUB2SCALE(&rec->s.s_values[3*i],
 		   aip->pt[i], aip->pt[0], local2mm);
     }
@@ -1346,7 +1346,7 @@ rt_arb_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     /* Convert from database (network) to internal (host) format */
     bu_cv_ntohd((unsigned char *)vec, ep->ext_buf, 8*3);
     if (mat == NULL) mat = bn_mat_identity;
-    for (i=0; i<8; i++) {
+    for (i = 0; i < 8; i++) {
 	MAT4X3PNT(aip->pt[i], mat, &vec[i*3]);
     }
     return 0;	/* OK */
@@ -1375,7 +1375,7 @@ rt_arb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 8 * ELEMENTS_PER_VECT;
     ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "arb external");
-    for (i=0; i<8; i++) {
+    for (i = 0; i < 8; i++) {
 	VSCALE(&vec[i*ELEMENTS_PER_VECT], aip->pt[i], local2mm);
     }
     bu_cv_htond(ep->ext_buf, (unsigned char *)vec, 8*ELEMENTS_PER_VECT);
@@ -1425,7 +1425,7 @@ rt_arb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
 	if (!verbose) return 0;
 
-	for (i=1; i < 8; i++) {
+	for (i = 1; i < 8; i++) {
 	    sprintf(buf, "\t%d (%g, %g, %g)\n", i+1,
 		    INTCLAMP(aip->pt[i][X] * mm2local),
 		    INTCLAMP(aip->pt[i][Y] * mm2local),
@@ -1437,7 +1437,7 @@ rt_arb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	bu_vls_strcat(str, buf);
 	switch (arb_type) {
 	    case ARB8:
-		for (i=0; i<8; i++) {
+		for (i = 0; i < 8; i++) {
 		    sprintf(buf, "\t%d (%g, %g, %g)\n", i+1,
 			    INTCLAMP(aip->pt[i][X] * mm2local),
 			    INTCLAMP(aip->pt[i][Y] * mm2local),
@@ -1446,7 +1446,7 @@ rt_arb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 		}
 		break;
 	    case ARB7:
-		for (i=0; i<7; i++) {
+		for (i = 0; i < 7; i++) {
 		    sprintf(buf, "\t%d (%g, %g, %g)\n", i+1,
 			    INTCLAMP(aip->pt[i][X] * mm2local),
 			    INTCLAMP(aip->pt[i][Y] * mm2local),
@@ -1455,7 +1455,7 @@ rt_arb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 		}
 		break;
 	    case ARB6:
-		for (i=0; i<5; i++) {
+		for (i = 0; i < 5; i++) {
 		    sprintf(buf, "\t%d (%g, %g, %g)\n", i+1,
 			    INTCLAMP(aip->pt[i][X] * mm2local),
 			    INTCLAMP(aip->pt[i][Y] * mm2local),
@@ -1469,7 +1469,7 @@ rt_arb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 		bu_vls_strcat(str, buf);
 		break;
 	    case ARB5:
-		for (i=0; i<5; i++) {
+		for (i = 0; i < 5; i++) {
 		    sprintf(buf, "\t%d (%g, %g, %g)\n", i+1,
 			    INTCLAMP(aip->pt[i][X] * mm2local),
 			    INTCLAMP(aip->pt[i][Y] * mm2local),
@@ -1478,7 +1478,7 @@ rt_arb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 		}
 		break;
 	    case ARB4:
-		for (i=0; i<3; i++) {
+		for (i = 0; i < 3; i++) {
 		    sprintf(buf, "\t%d (%g, %g, %g)\n", i+1,
 			    INTCLAMP(aip->pt[i][X] * mm2local),
 			    INTCLAMP(aip->pt[i][Y] * mm2local),
@@ -1542,13 +1542,14 @@ rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     pa.pa_tol_sq = tol->dist_sq;
     if (rt_arb_mk_planes(&pa, aip, "(tess)") < 0) return -2;
 
-    for (i=0; i<8; i++) verts[i] = (struct vertex *)0;
+    for (i = 0; i < 8; i++)
+	verts[i] = (struct vertex *)0;
 
     *r = nmg_mrsv(m);	/* Make region, empty shell, vertex */
     s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
     /* Process each face */
-    for (i=0; i < pa.pa_faces; i++) {
+    for (i = 0; i < pa.pa_faces; i++) {
 	if (pa.pa_clockwise[i] != 0) {
 	    /* Counter-Clockwise orientation (CCW) */
 	    vertp[0] = &verts[pa.pa_pindex[0][i]];
@@ -1580,11 +1581,11 @@ rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Associate vertex geometry */
-    for (i=0; i<8; i++)
+    for (i = 0; i < 8; i++)
 	if (verts[i]) nmg_vertex_gv(verts[i], aip->pt[i]);
 
     /* Associate face geometry */
-    for (i=0; i < pa.pa_faces; i++) {
+    for (i = 0; i < pa.pa_faces; i++) {
 	/* We already know the plane equations, this is fast */
 	nmg_face_g(fu[i], pa.pa_face[i].peqn);
     }
@@ -1650,13 +1651,14 @@ rt_arb_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     pa.pa_tol_sq = tol->dist_sq;
     if (rt_arb_mk_planes(&pa, aip, "(tnurb)") < 0) return -2;
 
-    for (i=0; i<8; i++) verts[i] = (struct vertex *)0;
+    for (i = 0; i < 8; i++)
+	verts[i] = (struct vertex *)0;
 
     *r = nmg_mrsv(m);	/* Make region, empty shell, vertex */
     s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
     /* Process each face */
-    for (i=0; i < pa.pa_faces; i++) {
+    for (i = 0; i < pa.pa_faces; i++) {
 	if (pa.pa_clockwise[i] != 0) {
 	    /* Counter-Clockwise orientation (CCW) */
 	    vertp[0] = &verts[pa.pa_pindex[0][i]];
@@ -1714,11 +1716,11 @@ rt_arb_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     }
 
     /* Associate vertex geometry */
-    for (i=0; i<8; i++)
+    for (i = 0; i < 8; i++)
 	if (verts[i]) nmg_vertex_gv(verts[i], aip->pt[i]);
 
     /* Associate face geometry */
-    for (i=0; i < pa.pa_faces; i++) {
+    for (i = 0; i < pa.pa_faces; i++) {
 	struct face_g_snurb *fg;
 	int j;
 
@@ -1747,7 +1749,7 @@ rt_arb_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	NMG_CK_EDGEUSE(eu);
 
 	/* For ctl_points, need 4 verts in order 0, 1, 3, 2 */
-	for (j=0; j < pa.pa_npts[i]; j++) {
+	for (j = 0; j < pa.pa_npts[i]; j++) {
 	    VMOVE(&fg->ctl_points[rt_arb_vert_index_scramble[j]*3],
 		  eu->vu_p->v_p->vg_p->coord);
 
@@ -1798,7 +1800,7 @@ rt_arb_calc_points(struct rt_arb_internal *arb, int cgtype, const plane_t planes
     RT_ARB_CK_MAGIC(arb);
 
     /* find new points for entire solid */
-    for (i=0; i<8; i++) {
+    for (i = 0; i < 8; i++) {
 	if (rt_arb_3face_intersect(pt[i], planes, cgtype, i*3) < 0) {
 	    bu_log("rt_arb_calc_points: Intersection of planes fails %d\n", i);
 	    return -1;			/* FAIL */
@@ -1806,7 +1808,7 @@ rt_arb_calc_points(struct rt_arb_internal *arb, int cgtype, const plane_t planes
     }
 
     /* Move new points to arb tol->dist))*/
-    for (i=0; i<8; i++) {
+    for (i = 0; i < 8; i++) {
 	VMOVE(arb->pt[i], pt[i]);
     }
 
@@ -1824,7 +1826,7 @@ rt_arb_check_points(struct rt_arb_internal *arb, int cgtype, const struct bn_tol
 
     switch (cgtype) {
 	case ARB8:
-	    for (i=0; i<12; ++i) {
+	    for (i = 0; i < 12; ++i) {
 		if (VNEAR_EQUAL(arb->pt[arb8_edge_vertex_mapping[i][0]],
 				arb->pt[arb8_edge_vertex_mapping[i][1]],
 				tol->dist))
@@ -1832,7 +1834,7 @@ rt_arb_check_points(struct rt_arb_internal *arb, int cgtype, const struct bn_tol
 	    }
 	    break;
 	case ARB7:
-	    for (i=0; i<11; ++i) {
+	    for (i = 0; i < 11; ++i) {
 		if (VNEAR_EQUAL(arb->pt[arb7_edge_vertex_mapping[i][0]],
 				arb->pt[arb7_edge_vertex_mapping[i][1]],
 				tol->dist))
@@ -1840,7 +1842,7 @@ rt_arb_check_points(struct rt_arb_internal *arb, int cgtype, const struct bn_tol
 	    }
 	    break;
 	case ARB6:
-	    for (i=0; i<8; ++i) {
+	    for (i = 0; i < 8; ++i) {
 		if (VNEAR_EQUAL(arb->pt[local_arb6_edge_vertex_mapping[i][0]],
 				arb->pt[local_arb6_edge_vertex_mapping[i][1]],
 				tol->dist))
@@ -1848,7 +1850,7 @@ rt_arb_check_points(struct rt_arb_internal *arb, int cgtype, const struct bn_tol
 	    }
 	    break;
 	case ARB5:
-	    for (i=0; i<8; ++i) {
+	    for (i = 0; i < 8; ++i) {
 		if (VNEAR_EQUAL(arb->pt[arb5_edge_vertex_mapping[i][0]],
 				arb->pt[arb5_edge_vertex_mapping[i][1]],
 				tol->dist))
@@ -1856,7 +1858,7 @@ rt_arb_check_points(struct rt_arb_internal *arb, int cgtype, const struct bn_tol
 	    }
 	    break;
 	case ARB4:
-	    for (i=0; i<6; ++i) {
+	    for (i = 0; i < 6; ++i) {
 		if (VNEAR_EQUAL(arb->pt[local_arb4_edge_vertex_mapping[i][0]],
 				arb->pt[local_arb4_edge_vertex_mapping[i][1]],
 				tol->dist))
@@ -1934,7 +1936,7 @@ rt_arb_calc_planes(struct bu_vls *error_msg_ret,
     RT_ARB_CK_MAGIC(arb);
     BN_CK_TOL(tol);
 
-    for (i=0; i<6; i++) {
+    for (i = 0; i < 6; i++) {
 	if (rt_arb_faces[type][i*4] == -1)
 	    break;	/* faces are done */
 
@@ -2173,7 +2175,7 @@ rt_arb_edit(struct bu_vls *error_msg_ret,
 	    goto err;
 
     if (newp >= 0 && newp < 6) {
-	for (i=0; i<3; i++) {
+	for (i = 0; i < 3; i++) {
 	    /* redo this plane (newp), use points p1, p2, p3 */
 	    p1 = *edptr++;
 	    p2 = *edptr++;
@@ -2191,7 +2193,7 @@ rt_arb_edit(struct bu_vls *error_msg_ret,
 
     if (newp == 8) {
 	/* special...redo next planes using pts defined in faces */
-	for (i=0; i<3; i++) {
+	for (i = 0; i < 3; i++) {
 	    if ((newp = *edptr++) == -1)
 		break;
 
@@ -2210,7 +2212,7 @@ rt_arb_edit(struct bu_vls *error_msg_ret,
      * push necessary points back into the planes
      */
     edptr = final;	/* point to the correct location */
-    for (i=0; i<2; i++) {
+    for (i = 0; i < 2; i++) {
 	const plane_t *c_planes = (const plane_t *)planes;
 
 	if ((p1 = *edptr++) == -1)
@@ -2332,7 +2334,7 @@ rt_arb_volume(fastf_t *vol, const struct rt_db_internal *ip)
 int
 rt_arb_get_edge_list(const struct rt_db_internal *ip, short (*edge_list[])[2])
 {
-    size_t edge_count=0;
+    size_t edge_count = 0;
     int arb_type;
     struct bn_tol tmp_tol;
     struct rt_arb_internal *aip = (struct rt_arb_internal *)ip->idb_ptr;
@@ -2395,7 +2397,7 @@ rt_arb_find_e_nearest_pt2(int *edge,
     int i;
     fastf_t dist=MAX_FASTF, tmp_dist;
     short (*edge_list)[2] = {0};
-    int edge_count=0;
+    int edge_count = 0;
     struct bn_tol tol;
     struct rt_arb_internal *aip = (struct rt_arb_internal *)ip->idb_ptr;
 

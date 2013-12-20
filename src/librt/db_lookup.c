@@ -95,7 +95,7 @@ db_dirhash(const char *str)
 	return 0;
 
     /* BSD name hashing starts i=0, discarding first char.  why? */
-    while(*s)
+    while (*s)
 	sum += (size_t)*s++ * i++;
 
     return RT_DBHASH(sum);
@@ -389,7 +389,7 @@ db_lookup_by_attr(struct db_i *dbip, int dir_flags, struct bu_attribute_value_se
     struct bu_attribute_value_set obj_avs;
     struct directory *dp;
     struct bu_ptbl *tbl;
-    int match_count=0;
+    int match_count = 0;
     int attr_count;
     int i, j;
     int draw;
@@ -422,8 +422,8 @@ db_lookup_by_attr(struct db_i *dbip, int dir_flags, struct bu_attribute_value_se
 
 	    draw = 0;
 	    match_count = 0;
-	    for (i=0; (size_t)i<(size_t)avs->count; i++) {
-		for (j=0; (size_t)j<(size_t)obj_avs.count; j++) {
+	    for (i = 0; (size_t)i < (size_t)avs->count; i++) {
+		for (j = 0; (size_t)j < (size_t)obj_avs.count; j++) {
 		    if (BU_STR_EQUAL(avs->avp[i].name, obj_avs.avp[j].name)) {
 			if (BU_STR_EQUAL(avs->avp[i].value, obj_avs.avp[j].value)) {
 			    if (op == 2) {

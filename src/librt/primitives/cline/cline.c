@@ -492,18 +492,18 @@ rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_
 
     /* Draw the top */
     RT_ADD_VLIST(vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
-    for (i=0; i<16; i++) {
+    for (i = 0; i < 16; i++) {
 	RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
     }
 
     /* Draw the bottom */
     RT_ADD_VLIST(vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
-    for (i=0; i<16; i++) {
+    for (i = 0; i < 16; i++) {
 	RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
     }
 
     /* Draw connections */
-    for (i=0; i<16; i += 4) {
+    for (i = 0; i < 16; i += 4) {
 	RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
 	RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
     }
@@ -521,18 +521,18 @@ rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_
 
 	/* Draw the top */
 	RT_ADD_VLIST(vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
-	for (i=0; i<16; i++) {
+	for (i = 0; i < 16; i++) {
 	    RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
 	}
 
 	/* Draw the bottom */
 	RT_ADD_VLIST(vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
-	for (i=0; i<16; i++) {
+	for (i = 0; i < 16; i++) {
 	    RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
 	}
 
 	/* Draw connections */
-	for (i=0; i<16; i += 4) {
+	for (i = 0; i < 16; i += 4) {
 	    RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
 	    RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
 	}
@@ -656,7 +656,7 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 
     bu_ptbl_init(&faces, 64, "faces");
     /* build outer faces */
-    for (seg_no=0; seg_no<nsegs; seg_no++) {
+    for (seg_no = 0; seg_no < nsegs; seg_no++) {
 	int next_seg;
 	struct vertex **verts[3];
 	struct faceuse *fu;
@@ -682,7 +682,7 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 
     /* build inner faces */
     if (cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius) {
-	for (seg_no=0; seg_no<nsegs; seg_no++) {
+	for (seg_no = 0; seg_no < nsegs; seg_no++) {
 	    int next_seg;
 	    struct vertex **verts[3];
 	    struct faceuse *fu;
@@ -710,7 +710,7 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
     /* build top faces */
     top_center.v = (struct vertex *)NULL;
     VMOVE(top_center.pt, top);
-    for (seg_no=0; seg_no<nsegs; seg_no++) {
+    for (seg_no = 0; seg_no < nsegs; seg_no++) {
 	int next_seg;
 	struct vertex **verts[3];
 	struct faceuse *fu;
@@ -743,7 +743,7 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
     /* build base faces */
     base_center.v = (struct vertex *)NULL;
     VMOVE(base_center.pt, cline_ip->v);
-    for (seg_no=0; seg_no<nsegs; seg_no++) {
+    for (seg_no = 0; seg_no < nsegs; seg_no++) {
 	int next_seg;
 	struct vertex **verts[3];
 	struct faceuse *fu;
@@ -779,13 +779,13 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
     if (base_center.v)
 	nmg_vertex_gv(base_center.v, base_center.pt);
 
-    for (seg_no=0; seg_no<nsegs; seg_no++) {
+    for (seg_no = 0; seg_no < nsegs; seg_no++) {
 	nmg_vertex_gv(top_outer[seg_no].v, top_outer[seg_no].pt);
 	nmg_vertex_gv(base_outer[seg_no].v, base_outer[seg_no].pt);
     }
 
     if (cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius) {
-	for (seg_no=0; seg_no<nsegs; seg_no++) {
+	for (seg_no = 0; seg_no < nsegs; seg_no++) {
 	    nmg_vertex_gv(top_inner[seg_no].v, top_inner[seg_no].pt);
 	    nmg_vertex_gv(base_inner[seg_no].v, base_inner[seg_no].pt);
 	}
@@ -799,7 +799,7 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
     }
 
     /* Associate face plane equations */
-    for (i=0; i<BU_PTBL_END(&faces); i++) {
+    for (i = 0; i < BU_PTBL_END(&faces); i++) {
 	struct faceuse *fu;
 
 	fu = (struct faceuse *)BU_PTBL_GET(&faces, i);

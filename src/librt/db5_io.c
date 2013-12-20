@@ -72,7 +72,8 @@ db5_header_is_valid(const unsigned char *hp)
     if (odp->db5h_minor_type != 0) return 0;
 
     /* Check length, known to be 8-bit.  Header len=1 8-byte chunk. */
-    if (hp[6] != 1) return 0;
+    if (hp[6] != 1)
+	return 0;
 
     return 1;		/* valid */
 }

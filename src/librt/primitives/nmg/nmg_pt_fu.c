@@ -329,8 +329,8 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
     fastf_t len;
     int quado, quadpt;
     int nmg_class = NMG_CLASS_Unknown;
-    int eu_is_crack=0;
-    int prev_eu_is_crack=0;
+    int eu_is_crack = 0;
+    int prev_eu_is_crack = 0;
 
     NMG_CK_EDGEUSE(eu_in);
     BN_CK_TOL(tol);
@@ -391,7 +391,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
 
     if (prev_eu_is_crack) {
 	struct edgeuse *eu_test;
-	int done=0;
+	int done = 0;
 
 	if (UNLIKELY(RTG.NMG_debug & DEBUG_PT_FU))
 	    bu_log("nmg_class_pt_euvu: prev_eu (%p) is a crack\n", (void *)prev_eu);
@@ -813,7 +813,7 @@ pl_pt_lu(struct fpi *fpi, const struct loopuse *lu, struct edge_info *ei)
     FILE *fp;
     char name[25];
     long *b;
-    static int plot_file_number=0;
+    static int plot_file_number = 0;
     int i;
     point_t p1, p2;
     point_t pca;
@@ -826,7 +826,7 @@ pl_pt_lu(struct fpi *fpi, const struct loopuse *lu, struct edge_info *ei)
     NMG_CK_EI(ei);
 
     sprintf(name, "pt_lu%02d.plot3", plot_file_number++);
-    fp=fopen(name, "wb");
+    fp = fopen(name, "wb");
     if (fp == (FILE *)NULL) {
 	perror(name);
 	bu_bomb("unable to open file for writing");

@@ -76,7 +76,7 @@ bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt
     bot->bot_flags = bot_ip->bot_flags;
     if (bot_ip->thickness) {
 	bot->bot_thickness = (fastf_t *)bu_calloc(bot_ip->num_faces, sizeof(fastf_t), "bot_thickness");
-	for (tri_index=0; tri_index < bot_ip->num_faces; tri_index++)
+	for (tri_index = 0; tri_index < bot_ip->num_faces; tri_index++)
 	    bot->bot_thickness[tri_index] = bot_ip->thickness[tri_index];
     }
     if (bot_ip->face_mode)
@@ -95,7 +95,7 @@ bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt
 	return -1;
     }
 
-    for(i=0;i<bot_ip->num_faces*3;i++) {
+    for(i = 0;i < bot_ip->num_faces*3; i++) {
 	tribufp[i] = &tribuf[i];
 	VMOVE(tribuf[i].v, (bot_ip->vertices+3*bot_ip->faces[i]));
     }
@@ -202,7 +202,7 @@ bottie_shot_double(struct soltab *stp, struct xray *rp, struct application *ap, 
 	return 0;
 
     /* adjust hit distances to initial ray origin */
-    for(i=0;i<hitdata.nhits;i++)
+    for(i = 0; i < hitdata.nhits; i++)
 	hitdata.hits[i].hit_dist = hitdata.hits[i].hit_dist - dirlen;
 
 

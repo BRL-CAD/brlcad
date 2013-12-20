@@ -110,7 +110,7 @@ rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, struct rt_me
     VSETALL(min, +INFINITY);
     VSETALL(max, -INFINITY);
     for (BU_LIST_FOR(mbpt, wdb_metaballpt, points))
-	for (i=0;i<3;i++) {
+	for (i = 0; i < 3; i++) {
 	    if (mbpt->coord[i] < min[i])
 		min[i] = mbpt->coord[i];
 	    if (mbpt->coord[i] > max[i])
@@ -250,7 +250,7 @@ rt_metaball_print(register const struct soltab *stp)
     RT_METABALL_CK_MAGIC(mb);
     for (BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) ++metaball_count;
     bu_log("Metaball with %d points and a threshold of %g (%s rendering)\n", metaball_count, mb->threshold, rt_metaball_lookup_type_name(mb->method));
-    metaball_count=0;
+    metaball_count = 0;
     for (BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head))
 	bu_log("\t%d: %g field strength at (%g, %g, %g) and 'goo' of %g\n", ++metaball_count, mbpt->fldstr, V3ARGS(mbpt->coord), mbpt->sweat);
     return;
@@ -662,11 +662,11 @@ rt_metaball_plot_sph(struct bu_list *vhead, point_t *center, fastf_t radius)
     rt_ell_16pts(middle, *center, a, c);
 
     RT_ADD_VLIST(vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
-    for (i=0; i<16; i++) RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+    for (i = 0; i < 16; i++) RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
     RT_ADD_VLIST(vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
-    for (i=0; i<16; i++) RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+    for (i = 0; i < 16; i++) RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
     RT_ADD_VLIST(vhead, &middle[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
-    for (i=0; i<16; i++) RT_ADD_VLIST(vhead, &middle[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+    for (i = 0; i < 16; i++) RT_ADD_VLIST(vhead, &middle[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
 }
 
 
@@ -733,7 +733,7 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
 
     BU_LIST_INIT(&mb->metaball_ctrl_head);
     if (mat == NULL) mat = bn_mat_identity;
-    for (i=1; i<=metaball_count*5; i+=5) {
+    for (i = 1; i <= metaball_count * 5; i += 5) {
 	/* Apply modeling transformations */
 	BU_GET(mbpt, struct wdb_metaballpt);
 	mbpt->l.magic = WDB_METABALLPT_MAGIC;
@@ -832,7 +832,7 @@ rt_metaball_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
     if (!verbose)
 	return 0;
 
-    metaball_count=0;
+    metaball_count = 0;
     for (BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) {
 	switch(mb->method) {
 	    case METABALL_ISOPOTENTIAL:

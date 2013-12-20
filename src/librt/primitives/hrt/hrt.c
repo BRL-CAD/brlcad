@@ -515,13 +515,13 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
             bu_log("hrt:  rt_poly_roots() 6!=%d\n", i);
             bn_pr_roots(stp->st_name, complex, i);
         } else if (i < 0) {
-            static int reported=0;
+            static int reported = 0;
             bu_log("The root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
             if (!reported) {
                 VPRINT("while shooting from:\t", rp->r_pt);
                 VPRINT("while shooting at:\t", rp->r_dir);
                 bu_log("Additional heart convergence failure details will be suppressed.\n");
-                reported=1;
+                reported = 1;
             }
         }
         return 0;               /* MISS */
@@ -533,7 +533,7 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
      * sufficiently close, then use the real part as one value of 't'
      * for the intersections
      */
-    for (j=0, i=0; j < 6; j++) {
+    for (j = 0, i = 0; j < 6; j++) {
         if (NEAR_ZERO(complex[j].im, ap->a_rt_i->rti_tol.dist))
             real[i++] = complex[j].re;
     }
@@ -827,12 +827,12 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct rt_tes
     rt_hrt_24pts(middle, hip->v, hip->xdir, hip->zdir);
 
     RT_ADD_VLIST(vhead, &top[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
-    for (i=0; i<24; i++) {
+    for (i = 0; i < 24; i++) {
 	RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
     }
 
     RT_ADD_VLIST(vhead, &middle[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
-    for (i=0; i<24; i++) {
+    for (i = 0; i < 24; i++) {
 	RT_ADD_VLIST(vhead, &middle[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
     }
     return 0;

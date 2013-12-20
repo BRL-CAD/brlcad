@@ -2341,7 +2341,7 @@ nmg_cut_loop(struct vertexuse *vu1, struct vertexuse *vu2)
     struct model *m;
     FILE *fd;
     char name[32];
-    static int i=0;
+    static int i = 0;
 
     NMG_CK_VERTEXUSE(vu1);
     NMG_CK_VERTEXUSE(vu2);
@@ -2544,7 +2544,7 @@ nmg_split_lu_at_vu(struct loopuse *lu, struct vertexuse *split_vu)
     /* nmg_kvu() does BU_LIST_INIT() on down_hd */
 
     /* Move edges & mates into new loop until vertex is repeated */
-    for (iteration=0; iteration < 10000; iteration++) {
+    for (iteration = 0; iteration < 10000; iteration++) {
 	struct edgeuse *eunext;
 	eunext = BU_LIST_PNEXT_CIRC(edgeuse, &eu->l);
 
@@ -2665,7 +2665,7 @@ nmg_split_touchingloops(struct loopuse *lu, const struct bn_tol *tol)
 
 	struct edgeuse *other_eu;
 	struct vertexuse *other_vu;
-	int vu_is_part_of_crack=0;
+	int vu_is_part_of_crack = 0;
 
 	vu = eu->vu_p;
 	NMG_CK_VERTEXUSE(vu);
@@ -2835,7 +2835,7 @@ int
 nmg_get_touching_jaunts(const struct loopuse *lu, struct bu_ptbl *tbl, int *need_init)
 {
     struct edgeuse *eu;
-    int count=0;
+    int count = 0;
 
     NMG_CK_LOOPUSE(lu);
 
@@ -2915,13 +2915,13 @@ nmg_check_proposed_loop(struct edgeuse *start_eu, struct edgeuse **next_start_eu
     struct edgeuse *loop_eu;
     struct edgeuse *last_eu;
     int j;
-    int done=0;
+    int done = 0;
 
     NMG_CK_EDGEUSE(start_eu);
     BU_CK_PTBL(jaunt_tbl);
 
     /* Initialize the count */
-    for (j=0; j< BU_PTBL_END(jaunt_tbl); j++)
+    for (j = 0; j < BU_PTBL_END(jaunt_tbl); j++)
 	visit_count[j] = 0;
 
     /* walk through the proposed new loop, updating the visit_count
@@ -2930,7 +2930,7 @@ nmg_check_proposed_loop(struct edgeuse *start_eu, struct edgeuse **next_start_eu
     last_eu = NULL;
     loop_eu = start_eu;
     while (!done) {
-	for (j=0; j<BU_PTBL_END(jaunt_tbl); j++) {
+	for (j = 0; j < BU_PTBL_END(jaunt_tbl); j++) {
 	    struct edgeuse *jaunt_eu;
 
 	    /* Don't worry about this jaunt */
@@ -2969,7 +2969,7 @@ nmg_check_proposed_loop(struct edgeuse *start_eu, struct edgeuse **next_start_eu
     /* check all jaunts to see if they are still touching jaunts in
      * the proposed loop
      */
-    for (j=0; j<BU_PTBL_END(jaunt_tbl); j++) {
+    for (j = 0; j < BU_PTBL_END(jaunt_tbl); j++) {
 	if (jaunt_status[j] == JS_JAUNT) {
 	    /* proposed loop contains this jaunt */
 	    if (visit_count[j] > 1)	/* it's still a touching jaunt */
@@ -3182,10 +3182,10 @@ nmg_loop_split_at_touching_jaunt(struct loopuse *lu, const struct bn_tol *tol)
 				    "nmg_loop_split_at_touching_jaunt: jaunt_status[]");
 
     /* consider each jaunt as a possible location for splitting the loop */
-    for (jaunt_no=0; jaunt_no<BU_PTBL_END(&jaunt_tbl); jaunt_no++) {
+    for (jaunt_no = 0; jaunt_no < BU_PTBL_END(&jaunt_tbl); jaunt_no++) {
 	struct edgeuse *start_eu1;	/* EU that will start a new loop upon split */
 	struct edgeuse *start_eu2;	/* EU that will start the remaining loop */
-	int do_split=1;			/* flag: 1 -> this jaunt is a good choice for making the split */
+	int do_split = 1;		/* flag: 1 -> this jaunt is a good choice for making the split */
 
 	/* initialize the status of each jaunt to unknown */
 	for (i = 0; i < BU_PTBL_END(&jaunt_tbl); i++)
@@ -4119,7 +4119,7 @@ nmg_esplit(struct vertex *v, struct edgeuse *eu, int share_geom)
     struct edgeuse *teuX,	/* radial edgeuse of eu */
 	*teuY,	/* new edgeuse (next of teuX) */
 	*neu1, *neu2; /* new (split) edgeuses */
-    int notdone=1;
+    int notdone = 1;
     struct vertex *vA, *vB;	/* start and end of eu */
 
     neu1 = neu2 = (struct edgeuse *)NULL;

@@ -196,7 +196,7 @@ db_path_to_string(const struct db_full_path *pp)
     cp = buf;
     rem = len;
 
-    for (i=0; i < pp->fp_len; i++) {
+    for (i = 0; i < pp->fp_len; i++) {
 	*cp++ = '/';
 	rem--;
 	if (pp->fp_names[i]) {
@@ -220,7 +220,7 @@ db_path_to_vls(struct bu_vls *str, const struct db_full_path *pp)
     BU_CK_VLS(str);
     RT_CK_FULL_PATH(pp);
 
-    for (i=0; i < pp->fp_len; i++) {
+    for (i = 0; i < pp->fp_len; i++) {
 	bu_vls_putc(str, '/');
 	if (pp->fp_names[i])
 	    bu_vls_strcat(str, pp->fp_names[i]->d_namep);
@@ -334,7 +334,7 @@ db_argv_to_path(struct db_full_path *pp, struct db_i *dbip, int argc, const char
 	"db_argv_to_path bool array");
 
 
-    for (i=0; i<argc; i++) {
+    for (i = 0; i<argc; i++) {
 	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    bu_log("db_argv_to_path() failed on element %d='%s'\n",
 		   i, argv[i]);
@@ -398,15 +398,18 @@ db_full_path_subset(
     for (; i < a->fp_len; i++) {
 	size_t j;
 
-	if (a->fp_names[i] != b->fp_names[0]) continue;
+	if (a->fp_names[i] != b->fp_names[0])
+	    continue;
 
 	/* First element matches, check remaining length */
-	if (b->fp_len > a->fp_len - i) return 0;
+	if (b->fp_len > a->fp_len - i)
+	    return 0;
 
 	/* Check remainder of 'b' */
-	for (j=1; j < b->fp_len; j++) {
+	for (j = 1; j < b->fp_len; j++) {
 	    if (a->fp_names[i+j] != b->fp_names[j]) goto step;
 	}
+
 	/* 'b' is a proper subset */
 	return 1;
 
@@ -428,7 +431,7 @@ db_full_path_match_top(
 
     if (a->fp_len > b->fp_len) return 0;
 
-    for (i=0; i < a->fp_len; i++) {
+    for (i = 0; i < a->fp_len; i++) {
 	if (a->fp_names[i] != b->fp_names[i]) return 0;
     }
 

@@ -82,15 +82,14 @@ db_corrupt_handler(struct db_i *dbip, const char *name, off_t offset, size_t siz
 
     /* iterate over combination members, looking for bad matrices */
     nodecount = ext.ext_nbytes/sizeof(union record) - 1;
-    for (j=0; j<nodecount; j++) {
+    for (j = 0; j < nodecount; j++) {
 
 	/* try without flipping */
 	flip_mat_dbmat(diskmat, rp[j+1].M.m_mat, 0);
 	if ((bn_mat_ck(name, diskmat) < 0)
 	    || fabs(diskmat[0]) > 1 || fabs(diskmat[1]) > 1 || fabs(diskmat[2]) > 1
 	    || fabs(diskmat[4]) > 1 || fabs(diskmat[5]) > 1 || fabs(diskmat[6]) > 1
-	    || fabs(diskmat[8]) > 1 || fabs(diskmat[9]) > 1 || fabs(diskmat[10]) > 1)
-	{
+	    || fabs(diskmat[8]) > 1 || fabs(diskmat[9]) > 1 || fabs(diskmat[10]) > 1) {
 	    /* corruption detected */
 	    cnt->found++;
 

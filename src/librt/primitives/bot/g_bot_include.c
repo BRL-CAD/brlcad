@@ -257,7 +257,7 @@ XGLUE(rt_bot_prep_, TRI_TYPE)(struct soltab *stp, struct rt_bot_internal *bot_ip
     bot->bot_flags = bot_ip->bot_flags;
     if (bot_ip->thickness) {
 	bot->bot_thickness = (fastf_t *)bu_calloc(bot_ip->num_faces, sizeof(fastf_t), "bot_thickness");
-	for (tri_index=0; tri_index < bot_ip->num_faces; tri_index++)
+	for (tri_index = 0; tri_index < bot_ip->num_faces; tri_index++)
 	    bot->bot_thickness[tri_index] = bot_ip->thickness[tri_index];
     }
     if (bot_ip->face_mode)
@@ -478,8 +478,8 @@ XGLUE(rt_bot_unoriented_segs_, TRI_TYPE)(struct hit *hits,
     /*
      * RT_BOT_SOLID, RT_BOT_UNORIENTED.
      */
-    fastf_t rm_dist=0.0;
-    int removed=0;
+    fastf_t rm_dist = 0.0;
+    int removed = 0;
     static const int IN = 0;
     static const int OUT = 1;
 
@@ -655,10 +655,10 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 		i--;
 		continue;
 	    } else if ((k - i) > 2) {
-		ssize_t keep1=-1, keep2=-1;
-		ssize_t enters=0, exits=0;
-		int reorder=0;
-		int reorder_failed=0;
+		ssize_t keep1 = -1, keep2 = -1;
+		ssize_t enters = 0, exits = 0;
+		int reorder = 0;
+		int reorder_failed = 0;
 
 		/* more than two hits at the same distance, likely a vertex hit
 		 * try to keep just two, one entrance and one exit.
@@ -684,7 +684,7 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 
 		if (reorder) {
 		    struct hit tmp_hit;
-		    int changed=0;
+		    int changed = 0;
 
 		    for (j = i; j < k; j++) {
 
@@ -1211,7 +1211,7 @@ XGLUE(rt_bot_piece_shot_, TRI_TYPE)(struct rt_piecestate *psp, struct rt_pieceli
 	if (tris_in_piece > bot->bot_tri_per_piece) {
 	    tris_in_piece = bot->bot_tri_per_piece;
 	}
-	for (trinum=0; trinum<tris_in_piece; trinum++) {
+	for (trinum = 0; trinum < tris_in_piece; trinum++) {
 	    register XGLUE(tri_specific_, TRI_TYPE) *trip = (XGLUE(tri_specific_, TRI_TYPE) *)bot->bot_facearray[face_array_index+trinum];
 	    fastf_t dN, abs_dN;
 	    /*

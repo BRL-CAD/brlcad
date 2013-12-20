@@ -64,7 +64,7 @@ db_open_inmem(void)
     dbip->dbi_read_only = 0;
 
     /* Initialize fields */
-    for (i=0; i<RT_DBNHASH; i++) {
+    for (i = 0; i < RT_DBNHASH; i++) {
 	dbip->dbi_Head[i] = RT_DIR_NULL;
     }
 

@@ -374,8 +374,8 @@ rt_tri_mc_realize_cube(fastf_t *tris, int pv, point_t *edges)
     vi = (int *)(mc_tris[pv]);
 
     fo = 0;
-    while( *vi >= 0 ) {
-	if(++fo > 5) {
+    while (*vi >= 0) {
+	if (++fo > 5) {
 	    bu_log("Whoa, too many triangles?\n");
 	    return -1;
 	}
@@ -394,7 +394,7 @@ rt_tri_mc_realize_cube(fastf_t *tris, int pv, point_t *edges)
 int
 nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_tol *tol)
 {
-    int *vi, fo, valids=0;
+    int *vi, fo, valids = 0;
     struct faceuse *fu;
     struct vertex *vertl[3], **f_vertl[3];
 
@@ -410,8 +410,8 @@ nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_tol
      */
 
     fo = 0;
-    while( *vi >= 0 ) {
-	if(++fo > 5) {
+    while (*vi >= 0) {
+	if (++fo > 5) {
 	    bu_log("Whoa, too many triangles?\n");
 	    return -1;
 	}
@@ -440,7 +440,7 @@ nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_tol
 	    return 0;
 	}
 
-	if(nmg_fu_planeeqn(fu, tol))
+	if (nmg_fu_planeeqn(fu, tol))
 	    bu_log("Tiny triangle! <%g %g %g> <%g %g %g> <%g %g %g> (%g %g %g)\n",
 		    V3ARGS(edges[vi[0]]), V3ARGS(edges[vi[1]]), V3ARGS(edges[vi[2]]),
 		    DIST_PT_PT(edges[vi[0]],edges[vi[1]]),
@@ -473,8 +473,8 @@ bangbang(struct application * a, struct partition *PartHeadp, struct seg * UNUSE
     int intersects = 0;
 
     for (pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
-	if(pp->pt_outhit->hit_dist>0.0) {
-	    if(pp->pt_inhit->hit_dist>0.0) {
+	if (pp->pt_outhit->hit_dist>0.0) {
+	    if (pp->pt_inhit->hit_dist>0.0) {
 		VJOIN1(t->hit, a->a_ray.r_pt, pp->pt_inhit->hit_dist, a->a_ray.r_dir);
 		t->in=INHIT;
 		t++;
@@ -484,7 +484,7 @@ bangbang(struct application * a, struct partition *PartHeadp, struct seg * UNUSE
 	    t->in=OUTHIT;
 	    t++;
 	    intersects++;
-	    if(intersects >= MAX_INTERSECTS)
+	    if (intersects >= MAX_INTERSECTS)
 		bu_bomb("Too many intersects in marching cubes");
 	}
     }
@@ -517,25 +517,25 @@ rt_nmg_mc_crosspew(struct application *a, int edge, point_t *p, point_t *edges, 
     int i;
     fastf_t dist;
 
-    for(i=0;i<MAX_INTERSECTS;i++) {
-	muh[i].in=0;
+    for (i = 0; i < MAX_INTERSECTS; i++) {
+	muh[i].in = 0;
 	VSETALL(muh[i].hit,VOODOO);
     }
 
     VJOIN1(a->a_ray.r_pt, *p, -2*tol->dist, a->a_ray.r_dir);
     rt_shootray(a);
     puh=muh;
-    while(puh->in > 0 && puh->hit[Z] <= a->a_ray.r_pt[Z]-tol->dist) {
+    while (puh->in > 0 && puh->hit[Z] <= a->a_ray.r_pt[Z]-tol->dist) {
 	bu_log("%d %g isn't close enough, moving on\n", puh->in, puh->hit[Z]);
 	puh++;
-	if(puh->in < 1)
+	if (puh->in < 1)
 	    bu_log("puhh?\n");
     }
     dist = DIST_PT_PT(a->a_ray.r_pt, puh->hit);
-    if(dist > (step + 2.5*tol->dist)) {
+    if (dist > (step + 2.5*tol->dist)) {
 	bu_log("spooky action on edge:%d. (in:%d) (%g %g %g -> %g %g %g) step:%g dist:%g\n", edge, puh->in, V3ARGS(a->a_ray.r_pt), V3ARGS(a->a_ray.r_dir), step, dist);
 	VJOIN1(edges[edge], a->a_ray.r_pt, 0.5*step+tol->dist, a->a_ray.r_dir);
-    } else if(puh->in > 0)
+    } else if (puh->in > 0)
 	VMOVE(edges[edge], muh->hit);
     return 0;
 }
@@ -543,43 +543,44 @@ rt_nmg_mc_crosspew(struct application *a, int edge, point_t *p, point_t *edges, 
 HIDDEN int
 rt_nmg_mc_pew(struct shell *s, struct whack  *primp[4], struct application *a, fastf_t x, fastf_t y, fastf_t b, fastf_t step, const struct bn_tol *tol)
 {
-    int i, in[4] = { 0, 0, 0, 0}, count=0;
+    int i, in[4] = { 0, 0, 0, 0}, count = 0;
     fastf_t last_b = -VOODOO;
 
-    while(primp[0]->in>0 || primp[1]->in>0 || primp[2]->in>0 || primp[3]->in>0) {
+    while (primp[0]->in>0 || primp[1]->in>0 || primp[2]->in>0 || primp[3]->in>0) {
 	unsigned char pv;
 	point_t edges[12];
 	struct whack muh[MAX_INTERSECTS];
 	point_t p[8];
 
 	a->a_uptr = muh;
-	if((in[0]|in[1]|in[2]|in[3]) == 0) {
+	if ((in[0]|in[1]|in[2]|in[3]) == 0) {
 	    b = +INFINITY;
 	    /* figure out the first hit distance and bin it */
-	    for(i=0;i<4;i++)
-		if(primp[i]->in>0 && primp[i]->hit[Z] < b) b = primp[i]->hit[Z];
+	    for (i = 0; i < 4; i++)
+		if (primp[i]->in>0 && primp[i]->hit[Z] < b) b = primp[i]->hit[Z];
 	    b = bin(b, step);
-	} else { /* if we know we're intersecting the surface, walk slow. */
-	    if(NEAR_ZERO(last_b+VOODOO, tol->dist))
+	} else {
+	    /* if we know we're intersecting the surface, walk slow. */
+	    if (NEAR_ZERO(last_b+VOODOO, tol->dist))
 		bu_log("teh fux? lastb = %g\n", last_b);
 	    b = last_b + step;
 	}
 
-	for(i=0;i<8;i++)
+	for (i = 0; i < 8; i++)
 	    VSET(p[i], x+step*point_offset[i][X], y+step*point_offset[i][Y], b+step*point_offset[i][Z]);
 
 	/* build the point vector */
 	pv = 0;
-	if(in[0] && primp[0]->hit[Z] > b+step) pv |= 0x09;
-	if(in[1] && primp[1]->hit[Z] > b+step) pv |= 0x06;
-	if(in[2] && primp[2]->hit[Z] > b+step) pv |= 0x90;
-	if(in[3] && primp[3]->hit[Z] > b+step) pv |= 0x60;
+	if (in[0] && primp[0]->hit[Z] > b+step) pv |= 0x09;
+	if (in[1] && primp[1]->hit[Z] > b+step) pv |= 0x06;
+	if (in[2] && primp[2]->hit[Z] > b+step) pv |= 0x90;
+	if (in[3] && primp[3]->hit[Z] > b+step) pv |= 0x60;
 
 #define MEH(A,I,O) \
-	if(primp[A][1].in > 0 && primp[A][1].hit[Z] < b+step+tol->dist) primp[A]+=2; \
-	if(primp[A]->hit[Z] < b+step+tol->dist) {  \
-	    if(primp[A]->in==1) { in[A]=1; pv |= 1<<I;} \
-	    if(primp[A]->in==2) { in[A]=0; pv |= 1<<O;} \
+	if (primp[A][1].in > 0 && primp[A][1].hit[Z] < b+step+tol->dist) primp[A]+=2; \
+	if (primp[A]->hit[Z] < b+step+tol->dist) {  \
+	    if (primp[A]->in==1) { in[A]=1; pv |= 1<<I;} \
+	    if (primp[A]->in==2) { in[A]=0; pv |= 1<<O;} \
 	} else pv |= in[A]<<I | in[A]<<O;
 
 	/*  p   t  b */
@@ -589,8 +590,8 @@ rt_nmg_mc_pew(struct shell *s, struct whack  *primp[4], struct application *a, f
 	MEH(3, 5, 6);
 #undef MEH
 
-#define MUH(a,l) if(bitdiff(pv,edge_vertex[a][0],edge_vertex[a][1])) { VMOVE(edges[a], l->hit); l++; } /* we already have ray intersect data for these. */
-	for(i=0;i<12;i++)
+#define MUH(a,l) if (bitdiff(pv,edge_vertex[a][0],edge_vertex[a][1])) { VMOVE(edges[a], l->hit); l++; } /* we already have ray intersect data for these. */
+	for (i = 0; i < 12; i++)
 	    VSETALL(edges[i], VOODOO);
 
 	MUH(1 ,primp[1]);
@@ -599,20 +600,20 @@ rt_nmg_mc_pew(struct shell *s, struct whack  *primp[4], struct application *a, f
 	MUH(7 ,primp[2]);
 #undef MUH
 
-	if(marching_cubes_use_midpoint) {
-	    if(marching_cubes_use_midpoint==1)
-		for(i=1;i<8;i+=2)
-		    if(bitdiff(pv,edge_vertex[i][0],edge_vertex[i][1]))
+	if (marching_cubes_use_midpoint) {
+	    if (marching_cubes_use_midpoint==1)
+		for (i = 1; i < 8; i += 2)
+		    if (bitdiff(pv,edge_vertex[i][0],edge_vertex[i][1]))
 			VADD2SCALE(edges[i], p[edge_vertex[i][0]], p[edge_vertex[i][1]], 0.5);
-	    for(i=0;i<7;i+=2)
-		if(bitdiff(pv,edge_vertex[i][0],edge_vertex[i][1]))
+	    for (i = 0; i < 7; i += 2)
+		if (bitdiff(pv,edge_vertex[i][0],edge_vertex[i][1]))
 		    VADD2SCALE(edges[i], p[edge_vertex[i][0]], p[edge_vertex[i][1]], 0.5);
-	    for(i=8;i<12;i++)
-		if(bitdiff(pv,edge_vertex[i][0],edge_vertex[i][1]))
+	    for (i = 8; i < 12; i++)
+		if (bitdiff(pv,edge_vertex[i][0],edge_vertex[i][1]))
 		    VADD2SCALE(edges[i], p[edge_vertex[i][0]], p[edge_vertex[i][1]], 0.5);
 	} else {
 	    /* the 'muh' list may have to be walked. */
-#define MEH(A,B,C) if(bitdiff(pv,B,C)) rt_nmg_mc_crosspew(a, A, p+B, edges, muh, step, tol)
+#define MEH(A,B,C) if (bitdiff(pv,B,C)) rt_nmg_mc_crosspew(a, A, p+B, edges, muh, step, tol)
 	    VSET(a->a_ray.r_dir, 1, 0, 0);
 	    MEH(0 ,0,1);
 	    MEH(2 ,3,2);
@@ -625,7 +626,7 @@ rt_nmg_mc_pew(struct shell *s, struct whack  *primp[4], struct application *a, f
 	    MEH(10,2,6);
 	    MEH(11,3,7);
 #undef MEH
-#define MEH(A,B,C,D) if(NEAR_EQUAL(edges[B][Z], p[A][Z], tol->dist)) { VMOVE(edges[C], p[A]); VMOVE(edges[D], p[A]); }
+#define MEH(A,B,C,D) if (NEAR_EQUAL(edges[B][Z], p[A][Z], tol->dist)) { VMOVE(edges[C], p[A]); VMOVE(edges[D], p[A]); }
 	    MEH(0,3,0,8);
 	    MEH(1,1,0,9);
 	    MEH(2,1,2,10);
@@ -638,7 +639,7 @@ rt_nmg_mc_pew(struct shell *s, struct whack  *primp[4], struct application *a, f
 	}
 
 	/* stuff it into an nmg shell */
-	if(pv != 0 && pv != 0xff && s)	/* && s should go away. */
+	if (pv != 0 && pv != 0xff && s)	/* && s should go away. */
 	    count += nmg_mc_realize_cube(s, pv, edges, tol);
 
 	last_b = b;
@@ -678,16 +679,16 @@ fire_row(int cpu, void * ptr)
 
     x=bin(a.a_rt_i->mdl_min[X], m->step) - m->step + (m->step * cpu);
 
-    for(; x<m->endx; x += m->step * (fastf_t)m->ncpu) {
+    for (; x<m->endx; x += m->step * (fastf_t)m->ncpu) {
 	y=bin(a.a_rt_i->mdl_min[Y], m->step) - m->step;
-	for(; y<m->endy; y+=m->step) {
+	for (; y<m->endy; y+=m->step) {
 	    int i, j;
 
-	    for(i=0;i<4;i++)
+	    for (i = 0; i < 4; i++)
 		primp[i] = prim[i];
 
-	    for(i=0;i<4;i++)
-		for(j=0;j<MAX_INTERSECTS-1;j++) {
+	    for (i = 0; i < 4; i++)
+		for (j = 0; j < MAX_INTERSECTS - 1; j++) {
 		    prim[i][j].in = 0;
 		    VSETALL(prim[i][j].hit, VOODOO);
 		}
@@ -736,10 +737,10 @@ nmg_mc_evaluate (struct shell *s, struct rt_i *rtip, const struct db_full_path *
     m.ncpu = bu_avail_cpus();
     m.ncpu = 1; /* seems to be an issue with confused loop calculation in the NMG code. */
     m.resources = (struct resource *)bu_malloc(m.ncpu * sizeof(struct resource), "Resource array");
-    for(i=0;i<m.ncpu;i++)
+    for (i = 0; i < m.ncpu; i++)
 	rt_init_resource(&m.resources[i], i, rtip);
 
-    rt_gettree( rtip, db_path_to_string(pathp) );
+    rt_gettree(rtip, db_path_to_string(pathp));
     rt_prep_parallel(rtip, m.ncpu);
 
     /* use rel value * bounding spheres diameter or the abs tolerance */

@@ -461,13 +461,13 @@ rt_eto_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	    bu_log("eto:  rt_poly_roots() 4!=%d\n", i);
 	    bn_pr_roots(stp->st_name, val, i);
 	} else if (i < 0) {
-	    static int reported=0;
+	    static int reported = 0;
 	    bu_log("The root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
 	    if (!reported) {
 		VPRINT("while shooting from:\t", rp->r_pt);
 		VPRINT("while shooting at:\t", rp->r_dir);
 		bu_log("Additional elliptical torus convergence failure details will be suppressed.\n");
-		reported=1;
+		reported = 1;
 	    }
 	}
 	return 0;		/* MISS */
@@ -479,7 +479,7 @@ rt_eto_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
      * sufficiently close, then use the real part as one value of 't'
      * for the intersections
      */
-    for (j=0, i=0; j < 4; j++) {
+    for (j = 0, i = 0; j < 4; j++) {
 	if (NEAR_ZERO(val[j].im, 0.0001))
 	    k[i++] = val[j].re;
     }
@@ -1156,7 +1156,7 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct vertex **vertp[4];
     vect_t Au, Bu, Nu, Cp, Dp, Xu;
     vect_t *norms = NULL;	/* normal vectors for each vertex */
-    int fail=0;
+    int fail = 0;
 
     RT_CK_DB_INTERNAL(ip);
     tip = (struct rt_eto_internal *)ip->idb_ptr;
@@ -1270,7 +1270,7 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Associate face geometry */
-    for (i=0; i < nfaces; i++) {
+    for (i = 0; i < nfaces; i++) {
 	if (nmg_fu_planeeqn(faces[i], tol) < 0) {
 	    fail = (-1);
 	    goto failure;
@@ -1278,8 +1278,8 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* associate vertexuse normals */
-    for (i=0; i<nells; i++) {
-	for (j=0; j<npts; j++) {
+    for (i = 0; i < nells; i++) {
+	for (j = 0; j < npts; j++) {
 	    struct vertexuse *vu;
 	    vect_t rev_norm;
 
