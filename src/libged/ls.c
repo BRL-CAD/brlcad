@@ -68,7 +68,7 @@ _ged_getspace(struct db_i *dbip,
  * compare on the respective names and return that value.
  */
 static int
-cmpdirname(const genptr_t a, const genptr_t b, void *UNUSED(arg))
+cmpdirname(const void *a, const void *b, void *UNUSED(arg))
 {
     struct directory **dp1, **dp2;
 
