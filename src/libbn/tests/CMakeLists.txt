@@ -11,6 +11,7 @@ BRLCAD_ADDEXEC(tester_bn_chull bn_chull.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_plane_pt bn_plane_pt.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_plane_dist bn_plane_dist.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_plane_isect bn_plane_isect.c "libbu;libbn" NO_INSTALL)
+BRLCAD_ADDEXEC(tester_bn_complex bn_complex.c "libbu;libbn" NO_INSTALL)
 CMAKEFILES(bn_chull_test003_bot.asc)
 CMAKEFILES(bn_chull_test004_bot.asc)
 CMAKEFILES(bn_poly_cubic_roots.c bn_poly_quartic_roots.c bn_obr.c)
@@ -268,6 +269,112 @@ add_test(bn_plane_isect_lseg3_lseg3_case0_1    tester_bn_plane_isect 2 -5,-5,-5 
 add_test(bn_plane_isect_lseg3_lseg3_case0_2    tester_bn_plane_isect 2 -5,-5,-5 3,3,3 0,0,0 -3,-3,-3 0 1.666667 0.666667)
 add_test(bn_plane_isect_lseg3_lseg3_case0_3    tester_bn_plane_isect 2 -5,-5,-5 5,5,5 -4,-4,-4 2,2,2 0 0.2 0.6)
 add_test(bn_plane_isect_lseg3_lseg3_case1_1    tester_bn_plane_isect 2 0,0,0 0,1,1 0,1,0 0,-1,1 1 0.5 0.5)
+
+#
+#  ************ complex.c tests *************
+
+# For tester_bn_complex, the input format is as follows:
+#
+# tester_bn_complex <function number> <args>
+
+# For function #1 (bn_cx_div), the <args> format is as follows:
+#
+# AP BP expected_return
+#
+# where AP and BP are the numbers in question. An individual complex
+# number is two integer or floating point numbers separated by commas.
+
+add_test(bn_cx_div_same_1        tester_bn_complex 1  1,3 1,3 1,0)
+add_test(bn_cx_div_same_2        tester_bn_complex 1  3,1 3,1 1,0)
+add_test(bn_cx_div_dif_1         tester_bn_complex 1  6.3,4.2 9.8,7.7 0.605678,-0.0473186)
+add_test(bn_cx_div_dif_2         tester_bn_complex 1  0,0 1,1 0,0)
+add_test(bn_cx_div_by_0_1        tester_bn_complex 1  1,1 0,0 1.0e20,1.0e20)
+
+# For function #2 (bn_cx_mul/bn_cx_mul2), the <args> format is as follows:
+#
+# AP BP expected_return
+#
+# where AP and BP are the numbers in question. An individual complex
+# number is two integer or floating point numbers separated by commas.
+
+add_test(bn_cx_mul_0_1           tester_bn_complex 2 5.2,3.8 0,0 0,0)
+add_test(bn_cx_mul_0_2           tester_bn_complex 2 0,0 5.2,3.8 0,0)
+add_test(bn_cx_mul_inv_1         tester_bn_complex 2 7.4,2.3 0.123231,-0.0383014 1,0)
+add_test(bn_cx_mul_inv_2         tester_bn_complex 2 0.123231,-0.0383014 7.4,2.3 1,0)
+
+# For function #3 (bn_cx_sub), the <args> format is as follows:
+#
+# AP BP expected_return
+#
+# where AP and BP are the numbers in question. An individual complex
+# number is two integer or floating point numbers separated by commas.
+
+add_test(bn_cx_sub_0_1           tester_bn_complex 3 5.2,3.8 0,0 5.2,3.8)
+add_test(bn_cx_sub_0_2           tester_bn_complex 3 0,0 5.2,3.8 -5.2,-3.8)
+add_test(bn_cx_sub_same_1        tester_bn_complex 3 1.4,2.9 1.4,2.9 0,0)
+add_test(bn_cx_sub_dif_1         tester_bn_complex 3 7.4,-2.3 8.9,6.4 -1.5,-8.7)
+add_test(bn_cx_sub_dif_2         tester_bn_complex 3 8.9,6.4 7.4,-2.3 1.5,8.7)
+
+# For function #4 (bn_cx_add), the <args> format is as follows:
+#
+# AP BP expected_return
+#
+# where AP and BP are the numbers in question. An individual complex
+# number is two integer or floating point numbers separated by commas.
+
+add_test(bn_cx_add_0_1           tester_bn_complex 4 5.2,3.8 0,0 5.2,3.8)
+add_test(bn_cx_add_0_2           tester_bn_complex 4 0,0 5.2,3.8 5.2,3.8)
+add_test(bn_cx_add_inv_1         tester_bn_complex 4 1.4,2.9 -1.4,-2.9 0,0)
+add_test(bn_cx_add_dif_1         tester_bn_complex 4 7.4,-2.3 8.9,6.4 16.3,4.1)
+add_test(bn_cx_add_dif_2         tester_bn_complex 4 8.9,6.4 7.4,-2.3 16.3,4.1)
+
+# For function #5 (bn_cx_sqrt), the <args> format is as follows:
+#
+# IP expected_return
+#
+# where IP is the number in question. An individual complex number is
+# two integer or floating point numbers separated by commas.
+
+add_test(bn_cx_sqrt_1            tester_bn_complex 5  0,2 1,1)
+add_test(bn_cx_sqrt_2            tester_bn_complex 5  2,0 1.414214,0)
+add_test(bn_cx_sqrt_3            tester_bn_complex 5  0,0 0,0)
+add_test(bn_cx_sqrt_4            tester_bn_complex 5 6.3,4.2 2.63360,0.797389)
+add_test(bn_cx_sqrt_5            tester_bn_complex 5 9.8,7.7 3.33640,1.15394)
+
+# For function #6 (bn_cx_neg), the <args> format is as follows:
+#
+# IP expected_return
+#
+# where IP is the number in question. An individual complex number is
+# two integer or floating point numbers separated by commas.
+
+add_test(bn_cx_neg_0_1           tester_bn_complex 6  0,0 0,0)
+add_test(bn_cx_neg_0_2           tester_bn_complex 6  2,0 -2,0)
+add_test(bn_cx_neg_0_3           tester_bn_complex 6  0,2 0,-2)
+add_test(bn_cx_neg_dif_1         tester_bn_complex 6 6.3,4.2 -6.3,-4.2)
+
+# For function #7 (bn_cx_conj), the <args> format is as follows:
+#
+# IP expected_return
+#
+# where IP is the number in question. An individual complex number is
+# two integer or floating point numbers separated by commas.
+
+add_test(bn_cx_conj_0_1          tester_bn_complex 7  0,0 0,0)
+add_test(bn_cx_conj_0_2          tester_bn_complex 7  2,0 2,0)
+add_test(bn_cx_conj_0_3          tester_bn_complex 7  0,2 0,-2)
+add_test(bn_cx_conj_dif_1        tester_bn_complex 7 6.3,4.2 6.3,-4.2)
+
+# For function #8 (bn_cx_real/bn_cx_imag), the <args> format is as follows:
+#
+# IP expected_re,expected_im
+#
+# where IP is the number in question. An individual complex number is
+# two integer or floating point numbers separated by commas.
+
+add_test(bn_cx_parts_1           tester_bn_complex 8  0,0 0,0)
+add_test(bn_cx_parts_2           tester_bn_complex 8  1,2 1,2)
+add_test(bn_cx_parts_3           tester_bn_complex 8  2,1 2,1)
 
 
 # Local Variables:
