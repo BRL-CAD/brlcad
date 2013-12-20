@@ -97,9 +97,9 @@ int tone_simple(int pix, int x, int y, int nx, int ny, int newrow);
 int tone_classic(int pix, int x, int y, int nx, int ny, int newrow);
 
 static const char usage[] = "\
-Usage: halftone [-R -S -a] [-D Debug Level]\n\
+Usage: halftone [-R -S -a] [-D Debug_Level]\n\
 	[-s squarefilesize] [-w file_width] [-n file_height]\n\
-	[-B contrast] [-I intensity_levels] [-T x y ... tone_curve]\n\
+	[-B contrast] [-I intensity_levels] [-T x y ... (tone curve)]\n\
 	[-M Method] [file.bw]\n\
 	where Method is chosen from:\n\
 	    0  Floyd-Steinberg\n\
@@ -176,7 +176,7 @@ setup(int argc, char **argv)
 		break;
 /*
  * Tone scale processing is a little strange.  The -T option is followed
- * be a list of points.  The points are collected and one point is added
+ * by a list of points.  The points are collected and one point is added
  * at 1024, 1024 to let tonescale be stupid.  Cubic_init takes the list
  * of points and generates "cubics" for tonescale to use in generating
  * curve to use for the tone map.  If tonescale is called with no cubics
