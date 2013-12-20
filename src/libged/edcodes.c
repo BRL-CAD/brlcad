@@ -39,7 +39,7 @@
 
 
 HIDDEN int
-edcodes_id_compare(const void *p1, const void *p2)
+edcodes_id_compare(const void *p1, const void *p2, void *UNUSED(arg))
 {
     int id1, id2;
 
@@ -51,7 +51,7 @@ edcodes_id_compare(const void *p1, const void *p2)
 
 
 HIDDEN int
-edcodes_reg_compare(const void *p1, const void *p2)
+edcodes_reg_compare(const void *p1, const void *p2, void *UNUSED(arg))
 {
     char *reg1, *reg2;
 
@@ -260,9 +260,9 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 
 	/* sort the array of lines */
 	if (sort_by_ident) {
-	    qsort(line_array, line_count, sizeof(char *), edcodes_id_compare);
+	    bu_sort((void *)line_array, line_count, sizeof(char *), edcodes_id_compare, NULL);
 	} else {
-	    qsort(line_array, line_count, sizeof(char *), edcodes_reg_compare);
+	    bu_sort((void *)line_array, line_count, sizeof(char *), edcodes_reg_compare, NULL);
 	}
 
 	/* rewrite the temp file using the sorted lines */

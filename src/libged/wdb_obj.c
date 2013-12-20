@@ -193,7 +193,7 @@ static int pathListNoLeaf = 0;
  * on the respective names and return that value.
  */
 int
-wdb_cmpdirname(const genptr_t a, const genptr_t b)
+wdb_cmpdirname(const void *a, const void *b, void *UNUSED(arg))
 {
     struct directory **dp1, **dp2;
 
@@ -271,9 +271,9 @@ wdb_vls_col_pr4v(struct bu_vls *vls,
     int cwidth;		/* column width */
     int numcol;		/* number of columns */
 
-    qsort((genptr_t)list_of_names,
-	  (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
-	  (int (*)(const void *, const void *))wdb_cmpdirname);
+    bu_sort((void *)list_of_names,
+	    (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
+	    wdb_cmpdirname, NULL);
 
     /*
      * Traverse the list of names, find the longest name and set the
@@ -363,9 +363,9 @@ wdb_vls_long_dpp(struct rt_wdb *wdbp,
     int max_type_len = 0;
     struct directory *dp;
 
-    qsort((genptr_t)list_of_names,
-	  (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
-	  (int (*)(const void *, const void *))wdb_cmpdirname);
+    bu_sort((void *)list_of_names,
+	    (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
+	    wdb_cmpdirname, NULL);
 
     for (i = 0; i < num_in_list; i++) {
 	int len;
@@ -485,9 +485,9 @@ wdb_vls_line_dpp(struct rt_wdb *UNUSED(wdbp),
     int isComb, isRegion;
     int isSolid;
 
-    qsort((genptr_t)list_of_names,
-	  (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
-	  (int (*)(const void *, const void *))wdb_cmpdirname);
+    bu_sort((void *)list_of_names,
+	    (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
+	    wdb_cmpdirname, NULL);
 
     /*
      * i - tracks the list item

@@ -203,12 +203,12 @@ prompt(char *fmt)
 /**
  * S O R T F U N C
  *
- * Comparison function for qsort().
+ * Comparison function for bu_sort().
  *
- * 'a' is the exact template expected by qsort.
+ * 'a' is the exact template expected by bu_sort.
  */
 static int
-sortFunc(const void *a, const void *b)
+sortFunc(const void *a, const void *b, void *UNUSED(arg))
 {
     const char **lhs = (const char **)a;
     const char **rhs = (const char **)b;
@@ -306,8 +306,8 @@ main(int argc, char *argv[])
 		prompt(PROMPT);
 		continue;
 	    case SORT_TOC :
-		qsort((genptr_t)toc_list, (unsigned)ndir,
-		       sizeof(char *), sortFunc);
+		bu_sort((void *)toc_list, (unsigned)ndir,
+			sizeof(char *), sortFunc, NULL);
 		break;
 	    case TOC :
 		list_toc(arg_list);
