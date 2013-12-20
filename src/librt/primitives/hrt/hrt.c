@@ -876,7 +876,7 @@ rt_hrt_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * (ELEMENTS_PER_VECT*4 + 1);
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "hrt external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "hrt external");
 
     /* scale values to local buffer */
     VSCALE(&hec[0*ELEMENTS_PER_VECT], hip->v, local2mm);

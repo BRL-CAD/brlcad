@@ -152,7 +152,7 @@ XGLUE(rt_bot_prep_pieces_, TRI_TYPE)(struct bot_specific *bot,
 
 
     tpp_m1 = tri_per_piece - 1;
-    trip = bot->bot_facelist;
+    trip = (XGLUE(tri_specific_, TRI_TYPE) *)bot->bot_facelist;
     minmax = &stp->st_piece_rpps[num_rpps-1];
     minmax->min[X] = minmax->max[X] = trip->tri_A[X];
     minmax->min[Y] = minmax->max[Y] = trip->tri_A[Y];
@@ -1039,7 +1039,7 @@ int
 XGLUE(rt_bot_shot_, TRI_TYPE)(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
-    register XGLUE(tri_specific_, TRI_TYPE) *trip = bot->bot_facelist;
+    register XGLUE(tri_specific_, TRI_TYPE) *trip = (XGLUE(tri_specific_, TRI_TYPE) *)bot->bot_facelist;
     struct hit hits[MAXHITS];
     register struct hit *hp;
     size_t nhits;
@@ -1212,7 +1212,7 @@ XGLUE(rt_bot_piece_shot_, TRI_TYPE)(struct rt_piecestate *psp, struct rt_pieceli
 	    tris_in_piece = bot->bot_tri_per_piece;
 	}
 	for (trinum=0; trinum<tris_in_piece; trinum++) {
-	    register XGLUE(tri_specific_, TRI_TYPE) *trip = bot->bot_facearray[face_array_index+trinum];
+	    register XGLUE(tri_specific_, TRI_TYPE) *trip = (XGLUE(tri_specific_, TRI_TYPE) *)bot->bot_facearray[face_array_index+trinum];
 	    fastf_t dN, abs_dN;
 	    /*
 	     * Ray Direction dot N.  (N is outward-pointing normal) wn
@@ -1373,7 +1373,7 @@ XGLUE(rt_bot_free_, TRI_TYPE)(struct bot_specific *bot)
 	bot->bot_facemode = NULL;
     }
 
-    ptr = bot->bot_facelist;
+    ptr = (XGLUE(tri_specific_, TRI_TYPE) *)bot->bot_facelist;
     while (ptr) {
 	tri = ptr->tri_forw;
 	if (ptr) {

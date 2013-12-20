@@ -192,7 +192,7 @@ db_path_to_string(const struct db_full_path *pp)
 	    len += 16;
     }
 
-    buf = bu_malloc(len, "pathname string");
+    buf = (char *)bu_malloc(len, "pathname string");
     cp = buf;
     rem = len;
 

@@ -259,7 +259,7 @@ db_get_external(register struct bu_external *ep, const struct directory *dp, con
 	ep->ext_nbytes = dp->d_len * sizeof(union record);
     else
 	ep->ext_nbytes = dp->d_len;
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "db_get_ext ext_buf");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "db_get_ext ext_buf");
 
     if (dp->d_flags & RT_DIR_INMEM) {
 	memcpy((char *)ep->ext_buf, dp->d_un.ptr, ep->ext_nbytes);
@@ -268,7 +268,7 @@ db_get_external(register struct bu_external *ep, const struct directory *dp, con
 
     if (db_read(dbip, (char *)ep->ext_buf, ep->ext_nbytes, dp->d_addr) < 0) {
 	bu_free(ep->ext_buf, "db_get_ext ext_buf");
-	ep->ext_buf = (genptr_t)NULL;
+	ep->ext_buf = (uint8_t *)NULL;
 	ep->ext_nbytes = 0;
 	return -1;	/* VERY BAD */
     }

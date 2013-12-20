@@ -83,7 +83,7 @@ bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt
 	bot->bot_facemode = bu_bitv_dup(bot_ip->face_mode);
     bot->bot_facelist = NULL;
 
-    if((tie = bot_ip->tie = bot->tie = bottie_allocn_double(bot_ip->num_faces)) == NULL)
+    if((tie = bot_ip->tie = bot->tie = (struct tie_s *)bottie_allocn_double(bot_ip->num_faces)) == NULL)
 	return -1;
     if((tribuf = (TIE_3 *)bu_malloc(sizeof(TIE_3) * 3 * bot_ip->num_faces, "triangle tribuffer")) == NULL) {
 	tie_free(tie);
@@ -141,7 +141,7 @@ hitfunc(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *UNUSED(tri
     }
 
     hp = &h->hits[h->nhits];
-    tsp = hp->hit_private = &h->ts[h->nhits];
+    tsp = hp->hit_private = (struct tri_specific*)&h->ts[h->nhits];
     h->nhits++;
 
 

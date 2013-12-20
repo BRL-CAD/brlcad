@@ -538,7 +538,7 @@ nmg_rm_redundancies(struct shell *s, const struct bn_tol *tol)
 
 	    lu1 = BU_LIST_FIRST(loopuse, &fu->lu_hd);
 	    while (BU_LIST_NOT_HEAD(&lu1->l, &fu->lu_hd)) {
-		int class;
+		int nmg_class;
 		struct loopuse *next_lu;
 
 		next_lu = BU_LIST_PNEXT(loopuse, &lu1->l);
@@ -548,9 +548,9 @@ nmg_rm_redundancies(struct shell *s, const struct bn_tol *tol)
 		    continue;
 		}
 
-		class = nmg_classify_lu_lu(lu, lu1, tol);
+		nmg_class = nmg_classify_lu_lu(lu, lu1, tol);
 
-		if (class == NMG_CLASS_AonBshared) {
+		if (nmg_class == NMG_CLASS_AonBshared) {
 		    nmg_klu(lu1); /* lu1 is redundant */
 		}
 
@@ -922,7 +922,7 @@ nmg_invert_shell(struct shell *s)
     }
 
     /* Allocate map of faces visited */
-    tags = bu_calloc(m->maxindex+1, 1, "nmg_invert_shell() tags[]");
+    tags = (char *)bu_calloc(m->maxindex+1, 1, "nmg_invert_shell() tags[]");
 
     for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 	NMG_CK_FACEUSE(fu);

@@ -1041,7 +1041,7 @@ rt_bot_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	    - ep->ext_nbytes % (sizeof(union record));
     }
     num_recs = ep->ext_nbytes / sizeof(union record) - 1;
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "bot external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "bot external");
     rec = (union record *)ep->ext_buf;
 
     rec->bot.bot_id = DBID_BOT;
@@ -1273,7 +1273,7 @@ rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	    + SIZEOF_NETWORK_LONG * (bip->num_face_normals * 3 + 2); /* indices into normals array, num_normals, num_face_normals */
     }
 
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "BOT external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "BOT external");
 
     cp = ep->ext_buf;
     rem = ep->ext_nbytes;
@@ -3423,7 +3423,7 @@ rt_bot_face_fuse(struct rt_bot_internal *bot)
 	if (bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS) {
 	    struct bu_bitv *new_mode;
 
-	    bot->thickness = bu_realloc(bot->thickness, num_faces*sizeof(fastf_t), "BOT thickness realloc");
+	    bot->thickness = (fastf_t *)bu_realloc(bot->thickness, num_faces*sizeof(fastf_t), "BOT thickness realloc");
 	    new_mode = bu_bitv_new(num_faces);
 	    for (l = 0; l < num_faces; l++) {
 		if (BU_BITTEST(bot->face_mode, l))

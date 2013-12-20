@@ -195,7 +195,7 @@ rt_metaball_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 
     if (rtip) RT_CK_RTI(rtip);
 
-    mb = ip->idb_ptr;
+    mb = (struct rt_metaball_internal *)ip->idb_ptr;
     RT_METABALL_CK_MAGIC(mb);
 
     /* generate a copy of the metaball */
@@ -786,7 +786,7 @@ rt_metaball_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE*(1+5*metaball_count) + 2*SIZEOF_NETWORK_LONG;
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "metaball external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "metaball external");
     if (ep->ext_buf == NULL)
 	bu_bomb("Failed to allocate DB space!\n");
     *(uint32_t *)ep->ext_buf = htonl(metaball_count);

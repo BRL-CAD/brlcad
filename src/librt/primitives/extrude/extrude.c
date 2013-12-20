@@ -2402,7 +2402,7 @@ rt_extrude_export4(struct bu_external *ep, const struct rt_db_internal *ip, doub
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = 2*sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "extrusion external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "extrusion external");
     rec = (union record *)ep->ext_buf;
 
     rec->extr.ex_id = DBID_EXTR;
@@ -2452,7 +2452,7 @@ rt_extrude_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = (long)(4 * ELEMENTS_PER_VECT * SIZEOF_NETWORK_DOUBLE + SIZEOF_NETWORK_LONG + strlen(extrude_ip->sketch_name) + 1);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "extrusion external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "extrusion external");
 
     ptr = (unsigned char *)ep->ext_buf;
     rem = ep->ext_nbytes;

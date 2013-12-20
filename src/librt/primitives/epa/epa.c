@@ -1708,7 +1708,7 @@ rt_epa_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "epa external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "epa external");
     epa = (union record *)ep->ext_buf;
 
     epa->s.s_id = ID_SOLID;
@@ -1822,7 +1822,7 @@ rt_epa_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 11;
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "epa external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "epa external");
 
     if (!NEAR_EQUAL(MAGNITUDE(xip->epa_Au), 1.0, RT_LEN_TOL)) {
 	bu_log("rt_epa_export4: Au not a unit vector!\n");

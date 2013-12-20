@@ -1297,7 +1297,7 @@ rt_arb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "arb external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "arb external");
     rec = (union record *)ep->ext_buf;
 
     rec->s.s_id = ID_SOLID;
@@ -1374,7 +1374,7 @@ rt_arb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 8 * ELEMENTS_PER_VECT;
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "arb external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "arb external");
     for (i=0; i<8; i++) {
 	VSCALE(&vec[i*ELEMENTS_PER_VECT], aip->pt[i], local2mm);
     }

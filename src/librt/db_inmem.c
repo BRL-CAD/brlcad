@@ -144,7 +144,7 @@ db_inmem(struct directory *dp, struct bu_external *ext, int flags, struct db_i *
     dp->d_flags = flags | RT_DIR_INMEM;
 
     /* Empty out the external structure, but leave it w/valid magic */
-    ext->ext_buf = (genptr_t)NULL;
+    ext->ext_buf = (uint8_t *)NULL;
     ext->ext_nbytes = 0;
 }
 

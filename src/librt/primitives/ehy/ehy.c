@@ -1728,7 +1728,7 @@ rt_ehy_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "ehy external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "ehy external");
     ehy = (union record *)ep->ext_buf;
 
     ehy->s.s_id = ID_SOLID;
@@ -1843,7 +1843,7 @@ rt_ehy_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 3*4;
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "ehy external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "ehy external");
 
     if (!NEAR_EQUAL(MAGNITUDE(xip->ehy_Au), 1.0, RT_LEN_TOL)) {
 	bu_log("rt_ehy_export4: Au not a unit vector!\n");

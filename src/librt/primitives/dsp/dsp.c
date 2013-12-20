@@ -704,9 +704,9 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 #endif
 
     /* allocate the struct dsp_bb's we will need */
-    dsp->layer = bu_malloc(dsp->layers * sizeof(struct dsp_bb_layer),
+    dsp->layer = (struct dsp_bb_layer *)bu_malloc(dsp->layers * sizeof(struct dsp_bb_layer),
 			   "dsp_bb_layers array");
-    dsp->bb_array = bu_malloc(tot * sizeof(struct dsp_bb), "dsp_bb array");
+    dsp->bb_array = (struct dsp_bb *)bu_malloc(tot * sizeof(struct dsp_bb), "dsp_bb array");
 
     /* now we fill in the "lowest" layer of struct dsp_bb's from the
      * raw data
@@ -3656,9 +3656,9 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* malloc space for the vertices */
     base_vert_count = 2*xlim + 2*ylim;
-    base_verts = bu_calloc(base_vert_count, sizeof(struct vertex *), "base verts");
-    strip1Verts = bu_calloc(ylim+1, sizeof(struct vertex *), "strip1Verts");
-    strip2Verts = bu_calloc(ylim+1, sizeof(struct vertex *), "strip2Verts");
+    base_verts = (struct vertex **)bu_calloc(base_vert_count, sizeof(struct vertex *), "base verts");
+    strip1Verts = (struct vertex **)bu_calloc(ylim+1, sizeof(struct vertex *), "strip1Verts");
+    strip2Verts = (struct vertex **)bu_calloc(ylim+1, sizeof(struct vertex *), "strip2Verts");
 
     /* Make region, empty shell, vertex */
     *r = nmg_mrsv(m);
@@ -4121,9 +4121,9 @@ get_file_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 	    bu_log("got %zu != count %d", got, count);
 	    bu_bomb("\n");
 	}
-	dsp_ip->dsp_buf = dsp_ip->dsp_mp->apbuf;
+	dsp_ip->dsp_buf = (short unsigned int *)dsp_ip->dsp_mp->apbuf;
     } else {
-	dsp_ip->dsp_buf = dsp_ip->dsp_mp->buf;
+	dsp_ip->dsp_buf = (short unsigned int *)dsp_ip->dsp_mp->buf;
     }
     return 0;
 }
@@ -4155,7 +4155,7 @@ get_obj_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 	       dsp_ip->dsp_bip->idb_minor_type);
     }
 
-    bip = dsp_ip->dsp_bip->idb_ptr;
+    bip = (struct rt_binunif_internal *)dsp_ip->dsp_bip->idb_ptr;
 
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("binunif magic: 0x%08x  type: %d count:%zu data[0]:%u\n",
@@ -4360,7 +4360,7 @@ rt_dsp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record)*DB_SS_NGRAN;
-    ep->ext_buf = bu_calloc(1, ep->ext_nbytes, "dsp external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "dsp external");
     rec = (union record *)ep->ext_buf;
 
     dsp = *dsp_ip;	/* struct copy */
@@ -4418,7 +4418,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     ip->idb_meth = &OBJ[ID_DSP];
     BU_ALLOC(ip->idb_ptr, struct rt_dsp_internal);
 
-    dsp_ip = ip->idb_ptr;
+    dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
     BU_VLS_INIT(&dsp_ip->dsp_name);
 
     dsp_ip->magic = RT_DSP_INTERNAL_MAGIC;
@@ -4537,7 +4537,7 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	SIZEOF_NETWORK_SHORT +
 	2 + name_len;
 
-    ep->ext_buf = bu_malloc(ep->ext_nbytes, "dsp external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "dsp external");
     cp = (unsigned char *)ep->ext_buf;
     rem = ep->ext_nbytes;
 

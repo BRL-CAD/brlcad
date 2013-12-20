@@ -72,7 +72,7 @@ nmg_construct_region(struct model *parent, const struct nmgregion *original, gen
 
     if (original->ra_p != NULL) {
 	const struct nmgregion_a *originalAttributes = original->ra_p;
-	struct nmgregion_a       *newAttributes      = structArray[originalAttributes->index];
+	struct nmgregion_a       *newAttributes      = (struct nmgregion_a *)structArray[originalAttributes->index];
 
 	if (newAttributes == NULL)
 	    newAttributes = nmg_construct_region_a(originalAttributes, structArray);
@@ -163,7 +163,7 @@ nmg_construct_face(struct faceuse *parent, const struct face *original, genptr_t
 
     switch (*original->g.magic_p) {
     case NMG_FACE_G_PLANE_MAGIC:
-	ret->g.plane_p = structArray[original->g.plane_p->index];
+	ret->g.plane_p = (struct face_g_plane *)structArray[original->g.plane_p->index];
 
 	if (ret->g.plane_p == NULL)
 	    ret->g.plane_p = nmg_construct_face_g_plane(original->g.plane_p, structArray);
@@ -172,7 +172,7 @@ nmg_construct_face(struct faceuse *parent, const struct face *original, genptr_t
 	break;
 
     case NMG_FACE_G_SNURB_MAGIC:
-	ret->g.snurb_p = structArray[original->g.plane_p->index];
+	ret->g.snurb_p = (struct face_g_snurb *)structArray[original->g.plane_p->index];
 
 	if (ret->g.snurb_p == NULL)
 	    ret->g.snurb_p = nmg_construct_face_g_snurb(original->g.snurb_p, structArray);
@@ -218,7 +218,7 @@ nmg_construct_vertex(const struct vertex *original, genptr_t *structArray)
     structArray[ret->index] = ret;
 
     if (original->vg_p != NULL) {
-	ret->vg_p = structArray[original->vg_p->index];
+	ret->vg_p = (struct vertex_g *)structArray[original->vg_p->index];
 
 	if (ret->vg_p == NULL)
 	    ret->vg_p = nmg_construct_vertex_g(original->vg_p, structArray);
@@ -272,14 +272,14 @@ nmg_construct_vertexuse(void *parent, const struct vertexuse *original, genptr_t
     NMG_GETSTRUCT(ret, vertexuse);
 
     ret->l.magic            = NMG_VERTEXUSE_MAGIC;
-    ret->up.magic_p         = parent;
+    ret->up.magic_p         = (uint32_t *)parent;
     ret->v_p                = (struct vertex*)NULL;
     ret->a.magic_p          = NULL;
     ret->index              = original->index;
     structArray[ret->index] = ret;
 
     if (original->v_p != NULL) {
-	ret->v_p = structArray[original->v_p->index];
+	ret->v_p = (struct vertex *)structArray[original->v_p->index];
 
 	if (ret->v_p == NULL)
 	    ret->v_p = nmg_construct_vertex(original->v_p, structArray);
@@ -290,7 +290,7 @@ nmg_construct_vertexuse(void *parent, const struct vertexuse *original, genptr_t
     if (original->a.magic_p != NULL) {
 	switch (*original->a.magic_p) {
 	case NMG_VERTEXUSE_A_PLANE_MAGIC:
-	    ret->a.plane_p = structArray[original->a.plane_p->index];
+	    ret->a.plane_p = (struct vertexuse_a_cnurb *)structArray[original->a.plane_p->index];
 
 	    if (ret->a.plane_p == NULL)
 		ret->a.plane_p = nmg_construct_vertexuse_a_plane(original->a.plane_p, structArray);
@@ -298,7 +298,7 @@ nmg_construct_vertexuse(void *parent, const struct vertexuse *original, genptr_t
 	    break;
 
 	case NMG_VERTEXUSE_A_CNURB_MAGIC:
-	    ret->a.cnurb_p = structArray[original->a.cnurb_p->index];
+	    ret->a.cnurb_p = (struct vertexuse_a_cnurb *)structArray[original->a.cnurb_p->index];
 
 	    if (ret->a.cnurb_p == NULL)
 		ret->a.cnurb_p = nmg_construct_vertexuse_a_cnurb(original->a.cnurb_p, structArray);
@@ -389,7 +389,7 @@ nmg_construct_edgeuse(void *parent, const struct edgeuse *original, genptr_t *st
     BU_LIST_INIT(&ret->l2);
     ret->l2.magic = NMG_EDGEUSE2_MAGIC;
 
-    ret->up.magic_p         = parent;
+    ret->up.magic_p         = (uint32_t *)parent;
     ret->eumate_p           = (struct edgeuse*)NULL;
     ret->radial_p           = (struct edgeuse*)NULL;
     ret->e_p                = (struct edge*)NULL;
@@ -400,7 +400,7 @@ nmg_construct_edgeuse(void *parent, const struct edgeuse *original, genptr_t *st
     structArray[ret->index] = ret;
 
     if (original->eumate_p != NULL) {
-	ret->eumate_p = structArray[original->eumate_p->index];
+	ret->eumate_p = (struct edgeuse *)structArray[original->eumate_p->index];
 
 	/* because it's tricky to choose the right parent for the mate
 	 * wait until it's created and set eumate_p afterwards
@@ -410,7 +410,7 @@ nmg_construct_edgeuse(void *parent, const struct edgeuse *original, genptr_t *st
     }
 
     if (original->radial_p != NULL) {
-	ret->radial_p = structArray[original->radial_p->index];
+	ret->radial_p = (struct edgeuse *)structArray[original->radial_p->index];
 
 	/* because it's tricky to choose the right parent wait until
 	 * it's created and set it afterwards
@@ -420,14 +420,14 @@ nmg_construct_edgeuse(void *parent, const struct edgeuse *original, genptr_t *st
     }
 
     if (original->e_p != NULL) {
-	ret->e_p = structArray[original->e_p->index];
+	ret->e_p = (struct edge *)structArray[original->e_p->index];
 
 	if (ret->e_p == 0)
 	    ret->e_p = nmg_construct_edge(ret, original->e_p, structArray);
     }
 
     if (original->vu_p != NULL) {
-	ret->vu_p = structArray[original->vu_p->index];
+	ret->vu_p = (struct vertexuse *)structArray[original->vu_p->index];
 
 	if (ret->vu_p == 0)
 	    ret->vu_p = nmg_construct_vertexuse(ret, original->vu_p, structArray);
@@ -436,7 +436,7 @@ nmg_construct_edgeuse(void *parent, const struct edgeuse *original, genptr_t *st
     if (original->g.magic_p != NULL) {
 	switch (*original->g.magic_p) {
 	case NMG_EDGE_G_LSEG_MAGIC:
-	    ret->g.lseg_p = structArray[original->g.lseg_p->index];
+	    ret->g.lseg_p = (struct edge_g_lseg *)structArray[original->g.lseg_p->index];
 
 	    if (ret->g.lseg_p == NULL)
 		ret->g.lseg_p = nmg_construct_edge_g_lseg(original->g.lseg_p, structArray);
@@ -445,7 +445,7 @@ nmg_construct_edgeuse(void *parent, const struct edgeuse *original, genptr_t *st
 	    break;
 
 	case NMG_EDGE_G_CNURB_MAGIC:
-	    ret->g.cnurb_p = structArray[original->g.cnurb_p->index];
+	    ret->g.cnurb_p = (struct edge_g_cnurb *)structArray[original->g.cnurb_p->index];
 
 	    if (ret->g.cnurb_p == NULL)
 		ret->g.cnurb_p = nmg_construct_edge_g_cnurb(original->g.cnurb_p, structArray);
@@ -491,7 +491,7 @@ nmg_construct_loop(struct loopuse *parent, const struct loop *original, genptr_t
     structArray[ret->index] = ret;
 
     if (original->lg_p != NULL) {
-	ret->lg_p = structArray[original->lg_p->index];
+	ret->lg_p = (struct loop_g *)structArray[original->lg_p->index];
 
 	if (ret->lg_p == NULL)
 	    ret->lg_p = nmg_construct_loop_g(original->lg_p, structArray);
@@ -509,7 +509,7 @@ nmg_construct_loopuse(void *parent, const struct loopuse *original, genptr_t *st
     NMG_GETSTRUCT(ret, loopuse);
 
     ret->l.magic     = NMG_LOOPUSE_MAGIC;
-    ret->up.magic_p  = parent;
+    ret->up.magic_p  = (uint32_t *)parent;
     ret->lumate_p    = (struct loopuse *)NULL;
     ret->orientation = original->orientation;
     ret->l_p         = (struct loop *)NULL;
@@ -520,7 +520,7 @@ nmg_construct_loopuse(void *parent, const struct loopuse *original, genptr_t *st
     structArray[ret->index] = ret;
 
     if (original->lumate_p != NULL) {
-	ret->lumate_p = structArray[original->lumate_p->index];
+	ret->lumate_p = (struct loopuse *)structArray[original->lumate_p->index];
 
 	/* because it's tricky to choose the right parent for the mate
 	 * wait until it's created and set eumate_p afterwards
@@ -530,7 +530,7 @@ nmg_construct_loopuse(void *parent, const struct loopuse *original, genptr_t *st
     }
 
     if (original->l_p != NULL) {
-	ret->l_p = structArray[original->l_p->index];
+	ret->l_p = (struct loop *)structArray[original->l_p->index];
 
 	if (ret->l_p == 0)
 	    ret->l_p = nmg_construct_loop(ret, original->l_p, structArray);
@@ -539,7 +539,7 @@ nmg_construct_loopuse(void *parent, const struct loopuse *original, genptr_t *st
     switch (BU_LIST_FIRST_MAGIC(&original->down_hd)) {
     case NMG_VERTEXUSE_MAGIC: {
 	    const struct vertexuse *originalVertexUse = BU_LIST_FIRST(vertexuse, &original->down_hd);
-	    struct vertexuse       *newVertexUse      = structArray[originalVertexUse->index];
+	    struct vertexuse       *newVertexUse      = (struct vertexuse *)structArray[originalVertexUse->index];
 
 	    if (newVertexUse == NULL)
 		newVertexUse = nmg_construct_vertexuse(ret, originalVertexUse, structArray);
@@ -553,7 +553,7 @@ nmg_construct_loopuse(void *parent, const struct loopuse *original, genptr_t *st
 	    const struct edgeuse *originalEdgeUse;
 
 	    for (BU_LIST_FOR(originalEdgeUse, edgeuse, &original->down_hd)) {
-		struct edgeuse *newEdgeUse = structArray[originalEdgeUse->index];
+		struct edgeuse *newEdgeUse = (struct edgeuse *)structArray[originalEdgeUse->index];
 
 		if (newEdgeUse == NULL)
 		    newEdgeUse = nmg_construct_edgeuse(ret, originalEdgeUse, structArray);
@@ -588,21 +588,21 @@ nmg_construct_faceuse(struct shell *parent, const struct faceuse *original, genp
     structArray[ret->index] = ret;
 
     if (original->fumate_p != NULL) {
-	ret->fumate_p = structArray[original->fumate_p->index];
+	ret->fumate_p = (struct faceuse *)structArray[original->fumate_p->index];
 
 	if (ret->fumate_p == NULL)
 	    ret->fumate_p = nmg_construct_faceuse(parent, original->fumate_p, structArray);
     }
 
     if (original->f_p != NULL) {
-	ret->f_p = structArray[original->f_p->index];
+	ret->f_p = (struct face *)structArray[original->f_p->index];
 
 	if (ret->f_p == 0)
 	    ret->f_p = nmg_construct_face(ret, original->f_p, structArray);
     }
 
     for (BU_LIST_FOR(originalLoopUse, loopuse, &original->lu_hd)) {
-	struct loopuse *newLoopUse = structArray[originalLoopUse->index];
+	struct loopuse *newLoopUse = (struct loopuse *)structArray[originalLoopUse->index];
 
 	if (newLoopUse == NULL)
 	    newLoopUse = nmg_construct_loopuse(ret, originalLoopUse, structArray);
@@ -657,7 +657,7 @@ nmg_construct_shell(struct nmgregion *parent, const struct shell *original, genp
 
     if (original->sa_p != NULL) {
 	const struct shell_a *originalAttributes = original->sa_p;
-	struct shell_a       *newAttributes      = structArray[originalAttributes->index];
+	struct shell_a       *newAttributes      = (struct shell_a *)structArray[originalAttributes->index];
 
 	if (newAttributes == NULL)
 	    newAttributes = nmg_construct_shell_a(originalAttributes, structArray);
@@ -666,7 +666,7 @@ nmg_construct_shell(struct nmgregion *parent, const struct shell *original, genp
     }
 
     for (BU_LIST_FOR(originalFaceUse, faceuse, &original->fu_hd)) {
-	struct faceuse *newFaceUse = structArray[originalFaceUse->index];
+	struct faceuse *newFaceUse = (struct faceuse *)structArray[originalFaceUse->index];
 
 	if (newFaceUse == NULL)
 	    newFaceUse = nmg_construct_faceuse(ret, originalFaceUse, structArray);
@@ -675,7 +675,7 @@ nmg_construct_shell(struct nmgregion *parent, const struct shell *original, genp
     }
 
     for (BU_LIST_FOR(originalLoopUse, loopuse, &original->lu_hd)) {
-	struct loopuse *newLoopUse = structArray[originalLoopUse->index];
+	struct loopuse *newLoopUse = (struct loopuse *)structArray[originalLoopUse->index];
 
 	if (newLoopUse == NULL)
 	    newLoopUse = nmg_construct_loopuse(ret, originalLoopUse, structArray);
@@ -684,7 +684,7 @@ nmg_construct_shell(struct nmgregion *parent, const struct shell *original, genp
     }
 
     for (BU_LIST_FOR(originalEdgeUse, edgeuse, &original->eu_hd)) {
-	struct edgeuse *newEdgeUse = structArray[originalEdgeUse->index];
+	struct edgeuse *newEdgeUse = (struct edgeuse *)structArray[originalEdgeUse->index];
 
 	if (newEdgeUse == NULL)
 	    newEdgeUse = nmg_construct_edgeuse(ret, originalEdgeUse, structArray);
@@ -693,7 +693,7 @@ nmg_construct_shell(struct nmgregion *parent, const struct shell *original, genp
     }
 
     if (original->vu_p != 0) {
-	ret->vu_p = structArray[original->vu_p->index];
+	ret->vu_p = (struct vertexuse *)structArray[original->vu_p->index];
 
 	if (ret->vu_p == NULL)
 	    ret->vu_p = nmg_construct_vertexuse(ret, original->vu_p, structArray);
@@ -731,7 +731,7 @@ nmg_clone_model(const struct model *original)
     tolerance.para    = 1 - tolerance.perp;
 
     for (BU_LIST_FOR(originalRegion, nmgregion, &original->r_hd)) {
-	struct nmgregion *newRegion = structArray[originalRegion->index];
+	struct nmgregion *newRegion = (struct nmgregion *)structArray[originalRegion->index];
 
 	if (newRegion == NULL) {
 	    const struct shell *originalShell;
@@ -739,7 +739,7 @@ nmg_clone_model(const struct model *original)
 	    newRegion = nmg_construct_region(ret, originalRegion, structArray);
 
 	    for (BU_LIST_FOR(originalShell, shell, &originalRegion->s_hd)) {
-		struct shell *newShell = structArray[originalShell->index];
+		struct shell *newShell = (struct shell *)structArray[originalShell->index];
 
 		if (newShell == NULL)
 		    newShell = nmg_construct_shell(newRegion, originalShell, structArray);

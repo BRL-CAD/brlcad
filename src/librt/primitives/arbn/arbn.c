@@ -931,7 +931,7 @@ rt_arbn_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = (ngrans + 1) * sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "arbn external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "arbn external");
     rec = (union record *)ep->ext_buf;
 
     rec[0].n.n_id = DBID_ARBN;
@@ -1062,7 +1062,7 @@ rt_arbn_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_LONG + byte_count;
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "arbn external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "arbn external");
 
     *(uint32_t *)ep->ext_buf = htonl(aip->neqn);
 

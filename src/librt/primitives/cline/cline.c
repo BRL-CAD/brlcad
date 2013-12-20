@@ -891,7 +891,7 @@ rt_cline_export4(struct bu_external *ep, const struct rt_db_internal *ip, double
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "cline external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "cline external");
     rec = (union record *)ep->ext_buf;
 
     if (dbip) RT_CK_DBI(dbip);
@@ -975,7 +975,7 @@ rt_cline_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 8;
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "cline external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "cline external");
 
     vec[0] = cline_ip->thickness * local2mm;
     vec[1] = cline_ip->radius * local2mm;

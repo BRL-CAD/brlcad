@@ -1278,7 +1278,7 @@ rt_hyp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT * 4;
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "hyp external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "hyp external");
 
 
     /* Since libwdb users may want to operate in units other than mm,

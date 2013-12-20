@@ -117,15 +117,15 @@ db_dircheck(struct db_i *dbip,
     *headp = &(dbip->dbi_Head[db_dirhash(cp)]);
 
     for (dp = **headp; dp != RT_DIR_NULL; dp=dp->d_forw) {
-	char *this;
-	if (n0 == *(this=dp->d_namep)  &&	/* speed */
-	    n1 == this[1]  &&			/* speed */
-	    BU_STR_EQUAL(cp, this)) {
+	char *this_obj;
+	if (n0 == *(this_obj=dp->d_namep)  &&	/* speed */
+	    n1 == this_obj[1]  &&			/* speed */
+	    BU_STR_EQUAL(cp, this_obj)) {
 	    /* Name exists in directory already */
 	    int c;
 
 	    bu_vls_strcpy(ret_name, "A_");
-	    bu_vls_strcat(ret_name, this);
+	    bu_vls_strcat(ret_name, this_obj);
 
 	    for (c = 'A'; c <= 'Z'; c++) {
 		*cp = c;
@@ -170,10 +170,10 @@ db_lookup(const struct db_i *dbip, const char *name, int noisy)
 
     dp = dbip->dbi_Head[db_dirhash(name)];
     for (; dp != RT_DIR_NULL; dp=dp->d_forw) {
-	char *this;
+	char *this_obj;
 
 	/* first two checks are for speed */
-	if ((n0 == *(this=dp->d_namep)) && (n1 == this[1]) && (BU_STR_EQUAL(name, this))) {
+	if ((n0 == *(this_obj=dp->d_namep)) && (n1 == this_obj[1]) && (BU_STR_EQUAL(name, this_obj))) {
 	    if (RT_G_DEBUG&DEBUG_DB)
 		bu_log("db_lookup(%s) %p\n", name, (void *)dp);
 	    return dp;

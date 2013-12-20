@@ -252,7 +252,7 @@ rt_ars_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = (1 + per_curve_grans * arip->ncurves) *
 	sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "ars external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "ars external");
     rec = (union record *)ep->ext_buf;
 
     rec[0].a.a_id = ID_ARS_A;
@@ -385,7 +385,7 @@ rt_ars_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = 2 * SIZEOF_NETWORK_LONG + ELEMENTS_PER_POINT * arip->ncurves * arip->pts_per_curve * SIZEOF_NETWORK_DOUBLE;
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "ars external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "ars external");
     cp = (unsigned char *)ep->ext_buf;
 
     *(uint32_t *)cp = htonl(arip->ncurves);
@@ -1255,14 +1255,14 @@ rt_ars_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 	    }
 	    if (i < ars->pts_per_curve) {
 		for (j=0; j<ars->ncurves; j++) {
-		    ars->curves[j] = bu_realloc(ars->curves[j],
+		    ars->curves[j] = (fastf_t *)bu_realloc(ars->curves[j],
 						i * 3 * sizeof(fastf_t),
 						"ars->curves[j]");
 		}
 		ars->pts_per_curve = i;
 	    } else if (i > ars->pts_per_curve) {
 		for (j=0; j<ars->ncurves; j++) {
-		    ars->curves[j] = bu_realloc(ars->curves[j],
+		    ars->curves[j] = (fastf_t *)bu_realloc(ars->curves[j],
 						i * 3 * sizeof(fastf_t),
 						"ars->curves[j]");
 		    /* new points are duplicates of last */

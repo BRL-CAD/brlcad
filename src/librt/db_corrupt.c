@@ -63,7 +63,7 @@ db_corrupt_handler(struct db_i *dbip, const char *name, off_t offset, size_t siz
     /* set up our buffer */
     BU_EXTERNAL_INIT(&ext);
     ext.ext_nbytes = size * sizeof(union record);
-    ext.ext_buf = (genptr_t)bu_calloc(ext.ext_nbytes, 1, "db_corrupt");
+    ext.ext_buf = (uint8_t *)bu_calloc(ext.ext_nbytes, 1, "db_corrupt");
 
     /* read into the buffer */
     j = (size_t)fread(ext.ext_buf, 1, ext.ext_nbytes, dbip->dbi_fp);

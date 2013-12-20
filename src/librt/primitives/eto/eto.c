@@ -1409,7 +1409,7 @@ rt_eto_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "eto external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "eto external");
     eto = (union record *)ep->ext_buf;
 
     eto->s.s_id = ID_SOLID;
@@ -1498,7 +1498,7 @@ rt_eto_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 11;
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "eto external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "eto external");
 
     /* scale 'em into local buffer */
     VSCALE(&vec[0*3], tip->eto_V, local2mm);

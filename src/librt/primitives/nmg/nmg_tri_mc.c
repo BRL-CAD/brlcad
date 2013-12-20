@@ -735,7 +735,7 @@ nmg_mc_evaluate (struct shell *s, struct rt_i *rtip, const struct db_full_path *
 
     m.ncpu = bu_avail_cpus();
     m.ncpu = 1; /* seems to be an issue with confused loop calculation in the NMG code. */
-    m.resources = bu_malloc(m.ncpu * sizeof(struct resource), "Resource array");
+    m.resources = (struct resource *)bu_malloc(m.ncpu * sizeof(struct resource), "Resource array");
     for(i=0;i<m.ncpu;i++)
 	rt_init_resource(&m.resources[i], i, rtip);
 

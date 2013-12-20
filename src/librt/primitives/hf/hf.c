@@ -2146,7 +2146,7 @@ rt_hf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record) * DB_SS_NGRAN;
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "hf external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "hf external");
     rec = (union record *)ep->ext_buf;
 
     bu_vls_struct_print(&str, rt_hf_parse, (char *)xip);
@@ -2215,7 +2215,7 @@ rt_hf_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose,
     if (!verbose)
 	return 0;
 
-    bu_vls_struct_print(str, rt_hf_parse, ip->idb_ptr);
+    bu_vls_struct_print(str, rt_hf_parse, (const char *)ip->idb_ptr);
     bu_vls_strcat(str, "\n");
 
     return 0;

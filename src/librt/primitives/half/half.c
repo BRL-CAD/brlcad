@@ -644,7 +644,7 @@ rt_hlf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "half external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "half external");
     rec = (union record *)ep->ext_buf;
 
     rec->s.s_id = ID_SOLID;
@@ -739,7 +739,7 @@ rt_hlf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 4;
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "half external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "half external");
 
     /* only the distance needs to be scaled */
     scaled_dist = hip->eqn[W] * local2mm;
