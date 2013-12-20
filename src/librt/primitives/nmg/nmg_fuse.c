@@ -164,9 +164,9 @@ nmg_region_v_unique(struct nmgregion *r1, const struct bn_tol *tol)
 }
 
 
-/* compare function for qsort within function nmg_ptbl_vfuse */
+/* compare function for bu_sort within function nmg_ptbl_vfuse */
 static int
-x_comp(const void *p1, const void *p2)
+x_comp(const void *p1, const void *p2, void *UNUSED(arg))
 {
     fastf_t i, j;
 
@@ -198,7 +198,7 @@ nmg_ptbl_vfuse(struct bu_ptbl *t, const struct bn_tol *tol)
     register fastf_t ab, abx, aby, abz;
 
     /* sort the vertices in the 't' list by the 'x' coordinate */
-    qsort(BU_PTBL_BASEADDR(t), BU_PTBL_LEN(t), sizeof(long *), (int (*)(const void *a, const void *b))x_comp);
+    bu_sort(BU_PTBL_BASEADDR(t), BU_PTBL_LEN(t), sizeof(long *), x_comp, NULL);
 
     count = 0;
     for (i = 0 ; i < BU_PTBL_END(t) ; i++) {
@@ -1051,9 +1051,9 @@ nmg_cnurb_is_on_crv(const struct edgeuse *eu, const struct edge_g_cnurb *cnrb, c
     return coincident;
 }
 
-/* compare function for qsort within function nmg_edge_fuse */
+/* compare function for bu_sort within function nmg_edge_fuse */
 static int
-v_ptr_comp(const void *p1, const void *p2)
+v_ptr_comp(const void *p1, const void *p2, void *UNUSED(arg))
 {
     size_t i, j;
 
@@ -1143,7 +1143,7 @@ nmg_edge_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
 	j++;
     }
 
-    qsort(&edgeuse_vert_list[0][0], nelem, 2 * sizeof(size_t), (int (*)(const void *a, const void *b))v_ptr_comp);
+    bu_sort(&edgeuse_vert_list[0][0], nelem, 2 * sizeof(size_t), v_ptr_comp, NULL);
 
     for (i = 0; i < nelem ; i++) {
 
@@ -1196,7 +1196,7 @@ nmg_edge_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
 }
 
 
-/* compare function for qsort within function nmg_edge_g_fuse */
+/* compare function for bu_sort within function nmg_edge_g_fuse */
 static int
 e_rr_xyp_comp(const void *p1, const void *p2, void *arg)
 {

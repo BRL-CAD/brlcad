@@ -594,6 +594,7 @@ variables should be utilized instead of the standard C facility:
   bu_strncmp() instead of strncmp()
   bu_strcasecmp() instead of strnicmp()/strncasecmp()
   bu_file_delete() instead of unlink(), rmdir(), and remove()
+  bu_sort() instead of qsort()
 
 Similarly, ANSI C functions are preferred over the BSD and POSIX
 interfaces.  The following functions should be used:

@@ -165,59 +165,59 @@ rt_cut_optimize_parallel(int cpu, genptr_t arg)
     (*(const struct soltab **)(_p1))->_memb[_ind] > \
     (*(const struct soltab **)(_p2))->_memb[_ind] ? 1 : 0
 
-/* Functions for use with qsort */
-HIDDEN int rt_projXmin_comp(const void * p1, const void * p2);
-HIDDEN int rt_projXmax_comp(const void * p1, const void * p2);
-HIDDEN int rt_projYmin_comp(const void * p1, const void * p2);
-HIDDEN int rt_projYmax_comp(const void * p1, const void * p2);
-HIDDEN int rt_projZmin_comp(const void * p1, const void * p2);
-HIDDEN int rt_projZmax_comp(const void * p1, const void * p2);
+/* Functions for use with bu_sort */
+HIDDEN int rt_projXmin_comp(const void * p1, const void * p2, void *UNUSED(arg));
+HIDDEN int rt_projXmax_comp(const void * p1, const void * p2, void *UNUSED(arg));
+HIDDEN int rt_projYmin_comp(const void * p1, const void * p2, void *UNUSED(arg));
+HIDDEN int rt_projYmax_comp(const void * p1, const void * p2, void *UNUSED(arg));
+HIDDEN int rt_projZmin_comp(const void * p1, const void * p2, void *UNUSED(arg));
+HIDDEN int rt_projZmax_comp(const void * p1, const void * p2, void *UNUSED(arg));
 
 HIDDEN int
-rt_projXmin_comp(const void *p1, const void *p2)
+rt_projXmin_comp(const void *p1, const void *p2, void *UNUSED(arg))
 {
     return CMP(p1, p2, st_min, X);
 }
 
 
 HIDDEN int
-rt_projXmax_comp(const void *p1, const void *p2)
+rt_projXmax_comp(const void *p1, const void *p2, void *UNUSED(arg))
 {
     return CMP(p1, p2, st_max, X);
 }
 
 
 HIDDEN int
-rt_projYmin_comp(const void *p1, const void *p2)
+rt_projYmin_comp(const void *p1, const void *p2, void *UNUSED(arg))
 {
     return CMP(p1, p2, st_min, Y);
 }
 
 
 HIDDEN int
-rt_projYmax_comp(const void *p1, const void *p2)
+rt_projYmax_comp(const void *p1, const void *p2, void *UNUSED(arg))
 {
     return CMP(p1, p2, st_max, Y);
 }
 
 
 HIDDEN int
-rt_projZmin_comp(const void *p1, const void *p2)
+rt_projZmin_comp(const void *p1, const void *p2, void *UNUSED(arg))
 {
     return CMP(p1, p2, st_min, Z);
 }
 
 
 HIDDEN int
-rt_projZmax_comp(const void *p1, const void *p2)
+rt_projZmax_comp(const void *p1, const void *p2, void *UNUSED(arg))
 {
     return CMP(p1, p2, st_max, Z);
 }
 
 
 HIDDEN struct cmp_pair {
-    int (*cmp_min)(const void *, const void *);
-    int (*cmp_max)(const void *, const void *);
+    int (*cmp_min)(const void *, const void *, void *);
+    int (*cmp_max)(const void *, const void *, void *);
 } pairs[] = {
     { rt_projXmin_comp, rt_projXmax_comp },
     { rt_projYmin_comp, rt_projYmax_comp },
@@ -439,10 +439,10 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 	memcpy(list_min, fromp->bn_list, len*sizeof(struct soltab *));
 	memcpy(list_max, fromp->bn_list, len*sizeof(struct soltab *));
 	for (i=0; i<3; i++) {
-	    qsort((genptr_t)list_min, len,
-		  sizeof(struct soltab *), pairs[i].cmp_min);
-	    qsort((genptr_t)list_max, len,
-		  sizeof(struct soltab *), pairs[i].cmp_max);
+	    bu_sort((genptr_t)list_min, len,
+		  sizeof(struct soltab *), pairs[i].cmp_min, NULL);
+	    bu_sort((genptr_t)list_max, len,
+		  sizeof(struct soltab *), pairs[i].cmp_max, NULL);
 	    nstart = nend = axi = 0;
 	    l1 = list_min;
 	    l2 = list_max;

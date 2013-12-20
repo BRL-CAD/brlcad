@@ -1288,7 +1288,7 @@ nmg_is_wedge_before_cross(const struct nmg_vu_stuff *wedge, const struct nmg_vu_
 /**
  * N M G _ F A C E _ V U _ C O M P A R E
  *
- * Support routine for nmg_face_coincident_vu_sort(), via qsort().
+ * Support routine for nmg_face_coincident_vu_sort(), via bu_sort().
  *
  * It is important to note that an edge on the LEFT side of the ray
  * will have a "lo" angle which is numerically LARGER than the "hi" angle.
@@ -1304,7 +1304,7 @@ nmg_is_wedge_before_cross(const struct nmg_vu_stuff *wedge, const struct nmg_vu_
 #define AB_EQUAL {ret = 0; goto out;}
 #define A_GT_B {ret = 1; goto out;}
 static int
-nmg_face_vu_compare(const void *aa, const void *bb)
+nmg_face_vu_compare(const void *aa, const void *bb, void *UNUSED(arg))
 {
     register const struct nmg_vu_stuff *a = (const struct nmg_vu_stuff *)aa;
     register const struct nmg_vu_stuff *b = (const struct nmg_vu_stuff *)bb;
@@ -1848,8 +1848,8 @@ nmg_face_coincident_vu_sort(struct nmg_ray_state *rs, int start, int end)
     }
 
     /* Sort the vertexuse table into appropriate order */
-    qsort((genptr_t)vs, (unsigned)nvu, (unsigned)sizeof(*vs),
-	  nmg_face_vu_compare);
+    bu_sort((genptr_t)vs, (unsigned)nvu, (unsigned)sizeof(*vs),
+	  nmg_face_vu_compare, NULL);
 
     if (RTG.NMG_debug&DEBUG_VU_SORT) {
 	bu_log("Vertexuse table (after sort):\n");
