@@ -295,7 +295,7 @@ nmg_construct_vertexuse(void *parent, const struct vertexuse *original, genptr_t
     if (original->a.magic_p != NULL) {
         switch (*original->a.magic_p) {
             case NMG_VERTEXUSE_A_PLANE_MAGIC:
-                ret->a.plane_p = (struct vertexuse_a_cnurb *)structArray[original->a.plane_p->index];
+                ret->a.plane_p = (struct vertexuse_a_plane *)structArray[original->a.plane_p->index];
                 if (ret->a.plane_p == NULL)
                     ret->a.plane_p = nmg_construct_vertexuse_a_plane(original->a.plane_p, structArray);
                 break;
