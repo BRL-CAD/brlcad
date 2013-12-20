@@ -3150,12 +3150,10 @@ rt_nmg_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 
     /*Iterate through all regions and shells */
     m = (struct model *)ip->idb_ptr;
-    r = BU_LIST_FIRST(nmgregion, &m->r_hd);
-    while(BU_LIST_NOT_HEAD(r, &m->r_hd)) {
+    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
 	struct shell* s;
 
-	s = BU_LIST_FIRST(shell, &r->s_hd);
-	while(BU_LIST_NOT_HEAD(s, &r->s_hd)) {
+	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 	    struct bu_ptbl nmg_faces;
 	    unsigned int num_faces, i, j, k, l;
 	    struct poly_face *faces;
@@ -3163,7 +3161,7 @@ rt_nmg_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	    /*get faces of this shell*/
 	    nmg_face_tabulate(&nmg_faces, &s->l.magic);
 	    num_faces = BU_PTBL_LEN(&nmg_faces);
-	    faces = (struct poly_face *)bu_calloc(num_faces, sizeof(struct poly_face), "nmg_surf_area: faces");
+	    faces = (struct poly_face *)bu_calloc(num_faces, sizeof(struct poly_face), "rt_nmg_surf_area: faces");
 
 	    for(i = 0; i < num_faces; i++) {
 		struct face *f;
@@ -3171,7 +3169,7 @@ rt_nmg_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 		HMOVE(faces[i].plane_eqn, f->g.plane_p->N);
 		VUNITIZE(faces[i].plane_eqn);
 		/* allocate array of pt structs, max number of verts per faces = (# of faces) - 1 */
-		faces[i].pts = (point_t *)bu_calloc(num_faces - 1, sizeof(point_t), "nmg_surf_area: pts");
+		faces[i].pts = (point_t *)bu_calloc(num_faces - 1, sizeof(point_t), "rt_nmg_surf_area: pts");
 	    }
 	    /* find all vertices */
 	    for (i = 0; i < num_faces - 2; i++) {
@@ -3217,9 +3215,7 @@ rt_nmg_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 		bu_free((char *)faces[i].pts, "rt_nmg_surf_area: pts");
 	    }
 	    bu_free((char *)faces, "rt_nmg_surf_area: faces");
-	    s = BU_LIST_PNEXT(shell, s);
 	}
-	r = BU_LIST_PNEXT(nmgregion, r);
     }
 }
 
@@ -3246,7 +3242,7 @@ rt_nmg_centroid(point_t *cent, const struct rt_db_internal *ip)
     /*get faces*/
     nmg_face_tabulate(&nmg_faces, &s->l.magic);
     num_faces = BU_PTBL_LEN(&nmg_faces);
-    faces = (struct poly_face *)bu_calloc(num_faces, sizeof(struct poly_face), "nmg_surf_area: faces");
+    faces = (struct poly_face *)bu_calloc(num_faces, sizeof(struct poly_face), "rt_nmg_centroid: faces");
 
     for(i = 0; i < num_faces; i++) {
 	struct face *f;
@@ -3254,7 +3250,7 @@ rt_nmg_centroid(point_t *cent, const struct rt_db_internal *ip)
 	HMOVE(faces[i].plane_eqn, f->g.plane_p->N);
 	VUNITIZE(faces[i].plane_eqn);
 	/* allocate array of pt structs, max number of verts per faces = (# of faces) - 1 */
-	faces[i].pts = (point_t *)bu_calloc(num_faces - 1, sizeof(point_t), "nmg_surf_area: pts");
+	faces[i].pts = (point_t *)bu_calloc(num_faces - 1, sizeof(point_t), "rt_nmg_centroid: pts");
     }
     /* find all vertices */
     for (i = 0; i < num_faces - 2; i++) {
@@ -3376,9 +3372,9 @@ rt_nmg_centroid(point_t *cent, const struct rt_db_internal *ip)
     /* reverse the weighting */
     VSCALE(*cent, *cent, (1/volume));
     for (i = 0; i < num_faces; i++) {
-	bu_free((char *)faces[i].pts, "rt_nmg_surf_area: pts");
+	bu_free((char *)faces[i].pts, "rt_nmg_centroid: pts");
     }
-    bu_free((char *)faces, "rt_nmg_surf_area: faces");
+    bu_free((char *)faces, "rt_nmg_centroid: faces");
 }
 
 
@@ -3390,12 +3386,10 @@ rt_nmg_volume(fastf_t *volume, const struct rt_db_internal *ip)
 
     /*Iterate through all regions and shells */
     m = (struct model *)ip->idb_ptr;
-    r = BU_LIST_FIRST(nmgregion, &m->r_hd);
-    while(BU_LIST_NOT_HEAD(r, &m->r_hd)) {
+    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
 	struct shell* s;
 
-	s = BU_LIST_FIRST(shell, &r->s_hd);
-	while(BU_LIST_NOT_HEAD(s, &r->s_hd)) {
+	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 	    struct bu_ptbl nmg_faces;
 	    unsigned int num_faces, i, j, k, l;
 	    struct poly_face *faces;
@@ -3403,7 +3397,7 @@ rt_nmg_volume(fastf_t *volume, const struct rt_db_internal *ip)
 	    /*get faces of this shell*/
 	    nmg_face_tabulate(&nmg_faces, &s->l.magic);
 	    num_faces = BU_PTBL_LEN(&nmg_faces);
-	    faces = (struct poly_face *)bu_calloc(num_faces, sizeof(struct poly_face), "nmg_volume: faces");
+	    faces = (struct poly_face *)bu_calloc(num_faces, sizeof(struct poly_face), "rt_nmg_volume: faces");
 
 	    for(i = 0; i < num_faces; i++) {
 		struct face *f;
@@ -3411,7 +3405,7 @@ rt_nmg_volume(fastf_t *volume, const struct rt_db_internal *ip)
 		HMOVE(faces[i].plane_eqn, f->g.plane_p->N);
 		VUNITIZE(faces[i].plane_eqn);
 		/* allocate array of pt structs, max number of verts per faces = (# of faces) - 1 */
-		faces[i].pts = (point_t *)bu_calloc(num_faces - 1, sizeof(point_t), "nmg_volume: pts");
+		faces[i].pts = (point_t *)bu_calloc(num_faces - 1, sizeof(point_t), "rt_nmg_volume: pts");
 	    }
 	    /* find all vertices */
 	    for (i = 0; i < num_faces - 2; i++) {
@@ -3460,9 +3454,7 @@ rt_nmg_volume(fastf_t *volume, const struct rt_db_internal *ip)
 		bu_free((char *)faces[i].pts, "rt_nmg_volume: pts");
 	    }
 	    bu_free((char *)faces, "rt_nmg_volume: faces");
-	    s = BU_LIST_PNEXT(shell, s);
 	}
-	r = BU_LIST_PNEXT(nmgregion, r);
     }
 }
 

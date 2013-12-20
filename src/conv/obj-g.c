@@ -1559,16 +1559,16 @@ sort_indexes(struct ti_t *ti)
     size_t num_indexes = ti->num_tri * 3;
 
     /* process vertex indexes */
-    bu_sort(ti->vsi, num_indexes, sizeof ti->vsi[0], comp, (size_t *)ti->index_arr_tri);
+    bu_sort(ti->vsi, num_indexes, sizeof ti->vsi[0], comp, ti->index_arr_tri);
 
     /* process vertex normal indexes */
     if (ti->tri_type == FACE_NV || ti->tri_type == FACE_TNV) {
-	bu_sort(ti->vnsi, num_indexes, sizeof ti->vnsi[0], comp, (size_t *)ti->index_arr_tri);
+	bu_sort(ti->vnsi, num_indexes, sizeof ti->vnsi[0], comp, ti->index_arr_tri);
     }
 
     /* process texture vertex indexes */
     if (ti->tri_type == FACE_TV || ti->tri_type == FACE_TNV) {
-	bu_sort(ti->tvsi, num_indexes, sizeof ti->tvsi[0], comp, (size_t *)ti->index_arr_tri);
+	bu_sort(ti->tvsi, num_indexes, sizeof ti->tvsi[0], comp, ti->index_arr_tri);
     }
 
     return;

@@ -1406,9 +1406,9 @@ rt_arbn_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	*area += (fabs(VDOT(faces[i].plane_eqn, tot)) * 0.5);
     }
     for (i = 0; i < aip->neqn; i++) {
-	bu_free((char *)faces[i].pts, "analyze_arbn: pts");
+	bu_free((char *)faces[i].pts, "rt_arbn_surf_area: pts");
     }
-    bu_free((char *)faces, "analyze_arbn: faces");
+    bu_free((char *)faces, "rt_arbn_surf_area: faces");
 }
 
 
@@ -1429,12 +1429,12 @@ rt_arbn_centroid(point_t *cent, const struct rt_db_internal *ip)
 	return;
 
     /* allocate array of face structs */
-    faces = (struct poly_face *)bu_calloc(aip->neqn, sizeof(struct poly_face), "arbn_centroid: faces");
+    faces = (struct poly_face *)bu_calloc(aip->neqn, sizeof(struct poly_face), "rt_arbn_centroid: faces");
     for (i = 0; i < aip->neqn; i++) {
 	HMOVE(faces[i].plane_eqn, aip->eqn[i]);
 	VUNITIZE(faces[i].plane_eqn);
 	/* allocate array of pt structs, max number of verts per faces = (# of faces) - 1 */
-	faces[i].pts = (point_t *)bu_calloc(aip->neqn - 1, sizeof(point_t), "arbn_centroid: pts");
+	faces[i].pts = (point_t *)bu_calloc(aip->neqn - 1, sizeof(point_t), "rt_arbn_centroid: pts");
     }
 
     /* find all vertices */
