@@ -304,9 +304,10 @@ view_eol(struct application *UNUSED(ap))
 {
 }
 
-/* a region ID sort comparison for use with qsort on a region array */
+/* a region ID sort comparison for use with bu_sort on a region array */
 int region_ID_cmp(const void *p1,
-		  const void *p2)
+		  const void *p2,
+		  void *UNUSED(arg))
 {
     /* cast into correct type--note the incoming pointer type is a
        pointer to a pointer which must be dereferenced! */
@@ -464,7 +465,7 @@ view_end(struct application *ap)
 	}
 
 	/* sort the region array by ID, then by name */
-	qsort(rp_array, nregions, sizeof(struct region *), region_ID_cmp);
+	bu_sort(rp_array, nregions, sizeof(struct region *), region_ID_cmp, NULL);
 
 	/* WEIGHT BY REGION NAME =============== */
 	/* ^L is char code for FormFeed/NewPage */

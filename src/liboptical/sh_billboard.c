@@ -499,7 +499,7 @@ struct imgdist {
 
 
 int
-imgdist_compare(const void *a, const void *b)
+imgdist_compare(const void *a, const void *b, void *UNUSED(arg))
 {
     return (int)(((struct imgdist *)a)->dist - ((struct imgdist *)b)->dist);
 }
@@ -557,7 +557,7 @@ bbd_render(struct application *ap, const struct partition *pp, struct shadework 
 	i++;
     }
 
-    qsort(id, bbd_sp->img_count, sizeof(id[0]), &imgdist_compare);
+    bu_sort(id, bbd_sp->img_count, sizeof(id[0]), &imgdist_compare, NULL);
 
     for (i = 0; i < bbd_sp->img_count && swp->sw_transmit > 0.0; i++) {
 	if (id[i].status > 0) do_ray_image(ap, pp, swp, bbd_sp, id[i].bi, id[i].dist);
