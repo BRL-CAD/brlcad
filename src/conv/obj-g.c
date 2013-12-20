@@ -424,7 +424,7 @@ cleanup_name(struct bu_vls *outputObjectName_ptr)
 /*
  * C O M P _ B
  *
- * Compare function used by the functions qsort and bsearch for
+ * Compare function used by the function bsearch for
  * sorting and searching an array of numbers.
  */
 static int
@@ -438,9 +438,22 @@ comp_b(const void *p1, const void *p2)
 
 
 /*
+ * C O M P _ B _ S O R T
+ *
+ * Compare function used by the function bu_sort for
+ * sorting an array of numbers.
+ */
+static int
+comp_b_sort(const void *p1, const void *p2, void *UNUSED(arg))
+{
+    return comp_b(p1, p2);
+}
+
+
+/*
  * C O M P
  *
- * Compare function used by the function qsort for sorting an index
+ * Compare function used by the function bu_sort for sorting an index
  * into a multi-dimensional array.
  */
 static int
@@ -457,11 +470,11 @@ comp(const void *p1, const void *p2, void *arg)
 /*
  * C O M P _ C
  *
- * Compare function used by the function qsort for sorting a 2D array
+ * Compare function used by the function bu_sort for sorting a 2D array
  * of numbers.
  */
 static int
-comp_c(const void *p1, const void *p2)
+comp_c(const void *p1, const void *p2, void *UNUSED(arg))
 {
     edge_arr_2D_t i = (edge_arr_2D_t) p1;
     edge_arr_2D_t j = (edge_arr_2D_t) p2;
@@ -1994,7 +2007,7 @@ remove_duplicates_and_sort(size_t **list, size_t *count)
     size_t unique_count = 0;
     size_t *unique_arr = (size_t *)NULL;
 
-    qsort(*list, *count, sizeof(size_t), (int (*)(const void *a, const void *b))comp_b);
+    bu_sort(*list, *count, sizeof(size_t), comp_b_sort, NULL);
 
     /* process list, count sorted and unique list elements */
     last = (*list)[0];
@@ -2515,7 +2528,7 @@ test_closure(struct ga_t *ga,
 	}
     } /* ends when edges list is complete */
 
-    qsort(edges, edge_count, sizeof(size_t) * 2, (int (*)(const void *a, const void *b))comp_c);
+    bu_sort(edges, edge_count, sizeof(size_t) * 2, comp_c, NULL);
 
     if (debug) {
 	for (idx = 0 ; idx < edge_count ; idx++) {

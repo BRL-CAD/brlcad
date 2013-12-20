@@ -430,7 +430,7 @@ _ged_open_dbip(const char *filename, int existing_only)
 
 
 HIDDEN int
-_ged_cmp_attr(const void *p1, const void *p2)
+_ged_cmp_attr(const void *p1, const void *p2, void *UNUSED(arg))
 {
     return bu_strcmp(((struct bu_attribute_value_pair *)p1)->name,
 		     ((struct bu_attribute_value_pair *)p2)->name);
@@ -515,7 +515,7 @@ _ged_print_node(struct ged *gedp,
 	    int max_attr_name_len = 0;
 
 	    /* sort attribute-value set array by attribute name */
-	    qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmp_attr);
+	    bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmp_attr, NULL);
 
 	    for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
 		int len = (int)strlen(avpp->name);
