@@ -44,11 +44,11 @@
 #define BUFLEN (8192*2)	/* usually 2 pages of memory, 16KB */
 
 
-const char *progname = "imod";
-int numop = 0;		/* number of operations */
-int op[256];		/* operations */
-double val[256];		/* arguments to operations */
-int mapbuf[65536];		/* translation buffer/lookup table */
+static const char *progname = "imod";
+static int numop = 0;		/* number of operations */
+static int op[256];		/* operations */
+static double val[256];		/* arguments to operations */
+static int mapbuf[65536];	/* translation buffer/lookup table */
 
 
 static int

@@ -46,13 +46,13 @@ void LintoLog(double *in, double *out, int num); /* in interp.c */
 
 
 /* FIXME: these need to get shoved into a struct and passed */
-double mindB = -120.0;
-int lflag = 0;
-int cflag = 0;
-int linear_output = 0;
-int ascii_output = 0;
-int normalize_output = 0;
-double cbfilter[27];
+static double mindB = -120.0;
+static int lflag = 0;
+static int cflag = 0;
+static int linear_output = 0;
+static int ascii_output = 0;
+static int normalize_output = 0;
+static double cbfilter[27];
 
 
 static void

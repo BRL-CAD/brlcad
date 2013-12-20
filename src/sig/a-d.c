@@ -38,7 +38,7 @@
 
 
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
     double d;
     int i;

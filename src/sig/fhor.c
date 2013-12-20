@@ -53,7 +53,8 @@
  * FIXME: need to get packed into a struct and passed instead of
  * relying on them being global.
  */
-static int upper[HSCREEN], lower[HSCREEN];
+static int upper[HSCREEN];
+static int lower[HSCREEN];
 
 
 static int

@@ -37,9 +37,6 @@
 #include "bu.h"
 #include "vmath.h"
 
-char smod[]    = "smod";
-char *progname = smod;
-
 
 #define ADD 1
 #define MULT 2
@@ -47,16 +44,19 @@ char *progname = smod;
 #define POW 4
 #define BUFLEN 65536
 
-int numop = 0;		/* number of operations */
-int op[256];		/* operations */
-double val[256];		/* arguments to operations */
-short mapbuf[BUFLEN];		/* translation buffer/lookup table */
-unsigned char clip_h[BUFLEN];	/* map of values which clip high */
-unsigned char clip_l[BUFLEN];	/* map of values which clip low */
 
 static const char usage[] = "Usage: smod [-a add | -s sub | -m mult | -d div | -A | -e exp | -r root] [file.s]\n";
+static const char *progname = "smod";
 
-int
+static int numop = 0;		/* number of operations */
+static int op[256];		/* operations */
+static double val[256];		/* arguments to operations */
+static short mapbuf[BUFLEN];		/* translation buffer/lookup table */
+static unsigned char clip_h[BUFLEN];	/* map of values which clip high */
+static unsigned char clip_l[BUFLEN];	/* map of values which clip low */
+
+
+static int
 get_args(int argc, char *argv[])
 {
     char *file_name;
@@ -133,7 +133,7 @@ get_args(int argc, char *argv[])
 }
 
 
-void
+static void
 mk_trans_tbl()
 {
     int i, j, k;

@@ -37,11 +37,6 @@
 #include "bu.h"
 #include "vmath.h"
 
-char umod[] = "umod";
-char hyphen[] = "-";
-char *progname = umod;
-char *file_name = NULL;
-
 
 #define ADD 1
 #define MULT 2
@@ -49,16 +44,17 @@ char *file_name = NULL;
 #define POW 4
 #define BUFLEN (8192*2)	/* usually 2 pages of memory, 16KB */
 
-int numop = 0;		/* number of operations */
-int op[256];		/* operations */
-double val[256];		/* arguments to operations */
-unsigned short iobuf[BUFLEN];		/* input buffer */
-int mapbuf[65536];		/* translation buffer/lookup table */
 
 static const char usage[] = "Usage: umod [-a add | -s sub | -m mult | -d div | -A | -e exp | -r root] [file.s]\n";
+static const char *progname = "umod";
+static int numop = 0;		/* number of operations */
+static int op[256];		/* operations */
+static double val[256];		/* arguments to operations */
+static int mapbuf[65536];		/* translation buffer/lookup table */
 
-int
-get_args(int argc, char **argv)
+
+static int
+get_args(int argc, char *argv[])
 {
     int c;
     double d;
@@ -110,9 +106,9 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty((int)fileno(stdin)))
 	    return 0;
-	file_name = hyphen;
     } else {
 	char *ifname;
+	const char *file_name = NULL;
 	file_name = argv[bu_optind];
 	ifname = bu_realpath(file_name, NULL);
 	if (freopen(ifname, "r", stdin) == NULL) {
@@ -132,7 +128,7 @@ get_args(int argc, char **argv)
 }
 
 
-void
+static void
 mk_trans_tbl(void)
 {
     int i, j;
@@ -163,12 +159,14 @@ mk_trans_tbl(void)
 
 
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
     unsigned short *p, *q;
     unsigned int n;
     unsigned long clip_high, clip_low;
     int idx;
+
+    unsigned short iobuf[BUFLEN];		/* input buffer */
 
     if (!(progname=strrchr(*argv, '/')))
 	progname = *argv;

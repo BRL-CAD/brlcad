@@ -47,13 +47,13 @@ void coswin(double *data, int length, double percent); /* in coswin.c */
  * Buffering stuff
  */
 #define BSIZE 16*1024		/* Must be AT LEAST 2*Points in spectrum */
-double buf[BSIZE];		/* input data buffer */
-double temp[BSIZE];		/* windowed data buffer */
-int input_sample = 0;	/* The *next* input sample ("file pointer") */
+static double buf[BSIZE];		/* input data buffer */
+static double temp[BSIZE];		/* windowed data buffer */
+static int input_sample = 0;	/* The *next* input sample ("file pointer") */
 
-int buf_start = 0;		/* sample number in buf[0] */
-int buf_num = 0;		/* number of samples currently in buffer */
-int buf_index = 0;		/* buffer offset for current window */
+static int buf_start = 0;		/* sample number in buf[0] */
+static int buf_num = 0;		/* number of samples currently in buffer */
+static int buf_index = 0;		/* buffer offset for current window */
 
 
 /*
