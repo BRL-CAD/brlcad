@@ -396,7 +396,8 @@ IsLoopValid(const ON_SimpleArray<ON_Curve*>& loop, double tolerance, ON_PolyCurv
 
     // Check the loop is continuous and closed or not.
     if (ret) {
-	AppendToPolyCurve(loop[0]->Duplicate(), *polycurve);
+	if (loop[0] != NULL)
+	    AppendToPolyCurve(loop[0]->Duplicate(), *polycurve);
 	for (int i = 1 ; i < loop.Count(); i++) {
 	    if (loop[i] && loop[i - 1] && loop[i]->PointAtStart().DistanceTo(loop[i-1]->PointAtEnd()) < ON_ZERO_TOLERANCE)
 		AppendToPolyCurve(loop[i]->Duplicate(), *polycurve);
@@ -926,7 +927,7 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 	    }
 	    else {
 		bu_log("ON_Curve::Duplicate() failed.\n");
-		outerloop.Append(outerloop[i]);
+		outerloop.Append(NULL);
 	    }
 #if USE_CONNECTIVITY_GRAPH
 	    outerloop_start_end.Append(outerloop_start_end[i]);
@@ -989,6 +990,8 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 #endif
 	int curve_count = q.m_pos - p.m_pos;
 	for (int j = p.m_pos + 1; j <= q.m_pos; j++) {
+	    // No need to duplicate the curve, because the pointer
+	    // in the array 'outerloop' will be moved out later.
 	    newloop.Append(outerloop[j]);
 #if USE_CONNECTIVITY_GRAPH
 	    newloop_start_end.Append(outerloop_start_end[j]);
@@ -1093,7 +1096,13 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 	    TrimmedFace *newface = new TrimmedFace();
 	    newface->m_face = in->m_face;
 	    newface->m_outerloop = outerloop;
+	    // First copy the array with pointers, and then change
+	    // the pointers into copies.
 	    newface->m_innerloop = in->m_innerloop;
+	    for (unsigned int i = 0; i < in->m_innerloop.size(); i++)
+		for (int j = 0; j < in->m_innerloop[i].Count(); j++)
+		    if (in->m_innerloop[i][j])
+			newface->m_innerloop[i][j] = in->m_innerloop[i][j]->Duplicate();
 	    newface->m_innerloop.insert(newface->m_innerloop.end(), innerloops.begin(), innerloops.end());
 #if USE_CONNECTIVITY_GRAPH
 	    for (int i = 0; i < outerloop_start_end.Count(); i++)
