@@ -202,9 +202,9 @@ _ged_wrap_comb(struct ged *gedp, struct directory *dp) {
     return GED_OK;
 }
 
-/* QSort functions for solids */
+/* bu_sort functions for solids */
 HIDDEN int
-name_compare(const void *d1, const void *d2)
+name_compare(const void *d1, const void *d2, void *UNUSED(arg))
 {
     struct directory *dp1 = *(struct directory **)d1;
     struct directory *dp2 = *(struct directory **)d2;
@@ -220,7 +220,7 @@ name_compare(const void *d1, const void *d2)
  *
  *  Run the first search, and quit if any non-union ops are present.
  *  If all clear, search for the solid and comb lists.  Clear the old
- *  tree and union in all the solids - solids are sorted via qsort.
+ *  tree and union in all the solids - solids are sorted via bu_sort.
  *  If we have combs, run the not-in-this-comb-tree search and check
  *  which (if any) of the combs under the current comb are not used
  *  elsewhere.  For those that are not, remove them.
@@ -284,7 +284,7 @@ _ged_flatten_comb(struct ged *gedp, struct directory *dp) {
 
     /* Sort the solids and union them into a new tree for dp */
     if (BU_PTBL_LEN(solids)) {
-	qsort((genptr_t)BU_PTBL_BASEADDR(solids), BU_PTBL_LEN(solids), sizeof(struct directory *), name_compare);
+	bu_sort((void *)BU_PTBL_BASEADDR(solids), BU_PTBL_LEN(solids), sizeof(struct directory *), name_compare, NULL);
 	for (BU_PTBL_FOR(dp_curr, (struct directory **), solids)) {
 	    /* add "child" comb to the newly cleared parent */
 	    if (_ged_combadd(gedp, (*dp_curr), dp->d_namep, 0, WMOP_UNION, 0, 0) == RT_DIR_NULL) {
