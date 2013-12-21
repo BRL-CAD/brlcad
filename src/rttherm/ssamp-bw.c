@@ -192,7 +192,7 @@ main(int argc, char **argv)
 	bn_pr_tabdata("filter", filt);
     }
 
-    /* Convert each of the spectral sample curves into scalor values */
+    /* Convert each of the spectral sample curves into scalar values */
     pixels = bu_malloc(sizeof(fastf_t) * width * height, "fastf_t pixels");
 
     for (i = width*height-1; i >= 0; i--) {

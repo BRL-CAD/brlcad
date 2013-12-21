@@ -764,7 +764,7 @@ GED_EXPORT extern int ged_autoview(struct ged *gedp, int argc, const char *argv[
 GED_EXPORT extern int ged_bb(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Tesselates each operand object, then performs the
+ * Tessellates each operand object, then performs the
  * boolean evaluation, storing result in 'new_obj'
  */
 GED_EXPORT extern int ged_bev(struct ged *gedp, int argc, const char *argv[]);

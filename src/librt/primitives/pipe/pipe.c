@@ -587,7 +587,7 @@ pipe_elements_calculate(struct bu_list *elements_head, struct rt_db_internal *ip
 	angle = bn_pi - acos(VDOT(n1, n2));
 	dist_to_bend = pp2->pp_bendradius * tan(angle / 2.0);
 	if (isnan(dist_to_bend) || VNEAR_ZERO(norm, SQRT_SMALL_FASTF) || NEAR_ZERO(dist_to_bend, SQRT_SMALL_FASTF)) {
-	    /* points are colinear, treat as a linear segment */
+	    /* points are collinear, treat as a linear segment */
 	    rt_linear_pipe_prep(elements_head, curr_pt, curr_id, curr_od,
 				pp2->pp_coord, pp2->pp_id, pp2->pp_od, min, max);
 	    VMOVE(curr_pt, pp2->pp_coord);
@@ -3881,7 +3881,7 @@ rt_pipe_tess(
 	VSUB2(n2, pp3->pp_coord, pp2->pp_coord);
 	VCROSS(norm, n1, n2);
 	if (VNEAR_ZERO(norm, VUNITIZE_TOL)) {
-	    /* points are colinear, treat as a linear segment */
+	    /* points are collinear, treat as a linear segment */
 	    tesselate_pipe_linear(curr_pt, curr_od / 2.0, curr_id / 2.0,
 				  pp2->pp_coord, pp2->pp_od / 2.0, pp2->pp_id / 2.0,
 				  arc_segs, sin_del, cos_del, &outer_loop, &inner_loop, r1, r2, s, tol);

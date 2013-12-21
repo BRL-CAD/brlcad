@@ -97,7 +97,7 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
     VCROSS(norm, vec1, vec2);
     length = MAGNITUDE(norm);
     if (ZERO(length)) {
-	bu_vls_printf(gedp->ged_result_str, "%s: points are colinear\n", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "%s: points are collinear\n", argv[0]);
 	return GED_ERROR;
     }
     VSCALE(norm, norm, 1.0/length);

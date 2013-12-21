@@ -701,7 +701,7 @@ vdraw open rr;vdraw params c 00ff00; vdraw write n 0 %g %g %g; vdraw wwrite n 1 
 	 * sw_extinction is in terms of fraction of light absorbed
 	 * per linear meter of glass.  a_cumlen is in mm.
 	 */
-/* XXX extinction should be a spectral curve, not scalor */
+/* XXX extinction should be a spectral curve, not scalar */
 	if (swp->sw_extinction > 0 && sub_ap.a_cumlen > 0) {
 	    attenuation = pow(10.0, -1.0e-3 * sub_ap.a_cumlen *
 			      swp->sw_extinction);

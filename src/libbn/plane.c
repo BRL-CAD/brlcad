@@ -657,7 +657,7 @@ bn_isect_line2_line2(fastf_t *dist, const fastf_t *p, const fastf_t *d, const fa
      *	             [ Dy  -Cy ]
      *
      * If det(M) is zero, then the lines are parallel (perhaps
-     * colinear).  Otherwise, exactly one solution exists.
+     * collinear).  Otherwise, exactly one solution exists.
      */
     det = c[X] * d[Y] - d[X] * c[Y];
 
@@ -742,7 +742,7 @@ bn_isect_line2_line2(fastf_t *dist, const fastf_t *p, const fastf_t *d, const fa
 	    dist[1] = (hy + c[Y]) / d[Y];
 	}
 	if (bu_debug & BU_DEBUG_MATH) {
-	    bu_log("\tcolinear, t = %g, u = %g\n", dist[0], dist[1]);
+	    bu_log("\tcollinear, t = %g, u = %g\n", dist[0], dist[1]);
 	}
 	return 0;	/* Lines collinear */
     }
@@ -973,7 +973,7 @@ bn_isect_lseg2_lseg2(fastf_t *dist,
 	if (nogood >= 2)
 	    return -1;	/* collinear, but not overlapping */
 	if (bu_debug & BU_DEBUG_MATH) {
-	    bu_log("  HIT colinear!\n");
+	    bu_log("  HIT collinear!\n");
 	}
 	return 0;		/* collinear and overlapping */
     }
@@ -1112,17 +1112,17 @@ bn_isect_lseg3_lseg3(fastf_t *dist,
     }
 
     if (status == 0) {  /* infinite lines are collinear */
-	/* Lines are colinear */
+	/* Lines are collinear */
 	if ((dist[0] > 1.0+ptol && dist[1] > 1.0+ptol) || (dist[0] < -ptol && dist[1] < -ptol)) {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_MATH)) {
-		bu_log("bn_isect_lseg3_lseg3(): MISS, line segments are colinear but not overlapping!\n");
+		bu_log("bn_isect_lseg3_lseg3(): MISS, line segments are collinear but not overlapping!\n");
 	    }
 	    ret = -1;   /* line segments are collinear but not overlapping */
 	    goto out;
 	}
 
 	if (UNLIKELY(bu_debug & BU_DEBUG_MATH)) {
-	    bu_log("bn_isect_lseg3_lseg3(): HIT, line segments are colinear and overlapping!\n");
+	    bu_log("bn_isect_lseg3_lseg3(): HIT, line segments are collinear and overlapping!\n");
 	}
 
 	ret = 0; /* line segments are collinear and overlapping */
@@ -1420,7 +1420,7 @@ bn_isect_line_lseg(fastf_t *t, const fastf_t *p, const fastf_t *d, const fastf_t
     code = bn_isect_line3_line3(&dist1, &dist2, p, d, a, ab, tol);
 
     if (UNLIKELY(code == 0)) {
-	bu_bomb("bn_isect_line_lseg(): we should have already detected a colinear condition\n");
+	bu_bomb("bn_isect_line_lseg(): we should have already detected a collinear condition\n");
     }
 
     if (code < 0) {

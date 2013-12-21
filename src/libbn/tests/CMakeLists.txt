@@ -173,11 +173,11 @@ add_test(bn_plane_distsq_pt3_lseg3_v2_case5_1   tester_bn_plane_pt 4 -5,-5,-5 5,
 # Where A, B, and C are the points in question. This test function
 # does not currently support checking the resultant plane.
 
-add_test(bn_plane_mk_plane_3pts_fail_same       tester_bn_plane_pt 5 0,0,0 0,0,0 0,0,0 -1)
-add_test(bn_plane_mk_plane_3pts_fail_colinear_1 tester_bn_plane_pt 5 0,0,0 5,8,2 0,0,0 -1)
-add_test(bn_plane_mk_plane_3pts_fail_colinear_2 tester_bn_plane_pt 5 5,8,2 0,0,0 0,0,0 -1)
-add_test(bn_plane_mk_plane_3pts_fail_colinear_3 tester_bn_plane_pt 5 -10,-10,-10 0,0,0 5,5,5 -1)
-add_test(bn_plane_mk_plane_3pts_succeed         tester_bn_plane_pt 5 -10,-10,-10 7,3,8 19,4,2 0)
+add_test(bn_plane_mk_plane_3pts_fail_same        tester_bn_plane_pt 5 0,0,0 0,0,0 0,0,0 -1)
+add_test(bn_plane_mk_plane_3pts_fail_collinear_1 tester_bn_plane_pt 5 0,0,0 5,8,2 0,0,0 -1)
+add_test(bn_plane_mk_plane_3pts_fail_collinear_2 tester_bn_plane_pt 5 5,8,2 0,0,0 0,0,0 -1)
+add_test(bn_plane_mk_plane_3pts_fail_collinear_3 tester_bn_plane_pt 5 -10,-10,-10 0,0,0 5,5,5 -1)
+add_test(bn_plane_mk_plane_3pts_succeed          tester_bn_plane_pt 5 -10,-10,-10 7,3,8 19,4,2 0)
 
 
 # For tester_bn_plane_dist, the input format is as follows:

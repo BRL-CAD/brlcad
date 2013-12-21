@@ -514,7 +514,7 @@ ICV_EXPORT extern int icv_filter(icv_image_t *img, ICV_FILTER filter_type);
 /**
  * Filters a set of three image with the specified filter type.  Does
  * zero_padding for outbound pixels.  Finds the resultant pixel with
- * the help of neighbouring pixels in all the three images.
+ * the help of neighboring pixels in all the three images.
  *
  *
  * @return Resultant image.
@@ -690,7 +690,7 @@ typedef enum {
  * e.g. icv_resize(bif, ICV_RESIZE_SHRINK,0,0,2);
  *  shrinks the image with a factor of 2.
  *
- * c) ICV_RESIZE_NINTERP : This interpolates using nearest neighbour
+ * c) ICV_RESIZE_NINTERP : This interpolates using nearest neighbor
  * method.
  * e.g. icv_resize(bif, ICV_RESIZE_NINTERP,1024,1024,0);
  *  interpolates the output image to have the size of 1024X1024.

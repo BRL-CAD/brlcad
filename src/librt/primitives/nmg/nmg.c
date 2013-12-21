@@ -337,7 +337,7 @@ rt_nmg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
  * R T _ N M G _ T E S S
  *
  * XXX This routine "destroys" the internal nmg solid.  This means
- * that once you tesselate an NMG solid, your in-memory copy becomes
+ * that once you tessellate an NMG solid, your in-memory copy becomes
  * invalid, and you can't do anything else with it until you get a new
  * copy from disk.
  *
@@ -382,7 +382,7 @@ rt_nmg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 
     /* XXX The next two lines "destroy" the internal nmg solid.  This
-     * means that once you tesselate an NMG solid, your in-memory copy
+     * means that once you tessellate an NMG solid, your in-memory copy
      * becomes invalid, and you can't do anything else with it until
      * you get a new copy from disk.
      */

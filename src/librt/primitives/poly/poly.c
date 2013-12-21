@@ -160,7 +160,7 @@ rt_pg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
  * ap, bp, cp point to vect_t points.
  *
  * Return -
- * 0 if the 3 points didn't form a plane (e.g., colinear, etc.).
+ * 0 if the 3 points didn't form a plane (e.g., collinear, etc.).
  * # pts (3) if a valid plane resulted.
  */
 HIDDEN int

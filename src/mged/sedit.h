@@ -39,9 +39,9 @@
 /* These ECMD_ values go in es_edflag.  Some names not changed yet */
 #define IDLE		0	/* edarb.c */
 #define STRANS		1	/* buttons.c */
-#define SSCALE		2	/* buttons.c */	/* Scale whole solid by scalor */
+#define SSCALE		2	/* buttons.c */	/* Scale whole solid by scalar */
 #define SROT		3	/* buttons.c */
-#define PSCALE		4	/* Scale one solid parameter by scalor */
+#define PSCALE		4	/* Scale one solid parameter by scalar */
 
 #define ECMD_TGC_MV_H	5
 #define ECMD_TGC_MV_HH	6

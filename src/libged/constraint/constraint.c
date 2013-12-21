@@ -232,7 +232,7 @@ constraint_help(void *datap, int argc, const char *argv[])
     bu_vls_printf(gedp->ged_result_str, "\nConstraint Expressions:\n");
     bu_vls_printf(gedp->ged_result_str, "\tcoincident {{point point}|{point edge}|{edge edge}}\n"); /* mate */
     bu_vls_printf(gedp->ged_result_str, "\t\tspecified entities stay connected\n");
-    bu_vls_printf(gedp->ged_result_str, "\tcolinear {line line}\n"); /* align */
+    bu_vls_printf(gedp->ged_result_str, "\tcollinear {line line}\n"); /* align */
     bu_vls_printf(gedp->ged_result_str, "\t\tstraight edges are aligned along the same line\n");
     bu_vls_printf(gedp->ged_result_str, "\tconcentric {circle circle}\n"); /* center */
     bu_vls_printf(gedp->ged_result_str, "\t\tcircle/arc curves maintain same center point\n");
@@ -274,7 +274,7 @@ constraint_help(void *datap, int argc, const char *argv[])
 
     bu_vls_printf(gedp->ged_result_str, "\nExamples:\n");
     bu_vls_printf(gedp->ged_result_str, "\t%s set c1 coincident ell.V arb8.P[4]\n", argv[0]);
-    bu_vls_printf(gedp->ged_result_str, "\t%s set c2 colinear arb8.E[1] rpc.E[0]\n", argv[0]);
+    bu_vls_printf(gedp->ged_result_str, "\t%s set c2 collinear arb8.E[1] rpc.E[0]\n", argv[0]);
     bu_vls_printf(gedp->ged_result_str, "\t%s set c3 tangent car terrain.r\n", argv[0]);
     bu_vls_printf(gedp->ged_result_str, "\t%s set c4 equal ell.R[1] arb8.E[2]\n", argv[0]);
     bu_vls_printf(gedp->ged_result_str, "\t%s set p0 formula ell.R[0]=10.0\n", argv[0]);

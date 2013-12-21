@@ -1159,12 +1159,12 @@ nmg_break_eg_on_v(const struct edge_g_lseg *eg, struct vertex *v, const struct b
 /**
  * N M G _ I S E C T _ 2 C O L I N E A R _ E D G E 2 P
  *
- * Perform edge mutual breaking only on two colinear edgeuses.
+ * Perform edge mutual breaking only on two collinear edgeuses.
  * This can result in 2 new edgeuses showing up in either loop (case A & D).
  * The vertexuse lists are updated to have all participating vu's and
  * their duals.
  *
- * Two colinear line segments (eu1 and eu2, or just "1" and "2" in the
+ * Two collinear line segments (eu1 and eu2, or just "1" and "2" in the
  * diagram) can overlap each other in one of 9 configurations,
  * labeled A through I:
  *
@@ -1370,7 +1370,7 @@ nmg_isect_edge2p_edge2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
      * is->pt is *not* one of the endpoints of this edge.
      *
      * IMPORTANT NOTE:  The edge-ray used for the edge intersection
-     * calculations is colinear with the "intersection line",
+     * calculations is collinear with the "intersection line",
      * but the edge-ray starts at vu1a and points to vu1b,
      * while the intersection line has to satisfy different constraints.
      * Don't confuse the two!
@@ -1400,11 +1400,11 @@ nmg_isect_edge2p_edge2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
     }
 
     /*
-     * Whether geometry hits or misses, as long as not colinear, check topo.
-     * If one endpoint matches, and edges are not colinear,
+     * Whether geometry hits or misses, as long as not collinear, check topo.
+     * If one endpoint matches, and edges are not collinear,
      * then accept the one shared vertex as the intersection point.
      * Can't do this before geometry check, or we might miss the
-     * colinear condition, and not do the mutual intersection.
+     * collinear condition, and not do the mutual intersection.
      */
     if (status != 0 &&
 	(vu1a->v_p == vu2a->v_p || vu1a->v_p == vu2b->v_p ||
@@ -1466,7 +1466,7 @@ nmg_isect_edge2p_edge2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 	    goto topo;
 	}
 
-	/* Edges not colinear. Either join up with a matching vertex,
+	/* Edges not collinear. Either join up with a matching vertex,
 	 * or break eu2 on our vert.
 	 */
 	if (ZERO(dist[1])) {
@@ -1505,7 +1505,7 @@ nmg_isect_edge2p_edge2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 	    goto topo;
 	}
 
-	/* Edges not colinear. Either join up with a matching vertex,
+	/* Edges not collinear. Either join up with a matching vertex,
 	 * or break eu2 on our vert.
 	 */
 	if (ZERO(dist[1])) {
@@ -1575,7 +1575,7 @@ nmg_isect_edge2p_edge2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
     if (RTG.NMG_debug & DEBUG_POLYSECT)
 	bu_log("\tintersect is in middle of eu1, breaking it\n");
 
-    /* Edges not colinear. Either join up with a matching vertex,
+    /* Edges not collinear. Either join up with a matching vertex,
      * or break eu2 on our vert.
      */
     if (ZERO(dist[1])) {
@@ -2505,7 +2505,7 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		 * In the description below the line p0->p1 is eu1 where
 		 * p0 is the start of eu1 and p1 is the end of eu1.
 		 * The same is done for eu2 with line q0->q1.
-		 * When eu1 and eu2 are colinear, the value of dist[0]
+		 * When eu1 and eu2 are collinear, the value of dist[0]
 		 * returned from function 'bn_isect_lseg3_lseg3' is the
 		 * scaled distance from p0->q0 and dist[1] is the scaled
 		 * distance from p0->q1.
@@ -2942,11 +2942,11 @@ nmg_isect_line2_edge2p(struct nmg_inter_struct *is, struct bu_ptbl *list, struct
 
     if (status == 0) {
 	/*
-	 * The edge is colinear with the line.
+	 * The edge is collinear with the line.
 	 * List both vertexuse structures, and return.
 	 */
 	if (RTG.NMG_debug & DEBUG_POLYSECT)
-	    bu_log("\t\tedge colinear with isect line.  Listing vu1a, vu1b\n");
+	    bu_log("\t\tedge collinear with isect line.  Listing vu1a, vu1b\n");
 	nmg_enlist_vu(is, vu1a, 0, MAX_FASTF);
 	nmg_enlist_vu(is, vu1b, 0, MAX_FASTF);
 	ret = 0;
@@ -2957,7 +2957,7 @@ nmg_isect_line2_edge2p(struct nmg_inter_struct *is, struct bu_ptbl *list, struct
 
     VJOIN1(hit_pt, is->pt, dist[0], is->dir);	/* 3D hit */
 
-    /* Edges not colinear. Either list a vertex,
+    /* Edges not collinear. Either list a vertex,
      * or break eu1.
      */
     if (status == 1 || ZERO(dist[1])) {
@@ -3278,7 +3278,7 @@ nmg_repair_v_near_v(struct vertex *hit_v, struct vertex *v, const struct edge_g_
 	);
     if (eg1) {
 	if (bn_2line3_colinear(eg1->e_pt, eg1->e_dir, eg2->e_pt, eg2->e_dir, 1e5, tol))
-	    bu_bomb("ERROR: nmg_repair_v_near_v() eg1 and eg2 are colinear!\n");
+	    bu_bomb("ERROR: nmg_repair_v_near_v() eg1 and eg2 are collinear!\n");
 	bu_log("eg1: line/ vu dist=%g, hit dist=%g\n",
 	       bn_dist_line3_pt3(eg1->e_pt, eg1->e_dir, v->vg_p->coord),
 	       bn_dist_line3_pt3(eg1->e_pt, eg1->e_dir, hit_v->vg_p->coord));
@@ -3422,7 +3422,7 @@ nmg_common_v_2eg(struct edge_g_lseg *eg1, struct edge_g_lseg *eg2, const struct 
     BN_CK_TOL(tol);
 
     if (eg1 == eg2)
-	bu_bomb("nmg_common_v_2eg() eg1 and eg2 are colinear\n");
+	bu_bomb("nmg_common_v_2eg() eg1 and eg2 are collinear\n");
 
     /* Scan all edgeuses in the model that use eg1 */
     for (BU_LIST_FOR(midway, bu_list, &eg1->eu_hd2)) {
@@ -4060,7 +4060,7 @@ nmg_isect_fu_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struct faceus
  * If is->on_eg is set, it is the callers' responsibility to make sure
  * it is not much different than the original geometric one.
  *
- * Go to great pains to ensure that two non-colinear lines intersect
+ * Go to great pains to ensure that two non-collinear lines intersect
  * at either 0 or 1 points, and no more.
  *
  * Called from -
@@ -4215,7 +4215,7 @@ re_tabulate:
 	}
 
 	/*
-	 * eg1 is now known to be NOT colinear with on_eg.
+	 * eg1 is now known to be NOT collinear with on_eg.
 	 * From here on, only 0 or 1 points of intersection are possible.
 	 */
 
@@ -4230,14 +4230,14 @@ re_tabulate:
 
 	/* Do this check before topology search */
 	if (code == 0) {
-	    /* Geometry says lines are colinear.  Egads! This can't be! */
+	    /* Geometry says lines are collinear.  Egads! This can't be! */
 	    if (is->on_eg) {
-		bu_log("nmg_isect_line2_face2pNEW() edge_g not shared, geometry says lines are colinear.\n");
+		bu_log("nmg_isect_line2_face2pNEW() edge_g not shared, geometry says lines are collinear.\n");
 		goto fixup;
 	    }
 	    /* on_eg wasn't set, use it and continue on */
 	    if (RTG.NMG_debug & DEBUG_POLYSECT)
-		bu_log("NOTICE: setting on_eg to eg1 and continuing with colinear case.\n");
+		bu_log("NOTICE: setting on_eg to eg1 and continuing with collinear case.\n");
 	    is->on_eg = (*eg1);
 	    goto colinear;
 	}
@@ -4249,10 +4249,10 @@ re_tabulate:
 	fixup:
 	    nmg_pr_eg(&(*eg1)->l.magic, 0);
 	    nmg_pr_eg(&is->on_eg->l.magic, 0);
-	    bu_log("nmg_isect_line2_face2pNEW() eg1 colinear to on_eg?\n");
+	    bu_log("nmg_isect_line2_face2pNEW() eg1 collinear to on_eg?\n");
 
-	    /* fuse eg1 with on_eg, handle as colinear */
-	    bu_log("fusing eg1 with on_eg, handling as colinear\n");
+	    /* fuse eg1 with on_eg, handle as collinear */
+	    bu_log("fusing eg1 with on_eg, handling as collinear\n");
 	    nmg_jeg(is->on_eg, *eg1);
 	    goto colinear;
 	}
@@ -6012,8 +6012,8 @@ nmg_isect_two_generic_faces(struct faceuse *fu1, struct faceuse *fu2, const stru
  *
  * Intersect one edge with another.  At least one is a wire edge;
  * thus there is no face context or intersection line.
- * If the edges are non-colinear, there will be at most one point of isect.
- * If the edges are colinear, there may be two.
+ * If the edges are non-collinear, there will be at most one point of isect.
+ * If the edges are collinear, there may be two.
  *
  * Called from nmg_isect_edge3p_shell()
  */
@@ -6082,8 +6082,8 @@ nmg_isect_edge3p_edge3p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
     }
 
     if (status == 0) {
-	/* lines are colinear */
-	bu_log("nmg_isect_edge3p_edge3p() colinear case.  Untested waters.\n");
+	/* lines are collinear */
+	bu_log("nmg_isect_edge3p_edge3p() collinear case.  Untested waters.\n");
 	/* Initialize 2D vertex cache with EDGE info. */
 	nmg_isect2d_prep(is, &eu1->l.magic);
 	/* 3rd arg has to be a faceuse.  Tried to send it eu1->e_p */

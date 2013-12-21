@@ -190,9 +190,9 @@ UpdateBox(struct obr_vals *obr, point2d_t left_pnt, point2d_t right_pnt, point2d
     }
 }
 
-/* Three consecutive colinear points will cause a problem (as per a comment in the original code)
+/* Three consecutive collinear points will cause a problem (as per a comment in the original code)
  * Consequently, we're going to have to build the convex hull for all non-trivial inputs in order to
- * make sure we don't get colinear points from the NMG inputs.*/
+ * make sure we don't get collinear points from the NMG inputs.*/
 HIDDEN int
 bn_obr_calc(const point2d_t *pnts, int pnt_cnt, struct obr_vals *obr)
 {

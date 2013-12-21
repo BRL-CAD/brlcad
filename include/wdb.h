@@ -372,7 +372,7 @@ WDB_EXPORT int mk_ehy(
 
 /**
  *
- * Make a hyperbolid at the given center point with a vertex, height
+ * Make a hyperboloid at the given center point with a vertex, height
  * vector, A vector, magnitude of the B vector, and neck to base
  * ratio.
  *

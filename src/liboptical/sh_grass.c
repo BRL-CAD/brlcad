@@ -733,7 +733,7 @@ isect_blade(const struct blade *bl, const fastf_t *root, struct grass_ray *r, st
 	    bu_log("\t    ");
 	    switch (cond) {
 		case -2: bu_log("lines parallel  "); break;
-		case -1: bu_log("lines colinear  "); break;
+		case -1: bu_log("lines collinear "); break;
 		case  0: bu_log("lines intersect "); break;
 		case  1: bu_log("lines miss      "); break;
 	    }

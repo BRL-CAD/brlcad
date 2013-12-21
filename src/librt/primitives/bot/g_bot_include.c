@@ -38,7 +38,7 @@
  * This function is called with pointers to 3 points, and is used to
  * prepare BOT faces.  ap, bp, cp point to vect_t points.
  *
- * Returns 0 if the 3 points didn't form a plane (e.g., colinear, etc.).
+ * Returns 0 if the 3 points didn't form a plane (e.g., collinear, etc.).
  * Returns # pts (3) if a valid plane resulted.
  */
 int

@@ -478,7 +478,7 @@ BN_EXPORT extern void bn_tcl_setup();
 /**
  * B N _ I N I T
  *@brief
- * Allows LIBBN to be dynamically loade to a vanilla tclsh/wish with
+ * Allows LIBBN to be dynamically loaded to a vanilla tclsh/wish with
  * "load /usr/brlcad/lib/libbn.so"
  *
  * The name of this function is specified by TCL.
@@ -1360,7 +1360,7 @@ BN_EXPORT extern void bn_gauss_free(struct bn_gauss *p);
  *	    a variance of 1.0.
  *
  * @par Calls
- *	BN_UNIF_CIRCLE to get to uniform random number whos radius is
+ *	BN_UNIF_CIRCLE to get to uniform random number whose radius is
  *	<= 1.0. I.e. sqrt(v1*v1 + v2*v2) <= 1.0
  *	BN_UNIF_CIRCLE is a macro which can call bn_unif_double_fill.
  *
@@ -1480,7 +1480,7 @@ BN_EXPORT extern void bn_noise_vec(point_t point,
  * @li s.d.  0.306642
  * @li Var 0.0940295
  *
- * The function call pow() is relatively expensive.  Therfore, this
+ * The function call pow() is relatively expensive.  Therefore, this
  * function pre-computes and saves the spectral weights in a table for
  * re-use in successive invocations.
  */
@@ -1511,7 +1511,7 @@ BN_EXPORT extern double bn_noise_fbm(point_t point,
  * s.d. 0.174796
  * Var  0.0305536
  @endcode
- * The function call pow() is relatively expensive.  Therfore, this
+ * The function call pow() is relatively expensive.  Therefore, this
  * function pre-computes and saves the spectral weights in a table for
  * re-use in successive invocations.
  */
@@ -1900,8 +1900,8 @@ BN_EXPORT extern int bn_dist_pt2_lseg2(fastf_t *dist_sq,
  *
  * @return -3	missed
  * @return -2	missed (line segments are parallel)
- * @return -1	missed (colinear and non-overlapping)
- * @return 0	hit (line segments colinear and overlapping)
+ * @return -1	missed (collinear and non-overlapping)
+ * @return 0	hit (line segments collinear and overlapping)
  * @return 1	hit (normal intersection)
  *
  * @param[out] dist
@@ -1992,7 +1992,7 @@ BN_EXPORT extern int bn_isect_line3_line3(fastf_t *s, fastf_t *t,
 /**
  * B N _ 2 L I N E 3 _ C O L I N E A R
  * @brief
- * Returns non-zero if the 3 lines are colinear to within tol->dist
+ * Returns non-zero if the 3 lines are collinear to within tol->dist
  * over the given distance range.
  *
  * Range should be at least one model diameter for most applications.
@@ -2091,8 +2091,8 @@ BN_EXPORT extern int bn_isect_line2_lseg2(fastf_t *dist,
  * vectors.  The vectors are unlikely to be unit length.
  *
  * @return -2	missed (line segments are parallel)
- * @return -1	missed (colinear and non-overlapping)
- * @return 0	hit (line segments colinear and overlapping)
+ * @return -1	missed (collinear and non-overlapping)
+ * @return 0	hit (line segments collinear and overlapping)
  * @return 1	hit (normal intersection)
  *
  * @param dist  The value at dist[] is set to the parametric distance of the
@@ -2244,7 +2244,7 @@ BN_EXPORT extern int bn_npts_distinct(const int npts,
  *
  *  @return 0	OK
  *  @return -1	Failure.  At least two of the points were not distinct,
- *		or all three were colinear.
+ *		or all three were collinear.
  *
  * @param[out]	plane	The plane equation is stored here.
  * @param[in]	a	point 1
@@ -3811,7 +3811,7 @@ BN_EXPORT extern void bn_tabdata_mul3(struct bn_tabdata *out,
 /*
  *			B N _ T A B D A T A _ I N C R _ M U L 3 _ S C A L E
  *@brief
- *  Element-by-element multiply the values from three data tables and a scalor.
+ *  Element-by-element multiply the values from three data tables and a scalar.
  *
  *	out += in1 * in2 * in3 * scale
  */
@@ -3824,7 +3824,7 @@ BN_EXPORT extern void bn_tabdata_incr_mul3_scale(struct bn_tabdata *out,
 /*
  *			B N _ T A B D A T A _ I N C R _ M U L 2 _ S C A L E
  *@brief
- *  Element-by-element multiply the values from two data tables and a scalor.
+ *  Element-by-element multiply the values from two data tables and a scalar.
  *
  *	out += in1 * in2 * scale
  */

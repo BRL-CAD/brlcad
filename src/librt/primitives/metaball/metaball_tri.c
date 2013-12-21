@@ -96,7 +96,7 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 
     radius = rt_metaball_get_bounding_sphere(&center, mb->threshold, mb);
     if(radius < 0) {	/* no control points */
-	bu_log("Attempting to tesselate metaball with no control points");
+	bu_log("Attempting to tessellate metaball with no control points");
 	return -1;
     }
     rt_metaball_bbox(ip, &min, &max, tol);
@@ -172,7 +172,7 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
     nmg_model_fuse(m, tol);
 
     rt_get_timer(&times, NULL);
-    bu_log("metaball tesselate (%d triangles): %s\n", numtri, bu_vls_addr(&times));
+    bu_log("metaball tessellate (%d triangles): %s\n", numtri, bu_vls_addr(&times));
 
     return 0;
 }

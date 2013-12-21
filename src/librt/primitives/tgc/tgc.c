@@ -2238,7 +2238,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     if (ttol->abs > 0.0 && ttol->abs < tol->dist) {
 	bu_log("WARNING: tessellation tolerance is %fmm while calculational tolerance is %fmm\n",
 	       ttol->abs, tol->dist);
-	bu_log("Cannot tesselate a TGC to finer tolerance than the calculational tolerance\n");
+	bu_log("Cannot tessellate a TGC to finer tolerance than the calculational tolerance\n");
 	abs_tol = tol->dist;
     } else {
 	abs_tol = ttol->abs;

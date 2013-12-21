@@ -133,7 +133,7 @@ rt_botface_w_normals(struct soltab *stp,
  * prepare BOT faces.  ap, bp, cp point to vect_t points.
  *
  * Return -
- * 0 if the 3 points didn't form a plane (e.g., colinear, etc.).
+ * 0 if the 3 points didn't form a plane (e.g., collinear, etc.).
  * # pts (3) if a valid plane resulted.
  */
 size_t
