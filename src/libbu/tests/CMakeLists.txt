@@ -379,6 +379,12 @@ add_test(bu_vls_vprintf_test_63 tester_bu_vls_vprintf 63)
 add_test(bu_vls_vprintf_test_64 tester_bu_vls_vprintf 64)
 add_test(bu_vls_vprintf_test_65 tester_bu_vls_vprintf 65)
 
+#
+#  ************ sort.c test *************
+#
+BRLCAD_ADDEXEC(tester_bu_sort bu_sort.c libbu NO_INSTALL)
+add_test(bu_sort_test_1 tester_bu_sort)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake
