@@ -380,6 +380,81 @@ add_test(bu_vls_vprintf_test_64 tester_bu_vls_vprintf 64)
 add_test(bu_vls_vprintf_test_65 tester_bu_vls_vprintf 65)
 
 #
+#  ************ vls.c tests *************
+
+# For tester_bu_vls, the input format is as follows:
+#
+# tester_bu_vls <function number> <args>
+BRLCAD_ADDEXEC(tester_bu_vls bu_vls.c libbu NO_INSTALL)
+
+# For function #1 (bu_vls_init) there are no arguments
+add_test(bu_vls_init tester_bu_vls 1)
+
+# For function #2 (bu_vls_vlsinit) there are no arguments
+add_test(bu_vls_vlsinit tester_bu_vls 2)
+
+# For function #3 (bu_vls_strcpy/bu_vls_addr) the <args> format is as follows:
+#
+# string_to_test
+#
+# where string_to_test is a string to be used in testing bu_vls_strcpy/bu_vls_addr.
+
+add_test(bu_vls_access_1 tester_bu_vls 3 "Test 1 2 3")
+
+# For function #4 (bu_vls_strdup) the <args> format is as follwos:
+#
+# string_to_test
+#
+# where string_to_test is a string to be used in testing bu_vls_strdup.
+
+add_test(bu_vls_strdup_1 tester_bu_vls 4 "Test 1 2 3")
+
+# For function #5 (bu_vls_strlen) the <args> format is as follows:
+#
+# string_to_test
+#
+# where string_to_test is a string whose length will be checked
+
+add_test(bu_vls_strlen_1 tester_bu_vls 5 "Test 1 2 3")
+
+# For function #6 (bu_vls_trunc) the <args> format is as follows:
+#
+# string_to_test trunc_len expected_result
+#
+# where string_to_test is the string which will be truncated, and
+# trunc_len is the length that will be used for truncation.
+
+add_test(bu_vls_trunc_1 tester_bu_vls 6 "Test 1 2 3" 6 "Test 1")
+add_test(bu_vls_trunc_2 tester_bu_vls 6 "Test 1 2 3" -2 "Test 1 2")
+
+# For function #7 (bu_vls_trunc2) the <args> format is as follows:
+#
+# string_to_test trunc_len expected_result
+#
+# where string_to_test is the string which will be truncated, and
+# trunc_len is the length that will be used for truncation.
+
+add_test(bu_vls_trunc2_1 tester_bu_vls 7 "Test 1 2 3" 6 "Test 1")
+add_test(bu_vls_trunc2_2 tester_bu_vls 7 "Test 1 2 3" -2 "Test 1 2 3")
+
+# For function #8 (bu_vls_nibble) the <args> format is as follows:
+#
+# string_to_test nibble_len expected_result
+#
+# where string_to_test is the string which will be nibbled, and
+# nibble_len is the length that will be nibbled.
+
+add_test(bu_vls_nibble_1 tester_bu_vls 8 "Test 1 2 3" 4 " 1 2 3")
+
+# For function #9 (bu_vls_strcat) the <args> format is as follows:
+#
+# string1 string2 expected_result
+#
+# where string1 and string2 will be concatenated.
+
+add_test(bu_vls_strcat_1 tester_bu_vls_strcat 9 "Test 1" " 2 3" "Test 1 2 3")
+
+#
 #  ************ sort.c test *************
 #
 BRLCAD_ADDEXEC(tester_bu_sort bu_sort.c libbu NO_INSTALL)
