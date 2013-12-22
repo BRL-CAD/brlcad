@@ -65,7 +65,7 @@ comp_4(const void *num1, const void *num2, void *cmp)
 
 
 int
-main()
+main(int argc, char **argv)
 {
     unsigned int arg_1[6] = {5, 2, 6, -15, 168, 3};
     unsigned int exp_1[6] = {-15, 2, 3, 5, 6, 168};
@@ -85,47 +85,77 @@ main()
     fastf_t cmp_8 = 3;
     fastf_t arg_8[5] = {-5, 23, 5.5, 0, 2};
     fastf_t exp_8[5] = {2, 5.5, 0, -5, 23};
-    int i;
+    fastf_t arg_9[5];
+    fastf_t exp_9[5];
+    fastf_t arg_10[5] = {INFINITY, 5, 5.2, 0, -INFINITY};
+    fastf_t exp_10[5] = {-INFINITY, 0, 5, 5.2, INFINITY};
+    int i, function_num;
 
-    bu_sort(&arg_1, 6, sizeof(int), comp_1, NULL);
-    for (i = 0; i < 6; i++)
-	if (arg_1[i] != exp_1[i])
-	    return 1;
-
-    bu_sort(&arg_2, 8, sizeof(int), comp_1, NULL);
-    for (i = 0; i < 8; i++)
-	if (arg_2[i] != exp_2[i])
-	    return 1;
-
-    bu_sort(&arg_3, 5, sizeof(fastf_t), comp_2, NULL);
-    for (i = 0; i < 5; i++)
-	if (!EQUAL(arg_3[i], exp_3[i]))
-	    return 1;
-
-    bu_sort(&arg_4, 7, sizeof(fastf_t), comp_2, NULL);
-    for (i = 0; i < 7; i++)
-	if (!EQUAL(arg_4[i], exp_4[i]))
-	    return 1;
-
-    bu_sort(&arg_5, 4, sizeof(char[256]), comp_3, NULL);
-    for (i = 0; i < 4; i++)
-	if (bu_strcmp(arg_5[i], exp_5[i]) != 0)
-	    return 1;
-
-    bu_sort(&arg_6, 3, sizeof(char[256]), comp_3, NULL);
-    for (i = 0; i < 3; i++)
-	if (bu_strcmp(arg_6[i], exp_6[i]) != 0)
-	    return 1;
-
-    bu_sort(&arg_7, 9, sizeof(fastf_t), comp_4, &cmp_7);
-    for (i = 0; i < 9; i++)
-	if (!EQUAL(arg_7[i], exp_7[i]))
-	    return 1;
-
-    bu_sort(&arg_8, 5, sizeof(fastf_t), comp_4, &cmp_8);
-    for (i = 0; i < 5; i++)
-	if (!EQUAL(arg_8[i], exp_8[i]))
-	    return 1;
+    if (argc != 2)
+	bu_exit(1, "ERROR: wrong number of parameters");
+    sscanf(argv[1], "%d", &function_num);
+    switch (function_num) {
+	case 1:
+	    bu_sort(&arg_1, 6, sizeof(int), comp_1, NULL);
+	    for (i = 0; i < 6; i++)
+		if (arg_1[i] != exp_1[i])
+		    return 1;
+	    break;
+	case 2:
+	    bu_sort(&arg_2, 8, sizeof(int), comp_1, NULL);
+	    for (i = 0; i < 8; i++)
+		if (arg_2[i] != exp_2[i])
+		    return 1;
+	    break;
+	case 3:
+	    bu_sort(&arg_3, 5, sizeof(fastf_t), comp_2, NULL);
+	    for (i = 0; i < 5; i++)
+		if (!EQUAL(arg_3[i], exp_3[i]))
+		    return 1;
+	    break;
+	case 4:
+	    bu_sort(&arg_4, 7, sizeof(fastf_t), comp_2, NULL);
+	    for (i = 0; i < 7; i++)
+		if (!EQUAL(arg_4[i], exp_4[i]))
+		    return 1;
+	    break;
+	case 5:
+	    bu_sort(&arg_5, 4, sizeof(char[256]), comp_3, NULL);
+	    for (i = 0; i < 4; i++)
+		if (strcmp(arg_5[i], exp_5[i]) != 0)
+		    return 1;
+	    break;
+	case 6:
+	    bu_sort(&arg_6, 3, sizeof(char[256]), comp_3, NULL);
+	    for (i = 0; i < 3; i++)
+		if (strcmp(arg_6[i], exp_6[i]) != 0)
+		    return 1;
+	    break;
+	case 7:
+	    bu_sort(&arg_7, 9, sizeof(fastf_t), comp_4, &cmp_7);
+	    for (i = 0; i < 9; i++)
+		if (!EQUAL(arg_7[i], exp_7[i]))
+		    return 1;
+	    break;
+	case 8:
+	    bu_sort(&arg_8, 5, sizeof(fastf_t), comp_4, &cmp_8);
+	    for (i = 0; i < 5; i++)
+		if (!EQUAL(arg_8[i], exp_8[i]))
+		    return 1;
+	    break;
+	case 9:
+	    bu_sort(&arg_9, 5, sizeof(fastf_t), comp_2, NULL);
+	    for (i = 0; i < 5; i++)
+		if (!EQUAL(arg_9[i], exp_9[i]))
+		    return 1;
+	    break;
+	case 10:
+	    bu_sort(&arg_10, 5, sizeof(fastf_t), comp_2, NULL);
+	    for (i = 0; i < 5; i++)
+		if ((!EQUAL(arg_10[i], exp_10[i]) && (!isinf(arg_10[i]) || !isinf(exp_10[i]))) || ((exp_10[i] < 0) != (arg_10[i] < 0)))
+		    return 1;
+	    break;
+    }
     return 0;
 }
 

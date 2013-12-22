@@ -458,7 +458,18 @@ add_test(bu_vls_strcat_1 tester_bu_vls 9 "Test 1" " 2 3" "Test 1 2 3")
 #  ************ sort.c test *************
 #
 BRLCAD_ADDEXEC(tester_bu_sort bu_sort.c libbu NO_INSTALL)
-add_test(bu_sort_test_1 tester_bu_sort)
+add_test(bu_sort_test_unsigned_int_1 tester_bu_sort 1)
+add_test(bu_sort_test_unsigned_int_2 tester_bu_sort 2)
+add_test(bu_sort_test_fastf_t_1 tester_bu_sort 3)
+add_test(bu_sort_test_fastf_t_2 tester_bu_sort 4)
+add_test(bu_sort_test_string_1 tester_bu_sort 5)
+add_test(bu_sort_test_string_2 tester_bu_sort 6)
+add_test(bu_sort_test_dist_to_int_1 tester_bu_sort 7)
+add_test(bu_sort_test_dist_to_int_2 tester_bu_sort 8)
+add_test(bu_sort_test_fastf_empty tester_bu_sort 9)
+add_test(bu_sort_test_fastf_inf tester_bu_sort 10)
+
+
 
 # Local Variables:
 # tab-width: 8
