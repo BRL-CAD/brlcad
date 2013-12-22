@@ -48,7 +48,7 @@ comp_2(const void *num1, const void *num2, void *UNUSED(arg))
 int
 comp_3(const void *str1, const void *str2, void *UNUSED(arg))
 {
-    return strcmp((char *)str1, (char *)str2);
+    return bu_strcmp((char *)str1, (char *)str2);
 }
 
 
@@ -109,12 +109,12 @@ main()
 
     bu_sort(&arg_5, 4, sizeof(char[256]), comp_3, NULL);
     for (i = 0; i < 4; i++)
-	if (strcmp(arg_5[i], exp_5[i]) != 0)
+	if (bu_strcmp(arg_5[i], exp_5[i]) != 0)
 	    return 1;
 
     bu_sort(&arg_6, 3, sizeof(char[256]), comp_3, NULL);
     for (i = 0; i < 3; i++)
-	if (strcmp(arg_6[i], exp_6[i]) != 0)
+	if (bu_strcmp(arg_6[i], exp_6[i]) != 0)
 	    return 1;
 
     bu_sort(&arg_7, 9, sizeof(fastf_t), comp_4, &cmp_7);
