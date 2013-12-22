@@ -119,7 +119,7 @@ static struct modeflags {
     char c;
     long mask;
     long value;
-    char *help;
+    const char *help;
 } modeflags[] = {
     { 'l',	MODE_1MASK, MODE_1LINGERING,
       "Lingering window" },

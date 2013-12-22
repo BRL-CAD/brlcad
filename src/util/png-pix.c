@@ -39,7 +39,7 @@
 static png_color_16 def_backgrd={ 0, 0, 0, 0, 0 };
 static int verbose=0;
 
-static char *usage="Usage: %s [-v] [png_input_file] > pix_output_file\n";
+static const char *usage = "Usage: %s [-v] [png_input_file] > pix_output_file\n";
 
 int
 main(int argc, char **argv)
