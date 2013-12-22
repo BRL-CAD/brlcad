@@ -689,7 +689,7 @@ main(int ac, char **av)
     /* set default terrain function */
     terrain_func = func_fbm;
 
-    arg_count = parse_args(ac, av, terrain_func );
+    arg_count = parse_args(ac, av, terrain_func);
 
     if (arg_count + 1 < ac)
 	usage("Excess arguments on cmd line\n");
