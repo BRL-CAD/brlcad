@@ -452,7 +452,7 @@ add_test(bu_vls_nibble_1 tester_bu_vls 8 "Test 1 2 3" 4 " 1 2 3")
 #
 # where string1 and string2 will be concatenated.
 
-add_test(bu_vls_strcat_1 tester_bu_vls_strcat 9 "Test 1" " 2 3" "Test 1 2 3")
+add_test(bu_vls_strcat_1 tester_bu_vls 9 "Test 1" " 2 3" "Test 1 2 3")
 
 #
 #  ************ sort.c test *************
