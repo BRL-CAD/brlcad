@@ -2119,7 +2119,7 @@ rt_pr_cut_info(const struct rt_i *rtip, const char *str)
 
     switch (rtip->rti_space_partition) {
 	case RT_PART_NUGRID:
-	    nugnp = &rtip->rti_CutHead.nugn;
+	    nugnp = (const struct nugridnode *)&rtip->rti_CutHead.nugn;
 	    if (nugnp->nu_type != CUT_NUGRIDNODE)
 		bu_bomb("rt_pr_cut_info: passed non-nugridnode");
 
