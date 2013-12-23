@@ -83,19 +83,19 @@ bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt
 	bot->bot_facemode = bu_bitv_dup(bot_ip->face_mode);
     bot->bot_facelist = NULL;
 
-    if((tie = bot_ip->tie = bot->tie = (struct tie_s *)bottie_allocn_double(bot_ip->num_faces)) == NULL)
+    if ((tie = bot_ip->tie = bot->tie = (struct tie_s *)bottie_allocn_double(bot_ip->num_faces)) == NULL)
 	return -1;
-    if((tribuf = (TIE_3 *)bu_malloc(sizeof(TIE_3) * 3 * bot_ip->num_faces, "triangle tribuffer")) == NULL) {
+    if ((tribuf = (TIE_3 *)bu_malloc(sizeof(TIE_3) * 3 * bot_ip->num_faces, "triangle tribuffer")) == NULL) {
 	tie_free(tie);
 	return -1;
     }
-    if((tribufp = (TIE_3 **)bu_malloc(sizeof(TIE_3*) * 3 * bot_ip->num_faces, "triangle tribuffer pointer")) == NULL) {
+    if ((tribufp = (TIE_3 **)bu_malloc(sizeof(TIE_3*) * 3 * bot_ip->num_faces, "triangle tribuffer pointer")) == NULL) {
 	tie_free(tie);
 	bu_free(tribuf, "tribuf");
 	return -1;
     }
 
-    for(i = 0;i < bot_ip->num_faces*3; i++) {
+    for (i = 0; i < bot_ip->num_faces*3; i++) {
 	tribufp[i] = &tribuf[i];
 	VMOVE(tribuf[i].v, (bot_ip->vertices+3*bot_ip->faces[i]));
     }
@@ -135,13 +135,13 @@ hitfunc(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *UNUSED(tri
     vect_t wxb;		/* vertex - ray_start */
     vect_t xp;		/* wxb cross ray_dir */
 
-    if(h->nhits > (MAXHITS-1)) {
+    if (h->nhits > (MAXHITS-1)) {
 	bu_log("Too many hits!\n");
 	return (void *)1;
     }
 
     hp = &h->hits[h->nhits];
-    tsp = hp->hit_private = (struct tri_specific *)&h->ts[h->nhits];
+    tsp = (struct tri_specific *)hp->hit_private = &h->ts[h->nhits];
     h->nhits++;
 
 
@@ -198,11 +198,11 @@ bottie_shot_double(struct soltab *stp, struct xray *rp, struct application *ap, 
     tie_work1(tie, &ray, &id, hitfunc, &hitdata);
 
     /* use hitfunc to build the hit list */
-    if(hitdata.nhits == 0)
+    if (hitdata.nhits == 0)
 	return 0;
 
     /* adjust hit distances to initial ray origin */
-    for(i = 0; i < hitdata.nhits; i++)
+    for (i = 0; i < hitdata.nhits; i++)
 	hitdata.hits[i].hit_dist = hitdata.hits[i].hit_dist - dirlen;
 
 
