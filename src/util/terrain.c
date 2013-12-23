@@ -572,7 +572,7 @@ parse_args(int ac, char **av, void (*terrain_func)(unsigned short *))
     char *strrchr(const char *, int);
     double v;
 
-    if (! (progname=strrchr(*av, '/')))
+    if (! (progname = strrchr(*av, '/')))
 	progname = *av;
     else
 	++progname;
@@ -635,19 +635,26 @@ parse_args(int ac, char **av, void (*terrain_func)(unsigned short *))
 		break;
 	    case 'f':
 		switch (*bu_optarg) {
-		    case 'L': terrain_func = func_lunar;
+		    case 'L':
+			terrain_func = func_lunar;
 			break;
-		    case 'l': terrain_func = func_lee;
+		    case 'l':
+			terrain_func = func_lee;
 			break;
-		    case 'f': terrain_func = func_fbm;
+		    case 'f':
+			terrain_func = func_fbm;
 			break;
-		    case 't': terrain_func = func_turb;
+		    case 't':
+			terrain_func = func_turb;
 			break;
-		    case 'T': terrain_func = func_turb_up;
+		    case 'T':
+			terrain_func = func_turb_up;
 			break;
-		    case 'm': terrain_func = func_multi;
+		    case 'm':
+			terrain_func = func_multi;
 			break;
-		    case 'r': terrain_func = func_ridged;
+		    case 'r':
+			terrain_func = func_ridged;
 			break;
 		    default:
 			fprintf(stderr,
