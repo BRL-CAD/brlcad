@@ -100,13 +100,14 @@ int tone_classic(int pix, int x, int y, int nx, int ny, int newrow);
 static const char usage[] = "\
 Usage: halftone [-R -S -a] [-D Debug_Level]\n\
 	[-s squarefilesize] [-w file_width] [-n file_height]\n\
-	[-B contrast] [-I intensity_levels] [-T x y ... (tone curve)]\n\
+	[-B contrast] [-I #_of_intensity_levels] [-T x y ... (tone curve)]\n\
 	[-M Method] [file.bw]\n\
 	where Method is chosen from:\n\
 	    0  Floyd-Steinberg\n\
 	    1  45-Degree Classic Screen\n\
 	    2  Thresholding\n\
-	    3  0-Degree Dispersed Screen\n";
+	    3  0-Degree Dispersed Screen\n\
+       (stdin used with '<' construct if file.bw not supplied)\n";
 
 /*	setup:	process parameters and setup working environment
  *
