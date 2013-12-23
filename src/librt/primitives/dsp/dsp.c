@@ -3180,7 +3180,7 @@ rt_dsp_free(register struct soltab *stp)
 }
 
 
-/* FIXME: can't 'rt_dsp_class' be replaced by 'rt_generic_class'?
+/* FIXME: can't 'rt_dsp_class' be replaced by 'rt_generic_class'? */
 /**
  * R T _ D S P _ C L A S S
  */
