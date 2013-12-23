@@ -3180,11 +3180,12 @@ rt_dsp_free(register struct soltab *stp)
 }
 
 
+/* FIXME: can't 'rt_dsp_class' be replaced by 'rt_generic_class'?
 /**
  * R T _ D S P _ C L A S S
  */
 int
-rt_dsp_class(void)
+rt_dsp_class(const struct soltab *UNUSED(s), const vect_t UNUSED(v0), const vect_t UNUSED(v2), const struct bn_tol *UNUSED(b))
 {
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("rt_dsp_class()\n");

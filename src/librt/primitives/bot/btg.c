@@ -141,7 +141,7 @@ hitfunc(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *UNUSED(tri
     }
 
     hp = &h->hits[h->nhits];
-    tsp = hp->hit_private = (struct tri_specific*)&h->ts[h->nhits];
+    tsp = hp->hit_private = (struct tri_specific *)&h->ts[h->nhits];
     h->nhits++;
 
 

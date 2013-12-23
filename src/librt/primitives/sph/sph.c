@@ -410,13 +410,6 @@ rt_sph_free(register struct soltab *stp)
 }
 
 
-int
-rt_sph_class(void)
-{
-    return 0;
-}
-
-
 /**
  * R T _ S P H _ P A R A M S
  *

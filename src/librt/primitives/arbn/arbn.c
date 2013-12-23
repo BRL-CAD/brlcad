@@ -484,16 +484,6 @@ rt_arbn_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 }
 
 
-/**
- * R T _ A R B N _ C L A S S
- */
-int
-rt_arbn_class(void)
-{
-    return 0;
-}
-
-
 /* structures used by arbn tessellator */
 struct arbn_pts
 {

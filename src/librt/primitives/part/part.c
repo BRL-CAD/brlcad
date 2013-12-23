@@ -900,16 +900,6 @@ rt_part_free(register struct soltab *stp)
 
 
 /**
- * R T _ P A R T _ C L A S S
- */
-int
-rt_part_class(void)
-{
-    return 0;
-}
-
-
-/**
  * R T _ P A R T _ H E M I S P H E R E 8
  *
  * Produce a crude approximation to a hemisphere,

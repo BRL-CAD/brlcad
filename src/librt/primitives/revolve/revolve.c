@@ -1218,16 +1218,6 @@ rt_revolve_free(struct soltab *stp)
 
 
 /**
- * R T _ R E V O L V E _ C L A S S
- */
-int
-rt_revolve_class()
-{
-    return 0;
-}
-
-
-/**
  * R T _ R E V O L V E _ P L O T
  */
 int

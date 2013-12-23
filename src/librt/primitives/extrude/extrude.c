@@ -1350,16 +1350,6 @@ rt_extrude_free(struct soltab *stp)
 
 
 /**
- * R T _ E X T R U D E _ C L A S S
- */
-int
-rt_extrude_class(void)
-{
-    return 0;
-}
-
-
-/**
  * R T _ E X T R U D E _ P L O T
  */
 int

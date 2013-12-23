@@ -251,16 +251,6 @@ rt_sketch_free(struct soltab *stp)
 }
 
 
-/**
- * R T _ S K E T C H _ C L A S S
- */
-int
-rt_sketch_class(void)
-{
-    return 0;
-}
-
-
 /*
   determine whether the 2D point 'pt' is within the bounds of the sketch
   by counting the number of intersections between the curve and a line

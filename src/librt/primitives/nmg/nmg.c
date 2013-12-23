@@ -305,16 +305,6 @@ rt_nmg_free(struct soltab *stp)
 
 
 /**
- * R T _ N M G _ C L A S S
- */
-int
-rt_nmg_class(void)
-{
-    return 0;
-}
-
-
-/**
  * R T _ N M G _ P L O T
  */
 int

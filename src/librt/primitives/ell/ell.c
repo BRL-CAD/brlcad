@@ -618,13 +618,6 @@ rt_ell_free(register struct soltab *stp)
 }
 
 
-int
-rt_ell_class(void)
-{
-    return 0;
-}
-
-
 /**
  * R T _ E L L _ 1 6 P T S
  *

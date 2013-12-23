@@ -735,16 +735,6 @@ rt_hrt_free(struct soltab *stp)
 
 
 /**
- * R T _ H R T _ C L A S S
- */
-int
-rt_hrt_class(void)
-{
-    return 0;
-}
-
-
-/**
  * R T _ H R T _ 2 4 P T S
  *
  * Similar to code used by the ELL

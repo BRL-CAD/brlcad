@@ -1132,13 +1132,6 @@ rt_ebm_free(struct soltab *stp)
 }
 
 
-int
-rt_ebm_class(void)
-{
-    return 0;
-}
-
-
 /* either x1==x2, or y1==y2 */
 void
 rt_ebm_plate(int x_1, int y_1, int x_2, int y_2, double t, register fastf_t *mat, register struct bu_list *vhead)

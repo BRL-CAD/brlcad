@@ -507,16 +507,6 @@ rt_pg_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uv
 
 
 /**
- * R T _ P G _ C L A S S
- */
-int
-rt_pg_class(void)
-{
-    return 0;
-}
-
-
-/**
  * R T _ P G _ P L O T
  */
 int

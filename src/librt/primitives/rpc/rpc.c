@@ -649,16 +649,6 @@ rt_rpc_free(struct soltab *stp)
     BU_PUT(rpc, struct rpc_specific);
 }
 
-
-/**
- * R T _ R P C _ C L A S S
- */
-int
-rt_rpc_class(void)
-{
-    return 0;
-}
-
 /* A canonical parabola in the Y-Z plane has equation z = y^2 / 4p, and opens
  * toward positive z with vertex at the origin.
  *

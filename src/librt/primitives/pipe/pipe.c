@@ -1838,16 +1838,6 @@ rt_pipe_free(struct soltab *stp)
 }
 
 
-/**
- * R T _ P I P E _ C L A S S
- */
-int
-rt_pipe_class(void)
-{
-    return 0;
-}
-
-
 static int
 pipe_circle_segments(const struct rt_view_info *info, fastf_t radius)
 {

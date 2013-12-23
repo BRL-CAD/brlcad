@@ -645,13 +645,6 @@ rt_superell_free(struct soltab *stp)
 }
 
 
-int
-rt_superell_class(void)
-{
-    return 0;
-}
-
-
 /**
  * R T _ S U P E R E L L _ 1 6 P T S
  *

@@ -1594,13 +1594,6 @@ rt_tgc_free(struct soltab *stp)
 }
 
 
-int
-rt_tgc_class(void)
-{
-    return 0;
-}
-
-
 /**
  * R T _ T G C _ I M P O R T
  *

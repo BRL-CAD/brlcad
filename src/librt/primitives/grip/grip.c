@@ -207,16 +207,6 @@ rt_grp_free(struct soltab *stp)
 
 
 /**
- * R T _ G R P _ C L A S S
- */
-int
-rt_grp_class(void)
-{
-    return 0;
-}
-
-
-/**
  * R T _ G R P _ P L O T
  *
  * We represent a GRIP as a pyramid.  The center describes where the

@@ -736,13 +736,6 @@ rt_eto_free(struct soltab *stp)
 }
 
 
-int
-rt_eto_class(void)
-{
-    return 0;
-}
-
-
 /**
  * M A K E _ E L L I P S E 4
  *

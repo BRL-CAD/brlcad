@@ -654,16 +654,6 @@ rt_ehy_free(struct soltab *stp)
 }
 
 
-/**
- * R T _ E H Y _ C L A S S
- */
-int
-rt_ehy_class(void)
-{
-    return 0;
-}
-
-
 /* Our canonical hyperbola in the Y-Z plane has equation
  * z = +- (a/b) * sqrt(b^2 + y^2), and opens toward +Z and -Z with asymptote
  * origin at the origin.

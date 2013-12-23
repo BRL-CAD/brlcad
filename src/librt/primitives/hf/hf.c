@@ -1662,16 +1662,6 @@ rt_hf_free(struct soltab *stp)
 
 
 /**
- * R T _ H F _ C L A S S
- */
-int
-rt_hf_class(void)
-{
-    return 0;
-}
-
-
-/**
  * R T _ H F _ P L O T
  */
 int

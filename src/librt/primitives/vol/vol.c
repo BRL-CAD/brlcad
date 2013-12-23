@@ -951,13 +951,6 @@ rt_vol_free(struct soltab *stp)
 }
 
 
-int
-rt_vol_class(void)
-{
-    return 0;
-}
-
-
 /**
  * R T _ V O L _ P L O T
  */

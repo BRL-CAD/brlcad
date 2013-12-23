@@ -937,13 +937,6 @@ rt_rec_free(struct soltab *stp)
 }
 
 
-int
-rt_rec_class(void)
-{
-    return 0;
-}
-
-
 /* plot and tess are handled by g_tgc.c */
 /* import, export, ifree, and describe are also handled by g_tgc.c */
 

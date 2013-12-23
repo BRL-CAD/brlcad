@@ -240,6 +240,18 @@ rt_generic_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
 
 
 /**
+ * R T _ G E N E R I C _ C L A S S
+ *
+ * Invoked via OBJ[].ft_form() on solid types which are
+ * fully described by their bu_structparse table in ft_parsetab.
+ */
+int
+rt_generic_class(const struct soltab *UNUSED(s), const vect_t UNUSED(v0), const vect_t UNUSED(v2), const struct bn_tol *UNUSED(b))
+{
+    return 0;
+}
+
+/**
  * R T _ G E N E R I C _ F O R M
  *
  * Invoked via OBJ[].ft_form() on solid types which are

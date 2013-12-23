@@ -936,13 +936,6 @@ rt_tor_free(struct soltab *stp)
 }
 
 
-int
-rt_tor_class(void)
-{
-    return 0;
-}
-
-
 /**
  * R T _ N U M _ C I R C U L A R _ S E G M E N T S
  *
