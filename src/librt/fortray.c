@@ -79,7 +79,7 @@ fr_string_c2f(register char *fstr, register char *cstr, register int flen)
 {
     register int i;
 
-    for (i=0; i < flen; i++) {
+    for (i = 0; i < flen; i++) {
 	if ((fstr[i] = cstr[i]) == '\0') break;
     }
     for (; i < flen; i++)
@@ -238,7 +238,7 @@ BU_FORTRAN(frshot, FRSHOT)(int *nloc,			/* input & output */
 	*nloc = 0;
 	return;
     }
-    for (i=0; i < *nloc; i++, pp=pp->pt_forw) {
+    for (i = 0; i < *nloc; i++, pp=pp->pt_forw) {
 	register struct context *ctp;
 
 	if (pp == &fr_global_head) break;
