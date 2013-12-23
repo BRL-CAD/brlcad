@@ -122,13 +122,13 @@ main(int argc, char **argv)
 	case 5:
 	    bu_sort(&arg_5, 4, sizeof(char[256]), comp_3, NULL);
 	    for (i = 0; i < 4; i++)
-		if (strcmp(arg_5[i], exp_5[i]) != 0)
+		if (bu_strcmp(arg_5[i], exp_5[i]) != 0)
 		    return 1;
 	    break;
 	case 6:
 	    bu_sort(&arg_6, 3, sizeof(char[256]), comp_3, NULL);
 	    for (i = 0; i < 3; i++)
-		if (strcmp(arg_6[i], exp_6[i]) != 0)
+		if (bu_strcmp(arg_6[i], exp_6[i]) != 0)
 		    return 1;
 	    break;
 	case 7:
