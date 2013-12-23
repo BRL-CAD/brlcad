@@ -194,14 +194,15 @@ struct rt_grip_internal {
 /**
  * ID_POLY
  */
+struct rt_pg_face_internal {
+    size_t npts;		/**< @brief number of points for this polygon */
+    fastf_t *verts;		/**< @brief has 3*npts elements */
+    fastf_t *norms;		/**< @brief has 3*npts elements */
+};			        /**< @brief has npoly elements */
 struct rt_pg_internal {
     uint32_t magic;
     size_t npoly;
-    struct rt_pg_face_internal {
-	size_t npts;		/**< @brief number of points for this polygon */
-	fastf_t *verts;		/**< @brief has 3*npts elements */
-	fastf_t *norms;		/**< @brief has 3*npts elements */
-    } *poly;			/**< @brief has npoly elements */
+    struct rt_pg_face_internal *poly;	/**< @brief has npoly elements */
     /* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
     size_t max_npts;		/**< @brief maximum value of npts in poly[] */
 };
