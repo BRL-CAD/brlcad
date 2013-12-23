@@ -1494,7 +1494,7 @@ rt_tor_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * (2*3+2);
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "tor external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "tor external");
 
     /* scale values into local buffer */
     VSCALE(&vec[0*3], tip->v, local2mm);
@@ -1534,7 +1534,7 @@ rt_tor_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "tor external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "tor external");
     rec = (union record *)ep->ext_buf;
 
     rec->s.s_id = ID_SOLID;

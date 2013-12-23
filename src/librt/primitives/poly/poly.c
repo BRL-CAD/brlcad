@@ -785,7 +785,7 @@ rt_pg_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = (1 + pgp->npoly) * sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "pg external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "pg external");
     rec = (union record *)ep->ext_buf;
 
     rec[0].p.p_id = ID_P_HEAD;

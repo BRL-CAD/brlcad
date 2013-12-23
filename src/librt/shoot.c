@@ -53,7 +53,7 @@ rt_res_pieces_init(struct resource *resp, struct rt_i *rtip)
     RT_CK_RESOURCE(resp);
     RT_CK_RTI(rtip);
 
-    psptab = bu_calloc(rtip->rti_nsolids_with_pieces, sizeof(struct rt_piecestate), "re_pieces[]");
+    psptab = (struct rt_piecestate *)bu_calloc(rtip->rti_nsolids_with_pieces, sizeof(struct rt_piecestate), "re_pieces[]");
     resp->re_pieces = psptab;
 
     RT_VISIT_ALL_SOLTABS_START(stp, rtip) {

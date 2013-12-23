@@ -1417,7 +1417,7 @@ rt_rpc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "rpc external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "rpc external");
     rpc = (union record *)ep->ext_buf;
 
     rpc->s.s_id = ID_SOLID;
@@ -1518,7 +1518,7 @@ rt_rpc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 10;
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "rpc external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "rpc external");
 
     mag_b = MAGNITUDE(xip->rpc_B);
     mag_h = MAGNITUDE(xip->rpc_H);

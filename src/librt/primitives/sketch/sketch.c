@@ -1209,7 +1209,7 @@ rt_sketch_export4(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 
     ngran = ceil((double)(nbytes + sizeof(union record)) / sizeof(union record));
     ep->ext_nbytes = ngran * sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "sketch external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "sketch external");
 
     rec = (union record *)ep->ext_buf;
 
@@ -1615,7 +1615,7 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 		bu_bomb("rt_sketch_export5: unsupported segment type\n");
 	}
     }
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "sketch external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "sketch external");
 
     cp = (unsigned char *)ep->ext_buf;
 
@@ -1995,7 +1995,7 @@ rt_curve_free(struct rt_curve *crv)
 
     crv->count = 0;
     crv->reverse = (int *)NULL;
-    crv->segment = (genptr_t)NULL;
+    crv->segment = (void **)NULL;
 }
 
 
@@ -2086,7 +2086,7 @@ rt_copy_curve(struct rt_curve *crv_out, const struct rt_curve *crv_in)
 			nsg_out->weights[i] = nsg_in->weights[i];
 		} else
 		    nsg_out->weights = (fastf_t *)NULL;
-		nsg_out->k.knots = bu_malloc(nsg_in->k.k_size * sizeof(fastf_t), "nsg_out->k.knots");
+		nsg_out->k.knots = (fastf_t *)bu_malloc(nsg_in->k.k_size * sizeof(fastf_t), "nsg_out->k.knots");
 		for (i=0; i<(size_t)nsg_in->k.k_size; i++)
 		    nsg_out->k.knots[i] = nsg_in->k.knots[i];
 		break;
@@ -2532,7 +2532,7 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 	    crv = &skt->curve;
 	    crv->count = 0;
 	    crv->reverse = (int *)NULL;
-	    crv->segment = (genptr_t)NULL;
+	    crv->segment = (void **)NULL;
 
 	    if ((ret=get_tcl_curve(brlcad_interp, crv, tmp)) != TCL_OK)
 		return ret;
@@ -2666,7 +2666,7 @@ rt_curve_order_segments(struct rt_curve *crv)
 	    if (end3 != end1)
 		continue;
 
-	    rt_curve_reverse_segment(crv->segment[k]);
+	    rt_curve_reverse_segment((uint32_t *)crv->segment[k]);
 
 	    if (k != j) {
 		/* exchange j and k segments */

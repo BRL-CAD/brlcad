@@ -131,7 +131,7 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 
     /* allocate enough for the header (scale + type + count) */
     external->ext_nbytes = SIZEOF_NETWORK_DOUBLE + SIZEOF_NETWORK_SHORT + SIZEOF_NETWORK_LONG;
-    external->ext_buf = (genptr_t) bu_calloc(sizeof(unsigned char), external->ext_nbytes, "pnts external");
+    external->ext_buf = (uint8_t *) bu_calloc(sizeof(unsigned char), external->ext_nbytes, "pnts external");
     buf = (unsigned char *)external->ext_buf;
 
     scan = pnts->scale; /* convert fastf_t to double */
@@ -162,7 +162,7 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
     /* convert number of doubles to number of network bytes required to store doubles */
     pointDataSize = pointDataSize * SIZEOF_NETWORK_DOUBLE;
 
-    external->ext_buf = (genptr_t)bu_realloc(external->ext_buf, external->ext_nbytes + (pnts->count * pointDataSize), "pnts external realloc");
+    external->ext_buf = (uint8_t *)bu_realloc(external->ext_buf, external->ext_nbytes + (pnts->count * pointDataSize), "pnts external realloc");
     buf = (unsigned char *)external->ext_buf + external->ext_nbytes;
     external->ext_nbytes = external->ext_nbytes + (pnts->count * pointDataSize);
 

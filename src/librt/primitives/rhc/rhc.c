@@ -1572,7 +1572,7 @@ rt_rhc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "rhc external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "rhc external");
     rhc = (union record *)ep->ext_buf;
 
     rhc->s.s_id = ID_SOLID;
@@ -1673,7 +1673,7 @@ rt_rhc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 11;
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "rhc external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "rhc external");
 
     /* scale 'em into local buffer */
     VSCALE(&vec[0 * 3], xip->rhc_V, local2mm);
