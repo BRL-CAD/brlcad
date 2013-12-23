@@ -69,7 +69,8 @@ void dump(FILE *fd)
 		if ((i=fread(buf, 1, sizeof(buf), fd)) == 0) {
 		    fprintf(stderr, "%s: offset exceeds end of input!\n", progname);
 		    bu_exit (-1, NULL);
-		} else addr += i;
+		}
+		addr += i;
 	    }
 	} else addr = offset;
     }
@@ -97,7 +98,7 @@ void dump(FILE *fd)
 	    int c = *p;
 	    if (c < 0)
 		c = 0;
-	    if (c > 255)
+	    else if (c > 255)
 		c = 255;
 	    if (isascii(c) && isprint(c))
 		putchar(c);
