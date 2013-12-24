@@ -236,7 +236,7 @@ main(int argc, char **argv)
 	}
     }
 
-    palette = bu_rb_create1("Pixel palette", compare_pixels);
+    palette = bu_rb_create1("Pixel palette", (int (*)(void))compare_pixels);
     bu_rb_uniq_on1(palette);
 
     /*
@@ -253,7 +253,7 @@ main(int argc, char **argv)
     }
     bu_free((genptr_t)buf, "pixel buffer");
 
-    bu_rb_walk1(palette, print_pixel, INORDER);
+    bu_rb_walk1(palette, (void (*)(void))print_pixel, INORDER);
 
     return 0;
 }
