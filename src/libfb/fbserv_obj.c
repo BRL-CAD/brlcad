@@ -110,7 +110,7 @@ existing_client_handler(ClientData clientData, int UNUSED(mask))
 
     curr_fbp = fbsp->fbs_fbp;
 
-    for (i = MAX_CLIENTS-1; i >= 0; i--) {
+    for (i = MAX_CLIENTS - 1; i >= 0; i--) {
 	if (fbsp->fbs_clients[i].fbsc_fd == 0)
 	    continue;
 
@@ -131,8 +131,10 @@ existing_client_handler(ClientData clientData, int UNUSED(mask))
 	    bu_log("pkg_process error encountered (2)\n");
     }
 
-    if (fbsp->fbs_callback != FBS_CALLBACK_NULL)
+    if (fbsp->fbs_callback != FBS_CALLBACK_NULL) {
+	/* need to cast explicitly to get the function call */
 	fbsp->fbs_callback(fbsp->fbs_clientData);
+    }
 }
 
 
@@ -185,7 +187,7 @@ new_client(struct fbserv_obj *fbsp, struct pkg_conn *pcp, Tcl_Channel chan)
     if (pcp == PKC_ERROR)
 	return;
 
-    for (i = MAX_CLIENTS-1; i >= 0; i--) {
+    for (i = MAX_CLIENTS - 1; i >= 0; i--) {
 	/* this slot is being used */
 	if (fbsp->fbs_clients[i].fbsc_fd != 0)
 	    continue;
@@ -217,7 +219,7 @@ new_client(struct fbserv_obj *fbsp, struct pkg_conn *pcp, Tcl_Channel UNUSED(cha
     if (pcp == PKC_ERROR)
 	return;
 
-    for (i = MAX_CLIENTS-1; i >= 0; i--) {
+    for (i = MAX_CLIENTS - 1; i >= 0; i--) {
 	/* this slot is being used */
 	if (fbsp->fbs_clients[i].fbsc_fd != 0)
 	    continue;
@@ -362,7 +364,7 @@ fbs_rfbclear(struct pkg_conn *pcp, char *buf)
     RGBpixel bg;
     char rbuf[NET_LONG_LEN+1];
 
-    if(!buf) {
+    if (!buf) {
 	bu_log("fbs_rfbclear: null buffer\n");
 	return;
     }
@@ -387,7 +389,7 @@ fbs_rfbread(struct pkg_conn *pcp, char *buf)
     static unsigned char *scanbuf = NULL;
     static size_t buflen = 0;
 
-    if(!buf) {
+    if (!buf) {
 	bu_log("fbs_rfbread: null buffer\n");
 	return;
     }
@@ -426,7 +428,7 @@ fbs_rfbwrite(struct pkg_conn *pcp, char *buf)
     int ret;
     int type;
 
-    if(!buf) {
+    if (!buf) {
 	bu_log("fbs_rfbwrite: null buffer\n");
 	return;
     }
@@ -458,7 +460,7 @@ fbs_rfbreadrect(struct pkg_conn *pcp, char *buf)
     static unsigned char *scanbuf = NULL;
     static size_t buflen = 0;
 
-    if(!buf) {
+    if (!buf) {
 	bu_log("fbs_rfbreadrect: null buffer\n");
 	return;
     }
@@ -503,7 +505,7 @@ fbs_rfbwriterect(struct pkg_conn *pcp, char *buf)
     int ret;
     int type;
 
-    if(!buf) {
+    if (!buf) {
 	bu_log("fbs_rfbwriterect: null buffer\n");
 	return;
     }
@@ -538,7 +540,7 @@ fbs_rfbbwreadrect(struct pkg_conn *pcp, char *buf)
     static unsigned char *scanbuf = NULL;
     static int buflen = 0;
 
-    if(!buf) {
+    if (!buf) {
 	bu_log("fbs_rfbbwreadrect: null buffer\n");
 	return;
     }
@@ -583,7 +585,7 @@ fbs_rfbbwwriterect(struct pkg_conn *pcp, char *buf)
     int ret;
     int type;
 
-    if(!buf) {
+    if (!buf) {
 	bu_log("fbs_rfbbwwriterect: null buffer\n");
 	return;
     }
@@ -611,7 +613,7 @@ fbs_rfbcursor(struct pkg_conn *pcp, char *buf)
     int mode, x, y;
     char rbuf[NET_LONG_LEN+1];
 
-    if(!buf) {
+    if (!buf) {
 	bu_log("fbs_rfbcursor: null buffer\n");
 	return;
     }
@@ -654,7 +656,7 @@ fbs_rfbsetcursor(struct pkg_conn *pcp, char *buf)
     int xbits, ybits;
     int xorig, yorig;
 
-    if(!buf) {
+    if (!buf) {
 	bu_log("fbs_rfsetcursor: null buffer\n");
 	return;
     }
@@ -682,7 +684,7 @@ fbs_rfbscursor(struct pkg_conn *pcp, char *buf)
     int mode, x, y;
     char rbuf[NET_LONG_LEN+1];
 
-    if(!buf) {
+    if (!buf) {
 	bu_log("fbs_rfbscursor: null buffer\n");
 	return;
     }
@@ -704,7 +706,7 @@ fbs_rfbwindow(struct pkg_conn *pcp, char *buf)
     int x, y;
     char rbuf[NET_LONG_LEN+1];
 
-    if(!buf) {
+    if (!buf) {
 	bu_log("fbs_rfbwindow: null buffer\n");
 	return;
     }
@@ -726,7 +728,7 @@ fbs_rfbzoom(struct pkg_conn *pcp, char *buf)
     int x, y;
     char rbuf[NET_LONG_LEN+1];
 
-    if(!buf) {
+    if (!buf) {
 	bu_log("fbs_rfbzoom: null buffer\n");
 	return;
     }
@@ -747,7 +749,7 @@ fbs_rfbview(struct pkg_conn *pcp, char *buf)
     int xcenter, ycenter, xzoom, yzoom;
     char rbuf[NET_LONG_LEN+1];
 
-    if(!buf) {
+    if (!buf) {
 	bu_log("fbs_rfbview: null buffer\n");
 	return;
     }
@@ -824,7 +826,7 @@ fbs_rfbwmap(struct pkg_conn *pcp, char *buf)
     long ret;
     ColorMap map;
 
-    if(!buf) {
+    if (!buf) {
 	bu_log("fbs_rfbwmap: null buffer\n");
 	return;
     }
@@ -888,7 +890,7 @@ fbs_rfbhelp(struct pkg_conn *pcp, char *buf)
     long ret;
     char rbuf[NET_LONG_LEN+1];
 
-    if(!buf) {
+    if (!buf) {
 	bu_log("fbs_rfbhelp: null buffer\n");
 	return;
     }
