@@ -1345,36 +1345,26 @@ ccw(const void *x, const void *y, void *cmp)
 }
 
 
-void
-rt_arbn_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+static void
+rt_arbn_faces_area(struct poly_face* faces, struct rt_arbn_internal* aip)
 {
-    struct poly_face *faces;
-    struct rt_arbn_internal *aip = (struct rt_arbn_internal *)ip->idb_ptr;
-    size_t i, j, k, l;
-
-    /* allocate array of face structs */
-    faces = (struct poly_face *)bu_calloc(aip->neqn, sizeof(struct poly_face), "arbn_surf_area: faces");
+    size_t i, j, l ,k;
     for (i = 0; i < aip->neqn; i++) {
-	HMOVE(faces[i].plane_eqn, aip->eqn[i]);
-	VUNITIZE(faces[i].plane_eqn);
-	/* allocate array of pt structs, max number of verts per faces = (# of faces) - 1 */
-	faces[i].pts = (point_t *)bu_calloc(aip->neqn - 1, sizeof(point_t), "arbn_surf_area: pts");
+    	HMOVE(faces[i].plane_eqn, aip->eqn[i]);
+    	VUNITIZE(faces[i].plane_eqn);
     }
-
     /* find all vertices */
     for (i = 0; i < aip->neqn - 2; i++) {
 	for (j = i + 1; j < aip->neqn - 1; j++) {
 	    for (k = j + 1; k < aip->neqn; k++) {
 		point_t pt;
 		int keep_point = 1;
-		if (bn_mkpoint_3planes(pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]) < 0) {
+		if (bn_mkpoint_3planes(pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]) < 0)
 		    continue;
-		}
 		/* discard pt if it is outside the arbn */
 		for (l = 0; l < aip->neqn; l++) {
-		    if (l == i || l == j || l == k) {
+		    if (l == i || l == j || l == k)
 			continue;
-		    }
 		    if (DIST_PT_PLANE(pt, aip->eqn[l]) > BN_TOL_DIST) {
 			keep_point = 0;
 			break;
@@ -1390,17 +1380,34 @@ rt_arbn_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	}
     }
     for (i = 0; i < aip->neqn; i++) {
-	vect_t tmp, tot = VINIT_ZERO;
-	/* sort points */
-	bu_sort(faces[i].pts, faces[i].npts, sizeof(point_t), ccw, &faces[i].plane_eqn);
-	/* N-Sided Face - compute area using Green's Theorem */
-	for (j = 0; j < faces[i].npts; j++) {
-	    VCROSS(tmp, faces[i].pts[j], faces[i].pts[j + 1 == faces[i].npts ? 0 : j + 1]);
-	    VADD2(tot, tot, tmp);
-	}
-	*area += (fabs(VDOT(faces[i].plane_eqn, tot)) * 0.5);
+    	vect_t tmp, tot = VINIT_ZERO;
+    	bu_sort(faces[i].pts, faces[i].npts, sizeof(point_t), ccw, &faces[i].plane_eqn);
+    	/* N-Sided Face - compute area using Green's Theorem */
+    	for (j = 0; j < faces[i].npts; j++) {
+    	    VCROSS(tmp, faces[i].pts[j], faces[i].pts[j + 1 == faces[i].npts ? 0 : j + 1]);
+    	    VADD2(tot, tot, tmp);
+    	}
+    	faces[i].area += (fabs(VDOT(faces[i].plane_eqn, tot)) * 0.5);
     }
+}
+
+
+void
+rt_arbn_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    struct poly_face *faces;
+    struct rt_arbn_internal *aip = (struct rt_arbn_internal *)ip->idb_ptr;
+    size_t i;
+
+    /* allocate array of face structs */
+    faces = (struct poly_face *)bu_calloc(aip->neqn, sizeof(struct poly_face), "arbn_surf_area: faces");
     for (i = 0; i < aip->neqn; i++) {
+	/* allocate array of pt structs, max number of verts per faces = (# of faces) - 1 */
+	faces[i].pts = (point_t *)bu_calloc(aip->neqn - 1, sizeof(point_t), "arbn_surf_area: pts");
+    }
+    rt_arbn_faces_area(faces, aip);
+    for (i = 0; i < aip->neqn; i++) {
+	*area += faces[i].area;
 	bu_free((char *)faces[i].pts, "rt_arbn_surf_area: pts");
     }
     bu_free((char *)faces, "rt_arbn_surf_area: faces");
@@ -1412,7 +1419,7 @@ rt_arbn_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     struct poly_face *faces;
     struct rt_arbn_internal *aip = (struct rt_arbn_internal *)ip->idb_ptr;
-    size_t i, j, k, l;
+    size_t i, j;
     point_t arbit_point = VINIT_ZERO;
     fastf_t volume = 0.0;
 
@@ -1426,40 +1433,10 @@ rt_arbn_centroid(point_t *cent, const struct rt_db_internal *ip)
     /* allocate array of face structs */
     faces = (struct poly_face *)bu_calloc(aip->neqn, sizeof(struct poly_face), "rt_arbn_centroid: faces");
     for (i = 0; i < aip->neqn; i++) {
-	HMOVE(faces[i].plane_eqn, aip->eqn[i]);
-	VUNITIZE(faces[i].plane_eqn);
 	/* allocate array of pt structs, max number of verts per faces = (# of faces) - 1 */
 	faces[i].pts = (point_t *)bu_calloc(aip->neqn - 1, sizeof(point_t), "rt_arbn_centroid: pts");
     }
-
-    /* find all vertices */
-    for (i = 0; i < aip->neqn - 2; i++) {
-	for (j = i + 1; j < aip->neqn - 1; j++) {
-	    for (k = j + 1; k < aip->neqn; k++) {
-		point_t pt;
-		int keep_point = 1;
-		if (bn_mkpoint_3planes(pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]) < 0) {
-		    continue;
-		}
-		/* discard pt if it is outside the arbn */
-		for (l = 0; l < aip->neqn; l++) {
-		    if (l == i || l == j || l == k) {
-			continue;
-		    }
-		    if (DIST_PT_PLANE(pt, aip->eqn[l]) > BN_TOL_DIST) {
-			keep_point = 0;
-			break;
-		    }
-		}
-		/* found a good point, add it to each of the intersecting faces */
-		if (keep_point) {
-		    VMOVE((faces[i]).pts[(faces[i]).npts], (pt)); (faces[i]).npts++;
-		    VMOVE((faces[j]).pts[(faces[j]).npts], (pt)); (faces[j]).npts++;
-		    VMOVE((faces[k]).pts[(faces[k]).npts], (pt)); (faces[k]).npts++;
-		}
-	    }
-	}
-    }
+    rt_arbn_faces_area(faces, aip);
     for (i = 0; i < aip->neqn; i++) {
 	fastf_t x_0 = 0.0;
 	fastf_t x_1 = 0.0;
@@ -1469,8 +1446,6 @@ rt_arbn_centroid(point_t *cent, const struct rt_db_internal *ip)
 	fastf_t z_1 = 0.0;
 	fastf_t a = 0.0;
 	fastf_t signedArea = 0.0;
-	/* sort points */
-	bu_sort(faces[i].pts, faces[i].npts, sizeof(point_t), ccw, &faces[i].plane_eqn);
 	/* Calculate Centroid projection for face for x-y-plane */
 	for (j = 0; j < faces[i].npts-1; j++) {
 	    x_0 = faces[i].pts[j][0];
@@ -1523,13 +1498,7 @@ rt_arbn_centroid(point_t *cent, const struct rt_db_internal *ip)
     VSCALE(arbit_point, arbit_point, (1/aip->neqn));
 
     for (i = 0; i < aip->neqn; i++) {
-	vect_t tmp, tot = VINIT_ZERO;
-	/* N-Sided Face - compute area using Green's Theorem */
-	for (j = 0; j < faces[i].npts; j++) {
-	    VCROSS(tmp, faces[i].pts[j], faces[i].pts[j + 1 == faces[i].npts ? 0 : j + 1]);
-	    VADD2(tot, tot, tmp);
-	}
-	faces[i].area = (fabs(VDOT(faces[i].plane_eqn, tot)) * 0.5);
+	vect_t tmp = VINIT_ZERO;
 	/* calculate volume */
 	VSCALE(tmp, faces[i].plane_eqn, faces[i].area);
 	faces[i].vol_pyramid = (VDOT(faces[i].pts[0], tmp)/3);
