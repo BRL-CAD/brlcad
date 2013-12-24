@@ -165,7 +165,7 @@ BU_FORTRAN(frprep, FRPREP)(struct rt_i **rtip)
 struct context {
     double co_vpriv[3];
     struct soltab *co_stp;
-    char *co_priv;
+    const char *co_priv;
     int co_inflip;
 };
 
@@ -238,7 +238,7 @@ BU_FORTRAN(frshot, FRSHOT)(int *nloc,			/* input & output */
 	*nloc = 0;
 	return;
     }
-    for (i = 0; i < *nloc; i++, pp=pp->pt_forw) {
+    for (i = 0; i < *nloc; i++, pp = pp->pt_forw) {
 	register struct context *ctp;
 
 	if (pp == &fr_global_head) break;
@@ -249,7 +249,7 @@ BU_FORTRAN(frshot, FRSHOT)(int *nloc,			/* input & output */
 	ctp = &context[i];
 	ctp->co_stp = pp->pt_inseg->seg_stp;
 	VMOVE(ctp->co_vpriv, pp->pt_inhit->hit_vpriv);
-	ctp->co_priv = pp->pt_inhit->hit_private;
+	ctp->co_priv = (const char *)pp->pt_inhit->hit_private;
 	ctp->co_inflip = pp->pt_inflip;
     }
     *nloc = i;	/* Will have been incremented above, if successful */
@@ -293,7 +293,7 @@ BU_FORTRAN(frnorm, FRNORM)(double *normal,	/* output only */
     ctp = &context[i];
     stp = ctp->co_stp;
     VMOVE(hit.hit_vpriv, ctp->co_vpriv);
-    hit.hit_private = ctp->co_priv;
+    hit.hit_private = (void *)ctp->co_priv;
 
     /* The new macro doesn't use ray argument */
     RT_HIT_NORMAL(normal, &hit, stp, NULL, ctp->co_inflip);
