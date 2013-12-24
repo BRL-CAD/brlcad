@@ -819,12 +819,13 @@ nmg_bsegs(struct ray_data *rd, struct application *ap, struct seg *seghead, stru
     int seg_count = 0;
 
     for (BU_LIST_FOR(a_hit, hitmiss, &rd->rd_hit)) {
+        int (*state_table_func)(struct seg *, struct seg **, int *, struct hitmiss *, struct soltab *, struct application *, struct bn_tol *);
+
 	NMG_CK_HITMISS(a_hit);
 
 	/* cast function pointers for use */
-        int (*_state_table_func)(struct seg *, struct seg **, int *, struct hitmiss *, struct soltab *, struct application *, struct bn_tol *);
-	_state_table_func = (int (*)(struct seg *, struct seg **, int *, struct hitmiss *, struct soltab *, struct application *, struct bn_tol *))state_table[ray_state];
-	new_state = _state_table_func(seghead, &seg_p, &seg_count, a_hit, stp, ap, (struct bn_tol *)rd->tol);
+	state_table_func = (int (*)(struct seg *, struct seg **, int *, struct hitmiss *, struct soltab *, struct application *, struct bn_tol *))state_table[ray_state];
+	new_state = state_table_func(seghead, &seg_p, &seg_count, a_hit, stp, ap, (struct bn_tol *)rd->tol);
 	if (new_state < 0) {
 	    /* state transition error.  Print out the hit list
 	     * and indicate where we were in processing it.
