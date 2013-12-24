@@ -163,7 +163,7 @@ main(int ac, char **av)
 	/* no file left, try processing stdin */
 	if (isatty(fileno(stdin)))
 		usage();
-	
+
 	dump(stdin);
     } else {
 	/* process each remaining arguments */
