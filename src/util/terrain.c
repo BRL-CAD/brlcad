@@ -701,10 +701,11 @@ main(int ac, char **av)
     /* function to call to generate the terrain.  Default noise pattern is fBm */
     void (*terrain_func)(unsigned short *);
 
-    /* set default terrain function */
-    terrain_func = func_fbm;
-
+    terrain_func = NULL;
     arg_count = parse_args(ac, av, terrain_func);
+
+    if (!terrain_func)
+	terrain_func = func_fbm;
 
     if (arg_count + 1 < ac)
 	usage("Excess arguments on cmd line\n");
