@@ -1423,7 +1423,7 @@ nmg_pl_comb_fu(int num1, int num2, const struct faceuse *fu1)
 
     if (do_plot) {
 	(void)sprintf(name, "comb%d.%d.plot3", num1, num2);
-	fp=fopen(name, "wb");
+	fp = fopen(name, "wb");
 	if (fp == (FILE *)NULL) {
 	    (void)perror(name);
 	    return;
@@ -1915,7 +1915,7 @@ nmg_show_broken_classifier_stuff(uint32_t *p, char **classlist, int all_new, int
     } else {
 	/* Non interactive, drop a plot file */
 	char buf[128];
-	static int num=0;
+	static int num = 0;
 	FILE *fp;
 
 	sprintf(buf, "cbroke%d.plot3", num++);
@@ -2157,7 +2157,7 @@ nmg_plot_ray_face(const char *fname, fastf_t *pt, const fastf_t *dir, const stru
     FILE *fp;
     long *b;
     point_t pp;
-    static int i=0;
+    static int i = 0;
     char name[1024] = {0};
 
     if (! (RTG.NMG_debug & DEBUG_NMGRT))
@@ -2196,7 +2196,7 @@ void
 nmg_plot_lu_around_eu(const char *prefix, const struct edgeuse *eu, const struct bn_tol *tol)
 {
     char file[256];
-    static int num=0;
+    static int num = 0;
     struct model *m;
     struct bn_vlblock *vbp;
     long *tab;
