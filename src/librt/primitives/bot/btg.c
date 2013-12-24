@@ -83,8 +83,13 @@ bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt
 	bot->bot_facemode = bu_bitv_dup(bot_ip->face_mode);
     bot->bot_facelist = NULL;
 
-    if ((tie = bot_ip->tie = bot->tie = (struct tie_s *)bottie_allocn_double(bot_ip->num_faces)) == NULL)
+    tie = (struct tie_s *)bottie_allocn_double(bot_ip->num_faces);
+    if (tie != NULL) {
+	bot_ip->tie = tie;
+    } else {
 	return -1;
+    }
+
     if ((tribuf = (TIE_3 *)bu_malloc(sizeof(TIE_3) * 3 * bot_ip->num_faces, "triangle tribuffer")) == NULL) {
 	tie_free(tie);
 	return -1;
@@ -99,7 +104,9 @@ bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt
 	tribufp[i] = &tribuf[i];
 	VMOVE(tribuf[i].v, (bot_ip->vertices+3*bot_ip->faces[i]));
     }
+
     tie_push1(bot_ip->tie, tribufp, bot_ip->num_faces, bot, 0);
+
     bu_free(tribuf, "tribuffer");
     bu_free(tribufp, "tribufp");
 
@@ -141,7 +148,8 @@ hitfunc(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *UNUSED(tri
     }
 
     hp = &h->hits[h->nhits];
-    tsp = (struct tri_specific *)hp->hit_private = &h->ts[h->nhits];
+    hp->hit_private = &h->ts[h->nhits];
+    tsp = (struct tri_specific *)hp->hit_private;
     h->nhits++;
 
 
