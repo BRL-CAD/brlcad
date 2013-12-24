@@ -105,7 +105,13 @@ bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt
 	VMOVE(tribuf[i].v, (bot_ip->vertices+3*bot_ip->faces[i]));
     }
 
-    tie_push1(bot_ip->tie, tribufp, bot_ip->num_faces, bot, 0);
+    /* tie_pushX sig: (struct tie_s *,
+     *                 TIE_3 **,
+     *                 unsigned int,
+     *                 void *,
+     *                 unsigned int);
+     */
+    tie_push1((struct tie_s *)bot_ip->tie, tribufp, bot_ip->num_faces, bot, 0);
 
     bu_free(tribuf, "tribuffer");
     bu_free(tribufp, "tribufp");
