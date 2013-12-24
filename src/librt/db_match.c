@@ -165,7 +165,7 @@ db_update_nref(struct db_i *dbip, struct resource *resp)
 	    }
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
 	    db_tree_funcleaf(dbip, comb, comb->tree,
-			     db_count_refs, (genptr_t)NULL,
+			     (void (*)())db_count_refs, (genptr_t)NULL,
 			     (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL);
 	    rt_db_free_internal(&intern);
 	}
