@@ -202,7 +202,7 @@ db_diradd(struct db_i *dbip, const char *name, off_t laddr, size_t len, int flag
 	       (void *)dbip, name, laddr, len, flags, ptr);
     }
 
-    if ((tmp_ptr=strchr(name, '/')) != NULL) {
+    if ((tmp_ptr = strchr(name, '/')) != NULL) {
 	/* if this is a version 4 database and the offending char is beyond NAMESIZE
 	 * then it is not really a problem
 	 */
