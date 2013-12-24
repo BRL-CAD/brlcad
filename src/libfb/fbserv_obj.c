@@ -132,8 +132,10 @@ existing_client_handler(ClientData clientData, int UNUSED(mask))
     }
 
     if (fbsp->fbs_callback != FBS_CALLBACK_NULL) {
-	/* need to cast explicitly to get the function call */
-	fbsp->fbs_callback(fbsp->fbs_clientData);
+	/* need to cast func pointer explicitly to get the function call */
+	void (*cfp)(void *);
+	cfp = (void (*)(void *))fbsp->fbs_callback;
+	cfp(fbsp->fbs_clientData);
     }
 }
 

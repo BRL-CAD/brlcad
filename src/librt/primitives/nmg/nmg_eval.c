@@ -644,9 +644,12 @@ nmg_eval_plot(struct nmg_bool_state *bs, int num)
 	/* Cause animation of boolean operation as it proceeds! */
 	if (nmg_vlblock_anim_upcall) {
 	    /* if requested, delay 1/4 second */
-	    (*nmg_vlblock_anim_upcall)(vbp,
-				       (RTG.NMG_debug&DEBUG_PL_SLOW) ? 250000 : 0,
-				       0);
+	    /* need to cast nmg_vlblock_anim_upcall pointer for actual use as a function */
+	    void (*cfp)(struct bn_vlblock *, int, int);
+	    cfp = (void (*)(struct bn_vlblock *, int, int))nmg_vlblock_anim_upcall;
+	    cfp(vbp,
+		(RTG.NMG_debug&DEBUG_PL_SLOW) ? 250000 : 0,
+		0);
 	} else {
 	    bu_log("null nmg_vlblock_anim_upcall, no animation\n");
 	}

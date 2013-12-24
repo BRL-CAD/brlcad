@@ -233,8 +233,12 @@ nmg_class_pt_vu(struct fpi *fpi, struct vertexuse *vu)
     ved->dist = MAGNITUDE(delta);
     if (ved->dist < fpi->tol->dist_sq) {
 	ved->status = NMG_FPI_TOUCHED;
-	if (fpi->hits == NMG_FPI_PERGEOM)
-	    fpi->vu_func(vu, fpi->pt, fpi->priv);
+	if (fpi->hits == NMG_FPI_PERGEOM) {
+	    /* need to cast vu_func pointer for actual use as a function */
+	    void (*cfp)(struct vertexuse *, point_t, const char*);
+	    cfp = (void (*)(struct vertexuse *, point_t, const char *))fpi->vu_func;
+	    cfp(vu, fpi->pt, fpi->priv);
+	}
     } else ved->status = NMG_FPI_MISSED;
 
     ved->v1 = ved->v2 = vu->v_p;
@@ -245,8 +249,12 @@ nmg_class_pt_vu(struct fpi *fpi, struct vertexuse *vu)
 
     if (fpi->vu_func  &&
 	ved->status == NMG_FPI_TOUCHED &&
-	fpi->hits == NMG_FPI_PERUSE)
-	fpi->vu_func(vu, fpi->pt, fpi->priv);
+	fpi->hits == NMG_FPI_PERUSE) {
+	/* need to cast vu_func pointer for actual use as a function */
+	void (*cfp)(struct vertexuse *, point_t, const char*);
+	cfp = (void (*)(struct vertexuse *, point_t, const char *))fpi->vu_func;
+	cfp(vu, fpi->pt, fpi->priv);
+    }
 
     return ved->status;
 }
@@ -613,7 +621,10 @@ nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list
 	    if (fpi->eu_func &&
 		(fpi->hits == NMG_FPI_PERUSE ||
 		 (fpi->hits == NMG_FPI_PERGEOM && !found_data))) {
-		fpi->eu_func(eu, fpi->pt, fpi->priv);
+		/* need to cast eu_func pointer for actual use as a function */
+		void (*cfp)(struct edgeuse *, point_t, const char*);
+		cfp = (void (*)(struct edgeuse *, point_t, const char *))fpi->eu_func;
+		cfp(eu, fpi->pt, fpi->priv);
 	    }
 	    break;
 	case 1:	/* within tolerance of endpoint at ved->v1 */
@@ -633,7 +644,10 @@ nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list
 	    if (fpi->vu_func &&
 		(fpi->hits == NMG_FPI_PERUSE ||
 		 (fpi->hits == NMG_FPI_PERGEOM && !found_data))) {
-		fpi->vu_func(eu->vu_p, fpi->pt, fpi->priv);
+		/* need to cast vu_func pointer for actual use as a function */
+		void (*cfp)(struct vertexuse *, point_t, const char*);
+		cfp = (void (*)(struct vertexuse *, point_t, const char *))fpi->vu_func;
+		cfp(eu->vu_p, fpi->pt, fpi->priv);
 	    }
 
 	    break;
@@ -653,7 +667,10 @@ nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list
 	    if (fpi->vu_func &&
 		(fpi->hits == NMG_FPI_PERUSE ||
 		 (fpi->hits == NMG_FPI_PERGEOM && !found_data))) {
-		fpi->vu_func(eu->eumate_p->vu_p, fpi->pt, fpi->priv);
+		/* need to cast vu_func pointer for actual use as a function */
+		void (*cfp)(struct vertexuse *, point_t, const char*);
+		cfp = (void (*)(struct vertexuse *, point_t, const char *))fpi->vu_func;
+		cfp(eu->eumate_p->vu_p, fpi->pt, fpi->priv);
 	    }
 	    break;
 
