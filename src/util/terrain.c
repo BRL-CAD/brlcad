@@ -137,6 +137,8 @@ func_fbm(unsigned short *buf)
 	}
     }
 }
+
+
 /***********************************************************************
  *
  * func_turb
@@ -257,6 +259,8 @@ func_multi(unsigned short *buf)
     if (debug) bu_log("min_V: %g   max_V: %g\n", min_V, max_V);
 
 }
+
+
 /***********************************************************************
  *
  * func_ridged
@@ -403,8 +407,10 @@ lunar2(point_t point, double h, double lacunarity, double octaves)
 
     return 1.0 - result;
 }
+
+
 /***********************************************************************
- * This one's got detail on the peaks
+ * This one has detail on the peaks
  */
 double
 land(point_t point, double h, double lacunarity, double octaves)
@@ -434,8 +440,10 @@ land(point_t point, double h, double lacunarity, double octaves)
 
     return 1.0 - result;
 }
+
+
 /***********************************************************************
- * This one's got detail on the peaks and in the valleys, but not on the
+ * This one has detail on the peaks and in the valleys, but not on the
  * slopes
  *
  */
