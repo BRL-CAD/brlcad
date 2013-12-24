@@ -666,6 +666,8 @@ db_tree_funcleaf(
     genptr_t user_ptr4)
 {
     RT_CK_DBI(dbip);
+    void (*_leaf_func)(struct db_i *, struct rt_comb_internal *, union tree *,
+		       void *, void *, void *, void *);
 
     if (!comb_tree)
 	return;
@@ -674,7 +676,7 @@ db_tree_funcleaf(
 
     switch (comb_tree->tr_op) {
 	case OP_DB_LEAF:
-	    (*leaf_func)(dbip, comb, comb_tree, user_ptr1, user_ptr2, user_ptr3, user_ptr4);
+	    _leaf_func(dbip, comb, comb_tree, user_ptr1, user_ptr2, user_ptr3, user_ptr4);
 	    break;
 	case OP_UNION:
 	case OP_INTERSECT:
