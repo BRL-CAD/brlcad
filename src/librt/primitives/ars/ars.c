@@ -1130,7 +1130,7 @@ rt_ars_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 int
 rt_ars_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
-    register struct rt_ars_internal *ars=(struct rt_ars_internal *)intern->idb_ptr;
+    register struct rt_ars_internal *ars = (struct rt_ars_internal *)intern->idb_ptr;
     size_t i, j;
 
     RT_ARS_CK_MAGIC(ars);
