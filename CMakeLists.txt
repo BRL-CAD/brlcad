@@ -2280,6 +2280,10 @@ endif(NOT BRLCAD_DISABLE_SUMMARY)
 # *******************************************************************
 # ***                      Timestamp Rules                        ***
 # *******************************************************************
+# TODO - As of CMake 2.8.11, the string command has a TIMESTAMP option
+# that may be able to simplify some of the current timestamp system.
+# We would need to be able to require 2.8.11 or newer, so there will
+# be a bit of a wait, but it's something to look into.
 if(NOT BRLCAD_IS_SUBBUILD)
   # Set up rules to print a timestamp string during build
   set(BUILD_DELTA_FILE "${CMAKE_BINARY_DIR}/CMakeTmp/BUILD_DELTA_FILE")
