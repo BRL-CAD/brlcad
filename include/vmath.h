@@ -1274,8 +1274,17 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 #define MAGSQ(a)	((a)[X]*(a)[X] + (a)[Y]*(a)[Y] + (a)[Z]*(a)[Z])
 #define MAG2SQ(a)	((a)[X]*(a)[X] + (a)[Y]*(a)[Y])
 
-/** @brief Return scalar magnitude of vector at `a' */
+
+/**
+ * @brief Return scalar magnitude of the 3D vector `a'.  This is
+ * otherwise known as the Euclidean norm of the provided vector..
+ */
 #define MAGNITUDE(a) sqrt(MAGSQ(a))
+
+/**
+ * @brief Return scalar magnitude of the 2D vector at `a'.  This is
+ * otherwise known as the Euclidean norm of the provided vector..
+ */
 #define MAGNITUDE2(a) sqrt(MAG2SQ(a))
 
 /**
