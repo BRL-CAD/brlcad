@@ -113,9 +113,9 @@ parse_file(const char *file, char *host, int *portp, char *device, int length)
 {
     int port;
     char prefix[256];
-    char *rest;
-    char *dev;
-    char *colon;
+    const char *rest;
+    const char *dev;
+    const char *colon;
 
     if (numeric(file)) {
 	/* 0 */
