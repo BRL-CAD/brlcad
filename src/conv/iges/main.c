@@ -50,7 +50,7 @@ struct file_list iges_list;
 struct file_list *curr_file;
 struct name_list *name_root;
 
-char operator[] = {
+char operators[] = {
     ' ',
     'u',
     '+',

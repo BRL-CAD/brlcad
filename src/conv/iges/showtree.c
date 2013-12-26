@@ -85,7 +85,7 @@ Showtree(struct node *root)
 	    else
 		*tmp = '\0';
 	    bu_strlcat(tmp, opa, size);
-	    oper[1] = operator[ptr->op];
+	    oper[1] = operators[ptr->op];
 
 	    bu_strlcat(tmp, oper, size);
 	    bu_strlcat(tmp, opb, size);

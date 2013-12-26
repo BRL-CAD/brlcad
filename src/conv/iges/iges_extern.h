@@ -51,7 +51,7 @@ extern struct iges_directory **dir; /* Directory array */
 extern struct reglist *regroot; /* list of regions created from solids of revolution */
 extern struct types typecount[]; /* Count of how many entities of each type actually
 				    appear in the IGES file */
-extern char operator[]; /* characters representing operators: 'u', '+', and '-' */
+extern char operators[]; /* characters representing operators: 'u', '+', and '-' */
 extern struct iges_edge_list *edge_root;
 extern struct iges_vertex_list *vertex_root;
 extern struct bn_tol tol;

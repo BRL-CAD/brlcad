@@ -56,7 +56,7 @@ Makegroup()
 	    if ((dir[i]->type > 149 && dir[i]->type < 185) || dir[i]->type == 430) {
 		if (!(dir[i]->referenced)) {
 		    /* Make the BRL-CAD member record */
-		    wmem = mk_addmember(dir[i]->name, &head.l, NULL, operator[Union]);
+		    wmem = mk_addmember(dir[i]->name, &head.l, NULL, operators[Union]);
 		    flt = (fastf_t *)dir[i]->rot;
 		    for (j = 0; j < 16; j++) {
 			wmem->wm_mat[j] = (*flt);
@@ -66,7 +66,7 @@ Makegroup()
 	    }
 	}
 	if (nurbs) {
-	    (void)mk_addmember("nurb.s", &head.l, NULL, operator[Union]);
+	    (void)mk_addmember("nurb.s", &head.l, NULL, operators[Union]);
 	}
 	/* Make the group named "all" */
 	mk_lcomb(fdout, "all", &head, 0 ,

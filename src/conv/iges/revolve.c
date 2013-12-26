@@ -372,17 +372,17 @@ revolve(int entityno)
     while (trcptr != NULL) {
 	/* Union together all the TRC's that are not subtracts */
 	if (trcptr->op != 1) {
-	    (void)mk_addmember(trcptr->name, &head.l, NULL, operator[Union]);
+	    (void)mk_addmember(trcptr->name, &head.l, NULL, operators[Union]);
 
 	    if (fract < 1.0) {
 		/* include cutting solid */
-		(void)mk_addmember(cutname, &head.l, NULL, operator[cutop]);
+		(void)mk_addmember(cutname, &head.l, NULL, operators[cutop]);
 	    }
 
 	    subp = trcptr->subtr;
 	    /* Subtract the inside TRC's */
 	    while (subp != NULL) {
-		(void)mk_addmember(subp->name, &head.l, NULL, operator[Subtract]);
+		(void)mk_addmember(subp->name, &head.l, NULL, operators[Subtract]);
 		subp = subp->next;
 	    }
 	}

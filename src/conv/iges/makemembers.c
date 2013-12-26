@@ -53,7 +53,7 @@ Makemembers(struct node *root, struct wmember *head)
 	    entno = (-(1+ptr->op)/2); /* entity number */
 
 	    /* make the member record */
-	    wmem = mk_addmember(dir[entno]->name, &(head->l), NULL, operator[op]);
+	    wmem = mk_addmember(dir[entno]->name, &(head->l), NULL, operators[op]);
 	    flt = (fastf_t *)dir[entno]->rot;
 	    for (i = 0; i < 16; i++) {
 		wmem->wm_mat[i] = (*flt);

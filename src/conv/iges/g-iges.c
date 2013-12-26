@@ -554,7 +554,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 
 		/* construct a unique file name */
 		len = strlen(output_file) + strlen(dp->d_namep) + 6 + SUFFIX_LEN;
-		multi_name = bu_malloc(sizeof(char)*len, "multi_name");
+		multi_name = (char *)bu_malloc(sizeof(char)*len, "multi_name");
 		snprintf(multi_name, len, "%s/%s.igs", output_file, dp->d_namep);
 		bu_strlcpy(suffix, "a", sizeof(suffix));
 		suffix[0]--;
