@@ -670,10 +670,10 @@ prntShieldComp(struct application *ap, struct partition *pt_headp, Pt_Queue *qp)
     prntShieldComp(ap, pt_headp, qp->q_next);
     prntRegionHdr(ap, pt_headp, qp->q_part, entrynorm, exitnorm);
 }
+
+
 void
-prntColors(colorp, str)
-    Colors *colorp;
-    char *str;
+prntColors(Colors *colorp, char *str)
 {
     brst_log("%s:\n", str);
     for (colorp = colorp->c_next;

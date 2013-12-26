@@ -39,9 +39,7 @@
 #define DEBUG_IDENTS 0
 
 int
-findIdents(ident, idp)
-    int ident;
-    Ids *idp;
+findIdents(int ident, Ids *idp)
 {
 #if DEBUG_IDENTS
     brst_log("findIdents(%d)\n", ident);
