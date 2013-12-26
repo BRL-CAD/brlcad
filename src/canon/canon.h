@@ -98,7 +98,7 @@ FUNC_EXTERN(void ipu_scan_config, (struct dsreq *dsp, char units, int divisor, c
 #endif
 
 FUNC_EXTERN(int parse_args, (int ac, char *av[]));
-FUNC_EXTERN(void usage, (char *s));
+FUNC_EXTERN(void usage, (const char *s));
 
 extern char *progname;
 extern char scsi_device[];
