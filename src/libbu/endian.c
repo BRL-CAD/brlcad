@@ -22,8 +22,15 @@
 
 #include "bu.h"
 
-
-inline bu_endian_t
+/* FIXME: in C++ an inlined function should be defined in a header
+ * instead of being externed, otherwise an error results.  C is more
+ * forgiving, but this should be either defined in bu.h or an included
+ * header where needed (say, 'endian.h').
+ *
+#if !defined(__cplusplus)
+inline
+#endif
+bu_endian_t
 bu_byteorder()
 {
     const union bob {
