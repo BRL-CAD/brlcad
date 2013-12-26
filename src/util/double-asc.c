@@ -53,8 +53,8 @@ static int make_cells = 0;		/* Insert cell coords in output? */
 static int d_per_l = 1;		/* doubles per line of output */
 
 
-void print_usage (willexit)
-    int willexit;
+void
+print_usage(int willexit)
 {
     if (willexit)
 	bu_exit(1, "%s%s", usage1, usage2);
