@@ -50,7 +50,7 @@ usage(const char *argv0)
     bu_exit(1, NULL);
 }
 
-static int	NMG_debug=0;		/* saved arg of -X, for longjmp handling */
+static int	NMG_debug = 0;		/* saved arg of -X, for longjmp handling */
 static int	verbose;
 static int	curr_id;		/* Current region ident code */
 static int	face_count;		/* Count of faces output for a region id */
@@ -58,8 +58,8 @@ static int	ncpu = 1;
 static char	*out_file = NULL;	/* Output filename */
 static FILE	*fp_out;		/* Output file pointer */
 static int	*idents;		/* Array of region ident numbers */
-static int	ident_count=0;		/* Number of idents in above array */
-static int	ident_length=0;		/* Length of idents array */
+static int	ident_count = 0;	/* Number of idents in above array */
+static int	ident_length = 0;	/* Length of idents array */
 #define		IDENT_BLOCK	256	/* Number of idents array slots to allocate */
 
 static struct db_i		*dbip;
@@ -94,10 +94,8 @@ fastf_print(FILE *out, size_t length, fastf_t f)
     buffer[0] = ' ';
 
     buf_len = strlen(buffer);
-    if (buf_len <= length)
-    {
-	for (i=0; i<length; i++)
-	{
+    if (buf_len <= length) {
+	for (i = 0; i < length; i++) {
 	    if (i < buf_len)
 		fputc(buffer[i], out);
 	    else
@@ -111,7 +109,7 @@ fastf_print(FILE *out, size_t length, fastf_t f)
     if ((size_t)(ptr - buffer) > length)
 	bu_exit(1, "ERROR: Value (%f) too large for format length (%zu)\n", f, length);
 
-    for (i=0; i<length; i++)
+    for (i = 0; i < length; i++)
 	fputc(buffer[i], out);
 }
 
@@ -121,14 +119,12 @@ insert_id(int id)
 {
     int i;
 
-    for (i=0; i<ident_count; i++)
-    {
+    for (i = 0; i < ident_count; i++) {
 	if (idents[i] == id)
 	    return;
     }
 
-    if (ident_count == ident_length)
-    {
+    if (ident_count == ident_length) {
 	idents = (int *)bu_realloc((char *)idents, (ident_length + IDENT_BLOCK)*sizeof(int), "insert_id: idents");
 	ident_length += IDENT_BLOCK;
     }
@@ -183,7 +179,7 @@ Write_euclid_face(const struct loopuse *lu, const int facet_type, const int regi
     struct faceuse *fu;
     struct edgeuse *eu;
     plane_t plane;
-    int vertex_count=0;
+    int vertex_count = 0;
 
     NMG_CK_LOOPUSE(lu);
 
@@ -259,22 +255,19 @@ Write_euclid_region(struct nmgregion *r, struct db_tree_state *tsp)
     }
 
     /* write out each face in the region */
-    for (BU_LIST_FOR(s, shell, &r->s_hd))
-    {
+    for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 	struct faceuse *fu;
 
-	for (BU_LIST_FOR(fu, faceuse, &s->fu_hd))
-	{
+	for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 	    struct loopuse *lu;
-	    int no_of_loops=0;
-	    int no_of_holes=0;
+	    int no_of_loops = 0;
+	    int no_of_holes = 0;
 
 	    if (fu->orientation != OT_SAME)
 		continue;
 
 	    /* count the loops in this face */
-	    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd))
-	    {
+	    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 		    continue;
 
@@ -287,8 +280,7 @@ Write_euclid_region(struct nmgregion *r, struct db_tree_state *tsp)
 	    faces = (struct facets *)bu_calloc(no_of_loops, sizeof(struct facets), "g-euclid: faces");
 
 	    i = 0;
-	    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd))
-	    {
+	    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 		    continue;
 
@@ -308,27 +300,21 @@ Write_euclid_region(struct nmgregion *r, struct db_tree_state *tsp)
 	     * 2 -> a facet that will have holes
 	     */
 
-	    for (i=0; i<no_of_loops; i++)
-	    {
+	    for (i = 0; i < no_of_loops; i++) {
 		if (faces[i].facet_type == 1)
 		    no_of_holes++;
 	    }
 
-	    if (!no_of_holes)
-	    {
+	    if (!no_of_holes) {
 		/* no holes, so each loop is a simple face (type 0) */
-		for (i=0; i<no_of_loops; i++)
+		for (i = 0; i < no_of_loops; i++)
 		    faces[i].facet_type = 0;
-	    }
-	    else if (no_of_loops == no_of_holes + 1)
-	    {
-		struct loopuse *outer_lu=(struct loopuse *)NULL;
+	    } else if (no_of_loops == no_of_holes + 1) {
+		struct loopuse *outer_lu = (struct loopuse *)NULL;
 
 		/* only one outer loop, so find it */
-		for (i=0; i<no_of_loops; i++)
-		{
-		    if (faces[i].facet_type == (-1))
-		    {
+		for (i = 0; i < no_of_loops; i++) {
+		    if (faces[i].facet_type == (-1)) {
 			outer_lu = faces[i].lu;
 			faces[i].facet_type = 2;
 			break;
@@ -336,27 +322,22 @@ Write_euclid_region(struct nmgregion *r, struct db_tree_state *tsp)
 		}
 
 		/* every hole must have this same outer_loop */
-		for (i=0; i<no_of_loops; i++)
-		{
+		for (i = 0; i < no_of_loops; i++) {
 		    if (faces[i].facet_type == 1)
 			faces[i].outer_loop = outer_lu;
 		}
-	    }
-	    else
-	    {
+	    } else {
 		int loop1, loop2;
 		int outer_loop_count;
 
 		/* must determine which holes go with which outer loops */
-		for (loop1=0; loop1<no_of_loops; loop1++)
-		{
+		for (loop1 = 0; loop1 < no_of_loops; loop1++) {
 		    if (faces[loop1].facet_type != 1)
 			continue;
 
 		    /* loop1 is a hole look for loops containing loop1 */
 		    outer_loop_count = 0;
-		    for (loop2=0; loop2<no_of_loops; loop2++)
-		    {
+		    for (loop2 = 0; loop2 < no_of_loops; loop2++) {
 			int class;
 
 			if (faces[loop2].facet_type == 1)
@@ -373,25 +354,21 @@ Write_euclid_region(struct nmgregion *r, struct db_tree_state *tsp)
 			outer_loop_count++;
 		    }
 
-		    if (outer_loop_count > 1)
-		    {
+		    if (outer_loop_count > 1) {
 			/* must choose outer loop from a list of candidates
 			 * if any of these candidates contain one of the
 			 * other candidates, the outer one can be eliminated
 			 * as a possible choice */
-			for (loop2=0; loop2<no_of_loops; loop2++)
-			{
+			for (loop2 = 0; loop2 < no_of_loops; loop2++) {
 			    if (faces[loop2].facet_type != (-2))
 				continue;
 
-			    for (i=0; i<no_of_loops; i++)
-			    {
+			    for (i = 0; i < no_of_loops; i++) {
 				if (faces[i].facet_type != (-2))
 				    continue;
 
 				if (nmg_classify_lu_lu(faces[i].lu,
-						       faces[loop2].lu, &tol))
-				{
+						       faces[loop2].lu, &tol)) {
 				    if (faces[i].facet_type != (-2))
 					continue;
 
@@ -402,16 +379,13 @@ Write_euclid_region(struct nmgregion *r, struct db_tree_state *tsp)
 			}
 		    }
 
-		    if (outer_loop_count != 1)
-		    {
+		    if (outer_loop_count != 1) {
 			bu_log("Failed to find outer loop for hole in component %d\n", tsp->ts_regionid);
 			goto outt;
 		    }
 
-		    for (i=0; i<no_of_loops; i++)
-		    {
-			if (faces[i].facet_type == (-2))
-			{
+		    for (i = 0; i < no_of_loops; i++) {
+			if (faces[i].facet_type == (-2)) {
 			    faces[i].facet_type = 2;
 			    faces[loop1].outer_loop = faces[i].lu;
 			}
@@ -419,26 +393,22 @@ Write_euclid_region(struct nmgregion *r, struct db_tree_state *tsp)
 		}
 
 		/* Check */
-		for (i=0; i<no_of_loops; i++)
-		{
-		    if (faces[i].facet_type < 0)
-		    {
+		for (i = 0; i < no_of_loops; i++) {
+		    if (faces[i].facet_type < 0) {
 			/* all holes have been placed
 			 * so these must be simple faces
 			 */
 			faces[i].facet_type = 0;
 		    }
 
-		    if (faces[i].facet_type == 1 && faces[i].outer_loop == NULL)
-		    {
+		    if (faces[i].facet_type == 1 && faces[i].outer_loop == NULL) {
 			bu_log("Failed to find outer loop for hole in component %d\n", tsp->ts_regionid);
 			goto outt;
 		    }
 		}
 	    }
 	    /* output faces with holes first */
-	    for (i=0; i<no_of_loops; i++)
-	    {
+	    for (i = 0; i < no_of_loops; i++) {
 		struct loopuse *outer_loop;
 
 		if (faces[i].facet_type != 2)
@@ -448,8 +418,7 @@ Write_euclid_region(struct nmgregion *r, struct db_tree_state *tsp)
 		Write_euclid_face(outer_loop, 2, tsp->ts_regionid, ++face_count);
 
 		/* output holes for this face */
-		for (j=0; j<no_of_loops; j++)
-		{
+		for (j = 0; j < no_of_loops; j++) {
 		    if (j == i)
 			continue;
 
@@ -458,8 +427,7 @@ Write_euclid_region(struct nmgregion *r, struct db_tree_state *tsp)
 		}
 	    }
 	    /* output simple faces */
-	    for (i=0; i<no_of_loops; i++)
-	    {
+	    for (i = 0; i < no_of_loops; i++) {
 		if (faces[i].facet_type != 0)
 		    continue;
 		Write_euclid_face(faces[i].lu, 0, tsp->ts_regionid, ++face_count);
@@ -561,8 +529,7 @@ main(int argc, char **argv)
 	usage(argv[0]);
 
     /* Open BRL-CAD database */
-    if ((dbip = db_open(argv[bu_optind], DB_OPEN_READONLY)) == DBI_NULL)
-    {
+    if ((dbip = db_open(argv[bu_optind], DB_OPEN_READONLY)) == DBI_NULL) {
 	perror(argv[0]);
 	bu_exit(1, "Cannot open geometry database file %s\n", argv[bu_optind]);
     }
@@ -576,8 +543,7 @@ main(int argc, char **argv)
 	setmode(fileno(fp_out), O_BINARY);
 #endif
     } else {
-	if ((fp_out = fopen(out_file, "wb")) == NULL)
-	{
+	if ((fp_out = fopen(out_file, "wb")) == NULL) {
 	    bu_log("Cannot open %s\n", out_file);
 	    perror(argv[0]);
 	    return 2;
@@ -598,11 +564,9 @@ main(int argc, char **argv)
 
     /* Process regions in ident order */
     curr_id = 0;
-    for (i=0; i<ident_length; i++)
-    {
+    for (i = 0; i < ident_length; i++) {
 	int next_id = 99999999;
-	for (j=0; j<ident_length; j++)
-	{
+	for (j = 0; j < ident_length; j++) {
 	    int test_id;
 
 	    test_id = idents[j];
@@ -658,7 +622,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
     union tree *ret_tree = TREE_NULL;
 
     /* Begin bomb protection */
-    if ( !BU_SETJUMP ) {
+    if (!BU_SETJUMP) {
 	/* try */
 
 	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
@@ -709,7 +673,7 @@ union tree *
 do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
 {
     struct nmgregion	*r;
-    struct bu_list		vhead;
+    struct bu_list	vhead;
     union tree		*ret_tree;
 
     if (verbose)
@@ -746,23 +710,19 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 	r = (struct nmgregion *)NULL;
 
     regions_converted++;
-    if (r != (struct nmgregion *)NULL)
-    {
+    if (r != (struct nmgregion *)NULL) {
 	struct shell *s;
-	int empty_region=0;
-	int empty_model=0;
+	int empty_region = 0;
+	int empty_model = 0;
 
 	/* Kill cracks */
 	s = BU_LIST_FIRST(shell, &r->s_hd);
-	while (BU_LIST_NOT_HEAD(&s->l, &r->s_hd))
-	{
+	while (BU_LIST_NOT_HEAD(&s->l, &r->s_hd)) {
 	    struct shell *next_s;
 
 	    next_s = BU_LIST_PNEXT(shell, &s->l);
-	    if (nmg_kill_cracks(s))
-	    {
-		if (nmg_ks(s))
-		{
+	    if (nmg_kill_cracks(s)) {
+		if (nmg_ks(s)) {
 		    empty_region = 1;
 		    break;
 		}
@@ -771,13 +731,11 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 	}
 
 	/* kill zero length edgeuses */
-	if (!empty_region)
-	{
+	if (!empty_region) {
 	    empty_model = nmg_kill_zero_length_edgeuses(*tsp->ts_m);
 	}
 
-	if (!empty_region && !empty_model)
-	{
+	if (!empty_region && !empty_model) {
 	    /* Write the region to the EUCLID file */
 	    Write_euclid_region(r, tsp);
 	}
