@@ -241,24 +241,22 @@ void
 ArgCompat (int Interior)
 {
     if (Interior != BI_RINGS) {
-	(void) fputs("Only one of -e, -i, -l, and -w may be specified\n",
+	(void)fputs("Only one of -e, -i, -l, and -w may be specified\n",
 		     stderr);
-	(void) bu_exit (1, NULL);
+	(void)bu_exit (1, NULL);
     }
 }
 
 
 void
 Fill_Empty (unsigned char *fbbPtr, double UNUSED(rho), double UNUSED(npf_rho), int UNUSED(unit_r), int merge)
-
 /* Pointer to within fbb */
 /* Radius of current pixel */
 /* Value of function at this theta */
 /* Unit radius (in pixels) */
 /* Overlay onto current FB contents? */
-
 {
-    if (! merge) {
+    if (!merge) {
 	COPYRGB(fbbPtr, Color[C_BKGRND]);
     }
 }
@@ -266,7 +264,6 @@ Fill_Empty (unsigned char *fbbPtr, double UNUSED(rho), double UNUSED(npf_rho), i
 
 void
 Fill_Constant (unsigned char *fbbPtr, double UNUSED(rho), double UNUSED(npf_rho), int UNUSED(unit_r), int UNUSED(merge))
-
 /* Pointer to within fbb */
 /* Radius of current pixel */
 /* Value of function at this theta */
@@ -280,13 +277,11 @@ Fill_Constant (unsigned char *fbbPtr, double UNUSED(rho), double UNUSED(npf_rho)
 
 void
 Fill_Ramp (unsigned char *fbbPtr, double rho, double UNUSED(npf_rho), int unit_r, int UNUSED(merge))
-
 /* Pointer to within fbb */
 /* Radius of current pixel */
 /* Value of function at this theta */
 /* Unit radius (in pixels) */
 /* Overlay onto current FB contents? */
-
 {
     RGBpixel ThisPix;	/* Ramped color for current pixel */
 
@@ -302,13 +297,11 @@ Fill_Ramp (unsigned char *fbbPtr, double rho, double UNUSED(npf_rho), int unit_r
 
 void
 Fill_Wedges (unsigned char *fbbPtr, double UNUSED(rho), double npf_rho, int UNUSED(unit_r), int UNUSED(merge))
-
 /* Pointer to within fbb */
 /* Radius of current pixel */
 /* Value of function at this theta */
 /* Unit radius (in pixels) */
 /* Overlay onto current FB contents? */
-
 {
     if (npf_rho > .8) {
 	COPYRGB(fbbPtr, Color[C_RED]);
@@ -326,13 +319,11 @@ Fill_Wedges (unsigned char *fbbPtr, double UNUSED(rho), double npf_rho, int UNUS
 
 void
 Fill_Rings (unsigned char *fbbPtr, double rho, double UNUSED(npf_rho), int unit_r, int UNUSED(merge))
-
 /* Pointer to within fbb */
 /* Radius of current pixel */
 /* Value of function at this theta */
 /* Unit radius (in pixels) */
 /* Overlay onto current FB contents? */
-
 {
     if (rho / unit_r > .8) {
 	COPYRGB(fbbPtr, Color[C_RED]);
@@ -353,13 +344,13 @@ PrintUsage (int ShoOpts)
 {
     char **oPtr;		/* Pointer to option string */
 
-    (void) fprintf(stderr, "Usage: '%s [options] [file]'\n", ProgName);
+    (void)fprintf(stderr, "Usage: '%s [options] [file]'\n", ProgName);
     if (ShoOpts) {
-	(void) fputs("Options:\n", stderr);
+	(void)fputs("Options:\n", stderr);
 	for (oPtr = ExplainOpts; **oPtr != '\0'; oPtr++)
-	    (void) fputs(*oPtr, stderr);
+	    (void)fputs(*oPtr, stderr);
     } else
-	(void) fputs(" -? option for help\n", stderr);
+	(void)fputs(" -? option for help\n", stderr);
 }
 
 
@@ -757,10 +748,9 @@ main (int argc, char **argv)
      * the FB are mutually compatible
      */
     if ((ctr_x + unit_r > fb_width) || (ctr_x < unit_r) ||
-	(ctr_y + unit_r > fb_height) || (ctr_y < unit_r))
-    {
-	(void) fputs("Plot not entirely within frame buffer\n", stderr);
-	(void) bu_exit (1, NULL);
+	(ctr_y + unit_r > fb_height) || (ctr_y < unit_r)) {
+	(void)fputs("Plot not entirely within frame buffer\n", stderr);
+	(void)bu_exit (1, NULL);
     }
 
     if (clr_fb)
@@ -800,9 +790,9 @@ main (int argc, char **argv)
 	    Fill_Func = Fill_Rings;
 	    break;
 	default:
-	    (void) fputs("Bad interior.  Shouldn't happen\n",
-			 stderr);
-	    (void) bu_exit (1, NULL);
+	    (void)fputs("Bad interior.  Shouldn't happen\n",
+			stderr);
+	    (void)bu_exit (1, NULL);
 	    break;
     }
 
