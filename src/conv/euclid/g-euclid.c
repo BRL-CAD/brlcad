@@ -338,15 +338,15 @@ Write_euclid_region(struct nmgregion *r, struct db_tree_state *tsp)
 		    /* loop1 is a hole look for loops containing loop1 */
 		    outer_loop_count = 0;
 		    for (loop2 = 0; loop2 < no_of_loops; loop2++) {
-			int class;
+			int nmg_class;
 
 			if (faces[loop2].facet_type == 1)
 			    continue;
 
-			class = nmg_classify_lu_lu(faces[loop1].lu,
+			nmg_class = nmg_classify_lu_lu(faces[loop1].lu,
 						   faces[loop2].lu, &tol);
 
-			if (class != NMG_CLASS_AinB)
+			if (nmg_class != NMG_CLASS_AinB)
 			    continue;
 
 			/* loop1 is inside loop2, possible outer loop */
