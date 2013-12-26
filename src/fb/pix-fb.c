@@ -185,7 +185,7 @@ get_args(int argc, char **argv)
 int
 skipbytes(int fd, off_t num)
 {
-    int n, try;
+    int n, tries;
 
     if (fileinput) {
 	(void)lseek(fd, num, 1);
@@ -193,8 +193,8 @@ skipbytes(int fd, off_t num)
     }
 
     while (num > 0) {
-	try = num > scanbytes ? scanbytes : num;
-	n = read(fd, scanline, try);
+	tries = num > scanbytes ? scanbytes : num;
+	n = read(fd, scanline, tries);
 	if (n <= 0) {
 	    return -1;
 	}

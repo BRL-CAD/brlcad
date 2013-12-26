@@ -335,7 +335,7 @@ general:
 int
 skipbytes(int fd, off_t num)
 {
-    int n, try;
+    int n, tries;
 
     if (fileinput) {
 	(void)lseek(fd, num, 1);
@@ -343,8 +343,8 @@ skipbytes(int fd, off_t num)
     }
 
     while (num > 0) {
-	try = num > MAX_LINE ? MAX_LINE : num;
-	n = read(fd, ibuf, try);
+	tries = num > MAX_LINE ? MAX_LINE : num;
+	n = read(fd, ibuf, tries);
 	if (n <= 0) {
 	    return -1;
 	}
