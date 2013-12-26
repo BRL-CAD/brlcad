@@ -59,14 +59,14 @@ long bu_n_realloc = 0;
  *
  * NOT published in a public header.
  */
-const char bu_vls_message[] = "bu_vls_str";
+EXTERNVARINIT const char bu_vls_message[] = "bu_vls_str";
 
 /**
  * used by malloc and vls as the bu_strdup debug string.
  *
  * NOT published in a public header.
  */
-const char bu_strdup_message[] = "bu_strdup string";
+EXTERNVARINIT const char bu_strdup_message[] = "bu_strdup string";
 
 /**
  * bu_setjmp_valid is global because BU_SETJUMP() *must* be a macro.
