@@ -82,8 +82,8 @@ char *print_queue = "canon";
 /*
  *	U S A G E --- tell user how to invoke this program, then exit
  */
-void usage(s)
-    char *s;
+void
+usage(const char *s)
 {
     if (s) (void)fputs(s, stderr);
 
@@ -104,9 +104,8 @@ void usage(s)
 /*
  *	P A R S E _ A R G S --- Parse through command line flags
  */
-int parse_args(ac, av)
-    int ac;
-    char *av[];
+int
+parse_args(int ac, char **av)
 {
     int  c;
     char *p;
