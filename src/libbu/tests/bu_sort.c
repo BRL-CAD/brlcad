@@ -67,8 +67,8 @@ comp_4(const void *num1, const void *num2, void *cmp)
 int
 main(int argc, char **argv)
 {
-    unsigned int arg_1[6] = {5, 2, 6, -15, 168, 3};
-    unsigned int exp_1[6] = {-15, 2, 3, 5, 6, 168};
+    int arg_1[6] = {5, 2, 6, -15, 168, 3};
+    int exp_1[6] = {-15, 2, 3, 5, 6, 168};
     unsigned int arg_2[8] = {56, 4, 7, 156, 2, 0, 23, 8};
     unsigned int exp_2[8] = {0, 2, 4, 7, 8, 23, 56, 156};
     fastf_t arg_3[5] = {5.5, 3.8, -5.5, 1, -7};
