@@ -66,7 +66,7 @@ describe_tree(union tree *tree,
     char *unionn=" u ";
     char *sub=" - ";
     char *inter=" + ";
-    char *xor=" ^ ";
+    char *xorr=" ^ ";
     char *op=NULL;
 
     BU_CK_VLS(str);
@@ -100,7 +100,7 @@ describe_tree(union tree *tree,
 	    op = sub;
 	    goto binary;
 	case OP_XOR:		/* exclusive "or" operator node */
-	    op = xor;
+	    op = xorr;
 	binary:				/* common for all binary nodes */
 	    describe_tree(tree->tr_b.tb_left, &left);
 	    describe_tree(tree->tr_b.tb_right, &right);
