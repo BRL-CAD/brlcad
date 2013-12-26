@@ -69,9 +69,9 @@ struct state_data {
 static struct bu_list state_stack;
 static struct state_data *curr_state;
 static int curr_color=7;
-static int ignore_colors=0;
+static int ignore_colors = 0;
 static char *curr_layer_name;
-static int color_by_layer=0;		/* flag, if set, colors are set by layer */
+static int color_by_layer = 0;		/* flag, if set, colors are set by layer */
 
 struct layer {
     char *name;			/* layer name */
@@ -152,7 +152,7 @@ static int curr_layer;
 #define NUM_ENTITY_STATES		19
 
 /* POLYLINE flags */
-static int polyline_flag=0;
+static int polyline_flag = 0;
 #define POLY_CLOSED		1
 #define POLY_CURVE_FIT		2
 #define POLY_SPLINE_FIT		4
@@ -184,13 +184,13 @@ static int polyline_flag=0;
 #define NUM_TABLE_STATES	2
 
 static fastf_t *polyline_verts=NULL;
-static int polyline_vertex_count=0;
-static int polyline_vertex_max=0;
-static int mesh_m_count=0;
-static int mesh_n_count=0;
+static int polyline_vertex_count = 0;
+static int polyline_vertex_max = 0;
+static int mesh_m_count = 0;
+static int mesh_n_count = 0;
 static int *polyline_vert_indices=NULL;
-static int polyline_vert_indices_count=0;
-static int polyline_vert_indices_max=0;
+static int polyline_vert_indices_count = 0;
+static int polyline_vert_indices_max = 0;
 #define PVINDEX(_i, _j)	((_i)*mesh_n_count + (_j))
 #define POLYLINE_VERTEX_BLOCK	10
 
@@ -199,7 +199,7 @@ static point_t pts[4];
 #define UNKNOWN_ENTITY	0
 #define POLYLINE_VERTEX		1
 
-static int invisible=0;
+static int invisible = 0;
 
 #define ERROR_FLAG	-999
 #define EOF_FLAG	-998
@@ -214,8 +214,8 @@ static FILE *dxf;
 static struct rt_wdb *out_fp;
 static char *output_file;
 static char *dxf_file;
-static int verbose=0;
-static fastf_t tol=0.01;
+static int verbose = 0;
+static fastf_t tol = 0.01;
 static fastf_t tol_sq;
 static char *base_name;
 static char tmp_name[256];
@@ -234,7 +234,7 @@ static int (*process_entities_code[NUM_ENTITY_STATES])(int code);
 static int (*process_tables_sub_code[NUM_TABLE_STATES])(int code);
 
 static int *int_ptr=NULL;
-static int units=0;
+static int units = 0;
 static fastf_t units_conv[]={
     /* 0 */	1.0,
     /* 1 */	25.4,
@@ -313,7 +313,7 @@ get_layer()
 	    }
 	    max_layers += 5;
 	    layers = (struct layer **)bu_realloc(layers, max_layers*sizeof(struct layer *), "layers");
-	    for (i=0; i<5; i++) {
+	    for (i = 0; i < 5; i++) {
 		BU_ALLOC(layers[max_layers-i-1], struct layer);
 	    }
 	}
@@ -848,12 +848,12 @@ process_entities_polyline_code(int code)
 			if (mesh_m_count < 2) {
 			    if (mesh_n_count > 4) {
 				bu_log("Cannot handle polyline meshes with m<2 and n>4\n");
-				polyline_vert_indices_count=0;
+				polyline_vert_indices_count = 0;
 				polyline_vert_indices_count = 0;
 				break;
 			    }
 			    if (mesh_n_count < 3) {
-				polyline_vert_indices_count=0;
+				polyline_vert_indices_count = 0;
 				polyline_vert_indices_count = 0;
 				break;
 			    }
@@ -869,8 +869,8 @@ process_entities_polyline_code(int code)
 			    }
 			}
 
-			for (j=1; j<mesh_n_count; j++) {
-			    for (i=1; i<mesh_m_count; i++) {
+			for (j = 1; j < mesh_n_count; j++) {
+			    for (i = 1; i < mesh_m_count; i++) {
 				add_triangle(polyline_vert_indices[PVINDEX(i-1, j-1)],
 					     polyline_vert_indices[PVINDEX(i-1, j)],
 					     polyline_vert_indices[PVINDEX(i, j-1)],
@@ -881,12 +881,12 @@ process_entities_polyline_code(int code)
 					     curr_layer);
 			    }
 			}
-			polyline_vert_indices_count=0;
+			polyline_vert_indices_count = 0;
 			polyline_vertex_count = 0;
 		    }
 		} else {
 		    struct edgeuse *eu;
-		    struct vertex *v0=NULL, *v1=NULL, *v2=NULL;
+		    struct vertex *v0 = NULL, *v1 = NULL, *v2 = NULL;
 
 		    if (polyline_vertex_count > 1) {
 			int i;
@@ -895,7 +895,7 @@ process_entities_polyline_code(int code)
 			    create_nmg();
 			}
 
-			for (i=0; i<polyline_vertex_count-1; i++) {
+			for (i = 0; i < polyline_vertex_count-1; i++) {
 			    eu = nmg_me(v1, v2, layers[curr_layer]->s);
 			    if (i == 0) {
 				v1 = eu->vu_p->v_p;
@@ -923,7 +923,7 @@ process_entities_polyline_code(int code)
 			    }
 			}
 		    }
-		    polyline_vert_indices_count=0;
+		    polyline_vert_indices_count = 0;
 		    polyline_vertex_count = 0;
 		}
 
@@ -1393,12 +1393,12 @@ process_lwpolyline_entities_code(int code)
 		    create_nmg();
 		}
 
-		for (i=0; i<polyline_vertex_count; i++) {
+		for (i = 0; i < polyline_vertex_count; i++) {
 		    MAT4X3PNT(tmp_pt, curr_state->xform, &polyline_verts[i*3]);
 		    VMOVE(&polyline_verts[i*3], tmp_pt);
 		}
 
-		for (i=0; i<polyline_vertex_count-1; i++) {
+		for (i = 0; i < polyline_vertex_count-1; i++) {
 		    struct edgeuse *eu;
 
 		    eu = nmg_me(v1, v2, layers[curr_layer]->s);
@@ -1428,7 +1428,7 @@ process_lwpolyline_entities_code(int code)
 		    }
 		}
 	    }
-	    polyline_vert_indices_count=0;
+	    polyline_vert_indices_count = 0;
 	    polyline_vertex_count = 0;
 	    curr_state->sub_state = UNKNOWN_ENTITY_STATE;
 	    process_entities_code[curr_state->sub_state](code);
@@ -1517,7 +1517,7 @@ process_ellipse_entities_code(int code)
     static point_t center={0, 0, 0};
     static point_t majorAxis={1.0, 0, 0};
     static double ratio=1.0;
-    static double startAngle=0.0;
+    static double startAngle = 0.0;
     static double endAngle=M_PI*2.0;
     double angle, delta;
     double majorRadius, minorRadius;
@@ -1526,7 +1526,7 @@ process_ellipse_entities_code(int code)
     int coord;
     int fullCircle;
     int done;
-    struct vertex *v0=NULL, *v1=NULL, *v2=NULL;
+    struct vertex *v0 = NULL, *v1 = NULL, *v2 = NULL;
     struct edgeuse *eu;
 
     switch (code) {
@@ -1725,7 +1725,7 @@ process_circle_entities_code(int code)
 	    }
 
 	    /* move everything to the specified center */
-	    for (i=0; i<segs_per_circle; i++) {
+	    for (i = 0; i < segs_per_circle; i++) {
 		point_t tmp_pt;
 		VADD2(circle_pts[i], circle_pts[i], center);
 
@@ -1735,7 +1735,7 @@ process_circle_entities_code(int code)
 	    }
 
 	    /* make nmg wire edges */
-	    for (i=0; i<segs_per_circle; i++) {
+	    for (i = 0; i < segs_per_circle; i++) {
 		if (i+1 == segs_per_circle) {
 		    v2 = v0;
 		}
@@ -1895,16 +1895,16 @@ void
 drawString(char *theText, point_t firstAlignmentPoint, point_t secondAlignmentPoint,
 	   double textHeight, double UNUSED(textScale), double textRotation, int horizAlignment, int vertAlignment, int UNUSED(textFlag))
 {
-    double stringLength=0.0;
+    double stringLength = 0.0;
     char *copyOfText;
     char *c, *cp;
     vect_t diff;
     struct bu_list vhead;
-    int maxLineLen=0;
+    int maxLineLen = 0;
 
     BU_LIST_INIT(&vhead);
 
-    copyOfText = bu_calloc((unsigned int)strlen(theText)+1, 1, "copyOfText");
+    copyOfText = (char *)bu_calloc((unsigned int)strlen(theText)+1, 1, "copyOfText");
     c = theText;
     cp = copyOfText;
     (void)convertSecretCodes(c, cp, &maxLineLen);
@@ -1984,11 +1984,11 @@ drawMtext(char *text, int attachPoint, int UNUSED(drawingDirection), double text
     double lineSpace;
     vect_t xdir, ydir;
     double startx, starty;
-    int maxLineLen=0;
+    int maxLineLen = 0;
     double scale = 1.0;
     double xdel = 0.0, ydel = 0.0;
     double radians = rotationAngle * DEG2RAD;
-    char *copyOfText = bu_calloc((unsigned int)strlen(text)+1, 1, "copyOfText");
+    char *copyOfText = (char *)bu_calloc((unsigned int)strlen(text)+1, 1, "copyOfText");
 
     BU_LIST_INIT(&vhead);
 
@@ -2081,8 +2081,8 @@ drawMtext(char *text, int attachPoint, int UNUSED(drawingDirection), double text
 static int
 process_leader_entities_code(int code)
 {
-    static int arrowHeadFlag=0;
-    static int vertNo=0;
+    static int arrowHeadFlag = 0;
+    static int vertNo = 0;
     static point_t pt;
     point_t tmp_pt;
     int i;
@@ -2190,7 +2190,7 @@ process_leader_entities_code(int code)
 		    create_nmg();
 		}
 
-		for (i=0; i<polyline_vertex_count-1; i++) {
+		for (i = 0; i < polyline_vertex_count-1; i++) {
 		    eu = nmg_me(v1, v2, layers[curr_layer]->s);
 		    if (i == 0) {
 			v1 = eu->vu_p->v_p;
@@ -2207,7 +2207,7 @@ process_leader_entities_code(int code)
 		    v2 = NULL;
 		}
 	    }
-	    polyline_vert_indices_count=0;
+	    polyline_vert_indices_count = 0;
 	    polyline_vertex_count = 0;
 	    arrowHeadFlag = 0;
 	    vertNo = 0;
@@ -2225,15 +2225,15 @@ static int
 process_mtext_entities_code(int code)
 {
     static struct bu_vls *vls = NULL;
-    static int attachPoint=0;
-    static int drawingDirection=0;
-    static double textHeight=0.0;
-    static double entityHeight=0.0;
-    static double charWidth=0.0;
-    static double rectWidth=0.0;
-    static double rotationAngle=0.0;
-    static double insertionPoint[3]={0, 0, 0};
-    static double xAxisDirection[3]={0, 0, 0};
+    static int attachPoint = 0;
+    static int drawingDirection = 0;
+    static double textHeight = 0.0;
+    static double entityHeight = 0.0;
+    static double charWidth = 0.0;
+    static double rectWidth = 0.0;
+    static double rotationAngle = 0.0;
+    static double insertionPoint[3] = {0, 0, 0};
+    static double xAxisDirection[3] = {0, 0, 0};
     point_t tmp_pt;
     int coord;
 
@@ -2352,14 +2352,14 @@ process_text_attrib_entities_code(int code)
      */
 
     static char *theText=NULL;
-    static int horizAlignment=0;
-    static int vertAlignment=0;
-    static int textFlag=0;
+    static int horizAlignment = 0;
+    static int vertAlignment = 0;
+    static int textFlag = 0;
     static point_t firstAlignmentPoint = VINIT_ZERO;
     static point_t secondAlignmentPoint = VINIT_ZERO;
-    static double textScale=1.0;
+    static double textScale = 1.0;
     static double textHeight;
-    static double textRotation=0.0;
+    static double textRotation = 0.0;
     point_t tmp_pt;
     int coord;
 
@@ -2428,13 +2428,13 @@ process_text_attrib_entities_code(int code)
 			   textHeight, textScale, textRotation, horizAlignment, vertAlignment, textFlag);
 		layers[curr_layer]->text_count++;
 	    }
-	    horizAlignment=0;
-	    vertAlignment=0;
-	    textFlag=0;
+	    horizAlignment = 0;
+	    vertAlignment = 0;
+	    textFlag = 0;
 	    VSET(firstAlignmentPoint, 0.0, 0.0, 0.0);
 	    VSET(secondAlignmentPoint, 0.0, 0.0, 0.0);
-	    textScale=1.0;
-	    textRotation=0.0;
+	    textScale = 1.0;
+	    textRotation = 0.0;
 	    curr_state->sub_state = UNKNOWN_ENTITY_STATE;
 	    process_entities_code[curr_state->sub_state](code);
 	    break;
@@ -2615,13 +2615,13 @@ process_arc_entities_code(int code)
 
 	    if (verbose) {
 		bu_log("ARC points calculated:\n");
-		for (i=0; i<num_segs; i++) {
+		for (i = 0; i < num_segs; i++) {
 		    bu_log("\t point #%d: (%g %g %g)\n", i, V3ARGS(circle_pts[i]));
 		}
 	    }
 
 	    /* move everything to the specified center */
-	    for (i=0; i<num_segs; i++) {
+	    for (i = 0; i < num_segs; i++) {
 		point_t tmp_pt;
 
 		VADD2(circle_pts[i], circle_pts[i], center);
@@ -2633,13 +2633,13 @@ process_arc_entities_code(int code)
 
 	    if (verbose) {
 		bu_log("ARC points after move to center at (%g %g %g):\n", V3ARGS(center));
-		for (i=0; i<num_segs; i++) {
+		for (i = 0; i < num_segs; i++) {
 		    bu_log("\t point #%d: (%g %g %g)\n", i, V3ARGS(circle_pts[i]));
 		}
 	    }
 
 	    /* make nmg wire edges */
-	    for (i=1; i<num_segs; i++) {
+	    for (i = 1; i < num_segs; i++) {
 		if (i == num_segs) {
 		    v2 = v0;
 		}
@@ -2663,7 +2663,7 @@ process_arc_entities_code(int code)
 	    }
 
 	    VSETALL(center, 0.0);
-	    for (i=0; i<segs_per_circle; i++) {
+	    for (i = 0; i < segs_per_circle; i++) {
 		VSETALL(circle_pts[i], 0.0);
 	    }
 
@@ -2679,28 +2679,28 @@ process_arc_entities_code(int code)
 static int
 process_spline_entities_code(int code)
 {
-    static int flag=0;
-    static int degree=0;
-    static int numKnots=0;
-    static int numCtlPts=0;
-    static int numFitPts=0;
-    static fastf_t *knots=NULL;
-    static fastf_t *weights=NULL;
-    static fastf_t *ctlPts=NULL;
-    static fastf_t *fitPts=NULL;
-    static int knotCount=0;
-    static int weightCount=0;
-    static int ctlPtCount=0;
-    static int fitPtCount=0;
-    static int subCounter=0;
-    static int subCounter2=0;
+    static int flag = 0;
+    static int degree = 0;
+    static int numKnots = 0;
+    static int numCtlPts = 0;
+    static int numFitPts = 0;
+    static fastf_t *knots = NULL;
+    static fastf_t *weights = NULL;
+    static fastf_t *ctlPts = NULL;
+    static fastf_t *fitPts = NULL;
+    static int knotCount = 0;
+    static int weightCount = 0;
+    static int ctlPtCount = 0;
+    static int fitPtCount = 0;
+    static int subCounter = 0;
+    static int subCounter2 = 0;
     int i;
     int coord;
     struct edge_g_cnurb *crv;
     int pt_type;
     int ncoords;
-    struct vertex *v1=NULL;
-    struct vertex *v2=NULL;
+    struct vertex *v1 = NULL;
+    struct vertex *v2 = NULL;
     struct edgeuse *eu;
     fastf_t startParam;
     fastf_t stopParam;
@@ -2742,7 +2742,7 @@ process_spline_entities_code(int code)
 		weights = (fastf_t *)bu_malloc(numCtlPts*sizeof(fastf_t),
 					       "spline weights");
 	    }
-	    for (i=0; i<numCtlPts; i++) {
+	    for (i = 0; i < numCtlPts; i++) {
 		weights[i] = 1.0;
 	    }
 	    break;
@@ -2822,10 +2822,10 @@ process_spline_entities_code(int code)
 	    }
 	    crv = rt_nurb_new_cnurb(degree+1, numCtlPts+degree+1, numCtlPts, pt_type);
 
-	    for (i=0; i<numKnots; i++) {
+	    for (i = 0; i < numKnots; i++) {
 		crv->k.knots[i] = knots[i];
 	    }
-	    for (i=0; i<numCtlPts; i++) {
+	    for (i = 0; i < numCtlPts; i++) {
 		crv->ctl_points[i*ncoords + 0] = ctlPts[i*3+0];
 		crv->ctl_points[i*ncoords + 1] = ctlPts[i*3+1];
 		crv->ctl_points[i*ncoords + 2] = ctlPts[i*3+2];
@@ -2840,7 +2840,7 @@ process_spline_entities_code(int code)
 	    stopParam = knots[numKnots-1];
 	    paramDelta = (stopParam - startParam) / (double)splineSegs;
 	    rt_nurb_c_eval(crv, startParam, pt);
-	    for (i=0; i<splineSegs; i++) {
+	    for (i = 0; i < splineSegs; i++) {
 		fastf_t param = startParam + paramDelta * (i+1);
 		eu = nmg_me(v1, v2, layers[curr_layer]->s);
 		v1 = eu->vu_p->v_p;
@@ -2933,7 +2933,7 @@ process_3dface_entities_code(int code)
 		bu_log("\tmaking two triangles\n");
 	    }
 	    layers[curr_layer]->face3d_count++;
-	    for (vert_no=0; vert_no<4; vert_no++) {
+	    for (vert_no = 0; vert_no < 4; vert_no++) {
 		point_t tmp_pt1;
 		MAT4X3PNT(tmp_pt1, curr_state->xform, pts[vert_no]);
 		VMOVE(pts[vert_no], tmp_pt1);
@@ -3071,9 +3071,9 @@ nmg_wire_edges_to_sketch(struct model *m)
 	skt->verts[idx][1] = vr->the_array[idx*3 + 1];
     }
     skt->curve.count = BU_PTBL_LEN(&segs);
-    skt->curve.reverse = bu_realloc(skt->curve.reverse, skt->curve.count * sizeof (int), "curve segment reverse");
+    skt->curve.reverse = (int *)bu_realloc(skt->curve.reverse, skt->curve.count * sizeof (int), "curve segment reverse");
     memset(skt->curve.reverse, 0, skt->curve.count * sizeof (int));
-    skt->curve.segment = bu_realloc(skt->curve.segment, skt->curve.count * sizeof (genptr_t), "curve segments");
+    skt->curve.segment = (void **)bu_realloc(skt->curve.segment, skt->curve.count * sizeof (genptr_t), "curve segments");
     for (idx = 0; idx < BU_PTBL_LEN(&segs); idx++) {
 	genptr_t ptr = BU_PTBL_GET(&segs, idx);
 	skt->curve.segment[idx] = ptr;
@@ -3091,7 +3091,7 @@ readcodes()
 {
     int code;
     size_t line_len;
-    static int line_num=0;
+    static int line_num = 0;
 
     curr_state->file_offset = bu_ftell(dxf);
 
@@ -3249,7 +3249,7 @@ main(int argc, char *argv[])
 
     /* create storage for circles */
     circle_pts = (point_t *)bu_calloc(segs_per_circle, sizeof(point_t), "circle_pts");
-    for (i=0; i<segs_per_circle; i++) {
+    for (i = 0; i < segs_per_circle; i++) {
 	VSETALL(circle_pts[i], 0.0);
     }
 
@@ -3268,7 +3268,7 @@ main(int argc, char *argv[])
     next_layer = 1;
     curr_layer = 0;
     layers = (struct layer **)bu_calloc(5, sizeof(struct layer *), "layers");
-    for (i=0; i<max_layers; i++) {
+    for (i = 0; i < max_layers; i++) {
 	BU_ALLOC(layers[i], struct layer);
     }
     layers[0]->name = bu_strdup("noname");
@@ -3284,7 +3284,7 @@ main(int argc, char *argv[])
     }
 
     BU_LIST_INIT(&head_all);
-    for (i=0; i<next_layer; i++) {
+    for (i = 0; i < next_layer; i++) {
 	struct bu_list head;
 	int j;
 
@@ -3306,7 +3306,7 @@ main(int argc, char *argv[])
 	    }
 	}
 
-	for (j=0; j<BU_PTBL_END(&layers[i]->solids); j++) {
+	for (j = 0; j < BU_PTBL_END(&layers[i]->solids); j++) {
 	    (void)mk_addmember((char *)BU_PTBL_GET(&layers[i]->solids, j), &head,
 			       NULL, WMOP_UNION);
 	    bu_free((char *)BU_PTBL_GET(&layers[i]->solids, j), "solid_name");
@@ -3407,7 +3407,7 @@ main(int argc, char *argv[])
 
     if (BU_LIST_NON_EMPTY(&head_all)) {
 	struct bu_vls top_name = BU_VLS_INIT_ZERO;
-	int count=0;
+	int count = 0;
 
 	bu_vls_strcpy(&top_name, "all");
 	while (db_lookup(out_fp->dbip, bu_vls_addr(&top_name), LOOKUP_QUIET) != RT_DIR_NULL) {
