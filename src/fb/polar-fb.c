@@ -391,7 +391,7 @@ main (int argc, char **argv)
     unsigned char *fbb;		/* Buffer for current line of frame buffer */
     unsigned char *fbbPtr;	/* Pointer to within fbb */
 
-    void (*Fill_Func)() = Fill_Empty;
+    void (*Fill_Func)(unsigned char *, double, double, int, int) = Fill_Empty;
 
 /* Initialize things */
     ProgName = *argv;
@@ -857,7 +857,7 @@ main (int argc, char **argv)
 		    COPYRGB(fbbPtr, Color[C_BKGRND]);
 		}
 	    } else {
-		(*Fill_Func)(fbbPtr, rho, npf_rho, unit_r, merge);
+		Fill_Func(fbbPtr, rho, npf_rho, unit_r, merge);
 
 		if (perimeter && (npf_rho - rho / unit_r < .02)) {
 		    COPYRGB(fbbPtr, Color[C_PERIM]);
