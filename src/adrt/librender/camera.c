@@ -536,7 +536,8 @@ void
 render_camera_render(render_camera_t *camera, struct tie_s *tie, camera_tile_t *tile, tienet_buffer_t *result)
 {
     render_camera_thread_data_t td;
-    unsigned int scanline, ind;
+    unsigned int scanline;
+    uint32_t ind;
 
     ind = result->ind;
 
@@ -598,7 +599,7 @@ render_shader_load_plugin(const char *filename)
 	bu_log("Faulty plugin %s: %s\n", filename, bu_dlerror());
 	return NULL;
     }
-    name = bu_dlsym(lh, "name");
+    name = (char *)bu_dlsym(lh, "name");
     if(name == NULL) {
 	bu_log("Faulty plugin %s: No name\n", filename);
 	bu_dlclose(lh);
