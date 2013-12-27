@@ -83,12 +83,13 @@ typedef struct _server_data_ {
 
 
 server_data*
-init_srv_data () {
-		server_data *stash = bu_malloc(sizeof *stash, "server data memory");
-		stash->DBIP = NULL;
-		stash->srv_argc = 0;
-		stash->srv_argv = NULL;
-		return stash;
+init_srv_data()
+{
+    server_data *stash = bu_malloc(sizeof *stash, "server data memory");
+    stash->DBIP = NULL;
+    stash->srv_argc = 0;
+    stash->srv_argv = NULL;
+    return stash;
 }
 
 /** print a usage statement when invoked with bad, help, or no arguments
@@ -106,7 +107,8 @@ usage(const char *msg, const char *argv0)
 
 
 void
-validate_port(int port) {
+validate_port(int port)
+{
     if (port < 0)
 	bu_exit(EXIT_FAILURE, "Invalid negative port range\n");
 }
@@ -127,7 +129,8 @@ miss(struct application *UNUSED(ap))
 }
 
 void
-do_something(server_data *stash) {
+do_something(server_data *stash)
+{
     /* shoot a ray at some geometry just to show that we can */
     struct application ap;
     struct rt_i *rtip;
@@ -182,9 +185,10 @@ server_args(struct pkg_conn *connection, char *buf)
     /* updates the srv_argc and srv_argv application globals used to
      * show that we can shoot at geometry in-memory.
      */
-	server_data *stash;
-	stash = init_srv_data();
-	stash->srv_argc++;
+    server_data *stash;
+    stash = init_srv_data();
+    stash->srv_argc++;
+
     if (!stash->srv_argv) {
 	stash->srv_argv = bu_calloc(1, stash->srv_argc * sizeof(char *), "server_args() srv_argv calloc");
     } else {
@@ -259,7 +263,8 @@ server_ciao(struct pkg_conn* connection, char *buf)
 /** start up a server that listens for a single client.
  */
 void
-run_server(int port) {
+run_server(int port)
+{
     struct pkg_conn *client;
     int netfd;
     char portname[MAX_DIGITS] = {0};
