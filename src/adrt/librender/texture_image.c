@@ -33,20 +33,7 @@
 
 #include "bu.h"
 
-void
-texture_image_init(struct texture_s *texture, short w, short h, unsigned char *image) {
-    struct texture_image_s *td;
 
-    BU_ALLOC(texture->data, struct texture_image_s);
-    texture->free = texture_image_free;
-    texture->work = (texture_work_t *)texture_image_work;
-
-    td = (struct texture_image_s *)texture->data;
-    td->w = w;
-    td->h = h;
-    td->image = (unsigned char *)bu_malloc(3*w*h, "texture image");
-    memcpy(td->image, image, 3*w*h);
-}
 
 
 void

@@ -30,24 +30,7 @@
 
 #include "bu.h"
 
-void
-texture_camo_init(struct texture_s *texture, fastf_t size, int octaves, int absolute, vect_t color1, vect_t color2, vect_t color3) {
-    struct texture_camo_s *sd;
 
-    BU_ALLOC(texture->data, struct texture_camo_s);
-    texture->free = texture_camo_free;
-    texture->work = (texture_work_t *)texture_camo_work;
-
-    sd = (struct texture_camo_s *)texture->data;
-    sd->size = size;
-    sd->octaves = octaves;
-    sd->absolute = absolute;
-    VMOVE(sd->color1, color1);
-    VMOVE(sd->color2, color2);
-    VMOVE(sd->color3, color3);
-
-    texture_perlin_init(&sd->perlin);
-}
 
 
 void

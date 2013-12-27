@@ -30,17 +30,7 @@
 
 #include "bu.h"
 
-void
-texture_gradient_init(struct texture_s *texture, int axis) {
-    struct texture_gradient_s *td;
 
-    BU_ALLOC(texture->data, struct texture_gradient_s);
-    texture->free = texture_gradient_free;
-    texture->work = (texture_work_t *)texture_gradient_work;
-
-    td = (struct texture_gradient_s *)texture->data;
-    td->axis = axis;
-}
 
 
 void

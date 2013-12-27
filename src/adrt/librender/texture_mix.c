@@ -30,19 +30,6 @@
 
 #include "bu.h"
 
-void
-texture_mix_init(struct texture_s *texture, struct texture_s *texture1, struct texture_s *texture2, fastf_t coef) {
-    struct texture_mix_s *td;
-
-    BU_ALLOC(texture->data, struct texture_mix_s);
-    texture->free = texture_mix_free;
-    texture->work = (texture_work_t *)texture_mix_work;
-
-    td = (struct texture_mix_s *)texture->data;
-    td->texture1 = texture1;
-    td->texture2 = texture2;
-    td->coef = coef;
-}
 
 
 void

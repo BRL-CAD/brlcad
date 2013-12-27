@@ -29,18 +29,7 @@
 
 #include "bu.h"
 
-void
-texture_blend_init(struct texture_s *texture, vect_t color1, vect_t color2) {
-    struct texture_blend_s *sd;
 
-    BU_ALLOC(texture->data, struct texture_blend_s);
-    texture->free = texture_blend_free;
-    texture->work = (texture_work_t *)texture_blend_work;
-
-    sd = (struct texture_blend_s *)texture->data;
-    VMOVE(sd->color1, color1);
-    VMOVE(sd->color2, color2);
-}
 
 
 void

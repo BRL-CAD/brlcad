@@ -29,17 +29,7 @@
 
 #include "bu.h"
 
-void
-texture_bump_init(struct texture_s *texture, vect_t coef) {
-    struct texture_bump_s *sd;
 
-    BU_ALLOC(texture->data, struct texture_bump_s);
-    texture->free = texture_bump_free;
-    texture->work = (texture_work_t *)texture_bump_work;
-
-    sd = (struct texture_bump_s *)texture->data;
-    VMOVE(sd->coef, coef);
-}
 
 
 void

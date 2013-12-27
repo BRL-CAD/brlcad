@@ -30,23 +30,7 @@
 
 #include "bu.h"
 
-void
-texture_clouds_init(struct texture_s *texture, tfloat size, int octaves, int absolute, vect_t scale, vect_t translate) {
-    struct texture_clouds_s *td;
 
-    BU_ALLOC(texture->data, struct texture_clouds_s);
-    texture->free = texture_clouds_free;
-    texture->work = (texture_work_t *)texture_clouds_work;
-
-    td = (struct texture_clouds_s*)texture->data;
-    td->size = size;
-    td->octaves = octaves;
-    td->absolute = absolute;
-    VMOVE(td->scale, scale);
-    VMOVE(td->translate, translate);
-
-    texture_perlin_init(&td->perlin);
-}
 
 
 void

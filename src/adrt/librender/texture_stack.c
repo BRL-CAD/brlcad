@@ -30,18 +30,7 @@
 #include "bu.h"
 
 
-void
-texture_stack_init(struct texture_s *texture) {
-    struct texture_stack_s *td;
 
-    BU_ALLOC(texture->data, struct texture_stack_s);
-    texture->free = texture_stack_free;
-    texture->work = (texture_work_t *)texture_stack_work;
-
-    td = (struct texture_stack_s *)texture->data;
-    td->num = 0;
-    td->list = NULL;
-}
 
 
 void
@@ -66,15 +55,7 @@ texture_stack_work(struct texture_s *texture, void *mesh, struct tie_ray_s *ray,
 }
 
 
-void
-texture_stack_push(struct texture_s *texture, struct texture_s *texture_new) {
-    struct texture_stack_s *td;
 
-    td = (struct texture_stack_s *)texture->data;
-
-    td->list = (struct texture_s **)bu_realloc(td->list, sizeof(struct texture_s *)*(td->num+1), "texture data");
-    td->list[td->num++] = texture_new;
-}
 
 
 /*

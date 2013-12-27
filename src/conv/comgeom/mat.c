@@ -310,21 +310,7 @@ mat_inv(matp_t output, matp_t input)
 }
 
 
-/*
- *			V T O H _ M O V E
- *
- * Takes a pointer to a [x, y, z] vector, and a pointer
- * to space for a homogeneous vector [x, y, z, w],
- * and builds [x, y, z, 1].
- */
-void
-vtoh_move(float *h, float *v)
-{
-    *h++ = *v++;
-    *h++ = *v++;
-    *h++ = *v;
-    *h++ = 1;
-}
+
 
 /*
  *			H T O V _ M O V E
