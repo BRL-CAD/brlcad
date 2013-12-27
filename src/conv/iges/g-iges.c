@@ -658,11 +658,8 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 static int de_pointer_number;
 
 int
-get_de_pointers(tp, dp, de_len, de_pointers)
-    union tree *tp;
-    struct directory *dp;
-    int de_len;
-    int *de_pointers;
+get_de_pointers(union tree *tp, struct directory *dp, int de_len,
+		int *de_pointers)
 {
     RT_CK_TREE(tp);
     RT_CK_DIR(dp);
