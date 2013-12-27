@@ -1151,7 +1151,7 @@ rt_ars_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
     } else if (BU_STR_EQUAL(attr, "PPC")) {
 	bu_vls_printf(logstr, "%zu", ars->pts_per_curve);
     } else if (attr[0] == 'C') {
-	char *ptr;
+	const char *ptr;
 
 	if (attr[1] == '\0') {
 	    /* all the curves */
@@ -1178,7 +1178,9 @@ rt_ars_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 		return BRLCAD_ERROR;
 	    }
 	    j = atoi((ptr+1));
+	    /* FIXME: is this necessary? modifiying a const char is illegal!
 	    *ptr = '\0';
+	    */
 	    i = atoi(&attr[1]);
 	    bu_vls_printf(logstr, "%.25g %.25g %.25g",
 			  V3ARGS(&ars->curves[i][j*3]));
@@ -1278,7 +1280,7 @@ rt_ars_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 	    }
 	} else if (argv[0][0] == 'C') {
 	    if (isdigit((int)argv[0][1])) {
-		char *ptr;
+		const char *ptr;
 
 		/* a specific curve */
 		ptr = strchr(argv[0], 'P');
@@ -1296,16 +1298,17 @@ rt_ars_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		    }
 		} else {
 		    char *dupstr;
+		    char *ptr2;
 
 		    /* one complete curve */
 		    i = atoi(&argv[0][1]);
 		    len = ars->pts_per_curve * 3;
 		    dupstr = bu_strdup(argv[1]);
-		    ptr = dupstr;
-		    while (*ptr) {
-			if (*ptr == '{' || *ptr == '}')
-			    *ptr = ' ';
-			ptr++;
+		    ptr2 = dupstr;
+		    while (*ptr2) {
+			if (*ptr2 == '{' || *ptr2 == '}')
+			    *ptr2 = ' ';
+			ptr2++;
 		    }
 		    if (!ars->curves[i]) {
 			ars->curves[i] = (fastf_t *)bu_calloc(ars->pts_per_curve * 3, sizeof(fastf_t), "ars->curves[i]");

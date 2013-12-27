@@ -1338,7 +1338,7 @@ int
 obj_in_path(const char *path, const char *obj)
 {
     size_t obj_len=strlen(obj);
-    char *ptr;
+    const char *ptr;
 
     ptr = strstr(path, obj);
 
