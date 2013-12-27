@@ -112,14 +112,12 @@ RGBpixel Color[] = {
 
 int
 LoadNPF (char *FileName, double *Table, int Quantum, double convert, double arc_min, double arc_max)
-
 /* Name of input file */
 /* Location for storing function */
 /* Angular resolution of Table (in degrees) */
 /* Factor to convert input units to radians */
 /* First angle of interest */
 /* Last    "    "     "    */
-
 {
     int Warnings = 0;	/* Have any warning messages been printed? */
     int angle;
@@ -152,8 +150,7 @@ LoadNPF (char *FileName, double *Table, int Quantum, double convert, double arc_
 
     /* Fill the table */
     while ((fscanf(fPtr, "%lf", &theta) == 1) &&
-	   (fscanf(fPtr, "%lf", &rho) == 1))
-    {
+	   (fscanf(fPtr, "%lf", &rho) == 1)) {
 	theta *= convert;
 	if ((theta < 0.0) || (npf_index(theta / Deg2Rad) * Quantum > 360)) {
 	    (void) fprintf(stderr,
@@ -269,7 +266,6 @@ Fill_Constant (unsigned char *fbbPtr, double UNUSED(rho), double UNUSED(npf_rho)
 /* Value of function at this theta */
 /* Unit radius (in pixels) */
 /* Overlay onto current FB contents? */
-
 {
     COPYRGB(fbbPtr, Color[C_INTERIOR]);
 }
@@ -393,15 +389,15 @@ main (int argc, char **argv)
 
     void (*Fill_Func)(unsigned char *, double, double, int, int) = Fill_Empty;
 
-/* Initialize things */
+    /* Initialize things */
     ProgName = *argv;
     angle_cvt = Deg2Rad = DEG2RAD;
     FB_Name = "";
     Interior = BI_RINGS;
     Color[C_BKGRND][RED] = Color[C_BKGRND][GRN] = Color[C_BKGRND][BLU] = 255;
 
-/* Handle command-line options */
-    while ((--argc > 0) && ((*++argv)[0] == '-'))
+    /* Handle command-line options */
+    while ((--argc > 0) && ((*++argv)[0] == '-')) {
 	for (Opt = argv[0] + 1; *Opt != '\0'; Opt++)
 	    switch (*Opt) {
 		case 'o':		/* Translate the plot */
@@ -707,6 +703,7 @@ main (int argc, char **argv)
 		    PrintUsage(1);
 		    (void) bu_exit (*Opt != '?', NULL);
 	    }
+    } /* while */
 
     /* Determine source of input */
     switch (argc) {
