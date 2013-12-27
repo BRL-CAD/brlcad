@@ -22,11 +22,7 @@
 #include "./iges_extern.h"
 
 int
-Add_loop_to_face(s, fu, entityno, face_orient)
-    struct shell *s;
-    struct faceuse *fu;
-    int entityno;
-    int face_orient;
+Add_loop_to_face(struct shell *s, struct faceuse *fu, int entityno, int face_orient)
 {
     struct faceuse *fu_tmp;
     plane_t pl_fu, pl_fu_tmp;
