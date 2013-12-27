@@ -391,6 +391,8 @@ main(int argc, char **argv)
     do_line(vfp, textstring);
 
     fb_close(fbp);
+    vfont_free(vfp);
+
     return 0;
 }
 
