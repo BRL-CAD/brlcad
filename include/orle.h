@@ -107,6 +107,7 @@ typedef struct /* Old RLE format instruction.				*/
 
 typedef unsigned char RLEpixel[3];
 
+/* FIXME: RLEColorMap is same as ColorMap defined in 'fbio.h' */
 typedef struct  {
     unsigned short cm_red[256];
     unsigned short cm_green[256];
