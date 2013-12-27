@@ -103,7 +103,7 @@ resize_isst(struct isst_s *isstp)
 	    break;
     }
     isstp->tile.format = RENDER_CAMERA_BIT_DEPTH_24;
-    TIENET_BUFFER_SIZE(isstp->buffer_image, (size_t)(3 * isstp->camera.w * isstp->camera.h));
+    TIENET_BUFFER_SIZE(isstp->buffer_image, (uint32_t)(3 * isstp->camera.w * isstp->camera.h));
     glClearColor (0.0, 0, 0.0, 1);
     glBindTexture (GL_TEXTURE_2D, isstp->texid);
     glPixelStorei (GL_UNPACK_ALIGNMENT, 1);

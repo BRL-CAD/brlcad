@@ -124,7 +124,7 @@ enum
 
 #define TIENET_BUFFER_SIZE(_b, _s) { \
 	if (_s > _b.size) { \
-	    _b.data = bu_realloc(_b.data, _s, "tienet buffer size"); \
+	    _b.data = (uint8_t *)bu_realloc(_b.data, _s, "tienet buffer size");	\
 	    _b.size = _s; \
 	} }
 
