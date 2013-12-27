@@ -85,7 +85,7 @@ typedef struct _server_data_ {
 server_data*
 init_srv_data()
 {
-    server_data *stash = bu_malloc(sizeof *stash, "server data memory");
+    server_data *stash = (server_data *)bu_malloc(sizeof *stash, "server data memory");
     stash->DBIP = NULL;
     stash->srv_argc = 0;
     stash->srv_argv = NULL;
@@ -190,11 +190,11 @@ server_args(struct pkg_conn *connection, char *buf)
     stash->srv_argc++;
 
     if (!stash->srv_argv) {
-	stash->srv_argv = bu_calloc(1, stash->srv_argc * sizeof(char *), "server_args() srv_argv calloc");
+	stash->srv_argv = (char **)bu_calloc(1, stash->srv_argc * sizeof(char *), "server_args() srv_argv calloc");
     } else {
-	stash->srv_argv = bu_realloc(stash->srv_argv, stash->srv_argc * sizeof(char *), "server_args() srv_argv realloc");
+	stash->srv_argv = (char **)bu_realloc(stash->srv_argv, stash->srv_argc * sizeof(char *), "server_args() srv_argv realloc");
     }
-    stash->srv_argv[stash->srv_argc - 1] = bu_calloc(1, strlen(buf)+1, "server_args() srv_argv[] calloc");
+    stash->srv_argv[stash->srv_argc - 1] = (char *)bu_calloc(1, strlen(buf)+1, "server_args() srv_argv[] calloc");
     bu_strlcpy(stash->srv_argv[stash->srv_argc - 1], buf, strlen(buf)+1);
 
     bu_log("Planning to shoot at %s\n", buf);
