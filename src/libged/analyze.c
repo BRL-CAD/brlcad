@@ -626,8 +626,10 @@ void print_faces_table(struct ged *gedp, table_t *table)
 HIDDEN void
 analyze_general(struct ged *gedp, const struct rt_db_internal *ip)
 {
-    fastf_t vol, area = -1;
+    fastf_t vol, area;
     point_t centroid;
+
+    vol = area = -1.0;
 
     if (OBJ[ip->idb_minor_type].ft_volume) {
 	OBJ[ip->idb_minor_type].ft_volume(&vol, ip);

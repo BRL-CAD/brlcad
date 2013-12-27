@@ -1355,6 +1355,7 @@ rt_vol_centroid(point_t *cent, const struct rt_db_internal *ip)
     RT_VOL_CK_MAGIC(vip);
 
     cnt = 0;
+    x_tot = y_tot = z_tot = 0.0;
 
     for (x = 0; x < vip->xdim; x++) {
 	for (y = 0; y < vip->ydim; y++) {
