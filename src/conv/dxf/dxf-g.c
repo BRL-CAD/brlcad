@@ -23,6 +23,8 @@
  *
  */
 
+/* FIXME: most funcs should have 'const char*' instead of 'char *' in their args. */
+
 #include "common.h"
 
 /* system headers */
@@ -2315,9 +2317,17 @@ process_mtext_entities_code(int code)
 	    MAT4X3PNT(tmp_pt, curr_state->xform, insertionPoint);
 	    VMOVE(insertionPoint, tmp_pt);
 
-	    drawMtext((vls) ? bu_vls_addr(vls) : "NO_NAME", attachPoint, drawingDirection, textHeight, entityHeight,
-		      charWidth, rectWidth, rotationAngle, insertionPoint);
-
+	    {
+		char noname[] = "NO_NAME";
+		char *t = NULL;
+		if (vls) {
+		    t = bu_strdup(bu_vls_cstr(vls));
+		}
+		drawMtext((t) ? t : noname, attachPoint, drawingDirection, textHeight, entityHeight,
+			  charWidth, rectWidth, rotationAngle, insertionPoint);
+		if (t)
+		    bu_free(t, "temp char buf");
+	    }
 	    bu_vls_free(vls);
 	    BU_PUT(vls, struct bu_vls);
 
