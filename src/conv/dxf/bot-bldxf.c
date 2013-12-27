@@ -448,7 +448,7 @@ void add_bots(struct rt_bot_internal *bot_dest,
 
     /* allocate space for extra vertices */
     bot_dest->vertices =
-	bu_realloc(bot_dest->vertices, i * sz, "new vertices");
+	(fastf_t *)bu_realloc(bot_dest->vertices, i * sz, "new vertices");
 
     /* copy new vertices */
     memcpy(&bot_dest->vertices[bot_dest->num_vertices],
@@ -458,7 +458,7 @@ void add_bots(struct rt_bot_internal *bot_dest,
     /* allocate space for new faces */
     i = bot_dest->num_faces + bot_src->num_faces;
     sz = sizeof(int) * 3;
-    bot_dest->faces = bu_realloc(bot_dest->faces, i * sz, "new faces");
+    bot_dest->faces = (int *)bu_realloc(bot_dest->faces, i * sz, "new faces");
 
     /* copy new faces, making sure that we update the vertex indices to
      * point to their new locations
@@ -502,7 +502,7 @@ l_func(struct db_tree_state *UNUSED(tsp), const struct db_full_path * pathp, str
     if (debug&DEBUG_NAMES)
 	bu_log("\n");
 
-    bot = ip->idb_ptr;
+    bot = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot);
 
     add_bots((struct rt_bot_internal *)client_data, bot);

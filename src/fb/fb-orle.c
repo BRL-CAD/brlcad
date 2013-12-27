@@ -67,7 +67,7 @@ main(int argc, char **argv)
 	return 1;
     }
     fp = stdout;
-    setbuf(fp, malloc(BUFSIZ));
+    setbuf(fp, (char *)malloc(BUFSIZ));
 
     rle_wlen(xlen, ylen, 1);
     rle_wpos(xpos, ypos, 1);

@@ -75,7 +75,7 @@ void usage(void)
 void computeScanline(int UNUSED(pid), genptr_t UNUSED(arg)) {
     int i=0;
     /* working pixel component value */
-    unsigned char *value = image->buf;
+    unsigned char *value = (unsigned char *)image->buf;
 
     /* struct wmember *allScanlineList = (struct wmember *)arg;*/
     fflush(stdout);

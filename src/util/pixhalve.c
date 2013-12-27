@@ -348,8 +348,8 @@ main(int argc, char *argv[])
     out_width = file_width/2;
 
     /* Allocate 1-scanline input & output buffers */
-    inbuf = bu_malloc(3*file_width+8, "inbuf");
-    outbuf = bu_malloc(3*(out_width+2)+8, "outbuf");
+    inbuf = (unsigned char *)bu_malloc(3*file_width+8, "inbuf");
+    outbuf = (unsigned char *)bu_malloc(3*(out_width+2)+8, "outbuf");
 
     /* Allocate 5 integer arrays for each color */
     /* each width+2 elements wide */

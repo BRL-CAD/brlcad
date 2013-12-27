@@ -128,7 +128,7 @@ hm_Put_Item(HWindow *win, HMitem *itemp, int flag)
     int	bit = 1;
     int	writemask = 0;
 
-    buf = bu_calloc(1, sizeof(char) * width, "alloc buf");
+    buf = (char *)bu_calloc(1, sizeof(char) * width, "alloc buf");
     p = buf;
 
     if ( bitmap == 0 )
@@ -217,7 +217,7 @@ hm_Put_Border(HWindow *win, int row, int mark)
     static char	*buf;
     char	*p;
 
-    buf = bu_calloc(1, sizeof(char) * win->width, "alloc buf");
+    buf = (char *)bu_calloc(1, sizeof(char) * win->width, "alloc buf");
     p = buf;
     *p++ = (char)mark;
     for ( i = 0; i < win->width; i++ )

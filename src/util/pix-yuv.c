@@ -149,8 +149,8 @@ main(int argc, char **argv)
     }
 
     /* Allocate full size buffers for input and output */
-    inbuf = bu_malloc(3*file_width*file_height+8, "inbuf");
-    outbuf = bu_malloc(2*file_width*file_height+8, "outbuf");
+    inbuf = (unsigned char *)bu_malloc(3*file_width*file_height+8, "inbuf");
+    outbuf = (unsigned char *)bu_malloc(2*file_width*file_height+8, "outbuf");
 
     if (bu_mread(infd, inbuf, 3*file_width*file_height) < 3*file_width*file_height) {
 	perror("READ ERROR");

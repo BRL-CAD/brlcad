@@ -158,10 +158,10 @@ hit(struct application *ap, struct partition *part, struct seg *UNUSED(seg))
     } else {
 	bot = (struct bot_specific *)stp->st_specific;
 	if (bot->bot_facearray) {
-	    tri = bot->bot_facearray[surfno];
+	    tri = (struct tri_specific *)bot->bot_facearray[surfno];
 	} else {
 	    i = bot->bot_ntri - 1;
-	    tri = bot->bot_facelist;
+	    tri = (struct tri_specific *)bot->bot_facelist;
 	    while (i != (size_t)surfno) {
 		i--;
 		tri = tri->tri_forw;
@@ -272,10 +272,10 @@ hit(struct application *ap, struct partition *part, struct seg *UNUSED(seg))
     }
     bot = (struct bot_specific *)stp->st_specific;
     if (bot->bot_facearray) {
-	tri = bot->bot_facearray[surfno];
+	tri = (struct tri_specific *)bot->bot_facearray[surfno];
     } else {
 	i = bot->bot_ntri - 1;
-	tri = bot->bot_facelist;
+	tri = (struct tri_specific *)bot->bot_facelist;
 	while (i != (size_t)surfno) {
 	    i--;
 	    tri = tri->tri_forw;
@@ -520,7 +520,7 @@ main(int argc, char *argv[])
 	    }
 
 	    bot = (struct bot_specific *)stp->st_specific;
-	    tri = bot->bot_facelist;
+	    tri = (struct tri_specific *)bot->bot_facelist;
 	    while (tri) {
 		point_t p2, p3, sum;
 

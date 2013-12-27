@@ -232,7 +232,7 @@ parse_fmt(const char *uoutspec, int outcom_type)
     outitem *prev_oip = OUTITEM_NULL;
     outval *vtp;
 
-    mycopy = uos = bu_malloc(strlen(uoutspec)+1, "uos");
+    mycopy = uos = (char *)bu_malloc(strlen(uoutspec)+1, "uos");
     bu_strlcpy(uos, uoutspec, strlen(uoutspec)+1);
 
     /* Break up the format specification into pieces,
@@ -273,7 +273,7 @@ parse_fmt(const char *uoutspec, int outcom_type)
 	 * needs an output item or not (i.e. whether it
 	 * contains 1 conversion spec vs. none)
 	 */
-	oip->format = bu_malloc(uos - up + 1, "format");
+	oip->format = (char *)bu_malloc(uos - up + 1, "format");
 	of = oip->format;
 	while (up != uos) {
 	    if (*up == '\\') {
@@ -534,7 +534,7 @@ fopenrc(void)
     if ((fPtr = fopen(DEF_RCF_NAME, "rb")) == NULL) {
 	if ((home = getenv("HOME")) != NULL) {
 	    len = strlen(home) + strlen(DEF_RCF_NAME) + 2;
-	    rc_file_name = bu_malloc(len, "rc_file_name");
+	    rc_file_name = (char *)bu_malloc(len, "rc_file_name");
 	    snprintf(rc_file_name, len, "%s/%s", home, DEF_RCF_NAME);
 	    fPtr = fopen(rc_file_name, "rb");
 	}
@@ -681,7 +681,7 @@ direct_output(const char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 	j = strlen(buffer);
 	while (isspace((int)*(buffer+j-1))) j--;
 
-	new_dest = bu_malloc(strlen(buffer + i)+1, "new_dest");
+	new_dest = (char *)bu_malloc(strlen(buffer + i)+1, "new_dest");
 
 	snprintf(new_dest, j-i+1, "%s", buffer + i);
 	if (bu_file_exists(new_dest, NULL)) {
@@ -738,7 +738,7 @@ state_file(const char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
     if (BU_STR_EQUAL(buffer + i, "default")) {
 	new_name = def_sf_name;
     } else {
-	new_name = bu_malloc(strlen(buffer + i)+1, "new_state_filename");
+	new_name = (char *)bu_malloc(strlen(buffer + i)+1, "new_state_filename");
 	snprintf(new_name, strlen(buffer+i), "%s", buffer + i);
     }
 

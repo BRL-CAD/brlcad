@@ -179,7 +179,7 @@ mat_Save_Db(char *file)
     FILE		*fp;
     if ( (fp = fopen( file, "wb" )) == NULL )
 	return	0;
-    setbuf( fp, bu_malloc( BUFSIZ, "buffer" ) );
+    setbuf( fp, (char *)bu_malloc( BUFSIZ, "buffer" ) );
     for (	entry = mat_db_table;
 		entry < &mat_db_table[mat_db_size]
 		    && put_Mat_Entry( entry, fp );

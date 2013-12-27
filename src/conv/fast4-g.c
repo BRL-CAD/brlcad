@@ -2150,7 +2150,7 @@ make_bot_object(void)
     for (i=0; i<face_count*3; i++)
 	faces[i] -= min_pt;
     bot_ip.num_faces = face_count;
-    bot_ip.faces = bu_calloc(face_count*3, sizeof(int), "BOT faces");
+    bot_ip.faces = (int *)bu_calloc(face_count*3, sizeof(int), "BOT faces");
     for (i=0; i<face_count*3; i++)
 	bot_ip.faces[i] = faces[i];
 

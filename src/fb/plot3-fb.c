@@ -493,10 +493,10 @@ get_strokes(void)
 
     /* ~32 strokes/KB */
     bytes = 640 * sizeof(stroke);
-    if ((cp = malloc(bytes)) == (char *)0) {
+    if ((cp = (char *)malloc(bytes)) == (char *)0) {
 	/* Attempt to draw/free some vectors and try again */
 	OutBuild();
-	if ((cp = malloc(bytes)) == (char *)0) {
+	if ((cp = (char *)malloc(bytes)) == (char *)0) {
 	    fprintf(stderr, "plot3-fb: malloc failed!\n");
 	    bu_exit(2, NULL);
 	}

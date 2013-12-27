@@ -640,8 +640,8 @@ txt_free(genptr_t cp)
     bu_vls_free(&tp->tx_name);
     if (tp->tx_binunifp) rt_binunif_free(tp->tx_binunifp);
     if (tp->tx_mp) bu_close_mapped_file(tp->tx_mp);
-    tp->tx_binunifp = GENPTR_NULL; /* sanity */
-    tp->tx_mp = GENPTR_NULL; /* sanity */
+    tp->tx_binunifp = (struct rt_binunif_internal *)NULL; /* sanity */
+    tp->tx_mp = (struct bu_mapped_file *)NULL; /* sanity */
     BU_PUT(cp, struct txt_specific);
 }
 
@@ -729,7 +729,7 @@ ckr_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *
 HIDDEN void
 ckr_print(register struct region *rp, genptr_t UNUSED(dp))
 {
-    bu_struct_print(rp->reg_name, ckr_parse, rp->reg_udata);
+    bu_struct_print(rp->reg_name, ckr_parse, (const char *)rp->reg_udata);
 }
 
 

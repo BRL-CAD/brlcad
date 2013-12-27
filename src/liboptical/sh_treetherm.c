@@ -278,7 +278,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
 	bu_log("Error mapping \"%s\"\n",  tthrm_sp->tt_name);
 	bu_bomb("shader tthrm: can't get thermal data");
     }
-    tt_data = tt_file->buf;
+    tt_data = (char *)tt_file->buf;
 
 
     if (rdebug&RDEBUG_SHADE)

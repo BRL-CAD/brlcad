@@ -1570,7 +1570,7 @@ convert_load_order(
     unsigned short int buf4 = 0;
     size_t ret;
 
-    buf3 = bu_calloc(*in_ydim, sizeof(unsigned short int), "buf3");
+    buf3 = (short unsigned int *)bu_calloc(*in_ydim, sizeof(unsigned short int), "buf3");
 
     if ((fp4=fopen(in_dsp_output_filename, "wb")) == NULL) {
 	bu_log("Could not open '%s' for write.\n", in_dsp_output_filename);

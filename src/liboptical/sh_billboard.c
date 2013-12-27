@@ -435,7 +435,7 @@ do_ray_image(struct application *ap,
     if (ulo > uhi) { int i = ulo; ulo = uhi; uhi = i; }
     if (vlo > vhi) { int i = vlo; vlo = vhi; vhi = i; }
 
-    pixels = bi->img_mf->buf;
+    pixels = (unsigned char*)bi->img_mf->buf;
 
     if (rdebug&RDEBUG_SHADE) {
 	bu_log("u:%d..%d  v:%d..%d\n", ulo, uhi, vlo, vhi);

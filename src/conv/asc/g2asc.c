@@ -89,7 +89,7 @@ tclify_name(const char *name)
 
     if (max_len > tclified_name_buffer_len) {
 	tclified_name_buffer_len = max_len;
-	tclified_name = bu_realloc(tclified_name, tclified_name_buffer_len, "tclified_name buffer");
+	tclified_name = (char *)bu_realloc(tclified_name, tclified_name_buffer_len, "tclified_name buffer");
     }
 
     dest = tclified_name;
@@ -464,7 +464,7 @@ get_ext(struct bu_external *ep, size_t ngran)
     BU_EXTERNAL_INIT(ep);
 
     ep->ext_nbytes = ngran * sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "get_ext ext_buf");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "get_ext ext_buf");
 
     /* Copy the freebie (first) record into the array of records.  */
     memcpy((char *)ep->ext_buf, (char *)&record, sizeof(union record));

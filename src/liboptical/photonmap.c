@@ -1049,7 +1049,7 @@ Irradiance(int pid, struct Photon *P, struct application *ap)
 	    Polar2Euclidian(lap->a_ray.r_dir, P->Normal, theta, phi);
 
 	    /* Utilize the purpose pointer as a pointer to the Irradiance Color */
-	    lap->a_purpose = (void*)P->Irrad;
+	    lap->a_purpose = (const char *)P->Irrad;
 
 	    /* bu_log("Vec: [%.3f, %.3f, %.3f]\n", ap->a_ray.r_dir[0], ap->a_ray.r_dir[1], ap->a_ray.r_dir[2]);*/
 	    rt_shootray(lap);

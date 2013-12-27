@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
 	return 1;
     }
 
-    vertices = bu_calloc(128 * 3, sizeof(fastf_t), "vertices");
+    vertices = (fastf_t *)bu_calloc(128 * 3, sizeof(fastf_t), "vertices");
 
     while (triangleAvailable == 1) {
 	/* read a set of input values -- input data should be a 3-tuple
@@ -113,7 +113,7 @@ int main(int argc, char *argv[])
 	inputZ = atof(inputString);
 
 	if (triangleCount >= maxTriangleCapacity) {
-	    vertices = bu_realloc(vertices, ((maxTriangleCapacity + 128) * 3) * sizeof(fastf_t), "vertices");
+	    vertices = (fastf_t *)bu_realloc(vertices, ((maxTriangleCapacity + 128) * 3) * sizeof(fastf_t), "vertices");
 	    maxTriangleCapacity += 128;
 	}
 

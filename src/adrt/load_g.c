@@ -191,7 +191,7 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
 	return -1;
     } else if (intern.idb_minor_type == ID_BOT) {
 	size_t i;
-	struct rt_bot_internal *bot = intern.idb_ptr;
+	struct rt_bot_internal *bot = (struct rt_bot_internal *)intern.idb_ptr;
 
 	RT_BOT_CK_MAGIC(bot);
 

@@ -119,8 +119,8 @@ create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *gr
 
     mk_id(fpout, "Ascii NMG");
 
-    rname = bu_malloc(size, "rname");	/* Region name. */
-    sname = bu_malloc(size, "sname");	/* Solid name. */
+    rname = (char *)bu_malloc(size, "rname");	/* Region name. */
+    sname = (char *)bu_malloc(size, "sname");	/* Solid name. */
 
     snprintf(sname, size, "s.%s", reg_name);
     mk_nmg(fpout, sname,  m);		/* Make nmg object. */

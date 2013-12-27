@@ -140,7 +140,7 @@ lgt_Save_Db(char *file)
 
     if ( (fp = fopen( file, "wb" )) == NULL )
 	return	0;
-    setbuf( fp, bu_malloc( BUFSIZ, "buffer" ) );
+    setbuf( fp, (char *)bu_malloc( BUFSIZ, "buffer" ) );
     for (	entry = lgts;
 		entry < &lgts[lgt_db_size]
 		    && put_Lgt_Entry( entry, fp );

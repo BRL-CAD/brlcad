@@ -153,7 +153,7 @@ main(int argc, char **argv)
 
     /* Create .fig file name and open it. */
     size = sizeof(prefix) + sizeof(argv[0] + 4);
-    fig_file = bu_malloc(size, "st");
+    fig_file = (char *)bu_malloc(size, "st");
     /* Ignore leading path name. */
     if ((dot = strrchr(argv[0], '/')) != (char *)NULL) {
 	if (prefix)

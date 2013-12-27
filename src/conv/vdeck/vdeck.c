@@ -1679,7 +1679,7 @@ getcmd(char *args[], int ct)
 	while (--arg_ct >= 0)
 	    bu_free(args[arg_ct], "args[arg_ct]");
     for (arg_ct = ct; arg_ct < MAXARG - 1; ++arg_ct) {
-	args[arg_ct] = bu_malloc(MAXLN, "getcmd buffer");
+	args[arg_ct] = (char *)bu_malloc(MAXLN, "getcmd buffer");
 	if (! getarg(args[arg_ct], MAXLN))
 	    break;
     }

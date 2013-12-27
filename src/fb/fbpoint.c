@@ -142,7 +142,7 @@ main(int argc, char **argv)
 {
     int width, height;
 
-    setbuf(stderr, malloc(BUFSIZ));
+    setbuf(stderr, (char *)malloc(BUFSIZ));
     width = height = 512;
     curX = curY = -1;
 

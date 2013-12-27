@@ -274,7 +274,7 @@ mengerize(struct rt_wdb *fp, point_t origin, fastf_t extent, axes xyz, const cha
 	return NULL; /* nothing to do */
 
     /* initialize */
-    levels = bu_calloc(repeat * strlen(pattern), sizeof(struct wmember *), "alloc uts array");
+    levels = (struct wmember **)bu_calloc(repeat * strlen(pattern), sizeof(struct wmember *), "alloc uts array");
     BU_ALLOC(final, struct wmember);
     BU_LIST_INIT(&(final->l));
 

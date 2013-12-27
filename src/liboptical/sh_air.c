@@ -159,7 +159,7 @@ air_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
 HIDDEN void
 air_print(register struct region *rp, genptr_t dp)
 {
-    bu_struct_print(rp->reg_name, air_parse, dp);
+    bu_struct_print(rp->reg_name, air_parse, (const char *)dp);
 }
 
 

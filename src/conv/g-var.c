@@ -320,7 +320,7 @@ void write_mesh_data()
 		fprintf(stderr, ">> .. normals will be computed\n");
 	    }
 	    /* normals need to be computed */
-	    normals = bu_calloc(sizeof(float), curr->bot->num_vertices * 3, "normals");
+	    normals = (float *)bu_calloc(sizeof(float), curr->bot->num_vertices * 3, "normals");
 	    get_normals(curr->bot, normals);
 	    ret = fwrite(normals, sizeof(float), curr->bot->num_vertices * 3, fp_out);
 	    if (ret != curr->bot->num_vertices * 3)

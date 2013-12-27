@@ -259,7 +259,7 @@ main(int argc, char **argv)
 	unsigned char *buf;
 	int npix = file_width * yout;
 
-	if ((buf = malloc(npix)) == NULL) {
+	if ((buf = (unsigned char *)malloc(npix)) == NULL) {
 	    perror("bw-fb malloc");
 	    goto general;
 	}

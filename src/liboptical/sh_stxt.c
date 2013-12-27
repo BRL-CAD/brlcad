@@ -125,7 +125,7 @@ stxt_read(register struct stxt_specific *stp)
     int rd, rdd;
 
     /*** MEMORY HOG ***/
-    stp->stx_pixels = bu_malloc(
+    stp->stx_pixels = (char *)bu_malloc(
 	stp->stx_w * stp->stx_n * stp->stx_d * 3,
 	stp->stx_file);
 
@@ -143,7 +143,7 @@ stxt_read(register struct stxt_specific *stp)
 	    stp->stx_file[0] = '\0';
 	    return 0;
 	}
-	linebuf = bu_malloc(stp->stx_fw*3, "texture file line");
+	linebuf = (char *)bu_malloc(stp->stx_fw*3, "texture file line");
 
 	for (i = 0; i < stp->stx_n; i++) {
 	    if ((rd = (int)fread(linebuf, 1, stp->stx_fw*3, fp)) != stp->stx_fw*3) {

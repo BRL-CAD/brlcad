@@ -412,7 +412,7 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
 	fstate->volume = fstate->a_len * fstate->res[X] * fstate->res[Y]; /* volume of bounding box */
 
 	/* allocate storage for saved rays */
-	fstate->ray = bu_malloc(sizeof(struct part *) * fstate->res[X] * fstate->res[Y], "ray");
+	fstate->ray = (struct part **)bu_malloc(sizeof(struct part *) * fstate->res[X] * fstate->res[Y], "ray");
 	VMOVE(fstate->min, fstate->rtip->mdl_min);
 	VMOVE(fstate->max, fstate->rtip->mdl_max);
 

@@ -603,9 +603,9 @@ prj_free(genptr_t cp)
 
 	img_sp->i_img = (unsigned char *)0;
 	if (img_sp->i_data) bu_close_mapped_file(img_sp->i_data);
-	img_sp->i_data = GENPTR_NULL; /* sanity */
+	img_sp->i_data = (struct bu_mapped_file *)NULL; /* sanity */
 	if (img_sp->i_binunifp) rt_binunif_free(img_sp->i_binunifp);
-	img_sp->i_binunifp = GENPTR_NULL; /* sanity */
+	img_sp->i_binunifp = (struct rt_binunif_internal *)NULL; /* sanity */
 	bu_vls_vlsfree(&img_sp->i_name);
 
 	BU_LIST_DEQUEUE(&img_sp->l);
