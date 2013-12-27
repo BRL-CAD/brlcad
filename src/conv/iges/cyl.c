@@ -22,8 +22,7 @@
 #include "./iges_extern.h"
 
 int
-cyl(entityno)
-    int entityno;
+cyl(int entityno)
 {
     fastf_t radius = 0.0;
     point_t base;		/* center point of base */
