@@ -40,9 +40,7 @@ static char *default_drawing_name = "iges_drawing";
 struct bu_list free_hd;
 
 void
-Getstrg(str, id)
-    char **str;
-    char *id;
+Getstrg(char **str, char *id)
 {
     int i = (-1), length = 0, done = 0, lencard;
     char num[80];
@@ -108,9 +106,7 @@ Getstrg(str, id)
 
 
 void
-Note_to_vlist(entno, vhead)
-    int entno;
-    struct bu_list *vhead;
+Note_to_vlist(int entno, struct bu_list *vhead)
 {
     int entity_type;
     int nstrings = 0;
@@ -201,9 +197,7 @@ Note_to_vlist(entno, vhead)
 
 
 void
-Get_plane(pl, entno)
-    plane_t pl;
-    int entno;
+Get_plane(plane_t pl, int entno)
 {
     int entity_type;
     int i;
@@ -221,9 +215,7 @@ Get_plane(pl, entno)
 
 
 void
-Curve_to_vlist(vhead, ptlist)
-    struct bu_list *vhead;
-    struct ptlist *ptlist;
+Curve_to_vlist(struct bu_list *vhead, struct ptlist *ptlist)
 {
     struct ptlist *ptr;
 
@@ -246,9 +238,7 @@ Curve_to_vlist(vhead, ptlist)
 
 
 void
-Leader_to_vlist(entno, vhead)
-    int entno;
-    struct bu_list *vhead;
+Leader_to_vlist(int entno, struct bu_list *vhead)
 {
     int entity_type;
     int npts, i;
@@ -512,8 +502,7 @@ Draw_entities(struct model *m, int de_list[], int no_of_des, fastf_t x, fastf_t 
 
 
 struct views_visible *
-Get_views_visible(entno)
-    int entno;
+Get_views_visible(int entno)
 {
     int entity_type;
     int no_of_views;
@@ -554,11 +543,8 @@ Get_views_visible(entno)
 
 
 void
-Do_view(m, view_vis_list, entno, x, y, ang)
-    struct model *m;
-    struct bu_ptbl *view_vis_list;
-    int entno;
-    fastf_t x, y, ang;
+Do_view(struct model *m, struct bu_ptbl *view_vis_list, int entno,
+	fastf_t x, fastf_t y, fastf_t ang)
 {
     int view_de;
     int entity_type;
@@ -658,9 +644,7 @@ Do_view(m, view_vis_list, entno, x, y, ang)
 
 
 void
-Get_drawing(entno, view_vis_list)
-    int entno;
-    struct bu_ptbl *view_vis_list;
+Get_drawing(int entno, struct bu_ptbl *view_vis_list)
 {
     int entity_type;
     int no_of_views;
