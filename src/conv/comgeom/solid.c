@@ -698,7 +698,7 @@ getsolid(void)
     if ((version == 5 && BU_STR_EQUAL(solid_type, "ell"))
 	|| BU_STR_EQUAL(solid_type, "ell1"))
     {
-	double m2 = 0.0;
+	double m2;
 
 	/* V, A, r */
 	/* GIFT4 name is "ell1", GIFT5 name is "ell" */
@@ -708,6 +708,7 @@ getsolid(void)
 	}
 
     ell1:
+	m2 = 0.0;
 	r1 = dd[6];		/* R */
 	VMOVE(work, D(0));
 	work[0] += bn_pi;
