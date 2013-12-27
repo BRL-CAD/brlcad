@@ -53,9 +53,7 @@ Get_vertex(struct iges_edge_use *edge_use)
 
 
 int
-Put_vertex(v, edge)
-    struct vertex *v;
-    struct iges_edge_use *edge;
+Put_vertex(struct vertex *v, struct iges_edge_use *edge)
 {
     struct iges_edge_list *e_list;
     struct iges_edge_list *el;
@@ -99,8 +97,7 @@ Put_vertex(v, edge)
 
 
 struct iges_edge *
-Get_edge(e_use)
-    struct iges_edge_use *e_use;
+Get_edge(struct iges_edge_use *e_use)
 {
     struct iges_edge_list *e_list;
 
@@ -112,8 +109,7 @@ Get_edge(e_use)
 
 
 struct vertex *
-Get_edge_start_vertex(edge)
-    struct iges_edge *edge;
+Get_edge_start_vertex(struct iges_edge *edge)
 {
     struct iges_vertex_list *v_list;
 
@@ -125,8 +121,7 @@ Get_edge_start_vertex(edge)
 
 
 struct vertex *
-Get_edge_end_vertex(edge)
-    struct iges_edge *edge;
+Get_edge_end_vertex(struct iges_edge *edge)
 {
     struct iges_vertex_list *v_list;
 

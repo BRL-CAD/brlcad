@@ -109,8 +109,7 @@ Find_inner_loops(struct faceuse *fu, struct loop_list *lptr)
 
 
 void
-Orient_face_loops(fu)
-    struct faceuse *fu;
+Orient_face_loops(struct faceuse *fu)
 {
     struct loopuse *lu;
     struct loopuse *lu_outer = NULL;
@@ -196,8 +195,7 @@ Orient_face_loops(fu)
 
 
 void
-Orient_nurb_face_loops(fu)
-    struct faceuse *fu;
+Orient_nurb_face_loops(struct faceuse *fu)
 {
     struct face *f;
     struct face_g_snurb *fg;
@@ -247,8 +245,7 @@ Orient_nurb_face_loops(fu)
 
 
 void
-Orient_loops(r)
-    struct nmgregion *r;
+Orient_loops(struct nmgregion *r)
 {
     struct shell *s;
 

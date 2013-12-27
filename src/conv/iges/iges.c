@@ -1885,8 +1885,7 @@ write_shell_face_loop(char *name,
 
 
 void
-w_terminate(fp)
-    FILE *fp;
+w_terminate(FILE *fp)
 {
     fprintf(fp, "S%07dG%07dD%07dP%07d%40.40sT0000001\n", start_len, global_len, dir_seq, param_seq, " ");
 }

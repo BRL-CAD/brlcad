@@ -43,8 +43,7 @@ Initstack()
 /* This function pushes a pointer onto the stack. */
 
 void
-Push(ptr)
-    union tree *ptr;
+Push(union tree *ptr)
 {
 
     jtop++;

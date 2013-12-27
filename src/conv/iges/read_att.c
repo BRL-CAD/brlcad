@@ -26,9 +26,7 @@
  * (att_de) and stores the values in the structure (att)
  */
 void
-Read_att(att_de, att)
-    int att_de;
-    struct brlcad_att *att;
+Read_att(int att_de, struct brlcad_att *att)
 {
     int entityno;
     int i;

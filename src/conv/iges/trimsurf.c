@@ -48,9 +48,7 @@ struct snurb_hit
 
 
 struct face_g_snurb *
-Get_nurb_surf(entityno, m)
-    int entityno;
-    struct model *m;
+Get_nurb_surf(int entityno, struct model *m)
 {
     struct face_g_snurb *srf;
     point_t pt;
@@ -193,9 +191,7 @@ Get_nurb_surf(entityno, m)
 
 
 void
-Assign_cnurb_to_eu(eu, crv)
-    struct edgeuse *eu;
-    struct edge_g_cnurb *crv;
+Assign_cnurb_to_eu(struct edgeuse *eu, struct edge_g_cnurb *crv)
 {
     fastf_t *ctl_points;
     fastf_t *knots;
@@ -226,8 +222,7 @@ Assign_cnurb_to_eu(eu, crv)
 
 
 struct edge_g_cnurb *
-Get_cnurb(entity_no)
-    int entity_no;
+Get_cnurb(int entity_no)
 {
     struct edge_g_cnurb *crv;
     point_t pt, pt2;
@@ -314,10 +309,7 @@ Get_cnurb(entity_no)
 
 
 void
-Assign_vu_geom(vu, u, v, srf)
-    struct vertexuse *vu;
-    fastf_t u, v;
-    struct face_g_snurb *srf;
+Assign_vu_geom(struct vertexuse *vu, fastf_t u, fastf_t v, struct face_g_snurb *srf)
 {
     point_t uvw;
     hpoint_t pt_on_srf;
@@ -371,10 +363,7 @@ Assign_vu_geom(vu, u, v, srf)
 
 
 void
-Add_trim_curve(entity_no, lu, srf)
-    int entity_no;
-    struct loopuse *lu;
-    struct face_g_snurb *srf;
+Add_trim_curve(int entity_no, struct loopuse *lu, struct face_g_snurb *srf)
 {
     int entity_type;
     struct edge_g_cnurb *crv;
@@ -540,11 +529,7 @@ Add_trim_curve(entity_no, lu, srf)
 
 
 struct loopuse *
-Make_trim_loop(entity_no, orientation, srf, fu)
-    int entity_no;
-    int orientation;
-    struct face_g_snurb *srf;
-    struct faceuse *fu;
+Make_trim_loop(int entity_no, int orientation, struct face_g_snurb *srf, struct faceuse *fu)
 {
     struct loopuse *lu;
     struct edgeuse *eu;
@@ -729,12 +714,7 @@ Make_trim_loop(entity_no, orientation, srf, fu)
 
 
 struct loopuse *
-Make_loop(entity_no, orientation, on_surf_de, srf, fu)
-    int entity_no;
-    int orientation;
-    int on_surf_de;
-    struct face_g_snurb *srf;
-    struct faceuse *fu;
+Make_loop(int entity_no, int orientation, int on_surf_de, struct face_g_snurb *srf, struct faceuse *fu)
 {
     struct loopuse *lu;
     int entity_type;
@@ -772,9 +752,7 @@ Make_loop(entity_no, orientation, on_surf_de, srf, fu)
 
 
 struct loopuse *
-Make_default_loop(srf, fu)
-    struct face_g_snurb *srf;
-    struct faceuse *fu;
+Make_default_loop(struct face_g_snurb *srf, struct faceuse *fu)
 {
     struct loopuse *lu;
     struct edgeuse *eu;
@@ -893,9 +871,7 @@ Make_default_loop(srf, fu)
 
 
 void
-Assign_surface_to_fu(fu, srf)
-    struct faceuse *fu;
-    struct face_g_snurb *srf;
+Assign_surface_to_fu(struct faceuse *fu, struct face_g_snurb *srf)
 {
     struct face *f;
 
@@ -918,9 +894,7 @@ Assign_surface_to_fu(fu, srf)
 
 
 struct faceuse *
-trim_surf(entityno, s)
-    int entityno;
-    struct shell *s;
+trim_surf(int entityno, struct shell *s)
 {
     struct model *m;
     struct face_g_snurb *srf;
@@ -1062,9 +1036,7 @@ trim_surf(entityno, s)
 
 
 int
-uv_in_fu(u, v, fu)
-    fastf_t u, v;
-    struct faceuse *fu;
+uv_in_fu(fastf_t u, fastf_t v, struct faceuse *fu)
 {
     int ot_sames, ot_opps;
     struct loopuse *lu;
@@ -1102,11 +1074,7 @@ uv_in_fu(u, v, fu)
  * in direction "ray_dir". Place hits on "hit_list"
  */
 void
-find_intersections(fu, mid_pt, ray_dir, hit_list)
-    struct faceuse *fu;
-    point_t mid_pt;
-    vect_t ray_dir;
-    struct bu_list *hit_list;
+find_intersections(struct faceuse *fu, point_t mid_pt, vect_t ray_dir, struct bu_list *hit_list)
 {
     plane_t pl1, pl2;
     struct bu_list bezier;
@@ -1215,9 +1183,7 @@ find_intersections(fu, mid_pt, ray_dir, hit_list)
 
 /* adjust flip flag on faces using hit list data */
 void
-adjust_flips(hit_list, ray_dir)
-    struct bu_list *hit_list;
-    vect_t ray_dir;
+adjust_flips(struct bu_list *hit_list, vect_t ray_dir)
 {
     struct snurb_hit *hit;
     int enter = 0;
@@ -1250,9 +1216,7 @@ adjust_flips(hit_list, ray_dir)
 
 /* Find a uv point that is actually in the face */
 int
-Find_uv_in_fu(u_in, v_in, fu)
-    fastf_t *u_in, *v_in;
-    struct faceuse *fu;
+Find_uv_in_fu(fastf_t *u_in, fastf_t *v_in, struct faceuse *fu)
 {
     struct face *f;
     struct face_g_snurb *fg;

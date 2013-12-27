@@ -411,8 +411,7 @@ revolve(int entityno)
 
 /* Routine to add a name to the list of subtractions */
 void
-Addsub(trc, ptr)
-    struct trclist *trc, *ptr;
+Addsub(struct trclist *trc, struct trclist *ptr)
 {
     struct subtracts *subp;
 

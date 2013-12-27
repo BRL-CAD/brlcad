@@ -330,9 +330,7 @@ Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
 
 
 struct faceuse *
-Make_nurb_face(s, surf_entityno)
-    struct shell *s;
-    int surf_entityno;
+Make_nurb_face(struct shell *s, int surf_entityno)
 {
     struct vertex *verts[1];
     struct loopuse *lu;
