@@ -51,8 +51,7 @@ static int stats=0;
 
 /* returns 1 if faceuse was not written because it was empty */
 static int
-write_fu_as_sgp( fu )
-    struct faceuse *fu;
+write_fu_as_sgp(struct faceuse *fu)
 {
     struct loopuse *lu;
 
