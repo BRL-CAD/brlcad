@@ -517,6 +517,192 @@ add_test(bn_mat_is_equal_2       tester_bn_mat 10 70.46,38.7,1.57,84.19,38.53,52
 add_test(bn_mat_is_equal_3       tester_bn_mat 10 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 0)
 add_test(bn_mat_is_equal_4       tester_bn_mat 10 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1 71.53,18.85,47.48,24.56,42.34,98.18,42.1,74.61,30.47,49.18,63.06,2.11,58.31,60.61,0.62,34.23 0)
 
+# For function #11 (bn_mat_atan2), the <args> format is as follows:
+#
+# y x <expected_result>
+#
+# where x and y are the floating point arguments to the atan2 function
+
+add_test(bn_atan2_0_0            tester_bn_mat 11 0 0 0)
+add_test(bn_atan2_0_1            tester_bn_mat 11 2.8 0 1.570796326794896)
+add_test(bn_atan2_0_2            tester_bn_mat 11 -2.8 0 -1.570796326794896)
+add_test(bn_atan2_1              tester_bn_mat 11 2.55 8.76 0.283268001141651)
+add_test(bn_atan2_2              tester_bn_mat 11 -2.8 -7.2 -2.770701364777130)
+
+# For function #12 (bn_vtoh_move), the <args> format is as follows:
+#
+# V <expected_result>
+#
+# where V is the 3-vector to move to a homogeneous vector.
+# A vector is three floating point numbers separated by commas.
+
+add_test(bn_vtoh_move            tester_bn_mat 12 2.6,-5.5,8.12 2.6,-5.5,8.12,1)
+
+# For function #13 (bn_vtoh_move), the <args> format is as follows:
+#
+# H <expected_result>
+#
+# where H is the homogeneous vector to move to a 3-vector.
+# A homogeneous vector is four floating point numbers separated by commas.
+
+add_test(bn_htov_move            tester_bn_mat 13 1.1,2.2,3.3,7.4 0.14864864864864866,0.2972972972972973,0.4459459459459459)
+
+# For function #14 (bn_mat_ae), the <args> format is as follows:
+#
+# az el <expected_result>
+#
+# where az is the azimuth and el is the elevation to generate a
+# transform matrix.
+# az and el are floating point numbers and are in degrees.
+
+add_test(bn_mat_ae               tester_bn_mat 14 0 90 0,0,-1,0,0,1,0,0,1,0,0,0,0,0,0,1)
+
+# For function #15 (bn_ae_vec), the <args> format is as follows:
+#
+# V <expected_az> <expected_el>
+#
+# where V is the vector to extract az and el info from.
+#
+# Functions 15-17 were verified using the website below.
+# http://www.random-science-tools.com/maths/coordinate-converter.htm
+
+add_test(bn_ae_vec_0             tester_bn_mat 15 0,1,0 90 0)
+add_test(bn_ae_vec_1             tester_bn_mat 15 5.7,-2.34,19.61 337.68055960702 72.556852698595)
+add_test(bn_ae_vec_2             tester_bn_mat 15 -23.78,42,3.141 119.518125952119 3.7234738236524)
+
+# For function #16 (bn_vec_ae), the <args> format is as follows:
+#
+# az el <expected_result>
+#
+# where az is the azimuth and el is the elevation to generate a vector
+# az and el are floting point numbers and are in radians.
+
+# These two tests fail for some reason. It could be a bug in bn_vec_ae().
+# The value of the returned vector seems to always have the same z value
+# irrespective of the input.
+
+add_test(bn_vec_ae_1             tester_bn_mat 16 1 1 0.291926581820,0.454648713558,0.841470984697)
+add_test(bn_vec_ae_2             tester_bn_mat 16 0.5 1.2 0.317998846662,0.173723561699,0.932039085893)
+
+# For function #17 (bn_vec_aed), the <args> format is as follows:
+#
+# az el d <expected_result>
+#
+# where az is the azimuth, el is the elevation and d is the distance
+# to generate a vector
+# az and el are floting point numbers and are in radians.
+# d is a floating point number.
+
+add_test(bn_vec_aed_1            tester_bn_mat 17 1 1 5 1.45963290910,2.27324356779,4.20735492349)
+add_test(bn_vec_aed_2            tester_bn_mat 17 0.3845 0.286 18.3354 16.3062567701,6.59816438267,5.17272752864)
+
+# For function #18 (bn_mat_angles), the <args> format is as follows:
+#
+# x y z <expected_result>
+#
+# where x, y, z are the angles to rotate about their respective axes
+# x, y, z are floating point numbers and are in degrees.
+#
+# Functions 18 and 19 were verified using the website below
+# http://toolserver.org/~dschwen/tools/rotationmatrix.html
+
+add_test(bn_mat_angles_1         tester_bn_mat 18 30 40 50 0.4924038765,-0.5868240888,0.6427876097,0,0.8700019038,0.310468461,-0.3830222216,0,0.0252013863,0.7478280708,0.6634139482,0,0,0,0,1)
+add_test(bn_mat_angles_2         tester_bn_mat 18 84.23 19.5 38.9 0.733604282,-0.591944033,0.3338068592,0,0.3215992025,-0.1303153824,-0.9378655842,0,0.5986641049,0.7953742282,0.0947688064,0,0,0,0,1)
+
+# For function #19 (bn_mat_angles_rad), the <args> format is as follows:
+#
+# x y z <expected_result>
+#
+# where x, y, z are the angles to rotate about their respective axes
+# x, y, z are floating point numbers and are in radians.
+
+add_test(bn_mat_angles_rad_1     tester_bn_mat 19 1.14 0.856 0.321 0.6219827767,-0.2068090198,0.7552267572,0,0.7829298453,0.1797494268,-0.5955761923,0,-0.0125810482,0.9617277021,0.2737180014,0,0,0,0,1)
+add_test(bn_mat_angles_rad_2     tester_bn_mat 19 0.6 1 0.92 0.3273260276,-0.4298653899,0.8414709848,0,0.9444818397,0.1219905484,-0.3050776304,0,0.0284908076,0.8946139126,0.4459307359,0,0,0,0,1)
+
+# For function #20 (bn_eigen2x2), the <args> format is as follows:
+#
+# a b c <expected_val1> <expected_val2> <expected_vec1> <expected_vec2>
+#
+# where a, b, c are the values of the symmetric 2x2 matrix.
+# The eigenvalue with the lowest absolute value will be val1, and its
+# eigenvector will be in vec1.
+# An eigen vector is two floating point numbers separated by commas.
+
+add_test(bn_eigen2x2_1           tester_bn_mat 20 2.18 13.9 6.6 -9.68459058019096 18.464590580191 0.760598630446286,-0.649222398999938,0 0.649222398999938,0.760598630446286,0)
+add_test(bn_eigen2x2_2           tester_bn_mat 20 1 2 3 -0.23606797749979 4.23606797749979 0.85065080835204,-0.525731112119133,0 0.525731112119133,0.85065080835204,0)
+
+# For function #21 (bn_mat_xrot), the <args> format is as follows:
+#
+# sinx cosx <expected_result>
+#
+# where sinx and cosx are the sine and cosine of the angle of rotation
+# about the x-axis.
+# sinx and cosx are floating point values.
+
+add_test(bn_mat_xrot_1           tester_bn_mat 21 0.342020143325668 0.939692620785908 1,0,0,0,0,0.9396926208,-0.3420201433,0,0,0.3420201433,0.9396926208,0,0,0,0,1)
+add_test(bn_mat_xrot_2           tester_bn_mat 21 -0.78260815685241 0.622514636637619 1,0,0,0,0,0.6225146366,0.7826081569,0,0,-0.7826081569,0.6225146366,0,0,0,0,1)
+
+# For function #22 (bn_mat_yrot), the <args> format is as follows:
+#
+# siny cosy <expected_result>
+#
+# where siny and cosy are the sine and cosine of the angle of rotation
+# about the y-axis.
+# siny and cosy are floating point values.
+
+add_test(bn_mat_yrot_1           tester_bn_mat 22 0.30901699437494 0.951056516295153 0.9510565163,0,-0.3090169944,0,0,1,0,0,0.3090169944,0,0.9510565163,0,0,0,0,1)
+add_test(bn_mat_yrot_2           tester_bn_mat 22 0.17364817766693 0.984807753012208 0.9848077530122,0,-0.1736481777,0,0,1,0,0,0.1736481777,0,0.984807753,0,0,0,0,1)
+
+# For function #23 (bn_mat_zrot), the <args> format is as follows:
+#
+# sinz cosz <expected_result>
+#
+# where sinz and cosz are the sine and cosine of the angle of rotation
+# about the z-axis.
+# sinz and cosz are floating point values.
+
+add_test(bn_mat_zrot_1           tester_bn_mat 23 0.669130606358858 0.743144825477394 0.743144825477394,-0.669130606358858,0,0,0.669130606358858,0.743144825477394,0,0,0,0,1,0,0,0,0,1)
+add_test(bn_mat_zrot_2           tester_bn_mat 23 -0.99619469809174 -0.087155742747658 -0.087155742747658,0.996194698091745,0,0,-0.996194698091746,-0.087155742747658,0,0,0,0,1,0,0,0,0,1)
+
+# For function #24 (bn_mat_scale_about_pt), the <args> format is as follows:
+#
+# P s <expected_result>
+#
+# where P is the point to scale about and s is the uniform scale to
+# be applied.
+# A point is three floating point numbers separated by commas.
+# Scale is a floating point number.
+
+add_test(bn_mat_scale_about_pt_1 tester_bn_mat 24 3,4,5 1.5 0 1,0,0,-1,0,1,0,-1.333333333333333,0,0,1,-1.666666666666667,0,0,0,0.666666666666667)
+add_test(bn_mat_scale_about_pt_2 tester_bn_mat 24 2.18,-4.55,-17.4 0.31 0 1,0,0,4.852258064516120,0,1,0,-10.127419354838700,0,0,1,-38.729032258064500,0,0,0,3.225806451612900)
+
+# For function #25 (bn_mat_xform_about_pt), the <args> format is as follows:
+#
+# M P <expected_result>
+#
+# where M is the transform matrix, P is the point to apply from.
+# A matrix is 16 floating point values separated by commas.
+# A point is three floating point values separated by commas.
+
+add_test(bn_mat_xform_about_pt_1 tester_bn_mat 25 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16 -2,4.5,6.7 -25,-26,-27,219.9,63.5,69,74.5,-602.65,96.1,103.8,111.5,-902.75,13,14,15,-121.5)
+
+# For function #26 (bn_mat_ck), the <args> format is as follows:
+#
+# M <expected_result>
+#
+# where M is the matrix to check for axis perpendicularity
+# A matrix is 16 floating point values separated by commas.
+
+add_test(bn_mat_ck_1             tester_bn_mat 26 -0.064769339233561,-0.740316935054896,-0.669130606358858,0,-0.920939044198179,-0.213876288688268,0.325773249374894,0,-0.384286624235859,0.637328619165857,-0.667934144677115,0,0,0,0,1 0)
+add_test(bn_mat_ck_2             tester_bn_mat 26 -0.384795044679446,-0.906520316365329,0.17364817766693,23.835,-0.772197474581702,0.419235049422787,0.477444272753497,-1.23,-0.505612335529687,0.049627506006009,-0.861332268528144,-46.321,0,0,0,1 0)
+add_test(bn_mat_ck_3             tester_bn_mat 26 -0.38457345,-0.944,0.46483,23.835,0.27474,0.4192787,0.4272753497,-1.23,-0.87,0.06009,0.999144,-46.321,0,0,0,1 -1)
+
+# For function #27 (bn_mat_dup), there is one argument to keep main()
+# happy, which is ignored.
+# A matrix is initiated, copied and the dereferenced pointer compared in the funcion.
+
+add_test(bn_mat_dup              tester_bn_mat 27 0)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake
