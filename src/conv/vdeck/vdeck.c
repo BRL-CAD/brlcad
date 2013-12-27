@@ -174,7 +174,7 @@ extern int		parsArg();
 extern int		insert();
 extern int		col_prt();
 extern int		match();
-extern int		delete();
+extern int		delete_obj();
 extern int		cgarbs();
 extern int		redoarb();
 
@@ -223,7 +223,7 @@ sortFunc(const void *a, const void *b, void *UNUSED(arg))
 int
 main(int argc, char *argv[])
 {
-    setbuf(stdout, bu_malloc(BUFSIZ, "stdout buffer"));
+    setbuf(stdout, (char *)bu_malloc(BUFSIZ, "stdout buffer"));
     BU_LIST_INIT(&(sol_hd.l));
 
     if (! parsArg(argc, argv)) {
@@ -300,7 +300,7 @@ main(int argc, char *argv[])
 		    prompt("enter object[s] to remove: ");
 		    (void) getcmd(arg_list, arg_ct);
 		}
-		(void) delete(arg_list);
+		(void) delete_obj(arg_list);
 		break;
 	    case RETURN :
 		prompt(PROMPT);
@@ -1455,7 +1455,7 @@ insert(char *args[], int ct)
  * the arguments.
  */
 int
-delete(char *args[])
+delete_obj(char *args[])
 {
     int	i;
     int	nomatch;
