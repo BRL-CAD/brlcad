@@ -35,7 +35,7 @@
 #include "./iges_extern.h"
 
 void
-Readcnv(char *inum, fastf_t *id)
+Readcnv(fastf_t *inum, char *id)
 {
     int i = (-1), done = 0, lencard;
     char num[80];
