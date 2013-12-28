@@ -99,7 +99,7 @@ sf(int start, int skip)
  */
     while (&runner->l != &head) {
 	printframe(runner);
-	for (i=0; i<skip; i++) {
+	for (i = 0; i < skip; i++) {
 	    runner = (struct frame *)runner->l.forw;
 	    if (&runner->l == &head) return;
 	}
@@ -113,7 +113,7 @@ squirtframes(int base)
 
     sf(0, base);	/* start by outputting every base entries at one */
 
-    while (base > 1 ) {
+    while (base > 1) {
 	sf(base/2, base);
 	base /= 2;
     }
@@ -242,7 +242,7 @@ bubblesort(void)
     struct frame *a, *b;
 
     a = (struct frame *)head.forw;
-    while (a->l.forw != &head ) {
+    while (a->l.forw != &head) {
 	b = (struct frame *)a->l.forw;
 	if (a->number > b->number) {
 	    BU_LIST_DEQUEUE(&b->l);
@@ -286,7 +286,7 @@ get_args(int argc, char **argv)
     verbose = 1;
     specify_base = force_shell = suppress_shell = 0;
     frame_offset = 0;
-    while ( (c=bu_getopt(argc, argv, OPT_STR)) != -1) {
+    while ((c=bu_getopt(argc, argv, OPT_STR)) != -1) {
 	switch (c) {
 	    case 'q':
 		verbose = 0;
@@ -332,7 +332,7 @@ main(int argc, char *argv[])
 
     BU_LIST_INIT(&head);
     globals.text=NULL;
-    globals.tp=globals.tl=0;
+    globals.tp=globals.tl = 0;
     globals.flags=globals.location=globals.length = 0;
     globals.l.magic = MAGIC;
 
@@ -356,7 +356,7 @@ main(int argc, char *argv[])
 	/*compute base as largest power of 2 less than num of frames*/
 	base = 1;
 	count = 2;
-	for ( BU_LIST_FOR( lp, frame, &head ) ) {
+	for (BU_LIST_FOR(lp, frame, &head)) {
 	    if (count-- <= 0) {
 		base *= 2;
 		count = base - 1;

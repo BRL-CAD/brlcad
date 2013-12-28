@@ -72,14 +72,14 @@ get_args(int argc, char **argv)
     while ((c = bu_getopt(argc, argv, "e:s:w:n:R:G:B:o:h?NC")) != -1) {
 	switch (c) {
 	    case 'e' :
-	        if(BU_STR_EQUAL(bu_optarg, "ntsc")) {
+	        if (BU_STR_EQUAL(bu_optarg, "ntsc")) {
 		    rweight = 0.30;
 		    gweight = 0.59;
 		    bweight = 0.11;
 		    red = green = blue = 1;
 		    color = ICV_COLOR_RGB;
 		}
-		else if(BU_STR_EQUAL(bu_optarg, "crt")) {
+		else if (BU_STR_EQUAL(bu_optarg, "crt")) {
 		    rweight = 0.26;
 		    gweight = 0.66;
 		    bweight = 0.08;
@@ -155,7 +155,7 @@ main(int argc, char **argv)
     if (img == NULL)
 	return 1;
 
-    if(red && green && blue)
+    if (red && green && blue)
 	color = ICV_COLOR_RGB;
     else if (blue && green)
 	color = ICV_COLOR_BG;

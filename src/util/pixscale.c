@@ -414,7 +414,7 @@ main(int argc, char **argv)
 {
     int i;
 
-    if ( argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)) )
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
 	bu_exit(1, "%s", usage);
     if (!get_args(argc, argv) || isatty(fileno(stdout)))
 	bu_exit(1, "%s", usage);

@@ -74,7 +74,7 @@ main(int argc, char **argv)
     struct wmember comb1;	/* Used to make groups. */
     int ret;
 
-    if(argc > 1) {
+    if (argc > 1) {
 	if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?")) {
 	    printusage();
 	    return 0;
@@ -230,7 +230,7 @@ main(int argc, char **argv)
 	/*	-sd# - # = stem diameter */
 	/*	-sh# - # = stem height */
 
-	for (i=1; i<argc; i++) {
+	for (i = 1; i < argc; i++) {
 	    /* START # 3 */
 	    /* Put argument into temporary character string. */
 	    temp = argv[i];
@@ -360,7 +360,7 @@ main(int argc, char **argv)
     /* Write ident record. */
     mk_id(fpw, "bolts");
 
-    for (i=0; i<numblt; i++) {
+    for (i = 0; i < numblt; i++) {
 	/* Loop for each bolt created. */
 	/* START # 20 */
 

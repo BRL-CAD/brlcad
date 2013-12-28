@@ -71,7 +71,7 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
     if (!ifp || !ofp || !angle)
 	bu_exit(1, "bwrot: internal error processing arguments\n");
 
-    if ( isatty(fileno(stdin)) && isatty(fileno(stdout)) && argc == 1)
+    if (isatty(fileno(stdin)) && isatty(fileno(stdout)) && argc == 1)
 	return 0;
 
     while ((c = bu_getopt(argc, argv, "fbri#:a:s:o:w:n:S:W:N:h?")) != -1) {

@@ -79,7 +79,7 @@ main(int argc, char **argv)
     double mean, var, skew;
     FILE *fp;
 
-    if ( BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?") )
+    if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?"))
 	bu_exit(1, "%s", Usage);
 
     /* check for verbose flag */

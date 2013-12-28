@@ -50,11 +50,11 @@ int
 main(int argc, char **argv)
 {
 
-    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)) ) {
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 	fprintf(stderr,"%s\n",usage);
 	fprintf(stderr,"       Program continues running:\n");
     }
-    else if ( BU_STR_EQUAL(argv[1], "-h") ||  BU_STR_EQUAL(argv[1], "-?") )
+    else if (BU_STR_EQUAL(argv[1], "-h") ||  BU_STR_EQUAL(argv[1], "-?"))
 	bu_exit(25, "%s\n", usage);
 
     dunnopen();

@@ -286,8 +286,8 @@ main(int argc, char *argv[])
     int tkargc = 1;
     char *tkargv[2] = {NULL, NULL};
 
-    if(argc > 1){
-	if ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")){
+    if (argc > 1) {
+	if (BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) {
 		bu_exit(1, "Usage: %s logfile(s)\n", argv[0]);
 	}
     }

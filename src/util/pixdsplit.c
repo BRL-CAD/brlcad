@@ -128,7 +128,7 @@ main (int argc, char *argv[])
 	    break;
 	case 1:
 	    inf_name = bu_realpath(argv[bu_optind++], NULL);
-	    if(inf_name == NULL || *inf_name == '\0') {
+	    if (inf_name == NULL || *inf_name == '\0') {
 		bu_log("Bad file name\n");
 		bu_free(inf_name, "realpath alloc from bu_realpath");
 		return 1;

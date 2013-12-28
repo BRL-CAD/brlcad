@@ -105,11 +105,11 @@ main(int argc, char **argv)
 	bu_exit (1, NULL);
     }
 
-    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)) ) {
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 	fprintf(stderr,"%s",usage);
 	fprintf(stderr,"       Program continues running:\n");
     }
-    else if ( BU_STR_EQUAL(argv[1], "-h") ||  BU_STR_EQUAL(argv[1], "-?") )
+    else if (BU_STR_EQUAL(argv[1], "-h") ||  BU_STR_EQUAL(argv[1], "-?"))
 	bu_exit(25, "%s", usage);
 
     dunnopen();

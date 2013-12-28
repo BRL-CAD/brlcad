@@ -496,22 +496,22 @@ main(int argc, char **argv)
 		break;
 	    case 'n':
 		nbuf = atoi(&argv[0][2]);
-		if(nbuf < 0) {
+		if (nbuf < 0) {
 		    printf("Negative buffer count.\n");
 		    return -1;
 		}
-		if(nbuf >= INT_MAX) {
+		if (nbuf >= INT_MAX) {
 		    printf("Too many buffers specified.\n");
 		    return -1;
 		}
 		break;
 	    case 'l':
 		buflen = atoi(&argv[0][2]);
-		if(buflen <= 0) {
+		if (buflen <= 0) {
 		    printf("Invalid buffer length.\n");
 		    return -1;
 		}
-		if(buflen >= INT_MAX) {
+		if (buflen >= INT_MAX) {
 		    printf("Buffer length too large.\n");
 		    return -1;
 		}
@@ -521,10 +521,10 @@ main(int argc, char **argv)
 		break;
 	    case 'p':
 		port = atoi(&argv[0][2]);
-		if(port < 0) {
+		if (port < 0) {
 		    port = 0;
 		}
-		if(port > 65535) {
+		if (port > 65535) {
 		    port = 65535;
 		}
 		break;
@@ -612,10 +612,10 @@ main(int argc, char **argv)
 	int cnt;
 	if (trans) {
 	    pattern(buf, buflen);
-	    if (udp)  (void)Nwrite(fd, buf, 4); /* rcvr start */
+	    if (udp) (void)Nwrite(fd, buf, 4); /* rcvr start */
 	    while (nbuf-- && Nwrite(fd, buf, buflen) == buflen)
 		nbytes += buflen;
-	    if (udp)  (void)Nwrite(fd, buf, 4); /* rcvr end */
+	    if (udp) (void)Nwrite(fd, buf, 4); /* rcvr end */
 	} else {
 	    while ((cnt=Nread(fd, buf, buflen)) > 0) {
 		static int going = 0;
