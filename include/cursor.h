@@ -54,6 +54,25 @@ __BEGIN_DECLS
  */
 CURSOR_EXPORT extern int InitTermCap(FILE *fp);
 
+/**
+ * These below functions output terminal control strings to the file
+ * stream specified by the InitTermCap() call which must precede them.
+ * They return 0 if the capability is not described in the termcap
+ * database and 1 otherwise.  Of course if the database entry is
+ * wrong, the command will not do its job.
+ */
+
+int ClrEOL(void);
+int ClrStandout(void);
+int ClrText(void);
+int DeleteLn(void);
+int HmCursor(void);
+int MvCursor(int x, int y);
+int ResetScrlReg(void);
+int ScrollDn(void);
+int ScrollUp(void);
+int SetScrlReg(int top, int btm);
+int SetStandout(void);
 
 __END_DECLS
 
