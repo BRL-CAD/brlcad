@@ -29,6 +29,8 @@
 
 #include "common.h"
 
+#include <stdio.h>
+
 __BEGIN_DECLS
 
 #ifndef CURSOR_EXPORT
@@ -45,7 +47,10 @@ __BEGIN_DECLS
 
 
 /**
- * initialize termcap
+ * Initialize termcap.
+ *
+ * This function must be called first to read the termcap database and
+ * to specify the output stream.
  */
 CURSOR_EXPORT extern int InitTermCap(FILE *fp);
 

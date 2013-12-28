@@ -20,7 +20,11 @@
 
 #include "common.h"
 
-#include <stdio.h>
+/* interface header */
+#include "cursor.h"
+
+/* system headers */
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -59,7 +63,6 @@
 #define TBUFSIZ		1024
 #define MAX_TERM_LEN	80
 
-
 static FILE	*out_fp;		/* Output stream.	*/
 static char	termCapBuf[TBUFSIZ];  	/* Termcap entry.	*/
 static char	tstrings[TBUFSIZ];    	/* Individual TCS.	*/
@@ -68,7 +71,8 @@ static char	*tstr_addr = tstrings;	/* Used by tgetstr().	*/
 static int	fd_stdout = 1;
 #endif
 
-static void	LoadTP(void), LoadTCS(void);
+static void LoadTP(void);
+static void LoadTCS(void);
 
 
 /* This is a global buffer for the name of the terminal.	*/
@@ -95,10 +99,6 @@ char		*CS, /* Change scrolling region.		*/
 int		LI, /* Number of lines on screen.		*/
     CO; /* Number of columns on screen.		*/
 
-/* This function must be called first to read the termcap database and
-   to specify the output stream.
-*/
-int		InitTermCap(FILE *fp);
 
 /* This function must be accessible to the termcap library, but will
    not necessarily be needed by the application.
@@ -111,13 +111,17 @@ int		PutChr(int c);
    database and 1 otherwise.  Of course if the database entry is
    wrong, the command will not do its job.
 */
-int		ClrStandout(void), ClrEOL(void), ClrText(void),
-    DeleteLn(void),
-    HmCursor(void),
-    MvCursor(int x, int y),
-    ResetScrlReg(void),
-    ScrollDn(void), ScrollUp(void),
-    SetScrlReg(int top, int btm), SetStandout(void);
+int ClrStandout(void);
+int ClrEOL(void);
+int ClrText(void);
+int DeleteLn(void);
+int HmCursor(void);
+int MvCursor(int x, int y);
+int ResetScrlReg(void);
+int ScrollDn(void);
+int ScrollUp(void);
+int SetScrlReg(int top, int btm);
+int SetStandout(void);
 
 
 /*	I n i t T e r m C a p ( )
