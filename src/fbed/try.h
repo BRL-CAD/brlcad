@@ -25,26 +25,22 @@
 #define FBED_TRY_H
 
 #define INCL_TRY
-typedef struct
-{
+typedef struct {
     int (*f_func)();		/* Function pointer. */
     char *f_buff;		/* Macro key-stroke buffer. */
     char *f_name;		/* Function/macro name. */
 }
 Func_Tab;
-#define FT_NULL	(Func_Tab *) NULL
+#define FT_NULL	(Func_Tab *)NULL
 
-typedef union try
-{
-    struct
-    {
+typedef union try {
+    struct {
 	int t_curr;  /* Current letter. */
 	union try	*t_altr; /* Alternate letter node link. */
 	union try	*t_next; /* Next letter node link. */
     }
     n;
-    struct
-    {
+    struct {
 	Func_Tab	*t_ftbl; /* Function table pointer. */
 	union try	*t_altr; /* Alternate letter node link. */
 	union try	*t_next; /* Next letter node link. */
@@ -52,7 +48,7 @@ typedef union try
     l;
 }
 Try;
-#define TRY_NULL	(Try *) NULL
+#define TRY_NULL	(Try *)NULL
 
 #endif /* FBED_TRY_H */
 

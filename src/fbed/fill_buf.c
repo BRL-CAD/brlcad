@@ -47,17 +47,16 @@
 void
 fill_buf(int wid, int *buf)
 {
-    char    bitrow[FONTBUFSZ];
-    int     j;
+    char bitrow[FONTBUFSZ];
+    int  j;
 
-    if ( font.ffdes == NULL )
+    if (font.ffdes == NULL)
 	return;
     /* Read the row, rounding width up to nearest byte value. */
-    if ( (int)fread( bitrow, (size_t)(wid / 8) + ((wid % 8 == 0) ? 0 : 1), 1, font.ffdes)
+    if ((int)fread(bitrow, (size_t)(wid / 8) + ((wid % 8 == 0) ? 0 : 1), 1, font.ffdes)
 	 < 1
-	)
-    {
-	(void) fprintf( stderr, "fill_buf() read failed!\n" );
+	) {
+	(void)fprintf(stderr, "fill_buf() read failed!\n");
 	return;
     }
 
@@ -65,11 +64,12 @@ fill_buf(int wid, int *buf)
        The bitx routine extracts the bit value.  Can't just use the
        j-th bit because the bytes are backwards.
     */
-    for (j = 0; j < wid; j++)
+    for (j = 0; j < wid; j++) {
 	if (bitx (bitrow, (j & ~7) + (7 - (j & 7))))
 	    buf[j + 2] = 1;
 	else
 	    buf[j + 2] = 0;
+    }
 
     /* Need two samples worth of background on either end to make the
        filtering come out right without special casing the
@@ -79,7 +79,8 @@ fill_buf(int wid, int *buf)
     return;
 }
 
-/*	c l e a r _ b u f ( )
+
+/*	c l e a r _ b u f ()
 	Just sets all the buffer values to zero (this is used to
 	"read" background areas of the character needed for filtering near
 	the edges of the character definition.
@@ -87,10 +88,10 @@ fill_buf(int wid, int *buf)
 void
 clear_buf(int wid, int *buf)
 {
-    int     i, w = wid + 4;
+    int i, w = wid + 4;
 
     /* Clear each value in the row. */
-    for ( i = 0; i < w; i++ )
+    for (i = 0; i < w; i++)
 	buf[i] = 0;
     return;
 }
