@@ -79,25 +79,25 @@ static void LoadTCS(void);
 static char termName[MAX_TERM_LEN] = "UNKNOWN";
 
 /* from termcap/termlib library */
-extern char *BC, /* Backspace.			*/
-    *UP; /* Cursor up one line.			*/
+extern char *BC; /* Backspace.			*/
+extern char *UP; /* Cursor up one line.		*/
 
 /* Individual terminal control strings (TCS).	*/
-char *CS, /* Change scrolling region.		*/
-    *SO, /* Begin standout mode.		*/
-    *SE, /* End standout mode.			*/
-    *CE, /* Clear to end of line.		*/
-    *CL, /* Clear display and home cursor.	*/
-    *HO, /* Home cursor.			*/
-    *CM, /* Screen-relative cursor motion.	*/
-    *TI, /* Initialize terminal.		*/
-    *DL, /* Delete line.			*/
-    *SR, /* Scroll text down.			*/
-    *SF; /* Scroll text up.			*/
+char *CS; /* Change scrolling region.		*/
+char *SO; /* Begin standout mode.		*/
+char *SE; /* End standout mode.			*/
+char *CE; /* Clear to end of line.		*/
+char *CL; /* Clear display and home cursor.	*/
+char *HO; /* Home cursor.			*/
+char *CM; /* Screen-relative cursor motion.	*/
+char *TI; /* Initialize terminal.		*/
+char *DL; /* Delete line.			*/
+char *SR; /* Scroll text down.			*/
+char *SF; /* Scroll text up.			*/
 
 /* Individual terminal parameters.		*/
-int LI, /* Number of lines on screen.		*/
-    CO; /* Number of columns on screen.		*/
+int LI; /* Number of lines on screen.		*/
+int CO; /* Number of columns on screen.		*/
 
 
 /* This function must be accessible to the termcap library, but will
@@ -174,9 +174,9 @@ LoadTP(void)
 }
 
 
-/* L o a d T C S ()
-   Get the terminal control strings.
-*/
+/*
+ * Get the terminal control strings.
+ */
 static void
 LoadTCS(void)
 {
