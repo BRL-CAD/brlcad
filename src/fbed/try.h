@@ -33,17 +33,17 @@ typedef struct {
 Func_Tab;
 #define FT_NULL	(Func_Tab *)NULL
 
-typedef union try {
+typedef union tryit {
     struct {
 	int t_curr;  /* Current letter. */
-	union try	*t_altr; /* Alternate letter node link. */
-	union try	*t_next; /* Next letter node link. */
+	union tryit	*t_altr; /* Alternate letter node link. */
+	union tryit	*t_next; /* Next letter node link. */
     }
     n;
     struct {
 	Func_Tab	*t_ftbl; /* Function table pointer. */
-	union try	*t_altr; /* Alternate letter node link. */
-	union try	*t_next; /* Next letter node link. */
+	union tryit	*t_altr; /* Alternate letter node link. */
+	union tryit	*t_next; /* Next letter node link. */
     }
     l;
 }
