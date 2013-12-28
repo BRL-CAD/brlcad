@@ -76,7 +76,7 @@ static void LoadTCS(void);
 
 
 /* This is a global buffer for the name of the terminal.	*/
-char		termName[MAX_TERM_LEN] = "UNKNOWN";
+static char termName[MAX_TERM_LEN] = "UNKNOWN";
 
 /* from termcap/termlib library */
 extern char	*BC, /* Backspace.				*/
@@ -103,28 +103,10 @@ int		LI, /* Number of lines on screen.		*/
 /* This function must be accessible to the termcap library, but will
    not necessarily be needed by the application.
 */
-int		PutChr(int c);
-
-/* These functions output terminal control strings to the file stream
-   specified by the InitTermCap() call which must precede them.
-   They return 0 if the capability is not described in the termcap
-   database and 1 otherwise.  Of course if the database entry is
-   wrong, the command will not do its job.
-*/
-int ClrStandout(void);
-int ClrEOL(void);
-int ClrText(void);
-int DeleteLn(void);
-int HmCursor(void);
-int MvCursor(int x, int y);
-int ResetScrlReg(void);
-int ScrollDn(void);
-int ScrollUp(void);
-int SetScrlReg(int top, int btm);
-int SetStandout(void);
+int PutChr(int c);
 
 
-/*	I n i t T e r m C a p ( )
+/*
 	Get terminal name from environment and leave in 'termName' for
 	external reference.
 	Read termcap entry into 'termCapBuf'.
@@ -174,6 +156,7 @@ InitTermCap(FILE *fp)
     return	1;		/* All is well.				*/
 }
 
+
 /*	L o a d T P ( )
 	Get the terminal parameters.
 */
@@ -200,6 +183,7 @@ LoadTP(void)
     return;
 }
 
+
 /*	L o a d T C S ( )
 	Get the terminal control strings.
 */
@@ -222,9 +206,7 @@ LoadTCS(void)
     return;
 }
 
-/*	H m C u r s o r ( )
-	Home the cursor.
-*/
+
 int
 HmCursor(void)
 {
@@ -237,9 +219,7 @@ HmCursor(void)
 	return	0;
 }
 
-/*	S c r o l l U p ( )
-	Forward scroll 1 line.
-*/
+
 int
 ScrollUp(void)
 {
@@ -252,9 +232,7 @@ ScrollUp(void)
 	return	0;
 }
 
-/*	S c r o l l D n ( )
-	Reverse scroll 1 line.
-*/
+
 int
 ScrollDn(void)
 {
@@ -267,9 +245,7 @@ ScrollDn(void)
 	return	0;
 }
 
-/*	D e l e t e L n ( )
-	Delete the current line.
-*/
+
 int
 DeleteLn(void)
 {
@@ -282,9 +258,7 @@ DeleteLn(void)
 	return	0;
 }
 
-/*	M v C u r s o r ( )
-	Move the cursor to screen coordinates x, y.
-*/
+
 int
 MvCursor(int x, int y)
 {
@@ -298,9 +272,7 @@ MvCursor(int x, int y)
 	return	0;
 }
 
-/*	C l r E O L ( )
-	Clear from the cursor to end of line.
-*/
+
 int
 ClrEOL(void)
 {
@@ -313,9 +285,7 @@ ClrEOL(void)
 	return	0;
 }
 
-/*	C l r T e x t ( )
-	Clear screen and home cursor.
-*/
+
 int
 ClrText(void)
 {
@@ -328,9 +298,7 @@ ClrText(void)
 	return	0;
 }
 
-/*	S e t S c r l R e g ( )
-	Set the scrolling region to be from "top" to "btm".
-*/
+
 int
 SetScrlReg(int top, int btm)
 {
@@ -343,9 +311,7 @@ SetScrlReg(int top, int btm)
 	return	0;
 }
 
-/*	R e s e t S c r l R e g ( )
-	Reset the scrolling region to the entire screen.
-*/
+
 int
 ResetScrlReg(void)
 {
@@ -358,9 +324,7 @@ ResetScrlReg(void)
 	return	0;
 }
 
-/*	C l r S t a n d o u t ( )
-	End standout mode.
-*/
+
 int
 ClrStandout(void)
 {
@@ -373,9 +337,7 @@ ClrStandout(void)
 	return	0;
 }
 
-/*	S e t S t a n d o u t ( )
-	Begin standout mode.
-*/
+
 int
 SetStandout(void)
 {
@@ -388,7 +350,7 @@ SetStandout(void)
 	return	0;
 }
 
-/*	P u t C h r ( )							*/
+
 int
 PutChr(int c)
 {

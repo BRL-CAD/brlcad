@@ -51,6 +51,12 @@ __BEGIN_DECLS
  *
  * This function must be called first to read the termcap database and
  * to specify the output stream.
+ *
+ * Get individual parameters and control strings.  Initialize the
+ * terminal.  Use 'fp' as output stream.
+ *
+ * Returns 1 for success, 0 for failure and prints appropriate
+ * diagnostic.
  */
 CURSOR_EXPORT extern int InitTermCap(FILE *fp);
 
@@ -62,17 +68,61 @@ CURSOR_EXPORT extern int InitTermCap(FILE *fp);
  * wrong, the command will not do its job.
  */
 
-int ClrEOL(void);
-int ClrStandout(void);
-int ClrText(void);
-int DeleteLn(void);
-int HmCursor(void);
-int MvCursor(int x, int y);
-int ResetScrlReg(void);
-int ScrollDn(void);
-int ScrollUp(void);
-int SetScrlReg(int top, int btm);
-int SetStandout(void);
+/**
+ * Begin standout mode.
+ */
+CURSOR_EXPORT extern int SetStandout(void);
+
+/**
+ * End standout mode.
+ */
+CURSOR_EXPORT extern int ClrStandout(void);
+
+/**
+ * Clear from the cursor to end of line.
+ */
+CURSOR_EXPORT extern int ClrEOL(void);
+
+/**
+ * Clear screen and home cursor.
+ */
+CURSOR_EXPORT extern int ClrText(void);
+
+/**
+ * Delete the current line.
+ */
+CURSOR_EXPORT extern int DeleteLn(void);
+
+/**
+ * Home the cursor.
+ */
+CURSOR_EXPORT extern int HmCursor(void);
+
+/**
+ * Move the cursor to screen coordinates x, y.
+ */
+CURSOR_EXPORT extern int MvCursor(int x, int y);
+
+/**
+ * Reverse scroll 1 line.
+ */
+CURSOR_EXPORT extern int ScrollDn(void);
+
+/**
+ * Forward scroll 1 line.
+ */
+CURSOR_EXPORT extern int ScrollUp(void);
+
+/**
+ * Set the scrolling region to be from "top" to "btm".
+ */
+CURSOR_EXPORT extern int SetScrlReg(int top, int btm);
+
+/**
+ * Reset the scrolling region to the entire screen.
+ */
+CURSOR_EXPORT extern int ResetScrlReg(void);
+
 
 __END_DECLS
 
