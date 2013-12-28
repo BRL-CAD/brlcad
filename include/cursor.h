@@ -24,9 +24,35 @@
  *
  */
 
+#ifndef CURSOR_H
+#define CURSOR_H
 
-extern int InitTermCap(FILE *fp);
+#include "common.h"
 
+__BEGIN_DECLS
+
+#ifndef CURSOR_EXPORT
+#  if defined(CURSOR_DLL_EXPORTS) && defined(CURSOR_DLL_IMPORTS)
+#    error "Only CURSOR_DLL_EXPORTS or CURSOR_DLL_IMPORTS can be defined, not both."
+#  elif defined(CURSOR_DLL_EXPORTS)
+#    define CURSOR_EXPORT __declspec(dllexport)
+#  elif defined(CURSOR_DLL_IMPORTS)
+#    define CURSOR_EXPORT __declspec(dllimport)
+#  else
+#    define CURSOR_EXPORT
+#  endif
+#endif
+
+
+/**
+ * initialize termcap
+ */
+CURSOR_EXPORT extern int InitTermCap(FILE *fp);
+
+
+__END_DECLS
+
+#endif /* CURSOR_H */
 
 /*
  * Local Variables:
