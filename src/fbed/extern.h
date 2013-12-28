@@ -85,7 +85,7 @@ extern int LI, CO;
 extern struct vfont font;
 
 extern Func_Tab	*get_Func_Name(char* inbuf, size_t bufsz, const char* msg);
-extern RGBpixel *get_Fb_Panel();
+extern RGBpixel *get_Fb_Panel(Rect2D *rectp);
 extern char *char_To_String(int i);
 extern int add_Try(Func_Tab* ftbl, const char* name, Try** trypp);
 extern int bitx(char *bitstring, int posn);
