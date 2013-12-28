@@ -335,7 +335,7 @@ main(int argc, char **argv)
 	prnt_Usage();
 	return 1;
     }
-    setbuf(stdout, malloc(BUFSIZ));
+    setbuf(stdout, (char *)malloc(BUFSIZ));
     tty = isatty(1);
     if (!InitTermCap(stdout)) {
 	(void)fprintf(stderr, "Could not initialize terminal.\n");
@@ -1099,7 +1099,7 @@ f_Name_Keyboard_Macro()
     }
     if (! get_Input(macro_name, MAX_LN, "Name keyboard macro : "))
 	return 0;
-    macro_entry->f_name = malloc((unsigned) strlen(macro_name)+1);
+    macro_entry->f_name = (char *)malloc((unsigned) strlen(macro_name)+1);
     if (macro_entry->f_name == NULL) {
 	Malloc_Bomb();
     }
@@ -1483,8 +1483,8 @@ f_Save_RLE() /* Save framebuffer image with Run-Length Encoding. */
 HIDDEN int
 f_Transliterate() /* Transliterate pixels of color1 to target color2.*/
 {
-    RGBpixel new, cur;
-    RGBpixel old = {0,0,0};
+    RGBpixel newpix, curpix;
+    RGBpixel oldpix = {0,0,0};
     static char oldbuf[CLR_LEN];
     static char newbuf[CLR_LEN];
     int x, y;
@@ -1493,18 +1493,18 @@ f_Transliterate() /* Transliterate pixels of color1 to target color2.*/
     rgt = current.r_corner.p_x;
     top = current.r_origin.p_y;
     btm = current.r_corner.p_y;
-    if (!getColor(old, "Enter old pixel color", oldbuf))
+    if (!getColor(oldpix, "Enter old pixel color", oldbuf))
 	return 0;
-    if (!getColor(new, "Enter new pixel color", newbuf))
+    if (!getColor(newpix, "Enter new pixel color", newbuf))
 	return 0;
     for (y = top; y <= btm; y++) {
 	x = lft;
 	(void)fb_seek(fbp, x, y);
 	for (; x <= rgt; x++) {
-	    (void)fb_rpixel(fbp, (unsigned char *) cur);
-	    if (AproxPixel(cur, old, tolerance)) {
+	    (void)fb_rpixel(fbp, (unsigned char *)curpix);
+	    if (AproxPixel(curpix, oldpix, tolerance)) {
 		(void)fb_seek(fbp, x, y);
-		fb_wpixel(fbp, new);
+		fb_wpixel(fbp, newpix);
 	    }
 	}
     }
@@ -1534,7 +1534,7 @@ f_Stop_Macro()
 	Malloc_Bomb();
     }
     macro_entry->f_func = f_Exec_Macro;
-    macro_entry->f_buff = malloc((unsigned) strlen(macro_buf)+1);
+    macro_entry->f_buff = (char *)malloc((unsigned) strlen(macro_buf)+1);
     if (macro_entry->f_buff == NULL) {
 	Malloc_Bomb();
     }
@@ -1567,7 +1567,7 @@ f_Enter_Macro_Definition()
 	Malloc_Bomb();
     }
     macro_entry->f_func = f_Exec_Macro;
-    macro_entry->f_buff = malloc((unsigned) strlen(macro_buf)+1);
+    macro_entry->f_buff = (char *)malloc((unsigned) strlen(macro_buf)+1);
     if (macro_entry->f_buff == NULL) {
 	Malloc_Bomb();
     }
@@ -2047,8 +2047,7 @@ fb_Get_Pixel(unsigned char *pixel)
 
 /*	g e t _ F b _ P a n e l () */
 RGBpixel *
-get_Fb_Panel(rectp)
-    Rect2D *rectp;
+get_Fb_Panel(Rect2D *rectp)
 {
     int top;
     int rectwid;
