@@ -66,21 +66,21 @@ static struct application ag;	/* global application structure (zeroed out) */
 
 /* functions local to this module */
 static int doBursts();
-static int burstPoint();
+static int burstPoint(struct application *, fastf_t *, fastf_t *);
 static int burstRay();
 static int gridShot();
-static int f_BurstHit();
-static int f_BurstMiss();
-static int f_HushOverlap();
-static int f_Overlap();
-static int f_ShotHit();
-static int f_ShotMiss();
-static int getRayOrigin();
-static int readBurst();
-static int readShot();
-static void lgtModel();
+static int f_BurstHit(struct application *x, struct partition *, struct seg *);
+static int f_BurstMiss(struct application *ap);
+static int f_HushOverlap(struct application *ap, struct partition *, struct region *, struct region *, struct partition *);
+static int f_Overlap(struct application *, struct partition *, struct region *, struct region *, struct partition *);
+static int f_ShotHit(struct application *, struct partition *, struct seg *);
+static int f_ShotMiss(struct application *);
+static int getRayOrigin(struct application *);
+static int readBurst(fastf_t *);
+static int readShot(fastf_t *);
+static void lgtModel(struct application *, struct partition *, struct hit *, struct xray *, fastf_t surfnorm[3]);
 static void view_end();
-static void view_pix();
+static void view_pix(struct application *);
 
 /*
   void colorPartition(struct region *regp, int type)
