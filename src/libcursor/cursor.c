@@ -58,17 +58,17 @@
 #ifdef HAVE_SYS_IOCTL_H
 #  include <sys/ioctl.h>
 #endif
-#define _winsize winsize	/* For compat with _ioctl.h. */
+#define _winsize winsize		/* For compat with _ioctl.h. */
 
-#define TBUFSIZ		1024
-#define MAX_TERM_LEN	80
+#define TBUFSIZ 1024
+#define MAX_TERM_LEN 80
 
-static FILE	*out_fp;		/* Output stream.	*/
-static char	termCapBuf[TBUFSIZ];  	/* Termcap entry.	*/
-static char	tstrings[TBUFSIZ];    	/* Individual TCS.	*/
-static char	*tstr_addr = tstrings;	/* Used by tgetstr().	*/
+static FILE *out_fp;			/* Output stream.	*/
+static char termCapBuf[TBUFSIZ];  	/* Termcap entry.	*/
+static char tstrings[TBUFSIZ];    	/* Individual TCS.	*/
+static char *tstr_addr = tstrings;	/* Used by tgetstr().	*/
 #ifdef TIOCGWINSZ
-static int	fd_stdout = 1;
+static int fd_stdout = 1;
 #endif
 
 static void LoadTP(void);
@@ -79,130 +79,120 @@ static void LoadTCS(void);
 static char termName[MAX_TERM_LEN] = "UNKNOWN";
 
 /* from termcap/termlib library */
-extern char	*BC, /* Backspace.				*/
+extern char *BC, /* Backspace.			*/
     *UP; /* Cursor up one line.			*/
 
-/* Individual terminal control strings (TCS).			*/
-char		*CS, /* Change scrolling region.		*/
-    *SO, /* Begin standout mode.			*/
+/* Individual terminal control strings (TCS).	*/
+char *CS, /* Change scrolling region.		*/
+    *SO, /* Begin standout mode.		*/
     *SE, /* End standout mode.			*/
-    *CE, /* Clear to end of line.			*/
-    *CL, /* Clear display and home cursor.		*/
-    *HO, /* Home cursor.				*/
-    *CM, /* Screen-relative cursor motion.		*/
-    *TI, /* Initialize terminal.			*/
-    *DL, /* Delete line.				*/
+    *CE, /* Clear to end of line.		*/
+    *CL, /* Clear display and home cursor.	*/
+    *HO, /* Home cursor.			*/
+    *CM, /* Screen-relative cursor motion.	*/
+    *TI, /* Initialize terminal.		*/
+    *DL, /* Delete line.			*/
     *SR, /* Scroll text down.			*/
-    *SF; /* Scroll text up.				*/
+    *SF; /* Scroll text up.			*/
 
-/* Individual terminal parameters.				*/
-int		LI, /* Number of lines on screen.		*/
+/* Individual terminal parameters.		*/
+int LI, /* Number of lines on screen.		*/
     CO; /* Number of columns on screen.		*/
 
 
 /* This function must be accessible to the termcap library, but will
-   not necessarily be needed by the application.
-*/
+ * not necessarily be needed by the application.
+ */
 int PutChr(int c);
 
 
 /*
-	Get terminal name from environment and leave in 'termName' for
-	external reference.
-	Read termcap entry into 'termCapBuf'.
-	Get individual parameters and control strings.
-	Initialize the terminal.
-	Returns 1 for success, 0 for failure and prints
-	appropriate diagnostic.
-	Use 'fp' as output stream.
-*/
+ * Get terminal name from environment and leave in 'termName' for
+ * external reference.
+ * Read termcap entry into 'termCapBuf'.
+ */
 int
 InitTermCap(FILE *fp)
 {
-    char	*term; /* Name of terminal from environment ($TERM).*/
+    char *term; /* Name of terminal from environment ($TERM).*/
     out_fp = fp;
 #ifdef TIOCGWINSZ
-    fd_stdout = fileno( out_fp );
+    fd_stdout = fileno(out_fp);
 #endif
-    if ( (term = getenv( "TERM" )) == NULL )
-    {
-	(void) fprintf( stderr, "TERM not set or exported!\n" );
-	return	0;
-    }
-    else
-    {
-	(void) strncpy( termName, term, MAX_TERM_LEN ); /* intentionally not bu_strlcpy to not add libbu dep */
+    if ((term = getenv("TERM")) == NULL) {
+	(void) fprintf(stderr, "TERM not set or exported!\n");
+	return 0;
+    } else {
+	(void) strncpy(termName, term, MAX_TERM_LEN); /* intentionally not bu_strlcpy to not add libbu dep */
 	termName[sizeof(termName) - 1] = '\0';
     }
 
     /* Get terminal entry.						*/
-    switch ( tgetent( termCapBuf, term ) )
-    {
+    switch (tgetent(termCapBuf, term)) {
 	case -1 :
-	    (void) fprintf( stderr, "Can't open termcap file!\n" );
-	    return	0;
-	case  0 :
-	    (void) fprintf( stderr,
-			    "Terminal type not in termcap file!\n"
+	    (void) fprintf(stderr, "Can't open termcap file!\n");
+	    return 0;
+	case 0 :
+	    (void) fprintf(stderr,
+			   "Terminal type not in termcap file!\n"
 		);
-	    return	0;
+	    return 0;
     }
 
     /* Get individual terminal parameters and control strings.	*/
     LoadTP();
     LoadTCS();
 
-    tputs( TI, 1, PutChr );	/* Initialize terminal.			*/
-    return	1;		/* All is well.				*/
+    tputs(TI, 1, PutChr);	/* Initialize terminal.			*/
+    return 1;		/* All is well.				*/
 }
 
 
-/*	L o a d T P ( )
-	Get the terminal parameters.
-*/
+/*
+ * Get the terminal parameters.
+ */
 static void
 LoadTP(void)
 {
 #ifdef TIOCGWINSZ
     /* Get window size for DMD layers support.			*/
-    struct _winsize		window;
+    struct _winsize window;
 
-    if (	ioctl( fd_stdout, TIOCGWINSZ, &window ) == 0
-		&&	window.ws_row != 0 && window.ws_col != 0
+    if (ioctl(fd_stdout, TIOCGWINSZ, &window) == 0
+	&& window.ws_row != 0 && window.ws_col != 0
 	)
     {
 	LI = (int) window.ws_row;
 	CO = (int) window.ws_col;
+	return;
     }
-    else
 #endif
-    {
-	LI = tgetnum( "li" );
-	CO = tgetnum( "co" );
-    }
+
+    LI = tgetnum("li");
+    CO = tgetnum("co");
     return;
 }
 
 
-/*	L o a d T C S ( )
-	Get the terminal control strings.
+/* L o a d T C S ()
+   Get the terminal control strings.
 */
 static void
 LoadTCS(void)
 {
-    CS = tgetstr( "cs", &tstr_addr );
-    SE = tgetstr( "se", &tstr_addr );
-    SO = tgetstr( "so", &tstr_addr );
-    CE = tgetstr( "ce", &tstr_addr );
-    CL = tgetstr( "cl", &tstr_addr );
-    HO = tgetstr( "ho", &tstr_addr );
-    CM = tgetstr( "cm", &tstr_addr );
-    BC = tgetstr( "bc", &tstr_addr );
-    UP = tgetstr( "up", &tstr_addr );
-    TI = tgetstr( "ti", &tstr_addr );
-    DL = tgetstr( "dl", &tstr_addr );
-    SR = tgetstr( "sr", &tstr_addr );
-    SF = tgetstr( "sf", &tstr_addr );
+    CS = tgetstr("cs", &tstr_addr);
+    SE = tgetstr("se", &tstr_addr);
+    SO = tgetstr("so", &tstr_addr);
+    CE = tgetstr("ce", &tstr_addr);
+    CL = tgetstr("cl", &tstr_addr);
+    HO = tgetstr("ho", &tstr_addr);
+    CM = tgetstr("cm", &tstr_addr);
+    BC = tgetstr("bc", &tstr_addr);
+    UP = tgetstr("up", &tstr_addr);
+    TI = tgetstr("ti", &tstr_addr);
+    DL = tgetstr("dl", &tstr_addr);
+    SR = tgetstr("sr", &tstr_addr);
+    SF = tgetstr("sf", &tstr_addr);
     return;
 }
 
@@ -210,152 +200,145 @@ LoadTCS(void)
 int
 HmCursor(void)
 {
-    if ( HO != NULL )
-    {
-	tputs( HO, 1, PutChr );
-	return	1;
+    if (HO != NULL) {
+	tputs(HO, 1, PutChr);
+	return 1;
+    } else {
+	return 0;
     }
-    else
-	return	0;
 }
 
 
 int
 ScrollUp(void)
 {
-    if ( SF != NULL )
-    {
-	tputs( SF, 1, PutChr );
-	return	1;
+    if (SF != NULL) {
+	tputs(SF, 1, PutChr);
+	return 1;
+    } else {
+	return 0;
     }
-    else
-	return	0;
 }
 
 
 int
 ScrollDn(void)
 {
-    if ( SR != NULL )
-    {
-	tputs( SR, 1, PutChr );
-	return	1;
+    if (SR != NULL) {
+	tputs(SR, 1, PutChr);
+	return 1;
+    } else {
+	return 0;
     }
-    else
-	return	0;
 }
 
 
 int
 DeleteLn(void)
 {
-    if ( DL != NULL )
-    {
-	tputs( DL, 1, PutChr );
-	return	1;
+    if (DL != NULL) {
+	tputs(DL, 1, PutChr);
+	return 1;
+    } else {
+	return 0;
     }
-    else
-	return	0;
 }
 
 
 int
 MvCursor(int x, int y)
 {
-    --x; --y; /* Tgoto() adds 1 to each coordinate!?		*/
-    if ( CM != NULL )
-    {
-	tputs( tgoto( CM, x, y ), 1, PutChr );
-	return	1;
+    /* Tgoto() adds 1 to each coordinate!? */
+    --x;
+    --y;
+
+    if (CM != NULL) {
+	tputs(tgoto(CM, x, y), 1, PutChr);
+	return 1;
+    } else {
+	return 0;
     }
-    else
-	return	0;
 }
 
 
 int
 ClrEOL(void)
 {
-    if ( CE != NULL )
-    {
-	tputs( CE, 1, PutChr );
-	return	1;
+    if (CE != NULL) {
+	tputs(CE, 1, PutChr);
+	return 1;
+    } else {
+	return 0;
     }
-    else
-	return	0;
 }
 
 
 int
 ClrText(void)
 {
-    if ( CL != NULL )
-    {
-	tputs( CL, LI, PutChr );
-	return	1;
+    if (CL != NULL) {
+	tputs(CL, LI, PutChr);
+	return 1;
+    } else {
+	return 0;
     }
-    else
-	return	0;
 }
 
 
 int
 SetScrlReg(int top, int btm)
 {
-    if ( CS != NULL )
-    {
-	tputs( tgoto( CS, btm-1, top-1 ), 1, PutChr );
-	return	1;
+    if (CS != NULL) {
+	tputs(tgoto(CS, btm-1, top-1), 1, PutChr);
+	return 1;
+    } else {
+	return 0;
     }
-    else
-	return	0;
 }
 
 
 int
 ResetScrlReg(void)
 {
-    if ( CS != NULL )
-    {
-	tputs( tgoto( CS, LI-1, 0 ), 1, PutChr );
-	return	1;
+    if (CS != NULL) {
+	tputs(tgoto(CS, LI-1, 0), 1, PutChr);
+	return 1;
+    } else {
+	return 0;
     }
-    else
-	return	0;
 }
 
 
 int
 ClrStandout(void)
 {
-    if ( SE != NULL )
-    {
-	tputs( SE, 1, PutChr );
-	return	1;
+    if (SE != NULL) {
+	tputs(SE, 1, PutChr);
+	return 1;
+    } else {
+	return 0;
     }
-    else
-	return	0;
 }
 
 
 int
 SetStandout(void)
 {
-    if ( SO != NULL )
-    {
-	tputs( SO, 1, PutChr );
-	return	1;
+    if (SO != NULL) {
+	tputs(SO, 1, PutChr);
+	return 1;
+    } else {
+	return 0;
     }
-    else
-	return	0;
 }
 
 
 int
 PutChr(int c)
 {
-    return	putc( c, out_fp );
+    return putc(c, out_fp);
 }
+
 
 /*
  * Local Variables:
