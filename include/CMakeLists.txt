@@ -4,6 +4,7 @@ set(include_hdrs
   bn.h
   bu.h
   common.h
+  cursor.h
   ged.h
   magic.h
   pstdint.h
