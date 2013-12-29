@@ -48,7 +48,9 @@
  * go to src/conv and edit g2asc.c and asc2g.c to support the new solid
  * go to src/librt and edit tcl.c to add the new solid to
  *	rt_solid_type_lookup[]
- *	also add the interface table and to rt_id_solid() in table.c
+ *	also add the interface table and to rt_id_solid() in table.c;
+ *	you MUST add the appropriate RTFUNCTAB_FUNC_X_CAST macro
+ *	for each function rt_xxx_X you add (see entire list in raytrace.h)
  * go to src/mged and create the edit support
  *
  */
