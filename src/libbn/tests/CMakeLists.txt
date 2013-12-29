@@ -13,6 +13,7 @@ BRLCAD_ADDEXEC(tester_bn_plane_dist bn_plane_dist.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_plane_isect bn_plane_isect.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_complex bn_complex.c "libbu;libbn" NO_INSTALL)
 BRLCAD_ADDEXEC(tester_bn_mat bn_mat.c "libbu;libbn" NO_INSTALL)
+BRLCAD_ADDEXEC(tester_bn_tabdata bn_tabdata.c "libbu;libbn" NO_INSTALL)
 CMAKEFILES(bn_chull_test003_bot.asc)
 CMAKEFILES(bn_chull_test004_bot.asc)
 CMAKEFILES(bn_poly_cubic_roots.c bn_poly_quartic_roots.c bn_obr.c)
@@ -702,6 +703,153 @@ add_test(bn_mat_ck_3             tester_bn_mat 26 -0.38457345,-0.944,0.46483,23.
 # A matrix is initiated, copied and the dereferenced pointer compared in the funcion.
 
 add_test(bn_mat_dup              tester_bn_mat 27 0)
+
+
+#
+#  *************** tabdata.c tests ***************
+#
+# For tester_bn_tabdata, input is as follows:
+# tester_bn_tabdata <function_number> <args>
+
+# For function #1 (bn_table_make_uniform), the <args> format is as follows:
+#
+# first last num expected
+#
+# where first last and num will be used to make a uniform table, and
+# expected is the expected result table.  A table is a list of
+# comma-separated numbers, where the first one is the number of
+# entries: nx,x0,x1,...,x(nx).
+
+add_test(bn_table_make_uniform tester_bn_tabdata 1 0 100 10 10,0,10,20,30,40,50,60,70,80,90,100)
+
+# For function #2 (bn_tabdata_add), the <args> format is as follows:
+#
+# table tabdata1 tabdata2 expected_tabdata
+#
+# where tabdata1 and tabdata2 will be added, and table is a table that
+# tabdata1 and tabdata2 use.  A table is a list of comma-separated
+# numbers, where the first one is the number of entries:
+# nx,x0,x1,...,x(nx); a tabdata is a list of comma-separated numbers
+# with the same length as the table to which it refers; if the table
+# entry is nx,x0,x1,...,x(nx), then the tabdata entry is
+# y0,y1,...y(nx-1)
+
+add_test(bn_tabdata_add tester_bn_tabdata 2 5,0,20,40,60,80,100 1,2,3,4,5 8,3,6,2,9 9,5,9,6,14)
+
+# For function #3 (bn_tabdata_mul), the <args> format is as follows:
+#
+# table tabdata1 tabdata2 expected_tabdata
+#
+# where tabdata1 and tabdata2 will be multiplied, and table is a table
+# that tabdata1 and tabdata2 use.  A table is a list of
+# comma-separated numbers, where the first one is the number of
+# entries: nx,x0,x1,...,x(nx); a tabdata is a list of comma-separated
+# numbers with the same length as the table to which it refers; if the
+# table entry is nx,x0,x1,...,x(nx), then the tabdata entry is
+# y0,y1,...y(nx-1)
+
+add_test(bn_tabdata_mul tester_bn_tabdata 3 5,0,20,40,60,80,100 1,2,3,4,5 8,3,6,2,9 8,6,18,8,45)
+
+# For function #4 (bn_tabdata_mul3), the <args> format is as follows:
+#
+# table tabdata1 tabdata2 tabdata3 expected_tabdata
+#
+# where tabdata1, tabdata2, and tabdata3 will be multiplied, and table
+# is a table that tabdata1, tabdata2, and tabdata3 use.  A table is a
+# list of comma-separated numbers, where the first one is the number
+# of entries: nx,x0,x1,...,x(nx); a tabdata is a list of
+# comma-separated numbers with the same length as the table to which
+# it refers; if the table entry is nx,x0,x1,...,x(nx), then the
+# tabdata entry is y0,y1,...y(nx-1)
+
+add_test(bn_tabdata_mul3 tester_bn_tabdata 4 5,0,20,40,60,80,100 1,2,3,4,5 8,3,6,2,9 8,6,18,8,45 64,36,324,64,2025)
+
+
+# For function #5 (bn_tabdata_incr_mul3_scale), the <args> format is as follows:
+#
+# table tabdataout_orig tabdata1 tabdata2 tabdata3 scale expected_tabdata
+#
+# where tabdata1, tabdata2, and tabdata3, and scale will be
+# multiplied, and the result will be added to tabdataout_orig; table
+# is a table that tabdata1, tabdata2, and tabdata3 use.  A table is a
+# list of comma-separated numbers, where the first one is the number
+# of entries: nx,x0,x1,...,x(nx); a tabdata is a list of
+# comma-separated numbers with the same length as the table to which
+# it refers; if the table entry is nx,x0,x1,...,x(nx), then the
+# tabdata entry is y0,y1,...y(nx-1)
+
+add_test(bn_tabdata_incr_mul3_scale tester_bn_tabdata 5 5,0,20,40,60,80,100 5,4,3,2,1 1,2,3,4,5 8,3,6,2,9 8,6,18,8,45 2 133,76,651,130,4051)
+
+
+# For function #6 (bn_tabdata_incr_mul2_scale), the <args> format is as follows:
+#
+# table tabdataout_orig tabdata1 tabdata2 scale expected_tabdata
+#
+# where tabdata1 and tabdata2, and scale will be multiplied, and the
+# result will be added to tabdataout_orig; table is a table that
+# tabdata and tabdata2 use.  A table is a list of comma-separated
+# numbers, where the first one is the number of entries:
+# nx,x0,x1,...,x(nx); a tabdata is a list of comma-separated numbers
+# with the same length as the table to which it refers; if the table
+# entry is nx,x0,x1,...,x(nx), then the tabdata entry is
+# y0,y1,...y(nx-1)
+
+add_test(bn_tabdata_incr_mul2_scale tester_bn_tabdata 6 5,0,20,40,60,80,100 5,4,3,2,1 1,2,3,4,5 8,3,6,2,9 2 21,16,39,18,91)
+
+
+# For function #7 (bn_tabdata_scale), the <args> format is as follows:
+#
+# table tabdata scale expected_tabdata
+#
+# where tabdata will be scaled by scale.  A table is a list of
+# comma-separated numbers, where the first one is the number of
+# entries: nx,x0,x1,...,x(nx); a tabdata is a list of comma-separated
+# numbers with the same length as the table to which it refers; if the
+# table entry is nx,x0,x1,...,x(nx), then the tabdata entry is
+# y0,y1,...y(nx-1)
+
+add_test(bn_tabdata_scale tester_bn_tabdata 7 5,0,20,40,60,80,100 1,2,3,4,5 2 2,4,6,8,10)
+
+
+# For function #8 (bn_table_scale), the <args> format is as follows:
+#
+# table scale expected_table
+#
+# where table will be scaled by scale.  A table is a list of
+# comma-separated numbers, where the first one is the number of
+# entries: nx,x0,x1,...,x(nx).
+
+add_test(bn_table_scale tester_bn_tabdata 8 5,0,20,40,60,80,100 2 5,0,40,80,120,160,200)
+
+
+# For function #9 (bn_tabdata_join1), the <args> format is as follows:
+#
+# table tabdata1 tabdata2 scale expected_tabdata
+#
+# where tabdata1, tabdata2, and scale will be combined via
+# bn_tabdata_join1, and the result will be checked against
+# expected_tabdata. A table is a list of comma-separated numbers,
+# where the first one is the number of entries: nx,x0,x1,...,x(nx); a
+# tabdata is a list of comma-separated numbers with the same length as
+# the table to which it refers; if the table entry is
+# nx,x0,x1,...,x(nx), then the tabdata entry is y0,y1,...y(nx-1)
+
+add_test(bn_tabdata_join1 tester_bn_tabdata 9 5,0,20,40,60,80,100 1,2,3,4,5 5,4,3,2,1 2 11,10,9,8,7)
+
+
+# For function #10 (bn_tabdata_join2), the <args> format is as follows:
+#
+# table tabdata1 tabdata2 tabdata3 scale1 scale2 expected_tabdata
+#
+# where tabdata1, tabdata2, and scale will be combined via
+# bn_tabdata_join2, and the result will be checked against
+# expected_tabdata. A table is a list of comma-separated numbers,
+# where the first one is the number of entries: nx,x0,x1,...,x(nx); a
+# tabdata is a list of comma-separated numbers with the same length as
+# the table to which it refers; if the table entry is
+# nx,x0,x1,...,x(nx), then the tabdata entry is y0,y1,...y(nx-1)
+
+add_test(bn_tabdata_join2 tester_bn_tabdata 10 5,0,20,40,60,80,100 1,2,3,4,5 5,4,3,2,1 2,4,6,8,10 2 3 17,22,27,32,37)
 
 # Local Variables:
 # tab-width: 8
