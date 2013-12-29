@@ -45,6 +45,8 @@
 extern int seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, point_t V,
 			vect_t u_vec, vect_t v_vec, struct rt_sketch_internal *sketch_ip, genptr_t seg);
 
+extern void rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip);
+
 struct extrude_specific {
     mat_t rot, irot;	/* rotation and translation to get extrusion vector in +z direction with V at origin */
     vect_t unit_h;	/* unit vector in direction of extrusion vector */
@@ -321,6 +323,40 @@ rt_extrude_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const str
 
     return 0;              /* OK */
 }
+
+
+/**
+ * R T _ E X T R U D E _ V O L U M E
+ *
+ * Calculate the volume of an extruded object
+ */
+void
+rt_extrude_volume(fastf_t *vol, const struct rt_db_internal *ip)
+{
+    struct rt_extrude_internal *eip;
+    struct rt_sketch_internal *skt;
+    struct rt_db_internal db_skt;
+    fastf_t area;
+    fastf_t h_norm;
+    fastf_t u_norm;
+    fastf_t v_norm;
+    eip = (struct rt_extrude_internal *)ip->idb_ptr;
+    RT_EXTRUDE_CK_MAGIC(eip);
+    skt = eip->skt;
+    RT_SKETCH_CK_MAGIC(skt);
+
+    RT_DB_INTERNAL_INIT(&db_skt);
+    db_skt.idb_ptr = (genptr_t)skt;
+
+    rt_sketch_surf_area(&area, &db_skt);
+
+    h_norm = MAGNITUDE(eip->h);
+    u_norm = MAGNITUDE(eip->u_vec);
+    v_norm = MAGNITUDE(eip->v_vec);
+
+    *vol = area * h_norm * u_norm * v_norm;
+}
+
 
 /**
  * R T _ E X T R U D E _ P R E P
