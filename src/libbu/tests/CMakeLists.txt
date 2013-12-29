@@ -568,7 +568,53 @@ add_test(bu_sort_test_dist_to_int_2 tester_bu_sort 8)
 add_test(bu_sort_test_fastf_empty tester_bu_sort 9)
 add_test(bu_sort_test_fastf_inf tester_bu_sort 10)
 
+#
+#  ************ color.c tests *************
 
+# For tester_bu_color, the input format is as follows:
+#
+# tester_bu_color <function number> <args>
+BRLCAD_ADDEXEC(tester_bu_color bu_color.c libbu NO_INSTALL)
+
+# For function #1 (bu_rgb_to_hsv) the <args> format is as follows:
+#
+# rgb expected_hsv
+#
+# Where rgb colors are represented by comma-separated triples of
+# integers, and hsv colors are represented by comma-separated triples
+# of floats.
+
+add_test(bu_rgb_to_hsv_1 tester_bu_color 1 192,78,214 290,0.636,0.839)
+
+# For function #2 (bu_hsv_to_rgb) the <args> format is as follows:
+#
+# hsv expected_rgb
+#
+# Where rgb colors are represented by comma-separated triples of
+# integers, and hsv colors are represented by comma-separated triples
+# of floats.
+
+add_test(bu_hsv_to_rgb_1 tester_bu_color 2 290,0.636,0.839 192,78,214)
+
+# For function #3 (bu_str_to_rgb) the <args> format is as follows:
+#
+# string expected_rgb
+#
+# Where rgb colors are represented by comma-separated triples of
+# integers.
+
+add_test(bu_str_to_rgb_1 tester_bu_color 3 "#C04ED6" 192,78,214)
+add_test(bu_str_to_rgb_2 tester_bu_color 3 "192/78/214" 192,78,214)
+add_test(bu_str_to_rgb_3 tester_bu_color 3 "192 78 214" 192,78,214)
+
+# For function #4 (bu_color_to_rgb_floats) the <args> format is as follows:
+#
+# rgb_color
+#
+# Where rgb colors are represented by comma-separated triples of
+# integers or floats.
+
+add_test(bu_color_to_rgb_floats_1 tester_bu_color 4 192,78,214)
 
 # Local Variables:
 # tab-width: 8
