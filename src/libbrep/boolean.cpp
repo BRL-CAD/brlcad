@@ -1657,13 +1657,11 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
     if (brepA->BoundingBox().MinimumDistanceTo(brepB->BoundingBox()) > ON_ZERO_TOLERANCE) {
 	switch(operation) {
 	    case BOOLEAN_UNION:
-		// TODO: ON_MergeBreps is unimplemented in openNURBS - need to implement in libbrep
-		//brepO = ON_MergeBreps(*brepA, *brepB, ON_ZERO_TOLERANCE);
-		//return 0;
+		brepO->Append(*brepA);
+		brepO->Append(*brepB);
 		break;
 	    case BOOLEAN_DIFF:
-		brepO = brepA->Duplicate();
-		return 0;
+		brepO->Append(*brepA);
 		break;
 	    case BOOLEAN_INTERSECT:
 		return 0;
@@ -1672,6 +1670,10 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 		bu_log("Error - unknown boolean operation\n");
 		return -1;
 	}
+
+	brepO->ShrinkSurfaces();
+	brepO->Compact();
+	return 0;
     }
 
     std::set<int> A_unused, B_unused;
