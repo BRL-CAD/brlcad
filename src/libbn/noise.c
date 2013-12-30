@@ -494,7 +494,7 @@ find_spec_wgt(double h, double l, double o)
 	    bu_bomb("find_spec_wgt");
 	if (EQUAL(ep->lacunarity, l)
 	    && EQUAL(ep->h_val, h)
-	    && ep->octaves > (o - SMALL_FASTF))
+	    && (ep->octaves > o || EQUAL(ep->octaves, o)))
 	{
 	    return ep;
 	}
@@ -515,8 +515,10 @@ find_spec_wgt(double h, double l, double o)
 	    bu_bomb("find_spec_wgt");
 	if (EQUAL(ep->lacunarity, l)
 	    && EQUAL(ep->h_val, h)
-	    && ep->octaves > (o - SMALL_FASTF))
+	    && (ep->octaves > o || EQUAL(ep->octaves, o)))
+	{
 	    break;
+	}
     }
 
     if (i >= etbl_next)
@@ -569,7 +571,7 @@ bn_noise_fbm(fastf_t *point, double h_val, double lacunarity, double octaves)
 
     return value;
 
-} /* bn_noise_fbm() */
+}
 
 
 double
@@ -587,14 +589,12 @@ bn_noise_turb(fastf_t *point, double h_val, double lacunarity, double octaves)
      * possible future use
      */
 
-#define CACHE_SPECTRAL_WGTS 1
-#ifdef CACHE_SPECTRAL_WGTS
-
     ep = find_spec_wgt(h_val, lacunarity, octaves);
 
     /* now we're ready to compute the fBm value */
 
     value = 0.0;            /* initialize vars to proper values */
+    /* not cached: frequency = 1.0; */
 
     /* copy the point so we don't corrupt the caller's copy of the
      * variable
@@ -605,6 +605,10 @@ bn_noise_turb(fastf_t *point, double h_val, double lacunarity, double octaves)
     /* inner loop of spectral construction */
     oct=(int)octaves; /* save repeating double->int cast */
     for (i=0; i < oct; i++) {
+	/* not cached:
+	 * value += fabs(bn_noise_perlin(pt)) * pow(frequency, -h_val);
+	 * frequency *= lacunarity;
+	 */
 	value += fabs(bn_noise_perlin(pt)) * spec_wgts[i];
 	PSCALE(pt, lacunarity);
     }
@@ -615,31 +619,12 @@ bn_noise_turb(fastf_t *point, double h_val, double lacunarity, double octaves)
 	 * preset in loop above
 	 */
 	value += noise_remainder * bn_noise_perlin(pt) * spec_wgts[i];
-    }
-#else
-    PCOPY(pt, point);
-
-    value = 0.0;      /* initialize vars to proper values */
-    frequency = 1.0;
-
-    oct=(int)octaves; /* save repeating double->int cast */
-    for (i=0; i < oct; i++) {
-	value += fabs(bn_noise_perlin(pt)) * pow(frequency, -h_val);
-	frequency *= lacunarity;
-	PSCALE(pt, lacunarity);
+	/* not cached: value += noise_remainder * bn_noise_perlin(pt) * pow(frequency, -h_val); */
     }
 
-    noise_remainder = octaves - (int)octaves;
-    if (noise_remainder) {
-	/* add in ``octaves'' noise_remainder ``i'' and spatial freq. are
-	 * preset in loop above
-	 */
-	value += noise_remainder * bn_noise_perlin(pt) * pow(frequency, -h_val);
-    }
-#endif
     return value;
 
-} /* bn_noise_turb() */
+}
 
 
 double
