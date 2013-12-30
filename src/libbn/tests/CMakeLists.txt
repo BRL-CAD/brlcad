@@ -851,6 +851,160 @@ add_test(bn_tabdata_join1 tester_bn_tabdata 9 5,0,20,40,60,80,100 1,2,3,4,5 5,4,
 
 add_test(bn_tabdata_join2 tester_bn_tabdata 10 5,0,20,40,60,80,100 1,2,3,4,5 5,4,3,2,1 2,4,6,8,10 2 3 17,22,27,32,37)
 
+
+# For function #11 (bn_tabdata_blend2), the <args> format is as follows:
+#
+# table tabdata1 tabdata2 scale1 scale2 expected_result
+#
+# where tabdata1, tabdata2, scale1, and scale2 will be combined via
+# bn_tabdata_blend2, and the result will be checked against
+# expected_result. A table is a list of comma-separated numbers,
+# where the first one is the number of entries: nx,x0,x1,...,x(nx); a
+# tabdata is a list of comma-separated numbers with the same length as
+# the table to which it refers; if the table entry is
+# nx,x0,x1,...,x(nx), then the tabdata entry is y0,y1,...y(nx-1)
+
+add_test(bn_tabdata_blend2 tester_bn_tabdata 11 5,0,20,40,60,80,100 1,2,3,4,5 5,4,3,2,1 2 0.5 4.5,6,7.5,9,10.5)
+
+
+# For function #12 (bn_tabdata_blend3), the <args> format is as follows:
+#
+# table tabdata1 tabdata2 tabdata3 scale1 scale2 scale3 expected_result
+#
+# where tabdata1, tabdata2, tabdata3, scale1, scale2, and scale3 will
+# be combined via bn_tabdata_blend3, and the result will be checked
+# against expected_result. A table is a list of comma-separated
+# numbers, where the first one is the number of entries:
+# nx,x0,x1,...,x(nx); a tabdata is a list of comma-separated numbers
+# with the same length as the table to which it refers; if the table
+# entry is nx,x0,x1,...,x(nx), then the tabdata entry is
+# y0,y1,...y(nx-1)
+
+add_test(bn_tabdata_blend3 tester_bn_tabdata 12 5,0,20,40,60,80,100 1,2,3,4,5 5,4,3,2,1 3,2,4,1,5 2 0.5 3 13.5,12,19.5,12,25.5)
+
+
+# For function #13 (bn_tabdata_area1), the <args> format is as follows:
+#
+# table tabdata expected_result
+#
+# where the area of the tabdata (which is a tabdata over table), will
+# be calculated. The area will be calculated using intepretation #1
+# (see bn.h). A table is a list of comma-separated numbers, where the
+# first one is the number of entries: nx,x0,x1,...,x(nx); a tabdata is
+# a list of comma-separated numbers with the same length as the table
+# to which it refers; if the table entry is nx,x0,x1,...,x(nx), then
+# the tabdata entry is y0,y1,...y(nx-1)
+
+add_test(bn_tabdata_area1 tester_bn_tabdata 13 5,0,20,40,60,80,100 1,2,3,4,5 15)
+
+
+# For function #14 (bn_tabdata_area2), the <args> format is as follows:
+#
+# table tabdata expected_result
+#
+# where the area of the tabdata (which is a tabdata over table), will
+# be calculated. The area will be calculated using intepretation #2
+# (see bn.h). A table is a list of comma-separated numbers, where the
+# first one is the number of entries: nx,x0,x1,...,x(nx); a tabdata is
+# a list of comma-separated numbers with the same length as the table
+# to which it refers; if the table entry is nx,x0,x1,...,x(nx), then
+# the tabdata entry is y0,y1,...y(nx-1)
+
+add_test(bn_tabdata_area2 tester_bn_tabdata 14 5,0,20,40,60,80,100 1,2,3,4,5 300)
+
+
+
+# For function #15 (bn_tabdata_mul_area1), the <args> format is as follows:
+#
+# table tabdata1 tabdata2 expected_result
+#
+# where the area of tabdata1*tabdata2 (which are tabdatas over table),
+# will be calculated. The area will be calculated using intepretation
+# #1 (see bn.h). A table is a list of comma-separated numbers, where
+# the first one is the number of entries: nx,x0,x1,...,x(nx); a
+# tabdata is a list of comma-separated numbers with the same length as
+# the table to which it refers; if the table entry is
+# nx,x0,x1,...,x(nx), then the tabdata entry is y0,y1,...y(nx-1)
+
+add_test(bn_tabdata_mul_area1 tester_bn_tabdata 15 5,0,20,40,60,80,100 1,2,3,4,5 5,4,3,2,1 35)
+
+
+# For function #16 (bn_tabdata_mul_area2), the <args> format is as follows:
+#
+# table tabdata expected_result
+#
+# where the area of tabdata1*tabdata2 (which are tabdatas over table),
+# will be calculated. The area will be calculated using intepretation
+# #2 (see bn.h). A table is a list of comma-separated numbers, where
+# the first one is the number of entries: nx,x0,x1,...,x(nx); a
+# tabdata is a list of comma-separated numbers with the same length as
+# the table to which it refers; if the table entry is
+# nx,x0,x1,...,x(nx), then the tabdata entry is y0,y1,...y(nx-1)
+
+add_test(bn_tabdata_mul_area2 tester_bn_tabdata 16 5,0,20,40,60,80,100 1,2,3,4,5 5,4,3,2,1 700)
+
+
+# For function #17 (bn_table_lin_interp), the <args> format is as follows:
+#
+# table tabdata wl expected_result
+#
+# where wl will be used to sample the tabdata via
+# bn_table_lin_interp. A table is a list of comma-separated numbers,
+# where the first one is the number of entries: nx,x0,x1,...,x(nx); a
+# tabdata is a list of comma-separated numbers with the same length as
+# the table to which it refers; if the table entry is
+# nx,x0,x1,...,x(nx), then the tabdata entry is y0,y1,...y(nx-1)
+
+add_test(bn_table_lin_interp_1 tester_bn_tabdata 17 5,0,20,40,60,80,100 1,2,3,4,5 30 2.5)
+add_test(bn_table_lin_interp_2 tester_bn_tabdata 17 5,0,20,30,60,80,100 1,2,3,4,5 30 3)
+add_test(bn_table_lin_interp_3 tester_bn_tabdata 17 5,0,20,30,60,80,100 1,2,3,4,5 45 3.5)
+add_test(bn_table_lin_interp_4 tester_bn_tabdata 17 5,0,20,30,60,80,100 1,2,3,4,5 25 2.5)
+add_test(bn_table_lin_interp_5 tester_bn_tabdata 17 5,0,20,40,60,80,100 1,2,3,4,5 800 0)
+
+
+# For function #18 (bn_tabdata_copy), the <args> format is as follows:
+#
+# table tabdata
+#
+# where tabdata will be copied via bn_tabdata_copy. A table is a list
+# of comma-separated numbers, where the first one is the number of
+# entries: nx,x0,x1,...,x(nx); a tabdata is a list of comma-separated
+# numbers with the same length as the table to which it refers; if the
+# table entry is nx,x0,x1,...,x(nx), then the tabdata entry is
+# y0,y1,...y(nx-1)
+
+add_test(bn_tabdata_copy tester_bn_tabdata 18 5,0,20,40,60,80,100 1,2,3,4,5)
+
+
+# For function #19 (bn_tabdata_dup), the <args> format is as follows:
+#
+# table tabdata
+#
+# where tabdata will be copied via bn_tabdata_dup. A table is a list
+# of comma-separated numbers, where the first one is the number of
+# entries: nx,x0,x1,...,x(nx); a tabdata is a list of comma-separated
+# numbers with the same length as the table to which it refers; if the
+# table entry is nx,x0,x1,...,x(nx), then the tabdata entry is
+# y0,y1,...y(nx-1)
+
+add_test(bn_tabdata_dup tester_bn_tabdata 19 5,0,20,40,60,80,100 1,2,3,4,5)
+
+
+# For function #20 (bn_tabdata_get_constval), the <args> format is as follows:
+#
+# table val expected_tabdata
+#
+# where a tabdata based on table with every item set to val will be
+# produced via bn_tabdata_get_constval and checked against
+# expected_tabdata. A table is a list of comma-separated numbers,
+# where the first one is the number of entries: nx,x0,x1,...,x(nx); a
+# tabdata is a list of comma-separated numbers with the same length as
+# the table to which it refers; if the table entry is
+# nx,x0,x1,...,x(nx), then the tabdata entry is y0,y1,...y(nx-1)
+
+add_test(bn_tabdata_get_constval tester_bn_tabdata 20 5,0,20,40,60,80,100 3 3,3,3,3,3)
+
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

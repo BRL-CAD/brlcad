@@ -361,7 +361,7 @@ test_bn_tabdata_join2(int argc, char *argv[])
     fastf_t scale_1, scale_2;
 
     if (argc != 9) {
-	bu_exit(1, "<args> format: table tabdata1 tabdata2 tabdata3 scale1 scale2 expected_tabdata [%s]\n", argv[0]);
+	bu_exit(1, "<args> format: table tabdata1 tabdata2 tabdata3 scale1 scale2 scale3 expected_tabdata [%s]\n", argv[0]);
     }
 
     scan_tab_args(argv[2], &tab_in);
@@ -374,6 +374,248 @@ test_bn_tabdata_join2(int argc, char *argv[])
     BN_GET_TABDATA(actual, tab_in);
 
     bn_tabdata_join2(actual, td_in1, scale_1, td_in2, scale_2, td_in3);
+
+    bn_pr_tabdata("Result", actual);
+
+    return !tabdata_equal(expected, actual);
+}
+
+static int
+test_bn_tabdata_blend2(int argc, char *argv[])
+{
+    struct bn_table *tab_in;
+    struct bn_tabdata *td_in1;
+    struct bn_tabdata *td_in2;
+    struct bn_tabdata *expected;
+    struct bn_tabdata *actual;
+    fastf_t scale_1, scale_2;
+
+    if (argc != 8) {
+	bu_exit(1, "<args> format: table tabdata1 tabdata2 scale1 scale2 expected_result [%s]\n", argv[0]);
+    }
+
+    scan_tab_args(argv[2], &tab_in);
+    scan_tabdata_args(argv[3], &td_in1, tab_in);
+    scan_tabdata_args(argv[4], &td_in2, tab_in);
+    sscanf(argv[5], "%lg", &scale_1);
+    sscanf(argv[6], "%lg", &scale_2);
+    scan_tabdata_args(argv[7], &expected, tab_in);
+    BN_GET_TABDATA(actual, tab_in);
+
+    bn_tabdata_blend2(actual, scale_1, td_in1, scale_2, td_in2);
+
+    bn_pr_tabdata("Result", actual);
+
+    return !tabdata_equal(expected, actual);
+}
+
+static int
+test_bn_tabdata_blend3(int argc, char *argv[])
+{
+    struct bn_table *tab_in;
+    struct bn_tabdata *td_in1;
+    struct bn_tabdata *td_in2;
+    struct bn_tabdata *td_in3;
+    struct bn_tabdata *expected;
+    struct bn_tabdata *actual;
+    fastf_t scale_1, scale_2, scale_3;
+
+    if (argc != 10) {
+	bu_exit(1, "<args> format: table tabdata1 tabdata2 tabdata3 scale1 scale2 scale3 expected_result [%s]\n", argv[0]);
+    }
+
+    scan_tab_args(argv[2], &tab_in);
+    scan_tabdata_args(argv[3], &td_in1, tab_in);
+    scan_tabdata_args(argv[4], &td_in2, tab_in);
+    scan_tabdata_args(argv[5], &td_in3, tab_in);
+    sscanf(argv[6], "%lg", &scale_1);
+    sscanf(argv[7], "%lg", &scale_2);
+    sscanf(argv[8], "%lg", &scale_3);
+    scan_tabdata_args(argv[9], &expected, tab_in);
+    BN_GET_TABDATA(actual, tab_in);
+
+    bn_tabdata_blend3(actual, scale_1, td_in1, scale_2, td_in2, scale_3, td_in3);
+
+    bn_pr_tabdata("Result", actual);
+
+    return !tabdata_equal(expected, actual);
+}
+
+static int
+test_bn_tabdata_area1(int argc, char *argv[])
+{
+    struct bn_table *tab_in;
+    struct bn_tabdata *td_in;
+    fastf_t expected, actual;
+
+    if (argc != 5) {
+	bu_exit(1, "<args> format: table tabdata expected_result [%s]\n", argv[0]);
+    }
+
+    scan_tab_args(argv[2], &tab_in);
+    scan_tabdata_args(argv[3], &td_in, tab_in);
+    sscanf(argv[4], "%lg", &expected);
+
+    actual = bn_tabdata_area1(td_in);
+
+    bu_log("Result: %g\n", actual);
+
+    return !NEAR_EQUAL(expected, actual, BN_TOL_DIST);
+}
+
+static int
+test_bn_tabdata_area2(int argc, char *argv[])
+{
+    struct bn_table *tab_in;
+    struct bn_tabdata *td_in;
+    fastf_t expected, actual;
+
+    if (argc != 5) {
+	bu_exit(1, "<args> format: table tabdata expected_result [%s]\n", argv[0]);
+    }
+
+    scan_tab_args(argv[2], &tab_in);
+    scan_tabdata_args(argv[3], &td_in, tab_in);
+    sscanf(argv[4], "%lg", &expected);
+
+    actual = bn_tabdata_area2(td_in);
+
+    bu_log("Result: %g\n", actual);
+
+    return !NEAR_EQUAL(expected, actual, BN_TOL_DIST);
+}
+
+static int
+test_bn_tabdata_mul_area1(int argc, char *argv[])
+{
+    struct bn_table *tab_in;
+    struct bn_tabdata *td_in1;
+    struct bn_tabdata *td_in2;
+    fastf_t expected, actual;
+
+    if (argc != 6) {
+	bu_exit(1, "<args> format: table tabdata1 tabdata2 expected_result [%s]\n", argv[0]);
+    }
+
+    scan_tab_args(argv[2], &tab_in);
+    scan_tabdata_args(argv[3], &td_in1, tab_in);
+    scan_tabdata_args(argv[4], &td_in2, tab_in);
+    sscanf(argv[5], "%lg", &expected);
+
+    actual = bn_tabdata_mul_area1(td_in1, td_in2);
+
+    bu_log("Result: %g\n", actual);
+
+    return !NEAR_EQUAL(expected, actual, BN_TOL_DIST);
+}
+
+static int
+test_bn_tabdata_mul_area2(int argc, char *argv[])
+{
+    struct bn_table *tab_in;
+    struct bn_tabdata *td_in1;
+    struct bn_tabdata *td_in2;
+    fastf_t expected, actual;
+
+    if (argc != 6) {
+	bu_exit(1, "<args> format: table tabdata1 tabdata2 expected_result [%s]\n", argv[0]);
+    }
+
+    scan_tab_args(argv[2], &tab_in);
+    scan_tabdata_args(argv[3], &td_in1, tab_in);
+    scan_tabdata_args(argv[4], &td_in2, tab_in);
+    sscanf(argv[5], "%lg", &expected);
+
+    actual = bn_tabdata_mul_area2(td_in1, td_in2);
+
+    bu_log("Result: %g\n", actual);
+
+    return !NEAR_EQUAL(expected, actual, BN_TOL_DIST);
+}
+
+static int
+test_bn_table_lin_interp(int argc, char *argv[])
+{
+    struct bn_table *tab_in;
+    struct bn_tabdata *td_in;
+    fastf_t wl;
+    fastf_t expected, actual;
+
+    if (argc != 6) {
+	bu_exit(1, "<args> format: table tabdata wl expected_result [%s]\n", argv[0]);
+    }
+
+    scan_tab_args(argv[2], &tab_in);
+    scan_tabdata_args(argv[3], &td_in, tab_in);
+    sscanf(argv[4], "%lg", &wl);
+    sscanf(argv[5], "%lg", &expected);
+
+    actual = bn_table_lin_interp(td_in, wl);
+
+    bu_log("Result: %g\n", actual);
+
+    return !NEAR_EQUAL(expected, actual, BN_TOL_DIST);
+}
+
+static int
+test_bn_tabdata_copy(int argc, char *argv[])
+{
+    struct bn_table *tab_in;
+    struct bn_tabdata *td_in;
+    struct bn_tabdata *actual;
+
+    if (argc != 4) {
+	bu_exit(1, "<args> format: table tabdata [%s]\n", argv[0]);
+    }
+
+    scan_tab_args(argv[2], &tab_in);
+    scan_tabdata_args(argv[3], &td_in, tab_in);
+    BN_GET_TABDATA(actual, tab_in);
+
+    bn_tabdata_copy(actual, td_in);
+
+    bn_pr_tabdata("Result", actual);
+
+    return !tabdata_equal(td_in, actual);
+}
+
+static int
+test_bn_tabdata_dup(int argc, char *argv[])
+{
+    struct bn_table *tab_in;
+    struct bn_tabdata *td_in;
+    struct bn_tabdata *actual;
+
+    if (argc != 4) {
+	bu_exit(1, "<args> format: table tabdata [%s]\n", argv[0]);
+    }
+
+    scan_tab_args(argv[2], &tab_in);
+    scan_tabdata_args(argv[3], &td_in, tab_in);
+
+    actual = bn_tabdata_dup(td_in);
+
+    bn_pr_tabdata("Result", actual);
+
+    return !tabdata_equal(td_in, actual);
+}
+
+static int
+test_bn_tabdata_get_constval(int argc, char *argv[])
+{
+    struct bn_table *tab_in;
+    fastf_t val;
+    struct bn_tabdata *expected;    struct bn_tabdata *actual;
+
+    if (argc != 5) {
+	bu_exit(1, "<args> format: table val expected_tabdata [%s]\n", argv[0]);
+    }
+
+    scan_tab_args(argv[2], &tab_in);
+    sscanf(argv[3], "%lg", &val);
+    scan_tabdata_args(argv[4], &expected, tab_in);
+
+    actual = bn_tabdata_get_constval(val, tab_in);
 
     bn_pr_tabdata("Result", actual);
 
@@ -413,6 +655,26 @@ main(int argc, char *argv[])
 	return test_bn_tabdata_join1(argc, argv);
     case 10:
 	return test_bn_tabdata_join2(argc, argv);
+    case 11:
+	return test_bn_tabdata_blend2(argc, argv);
+    case 12:
+	return test_bn_tabdata_blend3(argc, argv);
+    case 13:
+	return test_bn_tabdata_area1(argc, argv);
+    case 14:
+	return test_bn_tabdata_area2(argc, argv);
+    case 15:
+	return test_bn_tabdata_mul_area1(argc, argv);
+    case 16:
+	return test_bn_tabdata_mul_area2(argc, argv);
+    case 17:
+	return test_bn_table_lin_interp(argc, argv);
+    case 18:
+	return test_bn_tabdata_copy(argc, argv);
+    case 19:
+	return test_bn_tabdata_dup(argc, argv);
+    case 20:
+	return test_bn_tabdata_get_constval(argc, argv);
     }
 
     bu_log("ERROR: function_num %d is not valid [%s]\n", function_num, argv[0]);
