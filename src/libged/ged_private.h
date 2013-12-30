@@ -471,6 +471,8 @@ extern int _ged_results_append_vls(struct ged *gedp,
 
 extern int _ged_results_clear(struct ged *gedp);
 
+/* defined in track.c */
+extern int _ged_track(struct bu_vls *log_str, struct rt_wdb *wdbp, const char *argv[]);
 
 __END_DECLS
 
