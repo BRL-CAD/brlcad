@@ -841,24 +841,21 @@
                       <programlisting><![CDATA[
 while (1) { ...                   /* ok */
 for (i = 0; i &lt; max; i++) { ...   /* ok */
-while ( max ) { ...               /* discouraged */
-]]>             </programlisting>
+while ( max ) { ...               /* discouraged */]]></programlisting>
                     </para></listitem>
 
                   <listitem><para>
                       Commas and semicolons are followed by whitespace.
                       <programlisting><![CDATA[
 int main(int argc, char *argv[]); /* ok */
-for (i = 0; i &lt; max; i++) { ...   /* ok */
-]]>             </programlisting>
+for (i = 0; i &lt; max; i++) { ...   /* ok */]]></programlisting>
                     </para></listitem>
 
                   <listitem><para>
                       No space on arrow operators.
                       <programlisting><![CDATA[
 structure->member = 5;            /* ok */
-structure -> member = 5;          /* bad */
-]]>             </programlisting>
+structure -> member = 5;          /* bad */]]></programlisting>
                     </para></listitem>
 
                   <listitem><para>
@@ -867,8 +864,7 @@ structure -> member = 5;          /* bad */
 int my_function(int i);           /* ok, no space */
 while (argc--) ...                /* ok, has space */
 if( var == val )                  /* discouraged */
-switch(foo) ...                   /* discouraged */
-]]>             </programlisting>
+switch(foo) ...                   /* discouraged */]]></programlisting>
                     </para></listitem>
 
                   <listitem><para>
@@ -882,8 +878,7 @@ switch(foo) ...                   /* discouraged */
 /**
 * good:
 * multiple-line doxygen comment
-*/
-]]>             </programlisting>
+*/]]></programlisting>
                     </para></listitem>
                 </itemizedlist>
               </para>
@@ -898,8 +893,7 @@ switch(foo) ...                   /* discouraged */
                       <programlisting><![CDATA[
 double localVariable; /* ok */
 double LocalVariable; /* bad (looks like class or    constructor) */
-double _localVar;     /* bad (looks like member variable)      */
-]]>             </programlisting>
+double _localVar;     /* bad (looks like member variable)      */]]></programlisting>
                     </para></listitem>
 
                   <listitem><para>
@@ -908,24 +902,21 @@ double _localVar;     /* bad (looks like member variable)      */
 char *name;    /* ok  */
 char *pName;   /* discouraged for new code, but okay */
 char *fooPtr;  /* bad */
-char *lpszFoo; /* bad */
-]]>             </programlisting>
+char *lpszFoo; /* bad */]]></programlisting>
                     </para></listitem>
 
                   <listitem><para>
                       Constants should be all upper-case with word boundaries optionally separated by underscores.
                       <programlisting><![CDATA[
 static const int MAX_READ = 2;  /* ok  */
-static const int arraySize = 8; /* bad */
-]]>             </programlisting>
+static const int arraySize = 8; /* bad */]]></programlisting>
                     </para></listitem>
 
                   <listitem><para>
                       Public API (global) function names should be in lowercase with underscores to separate words.  Most functions within the core libraries are named with the following convention: [library]_[group]_[action]
                       <programlisting><![CDATA[
 bu_vls_strcat()
-bn_mat_transpose()
-]]>             </programlisting>
+bn_mat_transpose()]]></programlisting>
                     </para></listitem>
 
                   <listitem><para>
@@ -949,8 +940,7 @@ some_function(char *j)
             j -= 1;
         }
     }
-}
-]]></programlisting>
+}]]></programlisting>
               </para>
             </listitem>
           </itemizedlist>
@@ -1314,11 +1304,13 @@ Scanning dependencies of target ellipsoid_article_html
       <table><title>BRL-CAD DocBook Configuration Options</title>
       <tgroup cols="3">
       <thead><row><entry>Option</entry> <entry>Description</entry> <entry>Setting</entry></row></thead>
-      <tbody><row><entry>BRLCAD_EXTRADOCS</entry> <entry>Enable DocBook documentation</entry> <entry>ON</entry></row></tbody>
-      <tbody><row><entry>BRLCAD_EXTRADOCS_HTML</entry> <entry>Enable HTML output</entry> <entry>ON</entry></row></tbody>
-      <tbody><row><entry>BRLCAD_EXTRADOCS_MAN</entry> <entry>Enable UNIX man page output</entry> <entry>ON (OFF on Windows)</entry></row></tbody>
-      <tbody><row><entry>BRLCAD_EXTRADOCS_PDF</entry> <entry>Enable PDF output (needs FOP)</entry> <entry>OFF</entry></row></tbody>
-      <tbody><row><entry>BRLCAD_EXTRADOCS_PDF_MAN</entry> <entry>Enable PDF man page output</entry> <entry>Defaults to setting of BRLCAD_EXTRADOCS_PDF</entry></row></tbody>
+      <tbody>
+        <row><entry>BRLCAD_EXTRADOCS</entry> <entry>Enable DocBook documentation</entry> <entry>ON</entry></row>
+        <row><entry>BRLCAD_EXTRADOCS_HTML</entry> <entry>Enable HTML output</entry> <entry>ON</entry></row>
+        <row><entry>BRLCAD_EXTRADOCS_MAN</entry> <entry>Enable UNIX man page output</entry> <entry>ON (OFF on Windows)</entry></row>
+        <row><entry>BRLCAD_EXTRADOCS_PDF</entry> <entry>Enable PDF output (needs FOP)</entry> <entry>OFF</entry></row>
+        <row><entry>BRLCAD_EXTRADOCS_PDF_MAN</entry> <entry>Enable PDF man page output</entry> <entry>Defaults to setting of BRLCAD_EXTRADOCS_PDF</entry></row>
+      </tbody>
       </tgroup>
       </table>
       
@@ -1796,9 +1788,7 @@ Scanning dependencies of target ellipsoid_article_html
 
   </refpurpose>
 </refnamediv>
-]]></programlisting>
 
-<programlisting><![CDATA[
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
@@ -1806,17 +1796,13 @@ Scanning dependencies of target ellipsoid_article_html
     <arg choice="opt" rep="norepeat"/>
   </cmdsynopsis>
 </refsynopsisdiv>
-]]></programlisting>
 
-<programlisting><![CDATA[
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
   <para>
 
   </para>
 </refsection>
-]]></programlisting>
 
-<programlisting><![CDATA[
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
 
   <para>
@@ -1855,9 +1841,7 @@ Scanning dependencies of target ellipsoid_article_html
   </example>
 
 </refsection>
-]]></programlisting>
 
-<programlisting><![CDATA[
 <info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
@@ -1867,8 +1851,7 @@ Scanning dependencies of target ellipsoid_article_html
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
   </para>
 </refsection>
-</refentry>
-]]></programlisting>
+</refentry>]]></programlisting>
 
     </appendix>
     <appendix>
@@ -1885,9 +1868,7 @@ Scanning dependencies of target ellipsoid_article_html
 #include <stdio.h>
 #include "vmath.h"              /* vector math macros */
 #include "raytrace.h"           /* librt interface definitions */
-]]></programlisting>
 
-<programlisting><![CDATA[
 /**
  * rt_shootray() was told to call this on a hit.
  *
@@ -2007,9 +1988,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
      */
     return 1;
 }
-]]></programlisting>
 
-<programlisting><![CDATA[
 /**
  * This is a callback routine that is invoked for every ray that
  * entirely misses hitting any geometry.  This function is invoked by
@@ -2021,9 +2000,7 @@ miss(struct application *UNUSED(ap))
     bu_log("missed\n");
     return 0;
 }
-]]></programlisting>
 
-<programlisting><![CDATA[
 int
 main(int argc, char **argv)
 {
@@ -2130,8 +2107,7 @@ main(int argc, char **argv)
      */
 
     return 0;
-}
-]]></programlisting>
+}]]></programlisting>
     </appendix>
     <appendix>
       <title>Code Example: Walking Geometry</title>
@@ -2142,9 +2118,7 @@ main(int argc, char **argv)
 <programlisting><![CDATA[
 #include "common.h"
 #include "raytrace.h"
-]]></programlisting>
 
-<programlisting><![CDATA[
 /* basically this callback function counts how many CSG nodes are underneath
  * a given combination tree hierarchy.
  */
@@ -2156,9 +2130,7 @@ incr_region(struct db_tree_state *tsp, struct db_full_path *pathp, const struct 
   (*counter)++;
   return 0;
 }
-]]></programlisting>
 
-<programlisting><![CDATA[
 int
 main(int argc, char *argv[])
 {
@@ -2219,9 +2191,7 @@ main(int argc, char *argv[])
 #include "bio.h"
 #include "bu.h"
 #include "ged.h"
-]]></programlisting>
 
-<programlisting><![CDATA[
 HIDDEN int
 zoom(struct ged *gedp, double sf)
 {
@@ -2234,9 +2204,7 @@ zoom(struct ged *gedp, double sf)
 
     return GED_OK;
 }
-]]></programlisting>
 
-<programlisting><![CDATA[
 int
 ged_zoom(struct ged *gedp, int argc, const char *argv[])
 {
@@ -2276,9 +2244,7 @@ ged_zoom(struct ged *gedp, int argc, const char *argv[])
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
-]]></programlisting>
 
-<programlisting><![CDATA[
 int
 main(int argc, char *argv[])
 {
@@ -2288,9 +2254,7 @@ main(int argc, char *argv[])
 
     if (argc > 1)
         bu_exit(1, "%s: unexpected argument(s)\n", argv[0]);
-]]></programlisting>
 
-<programlisting><![CDATA[
 /*********************************************
      * Linear polynomial (1st degree equation):
      *  A*X + B = 0
@@ -2321,9 +2285,7 @@ main(int argc, char *argv[])
     /* print the roots */
     bu_log("The root should be 2\n");
     bn_pr_roots("My Linear Polynomial", roots, num_roots);
-]]></programlisting>
 
-<programlisting><![CDATA[
  /*********************************************
      * Quadratic polynomial (2nd degree equation):
      *  A*X^2 + B*X + C = 0
@@ -2358,9 +2320,7 @@ main(int argc, char *argv[])
     /* print the roots */
     bu_log("The roots should be 2 and -2\n");
     bn_pr_roots("My Quadratic Polynomial", roots, num_roots);
-]]></programlisting>
 
-<programlisting><![CDATA[
  /*****************************************
      * Cubic polynomial (3rd degree equation):
      *  A*X^3 + B*X^2 + C*X + D = 0
@@ -2389,9 +2349,7 @@ main(int argc, char *argv[])
     /* print the roots */
     bu_log("The roots should be 1/3, -1/5, and -2/3\n");
     bn_pr_roots("My Cubic Polynomial", roots, num_roots);
-]]></programlisting>
 
-<programlisting><![CDATA[
  /*******************************************
      * Quartic polynomial (4th degree equation):
      *  A*X^4 + B*X^3 + C*X^2 + D*X + E = 0
@@ -2420,9 +2378,7 @@ main(int argc, char *argv[])
     /* print the roots */
     bu_log("The roots should be 3, 1, -2, -4\n");
     bn_pr_roots("My Quartic Polynomial", roots, num_roots);
-]]></programlisting>
 
-<programlisting><![CDATA[
  /*******************************************
      * Sextic polynomial (6th degree equation):
      *  A*X^6 + B*X^5 + C*X^4 + D*X^3 + E*X^2 + F*X + G = 0
