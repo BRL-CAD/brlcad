@@ -5315,7 +5315,7 @@ rt_bot_volume(fastf_t *volume, const struct rt_db_internal *ip)
 
     for (face.npts = 0, i = 0; i < bot->num_faces; face.npts = 0, i++) {
 	int a, b, c;
-	vect_t tmp, v1, v2, tot = VINIT_ZERO;
+	vect_t tmp;
 
 
 	/* find indices of the 3 vertices that make up this face */
@@ -5339,12 +5339,7 @@ rt_bot_volume(fastf_t *volume, const struct rt_db_internal *ip)
 
 	/* sort points */
 	bu_sort(face.pts, face.npts, sizeof(point_t), ccw_algo, &face.plane_eqn);
-	/* Triangular Face - for triangular face T:V0, V1, V2,
-	 * area = 0.5 * [(V2 - V0) x (V1 - V0)] */
-	VSUB2(v1, face.pts[1], face.pts[0]);
-	VSUB2(v2, face.pts[2], face.pts[0]);
-	VCROSS(tot, v2, v1);
-	face.area = fabs(VDOT(face.plane_eqn, tot)) * 0.5;
+	bn_polygon_area(&face.area, face.npts, (const point_t *)face.pts);
 
 	/* VOLUME */
 	VSCALE(tmp, face.plane_eqn, face.area);

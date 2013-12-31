@@ -4597,6 +4597,30 @@ struct tri_float_specific  {
 
 typedef struct tri_float_specific tri_specific_float;
 
+
+/*----------------------------------------------------------------------*/
+
+
+/* polygon.c */
+
+
+/**
+ * calculate the interior area of a polygon.
+ *
+ * If npts > 4, Greens Theorem is used. The polygon mustn't 
+ * be self-intersecting.
+ * 
+ * @param[out] area The interior area of the polygon
+ * @param[in] npts Number of point_ts, stored in pts
+ * @param[in] pts All points of the polygon, sorted counter-clockwise. 
+ * The array mustn't contain duplicated points.
+ *
+ * @return 0 if calculation was successful
+ * @return 1 if calculation failed, e.g. because one parameter is a NULL-pointer
+ */
+BN_EXPORT extern int bn_polygon_area(fastf_t *area, size_t npts, const point_t *pts);
+
+
 #endif /* BN_H */
 
 /** @} */

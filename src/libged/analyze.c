@@ -741,40 +741,13 @@ ccw(const void *x, const void *y, void *cmp)
 HIDDEN void
 analyze_poly_face(struct ged *gedp, struct poly_face *face, row_t *row)
 {
-    size_t i;
-    vect_t v1, v2, tmp, tot = VINIT_ZERO;
     fastf_t angles[5];
 
     findang(angles, face->plane_eqn);
 
     /* sort points */
     bu_sort(face->pts, face->npts, sizeof(point_t), ccw, &face->plane_eqn);
-
-    switch (face->npts) {
-	case 3:
-	    /* Triangular Face - for triangular face T:V0, V1, V2,
-	     * area = 0.5 * [(V2 - V0) x (V1 - V0)] */
-	    VSUB2(v1, face->pts[1], face->pts[0]);
-	    VSUB2(v2, face->pts[2], face->pts[0]);
-	    VCROSS(tot, v2, v1);
-	    break;
-	case 4:
-	    /* Quadrilateral Face - for planar quadrilateral
-	     * Q:V0, V1, V2, V3 with unit normal N,
-	     * area = N/2 ⋅ [(V2 - V0) x (V3 - V1)] */
-	    VSUB2(v1, face->pts[2], face->pts[0]);
-	    VSUB2(v2, face->pts[3], face->pts[1]);
-	    VCROSS(tot, v2, v1);
-	    break;
-	default:
-	    /* N-Sided Face - compute area using Green's Theorem */
-	    for (i = 0; i < face->npts; i++) {
-		VCROSS(tmp, face->pts[i], face->pts[i + 1 == face->npts ? 0 : i + 1]);
-		VADD2(tot, tot, tmp);
-	    }
-	    break;
-    }
-    face->area = fabs(VDOT(face->plane_eqn, tot)) * 0.5;
+    bn_polygon_area(&face->area, face->npts, (const point_t *)face->pts);
 
     /* store face information for pretty printing */
     row->nfields = 8;

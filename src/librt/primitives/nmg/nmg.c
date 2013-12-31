@@ -3172,14 +3172,8 @@ rt_nmg_faces_area(struct poly_face* faces, struct shell* s)
 	}
     }
     for (i = 0; i < num_faces; i++) {
-	vect_t tmp, tot = VINIT_ZERO;
 	bu_sort(faces[i].pts, faces[i].npts, sizeof(point_t), nmg_ccw, &faces[i].plane_eqn);
-	/* N-Sided Face - compute area using Green's Theorem */
-	for (j = 0; j < faces[i].npts; j++) {
-	    VCROSS(tmp, faces[i].pts[j], faces[i].pts[j + 1 == faces[i].npts ? 0 : j + 1]);
-	    VADD2(tot, tot, tmp);
-	}
-	faces[i].area = (fabs(VDOT(faces[i].plane_eqn, tot)) * 0.5);
+	bn_polygon_area(&faces[i].area, faces[i].npts, (const point_t *)faces[i].pts);
     }
 }
 
