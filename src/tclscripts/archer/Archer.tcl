@@ -445,7 +445,6 @@ package provide Archer 1.0
 
     private {
 	variable mInstanceInit 1
-	method brepDragHandler {x y win startMode}
     }
 }
 
@@ -6488,17 +6487,6 @@ proc title_node_handler {node} {
     $itk_component(ged) rect lwidth 0
 }
 
-::itcl::body Archer::brepDragHandler {x y win startMode} {
-    # if we've switched to a different (standard) editing mode or if
-    # the edit command has been unset to exit the current mode, then
-    # delete this binding and clear the edit state to ensure it isn't
-    # restored until we explicitly switch back
-    if {$mDefaultBindingMode != $startMode || $GeometryEditFrame::mEditCommand == ""} {
-	bind $win <Button1-Motion> ""
-	$itk_component(brepView) clearEditState
-    }
-}
-
 ::itcl::body Archer::beginObjTranslate {} {
     set obj $mSelectedObjPath
 
@@ -6537,7 +6525,8 @@ proc title_node_handler {node} {
 		    bind $win <1> "$itk_component(ged) pane_otranslate_mode $dname $obj %x %y; break"
 		}
 	    } elseif {$mSelectedObjType == "brep"} {
-		bind $win <Button1-Motion> "[::itcl::code $this brepDragHandler %x %y $win $mDefaultBindingMode]; break"
+		$itk_component(ged) brep [file tail $obj] plot SCV
+		continue
 	    } else {
 		bind $win <1> "$itk_component(ged) pane_$GeometryEditFrame::mEditCommand\_mode $dname $obj $GeometryEditFrame::mEditParam1 %x %y; break"
 	    }
