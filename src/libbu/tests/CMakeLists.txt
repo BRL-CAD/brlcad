@@ -616,6 +616,16 @@ add_test(bu_str_to_rgb_3 tester_bu_color 3 "192 78 214" 192,78,214)
 
 add_test(bu_color_to_rgb_floats_1 tester_bu_color 4 192,78,214)
 
+#
+#  *********** badmagic.c tests ************
+#
+
+BRLCAD_ADDEXEC(tester_bu_badmagic bu_badmagic.c libbu NO_INSTALL)
+add_test(bu_badmagic_diff_magic  tester_bu_badmagic 1)
+add_test(bu_badmagic_normal      tester_bu_badmagic 2)
+add_test(bu_badmagic_null_ptr    tester_bu_badmagic 3)
+add_test(bu_badmagic_misaligned  tester_bu_badmagic 4)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake
