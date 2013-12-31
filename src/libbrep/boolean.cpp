@@ -335,7 +335,6 @@ struct TrimmedFace {
     }
 };
 
-
 HIDDEN int
 compare_t(const IntersectPoint* a, const IntersectPoint* b)
 {
@@ -1719,9 +1718,8 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
     // We won't be able to distinguish between 1 and 3 at this stage, but we can narrow in
     // on which faces might fall into category 2 and what faces they might interact with.
     std::set<std::pair<int, int> > intersection_candidates;
-    std::vector<int> A_intact, B_intact;
-    A_intact.resize(facecount1, 0);
-    B_intact.resize(facecount2, 0);
+    std::set<int> A_cat2;
+    std::set<int> B_cat2;
     for (int i = 0; i < facecount1; i++) {
 	if (A_unused.find(i) == A_unused.end() && A_finalform.find(i) == A_finalform.end()) {
 	    for (int j = 0; j < facecount2; j++) {
@@ -1732,20 +1730,50 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 		    fastf_t disjoint = brepA->m_F[i].BoundingBox().MinimumDistanceTo(brepB->m_F[j].BoundingBox());
 		    if (!(disjoint > ON_ZERO_TOLERANCE)) {
 			intersection_candidates.insert(std::pair<int, int>(i,j));
-			A_intact[i]++;
-			B_intact[j]++;
+			A_cat2.insert(i);
+			B_cat2.insert(j);
 		    }
 		}
 	    }
 	}
     }
 
+    // For those not in category 2 an inside/outside test on the breps combined with the boolean op
+    // should be enough to decide the issue, but there is a problem.  If *all* faces of a brep are
+    // inside the other brep and the operation is a subtraction, we don't want a "floating" inside-out
+    // brep volume inside the outer volume and topologically isolated.  Normally this is handled by
+    // creating a face that connects the outer and inner shells, but this is potentially a non-trivial
+    // operation.  The only thing that comes immediately to mind is to find the center point of the
+    // bounding box of the inner brep, create a plane using that point and the z+ unit vector for a normal, and
+    // cut both breps in half with that plane to form four new breps and two new subtraction problems.
+    //
+    // More broadly, this is a problem - unioning two half-spheres with a sphere subtracted out of their
+    // respective centers will end up with isolated surfaces in the middle of the union unless the routines
+    // know they must keep one of the coplanar faces in order to topologically connect the middle.  However,
+    // in the case where there is no center sphere the central face should be removed.  It may be that the
+    // condition to satisfy for removal is no interior trimming loops on the face.
+
+    // Is it possible to do a Face/Face intersection test on cat2 cases, aware of the boolean operation, that would
+    // be able to create the final faces from the A and B input faces and the intersection curves without
+    // needing to do an inside/outside test on the resultant pieces?  Something like:
+    //
+    // A) trim the raw SSI curves with the trimming loops from both faces and get "final" curve segments in
+    //    3D and both 2D parametric spaces.  Consolidate curves where different faces created the same curve.
+    // B) assemble the new 2D segments and whatever pieces are needed from the existing trimming curves to
+    //    form new 2D loops (which must be non-self-intersecting), whose roles in A and B respectively 
+    //    would be determined by the boolean op and each face's role within it.
+    // C) build "representative polygons" for all the 2D loops in each face, new and old - representative in
+    //    this case meaning that the intersection behavior of the general loops is accurately duplicated
+    //    by the polygons, which should be assurable by identifying and using all 2D curve intersections and possibly
+    //    horizontal and vertical tangents - and use clipper to perform the boolean ops.  Using the resulting polygons,
+    //    deduce and assemble the final trimming loops (and face or faces) created from A and B respectively.
+    //
+    // If it should prove that the above is possible, would it also be possible to then do edge comparisons to
+    // determine which of the "fully used/fully non-used" faces are needed?  Are there any cases where that information
+    // would be insufficient to decide the issue?  If it could be made to work, we could avoid inside/outside
+    // testing all together...
 
     bu_log("Summary of brep status: \n A_unused: %d\n B_unused: %d\n A_finalform: %d\n B_finalform %d\nintersection_candidates(%d):\n", A_unused.size(), B_unused.size(), A_finalform.size(), B_finalform.size(), intersection_candidates.size());
-
-    for (std::set<std::pair<int, int> >::iterator it=intersection_candidates.begin(); it != intersection_candidates.end(); ++it) {
-	bu_log("     (%d,%d)\n", (*it).first, (*it).second);
-    }
 
     int surfcount1 = brepA->m_S.Count();
     int surfcount2 = brepB->m_S.Count();
@@ -1757,6 +1785,24 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
     for (int i = 0; i < surfcount2; i++)
 	surf_treeB.Append(new Subsurface(brepB->m_S[i]->Duplicate()));
 
+#if 0
+    std::multimap<int, ON_Curve *> added_2d_curves_A;
+    std::multimap<int, ON_Curve *> added_2d_curves_B;
+    for (std::set<std::pair<int, int> >::iterator it=intersection_candidates.begin(); it != intersection_candidates.end(); ++it) {
+	bu_log("     (%d,%d)\n", (*it).first, (*it).second);
+	ON_ClassArray<ON_SSX_EVENT> events;
+	int surf_index1 = brepA->m_F[(*it).first].m_si;
+	int surf_index2 = brepB->m_F[(*it).second].m_si;
+	//intersection_events_A.insert(std::pair<int, struct Face_Intersection_Event * >(((*it).first), face_event));
+	//intersection_events_B.insert(std::pair<int, struct Face_Intersection_Event * >(((*it).second), face_event));
+	ON_Surface *surfA = brepA->m_S[surf_index1];
+	ON_Surface *surfB = brepB->m_S[surf_index2];
+	int results = ON_Intersect(surfA, surfB, events, INTERSECTION_TOL, 0.0, 0.0, NULL,
+		NULL, NULL, NULL, surf_treeA[surf_index1], surf_treeB[surf_index2]);
+	if (results)
+	    bu_log("Intersecting: (%d,%d)\n", (*it).first, (*it).second);
+    }
+#endif
     // calculate intersection curves
     for (int i = 0; i < facecount1; i++) {
 	for (int j = 0; j < facecount2; j++) {
@@ -2159,7 +2205,6 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 	delete surf_treeA[i];
     for (int i = 0; i < surf_treeB.Count(); i++)
 	delete surf_treeB[i];
-
     return 0;
 }
 
