@@ -27,6 +27,8 @@
 
 #include <string.h>
 
+#include "cursor.h"
+
 
 #define OVERLAPTOL	0.25	/* Thinner overlaps won't be reported. */
 #define MAX_SCANSIZE	2048	/* Longest output scanline. */
@@ -154,19 +156,11 @@ int write_Trie();
 int lgt_Save_Db();
 int read_Trie();
 int lgt_Rd_Db();
-int ClrText();
-int MvCursor();
-int InitTermCap();
-int SetScrlReg();
-int ClrEOL();
-int ResetScrlReg();
-int DeleteLn();
+
 int init_Temp_To_RGB();
 int do_More();
 int append_PtList();
 int delete_Node_OcList();
-int SetStandout();
-int ClrStandout();
 int save_Tty();
 int set_Raw();
 int ir_shootray_octree();
