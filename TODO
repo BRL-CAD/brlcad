@@ -18,6 +18,9 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* test fbed, make sure stdout still works, displays output.  went from
+  unbuffered to buffered.
+
 * check repository.sh support for pathnames with spaces and special
   characters.  regression-full is failing.
 
