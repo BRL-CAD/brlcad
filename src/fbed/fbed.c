@@ -335,15 +335,16 @@ main(int argc, char **argv)
 	prnt_Usage();
 	return 1;
     }
-    setbuf(stdout, (char *)malloc(BUFSIZ));
+
     tty = isatty(1);
     if (!InitTermCap(stdout)) {
 	(void)fprintf(stderr, "Could not initialize terminal.\n");
 	return 1;
     }
     init_Status();
-    if (fb_Setup() == -1)
+    if (fb_Setup() == -1) {
 	return 1;
+    }
     current.r_origin.p_x = 0;
     current.r_corner.p_x = fb_getwidth(fbp)-1;
     current.r_origin.p_y = 0;
@@ -415,6 +416,7 @@ main(int argc, char **argv)
 		prnt_Status();
 	}
     }
+
     (void)f_Quit((char *) NULL);
     /*NOTREACHED*/
     return 0; /* shut up stupid compilers */
