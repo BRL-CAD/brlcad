@@ -1760,7 +1760,7 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
     // A) trim the raw SSI curves with the trimming loops from both faces and get "final" curve segments in
     //    3D and both 2D parametric spaces.  Consolidate curves where different faces created the same curve.
     // B) assemble the new 2D segments and whatever pieces are needed from the existing trimming curves to
-    //    form new 2D loops (which must be non-self-intersecting), whose roles in A and B respectively 
+    //    form new 2D loops (which must be non-self-intersecting), whose roles in A and B respectively
     //    would be determined by the boolean op and each face's role within it.
     // C) build "representative polygons" for all the 2D loops in each face, new and old - representative in
     //    this case meaning that the intersection behavior of the general loops is accurately duplicated
@@ -1768,10 +1768,30 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
     //    horizontal and vertical tangents - and use clipper to perform the boolean ops.  Using the resulting polygons,
     //    deduce and assemble the final trimming loops (and face or faces) created from A and B respectively.
     //
-    // If it should prove that the above is possible, would it also be possible to then do edge comparisons to
-    // determine which of the "fully used/fully non-used" faces are needed?  Are there any cases where that information
-    // would be insufficient to decide the issue?  If it could be made to work, we could avoid inside/outside
-    // testing all together...
+    // A case to think about here is the case of two spheres intersecting - depending on A, the exact trimming
+    // loop in B may need to either define the small area as a new face, or everything BUT the small area
+    // as a new face - different A spheres may either almost fully contain B or just intersect it.  That case
+    // would seem to suggest that we do need some sort of inside/outside test, since B doesn't have enough
+    // information to determine which face is to be saved without consulting A.  A does have enough, since
+    // in either case the same cut is made to A to remove surface area, but which piece of B stays
+    // essentially puts us back to the same situation we were in with the original face sets.
+    //
+    // A possible improvement here might be to calculate the best fit plane of the intersection curve and rotate
+    // both the faces in question and A so that that plane is centered at the origin with the normal in z+.
+    // In that orientation, axis aligned bounding box tests can be made that will be as informative
+    // as possible, and may allow many inside/outside decisions to be made without an explicit raytrace.  Coplanar
+    // faces will have to be handled differently, but for convex cases there should be enough information to decide.
+    // Concave cases may require a raytrace, but there is one other possible approach - if, instead of using the
+    // whole brep and face bounding boxes we start with the bounding box of the intersection curve and construct
+    // the sub-box that 'slices' through the parent bbox to the furthest wall in the opposite direction from the
+    // surface normal, then see which of the two possible
+    // faces' bounding boxes removes the most volume from that box when subtracted, we may be able to decide
+    // (say, for a subtraction) which face is cutting deeper.  It's not clear to me yet if such an approach would
+    // work or would scale to complex cases, but it may be worth thinking about.
+    //
+    // Also worth thinking about - would it be possible to then do edge comparisons to
+    // determine which of the "fully used/fully non-used" faces are needed?
+
 
     bu_log("Summary of brep status: \n A_unused: %d\n B_unused: %d\n A_finalform: %d\n B_finalform %d\nintersection_candidates(%d):\n", A_unused.size(), B_unused.size(), A_finalform.size(), B_finalform.size(), intersection_candidates.size());
 
