@@ -21,10 +21,13 @@
  *
  */
 
-#include "common.h"
-
 #ifndef FBED_EXTERN_H
 #define FBED_EXTERN_H
+
+#include "common.h"
+
+#include "cursor.h"
+
 
 #define MAX_LN			81
 #define Toggle(f)		(f) = ! (f)
@@ -89,11 +92,9 @@ extern RGBpixel *get_Fb_Panel(Rect2D *rectp);
 extern char *char_To_String(int i);
 extern int add_Try(Func_Tab* ftbl, const char* name, Try** trypp);
 extern int bitx(char *bitstring, int posn);
-extern int fb_Init_Menu();
 extern int getpos(Point *pos);
 extern int get_Input(char* inbuf, size_t bufsz, const char* msg);
 extern void fb_Get_Pixel(unsigned char *pixel);
-extern void pos_close();
 extern void init_Status(void);
 extern void init_Tty(void), restore_Tty(void);
 extern void prnt_Status(void);
@@ -103,31 +104,25 @@ extern void prnt_Debug( const char *fmt, ... );
 extern void prnt_Event( const char *fmt, ... );
 extern void prnt_Rect2D(const char *str, Rect2D *rectp);
 extern void do_Key_Cmd(int key, int n);
-extern int InitTermCap();
 extern void prnt_Prompt(const char *msg);
 extern int empty(int fd);
 extern int get_Char(void);
 extern int get_Mouse_Pos(Point *pointp);
-extern int SetStandout();
-extern int ClrStandout();
 extern int exec_Shell(char **args);
 extern void do_line(int xpos, int ypos, const char *line, RGBpixel (*menu_border));
 extern int pad_open(int n);
-extern void save_Tty();
-extern void set_Raw();
-extern void clr_Tabs();
-extern void clr_Echo();
-extern void clr_CRNL();
-extern int MvCursor();
 extern void pad_close(void);
+
+extern void pos_close();
+extern int fb_Init_Menu();
+
+extern void clr_CRNL();
+extern void clr_Echo();
+extern void clr_Tabs();
 extern void reset_Tty();
-extern int ClrText();
-extern int HmCursor();
-extern int DeleteLn();
-extern int ClrEOL();
-extern int SetScrlReg();
-extern int ResetScrlReg();
+extern void save_Tty();
 extern void set_HUPCL();
+extern void set_Raw();
 
 #endif /* FBED_EXTERN_H */
 
