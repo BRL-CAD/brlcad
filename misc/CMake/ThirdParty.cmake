@@ -1,7 +1,7 @@
 #                T H I R D P A R T Y . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2013 United States Government as represented by
+# Copyright (c) 2011-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without

@@ -101,7 +101,7 @@ $ <emphasis remap='I'>g-x3d -o shell.x3d sample.g sample_object</emphasis>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 2002-2013 by the United States
+<para>This software is Copyright (c) 2002-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

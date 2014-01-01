@@ -2,7 +2,7 @@
 #             D I S T C H E C K  _ S C R E E N . S H
 # BRL-CAD
 #
-# Copyright (c) 2012-2013 United States Government as represented by
+# Copyright (c) 2012-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without

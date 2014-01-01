@@ -1,7 +1,7 @@
 /*                     T E X T U R E _ C A M O . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2013 United States Government as represented by
+ * Copyright (c) 2002-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or

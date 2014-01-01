@@ -2,7 +2,7 @@
 #                P U L L _ S O L I D S U B . S H
 # BRL-CAD
 #
-# Copyright (c) 2007-2013 United States Government as represented by
+# Copyright (c) 2007-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
