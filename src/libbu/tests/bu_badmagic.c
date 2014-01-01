@@ -24,17 +24,14 @@
 #include <string.h>
 
 #include "bu.h"
-#include "bn.h"
 
-int
+static int
 bomb_callback(const void *data, const char *str)
 {
     char *expected_str;
     int result;
     if (!data) exit(1);
-    expected_str = (char *)data;;
-    printf("Expected str: \"%s\"\n", expected_str);
-    printf("Actual str: \"%s\"\n", str);
+    expected_str = (char *)data;
     result = strcmp(expected_str, str);
     exit(result);
 }
@@ -70,7 +67,7 @@ main(int argc, char *argv[])
 	bu_badmagic(ptr, magic, str, file, line);
 	return 1;
     case 2:
-	*(ptr) = BU_BITV_MAGIC;
+	*ptr = BU_BITV_MAGIC;
 	magic = BU_BITV_MAGIC;
 	str = (char *)bu_identify_magic(*ptr);
 	expected_str = "\0";
