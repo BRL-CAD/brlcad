@@ -1772,9 +1772,9 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
     // loop in B may need to either define the small area as a new face, or everything BUT the small area
     // as a new face - different A spheres may either almost fully contain B or just intersect it.  That case
     // would seem to suggest that we do need some sort of inside/outside test, since B doesn't have enough
-    // information to determine which face is to be saved without consulting A.  A does have enough, since
-    // in either case the same cut is made to A to remove surface area, but which piece of B stays
-    // essentially puts us back to the same situation we were in with the original face sets.
+    // information to determine which face is to be saved without consulting A.  Likewise, A may either save
+    // just the piece inside the loop or everything outside it, depending on B.  This is the same situation we
+    // were in with the original face sets.
     //
     // A possible improvement here might be to calculate the best fit plane of the intersection curve and rotate
     // both the faces in question and A so that that plane is centered at the origin with the normal in z+.
