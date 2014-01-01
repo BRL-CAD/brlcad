@@ -1413,7 +1413,7 @@ rt_arbn_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
     struct poly_face *faces;
     struct rt_arbn_internal *aip = (struct rt_arbn_internal *)ip->idb_ptr;
-    size_t i, j;
+    size_t i;
     point_t arbit_point = VINIT_ZERO;
     fastf_t volume = 0.0;
 
@@ -1432,60 +1432,7 @@ rt_arbn_centroid(point_t *cent, const struct rt_db_internal *ip)
     }
     rt_arbn_faces_area(faces, aip);
     for (i = 0; i < aip->neqn; i++) {
-	fastf_t x_0 = 0.0;
-	fastf_t x_1 = 0.0;
-        fastf_t y_0 = 0.0;
-	fastf_t y_1 = 0.0;
-	fastf_t z_0 = 0.0;
-	fastf_t z_1 = 0.0;
-	fastf_t a = 0.0;
-	fastf_t signedArea = 0.0;
-	/* Calculate Centroid projection for face for x-y-plane */
-	for (j = 0; j < faces[i].npts-1; j++) {
-	    x_0 = faces[i].pts[j][0];
-	    y_0 = faces[i].pts[j][1];
-	    x_1 = faces[i].pts[j+1][0];
-	    y_1 = faces[i].pts[j+1][1];
-	    a = x_0 *y_1 - x_1*y_0;
-	    signedArea += a;
-	    faces[i].cent[0] += (x_0 + x_1)*a;
-	    faces[i].cent[1] += (y_0 + y_1)*a;
-	}
-	x_0 = faces[i].pts[j][0];
-	y_0 = faces[i].pts[j][1];
-	x_1 = faces[i].pts[0][0];
-	y_1 = faces[i].pts[0][1];
-	a = x_0 *y_1 - x_1*y_0;
-	signedArea += a;
-	faces[i].cent[0] += (x_0 + x_1)*a;
-	faces[i].cent[1] += (y_0 + y_1)*a;
-
-	signedArea *= 0.5;
-	faces[i].cent[0] /= (6.0*signedArea);
-	faces[i].cent[1] /= (6.0*signedArea);
-
-	/* calculate Centroid projection for face for x-z-plane */
-
-	signedArea = 0.0;
-	for (j = 0; j < faces[i].npts-1; j++) {
-	    x_0 = faces[i].pts[j][0];
-	    z_0 = faces[i].pts[j][2];
-	    x_1 = faces[i].pts[j+1][0];
-	    z_1 = faces[i].pts[j+1][2];
-	    a = x_0 *z_1 - x_1*z_0;
-	    signedArea += a;
-	    faces[i].cent[2] += (z_0 + z_1)*a;
-	}
-	x_0 = faces[i].pts[j][0];
-	z_0 = faces[i].pts[j][2];
-	x_1 = faces[i].pts[0][0];
-	z_0 = faces[i].pts[0][2];
-	a = x_0 *z_1 - x_1*z_0;
-	signedArea += a;
-	faces[i].cent[2] += (z_0 + z_1)*a;
-
-	signedArea *= 0.5;
-	faces[i].cent[2] /= (6.0*signedArea);
+	bn_polygon_centroid(&faces[i].cent, faces[i].npts, (const point_t *) faces[i].pts);
 	VADD2(arbit_point, arbit_point, faces[i].cent);
 
     }

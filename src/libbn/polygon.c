@@ -64,6 +64,73 @@ bn_polygon_area(fastf_t *area, size_t npts, const point_t *pts)
     *area = fabs(VDOT(plane_eqn, tot)) * 0.5;
     return 0;
 }
+
+
+int
+bn_polygon_centroid(point_t *cent, size_t npts, const point_t *pts)
+{
+    size_t i;
+    fastf_t x_0 = 0.0;
+    fastf_t x_1 = 0.0;
+    fastf_t y_0 = 0.0;
+    fastf_t y_1 = 0.0;
+    fastf_t z_0 = 0.0;
+    fastf_t z_1 = 0.0;
+    fastf_t a = 0.0;
+    fastf_t signedArea = 0.0;
+
+    if (!pts || !cent || npts < 3)
+	return 1;
+    /* Calculate Centroid projection for face for x-y-plane */
+    for (i = 0; i < npts-1; i++) {
+	x_0 = pts[i][0];
+	y_0 = pts[i][1];
+	x_1 = pts[i+1][0];
+	y_1 = pts[i+1][1];
+	a = x_0 *y_1 - x_1*y_0;
+	signedArea += a;
+	*cent[0] += (x_0 + x_1)*a;
+	*cent[1] += (y_0 + y_1)*a;
+    }
+    x_0 = pts[i][0];
+    y_0 = pts[i][1];
+    x_1 = pts[0][0];
+    y_1 = pts[0][1];
+    a = x_0 *y_1 - x_1*y_0;
+    signedArea += a;
+    *cent[0] += (x_0 + x_1)*a;
+    *cent[1] += (y_0 + y_1)*a;
+
+    signedArea *= 0.5;
+    *cent[0] /= (6.0*signedArea);
+    *cent[1] /= (6.0*signedArea);
+
+    /* calculate Centroid projection for face for x-z-plane */
+
+    signedArea = 0.0;
+    for (i = 0; i < npts-1; i++) {
+	x_0 = pts[i][0];
+	z_0 = pts[i][2];
+	x_1 = pts[i+1][0];
+	z_1 = pts[i+1][2];
+	a = x_0 *z_1 - x_1*z_0;
+	signedArea += a;
+	*cent[2] += (z_0 + z_1)*a;
+    }
+    x_0 = pts[i][0];
+    z_0 = pts[i][2];
+    x_1 = pts[0][0];
+    z_0 = pts[0][2];
+    a = x_0 *z_1 - x_1*z_0;
+    signedArea += a;
+    *cent[2] += (z_0 + z_1)*a;
+
+    signedArea *= 0.5;
+    *cent[2] /= (6.0*signedArea);
+    return 0;
+}
+
+
 /*
  * Local Variables:
  * mode: C

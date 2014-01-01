@@ -4621,6 +4621,20 @@ typedef struct tri_float_specific tri_specific_float;
 BN_EXPORT extern int bn_polygon_area(fastf_t *area, size_t npts, const point_t *pts);
 
 
+/**
+ * calculate the centroid of a non self-intersecting polygon
+ *
+ * @param[out] cent The centroid of the polygon
+ * @param[in] npts Number of point_ts, stored in pts
+ * @param[in] pts all points of the polygon, sorted counter-clockwise.
+ * The array mustn't contain duplicated points.
+ *
+ * @return 0 if calculation was successful
+ * @return 1 if calculation failed, e.g. because one in-parameter is a NULL-pointer
+ */
+BN_EXPORT extern int bn_polygon_centroid(point_t *cent, size_t npts, const point_t *pts);
+
+
 #endif /* BN_H */
 
 /** @} */
