@@ -41,7 +41,7 @@
 #include "raytrace.h"
 
 // Whether to output the debug messages about b-rep booleans.
-#define DEBUG_BREP_BOOLEAN 1
+#define DEBUG_BREP_BOOLEAN 0
 
 // Using connectivity graphs can reduce the number of inside/outside tests,
 // which is considered time-consuming in some research papers. But in practice
