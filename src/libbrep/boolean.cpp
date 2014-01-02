@@ -1718,20 +1718,15 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
     // We won't be able to distinguish between 1 and 3 at this stage, but we can narrow in
     // on which faces might fall into category 2 and what faces they might interact with.
     std::set<std::pair<int, int> > intersection_candidates;
-    std::set<int> A_cat2;
-    std::set<int> B_cat2;
     for (int i = 0; i < facecount1; i++) {
 	if (A_unused.find(i) == A_unused.end() && A_finalform.find(i) == A_finalform.end()) {
 	    for (int j = 0; j < facecount2; j++) {
 		if (B_unused.find(j) == B_unused.end() &&  B_finalform.find(j) == B_finalform.end()) {
-		    bu_log("Checking: %d, %d\n", i, j);
 		    // If the two faces don't interact according to their bounding boxes,
 		    // they won't be a source of events - otherwise, they must be checked.
 		    fastf_t disjoint = brepA->m_F[i].BoundingBox().MinimumDistanceTo(brepB->m_F[j].BoundingBox());
 		    if (!(disjoint > ON_ZERO_TOLERANCE)) {
 			intersection_candidates.insert(std::pair<int, int>(i,j));
-			A_cat2.insert(i);
-			B_cat2.insert(j);
 		    }
 		}
 	    }
@@ -1792,8 +1787,12 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
     // Also worth thinking about - would it be possible to then do edge comparisons to
     // determine which of the "fully used/fully non-used" faces are needed?
 
-
-    bu_log("Summary of brep status: \n A_unused: %d\n B_unused: %d\n A_finalform: %d\n B_finalform %d\nintersection_candidates(%d):\n", A_unused.size(), B_unused.size(), A_finalform.size(), B_finalform.size(), intersection_candidates.size());
+    if(DEBUG_BREP_BOOLEAN) {
+	bu_log("Summary of brep status: \n A_unused: %d\n B_unused: %d\n A_finalform: %d\n B_finalform %d\nintersection_candidates(%d):\n", A_unused.size(), B_unused.size(), A_finalform.size(), B_finalform.size(), intersection_candidates.size());
+	for (std::set<std::pair<int, int> >::iterator it=intersection_candidates.begin(); it != intersection_candidates.end(); ++it) {
+	    bu_log("     (%d,%d)\n", (*it).first, (*it).second);
+	}
+    }
 
     int surfcount1 = brepA->m_S.Count();
     int surfcount2 = brepB->m_S.Count();
@@ -1805,62 +1804,20 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
     for (int i = 0; i < surfcount2; i++)
 	surf_treeB.Append(new Subsurface(brepB->m_S[i]->Duplicate()));
 
-#if 0
-    std::multimap<int, ON_Curve *> added_2d_curves_A;
-    std::multimap<int, ON_Curve *> added_2d_curves_B;
-    for (std::set<std::pair<int, int> >::iterator it=intersection_candidates.begin(); it != intersection_candidates.end(); ++it) {
-	bu_log("     (%d,%d)\n", (*it).first, (*it).second);
-	ON_ClassArray<ON_SSX_EVENT> events;
-	int surf_index1 = brepA->m_F[(*it).first].m_si;
-	int surf_index2 = brepB->m_F[(*it).second].m_si;
-	//intersection_events_A.insert(std::pair<int, struct Face_Intersection_Event * >(((*it).first), face_event));
-	//intersection_events_B.insert(std::pair<int, struct Face_Intersection_Event * >(((*it).second), face_event));
-	ON_Surface *surfA = brepA->m_S[surf_index1];
-	ON_Surface *surfB = brepB->m_S[surf_index2];
-	int results = ON_Intersect(surfA, surfB, events, INTERSECTION_TOL, 0.0, 0.0, NULL,
-		NULL, NULL, NULL, surf_treeA[surf_index1], surf_treeB[surf_index2]);
-	if (results)
-	    bu_log("Intersecting: (%d,%d)\n", (*it).first, (*it).second);
-    }
-#endif
     // calculate intersection curves
     for (int i = 0; i < facecount1; i++) {
 	for (int j = 0; j < facecount2; j++) {
-	    ON_Surface *surfA, *surfB;
-	    ON_ClassArray<ON_SSX_EVENT> events;
-	    int results = 0;
-	    surfA = brepA->m_S[brepA->m_F[i].m_si];
-	    surfB = brepB->m_S[brepB->m_F[j].m_si];
-	    if (IsSameSurface(surfA, surfB))
-		continue;
+	    if (intersection_candidates.find(std::pair<int,int>(i, j)) != intersection_candidates.end()) {
+		ON_Surface *surfA, *surfB;
+		ON_ClassArray<ON_SSX_EVENT> events;
+		int results = 0;
+		surfA = brepA->m_S[brepA->m_F[i].m_si];
+		surfB = brepB->m_S[brepB->m_F[j].m_si];
+		if (IsSameSurface(surfA, surfB))
+		    continue;
 
-	    // If the two faces don't interact according to their bounding boxes,
-	    // they won't be a source of events
-	    fastf_t disjoint = brepA->m_F[i].BoundingBox().MinimumDistanceTo(brepB->m_F[j].BoundingBox());
-	    if (disjoint > ON_ZERO_TOLERANCE) {
-		continue;
-	    }
-
-	    // Look for coplanar faces, which don't require the full surface
-	    // intersection test
-	    ON_Plane surfA_plane, surfB_plane;
-	    int coplanar = 0;
-	    if (surfA->IsPlanar(&surfA_plane) && surfB->IsPlanar(&surfB_plane)) {
-		/* We already checked for disjoint above, so the only remaining question is the normals */
-		if (surfA_plane.Normal().IsParallelTo(surfB_plane.Normal())) {
-		    ON_SSX_EVENT Event;
-		    Event.m_curve3d = Event.m_curveA = Event.m_curveB = NULL;
-		    Event.m_type = ON_SSX_EVENT::ssx_overlap;
-		    events.Append(Event);
-		    coplanar = 1;
-		    results = 1;
-		    bu_log("Faces brepA->%d and brepB->%d are coplanar\n", i, j);
-		}
-	    }
-
-	    // Possible enhancement: Some faces may share the same surface.
-	    // We can store the result of SSI to avoid re-computation.
-	    if (!coplanar) {
+		// Possible enhancement: Some faces may share the same surface.
+		// We can store the result of SSI to avoid re-computation.
 		results = ON_Intersect(surfA,
 			surfB,
 			events,
@@ -1873,30 +1830,43 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 			NULL,
 			surf_treeA[brepA->m_F[i].m_si],
 			surf_treeB[brepB->m_F[j].m_si]);
-	    }
-	    if (results <= 0)
-		continue;
-	    ON_SimpleArray<ON_Curve*> curve_uv, curve_st;
-	    for (int k = 0; k < events.Count(); k++) {
-		if (events[k].m_type == ON_SSX_EVENT::ssx_tangent
-		    || events[k].m_type == ON_SSX_EVENT::ssx_transverse) {
-		    if (get_subcurve_inside_faces(brepA, brepB, i, j, &events[k]) < 0)
-			continue;
-		    SSICurve c1, c2;
-		    c1.m_curve = events[k].m_curveA;
-		    c2.m_curve = events[k].m_curveB;
+		if (results <= 0)
+		    continue;
+		ON_SimpleArray<ON_Curve*> curve_uv, curve_st;
+		for (int k = 0; k < events.Count(); k++) {
+		    if (events[k].m_type == ON_SSX_EVENT::ssx_tangent
+			    || events[k].m_type == ON_SSX_EVENT::ssx_transverse) {
+			if (get_subcurve_inside_faces(brepA, brepB, i, j, &events[k]) < 0)
+			    continue;
+			SSICurve c1, c2;
+			c1.m_curve = events[k].m_curveA;
+			c2.m_curve = events[k].m_curveB;
 #if USE_CONNECTIVITY_GRAPH
-		    c1.m_info.m_fi1 = c2.m_info.m_fi2 = i;
-		    c1.m_info.m_fi2 = c2.m_info.m_fi1 = facecount1 + j;
-		    c1.m_info.m_ci = c2.m_info.m_ci = k;
+			c1.m_info.m_fi1 = c2.m_info.m_fi2 = i;
+			c1.m_info.m_fi2 = c2.m_info.m_fi1 = facecount1 + j;
+			c1.m_info.m_ci = c2.m_info.m_ci = k;
 #endif
-		    curvesarray[i].Append(c1);
-		    curvesarray[facecount1 + j].Append(c2);
-		    // Set m_curveA and m_curveB to NULL, in case that they are
-		    // deleted by ~ON_SSX_EVENT().
-		    events[k].m_curveA = events[k].m_curveB = NULL;
+			curvesarray[i].Append(c1);
+			curvesarray[facecount1 + j].Append(c2);
+			// Set m_curveA and m_curveB to NULL, in case that they are
+			// deleted by ~ON_SSX_EVENT().
+			events[k].m_curveA = events[k].m_curveB = NULL;
+		    }
 		}
+
+		if (DEBUG_BREP_BOOLEAN) {
+		    // Look for coplanar faces
+		    ON_Plane surfA_plane, surfB_plane;
+		    if (surfA->IsPlanar(&surfA_plane) && surfB->IsPlanar(&surfB_plane)) {
+			/* We already checked for disjoint above, so the only remaining question is the normals */
+			if (surfA_plane.Normal().IsParallelTo(surfB_plane.Normal())) {
+			    bu_log("Faces brepA->%d and brepB->%d are coplanar and intersecting\n", i, j);
+			}
+		    }
+		}
+
 	    }
+
 	}
     }
 
