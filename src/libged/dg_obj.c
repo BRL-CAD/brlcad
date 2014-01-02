@@ -714,8 +714,22 @@ dgo_E_tcl(void *clientData,
 	  const char **argv)
 {
     struct dg_obj *dgop = (struct dg_obj *)clientData;
+    struct ged ged;
+    int ret;
 
-    return dgo_E_cmd(dgop, argc-1, argv+1);
+    GED_INIT(&ged, dgop->dgo_wdbp);
+
+    ret = ged_E(&ged, argc-1, argv+1);
+
+    ged_free(&ged);
+
+    if (ret == GED_OK) {
+	return TCL_OK;
+    } else {
+	return TCL_ERROR;
+    }
+
+    return TCL_OK;
 }
 
 

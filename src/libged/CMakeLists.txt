@@ -287,7 +287,6 @@ set(LIBGED_SOURCES
   vrot.c
   vutil.c
   wcodes.c
-  wdb_bigE.c
   wdb_comb_std.c
   wdb_importFg4Section.c
   wdb_nirt.c
