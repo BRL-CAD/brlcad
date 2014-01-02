@@ -1348,41 +1348,26 @@ ccw(const void *x, const void *y, void *cmp)
 static void
 rt_arbn_faces_area(struct poly_face* faces, struct rt_arbn_internal* aip)
 {
-    size_t i, j, l ,k;
+    size_t i;
+    size_t *npts = (size_t *)bu_calloc(aip->neqn, sizeof(size_t), "rt_arbn_faces_area: npts");
+    point_t **tmp_pts = (point_t **)bu_calloc(aip->neqn, sizeof(point_t *), "rt_arbn_faces_area: tmp_pts");
+    plane_t *eqs = (plane_t *)bu_calloc(aip->neqn, sizeof(plane_t), "rt_arbn_faces_area: eqs");
+
     for (i = 0; i < aip->neqn; i++) {
     	HMOVE(faces[i].plane_eqn, aip->eqn[i]);
     	VUNITIZE(faces[i].plane_eqn);
+	tmp_pts[i] = faces[i].pts;
+    	HMOVE(eqs[i], faces[i].plane_eqn);
     }
-    /* find all vertices */
-    for (i = 0; i < aip->neqn - 2; i++) {
-	for (j = i + 1; j < aip->neqn - 1; j++) {
-	    for (k = j + 1; k < aip->neqn; k++) {
-		point_t pt;
-		int keep_point = 1;
-		if (bn_mkpoint_3planes(pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]) < 0)
-		    continue;
-		/* discard pt if it is outside the arbn */
-		for (l = 0; l < aip->neqn; l++) {
-		    if (l == i || l == j || l == k)
-			continue;
-		    if (DIST_PT_PLANE(pt, aip->eqn[l]) > BN_TOL_DIST) {
-			keep_point = 0;
-			break;
-		    }
-		}
-		/* found a good point, add it to each of the intersecting faces */
-		if (keep_point) {
-		    VMOVE((faces[i]).pts[(faces[i]).npts], (pt)); (faces[i]).npts++;
-		    VMOVE((faces[j]).pts[(faces[j]).npts], (pt)); (faces[j]).npts++;
-		    VMOVE((faces[k]).pts[(faces[k]).npts], (pt)); (faces[k]).npts++;
-		}
-	    }
-	}
-    }
+    bn_polygon_mk_pts_planes(npts, tmp_pts, aip->neqn, (const plane_t *)eqs);
     for (i = 0; i < aip->neqn; i++) {
+	faces[i].npts = npts[i];
     	bu_sort(faces[i].pts, faces[i].npts, sizeof(point_t), ccw, &faces[i].plane_eqn);
     	bn_polygon_area(&faces[i].area, faces[i].npts, (const point_t *)faces[i].pts);
     }
+    bu_free((char *)tmp_pts, "rt_arbn_faces_area: tmp_pts");
+    bu_free((char *)npts, "rt_arbn_faces_area: npts");
+    bu_free((char *)eqs, "rt_arbn_faces_area: eqs");
 }
 
 

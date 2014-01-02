@@ -3136,45 +3136,33 @@ static void
 rt_nmg_faces_area(struct poly_face* faces, struct shell* s)
 {
     struct bu_ptbl nmg_faces;
-    unsigned int num_faces, i, j, k, l;
+    unsigned int num_faces, i;
+    size_t *npts;
+    point_t **tmp_pts;
+    plane_t *eqs;
     nmg_face_tabulate(&nmg_faces, &s->l.magic);
     num_faces = BU_PTBL_LEN(&nmg_faces);
+    tmp_pts = (point_t **)bu_calloc(num_faces, sizeof(point_t *), "rt_nmg_faces_area: tmp_pts");
+    npts = (size_t *)bu_calloc(num_faces, sizeof(size_t), "rt_nmg_faces_area: npts");
+    eqs = (plane_t *)bu_calloc(num_faces, sizeof(plane_t), "rt_nmg_faces_area: eqs");
+
     for(i = 0; i < num_faces; i++) {
 	struct face *f;
 	f = (struct face *)BU_PTBL_GET(&nmg_faces, i);
 	HMOVE(faces[i].plane_eqn, f->g.plane_p->N);
 	VUNITIZE(faces[i].plane_eqn);
+	tmp_pts[i] = faces[i].pts;
+    	HMOVE(eqs[i], faces[i].plane_eqn);
     }
-    /* find all vertices */
-    for (i = 0; i < num_faces - 2; i++) {
-	for (j = i + 1; j < num_faces - 1; j++) {
-	    for (k = j + 1; k < num_faces; k++) {
-		point_t pt;
-		int keep_point = 1;
-		if (bn_mkpoint_3planes(pt, faces[i].plane_eqn, faces[j].plane_eqn, faces[k].plane_eqn) < 0)
-		    continue;
-		/* discard pt if it is outside the arbn */
-		for (l = 0; l < num_faces; l++) {
-		    if (l == i || l == j || l == k)
-			continue;
-		    if (DIST_PT_PLANE(pt, faces[l].plane_eqn) > BN_TOL_DIST) {
-			keep_point = 0;
-			break;
-		    }
-		}
-		/* found a good point, add it to each of the intersecting faces */
-		if (keep_point) {
-		    VMOVE((faces[i]).pts[(faces[i]).npts], (pt)); (faces[i]).npts++;
-		    VMOVE((faces[j]).pts[(faces[j]).npts], (pt)); (faces[j]).npts++;
-		    VMOVE((faces[k]).pts[(faces[k]).npts], (pt)); (faces[k]).npts++;
-		}
-	    }
-	}
-    }
+    bn_polygon_mk_pts_planes(npts, tmp_pts, num_faces, (const plane_t *)eqs);
     for (i = 0; i < num_faces; i++) {
+	faces[i].npts = npts[i];
 	bu_sort(faces[i].pts, faces[i].npts, sizeof(point_t), nmg_ccw, &faces[i].plane_eqn);
 	bn_polygon_area(&faces[i].area, faces[i].npts, (const point_t *)faces[i].pts);
     }
+    bu_free((char *)tmp_pts, "rt_nmg_faces_area: tmp_pts");
+    bu_free((char *)npts, "rt_nmg_faces_area: npts");
+    bu_free((char *)eqs, "rt_nmg_faces_area: eqs");
 }
 
 

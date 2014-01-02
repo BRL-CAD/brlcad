@@ -923,12 +923,15 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
 HIDDEN void
 analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
 {
-    size_t i, j, k, l;
+    size_t i;
     fastf_t tot_vol = 0.0, tot_area = 0.0;
     table_t table;
     struct poly_face *faces;
     struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
     struct rt_arbn_internal *aip = (struct rt_arbn_internal *)ip->idb_ptr;
+    size_t *npts = (size_t *)bu_calloc(aip->neqn, sizeof(size_t), "analyze_arbn: npts");
+    point_t **tmp_pts = (point_t **)bu_calloc(aip->neqn, sizeof(point_t *), "analyze_arbn: tmp_pts");
+    plane_t *eqs= (plane_t *)bu_calloc(aip->neqn, sizeof(plane_t), "analyze_arbn: eqs");
 
     /* allocate array of face structs */
     faces = (struct poly_face *)bu_calloc(aip->neqn, sizeof(struct poly_face), "analyze_arbn: faces");
@@ -937,44 +940,21 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
 	VUNITIZE(faces[i].plane_eqn);
 	/* allocate array of pt structs, max number of verts per faces = (# of faces) - 1 */
 	faces[i].pts = (point_t *)bu_calloc(aip->neqn - 1, sizeof(point_t), "analyze_arbn: pts");
+	tmp_pts[i] = faces[i].pts;
+    	HMOVE(eqs[i], faces[i].plane_eqn);
     }
     /* allocate table rows, 1 row per plane eqn */
     table.rows = (row_t *)bu_calloc(aip->neqn, sizeof(row_t), "analyze_arbn: rows");
     table.nrows = aip->neqn;
 
-    /* find all vertices */
-    for (i = 0; i < aip->neqn - 2; i++) {
-	for (j = i + 1; j < aip->neqn - 1; j++) {
-	    for (k = j + 1; k < aip->neqn; k++) {
-		point_t pt;
-		int keep_point = 1;
-		if (bn_mkpoint_3planes(pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]) < 0) {
-		    continue;
-		}
-		/* discard pt if it is outside the arbn */
-		for (l = 0; l < aip->neqn; l++) {
-		    if (l == i || l == j || l == k) {
-			continue;
-		    }
-		    if (DIST_PT_PLANE(pt, aip->eqn[l]) > gedp->ged_wdbp->wdb_tol.dist) {
-			keep_point = 0;
-			break;
-		    }
-		}
-		/* found a good point, add it to each of the intersecting faces */
-		if (keep_point) {
-		    ADD_PT(faces[i], pt);
-		    ADD_PT(faces[j], pt);
-		    ADD_PT(faces[k], pt);
-		}
-	    }
-	}
-    }
+    bn_polygon_mk_pts_planes(npts, tmp_pts, aip->neqn, (const plane_t *)eqs);
 
     for (i = 0; i < aip->neqn; i++) {
 	vect_t tmp;
 	bu_vls_sprintf(&tmpstr, "%4zu", i);
 	snprintf(faces[i].label, sizeof(faces[i].label), "%s", bu_vls_addr(&tmpstr));
+
+	faces[i].npts = npts[i];
 
 	/* calculate surface area */
 	analyze_poly_face(gedp, &faces[i], &table.rows[i]);
@@ -1003,6 +983,9 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
     }
     bu_free((char *)faces, "analyze_arbn: faces");
     bu_free((char *)table.rows, "analyze_arbn: rows");
+    bu_free((char *)tmp_pts, "analyze_arbn: tmp_pts");
+    bu_free((char *)npts, "analyze_arbn: npts");
+    bu_free((char *)eqs, "analyze_arbn: eqs");
     bu_vls_free(&tmpstr);
 }
 

@@ -4635,6 +4635,24 @@ BN_EXPORT extern int bn_polygon_area(fastf_t *area, size_t npts, const point_t *
 BN_EXPORT extern int bn_polygon_centroid(point_t *cent, size_t npts, const point_t *pts);
 
 
+/**
+ * calculate for an array of plane_eqs, which build a polyhedron, the
+ * point_t's for each face.
+ *
+ * @param[out] npts Array, which stores for every face the number of
+ * point_ts, added to pts. Needs to be allocated with npts[neqs] already.
+ * @param[out] pts 2D-array which stores the point_ts for every
+ * face. The array needs to be allocated with pts[neqs][neqs-1] already.
+ * @param[in] neqs Number of plane_ts, stored in eqs
+ * @param[in] eqs Array, that contains the plane equations, which
+ * build the polyhedron
+ *
+ * @return 0 if calculation was successful
+ * @return 1 if calculation failed, e.g. because one parameter is a NULL-Pointer
+ */
+BN_EXPORT extern int bn_polygon_mk_pts_planes(size_t *npts, point_t **pts, size_t neqs, const plane_t *eqs);
+
+
 #endif /* BN_H */
 
 /** @} */

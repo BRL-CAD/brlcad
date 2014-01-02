@@ -131,6 +131,42 @@ bn_polygon_centroid(point_t *cent, size_t npts, const point_t *pts)
 }
 
 
+int
+bn_polygon_mk_pts_planes(size_t *npts, point_t **pts, size_t neqs, const plane_t *eqs)
+{
+    size_t i, j, k, l;
+    if (!npts || !pts || neqs < 4 || !eqs)
+    	return 1;
+    /* find all vertices */
+    for (i = 0; i < neqs - 2; i++) {
+	for (j = i + 1; j < neqs - 1; j++) {
+	    for (k = j + 1; k < neqs; k++) {
+		point_t pt;
+		int keep_point = 1;
+		if (bn_mkpoint_3planes(pt, eqs[i], eqs[j], eqs[k]) < 0)
+		    continue;
+		/* discard pt if it is outside the polyhedron */
+		for (l = 0; l < neqs; l++) {
+		    if (l == i || l == j || l == k)
+			continue;
+		    if (DIST_PT_PLANE(pt, eqs[l]) > BN_TOL_DIST) {
+			keep_point = 0;
+			break;
+		    }
+		}
+		/* found a good point, add it to each of the intersecting faces */
+		if (keep_point) {
+		    VMOVE(pts[i][npts[i]], (pt)); npts[i]++;
+		    VMOVE(pts[j][npts[j]], (pt)); npts[j]++;
+		    VMOVE(pts[k][npts[k]], (pt)); npts[k]++;
+		}
+	    }
+	}
+   }
+    return 0;
+}
+
+
 /*
  * Local Variables:
  * mode: C
