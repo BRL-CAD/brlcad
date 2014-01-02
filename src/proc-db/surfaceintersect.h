@@ -31,6 +31,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "opennurbs_array.h"
+#include "twistedcube.h"
 
 
 /**
