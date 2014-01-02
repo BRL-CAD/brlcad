@@ -32,7 +32,7 @@ bomb_callback(const void *data, const char *str)
     int result;
     if (!data) exit(1);
     expected_str = (char *)data;
-    result = strcmp(expected_str, str);
+    result = bu_strcmp(expected_str, str);
     exit(result);
 }
 
