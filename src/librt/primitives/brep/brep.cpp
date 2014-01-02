@@ -92,7 +92,7 @@ extern "C" {
     int rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, const char **argv);
     int rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *ip);
     RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, const char* operation);
-    struct rt_selection_list *rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query);
+    struct rt_selection_set *rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query);
     int rt_brep_process_selection(struct rt_db_internal *ip, const struct rt_selection *selection, const struct rt_selection_operation *op);
 #ifdef __cplusplus
 }
@@ -3721,8 +3721,8 @@ cmp_cv_startdist(brep_selectable_cv *c1, brep_selectable_cv *c2)
     return false;
 }
 
-struct rt_selection_list *
-new_cv_item(brep_selectable_cv *s)
+struct rt_selection *
+new_cv_selection(brep_selectable_cv *s)
 {
     // make new brep selection w/ cv list
     brep_selection *bs = new brep_selection;
@@ -3740,14 +3740,10 @@ new_cv_item(brep_selectable_cv *s)
     BU_ALLOC(selection, struct rt_selection);
     selection->obj = (void *)bs;
 
-    struct rt_selection_list *item;
-    BU_ALLOC(item, struct rt_selection_list);
-    item->s = selection;
-
-    return item;
+    return selection;
 }
 
-struct rt_selection_list *
+struct rt_selection_set *
 rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query)
 {
     struct rt_brep_internal *bip;
@@ -3812,17 +3808,16 @@ rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selecti
     selectable.sort(cmp_cv_startdist);
 
     // build and return list of selections
-    struct rt_selection_list *selection_list;
-    BU_ALLOC(selection_list, struct rt_selection_list);
-    BU_LIST_INIT(&selection_list->l);
+    struct rt_selection_set *selection_set;
+    BU_ALLOC(selection_set, struct rt_selection_set);
+    BU_PTBL_INIT(&selection_set->selections);
 
     for (s = selectable.begin(); s != selectable.end(); ++s) {
-	struct rt_selection_list *item = new_cv_item(*s);
-	BU_LIST_INSERT(&selection_list->l, &item->l);
+	bu_ptbl_ins(&selection_set->selections, (long *)new_cv_selection(*s));
     }
     selectable.clear();
 
-    return selection_list;
+    return selection_set;
 }
 
 int

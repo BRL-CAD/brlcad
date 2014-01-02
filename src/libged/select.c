@@ -504,7 +504,7 @@ ged_rselect(struct ged *gedp, int argc, const char *argv[])
     }
 }
 
-struct rt_selection_list *
+struct rt_selection_set *
 ged_selection(struct ged *gedp, const char *object_name, const char *selection_name)
 {
     struct rt_object_selections *obj_selections;
@@ -521,13 +521,13 @@ ged_selection(struct ged *gedp, const char *object_name, const char *selection_n
     obj_selections = (struct rt_object_selections *)bu_get_hash_value(entry);
 
     /* find the named selection */
-    entry = bu_hash_tbl_find(obj_selections->selections,
+    entry = bu_hash_tbl_find(obj_selections->sets,
 		(const unsigned char *)selection_name, strlen(selection_name), &prev, &idx);
     if (!entry) {
 	return NULL;
     }
 
-    return (struct rt_selection_list *)bu_get_hash_value(entry);
+    return (struct rt_selection_set *)bu_get_hash_value(entry);
 }
 
 /*

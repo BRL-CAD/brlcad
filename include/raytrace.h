@@ -2050,14 +2050,18 @@ struct rt_selection {
 };
 
 /**
- * R T _ S E L E C T I O N _ L I S T
+ * R T _ S E L E C T I O N _ S E T
  *
  * TODO: This structure is tentative and subject to change or removal
  *       without notice.
  */
-struct rt_selection_list {
-    struct bu_list l;
-    struct rt_selection *s;
+struct rt_selection_set {
+    struct bu_ptbl selections; /**< @brief holds struct rt_selection */
+
+    /** selection-object-specific routine that will free all memory
+     *  associated with any of the stored selections
+     */
+    void (*free_selection)(struct rt_selection *);
 };
 
 /**
@@ -2065,20 +2069,15 @@ struct rt_selection_list {
  *
  * Stores selections associated with an object. There is an entry in
  * the selections table for each kind of selection (e.g. "active",
- * "option"). The table entries are lists to allow more than one
+ * "option"). The table entries are sets to allow more than one
  * selection of the same type (e.g. multiple "option" selections).
  *
  * TODO: This structure is tentative and subject to change or removal
  *       without notice.
  */
 struct rt_object_selections {
-    /** selection type -> struct rt_selection_list */
-    struct bu_hash_tbl *selections;
-
-    /** selection-object specific routine that will free all memory
-     *  associated with any of the stored selections
-     */
-    void (*free_selection)(struct rt_selection *);
+    /** selection type -> struct rt_selection_set */
+    struct bu_hash_tbl *sets;
 };
 
 /**
@@ -2325,9 +2324,9 @@ struct rt_functab {
 #define RTFUNCTAB_FUNC_ORIENTED_BBOX_CAST(_func) ((int (*)(struct rt_arb_internal *, struct rt_db_internal *, const fastf_t))_func)
 
     /** get a list of the selections matching a query */
-    struct rt_selection_list *(*ft_find_selections)(const struct rt_db_internal *,
+    struct rt_selection_set *(*ft_find_selections)(const struct rt_db_internal *,
 						   const struct rt_selection_query *);
-#define RTFUNCTAB_FUNC_FIND_SELECTIONS_CAST(_func) ((struct rt_selection_list *(*)(const struct rt_db_internal *, const struct rt_selection_query *))_func)
+#define RTFUNCTAB_FUNC_FIND_SELECTIONS_CAST(_func) ((struct rt_selection_set *(*)(const struct rt_db_internal *, const struct rt_selection_query *))_func)
 
     /** evaluate a logical selection expression (e.g. a INTERSECT b,
      *  NOT a) to create a new selection
