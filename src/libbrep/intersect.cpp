@@ -3518,25 +3518,6 @@ ON_Intersect(const ON_Surface* surfA,
     return x.Count() - original_count;
 }
 
-/* Ultimately we're intersecting trimmed faces, not surfaces -
- * seems logical to handle the face trimming before returning
- * results.  It's quite possible for surfaces to intersect
- * but have some or all of those intersections voided by
- * face trimming loops */
-/*
-int
-ON_Intersect(const ON_BrepFace* faceA,
-	     const ON_BrepFace* faceB,
-	     ON_ClassArray<ON_FFX_EVENT>& x,
-	     double intersection_tolerance,
-	     double overlap_tolerance,
-	     double fitting_tolerance,
-	     Subsurface* treeA,
-	     Subsurface* treeB)
-{
-}
-*/
-
 // Local Variables:
 // tab-width: 8
 // mode: C++
