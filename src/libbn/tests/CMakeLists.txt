@@ -576,7 +576,7 @@ add_test(bn_ae_vec_2             tester_bn_mat 15 -23.78,42,3.141 119.5181259521
 # az el <expected_result>
 #
 # where az is the azimuth and el is the elevation to generate a vector
-# az and el are floting point numbers and are in radians.
+# az and el are floating point numbers and are in radians.
 
 # These two tests fail for some reason. It could be a bug in bn_vec_ae().
 # The value of the returned vector seems to always have the same z value
@@ -591,7 +591,7 @@ add_test(bn_vec_ae_2             tester_bn_mat 16 0.5 1.2 0.317998846662,0.17372
 #
 # where az is the azimuth, el is the elevation and d is the distance
 # to generate a vector
-# az and el are floting point numbers and are in radians.
+# az and el are floating point numbers and are in radians.
 # d is a floating point number.
 
 add_test(bn_vec_aed_1            tester_bn_mat 17 1 1 5 1.45963290910,2.27324356779,4.20735492349)
@@ -700,7 +700,7 @@ add_test(bn_mat_ck_3             tester_bn_mat 26 -0.38457345,-0.944,0.46483,23.
 
 # For function #27 (bn_mat_dup), there is one argument to keep main()
 # happy, which is ignored.
-# A matrix is initiated, copied and the dereferenced pointer compared in the funcion.
+# A matrix is initiated, copied and the dereferenced pointer compared in the function.
 
 add_test(bn_mat_dup              tester_bn_mat 27 0)
 
@@ -888,7 +888,7 @@ add_test(bn_tabdata_blend3 tester_bn_tabdata 12 5,0,20,40,60,80,100 1,2,3,4,5 5,
 # table tabdata expected_result
 #
 # where the area of the tabdata (which is a tabdata over table), will
-# be calculated. The area will be calculated using intepretation #1
+# be calculated. The area will be calculated using interpretation #1
 # (see bn.h). A table is a list of comma-separated numbers, where the
 # first one is the number of entries: nx,x0,x1,...,x(nx); a tabdata is
 # a list of comma-separated numbers with the same length as the table
@@ -903,7 +903,7 @@ add_test(bn_tabdata_area1 tester_bn_tabdata 13 5,0,20,40,60,80,100 1,2,3,4,5 15)
 # table tabdata expected_result
 #
 # where the area of the tabdata (which is a tabdata over table), will
-# be calculated. The area will be calculated using intepretation #2
+# be calculated. The area will be calculated using interpretation #2
 # (see bn.h). A table is a list of comma-separated numbers, where the
 # first one is the number of entries: nx,x0,x1,...,x(nx); a tabdata is
 # a list of comma-separated numbers with the same length as the table
@@ -919,7 +919,7 @@ add_test(bn_tabdata_area2 tester_bn_tabdata 14 5,0,20,40,60,80,100 1,2,3,4,5 300
 # table tabdata1 tabdata2 expected_result
 #
 # where the area of tabdata1*tabdata2 (which are tabdatas over table),
-# will be calculated. The area will be calculated using intepretation
+# will be calculated. The area will be calculated using interpretation
 # #1 (see bn.h). A table is a list of comma-separated numbers, where
 # the first one is the number of entries: nx,x0,x1,...,x(nx); a
 # tabdata is a list of comma-separated numbers with the same length as
@@ -934,7 +934,7 @@ add_test(bn_tabdata_mul_area1 tester_bn_tabdata 15 5,0,20,40,60,80,100 1,2,3,4,5
 # table tabdata expected_result
 #
 # where the area of tabdata1*tabdata2 (which are tabdatas over table),
-# will be calculated. The area will be calculated using intepretation
+# will be calculated. The area will be calculated using interpretation
 # #2 (see bn.h). A table is a list of comma-separated numbers, where
 # the first one is the number of entries: nx,x0,x1,...,x(nx); a
 # tabdata is a list of comma-separated numbers with the same length as

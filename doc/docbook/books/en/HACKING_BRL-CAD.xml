@@ -958,7 +958,7 @@ bn_mat_transpose()]]></programlisting>
 
             <listitem>
               <para>
-                BRL-CAD uses The One True Brace Style from BSD KNF and K&amp;R<footnote><para><link xlink:href="http://en.wikipedia.org/wiki/Indent_sytle"/></para></footnote>. Opening braces should be on the same line as their statement; closing braces should line up with that same statement. Functions, however, are treated specially, and we place their opening braces on separate lines.
+                BRL-CAD uses The One True Brace Style from BSD KNF and K&amp;R<footnote><para><link xlink:href="http://en.wikipedia.org/wiki/Indent_style"/></para></footnote>. Opening braces should be on the same line as their statement; closing braces should line up with that same statement. Functions, however, are treated specially, and we place their opening braces on separate lines.
                 <programlisting><![CDATA[
 static int
 some_function(char *j)
@@ -1064,7 +1064,7 @@ some_function(char *j)
             <command>make &gt;build.log 2&gt;&amp;1</command>
           </para>
 
-          <note><para>      
+          <note><para>
               If you have a quad-core CPU, you can run <command>make -j4</command> to request compilation in parallel.
             </para></note>
         </section>
@@ -1102,15 +1102,15 @@ some_function(char *j)
         <para>
           After obtaining the source code, you should to join the BRL-CAD developer mailing list (<link xlink:href="http://lists.sourceforge.net/lists/listinfo/brlcad-devel"/>) and the #brlcad IRC channel at irc.freenode.net.
         </para>
-        
+
         <para>
           Joining both lists helps introduce yourself to the BRL-CAD community and gives you the opportunity to regularly communicate with other experienced contributors. You can also ask questions on the mailing list or the IRC channel.
         </para>
-        
+
         <para>
           Note that BRL-CAD contributors have a set of rules that they try to respect and follow to enable collaboration and communication. We strongly encourage new contributors to be creative and to be specific when asking questions on the mailing list or on the IRC channel. We also strongly advise you to use interleaved posting when replying on any communication channels. And <emphasis>never be afraid to ask questions</emphasis>.
         </para>
-        
+
         <para>
           Finally, when modifying code, it's advisable to regularly consult with experienced developers and to follow these rules of thumb when adding changes:
         </para>
@@ -1144,13 +1144,13 @@ some_function(char *j)
       <para>
       Instead of using a mix of formats and tools, BRL-CAD uses the DocBook documentation format and toolchain to produce documentation in the range of required formats.
       </para>
-      
+
       <section><title>What is DocBook?</title>
       <para>
       DocBook is a schema (a structured approach to organization of information) that uses the eXtensible Markup Language standard (XML) as its fundamental framework and builds atop that framework a vocabulary for describing the content and structure of technical documentation. BRL-CAD uses the DocBook 5.0 documentation format to describe its documentation. For detailed documentation for DocBook 5.0, see <link xlink:href="http://www.docbook.org/tdg5/en/html/docbook.html"/>.
       </para>
       </section>
-      
+
       <section><title>Tools for Working with DocBook</title>
       <para>
       While you can write documentation in DocBook using WYSIWYG (What You See Is What You Get) editors, we require that a document saved to DocBook from an editing tool should be inspected for human readability and, if necessary, reformatted for simplicity.
@@ -1159,7 +1159,7 @@ some_function(char *j)
       <para>
       If you are comfortable with working with DocBook XML directly, we recommend that you use the Emacs editor and its nXML module. nXML can automatically recognize and highlight mistakes in the structure of a document while you are editing. The following image illustrates nXML identifying an incorrect closing tag for an informal figure object:
       </para>
-      
+
       <mediaobject>
       <imageobject role="html">
         <imagedata fileref="../../books/en/images/hacking_brlcad_emacs-nxml.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
@@ -1195,33 +1195,33 @@ xmllint failure: 1
       <para>
         Note that these alternative validation tools must be installed on the system on which you are working; they are not provided with BRL-CAD. To specify an alternative tool, use the VALIDATE_EXECUTABLE option. For example, run the following command to use the Oracle Multi-Schema XML Validator:
       </para>
-      
+
       <para>
         <command>cmake -DVALIDATE_EXECUTABLE=msv ...</command>
       </para>
-      
+
       <para>
         While BRL-CAD provides enough DocBook support to guarantee that HTML files and UNIX man pages are generated, you can only generate PDF documents if the <link xlink:href="http://xmlgraphics.apache.org/fop">Apache Formatting Objects Processor (FOP)</link> (http://xmlgraphics.apache.org/fop") is installed on your system. When FOP is available, BRL-CAD can automatically produce PDF outputs.
       </para>
-      
+
       <para>
         For more information, including how to use alternative tools for other DocBook processing steps besides validation, see the file <filename>doc/docbook/README</filename> in the BRL-CAD source code archive.
       </para>
       </section>
-      
+
       <section><title>Adding a New Document to BRL-CAD</title>
       <para>
         Because creating and editing DocBook documentation is greatly simplified by BRL-CAD's management of the conversion process, it is usually a good idea to add a new document to the build system at the beginning of the document creation and editing process. To do this, copy a template file from the source directories to the file name to be used for the new document.
       </para>
-      
+
       <para>
         For example, if you are writing a new DocBook article in English about the ellipsoid, use the following command to copy the article template to the filename <filename>ellipsoid.xml</filename> in the English articles directory:
       </para>
-      
+
       <para>
       <prompt>~/brlcad$</prompt> <command>cp doc/docbook/articles/en/TEMPLATE.xml doc/docbook/articles/en/ellipsoid.xml</command>
       </para>
-      
+
       <para>
         Next, open the file <filename>doc/docbook/articles/en/CMakeLists.txt</filename> in a text editor. Then, add the name of the new document to the file to alert the build system of its existence:
       </para>
@@ -1233,19 +1233,19 @@ xmllint failure: 1
         <imagedata fileref="../../books/en/images/hacking_brlcad_docbook_CMakeLists.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
       </imageobject>
       </mediaobject>
-      
+
       <para>
         BRL-CAD now knows about the new file and can generate output for it.
       </para>
-      
+
       <para>
         You will generally only want to rebuild a specific output (say, HTML) to confirm that output renders properly. To set up the specific targets for the new file, run the command below to refresh the build targets (in this example, the build output directory is called <filename>build</filename>):
       </para>
-      
+
       <para>
         <prompt>~/brlcad/build$</prompt> <command>cmake ..</command>
       </para>
-      
+
       <para>
         This creates a new build target, ellipsoid_article_html, which will build only the HTML output of the document and its dependencies:
       </para>
@@ -1282,7 +1282,7 @@ Scanning dependencies of target ellipsoid_article_html
       <para>
         This generates a file named <filename>brlcad/build/share/doc/html/articles/en/ellipsoid.html.</filename> Open this document in a web browser to view the HTML output:
       </para>
-      
+
       <mediaobject>
       <imageobject role="html">
         <imagedata fileref="../../books/en/images/hacking_brlcad_example_docbook_default_output.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
@@ -1300,11 +1300,11 @@ Scanning dependencies of target ellipsoid_article_html
         <listitem><para>Build the HTML output. As long as the DocBook file is the only file being changed, you can use the target ellipsoid_article_html/fast to avoid checking the target's dependencies and to speed up the compilation process.</para></listitem>
         <listitem><para>Once you have generated the updated HTML file, refresh the page in your web browser to view the changes.</para></listitem>
       </orderedlist>
-      
+
       <para>
         In the following example, all of the previous elements are combined into a DocBook editing workflow. The title of the article was changed from the default (Article Title) to the article's actual title (A Guide to Modeling with the Ellipsoid Primitive), the build target was remade, and the results are seen in a web browser.
       </para>
-      
+
       <mediaobject>
       <imageobject role="html">
         <imagedata fileref="../../books/en/images/hacking_brlcad_docbook_working_session.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
@@ -1313,9 +1313,9 @@ Scanning dependencies of target ellipsoid_article_html
         <imagedata fileref="../../books/en/images/hacking_brlcad_docbook_working_session.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
       </imageobject>
       </mediaobject>
-      
+
       </section>
-      
+
       <section><title>Adding a Translated Document to BRL-CAD</title>
       <para>
         By and large, adding translations of BRL-CAD documents follows the same process as adding English documents. However, you must select the correct subdirectory for the language of the translation.
@@ -1337,12 +1337,12 @@ Scanning dependencies of target ellipsoid_article_html
       </imageobject>
       </mediaobject>
       </section>
-      
+
       <section><title>Selecting Output Formats</title>
       <para>
       Although you can produce HTML, UNIX man pages, and PDF files from the DocBook sources, you don't have to produce all of them. By default, PDF output is not produced because it takes longer to generate than other formats. UNIX man pages are not generated by default for Windows (where they generally are of little use) to avoid wasting configuration and compilation time.
       </para>
-      
+
       <para>
       You can use the following configuration options to turn the compilation of various formats on and off:
       </para>
@@ -1358,33 +1358,33 @@ Scanning dependencies of target ellipsoid_article_html
       </tbody>
       </tgroup>
       </table>
-      
+
       <para>
       The option to disable the PDF man page output exists to support situations where someone wants the article and tutorial PDFs, without the overhead of generating hundreds of PDFs for the various manual pages. If you do not specifically want PDF versions of the individual manual pages, set the BRLCAD_EXTRADOCS_PDF_MAN option to OFF.
       </para>
       </section>
-      
+
       <section><title>Sharing Content Between Documents</title>
       <para>
       Just as different documentation formats are needed to display the same content in different software environments, different documents that serve different needs will often need to share common content. DocBook provides a mechanism, called XInclude, which allows one document to directly reference content from another document.
       </para>
-      
+
       <para>
       For example, volume II of the BRL-CAD Tutorial Series makes extensive use of the XInclude mechanism. The majority of the original content in that tutorial was split up into individual lessons, each which exist as separate documents. To provide those individual documents and at the same time preserve the original Volume II, without duplicating content, the file <filename>BRL-CAD_Tutorial_Series-VolumeII.xml</filename> pulls in the content of the lessons using XInclude:
       </para>
-      
+
       <para>
       <code>&lt;xi:include href="/lessons/en/mged01_creating_primitive_shapes.xml" xpointer="creating_primitive_shapes_overviewlist"/&gt;</code>
       </para>
-      
-      <para>      
+
+      <para>
       For this reference to work, the lesson <filename>mged01_creating_primitive_shapes.xml</filename> must provide matching identifying labels. The matching label for the reference above is:
       </para>
-      
+
       <para>
       <code>&lt;para xml:id="creating_primitive_shapes_overviewlist"&gt;</code>
       </para>
-      
+
       <para>
       The drawbacks to this mechanism are that:
       </para>
@@ -1399,15 +1399,15 @@ Scanning dependencies of target ellipsoid_article_html
       <para>
       DocBook does not allow you to specify the formatting details of a document. This is a deliberate design decision, since avoiding the encoding of formatting information in the original document offers greater consistency and uniformity across documents.
       </para>
-      
+
       <para>
       However, some documents have unique formatting requirements. DocBook's toolchain allows you to do this type of customization, but it is the most complex aspect of working with DocBook. You should only customize the output when there is a compelling need to do so.
       </para>
-      
+
       <para>
       One of the best examples of DocBook output customization in BRL-CAD is work done by Tom Browder to format the PDF covers of the BRL-CAD Tutorial Series volumes, as shown below:
       </para>
-      
+
       <mediaobject>
       <imageobject role="html">
         <imagedata fileref="../../books/en/images/hacking_brlcad_tutorial_1_pdf.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
@@ -1416,21 +1416,21 @@ Scanning dependencies of target ellipsoid_article_html
         <imagedata fileref="../../books/en/images/hacking_brlcad_tutorial_1_pdf.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
       </imageobject>
       </mediaobject>
-      
+
       <para>
       A number of elements are needed to achieve this result:
       </para>
-      
+
       <itemizedlist>
       <listitem><para>A custom XML Stylesheet Language (XSL) file (named <filename>doc/docbook/resources/brlcad/tutorial-template.xsl.in</filename>) that defines the layout of the document.</para></listitem>
       <listitem><para>A custom CMake build logic file (named <filename>doc/docbook/books/en/CMakeLists.txt</filename>) that further customizes the template file for each individual book.</para></listitem>
       <listitem><para>The Deja-Vu and STIX fonts (located in <filename>doc/docbook/resources/other/fonts</filename>) to ensure uniform, high-quality text rendering.</para></listitem>
       </itemizedlist>
-      
+
       <para>
       Although each case of special formatting is likely to be unique, the preceding example can serve as a starting point. Another useful resource for information about customizing DocBook output is the book <link xlink:href="http://www.sagehill.net/docbookxsl">DocBook XSL: The Complete Guide</link> (http://www.sagehill.net/docbookxsl).
       </para>
-      
+
       <para>
       Now that you have an idea about how to format documentation for the BRL-CAD project, let's take a look at the types of documentation that the project maintains.
       </para>
@@ -1442,12 +1442,12 @@ Scanning dependencies of target ellipsoid_article_html
       <para>
       BRL-CAD provides developers, users, and others with a range of documentation covering the basics of the software, its usage, and development APIs. This chapter briefly introduces the types of documentation that the BRL-CAD project maintains, as well as the purpose of each document.
       </para>
-      
+
       <section><title>BRL-CAD Wiki</title>
       <para>
       The easiest way to contribute as a documenter is through BRL-CAD's wiki (a website that users can edit) at <link xlink:href="http://brlcad.org/wiki/Main_Page"/>. The wiki is not currently integrated with any of the other documentation systems in BRL-CAD, although this remains one of BRL-CAD's project goals.
       </para>
-      
+
       <mediaobject>
       <imageobject role="html">
         <imagedata fileref="../../books/en/images/hacking_brlcad_brlcad-wiki.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
@@ -1462,7 +1462,7 @@ Scanning dependencies of target ellipsoid_article_html
       <para>
       Man pages are command-specific or program-specific documentation which thoroughly document and demonstrate the use of that command or program. Man pages may reference other man pages, but they are intended to be the primary source of documentation for a specific tool and should be written with a very tight focus.
       </para>
-      
+
       <mediaobject>
       <imageobject role="html">
         <imagedata fileref="../../books/en/images/hacking_brlcad_man_page_search.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
@@ -1477,11 +1477,11 @@ Scanning dependencies of target ellipsoid_article_html
       <para>
       Most of the project's documentation is maintained in the BRL-CAD source code repository as DocBook files (see the chapter Working with Our Documentation for more information about DocBook). API documentation, on the other hand, is automatically generated from the headers in the application's source code. Specially formatted source code comments in the headers are converted to HTML documentation by <link xlink:href="http://www.doxygen.org/">Doxygen</link> (http://www.doxygen.org), a tool for generating source code documentation.
       </para>
-      
+
       <para>
       API documentation is the lowest level, most authoritative documentation of BRL-CAD's programming interfaces. However, it does not address user-level programs or commands.
       </para>
-      
+
       <mediaobject>
       <imageobject role="html">
         <imagedata fileref="../../books/en/images/hacking_brlcad_doxygen_output.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
@@ -1496,7 +1496,7 @@ Scanning dependencies of target ellipsoid_article_html
       <para>
       Lessons are documents that are used to train a user to master a particular aspect of BRL-CAD. Unlike other documents, lessons focus on step-by-step teaching.
       </para>
-      
+
       <mediaobject>
       <imageobject role="html">
         <imagedata fileref="../../books/en/images/hacking_brlcad_tcl_tk_presentation.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
@@ -1511,7 +1511,7 @@ Scanning dependencies of target ellipsoid_article_html
       <para>
       These can be technical reports, journal articles, conference papers, and/or similar focused descriptions of specific aspects of the package. Unlike lessons, reports and articles are primarily designed to inform rather than train. They are generally less comprehensive in scope and/or detail than a full-blown book.
       </para>
-      
+
       <mediaobject>
       <imageobject role="html">
         <imagedata fileref="../../books/en/images/hacking_brlcad_article_tire_pdf.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
@@ -1526,7 +1526,7 @@ Scanning dependencies of target ellipsoid_article_html
       <para>
       Books are typically large documents that cover many aspects of BRL-CAD. In some cases, books can be collections of lessons, reports, articles, and/or other forms of documentation that are compiled between one set of covers.
       </para>
-      
+
       <mediaobject>
       <imageobject role="html">
         <imagedata fileref="../../books/en/images/hacking_brlcad_book_vol3_pdf.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
@@ -1541,7 +1541,7 @@ Scanning dependencies of target ellipsoid_article_html
       <para>
       Specifications are formal documents that define formats or protocols that others can independently implement. Currently, the only specification in the BRL-CAD documentation set is a draft specification of the .g file format.
       </para>
-      
+
       <mediaobject>
       <imageobject role="html">
         <imagedata fileref="../../books/en/images/hacking_brlcad_g_spec_pdf.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
@@ -1556,7 +1556,7 @@ Scanning dependencies of target ellipsoid_article_html
       <para>
       Presentations can range from an overview of the entire BRL-CAD package to an in-depth review of a specific feature or technical algorithm. Presentations are often used when marketing or explaining some aspect of BRL-CAD to people who are not familiar with it.
       </para>
-      
+
       <mediaobject>
       <imageobject role="html">
         <imagedata fileref="../../books/en/images/hacking_brlcad_tcl_tk_presentation.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
@@ -1566,34 +1566,34 @@ Scanning dependencies of target ellipsoid_article_html
       </imageobject>
       </mediaobject>
       </section>
-      
+
     </chapter>
     <chapter>
       <title>What Documentation to Work On</title>
       <para>
       If you would like to work on a major project, then this section is for you. Depending on how much you want to participate, we have documentation tasks that you can tackle and complete in a short or longer time. In any case, you are invited to work on the documentation for BRL-CAD forever.
       </para>
-      
+
       <para>
       Like our development tasks, the documentation tasks that we have available can take you anywhere from two hours to two days to two or more weeks to complete.
       </para>
-      
+
       <section><title>Two-Hour Tasks</title>
       <para>
       If you want to get started working on the BRL-CAD documentation immediately, one great way to do that is by helping to clean up the existing documentation. Take a look at the documentation and check the spelling or copy edit it to make the documentation more concise or to correct problems with grammar or punctuation. Alternatively, check out our list of <link xlink:href="http://brlcad.org/wiki/Deuces#Documentation_and_Training">documentation tasks</link> (http://brlcad.org/wiki/Deuces#Documentation_and_Training) that you can complete in two hours or less.
       </para>
       </section>
-      
+
       <section><title>Two-Day Tasks</title>
       <para>
       If you have a little more time to devote to the documentation, we maintain a list of tasks that will take you anywhere from a few hours to a few days to complete. You can find that list on the <link xlink:href="http://brlcad.org/wiki/Contributor_Quickies">BRL-CAD website</link> (http://brlcad.org/wiki/Contributor_Quickies). These tasks have roughly the same complexity and require no prior experience with BRL-CAD.
       </para>
-      
+
       <para>
       We also have a list of bugs in our <link xlink:href="http://sourceforge.net/p/brlcad/code/HEAD/tree/brlcad/trunk/BUGS">BUGS file</link>. While most of the bugs in the list focus on the BRL-CAD code, there are a few related to the documentation. If you plan to tackle a documentation bug, remember to report it in our <link xlink:href="http://sourceforge.net/p/brlcad/bugs/">bug tracker</link> (http://sourceforge.net/p/brlcad/bugs/).
       </para>
       </section>
-      
+
       <section><title>Two-Week Tasks</title>
       <para>
       If you are familiar with CAD in general and BRL-CAD in particular, then you might want to try creating some tutorial and training material. Check out our list of <link xlink:href="http://brlcad.org/wiki/Contributor_Quickies#Training">training material that we need</link> (http://brlcad.org/wiki/Contributor_Quickies#Training).
@@ -1609,26 +1609,26 @@ Scanning dependencies of target ellipsoid_article_html
       <note><para>
       For more information about creating and modifying documentation, refer to the chapter Working with Our Documentation earlier in this book.
       </para></note>
-      
+
       <section><title>Obtaining the Documentation</title>
       <para>
       The documentation and the toolchain required to generate the documentation is part of the software's development code. You should download the source code from the Subversion version control system using the following command:
       </para>
-      
+
       <para>
       <command>svn checkout svn://svn.code.sf.net/p/brlcad/code/brlcad/trunk brlcad-code</command>
       </para>
-      
+
       <para>
       The directory <filename>brlcad-code</filename> should be within your <filename>/home</filename> directory so that BRL-CAD's build directory commands don't interfere with your system's commands.
       </para>
-      
+
       <section><title>Obtaining FOP</title>
       <para>
       While BRL-CAD comes with the tools for generating HTML files and UNIX man pages, you will need additional software to generate PDF files. That software is called Apache FOP, and you can download it from the <link xlink:href="http://xmlgraphics.apache.org/fop/">FOP project's website</link> (http://xmlgraphics.apache.org/fop/). The FOP website also has instructions for installing and configuring FOP to run on your system.
       </para>
       </section>
-      
+
       <section><title>Configure</title>
       <para>
       Next, you must set up the build directory and configure the compilation. This will also set up the tools that you need to generate the documentation. Do that by running the following command.
@@ -1638,7 +1638,7 @@ Scanning dependencies of target ellipsoid_article_html
       <command>cmake ../brlcad_build -DBRLCAD_BUILD_TYPE=Debug</command>
       </para>
       </section>
-      
+
       <section><title>Generate the Documentation</title>
       <para>
       Once you've configured the compilation, you'll need to run the following build targets to generate the documentation:
@@ -1649,7 +1649,7 @@ Scanning dependencies of target ellipsoid_article_html
       <listitem><para>html (to generate the HTML version of the documentation)</para></listitem>
       <listitem><para>man (to generate the UNIX man pages)</para></listitem>
       <listitem><para>pdf (to generate PDF versions of the documentation. Running this target is optional, and you must have FOP installed on the system on which you're working).</para></listitem>
-      </itemizedlist>      
+      </itemizedlist>
       </section>
       </section>
 
@@ -1676,11 +1676,11 @@ Scanning dependencies of target ellipsoid_article_html
             </listitem>
           </varlistentry>
       </variablelist>
-      
+
       <para>
       You can find more information about editing the documentation in the chapter Working with Our Documentation earlier in this book.
       </para>
-      
+
       <para>
       Remember to:
       </para>
@@ -1713,7 +1713,7 @@ Scanning dependencies of target ellipsoid_article_html
       <para>
       So you don't code or write documentation? That doesn't matter. You can still contribute to the BRL-CAD project. Other areas in which we need help with include:
       </para>
-      
+
       <itemizedlist>
       <listitem><para>Bug Reporting and Feature Requests</para></listitem>
       <listitem><para>Outreach and Artwork</para></listitem>
@@ -1722,34 +1722,34 @@ Scanning dependencies of target ellipsoid_article_html
       <listitem><para>Translations</para></listitem>
       <listitem><para>User Experience</para></listitem>
       </itemizedlist>
-      
+
       <para>
       Most of the tasks in these areas don't require deep technical skills, but they are definitely important. They need your time, your commitment, and your passion. If find any of these areas interesting, then BRL-CAD has a place for you.
       </para>
-      
+
       <para>
       Let's take a look at a few other ways that you can contribute to the BRL-CAD project.
       </para>
-                  
+
       <section><title>Bug Reporting and Feature Requests</title>
       <para>
       Finding bugs in software is often a challenging task for developers. If you find a problem with the software, file a bug report on BRL-CAD's official <link xlink:href="http://sourceforge.net/p/brlcad/bugs/">bug tracking page</link> on SourceForge (http://sourceforge.net/p/brlcad/bugs/). Please remember to provide enough detail so that we can reproduce the problem. You can also post to our developer mailing list at <email>brlcad-devel@lists.sourceforge.net</email>.
       </para>
-      
+
       <para>
       In addition, if you have a suggestion for new feature, feel free to submit a request on BRL-CAD's official <link xlink:href="http://sourceforge.net/p/brlcad/feature-requests/">feature request page</link> (http://sourceforge.net/p/brlcad/feature-requests/) on SourceForge. You can also post to our developer mailing list at <email>brlcad-devel@lists.sourceforge.net</email>.
       </para>
       </section>
-      
+
       <section><title>Outreach and Artwork</title>
       <para>
       BRL-CAD has a large and passionate community of users and contributors. We need people to work with that community and to help with marketing and promoting the software.
       </para>
-      
+
       <para>
       As well, we need professional-quality artwork. Everything from logos to diagrams to icons. And just about anything in between. Your efforts will help give BRL-CAD a more polished look and will support our outreach and marketing efforts.
       </para>
-      
+
       <mediaobject>
       <imageobject role="html">
         <imagedata fileref="../../books/en/images/hacking_brlcad_xyz.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
@@ -1758,16 +1758,16 @@ Scanning dependencies of target ellipsoid_article_html
         <imagedata fileref="../../books/en/images/hacking_brlcad_xyz.png" format="PNG" scalefit="1" width="100%" contentdepth="100%"/>
       </imageobject>
       </mediaobject>
-      
+
       <para>
       The preceding diagram was created to illustrate BRL-CAD's coordinate system.
       </para>
-      
+
       <para>
       You can find a list of outreach and artwork tasks that will get you started at the <link xlink:href="http://brlcad.org/wiki/Contributor_Quickies#Outreach">BRL-CAD website</link> (http://brlcad.org/wiki/Contributor_Quickies#Outreach).
       </para>
       </section>
-      
+
       <section><title>Quality Assurance</title>
       <para>
       Testing is a vital part of the software development process. As Eric Raymond said, "given enough eyeballs, all bugs are shallow." We need your eyeballs to help us ensure that the code for BRL-CAD is of the highest quality.
@@ -1776,22 +1776,22 @@ Scanning dependencies of target ellipsoid_article_html
       <para>
       What can you do? Create testing frameworks and tests for specific portions of the code. Or go through BRL-CAD's graphical user interface and find and report any bugs. You can help make BRL-CAD better by reporting any problems you encounter.
       </para>
-      
+
       <para>
       You can find a list of quality assurance tasks that will get you started at the <link xlink:href="http://brlcad.org/wiki/Contributor_Quickies#Quality_Assurance">BRL-CAD website</link> (http://brlcad.org/wiki/Contributor_Quickies#Quality_Assurance).
       </para>
       </section>
-      
+
       <section><title>Research</title>
       <para>
       BRL-CAD improves not just through rigorous coding and quality assurance but also through research. We need contributors who can study problems with the software and recommend solutions based on their research. This is an area which typically requires a solid level of technical ability, but contributions here can have an enormous positive impact on the software.
       </para>
-      
+
       <para>
       You can find a list of research tasks that will get you started at the <link xlink:href="http://brlcad.org/wiki/Contributor_Quickies#Research">BRL-CAD website</link> (http://brlcad.org/wiki/Contributor_Quickies#Research).
       </para>
       </section>
-      
+
       <section><title>Translations</title>
       <para>
       We want to make BRL-CAD available to as many users as possible, regardless of what language they speak. To that end, we're steadily making the software available in a number of languages. But there's still work to do. If you have a knowledge or one or more languages other than English, we can use your skills.
@@ -1801,12 +1801,12 @@ Scanning dependencies of target ellipsoid_article_html
       You can find a list of translation tasks that will get you started at the <link xlink:href="http://brlcad.org/wiki/Contributor_Quickies#Translation">BRL-CAD website</link> (http://brlcad.org/wiki/Contributor_Quickies#Translation).
       </para>
       </section>
-      
+
       <section><title>User Experience</title>
       <para>
       BRL-CAD is a large, powerful, and complex piece of software. And as with any software package, it can always be made more consistent, usable, and user friendly. If you're willing to learn the user interface and to approach the package with a critical eye, then you can help make the BRL-CAD user interface friendlier and more consistent.
       </para>
-      
+
       <para>
       You can find a list of user experience tasks that will get you started at the <link xlink:href="http://brlcad.org/wiki/Contributor_Quickies#User_Interface">BRL-CAD website</link> (http://brlcad.org/wiki/Contributor_Quickies#User_Interface).
       </para>
@@ -1820,7 +1820,7 @@ Scanning dependencies of target ellipsoid_article_html
       <para>
       In addition to the resources provided previously in this book, the following resources are available to provide additional help and guidance to BRL-CAD contributors:
       </para>
-      
+
       <itemizedlist>
       <listitem><para>Wiki: <link xlink:href="http://brlcad.org/wiki/Main_Page"/></para></listitem>
       <listitem><para>FAQs: <link xlink:href="http://brlcad.org/wiki/FAQ"/></para></listitem>
@@ -1846,7 +1846,7 @@ Scanning dependencies of target ellipsoid_article_html
       <para>
       The following DocBook XML template illustrates the general structure that is used when defining a man page for MGED commands, along with examples of how elements such as paragraphs, lists, and examples are included. If you haven't worked with DocBook before, refer to the section What is DocBook? in the chapter Working with our Documentation.
       </para>
-      
+
 <programlisting><![CDATA[
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="">
 
@@ -2253,7 +2253,7 @@ main(int argc, char *argv[])
   return 0;
 }
 ]]></programlisting>
-      
+
     </appendix>
     <appendix>
       <title>Code Example: Command Plugin</title>
@@ -2305,7 +2305,7 @@ ged_zoom(struct ged *gedp, int argc, const char *argv[])
     return zoom(gedp, sf);
 }
 ]]></programlisting>
-    
+
     </appendix>
     <appendix>
       <title>Example Code: Root Solving</title>

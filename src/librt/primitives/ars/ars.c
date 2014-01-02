@@ -1178,7 +1178,7 @@ rt_ars_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 		return BRLCAD_ERROR;
 	    }
 	    j = atoi((ptr+1));
-	    /* FIXME: is this necessary? modifiying a const char is illegal!
+	    /* FIXME: is this necessary? modifying a const char is illegal!
 	    *ptr = '\0';
 	    */
 	    i = atoi(&attr[1]);

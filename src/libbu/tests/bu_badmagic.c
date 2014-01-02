@@ -46,7 +46,7 @@ main(int argc, char *argv[])
     char *expected_str = (char *)bu_malloc(512, "bu_badmagic.c");
     char *file = "bu_badmagic.c";
     int line = 42, testnum;
-    
+
     if (argc < 2) {
 	bu_exit(1, "Must specify a function number. [%s]\n", argv[0]);
     }

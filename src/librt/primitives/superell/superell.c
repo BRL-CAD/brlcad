@@ -1141,7 +1141,7 @@ sign(fastf_t x)
 }
 
 
-/* This is the c auxilary function for superell_xyz_from_uv.
+/* This is the c auxiliary function for superell_xyz_from_uv.
  * See http://en.wikipedia.org/wiki/Superellipsoid for more
  * information.
  */
@@ -1152,7 +1152,7 @@ superell_c(fastf_t w, fastf_t m)
 }
 
 
-/* This is the s auxilary function for superell_xyz_from_uv.
+/* This is the s auxiliary function for superell_xyz_from_uv.
  * See http://en.wikipedia.org/wiki/Superellipsoid for more
  * information.
  */
@@ -1188,7 +1188,7 @@ superell_surf_area_general(const struct rt_superell_internal *sip, vect_t mags, 
     fastf_t area = 0;
     fastf_t u, v;
 
-    /* Following the standard definitons of uv, u ranges from -pi to
+    /* Following the standard definitions of uv, u ranges from -pi to
      * pi radians, and v ranges from -pi/2 to pi/2.
      */
     for (u = -M_PI; u <= M_PI; u += side_length) {
