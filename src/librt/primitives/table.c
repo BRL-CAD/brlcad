@@ -1773,7 +1773,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_superell_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_superell_bbox),
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_superell_volume),
-	NULL,
+	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_superell_surf_area),
 	NULL,
 	NULL,
 	NULL,

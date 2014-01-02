@@ -1121,6 +1121,139 @@ rt_superell_volume(fastf_t *volume, const struct rt_db_internal *ip)
 }
 
 
+static fastf_t
+superell_surf_area_box(vect_t mags)
+{
+    return 8 * (mags[0] * mags[1] + mags[0] * mags[2] + mags[1] * mags[2]);
+}
+
+
+static fastf_t
+sign(fastf_t x)
+{
+    if (x > 0) {
+	return 1.0;
+    } else if (x < 0) {
+	return -1.0;
+    } else {
+	return 0.0;
+    }
+}
+
+
+/* This is the c auxilary function for superell_xyz_from_uv.
+ * See http://en.wikipedia.org/wiki/Superellipsoid for more
+ * information.
+ */
+static fastf_t
+superell_c(fastf_t w, fastf_t m)
+{
+    return sign(cos(w)) * pow(fabs(cos(w)), m);
+}
+
+
+/* This is the s auxilary function for superell_xyz_from_uv.
+ * See http://en.wikipedia.org/wiki/Superellipsoid for more
+ * information.
+ */
+static fastf_t
+superell_s(fastf_t w, fastf_t m)
+{
+    return sign(sin(w)) * pow(fabs(sin(w)), m);
+}
+
+
+/* This calculates the xyz coordinates of a set of uv coordinates on
+ * a superellipsoid, using the algorithm detailed in these places:
+ *
+ * http://en.wikipedia.org/wiki/Superellipsoid
+ * http://paulbourke.net/geometry/superellipse/
+ */
+static void
+superell_xyz_from_uv(point_t pt, fastf_t u, fastf_t v, vect_t mags, const struct rt_superell_internal *sip)
+{
+    pt[X] = mags[0] * superell_c(v, sip->n) * superell_c(u, sip->e);
+    pt[Y] = mags[1] * superell_c(v, sip->n) * superell_s(u, sip->e);
+    pt[Z] = mags[2] * superell_s(v, sip->n);
+}
+
+
+/* This attempts to find the surface area by subdividing the uv plane
+ * into squares, and finding the approximate surface area of each
+ * square.
+ */
+static fastf_t
+superell_surf_area_general(const struct rt_superell_internal *sip, vect_t mags, fastf_t side_length)
+{
+    fastf_t area = 0;
+    fastf_t u, v;
+
+    /* Following the standard definitons of uv, u ranges from -pi to
+     * pi radians, and v ranges from -pi/2 to pi/2.
+     */
+    for (u = -M_PI; u <= M_PI; u += side_length) {
+	for (v = - M_PI / 2; v < M_PI / 2; v += side_length) {
+	    point_t here, down, right;
+	    superell_xyz_from_uv(here, u, v, mags, sip);
+	    superell_xyz_from_uv(down, u + side_length, v, mags, sip);
+	    superell_xyz_from_uv(right, u, v + side_length, mags, sip);
+	    area += bn_dist_pt3_pt3(here, down) * bn_dist_pt3_pt3(here, right);
+	}
+    }
+
+
+    return area;
+}
+
+
+void
+rt_superell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    struct rt_superell_internal *sip;
+    vect_t mags;
+
+    RT_CK_DB_INTERNAL(ip);
+    sip = (struct rt_superell_internal *)ip->idb_ptr;
+
+    mags[0] = MAGNITUDE(sip->a);
+    mags[1] = MAGNITUDE(sip->b);
+    mags[2] = MAGNITUDE(sip->c);
+
+    /* The parametric representation does not work correctly at n = e
+     * = 0, so this uses a special calculation for boxes.
+     */
+    if ((NEAR_EQUAL(sip->e, 0, BN_TOL_DIST)) && NEAR_EQUAL(sip->n, 0, BN_TOL_DIST)) {
+	*area = superell_surf_area_box(mags);
+    } else {
+	/* This uses an initial precision of 64 because anything
+	 * smaller than 64 is extremely inaccurate; 64 seems to result
+	 * in reasonably accurate values, while not being as slow as
+	 * larger values; A significant speedup of
+	 * superell_surf_area_general could make larger values more
+	 * practical.
+	 *
+	 * On each iteration, the precision is multiplied by 4,
+	 * because larger and smaller values seem to lead to slower
+	 * convergence in general: smaller values do not increase the
+	 * accuracy by enough on each iteration, and larger values
+	 * increase the accuracy enough that even when the result is
+	 * quite close the areas are not within BN_TOL_DIST of each
+	 * other. A significant speedup of superell_surf_area_general
+	 * could make larger values more practical.
+	 */
+	int precision = 64;
+	fastf_t previous_area = 0;
+	fastf_t current_area = superell_surf_area_general(sip, mags, M_PI / precision);
+	while (!(NEAR_EQUAL(current_area, previous_area, BN_TOL_DIST))) {
+	    precision *= 4;
+	    previous_area = current_area;
+	    current_area = superell_surf_area_general(sip, mags, M_PI / precision);
+	}
+	*area = current_area;
+    }
+}
+
+
 /*
  * Local Variables:
  * mode: C
