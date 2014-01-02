@@ -45,7 +45,7 @@ pix_write(icv_image_t *bif, const char *filename)
 
     if (filename==NULL) {
 	fp = stdout;
-    } else if ((fp = fopen(filename, "w")) == NULL) {
+    } else if ((fp = fopen(filename, "wb")) == NULL) {
 	bu_log("pix_write: Cannot open file for saving\n");
 	return -1;
     }
@@ -73,7 +73,7 @@ pix_read(const char* filename, int width, int height)
 
     if (filename == NULL) {
 	fp = stdin;
-    } else if ((fp = fopen(filename, "r")) == NULL) {
+    } else if ((fp = fopen(filename, "rb")) == NULL) {
 	bu_log("pix_read: Cannot open file for reading\n");
 	return NULL;
     }

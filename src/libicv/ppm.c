@@ -65,7 +65,7 @@ ppm_write(icv_image_t *bif, const char *filename)
 
     if (filename==NULL) {
 	fp = stdout;
-    } else if ((fp = fopen(filename, "w")) == NULL) {
+    } else if ((fp = fopen(filename, "wb")) == NULL) {
 	bu_log("ERROR : Cannot open file for saving\n");
 	return -1;
     }
@@ -119,7 +119,7 @@ ppm_read(const char *filename)
 
     if (filename == NULL) {
 	fp = stdin;
-    } else if ((fp = fopen(filename, "r")) == NULL) {
+    } else if ((fp = fopen(filename, "rb")) == NULL) {
 	bu_log("ERROR: Cannot open file for reading\n");
 	return NULL;
     }

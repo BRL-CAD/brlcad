@@ -116,7 +116,7 @@ png_write(icv_image_t *bif, const char *filename)
     unsigned char *data;
     FILE *fh;
 
-    fh = fopen(filename, "w");
+    fh = fopen(filename, "wb");
     if (UNLIKELY(fh==NULL)) {
 	perror("fdopen");
 	bu_log("ERROR: png_write failed to get a FILE pointer\n");

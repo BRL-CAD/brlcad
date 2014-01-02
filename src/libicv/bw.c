@@ -49,7 +49,7 @@ bw_write(icv_image_t *bif, const char *filename)
 
     if (filename==NULL) {
 	fp = stdout;
-    } else if ((fp = fopen(filename, "w")) == NULL) {
+    } else if ((fp = fopen(filename, "wb")) == NULL) {
 	bu_log("bw_write: Cannot open file for saving\n");
 	return -1;
     }
@@ -76,7 +76,7 @@ bw_read(const char *filename, int width, int height)
 
     if (filename==NULL) {
 	fp = stdin;
-    } else if ((fp = fopen(filename, "r")) == NULL) {
+    } else if ((fp = fopen(filename, "rb")) == NULL) {
 	bu_log("bw_read: Cannot open %s for reading\n", filename);
 	return NULL;
     }
