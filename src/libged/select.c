@@ -504,28 +504,28 @@ ged_rselect(struct ged *gedp, int argc, const char *argv[])
     }
 }
 
+struct rt_object_selections *
+ged_get_object_selections(struct ged *gedp, const char *object_name)
+{
+    int new;
+    struct bu_hash_entry *entry;
+
+    entry = bu_hash_tbl_add(gedp->ged_selections, (unsigned char *)object_name,
+	    strlen(object_name), &new);
+
+    return (struct rt_object_selections *)bu_get_hash_value(entry);
+}
+
 struct rt_selection_set *
-ged_selection(struct ged *gedp, const char *object_name, const char *selection_name)
+ged_get_selection_set(struct ged *gedp, const char *object_name, const char *selection_name)
 {
     struct rt_object_selections *obj_selections;
-    struct bu_hash_entry *entry, *prev;
-    unsigned long idx;
+    struct bu_hash_entry *entry;
+    int new;
 
-    /* find object selections */
-    entry = bu_hash_tbl_find(gedp->ged_selections,
-		(const unsigned char *)object_name, strlen(object_name), &prev, &idx);
-    if (!entry) {
-	return NULL;
-    }
-
-    obj_selections = (struct rt_object_selections *)bu_get_hash_value(entry);
-
-    /* find the named selection */
-    entry = bu_hash_tbl_find(obj_selections->sets,
-		(const unsigned char *)selection_name, strlen(selection_name), &prev, &idx);
-    if (!entry) {
-	return NULL;
-    }
+    obj_selections = ged_get_object_selections(gedp, object_name);
+    entry = bu_hash_tbl_add(obj_selections->sets,
+		(const unsigned char *)selection_name, strlen(selection_name), &new);
 
     return (struct rt_selection_set *)bu_get_hash_value(entry);
 }

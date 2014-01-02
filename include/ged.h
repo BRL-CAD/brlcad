@@ -1796,11 +1796,19 @@ GED_EXPORT extern int ged_search(struct ged *gedp, int argc, const char *argv[])
 GED_EXPORT extern int ged_select(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Return ged selections of specified kind for specified object.
+ * Return ged selections for specifed object. Created if it doesn't
+ * exist.
  */
-GED_EXPORT struct rt_selection_set *ged_selection(struct ged *gedp,
-						   const char *object_name,
-						   const char *selection_name);
+GED_EXPORT struct rt_object_selections *ged_get_object_selections(struct ged *gedp,
+								  const char *object_name);
+
+/**
+ * Return ged selections of specified kind for specified object.
+ * Created if it doesn't exist.
+ */
+GED_EXPORT struct rt_selection_set *ged_get_selection_set(struct ged *gedp,
+							  const char *object_name,
+							  const char *selection_name);
 
 /**
  * Get/set the output handler script
