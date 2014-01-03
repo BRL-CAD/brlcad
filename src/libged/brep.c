@@ -53,7 +53,7 @@ RT_EXPORT extern int brep_intersect_curve_curve(struct rt_db_internal *intern1, 
 RT_EXPORT extern int brep_intersect_curve_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
 RT_EXPORT extern int brep_intersect_surface_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock *vbp);
 RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, const char* operation);
- 
+
 static int
 selection_command(
 	struct ged *gedp,
@@ -67,7 +67,7 @@ selection_command(
     struct rt_selection *new_selection;
     struct rt_selection_query query;
     const char *cmd, *solid_name, *selection_name;
- 
+
     /*  0         1          2         3
      * brep <solid_name> selection subcommand
      */

@@ -1796,7 +1796,7 @@ GED_EXPORT extern int ged_search(struct ged *gedp, int argc, const char *argv[])
 GED_EXPORT extern int ged_select(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Return ged selections for specifed object. Created if it doesn't
+ * Return ged selections for specified object. Created if it doesn't
  * exist.
  */
 GED_EXPORT struct rt_object_selections *ged_get_object_selections(struct ged *gedp,
