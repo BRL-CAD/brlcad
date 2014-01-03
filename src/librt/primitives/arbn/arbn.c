@@ -1449,6 +1449,35 @@ rt_arbn_centroid(point_t *cent, const struct rt_db_internal *ip)
 }
 
 
+void
+rt_arbn_volume(fastf_t *volume, const struct rt_db_internal *ip)
+{
+    struct poly_face *faces;
+    struct rt_arbn_internal *aip = (struct rt_arbn_internal *)ip->idb_ptr;
+    size_t i;
+
+    *volume = 0.0;
+    /* allocate array of face structs */
+    faces = (struct poly_face *)bu_calloc(aip->neqn, sizeof(struct poly_face), "rt_arbn_volume: faces");
+    for (i = 0; i < aip->neqn; i++) {
+	/* allocate array of pt structs, max number of verts per faces = (# of faces) - 1 */
+	faces[i].pts = (point_t *)bu_calloc(aip->neqn - 1, sizeof(point_t), "rt_arbn_volume: pts");
+    }
+    rt_arbn_faces_area(faces, aip);
+    for (i = 0; i < aip->neqn; i++) {
+	vect_t tmp;
+
+	/* calculate volume of pyramid */
+	VSCALE(tmp, faces[i].plane_eqn, faces[i].area);
+	*volume += VDOT(faces[i].pts[0], tmp)/3;
+    }
+    for (i = 0; i < aip->neqn; i++) {
+	bu_free((char *)faces[i].pts, "rt_arbn_volume: pts");
+    }
+    bu_free((char *)faces, "rt_arbn_volume: faces");
+}
+
+
 /** @} */
 /*
  * Local Variables:
