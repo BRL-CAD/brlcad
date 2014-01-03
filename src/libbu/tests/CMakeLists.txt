@@ -626,6 +626,23 @@ add_test(bu_badmagic_normal      tester_bu_badmagic 2)
 add_test(bu_badmagic_null_ptr    tester_bu_badmagic 3)
 add_test(bu_badmagic_misaligned  tester_bu_badmagic 4)
 
+#
+#  *********** date-time.c tests ************
+#
+
+BRLCAD_ADDEXEC(tester_bu_date-time bu_date-time.c libbu NO_INSTALL)
+add_test(bu_date-time1  tester_bu_date-time 1)
+add_test(bu_date-time2  tester_bu_date-time 2)
+add_test(bu_date-time3  tester_bu_date-time 3)
+add_test(bu_date-time4  tester_bu_date-time 4)
+add_test(bu_date-time5  tester_bu_date-time 5)
+add_test(bu_date-time6  tester_bu_date-time 6)
+add_test(bu_date-time7  tester_bu_date-time 7)
+add_test(bu_date-time8  tester_bu_date-time 8)
+add_test(bu_date-time9  tester_bu_date-time 9)
+add_test(bu_date-time10  tester_bu_date-time 10)
+
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake
