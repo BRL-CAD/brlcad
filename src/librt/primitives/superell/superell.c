@@ -1168,6 +1168,12 @@ superell_s(fastf_t w, fastf_t m)
  *
  * http://en.wikipedia.org/wiki/Superellipsoid
  * http://paulbourke.net/geometry/superellipse/
+ *
+ * Since this code is called inside a loop through v-values inside a
+ * loop through u-values, superell_c(u, sip->e) and superell_s(u,
+ * sip->e) can be precomputed, which results in a significant
+ * performance gain; for this reason, the function takes there values
+ * and not he original u-value.
  */
 static void
 superell_xyz_from_uv(point_t pt, fastf_t u, fastf_t v, vect_t mags, const struct rt_superell_internal *sip)
@@ -1188,19 +1194,56 @@ superell_surf_area_general(const struct rt_superell_internal *sip, vect_t mags, 
     fastf_t area = 0;
     fastf_t u, v;
 
-    /* Following the standard definitions of uv, u ranges from -pi to
-     * pi radians, and v ranges from -pi/2 to pi/2.
+    /* There are M_PI / side_length + 1 values because both ends have
+       to be stored */
+    int row_length = sizeof(point_t) * (M_PI / side_length + 1);
+
+    point_t *row1 = bu_malloc(row_length, "superell_surf_area_general");
+    point_t *row2 = bu_malloc(row_length, "superell_surf_area_general");
+
+    int index = 0;
+
+
+    /* This function keeps a moving window of two rows at any time,
+     * and calculates the area of space between those two rows. It
+     * calculates the first row outside of the loop so that at each
+     * iteration it only has to calculate the second. Following
+     * standard definitions of u and v, u ranges from -pi to pi, and v
+     * ranges from -pi/2 to pi/2. Using an extra index variable allows
+     * the code to compute the index into the array very efficiently.
      */
-    for (u = -M_PI; u <= M_PI; u += side_length) {
-	for (v = - M_PI / 2; v < M_PI / 2; v += side_length) {
-	    point_t here, down, right;
-	    superell_xyz_from_uv(here, u, v, mags, sip);
-	    superell_xyz_from_uv(down, u + side_length, v, mags, sip);
-	    superell_xyz_from_uv(right, u, v + side_length, mags, sip);
-	    area += bn_dist_pt3_pt3(here, down) * bn_dist_pt3_pt3(here, right);
-	}
+    for (v = - M_PI / 2; v < M_PI / 2; v += side_length, index++) {
+	superell_xyz_from_uv(row1[index], -M_PI, v, mags, sip);
     }
 
+
+    /* This starts at -M_PI + side_length because the first row is
+     * computed outside the loop, which allows the loop to always
+     * calculate the second row of the pair.
+     */
+    for (u = -M_PI + side_length; u < M_PI; u += side_length) {
+	index = 0;
+	for (v = - M_PI / 2; v < M_PI / 2; v += side_length, index++) {
+	    superell_xyz_from_uv(row2[index], u + side_length, v, mags, sip);
+	}
+
+	index = 0;
+
+	/* This ends at -M_PI / 2 - side_length because if it kept
+	 * going it would overflow the array, since it always looks at
+	 * the square to the right of its current index.
+	 */
+	for (v = - M_PI / 2; v < M_PI / 2 - side_length; v += side_length, index++) {
+	    area +=
+		bn_dist_pt3_pt3(row1[index], row1[index + 1]) *
+		bn_dist_pt3_pt3(row1[index], row2[index]);
+	}
+
+	memcpy(row1, row2, row_length);
+    }
+
+    bu_free(row1, "superell_surf_area_general");
+    bu_free(row2, "superell_surf_area_general");
 
     return area;
 }
@@ -1225,27 +1268,32 @@ rt_superell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     if ((NEAR_EQUAL(sip->e, 0, BN_TOL_DIST)) && NEAR_EQUAL(sip->n, 0, BN_TOL_DIST)) {
 	*area = superell_surf_area_box(mags);
     } else {
-	/* This uses an initial precision of 64 because anything
-	 * smaller than 64 is extremely inaccurate; 64 seems to result
-	 * in reasonably accurate values, while not being as slow as
-	 * larger values; A significant speedup of
-	 * superell_surf_area_general could make larger values more
-	 * practical.
-	 *
-	 * On each iteration, the precision is multiplied by 4,
-	 * because larger and smaller values seem to lead to slower
-	 * convergence in general: smaller values do not increase the
-	 * accuracy by enough on each iteration, and larger values
-	 * increase the accuracy enough that even when the result is
-	 * quite close the areas are not within BN_TOL_DIST of each
-	 * other. A significant speedup of superell_surf_area_general
-	 * could make larger values more practical.
+	/* This number specifies the initial precision used. The
+	 * precision is roughly the number of chunks that the uv-space
+	 * is divided into during the approximation; the larger the
+	 * number the higher the accuracy and the lower the
+	 * performance.
 	 */
-	int precision = 64;
+	int precision = 1024;
+
 	fastf_t previous_area = 0;
 	fastf_t current_area = superell_surf_area_general(sip, mags, M_PI / precision);
 	while (!(NEAR_EQUAL(current_area, previous_area, BN_TOL_DIST))) {
-	    precision *= 4;
+	    /* The precision is multiplied by a constant on each round
+	     * through the loop to make sure that the precision
+	     * continues to increase until a satisfactory value is
+	     * found. If this value is very small, this approximation
+	     * will likely convere fairly quickly and with lower
+	     * accuracy: the smaller the distance between the inputs
+	     * the more likely that the outputs will be within
+	     * BN_TOL_DIST. A large value will result in slow
+	     * convergence, but in high accuracy: when the values are
+	     * finally within BN_TOL_DIST of each other the
+	     * approximation must be very good, because a large
+	     * increase in input precision resulted in a small
+	     * increase in accuracy.
+	     */
+	    precision *= 2;
 	    previous_area = current_area;
 	    current_area = superell_surf_area_general(sip, mags, M_PI / precision);
 	}
