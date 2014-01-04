@@ -1353,7 +1353,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * replaced universally with fastf_t's since their epsilon is
  * considerably less than that of a double.
  */
-#define INTCLAMP(_a) (NEAR_EQUAL((_a), rint(_a), VUNITIZE_TOL) ? (double)(long)rint(_a) : (_a))
+#define INTCLAMP(_a) (NEAR_EQUAL((_a), rint(_a), VUNITIZE_TOL) ? rint(_a) : (_a))
 
 /** @brief integer clamped versions of the previous arg macros. */
 #define V2INTCLAMPARGS(a) INTCLAMP((a)[X]), INTCLAMP((a)[Y])

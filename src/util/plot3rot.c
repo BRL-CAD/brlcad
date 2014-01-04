@@ -429,10 +429,10 @@ dofile(FILE *fp)
 		    VSET(max, maxx, maxy, -1);
 		    model_rpp(min, max);
 
-		    minx = (long)floor(space_min[X]);
-		    miny = (long)floor(space_min[Y]);
-		    maxx = (long)ceil(space_max[X]);
-		    maxy = (long)ceil(space_max[Y]);
+		    minx = lrint(floor(space_min[X]));
+		    miny = lrint(floor(space_min[Y]));
+		    maxx = lrint(ceil(space_max[X]));
+		    maxy = lrint(ceil(space_max[Y]));
 		    if (minx < -32768) minx = -32768;
 		    if (miny < -32768) miny = -32768;
 		    if (maxx > 32767) maxx = 32767;

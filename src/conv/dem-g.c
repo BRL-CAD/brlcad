@@ -169,7 +169,7 @@ flip_high_low_bytes(long int in_value, unsigned char *out_string)
 	unsigned char highbyte = '\0';
 	unsigned char lowbyte = '\0';
 
-	highbyte = (unsigned char)floor(in_value / 256);
+	highbyte = (unsigned char)lrint(floor(in_value / 256));
 	lowbyte = (unsigned char)(in_value - (highbyte * 256));
 	out_string[0] = highbyte;
 	out_string[1] = lowbyte;
@@ -1431,14 +1431,14 @@ read_dem(
 		    curr_elevation = 0;
 		}
 
-		if (output_elevation((long int)round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
+		if (output_elevation(lrint(round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor)), fp2) == BRLCAD_ERROR) {
 		    bu_log("Function 'output_elevation' failed on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
 		    fclose(fp);
 		    fclose(fp2);
 		    return BRLCAD_ERROR;
 		}
 	    }
-	    additional_1024char_chunks = (long int)ceil((tot_elevations_in_curr_b_record - 146.0) / 170.0);
+	    additional_1024char_chunks = lrint(ceil((tot_elevations_in_curr_b_record - 146.0) / 170.0));
 
 	    if (additional_1024char_chunks > 0) {
 		for (indx2 = 1; indx2 < additional_1024char_chunks; indx2++) {
@@ -1470,7 +1470,7 @@ read_dem(
 			    curr_elevation = 0;
 			}
 
-			if (output_elevation((long int)round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
+			if (output_elevation(lrint(round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor)), fp2) == BRLCAD_ERROR) {
 			    bu_log("Function 'output_elevation' failed on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
 			    fclose(fp);
 			    fclose(fp2);
@@ -1507,7 +1507,7 @@ read_dem(
 			curr_elevation = 0;
 		    }
 
-		    if (output_elevation((long int)round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
+		    if (output_elevation(lrint(round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor)), fp2) == BRLCAD_ERROR) {
 			bu_log("Function 'output_elevation' failed on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
 			fclose(fp);
 			fclose(fp2);
@@ -1536,7 +1536,7 @@ read_dem(
 		    curr_elevation = 0;
 		}
 
-		if (output_elevation((long int)round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
+		if (output_elevation(lrint(round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor)), fp2) == BRLCAD_ERROR) {
 		    bu_log("Function 'output_elevation' failed on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
 		    fclose(fp);
 		    fclose(fp2);

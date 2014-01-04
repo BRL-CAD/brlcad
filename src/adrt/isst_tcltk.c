@@ -274,7 +274,7 @@ set_resolution(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_
 	resolution = 20;
 	isst->gs = 0;
     } else {
-	isst->gs = (int)floor(isst->w * .05 * resolution);
+	isst->gs = lrint(floor(isst->w * .05 * resolution));
     }
     resize_isst(isst);
 

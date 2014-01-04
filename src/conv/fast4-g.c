@@ -895,7 +895,7 @@ Add_stragglers_to_groups(void)
 		ssize_t new_cnt, i;
 		struct bu_list *list_first;
 
-		new_cnt = (ssize_t)ceil(region_id_max/1000.0);
+		new_cnt = lrint(ceil(region_id_max/1000.0));
 		new_head = (struct wmember *)bu_calloc(new_cnt, sizeof(struct wmember), "group_head list");
 		bu_log("ptr->region_id=%d region_id_max=%d new_cnt=%ld\n", ptr->region_id, region_id_max, new_cnt);
 

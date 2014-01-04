@@ -823,7 +823,7 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 		/* initialize the current dsp_bb cell */
 		dsp_bb = &curr->p[y*curr->dim[X]+x];
 		dsp_bb->magic = MAGIC_dsp_bb;
-		n = (int)pow((double)DIM_BB_CHILDREN, (double)curr_layer);
+		n = lrint(pow((double)DIM_BB_CHILDREN, (double)curr_layer));
 		VSET(dsp_bb->dspb_rpp.dsp_min,
 		     x * n, y * n, 0x0ffff);
 		VSET(dsp_bb->dspb_rpp.dsp_max,

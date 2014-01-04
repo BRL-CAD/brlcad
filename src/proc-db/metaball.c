@@ -190,9 +190,9 @@ make_spaghetti(const char *filename, const char *name, long count)
     mk_id(fp, title);
 
     /* just to make things interesting, make varying sized sets */
-    some = (long)ceil((double)count * (1.0 / 111.0));
-    more = (long)ceil((double)count * (10.0 / 111.0));
-    many = (long)ceil((double)count * (100.0 / 111.0));
+    some = lrint(ceil((double)count * (1.0 / 111.0)));
+    more = lrint(ceil((double)count * (10.0 / 111.0)));
+    many = lrint(ceil((double)count * (100.0 / 111.0)));
 
     /* create individual metaballs with random points using LIBWDB */
     make_meatballs(fp, balls[0], some);

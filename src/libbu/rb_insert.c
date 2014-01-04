@@ -211,7 +211,7 @@ bu_rb_insert(struct bu_rb_tree *tree, void *data)
 	bu_malloc(nm_orders * sizeof(struct bu_rb_node *),
 		  "red-black right children");
     node->rbn_color = (char *)
-	bu_malloc((size_t) ceil((double) (nm_orders / 8.0)),
+	bu_malloc((size_t) lrint(ceil((double) (nm_orders / 8.0))),
 		  "red-black colors");
     node->rbn_size = (int *)
 	bu_malloc(nm_orders * sizeof(int),

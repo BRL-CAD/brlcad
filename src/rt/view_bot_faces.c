@@ -292,7 +292,7 @@ view_end(struct application *UNUSED(ap))
     while (entry) {
 	size_t i;
 
-	fprintf(outfp, "BOT: %s\n", Tcl_GetHashKey(&bots, entry));
+	fprintf(outfp, "BOT: %s\n", (char *)Tcl_GetHashKey(&bots, entry));
 	faces = (struct bu_ptbl *)Tcl_GetHashValue(entry);
 	for (i=0; i<BU_PTBL_LEN(faces); i++) {
 	    fprintf(outfp, "\t%lu\n", (unsigned long)BU_PTBL_GET(faces, i));

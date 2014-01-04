@@ -41,7 +41,7 @@ bu_rb_create(const char *description, int nm_orders, int (**compare_funcs)(const
 	bu_malloc(nm_orders * sizeof(struct bu_rb_node),
 		  "red-black roots");
     tree->rbt_unique = (char *)
-	bu_malloc((size_t) ceil((double) (nm_orders / 8.0)),
+	bu_malloc((size_t) lrint(ceil((double) (nm_orders / 8.0))),
 		  "red-black uniqueness flags");
     RB_NULL(tree) = (struct bu_rb_node *)
 	bu_malloc(sizeof(struct bu_rb_node),
@@ -56,7 +56,7 @@ bu_rb_create(const char *description, int nm_orders, int (**compare_funcs)(const
 	bu_malloc(nm_orders * sizeof(struct bu_rb_node *),
 		  "red-black right children");
     RB_NULL(tree)->rbn_color = (char *)
-	bu_malloc((size_t) ceil((double) (nm_orders / 8.0)),
+	bu_malloc((size_t) lrint(ceil((double) (nm_orders / 8.0))),
 		  "red-black colors");
     RB_NULL(tree)->rbn_size = (int *)
 	bu_malloc(nm_orders * sizeof(int),

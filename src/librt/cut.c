@@ -312,8 +312,8 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 	    RT_NU_GFACTOR_DEFAULT);
     }
 
-    nu_ncells = (int)ceil(2.0 + rtip->rti_nu_gfactor *
-			  pow((double)fromp->bn_len, 1.0/3.0));
+    nu_ncells = lrint(ceil(2.0 + rtip->rti_nu_gfactor *
+			  pow((double)fromp->bn_len, 1.0/3.0)));
     if (rtip->rti_nugrid_dimlimit > 0 &&
 	nu_ncells > rtip->rti_nugrid_dimlimit)
 	nu_ncells = rtip->rti_nugrid_dimlimit;
@@ -797,7 +797,7 @@ rt_cut_it(register struct rt_i *rtip, int ncpu)
      * (2**rtip->rti_cutdepth)*rtip->rti_cutlen potential leaf slots.
      * Also note that solids will typically span several leaves.
      */
-    rtip->rti_cutlen = (int)log((double)(rtip->nsolids+1));  /* ln ~= log2, nsolids+1 to avoid log(0) */
+    rtip->rti_cutlen = lrint(floor(log((double)(rtip->nsolids+1))));  /* ln ~= log2, nsolids+1 to avoid log(0) */
     rtip->rti_cutdepth = 2 * rtip->rti_cutlen;
     if (rtip->rti_cutlen < 3) rtip->rti_cutlen = 3;
     if (rtip->rti_cutdepth < 12) rtip->rti_cutdepth = 12;

@@ -77,7 +77,7 @@ extern icv_image_t* ppm_read(const char *filename);
  * return the string as as return type (making the int type be an int*
  * argument instead that gets set).
  */
-int
+ICV_IMAGE_FORMAT
 icv_guess_file_format(const char *filename, char *trimmedname)
 {
     /* look for the FMT: header */

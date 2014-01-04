@@ -149,7 +149,7 @@ typedef struct icv_image icv_image_t;
  * extensions
  * @return File Format
  */
-ICV_EXPORT extern int icv_guess_file_format(const char *filename, char *trimmedname);
+ICV_EXPORT extern ICV_IMAGE_FORMAT icv_guess_file_format(const char *filename, char *trimmedname);
 
 /**
  * This function allocates memory for an image and returns the

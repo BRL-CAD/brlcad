@@ -379,7 +379,7 @@ get_int( int type )
 		if ( fscanf( ply_fp, "%lf", &val_double ) != 1 ) {
 		    bu_exit(1, "ERROR parsing data\n" );
 		}
-		val = (int)floor(val_double);
+		val = lrint(floor(val_double));
 		break;
 	}
     } else {

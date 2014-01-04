@@ -66,13 +66,15 @@ dot_comb(struct db_i *dbip, struct directory *dp, genptr_t out)
 	bu_log("ERROR: Database read error, skipping %s\n", dp->d_namep);
     }
     comb = (struct rt_comb_internal *)intern.idb_ptr;
-
+    
     if (comb->region_flag) {
-	if (bu_ptbl_ins_unique(&(o->regions), (long *)bu_hash((unsigned char *)dp->d_namep, strlen(dp->d_namep))) == -1) {
+	long hash = bu_hash((unsigned char *)dp->d_namep, strlen(dp->d_namep));
+	if (bu_ptbl_ins_unique(&(o->regions), (long *)hash) == -1) {
 	    fprintf(o->outfp, "\t\"%s\" [ color=blue shape=box3d ];\n", dp->d_namep);
 	}
     } else {
-	if (bu_ptbl_ins_unique(&(o->groups), (long *)bu_hash((unsigned char *)dp->d_namep, strlen(dp->d_namep))) == -1) {
+	long hash = bu_hash((unsigned char *)dp->d_namep, strlen(dp->d_namep));
+	if (bu_ptbl_ins_unique(&(o->groups), (long *)hash) == -1) {
 	    fprintf(o->outfp, "\t\"%s\" [ color=green ];\n", dp->d_namep);
 	}
     }
@@ -145,7 +147,8 @@ dot_leaf(struct db_i *UNUSED(dbip), struct directory *dp, genptr_t out)
     if (!o->outfp)
 	return;
 
-    if (bu_ptbl_ins_unique(&(o->primitives), (long *)bu_hash((unsigned char *)dp->d_namep, strlen(dp->d_namep))) == -1) {
+    long hash = bu_hash((unsigned char *)dp->d_namep, strlen(dp->d_namep));
+    if (bu_ptbl_ins_unique(&(o->primitives), (long *)hash) == -1) {
 	fprintf(o->outfp, "\t\"%s\" [ color=red shape=box rank=min ];\n", dp->d_namep);
     }
 

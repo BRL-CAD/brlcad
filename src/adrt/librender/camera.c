@@ -589,6 +589,7 @@ render_shader_load_plugin(const char *filename)
 {
 #ifdef HAVE_DLFCN_H
     void *lh;	/* library handle */
+    int *init_val;
     int (*init)(render_t *, const char *);
     char *name;
     struct render_shader_s *s;
@@ -606,7 +607,8 @@ render_shader_load_plugin(const char *filename)
 	return NULL;
     }
     /* assumes function pointers can be stored as a number, which ISO C does not guarantee */
-    init = (int (*) (render_t *, const char *))(intptr_t)bu_dlsym(lh, "init");
+    init_val = bu_dlsym(lh, "init");
+    init = (int (*) (render_t *, const char *))(intptr_t)init_val;
     if(init == NULL) {
 	bu_log("Faulty plugin %s: No init\n", filename);
 	bu_dlclose(lh);

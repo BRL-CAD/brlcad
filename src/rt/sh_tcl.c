@@ -58,6 +58,7 @@ extern int get_args(int argc, const char *argv[]); /* opt.c */
 int
 sh_directchange_rgb(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
+    long int rtip_val;
     struct rt_i	*rtip;
     struct region	*regp;
     struct directory *dp;
@@ -72,7 +73,8 @@ sh_directchange_rgb(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc,
     g = atoi(argv[3+1]) / 255.0;
     b = atoi(argv[3+2]) / 255.0;
 
-    rtip = (struct rt_i *)atol(argv[1]);
+    rtip_val = atol(argv[1]);
+    rtip = (struct rt_i *)rtip_val;
     RT_CK_RTI(rtip);
 
     if ( rtip->needprep )  {
@@ -122,6 +124,7 @@ sh_directchange_rgb(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc,
 int
 sh_directchange_shader(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
+    long int rtip_val;
     struct rt_i	*rtip;
     struct region *regp;
     struct directory *dp;
@@ -132,7 +135,8 @@ sh_directchange_shader(ClientData UNUSED(clientData), Tcl_Interp *interp, int ar
 	return TCL_ERROR;
     }
 
-    rtip = (struct rt_i *)atol(argv[1]);
+    rtip_val = atol(argv[1]);
+    rtip = (struct rt_i *)rtip_val;
     RT_CK_RTI(rtip);
 
     if ( rtip->needprep )  {

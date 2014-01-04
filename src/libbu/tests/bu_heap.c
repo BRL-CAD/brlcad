@@ -56,7 +56,7 @@ main (int ac, char *av[])
     srand(time(0));
 
     for (i=0; i<1024*1024*10; i++) {
-	size_t sz = (((double)rand() / (double)(RAND_MAX-1)) * (double)HEAP_BINS) + 1;
+	size_t sz = ((rand() / (double)(RAND_MAX-1)) * (double)HEAP_BINS) + 1;
 	/* bu_log("allocating %d: %zd\n", i, sz); */
 #ifdef USE_MALLOC
 	ptr = malloc(sz);
