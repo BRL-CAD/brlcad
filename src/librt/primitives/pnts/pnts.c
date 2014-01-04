@@ -362,6 +362,7 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
     struct bu_list *head = NULL;
     unsigned char *buf = NULL;
     unsigned long i;
+    uint16_t type;
 
     /* must be double for import and export */
     double scan;
@@ -387,7 +388,8 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
     bu_cv_ntohd((unsigned char *)&scan, buf, 1);
     pnts->scale = scan; /* convert double to fastf_t */
     buf += SIZEOF_NETWORK_DOUBLE;
-    pnts->type = (rt_pnt_type)ntohs(*(uint16_t *)buf);
+    type = ntohs(*(uint16_t *)buf);
+    pnts->type = (rt_pnt_type)type; /* intentional enum coercion */
     buf += SIZEOF_NETWORK_SHORT;
     pnts->count = ntohl(*(uint32_t *)buf);
     buf += SIZEOF_NETWORK_LONG;
