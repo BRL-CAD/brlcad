@@ -94,6 +94,14 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* fix the redblack tree callback function signatures.  they're
+  declared and handled as taking (void) but they actually take a
+  pointer and an int.  need to create a proper void* data parameter or
+  change the interface to not require so much cast spagettery.
+
+* decouple libwdb from librt, particularly the headers and relevant
+  structures that cross over to both such as the rtgeom.h types.
+
 * Translate the poly2tri routines into libbn C code
 
 * Implement Shamos-Hoey test for checking whether a polygon is simple
