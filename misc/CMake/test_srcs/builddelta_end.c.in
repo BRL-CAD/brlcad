@@ -65,7 +65,8 @@ main(void)
   time_t t, ts, te;
   struct tm *currenttime;
   struct tm starttime;
-  int tdiff, tdiff_tmp;
+  int tdiff;
+  double tdiff_tmp;
 
   t = time(NULL);
   currenttime = localtime(&t);
@@ -85,7 +86,7 @@ main(void)
   printf("Elapsed compilation time: ");
 
   tdiff_tmp = difftime(te, ts);
-  tdiff = (int)tdiff_tmp;
+  tdiff = (int)tdiff_tmp; /* intentionally truncates */
 
   printtime(tdiff);
 
@@ -98,7 +99,7 @@ main(void)
 
   ts = mktime(&starttime);
   tdiff_tmp = difftime(te, ts);
-  tdiff = (int)tdiff_tmp;
+  tdiff = (int)tdiff_tmp; /* intentionally truncates */
   printtime(tdiff);
   printf("\n---\n");
 
