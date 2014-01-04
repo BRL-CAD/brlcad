@@ -3107,17 +3107,6 @@ rt_nmg_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
-/* bu_sort helper function, used to sort points into
- * counter-clockwise order */
-HIDDEN int
-nmg_ccw(const void *x, const void *y, void *cmp)
-{
-    vect_t tmp;
-    VCROSS(tmp, ((fastf_t *)x), ((fastf_t *)y));
-    return VDOT(*((point_t *)cmp), tmp);
-}
-
-
 /* contains information used to analyze a polygonal face */
 struct poly_face
 {
@@ -3157,7 +3146,7 @@ rt_nmg_faces_area(struct poly_face* faces, struct shell* s)
     bn_polygon_mk_pts_planes(npts, tmp_pts, num_faces, (const plane_t *)eqs);
     for (i = 0; i < num_faces; i++) {
 	faces[i].npts = npts[i];
-	bu_sort(faces[i].pts, faces[i].npts, sizeof(point_t), nmg_ccw, &faces[i].plane_eqn);
+	bn_polygon_sort_ccw(faces[i].npts, faces[i].pts, faces[i].plane_eqn);
 	bn_polygon_area(&faces[i].area, faces[i].npts, (const point_t *)faces[i].pts);
     }
     bu_free((char *)tmp_pts, "rt_nmg_faces_area: tmp_pts");

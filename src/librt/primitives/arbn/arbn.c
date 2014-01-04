@@ -1334,17 +1334,6 @@ struct poly_face
 };
 
 
-/* bu_sort helper function, used to sort points into
- * counter-clockwise order */
-HIDDEN int
-ccw(const void *x, const void *y, void *cmp)
-{
-    vect_t tmp;
-    VCROSS(tmp, ((fastf_t *)x), ((fastf_t *)y));
-    return VDOT(*((point_t *)cmp), tmp);
-}
-
-
 static void
 rt_arbn_faces_area(struct poly_face* faces, struct rt_arbn_internal* aip)
 {
@@ -1362,7 +1351,7 @@ rt_arbn_faces_area(struct poly_face* faces, struct rt_arbn_internal* aip)
     bn_polygon_mk_pts_planes(npts, tmp_pts, aip->neqn, (const plane_t *)eqs);
     for (i = 0; i < aip->neqn; i++) {
 	faces[i].npts = npts[i];
-    	bu_sort(faces[i].pts, faces[i].npts, sizeof(point_t), ccw, &faces[i].plane_eqn);
+    	bn_polygon_sort_ccw(faces[i].npts, faces[i].pts, faces[i].plane_eqn);
     	bn_polygon_area(&faces[i].area, faces[i].npts, (const point_t *)faces[i].pts);
     }
     bu_free((char *)tmp_pts, "rt_arbn_faces_area: tmp_pts");

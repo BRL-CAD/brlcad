@@ -712,17 +712,6 @@ findang(fastf_t *angles, fastf_t *unitv)
 }
 
 
-/* qsort helper function, used to sort points into
- * counter-clockwise order */
-HIDDEN int
-ccw(const void *x, const void *y, void *cmp)
-{
-    vect_t tmp;
-    VCROSS(tmp, ((fastf_t *)x), ((fastf_t *)y));
-    return VDOT(*((point_t *)cmp), tmp);
-}
-
-
 /**
  * A N A L Y Z E _ P O L Y _ F A C E
  *
@@ -746,7 +735,7 @@ analyze_poly_face(struct ged *gedp, struct poly_face *face, row_t *row)
     findang(angles, face->plane_eqn);
 
     /* sort points */
-    bu_sort(face->pts, face->npts, sizeof(point_t), ccw, &face->plane_eqn);
+    bn_polygon_sort_ccw(face->npts, face->pts, face->plane_eqn);
     bn_polygon_area(&face->area, face->npts, (const point_t *)face->pts);
 
     /* store face information for pretty printing */

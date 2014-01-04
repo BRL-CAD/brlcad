@@ -5276,17 +5276,6 @@ rt_bot_list_free(struct rt_bot_list *headRblp, int fbflag)
 }
 
 
-/* qsort helper function, used to sort points into
- * counter-clockwise order */
-HIDDEN int
-ccw_algo(const void *x, const void *y, void *cmp)
-{
-    vect_t tmp;
-    VCROSS(tmp, ((fastf_t *)x), ((fastf_t *)y));
-    return VDOT(*((point_t *)cmp), tmp);
-}
-
-
 void
 rt_bot_volume(fastf_t *volume, const struct rt_db_internal *ip)
 {
@@ -5338,7 +5327,7 @@ rt_bot_volume(fastf_t *volume, const struct rt_db_internal *ip)
 	/* SURFACE AREA */
 
 	/* sort points */
-	bu_sort(face.pts, face.npts, sizeof(point_t), ccw_algo, &face.plane_eqn);
+	bn_polygon_sort_ccw(face.npts, face.pts, face.plane_eqn);
 	bn_polygon_area(&face.area, face.npts, (const point_t *)face.pts);
 
 	/* VOLUME */

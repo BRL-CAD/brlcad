@@ -4653,6 +4653,19 @@ BN_EXPORT extern int bn_polygon_centroid(point_t *cent, size_t npts, const point
 BN_EXPORT extern int bn_polygon_mk_pts_planes(size_t *npts, point_t **pts, size_t neqs, const plane_t *eqs);
 
 
+/**
+ * sort an array of point_ts, building a convex polygon, counter-clockwise
+ *
+ *@param[in] npts Number of points, pts contains
+ *@param pts Array of point_ts, building a convex polygon. Duplicated points
+ *aren't allowed. The points in the array will be sorted counter-clockwise.
+ *@param[in] cmp Plane equation of the polygon
+ *
+ *@return 0 if calculation was succesful
+ *@return 1 if calculation failed, e.g. because pts is a NULL-pointer
+ */
+BN_EXPORT extern int bn_polygon_sort_ccw(size_t npts, point_t *pts, plane_t cmp);
+
 #endif /* BN_H */
 
 /** @} */

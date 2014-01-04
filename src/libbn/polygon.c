@@ -167,6 +167,25 @@ bn_polygon_mk_pts_planes(size_t *npts, point_t **pts, size_t neqs, const plane_t
 }
 
 
+HIDDEN int
+sort_ccw(const void *x, const void *y, void *cmp)
+{
+    vect_t tmp;
+    VCROSS(tmp, ((fastf_t *)x), ((fastf_t *)y));
+    return VDOT(*((point_t *)cmp), tmp);
+}
+
+
+int
+bn_polygon_sort_ccw(size_t npts, point_t *pts, plane_t cmp)
+{
+    if (!pts || npts < 3)
+	return 1;
+    bu_sort(pts, npts, sizeof(point_t), sort_ccw, &cmp);
+    return 0;
+}
+
+
 /*
  * Local Variables:
  * mode: C
