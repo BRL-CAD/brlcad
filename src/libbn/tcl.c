@@ -187,7 +187,7 @@ static void bn_vblend(mat_t a, fastf_t b, mat_t c, fastf_t d, mat_t e)
 
 static struct math_func_link {
     const char *name;
-    void (*func)();
+    void (*func)(void);
 } math_funcs[] = {
     {"bn_dist_pt2_lseg2",	 MATH_FUNC_VOID_CAST(bn_dist_pt2_lseg2)},
     {"bn_isect_line2_line2",	 MATH_FUNC_VOID_CAST(bn_isect_line2_line2)},
@@ -241,7 +241,7 @@ static struct math_func_link {
 int
 bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    void (*math_func)();
+    void (*math_func)(void);
     struct bu_vls result = BU_VLS_INIT_ZERO;
     struct math_func_link *mfl;
 

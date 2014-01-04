@@ -2341,7 +2341,7 @@ X24_updstate(FBIO *ifp)
  * X 2 4 _ Z A P M E M
  */
 HIDDEN void
-X24_zapmem()
+X24_zapmem(void)
 {
 #ifndef HAVE_SYS_MMAN_H
     int shmid;

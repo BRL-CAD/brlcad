@@ -61,7 +61,7 @@ struct _internal_state_s {
 static struct _internal_state_s global_state = { MERSENNE_MAGIC, N+1, {0} };
 
 void *
-bn_randmt_state_create()
+bn_randmt_state_create(void)
 {
     struct _internal_state_s *is;
 

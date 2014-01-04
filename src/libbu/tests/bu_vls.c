@@ -46,7 +46,7 @@ compare_vls(struct bu_vls *actual_vls, struct bu_vls *expected_vls)
 }
 
 static int
-test_bu_vls_init()
+test_bu_vls_init(void)
 {
     struct bu_vls expected_vls = { BU_VLS_MAGIC, (char *)0, 0, 0, 0 };
     struct bu_vls actual_vls;
@@ -60,7 +60,7 @@ test_bu_vls_init()
 }
 
 static int
-test_bu_vls_vlsinit()
+test_bu_vls_vlsinit(void)
 {
     struct bu_vls expected_vls = { BU_VLS_MAGIC, (char *)0, 0, 0, 0 };
     struct bu_vls *actual_vls;

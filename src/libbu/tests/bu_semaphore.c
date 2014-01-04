@@ -88,7 +88,7 @@ repeat_test(unsigned long reps)
 
 
 static int
-single_thread_test()
+single_thread_test(void)
 {
     if (!set_exit_alarm(1)) {
 	bu_log("failed to start alarm; skipping single-thread bu_semaphore test");

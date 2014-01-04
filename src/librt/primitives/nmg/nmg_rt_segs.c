@@ -793,7 +793,7 @@ state6(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 }
 
 
-static int (*state_table[7])() = {
+static int (*state_table[7])(void) = {
     (int (*)(void))state0,
     (int (*)(void))state1,
     (int (*)(void))state2,

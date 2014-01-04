@@ -231,7 +231,7 @@ Cad_AppInit(Tcl_Interp *interp)
 	bu_log("Dm_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
-    Tcl_StaticPackage(interp, "Dm", Dm_Init, (Tcl_PackageInitProc *) NULL);
+    Tcl_StaticPackage(interp, "Dm", (int (*)(struct Tcl_Interp *))Dm_Init, (Tcl_PackageInitProc *) NULL);
 
     /* Initialize libfb */
     if (Fb_Init(interp) == TCL_ERROR) {

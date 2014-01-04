@@ -304,7 +304,7 @@ test_sscanf(int type, const char *src, const char *fmt) {
 #define LARGE_FLT 1.0e+37
 
 static void
-doNumericTests()
+doNumericTests(void)
 {
 #define TEST_SIGNED_CONSTANT(str, fmt) \
     test_sscanf(SCAN_SHORTSHORT, str, "%hh" bu_cpp_str(fmt)); \
@@ -422,7 +422,7 @@ test_sscanf_s(const char *src, const char *fmt)
 }
 
 static void
-doStringTests()
+doStringTests(void)
 {
     int bu_ret;
     char buf[TS_STR_SIZE];
@@ -488,7 +488,7 @@ doStringTests()
 }
 
 static void
-doPointerTests()
+doPointerTests(void)
 {
     test_sscanf(SCAN_POINTER, "0", "%p");
     test_sscanf(SCAN_POINTER, bu_cpp_xstr(UNSIGNED_L_HEX), "%p");
@@ -533,7 +533,7 @@ test_sscanf_noconv(const char *src, const char *fmt)
 }
 
 static void
-doNonConversionTests()
+doNonConversionTests(void)
 {
     /* %n - don't convert/assign, but do store consumed char count */
     test_sscanf_noconv(". \tg\t\tn i    RTSA si sihT", ". g n i RTSA%n");
@@ -590,7 +590,7 @@ test_string_width(const char *src, const char *fmt)
 }
 
 static void
-doWidthTests()
+doWidthTests(void)
 {
     int i;
     int ret, bu_ret;
@@ -649,7 +649,7 @@ doWidthTests()
 }
 
 static void
-doErrorTests()
+doErrorTests(void)
 {
     int i, ret, bu_ret;
 
@@ -736,7 +736,7 @@ test_vls(const char *src, const char *fmt, const char *expectedStr)
 }
 
 static void
-doVlsTests()
+doVlsTests(void)
 {
     int bu_ret;
     struct bu_vls vls = BU_VLS_INIT_ZERO;

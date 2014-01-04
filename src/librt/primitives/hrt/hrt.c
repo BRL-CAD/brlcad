@@ -647,7 +647,7 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
  * This is the Becker vector version
  */
 void
-rt_hrt_vshot()
+rt_hrt_vshot(void)
 {
     bu_log("rt_hrt_vshot: Not implemented yet!\n");
 }
@@ -705,7 +705,7 @@ rt_hrt_norm(register struct hit *UNUSED(hitp), register struct xray *UNUSED(rp))
  * Return the curvature of the heart.
  */
 void
-rt_hrt_curve()
+rt_hrt_curve(void)
 {
     bu_log("rt_hrt_curve: Not implemented yet!\n");
 }
@@ -715,7 +715,7 @@ rt_hrt_curve()
  * R T _ H R T _ U V
  */
 void
-rt_hrt_uv()
+rt_hrt_uv(void)
 {
     bu_log("rt_hrt_uv: Not implemented yet!\n");
 }
@@ -790,7 +790,7 @@ rt_hrt_24pts(fastf_t *ov, fastf_t *V, fastf_t *A, fastf_t *B)
  * R T _ H R T _ A D A P T I V E _ P L O T
  */
 int
-rt_hrt_adaptive_plot()
+rt_hrt_adaptive_plot(void)
 {
     bu_log("rt_adaptive_plot: Not implemented yet!\n");
     return 0;
@@ -833,7 +833,7 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct rt_tes
  * R T _ H R T _ T E S S
  */
 int
-rt_hrt_tess()
+rt_hrt_tess(void)
 {
     bu_log("rt_hrt_tess: Not implemented yet!\n");
     return 0;
@@ -1037,7 +1037,7 @@ rt_hrt_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
  *
  */
 void
-rt_hrt_surf_area()
+rt_hrt_surf_area(void)
 {
     bu_log("rt_hrt_surf_area: Not implemented yet!\n");
 }
@@ -1048,7 +1048,7 @@ rt_hrt_surf_area()
  *
  */
 void
-rt_hrt_volume()
+rt_hrt_volume(void)
 {
     bu_log("rt_hrt_volume: Not implemented yet!\n");
 }
@@ -1059,7 +1059,7 @@ rt_hrt_volume()
  *
  */
 void
-rt_hrt_centroid()
+rt_hrt_centroid(void)
 {
     bu_log("rt_hrt_centroid: Not implemented yet!\n");
 }

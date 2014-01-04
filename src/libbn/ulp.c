@@ -49,7 +49,7 @@
 /* #define HAVE_IEEE754 1 */
 
 double
-bn_epsilon()
+bn_epsilon(void)
 {
 #if defined(DBL_EPSILON)
     return DBL_EPSILON;
@@ -69,7 +69,7 @@ bn_epsilon()
 
 
 float
-bn_epsilonf()
+bn_epsilonf(void)
 {
 #if defined(FLT_EPSILON)
     return FLT_EPSILON;
@@ -89,7 +89,7 @@ bn_epsilonf()
 
 
 double
-bn_dbl_min()
+bn_dbl_min(void)
 {
     long long val = (1LL<<52);
     return *(double *)&val;
@@ -97,7 +97,7 @@ bn_dbl_min()
 
 
 double
-bn_dbl_max()
+bn_dbl_max(void)
 {
 #if defined(DBL_MAX)
 	return DBL_MAX;
@@ -112,7 +112,7 @@ bn_dbl_max()
 
 
 double
-bn_flt_min()
+bn_flt_min(void)
 {
     long val = (1LL<<23);
     return *(float *)&val;
@@ -120,7 +120,7 @@ bn_flt_min()
 
 
 double
-bn_flt_max()
+bn_flt_max(void)
 {
 #if defined(FLT_MAX)
 	return FLT_MAX;
@@ -135,28 +135,28 @@ bn_flt_max()
 
 
 double
-bn_flt_min_sqrt()
+bn_flt_min_sqrt(void)
 {
     return sqrt(bn_flt_min());
 }
 
 
 double
-bn_flt_max_sqrt()
+bn_flt_max_sqrt(void)
 {
     return sqrt(bn_flt_max());
 }
 
 
 double
-bn_dbl_min_sqrt()
+bn_dbl_min_sqrt(void)
 {
     return sqrt(bn_dbl_min());
 }
 
 
 double
-bn_dbl_max_sqrt()
+bn_dbl_max_sqrt(void)
 {
     return sqrt(bn_dbl_max());
 }

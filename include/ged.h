@@ -560,10 +560,10 @@ struct ged {
 
     void			*ged_dmp;
     void			*ged_refresh_clientdata;	/**< @brief  client data passed to refresh handler */
-    void			(*ged_refresh_handler)();	/**< @brief  function for handling refresh requests */
-    void			(*ged_output_handler)();	/**< @brief  function for handling output */
+    void			(*ged_refresh_handler)(void *);	/**< @brief  function for handling refresh requests */
+    void			(*ged_output_handler)(struct ged *, char *);	/**< @brief  function for handling output */
     char			*ged_output_script;		/**< @brief  script for use by the outputHandler */
-    void			(*ged_create_vlist_callback)();	/**< @brief  function to call after creating a vlist */
+    void			(*ged_create_vlist_callback)(struct solid *);	/**< @brief  function to call after creating a vlist */
     void			(*ged_free_vlist_callback)();	/**< @brief  function to call after freeing a vlist */
 
     /* FIXME -- this ugly hack needs to die.  the result string should be stored before the call. */
@@ -579,7 +579,7 @@ struct ged {
     int ged_dm_width;
     int ged_dm_height;
     int ged_dmp_is_null;
-    void (*ged_dm_get_display_image)();
+    void (*ged_dm_get_display_image)(struct ged *, unsigned char **);
 };
 
 typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);

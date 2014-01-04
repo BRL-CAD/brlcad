@@ -68,7 +68,7 @@ test_vls(const char *fmt, ...)
 
 
 int
-check_format_chars()
+check_format_chars(void)
 {
   int status = 0; /* assume okay */
   int i, flags;

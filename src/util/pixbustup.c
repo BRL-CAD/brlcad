@@ -41,7 +41,7 @@ static size_t nlines;		/* Number of input lines */
 static size_t pix_line;		/* Number of pixels/line */
 
 static void
-printUsage()
+printUsage(void)
 {
     bu_log("Usage: pixbustup basename width [image_offset] [first_number] <input.pix\n");
 }

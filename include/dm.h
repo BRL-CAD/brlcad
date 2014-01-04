@@ -341,7 +341,7 @@ DM_EXPORT extern struct dm dm_X;
 DM_EXPORT extern struct dm dm_txt;
 DM_EXPORT extern struct dm dm_qt;
 
-DM_EXPORT extern int Dm_Init();
+DM_EXPORT extern int Dm_Init(void *interp);
 DM_EXPORT extern struct dm *dm_open(Tcl_Interp *interp,
 				    int type,
 				    int argc,
@@ -401,7 +401,9 @@ DM_EXPORT extern int dm_draw_labels(struct dm *dmp,
 				    const char *name,
 				    mat_t viewmat,
 				    int *labelsColor,
-				    int (*labelsHook)(),
+				    int (*labelsHook)(struct dm *dmp_arg, struct rt_wdb *wdbp_arg,
+                                                      const char *name_arg, mat_t viewmat_arg,
+                                                      int *labelsColor_arg, ClientData labelsHookClientdata_arg),
 				    ClientData labelsHookClientdata);
 
 /* rect.c */

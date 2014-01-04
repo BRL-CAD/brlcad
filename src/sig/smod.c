@@ -134,7 +134,7 @@ get_args(int argc, char *argv[])
 
 
 static void
-mk_trans_tbl()
+mk_trans_tbl(void)
 {
     int i, j, k;
     double d;
