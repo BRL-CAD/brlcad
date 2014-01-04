@@ -101,7 +101,7 @@ bu_heap_log(bu_heap_func_t log)
 
 
 static void
-heap_print()
+heap_print(void)
 {
     static int printed = 0;
 

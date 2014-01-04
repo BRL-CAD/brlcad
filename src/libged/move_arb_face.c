@@ -216,7 +216,7 @@ if (face_idx > max_idx) { \
     /* calculate new points for the arb */
     save_tol_dist = gedp->ged_wdbp->wdb_tol.dist;
     gedp->ged_wdbp->wdb_tol.dist = gedp->ged_wdbp->wdb_tol.dist * 2;
-    if (rt_arb_calc_points(arb, arb_type, planes, &gedp->ged_wdbp->wdb_tol) < 0) {
+    if (rt_arb_calc_points(arb, arb_type, (const plane_t *)planes, &gedp->ged_wdbp->wdb_tol) < 0) {
 	gedp->ged_wdbp->wdb_tol.dist = save_tol_dist;
 	rt_db_free_internal(&intern);
 	return GED_ERROR;

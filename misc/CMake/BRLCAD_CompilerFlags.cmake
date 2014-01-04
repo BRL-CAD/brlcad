@@ -115,6 +115,8 @@ if(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
   CHECK_C_FLAG(Wshadow)
   CHECK_CXX_FLAG(Wshadow)
 
+#  CHECK_C_FLAG(Wstrict-prototypes)
+
 # report where we throw away const
 #  CHECK_C_FLAG(Wcast-qual)
 #  CHECK_CXX_FLAG(Wcast-qual)

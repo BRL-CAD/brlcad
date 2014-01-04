@@ -30,6 +30,24 @@
 
 #include "common.h"
 
+#if defined(HAVE_TERMIOS_H)
+#  undef SYSV
+#  undef BSD
+#  include <termios.h>
+#else	/* !defined(HAVE_TERMIOS_H) */
+#  ifdef SYSV
+#    undef BSD
+#    include <termio.h>
+#    include <memory.h>
+#  endif /* SYSV */
+#  ifdef BSD
+#    undef SYSV
+#    include <sys/ioctl.h>
+#  endif /* BSD */
+#endif /* HAVE_TERMIOS_H */
+
+
+
 __BEGIN_DECLS
 
 void clr_Cbreak( int fd );
@@ -48,7 +66,16 @@ void reset_Tty( int fd );
 int save_Fil_Stat( int fd );
 int reset_Fil_Stat( int	fd );
 int set_O_NDELAY( int fd );
-void prnt_Tio();	/* misc. types of args */
+void prnt_Tio(
+    char *msg,
+#if defined(BSD)
+    struct sgttyb *tio_ptr
+#elif defined(SYSV)
+    struct termio *tio_ptr
+#elif defined(HAVE_TERMIOS_H)
+    struct termios *tio_ptr
+#endif
+);
 
 __END_DECLS
 

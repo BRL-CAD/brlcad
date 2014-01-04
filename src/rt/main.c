@@ -50,7 +50,7 @@
 #include "brlcad_version.h"
 
 
-extern void application_init();
+extern void application_init(void);
 
 extern const char title[];
 

@@ -209,7 +209,7 @@ rb_walk(struct bu_rb_tree *tree,
 	int what_to_visit,
 	int trav_type)
 {
-    static void (*walk[][3])() = {
+    static void (*walk[][3])(void) = {
 	{ BU_RB_WALK_FUNC_CAST_AS_FUNC_ARG(prewalknodes),
 	  BU_RB_WALK_FUNC_CAST_AS_FUNC_ARG(inwalknodes),
 	  BU_RB_WALK_FUNC_CAST_AS_FUNC_ARG(postwalknodes)

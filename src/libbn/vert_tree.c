@@ -74,7 +74,7 @@ union vert_tree {
 
 
 struct vert_root *
-create_vert_tree()
+create_vert_tree(void)
 {
     struct vert_root *tree;
 
@@ -90,7 +90,7 @@ create_vert_tree()
 }
 
 struct vert_root *
-create_vert_tree_w_norms()
+create_vert_tree_w_norms(void)
 {
     struct vert_root *tree;
 

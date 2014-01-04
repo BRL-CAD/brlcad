@@ -46,7 +46,7 @@
 
 
 HIDDEN const char *
-_brlcad_data()
+_brlcad_data(void)
 {
     static char path[MAXPATHLEN] = {0};
 

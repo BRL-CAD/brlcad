@@ -31,7 +31,7 @@
 inline
 #endif
 bu_endian_t
-bu_byteorder()
+bu_byteorder(void)
 {
     const union bob {
 	unsigned long i;

@@ -5430,7 +5430,8 @@ RT_EXPORT extern void db_tree_mul_dbleaf(union tree *tp,
 RT_EXPORT extern void db_tree_funcleaf(struct db_i		*dbip,
 				       struct rt_comb_internal	*comb,
 				       union tree		*comb_tree,
-				       void		(*leaf_func)(),
+                                       void (*leaf_func)(struct db_i *, struct rt_comb_internal *, union tree *,
+                                                         void *, void *, void *, void *),
 				       genptr_t		user_ptr1,
 				       genptr_t		user_ptr2,
 				       genptr_t		user_ptr3,
@@ -5810,12 +5811,17 @@ RT_EXPORT extern struct rt_db_internal *rt_mirror(struct db_i *dpip,
 */
 
 /* arb8.c */
-RT_EXPORT extern int rt_arb_get_cgtype();		/* needs rt_arb_internal for arg list */
+RT_EXPORT extern int rt_arb_get_cgtype(
+    int *cgtype,
+    struct rt_arb_internal *arb,
+    const struct bn_tol *tol,
+    register int *uvec,  /* array of indexes to unique points in arb->pt[] */
+    register int *svec); /* array of indexes to like points in arb->pt[] */
 RT_EXPORT extern int rt_arb_std_type(const struct rt_db_internal *ip,
 				     const struct bn_tol *tol);
 RT_EXPORT extern void rt_arb_centroid(point_t                       *cent,
 				      const struct rt_db_internal   *ip);
-RT_EXPORT extern int rt_arb_calc_points();		/* needs wdb.h for arg list */
+RT_EXPORT extern int rt_arb_calc_points(struct rt_arb_internal *arb, int cgtype, const plane_t planes[6], const struct bn_tol *tol);		/* needs wdb.h for arg list */
 RT_EXPORT extern int rt_arb_check_points(struct rt_arb_internal *arb,
 					 int cgtype,
 					 const struct bn_tol *tol);
@@ -5872,7 +5878,7 @@ RT_EXPORT extern void rt_vls_pipept(struct bu_vls *vp,
 				    int seg_no,
 				    const struct rt_db_internal *ip,
 				    double mm2local);
-RT_EXPORT extern void rt_pipept_print();		/* needs wdb_pipept for arg */
+RT_EXPORT extern void rt_pipept_print(const struct wdb_pipept *pipept, double mm2local);
 RT_EXPORT extern int rt_pipe_ck(const struct bu_list *headp);
 
 /* metaball.c */
@@ -5881,7 +5887,7 @@ RT_EXPORT extern void rt_vls_metaballpt(struct bu_vls *vp,
 					const int pt_no,
 					const struct rt_db_internal *ip,
 					const double mm2local);
-RT_EXPORT extern void rt_metaballpt_print();		/* needs wdb_metaballpt for arg */
+RT_EXPORT extern void rt_metaballpt_print(const struct wdb_metaballpt *metaball, double mm2local);
 RT_EXPORT extern int rt_metaball_ck(const struct bu_list *headp);
 RT_EXPORT extern fastf_t rt_metaball_point_value(const point_t *p,
 						 const struct rt_metaball_internal *mb);
@@ -5968,13 +5974,13 @@ RT_EXPORT extern void rt_memprint(struct mem_map **pp);
 /**
  * Return all the storage used by the rt_mem_freemap.
  */
-RT_EXPORT extern void rt_memclose();
+RT_EXPORT extern void rt_memclose(void);
 
 
 /**
  *
  */
-RT_EXPORT extern struct bn_vlblock *rt_vlblock_init();
+RT_EXPORT extern struct bn_vlblock *rt_vlblock_init(void);
 
 
 /**
@@ -6254,7 +6260,7 @@ RT_EXPORT extern struct bn_vlblock *bn_vlblock_init(struct bu_list	*free_vlist_h
 /**
  *
  */
-RT_EXPORT extern struct bn_vlblock *	rt_vlblock_init();
+RT_EXPORT extern struct bn_vlblock *	rt_vlblock_init(void);
 
 
 /**
@@ -6305,7 +6311,7 @@ RT_EXPORT extern void bn_vlist_cleanup(struct bu_list *hd);
 /**
  * XXX This needs to remain a LIBRT function.
  */
-RT_EXPORT extern void rt_vlist_cleanup();
+RT_EXPORT extern void rt_vlist_cleanup(void);
 
 
 /**
@@ -6450,8 +6456,8 @@ RT_EXPORT extern struct hit *rt_htbl_get(struct rt_htbl *b);
 
 /* From file nmg_mk.c */
 /*	MAKE routines */
-RT_EXPORT extern struct model *nmg_mm();
-RT_EXPORT extern struct model *nmg_mmr();
+RT_EXPORT extern struct model *nmg_mm(void);
+RT_EXPORT extern struct model *nmg_mmr(void);
 RT_EXPORT extern struct nmgregion *nmg_mrsv(struct model *m);
 RT_EXPORT extern struct shell *nmg_msv(struct nmgregion *r_p);
 RT_EXPORT extern struct faceuse *nmg_mf(struct loopuse *lu1);
@@ -7389,7 +7395,7 @@ RT_EXPORT extern int nmg_class_pt_lu_except(point_t		pt,
 RT_EXPORT extern int nmg_class_pt_fu_except(const point_t pt,
 					    const struct faceuse *fu,
 					    const struct loopuse *ignore_lu,
-					    void (*eu_func)(), void (*vu_func)(),
+					    void (*eu_func)(void), void (*vu_func)(void),
 					    const char *priv,
 					    const int call_on_hits,
 					    const int in_or_out_only,
@@ -7556,17 +7562,17 @@ RT_EXPORT extern void nmg_cnurb_to_vlist(struct bu_list *vhead,
 /**
  * global nmg animation plot callback
  */
-RT_EXPORT extern void (*nmg_plot_anim_upcall)();
+RT_EXPORT extern void (*nmg_plot_anim_upcall)(void);
 
 /**
  * global nmg animation vblock callback
  */
-RT_EXPORT extern void (*nmg_vlblock_anim_upcall)();
+RT_EXPORT extern void (*nmg_vlblock_anim_upcall)(void);
 
 /**
  * global nmg mged display debug callback
  */
-RT_EXPORT extern void (*nmg_mged_debug_display_hack)();
+RT_EXPORT extern void (*nmg_mged_debug_display_hack)(void);
 
 /**
  * edge use distance tolerance
@@ -7790,7 +7796,7 @@ RT_EXPORT extern struct vertexuse *nmg_enlist_vu(struct nmg_inter_struct	*is,
 RT_EXPORT extern void nmg_isect2d_prep(struct nmg_inter_struct *is,
 				       const uint32_t *assoc_use);
 RT_EXPORT extern void nmg_isect2d_cleanup(struct nmg_inter_struct *is);
-RT_EXPORT extern void nmg_isect2d_final_cleanup();
+RT_EXPORT extern void nmg_isect2d_final_cleanup(void);
 RT_EXPORT extern int nmg_isect_2faceuse(point_t pt,
 					vect_t dir,
 					struct faceuse *fu1,

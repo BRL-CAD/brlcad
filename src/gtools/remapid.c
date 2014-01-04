@@ -880,7 +880,7 @@ main(int argc, char **argv)
     /*
      * Initialize the assignment
      */
-    assignment = bu_rb_create1("Remapping assignment", compare_curr_ids);
+    assignment = bu_rb_create1("Remapping assignment", BU_RB_COMPARE_FUNC_CAST_AS_FUNC_ARG(compare_curr_ids));
     bu_rb_uniq_on1(assignment);
 
     /*
@@ -897,9 +897,9 @@ main(int argc, char **argv)
 	db_init(db_name);
 
 	if (debug)
-	    bu_rb_walk1(assignment, print_nonempty_curr_id, INORDER);
+	    bu_rb_walk1(assignment, (void (*)(void))print_nonempty_curr_id, INORDER);
 	else
-	    bu_rb_walk1(assignment, write_assignment, INORDER);
+	    bu_rb_walk1(assignment, (void (*)(void))write_assignment, INORDER);
     }
     return 0;
 }

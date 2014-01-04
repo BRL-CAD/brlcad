@@ -163,7 +163,7 @@ pl_3(register FILE *plotfp, int x, int y, int z, char c)
  */
 
 int
-pl_getOutputMode() {
+pl_getOutputMode(void) {
     return pl_outputMode;
 }
 

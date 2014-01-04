@@ -1482,7 +1482,7 @@ typedef struct bu_bitv bu_bitv_t;
  * length sizeof(bitv_t)*8.0 bits long.  users should not call this
  * directly, instead calling the BU_BITV_SHIFT macro instead.
  */
-BU_EXPORT extern size_t bu_bitv_shift();
+BU_EXPORT extern size_t bu_bitv_shift(void);
 
 /*
  * Bit-string manipulators for arbitrarily long bit strings stored as
@@ -3475,13 +3475,13 @@ BU_EXPORT extern void bu_hist_pr(const struct bu_hist *histp, const char *title)
  * application.  If bu_parallel() is active, this routine will return
  * non-zero.
  */
-BU_EXPORT extern int bu_is_parallel();
+BU_EXPORT extern int bu_is_parallel(void);
 
 /**
  * Used by bu_bomb() to help terminate parallel threads,
  * without dragging in the whole parallel library if it isn't being used.
  */
-BU_EXPORT extern void bu_kill_parallel();
+BU_EXPORT extern void bu_kill_parallel(void);
 
 /**
  * returns the CPU number of the current bu_parallel() invoked thread.
@@ -3511,7 +3511,7 @@ BU_EXPORT extern void bu_setlinebuf(FILE *fp);
 /**
  * Creates and initializes a bu_list head structure
  */
-BU_EXPORT extern struct bu_list *bu_list_new();
+BU_EXPORT extern struct bu_list *bu_list_new(void);
 
 /**
  * Returns the results of BU_LIST_POP
@@ -3675,7 +3675,7 @@ BU_EXPORT extern void bu_log_add_hook(bu_hook_t func, genptr_t clientdata);
 BU_EXPORT extern void bu_log_delete_hook(bu_hook_t func, genptr_t clientdata);
 
 BU_EXPORT extern void bu_log_hook_save_all(struct bu_hook_list *save_hlp);
-BU_EXPORT extern void bu_log_hook_delete_all();
+BU_EXPORT extern void bu_log_hook_delete_all(void);
 BU_EXPORT extern void bu_log_hook_restore_all(struct bu_hook_list *restore_hlp);
 
 /**
@@ -3854,7 +3854,7 @@ BU_EXPORT extern void bu_ck_malloc_ptr(genptr_t ptr, const char *str);
  *  -1	something is wrong
  *   0	all is OK;
  */
-BU_EXPORT extern int bu_mem_barriercheck();
+BU_EXPORT extern int bu_mem_barriercheck(void);
 
 /**
  * really fast heap-based memory allocation intended for "small"
@@ -4066,7 +4066,7 @@ BU_EXPORT extern int bu_terminate(int process);
 /**
  * returns the process ID of the calling process
  */
-BU_EXPORT extern int bu_process_id();
+BU_EXPORT extern int bu_process_id(void);
 
 /** @file libbu/parallel.c
  *
@@ -4087,7 +4087,7 @@ BU_EXPORT extern void bu_nice_set(int newnice);
  * Return the maximum number of physical CPUs that are considered to
  * be available to this process now.
  */
-BU_EXPORT extern int bu_avail_cpus();
+BU_EXPORT extern int bu_avail_cpus(void);
 
 /**
  * Create 'ncpu' copies of function 'func' all running in parallel,
@@ -4538,7 +4538,7 @@ BU_EXPORT extern void bu_ptbl_trunc(struct bu_ptbl *tbl,
  * and the comparison functions (one per order).  bu_rb_create()
  * returns a pointer to the red-black tree header record.
  */
-BU_EXPORT extern struct bu_rb_tree *bu_rb_create(const char *description, int nm_orders, int (**compare_funcs)());
+BU_EXPORT extern struct bu_rb_tree *bu_rb_create(const char *description, int nm_orders, int (**compare_funcs)(const void *, const void *));
 /* A macro for correct casting of a rb compare function for use a function argument: */
 #define BU_RB_COMPARE_FUNC_CAST_AS_FUNC_ARG(_func) ((int (*)(void))_func)
 
@@ -4555,7 +4555,7 @@ BU_EXPORT extern struct bu_rb_tree *bu_rb_create(const char *description, int nm
  * function pointers, in order to avoid memory leaks on freeing the
  * tree, applications should call bu_rb_free1(), NOT bu_rb_free().
  */
-BU_EXPORT extern struct bu_rb_tree *bu_rb_create1(const char *description, int (*compare_func)());
+BU_EXPORT extern struct bu_rb_tree *bu_rb_create1(const char *description, int (*compare_func)(void));
 
 /** @file libbu/rb_delete.c
  *
@@ -4841,7 +4841,7 @@ BU_EXPORT extern void *bu_rb_search(struct bu_rb_tree *tree,
  * libbu/rb_diag.c and libbu/rb_walk.c for examples of their use.
  *
  */
-BU_EXPORT extern void bu_rb_walk(struct bu_rb_tree *tree, int order, void (*visit)(), int trav_type);
+BU_EXPORT extern void bu_rb_walk(struct bu_rb_tree *tree, int order, void (*visit)(void), int trav_type);
 #define bu_rb_walk1(t, v, d) bu_rb_walk((t), 0, (v), (d))
 
 #define BU_RB_WALK_FUNC_CAST_AS_FUNC_ARG(_func) ((void (*)(void))_func)
@@ -4910,7 +4910,7 @@ BU_EXPORT extern void bu_semaphore_init(unsigned int nsemaphores);
 /**
  * Release all initialized semaphores and any associated memory.
  */
-BU_EXPORT extern void bu_semaphore_free();
+BU_EXPORT extern void bu_semaphore_free(void);
 
 /**
  * Prepare 'nsemaphores' independent critical section semaphores.  Die
@@ -4950,7 +4950,7 @@ DEPRECATED BU_EXPORT extern void bu_vls_init_if_uninit(struct bu_vls *vp);
  * return the result.  Allows for creation of dynamically allocated
  * VLS strings.
  */
-BU_EXPORT extern struct bu_vls *bu_vls_vlsinit();
+BU_EXPORT extern struct bu_vls *bu_vls_vlsinit(void);
 
 /**
  * Return a pointer to the null-terminated string in the vls array.
@@ -5597,7 +5597,7 @@ BU_EXPORT extern double bu_units_conversion(const char *str);
  * NULL	No known unit matches this conversion factor.
  */
 BU_EXPORT extern const char *bu_units_string(const double mm);
-BU_EXPORT extern struct bu_vls *bu_units_strings_vls();
+BU_EXPORT extern struct bu_vls *bu_units_strings_vls(void);
 
 /**
  * Given a conversion factor to mm, search the table to find the
@@ -6221,7 +6221,7 @@ BU_EXPORT extern char **bu_argv_from_path(const char *path, int *ac);
  * Returns 0 on success.
  * Returns non-zero on error (with perror set if signal() failure).
  */
-BU_EXPORT extern int bu_suspend_interrupts();
+BU_EXPORT extern int bu_suspend_interrupts(void);
 
 /**
  * Resume signal processing and interrupts after critical sections.
@@ -6233,7 +6233,7 @@ BU_EXPORT extern int bu_suspend_interrupts();
  * Returns 0 on success.
  * Returns non-zero on error (with perror set if signal() failure).
  */
-BU_EXPORT extern int bu_restore_interrupts();
+BU_EXPORT extern int bu_restore_interrupts(void);
 
 /** @} */
 
@@ -6255,7 +6255,7 @@ BU_EXPORT extern int bu_restore_interrupts();
 /**
  * Detect SIMD capabilities at runtime.
  */
-BU_EXPORT extern int bu_simd_level();
+BU_EXPORT extern int bu_simd_level(void);
 
 /**
  * Detect if requested SIMD capabilities are available at runtime.
@@ -6271,7 +6271,7 @@ BU_EXPORT extern int bu_simd_supported(int level);
 /** @file libbu/timer.c
  * Return microsecond accuracy time information.
  */
-BU_EXPORT extern int64_t bu_gettime();
+BU_EXPORT extern int64_t bu_gettime(void);
 
 /** @} */
 
@@ -6309,7 +6309,7 @@ BU_EXPORT void bu_utctime(struct bu_vls *utc_result, const int64_t time_val);
 BU_EXPORT extern void *bu_dlopen(const char *path, int mode);
 BU_EXPORT extern void *bu_dlsym(void *path, const char *symbol);
 BU_EXPORT extern int bu_dlclose(void *handle);
-BU_EXPORT extern const char *bu_dlerror();
+BU_EXPORT extern const char *bu_dlerror(void);
 
 /** NEW: Do not use. */
 BU_EXPORT extern int bu_fseek(FILE *stream, off_t offset, int origin);

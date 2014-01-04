@@ -101,11 +101,11 @@ bu_rb_create(const char *description, int nm_orders, int (**compare_funcs)(const
 struct bu_rb_tree *
 bu_rb_create1(const char *description, int (*compare_func)(void))
 {
-    int (**cfp)();
+    int (**cfp)(const void *, const void *);
 
-    cfp = (int (**)())
-	bu_malloc(sizeof(int (*)()), "red-black function table");
-    *cfp = compare_func;
+    cfp = (int (**)(const void *, const void *))
+	bu_malloc(sizeof(int (*)(const void *, const void *)), "red-black function table");
+    *cfp = (int (*)(const void *, const void *)) compare_func;
     return bu_rb_create(description, 1, cfp);
 }
 

@@ -901,7 +901,7 @@ main(int argc, char **argv)
 		use_air = ((control.glc_what_to_report & G_LINT_A_ANY) != 0);
 		break;
 	    case 's':
-		ovlp_log = bu_rb_create1("overlap log", compare_overlaps);
+		ovlp_log = bu_rb_create1("overlap log", BU_RB_COMPARE_FUNC_CAST_AS_FUNC_ARG(compare_overlaps));
 		if (control.glc_how_to_report == G_LINT_PLOT3)
 		    control.glc_how_to_report = G_LINT_ASCII;
 		bu_rb_uniq_on1(ovlp_log);
@@ -1036,14 +1036,14 @@ main(int argc, char **argv)
      * sort them now and then print them out.
      */
     if (ovlp_log) {
-	ovlps_by_vol = bu_rb_create1("overlaps by volume", compare_by_vol);
+	ovlps_by_vol = bu_rb_create1("overlaps by volume", BU_RB_COMPARE_FUNC_CAST_AS_FUNC_ARG(compare_by_vol));
 	bu_rb_uniq_on1(ovlps_by_vol);
-	bu_rb_walk1(ovlp_log, insert_by_vol, INORDER);
+	bu_rb_walk1(ovlp_log, (void (*)(void))insert_by_vol, INORDER);
 
 	if (control.glc_how_to_report == G_LINT_ASCII_WITH_ORIGIN)
-	    bu_rb_walk1(ovlps_by_vol, print_overlap_o, INORDER);
+	    bu_rb_walk1(ovlps_by_vol, (void (*)(void))print_overlap_o, INORDER);
 	else
-	    bu_rb_walk1(ovlps_by_vol, print_overlap, INORDER);
+	    bu_rb_walk1(ovlps_by_vol, (void (*)(void))print_overlap, INORDER);
     }
 
     return 0;

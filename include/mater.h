@@ -72,10 +72,10 @@ RT_EXPORT extern void rt_color_addrec(int low,
 				      off_t addr);
 RT_EXPORT extern void rt_insert_color(struct mater *newp);
 RT_EXPORT extern void rt_vls_color_map(struct bu_vls *str);
-RT_EXPORT extern struct mater *rt_material_head();
+RT_EXPORT extern struct mater *rt_material_head(void);
 RT_EXPORT extern void rt_new_material_head(struct mater *);
-RT_EXPORT extern struct mater *rt_dup_material_head();
-RT_EXPORT extern void rt_color_free();
+RT_EXPORT extern struct mater *rt_dup_material_head(void);
+RT_EXPORT extern void rt_color_free(void);
 
 __END_DECLS
 

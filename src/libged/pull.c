@@ -48,12 +48,12 @@ pull_comb(struct db_i *dbip,
  * and storing the changes at the combinations.
  */
 static void
-pull_comb_mat(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, matp_t mp, genptr_t UNUSED(usr_ptr2),
+pull_comb_mat(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t mp, genptr_t UNUSED(usr_ptr2),
 	      genptr_t UNUSED(usr_ptr3), genptr_t UNUSED(usr_ptr4))
 {
     struct directory *dp;
     mat_t inv_mat;
-    matp_t mat = mp;
+    matp_t mat = (matp_t)mp;
 
     RT_CK_DBI(dbip);
     RT_CK_TREE(comb_leaf);

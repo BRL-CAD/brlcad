@@ -294,7 +294,7 @@ f_facedef(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     }
 
     /* find all vertices from the plane equations */
-    if (rt_arb_calc_points(arb, es_type, planes, &mged_tol) < 0) {
+    if (rt_arb_calc_points(arb, es_type, (const plane_t *)planes, &mged_tol) < 0) {
 	Tcl_AppendResult(interp, "facedef:  unable to find points\n", (char *)NULL);
 	status = TCL_ERROR;
 	goto end;

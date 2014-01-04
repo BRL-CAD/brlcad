@@ -473,7 +473,7 @@ BN_EXPORT extern void bn_encode_hvect(struct bu_vls *vp,
  * Add all the supported Tcl interfaces to LIBBN routines to
  * the list of commands known by the given interpreter.
  */
-BN_EXPORT extern void bn_tcl_setup();
+BN_EXPORT extern void bn_tcl_setup(Tcl_Interp *interp);
 
 /**
  * B N _ I N I T
@@ -483,12 +483,12 @@ BN_EXPORT extern void bn_tcl_setup();
  *
  * The name of this function is specified by TCL.
  */
-BN_EXPORT extern int Bn_Init();
+BN_EXPORT extern int Bn_Init(Tcl_Interp *interp);
 
 /**
  * B N _ M A T _ P R I N T
  */
-BN_EXPORT extern void bn_tcl_mat_print();
+BN_EXPORT extern void bn_tcl_mat_print(Tcl_Interp *interp, const char *title, const mat_t m);
 
 /** @} */
 
@@ -1434,7 +1434,7 @@ BN_EXPORT extern double bn_gauss_fill(struct bn_gauss *p);
  * fractal noise support
  */
 
-BN_EXPORT extern void bn_noise_init();
+BN_EXPORT extern void bn_noise_init(void);
 
 /**
  *@brief
@@ -3190,7 +3190,7 @@ BN_EXPORT extern const float bn_sin_table[BN_SINTABSIZE];
  *  For benchmarking purposes, make the random number table predictable.
  *  Setting to all zeros keeps dithered values at their original values.
  */
-BN_EXPORT extern void bn_mathtab_constant();
+BN_EXPORT extern void bn_mathtab_constant(void);
 
 /** @} */
 
@@ -3221,7 +3221,7 @@ BN_EXPORT extern void bn_mathtab_constant();
  *
  */
 
-BN_EXPORT extern double bn_randmt();
+BN_EXPORT extern double bn_randmt(void);
 BN_EXPORT extern void bn_randmt_seed(unsigned long seed);
 
 /** @} */
@@ -4436,7 +4436,7 @@ struct vert_root {
  *
  *	Possible refinements include specifying an initial size
  */
-BN_EXPORT extern struct vert_root *create_vert_tree();
+BN_EXPORT extern struct vert_root *create_vert_tree(void);
 
 /**		C R E A T E _ V E R T _ T R E E _ W _ N O R M S
  *@brief
@@ -4444,7 +4444,7 @@ BN_EXPORT extern struct vert_root *create_vert_tree();
  *
  *	Possible refinements include specifying an initial size
  */
-BN_EXPORT extern struct vert_root *create_vert_tree_w_norms();
+BN_EXPORT extern struct vert_root *create_vert_tree_w_norms(void);
 
 /**		F R E E _ V E R T_ T R E E
  *@brief
@@ -4524,7 +4524,7 @@ BN_EXPORT extern void clean_vert_tree(struct vert_root *tree_root);
  *  Once-only setup routine
  *  Used by libplot3/symbol.c, so it can't be static.
  */
-BN_EXPORT extern void tp_setup();
+BN_EXPORT extern void tp_setup(void);
 
 /**
  * report version information about LIBBN

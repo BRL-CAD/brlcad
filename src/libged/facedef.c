@@ -374,7 +374,7 @@ Enter form of new face definition: ");
     }
 
     /* find all vertices from the plane equations */
-    if (rt_arb_calc_points(arb, type, planes, &gedp->ged_wdbp->wdb_tol) < 0) {
+    if (rt_arb_calc_points(arb, type, (const plane_t *)planes, &gedp->ged_wdbp->wdb_tol) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "facedef:  unable to find points\n");
 	rt_db_free_internal(&intern);
 	return GED_ERROR;

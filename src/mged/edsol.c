@@ -4667,10 +4667,10 @@ sedit(void)
 		/* change D of planar equation */
 		es_peqn[es_menu][W]=VDOT(&es_peqn[es_menu][0], work);
 		/* find new vertices, put in record in vector notation */
-		(void)rt_arb_calc_points(arb, es_type, es_peqn, &mged_tol);
+
+                (void)rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &mged_tol);
 	    }
 	    break;
-
 	case ECMD_ARB_SETUP_ROTFACE:
 	    arb = (struct rt_arb_internal *)es_int.idb_ptr;
 	    RT_ARB_CK_MAGIC(arb);
@@ -4790,7 +4790,7 @@ sedit(void)
 		es_peqn[es_menu][W]=VDOT(eqp, tempvec);
 	    }
 
-	    (void)rt_arb_calc_points(arb, es_type, es_peqn, &mged_tol);
+	    (void)rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &mged_tol);
 	    MAT_IDN(incr_change);
 
 	    /* no need to calc_planes again */
@@ -6877,7 +6877,8 @@ sedit_mouse(const vect_t mousevec)
 		    (struct rt_arb_internal *)es_int.idb_ptr;
 
 		RT_ARB_CK_MAGIC(arb);
-		(void)rt_arb_calc_points(arb, es_type, es_peqn, &mged_tol);
+
+		(void)rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &mged_tol);
 	    }
 
 	    break;
@@ -7610,7 +7611,8 @@ f_eqn(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 
     VMOVE(tempvec, arb->pt[fixv]);
     es_peqn[es_menu][W]=VDOT(es_peqn[es_menu], tempvec);
-    if (rt_arb_calc_points(arb, es_type, es_peqn, &mged_tol))
+
+    if (rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &mged_tol))
 	return CMD_BAD;
 
     /* draw the new version of the solid */

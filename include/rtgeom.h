@@ -824,6 +824,27 @@ struct rt_hrt_internal
 };
 #define RT_HRT_CK_MAGIC(_p) BU_CKMAG(_p, RT_HRT_INTERNAL_MAGIC, "rt_hrt_internal")
 
+
+struct wdb_pipept {
+    struct bu_list l;      /**< @brief  doubly linked list support */
+    point_t pp_coord;      /**< @brief  "control" point for pipe solid */
+    fastf_t pp_id;         /**< @brief  inner diam, <=0 if solid (wire) */
+    fastf_t pp_od;         /**< @brief  pipe outer diam */
+    fastf_t pp_bendradius; /**< @brief  bend radius to use for a bend at this point */
+};
+
+struct wdb_metaballpt {
+    struct bu_list l;
+    int type;
+    fastf_t fldstr; /**< @brief  field strength */
+    fastf_t sweat;  /**< @brief  beta value used for metaball and blob evaluation */
+    point_t coord;
+    point_t coord2;
+};
+#define WDB_METABALLPT_TYPE_POINT 0x0
+#define WDB_METABALLPT_TYPE_LINE 0x1
+#define WDB_METABALLPT_NULL	((struct wdb_metaballpt *)0)
+
 __END_DECLS
 
 #endif /* RTGEOM_H */

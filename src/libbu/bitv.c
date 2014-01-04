@@ -72,7 +72,7 @@
  * BU_BITV_SHIFT macro instead.
  */
 inline size_t
-bu_bitv_shift()
+bu_bitv_shift(void)
 {
     size_t x = sizeof(bitv_t) * 8;
 

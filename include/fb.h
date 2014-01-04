@@ -206,8 +206,8 @@ FB_EXPORT extern int _wgl_open_existing(FBIO *ifp, Display *dpy, Window win, Col
 
 /* tcl.c */
 /* The presence of Tcl_Interp as an arg prevents giving arg list */
-FB_EXPORT extern void fb_tcl_setup();
-FB_EXPORT extern int Fb_Init();
+FB_EXPORT extern void fb_tcl_setup(void);
+FB_EXPORT extern int Fb_Init(Tcl_Interp *interp);
 FB_EXPORT extern int fb_refresh(FBIO *ifp, int x, int y, int w, int h);
 
 

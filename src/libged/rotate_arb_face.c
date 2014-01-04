@@ -200,7 +200,7 @@ ged_rotate_arb_face(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* calculate new points for the arb */
-    (void)rt_arb_calc_points(arb, arb_type, planes, &gedp->ged_wdbp->wdb_tol);
+    (void)rt_arb_calc_points(arb, arb_type, (const plane_t *)planes, &gedp->ged_wdbp->wdb_tol);
 
     {
 	mat_t invmat;

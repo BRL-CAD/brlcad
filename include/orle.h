@@ -139,16 +139,16 @@ ORLE_EXPORT extern int	rle_verbose;
 __BEGIN_DECLS
 
 /* Entry points.							*/
-ORLE_EXPORT extern void rle_rlen();
+ORLE_EXPORT extern void rle_rlen(int *, int *);
 ORLE_EXPORT extern void rle_wlen(int, int, int);
-ORLE_EXPORT extern void rle_rpos();
+ORLE_EXPORT extern void rle_rpos(int *, int *);
 ORLE_EXPORT extern void rle_wpos(int, int, int);
-ORLE_EXPORT extern int rle_rhdr();
+ORLE_EXPORT extern int rle_rhdr(FILE *, int *, register unsigned char *);
 ORLE_EXPORT extern int rle_whdr(FILE *, int, int, int, unsigned char *);
-ORLE_EXPORT extern int rle_rmap();
+ORLE_EXPORT extern int rle_rmap(FILE *, RLEColorMap *);
 ORLE_EXPORT extern int rle_wmap(FILE *, RLEColorMap *);
-ORLE_EXPORT extern int rle_decode_ln();
-ORLE_EXPORT extern int rle_encode_ln();
+ORLE_EXPORT extern int rle_decode_ln(register FILE *, RLEpixel *);
+ORLE_EXPORT extern int rle_encode_ln(register FILE *, RLEpixel *);
 
 __END_DECLS
 

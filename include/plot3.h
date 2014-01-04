@@ -46,7 +46,7 @@ __BEGIN_DECLS
 #define PL_OUTPUT_MODE_TEXT 1
 
 
-BN_EXPORT extern int pl_getOutputMode();
+BN_EXPORT extern int pl_getOutputMode(void);
 BN_EXPORT extern void pl_setOutputMode(int mode);
 BN_EXPORT extern void pl_point(FILE *plotfp,
 		     int x,

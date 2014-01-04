@@ -98,7 +98,7 @@ main(int argc, char **argv)
 	    (void) fprintf(stderr,
 			   "Reading color map from file\n"
 		);
-	if (rle_rmap(fp, &cmap) == -1)
+	if (rle_rmap(fp, (RLEColorMap *)&cmap) == -1)
 	    return 1;
 	if (rle_verbose)
 	    prnt_Cmap(&cmap);

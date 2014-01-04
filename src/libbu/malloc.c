@@ -174,7 +174,7 @@ memdebug_check(register genptr_t ptr, const char *str)
 }
 
 
-extern int bu_bomb_failsafe_init();
+extern int bu_bomb_failsafe_init(void);
 
 /**
  * This routine only returns on successful allocation.  We promise

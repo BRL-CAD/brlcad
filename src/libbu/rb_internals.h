@@ -171,8 +171,7 @@ extern void rb_rot_right(struct bu_rb_node *y, int order);
  * N.B. rb_walk() is not declared static because it is called by
  * bu_rb_diagnose_tree() in rb_diag.c.
  */
-extern void rb_walk(struct bu_rb_tree *tree, int order, void (*visit) (/* ??? */), int what_to_visit, int trav_type);
-
+extern void rb_walk(struct bu_rb_tree *tree, int order, void (*visit) (void), int what_to_visit, int trav_type);
 
 /**
  * R B _ F R E E _ N O D E

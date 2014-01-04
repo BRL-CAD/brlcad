@@ -1553,14 +1553,23 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 #define V_MAX(r, s) if ((r) < (s)) r = (s)
 
+#ifdef VMIN
+#  undef VMIN
+#endif
 #define VMIN(r, s) do { \
 	V_MIN((r)[X], (s)[X]); V_MIN((r)[Y], (s)[Y]); V_MIN((r)[Z], (s)[Z]); \
     } while (0)
 
+#ifdef VMAX
+#  undef VMAX
+#endif
 #define VMAX(r, s) do { \
 	V_MAX((r)[X], (s)[X]); V_MAX((r)[Y], (s)[Y]); V_MAX((r)[Z], (s)[Z]); \
     } while (0)
 
+#ifdef VMINMAX
+#  undef VMINMAX
+#endif
 #define VMINMAX(min, max, pt) do { \
 	VMIN((min), (pt)); VMAX((max), (pt)); \
     } while (0)

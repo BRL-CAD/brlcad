@@ -145,7 +145,7 @@ bn_randmt_seed(unsigned long seed)
     bn_randmt_state_seed(&global_state, (uint32_t)seed);
 }
 
-double bn_randmt()
+double bn_randmt(void)
 {
     return bn_randmt_state(&global_state);
 }
