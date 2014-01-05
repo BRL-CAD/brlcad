@@ -719,7 +719,6 @@ findang(fastf_t *angles, fastf_t *unitv)
  * Currently used for:
  * - arb8
  * - arbn
- * - bot
  * - ars
  *
  * returns:
@@ -979,80 +978,6 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
 }
 
 
-#define BOT_PT(idx) (&bot->vertices[(idx) * ELEMENTS_PER_POINT])
-
-/**
- * A N A L Y Z E _ B O T
- */
-HIDDEN void
-analyze_bot(struct ged *gedp, const struct rt_db_internal *ip)
-{
-    size_t i;
-    fastf_t tot_area = 0.0, tot_vol = 0.0;
-    table_t table;
-    struct poly_face face = POLY_FACE_INIT_ZERO;
-    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
-    RT_BOT_CK_MAGIC(bot);
-
-    /* allocate pts array, 3 vertices per bot face */
-    face.pts = (point_t *)bu_calloc(3, sizeof(point_t), "analyze_bot: pts");
-    /* allocate table rows, 1 row per bot face */
-    table.rows = (row_t *)bu_calloc(bot->num_faces, sizeof(row_t), "analyze_bot: rows");
-    table.nrows = bot->num_faces;
-
-    for (face.npts = 0, i = 0; i < bot->num_faces; face.npts = 0, i++) {
-	int a, b, c;
-	vect_t tmp;
-
-	/* find indices of the 3 vertices that make up this face */
-	a = bot->faces[i * ELEMENTS_PER_POINT + 0];
-	b = bot->faces[i * ELEMENTS_PER_POINT + 1];
-	c = bot->faces[i * ELEMENTS_PER_POINT + 2];
-
-	/* find normal, needed to calculate volume later */
-	if (bot->bot_flags == RT_BOT_HAS_SURFACE_NORMALS && bot->normals) {
-	    /* bot->normals array already exists, use those instead */
-	    VMOVE(face.plane_eqn, &bot->normals[i * ELEMENTS_PER_VECT]);
-	} else if (UNLIKELY(bn_mk_plane_3pts(face.plane_eqn, BOT_PT(a), BOT_PT(b), BOT_PT(c), &gedp->ged_wdbp->wdb_tol) < 0)) {
-	    bu_vls_printf(gedp->ged_result_str,
-			  "analyze_bot: bad BOT, points (%.3f, %.3f, %.3f), (%.3f, %.3f, %.3f), (%.3f, %.3f, %.3f) do not form a plane\n",
-			  V3ARGS(BOT_PT(a)), V3ARGS(BOT_PT(b)), V3ARGS(BOT_PT(c)));
-	    continue;
-	}
-
-	ADD_PT(face, BOT_PT(a));
-	ADD_PT(face, BOT_PT(b));
-	ADD_PT(face, BOT_PT(c));
-
-	snprintf(face.label, sizeof(face.label), "%d%d%d", a, b, c);
-
-	/* surface area */
-	analyze_poly_face(gedp, &face, &table.rows[i]);
-	tot_area += face.area;
-
-	/* volume */
-	VSCALE(tmp, face.plane_eqn, face.area);
-	tot_vol += fabs(VDOT(face.pts[0], tmp));
-    }
-    tot_vol /= 3.0;
-
-    print_faces_table(gedp, &table);
-    print_volume_table(gedp,
-		       tot_vol
-		       * gedp->ged_wdbp->dbip->dbi_base2local
-		       * gedp->ged_wdbp->dbip->dbi_base2local
-		       * gedp->ged_wdbp->dbip->dbi_base2local,
-		       tot_area
-		       * gedp->ged_wdbp->dbip->dbi_base2local
-		       * gedp->ged_wdbp->dbip->dbi_base2local,
-		       tot_vol/GALLONS_TO_MM3
-	);
-
-    bu_free((char *)face.pts, "analyze_bot: pts");
-    bu_free((char *)table.rows, "analyze_bot: rows");
-}
-
-
 #define ARS_PT(ii, jj) (&arip->curves[i+(ii)][(j+(jj))*ELEMENTS_PER_VECT])
 
 /**
@@ -1290,7 +1215,7 @@ analyze_do(struct ged *gedp, const struct rt_db_internal *ip)
 	    break;
 
 	case ID_BOT:
-	    analyze_bot(gedp, ip);
+	    analyze_general(gedp, ip);
 	    break;
 
 	case ID_ARBN:

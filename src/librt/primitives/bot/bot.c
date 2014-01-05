@@ -1411,7 +1411,7 @@ rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
     RT_BOT_CK_MAGIC(bot_ip);
     bu_vls_strcat(str, "Bag of triangles (BOT)\n");
-
+  
     switch (bot_ip->orientation) {
 	case RT_BOT_UNORIENTED:
 	    orientation = unoriented;
@@ -5295,6 +5295,8 @@ rt_bot_volume(fastf_t *volume, const struct rt_db_internal *ip)
     RT_BOT_CK_MAGIC(bot);
 
     *volume = 0.0;
+    if(bot->mode == RT_BOT_SURFACE)
+	return;
 
     /* allocate pts array, 3 vertices per bot face */
     face.pts = (point_t *)bu_calloc(3, sizeof(point_t), "rt_bot_volume: pts");
@@ -5333,11 +5335,130 @@ rt_bot_volume(fastf_t *volume, const struct rt_db_internal *ip)
 	/* VOLUME */
 	VSCALE(tmp, face.plane_eqn, face.area);
 	*volume += fabs(VDOT(face.pts[0], tmp));
+	if (bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS) {
+	    if (BU_BITTEST(bot->face_mode, i))
+		*volume += face.area * bot->thickness[i];
+	    else
+		*volume += face.area * 0.5 * bot->thickness[i];
+	}
     }
     *volume /= 3.0;
     bu_free((char *)face.pts, "rt_bot_volume: pts");
 }
 
+void
+rt_bot_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{   
+    typedef point_t triangle[3];
+    struct rt_bot_internal *bot_ip =
+	(struct rt_bot_internal *)ip->idb_ptr;
+    size_t a, b, j;
+    triangle *whole_bot_vertices = (triangle *)bu_calloc(bot_ip->num_faces, sizeof(triangle), "rt_bot_surf_area: whole_bot_vertices"); /* [face][corner][x,y,z] */
+    fastf_t whole_bot_overall_area;  
+    
+    whole_bot_overall_area = 0;
+
+    for (a = 0; a < bot_ip->num_faces; a++) {
+	point_t pt[3];
+	       
+	for (j = 0; j < 3; j++) {
+	    size_t ptnum;
+	    ptnum = bot_ip->faces[a*3+j];
+	    VSCALE(pt[j], &bot_ip->vertices[ptnum*3], 1);
+	    /* transfer the vertices into an array, which is structured after the faces, which is necessary for later comparsions, if the bot is a plate */
+	    switch (bot_ip->mode) {
+	    case RT_BOT_PLATE:
+	    case RT_BOT_PLATE_NOCOS:                    
+		whole_bot_vertices[a][j][0] = pt[j][X];
+		whole_bot_vertices[a][j][1] = pt[j][Y];
+		whole_bot_vertices[a][j][2] = pt[j][Z];
+		break;
+	    }
+	}                
+	
+	whole_bot_overall_area += bn_area_of_triangle((const fastf_t *)&pt[0], (const fastf_t *)&pt[1], (const fastf_t *)&pt[2]);
+    }
+      
+    switch (bot_ip->mode) {
+    case RT_BOT_PLATE:
+    case RT_BOT_PLATE_NOCOS:
+	for (a = 0; a-1 < bot_ip->num_faces; a++) {
+	    int a_is_exterior_edge, b_is_exterior_edge, c_is_exterior_edge;
+	    a_is_exterior_edge = 1;
+	    b_is_exterior_edge = 1;
+	    c_is_exterior_edge = 1;               
+	    /* get exterior edges by checking each possible combination between the faces a and b */
+	    for (b = 0; b < bot_ip->num_faces; b++) {
+		if (a == b)
+		    continue; /* can't check against own face */
+		/* if both vertices are equal, a and b have a common edge, so it can't be an exterior edge, so the variable is set to 0(false) */
+		if(EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][0]) && EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][1]))
+		    a_is_exterior_edge = 0;
+		else if (EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][1]) && EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][2]))
+		    a_is_exterior_edge = 0;
+		else if (EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][2]) && EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][0]))
+		    a_is_exterior_edge = 0;
+		else if (EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][1]) && EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][0]))
+		    a_is_exterior_edge = 0;
+		else if (EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][2]) && EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][1]))
+		    a_is_exterior_edge = 0;
+		else if (EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][0]) && EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][2]))
+		    a_is_exterior_edge = 0;
+		if(EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][0]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][1]))
+		    b_is_exterior_edge = 0;
+		else if (EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][1]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][2]))
+		    b_is_exterior_edge = 0;
+		else if (EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][2]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][0]))
+		    b_is_exterior_edge = 0;
+		else if (EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][1]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][0]))
+		    b_is_exterior_edge = 0;
+		else if (EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][2]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][1]))
+		    b_is_exterior_edge = 0;
+		else if (EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][0]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][2]))
+		    b_is_exterior_edge = 0;
+		if(EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][0]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][1]))
+		    c_is_exterior_edge = 0;
+		else if (EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][1]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][2]))
+		    c_is_exterior_edge = 0;
+		else if (EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][2]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][0]))
+		    c_is_exterior_edge = 0;
+		else if (EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][1]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][0]))
+		    c_is_exterior_edge = 0;
+		else if (EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][2]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][1]))
+		    c_is_exterior_edge = 0;
+		else if (EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][0]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][2]))
+		    c_is_exterior_edge = 0;
+		                 
+	    }
+	    if (a_is_exterior_edge == 1) {
+		fastf_t rectangle_size, edge_length;
+		
+		edge_length = bn_dist_pt3_pt3(whole_bot_vertices[a][0], whole_bot_vertices[a][1]);
+		rectangle_size = bot_ip->thickness[a] * edge_length;
+		whole_bot_overall_area += rectangle_size;
+		                  
+	    }
+	    if (b_is_exterior_edge == 1) {
+		fastf_t rectangle_size, edge_length;
+		
+		edge_length = bn_dist_pt3_pt3(whole_bot_vertices[a][1], whole_bot_vertices[a][2]);
+		rectangle_size = bot_ip->thickness[a] * edge_length;
+		whole_bot_overall_area += rectangle_size;
+	    }
+	    if (c_is_exterior_edge == 1) {
+		fastf_t rectangle_size, edge_length;
+		
+		edge_length = bn_dist_pt3_pt3(whole_bot_vertices[a][2], whole_bot_vertices[a][0]);
+		rectangle_size = bot_ip->thickness[a] * edge_length;
+		whole_bot_overall_area += rectangle_size;
+	    }
+	}
+
+    }
+    *area = whole_bot_overall_area;
+    bu_free((char *)whole_bot_vertices, "rt_bot_surf_area: whole_bot_vertices");
+    return;
+}
 
 /** @} */
 /*

@@ -1544,7 +1544,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_bot_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_bot_bbox),
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_bot_volume),
-	NULL,
+	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_bot_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_bot_centroid),
 	RTFUNCTAB_FUNC_ORIENTED_BBOX_CAST(rt_bot_oriented_bbox),
 	NULL,
