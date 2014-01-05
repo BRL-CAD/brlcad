@@ -235,7 +235,7 @@
 	</listitem>
 	<listitem>
 	  <para>
-		Programs for manipulating images and converting between different image file types. The two primary BRL-CAD types are pix (24-bit red, green, and blue [RGB] color images) and bw (8-bit greyscale images). Converters exist for various image formats including alias, png, ppm, etc.
+		Programs for manipulating images and converting between different image file types. The two primary BRL-CAD types are pix (24-bit red, green, and blue [RGB] color images) and bw (8-bit grayscale images). Converters exist for various image formats including alias, png, ppm, etc.
 	  </para>
 	</listitem>
 	<listitem>
@@ -378,7 +378,7 @@
 
   </chapter>
 
-  <chapter xml:id="acknowledgements"><info><title>Acknowledgements</title></info>
+  <chapter xml:id="acknowledgments"><info><title>Acknowledgments</title></info>
 
 	<para>
 	The authors would like to thank the members of the Advanced Computer Systems Team, who reviewed this document in a timely manner and made many helpful suggestions to improve its accuracy and presentation. At the time this document was prepared team members included John Anderson, TraNese Christy, Bob Parker, Ron Bowers, and Sean Morrison.

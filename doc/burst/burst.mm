@@ -933,7 +933,7 @@ that has long been a bottleneck to the vulnerability and lethality analyst,
 will increase dramatically.
 Another benefit will be increased accuracy of results due to the superior
 detail and accuracy afforded by a true combinatorial solid geometry modeler.
-.H 1 Acknowledgements
+.H 1 Acknowledgments
 The author would like to thank Leonard E. Bruenning, Jr. of Sverdrup
 Technology, Inc. for his thorough, concise and well-illustrated
 documentation\*F of the requirements to be met by the \*(b) program

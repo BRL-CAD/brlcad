@@ -31,7 +31,7 @@
 
   </info>
 
-  <preface><info><title>Acknowledgements</title></info>
+  <preface><info><title>Acknowledgments</title></info>
 
 
     <para>
@@ -523,7 +523,7 @@
        smaller, more manageable pieces. Also, this step can often reveal a
        logical building order (e.g., the drywall does not get installed until the
        wiring inside the walls has been run) as well as identify important
-       interconnectivities among parts.
+       interconnections among parts.
      </para>
      <para>
        The following list provides some tips to achieve good model structuring:
@@ -1583,7 +1583,7 @@ mvall oldname newname
 	    model.
 	  </para>
 	  <para>
-	    As shown in Table 7, there are tradeoffs to be considered when using each
+	    As shown in Table 7, there are trade-offs to be considered when using each
 	    of these approaches. Construction effort is one of them. If the prototype
 	    consists of many objects or layers of structure, replication could be a
 	    tedious task. In the box of pencils, for example, all of the structure of

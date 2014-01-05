@@ -28,7 +28,7 @@
     <para>
       There are many input fields. Some stand alone, and others belong to series
       that work together to provide the needed information for a specific
-      option. Each series is demarked by a diamond-shaped check box. If the
+      option. Each series is denoted by a diamond-shaped check box. If the
       diamond is highlighted red, then all fields in that series are required.
       All required fields must be filled in for the pattern tool to work
       properly. It is also important to note that all dimensions must be in
@@ -92,7 +92,7 @@
       increment, examine the primitives of the object(s) you wish to pattern and find
       the largest span. For example, to create a pattern to the primitive level with
       the following primitives (which may or may not be in regions or
-      assemblies),
+      assemblies):
 
       <literallayout class="normal">
 part.s22 part.s22-1 part.s23 part.s24 part.s24+1 part.s24-1 part.s25,
