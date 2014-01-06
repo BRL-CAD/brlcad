@@ -1411,7 +1411,7 @@ rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
     RT_BOT_CK_MAGIC(bot_ip);
     bu_vls_strcat(str, "Bag of triangles (BOT)\n");
-  
+
     switch (bot_ip->orientation) {
 	case RT_BOT_UNORIENTED:
 	    orientation = unoriented;
@@ -5348,37 +5348,37 @@ rt_bot_volume(fastf_t *volume, const struct rt_db_internal *ip)
 
 void
 rt_bot_surf_area(fastf_t *area, const struct rt_db_internal *ip)
-{   
+{
     typedef point_t triangle[3];
     struct rt_bot_internal *bot_ip =
 	(struct rt_bot_internal *)ip->idb_ptr;
     size_t a, b, j;
     triangle *whole_bot_vertices = (triangle *)bu_calloc(bot_ip->num_faces, sizeof(triangle), "rt_bot_surf_area: whole_bot_vertices"); /* [face][corner][x,y,z] */
-    fastf_t whole_bot_overall_area;  
-    
+    fastf_t whole_bot_overall_area;
+
     whole_bot_overall_area = 0;
 
     for (a = 0; a < bot_ip->num_faces; a++) {
 	point_t pt[3];
-	       
+
 	for (j = 0; j < 3; j++) {
 	    size_t ptnum;
 	    ptnum = bot_ip->faces[a*3+j];
 	    VSCALE(pt[j], &bot_ip->vertices[ptnum*3], 1);
-	    /* transfer the vertices into an array, which is structured after the faces, which is necessary for later comparsions, if the bot is a plate */
+	    /* transfer the vertices into an array, which is structured after the faces, which is necessary for later comparisons, if the bot is a plate */
 	    switch (bot_ip->mode) {
 	    case RT_BOT_PLATE:
-	    case RT_BOT_PLATE_NOCOS:                    
+	    case RT_BOT_PLATE_NOCOS:
 		whole_bot_vertices[a][j][0] = pt[j][X];
 		whole_bot_vertices[a][j][1] = pt[j][Y];
 		whole_bot_vertices[a][j][2] = pt[j][Z];
 		break;
 	    }
-	}                
-	
+	}
+
 	whole_bot_overall_area += bn_area_of_triangle((const fastf_t *)&pt[0], (const fastf_t *)&pt[1], (const fastf_t *)&pt[2]);
     }
-      
+
     switch (bot_ip->mode) {
     case RT_BOT_PLATE:
     case RT_BOT_PLATE_NOCOS:
@@ -5386,7 +5386,7 @@ rt_bot_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	    int a_is_exterior_edge, b_is_exterior_edge, c_is_exterior_edge;
 	    a_is_exterior_edge = 1;
 	    b_is_exterior_edge = 1;
-	    c_is_exterior_edge = 1;               
+	    c_is_exterior_edge = 1;
 	    /* get exterior edges by checking each possible combination between the faces a and b */
 	    for (b = 0; b < bot_ip->num_faces; b++) {
 		if (a == b)
@@ -5428,26 +5428,26 @@ rt_bot_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 		    c_is_exterior_edge = 0;
 		else if (EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][0]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][2]))
 		    c_is_exterior_edge = 0;
-		                 
+
 	    }
 	    if (a_is_exterior_edge == 1) {
 		fastf_t rectangle_size, edge_length;
-		
+
 		edge_length = bn_dist_pt3_pt3(whole_bot_vertices[a][0], whole_bot_vertices[a][1]);
 		rectangle_size = bot_ip->thickness[a] * edge_length;
 		whole_bot_overall_area += rectangle_size;
-		                  
+
 	    }
 	    if (b_is_exterior_edge == 1) {
 		fastf_t rectangle_size, edge_length;
-		
+
 		edge_length = bn_dist_pt3_pt3(whole_bot_vertices[a][1], whole_bot_vertices[a][2]);
 		rectangle_size = bot_ip->thickness[a] * edge_length;
 		whole_bot_overall_area += rectangle_size;
 	    }
 	    if (c_is_exterior_edge == 1) {
 		fastf_t rectangle_size, edge_length;
-		
+
 		edge_length = bn_dist_pt3_pt3(whole_bot_vertices[a][2], whole_bot_vertices[a][0]);
 		rectangle_size = bot_ip->thickness[a] * edge_length;
 		whole_bot_overall_area += rectangle_size;

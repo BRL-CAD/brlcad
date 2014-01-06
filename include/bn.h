@@ -4661,7 +4661,7 @@ BN_EXPORT extern int bn_polygon_mk_pts_planes(size_t *npts, point_t **pts, size_
  *aren't allowed. The points in the array will be sorted counter-clockwise.
  *@param[in] cmp Plane equation of the polygon
  *
- *@return 0 if calculation was succesful
+ *@return 0 if calculation was successful
  *@return 1 if calculation failed, e.g. because pts is a NULL-pointer
  */
 BN_EXPORT extern int bn_polygon_sort_ccw(size_t npts, point_t *pts, plane_t cmp);

@@ -1140,7 +1140,7 @@ NEW OBJECTS
        font size (height)
        font style: bold/italic/regular
        font color
-       justification: left, center, right, bottom, middle, top  (combinable options, e.g., "top left")
+       justification: left, center, right, bottom, middle, top  (combineable options, e.g., "top left")
        placement: default, above, below, inline, interior, exterior
 
   Line properties:

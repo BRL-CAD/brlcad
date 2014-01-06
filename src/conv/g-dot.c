@@ -66,7 +66,7 @@ dot_comb(struct db_i *dbip, struct directory *dp, genptr_t out)
 	bu_log("ERROR: Database read error, skipping %s\n", dp->d_namep);
     }
     comb = (struct rt_comb_internal *)intern.idb_ptr;
-    
+
     if (comb->region_flag) {
 	long hash = bu_hash((unsigned char *)dp->d_namep, strlen(dp->d_namep));
 	if (bu_ptbl_ins_unique(&(o->regions), (long *)hash) == -1) {

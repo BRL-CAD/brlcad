@@ -1283,7 +1283,7 @@ rt_superell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	     * through the loop to make sure that the precision
 	     * continues to increase until a satisfactory value is
 	     * found. If this value is very small, this approximation
-	     * will likely convere fairly quickly and with lower
+	     * will likely converge fairly quickly and with lower
 	     * accuracy: the smaller the distance between the inputs
 	     * the more likely that the outputs will be within
 	     * BN_TOL_DIST. A large value will result in slow
