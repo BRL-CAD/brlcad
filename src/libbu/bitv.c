@@ -128,7 +128,7 @@ bu_bitv_or(struct bu_bitv *ov, const struct bu_bitv *iv)
 {
     register bitv_t *out;
     register const bitv_t *in;
-    register int words;
+    register size_t words;
 
     if (UNLIKELY(ov->nbits != iv->nbits))
 	bu_bomb("bu_bitv_or: length mis-match");
@@ -151,7 +151,7 @@ bu_bitv_and(struct bu_bitv *ov, const struct bu_bitv *iv)
 {
     register bitv_t *out;
     register const bitv_t *in;
-    register int words;
+    register size_t words;
 
     if (UNLIKELY(ov->nbits != iv->nbits))
 	bu_bomb("bu_bitv_and: length mis-match");
@@ -173,8 +173,8 @@ void
 bu_bitv_vls(struct bu_vls *v, register const struct bu_bitv *bv)
 {
     int seen = 0;
-    register int i;
-    int len;
+    register size_t i;
+    size_t len;
 
     BU_CK_VLS(v);
     BU_CK_BITV(bv);
@@ -189,7 +189,7 @@ bu_bitv_vls(struct bu_vls *v, register const struct bu_bitv *bv)
 	    continue;
 	if (seen)
 	    bu_vls_strcat(v, ", ");
-	bu_vls_printf(v, "%d", i);
+	bu_vls_printf(v, "%lu", i);
 	seen = 1;
     }
     bu_vls_strcat(v, ") ");
@@ -227,10 +227,10 @@ bu_bitv_to_hex(struct bu_vls *v, const struct bu_bitv *bv)
     BU_CK_BITV(bv);
 
     word_count = bv->nbits / 8 / BVS;
-    bu_vls_extend(v, (unsigned int)(word_count * BVS * 2 + 1));
+    bu_vls_extend(v, word_count * BVS * 2 + 1);
 
     while (word_count--) {
-	chunksize = (unsigned int)BVS;
+	chunksize = BVS;
 	while (chunksize--) {
 	    unsigned long val = (unsigned long)((bv->bits[word_count] & ((bitv_t)(0xff)<<(chunksize*8))) >> (chunksize*8)) & (bitv_t)0xff;
 	    bu_vls_printf(v, "%02lx", val);
@@ -275,7 +275,7 @@ bu_hex_to_bitv(const char *str)
     word_count = bytes / BVS;
     chunksize = bytes % BVS;
     if (chunksize == 0) {
-	chunksize = (unsigned int)BVS;
+	chunksize = BVS;
     } else {
 	/* handle partial chunk before using chunksize == BVS */
 	word_count++;
@@ -296,7 +296,7 @@ bu_hex_to_bitv(const char *str)
 	    /* set the appropriate bits in the bit vector */
 	    bv->bits[word_count] |= (bitv_t)c<<(chunksize*8);
 	}
-	chunksize = (unsigned int)BVS;
+	chunksize = BVS;
     }
 
     return bv;

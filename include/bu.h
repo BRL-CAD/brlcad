@@ -4982,7 +4982,7 @@ BU_EXPORT extern char *bu_vls_cstr(const struct bu_vls *vp);
  * sized amounts and may allocate more than requested.
  */
 BU_EXPORT extern void bu_vls_extend(struct bu_vls *vp,
-				    unsigned int extra);
+				    size_t extra);
 
 /**
  * Ensure that the vls has a length of at least 'newlen', and make
@@ -5219,7 +5219,7 @@ BU_EXPORT extern void bu_vls_sprintf(struct bu_vls *vls,
  * Efficiently append 'cnt' spaces to the current vls.
  */
 BU_EXPORT extern void bu_vls_spaces(struct bu_vls *vp,
-				    int cnt);
+				    size_t cnt);
 
 /**
  * Returns number of printed spaces used on final output line of a
@@ -5233,7 +5233,7 @@ BU_EXPORT extern void bu_vls_spaces(struct bu_vls *vp,
  *
  *	0-7 --> 8, 8-15 --> 16, 16-23 --> 24, etc.
  */
-BU_EXPORT extern int bu_vls_print_positions_used(const struct bu_vls *vp);
+BU_EXPORT extern size_t bu_vls_print_positions_used(const struct bu_vls *vp);
 
 /**
  * Given a vls, return a version of that string which has had all
