@@ -202,7 +202,7 @@ main(int argc, char **argv)
 
     int i, n, c;
     int L = 1024;
-    double cbsum;
+    double cbsum = 0.0;
     int phase = 0;
     double data[MAXFFT];		/* Data buffer: 2*Points in spectrum */
 
