@@ -85,8 +85,8 @@ main(int argc, char **argv)
     fastf_t cmp_8 = 3;
     fastf_t arg_8[5] = {-5, 23, 5.5, 0, 2};
     fastf_t exp_8[5] = {2, 5.5, 0, -5, 23};
-    fastf_t arg_9[5];
-    fastf_t exp_9[5];
+    fastf_t arg_9[5] = {0, 0, 0, 0, 0};
+    fastf_t exp_9[5] = {0, 0, 0, 0, 0};
     fastf_t arg_10[5] = {INFINITY, 5, 5.2, 0, -INFINITY};
     fastf_t exp_10[5] = {-INFINITY, 0, 5, 5.2, INFINITY};
     int i, function_num;
