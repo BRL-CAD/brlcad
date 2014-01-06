@@ -1484,13 +1484,23 @@ typedef struct bu_bitv bu_bitv_t;
  */
 BU_EXPORT extern size_t bu_bitv_shift(void);
 
-/*
- * Bit-string manipulators for arbitrarily long bit strings stored as
- * an array of bitv_t's.
+/**
+ * Convert a number of words into the corresponding (bitv_t type) size
+ * as a bit-vector size.
+ */
+#define BU_WORDS2BITS(_nw)	((size_t)(_nw>0?_nw:0)*sizeof(bitv_t)*8)
+
+/**
+ * Convert a bit-vector (stored in a bitv_t array) size into the
+ * corresponding word size.
+ */
+#define BU_BITS2WORDS(_nb)	(((size_t)(_nb>0?_nb:0)+BU_BITV_MASK)>>BU_BITV_SHIFT)
+
+/**
+ * Convert a bit-vector (stored in a bitv_t array) size into the
+ * corresponding total memory size (in bytes) of the bitv_t array.
  */
 #define BU_BITS2BYTES(_nb)	(BU_BITS2WORDS(_nb)*sizeof(bitv_t))
-#define BU_BITS2WORDS(_nb)	(((_nb)+BU_BITV_MASK)>>BU_BITV_SHIFT)
-#define BU_WORDS2BITS(_nw)	((_nw)*sizeof(bitv_t)*8)
 
 
 #if 1
