@@ -1950,11 +1950,11 @@ struct bu_attribute_value_pair {
  */
 struct bu_attribute_value_set {
     uint32_t magic;
-    unsigned int count;	/**< # valid entries in avp */
-    unsigned int max;	/**< # allocated slots in avp */
+    size_t count;                        /**< # valid entries in avp */
+    size_t max;                          /**< # allocated slots in avp */
     genptr_t readonly_min;
     genptr_t readonly_max;
-    struct bu_attribute_value_pair *avp;	/**< array[max]  */
+    struct bu_attribute_value_pair *avp; /**< array[max] */
 };
 typedef struct bu_attribute_value_set bu_avs_t;
 #define BU_AVS_NULL ((struct bu_attribute_value_set *)0)
@@ -2688,7 +2688,7 @@ typedef struct bu_observer bu_observer_t;
  * Initialize avs with storage for len entries.
  */
 BU_EXPORT extern void bu_avs_init(struct bu_attribute_value_set *avp,
-				  int len,
+				  size_t len,
 				  const char *str);
 
 /**
@@ -2700,7 +2700,7 @@ BU_EXPORT extern void bu_avs_init_empty(struct bu_attribute_value_set *avp);
  * Allocate storage for a new attribute/value set, with at least 'len'
  * slots pre-allocated.
  */
-BU_EXPORT extern struct bu_attribute_value_set *bu_avs_new(int len,
+BU_EXPORT extern struct bu_attribute_value_set *bu_avs_new(size_t len,
 							   const char *str);
 
 /**
