@@ -18,7 +18,10 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* nada.
+* investigate failure of repository regression on Mac OS X when doing
+  the odd pathnames distcheck.  Looks like the tools on OS X (grep,
+  sh, etc.) aren't handling the funky names properly, and as a result
+  the test hangs.
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
