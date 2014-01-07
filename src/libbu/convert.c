@@ -245,7 +245,7 @@ bu_cv_pr_cookie(char *title, int cookie)
 
 
 size_t
-bu_cv(genptr_t out, char *outfmt, size_t size, genptr_t in, char *infmt, int count)
+bu_cv(genptr_t out, char *outfmt, size_t size, genptr_t in, char *infmt, size_t count)
 {
     int incookie, outcookie;
     incookie = bu_cv_cookie(infmt);
@@ -283,14 +283,14 @@ bu_cv_optimize(register int cookie)
 }
 
 
-int
+size_t
 bu_cv_itemlen(register int cookie)
 {
     register int fmt = (cookie & CV_TYPE_MASK) >> CV_TYPE_SHIFT;
-    static int host_size_table[8] = {0, sizeof(char),
+    static size_t host_size_table[8] = {0, sizeof(char),
 				     sizeof(short), sizeof(int),
 				     sizeof(long int), sizeof(double)};
-    static int net_size_table[8] = {0, 1, 2, 4, 8, 8};
+    static size_t net_size_table[8] = {0, 1, 2, 4, 8, 8};
 
     if (cookie & CV_HOST_MASK)
 	return host_size_table[fmt];
@@ -464,11 +464,12 @@ bu_cv_htonul(genptr_t out, size_t size, register long unsigned int *in, size_t c
 
 
 size_t
-bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incookie,  size_t count)
+bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in, int incookie, size_t count)
 {
     size_t work_count = 4096;
     size_t number_done = 0;
-    int inIsHost, outIsHost, infmt, outfmt, insize, outsize;
+    int inIsHost, outIsHost, infmt, outfmt;
+    size_t insize, outsize;
     size_t bufsize;
     genptr_t t1, t2, t3;
     genptr_t from;

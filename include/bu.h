@@ -511,7 +511,7 @@ typedef const void *const_genptr_t;
  * @param outfmt	output format
  *
  */
-BU_EXPORT extern size_t bu_cv(genptr_t out, char *outfmt, size_t size, genptr_t in, char *infmt, int count);
+BU_EXPORT extern size_t bu_cv(genptr_t out, char *outfmt, size_t size, genptr_t in, char *infmt, size_t count);
 
 /**
  * Set's a bit vector after parsing an input string.
@@ -543,7 +543,7 @@ BU_EXPORT extern int bu_cv_optimize(int cookie);
 /**
  * Returns the number of bytes each "item" of type "cookie" occupies.
  */
-BU_EXPORT extern int bu_cv_itemlen(int cookie);
+BU_EXPORT extern size_t bu_cv_itemlen(int cookie);
 
 /**
  * convert with cookie
