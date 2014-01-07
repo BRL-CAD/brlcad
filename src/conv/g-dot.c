@@ -143,11 +143,12 @@ static void
 dot_leaf(struct db_i *UNUSED(dbip), struct directory *dp, genptr_t out)
 {
     struct output *o = (struct output *)out;
+    unsigned long hash;
 
     if (!o->outfp)
 	return;
 
-    long hash = bu_hash((unsigned char *)dp->d_namep, strlen(dp->d_namep));
+    hash = bu_hash((unsigned char *)dp->d_namep, strlen(dp->d_namep));
     if (bu_ptbl_ins_unique(&(o->primitives), (long *)hash) == -1) {
 	fprintf(o->outfp, "\t\"%s\" [ color=red shape=box rank=min ];\n", dp->d_namep);
     }
