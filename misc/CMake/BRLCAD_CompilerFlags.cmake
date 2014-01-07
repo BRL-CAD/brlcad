@@ -108,7 +108,7 @@ if(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
   CHECK_C_FLAG(Wextra)
   CHECK_CXX_FLAG(Wextra)
 
-  # make sure our preprocesor logic references defined symbol names
+  # make sure our preprocessor logic references defined symbol names
   CHECK_C_FLAG(Wundef)
   CHECK_CXX_FLAG(Wundef)
 
