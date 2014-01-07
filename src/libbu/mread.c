@@ -36,7 +36,7 @@ bu_mread(int fd, void *bufp, long int n)
     char *cbufp = (char *)bufp;
 
     while (count < n) {
-	nread = read(fd, cbufp, (size_t)n-count);
+	nread = read(fd, cbufp, (size_t)(n-count));
 	if (UNLIKELY(nread < 0)) {
 	    return nread;
 	}

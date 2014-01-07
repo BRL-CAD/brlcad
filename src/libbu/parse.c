@@ -220,7 +220,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 		    register size_t lenstr;
 
 		    /* include the terminating null */
-		    lenstr = (int)strlen(loc) + 1;
+		    lenstr = strlen(loc) + 1;
 
 		    len = lenstr;
 
@@ -1404,7 +1404,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 HIDDEN void
 parse_vls_print_floating(struct bu_vls *vls, const char *name, size_t count, const fastf_t *fp, const double *dp)
 {
-    register int tmpi;
+    register size_t tmpi;
     register char *cp;
 
     size_t increase;
@@ -1424,7 +1424,7 @@ parse_vls_print_floating(struct bu_vls *vls, const char *name, size_t count, con
     if (dp) {
 	snprintf(cp, increase, "%s%s=%.27G", (vls->vls_len?" ":""), name, *dp++);
     }
-    tmpi = (int)strlen(cp);
+    tmpi = strlen(cp);
     vls->vls_len += tmpi;
 
     while (--count > 0) {
@@ -1435,7 +1435,7 @@ parse_vls_print_floating(struct bu_vls *vls, const char *name, size_t count, con
 	if (dp) {
 	    sprintf(cp, "%c%.27G", COMMA, *dp++);
 	}
-	tmpi = (int)strlen(cp);
+	tmpi = strlen(cp);
 	vls->vls_len += tmpi;
     }
 }
