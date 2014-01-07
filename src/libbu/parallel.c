@@ -201,7 +201,7 @@ bu_nice_set(int newnice)
 }
 
 
-int
+size_t
 bu_avail_cpus(void)
 {
     int ncpu = -1;

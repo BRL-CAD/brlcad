@@ -4097,7 +4097,7 @@ BU_EXPORT extern void bu_nice_set(int newnice);
  * Return the maximum number of physical CPUs that are considered to
  * be available to this process now.
  */
-BU_EXPORT extern int bu_avail_cpus(void);
+BU_EXPORT extern size_t bu_avail_cpus(void);
 
 /**
  * Create 'ncpu' copies of function 'func' all running in parallel,
