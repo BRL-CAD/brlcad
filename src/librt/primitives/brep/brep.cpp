@@ -3799,10 +3799,11 @@ rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selecti
 
     // narrow down the list to just the control vertexes closest to
     // the query line, and sort them by proximity to the query start
-    std::list<brep_selectable_cv *>::iterator s;
-    for (s = selectable.begin(); s != selectable.end(); ++s) {
-	if ((*s)->sqdist_to_line > min_distsq) {
-	    selectable.erase(s);
+    std::list<brep_selectable_cv *>::iterator s, tmp_s;
+    for (s = selectable.begin(); s != selectable.end();) {
+	tmp_s = s++;
+	if ((*tmp_s)->sqdist_to_line > min_distsq) {
+	    selectable.erase(tmp_s);
 	}
     }
     selectable.sort(cmp_cv_startdist);
