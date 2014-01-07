@@ -1927,7 +1927,7 @@ int
 bu_shader_to_list(const char *in, struct bu_vls *vls)
 {
     size_t len;
-    int shader_name_len = 0;
+    size_t shader_name_len = 0;
     char *iptr;
     const char *shader;
     char *copy;

@@ -109,7 +109,7 @@ bu_vlb_free(struct bu_vlb *vlb)
     }
     vlb->buf = NULL;
     vlb->bufCapacity = 0;
-    vlb->nextByte = -1;
+    vlb->nextByte = (size_t)-1;
     vlb->magic = 0;
 }
 

@@ -107,9 +107,10 @@ void
 bu_sort(void *array, size_t nummemb, size_t sizememb, int (*compare)(const void *, const void *, void *), void *context)
 {
     char *pa, *pb, *pc, *pd, *pl, *pm, *pn;
-    size_t d, r;
     int cmp_result;
-    int swaptype, swap_cnt;
+    int swaptype;
+    size_t d, r;
+    size_t swap_cnt;
 
   loop:	SWAPINIT(array, sizememb);
     swap_cnt = 0;
