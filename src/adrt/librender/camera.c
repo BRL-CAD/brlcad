@@ -67,7 +67,7 @@ render_camera_init(render_camera_t *camera, int threads)
     camera->tilt = 0;
 
     /* The camera will use a thread for every cpu the machine has. */
-    camera->thread_num = threads ? threads : bu_avail_cpus();
+    camera->thread_num = threads ? threads : (uint8_t)bu_avail_cpus();
 
     bu_semaphore_init(TIE_SEM_LAST);
 
