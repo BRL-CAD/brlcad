@@ -578,10 +578,11 @@ end:
 int
 ged_track(struct ged *gedp, int argc, const char *argv[])
 {
+    static const char *usage = "basename rX1 rX2 rZ rR dX dZ dR iX iZ iR minX minY th";
+
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
-    static const char *usage = "basename rX1 rX2 rZ rR dX dZ dR iX iZ iR minX minY th";
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
