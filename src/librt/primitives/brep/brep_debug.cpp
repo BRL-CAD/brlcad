@@ -505,10 +505,14 @@ plottrim(ON_BrepTrim& trim, struct bn_vlblock *vbp, int plotres, bool dim3d)
     for (int k = 1; k <= plotres; k++) {
 	ON_3dPoint p = trimCurve->PointAt(dom.ParameterAt((double) (k - 1)
 							  / (double) plotres));
+	p.x = p.x/width;
+	p.y = p.y/height;
 	if (dim3d)
 	    p = surf->PointAt(p.x, p.y);
 	VMOVE(pt1, p);
 	p = trimCurve->PointAt(dom.ParameterAt((double) k / (double) plotres));
+	p.x = p.x/width;
+	p.y = p.y/height;
 	if (dim3d)
 	    p = surf->PointAt(p.x, p.y);
 	VMOVE(pt2, p);
