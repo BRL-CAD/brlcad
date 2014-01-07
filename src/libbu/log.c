@@ -197,7 +197,7 @@ bu_log(const char *fmt, ...)
     va_end(ap);
 
     if (BU_LIST_IS_EMPTY(&(log_hook_list.l)) || log_hooks_called) {
-	int ret = EOF;
+	size_t ret = 0;
 	size_t len;
 
 	if (UNLIKELY(log_first_time)) {
@@ -218,7 +218,7 @@ bu_log(const char *fmt, ...)
 	    bu_semaphore_release(BU_SEM_SYSCALL);
 	}
 
-	if (UNLIKELY(!ret && stdout)) {
+	if (UNLIKELY(ret == 0 && stdout)) {
 	    /* if stderr fails, try stdout instead */
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    ret = fwrite(bu_vls_addr(&output), len, 1, stdout);
@@ -226,7 +226,7 @@ bu_log(const char *fmt, ...)
 	    bu_semaphore_release(BU_SEM_SYSCALL);
 	}
 
-	if (UNLIKELY(ret != 1)) {
+	if (UNLIKELY(ret == 0)) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    perror("fwrite failed");
 	    bu_semaphore_release(BU_SEM_SYSCALL);
@@ -260,7 +260,7 @@ bu_flog(FILE *fp, const char *fmt, ...)
     }
 
     if (BU_LIST_IS_EMPTY(&(log_hook_list.l)) || log_hooks_called) {
-	int ret;
+	size_t ret;
 	size_t len;
 
 	len = bu_vls_strlen(&output);
