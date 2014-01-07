@@ -100,44 +100,59 @@ if(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
   CHECK_C_FLAG(pedantic)
   CHECK_CXX_FLAG(pedantic)
 
+  # this catches a lot, it's good
   CHECK_C_FLAG(Wall)
   CHECK_CXX_FLAG(Wall)
 
-  CHECK_C_FLAG(Wbad-function-cast)
-
+  # this catches a lot more, also good
   CHECK_C_FLAG(Wextra)
   CHECK_CXX_FLAG(Wextra)
 
+  # make sure our preprocesor logic references defined symbol names
   CHECK_C_FLAG(Wundef)
   CHECK_CXX_FLAG(Wundef)
 
+  # this makes sure we don't try to compare floating point exactly
   CHECK_C_FLAG(Wfloat-equal)
   CHECK_CXX_FLAG(Wfloat-equal)
 
+  # make sure we're using unambiguous symbol names, no shadowing
   CHECK_C_FLAG(Wshadow)
   CHECK_CXX_FLAG(Wshadow)
 
-#  CHECK_C_FLAG(Wstrict-prototypes)
+  # make sure we're not dangerously casting return types
+  CHECK_C_FLAG(Wbad-function-cast)
+  CHECK_CXX_FLAG(Wbad-function-cast)
 
-# report where we throw away const
-#  CHECK_C_FLAG(Wcast-qual)
-#  CHECK_CXX_FLAG(Wcast-qual)
+  # this makes sure we don't declare variables mid-scope, helps build on Windows
+  CHECK_C_FLAG(Wdeclaration-after-statement)
+  CHECK_CXX_FLAG(Wdeclaration-after-statement)
 
-# check for redundant declarations
-#  CHECK_C_FLAG(Wredundant-decls)
-#  CHECK_CXX_FLAG(Wredundant-decls)
+  # FIXME: this one is a lot of work, a work-in-progress, but good to have eventually
+  # this makes sure prototypes are properly declared, no k&r and no assuming () means (void)
+  # CHECK_C_FLAG(Wstrict-prototypes)
 
-  # want C inline warnings, but versions of g++ (circa 4.7) spew
-  # unquellable bogus warnings on default constructors that we don't
-  # have access to (e.g., in opennurbs and boost), so turn them off
+  # FIXME: shouldn't be throwing away const, should be using it more.  ton of work.
+  # this reports where we throw away const
+  #  CHECK_C_FLAG(Wcast-qual)
+  #  CHECK_CXX_FLAG(Wcast-qual)
+
+  # check for redundant declarations
+  #  CHECK_C_FLAG(Wredundant-decls)
+  #  CHECK_CXX_FLAG(Wredundant-decls)
+
+  # want C inline warnings, but not for c++.  versions of g++ (circa
+  # 4.7) spew unquellable bogus warnings on default constructors that
+  # we don't have access to (e.g., in opennurbs and boost), so turn
+  # them off
   CHECK_C_FLAG(Winline)
   CHECK_CXX_FLAG(Wno-inline)
 
-  # Need this for tcl.h
+  # this makes sure we don't warn about using long long.  really, it's okay.
   CHECK_C_FLAG(Wno-long-long)
   CHECK_CXX_FLAG(Wno-long-long)
 
-  # Need this for X11 headers using variadic macros
+  # this is for X11 headers, they use variadic macros
   CHECK_C_FLAG(Wno-variadic-macros)
   CHECK_CXX_FLAG(Wno-variadic-macros)
 endif(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
