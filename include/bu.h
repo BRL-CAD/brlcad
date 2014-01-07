@@ -1626,8 +1626,8 @@ struct bu_hist  {
     fastf_t hg_min;		/**< minimum value */
     fastf_t hg_max;		/**< maximum value */
     fastf_t hg_clumpsize;	/**< (max-min+1)/nbins+1 */
-    long hg_nsamples;		/**< total number of samples spread into histogram */
-    long hg_nbins;		/**< # of bins in hg_bins[]  */
+    size_t hg_nsamples;		/**< total number of samples spread into histogram */
+    size_t hg_nbins;		/**< # of bins in hg_bins[]  */
     long *hg_bins;		/**< array of counters */
 };
 typedef struct bu_hist bu_hist_t;
@@ -3452,7 +3452,7 @@ BU_EXPORT extern void bu_hist_free(struct bu_hist *histp);
  *
  * It is expected that the structure is junk upon entry.
  */
-BU_EXPORT extern void bu_hist_init(struct bu_hist *histp, fastf_t min, fastf_t max, unsigned int nbins);
+BU_EXPORT extern void bu_hist_init(struct bu_hist *histp, fastf_t min, fastf_t max, size_t nbins);
 
 /**
  */

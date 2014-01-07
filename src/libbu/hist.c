@@ -40,31 +40,33 @@ bu_hist_free(struct bu_hist *histp)
 
     if (histp->hg_bins)
 	bu_free((char *)histp->hg_bins, "old bu_hist bins");
-    histp->hg_bins = (long *)0;
+    histp->hg_bins = NULL;
     histp->hg_nbins = 0;
     histp->magic = (unsigned int)-1;	/* sanity */
 }
 
 
 void
-bu_hist_init(struct bu_hist *histp, fastf_t min, fastf_t max, unsigned int nbins)
+bu_hist_init(struct bu_hist *histp, fastf_t min, fastf_t max, size_t nbins)
 {
 
-    if (max <= min)  max = min+1;
+    if (max <= min)
+	max = min+1;
     if (nbins < 1) {
 	nbins = 1;	/* nbins=1 makes for a nice 2-bin binary histogram */
     } else if (nbins > 10000) {
 	nbins = 10000;	/* This is a lot of lines to print out */
     }
 
-    histp->hg_min = floor(min);
-    histp->hg_max = ceil(max);
+    histp->hg_min = lrint(floor(min));
+    histp->hg_max = lrint(ceil(max));
     histp->hg_nbins = nbins;
 
     histp->hg_clumpsize = ((max-min)/nbins);
-    if (histp->hg_clumpsize <= 0)  histp->hg_clumpsize = 1;
+    if (histp->hg_clumpsize <= 0)
+	histp->hg_clumpsize = 1;
 
-    histp->hg_nsamples = 0L;
+    histp->hg_nsamples = 0;
     histp->hg_bins = (long *)bu_calloc(nbins+1, sizeof(long), "bu_hist bins");
     histp->magic = BU_HIST_MAGIC;
 }
@@ -86,7 +88,10 @@ bu_hist_range(register struct bu_hist *hp, fastf_t low, fastf_t high)
 	b = hp->hg_nbins-1;
     else
 	b = (high - hp->hg_min) / hp->hg_clumpsize;
-    if (b >= hp->hg_nbins)  b = hp->hg_nbins-1;
+    if (b >= (long)hp->hg_nbins)
+	b = hp->hg_nbins-1;
+    if (b < 0)
+	b = 0;
 
     for (i=a; i <= b; i++) {
 	hp->hg_bins[i]++;
@@ -101,7 +106,6 @@ bu_hist_range(register struct bu_hist *hp, fastf_t low, fastf_t high)
 HIDDEN void
 hist_pr_suppress(register const struct bu_hist *histp, const char *title, int zero_suppress)
 {
-    register int i;
     long maxcount;
     static const char marks[] = "################################################################";
 #define NMARKS 50
@@ -109,7 +113,8 @@ hist_pr_suppress(register const struct bu_hist *histp, const char *title, int ze
     int percent;
     unsigned int mark_count;
     double val;
-    int nbins;
+    size_t i;
+    size_t nbins;
 
     BU_CK_HIST(histp);
 
@@ -119,17 +124,20 @@ hist_pr_suppress(register const struct bu_hist *histp, const char *title, int ze
 	if (histp->hg_bins[i] > maxcount)
 	    maxcount = histp->hg_bins[i];
     }
-    if (maxcount <= 0)  maxcount = 1;
+    if (maxcount < 1)
+	maxcount = 1;
 
     nbins = histp->hg_nbins;
     if (zero_suppress) {
 	/* Suppress trailing bins with zero counts.  nbins s/b >= 1 */
-	for (; nbins >= 1; nbins--)
-	    if (histp->hg_bins[nbins] > 0)  break;
+	for (; nbins >= 1; nbins--) {
+	    if (histp->hg_bins[nbins] > 0)
+		break;
+	}
     }
 
     /* 12345678 12345678 123 .... */
-    bu_log("\nHistogram of %s\nmin=%g, max=%g, nbins=%ld, clumpsize=%g\n%ld samples collected, highest count was %ld\n\n Value      Count Rel%%|  Bar Graph\n",
+    bu_log("\nHistogram of %s\nmin=%g, max=%g, nbins=%zd, clumpsize=%g\n%ld samples collected, highest count was %ld\n\n Value      Count Rel%%|  Bar Graph\n",
 	   title,
 	   histp->hg_min, histp->hg_max,
 	   histp->hg_nbins, histp->hg_clumpsize,
@@ -140,7 +148,8 @@ hist_pr_suppress(register const struct bu_hist *histp, const char *title, int ze
     if (zero_suppress) {
 	/* Leading bins with zero counts are suppressed. */
 	for (; i <= nbins; i++) {
-	    if (histp->hg_bins[i] > 0)  break;
+	    if (histp->hg_bins[i] > 0)
+		break;
 	}
     }
     for (; i <= nbins; i++) {
@@ -161,8 +170,7 @@ hist_pr_suppress(register const struct bu_hist *histp, const char *title, int ze
 	}
 	val = histp->hg_min + i*histp->hg_clumpsize;
 	bu_log("%8g %8ld %3d |%s\n",
-	       val,
-	       histp->hg_bins[i], percent, buf);
+	       val, histp->hg_bins[i], percent, buf);
     }
 }
 
