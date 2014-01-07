@@ -304,8 +304,9 @@ bu_cv_ntohss(register short int *out, size_t size, register genptr_t in, size_t 
     size_t limit;
     register size_t i;
 
-    limit = (int)(size / sizeof(signed short));
-    if (limit < count) count = limit;
+    limit = size / sizeof(signed short);
+    if (limit < count)
+	count = limit;
 
     for (i=0; i<count; i++) {
 	*out++ = ((signed char *)in)[0] << 8 | ((unsigned char *)in)[1];
@@ -326,8 +327,9 @@ bu_cv_ntohus(register short unsigned int *out, size_t size, register genptr_t in
     size_t limit;
     register size_t i;
 
-    limit = (int)(size / sizeof(unsigned short));
-    if (limit < count) count = limit;
+    limit = size / sizeof(unsigned short);
+    if (limit < count)
+	count = limit;
 
     for (i=0; i<count; i++) {
 	*out++ = ((unsigned char *)in)[0]<<8 |
@@ -344,8 +346,9 @@ bu_cv_ntohsl(register long int *out, size_t size, register genptr_t in, size_t c
     size_t limit;
     register size_t i;
 
-    limit = (int)(size / sizeof(signed long int));
-    if (limit < count) count = limit;
+    limit = size / sizeof(signed long int);
+    if (limit < count)
+	count = limit;
 
     for (i=0; i<count; i++) {
 	*out++ = ((signed char *)in)[0] << 24 |
@@ -366,8 +369,9 @@ bu_cv_ntohul(register long unsigned int *out, size_t size, register genptr_t in,
     size_t limit;
     register size_t i;
 
-    limit = (int)(size / sizeof(unsigned long int));
-    if (limit < count) count = limit;
+    limit = size / sizeof(unsigned long int);
+    if (limit < count)
+	count = limit;
 
     for (i=0; i<count; i++) {
 	*out++ =
@@ -389,7 +393,7 @@ bu_cv_htonss(genptr_t out, size_t size, register short int *in, size_t count)
     register unsigned char *cp = (unsigned char *)out;
     register int val;
 
-    limit = (int)(size / 2);
+    limit = size / 2;
     if (count > limit)  count = limit;
 
     for (i=0; i<count; i++) {
@@ -408,8 +412,9 @@ bu_cv_htonus(genptr_t out, size_t size, register short unsigned int *in, size_t 
     register unsigned char *cp = (unsigned char *)out;
     register int val;
 
-    limit = (int)(size / 2);
-    if (count > limit)  count = limit;
+    limit = size / 2;
+    if (count > limit)
+	count = limit;
 
     for (i=0; i<count; i++) {
 	*cp++ = (val = *in++)>>8;
@@ -427,8 +432,9 @@ bu_cv_htonsl(genptr_t out, size_t size, register long int *in, size_t count)
     register unsigned char *cp = (unsigned char *)out;
     register long val;
 
-    limit = (int)(size / 4);
-    if (count > limit)  count = limit;
+    limit = size / 4;
+    if (count > limit)
+	count = limit;
 
     for (i=0; i<count; i++) {
 	*cp++ = (val = *in++)>>24;
@@ -448,10 +454,9 @@ bu_cv_htonul(genptr_t out, size_t size, register long unsigned int *in, size_t c
     register unsigned char *cp = (unsigned char *)out;
     register long val;
 
-    limit = (int)(size / 4);
-    if (count > limit) {
+    limit = size / 4;
+    if (count > limit)
 	count = limit;
-    }
 
     for (i=0; i<count; i++) {
 	*cp++ = (val = *in++)>>24;
