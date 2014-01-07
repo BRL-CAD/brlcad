@@ -143,7 +143,7 @@ int bu_hsv_to_rgb(fastf_t *hsv, unsigned char *rgb)
 	if (NEAR_ZERO(hue - 360.0, SMALL_FASTF))
 	    hue = 0.0;
 	hue /= 60.0;
-	hue_int = floor((double) hue);
+	hue_int = lrint(floor((double) hue));
 	hue_frac = hue - hue_int;
 	p = val * (1.0 - sat);
 	q = val * (1.0 - (sat * hue_frac));
@@ -162,24 +162,26 @@ int bu_hsv_to_rgb(fastf_t *hsv, unsigned char *rgb)
 	}
     }
 
-    rgb[RED] = float_rgb[RED] * 255;
-    rgb[GRN] = float_rgb[GRN] * 255;
-    rgb[BLU] = float_rgb[BLU] * 255;
+    rgb[RED] = (unsigned char)lrint(float_rgb[RED] * 255.0);
+    rgb[GRN] = (unsigned char)lrint(float_rgb[GRN] * 255.0);
+    rgb[BLU] = (unsigned char)lrint(float_rgb[BLU] * 255.0);
 
     return 1;
 }
 
 
-int bu_str_to_rgb(char *str, unsigned char *rgb)
+int
+bu_str_to_rgb(char *str, unsigned char *rgb)
 {
     int num;
-    int r, g, b;
+    unsigned int r = 0;
+    unsigned int g = 0;
+    unsigned int b = 0;
 
     if (UNLIKELY(!str || !rgb)) {
 	return 0;
     }
 
-    r = g = b = -1;
     while (isspace((int)(*str)))
 	++str;
 
@@ -188,21 +190,24 @@ int bu_str_to_rgb(char *str, unsigned char *rgb)
 	    return 0;
 	sscanf(str, "%02x%02x%02x", (unsigned int *)&r, (unsigned int *)&g, (unsigned int *)&b);
     } else if (isdigit((int)(*str))) {
-	num = sscanf(str, "%d/%d/%d", &r, &g, &b);
+	num = sscanf(str, "%u/%u/%u", &r, &g, &b);
 	if (num == 1) {
-	    sscanf(str, "%d %d %d", &r, &g, &b);
+	    num = sscanf(str, "%u %u %u", &r, &g, &b);
+	    if (num != 3)
+		return 0;
 	}
-	VSET(rgb, r, g, b);
-	if ((r < 0) || (r > 255)
-	    || (g < 0) || (g > 255)
-	    || (b < 0) || (b > 255)) {
-	    return 0;
-	}
+	if (r > 255)
+	    r = 255;
+	if (g > 255)
+	    g = 255;
+	if (b > 255)
+	    b = 255;
     } else {
 	return 0;
     }
 
-    VSET(rgb, r, g, b);
+    VSET(rgb, (fastf_t)r, (fastf_t)g, (fastf_t)b);
+
     return 1;
 }
 
