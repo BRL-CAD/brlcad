@@ -171,8 +171,10 @@ int
 main(int ac, char *av[])
 {
   /*  int next_arg; *//* <= not needed */
-    FILE *in1, *in2;
-    unsigned short *buf1, *buf2;
+    FILE *in1 = NULL;
+    FILE *in2 = NULL;
+    unsigned short *buf1 = NULL;
+    unsigned short *buf2 = NULL;
     size_t count = 0;
     int in_cookie, out_cookie;
     int conv;
