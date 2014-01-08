@@ -1793,6 +1793,63 @@ rt_tor_centroid(point_t *cent, const struct rt_db_internal *ip)
 }
 
 
+/**
+ * R T _ T O R _ D I F F
+ *
+ * Compare two instances of a torus primitive.
+ */
+int
+rt_tor_diff(struct bu_attribute_value_set *UNUSED(orig_diffs), struct bu_attribute_value_set *UNUSED(new_diffs), const struct rt_db_internal *orig_obj, const struct rt_db_internal *new_obj, const struct bn_tol *tol) {
+    int total_diff = 0;
+    struct rt_tor_internal *orig_ip = (struct rt_tor_internal *)orig_obj->idb_ptr;
+    struct rt_tor_internal *new_ip = (struct rt_tor_internal *)new_obj->idb_ptr;
+    RT_TOR_CK_MAGIC(orig_ip);
+    RT_TOR_CK_MAGIC(new_ip);
+
+    if(!VNEAR_EQUAL(orig_ip->v, new_ip->v, tol->dist)) {
+	/* TODO - add bu_avs entries to orig_diffs and new_diffs, since the values differ */
+	total_diff++;
+    }
+
+    if(!VNEAR_EQUAL(orig_ip->h, new_ip->v, tol->dist)) {
+	/* TODO - add bu_avs entries to orig_diffs and new_diffs, since the values differ */
+	total_diff++;
+    }
+
+    if(!NEAR_EQUAL(orig_ip->r_h, new_ip->r_h, tol->dist)) {
+	/* TODO - add bu_avs entries to orig_diffs and new_diffs, since the values differ */
+	total_diff++;
+    }
+
+    if(!NEAR_EQUAL(orig_ip->r_a, new_ip->r_a, tol->dist)) {
+	/* TODO - add bu_avs entries to orig_diffs and new_diffs, since the values differ */
+	total_diff++;
+    }
+
+    if(!VNEAR_EQUAL(orig_ip->a, new_ip->a, tol->dist)) {
+	/* TODO - add bu_avs entries to orig_diffs and new_diffs, since the values differ */
+	total_diff++;
+    }
+
+    if(!VNEAR_EQUAL(orig_ip->b, new_ip->b, tol->dist)) {
+	/* TODO - add bu_avs entries to orig_diffs and new_diffs, since the values differ */
+	total_diff++;
+    }
+
+    if(!NEAR_EQUAL(orig_ip->r_b, new_ip->r_b, tol->dist)) {
+	/* TODO - add bu_avs entries to orig_diffs and new_diffs, since the values differ */
+	total_diff++;
+    }
+
+    /* TODO - check extra bu_avs attributes, if any, assigned to primitives.  Need to find
+     * out if avs array in value set container is sorted alphabetically by key (or, if not,
+     * whether we can safely sort them in place as a first step.) This comparison and result
+     * assignment is generic to all objects with attributes and should probably be a libbu
+     * function called by all the primitive diff routines.*/
+
+   return total_diff;
+}
+
 /*
  * Local Variables:
  * mode: C
