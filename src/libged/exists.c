@@ -164,10 +164,10 @@ int db_object_exists_and_non_null(struct exists_data *);
 static int
 compare1(const void *va, const void *vb)
 {
-	const unsigned char *a = va;
-	const unsigned char *b = VTOC(vb);
+    const unsigned char *a = (unsigned char *)va;
+    const unsigned char *b = VTOC(vb);
 
-	return a[0] - b[0];
+    return a[0] - b[0];
 }
 
 static int
