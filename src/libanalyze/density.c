@@ -95,8 +95,8 @@ parse_densities_buffer(char *buf, size_t len, struct density_entry *densities, s
 	    q = last;
 
 	while (idx >= *num_densities) {
-	    densities = bu_realloc(densities, sizeof(struct density_entry)*(*num_densities)*2,
-				   "density entries");
+            densities = (struct density_entry *)bu_realloc(densities, sizeof(struct density_entry)*(*num_densities)*2,
+                                                           "density entries");
 	    *num_densities *= 2;
 	}
 
