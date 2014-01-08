@@ -99,6 +99,68 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* Need to mark and/or otherwise disambiguate grazing hit segments so
+  we can consistently retain ore remove hits without introducing
+  overlaps.  Consider the case of a tgc stacked on top of an arb8,
+  perfectly tangent, and shoot a ray at that point.
+
+   -----   z=2.0
+   |tgc| 
+  -------- z=1.0   <---- shoot a ray through here
+  | arb8 |
+  -------- z=0.0
+
+  There are two concerns: 1) a ray should never pass through the two
+  without either either or both and 2) a convention that precludes
+  forcing the user to "nudge" them apart by some arbitrary epsilon is
+  desired for usability (it's intuitive and common for users to model
+  two object with "perfect tangency")
+
+  If we hit both, an overlap will ensue unless these objects are
+  unioned.  This is undesirable.  If we miss both, that's devastating.
+
+  In order to only hit one, a consistent grazing policy must be
+  applied such that grazing points on one "side" of an object are
+  always keps and grazing hits on the other "side" are always thrown
+  away.  The proposed method, similar to handling special case
+  grazings with a Breseham line painter algorithm, is to consistently
+  consider grazes with a procedure:
+
+  1) calculate the ray intersection, detect whether hit is grazing
+  (defined as a hit being barely in/on the surface either through a
+  point, edge or even down a surface)
+
+  2) calculate a hit normal.  it may be desirable to average both the
+  in/out hit points to get more of a "practical" surface normal.
+
+  3) calculate the ray of reflection.  use the surface normal and ray
+  of intersection to calculate our reflection direction.
+
+  4) determine which plane of a globally bounding rpp the reflected
+  ray would intersect with.
+
+  5) if we hit the front, right, or bottom face, the grazing is kept,
+  but if we hit the back, left, or top face, the grazing is ignored.
+  in ray-view projected 2D, this corresponds with keeping the grazing
+  if the reflection is pointing up or to the left and discarding if
+  pointing down or to the right.
+
+  This should result in consistent grazing behavior that addresses the
+  above case: we consistently hit the tgc but not the arb8 and there
+  are no overlaps requiring modeler intervention.  The main problem
+  with this approach, however, is calculating an appropriate surface
+  normal for edge and face grazings can be difficult for some objects.
+
+  In the case above, we do not get a hit on the tgc's bottom ellipse,
+  for example, instead getting two hits near the edge of the side.
+  Similarly, we hit the left and right arb8 faces, not the top face
+  even though that is what we are conceptually grazing through.  
+
+  One possibility to address that difficulty is to simply report all
+  grazing hits, but mark them as grazing, and let rt_shootray() sort
+  it out by sampling a 3x3 pattern that determines if we're grazing
+  the "top/left" or "bottom/right" side of a surface.
+
 * fix the redblack tree callback function signatures.  they're
   declared and handled as taking (void) but they actually take a
   pointer and an int.  need to create a proper void* data parameter or
