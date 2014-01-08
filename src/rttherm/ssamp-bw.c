@@ -193,7 +193,7 @@ main(int argc, char **argv)
     }
 
     /* Convert each of the spectral sample curves into scalar values */
-    pixels = bu_malloc(sizeof(fastf_t) * width * height, "fastf_t pixels");
+    pixels = (fastf_t *)bu_malloc(sizeof(fastf_t) * width * height, "fastf_t pixels");
 
     for (i = width*height-1; i >= 0; i--) {
 	struct bn_tabdata *sp;
