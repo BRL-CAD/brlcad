@@ -46,7 +46,9 @@
 #  undef X_NOT_POSIX
 #endif
 
+#define class FB_VISUAL_CLASS_VAR
 #include <X11/Xlib.h>
+#undef class
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
 #include <X11/Xatom.h>		/* for XA_RGB_BEST_MAP */

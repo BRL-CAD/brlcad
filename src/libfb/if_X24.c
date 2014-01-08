@@ -66,8 +66,10 @@
 #  undef X_NOT_STDC_ENV
 #  undef X_NOT_POSIX
 #endif
+#define class FB_VISUAL_CLASS_VAR
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+#undef class
 #include <X11/Xatom.h>
 
 #include <ctype.h>

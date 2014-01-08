@@ -61,7 +61,9 @@
 #define access acs
 #define remainder rem
 #ifdef HAVE_GL_GLX_H
+#  define class FB_VISUAL_CLASS_VAR
 #  include <GL/glx.h>
+#  undef class
 #endif
 #undef remainder
 #undef access
