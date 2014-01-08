@@ -100,24 +100,37 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
 * Need to mark or otherwise disambiguate grazing hit segments so we
-  can consistently retain ore remove hits without introducing
-  overlaps.  Consider the case of a tgc stacked on top of an arb8,
-  perfectly tangent, and shoot a ray at that point.
+  can consistently retain or remove hits without introducing overlaps.
+  Consider the case of a tgc stacked on top of an arb8, perfectly
+  tangent, and shoot a ray at that point:
+ 
+                                   -----   z=2.0
+                                   |tgc| 
+  shoot a ray through here --->   -------- z=1.0   <--- or here
+                                  | arb8 |
+                                  -------- z=0.0
 
-   -----   z=2.0
-   |tgc| 
-  -------- z=1.0   <---- shoot a ray through here
-  | arb8 |
-  -------- z=0.0
+  Here are the primary concerns:
 
-  There are two concerns: 1) a ray should never pass through the two
-  without either either or both and 2) a convention that precludes
-  forcing the user to "nudge" them apart by some arbitrary epsilon is
-  desired for usability (it's intuitive and common for users to model
-  two object with "perfect tangency").
+  A) solidity: a ray should never pass through the two without one or
+  both evaluating to a hit,
+
+  B) usability: a convention that precludes forcing the user to
+  "nudge" them apart by some arbitrary epsilon is desired (it's
+  intuitive and common for users to model two objects with "perfect
+  tangency"),
+
+  C) deterministic: firing a ray should give the same result every
+  time that same ray is fired, and,
+
+  D) bidirectional: a ray fired in one direction should evaluate to
+  the same result if fired from the opposite direction along the same
+  path (view independence).
 
   If we hit both, an overlap will ensue unless these objects are
-  unioned.  This is undesirable.  If we miss both, that's devastating.
+  unioned.  This is undesirable.  If we miss both, slipping through
+  the hairline "crack", it can be devastating for analysis and result
+  in raytrace speckling.
 
   In order to only hit one, a consistent grazing policy must be
   applied such that grazing points on one "side" of an object are
@@ -139,11 +152,27 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   4) Determine which plane of a globally bounding rpp the reflected
   ray would intersect with.
 
-  5) If we hit the front, right, or bottom face, the grazing is kept,
-  but if we hit the back, left, or top face, the grazing is ignored.
-  In ray-view projected 2D, this corresponds with keeping the grazing
-  if the reflection is pointing up or to the left and discarding if
-  pointing down or to the right.
+  5) If the reflected ray hits the front, right, or bottom face, the
+  grazing is kept, but if it reflects onto the back, left, or top
+  face, the grazing is ignored.  In ray-view projected 2D, this
+  corresponds with keeping the grazing if the reflection is pointing
+  up or to the left and discarding if pointing down or to the right.
+
+                                   discard top/left/rear
+                rear              keep bottom/right/front
+            .____________.
+            |\           |\ t              discard
+            | \          | \ o           ._________.
+          l |  \         |  \ p          |/////////|
+          e |   o____________o          d|//view// |
+          f |   |        |   |          i|//of///  |
+          t |   |        |   | r        s|//ray/   |k
+        b   .___|________.   | i        c|////+    |e
+         o  \   |         \  | g        a|////     |e
+          t  \  |          \ | h        r|///      |p
+           t  \ |           \| t        d|//       |
+            o  \o____________o           ./________.
+             m     front                     keep      
 
   This should result in consistent grazing behavior that addresses the
   above case: we consistently hit the tgc but not the arb8 and there
