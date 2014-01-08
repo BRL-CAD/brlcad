@@ -37,8 +37,8 @@
 #include "raytrace.h"
 #include "nurb.h"
 
-
-extern fastf_t spl_crv_flat();
+/* This doesn't seem to be used anymore: */
+/* extern fastf_t spl_crv_flat(); */
 
 
 int

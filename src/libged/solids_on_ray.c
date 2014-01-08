@@ -270,7 +270,7 @@ ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[])
 
     /* allocate space for display top-levels */
     args = 2 + ged_count_tops(gedp);
-    solids_on_ray_cmd_vec = bu_calloc(1, sizeof(char *) * args, "alloca solids_on_ray_cmd_vec");
+    solids_on_ray_cmd_vec = (char **)bu_calloc(args, sizeof(char *), "alloca solids_on_ray_cmd_vec");
 
     /*
      * Build a list of all the top-level objects currently displayed

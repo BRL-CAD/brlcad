@@ -1198,8 +1198,8 @@ superell_surf_area_general(const struct rt_superell_internal *sip, vect_t mags, 
        to be stored */
     int row_length = sizeof(point_t) * (M_PI / side_length + 1);
 
-    point_t *row1 = bu_malloc(row_length, "superell_surf_area_general");
-    point_t *row2 = bu_malloc(row_length, "superell_surf_area_general");
+    point_t *row1 = (point_t *)bu_malloc(row_length, "superell_surf_area_general");
+    point_t *row2 = (point_t *)bu_malloc(row_length, "superell_surf_area_general");
 
     int idx = 0;
 

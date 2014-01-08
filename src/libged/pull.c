@@ -186,7 +186,7 @@ pull_leaf(struct db_i *dbip, struct directory *dp, genptr_t mp)
     if (!(dp->d_flags & RT_DIR_SOLID))
         return;
     if (rt_db_get_internal(&intern, dp, dbip, mat, &rt_uniresource) < 0) {
-        bu_vls_printf(mp, "Database read error, aborting\n");
+        bu_vls_printf((struct bu_vls *)mp, "Database read error, aborting\n");
         return;
     }
 

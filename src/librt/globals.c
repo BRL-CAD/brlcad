@@ -40,11 +40,11 @@ struct rt_g RTG = RT_G_INIT_ZERO;
 
 struct resource rt_uniresource;
 
-void (*nmg_plot_anim_upcall)();
+void (*nmg_plot_anim_upcall)(void);
 
-void (*nmg_vlblock_anim_upcall)();
+void (*nmg_vlblock_anim_upcall)(void);
 
-void (*nmg_mged_debug_display_hack)();
+void (*nmg_mged_debug_display_hack)(void);
 
 double nmg_eue_dist = 0.05;
 

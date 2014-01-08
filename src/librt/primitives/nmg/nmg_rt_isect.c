@@ -2142,8 +2142,8 @@ isect_ray_planar_face(struct ray_data *rd, struct faceuse *fu_p)
     else
 	pt_class = nmg_class_pt_fu_except(plane_pt, fu_p,
 					  (struct loopuse *)NULL,
-					  (void (*)(void))eu_touch_func,
-					  (void (*)(void))vu_touch_func,
+					  (void (*)(struct edgeuse *, point_t, const char *))eu_touch_func,
+					  (void (*)(struct vertexuse *, point_t, const char *))vu_touch_func,
 					  (char *)rd,
 					  NMG_FPI_PERGEOM,
 					  0,

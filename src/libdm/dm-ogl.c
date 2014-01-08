@@ -2209,7 +2209,7 @@ ogl_getDisplayImage(struct dm *dmp, unsigned char **image)
 	width = dmp->dm_width;
 	height = dmp->dm_height;
 
-	pixels = bu_calloc(width * height, sizeof(GLuint), "pixels");
+	pixels = (GLuint *)bu_calloc(width * height, sizeof(GLuint), "pixels");
 
 	{
 	    glReadBuffer(GL_FRONT);

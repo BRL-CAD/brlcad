@@ -473,7 +473,7 @@ nmgbld(void)
     /* Allocate storage for external v5 form of the body */
     BU_EXTERNAL_INIT(&ext);
     ext.ext_nbytes = SIZEOF_NETWORK_LONG + 26*SIZEOF_NETWORK_LONG + 128 * granules;
-    ext.ext_buf = bu_malloc(ext.ext_nbytes, "nmg ext_buf");
+    ext.ext_buf = (uint8_t *)bu_malloc(ext.ext_nbytes, "nmg ext_buf");
     *(uint32_t *)ext.ext_buf = htonl(version);
     BU_ASSERT_LONG(version, ==, 1);	/* DISK_MODEL_VERSION */
 

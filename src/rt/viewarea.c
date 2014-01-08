@@ -211,7 +211,7 @@ increment_assembly_counter(register struct area *cell, const char *path, area_ty
     assembly_head_ptr = cell->assembly;
 
     l = strlen(path);
-    buffer = bu_calloc((unsigned int)l+1, sizeof(char), "increment_assembly_counter buffer allocation");
+    buffer = (char *)bu_calloc((unsigned int)l+1, sizeof(char), "increment_assembly_counter buffer allocation");
     bu_strlcpy(buffer, path, l+1);
 
     /* trim off the region name */

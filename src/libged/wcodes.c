@@ -113,7 +113,7 @@ wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, size_t pathp
     if (comb->tree) {
 	if (pathpos >= path_capacity) {
 	    path_capacity += PATH_STEP;
-	    path = bu_realloc(path, sizeof(struct directory *) * path_capacity, "realloc path bigger");
+	    path = (struct directory **)bu_realloc(path, sizeof(struct directory *) * path_capacity, "realloc path bigger");
 	}
 	path[pathpos] = dp;
 	db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, wcodes_printnode,
@@ -157,7 +157,7 @@ ged_wcodes(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    path = bu_calloc(PATH_STEP, sizeof(struct directory *), "alloc initial path");
+    path = (struct directory **)bu_calloc(PATH_STEP, sizeof(struct directory *), "alloc initial path");
     path_capacity = PATH_STEP;
 
     for (i = 2; i < argc; ++i) {

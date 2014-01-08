@@ -187,7 +187,7 @@ X_fb_open(void)
 
     *fbp = X24_interface; /* struct copy */
 
-    fbp->if_name = bu_malloc((unsigned)strlen(X_name)+1, "if_name");
+    fbp->if_name = (char *)bu_malloc((unsigned)strlen(X_name)+1, "if_name");
     bu_strlcpy(fbp->if_name, X_name, strlen(X_name)+1);
 
     /* Mark OK by filling in magic number */

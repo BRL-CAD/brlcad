@@ -560,7 +560,7 @@ dgo_eraseobjpath(struct dg_obj *dgop,
 	if (*av[ac-1] == '\0')
 	    --ac;
 
-	dpp = bu_calloc(ac+1, sizeof(struct directory *), "eraseobjpath: directory pointers");
+	dpp = (struct directory **)bu_calloc(ac+1, sizeof(struct directory *), "eraseobjpath: directory pointers");
 	for (j = 0; j < ac; ++j)
 	    if ((dp = db_lookup(dgop->dgo_wdbp->dbip, av[j], noisy)) != RT_DIR_NULL)
 		dpp[j] = dp;
@@ -886,7 +886,7 @@ dgo_build_dpp(struct dg_obj *dgop,
      * Next, we build an array of directory pointers that
      * correspond to the object's path.
      */
-    dpp = bu_calloc(ac+1, sizeof(struct directory *), "dgo_build_dpp: directory pointers");
+    dpp = (struct directory **)bu_calloc(ac+1, sizeof(struct directory *), "dgo_build_dpp: directory pointers");
     for (i = 0; i < ac; ++i) {
 	if ((dp = db_lookup(dgop->dgo_wdbp->dbip, av[i], 0)) != RT_DIR_NULL)
 	    dpp[i] = dp;
@@ -3872,7 +3872,7 @@ dgo_bot_check_leaf(struct db_tree_state *tsp,
 		dgcdp->shaded_mode_override = -1;
 		dgcdp->dmode = DGO_WIREFRAME;
 
-		dgo_drawtrees(dgcdp->dgop, ac, av, 1, client_data);
+		dgo_drawtrees(dgcdp->dgop, ac, av, 1, (struct dg_client_data *)client_data);
 
 		/* restore shaded mode states */
 		dgcdp->dgop->dgo_shaded_mode = save_dgo_shaded_mode;
@@ -3899,7 +3899,7 @@ dgo_bot_check_leaf(struct db_tree_state *tsp,
 		    (void)rt_pg_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
 		    dgo_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
 		} else
-		    dgo_drawtrees(dgcdp->dgop, ac, av, 3, client_data);
+		    dgo_drawtrees(dgcdp->dgop, ac, av, 3, (struct dg_client_data *)client_data);
 	    } else {
 		/* save shaded mode states */
 		int save_dgo_shaded_mode = dgcdp->dgop->dgo_shaded_mode;
@@ -3911,7 +3911,7 @@ dgo_bot_check_leaf(struct db_tree_state *tsp,
 		dgcdp->shaded_mode_override = -1;
 		dgcdp->dmode = DGO_WIREFRAME;
 
-		dgo_drawtrees(dgcdp->dgop, ac, av, 1, client_data);
+		dgo_drawtrees(dgcdp->dgop, ac, av, 1, (struct dg_client_data *)client_data);
 
 		/* restore shaded mode states */
 		dgcdp->dgop->dgo_shaded_mode = save_dgo_shaded_mode;

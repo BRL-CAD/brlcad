@@ -589,14 +589,14 @@ render_shader_load_plugin(const char *filename)
 {
 #ifdef HAVE_DLFCN_H
     void *lh;	/* library handle */
-    int *init_val;
+    void *init_val;
     int (*init)(render_t *, const char *);
     char *name;
     struct render_shader_s *s;
 
     lh = bu_dlopen(filename, RTLD_LOCAL|RTLD_LAZY);
 
-    if(lh == NULL) {
+    if (lh == NULL) {
 	bu_log("Faulty plugin %s: %s\n", filename, bu_dlerror());
 	return NULL;
     }

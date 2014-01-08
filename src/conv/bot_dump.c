@@ -69,7 +69,7 @@ main(int argc, char *argv[])
 	bu_exit(1, usage, argv[0]);
     }
 
-    av = bu_calloc(argc, sizeof(char *), "alloc argv copy");
+    av = (const char **)bu_calloc(argc, sizeof(char *), "alloc argv copy");
 
     db_index = bu_optind;
     for (i = j = 0; i < argc; ++i) {

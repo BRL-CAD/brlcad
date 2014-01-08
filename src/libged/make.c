@@ -613,7 +613,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	pnts_ip->scale = 0;
 
 	BU_ALLOC(pnts_ip->point, struct pnt);
-	headPoint = pnts_ip->point;
+	headPoint = (struct pnt *)pnts_ip->point;
 	BU_LIST_INIT(&headPoint->l);
 	BU_ALLOC(point, struct pnt);
 	VSET(point->v, origin[X], origin[Y], origin[Z]);

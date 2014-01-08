@@ -561,7 +561,7 @@ parse_error(struct ged *gedp, struct bu_vls *str, char *error)
 	bu_vls_printf(gedp->ged_result_str, "%s:%d %s\n", lex_name, lex_line, error);
 	return;
     }
-    text = bu_malloc(str->vls_offset+2, "error pointer");
+    text = (char *)bu_malloc(str->vls_offset+2, "error pointer");
     for (i=0; i<str->vls_offset; i++) {
 	text[i]=(str->vls_str[i] == '\t')? '\t' : '-';
     }
@@ -3058,7 +3058,7 @@ static char *
 hold_point_to_string(struct ged *gedp, struct hold_point *hp)
 {
 #define HOLD_POINT_TO_STRING_LEN 1024
-    char *text = bu_malloc(HOLD_POINT_TO_STRING_LEN, "hold_point_to_string");
+    char *text = (char *)bu_malloc(HOLD_POINT_TO_STRING_LEN, "hold_point_to_string");
     char *path;
     vect_t loc = VINIT_ZERO;
 

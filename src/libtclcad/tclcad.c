@@ -160,7 +160,7 @@ Tclcad_Init(Tcl_Interp *interp)
     /* initialize command history objects */
     Cho_Init(interp);
 
-    Tcl_PkgProvide(interp,  "Tclcad", (ClientData)brlcad_version());
+    Tcl_PkgProvide(interp, "Tclcad", brlcad_version());
 
     (void)library_initialized(1);
 

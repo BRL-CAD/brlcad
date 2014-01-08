@@ -120,13 +120,17 @@ if(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
   CHECK_C_FLAG(Wshadow)
   CHECK_CXX_FLAG(Wshadow)
 
-  # make sure we're not dangerously casting return types
+  # make sure we're not dangerously casting return types. C-only for
+  # gcc, but maybe not for clang or others.
   CHECK_C_FLAG(Wbad-function-cast)
   CHECK_CXX_FLAG(Wbad-function-cast)
 
   # this makes sure we don't declare variables mid-scope, helps build on Windows
   CHECK_C_FLAG(Wdeclaration-after-statement)
   CHECK_CXX_FLAG(Wdeclaration-after-statement)
+
+  # C-only: this makes sure C sources will compile as C++ code
+  CHECK_C_FLAG(Wc++-compat)
 
   # FIXME: this one is a lot of work, a work-in-progress, but good to have eventually
   # this makes sure prototypes are properly declared, no k&r and no assuming () means (void)

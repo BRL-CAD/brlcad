@@ -181,30 +181,27 @@ compare1(const void *va, const void *vb)
 static int
 compare3(const void *va, const void *vb)
 {
-    const char *a = va;
+    const char *a = (const char *)va;
     const char *b = (const char *)VTOC(vb);
     return bu_strcmp(a, b);
 }
 
 
-static struct t_op const *
+static const struct t_op *
 findop(const char *s)
 {
     if (s[0] == '-') {
 	if (s[1] == '\0')
 	    return NULL;
 	if (s[2] == '\0')
-	    return bsearch(s + 1, mop2, __arraycount(mop2),
-			   sizeof(*mop2), compare1);
+	    return (const struct t_op *)bsearch(s + 1, mop2, __arraycount(mop2), sizeof(*mop2), compare1);
 	else if (s[4] != '\0')
 	    return NULL;
 	else
-	    return bsearch(s + 1, mop4, __arraycount(mop4),
-			   sizeof(*mop4), compare3);
+	    return (const struct t_op *)bsearch(s + 1, mop4, __arraycount(mop4), sizeof(*mop4), compare3);
     } else {
 	if (s[1] == '\0')
-	    return bsearch(s, cop, __arraycount(cop), sizeof(*cop),
-			   compare1);
+	    return (const struct t_op *)bsearch(s, cop, __arraycount(cop), sizeof(*cop), compare1);
 	else if (BU_STR_EQUAL(s, cop2[0].op_text))
 	    return cop2;
 	else

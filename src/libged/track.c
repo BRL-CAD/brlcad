@@ -185,9 +185,9 @@ _ged_track(struct bu_vls *log_str, struct rt_wdb *wdbp, const char *argv[])
     grpname = bu_strdup(argv[arg]);
     grpname_len = (int)strlen(grpname);
     len = grpname_len + 1 + extraChars;
-    solname = bu_malloc(len, "solid name");
-    regname = bu_malloc(len, "region name");
-    sol.s_name = bu_malloc(len, "sol.s_name");
+    solname = (char *)bu_malloc(len, "solid name");
+    regname = (char *)bu_malloc(len, "region name");
+    sol.s_name = (char *)bu_malloc(len, "sol.s_name");
 
     /* first road wheel X */
     ++arg;

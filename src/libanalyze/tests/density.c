@@ -51,14 +51,14 @@ main(int argc, char **argv)
       bu_exit(EXIT_FAILURE, NULL);
   }
 
-  buf = bu_malloc(sb.st_size+1, "density buffer");
+  buf = (char *)bu_malloc(sb.st_size+1, "density buffer");
   ret = fread(buf, sb.st_size, 1, fp);
   if (ret != 1) {
     bu_log("Error reading file %s\n", argv[1]);
     bu_exit(EXIT_FAILURE, NULL);
   }
 
-  densities = bu_calloc(num_densities, sizeof(struct density_entry), "density entries");
+  densities = (struct density_entry *)bu_calloc(num_densities, sizeof(struct density_entry), "density entries");
 
   ret = parse_densities_buffer(buf, (unsigned long)sb.st_size, densities, NULL, &num_densities);
 

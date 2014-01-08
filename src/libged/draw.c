@@ -115,7 +115,7 @@ draw_check_leaf(struct db_tree_state *tsp,
 		dgcdp->shaded_mode_override = -1;
 		dgcdp->dmode = _GED_WIREFRAME;
 
-		_ged_drawtrees(dgcdp->gedp, ac, av, 1, client_data);
+		_ged_drawtrees(dgcdp->gedp, ac, av, 1, (struct _ged_client_data *)client_data);
 
 		/* restore shaded mode states */
 		dgcdp->gedp->ged_gdp->gd_shaded_mode = save_shaded_mode;
@@ -149,7 +149,7 @@ draw_check_leaf(struct db_tree_state *tsp,
 		    (void)rt_pg_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
 		    _ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
 		} else
-		    _ged_drawtrees(dgcdp->gedp, ac, av, 3, client_data);
+		    _ged_drawtrees(dgcdp->gedp, ac, av, 3, (struct _ged_client_data *)client_data);
 	    } else {
 		/* save shaded mode states */
 		int save_shaded_mode = dgcdp->gedp->ged_gdp->gd_shaded_mode;
@@ -161,7 +161,7 @@ draw_check_leaf(struct db_tree_state *tsp,
 		dgcdp->shaded_mode_override = -1;
 		dgcdp->dmode = _GED_WIREFRAME;
 
-		_ged_drawtrees(dgcdp->gedp, ac, av, 1, client_data);
+		_ged_drawtrees(dgcdp->gedp, ac, av, 1, (struct _ged_client_data *)client_data);
 
 		/* restore shaded mode states */
 		dgcdp->gedp->ged_gdp->gd_shaded_mode = save_shaded_mode;

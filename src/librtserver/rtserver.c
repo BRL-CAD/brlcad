@@ -91,7 +91,7 @@ static pthread_mutex_t apps_mutex = PTHREAD_MUTEX_INITIALIZER;
 	    _p = (struct application *)BU_PTBL_GET( &apps, BU_PTBL_LEN( &apps )-1 ); \
 	    bu_ptbl_trunc( &apps, BU_PTBL_LEN( &apps )-1 );		\
 	    pthread_mutex_unlock( &apps_mutex );			\
-	    bu_vlb_reset(_p->a_uptr);					\
+	    bu_vlb_reset((struct bu_vlb *)_p->a_uptr);					\
 	} else {							\
 	    int app_no = app_count++;					\
 	    pthread_mutex_unlock( &apps_mutex );			\
@@ -99,7 +99,7 @@ static pthread_mutex_t apps_mutex = PTHREAD_MUTEX_INITIALIZER;
 	    RT_APPLICATION_INIT(_p);					\
 	    _p->a_rt_i = myrtip;					\
 	    BU_ALLOC(_p->a_uptr, struct bu_vlb); \
-	    bu_vlb_init(_p->a_uptr);					\
+	    bu_vlb_init((struct bu_vlb *)_p->a_uptr);					\
 	    BU_ALLOC(_p->a_resource, struct resource); \
 	    rt_init_resource( _p->a_resource, app_no, _p->a_rt_i );	\
 	    _p->a_hit = rts_hit;					\
@@ -678,7 +678,7 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *UNUSED
 	bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_DOUBLE*2);
 
 	/* get the region index from the hash table */
-	entry = Tcl_FindHashEntry( rts_geometry[sessionid]->rts_rtis[0]->rtrti_region_names, (ClientData)rp->reg_name );
+	entry = Tcl_FindHashEntry( rts_geometry[sessionid]->rts_rtis[0]->rtrti_region_names, (const char *)rp->reg_name );
 	regionIndex = (CLIENTDATA_INT)Tcl_GetHashValue( entry );
 
 	/* write region index to buffer */
@@ -804,7 +804,7 @@ rts_shootray( struct application *ap )
 
     /* write the number of rays to the byte array */
     *(uint32_t *)buffer = htonl(i);
-    bu_vlb_write(ap->a_uptr, buffer, SIZEOF_NETWORK_LONG);
+    bu_vlb_write((struct bu_vlb *)ap->a_uptr, buffer, SIZEOF_NETWORK_LONG);
 
     /* actually shoot the ray */
     rt_shootray( ap );
@@ -1302,7 +1302,7 @@ Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_shootRay( JNIEnv *env, j
     /* make session id available for the hit routine */
     ap->a_user = sessionId;
 
-    vlb = ap->a_uptr;
+    vlb = (struct bu_vlb *)ap->a_uptr;
 
     /* write the number of rays to the byte array (one in this case) */
     *(uint32_t *)buffer = htonl(rayCount);
@@ -1452,7 +1452,7 @@ JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWra
     rayCount = (*env)->GetArrayLength(env, aRays);
 
     /* write the number of rays to the byte array */
-    vlb = ap->a_uptr;
+    vlb = (struct bu_vlb *)ap->a_uptr;
     *(uint32_t *)buffer = htonl(rayCount);
     bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_LONG);
 
@@ -1753,7 +1753,7 @@ JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWra
     vlb = (struct bu_vlb *)ap->a_uptr;
 
     /* write the number of rays to the byte array */
-    vlb = ap->a_uptr;
+    vlb = (struct bu_vlb *)ap->a_uptr;
     *(uint32_t *)buffer = htonl(rayCount);
     bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_LONG);
 

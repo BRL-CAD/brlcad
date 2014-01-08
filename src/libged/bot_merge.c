@@ -59,7 +59,7 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    bots = bu_calloc(argc, sizeof(struct rt_bot_internal), "bot internal");
+    bots = (struct rt_bot_internal **)bu_calloc(argc, sizeof(struct rt_bot_internal *), "bot internal");
 
     /* create a new bot */
     BU_ALLOC(bots[0], struct rt_bot_internal);
@@ -132,12 +132,12 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-    bots[0]->vertices = bu_calloc(bots[0]->num_vertices*3, sizeof(fastf_t), "verts");
-    bots[0]->faces = bu_calloc(bots[0]->num_faces*3, sizeof(int), "verts");
+    bots[0]->vertices = (fastf_t *)bu_calloc(bots[0]->num_vertices*3, sizeof(fastf_t), "verts");
+    bots[0]->faces = (int *)bu_calloc(bots[0]->num_faces*3, sizeof(int), "verts");
 
     if (bots[0]->mode == RT_BOT_PLATE || bots[0]->mode == RT_BOT_PLATE_NOCOS) {
-	bots[0]->thickness = bu_calloc(bots[0]->num_faces, sizeof(fastf_t), "thickness");
-	bots[0]->face_mode = bu_calloc(bots[0]->num_faces, sizeof(struct bu_bitv), "face_mode");
+	bots[0]->thickness = (fastf_t *)bu_calloc(bots[0]->num_faces, sizeof(fastf_t), "thickness");
+	bots[0]->face_mode = (struct bu_bitv *)bu_calloc(bots[0]->num_faces, sizeof(struct bu_bitv), "face_mode");
     }
 
     avail_vert = 0;

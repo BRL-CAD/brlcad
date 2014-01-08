@@ -439,7 +439,7 @@ ph_dirbuild(struct pkg_conn *UNUSED(pc), char *buf)
 	if (isspace((int)buf[n]))
 	    max_argc++;
     }
-    argv = bu_calloc(max_argc+1, sizeof(char *), "alloc argv");
+    argv = (char **)bu_calloc(max_argc+1, sizeof(char *), "alloc argv");
 
     if ((bu_argv_from_string(argv, max_argc, buf)) <= 0)  {
 	/* No words in input */
@@ -511,7 +511,7 @@ ph_gettrees(struct pkg_conn *UNUSED(pc), char *buf)
 	if (isspace((int)buf[n]))
 	    max_argc++;
     }
-    argv = bu_calloc(max_argc+1, sizeof(char *), "alloc argv");
+    argv = (char **)bu_calloc(max_argc+1, sizeof(char *), "alloc argv");
 
     if ((argc = bu_argv_from_string(argv, max_argc, buf)) <= 0)  {
 	/* No words in input */

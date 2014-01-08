@@ -340,7 +340,7 @@ main(int ac, char *av[])
 
 	ged_tops(gp, 2, tops);
 
-	topobjs = bu_calloc(1, bu_vls_strlen(gp->ged_result_str), "alloc topobjs");
+	topobjs = (char **)bu_calloc(1, bu_vls_strlen(gp->ged_result_str), "alloc topobjs");
 	c = bu_argv_from_string(topobjs, bu_vls_strlen(gp->ged_result_str), bu_vls_addr(gp->ged_result_str));
 	objs = bu_dup_argv(c, (const char **)topobjs);
 	bu_free(topobjs, "free topobjs");

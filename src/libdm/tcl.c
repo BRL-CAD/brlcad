@@ -126,8 +126,10 @@ register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds)
 
 
 int
-Dm_Init(void *interp)
+Dm_Init(void *interpreter)
 {
+    Tcl_Interp *interp = (Tcl_Interp *)interpreter;
+
     static struct bu_cmdtab cmdtab[] = {
 	{"dm_validXType", dm_validXType_tcl},
 	{"dm_bestXType", dm_bestXType_tcl},

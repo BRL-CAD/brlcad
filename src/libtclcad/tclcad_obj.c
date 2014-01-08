@@ -10844,8 +10844,8 @@ to_prim_label(struct ged *gedp,
     if (current_top->to_gop->go_prim_label_list_size < 1)
 	return GED_OK;
 
-    current_top->to_gop->go_prim_label_list = bu_calloc(current_top->to_gop->go_prim_label_list_size,
-							sizeof(struct bu_vls), "prim_label");
+    current_top->to_gop->go_prim_label_list = (struct bu_vls *)bu_calloc(current_top->to_gop->go_prim_label_list_size,
+									 sizeof(struct bu_vls), "prim_label");
     for (i = 0; i < current_top->to_gop->go_prim_label_list_size; ++i) {
 	bu_vls_init(&current_top->to_gop->go_prim_label_list[i]);
 	bu_vls_printf(&current_top->to_gop->go_prim_label_list[i], "%s", argv[i+1]);
@@ -12797,7 +12797,7 @@ to_view_func_common(struct ged *gedp,
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
-    av = bu_calloc(argc+1, sizeof(char *), "alloc av copy");
+    av = (char **)bu_calloc(argc+1, sizeof(char *), "alloc av copy");
 
     /* must be wanting help */
     if (argc == 1) {
@@ -12903,7 +12903,7 @@ to_dm_func(struct ged *gedp,
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
-    av = bu_calloc(argc+1, sizeof(char *), "alloc av copy");
+    av = (char **)bu_calloc(argc+1, sizeof(char *), "alloc av copy");
 
     /* must be wanting help */
     if (argc == 1) {
@@ -13009,7 +13009,7 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 	case DM_TYPE_X:
 	    *gdvp->gdv_fbs.fbs_fbp = X24_interface; /* struct copy */
 
-	    gdvp->gdv_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen("/dev/X")+1, "if_name");
+	    gdvp->gdv_fbs.fbs_fbp->if_name = (char *)bu_malloc((unsigned)strlen("/dev/X")+1, "if_name");
 	    bu_strlcpy(gdvp->gdv_fbs.fbs_fbp->if_name, "/dev/X", strlen("/dev/X")+1);
 
 	    /* Mark OK by filling in magic number */
@@ -13055,7 +13055,7 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 	case DM_TYPE_OGL:
 	    *gdvp->gdv_fbs.fbs_fbp = ogl_interface; /* struct copy */
 
-	    gdvp->gdv_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen("/dev/ogl")+1, "if_name");
+	    gdvp->gdv_fbs.fbs_fbp->if_name = (char *)bu_malloc((unsigned)strlen("/dev/ogl")+1, "if_name");
 	    bu_strlcpy(gdvp->gdv_fbs.fbs_fbp->if_name, "/dev/ogl", strlen("/dev/ogl")+1);
 
 	    /* Mark OK by filling in magic number */

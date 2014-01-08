@@ -39,6 +39,7 @@
 /* private headers */
 #include "brlcad_version.h"
 
+#define RT_FUNC_TCL_CAST(_func) ((int (*)(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv))_func)
 
 static int rt_tcl_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
 static int rt_tcl_rt_onehit(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
@@ -57,19 +58,19 @@ static int rt_tcl_rt_set(ClientData clientData, Tcl_Interp *interp, int argc, co
 
 struct dbcmdstruct {
     char *cmdname;
-    int (*cmdfunc)();
+    int (*cmdfunc)(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
 };
 
 
 static struct dbcmdstruct rt_tcl_rt_cmds[] = {
-    {"shootray",	(int (*)())rt_tcl_rt_shootray},
-    {"onehit",		(int (*)())rt_tcl_rt_onehit},
-    {"no_bool",		(int (*)())rt_tcl_rt_no_bool},
-    {"check",		(int (*)())rt_tcl_rt_check},
-    {"prep",		(int (*)())rt_tcl_rt_prep},
-    {"cutter",		(int (*)())rt_tcl_rt_cutter},
-    {"set",		(int (*)())rt_tcl_rt_set},
-    {(char *)0,		(int (*)())0}
+    {"shootray",	RT_FUNC_TCL_CAST(rt_tcl_rt_shootray)},
+    {"onehit",		RT_FUNC_TCL_CAST(rt_tcl_rt_onehit)},
+    {"no_bool",		RT_FUNC_TCL_CAST(rt_tcl_rt_no_bool)},
+    {"check",		RT_FUNC_TCL_CAST(rt_tcl_rt_check)},
+    {"prep",		RT_FUNC_TCL_CAST(rt_tcl_rt_prep)},
+    {"cutter",		RT_FUNC_TCL_CAST(rt_tcl_rt_cutter)},
+    {"set",		RT_FUNC_TCL_CAST(rt_tcl_rt_set)},
+    {(char *)0,		RT_FUNC_TCL_CAST(0)}
 };
 
 

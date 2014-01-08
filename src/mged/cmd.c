@@ -137,7 +137,7 @@ gui_output(genptr_t clientData, genptr_t str)
 
     Tcl_DStringInit(&tclcommand);
     (void)Tcl_DStringAppendElement(&tclcommand, bu_vls_addr(&tcl_output_hook));
-    (void)Tcl_DStringAppendElement(&tclcommand, str);
+    (void)Tcl_DStringAppendElement(&tclcommand, (const char *)str);
 
     save_result = Tcl_GetObjResult(INTERP);
     Tcl_IncrRefCount(save_result);
@@ -149,7 +149,7 @@ gui_output(genptr_t clientData, genptr_t str)
 
     Tcl_DStringFree(&tclcommand);
 
-    len = (int)strlen(str);
+    len = (int)strlen((const char *)str);
     return len;
 }
 

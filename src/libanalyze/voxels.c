@@ -177,11 +177,11 @@ voxelize(struct rt_i *rtip, fastf_t sizeVoxel[3], int levelOfDetail, void (*crea
 
     /* voxelArray stores the distance in path of ray inside a voxel which is filled
      * initialize with 0s */
-    voxelArray = bu_calloc(numVoxel[0], sizeof(fastf_t), "voxelize:voxelArray");
+    voxelArray = (fastf_t *)bu_calloc(numVoxel[0], sizeof(fastf_t), "voxelize:voxelArray");
 
     /* regionList holds the names of voxels inside the voxels
      * initialize with NULLs */
-    voxelHits.regionList = bu_calloc(numVoxel[0], sizeof(struct voxelRegion), "voxelize:regionList");
+    voxelHits.regionList = (struct voxelRegion *)bu_calloc(numVoxel[0], sizeof(struct voxelRegion), "voxelize:regionList");
 
     /* minimum value of bounding box in Y and Z directions */
     yMin = (int)((rtip->mdl_min)[1]);

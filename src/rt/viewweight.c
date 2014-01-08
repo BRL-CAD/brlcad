@@ -217,7 +217,7 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj),
 
     i = maxm(strlen(curdir), strlen(homedir)) + strlen(DENSITY_FILE) + 2;
     /* densityfile is global to this file and will be used later (and then freed) */
-    densityfile = bu_calloc((unsigned int)i, sizeof(char), "densityfile");
+    densityfile = (char *)bu_calloc((unsigned int)i, sizeof(char), "densityfile");
 
     snprintf(densityfile, i, "%s/%s", curdir, DENSITY_FILE);
 

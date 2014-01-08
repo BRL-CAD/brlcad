@@ -133,7 +133,7 @@ dmo_openFb(struct dm_obj *dmop)
 	case DM_TYPE_X:
 	    *dmop->dmo_fbs.fbs_fbp = X24_interface; /* struct copy */
 
-	    dmop->dmo_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen("/dev/X")+1, "if_name");
+	    dmop->dmo_fbs.fbs_fbp->if_name = (char *)bu_malloc((unsigned)strlen("/dev/X")+1, "if_name");
 	    bu_strlcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/X", strlen("/dev/X")+1);
 
 	    /* Mark OK by filling in magic number */
@@ -155,7 +155,7 @@ dmo_openFb(struct dm_obj *dmop)
 	case DM_TYPE_OGL:
 	    *dmop->dmo_fbs.fbs_fbp = ogl_interface; /* struct copy */
 
-	    dmop->dmo_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen("/dev/ogl")+1, "if_name");
+	    dmop->dmo_fbs.fbs_fbp->if_name = (char *)bu_malloc((unsigned)strlen("/dev/ogl")+1, "if_name");
 	    bu_strlcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/ogl", strlen("/dev/ogl")+1);
 
 	    /* Mark OK by filling in magic number */
