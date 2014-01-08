@@ -99,8 +99,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
-* Need to mark and/or otherwise disambiguate grazing hit segments so
-  we can consistently retain ore remove hits without introducing
+* Need to mark or otherwise disambiguate grazing hit segments so we
+  can consistently retain ore remove hits without introducing
   overlaps.  Consider the case of a tgc stacked on top of an arb8,
   perfectly tangent, and shoot a ray at that point.
 
@@ -114,34 +114,34 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   without either either or both and 2) a convention that precludes
   forcing the user to "nudge" them apart by some arbitrary epsilon is
   desired for usability (it's intuitive and common for users to model
-  two object with "perfect tangency")
+  two object with "perfect tangency").
 
   If we hit both, an overlap will ensue unless these objects are
   unioned.  This is undesirable.  If we miss both, that's devastating.
 
   In order to only hit one, a consistent grazing policy must be
   applied such that grazing points on one "side" of an object are
-  always keps and grazing hits on the other "side" are always thrown
+  always kept and grazing hits on the other "side" are always thrown
   away.  The proposed method, similar to handling special case
   grazings with a Breseham line painter algorithm, is to consistently
   consider grazes with a procedure:
 
-  1) calculate the ray intersection, detect whether hit is grazing
+  1) Calculate the ray intersection, detect whether the hit is grazing
   (defined as a hit being barely in/on the surface either through a
-  point, edge or even down a surface)
+  point, edge or even down a surface).
 
-  2) calculate a hit normal.  it may be desirable to average both the
+  2) Calculate a hit normal.  It may be desirable to average both the
   in/out hit points to get more of a "practical" surface normal.
 
-  3) calculate the ray of reflection.  use the surface normal and ray
+  3) Calculate the ray of reflection.  Use the surface normal and ray
   of intersection to calculate our reflection direction.
 
-  4) determine which plane of a globally bounding rpp the reflected
+  4) Determine which plane of a globally bounding rpp the reflected
   ray would intersect with.
 
-  5) if we hit the front, right, or bottom face, the grazing is kept,
+  5) If we hit the front, right, or bottom face, the grazing is kept,
   but if we hit the back, left, or top face, the grazing is ignored.
-  in ray-view projected 2D, this corresponds with keeping the grazing
+  In ray-view projected 2D, this corresponds with keeping the grazing
   if the reflection is pointing up or to the left and discarding if
   pointing down or to the right.
 
