@@ -24,6 +24,9 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * check repository.sh support for pathnames with spaces and special
   characters.  regression-full is failing.
 
+* add a proper tgamma (c99) check, see superell.c; add a lrint check
+  as well.
+
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
@@ -31,8 +34,6 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 * sync tgc/rec shot() behavior, sort results for proper normal.
   inspect t62 grazing with r653,r735 (tgc on an arb8) looking at ae0,0
   and z=1524 (was hit/overlap, now misses).
-
-* add a proper tgamma (c99) check, see superell.c
 
 * libnmg: eliminate the nmgregion and model structures, rename shell
   to model (consider naming consistency of all public structs).
