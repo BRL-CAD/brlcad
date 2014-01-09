@@ -71,7 +71,7 @@ main(int argc, char *argv[])
 	    long idx = ibuf[i];
 	    if (idx < 0)
 		idx = 0;
-	    if (idx > LONG_MAX-1)
+	    else if (idx > LONG_MAX-1)
 		idx = LONG_MAX-1;
 	    zerop[idx]++;
 	}
