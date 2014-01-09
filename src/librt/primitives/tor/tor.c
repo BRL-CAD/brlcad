@@ -1794,60 +1794,63 @@ rt_tor_centroid(point_t *cent, const struct rt_db_internal *ip)
 
 
 /**
- * R T _ T O R _ D I F F
+ * R T _ T O R _ A V S
  *
- * Compare two instances of a torus primitive.
+ * Populate an avs array with attribute/value entries representing
+ * the TOR primitive's internal parameters and any other assigned
+ * attributes.
  */
 int
-rt_tor_diff(struct bu_attribute_value_set *UNUSED(orig_diffs), struct bu_attribute_value_set *UNUSED(new_diffs), const struct rt_db_internal *orig_obj, const struct rt_db_internal *new_obj, const struct bn_tol *tol) {
-    int total_diff = 0;
-    struct rt_tor_internal *orig_ip = (struct rt_tor_internal *)orig_obj->idb_ptr;
-    struct rt_tor_internal *new_ip = (struct rt_tor_internal *)new_obj->idb_ptr;
-    RT_TOR_CK_MAGIC(orig_ip);
-    RT_TOR_CK_MAGIC(new_ip);
+rt_tor_avs(struct bu_attribute_value_set *avs, const struct rt_db_internal *ip) {
+    struct bu_vls attr_key = BU_VLS_INIT_ZERO;
+    struct bu_vls attr_val = BU_VLS_INIT_ZERO;
+    struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
+    RT_TOR_CK_MAGIC(tip);
 
-    if(!VNEAR_EQUAL(orig_ip->v, new_ip->v, tol->dist)) {
-	/* TODO - add bu_avs entries to orig_diffs and new_diffs, since the values differ */
-	total_diff++;
+    if (!avs) return -1;
+    if (!BU_AVS_IS_INITIALIZED(avs)) BU_AVS_INIT(avs);
+
+    /* Parameter: v */
+    bu_vls_sprintf(&attr_key, "v");
+    bu_vls_sprintf(&attr_val, "%.15f, %.15f, %.15f", V3ARGS(tip->v));
+    (void)bu_avs_add(avs, bu_vls_addr(&attr_key), bu_vls_addr(&attr_val));
+
+    /* Parameter: h */
+    bu_vls_sprintf(&attr_key, "h");
+    bu_vls_sprintf(&attr_val, "%.15f, %.15f, %.15f", V3ARGS(tip->h));
+    (void)bu_avs_add(avs, bu_vls_addr(&attr_key), bu_vls_addr(&attr_val));
+
+    /* Parameter: r_h */
+    bu_vls_sprintf(&attr_key, "r_h");
+    bu_vls_sprintf(&attr_val, "%.15f", tip->r_h);
+    (void)bu_avs_add(avs, bu_vls_addr(&attr_key), bu_vls_addr(&attr_val));
+
+    /* Parameter: r_a */
+    bu_vls_sprintf(&attr_key, "r_a");
+    bu_vls_sprintf(&attr_val, "%.15f", tip->r_a);
+    (void)bu_avs_add(avs, bu_vls_addr(&attr_key), bu_vls_addr(&attr_val));
+
+    /* Parameter: a */
+    bu_vls_sprintf(&attr_key, "a");
+    bu_vls_sprintf(&attr_val, "%.15f, %.15f, %.15f", V3ARGS(tip->a));
+    (void)bu_avs_add(avs, bu_vls_addr(&attr_key), bu_vls_addr(&attr_val));
+
+    /* Parameter: b */
+    bu_vls_sprintf(&attr_key, "b");
+    bu_vls_sprintf(&attr_val, "%.15f, %.15f, %.15f", V3ARGS(tip->b));
+    (void)bu_avs_add(avs, bu_vls_addr(&attr_key), bu_vls_addr(&attr_val));
+
+    /* Parameter: r_b */
+    bu_vls_sprintf(&attr_key, "r_b");
+    bu_vls_sprintf(&attr_val, "%.15f", tip->r_b);
+    (void)bu_avs_add(avs, bu_vls_addr(&attr_key), bu_vls_addr(&attr_val));
+
+    /* Add extra bu_avs attributes, if any, assigned to this primitive. */
+    if (ip->idb_avs.magic == BU_AVS_MAGIC) {
+	bu_avs_merge(avs, &ip->idb_avs);
     }
 
-    if(!VNEAR_EQUAL(orig_ip->h, new_ip->v, tol->dist)) {
-	/* TODO - add bu_avs entries to orig_diffs and new_diffs, since the values differ */
-	total_diff++;
-    }
-
-    if(!NEAR_EQUAL(orig_ip->r_h, new_ip->r_h, tol->dist)) {
-	/* TODO - add bu_avs entries to orig_diffs and new_diffs, since the values differ */
-	total_diff++;
-    }
-
-    if(!NEAR_EQUAL(orig_ip->r_a, new_ip->r_a, tol->dist)) {
-	/* TODO - add bu_avs entries to orig_diffs and new_diffs, since the values differ */
-	total_diff++;
-    }
-
-    if(!VNEAR_EQUAL(orig_ip->a, new_ip->a, tol->dist)) {
-	/* TODO - add bu_avs entries to orig_diffs and new_diffs, since the values differ */
-	total_diff++;
-    }
-
-    if(!VNEAR_EQUAL(orig_ip->b, new_ip->b, tol->dist)) {
-	/* TODO - add bu_avs entries to orig_diffs and new_diffs, since the values differ */
-	total_diff++;
-    }
-
-    if(!NEAR_EQUAL(orig_ip->r_b, new_ip->r_b, tol->dist)) {
-	/* TODO - add bu_avs entries to orig_diffs and new_diffs, since the values differ */
-	total_diff++;
-    }
-
-    /* TODO - check extra bu_avs attributes, if any, assigned to primitives.  Need to find
-     * out if avs array in value set container is sorted alphabetically by key (or, if not,
-     * whether we can safely sort them in place as a first step.) This comparison and result
-     * assignment is generic to all objects with attributes and should probably be a libbu
-     * function called by all the primitive diff routines.*/
-
-   return total_diff;
+   return 0;
 }
 
 /*

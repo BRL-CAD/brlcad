@@ -79,7 +79,7 @@
     extern struct rt_selection_set *rt_##name##_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query); \
     extern struct rt_selection *rt_##name##_evaluate_selection(const struct rt_db_internal *ip, int op, const struct rt_selection *a, const struct rt_selection *b); \
     extern int rt_##name##_process_selection(struct rt_db_internal *ip, const struct rt_selection *selection, const struct rt_selection_operation *op); \
-    extern int rt_##name##_diff(struct bu_attribute_value_set *orig_diffs, struct bu_attribute_value_set *new_diffs, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, const struct bn_tol *tol)
+    extern int rt_##name##_avs(struct bu_attribute_value_set *avs, const struct rt_db_internal *ip)
 
 RT_DECLARE_INTERFACE(tor);
 RT_DECLARE_INTERFACE(tgc);
@@ -247,7 +247,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
-	NULL
+	RTFUNCTAB_FUNC_AVS_CAST(rt_tor_avs)
     },
 
     {
