@@ -1792,67 +1792,6 @@ rt_tor_centroid(point_t *cent, const struct rt_db_internal *ip)
     VMOVE(*cent,tip->v);
 }
 
-
-/**
- * R T _ T O R _ A V S
- *
- * Populate an avs array with attribute/value entries representing
- * the TOR primitive's internal parameters and any other assigned
- * attributes.
- */
-int
-rt_tor_avs(struct bu_attribute_value_set *avs, const struct rt_db_internal *ip) {
-    struct bu_vls attr_key = BU_VLS_INIT_ZERO;
-    struct bu_vls attr_val = BU_VLS_INIT_ZERO;
-    struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
-    RT_TOR_CK_MAGIC(tip);
-
-    if (!avs) return -1;
-    if (!BU_AVS_IS_INITIALIZED(avs)) BU_AVS_INIT(avs);
-
-    /* Parameter: v */
-    bu_vls_sprintf(&attr_key, "v");
-    bu_vls_sprintf(&attr_val, "%.15f, %.15f, %.15f", V3ARGS(tip->v));
-    (void)bu_avs_add(avs, bu_vls_addr(&attr_key), bu_vls_addr(&attr_val));
-
-    /* Parameter: h */
-    bu_vls_sprintf(&attr_key, "h");
-    bu_vls_sprintf(&attr_val, "%.15f, %.15f, %.15f", V3ARGS(tip->h));
-    (void)bu_avs_add(avs, bu_vls_addr(&attr_key), bu_vls_addr(&attr_val));
-
-    /* Parameter: r_h */
-    bu_vls_sprintf(&attr_key, "r_h");
-    bu_vls_sprintf(&attr_val, "%.15f", tip->r_h);
-    (void)bu_avs_add(avs, bu_vls_addr(&attr_key), bu_vls_addr(&attr_val));
-
-    /* Parameter: r_a */
-    bu_vls_sprintf(&attr_key, "r_a");
-    bu_vls_sprintf(&attr_val, "%.15f", tip->r_a);
-    (void)bu_avs_add(avs, bu_vls_addr(&attr_key), bu_vls_addr(&attr_val));
-
-    /* Parameter: a */
-    bu_vls_sprintf(&attr_key, "a");
-    bu_vls_sprintf(&attr_val, "%.15f, %.15f, %.15f", V3ARGS(tip->a));
-    (void)bu_avs_add(avs, bu_vls_addr(&attr_key), bu_vls_addr(&attr_val));
-
-    /* Parameter: b */
-    bu_vls_sprintf(&attr_key, "b");
-    bu_vls_sprintf(&attr_val, "%.15f, %.15f, %.15f", V3ARGS(tip->b));
-    (void)bu_avs_add(avs, bu_vls_addr(&attr_key), bu_vls_addr(&attr_val));
-
-    /* Parameter: r_b */
-    bu_vls_sprintf(&attr_key, "r_b");
-    bu_vls_sprintf(&attr_val, "%.15f", tip->r_b);
-    (void)bu_avs_add(avs, bu_vls_addr(&attr_key), bu_vls_addr(&attr_val));
-
-    /* Add extra bu_avs attributes, if any, assigned to this primitive. */
-    if (ip->idb_avs.magic == BU_AVS_MAGIC) {
-	bu_avs_merge(avs, &ip->idb_avs);
-    }
-
-   return 0;
-}
-
 /*
  * Local Variables:
  * mode: C

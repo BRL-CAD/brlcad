@@ -2343,12 +2343,6 @@ struct rt_functab {
 				const struct rt_selection_operation *);
 #define RTFUNCTAB_FUNC_PROCESS_SELECTION_CAST(_func) ((int (*)(struct rt_db_internal *, const struct rt_selection *, const struct rt_selection_operation *))_func)
 
-    /** build a complete AVS representation of a primitive, including both internal parameters and
-     *  any assigned attributes */
-    int (*ft_avs)(struct bu_attribute_value_set *,
-	    	  const struct rt_db_internal *);
-#define RTFUNCTAB_FUNC_AVS_CAST(_func) ((int (*)(struct bu_attribute_value_set *, const struct rt_db_internal *))_func)
-
 };
 
 
