@@ -356,6 +356,12 @@ HIDDEN int to_mouse_append_pt_common(struct ged *gedp,
 					 ged_func_ptr func,
 					 const char *usage,
 					 int maxargs);
+HIDDEN int to_mouse_brep_selection_append(struct ged *gedp,
+					 int argc,
+					 const char *argv[],
+					 ged_func_ptr func,
+					 const char *usage,
+					 int maxargs);
 HIDDEN int to_mouse_constrain_rot(struct ged *gedp,
 				  int argc,
 				  const char *argv[],
@@ -1122,6 +1128,7 @@ static struct to_cmdtab to_cmds[] = {
     {"move_pipept_mode",	"obj seg_i mx my", TO_UNLIMITED, to_move_pipept_mode, GED_FUNC_PTR_NULL},
     {"mouse_add_metaballpt",	"obj mx my", TO_UNLIMITED, to_mouse_append_pt_common, ged_add_metaballpt},
     {"mouse_append_pipept",	"obj mx my", TO_UNLIMITED, to_mouse_append_pt_common, ged_append_pipept},
+    {"mouse_brep_selection_append", "obj mx my", 5, to_mouse_brep_selection_append, GED_FUNC_PTR_NULL},
     {"mouse_constrain_rot",	"coord mx my", TO_UNLIMITED, to_mouse_constrain_rot, GED_FUNC_PTR_NULL},
     {"mouse_constrain_trans",	"coord mx my", TO_UNLIMITED, to_mouse_constrain_trans, GED_FUNC_PTR_NULL},
     {"mouse_data_scale",	"mx my", TO_UNLIMITED, to_mouse_data_scale, GED_FUNC_PTR_NULL},
@@ -6562,6 +6569,104 @@ to_mouse_append_pt_common(struct ged *gedp,
 	av[2] = (char *)0;
 	to_edit_redraw(gedp, 2, (const char **)av);
     }
+
+    return GED_OK;
+}
+
+HIDDEN int
+to_mouse_brep_selection_append(struct ged *gedp,
+		       int argc,
+		       const char *argv[],
+		       ged_func_ptr UNUSED(func),
+		       const char *usage,
+		       int maxargs)
+{
+    const char *cmd_argv[11] = {"brep", NULL, "selection", "append", "active"};
+    int ret, cmd_argc = (int)(sizeof(cmd_argv) / sizeof(const char *));
+    struct ged_dm_view *gdvp;
+    const char *brep_name;
+    char *end;
+    struct bu_vls start[] = {BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO};
+    struct bu_vls dir[] = {BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO};
+    point_t screen_pt, view_pt, model_pt;
+    vect_t view_dir, model_dir;
+    mat_t invRot;
+
+    if (argc != maxargs) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    /* parse args */
+    brep_name = bu_basename(argv[2]);
+
+    screen_pt[X] = strtol(argv[3], &end, 10);
+    if (*end != '\0') {
+	bu_vls_printf(gedp->ged_result_str, "ERROR: bad x value %d\n", screen_pt[X]);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    screen_pt[Y] = strtol(argv[4], &end, 10);
+    if (*end != '\0') {
+	bu_vls_printf(gedp->ged_result_str, "ERROR: bad y value: %d\n", screen_pt[Y]);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    /* stash point coordinates for future drag handling */
+    gdvp->gdv_view->gv_prevMouseX = screen_pt[X];
+    gdvp->gdv_view->gv_prevMouseY = screen_pt[Y];
+
+    /* convert screen point to model-space start point and direction */
+    view_pt[X] = screen_to_view_x(gdvp->gdv_dmp, screen_pt[X]);
+    view_pt[Y] = screen_to_view_y(gdvp->gdv_dmp, screen_pt[Y]);
+    view_pt[Z] = 1.0;
+
+    MAT4X3PNT(model_pt, gdvp->gdv_view->gv_view2model, view_pt);
+
+    VSET(view_dir, 0.0, 0.0, -1.0);
+    bn_mat_inv(invRot, gedp->ged_gvp->gv_rotation);
+    MAT4X3PNT(model_dir, invRot, view_dir);
+
+    /* brep brep_name selection append selection_name startx starty startz dirx diry dirz */
+    bu_vls_printf(&start[X], "%f", model_pt[X]);
+    bu_vls_printf(&start[Y], "%f", model_pt[Y]);
+    bu_vls_printf(&start[Z], "%f", model_pt[Z]);
+
+    cmd_argv[1] = brep_name;
+    cmd_argv[5] = bu_vls_addr(&start[X]);
+    cmd_argv[6] = bu_vls_addr(&start[Y]);
+    cmd_argv[7] = bu_vls_addr(&start[Z]);
+
+    bu_vls_printf(&dir[X], "%f", model_dir[X]);
+    bu_vls_printf(&dir[Y], "%f", model_dir[Y]);
+    bu_vls_printf(&dir[Z], "%f", model_dir[Z]);
+
+    cmd_argv[8] = bu_vls_addr(&dir[X]);
+    cmd_argv[9] = bu_vls_addr(&dir[Y]);
+    cmd_argv[10] = bu_vls_addr(&dir[Z]);
+
+    gedp->ged_gvp = gdvp->gdv_view;
+    ret = ged_brep(gedp, cmd_argc, cmd_argv);
+
+    bu_vls_free(&start[X]);
+    bu_vls_free(&start[Y]);
+    bu_vls_free(&start[Z]);
+    bu_vls_free(&dir[X]);
+    bu_vls_free(&dir[Y]);
+    bu_vls_free(&dir[Z]);
+
+    if (ret != GED_OK) {
+	return GED_ERROR;
+    }
+
+    bu_free((void *)brep_name, "brep_name");
 
     return GED_OK;
 }

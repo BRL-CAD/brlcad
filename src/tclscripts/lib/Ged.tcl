@@ -333,6 +333,7 @@ package provide cadwidgets::Ged 1.0
 	method more_args_callback {args}
 	method mouse_add_metaballpt {args}
 	method mouse_append_pipept {args}
+	method mouse_brep_selection_append {_obj _mx _my}
 	method mouse_constrain_rot {args}
 	method mouse_constrain_trans {args}
 	method mouse_find_arb_edge {_arb _mx _my _ptol}
@@ -2287,6 +2288,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::mouse_append_pipept {args} {
     eval $mGed mouse_append_pipept $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::mouse_brep_selection_append {_obj _mx _my} {
+    eval $mGed mouse_brep_selection_append $itk_component($itk_option(-pane)) $_obj $_mx $_my
 }
 
 ::itcl::body cadwidgets::Ged::mouse_constrain_rot {args} {
