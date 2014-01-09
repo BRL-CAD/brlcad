@@ -3721,6 +3721,21 @@ cmp_cv_startdist(brep_selectable_cv *c1, brep_selectable_cv *c2)
     return false;
 }
 
+static void
+brep_free_selection(struct rt_selection *s)
+{
+    struct brep_selection *bs = (struct brep_selection *)s->obj;
+    std::list<brep_cv *> *cvs = bs->control_vertexes;
+
+    std::list<brep_cv *>::iterator cv;
+    for (cv = cvs->begin(); cv != cvs->end(); ++cv) {
+	delete *cv;
+    }
+    cvs->clear();
+
+    BU_FREE(s, struct rt_selection);
+}
+
 struct rt_selection *
 new_cv_selection(brep_selectable_cv *s)
 {
@@ -3817,6 +3832,7 @@ rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selecti
 	bu_ptbl_ins(&selection_set->selections, (long *)new_cv_selection(*s));
     }
     selectable.clear();
+    selection_set->free_selection = brep_free_selection;
 
     return selection_set;
 }
