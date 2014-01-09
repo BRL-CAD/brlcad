@@ -507,11 +507,11 @@ ged_rselect(struct ged *gedp, int argc, const char *argv[])
 struct rt_object_selections *
 ged_get_object_selections(struct ged *gedp, const char *object_name)
 {
-    int new;
+    int int_new;
     struct bu_hash_entry *entry;
 
     entry = bu_hash_tbl_add(gedp->ged_selections, (unsigned char *)object_name,
-	    strlen(object_name), &new);
+	    strlen(object_name), &int_new);
 
     return (struct rt_object_selections *)bu_get_hash_value(entry);
 }
@@ -521,11 +521,11 @@ ged_get_selection_set(struct ged *gedp, const char *object_name, const char *sel
 {
     struct rt_object_selections *obj_selections;
     struct bu_hash_entry *entry;
-    int new;
+    int int_new;
 
     obj_selections = ged_get_object_selections(gedp, object_name);
     entry = bu_hash_tbl_add(obj_selections->sets,
-		(const unsigned char *)selection_name, strlen(selection_name), &new);
+		(const unsigned char *)selection_name, strlen(selection_name), &int_new);
 
     return (struct rt_selection_set *)bu_get_hash_value(entry);
 }

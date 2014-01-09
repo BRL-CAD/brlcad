@@ -2306,7 +2306,7 @@ struct solve_stack {
     struct joint *jp;
     int freedom;
     double old;
-    double new;
+    double snew;
 };
 #define SOLVE_STACK_MAGIC 0x76766767
 struct bu_list solve_head = {
@@ -2607,7 +2607,7 @@ part_solve(struct ged *gedp, struct hold *hp, double limits, double tol)
 	ssp->freedom = bestfreedom;
 	ssp->old = (bestfreedom<3) ? bestjoint->rots[bestfreedom].current :
 	    bestjoint->dirs[bestfreedom-3].current;
-	ssp->new = bestvalue;
+	ssp->snew = bestvalue;
 	BU_LIST_PUSH(&solve_head, ssp);
     }
     if (bestfreedom < 3) {
@@ -2631,7 +2631,7 @@ reject_move(struct ged *gedp)
 
     if (joint_debug & DEBUG_J_SYSTEM) {
 	bu_vls_printf(gedp->ged_result_str, "reject_move: rejecting %s(%d, %g)->%g\n", ssp->jp->name,
-		      ssp->freedom, ssp->new, ssp->old);
+		      ssp->freedom, ssp->snew, ssp->old);
     }
     if (ssp->freedom<3) {
 	ssp->jp->rots[ssp->freedom].current = ssp->old;
