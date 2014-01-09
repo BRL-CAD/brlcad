@@ -200,6 +200,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	NULL
     },
 
@@ -1853,6 +1854,7 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_metaball_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_metaball_bbox),
+	NULL,
 	NULL,
 	NULL,
 	NULL,
