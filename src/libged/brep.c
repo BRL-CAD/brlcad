@@ -86,6 +86,7 @@ selection_command(
 	 * selection_name startx starty startz dirx diry dirz
 	 */
 	if (argc != 11) {
+	    bu_log("wrong args for selection append");
 	    return -1;
 	}
 	selection_name = argv[4];
@@ -101,15 +102,17 @@ selection_command(
 
 	selection_set = ip->idb_meth->ft_find_selections(ip, &query);
 	if (!selection_set) {
+	    bu_log("no matching selections");
 	    return -1;
 	}
 
 	/* could be multiple options, just grabbing the first and
 	 * freeing the rest
 	 */
-	free_selection = selection_set->free_selection;
 	selections = &selection_set->selections;
 	new_selection = (struct rt_selection *)BU_PTBL_GET(selections, 0);
+
+	free_selection = selection_set->free_selection;
 	for (i = 1; i < BU_PTBL_LEN(selections); ++i) {
 	    long *s = BU_PTBL_GET(selections, i);
 	    free_selection((struct rt_selection *)s);
@@ -119,7 +122,7 @@ selection_command(
 
 	/* get existing/new selections set in gedp */
 	selection_set = ged_get_selection_set(gedp, solid_name, selection_name);
-	free_selection = selection_set->free_selection;
+	selection_set->free_selection = free_selection;
 	selections = &selection_set->selections;
 
 	/* TODO: Need to implement append by passing new and
@@ -211,7 +214,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (argc < 2 || argc > 10) {
+    if (argc < 2 || argc > 11) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
