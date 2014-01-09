@@ -69,7 +69,7 @@ get_new_name(const char *name,
     Tcl_HashEntry *ptr = NULL;
     char *aname = NULL;
     char *ret_name = NULL;
-    int new=0;
+    int int_new=0;
     long num=0;
 
     RT_CK_DBI(dbip);
@@ -82,9 +82,9 @@ get_new_name(const char *name,
 	name = "UNKNOWN";
     }
 
-    ptr = Tcl_CreateHashEntry(name_tbl, name, &new);
+    ptr = Tcl_CreateHashEntry(name_tbl, name, &int_new);
 
-    if (!new) {
+    if (!int_new) {
 	return (char *)Tcl_GetHashValue(ptr);
     }
 
@@ -164,7 +164,7 @@ get_new_name(const char *name,
     /* we should now have a unique name.  store it in the hash */
     ret_name = bu_vls_strgrab(&new_name);
     Tcl_SetHashValue(ptr, (ClientData)ret_name);
-    (void)Tcl_CreateHashEntry(used_names_tbl, ret_name, &new);
+    (void)Tcl_CreateHashEntry(used_names_tbl, ret_name, &int_new);
     bu_vls_free(&new_name);
 
     return ret_name;
