@@ -103,9 +103,9 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   can consistently retain or remove hits without introducing overlaps.
   Consider the case of a tgc stacked on top of an arb8, perfectly
   tangent, and shoot a ray at that point:
- 
+
                                    -----   z=2.0
-                                   |tgc| 
+                                   |tgc|
   shoot a ray through here --->   -------- z=1.0   <--- or here
                                   | arb8 |
                                   -------- z=0.0
@@ -172,7 +172,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
           t  \  |          \ | h        r|///      |p
            t  \ |           \| t        d|//       |
             o  \o____________o           ./________.
-             m     front                     keep      
+             m     front                     keep
 
   This should result in consistent grazing behavior that addresses the
   above case: we consistently hit the tgc but not the arb8 and there
@@ -183,7 +183,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   In the case above, we do not get a hit on the tgc's bottom ellipse,
   for example, instead getting two hits near the edge of the side.
   Similarly, we hit the left and right arb8 faces, not the top face
-  even though that is what we are conceptually grazing through.  
+  even though that is what we are conceptually grazing through.
 
   One possibility to address that difficulty is to simply report all
   grazing hits, but mark them as grazing, and let rt_shootray() sort
