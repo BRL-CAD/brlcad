@@ -30,8 +30,8 @@
 #include "common.h"
 
 #include <stdlib.h> /* for atof() */
-#include <math.h>
 #include <string.h>
+#include <math.h>
 #include "bio.h"
 
 #include "bu.h"

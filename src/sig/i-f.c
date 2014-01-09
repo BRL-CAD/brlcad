@@ -38,7 +38,6 @@
 #include "vmath.h"
 
 
-
 int
 main(int argc, char *argv[])
 {
@@ -74,6 +73,7 @@ main(int argc, char *argv[])
 	if (ret != (size_t)num)
 	    perror("fwrite");
     }
+
     return 0;
 }
 
