@@ -66,10 +66,9 @@
 #  undef X_NOT_STDC_ENV
 #  undef X_NOT_POSIX
 #endif
-#define class FB_VISUAL_CLASS_VAR
+#define class REDEFINE_CLASS_STRING_TO_AVOID_CXX_CONFLICT
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#undef class
 #include <X11/Xatom.h>
 
 #include <ctype.h>
@@ -368,7 +367,7 @@ print_display_info(Display *dpy)
 	printf("screen: %d\n", vp[i].screen);
 	printf("depth : %d\n", vp[i].depth);
 
-	switch (visual->FB_VISUAL_CLASS_VAR) {
+	switch (visual->class) {
 	    case DirectColor:
 		printf("DirectColor: Alterable RGB maps, pixel RGB subfield indices\n");
 		printf("RGB Masks: 0x%lx 0x%lx 0x%lx\n", visual->red_mask,
@@ -393,7 +392,7 @@ print_display_info(Display *dpy)
 		break;
 	    default:
 		printf("Unknown visual class %d\n",
-		       visual->FB_VISUAL_CLASS_VAR);
+		       visual->class);
 		break;
 	}
 	printf("Map Entries: %d\n", visual->map_entries);
@@ -2707,7 +2706,7 @@ _X24_open_existing(FBIO *ifp, Display *dpy, Window win, Window cwinp, Colormap c
     xi->xi_gc = gc;
     xi->xi_cgc = gc;
 
-    switch (vip->FB_VISUAL_CLASS_VAR) {
+    switch (vip->class) {
 	case TrueColor:
 	    if (vip->depth >= 24) {
 		xi->xi_mode = FLG_VT24 << 1;
@@ -3443,9 +3442,9 @@ X24_help(FBIO *ifp)
     fb_log("	xi_xheight=%d\n", xi->xi_xheight);
 
     fb_log("X11 Visual:\n");
-    fb_log("	class=%d\n", xi->xi_visinfo.FB_VISUAL_CLASS_VAR);
+    fb_log("	class=%d\n", xi->xi_visinfo.class);
 
-    switch (xi->xi_visinfo.FB_VISUAL_CLASS_VAR) {
+    switch (xi->xi_visinfo.class) {
 	case DirectColor:
 	    fb_log("\tDirectColor: Alterable RGB maps, pixel RGB subfield indices\n");
 	    fb_log("\tRGB Masks: 0x%lu 0x%lu 0x%lu\n", xi->xi_visinfo.red_mask,
@@ -3469,8 +3468,7 @@ X24_help(FBIO *ifp)
 	    fb_log("\tStaticGray: Fixed map (R=G=B), single index\n");
 	    break;
 	default:
-	    fb_log("\tUnknown visual class %d\n",
-		   xi->xi_visinfo.FB_VISUAL_CLASS_VAR);
+	    fb_log("\tUnknown visual class %d\n", xi->xi_visinfo.class);
 	    break;
     }
     fb_log("\tColormap Size: %d\n", xi->xi_visinfo.colormap_size);
@@ -3553,6 +3551,11 @@ FBIO X24_interface =  {
     {0}  /* u6 */
 };
 
+/* Because class is actually used to access a struct
+ * entry in this file, preserve our redefinition
+ * of class for the benefit of avoiding C++ name
+ * collisions until the end of this file */
+#undef class
 
 #else
 

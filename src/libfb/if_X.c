@@ -46,9 +46,8 @@
 #  undef X_NOT_POSIX
 #endif
 
-#define class FB_VISUAL_CLASS_VAR
+#define class REDEFINE_CLASS_STRING_TO_AVOID_CXX_CONFLICT
 #include <X11/Xlib.h>
-#undef class
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
 #include <X11/Xatom.h>		/* for XA_RGB_BEST_MAP */
@@ -245,7 +244,7 @@ x_print_display_info(Display *dpy)
     visual = DefaultVisual(dpy, screen);
     printf("---- Visual 0x%lx ----\n", (unsigned long int)visual);
 
-    switch (visual->FB_VISUAL_CLASS_VAR) {
+    switch (visual->class) {
 	case DirectColor:
 	    printf("DirectColor: Alterable RGB maps, pixel RGB subfield indices\n");
 	    printf("RGB Masks: 0x%lx 0x%lx 0x%lx\n", visual->red_mask,
@@ -269,8 +268,7 @@ x_print_display_info(Display *dpy)
 	    printf("StaticGray: Fixed map (R=G=B), single index\n");
 	    break;
 	default:
-	    printf("Unknown visual class %d\n",
-		   visual->FB_VISUAL_CLASS_VAR);
+	    printf("Unknown visual class %d\n", visual->class);
 	    break;
     }
     printf("Map Entries: %d\n", visual->map_entries);
@@ -1745,6 +1743,11 @@ FBIO X_interface = {
     {0}  /* u6 */
 };
 
+/* Because class is actually used to access a struct
+ * entry in this file, preserve our redefinition
+ * of class for the benefit of avoiding C++ name
+ * collisions until the end of this file */
+#undef class
 
 #else
 

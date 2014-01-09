@@ -61,9 +61,8 @@
 #define access acs
 #define remainder rem
 #ifdef HAVE_GL_GLX_H
-#  define class FB_VISUAL_CLASS_VAR
+#  define class REDEFINE_CLASS_STRING_TO_AVOID_CXX_CONFLICT
 #  include <GL/glx.h>
-#  undef class
 #endif
 #undef remainder
 #undef access
@@ -1018,7 +1017,7 @@ fb_ogl_choose_visual(FBIO *ifp)
 	     red, green, blue masks:    0xff0000, 0xff00, 0xff
 	     significant bits in color specification:    8 bits
 	    */
-	    if ((m_hard_cmap) && (vip->FB_VISUAL_CLASS_VAR != DirectColor)) {
+	    if ((m_hard_cmap) && (vip->class != DirectColor)) {
 		continue;
 	    }
 	    if ((m_hard_cmap) && (vip->colormap_size < 256)) {
@@ -1320,7 +1319,7 @@ fb_ogl_open(FBIO *ifp, const char *file, int width, int height)
     swa.colormap = OGL(ifp)->xcmap;
 
 #define XCreateWindowDebug(display, parent, x, y, width, height,	\
-			   border_width, depth, FB_VISUAL_CLASS_VAR, visual, valuemask, \
+			   border_width, depth, class, visual, valuemask, \
 			   attributes)					\
     (printf("XCreateWindow(display = %08X, \n", (long)display),		\
      printf("                parent = %08X, \n", (long)parent),		\
@@ -1330,7 +1329,7 @@ fb_ogl_open(FBIO *ifp, const char *file, int width, int height)
      printf("                height = %d, \n", height),			\
      printf("          border_width = %d, \n", border_width),		\
      printf("                 depth = %d, \n", depth),			\
-     printf("                 class = %d, \n", FB_VISUAL_CLASS_VAR),			\
+     printf("                 class = %d, \n", class),			\
      printf("                visual = %08X, \n", (long)visual),		\
      printf("             valuemask = %08X, \n", valuemask),		\
      printf("            attributes = {"),				\
@@ -1349,7 +1348,7 @@ fb_ogl_open(FBIO *ifp, const char *file, int width, int height)
      (valuemask & CWDontPropagate) ? printf(" do_not_propagate_mask = %08X ", (attributes)->do_not_propagate_mask) : 0, \
      (valuemask & CWColormap) ? printf(" colormap = %08X ", (long)((attributes)->colormap)) : 0, \
      (valuemask & CWCursor) ? printf(" cursor = %08X ", (long)((attributes)->cursor)) : 0, \
-     printf(" }\n")) > 0 ? XCreateWindow(display, parent, x, y, width, height, border_width, depth, FB_VISUAL_CLASS_VAR, visual, valuemask, attributes) : -1;
+     printf(" }\n")) > 0 ? XCreateWindow(display, parent, x, y, width, height, border_width, depth, class, visual, valuemask, attributes) : -1;
 
     OGL(ifp)->wind = XCreateWindow(OGL(ifp)->dispp,
 				   RootWindow(OGL(ifp)->dispp,
@@ -2260,7 +2259,7 @@ ogl_help(FBIO *ifp)
 
     fb_log("X11 Visual:\n");
 
-    switch (visual->FB_VISUAL_CLASS_VAR) {
+    switch (visual->class) {
 	case DirectColor:
 	    fb_log("\tDirectColor: Alterable RGB maps, pixel RGB subfield indices\n");
 	    fb_log("\tRGB Masks: 0x%x 0x%x 0x%x\n", visual->red_mask,
@@ -2284,8 +2283,7 @@ ogl_help(FBIO *ifp)
 	    fb_log("\tStaticGray: Fixed map (R=G=B), single index\n");
 	    break;
 	default:
-	    fb_log("\tUnknown visual class %d\n",
-		   visual->FB_VISUAL_CLASS_VAR);
+	    fb_log("\tUnknown visual class %d\n", visual->class);
 	    break;
     }
     fb_log("\tColormap Size: %d\n", visual->colormap_size);
@@ -2466,6 +2464,11 @@ FBIO ogl_interface =
     {0}  /* u6 */
 };
 
+/* Because class is actually used to access a struct
+ * entry in this file, preserve our redefinition
+ * of class for the benefit of avoiding C++ name
+ * collisions until the end of this file */
+#undef class
 
 #else
 
