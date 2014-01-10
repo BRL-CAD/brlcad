@@ -854,7 +854,7 @@ diff_dbip(struct db_i *dbip1, struct db_i *dbip2)
 	    }
 	    if (tcl_list_to_avs(bu_vls_addr(&s2_tcl), &avs2, 1)) have_tcl2 = 0;
 	    bu_vls_sprintf(&temp_str, "dp2 core: %s", dp2->d_namep);
-	    bu_avs_print(&avs1, bu_vls_addr(&temp_str));
+	    bu_avs_print(&avs2, bu_vls_addr(&temp_str));
 	    if (intern2.idb_avs.magic == BU_AVS_MAGIC) {
 		bu_vls_sprintf(&temp_str, "dp2 additional: %s", dp2->d_namep);
 		bu_avs_print(&intern2.idb_avs, bu_vls_addr(&temp_str));
