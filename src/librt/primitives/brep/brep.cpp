@@ -3869,7 +3869,12 @@ rt_brep_process_selection(
     for (; cv != bs->control_vertexes->end(); ++cv) {
 	// TODO: if another face references the same surface, the
 	// surface needs to be duplicated
-	int surface_index = brep->Face((*cv)->face_index)->SurfaceOf()->ComponentIndex().m_index;
+	int face_index = (*cv)->face_index;
+	if (face_index < 0 || face_index >= brep->m_F.Count()) {
+	    bu_log("%d is not a valid face index\n");
+	    return -1;
+	}
+	int surface_index = brep->m_F[face_index].m_si;
 	int ret = brep_translate_scv(brep, surface_index, (*cv)->i, (*cv)->j, dx, dy, dz);
 	if (ret < 0) {
 	    return ret;

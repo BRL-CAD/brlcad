@@ -2564,6 +2564,11 @@ brep_translate_scv(
 	fastf_t dz)
 {
     ON_NurbsSurface *nurbsSurface = NULL;
+    if (surface_index < 0 || surface_index >= brep->m_S.Count()) {
+	bu_log("brep_translate_scv: invalid surface index %d\n", surface_index);
+	return -1;
+    }
+
     ON_Surface *surface = brep->m_S[surface_index];
     if (surface) {
 	nurbsSurface = dynamic_cast<ON_NurbsSurface *>(surface);
