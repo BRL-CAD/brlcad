@@ -45,7 +45,7 @@
 static char usage[] = "\
 Usage: 'imgdims [-ns] [-# bytes/pixel] file_name'\n\
     or 'imgdims [-# bytes/pixel] num_bytes'\n";
-#define OPT_STRING "ns#:?"
+#define OPT_STRING "ns#:h?"
 
 
 static void print_usage (void)
@@ -123,7 +123,6 @@ main (int argc, char **argv)
 		    print_usage();
 		}
 		break;
-	    case '?':
 	    default:
 		print_usage();
 	}
