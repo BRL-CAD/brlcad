@@ -83,7 +83,8 @@ void BinaryNetwork<T>::add_vertex(Variable<T> *V)
 template<class T>
 void BinaryNetwork<T>::add_edge(Constraint *C)
 {
-    Vertex v1, v2;
+    Vertex v1 = Vertex();
+    Vertex v2 = Vertex();
     std::list<std::string> vl = C->getVariableList();
     getVertexbyID(vl.front(), v1);
     getVertexbyID(vl.back(), v2);
