@@ -2752,6 +2752,7 @@ BU_EXPORT extern void bu_avs_merge(struct bu_attribute_value_set *dest,
  * Get the value of a given attribute from an attribute set.  The
  * behavior is not currently well-defined for AVS containing
  * non-unique attributes, but presently returns the first encountered.
+ * Returns NULL if the requested attribute is not present in the set.
  */
 BU_EXPORT extern const char *bu_avs_get(const struct bu_attribute_value_set *avp,
 					const char *attribute);
