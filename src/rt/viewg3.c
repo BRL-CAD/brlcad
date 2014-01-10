@@ -78,9 +78,7 @@ struct bu_structparse view_parse[] = {
 
 
 static mat_t model2hv;			/* model coords to GIFT h, v in inches */
-
 static FILE *plotfp;			/* optional plotting file */
-static long line_num;			/* count of lines output to shotline file */
 
 const char title[] = "RTG3";
 
