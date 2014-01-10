@@ -773,6 +773,150 @@ compare_attrs(struct directory *dp1, struct directory *dp2, struct db_i *dbip1, 
 
 #endif
 
+/* Status:
+ * 0 - valid diff info;
+ * 1 - problem during diffing;
+ *
+ * Internal diff types:
+ *
+ * 0 - no difference;
+ * 1 - in original only;
+ * 2 - in new only;
+ * 3 - type difference;
+ * 4 - binary-only difference;
+ * 5 - parameter differences;
+ *
+ * Additional diff types (valid only for internal diff types 0, 3, 4, and 5):
+ *  0 - no difference;
+ *  1 - in original only;
+ *  2 - in new only;
+ *  3 - additional attributes in original only, no common with differing values;
+ *  4 - additional attributes in new only, no common with differing values;
+ *  5 - complex attribute diffs
+ */
+struct gdiff_result {
+    int status;
+    struct directory *dp_orig;
+    struct directory *dp_new;
+    struct rt_db_internal *intern_orig;
+    struct rt_db_internal *intern_new;
+    int internal_diff_type;
+    struct bu_attribute_value_set internal_shared;
+    struct bu_attribute_value_set internal_orig_only;
+    struct bu_attribute_value_set internal_new_only;
+    struct bu_attribute_value_set internal_orig_diff;
+    struct bu_attribute_value_set internal_new_diff;
+    int additional_diff_type;
+    struct bu_attribute_value_set additional_shared;
+    struct bu_attribute_value_set additional_orig_only;
+    struct bu_attribute_value_set additional_new_only;
+    struct bu_attribute_value_set additional_orig_diff;
+    struct bu_attribute_value_set additional_new_diff;
+};
+
+void
+gdiff_init(struct gdiff_result *result){
+    result->status = 0;
+    result->internal_diff_type = 0;
+    result->intern_orig = (struct rt_db_internal *)bu_calloc(1, sizeof(struct rt_db_internal), "intern_orig");
+    result->intern_new = (struct rt_db_internal *)bu_calloc(1, sizeof(struct rt_db_internal), "intern_new");
+    RT_DB_INTERNAL_INIT(result->intern_orig);
+    RT_DB_INTERNAL_INIT(result->intern_new);
+    BU_AVS_INIT(&result->internal_shared);
+    BU_AVS_INIT(&result->internal_orig_only);
+    BU_AVS_INIT(&result->internal_new_only);
+    BU_AVS_INIT(&result->internal_orig_diff);
+    BU_AVS_INIT(&result->internal_new_diff);
+    BU_AVS_INIT(&result->additional_shared);
+    BU_AVS_INIT(&result->additional_orig_only);
+    BU_AVS_INIT(&result->additional_new_only);
+    BU_AVS_INIT(&result->additional_orig_diff);
+    BU_AVS_INIT(&result->additional_new_diff);
+}
+
+void
+gdiff_print(struct gdiff_result *result){
+    struct bu_vls tmp = BU_VLS_INIT_ZERO;
+    struct directory *dp = result->dp_orig;
+    if (result->internal_diff_type == 2) {
+	dp = result->dp_new;
+    }
+    bu_log("\n\n%s(%d): (internal type: %d) (additional type: %d)\n", dp->d_namep, result->status, result->internal_diff_type, result->additional_diff_type);
+    bu_vls_sprintf(&tmp, "Internal parameters: shared (%s)", dp->d_namep);
+    bu_avs_print(&result->internal_shared, bu_vls_addr(&tmp));
+    bu_vls_sprintf(&tmp, "Internal parameters: orig_only (%s)", dp->d_namep);
+    bu_avs_print(&result->internal_orig_only, bu_vls_addr(&tmp));
+    bu_vls_sprintf(&tmp, "Internal parameters: new_only (%s)", dp->d_namep);
+    bu_avs_print(&result->internal_new_only, bu_vls_addr(&tmp));
+    bu_vls_sprintf(&tmp, "Internal parameters: orig_diff (%s)", dp->d_namep);
+    bu_avs_print(&result->internal_orig_diff, bu_vls_addr(&tmp));
+    bu_vls_sprintf(&tmp, "Internal parameters: new_diff (%s)", dp->d_namep);
+    bu_avs_print(&result->internal_new_diff, bu_vls_addr(&tmp));
+
+    bu_vls_sprintf(&tmp, "Additional parameters: shared (%s)", dp->d_namep);
+    bu_avs_print(&result->additional_shared, bu_vls_addr(&tmp));
+    bu_vls_sprintf(&tmp, "Additional parameters: orig_only (%s)", dp->d_namep);
+    bu_avs_print(&result->additional_orig_only, bu_vls_addr(&tmp));
+    bu_vls_sprintf(&tmp, "Additional parameters: new_only (%s)", dp->d_namep);
+    bu_avs_print(&result->additional_new_only, bu_vls_addr(&tmp));
+    bu_vls_sprintf(&tmp, "Additional parameters: orig_diff (%s)", dp->d_namep);
+    bu_avs_print(&result->additional_orig_diff, bu_vls_addr(&tmp));
+    bu_vls_sprintf(&tmp, "Additional parameters: new_diff (%s)", dp->d_namep);
+    bu_avs_print(&result->additional_new_diff, bu_vls_addr(&tmp));
+}
+
+int
+bu_avs_diff(struct bu_attribute_value_set *shared,
+	struct bu_attribute_value_set *orig_only,
+	struct bu_attribute_value_set *new_only,
+	struct bu_attribute_value_set *orig_diff,
+	struct bu_attribute_value_set *new_diff,
+	const struct bu_attribute_value_set *avs1,
+	const struct bu_attribute_value_set *avs2,
+	struct bn_tol *tol)
+{
+    struct bu_attribute_value_pair *avp;
+    int have_shared = 0;
+    int have_orig_only = 0;
+    int have_new_only = 0;
+    int have_diff = 0;
+    if (tol) bu_log("Need to do some floating point value foo\n");
+    if (!BU_AVS_IS_INITIALIZED(shared)) BU_AVS_INIT(shared);
+    if (!BU_AVS_IS_INITIALIZED(orig_only)) BU_AVS_INIT(orig_only);
+    if (!BU_AVS_IS_INITIALIZED(new_only)) BU_AVS_INIT(new_only);
+    if (!BU_AVS_IS_INITIALIZED(orig_diff)) BU_AVS_INIT(orig_diff);
+    if (!BU_AVS_IS_INITIALIZED(new_diff)) BU_AVS_INIT(new_diff);
+    for (BU_AVS_FOR(avp, avs1)) {
+	const char *val2 = bu_avs_get(avs2, avp->name);
+	if (!val2) {
+	    bu_avs_add(orig_only, avp->name, avp->value);
+	    have_orig_only++;
+	}
+	if (BU_STR_EQUAL(avp->value, val2)) {
+	    bu_avs_add(shared, avp->name, avp->value);
+	    have_shared++;
+	} else {
+	    bu_avs_add(orig_diff, avp->name, avp->value);
+	    bu_avs_add(new_diff, avp->name, val2);
+	    have_diff++;
+	}
+    }
+    for (BU_AVS_FOR(avp, avs2)) {
+	const char *val1 = bu_avs_get(avs1, avp->name);
+	if (!val1) {
+	    bu_avs_add(new_only, avp->name, avp->value);
+	    have_new_only++;
+	}
+    }
+    if (have_diff) return 5;
+    if (!have_orig_only && !have_new_only) return 0;
+    if (have_orig_only && !have_new_only && !have_shared) return 1;
+    if (!have_orig_only && have_new_only && !have_shared) return 2;
+    if (have_orig_only && !have_new_only && have_shared) return 3;
+    if (!have_orig_only && have_new_only && have_shared) return 4;
+    return 5;
+}
+
 int
 tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int offset) {
     int i = 0;
@@ -801,162 +945,231 @@ tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int of
 int
 diff_dbip(struct db_i *dbip1, struct db_i *dbip2)
 {
+    int i;
     struct directory *dp1, *dp2;
-    struct rt_db_internal intern1, intern2;
     struct bu_attribute_value_set avs1, avs2;
     struct bu_vls s1_tcl = BU_VLS_INIT_ZERO;
     struct bu_vls s2_tcl = BU_VLS_INIT_ZERO;
-    struct bu_vls temp_str = BU_VLS_INIT_ZERO;
+    struct gdiff_result *results = NULL;
+    int diff_count = -1;
+    int diff_total = 0;
     /*struct bu_vls diff_log = BU_VLS_INIT_ZERO;*/
     int has_diff = 0;
     int have_tcl1 = 1;
     int have_tcl2 = 1;
 
+    /* Get a count of the number of objects in the
+     * union of the two candidate databases */
+    {
+	int dbip1_only = 0;
+	int dbip2_only = 0;
+	int dbip1_dbip2 = 0;
+
+	FOR_ALL_DIRECTORY_START(dp1, dbip1) {
+	    /* check if this object exists in the other database */
+	    if (db_lookup(dbip2, dp1->d_namep, 0) == RT_DIR_NULL) {
+		dbip1_only++;
+	    } else {
+		dbip1_dbip2++;
+	    }
+	} FOR_ALL_DIRECTORY_END;
+	FOR_ALL_DIRECTORY_START(dp2, dbip2) {
+	    /* check if this object exists in the other database */
+	    if (db_lookup(dbip1, dp2->d_namep, 0) == RT_DIR_NULL) {
+		dbip2_only++;
+	    } else {
+		dbip1_dbip2++;
+	    }
+	} FOR_ALL_DIRECTORY_END;
+	dbip1_dbip2 = dbip1_dbip2/2;
+	diff_total = dbip1_dbip2 + dbip1_only + dbip2_only;
+    }
+
+    /* Populate the results array with enough containers to
+     * hold the results of processing the two databases */
+
+    results = (struct gdiff_result *)bu_calloc(diff_total + 1, sizeof(struct gdiff_result), "gdiff results array");
+
+    for (i = 0; i < diff_total + 1; i++) {
+	gdiff_init(&(results[i]));
+    }
+
     /* look at all objects in this database */
     FOR_ALL_DIRECTORY_START(dp1, dbip1) {
-	bu_log("\n\n\n%s:\n\n", dp1->d_namep);
+	struct gdiff_result *curr_result = NULL;
+	diff_count++;
+	curr_result = &results[diff_count];
+	curr_result->dp_orig = dp1;
 
+	/* skip the _GLOBAL object for now - need to deal with this, however */
+	if (dp1->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
+	    curr_result->dp_orig = dp1;
+	    continue;
+	}
+
+	/* Get the internal objects */
+	if (rt_db_get_internal(curr_result->intern_orig, dp1, dbip1, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	    bu_log("rt_db_get_internal(%s) failure\n", dp1->d_namep);
+	    curr_result->status = 1;
+	    continue;
+	}
 	/* check if this object exists in the other database */
 	if ((dp2 = db_lookup(dbip2, dp1->d_namep, 0)) == RT_DIR_NULL) {
 	    /*kill_obj(dp1->d_namep);*/
-	    bu_log("case1\n");
+	    curr_result->dp_new = NULL;
+	    curr_result->internal_diff_type = 1;
 	    continue;
-	}
-
-	/* skip the _GLOBAL object */
-	if (dp1->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
-	    bu_log("case2\n");
-	    continue;
-	}
-
-	/* Get the internal objects */	
-	if (rt_db_get_internal(&intern1, dp1, dbip1, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	    bu_log("rt_db_get_internal(%s) failure\n", dp1->d_namep);
-	    continue;
-	}
-	if (rt_db_get_internal(&intern2, dp2, dbip2, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	    bu_log("rt_db_get_internal(%s) failure\n", dp2->d_namep);
-	    continue;
+	} else {
+	    curr_result->dp_new = dp2;
+	    if (rt_db_get_internal(curr_result->intern_new, dp2, dbip2, (fastf_t *)NULL, &rt_uniresource) < 0) {
+		bu_log("rt_db_get_internal(%s) failure\n", dp2->d_namep);
+		curr_result->status = 1;
+		continue;
+	    }
 	}
 
 	/* Do some type based checking - if we've totally changed
-	 * types we don't need to get into the details */
-	if (intern1.idb_minor_type != intern2.idb_minor_type) has_diff = 1;
-	if (intern1.idb_minor_type == DB5_MINORTYPE_BRLCAD_ARB8) {
-	    struct bn_tol arb_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
-	    int arb_type_1 = rt_arb_std_type(&intern1, &arb_tol);
-	    int arb_type_2 = rt_arb_std_type(&intern2, &arb_tol);
-	    if (arb_type_1 != arb_type_2) has_diff=1;
+	 * types we don't need to get into the details.
+	 * TODO - is that true?  Do we perhaps want to be able
+	 * to compare the vertex values of a tor and sphere, even
+	 * though the rest of the parameters are different?  How
+	 * fine grained do we want to be here? */
+	if (curr_result->intern_orig->idb_minor_type != curr_result->intern_new->idb_minor_type) {
+	    curr_result->internal_diff_type = 3;
+	} else {
+	    if (curr_result->intern_orig->idb_minor_type == DB5_MINORTYPE_BRLCAD_ARB8) {
+		struct bn_tol arb_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
+		int arb_type_1 = rt_arb_std_type(curr_result->intern_orig, &arb_tol);
+		int arb_type_2 = rt_arb_std_type(curr_result->intern_new, &arb_tol);
+		if (arb_type_1 != arb_type_2) curr_result->internal_diff_type = 3;
+	    }
 	}
-	if (has_diff) continue;
 
-	/* try to get the TCL version of this object */
-	bu_vls_trunc(&s1_tcl, 0);
-	if (intern1.idb_meth->ft_get(&s1_tcl, &intern1, NULL) == BRLCAD_ERROR) have_tcl1 = 0;
-	/*bu_log("dp1: %s\n", bu_vls_addr(&s1_tcl));*/
-	bu_vls_trunc(&s2_tcl, 0);
-	if (intern2.idb_meth->ft_get(&s2_tcl, &intern2, NULL) == BRLCAD_ERROR) have_tcl2 = 0;
-	/*bu_log("dp2: %s\n", bu_vls_addr(&s2_tcl));*/
+	/* Try to create attribute/value set definitions for these
+	 * objects from their Tcl list definitions.  We use an
+	 * offset of one because for all objects the first entry
+	 * in the list is the type of the object, which a) isn't
+	 * an attribute/value pair and b) we can already get from
+	 * the C data structures */
+	if (curr_result->internal_diff_type != 3) {
+	    bu_vls_trunc(&s1_tcl, 0);
+	    if (curr_result->intern_orig->idb_meth->ft_get(&s1_tcl, curr_result->intern_orig, NULL) == BRLCAD_ERROR) have_tcl1 = 0;
+	    /*bu_log("dp1: %s\n", bu_vls_addr(&s1_tcl));*/
+	    bu_vls_trunc(&s2_tcl, 0);
+	    if (curr_result->intern_new->idb_meth->ft_get(&s2_tcl, curr_result->intern_new, NULL) == BRLCAD_ERROR) have_tcl2 = 0;
+	    /*bu_log("dp2: %s\n", bu_vls_addr(&s2_tcl));*/
+	    if (have_tcl1 && have_tcl2) {
+		if (tcl_list_to_avs(bu_vls_addr(&s1_tcl), &avs1, 1)) have_tcl1 = 0;
+		/*bu_vls_sprintf(&temp_str, "dp1 core: %s", dp1->d_namep);*/
+		if (tcl_list_to_avs(bu_vls_addr(&s2_tcl), &avs2, 1)) have_tcl2 = 0;
+		/*bu_vls_sprintf(&temp_str, "dp2 core: %s", dp2->d_namep);*/
+	    }
+	}
+	/* If we have both avs sets, do the detailed comparison */
 	if (have_tcl1 && have_tcl2) {
-	    if (tcl_list_to_avs(bu_vls_addr(&s1_tcl), &avs1, 1)) have_tcl1 = 0;
-	    bu_vls_sprintf(&temp_str, "dp1 core: %s", dp1->d_namep);
-	    bu_avs_print(&avs1, bu_vls_addr(&temp_str));
-	    if (intern1.idb_avs.magic == BU_AVS_MAGIC) {
-		bu_vls_sprintf(&temp_str, "dp1 additional: %s", dp1->d_namep);
-		bu_avs_print(&intern1.idb_avs, bu_vls_addr(&temp_str));
+	    int avs_diff_result = bu_avs_diff(&curr_result->internal_shared, &curr_result->internal_orig_only,
+		    &curr_result->internal_new_only, &curr_result->internal_orig_diff,
+		    &curr_result->internal_new_diff, &avs1, &avs2, (struct bn_tol *)NULL);
+	    switch(avs_diff_result) {
+		case 0:
+		    curr_result->internal_diff_type = 0;
+		    break;
+		default:
+		    curr_result->internal_diff_type = 5;
+		    break;
 	    }
-	    if (tcl_list_to_avs(bu_vls_addr(&s2_tcl), &avs2, 1)) have_tcl2 = 0;
-	    bu_vls_sprintf(&temp_str, "dp2 core: %s", dp2->d_namep);
-	    bu_avs_print(&avs2, bu_vls_addr(&temp_str));
-	    if (intern2.idb_avs.magic == BU_AVS_MAGIC) {
-		bu_vls_sprintf(&temp_str, "dp2 additional: %s", dp2->d_namep);
-		bu_avs_print(&intern2.idb_avs, bu_vls_addr(&temp_str));
+	} else {
+	    /* If we reach this point and don't have successful avs creation, we are reduced
+	     * to comparing the binary serializations of the two objects.  This is not ideal
+	     * in that it precludes a nuanced description of the differences, but it is at
+	     * least able to detect them */
+	    struct bu_external ext1, ext2;
+
+	    if (db_get_external(&ext1, dp1, dbip1)) {
+		bu_log("ERROR: db_get_external failed on solid %s in %s\n", dp1->d_namep, dbip1->dbi_filename);
+		continue;
+	    }
+	    if (db_get_external(&ext2, dp2, dbip2)) {
+		bu_log("ERROR: db_get_external failed on solid %s in %s\n", dp2->d_namep, dbip2->dbi_filename);
+		continue;
 	    }
 
+	    if (ext1.ext_nbytes != ext2.ext_nbytes) {
+		curr_result->internal_diff_type = 4;
+	    }
+
+	    if (!(curr_result->internal_diff_type != 4) &&
+		    memcmp((void *)ext1.ext_buf, (void *)ext2.ext_buf, ext1.ext_nbytes)) {
+		curr_result->internal_diff_type = 4;
+	    }
 	}
 
-	/* If we reach this point and don't have successful avs creation, we are reduced
-	 * to comparing the binary serializations of the two objects.  This is not ideal
-	 * in that it precludes a nuanced description of the differences, but it is at
-	 * least able to detect them */
-	if(!have_tcl1 || !have_tcl2) {
+	/* If we might care, look at the extra attributes as well */
+	if (!curr_result->internal_diff_type || curr_result->internal_diff_type >= 3) {
+	    if (curr_result->intern_orig->idb_avs.magic == BU_AVS_MAGIC &&
+		    curr_result->intern_new->idb_avs.magic == BU_AVS_MAGIC) {
+		curr_result->additional_diff_type = bu_avs_diff(&curr_result->additional_shared,
+			&curr_result->additional_orig_only,
+			&curr_result->additional_new_only, &curr_result->additional_orig_diff,
+			&curr_result->additional_new_diff,
+			&curr_result->intern_orig->idb_avs,
+			&curr_result->intern_new->idb_avs,
+			(struct bn_tol *)NULL);
+	    } else {
+		if (curr_result->intern_orig->idb_avs.magic == BU_AVS_MAGIC) {
+		    curr_result->additional_diff_type = 1;
+		    bu_avs_merge(&curr_result->additional_orig_only, &curr_result->intern_orig->idb_avs);
+		}
+		if (curr_result->intern_new->idb_avs.magic == BU_AVS_MAGIC) {
+		    curr_result->additional_diff_type = 2;
+		    bu_avs_merge(&curr_result->additional_new_only, &curr_result->intern_new->idb_avs);
+		}
+	    }
 	}
 
 	bu_avs_free(&avs1);
 	bu_avs_free(&avs2);
 
-#if 0
-	/* got TCL versions of both */
-	if ((dp1->d_flags & RT_DIR_SOLID) && (dp2->d_flags & RT_DIR_SOLID)) {
-	    /* both are solids */
-	    has_diff += compare_tcl_solids(&diff_log, bu_vls_addr(&s1_tcl), bu_vls_addr(&s2_tcl), dp1, mode, use_floats, evolutionary);
-	    if (pre_5_vers != 2) {
-		has_diff += compare_attrs(dp1, dp2);
-	    }
-	    continue;
-	}
-
-	if ((dp1->d_flags & RT_DIR_COMB) && (dp2->d_flags & RT_DIR_COMB)) {
-	    /* both are combinations */
-	    has_diff += compare_tcl_combs(obj1, dp1, obj2);
-	    if (pre_5_vers != 2) {
-		has_diff += compare_attrs(dp1, dp2);
-	    }
-	    continue;
-	}
-
-	/* the two objects are different types */
-	if (!BU_STR_EQUAL(str1, str2)) {
-	    has_diff += 1;
-	    if (mode == HUMAN)
-		printf("%s:\n\twas: %s\n\tis now: %s\n\n",
-		       dp1->d_namep, str1, str2);
-	    else
-		printf("kill %s\ndb put %s %s\n",
-		       dp1->d_namep, dp2->d_namep, str2);
-	}
-#endif
     } FOR_ALL_DIRECTORY_END;
+
+    /* now look for objects in the other database that aren't here */
+    FOR_ALL_DIRECTORY_START(dp2, dbip2) {
+	struct gdiff_result *curr_result = NULL;
+	/* check if this object exists in the other database */
+	if (db_lookup(dbip1, dp2->d_namep, 0) == RT_DIR_NULL) {
+	    diff_count++;
+	    curr_result = &results[diff_count];
+	    curr_result->dp_new = dp2;
+	    curr_result->internal_diff_type = 2;
+	    if (rt_db_get_internal(curr_result->intern_new, dp2, dbip2, (fastf_t *)NULL, &rt_uniresource) < 0) {
+		bu_log("rt_db_get_internal(%s) failure\n", dp2->d_namep);
+		curr_result->status = 1;
+		continue;
+	    }
+	    if (curr_result->intern_new->idb_meth->ft_get(&s2_tcl, curr_result->intern_new, NULL) != BRLCAD_ERROR) {
+		if (!tcl_list_to_avs(bu_vls_addr(&s2_tcl), &avs2, 1)){
+		    curr_result->internal_diff_type = 2;
+		    bu_avs_merge(&curr_result->internal_new_only, &avs2);
+		    bu_avs_free(&avs2);
+		}
+	    }
+	    curr_result->additional_diff_type = 0;
+	    if (curr_result->intern_new->idb_avs.magic == BU_AVS_MAGIC) {
+		if (curr_result->intern_new->idb_avs.count > 0) curr_result->additional_diff_type = 2;
+		bu_avs_merge(&curr_result->additional_new_only, &curr_result->intern_new->idb_avs);
+	    }
+
+	}
+    } FOR_ALL_DIRECTORY_END;
+
+
+    for (i = 0; i < diff_total; i++) {
+	gdiff_print(&(results[i]));
+    }
+
 
     bu_vls_free(&s1_tcl);
     bu_vls_free(&s2_tcl);
-#if 0
-    /* now look for objects in the other database that aren't here */
-    FOR_ALL_DIRECTORY_START(dp2, dbip2) {
-	/* skip the _GLOBAL object */
-	if (dp2->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY)
-	    continue;
-
-	/* check if this object exists in the other database */
-	if (db_lookup(dbip1, dp2->d_namep, 0) == RT_DIR_NULL) {
-	    /* need to add this object */
-	    has_diff += 1;
-	    argv[2] = dp2->d_namep;
-
-	    /* FIXME: use libtclcad's get interface or libged or librt
-	     * directly, just not wdb_obj
-	     */
-	    if (wdb_get_tcl((void *)dbip2->dbi_wdbp, 3, (const char **)argv) == TCL_ERROR ||
-		!bu_strncmp(Tcl_GetStringResult(interp), "invalid", 7)) {
-		/* could not get TCL version */
-		if (mode == HUMAN)
-		    printf("Import %s from %s\n",
-			   dp2->d_namep, dbip2->dbi_filename);
-		else
-		    printf("# IMPORT %s from %s\n",
-			   dp2->d_namep, dbip2->dbi_filename);
-	    } else {
-		if (mode == HUMAN)
-		    printf("%s does not exist in %s\n",
-			   dp2->d_namep, dbip1->dbi_filename);
-		else
-		    printf("db put %s %s\n",
-			   dp2->d_namep, Tcl_GetStringResult(interp));
-	    }
-	    Tcl_ResetResult(interp);
-	}
-    } FOR_ALL_DIRECTORY_END;
-#endif
     return has_diff;
 }
 
