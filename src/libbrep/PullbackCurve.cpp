@@ -191,7 +191,7 @@ toUV(brlcad::SurfaceTree *surftree, const ON_Curve *curve, ON_2dPoint& out_pt, d
 		break;
 		//return brep_edge_check(found, sbv, face, surf, ray, hits);
 	    }
-	    brep_newton_iterate(surf, pr, Rcurr, su, sv, uv, new_uv);
+	    brep_newton_iterate(pr, Rcurr, su, sv, uv, new_uv);
 	    move(uv, new_uv);
 	    Dlast = d;
 	}

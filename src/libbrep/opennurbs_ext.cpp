@@ -108,28 +108,6 @@ brep_newton_iterate(plane_ray& pr, pt2d_t R, ON_3dVector& su, ON_3dVector& sv, p
 	mat2d_pt2d_mul(tmp, inv_jacob, R);
 	pt2dsub(out_uv, uv, tmp);
     } else {
-	TRACE2("inverse failed"); // XXX how to handle this?
-	move(out_uv, uv);
-    }
-}
-
-
-void
-brep_newton_iterate(const ON_Surface* UNUSED(surf), plane_ray& pr, pt2d_t R, ON_3dVector& su, ON_3dVector& sv, pt2d_t uv, pt2d_t out_uv)
-{
-    vect_t vsu, vsv;
-    VMOVE(vsu, su);
-    VMOVE(vsv, sv);
-
-    mat2d_t jacob = { VDOT(pr.n1, vsu), VDOT(pr.n1, vsv),
-		      VDOT(pr.n2, vsu), VDOT(pr.n2, vsv) };
-    mat2d_t inv_jacob;
-    if (mat2d_inverse(inv_jacob, jacob)) {
-	// check inverse validity
-	pt2d_t tmp;
-	mat2d_pt2d_mul(tmp, inv_jacob, R);
-	pt2dsub(out_uv, uv, tmp);
-    } else {
 	TRACE2("inverse failed"); // FIXME: how to handle this?
 	move(out_uv, uv);
     }
