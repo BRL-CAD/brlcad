@@ -829,7 +829,7 @@ diff_dbip(struct db_i *dbip1, struct db_i *dbip2)
 	    continue;
 	}
 
-	/* try to get the TCL version of this object */
+	/* Get the internal objects */	
 	if (rt_db_get_internal(&intern1, dp1, dbip1, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	    bu_log("rt_db_get_internal(%s) failure\n", dp1->d_namep);
 	    continue;
@@ -838,6 +838,19 @@ diff_dbip(struct db_i *dbip1, struct db_i *dbip2)
 	    bu_log("rt_db_get_internal(%s) failure\n", dp2->d_namep);
 	    continue;
 	}
+
+	/* Do some type based checking - if we've totally changed
+	 * types we don't need to get into the details */
+	if (intern1.idb_minor_type != intern2.idb_minor_type) has_diff = 1;
+	if (intern1.idb_minor_type == DB5_MINORTYPE_BRLCAD_ARB8) {
+	    struct bn_tol arb_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
+	    int arb_type_1 = rt_arb_std_type(&intern1, &arb_tol);
+	    int arb_type_2 = rt_arb_std_type(&intern2, &arb_tol);
+	    if (arb_type_1 != arb_type_2) has_diff=1;
+	}
+	if (has_diff) continue;
+
+	/* try to get the TCL version of this object */
 	bu_vls_trunc(&s1_tcl, 0);
 	if (intern1.idb_meth->ft_get(&s1_tcl, &intern1, NULL) == BRLCAD_ERROR) have_tcl1 = 0;
 	/*bu_log("dp1: %s\n", bu_vls_addr(&s1_tcl));*/
@@ -860,9 +873,15 @@ diff_dbip(struct db_i *dbip1, struct db_i *dbip2)
 		bu_avs_print(&intern2.idb_avs, bu_vls_addr(&temp_str));
 	    }
 
-	} else {
-	    bu_log("\n\n\nSomething wrong with above gets!\n\n\n");
 	}
+
+	/* If we reach this point and don't have successful avs creation, we are reduced
+	 * to comparing the binary serializations of the two objects.  This is not ideal
+	 * in that it precludes a nuanced description of the differences, but it is at
+	 * least able to detect them */
+	if(!have_tcl1 || !have_tcl2) {
+	}
+
 	bu_avs_free(&avs1);
 	bu_avs_free(&avs2);
 
