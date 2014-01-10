@@ -9,6 +9,7 @@ BRLCAD_LIB_INCLUDE_DIRS(analyze ANALYZE_INCLUDE_DIRS "")
 
 set(LIBANALYZE_SOURCES
   density.c
+  diff.c
   overlaps.c
   voxels.c
   )
@@ -18,7 +19,7 @@ add_subdirectory(tests)
 BRLCAD_ADDLIB(libanalyze "${LIBANALYZE_SOURCES}" "${TCL_LIBRARY};libbu;librt")
 set_target_properties(libanalyze PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
-CMAKEFILES(diff.c)
+#CMAKEFILES(diff.c)
 
 # Local Variables:
 # tab-width: 8

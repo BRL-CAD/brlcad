@@ -48,7 +48,7 @@
 /* type of adjustment, for do_compare() */
 #define PARAMS 1
 #define ATTRS  2
-
+#if 0
 HIDDEN int
 compare_color_tables(struct bu_vls *diff_log, int mode, struct mater *mater_hd1, struct mater *mater_hd2)
 {
@@ -402,8 +402,169 @@ do_compare(int type, struct bu_vls *diff_log, struct bu_vls *vls, Tcl_Obj *obj1,
     return found_diffs;
 }
 
+HIDDEN int
+do_attr_compare(struct bu_vls *diff_log, struct bu_vls *vls, struct bu_attribute_value_set *avs1, struct bu_attribute_value_set *avs2, char *obj_name, int mode, int use_floats, int evolutionary)
+{
+    Tcl_Obj *key1, *val1, *key2, *val2;
+    int len1, len2, found, junk;
+    int i, j;
+    int start_index = 0;
+    int found_diffs = 0;
+    int ev = 0;
+
+    Tcl_ListObjLength(NULL, obj1, &len1);
+    Tcl_ListObjLength(NULL, obj2, &len2);
+
+    if (!len1 && !len2)
+	return 0;
+
+    /* check for changed values from object 1 to object2 */
+    for (i=start_index; i<len1; i+=2) {
+	Tcl_ListObjIndex(NULL, obj1, i, &key1);
+	Tcl_ListObjIndex(NULL, obj1, i+1, &val1);
+	found = 0;
+	for (j=start_index; j<len2; j += 2) {
+	    Tcl_ListObjIndex(NULL, obj2, j, &key2);
+	    if (BU_STR_EQUAL(Tcl_GetStringFromObj(key1, &junk), Tcl_GetStringFromObj(key2, &junk))) {
+		found = 1;
+		Tcl_ListObjIndex(NULL, obj2, j+1, &val2);
+		/* check if this value has changed */
+		ev = BU_STR_EQUAL(val1, val2);
+		if (ev) {
+		    if (!found_diffs++) {
+			if (mode == HUMAN) {
+			    bu_vls_printf(diff_log, "%s has changed:\n", obj_name);
+			}
+		    }
+		    if (mode == HUMAN) {
+			if (type == PARAMS) {
+			    bu_vls_printf(diff_log,"\tparameter %s has changed from:\n\t\t%s\n\tto:\n\t\t%s\n",
+				   Tcl_GetStringFromObj(key1, &junk),
+				   Tcl_GetStringFromObj(val1, &junk),
+				   Tcl_GetStringFromObj(val2, &junk));
+			} else {
+			    bu_vls_printf(diff_log,"\t%s attribute \"%s\" has changed from:\n\t\t%s\n\tto:\n\t\t%s\n",
+				   obj_name,
+				   Tcl_GetStringFromObj(key1, &junk),
+				   Tcl_GetStringFromObj(val1, &junk),
+				   Tcl_GetStringFromObj(val2, &junk));
+			}
+		    } else {
+			int val_len;
+
+			if (type == ATTRS) {
+			    bu_vls_printf(vls, "attr set %s ", obj_name);
+			} else {
+			    bu_vls_strcat(vls, " ");
+			}
+			bu_vls_strcat(vls, Tcl_GetStringFromObj(key1, &junk));
+			bu_vls_strcat(vls, " ");
+			Tcl_ListObjLength(NULL, val2, &val_len);
+			if (val_len > 1)
+			    bu_vls_putc(vls, '{');
+			bu_vls_strcat(vls, Tcl_GetStringFromObj(val2, &junk));
+			if (val_len > 1)
+			    bu_vls_putc(vls, '}');
+			if (type == ATTRS) {
+			    bu_vls_putc(vls, '\n');
+			}
+		    }
+		}
+		break;
+	    }
+	}
+	if (!found) {
+	    /* this keyword value pair has been eliminated */
+	    if (!found_diffs++) {
+		if (mode == HUMAN) {
+		    bu_vls_printf(diff_log,"%s has changed:\n", obj_name);
+		}
+	    }
+	    if (mode == HUMAN) {
+		if (type == PARAMS) {
+		    bu_vls_printf(diff_log,"\tparameter %s has been eliminated\n",
+			   Tcl_GetStringFromObj(key1, &junk));
+		} else {
+		    bu_vls_printf(diff_log,"\tattribute \"%s\" has been eliminated from %s\n",
+			   Tcl_GetStringFromObj(key1, &junk), obj_name);
+		}
+	    } else {
+		if (type == ATTRS) {
+		    bu_vls_printf(vls, "attr rm %s %s\n", obj_name,
+				  Tcl_GetStringFromObj(key1, &junk));
+		} else {
+		    bu_vls_strcat(vls, " ");
+		    bu_vls_strcat(vls, Tcl_GetStringFromObj(key1, &junk));
+		    bu_vls_strcat(vls, " none");
+		}
+	    }
+	}
+    }
+
+    /* check for keyword value pairs in object 2 that don't appear in object 1 */
+    for (i=start_index; i<len2; i+= 2) {
+	/* get keyword/value pairs from object 2 */
+	Tcl_ListObjIndex(NULL, obj2, i, &key2);
+	Tcl_ListObjIndex(NULL, obj2, i+1, &val2);
+	found = 0;
+	/* look for this keyword in object 1 */
+	for (j=start_index; j<len1; j += 2) {
+	    Tcl_ListObjIndex(NULL, obj1, j, &key1);
+	    if (BU_STR_EQUAL(Tcl_GetStringFromObj(key1, &junk), Tcl_GetStringFromObj(key2, &junk))) {
+		found = 1;
+		break;
+	    }
+	}
+	if (found)
+	    continue;
+
+	/* This keyword/value pair in object 2 is not in object 1 */
+	if (!found_diffs++) {
+	    if (mode == HUMAN) {
+		bu_vls_printf(diff_log,"%s has changed:\n", obj_name);
+	    }
+	}
+	if (mode == HUMAN) {
+	    if (type == PARAMS) {
+		bu_vls_printf(diff_log,"\t%s has new parameter \"%s\" with value %s\n",
+		       obj_name,
+		       Tcl_GetStringFromObj(key2, &junk),
+		       Tcl_GetStringFromObj(val2, &junk));
+	    } else {
+		bu_vls_printf(diff_log,"\t%s has new attribute \"%s\" with value {%s}\n",
+		       obj_name,
+		       Tcl_GetStringFromObj(key2, &junk),
+		       Tcl_GetStringFromObj(val2, &junk));
+	    }
+	} else {
+	    int val_len;
+
+	    if (type == ATTRS) {
+		bu_vls_printf(vls, "attr set %s ", obj_name);
+	    } else {
+		bu_vls_strcat(vls, " ");
+	    }
+	    bu_vls_strcat(vls, Tcl_GetStringFromObj(key2, &junk));
+	    bu_vls_strcat(vls, " ");
+	    Tcl_ListObjLength(NULL, val2, &val_len);
+	    if (val_len > 1)
+		bu_vls_putc(vls, '{');
+	    bu_vls_strcat(vls, Tcl_GetStringFromObj(val2, &junk));
+	    if (val_len > 1)
+		bu_vls_putc(vls, '}');
+	    if (type == ATTRS)
+		bu_vls_putc(vls, '\n');
+	}
+    }
+
+    if (evolutionary && found_diffs)
+	bu_vls_strcat(vls, ev == 2 ? " (Evolutionary)" : " (Reworked)");
+
+    return found_diffs;
+}
+
 int
-compare_tcl_solids(struct bu_vls *diff_log, char *str1, Tcl_Obj *obj1, struct directory *dp1, char *str2, Tcl_Obj *obj2, int mode, int use_floats, int evolutionary)
+compare_tcl_solids(struct bu_vls *diff_log, char *str1, char *str2, struct directory *dp1, int mode, int use_floats, int evolutionary)
 {
     char *c1, *c2;
     struct bu_vls adjust = BU_VLS_INIT_ZERO;
@@ -426,13 +587,13 @@ compare_tcl_solids(struct bu_vls *diff_log, char *str1, Tcl_Obj *obj1, struct di
 	return 0;		/* no difference */
     }
 
-    /* same solid type, can use "db adjust" */
+    /* same solid type, split tcl list into bu_attribute_value_set for comparison */
 
     if (mode == SCRIPT) {
 	bu_vls_printf(&adjust, "db adjust %s", dp1->d_namep);
     }
 
-    different = do_compare(PARAMS, diff_log, &adjust, obj1, obj2, dp1->d_namep, mode, use_floats, evolutionary);
+    different = do_compare(PARAMS, diff_log, &adjust, str1, str2, dp1->d_namep, mode, use_floats, evolutionary);
 
     if (mode != HUMAN) {
 	bu_vls_printf(diff_log,"%s\n", bu_vls_addr(&adjust));
@@ -602,7 +763,7 @@ compare_attrs(struct directory *dp1, struct directory *dp2, struct db_i *dbip1, 
     }
 
     bu_vls_trunc(&vls, 0);
-    different = do_compare(ATTRS, &vls, obj1, obj2, dp1->d_namep);
+    different = do_compare(ATTRS, &vls, &avs1, &avs2, dp1->d_namep);
 
     printf("%s", bu_vls_addr(&vls));
     bu_vls_free(&vls);
@@ -610,79 +771,106 @@ compare_attrs(struct directory *dp1, struct directory *dp2, struct db_i *dbip1, 
     return different;
 }
 
-#if 0
+#endif
+
 int
-diff_objs(Tcl_Interp *interp, const char *db1, const char *db2)
+tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int offset) {
+    int i = 0;
+    int list_c = 0;
+    const char **listv = (const char **)NULL;
+
+    if (Tcl_SplitList(NULL, tcl_list, &list_c, (const char ***)&listv) != TCL_OK) {
+	return -1;
+    }
+
+    if (!BU_AVS_IS_INITIALIZED(avs)) BU_AVS_INIT(avs);
+
+    if (!list_c) {
+	Tcl_Free((char *)listv);
+	return 0;
+    }
+
+    for (i = offset; i < list_c; i += 2) {
+	(void)bu_avs_add(avs, listv[i], listv[i+1]);
+    }
+
+    Tcl_Free((char *)listv);
+    return 0;
+}
+
+int
+diff_dbip(struct db_i *dbip1, struct db_i *dbip2)
 {
     struct directory *dp1, *dp2;
-    char *argv[4] = {NULL, NULL, NULL, NULL};
+    struct rt_db_internal intern1, intern2;
+    struct bu_attribute_value_set avs1, avs2;
     struct bu_vls s1_tcl = BU_VLS_INIT_ZERO;
     struct bu_vls s2_tcl = BU_VLS_INIT_ZERO;
-    struct bu_vls vls = BU_VLS_INIT_ZERO;
+    struct bu_vls temp_str = BU_VLS_INIT_ZERO;
+    /*struct bu_vls diff_log = BU_VLS_INIT_ZERO;*/
     int has_diff = 0;
+    int have_tcl1 = 1;
+    int have_tcl2 = 1;
 
     /* look at all objects in this database */
     FOR_ALL_DIRECTORY_START(dp1, dbip1) {
-	char *str1, *str2;
-	Tcl_Obj *obj1, *obj2;
+	bu_log("\n\n\n%s:\n\n", dp1->d_namep);
 
 	/* check if this object exists in the other database */
 	if ((dp2 = db_lookup(dbip2, dp1->d_namep, 0)) == RT_DIR_NULL) {
-	    kill_obj(dp1->d_namep);
+	    /*kill_obj(dp1->d_namep);*/
+	    bu_log("case1\n");
 	    continue;
 	}
 
 	/* skip the _GLOBAL object */
-	if (dp1->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY)
+	if (dp1->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
+	    bu_log("case2\n");
 	    continue;
+	}
 
 	/* try to get the TCL version of this object */
-	bu_vls_trunc(&vls, 0);
-	bu_vls_printf(&vls, "%s get %s", db1, dp1->d_namep);
-	if (Tcl_Eval(interp, bu_vls_addr(&vls)) != TCL_OK) {
-	    /* cannot get TCL version, use bu_external */
-	    Tcl_ResetResult(interp);
-	    has_diff += compare_external(dp1, dp2);
+	if (rt_db_get_internal(&intern1, dp1, dbip1, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	    bu_log("rt_db_get_internal(%s) failure\n", dp1->d_namep);
 	    continue;
 	}
-
-	obj1 = Tcl_NewListObj(0, NULL);
-	Tcl_AppendObjToObj(obj1, Tcl_GetObjResult(interp));
-
+	if (rt_db_get_internal(&intern2, dp2, dbip2, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	    bu_log("rt_db_get_internal(%s) failure\n", dp2->d_namep);
+	    continue;
+	}
 	bu_vls_trunc(&s1_tcl, 0);
+	if (intern1.idb_meth->ft_get(&s1_tcl, &intern1, NULL) == BRLCAD_ERROR) have_tcl1 = 0;
+	/*bu_log("dp1: %s\n", bu_vls_addr(&s1_tcl));*/
 	bu_vls_trunc(&s2_tcl, 0);
+	if (intern2.idb_meth->ft_get(&s2_tcl, &intern2, NULL) == BRLCAD_ERROR) have_tcl2 = 0;
+	/*bu_log("dp2: %s\n", bu_vls_addr(&s2_tcl));*/
+	if (have_tcl1 && have_tcl2) {
+	    if (tcl_list_to_avs(bu_vls_addr(&s1_tcl), &avs1, 1)) have_tcl1 = 0;
+	    bu_vls_sprintf(&temp_str, "dp1 core: %s", dp1->d_namep);
+	    bu_avs_print(&avs1, bu_vls_addr(&temp_str));
+	    if (intern1.idb_avs.magic == BU_AVS_MAGIC) {
+		bu_vls_sprintf(&temp_str, "dp1 additional: %s", dp1->d_namep);
+		bu_avs_print(&intern1.idb_avs, bu_vls_addr(&temp_str));
+	    }
+	    if (tcl_list_to_avs(bu_vls_addr(&s2_tcl), &avs2, 1)) have_tcl2 = 0;
+	    bu_vls_sprintf(&temp_str, "dp2 core: %s", dp2->d_namep);
+	    bu_avs_print(&avs1, bu_vls_addr(&temp_str));
+	    if (intern2.idb_avs.magic == BU_AVS_MAGIC) {
+		bu_vls_sprintf(&temp_str, "dp2 additional: %s", dp2->d_namep);
+		bu_avs_print(&intern2.idb_avs, bu_vls_addr(&temp_str));
+	    }
 
-	bu_vls_strcpy(&s1_tcl, Tcl_GetStringResult(interp));
-	str1 = bu_vls_addr(&s1_tcl);
-	Tcl_ResetResult(interp);
-
-	/* try to get TCL version of object from the other database */
-	bu_vls_trunc(&vls, 0);
-	bu_vls_printf(&vls, "%s get %s", db2, dp1->d_namep);
-	if (Tcl_Eval(interp, bu_vls_addr(&vls)) != TCL_OK) {
-	    Tcl_ResetResult(interp);
-
-	    /* cannot get it, they MUST be different */
-	    if (mode == HUMAN)
-		printf("Replace %s with the same object from %s\n",
-		       dp1->d_namep, dbip2->dbi_filename);
-	    else
-		printf("kill %s\n# IMPORT %s from %s\n",
-		       dp1->d_namep, dp2->d_namep, dbip2->dbi_filename);
-	    continue;
+	} else {
+	    bu_log("\n\n\nSomething wrong with above gets!\n\n\n");
 	}
+	bu_avs_free(&avs1);
+	bu_avs_free(&avs2);
 
-	obj2 = Tcl_NewListObj(0, NULL);
-	Tcl_AppendObjToObj(obj2, Tcl_GetObjResult(interp));
-
-	bu_vls_strcpy(&s2_tcl, Tcl_GetStringResult(interp));
-	str2 = bu_vls_addr(&s2_tcl);
-	Tcl_ResetResult(interp);
-
+#if 0
 	/* got TCL versions of both */
 	if ((dp1->d_flags & RT_DIR_SOLID) && (dp2->d_flags & RT_DIR_SOLID)) {
 	    /* both are solids */
-	    has_diff += compare_tcl_solids(str1, obj1, dp1, str2, obj2);
+	    has_diff += compare_tcl_solids(&diff_log, bu_vls_addr(&s1_tcl), bu_vls_addr(&s2_tcl), dp1, mode, use_floats, evolutionary);
 	    if (pre_5_vers != 2) {
 		has_diff += compare_attrs(dp1, dp2);
 	    }
@@ -708,11 +896,12 @@ diff_objs(Tcl_Interp *interp, const char *db1, const char *db2)
 		printf("kill %s\ndb put %s %s\n",
 		       dp1->d_namep, dp2->d_namep, str2);
 	}
+#endif
     } FOR_ALL_DIRECTORY_END;
 
     bu_vls_free(&s1_tcl);
     bu_vls_free(&s2_tcl);
-
+#if 0
     /* now look for objects in the other database that aren't here */
     FOR_ALL_DIRECTORY_START(dp2, dbip2) {
 	/* skip the _GLOBAL object */
@@ -748,10 +937,11 @@ diff_objs(Tcl_Interp *interp, const char *db1, const char *db2)
 	    Tcl_ResetResult(interp);
 	}
     } FOR_ALL_DIRECTORY_END;
-
+#endif
     return has_diff;
 }
 
+#if 0
 
 int
 main(int argc, char **argv)
