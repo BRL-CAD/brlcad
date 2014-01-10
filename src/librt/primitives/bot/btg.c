@@ -78,14 +78,20 @@ bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt
 	bot->bot_thickness = (fastf_t *)bu_calloc(bot_ip->num_faces, sizeof(fastf_t), "bot_thickness");
 	for (tri_index = 0; tri_index < bot_ip->num_faces; tri_index++)
 	    bot->bot_thickness[tri_index] = bot_ip->thickness[tri_index];
+    } else {
+	bot->bot_thickness = NULL;
     }
-    if (bot_ip->face_mode)
+
+    if (bot_ip->face_mode) {
 	bot->bot_facemode = bu_bitv_dup(bot_ip->face_mode);
+    } else {
+	bot->bot_facemode = BU_BITV_NULL;
+    }
     bot->bot_facelist = NULL;
 
     tie = (struct tie_s *)bottie_allocn_double(bot_ip->num_faces);
     if (tie != NULL) {
-	bot_ip->tie = tie;
+	bot_ip->tie = bot->tie = tie;
     } else {
 	return -1;
     }
@@ -168,7 +174,7 @@ hitfunc(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *UNUSED(tri
      * make_bot_segment(). BOT hits were disappearing from the segment
      * depending on hit_vpriv[X] uninitialized value.
      */
-    dn = VDOT(tsp->tri_wn, ray->dir);
+    dn = VDOT(tsp->tri_N, ray->dir);
     abs_dn = dn >= 0.0 ? dn : (-dn);
     VSUB2(wxb, tsp->tri_A, ray->pos);
     VCROSS(xp, wxb, ray->dir);
@@ -219,6 +225,9 @@ bottie_shot_double(struct soltab *stp, struct xray *rp, struct application *ap, 
     for (i = 0; i < hitdata.nhits; i++)
 	hitdata.hits[i].hit_dist = hitdata.hits[i].hit_dist - dirlen;
 
+    /* FIXME: we don't have the hit_surfno but at least initialize it */
+    for (i = 0; i < hitdata.nhits; i++)
+        hitdata.hits[i].hit_surfno = 0;
 
     return rt_bot_makesegs(hitdata.hits, hitdata.nhits, stp, rp, ap, seghead, NULL);
 }
