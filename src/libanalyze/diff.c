@@ -990,7 +990,7 @@ diff_dbip(struct db_i *dbip1, struct db_i *dbip2)
 
     results = (struct gdiff_result *)bu_calloc(diff_total + 1, sizeof(struct gdiff_result), "gdiff results array");
 
-    for (i = 0; i < diff_total + 1; i++) {
+    for (i = 0; i < diff_total; i++) {
 	gdiff_init(&(results[i]));
     }
 
