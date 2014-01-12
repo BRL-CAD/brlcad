@@ -362,6 +362,12 @@ HIDDEN int to_mouse_brep_selection_append(struct ged *gedp,
 					 ged_func_ptr func,
 					 const char *usage,
 					 int maxargs);
+HIDDEN int to_mouse_brep_selection_translate(struct ged *gedp,
+					     int argc,
+					     const char *argv[],
+					     ged_func_ptr func,
+					     const char *usage,
+					     int maxargs);
 HIDDEN int to_mouse_constrain_rot(struct ged *gedp,
 				  int argc,
 				  const char *argv[],
@@ -1129,6 +1135,7 @@ static struct to_cmdtab to_cmds[] = {
     {"mouse_add_metaballpt",	"obj mx my", TO_UNLIMITED, to_mouse_append_pt_common, ged_add_metaballpt},
     {"mouse_append_pipept",	"obj mx my", TO_UNLIMITED, to_mouse_append_pt_common, ged_append_pipept},
     {"mouse_brep_selection_append", "obj mx my", 5, to_mouse_brep_selection_append, GED_FUNC_PTR_NULL},
+    {"mouse_brep_selection_translate", "obj mx my", 5, to_mouse_brep_selection_translate, GED_FUNC_PTR_NULL},
     {"mouse_constrain_rot",	"coord mx my", TO_UNLIMITED, to_mouse_constrain_rot, GED_FUNC_PTR_NULL},
     {"mouse_constrain_trans",	"coord mx my", TO_UNLIMITED, to_mouse_constrain_trans, GED_FUNC_PTR_NULL},
     {"mouse_data_scale",	"mx my", TO_UNLIMITED, to_mouse_data_scale, GED_FUNC_PTR_NULL},
@@ -6586,6 +6593,7 @@ to_mouse_brep_selection_append(struct ged *gedp,
     struct ged_dm_view *gdvp;
     const char *brep_name;
     char *end;
+    struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct bu_vls start[] = {BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO};
     struct bu_vls dir[] = {BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO};
     point_t screen_pt, view_pt, model_pt;
@@ -6666,9 +6674,111 @@ to_mouse_brep_selection_append(struct ged *gedp,
 	return GED_ERROR;
     }
 
+    bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_brep_selection_translate %V %s %%x %%y; "
+		  "%V brep %s plot SCV}",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &current_top->to_gop->go_name,
+		  &gdvp->gdv_name,
+		  brep_name,
+		  &current_top->to_gop->go_name,
+		  brep_name);
+    Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
+    bu_vls_free(&bindings);
+
     bu_free((void *)brep_name, "brep_name");
 
     return GED_OK;
+}
+
+HIDDEN int
+to_mouse_brep_selection_translate(struct ged *gedp,
+		       int argc,
+		       const char *argv[],
+		       ged_func_ptr UNUSED(func),
+		       const char *usage,
+		       int maxargs)
+{
+    const char *cmd_argv[8] = {"brep", NULL, "selection", "translate", "active"};
+    int ret, cmd_argc = (int)(sizeof(cmd_argv) / sizeof(const char *));
+    struct ged_dm_view *gdvp;
+    const char *brep_name;
+    char *end;
+    point_t screen_end, view_start, view_end, model_start, model_end;
+    vect_t model_delta;
+    struct bu_vls delta[] = {BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO};
+
+    if (argc != maxargs) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    brep_name = bu_basename(argv[2]);
+
+    screen_end[X] = strtol(argv[3], &end, 10);
+    if (*end != '\0') {
+	bu_vls_printf(gedp->ged_result_str, "ERROR: bad x value %d\n", screen_end[X]);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    screen_end[Y] = strtol(argv[4], &end, 10);
+    if (*end != '\0') {
+	bu_vls_printf(gedp->ged_result_str, "ERROR: bad y value: %d\n", screen_end[Y]);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    // convert screen-space delta to model-space delta
+    view_start[X] = screen_to_view_x(gdvp->gdv_dmp, gdvp->gdv_view->gv_prevMouseX);
+    view_start[Y] = screen_to_view_y(gdvp->gdv_dmp, gdvp->gdv_view->gv_prevMouseY);
+    view_start[Z] = 1;
+    MAT4X3PNT(model_start, gdvp->gdv_view->gv_view2model, view_start);
+
+    view_end[X] = screen_to_view_x(gdvp->gdv_dmp, screen_end[X]);
+    view_end[Y] = screen_to_view_y(gdvp->gdv_dmp, screen_end[Y]);
+    view_end[Z] = 1;
+    MAT4X3PNT(model_end, gdvp->gdv_view->gv_view2model, view_end);
+
+    VSUB2(model_delta, model_end, model_start);
+
+    bu_vls_printf(&delta[X], "%f", model_delta[X]);
+    bu_vls_printf(&delta[Y], "%f", model_delta[Y]);
+    bu_vls_printf(&delta[Z], "%f", model_delta[Z]);
+
+    cmd_argv[1] = brep_name;
+    cmd_argv[5] = bu_vls_addr(&delta[X]);
+    cmd_argv[6] = bu_vls_addr(&delta[Y]);
+    cmd_argv[7] = bu_vls_addr(&delta[Z]);
+
+    ret = ged_brep(gedp, cmd_argc, cmd_argv);
+
+    bu_free((void *)brep_name, "brep_name");
+    bu_vls_free(&delta[X]);
+    bu_vls_free(&delta[Y]);
+    bu_vls_free(&delta[Z]);
+
+    if (ret != GED_OK) {
+	return GED_ERROR;
+    }
+
+    // need to tell front-end that we've modified the db
+    Tcl_Eval(current_top->to_interp, "$::ArcherCore::application setSave");
+
+    gdvp->gdv_view->gv_prevMouseX = screen_end[X];
+    gdvp->gdv_view->gv_prevMouseY = screen_end[Y];
+
+    cmd_argc = 2;
+    cmd_argv[0] = "draw";
+    cmd_argv[1] = argv[2];
+    cmd_argv[2] = NULL;
+    ret = to_edit_redraw(gedp, cmd_argc, cmd_argv);
+
+    return ret;
 }
 
 HIDDEN int

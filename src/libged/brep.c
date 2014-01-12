@@ -334,6 +334,9 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 
     if (BU_STR_EQUAL(argv[2], "selection")) {
 	ret = selection_command(gedp, &intern, argc, argv);
+	if (BU_STR_EQUAL(argv[3], "translate") && ret == 0) {
+	    GED_DB_PUT_INTERNAL(gedp, ndp, &intern, &rt_uniresource, GED_ERROR);
+	}
 	rt_db_free_internal(&intern);
 
 	return ret;
