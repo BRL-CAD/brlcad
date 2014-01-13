@@ -144,6 +144,7 @@ compare_color_tables(struct bu_vls *diff_log, int mode, struct mater *mater_hd1,
  *  5 - complex attribute diffs
  */
 struct gdiff_result {
+    uint32_t diff_magic;
     int status;
     struct directory *dp_orig;
     struct directory *dp_new;
@@ -162,9 +163,14 @@ struct gdiff_result {
     struct bu_attribute_value_set additional_new_diff;
 };
 
+#define GDIFF_MAGIC 0x64696666 /**< diff */
+#define GDIFF_NULL ((struct gdiff_result *)0)
+#define GDIFF_IS_INITIALIZED(_p) (((struct gdiff_result *)(_p) != GDIFF_NULL) && (_p)->diff_magic == GDIFF_MAGIC)
+
 void
 gdiff_init(struct gdiff_result *result)
 {
+    result->diff_magic = GDIFF_MAGIC;
     result->status = 0;
     result->internal_diff_type = 0;
     result->intern_orig = (struct rt_db_internal *)bu_calloc(1, sizeof(struct rt_db_internal), "intern_orig");
@@ -322,8 +328,6 @@ int
 avpp_val_compare(const char *val1, const char *val2, struct bn_tol *tol)
 {
     if (!tol) return BU_STR_EQUAL(val1, val2);
-
-    if (tol) bu_log("Need to do some floating point value foo - use strtod or some such to figure out how many numbers we might have, then print a fmt string for sscanf, malloc an array, and read 'em in.  We can't just use strtod because it will return 0 on failure and zero is a potentially valid number.\nEven more of a problem, how do we distinguish between single number distances like a radius and non-dimensional input parameters?  Name-based isn't good enough, since names may mean different things - dimensional or not - between different primitives.  Name+primitive is probably needed, but where and how do we encode that information?  Teach the librt get functions to return a default unit and/or dimension on request?\n");
 
     return 0;
 }
