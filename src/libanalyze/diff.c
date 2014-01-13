@@ -409,8 +409,8 @@ tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int of
     return 0;
 }
 
-int
-diff_dp(struct gdiff_result *result, struct directory *dp1, struct directory *dp2,
+void *
+diff_dp(void *result_in, struct directory *dp1, struct directory *dp2,
 	struct db_i *dbip1, struct db_i *dbip2)
 {
     struct bu_attribute_value_set avs1, avs2;
@@ -418,6 +418,12 @@ diff_dp(struct gdiff_result *result, struct directory *dp1, struct directory *dp
     struct bu_vls s2_tcl = BU_VLS_INIT_ZERO;
     int have_tcl1 = 1;
     int have_tcl2 = 1;
+    struct gdiff_result *result = NULL;
+    if (!result_in) {
+	result = (struct gdiff_result *)bu_calloc(1, sizeof(struct gdiff_result), "gdiff result struct");
+    } else {
+	result = (struct gdiff_result *)result_in;
+    }
 
     if (!(GDIFF_IS_INITIALIZED(result))) gdiff_init(result);
 
@@ -425,12 +431,12 @@ diff_dp(struct gdiff_result *result, struct directory *dp1, struct directory *dp
     if (rt_db_get_internal(result->intern_orig, dp1, dbip1, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	bu_log("rt_db_get_internal(%s) failure\n", dp1->d_namep);
 	result->status = 1;
-	return -1;
+	return (void *)result;
     }
     if (rt_db_get_internal(result->intern_new, dp2, dbip2, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	bu_log("rt_db_get_internal(%s) failure\n", dp2->d_namep);
 	result->status = 1;
-	return -1;
+	return (void *)result;
     }
 
     /* Do some type based checking - this will make a difference in
@@ -480,12 +486,12 @@ diff_dp(struct gdiff_result *result, struct directory *dp1, struct directory *dp
 	    if (db_get_external(&ext1, dp1, dbip1)) {
 		bu_log("ERROR: db_get_external failed on solid %s in %s\n", dp1->d_namep, dbip1->dbi_filename);
 		result->status = 1;
-		return -1;
+		return (void *)result;
 	    }
 	    if (db_get_external(&ext2, dp2, dbip2)) {
 		bu_log("ERROR: db_get_external failed on solid %s in %s\n", dp2->d_namep, dbip2->dbi_filename);
 		result->status = 1;
-		return -1;
+		return (void *)result;
 	    }
 
 	    if (ext1.ext_nbytes != ext2.ext_nbytes) {
@@ -527,7 +533,7 @@ diff_dp(struct gdiff_result *result, struct directory *dp1, struct directory *dp
     bu_avs_free(&avs1);
     bu_avs_free(&avs2);
 
-    return 0;
+    return (void *)result;
 }
 
 struct bu_ptbl *

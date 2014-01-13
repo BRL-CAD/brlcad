@@ -128,6 +128,15 @@ voxelize(struct rt_i *rtip, fastf_t voxelSize[3], int levelOfDetail, void (*crea
 
 
 
+/**
+ * Analyze the difference between two directory objects
+ *
+ * Returns a pointer to the results structure.  If the first
+ * parameter is NULL, diff_dp will create a results structure - else,
+ * it uses the one provided.
+ */
+ANALYZE_EXPORT void *
+diff_dp(void *result, struct directory dp1, struct directory dp2, struct db_i *dbip1, struct db_i *dbip2);
 
 /**
  * Analyze the difference between two database objects
