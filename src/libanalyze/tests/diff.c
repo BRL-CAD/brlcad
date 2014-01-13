@@ -28,6 +28,7 @@ main(int argc, char **argv)
     int ret = 0;
     struct db_i *dbip1 = DBI_NULL;
     struct db_i *dbip2 = DBI_NULL;
+    struct bu_vls diff_log = BU_VLS_INIT_ZERO;
 
     if (argc != 3) {
 	bu_log("Error - please specify two .g files\n");
@@ -62,7 +63,9 @@ main(int argc, char **argv)
     }
 
 
-    ret = diff_dbip(dbip1, dbip2);
+    ret = diff_dbip(&diff_log, dbip1, dbip2);
+
+    bu_log("%s", bu_vls_addr(&diff_log));
 
     db_close(dbip1);
     db_close(dbip2);

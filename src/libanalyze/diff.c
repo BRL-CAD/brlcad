@@ -255,7 +255,7 @@ attrs_summary(struct bu_vls *attr_log, struct gdiff_result *result)
 }
 
 void
-gdiff_summary(int result_count, struct gdiff_result *results)
+gdiff_summary(struct bu_vls *diff_log, int result_count, struct gdiff_result *results)
 {
     int i = 0;
     struct bu_vls params = BU_VLS_INIT_ZERO;
@@ -301,14 +301,16 @@ gdiff_summary(int result_count, struct gdiff_result *results)
 		break;
 	}
     }
-    if (strlen(bu_vls_addr(&same)) > 0) bu_log("%s", bu_vls_addr(&same));
-    if (strlen(bu_vls_addr(&removed)) > 0) bu_log("%s", bu_vls_addr(&removed));
-    if (strlen(bu_vls_addr(&added)) > 0) bu_log("%s", bu_vls_addr(&added));
-    if (strlen(bu_vls_addr(&typechanged)) > 0) bu_log("%s", bu_vls_addr(&typechanged));
-    if (strlen(bu_vls_addr(&params)) > 0) bu_log("%s", bu_vls_addr(&params));
+    bu_vls_trunc(diff_log, 0);
+    if (strlen(bu_vls_addr(&same)) > 0) bu_vls_printf(diff_log, "%s", bu_vls_addr(&same));
+    if (strlen(bu_vls_addr(&removed)) > 0) bu_vls_printf(diff_log, "%s", bu_vls_addr(&removed));
+    if (strlen(bu_vls_addr(&added)) > 0) bu_vls_printf(diff_log, "%s", bu_vls_addr(&added));
+    if (strlen(bu_vls_addr(&typechanged)) > 0) bu_vls_printf(diff_log, "%s", bu_vls_addr(&typechanged));
+    if (strlen(bu_vls_addr(&params)) > 0) bu_vls_printf(diff_log, "%s", bu_vls_addr(&params));
+    /*
     for (i = 0; i < result_count; i++) {
-	/*gdiff_print(&(results[i]));*/
-    }
+	gdiff_print(&(results[i]));
+    }*/
 }
 
 int
@@ -518,14 +520,13 @@ diff_dp(struct gdiff_result *result, struct directory *dp1, struct directory *dp
 }
 
 int
-diff_dbip(struct db_i *dbip1, struct db_i *dbip2)
+diff_dbip(struct bu_vls *diff_log, struct db_i *dbip1, struct db_i *dbip2)
 {
     int i;
     struct directory *dp1, *dp2;
     struct gdiff_result *results = NULL;
     int diff_count = -1;
     int diff_total = 0;
-    /*struct bu_vls diff_log = BU_VLS_INIT_ZERO;*/
 
     /* Get a count of the number of objects in the
      * union of the two candidate databases */
@@ -618,7 +619,7 @@ diff_dbip(struct db_i *dbip1, struct db_i *dbip2)
     } FOR_ALL_DIRECTORY_END;
 
 
-    gdiff_summary(diff_total, results);
+    gdiff_summary(diff_log, diff_total, results);
 
     for (i = 0; i < diff_total; i++) {
 	gdiff_free(&(results[i]));

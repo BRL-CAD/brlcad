@@ -131,7 +131,7 @@ voxelize(struct rt_i *rtip, fastf_t voxelSize[3], int levelOfDetail, void (*crea
  * Return codes: TODO
  */
 ANALYZE_EXPORT extern int
-diff_dbip(struct db_i *dbip1, struct db_i *dbip2);
+diff_dbip(struct bu_vls *diff_log, struct db_i *dbip1, struct db_i *dbip2);
 
 __END_DECLS
 
