@@ -133,10 +133,11 @@ voxelize(struct rt_i *rtip, fastf_t voxelSize[3], int levelOfDetail, void (*crea
  *
  * Returns a pointer to the results structure.  If the first
  * parameter is NULL, diff_dp will create a results structure - else,
- * it uses the one provided.
+ * it uses the one provided.  This allows a calling function to
+ * allocate a large number of result containers at once.
  */
 ANALYZE_EXPORT void *
-diff_dp(void *result, struct directory dp1, struct directory dp2, struct db_i *dbip1, struct db_i *dbip2);
+diff_dp(void *result_in, struct directory *dp1, struct directory *dp2, struct db_i *dbip1, struct db_i *dbip2);
 
 /**
  * Analyze the difference between two database objects
@@ -157,6 +158,46 @@ diff_summarize(struct bu_vls *diff_log, struct bu_ptbl *results);
  */
 ANALYZE_EXPORT void
 diff_free_ptbl(struct bu_ptbl *results_table);
+
+typedef enum {
+    DIFF_NONE = 0,   /* No difference between objects */
+    DIFF_REMOVED,    /* Items removed, none added or changed */
+    DIFF_ADDED,      /* Items added, none removed or changed */
+    DIFF_TYPECHANGE, /* Item underwent a change in type (e.g. sph -> arb8) */
+    DIFF_BINARY,     /* Only binary change testing available */
+    DIFF             /* Differences present (none of the above cases */
+} diff_t;
+
+ANALYZE_EXPORT diff_t
+diff_type(void *result);
+
+typedef enum {
+    DIFF_SHARED_PARAM = 0,
+    DIFF_ORIG_ONLY_PARAM,
+    DIFF_NEW_ONLY_PARAM,
+    DIFF_CHANGED_ORIG_PARAM,
+    DIFF_CHANGED_NEW_PARAM,
+    DIFF_SHARED_ATTR,
+    DIFF_ORIG_ONLY_ATTR,
+    DIFF_NEW_ONLY_ATTR,
+    DIFF_CHANGED_ORIG_ATTR,
+    DIFF_CHANGED_NEW_ATTR
+} diff_result_t;
+
+ANALYZE_EXPORT struct bu_attribute_value_set *
+diff_result(void *result, diff_result_t result_type);
+
+typedef enum {
+    DIFF_ORIG = 0,
+    DIFF_NEW
+} diff_obj_t;
+
+ANALYZE_EXPORT struct directory *
+diff_info_dp(void *result, diff_obj_t obj_type);
+
+ANALYZE_EXPORT struct rt_db_internal *
+diff_info_intern(void *result, diff_obj_t obj_type);
+
 
 
 __END_DECLS

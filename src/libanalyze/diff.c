@@ -41,6 +41,7 @@
 #include "raytrace.h"
 #include "wdb.h"
 #include "mater.h"
+#include "analyze.h"
 
 #if 0
 HIDDEN int
@@ -158,6 +159,51 @@ struct gdiff_result {
 #define GDIFF_MAGIC 0x64696666 /**< diff */
 #define GDIFF_NULL ((struct gdiff_result *)0)
 #define GDIFF_IS_INITIALIZED(_p) (((struct gdiff_result *)(_p) != GDIFF_NULL) && (_p)->diff_magic == GDIFF_MAGIC)
+
+struct bu_attribute_value_set *
+diff_result(void *result, diff_result_t result_type)
+{
+    struct gdiff_result *curr_result = (struct gdiff_result *)result;
+    if (!result) return NULL;
+    BU_CKMAG(curr_result, GDIFF_MAGIC, "struct gdiff_result");
+
+    switch(result_type) {
+	case DIFF_SHARED_PARAM:
+	    return &(curr_result->internal_shared);
+	    break;
+	case DIFF_ORIG_ONLY_PARAM:
+	    return &(curr_result->internal_orig_only);
+	    break;
+	case DIFF_NEW_ONLY_PARAM:
+	    return &(curr_result->internal_new_only);
+	    break;
+	case DIFF_CHANGED_ORIG_PARAM:
+	    return &(curr_result->internal_orig_diff);
+	    break;
+	case DIFF_CHANGED_NEW_PARAM:
+	    return &(curr_result->internal_new_diff);
+	    break;
+	case DIFF_SHARED_ATTR:
+	    return &(curr_result->additional_shared);
+	    break;
+	case DIFF_ORIG_ONLY_ATTR:
+	    return &(curr_result->additional_orig_only);
+	    break;
+	case DIFF_NEW_ONLY_ATTR:
+	    return &(curr_result->additional_new_only);
+	    break;
+	case DIFF_CHANGED_ORIG_ATTR:
+	    return &(curr_result->additional_orig_diff);
+	    break;
+	case DIFF_CHANGED_NEW_ATTR:
+	    return &(curr_result->additional_new_diff);
+	    break;
+	default:
+	    bu_log("Error - unknown result type requested!\n");
+	    return NULL;
+	    break;
+    }
+}
 
 void
 gdiff_init(struct gdiff_result *result)
