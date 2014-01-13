@@ -158,12 +158,6 @@ ANALYZE_EXPORT struct bu_ptbl *
 diff_dbip(struct db_i *dbip1, struct db_i *dbip2);
 
 /**
- * Print a summary of the diff results to diff_log
- */
-ANALYZE_EXPORT void
-diff_summarize(struct bu_vls *diff_log, struct bu_ptbl *results);
-
-/**
  * Free diff result
  */
 ANALYZE_EXPORT void
@@ -183,6 +177,13 @@ typedef enum {
     DIFF_BINARY,     /* Only binary change testing available */
     DIFF             /* Differences present (none of the above cases */
 } diff_t;
+
+/**
+ * Report on the status of the result object - 0 is OK, 1 means
+ * something went wrong with the diff.
+ */
+ANALYZE_EXPORT int
+diff_status(void *result);
 
 /**
  * Report on the type of diff result contained in the object

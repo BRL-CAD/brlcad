@@ -205,12 +205,97 @@ diff_result(void *result, diff_result_t result_type)
     }
 }
 
+diff_t
+diff_type(void *result)
+{
+    struct gdiff_result *curr_result = (struct gdiff_result *)result;
+    BU_CKMAG(curr_result, GDIFF_MAGIC, "struct gdiff_result");
+
+    switch(curr_result->diff_type) {
+	case 0:
+	    return DIFF_NONE;
+	    break;
+	case 1:
+	    return DIFF_REMOVED;
+	    break;
+	case 2:
+	    return DIFF_ADDED;
+	    break;
+	case 3:
+	    return DIFF_TYPECHANGE;
+	    break;
+	case 4:
+	    return DIFF_BINARY;
+	    break;
+	case 5:
+	    return DIFF;
+	    break;
+	default:
+	    bu_log("Error - unknown type!\n");
+	    return DIFF_NONE;
+	    break;
+    }
+}
+
+struct directory *
+diff_info_dp(void *result, diff_obj_t obj_type)
+{
+    struct gdiff_result *curr_result = (struct gdiff_result *)result;
+    BU_CKMAG(curr_result, GDIFF_MAGIC, "struct gdiff_result");
+
+    switch(obj_type) {
+	case DIFF_ORIG:
+	    return curr_result->dp_orig;
+	    break;
+	case DIFF_NEW:
+	    return curr_result->dp_new;
+	    break;
+	default:
+	    bu_log("Error - unknown type!\n");
+	    return NULL;
+	    break;
+    }
+}
+
+
+struct rt_db_internal *
+diff_info_intern(void *result, diff_obj_t obj_type)
+{
+    struct gdiff_result *curr_result = (struct gdiff_result *)result;
+    BU_CKMAG(curr_result, GDIFF_MAGIC, "struct gdiff_result");
+
+    switch(obj_type) {
+	case DIFF_ORIG:
+	    return curr_result->intern_orig;
+	    break;
+	case DIFF_NEW:
+	    return curr_result->intern_new;
+	    break;
+	default:
+	    bu_log("Error - unknown type!\n");
+	    return NULL;
+	    break;
+    }
+}
+
+int
+diff_status(void *result)
+{
+    struct gdiff_result *curr_result = (struct gdiff_result *)result;
+    BU_CKMAG(curr_result, GDIFF_MAGIC, "struct gdiff_result");
+    return curr_result->status;
+}
+
+
+
 void
 gdiff_init(struct gdiff_result *result)
 {
     result->diff_magic = GDIFF_MAGIC;
     result->status = 0;
     result->diff_type = 0;
+    result->dp_orig = NULL;
+    result->dp_new = NULL;
     result->intern_orig = (struct rt_db_internal *)bu_calloc(1, sizeof(struct rt_db_internal), "intern_orig");
     result->intern_new = (struct rt_db_internal *)bu_calloc(1, sizeof(struct rt_db_internal), "intern_new");
     RT_DB_INTERNAL_INIT(result->intern_orig);
@@ -257,121 +342,6 @@ diff_free_ptbl(struct bu_ptbl *results_table)
 	diff_free((void *)result);
     }
     bu_ptbl_free(results_table);
-}
-
-void
-gdiff_print(struct gdiff_result *result)
-{
-    struct bu_vls tmp = BU_VLS_INIT_ZERO;
-    struct directory *dp = result->dp_orig;
-    if (result->diff_type == 2) {
-	dp = result->dp_new;
-    }
-    bu_log("\n\n%s(%d): (internal type: %d)\n", dp->d_namep, result->status, result->diff_type);
-    bu_vls_sprintf(&tmp, "Internal parameters: shared (%s)", dp->d_namep);
-    bu_avs_print(&result->internal_shared, bu_vls_addr(&tmp));
-    bu_vls_sprintf(&tmp, "Internal parameters: orig_only (%s)", dp->d_namep);
-    bu_avs_print(&result->internal_orig_only, bu_vls_addr(&tmp));
-    bu_vls_sprintf(&tmp, "Internal parameters: new_only (%s)", dp->d_namep);
-    bu_avs_print(&result->internal_new_only, bu_vls_addr(&tmp));
-    bu_vls_sprintf(&tmp, "Internal parameters: orig_diff (%s)", dp->d_namep);
-    bu_avs_print(&result->internal_orig_diff, bu_vls_addr(&tmp));
-    bu_vls_sprintf(&tmp, "Internal parameters: new_diff (%s)", dp->d_namep);
-    bu_avs_print(&result->internal_new_diff, bu_vls_addr(&tmp));
-
-    bu_vls_sprintf(&tmp, "Additional parameters: shared (%s)", dp->d_namep);
-    bu_avs_print(&result->additional_shared, bu_vls_addr(&tmp));
-    bu_vls_sprintf(&tmp, "Additional parameters: orig_only (%s)", dp->d_namep);
-    bu_avs_print(&result->additional_orig_only, bu_vls_addr(&tmp));
-    bu_vls_sprintf(&tmp, "Additional parameters: new_only (%s)", dp->d_namep);
-    bu_avs_print(&result->additional_new_only, bu_vls_addr(&tmp));
-    bu_vls_sprintf(&tmp, "Additional parameters: orig_diff (%s)", dp->d_namep);
-    bu_avs_print(&result->additional_orig_diff, bu_vls_addr(&tmp));
-    bu_vls_sprintf(&tmp, "Additional parameters: new_diff (%s)", dp->d_namep);
-    bu_avs_print(&result->additional_new_diff, bu_vls_addr(&tmp));
-}
-
-void
-attrs_summary(struct bu_vls *attr_log, struct gdiff_result *result)
-{
-    struct bu_attribute_value_pair *avpp;
-    if (result->additional_orig_only.count > 0) {
-	bu_vls_printf(attr_log, "   Attributes removed:\n");
-	for (BU_AVS_FOR(avpp, &(result->additional_orig_only))) {
-	    bu_vls_printf(attr_log, "      %s\n", avpp->name);
-	}
-    }
-    if (result->additional_new_only.count > 0) {
-	bu_vls_printf(attr_log, "   Attributes added:\n");
-	for (BU_AVS_FOR(avpp, &(result->additional_new_only))) {
-	    bu_vls_printf(attr_log, "      %s: %s\n", avpp->name, avpp->value);
-	}
-    }
-    if (result->additional_orig_diff.count > 0) {
-	bu_vls_printf(attr_log, "   Attribute parameters changed:\n");
-	for (BU_AVS_FOR(avpp, &(result->internal_orig_diff))) {
-	    bu_vls_printf(attr_log, "      %s: \"%s\" -> \"%s\"\n", avpp->name, avpp->value, bu_avs_get(&(result->additional_new_diff), avpp->name));
-	}
-    }
-}
-
-void
-diff_summarize(struct bu_vls *diff_log, struct bu_ptbl *results_table)
-{
-    int i = 0;
-    struct bu_vls params = BU_VLS_INIT_ZERO;
-    struct bu_vls added = BU_VLS_INIT_ZERO;
-    struct bu_vls removed = BU_VLS_INIT_ZERO;
-    struct bu_vls typechanged = BU_VLS_INIT_ZERO;
-    struct bu_vls same = BU_VLS_INIT_ZERO;
-    struct bu_attribute_value_pair *avpp;
-    for (i = 0; i < (int)BU_PTBL_LEN(results_table); i++) {
-	struct gdiff_result *result = (struct gdiff_result *)BU_PTBL_GET(results_table, i);
-	struct directory *dp = result->dp_orig;
-	if (result->diff_type == 2) {
-	    dp = result->dp_new;
-	}
-	switch (result->diff_type) {
-	    case 0:
-		break;
-	    case 1:
-		bu_vls_printf(&removed, "%s was removed.\n\n", dp->d_namep);
-		break;
-	    case 2:
-		bu_vls_printf(&added, "%s was added.\n\n", dp->d_namep);
-		break;
-	    case 3:
-		bu_vls_printf(&typechanged, "%s changed from type \"%s\" to type \"%s\".\n", dp->d_namep, result->intern_orig->idb_meth->ft_label, result->intern_new->idb_meth->ft_label);
-		attrs_summary(&typechanged, result);
-		bu_vls_printf(&typechanged, "\n");
-		break;
-	    case 4:
-		bu_vls_printf(&params, "%s exhibits a binary difference.\n", dp->d_namep);
-		attrs_summary(&params, result);
-		bu_vls_printf(&params, "\n");
-		break;
-	    case 5:
-		bu_vls_printf(&params, "%s changed:\n", dp->d_namep);
-		for (BU_AVS_FOR(avpp, &(result->internal_orig_diff))) {
-		    bu_vls_printf(&params, "   %s: \"%s\" -> \"%s\"\n", avpp->name, avpp->value, bu_avs_get(&(result->internal_new_diff), avpp->name));
-		}
-		attrs_summary(&params, result);
-		bu_vls_printf(&params, "\n");
-		break;
-	    default:
-		break;
-	}
-    }
-    bu_vls_trunc(diff_log, 0);
-    if (strlen(bu_vls_addr(&same)) > 0) bu_vls_printf(diff_log, "%s", bu_vls_addr(&same));
-    if (strlen(bu_vls_addr(&removed)) > 0) bu_vls_printf(diff_log, "%s", bu_vls_addr(&removed));
-    if (strlen(bu_vls_addr(&added)) > 0) bu_vls_printf(diff_log, "%s", bu_vls_addr(&added));
-    if (strlen(bu_vls_addr(&typechanged)) > 0) bu_vls_printf(diff_log, "%s", bu_vls_addr(&typechanged));
-    if (strlen(bu_vls_addr(&params)) > 0) bu_vls_printf(diff_log, "%s", bu_vls_addr(&params));
-    /*
-    for (i = 0; i < result_count; i++) {
-	gdiff_print(&(results[i]));
-    }*/
 }
 
 int
