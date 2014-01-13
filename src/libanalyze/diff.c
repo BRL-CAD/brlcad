@@ -835,6 +835,22 @@ gdiff_init(struct gdiff_result *result){
 }
 
 void
+gdiff_free(struct gdiff_result *result) {
+    rt_db_free_internal(result->intern_orig);
+    rt_db_free_internal(result->intern_new);
+    bu_avs_free(&result->internal_shared);
+    bu_avs_free(&result->internal_orig_only);
+    bu_avs_free(&result->internal_new_only);
+    bu_avs_free(&result->internal_orig_diff);
+    bu_avs_free(&result->internal_new_diff);
+    bu_avs_free(&result->additional_shared);
+    bu_avs_free(&result->additional_orig_only);
+    bu_avs_free(&result->additional_new_only);
+    bu_avs_free(&result->additional_orig_diff);
+    bu_avs_free(&result->additional_new_diff);
+}
+
+void
 gdiff_print(struct gdiff_result *result){
     struct bu_vls tmp = BU_VLS_INIT_ZERO;
     struct directory *dp = result->dp_orig;
@@ -1364,6 +1380,10 @@ main(int argc, char **argv)
     if (!different) {
 	/* let the user know if there are no differences */
 	printf("No differences.\n");
+    }
+
+    for (i = 0; i < diff_total; i++) {
+	gdiff_free(&(results[i]));
     }
 
     return different;
