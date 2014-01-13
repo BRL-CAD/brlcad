@@ -56,10 +56,10 @@ compare_color_tables(struct bu_vls *diff_log, int mode, struct mater *mater_hd1,
 	mp2 = mater_hd2;
 	while (mp2 != MATER_NULL) {
 	    if (mp1->mt_low == mp2->mt_low
-		&& mp1->mt_high == mp2->mt_high
-		&& mp1->mt_r == mp2->mt_r
-		&& mp1->mt_g == mp2->mt_g
-		&& mp1->mt_b == mp2->mt_b)
+		    && mp1->mt_high == mp2->mt_high
+		    && mp1->mt_r == mp2->mt_r
+		    && mp1->mt_g == mp2->mt_g
+		    && mp1->mt_b == mp2->mt_b)
 	    {
 		found1 = 1;
 		break;
@@ -78,10 +78,10 @@ compare_color_tables(struct bu_vls *diff_log, int mode, struct mater *mater_hd1,
 	mp1 = mater_hd1;
 	while (mp1 != MATER_NULL) {
 	    if (mp1->mt_low == mp2->mt_low
-		&& mp1->mt_high == mp2->mt_high
-		&& mp1->mt_r == mp2->mt_r
-		&& mp1->mt_g == mp2->mt_g
-		&& mp1->mt_b == mp2->mt_b)
+		    && mp1->mt_high == mp2->mt_high
+		    && mp1->mt_r == mp2->mt_r
+		    && mp1->mt_g == mp2->mt_g
+		    && mp1->mt_b == mp2->mt_b)
 	    {
 		found2 = 1;
 		break;
@@ -102,12 +102,12 @@ compare_color_tables(struct bu_vls *diff_log, int mode, struct mater *mater_hd1,
 	bu_vls_printf(diff_log, "Color table has changed from:\n");
 	for (mp1 = mater_hd1; mp1 != MATER_NULL; mp1 = mp1->mt_forw) {
 	    bu_vls_printf(diff_log, "\t%d..%d %d %d %d\n", mp1->mt_low, mp1->mt_high,
-		   mp1->mt_r, mp1->mt_g, mp1->mt_b);
+		    mp1->mt_r, mp1->mt_g, mp1->mt_b);
 	}
 	bu_vls_printf(diff_log, "\t\tto:\n");
 	for (mp2 = mater_hd2; mp2 != MATER_NULL; mp2 = mp2->mt_forw) {
 	    bu_vls_printf(diff_log, "\t%d..%d %d %d %d\n", mp2->mt_low, mp2->mt_high,
-		   mp2->mt_r, mp2->mt_g, mp2->mt_b);
+		    mp2->mt_r, mp2->mt_g, mp2->mt_b);
 	}
     } else {
 	/* punt, just delete the existing colortable and print a new one */
@@ -163,7 +163,8 @@ struct gdiff_result {
 };
 
 void
-gdiff_init(struct gdiff_result *result){
+gdiff_init(struct gdiff_result *result)
+{
     result->status = 0;
     result->internal_diff_type = 0;
     result->intern_orig = (struct rt_db_internal *)bu_calloc(1, sizeof(struct rt_db_internal), "intern_orig");
@@ -183,7 +184,8 @@ gdiff_init(struct gdiff_result *result){
 }
 
 void
-gdiff_free(struct gdiff_result *result) {
+gdiff_free(struct gdiff_result *result)
+{
     rt_db_free_internal(result->intern_orig);
     rt_db_free_internal(result->intern_new);
     bu_avs_free(&result->internal_shared);
@@ -199,7 +201,8 @@ gdiff_free(struct gdiff_result *result) {
 }
 
 void
-gdiff_print(struct gdiff_result *result){
+gdiff_print(struct gdiff_result *result)
+{
     struct bu_vls tmp = BU_VLS_INIT_ZERO;
     struct directory *dp = result->dp_orig;
     if (result->internal_diff_type == 2) {
@@ -230,7 +233,8 @@ gdiff_print(struct gdiff_result *result){
 }
 
 void
-attrs_summary(struct bu_vls *attr_log, struct gdiff_result *result){
+attrs_summary(struct bu_vls *attr_log, struct gdiff_result *result)
+{
     struct bu_attribute_value_pair *avpp;
     if (result->additional_orig_only.count > 0) {
 	bu_vls_printf(attr_log, "   Attributes removed:\n");
@@ -253,7 +257,8 @@ attrs_summary(struct bu_vls *attr_log, struct gdiff_result *result){
 }
 
 void
-gdiff_summary(int result_count, struct gdiff_result *results) {
+gdiff_summary(int result_count, struct gdiff_result *results)
+{
     int i = 0;
     struct bu_vls attr = BU_VLS_INIT_ZERO;
     struct bu_vls params = BU_VLS_INIT_ZERO;
@@ -366,7 +371,8 @@ bu_avs_diff(struct bu_attribute_value_set *shared,
 }
 
 int
-tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int offset) {
+tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int offset)
+{
     int i = 0;
     int list_c = 0;
     const char **listv = (const char **)NULL;
