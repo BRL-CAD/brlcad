@@ -419,8 +419,7 @@ diff_dp(struct gdiff_result *result, struct directory *dp1, struct directory *dp
     int have_tcl1 = 1;
     int have_tcl2 = 1;
 
-    /*TODO*/
-    /*if (!(GDIFF_INITIALIZED(result))) gdiff_init(result);*/
+    if (!(GDIFF_IS_INITIALIZED(result))) gdiff_init(result);
 
     /* Get the internal objects */
     if (rt_db_get_internal(result->intern_orig, dp1, dbip1, (fastf_t *)NULL, &rt_uniresource) < 0) {
