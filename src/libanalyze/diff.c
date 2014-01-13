@@ -126,31 +126,23 @@ compare_color_tables(struct bu_vls *diff_log, int mode, struct mater *mater_hd1,
  * 0 - valid diff info;
  * 1 - problem during diffing;
  *
- * Internal diff types:
+ * Diff types:
  *
  * 0 - no difference;
  * 1 - in original only;
  * 2 - in new only;
  * 3 - type difference;
  * 4 - binary-only difference;
- * 5 - parameter differences;
- *
- * Additional diff types (valid only for internal diff types 0, 3, 4, and 5):
- *  0 - no difference;
- *  1 - in original only;
- *  2 - in new only;
- *  3 - additional attributes in original only, no common with differing values;
- *  4 - additional attributes in new only, no common with differing values;
- *  5 - complex attribute diffs
+ * 5 - parameter/attribute differences;
  */
 struct gdiff_result {
     uint32_t diff_magic;
     int status;
+    int diff_type;
     struct directory *dp_orig;
     struct directory *dp_new;
     struct rt_db_internal *intern_orig;
     struct rt_db_internal *intern_new;
-    int internal_diff_type;
     struct bu_attribute_value_set internal_shared;
     struct bu_attribute_value_set internal_orig_only;
     struct bu_attribute_value_set internal_new_only;
@@ -172,7 +164,7 @@ gdiff_init(struct gdiff_result *result)
 {
     result->diff_magic = GDIFF_MAGIC;
     result->status = 0;
-    result->internal_diff_type = 0;
+    result->diff_type = 0;
     result->intern_orig = (struct rt_db_internal *)bu_calloc(1, sizeof(struct rt_db_internal), "intern_orig");
     result->intern_new = (struct rt_db_internal *)bu_calloc(1, sizeof(struct rt_db_internal), "intern_new");
     RT_DB_INTERNAL_INIT(result->intern_orig);
@@ -211,10 +203,10 @@ gdiff_print(struct gdiff_result *result)
 {
     struct bu_vls tmp = BU_VLS_INIT_ZERO;
     struct directory *dp = result->dp_orig;
-    if (result->internal_diff_type == 2) {
+    if (result->diff_type == 2) {
 	dp = result->dp_new;
     }
-    bu_log("\n\n%s(%d): (internal type: %d)\n", dp->d_namep, result->status, result->internal_diff_type);
+    bu_log("\n\n%s(%d): (internal type: %d)\n", dp->d_namep, result->status, result->diff_type);
     bu_vls_sprintf(&tmp, "Internal parameters: shared (%s)", dp->d_namep);
     bu_avs_print(&result->internal_shared, bu_vls_addr(&tmp));
     bu_vls_sprintf(&tmp, "Internal parameters: orig_only (%s)", dp->d_namep);
@@ -266,7 +258,6 @@ void
 gdiff_summary(int result_count, struct gdiff_result *results)
 {
     int i = 0;
-    struct bu_vls attr = BU_VLS_INIT_ZERO;
     struct bu_vls params = BU_VLS_INIT_ZERO;
     struct bu_vls added = BU_VLS_INIT_ZERO;
     struct bu_vls removed = BU_VLS_INIT_ZERO;
@@ -276,15 +267,11 @@ gdiff_summary(int result_count, struct gdiff_result *results)
     for (i = 0; i < result_count; i++) {
 	struct gdiff_result *result = &(results[i]);
 	struct directory *dp = result->dp_orig;
-	if (result->internal_diff_type == 2) {
+	if (result->diff_type == 2) {
 	    dp = result->dp_new;
 	}
-	switch (result->internal_diff_type) {
+	switch (result->diff_type) {
 	    case 0:
-		bu_vls_trunc(&attr, 0);
-		attrs_summary(&attr, result);
-		if (strlen(bu_vls_addr(&attr)) > 0)
-		    bu_vls_printf(&same, "%s:\n%s\n", dp->d_namep, bu_vls_addr(&attr));
 		break;
 	    case 1:
 		bu_vls_printf(&removed, "%s was removed.\n\n", dp->d_namep);
@@ -303,7 +290,7 @@ gdiff_summary(int result_count, struct gdiff_result *results)
 		bu_vls_printf(&params, "\n");
 		break;
 	    case 5:
-		bu_vls_printf(&params, "%s parameters changed:\n", dp->d_namep);
+		bu_vls_printf(&params, "%s changed:\n", dp->d_namep);
 		for (BU_AVS_FOR(avpp, &(result->internal_orig_diff))) {
 		    bu_vls_printf(&params, "   %s: \"%s\" -> \"%s\"\n", avpp->name, avpp->value, bu_avs_get(&(result->internal_new_diff), avpp->name));
 		}
@@ -436,13 +423,13 @@ diff_dp(struct gdiff_result *result, struct directory *dp1, struct directory *dp
     /* Do some type based checking - this will make a difference in
      * subsequent decision trees */
     if (result->intern_orig->idb_minor_type != result->intern_new->idb_minor_type) {
-	result->internal_diff_type = 3;
+	result->diff_type = 3;
     } else {
 	if (result->intern_orig->idb_minor_type == DB5_MINORTYPE_BRLCAD_ARB8) {
 	    struct bn_tol arb_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
 	    int arb_type_1 = rt_arb_std_type(result->intern_orig, &arb_tol);
 	    int arb_type_2 = rt_arb_std_type(result->intern_new, &arb_tol);
-	    if (arb_type_1 != arb_type_2) result->internal_diff_type = 3;
+	    if (arb_type_1 != arb_type_2) result->diff_type = 3;
 	}
     }
 
@@ -466,14 +453,15 @@ diff_dp(struct gdiff_result *result, struct directory *dp1, struct directory *dp
 	int avs_diff_result = bu_avs_diff(&result->internal_shared, &result->internal_orig_only,
 		&result->internal_new_only, &result->internal_orig_diff,
 		&result->internal_new_diff, &avs1, &avs2, (struct bn_tol *)NULL);
-	if (avs_diff_result && !result->internal_diff_type) result->internal_diff_type = 5;
+	/* If we have a difference and we haven't already set a type, do so */
+	if (avs_diff_result && !result->diff_type) result->diff_type = 5;
     } else {
 	/* If we reach this point and don't have successful avs creation, we are reduced
 	 * to comparing the binary serializations of the two objects.  This is not ideal
 	 * in that it precludes a nuanced description of the differences, but it is at
 	 * least able to detect them.  We don't do this comparison for two different
 	 * object types, since they are already assumed to be different. */
-	if (result->internal_diff_type != 3) {
+	if (result->diff_type != 3) {
 	    struct bu_external ext1, ext2;
 
 	    if (db_get_external(&ext1, dp1, dbip1)) {
@@ -488,12 +476,12 @@ diff_dp(struct gdiff_result *result, struct directory *dp1, struct directory *dp
 	    }
 
 	    if (ext1.ext_nbytes != ext2.ext_nbytes) {
-		result->internal_diff_type = 4;
+		result->diff_type = 4;
 	    }
 
-	    if (!(result->internal_diff_type != 4) &&
+	    if (!(result->diff_type != 4) &&
 		    memcmp((void *)ext1.ext_buf, (void *)ext2.ext_buf, ext1.ext_nbytes)) {
-		result->internal_diff_type = 4;
+		result->diff_type = 4;
 	    }
 	}
     }
@@ -501,19 +489,25 @@ diff_dp(struct gdiff_result *result, struct directory *dp1, struct directory *dp
     /* Look at the extra attributes as well */
     if (result->intern_orig->idb_avs.magic == BU_AVS_MAGIC &&
 	    result->intern_new->idb_avs.magic == BU_AVS_MAGIC) {
-	(void)bu_avs_diff(&result->additional_shared,
+	int avs_diff_result = bu_avs_diff(&result->additional_shared,
 		&result->additional_orig_only,
 		&result->additional_new_only, &result->additional_orig_diff,
 		&result->additional_new_diff,
 		&result->intern_orig->idb_avs,
 		&result->intern_new->idb_avs,
 		(struct bn_tol *)NULL);
+	/* If we have a difference and we haven't already set a type, do so */
+	if (avs_diff_result && !result->diff_type) result->diff_type = 5;
     } else {
 	if (result->intern_orig->idb_avs.magic == BU_AVS_MAGIC) {
 	    bu_avs_merge(&result->additional_orig_only, &result->intern_orig->idb_avs);
+	    /* If we haven't already set a type, do so */
+	    if (!result->diff_type) result->diff_type = 5;
 	}
 	if (result->intern_new->idb_avs.magic == BU_AVS_MAGIC) {
 	    bu_avs_merge(&result->additional_new_only, &result->intern_new->idb_avs);
+	    /* If we haven't already set a type, do so */
+	    if (!result->diff_type) result->diff_type = 5;
 	}
     }
 
@@ -584,7 +578,7 @@ diff_dbip(struct db_i *dbip1, struct db_i *dbip2)
 	if ((dp2 = db_lookup(dbip2, dp1->d_namep, 0)) == RT_DIR_NULL) {
 	    /*kill_obj(dp1->d_namep);*/
 	    curr_result->dp_new = NULL;
-	    curr_result->internal_diff_type = 1;
+	    curr_result->diff_type = 1;
 	    continue;
 	}
 	curr_result->dp_new = dp2;
@@ -604,7 +598,7 @@ diff_dbip(struct db_i *dbip1, struct db_i *dbip2)
 	    diff_count++;
 	    curr_result = &results[diff_count];
 	    curr_result->dp_new = dp2;
-	    curr_result->internal_diff_type = 2;
+	    curr_result->diff_type = 2;
 	    if (rt_db_get_internal(curr_result->intern_new, dp2, dbip2, (fastf_t *)NULL, &rt_uniresource) < 0) {
 		bu_log("rt_db_get_internal(%s) failure\n", dp2->d_namep);
 		curr_result->status = 1;
@@ -612,7 +606,7 @@ diff_dbip(struct db_i *dbip1, struct db_i *dbip2)
 	    }
 	    if (curr_result->intern_new->idb_meth->ft_get(&s2_tcl, curr_result->intern_new, NULL) != BRLCAD_ERROR) {
 		if (!tcl_list_to_avs(bu_vls_addr(&s2_tcl), &avs2, 1)){
-		    curr_result->internal_diff_type = 2;
+		    curr_result->diff_type = 2;
 		    bu_avs_merge(&curr_result->internal_new_only, &avs2);
 		}
 	    }
