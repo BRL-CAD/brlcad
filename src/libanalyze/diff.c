@@ -323,7 +323,7 @@ avpp_val_compare(const char *val1, const char *val2, struct bn_tol *tol)
 {
     if (!tol) return BU_STR_EQUAL(val1, val2);
 
-    if (tol) bu_log("Need to do some floating point value foo - use strtod or some such to figure out how many numbers we might have, then print a fmt string for sscanf, malloc an array, and read 'em in.  We can't just use strtod because it will return 0 on failure and zero is a potentially valid number.\n");
+    if (tol) bu_log("Need to do some floating point value foo - use strtod or some such to figure out how many numbers we might have, then print a fmt string for sscanf, malloc an array, and read 'em in.  We can't just use strtod because it will return 0 on failure and zero is a potentially valid number.\nEven more of a problem, how do we distinguish between single number distances like a radius and non-dimensional input parameters?  Name-based isn't good enough, since names may mean different things - dimensional or not - between different primitives.  Name+primitive is probably needed, but where and how do we encode that information?  Teach the librt get functions to return a default unit and/or dimension on request?\n");
 
     return 0;
 }
