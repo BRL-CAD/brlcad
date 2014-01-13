@@ -319,6 +319,16 @@ gdiff_summary(int result_count, struct gdiff_result *results)
 }
 
 int
+avpp_val_compare(const char *val1, const char *val2, struct bn_tol *tol)
+{
+    if (!tol) return BU_STR_EQUAL(val1, val2);
+
+    if (tol) bu_log("Need to do some floating point value foo - use strtod or some such to figure out how many numbers we might have, then print a fmt string for sscanf, malloc an array, and read 'em in.  We can't just use strtod because it will return 0 on failure and zero is a potentially valid number.\n");
+
+    return 0;
+}
+
+int
 bu_avs_diff(struct bu_attribute_value_set *shared,
 	struct bu_attribute_value_set *orig_only,
 	struct bu_attribute_value_set *new_only,
@@ -333,7 +343,6 @@ bu_avs_diff(struct bu_attribute_value_set *shared,
     int have_orig_only = 0;
     int have_new_only = 0;
     int have_diff = 0;
-    if (tol) bu_log("Need to do some floating point value foo\n");
     if (!BU_AVS_IS_INITIALIZED(shared)) BU_AVS_INIT(shared);
     if (!BU_AVS_IS_INITIALIZED(orig_only)) BU_AVS_INIT(orig_only);
     if (!BU_AVS_IS_INITIALIZED(new_only)) BU_AVS_INIT(new_only);
@@ -345,7 +354,7 @@ bu_avs_diff(struct bu_attribute_value_set *shared,
 	    bu_avs_add(orig_only, avp->name, avp->value);
 	    have_orig_only++;
 	}
-	if (BU_STR_EQUAL(avp->value, val2)) {
+	if (avpp_val_compare(avp->value, val2, tol)) {
 	    bu_avs_add(shared, avp->name, avp->value);
 	    have_shared++;
 	} else {
