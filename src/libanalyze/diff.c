@@ -199,6 +199,17 @@ gdiff_free(struct gdiff_result *result)
 }
 
 void
+diff_free_ptbl(struct bu_ptbl *results_table)
+{
+    int i = 0;
+    for (i = 0; i < (int)BU_PTBL_LEN(results_table); i++) {
+	struct gdiff_result *result = (struct gdiff_result *)BU_PTBL_GET(results_table, i);
+	gdiff_free(result);
+    }
+    bu_ptbl_free(results_table);
+}
+
+void
 gdiff_print(struct gdiff_result *result)
 {
     struct bu_vls tmp = BU_VLS_INIT_ZERO;
@@ -255,7 +266,7 @@ attrs_summary(struct bu_vls *attr_log, struct gdiff_result *result)
 }
 
 void
-gdiff_summary(struct bu_vls *diff_log, int result_count, struct gdiff_result *results)
+diff_summarize(struct bu_vls *diff_log, struct bu_ptbl *results_table)
 {
     int i = 0;
     struct bu_vls params = BU_VLS_INIT_ZERO;
@@ -264,8 +275,8 @@ gdiff_summary(struct bu_vls *diff_log, int result_count, struct gdiff_result *re
     struct bu_vls typechanged = BU_VLS_INIT_ZERO;
     struct bu_vls same = BU_VLS_INIT_ZERO;
     struct bu_attribute_value_pair *avpp;
-    for (i = 0; i < result_count; i++) {
-	struct gdiff_result *result = &(results[i]);
+    for (i = 0; i < (int)BU_PTBL_LEN(results_table); i++) {
+	struct gdiff_result *result = (struct gdiff_result *)BU_PTBL_GET(results_table, i);
 	struct directory *dp = result->dp_orig;
 	if (result->diff_type == 2) {
 	    dp = result->dp_new;
@@ -519,12 +530,13 @@ diff_dp(struct gdiff_result *result, struct directory *dp1, struct directory *dp
     return 0;
 }
 
-int
-diff_dbip(struct bu_vls *diff_log, struct db_i *dbip1, struct db_i *dbip2)
+struct bu_ptbl *
+diff_dbip(struct db_i *dbip1, struct db_i *dbip2)
 {
     int i;
     struct directory *dp1, *dp2;
     struct gdiff_result *results = NULL;
+    struct bu_ptbl *results_table;
     int diff_count = -1;
     int diff_total = 0;
 
@@ -563,6 +575,9 @@ diff_dbip(struct bu_vls *diff_log, struct db_i *dbip1, struct db_i *dbip2)
     for (i = 0; i < diff_total; i++) {
 	gdiff_init(&(results[i]));
     }
+
+    BU_ALLOC(results_table, struct bu_ptbl);
+    BU_PTBL_INIT(results_table);
 
     /* look at all objects in this database */
     FOR_ALL_DIRECTORY_START(dp1, dbip1) {
@@ -618,13 +633,11 @@ diff_dbip(struct bu_vls *diff_log, struct db_i *dbip1, struct db_i *dbip2)
 	bu_avs_free(&avs2);
     } FOR_ALL_DIRECTORY_END;
 
-
-    gdiff_summary(diff_log, diff_total, results);
-
     for (i = 0; i < diff_total; i++) {
-	gdiff_free(&(results[i]));
+	bu_ptbl_ins(results_table, (long *)&(results[i]));
     }
-    return 0;
+
+    return results_table;
 }
 
 /*

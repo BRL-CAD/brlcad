@@ -125,13 +125,30 @@ ANALYZE_EXPORT extern struct region_pair *add_unique_pair(struct region_pair *li
 ANALYZE_EXPORT extern void
 voxelize(struct rt_i *rtip, fastf_t voxelSize[3], int levelOfDetail, void (*create_boxes)(genptr_t callBackData, int x, int y, int z, const char *regionName, fastf_t percentageFill), genptr_t callBackData);
 
+
+
+
+
 /**
  * Analyze the difference between two database objects
  *
- * Return codes: TODO
+ * Returns bu_ptbl of results
  */
-ANALYZE_EXPORT extern int
-diff_dbip(struct bu_vls *diff_log, struct db_i *dbip1, struct db_i *dbip2);
+ANALYZE_EXPORT struct bu_ptbl *
+diff_dbip(struct db_i *dbip1, struct db_i *dbip2);
+
+/**
+ * Print a summary of the diff results to diff_log
+ */
+ANALYZE_EXPORT void
+diff_summarize(struct bu_vls *diff_log, struct bu_ptbl *results);
+
+/**
+ * Free diff results in a bu_ptbl
+ */
+ANALYZE_EXPORT void
+diff_free_ptbl(struct bu_ptbl *results_table);
+
 
 __END_DECLS
 

@@ -25,7 +25,7 @@
 int
 main(int argc, char **argv)
 {
-    int ret = 0;
+    struct bu_ptbl *results;
     struct db_i *dbip1 = DBI_NULL;
     struct db_i *dbip2 = DBI_NULL;
     struct bu_vls diff_log = BU_VLS_INIT_ZERO;
@@ -63,13 +63,15 @@ main(int argc, char **argv)
     }
 
 
-    ret = diff_dbip(&diff_log, dbip1, dbip2);
+    results = diff_dbip(dbip1, dbip2);
+    diff_summarize(&diff_log, results);
+    diff_free_ptbl(results);
 
     bu_log("%s", bu_vls_addr(&diff_log));
 
     db_close(dbip1);
     db_close(dbip2);
-    return ret;
+    return 0;
 }
 
 /*
