@@ -155,7 +155,6 @@ struct gdiff_result {
     struct bu_attribute_value_set internal_new_only;
     struct bu_attribute_value_set internal_orig_diff;
     struct bu_attribute_value_set internal_new_diff;
-    int additional_diff_type;
     struct bu_attribute_value_set additional_shared;
     struct bu_attribute_value_set additional_orig_only;
     struct bu_attribute_value_set additional_new_only;
@@ -206,7 +205,7 @@ gdiff_print(struct gdiff_result *result){
     if (result->internal_diff_type == 2) {
 	dp = result->dp_new;
     }
-    bu_log("\n\n%s(%d): (internal type: %d) (additional type: %d)\n", dp->d_namep, result->status, result->internal_diff_type, result->additional_diff_type);
+    bu_log("\n\n%s(%d): (internal type: %d)\n", dp->d_namep, result->status, result->internal_diff_type);
     bu_vls_sprintf(&tmp, "Internal parameters: shared (%s)", dp->d_namep);
     bu_avs_print(&result->internal_shared, bu_vls_addr(&tmp));
     bu_vls_sprintf(&tmp, "Internal parameters: orig_only (%s)", dp->d_namep);
@@ -392,20 +391,145 @@ tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int of
 }
 
 int
+diff_dp(struct gdiff_result *result, struct directory *dp1, struct directory *dp2,
+	struct db_i *dbip1, struct db_i *dbip2)
+{
+    struct bu_attribute_value_set avs1, avs2;
+    struct bu_vls s1_tcl = BU_VLS_INIT_ZERO;
+    struct bu_vls s2_tcl = BU_VLS_INIT_ZERO;
+    int have_tcl1 = 1;
+    int have_tcl2 = 1;
+
+
+    /*TODO*/
+    /*if (!(GDIFF_INITIALIZED(result))) gdiff_init(result);*/
+
+    /* Get the internal objects */
+    if (rt_db_get_internal(result->intern_orig, dp1, dbip1, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	bu_log("rt_db_get_internal(%s) failure\n", dp1->d_namep);
+	result->status = 1;
+	return -1;
+    }
+    if (rt_db_get_internal(result->intern_new, dp2, dbip2, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	bu_log("rt_db_get_internal(%s) failure\n", dp2->d_namep);
+	result->status = 1;
+	return -1;
+    }
+
+    /* Do some type based checking - if we've totally changed
+     * types we don't need to get into the details.
+     * TODO - is that true?  Do we perhaps want to be able
+     * to compare the vertex values of a tor and sphere, even
+     * though the rest of the parameters are different?  How
+     * fine grained do we want to be here? */
+    if (result->intern_orig->idb_minor_type != result->intern_new->idb_minor_type) {
+	result->internal_diff_type = 3;
+    } else {
+	if (result->intern_orig->idb_minor_type == DB5_MINORTYPE_BRLCAD_ARB8) {
+	    struct bn_tol arb_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
+	    int arb_type_1 = rt_arb_std_type(result->intern_orig, &arb_tol);
+	    int arb_type_2 = rt_arb_std_type(result->intern_new, &arb_tol);
+	    if (arb_type_1 != arb_type_2) result->internal_diff_type = 3;
+	}
+    }
+
+    /* Try to create attribute/value set definitions for these
+     * objects from their Tcl list definitions.  We use an
+     * offset of one because for all objects the first entry
+     * in the list is the type of the object, which a) isn't
+     * an attribute/value pair and b) we can already get from
+     * the C data structures */
+    if (result->internal_diff_type != 3) {
+	bu_vls_trunc(&s1_tcl, 0);
+	if (result->intern_orig->idb_meth->ft_get(&s1_tcl, result->intern_orig, NULL) == BRLCAD_ERROR) have_tcl1 = 0;
+	/*bu_log("dp1: %s\n", bu_vls_addr(&s1_tcl));*/
+	bu_vls_trunc(&s2_tcl, 0);
+	if (result->intern_new->idb_meth->ft_get(&s2_tcl, result->intern_new, NULL) == BRLCAD_ERROR) have_tcl2 = 0;
+	/*bu_log("dp2: %s\n", bu_vls_addr(&s2_tcl));*/
+	if (have_tcl1 && have_tcl2) {
+	    if (tcl_list_to_avs(bu_vls_addr(&s1_tcl), &avs1, 1)) have_tcl1 = 0;
+	    /*bu_vls_sprintf(&temp_str, "dp1 core: %s", dp1->d_namep);*/
+	    if (tcl_list_to_avs(bu_vls_addr(&s2_tcl), &avs2, 1)) have_tcl2 = 0;
+	    /*bu_vls_sprintf(&temp_str, "dp2 core: %s", dp2->d_namep);*/
+	}
+    }
+    /* If we have both avs sets, do the detailed comparison */
+    if (result->internal_diff_type != 3) {
+	if (have_tcl1 && have_tcl2) {
+	    int avs_diff_result = bu_avs_diff(&result->internal_shared, &result->internal_orig_only,
+		    &result->internal_new_only, &result->internal_orig_diff,
+		    &result->internal_new_diff, &avs1, &avs2, (struct bn_tol *)NULL);
+	    switch(avs_diff_result) {
+		case 0:
+		    result->internal_diff_type = 0;
+		    break;
+		default:
+		    result->internal_diff_type = 5;
+		    break;
+	    }
+	} else {
+	    /* If we reach this point and don't have successful avs creation, we are reduced
+	     * to comparing the binary serializations of the two objects.  This is not ideal
+	     * in that it precludes a nuanced description of the differences, but it is at
+	     * least able to detect them */
+	    struct bu_external ext1, ext2;
+
+	    if (db_get_external(&ext1, dp1, dbip1)) {
+		bu_log("ERROR: db_get_external failed on solid %s in %s\n", dp1->d_namep, dbip1->dbi_filename);
+		result->status = 1;
+		return -1;
+	    }
+	    if (db_get_external(&ext2, dp2, dbip2)) {
+		bu_log("ERROR: db_get_external failed on solid %s in %s\n", dp2->d_namep, dbip2->dbi_filename);
+		result->status = 1;
+		return -1;
+	    }
+
+	    if (ext1.ext_nbytes != ext2.ext_nbytes) {
+		result->internal_diff_type = 4;
+	    }
+
+	    if (!(result->internal_diff_type != 4) &&
+		    memcmp((void *)ext1.ext_buf, (void *)ext2.ext_buf, ext1.ext_nbytes)) {
+		result->internal_diff_type = 4;
+	    }
+	}
+    }
+
+    /* Look at the extra attributes as well */
+    if (result->intern_orig->idb_avs.magic == BU_AVS_MAGIC &&
+	    result->intern_new->idb_avs.magic == BU_AVS_MAGIC) {
+	(void)bu_avs_diff(&result->additional_shared,
+		&result->additional_orig_only,
+		&result->additional_new_only, &result->additional_orig_diff,
+		&result->additional_new_diff,
+		&result->intern_orig->idb_avs,
+		&result->intern_new->idb_avs,
+		(struct bn_tol *)NULL);
+    } else {
+	if (result->intern_orig->idb_avs.magic == BU_AVS_MAGIC) {
+	    bu_avs_merge(&result->additional_orig_only, &result->intern_orig->idb_avs);
+	}
+	if (result->intern_new->idb_avs.magic == BU_AVS_MAGIC) {
+	    bu_avs_merge(&result->additional_new_only, &result->intern_new->idb_avs);
+	}
+    }
+
+    bu_avs_free(&avs1);
+    bu_avs_free(&avs2);
+
+    return 0;
+}
+
+int
 diff_dbip(struct db_i *dbip1, struct db_i *dbip2)
 {
     int i;
     struct directory *dp1, *dp2;
-    struct bu_attribute_value_set avs1, avs2;
-    struct bu_vls s1_tcl = BU_VLS_INIT_ZERO;
-    struct bu_vls s2_tcl = BU_VLS_INIT_ZERO;
-    struct gdiff_result *results = NULL;
+   struct gdiff_result *results = NULL;
     int diff_count = -1;
     int diff_total = 0;
     /*struct bu_vls diff_log = BU_VLS_INIT_ZERO;*/
-    int has_diff = 0;
-    int have_tcl1 = 1;
-    int have_tcl2 = 1;
 
     /* Get a count of the number of objects in the
      * union of the two candidate databases */
@@ -452,14 +576,6 @@ diff_dbip(struct db_i *dbip1, struct db_i *dbip2)
 
 	/* skip the _GLOBAL object for now - need to deal with this, however */
 	if (dp1->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
-	    curr_result->dp_orig = dp1;
-	    continue;
-	}
-
-	/* Get the internal objects */
-	if (rt_db_get_internal(curr_result->intern_orig, dp1, dbip1, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	    bu_log("rt_db_get_internal(%s) failure\n", dp1->d_namep);
-	    curr_result->status = 1;
 	    continue;
 	}
 	/* check if this object exists in the other database */
@@ -468,122 +584,19 @@ diff_dbip(struct db_i *dbip1, struct db_i *dbip2)
 	    curr_result->dp_new = NULL;
 	    curr_result->internal_diff_type = 1;
 	    continue;
-	} else {
-	    curr_result->dp_new = dp2;
-	    if (rt_db_get_internal(curr_result->intern_new, dp2, dbip2, (fastf_t *)NULL, &rt_uniresource) < 0) {
-		bu_log("rt_db_get_internal(%s) failure\n", dp2->d_namep);
-		curr_result->status = 1;
-		continue;
-	    }
 	}
+	curr_result->dp_new = dp2;
 
-	/* Do some type based checking - if we've totally changed
-	 * types we don't need to get into the details.
-	 * TODO - is that true?  Do we perhaps want to be able
-	 * to compare the vertex values of a tor and sphere, even
-	 * though the rest of the parameters are different?  How
-	 * fine grained do we want to be here? */
-	if (curr_result->intern_orig->idb_minor_type != curr_result->intern_new->idb_minor_type) {
-	    curr_result->internal_diff_type = 3;
-	} else {
-	    if (curr_result->intern_orig->idb_minor_type == DB5_MINORTYPE_BRLCAD_ARB8) {
-		struct bn_tol arb_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
-		int arb_type_1 = rt_arb_std_type(curr_result->intern_orig, &arb_tol);
-		int arb_type_2 = rt_arb_std_type(curr_result->intern_new, &arb_tol);
-		if (arb_type_1 != arb_type_2) curr_result->internal_diff_type = 3;
-	    }
-	}
-
-	/* Try to create attribute/value set definitions for these
-	 * objects from their Tcl list definitions.  We use an
-	 * offset of one because for all objects the first entry
-	 * in the list is the type of the object, which a) isn't
-	 * an attribute/value pair and b) we can already get from
-	 * the C data structures */
-	if (curr_result->internal_diff_type != 3) {
-	    bu_vls_trunc(&s1_tcl, 0);
-	    if (curr_result->intern_orig->idb_meth->ft_get(&s1_tcl, curr_result->intern_orig, NULL) == BRLCAD_ERROR) have_tcl1 = 0;
-	    /*bu_log("dp1: %s\n", bu_vls_addr(&s1_tcl));*/
-	    bu_vls_trunc(&s2_tcl, 0);
-	    if (curr_result->intern_new->idb_meth->ft_get(&s2_tcl, curr_result->intern_new, NULL) == BRLCAD_ERROR) have_tcl2 = 0;
-	    /*bu_log("dp2: %s\n", bu_vls_addr(&s2_tcl));*/
-	    if (have_tcl1 && have_tcl2) {
-		if (tcl_list_to_avs(bu_vls_addr(&s1_tcl), &avs1, 1)) have_tcl1 = 0;
-		/*bu_vls_sprintf(&temp_str, "dp1 core: %s", dp1->d_namep);*/
-		if (tcl_list_to_avs(bu_vls_addr(&s2_tcl), &avs2, 1)) have_tcl2 = 0;
-		/*bu_vls_sprintf(&temp_str, "dp2 core: %s", dp2->d_namep);*/
-	    }
-	}
-	/* If we have both avs sets, do the detailed comparison */
-	if (curr_result->internal_diff_type != 3) {
-	    if (have_tcl1 && have_tcl2) {
-		int avs_diff_result = bu_avs_diff(&curr_result->internal_shared, &curr_result->internal_orig_only,
-			&curr_result->internal_new_only, &curr_result->internal_orig_diff,
-			&curr_result->internal_new_diff, &avs1, &avs2, (struct bn_tol *)NULL);
-		switch(avs_diff_result) {
-		    case 0:
-			curr_result->internal_diff_type = 0;
-			break;
-		    default:
-			curr_result->internal_diff_type = 5;
-			break;
-		}
-	    } else {
-		/* If we reach this point and don't have successful avs creation, we are reduced
-		 * to comparing the binary serializations of the two objects.  This is not ideal
-		 * in that it precludes a nuanced description of the differences, but it is at
-		 * least able to detect them */
-		struct bu_external ext1, ext2;
-
-		if (db_get_external(&ext1, dp1, dbip1)) {
-		    bu_log("ERROR: db_get_external failed on solid %s in %s\n", dp1->d_namep, dbip1->dbi_filename);
-		    continue;
-		}
-		if (db_get_external(&ext2, dp2, dbip2)) {
-		    bu_log("ERROR: db_get_external failed on solid %s in %s\n", dp2->d_namep, dbip2->dbi_filename);
-		    continue;
-		}
-
-		if (ext1.ext_nbytes != ext2.ext_nbytes) {
-		    curr_result->internal_diff_type = 4;
-		}
-
-		if (!(curr_result->internal_diff_type != 4) &&
-			memcmp((void *)ext1.ext_buf, (void *)ext2.ext_buf, ext1.ext_nbytes)) {
-		    curr_result->internal_diff_type = 4;
-		}
-	    }
-	}
-
-	/* Look at the extra attributes as well */
-	if (curr_result->intern_orig->idb_avs.magic == BU_AVS_MAGIC &&
-		curr_result->intern_new->idb_avs.magic == BU_AVS_MAGIC) {
-	    curr_result->additional_diff_type = bu_avs_diff(&curr_result->additional_shared,
-		    &curr_result->additional_orig_only,
-		    &curr_result->additional_new_only, &curr_result->additional_orig_diff,
-		    &curr_result->additional_new_diff,
-		    &curr_result->intern_orig->idb_avs,
-		    &curr_result->intern_new->idb_avs,
-		    (struct bn_tol *)NULL);
-	} else {
-	    if (curr_result->intern_orig->idb_avs.magic == BU_AVS_MAGIC) {
-		curr_result->additional_diff_type = 1;
-		bu_avs_merge(&curr_result->additional_orig_only, &curr_result->intern_orig->idb_avs);
-	    }
-	    if (curr_result->intern_new->idb_avs.magic == BU_AVS_MAGIC) {
-		curr_result->additional_diff_type = 2;
-		bu_avs_merge(&curr_result->additional_new_only, &curr_result->intern_new->idb_avs);
-	    }
-	}
-
-	bu_avs_free(&avs1);
-	bu_avs_free(&avs2);
+	(void)diff_dp(curr_result, dp1, dp2, dbip1, dbip2);
 
     } FOR_ALL_DIRECTORY_END;
 
     /* now look for objects in the other database that aren't here */
     FOR_ALL_DIRECTORY_START(dp2, dbip2) {
+	struct bu_vls s2_tcl = BU_VLS_INIT_ZERO;
+	struct bu_attribute_value_set avs2;
 	struct gdiff_result *curr_result = NULL;
+	BU_AVS_INIT(&avs2);
 	/* check if this object exists in the other database */
 	if (db_lookup(dbip1, dp2->d_namep, 0) == RT_DIR_NULL) {
 	    diff_count++;
@@ -599,16 +612,13 @@ diff_dbip(struct db_i *dbip1, struct db_i *dbip2)
 		if (!tcl_list_to_avs(bu_vls_addr(&s2_tcl), &avs2, 1)){
 		    curr_result->internal_diff_type = 2;
 		    bu_avs_merge(&curr_result->internal_new_only, &avs2);
-		    bu_avs_free(&avs2);
 		}
 	    }
-	    curr_result->additional_diff_type = 0;
 	    if (curr_result->intern_new->idb_avs.magic == BU_AVS_MAGIC) {
-		if (curr_result->intern_new->idb_avs.count > 0) curr_result->additional_diff_type = 2;
 		bu_avs_merge(&curr_result->additional_new_only, &curr_result->intern_new->idb_avs);
 	    }
-
 	}
+	bu_avs_free(&avs2);
     } FOR_ALL_DIRECTORY_END;
 
 
@@ -617,10 +627,7 @@ diff_dbip(struct db_i *dbip1, struct db_i *dbip2)
     for (i = 0; i < diff_total; i++) {
 	gdiff_free(&(results[i]));
     }
-
-    bu_vls_free(&s1_tcl);
-    bu_vls_free(&s2_tcl);
-    return has_diff;
+    return 0;
 }
 
 /*
