@@ -228,20 +228,24 @@ gdiff_init(struct gdiff_result *result)
 }
 
 void
-gdiff_free(struct gdiff_result *result)
+diff_free(void *result)
 {
-    rt_db_free_internal(result->intern_orig);
-    rt_db_free_internal(result->intern_new);
-    bu_avs_free(&result->internal_shared);
-    bu_avs_free(&result->internal_orig_only);
-    bu_avs_free(&result->internal_new_only);
-    bu_avs_free(&result->internal_orig_diff);
-    bu_avs_free(&result->internal_new_diff);
-    bu_avs_free(&result->additional_shared);
-    bu_avs_free(&result->additional_orig_only);
-    bu_avs_free(&result->additional_new_only);
-    bu_avs_free(&result->additional_orig_diff);
-    bu_avs_free(&result->additional_new_diff);
+    struct gdiff_result *curr_result = (struct gdiff_result *)result;
+    if (!result) return;
+    BU_CKMAG(curr_result, GDIFF_MAGIC, "struct gdiff_result");
+
+    rt_db_free_internal(curr_result->intern_orig);
+    rt_db_free_internal(curr_result->intern_new);
+    bu_avs_free(&curr_result->internal_shared);
+    bu_avs_free(&curr_result->internal_orig_only);
+    bu_avs_free(&curr_result->internal_new_only);
+    bu_avs_free(&curr_result->internal_orig_diff);
+    bu_avs_free(&curr_result->internal_new_diff);
+    bu_avs_free(&curr_result->additional_shared);
+    bu_avs_free(&curr_result->additional_orig_only);
+    bu_avs_free(&curr_result->additional_new_only);
+    bu_avs_free(&curr_result->additional_orig_diff);
+    bu_avs_free(&curr_result->additional_new_diff);
 }
 
 void
@@ -250,7 +254,7 @@ diff_free_ptbl(struct bu_ptbl *results_table)
     int i = 0;
     for (i = 0; i < (int)BU_PTBL_LEN(results_table); i++) {
 	struct gdiff_result *result = (struct gdiff_result *)BU_PTBL_GET(results_table, i);
-	gdiff_free(result);
+	diff_free((void *)result);
     }
     bu_ptbl_free(results_table);
 }

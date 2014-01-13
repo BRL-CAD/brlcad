@@ -126,7 +126,15 @@ ANALYZE_EXPORT extern void
 voxelize(struct rt_i *rtip, fastf_t voxelSize[3], int levelOfDetail, void (*create_boxes)(genptr_t callBackData, int x, int y, int z, const char *regionName, fastf_t percentageFill), genptr_t callBackData);
 
 
+/* diff.c */
 
+/* One of the design goals of this API is to allow developers
+ * to access the results of the diffing process in a structured
+ * way that lets them create their own custom reports, scripts,
+ * visualizations, etc.  The functions diff_dp and diff_dbip are
+ * the workhorse functions that do the actual diffing, and the
+ * remainder of the API is devoted to accessing the results.
+ */
 
 /**
  * Analyze the difference between two directory objects
@@ -142,7 +150,9 @@ diff_dp(void *result_in, struct directory *dp1, struct directory *dp2, struct db
 /**
  * Analyze the difference between two database objects
  *
- * Returns bu_ptbl of results
+ * Returns a bu_ptbl of results, which can be interpreted
+ * by diff_result and friends.  To free the elements call
+ * diff_free_ptbl.
  */
 ANALYZE_EXPORT struct bu_ptbl *
 diff_dbip(struct db_i *dbip1, struct db_i *dbip2);
@@ -152,6 +162,12 @@ diff_dbip(struct db_i *dbip1, struct db_i *dbip2);
  */
 ANALYZE_EXPORT void
 diff_summarize(struct bu_vls *diff_log, struct bu_ptbl *results);
+
+/**
+ * Free diff result
+ */
+ANALYZE_EXPORT void
+diff_free(void *result);
 
 /**
  * Free diff results in a bu_ptbl
@@ -168,6 +184,9 @@ typedef enum {
     DIFF             /* Differences present (none of the above cases */
 } diff_t;
 
+/**
+ * Report on the type of diff result contained in the object
+ */
 ANALYZE_EXPORT diff_t
 diff_type(void *result);
 
@@ -184,6 +203,11 @@ typedef enum {
     DIFF_CHANGED_NEW_ATTR
 } diff_result_t;
 
+/**
+ * Return the attribute/value set corresponding to a particular
+ * subgroup in the result, as enumerated by the diff_result_t
+ * types.
+ */
 ANALYZE_EXPORT struct bu_attribute_value_set *
 diff_result(void *result, diff_result_t result_type);
 
@@ -192,12 +216,19 @@ typedef enum {
     DIFF_NEW
 } diff_obj_t;
 
+/**
+ * Return the directory pointer corresponding to either
+ * the original object or the object being compared to it.
+ */
 ANALYZE_EXPORT struct directory *
 diff_info_dp(void *result, diff_obj_t obj_type);
 
+/**
+ * Return the rt_db_internal information for either
+ * the original object or the object being compared to it.
+ */
 ANALYZE_EXPORT struct rt_db_internal *
 diff_info_intern(void *result, diff_obj_t obj_type);
-
 
 
 __END_DECLS
