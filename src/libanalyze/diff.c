@@ -400,7 +400,6 @@ diff_dp(struct gdiff_result *result, struct directory *dp1, struct directory *dp
     int have_tcl1 = 1;
     int have_tcl2 = 1;
 
-
     /*TODO*/
     /*if (!(GDIFF_INITIALIZED(result))) gdiff_init(result);*/
 
@@ -416,12 +415,8 @@ diff_dp(struct gdiff_result *result, struct directory *dp1, struct directory *dp
 	return -1;
     }
 
-    /* Do some type based checking - if we've totally changed
-     * types we don't need to get into the details.
-     * TODO - is that true?  Do we perhaps want to be able
-     * to compare the vertex values of a tor and sphere, even
-     * though the rest of the parameters are different?  How
-     * fine grained do we want to be here? */
+    /* Do some type based checking - this will make a difference in
+     * subsequent decision trees */
     if (result->intern_orig->idb_minor_type != result->intern_new->idb_minor_type) {
 	result->internal_diff_type = 3;
     } else {
@@ -439,39 +434,28 @@ diff_dp(struct gdiff_result *result, struct directory *dp1, struct directory *dp
      * in the list is the type of the object, which a) isn't
      * an attribute/value pair and b) we can already get from
      * the C data structures */
-    if (result->internal_diff_type != 3) {
-	bu_vls_trunc(&s1_tcl, 0);
-	if (result->intern_orig->idb_meth->ft_get(&s1_tcl, result->intern_orig, NULL) == BRLCAD_ERROR) have_tcl1 = 0;
-	/*bu_log("dp1: %s\n", bu_vls_addr(&s1_tcl));*/
-	bu_vls_trunc(&s2_tcl, 0);
-	if (result->intern_new->idb_meth->ft_get(&s2_tcl, result->intern_new, NULL) == BRLCAD_ERROR) have_tcl2 = 0;
-	/*bu_log("dp2: %s\n", bu_vls_addr(&s2_tcl));*/
-	if (have_tcl1 && have_tcl2) {
-	    if (tcl_list_to_avs(bu_vls_addr(&s1_tcl), &avs1, 1)) have_tcl1 = 0;
-	    /*bu_vls_sprintf(&temp_str, "dp1 core: %s", dp1->d_namep);*/
-	    if (tcl_list_to_avs(bu_vls_addr(&s2_tcl), &avs2, 1)) have_tcl2 = 0;
-	    /*bu_vls_sprintf(&temp_str, "dp2 core: %s", dp2->d_namep);*/
-	}
+    bu_vls_trunc(&s1_tcl, 0);
+    if (result->intern_orig->idb_meth->ft_get(&s1_tcl, result->intern_orig, NULL) == BRLCAD_ERROR) have_tcl1 = 0;
+    bu_vls_trunc(&s2_tcl, 0);
+    if (result->intern_new->idb_meth->ft_get(&s2_tcl, result->intern_new, NULL) == BRLCAD_ERROR) have_tcl2 = 0;
+    if (have_tcl1 && have_tcl2) {
+	if (tcl_list_to_avs(bu_vls_addr(&s1_tcl), &avs1, 1)) have_tcl1 = 0;
+	if (tcl_list_to_avs(bu_vls_addr(&s2_tcl), &avs2, 1)) have_tcl2 = 0;
     }
+
     /* If we have both avs sets, do the detailed comparison */
-    if (result->internal_diff_type != 3) {
-	if (have_tcl1 && have_tcl2) {
-	    int avs_diff_result = bu_avs_diff(&result->internal_shared, &result->internal_orig_only,
-		    &result->internal_new_only, &result->internal_orig_diff,
-		    &result->internal_new_diff, &avs1, &avs2, (struct bn_tol *)NULL);
-	    switch(avs_diff_result) {
-		case 0:
-		    result->internal_diff_type = 0;
-		    break;
-		default:
-		    result->internal_diff_type = 5;
-		    break;
-	    }
-	} else {
-	    /* If we reach this point and don't have successful avs creation, we are reduced
-	     * to comparing the binary serializations of the two objects.  This is not ideal
-	     * in that it precludes a nuanced description of the differences, but it is at
-	     * least able to detect them */
+    if (have_tcl1 && have_tcl2) {
+	int avs_diff_result = bu_avs_diff(&result->internal_shared, &result->internal_orig_only,
+		&result->internal_new_only, &result->internal_orig_diff,
+		&result->internal_new_diff, &avs1, &avs2, (struct bn_tol *)NULL);
+	if (avs_diff_result && !result->internal_diff_type) result->internal_diff_type = 5;
+    } else {
+	/* If we reach this point and don't have successful avs creation, we are reduced
+	 * to comparing the binary serializations of the two objects.  This is not ideal
+	 * in that it precludes a nuanced description of the differences, but it is at
+	 * least able to detect them.  We don't do this comparison for two different
+	 * object types, since they are already assumed to be different. */
+	if (result->internal_diff_type != 3) {
 	    struct bu_external ext1, ext2;
 
 	    if (db_get_external(&ext1, dp1, dbip1)) {
@@ -526,7 +510,7 @@ diff_dbip(struct db_i *dbip1, struct db_i *dbip2)
 {
     int i;
     struct directory *dp1, *dp2;
-   struct gdiff_result *results = NULL;
+    struct gdiff_result *results = NULL;
     int diff_count = -1;
     int diff_total = 0;
     /*struct bu_vls diff_log = BU_VLS_INIT_ZERO;*/
