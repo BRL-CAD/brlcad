@@ -86,6 +86,7 @@ set(noinst_HEADERS
   brlcad_version.h
   bselect.h
   conf.h
+  db_diff.h
   fbmsg.h
   sysv.h
   )
