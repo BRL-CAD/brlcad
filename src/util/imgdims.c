@@ -38,6 +38,7 @@
 #include "fb.h"
 
 
+#define NONE -1
 #define BELIEVE_NAME 0
 #define BELIEVE_STAT 1
 #define DFLT_PIXEL_SIZE 3
@@ -99,7 +100,7 @@ main (int argc, char **argv)
     char *argument;		/* file name or size */
     int bytes_per_pixel = -1;
     int ch;
-    int how = BELIEVE_NAME;
+    int how = NONE;
     int nm_bytes = -1;
     int nm_pixels = 0;
     size_t width;
@@ -131,7 +132,7 @@ main (int argc, char **argv)
     }
 
     argument = bu_realpath(argv[bu_optind], NULL);
-    if (!bu_file_exists(argument, NULL)) {
+    if (how != NONE && !bu_file_exists(argument, NULL)) {
 	bu_log("image file [%s] does not exist\n", argument);
 	bu_free(argument, "argument realpath");
 	bu_exit(1,NULL);
