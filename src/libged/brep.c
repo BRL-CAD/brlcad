@@ -61,7 +61,7 @@ selection_command(
 	int argc,
 	const char *argv[])
 {
-    size_t i;
+    int i;
     struct rt_selection_set *selection_set;
     struct bu_ptbl *selections;
     struct rt_selection *new_selection;
@@ -113,12 +113,13 @@ selection_command(
 	new_selection = (struct rt_selection *)BU_PTBL_GET(selections, 0);
 
 	free_selection = selection_set->free_selection;
-	for (i = 1; i < BU_PTBL_LEN(selections); ++i) {
+	for (i = BU_PTBL_LEN(selections) - 1; i > 0; --i) {
 	    long *s = BU_PTBL_GET(selections, i);
 	    free_selection((struct rt_selection *)s);
 	    bu_ptbl_rm(selections, s);
 	}
 	bu_ptbl_free(selections);
+	BU_FREE(selection_set, struct rt_selection_set);
 
 	/* get existing/new selections set in gedp */
 	selection_set = ged_get_selection_set(gedp, solid_name, selection_name);
@@ -129,7 +130,7 @@ selection_command(
 	 * existing selection to an rt_brep_evaluate_selection.
 	 * For now, new selection simply replaces old one.
 	 */
-	for (i = 1; i < BU_PTBL_LEN(selections); ++i) {
+	for (i = BU_PTBL_LEN(selections) - 1; i >= 0; --i) {
 	    long *s = BU_PTBL_GET(selections, i);
 	    free_selection((struct rt_selection *)s);
 	    bu_ptbl_rm(selections, s);
@@ -153,7 +154,7 @@ selection_command(
 	    return -1;
 	}
 
-	for (i = 0; i < BU_PTBL_LEN(selections); ++i) {
+	for (i = 0; i < (int)BU_PTBL_LEN(selections); ++i) {
 	    int ret;
 	    operation.type = RT_SELECTION_TRANSLATION;
 	    operation.parameters.tran.dx = atof(argv[5]);

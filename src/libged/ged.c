@@ -87,7 +87,7 @@ ged_close(struct ged *gedp)
 static int
 free_selection_set_entry(struct bu_hash_entry *entry, void *UNUSED(arg))
 {
-    size_t i;
+    int i;
     struct rt_selection_set *selection_set;
     struct bu_ptbl *selections;
     void (*free_selection)(struct rt_selection *);
@@ -97,12 +97,13 @@ free_selection_set_entry(struct bu_hash_entry *entry, void *UNUSED(arg))
     free_selection = selection_set->free_selection;
 
     /* free all selection objects and containing items */
-    for (i = 0; i < BU_PTBL_LEN(selections); ++i) {
+    for (i = BU_PTBL_LEN(selections) - 1; i >= 0; --i) {
 	long *s = BU_PTBL_GET(selections, i);
 	free_selection((struct rt_selection *)s);
 	bu_ptbl_rm(selections, s);
     }
     bu_ptbl_free(selections);
+    BU_FREE(selection_set, struct rt_selection_set);
 
     return 0;
 }

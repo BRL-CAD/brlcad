@@ -3837,6 +3837,8 @@ brep_free_selection(struct rt_selection *s)
     }
     cvs->clear();
 
+    delete cvs;
+    delete bs;
     BU_FREE(s, struct rt_selection);
 }
 
@@ -3922,6 +3924,7 @@ rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selecti
     for (s = selectable.begin(); s != selectable.end();) {
 	tmp_s = s++;
 	if ((*tmp_s)->sqdist_to_line > min_distsq) {
+	    delete *tmp_s;
 	    selectable.erase(tmp_s);
 	}
     }
@@ -3934,6 +3937,7 @@ rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selecti
 
     for (s = selectable.begin(); s != selectable.end(); ++s) {
 	bu_ptbl_ins(&selection_set->selections, (long *)new_cv_selection(*s));
+	delete *s;
     }
     selectable.clear();
     selection_set->free_selection = brep_free_selection;
