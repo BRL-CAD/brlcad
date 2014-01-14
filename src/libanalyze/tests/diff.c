@@ -22,7 +22,7 @@
 #include <string.h>
 #include "analyze.h"
 
-/* Debugging function for printing *everything* 
+/* Debugging function for printing *everything*
 
 void
 gdiff_print(void *result)
