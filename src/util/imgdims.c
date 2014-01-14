@@ -132,8 +132,9 @@ main (int argc, char **argv)
 
     argument = bu_realpath(argv[bu_optind], NULL);
     if (!bu_file_exists(argument, NULL)) {
+	bu_log("image file [%s] does not exist\n", argument);
 	bu_free(argument, "argument realpath");
-	bu_exit(1, "image file [%s] does not exist\n", argument);
+	bu_exit(1,NULL);
     }
 
     if ((stat(argument, &stat_buf) != 0)
