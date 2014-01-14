@@ -164,10 +164,10 @@ main (int argc, char **argv)
     if (bytes_per_pixel == -1)
 	bytes_per_pixel = DFLT_PIXEL_SIZE;
 
-    if (nm_bytes % bytes_per_pixel == 0)
-	nm_pixels = nm_bytes / bytes_per_pixel;
-    else
+    if (nm_bytes % bytes_per_pixel != 0)
 	bu_exit (1, "Image size (%d bytes) is not a multiple of pixel size (%d bytes)\n", nm_bytes, bytes_per_pixel);
+
+    nm_pixels = nm_bytes / bytes_per_pixel;
 
     if (!fb_common_image_size(&width, &height, nm_pixels))
 	bu_exit (0, NULL);
