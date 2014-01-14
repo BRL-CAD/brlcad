@@ -146,18 +146,17 @@ main (int argc, char **argv)
     }
 
     /*
-     * If the user specified a file,
-     * determine its size
+     * If the user specified a file, determine its size.
      */
     if (nm_bytes == -1) {
 	if ((how == BELIEVE_NAME)
 	    && fb_common_name_size(&width, &height, argument))
 	    goto done;
-	else {
-	    nm_bytes = (int)stat_buf.st_size;
-	    if (bytes_per_pixel == -1)
+
+	nm_bytes = (int)stat_buf.st_size;
+	if (bytes_per_pixel == -1)
 		bytes_per_pixel = pixel_size(argument);
-	}
+
     }
 
     bu_free(argument, "argument realpath");
