@@ -82,8 +82,8 @@ static int pixel_size (char *buf)
 
     if ((ep = strrchr(buf, '.')) == NULL)
 	return DFLT_PIXEL_SIZE;
-    else
-	++ep;
+
+    ++ep;
 
     for (ap = a_tbl; ap->ext; ++ap)
 	if (BU_STR_EQUAL(ep, ap->ext))
