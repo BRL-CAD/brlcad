@@ -1,4 +1,4 @@
-/*               B E Z I E R _ 2 D _ I S E C T . C
+/*                        B E Z I E R . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2014 United States Government as represented by
@@ -19,9 +19,9 @@
  */
 /** @addtogroup ray */
 /** @{ */
-/** @file librt/bezier_2d_isect.c
+/** @file librt/bezier.c
  *
- * The following routines are for 2D Bezier curves
+ * The following routines are for 2D Bezier curves.
  *
  * The following routines are borrowed from Graphics Gems I, Academic
  * Press, Inc., 1990, Andrew S. Glassner (editor), "A Bezier
@@ -41,18 +41,18 @@
 #include "raytrace.h"
 #include "nurb.h"
 
+#include "./librt_private.h"
+
 
 #define SGN(_x) (((_x)<0) ? -1 : 1)
 #define MAXDEPTH 64
 
 /*
- * CrossingCount :
  * Count the number of times a Bezier control polygon
  * crosses the ray. This number is >= the number of roots.
- *
  */
 HIDDEN int
-CrossingCount(
+crossing_count(
     point2d_t *V,		/* 2D Control pts of Bezier curve */
     int degree,                 /* Degree of Bezier curve */
     point2d_t ray_start,	/* starting point for ray */
@@ -81,7 +81,7 @@ CrossingCount(
  * recursive subdivision to bottom out.
  */
 HIDDEN int
-ControlPolygonFlatEnough(
+control_polygon_flat_enough(
     point2d_t *V,		/* Control points */
     int degree,			/* Degree of polynomial */
     fastf_t epsilon)		/* Maximum allowable error */
@@ -101,7 +101,7 @@ ControlPolygonFlatEnough(
     /* Find the perpendicular distance */
     /* from each interior control point to */
     /* line connecting V[0] and V[degree] */
-    distance = (double *)bu_malloc((unsigned)(degree + 1) * sizeof(double), "ControlPolygonFlatEnough");
+    distance = (double *)bu_malloc((unsigned)(degree + 1) * sizeof(double), "control_polygon_flat_enough");
     {
 	double abSquared;
 
@@ -137,7 +137,7 @@ ControlPolygonFlatEnough(
 	    max_distance_above = FMAX(max_distance_above, distance[i]);
 	}
     }
-    bu_free((char *)distance, "ControlPolygonFlatEnough");
+    bu_free((char *)distance, "control_polygon_flat_enough");
 
     {
 	double det, dInv;
@@ -271,7 +271,7 @@ bezier(
  * intercept - contains calculated intercept
  */
 HIDDEN int
-ComputeXIntercept(
+compute_x_intercept(
     point2d_t *V,               /* Control points */
     int degree,                 /* Degree of curve */
     point2d_t ray_start,	/* starting point of ray */
@@ -339,7 +339,7 @@ bezier_roots(
     int total_count;
     point2d_t eval_pt;
 
-    switch (CrossingCount(w, degree, ray_start, ray_perp)) {
+    switch (crossing_count(w, degree, ray_start, ray_perp)) {
 	case 0 : {
 	    /* No solutions here */
 	    return 0;
@@ -354,10 +354,10 @@ bezier_roots(
 		bezier(w, degree, 0.5, NULL, NULL, *intercept[0], *normal[0]);
 		return 1;
 	    }
-	    if (ControlPolygonFlatEnough(w, degree, epsilon)) {
+	    if (control_polygon_flat_enough(w, degree, epsilon)) {
 		BU_ALLOC(*intercept, point2d_t);
 		BU_ALLOC(*normal, point2d_t);
-		if (!ComputeXIntercept(w, degree, ray_start, ray_dir, *intercept[0], *normal[0])) {
+		if (!compute_x_intercept(w, degree, ray_start, ray_dir, *intercept[0], *normal[0])) {
 		    bu_free((char *)(*intercept), "bezier_roots: no solution");
 		    bu_free((char *)(*normal), "bezier_roots: no solution");
 		    return 0;
@@ -428,7 +428,7 @@ bezier_subdivide(struct bezier_2d_list *bezier_in, int degree, fastf_t epsilon, 
 	return new_head;
     }
 
-    if (ControlPolygonFlatEnough(bezier_in->ctl, degree, epsilon)) {
+    if (control_polygon_flat_enough(bezier_in->ctl, degree, epsilon)) {
 	BU_LIST_APPEND(&new_head->l, &bezier_in->l);
 	return new_head;
     }
