@@ -98,7 +98,7 @@ get_args(int argc, char *argv[])
 		val[ numop++ ] = 1.0 / d;
 		break;
 
-	    default:		/* '?' */
+	    default:
 		return 0;
 	}
     }
@@ -186,7 +186,7 @@ main(int argc, char *argv[])
 	    i = *p + 32768;
 	    if (i < 0)
 		i = 0;
-	    if (i > (int)(sizeof(mapbuf)/sizeof(mapbuf[0]))-1)
+	    else if (i > (int)(sizeof(mapbuf)/sizeof(mapbuf[0]))-1)
 		i = (int)(sizeof(mapbuf)/sizeof(mapbuf[0]))-1;
 
 	    if (mapbuf[i] > 32767) {

@@ -103,8 +103,8 @@ get_args(int argc, char *argv[])
 		val[ numop++ ] = 1.0 / d;
 		break;
 
-	    default:		/* '?' */
-		bu_exit(1, "%s", usage);
+	    default:
+		return 0;
 	}
     }
 
