@@ -1,7 +1,7 @@
 /*                     V E R T _ T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 2002-2013 United States Government as represented by
+ * Copyright (c) 2002-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -74,7 +74,7 @@ union vert_tree {
 
 
 struct vert_root *
-create_vert_tree()
+create_vert_tree(void)
 {
     struct vert_root *tree;
 
@@ -90,7 +90,7 @@ create_vert_tree()
 }
 
 struct vert_root *
-create_vert_tree_w_norms()
+create_vert_tree_w_norms(void)
 {
     struct vert_root *tree;
 
@@ -251,7 +251,7 @@ Add_vert( double x, double y, double z, struct vert_root *vert_root, fastf_t loc
 	new_node->vnode.cut_val = (vertex[new_node->vnode.coord] +
 				   vert_root->the_array[ptr->vleaf.index * 3 + new_node->vnode.coord]) * 0.5;
 
-	/* set the node "lower" nad "higher" pointers */
+	/* set the node "lower" and "higher" pointers */
 	if ( vertex[new_node->vnode.coord] >=
 	     vert_root->the_array[ptr->vleaf.index * 3 + new_node->vnode.coord] ) {
 	    new_node->vnode.higher = new_leaf;
@@ -387,7 +387,7 @@ Add_vert_and_norm( double x, double y, double z, double nx, double ny, double nz
 	new_node->vnode.cut_val = (vertex[new_node->vnode.coord] +
 				   vert_root->the_array[ptr->vleaf.index * 3 + new_node->vnode.coord]) * 0.5;
 
-	/* set the node "lower" nad "higher" pointers */
+	/* set the node "lower" and "higher" pointers */
 	if ( vertex[new_node->vnode.coord] >=
 	     vert_root->the_array[ptr->vleaf.index * 3 + new_node->vnode.coord] ) {
 	    new_node->vnode.higher = new_leaf;

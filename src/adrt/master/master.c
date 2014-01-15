@@ -1,7 +1,7 @@
 /*                        M A S T E R . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -636,7 +636,7 @@ static void finish(int sig) {
 
 
 static void help() {
-    printf("%s\n", "Usage: adrt_master [options]\n\
+    fprintf(stderr,"%s\n", "Usage: adrt_master [options]\n\
   -h\t\tdisplay help.\n\
   -c\t\tconnect to component server.\n\
   -d\t\tdaemon mode.\n\

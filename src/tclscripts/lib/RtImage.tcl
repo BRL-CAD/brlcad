@@ -1,7 +1,7 @@
 #                          R T I M A G E . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2013 United States Government as represented by
+# Copyright (c) 1998-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -213,9 +213,9 @@ proc rtimage {rtimage_dict} {
 	#
 	# Convert to ghost image
 	#
-	catch {exec [file join $binpath pix-bw] $tgi > $tbw}
+	catch {exec [file join $binpath pix-bw] -e crt $tgi > $tbw}
 	catch {exec [file join $binpath bwmod] -a 4 -d259 -r$_gamma -m255 $tbw > $tmod}
-	catch {exec [file join $binpath bw-pix] $tmod $tbwpix}
+	catch {exec [file join $binpath bw-pix] $tmod > $tbwpix}
 
 	set bgl "=[lindex $_bgcolor 0]/[lindex $_bgcolor 1]/[lindex $_bgcolor 2]"
 	catch {exec [file join $binpath pixmatte] -e $tfci $bgl $tbwpix $tfci > $tmi}

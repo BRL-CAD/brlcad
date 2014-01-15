@@ -1,7 +1,7 @@
 /*                  I N T E R S E C T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -2943,6 +2943,9 @@ ON_Intersect(const ON_Surface* surfA,
     if (DEBUG_BREP_INTERSECT)
 	bu_log("%d overlap events.\n", overlapevents.Count());
 
+    if (surfA->IsPlanar() && surfB->IsPlanar() && overlapevents.Count())
+	return x.Count() - original_count;
+
     /* Second step: calculate the intersection of the bounding boxes.
      * Only the children of intersecting b-box pairs need to be considered.
      * The children will be generated only when they are needed, using the
@@ -3007,7 +3010,7 @@ ON_Intersect(const ON_Surface* surfA,
 	candidates = next_candidates;
     }
     if (DEBUG_BREP_INTERSECT)
-	bu_log("We get %d intersection bounding boxes.\n", candidates.size());
+	bu_log("We get %lu intersection bounding boxes.\n", candidates.size());
 
     /* Third step: get the intersection points using triangular approximation,
      * and then Newton iterations.
@@ -3179,11 +3182,11 @@ ON_Intersect(const ON_Surface* surfA,
     double max_dis_s = surfB->Domain(0).Length() * 0.05;
     double max_dis_t = surfB->Domain(1).Length() * 0.05;
     if (DEBUG_BREP_INTERSECT) {
-	bu_log("max_dis: %lf\n", max_dis);
-	bu_log("max_dis_u: %lf\n", max_dis_u);
-	bu_log("max_dis_v: %lf\n", max_dis_v);
-	bu_log("max_dis_s: %lf\n", max_dis_s);
-	bu_log("max_dis_t: %lf\n", max_dis_t);
+	bu_log("max_dis: %f\n", max_dis);
+	bu_log("max_dis_u: %f\n", max_dis_u);
+	bu_log("max_dis_v: %f\n", max_dis_v);
+	bu_log("max_dis_s: %f\n", max_dis_s);
+	bu_log("max_dis_t: %f\n", max_dis_t);
     }
     // NOTE: More tests are needed to find a better threshold.
 
@@ -3514,7 +3517,6 @@ ON_Intersect(const ON_Surface* surfA,
     if (treeB == NULL) delete rootB;
     return x.Count() - original_count;
 }
-
 
 // Local Variables:
 // tab-width: 8

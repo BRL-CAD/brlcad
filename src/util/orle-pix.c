@@ -1,7 +1,7 @@
 /*                      O R L E - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -98,7 +98,7 @@ main(int argc, char **argv)
 	    (void) fprintf(stderr,
 			   "Reading color map from file\n"
 		);
-	if (rle_rmap(fp, &cmap) == -1)
+	if (rle_rmap(fp, (RLEColorMap *)&cmap) == -1)
 	    return 1;
 	if (rle_verbose)
 	    prnt_Cmap(&cmap);

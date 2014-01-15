@@ -1,7 +1,7 @@
 /*                      P L O T 3 - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -493,10 +493,10 @@ get_strokes(void)
 
     /* ~32 strokes/KB */
     bytes = 640 * sizeof(stroke);
-    if ((cp = malloc(bytes)) == (char *)0) {
+    if ((cp = (char *)malloc(bytes)) == (char *)0) {
 	/* Attempt to draw/free some vectors and try again */
 	OutBuild();
-	if ((cp = malloc(bytes)) == (char *)0) {
+	if ((cp = (char *)malloc(bytes)) == (char *)0) {
 	    fprintf(stderr, "plot3-fb: malloc failed!\n");
 	    bu_exit(2, NULL);
 	}

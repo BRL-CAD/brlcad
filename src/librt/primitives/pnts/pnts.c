@@ -1,7 +1,7 @@
 /*                          P N T S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -131,7 +131,7 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
 
     /* allocate enough for the header (scale + type + count) */
     external->ext_nbytes = SIZEOF_NETWORK_DOUBLE + SIZEOF_NETWORK_SHORT + SIZEOF_NETWORK_LONG;
-    external->ext_buf = (genptr_t) bu_calloc(sizeof(unsigned char), external->ext_nbytes, "pnts external");
+    external->ext_buf = (uint8_t *) bu_calloc(sizeof(unsigned char), external->ext_nbytes, "pnts external");
     buf = (unsigned char *)external->ext_buf;
 
     scan = pnts->scale; /* convert fastf_t to double */
@@ -162,7 +162,7 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
     /* convert number of doubles to number of network bytes required to store doubles */
     pointDataSize = pointDataSize * SIZEOF_NETWORK_DOUBLE;
 
-    external->ext_buf = (genptr_t)bu_realloc(external->ext_buf, external->ext_nbytes + (pnts->count * pointDataSize), "pnts external realloc");
+    external->ext_buf = (uint8_t *)bu_realloc(external->ext_buf, external->ext_nbytes + (pnts->count * pointDataSize), "pnts external realloc");
     buf = (unsigned char *)external->ext_buf + external->ext_nbytes;
     external->ext_nbytes = external->ext_nbytes + (pnts->count * pointDataSize);
 
@@ -362,6 +362,7 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
     struct bu_list *head = NULL;
     unsigned char *buf = NULL;
     unsigned long i;
+    uint16_t type;
 
     /* must be double for import and export */
     double scan;
@@ -387,7 +388,8 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
     bu_cv_ntohd((unsigned char *)&scan, buf, 1);
     pnts->scale = scan; /* convert double to fastf_t */
     buf += SIZEOF_NETWORK_DOUBLE;
-    pnts->type = (rt_pnt_type)ntohs(*(uint16_t *)buf);
+    type = ntohs(*(uint16_t *)buf);
+    pnts->type = (rt_pnt_type)type; /* intentional enum coercion */
     buf += SIZEOF_NETWORK_SHORT;
     pnts->count = ntohl(*(uint32_t *)buf);
     buf += SIZEOF_NETWORK_LONG;

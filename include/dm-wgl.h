@@ -1,7 +1,7 @@
 /*                          D M - W G L . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2013 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,14 +17,15 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @addtogroup libdm */
 /** @{ */
 /** @file dm-wgl.h
  *
  */
 
-#ifndef __DM_WGL__
-#define __DM_WGL__
+#ifndef DM_WGL_H
+#define DM_WGL_H
 
 #include "common.h"
 
@@ -32,6 +33,7 @@
 #  include <GL/gl.h>
 #endif
 
+__BEGIN_DECLS
 
 #define CMAP_BASE 40
 
@@ -71,7 +73,9 @@ struct wgl_vars {
 
 extern void wgl_fogHint();
 
-#endif /* __DM_WGL__ */
+__END_DECLS
+
+#endif /* DM_WGL_H */
 
 /** @} */
 /*

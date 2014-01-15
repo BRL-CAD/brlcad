@@ -1,7 +1,7 @@
 /*                        B U T T E R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,21 +33,20 @@
 #include <stdio.h>
 #include <math.h>
 #include "bu.h"
-#include "vmath.h"
-#include "bn.h"
 
-void cdiv();
+#include "fft.h"
+
 
 /*
- * Returns the magnitude of the transfer function Hs(s) for a
- * 1/3 octave 6-pole Butterworth bandpass filter of the given
- * frequency.
+ * Returns the magnitude of the transfer function Hs(s) for a 1/3
+ * octave 6-pole Butterworth bandpass filter of the given frequency.
+ *
+ * @param w is relative frequency (1.0 = center freq)
  */
-double
+static double
 butter(double w)
-/* relative frequency (1.0 = center freq) */
 {
-    bn_complex_t denom, num, h;
+    COMPLEX denom, num, h;
     double gammaval, k1, k2, k3, k4;
 
     /* 1/3 octave gammaval */
@@ -68,19 +67,21 @@ butter(double w)
 	+ k2 * pow(w, 5.0);
 
     cdiv(&h, &num, &denom);
-/* printf("(%f, %f)\n", h.re, h.im);*/
+
+    /* printf("(%f, %f)\n", h.re, h.im);*/
+
     return hypot(h.re, h.im);
 }
 
 
 /*
  * Compute weights for a log point spaces critical band filter.
+ *
+ * @param window is the length of FFT to compute relative frequency.
+ * @param points is the length of filter kernel.
  */
 void
 cbweights(double *filter, int window, int points)
-
-/* Length of FFT to compute relative freq for */
-/* Length of filter kernel wanted */
 {
     int i, center;
     double step, w;
@@ -100,7 +101,8 @@ cbweights(double *filter, int window, int points)
 
 #ifdef TEST
 #define N 512.0
-int main()
+int
+main()
 {
     int offset;
     double wr, mag, step;

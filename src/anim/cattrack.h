@@ -1,7 +1,7 @@
 /*                      C A T T R A C K . H
  * BRL-CAD
  *
- * Copyright (c) 2010-2013 United States Government as represented by
+ * Copyright (c) 2010-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,10 +23,14 @@
  *
  */
 
+#ifndef ANIM_CATTRACK_H
+#define ANIM_CATTRACK_H
+
 #include "common.h"
 
 #include "bu.h"
 
+__BEGIN_DECLS
 
 /**
  * get x value of a point which is a given distance along catenary
@@ -82,6 +86,9 @@ fastf_t hyper_get_ang(fastf_t a, fastf_t c, fastf_t x);
  */
 int getcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t *pth0, fastf_t *pth1, fastf_t delta_s, fastf_t *p_zero, fastf_t *p_one, fastf_t r_zero, fastf_t r_one);
 
+__END_DECLS
+
+#endif /* ANIM_CATTRACK_H */
 
 /*
  * Local Variables:

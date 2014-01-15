@@ -1,7 +1,7 @@
 /*                       B U T T O N S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,12 +36,13 @@
 #include "./mged_dm.h"
 #include "./sedit.h"
 
+/* external sp_hook function */
+extern void set_scroll_private(const struct bu_structparse *, const char *, void *, const char *);	/* defined in set.c */
 
 extern int mged_svbase(void);
 extern void set_e_axes_pos(int both);
 extern int mged_zoom(double val);
 extern void set_absolute_tran(void);	/* defined in set.c */
-extern void set_scroll_private(void);	/* defined in set.c */
 extern void adc_set_scroll(void);	/* defined in adc.c */
 
 /* forward declarations for the buttons table */
@@ -150,7 +151,7 @@ struct buttons {
 
 static mat_t sav_viewrot, sav_toviewcenter;
 static fastf_t sav_vscale;
-static int vsaved = 0;	/* set iff view saved */
+static int vsaved = 0;	/* set if view saved */
 
 extern void color_soltab(void);
 extern void sl_halt_scroll(void);	/* in scroll.c */
@@ -292,9 +293,9 @@ f_press(ClientData clientData,
 	    goto next;
 	}
 
-	for (menu=0, m=menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++, menu++) {
+	for (menu = 0, m = menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++, menu++) {
 	    if (*m == MENU_NULL) continue;
-	    for (item=0, mptr = *m;
+	    for (item = 0, mptr = *m;
 		 mptr->menu_string[0] != '\0';
 		 mptr++, item++) {
 		if (!BU_STR_EQUAL(str, mptr->menu_string))
@@ -303,7 +304,7 @@ f_press(ClientData clientData,
 		menu_state->ms_cur_item = item;
 		menu_state->ms_cur_menu = menu;
 		menu_state->ms_flag = 1;
-		/* It's up to the menu_func to set menu_state->ms_flag=0
+		/* It's up to the menu_func to set menu_state->ms_flag = 0
 		 * if no arrow is desired */
 		if (mptr->menu_func != ((void (*)())0))
 		    (*(mptr->menu_func))(mptr->menu_arg, menu, item);
@@ -371,7 +372,16 @@ int
 bv_rate_toggle()
 {
     mged_variables->mv_rateknobs = !mged_variables->mv_rateknobs;
-    set_scroll_private();
+
+    {
+	/* need dummy values for func signature--they are unused in the func */
+	const struct bu_structparse *sdp = 0;
+	const char name[] = "name";
+	void *base = 0;
+	const char value[] = "value";
+	set_scroll_private(sdp, name, base, value);
+    }
+
     return TCL_OK;
 }
 

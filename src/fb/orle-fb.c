@@ -1,7 +1,7 @@
 /*                       O R L E - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -141,7 +141,7 @@ main(int argc, char **argv)
 	    (void) fprintf(stderr,
 			   "Loading saved color map from file\n"
 		);
-	if (rle_rmap(fp, &cmap) == -1)
+	if (rle_rmap(fp, (RLEColorMap *)&cmap) == -1)
 	    return 1;
 	if (rle_verbose)
 	    prnt_Cmap(&cmap);
@@ -197,8 +197,7 @@ main(int argc, char **argv)
 		page_fault = 0;
 	    }
 	    if (y >= ypos && y <= ymax) {
-		if (rle_decode_ln(fp,
-				  scanbuf[(y%lines_per_buffer)*width*sizeof(RGBpixel)]) == -1)
+		if (rle_decode_ln(fp, (RLEpixel *) &scanbuf[(y%lines_per_buffer)*width*sizeof(RLEpixel)]) == -1)
 		    break;		/* not return */
 		dirty_flag = 1;
 	    }

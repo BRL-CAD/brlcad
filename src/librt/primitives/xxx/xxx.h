@@ -1,7 +1,7 @@
 /*                           X X X . H
  * BRL-CAD
  *
- * Copyright (c) 2012-2013 United States Government as represented by
+ * Copyright (c) 2012-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,6 +50,9 @@
  *
  */
 
+#ifndef LIBRT_PRIMITIVES_XXX_XXX_H
+#define LIBRT_PRIMITIVES_XXX_XXX_H
+
 #include "common.h"
 
 #include "bu.h"
@@ -83,6 +86,7 @@ struct xxx_specific {
     vect_t xxx_V;
 };
 
+#endif /* LIBRT_PRIMITIVES_XXX_XXX_H */
 
 /*
  * Local Variables:

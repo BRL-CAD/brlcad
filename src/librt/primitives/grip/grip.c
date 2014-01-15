@@ -1,7 +1,7 @@
 /*                          G R I P . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2013 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -207,16 +207,6 @@ rt_grp_free(struct soltab *stp)
 
 
 /**
- * R T _ G R P _ C L A S S
- */
-int
-rt_grp_class(void)
-{
-    return 0;
-}
-
-
-/**
  * R T _ G R P _ P L O T
  *
  * We represent a GRIP as a pyramid.  The center describes where the
@@ -352,7 +342,7 @@ rt_grp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double U
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "grip external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "grip external");
     rec = (union record *)ep->ext_buf;
 
     rec->s.s_id = ID_SOLID;
@@ -436,7 +426,7 @@ rt_grp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 7;
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "grip external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "grip external");
 
     VSCALE(&vec[0], gip->center, local2mm);
     VMOVE(&vec[3], gip->normal);

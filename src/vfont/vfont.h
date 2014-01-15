@@ -1,7 +1,7 @@
 /*                         V F O N T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef VFONT_FONT_H
-#define VFONT_FONT_H
+#ifndef VFONT_VFONT_H
+#define VFONT_VFONT_H
 
 #include "common.h"
 
@@ -84,7 +84,7 @@ struct vfont
 get_font(const char* fontname, void (*vfont_log)(const char *fmt, ...));
 
 
-#endif /* VFONT_FONT_H */
+#endif /* VFONT_VFONT_H */
 
 /*
  * Local Variables:

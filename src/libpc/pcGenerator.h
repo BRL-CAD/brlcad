@@ -1,7 +1,7 @@
 /*                    P C G E N E R A T O R . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,8 +25,8 @@
  * in the generation of constraints and parameters/variables
  *
  */
-#ifndef __PCGENERATOR_H__
-#define __PCGENERATOR_H__
+#ifndef LIBPC_PCGENERATOR_H
+#define LIBPC_PCGENERATOR_H
 
 #include "common.h"
 

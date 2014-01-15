@@ -1,7 +1,7 @@
 /*                            H E X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,8 +37,9 @@
 
 
 /* declarations to support use of bu_getopt() system call */
-static char *options = "o:";
-static char *progname = "(noname)";
+static char options[] = "o:";
+static char noname[]  = "(noname)";
+static char *progname = noname;
 
 static off_t offset=0;	 /* offset from beginning of file from which to start */
 
@@ -68,7 +69,8 @@ void dump(FILE *fd)
 		if ((i=fread(buf, 1, sizeof(buf), fd)) == 0) {
 		    fprintf(stderr, "%s: offset exceeds end of input!\n", progname);
 		    bu_exit (-1, NULL);
-		} else addr += i;
+		}
+		addr += i;
 	    }
 	} else addr = offset;
     }
@@ -96,7 +98,7 @@ void dump(FILE *fd)
 	    int c = *p;
 	    if (c < 0)
 		c = 0;
-	    if (c > 255)
+	    else if (c > 255)
 		c = 255;
 	    if (isascii(c) && isprint(c))
 		putchar(c);
@@ -136,29 +138,33 @@ main(int ac, char **av)
     /* Get # of options & turn all the option flags off */
     optlen = strlen(options);
 
-    for (c=0; c < optlen; c++)  /* NIL */;
-
     /* Turn off bu_getopt's error messages */
     bu_opterr = 0;
 
-    /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac, av, options)) != -1)
-	if (c == 'o') {
-	    newoffset = strtol(bu_optarg, &eos, 0);
+    for (c=0; c < optlen; c++)  /* NIL */;
 
-	    if (eos != bu_optarg)
+    /* get all the option flags from the command line */
+    while ((c=bu_getopt(ac, av, options)) != -1) {
+	if (c != 'o')
+		usage();
+
+	newoffset = strtol(bu_optarg, &eos, 0);
+
+	if (eos != bu_optarg)
 		offset = newoffset;
-	    else
-		fprintf(stderr, "%s: error parsing offset \"%s\"\n",
-			progname, bu_optarg);
-	} else usage();
+	else
+	    fprintf(stderr, "%s: error parsing offset \"%s\"\n",
+		progname, bu_optarg);
+    }
 
     if (offset%DUMPLEN != 0) offset -= offset % DUMPLEN;
 
     if (bu_optind >= ac) {
 	/* no file left, try processing stdin */
-	if (isatty(fileno(stdin))) usage();
-	else dump(stdin);
+	if (isatty(fileno(stdin)))
+		usage();
+
+	dump(stdin);
     } else {
 	/* process each remaining arguments */
 	for (files = ac-bu_optind; bu_optind < ac; bu_optind++) {

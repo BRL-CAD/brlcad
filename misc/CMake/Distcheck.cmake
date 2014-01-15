@@ -1,7 +1,7 @@
 #                 D I S T C H E C K . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2012-2013 United States Government as represented by
+# Copyright (c) 2012-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -142,10 +142,10 @@ if(NOT BRLCAD_IS_SUBBUILD)
 	set(DISTCHECK_REGRESS_CMD "$(MAKE) regress")
 	set(DISTCHECK_TEST_CMD "$(MAKE) test")
       else("${CMAKE_GENERATOR}" MATCHES "Make")
-	set(DISTCHECK_BUILD_CMD "${CMAKE_COMMAND} -E build .")
-	set(DISTCHECK_INSTALL_CMD "${CMAKE_COMMAND} -E build . --target install")
-	set(DISTCHECK_REGRESS_CMD "${CMAKE_COMMAND} -E build . --target regress")
-	set(DISTCHECK_TEST_CMD "${CMAKE_COMMAND} -E build . --target test")
+	set(DISTCHECK_BUILD_CMD "\"${CMAKE_COMMAND}\" -E build .")
+	set(DISTCHECK_INSTALL_CMD "\"${CMAKE_COMMAND}\" -E build . --target install")
+	set(DISTCHECK_REGRESS_CMD "\"${CMAKE_COMMAND}\" -E build . --target regress")
+	set(DISTCHECK_TEST_CMD "\"${CMAKE_COMMAND}\" -E build . --target test")
 	set(TARGET_REDIRECT "")
       endif("${CMAKE_GENERATOR}" MATCHES "Make")
 

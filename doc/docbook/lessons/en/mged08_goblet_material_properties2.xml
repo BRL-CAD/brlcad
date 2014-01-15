@@ -1,5 +1,4 @@
 <!-- Converted by db4-upgrade version 1.0 -->
-
 <article xmlns="http://docbook.org/ns/docbook" version="5.0">
   <info><title>Assigning More Material Properties to a Goblet</title>
 
@@ -52,7 +51,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged08_goblet_combeditor.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged08_goblet_combeditor.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -111,7 +113,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged08_spec_vs_diff_reflectivity.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged08_spec_vs_diff_reflectivity.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -169,7 +174,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged08_refractive_index.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged08_refractive_index.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -236,7 +244,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged08_goblet_reflectivity_1.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged08_goblet_reflectivity_1.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -249,7 +260,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged08_goblet_reflectivity_2.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged08_goblet_reflectivity_2.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -269,7 +283,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged08_comb_editor_window_mater_prop.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged08_comb_editor_window_mater_prop.png" format="PNG"/>
 	  </imageobject>
 	  <caption>

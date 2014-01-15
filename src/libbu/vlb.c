@@ -1,7 +1,7 @@
 /*                           V L B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@
 void
 bu_vlb_init(struct bu_vlb *vlb)
 {
-    vlb->buf = bu_calloc(1, VLB_BLOCK_SIZE, "bu_vlb");
+    vlb->buf = (uint8_t *)bu_calloc(1, VLB_BLOCK_SIZE, "bu_vlb");
     vlb->bufCapacity = VLB_BLOCK_SIZE;
     vlb->nextByte = 0;
     vlb->magic = BU_VLB_MAGIC;
@@ -46,7 +46,7 @@ bu_vlb_initialize(struct bu_vlb *vlb, size_t initialSize)
 	bu_vlb_init(vlb);
 	return;
     }
-    vlb->buf = bu_calloc(1, initialSize, "bu_vlb");
+    vlb->buf = (uint8_t *)bu_calloc(1, initialSize, "bu_vlb");
     vlb->bufCapacity = initialSize;
     vlb->nextByte = 0;
     vlb->magic = BU_VLB_MAGIC;
@@ -67,7 +67,7 @@ bu_vlb_write(struct bu_vlb *vlb, unsigned char *start, size_t len)
     }
 
     if (addBlocks) {
-	vlb->buf = bu_realloc(vlb->buf, currCapacity, "enlarging vlb");
+	vlb->buf = (uint8_t *)bu_realloc(vlb->buf, currCapacity, "enlarging vlb");
 	vlb->bufCapacity = currCapacity;
     }
 
@@ -109,7 +109,7 @@ bu_vlb_free(struct bu_vlb *vlb)
     }
     vlb->buf = NULL;
     vlb->bufCapacity = 0;
-    vlb->nextByte = -1;
+    vlb->nextByte = (size_t)-1;
     vlb->magic = 0;
 }
 

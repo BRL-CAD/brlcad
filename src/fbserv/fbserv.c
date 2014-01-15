@@ -1,7 +1,7 @@
 /*                        F B S E R V . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -299,7 +299,7 @@ drop_client(int sub)
  *  Don't send one down the wire, this can cause loops.
  */
 static void
-comm_error(char *str)
+comm_error(const char *str)
 {
 #if defined(HAVE_SYSLOG_H)
     if ( use_syslog ) {
@@ -342,7 +342,7 @@ main_loop(void)
 	tv.tv_sec = 60L;
 	tv.tv_usec = 0L;
 #endif
-	if ((select( max_fd+1, &infds, (fd_set *)0, (fd_set *)0, (void *)&tv ) == 0)) {
+	if ((select( max_fd+1, &infds, (fd_set *)0, (fd_set *)0, (struct timeval *)&tv ) == 0)) {
 	    /* Process fb events while waiting for client */
 	    /*printf("select timeout waiting for client\n");*/
 	    if (fb_server_fbp) {

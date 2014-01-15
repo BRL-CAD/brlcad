@@ -1,7 +1,7 @@
 /*                         H R T . C
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -515,13 +515,13 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
             bu_log("hrt:  rt_poly_roots() 6!=%d\n", i);
             bn_pr_roots(stp->st_name, complex, i);
         } else if (i < 0) {
-            static int reported=0;
+            static int reported = 0;
             bu_log("The root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
             if (!reported) {
                 VPRINT("while shooting from:\t", rp->r_pt);
                 VPRINT("while shooting at:\t", rp->r_dir);
                 bu_log("Additional heart convergence failure details will be suppressed.\n");
-                reported=1;
+                reported = 1;
             }
         }
         return 0;               /* MISS */
@@ -533,7 +533,7 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
      * sufficiently close, then use the real part as one value of 't'
      * for the intersections
      */
-    for (j=0, i=0; j < 6; j++) {
+    for (j = 0, i = 0; j < 6; j++) {
         if (NEAR_ZERO(complex[j].im, ap->a_rt_i->rti_tol.dist))
             real[i++] = complex[j].re;
     }
@@ -647,7 +647,7 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
  * This is the Becker vector version
  */
 void
-rt_hrt_vshot()
+rt_hrt_vshot(void)
 {
     bu_log("rt_hrt_vshot: Not implemented yet!\n");
 }
@@ -705,7 +705,7 @@ rt_hrt_norm(register struct hit *UNUSED(hitp), register struct xray *UNUSED(rp))
  * Return the curvature of the heart.
  */
 void
-rt_hrt_curve()
+rt_hrt_curve(void)
 {
     bu_log("rt_hrt_curve: Not implemented yet!\n");
 }
@@ -715,7 +715,7 @@ rt_hrt_curve()
  * R T _ H R T _ U V
  */
 void
-rt_hrt_uv()
+rt_hrt_uv(void)
 {
     bu_log("rt_hrt_uv: Not implemented yet!\n");
 }
@@ -731,16 +731,6 @@ rt_hrt_free(struct soltab *stp)
 	(struct hrt_specific *)stp->st_specific;
 
     BU_PUT(hrt, struct hrt_specific);
-}
-
-
-/**
- * R T _ H R T _ C L A S S
- */
-int
-rt_hrt_class(void)
-{
-    return 0;
 }
 
 
@@ -800,7 +790,7 @@ rt_hrt_24pts(fastf_t *ov, fastf_t *V, fastf_t *A, fastf_t *B)
  * R T _ H R T _ A D A P T I V E _ P L O T
  */
 int
-rt_hrt_adaptive_plot()
+rt_hrt_adaptive_plot(void)
 {
     bu_log("rt_adaptive_plot: Not implemented yet!\n");
     return 0;
@@ -827,12 +817,12 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct rt_tes
     rt_hrt_24pts(middle, hip->v, hip->xdir, hip->zdir);
 
     RT_ADD_VLIST(vhead, &top[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
-    for (i=0; i<24; i++) {
+    for (i = 0; i < 24; i++) {
 	RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
     }
 
     RT_ADD_VLIST(vhead, &middle[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
-    for (i=0; i<24; i++) {
+    for (i = 0; i < 24; i++) {
 	RT_ADD_VLIST(vhead, &middle[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
     }
     return 0;
@@ -843,7 +833,7 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct rt_tes
  * R T _ H R T _ T E S S
  */
 int
-rt_hrt_tess()
+rt_hrt_tess(void)
 {
     bu_log("rt_hrt_tess: Not implemented yet!\n");
     return 0;
@@ -876,7 +866,7 @@ rt_hrt_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * (ELEMENTS_PER_VECT*4 + 1);
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "hrt external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "hrt external");
 
     /* scale values to local buffer */
     VSCALE(&hec[0*ELEMENTS_PER_VECT], hip->v, local2mm);
@@ -1047,7 +1037,7 @@ rt_hrt_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
  *
  */
 void
-rt_hrt_surf_area()
+rt_hrt_surf_area(void)
 {
     bu_log("rt_hrt_surf_area: Not implemented yet!\n");
 }
@@ -1058,7 +1048,7 @@ rt_hrt_surf_area()
  *
  */
 void
-rt_hrt_volume()
+rt_hrt_volume(void)
 {
     bu_log("rt_hrt_volume: Not implemented yet!\n");
 }
@@ -1069,7 +1059,7 @@ rt_hrt_volume()
  *
  */
 void
-rt_hrt_centroid()
+rt_hrt_centroid(void)
 {
     bu_log("rt_hrt_centroid: Not implemented yet!\n");
 }

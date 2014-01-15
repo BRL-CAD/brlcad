@@ -27,31 +27,7 @@
 #-----------------------------------------------------------------------
 
 # Clear all pre-defined CMake flags
-
-set(CMAKE_C_FLAGS "")
-set(CMAKE_CXX_FLAGS "")
-set(CMAKE_SHARED_LINKER_FLAGS "")
-set(CMAKE_EXE_LINKER_FLAGS "")
-
-if(CMAKE_BUILD_TYPE)
-  string(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE_UPPER)
-  set(CMAKE_C_FLAGS_${BUILD_TYPE_UPPER} "")
-  set(CMAKE_CXX_FLAGS_${BUILD_TYPE_UPPER} "")
-  set(CMAKE_SHARED_LINKER_FLAGS_${BUILD_TYPE_UPPER} "")
-  set(CMAKE_EXE_LINKER_FLAGS_${BUILD_TYPE_UPPER} "")
-endif(CMAKE_BUILD_TYPE)
-
-foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-  string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-  set(CMAKE_C_FLAGS_${CFG_TYPE_UPPER} "")
-  set(CMAKE_CXX_FLAGS_${CFG_TYPE_UPPER} "")
-  set(CMAKE_SHARED_LINKER_FLAGS_${CFG_TYPE_UPPER} "")
-  set(CMAKE_EXE_LINKER_FLAGS_${CFG_TYPE_UPPER} "")
-endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-
-set(CMAKE_C_FLAGS "$ENV{CFLAGS}")
-set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS}")
-set(CMAKE_SHARED_LINKER_FLAGS "$ENV{LDFLAGS}")
+CLEAR_BUILD_FLAGS()
 
 # Quiet all warnings in this directory
 if(BRLCAD_DISABLE_SRC_OTHER_WARN)
@@ -372,8 +348,11 @@ ELSE(BRLCAD_PNG_BUILD)
   # The PNG CMake file seems to set PNG_PNG_INCLUDE_DIR rather than
   # PNG_INCLUDE_DIR, so a generic macro won't pick up the setting -
   # handle it here.
-
   set(PNG_INCLUDE_DIR ${PNG_PNG_INCLUDE_DIR} CACHE STRING "PNG include directory" FORCE)
+
+  # Newer CMake versions don't automatically put this value in the Cache,
+  # but we need it
+  set(PNG_LIBRARY "${PNG_LIBRARY}" CACHE STRING "PNG library" FORCE)
 endif(BRLCAD_PNG_BUILD)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/libpng/CTestTestfile.cmake)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/libpng/libpng.pc)
@@ -806,9 +785,6 @@ version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 THIRD_PARTY(openNURBS openNURBS "" opennurbs_ALIASES opennurbs_DESCRIPTION NOSYS)
 
-if(NOT MSVC)
-  set(NOT_MSVC 1)
-endif(NOT MSVC)
 # STEP Class Libraries
 # Need Lemon/Perplex to build STEP - conditionalize
 
@@ -868,6 +844,10 @@ if(BRLCAD_LEVEL2)
 else(BRLCAD_LEVEL2)
   CMAKEFILES(clipper)
 endif(BRLCAD_LEVEL2)
+
+# dom2dox - Doc-O-Matic to Doxygen C++ source converter
+include(${CMAKE_CURRENT_SOURCE_DIR}/dom2dox.dist)
+CMAKEFILES_IN_DIR(dom2dox_ignore_files dom2dox)
 
 # VDSlib - A View-Dependent Simplification and Rendering Library For
 # the moment, this is marked NOSYS - it's possible that some Debian

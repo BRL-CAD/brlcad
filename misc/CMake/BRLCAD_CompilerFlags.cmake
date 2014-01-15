@@ -1,7 +1,7 @@
 #      B R L C A D _ C O M P I L E R F L A G S . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2013 United States Government as represented by
+# Copyright (c) 2011-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -100,50 +100,79 @@ if(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
   CHECK_C_FLAG(pedantic)
   CHECK_CXX_FLAG(pedantic)
 
-  # FIXME: The Wall warnings are too verbose with Visual C++ (for
-  # now).  we have a lot to clean up.
-  if(NOT MSVC)
-    CHECK_C_FLAG(Wall)
-    CHECK_CXX_FLAG(Wall)
-  else(NOT MSVC)
-    CHECK_C_FLAG(W4)
-    CHECK_CXX_FLAG(W4)
-  endif(NOT MSVC)
+  # this catches a lot, it's good
+  CHECK_C_FLAG(Wall)
+  CHECK_CXX_FLAG(Wall)
 
+  # this catches a lot more, also good
   CHECK_C_FLAG(Wextra)
   CHECK_CXX_FLAG(Wextra)
 
+  # make sure our preprocessor logic references defined symbol names
   CHECK_C_FLAG(Wundef)
   CHECK_CXX_FLAG(Wundef)
 
+  # this makes sure we don't try to compare floating point exactly
   CHECK_C_FLAG(Wfloat-equal)
   CHECK_CXX_FLAG(Wfloat-equal)
 
+  # make sure we're using unambiguous symbol names, no shadowing
   CHECK_C_FLAG(Wshadow)
   CHECK_CXX_FLAG(Wshadow)
 
-# report where we throw away const
-#  CHECK_C_FLAG(Wcast-qual)
-#  CHECK_CXX_FLAG(Wcast-qual)
+  # make sure we're not dangerously casting return types. C-only for
+  # gcc, but maybe not for clang or others.
+  CHECK_C_FLAG(Wbad-function-cast)
+  CHECK_CXX_FLAG(Wbad-function-cast)
 
-# check for redundant declarations
-#  CHECK_C_FLAG(Wredundant-decls)
-#  CHECK_CXX_FLAG(Wredundant-decls)
+  # this makes sure we don't declare variables mid-scope, helps build on Windows
+  CHECK_C_FLAG(Wdeclaration-after-statement)
+  CHECK_CXX_FLAG(Wdeclaration-after-statement)
 
-  # want C inline warnings, but versions of g++ (circa 4.7) spew
-  # unquellable bogus warnings on default constructors that we don't
-  # have access to (e.g., in opennurbs and boost), so turn them off
+  # C-only: this makes sure C sources will compile as C++ code
+  CHECK_C_FLAG(Wc++-compat)
+
+  # FIXME: this one is a lot of work, a work-in-progress, but good to have eventually
+  # this makes sure prototypes are properly declared, no k&r and no assuming () means (void)
+  # CHECK_C_FLAG(Wstrict-prototypes)
+
+  # FIXME: shouldn't be throwing away const, should be using it more.  ton of work.
+  # this reports where we throw away const
+  #  CHECK_C_FLAG(Wcast-qual)
+  #  CHECK_CXX_FLAG(Wcast-qual)
+
+  # check for redundant declarations
+  #  CHECK_C_FLAG(Wredundant-decls)
+  #  CHECK_CXX_FLAG(Wredundant-decls)
+
+  # want C inline warnings, but not for c++.  versions of g++ (circa
+  # 4.7) spew unquellable bogus warnings on default constructors that
+  # we don't have access to (e.g., in opennurbs and boost), so turn
+  # them off
   CHECK_C_FLAG(Winline)
   CHECK_CXX_FLAG(Wno-inline)
 
-  # Need this for tcl.h
+  # this makes sure we don't warn about using long long.  really, it's okay.
   CHECK_C_FLAG(Wno-long-long)
   CHECK_CXX_FLAG(Wno-long-long)
 
-  # Need this for X11 headers using variadic macros
+  # this is for X11 headers, they use variadic macros
   CHECK_C_FLAG(Wno-variadic-macros)
   CHECK_CXX_FLAG(Wno-variadic-macros)
 endif(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
+
+if(BRLCAD_ENABLE_COVERAGE)
+  CHECK_C_FLAG(ftest-coverage)
+  CHECK_CXX_FLAG(ftest-coverage)
+  if(FTEST_COVERAGE_C_FLAG_FOUND)
+    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage")
+    SET(CMAKE_SHARED_LINKER_FLAGS  "${CMAKE_SHARED_LINKER_FLAGS} --coverage -fprofile-arcs")
+    SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} --coverage -fprofile-arcs")
+  else(FTEST_COVERAGE_C_FLAG_FOUND)
+    message(SEND_ERROR "Building with coverage is not supported by BRL-CAD on this platform.")
+  endif(FTEST_COVERAGE_C_FLAG_FOUND)
+endif(BRLCAD_ENABLE_COVERAGE)
 
 if(BRLCAD_ENABLE_STRICT)
   CHECK_C_FLAG(Werror)
@@ -172,6 +201,10 @@ foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
   set(CMAKE_SHARED_LINKER_FLAGS_${CFG_TYPE_UPPER} "${CMAKE_SHARED_LINKER_FLAGS_${CFG_TYPE_UPPER}}" CACHE STRING "Linker flags used for ${CFG_TYPE} builds" FORCE)
   set(CMAKE_EXE_LINKER_FLAGS_${CFG_TYPE_UPPER} "${CMAKE_EXE_LINKER_FLAGS_${CFG_TYPE_UPPER}}" CACHE STRING "Exe linker flags used for ${CFG_TYPE} builds" FORCE)
 endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+
+# TODO - figure out if this should be integrated above
+CHECK_COMPILER_FLAG(C "Wunused-const-variable" HAVE_C_WUNUSED_CONST_VARIABLE)
+
 
 # Local Variables:
 # tab-width: 8

@@ -1,7 +1,7 @@
 /*                         V D E C K . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2013 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -174,7 +174,7 @@ extern int		parsArg();
 extern int		insert();
 extern int		col_prt();
 extern int		match();
-extern int		delete();
+extern int		delete_obj();
 extern int		cgarbs();
 extern int		redoarb();
 
@@ -203,12 +203,12 @@ prompt(char *fmt)
 /**
  * S O R T F U N C
  *
- * Comparison function for qsort().
+ * Comparison function for bu_sort().
  *
- * 'a' is the exact template expected by qsort.
+ * 'a' is the exact template expected by bu_sort.
  */
 static int
-sortFunc(const void *a, const void *b)
+sortFunc(const void *a, const void *b, void *UNUSED(arg))
 {
     const char **lhs = (const char **)a;
     const char **rhs = (const char **)b;
@@ -223,7 +223,7 @@ sortFunc(const void *a, const void *b)
 int
 main(int argc, char *argv[])
 {
-    setbuf(stdout, bu_malloc(BUFSIZ, "stdout buffer"));
+    setbuf(stdout, (char *)bu_malloc(BUFSIZ, "stdout buffer"));
     BU_LIST_INIT(&(sol_hd.l));
 
     if (! parsArg(argc, argv)) {
@@ -300,14 +300,14 @@ main(int argc, char *argv[])
 		    prompt("enter object[s] to remove: ");
 		    (void) getcmd(arg_list, arg_ct);
 		}
-		(void) delete(arg_list);
+		(void) delete_obj(arg_list);
 		break;
 	    case RETURN :
 		prompt(PROMPT);
 		continue;
 	    case SORT_TOC :
-		qsort((genptr_t)toc_list, (unsigned)ndir,
-		       sizeof(char *), sortFunc);
+		bu_sort((void *)toc_list, (unsigned)ndir,
+			sizeof(char *), sortFunc, NULL);
 		break;
 	    case TOC :
 		list_toc(arg_list);
@@ -371,7 +371,7 @@ flatten_tree(struct bu_vls *vls, union tree *tp, char *op, int neg)
 	    return;
 
 	case OP_REGION:
-	    bu_log("REGION 'stp'=x%x\n", (size_t)tp->tr_a.tu_stp);
+	    bu_log("REGION 'stp'=%lx\n", (size_t)tp->tr_a.tu_stp);
 	    return;
 
 	default:
@@ -1455,7 +1455,7 @@ insert(char *args[], int ct)
  * the arguments.
  */
 int
-delete(char *args[])
+delete_obj(char *args[])
 {
     int	i;
     int	nomatch;
@@ -1679,7 +1679,7 @@ getcmd(char *args[], int ct)
 	while (--arg_ct >= 0)
 	    bu_free(args[arg_ct], "args[arg_ct]");
     for (arg_ct = ct; arg_ct < MAXARG - 1; ++arg_ct) {
-	args[arg_ct] = bu_malloc(MAXLN, "getcmd buffer");
+	args[arg_ct] = (char *)bu_malloc(MAXLN, "getcmd buffer");
 	if (! getarg(args[arg_ct], MAXLN))
 	    break;
     }

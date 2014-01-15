@@ -1,7 +1,7 @@
 /*                         G - D O T . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2013 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -68,11 +68,13 @@ dot_comb(struct db_i *dbip, struct directory *dp, genptr_t out)
     comb = (struct rt_comb_internal *)intern.idb_ptr;
 
     if (comb->region_flag) {
-	if (bu_ptbl_ins_unique(&(o->regions), (long *)bu_hash((unsigned char *)dp->d_namep, strlen(dp->d_namep))) == -1) {
+	long hash = bu_hash((unsigned char *)dp->d_namep, strlen(dp->d_namep));
+	if (bu_ptbl_ins_unique(&(o->regions), (long *)hash) == -1) {
 	    fprintf(o->outfp, "\t\"%s\" [ color=blue shape=box3d ];\n", dp->d_namep);
 	}
     } else {
-	if (bu_ptbl_ins_unique(&(o->groups), (long *)bu_hash((unsigned char *)dp->d_namep, strlen(dp->d_namep))) == -1) {
+	long hash = bu_hash((unsigned char *)dp->d_namep, strlen(dp->d_namep));
+	if (bu_ptbl_ins_unique(&(o->groups), (long *)hash) == -1) {
 	    fprintf(o->outfp, "\t\"%s\" [ color=green ];\n", dp->d_namep);
 	}
     }
@@ -141,11 +143,13 @@ static void
 dot_leaf(struct db_i *UNUSED(dbip), struct directory *dp, genptr_t out)
 {
     struct output *o = (struct output *)out;
+    unsigned long hash;
 
     if (!o->outfp)
 	return;
 
-    if (bu_ptbl_ins_unique(&(o->primitives), (long *)bu_hash((unsigned char *)dp->d_namep, strlen(dp->d_namep))) == -1) {
+    hash = bu_hash((unsigned char *)dp->d_namep, strlen(dp->d_namep));
+    if (bu_ptbl_ins_unique(&(o->primitives), (long *)hash) == -1) {
 	fprintf(o->outfp, "\t\"%s\" [ color=red shape=box rank=min ];\n", dp->d_namep);
     }
 
@@ -336,7 +340,7 @@ main(int ac, char *av[])
 
 	ged_tops(gp, 2, tops);
 
-	topobjs = bu_calloc(1, bu_vls_strlen(gp->ged_result_str), "alloc topobjs");
+	topobjs = (char **)bu_calloc(1, bu_vls_strlen(gp->ged_result_str), "alloc topobjs");
 	c = bu_argv_from_string(topobjs, bu_vls_strlen(gp->ged_result_str), bu_vls_addr(gp->ged_result_str));
 	objs = bu_dup_argv(c, (const char **)topobjs);
 	bu_free(topobjs, "free topobjs");

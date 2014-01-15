@@ -1,7 +1,7 @@
 /*                        I R D I S P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@ int
 main(void)
 {
     int ichoice;		/* Choice.  */
-    char *irX = "ir-X";		/* Calls ir-X program.  */
+    char irX[] = "ir-X";		/* Calls ir-X program.  */
     char showtherm[125];	/* Calls showtherm program.  */
     char gfile[16];		/* .g file.  */
     char group[26];		/* Group names.  */

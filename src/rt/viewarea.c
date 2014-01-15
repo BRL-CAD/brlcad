@@ -1,7 +1,7 @@
 /*                      V I E W A R E A . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -211,7 +211,7 @@ increment_assembly_counter(register struct area *cell, const char *path, area_ty
     assembly_head_ptr = cell->assembly;
 
     l = strlen(path);
-    buffer = bu_calloc((unsigned int)l+1, sizeof(char), "increment_assembly_counter buffer allocation");
+    buffer = (char *)bu_calloc((unsigned int)l+1, sizeof(char), "increment_assembly_counter buffer allocation");
     bu_strlcpy(buffer, path, l+1);
 
     /* trim off the region name */
@@ -1024,10 +1024,10 @@ view_end(struct application *ap)
 	       bu_units_string(units)
 	    );
     }
-    bu_log("Number of Presented Regions:    %8d\n", presented_region_count);
-    bu_log("Number of Presented Assemblies: %8d\n", presented_assembly_count);
-    bu_log("Number of Exposed Regions:    %8d\n", exposed_region_count);
-    bu_log("Number of Exposed Assemblies: %8d\n", exposed_assembly_count);
+    bu_log("Number of Presented Regions:    %8u\n", (unsigned)presented_region_count);
+    bu_log("Number of Presented Assemblies: %8u\n", (unsigned)presented_assembly_count);
+    bu_log("Number of Exposed Regions:    %8u\n", (unsigned)exposed_region_count);
+    bu_log("Number of Exposed Assemblies: %8u\n", (unsigned)exposed_assembly_count);
     bu_log("\n"
 	   "********************************************************************\n"
 	   "WARNING: The terminology and output format of 'rtarea' is deprecated\n"

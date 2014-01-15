@@ -1,7 +1,7 @@
 /*                       C H G V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -925,7 +925,7 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
     }
 
     bu_vls_from_argv(&vlsargv, argc, argv);
-    nargv = bu_calloc(argc + 1, sizeof(char *), "calloc f_ill nargv");
+    nargv = (char **)bu_calloc(argc + 1, sizeof(char *), "calloc f_ill nargv");
     orig_nargv = nargv;
     c = bu_argv_from_string(nargv, argc, bu_vls_addr(&vlsargv));
 

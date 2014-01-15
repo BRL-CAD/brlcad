@@ -1,7 +1,7 @@
 /*                          D M -  Q T . H
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef __DM_QT__
-#define __DM_QT__
+#ifndef DM_QT_H
+#define DM_QT_H
 
 #include "vmath.h"
 
@@ -77,7 +77,7 @@ struct qt_tk_bind {
 
 #endif /* DM_QT */
 
-#endif /* __DM_QT__ */
+#endif /* DM_QT_H */
 
 /** @} */
 /*

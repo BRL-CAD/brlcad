@@ -1,7 +1,7 @@
 /*                         L O A D . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,8 +21,8 @@
  *
  */
 
-#ifndef _SLAVE_LOAD_H
-#define _SLAVE_LOAD_H
+#ifndef ADRT_LOAD_H
+#define ADRT_LOAD_H
 
 #include "adrt.h"
 #include "adrt_struct.h"

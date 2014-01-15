@@ -1,7 +1,7 @@
 /*                        B U F F E R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -45,7 +45,7 @@
 int
 main(int argc, char *argv[])
 {
-    char template[512] = {0};
+    char _template[512] = {0};
     char buf[SIZE] = {0};
 
     FILE *fp = NULL;
@@ -53,12 +53,12 @@ main(int argc, char *argv[])
     int tfd = 0;
     int ret = 0;
 
-    if ( (BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) && argc == 2){
+    if ((BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) && argc == 2) {
 	bu_log("Usage: %s (takes no arguments)\n",argv[0]);
 	exit(1);
     }
 
-    if (argc > 1){
+    if (argc > 1) {
 	bu_log("%s: unrecognized argument(s)\n", argv[0]);
 	bu_log("        Program continues running:\n", argv[0]);
     }
@@ -77,9 +77,9 @@ main(int argc, char *argv[])
     }
 
     /* Create temporary file to hold data, get r/w file descriptor */
-    fp = bu_temp_file(template, 512);
+    fp = bu_temp_file(_template, 512);
     if (fp == NULL || (tfd = fileno(fp)) < 0) {
-	perror(template);
+	perror(_template);
 	goto err;
     }
 
@@ -127,7 +127,7 @@ clean:
 	fclose(fp);
 	fp = NULL;
     }
-    bu_file_delete(template);
+    bu_file_delete(_template);
 
     return ret;
 }

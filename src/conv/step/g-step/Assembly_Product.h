@@ -1,7 +1,7 @@
 /*                 Assembly_Product.h
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -21,21 +21,21 @@
  *
  */
 
-#ifndef ASSEMBLY_PRODUCT_H_
-#define ASSEMBLY_PRODUCT_H_
+#ifndef CONV_STEP_G_STEP_ASSEMBLY_PRODUCT_H
+#define CONV_STEP_G_STEP_ASSEMBLY_PRODUCT_H
 
 #include "common.h"
 #include <map>
 #include "ON_Brep.h"
 
-STEPentity *Add_Assembly_Product(struct directory *dp,
+void Add_Assembly_Product(struct directory *dp,
                                  struct db_i *dbip,
                                  struct bu_ptbl *children,
 				 struct comb_maps *maps,
 				 Registry *registry,
 				 InstMgr *instance_list);
 
-#endif /* ASSEMBLY_PRODUCT_H_ */
+#endif /* CONV_STEP_G_STEP_ASSEMBLY_PRODUCT_H */
 /*
  * Local Variables:
  * tab-width: 8

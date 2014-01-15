@@ -1,7 +1,7 @@
 /*                          A R B N . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2013 United States Government as represented by
+ * Copyright (c) 1989-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -49,7 +49,7 @@
  */
 int
 rt_arbn_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
-    size_t i,j,k;
+    size_t i, j, k;
     struct rt_arbn_internal *aip;
     RT_CK_DB_INTERNAL(ip);
     aip = (struct rt_arbn_internal *)ip->idb_ptr;
@@ -59,8 +59,8 @@ rt_arbn_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct
     VSETALL((*max), -INFINITY);
 
     /* Discover all vertices, use to calculate RPP */
-    for (i=0; i<aip->neqn-2; i++) {
-	for (j=i+1; j<aip->neqn-1; j++) {
+    for (i = 0; i < aip->neqn-2; i++) {
+	for (j = i+1; j < aip->neqn-1; j++) {
 	    double dot;
 
 	    /* If normals are parallel, no intersection */
@@ -68,7 +68,7 @@ rt_arbn_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct
 	    if (((dot) <= -SMALL_FASTF) ? (NEAR_EQUAL((dot), -1.0,  RT_DOT_TOL)) : (NEAR_EQUAL((dot), 1.0, RT_DOT_TOL))) continue;
 
 	    /* Have an edge line, isect with higher numbered planes */
-	    for (k=j+1; k<aip->neqn; k++) {
+	    for (k = j + 1; k < aip->neqn; k++) {
 		size_t m;
 		size_t next_k;
 		point_t pt;
@@ -78,8 +78,8 @@ rt_arbn_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct
 		if (bn_mkpoint_3planes(pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]) < 0) continue;
 
 		/* See if point is outside arb */
-		for (m=0; m<aip->neqn; m++) {
-		    if (i==m || j==m || k==m)
+		for (m = 0; m < aip->neqn; m++) {
+		    if (i == m || j == m || k == m)
 			continue;
 		    if (VDOT(pt, aip->eqn[m])-aip->eqn[m][3] > RT_LEN_TOL) {
 			next_k = 1;
@@ -95,6 +95,7 @@ rt_arbn_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct
 
     return 0;
 }
+
 
 /**
  * R T _ A R B N _ P R E P
@@ -132,7 +133,7 @@ rt_arbn_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     /* Zero face use counts
      * and make sure normal vectors are unit vectors
      */
-    for (i=0; i<aip->neqn; i++) {
+    for (i = 0; i < aip->neqn; i++) {
 	double normalLen = MAGNITUDE(aip->eqn[i]);
 	double scale;
 	if (ZERO(normalLen)) {
@@ -143,7 +144,7 @@ rt_arbn_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	HSCALE(aip->eqn[i], aip->eqn[i], scale);
 	used[i] = 0;
     }
-    for (i=0; i<aip->neqn-2; i++) {
+    for (i = 0; i < aip->neqn-2; i++) {
 	for (j=i+1; j<aip->neqn-1; j++) {
 	    double dot;
 
@@ -162,8 +163,8 @@ rt_arbn_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 		if (bn_mkpoint_3planes(pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]) < 0) continue;
 
 		/* See if point is outside arb */
-		for (m=0; m<aip->neqn; m++) {
-		    if (i==m || j==m || k==m)
+		for (m = 0; m < aip->neqn; m++) {
+		    if (i == m || j == m || k == m)
 			continue;
 		    if (VDOT(pt, aip->eqn[m])-aip->eqn[m][3] > tol->dist) {
 			next_k = 1;
@@ -183,7 +184,7 @@ rt_arbn_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     }
 
     /* If any planes were not used, then arbn is not convex */
-    for (i=0; i<aip->neqn; i++) {
+    for (i = 0; i < aip->neqn; i++) {
 	if (used[i] != 0) continue;	/* face was used */
 	bu_log("arbn(%s) face %zu unused, solid is not convex\n",
 	       stp->st_name, i);
@@ -219,7 +220,7 @@ rt_arbn_print(const struct soltab *stp)
     RT_ARBN_CK_MAGIC(arbp);
     bu_log("arbn bounded by %zu planes\n", arbp->neqn);
 
-    for (i=0; i < arbp->neqn; i++) {
+    for (i = 0; i < arbp->neqn; i++) {
 	bu_log("\t%zu: (%g, %g, %g) %g\n",
 	       i,
 	       INTCLAMP(arbp->eqn[i][X]),		/* should have unit length */
@@ -414,8 +415,8 @@ rt_arbn_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     aip = (struct rt_arbn_internal *)ip->idb_ptr;
     RT_ARBN_CK_MAGIC(aip);
 
-    for (i=0; i<aip->neqn-1; i++) {
-	for (j=i+1; j<aip->neqn; j++) {
+    for (i = 0; i < aip->neqn - 1; i++) {
+	for (j = i + 1; j < aip->neqn; j++) {
 	    double dot;
 	    int point_count;	/* # points on this line */
 	    point_t a, b;		/* start and end points */
@@ -430,19 +431,19 @@ rt_arbn_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 
 	    /* Have an edge line, isect with all other planes */
 	    point_count = 0;
-	    for (k=0; k<aip->neqn; k++) {
+	    for (k = 0; k < aip->neqn; k++) {
 		size_t m;
 		point_t pt;
 		size_t next_k;
 
 		next_k = 0;
 
-		if (k==i || k==j) continue;
+		if (k == i || k == j) continue;
 		if (bn_mkpoint_3planes(pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]) < 0) continue;
 
 		/* See if point is outside arb */
-		for (m=0; m<aip->neqn; m++) {
-		    if (i==m || j==m || k==m) continue;
+		for (m = 0; m < aip->neqn; m++) {
+		    if (i == m || j == m || k == m) continue;
 		    if (VDOT(pt, aip->eqn[m])-aip->eqn[m][3] > tol->dist) {
 			next_k = 1;
 			break;
@@ -483,16 +484,6 @@ rt_arbn_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 }
 
 
-/**
- * R T _ A R B N _ C L A S S
- */
-int
-rt_arbn_class(void)
-{
-    return 0;
-}
-
-
 /* structures used by arbn tessellator */
 struct arbn_pts
 {
@@ -515,8 +506,8 @@ Sort_edges(struct arbn_edges *edges, size_t *edge_count, const struct rt_arbn_in
 {
     size_t face;
 
-    for (face=0; face<aip->neqn; face++) {
-	int done=0;
+    for (face = 0; face < aip->neqn; face++) {
+	int done = 0;
 	size_t edge1, edge2;
 
 	if (edge_count[face] < 3)
@@ -587,8 +578,8 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     struct shell *s;
     struct faceuse **fu;		/* array of faceuses */
     size_t nverts;		/* maximum possible number of vertices = neqn!/(3!(neqn-3)! */
-    size_t point_count=0;	/* actual number of vertices */
-    size_t face_count=0;	/* actual number of faces built */
+    size_t point_count = 0;	/* actual number of vertices */
+    size_t face_count = 0;	/* actual number of faces built */
     size_t i, j, k, l, n;
     struct arbn_pts *pts;
     struct arbn_edges *edges;		/* A list of edges for each plane eqn (each face) */
@@ -614,15 +605,15 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     fu = (struct faceuse **)bu_calloc(aip->neqn, sizeof(struct faceuse *), "rt_arbn_tess: fu");
 
     /* Calculate all vertices */
-    for (i=0; i<aip->neqn; i++) {
-	for (j=i+1; j<aip->neqn; j++) {
-	    for (k=j+1; k<aip->neqn; k++) {
-		int keep_point=1;
+    for (i = 0; i < aip->neqn; i++) {
+	for (j = i + 1; j < aip->neqn; j++) {
+	    for (k = j + 1; k < aip->neqn; k++) {
+		int keep_point = 1;
 
 		if (bn_mkpoint_3planes(pts[point_count].pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]))
 		    continue;
 
-		for (l=0; l<aip->neqn; l++) {
+		for (l = 0; l < aip->neqn; l++) {
 		    if (l == i || l == j || l == k)
 			continue;
 		    if (DIST_PT_PLANE(pts[point_count].pt, aip->eqn[l]) > tol->dist) {
@@ -645,40 +636,44 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 					"rt_arbn_tess: verts");
 
     /* Associate points with vertices */
-    for (i=0; i<point_count; i++)
+    for (i = 0; i < point_count; i++)
 	pts[i].vp = &verts[i];
 
     /* Check for duplicate points */
-    for (i=0; i<point_count; i++) {
-	for (j=i+1; j<point_count; j++) {
-	if (DIST_PT_PT_SQ(pts[i].pt, pts[j].pt) < tol->dist_sq) {
-		    /* These two points should point to the same vertex */
-		    pts[j].vp = pts[i].vp;
-		}
+    for (i = 0; i < point_count; i++) {
+	for (j = i + 1; j < point_count; j++) {
+	    if (DIST_PT_PT_SQ(pts[i].pt, pts[j].pt) < tol->dist_sq) {
+		/* These two points should point to the same vertex */
+		pts[j].vp = pts[i].vp;
+	    }
 	}
     }
 
     /* Make list of edges for each face */
-    for (i=0; i<aip->neqn; i++) {
+    for (i = 0; i < aip->neqn; i++) {
 	/* look for a point that lies in this face */
-	for (j=0; j<point_count; j++) {
-	    if (pts[j].plane_no[0] != (int)i && pts[j].plane_no[1] != (int)i && pts[j].plane_no[2] != (int)i)
+	for (j = 0; j < point_count; j++) {
+	    if (pts[j].plane_no[0] != (int)i
+		&& pts[j].plane_no[1] != (int)i
+		&& pts[j].plane_no[2] != (int)i)
 		continue;
 
 	    /* look for another point that shares plane "i" and another with this one */
-	    for (k=j+1; k<point_count; k++) {
-		size_t match=(size_t)-1;
+	    for (k = j + 1; k < point_count; k++) {
+		size_t match = (size_t)-1;
 		size_t pt1, pt2;
-		int duplicate=0;
+		int duplicate = 0;
 
 		/* skip points not on plane "i" */
-		if (pts[k].plane_no[0] != (int)i && pts[k].plane_no[1] != (int)i && pts[k].plane_no[2] != (int)i)
+		if (pts[k].plane_no[0] != (int)i
+		    && pts[k].plane_no[1] != (int)i
+		    && pts[k].plane_no[2] != (int)i)
 		    continue;
 
-		for (l=0; l<3; l++) {
-		    for (n=0; n<3; n++) {
-			if (pts[j].plane_no[l] == pts[k].plane_no[n] && pts[j].plane_no[l] != (int)i)
-			{
+		for (l = 0; l < 3; l++) {
+		    for (n = 0; n < 3; n++) {
+			if (pts[j].plane_no[l] == pts[k].plane_no[n]
+			    && pts[j].plane_no[l] != (int)i) {
 			    match = pts[j].plane_no[l];
 			    break;
 			}
@@ -693,13 +688,13 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 		/* convert equivalent points to lowest point number */
 		pt1 = j;
 		pt2 = k;
-		for (l=0; l<pt1; l++) {
+		for (l = 0; l < pt1; l++) {
 		    if (pts[pt1].vp == pts[l].vp) {
 			pt1 = l;
 			break;
 		    }
 		}
-		for (l=0; l<pt2; l++) {
+		for (l = 0; l < pt2; l++) {
 		    if (pts[pt2].vp == pts[l].vp) {
 			pt2 = l;
 			break;
@@ -711,7 +706,7 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 		    continue;
 
 		/* check for duplicate edge */
-		for (l=0; l<edge_count[i]; l++) {
+		for (l = 0; l < edge_count[i]; l++) {
 		    if ((edges[LOC(i, l)].v1_no == (int)pt1
 			 && edges[LOC(i, l)].v2_no == (int)pt2)
 			|| (edges[LOC(i, l)].v2_no == (int)pt1
@@ -741,7 +736,7 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 
     /* Get max number of edges for any face */
     max_edge_count = 0;
-    for (i=0; i<aip->neqn; i++)
+    for (i = 0; i < aip->neqn; i++)
 	if (edge_count[i] > max_edge_count)
 	    max_edge_count = edge_count[i];
 
@@ -753,10 +748,10 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
     /* Make the faces */
-    for (i=0; i<aip->neqn; i++) {
-	int loop_length=0;
+    for (i = 0; i < aip->neqn; i++) {
+	int loop_length = 0;
 
-	for (j=0; j<edge_count[i]; j++) {
+	for (j = 0; j < edge_count[i]; j++) {
 	    /* skip zero length edges */
 	    if (pts[edges[LOC(i, j)].v1_no].vp == pts[edges[LOC(i, j)].v2_no].vp)
 		continue;
@@ -772,7 +767,7 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     }
 
     /* Associate vertex geometry */
-    for (i=0; i<point_count; i++) {
+    for (i = 0; i < point_count; i++) {
 	if (!(*pts[i].vp))
 	    continue;
 
@@ -789,7 +784,7 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     bu_free((char *)loop_verts, "rt_arbn_tess: loop_verts");
 
     /* Associate face geometry */
-    for (i=0; i<face_count; i++) {
+    for (i = 0; i < face_count; i++) {
 	if (nmg_fu_planeeqn(fu[i], tol)) {
 	    bu_log("Failed to calculate face plane equation\n");
 	    bu_free((char *)fu, "rt_arbn_tess: fu");
@@ -859,7 +854,7 @@ rt_arbn_import4(struct rt_db_internal *ip, const struct bu_external *ep, const f
     scan = (double *)bu_malloc(aip->neqn*sizeof(double)*ELEMENTS_PER_PLANE, "scan array");
 
     bu_cv_ntohd((unsigned char *)scan, (unsigned char *)(&rp[1]), aip->neqn*ELEMENTS_PER_PLANE);
-    for (i=0; i<aip->neqn; i++) {
+    for (i = 0; i < aip->neqn; i++) {
 	aip->eqn[i][X] = scan[(i*ELEMENTS_PER_PLANE)+0]; /* convert double to fastf_t */
 	aip->eqn[i][Y] = scan[(i*ELEMENTS_PER_PLANE)+1]; /* convert double to fastf_t */
 	aip->eqn[i][Z] = scan[(i*ELEMENTS_PER_PLANE)+2]; /* convert double to fastf_t */
@@ -869,7 +864,7 @@ rt_arbn_import4(struct rt_db_internal *ip, const struct bu_external *ep, const f
 
     /* Transform by the matrix */
     if (mat == NULL) mat = bn_mat_identity;
-    for (i=0; i < aip->neqn; i++) {
+    for (i = 0; i < aip->neqn; i++) {
 	point_t orig_pt;
 	point_t pt;
 	vect_t norm;
@@ -931,7 +926,7 @@ rt_arbn_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = (ngrans + 1) * sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "arbn external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "arbn external");
     rec = (union record *)ep->ext_buf;
 
     rec[0].n.n_id = DBID_ARBN;
@@ -941,7 +936,7 @@ rt_arbn_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
     /* Take the data from the caller, and scale it, into sbuf */
     sp = sbuf = (double *)bu_malloc(
 	aip->neqn * sizeof(double) * ELEMENTS_PER_PLANE, "arbn temp");
-    for (i=0; i<aip->neqn; i++) {
+    for (i = 0; i < aip->neqn; i++) {
 	/* Normal is unscaled, should have unit length; d is scaled */
 	*sp++ = aip->eqn[i][X];
 	*sp++ = aip->eqn[i][Y];
@@ -997,14 +992,14 @@ rt_arbn_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     eqn = (double *)bu_malloc(byte_count, "arbn plane eqn[] temp buf");
     bu_cv_ntohd((unsigned char *)eqn, (unsigned char *)ep->ext_buf + ELEMENTS_PER_PLANE, double_count);
     aip->eqn = (plane_t *)bu_malloc(double_count * sizeof(fastf_t), "arbn plane eqn[]");
-    for (i=0; i < aip->neqn; i++) {
+    for (i = 0; i < aip->neqn; i++) {
 	HMOVE(aip->eqn[i], &eqn[i*ELEMENTS_PER_PLANE]);
     }
     bu_free(eqn, "arbn plane eqn[] temp buf");
 
     /* Transform by the matrix, if we have one that is not the identity */
     if (mat && !bn_mat_is_identity(mat)) {
-	for (i=0; i < aip->neqn; i++) {
+	for (i = 0; i < aip->neqn; i++) {
 	    point_t orig_pt;
 	    point_t pt;
 	    vect_t norm;
@@ -1062,13 +1057,13 @@ rt_arbn_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_LONG + byte_count;
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "arbn external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "arbn external");
 
     *(uint32_t *)ep->ext_buf = htonl(aip->neqn);
 
     /* Take the data from the caller, and scale it, into vec */
     sp = vec = (double *)bu_malloc(byte_count, "arbn temp");
-    for (i=0; i<aip->neqn; i++) {
+    for (i = 0; i < aip->neqn; i++) {
 	/* Normal is unscaled, should have unit length; d is scaled */
 	*sp++ = aip->eqn[i][X];
 	*sp++ = aip->eqn[i][Y];
@@ -1105,7 +1100,7 @@ rt_arbn_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
 
     if (!verbose) return 0;
 
-    for (i=0; i < aip->neqn; i++) {
+    for (i = 0; i < aip->neqn; i++) {
 	sprintf(buf, "\t%lu: (%g, %g, %g) %g\n",
 		(long unsigned)i,
 		INTCLAMP(aip->eqn[i][X]),		/* should have unit length */
@@ -1163,14 +1158,14 @@ rt_arbn_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
     if (attr == (char *)NULL) {
 	bu_vls_strcpy(logstr, "arbn");
 	bu_vls_printf(logstr, " N %zu", arbn->neqn);
-	for (i=0; i<arbn->neqn; i++) {
+	for (i = 0; i < arbn->neqn; i++) {
 	    bu_vls_printf(logstr, " P%zu {%.25g %.25g %.25g %.25g}", i,
 			  V4ARGS(arbn->eqn[i]));
 	}
     } else if (BU_STR_EQUAL(attr, "N")) {
 	bu_vls_printf(logstr, "%zu", arbn->neqn);
     } else if (BU_STR_EQUAL(attr, "P")) {
-	for (i=0; i<arbn->neqn; i++) {
+	for (i = 0; i < arbn->neqn; i++) {
 	    bu_vls_printf(logstr, " P%zu {%.25g %.25g %.25g %.25g}", i,
 			  V4ARGS(arbn->eqn[i]));
 	}
@@ -1237,8 +1232,8 @@ rt_arbn_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 		goto cont;
 
 	    arbn->eqn = (plane_t *)bu_realloc(arbn->eqn,
-						  i * sizeof(plane_t),
-						  "arbn->eqn");
+					      i * sizeof(plane_t),
+					      "arbn->eqn");
 	    for (j=arbn->neqn; j<i; j++) {
 		HSETALL(arbn->eqn[j], 0.0);
 	    }
@@ -1266,7 +1261,7 @@ rt_arbn_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 		bu_free((char *)arbn->eqn, "arbn->eqn");
 	    arbn->eqn = (plane_t *)new_planes;
 	    arbn->neqn = (size_t)len / ELEMENTS_PER_PLANE;
-	    for (i=0; i<arbn->neqn; i++)
+	    for (i = 0; i < arbn->neqn; i++)
 		VUNITIZE(arbn->eqn[i]);
 	} else if (argv[0][0] == 'P') {
 	    if (argv[0][1] == '+') {
@@ -1322,6 +1317,153 @@ rt_arbn_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
     RT_ARBN_CK_MAGIC(aip);
 
     return 0;			/* OK */
+}
+
+
+/* contains information used to analyze a polygonal face */
+struct poly_face
+{
+    char label[5];
+    size_t npts;
+    point_t *pts;
+    plane_t plane_eqn;
+    fastf_t area;
+    fastf_t vol_pyramid;
+    point_t cent_pyramid;
+    point_t cent;
+};
+
+
+static void
+rt_arbn_faces_area(struct poly_face* faces, struct rt_arbn_internal* aip)
+{
+    size_t i;
+    size_t *npts = (size_t *)bu_calloc(aip->neqn, sizeof(size_t), "rt_arbn_faces_area: npts");
+    point_t **tmp_pts = (point_t **)bu_calloc(aip->neqn, sizeof(point_t *), "rt_arbn_faces_area: tmp_pts");
+    plane_t *eqs = (plane_t *)bu_calloc(aip->neqn, sizeof(plane_t), "rt_arbn_faces_area: eqs");
+
+    for (i = 0; i < aip->neqn; i++) {
+    	HMOVE(faces[i].plane_eqn, aip->eqn[i]);
+    	VUNITIZE(faces[i].plane_eqn);
+	tmp_pts[i] = faces[i].pts;
+    	HMOVE(eqs[i], faces[i].plane_eqn);
+    }
+    bn_polygon_mk_pts_planes(npts, tmp_pts, aip->neqn, (const plane_t *)eqs);
+    for (i = 0; i < aip->neqn; i++) {
+	faces[i].npts = npts[i];
+    	bn_polygon_sort_ccw(faces[i].npts, faces[i].pts, faces[i].plane_eqn);
+    	bn_polygon_area(&faces[i].area, faces[i].npts, (const point_t *)faces[i].pts);
+    }
+    bu_free((char *)tmp_pts, "rt_arbn_faces_area: tmp_pts");
+    bu_free((char *)npts, "rt_arbn_faces_area: npts");
+    bu_free((char *)eqs, "rt_arbn_faces_area: eqs");
+}
+
+
+void
+rt_arbn_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    struct poly_face *faces;
+    struct rt_arbn_internal *aip = (struct rt_arbn_internal *)ip->idb_ptr;
+    size_t i;
+
+    /* allocate array of face structs */
+    faces = (struct poly_face *)bu_calloc(aip->neqn, sizeof(struct poly_face), "arbn_surf_area: faces");
+    for (i = 0; i < aip->neqn; i++) {
+	/* allocate array of pt structs, max number of verts per faces = (# of faces) - 1 */
+	faces[i].pts = (point_t *)bu_calloc(aip->neqn - 1, sizeof(point_t), "arbn_surf_area: pts");
+    }
+    rt_arbn_faces_area(faces, aip);
+    for (i = 0; i < aip->neqn; i++) {
+	*area += faces[i].area;
+	bu_free((char *)faces[i].pts, "rt_arbn_surf_area: pts");
+    }
+    bu_free((char *)faces, "rt_arbn_surf_area: faces");
+}
+
+
+void
+rt_arbn_centroid(point_t *cent, const struct rt_db_internal *ip)
+{
+    struct poly_face *faces;
+    struct rt_arbn_internal *aip = (struct rt_arbn_internal *)ip->idb_ptr;
+    size_t i;
+    point_t arbit_point = VINIT_ZERO;
+    fastf_t volume = 0.0;
+
+    *cent[0] = 0.0;
+    *cent[1] = 0.0;
+    *cent[2] = 0.0;
+
+    if(cent == NULL)
+	return;
+
+    /* allocate array of face structs */
+    faces = (struct poly_face *)bu_calloc(aip->neqn, sizeof(struct poly_face), "rt_arbn_centroid: faces");
+    for (i = 0; i < aip->neqn; i++) {
+	/* allocate array of pt structs, max number of verts per faces = (# of faces) - 1 */
+	faces[i].pts = (point_t *)bu_calloc(aip->neqn - 1, sizeof(point_t), "rt_arbn_centroid: pts");
+    }
+    rt_arbn_faces_area(faces, aip);
+    for (i = 0; i < aip->neqn; i++) {
+	bn_polygon_centroid(&faces[i].cent, faces[i].npts, (const point_t *) faces[i].pts);
+	VADD2(arbit_point, arbit_point, faces[i].cent);
+
+    }
+    VSCALE(arbit_point, arbit_point, (1/aip->neqn));
+
+    for (i = 0; i < aip->neqn; i++) {
+	vect_t tmp = VINIT_ZERO;
+	/* calculate volume */
+	VSCALE(tmp, faces[i].plane_eqn, faces[i].area);
+	faces[i].vol_pyramid = (VDOT(faces[i].pts[0], tmp)/3);
+	volume += faces[i].vol_pyramid;
+	/*Vector from arbit_point to centroid of face, results in h of pyramid */
+	VSUB2(faces[i].cent_pyramid, faces[i].cent, arbit_point);
+	/*centroid of pyramid is 1/4 up from the bottom */
+	VSCALE(faces[i].cent_pyramid, faces[i].cent_pyramid, 0.75f);
+	/* now cent_pyramid is back in the polyhedron */
+	VADD2(faces[i].cent_pyramid, faces[i].cent_pyramid, arbit_point);
+	/* weight centroid of pyramid by pyramid's volume */
+	VSCALE(faces[i].cent_pyramid, faces[i].cent_pyramid, faces[i].vol_pyramid);
+	/* add cent_pyramid to the centroid of the polyhedron */
+	VADD2(*cent, *cent, faces[i].cent_pyramid);
+    }
+    /* reverse the weighting */
+    VSCALE(*cent, *cent, (1/volume));
+    for (i = 0; i < aip->neqn; i++) {
+	bu_free((char *)faces[i].pts, "rt_arbn_centroid: pts");
+    }
+    bu_free((char *)faces, "rt_arbn_centroid: faces");
+}
+
+
+void
+rt_arbn_volume(fastf_t *volume, const struct rt_db_internal *ip)
+{
+    struct poly_face *faces;
+    struct rt_arbn_internal *aip = (struct rt_arbn_internal *)ip->idb_ptr;
+    size_t i;
+
+    *volume = 0.0;
+    /* allocate array of face structs */
+    faces = (struct poly_face *)bu_calloc(aip->neqn, sizeof(struct poly_face), "rt_arbn_volume: faces");
+    for (i = 0; i < aip->neqn; i++) {
+	/* allocate array of pt structs, max number of verts per faces = (# of faces) - 1 */
+	faces[i].pts = (point_t *)bu_calloc(aip->neqn - 1, sizeof(point_t), "rt_arbn_volume: pts");
+    }
+    rt_arbn_faces_area(faces, aip);
+    for (i = 0; i < aip->neqn; i++) {
+	vect_t tmp;
+
+	/* calculate volume of pyramid */
+	VSCALE(tmp, faces[i].plane_eqn, faces[i].area);
+	*volume += VDOT(faces[i].pts[0], tmp)/3;
+    }
+    for (i = 0; i < aip->neqn; i++) {
+	bu_free((char *)faces[i].pts, "rt_arbn_volume: pts");
+    }
+    bu_free((char *)faces, "rt_arbn_volume: faces");
 }
 
 

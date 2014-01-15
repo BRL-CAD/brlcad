@@ -1,7 +1,7 @@
 /*                           I C V . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2013 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,8 +23,10 @@
  *
  */
 
-#ifndef __ICV_H__
-#define __ICV_H__
+#ifndef ICV_H
+#define ICV_H
+
+#include "common.h"
 
 __BEGIN_DECLS
 
@@ -147,7 +149,7 @@ typedef struct icv_image icv_image_t;
  * extensions
  * @return File Format
  */
-ICV_EXPORT extern int icv_guess_file_format(const char *filename, char *trimmedname);
+ICV_EXPORT extern ICV_IMAGE_FORMAT icv_guess_file_format(const char *filename, char *trimmedname);
 
 /**
  * This function allocates memory for an image and returns the
@@ -512,7 +514,7 @@ ICV_EXPORT extern int icv_filter(icv_image_t *img, ICV_FILTER filter_type);
 /**
  * Filters a set of three image with the specified filter type.  Does
  * zero_padding for outbound pixels.  Finds the resultant pixel with
- * the help of neighbouring pixels in all the three images.
+ * the help of neighboring pixels in all the three images.
  *
  *
  * @return Resultant image.
@@ -688,7 +690,7 @@ typedef enum {
  * e.g. icv_resize(bif, ICV_RESIZE_SHRINK,0,0,2);
  *  shrinks the image with a factor of 2.
  *
- * c) ICV_RESIZE_NINTERP : This interpolates using nearest neighbour
+ * c) ICV_RESIZE_NINTERP : This interpolates using nearest neighbor
  * method.
  * e.g. icv_resize(bif, ICV_RESIZE_NINTERP,1024,1024,0);
  *  interpolates the output image to have the size of 1024X1024.
@@ -724,7 +726,7 @@ ICV_EXPORT extern int icv_rot(int argv, char **argc);
 
 __END_DECLS
 
-#endif /* __ICV_H__ */
+#endif /* ICV_H */
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                           S P M . H
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,8 +26,10 @@
  *
  */
 
-#ifndef __SPM_H__
-#define __SPM_H__
+#ifndef SPM_H
+#define SPM_H
+
+#include "common.h"
 
 #ifndef BN_EXPORT
 #  if defined(BN_DLL_EXPORTS) && defined(BN_DLL_IMPORTS)
@@ -53,6 +55,7 @@ typedef struct {
 #define BN_SPM_MAP_NULL (bn_spm_map_t *)0
 #define BN_CK_SPM_MAP(_p) BU_CKMAG(_p, BN_SPM_MAGIC, "bn_spm_map_t")
 
+__BEGIN_DECLS
 
 /**
  * S P M _ I N I T
@@ -151,7 +154,9 @@ BN_EXPORT extern int bn_spm_pix_save(bn_spm_map_t *mapp, char *filename, int nx,
  */
 BN_EXPORT extern void bn_spm_dump(bn_spm_map_t *mp, int verbose);
 
-#endif /* __SPM_H__ */
+__END_DECLS
+
+#endif /* SPM_H */
 
 /** @} */
 /*

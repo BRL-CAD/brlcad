@@ -1,0 +1,110 @@
+<!-- Converted by db4-upgrade version 1.0 -->
+
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="attributes"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+>
+
+<refmeta>
+    <refentrytitle>Standard Attributes
+</refentrytitle>
+  <manvolnum>5</manvolnum>
+  <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+  <refmiscinfo class="manual">BRL-CAD Standard Conventions</refmiscinfo>
+</refmeta>
+
+<refnamediv xml:id="name">
+  <refname>attributes</refname>
+  <refpurpose>
+	standard attribute conventions in BRL-CAD databases
+  </refpurpose>
+</refnamediv>
+
+<!-- body begins here -->
+<refsection xml:id="gift_background"><info><title>BACKGROUND</title></info>
+
+  <para>
+	Starting with BRL-CAD database format version 5, BRL-CAD supports
+	the storage of arbitrary attribute/value data on any database object.
+	Prior to the development of this generic ability, BRL-CAD supported a
+	set of standard attributes used to hold key information about specific
+	properties. These conventions predate not only the version 5
+	database format but BRL-CAD itself.  The purpose of this man page
+	is to identify the standard attributes, document situations where
+	two or more attributes are used to identify the same property,
+	and identify where appropriate what constitutes meaningful values
+	for an attribute.
+  </para>
+
+  <para>
+	The earliest ancestor of BRL-CAD was the MAGIC code, written by
+	the Mathematical Applications Group, Inc. in 1967 to implement geometric
+	modeling ideas developed by BRL and AMSAA from 1958-1967.  That system,
+	which was entirely non-graphical, was followed some years later by the GIFT
+        program&#x2014;Geometric Information From Targets.  LIBRT, appearing around 1983,
+        became the successor to GIFT.
+	Today it is the core library of the BRL-CAD solid modeling package.  (For more background
+	see http://ftp.arl.army.mil/~mike/papers/96thebook/).  LIBRT inherited
+	both geometric primitives and attributes from GIFT--this heritage
+	is occasionally apparent in attribute names.
+  </para>
+  <para>
+	Note that with the introduction of support for arbitrary attribute/value pairs
+	it becomes much simpler for both developers and users to formulate new standards of their
+	own for storage of metadata in attributes.  Attributes should only
+	be documented in this file if one or more core BRL-CAD tools has implemented
+	one or more features that require specific attributes to be present.  Conventions
+	for attribute names that do not involve tool support should be documented
+	in appropriate user-level documentation.  In documenting attributes, one
+	additional distinction is made:  attributes that exist only as post-v5 attribute/value
+	pairs are referred to as non-core attributes; older
+	attributes (which may also be represented in core data structures) are referred
+	to as core attributes.
+  </para>
+</refsection>
+
+<refsection xml:id="core_attributes"><info><title>STANDARD (CORE) AND REGISTERED ATTRIBUTES</title></info>
+
+  <para>
+	The following table lists all known standard (core) BRL-CAD attributes and
+	aliases.  Any code setting or reading the value of one of these attributes
+	must handle all aliases to ensure all functions asking for
+	the value in question get a consistent answer.
+  </para>
+
+  <xi:include href="./attr_std_table.xml" xpointer="std_attr_tbl"/>
+
+  <!-- need a blank line -->
+  <literallayout>
+
+  </literallayout>
+
+  <para>
+        Given the importance of these attributes, it is appropriate to
+        briefly outline the meaning and purpose of each of them:
+  </para>
+
+  <xi:include href="./attr_std_list.xml" xpointer="std_attr_info"/>
+
+</refsection>
+
+<refsection xml:id="see_also"><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>attr</refentrytitle><manvolnum>n</manvolnum></citerefentry>.</para>
+</refsection>
+
+<refsection xml:id="author"><title>AUTHOR</title>
+    <para>BRL-CAD Team</para>
+</refsection>
+
+<refsection xml:id="copyright"><title>COPYRIGHT</title>
+    <para>This software is Copyright (c) 2010-2014 United States Government as
+    represented by the U.S. Army Research Laboratory. All rights reserved.</para>
+</refsection>
+
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
+
+  <para>
+    Reports of bugs or problems should be submitted via electronic
+    mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
+  </para>
+</refsection>
+</refentry>

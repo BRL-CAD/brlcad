@@ -2,7 +2,7 @@
 #			    W S . S H
 # BRL-CAD
 #
-# Copyright (c) 2007-2013 United States Government as represented by
+# Copyright (c) 2007-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,7 @@
 ###
 #
 # The purpose of this script is to update source files in a project so
-# that they have more consistent whitespace (aka "ws") formatting.
+# that they have more consistent whitespace (a/k/a "ws") formatting.
 #
 # The list of things the script can perform are as follows:
 #

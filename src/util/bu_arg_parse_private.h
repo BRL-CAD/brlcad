@@ -1,7 +1,7 @@
-/*              B U _ A R G _ P A R S E _ P R I V A T E.H
+/*              B U _ A R G _ P A R S E _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,8 +18,8 @@
  * information.
  */
 
-#ifndef BU_ARG_PARSE_PRIVATE_H
-#define BU_ARG_PARSE_PRIVATE_H
+#ifndef UTIL_BU_ARG_PARSE_PRIVATE_H
+#define UTIL_BU_ARG_PARSE_PRIVATE_H
 
 #include "tclap/CmdLine.h"
 /* local customizations of TCLAP MUST follow the above header */
@@ -292,4 +292,4 @@ BRLCAD_StdOutput::spacePrint(std::ostream& os,
 
 } // BRLCAD_StdOutput::spacePrint
 
-#endif /* BU_ARG_PARSE_PRIVATE_H */
+#endif /* UTIL_BU_ARG_PARSE_PRIVATE_H */

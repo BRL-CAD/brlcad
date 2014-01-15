@@ -1,7 +1,7 @@
 /*                      N M G _ P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2013 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1423,7 +1423,7 @@ nmg_pl_comb_fu(int num1, int num2, const struct faceuse *fu1)
 
     if (do_plot) {
 	(void)sprintf(name, "comb%d.%d.plot3", num1, num2);
-	fp=fopen(name, "wb");
+	fp = fopen(name, "wb");
 	if (fp == (FILE *)NULL) {
 	    (void)perror(name);
 	    return;
@@ -1437,9 +1437,12 @@ nmg_pl_comb_fu(int num1, int num2, const struct faceuse *fu1)
 
     if (do_anim) {
 	if (nmg_vlblock_anim_upcall) {
-	    (*nmg_vlblock_anim_upcall)(vbp,
-				       (RTG.NMG_debug&DEBUG_PL_SLOW) ? US_DELAY : 0,
-				       0);
+	    /* need to cast nmg_vlblock_anim_upcall pointer for actual use as a function */
+	    void (*cfp)(struct bn_vlblock *, int, int);
+	    cfp = (void (*)(struct bn_vlblock *, int, int))nmg_vlblock_anim_upcall;
+	    cfp(vbp,
+		(RTG.NMG_debug&DEBUG_PL_SLOW) ? US_DELAY : 0,
+		0);
 	} else {
 	    bu_log("null nmg_vlblock_anim_upcall, no animation\n");
 	}
@@ -1501,9 +1504,12 @@ nmg_pl_2fu(const char *str, const struct faceuse *fu1, const struct faceuse *fu2
     if (RTG.NMG_debug & DEBUG_PL_ANIM) {
 	/* Cause animation of boolean operation as it proceeds! */
 	if (nmg_vlblock_anim_upcall) {
-	    (*nmg_vlblock_anim_upcall)(vbp,
-				       (RTG.NMG_debug&DEBUG_PL_SLOW) ? US_DELAY : 0,
-				       0);
+	    /* need to cast nmg_vlblock_anim_upcall pointer for actual use as a function */
+	    void (*cfp)(struct bn_vlblock *, int, int);
+	    cfp = (void (*)(struct bn_vlblock *, int, int))nmg_vlblock_anim_upcall;
+	    cfp(vbp,
+		(RTG.NMG_debug&DEBUG_PL_SLOW) ? US_DELAY : 0,
+		0);
 	}
     }
 
@@ -1882,7 +1888,8 @@ nmg_show_broken_classifier_stuff(uint32_t *p, char **classlist, int all_new, int
 	    show_broken_vu(vbp, (struct vertexuse *)p);
 	    break;
 	default:
-	    bu_log("Unknown magic number %ld %0lx %zu %p\n", *p, *p, (size_t)p, (void *)p);
+	    bu_log("Unknown magic number %u %x %zu %p\n",
+		   (unsigned)*p, (unsigned)*p, (size_t)p, (void *)p);
 	    break;
     }
 
@@ -1894,17 +1901,23 @@ nmg_show_broken_classifier_stuff(uint32_t *p, char **classlist, int all_new, int
     if (nmg_vlblock_anim_upcall) {
 	void (*cur_sigint)(int);
 
+	/* need to cast nmg_vlblock_anim_upcall pointer for actual use as a function */
+	void (*cfp)(struct bn_vlblock *, int, int);
+	cfp = (void (*)(struct bn_vlblock *, int, int))nmg_vlblock_anim_upcall;
+
 	if (!a_string) {
-	    (*nmg_vlblock_anim_upcall)(vbp,
-				       (RTG.NMG_debug&DEBUG_PL_SLOW) ? US_DELAY : 0,
-				       1);
+	    cfp(vbp,
+		(RTG.NMG_debug&DEBUG_PL_SLOW) ? US_DELAY : 0,
+		1);
 	} else {
 
 	    bu_log("NMG Intermediate display Ctrl-C to continue (%s)\n", a_string);
 	    cur_sigint = signal(SIGINT, nmg_plot_sigstepalong);
-	    (*nmg_vlblock_anim_upcall)(vbp,
-				       (RTG.NMG_debug&DEBUG_PL_SLOW) ? US_DELAY : 0,
-				       1);
+
+	    cfp(vbp,
+		(RTG.NMG_debug&DEBUG_PL_SLOW) ? US_DELAY : 0,
+		1);
+
 	    for (stepalong = 0; !stepalong;) {
 		(*nmg_mged_debug_display_hack)();
 	    }
@@ -1914,7 +1927,7 @@ nmg_show_broken_classifier_stuff(uint32_t *p, char **classlist, int all_new, int
     } else {
 	/* Non interactive, drop a plot file */
 	char buf[128];
-	static int num=0;
+	static int num = 0;
 	FILE *fp;
 
 	sprintf(buf, "cbroke%d.plot3", num++);
@@ -1980,9 +1993,12 @@ nmg_face_plot(const struct faceuse *fu)
 	/* Cause animation of boolean operation as it proceeds! */
 	if (nmg_vlblock_anim_upcall) {
 	    /* if requested, delay 3/4 second */
-	    (*nmg_vlblock_anim_upcall)(vbp,
-				       (RTG.NMG_debug&DEBUG_PL_SLOW) ? 750000 : 0,
-				       0);
+	    /* need to cast nmg_vlblock_anim_upcall pointer for actual use as a function */
+	    void (*cfp)(struct bn_vlblock *, int, int);
+	    cfp = (void (*)(struct bn_vlblock *, int, int))nmg_vlblock_anim_upcall;
+	    cfp(vbp,
+		(RTG.NMG_debug&DEBUG_PL_SLOW) ? 750000 : 0,
+		0);
 	} else {
 	    bu_log("null nmg_vlblock_anim_upcall, no animation\n");
 	}
@@ -2027,9 +2043,12 @@ nmg_2face_plot(const struct faceuse *fu1, const struct faceuse *fu2)
     /* Cause animation of boolean operation as it proceeds! */
     if (nmg_vlblock_anim_upcall) {
 	/* if requested, delay 3/4 second */
-	(*nmg_vlblock_anim_upcall)(vbp,
-				   (RTG.NMG_debug&DEBUG_PL_SLOW) ? 750000 : 0,
-				   0);
+	/* need to cast nmg_vlblock_anim_upcall pointer for actual use as a function */
+	void (*cfp)(struct bn_vlblock *, int, int);
+	cfp = (void (*)(struct bn_vlblock *, int, int))nmg_vlblock_anim_upcall;
+	cfp(vbp,
+	    (RTG.NMG_debug&DEBUG_PL_SLOW) ? 750000 : 0,
+	    0);
     } else {
 	bu_log("null nmg_vlblock_anim_upcall, no animation\n");
     }
@@ -2156,7 +2175,7 @@ nmg_plot_ray_face(const char *fname, fastf_t *pt, const fastf_t *dir, const stru
     FILE *fp;
     long *b;
     point_t pp;
-    static int i=0;
+    static int i = 0;
     char name[1024] = {0};
 
     if (! (RTG.NMG_debug & DEBUG_NMGRT))
@@ -2195,7 +2214,7 @@ void
 nmg_plot_lu_around_eu(const char *prefix, const struct edgeuse *eu, const struct bn_tol *tol)
 {
     char file[256];
-    static int num=0;
+    static int num = 0;
     struct model *m;
     struct bn_vlblock *vbp;
     long *tab;
@@ -2369,8 +2388,8 @@ nmg_cnurb_to_vlist(struct bu_list *vhead, const struct edgeuse *eu, int n_interi
     fu = nmg_find_fu_of_eu(eu);	/* may return NULL */
     NMG_CK_FACEUSE(fu);
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_cnurb_to_vlist() eu=x%x, n=%d, order=%d\n",
-	       eu, n_interior, eg->order);
+	bu_log("nmg_cnurb_to_vlist() eu=%p, n=%d, order=%d\n",
+	       (void *)eu, n_interior, eg->order);
     }
 
     if (eg->order <= 0) {

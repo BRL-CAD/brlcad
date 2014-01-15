@@ -1,7 +1,7 @@
 /*                   G E D _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef __GED_PRIVATE_H__
-#define __GED_PRIVATE_H__
+#ifndef LIBGED_GED_PRIVATE_H
+#define LIBGED_GED_PRIVATE_H
 
 #include "common.h"
 
@@ -249,20 +249,20 @@ extern void _ged_do_list(struct ged *gedp,
 extern vect_t _ged_eye_model;
 extern mat_t _ged_viewrot;
 extern struct ged *_ged_current_gedp;
-extern int _ged_cm_vsize(int argc,
-			 char **argv);
-extern int _ged_cm_eyept(int argc,
-			 char **argv);
-extern int _ged_cm_lookat_pt(int argc,
-			     char **argv);
-extern int _ged_cm_vrot(int argc,
-			char **argv);
-extern int _ged_cm_orientation(int argc,
-			       char **argv);
-extern int _ged_cm_set(int argc,
-		       char **argv);
-extern int _ged_cm_null(int argc,
-			char **argv);
+extern int _ged_cm_vsize(const int argc,
+			 const char **argv);
+extern int _ged_cm_eyept(const int argc,
+			 const char **argv);
+extern int _ged_cm_lookat_pt(const int argc,
+			     const char **argv);
+extern int _ged_cm_vrot(const int argc,
+			const char **argv);
+extern int _ged_cm_orientation(const int argc,
+			       const char **argv);
+extern int _ged_cm_set(const int argc,
+		       const char **argv);
+extern int _ged_cm_null(const int argc,
+			const char **argv);
 
 
 /* defined in ls.c */
@@ -471,10 +471,12 @@ extern int _ged_results_append_vls(struct ged *gedp,
 
 extern int _ged_results_clear(struct ged *gedp);
 
+/* defined in track.c */
+extern int _ged_track(struct bu_vls *log_str, struct rt_wdb *wdbp, const char *argv[]);
 
 __END_DECLS
 
-#endif /* __GED_PRIVATE_H__ */
+#endif /* LIBGED_GED_PRIVATE_H */
 
 /** @} */
 /*

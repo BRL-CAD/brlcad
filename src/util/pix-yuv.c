@@ -1,7 +1,7 @@
 /*                       P I X - Y U V . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2013 United States Government as represented by
+ * Copyright (c) 1995-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -149,8 +149,8 @@ main(int argc, char **argv)
     }
 
     /* Allocate full size buffers for input and output */
-    inbuf = bu_malloc(3*file_width*file_height+8, "inbuf");
-    outbuf = bu_malloc(2*file_width*file_height+8, "outbuf");
+    inbuf = (unsigned char *)bu_malloc(3*file_width*file_height+8, "inbuf");
+    outbuf = (unsigned char *)bu_malloc(2*file_width*file_height+8, "outbuf");
 
     if (bu_mread(infd, inbuf, 3*file_width*file_height) < 3*file_width*file_height) {
 	perror("READ ERROR");

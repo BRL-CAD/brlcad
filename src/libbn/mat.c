@@ -1,7 +1,7 @@
 /*                           M A T . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2013 United States Government as represented by
+ * Copyright (c) 1996-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -76,7 +76,7 @@ void
 bn_mat_print(const char *title,
 	     const mat_t m)
 {
-    char obuf[1024];	/* sprintf may be non-PARALLEL */
+    char obuf[1024];	/* snprintf may be non-PARALLEL */
 
     bn_mat_print_guts(title, m, obuf, 1024);
     bu_log("%s\n", obuf);
@@ -570,20 +570,20 @@ bn_eigen2x2(fastf_t *val1, fastf_t *val2, fastf_t *vec1, fastf_t *vec2, fastf_t 
 
 
 void
-bn_vec_perp(vect_t new, const vect_t old)
+bn_vec_perp(vect_t new_vec, const vect_t old_vec)
 {
     register int i;
-    vect_t another;	/* Another vector, different */
+    vect_t another_vec;	/* Another vector, different */
 
     i = X;
-    if (fabs(old[Y])<fabs(old[i])) i=Y;
-    if (fabs(old[Z])<fabs(old[i])) i=Z;
-    VSETALL(another, 0);
-    another[i] = 1.0;
-    if (ZERO(old[X]) && ZERO(old[Y]) && ZERO(old[Z])) {
-	VMOVE(new, another);
+    if (fabs(old_vec[Y])<fabs(old_vec[i])) i=Y;
+    if (fabs(old_vec[Z])<fabs(old_vec[i])) i=Z;
+    VSETALL(another_vec, 0);
+    another_vec[i] = 1.0;
+    if (ZERO(old_vec[X]) && ZERO(old_vec[Y]) && ZERO(old_vec[Z])) {
+	VMOVE(new_vec, another_vec);
     } else {
-	VCROSS(new, another, old);
+	VCROSS(new_vec, another_vec, old_vec);
     }
 }
 
@@ -609,9 +609,9 @@ bn_mat_fromto(mat_t m, const fastf_t *from, const fastf_t *to, const struct bn_t
     vect_t w_prime;		/* image of "to" ("w") in Qt */
 
     VMOVE(unit_from, from);
-    VUNITIZE(unit_from);		/* aka "v" */
+    VUNITIZE(unit_from);		/* a/k/a "v" */
     VMOVE(unit_to, to);
-    VUNITIZE(unit_to);		/* aka "w" */
+    VUNITIZE(unit_to);		/* a/k/a "w" */
 
     /* If from and to are the same or opposite, special handling is
      * needed, because the cross product isn't defined.  asin(0.00001)
@@ -1011,7 +1011,7 @@ bn_mat_ck(const char *title, const mat_t m)
 
     /* NOTE: this tolerance cannot be any more tight than 0.00001 due
      * to default calculation tolerancing used by models.  Matrices
-     * exported to disk outside of tolerance and will fail import if
+     * exported to disk outside of tolerance will fail import if
      * set too restrictive.
      */
     if (!NEAR_ZERO(fx, 0.00001)

@@ -50,7 +50,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged14_candle_base_sphere_topview.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged14_candle_base_sphere_topview.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -85,7 +88,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged14_candle_multipane.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged14_candle_multipane.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -122,7 +128,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged14_primitive_editor.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged14_primitive_editor.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -142,7 +151,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged14_primitive_selection_dropdown.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged14_primitive_selection_dropdown.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -163,8 +175,14 @@
 	  <tgroup cols="2">
 	    <tbody>
 	      <row>
-		<entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/en/images/mged14_candle_spheres_topview.png"/></imageobject></inlinemediaobject></entry>
-		<entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/en/images/mged14_candle_spheres_frontview.png"/></imageobject></inlinemediaobject></entry>
+		<entry><inlinemediaobject>
+                       <imageobject role="html"><imagedata fileref="../../lessons/en/images/mged14_candle_spheres_topview.png"/></imageobject>
+                       <imageobject role="fo"><imagedata fileref="../../lessons/en/images/mged14_candle_spheres_topview.png"/></imageobject>
+                </inlinemediaobject></entry>
+		<entry><inlinemediaobject>
+                       <imageobject role="html"><imagedata fileref="../../lessons/en/images/mged14_candle_spheres_frontview.png"/></imageobject>
+                       <imageobject role="fo"><imagedata fileref="../../lessons/en/images/mged14_candle_spheres_frontview.png"/></imageobject>
+                </inlinemediaobject></entry>
 	      </row>
 	      <row>
 		<entry>Candle from Top View</entry>
@@ -187,7 +205,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged14_candle_spheres_az35el25.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged14_candle_spheres_az35el25.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -515,7 +536,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged14_candle_spheres_raytraced.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged14_candle_spheres_raytraced.png" format="PNG"/>
 	  </imageobject>
 	  <caption>

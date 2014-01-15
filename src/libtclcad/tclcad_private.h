@@ -1,7 +1,7 @@
 /*                   T C L C A D _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2012-2013 United States Government as represented by
+ * Copyright (c) 2012-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef __TCLCAD_PRIVATE_H__
-#define __TCLCAD_PRIVATE_H__
+#ifndef LIBTCLCAD_TCLCAD_PRIVATE_H
+#define LIBTCLCAD_TCLCAD_PRIVATE_H
 
 __BEGIN_DECLS
 
@@ -38,7 +38,7 @@ extern int library_initialized(int setit);
 
 __END_DECLS
 
-#endif /* __TCLCAD_PRIVATE_H__ */
+#endif /* LIBTCLCAD_TCLCAD_PRIVATE_H */
 
 /** @} */
 /*

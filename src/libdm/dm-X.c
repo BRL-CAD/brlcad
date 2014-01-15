@@ -1,7 +1,7 @@
 /*                          D M - X . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2013 United States Government as represented by
+ * Copyright (c) 1988-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,6 +32,8 @@
 #include <limits.h>
 #include <string.h>
 
+
+#define class REDEFINE_CLASS_STRING_TO_AVOID_CXX_CONFLICT
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
@@ -1736,6 +1738,11 @@ struct dm dm_X = {
     0				/* Tcl interpreter */
 };
 
+/* Because class is actually used to access a struct
+ * entry in this file, preserve our redefinition
+ * of class for the benefit of avoiding C++ name
+ * collisions until the end of this file */
+#undef class
 
 #endif /* DM_X */
 

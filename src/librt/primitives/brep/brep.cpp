@@ -1,7 +1,7 @@
 /*                     B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -92,7 +92,7 @@ extern "C" {
     int rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, const char **argv);
     int rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *ip);
     RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, const char* operation);
-    struct rt_selection_list *rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query);
+    struct rt_selection_set *rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query);
     int rt_brep_process_selection(struct rt_db_internal *ip, const struct rt_selection *selection, const struct rt_selection_operation *op);
 #ifdef __cplusplus
 }
@@ -143,15 +143,19 @@ bool
 brep_pt_trimmed(pt2d_t pt, const ON_BrepFace& face) {
     bool retVal = false;
     TRACE1("brep_pt_trimmed: " << PT2(pt));
+
     // for each loop
     const ON_Surface* surf = face.SurfaceOf();
     double umin, umax;
-    ON_2dPoint from, to;
+    ON_2dPoint from(0.0, 0.0);
+    ON_2dPoint to(0.0, 0.0);
+
     from.x = pt[0];
     from.y = to.y = pt[1];
     surf->GetDomain(0, &umin, &umax);
     to.x = umax + 1;
     ON_Line ray(from, to);
+
     // int intersections = 0;
     // for (int i = 0; i < face.LoopCount(); i++) {
     // ON_BrepLoop* loop = face.Loop(i);
@@ -233,8 +237,10 @@ split_trims_hv_tangent(const ON_Curve* curve, ON_Interval& t, std::list<double>&
     bool tanx1, tanx2, tanx_changed;
     bool tany1, tany2, tany_changed;
     bool tan_changed;
-    ON_3dVector tangent1, tangent2;
-    ON_3dPoint p1, p2;
+    ON_3dVector tangent1(0.0, 0.0, 0.0);
+    ON_3dVector tangent2(0.0, 0.0, 0.0);
+    ON_3dPoint p1(0.0, 0.0, 0.0);
+    ON_3dPoint p2(0.0, 0.0, 0.0);
 
     tangent1 = curve->TangentAt(t[0]);
     tangent2 = curve->TangentAt(t[1]);
@@ -363,7 +369,8 @@ brep_build_bvh(struct brep_specific* bs)
 int
 rt_brep_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
     struct rt_brep_internal* bi;
-    ON_3dPoint dmin, dmax;
+    ON_3dPoint dmin(0.0, 0.0, 0.0);
+    ON_3dPoint dmax(0.0, 0.0, 0.0);
 
     RT_CK_DB_INTERNAL(ip);
     bi = (struct rt_brep_internal*)ip->idb_ptr;
@@ -537,12 +544,12 @@ public:
 	return *this;
     }
 
-    bool operator==(const brep_hit& h)
+    bool operator==(const brep_hit& h) const
     {
 	return NEAR_ZERO(dist - h.dist, BREP_SAME_POINT_TOLERANCE);
     }
 
-    bool operator<(const brep_hit& h)
+    bool operator<(const brep_hit& h) const
     {
 	return dist < h.dist;
     }
@@ -699,11 +706,13 @@ utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, O
     int errantcount = 0;
     utah_ray_planes(r, p1, p1d, p2, p2d);
 
-    ON_3dPoint S;
-    ON_3dVector Su, Sv;
+    ON_3dPoint S(0.0, 0.0, 0.0);
+    ON_3dVector Su(0.0, 0.0, 0.0);
+    ON_3dVector Sv(0.0, 0.0, 0.0);
     //ON_3dVector Suu, Suv, Svv;
 
-    ON_2dPoint uv,puv;
+    ON_2dPoint uv(0.0, 0.0);
+    ON_2dPoint puv(0.0, 0.0);
 
     uv.x = suv->x;
     uv.y = suv->y;
@@ -889,11 +898,14 @@ utah_isTrimmed(ON_2dPoint uv, const ON_BrepFace *face) {
 	if (loop == 0) {
 	    continue;
 	}
+
 	// for each trim
-	ON_3dPoint closestPoint;
-	ON_3dVector tangent, kappa;
+	ON_3dPoint closestPoint(0.0, 0.0, 0.0);
+	ON_3dVector tangent(0.0, 0.0, 0.0);
+	ON_3dVector kappa(0.0, 0.0, 0.0);
 	double currentDistance = -10000.0;
 	ON_3dPoint hitPoint(uv.x, uv.y, 0.0);
+
 	for (int lti = 0; lti < loop->TrimCount(); lti++) {
 	    const ON_BrepTrim* trim = loop->Trim(lti);
 	    if (0 == trim)
@@ -1504,10 +1516,10 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	    hit = true;
 	} else {
 	    //TRACE2("screen xy: " << ap->a_x << ", " << ap->a_y);
-	    bu_log("**** ERROR odd number of hits: %zu\n", hits.size());
+	    bu_log("**** ERROR odd number of hits: %lu\n", static_cast<unsigned long>(hits.size()));
 	    bu_log("xyz %g %g %g \n", rp->r_pt[0], rp->r_pt[1], rp->r_pt[2]);
 	    bu_log("dir %g %g %g \n", rp->r_dir[0], rp->r_dir[1], rp->r_dir[2]);
-	    bu_log("**** Current Hits: %zu\n", hits.size());
+	    bu_log("**** Current Hits: %lu\n", static_cast<unsigned long>(hits.size()));
 
 	    for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
 		point_t prev;
@@ -1528,7 +1540,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
 		bu_log(")");
 	    }
-	    bu_log("\n**** Orig Hits: %zu\n", orig.size());
+	    bu_log("\n**** Orig Hits: %lu\n", static_cast<unsigned long>(orig.size()));
 
 	    for (HitList::iterator i = orig.begin(); i != orig.end(); ++i) {
 		point_t prev;
@@ -1743,16 +1755,22 @@ find_next_trimming_point(const ON_Curve* crv, const ON_Surface* s, double startd
 
 
 /* a binary predicate for std:list implemented as a function */
-bool near_equal(double first, double second) {
+bool
+near_equal(double first, double second)
+{
     /* FIXME: arbitrary nearness tolerance */
     return NEAR_EQUAL(first, second, 1e-6);
 }
 
 
-void plot_sum_surface(struct bu_list *vhead, const ON_Surface *surf,
-		      int isocurveres, int gridres) {
-    double pt1[3], pt2[3];
-    ON_2dPoint from, to;
+void
+plot_sum_surface(struct bu_list *vhead, const ON_Surface *surf, int isocurveres, int gridres)
+{
+    point_t pt1 = VINIT_ZERO;
+    point_t pt2 = VINIT_ZERO;
+
+    ON_2dPoint from(0.0, 0.0);
+    ON_2dPoint to(0.0, 0.0);
 
     ON_Interval udom = surf->Domain(0);
     ON_Interval vdom = surf->Domain(1);
@@ -1787,21 +1805,26 @@ void plot_sum_surface(struct bu_list *vhead, const ON_Surface *surf,
     }
     return;
 }
-void plotisoUCheckForTrim(struct bu_list *vhead, SurfaceTree* st, fastf_t from,
-			  fastf_t to, fastf_t v) {
-    double pt1[3], pt2[3];
+
+
+void
+plotisoUCheckForTrim(struct bu_list *vhead, SurfaceTree* st, fastf_t from, fastf_t to, fastf_t v)
+{
+    point_t pt1 = VINIT_ZERO;
+    point_t pt2 = VINIT_ZERO;
     std::list<BRNode*> m_trims_right;
     std::list<double> trim_hits;
 
     const ON_Surface *surf = st->getSurface();
     CurveTree *ctree = st->ctree;
     double umin, umax;
-    surf->GetDomain(0, &umin, &umax);
 
+    surf->GetDomain(0, &umin, &umax);
     m_trims_right.clear();
 
     fastf_t tol = 0.001;
-    ON_2dPoint pt;
+    ON_2dPoint pt(0.0, 0.0);
+
     pt.x = umin;
     pt.y = v;
 
@@ -1811,6 +1834,7 @@ void plotisoUCheckForTrim(struct bu_list *vhead, SurfaceTree* st, fastf_t from,
     }
 
     int cnt = 1;
+
     //bu_log("V - %f\n", pt.x);
     trim_hits.clear();
     for (std::list<BRNode*>::iterator i = m_trims_right.begin(); i
@@ -1827,10 +1851,12 @@ void plotisoUCheckForTrim(struct bu_list *vhead, SurfaceTree* st, fastf_t from,
 	    }
 	}
     }
+
     trim_hits.sort();
     trim_hits.unique(near_equal);
 
     int hit_cnt = trim_hits.size();
+
     cnt = 1;
     //bu_log("\tplotisoUCheckForTrim: hit_cnt %d from center  %f %f 0.0 to center %f %f 0.0\n", hit_cnt, from, v , to, v);
 
@@ -1841,11 +1867,13 @@ void plotisoUCheckForTrim(struct bu_list *vhead, SurfaceTree* st, fastf_t from,
 		start = from;
 	    }
 	    trim_hits.pop_front();
+
 	    double end = trim_hits.front();
 	    if (end > to) {
 		end = to;
 	    }
 	    trim_hits.pop_front();
+
 	    //bu_log("\tfrom - %f, to - %f\n", from, to);
 	    fastf_t deltax = (end - start) / 50.0;
 	    if (deltax > 0.001) {
@@ -1874,9 +1902,11 @@ void plotisoUCheckForTrim(struct bu_list *vhead, SurfaceTree* st, fastf_t from,
 }
 
 
-void plotisoVCheckForTrim(struct bu_list *vhead, SurfaceTree* st, fastf_t from,
-			  fastf_t to, fastf_t u) {
-    double pt1[3], pt2[3];
+void
+plotisoVCheckForTrim(struct bu_list *vhead, SurfaceTree* st, fastf_t from, fastf_t to, fastf_t u)
+{
+    point_t pt1 = VINIT_ZERO;
+    point_t pt2 = VINIT_ZERO;
     std::list<BRNode*> m_trims_above;
     std::list<double> trim_hits;
 
@@ -1888,7 +1918,8 @@ void plotisoVCheckForTrim(struct bu_list *vhead, SurfaceTree* st, fastf_t from,
     m_trims_above.clear();
 
     fastf_t tol = 0.001;
-    ON_2dPoint pt;
+    ON_2dPoint pt(0.0, 0.0);
+
     pt.x = u;
     pt.y = vmin;
 
@@ -1960,9 +1991,11 @@ void plotisoVCheckForTrim(struct bu_list *vhead, SurfaceTree* st, fastf_t from,
 }
 
 
-void plotisoU(struct bu_list *vhead, SurfaceTree* st, fastf_t from, fastf_t to,
-	      fastf_t v, int curveres) {
-    double pt1[3], pt2[3];
+void
+plotisoU(struct bu_list *vhead, SurfaceTree* st, fastf_t from, fastf_t to, fastf_t v, int curveres)
+{
+    point_t pt1 = VINIT_ZERO;
+    point_t pt2 = VINIT_ZERO;
     fastf_t deltau = (to - from) / curveres;
     const ON_Surface *surf = st->getSurface();
 
@@ -1983,9 +2016,11 @@ void plotisoU(struct bu_list *vhead, SurfaceTree* st, fastf_t from, fastf_t to,
 }
 
 
-void plotisoV(struct bu_list *vhead, SurfaceTree* st, fastf_t from, fastf_t to,
-	      fastf_t u, int curveres) {
-    double pt1[3], pt2[3];
+void
+plotisoV(struct bu_list *vhead, SurfaceTree* st, fastf_t from, fastf_t to, fastf_t u, int curveres)
+{
+    point_t pt1 = VINIT_ZERO;
+    point_t pt2 = VINIT_ZERO;
     fastf_t deltav = (to - from) / curveres;
     const ON_Surface *surf = st->getSurface();
 
@@ -2006,7 +2041,9 @@ void plotisoV(struct bu_list *vhead, SurfaceTree* st, fastf_t from, fastf_t to,
 }
 
 
-void plot_BBNode(struct bu_list *vhead, SurfaceTree* st, BBNode * node, int isocurveres, int gridres) {
+void
+plot_BBNode(struct bu_list *vhead, SurfaceTree* st, BBNode * node, int isocurveres, int gridres)
+{
     if (node->isLeaf()) {
 	//draw leaf
 	if (node->m_trimmed) {
@@ -2051,11 +2088,13 @@ void plot_BBNode(struct bu_list *vhead, SurfaceTree* st, BBNode * node, int isoc
 }
 
 
-void plot_face_from_surface_tree(struct bu_list *vhead, SurfaceTree* st,
-				 int isocurveres, int gridres) {
+void
+plot_face_from_surface_tree(struct bu_list *vhead, SurfaceTree* st, int isocurveres, int gridres)
+{
     BBNode *root = st->getRootNode();
     plot_BBNode(vhead, st, root, isocurveres, gridres);
 }
+
 
 void getEdgePoints(const ON_BrepEdge &edge, fastf_t t1, ON_3dPoint &start_3d, ON_3dVector &start_tang, fastf_t t2, ON_3dPoint &end_3d, ON_3dVector &end_tang, fastf_t min_dist, fastf_t max_dist, fastf_t within_dist, fastf_t cos_within_ang, std::map<double,ON_3dPoint *> &param_points)
 {
@@ -2280,19 +2319,31 @@ std::map<double, ON_3dPoint *> *getEdgePoints(ON_BrepEdge &edge,
     return param_points;
 }
 
-void getEdgePoints(const ON_BrepTrim &trim, fastf_t t1, ON_3dPoint &start_2d,
-	ON_3dVector &start_tang, ON_3dPoint &start_3d, ON_3dVector &start_norm,
-	fastf_t t2, ON_3dPoint &end_2d, ON_3dVector &end_tang,
-	ON_3dPoint &end_3d, ON_3dVector &end_norm, fastf_t min_dist,
-	fastf_t max_dist, fastf_t within_dist, fastf_t cos_within_ang,
-	std::map<double, ON_3dPoint *> &param_points)
+
+void
+getEdgePoints(const ON_BrepTrim &trim,
+	      fastf_t t1,
+	      ON_3dPoint &start_2d,
+	      ON_3dVector &start_tang,
+	      ON_3dPoint &start_3d,
+	      ON_3dVector &start_norm,
+	      fastf_t t2,
+	      ON_3dPoint &end_2d,
+	      ON_3dVector &end_tang,
+	      ON_3dPoint &end_3d,
+	      ON_3dVector &end_norm,
+	      fastf_t min_dist,
+	      fastf_t max_dist,
+	      fastf_t within_dist,
+	      fastf_t cos_within_ang,
+	      std::map<double, ON_3dPoint *> &param_points)
 {
     const ON_Surface *s = trim.SurfaceOf();
     ON_Interval range = trim.Domain();
-    ON_3dPoint mid_2d;
-    ON_3dPoint mid_3d;
-    ON_3dVector mid_norm;
-    ON_3dVector mid_tang;
+    ON_3dPoint mid_2d(0.0, 0.0, 0.0);
+    ON_3dPoint mid_3d(0.0, 0.0, 0.0);
+    ON_3dVector mid_norm(0.0, 0.0, 0.0);
+    ON_3dVector mid_tang(0.0, 0.0, 0.0);
     fastf_t t = (t1 + t2) / 2.0;
 
     if (trim.EvTangent(t, mid_2d, mid_tang)
@@ -2320,9 +2371,12 @@ void getEdgePoints(const ON_BrepTrim &trim, fastf_t t1, ON_3dPoint &start_2d,
     }
 }
 
-std::map<double, ON_3dPoint *> *getEdgePoints(ON_BrepTrim &trim,
-	fastf_t max_dist, const struct rt_tess_tol *ttol,
-	const struct bn_tol *tol, const struct rt_view_info *UNUSED(info))
+std::map<double, ON_3dPoint *> *
+getEdgePoints(ON_BrepTrim &trim,
+	      fastf_t max_dist,
+	      const struct rt_tess_tol *ttol,
+	      const struct bn_tol *tol,
+	      const struct rt_view_info *UNUSED(info))
 {
     std::map<double, ON_3dPoint *> *param_points = NULL;
     fastf_t min_dist, within_dist, cos_within_ang;
@@ -2369,12 +2423,19 @@ std::map<double, ON_3dPoint *> *getEdgePoints(ON_BrepTrim &trim,
 
 	if (trim.IsClosed()) {
 	    double mid_range = (range.m_t[0] + range.m_t[1]) / 2.0;
-	    ON_3dPoint start_2d, start_3d;
-	    ON_3dVector start_tang, start_norm;
-	    ON_3dPoint mid_2d, mid_3d;
-	    ON_3dVector mid_tang, mid_norm;
-	    ON_3dPoint end_2d, end_3d;
-	    ON_3dVector end_tang, end_norm;
+	    ON_3dPoint start_2d(0.0, 0.0, 0.0);
+	    ON_3dPoint start_3d(0.0, 0.0, 0.0);
+	    ON_3dVector start_tang(0.0, 0.0, 0.0);
+	    ON_3dVector start_norm(0.0, 0.0, 0.0);
+	    ON_3dPoint mid_2d(0.0, 0.0, 0.0);
+	    ON_3dPoint mid_3d(0.0, 0.0, 0.0);
+	    ON_3dVector mid_tang(0.0, 0.0, 0.0);
+	    ON_3dVector mid_norm(0.0, 0.0, 0.0);
+	    ON_3dPoint end_2d(0.0, 0.0, 0.0);
+	    ON_3dPoint end_3d(0.0, 0.0, 0.0);
+	    ON_3dVector end_tang(0.0, 0.0, 0.0);
+	    ON_3dVector end_norm(0.0, 0.0, 0.0);
+
 	    if (trim.EvTangent(range.m_t[0], start_2d, start_tang)
 		    && trim.EvTangent(mid_range, mid_2d, mid_tang)
 		    && trim.EvTangent(range.m_t[1], end_2d, end_tang)
@@ -2400,10 +2461,15 @@ std::map<double, ON_3dPoint *> *getEdgePoints(ON_BrepTrim &trim,
 				trim.PointAt(range.m_t[1]).y));
 	    }
 	} else {
-	    ON_3dPoint start_2d, start_3d;
-	    ON_3dVector start_tang, start_norm;
-	    ON_3dPoint end_2d, end_3d;
-	    ON_3dVector end_tang, end_norm;
+	    ON_3dPoint start_2d(0.0, 0.0, 0.0);
+	    ON_3dPoint start_3d(0.0, 0.0, 0.0);
+	    ON_3dVector start_tang(0.0, 0.0, 0.0);
+	    ON_3dVector start_norm(0.0, 0.0, 0.0);
+	    ON_3dPoint end_2d(0.0, 0.0, 0.0);
+	    ON_3dPoint end_3d(0.0, 0.0, 0.0);
+	    ON_3dVector end_tang(0.0, 0.0, 0.0);
+	    ON_3dVector end_norm(0.0, 0.0, 0.0);
+
 	    if (trim.EvTangent(range.m_t[0], start_2d, start_tang)
 		    && trim.EvTangent(range.m_t[1], end_2d, end_tang)
 		    && s->EvNormal(start_2d.x, start_2d.y, start_3d, start_norm)
@@ -2423,17 +2489,25 @@ std::map<double, ON_3dPoint *> *getEdgePoints(ON_BrepTrim &trim,
     return param_points;
 }
 
-void getSurfacePoints(const ON_Surface *s, fastf_t u1, fastf_t u2, fastf_t v1,
-	fastf_t v2, fastf_t min_dist, fastf_t within_dist,
-	fastf_t cos_within_ang, ON_2dPointArray &on_surf_points, bool left,
-	bool below)
+void
+getSurfacePoints(const ON_Surface *s,
+		 fastf_t u1,
+		 fastf_t u2,
+		 fastf_t v1,
+		 fastf_t v2,
+		 fastf_t min_dist,
+		 fastf_t within_dist,
+		 fastf_t cos_within_ang,
+		 ON_2dPointArray &on_surf_points,
+		 bool left,
+		 bool below)
 {
     double ldfactor = 2.0;
-    ON_2dPoint p2d;
-    ON_3dPoint p[4];
-    ON_3dVector norm[4];
-    ON_3dPoint mid;
-    ON_3dVector norm_mid;
+    ON_2dPoint p2d(0.0, 0.0);
+    ON_3dPoint p[4] = {ON_3dPoint(), ON_3dPoint(), ON_3dPoint(), ON_3dPoint()};
+    ON_3dVector norm[4] = {ON_3dVector(), ON_3dVector(), ON_3dVector(), ON_3dVector()};
+    ON_3dPoint mid(0.0, 0.0, 0.0);
+    ON_3dVector norm_mid(0.0, 0.0, 0.0);
     fastf_t u = (u1 + u2) / 2.0;
     fastf_t v = (v1 + v2) / 2.0;
     fastf_t udist = u2 - u1;
@@ -2621,9 +2695,13 @@ void getSurfacePoints(const ON_Surface *s, fastf_t u1, fastf_t u2, fastf_t v1,
     }
 }
 
-void getSurfacePoints(ON_BrepFace &face, const struct rt_tess_tol *ttol,
-	const struct bn_tol *tol, const struct rt_view_info *UNUSED(info),
-	ON_2dPointArray &on_surf_points)
+
+void
+getSurfacePoints(ON_BrepFace &face,
+		 const struct rt_tess_tol *ttol,
+		 const struct bn_tol *tol,
+		 const struct rt_view_info *UNUSED(info),
+		 ON_2dPointArray &on_surf_points)
 {
     double surface_width, surface_height;
     const ON_Surface *s = face.SurfaceOf();
@@ -2685,7 +2763,7 @@ void getSurfacePoints(ON_BrepFace &face, const struct rt_tess_tol *ttol,
 	ON_BOOL32 uclosed = s->IsClosed(0);
 	ON_BOOL32 vclosed = s->IsClosed(1);
 	if (uclosed && vclosed) {
-	    ON_2dPoint p;
+	    ON_2dPoint p(0.0, 0.0);
 	    double midx = (min.x + max.x) / 2.0;
 	    double midy = (min.y + max.y) / 2.0;
 
@@ -2737,7 +2815,7 @@ void getSurfacePoints(ON_BrepFace &face, const struct rt_tess_tol *ttol,
 	    p.Set(max.x, max.y);
 	    on_surf_points.Append(p);
 	} else if (uclosed) {
-	    ON_2dPoint p;
+	    ON_2dPoint p(0.0, 0.0);
 	    double midx = (min.x + max.x) / 2.0;
 
 	    //bottom left
@@ -2770,7 +2848,7 @@ void getSurfacePoints(ON_BrepFace &face, const struct rt_tess_tol *ttol,
 	    p.Set(max.x, max.y);
 	    on_surf_points.Append(p);
 	} else if (vclosed) {
-	    ON_2dPoint p;
+	    ON_2dPoint p(0.0, 0.0);
 	    double midy = (min.y + max.y) / 2.0;
 
 	    //bottom left
@@ -2803,7 +2881,8 @@ void getSurfacePoints(ON_BrepFace &face, const struct rt_tess_tol *ttol,
 	    p.Set(max.x, max.y);
 	    on_surf_points.Append(p);
 	} else {
-	    ON_2dPoint p;
+	    ON_2dPoint p(0.0, 0.0);
+
 	    //bottom left
 	    p.Set(min.x, min.y);
 	    on_surf_points.Append(p);
@@ -3200,8 +3279,8 @@ surface_GetClosestPointUsingSubdivisionUlength(
 	    if (max_distance < current_closest_dist) {
 		p2d.x = u_interval.Mid();
 		p2d.y = v_interval.Mid();
-		ON_3dPoint p3d = surf->PointAt(p2d.x,p2d.y);
-		current_closest_dist = p3d.DistanceTo(p);
+		ON_3dPoint curr_pnt = surf->PointAt(p2d.x,p2d.y);
+		current_closest_dist = curr_pnt.DistanceTo(p);
 	    }
 	}
 	return current_closest_dist;
@@ -3238,8 +3317,8 @@ surface_GetClosestPointUsingSubdivisionUlength(
 	    if (max_distance <= current_closest_dist) {
 		p2d.x = u_interval.Mid();
 		p2d.y = v_interval.Mid();
-		ON_3dPoint p3d = surf->PointAt(p2d.x,p2d.y);
-		current_closest_dist = p3d.DistanceTo(p);
+		ON_3dPoint curr_pnt = surf->PointAt(p2d.x,p2d.y);
+		current_closest_dist = curr_pnt.DistanceTo(p);
 	    }
 	}
     }
@@ -3261,7 +3340,6 @@ double surface_GetClosestPointUsingSubdivision(const ON_Surface *surf,
 	    new_v_interval.m_t[iv] = v_interval.m_t[iv];
 	    new_v_interval.m_t[1 - iv] = (v_interval.m_t[1] + v_interval.m_t[0]) / 2.0;
 	    if (surface_GetIntervalMinMaxDistance(surf, p, new_u_interval,new_v_interval, min_distance, max_distance)) {
-		double distance = DBL_MAX;
 		if (min_distance < current_closest_dist) {
 		    if (NEAR_EQUAL(min_distance,max_distance,tol*tol)) {
 			if (max_distance < current_closest_dist) {
@@ -3386,20 +3464,20 @@ double surface_GetClosestPoint3dFirstOrderSubdivision(const ON_Surface *surf,
 			    double vdot_2 = normal[1] * normal[3];
 
 			    if ((udot_1 < 0.0) || (udot_2 < 0.0) || (vdot_1 < 0.0) || (vdot_2 < 0.0)) {
-				double u,v;
+				double u_split,v_split;
 				if ((udot_1 < 0.0) || (udot_2 < 0.0)) {
 				    //get optimal U split
-				    u = surface_GetOptimalNormalUSplit(surf,new_u_interval,new_v_interval,tol);
+				    u_split = surface_GetOptimalNormalUSplit(surf,new_u_interval,new_v_interval,tol);
 				} else {
-				    u = new_u_interval.Mid();
+				    u_split = new_u_interval.Mid();
 				}
 				if ((vdot_1 < 0.0) || (vdot_2 < 0.0)) {
 				    //get optimal V split
-				    v = surface_GetOptimalNormalVSplit(surf,new_u_interval,new_v_interval,tol);
+				    v_split = surface_GetOptimalNormalVSplit(surf,new_u_interval,new_v_interval,tol);
 				} else {
-				    v = new_v_interval.Mid();
+				    v_split = new_v_interval.Mid();
 				}
-				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,new_u_interval,u,new_v_interval,v,current_closest_dist,p2d,p3d,tol,level++);
+				distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,new_u_interval,u_split,new_v_interval,v_split,current_closest_dist,p2d,p3d,tol,level++);
 				if (distance < current_closest_dist) {
 				    current_closest_dist = distance;
 				    if (current_closest_dist < tol)
@@ -3635,8 +3713,10 @@ bool surface_GetClosestPoint3dFirstOrder(
 			    double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
 			    if (distance < current_distance) {
 				current_distance = distance;
-				if (current_distance < tol)
-				    return true;
+				if (current_distance < tol) {
+				    rc = true;
+				    goto cleanup;
+				}
 			    }
 			}
 		    }
@@ -3662,8 +3742,10 @@ bool surface_GetClosestPoint3dFirstOrder(
 				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
-				    if (current_distance < tol)
-					return true;
+				    if (current_distance < tol) {
+					rc = true;
+					goto cleanup;
+				    }
 				}
 			    }
 			}
@@ -3687,8 +3769,10 @@ bool surface_GetClosestPoint3dFirstOrder(
 				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
-				    if (current_distance < tol)
-					return true;
+				    if (current_distance < tol) {
+					rc = true;
+					goto cleanup;
+				    }
 				}
 			    }
 			}
@@ -3712,8 +3796,10 @@ bool surface_GetClosestPoint3dFirstOrder(
 				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
-				    if (current_distance < tol)
-					return true;
+				    if (current_distance < tol) {
+					rc = true;
+					goto cleanup;
+				    }
 				}
 			    }
 			}
@@ -3737,8 +3823,10 @@ bool surface_GetClosestPoint3dFirstOrder(
 				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
-				    if (current_distance < tol)
-					return true;
+				    if (current_distance < tol) {
+					rc = true;
+					goto cleanup;
+				    }
 				}
 			    }
 			}
@@ -3763,8 +3851,10 @@ bool surface_GetClosestPoint3dFirstOrder(
 				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
-				    if (current_distance < tol)
-					return true;
+				    if (current_distance < tol) {
+					rc = true;
+					goto cleanup;
+				    }
 				}
 			    }
 			}
@@ -3788,8 +3878,10 @@ bool surface_GetClosestPoint3dFirstOrder(
 				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
-				    if (current_distance < tol)
-					return true;
+				    if (current_distance < tol) {
+					rc = true;
+					goto cleanup;
+				    }
 				}
 			    }
 			}
@@ -3813,8 +3905,10 @@ bool surface_GetClosestPoint3dFirstOrder(
 				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
-				    if (current_distance < tol)
-					return true;
+				    if (current_distance < tol) {
+					rc = true;
+					goto cleanup;
+				    }
 				}
 			    }
 			}
@@ -3838,8 +3932,10 @@ bool surface_GetClosestPoint3dFirstOrder(
 				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
-				    if (current_distance < tol)
-					return true;
+				    if (current_distance < tol) {
+					rc = true;
+					goto cleanup;
+				    }
 				}
 			    }
 			}
@@ -3866,8 +3962,10 @@ bool surface_GetClosestPoint3dFirstOrder(
 				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
-				    if (current_distance < tol)
-					return true;
+				    if (current_distance < tol) {
+					rc = true;
+					goto cleanup;
+				    }
 				}
 			    }
 			}
@@ -3891,8 +3989,10 @@ bool surface_GetClosestPoint3dFirstOrder(
 				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
-				    if (current_distance < tol)
-					return true;
+				    if (current_distance < tol) {
+					rc = true;
+					goto cleanup;
+				    }
 				}
 			    }
 			}
@@ -3916,8 +4016,10 @@ bool surface_GetClosestPoint3dFirstOrder(
 				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
-				    if (current_distance < tol)
-					return true;
+				    if (current_distance < tol) {
+					rc = true;
+					goto cleanup;
+				    }
 				}
 			    }
 			}
@@ -3941,8 +4043,10 @@ bool surface_GetClosestPoint3dFirstOrder(
 				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
-				    if (current_distance < tol)
-					return true;
+				    if (current_distance < tol) {
+					rc = true;
+					goto cleanup;
+				    }
 				}
 			    }
 			}
@@ -3967,8 +4071,10 @@ bool surface_GetClosestPoint3dFirstOrder(
 				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
-				    if (current_distance < tol)
-					return true;
+				    if (current_distance < tol) {
+					rc = true;
+					goto cleanup;
+				    }
 				}
 			    }
 			}
@@ -3992,8 +4098,10 @@ bool surface_GetClosestPoint3dFirstOrder(
 				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
-				    if (current_distance < tol)
-					return true;
+				    if (current_distance < tol) {
+					rc = true;
+					goto cleanup;
+				    }
 				}
 			    }
 			}
@@ -4017,8 +4125,10 @@ bool surface_GetClosestPoint3dFirstOrder(
 				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
-				    if (current_distance < tol)
-					return true;
+				    if (current_distance < tol) {
+					rc = true;
+					goto cleanup;
+				    }
 				}
 			    }
 			}
@@ -4042,8 +4152,10 @@ bool surface_GetClosestPoint3dFirstOrder(
 				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
-				    if (current_distance < tol)
-					return true;
+				    if (current_distance < tol) {
+					rc = true;
+					goto cleanup;
+				    }
 				}
 			    }
 			}
@@ -4070,8 +4182,10 @@ bool surface_GetClosestPoint3dFirstOrder(
 				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
-				    if (current_distance < tol)
-					return true;
+				    if (current_distance < tol) {
+					rc = true;
+					goto cleanup;
+				    }
 				}
 			    }
 			}
@@ -4095,8 +4209,10 @@ bool surface_GetClosestPoint3dFirstOrder(
 				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
-				    if (current_distance < tol)
-					return true;
+				    if (current_distance < tol) {
+					rc = true;
+					goto cleanup;
+				    }
 				}
 			    }
 			}
@@ -4120,8 +4236,10 @@ bool surface_GetClosestPoint3dFirstOrder(
 				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
-				    if (current_distance < tol)
-					return true;
+				    if (current_distance < tol) {
+					rc = true;
+					goto cleanup;
+				    }
 				}
 			    }
 			}
@@ -4145,8 +4263,10 @@ bool surface_GetClosestPoint3dFirstOrder(
 				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
-				    if (current_distance < tol)
-					return true;
+				    if (current_distance < tol) {
+					rc = true;
+					goto cleanup;
+				    }
 				}
 			    }
 			}
@@ -4171,8 +4291,10 @@ bool surface_GetClosestPoint3dFirstOrder(
 				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
-				    if (current_distance < tol)
-					return true;
+				    if (current_distance < tol) {
+					rc = true;
+					goto cleanup;
+				    }
 				}
 			    }
 			}
@@ -4196,8 +4318,10 @@ bool surface_GetClosestPoint3dFirstOrder(
 				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
-				    if (current_distance < tol)
-					return true;
+				    if (current_distance < tol) {
+					rc = true;
+					goto cleanup;
+				    }
 				}
 			    }
 			}
@@ -4221,8 +4345,10 @@ bool surface_GetClosestPoint3dFirstOrder(
 				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
-				    if (current_distance < tol)
-					return true;
+				    if (current_distance < tol) {
+					rc = true;
+					goto cleanup;
+				    }
 				}
 			    }
 			}
@@ -4246,8 +4372,10 @@ bool surface_GetClosestPoint3dFirstOrder(
 				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
-				    if (current_distance < tol)
-					return true;
+				    if (current_distance < tol) {
+					rc = true;
+					goto cleanup;
+				    }
 				}
 			    }
 			}
@@ -4274,8 +4402,10 @@ bool surface_GetClosestPoint3dFirstOrder(
 				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
-				    if (current_distance < tol)
-					return true;
+				    if (current_distance < tol) {
+					rc = true;
+					goto cleanup;
+				    }
 				}
 			    }
 			}
@@ -4299,8 +4429,10 @@ bool surface_GetClosestPoint3dFirstOrder(
 				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
-				    if (current_distance < tol)
-					return true;
+				    if (current_distance < tol) {
+					rc = true;
+					goto cleanup;
+				    }
 				}
 			    }
 			}
@@ -4324,8 +4456,10 @@ bool surface_GetClosestPoint3dFirstOrder(
 				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
-				    if (current_distance < tol)
-					return true;
+				    if (current_distance < tol) {
+					rc = true;
+					goto cleanup;
+				    }
 				}
 			    }
 			}
@@ -4349,8 +4483,10 @@ bool surface_GetClosestPoint3dFirstOrder(
 				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
-				    if (current_distance < tol)
-					return true;
+				    if (current_distance < tol) {
+					rc = true;
+					goto cleanup;
+				    }
 				}
 			    }
 			}
@@ -4375,8 +4511,10 @@ bool surface_GetClosestPoint3dFirstOrder(
 				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
-				    if (current_distance < tol)
-					return true;
+				    if (current_distance < tol) {
+					rc = true;
+					goto cleanup;
+				    }
 				}
 			    }
 			}
@@ -4400,8 +4538,10 @@ bool surface_GetClosestPoint3dFirstOrder(
 				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
-				    if (current_distance < tol)
-					return true;
+				    if (current_distance < tol) {
+					rc = true;
+					goto cleanup;
+				    }
 				}
 			    }
 			}
@@ -4425,8 +4565,10 @@ bool surface_GetClosestPoint3dFirstOrder(
 				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
-				    if (current_distance < tol)
-					return true;
+				    if (current_distance < tol) {
+					rc = true;
+					goto cleanup;
+				    }
 				}
 			    }
 			}
@@ -4450,8 +4592,10 @@ bool surface_GetClosestPoint3dFirstOrder(
 				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,tol,level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
-				    if (current_distance < tol)
-					return true;
+				    if (current_distance < tol) {
+					rc = true;
+					goto cleanup;
+				    }
 				}
 			    }
 			}
@@ -4461,6 +4605,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 	}
 
     }
+cleanup:
     delete[] uspan;
     delete[] vspan;
 
@@ -5074,7 +5219,7 @@ void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
 	} else {
 	    return;
 	}
-#if DEBUG_MY
+#ifdef DEBUG_MY
 	std::vector<p2t::Point*>::const_iterator i;
 	int count = 0;
 	for (i = polyline.begin(); i != polyline.end(); i++) {
@@ -5139,10 +5284,10 @@ void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
     if (plottype < 3) {
 	std::vector<p2t::Triangle*> tris = cdt->GetTriangles();
 	if (plottype == 0) { // shaded tris 3d
-	    ON_3dPoint pnt[3];
-	    ON_3dVector norm[3];
-	    point_t pt[3];
-	    vect_t nv[3];
+	    ON_3dPoint pnt[3] = {ON_3dPoint(), ON_3dPoint(), ON_3dPoint()};
+	    ON_3dVector norm[3] = {ON_3dVector(), ON_3dVector(), ON_3dVector()};
+	    point_t pt[3] = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO};
+	    vect_t nv[3] = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO};
 
 	    for (size_t i = 0; i < tris.size(); i++) {
 		p2t::Triangle *t = tris[i];
@@ -5175,9 +5320,10 @@ void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
 		RT_ADD_VLIST(vhead, pt[0], BN_VLIST_TRI_END);
 	    }
 	} else if (plottype == 1) { // tris 3d wire
-	    ON_3dPoint pnt[3];
-	    ON_3dVector norm[3];
-	    point_t pt[3];
+	    ON_3dPoint pnt[3] = {ON_3dPoint(), ON_3dPoint(), ON_3dPoint()};;
+	    ON_3dVector norm[3] = {ON_3dVector(), ON_3dVector(), ON_3dVector()};;
+	    point_t pt[3] = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO};
+
 	    for (size_t i = 0; i < tris.size(); i++) {
 		p2t::Triangle *t = tris[i];
 		p2t::Point *p = NULL;
@@ -5205,10 +5351,13 @@ void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
 
 	    }
 	} else if (plottype == 2) { // tris 2d
-	    double pt1[3], pt2[3];
+	    point_t pt1 = VINIT_ZERO;
+	    point_t pt2 = VINIT_ZERO;
+
 	    for (size_t i = 0; i < tris.size(); i++) {
 		p2t::Triangle *t = tris[i];
 		p2t::Point *p = NULL;
+
 		for (size_t j = 0; j < 3; j++) {
 		    if (j == 0) {
 			p = t->GetPoint(2);
@@ -5230,7 +5379,9 @@ void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
     } else if (plottype == 3) {
 	std::list<p2t::Triangle*> tris = cdt->GetMap();
 	std::list<p2t::Triangle*>::iterator it;
-	double pt1[3], pt2[3];
+	point_t pt1 = VINIT_ZERO;
+	point_t pt2 = VINIT_ZERO;
+
 	for (it = tris.begin(); it != tris.end(); it++) {
 	    p2t::Triangle* t = *it;
 	    p2t::Point *p = NULL;
@@ -5253,7 +5404,8 @@ void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
 	}
     } else if (plottype == 4) {
 	std::vector<p2t::Point*>& points = cdt->GetPoints();
-	double pt[3];
+	point_t pt = VINIT_ZERO;
+
 	for (size_t i = 0; i < points.size(); i++) {
 	    p2t::Point *p = NULL;
 	    p = (p2t::Point *) points[i];
@@ -5272,27 +5424,43 @@ void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
 	singularity_points.pop_back();
     }
     delete pointmap;
-
+#ifdef VALGRIND_CHECK
+    // free edge/trim points currently stored in edge->m_edge_user.p/trim->m_trim_user.p for valgrind check
     for (int li = 0; li < face.LoopCount(); li++) {
 	ON_BrepLoop *loop = face.Loop(li);
 
 	for (int lti = 0; lti < loop->TrimCount(); lti++) {
 	    ON_BrepTrim *trim = loop->Trim(lti);
+	    ON_BrepEdge *edge = trim->Edge();
 
-	    if (trim->m_trim_user.p) {
-		std::map<double, ON_3dPoint *> *points = (std::map<double,
-			ON_3dPoint *> *) trim->m_trim_user.p;
-		std::map<double, ON_3dPoint *>::iterator i;
-		for (i = points->begin(); i != points->end(); i++) {
-		    ON_3dPoint *p = (*i).second;
-		    delete p;
+	    if (trim->m_type != ON_BrepTrim::singular) {
+		// temporarily free param_points3d for valgrind check
+		std::map<double, ON_3dPoint *> *points = NULL;
+		if (watertight) {
+		    if (edge->m_edge_user.p) {
+			points = (std::map<double, ON_3dPoint *> *)edge->m_edge_user.p;
+			edge->m_edge_user.p = NULL;
+		    }
+		} else {
+		    if (trim->m_trim_user.p) {
+			points = (std::map<double, ON_3dPoint *> *) trim->m_trim_user.p;
+			trim->m_trim_user.p = NULL;
+		    }
 		}
-		points->clear();
-		delete points;
-		trim->m_trim_user.p = NULL;
+		if (points != NULL) {
+		    std::map<double, ON_3dPoint*>::const_iterator i;
+		    for (i = points->begin();
+			    i != points->end();i++) {
+			ON_3dPoint *p3d = (*i).second;
+			delete p3d;
+		    }
+		    points->clear();
+		    delete points;
+		}
 	    }
 	}
     }
+#endif
     if (cdt != NULL) {
 	std::vector<p2t::Point*> v = cdt->GetPoints();
 	while (!v.empty()) {
@@ -5305,12 +5473,16 @@ void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face,
     return;
 }
 
-void plot_face_trim(struct bu_list *vhead, ON_BrepFace &face, int plotres,
-		    bool dim3d) {
+
+void
+plot_face_trim(struct bu_list *vhead, ON_BrepFace &face, int plotres, bool dim3d)
+{
     const ON_Surface* surf = face.SurfaceOf();
     double umin, umax;
-    double pt1[3], pt2[3];
-    ON_2dPoint from, to;
+    point_t pt1 = VINIT_ZERO;
+    point_t pt2 = VINIT_ZERO;
+    ON_2dPoint from(0.0, 0.0);
+    ON_2dPoint to(0.0, 0.0);
 
     ON_TextLog tl(stderr);
 
@@ -5345,12 +5517,14 @@ void plot_face_trim(struct bu_list *vhead, ON_BrepFace &face, int plotres,
     return;
 }
 
+
 int
 rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 {
     TRACE1("rt_brep_adaptive_plot");
     struct rt_brep_internal* bi;
-    point_t pt1, pt2;
+    point_t pt1 = VINIT_ZERO;
+    point_t pt2 = VINIT_ZERO;
 
     BU_CK_LIST_HEAD(info->vhead);
     RT_CK_DB_INTERNAL(ip);
@@ -5451,6 +5625,7 @@ rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info
     return 0;
 }
 
+
 /**
  * R T _ B R E P _ P L O T
  *
@@ -5512,7 +5687,8 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 
     {
 
-	point_t pt1, pt2;
+	point_t pt1 = VINIT_ZERO;
+	point_t pt2 = VINIT_ZERO;
 
 	for (i = 0; i < bi->brep->m_E.Count(); i++) {
 	    ON_BrepEdge& e = brep->m_E[i];
@@ -6094,8 +6270,25 @@ cmp_cv_startdist(brep_selectable_cv *c1, brep_selectable_cv *c2)
     return false;
 }
 
-struct rt_selection_list *
-new_cv_item(brep_selectable_cv *s)
+static void
+brep_free_selection(struct rt_selection *s)
+{
+    struct brep_selection *bs = (struct brep_selection *)s->obj;
+    std::list<brep_cv *> *cvs = bs->control_vertexes;
+
+    std::list<brep_cv *>::iterator cv;
+    for (cv = cvs->begin(); cv != cvs->end(); ++cv) {
+	delete *cv;
+    }
+    cvs->clear();
+
+    delete cvs;
+    delete bs;
+    BU_FREE(s, struct rt_selection);
+}
+
+struct rt_selection *
+new_cv_selection(brep_selectable_cv *s)
 {
     // make new brep selection w/ cv list
     brep_selection *bs = new brep_selection;
@@ -6113,14 +6306,10 @@ new_cv_item(brep_selectable_cv *s)
     BU_ALLOC(selection, struct rt_selection);
     selection->obj = (void *)bs;
 
-    struct rt_selection_list *item;
-    BU_ALLOC(item, struct rt_selection_list);
-    item->s = selection;
-
-    return item;
+    return selection;
 }
 
-struct rt_selection_list *
+struct rt_selection_set *
 rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query)
 {
     struct rt_brep_internal *bip;
@@ -6176,26 +6365,29 @@ rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selecti
 
     // narrow down the list to just the control vertexes closest to
     // the query line, and sort them by proximity to the query start
-    std::list<brep_selectable_cv *>::iterator s;
-    for (s = selectable.begin(); s != selectable.end(); ++s) {
-	if ((*s)->sqdist_to_line > min_distsq) {
-	    selectable.erase(s);
+    std::list<brep_selectable_cv *>::iterator s, tmp_s;
+    for (s = selectable.begin(); s != selectable.end();) {
+	tmp_s = s++;
+	if ((*tmp_s)->sqdist_to_line > min_distsq) {
+	    delete *tmp_s;
+	    selectable.erase(tmp_s);
 	}
     }
     selectable.sort(cmp_cv_startdist);
 
     // build and return list of selections
-    struct rt_selection_list *selection_list;
-    BU_ALLOC(selection_list, struct rt_selection_list);
-    BU_LIST_INIT(&selection_list->l);
+    struct rt_selection_set *selection_set;
+    BU_ALLOC(selection_set, struct rt_selection_set);
+    BU_PTBL_INIT(&selection_set->selections);
 
     for (s = selectable.begin(); s != selectable.end(); ++s) {
-	struct rt_selection_list *item = new_cv_item(*s);
-	BU_LIST_INSERT(&selection_list->l, &item->l);
+	bu_ptbl_ins(&selection_set->selections, (long *)new_cv_selection(*s));
+	delete *s;
     }
     selectable.clear();
+    selection_set->free_selection = brep_free_selection;
 
-    return selection_list;
+    return selection_set;
 }
 
 int
@@ -6230,7 +6422,12 @@ rt_brep_process_selection(
     for (; cv != bs->control_vertexes->end(); ++cv) {
 	// TODO: if another face references the same surface, the
 	// surface needs to be duplicated
-	int surface_index = brep->Face((*cv)->face_index)->SurfaceOf()->ComponentIndex().m_index;
+	int face_index = (*cv)->face_index;
+	if (face_index < 0 || face_index >= brep->m_F.Count()) {
+	    bu_log("%d is not a valid face index\n",face_index);
+	    return -1;
+	}
+	int surface_index = brep->m_F[face_index].m_si;
 	int ret = brep_translate_scv(brep, surface_index, (*cv)->i, (*cv)->j, dx, dy, dz);
 	if (ret < 0) {
 	    return ret;

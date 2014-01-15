@@ -1,7 +1,7 @@
 /*                        G - I G E S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -554,7 +554,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 
 		/* construct a unique file name */
 		len = strlen(output_file) + strlen(dp->d_namep) + 6 + SUFFIX_LEN;
-		multi_name = bu_malloc(sizeof(char)*len, "multi_name");
+		multi_name = (char *)bu_malloc(sizeof(char)*len, "multi_name");
 		snprintf(multi_name, len, "%s/%s.igs", output_file, dp->d_namep);
 		bu_strlcpy(suffix, "a", sizeof(suffix));
 		suffix[0]--;
@@ -658,11 +658,8 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 static int de_pointer_number;
 
 int
-get_de_pointers(tp, dp, de_len, de_pointers)
-    union tree *tp;
-    struct directory *dp;
-    int de_len;
-    int *de_pointers;
+get_de_pointers(union tree *tp, struct directory *dp, int de_len,
+		int *de_pointers)
 {
     RT_CK_TREE(tp);
     RT_CK_DIR(dp);

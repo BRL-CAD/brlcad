@@ -1,7 +1,7 @@
 /*                        G I F 2 F B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -97,7 +97,13 @@ struct GIF_Image Im;
 
 char *framebuffer=NULL;
 
-void usage(char **argv);
+void
+usage(char **argv)
+{
+    fprintf(stderr,"Usage: %s [-H] [-v] [-F frame_buffer] [gif_file]\n", argv[0]);
+    fprintf(stderr,"       (stdin used with '<' construct if gif_file not supplied)\n");
+}
+
 int getByte(FILE *inp);
 
 int
@@ -121,9 +127,9 @@ main(int argc, char **argv)
     FBIO *fbp;
     FILE *fp;
 
-    while ((code = bu_getopt(argc, argv, "vFh")) != -1) {
+    while ((code = bu_getopt(argc, argv, "HvFh?")) != -1) {
 	switch (code) {
-	    case 'h':
+	    case 'H':
 		headers=1;
 		break;
 	    case 'v':
@@ -140,7 +146,6 @@ main(int argc, char **argv)
 
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin))) {
-	    (void) fprintf(stderr, "%s: No input file.\n", argv[0]);
 	    usage(argv);
 	    return 1;
 	}
@@ -492,12 +497,6 @@ int getByte(FILE *inp)
     }
     return code;
 }
-void
-usage(char **argv)
-{
-    fprintf(stderr, "%s [-h] [-v] [-F frame_buffer] [gif_file]\n", argv[0]);
-}
-
 
 /*
  * Local Variables:

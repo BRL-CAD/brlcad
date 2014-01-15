@@ -1,7 +1,7 @@
 /*                          S T R . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,6 +21,9 @@
 #include "common.h"
 
 #include <string.h>
+#if defined(HAVE_WORKING_STRCASECMP_FUNCTION) ||  defined(HAVE_WORKING_STRNCASECMP_FUNCTION)
+#include <strings.h>
+#endif
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
@@ -147,7 +150,7 @@ bu_strdupm(register const char *cp, const char *label)
     }
 
     len = strlen(cp)+1;
-    base = bu_malloc(len, label);
+    base = (char *)bu_malloc(len, label);
 
     if (UNLIKELY(bu_debug&BU_DEBUG_MEM_LOG)) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);

@@ -1,7 +1,7 @@
 /*                     B A S E N A M E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -61,7 +61,7 @@ bu_basename(const char *str)
 	len--;
 
     /* Create a new string */
-    base_str = bu_calloc(len + 2, sizeof(char), "bu_basename alloc");
+    base_str = (char *)bu_calloc(len + 2, sizeof(char), "bu_basename alloc");
     if (len > 0) {
 	bu_strlcpy(base_str, str, len+1);
     } else {

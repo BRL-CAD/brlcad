@@ -1,7 +1,7 @@
 /*                          A N A L Y Z E . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -626,13 +626,19 @@ void print_faces_table(struct ged *gedp, table_t *table)
 HIDDEN void
 analyze_general(struct ged *gedp, const struct rt_db_internal *ip)
 {
-    fastf_t vol, area = -1;
+    fastf_t vol, area;
     point_t centroid;
 
-    OBJ[ip->idb_minor_type].ft_volume(&vol, ip);
-    OBJ[ip->idb_minor_type].ft_surf_area(&area, ip);
+    vol = area = -1.0;
 
-    if (OBJ[ip->idb_minor_type].ft_centroid != NULL) {
+    if (OBJ[ip->idb_minor_type].ft_volume) {
+	OBJ[ip->idb_minor_type].ft_volume(&vol, ip);
+    }
+    if (OBJ[ip->idb_minor_type].ft_surf_area) {
+	OBJ[ip->idb_minor_type].ft_surf_area(&area, ip);
+    }
+
+    if (OBJ[ip->idb_minor_type].ft_centroid) {
         OBJ[ip->idb_minor_type].ft_centroid(&centroid, ip);
 	bu_vls_printf(gedp->ged_result_str, "\n    Centroid: (%g, %g, %g)\n",
 		      centroid[X] * gedp->ged_wdbp->dbip->dbi_base2local,
@@ -706,20 +712,6 @@ findang(fastf_t *angles, fastf_t *unitv)
 }
 
 
-/* plane used by ccw to compare 2 points */
-static plane_t *cmp_plane = NULL;
-
-/* qsort helper function, used to sort points into
- * counter-clockwise order */
-HIDDEN int
-ccw(const void *x, const void *y)
-{
-    vect_t tmp;
-    VCROSS(tmp, ((fastf_t *)x), ((fastf_t *)y));
-    return VDOT(*cmp_plane, tmp);
-}
-
-
 /**
  * A N A L Y Z E _ P O L Y _ F A C E
  *
@@ -727,7 +719,6 @@ ccw(const void *x, const void *y)
  * Currently used for:
  * - arb8
  * - arbn
- * - bot
  * - ars
  *
  * returns:
@@ -738,42 +729,13 @@ ccw(const void *x, const void *y)
 HIDDEN void
 analyze_poly_face(struct ged *gedp, struct poly_face *face, row_t *row)
 {
-    size_t i;
-    vect_t v1, v2, tmp, tot = VINIT_ZERO;
     fastf_t angles[5];
 
     findang(angles, face->plane_eqn);
 
     /* sort points */
-    cmp_plane = &face->plane_eqn;
-    qsort(face->pts, face->npts, sizeof(point_t), ccw);
-    cmp_plane = NULL;
-
-    switch (face->npts) {
-	case 3:
-	    /* Triangular Face - for triangular face T:V0, V1, V2,
-	     * area = 0.5 * [(V2 - V0) x (V1 - V0)] */
-	    VSUB2(v1, face->pts[1], face->pts[0]);
-	    VSUB2(v2, face->pts[2], face->pts[0]);
-	    VCROSS(tot, v2, v1);
-	    break;
-	case 4:
-	    /* Quadrilateral Face - for planar quadrilateral
-	     * Q:V0, V1, V2, V3 with unit normal N,
-	     * area = N/2 ⋅ [(V2 - V0) x (V3 - V1)] */
-	    VSUB2(v1, face->pts[2], face->pts[0]);
-	    VSUB2(v2, face->pts[3], face->pts[1]);
-	    VCROSS(tot, v2, v1);
-	    break;
-	default:
-	    /* N-Sided Face - compute area using Green's Theorem */
-	    for (i = 0; i < face->npts; i++) {
-		VCROSS(tmp, face->pts[i], face->pts[i + 1 == face->npts ? 0 : i + 1]);
-		VADD2(tot, tot, tmp);
-	    }
-	    break;
-    }
-    face->area = fabs(VDOT(face->plane_eqn, tot)) * 0.5;
+    bn_polygon_sort_ccw(face->npts, face->pts, face->plane_eqn);
+    bn_polygon_area(&face->area, face->npts, (const point_t *)face->pts);
 
     /* store face information for pretty printing */
     row->nfields = 8;
@@ -924,7 +886,8 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
     /* TABLE 3 =========================================== */
     /* find the volume - break arb8 into 6 arb4s */
 
-    OBJ[ID_ARB8].ft_volume(&tot_vol, ip);
+    if (OBJ[ID_ARB8].ft_volume)
+	OBJ[ID_ARB8].ft_volume(&tot_vol, ip);
 
     print_volume_table(gedp,
 		       tot_vol
@@ -948,12 +911,15 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
 HIDDEN void
 analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
 {
-    size_t i, j, k, l;
+    size_t i;
     fastf_t tot_vol = 0.0, tot_area = 0.0;
     table_t table;
     struct poly_face *faces;
     struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
     struct rt_arbn_internal *aip = (struct rt_arbn_internal *)ip->idb_ptr;
+    size_t *npts = (size_t *)bu_calloc(aip->neqn, sizeof(size_t), "analyze_arbn: npts");
+    point_t **tmp_pts = (point_t **)bu_calloc(aip->neqn, sizeof(point_t *), "analyze_arbn: tmp_pts");
+    plane_t *eqs= (plane_t *)bu_calloc(aip->neqn, sizeof(plane_t), "analyze_arbn: eqs");
 
     /* allocate array of face structs */
     faces = (struct poly_face *)bu_calloc(aip->neqn, sizeof(struct poly_face), "analyze_arbn: faces");
@@ -962,44 +928,21 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
 	VUNITIZE(faces[i].plane_eqn);
 	/* allocate array of pt structs, max number of verts per faces = (# of faces) - 1 */
 	faces[i].pts = (point_t *)bu_calloc(aip->neqn - 1, sizeof(point_t), "analyze_arbn: pts");
+	tmp_pts[i] = faces[i].pts;
+    	HMOVE(eqs[i], faces[i].plane_eqn);
     }
     /* allocate table rows, 1 row per plane eqn */
     table.rows = (row_t *)bu_calloc(aip->neqn, sizeof(row_t), "analyze_arbn: rows");
     table.nrows = aip->neqn;
 
-    /* find all vertices */
-    for (i = 0; i < aip->neqn - 2; i++) {
-	for (j = i + 1; j < aip->neqn - 1; j++) {
-	    for (k = j + 1; k < aip->neqn; k++) {
-		point_t pt;
-		int keep_point = 1;
-		if (bn_mkpoint_3planes(pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]) < 0) {
-		    continue;
-		}
-		/* discard pt if it is outside the arbn */
-		for (l = 0; l < aip->neqn; l++) {
-		    if (l == i || l == j || l == k) {
-			continue;
-		    }
-		    if (DIST_PT_PLANE(pt, aip->eqn[l]) > gedp->ged_wdbp->wdb_tol.dist) {
-			keep_point = 0;
-			break;
-		    }
-		}
-		/* found a good point, add it to each of the intersecting faces */
-		if (keep_point) {
-		    ADD_PT(faces[i], pt);
-		    ADD_PT(faces[j], pt);
-		    ADD_PT(faces[k], pt);
-		}
-	    }
-	}
-    }
+    bn_polygon_mk_pts_planes(npts, tmp_pts, aip->neqn, (const plane_t *)eqs);
 
     for (i = 0; i < aip->neqn; i++) {
 	vect_t tmp;
 	bu_vls_sprintf(&tmpstr, "%4zu", i);
 	snprintf(faces[i].label, sizeof(faces[i].label), "%s", bu_vls_addr(&tmpstr));
+
+	faces[i].npts = npts[i];
 
 	/* calculate surface area */
 	analyze_poly_face(gedp, &faces[i], &table.rows[i]);
@@ -1028,81 +971,10 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
     }
     bu_free((char *)faces, "analyze_arbn: faces");
     bu_free((char *)table.rows, "analyze_arbn: rows");
+    bu_free((char *)tmp_pts, "analyze_arbn: tmp_pts");
+    bu_free((char *)npts, "analyze_arbn: npts");
+    bu_free((char *)eqs, "analyze_arbn: eqs");
     bu_vls_free(&tmpstr);
-}
-
-
-#define BOT_PT(idx) (&bot->vertices[(idx) * ELEMENTS_PER_POINT])
-
-/**
- * A N A L Y Z E _ B O T
- */
-HIDDEN void
-analyze_bot(struct ged *gedp, const struct rt_db_internal *ip)
-{
-    size_t i;
-    fastf_t tot_area = 0.0, tot_vol = 0.0;
-    table_t table;
-    struct poly_face face = POLY_FACE_INIT_ZERO;
-    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
-    RT_BOT_CK_MAGIC(bot);
-
-    /* allocate pts array, 3 vertices per bot face */
-    face.pts = (point_t *)bu_calloc(3, sizeof(point_t), "analyze_bot: pts");
-    /* allocate table rows, 1 row per bot face */
-    table.rows = (row_t *)bu_calloc(bot->num_faces, sizeof(row_t), "analyze_bot: rows");
-    table.nrows = bot->num_faces;
-
-    for (face.npts = 0, i = 0; i < bot->num_faces; face.npts = 0, i++) {
-	int a, b, c;
-	vect_t tmp;
-
-	/* find indices of the 3 vertices that make up this face */
-	a = bot->faces[i * ELEMENTS_PER_POINT + 0];
-	b = bot->faces[i * ELEMENTS_PER_POINT + 1];
-	c = bot->faces[i * ELEMENTS_PER_POINT + 2];
-
-	/* find normal, needed to calculate volume later */
-	if (bot->bot_flags == RT_BOT_HAS_SURFACE_NORMALS && bot->normals) {
-	    /* bot->normals array already exists, use those instead */
-	    VMOVE(face.plane_eqn, &bot->normals[i * ELEMENTS_PER_VECT]);
-	} else if (UNLIKELY(bn_mk_plane_3pts(face.plane_eqn, BOT_PT(a), BOT_PT(b), BOT_PT(c), &gedp->ged_wdbp->wdb_tol) < 0)) {
-	    bu_vls_printf(gedp->ged_result_str,
-			  "analyze_bot: bad BOT, points (%.3f, %.3f, %.3f), (%.3f, %.3f, %.3f), (%.3f, %.3f, %.3f) do not form a plane\n",
-			  V3ARGS(BOT_PT(a)), V3ARGS(BOT_PT(b)), V3ARGS(BOT_PT(c)));
-	    continue;
-	}
-
-	ADD_PT(face, BOT_PT(a));
-	ADD_PT(face, BOT_PT(b));
-	ADD_PT(face, BOT_PT(c));
-
-	snprintf(face.label, sizeof(face.label), "%d%d%d", a, b, c);
-
-	/* surface area */
-	analyze_poly_face(gedp, &face, &table.rows[i]);
-	tot_area += face.area;
-
-	/* volume */
-	VSCALE(tmp, face.plane_eqn, face.area);
-	tot_vol += fabs(VDOT(face.pts[0], tmp));
-    }
-    tot_vol /= 3.0;
-
-    print_faces_table(gedp, &table);
-    print_volume_table(gedp,
-		       tot_vol
-		       * gedp->ged_wdbp->dbip->dbi_base2local
-		       * gedp->ged_wdbp->dbip->dbi_base2local
-		       * gedp->ged_wdbp->dbip->dbi_base2local,
-		       tot_area
-		       * gedp->ged_wdbp->dbip->dbi_base2local
-		       * gedp->ged_wdbp->dbip->dbi_base2local,
-		       tot_vol/GALLONS_TO_MM3
-	);
-
-    bu_free((char *)face.pts, "analyze_bot: pts");
-    bu_free((char *)table.rows, "analyze_bot: rows");
 }
 
 
@@ -1309,13 +1181,18 @@ print_results:
 HIDDEN void
 analyze_sketch(struct ged *gedp, const struct rt_db_internal *ip)
 {
-    fastf_t area;
-    OBJ[ID_SKETCH].ft_surf_area(&area, ip);
-    bu_vls_printf(gedp->ged_result_str, "\nTotal Area: %10.8f",
-		  area
-		  * gedp->ged_wdbp->dbip->dbi_local2base
-		  * gedp->ged_wdbp->dbip->dbi_local2base
-	);
+    fastf_t area = -1;
+
+    if (OBJ[ID_SKETCH].ft_surf_area)
+	OBJ[ID_SKETCH].ft_surf_area(&area, ip);
+
+    if (area > 0.0) {
+	bu_vls_printf(gedp->ged_result_str, "\nTotal Area: %10.8f",
+		      area
+		      * gedp->ged_wdbp->dbip->dbi_local2base
+		      * gedp->ged_wdbp->dbip->dbi_local2base
+	    );
+    }
 }
 
 
@@ -1338,7 +1215,7 @@ analyze_do(struct ged *gedp, const struct rt_db_internal *ip)
 	    break;
 
 	case ID_BOT:
-	    analyze_bot(gedp, ip);
+	    analyze_general(gedp, ip);
 	    break;
 
 	case ID_ARBN:
@@ -1390,6 +1267,10 @@ analyze_do(struct ged *gedp, const struct rt_db_internal *ip)
 	    break;
 
 	case ID_PIPE:
+	    analyze_general(gedp, ip);
+	    break;
+
+	case ID_VOL:
 	    analyze_general(gedp, ip);
 	    break;
 

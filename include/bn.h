@@ -1,7 +1,7 @@
 /*                            B N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,8 +31,8 @@
  *
  */
 
-#ifndef __BN_H__
-#define __BN_H__
+#ifndef BN_H
+#define BN_H
 
 #include "common.h"
 
@@ -473,24 +473,98 @@ BN_EXPORT extern void bn_encode_hvect(struct bu_vls *vp,
  * Add all the supported Tcl interfaces to LIBBN routines to
  * the list of commands known by the given interpreter.
  */
-BN_EXPORT extern void bn_tcl_setup();
+BN_EXPORT extern void bn_tcl_setup(Tcl_Interp *interp);
 
 /**
  * B N _ I N I T
  *@brief
- * Allows LIBBN to be dynamically loade to a vanilla tclsh/wish with
+ * Allows LIBBN to be dynamically loaded to a vanilla tclsh/wish with
  * "load /usr/brlcad/lib/libbn.so"
  *
  * The name of this function is specified by TCL.
  */
-BN_EXPORT extern int Bn_Init();
+BN_EXPORT extern int Bn_Init(Tcl_Interp *interp);
 
 /**
  * B N _ M A T _ P R I N T
  */
-BN_EXPORT extern void bn_tcl_mat_print();
+BN_EXPORT extern void bn_tcl_mat_print(Tcl_Interp *interp, const char *title, const mat_t m);
 
 /** @} */
+
+/*----------------------------------------------------------------------*/
+
+
+/* chull.c */
+/*
+ * Routines for the computation of convex hulls in 2D and 3D
+ */
+
+/**
+ * @brief
+ * Melkman's 2D simple polyline O(n) convex hull algorithm
+ *
+ * On-line construction of the convex hull of a simple polyline
+ * Melkman, Avraham A. Information Processing Letters 25.1 (1987): 11-12.
+ *
+ * See also <a href="http://geomalgorithms.com/a12-_hull-3.html">http://geomalgorithms.com/a12-_hull-3.html</a>
+ *
+ * @param[out]	hull convex hull array vertices in ccw orientation (max is n)
+ * @param	polyline The points defining the input polyline, stored with ccw orientation
+ * @param	n the number of points in polyline
+ * @return the number of points in the output hull array
+ */
+BN_EXPORT int bn_polyline_2d_chull(point2d_t** hull, const point2d_t* polyline, int n);
+
+/**
+ * @brief
+ * Find 2D convex hull for unordered co-planar point sets
+ *
+ * The monotone chain algorithm's sorting approach is used to do
+ * the initial ordering of the points:
+ *
+ * Another efficient algorithm for convex hulls in two dimensions.
+ * Andrew, A. M. Information Processing Letters 9.5 (1979): 216-219.
+ *
+ * See also <a href="http://geomalgorithms.com/a10-_hull-1.html">http://geomalgorithms.com/a10-_hull-1.html</a>
+ *
+ * From there, instead of using the monotonic chain hull assembly
+ * step, recognize that the points thus ordered can be viewed as
+ * defining a simple polyline and use Melkman's algorithm for the
+ * hull building.
+ *
+ * The input point array currently uses type point_t, but all Z
+ * values should be zero.
+ *
+ * @param[out]	hull 2D convex hull array vertices in ccw orientation (max is n)
+ * @param	points_2d The input 2d points for which a convex hull will be built
+ * @param	n the number of points in the input set
+ * @return the number of points in the output hull array or zero if error.
+ */
+BN_EXPORT int bn_2d_chull(point2d_t** hull, const point2d_t* points_2d, int n);
+
+/**
+ * @brief
+ * Find 3D coplanar point convex hull for unordered co-planar point sets
+ *
+ * This function assumes an input an array of 3D points which are coplanar
+ * in some arbitrary plane.  This function:
+ *
+ * 1. Finds the plane that fits the points and picks an origin, x-axis and y-axis
+ *    which allow 2D coordinates for all points to be calculated.
+ * 2. Calls 2D routines on the array found by step 1 to get a 2D convex hull
+ * 3. Translates the resultant 2D hull points back into 3D points so the hull array
+ *    contains the bounding hull expressed in the 3D coordinate space of the
+ *    original points.
+ *
+ * @param[out]	hull_3d convex hull array vertices using 3-space coordinates in ccw orientation (max is n)
+ * @param	points_3d The input points for which a convex hull will be built
+ * @param	n the number of points in the input set
+ * @return the number of points in the output hull array
+ */
+BN_EXPORT int bn_3d_coplanar_chull(point_t** hull, const point_t* points_3d, int n);
+
+
 
 
 /*----------------------------------------------------------------------*/
@@ -1286,7 +1360,7 @@ BN_EXPORT extern void bn_gauss_free(struct bn_gauss *p);
  *	    a variance of 1.0.
  *
  * @par Calls
- *	BN_UNIF_CIRCLE to get to uniform random number whos radius is
+ *	BN_UNIF_CIRCLE to get to uniform random number whose radius is
  *	<= 1.0. I.e. sqrt(v1*v1 + v2*v2) <= 1.0
  *	BN_UNIF_CIRCLE is a macro which can call bn_unif_double_fill.
  *
@@ -1350,7 +1424,7 @@ BN_EXPORT extern double bn_gauss_fill(struct bn_gauss *p);
  * lattice points.  The functions should be evaluated at non-integer
  * locations for their nature to be realized.
  *
- * Conatins contributed code from:
+ * Contains contributed code from:
  * F. Kenton Musgrave
  * Robert Skinner
  *
@@ -1360,7 +1434,7 @@ BN_EXPORT extern double bn_gauss_fill(struct bn_gauss *p);
  * fractal noise support
  */
 
-BN_EXPORT extern void bn_noise_init();
+BN_EXPORT extern void bn_noise_init(void);
 
 /**
  *@brief
@@ -1406,7 +1480,7 @@ BN_EXPORT extern void bn_noise_vec(point_t point,
  * @li s.d.  0.306642
  * @li Var 0.0940295
  *
- * The function call pow() is relatively expensive.  Therfore, this
+ * The function call pow() is relatively expensive.  Therefore, this
  * function pre-computes and saves the spectral weights in a table for
  * re-use in successive invocations.
  */
@@ -1437,7 +1511,7 @@ BN_EXPORT extern double bn_noise_fbm(point_t point,
  * s.d. 0.174796
  * Var  0.0305536
  @endcode
- * The function call pow() is relatively expensive.  Therfore, this
+ * The function call pow() is relatively expensive.  Therefore, this
  * function pre-computes and saves the spectral weights in a table for
  * re-use in successive invocations.
  */
@@ -1467,6 +1541,76 @@ BN_EXPORT extern double bn_noise_ridged(point_t point,
 					double lacunarity,
 					double octaves,
 					double offset);
+
+/*----------------------------------------------------------------------*/
+
+
+/* obr.c */
+/*
+ * Routines for the computation of oriented bounding rectangles 2D and 3D
+ */
+
+
+/**
+ *@brief
+ * Uses the Rotating Calipers algorithm to find the
+ * minimum oriented bounding rectangle for a set of 2D
+ * points.  Returns 0 on success.
+ *
+ * The box will be described by a center point and 2
+ * vectors:
+ *
+ * \verbatim
+ * ----------------------------
+ * |            ^             |
+ * |            |             |
+ * |         v  |             |
+ * |            |             |
+ * |            *------------>|
+ * |         center     u     |
+ * |                          |
+ * |                          |
+ * ----------------------------
+ * \endverbatim
+ *
+ * Note that the box is oriented, and thus not necessarily axis
+ * aligned (u and v are perpendicular, but not necessarily parallel
+ * with the coordinate space V=0 and U=0 axis vectors.)
+ *
+ * @param[out] center	center of oriented bounding rectangle
+ * @param[out] u	vector in the direction of obr x with
+ * 			vector length of 0.5 * obr length
+ * @param[out] v	vector in the obr y direction with vector
+ * 			length of 0.5 * obr width
+ * @param points_2d	array of 2D points
+ * @param pnt_cnt	number of points in pnts array
+ */
+BN_EXPORT extern int bn_2d_obr(point2d_t *center,
+			       vect2d_t *u,
+			       vect2d_t *v,
+			       const point2d_t *points_2d,
+			       int pnt_cnt);
+
+/**
+ *@brief
+ * Uses the Rotating Calipers algorithm to find the
+ * minimum oriented bounding rectangle for a set of coplanar 3D
+ * points.  Returns 0 on success.
+ *
+ * @param[out] center	center of oriented bounding rectangle
+ * @param[out] v1	vector in the direction of obr x with
+ * 			vector length of 0.5 * obr length
+ * @param[out] v2	vector in the obr y direction with vector
+ * 			length of 0.5 * obr width
+ * @param points_3d	array of coplanar 3D points
+ * @param pnt_cnt	number of points in pnts array
+ */
+BN_EXPORT extern int bn_3d_coplanar_obr(point_t *center,
+			       vect_t *v1,
+			       vect_t *v2,
+			       const point_t *points_3d,
+			       int pnt_cnt);
+
 
 
 /*----------------------------------------------------------------------*/
@@ -1661,7 +1805,7 @@ BN_EXPORT extern int bn_dist_pt3_lseg3(fastf_t *dist,
  *		A      PCA	B
  *
  * There are six distinct cases, with these return codes -
- * Return code presidence: 1, 2, 0, 3, 4, 5
+ * Return code precedence: 1, 2, 0, 3, 4, 5
  *
  *	0	P is within tolerance of lseg AB.  *dist =  0.
  *	1	P is within tolerance of point A.  *dist = 0.
@@ -1756,8 +1900,8 @@ BN_EXPORT extern int bn_dist_pt2_lseg2(fastf_t *dist_sq,
  *
  * @return -3	missed
  * @return -2	missed (line segments are parallel)
- * @return -1	missed (colinear and non-overlapping)
- * @return 0	hit (line segments colinear and overlapping)
+ * @return -1	missed (collinear and non-overlapping)
+ * @return 0	hit (line segments collinear and overlapping)
  * @return 1	hit (normal intersection)
  *
  * @param[out] dist
@@ -1848,7 +1992,7 @@ BN_EXPORT extern int bn_isect_line3_line3(fastf_t *s, fastf_t *t,
 /**
  * B N _ 2 L I N E 3 _ C O L I N E A R
  * @brief
- * Returns non-zero if the 3 lines are colinear to within tol->dist
+ * Returns non-zero if the 3 lines are collinear to within tol->dist
  * over the given distance range.
  *
  * Range should be at least one model diameter for most applications.
@@ -1947,8 +2091,8 @@ BN_EXPORT extern int bn_isect_line2_lseg2(fastf_t *dist,
  * vectors.  The vectors are unlikely to be unit length.
  *
  * @return -2	missed (line segments are parallel)
- * @return -1	missed (colinear and non-overlapping)
- * @return 0	hit (line segments colinear and overlapping)
+ * @return -1	missed (collinear and non-overlapping)
+ * @return 0	hit (line segments collinear and overlapping)
  * @return 1	hit (normal intersection)
  *
  * @param dist  The value at dist[] is set to the parametric distance of the
@@ -2100,7 +2244,7 @@ BN_EXPORT extern int bn_npts_distinct(const int npts,
  *
  *  @return 0	OK
  *  @return -1	Failure.  At least two of the points were not distinct,
- *		or all three were colinear.
+ *		or all three were collinear.
  *
  * @param[out]	plane	The plane equation is stored here.
  * @param[in]	a	point 1
@@ -3046,7 +3190,7 @@ BN_EXPORT extern const float bn_sin_table[BN_SINTABSIZE];
  *  For benchmarking purposes, make the random number table predictable.
  *  Setting to all zeros keeps dithered values at their original values.
  */
-BN_EXPORT extern void bn_mathtab_constant();
+BN_EXPORT extern void bn_mathtab_constant(void);
 
 /** @} */
 
@@ -3077,7 +3221,7 @@ BN_EXPORT extern void bn_mathtab_constant();
  *
  */
 
-BN_EXPORT extern double bn_randmt();
+BN_EXPORT extern double bn_randmt(void);
 BN_EXPORT extern void bn_randmt_seed(unsigned long seed);
 
 /** @} */
@@ -3667,7 +3811,7 @@ BN_EXPORT extern void bn_tabdata_mul3(struct bn_tabdata *out,
 /*
  *			B N _ T A B D A T A _ I N C R _ M U L 3 _ S C A L E
  *@brief
- *  Element-by-element multiply the values from three data tables and a scalor.
+ *  Element-by-element multiply the values from three data tables and a scalar.
  *
  *	out += in1 * in2 * in3 * scale
  */
@@ -3680,7 +3824,7 @@ BN_EXPORT extern void bn_tabdata_incr_mul3_scale(struct bn_tabdata *out,
 /*
  *			B N _ T A B D A T A _ I N C R _ M U L 2 _ S C A L E
  *@brief
- *  Element-by-element multiply the values from two data tables and a scalor.
+ *  Element-by-element multiply the values from two data tables and a scalar.
  *
  *	out += in1 * in2 * scale
  */
@@ -4292,7 +4436,7 @@ struct vert_root {
  *
  *	Possible refinements include specifying an initial size
  */
-BN_EXPORT extern struct vert_root *create_vert_tree();
+BN_EXPORT extern struct vert_root *create_vert_tree(void);
 
 /**		C R E A T E _ V E R T _ T R E E _ W _ N O R M S
  *@brief
@@ -4300,7 +4444,7 @@ BN_EXPORT extern struct vert_root *create_vert_tree();
  *
  *	Possible refinements include specifying an initial size
  */
-BN_EXPORT extern struct vert_root *create_vert_tree_w_norms();
+BN_EXPORT extern struct vert_root *create_vert_tree_w_norms(void);
 
 /**		F R E E _ V E R T_ T R E E
  *@brief
@@ -4380,7 +4524,7 @@ BN_EXPORT extern void clean_vert_tree(struct vert_root *tree_root);
  *  Once-only setup routine
  *  Used by libplot3/symbol.c, so it can't be static.
  */
-BN_EXPORT extern void tp_setup();
+BN_EXPORT extern void tp_setup(void);
 
 /**
  * report version information about LIBBN
@@ -4453,7 +4597,76 @@ struct tri_float_specific  {
 
 typedef struct tri_float_specific tri_specific_float;
 
-#endif /* __BN_H__ */
+
+/*----------------------------------------------------------------------*/
+
+
+/* polygon.c */
+
+
+/**
+ * calculate the interior area of a polygon.
+ *
+ * If npts > 4, Greens Theorem is used. The polygon mustn't
+ * be self-intersecting.
+ *
+ * @param[out] area The interior area of the polygon
+ * @param[in] npts Number of point_ts, stored in pts
+ * @param[in] pts All points of the polygon, sorted counter-clockwise.
+ * The array mustn't contain duplicated points.
+ *
+ * @return 0 if calculation was successful
+ * @return 1 if calculation failed, e.g. because one parameter is a NULL-pointer
+ */
+BN_EXPORT extern int bn_polygon_area(fastf_t *area, size_t npts, const point_t *pts);
+
+
+/**
+ * calculate the centroid of a non self-intersecting polygon
+ *
+ * @param[out] cent The centroid of the polygon
+ * @param[in] npts Number of point_ts, stored in pts
+ * @param[in] pts all points of the polygon, sorted counter-clockwise.
+ * The array mustn't contain duplicated points.
+ *
+ * @return 0 if calculation was successful
+ * @return 1 if calculation failed, e.g. because one in-parameter is a NULL-pointer
+ */
+BN_EXPORT extern int bn_polygon_centroid(point_t *cent, size_t npts, const point_t *pts);
+
+
+/**
+ * calculate for an array of plane_eqs, which build a polyhedron, the
+ * point_t's for each face.
+ *
+ * @param[out] npts Array, which stores for every face the number of
+ * point_ts, added to pts. Needs to be allocated with npts[neqs] already.
+ * @param[out] pts 2D-array which stores the point_ts for every
+ * face. The array needs to be allocated with pts[neqs][neqs-1] already.
+ * @param[in] neqs Number of plane_ts, stored in eqs
+ * @param[in] eqs Array, that contains the plane equations, which
+ * build the polyhedron
+ *
+ * @return 0 if calculation was successful
+ * @return 1 if calculation failed, e.g. because one parameter is a NULL-Pointer
+ */
+BN_EXPORT extern int bn_polygon_mk_pts_planes(size_t *npts, point_t **pts, size_t neqs, const plane_t *eqs);
+
+
+/**
+ * sort an array of point_ts, building a convex polygon, counter-clockwise
+ *
+ *@param[in] npts Number of points, pts contains
+ *@param pts Array of point_ts, building a convex polygon. Duplicated points
+ *aren't allowed. The points in the array will be sorted counter-clockwise.
+ *@param[in] cmp Plane equation of the polygon
+ *
+ *@return 0 if calculation was successful
+ *@return 1 if calculation failed, e.g. because pts is a NULL-pointer
+ */
+BN_EXPORT extern int bn_polygon_sort_ccw(size_t npts, point_t *pts, plane_t cmp);
+
+#endif /* BN_H */
 
 /** @} */
 /*

@@ -1,7 +1,7 @@
 /*                 ON_Brep.h
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -21,8 +21,8 @@
  *
  */
 
-#ifndef ON_BREP_H_
-#define ON_BREP_H_
+#ifndef CONV_STEP_G_STEP_ON_BREP_H
+#define CONV_STEP_G_STEP_ON_BREP_H
 
 #include "common.h"
 #include <map>
@@ -59,10 +59,10 @@ bool ON_NurbsCurve_to_STEP(ON_NurbsCurve *n_curve, ON_Brep_Info_AP203 *info, int
 void ON_NurbsSurfaceCV_Finalize_GenericAggregates(ON_Brep_Info_AP203 *info);
 bool ON_NurbsSurface_to_STEP(ON_NurbsSurface *n_surface, ON_Brep_Info_AP203 *info, int i);
 
-void ON_BRep_to_STEP(struct directory *dp, struct rt_db_internal *intern, Registry *registry,
+void ON_BRep_to_STEP(struct directory *dp, ON_Brep *brep, Registry *registry,
        	InstMgr *instance_list, STEPentity **brep_shape, STEPentity **brep_product);
 
-#endif /* ON_BREP_H_ */
+#endif /* CONV_STEP_G_STEP_ON_BREP_H */
 
 /*
  * Local Variables:

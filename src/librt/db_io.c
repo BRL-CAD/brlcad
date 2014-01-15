@@ -1,7 +1,7 @@
 /*                         D B _ I O . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2013 United States Government as represented by
+ * Copyright (c) 1988-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -57,8 +57,8 @@ db_read(const struct db_i *dbip, genptr_t addr, size_t count, off_t offset)
 
     RT_CK_DBI(dbip);
     if (RT_G_DEBUG&DEBUG_DB) {
-	bu_log("db_read(dbip=x%x, addr=x%x, count=%zu., offset=x%x)\n",
-	       dbip, addr, count, offset);
+	bu_log("db_read(dbip=%p, addr=%p, count=%zu., offset=x%lx)\n",
+	       (void *)dbip, addr, count, offset);
     }
     if (count == 0) {
 	return -1;
@@ -105,8 +105,8 @@ db_getmrec(const struct db_i *dbip, const struct directory *dp)
 	return (union record *)NULL;
     }
 
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_getmrec(%s) x%x, x%x\n",
-				    dp->d_namep, dbip, dp);
+    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_getmrec(%s) %p, %p\n",
+				    dp->d_namep, (void *)dbip, (void *)dp);
 
     if (dp->d_addr == RT_DIR_PHONY_ADDR)
 	return (union record *)0;	/* was dummy DB entry */
@@ -135,15 +135,15 @@ db_get(const struct db_i *dbip, const struct directory *dp, union record *where,
 
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_get(%s) x%x, x%x x%x off=%d len=%zu\n",
-				    dp->d_namep, dbip, dp, where, offset, len);
+    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_get(%s) %p, %p %p off=%ld len=%zu\n",
+				    dp->d_namep, (void *)dbip, (void *)dp, (void *)where, offset, len);
 
     if (dp->d_addr == RT_DIR_PHONY_ADDR) {
 	where->u_id = '\0';	/* undefined id */
 	return -1;
     }
     if (offset < 0 || len+(size_t)offset > dp->d_len) {
-	bu_log("db_get(%s):  xfer %d..%lu exceeds 0..%zu\n",
+	bu_log("db_get(%s):  xfer %lu..%lu exceeds 0..%zu\n",
 	       dp->d_namep, offset, offset+len, dp->d_len);
 	where->u_id = '\0';	/* undefined id */
 	return -1;
@@ -172,8 +172,8 @@ db_write(struct db_i *dbip, const genptr_t addr, size_t count, off_t offset)
 
     RT_CK_DBI(dbip);
     if (RT_G_DEBUG&DEBUG_DB) {
-	bu_log("db_write(dbip=x%x, addr=x%x, count=%zu., offset=x%x)\n",
-	       dbip, addr, count, offset);
+	bu_log("db_write(dbip=%p, addr=%p, count=%zu., offset=x%lx)\n",
+	       (void *)dbip, addr, count, offset);
     }
     if (dbip->dbi_read_only) {
 	bu_log("db_write(%s):  READ-ONLY file\n",
@@ -213,11 +213,11 @@ db_put(struct db_i *dbip, const struct directory *dp, union record *where, off_t
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
 
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_put(%s) x%x, x%x x%x off=%d len=%zu\n",
-				    dp->d_namep, dbip, dp, where, offset, len);
+    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_put(%s) %p, %p %p off=%ld len=%zu\n",
+				    dp->d_namep, (void *)dbip, (void *)dp, (void *)where, offset, len);
 
     if ((len+(size_t)offset) > dp->d_len) {
-	bu_log("db_put(%s):  xfer %d..%lu exceeds 0..%zu\n",
+	bu_log("db_put(%s):  xfer %ld..%lu exceeds 0..%zu\n",
 	       dp->d_namep, offset, offset+len, dp->d_len);
 	return -1;
     }
@@ -248,8 +248,8 @@ db_get_external(register struct bu_external *ep, const struct directory *dp, con
 {
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_get_external(%s) ep=x%x, dbip=x%x, dp=x%x\n",
-				    dp->d_namep, ep, dbip, dp);
+    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_get_external(%s) ep=%p, dbip=%p, dp=%p\n",
+				    dp->d_namep, (void *)ep, (void *)dbip, (void *)dp);
 
     if ((dp->d_flags & RT_DIR_INMEM) == 0 && dp->d_addr == RT_DIR_PHONY_ADDR)
 	return -1;		/* was dummy DB entry */
@@ -259,7 +259,7 @@ db_get_external(register struct bu_external *ep, const struct directory *dp, con
 	ep->ext_nbytes = dp->d_len * sizeof(union record);
     else
 	ep->ext_nbytes = dp->d_len;
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "db_get_ext ext_buf");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "db_get_ext ext_buf");
 
     if (dp->d_flags & RT_DIR_INMEM) {
 	memcpy((char *)ep->ext_buf, dp->d_un.ptr, ep->ext_nbytes);
@@ -268,7 +268,7 @@ db_get_external(register struct bu_external *ep, const struct directory *dp, con
 
     if (db_read(dbip, (char *)ep->ext_buf, ep->ext_nbytes, dp->d_addr) < 0) {
 	bu_free(ep->ext_buf, "db_get_ext ext_buf");
-	ep->ext_buf = (genptr_t)NULL;
+	ep->ext_buf = (uint8_t *)NULL;
 	ep->ext_nbytes = 0;
 	return -1;	/* VERY BAD */
     }
@@ -283,8 +283,8 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
     BU_CK_EXTERNAL(ep);
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_put_external(%s) ep=x%x, dbip=x%x, dp=x%x\n",
-				    dp->d_namep, ep, dbip, dp);
+    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_put_external(%s) ep=%p, dbip=%p, dp=%p\n",
+				    dp->d_namep, (void *)ep, (void *)dbip, (void *)dp);
 
 
     if (dbip->dbi_read_only) {
@@ -336,7 +336,7 @@ int
 db_fwrite_external(FILE *fp, const char *name, struct bu_external *ep)
 {
 
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_fwrite_external(%s) ep=x%x\n", name, ep);
+    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_fwrite_external(%s) ep=%p\n", name, (void *)ep);
 
     BU_CK_EXTERNAL(ep);
 

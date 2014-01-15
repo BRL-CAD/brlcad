@@ -45,7 +45,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged13_candle_design.png" format="PNG"/>
+	  </imageobject>
+          <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged13_candle_design.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -87,7 +90,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged13_candle_tabletop_wireframe_front.png" format="PNG"/>
+	  </imageobject>
+          <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged13_candle_tabletop_wireframe_front.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -128,7 +134,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged13_candle_tabletop_eto1_wireframe_front.png" format="PNG"/>
+	  </imageobject>
+          <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged13_candle_tabletop_eto1_wireframe_front.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -190,7 +199,10 @@ Move End H
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged13_candle_tabletop_eto1_rcc_wireframe_front.png" format="PNG"/>
+	  </imageobject>
+          <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged13_candle_tabletop_eto1_rcc_wireframe_front.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -211,7 +223,10 @@ Move End H
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged13_candle_tabletop_base_front.png" format="PNG"/>
+	  </imageobject>
+          <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged13_candle_tabletop_base_front.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -251,7 +266,10 @@ Move End H
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged13_candle_tabletop_base_candle_front.png" format="PNG"/>
+	  </imageobject>
+          <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged13_candle_tabletop_base_candle_front.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -287,7 +305,10 @@ Move End H
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged13_candle_complete_front.png" format="PNG"/>
+	  </imageobject>
+          <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged13_candle_complete_front.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -406,7 +427,10 @@ Move End H
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged13_candle_comb_ed_checker.png" format="PNG"/>
+	  </imageobject>
+          <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged13_candle_comb_ed_checker.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -472,7 +496,10 @@ Move End H
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged13_candle_raytraced_overlay.png" format="PNG"/>
+	  </imageobject>
+          <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged13_candle_raytraced_overlay.png" format="PNG"/>
 	  </imageobject>
 	  <caption>

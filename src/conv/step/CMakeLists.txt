@@ -72,15 +72,20 @@ macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
   # subdirectories to avoid multiple build targets trying to run exp2cxx
   # simultaneously to generate identical inputs (unknown if that is problematic)
   # and to add extra robustness for parallel build target ordering.
+  set(WATCHED_FILES ${EXPRESS_OUTPUT})
+  string(REPLACE " " "\\ " WATCHED_FILES "${WATCHED_FILES}")
+  set(STAMP_OUT_FILE ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done)
+  configure_file(${BRLCAD_CMAKE_DIR}/md5_compiletest.cmake.in
+    ${SCHEMA_OUT_DIR}/md5_${SCHEMA_NAME}_test.cmake @ONLY)
   add_custom_command(OUTPUT ${EXPRESS_OUTPUT} ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done
     COMMAND ${EXP2CXX_EXEC} ARGS ${SCHEMA_FILE}
-    COMMAND ${CMAKE_COMMAND} -E touch ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done
+    COMMAND ${CMAKE_COMMAND} -P ${SCHEMA_OUT_DIR}/md5_${SCHEMA_NAME}_test.cmake
     DEPENDS ${SCHEMA_FILE} ${EXP2CXX_EXECUTABLE_TARGET}
     WORKING_DIRECTORY ${SCHEMA_OUT_DIR}
     COMMENT "Generating C++ code to express ${SCHEMA_NAME}..."
     VERBATIM)
   add_custom_target(step-express-${SCHEMA_NAME}-${TARGET_SUFFIX}
-    DEPENDS ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done)
+    DEPENDS ${EXPRESS_OUTPUT} ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done)
 endmacro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE)
 
 add_subdirectory(step-g)

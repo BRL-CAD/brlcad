@@ -1,7 +1,7 @@
 /*                     R B _ C R E A T E . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2013 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@
 
 
 struct bu_rb_tree *
-bu_rb_create(char *description, int nm_orders, int (**order_funcs)())
+bu_rb_create(const char *description, int nm_orders, int (**compare_funcs)(const void *, const void *))
 {
     int order;
     struct bu_rb_tree *tree;
@@ -41,7 +41,7 @@ bu_rb_create(char *description, int nm_orders, int (**order_funcs)())
 	bu_malloc(nm_orders * sizeof(struct bu_rb_node),
 		  "red-black roots");
     tree->rbt_unique = (char *)
-	bu_malloc((size_t) ceil((double) (nm_orders / 8.0)),
+	bu_malloc((size_t) lrint(ceil((double) (nm_orders / 8.0))),
 		  "red-black uniqueness flags");
     RB_NULL(tree) = (struct bu_rb_node *)
 	bu_malloc(sizeof(struct bu_rb_node),
@@ -56,7 +56,7 @@ bu_rb_create(char *description, int nm_orders, int (**order_funcs)())
 	bu_malloc(nm_orders * sizeof(struct bu_rb_node *),
 		  "red-black right children");
     RB_NULL(tree)->rbn_color = (char *)
-	bu_malloc((size_t) ceil((double) (nm_orders / 8.0)),
+	bu_malloc((size_t) lrint(ceil((double) (nm_orders / 8.0))),
 		  "red-black colors");
     RB_NULL(tree)->rbn_size = (int *)
 	bu_malloc(nm_orders * sizeof(int),
@@ -70,7 +70,7 @@ bu_rb_create(char *description, int nm_orders, int (**order_funcs)())
     tree->rbt_magic = BU_RB_TREE_MAGIC;
     tree->rbt_description = description;
     tree->rbt_nm_orders = nm_orders;
-    tree->rbt_order = order_funcs;
+    tree->rbt_compar = compare_funcs;
     tree->rbt_print = 0;
     bu_rb_uniq_all_off(tree);
     tree->rbt_debug = 0x0;
@@ -99,14 +99,14 @@ bu_rb_create(char *description, int nm_orders, int (**order_funcs)())
 
 
 struct bu_rb_tree *
-bu_rb_create1(char *description, int (*order_func) (/* ??? */))
+bu_rb_create1(const char *description, int (*compare_func)(void))
 {
-    int (**ofp)();
+    int (**cfp)(const void *, const void *);
 
-    ofp = (int (**)())
-	bu_malloc(sizeof(int (*)()), "red-black function table");
-    *ofp = order_func;
-    return bu_rb_create(description, 1, ofp);
+    cfp = (int (**)(const void *, const void *))
+	bu_malloc(sizeof(int (*)(const void *, const void *)), "red-black function table");
+    *cfp = (int (*)(const void *, const void *)) compare_func;
+    return bu_rb_create(description, 1, cfp);
 }
 
 /*

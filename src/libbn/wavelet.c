@@ -1,7 +1,7 @@
 /*                       W A V E L E T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -151,7 +151,7 @@
 #include "bn.h"
 
 /**
- * This source file uses C-styple "templates" where functions specific
+ * This source file uses C-style "templates" where functions specific
  * to a set of specified data types are automatically
  * declared/provided via one single macro implementation.
  */

@@ -1,7 +1,7 @@
 /*                          D M - P E X . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2013 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,14 +17,17 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @addtogroup libdm */
 /** @{ */
 /** @file dm-pex.h
  *
  */
 
-#ifndef __DM_PEX__
-#define __DM_PEX__
+#ifndef DM_PEX_H
+#define DM_PEX_H
+
+#include "common.h"
 
 /*
  * Display coordinate conversion:
@@ -71,12 +74,16 @@ struct pex_vars {
     struct modifiable_pex_vars mvars;
 };
 
+__BEGIN_DECLS
+
 extern void Pex_configure_window_shape();
 extern void Pex_establish_perspective();
 extern void Pex_set_perspective();
 extern struct pex_vars head_pex_vars;
 
-#endif /* __DM_PEX__ */
+__END_DECLS
+
+#endif /* DM_PEX_H */
 
 /** @} */
 /*

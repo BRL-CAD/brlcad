@@ -1,7 +1,7 @@
 /*                  B O O L E A N . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,6 +29,8 @@
 #include <vector>
 #include <stack>
 #include <queue>
+#include <set>
+#include <map>
 #include <algorithm>
 #include "bio.h"
 
@@ -40,13 +42,6 @@
 
 // Whether to output the debug messages about b-rep booleans.
 #define DEBUG_BREP_BOOLEAN 0
-
-// Using connectivity graphs can reduce the number of inside/outside tests,
-// which is considered time-consuming in some research papers. But in practice
-// we find that the performance of inside/outside tests is not so critical,
-// and the implementation of connectivity graphs is still in beta (some cases
-// with SSI overlaps seem to be wrong), so we mark this flag as 0
-#define USE_CONNECTIVITY_GRAPH 0
 
 // tol value used in ON_Intersect()s. We use a smaller tolerance than the
 // default one 0.001.
@@ -74,28 +69,10 @@ struct IntersectPoint {
 };
 
 
-#if USE_CONNECTIVITY_GRAPH
-struct SSICurveInfo {
-    int m_fi1;	// index of the this face
-    int m_fi2;	// index of the the other face
-    int m_ci;	// index in the events array
-
-    // Default constructor. Set all to an invalid value.
-    SSICurveInfo()
-    {
-	m_fi1 = m_fi2 = m_ci = -1;
-    }
-};
-#endif
-
-
 // A structure to represent the curve segments generated from surface-surface
 // intersections, including some information needed by the connectivity graph
 struct SSICurve {
     ON_Curve* m_curve;
-#if USE_CONNECTIVITY_GRAPH
-    SSICurveInfo m_info;
-#endif
 
     SSICurve()
     {
@@ -213,14 +190,6 @@ public:
 	    arr.Append(m_ssi_curves[i].m_curve->Duplicate());
     }
 
-#if USE_CONNECTIVITY_GRAPH
-    void AppendSSIInfoToArray(ON_SimpleArray<SSICurveInfo>& arr) const
-    {
-	for (int i = 0; i < m_ssi_curves.Count(); i++)
-	    arr.Append(m_ssi_curves[i].m_info);
-    }
-#endif
-
     const ON_Curve* Curve()
     {
 	if (m_curve != NULL)
@@ -272,15 +241,6 @@ struct TrimmedFace {
 	BELONG = 1
     } m_belong_to_final;
     bool m_rev;
-#if USE_CONNECTIVITY_GRAPH
-    // Connectivity graph support
-    ON_SimpleArray<TrimmedFace*> m_neighbors;
-    // which parts of its parent's outerloop are used, described in multiple
-    // pairs of IntersectPoints (multiple intervals)
-    ON_ClassArray<std::pair<IntersectPoint, IntersectPoint> > m_parts;
-    // which SSI curves are used.
-    ON_SimpleArray<SSICurveInfo> m_ssi_info;
-#endif
 
     // Default constructor
     TrimmedFace()
@@ -324,15 +284,9 @@ struct TrimmedFace {
 	    for (int j = 0; j < m_innerloop[i].Count(); j++)
 		if (m_innerloop[i][j])
 		    out->m_innerloop[i][j] = m_innerloop[i][j]->Duplicate();
-#if USE_CONNECTIVITY_GRAPH
-	out->m_parts = m_parts;
-	out->m_ssi_info = m_ssi_info;
-	// Don't copy the neighbors
-#endif
 	return out;
     }
 };
-
 
 HIDDEN int
 compare_t(const IntersectPoint* a, const IntersectPoint* b)
@@ -394,7 +348,8 @@ IsLoopValid(const ON_SimpleArray<ON_Curve*>& loop, double tolerance, ON_PolyCurv
 
     // Check the loop is continuous and closed or not.
     if (ret) {
-	AppendToPolyCurve(loop[0]->Duplicate(), *polycurve);
+	if (loop[0] != NULL)
+	    AppendToPolyCurve(loop[0]->Duplicate(), *polycurve);
 	for (int i = 1 ; i < loop.Count(); i++) {
 	    if (loop[i] && loop[i - 1] && loop[i]->PointAtStart().DistanceTo(loop[i-1]->PointAtEnd()) < ON_ZERO_TOLERANCE)
 		AppendToPolyCurve(loop[i]->Duplicate(), *polycurve);
@@ -687,6 +642,42 @@ link_curves(const ON_SimpleArray<SSICurve>& in, ON_ClassArray<LinkedCurve>& out)
 }
 
 
+// It might be worth investigating the following approach to building a set of faces from the splitting
+// in order to achieve robustness in the final result:
+//
+// A) trim the raw SSI curves with the trimming loops from both faces and get "final" curve segments in
+//    3D and both 2D parametric spaces.  Consolidate curves where different faces created the same curve.
+// B) assemble the new 2D segments and whatever pieces are needed from the existing trimming curves to
+//    form new 2D loops (which must be non-self-intersecting), whose roles in A and B respectively
+//    would be determined by the boolean op and each face's role within it.
+// C) build "representative polygons" for all the 2D loops in each face, new and old - representative in
+//    this case meaning that the intersection behavior of the general loops is accurately duplicated
+//    by the polygons, which should be assurable by identifying and using all 2D curve intersections and possibly
+//    horizontal and vertical tangents - and use clipper to perform the boolean ops.  Using the resulting polygons,
+//    deduce and assemble the final trimming loops (and face or faces) created from A and B respectively.
+
+// Note that the 2D information alone cannot be enough to decide *which* faces created from these splits
+// end up in the final brep.  A case to think about here is the case of two spheres intersecting -
+// depending on A, the exact trimming
+// loop in B may need to either define the small area as a new face, or everything BUT the small area
+// as a new face - different A spheres may either almost fully contain B or just intersect it.  That case
+// would seem to suggest that we do need some sort of inside/outside test, since B doesn't have enough
+// information to determine which face is to be saved without consulting A.  Likewise, A may either save
+// just the piece inside the loop or everything outside it, depending on B.  This is the same situation we
+// were in with the original face sets.
+//
+// A possible improvement here might be to calculate the best fit plane of the intersection curve and rotate
+// both the faces in question and A so that that plane is centered at the origin with the normal in z+.
+// In that orientation, axis aligned bounding box tests can be made that will be as informative
+// as possible, and may allow many inside/outside decisions to be made without an explicit raytrace.  Coplanar
+// faces will have to be handled differently, but for convex cases there should be enough information to decide.
+// Concave cases may require a raytrace, but there is one other possible approach - if, instead of using the
+// whole brep and face bounding boxes we start with the bounding box of the intersection curve and construct
+// the sub-box that 'slices' through the parent bbox to the furthest wall in the opposite direction from the
+// surface normal, then see which of the two possible
+// faces' bounding boxes removes the most volume from that box when subtracted, we may be able to decide
+// (say, for a subtraction) which face is cutting deeper.  It's not clear to me yet if such an approach would
+// work or would scale to complex cases, but it may be worth thinking about.
 HIDDEN int
 split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_ClassArray<LinkedCurve> &curves)
 {
@@ -736,14 +727,6 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 	}
     }
 
-#if USE_CONNECTIVITY_GRAPH
-    // Keep track of information about which SSI curves are used into the final
-    // trimmed face, so that we can know which trimmed face on the other face
-    // shares an SSI curve with it (and they become neighbors in the connectivity
-    // graph).
-    ON_ClassArray<LinkedCurve> curves_from_ssi;
-#endif
-
     // deal with the situations where there is no intersection
     std::vector<ON_SimpleArray<ON_Curve*> > innerloops;
     for (int i = 0; i < curves.Count(); i++) {
@@ -758,13 +741,6 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 		    TrimmedFace *newface = new TrimmedFace();
 		    newface->m_face = in->m_face;
 		    curves[i].AppendCurvesToArray(newface->m_outerloop);
-#if USE_CONNECTIVITY_GRAPH
-		    // It doesn't share its parent's outerloop
-		    newface->m_parts.Empty();
-		    // It used the SSI curve (curves[i])
-		    curves[i].AppendSSIInfoToArray(newface->m_ssi_info);
-		    curves_from_ssi.Append(curves[i]);
-#endif
 		    out.Append(newface);
 		}
 	    }
@@ -843,12 +819,6 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 
     // Split the outer loop.
     ON_SimpleArray<ON_Curve*> outerloop;    // segments of the outerloop
-#if USE_CONNECTIVITY_GRAPH
-    // the start point and end point of an outerloop segment
-    // outerloop_start_end[] and outerloop[] should have the same size, and
-    // outerloop_start_end[i] should be corresponding to outerloop[i] exactly.
-    ON_ClassArray<std::pair<IntersectPoint, IntersectPoint> > outerloop_start_end;
-#endif
     int isect_iter = 0;
     for (int i = 0; i < in->m_outerloop.Count(); i++) {
 	ON_Curve *curve_on_loop = in->m_outerloop[i]->Duplicate();
@@ -873,43 +843,17 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 	    }
 	    if (left != NULL) {
 		outerloop.Append(left);
-#if USE_CONNECTIVITY_GRAPH
-		IntersectPoint start;
-		if (outerloop_start_end.Count() == 0 || outerloop_start_end.Last()->second.m_seg != i) {
-		    // It should use the start point of in->outerloop[i]
-		    start.m_seg = i;
-		    start.m_t = in->m_outerloop[i]->Domain().Min();
-		} else {
-		    // Continuous to the last one
-		    start = outerloop_start_end.Last()->second;
-		}
-		outerloop_start_end.Append(std::make_pair(start, isect_pt));
-#endif
 	    } else if (split_called) {
 		bu_log("Split failed.\n");
 		if (curve_on_loop) {
-		    bu_log("Domain: [%lf, %lf]\n", curve_on_loop->Domain().Min(), curve_on_loop->Domain().Max());
-		    bu_log("m_t: %lf\n", isect_pt.m_t);
+		    bu_log("Domain: [%f, %f]\n", curve_on_loop->Domain().Min(), curve_on_loop->Domain().Max());
+		    bu_log("m_t: %f\n", isect_pt.m_t);
 		}
 	    }
 	    intersect[isect_iter].m_pos = outerloop.Count() - 1;
 	}
 	if (curve_on_loop) {
 	    outerloop.Append(curve_on_loop);
-#if USE_CONNECTIVITY_GRAPH
-	    IntersectPoint start, end;
-	    if (outerloop_start_end.Count() == 0 || outerloop_start_end.Last()->second.m_seg != i) {
-		// It should use the start point of in->outerloop[i]
-		start.m_seg = i;
-		start.m_t = in->m_outerloop[i]->Domain().Min();
-	    } else {
-		// Continuous to the last one
-		start = outerloop_start_end.Last()->second;
-	    }
-	    end.m_seg = i;
-	    end.m_t = in->m_outerloop[i]->Domain().Max();
-	    outerloop_start_end.Append(std::make_pair(start, end));
-#endif
 	}
     }
 
@@ -924,11 +868,8 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 	    }
 	    else {
 		bu_log("ON_Curve::Duplicate() failed.\n");
-		outerloop.Append(outerloop[i]);
+		outerloop.Append(NULL);
 	    }
-#if USE_CONNECTIVITY_GRAPH
-	    outerloop_start_end.Append(outerloop_start_end[i]);
-#endif
 	}
 	intersect.Last()->m_pos = outerloop.Count() - 1;
     }
@@ -940,13 +881,6 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
     std::stack<int> s;
 
     for (int i = 0; i < intersect.Count(); i++) {
-#if USE_CONNECTIVITY_GRAPH
-	// Check the validity of outerloop_start_end
-	if (outerloop_start_end.Count() != outerloop.Count()) {
-	    bu_log("split_trimmed_face() Error [i = %d]: outerloop_start_end.Count() != outerloop.Count()\n", i);
-	    return -1;
-	}
-#endif
 
 	// Ignore UNSET IntersectPoints.
 	if (intersect[i].m_in_out == IntersectPoint::UNSET)
@@ -982,15 +916,11 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 
 	// need to form a new loop
 	ON_SimpleArray<ON_Curve*> newloop;
-#if USE_CONNECTIVITY_GRAPH
-	ON_ClassArray<std::pair<IntersectPoint, IntersectPoint> > newloop_start_end;
-#endif
 	int curve_count = q.m_pos - p.m_pos;
 	for (int j = p.m_pos + 1; j <= q.m_pos; j++) {
+	    // No need to duplicate the curve, because the pointer
+	    // in the array 'outerloop' will be moved out later.
 	    newloop.Append(outerloop[j]);
-#if USE_CONNECTIVITY_GRAPH
-	    newloop_start_end.Append(outerloop_start_end[j]);
-#endif
 	}
 
 	if (p.m_type != q.m_type) {
@@ -1033,20 +963,6 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 		outerloop[outerloop.Count()-1] = NULL;
 		outerloop.Remove();
 	    }
-#if USE_CONNECTIVITY_GRAPH
-	    // Update outerloop_start_end
-	    IntersectPoint invalid_point;
-	    invalid_point.m_seg = -1;
-	    outerloop_start_end[p.m_pos + 1] = std::make_pair(invalid_point, invalid_point);
-	    k = p.m_pos + 2;
-	    for (int j = q.m_pos + 1; j < outerloop_start_end.Count(); j++)
-		outerloop_start_end[k++] = outerloop_start_end[j];
-	    while (k < outerloop_start_end.Count()) {
-		outerloop_start_end.Remove();
-	    }
-	    // Update curves_from_ssi
-	    curves_from_ssi.Append(curves[p.m_type]);
-#endif
 	    // Update m_pos
 	    for (int j = i + 1; j < intersect.Count(); j++)
 		intersect[j].m_pos -= curve_count - 1;
@@ -1058,12 +974,6 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 	    TrimmedFace *newface = new TrimmedFace();
 	    newface->m_face = in->m_face;
 	    newface->m_outerloop.Append(newloop.Count(), newloop.Array());
-#if USE_CONNECTIVITY_GRAPH
-	    for (int j = 0; j < newloop_start_end.Count(); j++)
-		if (newloop_start_end[j].first.m_seg != -1)
-		    newface->m_parts.Append(newloop_start_end[j]);
-	    curves[p.m_type].AppendSSIInfoToArray(newface->m_ssi_info);
-#endif
 	    out.Append(newface);
 	} else {
 	    for (int j = 0; j < newloop.Count(); j++)
@@ -1077,9 +987,6 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 	    delete outerloop[0];
 	    outerloop[0] = NULL;
 	    outerloop.Remove(0);
-#if USE_CONNECTIVITY_GRAPH
-	    outerloop_start_end.Remove(0);
-#endif
 	}
     }
 
@@ -1091,15 +998,14 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 	    TrimmedFace *newface = new TrimmedFace();
 	    newface->m_face = in->m_face;
 	    newface->m_outerloop = outerloop;
+	    // First copy the array with pointers, and then change
+	    // the pointers into copies.
 	    newface->m_innerloop = in->m_innerloop;
+	    for (unsigned int i = 0; i < in->m_innerloop.size(); i++)
+		for (int j = 0; j < in->m_innerloop[i].Count(); j++)
+		    if (in->m_innerloop[i][j])
+			newface->m_innerloop[i][j] = in->m_innerloop[i][j]->Duplicate();
 	    newface->m_innerloop.insert(newface->m_innerloop.end(), innerloops.begin(), innerloops.end());
-#if USE_CONNECTIVITY_GRAPH
-	    for (int i = 0; i < outerloop_start_end.Count(); i++)
-		if (outerloop_start_end[i].first.m_seg != -1)
-		    newface->m_parts.Append(outerloop_start_end[i]);
-	    for (int i = 0; i < curves_from_ssi.Count(); i++)
-		curves_from_ssi[i].AppendSSIInfoToArray(newface->m_ssi_info);
-#endif
 	    out.Append(newface);
 	} else {
 	    for (int i = 0; i < outerloop.Count(); i++)
@@ -1148,6 +1054,24 @@ bool IsSameSurface(const ON_Surface* surfA, const ON_Surface* surfB)
 
     if (surfA == NULL || surfB == NULL)
 	return false;
+/*
+    // Deal with two planes, if that's what we have - in that case
+    // the determination can be more general than the CV comparison
+    ON_Plane surfA_plane, surfB_plane;
+    if (surfA->IsPlanar(&surfA_plane) && surfB->IsPlanar(&surfB_plane)) {
+	ON_3dVector surfA_normal = surfA_plane.Normal();
+	ON_3dVector surfB_normal = surfB_plane.Normal();
+	if (surfA_normal.IsParallelTo(surfB_normal) == 1) {
+	    if (surfA_plane.DistanceTo(surfB_plane.Origin()) < ON_ZERO_TOLERANCE) {
+		return true;
+	    } else {
+		return false;
+	    }
+	} else {
+	    return false;
+	}
+    }
+*/
 
     ON_NurbsSurface nurbsSurfaceA, nurbsSurfaceB;
     if (!surfA->GetNurbForm(nurbsSurfaceA) || !surfB->GetNurbForm(nurbsSurfaceB))
@@ -1351,77 +1275,6 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve*> &
     }
 }
 
-
-#if USE_CONNECTIVITY_GRAPH
-HIDDEN int
-build_connectivity_graph(const ON_Brep* brep, ON_SimpleArray<TrimmedFace*>& trimmedfaces, int start_idx = -1, int end_idx = -1)
-{
-    if (start_idx == -1)
-	start_idx = 0;
-
-    if (end_idx == -1)
-	end_idx = trimmedfaces.Count() - 1;
-
-    int facecount = brep->m_F.Count();
-    if (end_idx - start_idx + 1 != facecount) {
-	bu_log("build_connectivity_graph() Error: length of [start_idx, end_idx] not equal to the face count.\n");
-	return -1;
-    }
-
-    // Index of the edges of a face
-    ON_ClassArray<ON_SimpleArray<int> > edge_index(facecount);
-
-    for (int i = 0; i < facecount; i++) {
-	ON_SimpleArray<int> ei;
-	const ON_BrepFace& face = brep->m_F[i];
-	for (int j = 0; j < face.m_li.Count(); j++) {
-	    const ON_BrepLoop& loop = brep->m_L[face.m_li[j]];
-	    for (int k = 0; k < loop.m_ti.Count(); k++) {
-		const ON_BrepTrim& trim = brep->m_T[loop.m_ti[k]];
-		if (trim.m_ei != -1) {
-		    // The trim is not singular. It's corresponding to an edge
-		    ei.Append(trim.m_ei);
-		}
-	    }
-	}
-	edge_index.Append(ei);
-    }
-
-    if (edge_index.Count() != facecount) {
-	bu_log("build_connectivity_graph() Error: edge_index.Count() != brep->m_F.Count()\n");
-	return -1;
-    }
-
-    // Find the faces that share an edge
-    for (int i = 0; i < facecount; i++) {
-	for (int j = i + 1; j < facecount; j++) {
-	    bool shared = false;
-	    // Using O(n^2) searching. Because the problem size is usually very
-	    // small, this is an ideal choice.
-	    for (int k = 0; k < edge_index[i].Count(); k++) {
-		if (edge_index[j].Search(edge_index[i][k]) != -1) {
-		    shared = true;
-		    break;
-		}
-	    }
-	    if (shared) {
-		// They share an edge, so they're neighbors.
-		// Search the array to avoid duplication
-		if (trimmedfaces[start_idx+i]->m_neighbors.Search(trimmedfaces[start_idx+j]) == -1) {
-		    trimmedfaces[start_idx+i]->m_neighbors.Append(trimmedfaces[start_idx+j]);
-		}
-		if (trimmedfaces[start_idx+j]->m_neighbors.Search(trimmedfaces[start_idx+i]) == -1) {
-		    trimmedfaces[start_idx+j]->m_neighbors.Append(trimmedfaces[start_idx+i]);
-		}
-	    }
-	}
-    }
-
-    return 0;
-}
-#endif	// #if USE_CONNECTIVITY_GRAPH
-
-
 HIDDEN bool
 IsPointOnBrepSurface(const ON_3dPoint& pt, const ON_Brep* brep, ON_SimpleArray<Subsurface*>& surf_tree)
 {
@@ -1624,8 +1477,113 @@ IsFaceInsideBrep(const TrimmedFace* tface, const ON_Brep* brep, ON_SimpleArray<S
 int
 ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type operation)
 {
+    /* Deal with the trivial cases up front */
+    if (brepA->BoundingBox().MinimumDistanceTo(brepB->BoundingBox()) > ON_ZERO_TOLERANCE) {
+	switch(operation) {
+	    case BOOLEAN_UNION:
+		brepO->Append(*brepA);
+		brepO->Append(*brepB);
+		break;
+	    case BOOLEAN_DIFF:
+		brepO->Append(*brepA);
+		break;
+	    case BOOLEAN_INTERSECT:
+		return 0;
+		break;
+	    default:
+		bu_log("Error - unknown boolean operation\n");
+		return -1;
+	}
+
+	brepO->ShrinkSurfaces();
+	brepO->Compact();
+	return 0;
+    }
+
+    std::set<int> A_unused, B_unused;
+    std::set<int> A_finalform, B_finalform;
     int facecount1 = brepA->m_F.Count();
     int facecount2 = brepB->m_F.Count();
+
+    /* Depending on the operation type and the bounding box behaviors, we
+     * can sometimes decide immediately whether a face will end up in the
+     * final brep or will have no role in the intersections - do that
+     * categorization up front */
+    for (int i = 0; i < facecount1 + facecount2; i++) {
+	const ON_BrepFace &face = i < facecount1 ? brepA->m_F[i] : brepB->m_F[i - facecount1];
+	const ON_Brep *brep = i < facecount1 ? brepB : brepA;
+	std::set<int> *unused = i < facecount1 ? &A_unused : &B_unused;
+	std::set<int> *intact = i < facecount1 ? &A_finalform : &B_finalform;
+	int curr_index = i < facecount1 ? i : i - facecount1;
+	if (face.BoundingBox().MinimumDistanceTo(brep->BoundingBox()) > ON_ZERO_TOLERANCE) {
+	    switch(operation) {
+		case BOOLEAN_UNION:
+		    intact->insert(curr_index);
+		    break;
+		case BOOLEAN_DIFF:
+		    if (i < facecount1) intact->insert(curr_index);
+		    if (i >= facecount1) unused->insert(curr_index);
+		    break;
+		case BOOLEAN_INTERSECT:
+		    unused->insert(curr_index);
+		    break;
+		default:
+		    bu_log("Error - unknown boolean operation\n");
+		    break;
+	    }
+	}
+    }
+
+    // For the faces that we can't rule out, there are several possible roles they can play:
+    //
+    // 1.  Fully utilized in the new brep
+    // 2.  Changed into a new set of faces by intersections, each of which must be evaluated
+    // 3.  Fully discarded by the new brep
+    //
+    // We won't be able to distinguish between 1 and 3 at this stage, but we can narrow in
+    // on which faces might fall into category 2 and what faces they might interact with.
+    std::set<std::pair<int, int> > intersection_candidates;
+    for (int i = 0; i < facecount1; i++) {
+	if (A_unused.find(i) == A_unused.end() && A_finalform.find(i) == A_finalform.end()) {
+	    for (int j = 0; j < facecount2; j++) {
+		if (B_unused.find(j) == B_unused.end() &&  B_finalform.find(j) == B_finalform.end()) {
+		    // If the two faces don't interact according to their bounding boxes,
+		    // they won't be a source of events - otherwise, they must be checked.
+		    fastf_t disjoint = brepA->m_F[i].BoundingBox().MinimumDistanceTo(brepB->m_F[j].BoundingBox());
+		    if (!(disjoint > ON_ZERO_TOLERANCE)) {
+			intersection_candidates.insert(std::pair<int, int>(i,j));
+		    }
+		}
+	    }
+	}
+    }
+
+    // For those not in category 2 an inside/outside test on the breps combined with the boolean op
+    // should be enough to decide the issue, but there is a problem.  If *all* faces of a brep are
+    // inside the other brep and the operation is a subtraction, we don't want a "floating" inside-out
+    // brep volume inside the outer volume and topologically isolated.  Normally this is handled by
+    // creating a face that connects the outer and inner shells, but this is potentially a non-trivial
+    // operation.  The only thing that comes immediately to mind is to find the center point of the
+    // bounding box of the inner brep, create a plane using that point and the z+ unit vector for a normal, and
+    // cut both breps in half with that plane to form four new breps and two new subtraction problems.
+    //
+    // More broadly, this is a problem - unioning two half-spheres with a sphere subtracted out of their
+    // respective centers will end up with isolated surfaces in the middle of the union unless the routines
+    // know they must keep one of the coplanar faces in order to topologically connect the middle.  However,
+    // in the case where there is no center sphere the central face should be removed.  It may be that the
+    // condition to satisfy for removal is no interior trimming loops on the face.
+    //
+    //
+    // Also worth thinking about - would it be possible to then do edge comparisons to
+    // determine which of the "fully used/fully non-used" faces are needed?
+
+    if(DEBUG_BREP_BOOLEAN) {
+	bu_log("Summary of brep status: \n A_unused: %d\n B_unused: %d\n A_finalform: %d\n B_finalform %d\nintersection_candidates(%d):\n", A_unused.size(), B_unused.size(), A_finalform.size(), B_finalform.size(), intersection_candidates.size());
+	for (std::set<std::pair<int, int> >::iterator it=intersection_candidates.begin(); it != intersection_candidates.end(); ++it) {
+	    bu_log("     (%d,%d)\n", (*it).first, (*it).second);
+	}
+    }
+
     int surfcount1 = brepA->m_S.Count();
     int surfcount2 = brepB->m_S.Count();
     ON_ClassArray<ON_SimpleArray<SSICurve> > curvesarray(facecount1 + facecount2);
@@ -1639,48 +1597,61 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
     // calculate intersection curves
     for (int i = 0; i < facecount1; i++) {
 	for (int j = 0; j < facecount2; j++) {
-	    ON_Surface *surfA, *surfB;
-	    surfA = brepA->m_S[brepA->m_F[i].m_si];
-	    surfB = brepB->m_S[brepB->m_F[j].m_si];
-	    if (IsSameSurface(surfA, surfB))
-		continue;
-	    // Possible enhancement: Some faces may share the same surface.
-	    // We can store the result of SSI to avoid re-computation.
-	    ON_ClassArray<ON_SSX_EVENT> events;
-	    if (ON_Intersect(surfA,
-			     surfB,
-			     events,
-			     INTERSECTION_TOL,
-			     0.0,
-			     0.0,
-			     NULL,
-			     NULL,
-			     NULL,
-			     NULL,
-			     surf_treeA[brepA->m_F[i].m_si],
-			     surf_treeB[brepB->m_F[j].m_si]) <= 0)
-		continue;
-	    ON_SimpleArray<ON_Curve*> curve_uv, curve_st;
-	    for (int k = 0; k < events.Count(); k++) {
-		if (events[k].m_type == ON_SSX_EVENT::ssx_tangent
-		    || events[k].m_type == ON_SSX_EVENT::ssx_transverse) {
-		    if (get_subcurve_inside_faces(brepA, brepB, i, j, &events[k]) < 0)
-			continue;
-		    SSICurve c1, c2;
-		    c1.m_curve = events[k].m_curveA;
-		    c2.m_curve = events[k].m_curveB;
-#if USE_CONNECTIVITY_GRAPH
-		    c1.m_info.m_fi1 = c2.m_info.m_fi2 = i;
-		    c1.m_info.m_fi2 = c2.m_info.m_fi1 = facecount1 + j;
-		    c1.m_info.m_ci = c2.m_info.m_ci = k;
-#endif
-		    curvesarray[i].Append(c1);
-		    curvesarray[facecount1 + j].Append(c2);
-		    // Set m_curveA and m_curveB to NULL, in case that they are
-		    // deleted by ~ON_SSX_EVENT().
-		    events[k].m_curveA = events[k].m_curveB = NULL;
+	    if (intersection_candidates.find(std::pair<int,int>(i, j)) != intersection_candidates.end()) {
+		ON_Surface *surfA, *surfB;
+		ON_ClassArray<ON_SSX_EVENT> events;
+		int results = 0;
+		surfA = brepA->m_S[brepA->m_F[i].m_si];
+		surfB = brepB->m_S[brepB->m_F[j].m_si];
+		if (IsSameSurface(surfA, surfB))
+		    continue;
+
+		// Possible enhancement: Some faces may share the same surface.
+		// We can store the result of SSI to avoid re-computation.
+		results = ON_Intersect(surfA,
+			surfB,
+			events,
+			INTERSECTION_TOL,
+			0.0,
+			0.0,
+			NULL,
+			NULL,
+			NULL,
+			NULL,
+			surf_treeA[brepA->m_F[i].m_si],
+			surf_treeB[brepB->m_F[j].m_si]);
+		if (results <= 0)
+		    continue;
+		ON_SimpleArray<ON_Curve*> curve_uv, curve_st;
+		for (int k = 0; k < events.Count(); k++) {
+		    if (events[k].m_type == ON_SSX_EVENT::ssx_tangent
+			    || events[k].m_type == ON_SSX_EVENT::ssx_transverse) {
+			if (get_subcurve_inside_faces(brepA, brepB, i, j, &events[k]) < 0)
+			    continue;
+			SSICurve c1, c2;
+			c1.m_curve = events[k].m_curveA;
+			c2.m_curve = events[k].m_curveB;
+			curvesarray[i].Append(c1);
+			curvesarray[facecount1 + j].Append(c2);
+			// Set m_curveA and m_curveB to NULL, in case that they are
+			// deleted by ~ON_SSX_EVENT().
+			events[k].m_curveA = events[k].m_curveB = NULL;
+		    }
 		}
+
+		if (DEBUG_BREP_BOOLEAN) {
+		    // Look for coplanar faces
+		    ON_Plane surfA_plane, surfB_plane;
+		    if (surfA->IsPlanar(&surfA_plane) && surfB->IsPlanar(&surfB_plane)) {
+			/* We already checked for disjoint above, so the only remaining question is the normals */
+			if (surfA_plane.Normal().IsParallelTo(surfB_plane.Normal())) {
+			    bu_log("Faces brepA->%d and brepB->%d are coplanar and intersecting\n", i, j);
+			}
+		    }
+		}
+
 	    }
+
 	}
     }
 
@@ -1708,16 +1679,6 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 	    if (j != 0)
 		first->m_innerloop.push_back(iloop);
 	}
-#if USE_CONNECTIVITY_GRAPH
-	if (first->m_outerloop.Count()) {
-	    IntersectPoint start, end;
-	    start.m_seg = 0;
-	    start.m_t = first->m_outerloop[0]->Domain().Min();
-	    end.m_seg = first->m_outerloop.Count() - 1;
-	    end.m_t = (*first->m_outerloop.Last())->Domain().Max();
-	    first->m_parts.Append(std::make_pair(start, end));
-	}
-#endif
 	original_faces.Append(first);
     }
 
@@ -1725,29 +1686,6 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 	bu_log("ON_Boolean() Error: TrimmedFace generation failed.\n");
 	return -1;
     }
-
-#if USE_CONNECTIVITY_GRAPH
-    build_connectivity_graph(brepA, original_faces, 0, facecount1 - 1);
-    build_connectivity_graph(brepB, original_faces, facecount1, original_faces.Count() - 1);
-
-    if (DEBUG_BREP_BOOLEAN) {
-	bu_log("The connectivity graph for the first brep structure.");
-	for (int i = 0; i < facecount1; i++) {
-	    bu_log("\nFace[%d]'s neighbors:", i);
-	    for (int j = 0; j < original_faces[i]->m_neighbors.Count(); j++) {
-		bu_log(" %d", original_faces.Search(original_faces[i]->m_neighbors[j]));
-	    }
-	}
-	bu_log("\nThe connectivity graph for the second brep structure.");
-	for (int i = 0; i < facecount2; i++) {
-	    bu_log("\nFace[%d]'s neighbors:", i);
-	    for (int j = 0; j < original_faces[facecount1 + i]->m_neighbors.Count(); j++) {
-		bu_log(" %d", original_faces.Search(original_faces[facecount1 + i]->m_neighbors[j]) - facecount1);
-	    }
-	}
-	bu_log("\n");
-    }
-#endif	// #if USE_CONNECTIVITY_GRAPH
 
     // split the surfaces with the intersection curves
     ON_ClassArray<ON_SimpleArray<TrimmedFace*> > trimmedfaces;
@@ -1773,79 +1711,6 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 	bu_log("ON_Boolean() Error: trimmedfaces.Count() != original_faces.Count()\n");
 	return -1;
     }
-
-#if USE_CONNECTIVITY_GRAPH
-    // Update the connectivity graph after surface partitioning
-    for (int i = 0; i < original_faces.Count(); i++) {
-	for (int j = 0; j < trimmedfaces[i].Count(); j++) {
-	    TrimmedFace* t_face = trimmedfaces[i][j];
-	    if (t_face->m_parts.Count() == 0)
-		continue;
-	    for (int k = 0; k < original_faces[i]->m_neighbors.Count(); k++) {
-		int neighbor_index = original_faces.Search(original_faces[i]->m_neighbors[k]);
-		if (neighbor_index == -1)
-		    continue;
-		for (int l = 0; l < trimmedfaces[neighbor_index].Count(); l++) {
-		    // Search all of its parent's neighbors' children, and check
-		    // whether they share a common part of the original outerloop.
-		    // If their "parts" intersect (overlap) in some way, they are
-		    // neighbors again. (Neighboring parents' children become new
-		    // neighbors: parent[i]'s child[j] with parent[i]'s neighbor[k]'s
-		    // child[l])
-		    TrimmedFace* another_face = trimmedfaces[neighbor_index][l];
-		    if (another_face->m_parts.Count() == 0)
-			continue;
-		    // Find an intersection between all their "parts".
-		    for (int i1 = 0; i1 < t_face->m_parts.Count(); i1++) {
-			for (int i2 = 0; i2 < another_face->m_parts.Count(); i2++) {
-			    IntersectPoint& start1 = t_face->m_parts[i1].first;
-			    IntersectPoint& start2 = another_face->m_parts[i2].first;
-			    IntersectPoint& end1 = t_face->m_parts[i1].second;
-			    IntersectPoint& end2 = another_face->m_parts[i2].second;
-			    if (compare_t(&start1, &end1) > 0) {
-				// start > end, swap them
-				std::swap(start1, end1);
-			    }
-			    if (compare_t(&start2, &end2) > 0) {
-				std::swap(start2, end2);
-			    }
-			    const IntersectPoint& start_max = compare_t(&start1, &start2) < 0 ? start2 : start1;
-			    const IntersectPoint& end_min = compare_t(&end1, &end2) < 0 ? end1 : end2;
-			    if (compare_t(&start_max, &end_min) < 0) {
-				// The intervals intersect
-				if (t_face->m_neighbors.Search(another_face) == -1)
-				    t_face->m_neighbors.Append(another_face);
-				if (another_face->m_neighbors.Search(t_face) == -1)
-				    another_face->m_neighbors.Append(t_face);
-				break;
-			    }
-			}
-		    }
-		}
-	    }
-	}
-    }
-
-    if (DEBUG_BREP_BOOLEAN) {
-	bu_log("The new connectivity graph for the first brep structure.");
-	for (int i = 0; i < facecount1; i++) {
-	    for (int j = 0; j < trimmedfaces[i].Count(); j++) {
-		bu_log("\nFace[%p]'s neighbors:", trimmedfaces[i][j]);
-		for (int k = 0; k < trimmedfaces[i][j]->m_neighbors.Count(); k++)
-		    bu_log(" %p", trimmedfaces[i][j]->m_neighbors[k]);
-	    }
-	}
-	bu_log("\nThe new connectivity graph for the second brep structure.");
-	for (int i = 0; i < facecount2; i++) {
-	    for (int j = 0; j < trimmedfaces[facecount1 + i].Count(); j++) {
-		bu_log("\nFace[%p]'s neighbors:", trimmedfaces[facecount1 + i][j]);
-		for (int k = 0; k < trimmedfaces[facecount1 + i][j]->m_neighbors.Count(); k++)
-		    bu_log(" %p", trimmedfaces[facecount1 + i][j]->m_neighbors[k]);
-	    }
-	}
-	bu_log("\n");
-    }
-#endif	// #if USE_CONNECTIVITY_GRAPH
 
     for (int i = 0; i < original_faces.Count(); i++) {
 	delete original_faces[i];
@@ -1894,21 +1759,6 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 		    bu_log("Whether the trimmed face is inside/outside is unknown.\n");
 		splitted[j]->m_belong_to_final = TrimmedFace::UNKNOWN;
 	    }
-#if USE_CONNECTIVITY_GRAPH
-	    // BFS the connectivity graph and marked all connected trimmed faces.
-	    std::queue<TrimmedFace*> q;
-	    q.push(splitted[j]);
-	    while (!q.empty()) {
-		TrimmedFace* front = q.front();
-		q.pop();
-		for (int k = 0; k < front->m_neighbors.Count(); k++) {
-		    if (front->m_neighbors[k]->m_belong_to_final == TrimmedFace::UNKNOWN) {
-			front->m_neighbors[k]->m_belong_to_final = splitted[j]->m_belong_to_final;
-			q.push(front->m_neighbors[k]);
-		    }
-		}
-	    }
-#endif
 	}
     }
 
@@ -1937,57 +1787,9 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 		const ON_BrepFace& original_face = i >= facecount1 ? brepB->m_F[i - facecount1] : brepA->m_F[i];
 		if (original_face.m_bRev ^ t_face->m_rev)
 		    brepO->FlipFace(new_face);
-
-#if USE_CONNECTIVITY_GRAPH
-		// Generate the connectivity graph for the new solid (Remove
-		// the nodes that don't belong to it)
-		for (int k = 0; k < t_face->m_neighbors.Count(); k++)
-		    if (t_face->m_neighbors[k]->m_belong_to_final != TrimmedFace::BELONG) {
-			t_face->m_neighbors.Remove(k);
-			k--;
-		    }
-
-		for (int k = 0; k < t_face->m_ssi_info.Count(); k++) {
-		    SSICurveInfo info = t_face->m_ssi_info[k];
-		    if (info.m_fi1 != i) {
-			bu_log("Error: info.m_fi1(%d) != i(%d)\n", info.m_fi1, i);
-			continue;
-		    }
-		    for (int l = 0; l < trimmedfaces[info.m_fi2].Count(); l++) {
-			TrimmedFace* another_face = trimmedfaces[info.m_fi2][l];
-			if (another_face->m_belong_to_final != TrimmedFace::BELONG)
-			    continue;
-			int m;
-			for (m = 0; m < another_face->m_ssi_info.Count(); m++)
-			    if (another_face->m_ssi_info[m].m_fi2 == i && another_face->m_ssi_info[m].m_ci == info.m_ci)
-				break;
-			if (m != another_face->m_ssi_info.Count()) {
-			    if (t_face->m_neighbors.Search(another_face) == -1)
-				t_face->m_neighbors.Append(another_face);
-			    if (another_face->m_neighbors.Search(t_face) == -1)
-				another_face->m_neighbors.Append(t_face);
-			}
-		    }
-		}
-#endif
 	    }
 	}
     }
-
-#if USE_CONNECTIVITY_GRAPH
-    if (DEBUG_BREP_BOOLEAN) {
-	bu_log("The new connectivity graph for the final brep structure.");
-	for (int i = 0; i < facecount1 + facecount2; i++) {
-	    for (int j = 0; j < trimmedfaces[i].Count(); j++) {
-		if (trimmedfaces[i][j]->m_belong_to_final != TrimmedFace::BELONG)
-		    continue;
-		bu_log("\nFace[%p]'s neighbors:", trimmedfaces[i][j]);
-		for (int k = 0; k < trimmedfaces[i][j]->m_neighbors.Count(); k++)
-		    bu_log(" %p", trimmedfaces[i][j]->m_neighbors[k]);
-	    }
-	}
-    }
-#endif
 
     for (int i = 0; i < facecount1 + facecount2; i++)
 	for (int j = 0; j < trimmedfaces[i].Count(); j++)
@@ -1995,6 +1797,9 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 		delete trimmedfaces[i][j];
 		trimmedfaces[i][j] = NULL;
 	    }
+
+    brepO->ShrinkSurfaces();
+    brepO->Compact();
 
     // Check IsValid() and output the message.
     ON_wString ws;
@@ -2006,7 +1811,6 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 	delete surf_treeA[i];
     for (int i = 0; i < surf_treeB.Count(); i++)
 	delete surf_treeB[i];
-
     return 0;
 }
 

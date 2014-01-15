@@ -55,7 +55,14 @@
 
     <para>
     <screenshot>
-      <mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/oed_fig01.png"/></imageobject></mediaobject>
+      <mediaobject>
+        <imageobject role="html">
+          <imagedata align="center" fileref="../../articles/en/images/oed_fig01.png" format="PNG"/>
+        </imageobject>
+        <imageobject role="fo">
+          <imagedata align="center" fileref="../../articles/en/images/oed_fig01.png" format="PNG"/>
+        </imageobject>
+      </mediaobject>
     </screenshot>
     </para>
 
@@ -202,7 +209,14 @@ lollipop/
 
     <para>
       <screenshot>
-	<mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/oed_fig02.png"/></imageobject></mediaobject>
+	<mediaobject>
+          <imageobject role="html">
+             <imagedata align="center" fileref="../../articles/en/images/oed_fig02.png" format="PNG"/>
+          </imageobject>
+          <imageobject role="fo">
+             <imagedata align="center" fileref="../../articles/en/images/oed_fig02.png" format="PNG"/>
+          </imageobject>
+        </mediaobject>
       </screenshot>
     </para>
 
@@ -265,7 +279,14 @@ cube.s:  ARB8
 
     <para>
       <screenshot>
-	<mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/oed_fig03.png"/></imageobject></mediaobject>
+	<mediaobject>
+          <imageobject role="html">
+            <imagedata align="center" fileref="../../articles/en/images/oed_fig03.png" format="PNG"/>
+          </imageobject>
+          <imageobject role="fo">
+            <imagedata align="center" fileref="../../articles/en/images/oed_fig03.png" format="PNG"/>
+          </imageobject>
+        </mediaobject>
       </screenshot>
     </para>
 
@@ -278,7 +299,14 @@ cube.s:  ARB8
 
     <para>
       <screenshot>
-	<mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/oed_fig04.png"/></imageobject></mediaobject>
+	<mediaobject>
+          <imageobject role="html">
+            <imagedata align="center" fileref="../../articles/en/images/oed_fig04.png" format="PNG"/>
+          </imageobject>
+          <imageobject role="fo">
+            <imagedata align="center" fileref="../../articles/en/images/oed_fig04.png" format="PNG"/>
+          </imageobject>
+        </mediaobject>
       </screenshot>
     </para>
 
@@ -290,7 +318,14 @@ cube.s:  ARB8
 
     <para>
       <screenshot>
-	<mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/oed_fig05.png"/></imageobject></mediaobject>
+	<mediaobject>
+          <imageobject role="html">
+            <imagedata align="center" fileref="../../articles/en/images/oed_fig05.png" format="PNG"/>
+          </imageobject>
+          <imageobject role="fo">
+            <imagedata align="center" fileref="../../articles/en/images/oed_fig05.png" format="PNG"/>
+          </imageobject>
+        </mediaobject>
       </screenshot>
     </para>
 
@@ -341,7 +376,14 @@ cube.s:  ARB8
 
     <para>
       <screenshot>
-	<mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/oed_fig06.png"/></imageobject></mediaobject>
+	<mediaobject>
+          <imageobject role="html">
+            <imagedata align="center" fileref="../../articles/en/images/oed_fig06.png" format="PNG"/>
+          </imageobject>
+          <imageobject role="fo">
+            <imagedata align="center" fileref="../../articles/en/images/oed_fig06.png" format="PNG"/>
+          </imageobject>
+        </mediaobject>
       </screenshot>
     </para>
 
@@ -469,7 +511,14 @@ cube.s:  ARB8
 
     <para>
       <screenshot>
-	<mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/oed_fig07.png"/></imageobject></mediaobject>
+	<mediaobject>
+          <imageobject role="html">
+            <imagedata align="center" fileref="../../articles/en/images/oed_fig07.png" format="PNG"/>
+          </imageobject>
+          <imageobject role="fo">
+            <imagedata align="center" fileref="../../articles/en/images/oed_fig07.png" format="PNG"/>
+          </imageobject>
+        </mediaobject>
       </screenshot>
     </para>
 
@@ -510,7 +559,14 @@ cube.s:  ARB8
 
     <para>
       <screenshot>
-	<mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/oed_fig08.png"/></imageobject></mediaobject>
+	<mediaobject>
+          <imageobject role="html">
+            <imagedata align="center" fileref="../../articles/en/images/oed_fig08.png" format="PNG"/>
+          </imageobject>
+          <imageobject role="fo">
+            <imagedata align="center" fileref="../../articles/en/images/oed_fig08.png" format="PNG"/>
+          </imageobject>
+        </mediaobject>
       </screenshot>
     </para>
 
@@ -582,7 +638,14 @@ object2.c:  --
     <literallayout class="monospaced">accept</literallayout>
 
     <screenshot>
-      <mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/oed_fig09.png"/></imageobject></mediaobject>
+      <mediaobject>
+        <imageobject role="html">
+          <imagedata align="center" fileref="../../articles/en/images/oed_fig09.png" format="PNG"/>
+        </imageobject>
+        <imageobject role="fo">
+          <imagedata align="center" fileref="../../articles/en/images/oed_fig09.png" format="PNG"/>
+        </imageobject>
+      </mediaobject>
     </screenshot>
 
     <literallayout class="monospaced">
@@ -619,7 +682,14 @@ object2.c:  --
 
     <para>
       <screenshot>
-	<mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/oed_fig10.png"/></imageobject></mediaobject>
+	<mediaobject>
+          <imageobject role="html">
+            <imagedata align="center" fileref="../../articles/en/images/oed_fig10.png" format="PNG"/>
+          </imageobject>
+          <imageobject role="fo">
+            <imagedata align="center" fileref="../../articles/en/images/oed_fig10.png" format="PNG"/>
+          </imageobject>
+        </mediaobject>
       </screenshot>
     </para>
 
@@ -669,7 +739,14 @@ object1.c:  --
 
     <para>
       <screenshot>
-	<mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/oed_fig11.png"/></imageobject></mediaobject>
+	<mediaobject>
+          <imageobject role="html">
+            <imagedata align="center" fileref="../../articles/en/images/oed_fig11.png" format="PNG"/>
+          </imageobject>
+          <imageobject role="fo">
+            <imagedata align="center" fileref="../../articles/en/images/oed_fig11.png" format="PNG"/>
+          </imageobject>
+        </mediaobject>
       </screenshot>
     </para>
 
@@ -684,7 +761,14 @@ object1.c:  --
 
     <para>
       <screenshot>
-	<mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/oed_fig12.png"/></imageobject></mediaobject>
+	<mediaobject>
+          <imageobject role="html">
+            <imagedata align="center" fileref="../../articles/en/images/oed_fig12.png" format="PNG"/>
+          </imageobject>
+          <imageobject role="fo">
+            <imagedata align="center" fileref="../../articles/en/images/oed_fig12.png" format="PNG"/>
+          </imageobject>
+        </mediaobject>
       </screenshot>
     </para>
 
@@ -750,7 +834,14 @@ object1.c:  --
     <literallayout class="monospaced">B bigobject.r</literallayout>
 
     <screenshot>
-      <mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/oed_fig13.png"/></imageobject></mediaobject>
+      <mediaobject>
+        <imageobject role="html">
+          <imagedata align="center" fileref="../../articles/en/images/oed_fig13.png" format="PNG"/>
+        </imageobject>
+        <imageobject role="fo">
+          <imagedata align="center" fileref="../../articles/en/images/oed_fig13.png" format="PNG"/>
+        </imageobject>
+      </mediaobject>
     </screenshot>
     </para>
 

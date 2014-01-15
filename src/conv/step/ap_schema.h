@@ -1,7 +1,7 @@
 /*                   A P _ S C H E M A . H
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,8 +22,9 @@
  * Definition based switching for current STEP schema
  *
  */
-#ifndef AP_SCHEMA_H_
-#define AP_SCHEMA_H_
+
+#ifndef CONV_STEP_AP_SCHEMA_H
+#define CONV_STEP_AP_SCHEMA_H
 
 #include "common.h"
 
@@ -42,7 +43,7 @@
 #  define SCHEMA_NAMESPACE automotive_design
 #endif
 
-#endif /* AP_SCHEMA_H_ */
+#endif /* CONV_STEP_AP_SCHEMA_H */
 
 /*
  * Local Variables:

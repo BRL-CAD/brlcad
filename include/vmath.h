@@ -1,7 +1,7 @@
 /*                         V M A T H . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -87,8 +87,8 @@
  * preserve source code formatting.
  */
 
-#ifndef __VMATH_H__
-#define __VMATH_H__
+#ifndef VMATH_H
+#define VMATH_H
 
 #include "common.h"
 
@@ -488,6 +488,12 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	((_a)[Y]-(_b)[Y])*((_a)[Y]-(_b)[Y]) + \
 	((_a)[Z]-(_b)[Z])*((_a)[Z]-(_b)[Z])
 #define DIST_PT_PT(_a, _b) sqrt(DIST_PT_PT_SQ(_a, _b))
+
+/** @brief Compute distance between two 2D points. */
+#define DIST_PT2_PT2_SQ(_a, _b) \
+	((_a)[X]-(_b)[X])*((_a)[X]-(_b)[X]) + \
+	((_a)[Y]-(_b)[Y])*((_a)[Y]-(_b)[Y])
+#define DIST_PT2_PT2(_a, _b) sqrt(DIST_PT2_PT2_SQ(_a, _b))
 
 /** @brief set translation values of 4x4 matrix with x, y, z values. */
 #define MAT_DELTAS(_m, _x, _y, _z) do { \
@@ -1034,6 +1040,20 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	} \
     } while (0)
 
+/** @brief Normalize 2D vector `a' to be a unit vector. */
+#define V2UNITIZE(a) do { \
+	register double _f = MAG2SQ(a); \
+	if (! NEAR_EQUAL(_f, 1.0, VUNITIZE_TOL)) { \
+		_f = sqrt(_f); \
+		if (_f < VDIVIDE_TOL) { \
+			V2SETALL((a), 0.0); \
+		} else { \
+			_f = 1.0/_f; \
+			(a)[X] *= _f; (a)[Y] *= _f; \
+		} \
+	} \
+    } while (0)
+
 /**
  * @brief Find the sum of two points, and scale the result.  Often
  * used to find the midpoint.
@@ -1254,9 +1274,18 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 #define MAGSQ(a)	((a)[X]*(a)[X] + (a)[Y]*(a)[Y] + (a)[Z]*(a)[Z])
 #define MAG2SQ(a)	((a)[X]*(a)[X] + (a)[Y]*(a)[Y])
 
-/** @brief Return scalar magnitude of vector at `a' */
+
+/**
+ * @brief Return scalar magnitude of the 3D vector `a'.  This is
+ * otherwise known as the Euclidean norm of the provided vector..
+ */
 #define MAGNITUDE(a) sqrt(MAGSQ(a))
 
+/**
+ * @brief Return scalar magnitude of the 2D vector at `a'.  This is
+ * otherwise known as the Euclidean norm of the provided vector..
+ */
+#define MAGNITUDE2(a) sqrt(MAG2SQ(a))
 
 /**
  * Store cross product of 3D vectors at `b' and `c' in vector at `a'.
@@ -1324,7 +1353,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * replaced universally with fastf_t's since their epsilon is
  * considerably less than that of a double.
  */
-#define INTCLAMP(_a) (NEAR_EQUAL((_a), rint(_a), VUNITIZE_TOL) ? (double)(long)rint(_a) : (_a))
+#define INTCLAMP(_a) (NEAR_EQUAL((_a), rint(_a), VUNITIZE_TOL) ? rint(_a) : (_a))
 
 /** @brief integer clamped versions of the previous arg macros. */
 #define V2INTCLAMPARGS(a) INTCLAMP((a)[X]), INTCLAMP((a)[Y])
@@ -1524,16 +1553,42 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 #define V_MAX(r, s) if ((r) < (s)) r = (s)
 
+#ifdef VMIN
+#  undef VMIN
+#endif
 #define VMIN(r, s) do { \
 	V_MIN((r)[X], (s)[X]); V_MIN((r)[Y], (s)[Y]); V_MIN((r)[Z], (s)[Z]); \
     } while (0)
 
+#ifdef VMAX
+#  undef VMAX
+#endif
 #define VMAX(r, s) do { \
 	V_MAX((r)[X], (s)[X]); V_MAX((r)[Y], (s)[Y]); V_MAX((r)[Z], (s)[Z]); \
     } while (0)
 
+#ifdef VMINMAX
+#  undef VMINMAX
+#endif
 #define VMINMAX(min, max, pt) do { \
 	VMIN((min), (pt)); VMAX((max), (pt)); \
+    } while (0)
+
+/**
+ * @brief Included below are macros to update min and max X, Y
+ * values to contain a point
+ */
+
+#define V2MIN(r, s) do { \
+	V_MIN((r)[X], (s)[X]); V_MIN((r)[Y], (s)[Y]); \
+    } while (0)
+
+#define V2MAX(r, s) do { \
+	V_MAX((r)[X], (s)[X]); V_MAX((r)[Y], (s)[Y]); \
+    } while (0)
+
+#define V2MINMAX(min, max, pt) do { \
+	V2MIN((min), (pt)); V2MAX((max), (pt)); \
     } while (0)
 
 /**
@@ -1728,7 +1783,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
     } while (0)
 
 /**
- * Macros for dealing with 3-D "extents", aka bounding boxes, that are
+ * Macros for dealing with 3-D "extents", a/k/a bounding boxes, that are
  * represented as axis-aligned right parallelepipeds (RPPs).  This is
  * stored as two points: a min point, and a max point.  RPP 1 is
  * defined by lo1, hi1, RPP 2 by lo2, hi2.
@@ -1941,7 +1996,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 __END_DECLS
 
-#endif /* __VMATH_H__ */
+#endif /* VMATH_H */
 
 /** @} */
 /*

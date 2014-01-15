@@ -1,7 +1,7 @@
 /*                     P I X B U S T U P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,7 +41,7 @@ static size_t nlines;		/* Number of input lines */
 static size_t pix_line;		/* Number of pixels/line */
 
 static void
-printUsage()
+printUsage(void)
 {
     bu_log("Usage: pixbustup basename width [image_offset] [first_number] <input.pix\n");
 }

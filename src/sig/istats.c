@@ -1,7 +1,7 @@
 /*                        I S T A T S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,22 +35,25 @@
 
 
 /*
- * U S A G E --- tell user how to invoke this program, then exit
+ * Tell user how to invoke this program, then exit
  */
-void usage(const char *progname)
+static void
+usage(const char *progname)
 {
     bu_exit(1, "Usage: %s [ file ]\n", progname);
 }
 
+
 /*
- * P A R S E _ A R G S --- Parse through command line flags
+ * Parse through command line flags
  */
-int parse_args(int ac, char **av, char *progname)
+static int
+parse_args(int ac, char **av, const char **progname)
 {
     int c;
 
-    if (!(progname=strrchr(*av, '/')))
-	progname = *av;
+    if (!(*progname=strrchr(*av, '/')))
+	*progname = *av;
 
     /* Turn off bu_getopt's error messages */
     bu_opterr = 0;
@@ -60,13 +63,15 @@ int parse_args(int ac, char **av, char *progname)
 	switch (c) {
 	    case '?'	:
 	    case 'h'	:
-	    default		: usage(progname); break;
+	    default		: usage(*progname); break;
 	}
 
     return bu_optind;
 }
 
-void comp_stats(FILE *fd)
+
+static void
+comp_stats(FILE *fd)
 {
     short *buffer=(short *)NULL;
     short min, max;
@@ -101,28 +106,27 @@ void comp_stats(FILE *fd)
 
 
 /*
- * M A I N
- *
  * Call parse_args to handle command line arguments first, then
  * process input.
  */
-int main(int ac, char *av[])
+int
+main(int ac, char *av[])
 {
-    char *progname = "(noname)";
+    const char *progname = "istats";
     int arg_index;
 
     /* parse command flags
      */
-    arg_index = parse_args(ac, av, progname);
+    arg_index = parse_args(ac, av, &progname);
     if (arg_index < ac) {
 	char *ifname = bu_realpath(av[arg_index], NULL);
 	/* open file of shorts */
 	if (freopen(ifname, "r", stdin) == (FILE *)NULL) {
 	    perror(ifname);
-	    bu_free(ifname,"ifname alloc from bu_realpath");
+	    bu_free(ifname, "ifname alloc from bu_realpath");
 	    return -1;
 	}
-	bu_free(ifname,"ifname alloc from bu_realpath");
+	bu_free(ifname, "ifname alloc from bu_realpath");
     } else if (isatty((int)fileno(stdin))) {
 	usage(progname);
     }
@@ -131,6 +135,7 @@ int main(int ac, char *av[])
 
     return 0;
 }
+
 
 /*
  * Local Variables:

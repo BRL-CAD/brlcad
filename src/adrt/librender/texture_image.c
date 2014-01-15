@@ -1,7 +1,7 @@
 /*                     T E X T U R E _ I M A G E . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2013 United States Government as represented by
+ * Copyright (c) 2002-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,20 +33,7 @@
 
 #include "bu.h"
 
-void
-texture_image_init(struct texture_s *texture, short w, short h, unsigned char *image) {
-    struct texture_image_s *td;
 
-    BU_ALLOC(texture->data, struct texture_image_s);
-    texture->free = texture_image_free;
-    texture->work = (texture_work_t *)texture_image_work;
-
-    td = (struct texture_image_s *)texture->data;
-    td->w = w;
-    td->h = h;
-    td->image = (unsigned char *)bu_malloc(3*w*h, "texture image");
-    memcpy(td->image, image, 3*w*h);
-}
 
 
 void

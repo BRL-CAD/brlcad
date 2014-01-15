@@ -1,5 +1,4 @@
 <!-- Converted by db4-upgrade version 1.0 -->
-
 <article xmlns="http://docbook.org/ns/docbook" version="5.0">
   <info><title>
 	Ejercicios adicionales de ubicación de imágenes en espacios 3-D
@@ -63,7 +62,10 @@
 	sea aproximadamente del mismo tamaño que el de la siguiente ilustración:
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged14_candle_base_sphere_topview.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged14_candle_base_sphere_topview.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -98,7 +100,10 @@
 	diseño que está creando.
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged14_candle_multipane.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged14_candle_multipane.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -139,7 +144,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged14_primitive_editor.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged14_primitive_editor.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -159,7 +167,10 @@
 	siguiente ilustración.
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged14_primitive_selection_dropdown.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged14_primitive_selection_dropdown.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -181,10 +192,10 @@
 	    <tbody>
 	      <row>
 		<entry>
-		  <inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged14_candle_spheres_topview.png"/></imageobject></inlinemediaobject>
+		  <inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/es/images/mged14_candle_spheres_topview.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/es/images/mged14_candle_spheres_topview.png"/></imageobject></inlinemediaobject>
 		</entry>
 		<entry>
-		  <inlinemediaobject><imageobject><imagedata fileref="../../lessons/es/images/mged14_candle_spheres_frontview.png"/></imageobject></inlinemediaobject>
+		  <inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/es/images/mged14_candle_spheres_frontview.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/es/images/mged14_candle_spheres_frontview.png"/></imageobject></inlinemediaobject>
 		</entry>
 	      </row>
 	      <row>
@@ -208,7 +219,10 @@
 	vista en particular y detectarse desde otro punto de vista.
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged14_candle_spheres_az35el25.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged14_candle_spheres_az35el25.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -548,7 +562,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged14_candle_spheres_raytraced.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged14_candle_spheres_raytraced.png" format="PNG"/>
 	  </imageobject>
 	  <caption>

@@ -1,7 +1,7 @@
 /*                    P C V A R I A B L E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,8 +24,8 @@
  * Class definition of Variable & Domain
  *
  */
-#ifndef __PCVARIABLE_H__
-#define __PCVARIABLE_H__
+#ifndef LIBPC_PCVARIABLE_H
+#define LIBPC_PCVARIABLE_H
 
 #define VAR_ABS 0
 #define VAR_INT 1

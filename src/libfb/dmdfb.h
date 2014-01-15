@@ -1,7 +1,7 @@
 /*                         D M D F B . H
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,6 +23,10 @@
  *
  */
 /** @} */
+
+#ifndef LIBFB_DMDFB_H
+#define LIBFB_DMDFB_H
+
 
 #define BLACK		0
 #define WHITE		1
@@ -53,6 +57,8 @@
 #define SMALL_LAYER_SZ	51
 #define MIN_LAYER_SZ	80
 
+
+#endif /* LIBFB_DMDFB_H */
 /*
  * Local Variables:
  * mode: C

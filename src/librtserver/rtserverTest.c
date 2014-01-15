@@ -1,7 +1,7 @@
 /*                  R T S E R V E R T E S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -256,7 +256,7 @@ main( int argc, char *argv[] )
 	    VSET( ap->a_ray.r_dir, 0, 1, 0 );
 	    rts_shootray(ap);
 	    if( do_plot ) {
-		hitCount = countHits(ap->a_uptr);
+		hitCount = countHits((struct bu_vlb *)ap->a_uptr);
 		if ( hitCount == 0 ) {
 		    result_map[i][j] = ' ';
 		} else if ( hitCount <= 9 ) {

@@ -1,7 +1,7 @@
 /*                        T C L C A D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -160,7 +160,7 @@ Tclcad_Init(Tcl_Interp *interp)
     /* initialize command history objects */
     Cho_Init(interp);
 
-    Tcl_PkgProvide(interp,  "Tclcad", (ClientData)brlcad_version());
+    Tcl_PkgProvide(interp, "Tclcad", brlcad_version());
 
     (void)library_initialized(1);
 

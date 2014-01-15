@@ -1,7 +1,7 @@
 /*                       D S P _ A D D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -234,7 +234,7 @@ main(int ac, char *av[])
     // TCLAP doesn't check for confusion in file names
     if (BU_STR_EQUAL(dsp3_fname, dsp1_fname)
         || BU_STR_EQUAL(dsp3_fname, dsp2_fname)) {
-      bu_exit(EXIT_FAILURE, "overwriting an input file (use the '-f' option to continue)\n");
+      bu_exit(EXIT_FAILURE, "overwriting an input file\n");
     }
 
     // nor does it check for existing files (FIXME: add to TCLAP)

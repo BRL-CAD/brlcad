@@ -1,7 +1,7 @@
 /*                            D G . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,8 +27,10 @@
  *
  */
 
-#ifndef __DG_H__
-#define __DG_H__
+#ifndef DG_H
+#define DG_H
+
+#include "common.h"
 
 #include "ged.h"
 #include "obj.h"
@@ -248,7 +250,7 @@ GED_EXPORT extern int vdraw_cmd_tcl(struct dg_obj *dgop,
 
 __END_DECLS
 
-#endif /* __DG_H__ */
+#endif /* DG_H */
 
 /** @} */
 

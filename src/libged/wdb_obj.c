@@ -1,7 +1,7 @@
 /*                       W D B _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2013 United States Government as represented by
+ * Copyright (c) 2000-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -193,7 +193,7 @@ static int pathListNoLeaf = 0;
  * on the respective names and return that value.
  */
 int
-wdb_cmpdirname(const genptr_t a, const genptr_t b)
+wdb_cmpdirname(const void *a, const void *b, void *UNUSED(arg))
 {
     struct directory **dp1, **dp2;
 
@@ -271,9 +271,9 @@ wdb_vls_col_pr4v(struct bu_vls *vls,
     int cwidth;		/* column width */
     int numcol;		/* number of columns */
 
-    qsort((genptr_t)list_of_names,
-	  (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
-	  (int (*)(const void *, const void *))wdb_cmpdirname);
+    bu_sort((void *)list_of_names,
+	    (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
+	    wdb_cmpdirname, NULL);
 
     /*
      * Traverse the list of names, find the longest name and set the
@@ -363,9 +363,9 @@ wdb_vls_long_dpp(struct rt_wdb *wdbp,
     int max_type_len = 0;
     struct directory *dp;
 
-    qsort((genptr_t)list_of_names,
-	  (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
-	  (int (*)(const void *, const void *))wdb_cmpdirname);
+    bu_sort((void *)list_of_names,
+	    (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
+	    wdb_cmpdirname, NULL);
 
     for (i = 0; i < num_in_list; i++) {
 	int len;
@@ -485,9 +485,9 @@ wdb_vls_line_dpp(struct rt_wdb *UNUSED(wdbp),
     int isComb, isRegion;
     int isSolid;
 
-    qsort((genptr_t)list_of_names,
-	  (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
-	  (int (*)(const void *, const void *))wdb_cmpdirname);
+    bu_sort((void *)list_of_names,
+	    (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
+	    wdb_cmpdirname, NULL);
 
     /*
      * i - tracks the list item
@@ -1391,7 +1391,7 @@ wdb_move_arb_face_cmd(struct rt_wdb *wdbp,
     planes[face][3] = VDOT(&planes[face][0], pt);
 
     /* calculate new points for the arb */
-    (void)rt_arb_calc_points(arb, arb_type, planes, &wdbp->wdb_tol);
+    (void)rt_arb_calc_points(arb, arb_type, (const plane_t *)planes, &wdbp->wdb_tol);
 
     {
 	int i;
@@ -1602,7 +1602,7 @@ wdb_rotate_arb_face_cmd(struct rt_wdb *wdbp,
     }
 
     /* calculate new points for the arb */
-    (void)rt_arb_calc_points(arb, arb_type, planes, &wdbp->wdb_tol);
+    (void)rt_arb_calc_points(arb, arb_type, (const plane_t *)planes, &wdbp->wdb_tol);
 
     {
 	struct bu_vls vls;
@@ -2892,7 +2892,7 @@ wdb_dbip_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    bu_vls_printf(&vls, "%p", wdbp->dbip);
+    bu_vls_printf(&vls, "%p", (void *)wdbp->dbip);
     Tcl_AppendResult(wdbp->wdb_interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
     return TCL_OK;
@@ -6560,12 +6560,12 @@ wdb_pull_comb(struct db_i *dbip,
  * and storing the changes at the combinations.
  */
 static void
-wdb_pull_comb_mat(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, matp_t mp, genptr_t UNUSED(usr_ptr2),
+wdb_pull_comb_mat(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t mp, genptr_t UNUSED(usr_ptr2),
 	      genptr_t UNUSED(usr_ptr3), genptr_t UNUSED(usr_ptr4))
 {
     struct directory *dp;
     mat_t inv_mat;
-    matp_t mat = mp;
+    matp_t mat = (matp_t)mp;
 
     RT_CK_DBI(dbip);
     RT_CK_TREE(comb_leaf);

@@ -1,7 +1,7 @@
 /*                      S U B M O D E L . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2013 United States Government as represented by
+ * Copyright (c) 2000-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -261,7 +261,7 @@ rt_submodel_print(const struct soltab *stp)
     bn_mat_print("m2subm", submodel->m2subm);
 
     bu_log_indent_delta(4);
-    bu_log("submodel->rtip=x%x\n", submodel->rtip);
+    bu_log("submodel->rtip=%p\n", (void *)submodel->rtip);
 
     /* Loop through submodel's solid table printing them too. */
     RT_VISIT_ALL_SOLTABS_START(stp, submodel->rtip) {
@@ -878,7 +878,7 @@ rt_submodel_export4(struct bu_external *ep, const struct rt_db_internal *ip, dou
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record)*DB_SS_NGRAN;
-    ep->ext_buf = bu_calloc(1, ep->ext_nbytes, "submodel external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "submodel external");
     rec = (union record *)ep->ext_buf;
 
     bu_vls_struct_print(&str, rt_submodel_parse, (char *)sip);
@@ -965,7 +965,7 @@ rt_submodel_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
     BU_CK_EXTERNAL(ep);
     bu_vls_struct_print(&str, rt_submodel_parse, (char *)sip);
     ep->ext_nbytes = bu_vls_strlen(&str);
-    ep->ext_buf = bu_calloc(1, ep->ext_nbytes, "submodel external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "submodel external");
 
     bu_strlcpy((char *)ep->ext_buf, bu_vls_addr(&str), ep->ext_nbytes);
     bu_vls_free(&str);

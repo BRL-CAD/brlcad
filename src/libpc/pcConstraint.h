@@ -1,7 +1,7 @@
 /*                       P C C O N S T R A I N T . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,8 +24,8 @@
  * Constraint Class for Parametrics and Constraints Library
  *
  */
-#ifndef __PCCONSTRAINT_H__
-#define __PCCONSTRAINT_H__
+#ifndef LIBPC_PCCONSTRAINT_H
+#define LIBPC_PCCONSTRAINT_H
 
 #include "common.h"
 

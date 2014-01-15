@@ -1,7 +1,7 @@
 /*                           D B 5 . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,8 +26,10 @@
  *
  */
 
-#ifndef __DB5_H__
-#define __DB5_H__
+#ifndef DB5_H
+#define DB5_H
+
+#include "common.h"
 
 __BEGIN_DECLS
 
@@ -221,7 +223,7 @@ RT_EXPORT extern const unsigned char *db5_get_raw_internal_ptr(struct db5_raw_in
 
 __END_DECLS
 
-#endif	/* __DB5_H__ */
+#endif	/* DB5_H */
 
 /** @} */
 /*

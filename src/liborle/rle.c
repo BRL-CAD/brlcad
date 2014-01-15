@@ -1,7 +1,7 @@
 /*                           R L E . C
  * BRL-CAD
  *
- * Copyright (c) 1983-2013 United States Government as represented by
+ * Copyright (c) 1983-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -137,7 +137,7 @@ static Xtnd_Rle_Header w_setup;	/* Header being written out.	*/
 static Xtnd_Rle_Header r_setup;	/* Header being read in.	*/
 
 /* Functions to read instructions, depending on format.			*/
-HIDDEN int (*_func_Get_Inst)();	/* Ptr to appropriate function.	*/
+HIDDEN int (*_func_Get_Inst)(FILE *, int *, int *);	/* Ptr to appropriate function.	*/
 
 
 void
@@ -187,7 +187,7 @@ rle_wpos(int xpos, int ypos, int mode)
 }
 
 HIDDEN int
-_get_Old_Inst(register FILE *fp, register int *op, register int *dat)
+_get_Old_Inst(FILE *fp, int *op, int *dat)
 {
     static Old_Inst instruction;
     register char *p;
@@ -207,7 +207,7 @@ _get_Old_Inst(register FILE *fp, register int *op, register int *dat)
 }
 
 HIDDEN int
-_get_New_Inst(register FILE *fp, register int *opcode, register int *datum)
+_get_New_Inst(FILE *fp, int *opcode, int *datum)
 {
     static short long_data;
 
@@ -226,24 +226,24 @@ _get_New_Inst(register FILE *fp, register int *opcode, register int *datum)
 }
 
 void
-prnt_XSetup(char *msg, register Xtnd_Rle_Header *setup)
+prnt_XSetup(const char *msg, register Xtnd_Rle_Header *setup)
 {
-    (void) fprintf(stderr, "%s : \n", msg);
-    (void) fprintf(stderr,
-		   "\th_xpos=%d, h_ypos=%d\n\th_xlen=%d, h_ylen=%d\n",
-		   setup->h_xpos, setup->h_ypos,
-		   setup->h_xlen, setup->h_ylen);
-    (void) fprintf(stderr,
-		   "\th_flags=0x%x\n\th_ncolors=%d\n\th_pixelbits=%d\n",
-		   setup->h_flags, setup->h_ncolors, setup->h_pixelbits);
-    (void) fprintf(stderr,
-		   "\th_ncmap=%d\n\th_cmaplen=%d\n",
-		   setup->h_ncmap, setup->h_cmaplen);
-    (void) fprintf(stderr,
-		   "\th_background=[%d %d %d]\n",
-		   setup->h_background[0],
-		   setup->h_background[1],
-		   setup->h_background[2]);
+    (void)fprintf(stderr, "%s : \n", msg);
+    (void)fprintf(stderr,
+		  "\th_xpos=%d, h_ypos=%d\n\th_xlen=%d, h_ylen=%d\n",
+		  setup->h_xpos, setup->h_ypos,
+		  setup->h_xlen, setup->h_ylen);
+    (void)fprintf(stderr,
+		  "\th_flags=0x%x\n\th_ncolors=%d\n\th_pixelbits=%d\n",
+		  setup->h_flags, setup->h_ncolors, setup->h_pixelbits);
+    (void)fprintf(stderr,
+		  "\th_ncmap=%d\n\th_cmaplen=%d\n",
+		  setup->h_ncmap, setup->h_cmaplen);
+    (void)fprintf(stderr,
+		  "\th_background=[%d %d %d]\n",
+		  setup->h_background[0],
+		  setup->h_background[1],
+		  setup->h_background[2]);
     return;
 }
 
@@ -420,7 +420,7 @@ rle_whdr(FILE *fp, int ncolors, int bgflag, int cmflag, unsigned char *bgpixel)
     SWAB(w_setup.h_xlen);
     SWAB(w_setup.h_ylen);
     if (fwrite((char *) &w_setup, sizeof w_setup, 1, fp) != 1) {
-	(void) fprintf(stderr, "Write of RLE header failed!\n");
+	(void)fprintf(stderr, "Write of RLE header failed!\n");
 	return -1;
     }
     SWAB(w_setup.h_xpos);
@@ -428,7 +428,7 @@ rle_whdr(FILE *fp, int ncolors, int bgflag, int cmflag, unsigned char *bgpixel)
     SWAB(w_setup.h_xlen);
     SWAB(w_setup.h_ylen);
     if (rle_debug) {
-	(void) fprintf(stderr, "Magic=0x%x\n", x_magic);
+	(void)fprintf(stderr, "Magic=0x%x\n", x_magic);
 	prnt_XSetup("Setup structure written", &w_setup);
     }
     _bg_flag = bgflag;
@@ -570,7 +570,7 @@ rle_decode_ln(register FILE *fp, RLEpixel *scan_buf)
 	return dirty_flag;
     }
     pp = scan_buf[r_setup.h_xpos]; /* Pointer into pixel. */
-    while ((*_func_Get_Inst)(fp, &opcode, &datum) != EOF) {
+    while (_func_Get_Inst(fp, &opcode, &datum) != EOF) {
 	switch (opcode) {
 	    case RSkipLinesOp :
 		lines_to_skip = datum;

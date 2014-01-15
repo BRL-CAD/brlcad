@@ -1,7 +1,7 @@
 /*                          M R E A D . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2013 United States Government as represented by
+ * Copyright (c) 1992-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@ bu_mread(int fd, void *bufp, long int n)
     char *cbufp = (char *)bufp;
 
     while (count < n) {
-	nread = read(fd, cbufp, (size_t)n-count);
+	nread = read(fd, cbufp, (size_t)(n-count));
 	if (UNLIKELY(nread < 0)) {
 	    return nread;
 	}

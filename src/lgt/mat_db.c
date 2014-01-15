@@ -1,7 +1,7 @@
 /*                        M A T _ D B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -179,7 +179,7 @@ mat_Save_Db(char *file)
     FILE		*fp;
     if ( (fp = fopen( file, "wb" )) == NULL )
 	return	0;
-    setbuf( fp, bu_malloc( BUFSIZ, "buffer" ) );
+    setbuf( fp, (char *)bu_malloc( BUFSIZ, "buffer" ) );
     for (	entry = mat_db_table;
 		entry < &mat_db_table[mat_db_size]
 		    && put_Mat_Entry( entry, fp );

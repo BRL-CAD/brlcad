@@ -1,7 +1,7 @@
 /*                           R E V O L V E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2013 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1218,16 +1218,6 @@ rt_revolve_free(struct soltab *stp)
 
 
 /**
- * R T _ R E V O L V E _ C L A S S
- */
-int
-rt_revolve_class()
-{
-    return 0;
-}
-
-
-/**
  * R T _ R E V O L V E _ P L O T
  */
 int
@@ -1661,7 +1651,7 @@ rt_revolve_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * (ELEMENTS_PER_VECT*3 + 1) + bu_vls_strlen(&rip->sketch_name) + 1;
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "revolve external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "revolve external");
 
     ptr = (unsigned char *)ep->ext_buf;
 

@@ -39,6 +39,7 @@ set(docbook_mann_EN
   bot_split.xml
   bot_sync.xml
   bot_vertex_fuse.xml
+  brep.xml
   build_region.xml
   c.xml
   cat.xml

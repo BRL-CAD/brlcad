@@ -1,7 +1,7 @@
 /*                      S P H F L A K E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -116,7 +116,6 @@ int dir[9][2] = {  {0, -90},
 		   {240, -30},
 		   {360, -30} };
 
-/****** Function Prototypes ******/
 extern void initializeInfo(params_t *p, int inter, char *name, int depth);
 extern void createSphereflake(params_t *p);
 extern void createLights(params_t *p);
@@ -129,7 +128,6 @@ extern void getTrans(mat_t *trans, int i, int j, fastf_t v);
 extern void makeFlake(int depth, mat_t *trans, point_t center, fastf_t radius, double delta, int maxDepth);
 extern void usage(char *n);
 
-
 int main(int argc, char **argv)
 {
     int i;
@@ -139,15 +137,9 @@ int main(int argc, char **argv)
 
     int inter = 0;
     char fileName[MAX_INPUT_LENGTH];
-    int depth;
+    int depth = DEFAULT_MAXDEPTH;
 
-    memset(fileName, 0, MAX_INPUT_LENGTH);
-    depth = DEFAULT_MAXDEPTH;
-    bu_strlcpy(fileName, DEFAULT_FILENAME, sizeof(fileName));
-
-    bu_opterr = 0;
-
-    while ((optc = bu_getopt(argc, argv, "hHiIDd:f:F:")) != -1) {
+    while ((optc = bu_getopt(argc, argv, "iIDd:f:F:h?")) != -1) {
 	switch (optc) {
 	    case 'I' :
 	    case 'i' : /* interactive mode */
@@ -160,26 +152,25 @@ int main(int argc, char **argv)
 		break;
 	    case 'd':  /* Use a user-defined depth */
 		depth = atoi(bu_optarg);
-		if (depth > 5) {
+		if (depth > 5)
 		    printf("\nWARNING: Depths greater than 5 produce extremely large numbers of objects.\n");
-		}
 		break;
 	    case 'F':
 	    case 'f':  /* Use a user-defined filename */
 		memset(fileName, 0, MAX_INPUT_LENGTH);
 		bu_strlcpy(fileName, bu_optarg, sizeof(fileName));
 		break;
-	    case 'h':
-	    case 'H':
-	    case '?':
+	    default:
 		usage(argv[0]);
 		bu_exit(0, NULL);
-	    default:
-		break;
 	}
     }
     if (bu_optind <= 1) {
-	printf("Using all default parameters. Try %s -h for assistance\n", argv[0]);
+	usage(argv[0]);
+	fprintf(stderr,"Using all default parameters.\n");
+	fprintf(stderr,"       Program continues running:\n");
+	memset(fileName, 0, MAX_INPUT_LENGTH);
+	bu_strlcpy(fileName, DEFAULT_FILENAME, sizeof(fileName));
 	inter = 0;
     }
 
@@ -199,30 +190,11 @@ int main(int argc, char **argv)
 	BU_LIST_INIT(&(wmemberArray[i].l));
     }
 
-    /****** Create the SphereFlake ******/
-
     createSphereflake(&params);
-
-    /*
-      now that the entire sphereflake has been created, we can create the
-      additional objects needed to complete the scene.
-    */
-    /****** Create the Lights ******/
-
     createLights(&params);
-
-    /****** Create the Plane ******/
-
     createPlane(&params);
-
-    /****** Create the Environment map ******/
-
     createEnvironMap(&params);
-
-    /****** Create the entire Scene combination ******/
-
     createScene(&params);
-
 
     /* clean up */
     wdb_close(fp);
@@ -235,8 +207,8 @@ int main(int argc, char **argv)
 
 void usage(char *n)
 {
-    printf(
-	"\nUSAGE: %s -D -d# -i -f fileName\n\
+    fprintf(stderr,
+	"\nUsage: %s -D -d# -i -f fileName\n\
 	  D -- use default parameters\n\
 	  d -- set the recursive depth of the procedure\n\
 	  i -- use interactive mode\n\
@@ -247,15 +219,15 @@ void usage(char *n)
 void initializeInfo(params_t *p, int inter, char *name, int depth)
 {
     char input[MAX_INPUT_LENGTH];
-    int i = 0;
+    int i;
     size_t len = 0;
     unsigned int c[3];
 
-    if (name == NULL) {
+    if (name == NULL)
 	bu_strlcpy(p->fileName, DEFAULT_FILENAME, sizeof(p->fileName));
-    } else {
+    else
 	bu_strlcpy(p->fileName, name, sizeof(p->fileName));
-    }
+
     p->maxRadius = DEFAULT_MAXRADIUS;
     p->maxDepth =  (depth > 0) ? (depth) : (DEFAULT_MAXDEPTH);
     p->deltaRadius = DEFAULT_DELTARADIUS;
@@ -287,9 +259,8 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 	} else {
 	    len = strlen(input);
 	    if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-	    if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+	    if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0)
 		sscanf(input, "%48s", p->fileName); /* MAX_INPUT_LENGTH */
-	    }
 	}
 	fflush(stdin);
 
@@ -303,7 +274,7 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 	    if (bu_strncmp(input, "", MAX_INPUT_LENGTH) == 0) {
 		double scan[3];
 		sscanf(input, "%lg %lg %lg", &scan[X], &scan[Y], &scan[Z]);
-		VMOVE(p->pos, scan); /* double to fastf_t */
+		VMOVE(p->pos, scan);
 	    }
 	}
 	fflush(stdin);
@@ -315,9 +286,8 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 	} else {
 	    len = strlen(input);
 	    if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-	    if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+	    if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0)
 		sscanf(input, "%d", &(p->maxRadius));
-	    }
 	}
 	fflush(stdin);
 
@@ -328,9 +298,8 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 	} else {
 	    len = strlen(input);
 	    if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-	    if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+	    if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0)
 		sscanf(input, "%lg", &(p->deltaRadius));
-	    }
 	}
 	fflush(stdin);
 
@@ -341,9 +310,8 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 	} else {
 	    len = strlen(input);
 	    if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-	    if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+	    if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0)
 		sscanf(input, "%d", &(p->maxDepth));
-	    }
 	}
 	fflush(stdin);
 
@@ -356,9 +324,8 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 	    } else {
 		len = strlen(input);
 		if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-		if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+		if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0)
 		    sscanf(input, "%48s", p->matArray[i].name); /* MAX_INPUT_LENGTH */
-		}
 	    }
 	    fflush(stdin);
 
@@ -369,9 +336,8 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 	    } else {
 		len = strlen(input);
 		if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
-		if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
+		if (bu_strncmp(input, "", MAX_INPUT_LENGTH) != 0)
 		    sscanf(input, "%48s", p->matArray[i].params); /* MAX_INPUT_LENGTH */
-		}
 	    }
 	    fflush(stdin);
 
@@ -587,12 +553,6 @@ void getZRotMat(mat_t (*t), fastf_t phi)
     r[15] = 1;
     memcpy(*t, r, sizeof(*t));
 }
-
-
-/*
-  void makeFlake(int depth, mat_t *trans, point_t center, fastf_t radius, float delta, int maxDepth)
-*/
-
 
 void makeFlake(int depth, mat_t (*trans), fastf_t *center, fastf_t radius, double delta, int maxDepth)
 {

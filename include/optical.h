@@ -1,7 +1,7 @@
 /*                            O P T I C A L . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef __OPTICAL_H__
-#define __OPTICAL_H__
+#ifndef OPTICAL_H
+#define OPTICAL_H
 
 #include "common.h"
 
@@ -59,9 +59,9 @@ OPTICAL_EXPORT extern void optical_shader_init(struct mfuncs **headp);
 
 /* stub functions useful for debugging */
 /* defined in sh_text.c */
-OPTICAL_EXPORT extern int mlib_zero();
-OPTICAL_EXPORT extern int mlib_one();
-OPTICAL_EXPORT extern void mlib_void();
+OPTICAL_EXPORT extern int mlib_zero(struct application *, const struct partition *, struct shadework *, genptr_t);
+OPTICAL_EXPORT extern int mlib_one(struct region *, struct bu_vls *, genptr_t *, const struct mfuncs *, struct rt_i *);
+OPTICAL_EXPORT extern void mlib_void(struct region *, genptr_t);
 
 
 /* defined in refract.c */
@@ -196,7 +196,7 @@ struct floatpixel {
 
 __END_DECLS
 
-#endif /* __OPTICAL_H__ */
+#endif /* OPTICAL_H */
 
 /** @} */
 /*

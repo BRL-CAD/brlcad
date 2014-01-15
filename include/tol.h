@@ -1,7 +1,7 @@
 /*                           T O L . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2013 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @file tol.h
  *
  * These routines provide access to the default tolerance values
@@ -27,11 +28,17 @@
  *
  */
 
+#ifndef TOL_H
+#define TOL_H
+
+#include "common.h"
+
 #include "raytrace.h" /* FIXME: need to reverse dependency but need
 		       * RT_EXPORT broken out to do that.
 		       */
 #include "bn.h"
 
+__BEGIN_DECLS
 
 /**
  * Fills in the provided bn_tol structure with compile-time default
@@ -42,6 +49,9 @@
  */
 RT_EXPORT extern struct bn_tol *rt_tol_default(struct bn_tol *tol);
 
+__END_DECLS
+
+#endif /* TOL_H */
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                         M A T E R . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -247,7 +247,7 @@ rt_vls_color_map(struct bu_vls *str)
  * returns the material linked list head node
  */
 struct mater *
-rt_material_head()
+rt_material_head(void)
 {
     return material_head;
 }
@@ -267,7 +267,7 @@ rt_new_material_head(struct mater *newmat)
  * returns a copy of the material linked list head node
  */
 struct mater *
-rt_dup_material_head()
+rt_dup_material_head(void)
 {
     register struct mater *mp = NULL;
     register struct mater *newmp = NULL;

@@ -1,7 +1,7 @@
 /*                  S H _ B I L L B O A R D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -99,10 +99,8 @@ struct bbd_specific bbd_defaults = {
 #define SHDR_NULL ((struct bbd_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct bbd_specific, m)
 
-void new_image(register const struct bu_structparse *sdp,
-	       register const char *name,
-	       char *base,
-	       const char *value);
+/* local sp_hook function */
+void new_image(const struct bu_structparse *, const char *, void *, const char *);
 
 
 /* description of how to parse/print the arguments to the shader
@@ -123,10 +121,11 @@ struct bu_structparse bbd_parse_tab[] = {
 };
 
 
-void new_image(register const struct bu_structparse *UNUSED(sdp),	/*struct desc*/
-	       register const char *UNUSED(name),	/*member name*/
-	       char *base,	/*struct base*/
-	       const char *UNUSED(value)) /*string value */
+void
+new_image(const struct bu_structparse *UNUSED(sdp),
+	  const char *UNUSED(name),
+	  void *base,
+	  const char *UNUSED(value))
 {
     struct bbd_specific *bbd_sp = (struct bbd_specific *)base;
     struct bbd_img *bbdi;
@@ -436,7 +435,7 @@ do_ray_image(struct application *ap,
     if (ulo > uhi) { int i = ulo; ulo = uhi; uhi = i; }
     if (vlo > vhi) { int i = vlo; vlo = vhi; vhi = i; }
 
-    pixels = bi->img_mf->buf;
+    pixels = (unsigned char*)bi->img_mf->buf;
 
     if (rdebug&RDEBUG_SHADE) {
 	bu_log("u:%d..%d  v:%d..%d\n", ulo, uhi, vlo, vhi);
@@ -500,10 +499,12 @@ struct imgdist {
 
 
 int
-imgdist_compare(const void *a, const void *b)
+imgdist_compare(const void *a, const void *b, void *UNUSED(arg))
 {
     return (int)(((struct imgdist *)a)->dist - ((struct imgdist *)b)->dist);
 }
+
+
 /*
  * B I L L B O A R D _ R E N D E R
  *
@@ -556,9 +557,9 @@ bbd_render(struct application *ap, const struct partition *pp, struct shadework 
 	i++;
     }
 
-    qsort(id, bbd_sp->img_count, sizeof(id[0]), &imgdist_compare);
+    bu_sort(id, bbd_sp->img_count, sizeof(id[0]), &imgdist_compare, NULL);
 
-    for (i=0; i < bbd_sp->img_count && swp->sw_transmit > 0.0; i++) {
+    for (i = 0; i < bbd_sp->img_count && swp->sw_transmit > 0.0; i++) {
 	if (id[i].status > 0) do_ray_image(ap, pp, swp, bbd_sp, id[i].bi, id[i].dist);
     }
     if (rdebug&RDEBUG_SHADE) {

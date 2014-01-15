@@ -1,7 +1,7 @@
 /*                          C O N F I G _ W I N . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2013 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -308,6 +308,7 @@ typedef int mode_t;
 #define fork() -1
 #define getprogname() _pgmptr
 #define rint(_X) (floor((_X) + 0.5))
+#define lrint(_X) (long int)(floor((_X) + 0.5))
 #define sleep(_SECONDS) (Sleep(1000 * (_SECONDS)))
 
 #ifndef __cplusplus

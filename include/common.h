@@ -1,7 +1,7 @@
 /*                        C O M M O N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,8 +33,8 @@
  *
  */
 
-#ifndef __COMMON_H__
-#define __COMMON_H__
+#ifndef COMMON_H
+#define COMMON_H
 
 /* include the venerable config.h file.  use a pregenerated one for
  * windows when we cannot autogenerate it easily. do not include
@@ -335,7 +335,35 @@ typedef ptrdiff_t ssize_t;
 #  define __STDC_VERSION__ 0
 #endif
 
-#endif  /* __COMMON_H__ */
+/* Provide macros to indicate availability of diagnostic pragmas for
+ * GCC and Clang.
+ */
+#define HAVE_GCC_DIAG_PRAGMAS \
+    (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__))
+
+#define HAVE_CLANG_DIAG_PRAGMAS \
+    (defined(__clang__) && (__clang_major__ > 2 || (__clang_major__ == 2 && __clang_minor__ >= 8)))
+
+
+/**
+ * Provide a macro for different treatment of initialized extern const
+ * variables between C and C++.  In C the following initialization
+ * (definition) is acceptable for external linkage:
+ *
+ *   const int var = 10;
+ *
+ * but in C++ const is implicitly internal linkage so it must have
+ * extern qualifier:
+ *
+ *   extern const int var = 10;
+ */
+#if defined(__cplusplus)
+  #define EXTERNVARINIT extern
+#else
+  #define EXTERNVARINIT
+#endif
+
+#endif  /* COMMON_H */
 /** @} */
 /*
  * Local Variables:

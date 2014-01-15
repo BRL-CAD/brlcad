@@ -1,7 +1,7 @@
 /*                     P H O T O N M A P . H
  * BRL-CAD
  *
- * Copyright (c) 2002-2013 United States Government as represented by
+ * Copyright (c) 2002-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,6 +25,9 @@
  *  Declarations related to Photon Mapping
  *
  */
+
+#ifndef PHOTONMAP_H
+#define PHOTONMAP_H
 
 #include "common.h"
 
@@ -122,6 +125,7 @@ struct IrradCache {
     struct	IrradNode	*List;
 };
 
+__BEGIN_DECLS
 
 OPTICAL_EXPORT extern int PM_Activated;	/**< @brief Photon Mapping Activated, 0=off, 1=on */
 OPTICAL_EXPORT extern int PM_Visualize;	/**< @brief Photon Mapping Visualization of Irradiance Cache */
@@ -146,6 +150,11 @@ OPTICAL_EXPORT extern void IrradianceEstimate(struct application *ap,
 					      vect_t irrad,
 					      point_t pos,
 					      vect_t normal);
+
+__END_DECLS
+
+#endif /* PHOTONMAP_H */
+
 /** @} */
 /*
  * Local Variables:

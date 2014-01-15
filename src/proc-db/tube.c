@@ -1,7 +1,7 @@
 /*                          T U B E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@
 
 
 mat_t identity;
-double degtorad = 0.0174532925199433;
+double degtorad = DEG2RAD;
 double inches2mm = 25.4;
 
 void build_spline(char *name, int npts, double radius), read_pos(FILE *fp), build_cyl(char *cname, int npts, double radius), xfinddir(fastf_t *dir, double x, fastf_t *loc);
@@ -125,8 +125,17 @@ main(int argc, char **argv)
     vect_t from, to;
     vect_t offset;
 
-    if (argc > 0)
+    if (argc > 0) {
 	bu_log("Usage: %s\n", argv[0]);
+    	bu_log("       (Program expects ./pos.dat file to be present)\n");
+    	bu_log("       (Will generate file tube.g)\n");
+    	if (argc == 2) {
+	    if ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?"))
+		bu_exit(1,NULL);
+    	}
+	else if (argc == 1)
+	    bu_log("       Program continues running:\n");
+    }
 
     BU_LIST_INIT(&head.l);
     BU_LIST_INIT(&ghead.l);
@@ -157,9 +166,9 @@ main(int argc, char **argv)
 #endif
     fprintf(stderr, "inner radius=%gmm, outer radius=%gmm\n", iradius, oradius);
 
-    length = 187 * inches2mm;
+    length = 187. * inches2mm;
 #ifdef never
-    spacing = 100;			/* mm per sample */
+    spacing = 100.;			/* mm per sample */
     nsamples = ceil(length/spacing);
     fprintf(stderr, "length=%gmm, spacing=%gmm\n", length, spacing);
     fprintf(stderr, "nframes=%d\n", nframes);
@@ -228,7 +237,7 @@ main(int argc, char **argv)
 	mk_lcomb(outfp, gname, &ghead, 0,
 		 (char *)0, "", (unsigned char *)0, 0);
 
-	fprintf(stderr, "%d, ", frame);  fflush(stderr);
+	fprintf(stderr, "frame %d\n", frame);  fflush(stderr);
     }
     wdb_close(outfp);
     fflush(stderr);

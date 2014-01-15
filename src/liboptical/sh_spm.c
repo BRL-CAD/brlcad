@@ -1,7 +1,7 @@
 /*                        S H _ S P M . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -154,7 +154,7 @@ spm_print(register struct region *rp, genptr_t dp)
 
     spm = (struct spm_specific *)dp;
 
-    bu_log("spm_print(rp=x%x, dp = x%x)\n", rp, dp);
+    bu_log("spm_print(rp=%p, dp = %p)\n", (void *)rp, dp);
     (void)bu_struct_print("spm_print", spm_parse, (char *)dp);
     if (spm->sp_map) bn_spm_dump(spm->sp_map, 0);
 }

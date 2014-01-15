@@ -1,7 +1,7 @@
 /*                           T I E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,16 +22,14 @@
  *
  */
 
-#ifndef _TIE_H
-#define _TIE_H
+#ifndef TIE_H
+#define TIE_H
 
 #include "common.h"
 
 #include "vmath.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+__BEGIN_DECLS
 
 #define TIE_SINGLE_PRECISION 0
 #define TIE_DOUBLE_PRECISION 1
@@ -154,11 +152,9 @@ RT_EXPORT extern void TIE_VAL(tie_push)(struct tie_s *tie, TIE_3 **tlist, unsign
 #define tie_work TIE_VAL(tie_work)
 #define tie_push TIE_VAL(tie_push)
 
-#ifdef __cplusplus
-}
-#endif
+__END_DECLS
 
-#endif /* _TIE_H */
+#endif /* TIE_H */
 
 /*
  * Local Variables:

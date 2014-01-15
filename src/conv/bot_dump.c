@@ -1,7 +1,7 @@
 /*                       B O T _ D U M P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -69,7 +69,7 @@ main(int argc, char *argv[])
 	bu_exit(1, usage, argv[0]);
     }
 
-    av = bu_calloc(argc, sizeof(char *), "alloc argv copy");
+    av = (const char **)bu_calloc(argc, sizeof(char *), "alloc argv copy");
 
     db_index = bu_optind;
     for (i = j = 0; i < argc; ++i) {

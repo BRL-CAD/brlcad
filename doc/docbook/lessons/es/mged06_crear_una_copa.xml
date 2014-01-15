@@ -1,5 +1,4 @@
 <!-- Converted by db4-upgrade version 1.0 -->
-
 <article xmlns="http://docbook.org/ns/docbook" version="5.0">
   <info><title>Crear una copa</title>
 
@@ -41,7 +40,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged06_rtgoblet.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged06_rtgoblet.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -101,7 +103,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged06_gobletbase.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged06_gobletbase.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -134,7 +139,10 @@
 	siguiente.
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged06_goblet1stsphere.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged06_goblet1stsphere.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -220,7 +228,10 @@
 	terminado, su copa se parecerá a la siguiente desde una vista frontal:
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged06_gobletstem.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged06_gobletstem.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -253,7 +264,10 @@
 	mouse combinado con las vistas múltiples para posicionar la cuenca.
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged06_gobletbasestembasin.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged06_gobletbasestembasin.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -422,7 +436,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged06_base_subtracted_vol.png" format="PNG"/>
+	  </imageobject>
+	<imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged06_base_subtracted_vol.png" format="PNG"/>
 	  </imageobject>
 	</mediaobject>
@@ -450,7 +467,10 @@
 	La copa lucirá similar a la de la siguiente ilustración:
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/es/images/mged06_rtgobletaz_35el_25.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/es/images/mged06_rtgobletaz_35el_25.png" format="PNG"/>
 	  </imageobject>
 	  <caption>

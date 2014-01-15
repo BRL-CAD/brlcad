@@ -1,7 +1,7 @@
 /*                          L O O P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -250,10 +250,10 @@ main(int argc, char *argv[])
 		cincr = 1;
 	}
 	if (cincr > 0)
-	    for (c=cstart;  c <= cfinish; c += cincr)
+	    for (c = cstart;  c <= cfinish; c += cincr)
 		printf("%c\n", (char)c);
 	else if (cincr < 0)
-	    for (c=cstart; c >= cfinish; c +=cincr)
+	    for (c = cstart; c >= cfinish; c += cincr)
 		printf("%c\n", (char)c);
 	else {
 	    bu_log("loop 'incr' can not be zero.\n");

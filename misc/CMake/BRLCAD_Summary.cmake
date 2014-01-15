@@ -1,7 +1,7 @@
 #            B R L C A D _ S U M M A R Y . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2012-2013 United States Government as represented by
+# Copyright (c) 2012-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,14 +37,33 @@
 # This file contains the CMake routines that summarize the results
 # of the BRL-CAD configure process.
 
-# Beginning line of summary
+# By default, tailor the summary for an 80 column terminal
+set(MAX_LINE_LENGTH 80)
+
+###################################################
+#                                                 #
+#               Print Summary Banner              #
+#                                                 #
+###################################################
+
 message("\n")
 if(CMAKE_BUILD_TYPE)
-  message("------ BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} - ${CMAKE_BUILD_TYPE} Build  ------")
+  set(BRLCAD_SUMMARY_BANNER " BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} - ${CMAKE_BUILD_TYPE} Build ")
 else(CMAKE_BUILD_TYPE)
-  message("------------------- BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} ----------------------")
+  set(BRLCAD_SUMMARY_BANNER " BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} ")
 endif(CMAKE_BUILD_TYPE)
-message("\n")
+
+# Standardize width of summary line
+math(EXPR BANNER_LINE_TRIGGER "${MAX_LINE_LENGTH} - 1")
+string(LENGTH "${BRLCAD_SUMMARY_BANNER}" CURRENT_LENGTH)
+while(${CURRENT_LENGTH} LESS ${BANNER_LINE_TRIGGER})
+  set(BRLCAD_SUMMARY_BANNER "-${BRLCAD_SUMMARY_BANNER}-")
+  string(LENGTH "${BRLCAD_SUMMARY_BANNER}" CURRENT_LENGTH)
+endwhile(${CURRENT_LENGTH} LESS ${BANNER_LINE_TRIGGER})
+
+set(BRLCAD_SUMMARY_BANNER "${BRLCAD_SUMMARY_BANNER}\n")
+
+message("${BRLCAD_SUMMARY_BANNER}")
 
 ###################################################
 #                                                 #
@@ -139,8 +158,6 @@ endif(NOT MSVC)
 list(GET ALL_FLAG_LABELS 0 LABEL_LENGTH_STR)
 string(LENGTH "${LABEL_LENGTH_STR}" LABEL_LENGTH)
 
-set(MAX_LINE_LENGTH 80)
-
 function(print_flags flag_type flags FLAGS_MAXLINE)
   set(LINE_STR "${${flag_type}_LABEL}")
   string(REPLACE " " ";" ${flag_type}_LIST "${flags}")
@@ -207,6 +224,9 @@ else(CMAKE_CONFIGURATION_TYPES)
   endif(CMAKE_BUILD_TYPE)
 endif(CMAKE_CONFIGURATION_TYPES)
 
+# Spacer between flags and compilation status lists
+message(" ")
+
 ###################################################
 #                                                 #
 #   Set up primary report item lists and labels   #
@@ -246,6 +266,7 @@ set(BRLCAD_INSTALL_EXAMPLE_GEOMETRY_LABEL "Install example geometry models ")
 set(BRLCAD_DOCBOOK_BUILD_LABEL "Generate extra docs ")
 set(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE_LABEL "Build with strict ISO C compliance checking ")
 set(ENABLE_POSIX_COMPLIANCE_LABEL "Build with strict POSIX compliance checking ")
+set(ENABLE_ALL_CXX_COMPILE_LABEL "Build all C and C++ files with a C++ compiler ")
 
 # Make sets to use for iteration over all report items
 set(BUILD_REPORT_ITEMS
@@ -253,16 +274,30 @@ set(BUILD_REPORT_ITEMS
     TERMLIB UTAHRLE OPENNURBS SCL)
 
 set(FEATURE_REPORT_ITEMS
-    BRLCAD_ENABLE_X11 BRLCAD_ENABLE_OPENGL BRLCAD_ENABLE_RTSERVER
-    BRLCAD_ENABLE_RUNTIME_DEBUG BRLCAD_ENABLE_QT)
+    BRLCAD_ENABLE_OPENGL
+    BRLCAD_ENABLE_X11
+    BRLCAD_ENABLE_QT
+    BRLCAD_ENABLE_RTSERVER
+    BRLCAD_ENABLE_RUNTIME_DEBUG
+    )
 
 set(OTHER_REPORT_ITEMS
     BRLCAD_ARCH_BITSETTING BRLCAD_OPTIMIZED_BUILD
-    BRLCAD_FLAGS_DEBUG BRLCAD_ENABLE_PROFILING
-    BRLCAD_ENABLE_SMP BUILD_STATIC_LIBS BUILD_SHARED_LIBS
-    BRLCAD_ENABLE_COMPILER_WARNINGS BRLCAD_ENABLE_VERBOSE_PROGRESS
+    BUILD_STATIC_LIBS BUILD_SHARED_LIBS
     BRLCAD_INSTALL_EXAMPLE_GEOMETRY BRLCAD_DOCBOOK_BUILD
-    ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE ENABLE_POSIX_COMPLIANCE)
+    )
+
+if(BRLCAD_SUMMARIZE_DEV_SETTINGS)
+  set(OTHER_REPORT_ITEMS ${OTHER_REPORT_ITEMS}
+    BRLCAD_FLAGS_DEBUG
+    BRLCAD_ENABLE_SMP
+    BRLCAD_ENABLE_PROFILING
+    BRLCAD_ENABLE_COMPILER_WARNINGS
+    BRLCAD_ENABLE_VERBOSE_PROGRESS
+    ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE
+    ENABLE_POSIX_COMPLIANCE ENABLE_ALL_CXX_COMPILE
+    )
+endif(BRLCAD_SUMMARIZE_DEV_SETTINGS)
 
 # Construct list of all items
 set(ALL_ITEMS)

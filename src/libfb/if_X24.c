@@ -66,6 +66,7 @@
 #  undef X_NOT_STDC_ENV
 #  undef X_NOT_POSIX
 #endif
+#define class REDEFINE_CLASS_STRING_TO_AVOID_CXX_CONFLICT
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
@@ -2014,7 +2015,7 @@ X24_getmem(FBIO *ifp)
 		    fb_log("X24_getmem: can't seek fb file, using private memory instead, errno %d\n", errno);
 		else if (lseek(fd, 0, SEEK_SET) < 0)
 		    fb_log("X24_getmem: can't seek fb file, using private memory instead, errno %d\n", errno);
-		else if ((mem = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0)) == (char *) -1)
+		else if ((mem = (char *)mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0)) == (char *) -1)
 		    fb_log("X24_getmem: can't mmap fb file, using private memory instead, errno %d\n", errno);
 		else {
 		    close(fd);
@@ -2341,7 +2342,7 @@ X24_updstate(FBIO *ifp)
  * X 2 4 _ Z A P M E M
  */
 HIDDEN void
-X24_zapmem()
+X24_zapmem(void)
 {
 #ifndef HAVE_SYS_MMAN_H
     int shmid;
@@ -3467,8 +3468,7 @@ X24_help(FBIO *ifp)
 	    fb_log("\tStaticGray: Fixed map (R=G=B), single index\n");
 	    break;
 	default:
-	    fb_log("\tUnknown visual class %d\n",
-		   xi->xi_visinfo.class);
+	    fb_log("\tUnknown visual class %d\n", xi->xi_visinfo.class);
 	    break;
     }
     fb_log("\tColormap Size: %d\n", xi->xi_visinfo.colormap_size);
@@ -3551,6 +3551,11 @@ FBIO X24_interface =  {
     {0}  /* u6 */
 };
 
+/* Because class is actually used to access a struct
+ * entry in this file, preserve our redefinition
+ * of class for the benefit of avoiding C++ name
+ * collisions until the end of this file */
+#undef class
 
 #else
 

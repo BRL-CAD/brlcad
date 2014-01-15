@@ -1,7 +1,7 @@
 /*                        P I X - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -185,7 +185,7 @@ get_args(int argc, char **argv)
 int
 skipbytes(int fd, off_t num)
 {
-    int n, try;
+    int n, tries;
 
     if (fileinput) {
 	(void)lseek(fd, num, 1);
@@ -193,8 +193,8 @@ skipbytes(int fd, off_t num)
     }
 
     while (num > 0) {
-	try = num > scanbytes ? scanbytes : num;
-	n = read(fd, scanline, try);
+	tries = num > scanbytes ? scanbytes : num;
+	n = read(fd, scanline, tries);
 	if (n <= 0) {
 	    return -1;
 	}

@@ -1,7 +1,7 @@
 /*                      S S A M P - B W . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -192,8 +192,8 @@ main(int argc, char **argv)
 	bn_pr_tabdata("filter", filt);
     }
 
-    /* Convert each of the spectral sample curves into scalor values */
-    pixels = bu_malloc(sizeof(fastf_t) * width * height, "fastf_t pixels");
+    /* Convert each of the spectral sample curves into scalar values */
+    pixels = (fastf_t *)bu_malloc(sizeof(fastf_t) * width * height, "fastf_t pixels");
 
     for (i = width*height-1; i >= 0; i--) {
 	struct bn_tabdata *sp;

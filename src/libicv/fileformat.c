@@ -1,7 +1,7 @@
 /*                      F I L E F O R M A T . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,8 +34,8 @@
 #include "icv.h"
 
 
-/* c99 doesn't declare these */
-#if !defined(_WIN32) || defined(__CYGWIN__)
+/* c99 doesn't declare these, but C++ does */
+#if (!defined(_WIN32) || defined(__CYGWIN__)) && !defined(__cplusplus)
 extern FILE *fdopen(int, const char *);
 #endif
 
@@ -77,7 +77,7 @@ extern icv_image_t* ppm_read(const char *filename);
  * return the string as as return type (making the int type be an int*
  * argument instead that gets set).
  */
-int
+ICV_IMAGE_FORMAT
 icv_guess_file_format(const char *filename, char *trimmedname)
 {
     /* look for the FMT: header */
@@ -116,7 +116,7 @@ png_write(icv_image_t *bif, const char *filename)
     unsigned char *data;
     FILE *fh;
 
-    fh = fopen(filename, "w");
+    fh = fopen(filename, "wb");
     if (UNLIKELY(fh==NULL)) {
 	perror("fdopen");
 	bu_log("ERROR: png_write failed to get a FILE pointer\n");
@@ -188,7 +188,7 @@ icv_write(icv_image_t *bif, const char *filename, ICV_IMAGE_FORMAT format)
     char buf[BUFSIZ] = {0};
 
     if (format == ICV_IMAGE_AUTO) {
-	format = icv_guess_file_format(filename, buf);
+	format = (ICV_IMAGE_FORMAT)icv_guess_file_format(filename, buf);
     }
 
     ICV_IMAGE_VAL_INT(bif);
@@ -227,17 +227,17 @@ icv_writeline(icv_image_t *bif, int y, void *data, ICV_DATA type)
 
     ICV_IMAGE_VAL_INT(bif);
 
-    if(y > bif->height || y < 0)
+    if (y > bif->height || y < 0)
         return -1;
 
-    if(data == NULL)
+    if (data == NULL)
         return -1;
 
     width_size = (size_t) bif->width*bif->channels;
     dst = bif->data + width_size*y;
 
     if (type == ICV_DATA_UCHAR) {
-	p = data;
+	p = (unsigned char *)data;
 	for (; width_size > 0; width_size--) {
 		*dst = ICV_CONV_8BIT(*p);
 		p++;
@@ -258,13 +258,13 @@ icv_writepixel(icv_image_t *bif, int x, int y, double *data)
 
     ICV_IMAGE_VAL_INT(bif);
 
-    if(x > bif->width || x < 0)
+    if (x > bif->width || x < 0)
         return -1;
 
-    if(y > bif->height || y < 0)
+    if (y > bif->height || y < 0)
         return -1;
 
-    if(data == NULL)
+    if (data == NULL)
         return -1;
 
     dst = bif->data + (y*bif->width + x)*bif->channels;
@@ -313,7 +313,7 @@ icv_zero(icv_image_t *bif)
 
     data = bif->data;
     size = bif->width * bif->height * bif->channels;
-    for (i=0; i< size; i++)
+    for (i = 0; i < size; i++)
 	*data++ = 0;
 
     return bif;

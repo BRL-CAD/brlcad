@@ -1,7 +1,7 @@
 /*                          I M O D . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,25 +37,22 @@
 #include "bu.h"
 #include "vmath.h"
 
-
-char *progname = "(noname)";
-char *file_name = NULL;
-
-
 #define ADD 1
 #define MULT 2
 #define ABS 3
 #define POW 4
 #define BUFLEN (8192*2)	/* usually 2 pages of memory, 16KB */
 
-int numop = 0;		/* number of operations */
-int op[256];		/* operations */
-double val[256];		/* arguments to operations */
-short iobuf[BUFLEN];		/* input buffer */
-int mapbuf[65536];		/* translation buffer/lookup table */
 
-int
-get_args(int argc, char **argv)
+static const char *progname = "imod";
+static int numop = 0;		/* number of operations */
+static int op[256];		/* operations */
+static double val[256];		/* arguments to operations */
+static int mapbuf[65536];	/* translation buffer/lookup table */
+
+
+static int
+get_args(int argc, char *argv[])
 {
     int c;
     double d;
@@ -107,9 +104,9 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty((int)fileno(stdin)))
 	    return 0;
-	file_name = "-";
     } else {
 	char *ifname;
+	char *file_name = NULL;
 	file_name = argv[bu_optind];
 	ifname = bu_realpath(file_name, NULL);
 	if (freopen(ifname, "r", stdin) == NULL) {
@@ -129,7 +126,8 @@ get_args(int argc, char **argv)
 }
 
 
-void mk_trans_tbl(void)
+static void
+mk_trans_tbl(void)
 {
     int i, j;
     double d;
@@ -160,12 +158,15 @@ void mk_trans_tbl(void)
 }
 
 
-int main(int argc, char **argv)
+int
+main(int argc, char *argv[])
 {
     short *p, *q;
     int i;
     unsigned int n;
     unsigned long clip_high, clip_low;
+
+    short iobuf[BUFLEN];		/* input buffer */
 
     if (!(progname=strrchr(*argv, '/')))
 	progname = *argv;

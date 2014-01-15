@@ -1,7 +1,7 @@
 /*                      V F O N T - I F . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @addtogroup vfont */
 /** @ingroup io */
 /** @{ */
@@ -63,6 +64,11 @@
  *
  */
 
+#ifndef VFONT_IF_H
+#define VFONT_IF_H
+
+#include "common.h"
+
 #include "bu.h"
 
 #define SXT(c) ((c)|((c&0x80)?(~0xFF):0))
@@ -95,6 +101,8 @@ struct vfont {
  *
  */
 
+__BEGIN_DECLS
+
 /**
  * V F O N T _ G E T
  *
@@ -119,6 +127,10 @@ BU_EXPORT extern struct vfont *vfont_get(char *font);
  * Return the storage associated with a struct vfont
  */
 BU_EXPORT extern void vfont_free(struct vfont *font);
+
+__END_DECLS
+
+#endif /* VFONT_IF_H */
 
 /** @} */
 /*

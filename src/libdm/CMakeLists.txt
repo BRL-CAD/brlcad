@@ -55,7 +55,7 @@ if(BRLCAD_ENABLE_TK AND NOT WIN32)
 endif(BRLCAD_ENABLE_TK AND NOT WIN32)
 
 if(BRLCAD_ENABLE_QT)
-  BRLCAD_CHECK_CXX_FLAG(Wno-float-equal)
+  CHECK_CXX_FLAG(Wno-float-equal)
 
   list(APPEND libdm_DEFINES DM_QT)
   set(dmqt_srcs dm-qt.cpp)
@@ -90,7 +90,6 @@ set(LIBDM_SRCS
   dm_obj.c
   dm_util.c
   dm-txt.c
-  focus.c
   grid.c
   knob.c
   labels.c
@@ -102,7 +101,7 @@ set(LIBDM_SRCS
   vers.c
   )
 
-BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "libged;librt;libfb;${DM_X_LIBS};${DM_TKLIB};${Carbon_LIBRARIES};${Qt5Widgets_LIBRARIES}")
+BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "libged;librt;libfb;${DM_X_LIBS};${DM_TKLIB};${Qt5Widgets_LIBRARIES}")
 set_target_properties(libdm PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 if(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
@@ -115,6 +114,7 @@ set(libdm_ignore_files
   dm-qt.cpp
   dm-rtgl.c
   dm-tk.c
+  osg.cpp
   TODO
   )
 CMAKEFILES(${libdm_ignore_files})

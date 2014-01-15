@@ -1,7 +1,7 @@
 /*               P U L L B A C K C U R V E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2009-2013 United States Government as represented by
+ * Copyright (c) 2009-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,7 +51,7 @@ class BSpline
 public:
     int p; // degree
     int m; // num_knots-1
-    int n; // num_samples-1 (aka number of control points)
+    int n; // num_samples-1 (a/k/a number of control points)
     std::vector<double> params;
     std::vector<double> knots;
     ON_2dPointArray controls;
@@ -191,7 +191,7 @@ toUV(brlcad::SurfaceTree *surftree, const ON_Curve *curve, ON_2dPoint& out_pt, d
 		break;
 		//return brep_edge_check(found, sbv, face, surf, ray, hits);
 	    }
-	    brep_newton_iterate(surf, pr, Rcurr, su, sv, uv, new_uv);
+	    brep_newton_iterate(pr, Rcurr, su, sv, uv, new_uv);
 	    move(uv, new_uv);
 	    Dlast = d;
 	}
@@ -2417,7 +2417,7 @@ pullback_curve(const brlcad::SurfaceTree* surfacetree,
     ON_3dPoint p = curve->PointAt(tmin);
     ON_3dPoint from = curve->PointAt(tmin + 0.0001);
     brlcad::SurfaceTree *st = (brlcad::SurfaceTree *)surfacetree;
-    if (!st->getSurfacePoint((const ON_3dPoint&)p, uv, (const ON_3dPoint&)from) > 0) {
+    if (st->getSurfacePoint((const ON_3dPoint&)p, uv, (const ON_3dPoint&)from) < 0) {
 	std::cerr << "Error: Can not get surface point." << std::endl;
     }
 
@@ -2440,7 +2440,7 @@ pullback_curve(const brlcad::SurfaceTree* surfacetree,
 
 	p = curve->PointAt(tmax);
 	from = curve->PointAt(tmax - 0.0001);
-	if (!st->getSurfacePoint((const ON_3dPoint&)p, uv, (const ON_3dPoint&)from) > 0) {
+	if (st->getSurfacePoint((const ON_3dPoint&)p, uv, (const ON_3dPoint&)from) < 0) {
 	    std::cerr << "Error: Can not get surface point." << std::endl;
 	}
 

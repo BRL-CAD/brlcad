@@ -1,7 +1,7 @@
 /*                       N M G - S G P . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2013 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -51,8 +51,7 @@ static int stats=0;
 
 /* returns 1 if faceuse was not written because it was empty */
 static int
-write_fu_as_sgp( fu )
-    struct faceuse *fu;
+write_fu_as_sgp(struct faceuse *fu)
 {
     struct loopuse *lu;
 

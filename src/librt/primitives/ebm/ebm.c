@@ -1,7 +1,7 @@
 /*                           E B M . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2013 United States Government as represented by
+ * Copyright (c) 1988-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -268,19 +268,19 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
 
     /* Compute the inverse of the direction cosines */
     if (!ZERO(rp->r_dir[X])) {
-	invdir[X]=1.0/rp->r_dir[X];
+	invdir[X] = 1.0/rp->r_dir[X];
     } else {
 	invdir[X] = INFINITY;
 	rp->r_dir[X] = 0.0;
     }
     if (!ZERO(rp->r_dir[Y])) {
-	invdir[Y]=1.0/rp->r_dir[Y];
+	invdir[Y] = 1.0/rp->r_dir[Y];
     } else {
 	invdir[Y] = INFINITY;
 	rp->r_dir[Y] = 0.0;
     }
     if (!ZERO(rp->r_dir[Z])) {
-	invdir[Z]=1.0/rp->r_dir[Z];
+	invdir[Z] = 1.0/rp->r_dir[Z];
     } else {
 	invdir[Z] = INFINITY;
 	rp->r_dir[Z] = 0.0;
@@ -603,7 +603,7 @@ rt_ebm_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     }
     eip->mp = mp;
     if (mp->buflen < (size_t)(eip->xdim*eip->ydim)) {
-	bu_log("rt_ebm_import4() file '%s' is too short %zu < %zu\n",
+	bu_log("rt_ebm_import4() file '%s' is too short %zu < %u\n",
 	       eip->file, mp->buflen, eip->xdim*eip->ydim);
 	goto fail;
     }
@@ -630,7 +630,7 @@ rt_ebm_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 	/* Because of in-memory padding, read each scanline separately */
 	cp = (unsigned char *)mp->buf;
-	for (y=0; y < eip->ydim; y++) {
+	for (y = 0; y < eip->ydim; y++) {
 	    /* BIT() addresses into mp->apbuf */
 	    memcpy(&BIT(eip, 0, y), cp, eip->xdim);
 	    cp += eip->xdim;
@@ -666,7 +666,7 @@ rt_ebm_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record)*DB_SS_NGRAN;
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "ebm external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "ebm external");
     rec = (union record *)ep->ext_buf;
 
     bu_vls_struct_print(&str, rt_ebm_parse, (char *)&ebm);
@@ -749,7 +749,7 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     }
     eip->mp = mp;
     if (mp->buflen < (size_t)(eip->xdim*eip->ydim)) {
-	bu_log("rt_ebm_import4() file '%s' is too short %zu < %zu\n",
+	bu_log("rt_ebm_import4() file '%s' is too short %zu < %u\n",
 	       eip->file, mp->buflen, eip->xdim*eip->ydim);
 	goto fail;
     }
@@ -776,7 +776,7 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 	/* Because of in-memory padding, read each scanline separately */
 	cp = (unsigned char *)mp->buf;
-	for (y=0; y < eip->ydim; y++) {
+	for (y = 0; y < eip->ydim; y++) {
 	    /* BIT() addresses into mp->apbuf */
 	    memcpy(&BIT(eip, 0, y), cp, eip->xdim);
 	    cp += eip->xdim;
@@ -814,7 +814,7 @@ rt_ebm_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     bu_vls_struct_print(&str, rt_ebm_parse, (char *)&ebm);
 
     ep->ext_nbytes = bu_vls_strlen(&str) + 1;
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "ebm external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "ebm external");
 
     bu_strlcpy((char *)ep->ext_buf, bu_vls_addr(&str), ep->ext_nbytes);
     bu_vls_free(&str);
@@ -845,10 +845,10 @@ rt_ebm_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
     if (!verbose)
 	return 0;
 
-    bu_vls_printf(&substr, "  file=\"%s\" w=%zu n=%zu depth=%g\n   mat=",
+    bu_vls_printf(&substr, "  file=\"%s\" w=%u n=%u depth=%g\n   mat=",
 		  eip->file, eip->xdim, eip->ydim, INTCLAMP(eip->tallness*mm2local));
     bu_vls_vlscat(str, &substr);
-    for (i=0; i<15; i++) {
+    for (i = 0; i < 15; i++) {
 	bu_vls_trunc2(&substr, 0);
 	bu_vls_printf(&substr, "%g, ", INTCLAMP(eip->mat[i]));
 	bu_vls_vlscat(str, &substr);
@@ -989,7 +989,7 @@ rt_ebm_print(register const struct soltab *stp)
 	(struct rt_ebm_specific *)stp->st_specific;
 
     bu_log("ebm file = %s\n", ebmp->ebm_i.file);
-    bu_log("dimensions = (%zu, %zu, %g)\n",
+    bu_log("dimensions = (%u, %u, %g)\n",
 	   ebmp->ebm_i.xdim, ebmp->ebm_i.ydim,
 	   ebmp->ebm_i.tallness);
     VPRINT("model cellsize", ebmp->ebm_cellsize);
@@ -1132,13 +1132,6 @@ rt_ebm_free(struct soltab *stp)
 }
 
 
-int
-rt_ebm_class(void)
-{
-    return 0;
-}
-
-
 /* either x1==x2, or y1==y2 */
 void
 rt_ebm_plate(int x_1, int y_1, int x_2, int y_2, double t, register fastf_t *mat, register struct bu_list *vhead)
@@ -1185,17 +1178,17 @@ rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
     /* Find vertical lines */
     base = 0;	/* lint */
-    for (x=0; x <= eip->xdim; x++) {
+    for (x = 0; x <= eip->xdim; x++) {
 	following = 0;
-	for (y=0; y <= eip->ydim; y++) {
+	for (y = 0; y <= eip->ydim; y++) {
 	    if (following) {
-		if ((BIT(eip, x-1, y)==0) != (BIT(eip, x, y)==0))
+		if ((BIT(eip, x-1, y) == 0) != (BIT(eip, x, y) == 0))
 		    continue;
 		rt_ebm_plate(x, base, x, y, eip->tallness,
 			     eip->mat, vhead);
 		following = 0;
 	    } else {
-		if ((BIT(eip, x-1, y)==0) == (BIT(eip, x, y)==0))
+		if ((BIT(eip, x-1, y) == 0) == (BIT(eip, x, y) == 0))
 		    continue;
 		following = 1;
 		base = y;
@@ -1204,17 +1197,17 @@ rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     }
 
     /* Find horizontal lines */
-    for (y=0; y <= eip->ydim; y++) {
+    for (y = 0; y <= eip->ydim; y++) {
 	following = 0;
-	for (x=0; x <= eip->xdim; x++) {
+	for (x = 0; x <= eip->xdim; x++) {
 	    if (following) {
-		if ((BIT(eip, x, y-1)==0) != (BIT(eip, x, y)==0))
+		if ((BIT(eip, x, y-1) == 0) != (BIT(eip, x, y) == 0))
 		    continue;
 		rt_ebm_plate(base, y, x, y, eip->tallness,
 			     eip->mat, vhead);
 		following = 0;
 	    } else {
-		if ((BIT(eip, x, y-1)==0) == (BIT(eip, x, y)==0))
+		if ((BIT(eip, x, y-1) == 0) == (BIT(eip, x, y) == 0))
 		    continue;
 		following = 1;
 		base = x;
@@ -1270,7 +1263,7 @@ rt_ebm_sort_edges(struct ebm_edge *edges)
     int done;
     int from_x, from_y, to_x, to_y;
     int start_x, start_y;
-    int max_loop_length=0;
+    int max_loop_length = 0;
     int loop_length;
 
     /* create another list to hold the edges as they are sorted */
@@ -1454,13 +1447,13 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     while (y <= eip->ydim) {
 	x = 0;
 	while (x <= eip->xdim) {
-	    if ((BIT(eip, x, y-1)==0) != (BIT(eip, x, y)==0)) {
+	    if ((BIT(eip, x, y-1) ==0 ) != (BIT(eip, x, y) == 0)) {
 		/* a horizontal edge starts here */
 		start = x;
 		left = (BIT(eip, x, y-1) != 0);
 
 		/* find other end */
-		while ((BIT(eip, x, y-1)==0) != (BIT(eip, x, y)==0) &&
+		while ((BIT(eip, x, y-1) == 0) != (BIT(eip, x, y) == 0) &&
 		       (BIT(eip, x, y-1) != 0) == left)
 		    x++;
 		rt_ebm_edge(start, y, x, y, left, &edges);
@@ -1498,7 +1491,7 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		struct faceuse *fu1;
 		struct ebm_edge *e1;
 		point_t pt_ebm, pt_model;
-		int done=0;
+		int done = 0;
 
 		if (e->left) {
 		    /* make a face */
@@ -1527,7 +1520,7 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			fu = fu1;
 		} else {
 		    /* make a hole */
-		    for (i=0; i<loop_length; i++) {
+		    for (i = 0; i < loop_length; i++) {
 			if (*vertp[loop_length-i-1])
 			    loop_verts[i] = (*vertp[loop_length-i-1]);
 			else
@@ -1624,22 +1617,22 @@ rt_ebm_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 
     if (attr == (char *)NULL) {
 	bu_vls_strcpy(logstr, "ebm");
-	bu_vls_printf(logstr, " F %s W %zu N %zu H %.25g",
+	bu_vls_printf(logstr, " F %s W %u N %u H %.25g",
 		      ebm->file, ebm->xdim, ebm->ydim, ebm->tallness);
 	bu_vls_printf(logstr, " M {");
-	for (i=0; i<16; i++)
+	for (i = 0; i < 16; i++)
 	    bu_vls_printf(logstr, " %.25g", ebm->mat[i]);
 	bu_vls_printf(logstr, " }");
     } else if (BU_STR_EQUAL(attr, "F") || BU_STR_EQUAL(attr, "file")) {
 	bu_vls_printf(logstr, "%s", ebm->file);
     } else if (BU_STR_EQUAL(attr, "W")) {
-	bu_vls_printf(logstr, "%zu", ebm->xdim);
+	bu_vls_printf(logstr, "%u", ebm->xdim);
     } else if (BU_STR_EQUAL(attr, "N")) {
-	bu_vls_printf(logstr, "%zu", ebm->ydim);
+	bu_vls_printf(logstr, "%u", ebm->ydim);
     } else if (BU_STR_EQUAL(attr, "H")) {
 	bu_vls_printf(logstr, "%.25g", ebm->tallness);
     } else if (BU_STR_EQUAL(attr, "M")) {
-	for (i=0; i<16; i++)
+	for (i = 0; i < 16; i++)
 	    bu_vls_printf(logstr, "%.25g ", ebm->mat[i]);
     } else {
 	bu_vls_printf(logstr, "ERROR: Unknown attribute, choices are F, W, N, or H\n");
@@ -1686,7 +1679,7 @@ rt_ebm_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 	} else if (BU_STR_EQUAL(argv[0], "H")) {
 	    ebm->tallness = atof(argv[1]);
 	} else if (BU_STR_EQUAL(argv[0], "M")) {
-	    int len=16;
+	    int len = 16;
 	    fastf_t array[16];
 	    fastf_t *ar_ptr;
 
@@ -1757,6 +1750,103 @@ rt_ebm_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
     if (ip) RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */
+}
+
+
+/*
+ * R T _ E B M _ S U R F _ A R E A
+ *
+ * Computes the surface area of the ebm.
+ *
+ * The vertices are numbered from left to right, front to back.
+ * This method calculates the position of all the 8 vertices of each cell and
+ * then calculates the area of the top and bottom faces, then any other
+ * necessary faces.
+ */
+void
+rt_ebm_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    struct rt_ebm_internal *eip;
+    unsigned int x, y;
+    point_t x0, x1, x2, x3, x4, x5, x6, x7;
+    point_t _x0, _x1, _x2, _x3, _x4, _x5, _x6, _x7;
+    vect_t d3_0, d2_1, d7_4, d6_5;
+    vect_t d6_0, d4_2, d4_1, d5_0, d5_3, d7_1, d7_2, d6_3, _cross;
+    fastf_t _x, _y, det, _area = 0.0;
+
+    if (area == NULL || ip == NULL) {
+	return;
+    }
+    RT_CK_DB_INTERNAL(ip);
+    eip = (struct rt_ebm_internal *)ip->idb_ptr;
+    RT_EBM_CK_MAGIC(eip);
+
+    det = fabs(bn_mat_determinant(eip->mat));
+    if (EQUAL(det, 0.0)) {
+	*area = -1.0;
+	return;
+    }
+
+    for (y = 0; y < eip->ydim; y++) {
+	for (x = 0; x < eip->xdim; x++) {
+	    if (BIT(eip, x, y) != 0) {
+		_x = (fastf_t)x;
+		_y = (fastf_t)y;
+		VSET(_x0, _x - 0.5, _y - 0.5, 0.0);
+		VSET(_x1, _x + 0.5, _y - 0.5, 0.0);
+		VSET(_x2, _x - 0.5, _y + 0.5, 0.0);
+		VSET(_x3, _x + 0.5, _y + 0.5, 0.0);
+		VSET(_x4, _x - 0.5, _y - 0.5, eip->tallness);
+		VSET(_x5, _x + 0.5, _y - 0.5, eip->tallness);
+		VSET(_x6, _x - 0.5, _y + 0.5, eip->tallness);
+		VSET(_x7, _x + 0.5, _y + 0.5, eip->tallness);
+		MAT4X3PNT(x0, eip->mat, _x0);
+		MAT4X3PNT(x1, eip->mat, _x1);
+		MAT4X3PNT(x2, eip->mat, _x2);
+		MAT4X3PNT(x3, eip->mat, _x3);
+		MAT4X3PNT(x4, eip->mat, _x4);
+		MAT4X3PNT(x5, eip->mat, _x5);
+		MAT4X3PNT(x6, eip->mat, _x6);
+		MAT4X3PNT(x7, eip->mat, _x7);
+
+		VSUB2(d3_0, x3, x0);
+		VSUB2(d2_1, x2, x1);
+		VSUB2(d7_4, x7, x4);
+		VSUB2(d6_5, x6, x5);
+
+		VCROSS(_cross, d3_0, d2_1);
+		_area += 0.5 * MAGNITUDE(_cross);
+		VCROSS(_cross, d7_4, d6_5);
+		_area += 0.5 * MAGNITUDE(_cross);
+
+		if (BIT(eip, x + 1, y) == 0) {
+		    VSUB2(d5_3, x5, x3);
+		    VSUB2(d7_1, x7, x1);
+		    VCROSS(_cross, d5_3, d7_1);
+		    _area += 0.5 * MAGNITUDE(_cross);
+		}
+		if (BIT(eip, x - 1, y) == 0) {
+		    VSUB2(d6_0, x6, x0);
+		    VSUB2(d4_2, x4, x2);
+		    VCROSS(_cross, d6_0, d4_2);
+		    _area += 0.5 * MAGNITUDE(_cross);
+		}
+		if (BIT(eip, x, y + 1) == 0) {
+		    VSUB2(d7_2, x7, x2);
+		    VSUB2(d6_3, x6, x3);
+		    VCROSS(_cross, d7_2, d6_3);
+		    _area += 0.5 * MAGNITUDE(_cross);
+		}
+		if (BIT(eip, x, y - 1) == 0) {
+		    VSUB2(d4_1, x4, x1);
+		    VSUB2(d5_0, x5, x0);
+		    VCROSS(_cross, d4_1, d5_0);
+		    _area += 0.5 * MAGNITUDE(_cross);
+		}
+	    }
+	}
+    }
+    *area = _area;
 }
 
 

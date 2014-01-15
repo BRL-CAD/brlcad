@@ -1,7 +1,7 @@
 /*                         I H I S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,21 +31,22 @@
 #include "bu.h"
 
 
-long bits[16] = {0};
-long values[65536] = {0};
-long *zerop;
-short ibuf[1024] = {0};
-
-int verbose = 0;
-
-static const char usage[] = "Usage: ihist [-v] < shorts\n";
-
-int main(int argc, char **argv)
+int
+main(int argc, char *argv[])
 {
+    static const char usage[] = "Usage: ihist [-v] < shorts\n";
+
     long i, bit;
     int n;
     int max, min;
     long num, levels=0;
+
+    long bits[16] = {0};
+    long values[65536] = {0};
+    long *zerop;
+    short ibuf[1024] = {0};
+
+    int verbose = 0;
 
     while (argc > 1) {
 	if (BU_STR_EQUAL(argv[1], "-v")) {
@@ -70,7 +71,7 @@ int main(int argc, char **argv)
 	    long idx = ibuf[i];
 	    if (idx < 0)
 		idx = 0;
-	    if (idx > LONG_MAX-1)
+	    else if (idx > LONG_MAX-1)
 		idx = LONG_MAX-1;
 	    zerop[idx]++;
 	}

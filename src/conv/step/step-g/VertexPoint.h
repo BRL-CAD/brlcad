@@ -1,7 +1,7 @@
 /*                 VertexPoint.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef VERTEXPOINT_H_
-#define VERTEXPOINT_H_
+#ifndef CONV_STEP_STEP_G_VERTEXPOINT_H
+#define CONV_STEP_STEP_G_VERTEXPOINT_H
 
 #include "Point.h"
 #include "Vertex.h"
@@ -63,7 +63,7 @@ public:
     virtual void AddVertex(ON_Brep *brep);
 };
 
-#endif /* VERTEXPOINT_H_ */
+#endif /* CONV_STEP_STEP_G_VERTEXPOINT_H */
 
 /*
  * Local Variables:

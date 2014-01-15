@@ -1,5 +1,4 @@
 <!-- Converted by db4-upgrade version 1.0 -->
-
 <article xmlns="http://docbook.org/ns/docbook" version="5.0">
   <info><title>Assigning Material Properties and Raytracing in <application>MGED</application></title>
 
@@ -167,7 +166,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged04_commandwindow.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged04_commandwindow.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -281,7 +283,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged04_raytracedshapes.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged04_raytracedshapes.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -333,8 +338,8 @@
 	<tgroup cols="2">
 	  <tbody>
 	    <row>
-	      <entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/en/images/mged04_raytracedshapes.png"/></imageobject></inlinemediaobject></entry>
-	      <entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/en/images/mged04_fb_overlay_mode.png"/></imageobject></inlinemediaobject></entry>
+	      <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/en/images/mged04_raytracedshapes.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/en/images/mged04_raytracedshapes.png"/></imageobject></inlinemediaobject></entry>
+	      <entry><inlinemediaobject><imageobject role="html"><imagedata fileref="../../lessons/en/images/mged04_fb_overlay_mode.png"/></imageobject><imageobject role="fo"><imagedata fileref="../../lessons/en/images/mged04_fb_overlay_mode.png"/></imageobject></inlinemediaobject></entry>
 	    </row>
 	    <row>
 	      <entry>Framebuffer in Underlay Mode</entry>

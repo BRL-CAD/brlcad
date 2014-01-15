@@ -1,7 +1,7 @@
 /*                        M A L L O C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -174,7 +174,7 @@ memdebug_check(register genptr_t ptr, const char *str)
 }
 
 
-extern int bu_bomb_failsafe_init();
+extern int bu_bomb_failsafe_init(void);
 
 /**
  * This routine only returns on successful allocation.  We promise

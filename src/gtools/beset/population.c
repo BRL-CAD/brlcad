@@ -1,7 +1,7 @@
 /*                    P O P U L A T I O N . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -55,11 +55,11 @@ int shape_number;
 void
 pop_init (struct population *p, int size)
 {
-    p->parent = bu_malloc(sizeof(struct individual) * size, "parent");
-    p->child  = bu_malloc(sizeof(struct individual) * size, "child");
+    p->parent = (struct individual *)bu_malloc(sizeof(struct individual) * size, "parent");
+    p->child  = (struct individual *)bu_malloc(sizeof(struct individual) * size, "child");
     p->size = size;
     p->db_c = p->db_p = DBI_NULL;
-    p->name = bu_malloc(sizeof(char *) * size, "names");
+    p->name = (char **)bu_malloc(sizeof(char *) * size, "names");
 
 #define SEED 33
     /* init in main() bn_rand_init(randomer, SEED);*/
@@ -99,7 +99,7 @@ pop_spawn (struct population *p)
     p->db_p->dbi_wdbp = wdb_dbopen(p->db_p, RT_WDB_TYPE_DB_DISK);
 
     for (i = 0; i < p->size; i++) {
-	p->name[i] = bu_malloc(sizeof(char) * 256, "name");
+	p->name[i] = (char *)bu_malloc(sizeof(char) * 256, "name");
 	snprintf(p->name[i], 256, "ind%.3d", i);
 
 	BU_LIST_INIT(&wm_hd.l);
@@ -141,7 +141,7 @@ pop_spawn (struct population *p)
     }
 
 /*
- * reload the db so we dont
+ * reload the db so we don't
  * have to do any extra checks
  * in the main loop
  */
@@ -153,7 +153,7 @@ pop_spawn (struct population *p)
 }
 
 /**
- *	P O P _ A D D --- add an parent to othe database
+ *	P O P _ A D D --- add a parent to other database
  *	TODO: Don't overwrite previous parents, one .g file per generation
  */
 /*
@@ -331,7 +331,7 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
     switch ( tp->tr_op )  {
 
 	case OP_DB_LEAF:
-	    /* dont need to do any processing if crossing over */
+	    /* don't need to do any processing if crossing over */
 	    if (crossover) {
 		return;
 	    }

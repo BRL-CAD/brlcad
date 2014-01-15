@@ -1,7 +1,7 @@
 /*                           H Y P . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2013 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -684,20 +684,20 @@ rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct
 
 	/* draw ellipse */
 	RT_ADD_VLIST(vhead, ell[15], BN_VLIST_LINE_MOVE);
-	for (j=0; j<16; j++) {
+	for (j = 0; j < 16; j++) {
 	    RT_ADD_VLIST(vhead, ell[j], BN_VLIST_LINE_DRAW);
 	}
 
 	/* add ellipse's points to ribs */
-	for (j=0; j<16; j++) {
+	for (j = 0; j < 16; j++) {
 	    VMOVE(ribs[j][i], ell[j]);
 	}
     }
 
     /* draw ribs */
-    for (i=0; i<16; i++) {
+    for (i = 0; i < 16; i++) {
 	RT_ADD_VLIST(vhead, ribs[i][0], BN_VLIST_LINE_MOVE);
-	for (j=1; j<7; j++) {
+	for (j = 1; j < 7; j++) {
 	    RT_ADD_VLIST(vhead, ribs[i][j], BN_VLIST_LINE_DRAW);
 	}
 
@@ -1098,7 +1098,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Associate the face geometry */
-    for (i=0; i < face; i++) {
+    for (i = 0; i < face; i++) {
 	if (nmg_fu_planeeqn(outfaceuses[i], tol) < 0) {
 	    bu_log("planeeqn fail:\n\ti:\t%d\n\toutfaceuses:\n\tmin:\t%f\t%f\t%f\n\tmax:\t%f\t%f\t%f\n",
 		   i, outfaceuses[i]->f_p->min_pt[0],
@@ -1136,7 +1136,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* Assign vertexuse normals */
     nmg_vertex_tabulate(&vert_tab, &s->l.magic);
-    for (i=0; i<BU_PTBL_END(&vert_tab); i++) {
+    for (i = 0; i < BU_PTBL_END(&vert_tab); i++) {
 	point_t pt_prime, tmp_pt;
 	vect_t norm, rev_norm, tmp_vect;
 	struct vertex_g *vg;
@@ -1278,7 +1278,7 @@ rt_hyp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT * 4;
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "hyp external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "hyp external");
 
 
     /* Since libwdb users may want to operate in units other than mm,

@@ -1,7 +1,7 @@
 /*                         F B I O . H
  * BRL-CAD
  *
- * Copyright (c) 2005-2013 United States Government as represented by
+ * Copyright (c) 2005-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,8 +25,8 @@
  *
  */
 
-#ifndef __FBIO_H__
-#define __FBIO_H__
+#ifndef FBIO_H
+#define FBIO_H
 
 #include "common.h"
 
@@ -65,6 +65,7 @@ typedef unsigned char RGBpixel[3];
  * left-justified in a short.  Think of this as fixed-point values
  * from 0 to 1.
  */
+/* FIXME: ColorMap is same as RLEColorMap defined in 'orle.h' */
 typedef struct {
     unsigned short cm_red[256];
     unsigned short cm_green[256];
@@ -174,7 +175,7 @@ FB_EXPORT extern FBIO tk_interface;
 FB_EXPORT extern FBIO debug_interface, disk_interface, stk_interface;
 FB_EXPORT extern FBIO memory_interface, null_interface;
 
-#endif  /* __FBIO_H__ */
+#endif  /* FBIO_H */
 /** @} */
 /*
  * Local Variables:

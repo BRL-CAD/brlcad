@@ -78,8 +78,8 @@
  * HAVE_DIRECT_H, HAVE_DIR_H, HAVE_NDIR_H, HAVE_SYS_DIR_H and
  * HAVE_SYS_NDIR_H according to the files found.
  */
-#ifndef DIRENT_H
-#define DIRENT_H
+#ifndef LIBBU_UCE_DIRENT_H
+#define LIBBU_UCE_DIRENT_H
 #define DIRENT_H_INCLUDED
 
 /* find out platform */
@@ -672,4 +672,4 @@ _setdirname (struct DIR *dirp) {
 #endif
 
 
-#endif /*DIRENT_H*/
+#endif /*LIBBU_UCE_DIRENT_H*/

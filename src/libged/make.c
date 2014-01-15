@@ -1,7 +1,7 @@
 /*                         M A K E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -613,7 +613,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	pnts_ip->scale = 0;
 
 	BU_ALLOC(pnts_ip->point, struct pnt);
-	headPoint = pnts_ip->point;
+	headPoint = (struct pnt *)pnts_ip->point;
 	BU_LIST_INIT(&headPoint->l);
 	BU_ALLOC(point, struct pnt);
 	VSET(point->v, origin[X], origin[Y], origin[Z]);

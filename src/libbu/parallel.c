@@ -1,7 +1,7 @@
 /*                      P A R A L L E L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -201,7 +201,7 @@ bu_nice_set(int newnice)
 }
 
 
-int
+size_t
 bu_avail_cpus(void)
 {
     int ncpu = -1;

@@ -89,15 +89,15 @@ BRLCAD_ADDEXEC(dsp_add dsp_add.c libbu)
 BRLCAD_ADDEXEC(dsp_add_t dsp_add_t.cpp libbu NO_INSTALL)
 
 # tmp def for testing C wrapper for TCLAP
-BRLCAD_ADDEXEC(dsp_add2 "dsp_add2.c;bu_arg_parse.cpp" libbu NO_INSTALL)
-
-# another tmp def for testing C wrapper for TCLAP
-BRLCAD_ADDEXEC(dsp_add3 "dsp_add3.c;bu_arg_parse.cpp" libbu NO_INSTALL)
+BRLCAD_ADDEXEC(dsp_add4 "dsp_add4.c;bu_arg_parse.cpp" libbu NO_INSTALL)
 
 # a test file for the entire TCLAP wrapper interface
 #BRLCAD_ADDEXEC(test_bu_arg_parse "test_bu_arg_parse.c;bu_arg_parse.cpp" libbu NO_INSTALL)
 # ignore it for now
 CMAKEFILES(test_bu_arg_parse.c)
+
+# a new admin file
+BRLCAD_ADDEXEC(admin-db "admin-db.cpp;bu_arg_parse.cpp" "libbu;librt" NO_INSTALL)
 
 # tmp header to stand-in for bu.h (ignore it)
 CMAKEFILES(bu_arg_parse.h)

@@ -1,7 +1,7 @@
 /*                       S I M U L A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2013 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,8 +25,8 @@
  *
  */
 
-#ifndef SIMULATE_H_
-#define SIMULATE_H_
+#ifndef LIBGED_SIMULATE_SIMULATE_H
+#define LIBGED_SIMULATE_SIMULATE_H
 
 #include "common.h"
 
@@ -135,7 +135,7 @@ struct simulation_params {
     }   /* matches the linkage specification at the beginning. */
 #endif
 
-#endif /* SIMULATE_H_ */
+#endif /* LIBGED_SIMULATE_SIMULATE_H */
 
 
 /*

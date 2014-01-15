@@ -1,7 +1,7 @@
 /*                           B O T . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2013 United States Government as represented by
+ * Copyright (c) 1999-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -72,7 +72,7 @@
 	} else {						    \
 	    VMOVE((_hitp)->hit_normal, trip->tri_N);		    \
 	}							    \
-}
+    }
 
 
 /* forward declarations needed for the included routines below */
@@ -133,7 +133,7 @@ rt_botface_w_normals(struct soltab *stp,
  * prepare BOT faces.  ap, bp, cp point to vect_t points.
  *
  * Return -
- * 0 if the 3 points didn't form a plane (e.g., colinear, etc.).
+ * 0 if the 3 points didn't form a plane (e.g., collinear, etc.).
  * # pts (3) if a valid plane resulted.
  */
 size_t
@@ -185,6 +185,7 @@ rt_bot_prep_pieces(struct bot_specific *bot,
 	rt_bot_prep_pieces_double(bot, stp, ntri, tol);
     }
 }
+
 
 /**
  * R T _ B O T _ B B O X
@@ -512,6 +513,7 @@ rt_bot_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, c
     return 0;
 }
 
+
 vdsNode *
 build_vertex_tree(struct rt_bot_internal *bot)
 {
@@ -535,7 +537,7 @@ build_vertex_tree(struct rt_bot_internal *bot)
     /* create triangles */
     for (i = 0; i < tri_indices; i += 3) {
 	vdsAddTri(bot->faces[i], bot->faces[i + 1], bot->faces[i + 2],
-		normal, normal, normal, color, color, color);
+		  normal, normal, normal, color, color, color);
     }
 
     leaf_nodes = vdsEndGeometry();
@@ -558,6 +560,7 @@ struct bot_fold_data {
     vdsNode *root;
     fastf_t point_spacing;
 };
+
 
 static int
 should_fold(const vdsNode *node, void *udata)
@@ -609,6 +612,7 @@ should_fold(const vdsNode *node, void *udata)
     return 0;
 }
 
+
 static void
 plot_node(const vdsNode *node, void *udata)
 {
@@ -624,6 +628,7 @@ plot_node(const vdsNode *node, void *udata)
 	t = t->next;
     }
 }
+
 
 int
 rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
@@ -663,6 +668,7 @@ rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 
     return 0;
 }
+
 
 /**
  * R T _ B O T _ P L O T
@@ -801,7 +807,7 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	size_t faces[RT_BOT_TESS_MAX_FACES];
 	plane_t planes[RT_BOT_TESS_MAX_FACES];
 
-    rt_bot_centroid(&center, ip);
+	rt_bot_centroid(&center, ip);
 	fprintf(stderr, "center pt = (%g %g %g)\n", V3ARGS(center));
 
 	/* get the faces that use each vertex */
@@ -1035,7 +1041,7 @@ rt_bot_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	    - ep->ext_nbytes % (sizeof(union record));
     }
     num_recs = ep->ext_nbytes / sizeof(union record) - 1;
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "bot external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "bot external");
     rec = (union record *)ep->ext_buf;
 
     rec->bot.bot_id = DBID_BOT;
@@ -1267,7 +1273,7 @@ rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	    + SIZEOF_NETWORK_LONG * (bip->num_face_normals * 3 + 2); /* indices into normals array, num_normals, num_face_normals */
     }
 
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "BOT external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "BOT external");
 
     cp = ep->ext_buf;
     rem = ep->ext_nbytes;
@@ -1343,7 +1349,7 @@ rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	    normals = (double *)bu_malloc(bip->num_normals*ELEMENTS_PER_VECT*sizeof(double), "normals");
 
 	    /* convert fastf_t to double */
-	    for (i=0; i < bip->num_normals * ELEMENTS_PER_VECT; i++) {
+	    for (i = 0; i < bip->num_normals * ELEMENTS_PER_VECT; i++) {
 		normals[i] = bip->normals[i];
 	    }
 
@@ -1574,6 +1580,7 @@ rt_bot_ifree(struct rt_db_internal *ip)
     ip->idb_ptr = NULL; /* sanity */
 }
 
+
 int
 rt_bot_xform(struct rt_db_internal *op, const fastf_t *mat, struct rt_db_internal *ip, const int release, struct db_i *dbip)
 {
@@ -1684,7 +1691,7 @@ size_t
 rt_bot_get_edge_list(const struct rt_bot_internal *bot, size_t **edge_list)
 {
     size_t i;
-    size_t edge_count=0;
+    size_t edge_count = 0;
     size_t v1, v2, v3;
 
     if (bot->num_faces < 1)
@@ -1755,7 +1762,7 @@ rt_bot_find_e_nearest_pt2(
     size_t i;
     fastf_t dist=MAX_FASTF, tmp_dist;
     size_t *edge_list;
-    size_t edge_count=0;
+    size_t edge_count = 0;
     struct bn_tol tol;
 
     RT_BOT_CK_MAGIC(bot);
@@ -2229,7 +2236,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		    BU_BITCLR(bot->face_mode, li);
 	    }
 	} else if (BU_STR_EQUAL(argv[0], "nn")) {
-	    long new_num=0;
+	    long new_num = 0;
 	    size_t old_num = bot->num_normals;
 
 	    new_num = atol(Tcl_GetStringFromObj(obj, NULL));
@@ -2288,7 +2295,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 			return BRLCAD_ERROR;
 		    }
 
-		    /* normal [X,y,z] */
+		    /* normal [X, y, z] */
 		    li = atol(f_str);
 		    if (li < 0) {
 			bu_vls_printf(logstr, "invalid face normal index [%ld]", li);
@@ -2304,7 +2311,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 			return BRLCAD_ERROR;
 		    }
 
-		    /* normal [x,Y,z] */
+		    /* normal [x, Y, z] */
 		    li = atol(f_str);
 		    if (li < 0) {
 			bu_vls_printf(logstr, "invalid face normal index [%ld]", li);
@@ -2320,7 +2327,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 			return BRLCAD_ERROR;
 		    }
 
-		    /* normal [x,y,Z] */
+		    /* normal [x, y, Z] */
 		    li = atol(f_str);
 		    if (li < 0) {
 			bu_vls_printf(logstr, "invalid face normal index [%ld]", li);
@@ -2815,6 +2822,7 @@ struct bot_edge {
     struct bot_edge *next;
 };
 
+
 /* Builds a table of all unique edges in bot, storing the result in edges.
  * Returns number of edges.
  *
@@ -2907,6 +2915,7 @@ buildEdgeTable(struct rt_bot_internal *bot, struct bot_edge ***edges)
     return numEdges;
 }
 
+
 /**
  * Routine for finding the smallest edge length in a BoT.
  */
@@ -2977,6 +2986,7 @@ minEdge(struct rt_bot_internal *bot)
     return sqrt(minMag);
 }
 
+
 /**
  * Routine for finding the largest edge length in a BoT.
  */
@@ -3046,6 +3056,7 @@ maxEdge(struct rt_bot_internal *bot)
     return sqrt(maxMag);
 }
 
+
 /**
  * RT_BOT_PROPGET
  *
@@ -3106,7 +3117,7 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot, const struct bn_tol *tol)
     /* THE OLD WAY .. possibly O(n^3) with the vertex shifting */
 
     size_t i, j, k;
-    size_t count=0;
+    size_t count = 0;
 
     RT_BOT_CK_MAGIC(bot);
 
@@ -3140,7 +3151,7 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot, const struct bn_tol *tol)
     /* THE NEW WAY .. possibly O(n) with basic bin sorting */
 
     size_t i, j, k;
-    size_t count=0;
+    size_t count = 0;
 
     long slot;
     size_t total = 0;
@@ -3158,7 +3169,7 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot, const struct bn_tol *tol)
     RT_BOT_CK_MAGIC(bot);
 
     /* initialize a simple 256-slot integer bin space partitioning */
-    for (slot=0; slot<256; slot++) {
+    for (slot = 0; slot < 256; slot++) {
 	bin_todonext[slot] = 0;
 	bin_capacity[slot] = DEFAULT_CAPACITY;
 	bin[slot] = bu_calloc(DEFAULT_CAPACITY, sizeof(long *), "vertices bin");
@@ -3327,7 +3338,7 @@ rt_bot_face_fuse(struct rt_bot_internal *bot)
 {
     size_t num_faces;
     size_t i, j, k, l;
-    int count=0;
+    int count = 0;
 
     RT_BOT_CK_MAGIC(bot);
 
@@ -3339,7 +3350,7 @@ rt_bot_face_fuse(struct rt_bot_internal *bot)
 	    /* each pass through this loop either increments j or
 	     * decrements num_faces
 	     */
-	    int match=0;
+	    int match = 0;
 	    int elim;
 
 	    for (k = i * 3; k < (i+1) * 3; k++) {
@@ -3412,7 +3423,7 @@ rt_bot_face_fuse(struct rt_bot_internal *bot)
 	if (bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS) {
 	    struct bu_bitv *new_mode;
 
-	    bot->thickness = bu_realloc(bot->thickness, num_faces*sizeof(fastf_t), "BOT thickness realloc");
+	    bot->thickness = (fastf_t *)bu_realloc(bot->thickness, num_faces*sizeof(fastf_t), "BOT thickness realloc");
 	    new_mode = bu_bitv_new(num_faces);
 	    for (l = 0; l < num_faces; l++) {
 		if (BU_BITTEST(bot->face_mode, l))
@@ -3498,7 +3509,7 @@ find_closest_face(fastf_t **centers, int *piece, int *old_faces, size_t num_face
     size_t min_face=-1;
 
     if ((*centers) == NULL) {
-	int count_centers=0;
+	int count_centers = 0;
 
 	/* need to build the centers array */
 	(*centers) = (fastf_t *)bu_malloc(num_faces * 3 * sizeof(fastf_t), "center");
@@ -3581,7 +3592,7 @@ rt_bot_sort_faces(struct rt_bot_internal *bot, size_t tris_per_piece)
     int *piece_norms = (int *)NULL;	/* vertex normals for faces in the current piece */
     int *piece_verts = (int *)NULL;	/* a list of vertices in the current piece (each vertex appears only once) */
     unsigned char *vert_count;		/* an array used to hold the number of piece vertices that appear in each BOT face */
-    size_t new_face_count=0;		/* the current number of faces in the "new_faces" list */
+    size_t new_face_count = 0;		/* the current number of faces in the "new_faces" list */
     size_t faces_left;			/* the number of faces in the "old_faces" array that have not yet been used */
     size_t piece_len;			/* the current number of faces in the piece */
     size_t max_verts;			/* the maximum number of piece_verts found in a single unused face */
@@ -3866,6 +3877,7 @@ rt_bot_sort_faces(struct rt_bot_internal *bot, size_t tris_per_piece)
     return 0;
 }
 
+
 HIDDEN void
 delete_edge(int v1, int v2, struct bot_edge **edges)
 {
@@ -4146,7 +4158,7 @@ edge_can_be_decimated(struct rt_bot_internal *bot,
     size_t num_faces = bot->num_faces;
     size_t num_edges = bot->num_vertices;
     size_t count, v1_count;
-    size_t affected_count=0;
+    size_t affected_count = 0;
     vect_t v01, v02, v12;
     fastf_t *vertices = bot->vertices;
     size_t faces_affected[MAX_AFFECTED_FACES];
@@ -4323,7 +4335,7 @@ rt_bot_decimate(struct rt_bot_internal *bot,	/* BOT to be decimated */
     size_t edges_deleted = 0;
     size_t edge_count = 0;
     size_t face_count = 0;
-    size_t actual_count=0;
+    size_t actual_count = 0;
     size_t deleted = 0;
     size_t i = 0;
     int done;
@@ -4574,17 +4586,17 @@ rt_bot_smooth(struct rt_bot_internal *bot, const char *bot_name, struct db_i *db
 
 	    /* Compute the inverse of the direction cosines */
 	    if (ap.a_ray.r_dir[X] < -SQRT_SMALL_FASTF) {
-		inv_dir[X]=1.0/ap.a_ray.r_dir[X];
+		inv_dir[X] = 1.0/ap.a_ray.r_dir[X];
 	    } else if (ap.a_ray.r_dir[X] > SQRT_SMALL_FASTF) {
-		inv_dir[X]=1.0/ap.a_ray.r_dir[X];
+		inv_dir[X] = 1.0/ap.a_ray.r_dir[X];
 	    } else {
 		ap.a_ray.r_dir[X] = 0.0;
 		inv_dir[X] = INFINITY;
 	    }
 	    if (ap.a_ray.r_dir[Y] < -SQRT_SMALL_FASTF) {
-		inv_dir[Y]=1.0/ap.a_ray.r_dir[Y];
+		inv_dir[Y] = 1.0/ap.a_ray.r_dir[Y];
 	    } else if (ap.a_ray.r_dir[Y] > SQRT_SMALL_FASTF) {
-		inv_dir[Y]=1.0/ap.a_ray.r_dir[Y];
+		inv_dir[Y] = 1.0/ap.a_ray.r_dir[Y];
 	    } else {
 		ap.a_ray.r_dir[Y] = 0.0;
 		inv_dir[Y] = INFINITY;
@@ -4714,6 +4726,7 @@ struct tri_edges {
     size_t edge_3[2];
     size_t tri;
 };
+
 
 struct tri_pts {
     struct bu_list l;
@@ -4933,23 +4946,24 @@ rt_bot_split_func(struct rt_bot_internal *bot,
     bu_free((genptr_t)stack, "rt_bot_split_func: stack");
 }
 
-#define REMAP_BOT_VERTS(_oldbot,_newbot,_vmap,_vcount,_ovi,_i) { \
-size_t vmi; \
-\
-for (vmi = 0; vmi < _vcount; vmi++) { \
-    if (_ovi == _vmap[vmi]) { \
-	_newbot->faces[_i] = vmi; \
-	break; \
-    } \
-} \
-\
-if (vmi == _vcount) { \
-    _vmap[_vcount] = _ovi; \
-    _newbot->faces[_i] = _vcount; \
-    VMOVE(&_newbot->vertices[_vcount*3],&_oldbot->vertices[_ovi*3]); \
-    ++_vcount; \
-} \
-}
+
+#define REMAP_BOT_VERTS(_oldbot, _newbot, _vmap, _vcount, _ovi, _i) { \
+	size_t vmi; \
+	\
+	for (vmi = 0; vmi < _vcount; vmi++) { \
+	    if (_ovi == _vmap[vmi]) { \
+		_newbot->faces[_i] = vmi; \
+		break; \
+	    } \
+	} \
+	\
+	if (vmi == _vcount) { \
+	    _vmap[_vcount] = _ovi; \
+	    _newbot->faces[_i] = _vcount; \
+	    VMOVE(&_newbot->vertices[_vcount*3], &_oldbot->vertices[_ovi*3]); \
+	    ++_vcount; \
+	} \
+    }
 
 
 struct rt_bot_internal *
@@ -4986,9 +5000,9 @@ rt_bot_create(struct rt_bot_internal *bot, struct tri_pts *newTpp)
 	vcount = 0;
 	for (BU_LIST_FOR(tpp, tri_pts, &newTpp->l)) {
 
-	    REMAP_BOT_VERTS(bot,newbot,vmap,vcount,tpp->a,i*3);
-	    REMAP_BOT_VERTS(bot,newbot,vmap,vcount,tpp->b,i*3+1);
-	    REMAP_BOT_VERTS(bot,newbot,vmap,vcount,tpp->c,i*3+2);
+	    REMAP_BOT_VERTS(bot, newbot, vmap, vcount, tpp->a, i*3);
+	    REMAP_BOT_VERTS(bot, newbot, vmap, vcount, tpp->b, i*3+1);
+	    REMAP_BOT_VERTS(bot, newbot, vmap, vcount, tpp->c, i*3+2);
 
 	    if (bot->mode == RT_BOT_PLATE) {
 		newbot->thickness[i] = bot->thickness[tpp->tri];
@@ -5007,6 +5021,7 @@ rt_bot_create(struct rt_bot_internal *bot, struct tri_pts *newTpp)
 
     return newbot;
 }
+
 
 struct rt_bot_list *
 rt_bot_split(struct rt_bot_internal *bot)
@@ -5078,6 +5093,7 @@ rt_bot_split(struct rt_bot_internal *bot)
     return headRblp;
 }
 
+
 struct rt_bot_list *
 rt_bot_patches(struct rt_bot_internal *bot)
 {
@@ -5120,7 +5136,7 @@ rt_bot_patches(struct rt_bot_internal *bot)
 
     alltpp = (struct tri_pts *)bu_calloc(bot->num_faces, sizeof(struct tri_pts), "patches alltpp");
 
-    for (i=0; i < bot->num_faces; ++i) {
+    for (i = 0; i < bot->num_faces; ++i) {
 	vect_t a, b, norm_dir;
 	fastf_t results[6];
 	int result_max = 0;
@@ -5153,22 +5169,22 @@ rt_bot_patches(struct rt_bot_internal *bot)
 
 
 	if (result_max == 0) {
-	   BU_LIST_APPEND(&xplus.l, &tpp->l);
+	    BU_LIST_APPEND(&xplus.l, &tpp->l);
 	}
 	if (result_max == 1) {
-	   BU_LIST_APPEND(&xminus.l, &tpp->l);
+	    BU_LIST_APPEND(&xminus.l, &tpp->l);
 	}
 	if (result_max == 2) {
-	   BU_LIST_APPEND(&yplus.l, &tpp->l);
+	    BU_LIST_APPEND(&yplus.l, &tpp->l);
 	}
 	if (result_max == 3) {
-	   BU_LIST_APPEND(&yminus.l, &tpp->l);
+	    BU_LIST_APPEND(&yminus.l, &tpp->l);
 	}
 	if (result_max == 4) {
-	   BU_LIST_APPEND(&zplus.l, &tpp->l);
+	    BU_LIST_APPEND(&zplus.l, &tpp->l);
 	}
 	if (result_max == 5) {
-	   BU_LIST_APPEND(&zminus.l, &tpp->l);
+	    BU_LIST_APPEND(&zminus.l, &tpp->l);
 	}
 
     }
@@ -5240,6 +5256,7 @@ rt_bot_patches(struct rt_bot_internal *bot)
     return headRblp;
 }
 
+
 void
 rt_bot_list_free(struct rt_bot_list *headRblp, int fbflag)
 {
@@ -5258,6 +5275,190 @@ rt_bot_list_free(struct rt_bot_list *headRblp, int fbflag)
     bu_free(headRblp, "rt_bot_list_free: headRblp");
 }
 
+
+void
+rt_bot_volume(fastf_t *volume, const struct rt_db_internal *ip)
+{
+    /* contains information used to analyze a polygonal face */
+    struct poly_face
+    {
+	char label[5];
+	size_t npts;
+	point_t *pts;
+	plane_t plane_eqn;
+	fastf_t area;
+    };
+    size_t i;
+    struct poly_face face = { { 0, 0, 0, 0, 0 }, 0, NULL, HINIT_ZERO, 0.0 };
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
+    struct bn_tol tol;
+    RT_BOT_CK_MAGIC(bot);
+
+    *volume = 0.0;
+    if(bot->mode == RT_BOT_SURFACE)
+	return;
+
+    /* allocate pts array, 3 vertices per bot face */
+    face.pts = (point_t *)bu_calloc(3, sizeof(point_t), "rt_bot_volume: pts");
+    BN_TOL_INIT(&tol);
+    tol.dist_sq = BN_TOL_DIST * BN_TOL_DIST;
+
+
+    for (face.npts = 0, i = 0; i < bot->num_faces; face.npts = 0, i++) {
+	int a, b, c;
+	vect_t tmp;
+
+
+	/* find indices of the 3 vertices that make up this face */
+	a = bot->faces[i * ELEMENTS_PER_POINT + 0];
+	b = bot->faces[i * ELEMENTS_PER_POINT + 1];
+	c = bot->faces[i * ELEMENTS_PER_POINT + 2];
+
+	/* find normal, needed to calculate volume later */
+	if (bot->bot_flags == RT_BOT_HAS_SURFACE_NORMALS && bot->normals) {
+	    /* bot->normals array already exists, use those instead */
+	    VMOVE(face.plane_eqn, &bot->normals[i * ELEMENTS_PER_VECT]);
+	} else if (UNLIKELY(bn_mk_plane_3pts(face.plane_eqn, (&bot->vertices[(a) * ELEMENTS_PER_POINT]), (&bot->vertices[(b) * ELEMENTS_PER_POINT]), (&bot->vertices[(c) * ELEMENTS_PER_POINT]), &tol) < 0)) {
+	    continue;
+	}
+
+	VMOVE((face).pts[(face).npts], (&bot->vertices[(a) * ELEMENTS_PER_POINT])); (face).npts++;
+	VMOVE((face).pts[(face).npts], (&bot->vertices[(b) * ELEMENTS_PER_POINT])); (face).npts++;
+	VMOVE((face).pts[(face).npts], (&bot->vertices[(c) * ELEMENTS_PER_POINT])); (face).npts++;
+
+	/* SURFACE AREA */
+
+	/* sort points */
+	bn_polygon_sort_ccw(face.npts, face.pts, face.plane_eqn);
+	bn_polygon_area(&face.area, face.npts, (const point_t *)face.pts);
+
+	/* VOLUME */
+	VSCALE(tmp, face.plane_eqn, face.area);
+	*volume += fabs(VDOT(face.pts[0], tmp));
+	if (bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS) {
+	    if (BU_BITTEST(bot->face_mode, i))
+		*volume += face.area * bot->thickness[i];
+	    else
+		*volume += face.area * 0.5 * bot->thickness[i];
+	}
+    }
+    *volume /= 3.0;
+    bu_free((char *)face.pts, "rt_bot_volume: pts");
+}
+
+void
+rt_bot_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    typedef point_t triangle[3];
+    struct rt_bot_internal *bot_ip =
+	(struct rt_bot_internal *)ip->idb_ptr;
+    size_t a, b, j;
+    triangle *whole_bot_vertices = (triangle *)bu_calloc(bot_ip->num_faces, sizeof(triangle), "rt_bot_surf_area: whole_bot_vertices"); /* [face][corner][x,y,z] */
+    fastf_t whole_bot_overall_area;
+
+    whole_bot_overall_area = 0;
+
+    for (a = 0; a < bot_ip->num_faces; a++) {
+	point_t pt[3];
+
+	for (j = 0; j < 3; j++) {
+	    size_t ptnum;
+	    ptnum = bot_ip->faces[a*3+j];
+	    VSCALE(pt[j], &bot_ip->vertices[ptnum*3], 1);
+	    /* transfer the vertices into an array, which is structured after the faces, which is necessary for later comparisons, if the bot is a plate */
+	    switch (bot_ip->mode) {
+	    case RT_BOT_PLATE:
+	    case RT_BOT_PLATE_NOCOS:
+		whole_bot_vertices[a][j][0] = pt[j][X];
+		whole_bot_vertices[a][j][1] = pt[j][Y];
+		whole_bot_vertices[a][j][2] = pt[j][Z];
+		break;
+	    }
+	}
+
+	whole_bot_overall_area += bn_area_of_triangle((const fastf_t *)&pt[0], (const fastf_t *)&pt[1], (const fastf_t *)&pt[2]);
+    }
+
+    switch (bot_ip->mode) {
+    case RT_BOT_PLATE:
+    case RT_BOT_PLATE_NOCOS:
+	for (a = 0; a-1 < bot_ip->num_faces; a++) {
+	    int a_is_exterior_edge, b_is_exterior_edge, c_is_exterior_edge;
+	    a_is_exterior_edge = 1;
+	    b_is_exterior_edge = 1;
+	    c_is_exterior_edge = 1;
+	    /* get exterior edges by checking each possible combination between the faces a and b */
+	    for (b = 0; b < bot_ip->num_faces; b++) {
+		if (a == b)
+		    continue; /* can't check against own face */
+		/* if both vertices are equal, a and b have a common edge, so it can't be an exterior edge, so the variable is set to 0(false) */
+		if(EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][0]) && EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][1]))
+		    a_is_exterior_edge = 0;
+		else if (EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][1]) && EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][2]))
+		    a_is_exterior_edge = 0;
+		else if (EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][2]) && EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][0]))
+		    a_is_exterior_edge = 0;
+		else if (EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][1]) && EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][0]))
+		    a_is_exterior_edge = 0;
+		else if (EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][2]) && EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][1]))
+		    a_is_exterior_edge = 0;
+		else if (EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][0]) && EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][2]))
+		    a_is_exterior_edge = 0;
+		if(EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][0]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][1]))
+		    b_is_exterior_edge = 0;
+		else if (EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][1]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][2]))
+		    b_is_exterior_edge = 0;
+		else if (EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][2]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][0]))
+		    b_is_exterior_edge = 0;
+		else if (EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][1]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][0]))
+		    b_is_exterior_edge = 0;
+		else if (EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][2]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][1]))
+		    b_is_exterior_edge = 0;
+		else if (EQUAL(whole_bot_vertices[a][1], whole_bot_vertices[b][0]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][2]))
+		    b_is_exterior_edge = 0;
+		if(EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][0]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][1]))
+		    c_is_exterior_edge = 0;
+		else if (EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][1]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][2]))
+		    c_is_exterior_edge = 0;
+		else if (EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][2]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][0]))
+		    c_is_exterior_edge = 0;
+		else if (EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][1]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][0]))
+		    c_is_exterior_edge = 0;
+		else if (EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][2]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][1]))
+		    c_is_exterior_edge = 0;
+		else if (EQUAL(whole_bot_vertices[a][0], whole_bot_vertices[b][0]) && EQUAL(whole_bot_vertices[a][2], whole_bot_vertices[b][2]))
+		    c_is_exterior_edge = 0;
+
+	    }
+	    if (a_is_exterior_edge == 1) {
+		fastf_t rectangle_size, edge_length;
+
+		edge_length = bn_dist_pt3_pt3(whole_bot_vertices[a][0], whole_bot_vertices[a][1]);
+		rectangle_size = bot_ip->thickness[a] * edge_length;
+		whole_bot_overall_area += rectangle_size;
+
+	    }
+	    if (b_is_exterior_edge == 1) {
+		fastf_t rectangle_size, edge_length;
+
+		edge_length = bn_dist_pt3_pt3(whole_bot_vertices[a][1], whole_bot_vertices[a][2]);
+		rectangle_size = bot_ip->thickness[a] * edge_length;
+		whole_bot_overall_area += rectangle_size;
+	    }
+	    if (c_is_exterior_edge == 1) {
+		fastf_t rectangle_size, edge_length;
+
+		edge_length = bn_dist_pt3_pt3(whole_bot_vertices[a][2], whole_bot_vertices[a][0]);
+		rectangle_size = bot_ip->thickness[a] * edge_length;
+		whole_bot_overall_area += rectangle_size;
+	    }
+	}
+
+    }
+    *area = whole_bot_overall_area;
+    bu_free((char *)whole_bot_vertices, "rt_bot_surf_area: whole_bot_vertices");
+    return;
+}
 
 /** @} */
 /*

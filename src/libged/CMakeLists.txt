@@ -287,7 +287,6 @@ set(LIBGED_SOURCES
   vrot.c
   vutil.c
   wcodes.c
-  wdb_bigE.c
   wdb_comb_std.c
   wdb_importFg4Section.c
   wdb_nirt.c
@@ -346,6 +345,7 @@ set(ged_ignore_files
   simulate/simulate.h
   simulate/simutils.h
   wdb_qray.h
+  osg.cpp
   )
 CMAKEFILES(${ged_ignore_files})
 

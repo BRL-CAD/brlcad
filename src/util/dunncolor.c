@@ -1,7 +1,7 @@
 /*                     D U N N C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,7 +41,7 @@ extern int polaroid;
 
 extern void dunnopen(void);
 extern int ready(int nsecs);
-extern void getexposure(char *title);
+extern void getexposure(const char *title);
 extern int dunnsend(char color, int val);
 
 static char usage[] = "Usage: dunncolor [-p] baseval redval greenval blueval";
@@ -50,11 +50,11 @@ int
 main(int argc, char **argv)
 {
 
-    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)) ) {
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 	fprintf(stderr,"%s\n",usage);
 	fprintf(stderr,"       Program continues running:\n");
     }
-    else if ( BU_STR_EQUAL(argv[1], "-h") ||  BU_STR_EQUAL(argv[1], "-?") )
+    else if (BU_STR_EQUAL(argv[1], "-h") ||  BU_STR_EQUAL(argv[1], "-?"))
 	bu_exit(25, "%s\n", usage);
 
     dunnopen();

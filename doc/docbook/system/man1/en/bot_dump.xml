@@ -91,7 +91,7 @@ $ <emphasis remap='I'>bot_dump  -o some_bot_dump.dxf  -t dxf  sample.g  some_bot
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 2008-2013 by the United States
+<para>This software is Copyright (c) 2008-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

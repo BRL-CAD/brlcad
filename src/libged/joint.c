@@ -1,7 +1,7 @@
 /*                      J O I N T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -561,7 +561,7 @@ parse_error(struct ged *gedp, struct bu_vls *str, char *error)
 	bu_vls_printf(gedp->ged_result_str, "%s:%d %s\n", lex_name, lex_line, error);
 	return;
     }
-    text = bu_malloc(str->vls_offset+2, "error pointer");
+    text = (char *)bu_malloc(str->vls_offset+2, "error pointer");
     for (i=0; i<str->vls_offset; i++) {
 	text[i]=(str->vls_str[i] == '\t')? '\t' : '-';
     }
@@ -692,7 +692,7 @@ skip_group(struct ged *gedp, FILE *fip, struct bu_vls *str)
 	}
     }
     if (joint_debug & DEBUG_J_PARSE) {
-	bu_vls_printf(gedp->ged_result_str, "skip_group: Done....\n", (char *)NULL);
+	bu_vls_printf(gedp->ged_result_str, "skip_group: Done....\n");
     }
 
 }
@@ -2229,8 +2229,8 @@ hold_point_location(struct ged *gedp, fastf_t *loc, struct hold_point *hp)
 	 * this prints an error message instead of crashing MGED.
 	 */
 	if (!hp->path.fp_names) {
-	    bu_vls_printf(gedp->ged_result_str, "hold_point_location(): null pointer! %s not found!\n",
-			  hp->path.fp_names);
+	    bu_vls_printf(gedp->ged_result_str, "hold_point_location(): null pointer! '%s' not found!\n",
+			  "hp->path.fp_names");
 	    return 0;
 	}
 	    if (rt_db_get_internal(&intern, hp->path.fp_names[hp->path.fp_maxlen-1], dbip, NULL, &rt_uniresource) < 0)
@@ -2305,8 +2305,8 @@ struct solve_stack {
     struct bu_list l;
     struct joint *jp;
     int freedom;
-    double old;
-    double new;
+    double oldval;
+    double newval;
 };
 #define SOLVE_STACK_MAGIC 0x76766767
 struct bu_list solve_head = {
@@ -2605,9 +2605,9 @@ part_solve(struct ged *gedp, struct hold *hp, double limits, double tol)
 	BU_GET(ssp, struct solve_stack);
 	ssp->jp = bestjoint;
 	ssp->freedom = bestfreedom;
-	ssp->old = (bestfreedom<3) ? bestjoint->rots[bestfreedom].current :
+	ssp->oldval = (bestfreedom<3) ? bestjoint->rots[bestfreedom].current :
 	    bestjoint->dirs[bestfreedom-3].current;
-	ssp->new = bestvalue;
+	ssp->newval = bestvalue;
 	BU_LIST_PUSH(&solve_head, ssp);
     }
     if (bestfreedom < 3) {
@@ -2631,12 +2631,12 @@ reject_move(struct ged *gedp)
 
     if (joint_debug & DEBUG_J_SYSTEM) {
 	bu_vls_printf(gedp->ged_result_str, "reject_move: rejecting %s(%d, %g)->%g\n", ssp->jp->name,
-		      ssp->freedom, ssp->new, ssp->old);
+		      ssp->freedom, ssp->newval, ssp->oldval);
     }
     if (ssp->freedom<3) {
-	ssp->jp->rots[ssp->freedom].current = ssp->old;
+	ssp->jp->rots[ssp->freedom].current = ssp->oldval;
     } else {
-	ssp->jp->dirs[ssp->freedom-3].current = ssp->old;
+	ssp->jp->dirs[ssp->freedom-3].current = ssp->oldval;
     }
     joint_move(gedp, ssp->jp);
     BU_PUT(ssp, struct solve_stack);
@@ -3058,7 +3058,7 @@ static char *
 hold_point_to_string(struct ged *gedp, struct hold_point *hp)
 {
 #define HOLD_POINT_TO_STRING_LEN 1024
-    char *text = bu_malloc(HOLD_POINT_TO_STRING_LEN, "hold_point_to_string");
+    char *text = (char *)bu_malloc(HOLD_POINT_TO_STRING_LEN, "hold_point_to_string");
     char *path;
     vect_t loc = VINIT_ZERO;
 

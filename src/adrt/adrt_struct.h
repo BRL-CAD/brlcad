@@ -1,7 +1,7 @@
 /*                   A D R T _ S T R U C T . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,8 +22,8 @@
  *
  */
 
-#ifndef _ADRT_STRUCT_H
-#define _ADRT_STRUCT_H
+#ifndef ADRT_ADRT_STRUCT_H
+#define ADRT_ADRT_STRUCT_H
 
 #ifdef TIE_PRECISION
 # if defined(TIE_SINGLE_PRECISION) && TIE_PRECISION != TIE_SINGLE_PRECISION

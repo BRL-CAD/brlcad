@@ -1,7 +1,7 @@
 /*                 L I B R T _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2013 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,6 +28,8 @@
  * accordingly (e.g., ell_*() for functions defined in primitives/ell)
  *
  */
+#ifndef LIBRT_LIBRT_PRIVATE_H
+#define LIBRT_LIBRT_PRIVATE_H
 
 #include "common.h"
 
@@ -130,6 +132,8 @@ extern void plot_ellipse(
 	int num_points);
 
 __END_DECLS
+
+#endif /* LIBRT_LIBRT_PRIVATE_H */
 
 /*
  * Local Variables:

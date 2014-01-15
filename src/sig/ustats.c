@@ -1,7 +1,7 @@
 /*                         U S T A T S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,15 +34,16 @@
 #include "bu.h"
 
 static const char usage[]     = "Usage: %s [ file ]\n";
-static const char optstring[] = "h?";
 static const char progname[]  = "ustats";
 
+
 /*
- * P A R S E _ A R G S --- Parse through command line flags
+ * Parse through command line flags
  */
-int
-parse_args(int ac, char **av)
+static int
+parse_args(int ac, char *av[])
 {
+    const char optstring[] = "h?";
     int c;
 
     /* Turn off bu_getopt's error messages */
@@ -62,7 +63,7 @@ parse_args(int ac, char **av)
 }
 
 
-void
+static void
 comp_stats(FILE *fd)
 {
     unsigned short *buffer=(unsigned short *)NULL;

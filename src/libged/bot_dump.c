@@ -1,7 +1,7 @@
 /*                         B O T _ D U M P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -853,7 +853,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     struct rt_bot_internal *bot;
     struct directory *dp;
-    char *file_ext = '\0';
+    char *file_ext = NULL;
     FILE *fp = (FILE *)0;
     int fd = -1;
     mat_t mat;
@@ -1323,7 +1323,7 @@ int
 ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
-    char *file_ext = '\0';
+    char *file_ext = NULL;
     FILE *fp = (FILE *)0;
     int fd = -1;
     mat_t mat;

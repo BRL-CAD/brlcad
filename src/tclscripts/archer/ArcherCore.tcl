@@ -1,7 +1,7 @@
 #                      A R C H E R C O R E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2013 United States Government as represented by
+# Copyright (c) 2002-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -40,6 +40,7 @@ namespace eval ArcherCore {
 
     itk_option define -quitcmd quitCmd Command {}
     itk_option define -master master Master "."
+    itk_option define -geometry geometry Geometry ""
 
     constructor {{_viewOnly 0} {_noCopy 0} {_noTree 0} {_noToolbar 0} args} {}
     destructor {}
@@ -394,6 +395,7 @@ namespace eval ArcherCore {
 
 	# variables for preference state
 	variable mWindowGeometry ""
+	variable mCmdWindowGeometry ""
 	variable mEnableAffectedNodeHighlight 0
 	variable mEnableAffectedNodeHighlightPref ""
 	variable mEnableListView 0
@@ -1599,7 +1601,7 @@ namespace eval ArcherCore {
 	set rmode [lindex $rdata 0]
 	set rtrans [lindex $rdata 1]
 
-	if [ $rmode == $DISPLAY_MODE_HIDDEN ] {
+	if {$rmode == $DISPLAY_MODE_HIDDEN} {
 	    gedCmd draw -h $obj
 	} else {
 	    gedCmd draw -m$rmode -x$rtrans $obj
@@ -2129,8 +2131,6 @@ namespace eval ArcherCore {
 
     ::update
     Load $target
-
-    cd $mLastSelectedDir
 }
 
 ::itcl::body ArcherCore::saveDb {} {

@@ -1,7 +1,7 @@
 /*                    V I E W W E I G H T . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2013 United States Government as represented by
+ * Copyright (c) 1988-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -217,7 +217,7 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj),
 
     i = maxm(strlen(curdir), strlen(homedir)) + strlen(DENSITY_FILE) + 2;
     /* densityfile is global to this file and will be used later (and then freed) */
-    densityfile = bu_calloc((unsigned int)i, sizeof(char), "densityfile");
+    densityfile = (char *)bu_calloc((unsigned int)i, sizeof(char), "densityfile");
 
     snprintf(densityfile, i, "%s/%s", curdir, DENSITY_FILE);
 
@@ -304,9 +304,10 @@ view_eol(struct application *UNUSED(ap))
 {
 }
 
-/* a region ID sort comparison for use with qsort on a region array */
+/* a region ID sort comparison for use with bu_sort on a region array */
 int region_ID_cmp(const void *p1,
-		  const void *p2)
+		  const void *p2,
+		  void *UNUSED(arg))
 {
     /* cast into correct type--note the incoming pointer type is a
        pointer to a pointer which must be dereferenced! */
@@ -464,7 +465,7 @@ view_end(struct application *ap)
 	}
 
 	/* sort the region array by ID, then by name */
-	qsort(rp_array, nregions, sizeof(struct region *), region_ID_cmp);
+	bu_sort(rp_array, nregions, sizeof(struct region *), region_ID_cmp, NULL);
 
 	/* WEIGHT BY REGION NAME =============== */
 	/* ^L is char code for FormFeed/NewPage */

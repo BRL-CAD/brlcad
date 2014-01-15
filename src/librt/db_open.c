@@ -1,7 +1,7 @@
 /*                       D B _ O P E N . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2013 United States Government as represented by
+ * Copyright (c) 1988-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -61,7 +61,7 @@ db_open(const char *name, const char *mode)
     register int i;
     char **argv;
 
-    if ( name == NULL ) return DBI_NULL;
+    if (name == NULL) return DBI_NULL;
 
     if (RT_G_DEBUG & DEBUG_DB) {
 	bu_log("db_open(%s, %s)\n", name, mode);
@@ -93,7 +93,7 @@ db_open(const char *name, const char *mode)
 	    bu_close_mapped_file(mfp);
 
 	    if (RT_G_DEBUG & DEBUG_DB) {
-		bu_log("db_open(%s) dbip=x%x: reused previously mapped file\n", name, dbip);
+		bu_log("db_open(%s) dbip=%p: reused previously mapped file\n", name, (void *)dbip);
 	    }
 
 	    return dbip;
@@ -133,7 +133,7 @@ db_open(const char *name, const char *mode)
     }
 
     /* Initialize fields */
-    for (i=0; i<RT_DBNHASH; i++)
+    for (i = 0; i < RT_DBNHASH; i++)
 	dbip->dbi_Head[i] = RT_DIR_NULL;
 
     dbip->dbi_local2base = 1.0;		/* mm */
@@ -213,7 +213,7 @@ db_open(const char *name, const char *mode)
     }
 
     if (RT_G_DEBUG & DEBUG_DB) {
-	bu_log("db_open(%s) dbip=x%x version=%d\n", dbip->dbi_filename, dbip, dbip->dbi_version);
+	bu_log("db_open(%s) dbip=%p version=%d\n", dbip->dbi_filename, (void *)dbip, dbip->dbi_version);
     }
 
     return dbip;
@@ -227,7 +227,7 @@ db_create(const char *name, int version)
     struct db_i *dbip;
     int result;
 
-    if ( name == NULL ) return DBI_NULL;
+    if (name == NULL) return DBI_NULL;
 
     if (RT_G_DEBUG & DEBUG_DB)
 	bu_log("db_create(%s, %d)\n", name, version);
@@ -290,8 +290,8 @@ db_close(register struct db_i *dbip)
 	return;
 
     RT_CK_DBI(dbip);
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_close(%s) x%x uses=%d\n",
-				    dbip->dbi_filename, dbip, dbip->dbi_uses);
+    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_close(%s) %p uses=%d\n",
+				    dbip->dbi_filename, (void *)dbip, dbip->dbi_uses);
 
     bu_semaphore_acquire(BU_SEM_LISTS);
     if ((--dbip->dbi_uses) > 0) {
@@ -344,7 +344,7 @@ db_close(register struct db_i *dbip)
     bu_ptbl_free(&dbip->dbi_clients);
 
     /* Free all directory entries */
-    for (i=0; i < RT_DBNHASH; i++) {
+    for (i = 0; i < RT_DBNHASH; i++) {
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL;) {
 	    RT_CK_DIR(dp);
 	    nextdp = dp->d_forw;
@@ -398,7 +398,7 @@ db_dump(struct rt_wdb *wdbp, struct db_i *dbip)
     }
 
     /* Output all directory entries */
-    for (i=0; i < RT_DBNHASH; i++) {
+    for (i = 0; i < RT_DBNHASH; i++) {
 	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    RT_CK_DIR(dp);
 	    /* XXX Need to go to internal form, if database versions don't match */

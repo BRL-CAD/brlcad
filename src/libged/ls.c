@@ -1,7 +1,7 @@
 /*                         L S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -68,7 +68,7 @@ _ged_getspace(struct db_i *dbip,
  * compare on the respective names and return that value.
  */
 static int
-cmpdirname(const genptr_t a, const genptr_t b)
+cmpdirname(const void *a, const void *b, void *UNUSED(arg))
 {
     struct directory **dp1, **dp2;
 
@@ -97,9 +97,9 @@ _ged_vls_col_pr4v(struct bu_vls *vls,
     size_t cwidth;	/* column width */
     size_t numcol;	/* number of columns */
 
-    qsort((genptr_t)list_of_names,
+    bu_sort((genptr_t)list_of_names,
 	  (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
-	  (int (*)(const void *, const void *))cmpdirname);
+	  cmpdirname, NULL);
 
     /*
      * Traverse the list of names, find the longest name and set the
@@ -188,9 +188,9 @@ vls_long_dpp(struct ged *gedp,
     size_t max_type_len = 0;
     struct directory *dp;
 
-    qsort((genptr_t)list_of_names,
+    bu_sort((genptr_t)list_of_names,
 	  (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
-	  (int (*)(const void *, const void *))cmpdirname);
+	  cmpdirname, NULL);
 
     for (i = 0; i < num_in_list; i++) {
 	size_t len;
@@ -310,9 +310,9 @@ vls_line_dpp(struct ged *gedp,
     int isComb, isRegion;
     int isSolid;
 
-    qsort((genptr_t)list_of_names,
+    bu_sort((genptr_t)list_of_names,
 	  (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
-	  (int (*)(const void *, const void *))cmpdirname);
+	  cmpdirname, NULL);
 
     /*
      * i - tracks the list item

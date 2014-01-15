@@ -1,7 +1,7 @@
 /*                      R T S E R V E R . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @addtogroup rtserver */
 /** @{ */
 /** @file rtserver.h
@@ -25,6 +26,11 @@
  *	header file for the rtserver
  *
  */
+
+#ifndef RTSERVER_H
+#define RTSERVER_H
+
+#include "common.h"
 
 /* Attempt to handle different sizes of the TCL ClientData on differing architectures */
 #if SIZEOF_VOID_P == SIZEOF_INT
@@ -37,6 +43,7 @@ typedef long long CLIENTDATA_INT;
 #define CLIENTDATA_INT "ERROR: could not determine size of void*";
 #endif
 
+__BEGIN_DECLS
 
 extern void getApplication(struct application **ap);
 extern void freeApplication(struct application *ap);
@@ -53,6 +60,10 @@ extern int rts_load_geometry( char *filename, int num_trees, char **objects );
 extern void printHits(struct bu_vlb *vlb);
 extern void get_model_extents( int sessionid, point_t min, point_t max );
 extern void rts_shootray( struct application *ap );
+
+__END_DECLS
+
+#endif /* RTSERVER_H */
 
 /** @} */
 /*

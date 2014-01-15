@@ -1,7 +1,7 @@
 /*                        M E M S E T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,8 +26,27 @@
 
 #include "common.h"
 
+/* quell warnings */
+#if defined(HAVE_WUNUSED_CONST_VARIABLE)
+#  if HAVE_GCC_DIAG_PRAGMAS
+#    pragma GCC diagnostic push /* begin ignoring warnings */
+#    pragma GCC diagnostic ignored "-Wunused-const-variable"
+#  elif HAVE_CLANG_DIAG_PRAGMAS
+#    pragma clang diagnostic push /* begin ignoring warnings */
+#    pragma clang diagnostic ignored "-Wunused-const-variable"
+#  endif
+#endif
+
 /* quell empty-compilation unit warnings */
 static const int unused = 0;
+
+#if defined(HAVE_WUNUSED_CONST_VARIABLE)
+#  if HAVE_GCC_DIAG_PRAGMAS
+#    pragma GCC diagnostic pop
+#  elif HAVE_CLANG_DIAG_PRAGMAS
+#    pragma clang diagnostic pop
+#  endif
+#endif
 
 /*
  * defined for the folks that don't seem to have a system memset()

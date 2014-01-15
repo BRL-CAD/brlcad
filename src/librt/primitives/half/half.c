@@ -1,7 +1,7 @@
 /*                          H A L F . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -327,7 +327,7 @@ rt_hlf_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 
     vect_t P_A;
     fastf_t f;
-    auto double ival;
+    double ival;
 
     f = hitp->hit_dist;
     if (f <= -INFINITY || f >= INFINITY) {
@@ -644,7 +644,7 @@ rt_hlf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "half external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "half external");
     rec = (union record *)ep->ext_buf;
 
     rec->s.s_id = ID_SOLID;
@@ -739,7 +739,7 @@ rt_hlf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 4;
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "half external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "half external");
 
     /* only the distance needs to be scaled */
     scaled_dist = hip->eqn[W] * local2mm;

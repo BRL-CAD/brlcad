@@ -1,7 +1,7 @@
 /*                           C U T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2013 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -165,59 +165,59 @@ rt_cut_optimize_parallel(int cpu, genptr_t arg)
     (*(const struct soltab **)(_p1))->_memb[_ind] > \
     (*(const struct soltab **)(_p2))->_memb[_ind] ? 1 : 0
 
-/* Functions for use with qsort */
-HIDDEN int rt_projXmin_comp(const void * p1, const void * p2);
-HIDDEN int rt_projXmax_comp(const void * p1, const void * p2);
-HIDDEN int rt_projYmin_comp(const void * p1, const void * p2);
-HIDDEN int rt_projYmax_comp(const void * p1, const void * p2);
-HIDDEN int rt_projZmin_comp(const void * p1, const void * p2);
-HIDDEN int rt_projZmax_comp(const void * p1, const void * p2);
+/* Functions for use with bu_sort */
+HIDDEN int rt_projXmin_comp(const void * p1, const void * p2, void *UNUSED(arg));
+HIDDEN int rt_projXmax_comp(const void * p1, const void * p2, void *UNUSED(arg));
+HIDDEN int rt_projYmin_comp(const void * p1, const void * p2, void *UNUSED(arg));
+HIDDEN int rt_projYmax_comp(const void * p1, const void * p2, void *UNUSED(arg));
+HIDDEN int rt_projZmin_comp(const void * p1, const void * p2, void *UNUSED(arg));
+HIDDEN int rt_projZmax_comp(const void * p1, const void * p2, void *UNUSED(arg));
 
 HIDDEN int
-rt_projXmin_comp(const void *p1, const void *p2)
+rt_projXmin_comp(const void *p1, const void *p2, void *UNUSED(arg))
 {
     return CMP(p1, p2, st_min, X);
 }
 
 
 HIDDEN int
-rt_projXmax_comp(const void *p1, const void *p2)
+rt_projXmax_comp(const void *p1, const void *p2, void *UNUSED(arg))
 {
     return CMP(p1, p2, st_max, X);
 }
 
 
 HIDDEN int
-rt_projYmin_comp(const void *p1, const void *p2)
+rt_projYmin_comp(const void *p1, const void *p2, void *UNUSED(arg))
 {
     return CMP(p1, p2, st_min, Y);
 }
 
 
 HIDDEN int
-rt_projYmax_comp(const void *p1, const void *p2)
+rt_projYmax_comp(const void *p1, const void *p2, void *UNUSED(arg))
 {
     return CMP(p1, p2, st_max, Y);
 }
 
 
 HIDDEN int
-rt_projZmin_comp(const void *p1, const void *p2)
+rt_projZmin_comp(const void *p1, const void *p2, void *UNUSED(arg))
 {
     return CMP(p1, p2, st_min, Z);
 }
 
 
 HIDDEN int
-rt_projZmax_comp(const void *p1, const void *p2)
+rt_projZmax_comp(const void *p1, const void *p2, void *UNUSED(arg))
 {
     return CMP(p1, p2, st_max, Z);
 }
 
 
 HIDDEN struct cmp_pair {
-    int (*cmp_min)(const void *, const void *);
-    int (*cmp_max)(const void *, const void *);
+    int (*cmp_min)(const void *, const void *, void *);
+    int (*cmp_max)(const void *, const void *, void *);
 } pairs[] = {
     { rt_projXmin_comp, rt_projXmax_comp },
     { rt_projYmin_comp, rt_projYmax_comp },
@@ -312,8 +312,8 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 	    RT_NU_GFACTOR_DEFAULT);
     }
 
-    nu_ncells = (int)ceil(2.0 + rtip->rti_nu_gfactor *
-			  pow((double)fromp->bn_len, 1.0/3.0));
+    nu_ncells = lrint(ceil(2.0 + rtip->rti_nu_gfactor *
+			  pow((double)fromp->bn_len, 1.0/3.0)));
     if (rtip->rti_nugrid_dimlimit > 0 &&
 	nu_ncells > rtip->rti_nugrid_dimlimit)
 	nu_ncells = rtip->rti_nugrid_dimlimit;
@@ -439,10 +439,10 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 	memcpy(list_min, fromp->bn_list, len*sizeof(struct soltab *));
 	memcpy(list_max, fromp->bn_list, len*sizeof(struct soltab *));
 	for (i=0; i<3; i++) {
-	    qsort((genptr_t)list_min, len,
-		  sizeof(struct soltab *), pairs[i].cmp_min);
-	    qsort((genptr_t)list_max, len,
-		  sizeof(struct soltab *), pairs[i].cmp_max);
+	    bu_sort((genptr_t)list_min, len,
+		  sizeof(struct soltab *), pairs[i].cmp_min, NULL);
+	    bu_sort((genptr_t)list_max, len,
+		  sizeof(struct soltab *), pairs[i].cmp_max, NULL);
 	    nstart = nend = axi = 0;
 	    l1 = list_min;
 	    l2 = list_max;
@@ -797,7 +797,7 @@ rt_cut_it(register struct rt_i *rtip, int ncpu)
      * (2**rtip->rti_cutdepth)*rtip->rti_cutlen potential leaf slots.
      * Also note that solids will typically span several leaves.
      */
-    rtip->rti_cutlen = (int)log((double)(rtip->nsolids+1));  /* ln ~= log2, nsolids+1 to avoid log(0) */
+    rtip->rti_cutlen = lrint(floor(log((double)(rtip->nsolids+1))));  /* ln ~= log2, nsolids+1 to avoid log(0) */
     rtip->rti_cutdepth = 2 * rtip->rti_cutlen;
     if (rtip->rti_cutlen < 3) rtip->rti_cutlen = 3;
     if (rtip->rti_cutdepth < 12) rtip->rti_cutdepth = 12;
@@ -2119,7 +2119,7 @@ rt_pr_cut_info(const struct rt_i *rtip, const char *str)
 
     switch (rtip->rti_space_partition) {
 	case RT_PART_NUGRID:
-	    nugnp = &rtip->rti_CutHead.nugn;
+	    nugnp = (const struct nugridnode *)&rtip->rti_CutHead.nugn;
 	    if (nugnp->nu_type != CUT_NUGRIDNODE)
 		bu_bomb("rt_pr_cut_info: passed non-nugridnode");
 

@@ -1,7 +1,7 @@
 /*                            D O . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2013 United States Government as represented by
+ * Copyright (c) 1987-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -106,7 +106,7 @@ old_frame(FILE *fp)
     eye_model[Y] = atof(number);
     if (fscanf(fp, "%128s", number) != 1) return -1;
     eye_model[Z] = atof(number);
-    for (i=0; i < 16; i++) {
+    for (i = 0; i < 16; i++) {
 	if (fscanf(fp, "%128s", number) != 1)
 	    return -1;
 	Viewrotscale[i] = atof(number);
@@ -171,7 +171,7 @@ old_way(FILE *fp)
  *
  * Process "start" command in new format input stream
  */
-int cm_start(int argc, char **argv)
+int cm_start(const int argc, const char **argv)
 {
     char *buf = (char *)NULL;
     int frame;
@@ -210,7 +210,7 @@ int cm_start(int argc, char **argv)
 }
 
 
-int cm_vsize(int argc, char **argv)
+int cm_vsize(const int argc, const char **argv)
 {
     if (argc < 2)
 	return 1;
@@ -220,20 +220,20 @@ int cm_vsize(int argc, char **argv)
 }
 
 
-int cm_eyept(int argc, char **argv)
+int cm_eyept(const int argc, const char **argv)
 {
     register int i;
 
     if (argc < 2)
 	return 1;
 
-    for (i=0; i<3; i++)
+    for (i = 0; i < 3; i++)
 	eye_model[i] = atof(argv[i+1]);
     return 0;
 }
 
 
-int cm_lookat_pt(int argc, char **argv)
+int cm_lookat_pt(const int argc, const char **argv)
 {
     point_t pt;
     vect_t dir;
@@ -266,20 +266,20 @@ int cm_lookat_pt(int argc, char **argv)
 }
 
 
-int cm_vrot(int argc, char **argv)
+int cm_vrot(const int argc, const char **argv)
 {
     register int i;
 
     if (argc < 16)
 	return 1;
 
-    for (i=0; i<16; i++)
+    for (i = 0; i < 16; i++)
 	Viewrotscale[i] = atof(argv[i+1]);
     return 0;
 }
 
 
-int cm_orientation(int argc, char **argv)
+int cm_orientation(const int argc, const char **argv)
 {
     register int i;
     quat_t quat;
@@ -287,7 +287,7 @@ int cm_orientation(int argc, char **argv)
     if (argc < 4)
 	return 1;
 
-    for (i=0; i<4; i++)
+    for (i = 0; i < 4; i++)
 	quat[i] = atof(argv[i+1]);
     quat_quat2mat(Viewrotscale, quat);
     orientflag = 1;
@@ -295,7 +295,7 @@ int cm_orientation(int argc, char **argv)
 }
 
 
-int cm_end(int UNUSED(argc), char **UNUSED(argv))
+int cm_end(const int UNUSED(argc), const char **UNUSED(argv))
 {
     struct rt_i *rtip = APP.a_rt_i;
 
@@ -312,7 +312,7 @@ int cm_end(int UNUSED(argc), char **UNUSED(argv))
 }
 
 
-int cm_tree(int argc, const char **argv)
+int cm_tree(const int argc, const char **argv)
 {
     register struct rt_i *rtip = APP.a_rt_i;
     struct bu_vls times = BU_VLS_INIT_ZERO;
@@ -334,7 +334,7 @@ int cm_tree(int argc, const char **argv)
 }
 
 
-int cm_multiview(int UNUSED(argc), char **UNUSED(argv))
+int cm_multiview(const int UNUSED(argc), const char **UNUSED(argv))
 {
     register struct rt_i *rtip = APP.a_rt_i;
     size_t i;
@@ -352,7 +352,7 @@ int cm_multiview(int UNUSED(argc), char **UNUSED(argv))
     if (rtip && BU_LIST_IS_EMPTY(&rtip->HeadRegion)) {
 	def_tree(rtip);		/* Load the default trees */
     }
-    for (i=0; i<(sizeof(a)/sizeof(a[0])); i++) {
+    for (i = 0; i < (sizeof(a)/sizeof(a[0])); i++) {
 	do_ae((double)a[i], (double)e[i]);
 	(void)do_frame(curframe++);
     }
@@ -367,7 +367,7 @@ int cm_multiview(int UNUSED(argc), char **UNUSED(argv))
  *
  * Usage: anim path type args
  */
-int cm_anim(int argc, const char **argv)
+int cm_anim(const int argc, const char **argv)
 {
 
     if (db_parse_anim(APP.a_rt_i->rti_dbip, argc, argv) < 0) {
@@ -383,7 +383,7 @@ int cm_anim(int argc, const char **argv)
  *
  * Clean out results of last rt_prep(), and start anew.
  */
-int cm_clean(int UNUSED(argc), char **UNUSED(argv))
+int cm_clean(const int UNUSED(argc), const char **UNUSED(argv))
 {
     /* Allow lighting model clean up (e.g. lights, materials, etc.) */
     view_cleanup(APP.a_rt_i);
@@ -404,7 +404,7 @@ int cm_clean(int UNUSED(argc), char **UNUSED(argv))
  * "leaks".  This terminates the program, as there is no longer a
  * database.
  */
-int cm_closedb(int UNUSED(argc), char **UNUSED(argv))
+int cm_closedb(const int UNUSED(argc), const char **UNUSED(argv))
 {
     db_close(APP.a_rt_i->rti_dbip);
     APP.a_rt_i->rti_dbip = DBI_NULL;
@@ -452,7 +452,7 @@ struct bu_structparse set_parse[] = {
  *
  * Allow variable values to be set or examined.
  */
-int cm_set(int argc, char **argv)
+int cm_set(const int argc, const char **argv)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
 
@@ -475,7 +475,7 @@ int cm_set(int argc, char **argv)
 /**
  * C M _ A E
  */
-int cm_ae(int argc, char **argv)
+int cm_ae(const int argc, const char **argv)
 {
     if (argc < 3)
 	return 1;
@@ -491,11 +491,11 @@ int cm_ae(int argc, char **argv)
 /**
  * C M _ O P T
  */
-int cm_opt(int argc, char **argv)
+int cm_opt(const int argc, const char **argv)
 {
     int old_bu_optind=bu_optind;	/* need to restore this value after calling get_args() */
 
-    if (get_args(argc, (const char **)argv) <= 0) {
+    if (get_args(argc, argv) <= 0) {
 	bu_optind = old_bu_optind;
 	return -1;
     }
@@ -840,7 +840,7 @@ do_frame(int framenumber)
 	/* Multiple frame buffer mode */
 	for(full_incr_sample = 1; full_incr_sample <= full_incr_nsamples;
 	    full_incr_sample++){
-	    if(full_incr_sample > 1) /* first sample was already initialized */
+	    if (full_incr_sample > 1) /* first sample was already initialized */
 		view_2init(&APP, framename);
 	    do_run(pix_start, pix_end);
 	}
@@ -903,7 +903,7 @@ do_frame(int framenumber)
 	bu_log("%zu solid/ray intersections: %zu hits + %zu miss\n",
 	       rtip->nshots, rtip->nhits, rtip->nmiss);
 	bu_log("pruned %.1f%%:  %zu model RPP, %zu dups skipped, %zu solid RPP\n",
-	       rtip->nshots>0?((double)rtip->nhits*100.0)/rtip->nshots:100.0,
+	       rtip->nshots > 0 ? ((double)rtip->nhits*100.0)/rtip->nshots : 100.0,
 	       rtip->nmiss_model, rtip->ndup, rtip->nmiss_solid);
 	bu_log("Frame %2d: %10zu pixels in %9.2f sec = %12.2f pixels/sec\n",
 	       framenumber,
@@ -1045,7 +1045,7 @@ res_pr(void)
 
     bu_log("\nResource use summary, by processor:\n");
     res = &resource[0];
-    for (i=0; i<npsw; i++, res++) {
+    for (i = 0; i < npsw; i++, res++) {
 	bu_log("---CPU %d:\n", i);
 	if (res->re_magic != RESOURCE_MAGIC) {
 	    bu_log("Bad magic number!\n");

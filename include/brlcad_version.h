@@ -1,7 +1,7 @@
 /*                B R L C A D _ V E R S I O N . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @file brlcad_version.h
  *
  * PRIVATE container header for determining compile-time version
@@ -27,6 +28,9 @@
  * (e.g. bu_version())
  *
  */
+
+#ifndef BRLCAD_VERSION_H
+#define BRLCAD_VERSION_H
 
 #include "common.h"
 
@@ -127,6 +131,7 @@ static const char BRLCAD_USER[256] = {
 };
 #endif
 
+__BEGIN_DECLS
 
 static const char *brlcad_ident(const char *title);
 
@@ -183,6 +188,9 @@ brlcad_ident(const char *title)
     return ident;
 }
 
+__END_DECLS
+
+#endif /* BRLCAD_VERSION_H */
 
 /*
  * Local Variables:

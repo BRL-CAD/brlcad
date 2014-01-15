@@ -1,7 +1,7 @@
 /*                         D A U T O . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,14 +36,16 @@
 
 #include "bu.h"
 
-double *data;			/* Input buffer */
-double *r;			/* autocor output */
-double *weight;		/* weights to unbias estimation */
 
-static const char usage[] = "Usage: dauto [window_size (512)] < doubles >outputfile\n";
-
-int main(int argc, char **argv)
+int
+main(int argc, char *argv[])
 {
+    static const char usage[] = "Usage: dauto [window_size (512)] < doubles >outputfile\n";
+
+    double *data;			/* Input buffer */
+    double *r;			/* autocor output */
+    double *weight;		/* weights to unbias estimation */
+
     int i, j, n, L;
     double *dp1, *dp2;
     size_t ret;

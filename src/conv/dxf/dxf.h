@@ -1,7 +1,7 @@
 /*                           D X F . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,6 +23,8 @@
  *
  */
 
+#ifndef CONV_DXF_DXF_H
+#define CONV_DXF_DXF_H
 
 static unsigned char rgb[]={
     0, 0, 0,
@@ -282,6 +284,8 @@ static unsigned char rgb[]={
     221, 221, 221,
     255, 255, 255
 };
+
+#endif /* CONV_DXF_DXF_H */
 
 
 /*

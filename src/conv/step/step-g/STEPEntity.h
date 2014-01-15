@@ -1,7 +1,7 @@
 /*                    S T E P E N T I T Y . H
  * BRL-CAD
  *
- * Copyright (c) 2009-2013 United States Government as represented by
+ * Copyright (c) 2009-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,8 +18,8 @@
  * information.
  */
 
-#ifndef STEPENTITY_H_
-#define STEPENTITY_H_
+#ifndef CONV_STEP_STEP_G_STEPENTITY_H
+#define CONV_STEP_STEP_G_STEPENTITY_H
 
 #include "common.h"
 
@@ -79,7 +79,7 @@ public:
 };
 
 
-#endif /* STEPENTITY_H_ */
+#endif /* CONV_STEP_STEP_G_STEPENTITY_H */
 
 /*
  * Local Variables:

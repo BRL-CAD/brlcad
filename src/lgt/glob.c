@@ -1,7 +1,7 @@
 /*                          G L O B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -96,7 +96,7 @@ fastf_t	modl_radius;		/* Radius of model (bounding sphere).	*/
 fastf_t	modl_cntr[3];
 
 /* Conversion degrees to radians.					*/
-fastf_t	degtorad = 0.0174532925;
+fastf_t	degtorad = DEG2RAD;
 
 /* Translations of grid in plane of view.				*/
 fastf_t	x_grid_offset = 0.0, y_grid_offset = 0.0;

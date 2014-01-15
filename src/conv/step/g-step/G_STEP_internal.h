@@ -1,7 +1,7 @@
 /*               G _ S T E P _ I N T E R N A L . H
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -21,8 +21,8 @@
  *
  */
 
-#ifndef G_STEP_internal_H_
-#define G_STEP_internal_H_
+#ifndef CONV_STEP_G_STEP_G_STEP_INTERNAL_H
+#define CONV_STEP_G_STEP_G_STEP_INTERNAL_H
 
 #include "STEPWrapper.h"
 
@@ -34,7 +34,7 @@ SdaiRepresentation * Add_Shape_Representation(Registry *registry, InstMgr *insta
 STEPentity * Add_Shape_Definition_Representation(Registry *registry, InstMgr *instance_list, SdaiRepresentation *sdairep);
 STEPcomplex * Add_Default_Geometric_Context(Registry *registry, InstMgr *instance_list);
 
-#endif /* G_STEP_internal_H_ */
+#endif /* CONV_STEP_G_STEP_G_STEP_INTERNAL_H */
 
 /*
  * Local Variables:

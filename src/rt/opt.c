@@ -1,7 +1,7 @@
 /*                           O P T . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2013 United States Government as represented by
+ * Copyright (c) 1989-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -645,14 +645,14 @@ get_args(int argc, const char *argv[])
 
     /* TODO: add options instead of reading from ENV */
     env_str = getenv("LIBRT_RAND_MODE");
-    if(env_str != NULL && atoi(env_str) == 1){
+    if (env_str != NULL && atoi(env_str) == 1){
 	random_mode = 1;
 	bu_log("random mode\n");
     }
     /* TODO: Read from command line */
     /* Read from ENV with we're going to use the experimental mode */
     env_str = getenv("LIBRT_EXP_MODE");
-    if(env_str != NULL && atoi(env_str) == 1){
+    if (env_str != NULL && atoi(env_str) == 1){
 	full_incr_mode = 1;
 	full_incr_nsamples = 10;
 	bu_log("multi-sample mode\n");

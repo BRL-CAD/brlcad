@@ -405,6 +405,15 @@ mode.
 Aliases:  ENABLE_STRICT, ENABLE_STRICT_COMPILE, ENABLE_STRICT_COMPILE_FLAGS
 
 
+--- ENABLE_ALL_CXX_COMPILE ---
+
+Build all C and C++ files with a C++ compiler.  Defaults to OFF.
+
+EXPERIMENTAL!
+
+Aliases:  ENABLE_ALL_CXX
+
+
 --- ENABLE_POSIX_COMPLIANCE ---
 
 Build with strict POSIX compliance checking.  Defaults to OFF.
@@ -421,22 +430,22 @@ Aliases:  ENABLE_POSIX
 
 Build with strict ISO C compliance checking.  Defaults to OFF.
 
-Causes C compiler options to be set for strict compliance with the appropriate
-ISO C standard
-standard.
+Causes C compiler options to be set for strict compliance with the
+appropriate ISO C standard.
 
 Aliases:  STRICT_ISO_C
 
 
 --- BRLCAD_EXTRADOCS ---
 
-The core option that enables and disables building of BRL-CAD's DocBook
-based documentation (includes manuals and man pages for commands, among
-other things.)  Defaults to ON, but only HTML and MAN formats are enabled
-by default - PDF must be enabled separately by use of this option or one
-of its aliases.  Note that you may set environment variable APACHE_FOP
-to point to your locally installed fop executable file (which on Linux is
-usually a shell script with 0755 permissions).
+The core option that enables and disables building of BRL-CAD's
+DocBook based documentation (includes manuals and man pages for
+commands, among other things).  Defaults to ON, but only HTML and MAN
+formats are enabled by default - PDF must be enabled separately by use
+of this option or one of its aliases.  Note that you may set
+environment variable APACHE_FOP to point to your locally installed fop
+executable file (which on Linux is usually a shell script with 0755
+permissions).
 
 Aliases:  ENABLE_DOCS, ENABLE_EXTRA_DOCS, ENABLE_DOCBOOK
 
@@ -692,6 +701,17 @@ testing first for a system version if BRLCAD_BUNDLED_LIBS is also
 AUTO.
 
 Aliases:  ENABLE_GDIAM
+
+
+--- BRLCAD_ASTYLE ---
+
+Option for enabling and disabling compilation of the Artistic Style
+(astyle) utility provided with BRL-CAD's source distribution.  Default is
+AUTO,
+responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
+first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
+
+Aliases:  ENABLE_ASTYLE
 
 
 

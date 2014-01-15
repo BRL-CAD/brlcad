@@ -1,7 +1,7 @@
 /*                           G C V . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,8 +23,10 @@
  *
  */
 
-#ifndef __GCV_H__
-#define __GCV_H__
+#ifndef GCV_H
+#define GCV_H
+
+#include "common.h"
 
 #include "raytrace.h"
 
@@ -83,7 +85,7 @@ GCV_EXPORT extern union tree *gcv_bottess(int argc, const char **argv, struct db
 
 __END_DECLS
 
-#endif /* __GCV_H__ */
+#endif /* GCV_H */
 
 /*
  * Local Variables:

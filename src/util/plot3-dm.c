@@ -1,7 +1,7 @@
 /*                      P L O T 3 - D M . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2013 United States Government as represented by
+ * Copyright (c) 1999-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -98,7 +98,7 @@ output_catch(genptr_t clientdata, genptr_t str)
 
     BU_CK_VLS(vp);
     len = bu_vls_strlen(vp);
-    bu_vls_strcat(vp, str);
+    bu_vls_strcat(vp, (const char *)str);
     len = bu_vls_strlen(vp) - len;
 
     return len;

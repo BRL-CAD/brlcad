@@ -1,7 +1,7 @@
 /*                    T E S T _ V L S _ V P R I N T F. C
  * BRL-CAD
  *
- * Copyright (c) 2011-2013 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -68,7 +68,7 @@ test_vls(const char *fmt, ...)
 
 
 int
-check_format_chars()
+check_format_chars(void)
 {
   int status = 0; /* assume okay */
   int i, flags;
@@ -116,7 +116,7 @@ main(int argc, char *argv[])
     const char *word = "Lawyer";
 
     if (argc < 2) {
-	printf("Usage: %s test_num\n", argv[0]);
+	fprintf(stderr,"Usage: %s test_num\n", argv[0]);
 	return 1;
     }
 

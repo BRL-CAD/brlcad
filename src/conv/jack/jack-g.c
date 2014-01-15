@@ -1,7 +1,7 @@
 /*                        J A C K - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -121,7 +121,7 @@ main(int argc, char **argv)
 	    base = argv[1];
 	else
 	    base++;
-	reg_name = bu_malloc(sizeof(base)+1, "reg_name");
+	reg_name = (char *)bu_malloc(sizeof(base)+1, "reg_name");
 	bu_strlcpy(reg_name, base, sizeof(base)+1);
 	/* Ignore .pss extension if it's there. */
 	doti = strlen(reg_name) - 4;
@@ -325,8 +325,8 @@ create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *gr
     struct shell *s;
     struct nmgregion *r;
 
-    rname = bu_malloc(sizeof(reg_name) + 3, "rname");	/* Region name. */
-    sname = bu_malloc(sizeof(reg_name) + 3, "sname");	/* Solid name. */
+    rname = (char *)bu_malloc(sizeof(reg_name) + 3, "rname");	/* Region name. */
+    sname = (char *)bu_malloc(sizeof(reg_name) + 3, "sname");	/* Solid name. */
 
     snprintf(sname, sizeof(reg_name) + 2, "s.%s", reg_name);
     empty_model = nmg_kill_zero_length_edgeuses(m);

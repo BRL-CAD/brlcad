@@ -1,7 +1,7 @@
 /*                        D E M - G . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -169,7 +169,7 @@ flip_high_low_bytes(long int in_value, unsigned char *out_string)
 	unsigned char highbyte = '\0';
 	unsigned char lowbyte = '\0';
 
-	highbyte = (unsigned char)floor(in_value / 256);
+	highbyte = (unsigned char)lrint(floor(in_value / 256));
 	lowbyte = (unsigned char)(in_value - (highbyte * 256));
 	out_string[0] = highbyte;
 	out_string[1] = lowbyte;
@@ -214,11 +214,11 @@ output_elevation(long int in_value, FILE *fp)
  */
 void remove_whitespace(char *input_string)
 {
-    char *idx = '\0';
+    char *idx = NULL;
     int idx2 = 0;
     int input_string_length = 0;
-    char *firstp = '\0';
-    char *lastp = '\0';
+    char *firstp = NULL;
+    char *lastp = NULL;
     int found_start = 0;
     int found_end = 0;
     int cleaned_string_length = 0;
@@ -245,7 +245,7 @@ void remove_whitespace(char *input_string)
     }
     /* if found_start is 0 then string must be all whitespace */
     if (found_start == 0) {
-	/* set null to first character a do nothing more */
+	/* set null to first character and do nothing more */
 	input_string[0] = '\0';
 	return;
     }
@@ -298,7 +298,7 @@ int read_element(ResultStruct *io_struct)
     char *search_result_uppercase;
     char *search_result_lowercase;
     char *endp;
-    char *buf = '\0';
+    char *buf = NULL;
     int status = BRLCAD_ERROR;
     logical_record_type record_type ;
     int start_character = 0;
@@ -1431,14 +1431,14 @@ read_dem(
 		    curr_elevation = 0;
 		}
 
-		if (output_elevation((long int)round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
+		if (output_elevation(lrint(round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor)), fp2) == BRLCAD_ERROR) {
 		    bu_log("Function 'output_elevation' failed on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
 		    fclose(fp);
 		    fclose(fp2);
 		    return BRLCAD_ERROR;
 		}
 	    }
-	    additional_1024char_chunks = (long int)ceil((tot_elevations_in_curr_b_record - 146.0) / 170.0);
+	    additional_1024char_chunks = lrint(ceil((tot_elevations_in_curr_b_record - 146.0) / 170.0));
 
 	    if (additional_1024char_chunks > 0) {
 		for (indx2 = 1; indx2 < additional_1024char_chunks; indx2++) {
@@ -1470,7 +1470,7 @@ read_dem(
 			    curr_elevation = 0;
 			}
 
-			if (output_elevation((long int)round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
+			if (output_elevation(lrint(round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor)), fp2) == BRLCAD_ERROR) {
 			    bu_log("Function 'output_elevation' failed on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
 			    fclose(fp);
 			    fclose(fp2);
@@ -1507,7 +1507,7 @@ read_dem(
 			curr_elevation = 0;
 		    }
 
-		    if (output_elevation((long int)round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
+		    if (output_elevation(lrint(round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor)), fp2) == BRLCAD_ERROR) {
 			bu_log("Function 'output_elevation' failed on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
 			fclose(fp);
 			fclose(fp2);
@@ -1536,7 +1536,7 @@ read_dem(
 		    curr_elevation = 0;
 		}
 
-		if (output_elevation((long int)round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor), fp2) == BRLCAD_ERROR) {
+		if (output_elevation(lrint(round_closest(curr_elevation * raw_dem_2_raw_dsp_scale_factor)), fp2) == BRLCAD_ERROR) {
 		    bu_log("Function 'output_elevation' failed on 'b' record# '%ld', record elevation# '%ld', dem elevation# '%ld', raw elevation value '%ld'.\n", curr_b_record, elevation_number_in_curr_b_record, elevation_number, curr_elevation);
 		    fclose(fp);
 		    fclose(fp2);
@@ -1570,7 +1570,7 @@ convert_load_order(
     unsigned short int buf4 = 0;
     size_t ret;
 
-    buf3 = bu_calloc(*in_ydim, sizeof(unsigned short int), "buf3");
+    buf3 = (short unsigned int *)bu_calloc(*in_ydim, sizeof(unsigned short int), "buf3");
 
     if ((fp4=fopen(in_dsp_output_filename, "wb")) == NULL) {
 	bu_log("Could not open '%s' for write.\n", in_dsp_output_filename);

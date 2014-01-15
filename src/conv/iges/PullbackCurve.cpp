@@ -1,7 +1,7 @@
 /*               P U L L B A C K C U R V E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2011-2013 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,7 +43,7 @@ typedef struct pbc_data {
 typedef struct _bspline {
     int p; // degree
     int m; // num_knots-1
-    int n; // num_samples-1 (aka number of control points)
+    int n; // num_samples-1 (a/k/a number of control points)
     vector<double> params;
     vector<double> knots;
     ON_2dPointArray controls;

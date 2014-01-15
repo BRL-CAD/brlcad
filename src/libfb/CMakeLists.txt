@@ -8,6 +8,7 @@ set(FB_INCLUDE_DIRS
   ${OPENGL_INCLUDE_DIR_GLX}
   ${TCL_INCLUDE_DIRS}
   ${TK_INCLUDE_PATH}
+  ${OPENNURBS_INCLUDE_DIR}
   )
 BRLCAD_LIB_INCLUDE_DIRS(fb FB_INCLUDE_DIRS "")
 
@@ -82,8 +83,6 @@ endif(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
 set(libfb_ignore_files
   dmdfb.h
   if_TEMPLATE.c
-  nilcursor.h
-  oglcursor.h
   if_X.c
   if_X24.c
   if_ogl.c

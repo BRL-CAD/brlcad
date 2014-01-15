@@ -1,7 +1,7 @@
 /*                    P C S O L V E R . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,8 +24,8 @@
  * various constraint solving methods
  *
  */
-#ifndef __PCSOLVER_H__
-#define __PCSOLVER_H__
+#ifndef LIBPC_PCSOLVER_H
+#define LIBPC_PCSOLVER_H
 
 #include "common.h"
 

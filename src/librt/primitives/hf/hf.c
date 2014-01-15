@@ -1,7 +1,7 @@
 /*                            H F . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -226,7 +226,7 @@ rt_hf_bbox(struct rt_db_internal *ip, point_t *min_pt, point_t *max_pt, const st
 	sp = (unsigned short *)hip->mp->apbuf;
 	min = max = *sp++;
 	len = hip->w * hip->n;
-	for (i=1; i< len; i++, sp++) {
+	for (i = 1; i < len; i++, sp++) {
 	    if ((int)*sp > max) max=*sp;
 	    if ((int)*sp < min) min=*sp;
 	}
@@ -240,7 +240,7 @@ rt_hf_bbox(struct rt_db_internal *ip, point_t *min_pt, point_t *max_pt, const st
 	fp = (fastf_t *) hip->mp->apbuf;
 	min = max = *fp++;
 	len = hip->w * hip->n;
-	for (i=1; i < len; i++, fp++) {
+	for (i = 1; i < len; i++, fp++) {
 	    if (*fp > max) max = *fp;
 	    if (*fp < min) min = *fp;
 	}
@@ -293,10 +293,10 @@ rt_hf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     const struct bn_tol *tol = &rtip->rti_tol;
     double dot;
     vect_t height, work;
-    static int first_time=1;
+    static int first_time = 1;
 
     if (first_time) {
-	first_time=0;
+	first_time = 0;
     }
     RT_CK_DB_INTERNAL(ip);
     hip = (struct rt_hf_internal *)ip->idb_ptr;
@@ -359,7 +359,7 @@ rt_hf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	sp = (unsigned short *)hf->hf_mp->apbuf;
 	min = max = *sp++;
 	len = hf->hf_w * hf->hf_n;
-	for (i=1; i< len; i++, sp++) {
+	for (i = 1; i < len; i++, sp++) {
 	    if ((int)*sp > max) max=*sp;
 	    if ((int)*sp < min) min=*sp;
 	}
@@ -374,7 +374,7 @@ rt_hf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	fp = (fastf_t *) hf->hf_mp->apbuf;
 	min = max = *fp++;
 	len = hf->hf_w * hf->hf_n;
-	for (i=1; i < len; i++, fp++) {
+	for (i = 1; i < len; i++, fp++) {
 	    if (*fp > max) max = *fp;
 	    if (*fp < min) min = *fp;
 	}
@@ -447,7 +447,7 @@ hf_cell_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
     struct hf_specific *hfp =
 	(struct hf_specific *)stp->st_specific;
 
-    fastf_t dn, abs_dn, k1st=0, k2nd=0, alpha, beta;
+    fastf_t dn, abs_dn, k1st = 0, k2nd = 0, alpha, beta;
     int dir1st, dir2nd;
     vect_t wxb, xp;
     vect_t tri_wn1st, tri_wn2nd, tri_BA1st, tri_BA2nd;
@@ -693,9 +693,9 @@ hf_cell_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 static void
 axis_plane_isect(int plane, fastf_t inout, struct xray *rp, struct hf_specific *hf, double xWidth, double yWidth, struct hit **hp, int *nhits)
 {
-    double left, right, xx=0, xright=0, answer;
+    double left, right, xx = 0, xright = 0, answer;
     vect_t loc;
-    int CellX=0, CellY=0;
+    int CellX = 0, CellY = 0;
 
     if (plane == -6) return;
 
@@ -804,7 +804,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
     double xWidth, yWidth;
 
     vect_t peqn;
-    fastf_t pdist=0;
+    fastf_t pdist = 0;
     fastf_t allDist[6];	/* The hit point for all rays. */
     fastf_t cosine;
 
@@ -820,7 +820,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
     out = INFINITY;
     iplane = oplane = 0;
 
-    nhits=0;
+    nhits = 0;
     hp = &hits[0];
 
 
@@ -1496,8 +1496,8 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
     {
 	int i;
 	struct hit tmp;
-	for (i=0; i< nhits-1; i++) {
-	    for (j=i+1; j<nhits; j++) {
+	for (i = 0; i < nhits-1; i++) {
+	    for (j = i+1; j < nhits; j++) {
 		if (hits[i].hit_dist <= hits[j].hit_dist) continue;
 		tmp = hits[j];
 		hits[j]=hits[i];
@@ -1518,7 +1518,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	nhits++;
 	if (nerrors++ < 300) {
 	    bu_log("rt_hf_shot(%s): %d hit(s)@ %d %d: ", stp->st_name, nhits-1, ap->a_x, ap->a_y);
-	    for (i=0; i< nhits; i++) {
+	    for (i = 0; i < nhits; i++) {
 		bu_log("%f(%d), ", hits[i].hit_dist, hits[i].hit_surfno);
 	    }
 	    bu_log("\n");
@@ -1529,7 +1529,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
     {
 	struct seg *segp;
 	int i;
-	for (i=0; i< nhits; i+=2) {
+	for (i = 0; i < nhits; i += 2) {
 	    RT_GET_SEG(segp, ap->a_resource);
 	    segp->seg_stp = stp;
 	    segp->seg_in = hits[i];
@@ -1634,10 +1634,10 @@ rt_hf_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uv
     uvp->uv_u = delta[X] / hf->hf_Xlen;
     uvp->uv_v = delta[Y] / hf->hf_Ylen;
     r = 0.0;
-    if (uvp->uv_u < 0.0) uvp->uv_u=0.0;
-    if (uvp->uv_u > 1.0) uvp->uv_u=1.0;
-    if (uvp->uv_v < 0.0) uvp->uv_v=0.0;
-    if (uvp->uv_v > 1.0) uvp->uv_v=1.0;
+    if (uvp->uv_u < 0.0) uvp->uv_u = 0.0;
+    if (uvp->uv_u > 1.0) uvp->uv_u = 1.0;
+    if (uvp->uv_v < 0.0) uvp->uv_v = 0.0;
+    if (uvp->uv_v > 1.0) uvp->uv_v = 1.0;
 
     uvp->uv_du = r;
     uvp->uv_dv = r;
@@ -1658,16 +1658,6 @@ rt_hf_free(struct soltab *stp)
 	hf->hf_mp = (struct bu_mapped_file *)0;
     }
     BU_PUT(hf, struct hf_specific);
-}
-
-
-/**
- * R T _ H F _ C L A S S
- */
-int
-rt_hf_class(void)
-{
-    return 0;
 }
 
 
@@ -2039,7 +2029,7 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	goto err1;
     }
     if (xip->w < 2 || xip->n < 2) {
-	bu_log("rt_hf_import4() w=%zu, n=%zu too small\n", xip->w, xip->n);
+	bu_log("rt_hf_import4() w=%u, n=%u too small\n", xip->w, xip->n);
 	goto err1;
     }
     if (xip->xlen <= 0 || xip->ylen <= 0) {
@@ -2146,7 +2136,7 @@ rt_hf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record) * DB_SS_NGRAN;
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "hf external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "hf external");
     rec = (union record *)ep->ext_buf;
 
     bu_vls_struct_print(&str, rt_hf_parse, (char *)xip);
@@ -2215,7 +2205,7 @@ rt_hf_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose,
     if (!verbose)
 	return 0;
 
-    bu_vls_struct_print(str, rt_hf_parse, ip->idb_ptr);
+    bu_vls_struct_print(str, rt_hf_parse, (const char *)ip->idb_ptr);
     bu_vls_strcat(str, "\n");
 
     return 0;

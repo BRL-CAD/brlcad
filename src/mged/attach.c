@@ -1,7 +1,7 @@
 /*                        A T T A C H . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -350,7 +350,7 @@ print_valid_dm(Tcl_Interp *interpreter)
     Tcl_AppendResult(interpreter, "qt", (char *)NULL);
     i++;
 #endif /* DM_QT */
-    if (i==0) {
+    if (i == 0) {
 	Tcl_AppendResult(interpreter, "NONE AVAILABLE", (char *)NULL);
     }
     Tcl_AppendResult(interpreter, "\n", (char *)NULL);
@@ -541,7 +541,14 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
     }
 
     /* initialize the background color */
-    cs_set_bg();
+    {
+	/* need dummy values for func signature--they are unused in the func */
+	const struct bu_structparse *sdp = 0;
+	const char name[] = "name";
+	void *base = 0;
+	const char value[] = "value";
+	cs_set_bg(sdp, name, base, value);
+    }
 
     mged_link_vars(curr_dm_list);
 

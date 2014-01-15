@@ -1,7 +1,7 @@
 /*                            P C . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,8 +24,10 @@
  * Structures required for implementing Parametrics and constraints
  *
  */
-#ifndef __PC_H__
-#define __PC_H__
+#ifndef PC_H
+#define PC_H
+
+#include "common.h"
 
 #include "bu.h"
 #include "bn.h"

@@ -1,7 +1,7 @@
 /*                        F B S E R V . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2013 United States Government as represented by
+ * Copyright (c) 1995-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -58,7 +58,7 @@
  * Communication error.  An error occurred on the PKG link.
  */
 HIDDEN void
-communications_error(char *str)
+communications_error(const char *str)
 {
     bu_log(str);
 }

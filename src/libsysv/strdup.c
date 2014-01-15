@@ -1,7 +1,7 @@
 /*                        S T R D U P . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,8 +28,27 @@
 
 #include "common.h"
 
+/* quell warnings */
+#if defined(HAVE_WUNUSED_CONST_VARIABLE)
+#  if HAVE_GCC_DIAG_PRAGMAS
+#    pragma GCC diagnostic push /* begin ignoring warnings */
+#    pragma GCC diagnostic ignored "-Wunused-const-variable"
+#  elif HAVE_CLANG_DIAG_PRAGMAS
+#    pragma clang diagnostic push /* begin ignoring warnings */
+#    pragma clang diagnostic ignored "-Wunused-const-variable"
+#  endif
+#endif
+
 /* quell empty-compilation unit warnings */
 static const int unused = 0;
+
+#if defined(HAVE_WUNUSED_CONST_VARIABLE)
+#  if HAVE_GCC_DIAG_PRAGMAS
+#    pragma GCC diagnostic pop /* end ignoring warnings */
+#  elif HAVE_CLANG_DIAG_PRAGMAS
+#    pragma clang diagnostic pop /* end ignoring warnings */
+#  endif
+#endif
 
 #ifndef HAVE_STRDUP
 #include "sysv.h"

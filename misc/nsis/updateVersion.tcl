@@ -1,7 +1,7 @@
 #                      U P D A T E V E R S I O N . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2013 United States Government as represented by
+# Copyright (c) 2002-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or

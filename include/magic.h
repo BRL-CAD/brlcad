@@ -1,7 +1,7 @@
 /*                         M A G I C . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -49,8 +49,8 @@
  *
  */
 
-#ifndef __MAGIC_H__
-#define __MAGIC_H__
+#ifndef MAGIC_H
+#define MAGIC_H
 
 #include "common.h"
 
@@ -216,7 +216,7 @@
 #define ICV_IMAGE_MAGIC		0x6269666d /**< bifm */
 
 
-#endif /* __MAGIC_H__ */
+#endif /* MAGIC_H */
 
 /** @} */
 

@@ -81,7 +81,7 @@ namespace posix_time {
     {}
     //Give duration access to ticks constructor -- hide from users
     friend class date_time::time_duration<time_duration, time_res_traits>;
-  private:
+  protected:
     explicit time_duration(impl_type tick_count) :
       date_time::time_duration<time_duration, time_res_traits>(tick_count)
     {}

@@ -1,7 +1,7 @@
 /*                         M A T E R . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,8 +26,10 @@
  *
  */
 
-#ifndef __MATER_H__
-#define __MATER_H__
+#ifndef MATER_H
+#define MATER_H
+
+#include "common.h"
 
 #include "bu.h"
 #include "raytrace.h"
@@ -70,14 +72,14 @@ RT_EXPORT extern void rt_color_addrec(int low,
 				      off_t addr);
 RT_EXPORT extern void rt_insert_color(struct mater *newp);
 RT_EXPORT extern void rt_vls_color_map(struct bu_vls *str);
-RT_EXPORT extern struct mater *rt_material_head();
+RT_EXPORT extern struct mater *rt_material_head(void);
 RT_EXPORT extern void rt_new_material_head(struct mater *);
-RT_EXPORT extern struct mater *rt_dup_material_head();
-RT_EXPORT extern void rt_color_free();
+RT_EXPORT extern struct mater *rt_dup_material_head(void);
+RT_EXPORT extern void rt_color_free(void);
 
 __END_DECLS
 
-#endif /* __MATER_H__ */
+#endif /* MATER_H */
 
 /** @} */
 /*

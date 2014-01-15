@@ -18,11 +18,25 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* nada.
+* test fbed, make sure stdout still works, displays output.  went from
+  unbuffered to buffered.
+
+* check repository.sh support for pathnames with spaces and special
+  characters.  regression-full is failing.
+
+* add a proper tgamma (c99) check, see superell.c; add a lrint check
+  as well.
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* sync tgc/rec shot() behavior, sort results for proper normal.
+  inspect t62 grazing with r653,r735 (tgc on an arb8) looking at ae0,0
+  and z=1524 (was hit/overlap, now misses).
+
+* libnmg: eliminate the nmgregion and model structures, rename shell
+  to model (consider naming consistency of all public structs).
 
 * implement a region anointment feature where the user can turn an
   assembly into a region and change all lower or higher regions into
@@ -84,6 +98,121 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* Need to mark or otherwise disambiguate grazing hit segments so we
+  can consistently retain or remove hits without introducing overlaps.
+  Consider the case of a tgc stacked on top of an arb8, perfectly
+  tangent, and shoot a ray at that point:
+
+                                   -----   z=2.0
+                                   |tgc|
+  shoot a ray through here --->   -------- z=1.0   <--- or here
+                                  | arb8 |
+                                  -------- z=0.0
+
+  Here are the primary concerns:
+
+  A) solidity: a ray should never pass through the two without one or
+  both evaluating to a hit,
+
+  B) usability: a convention that precludes forcing the user to
+  "nudge" them apart by some arbitrary epsilon is desired (it's
+  intuitive and common for users to model two objects with "perfect
+  tangency"),
+
+  C) deterministic: firing a ray should give the same result every
+  time that same ray is fired, and,
+
+  D) bidirectional: a ray fired in one direction should evaluate to
+  the same result if fired from the opposite direction along the same
+  path (view independence).
+
+  If we hit both, an overlap will ensue unless these objects are
+  unioned.  This is undesirable.  If we miss both, slipping through
+  the hairline "crack", it can be devastating for analysis and result
+  in raytrace speckling.
+
+  In order to only hit one, a consistent grazing policy must be
+  applied such that grazing points on one "side" of an object are
+  always kept and grazing hits on the other "side" are always thrown
+  away.  The proposed method, similar to handling special case
+  grazings with a Breseham line painter algorithm, is to consistently
+  consider grazes with a procedure:
+
+  1) Calculate the ray intersection, detect whether the hit is grazing
+  (defined as a hit being barely in/on the surface either through a
+  point, edge or even down a surface).
+
+  2) Calculate a hit normal.  It may be desirable to average both the
+  in/out hit points to get more of a "practical" surface normal.
+
+  3) Calculate the ray of reflection.  Use the surface normal and ray
+  of intersection to calculate our reflection direction.
+
+  4) Determine which plane of a globally bounding rpp the reflected
+  ray would intersect with.
+
+  5) If the reflected ray hits the front, right, or bottom face, the
+  grazing is kept, but if it reflects onto the back, left, or top
+  face, the grazing is ignored.  In ray-view projected 2D, this
+  corresponds with keeping the grazing if the reflection is pointing
+  up or to the left and discarding if pointing down or to the right.
+
+                                   discard top/left/rear
+                rear              keep bottom/right/front
+            .____________.
+            |\           |\ t              discard
+            | \          | \ o           ._________.
+          l |  \         |  \ p          |/////////|
+          e |   o____________o          d|//view// |
+          f |   |        |   |          i|//of///  |
+          t |   |        |   | r        s|//ray/   |k
+        b   .___|________.   | i        c|////+    |e
+         o  \   |         \  | g        a|////     |e
+          t  \  |          \ | h        r|///      |p
+           t  \ |           \| t        d|//       |
+            o  \o____________o           ./________.
+             m     front                     keep
+
+  This should result in consistent grazing behavior that addresses the
+  above case: we consistently hit the tgc but not the arb8 and there
+  are no overlaps requiring modeler intervention.  The main problem
+  with this approach, however, is calculating an appropriate surface
+  normal for edge and face grazings can be difficult for some objects.
+
+  In the case above, we do not get a hit on the tgc's bottom ellipse,
+  for example, instead getting two hits near the edge of the side.
+  Similarly, we hit the left and right arb8 faces, not the top face
+  even though that is what we are conceptually grazing through.
+
+  One possibility to address that difficulty is to simply report all
+  grazing hits, but mark them as grazing, and let rt_shootray() sort
+  it out by sampling a 3x3 pattern that determines if we're grazing
+  the "top/left" or "bottom/right" side of a surface.
+
+* fix the redblack tree callback function signatures.  they're
+  declared and handled as taking (void) but they actually take a
+  pointer and an int.  need to create a proper void* data parameter or
+  change the interface to not require so much cast spagettery.
+
+* decouple libwdb from librt, particularly the headers and relevant
+  structures that cross over to both such as the rtgeom.h types.
+
+* Translate the poly2tri routines into libbn C code
+
+* Implement Shamos-Hoey test for checking whether a polygon is simple
+  in libbn: http://geomalgorithms.com/a09-_intersect-3.html
+
+* figure out what in f_matpick (or possibly some other related function)
+  is causing ipathpos to get incremented to a number larger than the
+  number of objects in the full path its supposed to be referencing.
+
+* Need to eliminate bu_argv0_full_path and rework the bu_brlcad_* functions
+  that currently rely on it to take that path as a parameter from the
+  calling application.  The library shouldn't be responsible for managing
+  that path - there are too many issues with doing so.  The current approach
+  fixes some concerns but breaks if an application changes its notion of
+  the current working directory after initialization, for example.
 
 * change _mged_ command prefix to a simple '.' prefix to hide/protect
   the built-in commands.
@@ -285,24 +414,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * add support for a zoom/viewsize and twist options to rt so you can
   adjust the image without having to feed a view script.
-
-* implement some means (perhaps glint) to check a .g file for
-  duplicate region IDs and material inconsistencies.  perhaps exposed
-  as a new command, it should take an assembly/comb name as input,
-  walk the tree, and report duplicates.  if no arg, it walks all
-  top-level objects but processes them independently and only reports
-  sub-paths once (so you don't get the same object repeatedly reported
-  for all N top-level copies).  in the output, group together regions
-  with same and different material properties together:
-
-DUPLICATE ID NUMBERS
-comp.r1 ID 1234
-comp.r2 ID 1234
-
-DUPLICATE ID NUMBERS WITH DIFFERENT MATERIAL PROPERTIES
-comp.r3 ID 5678 material code 1 LOS 50
-comp.r4 ID 5678 material code 5 LOS 75
-
 
 * provide pkgIndex.tcl files for bu, bn, rt, fb, dm so we can properly
   package require the libs without an explicit 'load'
@@ -545,7 +656,7 @@ comp.r4 ID 5678 material code 5 LOS 75
 * make db_open modes behave the same as the fopen() modes (i.e.,
   create the .g if one doesn't exist when write mode)
 
-* fix the shaders.sh regression test case, failing dues to changes
+* fix the shaders.sh regression test case, failing due to changes
   with mged's view initialization.
 
 * inside support for ARS
@@ -658,13 +769,6 @@ comp.r4 ID 5678 material code 5 LOS 75
   segments)
 
 * address the TODO items in src/mged/clone.c
-
-* develop a low-level tool for investigating, reporting statistics on,
-  and repairing geometry database files.  the tool should nominally
-  perform big/little endian conversions, report number and types of
-  objects, allow deletion/undeletion/hiding/unhiding, provide some
-  general means to manipulate the packed and unpacked .g file data for
-  performing low-level modifications
 
 * fix rt parallel crash
   (true ; while [ $? -eq 0 ] ; do rt -o /dev/null moss.g all.g ; done)
@@ -882,6 +986,36 @@ comp.r4 ID 5678 material code 5 LOS 75
 * investigate the libngpcore and libngput libraries from the ngPlant
   project as a possible means of procedurally generating plant models
   in BRL-CAD (libraries are BSD licensed: http://ngplant.sourceforge.net)
+
+DATABASE MAINTENANCE/ADMINISTRATION
+-----------------------------------
+
+(Note: See src/util/admin-db.cpp for a starting admin tool which could
+be expanded to do the following tasks.)
+
+* implement some means (perhaps glint) to check a .g file for
+  duplicate region IDs and material inconsistencies.  perhaps exposed
+  as a new command, it should take an assembly/comb name as input,
+  walk the tree, and report duplicates.  if no arg, it walks all
+  top-level objects but processes them independently and only reports
+  sub-paths once (so you don't get the same object repeatedly reported
+  for all N top-level copies).  in the output, group together regions
+  with same and different material properties together:
+
+DUPLICATE ID NUMBERS
+comp.r1 ID 1234
+comp.r2 ID 1234
+
+DUPLICATE ID NUMBERS WITH DIFFERENT MATERIAL PROPERTIES
+comp.r3 ID 5678 material code 1 LOS 50
+comp.r4 ID 5678 material code 5 LOS 75
+
+* develop a low-level tool for investigating, reporting statistics on,
+  and repairing geometry database files.  the tool should nominally
+  perform big/little endian conversions, report number and types of
+  objects, allow deletion/undeletion/hiding/unhiding, provide some
+  general means to manipulate the packed and unpacked .g file data for
+  performing low-level modifications
 
 
 LIBGED
@@ -1102,7 +1236,7 @@ NEW OBJECTS
        font size (height)
        font style: bold/italic/regular
        font color
-       justification: left, center, right, bottom, middle, top  (combinable options, e.g., "top left")
+       justification: left, center, right, bottom, middle, top  (combineable options, e.g., "top left")
        placement: default, above, below, inline, interior, exterior
 
   Line properties:
@@ -1739,7 +1873,6 @@ DOCUMENTATION
     ustats
     vegetation
     wavy
-    wdb_example
     window
     window_frame
     wire
@@ -1897,12 +2030,6 @@ DOCUMENTATION
 	Overview of the various geometry conversion facilities in
 	BRL-CAD and how they related to solid geometry
 	representations.
-
-* A Developer's Introduction to BRL-CAD
-	An overview of BRL-CAD from a developer perspective intended
-	for new developers.  Provides overview of structure, important
-	sections, operating procedures, and answers to FAQ development
-	questions.
 
 ---
 See the feature request and bug trackers for more tasks and future

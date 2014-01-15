@@ -1,7 +1,7 @@
 /*                         S O L I D . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2013 United States Government as represented by
+ * Copyright (c) 1989-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -698,7 +698,7 @@ getsolid(void)
     if ((version == 5 && BU_STR_EQUAL(solid_type, "ell"))
 	|| BU_STR_EQUAL(solid_type, "ell1"))
     {
-	double m2 = 0.0;
+	double m2;
 
 	/* V, A, r */
 	/* GIFT4 name is "ell1", GIFT5 name is "ell" */
@@ -708,6 +708,7 @@ getsolid(void)
 	}
 
     ell1:
+	m2 = 0.0;
 	r1 = dd[6];		/* R */
 	VMOVE(work, D(0));
 	work[0] += bn_pi;

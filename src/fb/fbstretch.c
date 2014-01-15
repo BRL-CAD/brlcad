@@ -1,7 +1,7 @@
 /*                     F B S T R E T C H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -94,8 +94,8 @@ static bool_t sample = 0;		/* set: sampling; clear: averaging */
 static bool_t verbose = 0;		/* set for size info printout */
 static float x_scale = -1.0;		/* horizontal scaling factor */
 static float y_scale = -1.0;		/* vertical scaling factor */
-static bool_t x_compress;		/* set iff compressing horizontally */
-static bool_t y_compress;		/* set iff compressing vertically */
+static bool_t x_compress;		/* set if compressing horizontally */
+static bool_t y_compress;		/* set if compressing vertically */
 static char *src_file = NULL;		/* source frame buffer name */
 static FBIO *src_fbp = FBIO_NULL;	/* source frame buffer handle */
 static char *dst_file = NULL;		/* destination frame buffer name */

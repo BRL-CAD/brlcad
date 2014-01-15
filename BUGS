@@ -15,6 +15,15 @@ on-going issues.
 Recent Bugs
 -----------
 
+* nirt -e "xyz val val val" doesn't work due to the space after the -e
+  and how the nirt/rt commands parse quoted args.
+
+* probably related, there is a big parsing difference between nirt
+  with "xyz 1.0 2.0 3.0; dir 0 -1 0;" and "xyz 1. 2. 3. ; dir 0 -1
+  0;".  note the intentional space.  problem observed is that center
+  point ended up being "0.0 2.0 0.0" with there clearly being a
+  parsing error depending on where the semicolon was positioned.
+
 * calling "attr set obj key value" should always result in key getting
   set to value, no matter what, as it is the lowest-level attribute
   management interface and what the command (correctly) documents.
@@ -268,9 +277,6 @@ Recent Bugs
   depending on whether you shoot from the front or back can result in
   bogus lists visible with nirt in mged, entirely missing the bot, or
   mismatched entry/exit/overlap segments.
-
-* nirt -e "xyz val val val" doesn't work due to the space after the -e
-  and how the nirt/rt commands parse quoted args.
 
 * tab completion in classic/command mode sometimes doesn't work
   (presumably if mged can't find tcl resources).  was finally able to

@@ -1,7 +1,7 @@
 /*                     P I X - A L I A S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -46,9 +46,10 @@
 
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "hs:w:n:";
+char options[] = "hs:w:n:";
 char optflags[sizeof(options)];
-char *progname = "(noname)";
+char noname[] = "(noname)";
+char *progname = noname;
 
 int x=512;
 int y=512;

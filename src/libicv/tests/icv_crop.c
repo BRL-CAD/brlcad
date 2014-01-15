@@ -98,7 +98,7 @@ int main(int argc, char* argv[])
 	    \t   (llx,lly)             (lrx,lry)\n");
 
 
-    bu_log("Prompting Input Paramters\n");
+    bu_log("Prompting Input Parameters\n");
 
     bu_log("\tUpper left corner in input file (ulx, uly)?: ");
 	ret = scanf("%d%d", &ulx, &uly);

@@ -1,7 +1,8 @@
+
 /*                       M A S O N R Y . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,7 +40,7 @@
 
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "w:o:n:t:b:u:c:rlhdm:T:R:";
+char *options = "w:o:n:t:b:u:c:rldm:T:R:h?";
 
 int debug = 0;
 char *progname = "masonry";
@@ -50,16 +51,15 @@ char *type = "frame";
 char *units = "mm";
 double unit_conv = 1.0;
 matp_t trans_matrix = (matp_t)NULL;
-const double degtorad =  0.01745329251994329573;
 
 int log_cmds = 0;	/* log sessions to a log file */
 /* standard construction brick:
  * 8" by 2 1/4" by 3 3/8"
  */
-double brick_height = 8.0 * 25.4;
-double brick_width = 2.25 * 25.4;
-double brick_depth = 3.25 * 25.4;
-double min_mortar = 0.25 * 25.4;
+double brick_height = 203.2; /* 8.0  * 25.4 */
+double brick_width =  57.15; /* 2.25 * 25.4 */
+double brick_depth =  82.55; /* 3.25 * 25.4 */
+double min_mortar =    6.35; /* 0.25 * 25.4 */
 
 unsigned char *color;
 unsigned char def_color[3];
@@ -67,13 +67,13 @@ unsigned char brick_color[3] = {160, 40, 40};
 unsigned char mortar_color[3] = {190, 190, 190};
 
 int rand_brick_color = 0;
-int make_mortar = 1;
+int make_mortar = 0;
 
 /* real dimensions of a "2 by 4" board */
-double bd_thick = 3.25 * 25.4;
-double bd_thin = 1.5 * 25.4;
-double beam_height = 5.5 * 25.4;
-double sr_thick = 0.75 * 25.4;	/* sheetrock thickness */
+double bd_thick =     3.25 * 25.4;
+double bd_thin =      1.5  * 25.4;
+double beam_height =  5.5  * 25.4;
+double sr_thick =     0.75 * 25.4; /* sheetrock thickness */
 double stud_spacing = 16.0 * 25.4; /* spacing between vertical studs */
 
 unsigned char sheetrock_color[3] = { 200, 200, 200 };
@@ -109,12 +109,13 @@ void usage(char *s)
     if (s)
 	bu_log("%s\n", s);
 
-    bu_exit(1, "Usage: %s %s\n%s\n%s\n%s\n",
+    bu_exit(1, "Usage: %s %s\n%s\n%s\n%s\n%s\n",
 	    progname,
-	    "[ -u units ] -w(all) width, height [-o(pening) lx, lz, hx, hz ...]",
-	    " [-n name] [ -d(ebug) ] [-t {frame|brick|block|sheetrock} ] [-c R/G/B]",
+	    "[-u units] [-w(all) width, height] [-o(pening) lx, lz, hx, hz]",
+	    " [-n name_mged_object] [-d(ebug)] [-t {frame|brick|block|sheetrock}] [-c R/G/B]",
 	    " [-l(og_commands)] [-R(otate) rx/ry/rz] [-T(ranslate) dx/dy/dz]",
-	    " brick sub-options: [-r(and_color)] [-b width, height, depth ] [-m min_mortar]"
+	    " (brick options:) [-r(and_color)] [-b width, height, depth] [-m min_mortar_width]",
+	    " (default units=mm)"
 	);
 }
 
@@ -210,7 +211,7 @@ set_rotate(char *s)
 					 "rotation matrix");
 	MAT_IDN(trans_matrix);
     }
-    buildHrot(trans_matrix, rx*degtorad, ry*degtorad, rz*degtorad);
+    buildHrot(trans_matrix, rx*DEG2RAD, ry*DEG2RAD, rz*DEG2RAD);
 }
 
 
@@ -234,9 +235,6 @@ int parse_args(int ac, char **av)
 
     BU_LIST_INIT(&ol_hd.l);
 
-    /* Turn off bu_getopt's error messages */
-    bu_opterr = 0;
-
     /* get all the option flags from the command line */
     while ((c=bu_getopt(ac, av, options)) != -1) {
 	switch (c) {
@@ -248,15 +246,13 @@ int parse_args(int ac, char **av)
 		set_rotate(bu_optarg);
 		break;
 	    case 'b':
-		if (sscanf(bu_optarg, "%lf, %lf, %lf", &width, &height, &dy) == 3) {
-		    brick_width = width * unit_conv;
-		    brick_height = height * unit_conv;
-		    brick_depth = dy * unit_conv;
-		    units_lock = 1;
-		} else {
-		    usage("error parsing -b option\n");
-		}
+		if (sscanf(bu_optarg, "%lf, %lf, %lf", &width, &height, &dy) != 3)
+			usage("error parsing -b option\n");
 
+		brick_width = width * unit_conv;
+		brick_height = height * unit_conv;
+		brick_depth = dy * unit_conv;
+		units_lock = 1;
 		break;
 	    case 'c':
 		if (sscanf(bu_optarg, "%d %d %d", &R, &G, &B) == 3) {
@@ -273,41 +269,41 @@ int parse_args(int ac, char **av)
 		log_cmds = !log_cmds;
 		break;
 	    case 'm':
-		if ((dx=atof(bu_optarg)) > 0.0) {
-		    min_mortar = dx * unit_conv;
-		    units_lock = 1;
-		    make_mortar = 1;
-		} else {
+		if ((dx=atof(bu_optarg)) <= 0.0)
 		    usage("error parsing -m option\n");
-		}
+
+		min_mortar = dx * unit_conv;
+		units_lock = 1;
+		make_mortar = 1;
 
 		break;
 	    case 'n':
 		obj_name = bu_optarg;
 		break;
 	    case 'o':
-		if (ZERO(ol_hd.ex)) {
-		    usage("set wall dim before openings\n");
-		} else if (sscanf(bu_optarg, "%lf, %lf, %lf, %lf", &dx, &dy, &width, &height) == 4) {
-		    BU_ALLOC(op, struct opening);
-		    BU_LIST_INSERT(&ol_hd.l, &op->l);
-		    op->sx = dx * unit_conv;
-		    op->sz = dy * unit_conv;
-		    op->ex = width * unit_conv;
-		    op->ez = height * unit_conv;
+		if (ZERO(ol_hd.ex))
+		    usage("set wall dimensions (-w) ahead of openings (-o)\n");
+		if (sscanf(bu_optarg, "%lf, %lf, %lf, %lf", &dx, &dy, &width, &height) != 4)
+		    usage("error parsing -o option\n");
 
-		    /* do bounds checking */
-		    if (op->sx < 0.0) op->sx = 0.0;
-		    if (op->sz < 0.0) op->sz = 0.0;
-		    if (op->ex > WALL_WIDTH)
+		BU_ALLOC(op, struct opening);
+		BU_LIST_INSERT(&ol_hd.l, &op->l);
+		op->sx = dx * unit_conv;
+		op->sz = dy * unit_conv;
+		op->ex = width * unit_conv;
+		op->ez = height * unit_conv;
+
+		/* do bounds checking */
+		if (op->sx < 0.0)
+			op->sx = 0.0;
+		if (op->sz < 0.0)
+			op->sz = 0.0;
+		if (op->ex > WALL_WIDTH)
 			op->ex = WALL_WIDTH;
-		    if (op->ez > WALL_HEIGHT)
+		if (op->ez > WALL_HEIGHT)
 			op->ez = WALL_HEIGHT;
 
-		    units_lock = 1;
-		} else {
-		    usage("error parsing -o option\n");
-		}
+		units_lock = 1;
 		break;
 	    case 'r':
 		rand_brick_color = !rand_brick_color;
@@ -320,26 +316,22 @@ int parse_args(int ac, char **av)
 		    bu_log("Warning: attempting to change units in mid-parse\n");
 
 		dx=bu_units_conversion(bu_optarg);
-		if (!ZERO(dx)) {
-		    unit_conv = dx;
-		    units = bu_optarg;
-		} else {
+		if (ZERO(dx))
 		    usage("error parsing -u (units)\n");
-		}
+
+		unit_conv = dx;
+		units = bu_optarg;
 		break;
 	    case 'w':
-		if (sscanf(bu_optarg, "%lf, %lf", &width, &height) == 2) {
-		    WALL_WIDTH = width * unit_conv;
-		    WALL_HEIGHT = height * unit_conv;
-		    units_lock = 1;
-		} else {
+		if (sscanf(bu_optarg, "%lf, %lf", &width, &height) != 2)
 		    usage("error parsing -w (wall dimensions)\n");
-		}
+
+		WALL_WIDTH = width * unit_conv;
+		WALL_HEIGHT = height * unit_conv;
+		units_lock = 1;
 		break;
-	    case '?':
-	    case 'h':
 	    default:
-		usage("Bad or help flag specified\n");
+		usage((char *)NULL);
 		break;
 	}
     }
@@ -864,13 +856,12 @@ mortar_brick(struct rt_wdb *fd)
     mortar_width = WALL_WIDTH -
 	(horiz_bricks * (brick_width + min_mortar) +
 	 brick_depth);
-
     mortar_width = min_mortar + mortar_width / (double)horiz_bricks;
 
     vert_bricks = WALL_HEIGHT / (brick_height+min_mortar);
+
     mortar_height = WALL_HEIGHT - vert_bricks * (brick_height+min_mortar);
     mortar_height = min_mortar + mortar_height/vert_bricks;
-
 
     /* make prototype brick */
 
@@ -953,6 +944,7 @@ brick(struct rt_wdb *fd)
 	color = brick_color;
 
     horiz_bricks = (WALL_WIDTH-brick_depth) / brick_width;
+
     mortar_width = WALL_WIDTH - horiz_bricks * brick_width;
     mortar_width /= horiz_bricks;
 
@@ -1003,6 +995,7 @@ int main(int ac, char **av)
 	perror(sol_name);
 	return -1;
     }
+    bu_log("Have created file %s.g .\n",progname);
 
     if (debug) {
 	bu_log("Wall \"%s\"(%g) %g by %g\n", units, unit_conv,

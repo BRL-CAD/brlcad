@@ -1,7 +1,7 @@
 /*                           N M G . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,10 +25,13 @@
  * Modelling."  Developed from "Non-Manifold Geometric Boundary
  * Modeling" by Kevin Weiler, 5/7/87 (SIGGraph 1989 Course #20 Notes)
  *
+ * See also "Topological Structures for Geometric Modeling"
+ * by Kevin J. Weiler - RPI Phd thesis from 1986.
+ *
  */
 
-#ifndef __NMG_H__
-#define __NMG_H__
+#ifndef NMG_H
+#define NMG_H
 
 #include "common.h"
 
@@ -793,7 +796,7 @@ struct nmg_visit_handlers {
     void (*vis_vertex_g)(uint32_t *, genptr_t, int);
 };
 
-#endif /* __NMG_H__ */
+#endif /* NMG_H */
 
 /** @} */
 /*

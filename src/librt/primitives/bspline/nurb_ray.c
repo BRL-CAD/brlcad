@@ -1,7 +1,7 @@
 /*                      N U R B _ R A Y . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2013 United States Government as represented by
+ * Copyright (c) 1991-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -124,8 +124,9 @@ struct internal_convex_hull {
     fastf_t min, max;
 };
 
-
+#if !defined(SIGN)
 #define SIGN(a)	((a < 0.0)? -1 : 1)
+#endif
 
 void
 rt_nurb_clip_srf(const struct face_g_snurb *srf, int dir, fastf_t *min, fastf_t *max)

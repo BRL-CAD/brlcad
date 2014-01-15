@@ -1,7 +1,7 @@
 /*                          C M D . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2013 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @addtogroup cmd */
 /** @ingroup data */
 /** @{ */
@@ -27,8 +28,8 @@
  *
  */
 
-#ifndef __CMD_H__
-#define __CMD_H__
+#ifndef CMD_H
+#define CMD_H
 
 #include "common.h"
 
@@ -82,6 +83,7 @@ struct bu_cmdhist_obj {
 };
 #define BU_CMDHIST_OBJ_NULL (struct bu_cmdhist_obj *)NULL
 
+__BEGIN_DECLS
 
 /**
  * This function is intended to be used for parsing subcommands.  If
@@ -142,7 +144,10 @@ BU_EXPORT extern int bu_cmdhist_next(void *data, int argc, const char **argv);
  */
 BU_EXPORT extern int bu_cmdhist_prev(void *data, int argc, const char **argv);
 
-#endif  /* __CMD_H__ */
+__END_DECLS
+
+#endif  /* CMD_H */
+
 /** @} */
 /*
  * Local Variables:

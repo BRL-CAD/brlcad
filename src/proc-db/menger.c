@@ -1,7 +1,7 @@
 /*                        M E N G E R . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2013 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -61,9 +61,8 @@ slice(struct rt_wdb *fp, point_t origin, fastf_t depth, fastf_t width, fastf_t h
     vect_t cell[27];
     point_t minpt, maxpt;
 
-    if (!fp || depth < SMALL_FASTF || width < SMALL_FASTF) {
+    if (!fp || depth < SMALL_FASTF || width < SMALL_FASTF)
 	return;
-    }
 
     if (level > 0) {
 	struct bu_vls celfix = BU_VLS_INIT_ZERO;
@@ -271,12 +270,11 @@ mengerize(struct rt_wdb *fp, point_t origin, fastf_t extent, axes xyz, const cha
     struct wmember *final = NULL;
     struct bu_vls cut = BU_VLS_INIT_ZERO;
 
-    if (!fp || !pattern || extent < SMALL_FASTF || xyz == 0) {
+    if (!fp || !pattern || extent < SMALL_FASTF || xyz == 0)
 	return NULL; /* nothing to do */
-    }
 
     /* initialize */
-    levels = bu_calloc(repeat * strlen(pattern), sizeof(struct wmember *), "alloc uts array");
+    levels = (struct wmember **)bu_calloc(repeat * strlen(pattern), sizeof(struct wmember *), "alloc uts array");
     BU_ALLOC(final, struct wmember);
     BU_LIST_INIT(&(final->l));
 
@@ -288,7 +286,7 @@ mengerize(struct rt_wdb *fp, point_t origin, fastf_t extent, axes xyz, const cha
 	    BU_ALLOC(levels[slot], struct wmember);
 	    BU_LIST_INIT(&(levels[slot]->l));
 
-	    bu_log("%s %.2zu: %s%s%s width=%lf\n",
+	    bu_log("%s %.2d: %s%s%s width=%lf\n",
 		   (pattern[j] != 'i') ? "EXTERIOR" : "INTERIOR",
 		   slot,
 		   (xyz & XDIR) ? "X" : "",
@@ -296,12 +294,12 @@ mengerize(struct rt_wdb *fp, point_t origin, fastf_t extent, axes xyz, const cha
 		   (xyz & ZDIR) ? "Z" : "",
 		   extent / pow(3.0, slot));
 	    bu_vls_trunc(&cut, 0);
-	    bu_vls_printf(&cut, "box%zu_", slot);
+	    bu_vls_printf(&cut, "box%d_", slot);
 	    slice(fp, origin, extent, extent, extent, xyz, (pattern[j] != 'i'), /* !!! previous/solid, */ slot, bu_vls_addr(&cut), &(levels[slot]->l));
 
 	    /* group each xyz pattern together */
 	    bu_vls_trunc(&cut, 0);
-	    bu_vls_printf(&cut, "level%zu.c", slot);
+	    bu_vls_printf(&cut, "level%d.c", slot);
 	    mk_comb(fp, bu_vls_addr(&cut), &(levels[slot]->l), 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0);
 
 	    /* stash this pattern for the final combination */
@@ -337,7 +335,7 @@ main(int ac, char *av[])
     /* maximum extent in positive xyz directions (i.e., it's a cube) */
     static const fastf_t EXTENT = 1000000.0;
 
-    static const char optstring[] = "hHo:O:p:P:r:R:xXyYzZ";
+    static const char optstring[] = "o:O:p:P:r:R:xXyYzZh?";
     const char *av0 = av[0];
 
     struct bu_vls filename = BU_VLS_INIT_ZERO;
@@ -351,7 +349,6 @@ main(int ac, char *av[])
     struct bu_vls *boxes = NULL;
 
     bu_optind = 1;
-    bu_opterr = 0;
 
     /* set up defaults */
     bu_vls_strcpy(&filename, "menger.g");
@@ -385,43 +382,34 @@ main(int ac, char *av[])
 		/* scan for valid pattern characters */
 		bu_vls_trunc(&pattern, 0);
 		for (i=0; i < strlen(bu_optarg); i++) {
-		    if (bu_optarg[i] == 'i'
-			|| bu_optarg[i] == 'o')
-		    {
-			bu_vls_putc(&pattern, bu_optarg[i]);
-		    } else {
+		    if (bu_optarg[i] != 'i' && bu_optarg[i] != 'o')
 			bu_exit(5, "ERROR: Invalid pattern character encountered\nExpecting combinations of 'o' and 'i' (e.g., \"oiio\")\n");
-		    }
+
+		    bu_vls_putc(&pattern, bu_optarg[i]);
 		}
 		break;
 	    }
 	    case 'r':
 	    case 'R': {
 		long val = repeat;
-		if (!bu_optarg) {
+		if (!bu_optarg)
 		    bu_exit(3, "ERROR: missing repeat count after -r option\n");
-		}
+
 		val = strtol(bu_optarg, NULL, 0);
-		if (val <= 0) {
+		if (val <= 0)
 		    bu_exit(3, "ERROR: invalid repeat specification [%ld <= 0]\n", val);
-		}
+
 		repeat = (size_t)val;
 		break;
 	    }
-	    case '?':
-	    case 'h':
-	    case 'H':
 	    default:
 		usage(av[0]);
-		if (c == '?' && bu_optopt != '?' && tolower(bu_optopt) != 'h') {
-		    char *opt = strchr(optstring, bu_optopt);
-		    if (opt && opt[1] == ':') {
-			bu_exit(2, "ERROR: Missing option argument [-%c ARG]\n", bu_optopt);
-		    }
-		    bu_exit(1, "ERROR: Unrecognized option [-%c]\n", bu_optopt);
-		}
 		bu_exit(0, NULL);
 	}
+    }
+    if (ac == 1) {
+	usage(av[0]);
+    	fprintf(stderr,"       Program continues running:\n");
     }
     av += bu_optind;
     ac -= bu_optind;
@@ -450,16 +438,15 @@ main(int ac, char *av[])
     bu_log("Writing geometry to [%V]\n\n", &filename);
 
     fp = wdb_fopen(bu_vls_addr(&filename));
-    if (!fp) {
+    if (!fp)
 	bu_exit(6, "ERROR: Unable to open %V\n", &filename);
-    }
+
     (void)mk_id_units(fp, "Menger Sponge", "m");
 
     /* DO IT! */
     boxes = mengerize(fp, origin, EXTENT, xyz, bu_vls_addr(&pattern), repeat);
-    if (!boxes) {
+    if (!boxes)
 	bu_exit(7, "ERROR: Unable to create sponge\n");
-    }
 
     /* make the top-level scene:
      *

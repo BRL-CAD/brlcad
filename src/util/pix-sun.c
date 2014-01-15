@@ -1,7 +1,7 @@
 /*                       P I X - S U N . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,9 +36,10 @@
 
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "hs:w:n:d";
+char options[] = "hs:w:n:d";
 char optflags[sizeof(options)];
-char *progname = "(noname)";
+char noname[] = "(noname)";
+char *progname = noname;
 int dither = 0;
 
 #define MAPSIZE 256   /* Number of unique color values in Sun Colormap */

@@ -1,7 +1,7 @@
 /*                        D M _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2013 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -133,7 +133,7 @@ dmo_openFb(struct dm_obj *dmop)
 	case DM_TYPE_X:
 	    *dmop->dmo_fbs.fbs_fbp = X24_interface; /* struct copy */
 
-	    dmop->dmo_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen("/dev/X")+1, "if_name");
+	    dmop->dmo_fbs.fbs_fbp->if_name = (char *)bu_malloc((unsigned)strlen("/dev/X")+1, "if_name");
 	    bu_strlcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/X", strlen("/dev/X")+1);
 
 	    /* Mark OK by filling in magic number */
@@ -155,7 +155,7 @@ dmo_openFb(struct dm_obj *dmop)
 	case DM_TYPE_OGL:
 	    *dmop->dmo_fbs.fbs_fbp = ogl_interface; /* struct copy */
 
-	    dmop->dmo_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen("/dev/ogl")+1, "if_name");
+	    dmop->dmo_fbs.fbs_fbp->if_name = (char *)bu_malloc((unsigned)strlen("/dev/ogl")+1, "if_name");
 	    bu_strlcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/ogl", strlen("/dev/ogl")+1);
 
 	    /* Mark OK by filling in magic number */
@@ -1786,7 +1786,7 @@ dmo_lineStyle_tcl(void *clientData, int argc, const char **argv)
     }
 
     /* wrong number of arguments */
-    bu_vls_printf(&vls, "helplib_alias dm_linestyle %1", argv[1]);
+    bu_vls_printf(&vls, "helplib_alias dm_linestyle %s", argv[1]);
     Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;

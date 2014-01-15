@@ -4,6 +4,7 @@ set(include_hdrs
   bn.h
   bu.h
   common.h
+  cursor.h
   ged.h
   magic.h
   pstdint.h
@@ -85,6 +86,7 @@ set(noinst_HEADERS
   brlcad_version.h
   bselect.h
   conf.h
+  db_diff.h
   fbmsg.h
   sysv.h
   )

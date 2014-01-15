@@ -1,7 +1,7 @@
 /*                          D M - G L X . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2013 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,8 +23,10 @@
  *
  */
 
-#ifndef __DM_GLX__
-#define __DM_GLX__
+#ifndef DM_GLX_H
+#define DM_GLX_H
+
+#include "common.h"
 
 /* Map +/-2048 GED space into -1.0..+1.0 :: x/2048*/
 #define GED2IRIS(x)	(((float)(x))*0.00048828125)
@@ -64,10 +66,14 @@ struct glx_vars {
     struct modifiable_glx_vars mvars;
 };
 
+__BEGIN_DECLS
+
 extern void glx_clearToBlack();
 extern struct glx_vars head_glx_vars;
 
-#endif /* __DM_GLX__ */
+__END_DECLS
+
+#endif /* DM_GLX_H */
 
 /** @} */
 /*

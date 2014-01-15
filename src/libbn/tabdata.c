@@ -1,7 +1,7 @@
 /*                       T A B D A T A . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -676,7 +676,7 @@ bn_tabdata_resample_avg(const struct bn_table *newtable, const struct bn_tabdata
 	} else {
 	    /*
 	     *  Complex case: find average value.
-	     *  Interpolate both end, and consider all
+	     *  Interpolate both ends, and consider all
 	     *  intermediate old spans.
 	     *  There are three parts to sum:
 	     *	Partial interval from newx[i] to j+1

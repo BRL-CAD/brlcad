@@ -1,7 +1,7 @@
 /*                           T E A . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,6 +22,9 @@
  * Utah Teapot vertex data (ducks) and patch data
  *
  */
+
+#ifndef PROC_DB_TEA_H
+#define PROC_DB_TEA_H
 
 #define DEGREE 4
 #define DUCK_COUNT 306
@@ -381,6 +384,7 @@ pt patches[PATCH_COUNT] = {
     {{270, 270, 270, 270}, {300, 305, 306, 279}, {297, 303, 304, 275}, {294, 301, 302, 271}}
 };
 
+#endif /* PROC_DB_TEA_H */
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                      E U C L I D - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -247,8 +247,8 @@ add_nmg_to_db(struct rt_wdb *fpout, struct model *m, int reg_id)
     s = BU_LIST_FIRST( shell, &r->s_hd );
 
     sprintf(id, "%d", reg_id);
-    rname = bu_malloc(sizeof(id) + 3, "rname");	/* Region name. */
-    sname = bu_malloc(sizeof(id) + 3, "sname");	/* Solid name. */
+    rname = (char *)bu_malloc(sizeof(id) + 3, "rname");	/* Region name. */
+    sname = (char *)bu_malloc(sizeof(id) + 3, "sname");	/* Solid name. */
 
     snprintf(sname, 80, "%s.s", id);
     if ( polysolids )

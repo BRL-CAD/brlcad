@@ -1,7 +1,7 @@
 /*                           S P H . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -407,13 +407,6 @@ rt_sph_free(register struct soltab *stp)
 	(struct sph_specific *)stp->st_specific;
 
     BU_PUT(sph, struct sph_specific);
-}
-
-
-int
-rt_sph_class(void)
-{
-    return 0;
 }
 
 

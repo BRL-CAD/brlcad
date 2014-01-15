@@ -1,7 +1,7 @@
 /*                 OffsetCurve3D.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -61,7 +61,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* OFFSETCURVE3D_H_ */
+#endif /* CONV_STEP_STEP_G_OFFSETCURVE3D_H */
 
 /*
  * Local Variables:

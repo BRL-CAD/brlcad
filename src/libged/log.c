@@ -1,7 +1,7 @@
 /*                           L O G . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@ log_hook(genptr_t clientdata,
 
     BU_CK_VLS(vp);
     len = bu_vls_strlen(vp);
-    bu_vls_strcat(vp, str);
+    bu_vls_strcat(vp, (const char *)str);
     len = bu_vls_strlen(vp) - len;
 
     return len;

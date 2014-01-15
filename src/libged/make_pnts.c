@@ -1,7 +1,7 @@
 /*                        M A K E _ P N T S . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2013 United States Government as represented by
+ * Copyright (c) 2009-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -92,10 +92,10 @@ static char *p_make_pnts[] = {
 
 
 /*
- * Character compare function used by qsort function.
+ * Character compare function used by bu_sort function.
  */
 int
-compare_char(const char *a, const char *b)
+compare_char(const char *a, const char *b, void *UNUSED(arg))
 {
     return (int)(*a - *b);
 }
@@ -132,7 +132,7 @@ str2type(const char *format_string, rt_pnt_type *pnt_type, struct bu_vls *ged_re
 	bu_vls_trimspace(&str);
 
 	temp_string = bu_vls_addr(&str);
-	qsort(temp_string, strlen(temp_string), sizeof(char), (int (*)(const void *a, const void *b))compare_char);
+	bu_sort(temp_string, strlen(temp_string), sizeof(char), (int (*)(const void *a, const void *b, void *arg))compare_char, NULL);
 
 	if (BU_STR_EQUAL(temp_string, "xyz")) {
 	    *pnt_type = RT_PNT_TYPE_PNT;

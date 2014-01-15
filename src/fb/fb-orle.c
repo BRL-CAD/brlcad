@@ -1,7 +1,7 @@
 /*                       F B - O R L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -67,7 +67,7 @@ main(int argc, char **argv)
 	return 1;
     }
     fp = stdout;
-    setbuf(fp, malloc(BUFSIZ));
+    setbuf(fp, (char *)malloc(BUFSIZ));
 
     rle_wlen(xlen, ylen, 1);
     rle_wpos(xpos, ypos, 1);

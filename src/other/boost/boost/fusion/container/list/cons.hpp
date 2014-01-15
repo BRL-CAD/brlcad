@@ -1,5 +1,5 @@
 /*=============================================================================
-    Copyright (c) 2005 Joel de Guzman
+    Copyright (c) 2001-2011 Joel de Guzman
     Copyright (c) 2005 Eric Niebler
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying 
@@ -8,6 +8,7 @@
 #if !defined(FUSION_CONS_07172005_0843)
 #define FUSION_CONS_07172005_0843
 
+#include <boost/fusion/container/list/cons_fwd.hpp>
 #include <boost/fusion/support/detail/access.hpp>
 #include <boost/fusion/sequence/intrinsic/begin.hpp>
 #include <boost/fusion/sequence/intrinsic/end.hpp>
@@ -33,7 +34,7 @@ namespace boost { namespace fusion
     struct forward_traversal_tag;
     struct fusion_sequence_tag;
 
-    struct nil : sequence_base<nil>
+    struct nil_ : sequence_base<nil_>
     {
         typedef mpl::int_<0> size;
         typedef cons_tag fusion_tag;
@@ -43,10 +44,10 @@ namespace boost { namespace fusion
         typedef void_ car_type;
         typedef void_ cdr_type;
 
-        nil() {}
+        nil_() {}
 
         template <typename Iterator>
-        nil(Iterator const& /*iter*/, mpl::true_ /*this_is_an_iterator*/)
+        nil_(Iterator const& /*iter*/, mpl::true_ /*this_is_an_iterator*/)
         {}
 
         template <typename Iterator>
@@ -55,7 +56,7 @@ namespace boost { namespace fusion
         }
     };
 
-    template <typename Car, typename Cdr = nil>
+    template <typename Car, typename Cdr /*= nil_*/>
     struct cons : sequence_base<cons<Car, Cdr> >
     {
         typedef mpl::int_<Cdr::size::value+1> size;
@@ -87,7 +88,7 @@ namespace boost { namespace fusion
         template <typename Sequence>
         cons(
             Sequence const& seq
-          , typename disable_if<
+          , typename boost::disable_if<
                 mpl::or_<
                     is_convertible<Sequence, cons> // use copy ctor instead
                   , is_convertible<Sequence, Car>  // use copy to car instead
@@ -118,7 +119,7 @@ namespace boost { namespace fusion
         }
 
         template <typename Sequence>
-        typename disable_if<is_convertible<Sequence, Car>, cons&>::type
+        typename boost::disable_if<is_convertible<Sequence, Car>, cons&>::type
         operator=(Sequence const& seq)
         {
             typedef typename result_of::begin<Sequence const>::type Iterator;

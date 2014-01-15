@@ -1,7 +1,7 @@
 /*                          S M O D . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,28 +38,29 @@
 #include "vmath.h"
 
 
-char *progname = "smod";
-
-
 #define ADD 1
 #define MULT 2
 #define ABS 3
 #define POW 4
 #define BUFLEN 65536
 
-int numop = 0;		/* number of operations */
-int op[256];		/* operations */
-double val[256];		/* arguments to operations */
-short mapbuf[BUFLEN];		/* translation buffer/lookup table */
-unsigned char clip_h[BUFLEN];	/* map of values which clip high */
-unsigned char clip_l[BUFLEN];	/* map of values which clip low */
 
 static const char usage[] = "Usage: smod [-a add | -s sub | -m mult | -d div | -A | -e exp | -r root] [file.s]\n";
+static const char *progname = "smod";
 
-int
+static int numop = 0;		/* number of operations */
+static int op[256];		/* operations */
+static double val[256];		/* arguments to operations */
+static short mapbuf[BUFLEN];		/* translation buffer/lookup table */
+static unsigned char clip_h[BUFLEN];	/* map of values which clip high */
+static unsigned char clip_l[BUFLEN];	/* map of values which clip low */
+
+
+static int
 get_args(int argc, char *argv[])
 {
     char *file_name;
+    char hyphen[] = "-";
     int c;
     double d;
 
@@ -110,7 +111,7 @@ get_args(int argc, char *argv[])
     if (bu_optind >= argc) {
 	if (isatty((int)fileno(stdin)))
 	    return 0;
-	file_name = "-";
+	file_name = hyphen;
     } else {
 	char *ifname;
 	file_name = argv[bu_optind];
@@ -132,8 +133,8 @@ get_args(int argc, char *argv[])
 }
 
 
-void
-mk_trans_tbl()
+static void
+mk_trans_tbl(void)
 {
     int i, j, k;
     double d;
@@ -174,7 +175,6 @@ main(int argc, char *argv[])
 {
     unsigned int j, n;
     unsigned long clip_high, clip_low;
-    char *strrchr();
     short iobuf[BUFLEN];		/* input buffer */
 
     if (!(progname=strrchr(*argv, '/')))

@@ -1,7 +1,7 @@
 /*                    F B S E R V _ O B J . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,8 +22,10 @@
 /** @file fbserv_obj.h
  *
  */
-#ifndef __FBSERV_OBJ_H__
-#define __FBSERV_OBJ_H__
+#ifndef FBSERV_OBJ_H
+#define FBSERV_OBJ_H
+
+#include "common.h"
 
 #include "fb.h"
 #include "pkg.h"
@@ -61,16 +63,20 @@ struct fbserv_obj {
     Tcl_Interp *fbs_interp;		/**< @brief tcl interpreter */
     struct fbserv_listener fbs_listener;		/**< @brief data for listening */
     struct fbserv_client fbs_clients[MAX_CLIENTS];	/**< @brief connected clients */
-    void (*fbs_callback)();		/**< @brief callback function */
+    void (*fbs_callback)(genptr_t clientData);		/**< @brief callback function */
     genptr_t fbs_clientData;
     int fbs_mode;			/**< @brief 0-off, 1-underlay, 2-interlay, 3-overlay */
 };
 
+__BEGIN_DECLS
 
 FB_EXPORT extern int fbs_open(struct fbserv_obj *fbsp, int port);
 FB_EXPORT extern int fbs_close(struct fbserv_obj *fbsp);
 
-#endif  /* __FBSERV_OBJ_H__ */
+__END_DECLS
+
+#endif  /* FBSERV_OBJ_H */
+
 /** @} */
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                      P I X M A T T E . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2013 United States Government as represented by
+ * Copyright (c) 1989-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -83,7 +83,7 @@ The default width is 3 bytes, suitable for processing .pix files.\n\
 
 
 void
-usage(char *s, int n)
+usage(const char *s, int n)
 {
     if (s && *s) (void)fputs(s, stderr);
 

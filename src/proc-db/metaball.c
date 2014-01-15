@@ -1,7 +1,7 @@
 /*                      M E T A B A L L . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -184,16 +184,15 @@ make_spaghetti(const char *filename, const char *name, long count)
 
     /* get a write-only handle */
     fp = wdb_fopen(filename);
-    if (fp == RT_WDB_NULL) {
+    if (fp == RT_WDB_NULL)
 	bu_exit(EXIT_FAILURE, "ERROR: unable to open file for writing.\n");
-    }
 
     mk_id(fp, title);
 
     /* just to make things interesting, make varying sized sets */
-    some = (long)ceil((double)count * (1.0 / 111.0));
-    more = (long)ceil((double)count * (10.0 / 111.0));
-    many = (long)ceil((double)count * (100.0 / 111.0));
+    some = lrint(ceil((double)count * (1.0 / 111.0)));
+    more = lrint(ceil((double)count * (10.0 / 111.0)));
+    many = lrint(ceil((double)count * (100.0 / 111.0)));
 
     /* create individual metaballs with random points using LIBWDB */
     make_meatballs(fp, balls[0], some);
@@ -228,13 +227,20 @@ make_spaghetti(const char *filename, const char *name, long count)
 int
 main(int argc, char *argv[])
 {
-    static const char usage[] = "Usage:\n%s [-h] [-o outfile] [-n count]\n\n  -h      \tShow help\n  -o file \tFile to write out (default: metaball.g)\n  -n count\tTotal metaball point count (default 555)\n\n";
+    static const char usage[] = "Usage:\n%s [-o outfile] [-n count]\n\n  -o file \tFile to write out (default: metaball.g)\n  -n count\tTotal metaball point count (default %d)\n\n";
+    static const int COUNTMAX = 555;
 
     char outfile[MAXPATHLEN] = "metaball.g";
-    int optc = 0;
-    long count = 555;
+    int optc;
+    long count = COUNTMAX;
 
-    while ((optc = bu_getopt(argc, argv, "Hho:n:")) != -1) {
+    if (argc == 1) {
+	fprintf(stderr,usage, *argv, COUNTMAX);
+    	fprintf(stderr,"       Program continues running:\n");
+    }
+
+    while ((optc = bu_getopt(argc, argv, "o:n:h?")) != -1) {
+        if (bu_optopt == '?') optc='h';
 	switch (optc) {
 	    case 'o':
 		snprintf(outfile, MAXPATHLEN, "%s", bu_optarg);
@@ -242,21 +248,17 @@ main(int argc, char *argv[])
 	    case 'n':
 		count = atoi(bu_optarg);
 		break;
-	    case 'h' :
-	    case 'H' :
-	    case '?' :
-		printf(usage, *argv);
+	    default:
+		fprintf(stderr,usage, *argv, COUNTMAX);
 		return optc == '?' ? EXIT_FAILURE : EXIT_SUCCESS;
 	}
     }
 
-    if (count <= 0) {
+    if (count <= 0)
 	bu_exit(EXIT_FAILURE, "ERROR: count must be greater than zero");
-    }
 
-    if (bu_file_exists(outfile, NULL)) {
+    if (bu_file_exists(outfile, NULL))
 	bu_exit(EXIT_FAILURE, "ERROR: %s already exists.  Remove file and try again.", outfile);
-    }
 
     bu_log("Writing metaballs out to [%s]\n", outfile);
 

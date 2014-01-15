@@ -1,7 +1,7 @@
 /*         T E S T _ C U R V E _ I N T E R S E C T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -106,7 +106,7 @@ main(int, char**)
 	ON_Circle circleB(plane, centerB, radius);
 	ON_NurbsCurve *curveB = ON_NurbsCurve::New();
 	circleB.GetNurbForm(*curveB);
-	bu_log("Center of circleB: (%lf,%lf,%lf):\n", centerB.x, centerB.y, centerB.z);
+	bu_log("Center of circleB: (%f,%f,%f):\n", centerB.x, centerB.y, centerB.z);
 	test_cci(curveA, curveB);
 	delete curveB;
     }
@@ -152,7 +152,7 @@ main(int, char**)
 	ON_Circle circleB(plane, centerB, radius);
 	ON_NurbsCurve *curveB = ON_NurbsCurve::New();
 	circleB.GetNurbForm(*curveB);
-	bu_log("Center of circleB: (%lf,%lf,%lf):\n", centerB.x, centerB.y, centerB.z);
+	bu_log("Center of circleB: (%f,%f,%f):\n", centerB.x, centerB.y, centerB.z);
 	test_csi(curveB, surfA);
 	delete curveB;
     }

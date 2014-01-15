@@ -1,7 +1,7 @@
 /*                          P R E P . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2013 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -316,10 +316,10 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 	/* Ensure bit numbers are unique */
 	register struct soltab **ssp = &rtip->rti_Solids[stp->st_bit];
 	if (*ssp != SOLTAB_NULL) {
-	    bu_log("rti_Solids[%ld] is non-empty! rtip=x%x\n", stp->st_bit, rtip);
-	    bu_log("Existing entry is (st_rtip=x%x):\n", (*ssp)->st_rtip);
+	    bu_log("rti_Solids[%ld] is non-empty! rtip=%p\n", stp->st_bit, (void *)rtip);
+	    bu_log("Existing entry is (st_rtip=%p):\n", (void *)(*ssp)->st_rtip);
 	    rt_pr_soltab(*ssp);
-	    bu_log("2nd soltab also claiming that bit is (st_rtip=x%x):\n", stp->st_rtip);
+	    bu_log("2nd soltab also claiming that bit is (st_rtip=%p):\n", (void *)stp->st_rtip);
 	    rt_pr_soltab(stp);
 	}
 	BU_ASSERT_PTR(*ssp, ==, SOLTAB_NULL);
@@ -342,7 +342,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 	    "rti_sol_by_type[]");
 	rtip->rti_nsol_by_type[i] = 0;
     }
-    /* Fill in the array and rebuild the count (aka index) */
+    /* Fill in the array and rebuild the count (a/k/a index) */
     RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
 	register int id;
 	id = stp->st_id;
@@ -658,10 +658,10 @@ rt_init_resource(struct resource *resp,
 	struct resource *ores = (struct resource *)
 	    BU_PTBL_GET(&rtip->rti_resources, cpu_num);
 	if (ores != NULL && ores != resp) {
-	    bu_log("rt_init_resource(cpu=%d) re-registering resource, had x%x, new=x%x\n",
+	    bu_log("rt_init_resource(cpu=%d) re-registering resource, had %p, new=%p\n",
 		   cpu_num,
-		   ores,
-		   resp);
+		   (void *)ores,
+		   (void *)resp);
 	    return;
 	}
 	BU_PTBL_SET(&rtip->rti_resources, cpu_num, resp);
@@ -1338,7 +1338,7 @@ int
 obj_in_path(const char *path, const char *obj)
 {
     size_t obj_len=strlen(obj);
-    char *ptr;
+    const char *ptr;
 
     ptr = strstr(path, obj);
 

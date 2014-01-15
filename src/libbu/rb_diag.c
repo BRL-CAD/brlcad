@@ -1,7 +1,7 @@
 /*                       R B _ D I A G . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2013 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -83,7 +83,8 @@ bu_rb_diagnose_tree(struct bu_rb_tree *tree, int order, int trav_type)
     bu_log("Empty node:  <%p>\n", (void*)tree->rbt_empty_node);
     bu_log("Uniqueness:  %d\n", RB_GET_UNIQUENESS(tree, order));
     d_order = order;
-    rb_walk(tree, order, _rb_describe_node, WALK_NODES, trav_type);
+    rb_walk(tree, order, BU_RB_WALK_FUNC_CAST_AS_FUNC_ARG(_rb_describe_node),
+	    WALK_NODES, trav_type);
     bu_log("--------------------------------------------------\n");
 }
 
@@ -104,13 +105,13 @@ bu_rb_summarize_tree(struct bu_rb_tree *tree)
     if ((tree->rbt_nm_orders > 0) && (tree->rbt_nm_nodes > 0)) {
 	bu_log("i    Order[i]   Uniq[i]  Root[i]      Package[i]     Data[i]\n");
 	for (i = 0; i < tree->rbt_nm_orders; ++i) {
-	    bu_log("%-3d  <%p>    %c      <%p>    <%p>    <%p>\n",
+	    bu_log("%-3d  <%lx>    %c      <%p>    <%p>    <%p>\n",
 		   i,
-		   RB_ORDER_FUNC(tree, i),
+		   (long unsigned int)RB_COMPARE_FUNC(tree, i),
 		   RB_GET_UNIQUENESS(tree, i) ? 'Y' : 'N',
-		   (void*)RB_ROOT(tree, i),
-		   (RB_ROOT(tree, i) == BU_RB_NODE_NULL) ? 0 : (void*)(RB_ROOT(tree, i)->rbn_package)[i],
-		   (RB_ROOT(tree, i) == BU_RB_NODE_NULL) ? 0 : RB_DATA(RB_ROOT(tree, i), i));
+		   (void *)RB_ROOT(tree, i),
+		   (RB_ROOT(tree, i) == BU_RB_NODE_NULL) ? NULL : (void *)(RB_ROOT(tree, i)->rbn_package)[i],
+		   (RB_ROOT(tree, i) == BU_RB_NODE_NULL) ? NULL : RB_DATA(RB_ROOT(tree, i), i));
 	}
     }
     bu_log("-------------------------------------------------\n");

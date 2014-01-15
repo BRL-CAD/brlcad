@@ -1,7 +1,7 @@
 /*                       S H _ T E X T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2013 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -55,9 +55,10 @@ struct txt_specific {
 #define TX_NULL ((struct txt_specific *)0)
 #define TX_O(m) bu_offsetof(struct txt_specific, m)
 
+/* local sp_hook functions */
+HIDDEN void txt_transp_hook(const struct bu_structparse *, const char *, void *, const char *);
+HIDDEN void txt_source_hook(const struct bu_structparse *, const char *, void *, const char *);
 
-HIDDEN void txt_transp_hook(struct bu_structparse *ptab, char *name, char *cp, char *value);
-HIDDEN void txt_source_hook(const struct bu_structparse *ip, const char *sp_name, genptr_t base, char *p);
 HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInstance, const long unsigned int size);
 
 
@@ -66,7 +67,7 @@ struct bu_structparse txt_parse[] = {
     {"%V",	1, "file", TX_O(tx_name),		txt_source_hook, NULL, NULL },
     {"%V",	1, "obj", TX_O(tx_name),		txt_source_hook, NULL, NULL },
     {"%V",	1, "object", TX_O(tx_name),		txt_source_hook, NULL, NULL },
-    {"%V",	1, "texture", TX_O(tx_name),	 BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%V",	1, "texture", TX_O(tx_name),	        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "w",		TX_O(tx_w),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "n",		TX_O(tx_n),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "l",		TX_O(tx_n),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -85,15 +86,18 @@ struct bu_structparse txt_parse[] = {
  * fail.
  */
 HIDDEN void
-txt_source_hook(const struct bu_structparse *UNUSED(ip), const char *sp_name, genptr_t base, char *UNUSED(p))
+txt_source_hook(const struct bu_structparse *UNUSED(sdp),
+		const char *name,
+		void *base,
+		const char *UNUSED(value))
 {
     struct txt_specific *textureSpecific = (struct txt_specific *)base;
-    if (bu_strncmp(sp_name, "file", 4)==0) {
+    if (bu_strncmp(name, "file", 4) == 0) {
 	textureSpecific->tx_datasrc=TXT_SRC_FILE;
-    } else if (bu_strncmp(sp_name, "obj", 3)==0) {
-	textureSpecific->tx_datasrc=TXT_SRC_OBJECT;
+    } else if (bu_strncmp(name, "obj", 3) == 0) {
+	textureSpecific->tx_datasrc = TXT_SRC_OBJECT;
     } else {
-	textureSpecific->tx_datasrc=TXT_SRC_AUTO;
+	textureSpecific->tx_datasrc = TXT_SRC_AUTO;
     }
 }
 
@@ -104,12 +108,15 @@ txt_source_hook(const struct bu_structparse *UNUSED(ip), const char *sp_name, ge
  * Hooked function, called by bu_structparse
  */
 HIDDEN void
-txt_transp_hook(struct bu_structparse *ptab, char *name, char *cp, char *UNUSED(value))
+txt_transp_hook(const struct bu_structparse *sdp,
+		const char *name,
+		void *base,
+		const char *UNUSED(value))
 {
     register struct txt_specific *tp =
-	(struct txt_specific *)cp;
+	(struct txt_specific *)base;
 
-    if (BU_STR_EQUAL(name, txt_parse[0].sp_name) && ptab == txt_parse) {
+    if (BU_STR_EQUAL(name, txt_parse[0].sp_name) && sdp == txt_parse) {
 	tp->tx_trans_valid = 1;
     } else {
 	bu_log("file:%s, line:%d txt_transp_hook name:(%s) instead of (%s)\n",
@@ -258,7 +265,7 @@ txt_render(struct application *ap, const struct partition *pp, struct shadework 
      * texture isn't and can't be read, give debug colors
      */
 
-    if ((bu_vls_strlen(&tp->tx_name)<=0) || (!tp->tx_mp && !tp->tx_binunifp)) {
+    if ((bu_vls_strlen(&tp->tx_name) <= 0) || (!tp->tx_mp && !tp->tx_binunifp)) {
 	bu_log("WARNING: texture [%V] could not be read\n", &tp->tx_name);
 	VSET(swp->sw_color, uvc.uv_u, 0, uvc.uv_v);
 	if (swp->sw_reflect > 0 || swp->sw_transmit > 0)
@@ -320,7 +327,7 @@ txt_render(struct application *ap, const struct partition *pp, struct shadework 
     } else {
 	/* Calculate weighted average of cells in footprint */
 
-	fastf_t tot_area=0.0;
+	fastf_t tot_area = 0.0;
 	fastf_t cell_area;
 	int start_line, stop_line, line;
 	int start_col, stop_col, col;
@@ -457,7 +464,7 @@ bwtxt_render(struct application *ap, const struct partition *pp, struct shadewor
      * If no texture file present, or if
      * texture isn't and can't be read, give debug colors
      */
-    if ((bu_vls_strlen(&tp->tx_name)<=0) || (!tp->tx_mp && !tp->tx_binunifp)) {
+    if ((bu_vls_strlen(&tp->tx_name) <= 0) || (!tp->tx_mp && !tp->tx_binunifp)) {
 	VSET(swp->sw_color, uvc.uv_u, 0, uvc.uv_v);
 	if (swp->sw_reflect > 0 || swp->sw_transmit > 0)
 	    (void)rr_render(ap, pp, swp);
@@ -509,7 +516,7 @@ bwtxt_render(struct application *ap, const struct partition *pp, struct shadewor
     if (dx < 1) dx = 1;
     if (dy < 1) dy = 1;
     bw = 0;
-    for (line=0; line<dy; line++) {
+    for (line = 0; line < dy; line++) {
 	register unsigned char *cp=NULL;
 	register unsigned char *ep;
 
@@ -591,7 +598,7 @@ txt_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
     if (tp->tx_n < 0) tp->tx_n = tp->tx_w;
     if (tp->tx_trans_valid) rp->reg_transmit = 1;
     BU_CK_VLS(&tp->tx_name);
-    if (bu_vls_strlen(&tp->tx_name)<=0) return -1;
+    if (bu_vls_strlen(&tp->tx_name) <= 0) return -1;
     /* !?! if (tp->tx_name[0] == '\0') return -1;	*/ /* FAIL, no file */
 
     if (BU_STR_EQUAL(mfp->mf_name, "bwtexture")) pixelbytes = 1;
@@ -633,8 +640,8 @@ txt_free(genptr_t cp)
     bu_vls_free(&tp->tx_name);
     if (tp->tx_binunifp) rt_binunif_free(tp->tx_binunifp);
     if (tp->tx_mp) bu_close_mapped_file(tp->tx_mp);
-    tp->tx_binunifp = GENPTR_NULL; /* sanity */
-    tp->tx_mp = GENPTR_NULL; /* sanity */
+    tp->tx_binunifp = (struct rt_binunif_internal *)NULL; /* sanity */
+    tp->tx_mp = (struct bu_mapped_file *)NULL; /* sanity */
     BU_PUT(cp, struct txt_specific);
 }
 
@@ -692,8 +699,6 @@ ckr_render(struct application *ap, const struct partition *pp, register struct s
  */
 HIDDEN int
 ckr_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
-
-
 /* New since 4.4 release */
 {
     register struct ckr_specific *ckp;
@@ -724,7 +729,7 @@ ckr_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *
 HIDDEN void
 ckr_print(register struct region *rp, genptr_t UNUSED(dp))
 {
-    bu_struct_print(rp->reg_name, ckr_parse, rp->reg_udata);
+    bu_struct_print(rp->reg_name, ckr_parse, (const char *)rp->reg_udata);
 }
 
 
@@ -825,7 +830,7 @@ bmp_render(struct application *ap, const struct partition *pp, struct shadework 
      * If no texture file present, or if
      * texture isn't and can't be read, give debug color.
      */
-    if ((bu_vls_strlen(&tp->tx_name)<=0) || (!tp->tx_mp && !tp->tx_binunifp)) {
+    if ((bu_vls_strlen(&tp->tx_name) <= 0) || (!tp->tx_mp && !tp->tx_binunifp)) {
 	VSET(swp->sw_color, swp->sw_uv.uv_u, 0, swp->sw_uv.uv_v);
 	if (swp->sw_reflect > 0 || swp->sw_transmit > 0)
 	    (void)rr_render(ap, pp, swp);
@@ -916,7 +921,8 @@ envmap_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *UNUSE
 	optical_shader_init(&shaders);
     }
     if (mlib_setup(&shaders, &env_region, rtip) < 0)
-	bu_log("envmap_setup() material '%s' failed\n", env_region.reg_mater);
+	bu_log("envmap_setup() material '%s' failed\n",
+	       env_region.reg_mater.ma_shader);
 
 
     return 0;		/* This region should be dropped */

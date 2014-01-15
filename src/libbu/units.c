@@ -1,7 +1,7 @@
 /*                         U N I T S . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2013 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -379,13 +379,16 @@ bu_mm_value(const char *s)
 
 
 void
-bu_mm_cvt(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
+bu_mm_cvt(const struct bu_structparse *sdp,
+	  const char *name,
+	  void *base,
+	  const char *value)
 /* structure description */
 /* struct member name */
 /* beginning of structure */
 /* string containing value */
 {
-    register double *p = (double *)(base+sdp->sp_offset);
+    register double *p = (double *)((char *)base + sdp->sp_offset);
 
     if (UNLIKELY(!name)) {
 	bu_log("bu_mm_cvt: NULL name encountered\n");

@@ -1,7 +1,7 @@
 /*                            P O L Y . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -160,7 +160,7 @@ rt_pg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
  * ap, bp, cp point to vect_t points.
  *
  * Return -
- * 0 if the 3 points didn't form a plane (e.g., colinear, etc.).
+ * 0 if the 3 points didn't form a plane (e.g., collinear, etc.).
  * # pts (3) if a valid plane resulted.
  */
 HIDDEN int
@@ -507,16 +507,6 @@ rt_pg_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uv
 
 
 /**
- * R T _ P G _ C L A S S
- */
-int
-rt_pg_class(void)
-{
-    return 0;
-}
-
-
-/**
  * R T _ P G _ P L O T
  */
 int
@@ -785,7 +775,7 @@ rt_pg_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = (1 + pgp->npoly) * sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "pg external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "pg external");
     rec = (union record *)ep->ext_buf;
 
     rec[0].p.p_id = ID_P_HEAD;

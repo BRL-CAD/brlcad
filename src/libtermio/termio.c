@@ -1,7 +1,7 @@
 /*                        T E R M I O . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -377,16 +377,15 @@ get_O_Speed(int fd)
 
 /* c o p y _ T i o ()						*/
 static void
-copy_Tio(to, from)
-#ifdef BSD
-    struct sgttyb *to, *from;
+copy_Tio(
+#if defined(BSD)
+    struct sgttyb *to, struct sgttyb *from
+#elif defined(SYSV)
+    struct termio *to, struct termio *from
+#elif defined(HAVE_TERMIOS_H)
+    struct termios *to, struct termios*from
 #endif
-#ifdef SYSV
-    struct termio *to, *from;
-#endif
-#ifdef HAVE_TERMIOS_H
-    struct termios *to, *from;
-#endif
+)
 {
     (void)memcpy((char *) to, (char *) from, sizeof(*from));
     return;
@@ -424,7 +423,7 @@ reset_Tty(int fd)
 #ifdef SYSV
     (void) ioctl(fd, TCSETA, &save_tio[fd]); /* Write setting.		*/
 #endif
-#if HAVE_TERMIOS_H
+#ifdef HAVE_TERMIOS_H
     (void)tcsetattr(fd, TCSAFLUSH, &save_tio[fd]);
 #endif
     return;
@@ -458,59 +457,52 @@ set_O_NDELAY(int fd)
 #if defined(O_NDELAY)
     return fcntl(fd, F_SETFL, O_NDELAY);
 #else
-#if HAVE_TERMIOS_H
+#  if defined(HAVE_TERMIOS_H)
     return fcntl(fd, F_SETFL, FNDELAY);
-#endif
+#  endif
 #endif
 }
 
 /* p r n t _ T i o ()						*/
 void
-prnt_Tio(msg, tio_ptr)
-    char *msg;
-#ifdef BSD
-    struct sgttyb *tio_ptr;
+prnt_Tio(
+    char *msg,
+#if defined(BSD)
+    struct sgttyb *tio_ptr
+#elif defined(SYSV)
+    struct termio *tio_ptr
+#elif defined(HAVE_TERMIOS_H)
+    struct termios *tio_ptr
 #endif
-#ifdef SYSV
-    struct termio *tio_ptr;
-#endif
-#ifdef HAVE_TERMIOS_H
-    struct termios *tio_ptr;
-#endif
+)
 {
     register int i;
     (void) fprintf(stderr, "%s :\n\r", msg);
-#ifdef BSD
+#if defined(BSD)
     (void) fprintf(stderr, "\tsg_ispeed=%d\n\r", (int) tio_ptr->sg_ispeed);
     (void) fprintf(stderr, "\tsg_ospeed=%d\n\r", (int) tio_ptr->sg_ospeed);
     (void) fprintf(stderr, "\tsg_erase='%c'\n\r", tio_ptr->sg_erase);
     (void) fprintf(stderr, "\tsg_kill='%c'\n\r", tio_ptr->sg_kill);
     (void) fprintf(stderr, "\tsg_flags=0x%x\n\r", tio_ptr->sg_flags);
-#endif
-#ifdef SYSV
-
+#elif defined(SYSV)
     (void) fprintf(stderr, "\tc_iflag=0x%x\n\r", tio_ptr->c_iflag);
     (void) fprintf(stderr, "\tc_oflag=0x%x\n\r", tio_ptr->c_oflag);
     (void) fprintf(stderr, "\tc_cflag=0x%x\n\r", tio_ptr->c_cflag);
     (void) fprintf(stderr, "\tc_lflag=0x%x\n\r", tio_ptr->c_lflag);
     (void) fprintf(stderr, "\tc_line=%c\n\r", tio_ptr->c_line);
-    for (i = 0; i < NCC; ++i)
-    {
+    for (i = 0; i < NCC; ++i) {
 	(void) fprintf(stderr,
 		       "\tc_cc[%d]=0%o\n\r",
 		       i,
 		       tio_ptr->c_cc[i]
 	    );
     }
-#endif
-#ifdef HAVE_TERMIOS_H
-
+#elif defined(HAVE_TERMIOS_H)
     (void) fprintf(stderr, "\tc_iflag=0x%x\n\r", (unsigned int)tio_ptr->c_iflag);
     (void) fprintf(stderr, "\tc_oflag=0x%x\n\r", (unsigned int)tio_ptr->c_oflag);
     (void) fprintf(stderr, "\tc_cflag=0x%x\n\r", (unsigned int)tio_ptr->c_cflag);
     (void) fprintf(stderr, "\tc_lflag=0x%x\n\r", (unsigned int)tio_ptr->c_lflag);
-    for (i = 0; i < NCCS; ++i)
-    {
+    for (i = 0; i < NCCS; ++i) {
 	(void) fprintf(stderr,
 		       "\tc_cc[%d]=0%o\n\r",
 		       i,

@@ -1,7 +1,7 @@
 /*                      S H _ N O I S E . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2013 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,37 +45,17 @@
 #define noise_MAGIC 0x1847
 #define CK_noise_SP(_p) BU_CKMAG(_p, noise_MAGIC, "noise_specific")
 
-/* This allows us to specify the "size" parameter as values like ".5m"
- * or "27in" rather than using mm all the time.
- */
 void
-noise_cvt_parse(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
+noise_deg_to_rad(const struct bu_structparse *sdp,
+		 const char *UNUSED(name),
+		 void *base,
+		 const char *UNUSED(value))
 /* structure description */
 /* struct member name */
 /* beginning of structure */
 /* string containing value */
 {
-    double *p = (double *)(base+sdp->sp_offset);
-
-    if (rdebug&RDEBUG_SHADE)
-	bu_log("%s value %s ", name, value);
-    /* reconvert with optional units */
-    *p = bu_mm_value(value);
-
-    if (rdebug&RDEBUG_SHADE)
-	bu_log(" %g\n", *p);
-
-}
-
-
-void
-noise_deg_to_rad(register const struct bu_structparse *sdp, const char *UNUSED(name), char *base, const char *UNUSED(value))
-/* structure description */
-/* struct member name */
-/* beginning of structure */
-/* string containing value */
-{
-    double *p = (double *)(base+sdp->sp_offset);
+    double *p = (double *)((char *)base + sdp->sp_offset);
 
     /* reconvert with optional units */
     *p = *p * (bn_pi / 180.0);
@@ -175,10 +155,7 @@ struct bu_structparse noise_parse_tab[] = {
  */
 HIDDEN int
 noise_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip)
-
-
 /* pointer to reg_udata in *rp */
-
 /* New since 4.4 release */
 {
     register struct noise_specific *noise_sp;
@@ -283,10 +260,7 @@ noise_free(genptr_t cp)
  */
 static void
 norm_noise(fastf_t *pt, double val, struct noise_specific *noise_sp, double (*func) (/* ??? */), struct shadework *swp, int rescale)
-
-
 /* defined in material.h */
-
 {
     vect_t N, tmp;
     point_t u_pt, v_pt;
@@ -358,8 +332,6 @@ norm_noise(fastf_t *pt, double val, struct noise_specific *noise_sp, double (*fu
  */
 int
 fractal_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
-
-
 /* defined in material.h */
 /* ptr to the shader-specific struct */
 {

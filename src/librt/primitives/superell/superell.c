@@ -1,7 +1,7 @@
 /*                      S U P E R E L L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -531,7 +531,7 @@ rt_superell_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
     }
 
     if (counter > 0) {
-	bu_log("rt_superell_shot():  realroot in %d out %d\n", realRoot[1], realRoot[0]);
+	bu_log("rt_superell_shot():  realroot in %f out %f\n", realRoot[1], realRoot[0]);
 	counter--;
     }
 
@@ -642,13 +642,6 @@ rt_superell_free(struct soltab *stp)
 	(struct superell_specific *)stp->st_specific;
 
     BU_PUT(superell, struct superell_specific);
-}
-
-
-int
-rt_superell_class(void)
-{
-    return 0;
 }
 
 
@@ -870,7 +863,7 @@ rt_superell_export4(struct bu_external *ep, const struct rt_db_internal *ip, dou
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "superell external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "superell external");
     rec = (union record *)ep->ext_buf;
 
     rec->s.s_id = ID_SOLID;
@@ -962,7 +955,7 @@ rt_superell_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * (ELEMENTS_PER_VECT*4 + 2);
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "superell external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "superell external");
 
     /* scale 'em into local buffer */
     VSCALE(&vec[0*ELEMENTS_PER_VECT], eip->v, local2mm);
@@ -1071,6 +1064,7 @@ rt_superell_ifree(struct rt_db_internal *ip)
 /* The U parameter runs south to north.  In order to orient loop CCW,
  * need to start with 0, 1-->0, 0 transition at the south pole.
  */
+/* unused var:
 static const fastf_t rt_superell_uvw[5*ELEMENTS_PER_VECT] = {
     0, 1, 0,
     0, 0, 0,
@@ -1078,7 +1072,7 @@ static const fastf_t rt_superell_uvw[5*ELEMENTS_PER_VECT] = {
     1, 1, 0,
     0, 1, 0
 };
-
+*/
 
 /**
  * R T _ S U P E R E L L _ P A R A M S
@@ -1090,6 +1084,221 @@ rt_superell_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip
     if (ip) RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */
+}
+
+
+/**
+ * R T _ S U P E R E L L _ V O L U M E
+ *
+ * Computes the volume of a superellipsoid
+ *
+ * Volume equation from http://lrv.fri.uni-lj.si/~franc/SRSbook/geometry.pdf
+ * which also includes a derivation on page 32.
+ */
+void
+rt_superell_volume(fastf_t *volume, const struct rt_db_internal *ip)
+{
+#ifdef HAVE_TGAMMA
+    struct rt_superell_internal *sip;
+    double mag_a, mag_b, mag_c;
+#endif
+
+    if (volume == NULL || ip == NULL) {
+	return;
+    }
+
+#ifdef HAVE_TGAMMA
+    RT_CK_DB_INTERNAL(ip);
+    sip = (struct rt_superell_internal *)ip->idb_ptr;
+    RT_SUPERELL_CK_MAGIC(sip);
+
+    mag_a = MAGNITUDE(sip->a);
+    mag_b = MAGNITUDE(sip->b);
+    mag_c = MAGNITUDE(sip->c);
+
+    *volume = 2.0 * mag_a * mag_b * mag_c * sip->e * sip->n * (tgamma(sip->n/2.0 + 1.0) * tgamma(sip->n) / tgamma(3.0 * sip->n/2.0 + 1.0)) * (tgamma(sip->e / 2.0) * tgamma(sip->e / 2.0) / tgamma(sip->e));
+#endif
+}
+
+
+static fastf_t
+superell_surf_area_box(vect_t mags)
+{
+    return 8 * (mags[0] * mags[1] + mags[0] * mags[2] + mags[1] * mags[2]);
+}
+
+
+static fastf_t
+sign(fastf_t x)
+{
+    if (x > 0) {
+	return 1.0;
+    } else if (x < 0) {
+	return -1.0;
+    } else {
+	return 0.0;
+    }
+}
+
+
+/* This is the c auxiliary function for superell_xyz_from_uv.
+ * See http://en.wikipedia.org/wiki/Superellipsoid for more
+ * information.
+ */
+static fastf_t
+superell_c(fastf_t w, fastf_t m)
+{
+    return sign(cos(w)) * pow(fabs(cos(w)), m);
+}
+
+
+/* This is the s auxiliary function for superell_xyz_from_uv.
+ * See http://en.wikipedia.org/wiki/Superellipsoid for more
+ * information.
+ */
+static fastf_t
+superell_s(fastf_t w, fastf_t m)
+{
+    return sign(sin(w)) * pow(fabs(sin(w)), m);
+}
+
+
+/* This calculates the xyz coordinates of a set of uv coordinates on
+ * a superellipsoid, using the algorithm detailed in these places:
+ *
+ * http://en.wikipedia.org/wiki/Superellipsoid
+ * http://paulbourke.net/geometry/superellipse/
+ *
+ * Since this code is called inside a loop through v-values inside a
+ * loop through u-values, superell_c(u, sip->e) and superell_s(u,
+ * sip->e) can be precomputed, which results in a significant
+ * performance gain; for this reason, the function takes there values
+ * and not he original u-value.
+ */
+static void
+superell_xyz_from_uv(point_t pt, fastf_t u, fastf_t v, vect_t mags, const struct rt_superell_internal *sip)
+{
+    pt[X] = mags[0] * superell_c(v, sip->n) * superell_c(u, sip->e);
+    pt[Y] = mags[1] * superell_c(v, sip->n) * superell_s(u, sip->e);
+    pt[Z] = mags[2] * superell_s(v, sip->n);
+}
+
+
+/* This attempts to find the surface area by subdividing the uv plane
+ * into squares, and finding the approximate surface area of each
+ * square.
+ */
+static fastf_t
+superell_surf_area_general(const struct rt_superell_internal *sip, vect_t mags, fastf_t side_length)
+{
+    fastf_t area = 0;
+    fastf_t u, v;
+
+    /* There are M_PI / side_length + 1 values because both ends have
+       to be stored */
+    int row_length = sizeof(point_t) * (M_PI / side_length + 1);
+
+    point_t *row1 = (point_t *)bu_malloc(row_length, "superell_surf_area_general");
+    point_t *row2 = (point_t *)bu_malloc(row_length, "superell_surf_area_general");
+
+    int idx = 0;
+
+
+    /* This function keeps a moving window of two rows at any time,
+     * and calculates the area of space between those two rows. It
+     * calculates the first row outside of the loop so that at each
+     * iteration it only has to calculate the second. Following
+     * standard definitions of u and v, u ranges from -pi to pi, and v
+     * ranges from -pi/2 to pi/2. Using an extra index variable allows
+     * the code to compute the index into the array very efficiently.
+     */
+    for (v = - M_PI / 2; v < M_PI / 2; v += side_length, idx++) {
+	superell_xyz_from_uv(row1[idx], -M_PI, v, mags, sip);
+    }
+
+
+    /* This starts at -M_PI + side_length because the first row is
+     * computed outside the loop, which allows the loop to always
+     * calculate the second row of the pair.
+     */
+    for (u = -M_PI + side_length; u < M_PI; u += side_length) {
+	idx = 0;
+	for (v = - M_PI / 2; v < M_PI / 2; v += side_length, idx++) {
+	    superell_xyz_from_uv(row2[idx], u + side_length, v, mags, sip);
+	}
+
+	idx = 0;
+
+	/* This ends at -M_PI / 2 - side_length because if it kept
+	 * going it would overflow the array, since it always looks at
+	 * the square to the right of its current index.
+	 */
+	for (v = - M_PI / 2; v < M_PI / 2 - side_length; v += side_length, idx++) {
+	    area +=
+		bn_dist_pt3_pt3(row1[idx], row1[idx + 1]) *
+		bn_dist_pt3_pt3(row1[idx], row2[idx]);
+	}
+
+	memcpy(row1, row2, row_length);
+    }
+
+    bu_free(row1, "superell_surf_area_general");
+    bu_free(row2, "superell_surf_area_general");
+
+    return area;
+}
+
+
+void
+rt_superell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    struct rt_superell_internal *sip;
+    vect_t mags;
+
+    RT_CK_DB_INTERNAL(ip);
+    sip = (struct rt_superell_internal *)ip->idb_ptr;
+
+    mags[0] = MAGNITUDE(sip->a);
+    mags[1] = MAGNITUDE(sip->b);
+    mags[2] = MAGNITUDE(sip->c);
+
+    /* The parametric representation does not work correctly at n = e
+     * = 0, so this uses a special calculation for boxes.
+     */
+    if ((NEAR_EQUAL(sip->e, 0, BN_TOL_DIST)) && NEAR_EQUAL(sip->n, 0, BN_TOL_DIST)) {
+	*area = superell_surf_area_box(mags);
+    } else {
+	/* This number specifies the initial precision used. The
+	 * precision is roughly the number of chunks that the uv-space
+	 * is divided into during the approximation; the larger the
+	 * number the higher the accuracy and the lower the
+	 * performance.
+	 */
+	int precision = 1024;
+
+	fastf_t previous_area = 0;
+	fastf_t current_area = superell_surf_area_general(sip, mags, M_PI / precision);
+	while (!(NEAR_EQUAL(current_area, previous_area, BN_TOL_DIST))) {
+	    /* The precision is multiplied by a constant on each round
+	     * through the loop to make sure that the precision
+	     * continues to increase until a satisfactory value is
+	     * found. If this value is very small, this approximation
+	     * will likely converge fairly quickly and with lower
+	     * accuracy: the smaller the distance between the inputs
+	     * the more likely that the outputs will be within
+	     * BN_TOL_DIST. A large value will result in slow
+	     * convergence, but in high accuracy: when the values are
+	     * finally within BN_TOL_DIST of each other the
+	     * approximation must be very good, because a large
+	     * increase in input precision resulted in a small
+	     * increase in accuracy.
+	     */
+	    precision *= 2;
+	    previous_area = current_area;
+	    current_area = superell_surf_area_general(sip, mags, M_PI / precision);
+	}
+	*area = current_area;
+    }
 }
 
 

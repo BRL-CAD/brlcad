@@ -1,7 +1,7 @@
 /*                       I M G D I M S . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2013 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,6 +38,7 @@
 #include "fb.h"
 
 
+#define NONE -1
 #define BELIEVE_NAME 0
 #define BELIEVE_STAT 1
 #define DFLT_PIXEL_SIZE 3
@@ -45,7 +46,7 @@
 static char usage[] = "\
 Usage: 'imgdims [-ns] [-# bytes/pixel] file_name'\n\
     or 'imgdims [-# bytes/pixel] num_bytes'\n";
-#define OPT_STRING "ns#:?"
+#define OPT_STRING "ns#:h?"
 
 
 static void print_usage (void)
@@ -82,8 +83,8 @@ static int pixel_size (char *buf)
 
     if ((ep = strrchr(buf, '.')) == NULL)
 	return DFLT_PIXEL_SIZE;
-    else
-	++ep;
+
+    ++ep;
 
     for (ap = a_tbl; ap->ext; ++ap)
 	if (BU_STR_EQUAL(ep, ap->ext))
@@ -99,7 +100,7 @@ main (int argc, char **argv)
     char *argument;		/* file name or size */
     int bytes_per_pixel = -1;
     int ch;
-    int how = BELIEVE_NAME;
+    int how = NONE;
     int nm_bytes = -1;
     int nm_pixels = 0;
     size_t width;
@@ -123,7 +124,6 @@ main (int argc, char **argv)
 		    print_usage();
 		}
 		break;
-	    case '?':
 	    default:
 		print_usage();
 	}
@@ -132,9 +132,10 @@ main (int argc, char **argv)
     }
 
     argument = bu_realpath(argv[bu_optind], NULL);
-    if (!bu_file_exists(argument, NULL)) {
+    if (how != NONE && !bu_file_exists(argument, NULL)) {
+	bu_log("image file [%s] does not exist\n", argument);
 	bu_free(argument, "argument realpath");
-	bu_exit(1, "image file [%s] does not exist\n", argument);
+	bu_exit(1,NULL);
     }
 
     if ((stat(argument, &stat_buf) != 0)
@@ -146,18 +147,17 @@ main (int argc, char **argv)
     }
 
     /*
-     * If the user specified a file,
-     * determine its size
+     * If the user specified a file, determine its size.
      */
     if (nm_bytes == -1) {
 	if ((how == BELIEVE_NAME)
 	    && fb_common_name_size(&width, &height, argument))
 	    goto done;
-	else {
-	    nm_bytes = (int)stat_buf.st_size;
-	    if (bytes_per_pixel == -1)
+
+	nm_bytes = (int)stat_buf.st_size;
+	if (bytes_per_pixel == -1)
 		bytes_per_pixel = pixel_size(argument);
-	}
+
     }
 
     bu_free(argument, "argument realpath");
@@ -165,10 +165,10 @@ main (int argc, char **argv)
     if (bytes_per_pixel == -1)
 	bytes_per_pixel = DFLT_PIXEL_SIZE;
 
-    if (nm_bytes % bytes_per_pixel == 0)
-	nm_pixels = nm_bytes / bytes_per_pixel;
-    else
+    if (nm_bytes % bytes_per_pixel != 0)
 	bu_exit (1, "Image size (%d bytes) is not a multiple of pixel size (%d bytes)\n", nm_bytes, bytes_per_pixel);
+
+    nm_pixels = nm_bytes / bytes_per_pixel;
 
     if (!fb_common_image_size(&width, &height, nm_pixels))
 	bu_exit (0, NULL);

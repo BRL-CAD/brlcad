@@ -1,7 +1,7 @@
 /*                      G E N C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,6 +43,14 @@ int bytes_in_buf, copies_per_buf;
 
 unsigned char buf[MAX_BYTES];
 
+void
+printusage(int i)
+{
+    bu_log("%s\n", Usage);
+    bu_log("  (No whitespace immediately after -r and must redirect output)");
+    bu_exit(i, NULL);
+}
+
 
 int
 main(int argc, char **argv)
@@ -51,9 +59,8 @@ main(int argc, char **argv)
     int32_t count;
     unsigned char *bp;
 
-    if (argc < 1 || isatty(fileno(stdout))) {
-	bu_exit(1, "%s", Usage);
-    }
+    if (argc == 1 || isatty(fileno(stdout)))
+	printusage(1);
 
     count = -1;
     if (argc > 1 && bu_strncmp(argv[1], "-r", 2) == 0) {
@@ -76,9 +83,8 @@ main(int argc, char **argv)
     } else if (!isatty(fileno(stdin))) {
 	/* get values from stdin */
 	len = fread((char *)buf, 1, MAX_BYTES, stdin);
-	if (len <= 0) {
-	    bu_exit(2, "%s", Usage);
-	}
+	if (len <= 0)
+	    printusage(2);
     } else {
 	/* assume black */
 	buf[0] = 0;

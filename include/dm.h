@@ -1,7 +1,7 @@
 /*                          D M . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2013 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef __DM_H__
-#define __DM_H__
+#ifndef DM_H
+#define DM_H
 
 #include "common.h"
 
@@ -341,7 +341,7 @@ DM_EXPORT extern struct dm dm_X;
 DM_EXPORT extern struct dm dm_txt;
 DM_EXPORT extern struct dm dm_qt;
 
-DM_EXPORT extern int Dm_Init();
+DM_EXPORT extern int Dm_Init(void *interp);
 DM_EXPORT extern struct dm *dm_open(Tcl_Interp *interp,
 				    int type,
 				    int argc,
@@ -389,9 +389,6 @@ DM_EXPORT extern int vclip(fastf_t *,
 			   fastf_t *,
 			   fastf_t *);
 
-/* focus.c */
-DM_EXPORT extern void dm_applicationfocus(void);
-
 /* grid.c */
 DM_EXPORT extern void dm_draw_grid(struct dm *dmp,
 				   struct ged_grid_state *ggsp,
@@ -404,7 +401,9 @@ DM_EXPORT extern int dm_draw_labels(struct dm *dmp,
 				    const char *name,
 				    mat_t viewmat,
 				    int *labelsColor,
-				    int (*labelsHook)(),
+				    int (*labelsHook)(struct dm *dmp_arg, struct rt_wdb *wdbp_arg,
+                                                      const char *name_arg, mat_t viewmat_arg,
+                                                      int *labelsColor_arg, ClientData labelsHookClientdata_arg),
 				    ClientData labelsHookClientdata);
 
 /* rect.c */
@@ -460,7 +459,7 @@ __END_DECLS
     HIDDEN int _dmtype##_freeDLists(struct dm *dmp, unsigned int list, int range); \
     HIDDEN int _dmtype##_getDisplayImage(struct dm *dmp, unsigned char **image);
 
-#endif /* __DM_H__ */
+#endif /* DM_H */
 
 /** @} */
 /*

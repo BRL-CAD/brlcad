@@ -1,7 +1,7 @@
 /*                        S E A R C H . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -124,6 +124,7 @@ static OPTION options[] = {
     { "-stdattr",   N_STDATTR,      c_stdattr,      O_ZERO },
     { "-type",      N_TYPE,         c_type,	    O_ARGV },
 };
+
 
 /**
  * A generic traversal function maintaining awareness of the full path
@@ -449,7 +450,7 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
 		if (state == 1) {
 		    if ((int)db_node->path->fp_len > db_node->matching_len) {
 			db_node->matching_len = db_node->path->fp_len;
-			/*bu_log("matching_leaf: %s(%d)\n", db_path_to_string(db_node->path),db_node->matching_len);*/
+			/*bu_log("matching_leaf: %s(%d)\n", db_path_to_string(db_node->path), db_node->matching_len);*/
 		    }
 		    DB_FULL_PATH_POP(db_node->path);
 		    return 1;
@@ -650,8 +651,8 @@ f_below(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, st
     }
     db_free_full_path(&belowpath);
     if (state >= 1 && ((int)((curr_node.matching_len - (db_node->path->fp_len - db_node->orig_len)) - 1) >= plan->min_depth)
-	    && ((int)((curr_node.matching_len - (db_node->path->fp_len - db_node->orig_len)) - 1) <= plan->max_depth)) {
-	/*bu_log("(%d) f_below match: %s(%d): (%d) - %d; (%d,%d)\n", db_node->orig_len, db_path_to_string(db_node->path), db_node->path->fp_len, curr_node.matching_len, curr_node.matching_len - (db_node->path->fp_len - db_node->orig_len) - 1, plan->min_depth, plan->max_depth);*/
+	&& ((int)((curr_node.matching_len - (db_node->path->fp_len - db_node->orig_len)) - 1) <= plan->max_depth)) {
+	/*bu_log("(%d) f_below match: %s(%d): (%d) - %d; (%d, %d)\n", db_node->orig_len, db_path_to_string(db_node->path), db_node->path->fp_len, curr_node.matching_len, curr_node.matching_len - (db_node->path->fp_len - db_node->orig_len) - 1, plan->min_depth, plan->max_depth);*/
 	return 1;
     } else {
 	return 0;
@@ -811,8 +812,9 @@ c_iregex(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_p
     return c_regex_common(N_IREGEX, pattern, 1, resultplan);
 }
 
+
 HIDDEN int
-string_to_name_and_val(const char *in, struct bu_vls *name, struct bu_vls *value){
+string_to_name_and_val(const char *in, struct bu_vls *name, struct bu_vls *value) {
     size_t equalpos = 0;
     int checkval = 0;
 
@@ -847,6 +849,7 @@ string_to_name_and_val(const char *in, struct bu_vls *name, struct bu_vls *value
     }
     return checkval;
 }
+
 
 /*
  * -attr functions --
@@ -894,8 +897,8 @@ f_attr(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
 
     bu_avs_init_empty(&avs);
     if (db5_get_attributes(dbip, &avs, dp) < 0) {
-      bu_avs_free(&avs);
-      return 0;
+	bu_avs_free(&avs);
+	return 0;
     }
     avpp = avs.avp;
 
@@ -1104,8 +1107,8 @@ f_stdattr(struct db_plan_t *UNUSED(plan), struct db_node_t *db_node, struct db_i
 
     bu_avs_init_empty(&avs);
     if (db5_get_attributes(dbip, &avs, dp) < 0) {
-      bu_avs_free(&avs);
-      return 0;
+	bu_avs_free(&avs);
+	return 0;
     }
 
     avpp = avs.avp;
@@ -1160,30 +1163,16 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
     int type;
 
     dp = DB_FULL_PATH_CUR_DIR(db_node->path);
-    if (!dp)
-	return 0;
-
+    if (!dp) return 0;
     if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) return 0;
+    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || !intern.idb_meth->ft_label) {
+	rt_db_free_internal(&intern);
+	return 0;
+    }
 
-    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) return 0;
-
-    /* Eventually this whole switch statement needs to go away in
-     * favor of a function to query the primitive's short name and use
-     * that for the comparison - will be MUCH shorter and simpler.
-     */
     switch (intern.idb_minor_type) {
-	case DB5_MINORTYPE_BRLCAD_TOR:
-	    type_match = (!bu_fnmatch(plan->type_data, "tor", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_TGC:
-	    type_match = (!bu_fnmatch(plan->type_data, "tgc", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_ELL:
-	    type_match = (!bu_fnmatch(plan->type_data, "ell", 0));
-	    break;
 	case DB5_MINORTYPE_BRLCAD_ARB8:
 	    type = rt_arb_std_type(&intern, &wdbp->wdb_tol);
-
 	    switch (type) {
 		case 4:
 		    type_match = (!bu_fnmatch(plan->type_data, "arb4", 0));
@@ -1204,85 +1193,6 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
 		    type_match = (!bu_fnmatch(plan->type_data, "invalid", 0));
 		    break;
 	    }
-
-	    break;
-	case DB5_MINORTYPE_BRLCAD_ARS:
-	    type_match = (!bu_fnmatch(plan->type_data, "ars", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_HALF:
-	    type_match = (!bu_fnmatch(plan->type_data, "half", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_REC:
-	    type_match = (!bu_fnmatch(plan->type_data, "rec", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_POLY:
-	    type_match = (!bu_fnmatch(plan->type_data, "poly", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_BSPLINE:
-	    type_match = (!bu_fnmatch(plan->type_data, "spline", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_SPH:
-	    type_match = (!bu_fnmatch(plan->type_data, "sph", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_NMG:
-	    type_match = (!bu_fnmatch(plan->type_data, "nmg", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_EBM:
-	    type_match = (!bu_fnmatch(plan->type_data, "ebm", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_VOL:
-	    type_match = (!bu_fnmatch(plan->type_data, "vol", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_ARBN:
-	    type_match = (!bu_fnmatch(plan->type_data, "arbn", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_PIPE:
-	    type_match = (!bu_fnmatch(plan->type_data, "pipe", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_PARTICLE:
-	    type_match = (!bu_fnmatch(plan->type_data, "part", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_RPC:
-	    type_match = (!bu_fnmatch(plan->type_data, "rpc", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_RHC:
-	    type_match = (!bu_fnmatch(plan->type_data, "rhc", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_EPA:
-	    type_match = (!bu_fnmatch(plan->type_data, "epa", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_EHY:
-	    type_match = (!bu_fnmatch(plan->type_data, "ehy", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_ETO:
-	    type_match = (!bu_fnmatch(plan->type_data, "eto", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_GRIP:
-	    type_match = (!bu_fnmatch(plan->type_data, "grip", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_JOINT:
-	    type_match = (!bu_fnmatch(plan->type_data, "joint", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_HF:
-	    type_match = (!bu_fnmatch(plan->type_data, "hf", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_DSP:
-	    type_match = (!bu_fnmatch(plan->type_data, "dsp", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_SKETCH:
-	    type_match = (!bu_fnmatch(plan->type_data, "sketch", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_EXTRUDE:
-	    type_match = (!bu_fnmatch(plan->type_data, "extrude", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_SUBMODEL:
-	    type_match = (!bu_fnmatch(plan->type_data, "submodel", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_CLINE:
-	    type_match = (!bu_fnmatch(plan->type_data, "cline", 0));
-	    break;
-	case DB5_MINORTYPE_BRLCAD_BOT:
-	    type_match = (!bu_fnmatch(plan->type_data, "bot", 0));
 	    break;
 	case DB5_MINORTYPE_BRLCAD_COMBINATION:
 	    if (dp->d_flags & RT_DIR_REGION) {
@@ -1294,11 +1204,12 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
 		type_match = 1;
 	    }
 	    break;
-	case DB5_MINORTYPE_BRLCAD_BREP:
-	    type_match = (!bu_fnmatch(plan->type_data, "brep", 0));
+	case DB5_MINORTYPE_BRLCAD_METABALL:
+	    /* Because ft_label is only 8 characters, ft_label doesn't work in fnmatch for metaball*/
+	    type_match = (!bu_fnmatch(plan->type_data, "metaball", 0));
 	    break;
 	default:
-	    type_match = (!bu_fnmatch(plan->type_data, "other", 0));
+	    type_match = !bu_fnmatch(plan->type_data, intern.idb_meth->ft_label, 0);
 	    break;
     }
 
@@ -1318,6 +1229,7 @@ c_type(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
     return BRLCAD_OK;
 }
 
+
 /*
  * -bool function --
  *
@@ -1328,11 +1240,12 @@ c_type(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
 HIDDEN int
 f_bool(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct bu_ptbl *UNUSED(results))
 {
-   int bool_match = 0;
-   int bool_type = DB_FULL_PATH_CUR_BOOL(db_node->path);
-   if (plan->bool_data == bool_type) bool_match = 1;
-   return bool_match;
+    int bool_match = 0;
+    int bool_type = DB_FULL_PATH_CUR_BOOL(db_node->path);
+    if (plan->bool_data == bool_type) bool_match = 1;
+    return bool_match;
 }
+
 
 HIDDEN int
 c_bool(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput))
@@ -1349,6 +1262,7 @@ c_bool(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
     (*resultplan) = newplan;
     return BRLCAD_OK;
 }
+
 
 /*
  * -maxdepth function --
@@ -1427,7 +1341,7 @@ f_depth(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(d
     checkval = string_to_name_and_val(plan->depth_data, &name, &value);
 
     if ((bu_vls_strlen(&value) > 0 && isdigit((int)bu_vls_addr(&value)[0]))
-	   || (bu_vls_strlen(&value) == 0 && isdigit((int)bu_vls_addr(&name)[0]))) {
+	|| (bu_vls_strlen(&value) == 0 && isdigit((int)bu_vls_addr(&name)[0]))) {
 	switch (checkval) {
 	    case 0:
 		ret = ((int)db_node->path->fp_len - 1 == atol(bu_vls_addr(&name))) ? 1 : 0;
@@ -1662,30 +1576,35 @@ HIDDEN int
 find_create(char ***argvp, struct db_plan_t **resultplan, struct bu_ptbl *UNUSED(results), int *db_search_isoutput, int quiet)
 {
     OPTION *p;
-    struct db_plan_t *newplan;
+    struct db_plan_t *newplan = NULL;
     char **argv;
     int checkval;
     struct bu_vls name = BU_VLS_INIT_ZERO;
     struct bu_vls value = BU_VLS_INIT_ZERO;
 
+    if (!argvp || !resultplan)
+	return BRLCAD_ERROR;
+
     argv = *argvp;
 
     checkval = string_to_name_and_val(argv[0], &name, &value);
 
-    if ((p = option(bu_vls_addr(&name))) == NULL) {
+    p = option(bu_vls_addr(&name));
+    if (!p) {
 	if (!quiet)
 	    bu_log("%s: unknown option passed to find_create\n", *argv);
 	return BRLCAD_ERROR;
     }
+
     ++argv;
     if (p->flags & (O_ARGV|O_ARGVP) && !*argv) {
 	if (!quiet)
 	    bu_log("%s: requires additional arguments\n", *--argv);
 	return BRLCAD_ERROR;
     }
-    switch(p->flags) {
+
+    switch (p->flags) {
 	case O_NONE:
-	    newplan = NULL;
 	    break;
 	case O_ZERO:
 	    (p->create)(NULL, NULL, 0, &newplan, db_search_isoutput);
@@ -1700,38 +1619,39 @@ find_create(char ***argvp, struct db_plan_t **resultplan, struct bu_ptbl *UNUSED
 	    return BRLCAD_OK;
     }
 
-    if (bu_vls_strlen(&value) > 0 && isdigit((int)bu_vls_addr(&value)[0])) {
-	switch (checkval) {
-	    case 1:
-		newplan->min_depth = atol(bu_vls_addr(&value));
-		newplan->max_depth = atol(bu_vls_addr(&value));
-		break;
-	    case 2:
-		newplan->min_depth = atol(bu_vls_addr(&value)) + 1;
-		newplan->max_depth = INT_MAX;
-		break;
-	    case 3:
-		newplan->min_depth = 0;
-		newplan->max_depth = atol(bu_vls_addr(&value)) - 1;
-		break;
-	    case 4:
-		newplan->min_depth = atol(bu_vls_addr(&value));
-		newplan->max_depth = INT_MAX;
-		break;
-	    case 5:
-		newplan->min_depth = 0;
-		newplan->max_depth = atol(bu_vls_addr(&value));
-		break;
-	    default:
-		newplan->min_depth = 0;
-		newplan->max_depth = INT_MAX;
-		break;
+    if (newplan) {
+	if (bu_vls_strlen(&value) > 0 && isdigit((int)bu_vls_addr(&value)[0])) {
+	    switch (checkval) {
+		case 1:
+		    newplan->min_depth = atol(bu_vls_addr(&value));
+		    newplan->max_depth = atol(bu_vls_addr(&value));
+		    break;
+		case 2:
+		    newplan->min_depth = atol(bu_vls_addr(&value)) + 1;
+		    newplan->max_depth = INT_MAX;
+		    break;
+		case 3:
+		    newplan->min_depth = 0;
+		    newplan->max_depth = atol(bu_vls_addr(&value)) - 1;
+		    break;
+		case 4:
+		    newplan->min_depth = atol(bu_vls_addr(&value));
+		    newplan->max_depth = INT_MAX;
+		    break;
+		case 5:
+		    newplan->min_depth = 0;
+		    newplan->max_depth = atol(bu_vls_addr(&value));
+		    break;
+		default:
+		    newplan->min_depth = 0;
+		    newplan->max_depth = INT_MAX;
+		    break;
+	    }
+	} else {
+	    newplan->min_depth = 0;
+	    newplan->max_depth = INT_MAX;
 	}
-    } else {
-	newplan->min_depth = 0;
-	newplan->max_depth = INT_MAX;
     }
-
 
     *argvp = argv;
     (*resultplan) = newplan;
@@ -2131,7 +2051,7 @@ db_search_form_plan(char **argv, int quiet) {
      */
     for (plan = tail = NULL; *argv;) {
 	if (find_create(&argv, &newplan, results, &db_search_isoutput, quiet) != BRLCAD_OK) return NULL;
-	if (!(newplan))
+	if (!newplan)
 	    continue;
 	if (plan == NULL)
 	    tail = plan = newplan;
@@ -2205,6 +2125,7 @@ find_execute_plans(struct db_i *dbip, struct rt_wdb *wdbp, struct bu_ptbl *resul
 
 }
 
+
 HIDDEN void
 db_search_free_plan(void **vplan) {
     struct db_plan_t *p;
@@ -2217,7 +2138,6 @@ db_search_free_plan(void **vplan) {
     /* sanity */
     *vplan = NULL;
 }
-
 
 
 /*********** DEPRECATED search functionality ******************/
@@ -2243,6 +2163,7 @@ db_full_path_list_add(const char *path, int local, struct db_i *dbip, struct db_
     return 0;
 }
 
+
 /* Internal version of deprecated function */
 void
 _db_free_full_path_list(struct db_full_path_list *path_list)
@@ -2261,23 +2182,26 @@ _db_free_full_path_list(struct db_full_path_list *path_list)
     }
 }
 
+
 void
 db_free_full_path_list(struct db_full_path_list *path_list)
 {
     _db_free_full_path_list(path_list);
 }
 
+
 void
 db_search_freeplan(void **vplan) {
     db_search_free_plan(vplan);
 }
 
+
 /* Internal version of deprecated function */
 struct db_full_path_list *
 _db_search_full_paths(void *searchplan,        /* search plan */
-		     struct db_full_path_list *pathnames,      /* list of pathnames to traverse */
-		     struct db_i *dbip,
-		     struct rt_wdb *wdbp)
+		      struct db_full_path_list *pathnames,      /* list of pathnames to traverse */
+		      struct db_i *dbip,
+		      struct rt_wdb *wdbp)
 {
     int i;
     struct directory *dp;
@@ -2318,7 +2242,7 @@ _db_search_full_paths(void *searchplan,        /* search plan */
 	DB_FULL_PATH_SET_CUR_BOOL(curr_node.path, 2);
 	db_fullpath_traverse(dbip, wdbp, searchresults, &curr_node, find_execute_plans, find_execute_plans, wdbp->wdb_resp, (struct db_plan_t *)searchplan);
     }
-    for(i = 0; i < (int)BU_PTBL_LEN(searchresults); i++){
+    for(i = 0; i < (int)BU_PTBL_LEN(searchresults); i++) {
 	BU_ALLOC(new_entry, struct db_full_path_list);
 	BU_ALLOC(new_entry->path, struct db_full_path);
 	dfptr = (struct db_full_path *)BU_PTBL_GET(searchresults, i);
@@ -2326,13 +2250,14 @@ _db_search_full_paths(void *searchplan,        /* search plan */
 	db_dup_full_path(new_entry->path, dfptr);
 	BU_LIST_PUSH(&(searchresults_list->l), &(new_entry->l));
     }
-    for(i = (int)BU_PTBL_LEN(searchresults) - 1; i >= 0; i--){
+    for(i = (int)BU_PTBL_LEN(searchresults) - 1; i >= 0; i--) {
 	dfptr = (struct db_full_path *)BU_PTBL_GET(searchresults, i);
 	db_free_full_path(dfptr);
     }
     bu_ptbl_free(searchresults);
     return searchresults_list;
 }
+
 
 struct db_full_path_list *
 db_search_full_paths(void *searchplan,        /* search plan */
@@ -2342,6 +2267,7 @@ db_search_full_paths(void *searchplan,        /* search plan */
 {
     return _db_search_full_paths(searchplan, pathnames, dbip, wdbp);
 }
+
 
 struct bu_ptbl *
 db_search_unique_objects(void *searchplan,        /* search plan */
@@ -2365,16 +2291,18 @@ db_search_unique_objects(void *searchplan,        /* search plan */
     return uniq_db_objs;
 }
 
+
 void *
 db_search_formplan(char **argv, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp)) {
     return (void *)db_search_form_plan(argv, 0);
 }
 
+
 /*********** New search functionality ******************/
 
 void db_free_search_tbl(struct bu_ptbl *search_results) {
     int i;
-    for(i = (int)BU_PTBL_LEN(search_results) - 1; i >= 0; i--){
+    for(i = (int)BU_PTBL_LEN(search_results) - 1; i >= 0; i--) {
 	struct db_full_path *path = (struct db_full_path *)BU_PTBL_GET(search_results, i);
 	db_free_full_path(path);
 	bu_free(path, "free search path container");
@@ -2382,6 +2310,7 @@ void db_free_search_tbl(struct bu_ptbl *search_results) {
     bu_ptbl_free(search_results);
     bu_free(search_results, "free search container");
 }
+
 
 int
 db_search_plan_validate(const char *plan_string) {
@@ -2406,10 +2335,11 @@ db_search_plan_validate(const char *plan_string) {
     return valid;
 }
 
+
 struct bu_ptbl *
 db_search_flat(const char *plan_string,
-	struct rt_wdb *wdbp,
-	int flags)
+	       struct rt_wdb *wdbp,
+	       int flags)
 {
     int i = 0;
     struct bu_ptbl *search_results = NULL;
@@ -2453,7 +2383,7 @@ db_search_flat(const char *plan_string,
     if (search_results) {
 	BU_ALLOC(dp_set, struct bu_ptbl);
 	BU_PTBL_INIT(dp_set);
-	for (i = (int)BU_PTBL_LEN(search_results) - 1; i >= 0; i--){
+	for (i = (int)BU_PTBL_LEN(search_results) - 1; i >= 0; i--) {
 	    struct db_full_path *dfptr = (struct db_full_path *)BU_PTBL_GET(search_results, i);
 	    bu_ptbl_ins(dp_set, (long *)dfptr->fp_names[dfptr->fp_len - 1]);
 	}
@@ -2468,10 +2398,11 @@ db_search_flat(const char *plan_string,
     return dp_set;
 }
 
+
 struct bu_ptbl *
 db_search_path(const char *plan_string,
-	struct directory *dp,
-	struct rt_wdb *wdbp)
+	       struct directory *dp,
+	       struct rt_wdb *wdbp)
 {
     struct bu_ptbl *search_results = NULL;
     char **plan_argv = NULL;
@@ -2510,11 +2441,12 @@ db_search_path(const char *plan_string,
     return search_results;
 }
 
+
 struct bu_ptbl *
 db_search_paths(const char *plan_string,
-	int path_cnt,
-	struct directory **paths,
-	struct rt_wdb *wdbp)
+		int path_cnt,
+		struct directory **paths,
+		struct rt_wdb *wdbp)
 {
     int i = 0;
     struct directory *curr_path;
@@ -2537,10 +2469,11 @@ db_search_paths(const char *plan_string,
     return combined_results;
 }
 
+
 struct bu_ptbl *
 db_search_path_obj(const char *plan_string,
-	struct directory *dp,
-	struct rt_wdb *wdbp)
+		   struct directory *dp,
+		   struct rt_wdb *wdbp)
 {
     int i;
     struct bu_ptbl *uniq_db_objs = NULL;
@@ -2548,7 +2481,7 @@ db_search_path_obj(const char *plan_string,
     if (search_results) {
 	BU_ALLOC(uniq_db_objs, struct bu_ptbl);
 	BU_PTBL_INIT(uniq_db_objs);
-	for (i = (int)BU_PTBL_LEN(search_results) - 1; i >= 0; i--){
+	for (i = (int)BU_PTBL_LEN(search_results) - 1; i >= 0; i--) {
 	    struct db_full_path *dfptr = (struct db_full_path *)BU_PTBL_GET(search_results, i);
 	    bu_ptbl_ins_unique(uniq_db_objs, (long *)dfptr->fp_names[dfptr->fp_len - 1]);
 	}
@@ -2557,11 +2490,12 @@ db_search_path_obj(const char *plan_string,
     return uniq_db_objs;
 }
 
+
 struct bu_ptbl *
 db_search_paths_obj(const char *plan_string,
-	int path_cnt,
-	struct directory **paths,
-	struct rt_wdb *wdbp)
+		    int path_cnt,
+		    struct directory **paths,
+		    struct rt_wdb *wdbp)
 {
     int i = 0;
     int j = 0;
@@ -2574,7 +2508,7 @@ db_search_paths_obj(const char *plan_string,
 	if (curr_path != RT_DIR_NULL) {
 	    struct bu_ptbl *search_results = db_search_path(plan_string, curr_path, wdbp);
 	    if (search_results) {
-		for(j = (int)BU_PTBL_LEN(search_results) - 1; j >= 0; j--){
+		for(j = (int)BU_PTBL_LEN(search_results) - 1; j >= 0; j--) {
 		    struct db_full_path *dfptr = (struct db_full_path *)BU_PTBL_GET(search_results, j);
 		    bu_ptbl_ins_unique(combined_results, (long *)dfptr->fp_names[dfptr->fp_len - 1]);
 		}
@@ -2584,6 +2518,7 @@ db_search_paths_obj(const char *plan_string,
     }
     return combined_results;
 }
+
 
 /*
  * Local Variables:

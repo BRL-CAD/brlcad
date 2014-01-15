@@ -1,7 +1,7 @@
 /*                          I R - X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -84,8 +84,8 @@ main(void)
     XRectangle rect[MAXARR];	/* Array for drawing rectangles.  */
     char **a=(char **)NULL;	/* Place holder for XSetStandard */
 				/* Properties.  */
-    char *winttl = "SEE";	/* Window title.  */
-    char *quit = "QUIT";		/* Exit label.  */
+    const char winttl[] = "SEE";	/* Window title.  */
+    const char quit[] = "QUIT";		/* Exit label.  */
     Font font;			/* Structure for setting font.  */
 
     /* Other variables.  */

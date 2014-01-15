@@ -1,7 +1,7 @@
 /*                   T E S T _ R B T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 2012-2013 United States Government as represented by
+ * Copyright (c) 2012-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -63,7 +63,7 @@ main(int ac, char *av[])
 {
     struct bu_rb_tree *testTree;
     void *searchedValue;
-    char *sources[] = {"h", "e", "a", "l", "l", "o"};
+    const char *sources[] = {"h", "e", "a", "l", "l", "o"};
     int i = 0;
     int passed = 0;
 
@@ -72,12 +72,12 @@ main(int ac, char *av[])
 	return 1;
     }
 
-    testTree = bu_rb_create1("TestingTree", compareFunc);
+    testTree = bu_rb_create1("TestingTree", BU_RB_COMPARE_FUNC_CAST_AS_FUNC_ARG(compareFunc));
     for (i = 0; i < 6; i++)
-	bu_rb_insert(testTree, sources[i]);
+	bu_rb_insert(testTree, (void *)sources[i]);
 
     printf("SEARCH TEST: \n\tSEARCHING AN EXISTING VALUE:\n");
-    searchedValue = bu_rb_search(testTree, 0, "h");
+    searchedValue = bu_rb_search(testTree, 0, (void *)"h");
 
     if (searchedValue == NULL) {
 	printf("\t\t\t[FAILED]\n\t\t\tShould be h \n");
@@ -87,7 +87,7 @@ main(int ac, char *av[])
     }
 
     printf("\tSEARCHING A NONEXISTENT VALUE:\n");
-    searchedValue = bu_rb_search(testTree, 0, "not");
+    searchedValue = bu_rb_search(testTree, 0, (void *)"not");
 
     if (searchedValue == 0) {
 	printf("\t\t\t[PASSED]\n");
@@ -97,11 +97,11 @@ main(int ac, char *av[])
     }
 
     printf("DELETE TEST: \n\tDELETING AN EXISTENT VALUE:\n");
-    searchedValue = bu_rb_search(testTree, 0, "a");
+    searchedValue = bu_rb_search(testTree, 0, (void *)"a");
     bu_rb_delete(testTree, 0);
 
     printf("\tSEARCHING THE SAME VALUE AFTER DELETION \n");
-    searchedValue = bu_rb_search(testTree, 0, "a");
+    searchedValue = bu_rb_search(testTree, 0, (void *)"a");
 
     if (searchedValue == 0) {
 	printf("\t\t\t[PASSED]\n");
@@ -114,20 +114,20 @@ main(int ac, char *av[])
     printf("RED-BLACK TREE WALKING TESTS :\n");
 
     printf("\nPREORDER:\n");
-    bu_rb_walk(testTree, 0, displayNode, 0);
+    bu_rb_walk(testTree, 0, BU_RB_WALK_FUNC_CAST_AS_FUNC_ARG(displayNode), 0);
     bu_rb_diagnose_tree(testTree, 0, 0);
-    searchedValue = bu_rb_search(testTree, 0, "h");
+    searchedValue = bu_rb_search(testTree, 0, (void *)"h");
 
     printf("\nPREORDER AFTER SEARCH:\n");
-    bu_rb_walk(testTree, 0, displayNode, 0);
+    bu_rb_walk(testTree, 0, BU_RB_WALK_FUNC_CAST_AS_FUNC_ARG(displayNode), 0);
     bu_rb_diagnose_tree(testTree, 0, 0);
 
     printf("\nINORDER:\n");
-    bu_rb_walk(testTree, 0, displayNode, 1);
+    bu_rb_walk(testTree, 0, BU_RB_WALK_FUNC_CAST_AS_FUNC_ARG(displayNode), 1);
     bu_rb_diagnose_tree(testTree, 0, 1);
 
     printf("\nPOSTORDER\n");
-    bu_rb_walk(testTree, 0, displayNode, 2);
+    bu_rb_walk(testTree, 0, BU_RB_WALK_FUNC_CAST_AS_FUNC_ARG(displayNode), 2);
     bu_rb_diagnose_tree(testTree, 0, 2);
 
     if (passed != 3)

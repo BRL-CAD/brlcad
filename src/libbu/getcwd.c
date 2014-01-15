@@ -1,7 +1,7 @@
 /*                        G E T C W D . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2013 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,7 +47,7 @@ bu_getcwd(char *buf, size_t size)
     /* NULL buf means allocate */
     if (!buf) {
 	sz = MAXPATHLEN;
-	buf = bu_calloc(1, sz, "alloc bu_getcwd");
+	buf = (char *)bu_calloc(1, sz, "alloc bu_getcwd");
     }
 
     /* FIRST: try getcwd */

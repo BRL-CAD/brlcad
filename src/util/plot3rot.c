@@ -1,7 +1,7 @@
 /*                      P L O T 3 R O T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -429,10 +429,10 @@ dofile(FILE *fp)
 		    VSET(max, maxx, maxy, -1);
 		    model_rpp(min, max);
 
-		    minx = (long)floor(space_min[X]);
-		    miny = (long)floor(space_min[Y]);
-		    maxx = (long)ceil(space_max[X]);
-		    maxy = (long)ceil(space_max[Y]);
+		    minx = lrint(floor(space_min[X]));
+		    miny = lrint(floor(space_min[Y]));
+		    maxx = lrint(ceil(space_max[X]));
+		    maxy = lrint(ceil(space_max[Y]));
 		    if (minx < -32768) minx = -32768;
 		    if (miny < -32768) miny = -32768;
 		    if (maxx > 32767) maxx = 32767;

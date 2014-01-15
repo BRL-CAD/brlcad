@@ -1,7 +1,7 @@
 /*                     P I X S H R I N K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,10 +35,12 @@
 #define UCHAR unsigned char
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "us:w:n:f:h?";
+char options[] = "us:w:n:f:h?";
 
-char *progname = "(noname)";
-char *filename = "(stdin)";
+char noname[]  = "(noname)";
+char Stdin[]   = "(stdin)";
+char *progname = noname;
+char *filename = Stdin;
 
 void shrink_image(int scanlen, int Width, int Height, unsigned char *buffer, int Factor), usample_image(int scanlen, int Width, int Height, unsigned char *buffer, int Factor);
 

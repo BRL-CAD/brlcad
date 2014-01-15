@@ -1,7 +1,7 @@
 /*                          B O L T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,10 +38,10 @@
 static void
 printusage(void)
 {
-    printf("Usage: bolt  <-- (if no arguments, go into interactive mode)\n");
-    printf("or\n");
-    printf("Usage: bolt -o# -f name.g -n# -hd# -hh# -wd# -wh# -sd# -sh#\n");
-    printf("       (units mm)\n");
+    fprintf(stderr,"Usage: bolt  <-- (if no arguments, go into interactive mode)\n");
+    fprintf(stderr,"or\n");
+    fprintf(stderr,"Usage: bolt -o# -f name.g -n# -hd# -hh# -wd# -wh# -sd# -sh#\n");
+    fprintf(stderr,"       (units mm)\n");
 }
 
 
@@ -74,7 +74,7 @@ main(int argc, char **argv)
     struct wmember comb1;	/* Used to make groups. */
     int ret;
 
-    if(argc > 1) {
+    if (argc > 1) {
 	if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?")) {
 	    printusage();
 	    return 0;
@@ -119,7 +119,7 @@ main(int argc, char **argv)
     /* If there are no arguments ask questions. */
     if (argc == 1) {
 	printusage();
-	printf("\n       Program continues running:\n\n");
+	fprintf(stderr,"\n       Program continues running:\n\n");
 	/* START # 1 */
 
 	/* Find type of bolt to build. */
@@ -230,7 +230,7 @@ main(int argc, char **argv)
 	/*	-sd# - # = stem diameter */
 	/*	-sh# - # = stem height */
 
-	for (i=1; i<argc; i++) {
+	for (i = 1; i < argc; i++) {
 	    /* START # 3 */
 	    /* Put argument into temporary character string. */
 	    temp = argv[i];
@@ -360,7 +360,7 @@ main(int argc, char **argv)
     /* Write ident record. */
     mk_id(fpw, "bolts");
 
-    for (i=0; i<numblt; i++) {
+    for (i = 0; i < numblt; i++) {
 	/* Loop for each bolt created. */
 	/* START # 20 */
 

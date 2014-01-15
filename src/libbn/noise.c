@@ -1,7 +1,7 @@
 /*                         N O I S E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@
  * lattice points.  The functions should be evaluated at non-integer
  * locations for their nature to be realized.
  *
- * Conatins contributed code from:
+ * Contains contributed code from:
  * F. Kenton Musgrave
  * Robert Skinner
  *
@@ -59,7 +59,7 @@
  *
  *@n x, y, z are set to the noise space location for the source point.
  *@n ix, iy, iz are the integer lattice point (integer portion of x, y, z)
- *@n fx, fy, fz are the fractional lattice distance above ix, iy, iz
+ *@n fx, fy, fz are the fractional lattice distances above ix, iy, iz
  *
  * The noise function has a finite domain, which can be exceeded when
  * using fractal textures with very high frequencies.  This routine is
@@ -479,7 +479,7 @@ build_spec_tbl(double h_val, double lacunarity, double octaves)
 /**
  * The first order of business is to see if we have pre-computed the
  * spectral weights table for these parameters in a previous
- * invocation.  If not, the we compute them and save them for possible
+ * invocation.  If not, then we compute them and save them for possible
  * future use
  */
 struct fbm_spec *
@@ -494,7 +494,7 @@ find_spec_wgt(double h, double l, double o)
 	    bu_bomb("find_spec_wgt");
 	if (EQUAL(ep->lacunarity, l)
 	    && EQUAL(ep->h_val, h)
-	    && ep->octaves > (o - SMALL_FASTF))
+	    && (ep->octaves > o || EQUAL(ep->octaves, o)))
 	{
 	    return ep;
 	}
@@ -515,8 +515,10 @@ find_spec_wgt(double h, double l, double o)
 	    bu_bomb("find_spec_wgt");
 	if (EQUAL(ep->lacunarity, l)
 	    && EQUAL(ep->h_val, h)
-	    && ep->octaves > (o - SMALL_FASTF))
+	    && (ep->octaves > o || EQUAL(ep->octaves, o)))
+	{
 	    break;
+	}
     }
 
     if (i >= etbl_next)
@@ -538,7 +540,7 @@ bn_noise_fbm(fastf_t *point, double h_val, double lacunarity, double octaves)
 
     /* The first order of business is to see if we have pre-computed
      * the spectral weights table for these parameters in a previous
-     * invocation.  If not, the we compute them and save them for
+     * invocation.  If not, then we compute them and save them for
      * possible future use
      */
 
@@ -569,7 +571,7 @@ bn_noise_fbm(fastf_t *point, double h_val, double lacunarity, double octaves)
 
     return value;
 
-} /* bn_noise_fbm() */
+}
 
 
 double
@@ -583,18 +585,16 @@ bn_noise_turb(fastf_t *point, double h_val, double lacunarity, double octaves)
 
     /* The first order of business is to see if we have pre-computed
      * the spectral weights table for these parameters in a previous
-     * invocation.  If not, the we compute them and save them for
+     * invocation.  If not, then we compute them and save them for
      * possible future use
      */
-
-#define CACHE_SPECTRAL_WGTS 1
-#ifdef CACHE_SPECTRAL_WGTS
 
     ep = find_spec_wgt(h_val, lacunarity, octaves);
 
     /* now we're ready to compute the fBm value */
 
     value = 0.0;            /* initialize vars to proper values */
+    /* not cached: frequency = 1.0; */
 
     /* copy the point so we don't corrupt the caller's copy of the
      * variable
@@ -605,6 +605,10 @@ bn_noise_turb(fastf_t *point, double h_val, double lacunarity, double octaves)
     /* inner loop of spectral construction */
     oct=(int)octaves; /* save repeating double->int cast */
     for (i=0; i < oct; i++) {
+	/* not cached:
+	 * value += fabs(bn_noise_perlin(pt)) * pow(frequency, -h_val);
+	 * frequency *= lacunarity;
+	 */
 	value += fabs(bn_noise_perlin(pt)) * spec_wgts[i];
 	PSCALE(pt, lacunarity);
     }
@@ -615,31 +619,12 @@ bn_noise_turb(fastf_t *point, double h_val, double lacunarity, double octaves)
 	 * preset in loop above
 	 */
 	value += noise_remainder * bn_noise_perlin(pt) * spec_wgts[i];
-    }
-#else
-    PCOPY(pt, point);
-
-    value = 0.0;      /* initialize vars to proper values */
-    frequency = 1.0;
-
-    oct=(int)octaves; /* save repeating double->int cast */
-    for (i=0; i < oct; i++) {
-	value += fabs(bn_noise_perlin(pt)) * pow(frequency, -h_val);
-	frequency *= lacunarity;
-	PSCALE(pt, lacunarity);
+	/* not cached: value += noise_remainder * bn_noise_perlin(pt) * pow(frequency, -h_val); */
     }
 
-    noise_remainder = octaves - (int)octaves;
-    if (noise_remainder) {
-	/* add in ``octaves'' noise_remainder ``i'' and spatial freq. are
-	 * preset in loop above
-	 */
-	value += noise_remainder * bn_noise_perlin(pt) * pow(frequency, -h_val);
-    }
-#endif
     return value;
 
-} /* bn_noise_turb() */
+}
 
 
 double
@@ -652,7 +637,7 @@ bn_noise_ridged(fastf_t *point, double h_val, double lacunarity, double octaves,
 
     /* The first order of business is to see if we have pre-computed
      * the spectral weights table for these parameters in a previous
-     * invocation.  If not, the we compute them and save them for
+     * invocation.  If not, then we compute them and save them for
      * possible future use
      */
 
@@ -671,7 +656,7 @@ bn_noise_ridged(fastf_t *point, double h_val, double lacunarity, double octaves,
     /* get absolute value of noise_signal (this creates the ridges) */
     if (noise_signal < 0.0) noise_signal = -noise_signal;
 
-    /* invert and translate (note that "offset shoudl be ~= 1.0 */
+    /* invert and translate (note that "offset should be ~= 1.0 */
     noise_signal = offset - noise_signal;
 
     /* square the noise_signal, to increase "sharpness" of ridges */
@@ -708,7 +693,7 @@ bn_noise_mf(fastf_t *point, double h_val, double lacunarity, double octaves, dou
 
     /* The first order of business is to see if we have pre-computed
      * the spectral weights table for these parameters in a previous
-     * invocation.  If not, the we compute them and save them for
+     * invocation.  If not, then we compute them and save them for
      * possible future use
      */
 

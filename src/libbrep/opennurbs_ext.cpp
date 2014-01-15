@@ -1,7 +1,7 @@
 /*               O P E N N U R B S _ E X T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -94,28 +94,6 @@ brep_r(const ON_Surface* surf, plane_ray& pr, pt2d_t uv, ON_3dPoint& pt, ON_3dVe
 
 void
 brep_newton_iterate(plane_ray& pr, pt2d_t R, ON_3dVector& su, ON_3dVector& sv, pt2d_t uv, pt2d_t out_uv)
-{
-    vect_t vsu, vsv;
-    VMOVE(vsu, su);
-    VMOVE(vsv, sv);
-
-    mat2d_t jacob = { VDOT(pr.n1, vsu), VDOT(pr.n1, vsv),
-		      VDOT(pr.n2, vsu), VDOT(pr.n2, vsv) };
-    mat2d_t inv_jacob;
-    if (mat2d_inverse(inv_jacob, jacob)) {
-	// check inverse validity
-	pt2d_t tmp;
-	mat2d_pt2d_mul(tmp, inv_jacob, R);
-	pt2dsub(out_uv, uv, tmp);
-    } else {
-	TRACE2("inverse failed"); // XXX how to handle this?
-	move(out_uv, uv);
-    }
-}
-
-
-void
-brep_newton_iterate(const ON_Surface* UNUSED(surf), plane_ray& pr, pt2d_t R, ON_3dVector& su, ON_3dVector& sv, pt2d_t uv, pt2d_t out_uv)
 {
     vect_t vsu, vsv;
     VMOVE(vsu, su);
@@ -1654,7 +1632,7 @@ class BSpline {
 public:
     int p; // degree
     int m; // num_knots-1
-    int n; // num_samples-1 (aka number of control points)
+    int n; // num_samples-1 (a/k/a number of control points)
     std::vector<double> params;
     std::vector<double> knots;
     ON_2dPointArray controls;

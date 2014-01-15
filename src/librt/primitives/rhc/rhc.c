@@ -1,7 +1,7 @@
 /*                           R H C . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2013 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -717,16 +717,6 @@ rt_rhc_free(struct soltab *stp)
 	(struct rhc_specific *)stp->st_specific;
 
     BU_PUT(rhc, struct rhc_specific);
-}
-
-
-/**
- * R T _ R H C _ C L A S S
- */
-int
-rt_rhc_class(void)
-{
-    return 0;
 }
 
 
@@ -1572,7 +1562,7 @@ rt_rhc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "rhc external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "rhc external");
     rhc = (union record *)ep->ext_buf;
 
     rhc->s.s_id = ID_SOLID;
@@ -1673,7 +1663,7 @@ rt_rhc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 11;
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "rhc external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "rhc external");
 
     /* scale 'em into local buffer */
     VSCALE(&vec[0 * 3], xip->rhc_V, local2mm);
@@ -1861,6 +1851,59 @@ rt_rhc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     arclen = (h / 3) * (sqrt((b * b * rip->rhc_r * rip->rhc_r) / (a * a * rip->rhc_r * rip->rhc_r + pow(a, 4)) + 1) + 2 * sumodds + 4 * sumevens + sqrt((b * b * rip->rhc_r * rip->rhc_r) / (a * a * rip->rhc_r * rip->rhc_r + pow(a, 4)) + 1));
 
     *area = 2 * A + 2 * rip->rhc_r * height + arclen * height;
+}
+
+/**
+ * R T _ R H C _ C E N T R O I D
+ *
+ * Computes centroid of a right hyperbolic cylinder
+ */
+void
+rt_rhc_centroid(point_t *cent, const struct rt_db_internal *ip)
+{
+    if (cent != NULL && ip != NULL) {
+	struct rt_rhc_internal *rip;
+	fastf_t totalArea, guessArea, a, b, magB, sqrt_xa, sqrt_ga, xf, epsilon, high, low, scale_factor;
+	fastf_t guess = 0.0;
+	vect_t shift_h;
+
+	RT_CK_DB_INTERNAL(ip);
+	rip = (struct rt_rhc_internal *)ip->idb_ptr;
+	RT_RHC_CK_MAGIC(rip);
+
+	magB = MAGNITUDE(rip->rhc_B);
+	b = rip->rhc_c;
+	a = (rip->rhc_r * b) / sqrt(magB * (2 * rip->rhc_c + magB));
+	xf = magB + a;
+
+	/* epsilon is an upperbound on the error */
+
+	epsilon = 0.0001;
+
+	sqrt_xa = sqrt((xf * xf) - (a * a));
+	totalArea = (b / a) * ((xf * sqrt_xa) - ((a * a) * log(sqrt_xa + xf)) - ((a * a) * log(xf)));
+
+	low = a;
+	high = xf;
+
+	while (abs(high - low) > epsilon) {
+	    guess = (high + low) / 2;
+	    sqrt_ga = sqrt((guess * guess) - (a * a));
+	    guessArea = (b / a) * ((guess * sqrt_ga) - ((a * a) * log(sqrt_ga + guess)) - ((a * a) * log(guess)));
+
+	    if (guessArea > totalArea / 2) {
+		high = guess;
+	    } else {
+		low = guess;
+	    }
+	}
+
+	scale_factor = 1 - ((guess - a) / magB);
+
+	VSCALE(shift_h, rip->rhc_H, 0.5);
+	VSCALE(*cent, rip->rhc_B, scale_factor);
+	VADD2(*cent, shift_h, *cent);
+    }
 }
 
 

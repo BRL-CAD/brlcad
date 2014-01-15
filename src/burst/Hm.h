@@ -1,7 +1,7 @@
 /*                            H M . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,8 +34,8 @@
  * emulator, the menus can be controlled with the mouse.
  */
 
-#ifndef Hm_H_INCLUDE
-#define Hm_H_INCLUDE
+#ifndef BURST_HM_H
+#define BURST_HM_H
 
 
 /**
@@ -295,7 +295,7 @@ extern void HmTtyReset();
 #define HmMAXLINE 132
 #define HmHGTBORDER 2
 
-#endif		/* Hm_H_INCLUDE */
+#endif		/* BURST_HM_H */
 
 /*
  * Local Variables:

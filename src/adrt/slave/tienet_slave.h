@@ -1,7 +1,7 @@
 /*                  T I E N E T _ S L A V E . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2013 United States Government as represented by
+ * Copyright (c) 2002-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,8 +23,8 @@
  *      TIE Networking Slave Header
  *
  */
-#ifndef _TIENET_SLAVE_H
-#define _TIENET_SLAVE_H
+#ifndef ADRT_SLAVE_TIENET_SLAVE_H
+#define ADRT_SLAVE_TIENET_SLAVE_H
 
 extern	void	tienet_slave_init(int port, char *host, void fcb_work(tienet_buffer_t *buffer, tienet_buffer_t *result),
 				  void fcb_free(void),

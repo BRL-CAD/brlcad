@@ -1,7 +1,7 @@
 /*                     I N T E R R U P T . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2013 United States Government as represented by
+ * Copyright (c) 2009-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,23 +18,33 @@
  * information.
  */
 
+/* FIXME:  Should use sigaction(2) instead of BSD signal semantics for
+ * conformance, portability, and safety. */
+#if defined(C99_POSIX_USE_BSD)
+/* defining _BSD_SOURCE should ensure BSD signal semantics as well
+ * as sig_t for glibc on Linux according to 'man signal(2)'
+ */
+#if !defined(_BSD_SOURCE)
+#define _BSD_SOURCE
+#endif
+#endif
+
 #include "common.h"
-
-/* attempted fix: using sigaction: */
-/* #define BRLCAD_USE_SIGACTION */
-
-/* NOTE: can leverage sigaction(2) instead of BSD signal semantics for conformance/portability. */
 
 #include <signal.h>
 
 #include "bu.h"
 
+/*
+ */
 
-/* FIXME: need a configure test to provide this when needed */
+/* wrap for hack above */
+#if !defined(C99_POSIX_USE_BSD)
+/* orig code: */
 #ifndef HAVE_SIG_T
 typedef void (*sig_t)(int);
 #endif
-
+#endif
 
 /* hard-coded maximum signal number we can defer due to array we're
  * using for quick O(1) access in a single container for all signals.

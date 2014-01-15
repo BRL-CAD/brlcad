@@ -379,6 +379,270 @@ add_test(bu_vls_vprintf_test_63 tester_bu_vls_vprintf 63)
 add_test(bu_vls_vprintf_test_64 tester_bu_vls_vprintf 64)
 add_test(bu_vls_vprintf_test_65 tester_bu_vls_vprintf 65)
 
+#
+#  ************ vls.c tests *************
+
+# For tester_bu_vls, the input format is as follows:
+#
+# tester_bu_vls <function number> <args>
+BRLCAD_ADDEXEC(tester_bu_vls bu_vls.c libbu NO_INSTALL)
+
+# For function #1 (bu_vls_init) there are no arguments
+add_test(bu_vls_init tester_bu_vls 1)
+
+# For function #2 (bu_vls_vlsinit) there are no arguments
+add_test(bu_vls_vlsinit tester_bu_vls 2)
+
+# For function #3 (bu_vls_strcpy/bu_vls_addr) the <args> format is as follows:
+#
+# string_to_test
+#
+# where string_to_test is a string to be used in testing bu_vls_strcpy/bu_vls_addr.
+
+add_test(bu_vls_access_1 tester_bu_vls 3 "Test 1 2 3")
+
+# For function #4 (bu_vls_strncpy) the <args> format is as follwos:
+#
+# string_orig string_new n expected_result
+#
+# where string_new will be put into the vls via strncpy() after
+# string_new is put in with strcpy(); n is the n given to strncpy()
+
+add_test(bu_vls_strncpy_1 tester_bu_vls 4 "Test 1" "Test 1 2" 4 "Test")
+add_test(bu_vls_strncpy_2 tester_bu_vls 4 "Test 1" "Test 1 2" 8 "Test 1 2")
+
+# For function #5 (bu_vls_strdup) the <args> format is as follwos:
+#
+# string_to_test
+#
+# where string_to_test is a string to be used in testing bu_vls_strdup.
+
+add_test(bu_vls_strdup_1 tester_bu_vls 5 "Test 1 2 3")
+
+# For function #6 (bu_vls_strlen) the <args> format is as follows:
+#
+# string_to_test
+#
+# where string_to_test is a string whose length will be checked
+
+add_test(bu_vls_strlen_1 tester_bu_vls 6 "Test 1 2 3")
+
+# For function #7 (bu_vls_trunc) the <args> format is as follows:
+#
+# string_to_test trunc_len expected_result
+#
+# where string_to_test is the string which will be truncated, and
+# trunc_len is the length that will be used for truncation.
+
+add_test(bu_vls_trunc_1 tester_bu_vls 7 "Test 1 2 3" 6 "Test 1")
+add_test(bu_vls_trunc_2 tester_bu_vls 7 "Test 1 2 3" -2 "Test 1 2")
+
+# For function #8 (bu_vls_trunc2) the <args> format is as follows:
+#
+# string_to_test trunc_len expected_result
+#
+# where string_to_test is the string which will be truncated, and
+# trunc_len is the length that will be used for truncation.
+
+add_test(bu_vls_trunc2_1 tester_bu_vls 8 "Test 1 2 3" 6 "Test 1")
+add_test(bu_vls_trunc2_2 tester_bu_vls 8 "Test 1 2 3" -2 "Test 1 2 3")
+
+# For function #9 (bu_vls_nibble) the <args> format is as follows:
+#
+# string_to_test nibble_len expected_result
+#
+# where string_to_test is the string which will be nibbled, and
+# nibble_len is the length that will be nibbled.
+
+add_test(bu_vls_nibble_1 tester_bu_vls 9 "Test 1 2 3" 4 " 1 2 3")
+
+# For function #10 (bu_vls_strcat) the <args> format is as follows:
+#
+# string1 string2 expected_result
+#
+# where string1 and string2 will be concatenated.
+
+add_test(bu_vls_strcat_1 tester_bu_vls 10 "Test 1" " 2 3" "Test 1 2 3")
+
+# For function #11 (bu_vls_strncat) the <args> format is as follows:
+#
+# string1 string2 n expected_result
+#
+# where string1 and string2 will be concatenated.
+
+add_test(bu_vls_strncat_1 tester_bu_vls 11 "Test 1" " 2 3" 4 "Test 1 2 3")
+add_test(bu_vls_strncat_2 tester_bu_vls 11 "Test 1" " 2 3" 2 "Test 1 2")
+# This seems to be failing because a if() statement in strncat thinks
+# that 4 is not greater than -4, so len is left at strlen(" 2 3")
+add_test(bu_vls_strncat_3 tester_bu_vls 11 "Test 1" " 2 3" -4 "Test 1")
+
+# For function #12 (bu_vls_vlscat) the <args> format is as follows:
+#
+# string1 string2 expected_result
+#
+# where string1 and string2 will be concatenated via bu_vls_vlscat.
+
+add_test(bu_vls_vlscat_1 tester_bu_vls 12 "Test 1" " 2 3" "Test 1 2 3")
+
+# For function #13 (bu_vls_strcmp) the <args> format is as follows:
+#
+# string1 string2 expected_result
+#
+# where string1 and string2 will be compared via bu_vls_strcmp.
+
+add_test(bu_vls_strcmp_equal_1   tester_bu_vls 13 "Test 1" "Test 1" 0)
+add_test(bu_vls_strcmp_lesser_1  tester_bu_vls 13 "Test 1" "Test 2" -1)
+add_test(bu_vls_strcmp_greater_1 tester_bu_vls 13 "Test 1" "Test 0" 1)
+
+# For function #14 (bu_vls_strcmp) the <args> format is as follows:
+#
+# string1 string2 expected_result
+#
+# where string1 and string2 will be concatenated via bu_vls_vlscat.
+
+add_test(bu_vls_strncmp_equal_1   tester_bu_vls 14 "Test 1" "Test 1" 6 0)
+add_test(bu_vls_strncmp_lesser_1  tester_bu_vls 14 "Test 1" "Test 2" 6 -1)
+add_test(bu_vls_strncmp_greater_1 tester_bu_vls 14 "Test 1" "Test 0" 6 1)
+add_test(bu_vls_strncmp_equal_2   tester_bu_vls 14 "Test 1" "Test 1" 4 0)
+add_test(bu_vls_strncmp_equal_3   tester_bu_vls 14 "Test 1" "Test 2" 4 0)
+add_test(bu_vls_strncmp_equal_4   tester_bu_vls 14 "Test 1" "Test 0" 4 0)
+
+# For function #15 (bu_vls_from_argv) the <args> format is as follows:
+#
+# strings expected_result
+#
+# where strings will be recreated via bu_vls_from_argv, and the
+# recreation will be checked against expected_result
+
+add_test(bu_vls_from_argv_1 tester_bu_vls 15 Test Test 2 3 4 "Test Test 2 3 4")
+
+# For function #16 (bu_vls_trimspace) the <args> format is as follows:
+#
+# string expected_result
+#
+# where string will have spaces trimmed, and the result will be
+# compared with expected_result
+
+add_test(bu_vls_trimspace_1 tester_bu_vls 16 "   Testing1 2   " "Testing1 2")
+
+# For function #17 (bu_vls_spaces) the <args> format is as follows:
+#
+# string num_spaces expected_result
+#
+# where string will have num_spaces appended, and the result will be
+# checked against expected_result
+
+add_test(bu_vls_spaces_1 tester_bu_vls 17 "Testing1 2" 3 "Testing1 2   ")
+
+# For function #18 (bu_vls_detab) the <args> format is as follows:
+#
+# string expected_result
+#
+# where string will have tabs replaced, and the result will be checked
+# against expected_result
+
+add_test(bu_vls_detab_1 tester_bu_vls 18 "Testing	1 2	3" "Testing 1 2     3")
+
+# For function #19 (bu_vls_prepend) the <args> format is as follows:
+#
+# string string_to_prepend expected_result
+#
+# where string_to_prepend will be prepended to string, and the result
+# will be checked against expected_result
+
+add_test(bu_vls_prepend_1 tester_bu_vls 19 "2 3" "Test 1 " "Test 1 2 3")
+
+
+#
+#  ************ sort.c test *************
+#
+BRLCAD_ADDEXEC(tester_bu_sort bu_sort.c libbu NO_INSTALL)
+add_test(bu_sort_test_unsigned_int_1 tester_bu_sort 1)
+add_test(bu_sort_test_unsigned_int_2 tester_bu_sort 2)
+add_test(bu_sort_test_fastf_t_1 tester_bu_sort 3)
+add_test(bu_sort_test_fastf_t_2 tester_bu_sort 4)
+add_test(bu_sort_test_string_1 tester_bu_sort 5)
+add_test(bu_sort_test_string_2 tester_bu_sort 6)
+add_test(bu_sort_test_dist_to_int_1 tester_bu_sort 7)
+add_test(bu_sort_test_dist_to_int_2 tester_bu_sort 8)
+add_test(bu_sort_test_fastf_empty tester_bu_sort 9)
+add_test(bu_sort_test_fastf_inf tester_bu_sort 10)
+
+#
+#  ************ color.c tests *************
+
+# For tester_bu_color, the input format is as follows:
+#
+# tester_bu_color <function number> <args>
+BRLCAD_ADDEXEC(tester_bu_color bu_color.c libbu NO_INSTALL)
+
+# For function #1 (bu_rgb_to_hsv) the <args> format is as follows:
+#
+# rgb expected_hsv
+#
+# Where rgb colors are represented by comma-separated triples of
+# integers, and hsv colors are represented by comma-separated triples
+# of floats.
+
+add_test(bu_rgb_to_hsv_1 tester_bu_color 1 192,78,214 290,0.636,0.839)
+
+# For function #2 (bu_hsv_to_rgb) the <args> format is as follows:
+#
+# hsv expected_rgb
+#
+# Where rgb colors are represented by comma-separated triples of
+# integers, and hsv colors are represented by comma-separated triples
+# of floats.
+
+add_test(bu_hsv_to_rgb_1 tester_bu_color 2 290,0.636,0.839 192,78,214)
+
+# For function #3 (bu_str_to_rgb) the <args> format is as follows:
+#
+# string expected_rgb
+#
+# Where rgb colors are represented by comma-separated triples of
+# integers.
+
+add_test(bu_str_to_rgb_1 tester_bu_color 3 "#C04ED6" 192,78,214)
+add_test(bu_str_to_rgb_2 tester_bu_color 3 "192/78/214" 192,78,214)
+add_test(bu_str_to_rgb_3 tester_bu_color 3 "192 78 214" 192,78,214)
+
+# For function #4 (bu_color_to_rgb_floats) the <args> format is as follows:
+#
+# rgb_color
+#
+# Where rgb colors are represented by comma-separated triples of
+# integers or floats.
+
+add_test(bu_color_to_rgb_floats_1 tester_bu_color 4 192,78,214)
+
+#
+#  *********** badmagic.c tests ************
+#
+
+BRLCAD_ADDEXEC(tester_bu_badmagic bu_badmagic.c libbu NO_INSTALL)
+add_test(bu_badmagic_diff_magic  tester_bu_badmagic 1)
+add_test(bu_badmagic_normal      tester_bu_badmagic 2)
+add_test(bu_badmagic_null_ptr    tester_bu_badmagic 3)
+add_test(bu_badmagic_misaligned  tester_bu_badmagic 4)
+
+#
+#  *********** date-time.c tests ************
+#
+
+BRLCAD_ADDEXEC(tester_bu_date-time bu_date-time.c libbu NO_INSTALL)
+add_test(bu_date-time1  tester_bu_date-time 1)
+add_test(bu_date-time2  tester_bu_date-time 2)
+add_test(bu_date-time3  tester_bu_date-time 3)
+add_test(bu_date-time4  tester_bu_date-time 4)
+add_test(bu_date-time5  tester_bu_date-time 5)
+add_test(bu_date-time6  tester_bu_date-time 6)
+add_test(bu_date-time7  tester_bu_date-time 7)
+add_test(bu_date-time8  tester_bu_date-time 8)
+add_test(bu_date-time9  tester_bu_date-time 9)
+add_test(bu_date-time10  tester_bu_date-time 10)
+
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

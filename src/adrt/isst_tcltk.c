@@ -1,7 +1,7 @@
 /*                    I S S T _ T C L T K . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2013 United States Government as represented by
+ * Copyright (c) 2005-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -103,7 +103,7 @@ resize_isst(struct isst_s *isstp)
 	    break;
     }
     isstp->tile.format = RENDER_CAMERA_BIT_DEPTH_24;
-    TIENET_BUFFER_SIZE(isstp->buffer_image, (size_t)(3 * isstp->camera.w * isstp->camera.h));
+    TIENET_BUFFER_SIZE(isstp->buffer_image, (uint32_t)(3 * isstp->camera.w * isstp->camera.h));
     glClearColor (0.0, 0, 0.0, 1);
     glBindTexture (GL_TEXTURE_2D, isstp->texid);
     glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
@@ -274,7 +274,7 @@ set_resolution(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_
 	resolution = 20;
 	isst->gs = 0;
     } else {
-	isst->gs = (int)floor(isst->w * .05 * resolution);
+	isst->gs = lrint(floor(isst->w * .05 * resolution));
     }
     resize_isst(isst);
 

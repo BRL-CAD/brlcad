@@ -1,7 +1,7 @@
 /*                         S H O O T . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2013 United States Government as represented by
+ * Copyright (c) 2000-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -53,7 +53,7 @@ rt_res_pieces_init(struct resource *resp, struct rt_i *rtip)
     RT_CK_RESOURCE(resp);
     RT_CK_RTI(rtip);
 
-    psptab = bu_calloc(rtip->rti_nsolids_with_pieces, sizeof(struct rt_piecestate), "re_pieces[]");
+    psptab = (struct rt_piecestate *)bu_calloc(rtip->rti_nsolids_with_pieces, sizeof(struct rt_piecestate), "re_pieces[]");
     resp->re_pieces = psptab;
 
     RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
@@ -159,10 +159,11 @@ again:
 	min = cur+1;
 	goto again;
     }
+
     if (val < nugnp->nu_axis[axis][cur].nu_epos)
 	return cur;
-    else
-	return cur+1;
+
+    return cur+1;
 }
 
 
@@ -568,8 +569,8 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		}
 		if (RT_G_DEBUG & DEBUG_ADVANCE) {
 		    bu_log(
-			"rt_advance_to_next_cell()=x%x lastcut=x%x\n",
-			cutp, ssp->lastcut);
+			"rt_advance_to_next_cell()=%p lastcut=%p\n",
+			(void *)cutp, (void *)ssp->lastcut);
 		}
 
 		ssp->newray.r_pt[X] = px;
@@ -859,8 +860,8 @@ rt_shootray(register struct application *ap)
 					   the ray start point */
     struct bu_ptbl *regionbits;	/* table of all involved regions */
     char *status;
-    auto struct partition InitialPart;	/* Head of Initial Partitions */
-    auto struct partition FinalPart;	/* Head of Final Partitions */
+    struct partition InitialPart;	/* Head of Initial Partitions */
+    struct partition FinalPart;	/* Head of Final Partitions */
     struct soltab **stpp;
     register const union cutter *cutp;
     struct resource *resp;
@@ -933,7 +934,7 @@ rt_shootray(register struct application *ap)
 
     if (!BU_LIST_IS_INITIALIZED(&resp->re_parthead)) {
 	/* XXX This shouldn't happen any more */
-	bu_log("rt_shootray() resp=x%x uninitialized, fixing it\n", resp);
+	bu_log("rt_shootray() resp=%p uninitialized, fixing it\n", (void *)resp);
 	/*
 	 * We've been handed a mostly un-initialized resource struct,
 	 * with only a magic number and a cpu number filled in.  Init
@@ -1607,7 +1608,7 @@ rt_cell_n_on_ray(register struct application *ap, int n)
 
     if (!BU_LIST_IS_INITIALIZED(&resp->re_parthead)) {
 	/* XXX This shouldn't happen any more */
-	bu_log("rt_cell_n_on_ray() resp=x%x uninitialized, fixing it\n", resp);
+	bu_log("rt_cell_n_on_ray() resp=%p uninitialized, fixing it\n", (void *)resp);
 	/*
 	 * We've been handed a mostly un-initialized resource struct,
 	 * with only a magic number and a cpu number filled in.

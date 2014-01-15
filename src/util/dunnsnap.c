@@ -1,7 +1,7 @@
 /*                      D U N N S N A P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@ extern int fd;
 extern char cmd;
 extern void dunnopen(void);
 extern int ready(int nsecs);
-extern void getexposure(char *title);
+extern void getexposure(const char *title);
 extern int dunnsend(char color, int val);
 extern int goodstatus(void);
 extern void hangten(void);
@@ -105,11 +105,11 @@ main(int argc, char **argv)
 	bu_exit (1, NULL);
     }
 
-    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)) ) {
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 	fprintf(stderr,"%s",usage);
 	fprintf(stderr,"       Program continues running:\n");
     }
-    else if ( BU_STR_EQUAL(argv[1], "-h") ||  BU_STR_EQUAL(argv[1], "-?") )
+    else if (BU_STR_EQUAL(argv[1], "-h") ||  BU_STR_EQUAL(argv[1], "-?"))
 	bu_exit(25, "%s", usage);
 
     dunnopen();

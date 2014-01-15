@@ -1,7 +1,7 @@
 /*                          D M - T K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -49,8 +49,10 @@ extern int _tk_open_existing();	/* XXX TJM will be defined in libfb/if_tk.c */
 extern void dm_var_init(struct dm_list *initial_dm_list);		/* defined in attach.c */
 
 static int tk_dm(int argc, const char *argv[]);
-static void dirty_hook(void);
-static void zclip_hook(void);
+
+/* local sp_hook functions */
+static void dirty_hook(const struct bu_structparse *, const char *, void *, const char *);
+static void zclip_hook(const struct bu_structparse *, const char *, void *, const char *);
 
 static Tk_GenericProc tk_doevent;
 
@@ -164,19 +166,13 @@ dirty_hook(void)
 
 
 static void
-zclip_hook(void)
+zclip_hook(const struct bu_structparse *sdp,
+	   const char *name,
+	   void *base,
+	   const char *value)
 {
-    fastf_t bounds[6] = { GED_MIN, GED_MAX, GED_MIN, GED_MAX, GED_MIN, GED_MAX };
-
     view_state->vs_gvp->gv_zclip = dmp->dm_zclip;
-    dirty_hook();
-
-    if (dmp->dm_zclip) {
-	bounds[4] = -1.0;
-	bounds[5] = 1.0;
-    }
-
-    DM_SET_WIN_BOUNDS(dmp, bounds);
+    dirty_hook(sdp, name, base, value);
 }
 /*
  * Local Variables:

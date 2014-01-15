@@ -1,7 +1,7 @@
 /*                        C O S W I N . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,15 +33,15 @@
 #include "vmath.h"
 #include "bn.h"
 
+
 static int _init_length = 0;	/* Internal: last initialized size */
 static int maxinitlen = 0;
 static double *coswintab = NULL;
 
+
 /*
- * I N I T _ C O S W I N T A B
- *
- * Internal routine to initialize the cosine window table for
- * a given effect length (number of sample at each end effected).
+ * Internal routine to initialize the cosine window table for a given
+ * effect length (number of sample at each end effected).
  */
 int
 init_coswintab(int size)

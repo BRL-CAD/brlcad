@@ -1,7 +1,7 @@
 /*                      H E A T G R A P H . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -147,9 +147,9 @@ timeTable_init(int x, int y)
 	if (timeTable == NULL) {
 	    bu_log("X is %d, Y is %d\n", x, y);
 	    bu_log("Making time Table\n");
-	    timeTable = bu_malloc(x * sizeof(double *), "timeTable");
+	    timeTable = (fastf_t **)bu_malloc(x * sizeof(fastf_t *), "timeTable");
 	    for (i = 0; i < x; i++) {
-		timeTable[i] = bu_malloc(y * sizeof(double), "timeTable[i]");
+		timeTable[i] = (fastf_t *)bu_malloc(y * sizeof(fastf_t), "timeTable[i]");
 	    }
 	    for (i = 0; i < x; i++) {
 		for (w = 0; w < y; w++) {

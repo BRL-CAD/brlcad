@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2013 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@ struct file_list iges_list;
 struct file_list *curr_file;
 struct name_list *name_root;
 
-char operator[] = {
+char operators[] = {
     ' ',
     'u',
     '+',

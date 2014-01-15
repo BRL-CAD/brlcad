@@ -1,7 +1,7 @@
 /*                          D M - N U L L . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2013 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,8 +22,11 @@
 /** @file dm-Null.h
  *
  */
-#ifndef __DM_NULL__
-#define __DM_NULL__
+#ifndef DM_NULL_H
+#define DM_NULL_H
+
+#include "common.h"
+
 #include "dm.h"
 
 __BEGIN_DECLS
@@ -184,7 +187,7 @@ null_processEvents(struct dm *dmp);
 
 __END_DECLS
 
-#endif  /* __DM_NULL__ */
+#endif  /* DM_NULL_H */
 
 /** @} */
 /*

@@ -1,7 +1,7 @@
 /*                       C O M P N E T . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,8 +21,8 @@
  *
  */
 
-#ifndef _ISST_COMPNET_H
-#define _ISST_COMPNET_H
+#ifndef ADRT_MASTER_COMPNET_H
+#define ADRT_MASTER_COMPNET_H
 
 #include "common.h"
 

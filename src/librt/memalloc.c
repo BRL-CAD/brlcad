@@ -1,7 +1,7 @@
 /*                      M E M A L L O C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -260,20 +260,16 @@ rt_memfree(struct mem_map **pp, size_t size, off_t addr)
     }
 
     if (type & (M_TOVFL|M_BOVFL)) {
-	bu_log("rt_memfree(addr=x%x, size=%zu) ERROR type=0%o\n",
+	bu_log("rt_memfree(addr=%ld, size=%zu) ERROR type=0%o\n",
 	       addr, size, type);
 	if (prevp)
-	    bu_log("prevp: m_addr=x%x, m_size=%zu\n",
+	    bu_log("prevp: m_addr=%ld, m_size=%zu\n",
 		   prevp->m_addr, prevp->m_size);
 	if (curp)
-	    bu_log("curp: m_addr=x%x, m_size=%zu\n",
+	    bu_log("curp: m_addr=%ld, m_size=%zu\n",
 		   curp->m_addr, curp->m_size);
 	return;
     }
-
-    /* nothing to do */
-    if (!prevp || !curp)
-	return;
 
     /*
      * Now we do the surgery:
@@ -343,9 +339,9 @@ rt_memprint(struct mem_map **pp)
 {
     register struct mem_map *curp;
 
-    bu_log("rt_memprint(x%x):  address, length\n", *pp);
+    bu_log("rt_memprint(%p):  address, length\n", (void *)*pp);
     for (curp = *pp; curp; curp = curp->m_nxtp)
-	bu_log(" a=x%.8lx, l=%.5zu\n", curp->m_addr, curp->m_size);
+	bu_log(" a=%ld, l=%.5zu\n", curp->m_addr, curp->m_size);
 }
 
 

@@ -1,7 +1,7 @@
 /*                     B R E P _ D E B U G . C P P
  * BRL-CAD
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -505,10 +505,14 @@ plottrim(ON_BrepTrim& trim, struct bn_vlblock *vbp, int plotres, bool dim3d)
     for (int k = 1; k <= plotres; k++) {
 	ON_3dPoint p = trimCurve->PointAt(dom.ParameterAt((double) (k - 1)
 							  / (double) plotres));
+	p.x = p.x/width;
+	p.y = p.y/height;
 	if (dim3d)
 	    p = surf->PointAt(p.x, p.y);
 	VMOVE(pt1, p);
 	p = trimCurve->PointAt(dom.ParameterAt((double) k / (double) plotres));
+	p.x = p.x/width;
+	p.y = p.y/height;
 	if (dim3d)
 	    p = surf->PointAt(p.x, p.y);
 	VMOVE(pt2, p);
@@ -2560,6 +2564,11 @@ brep_translate_scv(
 	fastf_t dz)
 {
     ON_NurbsSurface *nurbsSurface = NULL;
+    if (surface_index < 0 || surface_index >= brep->m_S.Count()) {
+	bu_log("brep_translate_scv: invalid surface index %d\n", surface_index);
+	return -1;
+    }
+
     ON_Surface *surface = brep->m_S[surface_index];
     if (surface) {
 	nurbsSurface = dynamic_cast<ON_NurbsSurface *>(surface);

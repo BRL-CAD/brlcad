@@ -1,7 +1,7 @@
 /*                           D S P . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2013 United States Government as represented by
+ * Copyright (c) 1999-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -216,8 +216,8 @@ HIDDEN void
 hook_mtos_from_stom(
     const struct bu_structparse *sp,
     const char *sp_name,
-    genptr_t base,
-    char *UNUSED(p))
+    void *base,
+    const char *UNUSED(p))
 {
     struct rt_dsp_internal *dsp_ip = (struct rt_dsp_internal *)base;
 
@@ -233,8 +233,8 @@ HIDDEN void
 hook_file(
     const struct bu_structparse *sp,
     const char *sp_name,
-    genptr_t base,
-    char *UNUSED(p))
+    void *base,
+    const char *UNUSED(p))
 {
     struct rt_dsp_internal *dsp_ip = (struct rt_dsp_internal *)base;
 
@@ -276,7 +276,7 @@ const struct bu_structparse rt_dsp_ptab[] = {
  */
 
 
-static int plot_file_num=0;
+static int plot_file_num = 0;
 
 
 /**
@@ -389,7 +389,7 @@ plot_layers(struct dsp_specific *dsp_sp)
     int r, g, b, c;
     struct dsp_bb *d_bb;
 
-    for (l=0; l < dsp_sp->layers; l++) {
+    for (l = 0; l < dsp_sp->layers; l++) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	sprintf(buf, "Dsp_layer%d.plot3", l);
 	fp=fopen(buf, "wb");
@@ -407,8 +407,8 @@ plot_layers(struct dsp_specific *dsp_sp)
 	g = colors[c][1];
 	b = colors[c][2];
 
-	for (y=0; y < dsp_sp->layer[l].dim[Y]; y+= 2) {
-	    for (x=0; x < dsp_sp->layer[l].dim[X]; x+= 2) {
+	for (y = 0; y < dsp_sp->layer[l].dim[Y]; y+= 2) {
+	    for (x = 0; x < dsp_sp->layer[l].dim[X]; x+= 2) {
 		n = y * dsp_sp->layer[l].dim[X] + x;
 		d_bb = &dsp_sp->layer[l].p[n];
 		plot_dsp_bb(fp, d_bb, dsp_sp, r, g, b, 0);
@@ -527,7 +527,7 @@ dsp_print_v4(struct bu_vls *vls, const struct rt_dsp_internal *dsp_ip)
     BU_CK_VLS(&dsp_ip->dsp_name);
     BU_CK_VLS(vls);
 
-    bu_vls_printf(vls, "Displacement Map\n  file='%s' w=%zu n=%zu sm=%d",
+    bu_vls_printf(vls, "Displacement Map\n  file='%s' w=%u n=%u sm=%d",
 		  bu_vls_addr(&dsp_ip->dsp_name),
 		  dsp_ip->dsp_xcnt,
 		  dsp_ip->dsp_ycnt,
@@ -586,7 +586,7 @@ dsp_print_v5(struct bu_vls *vls,
 	    break;
     }
 
-    bu_vls_printf(vls, "='%s'\n  w=%zu n=%zu sm=%d ",
+    bu_vls_printf(vls, "='%s'\n  w=%u n=%u sm=%d ",
 		  bu_vls_addr(&dsp_ip->dsp_name),
 		  dsp_ip->dsp_xcnt,
 		  dsp_ip->dsp_ycnt,
@@ -704,9 +704,9 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 #endif
 
     /* allocate the struct dsp_bb's we will need */
-    dsp->layer = bu_malloc(dsp->layers * sizeof(struct dsp_bb_layer),
+    dsp->layer = (struct dsp_bb_layer *)bu_malloc(dsp->layers * sizeof(struct dsp_bb_layer),
 			   "dsp_bb_layers array");
-    dsp->bb_array = bu_malloc(tot * sizeof(struct dsp_bb), "dsp_bb array");
+    dsp->bb_array = (struct dsp_bb *)bu_malloc(tot * sizeof(struct dsp_bb), "dsp_bb array");
 
     /* now we fill in the "lowest" layer of struct dsp_bb's from the
      * raw data
@@ -721,12 +721,12 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
     dsp_min = 0xffff;
     dsp_max = 0;
 
-    for (y=0; y < YSIZ(dsp); y++) {
+    for (y = 0; y < YSIZ(dsp); y++) {
 
 	cell_min = 0xffff;
 	cell_max = 0;
 
-	for (x=0; x < XSIZ(dsp); x++) {
+	for (x = 0; x < XSIZ(dsp); x++) {
 
 	    elev = DSP(&dsp->dsp_i, x, y);
 	    cell_min = cell_max = elev;
@@ -758,7 +758,7 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 	    /* There are no "children" of a layer 0 element */
 	    dsp_bb->dspb_ch_dim[X] = 0;
 	    dsp_bb->dspb_ch_dim[Y] = 0;
-	    for (k=0; k < NUM_BB_CHILDREN; k++) {
+	    for (k = 0; k < NUM_BB_CHILDREN; k++) {
 		dsp_bb->dspb_children[k] =
 		    (struct dsp_bb *)NULL;
 	    }
@@ -810,8 +810,8 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 	    bu_log("layer %d  subcell size %d\n", curr_layer, subcell_size);
 
 	/* walk the grid and fill in the values for this layer */
-	for (y=0; y < curr->dim[Y]; y++) {
-	    for (x=0; x < curr->dim[X]; x++) {
+	for (y = 0; y < curr->dim[Y]; y++) {
+	    for (x = 0; x < curr->dim[X]; x++) {
 		int n, xp, yp;
 		/* x, y are in the coordinates in the current
 		 * layer.  xp, yp are the coordinates of the
@@ -823,7 +823,7 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 		/* initialize the current dsp_bb cell */
 		dsp_bb = &curr->p[y*curr->dim[X]+x];
 		dsp_bb->magic = MAGIC_dsp_bb;
-		n = (int)pow((double)DIM_BB_CHILDREN, (double)curr_layer);
+		n = lrint(pow((double)DIM_BB_CHILDREN, (double)curr_layer));
 		VSET(dsp_bb->dspb_rpp.dsp_min,
 		     x * n, y * n, 0x0ffff);
 		VSET(dsp_bb->dspb_rpp.dsp_max,
@@ -834,9 +834,9 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 
 
 		tot = 0;
-		i=0;
-		for (j=0; j<DIM_BB_CHILDREN && (yp+j)<prev->dim[Y]; j++) {
-		    for (i=0; i<DIM_BB_CHILDREN && (xp+i)<prev->dim[X]; i++) {
+		i = 0;
+		for (j = 0; j < DIM_BB_CHILDREN && (yp+j)<prev->dim[Y]; j++) {
+		    for (i = 0; i < DIM_BB_CHILDREN && (xp+i)<prev->dim[X]; i++) {
 
 			idx = (yp+j) * prev->dim[X] + xp+i;
 
@@ -862,7 +862,7 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 #ifdef PLOT_LAYERS
     if (RT_G_DEBUG & DEBUG_HF) {
 	plot_layers(dsp);
-	bu_log("_  x:%zu y:%zu min %d max %d\n",
+	bu_log("_  x:%u y:%u min %d max %d\n",
 	       XCNT(dsp), YCNT(dsp), dsp_min, dsp_max);
     }
 #endif
@@ -1122,7 +1122,7 @@ plot_seg(struct isect_stuff *isect,
     struct bound_rpp rpp;
     char fname[32];
     FILE *fp;
-    static int segnum =0;
+    static int segnum = 0;
 
     /* plot the bounding box and the seg */
     bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -1823,9 +1823,9 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
     point_t bbmin, bbmax;
     fastf_t dot, dot2;
 
-    for(x=0;x<4;x++)
+    for(x = 0; x < 4; x++)
 	memset(hits+x, 0, sizeof(struct hit));
-    x=0;
+    x = 0;
 
     dlog("isect_ray_cell_top\n");
     DSP_BB_CK(dsp_bb);
@@ -1983,7 +1983,7 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 	bu_log("hitcount: %d flags: 0x%0x\n", hitcount, hitf);
 
 	plot_cell_top(isect, dsp_bb, A, B, C, D, hits, hitf, 1);
-	for (i=0; i < 4; i++) {
+	for (i = 0; i < 4; i++) {
 	    if (hitf & (1<<i)) {
 		fastf_t v = VDOT(isect->r.r_dir, hits[i].hit_normal);
 
@@ -3141,7 +3141,7 @@ rt_dsp_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	uvp->uv_dv = min_r_V;
 
     if (RT_G_DEBUG & DEBUG_HF)
-	bu_log("rt_dsp_uv(pt:%g, %g siz:%zu, %zu)\n U_len=%g V_len=%g\n r=%g rbeam=%g diverge=%g dist=%g\n u=%g v=%g du=%g dv=%g\n",
+	bu_log("rt_dsp_uv(pt:%g, %g siz:%u, %u)\n U_len=%g V_len=%g\n r=%g rbeam=%g diverge=%g dist=%g\n u=%g v=%g du=%g dv=%g\n",
 	       pt[X], pt[Y], XSIZ(dsp), YSIZ(dsp),
 	       U_len, V_len,
 	       r, ap->a_rbeam, ap->a_diverge, hitp->hit_dist,
@@ -3180,11 +3180,12 @@ rt_dsp_free(register struct soltab *stp)
 }
 
 
+/* FIXME: can't 'rt_dsp_class' be replaced by 'rt_generic_class'? */
 /**
  * R T _ D S P _ C L A S S
  */
 int
-rt_dsp_class(void)
+rt_dsp_class(const struct soltab *UNUSED(s), const vect_t UNUSED(v0), const vect_t UNUSED(v2), const struct bn_tol *UNUSED(b))
 {
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("rt_dsp_class()\n");
@@ -3299,11 +3300,11 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
      * top at full resolution.  This helps edge matching.  The inside
      * of the top, we draw somewhat coarser
      */
-    for (y=0; y < dsp_ip->dsp_ycnt; y += ylim) {
+    for (y = 0; y < dsp_ip->dsp_ycnt; y += ylim) {
 	VSET(s_pt, 0.0, y, DSP(dsp_ip, 0, y));
 	MOVE(s_pt);
 
-	for (x=0; x < dsp_ip->dsp_xcnt; x++) {
+	for (x = 0; x < dsp_ip->dsp_xcnt; x++) {
 	    s_pt[X] = x;
 	    s_pt[Z] = DSP(dsp_ip, x, y);
 	    DRAW(s_pt);
@@ -3311,11 +3312,11 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     }
 
 
-    for (x=0; x < dsp_ip->dsp_xcnt; x += xlim) {
+    for (x = 0; x < dsp_ip->dsp_xcnt; x += xlim) {
 	VSET(s_pt, x, 0.0, DSP(dsp_ip, x, 0));
 	MOVE(s_pt);
 
-	for (y=0; y < dsp_ip->dsp_ycnt; y++) {
+	for (y = 0; y < dsp_ip->dsp_ycnt; y++) {
 	    s_pt[Y] = y;
 	    s_pt[Z] = DSP(dsp_ip, x, y);
 	    DRAW(s_pt);
@@ -3351,7 +3352,7 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     if (yfudge < 1) yfudge = 1;
 
     /* draw the horizontal (y==const) lines */
-    for (y=yfudge; y < ylim; y += step) {
+    for (y = yfudge; y < ylim; y += step) {
 	VSET(s_pt, 0.0, y, DSP(dsp_ip, 0, y));
 	VMOVE(o_pt, s_pt);
 	if (!ZERO(o_pt[Z])) {
@@ -3361,7 +3362,7 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	    drawing = 0;
 	}
 
-	for (x=xfudge; x < xlim; x+=step) {
+	for (x = xfudge; x < xlim; x+=step) {
 	    s_pt[X] = x;
 
 	    s_pt[Z] = DSP(dsp_ip, x, y);
@@ -3402,7 +3403,7 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
     }
 
-    for (x=xfudge; x < xlim; x += step) {
+    for (x = xfudge; x < xlim; x += step) {
 	VSET(s_pt, x, 0.0, DSP(dsp_ip, x, 0));
 	VMOVE(o_pt, s_pt);
 	if (!ZERO(o_pt[Z])) {
@@ -3413,7 +3414,7 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	}
 
 
-	for (y=yfudge; y < ylim; y+=step) {
+	for (y = yfudge; y < ylim; y+=step) {
 	    s_pt[Y] = y;
 
 	    s_pt[Z] = DSP(dsp_ip, x, y);
@@ -3591,7 +3592,7 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct vertex **strip2Verts;
     int base_vert_no1;
     int base_vert_no2;
-    int has_holes=0;
+    int has_holes = 0;
 
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("rt_dsp_tess()\n");
@@ -3656,9 +3657,9 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* malloc space for the vertices */
     base_vert_count = 2*xlim + 2*ylim;
-    base_verts = bu_calloc(base_vert_count, sizeof(struct vertex *), "base verts");
-    strip1Verts = bu_calloc(ylim+1, sizeof(struct vertex *), "strip1Verts");
-    strip2Verts = bu_calloc(ylim+1, sizeof(struct vertex *), "strip2Verts");
+    base_verts = (struct vertex **)bu_calloc(base_vert_count, sizeof(struct vertex *), "base verts");
+    strip1Verts = (struct vertex **)bu_calloc(ylim+1, sizeof(struct vertex *), "strip1Verts");
+    strip2Verts = (struct vertex **)bu_calloc(ylim+1, sizeof(struct vertex *), "strip2Verts");
 
     /* Make region, empty shell, vertex */
     *r = nmg_mrsv(m);
@@ -3669,25 +3670,25 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* assign geometry to the base_verts */
     /* start with x=0 edge */
-    for (y=0 ; y<=ylim ; y++) {
+    for (y = 0; y <= ylim; y++) {
 	VSET(tmp_pt, 0, y, 0);
 	MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
 	nmg_vertex_gv(base_verts[y], pt[0]);
     }
     /* now do y=ylim edge */
-    for (x=1 ; x<=xlim ; x++) {
+    for (x = 1; x <= xlim; x++) {
 	VSET(tmp_pt, x, ylim, 0);
 	MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
 	nmg_vertex_gv(base_verts[ylim+x], pt[0]);
     }
     /* now do x=xlim edge */
-    for (y=0 ; y<ylim ; y++) {
+    for (y = 0; y < ylim; y++) {
 	VSET(tmp_pt, xlim, y, 0);
 	MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
 	nmg_vertex_gv(base_verts[2*ylim+xlim-y], pt[0]);
     }
     /* now do y=0 edge */
-    for (x=1 ; x<xlim ; x++) {
+    for (x = 1; x < xlim; x++) {
 	VSET(tmp_pt, x, 0, 0);
 	MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
 	nmg_vertex_gv(base_verts[2*(xlim+ylim)-x], pt[0]);
@@ -3703,14 +3704,14 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* if a displacement on the edge (x=0) is zero then strip1Verts at
      * that point is the corresponding base_vert
      */
-    for (y=0 ; y<=ylim ; y++) {
+    for (y = 0; y <= ylim; y++) {
 	if (DSP(dsp_ip, 0, y) == 0) {
 	    strip1Verts[y] = base_verts[y];
 	}
     }
 
     /* make faces along x=0 plane */
-    for (y=1 ; y<=ylim ; y++) {
+    for (y= 1; y <= ylim; y++) {
 	verts[0] = &base_verts[y-1];
 	verts[1] = &strip1Verts[y-1];
 	verts[2] = &strip1Verts[y];
@@ -3758,12 +3759,12 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
      * (x, y)<->(x+1, y+1). Also make the vertical faces at y=0 and
      * y=ylim.
      */
-    for (x=0 ; x<xlim ; x++) {
+    for (x = 0; x < xlim; x++) {
 	/* set strip2Verts to base_verts values where the strip2Vert
 	 * is above a base_vert and DSP value is 0
 	 */
 	if ((x+1) == xlim) {
-	    for (y=0 ; y<=ylim ; y++) {
+	    for (y = 0; y <= ylim; y++) {
 		if (DSP(dsp_ip, xlim, y) == 0) {
 		    strip2Verts[y] = base_verts[2*ylim + xlim - y];
 		}
@@ -3823,7 +3824,7 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
 
 	/* make the top faces for this strip */
-	for (y=0 ; y<ylim ; y++) {
+	for (y = 0; y < ylim; y++) {
 	    int dir;
 	    /* get the cut direction for this cell */
 	    dir = get_cut_dir(dsp_ip, x, y, xlim, ylim);
@@ -3977,14 +3978,14 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
 
 	/* copy strip2 to strip1, set strip2 to all NULLs */
-	for (y=0 ; y<=ylim ; y++) {
+	for (y = 0; y <= ylim; y++) {
 	    strip1Verts[y] = strip2Verts[y];
 	    strip2Verts[y] = (struct vertex *)NULL;
 	}
     }
 
     /* make faces at x=xlim plane */
-    for (y=0 ; y<ylim ; y++) {
+    for (y = 0; y < ylim; y++) {
 	base_vert_no1 = 2*ylim+xlim-y;
 	verts[0] = &base_verts[base_vert_no1];
 	verts[1] = &base_verts[base_vert_no1-1];
@@ -4098,8 +4099,8 @@ get_file_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
     }
 
     if ((size_t)dsp_ip->dsp_mp->buflen != (size_t)(dsp_ip->dsp_xcnt*dsp_ip->dsp_ycnt*2)) {
-	bu_log("DSP buffer wrong size: %zu s/b %zu ",
-	       dsp_ip->dsp_mp->buflen, dsp_ip->dsp_xcnt*dsp_ip->dsp_ycnt*2);
+	bu_log("DSP buffer wrong size: %lu s/b %u ",
+	       (long unsigned int)dsp_ip->dsp_mp->buflen, dsp_ip->dsp_xcnt*dsp_ip->dsp_ycnt*2);
 	return -1;
     }
 
@@ -4121,9 +4122,9 @@ get_file_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 	    bu_log("got %zu != count %d", got, count);
 	    bu_bomb("\n");
 	}
-	dsp_ip->dsp_buf = dsp_ip->dsp_mp->apbuf;
+	dsp_ip->dsp_buf = (short unsigned int *)dsp_ip->dsp_mp->apbuf;
     } else {
-	dsp_ip->dsp_buf = dsp_ip->dsp_mp->buf;
+	dsp_ip->dsp_buf = (short unsigned int *)dsp_ip->dsp_mp->buf;
     }
     return 0;
 }
@@ -4155,7 +4156,7 @@ get_obj_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 	       dsp_ip->dsp_bip->idb_minor_type);
     }
 
-    bip = dsp_ip->dsp_bip->idb_ptr;
+    bip = (struct rt_binunif_internal *)dsp_ip->dsp_bip->idb_ptr;
 
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("binunif magic: 0x%08x  type: %d count:%zu data[0]:%u\n",
@@ -4360,7 +4361,7 @@ rt_dsp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record)*DB_SS_NGRAN;
-    ep->ext_buf = bu_calloc(1, ep->ext_nbytes, "dsp external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "dsp external");
     rec = (union record *)ep->ext_buf;
 
     dsp = *dsp_ip;	/* struct copy */
@@ -4418,7 +4419,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     ip->idb_meth = &OBJ[ID_DSP];
     BU_ALLOC(ip->idb_ptr, struct rt_dsp_internal);
 
-    dsp_ip = ip->idb_ptr;
+    dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
     BU_VLS_INIT(&dsp_ip->dsp_name);
 
     dsp_ip->magic = RT_DSP_INTERNAL_MAGIC;
@@ -4429,7 +4430,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     dsp_ip->dsp_xcnt = ntohl(*(uint32_t *)cp);
     cp += SIZEOF_NETWORK_LONG;
     if (dsp_ip->dsp_xcnt < 1) {
-	bu_log("%s:%d DSP X dimension (%zu) < 1 \n",
+	bu_log("%s:%d DSP X dimension (%u) < 1 \n",
 	       __FILE__, __LINE__,
 	       dsp_ip->dsp_xcnt);
     }
@@ -4437,7 +4438,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     dsp_ip->dsp_ycnt = ntohl(*(uint32_t *)cp);
     cp += SIZEOF_NETWORK_LONG;
     if (dsp_ip->dsp_ycnt < 1) {
-	bu_log("%s:%d DSP Y dimension (%zu) < 1 \n",
+	bu_log("%s:%d DSP Y dimension (%u) < 1 \n",
 	       __FILE__, __LINE__,
 	       dsp_ip->dsp_ycnt);
     }
@@ -4492,7 +4493,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 		   ep->ext_nbytes - (cp - (unsigned char *)ep->ext_buf));
 
     if (mat == NULL) mat = bn_mat_identity;
-    if (dsp_get_data(dsp_ip, mat, dbip)!=0) {
+    if (dsp_get_data(dsp_ip, mat, dbip) != 0) {
 	IMPORT_FAIL("unable to load displacement map data");
     }
 
@@ -4537,7 +4538,7 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	SIZEOF_NETWORK_SHORT +
 	2 + name_len;
 
-    ep->ext_buf = bu_malloc(ep->ext_nbytes, "dsp external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "dsp external");
     cp = (unsigned char *)ep->ext_buf;
     rem = ep->ext_nbytes;
 
@@ -4692,8 +4693,8 @@ rt_dsp_ifree(struct rt_db_internal *ip)
 HIDDEN void
 hook_verify(const struct bu_structparse *sp,
 	    const char *sp_name,
-	    genptr_t base,
-	    char *UNUSED(p))
+	    void *base,
+	    const char *UNUSED(p))
 {
     struct rt_dsp_internal *dsp_ip = (struct rt_dsp_internal *)base;
 

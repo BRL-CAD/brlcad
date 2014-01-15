@@ -1,7 +1,7 @@
 /*                       S H _ F L A T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -56,9 +56,10 @@ HIDDEN int flat_render(struct application *ap, const struct partition *pp, struc
 HIDDEN void flat_print(register struct region *rp, genptr_t dp);
 HIDDEN void flat_free(genptr_t cp);
 
+/* local sp_hook functions */
 /* these are two helper functions to process input color and transparency values */
-void normalizedInput_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value);
-void singleNormalizedInput_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value);
+void normalizedInput_hook(const struct bu_structparse *, const char *, void *, const char *);
+void singleNormalizedInput_hook(const struct bu_structparse *, const char *, void *, const char *);
 
 /*
  * the shader specific structure contains all variables which are unique
@@ -100,12 +101,12 @@ struct flat_specific flat_defaults = {
  * is alpha==.4 which is equiv to transparency=={.4 .4 .4}).
  */
 struct bu_structparse flat_parse_tab[] = {
-    { "%f", 3, "color", SHDR_O(color), normalizedInput_hook, NULL, NULL }, /* for 0->1 color values */
-    { "%f", 3, "rgb", SHDR_O(color), normalizedInput_hook, NULL, NULL }, /* for 0->255 color values */
-    { "%f", 1, "bright", SHDR_O(color), singleNormalizedInput_hook, NULL, NULL }, /* for luminosity gray value */
+    { "%f", 3, "color",        SHDR_O(color),        normalizedInput_hook, NULL, NULL }, /* for 0->1 color values */
+    { "%f", 3, "rgb",          SHDR_O(color),        normalizedInput_hook, NULL, NULL }, /* for 0->255 color values */
+    { "%f", 1, "bright",       SHDR_O(color),        singleNormalizedInput_hook, NULL, NULL }, /* for luminosity gray value */
     { "%f", 3, "transparency", SHDR_O(transparency), normalizedInput_hook, NULL, NULL }, /* for rgb 0->1 transparency */
-    { "%f", 1, "alpha", SHDR_O(transparency), singleNormalizedInput_hook, NULL, NULL }, /* for single channel alpha transparency */
-    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+    { "%f", 1, "alpha",        SHDR_O(transparency), singleNormalizedInput_hook, NULL, NULL }, /* for single channel alpha transparency */
+    { "",   0, (char *)0,      0,		     BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -135,14 +136,17 @@ struct mfuncs flat_mfuncs[] = {
  * value == string containing value
  */
 void
-normalizedInput_hook(register const struct bu_structparse *sdp, register const char *UNUSED(name), char *base, const char *UNUSED(value))
+normalizedInput_hook(const struct bu_structparse *sdp,
+		     const char *UNUSED(name),
+		     void *base,
+		     const char *UNUSED(value))
 {
-    register double *p = (double *)(base+sdp->sp_offset);
+    register double *p = (double *)((char *)base + sdp->sp_offset);
     size_t i;
     int ok;
 
     /* if all the values are in the range [0..1] there's nothing to do */
-    for (ok=1, i=0; i < sdp->sp_count; i++, p++) {
+    for (ok = 1, i = 0; i < sdp->sp_count; i++, p++) {
 	if ((*p > 1.0) || (*p < 0.0)) ok = 0;
     }
     if (ok) return;
@@ -150,12 +154,12 @@ normalizedInput_hook(register const struct bu_structparse *sdp, register const c
     /* user specified colors in the range [0..255] (or negative) so we need to
      * map those into [0..1]
      */
-    p = (double *)(base+sdp->sp_offset);
-    for (i=0; i < sdp->sp_count; i++, p++) {
+    p = (double *)((char *)base + sdp->sp_offset);
+    for (i = 0; i < sdp->sp_count; i++, p++) {
 	*p /= 255.0;
     }
 
-    for (ok=1, i=0; i < sdp->sp_count; i++, p++) {
+    for (ok = 1, i = 0; i < sdp->sp_count; i++, p++) {
 	if ((*p > 1.0) || (*p < 0.0)) ok = 0;
     }
     if (ok) bu_log ("User specified values are out of range (0.0 to either 1.0 or 255.0)");
@@ -169,9 +173,13 @@ normalizedInput_hook(register const struct bu_structparse *sdp, register const c
  * it three times.  the value is normalized from 0.0 to 1.0
  */
 void
-singleNormalizedInput_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value) {
+singleNormalizedInput_hook(const struct bu_structparse *sdp,
+			   const char *name,
+			   void *base,
+			   const char *value)
+{
 
-    register double *p = (double *)(base+sdp->sp_offset);
+    register double *p = (double *)((char *)base + sdp->sp_offset);
 
     normalizedInput_hook(sdp, name, base, value);
 
@@ -188,7 +196,8 @@ singleNormalizedInput_hook(register const struct bu_structparse *sdp, register c
  * default values are set.  Then any user-given values override.
  */
 HIDDEN int
-flat_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip) {
+flat_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
+{
 
     register struct flat_specific *flat_sp;
 
@@ -245,7 +254,8 @@ flat_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
  * one we are shading and blend accordingly with the flat color.
  */
 int
-flat_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp) {
+flat_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+{
 
     register struct flat_specific *flat_sp = (struct flat_specific *)dp;
     const point_t unit = {1.0, 1.0, 1.0};
@@ -271,7 +281,7 @@ flat_render(struct application *ap, const struct partition *pp, struct shadework
     } else {
 
 	/* this gets the background pixel value, if the transparency is not 0 */
-	swp->sw_transmit=1.0; /*!!! try to remove */
+	swp->sw_transmit = 1.0; /*!!! try to remove */
 	VMOVE(swp->sw_basecolor, flat_sp->transparency);
 	(void)rr_render(ap, pp, swp);
 
@@ -289,7 +299,8 @@ flat_render(struct application *ap, const struct partition *pp, struct shadework
  * F L A T _ P R I N T
  */
 HIDDEN void
-flat_print(register struct region *rp, genptr_t dp) {
+flat_print(register struct region *rp, genptr_t dp)
+{
     bu_struct_print(rp->reg_name, flat_parse_tab, (char *)dp);
 }
 
@@ -298,7 +309,8 @@ flat_print(register struct region *rp, genptr_t dp) {
  * F L A T _ F R E E
  */
 HIDDEN void
-flat_free(genptr_t cp) {
+flat_free(genptr_t cp)
+{
     BU_PUT(cp, struct flat_specific);
 }
 

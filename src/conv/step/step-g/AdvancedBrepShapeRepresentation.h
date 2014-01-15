@@ -1,7 +1,7 @@
 /*                 AdvancedBrepShapeRepresentation.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -23,8 +23,8 @@
  * structures.
  *
  */
-#ifndef ADVANCEDBREPSHAPEREPRESENTATION_H_
-#define ADVANCEDBREPSHAPEREPRESENTATION_H_
+#ifndef CONV_STEP_STEP_G_ADVANCEDBREPSHAPEREPRESENTATION_H
+#define CONV_STEP_STEP_G_ADVANCEDBREPSHAPEREPRESENTATION_H
 
 #include "common.h"
 
@@ -66,7 +66,7 @@ public:
 };
 
 
-#endif /* ADVANCEDBREPSHAPEREPRESENTATION_H_ */
+#endif /* CONV_STEP_STEP_G_ADVANCEDBREPSHAPEREPRESENTATION_H */
 
 /*
  * Local Variables:

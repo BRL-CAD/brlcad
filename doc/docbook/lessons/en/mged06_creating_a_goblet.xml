@@ -1,5 +1,4 @@
 <!-- Converted by db4-upgrade version 1.0 -->
-
 <article xmlns="http://docbook.org/ns/docbook" version="5.0">
   <info><title>Creating a Goblet</title>
 
@@ -41,7 +40,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged06_rtgoblet.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged06_rtgoblet.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -97,7 +99,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged06_gobletbase.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged06_gobletbase.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -129,7 +134,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged06_goblet1stsphere.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged06_goblet1stsphere.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -213,7 +221,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged06_gobletstem.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged06_gobletstem.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -243,7 +254,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged06_gobletbasestembasin.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged06_gobletbasestembasin.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -404,7 +418,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged06_base_subtracted_vol.png" format="PNG"/>
+	  </imageobject>
+	<imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged06_base_subtracted_vol.png" format="PNG"/>
 	  </imageobject>
 	</mediaobject>
@@ -431,7 +448,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged06_rtgobletaz_35_el_25.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged06_rtgobletaz_35_el_25.png" format="PNG"/>
 	  </imageobject>
 	  <caption>

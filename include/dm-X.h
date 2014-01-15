@@ -1,7 +1,7 @@
 /*                          D M - X . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2013 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef __DM_X__
-#define __DM_X__
+#ifndef DM_X_H
+#define DM_X_H
 
 #include "common.h"
 
@@ -43,7 +43,7 @@ struct x_vars {
     unsigned long pixels[NUM_PIXELS];
 };
 
-#endif /* __DM_X__ */
+#endif /* DM_X_H */
 /** @} */
 /*
  * Local Variables:

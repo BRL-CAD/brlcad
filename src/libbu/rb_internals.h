@@ -1,7 +1,7 @@
 /*                  R B _ I N T E R N A L S . H
  * BRL-CAD
  *
- * Copyright (c) 1998-2013 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,8 +22,8 @@
 
 #include "bu.h"
 
-#ifndef BU_RB_INTERNALS_H
-#define BU_RB_INTERNALS_H seen
+#ifndef LIBBU_RB_INTERNALS_H
+#define LIBBU_RB_INTERNALS_H seen
 
 
 /**
@@ -43,7 +43,7 @@
 /*
  * Access functions for fields of struct bu_rb_tree
  */
-#define RB_ORDER_FUNC(t, o) (((t)->rbt_order)[o])
+#define RB_COMPARE_FUNC(t, o) (((t)->rbt_compar)[o])
 #define RB_PRINT(t, p) (((t)->rbt_print)((p)->rbp_data))
 #define RB_ROOT(t, o) (((t)->rbt_root)[o])
 #define RB_CURRENT(t) ((t)->rbt_current)
@@ -171,8 +171,7 @@ extern void rb_rot_right(struct bu_rb_node *y, int order);
  * N.B. rb_walk() is not declared static because it is called by
  * bu_rb_diagnose_tree() in rb_diag.c.
  */
-extern void rb_walk(struct bu_rb_tree *tree, int order, void (*visit) (/* ??? */), int what_to_visit, int trav_type);
-
+extern void rb_walk(struct bu_rb_tree *tree, int order, void (*visit) (void), int what_to_visit, int trav_type);
 
 /**
  * R B _ F R E E _ N O D E
@@ -197,7 +196,7 @@ extern void rb_free_node(struct bu_rb_node *node);
  */
 extern void rb_free_package(struct bu_rb_package *package);
 
-#endif /* BU_RB_INTERNALS_H */
+#endif /* LIBBU_RB_INTERNALS_H */
 
 
 /*

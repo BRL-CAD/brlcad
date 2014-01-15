@@ -1,7 +1,7 @@
 /*                    W R I T E _ B R L . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,8 +27,8 @@
  *	IABG mbH (Germany)
  */
 
-#ifndef WRITE_BRL_INCLUDED
-#define WRITE_BRL_INCLUDED
+#ifndef CONV_INTAVAL_WRITE_BRL_H
+#define CONV_INTAVAL_WRITE_BRL_H
 
 #include "glob.h"
 #include "regtab.h"
@@ -115,4 +115,4 @@ void writeArb8
 );
 
 
-#endif // WRITE_BRL_INCLUDED
+#endif /* CONV_INTAVAL_WRITE_BRL_H */

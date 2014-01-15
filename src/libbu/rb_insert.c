@@ -1,7 +1,7 @@
 /*                     R B _ I N S E R T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2013 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,8 +45,8 @@ _rb_insert(struct bu_rb_tree *tree, int order, struct bu_rb_node *new_node)
     struct bu_rb_node *parent;
     struct bu_rb_node *grand_parent;
     struct bu_rb_node *y;
-    int (*compare)();
-    int comparison=0xdeadbeef;
+    int (*compare)(const void *, const void *);
+    int comparison = 0xdeadbeef;
     int direction;
     int result = 0;
 
@@ -71,15 +71,15 @@ _rb_insert(struct bu_rb_tree *tree, int order, struct bu_rb_node *new_node)
      */
     parent = RB_NULL(tree);
     node = RB_ROOT(tree, order);
-    compare = RB_ORDER_FUNC(tree, order);
+    compare = RB_COMPARE_FUNC(tree, order);
     while (node != RB_NULL(tree)) {
 	parent = node;
 	++RB_SIZE(parent, order);
 	if (UNLIKELY(tree->rbt_debug & BU_RB_DEBUG_OS))
 	    bu_log("_rb_insert(%p): size(%p, %d)=%d\n",
 		   (void*)new_node, (void*)parent, order, RB_SIZE(parent, order));
-	comparison = (*compare)(RB_DATA(new_node, order),
-				RB_DATA(node, order));
+	comparison = compare(RB_DATA(new_node, order),
+			     RB_DATA(node, order));
 	if (comparison < 0) {
 	    if (UNLIKELY(tree->rbt_debug & BU_RB_DEBUG_INSERT))
 		bu_log("_rb_insert(%p): <_%d <%p>, going left\n",
@@ -97,8 +97,8 @@ _rb_insert(struct bu_rb_tree *tree, int order, struct bu_rb_node *new_node)
     RB_PARENT(new_node, order) = parent;
     if (parent == RB_NULL(tree))
 	RB_ROOT(tree, order) = new_node;
-    else if ((*compare)(RB_DATA(new_node, order),
-			RB_DATA(parent, order)) < 0)
+    else if ((compare(RB_DATA(new_node, order),
+		      RB_DATA(parent, order))) < 0)
 	RB_LEFT_CHILD(parent, order) = new_node;
     else
 	RB_RIGHT_CHILD(parent, order) = new_node;
@@ -211,7 +211,7 @@ bu_rb_insert(struct bu_rb_tree *tree, void *data)
 	bu_malloc(nm_orders * sizeof(struct bu_rb_node *),
 		  "red-black right children");
     node->rbn_color = (char *)
-	bu_malloc((size_t) ceil((double) (nm_orders / 8.0)),
+	bu_malloc((size_t) lrint(ceil((double) (nm_orders / 8.0))),
 		  "red-black colors");
     node->rbn_size = (int *)
 	bu_malloc(nm_orders * sizeof(int),

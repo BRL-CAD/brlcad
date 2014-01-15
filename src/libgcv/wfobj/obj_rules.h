@@ -1,7 +1,7 @@
 /*                     O B J _ R U L E S . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2013 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef OBJ_RULES_H
-#define OBJ_RULES_H
+#ifndef LIBGCV_WFOBJ_OBJ_RULES_H
+#define LIBGCV_WFOBJ_OBJ_RULES_H
 
 #include "common.h"
 #include "obj_token_type.h"
@@ -63,7 +63,7 @@ void obj_parser_set_extra(yyscan_t scanner, void *extra);
 
 __END_DECLS
 
-#endif /* OBJ_RULES_H */
+#endif /* LIBGCV_WFOBJ_OBJ_RULES_H */
 
 /*
  * Local Variables:

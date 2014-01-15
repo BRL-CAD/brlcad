@@ -1,7 +1,7 @@
 /*                          N I R T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -206,9 +206,9 @@ attrib_add(char *a, int *prep)
 	/* make sure we have space */
 	if (!a_tab.attrib || a_tab.attrib_use >= (a_tab.attrib_cnt-1)) {
 	    a_tab.attrib_cnt += 16;
-	    a_tab.attrib = bu_realloc(a_tab.attrib,
-				      a_tab.attrib_cnt * sizeof(char *),
-				      "attrib_tab");
+	    a_tab.attrib = (char **)bu_realloc(a_tab.attrib,
+					       a_tab.attrib_cnt * sizeof(char *),
+					       "attrib_tab");
 	}
 
 	/* add the attribute name(s) */

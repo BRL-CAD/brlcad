@@ -1,7 +1,7 @@
 /*                      S P E C T R U M . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @addtogroup libmultispectral */
 /** @{ */
 /** @file spectrum.h
@@ -87,10 +88,15 @@
  *
  */
 
+#ifndef SPECTRUM_H
+#define SPECTRUM_H
+
 #include "common.h"
 
 #include "bn.h"
 #include "raytrace.h"
+
+__BEGIN_DECLS
 
 /*
  * Routines
@@ -108,6 +114,9 @@ RT_EXPORT extern void			rt_spect_black_body_fast(struct bn_tabdata		*data,
 
 RT_EXPORT extern void			rt_spect_reflectance_rgb(struct bn_tabdata		*curve,
 								 const float		rgb[3]);
+__END_DECLS
+
+#endif /* SPECTRUM_H */
 
 /** @} */
 /*

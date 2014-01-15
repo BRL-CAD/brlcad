@@ -1,7 +1,7 @@
 /*                       T E X T U R E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -69,7 +69,7 @@ struct fb_texture
 }
 *fbs = NULL;
 
-static char	*
+static char *
 suffix(char *str)
 {
     char	*p = str + strlen( str ) - 1;
@@ -82,9 +82,7 @@ suffix(char *str)
 }
 
 static RGBpixel	*
-icon_Lookup( iconp, u, v )
-    struct icon_texture	*iconp;
-    int	u, v;
+icon_Lookup(struct icon_texture	*iconp, int u, int v)
 {
     static int	word_sz = sizeof(icon_t) * BITS_PER_BYTE;
     static RGBpixel	black_pixel = { 0, 0, 0 };
@@ -98,7 +96,7 @@ icon_Lookup( iconp, u, v )
 	return	(RGBpixel *) white_pixel;
 }
 
-static struct icon_texture	*
+static struct icon_texture *
 init_Icon_Texture(char *file, Mat_Db_Entry *entry)
 {
     FILE	*iconfp;
@@ -126,7 +124,7 @@ init_Icon_Texture(char *file, Mat_Db_Entry *entry)
 	return	NULL;
     }
     BU_ALLOC(iconp, struct icon_texture);
-    iconp->filenm = bu_malloc( strlen(file)+1, "iconp->filenm");
+    iconp->filenm = (char *)bu_malloc( strlen(file)+1, "iconp->filenm");
 
     bu_strlcpy( iconp->filenm, file, strlen(file)+1);
     iconp->map = iconmap;
@@ -150,7 +148,7 @@ init_Icon_Texture(char *file, Mat_Db_Entry *entry)
     return	iconp;
 }
 
-static struct fb_texture	*
+static struct fb_texture *
 init_Fb_Texture(char *file, Mat_Db_Entry *entry)
 {
     FBIO		*txfbiop;
@@ -172,7 +170,7 @@ init_Fb_Texture(char *file, Mat_Db_Entry *entry)
 	return	NULL;
     }
     BU_ALLOC(fbp, struct fb_texture);
-    fbp->filenm = bu_malloc( strlen(file)+1, "fbp->filenm");
+    fbp->filenm = (char *)bu_malloc( strlen(file)+1, "fbp->filenm");
     bu_strlcpy( fbp->filenm, file, strlen(file)+1 );
     fbp->map = fbmap;
     fbp->wid = wid;

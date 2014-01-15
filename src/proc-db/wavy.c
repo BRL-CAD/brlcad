@@ -1,7 +1,7 @@
 /*                          W A V Y . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2013 United States Government as represented by
+ * Copyright (c) 1991-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -57,6 +57,11 @@ interpolate_data(fastf_t *grid)
     return surfs;
 }
 
+void
+printusage()
+{
+	bu_log("Usage: wavy [-d] [-H hscale]\n");
+}
 
 int
 main(int argc, char **argv)
@@ -69,25 +74,31 @@ main(int argc, char **argv)
     fastf_t grid[10][10][3];
     struct face_g_snurb **surfaces;
 
-    outfp = wdb_fopen("wavy.g");
-
     hscale = 2.5;
 
-    while ((i=bu_getopt(argc, argv, "dh:")) != -1) {
+    while ((i=bu_getopt(argc, argv, "dH:h?")) != -1) {
 	switch (i) {
 	    case 'd':
 		RTG.debug |= DEBUG_MEM | DEBUG_MEM_FULL;
 		break;
-	    case 'h':
+	    case 'H':
 		hscale = atof(bu_optarg);
 		break;
 	    default:
-		bu_exit(1, "Usage: %s [-d]\n", *argv);
+		printusage();
+		bu_exit(1,NULL);
 	}
     }
 
-    /* Create the database header record.  this solid will consist of
-     * three surfaces a top surface, bottom surface, and the sides (so
+    if (argc == 1) {
+    	printusage();
+    	bu_log("       Program continues running:\n");
+    }
+
+    outfp = wdb_fopen("wavy.g");
+
+    /* Create the database header record.  This solid will consist of
+     * three surfaces: a top surface, bottom surface, and the sides (so
      * that it will be closed).
      */
 

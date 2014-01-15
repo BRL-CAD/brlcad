@@ -144,7 +144,7 @@ namespace read_graphviz_detail {
     {
       std::string end_of_token = "(?=(?:\\W))";
       std::string whitespace = "(?:\\s+)";
-      std::string slash_slash_comment = "(?://.*$)";
+      std::string slash_slash_comment = "(?://.*?$)";
       std::string slash_star_comment = "(?:/\\*.*?\\*/)";
       std::string hash_comment = "(?:^#.*?$)";
       std::string backslash_newline = "(?:[\\\\][\\n])";
@@ -762,7 +762,6 @@ namespace read_graphviz_detail {
   }
 
   void translate_results_to_graph(const parser_result& r, ::boost::detail::graph::mutate_graph* mg) {
-    typedef boost::detail::graph::node_t vertex;
     typedef boost::detail::graph::edge_t edge;
     for (std::map<node_name, properties>::const_iterator i = r.nodes.begin(); i != r.nodes.end(); ++i) {
       // std::cerr << i->first << " " << props_to_string(i->second) << std::endl;
@@ -787,6 +786,7 @@ namespace read_graphviz_detail {
     for (properties::const_iterator i = root_graph_props.begin(); i != root_graph_props.end(); ++i) {
       mg->set_graph_property(i->first, i->second);
     }
+    mg->finish_building_graph();
   }
 
 } // end namespace read_graphviz_detail

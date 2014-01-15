@@ -1,7 +1,7 @@
 /*                           T C L . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2013 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,6 +39,7 @@
 /* private headers */
 #include "brlcad_version.h"
 
+#define RT_FUNC_TCL_CAST(_func) ((int (*)(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv))_func)
 
 static int rt_tcl_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
 static int rt_tcl_rt_onehit(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
@@ -57,19 +58,19 @@ static int rt_tcl_rt_set(ClientData clientData, Tcl_Interp *interp, int argc, co
 
 struct dbcmdstruct {
     char *cmdname;
-    int (*cmdfunc)();
+    int (*cmdfunc)(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
 };
 
 
 static struct dbcmdstruct rt_tcl_rt_cmds[] = {
-    {"shootray",	rt_tcl_rt_shootray},
-    {"onehit",		rt_tcl_rt_onehit},
-    {"no_bool",		rt_tcl_rt_no_bool},
-    {"check",		rt_tcl_rt_check},
-    {"prep",		rt_tcl_rt_prep},
-    {"cutter",		rt_tcl_rt_cutter},
-    {"set",		rt_tcl_rt_set},
-    {(char *)0,		(int (*)())0}
+    {"shootray",	RT_FUNC_TCL_CAST(rt_tcl_rt_shootray)},
+    {"onehit",		RT_FUNC_TCL_CAST(rt_tcl_rt_onehit)},
+    {"no_bool",		RT_FUNC_TCL_CAST(rt_tcl_rt_no_bool)},
+    {"check",		RT_FUNC_TCL_CAST(rt_tcl_rt_check)},
+    {"prep",		RT_FUNC_TCL_CAST(rt_tcl_rt_prep)},
+    {"cutter",		RT_FUNC_TCL_CAST(rt_tcl_rt_cutter)},
+    {"set",		RT_FUNC_TCL_CAST(rt_tcl_rt_set)},
+    {(char *)0,		RT_FUNC_TCL_CAST(0)}
 };
 
 
@@ -153,10 +154,10 @@ rt_tcl_pr_cutter(Tcl_Interp *interp, const union cutter *cutp)
 			      cutp->nugn.nu_axis[i]->nu_spos,
 			      cutp->nugn.nu_axis[i]->nu_epos,
 			      cutp->nugn.nu_axis[i]->nu_width);
-		bu_vls_printf(&str, " cells_per_axis %ld",
-			      cutp->nugn.nu_cells_per_axis);
-		bu_vls_printf(&str, " stepsize %ld}",
-			      cutp->nugn.nu_stepsize);
+		bu_vls_printf(&str, " cells_per_axis %d",
+			      cutp->nugn.nu_cells_per_axis[i]);
+		bu_vls_printf(&str, " stepsize %d}",
+			      cutp->nugn.nu_stepsize[i]);
 	    }
 	    break;
 	default:
@@ -613,8 +614,11 @@ rt_tcl_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv
 
     for (dbcmd = rt_tcl_rt_cmds; dbcmd->cmdname != NULL; dbcmd++) {
 	if (BU_STR_EQUAL(dbcmd->cmdname, argv[1])) {
-	    return (*dbcmd->cmdfunc)(clientData, interp,
-				     argc, argv);
+	    /* need proper cmd func pointer for actual call */
+	    int (*_cmdfunc)(void*, Tcl_Interp*, int, const char* const*);
+	    /* cast to the actual caller */
+	    _cmdfunc = (int (*)(void*, Tcl_Interp*, int, const char* const*))(*dbcmd->cmdfunc);
+	    return _cmdfunc(clientData, interp, argc, argv);
 	}
     }
 

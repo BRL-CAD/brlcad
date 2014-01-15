@@ -1,7 +1,7 @@
 /*                           T G C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -919,12 +919,13 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	if (tgc_msgs++ < 100) {
 	    bu_log("tgc(%s):  %d intersects != {0, 2, 4}\n", stp->st_name, npts);
 	    bu_log("\tray: pt = (%g %g %g), dir = (%g %g %g), units in mm\n", V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir));
-	    for (i=0; i<npts; i++) {
+	    for (i = 0; i < npts; i++) {
 		bu_log("\t%g", k[i]*t_scale);
 	    }
 	    bu_log("\n");
 	} else if (tgc_msgs == 100) {
-	    bu_log("tgc(%s):  too many grazing intersections encountered.  further reporting suppressed.\n");
+	    bu_log("tgc(%s):  too many grazing intersections encountered.  further reporting suppressed.\n",
+		stp->st_name);
 	    tgc_msgs++;
 	}
 
@@ -1593,13 +1594,6 @@ rt_tgc_free(struct soltab *stp)
 }
 
 
-int
-rt_tgc_class(void)
-{
-    return 0;
-}
-
-
 /**
  * R T _ T G C _ I M P O R T
  *
@@ -1666,7 +1660,7 @@ rt_tgc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "tgc external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "tgc external");
     rec = (union record *)ep->ext_buf;
 
     rec->s.s_id = ID_SOLID;
@@ -1748,7 +1742,7 @@ rt_tgc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT*6;
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "tgc external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "tgc external");
 
     /* scale 'em into local buffer */
     VSCALE(&vec[0*ELEMENTS_PER_VECT], tip->v, local2mm);
@@ -2237,7 +2231,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     if (ttol->abs > 0.0 && ttol->abs < tol->dist) {
 	bu_log("WARNING: tessellation tolerance is %fmm while calculational tolerance is %fmm\n",
 	       ttol->abs, tol->dist);
-	bu_log("Cannot tesselate a TGC to finer tolerance than the calculational tolerance\n");
+	bu_log("Cannot tessellate a TGC to finer tolerance than the calculational tolerance\n");
 	abs_tol = tol->dist;
     } else {
 	abs_tol = ttol->abs;

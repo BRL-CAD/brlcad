@@ -1,7 +1,7 @@
 /*                    D B _ C O R R U P T . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2013 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -63,7 +63,7 @@ db_corrupt_handler(struct db_i *dbip, const char *name, off_t offset, size_t siz
     /* set up our buffer */
     BU_EXTERNAL_INIT(&ext);
     ext.ext_nbytes = size * sizeof(union record);
-    ext.ext_buf = (genptr_t)bu_calloc(ext.ext_nbytes, 1, "db_corrupt");
+    ext.ext_buf = (uint8_t *)bu_calloc(ext.ext_nbytes, 1, "db_corrupt");
 
     /* read into the buffer */
     j = (size_t)fread(ext.ext_buf, 1, ext.ext_nbytes, dbip->dbi_fp);
@@ -82,15 +82,14 @@ db_corrupt_handler(struct db_i *dbip, const char *name, off_t offset, size_t siz
 
     /* iterate over combination members, looking for bad matrices */
     nodecount = ext.ext_nbytes/sizeof(union record) - 1;
-    for (j=0; j<nodecount; j++) {
+    for (j = 0; j < nodecount; j++) {
 
 	/* try without flipping */
 	flip_mat_dbmat(diskmat, rp[j+1].M.m_mat, 0);
 	if ((bn_mat_ck(name, diskmat) < 0)
 	    || fabs(diskmat[0]) > 1 || fabs(diskmat[1]) > 1 || fabs(diskmat[2]) > 1
 	    || fabs(diskmat[4]) > 1 || fabs(diskmat[5]) > 1 || fabs(diskmat[6]) > 1
-	    || fabs(diskmat[8]) > 1 || fabs(diskmat[9]) > 1 || fabs(diskmat[10]) > 1)
-	{
+	    || fabs(diskmat[8]) > 1 || fabs(diskmat[9]) > 1 || fabs(diskmat[10]) > 1) {
 	    /* corruption detected */
 	    cnt->found++;
 

@@ -1,7 +1,7 @@
 /*                  T E X T U R E S C A L E . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2013 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -223,8 +223,8 @@ main (int argc, char **argv)
     /*
      * Allocate 1-scanline buffers for input and output
      */
-    outbuf = bu_malloc(3*file_width, "outbuf");
-    inbuf  = bu_malloc(3*file_width, "inbuf");
+    outbuf = (char *)bu_malloc(3*file_width, "outbuf");
+    inbuf  = (char *)bu_malloc(3*file_width, "inbuf");
 
     /*
      * Do the filtering

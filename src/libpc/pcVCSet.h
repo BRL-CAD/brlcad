@@ -1,7 +1,7 @@
 /*                    P C V C S E T . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,8 +24,8 @@
  * VCSet Class definition : A Set of Variables and Constraints
  *
  */
-#ifndef __PCVCSET_H__
-#define __PCVCSET_H__
+#ifndef LIBPC_PCVCSET_H
+#define LIBPC_PCVCSET_H
 
 #include "common.h"
 

@@ -1,8 +1,5 @@
 <!-- Converted by db4-upgrade version 1.0 -->
-
-<article xmlns="http://docbook.org/ns/docbook" version="5.0"
-	 xmlns:xi="http://www.w3.org/2001/XInclude"
->
+<article xmlns="http://docbook.org/ns/docbook" xmlns:xi="http://www.w3.org/2001/XInclude" version="5.0">
   <info><title>Setting Up a .mgedrc File</title>
 
 
@@ -63,7 +60,10 @@
     after header.</title></info>
 
     <mediaobject>
-      <imageobject>
+      <imageobject role="html">
+	<imagedata align="center" fileref="../../articles/en/images/mgedrc_fig01.png" format="PNG"/>
+      </imageobject>
+    <imageobject role="fo">
 	<imagedata align="center" fileref="../../articles/en/images/mgedrc_fig01.png" format="PNG"/>
       </imageobject>
     </mediaobject>
@@ -205,7 +205,10 @@ proc cps {oldprim newprim} {cp $oldprim $newprim; sed $newprim}
   <figure xml:id="mgedrc13"><info><title>Sample elements and functionality of a .mgedrc file.</title></info>
 
     <mediaobject>
-      <imageobject>
+      <imageobject role="html">
+	<imagedata align="center" fileref="../../articles/en/images/mgedrc_fig02.png" format="PNG"/>
+      </imageobject>
+    <imageobject role="fo">
 	<imagedata align="center" fileref="../../articles/en/images/mgedrc_fig02.png" format="PNG"/>
       </imageobject>
     </mediaobject>
@@ -257,7 +260,10 @@ proc cps {oldprim newprim} {cp $oldprim $newprim; sed $newprim}
   <figure xml:id="mgedrc16"><info><title>Sample window dimension input and positioning.</title></info>
 
     <mediaobject>
-      <imageobject>
+      <imageobject role="html">
+	<imagedata align="center" fileref="../../articles/en/images/mgedrc_fig03.png" format="PNG"/>
+      </imageobject>
+    <imageobject role="fo">
 	<imagedata align="center" fileref="../../articles/en/images/mgedrc_fig03.png" format="PNG"/>
       </imageobject>
     </mediaobject>

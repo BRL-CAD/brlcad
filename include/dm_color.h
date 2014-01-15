@@ -1,7 +1,7 @@
 /*                          D M _ C O L O R . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2013 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,12 +23,12 @@
  *
  */
 
-#ifndef __DM_COLOR__
-#define __DM_COLOR__
+#ifndef DM_COLOR_H
+#define DM_COLOR_H
 
 #warning "The dm_color.h header is deprecated -- use dm.h instead"
 
-#endif /* __DM_COLOR__ */
+#endif /* DM_COLOR_H */
 
 /** @} */
 /*

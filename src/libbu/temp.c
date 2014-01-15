@@ -1,7 +1,7 @@
 /*                           T E M P . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2013 United States Government as represented by
+ * Copyright (c) 2001-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,7 +38,9 @@
 
 /* c99 doesn't declare these */
 #if !defined(_WIN32) || defined(__CYGWIN__)
+#  if !defined(__cplusplus)
 extern FILE *fdopen(int, const char *);
+#  endif
 #endif
 
 

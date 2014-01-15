@@ -1,7 +1,7 @@
 #                          R T . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2013 United States Government as represented by
+# Copyright (c) 2004-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -1375,7 +1375,7 @@ proc rt_init_vars { id win } {
 	set rt_control($id,fixedDest) 0
     }
 
-    # initialize everytime
+    # initialize every time
     rt_cook_src $id $win
     rt_cook_dest $id $win
     rt_check_dest $id $win

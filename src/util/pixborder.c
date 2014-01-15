@@ -1,7 +1,7 @@
 /*                     P I X B O R D E R . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2013 United States Government as represented by
+ * Copyright (c) 1996-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -546,9 +546,9 @@ main (int argc, char **argv)
      * Allocate a 1-scanline output buffer
      * and a circular input buffer of 3 scanlines
      */
-    outbuf = bu_malloc(3*file_width, "outbuf");
+    outbuf = (char *)bu_malloc(3*file_width, "outbuf");
     for (i = 0; i < 3; ++i)
-	inrow[i] = bu_malloc(3*(file_width + 2), "inrow[i]");
+	inrow[i] = (unsigned char *)bu_malloc(3*(file_width + 2), "inrow[i]");
     prev_row = 0;
     this_row = 1;
     next_row = 2;

@@ -1,7 +1,7 @@
 /*                           G E D . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef __GED_H__
-#define __GED_H__
+#ifndef GED_H
+#define GED_H
 
 #include "common.h"
 
@@ -537,6 +537,7 @@ struct ged_view {
     int				gv_y_samples;
     fastf_t			gv_point_scale;
     fastf_t			gv_curve_scale;
+    fastf_t			gv_data_vZ;
 };
 
 
@@ -555,13 +556,14 @@ struct ged {
     struct ged_drawable		*ged_gdp;
     struct ged_view		*ged_gvp;
     struct fbserv_obj		*ged_fbsp; /* FIXME: this shouldn't be here */
+    struct bu_hash_tbl		*ged_selections; /**< @brief object name -> struct rt_object_selections */
 
     void			*ged_dmp;
     void			*ged_refresh_clientdata;	/**< @brief  client data passed to refresh handler */
-    void			(*ged_refresh_handler)();	/**< @brief  function for handling refresh requests */
-    void			(*ged_output_handler)();	/**< @brief  function for handling output */
+    void			(*ged_refresh_handler)(void *);	/**< @brief  function for handling refresh requests */
+    void			(*ged_output_handler)(struct ged *, char *);	/**< @brief  function for handling output */
     char			*ged_output_script;		/**< @brief  script for use by the outputHandler */
-    void			(*ged_create_vlist_callback)();	/**< @brief  function to call after creating a vlist */
+    void			(*ged_create_vlist_callback)(struct solid *);	/**< @brief  function to call after creating a vlist */
     void			(*ged_free_vlist_callback)();	/**< @brief  function to call after freeing a vlist */
 
     /* FIXME -- this ugly hack needs to die.  the result string should be stored before the call. */
@@ -577,7 +579,7 @@ struct ged {
     int ged_dm_width;
     int ged_dm_height;
     int ged_dmp_is_null;
-    void (*ged_dm_get_display_image)();
+    void (*ged_dm_get_display_image)(struct ged *, unsigned char **);
 };
 
 typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);
@@ -762,7 +764,7 @@ GED_EXPORT extern int ged_autoview(struct ged *gedp, int argc, const char *argv[
 GED_EXPORT extern int ged_bb(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Tesselates each operand object, then performs the
+ * Tessellates each operand object, then performs the
  * boolean evaluation, storing result in 'new_obj'
  */
 GED_EXPORT extern int ged_bev(struct ged *gedp, int argc, const char *argv[]);
@@ -1793,6 +1795,20 @@ GED_EXPORT extern int ged_search(struct ged *gedp, int argc, const char *argv[])
  */
 GED_EXPORT extern int ged_select(struct ged *gedp, int argc, const char *argv[]);
 
+/**
+ * Return ged selections for specified object. Created if it doesn't
+ * exist.
+ */
+GED_EXPORT struct rt_object_selections *ged_get_object_selections(struct ged *gedp,
+								  const char *object_name);
+
+/**
+ * Return ged selections of specified kind for specified object.
+ * Created if it doesn't exist.
+ */
+GED_EXPORT struct rt_selection_set *ged_get_selection_set(struct ged *gedp,
+							  const char *object_name,
+							  const char *selection_name);
 
 /**
  * Get/set the output handler script
@@ -2082,7 +2098,7 @@ GED_EXPORT extern int ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA,
 
 __END_DECLS
 
-#endif /* __GED_H__ */
+#endif /* GED_H */
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                        G E T O P T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,8 +42,8 @@
 int
 bu_getopt(int nargc, char * const nargv[], const char *ostr)
 {
-    static char *place = EMSG;	/* option letter processing */
-    register char *oli;		/* option letter list index */
+    static const char *place = EMSG;	/* option letter processing */
+    register const char *oli;		/* option letter list index */
 
     if (*place=='\0') {
 	/* update scanning pointer */
@@ -80,7 +80,7 @@ bu_getopt(int nargc, char * const nargv[], const char *ostr)
 	/* need an argument */
 	if (*place) {
 	    /* no white space */
-	    bu_optarg = place;
+	    bu_optarg = (char *)place;
 	} else if (nargc <= ++bu_optind) {
 	    /* no arg */
 	    place = EMSG;

@@ -1,7 +1,7 @@
 /*                       D B _ T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2013 United States Government as represented by
+ * Copyright (c) 1988-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -169,8 +169,8 @@ db_pr_tree_state(const struct db_tree_state *tsp)
 
     RT_CK_DBTS(tsp);
 
-    bu_log("db_pr_tree_state(x%x):\n", tsp);
-    bu_log(" ts_dbip=x%x\n", tsp->ts_dbip);
+    bu_log("db_pr_tree_state(%p):\n", (void *)tsp);
+    bu_log(" ts_dbip=%p\n", (void *)tsp->ts_dbip);
     bu_printb(" ts_sofar", tsp->ts_sofar, "\020\3REGION\2INTER\1MINUS");
     bu_log("\n");
     bu_log(" ts_regionid=%d\n", tsp->ts_regionid);
@@ -189,7 +189,7 @@ db_pr_tree_state(const struct db_tree_state *tsp)
 	bu_log("\t%s = %s\n", tsp->ts_attrs.avp[i].name, tsp->ts_attrs.avp[i].value);
     }
     bn_mat_print("ts_mat", tsp->ts_mat);
-    bu_log(" ts_resp=x%x\n", tsp->ts_resp);
+    bu_log(" ts_resp=%p\n", (void *)tsp->ts_resp);
 }
 
 
@@ -202,7 +202,7 @@ db_pr_combined_tree_state(const struct combined_tree_state *ctsp)
     char *str;
 
     RT_CK_CTS(ctsp);
-    bu_log("db_pr_combined_tree_state(x%x):\n", ctsp);
+    bu_log("db_pr_combined_tree_state(%p):\n", (void *)ctsp);
     db_pr_tree_state(&(ctsp->cts_s));
     str = db_path_to_string(&(ctsp->cts_p));
     bu_log(" path='%s'\n", str);
@@ -659,12 +659,16 @@ db_tree_funcleaf(
     struct db_i *dbip,
     struct rt_comb_internal *comb,
     union tree *comb_tree,
-    void (*leaf_func)(),
+    void (*leaf_func)(struct db_i *, struct rt_comb_internal *, union tree *,
+                      void *, void *, void *, void *),
     genptr_t user_ptr1,
     genptr_t user_ptr2,
     genptr_t user_ptr3,
     genptr_t user_ptr4)
 {
+    void (*lfunc)(struct db_i *, struct rt_comb_internal *, union tree *,
+		  void *, void *, void *, void *);
+
     RT_CK_DBI(dbip);
 
     if (!comb_tree)
@@ -672,9 +676,10 @@ db_tree_funcleaf(
 
     RT_CK_TREE(comb_tree);
 
+    lfunc = (void (*)(struct db_i *, struct rt_comb_internal *, union tree *, void *, void *, void *, void *))leaf_func;
     switch (comb_tree->tr_op) {
 	case OP_DB_LEAF:
-	    (*leaf_func)(dbip, comb, comb_tree, user_ptr1, user_ptr2, user_ptr3, user_ptr4);
+	    lfunc(dbip, comb, comb_tree, user_ptr1, user_ptr2, user_ptr3, user_ptr4);
 	    break;
 	case OP_UNION:
 	case OP_INTERSECT:
@@ -714,8 +719,8 @@ db_follow_path(
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(total_path);
 	char *toofar = db_path_to_string(new_path);
-	bu_log("db_follow_path() total_path='%s', tsp=x%x, new_path='%s', noisy=%d, depth=%ld\n",
-	       sofar, tsp, toofar, noisy, depth);
+	bu_log("db_follow_path() total_path='%s', tsp=%p, new_path='%s', noisy=%d, depth=%ld\n",
+	       sofar, (void *)tsp, toofar, noisy, depth);
 	bu_free(sofar, "path string");
 	bu_free(toofar, "path string");
     }
@@ -1022,9 +1027,9 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
 
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(pathp);
-	bu_log("db_recurse() pathp='%s', tsp=x%x, *statepp=x%x, tsp->ts_sofar=%d\n",
-	       sofar, tsp,
-	       *region_start_statepp, tsp->ts_sofar);
+	bu_log("db_recurse() pathp='%s', tsp=%p, *statepp=%p, tsp->ts_sofar=%d\n",
+	       sofar, (void *)tsp,
+	       (void *)*region_start_statepp, tsp->ts_sofar);
 	bu_free(sofar, "path string");
 	if (bn_mat_ck("db_recurse() tsp->ts_mat at start", tsp->ts_mat) < 0) {
 	   bu_log("db_recurse(%s):  matrix does not preserve axis perpendicularity.\n",  dp->d_namep);
@@ -1090,8 +1095,8 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
 
 	    /* Take note of full state here at region start */
 	    if (*region_start_statepp != (struct combined_tree_state *)0) {
-		bu_log("db_recurse() ERROR at start of a region, *region_start_statepp = x%x\n",
-		       *region_start_statepp);
+		bu_log("db_recurse() ERROR at start of a region, *region_start_statepp = %p\n",
+		       (void *)*region_start_statepp);
 		db_free_db_tree_state(&nts);
 		curtree = TREE_NULL;		/* FAIL */
 		goto out;
@@ -1099,7 +1104,7 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
 	    ctsp =  db_new_combined_tree_state(&nts, pathp);
 	    *region_start_statepp = ctsp;
 	    if (RT_G_DEBUG&DEBUG_TREEWALK) {
-		bu_log("setting *region_start_statepp to x%x\n", ctsp);
+		bu_log("setting *region_start_statepp to %p\n", (void *)ctsp);
 		db_pr_combined_tree_state(ctsp);
 	    }
 	}
@@ -1166,8 +1171,8 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
 	     * Take note of full state here at "region start".
 	     */
 	    if (*region_start_statepp != (struct combined_tree_state *)0) {
-		bu_log("db_recurse(%s) ERROR at start of a region (bare solid), *region_start_statepp = x%x\n",
-		       sofar, *region_start_statepp);
+		bu_log("db_recurse(%s) ERROR at start of a region (bare solid), *region_start_statepp = %p\n",
+		       sofar, (void *)*region_start_statepp);
 		curtree = TREE_NULL;		/* FAIL */
 		goto out;
 	    }
@@ -1180,8 +1185,8 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
 	    ctsp->cts_s.ts_sofar |= TS_SOFAR_REGION;
 	    *region_start_statepp = ctsp;
 	    if (RT_G_DEBUG&DEBUG_TREEWALK) {
-		bu_log("db_recurse(%s): setting *region_start_statepp to x%x (bare solid)\n",
-		       sofar, ctsp);
+		bu_log("db_recurse(%s): setting *region_start_statepp to %p (bare solid)\n",
+		       sofar, (void *)ctsp);
 		db_pr_combined_tree_state(ctsp);
 	    }
 	    bu_free(sofar, "path string");
@@ -1209,9 +1214,9 @@ out:
     }
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(pathp);
-	bu_log("db_recurse() return curtree=x%x, pathp='%s', *statepp=x%x\n",
-	       curtree, sofar,
-	       *region_start_statepp);
+	bu_log("db_recurse() return curtree=%p, pathp='%s', *statepp=%p\n",
+	       (void *)curtree, sofar,
+	       (void *)*region_start_statepp);
 	bu_free(sofar, "path string");
     }
     if (curtree) RT_CK_TREE(curtree);

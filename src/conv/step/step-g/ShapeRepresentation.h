@@ -1,7 +1,7 @@
 /*                 ShapeRepresentation.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -23,12 +23,12 @@
  * structures.
  *
  */
-#ifndef SHAPEREPRESENTATION_H_
-#define SHAPEREPRESENTATION_H_
+#ifndef CONV_STEP_STEP_G_SHAPEREPRESENTATION_H
+#define CONV_STEP_STEP_G_SHAPEREPRESENTATION_H
 
 #include "common.h"
 
-/* inteface header */
+/* interface header */
 #include "Representation.h"
 
 /* system headers */
@@ -57,7 +57,7 @@ public:
 };
 
 
-#endif /* SHAPEREPRESENTATION_H_ */
+#endif /* CONV_STEP_STEP_G_SHAPEREPRESENTATION_H */
 
 /*
  * Local Variables:

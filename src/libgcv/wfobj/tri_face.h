@@ -1,7 +1,7 @@
 /*                      T R I _ F A C E . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2013 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef TRI_FACE_H
-#define TRI_FACE_H
+#ifndef LIBGCV_WFOBJ_TRI_FACE_H
+#define LIBGCV_WFOBJ_TRI_FACE_H
 
 struct faceuse*
 make_faceuse_from_face(const double points[], int numPoints);

@@ -1565,7 +1565,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 	    char szError[200];
 
 	    /* Reallocate previous successful size for following features */
-	    psSHP->pabyRec = malloc(psSHP->nBufSize);
+	    psSHP->pabyRec = (unsigned char *)malloc(psSHP->nBufSize);
 
 	    sprintf( szError,
 		     "Not enough memory to allocate requested memory (nBufSize=%d). "

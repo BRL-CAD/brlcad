@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,18 +26,18 @@
  *		-s	square size
  *		-n	number of lines
  *		-w	width
- *		-h	same as -s 1024
  *		-a	Automatic bw file sizing.
  *		-B	Beta for sharpening
  *		-I	number of intensity levels
  *		-M	method
  *			0 Floyd-Steinberg
- *			1 45 degree classical halftone screen
+ *			1 45-degree classical halftone screen
  *			2 Threshold
- *			3 0 degree dispersed halftone screen.
+ *			3 0-degree dispersed halftone screen
  *		-R	Add some noise.
- *		-S	Surpent flag.
+ *		-S	Surpent flag (set back to 0 if method is not Floyd-Steinberg)
  *		-T	tonescale points
+ *		-D	debug level
  *
  * Exit:
  *	writes a ht(bw) file.
@@ -85,7 +85,7 @@ double Beta=0.0;	/* Beta for sharpening */
 int Method=M_FLOYD;	/* Method of halftoning */
 
 int Surpent=0;		/* use serpentine scan lines */
-int Levels=1;		/* Number of levels-1 */
+int Levels=1;		/* Number of levels */
 int Debug=0;
 struct bn_unif *RandomFlag=0;	/* Use random numbers ? */
 
@@ -98,14 +98,18 @@ int tone_simple(int pix, int x, int y, int nx, int ny, int newrow);
 int tone_classic(int pix, int x, int y, int nx, int ny, int newrow);
 
 static const char usage[] = "\
-Usage: halftone [ -h -R -S -a] [-D Debug Level]\n\
+Usage: halftone [-R -S -a] [-D Debug_Level]\n\
 	[-s squarefilesize] [-w file_width] [-n file_height]\n\
-	[-B contrast] [-I intensity_levels] [-T x y ... tone_curve]\n\
+	[-B contrast] [-I #_of_intensity_levels] [-T x y ... (tone curve)]\n\
 	[-M Method] [file.bw]\n\
-	Floyd-Steinberg=0	45 Degree Classic Screen=1\n\
-	Thresholding=2		0 Degree Dispersed Screen=3\n";
+	where Method is chosen from:\n\
+	    0  Floyd-Steinberg\n\
+	    1  45-Degree Classic Screen\n\
+	    2  Thresholding\n\
+	    3  0-Degree Dispersed Screen\n\
+       (stdin used with '<' construct if file.bw not supplied)\n";
 
-/*	setup	process parameters and setup working environment
+/*	setup:	process parameters and setup working environment
  *
  * Entry:
  *	argc	- number of arguments.
@@ -118,9 +122,9 @@ Usage: halftone [ -h -R -S -a] [-D Debug Level]\n\
  * Uses:
  *	width	- width of picture
  *	height	- height of picture
- *	Beta	- sharpening value.
+ *	Beta	- sharpening value
  *	surpent	- to surpenten rasters?
- *	Levels	- number of intensity levels.
+ *	Levels	- number of intensity levels
  *	Debug	- debug level
  *	RandomFlag - Add noise to processes.
  *
@@ -138,7 +142,7 @@ setup(int argc, char **argv)
     int *Xlist, *Ylist;
     int	autosize = 0;
 
-    while ((c = bu_getopt(argc, argv, "D:hsa:n:w:B:M:RSI:T:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "D:s:an:w:B:M:RSI:T:h?")) != -1) {
 	switch (c) {
 	    case 's':
 		width = height = atol(bu_optarg);
@@ -149,9 +153,6 @@ setup(int argc, char **argv)
 	    case 'w':
 		width = atol(bu_optarg);
 		break;
-	    case 'h':
-		width = height = 1024;
-		break;
 	    case 'a':
 		autosize = 1;
 		break;
@@ -160,6 +161,10 @@ setup(int argc, char **argv)
 		break;
 	    case 'M':
 		Method = atoi(bu_optarg);
+		if (Method <0 || Method >3) {
+			fprintf(stderr,"halftone: Method must be 0,1,2,3; set to default (0)\n");
+			Method = 0;
+		}
 		break;
 	    case 'R':
 		RandomFlag = bn_unif_init(1, 0);
@@ -173,7 +178,7 @@ setup(int argc, char **argv)
 		break;
 /*
  * Tone scale processing is a little strange.  The -T option is followed
- * be a list of points.  The points are collected and one point is added
+ * by a list of points.  The points are collected and one point is added
  * at 1024, 1024 to let tonescale be stupid.  Cubic_init takes the list
  * of points and generates "cubics" for tonescale to use in generating
  * curve to use for the tone map.  If tonescale is called with no cubics
@@ -210,9 +215,8 @@ setup(int argc, char **argv)
 	    case 'D':
 		Debug = atoi(bu_optarg);
 		break;
-	    case '?':
+	    default:
 		bu_exit(1, usage);
-		break;
 	}
     }
 /*

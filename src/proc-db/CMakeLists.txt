@@ -14,8 +14,8 @@ include_directories(${PROC_DB_INCLUDE_DIRS})
 # where they provide some conceivable value to an end user.
 BRLCAD_ADDEXEC(bottest bottest.c libwdb NO_INSTALL)
 BRLCAD_ADDEXEC(brep_cobb brep_cobb.cpp "libwdb;${OPENNURBS_LIBRARY}" NO_STRICT NO_INSTALL)
-BRLCAD_ADDEXEC(brep_cube brep_cube.cpp "libwdb;${OPENNURBS_LIBRARY}" NO_STRICT NO_INSTALL)
-BRLCAD_ADDEXEC(brep_simple brep_simple.cpp "libwdb;${OPENNURBS_LIBRARY}" NO_STRICT NO_INSTALL)
+BRLCAD_ADDEXEC(brep_cube "brep_cube.cpp;twistedcube.cpp" "libwdb;${OPENNURBS_LIBRARY}" NO_STRICT NO_INSTALL)
+BRLCAD_ADDEXEC(brep_simple "brep_simple.cpp;twistedcube.cpp" "libwdb;${OPENNURBS_LIBRARY}" NO_STRICT NO_INSTALL)
 BRLCAD_ADDEXEC(brepintersect brepintersect.cpp "libwdb;${OPENNURBS_LIBRARY}" NO_STRICT NO_INSTALL)
 BRLCAD_ADDEXEC(breplicator breplicator.cpp "libwdb;${OPENNURBS_LIBRARY}" NO_STRICT NO_INSTALL)
 BRLCAD_ADDEXEC(contours contours.c libwdb NO_INSTALL)
@@ -23,7 +23,7 @@ BRLCAD_ADDEXEC(csgbrep csgbrep.cpp libwdb NO_STRICT NO_INSTALL)
 BRLCAD_ADDEXEC(nmgmodel nmgmodel.c libwdb NO_INSTALL)
 BRLCAD_ADDEXEC(pipetest pipetest.c libwdb NO_INSTALL)
 BRLCAD_ADDEXEC(spltest spltest.c libwdb NO_INSTALL)
-BRLCAD_ADDEXEC(surfaceintersect surfaceintersect.cpp "libwdb;${OPENNURBS_LIBRARY}" NO_STRICT NO_INSTALL)
+BRLCAD_ADDEXEC(surfaceintersect "surfaceintersect.cpp;twistedcube.cpp" "libwdb;${OPENNURBS_LIBRARY}" NO_STRICT NO_INSTALL)
 BRLCAD_ADDEXEC(tea_nmg tea_nmg.c libwdb NO_INSTALL)
 BRLCAD_ADDEXEC(tube tube.c "libwdb;${M_LIBRARY}" NO_INSTALL)
 BRLCAD_ADDEXEC(wdb_example wdb_example.c libwdb NO_INSTALL)
@@ -62,6 +62,7 @@ BRLCAD_ADDEXEC(wavy wavy.c libwdb)
 
 
 set(proc-db_ignore_files
+  twistedcube.h
   brepintersect.h
   metaballs.pl
   mkbuilding.h

@@ -1,7 +1,7 @@
 /*                       R E A D C N V . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2013 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,9 +35,7 @@
 #include "./iges_extern.h"
 
 void
-Readcnv(inum, id)
-    char *id;
-    fastf_t *inum;
+Readcnv(fastf_t *inum, char *id)
 {
     int i = (-1), done = 0, lencard;
     char num[80];

@@ -1,8 +1,5 @@
 <!-- Converted by db4-upgrade version 1.0 -->
-
-<article xmlns="http://docbook.org/ns/docbook" version="5.0"
-	 xmlns:xi="http://www.w3.org/2001/XInclude"
->
+<article xmlns="http://docbook.org/ns/docbook" xmlns:xi="http://www.w3.org/2001/XInclude" version="5.0">
   <info><title>Using the Projection Shader</title>
 
 
@@ -29,7 +26,10 @@
     <figure><info><title>The many components of a circuit board.</title></info>
 
       <mediaobject>
-	<imageobject>
+	<imageobject role="html">
+	  <imagedata align="center" fileref="../../articles/en/images/projection_shader_fig01.png" format="PNG"/>
+	</imageobject>
+      <imageobject role="fo">
 	  <imagedata align="center" fileref="../../articles/en/images/projection_shader_fig01.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
@@ -172,7 +172,10 @@
     <figure><info><title>Using the Raytrace Control Panel to size the graphics window.</title></info>
 
       <mediaobject>
-	<imageobject>
+	<imageobject role="html">
+	  <imagedata align="center" fileref="../../articles/en/images/projection_shader_fig02.png" format="PNG"/>
+	</imageobject>
+      <imageobject role="fo">
 	  <imagedata align="center" fileref="../../articles/en/images/projection_shader_fig02.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
@@ -301,7 +304,10 @@ Diagrammed, this command breaks down as follows:
     <figure><info><title>Fitting the geometry view to the image dimensions.</title></info>
 
       <mediaobject>
-	<imageobject>
+	<imageobject role="html">
+	  <imagedata align="center" fileref="../../articles/en/images/projection_shader_fig03.png" format="PNG"/>
+	</imageobject>
+      <imageobject role="fo">
 	  <imagedata align="center" fileref="../../articles/en/images/projection_shader_fig03.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
@@ -339,7 +345,10 @@ Diagrammed, this command breaks down as follows:
     <figure><info><title>Applying the shader settings with the combination editor.</title></info>
 
       <mediaobject>
-	<imageobject>
+	<imageobject role="html">
+	  <imagedata align="center" fileref="../../articles/en/images/projection_shader_fig04.png" format="PNG"/>
+	</imageobject>
+      <imageobject role="fo">
 	  <imagedata align="center" fileref="../../articles/en/images/projection_shader_fig04.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
@@ -348,7 +357,10 @@ Diagrammed, this command breaks down as follows:
     <figure><info><title>Original image (left) and image with circular cutouts (right).</title></info>
 
       <mediaobject>
-	<imageobject>
+	<imageobject role="html">
+	  <imagedata align="center" fileref="../../articles/en/images/projection_shader_fig05.png" format="PNG"/>
+	</imageobject>
+      <imageobject role="fo">
 	  <imagedata align="center" fileref="../../articles/en/images/projection_shader_fig05.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
@@ -373,7 +385,10 @@ prj_add circuitboard.prj circuit_front_950.pix 950 950
     <figure><info><title>The projection shader applied to the front of the circuit board.</title></info>
 
       <mediaobject>
-	<imageobject>
+	<imageobject role="html">
+	  <imagedata align="center" fileref="../../articles/en/images/projection_shader_fig06.png" format="PNG"/>
+	</imageobject>
+      <imageobject role="fo">
 	  <imagedata align="center" fileref="../../articles/en/images/projection_shader_fig06.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
@@ -386,7 +401,10 @@ prj_add circuitboard.prj circuit_front_950.pix 950 950
     <figure><info><title>The circuit board .prj file.</title></info>
 
       <mediaobject>
-	<imageobject>
+	<imageobject role="html">
+	  <imagedata align="center" fileref="../../articles/en/images/projection_shader_fig07.png" format="PNG"/>
+	</imageobject>
+      <imageobject role="fo">
 	  <imagedata align="center" fileref="../../articles/en/images/projection_shader_fig07.png" format="PNG"/>
 	</imageobject>
       </mediaobject>

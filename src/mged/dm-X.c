@@ -1,7 +1,7 @@
 /*                          D M - X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -53,26 +53,23 @@ extern void dm_var_init(struct dm_list *initial_dm_list);		/* defined in attach.
 
 
 static void
-dirty_hook(void)
+dirty_hook(const struct bu_structparse *UNUSED(sdp),
+	   const char *UNUSED(name),
+	   void *UNUSED(base),
+	   const char *UNUSED(value))
 {
     dirty = 1;
 }
 
 
 static void
-zclip_hook(void)
+zclip_hook(const struct bu_structparse *sdp,
+	   const char *name,
+	   void *base,
+	   const char *value)
 {
-    fastf_t bounds[6] = { GED_MIN, GED_MAX, GED_MIN, GED_MAX, GED_MIN, GED_MAX };
-
     view_state->vs_gvp->gv_zclip = dmp->dm_zclip;
-    dirty_hook();
-
-    if (dmp->dm_zclip) {
-	bounds[4] = -1.0;
-	bounds[5] = 1.0;
-    }
-
-    DM_SET_WIN_BOUNDS(dmp, bounds);
+    dirty_hook(sdp, name, base, value);
 }
 
 
@@ -190,7 +187,7 @@ X_fb_open(void)
 
     *fbp = X24_interface; /* struct copy */
 
-    fbp->if_name = bu_malloc((unsigned)strlen(X_name)+1, "if_name");
+    fbp->if_name = (char *)bu_malloc((unsigned)strlen(X_name)+1, "if_name");
     bu_strlcpy(fbp->if_name, X_name, strlen(X_name)+1);
 
     /* Mark OK by filling in magic number */

@@ -1,7 +1,7 @@
 /*                        E N D I A N . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,9 +22,16 @@
 
 #include "bu.h"
 
-
-inline bu_endian_t
-bu_byteorder()
+/* FIXME: in C++ an inlined function should be defined in a header
+ * instead of being externed, otherwise an error results.  C is more
+ * forgiving, but this should be either defined in bu.h or an included
+ * header where needed (say, 'endian.h').
+ */
+#if !defined(__cplusplus)
+inline
+#endif
+bu_endian_t
+bu_byteorder(void)
 {
     const union bob {
 	unsigned long i;

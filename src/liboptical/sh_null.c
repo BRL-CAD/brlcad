@@ -1,7 +1,7 @@
 /*                       S H _ N U L L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
 /** @file liboptical/sh_null.c
  *
  * Notes -
- * This is the null, aka invisible, shader.  It is potentially useful as a performance
+ * This is the null, a/k/a invisible, shader.  It is potentially useful as a performance
  * metric as well as to hide objects from a scene rendering.  It simply does nothing.
  *
  * This is the most basic shader.

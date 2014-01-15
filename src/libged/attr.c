@@ -1,7 +1,7 @@
 /*                         A T T R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,10 +42,10 @@ typedef enum {
 
 
 /*
- * avs attribute comparison function, e.g. for qsort
+ * avs attribute comparison function, e.g. for bu_sort
  */
 HIDDEN int
-attr_cmp(const void *p1, const void *p2)
+attr_cmp(const void *p1, const void *p2, void *UNUSED(arg))
 {
     return bu_strcmp(((struct bu_attribute_value_pair *)p1)->name,
 		     ((struct bu_attribute_value_pair *)p2)->name);
@@ -53,7 +53,7 @@ attr_cmp(const void *p1, const void *p2)
 
 
 HIDDEN int
-attr_cmp_nocase(const void *p1, const void *p2)
+attr_cmp_nocase(const void *p1, const void *p2, void *UNUSED(arg))
 {
     return bu_strcasecmp(((struct bu_attribute_value_pair *)p1)->name,
 			 ((struct bu_attribute_value_pair *)p2)->name);
@@ -61,7 +61,7 @@ attr_cmp_nocase(const void *p1, const void *p2)
 
 
 HIDDEN int
-attr_cmp_value(const void *p1, const void *p2)
+attr_cmp_value(const void *p1, const void *p2, void *UNUSED(arg))
 {
     return bu_strcmp(((struct bu_attribute_value_pair *)p1)->value,
 		     ((struct bu_attribute_value_pair *)p2)->value);
@@ -69,7 +69,7 @@ attr_cmp_value(const void *p1, const void *p2)
 
 
 HIDDEN int
-attr_cmp_value_nocase(const void *p1, const void *p2)
+attr_cmp_value_nocase(const void *p1, const void *p2, void *UNUSED(arg))
 {
     return bu_strcasecmp(((struct bu_attribute_value_pair *)p1)->value,
 			 ((struct bu_attribute_value_pair *)p2)->value);
@@ -140,18 +140,21 @@ attr_cmd(const char* arg)
 
 HIDDEN void
 attr_print(struct ged *gedp, struct bu_attribute_value_set *avs,
-	   const int max_attr_name_len, const int max_attr_value_len)
+	   const int max_attr_name_len)
 {
     struct bu_attribute_value_pair *avpp;
     size_t i;
 
     for (i = 0, avpp = avs->avp; i < avs->count; i++, avpp++) {
-	bu_vls_printf(gedp->ged_result_str,
-		      "\t%-*.*s"
-		      "\t%-*.*s\n",
-		      max_attr_name_len, max_attr_name_len, avpp->name,
-		      max_attr_value_len, max_attr_value_len, avpp->value
-	    );
+	int len_diff = 0;
+	int count = 0;
+	bu_vls_printf(gedp->ged_result_str, "\t%s", avpp->name);
+	len_diff = max_attr_name_len - strlen(avpp->name);
+	while (count < (len_diff) + 1) {
+	    bu_vls_printf(gedp->ged_result_str, " ");
+	    count++;
+	}
+	bu_vls_printf(gedp->ged_result_str, "%s\n", avpp->value);
     }
 }
 
@@ -227,7 +230,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* default: sort attribute-value set array by attribute name (case sensitive) */
-    qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp);
+    bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp, NULL);
 
     if (scmd == ATTR_SORT) {
 	/* pretty print */
@@ -236,20 +239,20 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	if (argc == 3) {
 	    /* just list the already sorted attribute-value pairs */
-	    attr_print(gedp, &avs, max_attr_name_len, max_attr_value_len);
+	    attr_print(gedp, &avs, max_attr_name_len);
 	} else {
 	    /* argv[3] is the sort type: 'case', 'nocase', 'value', 'value-nocase' */
 	    if (BU_STR_EQUIV(argv[3], NOCASE)) {
-		qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp_nocase);
+		bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp_nocase, NULL);
 	    } else if (BU_STR_EQUIV(argv[3], VALUE)) {
-		qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp_value);
+		bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp_value, NULL);
 	    } else if (BU_STR_EQUIV(argv[3], VALUE_NOCASE)) {
-		qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp_value_nocase);
+		bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp_value_nocase, NULL);
 	    } else if (BU_STR_EQUIV(argv[3], CASE)) {
 		; /* don't need to do anything since this is the existing (default) sort */
 	    }
 	    /* just list the already sorted attribute-value pairs */
-	    attr_print(gedp, &avs, max_attr_name_len, max_attr_value_len);
+	    attr_print(gedp, &avs, max_attr_name_len);
 	}
     } else if (scmd == ATTR_GET) {
 	if (argc == 3) {
@@ -374,7 +377,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
 	if (argc == 3) {
 	    /* just display all attributes */
-	    attr_print(gedp, &avs, max_attr_name_len, max_attr_value_len);
+	    attr_print(gedp, &avs, max_attr_name_len);
 	} else {
 	    const char *val;
 	    int len;

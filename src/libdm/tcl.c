@@ -1,7 +1,7 @@
 /*                           T C L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -126,8 +126,10 @@ register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds)
 
 
 int
-Dm_Init(void *interp)
+Dm_Init(void *interpreter)
 {
+    Tcl_Interp *interp = (Tcl_Interp *)interpreter;
+
     static struct bu_cmdtab cmdtab[] = {
 	{"dm_validXType", dm_validXType_tcl},
 	{"dm_bestXType", dm_bestXType_tcl},

@@ -1,7 +1,7 @@
 /*                          P A R T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2013 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -900,16 +900,6 @@ rt_part_free(register struct soltab *stp)
 
 
 /**
- * R T _ P A R T _ C L A S S
- */
-int
-rt_part_class(void)
-{
-    return 0;
-}
-
-
-/**
  * R T _ P A R T _ H E M I S P H E R E 8
  *
  * Produce a crude approximation to a hemisphere,
@@ -1560,7 +1550,7 @@ rt_part_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "part external");
+    ep->ext_buf = (uint8_t*)bu_calloc(1, ep->ext_nbytes, "part external");
     rec = (union record *)ep->ext_buf;
 
     /* Convert from user units to mm */
@@ -1681,7 +1671,7 @@ rt_part_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 8;
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "part external");
+    ep->ext_buf = (uint8_t*)bu_malloc(ep->ext_nbytes, "part external");
 
     /* scale 'em into local buffer */
     VSCALE(&vec[0*3], pip->part_V, local2mm);

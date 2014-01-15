@@ -1,7 +1,7 @@
 /*                      N M G M O D E L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@ static struct vertex **f_vertl[256];
 
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "h3210";
+char *options = "h?3210";
 
 char *progname = "(noname)";
 char plotfilename[1024] = {0};
@@ -62,17 +62,16 @@ int manifold[4] = { 1, 1, 1, 1 };
  * U S A G E --- tell user how to invoke this program, then exit
  */
 void
-usage(char *str)
+usage(char *str, int stopprog)
 {
     if (str) (void)fputs(str, stderr);
 
     (void) fprintf(stderr, "Usage: %s [ -0123 ] \n%s\"%s\"\n%s\"%s\"\n",
 		   progname,
-		   "\tCreate NMG to mged database ",
-		   mfilename,
-		   "\tand plot3 file ",
-		   plotfilename);
-    bu_exit(1, NULL);
+		   "       Create NMG to mged database ",mfilename,
+		   "       and plot3 file ",plotfilename);
+    if (stopprog) bu_exit(1, NULL);
+    fprintf(stderr,"       Program continues running:\n");
 }
 
 
@@ -95,9 +94,6 @@ parse_args(int ac, char **av)
     bu_strlcpy(mfilename, progname, sizeof(mfilename));
     bu_strlcat(mfilename, ".g", sizeof(mfilename));
 
-    /* Turn off bu_getopt's error messages */
-    bu_opterr = 0;
-
     /* get all the option flags from the command line */
     while ((c=bu_getopt(ac, av, options)) != -1)
 	switch (c) {
@@ -105,9 +101,7 @@ parse_args(int ac, char **av)
 	    case '2'	: manifold[2] = 0; break;
 	    case '1'	: manifold[1] = 0; break;
 	    case '0'	: manifold[0] = 0; break;
-	    case '?'	:
-	    case 'h'	:
-	    default		: usage((char *)NULL); break;
+	    default		: usage((char *)NULL,1); break;
 	}
 
     return bu_optind;
@@ -533,9 +527,10 @@ main(int ac, char *av[])
     FILE *fdplot;
     struct rt_wdb *fdmodel;
 
-    if (parse_args(ac, av) < ac) usage((char *)NULL);
+    parse_args(ac, av);
+    if (ac==1) usage((char *)NULL,0);
     if (!manifold[0] && !manifold[1] && !manifold[2] && !manifold[3])
-	usage("No manifolds selected\n");
+	usage("No manifolds selected\n",1);
 
 
     m = nmg_mm();

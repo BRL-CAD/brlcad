@@ -1,7 +1,7 @@
 /*                         E D I T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -476,7 +476,7 @@ struct edit_arg {
  */
 
 /* argument types */
-#define EDIT_FROM			0x01 /* aka keypoint */
+#define EDIT_FROM			0x01 /* a/k/a keypoint */
 #define EDIT_TO				0x02
 #define EDIT_TARGET_OBJ			0x04 /* obj to operate on */
 
@@ -1028,7 +1028,7 @@ edit_cmd_expand_vectors(struct ged *gedp, union edit_cmd *const subcmd)
 {
     struct edit_arg **arg_head;
     vect_t src_v = VINIT_ZERO; /* where omitted points draw from */
-    vect_t *kp_v = (vect_t *)NULL; /* 'from' point, aka keypoint */
+    vect_t *kp_v = (vect_t *)NULL; /* 'from' point, a/k/a keypoint */
     vect_t *to_v = (vect_t *)NULL; /* 'to' point */
     int i = 0;
 

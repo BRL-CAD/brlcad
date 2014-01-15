@@ -1,7 +1,7 @@
 /*                           T R Y . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,35 +20,37 @@
 /** @file fbed/try.h
  *	Author:		Gary S. Moss
  */
+
+#ifndef FBED_TRY_H
+#define FBED_TRY_H
+
 #define INCL_TRY
-typedef struct
-{
+typedef struct {
     int (*f_func)();		/* Function pointer. */
     char *f_buff;		/* Macro key-stroke buffer. */
     char *f_name;		/* Function/macro name. */
 }
 Func_Tab;
-#define FT_NULL	(Func_Tab *) NULL
+#define FT_NULL	(Func_Tab *)NULL
 
-typedef union try
-{
-    struct
-    {
+typedef union tryit {
+    struct {
 	int t_curr;  /* Current letter. */
-	union try	*t_altr; /* Alternate letter node link. */
-	union try	*t_next; /* Next letter node link. */
+	union tryit	*t_altr; /* Alternate letter node link. */
+	union tryit	*t_next; /* Next letter node link. */
     }
     n;
-    struct
-    {
+    struct {
 	Func_Tab	*t_ftbl; /* Function table pointer. */
-	union try	*t_altr; /* Alternate letter node link. */
-	union try	*t_next; /* Next letter node link. */
+	union tryit	*t_altr; /* Alternate letter node link. */
+	union tryit	*t_next; /* Next letter node link. */
     }
     l;
 }
 Try;
-#define TRY_NULL	(Try *) NULL
+#define TRY_NULL	(Try *)NULL
+
+#endif /* FBED_TRY_H */
 
 /*
  * Local Variables:

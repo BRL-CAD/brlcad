@@ -1,7 +1,7 @@
 /*                         C A N O N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,8 +22,8 @@
  *
  */
 
-#ifndef __CANON_H__
-#define __CANON_H__
+#ifndef CANON_CANON_H
+#define CANON_CANON_H
 
 #include "common.h"
 
@@ -98,7 +98,7 @@ FUNC_EXTERN(void ipu_scan_config, (struct dsreq *dsp, char units, int divisor, c
 #endif
 
 FUNC_EXTERN(int parse_args, (int ac, char *av[]));
-FUNC_EXTERN(void usage, (char *s));
+FUNC_EXTERN(void usage, (const char *s));
 
 extern char *progname;
 extern char scsi_device[];
@@ -125,7 +125,7 @@ extern char *arg_v[];
 extern int arg_c;
 extern char *print_queue;
 
-#endif  /* __CANON_H__ */
+#endif  /* CANON_CANON_H */
 
 /*
  * Local Variables:

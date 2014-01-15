@@ -1,7 +1,7 @@
 /*               R E N D E R _ I N T E R N A L . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,8 +21,8 @@
  *
  */
 
-#ifndef _RENDER_INTERNAL_H
-#define _RENDER_INTERNAL_H
+#ifndef ADRT_LIBRENDER_RENDER_INTERNAL_H
+#define ADRT_LIBRENDER_RENDER_INTERNAL_H
 
 #include "tie.h"
 

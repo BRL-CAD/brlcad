@@ -1,7 +1,7 @@
 /*                         H M E N U . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -128,7 +128,7 @@ hm_Put_Item(HWindow *win, HMitem *itemp, int flag)
     int	bit = 1;
     int	writemask = 0;
 
-    buf = bu_calloc(1, sizeof(char) * width, "alloc buf");
+    buf = (char *)bu_calloc(1, sizeof(char) * width, "alloc buf");
     p = buf;
 
     if ( bitmap == 0 )
@@ -217,7 +217,7 @@ hm_Put_Border(HWindow *win, int row, int mark)
     static char	*buf;
     char	*p;
 
-    buf = bu_calloc(1, sizeof(char) * win->width, "alloc buf");
+    buf = (char *)bu_calloc(1, sizeof(char) * win->width, "alloc buf");
     p = buf;
     *p++ = (char)mark;
     for ( i = 0; i < win->width; i++ )

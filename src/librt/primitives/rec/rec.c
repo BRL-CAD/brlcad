@@ -1,7 +1,7 @@
 /*                           R E C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -934,13 +934,6 @@ rt_rec_free(struct soltab *stp)
 	(struct rec_specific *)stp->st_specific;
 
     BU_PUT(rec, struct rec_specific);
-}
-
-
-int
-rt_rec_class(void)
-{
-    return 0;
 }
 
 

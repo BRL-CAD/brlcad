@@ -1,7 +1,7 @@
 /*                         S E L E C T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -504,6 +504,45 @@ ged_rselect(struct ged *gedp, int argc, const char *argv[])
     }
 }
 
+struct rt_object_selections *
+ged_get_object_selections(struct ged *gedp, const char *object_name)
+{
+    int int_new;
+    struct bu_hash_entry *entry;
+
+    entry = bu_hash_tbl_add(gedp->ged_selections, (unsigned char *)object_name,
+	    strlen(object_name), &int_new);
+
+    if (int_new) {
+	struct rt_object_selections *obj_selections;
+	BU_ALLOC(obj_selections, struct rt_object_selections);
+	obj_selections->sets = bu_hash_tbl_create(0);
+	bu_set_hash_value(entry, (unsigned char *)obj_selections);
+    }
+
+    return (struct rt_object_selections *)bu_get_hash_value(entry);
+}
+
+struct rt_selection_set *
+ged_get_selection_set(struct ged *gedp, const char *object_name, const char *selection_name)
+{
+    struct rt_object_selections *obj_selections;
+    struct bu_hash_entry *entry;
+    int int_new;
+
+    obj_selections = ged_get_object_selections(gedp, object_name);
+    entry = bu_hash_tbl_add(obj_selections->sets,
+		(const unsigned char *)selection_name, strlen(selection_name), &int_new);
+
+    if (int_new) {
+	struct rt_selection_set *set;
+	BU_ALLOC(set, struct rt_selection_set);
+	BU_PTBL_INIT(&set->selections);
+	bu_set_hash_value(entry, (unsigned char *)set);
+    }
+
+    return (struct rt_selection_set *)bu_get_hash_value(entry);
+}
 
 /*
  * Local Variables:

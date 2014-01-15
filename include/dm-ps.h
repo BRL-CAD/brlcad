@@ -1,7 +1,7 @@
 /*                          D M - P S . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2013 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,14 +17,15 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @addtogroup libdm */
 /** @{ */
 /** @file dm-ps.h
  *
  */
 
-#ifndef __DM_PS__
-#define __DM_PS__
+#ifndef DM_PS_H
+#define DM_PS_H
 
 /*
  * Display coordinate conversion:
@@ -51,7 +52,7 @@ struct ps_vars {
 
 extern struct ps_vars head_ps_vars;
 
-#endif /* __DM_PS__ */
+#endif /* DM_PS_H */
 
 /** @} */
 /*

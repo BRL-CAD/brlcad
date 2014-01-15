@@ -1,7 +1,7 @@
 /*                     B R E P _ D E B U G . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,8 +25,8 @@
  *
  */
 
-#ifndef __BREP_DEBUG
-#define __BREP_DEBUG
+#ifndef LIBRT_PRIMITIVES_BREP_BREP_DEBUG_H
+#define LIBRT_PRIMITIVES_BREP_BREP_DEBUG_H
 
 #include "common.h"
 

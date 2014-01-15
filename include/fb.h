@@ -1,7 +1,7 @@
 /*                            F B . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,8 +25,8 @@
  *
  */
 
-#ifndef __FB_H__
-#define __FB_H__
+#ifndef FB_H
+#define FB_H
 
 #include "common.h"
 
@@ -48,7 +48,6 @@
 
 #include "bu.h"
 #include "fbio.h"
-
 
 /* Library entry points which are macros.
  *
@@ -75,6 +74,8 @@
 #define fb_writerect(_ifp, _xmin, _ymin, _width, _height, _pp)		(*_ifp->if_writerect)(_ifp, _xmin, _ymin, _width, _height, _pp)
 #define fb_bwreadrect(_ifp, _xmin, _ymin, _width, _height, _pp) 	(*_ifp->if_bwreadrect)(_ifp, _xmin, _ymin, _width, _height, _pp)
 #define fb_bwwriterect(_ifp, _xmin, _ymin, _width, _height, _pp)	(*_ifp->if_bwwriterect)(_ifp, _xmin, _ymin, _width, _height, _pp)
+
+__BEGIN_DECLS
 
 /* Library entry points which are true functions. */
 FB_EXPORT extern void fb_configureWindow(FBIO *, int, int);
@@ -195,8 +196,8 @@ FB_EXPORT extern int _wgl_open_existing(FBIO *ifp, Display *dpy, Window win, Col
 
 /* tcl.c */
 /* The presence of Tcl_Interp as an arg prevents giving arg list */
-FB_EXPORT extern void fb_tcl_setup();
-FB_EXPORT extern int Fb_Init();
+FB_EXPORT extern void fb_tcl_setup(void);
+FB_EXPORT extern int Fb_Init(Tcl_Interp *interp);
 FB_EXPORT extern int fb_refresh(FBIO *ifp, int x, int y, int w, int h);
 
 
@@ -205,7 +206,9 @@ FB_EXPORT extern int fb_refresh(FBIO *ifp, int x, int y, int w, int h);
  */
 FB_EXPORT extern const char *fb_version(void);
 
-#endif /* __FB_H__ */
+__END_DECLS
+
+#endif /* FB_H */
 
 /** @} */
 /*

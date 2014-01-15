@@ -1,7 +1,7 @@
 /*                         S H A D E . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2013 United States Government as represented by
+ * Copyright (c) 1989-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -59,7 +59,7 @@ pr_shadework(const char *str, const struct shadework *swp)
     if (!swp)
 	return;
 
-    bu_log("Shadework%s: 0x%x\n", str ? str : "", swp);
+    bu_log("Shadework%s: %p\n", str ? str : "", (void *)swp);
     bu_printb(" sw_inputs", swp->sw_inputs, MFI_FORMAT);
     if (swp->sw_inputs & MFI_HIT)
 	bu_log(" sw_hit.dist:%g @ sw_hit.point(%g %g %g)\n",

@@ -1,7 +1,7 @@
 /*                      V I E W E D G E . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2013 United States Government as represented by
+ * Copyright (c) 2001-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -491,8 +491,8 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 	 * geometry. Need one per cpu, the upper half does the per-
 	 * thread allocation in worker, but that's off limits.
 	 */
-	occlusion_apps = bu_calloc(npsw, sizeof(struct application *),
-				   "occlusion application structure array");
+	occlusion_apps = (struct application **)bu_calloc(npsw, sizeof(struct application *),
+							  "occlusion application structure array");
 	for (i=0; i<npsw; ++i) {
 	    BU_ALLOC(occlusion_apps[i], struct application);
 	    RT_APPLICATION_INIT(occlusion_apps[i]);

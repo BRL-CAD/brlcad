@@ -1,7 +1,7 @@
 /*                        C A M E R A . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -67,7 +67,7 @@ render_camera_init(render_camera_t *camera, int threads)
     camera->tilt = 0;
 
     /* The camera will use a thread for every cpu the machine has. */
-    camera->thread_num = threads ? threads : bu_avail_cpus();
+    camera->thread_num = threads ? threads : (uint8_t)bu_avail_cpus();
 
     bu_semaphore_init(TIE_SEM_LAST);
 
@@ -536,7 +536,8 @@ void
 render_camera_render(render_camera_t *camera, struct tie_s *tie, camera_tile_t *tile, tienet_buffer_t *result)
 {
     render_camera_thread_data_t td;
-    unsigned int scanline, ind;
+    unsigned int scanline;
+    uint32_t ind;
 
     ind = result->ind;
 
@@ -588,24 +589,26 @@ render_shader_load_plugin(const char *filename)
 {
 #ifdef HAVE_DLFCN_H
     void *lh;	/* library handle */
+    void *init_val;
     int (*init)(render_t *, const char *);
     char *name;
     struct render_shader_s *s;
 
     lh = bu_dlopen(filename, RTLD_LOCAL|RTLD_LAZY);
 
-    if(lh == NULL) {
+    if (lh == NULL) {
 	bu_log("Faulty plugin %s: %s\n", filename, bu_dlerror());
 	return NULL;
     }
-    name = bu_dlsym(lh, "name");
+    name = (char *)bu_dlsym(lh, "name");
     if(name == NULL) {
 	bu_log("Faulty plugin %s: No name\n", filename);
 	bu_dlclose(lh);
 	return NULL;
     }
     /* assumes function pointers can be stored as a number, which ISO C does not guarantee */
-    init = (int (*) (render_t *, const char *))(intptr_t)bu_dlsym(lh, "init");
+    init_val = bu_dlsym(lh, "init");
+    init = (int (*) (render_t *, const char *))(intptr_t)init_val;
     if(init == NULL) {
 	bu_log("Faulty plugin %s: No init\n", filename);
 	bu_dlclose(lh);

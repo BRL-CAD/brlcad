@@ -1,7 +1,7 @@
 /*                       C O N V E R T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -245,7 +245,7 @@ bu_cv_pr_cookie(char *title, int cookie)
 
 
 size_t
-bu_cv(genptr_t out, char *outfmt, size_t size, genptr_t in, char *infmt, int count)
+bu_cv(genptr_t out, char *outfmt, size_t size, genptr_t in, char *infmt, size_t count)
 {
     int incookie, outcookie;
     incookie = bu_cv_cookie(infmt);
@@ -283,14 +283,14 @@ bu_cv_optimize(register int cookie)
 }
 
 
-int
+size_t
 bu_cv_itemlen(register int cookie)
 {
     register int fmt = (cookie & CV_TYPE_MASK) >> CV_TYPE_SHIFT;
-    static int host_size_table[8] = {0, sizeof(char),
+    static size_t host_size_table[8] = {0, sizeof(char),
 				     sizeof(short), sizeof(int),
 				     sizeof(long int), sizeof(double)};
-    static int net_size_table[8] = {0, 1, 2, 4, 8, 8};
+    static size_t net_size_table[8] = {0, 1, 2, 4, 8, 8};
 
     if (cookie & CV_HOST_MASK)
 	return host_size_table[fmt];
@@ -304,8 +304,9 @@ bu_cv_ntohss(register short int *out, size_t size, register genptr_t in, size_t 
     size_t limit;
     register size_t i;
 
-    limit = (int)(size / sizeof(signed short));
-    if (limit < count) count = limit;
+    limit = size / sizeof(signed short);
+    if (limit < count)
+	count = limit;
 
     for (i=0; i<count; i++) {
 	*out++ = ((signed char *)in)[0] << 8 | ((unsigned char *)in)[1];
@@ -326,8 +327,9 @@ bu_cv_ntohus(register short unsigned int *out, size_t size, register genptr_t in
     size_t limit;
     register size_t i;
 
-    limit = (int)(size / sizeof(unsigned short));
-    if (limit < count) count = limit;
+    limit = size / sizeof(unsigned short);
+    if (limit < count)
+	count = limit;
 
     for (i=0; i<count; i++) {
 	*out++ = ((unsigned char *)in)[0]<<8 |
@@ -344,8 +346,9 @@ bu_cv_ntohsl(register long int *out, size_t size, register genptr_t in, size_t c
     size_t limit;
     register size_t i;
 
-    limit = (int)(size / sizeof(signed long int));
-    if (limit < count) count = limit;
+    limit = size / sizeof(signed long int);
+    if (limit < count)
+	count = limit;
 
     for (i=0; i<count; i++) {
 	*out++ = ((signed char *)in)[0] << 24 |
@@ -366,8 +369,9 @@ bu_cv_ntohul(register long unsigned int *out, size_t size, register genptr_t in,
     size_t limit;
     register size_t i;
 
-    limit = (int)(size / sizeof(unsigned long int));
-    if (limit < count) count = limit;
+    limit = size / sizeof(unsigned long int);
+    if (limit < count)
+	count = limit;
 
     for (i=0; i<count; i++) {
 	*out++ =
@@ -389,7 +393,7 @@ bu_cv_htonss(genptr_t out, size_t size, register short int *in, size_t count)
     register unsigned char *cp = (unsigned char *)out;
     register int val;
 
-    limit = (int)(size / 2);
+    limit = size / 2;
     if (count > limit)  count = limit;
 
     for (i=0; i<count; i++) {
@@ -408,8 +412,9 @@ bu_cv_htonus(genptr_t out, size_t size, register short unsigned int *in, size_t 
     register unsigned char *cp = (unsigned char *)out;
     register int val;
 
-    limit = (int)(size / 2);
-    if (count > limit)  count = limit;
+    limit = size / 2;
+    if (count > limit)
+	count = limit;
 
     for (i=0; i<count; i++) {
 	*cp++ = (val = *in++)>>8;
@@ -427,8 +432,9 @@ bu_cv_htonsl(genptr_t out, size_t size, register long int *in, size_t count)
     register unsigned char *cp = (unsigned char *)out;
     register long val;
 
-    limit = (int)(size / 4);
-    if (count > limit)  count = limit;
+    limit = size / 4;
+    if (count > limit)
+	count = limit;
 
     for (i=0; i<count; i++) {
 	*cp++ = (val = *in++)>>24;
@@ -448,10 +454,9 @@ bu_cv_htonul(genptr_t out, size_t size, register long unsigned int *in, size_t c
     register unsigned char *cp = (unsigned char *)out;
     register long val;
 
-    limit = (int)(size / 4);
-    if (count > limit) {
+    limit = size / 4;
+    if (count > limit)
 	count = limit;
-    }
 
     for (i=0; i<count; i++) {
 	*cp++ = (val = *in++)>>24;
@@ -464,11 +469,12 @@ bu_cv_htonul(genptr_t out, size_t size, register long unsigned int *in, size_t c
 
 
 size_t
-bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incookie,  size_t count)
+bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in, int incookie, size_t count)
 {
     size_t work_count = 4096;
     size_t number_done = 0;
-    int inIsHost, outIsHost, infmt, outfmt, insize, outsize;
+    int inIsHost, outIsHost, infmt, outfmt;
+    size_t insize, outsize;
     size_t bufsize;
     genptr_t t1, t2, t3;
     genptr_t from;
@@ -637,7 +643,7 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 	in = ((char *) in) + work_count * insize;
 
 	/*
-	 * If the input is in net format convert it host format.
+	 * If the input is in net format convert it to host format.
 	 * Because we know that the input format is not equal to the
 	 * output this means that there will be at least two
 	 * conversions taking place if the input is in net format.

@@ -1,7 +1,7 @@
 #              B R L C A D _ T A R G E T S . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2013 United States Government as represented by
+# Copyright (c) 2011-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -89,6 +89,19 @@ macro(GET_TARGET_DLL_DEFINES targetname target_libs)
   endif(CPP_DLL_DEFINES)
 endmacro(GET_TARGET_DLL_DEFINES)
 
+# For BRL-CAD targets, use CXX as the language if the user requests it
+macro(SET_CXX_LANG SRC_FILES)
+  if(ENABLE_ALL_CXX_COMPILE)
+    foreach(srcfile ${SRC_FILES})
+      if(NOT ${CMAKE_CURRENT_SOURCE_DIR}/${srcfile} MATCHES "src/other")
+	if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${srcfile})
+	  set_source_files_properties(${srcfile} PROPERTIES LANGUAGE CXX)
+	endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${srcfile})
+      endif(NOT ${CMAKE_CURRENT_SOURCE_DIR}/${srcfile} MATCHES "src/other")
+    endforeach(srcfile ${SRC_FILES})
+  endif(ENABLE_ALL_CXX_COMPILE)
+endmacro(SET_CXX_LANG SRC_FILES)
+
 # Take a target definition and find out what compilation flags its libraries
 # are using
 macro(GET_TARGET_FLAGS targetname target_libs)
@@ -152,16 +165,58 @@ macro(CXX_NO_STRICT cxx_srcslist args)
   endif(NOERROR_FLAG)
 endmacro(CXX_NO_STRICT cxx_srcslist)
 
+# BRL-CAD style checking test
+macro(VALIDATE_STYLE srcslist)
+if(BRLCAD_STYLE_VALIDATE)
+  make_directory(${CMAKE_CURRENT_BINARY_DIR}/validation)
+  foreach(srcfile ${srcslist})
+    # Generated files won't conform to our style guidelines
+    get_property(IS_GENERATED SOURCE ${srcfile} PROPERTY GENERATED)
+    if(NOT IS_GENERATED)
+      get_filename_component(root_name ${srcfile} NAME_WE)
+      string(MD5 path_md5 "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
+      set(outfiles_root "${CMAKE_CURRENT_BINARY_DIR}/validation/${root_name}_${path_md5}")
+      set(srcfile_tmp "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
+      set(stampfile_tmp "${stampfile}")
+      configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/astyle.cmake.in ${outfiles_root}.cmake @ONLY)
+      add_custom_command(
+	OUTPUT ${outfiles_root}.checked
+	COMMAND ${CMAKE_COMMAND} -P ${outfiles_root}.cmake
+	DEPENDS ${srcfile} ${ASTYLE_EXECUTABLE_TARGET}
+	COMMENT "Validating style of ${srcfile}"
+	)
+      set_source_files_properties(${srcfile} PROPERTIES OBJECT_DEPENDS ${outfiles_root}.checked)
+    endif(NOT IS_GENERATED)
+  endforeach(srcfile ${srcslist})
+endif(BRLCAD_STYLE_VALIDATE)
+endmacro(VALIDATE_STYLE)
+
+macro(VALIDATE_TARGET_STYLE targetname)
+  if(BRLCAD_STYLE_VALIDATE)
+      configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/validate_style.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/${targetname}_validate.cmake @ONLY)
+      add_custom_command(
+	TARGET ${targetname} PRE_LINK
+	COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/${targetname}_validate.cmake
+	COMMENT "Checking validation status of ${targetname} srcs"
+	)
+  endif(BRLCAD_STYLE_VALIDATE)
+endmacro(VALIDATE_TARGET_STYLE targetname)
 
 #-----------------------------------------------------------------------------
 # Core routines for adding executables and libraries to the build and
 # install lists of CMake
 macro(BRLCAD_ADDEXEC execname srcslist libslist)
 
+  # Check at comple time the standard BRL-CAD style rules
+  VALIDATE_STYLE("${srcslist}")
+
+  # Go all C++ if the settings request it
+  SET_CXX_LANG("${srcslist}")
+
   # Call standard CMake commands
   add_executable(${execname} ${srcslist})
   target_link_libraries(${execname} ${libslist})
-
+  VALIDATE_TARGET_STYLE(${execname})
 
   # In some situations (usually test executables) we want to be able
   # to force the executable to remain in the local compilation
@@ -172,14 +227,17 @@ macro(BRLCAD_ADDEXEC execname srcslist libslist)
   # bypasses the standard install command call.
   CHECK_OPT("NO_INSTALL" NO_EXEC_INSTALL "${ARGN}")
   if(NO_EXEC_INSTALL)
-    if(NOT CMAKE_CONFIGURATION_TYPES)
-      set_target_properties(${execname} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-    else(NOT CMAKE_CONFIGURATION_TYPES)
-      foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-	string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-	set_target_properties(${execname} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER} ${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE})
-      endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-    endif(NOT CMAKE_CONFIGURATION_TYPES)
+    # Unfortunately, we currently need Windows binaries in the same directories as their DLL libraries
+    if(NOT WIN32)
+      if(NOT CMAKE_CONFIGURATION_TYPES)
+	set_target_properties(${execname} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+      else(NOT CMAKE_CONFIGURATION_TYPES)
+	foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+	  string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+	  set_target_properties(${execname} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER} ${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE})
+	endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+      endif(NOT CMAKE_CONFIGURATION_TYPES)
+    endif(NOT WIN32)
   else(NO_EXEC_INSTALL)
     install(TARGETS ${execname} DESTINATION ${BIN_DIR})
   endif(NO_EXEC_INSTALL)
@@ -238,6 +296,9 @@ endmacro(BRLCAD_ADDEXEC execname srcslist libslist)
 # statement will cover both automatically
 macro(BRLCAD_ADDLIB libname srcslist libslist)
 
+  # Go all C++ if the settings request it
+  SET_CXX_LANG("${srcslist}")
+
   # Add ${libname} to the list of BRL-CAD libraries
   list(APPEND BRLCAD_LIBS ${libname})
   list(REMOVE_DUPLICATES BRLCAD_LIBS)
@@ -259,10 +320,14 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
     FLAGS_TO_FILES("${srcslist}" ${libname})
   endif(${lib_type} STREQUAL "MIXED")
 
+  # Check at comple time the standard BRL-CAD style rules
+  VALIDATE_STYLE("${srcslist}")
+
   # Handle "shared" libraries (with MSVC, these would be dynamic libraries)
   if(BUILD_SHARED_LIBS)
 
     add_library(${libname} SHARED ${srcslist})
+    VALIDATE_TARGET_STYLE(${libname})
 
     # Make sure we don't end up with outputs named liblib...
     if(${libname} MATCHES "^lib*")
@@ -329,6 +394,7 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
   # respect standard naming conventions.)
   if(BUILD_STATIC_LIBS)
     add_library(${libname}-static STATIC ${srcslist})
+    VALIDATE_TARGET_STYLE(${libname}-static)
 
     # Make sure we don't end up with outputs named liblib...
     if(${libname}-static MATCHES "^lib*")

@@ -1,7 +1,7 @@
 /*                       S H _ C A M O . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -68,23 +68,6 @@ struct camo_specific {
 };
 #define CK_camo_SP(_p) BU_CKMAG(_p, camo_MAGIC, "camo_specific")
 
-/* This allows us to specify the "size" parameter as values like ".5m"
- * or "27in" rather than using mm all the time.
- */
-void
-camo_cvt_parse(register const struct bu_structparse *sdp, register const char *UNUSED(name), char *base, const char *value)
-/* structure description */
-/* struct member name */
-/* beginning of structure */
-/* string containing value */
-{
-    double *p = (double *)(base+sdp->sp_offset);
-
-    /* reconvert with optional units */
-    *p = bu_mm_value(value);
-}
-
-
 static struct camo_specific camo_defaults = {
     camo_MAGIC,
     2.1753974,		/* noise_lacunarity */
@@ -122,7 +105,8 @@ static struct camo_specific marble_defaults = {
 #define SHDR_NULL ((struct camo_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct camo_specific, m)
 
-void color_fix(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value);
+/* local sp_hook function */
+void color_fix(const struct bu_structparse *, const char *, void *, const char *);
 
 struct bu_structparse camo_print_tab[] = {
     {"%g", 1, "lacunarity",	SHDR_O(noise_lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -186,18 +170,21 @@ struct mfuncs camo_mfuncs[] = {
  * Used as a hooked function for input of color values
  */
 void
-color_fix(register const struct bu_structparse *sdp, register const char *UNUSED(name), char *base, const char *UNUSED(value))
+color_fix(const struct bu_structparse *sdp,
+	  const char *UNUSED(name),
+	  void *base,
+	  const char *UNUSED(value))
 /* structure description */
 /* struct member name */
 /* beginning of structure */
 /* string containing value */
 {
-    register double *p = (double *)(base+sdp->sp_offset);
+    register double *p = (double *)((char *)base + sdp->sp_offset);
     size_t i;
     int ok;
 
     /* if all the values are in the range [0..1] there's nothing to do */
-    for (ok=1, i=0; i < sdp->sp_count; i++, p++) {
+    for (ok = 1, i = 0; i < sdp->sp_count; i++, p++) {
 	if (*p > 1.0) ok = 0;
     }
     if (ok) return;
@@ -205,8 +192,8 @@ color_fix(register const struct bu_structparse *sdp, register const char *UNUSED
     /* user specified colors in the range [0..255] so we need to
      * map those into [0..1]
      */
-    p = (double *)(base+sdp->sp_offset);
-    for (i=0; i < sdp->sp_count; i++, p++) {
+    p = (double *)((char *)base + sdp->sp_offset);
+    for (i = 0; i < sdp->sp_count; i++, p++) {
 	*p /= 255.0;
     }
 }

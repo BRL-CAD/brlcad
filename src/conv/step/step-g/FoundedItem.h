@@ -1,7 +1,7 @@
 /*                 FoundedItem.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef FOUNDEDITEM_H_
-#define FOUNDEDITEM_H_
+#ifndef CONV_STEP_STEP_G_FOUNDEDITEM_H
+#define CONV_STEP_STEP_G_FOUNDEDITEM_H
 
 #include "STEPEntity.h"
 
@@ -48,7 +48,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* FOUNDEDITEM_H_ */
+#endif /* CONV_STEP_STEP_G_FOUNDEDITEM_H */
 
 /*
  * Local Variables:

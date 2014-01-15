@@ -1,7 +1,7 @@
 /*                      P R O G N A M E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@ bu_argv0_full_path(void)
 
 #ifdef HAVE_PROGRAM_INVOCATION_NAME
     /* GLIBC provides a way */
-    if (argv0[0] == BU_DIR_SEPARATOR && program_invocation_name)
+    if (argv0[0] == '\0' && program_invocation_name)
 	argv0 = program_invocation_name;
 #endif
 
@@ -72,6 +72,10 @@ bu_argv0_full_path(void)
     }
 
     /* running from relative dir */
+
+    /* FIXME: this is technically wrong.  if the current working
+     * directory is changed, we'll get the wrong path for argv0.
+     */
     bu_getcwd(buffer, MAXPATHLEN);
     snprintf(buffer+strlen(buffer), MAXPATHLEN-strlen(buffer), "%c%s", BU_DIR_SEPARATOR, argv0);
     if (bu_file_exists(buffer, NULL)) {
@@ -87,6 +91,12 @@ bu_argv0_full_path(void)
 const char *
 bu_getprogname(void)
 {
+    /* this static buffer is needed so we don't have to write into
+     * bu_progname[], which potentially holds a full path.  we have to
+     * free the bu_basename() memory, so we need to copy the string
+     * somewhere before returning.
+     */
+    static char buffer[MAXPATHLEN] = {0};
     const char *name = bu_progname;
     char *tmp_basename = NULL;
 
@@ -115,12 +125,12 @@ bu_getprogname(void)
 
     /* stash for return since we need to free the basename */
     bu_semaphore_acquire(BU_SEM_SYSCALL);
-    bu_strlcpy(bu_progname, name, MAXPATHLEN);
+    bu_strlcpy(buffer, name, MAXPATHLEN);
     bu_semaphore_release(BU_SEM_SYSCALL);
 
     bu_free(tmp_basename, "tmp_basename free");
 
-    return bu_progname;
+    return buffer;
 }
 
 

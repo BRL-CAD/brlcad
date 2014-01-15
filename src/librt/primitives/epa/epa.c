@@ -1,7 +1,7 @@
 /*                           E P A . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2013 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -635,16 +635,6 @@ rt_epa_free(struct soltab *stp)
 	(struct epa_specific *)stp->st_specific;
 
     BU_PUT(epa, struct epa_specific);
-}
-
-
-/**
- * R T _ E P A _ C L A S S
- */
-int
-rt_epa_class(void)
-{
-    return 0;
 }
 
 
@@ -1541,14 +1531,14 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Associate the face geometry */
-    for (i=0; i < face; i++) {
+    for (i = 0; i < face; i++) {
 	if (nmg_fu_planeeqn(outfaceuses[i], tol) < 0)
 	    goto fail;
     }
 
     /* Associate vertexuse normals */
-    for (i=0; i<nell; i++) {
-	for (j=0; j<segs_per_ell[i]; j++) {
+    for (i = 0; i < nell; i++) {
+	for (j = 0; j < segs_per_ell[i]; j++) {
 	    VREVERSE(rev_norm, &normals[i][j*3]);
 	    for (BU_LIST_FOR(vu, vertexuse, &vells[i][j]->vu_hd)) {
 
@@ -1708,7 +1698,7 @@ rt_epa_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "epa external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "epa external");
     epa = (union record *)ep->ext_buf;
 
     epa->s.s_id = ID_SOLID;
@@ -1822,7 +1812,7 @@ rt_epa_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 11;
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "epa external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "epa external");
 
     if (!NEAR_EQUAL(MAGNITUDE(xip->epa_Au), 1.0, RT_LEN_TOL)) {
 	bu_log("rt_epa_export4: Au not a unit vector!\n");

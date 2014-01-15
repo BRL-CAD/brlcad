@@ -1,7 +1,7 @@
 /*                          N U R B . H
  * BRL-CAD
  *
- * Copyright (c) 1991-2013 United States Government as represented by
+ * Copyright (c) 1991-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,8 +28,8 @@
  *
  */
 
-#ifndef __NURB_H__
-#define __NURB_H__
+#ifndef NURB_H
+#define NURB_H
 
 #include "common.h"
 
@@ -126,9 +126,7 @@ struct bezier_2d_list {
     point2d_t	*ctl;
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+__BEGIN_DECLS
 
 /* nurb_basis.c */
 RT_EXPORT extern fastf_t rt_nurb_basis_eval(struct knot_vector *knts, int interval,
@@ -293,11 +291,10 @@ RT_EXPORT extern int FindRoots(point2d_t *w, int degree, point2d_t **intercept, 
 				     int depth, fastf_t epsilon);
 RT_EXPORT extern struct bezier_2d_list *subdivide_bezier(struct bezier_2d_list *bezier_hd, int degree,
 							       fastf_t epsilon, int depth);
-#ifdef __cplusplus
-}
-#endif
 
-#endif /* __NURB_H__ */
+__END_DECLS
+
+#endif /* NURB_H */
 
 /** @} */
 /*

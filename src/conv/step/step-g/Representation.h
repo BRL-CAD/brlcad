@@ -1,7 +1,7 @@
 /*                 Representation.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -23,15 +23,15 @@
  * structures.
  *
  */
-#ifndef REPRESENTATION_H_
-#define REPRESENTATION_H_
+#ifndef CONV_STEP_STEP_G_REPRESENTATION_H
+#define CONV_STEP_STEP_G_REPRESENTATION_H
 
 #include "common.h"
 
 /* system headers */
 #include <list>
 
-/* inteface headers */
+/* interface headers */
 #include "STEPEntity.h"
 #include "STEPWrapper.h"
 
@@ -69,7 +69,7 @@ public:
 };
 
 
-#endif /* REPRESENTATION_H_ */
+#endif /* CONV_STEP_STEP_G_REPRESENTATION_H */
 
 /*
  * Local Variables:

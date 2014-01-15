@@ -1,7 +1,7 @@
 /*                           E H Y . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2013 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -173,6 +173,7 @@ struct ehy_specific {
     mat_t ehy_invRoS;	/* invRot(Scale(vect)) */
     fastf_t ehy_cprime;	/* c / |H| */
 };
+
 
 const struct bu_structparse rt_ehy_parse[] = {
     { "%f", 3, "V",   bu_offsetofarray(struct rt_ehy_internal, ehy_V, fastf_t, X),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -447,7 +448,7 @@ rt_ehy_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     /*
      * Check for hitting the top plate.
      */
- check_plates:
+check_plates:
     /* check top plate */
     if (hitp == &hits[1]  &&  !ZERO(dp[Z])) {
 	/* 1 hit so far, this is worthwhile */
@@ -653,15 +654,6 @@ rt_ehy_free(struct soltab *stp)
 }
 
 
-/**
- * R T _ E H Y _ C L A S S
- */
-int
-rt_ehy_class(void)
-{
-    return 0;
-}
-
 /* Our canonical hyperbola in the Y-Z plane has equation
  * z = +- (a/b) * sqrt(b^2 + y^2), and opens toward +Z and -Z with asymptote
  * origin at the origin.
@@ -689,6 +681,7 @@ ehy_hyperbola_b(fastf_t mag_h, fastf_t c, fastf_t r)
 {
     return (c * r) / sqrt(mag_h * (mag_h + 2.0 * c));
 }
+
 
 /* The contour of an ehy in the plane H-R (where R is one of the ehy axes A or
  * B) is the positive half of a hyperbola with asymptote origin at
@@ -727,6 +720,7 @@ ehy_hyperbolic_curve(fastf_t mag_h, fastf_t c, fastf_t r, int num_points)
     return curve;
 }
 
+
 /* The contour of an ehy in the plane H-R (where R is one of the ehy axes A or
  * B) is the positive half of a hyperbola with asymptote origin at
  * ((|H| + c)Hu), opening toward -H. We can transform this hyperbola to get an
@@ -743,7 +737,7 @@ ehy_hyperbolic_curve(fastf_t mag_h, fastf_t c, fastf_t r, int num_points)
  * Substituting b = (ar) / sqrt(|H| (|H| + 2a)) (see above comment):
  *
  *   y = (r / sqrt(|H| (|H| + 2a))) * sqrt((|H| + a - z)^2 - a^2)
- *     = r * sqrt( ((|H| + a - z)^2 - a^2) / (|H| (|H| + 2a))) )
+ *     = r * sqrt(((|H| + a - z)^2 - a^2) / (|H| (|H| + 2a))))
  */
 static fastf_t
 ehy_hyperbola_y(fastf_t mag_H, fastf_t c, fastf_t r, fastf_t z)
@@ -756,15 +750,16 @@ ehy_hyperbola_y(fastf_t mag_H, fastf_t c, fastf_t r, fastf_t z)
     return r * sqrt(n / d);
 }
 
+
 /* Plot the elliptical cross section of the given ehy at distance h along the
  * ehy height vector (h >= 0, h <= |H|) consisting of num_points points.
  */
 static void
 ehy_plot_ellipse(
-	struct bu_list *vhead,
-	struct rt_ehy_internal *ehy,
-	fastf_t h,
-	fastf_t num_points)
+    struct bu_list *vhead,
+    struct rt_ehy_internal *ehy,
+    fastf_t h,
+    fastf_t num_points)
 {
     fastf_t mag_H;
     vect_t V, Hu, Au, Bu, A, B, cross_section_plane;
@@ -787,13 +782,14 @@ ehy_plot_ellipse(
     plot_ellipse(vhead, cross_section_plane, A, B, num_points);
 }
 
+
 static void
 ehy_plot_hyperbola(
-	struct bu_list *vhead,
-	struct rt_ehy_internal *ehy,
-	struct rt_pt_node *pts,
-	vect_t Ru,
-	fastf_t r)
+    struct bu_list *vhead,
+    struct rt_ehy_internal *ehy,
+    struct rt_pt_node *pts,
+    vect_t Ru,
+    fastf_t r)
 {
     point_t p;
     vect_t ehy_V, Hu;
@@ -820,6 +816,7 @@ ehy_plot_hyperbola(
     }
 }
 
+
 static int
 ehy_curve_points(
     const struct rt_ehy_internal *ehy,
@@ -838,6 +835,7 @@ ehy_curve_points(
     return approx_curve_len / info->point_spacing;
 }
 
+
 static int
 ehy_ellipse_points(
     const struct rt_ehy_internal *ehy,
@@ -850,6 +848,7 @@ ehy_ellipse_points(
 
     return avg_circumference / info->point_spacing;
 }
+
 
 int
 rt_ehy_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
@@ -927,6 +926,7 @@ rt_ehy_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 
     return 0;
 }
+
 
 /**
  * R T _ E H Y _ P L O T
@@ -1544,7 +1544,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Associate the face geometry */
-    for (i=0; i < face; i++) {
+    for (i = 0; i < face; i++) {
 	if (nmg_fu_planeeqn(outfaceuses[i], tol) < 0)
 	    goto fail;
     }
@@ -1569,7 +1569,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* Assign vertexuse normals */
     nmg_vertex_tabulate(&vert_tab, &s->l.magic);
-    for (i=0; i<BU_PTBL_END(&vert_tab); i++) {
+    for (i = 0; i < BU_PTBL_END(&vert_tab); i++) {
 	point_t pt_prime, tmp_pt;
 	vect_t norm, rev_norm, tmp_vect;
 	struct vertex_g *vg;
@@ -1609,7 +1609,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     bu_ptbl_free(&vert_tab);
     return 0;
 
- fail:
+fail:
     /* free mem */
     bu_free((char *)outfaceuses, "faceuse []");
     for (i = 0; i < nell; i++) {
@@ -1718,7 +1718,7 @@ rt_ehy_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "ehy external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "ehy external");
     ehy = (union record *)ep->ext_buf;
 
     ehy->s.s_id = ID_SOLID;
@@ -1833,7 +1833,7 @@ rt_ehy_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 3*4;
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "ehy external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "ehy external");
 
     if (!NEAR_EQUAL(MAGNITUDE(xip->ehy_Au), 1.0, RT_LEN_TOL)) {
 	bu_log("rt_ehy_export4: Au not a unit vector!\n");
@@ -1954,6 +1954,7 @@ rt_ehy_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
     return 0;			/* OK */
 }
 
+
 static int
 ehy_is_valid(struct rt_ehy_internal *ehy)
 {
@@ -1990,6 +1991,29 @@ ehy_is_valid(struct rt_ehy_internal *ehy)
 
     return 1;
 }
+
+
+void
+rt_ehy_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    struct rt_ehy_internal *eip;
+    fastf_t a, b, h, integralArea, sqrt_rb;
+    RT_CK_DB_INTERNAL(ip);
+    eip = (struct rt_ehy_internal *)ip->idb_ptr;
+    RT_EHY_CK_MAGIC(eip);
+
+    a = eip->ehy_c;
+    h = MAGNITUDE(eip->ehy_H);
+    b = (eip->ehy_r1 * a) / sqrt(h * (h - 2 * a));
+
+    /** Formula taken from : https://docs.google.com/file/d/0BydeQ6BPlVejRWt6NlJLVDl0d28/edit
+     * Area can be calculated by substracting integral of hyperbola from the area of the bounding rectangle
+     */
+    sqrt_rb = sqrt(eip->ehy_r1 * eip->ehy_r1 + b * b);
+    integralArea = (a / b) * ((eip->ehy_r1 * sqrt_rb) + ((b * b / 2) * (log(sqrt_rb + eip->ehy_r1) - log(sqrt_rb - eip->ehy_r1))));
+    *area = 2 * eip->ehy_r1 * (a + h) - integralArea;
+}
+
 
 /** @} */
 /*

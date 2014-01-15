@@ -1,7 +1,7 @@
 /*                        V I E W G 3 . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2013 United States Government as represented by
+ * Copyright (c) 1989-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -78,9 +78,7 @@ struct bu_structparse view_parse[] = {
 
 
 static mat_t model2hv;			/* model coords to GIFT h, v in inches */
-
 static FILE *plotfp;			/* optional plotting file */
-static long line_num;			/* count of lines output to shotline file */
 
 const char title[] = "RTG3";
 

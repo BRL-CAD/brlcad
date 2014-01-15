@@ -1,7 +1,7 @@
 /*                         C H O R E . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,6 +24,9 @@
  *
  */
 
+#ifndef CANON_CHORE_H
+#define CANON_CHORE_H
+
 struct chore {
     int		todo;
     int		buflen;
@@ -43,6 +46,8 @@ struct chore {
 	while ( queue != NULL )  sginap(1); \
 	queue = item; \
 	item = NULL;  }
+
+#endif /* CANON_CHORE_H */
 
 /*
  * Local Variables:

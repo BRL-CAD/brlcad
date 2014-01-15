@@ -1,7 +1,7 @@
 /*                        S E A R C H . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,6 +51,11 @@
  * SUCH DAMAGE.
  *
  */
+
+#ifndef LIBRT_SEARCH_H
+#define LIBRT_SEARCH_H
+
+#include "common.h"
 
 #include "regex.h"
 #include "raytrace.h"
@@ -154,6 +159,7 @@ typedef struct _option {
 
 extern int isdepth, isoutput;
 
+__BEGIN_DECLS
 
 static int c_attr(char *, char ***, int, struct db_plan_t **, int *);
 static int c_iname(char *, char ***, int, struct db_plan_t **, int *);
@@ -176,6 +182,9 @@ static int c_or(char *, char ***, int, struct db_plan_t **, int *);
 static int c_above(char *, char ***, int, struct db_plan_t **, int *);
 static int c_below(char *, char ***, int, struct db_plan_t **, int *);
 
+__END_DECLS
+
+#endif /* LIBRT_SEARCH_H */
 
 /*
  * Local Variables:

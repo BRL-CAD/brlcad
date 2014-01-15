@@ -1,7 +1,7 @@
 /*                    L I B O S L R E N D . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2013 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
 
@@ -25,8 +25,8 @@
  *
  */
 
-#ifndef LIB_OSL_RENDERER_H
-#define LIB_OSL_RENDERER_H
+#ifndef LIBOPTICAL_LIBOSLREND_H
+#define LIBOPTICAL_LIBOSLREND_H
 
 #include "common.h"
 

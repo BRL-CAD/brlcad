@@ -16,6 +16,7 @@ set(RT_LOCAL_INCLUDE_DIRS
   ${TNT_INCLUDE_DIR}
   ${LIBVDS_INCLUDE_DIR}
   ${LIBGDIAM_INCLUDE_DIR}
+  ${BRLCAD_BOOST_INCLUDE_DIR}
   )
 
 BRLCAD_LIB_INCLUDE_DIRS(rt RT_INCLUDE_DIRS RT_LOCAL_INCLUDE_DIRS)
@@ -36,12 +37,15 @@ set(LIBRT_SOURCES
   constraint.c
   cut.c
   db5_alloc.c
+  db5_attr.c
+  db5_attr_registry.cpp
   db5_io.c
   db5_scan.c
   db5_types.c
   db_alloc.c
   db_anim.c
   db_corrupt.c
+  db_diff.c
   db_flags.c
   db_flip.c
   db_fullpath.c
@@ -149,8 +153,8 @@ set(LIBRT_SOURCES
   primitives/mirror.c
   primitives/nmg/nmg.c
   primitives/nmg/nmg_bool.c
-  primitives/nmg/nmg_brep.cpp
   primitives/nmg/nmg_ck.c
+  primitives/nmg/nmg_brep.cpp
   primitives/nmg/nmg_class.c
   primitives/nmg/nmg_copy.c
   primitives/nmg/nmg_eval.c

@@ -1,7 +1,7 @@
 /*                      C A N O N I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,8 +43,7 @@ char cmdbuf[64]="/usr/mdqs/bin/qpr -q "; /* queue name filled in by main() */
  *	send an image off into the printer queuing system
  */
 void
-queue(fp)
-    FILE *fp;
+queue(FILE *fp)
 {
     char img_buffer[8 * 1024];
     int img_bytes, i, args, bytes_read, bytes_written;

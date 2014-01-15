@@ -1,7 +1,7 @@
 /*                      N M G _ F U S E . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2013 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,12 +41,6 @@
 #include "raytrace.h"
 #include "nurb.h"
 
-
-/* The global variable edge_rr_xyp is used by function nmg_edge_g_fuse
- * and the compare function for qsort "e_rr_xyp_comp". This is an array
- * containing the rise over run ratios in the xy plane for each edge.
- */
-fastf_t *edge_rr_xyp;
 
 
 extern int debug_file_count;
@@ -170,9 +164,9 @@ nmg_region_v_unique(struct nmgregion *r1, const struct bn_tol *tol)
 }
 
 
-/* compare function for qsort within function nmg_ptbl_vfuse */
+/* compare function for bu_sort within function nmg_ptbl_vfuse */
 static int
-x_comp(const void *p1, const void *p2)
+x_comp(const void *p1, const void *p2, void *UNUSED(arg))
 {
     fastf_t i, j;
 
@@ -204,7 +198,7 @@ nmg_ptbl_vfuse(struct bu_ptbl *t, const struct bn_tol *tol)
     register fastf_t ab, abx, aby, abz;
 
     /* sort the vertices in the 't' list by the 'x' coordinate */
-    qsort(BU_PTBL_BASEADDR(t), BU_PTBL_LEN(t), sizeof(long *), (int (*)(const void *a, const void *b))x_comp);
+    bu_sort(BU_PTBL_BASEADDR(t), BU_PTBL_LEN(t), sizeof(long *), x_comp, NULL);
 
     count = 0;
     for (i = 0 ; i < BU_PTBL_END(t) ; i++) {
@@ -389,7 +383,7 @@ nmg_cnurb_is_linear(const struct edge_g_cnurb *cnrb)
     NMG_CK_EDGE_G_CNURB(cnrb);
 
     if (RTG.NMG_debug & DEBUG_MESH) {
-	bu_log("nmg_cnurb_is_linear(x%x)\n", cnrb);
+	bu_log("nmg_cnurb_is_linear(%p)\n", (void *)cnrb);
 	rt_nurb_c_print(cnrb);
     }
 
@@ -422,7 +416,7 @@ nmg_cnurb_is_linear(const struct edge_g_cnurb *cnrb)
 
 out:
     if (RTG.NMG_debug & DEBUG_MESH)
-	bu_log("nmg_cnurb_is_linear(x%x) returning %d\n", cnrb, linear);
+	bu_log("nmg_cnurb_is_linear(%p) returning %d\n", (void *)cnrb, linear);
 
     return linear;
 }
@@ -455,7 +449,7 @@ nmg_snurb_is_planar(const struct face_g_snurb *srf, const struct bn_tol *tol)
     BN_CK_TOL(tol);
 
     if (RTG.NMG_debug & DEBUG_MESH) {
-	bu_log("nmg_snurb_is_planar(x%x)\n", srf);
+	bu_log("nmg_snurb_is_planar(%p)\n", (void *)srf);
 	rt_nurb_s_print("", srf);
     }
 
@@ -553,7 +547,7 @@ nmg_snurb_is_planar(const struct face_g_snurb *srf, const struct bn_tol *tol)
 	    pl[H] = VDOT(pl, vsum);
 
 	} else {
-	    bu_log("nmg_snurb_is_plana: Cannot calculate plane for snurb x%x\n", srf);
+	    bu_log("nmg_snurb_is_plana: Cannot calculate plane for snurb %p\n", (void *)srf);
 	    rt_nurb_s_print("", srf);
 	    bu_bomb("nmg_snurb_is_plana: Cannot calculate plane for snurb\n");
 	}
@@ -574,7 +568,7 @@ nmg_snurb_is_planar(const struct face_g_snurb *srf, const struct bn_tol *tol)
     planar = 1;
 out:
     if (RTG.NMG_debug & DEBUG_MESH)
-	bu_log("nmg_snurb_is_planar(x%x) returning %d\n", srf, planar);
+	bu_log("nmg_snurb_is_planar(%p) returning %d\n", (void *)srf, planar);
 
     return planar;
 
@@ -698,8 +692,8 @@ nmg_eval_trim_to_tol(const struct edge_g_cnurb *cnrb, const struct face_g_snurb 
     BN_CK_TOL(tol);
 
     if (RTG.NMG_debug & DEBUG_MESH)
-	bu_log("nmg_eval_trim_to_tol(cnrb=x%x, snrb=x%x, t0=%g, t1=%g) START\n",
-	       cnrb, snrb, t0, t1);
+	bu_log("nmg_eval_trim_to_tol(cnrb=%p, snrb=%p, t0=%g, t1=%g) START\n",
+	       (void *)cnrb, (void *)snrb, t0, t1);
 
     BU_ALLOC(pt0, struct pt_list);
     pt0->t = t0;
@@ -715,8 +709,8 @@ nmg_eval_trim_to_tol(const struct edge_g_cnurb *cnrb, const struct face_g_snurb 
     nmg_split_trim(cnrb, snrb, t, pt0, pt1, tol);
 
     if (RTG.NMG_debug & DEBUG_MESH)
-	bu_log("nmg_eval_trim_to_tol(cnrb=x%x, snrb=x%x, t0=%g, t1=%g) END\n",
-	       cnrb, snrb, t0, t1);
+	bu_log("nmg_eval_trim_to_tol(cnrb=%p, snrb=%p, t0=%g, t1=%g) END\n",
+	       (void *)cnrb, (void *)snrb, t0, t1);
 }
 
 
@@ -769,8 +763,8 @@ nmg_eval_linear_trim_to_tol(const struct edge_g_cnurb *cnrb, const struct face_g
     BN_CK_TOL(tol);
 
     if (RTG.NMG_debug & DEBUG_MESH)
-	bu_log("nmg_eval_linear_trim_to_tol(cnrb=x%x, snrb=x%x, uvw1=(%g %g %g), uvw2=(%g %g %g)) START\n",
-	       cnrb, snrb, V3ARGS(uvw1), V3ARGS(uvw2));
+	bu_log("nmg_eval_linear_trim_to_tol(cnrb=%p, snrb=%p, uvw1=(%g %g %g), uvw2=(%g %g %g)) START\n",
+	       (void *)cnrb, (void *)snrb, V3ARGS(uvw1), V3ARGS(uvw2));
 
     BU_ALLOC(pt0, struct pt_list);
     pt0->t = 0.0;
@@ -785,8 +779,8 @@ nmg_eval_linear_trim_to_tol(const struct edge_g_cnurb *cnrb, const struct face_g
     nmg_split_linear_trim(snrb, uvw1, uvw2, pt0, pt1, tol);
 
     if (RTG.NMG_debug & DEBUG_MESH)
-	bu_log("nmg_eval_linear_trim_to_tol(cnrb=x%x, snrb=x%x) END\n",
-	       cnrb, snrb);
+	bu_log("nmg_eval_linear_trim_to_tol(cnrb=%p, snrb=%p) END\n",
+	       (void *)cnrb, (void *)snrb);
 }
 
 
@@ -818,12 +812,12 @@ nmg_cnurb_lseg_coincident(const struct edgeuse *eu1, const struct edge_g_cnurb *
     NMG_CK_EDGE_G_CNURB(cnrb);
 
     if (RTG.NMG_debug & DEBUG_MESH)
-	bu_log("nmg_cnurb_lseg_coincident(eu1=x%x, cnrb=x%x, snrb=x%x, pt1=(%g %g %g), pt2=(%g %g %g)\n",
-	       eu1, cnrb, snrb, V3ARGS(pt1), V3ARGS(pt2));
+	bu_log("nmg_cnurb_lseg_coincident(eu1=%p, cnrb=%p, snrb=%p, pt1=(%g %g %g), pt2=(%g %g %g)\n",
+	       (void *)eu1, (void *)cnrb, (void *)snrb, V3ARGS(pt1), V3ARGS(pt2));
 
     if (eu1->g.cnurb_p != cnrb) {
-	bu_log("nmg_cnurb_lseg_coincident: cnrb x%x isn't from eu x%x\n",
-	       cnrb, eu1);
+	bu_log("nmg_cnurb_lseg_coincident: cnrb %p isn't from eu %p\n",
+	       (void *)cnrb, (void *)eu1);
 	bu_bomb("nmg_cnurb_lseg_coincident: cnrb and eu1 disagree\n");
     }
 
@@ -845,14 +839,14 @@ nmg_cnurb_lseg_coincident(const struct edgeuse *eu1, const struct edge_g_cnurb *
 	vu1 = eu1->vu_p;
 	NMG_CK_VERTEXUSE(vu1);
 	if (!vu1->a.magic_p) {
-	    bu_log("nmg_cnurb_lseg_coincident: vu (x%x) has no attributes\n",
-		   vu1);
+	    bu_log("nmg_cnurb_lseg_coincident: vu (%p) has no attributes\n",
+		   (void *)vu1);
 	    bu_bomb("nmg_cnurb_lseg_coincident: vu has no attributes\n");
 	}
 
 	if (*vu1->a.magic_p != NMG_VERTEXUSE_A_CNURB_MAGIC) {
-	    bu_log("nmg_cnurb_lseg_coincident: vu (x%x) from CNURB EU (x%x) is not CNURB\n",
-		   vu1, eu1);
+	    bu_log("nmg_cnurb_lseg_coincident: vu (%p) from CNURB EU (%p) is not CNURB\n",
+		   (void *)vu1, (void *)eu1);
 	    bu_bomb("nmg_cnurb_lseg_coincident: vu from CNURB EU is not CNURB\n");
 	}
 
@@ -862,14 +856,14 @@ nmg_cnurb_lseg_coincident(const struct edgeuse *eu1, const struct edge_g_cnurb *
 	vu2 = eu1->eumate_p->vu_p;
 	NMG_CK_VERTEXUSE(vu2);
 	if (!vu2->a.magic_p) {
-	    bu_log("nmg_cnurb_lseg_coincident: vu (x%x) has no attributes\n",
-		   vu2);
+	    bu_log("nmg_cnurb_lseg_coincident: vu (%p) has no attributes\n",
+		   (void *)vu2);
 	    bu_bomb("nmg_cnurb_lseg_coincident: vu has no attributes\n");
 	}
 
 	if (*vu2->a.magic_p != NMG_VERTEXUSE_A_CNURB_MAGIC) {
-	    bu_log("nmg_cnurb_lseg_coincident: vu (x%x) from CNURB EU (x%x) is not CNURB\n",
-		   vu2, eu1);
+	    bu_log("nmg_cnurb_lseg_coincident: vu (%p) from CNURB EU (%p) is not CNURB\n",
+		   (void *)vu2, (void *)eu1);
 	    bu_bomb("nmg_cnurb_lseg_coincident: vu from CNURB EU is not CNURB\n");
 	}
 
@@ -951,8 +945,8 @@ nmg_cnurb_is_on_crv(const struct edgeuse *eu, const struct edge_g_cnurb *cnrb, c
     BN_CK_TOL(tol);
 
     if (RTG.NMG_debug & DEBUG_MESH)
-	bu_log("nmg_cnurb_is_on_crv(eu=x%x, cnrb=x%x, snrb=x%x, head=x%x)\n",
-	       eu, cnrb, snrb, head);
+	bu_log("nmg_cnurb_is_on_crv(eu=%p, cnrb=%p, snrb=%p, head=%p)\n",
+	       (void *)eu, (void *)cnrb, (void *)snrb, (void *)head);
     if (cnrb->order <= 0) {
 	struct vertexuse *vu1, *vu2;
 	struct vertexuse_a_cnurb *vu1a, *vu2a;
@@ -968,26 +962,26 @@ nmg_cnurb_is_on_crv(const struct edgeuse *eu, const struct edge_g_cnurb *cnrb, c
 	NMG_CK_VERTEXUSE(vu2);
 
 	if (!vu1->a.magic_p) {
-	    bu_log("nmg_cnurb_is_on_crv(): vu (x%x) on CNURB EU (x%x) has no attributes\n",
-		   vu1, eu);
+	    bu_log("nmg_cnurb_is_on_crv(): vu (%p) on CNURB EU (%p) has no attributes\n",
+		   (void *)vu1, (void *)eu);
 	    bu_bomb("nmg_cnurb_is_on_crv(): vu on CNURB EU has no attributes\n");
 	}
 	if (*vu1->a.magic_p != NMG_VERTEXUSE_A_CNURB_MAGIC) {
-	    bu_log("nmg_cnurb_is_on_crv(): vu (x%x) on CNURB EU (x%x) is not CNURB\n",
-		   vu1, eu);
+	    bu_log("nmg_cnurb_is_on_crv(): vu (%p) on CNURB EU (%p) is not CNURB\n",
+		   (void *)vu1, (void *)eu);
 	    bu_bomb("nmg_cnurb_is_on_crv(): vu on CNURB EU is not CNURB\n");
 	}
 	vu1a = vu1->a.cnurb_p;
 	NMG_CK_VERTEXUSE_A_CNURB(vu1a);
 
 	if (!vu2->a.magic_p) {
-	    bu_log("nmg_cnurb_is_on_crv(): vu (x%x) on CNURB EU (x%x) has no attributes\n",
-		   vu2, eu->eumate_p);
+	    bu_log("nmg_cnurb_is_on_crv(): vu (%p) on CNURB EU (%p) has no attributes\n",
+		   (void *)vu2, (void *)eu->eumate_p);
 	    bu_bomb("nmg_cnurb_is_on_crv(): vu on CNURB EU has no attributes\n");
 	}
 	if (*vu2->a.magic_p != NMG_VERTEXUSE_A_CNURB_MAGIC) {
-	    bu_log("nmg_cnurb_is_on_crv(): vu (x%x) on CNURB EU (x%x) is not CNURB\n",
-		   vu2, eu->eumate_p);
+	    bu_log("nmg_cnurb_is_on_crv(): vu (%p) on CNURB EU (%p) is not CNURB\n",
+		   (void *)vu2, (void *)eu->eumate_p);
 	    bu_bomb("nmg_cnurb_is_on_crv(): vu on CNURB EU is not CNURB\n");
 	}
 	vu2a = vu2->a.cnurb_p;
@@ -1057,9 +1051,9 @@ nmg_cnurb_is_on_crv(const struct edgeuse *eu, const struct edge_g_cnurb *cnrb, c
     return coincident;
 }
 
-/* compare function for qsort within function nmg_edge_fuse */
+/* compare function for bu_sort within function nmg_edge_fuse */
 static int
-v_ptr_comp(const void *p1, const void *p2)
+v_ptr_comp(const void *p1, const void *p2, void *UNUSED(arg))
 {
     size_t i, j;
 
@@ -1149,7 +1143,7 @@ nmg_edge_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
 	j++;
     }
 
-    qsort(&edgeuse_vert_list[0][0], nelem, 2 * sizeof(size_t), (int (*)(const void *a, const void *b))v_ptr_comp);
+    bu_sort(&edgeuse_vert_list[0][0], nelem, 2 * sizeof(size_t), v_ptr_comp, NULL);
 
     for (i = 0; i < nelem ; i++) {
 
@@ -1202,13 +1196,13 @@ nmg_edge_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
 }
 
 
-/* compare function for qsort within function nmg_edge_g_fuse */
+/* compare function for bu_sort within function nmg_edge_g_fuse */
 static int
-e_rr_xyp_comp(const void *p1, const void *p2)
+e_rr_xyp_comp(const void *p1, const void *p2, void *arg)
 {
     fastf_t i, j;
-
-    i = edge_rr_xyp[(*((size_t *)p1))];
+    fastf_t *edge_rr_xyp = (fastf_t *)arg;
+    i = edge_rr_xyp[((*((size_t *)p1)))];
     j = edge_rr_xyp[(*((size_t *)p2))];
 
     if (EQUAL(i, j))
@@ -1237,7 +1231,7 @@ nmg_edge_g_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
     fastf_t tmp;
 
     /* rise over run arrays for the xz and yz planes */
-    fastf_t *edge_rr, *edge_rr_xzp, *edge_rr_yzp;
+    fastf_t *edge_rr, *edge_rr_xzp, *edge_rr_yzp, *edge_rr_xyp;
 
     /* index into all arrays sorted by the contents of array edge_rr_xyp */
     size_t *sort_idx_xyp;
@@ -1325,7 +1319,7 @@ nmg_edge_g_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
     }
 
     /* create sort index based on array edge_rr_xyp */
-    qsort(sort_idx_xyp, etab_cnt, sizeof(size_t), (int (*)(const void *a, const void *b))e_rr_xyp_comp);
+    bu_sort(sort_idx_xyp, etab_cnt, sizeof(size_t), e_rr_xyp_comp, edge_rr_xyp);
 
     /* main loop */
     total = 0;
@@ -1484,8 +1478,8 @@ nmg_ck_fu_verts(struct faceuse *fu1, struct face *f2, const struct bn_tol *tol)
 	    dist = DIST_PT_PLANE(vg->coord, pl2);
 	    if (!NEAR_ZERO(dist, tol->dist)) {
 		if (RTG.NMG_debug & DEBUG_MESH) {
-		    bu_log("nmg_ck_fu_verts(x%x, x%x) v x%x off face by %e\n",
-			   fu1, f2, v, dist);
+		    bu_log("nmg_ck_fu_verts(%p, %p) v %p off face by %e\n",
+			   (void *)fu1, (void *)f2, (void *)v, dist);
 		    VPRINT(" pt", vg->coord);
 		    PLPRINT(" fg2", pl2);
 		}
@@ -1514,8 +1508,8 @@ nmg_ck_fu_verts(struct faceuse *fu1, struct face *f2, const struct bn_tol *tol)
 		dist = DIST_PT_PLANE(vg->coord, pl2);
 		if (!NEAR_ZERO(dist, tol->dist)) {
 		    if (RTG.NMG_debug & DEBUG_MESH) {
-			bu_log("nmg_ck_fu_verts(x%x, x%x) v x%x off face by %e\n",
-				fu1, f2, v, dist);
+			bu_log("nmg_ck_fu_verts(%p, %p) v %p off face by %e\n",
+			       (void *)fu1, (void *)f2, (void *)v, dist);
 			VPRINT(" pt", vg->coord);
 			PLPRINT(" fg2", pl2);
 		    }
@@ -1615,8 +1609,8 @@ nmg_two_face_fuse(struct face *f1, struct face *f2, const struct bn_tol *tol)
 
     if (!fg1 || !fg2) {
 	if (RTG.NMG_debug & DEBUG_MESH) {
-	    bu_log("nmg_two_face_fuse(x%x, x%x) null fg fg1=x%x, fg2=x%x\n",
-		   f1, f2, fg1, fg2);
+	    bu_log("nmg_two_face_fuse(%p, %p) null fg fg1=%p, fg2=%p\n",
+		   (void *)f1, (void *)f2, (void *)fg1, (void *)fg2);
 	}
 	return 0;
     }
@@ -1624,7 +1618,7 @@ nmg_two_face_fuse(struct face *f1, struct face *f2, const struct bn_tol *tol)
     /* test if the face geometry (i.e. face plane) is already fused */
     if (fg1 == fg2) {
 	if (RTG.NMG_debug & DEBUG_MESH) {
-	    bu_log("nmg_two_face_fuse(x%x, x%x) fg already shared\n", f1, f2);
+	    bu_log("nmg_two_face_fuse(%p, %p) fg already shared\n", (void *)f1, (void *)f2);
 	}
 	return 0;
     }
@@ -1653,8 +1647,8 @@ nmg_two_face_fuse(struct face *f1, struct face *f2, const struct bn_tol *tol)
     }
 
     if (RTG.NMG_debug & DEBUG_MESH) {
-	bu_log("nmg_two_face_fuse(x%x, x%x) coplanar faces, flip2=%d\n",
-	       f1, f2, flip2);
+	bu_log("nmg_two_face_fuse(%p, %p) coplanar faces, flip2=%d\n",
+	       (void *)f1, (void *)f2, flip2);
     }
 
     /* check if normals are pointing in the same direction */
@@ -1668,7 +1662,7 @@ nmg_two_face_fuse(struct face *f1, struct face *f2, const struct bn_tol *tol)
 
     if (flip2 == 0) {
 	if (RTG.NMG_debug & DEBUG_MESH) {
-	    bu_log("joining face geometry (same dir) f1=x%x, f2=x%x\n", f1, f2);
+	    bu_log("joining face geometry (same dir) f1=%p, f2=%p\n", (void *)f1, (void *)f2);
 	    PLPRINT(" fg1", fg1->N);
 	    PLPRINT(" fg2", fg2->N);
 	}
@@ -1678,17 +1672,17 @@ nmg_two_face_fuse(struct face *f1, struct face *f2, const struct bn_tol *tol)
 	if (RTG.NMG_debug & DEBUG_MESH) {
 	    bu_log("joining face geometry (opposite dirs)\n");
 
-	    bu_log(" f1=x%x, flip=%d", f1, f1->flip);
+	    bu_log(" f1=%p, flip=%d", (void *)f1, f1->flip);
 	    PLPRINT(" fg1", fg1->N);
 
-	    bu_log(" f2=x%x, flip=%d", f2, f2->flip);
+	    bu_log(" f2=%p, flip=%d", (void *)f2, f2->flip);
 	    PLPRINT(" fg2", fg2->N);
 	}
 	/* Flip flags of faces using fg2, first! */
 	for (BU_LIST_FOR(fn, face, &fg2->f_hd)) {
 	    fn->flip = !fn->flip;
 	    if (RTG.NMG_debug & DEBUG_MESH) {
-		bu_log("f=x%x, new flip=%d\n", fn, fn->flip);
+		bu_log("f=%p, new flip=%d\n", (void *)fn, fn->flip);
 	    }
 	}
 	nmg_jfg(f1, f2);
@@ -1762,7 +1756,7 @@ nmg_break_all_es_on_v(uint32_t *magic_p, struct vertex *v, const struct bn_tol *
     const char *magic_type;
 
     if (UNLIKELY(RTG.NMG_debug & DEBUG_BOOL)) {
-	bu_log("nmg_break_all_es_on_v(magic=x%x, v=x%x)\n", magic_p, v);
+	bu_log("nmg_break_all_es_on_v(magic=%p, v=%p)\n", (void *)magic_p, (void *)v);
     }
 
     magic_type = bu_identify_magic(*magic_p);
@@ -1810,7 +1804,7 @@ nmg_break_all_es_on_v(uint32_t *magic_p, struct vertex *v, const struct bn_tol *
 	/* Break edge on vertex, but don't fuse yet. */
 
 	if (UNLIKELY(RTG.NMG_debug & DEBUG_BOOL)) {
-	    bu_log("\tnmg_break_all_es_on_v: breaking eu x%x on v x%x\n", eu, v);
+	    bu_log("\tnmg_break_all_es_on_v: breaking eu %p on v %p\n", (void *)eu, (void *)v);
 	}
 	(void)nmg_ebreak(v, eu);
 	count++;
@@ -1906,7 +1900,8 @@ nmg_break_e_on_v(const uint32_t *magic_p, const struct bn_tol *tol)
 		}
 
 		if (RTG.NMG_debug & (DEBUG_BOOL|DEBUG_BASIC))
-		    bu_log("nmg_break_e_on_v(): breaking eu x%x (e=x%x) at vertex x%x\n", eu, eu->e_p, v);
+		    bu_log("nmg_break_e_on_v(): breaking eu %p (e=%p) at vertex %p\n",
+			   (void *)eu, (void *)eu->e_p, (void *)v);
 
 		/* Break edge on vertex, but don't fuse yet. */
 		new_eu = nmg_ebreak(v, eu);
@@ -2249,7 +2244,7 @@ nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existin
     BN_CK_TOL(tol);
 
     if (RTG.NMG_debug & DEBUG_BASIC || RTG.NMG_debug & DEBUG_MESH_EU)
-	bu_log("nmg_radial_build_list(existing=%d, eu=x%x)\n", existing, eu);
+	bu_log("nmg_radial_build_list(existing=%d, eu=%p)\n", existing, (void *)eu);
 
     if (ZERO(MAGSQ(xvec)) || ZERO(MAGSQ(yvec)) || ZERO(MAGSQ(zvec))) {
 	bu_log("nmg_radial_build_list(): one or more input vector(s) 'xvec', 'yvec', 'zvec' is zero magnitude.\n");
@@ -2297,7 +2292,7 @@ nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existin
 	rad->is_outie = 0;	/* not yet determined */
 
 	if (RTG.NMG_debug & DEBUG_MESH_EU)
-	    bu_log("\trad->eu = %x, rad->ang = %g\n", rad->eu, rad->ang);
+	    bu_log("\trad->eu = %p, rad->ang = %g\n", (void *)rad->eu, rad->ang);
 
 	/* the radial list is not always sorted */
 	nmg_radial_sorted_list_insert(hd, rad);
@@ -2325,12 +2320,12 @@ nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existin
     if (RTG.NMG_debug & DEBUG_MESH_EU) {
 	struct nmg_radial *next;
 
-	bu_log("amin=%g min_eu=x%x, amax=%g max_eu=x%x\n",
-	       rmin->ang * bn_radtodeg, rmin->eu,
-	       rmax->ang * bn_radtodeg, rmax->eu);
+	bu_log("amin=%g min_eu=%p, amax=%g max_eu=%p\n",
+	       rmin->ang * bn_radtodeg, (void *)rmin->eu,
+	       rmax->ang * bn_radtodeg, (void *)rmax->eu);
 
 	for (BU_LIST_FOR(next, nmg_radial, hd))
-	    bu_log("%x: eu=%x, fu=%x, ang=%g\n", next, next->eu, next->fu, next->ang);
+	    bu_log("%p: eu=%p, fu=%p, ang=%g\n", (void *)next, (void *)next->eu, (void *)next->fu, next->ang);
     }
 
     /* Skip to extremal repeated max&min.  Ignore wires */
@@ -2379,9 +2374,9 @@ nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existin
 	bu_log("  %f %f %f --- %f %f %f\n",
 	       V3ARGS(eu->vu_p->v_p->vg_p->coord),
 	       V3ARGS(eu->eumate_p->vu_p->v_p->vg_p->coord));
-	bu_log("amin=%g min_eu=x%x, amax=%g max_eu=x%x B\n",
-	       rmin->ang * bn_radtodeg, rmin->eu,
-	       rmax->ang * bn_radtodeg, rmax->eu);
+	bu_log("amin=%g min_eu=%p, amax=%g max_eu=%p B\n",
+	       rmin->ang * bn_radtodeg, (void *)rmin->eu,
+	       rmax->ang * bn_radtodeg, (void *)rmax->eu);
 	nmg_pr_radial_list(hd, tol);
 	nmg_pr_fu_around_eu_vecs(eu, xvec, yvec, zvec, tol);
 	bu_bomb("nmg_radial_build_list() min and max angle not adjacent in list (or list not monotone increasing)\n");
@@ -2469,7 +2464,7 @@ nmg_is_crack_outie(const struct edgeuse *eu, const struct bn_tol *tol)
     const struct edge *e;
     point_t midpt;
     const fastf_t *a, *b;
-    int class;
+    int nmg_class;
 
     NMG_CK_EDGEUSE(eu);
     BN_CK_TOL(tol);
@@ -2513,31 +2508,31 @@ nmg_is_crack_outie(const struct edgeuse *eu, const struct bn_tol *tol)
 	    tmp_tol.dist = SMALL_FASTF;
 	    tmp_tol.dist_sq = SMALL_FASTF * SMALL_FASTF;
 	}
-	class = nmg_class_pt_lu_except(midpt, lu, e, &tmp_tol);
+	nmg_class = nmg_class_pt_lu_except(midpt, lu, e, &tmp_tol);
     }
     if (RTG.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_is_crack_outie(eu=x%x) lu=x%x, e=x%x, class=%s\n",
-	       eu, lu, e, nmg_class_name(class));
+	bu_log("nmg_is_crack_outie(eu=%p) lu=%p, e=%p, nmg_class=%s\n",
+	       (void *)eu, (void *)lu, (void *)e, nmg_class_name(nmg_class));
     }
 
     if (lu->orientation == OT_SAME) {
-	if (class == NMG_CLASS_AinB || class == NMG_CLASS_AonBshared)
+	if (nmg_class == NMG_CLASS_AinB || nmg_class == NMG_CLASS_AonBshared)
 	    return 0;		/* an "innie" */
-	if (class == NMG_CLASS_AoutB)
+	if (nmg_class == NMG_CLASS_AoutB)
 	    return 1;		/* an "outie" */
     } else {
 	/* It's a hole loop, things work backwards. */
-	if (class == NMG_CLASS_AinB || class == NMG_CLASS_AonBshared)
+	if (nmg_class == NMG_CLASS_AinB || nmg_class == NMG_CLASS_AonBshared)
 	    return 1;		/* an "outie" */
-	if (class == NMG_CLASS_AoutB)
+	if (nmg_class == NMG_CLASS_AoutB)
 	    return 0;		/* an "innie" */
     }
 
     /* Other classifications "shouldn't happen". */
-    bu_log("nmg_is_crack_outie(eu=x%x), lu=x%x(%s)\n  midpt_class=%s, midpt=(%g, %g, %g)\n",
-	   eu,
-	   lu, nmg_orientation(lu->orientation),
-	   nmg_class_name(class),
+    bu_log("nmg_is_crack_outie(eu=%p), lu=%p(%s)\n  midpt_class=%s, midpt=(%g, %g, %g)\n",
+	   (void *)eu,
+	   (void *)lu, nmg_orientation(lu->orientation),
+	   nmg_class_name(nmg_class),
 	   V3ARGS(midpt));
     nmg_pr_lu_briefly(lu, 0);
     bu_bomb("nmg_is_crack_outie() got unexpected midpt classification from nmg_class_pt_lu_except()\n");
@@ -2561,7 +2556,7 @@ nmg_find_radial_eu(const struct bu_list *hd, const struct edgeuse *eu)
 	if (rad->eu == eu) return rad;
 	if (rad->eu->eumate_p == eu) return rad;
     }
-    bu_log("nmg_find_radial_eu() eu=x%x\n", eu);
+    bu_log("nmg_find_radial_eu() eu=%p\n", (void *)eu);
     bu_bomb("nmg_find_radial_eu() given edgeuse not found on list\n");
 
     return (struct nmg_radial *)NULL;
@@ -2663,8 +2658,8 @@ nmg_radial_mark_cracks(struct bu_list *hd, const struct edge *e1, const struct e
 	    rad->is_crack = 1;
 	    rad->is_outie = outie;
 	    if (RTG.NMG_debug & DEBUG_MESH_EU) {
-		bu_log("nmg_radial_mark_cracks() EVEN crack eu=x%x, uses=%d, outie=%d\n",
-		       rad->eu, uses, outie);
+		bu_log("nmg_radial_mark_cracks() EVEN crack eu=%p, uses=%d, outie=%d\n",
+		       (void *)rad->eu, uses, outie);
 	    }
 	    /* Mark all the rest of them the same way */
 	    for (other = BU_LIST_PNEXT(nmg_radial, rad);
@@ -2691,16 +2686,16 @@ nmg_radial_mark_cracks(struct bu_list *hd, const struct edge *e1, const struct e
 	 * All but the last one are "outies", last one is "innie"
 	 */
 	if (RTG.NMG_debug & DEBUG_MESH_EU) {
-	    bu_log("nmg_radial_mark_cracks() ODD crack eu=x%x, uses=%d, outie=%d\n",
-		   rad->eu, uses, outie);
+	    bu_log("nmg_radial_mark_cracks() ODD crack eu=%p, uses=%d, outie=%d\n",
+		   (void *)rad->eu, uses, outie);
 	}
 	/* Mark off pairs of edgeuses, one per trip through loop. */
 	eu = rad->eu;
 	for (; uses >= 2; uses--) {
 	    eu = nmg_find_next_use_of_2e_in_lu(eu, e1, e2);
 	    if (RTG.NMG_debug & DEBUG_MESH_EU) {
-		bu_log("rad->eu=x%x, eu=x%x, uses=%d\n",
-		       rad->eu, eu, uses);
+		bu_log("rad->eu=%p, eu=%p, uses=%d\n",
+		       (void *)rad->eu, (void *)eu, uses);
 	    }
 	    if (eu == rad->eu) {
 		nmg_pr_lu_briefly(lu, 0);
@@ -2791,7 +2786,7 @@ nmg_radial_find_an_original(const struct bu_list *hd, const struct shell *s, con
     }
     if (fallback) return fallback;
 
-    bu_log("nmg_radial_find_an_original() shell=x%x\n", s);
+    bu_log("nmg_radial_find_an_original() shell=%p\n", (void *)s);
     nmg_pr_radial_list(hd, tol);
     bu_bomb("nmg_radial_find_an_original() No entries from indicated shell\n");
 
@@ -2851,7 +2846,7 @@ nmg_radial_mark_flips(struct bu_list *hd, const struct shell *s, const struct bn
 	}
 	/* Mis-match detected */
 	if (RTG.NMG_debug & DEBUG_MESH_EU) {
-	    bu_log("nmg_radial_mark_flips() Mis-match detected, setting flip flag eu=x%x\n", rad->eu);
+	    bu_log("nmg_radial_mark_flips() Mis-match detected, setting flip flag eu=%p\n", (void *)rad->eu);
 	}
 	rad->needs_flip = !rad->needs_flip;
 	nflip++;
@@ -2866,8 +2861,8 @@ nmg_radial_mark_flips(struct bu_list *hd, const struct shell *s, const struct bn
     if (expected_ot == (orig->fu->orientation == OT_SAME))
 	return nflip;
 
-    bu_log("nmg_radial_mark_flips() unable to establish proper orientation parity.\n  eu count=%d, shell=x%x, expectation=%d\n",
-	   count, s, expected_ot);
+    bu_log("nmg_radial_mark_flips() unable to establish proper orientation parity.\n  eu count=%d, shell=%p, expectation=%d\n",
+	   count, (void *)s, expected_ot);
     nmg_pr_radial_list(hd, tol);
     bu_bomb("nmg_radial_mark_flips() unable to establish proper orientation parity.\n");
 
@@ -2917,16 +2912,16 @@ nmg_radial_check_parity(const struct bu_list *hd, const struct bu_ptbl *shells, 
 		continue;
 	    }
 	    /* Mis-match detected */
-	    bu_log("nmg_radial_check_parity() bad parity eu=x%x, s=x%x\n",
-		   rad->eu, *sp);
+	    bu_log("nmg_radial_check_parity() bad parity eu=%p, s=%p\n",
+		   (void *)rad->eu, (void *)*sp);
 	    count++;
 	    /* Set expectation for next */
 	    expected_ot = !expected_ot;
 	}
 	if (expected_ot == (orig->fu->orientation == OT_SAME))
 	    continue;
-	bu_log("nmg_radial_check_parity() bad parity at END eu=x%x, s=x%x\n",
-	       rad->eu, *sp);
+	bu_log("nmg_radial_check_parity() bad parity at END eu=%p, s=%p\n",
+	       (void *)rad->eu, (void *)*sp);
 	count++;
     }
     return count;
@@ -3024,15 +3019,15 @@ nmg_pr_radial(const char *title, const struct nmg_radial *rad)
 	f = rad->fu->f_p;
 	orient = nmg_orientation(rad->fu->orientation)[3];
     }
-    bu_log("%s%8.8x, mate of \\/\n",
+    bu_log("%s%p, mate of \\/\n",
 	   title,
-	   rad->eu->eumate_p
+	   (void *)rad->eu->eumate_p
 	);
-    bu_log("%s%8.8x, f=%8.8x, fu=%8.8x=%c, s=%8.8x %s %c%c%c %g deg\n",
+    bu_log("%s%p, f=%p, fu=%p=%c, s=%p %s %c%c%c %g deg\n",
 	   title,
-	   rad->eu,
-	   f, rad->fu, orient,
-	   rad->s,
+	   (void *)rad->eu,
+	   (void *)f, (void *)rad->fu, orient,
+	   (void *)rad->s,
 	   rad->existing_flag ? "old" : "new",
 	   rad->needs_flip ? 'F' : '/',
 	   rad->is_crack ? 'C' : '/',
@@ -3057,7 +3052,7 @@ nmg_pr_radial_list(const struct bu_list *hd, const struct bn_tol *tol)
     BU_CK_LIST_HEAD(hd);
     BN_CK_TOL(tol);
 
-    bu_log("nmg_pr_radial_list(hd=x%x)\n", hd);
+    bu_log("nmg_pr_radial_list(hd=%p)\n", (void *)hd);
 
     for (BU_LIST_FOR(rad, nmg_radial, hd)) {
 	NMG_CK_RADIAL(rad);
@@ -3244,7 +3239,7 @@ top:
 	    else
 		bu_log("src_dir agrees with eu1ref\n");
 
-	    bu_log("Joining dest_eu=x%x to src_eu=x%x\n", dest, src);
+	    bu_log("Joining dest_eu=%p to src_eu=%p\n", (void *)dest, (void *)src);
 	}
 
 	nmg_je(dest, src);
@@ -3360,9 +3355,9 @@ nmg_radial_join_eu_NEW(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn
     nmg_radial_build_list(&list2, &shell_tbl, 0, eu2ref, xvec, yvec, zvec, tol);
 
     if (RTG.NMG_debug & DEBUG_MESH_EU) {
-	bu_log("nmg_radial_join_eu_NEW(eu1=x%x, eu2=x%x) e1=x%x, e2=x%x\n",
-	       eu1, eu2,
-	       eu1->e_p, eu2->e_p);
+	bu_log("nmg_radial_join_eu_NEW(eu1=%p, eu2=%p) e1=%p, e2=%p\n",
+	       (void *)eu1, (void *)eu2,
+	       (void *)eu1->e_p, (void *)eu2->e_p);
 	nmg_euprint("\tJoining", eu1);
 	bu_log("Faces around eu1:\n");
 	nmg_pr_fu_around_eu_vecs(eu1ref, xvec, yvec, zvec, tol);
@@ -3464,7 +3459,7 @@ nmg_s_radial_harmonize(struct shell *s, const struct bn_tol *tol)
     BN_CK_TOL(tol);
 
     if (RTG.NMG_debug & DEBUG_BASIC)
-	bu_log("nmg_s_radial_harmonize(s=x%x) BEGIN\n", s);
+	bu_log("nmg_s_radial_harmonize(s=%p) BEGIN\n", (void *)s);
 
     nmg_edge_tabulate(&edges, &s->l.magic);
     for (ep = (struct edge **)BU_PTBL_LASTADDR(&edges);
@@ -3502,7 +3497,7 @@ nmg_s_radial_harmonize(struct shell *s, const struct bn_tol *tol)
     bu_ptbl_free(&edges);
 
     if (RTG.NMG_debug & DEBUG_BASIC)
-	bu_log("nmg_s_radial_harmonize(s=x%x) END\n", s);
+	bu_log("nmg_s_radial_harmonize(s=%p) END\n", (void *)s);
 }
 
 
@@ -3521,7 +3516,7 @@ nmg_s_radial_check(struct shell *s, const struct bn_tol *tol)
     BN_CK_TOL(tol);
 
     if (RTG.NMG_debug & DEBUG_BASIC)
-	bu_log("nmg_s_radial_check(s=x%x) BEGIN\n", s);
+	bu_log("nmg_s_radial_check(s=%p) BEGIN\n", (void *)s);
 
     nmg_edge_tabulate(&edges, &s->l.magic);
     for (ep = (struct edge **)BU_PTBL_LASTADDR(&edges); ep >= (struct edge **)BU_PTBL_BASEADDR(&edges); ep--) {
@@ -3531,7 +3526,7 @@ nmg_s_radial_check(struct shell *s, const struct bn_tol *tol)
     bu_ptbl_free(&edges);
 
     if (RTG.NMG_debug & DEBUG_BASIC)
-	bu_log("nmg_s_radial_check(s=x%x) END\n", s);
+	bu_log("nmg_s_radial_check(s=%p) END\n", (void *)s);
 }
 
 
@@ -3547,7 +3542,7 @@ nmg_r_radial_check(const struct nmgregion *r, const struct bn_tol *tol)
     BN_CK_TOL(tol);
 
     if (RTG.NMG_debug & DEBUG_BASIC)
-	bu_log("nmg_r_radial_check(r=x%x)\n", r);
+	bu_log("nmg_r_radial_check(r=%p)\n", (void *)r);
 
     for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 	NMG_CK_SHELL(s);

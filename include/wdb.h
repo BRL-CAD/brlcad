@@ -1,7 +1,7 @@
 /*                           W D B . H
  * BRL-CAD
  *
- * Copyright (c) 1988-2013 United States Government as represented by
+ * Copyright (c) 1988-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,8 +30,10 @@
  *
  */
 
-#ifndef __WDB_H__
-#define __WDB_H__
+#ifndef WDB_H
+#define WDB_H
+
+#include "common.h"
 
 #include "bu.h"
 #include "bn.h"
@@ -69,32 +71,6 @@ struct wmember {
 #define WMEMBER_NULL	((struct wmember *)0)
 #define WDB_CK_WMEMBER(_p)	BU_CKMAG(_p, WMEMBER_MAGIC, "wmember" );
 
-/*
- * Definitions for pipe (wire) segments
- * FIXME: move to rtgeom.h?
- */
-
-struct wdb_pipept {
-    struct bu_list	l;		/**< @brief  doubly linked list support */
-    point_t		pp_coord;	/**< @brief  "control" point for pipe solid */
-    fastf_t		pp_id;		/**< @brief  inner diam, <=0 if solid (wire) */
-    fastf_t		pp_od;		/**< @brief  pipe outer diam */
-    fastf_t		pp_bendradius;	/**< @brief  bend radius to use for a bend at this point */
-};
-
-#define WDB_PIPESEG_NULL	((struct wdb_pipeseg *)0)
-
-struct wdb_metaballpt {
-    struct bu_list	l;
-    int		type;
-    fastf_t		fldstr;		/**< @brief  field strength */
-    fastf_t		sweat;		/**< @brief  beta value used for metaball and blob evaluation */
-    point_t		coord;
-    point_t		coord2;
-};
-#define WDB_METABALLPT_TYPE_POINT 0x0
-#define WDB_METABALLPT_TYPE_LINE 0x1
-#define WDB_METABALLPT_NULL	((struct wdb_metaballpt *)0)
 
 /**
  *
@@ -370,7 +346,7 @@ WDB_EXPORT int mk_ehy(
 
 /**
  *
- * Make a hyperbolid at the given center point with a vertex, height
+ * Make a hyperboloid at the given center point with a vertex, height
  * vector, A vector, magnitude of the B vector, and neck to base
  * ratio.
  *
@@ -1032,7 +1008,7 @@ WDB_EXPORT extern int make_hole_in_prepped_regions(struct rt_wdb *wdbp,
 
 __END_DECLS
 
-#endif /* __WDB_H__ */
+#endif /* WDB_H */
 
 /** @} */
 

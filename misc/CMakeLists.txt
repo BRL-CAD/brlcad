@@ -11,6 +11,7 @@ set(datadir "\${datarootdir}")
 
 add_subdirectory(pkgconfig)
 add_subdirectory(perl)
+add_subdirectory(attributes)
 
 if(NOT CMAKE_CONFIGURATION_TYPES)
   configure_file(brlcad-config.in ${CMAKE_BINARY_DIR}/misc/brlcad-config @ONLY)
@@ -73,6 +74,7 @@ set(misc_ignore_files
   Doxyfile
   Doxyfile.in
   DoxyfileLibs.in
+  DoxyfileLibs-defaults.in
   Makefile.defs
   archlinux
   astyle.opt
@@ -88,6 +90,7 @@ set(misc_ignore_files
   macosx
   nsis
   win32-msvc
+  osg_changes.patch
   )
 CMAKEFILES(${misc_ignore_files})
 

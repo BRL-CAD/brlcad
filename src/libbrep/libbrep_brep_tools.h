@@ -1,7 +1,7 @@
 /*            L I B B R E P _ B R E P _ T O O L S . H
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,8 +24,8 @@
  *  Utility routines for working with geometry.
  */
 
-#ifndef __LIBBREP_BREP_TOOLS
-#define __LIBBREP_BREP_TOOLS
+#ifndef LIBBREP_LIBBREP_BREP_TOOLS_H
+#define LIBBREP_LIBBREP_BREP_TOOLS_H
 
 #include "common.h"
 
@@ -309,7 +309,7 @@ bool ON_Surface_Quad_Split(
 	);
 
 
-#endif /* __LIBBREP_BREP_TOOLS */
+#endif /* LIBBREP_LIBBREP_BREP_TOOLS_H */
 /** @} */
 
 // Local Variables:

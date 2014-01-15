@@ -1,7 +1,7 @@
 /*                   P C M A T H G R A M M A R . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,8 +29,8 @@
  *	3. lazy function evaluation
  *
  */
-#ifndef PC_MATH_GRAMMAR
-#define PC_MATH_GRAMMAR
+#ifndef LIBPC_PCMATHGRAMMAR_H
+#define LIBPC_PCMATHGRAMMAR_H
 #define PHOENIX_LIMIT 6
 
 #include "pcMathLF.h"

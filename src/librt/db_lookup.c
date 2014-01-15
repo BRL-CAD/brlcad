@@ -1,7 +1,7 @@
 /*                     D B _ L O O K U P . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2013 United States Government as represented by
+ * Copyright (c) 1988-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -95,7 +95,7 @@ db_dirhash(const char *str)
 	return 0;
 
     /* BSD name hashing starts i=0, discarding first char.  why? */
-    while(*s)
+    while (*s)
 	sum += (size_t)*s++ * i++;
 
     return RT_DBHASH(sum);
@@ -117,15 +117,15 @@ db_dircheck(struct db_i *dbip,
     *headp = &(dbip->dbi_Head[db_dirhash(cp)]);
 
     for (dp = **headp; dp != RT_DIR_NULL; dp=dp->d_forw) {
-	char *this;
-	if (n0 == *(this=dp->d_namep)  &&	/* speed */
-	    n1 == this[1]  &&			/* speed */
-	    BU_STR_EQUAL(cp, this)) {
+	char *this_obj;
+	if (n0 == *(this_obj=dp->d_namep)  &&	/* speed */
+	    n1 == this_obj[1]  &&			/* speed */
+	    BU_STR_EQUAL(cp, this_obj)) {
 	    /* Name exists in directory already */
 	    int c;
 
 	    bu_vls_strcpy(ret_name, "A_");
-	    bu_vls_strcat(ret_name, this);
+	    bu_vls_strcat(ret_name, this_obj);
 
 	    for (c = 'A'; c <= 'Z'; c++) {
 		*cp = c;
@@ -170,12 +170,12 @@ db_lookup(const struct db_i *dbip, const char *name, int noisy)
 
     dp = dbip->dbi_Head[db_dirhash(name)];
     for (; dp != RT_DIR_NULL; dp=dp->d_forw) {
-	char *this;
+	char *this_obj;
 
 	/* first two checks are for speed */
-	if ((n0 == *(this=dp->d_namep)) && (n1 == this[1]) && (BU_STR_EQUAL(name, this))) {
+	if ((n0 == *(this_obj=dp->d_namep)) && (n1 == this_obj[1]) && (BU_STR_EQUAL(name, this_obj))) {
 	    if (RT_G_DEBUG&DEBUG_DB)
-		bu_log("db_lookup(%s) x%x\n", name, dp);
+		bu_log("db_lookup(%s) %p\n", name, (void *)dp);
 	    return dp;
 	}
     }
@@ -192,17 +192,17 @@ db_diradd(struct db_i *dbip, const char *name, off_t laddr, size_t len, int flag
 {
     struct directory **headp;
     struct directory *dp;
-    char *tmp_ptr;
+    const char *tmp_ptr;
     struct bu_vls local = BU_VLS_INIT_ZERO;
 
     RT_CK_DBI(dbip);
 
     if (RT_G_DEBUG&DEBUG_DB) {
-	bu_log("db_diradd(dbip=0x%x, name='%s', addr=0x%x, len=%zu, flags=0x%x, ptr=0x%x)\n",
-	       dbip, name, laddr, len, flags, ptr);
+	bu_log("db_diradd(dbip=%p, name='%s', addr=%ld, len=%zu, flags=0x%x, ptr=%p)\n",
+	       (void *)dbip, name, laddr, len, flags, ptr);
     }
 
-    if ((tmp_ptr=strchr(name, '/')) != NULL) {
+    if ((tmp_ptr = strchr(name, '/')) != NULL) {
 	/* if this is a version 4 database and the offending char is beyond NAMESIZE
 	 * then it is not really a problem
 	 */
@@ -346,8 +346,8 @@ db_pr_dir(const struct db_i *dbip)
 
     RT_CK_DBI(dbip);
 
-    bu_log("db_pr_dir(x%x):  Dump of directory for file %s [%s]\n",
-	   dbip, dbip->dbi_filename,
+    bu_log("db_pr_dir(%p):  Dump of directory for file %s [%s]\n",
+	   (void *)dbip, dbip->dbi_filename,
 	   dbip->dbi_read_only ? "READ-ONLY" : "Read/Write");
 
     bu_log("Title = %s\n", dbip->dbi_title);
@@ -365,8 +365,8 @@ db_pr_dir(const struct db_i *dbip)
 		flags = "COM";
 	    else
 		flags = "Bad";
-	    bu_log("x%.8x %s %s=x%.8x len=%.5zu use=%.2ld nref=%.2ld %s",
-		   dp,
+	    bu_log("%p %s %s=%ld len=%.5ld use=%.2ld nref=%.2ld %s",
+		   (void *)dp,
 		   flags,
 		   dp->d_flags & RT_DIR_INMEM ? "  ptr " : "d_addr",
 		   dp->d_addr,
@@ -375,7 +375,7 @@ db_pr_dir(const struct db_i *dbip)
 		   dp->d_nref,
 		   dp->d_namep);
 	    if (dp->d_animate)
-		bu_log(" anim=x%x\n", dp->d_animate);
+		bu_log(" anim=%p\n", (void *)dp->d_animate);
 	    else
 		bu_log("\n");
 	}
@@ -389,7 +389,7 @@ db_lookup_by_attr(struct db_i *dbip, int dir_flags, struct bu_attribute_value_se
     struct bu_attribute_value_set obj_avs;
     struct directory *dp;
     struct bu_ptbl *tbl;
-    int match_count=0;
+    int match_count = 0;
     int attr_count;
     int i, j;
     int draw;
@@ -422,8 +422,8 @@ db_lookup_by_attr(struct db_i *dbip, int dir_flags, struct bu_attribute_value_se
 
 	    draw = 0;
 	    match_count = 0;
-	    for (i=0; (size_t)i<(size_t)avs->count; i++) {
-		for (j=0; (size_t)j<(size_t)obj_avs.count; j++) {
+	    for (i = 0; (size_t)i < (size_t)avs->count; i++) {
+		for (j = 0; (size_t)j < (size_t)obj_avs.count; j++) {
 		    if (BU_STR_EQUAL(avs->avp[i].name, obj_avs.avp[j].name)) {
 			if (BU_STR_EQUAL(avs->avp[i].value, obj_avs.avp[j].value)) {
 			    if (op == 2) {
