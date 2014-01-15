@@ -194,7 +194,7 @@ ControlPolygonFlatEnough(
  * control points for resulting sub-curves if "Left" and "Right" are
  * non-null.
  */
-HIDDEN void
+void
 Bezier(
     point2d_t *V,		/* Control pts */
     int degree,			/* Degree of bezier curve */
