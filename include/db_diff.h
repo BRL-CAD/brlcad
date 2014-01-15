@@ -49,6 +49,18 @@ db_diff(const struct db_i *dbip_left,
 	void *client_data);
 
 /**
+ * The flags parameter is a bitfield is used with db_compare() to
+ * specify whether to report internal object parameter differences
+ * (DB_COMPARE_PARAM), attribute differences (DB_COMPARE_ATTRS), or
+ * everything (DB_COMPARE_ALL).
+ */
+typedef enum {
+    DB_COMPARE_ALL=0x00,
+    DB_COMPARE_PARAM=0x01,
+    DB_COMPARE_ATTRS=0x02
+} db_compare_criteria_t;
+
+/**
  * Compare two database objects.
  *
  * This function is useful for comparing two geometry objects and
@@ -57,25 +69,17 @@ db_diff(const struct db_i *dbip_left,
  * right, removed in the right, changed going from left to right, or
  * unchanged.
  *
+ * The flags parameter is a bitfield specifying what type of
+ * comparisons to perform.  The default is to compare everything and
+ * report on any differences encountered.
+ *
  * The same bu_attribute_value_set container may be passed to any of
  * the provided containers to aggregate results.  NULL may be passed
  * to not inspect or record information for that type of comparison.
  *
- * The flags parameter is a bitfield specifying whether to report
- * internal object parameter differences (DB_COMPARE_PARAM), attribute
- * differences (DB_COMPARE_ATTRS), or everything (DB_COMPARE_ALL).
- * The default is to report everything.
- *
  * This function returns 0 if there are no differences and non-0 if
  * there are differences.  Negative values indicate an internal error.
  */
-
-typedef enum {
-    DB_COMPARE_ALL=0x00,
-    DB_COMPARE_PARAM=0x01,
-    DB_COMPARE_ATTRS=0x02
-} db_compare_criteria_t;
-
 RT_EXPORT extern int
 db_compare(const struct rt_db_internal *left_obj,
 	   const struct rt_db_internal *right_obj,
