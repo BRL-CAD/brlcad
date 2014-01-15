@@ -48,12 +48,6 @@ db_diff(const struct db_i *dbip_left,
 	int (*unch_func)(const struct db_i *left, const struct db_i *right, const struct directory *unchanged, void *data),
 	void *client_data);
 
-typedef enum {
-    DB_COMPARE_ALL=0x00,
-    DB_COMPARE_PARAM=0x01,
-    DB_COMPARE_ATTRS=0x02
-} db_compare_criteria_t;
-
 /**
  * Compare two database objects.
  *
@@ -75,6 +69,13 @@ typedef enum {
  * This function returns 0 if there are no differences and non-0 if
  * there are differences.  Negative values indicate an internal error.
  */
+
+typedef enum {
+    DB_COMPARE_ALL=0x00,
+    DB_COMPARE_PARAM=0x01,
+    DB_COMPARE_ATTRS=0x02
+} db_compare_criteria_t;
+
 RT_EXPORT extern int
 db_compare(const struct rt_db_internal *left_obj,
 	   const struct rt_db_internal *right_obj,
