@@ -39,6 +39,7 @@
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
+#include "db_diff.h"
 
 
 HIDDEN int

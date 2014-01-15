@@ -50,7 +50,7 @@ db_diff(const struct db_i *dbip_left,
 typedef enum {
     DB_COMPARE_ALL=0x00,
     DB_COMPARE_PARAM=0x01,
-    DB_COMPARE_ATTRS 0x02
+    DB_COMPARE_ATTRS=0x02
 } db_compare_criteria_t;
 
 /**
