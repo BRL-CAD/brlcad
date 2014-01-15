@@ -37,24 +37,39 @@ API DESIGN
 
 T.B.D.
 
+By design, this library is intended to be useful for reading and
+writing 3D geometry.  The public API design is intentionally very
+simple while supporting a number of file formats and geometry
+representation types.
+
+Supported file formats for reading and/or writing currently includes
+the following formats: OBJ, STL, VRML, FASTGEN4, and BRL-CAD.
+
+The library includes support for a number of implicit and explicit
+geometry representation types including Bags o' Triangles (triangle
+mesh geometry), n-Manifold polgyonal meshes, volumetric data, NURBS,
+and implicit primitives with constructive solid geometry (CSG) Boolean
+operations.
+
 
 NEW FORMATS
 ===========
 
-Adding a few notes on libraries that may be worth investigating to see if they
-have parsing logic that would help in developing convertors for various formats.
-They may amount to nothing, but are worth checking.
+Adding a few notes on libraries that may be worth investigating to see
+if they have parsing logic that would help in developing convertors
+for various formats.  They may amount to nothing, but are worth
+checking.
 
 
 Collada (MIT licensed libraries)
 http://opencollada.org/
-http://sourceforge.net/projects/colladamaya/ (specifically,
-http://colladamaya.svn.sourceforge.net/viewvc/colladamaya/trunk/FCollada/)
+http://sourceforge.net/projects/colladamaya/
+http://colladamaya.svn.sourceforge.net/viewvc/colladamaya/trunk/FCollada/
 
 Inventor files: (LGPL license)
 http://oss.sgi.com/projects/inventor/
-http://www.mevislab.de/inventor/ (website changed, see src/libgcv in dmtogl
-                                  branch of BRL-CAD for patch)
+http://www.mevislab.de/inventor/ (website changed, see src/libgcv in
+                                  dmtogl branch of BRL-CAD for patch)
 http://fl-inventor.sourceforge.net/
 
 AutoCAD dwg - none (opendwg not compatible with BRL-CAD licensing)
@@ -70,29 +85,36 @@ POV-RAY
 Haven't found anything with a compatible license...
 
 Blender
-Apparently their file format is a bit... weird.  Possibly useful notes here:
+
+Apparently their file format is a bit... weird.  Possibly useful notes
+here:
 http://www.atmind.nl/blender/mystery_ot_blend.html
 http://www.blender.org/development/architecture/
 http://www.blender.org/development/architecture/notes-on-sdna/
-Since blender is GPL, unlikely their code can be used directly. Since their
-storage format seems to be close to their data structures, it might be worth
-contacting the project and asking specifically about the parsing code, if they
-have the flexibility to sub-license just that piece as LGPL.
 
-Update: From discussions at SIGGRAPH Blender forum, unlikely they have flexibility to
-relicense anything.  Much more interestingly, Gamekit was announced there which DOES
-import Blender files and is MIT licensed:
+Since blender is GPL, unlikely their code can be used directly. Since
+their storage format seems to be close to their data structures, it
+might be worth contacting the project and asking specifically about
+the parsing code, if they have the flexibility to sub-license just
+that piece as LGPL.
+
+Update: From discussions at SIGGRAPH Blender forum, unlikely they have
+flexibility to relicense anything.  Much more interestingly, Gamekit
+was announced there which DOES import Blender files and is MIT
+licensed:
 
 http://code.google.com/p/gamekit/
 
-Exporting Blender may be impractical (i.e. no well defined format to target) but as Blender
-has importers for a wide variety of formats exporting to Blender directly may not be necessary
+Exporting Blender may be impractical (i.e. no well defined format to
+target) but as Blender has importers for a wide variety of formats
+exporting to Blender directly may not be necessary
 
 Universal 3D (Apache 2.0 license)
 http://sourceforge.net/projects/u3d/
 
 PLY
-http://www.tecgraf.puc-rio.br/~diego/professional/rply/ (newer, probably should start here)
+http://www.tecgraf.puc-rio.br/~diego/professional/rply/ (newer,
+probably should start here)
 http://www.cc.gatech.edu/projects/large_models/ply.html
 
 
