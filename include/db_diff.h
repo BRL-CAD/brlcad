@@ -31,8 +31,9 @@
  * getting called.  Any objects in dbip_right but not in dbip_left
  * cause add_func() to get called.  Any objects in dbip_left but not
  * in dbip_right cause del_func() to get called.  Objects existing in
- * both (i.e., with the same name) cause chgd_func() to get called.
- * If the object is unchanged, unch_func() is called.  NULL may be
+ * both (i.e., with the same name) but differing in some fashion
+ * cause chgd_func() to get called. If the object exists in both
+ * but is unchanged, unch_func() is called.  NULL may be
  * passed to skip any callback.
  *
  * The function returns 0 if there are no differences, or returns the
