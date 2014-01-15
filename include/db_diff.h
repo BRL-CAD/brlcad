@@ -45,7 +45,8 @@ db_diff(const struct db_i *dbip_left,
 	int (*add_func)(const struct db_i *left, const struct db_i *right, const struct directory *added, void *data),
 	int (*del_func)(const struct db_i *left, const struct db_i *right, const struct directory *removed, void *data),
 	int (*chgd_func)(const struct db_i *left, const struct db_i *right, const struct directory *before, const struct directory *after, void *data),
-	int (*unch_func)(const struct db_i *left, const struct db_i *right, const struct directory *unchanged, void *data));
+	int (*unch_func)(const struct db_i *left, const struct db_i *right, const struct directory *unchanged, void *data),
+	void *client_data);
 
 typedef enum {
     DB_COMPARE_ALL=0x00,

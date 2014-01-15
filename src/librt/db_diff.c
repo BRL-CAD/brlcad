@@ -60,8 +60,8 @@ db_diff(const struct db_i *dbip1,
 	int (*add_func)(const struct db_i *left, const struct db_i *right, const struct directory *added, void *data),
 	int (*del_func)(const struct db_i *left, const struct db_i *right, const struct directory *removed, void *data),
 	int (*chgd_func)(const struct db_i *left, const struct db_i *right, const struct directory *before, const struct directory *after, void *data),
-	int (*unch_func)(const struct db_i *left, const struct db_i *right, const struct directory *unchanged, void *data)
-	)
+	int (*unch_func)(const struct db_i *left, const struct db_i *right, const struct directory *unchanged, void *data),
+	void *client_data)
 {
     int ret = 0;
     int error = 0;
@@ -80,7 +80,7 @@ db_diff(const struct db_i *dbip1,
 	/* check if this object exists in the other database */
 	if ((dp2 = db_lookup(dbip2, dp1->d_namep, 0)) == RT_DIR_NULL) {
 	    this_diff++;
-	    if (del_func(dbip1, dbip2, dp1, NULL)) error--;
+	    if (del_func(dbip1, dbip2, dp1, client_data)) error--;
 	    continue;
 	}
 
@@ -93,9 +93,9 @@ db_diff(const struct db_i *dbip1,
 
 	if (db_diff_external(&ext1, &ext2)) {
 	    this_diff++;
-	    if (chgd_func(dbip1, dbip2, dp1, dp2, NULL)) error--;
+	    if (chgd_func(dbip1, dbip2, dp1, dp2, client_data)) error--;
 	} else {
-	    if (unch_func(dbip1, dbip2, dp1, NULL)) error--;
+	    if (unch_func(dbip1, dbip2, dp1, client_data)) error--;
 	}
 
 	ret += this_diff;
@@ -114,7 +114,7 @@ db_diff(const struct db_i *dbip1,
 	/* check if this object exists in the other database */
 	if ((dp1 = db_lookup(dbip1, dp2->d_namep, 0)) == RT_DIR_NULL) {
 	    this_diff++;
-	    if (add_func(dbip1, dbip2, dp1, NULL)) error--;
+	    if (add_func(dbip1, dbip2, dp1, client_data)) error--;
 	}
 
 	ret += this_diff;
