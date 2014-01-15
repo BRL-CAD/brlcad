@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2013-0X-XX  Release 7.24.2                                     ---
 ----------------------------------------------------------------------
 
+* fixed crash of extrude with special case bezier curves - huskmate13
 * improved performance of 'terrain' & numerous shaders - Sean Morrison
 * new manual pages for rtexample and brep_simple - Shardul Chiplunkar
 * added key binding to reopen/focus mged command window - Emory Huff
