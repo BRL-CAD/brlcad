@@ -37,6 +37,7 @@
 #include "bu.h"
 #include "vmath.h"
 
+
 #define ADD 1
 #define MULT 2
 #define ABS 3
@@ -44,6 +45,7 @@
 #define BUFLEN (8192*2)	/* usually 2 pages of memory, 16KB */
 
 
+static const char usage[] = "Usage: imod [-a add | -s sub | -m mult | -d div | -A | -e exp | -r root] [file.s]\n";
 static const char *progname = "imod";
 static int numop = 0;		/* number of operations */
 static int op[256];		/* operations */
@@ -57,7 +59,7 @@ get_args(int argc, char *argv[])
     int c;
     double d;
 
-    while ((c = bu_getopt(argc, argv, "a:s:m:d:Ae:r:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "a:s:m:d:Ae:r:h?")) != -1) {
 	switch (c) {
 	    case 'a':
 		op[ numop ] = ADD;
@@ -75,7 +77,7 @@ get_args(int argc, char *argv[])
 		op[ numop ] = MULT;
 		d = atof(bu_optarg);
 		if (ZERO(d)) {
-		    bu_exit(2, "bwmod: divide by zero!\n");
+		    bu_exit(2, "%s: divide by zero!\n", progname);
 		}
 		val[ numop++ ] = 1.0 / d;
 		break;
@@ -91,7 +93,7 @@ get_args(int argc, char *argv[])
 		op[ numop ] = POW;
 		d = atof(bu_optarg);
 		if (ZERO(d)) {
-		    bu_exit(2, "bwmod: zero root!\n");
+		    bu_exit(2, "%s: zero root!\n", progname);
 		}
 		val[ numop++ ] = 1.0 / d;
 		break;
@@ -111,8 +113,8 @@ get_args(int argc, char *argv[])
 	ifname = bu_realpath(file_name, NULL);
 	if (freopen(ifname, "r", stdin) == NULL) {
 	    fprintf(stderr,
-		    "bwmod: cannot open \"%s(canonical %s)\" for reading\n",
-		    file_name, ifname);
+		    "%s: cannot open \"%s(canonical %s)\" for reading\n",
+		    progname, file_name, ifname);
 	    bu_free(ifname, "ifname alloc from bu_realpath");
 	    return 0;
 	}
@@ -120,7 +122,7 @@ get_args(int argc, char *argv[])
     }
 
     if (argc > ++bu_optind)
-	fprintf(stderr, "bwmod: excess argument(s) ignored\n");
+	fprintf(stderr, "%s: excess argument(s) ignored\n", progname);
 
     return 1;		/* OK */
 }
@@ -165,14 +167,13 @@ main(int argc, char *argv[])
     int i;
     unsigned int n;
     unsigned long clip_high, clip_low;
-
     short iobuf[BUFLEN];		/* input buffer */
 
     if (!(progname=strrchr(*argv, '/')))
 	progname = *argv;
 
     if (!get_args(argc, argv) || isatty(fileno(stdin)) || isatty(fileno(stdout))) {
-	bu_exit(1, "Usage: imod {-a add -s sub -m mult -d div -A(abs) -e exp -r root} [file.s]\n");
+	bu_exit(1, "%s", usage);
     }
 
     mk_trans_tbl();
@@ -180,7 +181,6 @@ main(int argc, char *argv[])
     clip_high = clip_low = 0;
 
     while ((n=fread(iobuf, sizeof(*iobuf), BUFLEN, stdin)) > 0) {
-
 	/* translate */
 	for (p=iobuf, q= &iobuf[n]; p < q; ++p) {
 	    i = *p + 32768;
