@@ -189,11 +189,6 @@ control_polygon_flat_enough(
 }
 
 
-/*
- * Evaluate a Bezier curve at a particular parameter value. Fill in
- * control points for resulting sub-curves if "Left" and "Right" are
- * non-null.
- */
 void
 bezier(
     point2d_t *V,		/* Control pts */
@@ -310,11 +305,6 @@ compute_x_intercept(
 }
 
 
-/*
- * Given an equation in Bernstein-Bezier form, find
- * all of the roots in the interval [0, 1].  Return the number
- * of roots found.
- */
 int
 bezier_roots(
     point2d_t *w,               /* The control points */
