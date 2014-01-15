@@ -160,6 +160,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"fracture", cmd_ged_plain_wrapper, ged_fracture},
     {"front", f_bv_front, GED_FUNC_PTR_NULL},
     {"g", cmd_ged_plain_wrapper, ged_group},
+    {"gdiff", cmd_ged_plain_wrapper, ged_gdiff},
     {"get", cmd_ged_plain_wrapper, ged_get},
     {"get_autoview", cmd_ged_plain_wrapper, ged_get_autoview},
     {"get_comb", cmd_ged_plain_wrapper, ged_get_comb},

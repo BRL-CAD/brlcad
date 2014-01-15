@@ -1059,6 +1059,7 @@ static struct to_cmdtab to_cmds[] = {
     {"form",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_form},
     {"fracture",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_fracture},
     {"g",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_group},
+    {"gdiff",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_gdiff},
     {"get",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_get},
     {"get_autoview",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_get_autoview},
     {"get_bot_edges",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_get_bot_edges},

@@ -241,6 +241,7 @@ package provide cadwidgets::Ged 1.0
 	method form {args}
 	method fracture {args}
 	method g {args}
+	method gdiff {args}
 	method get {args}
 	method get_autoview {args}
 	method get_bot_edges {args}
@@ -1823,6 +1824,10 @@ package provide cadwidgets::Ged 1.0
 ::itcl::body cadwidgets::Ged::g {args} {
     set mRayNeedGettrees 1
     eval $mGed g $args
+}
+
+::itcl::body cadwidgets::Ged::gdiff {args} {
+    eval $mGed gdiff $args
 }
 
 ::itcl::body cadwidgets::Ged::get {args} {

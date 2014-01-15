@@ -1177,6 +1177,11 @@ GED_EXPORT extern int ged_form(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_fracture(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Calculate a geometry diff
+ */
+GED_EXPORT extern int ged_gdiff(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Get object attributes
  */
 GED_EXPORT extern int ged_get(struct ged *gedp, int argc, const char *argv[]);
