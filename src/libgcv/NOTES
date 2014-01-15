@@ -71,6 +71,9 @@ http://oss.sgi.com/projects/inventor/
 http://www.mevislab.de/inventor/ (website changed, see src/libgcv in
                                   dmtogl branch of BRL-CAD for patch)
 http://fl-inventor.sourceforge.net/
+Note that the Coin3D library is now 3-clause BSD as well, a better
+source from a licensing standpoint for extracting parsers etc.:
+https://bitbucket.org/Coin3D/coin/wiki/Home
 
 AutoCAD dwg - none (opendwg not compatible with BRL-CAD licensing)
 
