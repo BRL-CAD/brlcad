@@ -1140,6 +1140,9 @@ if(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
 endif(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
 mark_as_advanced(Qt5Widgets_DIR)
 
+# Enable features requiring OpenSceneGraph
+#find_package(OpenSceneGraph REQUIRED osgDB osgUtil osgText osgViewer osgGA)
+
 #----------------------------------------------------------------------
 # The following are fine-grained options for enabling/disabling compiler
 # and source code definition settings.  Typically these are set to
