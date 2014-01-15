@@ -179,8 +179,8 @@ diff_changed(const struct db_i *left, const struct db_i *right, const struct dir
 	    &(result->internal_new_diff), &(result->internal_shared));
 
     result->attribute_diff = db_compare(result->intern_orig, result->intern_new, DB_COMPARE_ATTRS,
-	    &(result->internal_new_only), &(result->internal_orig_only), &(result->internal_orig_diff),
-	    &(result->internal_new_diff), &(result->internal_shared));
+	    &(result->additional_new_only), &(result->additional_orig_only), &(result->additional_orig_diff),
+	    &(result->additional_new_diff), &(result->additional_shared));
 
     return 0;
 }
