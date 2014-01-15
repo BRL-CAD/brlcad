@@ -43,6 +43,8 @@
 #include "raytrace.h"
 #include "nurb.h"
 
+#include "../../librt_private.h"
+
 
 fastf_t rt_cnurb_par_edge(const struct edge_g_cnurb *crv, fastf_t epsilon);
 extern void get_indices(genptr_t seg, int *start, int *end);	/* from g_extrude.c */
@@ -840,7 +842,7 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 	    }
 
 	    /* now do subdivision as necessary */
-	    bezier_hd = subdivide_bezier(bezier_hd, bsg->degree, epsilon, 0);
+	    bezier_hd = bezier_subdivide(bezier_hd, bsg->degree, epsilon, 0);
 
 	    /* plot the results */
 	    bz = BU_LIST_FIRST(bezier_2d_list, &bezier_hd->l);

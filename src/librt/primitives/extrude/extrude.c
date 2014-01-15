@@ -41,6 +41,8 @@
 #include "raytrace.h"
 #include "nurb.h"
 
+#include "../../librt_private.h"
+
 
 extern int seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, point_t V,
 			vect_t u_vec, vect_t v_vec, struct rt_sketch_internal *sketch_ip, genptr_t seg);
@@ -997,21 +999,24 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 		dists = dist;
 		surfno = CARC_SEG;
 		break;
+
 	    case CURVE_BEZIER_MAGIC:
 		bsg = (struct bezier_seg *)lng;
 		verts = (point2d_t *)bu_calloc(bsg->degree + 1, sizeof(point2d_t), "Bezier verts");
 		for (j = 0; j <= (size_t)bsg->degree; j++) {
 		    V2MOVE(verts[j], extr->verts[bsg->ctl_points[j]]);
 		}
+
 		V2MOVE(ray_dir_unit, ray_dir);
 		diff = sqrt(MAG2SQ(ray_dir));
+
 		ray_dir_unit[X] /= diff;
 		ray_dir_unit[Y] /= diff;
 		ray_dir_unit[Z] = 0.0;
 		ray_perp[X] = ray_dir[Y];
 		ray_perp[Y] = -ray_dir[X];
-		dist_count = FindRoots(verts, bsg->degree, &intercept, &normal, ray_start, ray_dir_unit, ray_perp,
-				       0, extr_tol.dist);
+
+		dist_count = bezier_roots(verts, bsg->degree, &intercept, &normal, ray_start, ray_dir_unit, ray_perp, 0, extr_tol.dist);
 		if (dist_count) {
 		    free_dists = 1;
 		    dists = (fastf_t *)bu_calloc(dist_count, sizeof(fastf_t), "dists (Bezier)");
@@ -1023,8 +1028,10 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 		    bu_free((char *)intercept, "Bezier intercept");
 		    surfno = BEZIER_SEG;
 		}
+
 		bu_free((char *)verts, "Bezier verts");
 		break;
+
 	    case CURVE_NURB_MAGIC:
 		break;
 	    default:
@@ -1638,7 +1645,7 @@ get_seg_midpoint(genptr_t seg, struct rt_sketch_internal *skt, point2d_t pt)
 	    for (i = 0; i <= bsg->degree; i++) {
 		VMOVE_2D(V[i], skt->verts[bsg->ctl_points[i]]);
 	    }
-	    Bezier(V, bsg->degree, 0.51, NULL, NULL, pt, NULL);
+	    bezier(V, bsg->degree, 0.51, NULL, NULL, pt, NULL);
 	    bu_free((char *)V, "Bezier control points");
 	    break;
 	default:
@@ -1855,6 +1862,7 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 		    }
 		}
 		break;
+
 	    case CURVE_BEZIER_MAGIC:
 		bsg = (struct bezier_seg *)lng;
 		intercept = NULL;
@@ -1862,7 +1870,8 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 		for (j = 0; j <= bsg->degree; j++) {
 		    V2MOVE(verts[j], ip->verts[bsg->ctl_points[j]]);
 		}
-		code = FindRoots(verts, bsg->degree, &intercept, &normal, pta, dir, norm, 0, tol->dist);
+
+		code = bezier_roots(verts, bsg->degree, &intercept, &normal, pta, dir, norm, 0, tol->dist);
 		for (j = 0; j < code; j++) {
 		    V2SUB2(diff, intercept[j], pta);
 		    dist[0] = sqrt(MAG2SQ(diff));
@@ -1879,12 +1888,14 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 			(*root) = inter;
 		    }
 		}
+
 		if ((*intercept))
 		    bu_free((char *)intercept, "Bezier Intercepts");
 		if ((*normal))
 		    bu_free((char *)normal, "Bezier normals");
 		bu_free((char *)verts, "Bezier Ctl points");
 		break;
+
 	    default:
 		bu_log("isect_2D_loop_ray: Unrecognized curve segment type x%x\n", *lng);
 		bu_bomb("isect_2D_loop_ray: Unrecognized curve segment type\n");

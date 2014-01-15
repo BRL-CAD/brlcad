@@ -195,7 +195,7 @@ ControlPolygonFlatEnough(
  * non-null.
  */
 void
-Bezier(
+bezier(
     point2d_t *V,		/* Control pts */
     int degree,			/* Degree of bezier curve */
     double t,			/* Parameter value [0..1]	*/
@@ -210,10 +210,10 @@ Bezier(
     point2d_t **Vtemp;
 
 
-    Vtemp = (point2d_t **)bu_calloc(degree+1, sizeof(point2d_t *), "Bezier: Vtemp array");
+    Vtemp = (point2d_t **)bu_calloc(degree+1, sizeof(point2d_t *), "bezier: Vtemp array");
     for (i=0; i<=degree; i++)
 	Vtemp[i] = (point2d_t *)bu_calloc(degree+1, sizeof(point2d_t),
-					  "Bezier: Vtemp[i] array");
+					  "bezier: Vtemp[i] array");
     /* Copy control points */
     for (j =0; j <= degree; j++) {
 	V2MOVE(Vtemp[0][j], V[j]);
@@ -252,8 +252,8 @@ Bezier(
     }
 
     for (i=0; i<=degree; i++)
-	bu_free((char *)Vtemp[i], "Bezier: Vtemp[i]");
-    bu_free((char *)Vtemp, "Bezier: Vtemp");
+	bu_free((char *)Vtemp[i], "bezier: Vtemp[i]");
+    bu_free((char *)Vtemp, "bezier: Vtemp");
 
     return;
 }
@@ -311,13 +311,12 @@ ComputeXIntercept(
 
 
 /*
- * FindRoots :
  * Given an equation in Bernstein-Bezier form, find
  * all of the roots in the interval [0, 1].  Return the number
  * of roots found.
  */
 int
-FindRoots(
+bezier_roots(
     point2d_t *w,               /* The control points */
     int degree,         	/* The degree of the polynomial */
     point2d_t **intercept,	/* list of intersections found */
@@ -352,15 +351,15 @@ FindRoots(
 	    if (depth >= MAXDEPTH) {
 		BU_ALLOC(*intercept, point2d_t);
 		BU_ALLOC(*normal, point2d_t);
-		Bezier(w, degree, 0.5, NULL, NULL, *intercept[0], *normal[0]);
+		bezier(w, degree, 0.5, NULL, NULL, *intercept[0], *normal[0]);
 		return 1;
 	    }
 	    if (ControlPolygonFlatEnough(w, degree, epsilon)) {
 		BU_ALLOC(*intercept, point2d_t);
 		BU_ALLOC(*normal, point2d_t);
 		if (!ComputeXIntercept(w, degree, ray_start, ray_dir, *intercept[0], *normal[0])) {
-		    bu_free((char *)(*intercept), "FindRoots: no solution");
-		    bu_free((char *)(*normal), "FindRoots: no solution");
+		    bu_free((char *)(*intercept), "bezier_roots: no solution");
+		    bu_free((char *)(*normal), "bezier_roots: no solution");
 		    return 0;
 		}
 		return 1;
@@ -371,22 +370,22 @@ FindRoots(
 
     /* Otherwise, solve recursively after */
     /* subdividing control polygon */
-    Left = (point2d_t *)bu_calloc(degree+1, sizeof(point2d_t), "FindRoots: Left");
-    Right = (point2d_t *)bu_calloc(degree+1, sizeof(point2d_t), "FindRoots: Right");
-    Bezier(w, degree, 0.5, Left, Right, eval_pt, NULL);
+    Left = (point2d_t *)bu_calloc(degree+1, sizeof(point2d_t), "bezier_roots: Left");
+    Right = (point2d_t *)bu_calloc(degree+1, sizeof(point2d_t), "bezier_roots: Right");
+    bezier(w, degree, 0.5, Left, Right, eval_pt, NULL);
 
-    left_count  = FindRoots(Left,  degree, &left_t, &left_n, ray_start, ray_dir, ray_perp, depth+1, epsilon);
-    right_count = FindRoots(Right, degree, &right_t, &right_n, ray_start, ray_dir, ray_perp, depth+1, epsilon);
+    left_count  = bezier_roots(Left,  degree, &left_t, &left_n, ray_start, ray_dir, ray_perp, depth+1, epsilon);
+    right_count = bezier_roots(Right, degree, &right_t, &right_n, ray_start, ray_dir, ray_perp, depth+1, epsilon);
 
     total_count = left_count + right_count;
 
-    bu_free((char *)Left, "FindRoots: Left");
-    bu_free((char *)Right, "FindRoots: Right");
+    bu_free((char *)Left, "bezier_roots: Left");
+    bu_free((char *)Right, "bezier_roots: Right");
     if (total_count) {
 	*intercept = (point2d_t *)bu_calloc(total_count, sizeof(point2d_t),
-					    "FindRoots: roots compilation");
+					    "bezier_roots: roots compilation");
 	*normal = (point2d_t *)bu_calloc(total_count, sizeof(point2d_t),
-					 "FindRoots: normal compilation");
+					 "bezier_roots: normal compilation");
     }
 
     /* Gather solutions together */
@@ -414,7 +413,7 @@ FindRoots(
 
 
 struct bezier_2d_list *
-subdivide_bezier(struct bezier_2d_list *bezier_in, int degree, fastf_t epsilon, int depth)
+bezier_subdivide(struct bezier_2d_list *bezier_in, int degree, fastf_t epsilon, int depth)
 {
     struct bezier_2d_list *bz_l, *bz_r, *new_head;
     struct bezier_2d_list *left_rtrn, *rt_rtrn;
@@ -440,28 +439,28 @@ subdivide_bezier(struct bezier_2d_list *bezier_in, int degree, fastf_t epsilon, 
     BU_ALLOC(bz_r, struct bezier_2d_list);
     BU_LIST_INIT(&bz_r->l);
     bz_l->ctl = (point2d_t *)bu_calloc(degree + 1, sizeof(point2d_t),
-				       "subdivide_bezier: bz_l->ctl");
+				       "bezier_subdivide: bz_l->ctl");
     bz_r->ctl = (point2d_t *)bu_calloc(degree + 1, sizeof(point2d_t),
-				       "subdivide_bezier: bz_r->ctl");
+				       "bezier_subdivide: bz_r->ctl");
 
     /* subdivide at t = 0.5 */
-    Bezier(bezier_in->ctl, degree, 0.5, bz_l->ctl, bz_r->ctl, pt, NULL);
+    bezier(bezier_in->ctl, degree, 0.5, bz_l->ctl, bz_r->ctl, pt, NULL);
 
     /* eliminate original */
     BU_LIST_DEQUEUE(&bezier_in->l);
-    bu_free((char *)bezier_in->ctl, "subdivide_bezier: bezier_in->ctl");
-    bu_free((char *)bezier_in, "subdivide_bezier: bezier_in");
+    bu_free((char *)bezier_in->ctl, "bezier_subdivide: bezier_in->ctl");
+    bu_free((char *)bezier_in, "bezier_subdivide: bezier_in");
 
     /* recurse on left curve */
-    left_rtrn = subdivide_bezier(bz_l, degree, epsilon, depth+1);
+    left_rtrn = bezier_subdivide(bz_l, degree, epsilon, depth+1);
 
     /* recurse on right curve */
-    rt_rtrn = subdivide_bezier(bz_r, degree, epsilon, depth+1);
+    rt_rtrn = bezier_subdivide(bz_r, degree, epsilon, depth+1);
 
     BU_LIST_APPEND_LIST(&new_head->l, &left_rtrn->l);
     BU_LIST_APPEND_LIST(&new_head->l, &rt_rtrn->l);
-    bu_free((char *)left_rtrn, "subdivide_bezier: left_rtrn (head)");
-    bu_free((char *)rt_rtrn, "subdivide_bezier: rt_rtrn (head)");
+    bu_free((char *)left_rtrn, "bezier_subdivide: left_rtrn (head)");
+    bu_free((char *)rt_rtrn, "bezier_subdivide: rt_rtrn (head)");
 
     return new_head;
 }

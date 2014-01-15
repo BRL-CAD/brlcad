@@ -281,11 +281,6 @@ RT_EXPORT extern void rt_nurb_map_oslo(struct oslo_mat *oslo,
 					    int o_stride, int n_stride,
 					    int lower, int upper, int pt_type);
 
-/* bezier_2d_isect.c */
-RT_EXPORT extern void Bezier(point2d_t *V, int degree, double t, point2d_t *Left, point2d_t *Right, point2d_t eval_pt, point2d_t normal );
-RT_EXPORT extern int FindRoots(point2d_t *w, int degree, point2d_t **intercept, point2d_t **normal, point2d_t ray_start, point2d_t ray_dir, point2d_t ray_perp, int depth, fastf_t epsilon);
-RT_EXPORT extern struct bezier_2d_list *subdivide_bezier(struct bezier_2d_list *bezier_hd, int degree, fastf_t epsilon, int depth);
-
 __END_DECLS
 
 #endif /* NURB_H */
