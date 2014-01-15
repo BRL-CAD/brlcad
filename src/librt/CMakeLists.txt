@@ -24,7 +24,7 @@ BRLCAD_LIB_INCLUDE_DIRS(rt RT_INCLUDE_DIRS RT_LOCAL_INCLUDE_DIRS)
 set(LIBRT_SOURCES
   attributes.c
   bbox.c
-  bezier_2d_isect.c
+  bezier.c
   binunif/binunif.c
   binunif/db5_bin.c
   bool.c
