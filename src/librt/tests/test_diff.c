@@ -267,8 +267,8 @@ diff_summarize(struct bu_vls *diff_log, struct results *results)
 	const struct directory *dp = result->dp_orig;
 	if (!dp) dp = result->dp_new;
 	bu_vls_printf(diff_log, "%s was changed:\n", dp->d_namep);
-	attrs_summary(diff_log, result);
 	params_summary(diff_log, result);
+	attrs_summary(diff_log, result);
 	bu_vls_printf(diff_log, "\n");
     }
 }
