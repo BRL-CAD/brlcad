@@ -176,7 +176,7 @@ bu_avs_diff(struct bu_attribute_value_set *shared,
     return (have_diff) ? 1 : 0;
 }
 
-int
+HIDDEN int
 tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int offset)
 {
     int i = 0;
@@ -203,7 +203,7 @@ tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int of
 }
 
 /* TODO - this should be a function somewhere, is it already? */
-const char *
+HIDDEN const char *
 arb_type_to_str(int type) {
     switch (type) {
 	case 4:
