@@ -60,6 +60,8 @@ if they have parsing logic that would help in developing convertors
 for various formats.  They may amount to nothing, but are worth
 checking.
 
+For a fairly comprehensive list, see Paul Bourke's data formats page:
+http://paulbourke.net/dataformats/
 
 Collada (MIT licensed libraries)
 http://opencollada.org/
