@@ -263,7 +263,7 @@ db_compare(const struct rt_db_internal *left_obj,
 	/* Type is a valid basis on which to declare a DB_COMPARE_PARAM difference event,
 	 * but as a single value in the rt_<type>_get return it does not fit neatly into
 	 * the attribute/value paradigm used for the majority of the comparisions.  For
-	 * this reason, we handle it specially using the lower level database time
+	 * this reason, we handle it specially using the lower level database type
 	 * information directly.
 	 */
 	if (left_obj->idb_minor_type != right_obj->idb_minor_type) {
