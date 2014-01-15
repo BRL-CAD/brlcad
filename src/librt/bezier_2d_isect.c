@@ -142,15 +142,15 @@ ControlPolygonFlatEnough(
 	double det, dInv;
 	double a1, b1, c1, a2, b2, c2;
 
-	if (NEAR_ZERO(a, VUNITIZE_TOL))	{
-          a1 = 1.0;
-          b1 = 1.0;
-          c1 = 0.0;
+	if (NEAR_ZERO(a, VUNITIZE_TOL)) {
+	    a1 = 1.0;
+	    b1 = 1.0;
+	    c1 = 0.0;
 	} else {
-	  /* Implicit equation for zero line */
-	  a1 = 0.0;
-	  b1 = 1.0;
-	  c1 = 0.0;
+	    /* Implicit equation for zero line */
+	    a1 = 0.0;
+	    b1 = 1.0;
+	    c1 = 0.0;
 	}
 
 	/* Implicit equation for "above" line */
