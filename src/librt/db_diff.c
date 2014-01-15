@@ -157,13 +157,14 @@ bu_avs_diff(struct bu_attribute_value_set *shared,
 	if (!val2) {
 	    bu_avs_add(orig_only, avp->name, avp->value);
 	    have_diff++;
-	}
-	if (avpp_val_compare(avp->value, val2)) {
-	    bu_avs_add(shared, avp->name, avp->value);
 	} else {
-	    bu_avs_add(orig_diff, avp->name, avp->value);
-	    bu_avs_add(new_diff, avp->name, val2);
-	    have_diff++;
+	    if (avpp_val_compare(avp->value, val2)) {
+		bu_avs_add(shared, avp->name, avp->value);
+	    } else {
+		bu_avs_add(orig_diff, avp->name, avp->value);
+		bu_avs_add(new_diff, avp->name, val2);
+		have_diff++;
+	    }
 	}
     }
     for (BU_AVS_FOR(avp, avs2)) {
