@@ -1,3 +1,46 @@
+Included below are notes on the design and implementation of the
+Geometry Conversion Library (LIBGCV).
+
+
+ARCHITECTURE
+============
+
+From an architecture standpoint, here are a few tenants that LIBGCV
+should adhere to:
+
+1) Minimal library dependencies.  It needs to drop into external codes
+without needing more than BRL-CAD's core libraries (libbu, libbn,
+libwdb, librt, libbrep).  Stand-alone distribution is a requirement.
+
+2) Public C or C++ API, not both.  If it's a C++ API, it shouldn't
+have free-floating global functions.  If it's a C API, it shouldn't
+expose C++ types in the public API without compilation safeguards.
+
+3) API independence.  Each added geometry format should extend LIBGCV
+without requiring ANY change to the public API.  That means we should
+not have an enum or #defines or public functions that embed a format
+(e.g., no public gcv_obj_to_g() functions).
+
+4) Plugin architecture.  Each format should require only one
+line/block be added to some GCV initialization function (or
+dynamically loaded at runtime) to register itself.  Ideally, each
+format lives in a sub-directory self-contained.
+
+5) Simplicity, consistency.  The API design should declare minimal
+symbols, types, structs, functions, designs.  It should follow
+conventions of our existing libraries in terms of conventions and
+patterns.
+
+
+API DESIGN
+==========
+
+T.B.D.
+
+
+NEW FORMATS
+===========
+
 Adding a few notes on libraries that may be worth investigating to see if they
 have parsing logic that would help in developing convertors for various formats.
 They may amount to nothing, but are worth checking.
