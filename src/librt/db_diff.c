@@ -114,7 +114,7 @@ db_diff(const struct db_i *dbip1,
 	/* check if this object exists in the other database */
 	if ((dp1 = db_lookup(dbip1, dp2->d_namep, 0)) == RT_DIR_NULL) {
 	    this_diff++;
-	    if (add_func(dbip1, dbip2, dp1, client_data)) error--;
+	    if (add_func(dbip1, dbip2, dp2, client_data)) error--;
 	}
 
 	ret += this_diff;
