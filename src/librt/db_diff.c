@@ -80,7 +80,8 @@ db_diff(const struct db_i *dbip1,
 	/* check if this object exists in the other database */
 	if ((dp2 = db_lookup(dbip2, dp1->d_namep, 0)) == RT_DIR_NULL) {
 	    this_diff++;
-	    if (del_func(dbip1, dbip2, dp1, client_data)) error--;
+	    if (del_func)
+		if (del_func(dbip1, dbip2, dp1, client_data)) error--;
 	    continue;
 	}
 
@@ -93,9 +94,11 @@ db_diff(const struct db_i *dbip1,
 
 	if (db_diff_external(&ext1, &ext2)) {
 	    this_diff++;
-	    if (chgd_func(dbip1, dbip2, dp1, dp2, client_data)) error--;
+	    if (chgd_func)
+		if (chgd_func(dbip1, dbip2, dp1, dp2, client_data)) error--;
 	} else {
-	    if (unch_func(dbip1, dbip2, dp1, client_data)) error--;
+	    if (unch_func)
+		if (unch_func(dbip1, dbip2, dp1, client_data)) error--;
 	}
 
 	ret += this_diff;
@@ -114,7 +117,8 @@ db_diff(const struct db_i *dbip1,
 	/* check if this object exists in the other database */
 	if ((dp1 = db_lookup(dbip1, dp2->d_namep, 0)) == RT_DIR_NULL) {
 	    this_diff++;
-	    if (add_func(dbip1, dbip2, dp2, client_data)) error--;
+	    if (add_func)
+		if (add_func(dbip1, dbip2, dp2, client_data)) error--;
 	}
 
 	ret += this_diff;
