@@ -656,7 +656,7 @@ rt_rhc_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
  * R T _ R H C _ U V
  *
  * For a hit on the surface of an rhc, return the (u, v) coordinates
- * of the hit point, 0 <= u, v <= 1.
+ * of the hit point, 0 <= u, v <= 1
  * u = azimuth
  * v = elevation
  */
@@ -1139,11 +1139,11 @@ rt_mk_hyperbola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf_t
     intr = p0[Z] - m * p0[Y];
     /* find point on hyperbola with max dist between hyperbola and line */
     j = b + c;
-    k = 1 - m * m * r * r / (b * (b + 2 * c));
+    k = 1.0 - m * m * r * r / (b * (b + 2.0 * c));
     A = k;
-    B = 2 * j * k;
+    B = 2.0 * j * k;
     C = j * j * k - c * c;
-    discr = sqrt(B * B - 4 * A * C);
+    discr = sqrt(B * B - 4.0 * A * C);
     z0 = (-B + discr) / (2.0 * A);
 
     if (z0 + RHC_TOL >= -b) {
@@ -1158,27 +1158,27 @@ rt_mk_hyperbola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf_t
     }
 
     mpt[X] = 0;
-    mpt[Y] = ((mpt[Z] + b + c) * (mpt[Z] + b + c) - c * c) / (b * (b + 2 * c));
+    mpt[Y] = ((mpt[Z] + b + c) * (mpt[Z] + b + c) - c * c) / (b * (b + 2.0 * c));
 
     if (NEAR_ZERO(mpt[Y], RHC_TOL)) {
-	mpt[Y] = 0.;
+	mpt[Y] = 0.0;
     }
 
     mpt[Y] = r * sqrt(mpt[Y]);
 
-    if (p0[Y] < 0.) {
+    if (p0[Y] < 0.0) {
 	mpt[Y] = -mpt[Y];
     }
 
     /* max distance between that point and line */
     dist = fabs(m * mpt[Y] - mpt[Z] + intr) / sqrt(m * m + 1);
     /* angles between normal of line and of hyperbola at line endpoints */
-    VSET(norm_line, m, -1., 0.);
-    VSET(norm_hyperb, 0., (2 * c + 1) / (p0[Z] + c + 1), -1.);
+    VSET(norm_line, m, -1.0, 0.0);
+    VSET(norm_hyperb, 0., (2.0 * c + 1.0) / (p0[Z] + c + 1.0), -1.0);
     VUNITIZE(norm_line);
     VUNITIZE(norm_hyperb);
     theta0 = fabs(acos(VDOT(norm_line, norm_hyperb)));
-    VSET(norm_hyperb, 0., (2 * c + 1) / (p1[Z] + c + 1), -1.);
+    VSET(norm_hyperb, 0.0, (2.0 * c + 1.0) / (p1[Z] + c + 1.0), -1.0);
     VUNITIZE(norm_hyperb);
     theta1 = fabs(acos(VDOT(norm_line, norm_hyperb)));
 
@@ -1834,23 +1834,23 @@ rt_rhc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     b = rip->rhc_c;
     magB = MAGNITUDE(rip->rhc_B);
     height = MAGNITUDE(rip->rhc_H);
-    a = (rip->rhc_r * b) / sqrt(magB * (2 * rip->rhc_c + magB));
+    a = (rip->rhc_r * b) / sqrt(magB * (2.0 * rip->rhc_c + magB));
     sqrt_ra = sqrt(rip->rhc_r * rip->rhc_r + b * b);
-    integralArea = (b / a) * ((2 * rip->rhc_r * sqrt_ra) / 2 + ((a * a) / 2) * (log(sqrt_ra + rip->rhc_r) - log(sqrt_ra - rip->rhc_r)));
-    A = 2 * rip->rhc_r * (rip->rhc_c + magB) - integralArea;
+    integralArea = (b / a) * ((2.0 * rip->rhc_r * sqrt_ra) / 2.0 + ((a * a) / 2.0) * (log(sqrt_ra + rip->rhc_r) - log(sqrt_ra - rip->rhc_r)));
+    A = 2.0 * rip->rhc_r * (rip->rhc_c + magB) - integralArea;
 
-    h = (2 * rip->rhc_r) / n;
+    h = (2.0 * rip->rhc_r) / n;
     for (i = 1; i <= (n / 2) - 1; i++) {
-	x = -rip->rhc_r + 2 * i * h;
-	sumodds += sqrt((b * b * x * x) / (a * a * x * x + pow(a, 4)) + 1);
+	x = -rip->rhc_r + 2.0 * i * h;
+	sumodds += sqrt((b * b * x * x) / (a * a * x * x + pow(a, 4.0)) + 1.0);
     }
     for (j = 1; j <= (n / 2); j++) {
-	x = -rip->rhc_r + (2 * j - 1) * h;
-	sumevens += sqrt((b * b * x * x) / (a * a * x * x + pow(a, 4)) + 1);
+	x = -rip->rhc_r + (2.0 * j - 1.0) * h;
+	sumevens += sqrt((b * b * x * x) / (a * a * x * x + pow(a, 4.0)) + 1.0);
     }
-    arclen = (h / 3) * (sqrt((b * b * rip->rhc_r * rip->rhc_r) / (a * a * rip->rhc_r * rip->rhc_r + pow(a, 4)) + 1) + 2 * sumodds + 4 * sumevens + sqrt((b * b * rip->rhc_r * rip->rhc_r) / (a * a * rip->rhc_r * rip->rhc_r + pow(a, 4)) + 1));
+    arclen = (h / 3.0) * (sqrt((b * b * rip->rhc_r * rip->rhc_r) / (a * a * rip->rhc_r * rip->rhc_r + pow(a, 4.0)) + 1.0) + 2.0 * sumodds + 4.0 * sumevens + sqrt((b * b * rip->rhc_r * rip->rhc_r) / (a * a * rip->rhc_r * rip->rhc_r + pow(a, 4.0)) + 1.0));
 
-    *area = 2 * A + 2 * rip->rhc_r * height + arclen * height;
+    *area = 2.0 * A + 2.0 * rip->rhc_r * height + arclen * height;
 }
 
 /**
@@ -1887,18 +1887,18 @@ rt_rhc_centroid(point_t *cent, const struct rt_db_internal *ip)
 	high = xf;
 
 	while (abs(high - low) > epsilon) {
-	    guess = (high + low) / 2;
+	    guess = (high + low) / 2.0;
 	    sqrt_ga = sqrt((guess * guess) - (a * a));
 	    guessArea = (b / a) * ((guess * sqrt_ga) - ((a * a) * log(sqrt_ga + guess)) - ((a * a) * log(guess)));
 
-	    if (guessArea > totalArea / 2) {
+	    if (guessArea > totalArea / 2.0) {
 		high = guess;
 	    } else {
 		low = guess;
 	    }
 	}
 
-	scale_factor = 1 - ((guess - a) / magB);
+	scale_factor = 1.0 - ((guess - a) / magB);
 
 	VSCALE(shift_h, rip->rhc_H, 0.5);
 	VSCALE(*cent, rip->rhc_B, scale_factor);
