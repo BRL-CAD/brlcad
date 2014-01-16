@@ -5,7 +5,7 @@ Geometry Conversion Library (LIBGCV).
 ARCHITECTURE
 ============
 
-From an architecture standpoint, here are a few tenants that LIBGCV
+From an architecture standpoint, here are a few tenets that LIBGCV
 should adhere to:
 
 1) Minimal library dependencies.  It needs to drop into external codes
