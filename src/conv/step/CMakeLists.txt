@@ -27,13 +27,6 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/src/libbrep #Temporary until headers reworked
   )
 
-set(STEP_SCHEMA_FILE ${STEPCODE_DIR}/data/ap203/ap203.exp)
-add_definitions(-DAP203)
-#set(STEP_SCHEMA_FILE ${STEPCODE_DIR}/data/ap203e2/ap203e2_mim_lf.exp)
-#add_definitions(-DAP203e2)
-#set(STEP_SCHEMA_FILE ${STEPCODE_DIR}/data/ap214e3/AP214E3_2010.exp)
-#add_definitions(-DAP214e3)
-
 macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
   # This Schema determines which version of STEP the command will support
   # TODO - see if there is some way to automatically support multiple versions

@@ -4,6 +4,11 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
 
+set(STEP_SCHEMA_FILE ${STEPCODE_DIR}/data/ap203/ap203.exp)
+add_definitions(-DAP203)
+#set(STEP_SCHEMA_FILE ${STEPCODE_DIR}/data/ap203e2/ap203e2_mim_lf.exp)
+#add_definitions(-DAP203e2)
+
 GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} stepg)
 
 set(stepg_SOURCES

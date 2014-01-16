@@ -4,6 +4,9 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
 
+set(STEP_SCHEMA_FILE ${STEPCODE_DIR}/data/ap203/ap203.exp)
+add_definitions(-DAP203)
+
 GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} gstep)
 
 set(gstep_SOURCES
