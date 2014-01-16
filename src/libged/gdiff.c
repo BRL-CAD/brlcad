@@ -104,7 +104,7 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
      *
      * .g file args must always come first.
      *
-     * A maximum of two .g files can be specified - any addiitonal specification
+     * A maximum of two .g files can be specified - any additional specification
      * of .g files is an error.
      *
      * When only one environment is specified, all other args must define pairs of

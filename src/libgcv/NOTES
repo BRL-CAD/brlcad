@@ -56,7 +56,7 @@ NEW FORMATS
 ===========
 
 Adding a few notes on libraries that may be worth investigating to see
-if they have parsing logic that would help in developing convertors
+if they have parsing logic that would help in developing converters
 for various formats.  They may amount to nothing, but are worth
 checking.
 

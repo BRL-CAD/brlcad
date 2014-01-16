@@ -936,7 +936,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   tends to result in explosive completion times for worst-case scenarios -
   try to get closer to the "only do the work we need to" ideal.  Once a new
   idea is proven in that command, it should be made into a libgcv routine
-  and convertors/other commands retargeted to use it.
+  and converters/other commands retargeted to use it.
 
 * look into embedding both rgb[3] and complex[n] data types in a union to
   allow unification of libmultispectral and liboptical APIs to a single
