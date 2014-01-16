@@ -1163,7 +1163,7 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
      * Convert distance tolerance into a maximum permissible
      * angle tolerance.  'radius' is largest radius.
      */
-    state.theta_tol = 2. * acos(1.0 - dtol / radius);
+    state.theta_tol = 2.0 * acos(1.0 - dtol / radius);
 
     /* To ensure normal tolerance, remain below this angle */
     if (ttol->norm > 0.0 && ttol->norm < state.theta_tol) {
