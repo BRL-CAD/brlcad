@@ -100,8 +100,8 @@ Add_Default_Geometric_Context(Registry *registry, InstMgr *instance_list)
 
     /* Plane Angle Measure */
     SdaiPlane_angle_measure_with_unit *p_ang_measure_with_unit = new SdaiPlane_angle_measure_with_unit();
-    SdaiMeasure_value * p_ang_measure_value = new SdaiMeasure_value(DEG2RAD, config_control_design::t_measure_value);
-    p_ang_measure_value->SetUnderlyingType(config_control_design::t_plane_angle_measure);
+    SdaiMeasure_value * p_ang_measure_value = new SdaiMeasure_value(DEG2RAD, SCHEMA_NAMESPACE::t_measure_value);
+    p_ang_measure_value->SetUnderlyingType(SCHEMA_NAMESPACE::t_plane_angle_measure);
     p_ang_measure_with_unit->value_component_(p_ang_measure_value);
     SdaiUnit *p_ang_unit = new SdaiUnit((SdaiNamed_unit *)ua_entry_3);
     p_ang_measure_with_unit->unit_component_(p_ang_unit);
