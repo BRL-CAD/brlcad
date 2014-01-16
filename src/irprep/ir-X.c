@@ -108,8 +108,7 @@ main(void)
     char string[11];		/* Used to write a label.  */
     int flag=0;			/* Color flag.  */
     int lstarr;			/* Last color array.  */
-    int flag_pix;		/* 0=>no pix file written, 1=>pix file */
-				/* written.  */
+    int flag_pix;		/* 0=>no pix file written, 1=>pix file written.  */
     char file_pix[MAXFIL];	/* Pix file name.  */
     unsigned char c;		/* Used to write pix file.  */
     int ret;
