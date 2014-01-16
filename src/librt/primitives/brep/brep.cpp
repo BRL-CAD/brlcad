@@ -737,7 +737,7 @@ utah_newton_solver(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, O
 	    continue;
 	}
 
-	invdetJ = 1. / J;
+	invdetJ = 1.0 / J;
 
 	if ((iu != -1) && (iv != -1)) {
 	    du = -invdetJ * (j22 * f - j12 * g);
@@ -1629,7 +1629,7 @@ rt_brep_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, 
  * R T _ B R E P _ U V
  *
  * For a hit on the surface of an nurb, return the (u, v) coordinates
- * of the hit point, 0 <= u, v <= 1.
+ * of the hit point, 0 <= u, v <= 1
  * u = azimuth
  * v = elevation
  */

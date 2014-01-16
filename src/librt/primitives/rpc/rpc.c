@@ -1056,11 +1056,11 @@ rt_mk_parabola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t dtol, fastf
     dist = fabs(mpt[Z] + b + b + intr) / sqrt(m * m + 1);
     /* angles between normal of line and of parabola at line endpoints */
     VSET(norm_line, m, -1., 0.);
-    VSET(norm_parab, 2. * b / (r * r) * p0[Y], -1., 0.);
+    VSET(norm_parab, 2.0 * b / (r * r) * p0[Y], -1., 0.);
     VUNITIZE(norm_line);
     VUNITIZE(norm_parab);
     theta0 = fabs(acos(VDOT(norm_line, norm_parab)));
-    VSET(norm_parab, 2. * b / (r * r) * p1[Y], -1., 0.);
+    VSET(norm_parab, 2.0 * b / (r * r) * p1[Y], -1., 0.);
     VUNITIZE(norm_parab);
     theta1 = fabs(acos(VDOT(norm_line, norm_parab)));
     /* split segment at widest point if not within error tolerances */

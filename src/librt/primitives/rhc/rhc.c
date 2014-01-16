@@ -1144,13 +1144,13 @@ rt_mk_hyperbola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf_t
     B = 2 * j * k;
     C = j * j * k - c * c;
     discr = sqrt(B * B - 4 * A * C);
-    z0 = (-B + discr) / (2. * A);
+    z0 = (-B + discr) / (2.0 * A);
 
     if (z0 + RHC_TOL >= -b) {
 	/* use top sheet of hyperboloid */
 	mpt[Z] = z0;
     } else {
-	mpt[Z] = (-B - discr) / (2. * A);
+	mpt[Z] = (-B - discr) / (2.0 * A);
     }
 
     if (NEAR_ZERO(mpt[Z], RHC_TOL)) {

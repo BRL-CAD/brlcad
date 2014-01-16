@@ -655,14 +655,14 @@ rt_eto_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
     /* calculate curvature along ellipse */
     /* k = y'' / (1 + y'^2) ^ 3/2 */
-    rad = 1. / sqrt(1. - xp*xp/(a*a));
+    rad = 1.0 / sqrt(1.0 - xp*xp/(a*a));
     yp1 = -b/(a*a)*xp*rad;
     yp2 = -b/(a*a)*rad*(xp*xp*rad*rad + 1.);
     work = 1 + yp1*yp1;
     k_ell = yp2 / (work*sqrt(work));
 
     /* calculate curvature along radial circle */
-    k_circ = -1. / MAGNITUDE(Radius);
+    k_circ = -1.0 / MAGNITUDE(Radius);
 
     if (fabs(k_ell) < fabs(k_circ)) {
 	/* use 1st deriv for principle dir of curvature */
