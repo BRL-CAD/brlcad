@@ -26,8 +26,16 @@
 
 #include "AP214.h"
 
+struct AP214_info {
+    const struct db_i *dbip;
+    std::map<struct directory *, STEPentity *> objects;
+    std::map<std::pair<STEPentity *,STEPentity *>, STEPentity *> union_boolean_results;
+    std::map<std::pair<STEPentity *,STEPentity *>, STEPentity *> intersection_boolean_results;
+    std::map<std::pair<STEPentity *,STEPentity *>, STEPentity *> subtraction_boolean_results;
+};
+
 HIDDEN int
-conv_tree(struct directory **d, int depth, int parent_branch, struct directory **solid, const union tree *t, const struct db_i *dbip)
+conv_tree(struct directory **d, int depth, int parent_branch, struct directory **solid, const union tree *t, struct AP214_info *info)
 {
     struct directory *left = NULL, *right = NULL, *old = NULL;
     int ret = 0;
@@ -47,7 +55,7 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
         case OP_XOR:
 	    if (t->tr_op == OP_XOR) bu_log(".XOR.\n");
             /* convert right */
-            ret = conv_tree(d, depth+1, 1, &right, t->tr_b.tb_right, dbip);
+            ret = conv_tree(d, depth+1, 1, &right, t->tr_b.tb_right, info);
 	    right_ret = ret;
 	    if (ret == -1) {
 		break;
@@ -60,7 +68,7 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
         case OP_XNOP:
 	    if (t->tr_op == OP_XNOP) bu_log(".XNOP.\n");
             /* convert left */
-            ret = conv_tree(d, depth+1, 2, &left, t->tr_b.tb_left, dbip);
+            ret = conv_tree(d, depth+1, 2, &left, t->tr_b.tb_left, info);
 	    left_ret = ret;
             if (ret == -1) {
 		break;
@@ -106,11 +114,11 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
             {
                 char *name = t->tr_l.tl_name;
                 struct directory *dir;
-                dir = db_lookup(dbip, name, LOOKUP_QUIET);
+                dir = db_lookup(info->dbip, name, LOOKUP_QUIET);
 		if (dir != RT_DIR_NULL) {
 		    struct rt_db_internal intern;
 		    if (solid) (*solid) = dir;
-		    rt_db_get_internal(&intern, dir, dbip, bn_mat_identity, &rt_uniresource);
+		    rt_db_get_internal(&intern, dir, info->dbip, bn_mat_identity, &rt_uniresource);
 		    if (intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_COMBINATION) {
 			RT_CK_DB_INTERNAL(&intern);
 			struct rt_comb_internal *comb = (struct rt_comb_internal *)(intern.idb_ptr);
@@ -119,10 +127,27 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
 			    /* Probably should return empty object... */
 			    return NULL;
 			} else {
-			    conv_tree(&dir, depth+1, 0, NULL, comb->tree, dbip);
+			    int tree_construct = conv_tree(&dir, depth+1, 0, NULL, comb->tree, info);
+			    if (info->objects.find(dir) != info->objects.end()) {
+				bu_log("Combination object %s already exists\n", dir->d_namep);
+			    } else {
+				bu_log("Creating comb object %s\n", dir->d_namep);
+				info->objects.insert(std::make_pair(dir, (STEPentity *)NULL));
+			    }
+			    if (tree_construct == 2) {
+			    bu_log("Return code from conv_tree building %s's tree: %d\n", dir->d_namep, tree_construct);
+			    } else {
+			    bu_log("Return code from conv_tree building %s's tree: %d (should be 2 - this is the object that defines the comb's final shape)\n", dir->d_namep, tree_construct);
+			    }
 			    ret = 3;
 			}
 		    } else {
+			if (info->objects.find(dir) != info->objects.end()) {
+			    bu_log("Solid object %s already exists\n", dir->d_namep);
+			} else {
+			    bu_log("Creating solid object %s\n", dir->d_namep);
+			    info->objects.insert(std::make_pair(dir, (STEPentity *)NULL));
+			}
 			ret = 1;
 		    }
                 } else {
@@ -144,9 +169,10 @@ struct AP214_tree_result *
 AP214_Add_Tree(struct directory *dp, struct rt_wdb *wdbp, Registry *registry, InstMgr *instance_list)
 {
     struct AP214_tree_result *result = new struct AP214_tree_result;
-    struct db_i *dbip = wdbp->dbip;
+    struct AP214_info info;
+    info.dbip = wdbp->dbip;
     struct rt_db_internal comb_intern;
-    rt_db_get_internal(&comb_intern, dp, dbip, bn_mat_identity, &rt_uniresource);
+    rt_db_get_internal(&comb_intern, dp, info.dbip, bn_mat_identity, &rt_uniresource);
     RT_CK_DB_INTERNAL(&comb_intern);
     struct rt_comb_internal *comb = (struct rt_comb_internal *)(comb_intern.idb_ptr);
     RT_CK_COMB(comb);
@@ -154,7 +180,7 @@ AP214_Add_Tree(struct directory *dp, struct rt_wdb *wdbp, Registry *registry, In
 	/* Probably should return empty object... */
 	return NULL;
     } else {
-        (void)conv_tree(&dp, 0, 0, NULL, comb->tree, dbip);
+        (void)conv_tree(&dp, 0, 0, NULL, comb->tree, &info);
     }
     return result;
 }
