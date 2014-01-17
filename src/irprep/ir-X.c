@@ -17,12 +17,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/* An x-windows program to create a picture by sending groups */
+/* An X-windows program to create a picture by sending groups */
 /* of pixels to the display.  */
 /* This program reads a file that has as its first line the */
 /* width and height (integers) of the picture.  MAXPIX indicates */
 /* the maximum width and height.  Each line after the first */
-/* contains one floating point number, this is the value of */
+/* contains one floating point number, which is the value of */
 /* that pixel (such as a temperature).  The pixels are read */
 /* from left to right, top to bottom.  The program 'display' */
 /* will create a file with the appropriate format.  */
@@ -57,8 +57,8 @@ struct colstr
     short x1[MAXARR];	/* X vertex of square.  */
     short y1[MAXARR];	/* Y vertex of square.  */
     int cnt;		/* Counter.  */
-    int more;		/* 0=>no more, else this is array extra */
-    /* pixels are in.  */
+    int more;		/* 0=>no more, else this is array extra
+                           pixels are in.  */
 };
 
 
@@ -82,8 +82,7 @@ main(void)
     int screen=0;		/* Used for getting colors.  */
     XColor colval[MAXCOL];	/* Color values.  */
     XRectangle rect[MAXARR];	/* Array for drawing rectangles.  */
-    char **a=(char **)NULL;	/* Place holder for XSetStandard */
-				/* Properties.  */
+    char **a=(char **)NULL;	/* Place holder for XSetStandard Properties.  */
     const char winttl[] = "SEE";	/* Window title.  */
     const char quit[] = "QUIT";		/* Exit label.  */
     Font font;			/* Structure for setting font.  */
