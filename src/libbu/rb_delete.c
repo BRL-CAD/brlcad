@@ -37,7 +37,7 @@
  * This function has three parameters: the tree to be fixed up, the
  * node where the trouble occurs, and the order.  _rb_fixup() is an
  * implementation of the routine RB-DELETE-FIXUP on p. 274 of Cormen
- * et al.
+ * et al. (p. 326 in the paperback version of the 2009 edition).
  */
 HIDDEN void
 _rb_fixup(struct bu_rb_tree *tree, struct bu_rb_node *node, int order)
@@ -94,9 +94,10 @@ _rb_fixup(struct bu_rb_tree *tree, struct bu_rb_node *node, int order)
  *
  * Delete a node from one order of a red-black tree
  *
- * This function has three parameters: a tree, the node to delete,
- * and the order from which to delete it.  _rb_delete() is an
- * implementation of the routine RB-DELETE on p. 273 of Cormen et al.
+ * This function has three parameters: a tree, the node to delete, and
+ * the order from which to delete it.  _rb_delete() is an
+ * implementation of the routine RB-DELETE on p. 273 of Cormen et
+ * al. (p. 324 in the paperback version of the 2009 edition).
  */
 HIDDEN void
 _rb_delete(struct bu_rb_tree *tree, struct bu_rb_node *node, int order)
