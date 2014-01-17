@@ -116,20 +116,19 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
      *
      * When there is a current .g environment and two additional .g files are
      * specified, the argv environments will override use of the "current" .g environment.
-
-     if ((argc - bu_optind) == 2) {
-     bu_log("left: %s", argv[bu_optind]);
-     bu_log("right: %s", argv[bu_optind+1]);
-     } else {
-     if ((argc - bu_optind) == 1) {
-     if (left_dbip_specified || right_dbip_specified)
-     bu_log("obj_name: %s", argv[bu_optind]);
-     } else {
-     bu_vls_printf(gedp->ged_result_str, "Usage: %s", gdiff_usage());
-     return GED_ERROR;
-     }
-     }
      */
+     if ((argc - bu_optind) == 2) {
+	 bu_log("left: %s", argv[bu_optind]);
+	 bu_log("right: %s", argv[bu_optind+1]);
+     } else {
+	if ((argc - bu_optind) == 1) {
+	    if (left_dbip_specified || right_dbip_specified)
+		bu_log("obj_name: %s", argv[bu_optind]);
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s", gdiff_usage());
+	    return GED_ERROR;
+	}
+     }
 
     return GED_OK;
 }
