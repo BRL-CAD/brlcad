@@ -82,6 +82,7 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
 		}
 		if (left_ret == 1) bu_log("solid");
 		if (left_ret == 2) bu_log("boolean_result");
+		if (left_ret == 3) bu_log("comb(boolean_result)");
 		switch (t->tr_op) {
 		    case OP_UNION:
 			bu_log(" u ");
@@ -95,6 +96,7 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
 		}
 		if (right_ret == 1) bu_log("solid\n\n");
 		if (right_ret == 2) bu_log("boolean_result\n\n");
+		if (right_ret == 3) bu_log("comb(boolean_result)\n\n");
 
 		/* If we've got something here, anything above this is a boolean_result */
 		ret = 2;
@@ -117,8 +119,8 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
 			    /* Probably should return empty object... */
 			    return NULL;
 			} else {
-			    ret = 2;
 			    conv_tree(&dir, depth+1, 0, NULL, comb->tree, dbip);
+			    ret = 3;
 			}
 		    } else {
 			ret = 1;
