@@ -17,20 +17,21 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/* An X-windows program to create a picture by sending groups */
-/* of pixels to the display.  */
-/* This program reads a file that has as its first line the */
-/* width and height (integers) of the picture.  MAXPIX indicates */
-/* the maximum width and height.  Each line after the first */
-/* contains one floating point number, which is the value of */
-/* that pixel (such as a temperature).  The pixels are read */
-/* from left to right, top to bottom.  The program 'display' */
-/* will create a file with the appropriate format.  */
+/* An X-windows program to create a picture by sending groups
+ * of pixels to the display.
+ * This program reads a file that has as its first line the
+ * width and height (integers) of the picture.  MAXPIX indicates
+ * the maximum width and height.  Each line after the first
+ * contains one floating point number, which is the value of
+ * that pixel (such as a temperature).  The pixels are read
+ * from left to right, top to bottom.  The program 'display'
+ * will create a file with the appropriate format.
+ */
 
-/* This program currently has a choice of four colors:  shades */
-/* of gray; shades of red; black-blue-cyan-green-yellow-white;  */
-/* and black-blue-magenta-red-yellow-white.  */
-
+/* This program currently has a choice of four colors:  shades
+ * of gray; shades of red; black-blue-cyan-green-yellow-white;
+ * and black-blue-magenta-red-yellow-white.
+ */
 
 #include "common.h"
 
@@ -45,8 +46,8 @@
 
 #define MAXFIL 26		/* Maximum number of char in file name.  */
 #define MAXPIX 512		/* Maximum number of pixels is (512*512).  */
-#define MAXARR 120000		/* Maximum number of pixels that are the */
-				/* same color.  */
+#define MAXARR 12000		/* Maximum number of pixels that are the
+				 * same color.  */
 #define MAXCOL 128		/* Maximum number of colors.  */
 #define EXTRA 1			/* For colors where there are a lot of
 				 * pixels.  */
