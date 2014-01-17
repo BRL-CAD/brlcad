@@ -63,6 +63,8 @@ bu_rb_free(struct bu_rb_tree *tree, void (*free_data)(void *))
     bu_free((genptr_t) node->rbn_right, "red-black right children");
     bu_free((genptr_t) node->rbn_parent, "red-black parents");
     bu_free((genptr_t) node->rbn_color, "red-black colors");
+    if (node->rbn_size)
+	bu_free((genptr_t) node->rbn_size, "red-black size");
     bu_free((genptr_t) node->rbn_package, "red-black packages");
     bu_free((genptr_t) node, "red-black empty node");
 
@@ -97,6 +99,8 @@ rb_free_node(struct bu_rb_node *node)
     bu_free((genptr_t) node->rbn_left, "red-black left children");
     bu_free((genptr_t) node->rbn_right, "red-black right children");
     bu_free((genptr_t) node->rbn_color, "red-black colors");
+    if (node->rbn_size)
+	bu_free((genptr_t) node->rbn_size, "red-black size");
     bu_free((genptr_t) node->rbn_package, "red-black packages");
     bu_free((genptr_t) node->rbn_list_pos, "red-black list element");
     bu_free((genptr_t) node, "red-black node");
