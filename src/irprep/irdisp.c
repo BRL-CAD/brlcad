@@ -50,8 +50,8 @@ main(void)
 
     /* Find option.  */
     printf("This takes a BRL-CAD mged model with a PRISM\n");
-    printf("temperature output file and raytrace and/or\n");
-    printf("display it.  Make your selection.\n");
+    printf("temperature output file, and raytraces and/or\n");
+    printf("displays it.  Make your selection.\n");
     printf("\t0 - raytrace & store file\n");
     printf("\t1 - raytrace, store, & showtherm file\n");
     printf("\t2 - showtherm file\n");
@@ -101,7 +101,7 @@ main(void)
 	}
 	if (ngrp < 0)
 	    ngrp = 0;
-	if (ngrp > INT_MAX-1)
+	else if (ngrp > INT_MAX-1)
 	    ngrp = INT_MAX-1;
 
 	/* Read each group & put it in the variable showtherm.  */
@@ -133,9 +133,10 @@ main(void)
 	    (void)fflush(stdout);
 	}
 
-	/* Call the program showtherm with the appropriate options.  */
-	/* This will raytrace a .g file & find the appropriate */
-	/* temperature for each region.  */
+	/* Call the program showtherm with the appropriate options.
+	 * This will raytrace a .g file & find the appropriate
+	 * temperature for each region.
+	 */
 	printf("\nThe program showtherm is now being run.\n\t%s\n\n", showtherm);
 	(void)fflush(stdout);
 	ret = system(showtherm);
@@ -146,8 +147,8 @@ main(void)
     if ( (ichoice == 1) || (ichoice == 2) ) {
 	char choice[81];
 
-	/* Call the program ir-X so that a file that has been raytraced */
-	/* may be displayed.  */
+	/* Call the program ir-X so that a file that has been raytraced
+	 * may be displayed.  */
 	choice[0] = '\0';
 	while ( !BU_STR_EQUAL( choice, "X" ) && !BU_STR_EQUAL( choice, "x" ) ) {
 	    printf("\nSelect display ('X') -> " );
@@ -164,7 +165,7 @@ main(void)
 	}
 	printf("\nThe program %s in now being run.  If option\n", irX);
 	printf("0 or 1 was used when the name of a file is asked\n");
-	printf("for enter the name of the file that was just\n");
+	printf("for, enter the name of the file that was just\n");
 	printf("stored.\n\n");
 	(void)fflush(stdout);
 	ret = system(irX);
