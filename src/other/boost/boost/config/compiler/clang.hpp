@@ -156,7 +156,7 @@
 #  define BOOST_NO_CXX11_USER_DEFINED_LITERALS
 #endif
 
-#if !(__has_feature(cxx_alignas)
+#if !(__has_feature(cxx_alignas))
 #  define BOOST_NO_CXX11_ALIGNAS
 #endif
 
