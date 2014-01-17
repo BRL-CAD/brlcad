@@ -103,7 +103,7 @@ struct tie_tri_s {
 			 * Data[1] = Normal,
 			 * Data[2] = DotProduct, VectorU, VectorV
 			 */
-    tfloat *v;		/* 4-bytes or 8-bytes */
+    tfloat v[2];	/* 8-bytes or 16-bytes */
     void *ptr;		/* 4-bytes or 8-bytes */
     uint32_t b;		/* 4-bytes (way more than we need, but helps keep alignment) */
 };
