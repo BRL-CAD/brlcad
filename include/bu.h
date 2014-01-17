@@ -2474,11 +2474,14 @@ typedef struct bu_color bu_color_t;
  * will not mistakenly end up with stale pointers to nodes that have
  * been deleted."
  *
- * The implementation of balanced binary red-black tree operations
+ * This implementation of balanced binary red-black tree operations
  * provides all the basic dynamic set operations (e.g., insertion,
  * deletion, search, minimum, maximum, predecessor, and successor) and
  * order-statistic operations (i.e., select and rank) with optimal
- * O(log(n)) performance while sorting on multiple keys.
+ * O(log(n)) performance while sorting on multiple keys. Such an
+ * implementation is referred to as an "augmented red-black tree" and
+ * is discussed in Chapter 14 of the 2009 edition of "Introduction to
+ * Algorithms."
  */
 
 /**
@@ -2522,7 +2525,7 @@ struct bu_rb_list
  */
 struct bu_rb_tree {
     /***** CLASS I - Applications may read directly. ****************/
-    uint32_t rbt_magic;           /**< Magic no. for integrity check */
+    uint32_t rbt_magic;                /**< Magic no. for integrity check */
     int rbt_nm_nodes;                  /**< Number of nodes */
 
     /**** CLASS II - Applications may read/write directly. **********/
@@ -2617,7 +2620,7 @@ struct bu_rb_package
  */
 struct bu_rb_node
 {
-    uint32_t rbn_magic;		/**< Magic no. for integrity check */
+    uint32_t rbn_magic;		        /**< Magic no. for integrity check */
     struct bu_rb_tree *rbn_tree;	/**< Tree containing this node */
     struct bu_rb_node **rbn_parent;	/**< Parents */
     struct bu_rb_node **rbn_left;	/**< Left subtrees */
