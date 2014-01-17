@@ -83,6 +83,7 @@ endmacro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE)
 
 add_subdirectory(step-g)
 add_subdirectory(g-step)
+add_subdirectory(g-ap214)
 
 CMAKEFILES(
   BRLCADWrapper.h
