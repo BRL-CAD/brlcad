@@ -48,8 +48,8 @@
 #define MAXARR 120000		/* Maximum number of pixels that are the */
 				/* same color.  */
 #define MAXCOL 128		/* Maximum number of colors.  */
-#define EXTRA 1			/* For colors where there are a lot of */
-				/* pixels.  */
+#define EXTRA 1			/* For colors where there are a lot of
+				 * pixels.  */
 
 /* Define the structure for each color.  */
 struct colstr
@@ -58,7 +58,7 @@ struct colstr
     short y1[MAXARR];	/* Y vertex of square.  */
     int cnt;		/* Counter.  */
     int more;		/* 0=>no more, else this is array extra
-                           pixels are in.  */
+                         * pixels are in.  */
 };
 
 
@@ -75,8 +75,8 @@ main(void)
     GC my_gc;			/* Gc for my_window.  */
     XSizeHints window_hints;	/* Hints for 1st window.  */
     XEvent event_received;	/* Events.  */
-    long input_event_mask;	/* Input event mask that are to */
-				/* be responded to.  */
+    long input_event_mask;	/* Input event mask that are to
+				 * be responded to.  */
     unsigned long black;		/* Black pixel value.  */
     unsigned long white;		/* White pixel value.  */
     int screen=0;		/* Used for getting colors.  */
@@ -140,8 +140,9 @@ main(void)
     ret = scanf("%d", &flag_pix);
     if (ret == 0)
 	perror("scanf");
-    if (flag_pix != 1) flag_pix = 0;
-    if (flag_pix == 1) {
+    if (flag_pix != 1)
+	 flag_pix = 0;
+    else {
 	printf("Enter name of the pix file to be created ");
 	printf("(%d char max).\n\t", MAXFIL);
 	(void)fflush(stdout);
@@ -179,7 +180,7 @@ main(void)
 	}
     }
 
-    if (icol == 1) {
+    else if (icol == 1) {
 	/* Shades of red.  */
 	printf("- shades of red ");
 	(void)fflush(stdout);
@@ -190,7 +191,7 @@ main(void)
 	}
     }
 
-    if (icol == 2) {
+    else if (icol == 2) {
 	/* Black-blue-cyan-green-yellow-white.  */
 	printf("- black-blue-cyan-green-yellow-white ");
 	(void)fflush(stdout);
@@ -249,7 +250,7 @@ main(void)
 	}
     }
 
-    if (icol == 3) {
+    else if (icol == 3) {
 	/* Black-blue-magenta-red-yellow-white.  */
 	printf("- black-blue-magenta-red-yellow-white ");
 	(void)fflush(stdout);
