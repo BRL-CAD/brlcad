@@ -4724,12 +4724,12 @@ BU_EXPORT extern int bu_rb_is_uniq(struct bu_rb_tree *tree,
  *
  * This function has two parameters: the tree and a bitv_t encoding
  * the flag values.  bu_rb_set_uniqv() sets the flags according to the
- * bits in flag_rep.  For example, if flag_rep = 1011, then the
+ * bits in flag_rep.  For example, if flag_rep = 1011_2, then the
  * first, second, and fourth orders are specified unique, and the
  * third is specified not-necessarily unique.
  */
 BU_EXPORT extern void bu_rb_set_uniqv(struct bu_rb_tree *tree,
-				      bitv_t flag_rep);
+				      bitv_t vec);
 
 /**
  * These functions have one parameter: the tree for which to
