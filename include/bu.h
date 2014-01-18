@@ -4695,7 +4695,7 @@ BU_EXPORT extern void bu_rb_free(struct bu_rb_tree *tree, void (*free_data)(void
  */
 
 /**
- * Applications interface to _rb_insert()
+ * Applications interface to bu_rb_insert()
  *
  * This function has two parameters: the tree into which to insert the
  * new node and the contents of the node.  If a uniqueness requirement
