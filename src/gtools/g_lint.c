@@ -1038,12 +1038,12 @@ main(int argc, char **argv)
     if (ovlp_log) {
 	ovlps_by_vol = bu_rb_create1("overlaps by volume", BU_RB_COMPARE_FUNC_CAST_AS_FUNC_ARG(compare_by_vol));
 	bu_rb_uniq_on1(ovlps_by_vol);
-	bu_rb_walk1(ovlp_log, (void (*)(void))insert_by_vol, INORDER);
+	bu_rb_walk1(ovlp_log, (void (*)(void))insert_by_vol, BU_RB_WALK_INORDER);
 
 	if (control.glc_how_to_report == G_LINT_ASCII_WITH_ORIGIN)
-	    bu_rb_walk1(ovlps_by_vol, (void (*)(void))print_overlap_o, INORDER);
+	    bu_rb_walk1(ovlps_by_vol, (void (*)(void))print_overlap_o, BU_RB_WALK_INORDER);
 	else
-	    bu_rb_walk1(ovlps_by_vol, (void (*)(void))print_overlap, INORDER);
+	    bu_rb_walk1(ovlps_by_vol, (void (*)(void))print_overlap, BU_RB_WALK_INORDER);
     }
 
     return 0;

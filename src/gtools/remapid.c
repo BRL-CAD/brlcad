@@ -897,9 +897,9 @@ main(int argc, char **argv)
 	db_init(db_name);
 
 	if (debug)
-	    bu_rb_walk1(assignment, (void (*)(void))print_nonempty_curr_id, INORDER);
+	    bu_rb_walk1(assignment, (void (*)(void))print_nonempty_curr_id, BU_RB_WALK_INORDER);
 	else
-	    bu_rb_walk1(assignment, (void (*)(void))write_assignment, INORDER);
+	    bu_rb_walk1(assignment, (void (*)(void))write_assignment, BU_RB_WALK_INORDER);
     }
     return 0;
 }

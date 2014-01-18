@@ -2646,10 +2646,11 @@ struct bu_rb_node
 /*
  * Applications interface to bu_rb_walk()
  */
-#define PREORDER	0
-#define INORDER		1
-#define POSTORDER	2
-
+enum BU_RB_WALK_ORDER {
+    BU_RB_WALK_PREORDER,
+    BU_RB_WALK_INORDER,
+    BU_RB_WALK_POSTORDER
+};
 
 /**
  * TBD

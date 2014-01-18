@@ -253,7 +253,7 @@ main(int argc, char **argv)
     }
     bu_free((genptr_t)buf, "pixel buffer");
 
-    bu_rb_walk1(palette, (void (*)(void))print_pixel, INORDER);
+    bu_rb_walk1(palette, (void (*)(void))print_pixel, BU_RB_WALK_INORDER);
 
     return 0;
 }

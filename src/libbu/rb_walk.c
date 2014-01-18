@@ -223,9 +223,9 @@ rb_walk(struct bu_rb_tree *tree,
     BU_CKMAG(tree, BU_RB_TREE_MAGIC, "red-black tree");
     RB_CKORDER(tree, order);
     switch (trav_type) {
-	case PREORDER:
-	case INORDER:
-	case POSTORDER:
+	case BU_RB_WALK_PREORDER:
+	case BU_RB_WALK_INORDER:
+	case BU_RB_WALK_POSTORDER:
 	    switch (what_to_visit) {
 		case WALK_NODES:
 		case WALK_DATA: {
