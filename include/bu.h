@@ -4729,7 +4729,7 @@ BU_EXPORT extern int bu_rb_is_uniq(struct bu_rb_tree *tree,
  * third is specified not-necessarily unique.
  */
 BU_EXPORT extern void bu_rb_set_uniqv(struct bu_rb_tree *tree,
-				      bitv_t vec);
+				      bitv_t flag_rep);
 
 /**
  * These functions have one parameter: the tree for which to
