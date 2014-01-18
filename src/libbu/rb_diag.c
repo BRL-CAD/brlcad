@@ -56,11 +56,11 @@ _rb_describe_node(struct bu_rb_node *node, int depth)
     pp = tree->rbt_print;
 
     bu_log("%*snode <%p>...\n", depth * 2, "", (void*)node);
-    bu_log("%*s  tree:   <%p>\n", depth * 2, "", (void*)node->rbn_tree);
-    bu_log("%*s  parent: <%p>\n", depth * 2, "", (void*)RB_PARENT(node, d_order));
-    bu_log("%*s  left:   <%p>\n", depth * 2, "", (void*)RB_LEFT_CHILD(node, d_order));
-    bu_log("%*s  right:  <%p>\n", depth * 2, "", (void*)RB_RIGHT_CHILD(node, d_order));
-    bu_log("%*s  color:  %s\n", depth * 2, "", (RB_GET_COLOR(node, d_order) == RB_RED) ? "RED" : (RB_GET_COLOR(node, d_order) == RB_BLK) ? "BLACK" : "Huh?");
+    bu_log("%*s  tree:    <%p>\n", depth * 2, "", (void*)node->rbn_tree);
+    bu_log("%*s  parent:  <%p>\n", depth * 2, "", (void*)RB_PARENT(node, d_order));
+    bu_log("%*s  left:    <%p>\n", depth * 2, "", (void*)RB_LEFT_CHILD(node, d_order));
+    bu_log("%*s  right:   <%p>\n", depth * 2, "", (void*)RB_RIGHT_CHILD(node, d_order));
+    bu_log("%*s  color:   %s\n", depth * 2, "", (RB_GET_COLOR(node, d_order) == RB_RED) ? "RED" : (RB_GET_COLOR(node, d_order) == RB_BLK) ? "BLACK" : "Huh?");
     bu_log("%*s  package: <%p>\n", depth * 2, "", (void*)package);
 
     if ((pp != 0) && (package != BU_RB_PKG_NULL))
