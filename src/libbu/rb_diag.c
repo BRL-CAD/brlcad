@@ -46,7 +46,7 @@ _rb_describe_node(struct bu_rb_node *node, int depth)
 {
     struct bu_rb_tree *tree;
     struct bu_rb_package *package;
-    void (*pp)(void *);	/* Pretty print function */
+    void (*pp)(void *, const int);	/* Pretty print function */
 
     BU_CKMAG(node, BU_RB_NODE_MAGIC, "red-black node");
     tree = node->rbn_tree;
@@ -64,7 +64,7 @@ _rb_describe_node(struct bu_rb_node *node, int depth)
     bu_log("%*s  package: <%p>\n", depth * 2, "", (void*)package);
 
     if ((pp != 0) && (package != BU_RB_PKG_NULL))
-	(*pp)(package->rbp_data);
+	(*pp)(package->rbp_data, depth);
     else
 	bu_log("\n");
 }
