@@ -2843,7 +2843,7 @@ BU_EXPORT extern void bu_pr_bitv(const char *str, const struct bu_bitv *bv);
 BU_EXPORT extern void bu_bitv_to_hex(struct bu_vls *v, const struct bu_bitv *bv);
 
 /**
- * Convert a string of HEX digits (as produces by bu_bitv_to_hex) into
+ * Convert a string of HEX digits (as produced by bu_bitv_to_hex) into
  * a bit vector.
  */
 BU_EXPORT extern struct bu_bitv *bu_hex_to_bitv(const char *str);
