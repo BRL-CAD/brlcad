@@ -81,7 +81,7 @@ bu_rb_diagnose_tree(struct bu_rb_tree *tree, int order, int trav_type)
     bu_log("Order:       %d of %d\n", order, tree->rbt_nm_orders);
     bu_log("Current:     <%p>\n", (void*)tree->rbt_current);
     bu_log("Empty node:  <%p>\n", (void*)tree->rbt_empty_node);
-    bu_log("Uniqueness:  %d\n", RB_GET_UNIQUENESS(tree, order));
+    bu_log("Uniqueness?:  %s\n", RB_GET_UNIQUENESS(tree, order) ? "Yes" : "No");
     d_order = order;
     rb_walk(tree, order, BU_RB_WALK_FUNC_CAST_AS_FUNC_ARG(_rb_describe_node),
 	    WALK_NODES, trav_type);
