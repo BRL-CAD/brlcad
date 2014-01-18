@@ -103,18 +103,24 @@ bu_rb_summarize_tree(struct bu_rb_tree *tree)
     bu_log("Number of orders: %d\n", tree->rbt_nm_orders);
     bu_log("Debug bits:       <0x%X>\n", tree->rbt_debug);
     if ((tree->rbt_nm_orders > 0) && (tree->rbt_nm_nodes > 0)) {
-	bu_log("i    Order[i]   Uniq[i]  Root[i]      Package[i]     Data[i]\n");
+	bu_log("\n");
+	bu_log("                                 Order Attributes\n");
+	bu_log("\n");
+	bu_log("+-------+------------------+-----------+--------------+--------------+--------------+\n");
+	bu_log("| Order | Compare Function |  Unique?  |     Root     |   Package    |     Data     |\n");
+	bu_log("+-------+------------------+-----------+--------------+--------------+--------------+\n");
 	for (i = 0; i < tree->rbt_nm_orders; ++i) {
-	    bu_log("%-3d  <%lx>    %c      <%p>    <%p>    <%p>\n",
+	    bu_log("| %3d   |   <%010p>   |    %-3.3s    | <%010p> | <%010p> | <%010p> |\n",
 		   i,
-		   (long unsigned int)RB_COMPARE_FUNC(tree, i),
-		   RB_GET_UNIQUENESS(tree, i) ? 'Y' : 'N',
+		   RB_COMPARE_FUNC(tree, i),
+		   RB_GET_UNIQUENESS(tree, i) ? "Yes" : "No",
 		   (void *)RB_ROOT(tree, i),
 		   (RB_ROOT(tree, i) == BU_RB_NODE_NULL) ? NULL : (void *)(RB_ROOT(tree, i)->rbn_package)[i],
 		   (RB_ROOT(tree, i) == BU_RB_NODE_NULL) ? NULL : RB_DATA(RB_ROOT(tree, i), i));
 	}
+	bu_log("+-------+------------------+-----------+--------------+--------------+--------------+\n");
     }
-    bu_log("-------------------------------------------------\n");
+    bu_log("\n");
 }
 
 
