@@ -2849,6 +2849,25 @@ BU_EXPORT extern void bu_bitv_to_hex(struct bu_vls *v, const struct bu_bitv *bv)
 BU_EXPORT extern struct bu_bitv *bu_hex_to_bitv(const char *str);
 
 /**
+ * Convert a bit vector to an ascii string of binary digits in the GCC
+ * format ("0bn...").  The string is from MSB to LSB (bytes and bits).
+ */
+BU_EXPORT extern void bu_bitv_to_binary(struct bu_vls *v, const struct bu_bitv *bv);
+
+/**
+ * Convert a string of BINARY digits (as produced by bu_bitv_to_binary) into
+ * a bit vector.
+ */
+BU_EXPORT extern struct bu_bitv *bu_binary_to_bitv(const char *str);
+
+/**
+ * Compare two bit vectors for equality. They are considered equal iff
+ * their lengths and each bit are equal.  Returns 1 for true, zero for
+ * false.
+ */
+BU_EXPORT extern int bu_bitv_compare_equal(const struct bu_bitv *, const struct bu_bitv *);
+
+/**
  * Make a copy of a bit vector
  */
 BU_EXPORT extern struct bu_bitv *bu_bitv_dup(const struct bu_bitv *bv);
