@@ -23,6 +23,7 @@
 
 #include <string.h>
 
+
 int
 automatic_test(const char *input)
 {
@@ -89,7 +90,8 @@ automatic_test(const char *input)
 }
 
 
-int main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
     int pass = 0;
 
