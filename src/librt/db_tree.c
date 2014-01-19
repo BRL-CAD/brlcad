@@ -2408,7 +2408,8 @@ rt_shader_mat(
     RT_CK_RTI(rtip);
     RT_CK_RESOURCE(resp);
 
-    reg_name = bu_basename(rp->reg_name);
+    reg_name = (char *)bu_calloc(strlen(rp->reg_name), sizeof(char), "rt_shader_mat reg_name");
+    bu_basename(reg_name, rp->reg_name);
     /* get model-to-region space mapping */
     if (db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name, resp) < 0) {
 	bu_free(reg_name, "reg_name free");

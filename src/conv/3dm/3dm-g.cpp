@@ -617,7 +617,8 @@ main(int argc, char** argv)
     }
 
     /* use accumulated layer information to build mged hierarchy */
-    char *toplevel = bu_basename(outFileName);
+    char *toplevel = (char *)bu_calloc(strlen(outFileName), sizeof(char), "3dm-g toplevel");
+    bu_basename(toplevel, outFileName);
     BuildHierarchy(outfp, dump);
     mk_lcomb(outfp, toplevel, &all_regions, 0, NULL, NULL, NULL, 0);
     bu_free(toplevel, "bu_basename toplevel");

@@ -59,7 +59,8 @@ ged_bot_flip(struct ged *gedp, int argc, const char *argv[])
 
     for (i = 1; i < argc; ++i) {
 	/* Skip past any path elements */
-	char *obj = bu_basename(argv[i]);
+	char *obj = (char *)bu_calloc(strlen(argv[i]), sizeof(char), "ged_bot_flip obj");
+	bu_basename(obj, argv[i]);
 
 	if (BU_STR_EQUAL(obj, ".")) {
 	    /* malformed path, lookup using exactly what was provided */

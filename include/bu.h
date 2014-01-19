@@ -3991,8 +3991,8 @@ BU_EXPORT extern char *bu_dirname(const char *path);
  * separator may be.  It is assumed that all file and directory names
  * in the path will not contain a path separator, even if escaped.
  *
- * It is the caller's responsibility to bu_free() the pointer returned
- * from this routine.
+ * It is the caller's responsibility allocate basename with
+ * strlen(path).
  *
  * Examples of strings returned:
  *
@@ -4008,7 +4008,7 @@ BU_EXPORT extern char *bu_dirname(const char *path);
  * @n	a/		a
  * @n	///		/
  */
-BU_EXPORT extern char *bu_basename(const char *path);
+BU_EXPORT extern void bu_basename(char *basename, const char *path);
 
 /** @} */
 

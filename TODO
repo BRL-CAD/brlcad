@@ -476,7 +476,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   of the versioning details (such as described from "gcc -v" if we
   compiled with gcc) too.
 
-* make bu_basename/bu_dirname not allocation memory.  have caller pass
+* make bu_dirname not allocation memory.  have caller pass
   buffer in as a parameter with size ala snprintf/memcpy.
 
 * provide libdm mechanism for drawing spline curves (to help visualize

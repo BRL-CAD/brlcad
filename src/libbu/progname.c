@@ -116,7 +116,8 @@ bu_getprogname(void)
 #endif
 
     /* want just the basename from paths, otherwise default result */
-    tmp_basename = bu_basename(name);
+    tmp_basename = (char *)bu_calloc(strlen(name), sizeof(char), "bu_getprogname tmp_basename");
+    bu_basename(tmp_basename, name);
     if (BU_STR_EQUAL(tmp_basename, ".") || BU_STR_EQUAL(tmp_basename, "/")) {
 	name = DEFAULT_PROGNAME;
     } else {

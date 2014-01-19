@@ -6592,7 +6592,7 @@ to_mouse_brep_selection_append(struct ged *gedp,
     const char *cmd_argv[11] = {"brep", NULL, "selection", "append", "active"};
     int ret, cmd_argc = (int)(sizeof(cmd_argv) / sizeof(const char *));
     struct ged_dm_view *gdvp;
-    const char *brep_name;
+    char *brep_name;
     char *end;
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct bu_vls start[] = {BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO};
@@ -6612,7 +6612,8 @@ to_mouse_brep_selection_append(struct ged *gedp,
     }
 
     /* parse args */
-    brep_name = bu_basename(argv[2]);
+    brep_name = (char *)bu_calloc(strlen(argv[2]), sizeof(char), "to_mouse_brep_selection_append brep_name");
+    bu_basename(brep_name, argv[2]);
 
     screen_pt[X] = strtol(argv[3], &end, 10);
     if (*end != '\0') {
@@ -6702,7 +6703,7 @@ to_mouse_brep_selection_translate(struct ged *gedp,
     const char *cmd_argv[8] = {"brep", NULL, "selection", "translate", "active"};
     int ret, cmd_argc = (int)(sizeof(cmd_argv) / sizeof(const char *));
     struct ged_dm_view *gdvp;
-    const char *brep_name;
+    char *brep_name;
     char *end;
     point_t screen_end, view_start, view_end, model_start, model_end;
     vect_t model_delta;
@@ -6718,7 +6719,8 @@ to_mouse_brep_selection_translate(struct ged *gedp,
 	    break;
     }
 
-    brep_name = bu_basename(argv[2]);
+    brep_name = (char *)bu_calloc(strlen(argv[2]), sizeof(char), "to_mouse_brep_selection_translate brep_name");
+    bu_basename(brep_name, argv[2]);
 
     screen_end[X] = strtol(argv[3], &end, 10);
     if (*end != '\0') {
