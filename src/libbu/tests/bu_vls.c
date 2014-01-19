@@ -27,6 +27,7 @@
 #include "bu.h"
 
 #include "./vls_internals.h"
+#include "./test_internals.h"
 
 
 /* This prints out the values of the expected vls and compares it with
@@ -347,12 +348,15 @@ test_bu_vls_strcat(int argc, char *argv[])
 static int
 test_bu_vls_strncat(int argc, char *argv[])
 {
-    char *in_string_1;
-    char *in_string_2;
-    char *expected_out_string;
-    char *actual_out_string;
-    int n;
-    struct bu_vls vls = BU_VLS_INIT_ZERO;
+    /* argv[1] is the function number, ignored */
+    char *in_string_1;         /* argv[2] */
+    char *in_string_2;         /* argv[3] */
+    int n;                     /* argv[4] */
+    char *expected_out_string; /* argv[5] */
+
+    int test_results = FAIL;
+    struct bu_vls *actual_vls;
+    size_t narg;
 
     if (argc != 6) {
 	bu_exit(1, "ERROR: input format is string1 string2 n expected_result [%s]\n", argv[0]);
@@ -360,21 +364,31 @@ test_bu_vls_strncat(int argc, char *argv[])
 
     in_string_1 = argv[2];
     in_string_2 = argv[3];
-    sscanf(argv[4], "%d", &n);
+    bu_sscanf(argv[4], "%d", &n);
     expected_out_string = argv[5];
 
-    bu_vls_strcpy(&vls, in_string_1);
-    bu_vls_strncat(&vls, in_string_2, n);
-    actual_out_string = bu_vls_strdup(&vls);
-
-    printf("Result: %s\n", actual_out_string);
-
-    bu_vls_free(&vls);
+    narg = (size_t)n;
+    actual_vls = bu_vls_vlsinit();
+    bu_vls_strcpy(actual_vls, in_string_1);
+    bu_vls_strncat(actual_vls, in_string_2, n);
 
     /* These functions need to return sh-style return values where
      * non-zero is false and zero is true
      */
-    return !(bu_strcmp(actual_out_string, expected_out_string) == 0);
+    if (!bu_strcmp(bu_vls_cstr(actual_vls), expected_out_string)) {
+	printf("PASSED Input1: '%s' Input2: '%s' n: %d narg: %u Output: '%s' Expected: '%s'",
+	       in_string_1, in_string_2, n, narg, bu_vls_cstr(actual_vls), expected_out_string);
+	test_results = PASS;
+    }
+    else {
+	printf("FAILED Input1: '%s' Input2: '%s' n: %d narg: %u Output: '%s' Expected: '%s'",
+	       in_string_1, in_string_2, n, narg, bu_vls_cstr(actual_vls), expected_out_string);
+	test_results = FAIL;
+    }
+
+    bu_vls_free(actual_vls);
+
+    return test_results;
 }
 
 
