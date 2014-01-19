@@ -267,6 +267,7 @@ set(BRLCAD_DOCBOOK_BUILD_LABEL "Generate extra docs ")
 set(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE_LABEL "Build with strict ISO C compliance checking ")
 set(ENABLE_POSIX_COMPLIANCE_LABEL "Build with strict POSIX compliance checking ")
 set(ENABLE_ALL_CXX_COMPILE_LABEL "Build all C and C++ files with a C++ compiler ")
+set(ENABLE_BITV_TESTS_LABEL "Build BITV test support ")
 
 # Make sets to use for iteration over all report items
 set(BUILD_REPORT_ITEMS
@@ -296,6 +297,7 @@ if(BRLCAD_SUMMARIZE_DEV_SETTINGS)
     BRLCAD_ENABLE_VERBOSE_PROGRESS
     ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE
     ENABLE_POSIX_COMPLIANCE ENABLE_ALL_CXX_COMPILE
+    ENABLE_BITV_TESTS
     )
 endif(BRLCAD_SUMMARIZE_DEV_SETTINGS)
 
