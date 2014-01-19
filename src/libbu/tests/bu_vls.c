@@ -377,12 +377,12 @@ test_bu_vls_strncat(int argc, char *argv[])
      */
     if (!bu_strcmp(bu_vls_cstr(actual_vls), expected_out_string)) {
 	printf("PASSED Input1: '%s' Input2: '%s' n: %d narg: %u Output: '%s' Expected: '%s'",
-	       in_string_1, in_string_2, n, narg, bu_vls_cstr(actual_vls), expected_out_string);
+	       in_string_1, in_string_2, n, (unsigned int)narg, bu_vls_cstr(actual_vls), expected_out_string);
 	test_results = PASS;
     }
     else {
 	printf("FAILED Input1: '%s' Input2: '%s' n: %d narg: %u Output: '%s' Expected: '%s'",
-	       in_string_1, in_string_2, n, narg, bu_vls_cstr(actual_vls), expected_out_string);
+	       in_string_1, in_string_2, n, (unsigned int)narg, bu_vls_cstr(actual_vls), expected_out_string);
 	test_results = FAIL;
     }
 

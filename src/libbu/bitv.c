@@ -369,7 +369,6 @@ bu_binary_to_bitv(const char *str)
     unsigned int len = 0;
     int i, err = 0;
     struct bu_bitv *bv;
-    unsigned long c;
 
     /* copy the input string and remove white space */
     bu_vls_strcpy(v, str);
@@ -412,7 +411,7 @@ bu_bitv_compare_equal(const struct bu_bitv *bv1, const struct bu_bitv *bv2)
 {
     /* returns 1 (true) iff lengths are the same and each bit is
      * identical, 0 (false) otherwise */
-    int i;
+    unsigned int i;
 
     BU_CK_BITV(bv1);
     BU_CK_BITV(bv2);

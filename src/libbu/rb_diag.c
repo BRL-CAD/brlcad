@@ -53,7 +53,7 @@ _rb_describe_node(struct bu_rb_node *node, int depth)
     RB_CKORDER(tree, d_order);
 
     package = (node->rbn_package)[d_order];
-    pp = tree->rbt_print;
+    pp = (void (*)(void *, const int))tree->rbt_print;
 
     bu_log("%*snode <%p>...\n", depth * 2, "", (void*)node);
     bu_log("%*s  tree:    <%p>\n", depth * 2, "", (void*)node->rbn_tree);
