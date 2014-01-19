@@ -28,6 +28,7 @@
 
 #include "./vls_internals.h"
 
+
 /* This prints out the values of the expected vls and compares it with
  * the actual vls; it uses the C-style return values of 0 for false and 1
  * for true
@@ -45,6 +46,7 @@ compare_vls(struct bu_vls *actual_vls, struct bu_vls *expected_vls)
 	    && bu_vls_strcmp(expected_vls, actual_vls) == 0);
 }
 
+
 static int
 test_bu_vls_init(void)
 {
@@ -58,6 +60,7 @@ test_bu_vls_init(void)
      */
     return !compare_vls(&actual_vls, &expected_vls);
 }
+
 
 static int
 test_bu_vls_vlsinit(void)
@@ -77,6 +80,7 @@ test_bu_vls_vlsinit(void)
 
     return retval;
 }
+
 
 static int
 test_bu_vls_access(int argc, char *argv[])
@@ -112,6 +116,7 @@ test_bu_vls_access(int argc, char *argv[])
 
     return retval;
 }
+
 
 static int
 test_bu_vls_strncpy(int argc, char *argv[])
@@ -151,6 +156,7 @@ test_bu_vls_strncpy(int argc, char *argv[])
 	     && actual_result_len == n);
 }
 
+
 static int
 test_bu_vls_strdup(int argc, char *argv[])
 {
@@ -181,6 +187,7 @@ test_bu_vls_strdup(int argc, char *argv[])
     return !retval;
 }
 
+
 static int
 test_bu_vls_strlen(int argc, char *argv[])
 {
@@ -206,6 +213,7 @@ test_bu_vls_strlen(int argc, char *argv[])
      */
     return !(expected_length == actual_length);
 }
+
 
 static int
 test_bu_vls_trunc(int argc, char *argv[])
@@ -239,6 +247,7 @@ test_bu_vls_trunc(int argc, char *argv[])
     return !(bu_strcmp(actual_out_string, expected_out_string) == 0);
 }
 
+
 static int
 test_bu_vls_trunc2(int argc, char *argv[])
 {
@@ -270,7 +279,9 @@ test_bu_vls_trunc2(int argc, char *argv[])
     return !(bu_strcmp(actual_out_string, expected_out_string) == 0);
 }
 
-static int test_bu_vls_nibble(int argc, char *argv[])
+
+static int
+test_bu_vls_nibble(int argc, char *argv[])
 {
     char *in_string;
     int nibble_len;
@@ -300,7 +311,9 @@ static int test_bu_vls_nibble(int argc, char *argv[])
     return !(bu_strcmp(actual_out_string, expected_out_string) == 0);
 }
 
-static int test_bu_vls_strcat(int argc, char *argv[])
+
+static int
+test_bu_vls_strcat(int argc, char *argv[])
 {
     char *in_string_1;
     char *in_string_2;
@@ -330,7 +343,9 @@ static int test_bu_vls_strcat(int argc, char *argv[])
     return !(bu_strcmp(actual_out_string, expected_out_string) == 0);
 }
 
-static int test_bu_vls_strncat(int argc, char *argv[])
+
+static int
+test_bu_vls_strncat(int argc, char *argv[])
 {
     char *in_string_1;
     char *in_string_2;
@@ -362,7 +377,9 @@ static int test_bu_vls_strncat(int argc, char *argv[])
     return !(bu_strcmp(actual_out_string, expected_out_string) == 0);
 }
 
-static int test_bu_vls_vlscat(int argc, char *argv[])
+
+static int
+test_bu_vls_vlscat(int argc, char *argv[])
 {
     char *in_string_1;
     char *in_string_2;
@@ -395,7 +412,9 @@ static int test_bu_vls_vlscat(int argc, char *argv[])
     return !(bu_strcmp(actual_out_string, expected_out_string) == 0);
 }
 
-static int test_bu_vls_strcmp(int argc, char *argv[])
+
+static int
+test_bu_vls_strcmp(int argc, char *argv[])
 {
     char *in_string_1;
     char *in_string_2;
@@ -430,7 +449,9 @@ static int test_bu_vls_strcmp(int argc, char *argv[])
     return !(abs(actual_result) == expected_result*actual_result);
 }
 
-static int test_bu_vls_strncmp(int argc, char *argv[])
+
+static int
+test_bu_vls_strncmp(int argc, char *argv[])
 {
     char *in_string_1;
     char *in_string_2;
@@ -467,7 +488,9 @@ static int test_bu_vls_strncmp(int argc, char *argv[])
     return !(abs(actual_result) == expected_result*actual_result);
 }
 
-static int test_bu_vls_from_argv(int argc, char *argv[])
+
+static int
+test_bu_vls_from_argv(int argc, char *argv[])
 {
     char *expected_result;
     char *actual_result;
@@ -492,7 +515,9 @@ static int test_bu_vls_from_argv(int argc, char *argv[])
     return !(bu_strcmp(actual_result, expected_result) == 0);
 }
 
-static int test_bu_vls_trimspace(int argc, char *argv[])
+
+static int
+test_bu_vls_trimspace(int argc, char *argv[])
 {
     char *in_string;
     char *expected_result;
@@ -521,7 +546,9 @@ static int test_bu_vls_trimspace(int argc, char *argv[])
     return !(bu_strcmp(actual_result, expected_result) == 0);
 }
 
-static int test_bu_vls_spaces(int argc, char *argv[])
+
+static int
+test_bu_vls_spaces(int argc, char *argv[])
 {
     char *in_string;
     int num_spaces;
@@ -552,7 +579,9 @@ static int test_bu_vls_spaces(int argc, char *argv[])
     return !(bu_strcmp(actual_result, expected_result) == 0);
 }
 
-static int test_bu_vls_detab(int argc, char *argv[])
+
+static int
+test_bu_vls_detab(int argc, char *argv[])
 {
     char *in_string;
     char *expected_result;
@@ -581,7 +610,9 @@ static int test_bu_vls_detab(int argc, char *argv[])
     return !(bu_strcmp(actual_result, expected_result) == 0);
 }
 
-static int test_bu_vls_prepend(int argc, char *argv[])
+
+static int
+test_bu_vls_prepend(int argc, char *argv[])
 {
     char *in_string;
     char *prepend_string;
@@ -611,6 +642,7 @@ static int test_bu_vls_prepend(int argc, char *argv[])
      */
     return !(bu_strcmp(actual_result, expected_result) == 0);
 }
+
 
 int
 main(int argc, char *argv[])
