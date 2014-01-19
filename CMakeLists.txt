@@ -2234,7 +2234,7 @@ endif(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
 
 # If we're building on Windows, use config_win.h file
 if(WIN32)
-  CONFIG_H_APPEND(BRLCAD "#include \"config_win_cmake.h\"\n")
+  CONFIG_H_APPEND(BRLCAD "#include \"config_win.h\"\n")
 endif(WIN32)
 
 # Now that all the tests are done, configure the brlcad_config.h file:
@@ -2270,7 +2270,7 @@ BRLCAD_ADDDATA(toplevel_DOCFILES ".")
 
 # Generate the windows specific file, if needed
 if(WIN32)
-  configure_file(${BRLCAD_SOURCE_DIR}/include/config_win_cmake.h.in ${BRLCAD_BINARY_DIR}/include/config_win_cmake.h)
+  configure_file(${BRLCAD_SOURCE_DIR}/include/config_win.h.in ${BRLCAD_BINARY_DIR}/include/config_win.h)
 endif(WIN32)
 
 # *******************************************************************

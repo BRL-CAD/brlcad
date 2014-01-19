@@ -74,7 +74,7 @@ set(include_hdrs
   wdb.h
   )
 if(WIN32)
-  set(include_hdrs ${include_hdrs} ${CMAKE_CURRENT_BINARY_DIR}/config_win_cmake.h)
+  set(include_hdrs ${include_hdrs} ${CMAKE_CURRENT_BINARY_DIR}/config_win.h)
 endif(WIN32)
 install(FILES ${include_hdrs} DESTINATION ${INCLUDE_DIR}/brlcad)
 
@@ -93,8 +93,7 @@ set(noinst_HEADERS
 
 set(include_misc
   conf
-  config_win.h
-  config_win_cmake.h.in
+  config_win.h.in
   )
 
 CMAKEFILES(${include_hdrs})
