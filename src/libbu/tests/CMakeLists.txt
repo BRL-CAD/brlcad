@@ -470,11 +470,11 @@ add_test(bu_vls_strcat_1 tester_bu_vls 10 "Test 1" " 2 3" "Test 1 2 3")
 #
 # where string1 and string2 will be concatenated.
 
-add_test(bu_vls_strncat_1 tester_bu_vls 11 "Test 1" " 2 3" 4 "Test 1 2 3")
-add_test(bu_vls_strncat_2 tester_bu_vls 11 "Test 1" " 2 3" 2 "Test 1 2")
-add_test(bu_vls_strncat_3 tester_bu_vls 11 "Test 1" " 2 3" -4 "Test 1 2 3")
-add_test(bu_vls_strncat_4 tester_bu_vls 11 "Test 1" " 2 3" 0 "Test 1")
-add_test(bu_vls_strncat_5 tester_bu_vls 11 "Test 1" " 2 3" 5 "Test 1 2 3")
+add_test(bu_vls_strncat_1 tester_bu_vls 11 "Test 1" " 2 3"  4 "Test 1 2 3" )
+add_test(bu_vls_strncat_2 tester_bu_vls 11 "Test 1" " 2 3"  2 "Test 1 2"   )
+add_test(bu_vls_strncat_3 tester_bu_vls 11 "Test 1" " 2 3" -4 "Test 1 2 3" )
+add_test(bu_vls_strncat_4 tester_bu_vls 11 "Test 1" " 2 3"  0 "Test 1"     )
+add_test(bu_vls_strncat_5 tester_bu_vls 11 "Test 1" " 2 3"  5 "Test 1 2 3" )
 
 # For function #12 (bu_vls_vlscat) the <args> format is as follows:
 #
