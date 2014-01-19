@@ -184,7 +184,7 @@ bu_bitv_vls(struct bu_vls *v, register const struct bu_bitv *bv)
     bu_vls_strcat(v, "(");
 
     /* Visit all the bits in ascending order */
-    for (i=0; i<len; i++) {
+    for (i = 0; i < len; i++) {
 	if (BU_BITTEST(bv, i) == 0)
 	    continue;
 	if (seen)
@@ -244,7 +244,7 @@ bu_hex_to_bitv(const char *str)
 {
     char abyte[3];
     const char *str_start;
-    unsigned int len=0;
+    unsigned int len = 0;
     int bytes;
     struct bu_bitv *bv;
     unsigned long c;
