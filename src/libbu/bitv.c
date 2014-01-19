@@ -357,7 +357,7 @@ bu_binary_to_bitv(const char *str)
      *   Example 1: "  0b00110100 " ('b' may be 'B' if desired)
      *
      * Note that only the zeroes are actually tested and any other
-     * character will result in a '1' for that postion.  Example 2
+     * character will result in a '1' for that position.  Example 2
      * will result in the same bitv as Example 1 (but it is not good
      * practice).
      *
