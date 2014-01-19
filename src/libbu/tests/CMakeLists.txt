@@ -642,6 +642,9 @@ add_test(bu_date-time8  tester_bu_date-time 8)
 add_test(bu_date-time9  tester_bu_date-time 9)
 add_test(bu_date-time10  tester_bu_date-time 10)
 
+CMAKEFILES(
+  test_internals.h
+)
 
 # Local Variables:
 # tab-width: 8
