@@ -61,7 +61,7 @@ void bu_rgb_to_hsv(unsigned char *rgb, fastf_t *hsv)
     fastf_t *sat = &hsv[SAT];
     fastf_t *val = &hsv[VAL];
     fastf_t max, min;
-    fastf_t delta;
+    fastf_t chroma;
 
     /*
      * Compute value
@@ -85,9 +85,9 @@ void bu_rgb_to_hsv(unsigned char *rgb, fastf_t *hsv)
     /*
      * Compute saturation
      */
-    delta = max - min;
+    chroma = max - min;
     if (max > 0.0)
-	*sat = delta / max;
+	*sat = chroma / max;
     else
 	*sat = 0.0;
 
@@ -98,11 +98,11 @@ void bu_rgb_to_hsv(unsigned char *rgb, fastf_t *hsv)
 	*hue = ACHROMATIC;
     } else {
 	if (NEAR_ZERO(red - max, SMALL_FASTF)) /* red == max */
-	    *hue = (grn - blu) / delta;
+	    *hue = (grn - blu) / chroma;
 	else if (NEAR_ZERO(grn - max, SMALL_FASTF)) /* grn == max */
-	    *hue = 2.0 + (blu - red) / delta;
+	    *hue = 2.0 + (blu - red) / chroma;
 	else if (NEAR_ZERO(blu - max, SMALL_FASTF)) /* blu == max */
-	    *hue = 4.0 + (red - grn) / delta;
+	    *hue = 4.0 + (red - grn) / chroma;
 
 	/*
 	 * Convert hue to degrees
