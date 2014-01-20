@@ -54,7 +54,8 @@ enum axis {
 #define V3ARGS(a) (a)[X], (a)[Y], (a)[Z]
 
 
-void bu_rgb_to_hsv(unsigned char *rgb, fastf_t *hsv)
+void
+bu_rgb_to_hsv(unsigned char *rgb, fastf_t *hsv)
 {
     fastf_t red, grn, blu;
     fastf_t *hue = &hsv[HUE];
@@ -66,15 +67,15 @@ void bu_rgb_to_hsv(unsigned char *rgb, fastf_t *hsv)
     /*
      * Compute value
      */
-    max = min = red = ((fastf_t) rgb[RED]) / 255.0;
+    max = min = red = ((fastf_t)rgb[RED]) / 255.0;
 
-    grn = ((fastf_t) rgb[GRN]) / 255.0;
+    grn = ((fastf_t)rgb[GRN]) / 255.0;
     if (grn < min)
 	min = grn;
     else if (grn > max)
 	max = grn;
 
-    blu = ((fastf_t) rgb[BLU]) / 255.0;
+    blu = ((fastf_t)rgb[BLU]) / 255.0;
     if (blu < min)
 	min = blu;
     else if (blu > max)
@@ -97,7 +98,7 @@ void bu_rgb_to_hsv(unsigned char *rgb, fastf_t *hsv)
     if (NEAR_ZERO(*sat, SMALL_FASTF)) {
 	*hue = ACHROMATIC;
     } else {
-	if (NEAR_ZERO(red - max, SMALL_FASTF)) /* red == max */
+	if (NEAR_ZERO(red - max, SMALL_FASTF))      /* red == max */
 	    *hue = (grn - blu) / chroma;
 	else if (NEAR_ZERO(grn - max, SMALL_FASTF)) /* grn == max */
 	    *hue = 2.0 + (blu - red) / chroma;
@@ -114,7 +115,8 @@ void bu_rgb_to_hsv(unsigned char *rgb, fastf_t *hsv)
 }
 
 
-int bu_hsv_to_rgb(fastf_t *hsv, unsigned char *rgb)
+int
+bu_hsv_to_rgb(fastf_t *hsv, unsigned char *rgb)
 {
     fastf_t float_rgb[3] = { 0.0, 0.0, 0.0 };
     fastf_t hue, sat, val;
@@ -143,7 +145,7 @@ int bu_hsv_to_rgb(fastf_t *hsv, unsigned char *rgb)
 	if (NEAR_ZERO(hue - 360.0, SMALL_FASTF))
 	    hue = 0.0;
 	hue /= 60.0;
-	hue_int = lrint(floor((double) hue));
+	hue_int = lrint(floor((double)hue));
 	hue_frac = hue - hue_int;
 	p = val * (1.0 - sat);
 	q = val * (1.0 - (sat * hue_frac));
