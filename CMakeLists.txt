@@ -2273,11 +2273,6 @@ set(toplevel_DOCFILES
   )
 BRLCAD_ADDDATA(toplevel_DOCFILES ".")
 
-# Generate the windows specific file, if needed
-if(WIN32)
-  configure_file(${BRLCAD_SOURCE_DIR}/include/config_win.h.in ${BRLCAD_BINARY_DIR}/include/config_win.h)
-endif(WIN32)
-
 # *******************************************************************
 # ***                     Summarize Results                       ***
 # *******************************************************************
