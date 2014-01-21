@@ -2243,6 +2243,11 @@ get_property(CONFIG_H_FILE_CONTENTS GLOBAL PROPERTY ${CMAKE_PROJECT_NAME}_CONFIG
 file(WRITE ${CONFIG_H_FILE} "${CONFIG_H_FILE_CONTENTS}")
 configure_file(${CONFIG_H_FILE} ${BRLCAD_BINARY_DIR}/include/brlcad_config.h)
 
+# Generate the windows specific file, if needed
+if(WIN32)
+  configure_file(${BRLCAD_SOURCE_DIR}/include/config_win.h.in ${BRLCAD_BINARY_DIR}/include/config_win.h)
+endif(WIN32)
+
 # Create a 1 second sleep utility executable
 try_compile(BUILD_SLEEP
   "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp"
