@@ -95,9 +95,6 @@ typedef struct _bounding_volume_placeholder {
     int dummy;
 } BrepBoundingVolume;
 #else
-/* namespace brlcad { */
-/*     class BBNode; */
-/* }; */
 typedef brlcad::BBNode BrepBoundingVolume;
 #endif
 
@@ -488,20 +485,6 @@ BANode<BA>::isLeaf()
     }
     return false;
 }
-
-/*
-  template<class BA>
-  inline void
-  BANode<BA>::GetBBox(double* min, double* max) const
-  {
-  min[0] = m_node.m_min[0];
-  min[1] = m_node.m_min[1];
-  min[2] = m_node.m_min[2];
-  max[0] = m_node.m_max[0];
-  max[1] = m_node.m_max[1];
-  max[2] = m_node.m_max[2];
-  }
-*/
 
 template<class BA>
 inline void
@@ -990,7 +973,6 @@ private:
     BVNode<BV> *closer(const ON_3dPoint &pt, BVNode<BV> *left, BVNode<BV> *right);
     std::list<BRNode *> m_trims_above;
     std::list<BRNode *> m_trims_vertical;
-    /*		std::list<BRNode*> m_trims_right; */
 };
 
 typedef BVNode<ON_BoundingBox> BBNode;
