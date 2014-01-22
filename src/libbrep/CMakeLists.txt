@@ -28,6 +28,7 @@ set(LIBBREP_SOURCES
   PullbackCurve.cpp
   ssx_event.cpp
   Subcurve.cpp
+  Subsurface.cpp
   )
 
 set(libbrep_ignored_files
