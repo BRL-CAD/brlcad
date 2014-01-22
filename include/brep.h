@@ -304,7 +304,6 @@ public:
     /** Node management functions */
     void addChild(const BA &child);
     void addChild(BANode<BA> *child);
-    void removeChild(const BA &child);
     void removeChild(BANode<BA> *child);
 
     /** Test if this node is a leaf node (i.e. m_children is empty) */
@@ -465,13 +464,6 @@ BANode<BA>::addChild(BANode<BA> *child)
     if (LIKELY(child != NULL)) {
 	m_children.push_back(child);
     }
-}
-
-template<class BA>
-inline void
-BANode<BA>::removeChild(const BA &child)
-{
-    removeChild(&child);
 }
 
 template<class BA>
@@ -930,7 +922,6 @@ public:
     /** Functions to add and remove child nodes from this node. */
     void addChild(const BV &child);
     void addChild(BVNode<BV> *child);
-    void removeChild(const BV &child);
     void removeChild(BVNode<BV> *child);
 
     /** Report the depth of this node in the hierarchy */
@@ -1100,13 +1091,6 @@ BVNode<BV>::addChild(BVNode<BV> *child)
     if (LIKELY(child != NULL)) {
 	m_children.push_back(child);
     }
-}
-
-template<class BV>
-inline void
-BVNode<BV>::removeChild(const BV &child)
-{
-    removeChild(&child);
 }
 
 template<class BV>
