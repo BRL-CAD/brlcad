@@ -128,7 +128,7 @@ main(void)
 	}
 	showtherm[i] = '\0';
 	if (i >= 123) {
-	    printf("There are too many characters for showtherm,\n");
+	    printf("There are too many characters for showtherm;\n");
 	    printf("please revise pictx.\n");
 	    (void)fflush(stdout);
 	}
