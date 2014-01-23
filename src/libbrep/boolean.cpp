@@ -460,6 +460,11 @@ is_point_on_loop(const ON_2dPoint &pt, const ON_SimpleArray<ON_Curve *> &loop)
     return ON_Intersect(ON_3dPoint(pt), polycurve, px_event, INTERSECTION_TOL) ? 1 : 0;
 }
 
+HIDDEN bool
+is_point_inside_loop(const ON_2dPoint &pt, const ON_SimpleArray<ON_Curve *> &loop)
+{
+    return (point_loop_location(pt, loop) == INSIDE_OR_ON_LOOP) && is_point_on_loop(pt, loop) == 0;
+}
 
 HIDDEN int
 get_subcurve_inside_faces(const ON_Brep *brep1, const ON_Brep *brep2, int face_i1, int face_i2, ON_SSX_EVENT *event)
@@ -525,7 +530,7 @@ get_subcurve_inside_faces(const ON_Brep *brep1, const ON_Brep *brep2, int face_i
 		continue;
 	    }
 	    ON_2dPoint pt = event->m_curveA->PointAt(interval.Mid());
-	    if (is_point_on_loop(pt, outerloop1) == 0 && point_loop_location(pt, outerloop1) == INSIDE_OR_ON_LOOP) {
+	    if (is_point_inside_loop(pt, outerloop1)) {
 		intervals1.Append(interval);
 	    }
 	}
@@ -559,7 +564,7 @@ get_subcurve_inside_faces(const ON_Brep *brep1, const ON_Brep *brep2, int face_i
 		continue;
 	    }
 	    ON_2dPoint pt = event->m_curveB->PointAt(interval.Mid());
-	    if (is_point_on_loop(pt, outerloop2) == 0 && point_loop_location(pt, outerloop2) == INSIDE_OR_ON_LOOP) {
+	    if (is_point_inside_loop(pt, outerloop2)) {
 		// According to openNURBS's definition, the domain of m_curve3d,
 		// m_curveA, m_curveB in an ON_SSX_EVENT should be the same.
 		// (See ON_SSX_EVENT::IsValid()).
@@ -836,8 +841,8 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace *> &out, const TrimmedFace *in, ON
 		// boundary, that point should be IntersectPoint::OUT, the
 		// same as the right's outside the loop.
 		// Other cases are similar.
-		int left_in = point_loop_location(left, in->m_outerloop) == INSIDE_OR_ON_LOOP && is_point_on_loop(left, in->m_outerloop) == 0;
-		int right_in = point_loop_location(right, in->m_outerloop) == INSIDE_OR_ON_LOOP && is_point_on_loop(right, in->m_outerloop) == 0;
+		int left_in = is_point_inside_loop(left, in->m_outerloop);
+		int right_in = is_point_inside_loop(right, in->m_outerloop);
 		if (left_in < 0 || right_in < 0) {
 		    // not a loop
 		    ipt->m_in_out = IntersectPoint::UNSET;
@@ -1541,8 +1546,7 @@ is_face_inside_brep(const TrimmedFace *tface, const ON_Brep *brep, ON_SimpleArra
 	double x = rng.RandomDouble(bbox.m_min.x, bbox.m_max.x);
 	double y = rng.RandomDouble(bbox.m_min.y, bbox.m_max.y);
 	test_pt2d = ON_2dPoint(x, y);
-	if (point_loop_location(test_pt2d, tface->m_outerloop) == INSIDE_OR_ON_LOOP
-	    && is_point_on_loop(test_pt2d, tface->m_outerloop) == 0) {
+	if (is_point_inside_loop(test_pt2d, tface->m_outerloop)) {
 	    unsigned int j = 0;
 	    // The test point should not be inside an innerloop
 	    for (j = 0; j < tface->m_innerloop.size(); j++) {
