@@ -96,8 +96,8 @@ struct SSICurve {
     }
 };
 
-
-void AppendToPolyCurve(ON_Curve *curve, ON_PolyCurve &polycurve);
+HIDDEN void
+append_to_polycurve(ON_Curve *curve, ON_PolyCurve &polycurve);
 // We link the SSICurves that share an endpoint, and form this new structure,
 // which has many similar behaviors as ON_Curve, e.g. PointAt(), Reverse().
 struct LinkedCurve {
@@ -207,7 +207,7 @@ public:
 	}
 	ON_PolyCurve *polycurve = new ON_PolyCurve;
 	for (int i = 0; i < m_ssi_curves.Count(); i++) {
-	    AppendToPolyCurve(m_ssi_curves[i].m_curve->Duplicate(), *polycurve);
+	    append_to_polycurve(m_ssi_curves[i].m_curve->Duplicate(), *polycurve);
 	}
 	m_curve = polycurve;
 	return m_curve;
@@ -326,7 +326,7 @@ compare_for_rank(IntersectPoint * const *p1, IntersectPoint * const *p2)
 
 
 HIDDEN void
-AppendToPolyCurve(ON_Curve *curve, ON_PolyCurve &polycurve)
+append_to_polycurve(ON_Curve *curve, ON_PolyCurve &polycurve)
 {
     // use this function rather than ON_PolyCurve::Append() to avoid
     // getting nested polycurves, which makes ON_Brep::IsValid() to fail.
@@ -336,7 +336,7 @@ AppendToPolyCurve(ON_Curve *curve, ON_PolyCurve &polycurve)
 	// The input curve is a polycurve
 	const ON_CurveArray &segments = nested->SegmentCurves();
 	for (int i = 0; i < segments.Count(); i++) {
-	    AppendToPolyCurve(segments[i]->Duplicate(), polycurve);
+	    append_to_polycurve(segments[i]->Duplicate(), polycurve);
 	}
 	delete nested;
     } else {
@@ -346,7 +346,7 @@ AppendToPolyCurve(ON_Curve *curve, ON_PolyCurve &polycurve)
 
 
 HIDDEN bool
-IsLoopValid(const ON_SimpleArray<ON_Curve *> &loop, double tolerance, ON_PolyCurve *polycurve = NULL)
+is_loop_valid(const ON_SimpleArray<ON_Curve *> &loop, double tolerance, ON_PolyCurve *polycurve = NULL)
 {
     bool delete_curve = false;
     bool ret = true;
@@ -371,11 +371,11 @@ IsLoopValid(const ON_SimpleArray<ON_Curve *> &loop, double tolerance, ON_PolyCur
     // Check the loop is continuous and closed or not.
     if (ret) {
 	if (loop[0] != NULL) {
-	    AppendToPolyCurve(loop[0]->Duplicate(), *polycurve);
+	    append_to_polycurve(loop[0]->Duplicate(), *polycurve);
 	}
 	for (int i = 1 ; i < loop.Count(); i++) {
 	    if (loop[i] && loop[i - 1] && loop[i]->PointAtStart().DistanceTo(loop[i - 1]->PointAtEnd()) < ON_ZERO_TOLERANCE) {
-		AppendToPolyCurve(loop[i]->Duplicate(), *polycurve);
+		append_to_polycurve(loop[i]->Duplicate(), *polycurve);
 	    } else {
 		bu_log("The input loop is not continuous.\n");
 		ret = false;
@@ -403,7 +403,7 @@ IsLoopValid(const ON_SimpleArray<ON_Curve *> &loop, double tolerance, ON_PolyCur
 
 
 HIDDEN int
-IsPointInsideLoop(const ON_2dPoint &pt, const ON_SimpleArray<ON_Curve *> &loop)
+is_point_inside_loop(const ON_2dPoint &pt, const ON_SimpleArray<ON_Curve *> &loop)
 {
     // returns:
     //   -1: the input is not a valid loop
@@ -411,10 +411,10 @@ IsPointInsideLoop(const ON_2dPoint &pt, const ON_SimpleArray<ON_Curve *> &loop)
     //   1:  the point is inside the loop or on boundary
     // note:
     //   If you want to know whether this point is on boundary, please call
-    //   IsPointOnLoop().
+    //   is_point_on_loop().
 
     ON_PolyCurve polycurve;
-    if (!IsLoopValid(loop, ON_ZERO_TOLERANCE, &polycurve)) {
+    if (!is_loop_valid(loop, ON_ZERO_TOLERANCE, &polycurve)) {
 	return -1;
     }
 
@@ -443,7 +443,7 @@ IsPointInsideLoop(const ON_2dPoint &pt, const ON_SimpleArray<ON_Curve *> &loop)
 
 
 HIDDEN int
-IsPointOnLoop(const ON_2dPoint &pt, const ON_SimpleArray<ON_Curve *> &loop)
+is_point_on_loop(const ON_2dPoint &pt, const ON_SimpleArray<ON_Curve *> &loop)
 {
     // returns:
     //   -1: the input is not a valid loop
@@ -451,7 +451,7 @@ IsPointOnLoop(const ON_2dPoint &pt, const ON_SimpleArray<ON_Curve *> &loop)
     //   1:  the point is on the boundary of the loop
 
     ON_PolyCurve polycurve;
-    if (!IsLoopValid(loop, ON_ZERO_TOLERANCE, &polycurve)) {
+    if (!is_loop_valid(loop, ON_ZERO_TOLERANCE, &polycurve)) {
 	return -1;
     }
 
@@ -524,7 +524,7 @@ get_subcurve_inside_faces(const ON_Brep *brep1, const ON_Brep *brep2, int face_i
 		continue;
 	    }
 	    ON_2dPoint pt = event->m_curveA->PointAt(interval.Mid());
-	    if (IsPointOnLoop(pt, outerloop1) == 0 && IsPointInsideLoop(pt, outerloop1) == 1) {
+	    if (is_point_on_loop(pt, outerloop1) == 0 && is_point_inside_loop(pt, outerloop1) == 1) {
 		intervals1.Append(interval);
 	    }
 	}
@@ -558,7 +558,7 @@ get_subcurve_inside_faces(const ON_Brep *brep1, const ON_Brep *brep2, int face_i
 		continue;
 	    }
 	    ON_2dPoint pt = event->m_curveB->PointAt(interval.Mid());
-	    if (IsPointOnLoop(pt, outerloop2) == 0 && IsPointInsideLoop(pt, outerloop2) == 1) {
+	    if (is_point_on_loop(pt, outerloop2) == 0 && is_point_inside_loop(pt, outerloop2) == 1) {
 		// According to openNURBS's definition, the domain of m_curve3d,
 		// m_curveA, m_curveB in an ON_SSX_EVENT should be the same.
 		// (See ON_SSX_EVENT::IsValid()).
@@ -788,7 +788,7 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace *> &out, const TrimmedFace *in, ON
 	if (!have_intersect[i]) {
 	    // The start point cannot be on the boundary of the loop, because
 	    // there is no intersections between curves[i] and the loop.
-	    if (IsPointInsideLoop(curves[i].PointAtStart(), in->m_outerloop) == 1) {
+	    if (is_point_inside_loop(curves[i].PointAtStart(), in->m_outerloop) == 1) {
 		if (curves[i].IsClosed()) {
 		    ON_SimpleArray<ON_Curve *> index_loop;
 		    curves[i].AppendCurvesToArray(index_loop);
@@ -835,8 +835,8 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace *> &out, const TrimmedFace *in, ON
 		// boundary, that point should be IntersectPoint::OUT, the
 		// same as the right's outside the loop.
 		// Other cases are similar.
-		int left_in = IsPointInsideLoop(left, in->m_outerloop) == 1 && IsPointOnLoop(left, in->m_outerloop) == 0;
-		int right_in = IsPointInsideLoop(right, in->m_outerloop) == 1 && IsPointOnLoop(right, in->m_outerloop) == 0;
+		int left_in = is_point_inside_loop(left, in->m_outerloop) == 1 && is_point_on_loop(left, in->m_outerloop) == 0;
+		int right_in = is_point_inside_loop(right, in->m_outerloop) == 1 && is_point_on_loop(right, in->m_outerloop) == 0;
 		if (left_in < 0 || right_in < 0) {
 		    // not a loop
 		    ipt->m_in_out = IntersectPoint::UNSET;
@@ -1029,7 +1029,7 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace *> &out, const TrimmedFace *in, ON
 
 	// Append a trimmed face with newloop as its outerloop
 	// Don't add a face if the outerloop is not valid (e.g. degenerated).
-	if (IsLoopValid(newloop, ON_ZERO_TOLERANCE)) {
+	if (is_loop_valid(newloop, ON_ZERO_TOLERANCE)) {
 	    TrimmedFace *new_face = new TrimmedFace();
 	    new_face->m_face = in->m_face;
 	    new_face->m_outerloop.Append(newloop.Count(), newloop.Array());
@@ -1054,7 +1054,7 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace *> &out, const TrimmedFace *in, ON
 	out.Append(in->Duplicate());
     } else {
 	// The remaining part after splitting some parts out.
-	if (IsLoopValid(outerloop, ON_ZERO_TOLERANCE)) {
+	if (is_loop_valid(outerloop, ON_ZERO_TOLERANCE)) {
 	    TrimmedFace *new_face = new TrimmedFace();
 	    new_face->m_face = in->m_face;
 	    new_face->m_outerloop = outerloop;
@@ -1108,7 +1108,8 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace *> &out, const TrimmedFace *in, ON
 }
 
 
-bool IsSameSurface(const ON_Surface *surf1, const ON_Surface *surf2)
+HIDDEN bool
+is_same_surface(const ON_Surface *surf1, const ON_Surface *surf2)
 {
     // Approach: Get their NURBS forms, and compare their CVs.
     // If their CVs are all the same (location and weight), they are
@@ -1363,18 +1364,18 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve *> 
 }
 
 HIDDEN bool
-IsPointOnBrepSurface(const ON_3dPoint &pt, const ON_Brep *brep, ON_SimpleArray<Subsurface *> &surf_tree)
+is_point_on_brep_surface(const ON_3dPoint &pt, const ON_Brep *brep, ON_SimpleArray<Subsurface *> &surf_tree)
 {
     // Decide whether a point is on a brep's surface.
     // Basic approach: use PSI on the point with all the surfaces.
 
     if (brep == NULL || pt.IsUnsetPoint()) {
-	bu_log("IsPointOnBrepSurface(): brep == NULL || pt.IsUnsetPoint()\n");
+	bu_log("is_point_on_brep_surface(): brep == NULL || pt.IsUnsetPoint()\n");
 	return false;
     }
 
     if (surf_tree.Count() != brep->m_S.Count()) {
-	bu_log("IsPointOnBrepSurface(): surf_tree.Count() != brep->m_S.Count()\n");
+	bu_log("is_point_on_brep_surface(): surf_tree.Count() != brep->m_S.Count()\n");
 	return false;
     }
 
@@ -1401,7 +1402,7 @@ IsPointOnBrepSurface(const ON_3dPoint &pt, const ON_Brep *brep, ON_SimpleArray<S
 	    outerloop.Append(brep->m_C2[brep->m_T[loop.m_ti[j]].m_c2i]);
 	}
 	ON_2dPoint pt2d(px_event[0].m_b[0], px_event[0].m_b[1]);
-	if (IsPointInsideLoop(pt2d, outerloop) == 1 || IsPointOnLoop(pt2d, outerloop) == 1) {
+	if (is_point_inside_loop(pt2d, outerloop) == 1 || is_point_on_loop(pt2d, outerloop) == 1) {
 	    return true;
 	}
     }
@@ -1411,21 +1412,21 @@ IsPointOnBrepSurface(const ON_3dPoint &pt, const ON_Brep *brep, ON_SimpleArray<S
 
 
 HIDDEN bool
-IsPointInsideBrep(const ON_3dPoint &pt, const ON_Brep *brep, ON_SimpleArray<Subsurface *> &surf_tree)
+is_point_inside_brep(const ON_3dPoint &pt, const ON_Brep *brep, ON_SimpleArray<Subsurface *> &surf_tree)
 {
     // Decide whether a point is inside a brep's surface.
     // Basic approach: intersect a ray with the brep, and count the number of
     // intersections (like the raytrace)
     // Returns true (inside) or false (outside) provided the pt is not on the
-    // surfaces. (See also IsPointOnBrepSurface())
+    // surfaces. (See also is_point_on_brep_surface())
 
     if (brep == NULL || pt.IsUnsetPoint()) {
-	bu_log("IsPointInsideBrep(): brep == NULL || pt.IsUnsetPoint()\n");
+	bu_log("is_point_inside_brep(): brep == NULL || pt.IsUnsetPoint()\n");
 	return false;
     }
 
     if (surf_tree.Count() != brep->m_S.Count()) {
-	bu_log("IsPointInsideBrep(): surf_tree.Count() != brep->m_S.Count()\n");
+	bu_log("is_point_inside_brep(): surf_tree.Count() != brep->m_S.Count()\n");
 	return false;
     }
 
@@ -1458,12 +1459,12 @@ IsPointInsideBrep(const ON_3dPoint &pt, const ON_Brep *brep, ON_SimpleArray<Subs
 	}
 	for (int j = 0; j < x_event.Count(); j++) {
 	    ON_2dPoint pt2d(x_event[j].m_b[0], x_event[j].m_b[1]);
-	    if (IsPointInsideLoop(pt2d, outerloop) == 1 || IsPointOnLoop(pt2d, outerloop) == 1) {
+	    if (is_point_inside_loop(pt2d, outerloop) == 1 || is_point_on_loop(pt2d, outerloop) == 1) {
 		isect_pt.Append(x_event[j].m_B[0]);
 	    }
 	    if (x_event[j].m_type == ON_X_EVENT::ccx_overlap) {
 		pt2d = ON_2dPoint(x_event[j].m_b[2], x_event[j].m_b[3]);
-		if (IsPointInsideLoop(pt2d, outerloop) == 1 || IsPointOnLoop(pt2d, outerloop) == 1) {
+		if (is_point_inside_loop(pt2d, outerloop) == 1 || is_point_on_loop(pt2d, outerloop) == 1) {
 		    isect_pt.Append(x_event[j].m_B[1]);
 		}
 	    }
@@ -1490,7 +1491,7 @@ IsPointInsideBrep(const ON_3dPoint &pt, const ON_Brep *brep, ON_SimpleArray<Subs
 
 
 HIDDEN int
-IsFaceInsideBrep(const TrimmedFace *tface, const ON_Brep *brep, ON_SimpleArray<Subsurface *> &surf_tree)
+is_face_inside_brep(const TrimmedFace *tface, const ON_Brep *brep, ON_SimpleArray<Subsurface *> &surf_tree)
 {
     // returns:
     //  -1: whether the face is inside/outside is unknown
@@ -1518,16 +1519,16 @@ IsFaceInsideBrep(const TrimmedFace *tface, const ON_Brep *brep, ON_SimpleArray<S
     }
 
     if (tface->m_outerloop.Count() == 0) {
-	bu_log("IsFaceInsideBrep(): the input TrimmedFace is not trimmed.\n");
+	bu_log("is_face_inside_brep(): the input TrimmedFace is not trimmed.\n");
 	return -1;
     }
 
     ON_PolyCurve polycurve;
-    if (!IsLoopValid(tface->m_outerloop, ON_ZERO_TOLERANCE, &polycurve)) {
+    if (!is_loop_valid(tface->m_outerloop, ON_ZERO_TOLERANCE, &polycurve)) {
 	return -1;
     }
 
-    // Get a point inside the TrimmedFace, and then call IsPointInsideBrep().
+    // Get a point inside the TrimmedFace, and then call is_point_inside_brep().
     // First, try the center of its 2D domain.
     const int try_count = 10;
     ON_BoundingBox bbox =  polycurve.BoundingBox();
@@ -1539,13 +1540,13 @@ IsFaceInsideBrep(const TrimmedFace *tface, const ON_Brep *brep, ON_SimpleArray<S
 	double x = rng.RandomDouble(bbox.m_min.x, bbox.m_max.x);
 	double y = rng.RandomDouble(bbox.m_min.y, bbox.m_max.y);
 	test_pt2d = ON_2dPoint(x, y);
-	if (IsPointInsideLoop(test_pt2d, tface->m_outerloop) == 1
-	    && IsPointOnLoop(test_pt2d, tface->m_outerloop) == 0) {
+	if (is_point_inside_loop(test_pt2d, tface->m_outerloop) == 1
+	    && is_point_on_loop(test_pt2d, tface->m_outerloop) == 0) {
 	    unsigned int j = 0;
 	    // The test point should not be inside an innerloop
 	    for (j = 0; j < tface->m_innerloop.size(); j++) {
-		if (IsPointInsideLoop(test_pt2d, tface->m_innerloop[j]) == 1
-		    || IsPointOnLoop(test_pt2d, tface->m_innerloop[j]) == 1) {
+		if (is_point_inside_loop(test_pt2d, tface->m_innerloop[j]) == 1
+		    || is_point_on_loop(test_pt2d, tface->m_innerloop[j]) == 1) {
 		    break;
 		}
 	    }
@@ -1567,11 +1568,11 @@ IsFaceInsideBrep(const TrimmedFace *tface, const ON_Brep *brep, ON_SimpleArray<S
 	bu_log("valid test point: (%g, %g, %g)\n", test_pt3d.x, test_pt3d.y, test_pt3d.z);
     }
 
-    if (IsPointOnBrepSurface(test_pt3d, brep, surf_tree)) {
+    if (is_point_on_brep_surface(test_pt3d, brep, surf_tree)) {
 	return 2;
     }
 
-    return IsPointInsideBrep(test_pt3d, brep, surf_tree) ? 1 : 0;
+    return is_point_inside_brep(test_pt3d, brep, surf_tree) ? 1 : 0;
 }
 
 class InvalidBooleanOperation : public std::invalid_argument
@@ -1698,7 +1699,7 @@ get_evaluated_faces(const ON_Brep *brep1, const ON_Brep *brep2, op_type operatio
 		int results = 0;
 		surf1 = brep1->m_S[brep1->m_F[i].m_si];
 		surf2 = brep2->m_S[brep2->m_F[j].m_si];
-		if (IsSameSurface(surf1, surf2)) {
+		if (is_same_surface(surf1, surf2)) {
 		    continue;
 		}
 
@@ -1836,7 +1837,7 @@ get_evaluated_faces(const ON_Brep *brep1, const ON_Brep *brep2, op_type operatio
 	    }
 	    splitted[j]->m_belong_to_final = TrimmedFace::NOT_BELONG;
 	    splitted[j]->m_rev = false;
-	    int ret_inside_test = IsFaceInsideBrep(splitted[j], another_brep, surf_tree);
+	    int ret_inside_test = is_face_inside_brep(splitted[j], another_brep, surf_tree);
 	    if (ret_inside_test == 1) {
 		if (DEBUG_BREP_BOOLEAN) {
 		    bu_log("The trimmed face is inside the other brep.\n");
