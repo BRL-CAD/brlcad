@@ -165,13 +165,13 @@ public:
 
     bool Reverse()
     {
-	ON_SimpleArray<SSICurve> newarray;
+	ON_SimpleArray<SSICurve> new_array;
 	for (int i = m_ssi_curves.Count() - 1; i >= 0; i--) {
 	    if (!m_ssi_curves[i].m_curve->Reverse())
 		return false;
-	    newarray.Append(m_ssi_curves[i]);
+	    new_array.Append(m_ssi_curves[i]);
 	}
-	m_ssi_curves = newarray;
+	m_ssi_curves = new_array;
 	return true;
     }
 
@@ -290,20 +290,20 @@ struct TrimmedFace {
 };
 
 HIDDEN int
-compare_t(const IntersectPoint* a, const IntersectPoint* b)
+compare_t(const IntersectPoint* p1, const IntersectPoint* p2)
 {
     // Use for sorting an array. Use strict FP comparison.
-    if (a->m_seg != b->m_seg)
-	return a->m_seg - b->m_seg;
-    return a->m_t > b->m_t ? 1 : (a->m_t < b->m_t ? -1 : 0);
+    if (p1->m_seg != p2->m_seg)
+	return p1->m_seg - p2->m_seg;
+    return p1->m_t > p2->m_t ? 1 : (p1->m_t < p2->m_t ? -1 : 0);
 }
 
 
 HIDDEN int
-compare_for_rank(IntersectPoint* const *a, IntersectPoint* const *b)
+compare_for_rank(IntersectPoint* const *p1, IntersectPoint* const *p2)
 {
     // Use for sorting an array. Use strict FP comparison.
-    return (*a)->m_t_for_rank > (*b)->m_t_for_rank ? 1 : ((*a)->m_t_for_rank < (*b)->m_t_for_rank ? -1 : 0);
+    return (*p1)->m_t_for_rank > (*p2)->m_t_for_rank ? 1 : ((*p1)->m_t_for_rank < (*p2)->m_t_for_rank ? -1 : 0);
 }
 
 
@@ -434,31 +434,31 @@ IsPointOnLoop(const ON_2dPoint& pt, const ON_SimpleArray<ON_Curve*>& loop)
 
 
 HIDDEN int
-get_subcurve_inside_faces(const ON_Brep* brep1, const ON_Brep* brep2, int fi1, int fi2, ON_SSX_EVENT* Event)
+get_subcurve_inside_faces(const ON_Brep* brep1, const ON_Brep* brep2, int face_i1, int face_i2, ON_SSX_EVENT* event)
 {
     // The ON_SSX_EVENT from SSI is the intersection of two whole surfaces.
     // We need to get the part that lies inside both trimmed patches.
-    // (brep1's face[fi1] and brep2's face[fi2])
+    // (brep1's face[face_i1] and brep2's face[face_i2])
     // returns 0 for success, -1 for error.
 
-    if (Event == NULL)
+    if (event == NULL)
 	return -1;
 
-    if (Event->m_curve3d == NULL || Event->m_curveA == NULL || Event->m_curveB == NULL)
+    if (event->m_curve3d == NULL || event->m_curveA == NULL || event->m_curveB == NULL)
 	return -1;
 
     // 1. Get the outerloops.
     ON_SimpleArray<ON_Curve*> outerloop1, outerloop2;
-    if (fi1 < 0 || fi1 >= brep1->m_F.Count()) {
-	bu_log("get_subcurve_inside_faces(): invalid fi1 (%d).\n", fi1);
+    if (face_i1 < 0 || face_i1 >= brep1->m_F.Count()) {
+	bu_log("get_subcurve_inside_faces(): invalid face_i1 (%d).\n", face_i1);
 	return -1;
     }
-    if (fi2 < 0 || fi2 >= brep2->m_F.Count()) {
-	bu_log("get_subcurve_inside_faces(): invalid fi2 (%d).\n", fi2);
+    if (face_i2 < 0 || face_i2 >= brep2->m_F.Count()) {
+	bu_log("get_subcurve_inside_faces(): invalid face_i2 (%d).\n", face_i2);
 	return -1;
     }
-    const ON_BrepLoop& loop1 = brep1->m_L[brep1->m_F[fi1].m_li[0]];
-    const ON_BrepLoop& loop2 = brep2->m_L[brep2->m_F[fi2].m_li[0]];
+    const ON_BrepLoop& loop1 = brep1->m_L[brep1->m_F[face_i1].m_li[0]];
+    const ON_BrepLoop& loop2 = brep2->m_L[brep2->m_F[face_i2].m_li[0]];
 
     for (int i = 0; i < loop1.TrimCount(); i++) {
 	outerloop1.Append(brep1->m_C2[brep1->m_T[loop1.m_ti[i]].m_c2i]);
@@ -467,56 +467,56 @@ get_subcurve_inside_faces(const ON_Brep* brep1, const ON_Brep* brep2, int fi1, i
 	outerloop2.Append(brep2->m_C2[brep2->m_T[loop2.m_ti[i]].m_c2i]);
     }
 
-    // 2.1 Intersect the curves in Event with outerloop1, and get the parts
+    // 2.1 Intersect the curves in event with outerloop1, and get the parts
     // inside. (Represented with param intervals on the curve's domain [0, 1])
-    ON_SimpleArray<double> divT;
+    ON_SimpleArray<double> div_t;
     ON_SimpleArray<ON_Interval> intervals1, intervals2;
     ON_SimpleArray<ON_X_EVENT> x_event1, x_event2;
     for (int i = 0; i < outerloop1.Count(); i++)
-	ON_Intersect(Event->m_curveA, outerloop1[i], x_event1, INTERSECTION_TOL);
+	ON_Intersect(event->m_curveA, outerloop1[i], x_event1, INTERSECTION_TOL);
     for (int i = 0; i < x_event1.Count(); i++) {
-	divT.Append(x_event1[i].m_a[0]);
+	div_t.Append(x_event1[i].m_a[0]);
 	if (x_event1[i].m_type == ON_X_EVENT::ccx_overlap)
-	    divT.Append(x_event1[i].m_a[1]);
+	    div_t.Append(x_event1[i].m_a[1]);
     }
-    divT.QuickSort(ON_CompareIncreasing);
-    if (divT.Count() != 0) {
-	if (!ON_NearZero(divT[0] - Event->m_curveA->Domain().Min()))
-	    divT.Insert(0, Event->m_curveA->Domain().Min());
-	if (!ON_NearZero(*divT.Last() - Event->m_curveA->Domain().Max()))
-	    divT.Append(Event->m_curveA->Domain().Max());
-	for (int i = 0; i < divT.Count() - 1; i++) {
-	    ON_Interval interval(divT[i], divT[i + 1]);
+    div_t.QuickSort(ON_CompareIncreasing);
+    if (div_t.Count() != 0) {
+	if (!ON_NearZero(div_t[0] - event->m_curveA->Domain().Min()))
+	    div_t.Insert(0, event->m_curveA->Domain().Min());
+	if (!ON_NearZero(*div_t.Last() - event->m_curveA->Domain().Max()))
+	    div_t.Append(event->m_curveA->Domain().Max());
+	for (int i = 0; i < div_t.Count() - 1; i++) {
+	    ON_Interval interval(div_t[i], div_t[i + 1]);
 	    if (ON_NearZero(interval.Length()))
 		continue;
-	    ON_2dPoint pt = Event->m_curveA->PointAt(interval.Mid());
+	    ON_2dPoint pt = event->m_curveA->PointAt(interval.Mid());
 	    if (IsPointOnLoop(pt, outerloop1) == 0 && IsPointInsideLoop(pt, outerloop1) == 1)
 		intervals1.Append(interval);
 	}
     } else
-	intervals1.Append(Event->m_curveA->Domain());   // No intersection
+	intervals1.Append(event->m_curveA->Domain());   // No intersection
 
-    // 2.2 Intersect the curves in Event with outerloop2, and get the parts
+    // 2.2 Intersect the curves in event with outerloop2, and get the parts
     // inside. (Represented with param intervals on the curve's domain [0, 1])
-    divT.Empty();
+    div_t.Empty();
     for (int i = 0; i < outerloop2.Count(); i++)
-	ON_Intersect(Event->m_curveB, outerloop2[i], x_event2, INTERSECTION_TOL);
+	ON_Intersect(event->m_curveB, outerloop2[i], x_event2, INTERSECTION_TOL);
     for (int i = 0; i < x_event2.Count(); i++) {
-	divT.Append(x_event2[i].m_a[0]);
+	div_t.Append(x_event2[i].m_a[0]);
 	if (x_event2[i].m_type == ON_X_EVENT::ccx_overlap)
-	    divT.Append(x_event2[i].m_a[1]);
+	    div_t.Append(x_event2[i].m_a[1]);
     }
-    divT.QuickSort(ON_CompareIncreasing);
-    if (divT.Count() != 0) {
-	if (!ON_NearZero(divT[0] - Event->m_curveB->Domain().Min()))
-	    divT.Insert(0, Event->m_curveB->Domain().Min());
-	if (!ON_NearZero(*divT.Last() - Event->m_curveB->Domain().Max()))
-	    divT.Append(Event->m_curveB->Domain().Max());
-	for (int i = 0; i < divT.Count() - 1; i++) {
-	    ON_Interval interval(divT[i], divT[i + 1]);
+    div_t.QuickSort(ON_CompareIncreasing);
+    if (div_t.Count() != 0) {
+	if (!ON_NearZero(div_t[0] - event->m_curveB->Domain().Min()))
+	    div_t.Insert(0, event->m_curveB->Domain().Min());
+	if (!ON_NearZero(*div_t.Last() - event->m_curveB->Domain().Max()))
+	    div_t.Append(event->m_curveB->Domain().Max());
+	for (int i = 0; i < div_t.Count() - 1; i++) {
+	    ON_Interval interval(div_t[i], div_t[i + 1]);
 	    if (ON_NearZero(interval.Length()))
 		continue;
-	    ON_2dPoint pt = Event->m_curveB->PointAt(interval.Mid());
+	    ON_2dPoint pt = event->m_curveB->PointAt(interval.Mid());
 	    if (IsPointOnLoop(pt, outerloop2) == 0 && IsPointInsideLoop(pt, outerloop2) == 1) {
 		// According to openNURBS's definition, the domain of m_curve3d,
 		// m_curveA, m_curveB in an ON_SSX_EVENT should be the same.
@@ -526,7 +526,7 @@ get_subcurve_inside_faces(const ON_Brep* brep1, const ON_Brep* brep2, int fi1, i
 	    }
 	}
     } else
-	intervals2.Append(Event->m_curveB->Domain());   // No intersection
+	intervals2.Append(event->m_curveB->Domain());   // No intersection
 
     // 3. Merge the intervals and get the final result.
     ON_Interval merged_interval1, merged_interval2;
@@ -550,17 +550,17 @@ get_subcurve_inside_faces(const ON_Brep* brep1, const ON_Brep* brep2, int fi1, i
 
     // 4. Replace with the sub-curves.
     ON_Curve *tmp_curve;
-    tmp_curve = sub_curve(Event->m_curve3d, shared_interval.Min(), shared_interval.Max());
-    delete Event->m_curve3d;
-    Event->m_curve3d = tmp_curve;
-    tmp_curve = sub_curve(Event->m_curveA, shared_interval.Min(), shared_interval.Max());
-    delete Event->m_curveA;
-    Event->m_curveA = tmp_curve;
-    tmp_curve = sub_curve(Event->m_curveB, shared_interval.Min(), shared_interval.Max());
-    delete Event->m_curveB;
-    Event->m_curveB = tmp_curve;
+    tmp_curve = sub_curve(event->m_curve3d, shared_interval.Min(), shared_interval.Max());
+    delete event->m_curve3d;
+    event->m_curve3d = tmp_curve;
+    tmp_curve = sub_curve(event->m_curveA, shared_interval.Min(), shared_interval.Max());
+    delete event->m_curveA;
+    event->m_curveA = tmp_curve;
+    tmp_curve = sub_curve(event->m_curveB, shared_interval.Min(), shared_interval.Max());
+    delete event->m_curveB;
+    event->m_curveB = tmp_curve;
 
-    if (Event->m_curve3d == NULL || Event->m_curveA == NULL || Event->m_curveB == NULL)
+    if (event->m_curve3d == NULL || event->m_curveA == NULL || event->m_curveB == NULL)
 	return -1;
     return 0;
 }
@@ -616,12 +616,12 @@ link_curves(const ON_SimpleArray<SSICurve>& in, ON_ClassArray<LinkedCurve>& out)
 		continue;
 
 	    if (c1 != NULL && c2 != NULL) {
-		LinkedCurve newcurve;
-		newcurve.Append(*c1);
+		LinkedCurve new_curve;
+		new_curve.Append(*c1);
 		if (dis > ON_ZERO_TOLERANCE)
-		    newcurve.Append(SSICurve(new ON_LineCurve(c1->PointAtEnd(), c2->PointAtStart())));
-		newcurve.Append(*c2);
-		tmp[i] = newcurve;
+		    new_curve.Append(SSICurve(new ON_LineCurve(c1->PointAtEnd(), c2->PointAtStart())));
+		new_curve.Append(*c2);
+		tmp[i] = new_curve;
 		tmp[j].m_ssi_curves.Empty();
 	    }
 
@@ -736,13 +736,13 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 	    // there is no intersections between curves[i] and the loop.
 	    if (IsPointInsideLoop(curves[i].PointAtStart(), in->m_outerloop) == 1) {
 		if (curves[i].IsClosed()) {
-		    ON_SimpleArray<ON_Curve*> iloop;
-		    curves[i].AppendCurvesToArray(iloop);
-		    innerloops.push_back(iloop);
-		    TrimmedFace *newface = new TrimmedFace();
-		    newface->m_face = in->m_face;
-		    curves[i].AppendCurvesToArray(newface->m_outerloop);
-		    out.Append(newface);
+		    ON_SimpleArray<ON_Curve*> index_loop;
+		    curves[i].AppendCurvesToArray(index_loop);
+		    innerloops.push_back(index_loop);
+		    TrimmedFace *new_face = new TrimmedFace();
+		    new_face->m_face = in->m_face;
+		    curves[i].AppendCurvesToArray(new_face->m_outerloop);
+		    out.Append(new_face);
 		}
 	    }
 	}
@@ -972,10 +972,10 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 	// Append a trimmed face with newloop as its outerloop
 	// Don't add a face if the outerloop is not valid (e.g. degenerated).
 	if (IsLoopValid(newloop, ON_ZERO_TOLERANCE)) {
-	    TrimmedFace *newface = new TrimmedFace();
-	    newface->m_face = in->m_face;
-	    newface->m_outerloop.Append(newloop.Count(), newloop.Array());
-	    out.Append(newface);
+	    TrimmedFace *new_face = new TrimmedFace();
+	    new_face->m_face = in->m_face;
+	    new_face->m_outerloop.Append(newloop.Count(), newloop.Array());
+	    out.Append(new_face);
 	} else {
 	    for (int j = 0; j < newloop.Count(); j++)
 		delete newloop[j];
@@ -996,18 +996,18 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
     } else {
 	// The remaining part after splitting some parts out.
 	if (IsLoopValid(outerloop, ON_ZERO_TOLERANCE)) {
-	    TrimmedFace *newface = new TrimmedFace();
-	    newface->m_face = in->m_face;
-	    newface->m_outerloop = outerloop;
+	    TrimmedFace *new_face = new TrimmedFace();
+	    new_face->m_face = in->m_face;
+	    new_face->m_outerloop = outerloop;
 	    // First copy the array with pointers, and then change
 	    // the pointers into copies.
-	    newface->m_innerloop = in->m_innerloop;
+	    new_face->m_innerloop = in->m_innerloop;
 	    for (unsigned int i = 0; i < in->m_innerloop.size(); i++)
 		for (int j = 0; j < in->m_innerloop[i].Count(); j++)
 		    if (in->m_innerloop[i][j])
-			newface->m_innerloop[i][j] = in->m_innerloop[i][j]->Duplicate();
-	    newface->m_innerloop.insert(newface->m_innerloop.end(), innerloops.begin(), innerloops.end());
-	    out.Append(newface);
+			new_face->m_innerloop[i][j] = in->m_innerloop[i][j]->Duplicate();
+	    new_face->m_innerloop.insert(new_face->m_innerloop.end(), innerloops.begin(), innerloops.end());
+	    out.Append(new_face);
 	} else {
 	    for (int i = 0; i < outerloop.Count(); i++)
 		if (outerloop[i])
@@ -1047,23 +1047,23 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, ON_
 }
 
 
-bool IsSameSurface(const ON_Surface* surfA, const ON_Surface* surfB)
+bool IsSameSurface(const ON_Surface* surf1, const ON_Surface* surf2)
 {
     // Approach: Get their NURBS forms, and compare their CVs.
     // If their CVs are all the same (location and weight), they are
     // regarded as the same surface.
 
-    if (surfA == NULL || surfB == NULL)
+    if (surf1 == NULL || surf2 == NULL)
 	return false;
 /*
     // Deal with two planes, if that's what we have - in that case
     // the determination can be more general than the CV comparison
-    ON_Plane surfA_plane, surfB_plane;
-    if (surfA->IsPlanar(&surfA_plane) && surfB->IsPlanar(&surfB_plane)) {
-	ON_3dVector surfA_normal = surfA_plane.Normal();
-	ON_3dVector surfB_normal = surfB_plane.Normal();
-	if (surfA_normal.IsParallelTo(surfB_normal) == 1) {
-	    if (surfA_plane.DistanceTo(surfB_plane.Origin()) < ON_ZERO_TOLERANCE) {
+    ON_Plane surf1_plane, surf2_plane;
+    if (surf1->IsPlanar(&surf1_plane) && surf2->IsPlanar(&surf2_plane)) {
+	ON_3dVector surf1_normal = surf1_plane.Normal();
+	ON_3dVector surf2_normal = surf2_plane.Normal();
+	if (surf1_normal.IsParallelTo(surf2_normal) == 1) {
+	    if (surf1_plane.DistanceTo(surf2_plane.Origin()) < ON_ZERO_TOLERANCE) {
 		return true;
 	    } else {
 		return false;
@@ -1074,37 +1074,37 @@ bool IsSameSurface(const ON_Surface* surfA, const ON_Surface* surfB)
     }
 */
 
-    ON_NurbsSurface nurbsSurfaceA, nurbsSurfaceB;
-    if (!surfA->GetNurbForm(nurbsSurfaceA) || !surfB->GetNurbForm(nurbsSurfaceB))
+    ON_NurbsSurface nurbs_surf1, nurbs_surf2;
+    if (!surf1->GetNurbForm(nurbs_surf1) || !surf2->GetNurbForm(nurbs_surf2))
 	return false;
 
-    if (nurbsSurfaceA.Degree(0) != nurbsSurfaceB.Degree(0)
-	|| nurbsSurfaceA.Degree(1) != nurbsSurfaceB.Degree(1))
+    if (nurbs_surf1.Degree(0) != nurbs_surf2.Degree(0)
+	|| nurbs_surf1.Degree(1) != nurbs_surf2.Degree(1))
 	return false;
 
-    if (nurbsSurfaceA.CVCount(0) != nurbsSurfaceB.CVCount(0)
-	|| nurbsSurfaceA.CVCount(1) != nurbsSurfaceB.CVCount(1))
+    if (nurbs_surf1.CVCount(0) != nurbs_surf2.CVCount(0)
+	|| nurbs_surf1.CVCount(1) != nurbs_surf2.CVCount(1))
 	return false;
 
-    for (int i = 0; i < nurbsSurfaceA.CVCount(0); i++)
-	for (int j = 0; j < nurbsSurfaceB.CVCount(1); j++) {
+    for (int i = 0; i < nurbs_surf1.CVCount(0); i++)
+	for (int j = 0; j < nurbs_surf2.CVCount(1); j++) {
 	    ON_4dPoint cvA, cvB;
-	    nurbsSurfaceA.GetCV(i, j, cvA);
-	    nurbsSurfaceB.GetCV(i, j, cvB);
+	    nurbs_surf1.GetCV(i, j, cvA);
+	    nurbs_surf2.GetCV(i, j, cvB);
 	    if (cvA != cvB)
 		return false;
 	}
 
-    if (nurbsSurfaceA.KnotCount(0) != nurbsSurfaceB.KnotCount(0)
-	|| nurbsSurfaceA.KnotCount(1) != nurbsSurfaceB.KnotCount(1))
+    if (nurbs_surf1.KnotCount(0) != nurbs_surf2.KnotCount(0)
+	|| nurbs_surf1.KnotCount(1) != nurbs_surf2.KnotCount(1))
 	return false;
 
-    for (int i = 0; i < nurbsSurfaceA.KnotCount(0); i++)
-	if (!ON_NearZero(nurbsSurfaceA.m_knot[0][i] - nurbsSurfaceB.m_knot[0][i]))
+    for (int i = 0; i < nurbs_surf1.KnotCount(0); i++)
+	if (!ON_NearZero(nurbs_surf1.m_knot[0][i] - nurbs_surf2.m_knot[0][i]))
 	    return false;
 
-    for (int i = 0; i < nurbsSurfaceA.KnotCount(1); i++)
-	if (!ON_NearZero(nurbsSurfaceA.m_knot[1][i] - nurbsSurfaceB.m_knot[1][i]))
+    for (int i = 0; i < nurbs_surf1.KnotCount(1); i++)
+	if (!ON_NearZero(nurbs_surf1.m_knot[1][i] - nurbs_surf2.m_knot[1][i]))
 	    return false;
 
     return true;
@@ -1414,10 +1414,10 @@ IsFaceInsideBrep(const TrimmedFace* tface, const ON_Brep* brep, ON_SimpleArray<S
     if (bface == NULL)
 	return -1;
 
-    ON_BoundingBox brep_bbox = brep->BoundingBox();
-    brep_bbox.m_min -= ON_3dVector(INTERSECTION_TOL, INTERSECTION_TOL, INTERSECTION_TOL);
-    brep_bbox.m_max += ON_3dVector(INTERSECTION_TOL, INTERSECTION_TOL, INTERSECTION_TOL);
-    if (!bface->BoundingBox().Intersection(brep_bbox))
+    ON_BoundingBox brep2box = brep->BoundingBox();
+    brep2box.m_min -= ON_3dVector(INTERSECTION_TOL, INTERSECTION_TOL, INTERSECTION_TOL);
+    brep2box.m_max += ON_3dVector(INTERSECTION_TOL, INTERSECTION_TOL, INTERSECTION_TOL);
+    if (!bface->BoundingBox().Intersection(brep2box))
 	return 0;
 
     if (tface->m_outerloop.Count() == 0) {
@@ -1485,31 +1485,31 @@ public:
 };
 
 HIDDEN ON_ClassArray<ON_SimpleArray<TrimmedFace*> >
-get_evaluated_faces(const ON_Brep* brepA, const ON_Brep* brepB, op_type operation)
+get_evaluated_faces(const ON_Brep* brep1, const ON_Brep* brep2, op_type operation)
 {
-    std::set<int> A_unused, B_unused;
-    std::set<int> A_finalform, B_finalform;
-    int facecount1 = brepA->m_F.Count();
-    int facecount2 = brepB->m_F.Count();
+    std::set<int> unused1, unused2;
+    std::set<int> finalform1, finalform2;
+    int face_count1 = brep1->m_F.Count();
+    int face_count2 = brep2->m_F.Count();
 
     /* Depending on the operation type and the bounding box behaviors, we
      * can sometimes decide immediately whether a face will end up in the
      * final brep or will have no role in the intersections - do that
      * categorization up front */
-    for (int i = 0; i < facecount1 + facecount2; i++) {
-	const ON_BrepFace &face = i < facecount1 ? brepA->m_F[i] : brepB->m_F[i - facecount1];
-	const ON_Brep *brep = i < facecount1 ? brepB : brepA;
-	std::set<int> *unused = i < facecount1 ? &A_unused : &B_unused;
-	std::set<int> *intact = i < facecount1 ? &A_finalform : &B_finalform;
-	int curr_index = i < facecount1 ? i : i - facecount1;
+    for (int i = 0; i < face_count1 + face_count2; i++) {
+	const ON_BrepFace &face = i < face_count1 ? brep1->m_F[i] : brep2->m_F[i - face_count1];
+	const ON_Brep *brep = i < face_count1 ? brep2 : brep1;
+	std::set<int> *unused = i < face_count1 ? &unused1 : &unused2;
+	std::set<int> *intact = i < face_count1 ? &finalform1 : &finalform2;
+	int curr_index = i < face_count1 ? i : i - face_count1;
 	if (face.BoundingBox().MinimumDistanceTo(brep->BoundingBox()) > ON_ZERO_TOLERANCE) {
 	    switch(operation) {
 		case BOOLEAN_UNION:
 		    intact->insert(curr_index);
 		    break;
 		case BOOLEAN_DIFF:
-		    if (i < facecount1) intact->insert(curr_index);
-		    if (i >= facecount1) unused->insert(curr_index);
+		    if (i < face_count1) intact->insert(curr_index);
+		    if (i >= face_count1) unused->insert(curr_index);
 		    break;
 		case BOOLEAN_INTERSECT:
 		    unused->insert(curr_index);
@@ -1530,13 +1530,13 @@ get_evaluated_faces(const ON_Brep* brepA, const ON_Brep* brepB, op_type operatio
     // We won't be able to distinguish between 1 and 3 at this stage, but we can narrow in
     // on which faces might fall into category 2 and what faces they might interact with.
     std::set<std::pair<int, int> > intersection_candidates;
-    for (int i = 0; i < facecount1; i++) {
-	if (A_unused.find(i) == A_unused.end() && A_finalform.find(i) == A_finalform.end()) {
-	    for (int j = 0; j < facecount2; j++) {
-		if (B_unused.find(j) == B_unused.end() &&  B_finalform.find(j) == B_finalform.end()) {
+    for (int i = 0; i < face_count1; i++) {
+	if (unused1.find(i) == unused1.end() && finalform1.find(i) == finalform1.end()) {
+	    for (int j = 0; j < face_count2; j++) {
+		if (unused2.find(j) == unused2.end() &&  finalform2.find(j) == finalform2.end()) {
 		    // If the two faces don't interact according to their bounding boxes,
 		    // they won't be a source of events - otherwise, they must be checked.
-		    fastf_t disjoint = brepA->m_F[i].BoundingBox().MinimumDistanceTo(brepB->m_F[j].BoundingBox());
+		    fastf_t disjoint = brep1->m_F[i].BoundingBox().MinimumDistanceTo(brep2->m_F[j].BoundingBox());
 		    if (!(disjoint > ON_ZERO_TOLERANCE)) {
 			intersection_candidates.insert(std::pair<int, int>(i,j));
 		    }
@@ -1565,38 +1565,38 @@ get_evaluated_faces(const ON_Brep* brepA, const ON_Brep* brepB, op_type operatio
     // determine which of the "fully used/fully non-used" faces are needed?
 
     if(DEBUG_BREP_BOOLEAN) {
-	bu_log("Summary of brep status: \n A_unused: %d\n B_unused: %d\n A_finalform: %d\n B_finalform %d\nintersection_candidates(%d):\n", A_unused.size(), B_unused.size(), A_finalform.size(), B_finalform.size(), intersection_candidates.size());
+	bu_log("Summary of brep status: \n unused1: %d\n unused2: %d\n finalform1: %d\n finalform2 %d\nintersection_candidates(%d):\n", unused1.size(), unused2.size(), finalform1.size(), finalform2.size(), intersection_candidates.size());
 	for (std::set<std::pair<int, int> >::iterator it=intersection_candidates.begin(); it != intersection_candidates.end(); ++it) {
 	    bu_log("     (%d,%d)\n", (*it).first, (*it).second);
 	}
     }
 
-    int surfcount1 = brepA->m_S.Count();
-    int surfcount2 = brepB->m_S.Count();
-    ON_ClassArray<ON_SimpleArray<SSICurve> > curvesarray(facecount1 + facecount2);
+    int surf_count1 = brep1->m_S.Count();
+    int surf_count2 = brep2->m_S.Count();
+    ON_ClassArray<ON_SimpleArray<SSICurve> > curves_array(face_count1 + face_count2);
 
-    ON_SimpleArray<Subsurface*> surf_treeA, surf_treeB;
-    for (int i = 0; i < surfcount1; i++)
-	surf_treeA.Append(new Subsurface(brepA->m_S[i]->Duplicate()));
-    for (int i = 0; i < surfcount2; i++)
-	surf_treeB.Append(new Subsurface(brepB->m_S[i]->Duplicate()));
+    ON_SimpleArray<Subsurface*> surf_tree1, surf_tree2;
+    for (int i = 0; i < surf_count1; i++)
+	surf_tree1.Append(new Subsurface(brep1->m_S[i]->Duplicate()));
+    for (int i = 0; i < surf_count2; i++)
+	surf_tree2.Append(new Subsurface(brep2->m_S[i]->Duplicate()));
 
     // calculate intersection curves
-    for (int i = 0; i < facecount1; i++) {
-	for (int j = 0; j < facecount2; j++) {
+    for (int i = 0; i < face_count1; i++) {
+	for (int j = 0; j < face_count2; j++) {
 	    if (intersection_candidates.find(std::pair<int,int>(i, j)) != intersection_candidates.end()) {
-		ON_Surface *surfA, *surfB;
+		ON_Surface *surf1, *surf2;
 		ON_ClassArray<ON_SSX_EVENT> events;
 		int results = 0;
-		surfA = brepA->m_S[brepA->m_F[i].m_si];
-		surfB = brepB->m_S[brepB->m_F[j].m_si];
-		if (IsSameSurface(surfA, surfB))
+		surf1 = brep1->m_S[brep1->m_F[i].m_si];
+		surf2 = brep2->m_S[brep2->m_F[j].m_si];
+		if (IsSameSurface(surf1, surf2))
 		    continue;
 
 		// Possible enhancement: Some faces may share the same surface.
 		// We can store the result of SSI to avoid re-computation.
-		results = ON_Intersect(surfA,
-			surfB,
+		results = ON_Intersect(surf1,
+			surf2,
 			events,
 			INTERSECTION_TOL,
 			0.0,
@@ -1605,21 +1605,21 @@ get_evaluated_faces(const ON_Brep* brepA, const ON_Brep* brepB, op_type operatio
 			NULL,
 			NULL,
 			NULL,
-			surf_treeA[brepA->m_F[i].m_si],
-			surf_treeB[brepB->m_F[j].m_si]);
+			surf_tree1[brep1->m_F[i].m_si],
+			surf_tree2[brep2->m_F[j].m_si]);
 		if (results <= 0)
 		    continue;
 		ON_SimpleArray<ON_Curve*> curve_uv, curve_st;
 		for (int k = 0; k < events.Count(); k++) {
 		    if (events[k].m_type == ON_SSX_EVENT::ssx_tangent
 			    || events[k].m_type == ON_SSX_EVENT::ssx_transverse) {
-			if (get_subcurve_inside_faces(brepA, brepB, i, j, &events[k]) < 0)
+			if (get_subcurve_inside_faces(brep1, brep2, i, j, &events[k]) < 0)
 			    continue;
 			SSICurve c1, c2;
 			c1.m_curve = events[k].m_curveA;
 			c2.m_curve = events[k].m_curveB;
-			curvesarray[i].Append(c1);
-			curvesarray[facecount1 + j].Append(c2);
+			curves_array[i].Append(c1);
+			curves_array[face_count1 + j].Append(c2);
 			// Set m_curveA and m_curveB to NULL, in case that they are
 			// deleted by ~ON_SSX_EVENT().
 			events[k].m_curveA = events[k].m_curveB = NULL;
@@ -1628,11 +1628,11 @@ get_evaluated_faces(const ON_Brep* brepA, const ON_Brep* brepB, op_type operatio
 
 		if (DEBUG_BREP_BOOLEAN) {
 		    // Look for coplanar faces
-		    ON_Plane surfA_plane, surfB_plane;
-		    if (surfA->IsPlanar(&surfA_plane) && surfB->IsPlanar(&surfB_plane)) {
+		    ON_Plane surf1_plane, surf2_plane;
+		    if (surf1->IsPlanar(&surf1_plane) && surf2->IsPlanar(&surf2_plane)) {
 			/* We already checked for disjoint above, so the only remaining question is the normals */
-			if (surfA_plane.Normal().IsParallelTo(surfB_plane.Normal())) {
-			    bu_log("Faces brepA->%d and brepB->%d are coplanar and intersecting\n", i, j);
+			if (surf1_plane.Normal().IsParallelTo(surf2_plane.Normal())) {
+			    bu_log("Faces brep1->%d and brep2->%d are coplanar and intersecting\n", i, j);
 			}
 		    }
 		}
@@ -1643,46 +1643,46 @@ get_evaluated_faces(const ON_Brep* brepA, const ON_Brep* brepB, op_type operatio
     }
 
     ON_SimpleArray<TrimmedFace*> original_faces;
-    for (int i = 0; i < facecount1 + facecount2; i++) {
-	const ON_BrepFace &face = i < facecount1 ? brepA->m_F[i] : brepB->m_F[i - facecount1];
-	const ON_Brep *brep = i < facecount1 ? brepA : brepB;
-	const ON_SimpleArray<int> &loopindex = face.m_li;
+    for (int i = 0; i < face_count1 + face_count2; i++) {
+	const ON_BrepFace &face = i < face_count1 ? brep1->m_F[i] : brep2->m_F[i - face_count1];
+	const ON_Brep *brep = i < face_count1 ? brep1 : brep2;
+	const ON_SimpleArray<int> &loop_index = face.m_li;
 
 	TrimmedFace *first = new TrimmedFace();
 	first->m_face = &face;
 
-	for (int j = 0; j < loopindex.Count(); j++) {
-	    const ON_BrepLoop &loop = brep->m_L[loopindex[j]];
-	    const ON_SimpleArray<int> &trimindex = loop.m_ti;
-	    ON_SimpleArray<ON_Curve*> iloop;
-	    for (int k = 0; k < trimindex.Count(); k++) {
-		ON_Curve *curve2d = brep->m_C2[brep->m_T[trimindex[k]].m_c2i];
+	for (int j = 0; j < loop_index.Count(); j++) {
+	    const ON_BrepLoop &loop = brep->m_L[loop_index[j]];
+	    const ON_SimpleArray<int> &trim_index = loop.m_ti;
+	    ON_SimpleArray<ON_Curve*> index_loop;
+	    for (int k = 0; k < trim_index.Count(); k++) {
+		ON_Curve *curve2d = brep->m_C2[brep->m_T[trim_index[k]].m_c2i];
 		if (j == 0) {
 		    first->m_outerloop.Append(curve2d->Duplicate());
 		} else {
-		    iloop.Append(curve2d->Duplicate());
+		    index_loop.Append(curve2d->Duplicate());
 		}
 	    }
 	    if (j != 0)
-		first->m_innerloop.push_back(iloop);
+		first->m_innerloop.push_back(index_loop);
 	}
 	original_faces.Append(first);
     }
 
-    if (original_faces.Count() != facecount1 + facecount2) {
+    if (original_faces.Count() != face_count1 + face_count2) {
 	throw GeometryGenerationError("ON_Boolean() Error: TrimmedFace"
 		" generation failed.\n");
     }
 
     // split the surfaces with the intersection curves
-    ON_ClassArray<ON_SimpleArray<TrimmedFace*> > trimmedfaces;
+    ON_ClassArray<ON_SimpleArray<TrimmedFace*> > trimmed_faces;
     for (int i = 0; i < original_faces.Count(); i++) {
 	TrimmedFace* first = original_faces[i];
 	ON_ClassArray<LinkedCurve> linked_curves;
-	link_curves(curvesarray[i], linked_curves);
+	link_curves(curves_array[i], linked_curves);
 	ON_SimpleArray<TrimmedFace*> splitted;
 	split_trimmed_face(splitted, first, linked_curves);
-	trimmedfaces.Append(splitted);
+	trimmed_faces.Append(splitted);
 
 	// Delete the curves passed in.
 	// Only the copies of them will be used later.
@@ -1695,9 +1695,9 @@ get_evaluated_faces(const ON_Brep* brepA, const ON_Brep* brepB, op_type operatio
 	}
     }
 
-    if (trimmedfaces.Count() != original_faces.Count()) {
+    if (trimmed_faces.Count() != original_faces.Count()) {
 	throw GeometryGenerationError("ON_Boolean() Error: "
-		"trimmedfaces.Count() != original_faces.Count()\n");
+		"trimmed_faces.Count() != original_faces.Count()\n");
     }
 
     for (int i = 0; i < original_faces.Count(); i++) {
@@ -1705,7 +1705,7 @@ get_evaluated_faces(const ON_Brep* brepA, const ON_Brep* brepB, op_type operatio
 	original_faces[i] = NULL;
     }
 
-    for (int i = 0; i < trimmedfaces.Count(); i++) {
+    for (int i = 0; i < trimmed_faces.Count(); i++) {
 	/* Perform inside-outside test to decide whether the trimmed face should
 	 * be used in the final b-rep structure or not.
 	 * Different operations should be dealt with accordingly.
@@ -1713,9 +1713,9 @@ get_evaluated_faces(const ON_Brep* brepA, const ON_Brep* brepB, op_type operatio
 	 * structure of the b-rep. This can reduce time-consuming inside-outside
 	 * tests.
 	 */
-	const ON_SimpleArray<TrimmedFace*>& splitted = trimmedfaces[i];
-	const ON_Brep* another_brep = i >= facecount1 ? brepA : brepB;
-	ON_SimpleArray<Subsurface*>& surf_tree = i >= facecount1 ? surf_treeA : surf_treeB;
+	const ON_SimpleArray<TrimmedFace*>& splitted = trimmed_faces[i];
+	const ON_Brep* another_brep = i >= face_count1 ? brep1 : brep2;
+	ON_SimpleArray<Subsurface*>& surf_tree = i >= face_count1 ? surf_tree1 : surf_tree2;
 	for (int j = 0; j < splitted.Count(); j++) {
 	    if (splitted[j]->m_belong_to_final != TrimmedFace::UNKNOWN) {
 		// Visited before, don't need to test again
@@ -1727,14 +1727,14 @@ get_evaluated_faces(const ON_Brep* brepA, const ON_Brep* brepB, op_type operatio
 	    if (ret_inside_test == 1) {
 		if (DEBUG_BREP_BOOLEAN)
 		    bu_log("The trimmed face is inside the other brep.\n");
-		if (operation == BOOLEAN_INTERSECT || operation == BOOLEAN_XOR || (operation == BOOLEAN_DIFF && i >= facecount1))
+		if (operation == BOOLEAN_INTERSECT || operation == BOOLEAN_XOR || (operation == BOOLEAN_DIFF && i >= face_count1))
 		    splitted[j]->m_belong_to_final = TrimmedFace::BELONG;
 		if (operation == BOOLEAN_DIFF || operation == BOOLEAN_XOR)
 		    splitted[j]->m_rev = true;
 	    } else if (ret_inside_test == 0) {
 		if (DEBUG_BREP_BOOLEAN)
 		    bu_log("The trimmed face is outside the other brep.\n");
-		if (operation == BOOLEAN_UNION || operation == BOOLEAN_XOR || (operation == BOOLEAN_DIFF && i < facecount1))
+		if (operation == BOOLEAN_UNION || operation == BOOLEAN_XOR || (operation == BOOLEAN_DIFF && i < face_count1))
 		    splitted[j]->m_belong_to_final = TrimmedFace::BELONG;
 	    } else if (ret_inside_test == 2) {
 		if (DEBUG_BREP_BOOLEAN)
@@ -1749,29 +1749,29 @@ get_evaluated_faces(const ON_Brep* brepA, const ON_Brep* brepB, op_type operatio
 	    }
 	}
     }
-    for (int i = 0; i < surf_treeA.Count(); i++)
-	delete surf_treeA[i];
+    for (int i = 0; i < surf_tree1.Count(); i++)
+	delete surf_tree1[i];
 
-    for (int i = 0; i < surf_treeB.Count(); i++)
-	delete surf_treeB[i];
+    for (int i = 0; i < surf_tree2.Count(); i++)
+	delete surf_tree2[i];
 
-    return trimmedfaces;
+    return trimmed_faces;
 }
 
 int
-ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type operation)
+ON_Boolean(ON_Brep* evaluated_brep, const ON_Brep* brep1, const ON_Brep* brep2, op_type operation)
 {
-    ON_ClassArray<ON_SimpleArray<TrimmedFace*> > trimmedfaces;
+    ON_ClassArray<ON_SimpleArray<TrimmedFace*> > trimmed_faces;
     try {
 	/* Deal with the trivial cases up front */
-	if (brepA->BoundingBox().MinimumDistanceTo(brepB->BoundingBox()) > ON_ZERO_TOLERANCE) {
+	if (brep1->BoundingBox().MinimumDistanceTo(brep2->BoundingBox()) > ON_ZERO_TOLERANCE) {
 	    switch(operation) {
 		case BOOLEAN_UNION:
-		    brepO->Append(*brepA);
-		    brepO->Append(*brepB);
+		    evaluated_brep->Append(*brep1);
+		    evaluated_brep->Append(*brep2);
 		    break;
 		case BOOLEAN_DIFF:
-		    brepO->Append(*brepA);
+		    evaluated_brep->Append(*brep1);
 		    break;
 		case BOOLEAN_INTERSECT:
 		    return 0;
@@ -1779,11 +1779,11 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 		default:
 		    throw InvalidBooleanOperation("Error - unknown boolean operation\n");
 	    }
-	    brepO->ShrinkSurfaces();
-	    brepO->Compact();
+	    evaluated_brep->ShrinkSurfaces();
+	    evaluated_brep->Compact();
 	    return 0;
 	}
-	trimmedfaces = get_evaluated_faces(brepA, brepB, operation);
+	trimmed_faces = get_evaluated_faces(brep1, brep2, operation);
     } catch (InvalidBooleanOperation &e) {
 	bu_log("%s", e.what());
 	return -1;
@@ -1792,10 +1792,10 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 	return -1;
     }
 
-    int facecount1 = brepA->m_F.Count();
-    int facecount2 = brepB->m_F.Count();
-    for (int i = 0; i < trimmedfaces.Count(); i++) {
-	const ON_SimpleArray<TrimmedFace*>& splitted = trimmedfaces[i];
+    int face_count1 = brep1->m_F.Count();
+    int face_count2 = brep2->m_F.Count();
+    for (int i = 0; i < trimmed_faces.Count(); i++) {
+	const ON_SimpleArray<TrimmedFace*>& splitted = trimmed_faces[i];
 	const ON_Surface* surf = splitted.Count() ? splitted[0]->m_face->SurfaceOf() : NULL;
 	bool added = false;
 	for (int j = 0; j < splitted.Count(); j++) {
@@ -1805,38 +1805,38 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 		// to the brep structure.
 		if (!added) {
 		    ON_Surface *new_surf = surf->Duplicate();
-		    brepO->AddSurface(new_surf);
+		    evaluated_brep->AddSurface(new_surf);
 		    added = true;
 		}
-		ON_BrepFace& new_face = brepO->NewFace(brepO->m_S.Count() - 1);
+		ON_BrepFace& new_face = evaluated_brep->NewFace(evaluated_brep->m_S.Count() - 1);
 
-		add_elements(brepO, new_face, t_face->m_outerloop, ON_BrepLoop::outer);
-		// ON_BrepLoop &loop = brepO->m_L[brepO->m_L.Count() - 1];
+		add_elements(evaluated_brep, new_face, t_face->m_outerloop, ON_BrepLoop::outer);
+		// ON_BrepLoop &loop = evaluated_brep->m_L[evaluated_brep->m_L.Count() - 1];
 		for (unsigned int k = 0; k < t_face->m_innerloop.size(); k++)
-		    add_elements(brepO, new_face, t_face->m_innerloop[k], ON_BrepLoop::inner);
+		    add_elements(evaluated_brep, new_face, t_face->m_innerloop[k], ON_BrepLoop::inner);
 
-		brepO->SetTrimIsoFlags(new_face);
-		const ON_BrepFace& original_face = i >= facecount1 ? brepB->m_F[i - facecount1] : brepA->m_F[i];
+		evaluated_brep->SetTrimIsoFlags(new_face);
+		const ON_BrepFace& original_face = i >= face_count1 ? brep2->m_F[i - face_count1] : brep1->m_F[i];
 		if (original_face.m_bRev ^ t_face->m_rev)
-		    brepO->FlipFace(new_face);
+		    evaluated_brep->FlipFace(new_face);
 	    }
 	}
     }
 
-    for (int i = 0; i < facecount1 + facecount2; i++)
-	for (int j = 0; j < trimmedfaces[i].Count(); j++)
-	    if (trimmedfaces[i][j]) {
-		delete trimmedfaces[i][j];
-		trimmedfaces[i][j] = NULL;
+    for (int i = 0; i < face_count1 + face_count2; i++)
+	for (int j = 0; j < trimmed_faces[i].Count(); j++)
+	    if (trimmed_faces[i][j]) {
+		delete trimmed_faces[i][j];
+		trimmed_faces[i][j] = NULL;
 	    }
 
-    brepO->ShrinkSurfaces();
-    brepO->Compact();
+    evaluated_brep->ShrinkSurfaces();
+    evaluated_brep->Compact();
 
     // Check IsValid() and output the message.
     ON_wString ws;
     ON_TextLog log(ws);
-    brepO->IsValid(&log);
+    evaluated_brep->IsValid(&log);
     bu_log(ON_String(ws).Array());
 
     return 0;
