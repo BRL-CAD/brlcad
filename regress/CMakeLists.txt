@@ -1,6 +1,9 @@
 # Geometry Conversion Regression Tests (experimental)
 add_subdirectory(gcv)
 
+# STEP file conversion (experimental, requires web access)
+add_subdirectory(step)
+
 # MGED command tests
 add_subdirectory(mged)
 
