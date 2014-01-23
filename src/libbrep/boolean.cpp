@@ -481,6 +481,12 @@ is_point_inside_loop(const ON_2dPoint &pt, const ON_SimpleArray<ON_Curve *> &loo
 {
     return (point_loop_location(pt, loop) == INSIDE_OR_ON_LOOP) && !is_point_on_loop(pt, loop);
 }
+    
+HIDDEN bool
+is_point_outside_loop(const ON_2dPoint &pt, const ON_SimpleArray<ON_Curve *> &loop)
+{
+    return (point_loop_location(pt, loop) == OUTSIDE_OR_ON_LOOP) && !is_point_on_loop(pt, loop);
+}
 
 HIDDEN int
 get_subcurve_inside_faces(const ON_Brep *brep1, const ON_Brep *brep2, int face_i1, int face_i2, ON_SSX_EVENT *event)
@@ -1440,9 +1446,7 @@ is_point_on_brep_surface(const ON_3dPoint &pt, const ON_Brep *brep, ON_SimpleArr
 	}
 	ON_2dPoint pt2d(px_event[0].m_b[0], px_event[0].m_b[1]);
 	try {
-	    if (point_loop_location(pt2d, outerloop) == INSIDE_OR_ON_LOOP
-		|| is_point_on_loop(pt2d, outerloop))
-	    {
+	    if (!is_point_outside_loop(pt2d, outerloop)) {
 		return true;
 	    }
 	} catch (InvalidGeometry &e) {
@@ -1503,12 +1507,12 @@ is_point_inside_brep(const ON_3dPoint &pt, const ON_Brep *brep, ON_SimpleArray<S
 	try {
 	    for (int j = 0; j < x_event.Count(); j++) {
 		ON_2dPoint pt2d(x_event[j].m_b[0], x_event[j].m_b[1]);
-		if (point_loop_location(pt2d, outerloop) == INSIDE_OR_ON_LOOP || is_point_on_loop(pt2d, outerloop)) {
+		if (!is_point_outside_loop(pt2d, outerloop)) {
 		    isect_pt.Append(x_event[j].m_B[0]);
 		}
 		if (x_event[j].m_type == ON_X_EVENT::ccx_overlap) {
 		    pt2d = ON_2dPoint(x_event[j].m_b[2], x_event[j].m_b[3]);
-		    if (point_loop_location(pt2d, outerloop) == INSIDE_OR_ON_LOOP || is_point_on_loop(pt2d, outerloop)) {
+		    if (!is_point_outside_loop(pt2d, outerloop)) {
 			isect_pt.Append(x_event[j].m_B[1]);
 		    }
 		}
@@ -1594,8 +1598,7 @@ is_face_inside_brep(const TrimmedFace *tface, const ON_Brep *brep, ON_SimpleArra
 		// The test point should not be inside an innerloop
 		for (j = 0; j < tface->m_innerloop.size(); j++) {
 		    try {
-			if (point_loop_location(test_pt2d, tface->m_innerloop[j]) == INSIDE_OR_ON_LOOP
-			    || is_point_on_loop(test_pt2d, tface->m_innerloop[j])) {
+			if (!is_point_outside_loop(test_pt2d, tface->m_innerloop[j])) {
 			    break;
 			}
 		    } catch (InvalidGeometry &e) {
