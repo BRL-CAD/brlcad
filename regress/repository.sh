@@ -253,7 +253,13 @@ done
 # make sure no more WIN32 issues are introduced than existed
 # previously.  for cases where it "seems" necessary, can find and fix
 # a case that is not before adding another.  lets not increase this.
-if test $FOUND -lt 80 ; then
+NEED_FIXING=79
+if test $FOUND -lt `expr $NEED_FIXING + 1` ; then
+    if test $FOUND -ne $NEED_FIXING ; then
+	echo "********************************************************"
+	echo "FIXME: UPDATE THE PLATFORM SYMBOL COUNT IN $0"
+	echo "********************************************************"
+    fi
     echo "-> platform symbol usage check succeeded"
 else
     echo "-> platform symbol usage check FAILED"
