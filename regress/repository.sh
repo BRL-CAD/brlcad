@@ -58,6 +58,10 @@ SRCFILES="`find ${TOPSRC}/src -type f \( -name \*.c -o -name \*.cpp -o -name \*.
 
 INCFILES="`find ${TOPSRC}/include -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -not -regex '.*pkg.h'`"
 
+BLDFILES="`find ${TOPSRC}/src -type f \( -name \*.cmake -o -name CMakeLists.txt \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*cache.*' -not -regex '.*\.svn.*'`
+`find ${TOPSRC}/misc -type f \( -name \*.cmake -o -name CMakeLists.txt \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*cache.*' -not -regex '.*\.svn.*'`
+${TOPSRC}/CMakeLists.txt"
+
 
 ###
 # TEST: make sure nobody includes private headers like bio.h in a
@@ -177,6 +181,82 @@ if test "x$FOUND" = "x" ; then
     echo "-> API usage check succeeded"
 else
     echo "-> API usage check FAILED"
+    FAILED="`expr $FAILED + 1`"
+fi
+
+
+###
+# TEST: make sure we don't get worse when it comes to testing for a
+# platform feature vs. assuming a platform always had, has, and will
+# have some characteristic feature.
+
+echo "running platform symbol usage check"
+
+FOUND=0
+for platform in WIN32 WIN64 ; do
+    echo "Searching headers for $platform ..."
+    MATCH=
+    for file in $INCFILES /dev/null ; do
+	this="`grep -n -e [^a-zA-Z0-9_]$platform[^a-zA-Z0-9_] $file /dev/null | grep -v pstdint.h`"
+	if test "x$this" != "x" ; then
+	    MATCH="$MATCH
+$this"
+	fi
+    done
+    if test "x$MATCH" != "x" ; then
+	cnt="`echo \"$MATCH\" | tail -n +2 | wc -l | awk '{print $1}'`"
+	echo "FIXME: Found $cnt header instances of $platform ..."
+	echo "$MATCH
+"
+	FOUND=`expr $FOUND + 1`
+    fi
+done
+
+for platform in WIN32 WIN64 ; do
+    echo "Searching sources for $platform ..."
+    MATCH=
+    for file in $SRCFILES /dev/null ; do
+	this="`grep -n -e [^a-zA-Z0-9_]$platform[^a-zA-Z0-9_] $file /dev/null | grep -v uce-dirent.h`"
+	if test "x$this" != "x" ; then
+	    MATCH="$MATCH
+$this"
+	fi
+    done
+    if test "x$MATCH" != "x" ; then
+	cnt="`echo \"$MATCH\" | tail -n +2 | wc -l | awk '{print $1}'`"
+	echo "FIXME: Found $cnt source instances of $platform ..."
+	echo "$MATCH
+"
+	FOUND=`expr $FOUND + $cnt`
+    fi
+done
+
+for platform in WIN32 WIN64 ; do
+    echo "Searching build files for $platform ..."
+    MATCH=
+    for file in $BLDFILES /dev/null ; do
+	this="`grep -n -e [^a-zA-Z0-9_]$platform[^a-zA-Z0-9_] $file /dev/null`"
+	if test "x$this" != "x" ; then
+	    MATCH="$MATCH
+$this"
+	fi
+    done
+    if test "x$MATCH" != "x" ; then
+	cnt="`echo \"$MATCH\" | tail -n +2 | wc -l | awk '{print $1}'`"
+	echo "FIXME: Found $cnt build system instances of $platform ..."
+	echo "$MATCH
+"
+	FOUND=`expr $FOUND + $cnt`
+    fi
+done
+
+# make sure no more WIN32 issues are introduced than existed
+# previously.  for cases where it "seems" necessary, can find and fix
+# a case that is not before adding another.  lets not increase this.
+if test $FOUND -lt 80 ; then
+    echo "-> platform symbol usage check succeeded"
+else
+    echo "-> platform symbol usage check FAILED"
     FAILED="`expr $FAILED + 1`"
 fi
 
