@@ -52,6 +52,23 @@
 // than the default one ON_PI/180.
 #define ANGLE_TOL ON_PI/1800.0
 
+class InvalidBooleanOperation : public std::invalid_argument
+{
+public:
+    InvalidBooleanOperation(const std::string &msg = "") : std::invalid_argument(msg) {}
+};
+
+class InvalidGeometry : public std::invalid_argument
+{
+public:
+    InvalidGeometry(const std::string &msg = "") : std::invalid_argument(msg) {}
+};
+
+class GeometryGenerationError : public std::runtime_error
+{
+public:
+    GeometryGenerationError(const std::string &msg = "") : std::runtime_error(msg) {}
+};
 
 struct IntersectPoint {
     ON_3dPoint m_pt;	// 3D intersection point
@@ -407,7 +424,9 @@ enum {
 };
 
 //   Returns whether the point is inside/on or outside/on the loop
-//   boundary, or -1 on error.
+//   boundary.
+//
+//   Throws InvalidGeometry if loop is invalid.
 //
 //   If you want to know whether this point is on the loop boundary,
 //   call is_point_on_loop().
@@ -416,7 +435,7 @@ point_loop_location(const ON_2dPoint &pt, const ON_SimpleArray<ON_Curve *> &loop
 {
     ON_PolyCurve polycurve;
     if (!is_loop_valid(loop, ON_ZERO_TOLERANCE, &polycurve)) {
-	return -1;
+	throw InvalidGeometry("point_loop_location() given invalid loop\n");
     }
 
     ON_BoundingBox bbox = polycurve.BoundingBox();
@@ -443,17 +462,14 @@ point_loop_location(const ON_2dPoint &pt, const ON_SimpleArray<ON_Curve *> &loop
 }
 
 
-HIDDEN int
+// Returns whether or not point is on the loop boundary.
+// Throws InvalidGeometry if loop is invalid.
+HIDDEN bool
 is_point_on_loop(const ON_2dPoint &pt, const ON_SimpleArray<ON_Curve *> &loop)
 {
-    // returns:
-    //   -1: the input is not a valid loop
-    //   0:  the point is not on the boundary of the loop
-    //   1:  the point is on the boundary of the loop
-
     ON_PolyCurve polycurve;
     if (!is_loop_valid(loop, ON_ZERO_TOLERANCE, &polycurve)) {
-	return -1;
+	throw InvalidGeometry("is_ponit_on_loop() given invalid loop\n");
     }
 
     ON_ClassArray<ON_PX_EVENT> px_event;
@@ -463,7 +479,7 @@ is_point_on_loop(const ON_2dPoint &pt, const ON_SimpleArray<ON_Curve *> &loop)
 HIDDEN bool
 is_point_inside_loop(const ON_2dPoint &pt, const ON_SimpleArray<ON_Curve *> &loop)
 {
-    return (point_loop_location(pt, loop) == INSIDE_OR_ON_LOOP) && is_point_on_loop(pt, loop) == 0;
+    return (point_loop_location(pt, loop) == INSIDE_OR_ON_LOOP) && !is_point_on_loop(pt, loop);
 }
 
 HIDDEN int
@@ -530,8 +546,12 @@ get_subcurve_inside_faces(const ON_Brep *brep1, const ON_Brep *brep2, int face_i
 		continue;
 	    }
 	    ON_2dPoint pt = event->m_curveA->PointAt(interval.Mid());
-	    if (is_point_inside_loop(pt, outerloop1)) {
-		intervals1.Append(interval);
+	    try {
+		if (is_point_inside_loop(pt, outerloop1)) {
+		    intervals1.Append(interval);
+		}
+	    } catch (InvalidGeometry &e) {
+		bu_log("%s", e.what());
 	    }
 	}
     } else {
@@ -564,12 +584,16 @@ get_subcurve_inside_faces(const ON_Brep *brep1, const ON_Brep *brep2, int face_i
 		continue;
 	    }
 	    ON_2dPoint pt = event->m_curveB->PointAt(interval.Mid());
-	    if (is_point_inside_loop(pt, outerloop2)) {
-		// According to openNURBS's definition, the domain of m_curve3d,
-		// m_curveA, m_curveB in an ON_SSX_EVENT should be the same.
-		// (See ON_SSX_EVENT::IsValid()).
-		// So we don't need to pull the interval back to A
-		intervals2.Append(interval);
+	    try {
+		if (is_point_inside_loop(pt, outerloop2)) {
+		    // According to openNURBS's definition, the domain of m_curve3d,
+		    // m_curveA, m_curveB in an ON_SSX_EVENT should be the same.
+		    // (See ON_SSX_EVENT::IsValid()).
+		    // So we don't need to pull the interval back to A
+		    intervals2.Append(interval);
+		}
+	    } catch (InvalidGeometry &e) {
+		bu_log("%s", e.what());
 	    }
 	}
     } else {
@@ -794,16 +818,20 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace *> &out, const TrimmedFace *in, ON
 	if (!have_intersect[i]) {
 	    // The start point cannot be on the boundary of the loop, because
 	    // there is no intersections between curves[i] and the loop.
-	    if (point_loop_location(curves[i].PointAtStart(), in->m_outerloop) == INSIDE_OR_ON_LOOP) {
-		if (curves[i].IsClosed()) {
-		    ON_SimpleArray<ON_Curve *> index_loop;
-		    curves[i].AppendCurvesToArray(index_loop);
-		    innerloops.push_back(index_loop);
-		    TrimmedFace *new_face = new TrimmedFace();
-		    new_face->m_face = in->m_face;
-		    curves[i].AppendCurvesToArray(new_face->m_outerloop);
-		    out.Append(new_face);
+	    try {
+		if (point_loop_location(curves[i].PointAtStart(), in->m_outerloop) == INSIDE_OR_ON_LOOP) {
+		    if (curves[i].IsClosed()) {
+			ON_SimpleArray<ON_Curve *> index_loop;
+			curves[i].AppendCurvesToArray(index_loop);
+			innerloops.push_back(index_loop);
+			TrimmedFace *new_face = new TrimmedFace();
+			new_face->m_face = in->m_face;
+			curves[i].AppendCurvesToArray(new_face->m_outerloop);
+			out.Append(new_face);
+		    }
 		}
+	    } catch (InvalidGeometry &e) {
+		bu_log("%s", e.what());
 	    }
 	}
     }
@@ -841,9 +869,12 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace *> &out, const TrimmedFace *in, ON
 		// boundary, that point should be IntersectPoint::OUT, the
 		// same as the right's outside the loop.
 		// Other cases are similar.
-		int left_in = is_point_inside_loop(left, in->m_outerloop);
-		int right_in = is_point_inside_loop(right, in->m_outerloop);
-		if (left_in < 0 || right_in < 0) {
+		int left_in, right_in;
+		try {
+		    left_in = is_point_inside_loop(left, in->m_outerloop);
+		    right_in = is_point_inside_loop(right, in->m_outerloop);
+		} catch (InvalidGeometry &e) {
+		    bu_log("%s", e.what());
 		    // not a loop
 		    ipt->m_in_out = IntersectPoint::UNSET;
 		    continue;
@@ -1408,8 +1439,14 @@ is_point_on_brep_surface(const ON_3dPoint &pt, const ON_Brep *brep, ON_SimpleArr
 	    outerloop.Append(brep->m_C2[brep->m_T[loop.m_ti[j]].m_c2i]);
 	}
 	ON_2dPoint pt2d(px_event[0].m_b[0], px_event[0].m_b[1]);
-	if (point_loop_location(pt2d, outerloop) == INSIDE_OR_ON_LOOP || is_point_on_loop(pt2d, outerloop) == 1) {
-	    return true;
+	try {
+	    if (point_loop_location(pt2d, outerloop) == INSIDE_OR_ON_LOOP
+		|| is_point_on_loop(pt2d, outerloop))
+	    {
+		return true;
+	    }
+	} catch (InvalidGeometry &e) {
+	    bu_log("%s", e.what());
 	}
     }
 
@@ -1463,17 +1500,21 @@ is_point_inside_brep(const ON_3dPoint &pt, const ON_Brep *brep, ON_SimpleArray<S
 	for (int j = 0; j < loop.m_ti.Count(); j++) {
 	    outerloop.Append(brep->m_C2[brep->m_T[loop.m_ti[j]].m_c2i]);
 	}
-	for (int j = 0; j < x_event.Count(); j++) {
-	    ON_2dPoint pt2d(x_event[j].m_b[0], x_event[j].m_b[1]);
-	    if (point_loop_location(pt2d, outerloop) == INSIDE_OR_ON_LOOP || is_point_on_loop(pt2d, outerloop) == 1) {
-		isect_pt.Append(x_event[j].m_B[0]);
-	    }
-	    if (x_event[j].m_type == ON_X_EVENT::ccx_overlap) {
-		pt2d = ON_2dPoint(x_event[j].m_b[2], x_event[j].m_b[3]);
-		if (point_loop_location(pt2d, outerloop) == INSIDE_OR_ON_LOOP || is_point_on_loop(pt2d, outerloop) == 1) {
-		    isect_pt.Append(x_event[j].m_B[1]);
+	try {
+	    for (int j = 0; j < x_event.Count(); j++) {
+		ON_2dPoint pt2d(x_event[j].m_b[0], x_event[j].m_b[1]);
+		if (point_loop_location(pt2d, outerloop) == INSIDE_OR_ON_LOOP || is_point_on_loop(pt2d, outerloop)) {
+		    isect_pt.Append(x_event[j].m_B[0]);
+		}
+		if (x_event[j].m_type == ON_X_EVENT::ccx_overlap) {
+		    pt2d = ON_2dPoint(x_event[j].m_b[2], x_event[j].m_b[3]);
+		    if (point_loop_location(pt2d, outerloop) == INSIDE_OR_ON_LOOP || is_point_on_loop(pt2d, outerloop)) {
+			isect_pt.Append(x_event[j].m_B[1]);
+		    }
 		}
 	    }
+	} catch (InvalidGeometry &e) {
+	    bu_log("%s", e.what());
 	}
     }
 
@@ -1541,26 +1582,35 @@ is_face_inside_brep(const TrimmedFace *tface, const ON_Brep *brep, ON_SimpleArra
     bool found = false;
     ON_2dPoint test_pt2d;
     ON_RandomNumberGenerator rng;
-    for (int i = 0; i < try_count; i++) {
-	// Get a random point inside the outerloop's bounding box.
-	double x = rng.RandomDouble(bbox.m_min.x, bbox.m_max.x);
-	double y = rng.RandomDouble(bbox.m_min.y, bbox.m_max.y);
-	test_pt2d = ON_2dPoint(x, y);
-	if (is_point_inside_loop(test_pt2d, tface->m_outerloop)) {
-	    unsigned int j = 0;
-	    // The test point should not be inside an innerloop
-	    for (j = 0; j < tface->m_innerloop.size(); j++) {
-		if (point_loop_location(test_pt2d, tface->m_innerloop[j]) == INSIDE_OR_ON_LOOP
-		    || is_point_on_loop(test_pt2d, tface->m_innerloop[j]) == 1) {
+
+    try {
+	for (int i = 0; i < try_count; i++) {
+	    // Get a random point inside the outerloop's bounding box.
+	    double x = rng.RandomDouble(bbox.m_min.x, bbox.m_max.x);
+	    double y = rng.RandomDouble(bbox.m_min.y, bbox.m_max.y);
+	    test_pt2d = ON_2dPoint(x, y);
+	    if (is_point_inside_loop(test_pt2d, tface->m_outerloop)) {
+		unsigned int j = 0;
+		// The test point should not be inside an innerloop
+		for (j = 0; j < tface->m_innerloop.size(); j++) {
+		    try {
+			if (point_loop_location(test_pt2d, tface->m_innerloop[j]) == INSIDE_OR_ON_LOOP
+			    || is_point_on_loop(test_pt2d, tface->m_innerloop[j])) {
+			    break;
+			}
+		    } catch (InvalidGeometry &e) {
+			bu_log("%s", e.what());
+		    }
+		}
+		if (j == tface->m_innerloop.size()) {
+		    // We find a valid test point
+		    found = true;
 		    break;
 		}
 	    }
-	    if (j == tface->m_innerloop.size()) {
-		// We find a valid test point
-		found = true;
-		break;
-	    }
 	}
+    } catch (InvalidGeometry &e) {
+	bu_log("%s", e.what());
     }
 
     if (!found) {
@@ -1579,18 +1629,6 @@ is_face_inside_brep(const TrimmedFace *tface, const ON_Brep *brep, ON_SimpleArra
 
     return is_point_inside_brep(test_pt3d, brep, surf_tree) ? 1 : 0;
 }
-
-class InvalidBooleanOperation : public std::invalid_argument
-{
-public:
-    InvalidBooleanOperation(const std::string &msg = "") : std::invalid_argument(msg) {}
-};
-
-class GeometryGenerationError : public std::runtime_error
-{
-public:
-    GeometryGenerationError(const std::string &msg = "") : std::runtime_error(msg) {}
-};
 
 HIDDEN ON_ClassArray<ON_SimpleArray<TrimmedFace *> >
 get_evaluated_faces(const ON_Brep *brep1, const ON_Brep *brep2, op_type operation)
