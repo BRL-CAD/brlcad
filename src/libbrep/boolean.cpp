@@ -32,6 +32,7 @@
 #include <set>
 #include <map>
 #include <algorithm>
+#include <stdexcept>
 #include "bio.h"
 
 #include "vmath.h"
@@ -1473,33 +1474,19 @@ IsFaceInsideBrep(const TrimmedFace* tface, const ON_Brep* brep, ON_SimpleArray<S
     return IsPointInsideBrep(test_pt3d, brep, surf_tree) ? 1 : 0;
 }
 
+class InvalidBooleanOperation : public std::invalid_argument {
+public:
+    InvalidBooleanOperation(const std::string &msg = "") : std::invalid_argument(msg) {}
+};
 
-int
-ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type operation)
+class GeometryGenerationError : public std::runtime_error {
+public:
+    GeometryGenerationError(const std::string &msg = "") : std::runtime_error(msg) {}
+};
+
+HIDDEN ON_ClassArray<ON_SimpleArray<TrimmedFace*> >
+get_evaluated_faces(const ON_Brep* brepA, const ON_Brep* brepB, op_type operation)
 {
-    /* Deal with the trivial cases up front */
-    if (brepA->BoundingBox().MinimumDistanceTo(brepB->BoundingBox()) > ON_ZERO_TOLERANCE) {
-	switch(operation) {
-	    case BOOLEAN_UNION:
-		brepO->Append(*brepA);
-		brepO->Append(*brepB);
-		break;
-	    case BOOLEAN_DIFF:
-		brepO->Append(*brepA);
-		break;
-	    case BOOLEAN_INTERSECT:
-		return 0;
-		break;
-	    default:
-		bu_log("Error - unknown boolean operation\n");
-		return -1;
-	}
-
-	brepO->ShrinkSurfaces();
-	brepO->Compact();
-	return 0;
-    }
-
     std::set<int> A_unused, B_unused;
     std::set<int> A_finalform, B_finalform;
     int facecount1 = brepA->m_F.Count();
@@ -1528,8 +1515,8 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 		    unused->insert(curr_index);
 		    break;
 		default:
-		    bu_log("Error - unknown boolean operation\n");
-		    break;
+		    throw InvalidBooleanOperation("Error - unknown "
+			    "boolean operation\n");
 	    }
 	}
     }
@@ -1683,8 +1670,8 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
     }
 
     if (original_faces.Count() != facecount1 + facecount2) {
-	bu_log("ON_Boolean() Error: TrimmedFace generation failed.\n");
-	return -1;
+	throw GeometryGenerationError("ON_Boolean() Error: TrimmedFace"
+		" generation failed.\n");
     }
 
     // split the surfaces with the intersection curves
@@ -1699,17 +1686,18 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 
 	// Delete the curves passed in.
 	// Only the copies of them will be used later.
-	for (int j = 0; j < linked_curves.Count(); j++)
+	for (int j = 0; j < linked_curves.Count(); j++) {
 	    for (int k = 0; k < linked_curves[j].m_ssi_curves.Count(); k++)
 		if (linked_curves[j].m_ssi_curves[k].m_curve) {
 		    delete linked_curves[j].m_ssi_curves[k].m_curve;
 		    linked_curves[j].m_ssi_curves[k].m_curve = NULL;
 		}
+	}
     }
 
     if (trimmedfaces.Count() != original_faces.Count()) {
-	bu_log("ON_Boolean() Error: trimmedfaces.Count() != original_faces.Count()\n");
-	return -1;
+	throw GeometryGenerationError("ON_Boolean() Error: "
+		"trimmedfaces.Count() != original_faces.Count()\n");
     }
 
     for (int i = 0; i < original_faces.Count(); i++) {
@@ -1761,7 +1749,51 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
 	    }
 	}
     }
+    for (int i = 0; i < surf_treeA.Count(); i++)
+	delete surf_treeA[i];
 
+    for (int i = 0; i < surf_treeB.Count(); i++)
+	delete surf_treeB[i];
+
+    return trimmedfaces;
+}
+
+int
+ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type operation)
+{
+    ON_ClassArray<ON_SimpleArray<TrimmedFace*> > trimmedfaces;
+    try {
+	/* Deal with the trivial cases up front */
+	if (brepA->BoundingBox().MinimumDistanceTo(brepB->BoundingBox()) > ON_ZERO_TOLERANCE) {
+	    switch(operation) {
+		case BOOLEAN_UNION:
+		    brepO->Append(*brepA);
+		    brepO->Append(*brepB);
+		    break;
+		case BOOLEAN_DIFF:
+		    brepO->Append(*brepA);
+		    break;
+		case BOOLEAN_INTERSECT:
+		    return 0;
+		    break;
+		default:
+		    throw InvalidBooleanOperation("Error - unknown boolean operation\n");
+	    }
+	    brepO->ShrinkSurfaces();
+	    brepO->Compact();
+	    return 0;
+	}
+	trimmedfaces = get_evaluated_faces(brepA, brepB, operation);
+    } catch (InvalidBooleanOperation &e) {
+	bu_log("%s", e.what());
+	return -1;
+    } catch (GeometryGenerationError &e) {
+	bu_log("%s", e.what());
+	return -1;
+    }
+
+    int facecount1 = brepA->m_F.Count();
+    int facecount2 = brepB->m_F.Count();
     for (int i = 0; i < trimmedfaces.Count(); i++) {
 	const ON_SimpleArray<TrimmedFace*>& splitted = trimmedfaces[i];
 	const ON_Surface* surf = splitted.Count() ? splitted[0]->m_face->SurfaceOf() : NULL;
@@ -1807,10 +1839,6 @@ ON_Boolean(ON_Brep* brepO, const ON_Brep* brepA, const ON_Brep* brepB, op_type o
     brepO->IsValid(&log);
     bu_log(ON_String(ws).Array());
 
-    for (int i = 0; i < surf_treeA.Count(); i++)
-	delete surf_treeA[i];
-    for (int i = 0; i < surf_treeB.Count(); i++)
-	delete surf_treeB[i];
     return 0;
 }
 
