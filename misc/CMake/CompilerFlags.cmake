@@ -38,7 +38,7 @@ include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
 include(CMakeParseArguments)
 
-# Debugging macro to print all current flags
+# Debugging function to print all current flags
 function(PRINT_BUILD_FLAGS)
   message("Current Build Flags (${ARGV0}):\n")
   message("CMAKE_C_FLAGS: ${CMAKE_C_FLAGS}")
