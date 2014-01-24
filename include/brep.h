@@ -278,7 +278,7 @@ namespace brlcad {
 /**
  * Bounding Rectangle Hierarchy
  */
-class BRNode {
+class BREP_EXPORT BRNode {
 public:
     BRNode();
     BRNode(const ON_BoundingBox &node);
@@ -541,7 +541,7 @@ private:
 /*--------------------------------------------------------------------------------
  * Bounding Box Hierarchy
  */
-class BBNode {
+class BREP_EXPORT BBNode {
 public:
     BBNode();
     BBNode(const ON_BoundingBox &node);
