@@ -481,7 +481,7 @@ is_point_inside_loop(const ON_2dPoint &pt, const ON_SimpleArray<ON_Curve *> &loo
 {
     return (point_loop_location(pt, loop) == INSIDE_OR_ON_LOOP) && !is_point_on_loop(pt, loop);
 }
-    
+
 HIDDEN bool
 is_point_outside_loop(const ON_2dPoint &pt, const ON_SimpleArray<ON_Curve *> &loop)
 {
