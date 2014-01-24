@@ -22,7 +22,7 @@
  * gather statistics on a set of short integers.
  *
  * Options
- * h help
+ * h (or ?) help
  */
 
 #include "common.h"
@@ -50,6 +50,7 @@ usage(const char *progname)
 static int
 parse_args(int ac, char **av, const char **progname)
 {
+    const char optstring[] = "h?";
     int c;
 
     if (!(*progname=strrchr(*av, '/')))
@@ -59,9 +60,10 @@ parse_args(int ac, char **av, const char **progname)
     bu_opterr = 0;
 
     /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac, av, "h?")) != -1)
+    while ((c=bu_getopt(ac, av, optstring)) != -1)
 	switch (c) {
-	    default		: usage(*progname); break;
+	    default: usage(*progname);
+		break;
 	}
 
     return bu_optind;
@@ -103,6 +105,8 @@ comp_stats(FILE *fd)
 
 
 /*
+ * M A I N
+ *
  * Call parse_args to handle command line arguments first, then
  * process input.
  */
