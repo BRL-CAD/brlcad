@@ -1,4 +1,4 @@
-/*                         U S T A T S . C
+/*                        U S T A T S . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2014 United States Government as represented by
@@ -19,10 +19,10 @@
  */
 /** @file ustats.c
  *
- * gather statistics on unsigned shorts.
+ * gather statistics on a set of unsigned shorts.
  *
  * Options
- * h help
+ * h (or ?) help
  */
 
 #include "common.h"
@@ -33,29 +33,36 @@
 
 #include "bu.h"
 
-static const char usage[]     = "Usage: %s [ file ]\n";
-static const char progname[]  = "ustats";
+
+/*
+ * Tell user how to invoke this program, then exit
+ */
+static void
+usage(const char *progname)
+{
+    bu_exit(1, "Usage: %s [ file ]\n", progname);
+}
 
 
 /*
  * Parse through command line flags
  */
 static int
-parse_args(int ac, char *av[])
+parse_args(int ac, char **av, const char **progname)
 {
     const char optstring[] = "h?";
     int c;
+
+    if (!(*progname=strrchr(*av, '/')))
+	*progname = *av;
 
     /* Turn off bu_getopt's error messages */
     bu_opterr = 0;
 
     /* get all the option flags from the command line */
-    while ((c = bu_getopt(ac, av, optstring)) != -1)
+    while ((c=bu_getopt(ac, av, optstring)) != -1)
 	switch (c) {
-	    case '?':
-	    case 'h':
-	    default:
-		bu_exit(1, usage, progname);
+	    default: usage(*progname);
 		break;
 	}
 
@@ -67,22 +74,21 @@ static void
 comp_stats(FILE *fd)
 {
     unsigned short *buffer=(unsigned short *)NULL;
-    unsigned short min, max;
-    double stdev, sum, sum_sq, num, sqrt(double);
-    int count;
-    int i;
-
+    unsigned short min = USHRT_MAX;
+    unsigned short max = 0; /* sorry, did not find USHRT_MIN */
+    double doub, stdev, sqrt(double);
+    double sum = 0.0;
+    double sum_sq = 0.0;
+    double num = 0.0;
+    int count, i;
 
     buffer = (unsigned short *)bu_calloc(10240, sizeof(short), "buffer");
 
-    stdev = sum = sum_sq = count = num = 0.0;
-    min = 65535;
-    max = 0;
-
     while ((count=fread((void *)buffer, sizeof(short), 10240, fd))) {
 	for (i=0; i < count; ++i) {
-	    sum += (double)buffer[i];
-	    sum_sq += (double)(buffer[i]) * (double)(buffer[i]);
+	    doub = (double)buffer[i];
+	    sum += doub;
+	    sum_sq += doub*doub;
 	    if (buffer[i] > max) max = buffer[i];
 	    if (buffer[i] < min) min = buffer[i];
 	}
@@ -107,14 +113,15 @@ comp_stats(FILE *fd)
 int
 main(int ac, char *av[])
 {
+    const char *progname = "ustats";
     int arg_index;
 
     /* parse command flags
      */
-    arg_index = parse_args(ac, av);
+    arg_index = parse_args(ac, av, &progname);
     if (arg_index < ac) {
 	char *ifname = bu_realpath(av[arg_index], NULL);
-	/* open file of shorts */
+	/* open file of unsigned shorts */
 	if (freopen(ifname, "r", stdin) == (FILE *)NULL) {
 	    perror(ifname);
 	    bu_free(ifname, "ifname alloc from bu_realpath");
@@ -122,7 +129,7 @@ main(int ac, char *av[])
 	}
 	bu_free(ifname, "ifname alloc from bu_realpath");
     } else if (isatty((int)fileno(stdin))) {
-	bu_exit(1, usage, progname);
+	usage(progname);
     }
 
     comp_stats(stdin);
