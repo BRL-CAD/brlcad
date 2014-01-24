@@ -59,6 +59,7 @@ if(MSVC)
 endif(MSVC)
 
 set(IGNORE_FILES
+  AP214.h
   )
 CMAKEFILES(${IGNORE_FILES})
 
