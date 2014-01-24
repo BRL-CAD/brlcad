@@ -1482,6 +1482,11 @@ endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 # load our compiler testing macro definitions
 include(${BRLCAD_CMAKE_DIR}/CompilerFlags.cmake)
 
+# Cache the original CMake sets of build flags for later use
+if(NOT CMAKE_BUILD_FLAGS_CACHED)
+  CACHE_BUILD_FLAGS()
+endif(NOT CMAKE_BUILD_FLAGS_CACHED)
+
 # Clear out most CMake-assigned defaults - We're managing
 # our own compile flags, and don't (for example) want NDEBUG
 # if we have debugging flags enabled for a Release build.
