@@ -21,7 +21,7 @@
 /** @{ */
 /** @file libtermio.h
  *
- *  Externs for the BRL-CAD library LIBTERMIO
+ * Externs for the BRL-CAD library LIBTERMIO
  *
  */
 
@@ -47,35 +47,36 @@
 #endif /* HAVE_TERMIOS_H */
 
 
-
 __BEGIN_DECLS
 
-void clr_Cbreak( int fd );
-void set_Cbreak( int fd );
-void clr_Raw( int fd );
-void set_Raw( int fd );
-void set_Echo( int fd );
-void clr_Echo( int fd );
-void set_Tabs( int fd );
-void clr_Tabs( int fd );
-void set_HUPCL( int fd );
-void clr_CRNL( int fd );
-unsigned short get_O_Speed( int fd );
-void save_Tty( int fd );
-void reset_Tty( int fd );
-int save_Fil_Stat( int fd );
-int reset_Fil_Stat( int	fd );
-int set_O_NDELAY( int fd );
+void clr_Cbreak(int fd);
+void set_Cbreak(int fd);
+void clr_Raw(int fd);
+void set_Raw(int fd);
+void set_Echo(int fd);
+void clr_Echo(int fd);
+void set_Tabs(int fd);
+void clr_Tabs(int fd);
+void set_HUPCL(int fd);
+void clr_CRNL(int fd);
+unsigned short get_O_Speed(int fd);
+void save_Tty(int fd);
+void reset_Tty(int fd);
+int save_Fil_Stat(int fd);
+int reset_Fil_Stat(int fd);
+int set_O_NDELAY(int fd);
 void prnt_Tio(
-    char *msg
+    char *msg,
 #if defined(BSD)
-    ,struct sgttyb *tio_ptr
+    struct sgttyb *tio_ptr
 #elif defined(SYSV)
-    ,struct termio *tio_ptr
+    struct termio *tio_ptr
 #elif defined(HAVE_TERMIOS_H)
-    ,struct termios *tio_ptr
+    struct termios *tio_ptr
+#else
+    void *tio_ptr
 #endif
-);
+    );
 
 __END_DECLS
 

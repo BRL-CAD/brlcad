@@ -473,6 +473,8 @@ prnt_Tio(
     struct termio *tio_ptr
 #elif defined(HAVE_TERMIOS_H)
     struct termios *tio_ptr
+#else
+    void *tio_ptr
 #endif
 )
 {
