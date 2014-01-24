@@ -72,21 +72,21 @@ static void
 comp_stats(FILE *fd)
 {
     short *buffer=(short *)NULL;
-    short min = 32767;
-    short max = -32768;
-    double stdev, sqrt(double);
+    short min = SHRT_MAX;
+    short max = SHRT_MIN;
+    double doub, stdev, sqrt(double);
     double sum = 0.0;
     double sum_sq = 0.0;
     double num = 0.0;
-    int count = 0;
-    int i;
+    int count, i;
 
     buffer = (short *)bu_calloc(10240, sizeof(short), "buffer");
 
     while ((count=fread((void *)buffer, sizeof(short), 10240, fd))) {
 	for (i=0; i < count; ++i) {
-	    sum += (double)buffer[i];
-	    sum_sq += (double)(buffer[i] * buffer[i]);
+	    doub = (double)buffer[i];
+	    sum += doub;
+	    sum_sq += doub*doub;
 	    if (buffer[i] > max) max = buffer[i];
 	    if (buffer[i] < min) min = buffer[i];
 	}
