@@ -647,8 +647,8 @@ get_subcurve_inside_faces(const ON_Brep *brep1, const ON_Brep *brep2, int face_i
 }
 
 
-HIDDEN void
-link_curves(const ON_SimpleArray<SSICurve> &in, ON_ClassArray<LinkedCurve> &out)
+HIDDEN ON_ClassArray<LinkedCurve>
+link_curves(const ON_SimpleArray<SSICurve> &in)
 {
     // There might be two reasons why we need to link these curves.
     // 1) They are from intersections with two different surfaces.
@@ -719,6 +719,7 @@ link_curves(const ON_SimpleArray<SSICurve> &in, ON_ClassArray<LinkedCurve> &out)
     }
 
     // Append the remaining curves to out.
+    ON_ClassArray<LinkedCurve> out;
     for (int i = 0; i < tmp.Count(); i++) {
 	if (tmp[i].m_ssi_curves.Count() != 0) {
 	    out.Append(tmp[i]);
@@ -728,6 +729,8 @@ link_curves(const ON_SimpleArray<SSICurve> &in, ON_ClassArray<LinkedCurve> &out)
     if (DEBUG_BREP_BOOLEAN) {
 	bu_log("link_curves(): %d curves remaining.\n", out.Count());
     }
+
+    return out;
 }
 
 
@@ -767,8 +770,8 @@ link_curves(const ON_SimpleArray<SSICurve> &in, ON_ClassArray<LinkedCurve> &out)
 // faces' bounding boxes removes the most volume from that box when subtracted, we may be able to decide
 // (say, for a subtraction) which face is cutting deeper.  It's not clear to me yet if such an approach would
 // work or would scale to complex cases, but it may be worth thinking about.
-HIDDEN int
-split_trimmed_face(ON_SimpleArray<TrimmedFace *> &out, const TrimmedFace *in, ON_ClassArray<LinkedCurve> &curves)
+HIDDEN ON_SimpleArray<TrimmedFace *>
+split_trimmed_face(const TrimmedFace *in, ON_ClassArray<LinkedCurve> &curves)
 {
     /* We followed the algorithms described in:
      * S. Krishnan, A. Narkhede, and D. Manocha. BOOLE: A System to Compute
@@ -777,11 +780,11 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace *> &out, const TrimmedFace *in, ON
      * Appendix B: Partitioning a Simple Polygon using Non-Intersecting
      * Chains.
      */
-
+    ON_SimpleArray<TrimmedFace *> out;
     if (curves.Count() == 0) {
 	// No curve, no splitting
 	out.Append(in->Duplicate());
-	return 0;
+	return out;
     }
 
     // Get the intersection points between the SSI curves and the outerloop.
@@ -1147,7 +1150,7 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace *> &out, const TrimmedFace *in, ON
 	}
     }
 
-    return 0;
+    return out;
 }
 
 
@@ -1837,10 +1840,9 @@ get_evaluated_faces(const ON_Brep *brep1, const ON_Brep *brep2, op_type operatio
     ON_ClassArray<ON_SimpleArray<TrimmedFace *> > trimmed_faces;
     for (int i = 0; i < original_faces.Count(); i++) {
 	TrimmedFace *first = original_faces[i];
-	ON_ClassArray<LinkedCurve> linked_curves;
-	link_curves(curves_array[i], linked_curves);
-	ON_SimpleArray<TrimmedFace *> splitted;
-	split_trimmed_face(splitted, first, linked_curves);
+	ON_ClassArray<LinkedCurve> linked_curves = link_curves(curves_array[i]);
+
+	ON_SimpleArray<TrimmedFace *> splitted = split_trimmed_face(first, linked_curves);
 	trimmed_faces.Append(splitted);
 
 	// Delete the curves passed in.
