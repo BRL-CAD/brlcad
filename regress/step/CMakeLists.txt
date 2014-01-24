@@ -35,7 +35,7 @@ STEP_G_TEST("001" "1797609in.stp" "833eeab8c0ef61177aa846c76eaabb31" "ST-ACIS, N
 STEP_G_TEST("002" "2827056.stp"   "76283e455acd2ee9324e33b549bedcab" "ST-ACIS, NIST DPPA Repository")
 STEP_G_TEST("003" "4pinplug.stp"  "46554b41552b4e797591dbab4c56ef9d" "ST-ACIS, STEP Tools, Inc. customer")
 
-CMAKEFILES(test_001.md5 test002.md5 test003.md5)
+CMAKEFILES(test_001.md5 test_002.md5 test_003.md5)
 
 # Local Variables:
 # tab-width: 8
