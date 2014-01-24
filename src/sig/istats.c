@@ -72,17 +72,16 @@ static void
 comp_stats(FILE *fd)
 {
     short *buffer=(short *)NULL;
-    short min, max;
-    double stdev, sum, sum_sq, num, sqrt(double);
-    int count;
+    short min = 32767;
+    short max = -32768;
+    double stdev, sqrt(double);
+    double sum = 0.0;
+    double sum_sq = 0.0;
+    double num = 0.0;
+    int count = 0;
     int i;
 
-
     buffer = (short *)bu_calloc(10240, sizeof(short), "buffer");
-
-    stdev = sum = sum_sq = count = num = 0.0;
-    min = 32767;
-    max = -32768;
 
     while ((count=fread((void *)buffer, sizeof(short), 10240, fd))) {
 	for (i=0; i < count; ++i) {
