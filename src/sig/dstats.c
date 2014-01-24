@@ -48,11 +48,11 @@ main(int ac, char *av[])
     double buf[IBUFSIZE];		/* Input buffer */
 
     int i, n;
-    long num_values;
+    long num_values = 0;
     double *bp;
-    double sum, sum2;
-    double max, min;
-    double mean, var;
+    double sum = 0.0;
+    double sum2 = 0.0;
+    double max, min, mean, var;
     FILE *fp;
 
     if (ac == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
@@ -71,10 +71,8 @@ main(int ac, char *av[])
 	fp = stdin;
 
     /*
-     * Find sum, min, max.
+     * Find min, max.
      */
-    num_values = 0;
-    sum = sum2 = 0;
 #if defined(HUGE_VAL)
     min = HUGE_VAL;
     max = -HUGE_VAL;
