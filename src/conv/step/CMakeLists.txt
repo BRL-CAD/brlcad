@@ -56,6 +56,8 @@ macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
   set(EXPRESS_OUTPUT
     ${express_srcs}
     ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.h
+    ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}Helpers.h
+    ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}Names.h
     ${SCHEMA_OUT_DIR}/Sdaiclasses.h
     ${SCHEMA_OUT_DIR}/schema.h
     )
@@ -79,6 +81,9 @@ macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
     VERBATIM)
   add_custom_target(step-express-${SCHEMA_NAME}-${TARGET_SUFFIX}
     DEPENDS ${EXPRESS_OUTPUT} ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done)
+
+  set(clean_files ${EXPRESS_OUTPUT} ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done)
+  set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${clean_files}")
 endmacro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE)
 
 add_subdirectory(step-g)
