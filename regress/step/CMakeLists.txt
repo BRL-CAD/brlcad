@@ -1,5 +1,5 @@
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/eval_conversion.cmake
-  ${CMAKE_CURRENT_BINARY_DIR}/eval_conversion.cmake COPY_ONLY)
+  ${CMAKE_CURRENT_BINARY_DIR}/eval_conv.cmake COPY_ONLY)
 
 macro(STEP_G_TEST testnum_in filename_in md5sum_in comment_in)
 
@@ -21,7 +21,7 @@ macro(STEP_G_TEST testnum_in filename_in md5sum_in comment_in)
     COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/test_${testnum}.g
     COMMAND step-g -o ${CMAKE_CURRENT_BINARY_DIR}/test_${testnum}.g ${CMAKE_CURRENT_BINARY_DIR}/test_${testnum}.stp
     COMMAND ${CMAKE_COMMAND} -DTEST_NUM=${testnum}
-    -DOUTPUT_FILE=${CMAKE_CURRENT_BINARY_DIR}/test_${testnum}.g -DMD5_SUM=${CMAKE_CURRENT_SOURCE_DIR}/test_${testnum}.md5 -P ${CMAKE_CURRENT_SOURCE_DIR}/eval_conversion.cmake
+    -DOUTPUT_FILE=${CMAKE_CURRENT_BINARY_DIR}/test_${testnum}.g -DMD5_SUM=${CMAKE_CURRENT_SOURCE_DIR}/test_${testnum}.md5 -P ${CMAKE_CURRENT_SOURCE_DIR}/eval_conv.cmake
     DEPENDS step-g
     ${CMAKE_CURRENT_SOURCE_DIR}/eval_conversion.cmake
     ${CMAKE_CURRENT_SOURCE_DIR}/test_${testnum}.md5
