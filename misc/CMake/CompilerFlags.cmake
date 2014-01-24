@@ -38,6 +38,26 @@ include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
 include(CMakeParseArguments)
 
+# Debugging macro to print all current flags
+function(PRINT_BUILD_FLAGS)
+  message("Current Build Flags (${ARGV0}):\n")
+  message("CMAKE_C_FLAGS: ${CMAKE_C_FLAGS}")
+  message("CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
+  message("CMAKE_SHARED_LINKER_FLAGS: ${CMAKE_SHARED_LINKER_FLAGS}")
+  message("CMAKE_EXE_LINKER_FLAGS: ${CMAKE_EXE_LINKER_FLAGS}")
+  set(BUILD_TYPES DEBUG RELEASE ${CMAKE_CONFIGURATION_TYPES})
+  foreach(BTYPE ${BUILD_TYPES})
+    message(" ")
+    string(TOUPPER "${BTYPE}" BTYPE_UPPER)
+    message("CMAKE_C_FLAGS_${BTYPE_UPPER}: ${CMAKE_C_FLAGS_${BTYPE_UPPER}}")
+    message("CMAKE_CXX_FLAGS_${BTYPE_UPPER}: ${CMAKE_CXX_FLAGS_${BTYPE_UPPER}}")
+    message("CMAKE_SHARED_LINKER_FLAGS_${BTYPE_UPPER}: ${CMAKE_SHARED_LINKER_FLAGS_${BTYPE_UPPER}}")
+    message("CMAKE_EXE_LINKER_FLAGS_${BTYPE_UPPER}: ${CMAKE_EXE_LINKER_FLAGS_${BTYPE_UPPER}}")
+  endforeach(BTYPE ${BUILD_TYPES})
+  message(" ")
+endfunction(PRINT_BUILD_FLAGS)
+
+
 # Clear all currently defined CMake compiler and linker flags
 #
 # TODO - currently, it seems most of our src/other subbuilds
