@@ -34,11 +34,11 @@
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
 
-#include "common.h"
-
-#include <locale.h>
-#include "tkInt.h" /* FIXME: internal header */
+#include "tkInt.h"
+#define WIN32_LEAN_AND_MEAN
 #include "bio.h"
+#undef WIN32_LEAN_AND_MEAN
+#include <locale.h>
 
 
 /*

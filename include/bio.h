@@ -48,22 +48,8 @@
 #    define _BIO_IGNORE(x) IGNORE(x)
 #    undef IGNORE
 #  endif
-
-/* setting WIN32_LEAN_AND_MEAN disables the inclusion of a number of
- * unnecessary windows headers including cderr.h, dde.h, ddem1.h,
- * dlgs.h, lzexpand.h, mmsystem.h, nb30.h, rpc.h, shellapi.h,
- * winperf.h, and (most importantly) winsock.h among a number of other
- * MFC/OLE/GDI headers.  we do not want the inclusion of windows.h
- * here to imply anything with regard to networking.
- */
-#  ifndef WIN32_LEAN_AND_MEAN
-#    define WIN32_LEAN_AND_MEAN 111222333222111
-#  endif
 #  include <windows.h>
 #  include <io.h>
-#  if WIN32_LEAN_AND_MEAN == 111222333222111
-#    undef WIN32_LEAN_AND_MEAN
-#  endif
 
 #  undef rad1 /* Win32 radio button 1 */
 #  undef rad2 /* Win32 radio button 2 */
