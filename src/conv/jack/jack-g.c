@@ -69,7 +69,7 @@ main(int argc, char **argv)
     grp_name = reg_name = NULL;
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "g:r:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "g:r:h?")) != -1) {
 	switch (c) {
 	    case 'g':
 		grp_name = bu_optarg;
@@ -100,14 +100,13 @@ main(int argc, char **argv)
     /* Get BRL-CAD output data base name. */
     bu_optind++;
     if (bu_optind >= argc) {
-	bfile = "-";
+/*	bfile = "-"; */
 	bu_exit(1, usage, argv[0]);
-    } else {
-	bfile = argv[bu_optind];
-	if ((fpout = wdb_fopen(bfile)) == NULL) {
-	    bu_exit(1, "%s: cannot open %s for writing\n",
-		    argv[0], bfile);
-	}
+    }
+    bfile = argv[bu_optind];
+    if ((fpout = wdb_fopen(bfile)) == NULL) {
+	bu_exit(1, "%s: cannot open %s for writing\n",
+		argv[0], bfile);
     }
 
     /* Output BRL-CAD database header.  No problem if more than one. */
@@ -117,10 +116,10 @@ main(int argc, char **argv)
     if (!reg_name) {
 	/* Ignore leading path info. */
 	base = strrchr(argv[1], '/');
-	if (!base)
-	    base = argv[1];
-	else
+	if (base)
 	    base++;
+	else
+	    base = argv[1];
 	reg_name = (char *)bu_malloc(sizeof(base)+1, "reg_name");
 	bu_strlcpy(reg_name, base, sizeof(base)+1);
 	/* Ignore .pss extension if it's there. */
