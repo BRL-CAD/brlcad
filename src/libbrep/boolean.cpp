@@ -1636,8 +1636,13 @@ is_face_inside_brep(const TrimmedFace *tface, const ON_Brep *brep, ON_SimpleArra
     return is_point_inside_brep(test_pt3d, brep, surf_tree) ? 1 : 0;
 }
 
-HIDDEN ON_ClassArray<ON_SimpleArray<TrimmedFace *> >
-get_evaluated_faces(const ON_Brep *brep1, const ON_Brep *brep2, op_type operation)
+HIDDEN ON_ClassArray<ON_SimpleArray<SSICurve> >
+get_face_intersection_curves(
+	ON_SimpleArray<Subsurface *> &surf_tree1,
+	ON_SimpleArray<Subsurface *> &surf_tree2,
+	const ON_Brep *brep1,
+	const ON_Brep *brep2,
+	op_type operation)
 {
     std::set<int> unused1, unused2;
     std::set<int> finalform1, finalform2;
@@ -1729,15 +1734,14 @@ get_evaluated_faces(const ON_Brep *brep1, const ON_Brep *brep2, op_type operatio
 
     int surf_count1 = brep1->m_S.Count();
     int surf_count2 = brep2->m_S.Count();
-    ON_ClassArray<ON_SimpleArray<SSICurve> > curves_array(face_count1 + face_count2);
-
-    ON_SimpleArray<Subsurface *> surf_tree1, surf_tree2;
     for (int i = 0; i < surf_count1; i++) {
 	surf_tree1.Append(new Subsurface(brep1->m_S[i]->Duplicate()));
     }
     for (int i = 0; i < surf_count2; i++) {
 	surf_tree2.Append(new Subsurface(brep2->m_S[i]->Duplicate()));
     }
+
+    ON_ClassArray<ON_SimpleArray<SSICurve> > curves_array(face_count1 + face_count2);
 
     // calculate intersection curves
     for (int i = 0; i < face_count1; i++) {
@@ -1802,6 +1806,20 @@ get_evaluated_faces(const ON_Brep *brep1, const ON_Brep *brep2, op_type operatio
 
 	}
     }
+
+    return curves_array;
+}
+
+HIDDEN ON_ClassArray<ON_SimpleArray<TrimmedFace *> >
+get_evaluated_faces(const ON_Brep *brep1, const ON_Brep *brep2, op_type operation)
+{
+    ON_SimpleArray<Subsurface *> surf_tree1, surf_tree2;
+
+    ON_ClassArray<ON_SimpleArray<SSICurve> > curves_array =
+	get_face_intersection_curves(surf_tree1, surf_tree2, brep1, brep2, operation);
+
+    int face_count1 = brep1->m_F.Count();
+    int face_count2 = brep2->m_F.Count();
 
     ON_SimpleArray<TrimmedFace *> original_faces;
     for (int i = 0; i < face_count1 + face_count2; i++) {
