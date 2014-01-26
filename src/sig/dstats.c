@@ -29,6 +29,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+#include <float.h>
 #include "bio.h"
 
 #include "bu.h"
@@ -52,7 +53,9 @@ main(int ac, char *av[])
     double *bp;
     double sum = 0.0;
     double sum2 = 0.0;
-    double max, min, mean, var;
+    double min = DBL_MAX;
+    double max = DBL_MIN;
+    double mean, var;
     FILE *fp;
 
     if (ac == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
@@ -73,13 +76,6 @@ main(int ac, char *av[])
     /*
      * Find min, max.
      */
-#if defined(HUGE_VAL)
-    min = HUGE_VAL;
-    max = -HUGE_VAL;
-#else
-    min = HUGE;
-    max = -HUGE;
-#endif
     while ((n = fread(buf, sizeof(*buf), IBUFSIZE, fp)) > 0) {
 	num_values += n;
 	bp = &buf[0];
