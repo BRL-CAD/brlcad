@@ -29,6 +29,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include "bio.h"
 
 #include "bu.h"
@@ -76,7 +77,7 @@ comp_stats(FILE *fd)
     short *buffer=(short *)NULL;
     short min = SHRT_MAX;
     short max = SHRT_MIN;
-    double doub, stdev, sqrt(double);
+    double doub, stdev;
     double sum = 0.0;
     double sum_sq = 0.0;
     double num = 0.0;
