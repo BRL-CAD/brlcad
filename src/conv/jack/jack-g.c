@@ -100,7 +100,6 @@ main(int argc, char **argv)
     /* Get BRL-CAD output data base name. */
     bu_optind++;
     if (bu_optind >= argc) {
-/*	bfile = "-"; */
 	bu_exit(1, usage, argv[0]);
     }
     bfile = argv[bu_optind];
