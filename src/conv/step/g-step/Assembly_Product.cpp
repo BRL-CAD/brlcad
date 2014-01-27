@@ -224,6 +224,7 @@ Build_Representation_Relationship(STEPentity *input_transformation, STEPentity *
     while ((attr = stepcomplex->NextAttribute()) != NULL) {
 	//std::cout << "  " << attr->Name() << "," << attr->NonRefType() << "\n";
 	if (!bu_strcmp(attr->Name(), "name")) attr->StrToVal("''");
+	if (!bu_strcmp(attr->Name(), "description")) attr->StrToVal("''");
 	if (!bu_strcmp(attr->Name(), "rep_1")) {
 	    attr->ptr.c = new (STEPentity *);
 	    *(attr->ptr.c) = parent;
