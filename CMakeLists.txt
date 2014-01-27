@@ -2090,8 +2090,7 @@ if("${HAVE_LRINT}" MATCHES "^${HAVE_LRINT}$")
   if(HAVE_LRINT)
     CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_LRINT 1\n")
   endif(HAVE_LRINT)
-  set(CMAKE_REQUIRED_LIBRARIES
-    ${CMAKE_REQUIRED_LIBRARIES_BAK})
+  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_BAK})
 endif("${HAVE_LRINT}" MATCHES "^${HAVE_LRINT}$")
 
 #-----------------------------------------------------------------------
