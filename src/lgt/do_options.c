@@ -3434,20 +3434,21 @@ pars_Argv(int argc, char **argv)
 
     /* Parse options. */
     while ((c =
-	    bu_getopt(argc, argv, "A:D:I:G:K:O:S:T:X:a:b:c:d:e:f:g:i:j:k:n:o:p:s:t:v:w:x:y:z:")
+	    bu_getopt(argc, argv, "A:D:I:G:K:O:S:T:X:a:b:c:d:e:f:g:i:j:k:n:o:p:s:t:v:w:x:y:z:h?")
 	       )
 	   != EOF
 	)
     {
+    	if(bu_optopt == '?') c='h';
 	switch (c) {
+	    case 'h' :
+		return 0;
 	    default :
 		if (! user_Opt(c, bu_optarg)) {
 		    (void) printf("Failure of user_Opt(%c)", c);
 		    return 0;
 		}
 		break;
-	    case '?' :
-		return 0;
 	}
     }
     prnt_Timer("OPT");
