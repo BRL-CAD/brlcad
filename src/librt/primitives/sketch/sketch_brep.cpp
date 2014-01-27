@@ -31,7 +31,6 @@
 
 void FindLoops(ON_Brep **b) {
     ON_3dPoint ptmatch, ptterminate, pstart, pend;
-
     int *curvearray;
     curvearray = static_cast<int*>(bu_malloc((*b)->m_C3.Count() * sizeof(int), "sketch edge list"));
     for (int i = 0; i < (*b)->m_C3.Count(); i++) {
@@ -115,7 +114,7 @@ void FindLoops(ON_Brep **b) {
 	if (curvearray[i] == largest_loop_index) loopsegments.Append((*b)->m_C3[i]);
     }
 
-    (*b)->NewPlanarFaceLoop(0, ON_BrepLoop::outer, loopsegments, false);
+    (*b)->NewPlanarFaceLoop(0, ON_BrepLoop::outer, loopsegments, true);
 
     loopsegments.Empty();
 
@@ -125,7 +124,7 @@ void FindLoops(ON_Brep **b) {
 	    for (int j = 0; j < allsegments.Count(); j++) {
 		if (curvearray[j] == i) loopsegments.Append((*b)->m_C3[j]);
 	    }
-	    (*b)->NewPlanarFaceLoop(0, ON_BrepLoop::inner, loopsegments, false);
+	    (*b)->NewPlanarFaceLoop(0, ON_BrepLoop::inner, loopsegments, true);
 	}
 	loopsegments.Empty();
     }
@@ -235,7 +234,7 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
     sketch_surf->SetExtents(1, sketch_surf->Domain(1));
     (*b)->SetTrimIsoFlags(face);
     (*b)->FlipFace(face);
-
+    (*b)->Compact();
 }
 
 
