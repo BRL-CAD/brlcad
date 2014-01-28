@@ -19,7 +19,7 @@
  */
 /** @file libwdb/arbn.c
  *
- *  libwdb support for writing an ARBN.
+ * libwdb support for writing an ARBN.
  *
  */
 
@@ -36,29 +36,29 @@
 #include "raytrace.h"
 #include "wdb.h"
 
+
 /*
- *			M K _ A R B N
+ * Caller is responsible for freeing eqn[]
  *
- *  Caller is responsible for freeing eqn[]
- *
- *  Returns -
- *	<0	error
- *	 0	OK
+ * Returns -
+ * <0 error
+ * 0 OK
  */
 int
 mk_arbn(struct rt_wdb *filep, const char *name, size_t neqn, plane_t (*eqn))
 {
-    struct rt_arbn_internal	*arbn;
+    struct rt_arbn_internal *arbn;
 
-    if ( neqn <= 0 )  return -1;
+    if (neqn <= 0) return -1;
 
     BU_ALLOC(arbn, struct rt_arbn_internal);
     arbn->magic = RT_ARBN_INTERNAL_MAGIC;
     arbn->neqn = neqn;
     arbn->eqn = eqn;
 
-    return wdb_export( filep, name, (genptr_t)arbn, ID_ARBN, mk_conv2mm );
+    return wdb_export(filep, name, (genptr_t)arbn, ID_ARBN, mk_conv2mm);
 }
+
 
 /*
  * Local Variables:
