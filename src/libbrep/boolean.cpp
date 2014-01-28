@@ -518,7 +518,7 @@ intersect_intervals(const ON_Interval &interval1, const ON_Interval &interval2)
 }
 
 HIDDEN void
-replace_curve_with_subcurve(ON_Curve *curve, const ON_Interval &interval)
+replace_curve_with_subcurve(ON_Curve *&curve, const ON_Interval &interval)
 {
     ON_Curve *subcurve = sub_curve(curve, interval.Min(), interval.Max());
     delete curve;
