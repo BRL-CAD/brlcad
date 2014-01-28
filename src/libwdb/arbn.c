@@ -38,17 +38,24 @@
 
 
 int
-mk_arbn(struct rt_wdb *filep, const char *name, size_t neqn, plane_t (*eqn))
+mk_arbn(struct rt_wdb *filep, const char *name, size_t neqn, const plane_t *eqn)
 {
     struct rt_arbn_internal *arbn;
+    plane_t *equations = NULL;
+    size_t i;
 
     if (neqn <= 0)
 	return -1;
 
+    equations = (plane_t *)bu_malloc(neqn*sizeof(plane_t), "equations");
+    for (i=0; i<neqn; i++) {
+	HMOVE(equations[i], eqn[i]);
+    }
+
     BU_ALLOC(arbn, struct rt_arbn_internal);
     arbn->magic = RT_ARBN_INTERNAL_MAGIC;
     arbn->neqn = neqn;
-    arbn->eqn = eqn;
+    arbn->eqn = equations;
 
     return wdb_export(filep, name, (genptr_t)arbn, ID_ARBN, mk_conv2mm);
 }

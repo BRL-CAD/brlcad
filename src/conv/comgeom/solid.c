@@ -787,7 +787,7 @@ read_arbn(char *name)
     int	last_vertex;		/* index of first unused vertex */
     int	max_vertex;		/* size of vertex array */
     int	*used = (int *)0;	/* plane eqn use count */
-    plane_t	*eqn = (plane_t *)0;	/* plane equations */
+    plane_t *eqn = NULL;	/* plane equations */
     int	cur_eq = 0;		/* current (free) equation number */
     int	symm = 0;		/* symmetry about Y used */
     int	i;
@@ -1060,7 +1060,7 @@ read_arbn(char *name)
     }
 
     /* Write out the solid ! */
-    i = mk_arbn(outfp, name, nface, eqn);
+    i = mk_arbn(outfp, name, nface, (const plane_t *)eqn);
 
     if (vertex) bu_free((char *)vertex, "vertex");
     if (eqn)    bu_free((char *)eqn, "eqn");

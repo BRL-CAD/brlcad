@@ -393,7 +393,7 @@ WDB_EXPORT int mk_metaball(
  * <0 ERROR
  * 0 OK
  */
-WDB_EXPORT extern int mk_arbn(struct rt_wdb *fp, const char *name, size_t neqn, plane_t eqn[]);
+WDB_EXPORT extern int mk_arbn(struct rt_wdb *fp, const char *name, size_t neqn, const plane_t *eqn);
 
 WDB_EXPORT extern int mk_ars(struct rt_wdb *fp, const char *name, size_t ncurves, size_t pts_per_curve, fastf_t *curves[]);
 

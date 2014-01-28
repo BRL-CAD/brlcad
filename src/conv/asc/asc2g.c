@@ -1433,8 +1433,8 @@ arbnbld(void)
     char		name[NAME_LEN] = {0};
     char		type[TYPE_LEN] = {0};
     int		i;
-    int		neqn;			/* number of eqn expected */
-    plane_t		*eqn;		/* pointer to plane equations for faces */
+    int neqn;     /* number of eqn expected */
+    plane_t *eqn; /* pointer to plane equations for faces */
     char	*cp;
     char	*np;
 
@@ -1453,22 +1453,17 @@ arbnbld(void)
     cp = nxt_spc(cp);
 
     neqn = atoi(cp);			/* find number of eqns */
-    /*bu_log("neqn = %d\n", neqn);
-     */
+
     /* Check to make sure plane equations actually came in. */
     if (neqn <= 0) {
 	bu_log("asc2g: warning: %d equations counted for arbn %s\n", neqn, name);
     }
 
-    /*bu_log("mallocing space for eqns\n");
-     */
     /* Malloc space for the in-coming plane equations */
-    eqn = (plane_t *)bu_malloc(sizeof(plane_t) * neqn, "eqn");
+    eqn = (plane_t *)bu_malloc(neqn * sizeof(plane_t), "eqn");
 
     /* Now, read the plane equations and put in appropriate place */
 
-    /*bu_log("starting to dump eqns\n");
-     */
     for (i = 0; i < neqn; i++) {
 	double scan[4];
 
@@ -1479,10 +1474,12 @@ arbnbld(void)
 	HMOVE(eqn[i], scan);
     }
 
-    /*bu_log("sending info to mk_arbn\n");
-     */
-    mk_arbn(ofp, name, neqn, eqn);
+    mk_arbn(ofp, name, neqn, (const plane_t *)eqn);
+
+    bu_free(eqn, "eqn");
 }
+
+
 /**
  * E N D S W I T H
  *
