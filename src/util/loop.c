@@ -229,7 +229,7 @@ main(int argc, char *argv[])
 	}
     } else {
 	if (argc < 4) {
-	    bu_log("Usage:  loop [-c] start finish [incr] \n -c use for character(char) looping \n");
+	    usage();
 	    return 9;
 	}
 	/* print out character output */
