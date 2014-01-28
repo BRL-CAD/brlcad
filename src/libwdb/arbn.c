@@ -37,19 +37,13 @@
 #include "wdb.h"
 
 
-/*
- * Caller is responsible for freeing eqn[]
- *
- * Returns -
- * <0 error
- * 0 OK
- */
 int
 mk_arbn(struct rt_wdb *filep, const char *name, size_t neqn, plane_t (*eqn))
 {
     struct rt_arbn_internal *arbn;
 
-    if (neqn <= 0) return -1;
+    if (neqn <= 0)
+	return -1;
 
     BU_ALLOC(arbn, struct rt_arbn_internal);
     arbn->magic = RT_ARBN_INTERNAL_MAGIC;
