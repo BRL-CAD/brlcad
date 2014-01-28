@@ -68,8 +68,8 @@ add_test(bu_bitv_to_hex_test2 tester_bu_bitv_to_hex "12" "3231" 16)
 #      bu_bitv_vls testing     #
 ################################
 BRLCAD_ADDEXEC(tester_bu_bitv_vls    bu_bitv_vls.c    libbu NO_INSTALL)
-add_test(bu_bitv_vls_test1 tester_bu_bitv_vls "00000000" "() ")
-add_test(bu_bitv_vls_test2 tester_bu_bitv_vls "f0f0f0f0" "(4, 5, 6, 7, 12, 13, 14, 15, 20, 21, 22, 23, 28, 29, 30, 31) ")
+add_test(bu_bitv_vls_test1 tester_bu_bitv_vls "00000000" "()")
+add_test(bu_bitv_vls_test2 tester_bu_bitv_vls "f0f0f0f0" "(4, 5, 6, 7, 12, 13, 14, 15, 20, 21, 22, 23, 28, 29, 30, 31)")
 
 ##################################
 #      bu_hex_to_bitv testing    #
