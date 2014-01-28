@@ -88,7 +88,20 @@ endmacro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE)
 
 add_subdirectory(step-g)
 add_subdirectory(g-step)
-add_subdirectory(g-ap214)
+
+# Support for AP214 and AP242 is under development and not
+# yet functional.  Since the large C++ files generated for these
+# tools take a hideously long time to build on Windows, and are
+# noticable even on other platforms, wrap them with conditionals
+# until they do something useful.  It may be that work in STEPcode
+# to generate multiple files instead of single huge files will
+# help alleviate the issue - something to check into.
+if(BRLCAD_ENABLE_AP214)
+  add_subdirectory(g-ap214)
+endif(BRLCAD_ENABLE_AP214)
+if(BRLCAD_ENABLE_AP242)
+  add_subdirectory(g-ap242)
+endif(BRLCAD_ENABLE_AP242)
 
 CMAKEFILES(
   BRLCADWrapper.h
@@ -97,6 +110,8 @@ CMAKEFILES(
   ap203_elements.txt
   ap203e2_elements.txt
   ap214e3_elements.txt
+  g-ap214
+  g-ap242
   )
 
 DISTCLEAN(${SCHEMA_OUT_DIR}/make_schema)
