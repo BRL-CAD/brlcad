@@ -70,6 +70,12 @@ public:
     GeometryGenerationError(const std::string &msg = "") : std::runtime_error(msg) {}
 };
 
+class IntervalGenerationError : public std::runtime_error
+{
+public:
+    IntervalGenerationError(const std::string &msg = "") : std::runtime_error(msg) {}
+};
+
 struct IntersectPoint {
     ON_3dPoint m_pt;	// 3D intersection point
     int m_seg;		// which curve of the loop
@@ -488,6 +494,41 @@ is_point_outside_loop(const ON_2dPoint &pt, const ON_SimpleArray<ON_Curve *> &lo
     return (point_loop_location(pt, loop) == OUTSIDE_OR_ON_LOOP) && !is_point_on_loop(pt, loop);
 }
 
+HIDDEN ON_Interval
+union_intervals(const ON_SimpleArray<ON_Interval> &intervals)
+{
+    ON_Interval union_interval;
+    for (int i = 0; i < intervals.Count(); ++i) {
+	union_interval.Union(intervals[i]);
+    }
+    if (!union_interval.IsValid()) {
+	throw IntervalGenerationError("union_intervals() created invalid interval\n");
+    }
+    return union_interval;
+}
+
+HIDDEN ON_Interval
+intersect_intervals(const ON_Interval &interval1, const ON_Interval &interval2)
+{
+    ON_Interval intersection_interval;
+    if (!intersection_interval.Intersection(interval1, interval2)) {
+	throw IntervalGenerationError("intersect_intervals() failed to intersect intervals\n");
+    }
+    return intersection_interval;
+}
+
+HIDDEN void
+replace_curve_with_subcurve(ON_Curve *curve, const ON_Interval &interval)
+{
+    ON_Curve *subcurve = sub_curve(curve, interval.Min(), interval.Max());
+    delete curve;
+    curve = subcurve;
+
+    if (curve == NULL) {
+	throw GeometryGenerationError("replace_curve_with_subcurve(): NULL subcurve\n");
+    }
+}
+
 HIDDEN int
 get_subcurve_inside_faces(const ON_Brep *brep1, const ON_Brep *brep2, int face_i1, int face_i2, ON_SSX_EVENT *event)
 {
@@ -607,40 +648,24 @@ get_subcurve_inside_faces(const ON_Brep *brep1, const ON_Brep *brep2, int face_i
     }
 
     // 3. Merge the intervals and get the final result.
-    ON_Interval merged_interval1, merged_interval2;
-    for (int i = 0; i < intervals1.Count(); i++) {
-	merged_interval1.Union(intervals1[i]);
-    }
-    for (int i = 0; i < intervals2.Count(); i++) {
-	merged_interval2.Union(intervals2[i]);
-    }
+    try {
+	ON_Interval merged_interval1 = union_intervals(intervals1);
+	ON_Interval merged_interval2 = union_intervals(intervals2);
+	ON_Interval shared_interval = intersect_intervals(merged_interval1, merged_interval2);
 
-    if (!merged_interval1.IsValid() || !merged_interval2.IsValid()) {
+	if (DEBUG_BREP_BOOLEAN) {
+	    bu_log("shared_interval: [%g, %g]\n", shared_interval.Min(), shared_interval.Max());
+	}
+
+	// 4. Replace with the sub-curves.
+	replace_curve_with_subcurve(event->m_curve3d, shared_interval);
+	replace_curve_with_subcurve(event->m_curveA, shared_interval);
+	replace_curve_with_subcurve(event->m_curveB, shared_interval);
+    } catch (IntervalGenerationError &e) {
+	bu_log("%s", e.what());
 	return -1;
-    }
-
-    ON_Interval shared_interval;
-    if (!shared_interval.Intersection(merged_interval1, merged_interval2)) {
-	return -1;
-    }
-
-    if (DEBUG_BREP_BOOLEAN) {
-	bu_log("shared_interval: [%g, %g]\n", shared_interval.Min(), shared_interval.Max());
-    }
-
-    // 4. Replace with the sub-curves.
-    ON_Curve *tmp_curve;
-    tmp_curve = sub_curve(event->m_curve3d, shared_interval.Min(), shared_interval.Max());
-    delete event->m_curve3d;
-    event->m_curve3d = tmp_curve;
-    tmp_curve = sub_curve(event->m_curveA, shared_interval.Min(), shared_interval.Max());
-    delete event->m_curveA;
-    event->m_curveA = tmp_curve;
-    tmp_curve = sub_curve(event->m_curveB, shared_interval.Min(), shared_interval.Max());
-    delete event->m_curveB;
-    event->m_curveB = tmp_curve;
-
-    if (event->m_curve3d == NULL || event->m_curveA == NULL || event->m_curveB == NULL) {
+    } catch (GeometryGenerationError &e) {
+	bu_log("%s", e.what());
 	return -1;
     }
     return 0;
