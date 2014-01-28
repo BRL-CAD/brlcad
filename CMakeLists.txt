@@ -1807,7 +1807,16 @@ BRLCAD_CHECK_LIBRARY(DL dl dlopen)
 BRLCAD_CHECK_LIBRARY(SOLARIS_LEXER l yyless)
 
 # timeSetEvent in Windows memory management
-BRLCAD_CHECK_LIBRARY(WINMM winmm timeSetEvent)
+if("${HAVE_TIMESETEVENT}" MATCHES "^${HAVE_TIMESETEVENT}$")
+  set(CMAKE_REQUIRED_LIBRARIES_BAK ${CMAKE_REQUIRED_LIBRARIES})
+  set(CMAKE_REQUIRED_LIBRARIES winmm.lib)
+  check_c_source_compiles("#include <windows.h>\nint main() {return !!timeSetEvent(seconds*1000, 100, (LPTIMECALLBACK)NULL, NULL, TIME_ONESHOT);}" HAVE_TIMESETEVENT)
+  if(HAVE_TIMESETEVENT)
+    CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_TIMESETEVENT 1\n")
+    set(WINMM_LIBRARY winmm.lib)
+  endif(HAVE_TIMESETEVENT)
+  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_BAK})
+endif("${HAVE_TIMESETEVENT}" MATCHES "^${HAVE_TIMESETEVENT}$")
 
 
 # *******************************************************************
