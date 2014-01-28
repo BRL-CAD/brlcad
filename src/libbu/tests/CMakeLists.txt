@@ -80,7 +80,14 @@ add_test(bu_hex_to_bitv_test2 tester_bu_hex_to_bitv "30" "0" 0)
 add_test(bu_hex_to_bitv_error tester_bu_hex_to_bitv "303" "" 1)
 
 else(ENABLE_BITV_TESTS)
-CMAKEFILES(bu_bitv_and.c bu_bitv_or.c bu_bitv_shift.c bu_bitv_to_hex.c bu_bitv_vls.c bu_hex_to_bitv.c)
+  CMAKEFILES(
+    bu_bitv_and.c
+    bu_bitv_or.c
+    bu_bitv_shift.c
+    bu_bitv_to_hex.c
+    bu_bitv_vls.c
+    bu_hex_to_bitv.c
+  )
 endif(ENABLE_BITV_TESTS)
 
 #
