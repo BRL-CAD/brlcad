@@ -114,8 +114,7 @@ top:
 		printf("getregion: premature EOF\n");
 		return -1;
 	    }
-	    if (BU_STR_EQUAL(rcard, "  end") ||
-		BU_STR_EQUAL(rcard, "  END")) {
+	    if (BU_STR_EQUIV(rcard, "  end")) {
 		/* Version 1, DoE/MORSE */
 		reg_total = reg_num;
 		return 0;	/* done */
