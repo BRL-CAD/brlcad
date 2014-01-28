@@ -61,7 +61,7 @@ main(int argc , char *argv[])
     int ret;
 
     if(argc < 3)
-      return -1;
+	return -1;
 
     ret = test_bu_bitv_vls(argv[1], argv[2]);
     return !ret;
