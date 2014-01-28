@@ -1810,6 +1810,7 @@ get_face_intersection_curves(
 			c2.m_curve = events[k].m_curveB;
 			curves_array[i].Append(c1);
 			curves_array[face_count1 + j].Append(c2);
+			curves_array.SetCount(curves_array.Count() + 2);
 			// Set m_curveA and m_curveB to NULL, in case that they are
 			// deleted by ~ON_SSX_EVENT().
 			events[k].m_curveA = events[k].m_curveB = NULL;
