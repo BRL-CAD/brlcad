@@ -51,7 +51,7 @@
 void
 usage()
 {
-	bu_log("Usage: loop [-c] start finish [incr]\n        -c used for character (char) looping\n");
+	bu_log("Usage: loop [-c] start finish [incr]\n       -c used for character (char) looping\n");
 }
 
 int
@@ -146,7 +146,7 @@ main(int argc, char *argv[])
 	char *cp;
 	char fmt_string[50];
 
-	int field_width = 0;
+	int field_width;
 
 	int zeros      = 0;  /* leading zeros for output */
 	int zeros_arg1 = 0;  /* leading zeros in arg[1]  */
