@@ -23,11 +23,6 @@
  * This module contains all of the routines necessary to read in
  * a COMGEOM input file, and put the information into internal form.
  *
- *  Author -
- *	Michael John Muuss
- *
- *  Original Version -
- *	March 17, 1980
  */
 
 #include "common.h"
@@ -43,16 +38,16 @@ extern FILE *infp;
 
 extern char name_it[16];		/* argv[3] */
 
-void	namecvt(int n, char **cp, int c);
+void namecvt(int n, char **cp, int c);
 
 /*
- *			G E T L I N E
+ * G E T L I N E
  */
 int
 get_line(char *cp, int buflen, char *title)
 {
-    int	c;
-    int	count = buflen;
+    int c;
+    int count = buflen;
 
     while ((c = fgetc(infp)) == '\n') /* Skip blank lines.		*/
 	;
@@ -67,14 +62,15 @@ get_line(char *cp, int buflen, char *title)
 	c = fgetc(infp);
     }
     if (c == EOF)
-	return	EOF;
+	return EOF;
     while (count-- > 0)
 	*cp++ = 0;
-    return	c;
+    return c;
 }
 
+
 /*
- *			G E T I N T
+ * G E T I N T
  */
 int
 getint(char *cp, int start, size_t len)
@@ -89,8 +85,9 @@ getint(char *cp, int start, size_t len)
     return result;
 }
 
+
 /*
- *			G E T D O U B L E
+ * G E T D O U B L E
  */
 double
 getdouble(char *cp, int start, size_t len)
@@ -105,7 +102,8 @@ getdouble(char *cp, int start, size_t len)
     return result;
 }
 
-/*		N A M E C V T	 */
+
+/* N A M E C V T */
 void
 namecvt(int n, char **cp, int c)
 {
@@ -114,6 +112,7 @@ namecvt(int n, char **cp, int c)
     sprintf(str, "%c%d%.13s", (char)c, n, name_it);
     *cp = bu_strdup(str);
 }
+
 
 /*
  * Local Variables:

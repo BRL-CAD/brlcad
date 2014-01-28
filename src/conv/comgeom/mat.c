@@ -20,17 +20,17 @@
  */
 /** @file comgeom/mat.c
  *
- * 4 x 4 Matrix manipulation functions..............
+ * 4 x 4 Matrix manipulation functions
  *
- *	mat_zero(&m)			Fill matrix m with zeros
- *	mat_idn(&m)			Fill matrix m with identity matrix
- *	mat_copy(&o, &i)		Copy matrix i to matrix o
- *	mat_mul(&o, &i1, &i2)		Multiply i1 by i2 and store in o
- *	vecXmat(&ov, &iv, &m)		Multiply vector iv by m and store in ov
- *	matXvec(&ov, &m, &iv)		Multiply m by vector iv and store in ov
- *	mat_print(&m)			Print out the 4x4 matrix - calls printf
- *	mat_hscale(&m, hscale)	        Homogeneous scale of input matrix
- *	mat_inv(&om, &im)		Invert matrix im and store result in om
+ * mat_zero(&m)			Fill matrix m with zeros
+ * mat_idn(&m)			Fill matrix m with identity matrix
+ * mat_copy(&o, &i)		Copy matrix i to matrix o
+ * mat_mul(&o, &i1, &i2)		Multiply i1 by i2 and store in o
+ * vecXmat(&ov, &iv, &m)		Multiply vector iv by m and store in ov
+ * matXvec(&ov, &m, &iv)		Multiply m by vector iv and store in ov
+ * mat_print(&m)			Print out the 4x4 matrix - calls printf
+ * mat_hscale(&m, hscale)	        Homogeneous scale of input matrix
+ * mat_inv(&om, &im)		Invert matrix im and store result in om
  *
  *
  * Matrix array elements have the following positions in the matrix:
@@ -53,7 +53,7 @@
 
 
 /*
- *			M A T _ Z E R O
+ * M A T _ Z E R O
  *
  * Fill in the matrix "m" with zeros.
  */
@@ -69,7 +69,7 @@ mat_zero(matp_t m)
 
 
 /*
- *			M A T _ I D N
+ * M A T _ I D N
  *
  * Fill in the matrix "m" with an identity matrix.
  */
@@ -85,7 +85,7 @@ mat_idn(matp_t m)
 
 
 /*
- *			M A T _ C O P Y
+ * M A T _ C O P Y
  *
  * Copy the matrix "im" into the matrix "om".
  */
@@ -101,7 +101,7 @@ mat_copy(matp_t om, matp_t im)
 
 
 /*
- *			M A T _ M U L
+ * M A T _ M U L
  *
  * Multiply matrix "im1" by "im2" and store the result in "om".
  * NOTE:  This is different from multiplying "im2" by "im1" (most
@@ -133,7 +133,7 @@ mat_mul(matp_t om, matp_t im1, matp_t im2)
 
 
 /*
- *			V E C X M A T
+ * V E C X M A T
  *
  * Multiply the vector "iv" by the matrix "im" and store the result
  * in the vector "ov".  Note this is pre-multiply.
@@ -160,7 +160,7 @@ vecXmat(vectp_t ov, vectp_t iv, matp_t im)
 
 
 /*
- *			M A T X V E C
+ * M A T X V E C
  *
  * Multiply the matrix "im" by the vector "iv" and store the result
  * in the vector "ov".  Note this is post-multiply.
@@ -184,7 +184,7 @@ matXvec(vectp_t ov, matp_t im, vectp_t iv)
 
 
 /*
- *			M A T _ P R I N T
+ * M A T _ P R I N T
  *
  * Print out the 4x4 matrix addressed by "m".
  */
@@ -200,7 +200,7 @@ mat_print(matp_t m)
 
 
 /*
- *			M A T _ H S C A L E
+ * M A T _ H S C A L E
  *
  * The matrix pointed at by "m" is homogeneously scaled by the
  * variable "hscale".  NOTE that the input matrix is ALSO the output
@@ -216,12 +216,12 @@ mat_hscale(matp_t m, float hscale)
 
 
 /*
- *			M A T _ I N V
+ * M A T _ I N V
  *
  * The matrix pointed at by "im" is inverted and stored in the area
  * pointed at by "om".
  */
-#define EPSILON	0.000001
+#define EPSILON 0.000001
 
 /*
  * Invert a 4-by-4 matrix using Algorithm 120 from ACM.
@@ -233,9 +233,9 @@ mat_inv(matp_t output, matp_t input)
 {
     int i, j;			/* Indices */
     static int k;				/* Indices */
-    static int	z[4];			/* Temporary */
-    static float	b[4];			/* Temporary */
-    static float	c[4];			/* Temporary */
+    static int z[4];			/* Temporary */
+    static float b[4];			/* Temporary */
+    static float c[4];			/* Temporary */
 
     mat_copy(output, input);	/* Duplicate */
 
@@ -289,7 +289,7 @@ mat_inv(matp_t output, matp_t input)
 	}
     }
 
-    /*  Second Loop */
+    /* Second Loop */
     for (i = 0; i < 4; i++) {
 	while ((k = z[i]) != i) {
 	    static int p;			/* Local temp */
@@ -313,7 +313,7 @@ mat_inv(matp_t output, matp_t input)
 
 
 /*
- *			H T O V _ M O V E
+ * H T O V _ M O V E
  *
  * Takes a pointer to [x, y, z, w], and converts it to
  * an ordinary vector [x/w, y/w, z/w].

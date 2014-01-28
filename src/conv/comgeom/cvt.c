@@ -20,7 +20,7 @@
  */
 /** @file comgeom/cvt.c
  *
- *	This is the mainline for converting COM-GEOM
+ * This is the mainline for converting COM-GEOM
  * cards to a GED style database.
  *
  */
@@ -53,30 +53,30 @@ extern int get_line(char *cp, int buflen, char *title);
 extern void trim_trail_spaces(char *cp);
 extern int getsolid(void);
 
-struct wmember	*wmp;	/* array indexed by region number */
+struct wmember *wmp;	/* array indexed by region number */
 
-int	version = 5;	/* v4 or v5 ? */
-int	verbose = 0;	/* verbose = print a message on every item read */
+int version = 5;	/* v4 or v5 ? */
+int verbose = 0;	/* verbose = print a message on every item read */
 
 char name_it[16];	/* stores argv if it exists and appends it
 			   to each name generated.*/
 
-int	cur_col = 0;
+int cur_col = 0;
 
-FILE		*infp;
-struct rt_wdb	*outfp;		/* Output file descriptor */
+FILE *infp;
+struct rt_wdb *outfp;		/* Output file descriptor */
 
-int	sol_total, sol_work;	/* total num solids, num solids processed */
-int	reg_total;
+int sol_total, sol_work;	/* total num solids, num solids processed */
+int reg_total;
 
-extern void	getid(void);
+extern void getid(void);
 
-void		col_pr(char *str);
+void col_pr(char *str);
 
 static char usage[] = "\
 Usage: comgeom-g [options] input_file output_file\n\
 Options:\n\
-	-v input_vers#		default is 5 (cg5); versions 1, 4 also available\n\
+	-v input_vers#	(default is 5 (cg5); versions 1, 4 also available)\n\
 	-d debug_lvl\n\
 	-s name_suffix\n\
 ";
@@ -84,8 +84,8 @@ Options:\n\
 int
 get_args(int argc, char **argv)
 {
-    int	c;
-    char		*file_name;
+    int c;
+    char *file_name;
 
     if (argv == NULL) {
 	return 0;
@@ -156,15 +156,15 @@ get_args(int argc, char **argv)
 
 
 /*
- *			M A I N
+ * M A I N
  */
 int
 main(int argc, char **argv)
 {
     int i;
-    char	ctitle[132];
-    char	*title;
-    char	units[16];
+    char ctitle[132];
+    char *title;
+    char units[16];
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
@@ -180,7 +180,7 @@ main(int argc, char **argv)
     printf("Reading version %d COMGEOM file\n", version);
 
     if (verbose) {
-	printf("COMGEOM input file (version %d) must have this format:\n",version);
+	printf("COMGEOM input file (version %d) must have this format:\n", version);
 	switch (version) {
 	    case 1:
 		printf("     1.  title card\n");
@@ -212,7 +212,7 @@ main(int argc, char **argv)
     group_init();
 
     /*
-     *  Read title card
+     * Read title card
      */
     if (get_line(ctitle, sizeof(ctitle), "title card") == EOF) {
 	printf("Empty input file:  no title record\n");
@@ -243,7 +243,7 @@ main(int argc, char **argv)
 
     /* Convert units to lower case */
     {
-	char	*cp = units;
+	char *cp = units;
 	while (*cp) {
 	    if (isupper((int)*cp))
 		*cp = tolower((int)*cp);
@@ -270,7 +270,7 @@ main(int argc, char **argv)
     }
 
     /*
-     *  Read control card, if present
+     * Read control card, if present
      */
     sol_total = reg_total = 0;
     switch (version) {
@@ -304,7 +304,7 @@ main(int argc, char **argv)
 
 
     /*
-     *  SOLID TABLE
+     * SOLID TABLE
      */
     if (verbose) printf("Primitive table\n");
     sol_work = 0;
@@ -347,7 +347,7 @@ main(int argc, char **argv)
 	}
     } else {
 	if (version == 4) {
-	    char	dummy[88];
+	    char dummy[88];
 	    /* read the blank card (line) */
 	    (void)get_line(dummy, sizeof(dummy), "blank card");
 	}
@@ -364,8 +364,9 @@ main(int argc, char **argv)
     return 0;
 }
 
+
 /*
- *			C O L _ P R
+ * C O L _ P R
  */
 void
 col_pr(char *str)
@@ -381,6 +382,7 @@ col_pr(char *str)
 	cur_col = 0;
     }
 }
+
 
 /*
  * Local Variables:

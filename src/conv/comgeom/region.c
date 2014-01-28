@@ -18,10 +18,6 @@
  * information.
  *
  */
-/** @file comgeom/region.c
- *  Author -
- *	Michael John Muuss
- */
 
 #include "common.h"
 
@@ -42,44 +38,44 @@ extern void namecvt(int n, char **cp, int c);
 /* defined in cvt.c */
 extern void col_pr(char *str);
 
-extern char	name_it[];
+extern char name_it[];
 
-extern struct wmember	*wmp;	/* array indexed by region number */
+extern struct wmember *wmp;	/* array indexed by region number */
 
-extern FILE		*infp;
-extern struct rt_wdb	*outfp;
+extern FILE *infp;
+extern struct rt_wdb *outfp;
 
-extern int	reg_total;
-extern int	version;
-extern int	verbose;
+extern int reg_total;
+extern int version;
+extern int verbose;
 
-char	rcard[128];
+char rcard[128];
 
-void	region_register(int reg_num, int id, int air, int mat, int los);
-void	group_init(void);
-void	group_register(char *name, int lo, int hi);
-void	group_add(int val, char *name);
-void	group_write(void);
+void region_register(int reg_num, int id, int air, int mat, int los);
+void group_init(void);
+void group_register(char *name, int lo, int hi);
+void group_add(int val, char *name);
+void group_write(void);
 
 /*
- *			G E T R E G I O N
+ * G E T R E G I O N
  *
- *  Use wmp[region_number] as head for each region.
+ * Use wmp[region_number] as head for each region.
  *
- *  Returns -
- *	-1	error
- *	 0	done
+ * Returns -
+ * -1 error
+ * 0 done
  */
 int
 getregion(void)
 {
     int i, j;
     int card;
-    int	op;
-    int	reg_reg_flag;
-    int	reg_num;
-    char	*inst_name=NULL;
-    int	inst_num;
+    int op;
+    int reg_reg_flag;
+    int reg_num;
+    char *inst_name=NULL;
+    int inst_num;
     char *cp;
 
     reg_num = 0;		/* safety */
@@ -94,7 +90,7 @@ getregion(void)
 	return -1;
     }
 
- top:
+top:
     reg_reg_flag = 0;
 
     for (card = 0; ; card++) {
@@ -119,7 +115,7 @@ getregion(void)
 		return -1;
 	    }
 	    if (BU_STR_EQUAL(rcard, "  end") ||
-		 BU_STR_EQUAL(rcard, "  END")) {
+		BU_STR_EQUAL(rcard, "  END")) {
 		/* Version 1, DoE/MORSE */
 		reg_total = reg_num;
 		return 0;	/* done */
@@ -140,8 +136,8 @@ getregion(void)
 
 	/* Scan each of the 9 fields on the card */
 	for (i = 0; i < 9; i++, cp += 7) {
-	    char	nbuf[32];
-	    char	*np;
+	    char nbuf[32];
+	    char *np;
 
 	    /* Remove all spaces from the number */
 	    np = nbuf;
@@ -171,7 +167,7 @@ getregion(void)
 		    if (inst_num < 0) {
 			op = WMOP_SUBTRACT;
 			inst_num = -inst_num;
-		    }  else {
+		    } else {
 			op = WMOP_INTERSECT;
 		    }
 		}
@@ -180,11 +176,11 @@ getregion(void)
 		 * rather than the V4 way of doing it. */
 		if (cp[1] != ' ') {
 		    op = WMOP_UNION;
-		}  else {
+		} else {
 		    if (inst_num < 0) {
 			op = WMOP_SUBTRACT;
 			inst_num = -inst_num;
-		    }  else {
+		    } else {
 			op = WMOP_INTERSECT;
 		    }
 		}
@@ -209,8 +205,9 @@ getregion(void)
     goto top;
 }
 
+
 /*
- *			G E T I D
+ * G E T I D
  *
  * Load the region ID information into the structures
  */
@@ -222,7 +219,7 @@ getid(void)
     int air;
     int mat = -1;
     int los = -2;
-    char	idcard[132];
+    char idcard[132];
 
     while (1) {
 	if (get_line(idcard, sizeof(idcard), "region ident card") == EOF) {
@@ -255,18 +252,19 @@ getid(void)
     }
 }
 
+
 /*
- *			R E G I O N _ R E G I S T E R
+ * R E G I O N _ R E G I S T E R
  */
 void
 region_register(int reg_num, int id, int air, int mat, int los)
 {
-    struct wmember	*wp;
+    struct wmember *wp;
 
     wp = &wmp[reg_num];
     if (BU_LIST_IS_EMPTY(&wp->l)) {
 	if (verbose) {
-	    char	paren[32];
+	    char paren[32];
 
 	    /* Denote an empty region */
 	    snprintf(paren, 32, "(%s)", wp->wm_name);
@@ -275,20 +273,21 @@ region_register(int reg_num, int id, int air, int mat, int los)
 	return;
     }
     mk_lrcomb(outfp, wp->wm_name, wp, 1,
-	       "", "", (unsigned char *)0, id, air, mat, los, 0);
+	      "", "", (unsigned char *)0, id, air, mat, los, 0);
     /* Add region to the one group that it belongs to. */
     group_add(id, wp->wm_name);
 
     if (verbose) col_pr(wp->wm_name);
 }
 
-#define NGROUPS	21
+
+#define NGROUPS 21
 struct groups {
-    struct wmember	grp_wm;
-    int		grp_lo;
-    int		grp_hi;
+    struct wmember grp_wm;
+    int grp_lo;
+    int grp_hi;
 } groups[NGROUPS];
-int	ngroups;
+int ngroups;
 
 void
 group_init(void)
@@ -317,11 +316,12 @@ group_init(void)
 
 }
 
+
 void
 group_register(char *name, int lo, int hi)
 {
-    char	nbuf[32];
-    struct wmember	*wp;
+    char nbuf[32];
+    struct wmember *wp;
 
     if (ngroups >= NGROUPS) {
 	printf("Too many groups, ABORTING\n");
@@ -339,36 +339,38 @@ group_register(char *name, int lo, int hi)
     ngroups++;
 }
 
+
 void
 group_add(int val, char *name)
 {
-    int	i;
+    int i;
 
     for (i = ngroups - 1; i >= 0; i--) {
-	if (val < groups[i].grp_lo)  continue;
-	if (val > groups[i].grp_hi)  continue;
+	if (val < groups[i].grp_lo) continue;
+	if (val > groups[i].grp_hi) continue;
 	goto add;
     }
     printf("Unable to find group for value %d\n", val);
     i = 0;
 
- add:
+add:
     (void)mk_addmember(name, &groups[i].grp_wm.l, NULL, WMOP_UNION);
 }
+
 
 void
 group_write(void)
 {
-    struct wmember	*wp;
-    struct wmember		allhead;
-    int	i;
+    struct wmember *wp;
+    struct wmember allhead;
+    int i;
 
     BU_LIST_INIT(&allhead.l);
 
     for (i = 0; i < ngroups; i++) {
 	wp = &groups[i].grp_wm;
 	/* Skip empty groups */
-	if (BU_LIST_IS_EMPTY(&wp->l))  continue;
+	if (BU_LIST_IS_EMPTY(&wp->l)) continue;
 
 	/* Make a non-region combination */
 	mk_lfcomb(outfp, wp->wm_name, wp, 0);
@@ -381,6 +383,7 @@ group_write(void)
     /* Make all-encompassing "all.g" group here */
     mk_lfcomb(outfp, "all.g", &allhead, 0);
 }
+
 
 /*
  * Local Variables:

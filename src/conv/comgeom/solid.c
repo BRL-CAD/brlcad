@@ -20,16 +20,12 @@
  */
 /** @file comgeom/solid.c
  *
- *  Subroutine to convert solids from
- *  COMGEOM card decks into GED object files.  This conversion routine
- *  is used to translate between COMGEOM solids, and the
- *  more general GED solids.
+ * Subroutine to convert solids from
+ * COMGEOM card decks into GED object files.  This conversion routine
+ * is used to translate between COMGEOM solids, and the
+ * more general GED solids.
  *
- *  Authors -
- *	Michael John Muuss
- *	Susanne L. Muuss, J.D.
- *
- *  Original Version -
+ * Original Version -
  *	March, 1980
  */
 
@@ -58,12 +54,12 @@ extern void col_pr(char *str);
 /* defined in solid.c */
 extern int read_arbn(char *name);
 
-extern struct rt_wdb	*outfp;
+extern struct rt_wdb *outfp;
 extern int version;
 extern int verbose;
 
 extern double getdouble(char *cp, int start, int len);
-extern int    sol_total, sol_work;
+extern int sol_total, sol_work;
 
 char scard[132];			/* Solid card buffer area */
 
@@ -71,22 +67,22 @@ void trim_trail_spaces(char *cp);
 void eat(int count);
 
 /*
- *			G E T S O L D A T A
+ * G E T S O L D A T A
  *
- *  Obtain 'num' data items from input card(s).
- *  The first input card is already in global 'scard'.
+ * Obtain 'num' data items from input card(s).
+ * The first input card is already in global 'scard'.
  *
- *  Returns -
- *	 0	OK
- *	-1	failure
+ * Returns -
+ * 0 OK
+ * -1 failure
  */
 int
 getsoldata(fastf_t *dp, int num, int solid_num)
 {
-    int	cd;
+    int cd;
     fastf_t *fp;
-    int	i;
-    int	j;
+    int i;
+    int j;
 
     fp = dp;
     for (cd = 1; num > 0; cd++) {
@@ -120,23 +116,24 @@ getsoldata(fastf_t *dp, int num, int solid_num)
     return 0;
 }
 
+
 /*
- *			G E T X S O L D A T A
+ * G E T X S O L D A T A
  *
- *  Obtain 'num' data items from input card(s).
- *  All input cards must be freshly read.
+ * Obtain 'num' data items from input card(s).
+ * All input cards must be freshly read.
  *
- *  Returns -
- *	 0	OK
- *	-1	failure
+ * Returns -
+ * 0 OK
+ * -1 failure
  */
 int
 getxsoldata(fastf_t *dp, int num, int solid_num)
 {
-    int	cd;
+    int cd;
     fastf_t *fp;
-    int	i;
-    int	j;
+    int i;
+    int j;
 
     fp = dp;
     for (cd = 1; num > 0; cd++) {
@@ -170,8 +167,9 @@ getxsoldata(fastf_t *dp, int num, int solid_num)
     return 0;
 }
 
+
 /*
- *			T R I M _ T R A I L _ S P A C E S
+ * T R I M _ T R A I L _ S P A C E S
  */
 void
 trim_trail_spaces(char *cp)
@@ -180,32 +178,33 @@ trim_trail_spaces(char *cp)
 
     ep = cp + strlen(cp) - 1;
     while (ep >= cp) {
-	if (*ep != ' ')  break;
+	if (*ep != ' ') break;
 	*ep-- = '\0';
     }
 }
 
+
 /*
- *			G E T S O L I D
+ * G E T S O L I D
  *
- *  Returns -
- *	-1	error
- *	 0	conversion OK
- *	 1	EOF
+ * Returns -
+ * -1 error
+ * 0 conversion OK
+ * 1 EOF
  */
 int
 getsolid(void)
 {
-    char	given_solid_num[16];
-    char	solid_type[16];
-    int	i;
-    double	r1, r2;
-    vect_t	work;
-    double	m1;		/* Magnitude temporaries */
-    char	*name = NULL;
-    fastf_t	dd[4*6];	/* 4 cards of 6 nums each */
-    point_t	tmp[8];		/* 8 vectors of 3 nums each */
-    int	ret;
+    char given_solid_num[16];
+    char solid_type[16];
+    int i;
+    double r1, r2;
+    vect_t work;
+    double m1;		/* Magnitude temporaries */
+    char *name = NULL;
+    fastf_t dd[4*6];	/* 4 cards of 6 nums each */
+    point_t tmp[8];		/* 8 vectors of 3 nums each */
+    int ret;
 #define D(_i)	(&(dd[_i*3]))
 #define T(_i)	(&(tmp[_i][0]))
 
@@ -257,8 +256,8 @@ getsolid(void)
 
     /* Reduce solid type to lower case */
     {
-	char	*cp;
-	char	c;
+	char *cp;
+	char c;
 
 	cp = solid_type;
 	while ((c = *cp) != '\0') {
@@ -282,9 +281,9 @@ getsolid(void)
     }
 
     if (BU_STR_EQUAL(solid_type, "ars")) {
-	int		ncurves;
-	int		pts_per_curve;
-	fastf_t		**curve;
+	int ncurves;
+	int pts_per_curve;
+	fastf_t **curve;
 
 	ncurves = getint(scard, 10, 10);
 	pts_per_curve = getint(scard, 20, 10);
@@ -350,7 +349,7 @@ getsolid(void)
     }
 
     if (BU_STR_EQUAL(solid_type, "raw") ||
-	 BU_STR_EQUAL(solid_type, "wed")		/* DoE name */
+	BU_STR_EQUAL(solid_type, "wed")		/* DoE name */
 	) {
 	if (getsoldata(dd, 4*3, sol_work) < 0) {
 	    bu_free(name, "name");
@@ -372,10 +371,10 @@ getsolid(void)
 
     if (BU_STR_EQUAL(solid_type, "rvw")) {
 	/* Right Vertical Wedge (Origin: DoE/MORSE) */
-	double	a2, theta, phi, h2;
-	double	a2theta;
-	double	angle1, angle2;
-	vect_t	a, b, c;
+	double a2, theta, phi, h2;
+	double a2theta;
+	double angle1, angle2;
+	vect_t a, b, c;
 
 	if (getsoldata(dd, 1 * 3 + 4, sol_work) < 0) {
 	    bu_free(name, "name");
@@ -505,7 +504,7 @@ getsolid(void)
 	    return -1;
 	}
 	ret = mk_tgc(outfp, name, D(0), D(1),
-		      D(2), D(3), D(2), D(3));
+		     D(2), D(3), D(2), D(3));
 	bu_free(name, "name");
 	return ret;
     }
@@ -531,7 +530,7 @@ getsolid(void)
 	VSCALE(D(4), D(2), r1);
 	VSCALE(D(5), D(3), r1);
 	ret = mk_tgc(outfp, name, D(0), D(1),
-		      D(2), D(3), D(4), D(5));
+		     D(2), D(3), D(4), D(5));
 	bu_free(name, "name");
 	return ret;
     }
@@ -547,7 +546,7 @@ getsolid(void)
 	VSCALE(D(4), D(2), r1);
 	VSCALE(D(5), D(3), r2);
 	ret = mk_tgc(outfp, name, D(0), D(1),
-		      D(2), D(3), D(4), D(5));
+		     D(2), D(3), D(4), D(5));
 	bu_free(name, "name");
 	return ret;
     }
@@ -564,12 +563,12 @@ getsolid(void)
     }
 
     if (bu_strncmp(solid_type, "wir", 3) == 0) {
-	int			numpts;		/* points per wire */
-	int			num;
-	double			dia;
-	fastf_t			*pts;		/* 3 entries per pt */
-	struct	wdb_pipept	*ps;
-	struct	bu_list		head;		/* allow a whole struct for head */
+	int numpts;		/* points per wire */
+	int num;
+	double dia;
+	fastf_t *pts;		/* 3 entries per pt */
+	struct wdb_pipept *ps;
+	struct bu_list head;		/* allow a whole struct for head */
 
 	/* This might be getint(solid_type, 3, 2); for non-V5 */
 	numpts = getint(scard, 8, 2);
@@ -615,7 +614,7 @@ getsolid(void)
 	    return -1;
 	}
 	ret = mk_rpc(outfp, name, D(0), D(1),
-		      D(2), dd[9]);
+		     D(2), dd[9]);
 	bu_free(name, "name");
 	return ret;
     }
@@ -626,7 +625,7 @@ getsolid(void)
 	    return -1;
 	}
 	ret = mk_rhc(outfp, name, D(0), D(1),
-		      D(2), dd[9], dd[10]);
+		     D(2), dd[9], dd[10]);
 	bu_free(name, "name");
 	return ret;
     }
@@ -638,7 +637,7 @@ getsolid(void)
 	    return -1;
 	}
 	ret = mk_epa(outfp, name, D(0), D(1),
-		      D(2), dd[9], dd[10]);
+		     D(2), dd[9], dd[10]);
 	bu_free(name, "name");
 	return ret;
     }
@@ -650,7 +649,7 @@ getsolid(void)
 	    return -1;
 	}
 	ret = mk_ehy(outfp, name, D(0), D(1),
-		      D(2), dd[9], dd[10], dd[11]);
+		     D(2), dd[9], dd[10], dd[11]);
 	bu_free(name, "name");
 	return ret;
     }
@@ -662,7 +661,7 @@ getsolid(void)
 	    return -1;
 	}
 	ret = mk_eto(outfp, name, D(0), D(1),
-		      D(2), dd[9], dd[10]);
+		     D(2), dd[9], dd[10]);
 	bu_free(name, "name");
 	return ret;
     }
@@ -670,7 +669,7 @@ getsolid(void)
 
     if (version <= 4 && BU_STR_EQUAL(solid_type, "ell")) {
 	/* Foci F1, F2, major axis length L */
-	vect_t	v;
+	vect_t v;
 
 	/*
 	 * For simplicity, we convert ELL to ELL1, then
@@ -684,13 +683,13 @@ getsolid(void)
 	}
 	VADD2SCALE(v, D(0), D(1), 0.5); /* V is midpoint */
 
-	VSUB2(work, D(1), D(0));	/* work holds F2 -  F1 */
+	VSUB2(work, D(1), D(0));	/* work holds F2 - F1 */
 	m1 = MAGNITUDE(work);
 	r2 = 0.5 * dd[6] / m1;
 	VSCALE(D(1), work, r2);	/* A */
 
 	dd[6] = sqrt(MAGSQ(D(1)) -
-		      (m1 * 0.5)*(m1 * 0.5));	/* r */
+		     (m1 * 0.5)*(m1 * 0.5));	/* r */
 	VMOVE(D(0), v);
 	goto ell1;
     }
@@ -767,35 +766,36 @@ getsolid(void)
     }
 
     /*
-     *  The solid type string is defective,
-     *  or that solid is not currently supported.
+     * The solid type string is defective,
+     * or that solid is not currently supported.
      */
     printf("getsolid:  no support for solid type '%s'\n", solid_type);
     return -1;
 }
 
+
 int
 read_arbn(char *name)
 {
-    int	npt;			/* # vertex pts to be read in */
-    int	npe;			/* # planes from 3 vertex points */
-    int	neq;			/* # planes from equation */
-    int	nae;			/* # planes from az, el & vertex index */
-    int	nface;			/* total number of faces */
+    int npt;			/* # vertex pts to be read in */
+    int npe;			/* # planes from 3 vertex points */
+    int neq;			/* # planes from equation */
+    int nae;			/* # planes from az, el & vertex index */
+    int nface;			/* total number of faces */
     fastf_t *input_points = NULL;
-    double	*vertex = NULL;	/* vertex list of final solid */
-    int	last_vertex;		/* index of first unused vertex */
-    int	max_vertex;		/* size of vertex array */
-    int	*used = (int *)0;	/* plane eqn use count */
+    double *vertex = NULL;	/* vertex list of final solid */
+    int last_vertex;		/* index of first unused vertex */
+    int max_vertex;		/* size of vertex array */
+    int *used = (int *)0;	/* plane eqn use count */
     plane_t *eqn = NULL;	/* plane equations */
-    int	cur_eq = 0;		/* current (free) equation number */
-    int	symm = 0;		/* symmetry about Y used */
-    int	i;
-    int	j;
-    int	k;
-    int	m;
-    point_t	cent;			/* centroid of arbn */
-    struct bn_tol	tol;
+    int cur_eq = 0;		/* current (free) equation number */
+    int symm = 0;		/* symmetry about Y used */
+    int i;
+    int j;
+    int k;
+    int m;
+    point_t cent;			/* centroid of arbn */
+    struct bn_tol tol;
 
     /* FIXME: The tolerance here is sheer guesswork */
     tol.magic = BN_TOL_MAGIC;
@@ -846,8 +846,8 @@ read_arbn(char *name)
 	    return -1;
 	}
 	for (j = 0; j < 6; j++) {
-	    int	q, r, s;
-	    point_t	a, b, c;
+	    int q, r, s;
+	    point_t a, b, c;
 
 	    q = getint(scard, 10+j*10+0, 4);
 	    r = getint(scard, 10+j*10+4, 3);
@@ -891,7 +891,7 @@ read_arbn(char *name)
 
     /* Get planes defined by their equation */
     for (i = 0; i < neq; i++) {
-	double	scale;
+	double scale;
 	if (get_line(scard, sizeof(scard), "arbn plane equation card") == EOF) {
 	    printf("too few cards for arbn %d\n",
 		   sol_work);
@@ -920,15 +920,15 @@ read_arbn(char *name)
 	    return -1;
 	}
 	for (j = 0; j < 2; j++) {
-	    double	az, el;
-	    int	vert_no;
-	    double	cos_el;
-	    point_t	pt;
+	    double az, el;
+	    int vert_no;
+	    double cos_el;
+	    point_t pt;
 
 	    az = getdouble(scard, 10+j*30+0*10, 10) * bn_degtorad;
 	    el = getdouble(scard, 10+j*30+1*10, 10) * bn_degtorad;
 	    vert_no = getint(scard, 10+j*30+2*10, 10);
-	    if (vert_no == 0)  break;
+	    if (vert_no == 0) break;
 	    cos_el = cos(el);
 	    eqn[cur_eq][X] = cos(az) * cos_el;
 	    eqn[cur_eq][Y] = sin(az) * cos_el;
@@ -956,17 +956,17 @@ read_arbn(char *name)
 	VADD2(cent, cent, &input_points[i*3]);
     }
     VSCALE(cent, cent, 1.0/npt);
-    if (symm)  cent[Y] = 0;
+    if (symm) cent[Y] = 0;
 
     /* Point normals away from centroid */
     for (i = 0; i < nface; i++) {
-	double	dist;
+	double dist;
 
 	dist = VDOT(eqn[i], cent) - eqn[i][W];
 	/* If dist is negative, 'cent' is inside halfspace */
-#define DIST_TOL	(1.0e-8)
-#define DIST_TOL_SQ	(1.0e-10)
-	if (dist < -DIST_TOL)  continue;
+#define DIST_TOL (1.0e-8)
+#define DIST_TOL_SQ (1.0e-10)
+	if (dist < -DIST_TOL) continue;
 	if (dist > DIST_TOL) {
 	    /* Flip halfspace over */
 	    VREVERSE(eqn[i], eqn[i]);
@@ -984,8 +984,8 @@ read_arbn(char *name)
     input_points = NULL;
 
     /*
-     *  ARBN must be convex.  Test for concavity.
-     *  Byproduct is an enumeration of all the vertices.
+     * ARBN must be convex.  Test for concavity.
+     * Byproduct is an enumeration of all the vertices.
      */
     last_vertex = max_vertex = 0;
 
@@ -995,36 +995,36 @@ read_arbn(char *name)
     }
     for (i = 0; i < nface - 2; i++) {
 	for (j = i + 1; j < nface - 1; j++) {
-	    double	dot;
-	    int	point_count;	/* # points on this line */
+	    double dot;
+	    int point_count;	/* # points on this line */
 
 	    /* If normals are parallel, no intersection */
 	    dot = VDOT(eqn[i], eqn[j]);
-	    if (!NEAR_ZERO(dot, 0.999999))  continue;
+	    if (!NEAR_ZERO(dot, 0.999999)) continue;
 
 	    point_count = 0;
 	    for (k = j + 1; k < nface; k++) {
-		point_t	pt;
+		point_t pt;
 
-		if (bn_mkpoint_3planes(pt, eqn[i], eqn[j], eqn[k]) < 0)  continue;
+		if (bn_mkpoint_3planes(pt, eqn[i], eqn[j], eqn[k]) < 0) continue;
 
 		/* See if point is outside arb */
 		for (m = 0; m < nface; m++) {
-		    if (i == m || j == m || k == m)  continue;
+		    if (i == m || j == m || k == m) continue;
 		    if (VDOT(pt, eqn[m]) - eqn[m][W] > DIST_TOL)
 			goto next_k;
 		}
 		/* See if vertex already was found */
 		for (m = 0; m < last_vertex; m++) {
-		    vect_t	dist;
+		    vect_t dist;
 		    VSUB2(dist, pt, &vertex[m*3]);
 		    if (MAGSQ(dist) < DIST_TOL_SQ)
 			goto next_k;
 		}
 
 		/*
-		 *  Add point to vertex array.
-		 *  If more room needed, realloc.
+		 * Add point to vertex array.
+		 * If more room needed, realloc.
 		 */
 		if (last_vertex >= max_vertex) {
 		    if (max_vertex == 0) {
@@ -1054,7 +1054,7 @@ read_arbn(char *name)
 
     /* If any planes were not used, then arbn is not convex */
     for (i = 0; i < nface; i++) {
-	if (used[i] != 0)  continue;	/* face was used */
+	if (used[i] != 0) continue;	/* face was used */
 	printf("arbn face %d unused, solid is not convex\n", i);
 	return -1;
     }
@@ -1063,27 +1063,29 @@ read_arbn(char *name)
     i = mk_arbn(outfp, name, nface, (const plane_t *)eqn);
 
     if (vertex) bu_free((char *)vertex, "vertex");
-    if (eqn)    bu_free((char *)eqn, "eqn");
-    if (used)   bu_free((char *)used, "used");
+    if (eqn) bu_free((char *)eqn, "eqn");
+    if (used) bu_free((char *)used, "used");
 
     return i;
 }
 
+
 /*
- *			E A T
+ * E A T
  *
- *  Eat the indicated number of input lines
+ * Eat the indicated number of input lines
  */
 void
 eat(int count)
 {
     char lbuf[132];
-    int	i;
+    int i;
 
     for (i = 0; i < count; i++) {
 	(void)get_line(lbuf, sizeof(lbuf), "eaten card");
     }
 }
+
 
 /*
  * Local Variables:
