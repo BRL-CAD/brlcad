@@ -877,58 +877,244 @@ pullback_samples(PBCData* data,
     return samples;
 }
 
-// If the given uv point is at the edge of a closed parameter range, bias it
-// to the same side of the range as the previous point.
-static ON_2dPoint
-resolve_seam_point_from_prev(
-    const ON_Surface *surf,
-    const ON_2dPoint &pt,
-    const ON_2dPoint &prev_pt)
+
+/*
+ *  Similar to openNURBS's surf->IsAtSeam() function but uses tolerance to do a near check versus
+ *  the floating point equality used by openNURBS.
+ */
+int
+NearSeam(const ON_Surface *surf,ON_2dPoint &pt, double tol = 0.0)
 {
-    ON_2dPoint newpt = pt;
+    int rc = 0;
+    int i;
+    for (i=0; i<2; i++){
+      if (!surf->IsClosed(i))
+        continue;
+      double p = (i) ? pt.y : pt.x;
+      if ( NEAR_EQUAL(p, surf->Domain(i)[0], tol) || NEAR_EQUAL(p, surf->Domain(i)[1], tol))
+        rc += (i+1);
+    }
+
+    return rc;
+}
+
+
+/*
+ *  Simple check to determine if two consecutive points pulled back from 3d curve sampling
+ *  to 2d UV parameter space crosses the seam of the closed UV. The assumption here is that
+ *  the sampling of the 3d curve is a small fraction of the UV domain.
+ */
+bool
+TrimCrossesClosedSeam(const ON_Surface *surf,ON_2dPoint pt,ON_2dPoint &prev_pt)
+{
+    bool rc = false;
 
     ON_Interval dom[2];
     dom[0] = surf->Domain(0);
     dom[1] = surf->Domain(1);
 
-    double umin = dom[0].m_t[0];
-    double umax = dom[0].m_t[1];
-    double vmin = dom[1].m_t[0];
-    double vmax = dom[1].m_t[1];
-
-    if (surf->IsClosed(0) &&
-	(NEAR_EQUAL(pt.x, umin, PBC_TOL) || NEAR_EQUAL(pt.x, umax, PBC_TOL)))
-    {
-	if (fabs(prev_pt.x - umin) < fabs(prev_pt.x - umax)) {
-	    newpt.x = umin;
-	} else {
-	    newpt.x = umax;
-	}
+    if ((surf->IsClosed(0)) && (fabs(pt.x-prev_pt.x) > dom[0].Length()/2.0)) {
+	rc = true;
+    } else if ((surf->IsClosed(1)) && (fabs(pt.y-prev_pt.y) > dom[1].Length()/2.0)) {
+	rc = true;
     }
 
-    if (surf->IsClosed(1) &&
-	(NEAR_EQUAL(pt.y, vmin, PBC_TOL) || NEAR_EQUAL(pt.y, vmax, PBC_TOL)))
-    {
-	if (fabs(prev_pt.y - vmin) < fabs(prev_pt.y - vmax)) {
-	    newpt.y = vmin;
-	} else {
-	    newpt.y = vmax;
-	}
-    }
-
-    return newpt;
+    return rc;
 }
 
+/*
+ *  If within UV tolerance to a seam force force to actually seam value so surface
+ *  seam function can be used.
+ */
+void
+ForceToClosestSeam(const ON_Surface *surf, ON_2dPoint &p, double tol)
+{
+    int seam;
+    ON_Interval dom[2];
+    dom[0] = surf->Domain(0);
+    dom[1] = surf->Domain(1);
 
+    if ((seam=NearSeam(surf, p, tol)) > 0) {
+	if (seam == 1) { // east/west seam
+	    if (fabs(p.x - dom[0].m_t[0]) < dom[0].Length()/2.0) {
+		p.x = dom[0].m_t[0]; // on east swap to west seam
+	    } else {
+		p.x = dom[0].m_t[1]; // on west swap to east seam
+	    }
+	} else if (seam == 2) { // north/south seam
+	    if (fabs(p.y - dom[1].m_t[0]) < dom[1].Length()/2.0) {
+		p.y = dom[1].m_t[0]; // on north swap to south seam
+	    } else {
+		p.y = dom[1].m_t[1]; // on south swap to north seam
+	    }
+	} else { //on both seams
+	    if (fabs(p.x - dom[0].m_t[0]) < dom[0].Length()/2.0) {
+		p.x = dom[0].m_t[0]; // on east swap to west seam
+	    } else {
+		p.x = dom[0].m_t[1]; // on west swap to east seam
+	    }
+	    if (fabs(p.y - dom[1].m_t[0]) < dom[1].Length()/2.0) {
+		p.y = dom[1].m_t[0]; // on north swap to south seam
+	    } else {
+		p.y = dom[1].m_t[1]; // on south swap to north seam
+	    }
+	}
+    }
+}
+
+/*
+ *  If point lies on a seam(s) swap to opposite side of UV.
+ */
+void
+SwapUVSeamPoint(const ON_Surface *surf, ON_2dPoint &p)
+{
+    int seam;
+    ON_Interval dom[2];
+    dom[0] = surf->Domain(0);
+    dom[1] = surf->Domain(1);
+
+    if ((seam=surf->IsAtSeam(p.x,p.y)) > 0) {
+	if (seam == 1) { // east/west seam
+	    if (fabs(p.x - dom[0].m_t[0]) > dom[0].Length()/2.0) {
+		p.x = dom[0].m_t[0]; // on east swap to west seam
+	    } else {
+		p.x = dom[0].m_t[1]; // on west swap to east seam
+	    }
+	} else if (seam == 2) { // north/south seam
+	    if (fabs(p.y - dom[1].m_t[0]) > dom[1].Length()/2.0) {
+		p.y = dom[1].m_t[0]; // on north swap to south seam
+	    } else {
+		p.y = dom[1].m_t[1]; // on south swap to north seam
+	    }
+	} else { //on both seams
+	    if (fabs(p.x - dom[0].m_t[0]) > dom[0].Length()/2.0) {
+		p.x = dom[0].m_t[0]; // on east swap to west seam
+	    } else {
+		p.x = dom[0].m_t[1]; // on west swap to east seam
+	    }
+	    if (fabs(p.y - dom[1].m_t[0]) > dom[1].Length()/2.0) {
+		p.y = dom[1].m_t[0]; // on north swap to south seam
+	    } else {
+		p.y = dom[1].m_t[1]; // on south swap to north seam
+	    }
+	}
+    }
+}
+
+/*
+ *  Find where Pullback of 3d curve crosses closed seam of surface UV
+ */
+bool
+FindTrimSeamCrossing(PBCData &data,double t0,double t1, double offset,double &seam_t,ON_2dPoint &from,ON_2dPoint &to)
+{
+    bool rc = true;
+    const ON_Surface *surf = data.surftree->getSurface();
+
+    // quick bail out is surface not closed
+    if (surf->IsClosed(0) || surf->IsClosed(1)) {
+	ON_2dPoint p0 = data.curve->PointAt(t0);
+	ON_2dPoint p1 = data.curve->PointAt(t1);
+	ON_Interval dom[2];
+	dom[0] = surf->Domain(0);
+	dom[1] = surf->Domain(1);
+
+
+	if (toUV(data, p0, t0, offset) &&
+		toUV(data, p1, t1, offset) ) {
+	    if (TrimCrossesClosedSeam(surf,p0,p1)) {
+		ON_2dPoint p;
+		//lets check to see if p0 || p1 are already on a seam
+		int seam0 = surf->IsAtSeam(p0.x,p0.y);
+		int seam1 = surf->IsAtSeam(p1.x,p1.y);
+		if (seam0 > 0 ) {
+		    if (seam1 > 0) { // both p0 & p1 on seam shouldn't happen report error and return false
+			rc = false;
+		    } else { // just p0 on seam
+			from = to = p0;
+			seam_t = t0;
+			SwapUVSeamPoint(surf, to);
+		    }
+		} else if (seam1 > 0) { // only p1 on seam
+		    from = to = p1;
+		    seam_t = t1;
+		    SwapUVSeamPoint(surf, from);
+		} else { // crosses the seam somewhere in between the two points
+		    bool seem_not_found = true;
+		    while(seem_not_found) {
+			double t = (t0 + t1)/2.0;
+			int seam;
+			if (toUV(data, p, t, offset)) {
+			    if ((seam=surf->IsAtSeam(p.x,p.y)) > 0) {
+				from = to = p;
+				seam_t = t;
+				if (p0.DistanceTo(p) < p1.DistanceTo(p)) {
+				    SwapUVSeamPoint(surf, to);
+				} else {
+				    SwapUVSeamPoint(surf, from);
+				}
+				seem_not_found=false;
+				rc = true;
+			    } else {
+				if (TrimCrossesClosedSeam(surf,p0,p)) {
+				    p1 = p;
+				    t1 = t;
+				} else if (TrimCrossesClosedSeam(surf,p,p1)) {
+				    p0 = p;
+				    t0=t;
+				} else {
+				    seem_not_found=false;
+				    rc = false;
+				}
+			    }
+			} else if (toUV(data, p, t, -offset)) {
+			    if ((seam=surf->IsAtSeam(p.x,p.y)) > 0) {
+				from = to = p;
+				seam_t = t;
+				if (p0.DistanceTo(p) < p1.DistanceTo(p)) {
+				    SwapUVSeamPoint(surf, to);
+				} else {
+				    SwapUVSeamPoint(surf, from);
+				}
+				seem_not_found=false;
+				rc = true;
+			    } else {
+				if (TrimCrossesClosedSeam(surf,p0,p)) {
+				    p1 = p;
+				    t1 = t;
+				} else if (TrimCrossesClosedSeam(surf,p,p1)) {
+				    p0 = p;
+				    t0=t;
+				} else {
+				    seem_not_found=false;
+				    rc = false;
+				}
+			    }
+			} else {
+			    seem_not_found=false;
+			    rc = false;
+			}
+
+		    }
+		}
+	    }
+	}
+    }
+
+    return rc;
+}
+#ifdef TEMPDEBUGPRINTING
+bool PRINTDEBUG = false;
+int pt_count=0;
+#endif
 void
 pullback_samples_from_closed_surface(PBCData* data,
-				     double t,
-				     double s)
+		 double t,
+		 double s)
 {
     if (!data || !data->surftree)
 	return;
 
-    const ON_Curve* curve = data->curve;
+    const ON_Curve* curve= data->curve;
 
     if (!curve)
 	return;
@@ -937,22 +1123,14 @@ pullback_samples_from_closed_surface(PBCData* data,
     if (!surf)
 	return;
 
-    ON_2dPointArray *samples = new ON_2dPointArray();
-
+    ON_2dPointArray *samples= new ON_2dPointArray();
     size_t numKnots = curve->SpanCount();
-    double *knots = new double[numKnots + 1];
-
-    ON_2dPoint lastgoodpoint;
-    ON_2dPoint lastbadpoint;
-    ON_2dPoint workingpoint;
-    bool lastgoodpoint_set = false;
-    bool lastbadpoint_set = false;
-    bool workingpoint_set = false;
+    double *knots = new double[numKnots+1];
 
     curve->GetSpanVector(knots);
 
     size_t istart = 0;
-    while ((istart < (numKnots + 1)) && (t >= knots[istart]))
+    while ((istart < (numKnots+1)) && (t >= knots[istart]))
 	istart++;
 
     if (istart > 0) {
@@ -967,271 +1145,164 @@ pullback_samples_from_closed_surface(PBCData* data,
 	knots[++istop] = s;
     }
 
-    size_t samplesperknotinterval;
     size_t degree = curve->Degree();
+    size_t samplesperknotinterval=18*degree;
 
-    if (degree == 1) {
-	samplesperknotinterval = 3 * degree;
-    } else {
-	samplesperknotinterval = 18 * degree;
-    }
-    //
-    // thinking out-loud check half step between samples and check for sign change
-    // need to check sign change between p1->phalf, phalf->p2 if steps over
-    // bound then should be a sign change
-    //
     ON_2dPoint pt;
     ON_2dPoint prev_pt;
-    ON_2dVector dir;
-    ON_2dVector prev_dir;
-    double dottol = 0.9999999;
-    double steptol = 0.0000001;
-    bool has_dir = false;
-    bool has_prev_dir = false;
+    double prev_t;
+    double offset = 0.0;
+    double delta;
+    ON_Interval udom = surf->Domain(0);
+    ON_Interval vdom = surf->Domain(1);
+    for (size_t i=istart; i<istop; i++) {
+	delta = (knots[i+1] - knots[i])/(double)samplesperknotinterval;
+	if (i <= numKnots/2) {
+	    offset = PBC_FROM_OFFSET;
+	} else {
+	    offset = -PBC_FROM_OFFSET;
+	}
+	for (size_t j=0; j<=samplesperknotinterval; j++) {
+	    if ((j == samplesperknotinterval) && (i < istop - 1))
+		continue;
 
-    size_t i;
-    for (i = istart; (i <= (numKnots / 2)) && (i <= istop); ++i) {
-	if (i > istart) {
-	    double delta = (knots[i] - knots[i - 1]) / (double)samplesperknotinterval;
-	    if (!toUV(*data, prev_pt, knots[i - 1], PBC_FROM_OFFSET)) {
-		std::cout << "prev_pt1 failed" << std::endl;
+	    double curr_t = knots[i]+j*delta;
+	    if (curr_t < (s-t)/2.0) {
+		offset = PBC_FROM_OFFSET;
 	    } else {
-		lastgoodpoint = prev_pt;
-		samples->Append(prev_pt);
-		lastgoodpoint_set = true;
-		lastbadpoint_set = false;
-		workingpoint_set = false;
+		offset = -PBC_FROM_OFFSET;
 	    }
-	    for (size_t j = 1; j < samplesperknotinterval;) {
-		if (toUV(*data, pt, knots[i - 1] + j * delta, PBC_FROM_OFFSET)) {
-		    pt = resolve_seam_point_from_prev(surf, pt, prev_pt);
-		    dir = pt - prev_pt;
-		    dir.Unitize();
-		    has_dir = true;
-		    if (has_prev_dir && (j > 1)) {
-			double dot = prev_dir * dir;
-#ifdef SHOW_UNUSED
-			double lastgood = 0.0, lastbad = 0.0;
-#endif
-			if (dot < dottol) {
-			    double step = delta;
-			    double at = knots[i - 1] + j * delta;
-			    while (step > steptol) {
-				step = step / 2.0;
-				if (dot < dottol) {
-#ifdef SHOW_UNUSED
-				    lastbad = at;
-#endif
-				    lastbadpoint = workingpoint;
-				    lastbadpoint_set = workingpoint_set;
-				    at = at - step;
-				    if (toUV(*data, workingpoint, at, PBC_FROM_OFFSET)) {
-					workingpoint_set = true;
-					dir = workingpoint - prev_pt;
-					dir.Unitize();
-					dot = prev_dir * dir;
-				    }
-				} else {
-#ifdef SHOW_UNUSED
-				    lastgood = at;
-#endif
-				    lastgoodpoint = workingpoint;
-				    lastgoodpoint_set = workingpoint_set;
-				    at = at + step;
-				    if (toUV(*data, workingpoint, at, PBC_FROM_OFFSET)) {
-					workingpoint_set = true;
-					dir = workingpoint - prev_pt;
-					dir.Unitize();
-					dot = prev_dir * dir;
-				    }
-				}
-			    }
-			    if (dot < dottol) {
-#ifdef SHOW_UNUSED
-				lastbad = at;
-#endif
-				lastbadpoint = workingpoint;
-				lastbadpoint_set = workingpoint_set;
-			    } else {
-#ifdef SHOW_UNUSED
-				lastgood = at;
-#endif
-				lastgoodpoint = workingpoint;
-				lastgoodpoint_set = workingpoint_set;
-			    }
-			    if (lastgoodpoint_set) {
-				samples->Append(lastgoodpoint);
-				data->segments.push_back(samples);
-				samples = new ON_2dPointArray();
-			    }
-
-			    if (lastgoodpoint_set) {
-				std::cout << "finalgoodpt1 -  " << lastgoodpoint.x << "," << lastgoodpoint.y << std::endl;
-			    } else {
-				std::cout << "finalgoodpt1 -  unknown" << std::endl;
-			    }
-			    if (lastbadpoint_set) {
-				std::cout << "finalbadpt1 -  " << lastbadpoint.x << "," << lastbadpoint.y  << std::endl;
-			    } else {
-				std::cout << "finalbadpt1 -  unknown" << std::endl;
-			    }
-			}
-		    }
+	    if (toUV(*data, pt, curr_t, offset)) {
+		if (NearSeam(surf,pt,PBC_TOL) > 0) {
+		    ForceToClosestSeam(surf, pt, PBC_TOL);
+		}
+		if ((i == istart) && (j == 0)) {
+		    // first point just append and set reference in prev_pt
 		    samples->Append(pt);
-		    j++;
-		    //std::cout << "pt -  " << pt.x << "," << pt.y << "   2d dir - " << (pt.x - prev_pt.x) << "," << (pt.y - prev_pt.y) << std::endl;
-		    prev_pt = pt;
-		    prev_dir = dir;
-		    has_prev_dir = true;
-		} else {
-		    //std::cout << "didn't find point on surface" << std::endl;
-		    j++;
-		}
-	    }
-	} /* i > istart */
-
-	if (toUV(*data, pt, knots[i], PBC_FROM_OFFSET)) {
-	    if ((i == istart) && (i < numKnots)) {
-		double delta = (knots[i + 1] - knots[i]) / (double)samplesperknotinterval;
-		if (surf->IsClosed(0) || surf->IsClosed(1)) {
-		    ON_2dPoint test;
-		    if (toUV(*data, test, knots[i] + delta, PBC_FROM_OFFSET)) {
-			pt = resolve_seam_point_from_prev(surf, pt, test);
+#ifdef TEMPDEBUGPRINTING
+		    if (PRINTDEBUG) {
+			ON_3dPoint p3d = surf->PointAt(pt.x,pt.y);
+			//std::cout << "in pt2d_" << pt_count << " sph "<< pt.x << " " << pt.y << " 0.0 1.000" << std::endl;
+			std::cout << "in pt3d_" << pt_count++ << " sph "  << p3d.x << " " << p3d.y << " " << p3d.z << " 0.1000" << std::endl;
 		    }
+#endif
+		    prev_pt = pt;
+		    prev_t = curr_t;
+		    continue;
 		}
-	    } else {
-		pt = resolve_seam_point_from_prev(surf, pt, prev_pt);
-	    }
-	    samples->Append(pt);
-	    //std::cout << "pt -  " << pt.x << "," << pt.y << "   2d dir - " << (pt.x - prev_pt.x) << "," << (pt.y - prev_pt.y) << std::endl;
-	    prev_pt = pt;
-	    if (has_dir) {
-		prev_dir = dir;
-		has_prev_dir = true;
-	    }
-	} else {
-	    //std::cout << "didn't find point on surface" << std::endl;
-	}
-    }
-
-    has_dir = false;
-    has_prev_dir = false;
-    for (; (i > 1) && (i <= numKnots) && (i <= istop); ++i) {
-	double delta = (knots[i] - knots[i - 1]) / (double)samplesperknotinterval;
-	if (!toUV(*data, prev_pt, knots[i - 1], -PBC_FROM_OFFSET)) {
-	    std::cout << "prev_pt2 failed" << std::endl;
-	} else {
-	    lastgoodpoint = prev_pt;
-	    samples->Append(prev_pt);
-	    lastgoodpoint_set = true;
-	    lastbadpoint_set = false;
-	    workingpoint_set = false;
-	}
-	for (size_t j = 1; j < samplesperknotinterval;) {
-	    if (toUV(*data, pt, knots[i - 1] + j * delta, -PBC_FROM_OFFSET)) {
-		pt = resolve_seam_point_from_prev(surf, pt, prev_pt);
-		dir = pt - prev_pt;
-		dir.Unitize();
-		has_dir = true;
-		if (has_prev_dir && (j > 1)) {
-		    double dot = prev_dir * dir;
-#ifdef SHOW_UNUSED
-		    double lastgood = 0.0, lastbad = 0.0;
+		if (TrimCrossesClosedSeam(surf,pt,prev_pt)) {
+		    if (surf->IsAtSeam(pt.x,pt.y) > 0) {
+			SwapUVSeamPoint(surf, pt);
+		    } else if ((surf->IsAtSeam(prev_pt.x,prev_pt.y) > 0) &&
+			    (samples->Count() == 1)) {
+			samples->Empty();
+			SwapUVSeamPoint(surf, prev_pt);
+			samples->Append(prev_pt);
+#ifdef TEMPDEBUGPRINTING
+			if (PRINTDEBUG) {
+			    ON_3dPoint p3d = surf->PointAt(pt.x,pt.y);
+			    //std::cout << "in pt2d_" << pt_count << " sph "<< pt.x << " " << pt.y << " 0.0 1.000" << std::endl;
+			    std::cout << "in pt3d_" << pt_count++ << " sph "  << p3d.x << " " << p3d.y << " " << p3d.z << " 0.1000" << std::endl;
+			}
 #endif
-		    //std::cout << "dot - " << dot << std::endl;
-		    if (dot < dottol) {
-			double step = delta;
-			double at = knots[i - 1] + j * delta;
-			while (step > steptol) {
-			    step = step / 2.0;
-			    if (dot < dottol) {
-#ifdef SHOW_UNUSED
-				lastbad = at;
-#endif
-				lastbadpoint = workingpoint;
-				lastbadpoint_set = workingpoint_set;
-				at = at - step;
-				if (toUV(*data, workingpoint, at, -PBC_FROM_OFFSET)) {
-				    workingpoint_set = true;
-				    dir = workingpoint - prev_pt;
-				    dir.Unitize();
-				    dot = prev_dir * dir;
-				}
-			    } else {
-#ifdef SHOW_UNUSED
-				lastgood = at;
-#endif
-				lastgoodpoint = workingpoint;
-				lastgoodpoint_set = workingpoint_set;
-				at = at + step;
-				if (toUV(*data, workingpoint, at, -PBC_FROM_OFFSET)) {
-				    workingpoint_set = true;
-				    dir = workingpoint - prev_pt;
-				    dir.Unitize();
-				    dot = prev_dir * dir;
-				}
+		    } else {
+			ON_2dPoint from,to;
+			double seam_t;
+			if (FindTrimSeamCrossing(*data,prev_t,curr_t,offset,seam_t,from,to)) {
+			    samples->Append(from);
+#ifdef TEMPDEBUGPRINTING
+			    if (PRINTDEBUG) { //seam = surf->IsAtSeam(pt.x,pt.y)) {
+				ON_3dPoint p3d = surf->PointAt(from.x,from.y);
+				std::cout << "seam from:" << std::endl;
+				//std::cout << "in pt2d_" << pt_count << " sph "<< pt.x << " " << pt.y << " 0.0 1.000" << std::endl;
+				std::cout << "in pt3d_" << pt_count++ << " sph "  << p3d.x << " " << p3d.y << " " << p3d.z << " 0.1000" << std::endl;
 			    }
-			}
-			if (dot < dottol) {
-#ifdef SHOW_UNUSED
-			    lastbad = at;
 #endif
-			    lastbadpoint = workingpoint;
-			    lastbadpoint_set = workingpoint_set;
-			} else {
-#ifdef SHOW_UNUSED
-			    lastgood = at;
-#endif
-			    lastgoodpoint = workingpoint;
-			    lastgoodpoint_set = workingpoint_set;
-			}
-			if (lastgoodpoint_set) {
-			    samples->Append(lastgoodpoint);
 			    data->segments.push_back(samples);
-			    samples = new ON_2dPointArray();
-			}
-
-			if (lastgoodpoint_set) {
-			    std::cout << "finalgoodpt2 -  " << lastgoodpoint.x << "," << lastgoodpoint.y << std::endl;
+			    samples= new ON_2dPointArray();
+			    samples->Append(to);
+			    prev_pt = to;
+#ifdef TEMPDEBUGPRINTING
+			    if (PRINTDEBUG) { //seam = surf->IsAtSeam(pt.x,pt.y)) {
+				ON_3dPoint p3d = surf->PointAt(to.x,to.y);
+				std::cout << "seam to:" << std::endl;
+				//std::cout << "in pt2d_" << pt_count << " sph "<< pt.x << " " << pt.y << " 0.0 1.000" << std::endl;
+				std::cout << "in pt3d_" << pt_count++ << " sph "  << p3d.x << " " << p3d.y << " " << p3d.z << " 0.1000" << std::endl;
+			    }
+#endif
+			    prev_t = seam_t;
 			} else {
-			    std::cout << "finalgoodpt2 -  unknown" << std::endl;
-			}
-			if (lastbadpoint_set) {
-			    std::cout << "finalbadpt2 -  " << lastbadpoint.x << "," << lastbadpoint.y  << std::endl;
-			} else {
-			    std::cout << "finalbadpt2 -  unknown" << std::endl;
+			    std::cout << "Can not find seam crossing...." << std::endl;
 			}
 		    }
 		}
 		samples->Append(pt);
-		j++;
-		//std::cout << "pt -  " << pt.x << "," << pt.y << "   2d dir - " << (pt.x - prev_pt.x) << "," << (pt.y - prev_pt.y) << std::endl;
+
+#ifdef TEMPDEBUGPRINTING
+		if (PRINTDEBUG) {
+		    ON_3dPoint p3d = surf->PointAt(pt.x,pt.y);
+		    //std::cout << "in pt2d_" << pt_count << " sph "<< pt.x << " " << pt.y << " 0.0 1.000" << std::endl;
+		    std::cout << "in pt3d_" << pt_count++ << " sph "  << p3d.x << " " << p3d.y << " " << p3d.z << " 0.1000" << std::endl;
+		}
+#endif
 		prev_pt = pt;
-		prev_dir = dir;
-		has_prev_dir = true;
-	    } else {
-		//std::cout << "didn't find point on surface" << std::endl;
-		j++;
+		prev_t = curr_t;
 	    }
-	}
-	if (toUV(*data, pt, knots[i], -PBC_FROM_OFFSET)) {
-	    pt = resolve_seam_point_from_prev(surf, pt, prev_pt);
-	    samples->Append(pt);
-	    //std::cout << "pt -  " << pt.x << "," << pt.y << "   2d dir - " << (pt.x - prev_pt.x) << "," << (pt.y - prev_pt.y) << std::endl;
-	    prev_pt = pt;
-	    if (has_dir) {
-		prev_dir = dir;
-		has_prev_dir = true;
-	    }
-	} else {
-	    //std::cout << "didn't find point on surface" << std::endl;
 	}
     }
-
     delete [] knots;
 
     if (samples != NULL) {
 	data->segments.push_back(samples);
+
+	int numsegs = data->segments.size();
+
+	if (numsegs > 1) {
+	    if (curve->IsClosed()) {
+		ON_2dPointArray *reordered_samples= new ON_2dPointArray();
+		// must have walked over seam but have closed curve so reorder stitching
+		int seg = 0;
+		for (std::list<ON_2dPointArray *>::reverse_iterator rit=data->segments.rbegin(); rit!=data->segments.rend(); ++seg) {
+		    samples = *rit;
+#ifdef TEMPDEBUGPRINTING
+		    for(int i=0;i<samples->Count();i++) {
+			std::cout << "in pt2dorig_" << seg << "_" << i << " sph "<< samples->At(i)->x << " " << samples->At(i)->y << " 0.0 0.1000" << std::endl;
+		    }
+#endif
+		    if (seg < numsegs-1) { // since end points should be repeated
+			reordered_samples->Append(samples->Count()-1,(const ON_2dPoint *)samples->Array());
+		    } else {
+			reordered_samples->Append(samples->Count(),(const ON_2dPoint *)samples->Array());
+		    }
+		    data->segments.erase((++rit).base());
+		    rit = data->segments.rbegin();
+		    delete samples;
+		}
+		data->segments.clear();
+		data->segments.push_back(reordered_samples);
+#ifdef TEMPDEBUGPRINTING
+		for(int i=0;i<reordered_samples->Count();i++) {
+		    std::cout << "in pt2d_" << i << " sph "<< reordered_samples->At(i)->x << " " << reordered_samples->At(i)->y << " 0.0 0.1000" << std::endl;
+		}
+		numsegs = data->segments.size();
+#endif
+
+	    } else {
+		//punt for now
+#ifdef TEMPDEBUGPRINTING
+		std::cout << "punt for now:" << std::endl;
+		int seg=0;
+		for (std::list<ON_2dPointArray *>::reverse_iterator rit=data->segments.rbegin(); rit!=data->segments.rend(); ++seg) {
+		    ON_2dPointArray *samples = *rit;
+		    for(int i=0;i<samples->Count();i++) {
+			std::cout << "in pt2dorig_" << seg << "_" << i << " sph "<< samples->At(i)->x << " " << samples->At(i)->y << " 0.0 0.1000" << std::endl;
+		    }
+		    rit++;
+		}
+		numsegs = data->segments.size();
+#endif
+	    }
+	}
     }
 
     return;
