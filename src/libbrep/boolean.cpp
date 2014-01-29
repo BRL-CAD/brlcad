@@ -1873,6 +1873,70 @@ get_trimmed_faces(const ON_Brep *brep)
     return trimmed_faces;
 }
 
+HIDDEN void
+categorize_trimmed_faces(
+	ON_ClassArray<ON_SimpleArray<TrimmedFace *> > &trimmed_faces,
+	const ON_Brep *brep1,
+	const ON_Brep *brep2,
+	ON_SimpleArray<Subsurface *> &surf_tree1,
+	ON_SimpleArray<Subsurface *> &surf_tree2,
+	op_type operation)
+{
+    int face_count1 = brep1->m_F.Count();
+    for (int i = 0; i < trimmed_faces.Count(); i++) {
+	/* Perform inside-outside test to decide whether the trimmed face should
+	 * be used in the final b-rep structure or not.
+	 * Different operations should be dealt with accordingly.
+	 * Use connectivity graphs (optional) which represents the topological
+	 * structure of the b-rep. This can reduce time-consuming inside-outside
+	 * tests.
+	 */
+	const ON_SimpleArray<TrimmedFace *> &splitted = trimmed_faces[i];
+	const ON_Brep *another_brep = i >= face_count1 ? brep1 : brep2;
+	ON_SimpleArray<Subsurface *> &surf_tree = i >= face_count1 ? surf_tree1 : surf_tree2;
+	for (int j = 0; j < splitted.Count(); j++) {
+	    if (splitted[j]->m_belong_to_final != TrimmedFace::UNKNOWN) {
+		// Visited before, don't need to test again
+		continue;
+	    }
+	    splitted[j]->m_belong_to_final = TrimmedFace::NOT_BELONG;
+	    splitted[j]->m_rev = false;
+	    int ret_inside_test = is_face_inside_brep(splitted[j], another_brep, surf_tree);
+	    if (ret_inside_test == 1) {
+		if (DEBUG_BREP_BOOLEAN) {
+		    bu_log("The trimmed face is inside the other brep.\n");
+		}
+		if (operation == BOOLEAN_INTERSECT || operation == BOOLEAN_XOR || (operation == BOOLEAN_DIFF && i >= face_count1)) {
+		    splitted[j]->m_belong_to_final = TrimmedFace::BELONG;
+		}
+		if (operation == BOOLEAN_DIFF || operation == BOOLEAN_XOR) {
+		    splitted[j]->m_rev = true;
+		}
+	    } else if (ret_inside_test == 0) {
+		if (DEBUG_BREP_BOOLEAN) {
+		    bu_log("The trimmed face is outside the other brep.\n");
+		}
+		if (operation == BOOLEAN_UNION || operation == BOOLEAN_XOR || (operation == BOOLEAN_DIFF && i < face_count1)) {
+		    splitted[j]->m_belong_to_final = TrimmedFace::BELONG;
+		}
+	    } else if (ret_inside_test == 2) {
+		if (DEBUG_BREP_BOOLEAN) {
+		    bu_log("The trimmed face is on the other brep's surfaces.\n");
+		}
+		if (operation == BOOLEAN_UNION || operation == BOOLEAN_INTERSECT) {
+		    splitted[j]->m_belong_to_final = TrimmedFace::BELONG;
+		}
+		// TODO: Actually only one of them is needed in the final brep structure
+	    } else {
+		if (DEBUG_BREP_BOOLEAN) {
+		    bu_log("Whether the trimmed face is inside/outside is unknown.\n");
+		}
+		splitted[j]->m_belong_to_final = TrimmedFace::UNKNOWN;
+	    }
+	}
+    }
+}
+
 HIDDEN ON_ClassArray<ON_SimpleArray<TrimmedFace *> >
 get_evaluated_faces(const ON_Brep *brep1, const ON_Brep *brep2, op_type operation)
 {
@@ -1929,58 +1993,8 @@ get_evaluated_faces(const ON_Brep *brep1, const ON_Brep *brep2, op_type operatio
 	original_faces[i] = NULL;
     }
 
-    for (int i = 0; i < trimmed_faces.Count(); i++) {
-	/* Perform inside-outside test to decide whether the trimmed face should
-	 * be used in the final b-rep structure or not.
-	 * Different operations should be dealt with accordingly.
-	 * Use connectivity graphs (optional) which represents the topological
-	 * structure of the b-rep. This can reduce time-consuming inside-outside
-	 * tests.
-	 */
-	const ON_SimpleArray<TrimmedFace *> &splitted = trimmed_faces[i];
-	const ON_Brep *another_brep = i >= face_count1 ? brep1 : brep2;
-	ON_SimpleArray<Subsurface *> &surf_tree = i >= face_count1 ? surf_tree1 : surf_tree2;
-	for (int j = 0; j < splitted.Count(); j++) {
-	    if (splitted[j]->m_belong_to_final != TrimmedFace::UNKNOWN) {
-		// Visited before, don't need to test again
-		continue;
-	    }
-	    splitted[j]->m_belong_to_final = TrimmedFace::NOT_BELONG;
-	    splitted[j]->m_rev = false;
-	    int ret_inside_test = is_face_inside_brep(splitted[j], another_brep, surf_tree);
-	    if (ret_inside_test == 1) {
-		if (DEBUG_BREP_BOOLEAN) {
-		    bu_log("The trimmed face is inside the other brep.\n");
-		}
-		if (operation == BOOLEAN_INTERSECT || operation == BOOLEAN_XOR || (operation == BOOLEAN_DIFF && i >= face_count1)) {
-		    splitted[j]->m_belong_to_final = TrimmedFace::BELONG;
-		}
-		if (operation == BOOLEAN_DIFF || operation == BOOLEAN_XOR) {
-		    splitted[j]->m_rev = true;
-		}
-	    } else if (ret_inside_test == 0) {
-		if (DEBUG_BREP_BOOLEAN) {
-		    bu_log("The trimmed face is outside the other brep.\n");
-		}
-		if (operation == BOOLEAN_UNION || operation == BOOLEAN_XOR || (operation == BOOLEAN_DIFF && i < face_count1)) {
-		    splitted[j]->m_belong_to_final = TrimmedFace::BELONG;
-		}
-	    } else if (ret_inside_test == 2) {
-		if (DEBUG_BREP_BOOLEAN) {
-		    bu_log("The trimmed face is on the other brep's surfaces.\n");
-		}
-		if (operation == BOOLEAN_UNION || operation == BOOLEAN_INTERSECT) {
-		    splitted[j]->m_belong_to_final = TrimmedFace::BELONG;
-		}
-		// TODO: Actually only one of them is needed in the final brep structure
-	    } else {
-		if (DEBUG_BREP_BOOLEAN) {
-		    bu_log("Whether the trimmed face is inside/outside is unknown.\n");
-		}
-		splitted[j]->m_belong_to_final = TrimmedFace::UNKNOWN;
-	    }
-	}
-    }
+    categorize_trimmed_faces(trimmed_faces, brep1, brep2, surf_tree1, surf_tree2, operation);
+
     for (int i = 0; i < surf_tree1.Count(); i++) {
 	delete surf_tree1[i];
     }
