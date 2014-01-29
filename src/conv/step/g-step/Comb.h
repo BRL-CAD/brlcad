@@ -21,19 +21,12 @@
  *
  */
 
-#ifndef CONV_STEP_G_STEP_COMB_TREE_H
-#define CONV_STEP_G_STEP_COMB_TREE_H
+#ifndef CONV_STEP_G_STEP_COMB_H
+#define CONV_STEP_G_STEP_COMB_H
 
 #include "common.h"
 #include <map>
 #include "ON_Brep.h"
-
-struct comb_maps {
-    std::map<struct directory *, STEPentity *> brep_to_step;
-    std::map<struct directory *, STEPentity *> brep_to_step_shape;
-    std::map<struct directory *, STEPentity *> comb_to_step;
-    std::map<struct directory *, STEPentity *> comb_to_step_shape;
-};
 
 void Comb_to_STEP(struct directory *dp,
                               Registry *registry,
@@ -43,7 +36,7 @@ void Comb_to_STEP(struct directory *dp,
 
 int Comb_Is_Wrapper(struct directory *dp, struct rt_wdb *wdbp);
 
-#endif /* CONV_STEP_G_STEP_COMB_TREE_H */
+#endif /* CONV_STEP_G_STEP_COMB_H */
 /*
  * Local Variables:
  * tab-width: 8

@@ -26,6 +26,7 @@
 
 #include "raytrace.h"
 #include "Comb.h"
+#include "Trees.h"
 #include "G_STEP_internal.h"
 #include "ON_Brep.h"
 

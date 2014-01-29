@@ -139,6 +139,48 @@ HIDDEN _db_tree_get_child(union tree *tp) {
 
 }
 
+/* Convenience function to get a comb child's directory pointer
+ * when it the comb only has one child */
+struct directory *
+Comb_Get_Only_Child(struct directory *dp, struct rt_wdb *wdbp){
+    struct rt_db_internal comb_intern;
+    struct rt_comb_internal *comb;
+    union tree *child;
+    struct directory *child_dp;
+    int node_count = 0;
+
+    rt_db_get_internal(&comb_intern, dp, wdbp->dbip, bn_mat_identity, &rt_uniresource);
+    RT_CK_DB_INTERNAL(&comb_intern);
+    if (comb_intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_COMBINATION) {
+	rt_db_free_internal(&comb_intern);
+	return RT_DIR_NULL;
+    }
+
+    /* If this comb has more than one child, it isn't a wrapper */
+    comb = (struct rt_comb_internal *)comb_intern.idb_ptr;
+    if (comb->tree) {
+	node_count = db_count_tree_nodes(comb->tree, 0);
+	if (node_count > 1) {
+	    rt_db_free_internal(&comb_intern);
+	    return RT_DIR_NULL;
+	}
+    } else {
+	/* Empty comb */
+	return RT_DIR_NULL;
+    }
+
+    /* If the child doesn't exist, this isn't a wrapper */
+    child = _db_tree_get_child(comb->tree);
+    child_dp = db_lookup(wdbp->dbip, child->tr_l.tl_name, LOOKUP_QUIET);
+    if (child_dp == RT_DIR_NULL) {
+	rt_db_free_internal(&comb_intern);
+	return RT_DIR_NULL;
+    } else {
+	rt_db_free_internal(&comb_intern);
+	return child_dp;
+    }
+}
+
 /* A "wrapping" combination is a combination that contains a single object
  * and does not apply a matrix to it */
 int
