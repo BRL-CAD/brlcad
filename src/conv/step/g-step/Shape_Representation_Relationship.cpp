@@ -25,7 +25,7 @@
 
 #include "common.h"
 
-#include "G_STEP_internal.h"
+#include "AP203.h"
 
 /* Shape Representation Relationship
  *

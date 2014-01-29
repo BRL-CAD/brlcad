@@ -33,7 +33,7 @@
 #include <set>
 #include "bu.h"
 #include "raytrace.h"
-#include "G_STEP_internal.h"
+#include "AP203.h"
 #include "STEPWrapper.h"
 #include "ON_Brep.h"
 #include "Assembly_Product.h"

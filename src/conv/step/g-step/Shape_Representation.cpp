@@ -22,7 +22,7 @@
  */
 
 #include "common.h"
-#include "G_STEP_internal.h"
+#include "AP203.h"
 
 SdaiRepresentation *
 Add_Shape_Representation(Registry *registry, InstMgr *instance_list, SdaiRepresentation_context *context)

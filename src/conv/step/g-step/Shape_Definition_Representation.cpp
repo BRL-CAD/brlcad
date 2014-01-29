@@ -26,7 +26,7 @@
 
 #include "common.h"
 
-#include "G_STEP_internal.h"
+#include "AP203.h"
 #include "ON_Brep.h"
 
 /* Shape Definition Representation

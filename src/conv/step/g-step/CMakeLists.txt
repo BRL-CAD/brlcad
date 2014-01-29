@@ -12,10 +12,10 @@ GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} gstep)
 set(gstep_SOURCES
   ${express_srcs}
   ../BRLCADWrapper.cpp
+  AP203.cpp
   Assembly_Product.cpp
   Comb.cpp
   Default_Geometric_Context.cpp
-  G_STEP_Util.cpp
   ON_NurbsCurve.cpp
   ON_NurbsSurface.cpp
   ON_Brep.cpp
@@ -59,10 +59,10 @@ if(MSVC)
 endif(MSVC)
 
 set(IGNORE_FILES
+  AP203.h
   Assembly_Product.h
   Comb.h
   ON_Brep.h
-  G_STEP_internal.h
   list_elements.cpp
   Trees.h
   )

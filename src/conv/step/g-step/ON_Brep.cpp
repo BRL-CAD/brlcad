@@ -66,7 +66,7 @@
 #include <sstream>
 #include <map>
 
-#include "G_STEP_internal.h"
+#include "AP203.h"
 #include "ON_Brep.h"
 
 void
