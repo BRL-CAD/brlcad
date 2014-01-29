@@ -113,6 +113,8 @@ main(int argc, char *argv[])
     struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
 
     if (convert_tops_list) {
+	/* Need db_update_nref for DB_LS_TOPS to work */
+	db_update_nref(dbip, &rt_uniresource);
 	path_cnt = db_ls(dbip, DB_LS_TOPS, &paths);
 	if (!path_cnt) {
 	    std::cerr << "ERROR: no objects found in .g file" << "\n" << std::endl;
