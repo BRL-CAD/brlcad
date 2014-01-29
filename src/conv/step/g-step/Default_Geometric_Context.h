@@ -28,7 +28,7 @@
 #include "AP203.h"
 
 STEPcomplex *
-Add_Default_Geometric_Context(Registry *registry, InstMgr *instance_list);
+Add_Default_Geometric_Context(AP203_Contents *sc);
 
 #endif /*DEFAULT_GEOMETRIC_CONTEXT_H*/
 

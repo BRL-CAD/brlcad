@@ -27,8 +27,7 @@
 #include "AP203.h"
 
 SdaiRepresentation *
-Add_Shape_Representation(Registry *registry, InstMgr *instance_list,
-	SdaiRepresentation_context *context);
+Add_Shape_Representation(AP203_Contents *sc, SdaiRepresentation_context *context);
 
 #endif /*SHAPE_REPRESENTATION_H*/
 

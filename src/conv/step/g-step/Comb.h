@@ -21,22 +21,19 @@
  *
  */
 
-#ifndef CONV_STEP_G_STEP_COMB_H
-#define CONV_STEP_G_STEP_COMB_H
+#ifndef COMB_H
+#define COMB_H
 
-#include "common.h"
-#include <map>
-#include "ON_Brep.h"
+#include "AP203.h"
 
 void Comb_to_STEP(struct directory *dp,
-                              Registry *registry,
-                              InstMgr *instance_list,
-			      STEPentity **shape,
-			      STEPentity **product);
+	AP203_Contents *sc,
+	STEPentity **shape,
+	STEPentity **product);
 
 int Comb_Is_Wrapper(struct directory *dp, struct rt_wdb *wdbp);
 
-#endif /* CONV_STEP_G_STEP_COMB_H */
+#endif /* COMB_H */
 /*
  * Local Variables:
  * tab-width: 8

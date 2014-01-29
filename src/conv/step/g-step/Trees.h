@@ -21,26 +21,15 @@
  *
  */
 
-#ifndef CONV_STEP_G_STEP_COMB_TREE_H
-#define CONV_STEP_G_STEP_COMB_TREE_H
+#ifndef COMB_TREE_H
+#define COMB_TREE_H
 
-#include "common.h"
-#include <map>
-#include "ON_Brep.h"
-
-struct comb_maps {
-    std::map<struct directory *, STEPentity *> brep_to_step;
-    std::map<struct directory *, STEPentity *> brep_to_step_shape;
-    std::map<struct directory *, STEPentity *> comb_to_step;
-    std::map<struct directory *, STEPentity *> comb_to_step_shape;
-};
-
+#include "AP203.h"
 STEPentity *Comb_Tree_to_STEP(struct directory *dp,
                               struct rt_wdb *wdbp,
-                              Registry *registry,
-                              InstMgr *instance_list);
+                              AP203_Contents *sc);
 
-#endif /* CONV_STEP_G_STEP_COMB_TREE_H */
+#endif /* COMB_TREE_H */
 /*
  * Local Variables:
  * tab-width: 8

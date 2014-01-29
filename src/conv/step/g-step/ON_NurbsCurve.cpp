@@ -23,11 +23,6 @@
  *
  */
 
-#include "common.h"
-
-#include <sstream>
-#include <map>
-
 #include "AP203.h"
 #include "ON_Brep.h"
 

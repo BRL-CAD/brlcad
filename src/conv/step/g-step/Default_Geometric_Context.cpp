@@ -26,7 +26,7 @@
 #include "Default_Geometric_Context.h"
 
 STEPcomplex *
-Add_Default_Geometric_Context(Registry *registry, InstMgr *instance_list)
+Add_Default_Geometric_Context(AP203_Contents *sc)
 {
 
     int instance_cnt = 0;
@@ -34,16 +34,16 @@ Add_Default_Geometric_Context(Registry *registry, InstMgr *instance_list)
     STEPcomplex *stepcomplex;
 
     /* Uncertainty measure with unit */
-    SdaiUncertainty_measure_with_unit *uncertainty = (SdaiUncertainty_measure_with_unit *)registry->ObjCreate("UNCERTAINTY_MEASURE_WITH_UNIT");
+    SdaiUncertainty_measure_with_unit *uncertainty = (SdaiUncertainty_measure_with_unit *)sc->registry->ObjCreate("UNCERTAINTY_MEASURE_WITH_UNIT");
     uncertainty->name_("'DISTANCE_ACCURACY_VALUE'");
     uncertainty->description_("'Threshold below which geometry imperfections (such as overlaps) are not considered errors.'");
-    instance_list->Append(uncertainty, completeSE);
+    sc->instance_list->Append(uncertainty, completeSE);
     instance_cnt++;
 
     /** unit component of uncertainty measure with unit */
     const char *unitNmArr[4] = {"length_unit", "named_unit", "si_unit", "*"};
-    STEPcomplex *unit_complex = new STEPcomplex(registry, (const char **)unitNmArr, instance_cnt);
-    instance_list->Append((STEPentity *)unit_complex, completeSE);
+    STEPcomplex *unit_complex = new STEPcomplex(sc->registry, (const char **)unitNmArr, instance_cnt);
+    sc->instance_list->Append((STEPentity *)unit_complex, completeSE);
     instance_cnt++;
     stepcomplex = unit_complex->head;
     while (stepcomplex) {
@@ -68,7 +68,7 @@ Add_Default_Geometric_Context(Registry *registry, InstMgr *instance_list)
 
     /* Global Unit Assigned Context */
     const char *ua_entry_1_types[4] = {"named_unit", "si_unit", "solid_angle_unit", "*"};
-    STEPcomplex *ua_entry_1 = new STEPcomplex(registry, (const char **)ua_entry_1_types, instance_cnt);
+    STEPcomplex *ua_entry_1 = new STEPcomplex(sc->registry, (const char **)ua_entry_1_types, instance_cnt);
     stepcomplex = ua_entry_1->head;
     while (stepcomplex) {
 	if (!bu_strcmp(stepcomplex->EntityName(), "Si_Unit")) {
@@ -79,11 +79,11 @@ Add_Default_Geometric_Context(Registry *registry, InstMgr *instance_list)
 	}
 	stepcomplex = stepcomplex->sc;
     }
-    instance_list->Append((STEPentity *)ua_entry_1, completeSE);
+    sc->instance_list->Append((STEPentity *)ua_entry_1, completeSE);
     instance_cnt++;
 
     const char *ua_entry_3_types[4] = {"named_unit", "plane_angle_unit", "si_unit", "*"};
-    STEPcomplex *ua_entry_3 = new STEPcomplex(registry, (const char **)ua_entry_3_types, instance_cnt);
+    STEPcomplex *ua_entry_3 = new STEPcomplex(sc->registry, (const char **)ua_entry_3_types, instance_cnt);
     stepcomplex = ua_entry_3->head;
     while (stepcomplex) {
 	if (!bu_strcmp(stepcomplex->EntityName(), "Si_Unit")) {
@@ -94,7 +94,7 @@ Add_Default_Geometric_Context(Registry *registry, InstMgr *instance_list)
 	}
 	stepcomplex = stepcomplex->sc;
     }
-    instance_list->Append((STEPentity *)ua_entry_3, completeSE);
+    sc->instance_list->Append((STEPentity *)ua_entry_3, completeSE);
     instance_cnt++;
 
     /* Plane Angle Measure */
@@ -104,12 +104,12 @@ Add_Default_Geometric_Context(Registry *registry, InstMgr *instance_list)
     p_ang_measure_with_unit->value_component_(p_ang_measure_value);
     SdaiUnit *p_ang_unit = new SdaiUnit((SdaiNamed_unit *)ua_entry_3);
     p_ang_measure_with_unit->unit_component_(p_ang_unit);
-    instance_list->Append((STEPentity *)p_ang_measure_with_unit, completeSE);
+    sc->instance_list->Append((STEPentity *)p_ang_measure_with_unit, completeSE);
     instance_cnt++;
 
     /* Conversion based unit */
     const char *ua_entry_2_types[4] = {"conversion_based_unit", "named_unit", "plane_angle_unit", "*"};
-    STEPcomplex *ua_entry_2 = new STEPcomplex(registry, (const char **)ua_entry_2_types, instance_cnt);
+    STEPcomplex *ua_entry_2 = new STEPcomplex(sc->registry, (const char **)ua_entry_2_types, instance_cnt);
 
     /** dimensional exponents **/
     SdaiDimensional_exponents *dimensional_exp = new SdaiDimensional_exponents();
@@ -120,7 +120,7 @@ Add_Default_Geometric_Context(Registry *registry, InstMgr *instance_list)
     dimensional_exp->thermodynamic_temperature_exponent_(0.0);
     dimensional_exp->amount_of_substance_exponent_(0.0);
     dimensional_exp->luminous_intensity_exponent_(0.0);
-    instance_list->Append((STEPentity *)dimensional_exp, completeSE);
+    sc->instance_list->Append((STEPentity *)dimensional_exp, completeSE);
 
     stepcomplex = ua_entry_2->head;
     while (stepcomplex) {
@@ -146,7 +146,7 @@ Add_Default_Geometric_Context(Registry *registry, InstMgr *instance_list)
 	stepcomplex = stepcomplex->sc;
     }
 
-    instance_list->Append((STEPentity *)ua_entry_2, completeSE);
+    sc->instance_list->Append((STEPentity *)ua_entry_2, completeSE);
     instance_cnt++;
 
     /*
@@ -154,7 +154,7 @@ Add_Default_Geometric_Context(Registry *registry, InstMgr *instance_list)
      */
     const char *entNmArr[5] = {"geometric_representation_context", "global_uncertainty_assigned_context",
 			       "global_unit_assigned_context", "representation_context", "*"};
-    STEPcomplex *complex_entity = new STEPcomplex(registry, (const char **)entNmArr, instance_cnt);
+    STEPcomplex *complex_entity = new STEPcomplex(sc->registry, (const char **)entNmArr, instance_cnt);
     stepcomplex = complex_entity->head;
 
     while (stepcomplex) {
@@ -202,7 +202,7 @@ Add_Default_Geometric_Context(Registry *registry, InstMgr *instance_list)
 	stepcomplex = stepcomplex->sc;
     }
 
-    instance_list->Append((STEPentity *)complex_entity, completeSE);
+    sc->instance_list->Append((STEPentity *)complex_entity, completeSE);
 
     return complex_entity;
 }

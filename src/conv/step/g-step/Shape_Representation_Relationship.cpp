@@ -34,11 +34,11 @@
  * CARTESIAN_POINT (SdaiCartesian_point)
  */
 STEPentity *
-Add_Shape_Representation_Relationship(Registry *registry, InstMgr *instance_list,
+Add_Shape_Representation_Relationship(AP203_Contents *sc,
 	SdaiRepresentation *shape_rep, SdaiRepresentation *manifold_shape)
 {
-    STEPentity *ret_entity = registry->ObjCreate("SHAPE_REPRESENTATION_RELATIONSHIP");
-    instance_list->Append(ret_entity, completeSE);
+    STEPentity *ret_entity = sc->registry->ObjCreate("SHAPE_REPRESENTATION_RELATIONSHIP");
+    sc->instance_list->Append(ret_entity, completeSE);
 
     SdaiShape_representation_relationship *shape_rep_rel = (SdaiShape_representation_relationship *) ret_entity;
     shape_rep_rel->name_("''");

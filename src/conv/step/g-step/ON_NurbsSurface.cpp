@@ -23,14 +23,8 @@
  *
  */
 
-#include "common.h"
-
-#include <sstream>
-#include <map>
-
 #include "AP203.h"
 #include "ON_Brep.h"
-
 
 /* Unlike most of the structures we're working with, GenericAggregate seems to require that we manually
  * build its final string with the step file id numbers that identify each control point.  To allow for

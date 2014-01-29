@@ -21,22 +21,17 @@
  *
  */
 
-#ifndef CONV_STEP_G_STEP_ASSEMBLY_PRODUCT_H
-#define CONV_STEP_G_STEP_ASSEMBLY_PRODUCT_H
+#ifndef ASSEMBLY_PRODUCT_H
+#define ASSEMBLY_PRODUCT_H
 
-#include "common.h"
-#include <map>
-#include "ON_Brep.h"
-#include "Trees.h"
+#include "AP203.h"
 
 void Add_Assembly_Product(struct directory *dp,
                                  struct db_i *dbip,
                                  struct bu_ptbl *children,
-				 struct comb_maps *maps,
-				 Registry *registry,
-				 InstMgr *instance_list);
+				 AP203_Contents *sc);
 
-#endif /* CONV_STEP_G_STEP_ASSEMBLY_PRODUCT_H */
+#endif /* ASSEMBLY_PRODUCT_H */
 /*
  * Local Variables:
  * tab-width: 8

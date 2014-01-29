@@ -38,49 +38,49 @@
 #include "Shape_Representation.h"
 
 void
-Comb_to_STEP(struct directory *dp, Registry *registry, InstMgr *instance_list, STEPentity **shape, STEPentity **product) {
+Comb_to_STEP(struct directory *dp, AP203_Contents *sc, STEPentity **shape, STEPentity **product) {
     std::ostringstream ss;
     ss << "'" << dp->d_namep << "'";
     std::string str = ss.str();
 
-    STEPcomplex *context = Add_Default_Geometric_Context(registry, instance_list);
+    STEPcomplex *context = Add_Default_Geometric_Context(sc);
 
     // MECHANICAL_CONTEXT
-    SdaiMechanical_context *mech_context = (SdaiMechanical_context *)registry->ObjCreate("MECHANICAL_CONTEXT");
-    instance_list->Append((STEPentity *)mech_context, completeSE);
+    SdaiMechanical_context *mech_context = (SdaiMechanical_context *)sc->registry->ObjCreate("MECHANICAL_CONTEXT");
+    sc->instance_list->Append((STEPentity *)mech_context, completeSE);
     mech_context->name_("''");
     mech_context->discipline_type_("''");
 
     // APPLICATION_CONTEXT - TODO, should be one of these per file?
-    SdaiApplication_context *app_context = (SdaiApplication_context *)registry->ObjCreate("APPLICATION_CONTEXT");
-    instance_list->Append((STEPentity *)app_context, completeSE);
+    SdaiApplication_context *app_context = (SdaiApplication_context *)sc->registry->ObjCreate("APPLICATION_CONTEXT");
+    sc->instance_list->Append((STEPentity *)app_context, completeSE);
     mech_context->frame_of_reference_(app_context);
     app_context->application_("'CONFIGURATION CONTROLLED 3D DESIGNS OF MECHANICAL PARTS AND ASSEMBLIES'");
 
     // DESIGN_CONTEXT - TODO, should be one of these per file?
-    SdaiDesign_context *design_context = (SdaiDesign_context *)registry->ObjCreate("DESIGN_CONTEXT");
-    instance_list->Append((STEPentity *)design_context, completeSE);
+    SdaiDesign_context *design_context = (SdaiDesign_context *)sc->registry->ObjCreate("DESIGN_CONTEXT");
+    sc->instance_list->Append((STEPentity *)design_context, completeSE);
     design_context->name_("''");
     design_context->life_cycle_stage_("'design'");
     design_context->frame_of_reference_(app_context);
 
     // PRODUCT_DEFINITION
-    SdaiProduct_definition *prod_def = (SdaiProduct_definition *)registry->ObjCreate("PRODUCT_DEFINITION");
-    instance_list->Append((STEPentity *)prod_def, completeSE);
+    SdaiProduct_definition *prod_def = (SdaiProduct_definition *)sc->registry->ObjCreate("PRODUCT_DEFINITION");
+    sc->instance_list->Append((STEPentity *)prod_def, completeSE);
     prod_def->id_("''");
     prod_def->description_("''");
     prod_def->frame_of_reference_(design_context);
 
     // PRODUCT_DEFINITION_FORMATION
-    SdaiProduct_definition_formation *prod_def_form = (SdaiProduct_definition_formation *)registry->ObjCreate("PRODUCT_DEFINITION_FORMATION");
-    instance_list->Append((STEPentity *)prod_def_form, completeSE);
+    SdaiProduct_definition_formation *prod_def_form = (SdaiProduct_definition_formation *)sc->registry->ObjCreate("PRODUCT_DEFINITION_FORMATION");
+    sc->instance_list->Append((STEPentity *)prod_def_form, completeSE);
     prod_def->formation_(prod_def_form);
     prod_def_form->id_("''");
     prod_def_form->description_("''");
 
     // PRODUCT
-    SdaiProduct *prod = (SdaiProduct *)registry->ObjCreate("PRODUCT");
-    instance_list->Append((STEPentity *)prod, completeSE);
+    SdaiProduct *prod = (SdaiProduct *)sc->registry->ObjCreate("PRODUCT");
+    sc->instance_list->Append((STEPentity *)prod, completeSE);
     prod_def_form->of_product_(prod);
     prod->id_("''");
     prod->name_(str.c_str());
@@ -88,21 +88,21 @@ Comb_to_STEP(struct directory *dp, Registry *registry, InstMgr *instance_list, S
     prod->frame_of_reference_()->AddNode(new EntityNode((SDAI_Application_instance *)mech_context));
 
     // PRODUCT_DEFINITION_SHAPE
-    SdaiProduct_definition_shape *pshape = (SdaiProduct_definition_shape *)registry->ObjCreate("PRODUCT_DEFINITION_SHAPE");
-    instance_list->Append((STEPentity *)pshape, completeSE);
+    SdaiProduct_definition_shape *pshape = (SdaiProduct_definition_shape *)sc->registry->ObjCreate("PRODUCT_DEFINITION_SHAPE");
+    sc->instance_list->Append((STEPentity *)pshape, completeSE);
     pshape->name_("''");
     pshape->description_("'Comb shape definition'");
     SdaiCharacterized_product_definition *cpd = new SdaiCharacterized_product_definition(prod_def);
     pshape->definition_(new SdaiCharacterized_definition(cpd));
 
     // SHAPE_DEFINITION_REPRESENTATION
-    SdaiShape_definition_representation *shape_def_rep = (SdaiShape_definition_representation*)registry->ObjCreate("SHAPE_DEFINITION_REPRESENTATION");
-    instance_list->Append((STEPentity *)shape_def_rep, completeSE);
+    SdaiShape_definition_representation *shape_def_rep = (SdaiShape_definition_representation*)sc->registry->ObjCreate("SHAPE_DEFINITION_REPRESENTATION");
+    sc->instance_list->Append((STEPentity *)shape_def_rep, completeSE);
     shape_def_rep->definition_(pshape);
 
     // SHAPE_REPRESENTATION
-    SdaiShape_representation* shape_rep = (SdaiShape_representation *)Add_Shape_Representation(registry, instance_list, (SdaiRepresentation_context *) context);
-    instance_list->Append((STEPentity *)shape_rep, completeSE);
+    SdaiShape_representation* shape_rep = (SdaiShape_representation *)Add_Shape_Representation(sc, (SdaiRepresentation_context *) context);
+    sc->instance_list->Append((STEPentity *)shape_rep, completeSE);
     shape_def_rep->used_representation_(shape_rep);
     shape_rep->name_("''");
 

@@ -55,6 +55,7 @@ main(int argc, char *argv[])
     int convert_tops_list = 0;
     struct directory **paths;
     int path_cnt = 0;
+    AP203_Contents *sc = new AP203_Contents;
 
     // process command line arguments
     int c;
@@ -177,6 +178,9 @@ main(int argc, char *argv[])
     fs->schema_identifiers_(schema_tmp);
     header_instances->Append((SDAI_Application_instance *)fs, completeSE);
 
+    sc->registry = registry;
+    sc->instance_list = &instance_list;
+
     for (int i = 0; i < path_cnt; i++) {
 	/* Now, add actual DATA */
 	struct directory *dp = paths[i];
@@ -186,10 +190,10 @@ main(int argc, char *argv[])
 	switch (intern.idb_minor_type) {
 	    case DB5_MINORTYPE_BRLCAD_BREP:
 		RT_BREP_TEST_MAGIC((struct rt_brep_internal *)(intern.idb_ptr));
-		(void)ON_BRep_to_STEP(dp, ((struct rt_brep_internal *)(intern.idb_ptr))->brep, registry, &instance_list, &shape, &product);
+		(void)ON_BRep_to_STEP(dp, ((struct rt_brep_internal *)(intern.idb_ptr))->brep, sc, &shape, &product);
 		break;
 	    case DB5_MINORTYPE_BRLCAD_COMBINATION:
-		(void)Comb_Tree_to_STEP(dp, wdbp, registry, &instance_list);
+		(void)Comb_Tree_to_STEP(dp, wdbp, sc);
 		break;
 	    default:
 		bu_log("Primitive type of %s is not yet supported\n", dp->d_namep);
@@ -209,6 +213,7 @@ main(int argc, char *argv[])
     delete dotg;
     delete registry;
     delete sfile;
+    delete sc;
     bu_vls_free(&scratch_string);
     bu_free(paths, "free dp list");
 

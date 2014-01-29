@@ -38,10 +38,9 @@
 #include "Trees.h"
 
 STEPentity *
-Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, Registry *registry, InstMgr *instance_list)
+Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
 {
     STEPentity *toplevel_comb = NULL;
-    struct comb_maps *maps = new comb_maps;
 
     std::set<struct directory *> non_wrapper_combs;
 
@@ -59,9 +58,9 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, Registry *registry,
 	struct rt_brep_internal *bi = (struct rt_brep_internal*)(brep_intern.idb_ptr);
 	RT_BREP_TEST_MAGIC(bi);
 	ON_Brep *brep = bi->brep;
-	ON_BRep_to_STEP(curr_dp, brep, registry, instance_list, &brep_shape, &brep_product);
-	maps->brep_to_step[curr_dp] = brep_product;
-	maps->brep_to_step_shape[curr_dp] = brep_shape;
+	ON_BRep_to_STEP(curr_dp, brep, sc, &brep_shape, &brep_product);
+	sc->solid_to_step[curr_dp] = brep_product;
+	sc->solid_to_step_shape[curr_dp] = brep_shape;
 	bu_log("Brep: %s\n", curr_dp->d_namep);
     }
 
@@ -90,9 +89,9 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, Registry *registry,
 	    ON_Brep *brep_obj = ON_Brep::New();
 	    ON_Brep **brep = &brep_obj;
 	    solid_intern.idb_meth->ft_brep(brep, &solid_intern, &tol);
-	    ON_BRep_to_STEP(curr_dp, *brep, registry, instance_list, &brep_shape, &brep_product);
-	    maps->brep_to_step[curr_dp] = brep_product;
-	    maps->brep_to_step_shape[curr_dp] = brep_shape;
+	    ON_BRep_to_STEP(curr_dp, *brep, sc, &brep_shape, &brep_product);
+	    sc->solid_to_step[curr_dp] = brep_product;
+	    sc->solid_to_step_shape[curr_dp] = brep_shape;
 	    bu_log("solid to Brep: %s\n", curr_dp->d_namep);
 	} else {
 	    bu_log("WARNING: No Brep representation for solid %s!\n", curr_dp->d_namep);
@@ -108,9 +107,9 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, Registry *registry,
 	STEPentity *comb_shape;
 	STEPentity *comb_product;
 	if (!Comb_Is_Wrapper(curr_dp, wdbp)) bu_log("Awk! %s is a wrapper!\n", curr_dp->d_namep);
-	Comb_to_STEP(curr_dp, registry, instance_list, &comb_shape, &comb_product);
-	maps->comb_to_step[curr_dp] = comb_product;
-	maps->comb_to_step_shape[curr_dp] = comb_shape;
+	Comb_to_STEP(curr_dp, sc, &comb_shape, &comb_product);
+	sc->comb_to_step[curr_dp] = comb_product;
+	sc->comb_to_step_shape[curr_dp] = comb_shape;
 	non_wrapper_combs.insert(curr_dp);
 	bu_log("Comb non-wrapper: %s\n", curr_dp->d_namep);
     }
@@ -139,16 +138,16 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, Registry *registry,
 		std::ostringstream ss;
 		ss << "'" << curr_dp->d_namep << "'";
 		std::string str = ss.str();
-		maps->comb_to_step[curr_dp] = maps->brep_to_step.find(child)->second;
-		maps->comb_to_step_shape[curr_dp] = maps->brep_to_step_shape.find(child)->second;
+		sc->comb_to_step[curr_dp] = sc->solid_to_step.find(child)->second;
+		sc->comb_to_step_shape[curr_dp] = sc->solid_to_step_shape.find(child)->second;
 		bu_log("Comb wrapper: %s\n", curr_dp->d_namep);
-		((SdaiProduct_definition *)(maps->comb_to_step[curr_dp]))->formation_()->of_product_()->name_(str.c_str());
+		((SdaiProduct_definition *)(sc->comb_to_step[curr_dp]))->formation_()->of_product_()->name_(str.c_str());
 	    } else {
 		STEPentity *comb_shape;
 		STEPentity *comb_product;
-		Comb_to_STEP(curr_dp, registry, instance_list, &comb_shape, &comb_product);
-		maps->comb_to_step[curr_dp] = comb_product;
-		maps->comb_to_step_shape[curr_dp] = comb_shape;
+		Comb_to_STEP(curr_dp, sc, &comb_shape, &comb_product);
+		sc->comb_to_step[curr_dp] = comb_product;
+		sc->comb_to_step_shape[curr_dp] = comb_shape;
 		non_wrapper_combs.insert(curr_dp);
 		bu_log("Comb non-wrapper (matrix over primitive): %s\n", curr_dp->d_namep);
 	    }
@@ -168,7 +167,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, Registry *registry,
     for (std::set<struct directory *>::iterator it=non_wrapper_combs.begin(); it != non_wrapper_combs.end(); ++it) {
 	bu_log("look for matrices in %s\n", (*it)->d_namep);
 	struct bu_ptbl *comb_children = db_search_path_obj(comb_children_search, (*it), wdbp);
-	Add_Assembly_Product((*it), wdbp->dbip, comb_children, maps, registry, instance_list);
+	Add_Assembly_Product((*it), wdbp->dbip, comb_children, sc);
 	bu_ptbl_free(comb_children);
 	bu_free(comb_children, "free search result");
     }

@@ -22,12 +22,9 @@
  *
  */
 
-#include "common.h"
-
-#include "raytrace.h"
+#include "AP203.h"
 #include "Comb.h"
 #include "Trees.h"
-#include "AP203.h"
 #include "ON_Brep.h"
 
 /*
@@ -253,61 +250,60 @@ Build_Representation_Relationship(STEPentity *input_transformation, STEPentity *
 
 void
 Add_Assembly_Product(struct directory *dp, struct db_i *dbip, struct bu_ptbl *children,
-	struct comb_maps *maps,
-	Registry *registry, InstMgr *instance_list)
+	AP203_Contents *sc)
 {
     struct rt_db_internal comb_intern;
-    STEPentity *parent_shape = maps->comb_to_step_shape.find(dp)->second;
+    STEPentity *parent_shape = sc->comb_to_step_shape.find(dp)->second;
     rt_db_get_internal(&comb_intern, dp, dbip, bn_mat_identity, &rt_uniresource);
     RT_CK_DB_INTERNAL(&comb_intern);
     struct rt_comb_internal *comb = (struct rt_comb_internal *)(comb_intern.idb_ptr);
     for (int j = (int)BU_PTBL_LEN(children) - 1; j >= 0; j--){
-	STEPentity *orig_transform = Identity_AXIS2_PLACEMENT_3D(registry, instance_list);
+	STEPentity *orig_transform = Identity_AXIS2_PLACEMENT_3D(sc->registry, sc->instance_list);
 	STEPentity *curr_transform = NULL;
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(children, j);
-	STEPentity *child_shape = maps->comb_to_step_shape.find(curr_dp)->second;
+	STEPentity *child_shape = sc->comb_to_step_shape.find(curr_dp)->second;
 	if (!child_shape)
-	    child_shape = maps->brep_to_step_shape.find(curr_dp)->second;
+	    child_shape = sc->solid_to_step_shape.find(curr_dp)->second;
 	bu_log("%s under %s: ", curr_dp->d_namep, dp->d_namep);
 	union tree *curr_node = db_find_named_leaf(comb->tree, curr_dp->d_namep);
 	matp_t curr_matrix = curr_node->tr_l.tl_mat;
 	if(curr_matrix) {
 	    bu_log(" - found matrix over %s in %s\n", curr_dp->d_namep, dp->d_namep);
 	    bn_mat_print(curr_dp->d_namep, curr_matrix);
-	    curr_transform = Mat_to_Rep(curr_matrix, registry, instance_list);
+	    curr_transform = Mat_to_Rep(curr_matrix, sc->registry, sc->instance_list);
 	} else {
-	    curr_transform = Identity_AXIS2_PLACEMENT_3D(registry, instance_list);
+	    curr_transform = Identity_AXIS2_PLACEMENT_3D(sc->registry, sc->instance_list);
 	    bu_log("identity matrix\n");
 	}
 	if (curr_transform) {
-	    SdaiItem_defined_transformation *item_transform = (SdaiItem_defined_transformation *)registry->ObjCreate("ITEM_DEFINED_TRANSFORMATION");
+	    SdaiItem_defined_transformation *item_transform = (SdaiItem_defined_transformation *)sc->registry->ObjCreate("ITEM_DEFINED_TRANSFORMATION");
 	    item_transform->name_("''");
 	    item_transform->description_("''");
 	    item_transform->transform_item_1_((SdaiRepresentation_item_ptr)orig_transform);
 	    item_transform->transform_item_2_((SdaiRepresentation_item_ptr)curr_transform);
-	    instance_list->Append((STEPentity *)item_transform, completeSE);
-	    SdaiNext_assembly_usage_occurrence *usage = (SdaiNext_assembly_usage_occurrence *)registry->ObjCreate("NEXT_ASSEMBLY_USAGE_OCCURRENCE");
+	    sc->instance_list->Append((STEPentity *)item_transform, completeSE);
+	    SdaiNext_assembly_usage_occurrence *usage = (SdaiNext_assembly_usage_occurrence *)sc->registry->ObjCreate("NEXT_ASSEMBLY_USAGE_OCCURRENCE");
 	    usage->id_("''");
 	    usage->name_("''");
 	    usage->description_("''");
 	    usage->reference_designator_("''");
-	    usage->relating_product_definition_((SdaiProduct_definition *)maps->comb_to_step.find(dp)->second);
-	    SdaiProduct_definition *child_def = (SdaiProduct_definition *)maps->comb_to_step.find(curr_dp)->second;
+	    usage->relating_product_definition_((SdaiProduct_definition *)sc->comb_to_step.find(dp)->second);
+	    SdaiProduct_definition *child_def = (SdaiProduct_definition *)sc->comb_to_step.find(curr_dp)->second;
 	    if (!child_def)
-		child_def = (SdaiProduct_definition *)maps->brep_to_step.find(curr_dp)->second;
+		child_def = (SdaiProduct_definition *)sc->solid_to_step.find(curr_dp)->second;
 	    usage->related_product_definition_(child_def);
-	    instance_list->Append((STEPentity *)usage, completeSE);
-	    SdaiProduct_definition_shape *pshape = (SdaiProduct_definition_shape *)registry->ObjCreate("PRODUCT_DEFINITION_SHAPE");
+	    sc->instance_list->Append((STEPentity *)usage, completeSE);
+	    SdaiProduct_definition_shape *pshape = (SdaiProduct_definition_shape *)sc->registry->ObjCreate("PRODUCT_DEFINITION_SHAPE");
 	    pshape->name_("''");
 	    pshape->description_("''");
 	    SdaiCharacterized_product_definition *cpd = new SdaiCharacterized_product_definition(usage);
 	    pshape->definition_(new SdaiCharacterized_definition(cpd));
-	    instance_list->Append((STEPentity *)pshape, completeSE);
-	    STEPentity *rep_rel = Build_Representation_Relationship(item_transform, parent_shape, child_shape, registry, instance_list);
-	    SdaiContext_dependent_shape_representation *cshape = (SdaiContext_dependent_shape_representation *)registry->ObjCreate("CONTEXT_DEPENDENT_SHAPE_REPRESENTATION");
+	    sc->instance_list->Append((STEPentity *)pshape, completeSE);
+	    STEPentity *rep_rel = Build_Representation_Relationship(item_transform, parent_shape, child_shape, sc->registry, sc->instance_list);
+	    SdaiContext_dependent_shape_representation *cshape = (SdaiContext_dependent_shape_representation *)sc->registry->ObjCreate("CONTEXT_DEPENDENT_SHAPE_REPRESENTATION");
 	    cshape->representation_relation_((SdaiShape_representation_relationship *)rep_rel);
 	    cshape->represented_product_relation_(pshape);
-	    instance_list->Append((STEPentity *)cshape, completeSE);
+	    sc->instance_list->Append((STEPentity *)cshape, completeSE);
 	} else {
 	    bu_log("non-uniform scaling detected: %s/%s\n", dp->d_namep, curr_dp->d_namep);
 	}

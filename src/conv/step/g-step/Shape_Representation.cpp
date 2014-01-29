@@ -25,11 +25,11 @@
 #include "Shape_Representation.h"
 
 SdaiRepresentation *
-Add_Shape_Representation(Registry *registry, InstMgr *instance_list, SdaiRepresentation_context *context)
+Add_Shape_Representation(AP203_Contents *sc, SdaiRepresentation_context *context)
 {
 
-    SdaiShape_representation *shape_rep = (SdaiShape_representation *)registry->ObjCreate("SHAPE_REPRESENTATION");
-    instance_list->Append((STEPentity *)shape_rep, completeSE);
+    SdaiShape_representation *shape_rep = (SdaiShape_representation *)sc->registry->ObjCreate("SHAPE_REPRESENTATION");
+    sc->instance_list->Append((STEPentity *)shape_rep, completeSE);
     shape_rep->name_("''");
     shape_rep->context_of_items_(context);
 
@@ -37,14 +37,14 @@ Add_Shape_Representation(Registry *registry, InstMgr *instance_list, SdaiReprese
 
     /* create an axis */
 
-    SdaiAxis2_placement_3d *axis3d = (SdaiAxis2_placement_3d *)registry->ObjCreate("AXIS2_PLACEMENT_3D");
-    instance_list->Append((STEPentity *)axis3d, completeSE);
+    SdaiAxis2_placement_3d *axis3d = (SdaiAxis2_placement_3d *)sc->registry->ObjCreate("AXIS2_PLACEMENT_3D");
+    sc->instance_list->Append((STEPentity *)axis3d, completeSE);
     axis3d->name_("''");
 
     /* set the axis origin */
 
-    SdaiCartesian_point *origin= (SdaiCartesian_point *)registry->ObjCreate("CARTESIAN_POINT");
-    instance_list->Append((STEPentity *)origin, completeSE);
+    SdaiCartesian_point *origin= (SdaiCartesian_point *)sc->registry->ObjCreate("CARTESIAN_POINT");
+    sc->instance_list->Append((STEPentity *)origin, completeSE);
 
     RealNode *xnode = new RealNode();
     xnode->value = 0.0;
@@ -60,8 +60,8 @@ Add_Shape_Representation(Registry *registry, InstMgr *instance_list, SdaiReprese
 
     /* set the axis up direction (i-vector) */
 
-    SdaiDirection *axis = (SdaiDirection *)registry->ObjCreate("DIRECTION");
-    instance_list->Append((STEPentity *)axis, completeSE);
+    SdaiDirection *axis = (SdaiDirection *)sc->registry->ObjCreate("DIRECTION");
+    sc->instance_list->Append((STEPentity *)axis, completeSE);
 
     RealNode *axis_xnode = new RealNode();
     axis_xnode->value = 0.0;
@@ -77,8 +77,8 @@ Add_Shape_Representation(Registry *registry, InstMgr *instance_list, SdaiReprese
 
     /* add the axis front direction (j-vector) */
 
-    SdaiDirection *ref_dir = (SdaiDirection *)registry->ObjCreate("DIRECTION");
-    instance_list->Append((STEPentity *)ref_dir, completeSE);
+    SdaiDirection *ref_dir = (SdaiDirection *)sc->registry->ObjCreate("DIRECTION");
+    sc->instance_list->Append((STEPentity *)ref_dir, completeSE);
 
     RealNode *ref_dir_xnode = new RealNode();
     ref_dir_xnode->value = 1.0;

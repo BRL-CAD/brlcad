@@ -30,7 +30,7 @@
 /* Shape Representation Relationship
  */
 STEPentity *
-Add_Shape_Representation_Relationship(Registry *registry, InstMgr *instance_list,
+Add_Shape_Representation_Relationship(AP203_Contents *sc,
 	SdaiRepresentation *shape_rep, SdaiRepresentation *manifold_shape);
 
 #endif /*SHAPE_REPRESENTATION_RELATIONSHIP_H*/

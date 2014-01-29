@@ -60,12 +60,6 @@
 // Note that STEPentity is the same thing as
 // SDAI_Application_instance... see src/clstepcore/sdai.h line 220
 //
-
-#include "common.h"
-
-#include <sstream>
-#include <map>
-
 #include "AP203.h"
 #include "ON_Brep.h"
 #include "Shape_Definition_Representation.h"
@@ -203,7 +197,7 @@ Populate_Instance_List(ON_Brep_Info_AP203 *info)
 }
 
 void
-ON_BRep_to_STEP(struct directory *dp, ON_Brep *brep, Registry *registry, InstMgr *instance_list, STEPentity **brep_shape, STEPentity **brep_product)
+ON_BRep_to_STEP(struct directory *dp, ON_Brep *brep, AP203_Contents *sc, STEPentity **brep_shape, STEPentity **brep_product)
 {
     //ON_wString wstr;
     //ON_TextLog dump(wstr);
@@ -211,8 +205,8 @@ ON_BRep_to_STEP(struct directory *dp, ON_Brep *brep, Registry *registry, InstMgr
     //ON_String ss = wstr;
     //bu_log("Brep:\n %s\n", ss.Array());
     ON_Brep_Info_AP203 *info = new ON_Brep_Info_AP203();
-    info->registry = registry;
-    info->instance_list = instance_list;
+    info->registry = sc->registry;
+    info->instance_list = sc->instance_list;
     info->split_closed = 0; /* For now, don't try splitting things - need some libbrep functionality before that can work */
 
     info->cartesian_pnts.assign(brep->m_V.Count(), (STEPentity *)0);
@@ -224,7 +218,7 @@ ON_BRep_to_STEP(struct directory *dp, ON_Brep *brep, Registry *registry, InstMgr
     info->faces.assign(brep->m_F.Count(), (STEPentity *)0);
 
     /* The BRep needs a context - TODO: this can probably be used once for the whole step file... */
-    STEPcomplex *context = Add_Default_Geometric_Context(info->registry, info->instance_list);
+    STEPcomplex *context = Add_Default_Geometric_Context(sc);
 
     // Set up vertices and associated cartesian points
     for (int i = 0; i < brep->m_V.Count(); ++i) {
@@ -482,7 +476,7 @@ ON_BRep_to_STEP(struct directory *dp, ON_Brep *brep, Registry *registry, InstMgr
     items->AddNode(new EntityNode((SDAI_Application_instance *)info->manifold_solid_brep));
     info->advanced_brep->context_of_items_((SdaiRepresentation_context *) context);
 
-    (*brep_product) = Add_Shape_Definition_Representation(info->registry, info->instance_list, info->advanced_brep);
+    (*brep_product) = Add_Shape_Definition_Representation(sc, info->advanced_brep);
     (*brep_shape) = info->advanced_brep;
 
     Populate_Instance_List(info);

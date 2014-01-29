@@ -32,8 +32,7 @@
 /* Shape Definition Representation
  */
 STEPentity *
-Add_Shape_Definition_Representation(Registry *registry,
-	InstMgr *instance_list, SdaiRepresentation *sdairep);
+Add_Shape_Definition_Representation(AP203_Contents *sc, SdaiRepresentation *sdairep);
 
 #endif /*SHAPE_DEFINITION_REPRESENTATION_H*/
 
