@@ -1,4 +1,4 @@
-/*                   C O M B _ T R E E . C P P
+/*                   T R E E S . C P P
  * BRL-CAD
  *
  * Copyright (c) 2013-2014 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file Comb_Tree.cpp
+/** @file Trees.cpp
  *
- * File for writing out a combination and its tree contents
+ * File for writing out the tree structure associated with a comb
  * into the STEPcode containers
  *
  */

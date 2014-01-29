@@ -1,4 +1,4 @@
-/*                 Comb_Tree.h
+/*                       T R E E S . H
  * BRL-CAD
  *
  * Copyright (c) 2013-2014 United States Government as represented by
@@ -21,15 +21,15 @@
  *
  */
 
-#ifndef COMB_TREE_H
-#define COMB_TREE_H
+#ifndef TREES_H
+#define TREES_H
 
 #include "AP203.h"
 STEPentity *Comb_Tree_to_STEP(struct directory *dp,
                               struct rt_wdb *wdbp,
                               AP203_Contents *sc);
 
-#endif /* COMB_TREE_H */
+#endif /* TREES_H */
 /*
  * Local Variables:
  * tab-width: 8
