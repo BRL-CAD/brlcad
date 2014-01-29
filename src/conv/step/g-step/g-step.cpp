@@ -65,6 +65,9 @@ main(int argc, char *argv[])
     STEPentity *shape;
     STEPentity *product;
     int ret = 0;
+    int convert_tops_list = 0;
+    struct directory **paths;
+    int path_cnt = 0;
 
     // process command line arguments
     int c;
@@ -99,7 +102,7 @@ main(int argc, char *argv[])
     }
 
     if (argc < 2) {
-	bu_exit(3, "ERROR: specify object to export");
+	convert_tops_list = 1;
     }
 
 
@@ -119,17 +122,30 @@ main(int argc, char *argv[])
     }
 
     struct db_i *dbip = dotg->GetDBIP();
-    struct directory *dp = db_lookup(dbip, argv[1], LOOKUP_QUIET);
-    if (dp == RT_DIR_NULL) {
-	std::cerr << "ERROR: cannot find " << argv[1] << "\n" << std::endl;
-	delete dotg;
-	return 1;
-    }
     struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
 
-    struct rt_db_internal intern;
-    rt_db_get_internal(&intern, dp, dbip, bn_mat_identity, &rt_uniresource);
-    RT_CK_DB_INTERNAL(&intern);
+    if (convert_tops_list) {
+	path_cnt = db_ls(dbip, DB_LS_TOPS, &paths);
+	if (!path_cnt) {
+	    std::cerr << "ERROR: no objects found in .g file" << "\n" << std::endl;
+	    delete dotg;
+	    return 1;
+	}
+    } else {
+	struct directory *dp = db_lookup(dbip, argv[1], LOOKUP_QUIET);
+	if (dp == RT_DIR_NULL) {
+	    std::cerr << "ERROR: cannot find " << argv[1] << "\n" << std::endl;
+	    delete dotg;
+	    return 1;
+	} else {
+	    paths = (struct directory **)bu_malloc(sizeof(struct directory *) * 2, "dp array");
+	    paths[0] = dp;
+	    paths[1] = RT_DIR_NULL;
+	    path_cnt = 1;
+	}
+    }
+
+
     struct bu_vls scratch_string;
     bu_vls_init(&scratch_string);
 
@@ -174,18 +190,24 @@ main(int argc, char *argv[])
     fs->schema_identifiers_(schema_tmp);
     header_instances->Append((SDAI_Application_instance *)fs, completeSE);
 
-    /* Now, add actual DATA */
-    switch (intern.idb_minor_type) {
-	case DB5_MINORTYPE_BRLCAD_BREP:
-	    RT_BREP_TEST_MAGIC((struct rt_brep_internal *)(intern.idb_ptr));
-	    (void)ON_BRep_to_STEP(dp, ((struct rt_brep_internal *)(intern.idb_ptr))->brep, registry, &instance_list, &shape, &product);
-	    break;
-	case DB5_MINORTYPE_BRLCAD_COMBINATION:
-	    (void)Comb_Tree_to_STEP(dp, wdbp, registry, &instance_list);
-	    break;
-	default:
-	    bu_log("Primitive type of %s is not yet supported\n", argv[1]);
-	    break;
+    for (int i = 0; i < path_cnt; i++) {
+	/* Now, add actual DATA */
+	struct directory *dp = paths[i];
+	struct rt_db_internal intern;
+	rt_db_get_internal(&intern, dp, dbip, bn_mat_identity, &rt_uniresource);
+	RT_CK_DB_INTERNAL(&intern);
+	switch (intern.idb_minor_type) {
+	    case DB5_MINORTYPE_BRLCAD_BREP:
+		RT_BREP_TEST_MAGIC((struct rt_brep_internal *)(intern.idb_ptr));
+		(void)ON_BRep_to_STEP(dp, ((struct rt_brep_internal *)(intern.idb_ptr))->brep, registry, &instance_list, &shape, &product);
+		break;
+	    case DB5_MINORTYPE_BRLCAD_COMBINATION:
+		(void)Comb_Tree_to_STEP(dp, wdbp, registry, &instance_list);
+		break;
+	    default:
+		bu_log("Primitive type of %s is not yet supported\n", dp->d_namep);
+		break;
+	}
     }
 
     /* Write STEP file */
@@ -201,6 +223,7 @@ main(int argc, char *argv[])
     delete registry;
     delete sfile;
     bu_vls_free(&scratch_string);
+    bu_free(paths, "free dp list");
 
     return ret;
 }
