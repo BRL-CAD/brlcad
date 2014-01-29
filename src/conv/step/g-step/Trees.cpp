@@ -34,7 +34,7 @@
 #include "STEPWrapper.h"
 #include "ON_Brep.h"
 #include "Assembly_Product.h"
-#include "Comb_Tree.h"
+#include "Trees.h"
 
 void
 Comb_to_STEP(struct directory *dp, Registry *registry, InstMgr *instance_list, STEPentity **shape, STEPentity **product) {

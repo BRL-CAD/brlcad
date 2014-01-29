@@ -43,7 +43,7 @@
 #include <STEPattribute.h>
 #include <SdaiHeaderSchema.h>
 #include "ON_Brep.h"
-#include "Comb_Tree.h"
+#include "Trees.h"
 
 //
 // include NIST step related headers

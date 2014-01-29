@@ -27,6 +27,7 @@
 #include "common.h"
 #include <map>
 #include "ON_Brep.h"
+#include "Trees.h"
 
 void Add_Assembly_Product(struct directory *dp,
                                  struct db_i *dbip,
