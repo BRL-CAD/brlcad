@@ -28,7 +28,7 @@
 #include <sstream>
 #include <map>
 
-#include "G_STEP_internal.h"
+#include "AP203.h"
 
 void
 XYZ_to_Cartesian_point(double x, double y, double z, SdaiCartesian_point *step_pnt) {
