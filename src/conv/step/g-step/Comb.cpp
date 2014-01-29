@@ -156,7 +156,7 @@ Comb_Get_Only_Child(struct directory *dp, struct rt_wdb *wdbp){
 	return RT_DIR_NULL;
     }
 
-    /* If this comb has more than one child, it isn't a wrapper */
+    /* If this comb has more than one child, there exists no "only" child */
     comb = (struct rt_comb_internal *)comb_intern.idb_ptr;
     if (comb->tree) {
 	node_count = db_count_tree_nodes(comb->tree, 0);
@@ -165,20 +165,16 @@ Comb_Get_Only_Child(struct directory *dp, struct rt_wdb *wdbp){
 	    return RT_DIR_NULL;
 	}
     } else {
-	/* Empty comb */
+	/* Empty comb - there exists no "only" child */
 	return RT_DIR_NULL;
     }
 
-    /* If the child doesn't exist, this isn't a wrapper */
+    /* If the child doesn't exist, there exists no "only" child, so at
+     * this point whatever db_lookup returns is fine */
     child = _db_tree_get_child(comb->tree);
     child_dp = db_lookup(wdbp->dbip, child->tr_l.tl_name, LOOKUP_QUIET);
-    if (child_dp == RT_DIR_NULL) {
-	rt_db_free_internal(&comb_intern);
-	return RT_DIR_NULL;
-    } else {
-	rt_db_free_internal(&comb_intern);
-	return child_dp;
-    }
+    rt_db_free_internal(&comb_intern);
+    return child_dp;
 }
 
 /* A "wrapping" combination is a combination that contains a single object
