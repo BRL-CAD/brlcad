@@ -1836,6 +1836,18 @@ get_face_intersection_curves(
     return curves_array;
 }
 
+HIDDEN ON_SimpleArray<ON_Curve *>get_face_trim_loop(const ON_Brep *brep, int face_loop_index)
+{
+    const ON_BrepLoop &loop = brep->m_L[face_loop_index];
+    const ON_SimpleArray<int> &trim_index = loop.m_ti;
+    ON_SimpleArray<ON_Curve *> face_trim_loop;
+    for (int i = 0; i < trim_index.Count(); ++i) {
+	ON_Curve *curve2d = brep->m_C2[brep->m_T[trim_index[i]].m_c2i];
+	face_trim_loop.Append(curve2d->Duplicate());
+    }
+    return face_trim_loop;
+}
+
 HIDDEN ON_SimpleArray<TrimmedFace *>
 get_trimmed_faces(const ON_Brep *brep)
 {
@@ -1845,26 +1857,18 @@ get_trimmed_faces(const ON_Brep *brep)
 	const ON_BrepFace &face = brep->m_F[i];
 	const ON_SimpleArray<int> &loop_index = face.m_li;
 
-	TrimmedFace *first = new TrimmedFace();
-	first->m_face = &face;
+	TrimmedFace *trimmed_face = new TrimmedFace();
+	trimmed_face->m_face = &face;
 
-	for (int j = 0; j < loop_index.Count(); j++) {
-	    const ON_BrepLoop &loop = brep->m_L[loop_index[j]];
-	    const ON_SimpleArray<int> &trim_index = loop.m_ti;
-	    ON_SimpleArray<ON_Curve *> index_loop;
-	    for (int k = 0; k < trim_index.Count(); k++) {
-		ON_Curve *curve2d = brep->m_C2[brep->m_T[trim_index[k]].m_c2i];
-		if (j == 0) {
-		    first->m_outerloop.Append(curve2d->Duplicate());
-		} else {
-		    index_loop.Append(curve2d->Duplicate());
-		}
-	    }
-	    if (j != 0) {
-		first->m_innerloop.push_back(index_loop);
+	if (loop_index.Count() > 0) {
+	    ON_SimpleArray<ON_Curve *> index_loop = get_face_trim_loop(brep, loop_index[0]);
+	    trimmed_face->m_outerloop = index_loop;
+	    for (int j = 1; j < loop_index.Count(); j++) {
+		index_loop = get_face_trim_loop(brep, loop_index[j]);
+		trimmed_face->m_innerloop.push_back(index_loop);
 	    }
 	}
-	trimmed_faces.Append(first);
+	trimmed_faces.Append(trimmed_face);
     }
     return trimmed_faces;
 }
