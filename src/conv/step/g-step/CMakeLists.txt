@@ -13,7 +13,6 @@ set(gstep_SOURCES
   ${express_srcs}
   ../BRLCADWrapper.cpp
   Assembly_Product.cpp
-  Comb_Tree.cpp
   Default_Geometric_Context.cpp
   G_STEP_Util.cpp
   ON_NurbsCurve.cpp
@@ -22,6 +21,7 @@ set(gstep_SOURCES
   Shape_Definition_Representation.cpp
   Shape_Representation.cpp
   Shape_Representation_Relationship.cpp
+  Trees.cpp
   g-step.cpp
   )
 
@@ -60,9 +60,9 @@ endif(MSVC)
 set(IGNORE_FILES
   Assembly_Product.h
   ON_Brep.h
-  Comb_Tree.h
   G_STEP_internal.h
   list_elements.cpp
+  Trees.h
   )
 CMAKEFILES(${IGNORE_FILES})
 
