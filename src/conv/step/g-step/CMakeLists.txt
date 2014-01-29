@@ -13,6 +13,7 @@ set(gstep_SOURCES
   ${express_srcs}
   ../BRLCADWrapper.cpp
   Assembly_Product.cpp
+  Comb.cpp
   Default_Geometric_Context.cpp
   G_STEP_Util.cpp
   ON_NurbsCurve.cpp
@@ -59,6 +60,7 @@ endif(MSVC)
 
 set(IGNORE_FILES
   Assembly_Product.h
+  Comb.h
   ON_Brep.h
   G_STEP_internal.h
   list_elements.cpp
