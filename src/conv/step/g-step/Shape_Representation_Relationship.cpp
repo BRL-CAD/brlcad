@@ -22,10 +22,8 @@
  *
  */
 
-
-#include "common.h"
-
 #include "AP203.h"
+#include "Shape_Representation_Relationship.h"
 
 /* Shape Representation Relationship
  *
@@ -36,7 +34,8 @@
  * CARTESIAN_POINT (SdaiCartesian_point)
  */
 STEPentity *
-Add_Shape_Representation_Relationship(Registry *registry, InstMgr *instance_list, SdaiRepresentation *shape_rep, SdaiRepresentation *manifold_shape)
+Add_Shape_Representation_Relationship(Registry *registry, InstMgr *instance_list,
+	SdaiRepresentation *shape_rep, SdaiRepresentation *manifold_shape)
 {
     STEPentity *ret_entity = registry->ObjCreate("SHAPE_REPRESENTATION_RELATIONSHIP");
     instance_list->Append(ret_entity, completeSE);

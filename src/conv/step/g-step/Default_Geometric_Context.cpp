@@ -22,9 +22,8 @@
  *
  */
 
-#include "common.h"
-
 #include "AP203.h"
+#include "Default_Geometric_Context.h"
 
 STEPcomplex *
 Add_Default_Geometric_Context(Registry *registry, InstMgr *instance_list)

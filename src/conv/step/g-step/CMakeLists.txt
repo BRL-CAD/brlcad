@@ -62,7 +62,11 @@ set(IGNORE_FILES
   AP203.h
   Assembly_Product.h
   Comb.h
+  Default_Geometric_Context.h
   ON_Brep.h
+  Shape_Definition_Representation.h
+  Shape_Representation.h
+  Shape_Representation_Relationship.h
   list_elements.cpp
   Trees.h
   )

@@ -24,10 +24,8 @@
  *
  */
 
-#include "common.h"
-
 #include "AP203.h"
-#include "ON_Brep.h"
+#include "Shape_Definition_Representation.h"
 
 /* Shape Definition Representation
  *
@@ -42,7 +40,8 @@
  *
  */
 STEPentity *
-Add_Shape_Definition_Representation(Registry *registry, InstMgr *instance_list, SdaiRepresentation *sdairep)
+Add_Shape_Definition_Representation(Registry *registry, InstMgr *instance_list,
+	SdaiRepresentation *sdairep)
 {
     // SHAPE_DEFINITION_REPRESENTATION
     STEPentity *ret_entity = registry->ObjCreate("SHAPE_DEFINITION_REPRESENTATION");

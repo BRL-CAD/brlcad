@@ -1,4 +1,4 @@
-/*               G _ S T E P _ I N T E R N A L . H
+/*                            A P 2 0 3 . H
  * BRL-CAD
  *
  * Copyright (c) 2013-2014 United States Government as represented by
@@ -21,20 +21,25 @@
  *
  */
 
-#ifndef CONV_STEP_G_STEP_G_STEP_INTERNAL_H
-#define CONV_STEP_G_STEP_G_STEP_INTERNAL_H
+#ifndef AP203_H
+#define AP203_H
 
+#include "common.h"
+#include "BRLCADWrapper.h"
 #include "STEPWrapper.h"
+#include "STEPfile.h"
+#include "sdai.h"
+#include "STEPcomplex.h"
+#include "STEPattribute.h"
+
+#include <sstream>
+#include <map>
+#include <set>
 
 void XYZ_to_Cartesian_point(double x, double y, double z, SdaiCartesian_point *step_pnt);
 void XYZ_to_Direction(double x, double y, double z, SdaiDirection *step_direction);
 
-STEPentity * Add_Shape_Representation_Relationship(Registry *registry, InstMgr *instance_list, SdaiRepresentation *shape_rep, SdaiRepresentation *manifold_shape);
-SdaiRepresentation * Add_Shape_Representation(Registry *registry, InstMgr *instance_list, SdaiRepresentation_context *context);
-STEPentity * Add_Shape_Definition_Representation(Registry *registry, InstMgr *instance_list, SdaiRepresentation *sdairep);
-STEPcomplex * Add_Default_Geometric_Context(Registry *registry, InstMgr *instance_list);
-
-#endif /* CONV_STEP_G_STEP_G_STEP_INTERNAL_H */
+#endif /* AP203_H */
 
 /*
  * Local Variables:

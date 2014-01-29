@@ -68,6 +68,8 @@
 
 #include "AP203.h"
 #include "ON_Brep.h"
+#include "Shape_Definition_Representation.h"
+#include "Default_Geometric_Context.h"
 
 void
 ON_3dPoint_to_Cartesian_point(ON_3dPoint *inpnt, SdaiCartesian_point *step_pnt) {

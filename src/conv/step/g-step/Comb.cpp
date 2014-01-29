@@ -28,16 +28,14 @@
  */
 
 #include "common.h"
-#include <sstream>
-#include <map>
-#include <set>
+#include "AP203.h"
 #include "bu.h"
 #include "raytrace.h"
-#include "AP203.h"
-#include "STEPWrapper.h"
 #include "ON_Brep.h"
 #include "Assembly_Product.h"
 #include "Comb.h"
+#include "Default_Geometric_Context.h"
+#include "Shape_Representation.h"
 
 void
 Comb_to_STEP(struct directory *dp, Registry *registry, InstMgr *instance_list, STEPentity **shape, STEPentity **product) {

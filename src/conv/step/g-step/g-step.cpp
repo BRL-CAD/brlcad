@@ -23,34 +23,21 @@
  *
  */
 
-#include "common.h"
-
-#include <iostream>
+#include "AP203.h"
 
 #include "bu.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
 
-//
+#include <iostream>
+
 // step-g related headers
-//
-#include <BRLCADWrapper.h>
-#include <STEPWrapper.h>
-#include <STEPfile.h>
-#include <sdai.h>
-#include <STEPcomplex.h>
-#include <STEPattribute.h>
-#include <SdaiHeaderSchema.h>
+#include "SdaiHeaderSchema.h"
+#include "schema.h"
+
 #include "ON_Brep.h"
 #include "Trees.h"
-
-//
-// include NIST step related headers
-//
-#include <sdai.h>
-#include <STEPfile.h>
-#include "schema.h"
 
 void
 usage()

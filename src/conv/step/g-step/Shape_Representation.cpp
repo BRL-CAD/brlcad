@@ -21,8 +21,8 @@
  *
  */
 
-#include "common.h"
 #include "AP203.h"
+#include "Shape_Representation.h"
 
 SdaiRepresentation *
 Add_Shape_Representation(Registry *registry, InstMgr *instance_list, SdaiRepresentation_context *context)
