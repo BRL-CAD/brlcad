@@ -375,12 +375,11 @@ bu_binary_to_bitv(const char *str, const int nbytes)
      */
     struct bu_vls *v  = bu_vls_vlsinit();
     struct bu_vls *v2 = bu_vls_vlsinit();
-    unsigned int len = 0;
     unsigned nbits = nbytes > 0 ? nbytes * 8 : 0;
-    int i, j, err = 0, vlen, new_vlen;
+    size_t i, j, vlen, new_vlen, len = 0;
+    int err = 0;
     struct bu_bitv *bv;
     char abyte[9];
-    unsigned long c;
     size_t word_count;
     size_t chunksize = 0;
     volatile size_t BVS = sizeof(bitv_t); /* should be 1 byte as defined in bu.h */
@@ -415,7 +414,7 @@ bu_binary_to_bitv(const char *str, const int nbytes)
     /* zero-length input is okay, but we always need to add leading
      * zeroes to get a bit-length which is a multiple of eight
      */
-    vlen = (int)bu_vls_strlen(v2);
+    vlen = bu_vls_strlen(v2);
     new_vlen = nbits > vlen ? nbits : vlen;
     if (new_vlen < 8) {
 	new_vlen = 8;
@@ -425,14 +424,14 @@ bu_binary_to_bitv(const char *str, const int nbytes)
     }
 
     if (new_vlen > vlen) {
-	int needed_zeroes = new_vlen - vlen;
+	size_t needed_zeroes = new_vlen - vlen;
 	for (i = 0; i < needed_zeroes; ++i) {
 	    bu_vls_prepend(v2, "0");
 	}
 	vlen = new_vlen;
     }
 
-    len = (unsigned)vlen;
+    len = vlen;
     bv = bu_bitv_new(len); /* note it is initialized to all zeroes */
     BU_CK_BITV(bv);
 
@@ -453,16 +452,17 @@ bu_binary_to_bitv(const char *str, const int nbytes)
     j = 0;
     while (word_count--) {
 	while (chunksize--) {
+	    unsigned long lval;
 	    /* get next eight binary digits from string */
 	    for (i = 0; i < 8; ++i) {
 		abyte[i] = bu_vls_cstr(v2)[j++];
 	    }
 
 	    /* convert into an unsigned long */
-	    c = strtoul(abyte, (char **)NULL, 2);
+	    lval = strtoul(abyte, (char **)NULL, 2);
 
 	    /* set the appropriate bits in the bit vector */
-	    bv->bits[word_count] |= (bitv_t)c << (chunksize * 8);
+	    bv->bits[word_count] |= (bitv_t)lval << (chunksize * 8);
 	}
 	chunksize = BVS;
     }
@@ -540,7 +540,7 @@ bu_bitv_compare_equal2(const struct bu_bitv *bv1, const struct bu_bitv *bv2)
 	}
     } else {
 	/* equal nbits */
-	int i, j;
+	int i;
 	int len = (int)bv1->nbits;
 	for (i = 0; i < len; ++i) {
 	    int i1 = BU_BITTEST(bv1, i) ? 1 : 0;
