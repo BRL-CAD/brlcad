@@ -24,14 +24,8 @@
  *
  */
 
-#include "common.h"
-#include <sstream>
-#include <map>
-#include <set>
-#include "bu.h"
-#include "raytrace.h"
 #include "AP203.h"
-#include "STEPWrapper.h"
+#include "bu.h"
 #include "ON_Brep.h"
 #include "Assembly_Product.h"
 #include "Comb.h"
