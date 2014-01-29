@@ -1836,21 +1836,13 @@ get_face_intersection_curves(
     return curves_array;
 }
 
-HIDDEN ON_ClassArray<ON_SimpleArray<TrimmedFace *> >
-get_evaluated_faces(const ON_Brep *brep1, const ON_Brep *brep2, op_type operation)
+HIDDEN ON_SimpleArray<TrimmedFace *>
+get_trimmed_faces(const ON_Brep *brep)
 {
-    ON_SimpleArray<Subsurface *> surf_tree1, surf_tree2;
-
-    ON_ClassArray<ON_SimpleArray<SSICurve> > curves_array =
-	get_face_intersection_curves(surf_tree1, surf_tree2, brep1, brep2, operation);
-
-    int face_count1 = brep1->m_F.Count();
-    int face_count2 = brep2->m_F.Count();
-
-    ON_SimpleArray<TrimmedFace *> original_faces;
-    for (int i = 0; i < face_count1 + face_count2; i++) {
-	const ON_BrepFace &face = i < face_count1 ? brep1->m_F[i] : brep2->m_F[i - face_count1];
-	const ON_Brep *brep = i < face_count1 ? brep1 : brep2;
+    ON_SimpleArray<TrimmedFace *> trimmed_faces;
+    int face_count = brep->m_F.Count();
+    for (int i = 0; i < face_count; i++) {
+	const ON_BrepFace &face = brep->m_F[i];
 	const ON_SimpleArray<int> &loop_index = face.m_li;
 
 	TrimmedFace *first = new TrimmedFace();
@@ -1872,7 +1864,29 @@ get_evaluated_faces(const ON_Brep *brep1, const ON_Brep *brep2, op_type operatio
 		first->m_innerloop.push_back(index_loop);
 	    }
 	}
-	original_faces.Append(first);
+	trimmed_faces.Append(first);
+    }
+    return trimmed_faces;
+}
+
+HIDDEN ON_ClassArray<ON_SimpleArray<TrimmedFace *> >
+get_evaluated_faces(const ON_Brep *brep1, const ON_Brep *brep2, op_type operation)
+{
+    ON_SimpleArray<Subsurface *> surf_tree1, surf_tree2;
+
+    ON_ClassArray<ON_SimpleArray<SSICurve> > curves_array =
+	get_face_intersection_curves(surf_tree1, surf_tree2, brep1, brep2, operation);
+
+    int face_count1 = brep1->m_F.Count();
+    int face_count2 = brep2->m_F.Count();
+
+    ON_SimpleArray<TrimmedFace *> brep1_faces, brep2_faces;
+    brep1_faces = get_trimmed_faces(brep1);
+    brep2_faces = get_trimmed_faces(brep2);
+
+    ON_SimpleArray<TrimmedFace *> original_faces = brep1_faces;
+    for (int i = 0; i < brep2_faces.Count(); ++i) {
+	original_faces.Append(brep2_faces[i]);
     }
 
     if (original_faces.Count() != face_count1 + face_count2) {
