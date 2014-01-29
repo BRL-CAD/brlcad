@@ -64,6 +64,12 @@ public:
     InvalidGeometry(const std::string &msg = "") : std::invalid_argument(msg) {}
 };
 
+class AlgorithmError : public std::runtime_error
+{
+public:
+    AlgorithmError(const std::string &msg = "") : std::runtime_error(msg) {}
+};
+
 class GeometryGenerationError : public std::runtime_error
 {
 public:
@@ -1568,43 +1574,43 @@ is_point_inside_brep(const ON_3dPoint &pt, const ON_Brep *brep, ON_SimpleArray<S
     return pt_no_dup.Count() % 2 != 0;
 }
 
+enum {
+    OUTSIDE_BREP,
+    INSIDE_BREP,
+    ON_BREP_SURFACE
+};
 
+// Returns the location of the face with respect to the brep.
+//
+// Throws InvalidGeometry if given invalid arguments.
+// Throws AlgorithmError if a point inside the TrimmedFace can't be
+// found for testing.
 HIDDEN int
-is_face_inside_brep(const TrimmedFace *tface, const ON_Brep *brep, ON_SimpleArray<Subsurface *> &surf_tree)
+face_brep_location(const TrimmedFace *tface, const ON_Brep *brep, ON_SimpleArray<Subsurface *> &surf_tree)
 {
-    // returns:
-    //  -1: whether the face is inside/outside is unknown
-    //   0: the face is outside the brep
-    //   1: the face is inside the brep
-    //   2: the face is (completely) on the brep's surface
-    //      (because the overlap parts will be split out as separated trimmed
-    //       faces, if one point on a trimmed face is on the brep's surface,
-    //       the whole trimmed face should be on the surface)
-
     if (tface == NULL || brep == NULL) {
-	return -1;
+	throw InvalidGeometry("face_brep_location(): given NULL argument.\n");
     }
 
     const ON_BrepFace *bface = tface->m_face;
     if (bface == NULL) {
-	return -1;
+	throw InvalidGeometry("face_brep_location(): TrimmedFace has NULL face.\n");
     }
 
     ON_BoundingBox brep2box = brep->BoundingBox();
     brep2box.m_min -= ON_3dVector(INTERSECTION_TOL, INTERSECTION_TOL, INTERSECTION_TOL);
     brep2box.m_max += ON_3dVector(INTERSECTION_TOL, INTERSECTION_TOL, INTERSECTION_TOL);
     if (!bface->BoundingBox().Intersection(brep2box)) {
-	return 0;
+	return OUTSIDE_BREP;
     }
 
     if (tface->m_outerloop.Count() == 0) {
-	bu_log("is_face_inside_brep(): the input TrimmedFace is not trimmed.\n");
-	return -1;
+	throw InvalidGeometry("face_brep_location(): the input TrimmedFace is not trimmed.\n");
     }
 
     ON_PolyCurve polycurve;
     if (!is_loop_valid(tface->m_outerloop, ON_ZERO_TOLERANCE, &polycurve)) {
-	return -1;
+	throw InvalidGeometry("face_brep_location(): invalid outerloop.\n");
     }
 
     // Get a point inside the TrimmedFace, and then call is_point_inside_brep().
@@ -1615,38 +1621,29 @@ is_face_inside_brep(const TrimmedFace *tface, const ON_Brep *brep, ON_SimpleArra
     ON_2dPoint test_pt2d;
     ON_RandomNumberGenerator rng;
 
-    try {
-	for (int i = 0; i < try_count; i++) {
-	    // Get a random point inside the outerloop's bounding box.
-	    double x = rng.RandomDouble(bbox.m_min.x, bbox.m_max.x);
-	    double y = rng.RandomDouble(bbox.m_min.y, bbox.m_max.y);
-	    test_pt2d = ON_2dPoint(x, y);
-	    if (is_point_inside_loop(test_pt2d, tface->m_outerloop)) {
-		unsigned int j = 0;
-		// The test point should not be inside an innerloop
-		for (j = 0; j < tface->m_innerloop.size(); j++) {
-		    try {
-			if (!is_point_outside_loop(test_pt2d, tface->m_innerloop[j])) {
-			    break;
-			}
-		    } catch (InvalidGeometry &e) {
-			bu_log("%s", e.what());
-		    }
-		}
-		if (j == tface->m_innerloop.size()) {
-		    // We find a valid test point
-		    found = true;
+    for (int i = 0; i < try_count; i++) {
+	// Get a random point inside the outerloop's bounding box.
+	double x = rng.RandomDouble(bbox.m_min.x, bbox.m_max.x);
+	double y = rng.RandomDouble(bbox.m_min.y, bbox.m_max.y);
+	test_pt2d = ON_2dPoint(x, y);
+	if (is_point_inside_loop(test_pt2d, tface->m_outerloop)) {
+	    unsigned int j = 0;
+	    // The test point should not be inside an innerloop
+	    for (j = 0; j < tface->m_innerloop.size(); j++) {
+		if (!is_point_outside_loop(test_pt2d, tface->m_innerloop[j])) {
 		    break;
 		}
 	    }
+	    if (j == tface->m_innerloop.size()) {
+		// We find a valid test point
+		found = true;
+		break;
+	    }
 	}
-    } catch (InvalidGeometry &e) {
-	bu_log("%s", e.what());
     }
 
     if (!found) {
-	bu_log("Cannot find a point inside this trimmed face. Aborted.\n");
-	return -1;
+	throw AlgorithmError("Cannot find a point inside this trimmed face. Aborted.\n");
     }
 
     ON_3dPoint test_pt3d = tface->m_face->PointAt(test_pt2d.x, test_pt2d.y);
@@ -1655,10 +1652,13 @@ is_face_inside_brep(const TrimmedFace *tface, const ON_Brep *brep, ON_SimpleArra
     }
 
     if (is_point_on_brep_surface(test_pt3d, brep, surf_tree)) {
-	return 2;
+	// because the overlap parts will be split out as separated trimmed
+	// faces, if one point on a trimmed face is on the brep's surface,
+	// the whole trimmed face should be on the surface
+	return ON_BREP_SURFACE;
     }
 
-    return is_point_inside_brep(test_pt3d, brep, surf_tree) ? 1 : 0;
+    return is_point_inside_brep(test_pt3d, brep, surf_tree) ? INSIDE_BREP : OUTSIDE_BREP;
 }
 
 HIDDEN ON_ClassArray<ON_SimpleArray<SSICurve> >
@@ -1899,39 +1899,54 @@ categorize_trimmed_faces(
 		// Visited before, don't need to test again
 		continue;
 	    }
-	    splitted[j]->m_belong_to_final = TrimmedFace::NOT_BELONG;
-	    splitted[j]->m_rev = false;
-	    int ret_inside_test = is_face_inside_brep(splitted[j], another_brep, surf_tree);
-	    if (ret_inside_test == 1) {
-		if (DEBUG_BREP_BOOLEAN) {
-		    bu_log("The trimmed face is inside the other brep.\n");
-		}
-		if (operation == BOOLEAN_INTERSECT || operation == BOOLEAN_XOR || (operation == BOOLEAN_DIFF && i >= face_count1)) {
-		    splitted[j]->m_belong_to_final = TrimmedFace::BELONG;
-		}
-		if (operation == BOOLEAN_DIFF || operation == BOOLEAN_XOR) {
-		    splitted[j]->m_rev = true;
-		}
-	    } else if (ret_inside_test == 0) {
-		if (DEBUG_BREP_BOOLEAN) {
-		    bu_log("The trimmed face is outside the other brep.\n");
-		}
-		if (operation == BOOLEAN_UNION || operation == BOOLEAN_XOR || (operation == BOOLEAN_DIFF && i < face_count1)) {
-		    splitted[j]->m_belong_to_final = TrimmedFace::BELONG;
-		}
-	    } else if (ret_inside_test == 2) {
-		if (DEBUG_BREP_BOOLEAN) {
-		    bu_log("The trimmed face is on the other brep's surfaces.\n");
-		}
-		if (operation == BOOLEAN_UNION || operation == BOOLEAN_INTERSECT) {
-		    splitted[j]->m_belong_to_final = TrimmedFace::BELONG;
-		}
-		// TODO: Actually only one of them is needed in the final brep structure
-	    } else {
+
+	    int face_location = -1;
+	    try {
+		face_location = face_brep_location(splitted[j], another_brep, surf_tree);
+	    } catch (InvalidGeometry &e) {
+		bu_log("%s", e.what());
+	    } catch (AlgorithmError &e) {
+		bu_log("%s", e.what());
+	    }
+	    if (face_location < 0) {
 		if (DEBUG_BREP_BOOLEAN) {
 		    bu_log("Whether the trimmed face is inside/outside is unknown.\n");
 		}
-		splitted[j]->m_belong_to_final = TrimmedFace::UNKNOWN;
+		splitted[j]->m_belong_to_final = TrimmedFace::NOT_BELONG;
+		continue;
+	    }
+
+	    splitted[j]->m_rev = false;
+	    switch (face_location) {
+		case INSIDE_BREP:
+		    if (operation == BOOLEAN_INTERSECT
+			|| operation == BOOLEAN_XOR
+			|| (operation == BOOLEAN_DIFF && i >= face_count1))
+		    {
+			splitted[j]->m_belong_to_final = TrimmedFace::BELONG;
+		    }
+		    if (operation == BOOLEAN_DIFF || operation == BOOLEAN_XOR) {
+			splitted[j]->m_rev = true;
+		    }
+		    break;
+		case OUTSIDE_BREP:
+		    if (operation == BOOLEAN_UNION
+			|| operation == BOOLEAN_XOR
+			|| (operation == BOOLEAN_DIFF && i < face_count1))
+		    {
+			splitted[j]->m_belong_to_final = TrimmedFace::BELONG;
+		    }
+		    break;
+		case ON_BREP_SURFACE:
+		    if (operation == BOOLEAN_UNION || operation == BOOLEAN_INTERSECT) {
+			splitted[j]->m_belong_to_final = TrimmedFace::BELONG;
+		    }
+		    // TODO: Actually only one of them is needed in the final brep structure
+	    }
+	    if (DEBUG_BREP_BOOLEAN) {
+		bu_log("The trimmed face is %s the other brep.",
+			(face_location == INSIDE_BREP) ? "inside" :
+			((face_location == OUTSIDE_BREP) ? "outside" : "on the surface of"));
 	    }
 	}
     }
