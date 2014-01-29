@@ -52,16 +52,20 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
 	STEPentity *brep_shape;
 	STEPentity *brep_product;
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(breps, j);
-	struct rt_db_internal brep_intern;
-	rt_db_get_internal(&brep_intern, curr_dp, wdbp->dbip, bn_mat_identity, &rt_uniresource);
-	RT_CK_DB_INTERNAL(&brep_intern);
-	struct rt_brep_internal *bi = (struct rt_brep_internal*)(brep_intern.idb_ptr);
-	RT_BREP_TEST_MAGIC(bi);
-	ON_Brep *brep = bi->brep;
-	ON_BRep_to_STEP(curr_dp, brep, sc, &brep_shape, &brep_product);
-	sc->solid_to_step[curr_dp] = brep_product;
-	sc->solid_to_step_shape[curr_dp] = brep_shape;
-	bu_log("Brep: %s\n", curr_dp->d_namep);
+	if (sc->solid_to_step.find(curr_dp) == sc->solid_to_step.end()) {
+	    struct rt_db_internal brep_intern;
+	    rt_db_get_internal(&brep_intern, curr_dp, wdbp->dbip, bn_mat_identity, &rt_uniresource);
+	    RT_CK_DB_INTERNAL(&brep_intern);
+	    struct rt_brep_internal *bi = (struct rt_brep_internal*)(brep_intern.idb_ptr);
+	    RT_BREP_TEST_MAGIC(bi);
+	    ON_Brep *brep = bi->brep;
+	    ON_BRep_to_STEP(curr_dp, brep, sc, &brep_shape, &brep_product);
+	    sc->solid_to_step[curr_dp] = brep_product;
+	    sc->solid_to_step_shape[curr_dp] = brep_shape;
+	    bu_log("Brep: %s\n", curr_dp->d_namep);
+	} else {
+	    bu_log("Brep %s already present\n", curr_dp->d_namep);
+	}
     }
 
     /* Find all solids that aren't already breps, convert them, insert them, and stick in dp->STEPentity map */
@@ -73,28 +77,33 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
 	STEPentity *brep_shape;
 	STEPentity *brep_product;
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(non_breps, j);
-	// Get brep form of solid
-	// if that fails, try something else like oriented bounding box as a last resort?
-	// triangle meshes probably should go as is?
-	struct bn_tol tol;
-	tol.magic = BN_TOL_MAGIC;
-	tol.dist = BN_TOL_DIST;
-	tol.dist_sq = tol.dist * tol.dist;
-	tol.perp = SMALL_FASTF;
-	tol.para = 1.0 - tol.perp;
-	struct rt_db_internal solid_intern;
-	rt_db_get_internal(&solid_intern, curr_dp, wdbp->dbip, bn_mat_identity, &rt_uniresource);
-	RT_CK_DB_INTERNAL(&solid_intern);
-	if (solid_intern.idb_meth->ft_brep != NULL) {
+	if (sc->solid_to_step.find(curr_dp) == sc->solid_to_step.end()) {
+	    // Get brep form of solid
+	    // if that fails, try something else like oriented bounding box as a last resort?
+	    // triangle meshes probably should go as is?
+	    struct bn_tol tol;
+	    tol.magic = BN_TOL_MAGIC;
+	    tol.dist = BN_TOL_DIST;
+	    tol.dist_sq = tol.dist * tol.dist;
+	    tol.perp = SMALL_FASTF;
+	    tol.para = 1.0 - tol.perp;
+	    struct rt_db_internal solid_intern;
+	    rt_db_get_internal(&solid_intern, curr_dp, wdbp->dbip, bn_mat_identity, &rt_uniresource);
+	    RT_CK_DB_INTERNAL(&solid_intern);
 	    ON_Brep *brep_obj = ON_Brep::New();
-	    ON_Brep **brep = &brep_obj;
-	    solid_intern.idb_meth->ft_brep(brep, &solid_intern, &tol);
-	    ON_BRep_to_STEP(curr_dp, *brep, sc, &brep_shape, &brep_product);
-	    sc->solid_to_step[curr_dp] = brep_product;
-	    sc->solid_to_step_shape[curr_dp] = brep_shape;
-	    bu_log("solid to Brep: %s\n", curr_dp->d_namep);
+	    if (solid_intern.idb_meth->ft_brep != NULL) {
+		ON_Brep **brep = &brep_obj;
+		solid_intern.idb_meth->ft_brep(brep, &solid_intern, &tol);
+		ON_BRep_to_STEP(curr_dp, *brep, sc, &brep_shape, &brep_product);
+		sc->solid_to_step[curr_dp] = brep_product;
+		sc->solid_to_step_shape[curr_dp] = brep_shape;
+		bu_log("solid to Brep: %s\n", curr_dp->d_namep);
+	    } else {
+		ON_BRep_to_STEP(curr_dp, brep_obj, sc, &brep_shape, &brep_product);
+		bu_log("WARNING: No Brep representation for solid %s, writing empty brep as placeholder!\n", curr_dp->d_namep);
+	    }
 	} else {
-	    bu_log("WARNING: No Brep representation for solid %s!\n", curr_dp->d_namep);
+	    bu_log("solid to Brep %s already done\n", curr_dp->d_namep);
 	}
     }
 
@@ -104,14 +113,18 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
     struct bu_ptbl *combs = db_search_path_obj(comb_search, dp, wdbp);
     for (int j = (int)BU_PTBL_LEN(combs) - 1; j >= 0; j--){
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(combs, j);
-	STEPentity *comb_shape;
-	STEPentity *comb_product;
-	if (!Comb_Is_Wrapper(curr_dp, wdbp)) bu_log("Awk! %s is a wrapper!\n", curr_dp->d_namep);
-	Comb_to_STEP(curr_dp, sc, &comb_shape, &comb_product);
-	sc->comb_to_step[curr_dp] = comb_product;
-	sc->comb_to_step_shape[curr_dp] = comb_shape;
-	non_wrapper_combs.insert(curr_dp);
-	bu_log("Comb non-wrapper: %s\n", curr_dp->d_namep);
+	if (sc->comb_to_step.find(curr_dp) == sc->comb_to_step.end()) {
+	    STEPentity *comb_shape;
+	    STEPentity *comb_product;
+	    if (!Comb_Is_Wrapper(curr_dp, wdbp)) bu_log("Awk! %s is a wrapper!\n", curr_dp->d_namep);
+	    Comb_to_STEP(curr_dp, sc, &comb_shape, &comb_product);
+	    sc->comb_to_step[curr_dp] = comb_product;
+	    sc->comb_to_step_shape[curr_dp] = comb_shape;
+	    non_wrapper_combs.insert(curr_dp);
+	    bu_log("Comb non-wrapper: %s\n", curr_dp->d_namep);
+	} else {
+	    bu_log("Comb non-wrapper %s already handled\n", curr_dp->d_namep);
+	}
     }
 
     /* Find the combs that *are* wrappers, and point them to the product associated with their brep.
@@ -121,40 +134,44 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
     struct bu_ptbl *comb_wrappers = db_search_path_obj(comb_wrapper_search, dp, wdbp);
     for (int j = (int)BU_PTBL_LEN(comb_wrappers) - 1; j >= 0; j--){
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(comb_wrappers, j);
-	if (Comb_Is_Wrapper(curr_dp, wdbp)) bu_log("Awk! %s isn't a wrapper!\n", curr_dp->d_namep);
-	/* Satisfying the search pattern isn't enough to qualify as a wrapping comb - there
-	 * must also be no matrix hanging over the primitive */
-	struct rt_db_internal comb_intern;
-	rt_db_get_internal(&comb_intern, curr_dp, wdbp->dbip, bn_mat_identity, &rt_uniresource);
-	RT_CK_DB_INTERNAL(&comb_intern);
-	struct rt_comb_internal *comb = (struct rt_comb_internal *)(comb_intern.idb_ptr);
-	struct bu_ptbl *comb_child = db_search_path_obj(comb_child_search, curr_dp, wdbp);
-	struct directory *child = (struct directory *)BU_PTBL_GET(comb_child, 0);
-	bu_ptbl_free(comb_child);
-	bu_free(comb_child, "free search result");
-	union tree *curr_node = db_find_named_leaf(comb->tree, child->d_namep);
-	if (curr_node) {
-	    if (!(curr_node->tr_l.tl_mat)) {
-		std::ostringstream ss;
-		ss << "'" << curr_dp->d_namep << "'";
-		std::string str = ss.str();
-		sc->comb_to_step[curr_dp] = sc->solid_to_step.find(child)->second;
-		sc->comb_to_step_shape[curr_dp] = sc->solid_to_step_shape.find(child)->second;
-		bu_log("Comb wrapper: %s\n", curr_dp->d_namep);
-		((SdaiProduct_definition *)(sc->comb_to_step[curr_dp]))->formation_()->of_product_()->name_(str.c_str());
+	if (sc->comb_to_step.find(curr_dp) == sc->comb_to_step.end()) {
+	    if (Comb_Is_Wrapper(curr_dp, wdbp)) bu_log("Awk! %s isn't a wrapper!\n", curr_dp->d_namep);
+	    /* Satisfying the search pattern isn't enough to qualify as a wrapping comb - there
+	     * must also be no matrix hanging over the primitive */
+	    struct rt_db_internal comb_intern;
+	    rt_db_get_internal(&comb_intern, curr_dp, wdbp->dbip, bn_mat_identity, &rt_uniresource);
+	    RT_CK_DB_INTERNAL(&comb_intern);
+	    struct rt_comb_internal *comb = (struct rt_comb_internal *)(comb_intern.idb_ptr);
+	    struct bu_ptbl *comb_child = db_search_path_obj(comb_child_search, curr_dp, wdbp);
+	    struct directory *child = (struct directory *)BU_PTBL_GET(comb_child, 0);
+	    bu_ptbl_free(comb_child);
+	    bu_free(comb_child, "free search result");
+	    union tree *curr_node = db_find_named_leaf(comb->tree, child->d_namep);
+	    if (curr_node) {
+		if (!(curr_node->tr_l.tl_mat)) {
+		    std::ostringstream ss;
+		    ss << "'" << curr_dp->d_namep << "'";
+		    std::string str = ss.str();
+		    sc->comb_to_step[curr_dp] = sc->solid_to_step.find(child)->second;
+		    sc->comb_to_step_shape[curr_dp] = sc->solid_to_step_shape.find(child)->second;
+		    bu_log("Comb wrapper: %s\n", curr_dp->d_namep);
+		    ((SdaiProduct_definition *)(sc->comb_to_step[curr_dp]))->formation_()->of_product_()->name_(str.c_str());
+		} else {
+		    STEPentity *comb_shape;
+		    STEPentity *comb_product;
+		    Comb_to_STEP(curr_dp, sc, &comb_shape, &comb_product);
+		    sc->comb_to_step[curr_dp] = comb_product;
+		    sc->comb_to_step_shape[curr_dp] = comb_shape;
+		    non_wrapper_combs.insert(curr_dp);
+		    bu_log("Comb non-wrapper (matrix over primitive): %s\n", curr_dp->d_namep);
+		}
 	    } else {
-		STEPentity *comb_shape;
-		STEPentity *comb_product;
-		Comb_to_STEP(curr_dp, sc, &comb_shape, &comb_product);
-		sc->comb_to_step[curr_dp] = comb_product;
-		sc->comb_to_step_shape[curr_dp] = comb_shape;
-		non_wrapper_combs.insert(curr_dp);
-		bu_log("Comb non-wrapper (matrix over primitive): %s\n", curr_dp->d_namep);
+		bu_log("WARNING: db_find_named_leaf could not find %s in the tree of %s\n", child->d_namep, curr_dp->d_namep);
 	    }
+	    rt_db_free_internal(&comb_intern);
 	} else {
-	    bu_log("WARNING: db_find_named_leaf could not find %s in the tree of %s\n", child->d_namep, curr_dp->d_namep);
+	    bu_log("Comb wrapper %s already handled\n", curr_dp->d_namep);
 	}
-	rt_db_free_internal(&comb_intern);
     }
 
     /* For each non-wrapper comb, get list of immediate children and call Assembly Product,
