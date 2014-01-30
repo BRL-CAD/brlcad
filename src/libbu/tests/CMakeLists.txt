@@ -32,12 +32,10 @@ add_test(bu_basename_p__p_                                  tester_bu_basename "
 add_test(bu_basename_p__p__p_                               tester_bu_basename "...")
 add_test(bu_basename_sp__sp__sp_                            tester_bu_basename "   ")
 
-if(ENABLE_BITV_TESTS)
 #
 #  ************ bitv.c tests *************
 # a local library for this dir
 BRLCAD_ADDLIB(libbu_tests "test_funcs.c" "" NO_INSTALL)
-
 
 ###############################
 #      bu_bitv_and testing    #
@@ -134,18 +132,6 @@ set_tests_properties(
 
   PROPERTIES WILL_FAIL true
 )
-
-else(ENABLE_BITV_TESTS)
-  CMAKEFILES(
-    bu_bitv.c
-    bu_bitv_and.c
-    bu_bitv_or.c
-    bu_bitv_shift.c
-    bu_bitv_to_hex.c
-    bu_bitv_vls.c
-    bu_hex_to_bitv.c
-  )
-endif(ENABLE_BITV_TESTS)
 
 #
 #  ************ booleanize.c tests *************

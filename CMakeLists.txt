@@ -1312,10 +1312,6 @@ if(BRLCAD_ENABLE_DTRACE)
   endif(NOT HAVE_SYS_SDT_H)
 endif(BRLCAD_ENABLE_DTRACE)
 
-# Turn on BITV tests
-option(ENABLE_BITV_TESTS "Build with BITV tests support" OFF)
-mark_as_advanced(ENABLE_BITV_TESTS)
-
 # Take advantage of parallel processors if available - highly recommended
 option(BRLCAD_ENABLE_SMP "Enable SMP architecture parallel computation support" ON)
 if(WIN32 AND BRLCAD_ENABLE_SMP)
