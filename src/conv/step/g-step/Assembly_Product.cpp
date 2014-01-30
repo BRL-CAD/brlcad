@@ -188,7 +188,7 @@ Create_CARTESIAN_TRANSFORMATION_OPERATOR_3D(
     op3d->name_("''");
 
     /* For whatever reason, we seem to a) have TWO attributes called "name"
-     * that need to be set and a "description" attribute that doesn't respond
+     * that need to be set and b) a "description" attribute that doesn't respond
      * to setting via op3d->description_("''") - fall back on attribute list
      * access */
     ((STEPentity *)op3d)->ResetAttributes();
