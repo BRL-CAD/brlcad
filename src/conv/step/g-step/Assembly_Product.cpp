@@ -190,10 +190,10 @@ Mat_to_Rep(matp_t curr_matrix, Registry *registry, InstMgr *instance_list)
     VUNITIZE(outy);
     VUNITIZE(outz);
     if (NEAR_ZERO(xm - 1.0, RT_LEN_TOL) && NEAR_ZERO(ym - 1.0, RT_LEN_TOL) && NEAR_ZERO(zm - 1.0, RT_LEN_TOL)) {
-	bu_log("AXIS2_PLACEMENT_3D cartesian_point: %f, %f, %f\n", outorig[0], outorig[1], outorig[2]);
+	bu_log("AXIS2_PLACEMENT_3D cartesian_point: %f, %f, %f\n", -outorig[0], -outorig[1], -outorig[2]);
 	bu_log("AXIS2_PLACEMENT_3D axis: %f, %f, %f\n", outz[0], outz[1], outz[2]);
 	bu_log("AXIS2_PLACEMENT_3D ref axis: %f, %f, %f\n", outx[0], outx[1], outx[2]);
-	return Create_AXIS2_PLACEMENT_3D(outorig[0], outorig[1], outorig[2],
+	return Create_AXIS2_PLACEMENT_3D(-outorig[0], -outorig[1], -outorig[2],
 		outz[0], outz[1], outz[2], outx[0], outx[1], outx[2], registry, instance_list);
     } else {
 	if (NEAR_ZERO(xm - ym, RT_LEN_TOL) && NEAR_ZERO(xm - zm, RT_LEN_TOL)) {
