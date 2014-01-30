@@ -74,7 +74,6 @@ PCurveOrSurface::Load(STEPWrapper *sw, SDAI_Select *sse)
 {
     step = sw;
 
-    std::cout << sse->UnderlyingTypeName().c_str() << std::endl;
     SdaiPcurve_or_surface *v = (SdaiPcurve_or_surface *)sse;
 
     if (v->IsPcurve()) {
