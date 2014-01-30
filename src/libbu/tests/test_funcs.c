@@ -34,12 +34,14 @@
 #include "bu.h"
 #include "./test_internals.h"
 
+#define BITS_PER_BYTE 8
 
 void
 dump_bitv(const struct bu_bitv *b)
 {
-    size_t len = b->nbits;
-    int i, j, k, x;
+    const size_t len = b->nbits;
+    size_t x;
+    int i, j, k;
     int bit, ipad = 0, jpad = 0;
     size_t word_count;
     size_t chunksize = 0;
@@ -47,7 +49,7 @@ dump_bitv(const struct bu_bitv *b)
     unsigned bytes;
     struct bu_vls *v = bu_vls_vlsinit();
 
-    bytes = len / 8; /* eight digits per byte */
+    bytes = len / BITS_PER_BYTE; /* eight digits per byte */
     word_count = bytes / BVS;
     chunksize = bytes % BVS;
 
@@ -61,7 +63,7 @@ dump_bitv(const struct bu_bitv *b)
     while (word_count--) {
 	while (chunksize--) {
 	    /* get the appropriate bits in the bit vector */
-	    unsigned long lval = (unsigned long)((b->bits[word_count] & ((bitv_t)(0xff)<<(chunksize*8))) >> (chunksize*8)) & (bitv_t)0xff;
+	    unsigned long lval = (unsigned long)((b->bits[word_count] & ((bitv_t)(0xff)<<(chunksize*BITS_PER_BYTE))) >> (chunksize*BITS_PER_BYTE)) & (bitv_t)0xff;
 
 	    /* get next eight binary digits from bitv */
 	    int ii;
@@ -77,7 +79,7 @@ dump_bitv(const struct bu_bitv *b)
     /* print out one set of data per X bits */
     x = 16; /* X number of bits per line */
     x = x > len ? len : x;
-    /* we want even output lines (lengths in multiples of 8) */
+    /* we want even output lines (lengths in multiples of BITS_PER_BYTE) */
     if (len % x) {
 	ipad = jpad = x - (len % x);
     };
@@ -89,38 +91,37 @@ dump_bitv(const struct bu_bitv *b)
 
     bit = len - 1;
 
-    printf("\n=====================================================================");
-    printf("\nbitv dump:");
-    printf("\n nbits = %zu", len);
+    bu_log("\n=====================================================================");
+    bu_log("\nbitv dump:");
+    bu_log("\n nbits = %zu", len);
 
   NEXT:
 
     k = i + x;
-    printf("\n---------------------------------------------------------------------");
-    printf("\n bit ");
+    bu_log("\n---------------------------------------------------------------------");
+    bu_log("\n bit ");
     for (; i < k; ++i, --ipad) {
 	if (ipad > 0)
-	    printf(" %3s", " ");
+	    bu_log(" %3s", " ");
 	else
-	    printf(" %3d", bit--);
+	    bu_log(" %3d", bit--);
     }
 
-    printf("\n val ");
+    bu_log("\n val ");
     /* the actual values are a little tricky due to the actual structure and number of words */
     for (; j < k; ++j, --jpad) {
-        //printf(" 0x%02x", b->bits[j]);
 	if (jpad > 0)
-	    printf(" %3s", " ");
+	    bu_log(" %3s", " ");
 	else
-	    printf("   %c", bu_vls_cstr(v)[j]);
+	    bu_log("   %c", bu_vls_cstr(v)[j]);
     }
 
-    if (i < len - 1) {
+    if ((size_t)i < len - 1) {
         goto NEXT;
     }
 
-    printf("\n---------------------------------------------------------------------");
-    printf("\n=====================================================================");
+    bu_log("\n---------------------------------------------------------------------");
+    bu_log("\n=====================================================================");
 
     bu_vls_free(v);
 }
