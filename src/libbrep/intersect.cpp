@@ -334,7 +334,8 @@ curve_fitting(ON_Curve *in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool d
 		// The params of the nurbscurve is between [0, 2*pi]
 		double t_min, t_max;
 		if (in->IsClosed()) {
-		    t_max = ON_PI * 2, t_min = 0;
+		    t_max = ON_PI * 2.0;
+		    t_min = 0.0;
 		} else {
 		    double t_mid;
 		    ell.ClosestPointTo(in->PointAtStart(), &t_min);
@@ -346,7 +347,7 @@ curve_fitting(ON_Curve *in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool d
 		    if (!ON_Interval(t_min, t_max).Includes(t_mid)) {
 			// The arc crosses where t = 0 (2*PI).
 			// We make the curve "two rounds" of the ellipse.
-			t_min += 2 * ON_PI;
+			t_min += 2.0 * ON_PI;
 			std::swap(t_min, t_max);
 			nurbscurve.Append(nurbscurve);
 		    }
@@ -909,7 +910,7 @@ ON_Intersect(const ON_Curve *curveA,
 	intersection_tolerance = CCI_DEFAULT_TOLERANCE;
     }
     if (overlap_tolerance < intersection_tolerance) {
-	overlap_tolerance = 2 * intersection_tolerance;
+	overlap_tolerance = 2.0 * intersection_tolerance;
     }
     double t1_tolerance = intersection_tolerance;
     double t2_tolerance = intersection_tolerance;
@@ -1447,7 +1448,7 @@ ON_Intersect(const ON_Curve *curveA,
 	intersection_tolerance = CSI_DEFAULT_TOLERANCE;
     }
     if (overlap_tolerance < intersection_tolerance) {
-	overlap_tolerance = 2 * intersection_tolerance;
+	overlap_tolerance = 2.0 * intersection_tolerance;
     }
 
     check_domain(curveA_domain, curveA->Domain(), "curveA_domain");
@@ -2523,7 +2524,7 @@ ON_Intersect(const ON_Surface *surfA,
 	intersection_tolerance = SSI_DEFAULT_TOLERANCE;
     }
     if (overlap_tolerance < intersection_tolerance) {
-	overlap_tolerance = 2 * intersection_tolerance;
+	overlap_tolerance = 2.0 * intersection_tolerance;
     }
     if (fitting_tolerance < intersection_tolerance) {
 	fitting_tolerance = intersection_tolerance;
