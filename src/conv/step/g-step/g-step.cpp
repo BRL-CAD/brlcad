@@ -36,8 +36,7 @@
 #include "SdaiHeaderSchema.h"
 #include "schema.h"
 
-#include "ON_Brep.h"
-#include "Trees.h"
+#include "G_Objects.h"
 
 void
 usage()
@@ -189,18 +188,8 @@ main(int argc, char *argv[])
 	struct rt_db_internal intern;
 	rt_db_get_internal(&intern, dp, dbip, bn_mat_identity, &rt_uniresource);
 	RT_CK_DB_INTERNAL(&intern);
-	switch (intern.idb_minor_type) {
-	    case DB5_MINORTYPE_BRLCAD_BREP:
-		RT_BREP_TEST_MAGIC((struct rt_brep_internal *)(intern.idb_ptr));
-		(void)ON_BRep_to_STEP(dp, ((struct rt_brep_internal *)(intern.idb_ptr))->brep, sc, &shape, &product);
-		break;
-	    case DB5_MINORTYPE_BRLCAD_COMBINATION:
-		(void)Comb_Tree_to_STEP(dp, wdbp, sc);
-		break;
-	    default:
-		bu_log("Primitive type of %s is not yet supported\n", dp->d_namep);
-		break;
-	}
+	Object_To_STEP(dp, &intern, wdbp, sc);
+	rt_db_free_internal(&intern);
     }
 
     /* Write STEP file */

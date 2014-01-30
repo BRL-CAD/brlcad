@@ -30,6 +30,7 @@
 #include "Assembly_Product.h"
 #include "Comb.h"
 #include "Trees.h"
+#include "G_Objects.h"
 
 STEPentity *
 Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
@@ -39,70 +40,33 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
     std::set<struct directory *> non_wrapper_combs;
 
 
-    /* Find all brep solids, make instances of them, insert them, and stick in *dp to STEPentity* map */
-    const char *brep_search = "-type brep";
-    struct bu_ptbl *breps = db_search_path_obj(brep_search, dp, wdbp);
+    /* Find all solids, make instances of them, insert them, and stick in *dp to
+     * STEPentity* map.
+     *
+     * NOTE: Right now, without boolean evaluations, we need all primitive
+     * solid objects as BReps.  Once we *do* have boolean objects, this logic will
+     * change - probably to making solids out of regions.  Ironically, the AP203 logic
+     * for combs and solids as it exists here will most likely be preserved by
+     * moving it to AP214, where it will still be needed for boolean exports*/
+    const char *solid_search = "! -type comb";
+    struct bu_ptbl *breps = db_search_path_obj(solid_search, dp, wdbp);
     for (int j = (int)BU_PTBL_LEN(breps) - 1; j >= 0; j--){
-	STEPentity *brep_shape;
-	STEPentity *brep_product;
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(breps, j);
-	if (sc->solid_to_step.find(curr_dp) == sc->solid_to_step.end()) {
-	    struct rt_db_internal brep_intern;
-	    rt_db_get_internal(&brep_intern, curr_dp, wdbp->dbip, bn_mat_identity, &rt_uniresource);
-	    RT_CK_DB_INTERNAL(&brep_intern);
-	    struct rt_brep_internal *bi = (struct rt_brep_internal*)(brep_intern.idb_ptr);
-	    RT_BREP_TEST_MAGIC(bi);
-	    ON_Brep *brep = bi->brep;
-	    ON_BRep_to_STEP(curr_dp, brep, sc, &brep_shape, &brep_product);
-	    sc->solid_to_step[curr_dp] = brep_product;
-	    sc->solid_to_step_shape[curr_dp] = brep_shape;
-	    bu_log("Brep: %s\n", curr_dp->d_namep);
-	} else {
-	    bu_log("Brep %s already present\n", curr_dp->d_namep);
-	}
-    }
-
-    /* Find all solids that aren't already breps, convert them, insert them, and stick in dp->STEPentity map */
-    /* NOTE: this is a temporary measure until evaluated booleans are working - after that, it will be needed
-     * only for unevaluated boolean export via more advanced forms of STEP */
-    const char *non_brep_search = "! -type comb ! -type brep";
-    struct bu_ptbl *non_breps = db_search_path_obj(non_brep_search, dp, wdbp);
-    for (int j = (int)BU_PTBL_LEN(non_breps) - 1; j >= 0; j--){
-	STEPentity *brep_shape;
-	STEPentity *brep_product;
-	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(non_breps, j);
-	if (sc->solid_to_step.find(curr_dp) == sc->solid_to_step.end()) {
-	    // Get brep form of solid
-	    // if that fails, try something else like oriented bounding box as a last resort?
-	    // triangle meshes probably should go as is?
-	    struct bn_tol tol;
-	    tol.magic = BN_TOL_MAGIC;
-	    tol.dist = BN_TOL_DIST;
-	    tol.dist_sq = tol.dist * tol.dist;
-	    tol.perp = SMALL_FASTF;
-	    tol.para = 1.0 - tol.perp;
-	    struct rt_db_internal solid_intern;
-	    rt_db_get_internal(&solid_intern, curr_dp, wdbp->dbip, bn_mat_identity, &rt_uniresource);
-	    RT_CK_DB_INTERNAL(&solid_intern);
-	    ON_Brep *brep_obj = ON_Brep::New();
-	    if (solid_intern.idb_meth->ft_brep != NULL) {
-		ON_Brep **brep = &brep_obj;
-		solid_intern.idb_meth->ft_brep(brep, &solid_intern, &tol);
-		ON_BRep_to_STEP(curr_dp, *brep, sc, &brep_shape, &brep_product);
-		sc->solid_to_step[curr_dp] = brep_product;
-		sc->solid_to_step_shape[curr_dp] = brep_shape;
-		bu_log("solid to Brep: %s\n", curr_dp->d_namep);
-	    } else {
-		ON_BRep_to_STEP(curr_dp, brep_obj, sc, &brep_shape, &brep_product);
-		bu_log("WARNING: No Brep representation for solid %s, writing empty brep as placeholder!\n", curr_dp->d_namep);
-	    }
-	} else {
-	    bu_log("solid to Brep %s already done\n", curr_dp->d_namep);
-	}
+	struct rt_db_internal solid_intern;
+	rt_db_get_internal(&solid_intern, curr_dp, wdbp->dbip, bn_mat_identity, &rt_uniresource);
+	RT_CK_DB_INTERNAL(&solid_intern);
+	Object_To_STEP(curr_dp, &solid_intern, wdbp, sc);
+	rt_db_free_internal(&solid_intern);
     }
 
 
-    /* Find all combs that are not already wrappers, make instances of them, insert them, and stick in *dp to STEPentity* map */
+    /* Find all combs that are not already wrappers, make instances of them, insert
+     * them, and stick in *dp to STEPentity* map.
+     *
+     * NOTE: Once we have boolean evaluations, we will need to change this to search
+     * for assemblies (i.e. combs with no regions above them) and regions, which
+     * will become the "wrappers" for the evaluated brep solid below each region.
+     * Again, some form of this logic will probably end up in AP214 */
     const char *comb_search = "-type comb ! ( -nnodes 1 -below=1 ! -type comb )";
     struct bu_ptbl *combs = db_search_path_obj(comb_search, dp, wdbp);
     for (int j = (int)BU_PTBL_LEN(combs) - 1; j >= 0; j--){

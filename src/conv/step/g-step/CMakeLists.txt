@@ -16,6 +16,7 @@ set(gstep_SOURCES
   Assembly_Product.cpp
   Comb.cpp
   Default_Geometric_Context.cpp
+  G_Objects.cpp
   ON_NurbsCurve.cpp
   ON_NurbsSurface.cpp
   ON_Brep.cpp
@@ -63,6 +64,7 @@ set(IGNORE_FILES
   Assembly_Product.h
   Comb.h
   Default_Geometric_Context.h
+  G_Objects.h
   ON_Brep.h
   Shape_Definition_Representation.h
   Shape_Representation.h
