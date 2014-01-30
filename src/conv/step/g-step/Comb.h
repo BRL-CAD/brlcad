@@ -26,12 +26,17 @@
 
 #include "AP203.h"
 
-void Comb_to_STEP(struct directory *dp,
+void
+Comb_to_STEP(struct directory *dp,
 	AP203_Contents *sc,
 	STEPentity **shape,
 	STEPentity **product);
 
-int Comb_Is_Wrapper(struct directory *dp, struct rt_wdb *wdbp);
+struct directory *
+Comb_Get_Only_Child(struct directory *dp, struct rt_wdb *wdbp);
+
+int
+Comb_Is_Wrapper(struct directory *dp, struct rt_wdb *wdbp);
 
 #endif /* COMB_H */
 /*

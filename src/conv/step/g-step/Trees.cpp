@@ -67,46 +67,30 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
      * for assemblies (i.e. combs with no regions above them) and regions, which
      * will become the "wrappers" for the evaluated brep solid below each region.
      * Again, some form of this logic will probably end up in AP214 */
-    const char *comb_search = "-type comb ! ( -nnodes 1 -below=1 ! -type comb )";
+    const char *comb_search = "-type comb";
     struct bu_ptbl *combs = db_search_path_obj(comb_search, dp, wdbp);
     for (int j = (int)BU_PTBL_LEN(combs) - 1; j >= 0; j--){
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(combs, j);
+	int is_wrapper = !Comb_Is_Wrapper(curr_dp, wdbp);
 	if (sc->comb_to_step.find(curr_dp) == sc->comb_to_step.end()) {
-	    STEPentity *comb_shape;
-	    STEPentity *comb_product;
-	    if (!Comb_Is_Wrapper(curr_dp, wdbp)) bu_log("Awk! %s is a wrapper!\n", curr_dp->d_namep);
-	    Comb_to_STEP(curr_dp, sc, &comb_shape, &comb_product);
-	    sc->comb_to_step[curr_dp] = comb_product;
-	    sc->comb_to_step_shape[curr_dp] = comb_shape;
-	    non_wrapper_combs.insert(curr_dp);
-	    //bu_log("Comb non-wrapper: %s\n", curr_dp->d_namep);
-	} else {
-	    //bu_log("Comb non-wrapper %s already handled\n", curr_dp->d_namep);
-	}
-    }
-
-    /* Find the combs that *are* wrappers, and point them to the product associated with their brep.
-     * Change the name of the product, if appropriate */
-    const char *comb_wrapper_search = "-type comb -nnodes 1 ! ( -below=1 -type comb )";
-    const char *comb_child_search = "-mindepth 1 ! -type comb";
-    struct bu_ptbl *comb_wrappers = db_search_path_obj(comb_wrapper_search, dp, wdbp);
-    for (int j = (int)BU_PTBL_LEN(comb_wrappers) - 1; j >= 0; j--){
-	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(comb_wrappers, j);
-	if (sc->comb_to_step.find(curr_dp) == sc->comb_to_step.end()) {
-	    if (Comb_Is_Wrapper(curr_dp, wdbp)) bu_log("Awk! %s isn't a wrapper!\n", curr_dp->d_namep);
-	    /* Satisfying the search pattern isn't enough to qualify as a wrapping comb - there
-	     * must also be no matrix hanging over the primitive */
-	    struct rt_db_internal comb_intern;
-	    rt_db_get_internal(&comb_intern, curr_dp, wdbp->dbip, bn_mat_identity, &rt_uniresource);
-	    RT_CK_DB_INTERNAL(&comb_intern);
-	    struct rt_comb_internal *comb = (struct rt_comb_internal *)(comb_intern.idb_ptr);
-	    struct bu_ptbl *comb_child = db_search_path_obj(comb_child_search, curr_dp, wdbp);
-	    struct directory *child = (struct directory *)BU_PTBL_GET(comb_child, 0);
-	    bu_ptbl_free(comb_child);
-	    bu_free(comb_child, "free search result");
-	    union tree *curr_node = db_find_named_leaf(comb->tree, child->d_namep);
-	    if (curr_node && (sc->solid_to_step.find(child) != sc->solid_to_step.end())) {
-		if (!(curr_node->tr_l.tl_mat)) {
+	    if (!is_wrapper) {
+		STEPentity *comb_shape;
+		STEPentity *comb_product;
+		Comb_to_STEP(curr_dp, sc, &comb_shape, &comb_product);
+		sc->comb_to_step[curr_dp] = comb_product;
+		sc->comb_to_step_shape[curr_dp] = comb_shape;
+		non_wrapper_combs.insert(curr_dp);
+	    } else {
+		struct rt_db_internal comb_intern;
+		struct rt_comb_internal *comb;
+		struct directory *child;
+		union tree *curr_node;
+		rt_db_get_internal(&comb_intern, curr_dp, wdbp->dbip, bn_mat_identity, &rt_uniresource);
+		RT_CK_DB_INTERNAL(&comb_intern);
+		comb = (struct rt_comb_internal *)(comb_intern.idb_ptr);
+		child = Comb_Get_Only_Child(curr_dp, wdbp);
+		curr_node = db_find_named_leaf(comb->tree, child->d_namep);
+		if (curr_node && (sc->solid_to_step.find(child) != sc->solid_to_step.end())) {
 		    std::ostringstream ss;
 		    ss << "'" << curr_dp->d_namep << "'";
 		    std::string str = ss.str();
@@ -114,21 +98,10 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
 		    sc->comb_to_step_shape[curr_dp] = sc->solid_to_step_shape.find(child)->second;
 		    //bu_log("Comb wrapper: %s\n", curr_dp->d_namep);
 		    ((SdaiProduct_definition *)(sc->comb_to_step[curr_dp]))->formation_()->of_product_()->name_(str.c_str());
-		} else {
-		    STEPentity *comb_shape;
-		    STEPentity *comb_product;
-		    Comb_to_STEP(curr_dp, sc, &comb_shape, &comb_product);
-		    sc->comb_to_step[curr_dp] = comb_product;
-		    sc->comb_to_step_shape[curr_dp] = comb_shape;
-		    non_wrapper_combs.insert(curr_dp);
-		    bu_log("Comb non-wrapper (matrix over primitive): %s\n", curr_dp->d_namep);
 		}
-	    } else {
-		bu_log("WARNING: db_find_named_leaf could not find %s in the tree of %s\n", child->d_namep, curr_dp->d_namep);
 	    }
-	    rt_db_free_internal(&comb_intern);
 	} else {
-	    //bu_log("Comb wrapper %s already handled\n", curr_dp->d_namep);
+	    bu_log("comb %s already handled\n", curr_dp->d_namep);
 	}
     }
 
