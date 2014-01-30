@@ -189,23 +189,26 @@ Mat_to_Rep(matp_t curr_matrix, Registry *registry, InstMgr *instance_list)
     VUNITIZE(outx);
     VUNITIZE(outy);
     VUNITIZE(outz);
+
+    // If we aren't scaling, handle things with axis placement
     if (NEAR_ZERO(xm - 1.0, RT_LEN_TOL) && NEAR_ZERO(ym - 1.0, RT_LEN_TOL) && NEAR_ZERO(zm - 1.0, RT_LEN_TOL)) {
-	bu_log("AXIS2_PLACEMENT_3D cartesian_point: %f, %f, %f\n", -outorig[0], -outorig[1], -outorig[2]);
-	bu_log("AXIS2_PLACEMENT_3D axis: %f, %f, %f\n", outz[0], outz[1], outz[2]);
-	bu_log("AXIS2_PLACEMENT_3D ref axis: %f, %f, %f\n", outx[0], outx[1], outx[2]);
 	return Create_AXIS2_PLACEMENT_3D(-outorig[0], -outorig[1], -outorig[2],
 		outz[0], outz[1], outz[2], outx[0], outx[1], outx[2], registry, instance_list);
+    }
+
+    // OK, we're scaling as well - on to cartesian_transformation_operator_3d
+    if (NEAR_ZERO(xm - ym, VUNITIZE_TOL) && NEAR_ZERO(xm - zm, VUNITIZE_TOL)) {
+	bu_log("CARTESIAN_TRANSFORMATION_OPERATOR_3D local_origin: %f, %f, %f\n", outorig[0], outorig[1], outorig[2]);
+	bu_log("CARTESIAN_TRANSFORMATION_OPERATOR_3D axis1: %f, %f, %f\n", outx[0], outx[1], outx[2]);
+	bu_log("CARTESIAN_TRANSFORMATION_OPERATOR_3D axis2: %f, %f, %f\n", outy[0], outy[1], outy[2]);
+	bu_log("CARTESIAN_TRANSFORMATION_OPERATOR_3D axis3: %f, %f, %f\n", outz[0], outz[1], outz[2]);
+	bu_log("Scaling: %f\n", xm);
+	return NULL;
     } else {
-	if (NEAR_ZERO(xm - ym, RT_LEN_TOL) && NEAR_ZERO(xm - zm, RT_LEN_TOL)) {
-	    bu_log("CARTESIAN_TRANSFORMATION_OPERATOR_3D local_origin: %f, %f, %f\n", outorig[0], outorig[1], outorig[2]);
-	    bu_log("CARTESIAN_TRANSFORMATION_OPERATOR_3D axis1: %f, %f, %f\n", outx[0], outx[1], outx[2]);
-	    bu_log("CARTESIAN_TRANSFORMATION_OPERATOR_3D axis2: %f, %f, %f\n", outy[0], outy[1], outy[2]);
-	    bu_log("CARTESIAN_TRANSFORMATION_OPERATOR_3D axis3: %f, %f, %f\n", outz[0], outz[1], outz[2]);
-	    bu_log("Scaling: %f\n", xm);
-	    return NULL;
-	} else {
-	    return NULL;
-	}
+	bn_mat_print("Non-Uniform scaling detected", curr_matrix);
+	bu_log("xm: %0.14f\nym: %0.14f\nzm: %0.14f\n", xm, ym, zm);
+	bu_log("xm-ym: %0.14f\nxm-zm: %0.14f\nRT_LEN_TOL: %0.14f", xm-ym, xm-zm, RT_LEN_TOL);
+	return NULL;
     }
 }
 
@@ -267,9 +270,9 @@ Add_Assembly_Product(struct directory *dp, struct db_i *dbip, struct bu_ptbl *ch
 	union tree *curr_node = db_find_named_leaf(comb->tree, curr_dp->d_namep);
 	matp_t curr_matrix = curr_node->tr_l.tl_mat;
 	if(curr_matrix) {
-	    bu_log("%s under %s: ", curr_dp->d_namep, dp->d_namep);
-	    bu_log(" - found matrix over %s in %s\n", curr_dp->d_namep, dp->d_namep);
-	    bn_mat_print(curr_dp->d_namep, curr_matrix);
+	    //bu_log("%s under %s: ", curr_dp->d_namep, dp->d_namep);
+	    //bu_log(" - found matrix over %s in %s\n", curr_dp->d_namep, dp->d_namep);
+	    //bn_mat_print(curr_dp->d_namep, curr_matrix);
 	    curr_transform = Mat_to_Rep(curr_matrix, sc->registry, sc->instance_list);
 	} else {
 	    curr_transform = Identity_AXIS2_PLACEMENT_3D(sc->registry, sc->instance_list);
