@@ -197,6 +197,41 @@ Populate_Instance_List(ON_Brep_Info_AP203 *info)
 }
 
 void
+STEP_Empty_BRep(struct directory *dp, AP203_Contents *sc, STEPentity **brep_shape, STEPentity **brep_product)
+{
+    std::cout << "Making empty brep: " << dp->d_namep << std::endl;
+
+    STEPcomplex *context = Add_Default_Geometric_Context(sc);
+    SdaiClosed_shell *closed_shell;
+    SdaiManifold_solid_brep *manifold_solid_brep;
+    SdaiAdvanced_brep_shape_representation *advanced_brep;
+
+
+    // Closed shell that assembles the faces
+    closed_shell = (SdaiClosed_shell *)sc->registry->ObjCreate("CLOSED_SHELL");
+    closed_shell->name_("''");
+    // Solid manifold BRep
+    manifold_solid_brep = (SdaiManifold_solid_brep *)sc->registry->ObjCreate("MANIFOLD_SOLID_BREP");
+    manifold_solid_brep->outer_(closed_shell);
+    manifold_solid_brep->name_("''");
+    advanced_brep= (SdaiAdvanced_brep_shape_representation *)sc->registry->ObjCreate("ADVANCED_BREP_SHAPE_REPRESENTATION");
+    std::ostringstream ss;
+    ss << "'" << dp->d_namep << "'";
+    std::string str = ss.str();
+    advanced_brep->name_(str.c_str());
+    EntityAggregate *items = advanced_brep->items_();
+    items->AddNode(new EntityNode((SDAI_Application_instance *)manifold_solid_brep));
+    advanced_brep->context_of_items_((SdaiRepresentation_context *) context);
+
+    (*brep_product) = Add_Shape_Definition_Representation(sc, advanced_brep);
+    (*brep_shape) = advanced_brep;
+
+    sc->instance_list->Append((STEPentity *)(advanced_brep), completeSE);
+    sc->instance_list->Append((STEPentity *)(manifold_solid_brep), completeSE);
+    sc->instance_list->Append((STEPentity *)(closed_shell), completeSE);
+}
+
+void
 ON_BRep_to_STEP(struct directory *dp, ON_Brep *brep, AP203_Contents *sc, STEPentity **brep_shape, STEPentity **brep_product)
 {
     //ON_wString wstr;
@@ -204,6 +239,11 @@ ON_BRep_to_STEP(struct directory *dp, ON_Brep *brep, AP203_Contents *sc, STEPent
     //brep->Dump(dump);
     //ON_String ss = wstr;
     //bu_log("Brep:\n %s\n", ss.Array());
+    if (!brep) {
+	STEP_Empty_BRep(dp, sc, brep_shape, brep_product);
+	return;
+    }
+
     ON_Brep_Info_AP203 *info = new ON_Brep_Info_AP203();
     info->registry = sc->registry;
     info->instance_list = sc->instance_list;
