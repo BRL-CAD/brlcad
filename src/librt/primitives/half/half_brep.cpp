@@ -43,6 +43,9 @@ rt_hlf_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     hip = (struct rt_half_internal *)ip->idb_ptr;
     RT_HALF_CK_MAGIC(hip);
 
+    /*TODO - we need to do *something* here - try ON_BrepTrimmedPlane
+     * with the trimming curves defined by the max dimensions of the model space
+     * intersecting with the plane. */
     *b = NULL;
 }
 
