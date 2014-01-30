@@ -264,16 +264,16 @@ Add_Assembly_Product(struct directory *dp, struct db_i *dbip, struct bu_ptbl *ch
 	STEPentity *child_shape = sc->comb_to_step_shape.find(curr_dp)->second;
 	if (!child_shape)
 	    child_shape = sc->solid_to_step_shape.find(curr_dp)->second;
-	bu_log("%s under %s: ", curr_dp->d_namep, dp->d_namep);
 	union tree *curr_node = db_find_named_leaf(comb->tree, curr_dp->d_namep);
 	matp_t curr_matrix = curr_node->tr_l.tl_mat;
 	if(curr_matrix) {
+	    bu_log("%s under %s: ", curr_dp->d_namep, dp->d_namep);
 	    bu_log(" - found matrix over %s in %s\n", curr_dp->d_namep, dp->d_namep);
 	    bn_mat_print(curr_dp->d_namep, curr_matrix);
 	    curr_transform = Mat_to_Rep(curr_matrix, sc->registry, sc->instance_list);
 	} else {
 	    curr_transform = Identity_AXIS2_PLACEMENT_3D(sc->registry, sc->instance_list);
-	    bu_log("identity matrix\n");
+	    //bu_log("identity matrix\n");
 	}
 	if (curr_transform) {
 	    SdaiItem_defined_transformation *item_transform = (SdaiItem_defined_transformation *)sc->registry->ObjCreate("ITEM_DEFINED_TRANSFORMATION");

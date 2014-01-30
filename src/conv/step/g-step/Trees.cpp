@@ -79,9 +79,9 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
 	    sc->comb_to_step[curr_dp] = comb_product;
 	    sc->comb_to_step_shape[curr_dp] = comb_shape;
 	    non_wrapper_combs.insert(curr_dp);
-	    bu_log("Comb non-wrapper: %s\n", curr_dp->d_namep);
+	    //bu_log("Comb non-wrapper: %s\n", curr_dp->d_namep);
 	} else {
-	    bu_log("Comb non-wrapper %s already handled\n", curr_dp->d_namep);
+	    //bu_log("Comb non-wrapper %s already handled\n", curr_dp->d_namep);
 	}
     }
 
@@ -112,7 +112,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
 		    std::string str = ss.str();
 		    sc->comb_to_step[curr_dp] = sc->solid_to_step.find(child)->second;
 		    sc->comb_to_step_shape[curr_dp] = sc->solid_to_step_shape.find(child)->second;
-		    bu_log("Comb wrapper: %s\n", curr_dp->d_namep);
+		    //bu_log("Comb wrapper: %s\n", curr_dp->d_namep);
 		    ((SdaiProduct_definition *)(sc->comb_to_step[curr_dp]))->formation_()->of_product_()->name_(str.c_str());
 		} else {
 		    STEPentity *comb_shape;
@@ -128,7 +128,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
 	    }
 	    rt_db_free_internal(&comb_intern);
 	} else {
-	    bu_log("Comb wrapper %s already handled\n", curr_dp->d_namep);
+	    //bu_log("Comb wrapper %s already handled\n", curr_dp->d_namep);
 	}
     }
 
@@ -140,7 +140,6 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
      * where to associate them.*/
     const char *comb_children_search = "-mindepth 1 -maxdepth 1";
     for (std::set<struct directory *>::iterator it=non_wrapper_combs.begin(); it != non_wrapper_combs.end(); ++it) {
-	bu_log("look for matrices in %s\n", (*it)->d_namep);
 	struct bu_ptbl *comb_children = db_search_path_obj(comb_children_search, (*it), wdbp);
 	Add_Assembly_Product((*it), wdbp->dbip, comb_children, sc);
 	bu_ptbl_free(comb_children);
