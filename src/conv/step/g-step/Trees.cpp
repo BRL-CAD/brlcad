@@ -105,7 +105,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
 	    bu_ptbl_free(comb_child);
 	    bu_free(comb_child, "free search result");
 	    union tree *curr_node = db_find_named_leaf(comb->tree, child->d_namep);
-	    if (curr_node) {
+	    if (curr_node && (sc->solid_to_step.find(child) != sc->solid_to_step.end())) {
 		if (!(curr_node->tr_l.tl_mat)) {
 		    std::ostringstream ss;
 		    ss << "'" << curr_dp->d_namep << "'";
