@@ -86,7 +86,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "clbs:w:n:x:y:X:Y:S:W:N:C:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "clbs:w:n:x:y:X:Y:S:W:N:C:h?")) != -1) {
 	switch (c) {
 	    case 'c':
 		/* Center in output */
@@ -146,7 +146,7 @@ get_args(int argc, char **argv)
 		}
 		break;
 
-	    default:		/* '?' */
+	    default:		/* '?' or 'h' will get you here */
 		return 0;
 	}
 
