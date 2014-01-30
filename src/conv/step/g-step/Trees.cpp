@@ -100,8 +100,6 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
 		    ((SdaiProduct_definition *)(sc->comb_to_step[curr_dp]))->formation_()->of_product_()->name_(str.c_str());
 		}
 	    }
-	} else {
-	    bu_log("comb %s already handled\n", curr_dp->d_namep);
 	}
     }
 
