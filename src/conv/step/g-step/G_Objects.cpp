@@ -62,6 +62,14 @@ Object_To_STEP(struct directory *dp, struct rt_db_internal *intern, struct rt_wd
 		tol.para = 1.0 - tol.perp;
 		brep = &brep_obj;
 		intern->idb_meth->ft_brep(brep, intern, &tol);
+		if (!(*brep)) {
+		    bu_log("failure to convert brep %s (object type %s)\n", dp->d_namep, intern->idb_meth->ft_label);
+		    ON_Brep *brep_tmp = ON_Brep::New();
+		    ON_BRep_to_STEP(dp, brep_tmp, sc, &brep_shape, &brep_product);
+		    delete brep_tmp;
+		    delete brep_obj;
+		    return;
+		}
 		ON_BRep_to_STEP(dp, *brep, sc, &brep_shape, &brep_product);
 		sc->solid_to_step[dp] = brep_product;
 		sc->solid_to_step_shape[dp] = brep_shape;
