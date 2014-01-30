@@ -1024,8 +1024,14 @@ FindTrimSeamCrossing(PBCData &data,double t0,double t1, double offset,double &se
 	    if (TrimCrossesClosedSeam(surf,p0,p1)) {
 		ON_2dPoint p;
 		//lets check to see if p0 || p1 are already on a seam
-		int seam0 = surf->IsAtSeam(p0.x,p0.y);
-		int seam1 = surf->IsAtSeam(p1.x,p1.y);
+		int seam0=0;
+		if ((seam0 = NearSeam(surf,p0, PBC_TOL)) > 0) {
+		    ForceToClosestSeam(surf, p0, PBC_TOL);
+		}
+		int seam1 = 0;
+		if ((seam1 = NearSeam(surf,p1, PBC_TOL)) > 0) {
+		    ForceToClosestSeam(surf, p1, PBC_TOL);
+		}
 		if (seam0 > 0 ) {
 		    if (seam1 > 0) { // both p0 & p1 on seam shouldn't happen report error and return false
 			rc = false;
@@ -1044,7 +1050,8 @@ FindTrimSeamCrossing(PBCData &data,double t0,double t1, double offset,double &se
 			double t = (t0 + t1)/2.0;
 			int seam;
 			if (toUV(data, p, t, offset)) {
-			    if ((seam=surf->IsAtSeam(p.x,p.y)) > 0) {
+			    if ((seam=NearSeam(surf,p, PBC_TOL)) > 0) {
+				ForceToClosestSeam(surf, p, PBC_TOL);
 				from = to = p;
 				seam_t = t;
 				if (p0.DistanceTo(p) < p1.DistanceTo(p)) {
@@ -1067,7 +1074,8 @@ FindTrimSeamCrossing(PBCData &data,double t0,double t1, double offset,double &se
 				}
 			    }
 			} else if (toUV(data, p, t, -offset)) {
-			    if ((seam=surf->IsAtSeam(p.x,p.y)) > 0) {
+			    if ((seam=NearSeam(surf,p, PBC_TOL)) > 0) {
+				ForceToClosestSeam(surf, p, PBC_TOL);
 				from = to = p;
 				seam_t = t;
 				if (p0.DistanceTo(p) < p1.DistanceTo(p)) {
@@ -1102,6 +1110,7 @@ FindTrimSeamCrossing(PBCData &data,double t0,double t1, double offset,double &se
 
     return rc;
 }
+#define TEMPDEBUGPRINTING
 #ifdef TEMPDEBUGPRINTING
 bool PRINTDEBUG = false;
 int pt_count=0;
@@ -1193,18 +1202,17 @@ pullback_samples_from_closed_surface(PBCData* data,
 		if (TrimCrossesClosedSeam(surf,pt,prev_pt)) {
 		    if (surf->IsAtSeam(pt.x,pt.y) > 0) {
 			SwapUVSeamPoint(surf, pt);
-		    } else if ((surf->IsAtSeam(prev_pt.x,prev_pt.y) > 0) &&
-			    (samples->Count() == 1)) {
-			samples->Empty();
-			SwapUVSeamPoint(surf, prev_pt);
-			samples->Append(prev_pt);
-#ifdef TEMPDEBUGPRINTING
-			if (PRINTDEBUG) {
-			    ON_3dPoint p3d = surf->PointAt(pt.x,pt.y);
-			    //std::cout << "in pt2d_" << pt_count << " sph "<< pt.x << " " << pt.y << " 0.0 1.000" << std::endl;
-			    std::cout << "in pt3d_" << pt_count++ << " sph "  << p3d.x << " " << p3d.y << " " << p3d.z << " 0.1000" << std::endl;
+		    } else if (surf->IsAtSeam(prev_pt.x,prev_pt.y) > 0) {
+			if (samples->Count() == 1) {
+			    samples->Empty();
+			    SwapUVSeamPoint(surf, prev_pt);
+			    samples->Append(prev_pt);
+			} else {
+			    data->segments.push_back(samples);
+			    SwapUVSeamPoint(surf, prev_pt);
+			    samples= new ON_2dPointArray();
+			    samples->Append(prev_pt);
 			}
-#endif
 		    } else {
 			ON_2dPoint from,to;
 			double seam_t;
@@ -1265,8 +1273,10 @@ pullback_samples_from_closed_surface(PBCData* data,
 		for (std::list<ON_2dPointArray *>::reverse_iterator rit=data->segments.rbegin(); rit!=data->segments.rend(); ++seg) {
 		    samples = *rit;
 #ifdef TEMPDEBUGPRINTING
-		    for(int i=0;i<samples->Count();i++) {
-			std::cout << "in pt2dorig_" << seg << "_" << i << " sph "<< samples->At(i)->x << " " << samples->At(i)->y << " 0.0 0.1000" << std::endl;
+		    if (PRINTDEBUG) {
+			for(int i=0;i<samples->Count();i++) {
+			    std::cout << "in pt2dorig_" << seg << "_" << i << " sph "<< samples->At(i)->x << " " << samples->At(i)->y << " 0.0 0.1000" << std::endl;
+			}
 		    }
 #endif
 		    if (seg < numsegs-1) { // since end points should be repeated
@@ -1281,25 +1291,29 @@ pullback_samples_from_closed_surface(PBCData* data,
 		data->segments.clear();
 		data->segments.push_back(reordered_samples);
 #ifdef TEMPDEBUGPRINTING
-		for(int i=0;i<reordered_samples->Count();i++) {
-		    std::cout << "in pt2d_" << i << " sph "<< reordered_samples->At(i)->x << " " << reordered_samples->At(i)->y << " 0.0 0.1000" << std::endl;
+		if (PRINTDEBUG) {
+		    for(int i=0;i<reordered_samples->Count();i++) {
+			std::cout << "in pt2d_" << i << " sph "<< reordered_samples->At(i)->x << " " << reordered_samples->At(i)->y << " 0.0 0.1000" << std::endl;
+		    }
+		    numsegs = data->segments.size();
 		}
-		numsegs = data->segments.size();
 #endif
 
 	    } else {
 		//punt for now
 #ifdef TEMPDEBUGPRINTING
-		std::cout << "punt for now:" << std::endl;
-		int seg=0;
-		for (std::list<ON_2dPointArray *>::reverse_iterator rit=data->segments.rbegin(); rit!=data->segments.rend(); ++seg) {
-		    ON_2dPointArray *samples = *rit;
-		    for(int i=0;i<samples->Count();i++) {
-			std::cout << "in pt2dorig_" << seg << "_" << i << " sph "<< samples->At(i)->x << " " << samples->At(i)->y << " 0.0 0.1000" << std::endl;
+		if (PRINTDEBUG) {
+		    std::cout << "punt for now:" << std::endl;
+		    int seg=0;
+		    for (std::list<ON_2dPointArray *>::reverse_iterator rit=data->segments.rbegin(); rit!=data->segments.rend(); ++seg) {
+			samples = *rit;
+			for(int i=0;i<samples->Count();i++) {
+			    std::cout << "in pt2dorig_" << seg << "_" << i << " sph "<< samples->At(i)->x << " " << samples->At(i)->y << " 0.0 0.1000" << std::endl;
+			}
+			rit++;
 		    }
-		    rit++;
+		    numsegs = data->segments.size();
 		}
-		numsegs = data->segments.size();
 #endif
 	    }
 	}
