@@ -604,37 +604,37 @@ pd_3space(register FILE *plotfp, double px1, double py1, double pz1, double px2,
 void
 pdv_3point(register FILE *plotfp, const fastf_t *pt)
 {
-    pdv_3(plotfp, pt, 'X'); /* calling common fuction pdv_3 */
+    pdv_3(plotfp, pt, 'X'); /* calling common function pdv_3 */
 }
 
 void
 pd_3point(register FILE *plotfp, double x, double y, double z)
 {
-    pd_3(plotfp, x, y, z, 'X'); /* calling common fuction pd_3 */
+    pd_3(plotfp, x, y, z, 'X'); /* calling common function pd_3 */
 }
 
 void
 pdv_3move(register FILE *plotfp, const fastf_t *pt)
 {
-    pdv_3(plotfp, pt, 'O'); /* calling common fuction pdv_3 */
+    pdv_3(plotfp, pt, 'O'); /* calling common function pdv_3 */
 }
 
 void
 pd_3move(register FILE *plotfp, double x, double y, double z)
 {
-   pd_3(plotfp, x, y, z, 'O'); /* calling common fuction pd_3 */
+   pd_3(plotfp, x, y, z, 'O'); /* calling common function pd_3 */
 }
 
 void
 pdv_3cont(register FILE *plotfp, const fastf_t *pt)
 {
-    pdv_3(plotfp, pt, 'Q'); /* calling common fuction pdv_3 */
+    pdv_3(plotfp, pt, 'Q'); /* calling common function pdv_3 */
 }
 
 void
 pd_3cont(register FILE *plotfp, double x, double y, double z)
 {
-    pd_3(plotfp, x, y, z, 'Q'); /* calling common fuction pd_3 */
+    pd_3(plotfp, x, y, z, 'Q'); /* calling common function pd_3 */
 }
 
 void

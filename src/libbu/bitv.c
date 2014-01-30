@@ -360,7 +360,7 @@ bu_binary_to_bitv(const char *str, const int nbytes)
      *
      * Note that only the zeroes and ones are actually tested and any
      * other character will ignored.  So one can ease producing the
-     * binary input string by using spaces or other characters the string 
+     * binary input string by using spaces or other characters the string
      * to group the bits as shown in Examples 2, 3, and 4:
      *
      *   Example 2: "  0b 0011 0100 "
@@ -369,8 +369,8 @@ bu_binary_to_bitv(const char *str, const int nbytes)
      *
      *   Example 4: "  0b|0011|0100 "
      *
-     * Note also that an empty input ('0b') results in a valid but 
-     * zero-value bitv.     
+     * Note also that an empty input ('0b') results in a valid but
+     * zero-value bitv.
      *
      */
     struct bu_vls *v  = bu_vls_vlsinit();
