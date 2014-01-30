@@ -64,7 +64,9 @@ int file_height = MAC_HEIGHT;	/* generally constant */
 int file_width = MAC_WIDTH;
 int file_xoff;
 int file_yoff;
-int scr_width = 1024;		/* "screen" tracks input file if zero */
+int scr_width = 1024;	/* If this and scr_height are later found to be zero,
+			 * they assume the values of file_width and file_height .
+			 * /
 int scr_height = 1024;
 int scr_xoff;
 int scr_yoff;
