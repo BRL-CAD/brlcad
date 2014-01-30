@@ -191,7 +191,8 @@ Mat_to_Rep(matp_t curr_matrix, Registry *registry, InstMgr *instance_list)
     VUNITIZE(outz);
 
     // If we aren't scaling, handle things with axis placement
-    if (NEAR_ZERO(xm - 1.0, RT_LEN_TOL) && NEAR_ZERO(ym - 1.0, RT_LEN_TOL) && NEAR_ZERO(zm - 1.0, RT_LEN_TOL)) {
+    if (NEAR_ZERO(curr_matrix[15] - 1.0, VUNITIZE_TOL)) {
+	bu_log("AXIS2_PLACEMENT_3D created\n");
 	return Create_AXIS2_PLACEMENT_3D(-outorig[0], -outorig[1], -outorig[2],
 		outz[0], outz[1], outz[2], outx[0], outx[1], outx[2], registry, instance_list);
     }
@@ -199,15 +200,15 @@ Mat_to_Rep(matp_t curr_matrix, Registry *registry, InstMgr *instance_list)
     // OK, we're scaling as well - on to cartesian_transformation_operator_3d
     if (NEAR_ZERO(xm - ym, VUNITIZE_TOL) && NEAR_ZERO(xm - zm, VUNITIZE_TOL)) {
 	bu_log("CARTESIAN_TRANSFORMATION_OPERATOR_3D local_origin: %f, %f, %f\n", outorig[0], outorig[1], outorig[2]);
-	bu_log("CARTESIAN_TRANSFORMATION_OPERATOR_3D axis1: %f, %f, %f\n", outx[0], outx[1], outx[2]);
-	bu_log("CARTESIAN_TRANSFORMATION_OPERATOR_3D axis2: %f, %f, %f\n", outy[0], outy[1], outy[2]);
-	bu_log("CARTESIAN_TRANSFORMATION_OPERATOR_3D axis3: %f, %f, %f\n", outz[0], outz[1], outz[2]);
-	bu_log("Scaling: %f\n", xm);
+	bu_log("CARTESIAN_TRANSFORMATION_OPERATOR_3D axis1: %0.14f, %0.14f, %0.14f\n", outx[0], outx[1], outx[2]);
+	bu_log("CARTESIAN_TRANSFORMATION_OPERATOR_3D axis2: %0.14f, %0.14f, %0.14f\n", outy[0], outy[1], outy[2]);
+	bu_log("CARTESIAN_TRANSFORMATION_OPERATOR_3D axis3: %0.14f, %0.14f, %0.14f\n", outz[0], outz[1], outz[2]);
+	bu_log("Scaling: %0.10f\n", xm);
 	return NULL;
     } else {
 	bn_mat_print("Non-Uniform scaling detected", curr_matrix);
-	bu_log("xm: %0.14f\nym: %0.14f\nzm: %0.14f\n", xm, ym, zm);
-	bu_log("xm-ym: %0.14f\nxm-zm: %0.14f\nRT_LEN_TOL: %0.14f", xm-ym, xm-zm, RT_LEN_TOL);
+	bu_log("           xm: %0.14f\n           ym: %0.14f\n          zm: %0.14f\n", xm, ym, zm);
+	bu_log("        xm-ym: %0.14f\n        xm-zm: %0.14f\nVUNITIZE_TOL: %0.14f\n", xm-ym, xm-zm, VUNITIZE_TOL);
 	return NULL;
     }
 }
