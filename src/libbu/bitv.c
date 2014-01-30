@@ -347,7 +347,131 @@ bu_bitv_to_binary(struct bu_vls *v, const struct bu_bitv *bv)
 
 
 struct bu_bitv *
-bu_binary_to_bitv(const char *str, const int nbytes)
+bu_binary_to_bitv(const char *str)
+{
+    /* The incoming binary string is expected to be in the GCC format:
+     * "0b<1 or more binary digits>'" (and it may have leading and
+     * trailing spaces).  The input bit length will be increased to a
+     * multiple of eight if necessary when converting to a bitv_t.
+     *
+     *   Example 1: "  0b00110100 " ('b' may be 'B' if desired)
+     *
+     * Note that only the zeroes and ones are actually tested and any
+     * other character will ignored.  So one can ease producing the
+     * binary input string by using spaces or other characters the string
+     * to group the bits as shown in Examples 2, 3, and 4:
+     *
+     *   Example 2: "  0b 0011 0100 "
+     *
+     *   Example 3: "  0b_0011_0100 "
+     *
+     *   Example 4: "  0b|0011|0100 "
+     *
+     * Note also that an empty input ('0b') results in a valid but
+     * zero-value bitv.
+     *
+     */
+    struct bu_vls *v  = bu_vls_vlsinit();
+    struct bu_vls *v2 = bu_vls_vlsinit();
+    size_t i, j, vlen, new_vlen, len = 0;
+    int err = 0;
+    struct bu_bitv *bv;
+    char abyte[9];
+    size_t word_count;
+    size_t chunksize = 0;
+    volatile size_t BVS = sizeof(bitv_t); /* should be 1 byte as defined in bu.h */
+    unsigned bytes;
+
+    /* copy the input string and remove leading and trailing white space */
+    bu_vls_strcpy(v, str);
+    bu_vls_trimspace(v);
+
+    /* check first two chars (and remove them) */
+    if (*bu_vls_cstr(v) != '0')
+	++err;
+    bu_vls_nibble(v, 1);
+
+    if (*bu_vls_cstr(v) != 'b' && *bu_vls_cstr(v) != 'B')
+	++err;
+    bu_vls_nibble(v, 1);
+
+    /* close up any embedded non-zero or non-one spaces */
+    bu_vls_extend(v2, 2 * bu_vls_strlen(v));
+    bu_vls_trunc(v2, 0);
+    for (i = 0; i < bu_vls_strlen(v); ++i) {
+	const char c = bu_vls_cstr(v)[i];
+	if (c != '0' && c != '1')
+	    continue;
+	bu_vls_printf(v2, "%c", c);
+    }
+
+    if (err)
+	bu_exit(1, "Incorrect binary format '%s' (should be '0b<binary digits>').\n", str);
+
+    /* zero-length input is okay, but we always need to add leading
+     * zeroes to get a bit-length which is a multiple of eight
+     */
+    new_vlen = vlen = bu_vls_strlen(v2);
+    if (new_vlen < 8) {
+	new_vlen = 8;
+    }
+    else if (new_vlen % 8) {
+	new_vlen = (new_vlen / 8) * 8 + 8;
+    }
+
+    if (new_vlen > vlen) {
+	size_t needed_zeroes = new_vlen - vlen;
+	for (i = 0; i < needed_zeroes; ++i) {
+	    bu_vls_prepend(v2, "0");
+	}
+	vlen = new_vlen;
+    }
+
+    len = vlen;
+    bv = bu_bitv_new(len); /* note it is initialized to all zeroes */
+    BU_CK_BITV(bv);
+
+    /* note the final length of the bitv may be greater due to word sizes, etc. */
+
+    abyte[8] = '\0';
+    bytes = len / 8; /* eight digits per byte */
+    word_count = bytes / BVS;
+    chunksize = bytes % BVS;
+
+    if (chunksize == 0) {
+	chunksize = BVS;
+    } else {
+	/* handle partial chunk before using chunksize == BVS */
+	word_count++;
+    }
+
+    j = 0;
+    while (word_count--) {
+	while (chunksize--) {
+	    unsigned long lval;
+	    /* get next eight binary digits from string */
+	    for (i = 0; i < 8; ++i) {
+		abyte[i] = bu_vls_cstr(v2)[j++];
+	    }
+
+	    /* convert into an unsigned long */
+	    lval = strtoul(abyte, (char **)NULL, 2);
+
+	    /* set the appropriate bits in the bit vector */
+	    bv->bits[word_count] |= (bitv_t)lval << (chunksize * 8);
+	}
+	chunksize = BVS;
+    }
+
+    bu_vls_free(v);
+    bu_vls_free(v2);
+
+    return bv;
+}
+
+
+struct bu_bitv *
+bu_binary_to_bitv2(const char *str, const int nbytes)
 {
     /* The incoming binary string is expected to be in the GCC format:
      * "0b<1 or more binary digits>'" (and it may have leading and

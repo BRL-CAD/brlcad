@@ -48,8 +48,8 @@ test_bu_bitv_compare_equal(int argc, char **argv)
     bu_vls_strcpy(v1, argv[2]);
     bu_vls_strcpy(v2, argv[4]);
 
-    b1 = bu_binary_to_bitv(bu_vls_cstr(v1), lenbytes1);
-    b2 = bu_binary_to_bitv(bu_vls_cstr(v2), lenbytes2);
+    b1 = bu_binary_to_bitv2(bu_vls_cstr(v1), lenbytes1);
+    b2 = bu_binary_to_bitv2(bu_vls_cstr(v2), lenbytes2);
 
     BU_CK_VLS(v1);
     BU_CK_VLS(v2);
@@ -104,8 +104,8 @@ test_bu_bitv_compare_equal2(int argc, char **argv)
     bu_vls_strcpy(v1, argv[2]);
     bu_vls_strcpy(v2, argv[4]);
 
-    b1 = bu_binary_to_bitv(bu_vls_cstr(v1), lenbytes1);
-    b2 = bu_binary_to_bitv(bu_vls_cstr(v2), lenbytes2);
+    b1 = bu_binary_to_bitv2(bu_vls_cstr(v1), lenbytes1);
+    b2 = bu_binary_to_bitv2(bu_vls_cstr(v2), lenbytes2);
 
     BU_CK_VLS(v1);
     BU_CK_VLS(v2);
@@ -160,7 +160,7 @@ test_bu_bitv_to_binary(int argc, char **argv)
 
     bu_vls_strcpy(v, argv[3]);
     b1 = bu_bitv_new(sizeof(input_num) * 8);
-    b2 = bu_binary_to_bitv(bu_vls_cstr(v), 0);
+    b2 = bu_binary_to_bitv(bu_vls_cstr(v));
     printf("\nExpected bitv: '%s'", bu_vls_cstr(v));
     printf("\nExpected bitv dump:");
     dump_bitv(b2);
@@ -207,13 +207,14 @@ test_bu_binary_to_bitv(int argc, char **argv)
     struct bu_vls *v = bu_vls_vlsinit();
     struct bu_bitv *b;
     unsigned i, len, err = 0;
+    unsigned ull_size = sizeof(unsigned long long);
 
     if (argc < 2) {
 	bu_exit(1, "ERROR: input format is function_num function_test_args [%s]\n", argv[0]);
     }
 
     bu_vls_strcpy(v, argv[2]);
-    b = bu_binary_to_bitv(bu_vls_cstr(v), 0);
+    b = bu_binary_to_bitv(bu_vls_cstr(v));
     printf("\nNew bitv: '%s'", bu_vls_cstr(v));
     printf("\nNew bitv dump:");
     dump_bitv(b);
@@ -224,6 +225,7 @@ test_bu_binary_to_bitv(int argc, char **argv)
     len = b->nbits;
 
     /* now compare the bitv with the expected int */
+    len = len > ull_size ? ull_size : len;
     for (i = 0; i < len; ++i) {
 	/* get the expected bit */
 	unsigned long i1 = (expected_num >> i) & 0x01;
@@ -235,6 +237,63 @@ test_bu_binary_to_bitv(int argc, char **argv)
     }
 
     printf("\nInput binary string: '%s' Expected hex: '0x%x'", argv[2], (unsigned)expected_num);
+    bu_vls_trunc(v, 0);
+    bu_bitv_vls(v, b);
+    printf("\nInput bitv: '%s'", bu_vls_cstr(v));
+    printf("\nInput bitv dump:");
+    dump_bitv(b);
+
+    test_results = err ? FAIL : PASS;
+
+    bu_bitv_free(b);
+    bu_vls_free(v);
+
+    return test_results;
+}
+
+
+static int
+test_bu_binary_to_bitv2(int argc, char **argv)
+{
+    /*         argv[1]    argv[2]         argv[3]      argv[4]
+     * inputs: <func num> <binary string> <min nbytes> <expected hex num>
+     */
+    int test_results = FAIL;
+    unsigned nbytes = (unsigned)strtol(argv[3], (char **)NULL, 10);
+    unsigned long long int expected_num = strtol(argv[4], (char **)NULL, 16);
+    unsigned ull_size = sizeof(unsigned long long);
+    struct bu_vls *v = bu_vls_vlsinit();
+    struct bu_bitv *b;
+    unsigned i, len, err = 0;
+
+    if (argc < 2) {
+	bu_exit(1, "ERROR: input format is function_num function_test_args [%s]\n", argv[0]);
+    }
+
+    bu_vls_strcpy(v, argv[2]);
+    b = bu_binary_to_bitv2(bu_vls_cstr(v), nbytes);
+    printf("\nNew bitv: '%s'", bu_vls_cstr(v));
+    printf("\nNew bitv dump:");
+    dump_bitv(b);
+
+    BU_CK_VLS(v);
+    BU_CK_BITV(b);
+
+    len = b->nbits;
+
+    /* now compare the bitv with the expected int */
+    len = len > ull_size ? ull_size : len;
+    for (i = 0; i < len; ++i) {
+	/* get the expected bit */
+	unsigned long long i1 = (expected_num >> i) & 0x01;
+	unsigned long long i2 = BU_BITTEST(b, i) ? 1 : 0;
+	if (i1 != i2) {
+	    ++err;
+	    break;
+	}
+    }
+
+    printf("\nInput binary string: '%s' Expected hex: '0x%x'", argv[4], (unsigned)expected_num);
     bu_vls_trunc(v, 0);
     bu_bitv_vls(v, b);
     printf("\nInput bitv: '%s'", bu_vls_cstr(v));
@@ -273,6 +332,9 @@ main(int argc, char **argv)
 	    break;
 	case 4:
 	    return test_bu_bitv_compare_equal2(argc, argv);
+	    break;
+        case 5:
+	    return test_bu_binary_to_bitv2(argc, argv);
 	    break;
     }
 

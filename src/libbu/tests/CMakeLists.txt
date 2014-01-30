@@ -118,6 +118,10 @@ add_test(bu_bitv_compare_equal2_02 tester_bu_bitv   4 "0b00000101" 1 "0b00000010
 add_test(bu_bitv_compare_equal2_03 tester_bu_bitv   4 "0b00000100" 1 "0b000000101" 1) # XFAIL
 add_test(bu_bitv_compare_equal2_04 tester_bu_bitv   4 "0b00000101" 9 "0b000000101" 1)
 
+# args: function number, input binary string, num bytes desired, expected bit value in hex
+add_test(bu_binary_to_bitv2_01 tester_bu_bitv  5 "0b0101"          1 0x5   )
+add_test(bu_binary_to_bitv2_02 tester_bu_bitv  5 "0b0101"          9 0x5   )
+
 # some tests are expected to fail:
 set_tests_properties(
   bu_binary_to_bitv_07

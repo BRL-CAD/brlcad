@@ -2856,10 +2856,16 @@ BU_EXPORT extern void bu_bitv_to_binary(struct bu_vls *v, const struct bu_bitv *
 
 /**
  * Convert a string of BINARY digits (as produced by
+ * bu_bitv_to_binary) into a bit vector.
+ */
+BU_EXPORT extern struct bu_bitv *bu_binary_to_bitv(const char *str);
+
+/**
+ * Convert a string of BINARY digits (as produced by
  * bu_bitv_to_binary) into a bit vector.  The "nbytes" argument may be
  * zero if the user has no minimum length preference.
  */
-BU_EXPORT extern struct bu_bitv *bu_binary_to_bitv(const char *str, const int nbytes);
+BU_EXPORT extern struct bu_bitv *bu_binary_to_bitv2(const char *str, const int nbytes);
 
 /**
  * Compare two bit vectors for equality. They are considered equal iff
