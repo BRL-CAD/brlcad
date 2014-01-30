@@ -192,7 +192,6 @@ Mat_to_Rep(matp_t curr_matrix, Registry *registry, InstMgr *instance_list)
 
     // If we aren't scaling, handle things with axis placement
     if (NEAR_ZERO(curr_matrix[15] - 1.0, VUNITIZE_TOL)) {
-	bu_log("AXIS2_PLACEMENT_3D created\n");
 	return Create_AXIS2_PLACEMENT_3D(-outorig[0], -outorig[1], -outorig[2],
 		outz[0], outz[1], outz[2], outx[0], outx[1], outx[2], registry, instance_list);
     }
@@ -207,8 +206,8 @@ Mat_to_Rep(matp_t curr_matrix, Registry *registry, InstMgr *instance_list)
 	return NULL;
     } else {
 	bn_mat_print("Non-Uniform scaling detected", curr_matrix);
-	bu_log("           xm: %0.14f\n           ym: %0.14f\n          zm: %0.14f\n", xm, ym, zm);
-	bu_log("        xm-ym: %0.14f\n        xm-zm: %0.14f\nVUNITIZE_TOL: %0.14f\n", xm-ym, xm-zm, VUNITIZE_TOL);
+	bu_log("          xm: %0.14f\n          ym: %0.14f\n          zm: %0.14f\n", xm, ym, zm);
+	bu_log("       xm-ym: %0.14f\n       xm-zm: %0.14f\nVUNITIZE_TOL: %0.14f\n", xm-ym, xm-zm, VUNITIZE_TOL);
 	return NULL;
     }
 }
