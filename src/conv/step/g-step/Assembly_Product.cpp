@@ -157,6 +157,56 @@ Identity_AXIS2_PLACEMENT_3D(Registry *registry, InstMgr *instance_list) {
     return Create_AXIS2_PLACEMENT_3D(0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, registry, instance_list);
 }
 
+STEPentity *
+Create_CARTESIAN_TRANSFORMATION_OPERATOR_3D(
+	fastf_t pt_x, fastf_t pt_y, fastf_t pt_z,
+	fastf_t d1_x, fastf_t d1_y, fastf_t d1_z,
+	fastf_t d2_x, fastf_t d2_y, fastf_t d2_z,
+	fastf_t d3_x, fastf_t d3_y, fastf_t d3_z,
+	fastf_t scale,
+	Registry *registry, InstMgr *instance_list)
+{
+    SdaiCartesian_transformation_operator_3d *op3d = (SdaiCartesian_transformation_operator_3d *)registry->ObjCreate("CARTESIAN_TRANSFORMATION_OPERATOR_3D");
+    SdaiDirection *axis1 = (SdaiDirection *)registry->ObjCreate("DIRECTION");
+    SdaiDirection *axis2 = (SdaiDirection *)registry->ObjCreate("DIRECTION");
+    SdaiDirection *axis3 = (SdaiDirection *)registry->ObjCreate("DIRECTION");
+    SdaiCartesian_point *local_origin = (SdaiCartesian_point *)registry->ObjCreate("CARTESIAN_POINT");
+    XYZ_to_Cartesian_point(pt_x, pt_y, pt_z, local_origin);
+    local_origin->name_("'local_origin'");
+    XYZ_to_Direction(d1_x, d1_y, d1_z, axis1);
+    axis1->name_("'axis1'");
+    XYZ_to_Direction(d2_x, d2_y, d2_z, axis2);
+    axis2->name_("'axis2'");
+    XYZ_to_Direction(d3_x, d3_y, d3_z, axis3);
+    axis3->name_("'axis3'");
+
+    op3d->local_origin_(local_origin);
+    op3d->axis1_(axis1);
+    op3d->axis2_(axis2);
+    op3d->axis3_(axis3);
+    op3d->scale_(scale);
+    op3d->name_("''");
+
+    /* For whatever reason, we seem to a) have TWO attributes called "name"
+     * that need to be set and a "description" attribute that doesn't respond
+     * to setting via op3d->description_("''") - fall back on attribute list
+     * access */
+    ((STEPentity *)op3d)->ResetAttributes();
+    STEPattribute * attr = ((STEPentity *)op3d)->NextAttribute();
+    while( attr != 0 ) {
+	if (!bu_strcmp(attr->Name(), "name")) attr->StrToVal("''");
+	if (!bu_strcmp(attr->Name(), "description")) attr->StrToVal("''");
+	attr = ((STEPentity *)op3d)->NextAttribute();
+    }
+
+    instance_list->Append((STEPentity *)local_origin, completeSE);
+    instance_list->Append((STEPentity *)axis1, completeSE);
+    instance_list->Append((STEPentity *)axis2, completeSE);
+    instance_list->Append((STEPentity *)axis3, completeSE);
+    instance_list->Append((STEPentity *)op3d, completeSE);
+    return (STEPentity *)op3d;
+}
+
 // Returns either an AXIS2_PLACEMENT_3D, a CARTESIAN_TRANSFORMATION_OPERATOR_3D, or NULL
 // If NULL, geometry is being deformed in a way not supported by AP203
 STEPentity *
@@ -196,20 +246,23 @@ Mat_to_Rep(matp_t curr_matrix, Registry *registry, InstMgr *instance_list)
 		outz[0], outz[1], outz[2], outx[0], outx[1], outx[2], registry, instance_list);
     }
 
-    // OK, we're scaling as well - on to cartesian_transformation_operator_3d
+    // OK, we're scaling as well - make sure we're uniformly scaling and then use cartesian_transformation_operator_3d
     if (NEAR_ZERO(xm - ym, VUNITIZE_TOL) && NEAR_ZERO(xm - zm, VUNITIZE_TOL)) {
 	bu_log("CARTESIAN_TRANSFORMATION_OPERATOR_3D local_origin: %f, %f, %f\n", outorig[0], outorig[1], outorig[2]);
 	bu_log("CARTESIAN_TRANSFORMATION_OPERATOR_3D axis1: %0.14f, %0.14f, %0.14f\n", outx[0], outx[1], outx[2]);
 	bu_log("CARTESIAN_TRANSFORMATION_OPERATOR_3D axis2: %0.14f, %0.14f, %0.14f\n", outy[0], outy[1], outy[2]);
 	bu_log("CARTESIAN_TRANSFORMATION_OPERATOR_3D axis3: %0.14f, %0.14f, %0.14f\n", outz[0], outz[1], outz[2]);
-	bu_log("Scaling: %0.10f\n", xm);
-	return NULL;
-    } else {
-	bn_mat_print("Non-Uniform scaling detected", curr_matrix);
-	bu_log("          xm: %0.14f\n          ym: %0.14f\n          zm: %0.14f\n", xm, ym, zm);
-	bu_log("       xm-ym: %0.14f\n       xm-zm: %0.14f\nVUNITIZE_TOL: %0.14f\n", xm-ym, xm-zm, VUNITIZE_TOL);
-	return NULL;
+	bu_log("Scaling: %0.10f\n", 1/curr_matrix[15]);
+	return Create_CARTESIAN_TRANSFORMATION_OPERATOR_3D(outorig[0], outorig[1], outorig[2],
+		outx[0], outx[1], outx[2], outy[0], outy[1], outy[2], outz[0], outz[1], outz[2], 1/curr_matrix[15],
+		registry, instance_list);
     }
+
+    // Auugh - if we've gotten here, it's something that we aren't currently set up to handle with AP203
+    bn_mat_print("Non-Uniform scaling detected", curr_matrix);
+    bu_log("          xm: %0.14f\n          ym: %0.14f\n          zm: %0.14f\n", xm, ym, zm);
+    bu_log("       xm-ym: %0.14f\n       xm-zm: %0.14f\nVUNITIZE_TOL: %0.14f\n", xm-ym, xm-zm, VUNITIZE_TOL);
+    return NULL;
 }
 
 // Representation relationships are a complex type
