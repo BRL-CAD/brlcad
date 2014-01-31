@@ -124,10 +124,11 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
 			    if (sc->comb_to_step->find(dir) != sc->comb_to_step->end()) {
 				bu_log("Combination object %s already exists - returning\n", dir->d_namep);
 			    } else {
+				if (tree_construct == 1) ret = 1;
+				if (tree_construct != 1) ret = 3;
 				bu_log("Returning comb object's boolean_representation %s (%d)\n", dir->d_namep, tree_construct);
 				sc->comb_to_step->insert(std::make_pair(dir, (STEPentity *)NULL));
 			    }
-			    ret = 3;
 			}
 		    } else {
 			if (sc->solid_to_step->find(dir) != sc->solid_to_step->end()) {
@@ -160,6 +161,12 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
 void
 Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
 {
+    //TODO - need to build sets of regions and assemblies.  Each region tree should
+    //be fed into the tree walker above and return a representation item which will
+    //henceforth define the shape of that region object.  Items *above* regions will
+    //be handled the way such combs are handled in AP203, with any appropriate
+    //modifications for AP214
+
     struct rt_db_internal comb_intern;
     sc->dbip = wdbp->dbip;
     rt_db_get_internal(&comb_intern, dp, sc->dbip, bn_mat_identity, &rt_uniresource);
