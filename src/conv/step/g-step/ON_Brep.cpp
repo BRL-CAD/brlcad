@@ -87,26 +87,29 @@ Add_Edge(ON_BrepTrim *trim, SdaiPath *e_loop_path, ON_Brep_Info_AP203 *info)
 
     // Some trims don't have an associated edge - allow for that
     if (edge) {
-	STEPentity *new_oriented_edge = info->registry->ObjCreate("ORIENTED_EDGE");
-	SdaiOriented_edge *oriented_edge = (SdaiOriented_edge *)new_oriented_edge;
-	SdaiEdge_curve *e_curve = (SdaiEdge_curve *)info->edge_curves.at(edge->EdgeCurveIndexOf());
+	int ec_index = edge->EdgeCurveIndexOf();
+	if (ec_index < (int)info->edge_curves.size()) {
+	    STEPentity *new_oriented_edge = info->registry->ObjCreate("ORIENTED_EDGE");
+	    SdaiOriented_edge *oriented_edge = (SdaiOriented_edge *)new_oriented_edge;
+	    SdaiEdge_curve *e_curve = (SdaiEdge_curve *)info->edge_curves.at(ec_index);
 
-	oriented_edge->name_("''");
-	oriented_edge->edge_element_((SdaiEdge *)e_curve);
+	    oriented_edge->name_("''");
+	    oriented_edge->edge_element_((SdaiEdge *)e_curve);
 
-	if (trim->m_bRev3d) {
-	    oriented_edge->edge_start_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(1)->m_vertex_index)));
-	    oriented_edge->edge_end_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(0)->m_vertex_index)));
-	} else {
-	    oriented_edge->edge_start_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(0)->m_vertex_index)));
-	    oriented_edge->edge_end_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(1)->m_vertex_index)));
+	    if (trim->m_bRev3d) {
+		oriented_edge->edge_start_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(1)->m_vertex_index)));
+		oriented_edge->edge_end_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(0)->m_vertex_index)));
+	    } else {
+		oriented_edge->edge_start_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(0)->m_vertex_index)));
+		oriented_edge->edge_end_(((SdaiVertex *)info->vertex_pnts.at(edge->Vertex(1)->m_vertex_index)));
+	    }
+
+	    // add the edge
+	    oriented_edge->orientation_((Boolean)!trim->m_bRev3d);
+	    info->oriented_edges.push_back(new_oriented_edge);
+	    i = info->oriented_edges.size() - 1;
+	    e_loop_path->edge_list_()->AddNode(new EntityNode((SDAI_Application_instance *)(info->oriented_edges.at(i))));
 	}
-
-	// add the edge
-	oriented_edge->orientation_((Boolean)!trim->m_bRev3d);
-	info->oriented_edges.push_back(new_oriented_edge);
-	i = info->oriented_edges.size() - 1;
-	e_loop_path->edge_list_()->AddNode(new EntityNode((SDAI_Application_instance *)(info->oriented_edges.at(i))));
     }
 }
 
@@ -240,8 +243,8 @@ ON_BRep_to_STEP(struct directory *dp, ON_Brep *brep, AP203_Contents *sc, STEPent
     //ON_wString wstr;
     //ON_TextLog dump(wstr);
     //brep->Dump(dump);
-    //ON_String ss = wstr;
-    //bu_log("Brep:\n %s\n", ss.Array());
+    //ON_String ssw = wstr;
+    //bu_log("Brep:\n %s\n", ssw.Array());
     if (!brep) {
 	STEP_Empty_BRep(dp, sc, brep_shape, brep_product);
 	return;
