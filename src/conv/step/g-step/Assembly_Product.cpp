@@ -247,7 +247,7 @@ Mat_to_Rep(matp_t curr_matrix, Registry *registry, InstMgr *instance_list)
 
     // If we aren't scaling, handle things with axis placement
     if (NEAR_ZERO(curr_matrix[15] - 1.0, VUNITIZE_TOL)) {
-	return Create_AXIS2_PLACEMENT_3D(-outorig[0], -outorig[1], -outorig[2],
+	return Create_AXIS2_PLACEMENT_3D(outorig[0], outorig[1], outorig[2],
 		outz[0], outz[1], outz[2], outx[0], outx[1], outx[2], registry, instance_list);
     }
 
