@@ -57,7 +57,7 @@ Comb_to_STEP(struct directory *dp, AP203_Contents *sc, STEPentity **shape, STEPe
     // PRODUCT_DEFINITION
     SdaiProduct_definition *prod_def = (SdaiProduct_definition *)sc->registry->ObjCreate("PRODUCT_DEFINITION");
     sc->instance_list->Append((STEPentity *)prod_def, completeSE);
-    prod_def->id_("''");
+    prod_def->id_(str.c_str());
     prod_def->description_("''");
     prod_def->frame_of_reference_(sc->design_context);
 
@@ -72,9 +72,9 @@ Comb_to_STEP(struct directory *dp, AP203_Contents *sc, STEPentity **shape, STEPe
     SdaiProduct *prod = (SdaiProduct *)sc->registry->ObjCreate("PRODUCT");
     sc->instance_list->Append((STEPentity *)prod, completeSE);
     prod_def_form->of_product_(prod);
-    prod->id_("''");
+    prod->id_(str.c_str());
     prod->name_(str.c_str());
-    prod->description_("''");
+    prod->description_(str.c_str());
     prod->frame_of_reference_()->AddNode(new EntityNode((SDAI_Application_instance *)mech_context));
 
     // PRODUCT_DEFINITION_SHAPE
