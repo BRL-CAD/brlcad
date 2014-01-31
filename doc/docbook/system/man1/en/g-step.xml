@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='gstep1'>
+<refmeta>
+    <refentrytitle>G-STEP
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>g-step</refname>
+<refpurpose>STEP Translator/Exporter (BRL-CAD to STEP AP203)</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>g-step</command>
+    <arg choice='plain'>-o <replaceable>output_file.stp</replaceable></arg>
+    <arg choice='plain'><replaceable>database.g</replaceable></arg>
+    <arg choice='opt'><replaceable>object(s)</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>g-step</emphasis>
+converts the specified objects of the BRL-CAD database,
+<emphasis remap='I'>database.g,</emphasis>
+to a STEP AP203 file,
+<emphasis remap='I'>output_file.stp.</emphasis></para>
+
+
+<para>The following options are recognized</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-o </option><emphasis remap='I'>output_file_or_directory</emphasis></term>
+  <listitem>
+<para>Specifies the output file to which the STEP output is written.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>There are some inherent limits when writing BRL-CAD geometry to
+	the AP203 format.  The primary solid object representation used by STEP
+	is the NURBS Boundray Representation, and BRL-CAD's CSG models must be
+	converted to that representation upon export.  Boolean operations are
+	not supported in AP203, so the objects are either to write out all objects
+	and post-process them in another system to get the final forms or have
+	BRL-CAD itself perform the boolean evaluation at the region level.  The
+	latter will eventually be the default, but for the moment that feature
+	is not yet ready for general deployment.
+</para>
+
+
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLES</title>
+
+	<example><title>Export All .g File Contents</title>
+
+		<para>
+			<userinput>g-step -o m35.stp m35.g</userinput>
+		</para>
+		<para>
+			Writes out the full hierarchy of the .g file to m35.stp.
+		</para>
+	</example>
+
+	<example><title>Export Parts of a .g File</title>
+
+		<para>
+			<userinput>g-step -o m35.stp m35.g cab suspension</userinput>
+		</para>
+		<para>
+			Writes out the hierarchies associated with the combs cab and suspension, along with all combs and solids needed to define those hierarchies.
+		</para>
+	</example>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+  <para>Further reading:</para>
+<variablelist remap='TP'>
+	<varlistentry>
+		<term></term>
+  <listitem>
+	  <para>
+		  <emphasis remap='I'>Recommended Practices for AP203</emphasis>
+		  PDES, Inc. Industry consortium, April 1998.
+	  </para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+		<term></term>
+  <listitem>
+	  <para>
+		  <emphasis remap='I'>Usage Guide for the STEP PDM Schema V1.2</emphasis>
+		  PDM Implementor Forum, Release 4.3, January 2002.
+	  </para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1993-2014 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+
