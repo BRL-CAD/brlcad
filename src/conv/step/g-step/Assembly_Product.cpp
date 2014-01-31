@@ -224,7 +224,7 @@ Create_CARTESIAN_TRANSFORMATION_OPERATOR_3D(
 // how STEP views assemblies.
 
 STEPentity *
-Mat_to_Rep(matp_t curr_matrix, Registry *registry, InstMgr *instance_list)
+Mat_to_Rep(int flip_outorig, matp_t curr_matrix, Registry *registry, InstMgr *instance_list)
 {
     point_t origin, outorig;
     vect_t x_axis, y_axis, z_axis;
@@ -247,8 +247,19 @@ Mat_to_Rep(matp_t curr_matrix, Registry *registry, InstMgr *instance_list)
 
     // If we aren't scaling, handle things with axis placement
     if (NEAR_ZERO(curr_matrix[15] - 1.0, VUNITIZE_TOL)) {
-	return Create_AXIS2_PLACEMENT_3D(outorig[0], outorig[1], outorig[2],
-		outz[0], outz[1], outz[2], outx[0], outx[1], outx[2], registry, instance_list);
+	if (!flip_outorig) {
+	    return Create_AXIS2_PLACEMENT_3D(
+		    outorig[0], outorig[1], outorig[2],
+		    outz[0], outz[1], outz[2],
+		    outx[0], outx[1], outx[2],
+		    registry, instance_list);
+	} else {
+	    return Create_AXIS2_PLACEMENT_3D(
+		    -outorig[0], -outorig[1], -outorig[2],
+		    outz[0], outz[1], outz[2],
+		    outx[0], outx[1], outx[2],
+		    registry, instance_list);
+	}
     }
 
     // Have scaling, which STEP doesn't support in assemblies
@@ -316,7 +327,7 @@ Add_Assembly_Product(struct directory *dp, struct db_i *dbip, struct bu_ptbl *ch
 	    //bu_log("%s under %s: ", curr_dp->d_namep, dp->d_namep);
 	    //bu_log(" - found matrix over %s in %s\n", curr_dp->d_namep, dp->d_namep);
 	    //bn_mat_print(curr_dp->d_namep, curr_matrix);
-	    curr_transform = Mat_to_Rep(curr_matrix, sc->registry, sc->instance_list);
+	    curr_transform = Mat_to_Rep(sc->flip_transforms, curr_matrix, sc->registry, sc->instance_list);
 	} else {
 	    curr_transform = Identity_AXIS2_PLACEMENT_3D(sc->registry, sc->instance_list);
 	    //bu_log("identity matrix\n");

@@ -55,15 +55,19 @@ main(int argc, char *argv[])
     int convert_tops_list = 0;
     struct directory **paths;
     int path_cnt = 0;
+    int flip_transforms = 0;
     AP203_Contents *sc = new AP203_Contents;
 
     // process command line arguments
     int c;
     char *output_file = (char *)NULL;
-    while ((c = bu_getopt(argc, argv, "o:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "fo:")) != -1) {
 	switch (c) {
 	    case 'o':
 		output_file = bu_optarg;
+		break;
+	    case 'f':
+		flip_transforms = 1;
 		break;
 	    default:
 		usage();
@@ -205,6 +209,8 @@ main(int argc, char *argv[])
     sc->solid_to_step_shape = new std::map<struct directory *, STEPentity *>;
     sc->comb_to_step = new std::map<struct directory *, STEPentity *>;
     sc->comb_to_step_shape = new std::map<struct directory *, STEPentity *>;
+
+    sc->flip_transforms = flip_transforms;
 
     for (int i = 0; i < path_cnt; i++) {
 	/* Now, add actual DATA */
