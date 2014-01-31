@@ -103,7 +103,7 @@ Object_To_STEP(struct directory *dp, struct rt_db_internal *intern, struct rt_wd
 	    (*sc->solid_to_step_shape)[dp] = brep_shape;
 	    break;
 	case DB5_MINORTYPE_BRLCAD_COMBINATION:
-	    //(void)Comb_Tree_to_STEP(dp, wdbp, sc);
+	    (void)Comb_Tree_to_STEP(dp, wdbp, sc);
 	    break;
 	default:
 	    /* If it isn't already a BRep, it's not a comb, and it's not a special case try to make it

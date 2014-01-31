@@ -50,6 +50,7 @@ struct AP203_Contents {
     std::map<struct directory *, STEPentity *> *comb_to_step;
     std::map<struct directory *, STEPentity *> *comb_to_step_shape;
     int flip_transforms;
+    struct db_i *dbip;
 };
 
 struct AP214_tree_result {
