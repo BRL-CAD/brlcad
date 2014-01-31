@@ -44,10 +44,13 @@
 struct AP203_Contents {
     Registry *registry;
     InstMgr *instance_list;
-    std::map<struct directory *, STEPentity *> solid_to_step;
-    std::map<struct directory *, STEPentity *> solid_to_step_shape;
-    std::map<struct directory *, STEPentity *> comb_to_step;
-    std::map<struct directory *, STEPentity *> comb_to_step_shape;
+    STEPentity *default_context;
+    SdaiApplication_context *application_context;
+    SdaiDesign_context *design_context;
+    std::map<struct directory *, STEPentity *> *solid_to_step;
+    std::map<struct directory *, STEPentity *> *solid_to_step_shape;
+    std::map<struct directory *, STEPentity *> *comb_to_step;
+    std::map<struct directory *, STEPentity *> *comb_to_step_shape;
 };
 
 

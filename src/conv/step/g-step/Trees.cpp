@@ -72,13 +72,13 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
     for (int j = (int)BU_PTBL_LEN(combs) - 1; j >= 0; j--){
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(combs, j);
 	int is_wrapper = !Comb_Is_Wrapper(curr_dp, wdbp);
-	if (sc->comb_to_step.find(curr_dp) == sc->comb_to_step.end()) {
+	if (sc->comb_to_step->find(curr_dp) == sc->comb_to_step->end()) {
 	    if (!is_wrapper) {
 		STEPentity *comb_shape;
 		STEPentity *comb_product;
 		Comb_to_STEP(curr_dp, sc, &comb_shape, &comb_product);
-		sc->comb_to_step[curr_dp] = comb_product;
-		sc->comb_to_step_shape[curr_dp] = comb_shape;
+		(*sc->comb_to_step)[curr_dp] = comb_product;
+		(*sc->comb_to_step_shape)[curr_dp] = comb_shape;
 		non_wrapper_combs.insert(curr_dp);
 	    } else {
 		struct rt_db_internal comb_intern;
@@ -90,14 +90,14 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
 		comb = (struct rt_comb_internal *)(comb_intern.idb_ptr);
 		child = Comb_Get_Only_Child(curr_dp, wdbp);
 		curr_node = db_find_named_leaf(comb->tree, child->d_namep);
-		if (curr_node && (sc->solid_to_step.find(child) != sc->solid_to_step.end())) {
+		if (curr_node && (sc->solid_to_step->find(child) != sc->solid_to_step->end())) {
 		    std::ostringstream ss;
 		    ss << "'" << curr_dp->d_namep << "'";
 		    std::string str = ss.str();
-		    sc->comb_to_step[curr_dp] = sc->solid_to_step.find(child)->second;
-		    sc->comb_to_step_shape[curr_dp] = sc->solid_to_step_shape.find(child)->second;
+		    (*sc->comb_to_step)[curr_dp] = sc->solid_to_step->find(child)->second;
+		    (*sc->comb_to_step_shape)[curr_dp] = sc->solid_to_step_shape->find(child)->second;
 		    //bu_log("Comb wrapper: %s\n", curr_dp->d_namep);
-		    ((SdaiProduct_definition *)(sc->comb_to_step[curr_dp]))->formation_()->of_product_()->name_(str.c_str());
+		    ((SdaiProduct_definition *)((*sc->comb_to_step)[curr_dp]))->formation_()->of_product_()->name_(str.c_str());
 		}
 	    }
 	}

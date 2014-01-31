@@ -43,7 +43,7 @@ Comb_to_STEP(struct directory *dp, AP203_Contents *sc, STEPentity **shape, STEPe
     ss << "'" << dp->d_namep << "'";
     std::string str = ss.str();
 
-    STEPcomplex *context = Add_Default_Geometric_Context(sc);
+    STEPcomplex *context = (STEPcomplex *)sc->default_context;
 
     // MECHANICAL_CONTEXT
     SdaiMechanical_context *mech_context = (SdaiMechanical_context *)sc->registry->ObjCreate("MECHANICAL_CONTEXT");
@@ -51,25 +51,15 @@ Comb_to_STEP(struct directory *dp, AP203_Contents *sc, STEPentity **shape, STEPe
     mech_context->name_("''");
     mech_context->discipline_type_("''");
 
-    // APPLICATION_CONTEXT - TODO, should be one of these per file?
-    SdaiApplication_context *app_context = (SdaiApplication_context *)sc->registry->ObjCreate("APPLICATION_CONTEXT");
-    sc->instance_list->Append((STEPentity *)app_context, completeSE);
-    mech_context->frame_of_reference_(app_context);
-    app_context->application_("'CONFIGURATION CONTROLLED 3D DESIGNS OF MECHANICAL PARTS AND ASSEMBLIES'");
-
-    // DESIGN_CONTEXT - TODO, should be one of these per file?
-    SdaiDesign_context *design_context = (SdaiDesign_context *)sc->registry->ObjCreate("DESIGN_CONTEXT");
-    sc->instance_list->Append((STEPentity *)design_context, completeSE);
-    design_context->name_("''");
-    design_context->life_cycle_stage_("'design'");
-    design_context->frame_of_reference_(app_context);
+    // APPLICATION_CONTEXT
+    mech_context->frame_of_reference_(sc->application_context);
 
     // PRODUCT_DEFINITION
     SdaiProduct_definition *prod_def = (SdaiProduct_definition *)sc->registry->ObjCreate("PRODUCT_DEFINITION");
     sc->instance_list->Append((STEPentity *)prod_def, completeSE);
     prod_def->id_("''");
     prod_def->description_("''");
-    prod_def->frame_of_reference_(design_context);
+    prod_def->frame_of_reference_(sc->design_context);
 
     // PRODUCT_DEFINITION_FORMATION
     SdaiProduct_definition_formation *prod_def_form = (SdaiProduct_definition_formation *)sc->registry->ObjCreate("PRODUCT_DEFINITION_FORMATION");

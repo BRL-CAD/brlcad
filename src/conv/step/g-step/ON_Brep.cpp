@@ -201,7 +201,7 @@ STEP_Empty_BRep(struct directory *dp, AP203_Contents *sc, STEPentity **brep_shap
 {
     std::cout << "Making empty brep: " << dp->d_namep << std::endl;
 
-    STEPcomplex *context = Add_Default_Geometric_Context(sc);
+    STEPcomplex *context = (STEPcomplex *)sc->default_context;
     SdaiClosed_shell *closed_shell;
     SdaiManifold_solid_brep *manifold_solid_brep;
     SdaiAdvanced_brep_shape_representation *advanced_brep;
@@ -257,8 +257,7 @@ ON_BRep_to_STEP(struct directory *dp, ON_Brep *brep, AP203_Contents *sc, STEPent
     info->surfaces.assign(brep->m_S.Count(), (STEPentity *)0);
     info->faces.assign(brep->m_F.Count(), (STEPentity *)0);
 
-    /* The BRep needs a context - TODO: this can probably be used once for the whole step file... */
-    STEPcomplex *context = Add_Default_Geometric_Context(sc);
+    STEPcomplex *context = (STEPcomplex *)sc->default_context;
 
     // Set up vertices and associated cartesian points
     for (int i = 0; i < brep->m_V.Count(); ++i) {
