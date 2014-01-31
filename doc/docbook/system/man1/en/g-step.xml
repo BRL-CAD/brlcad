@@ -43,7 +43,7 @@ to a STEP AP203 file,
 
 <para>There are some inherent limits when writing BRL-CAD geometry to
 	the AP203 format.  The primary solid object representation used by STEP
-	is the NURBS Boundray Representation, and BRL-CAD's CSG models must be
+	is the NURBS Boundary Representation, and BRL-CAD's CSG models must be
 	converted to that representation upon export.  Boolean operations are
 	not supported in AP203, so the objects are either to write out all objects
 	and post-process them in another system to get the final forms or have
@@ -95,7 +95,7 @@ to a STEP AP203 file,
   <listitem>
 	  <para>
 		  <emphasis remap='I'>Usage Guide for the STEP PDM Schema V1.2</emphasis>
-		  PDM Implementor Forum, Release 4.3, January 2002.
+		  PDM Implementer Forum, Release 4.3, January 2002.
 	  </para>
   </listitem>
   </varlistentry>

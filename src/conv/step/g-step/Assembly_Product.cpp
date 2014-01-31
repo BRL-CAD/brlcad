@@ -210,7 +210,7 @@ Create_CARTESIAN_TRANSFORMATION_OPERATOR_3D(
 // Returns either an AXIS2_PLACEMENT_3D, a CARTESIAN_TRANSFORMATION_OPERATOR_3D, or NULL
 // If NULL, geometry is being deformed in a way not supported by AP203
 //
-// Note:  After some experimentation with CARTESIAN_TRANSFORMATINO_OPERATOR_3D did not
+// Note:  After some experimentation with CARTESIAN_TRANSFORMATION_OPERATOR_3D did not
 // succeed in generating useful imports, it looks like the limitation expressed in the
 // STEP PDM Schema usage guide may hold in this context:
 // http://www.steptools.com/support/stdev_docs/express/pdm/pdmug_release4_3.pdf
@@ -219,7 +219,7 @@ Create_CARTESIAN_TRANSFORMATION_OPERATOR_3D(
 //  principle incorporated in the assembly only by rigid motion (i.e.,
 //  translation and/or rotation) excluding mirroring and scaling."
 //
-// What this means is that any scaling operations in BRL-CAD's matricies are not
+// What this means is that any scaling operations in BRL-CAD's matrices are not
 // going to be expressible in STEP, because it is an "in-principle" conflict with
 // how STEP views assemblies.
 
@@ -362,7 +362,7 @@ Add_Assembly_Product(struct directory *dp, struct db_i *dbip, struct bu_ptbl *ch
 	    cshape->represented_product_relation_(pshape);
 	    sc->instance_list->Append((STEPentity *)cshape, completeSE);
 	} else {
-	    bu_log("\nA matrix with a scaling component is present in the following comb relationship:\n  %s/%s\nScaling is not supported by STEP in assembly structures - to export this structure, consider using\npush or xpush to remove the scaling matricies from the hierarchy.\n", dp->d_namep, curr_dp->d_namep);
+	    bu_log("\nA matrix with a scaling component is present in the following comb relationship:\n  %s/%s\nScaling is not supported by STEP in assembly structures - to export this structure, consider using\npush or xpush to remove the scaling matrices from the hierarchy.\n", dp->d_namep, curr_dp->d_namep);
 	}
     }
     rt_db_free_internal(&comb_intern);
