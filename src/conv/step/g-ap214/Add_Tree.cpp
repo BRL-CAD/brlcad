@@ -48,25 +48,9 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
     if (parent_branch == 0) bu_log("\n");
     switch (t->tr_op) {
         case OP_UNION:
-	    if (t->tr_op == OP_UNION && !parent_branch) {
-		if (depth > 0) bu_log("%*s", depth, "");
-		bu_log(".UNION.\n");
-	    }
         case OP_INTERSECT:
-	    if (t->tr_op == OP_INTERSECT && !parent_branch) {
-		if (depth > 0) bu_log("%*s", depth, "");
-		bu_log(".INTERSECT.\n");
-	    }
         case OP_SUBTRACT:
-	    if (t->tr_op == OP_SUBTRACT && !parent_branch) {
-		if (depth > 0) bu_log("%*s", depth, "");
-		bu_log(".SUBTRACT.\n");
-	    }
         case OP_XOR:
-	    if (t->tr_op == OP_XOR) {
-		if (depth > 0) bu_log("%*s", depth, "");
-		bu_log(".XOR.\n");
-	    }
             /* convert right */
             ret = conv_tree(d, depth+1, 1, &right, t->tr_b.tb_right, sc);
 	    right_ret = ret;
@@ -75,64 +59,48 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
             }
 	    /* fall through */
         case OP_NOT:
-	    if (t->tr_op == OP_NOT) {
-		if (depth > 0) bu_log("%*s", depth, "");
-		bu_log(".NOT.\n");
-	    }
         case OP_GUARD:
-	    if (t->tr_op == OP_GUARD) {
-		if (depth > 0) bu_log("%*s", depth, "");
-		bu_log(".GUARD.\n");
-	    }
         case OP_XNOP:
-	    if (t->tr_op == OP_XNOP) {
-		if (depth > 0) bu_log("%*s", depth, "");
-		bu_log(".XNOP.\n");
-	    }
             /* convert left */
             ret = conv_tree(d, depth+1, 2, &left, t->tr_b.tb_left, sc);
 	    left_ret = ret;
             if (ret == -1) {
 		break;
-	    } else {
-		if (depth > 0) bu_log("%*s", depth, "");
-		bu_log("(left) boolean_result type %d.\n", ret);
-            }
-	    if (left_ret && right_ret) {
-		if (depth > 0) bu_log("%*s", depth, "");
-		if (left && right) {
-		    bu_log("Constructed boolean for %s (left: %s,right: %s): ", (*d)->d_namep, left->d_namep, right->d_namep);
-		}
-		if (left && !right) {
-		    bu_log("Constructed boolean for %s (left: %s,right: boolean_result): ", (*d)->d_namep, left->d_namep);
-		}
-		if (!left && right) {
-		    bu_log("Constructed boolean for %s (left: boolean_result, right: %s): ", (*d)->d_namep, right->d_namep);
-		}
-		if (!left && !right) {
-		    bu_log("Constructed boolean for %s: ", (*d)->d_namep);
-		}
-		if (left_ret == 1) bu_log("solid");
-		if (left_ret == 2) bu_log("boolean_result");
-		if (left_ret == 3) bu_log("comb(boolean_result)");
-		switch (t->tr_op) {
-		    case OP_UNION:
-			bu_log(" u ");
-			break;
-		    case OP_INTERSECT:
-			bu_log(" + ");
-			break;
-		    case OP_SUBTRACT:
-			bu_log(" - ");
-			break;
-		}
-		if (right_ret == 1) bu_log("solid\n\n");
-		if (right_ret == 2) bu_log("boolean_result\n\n");
-		if (right_ret == 3) bu_log("comb(boolean_result)\n\n");
-
-		/* If we've got something here, anything above this is a boolean_result */
-		ret = 2;
 	    }
+	    if (depth > 0) bu_log("%*s", depth, "");
+	    bu_log("Returning boolean_result: ");
+	    if (left && right) {
+		bu_log("Constructed boolean for %s (left: %s,right: %s): ", (*d)->d_namep, left->d_namep, right->d_namep);
+	    }
+	    if (left && !right) {
+		bu_log("Constructed boolean for %s (left: %s,right: boolean_result): ", (*d)->d_namep, left->d_namep);
+	    }
+	    if (!left && right) {
+		bu_log("Constructed boolean for %s (left: boolean_result, right: %s): ", (*d)->d_namep, right->d_namep);
+	    }
+	    if (!left && !right) {
+		bu_log("Constructed boolean for %s: ", (*d)->d_namep);
+	    }
+	    if (left_ret == 1) bu_log("solid");
+	    if (left_ret == 2) bu_log("boolean_result");
+	    if (left_ret == 3) bu_log("comb(boolean_result)");
+	    switch (t->tr_op) {
+		case OP_UNION:
+		    bu_log(" u ");
+		    break;
+		case OP_INTERSECT:
+		    bu_log(" + ");
+		    break;
+		case OP_SUBTRACT:
+		    bu_log(" - ");
+		    break;
+	    }
+	    if (right_ret == 1) bu_log("solid\n");
+	    if (right_ret == 2) bu_log("boolean_result\n");
+	    if (right_ret == 3) bu_log("comb(boolean_result)\n");
+
+	    /* If we've got something here, anything above this is a boolean_result */
+	    ret = 2;
             break;
         case OP_DB_LEAF:
             {
@@ -154,26 +122,20 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
 			    int tree_construct = conv_tree(&dir, depth+1, 0, NULL, comb->tree, sc);
 			    if (depth > 0) bu_log("%*s", depth, "");
 			    if (sc->comb_to_step->find(dir) != sc->comb_to_step->end()) {
-				bu_log("Combination object %s already exists\n", dir->d_namep);
+				bu_log("Combination object %s already exists - returning\n", dir->d_namep);
 			    } else {
-				bu_log("Creating comb object %s\n", dir->d_namep);
+				bu_log("Returning comb object's boolean_representation %s (%d)\n", dir->d_namep, tree_construct);
 				sc->comb_to_step->insert(std::make_pair(dir, (STEPentity *)NULL));
-			    }
-			    if (depth > 0) bu_log("%*s", depth, "");
-			    if (tree_construct == 2) {
-			    bu_log("Return code from conv_tree building %s's tree: %d\n", dir->d_namep, tree_construct);
-			    } else {
-			    bu_log("Return code from conv_tree building %s's tree: %d (should be 2 - this is the object that defines the comb's final shape)\n", dir->d_namep, tree_construct);
 			    }
 			    ret = 3;
 			}
 		    } else {
 			if (sc->solid_to_step->find(dir) != sc->solid_to_step->end()) {
 			    if (depth > 0) bu_log("%*s", depth, "");
-			    bu_log("Solid object %s already exists\n", dir->d_namep);
+			    bu_log("Solid object %s already exists - Returning\n", dir->d_namep);
 			} else {
 			    if (depth > 0) bu_log("%*s", depth, "");
-			    bu_log("Creating solid object %s\n", dir->d_namep);
+			    bu_log("Returning solid object %s\n", dir->d_namep);
 			    sc->solid_to_step->insert(std::make_pair(dir, (STEPentity *)NULL));
 			}
 			ret = 1;
