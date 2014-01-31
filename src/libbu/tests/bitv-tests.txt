@@ -1,5 +1,5 @@
 # a local library for this dir
-BRLCAD_ADDLIB(libbu_tests "test_funcs.c" "" NO_INSTALL)
+BRLCAD_ADDLIB(libbu_tests "test_funcs.c" libbu NO_INSTALL)
 
 ###############################
 #      bu_bitv_and testing    #
