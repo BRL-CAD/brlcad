@@ -196,6 +196,9 @@ Populate_Instance_List(ON_Brep_Info_AP203 *info)
     ON_NurbsSurfaceCV_Finalize_GenericAggregates(info);
 }
 
+//TODO - technically, we'll have to create a full set of STEP
+//objects for the empty brep to be "valid" - currently, the Closed_Shell
+//will warn about invalidity on import.  Not sure if its worth it.
 void
 STEP_Empty_BRep(struct directory *dp, AP203_Contents *sc, STEPentity **brep_shape, STEPentity **brep_product)
 {
