@@ -169,6 +169,21 @@ build_curve_root(const ON_Curve *curve, const ON_Interval *domain, Subcurve &roo
     }
 }
 
+HIDDEN Subcurve *
+get_curve_root(
+	const ON_Curve *curve,
+	const ON_Interval *domain)
+{
+    Subcurve *root = new Subcurve;
+    if (!build_curve_root(curve, domain, *root)) {
+	delete root;
+	root = NULL;
+    }
+    if (root == NULL) {
+	throw std::bad_alloc();
+    }
+    return root;
+}
 
 HIDDEN bool
 build_surface_root(const ON_Surface *surf, const ON_Interval *u_domain, const ON_Interval *v_domain, Subsurface &root)
@@ -214,6 +229,22 @@ build_surface_root(const ON_Surface *surf, const ON_Interval *u_domain, const ON
     }
 }
 
+HIDDEN Subsurface *
+get_surface_root(
+	const ON_Surface *surf,
+	const ON_Interval *u_domain,
+	const ON_Interval *v_domain)
+{
+    Subsurface *root = new Subsurface;
+    if (!build_surface_root(surf, u_domain, v_domain, *root)) {
+	delete root;
+	root = NULL;
+    }
+    if (root == NULL) {
+	throw std::bad_alloc();
+    }
+    return root;
+}
 
 HIDDEN ON_Curve *
 curve_fitting(ON_Curve *in, double fitting_tolerance = ON_ZERO_TOLERANCE, bool delete_curve = true)
@@ -497,18 +528,14 @@ ON_Intersect(const ON_3dPoint &pointA,
     }
     check_domain(curveB_domain, curveB.Domain(), "curveB_domain");
 
-    Subcurve *root;
-    if (treeB != NULL) {
-	root = treeB;
-    } else {
-	root = new Subcurve;
+    Subcurve *root = treeB;
+    try {
 	if (root == NULL) {
-	    return false;
+	    root = get_curve_root(&curveB, curveB_domain);
 	}
-	if (!build_curve_root(&curveB, curveB_domain, *root)) {
-	    delete root;
-	    return false;
-	}
+    } catch (std::bad_alloc &e) {
+	bu_log("%s", e.what());
+	return false;
     }
 
     if (!root->IsPointIn(pointA, tolerance)) {
@@ -693,18 +720,14 @@ ON_Intersect(const ON_3dPoint &pointA,
     u_domain = check_domain(surfaceB_udomain, surfaceB.Domain(0), "surfaceB_udomain");
     v_domain = check_domain(surfaceB_vdomain, surfaceB.Domain(1), "surfaceB_vdomain");
 
-    Subsurface *root;
-    if (treeB != NULL) {
-	root = treeB;
-    } else {
-	root = new Subsurface;
+    Subsurface *root = treeB;
+    try {
 	if (root == NULL) {
-	    return false;
+	    root = get_surface_root(&surfaceB, &u_domain, &v_domain);
 	}
-	if (!build_surface_root(&surfaceB, &u_domain, &v_domain, *root)) {
-	    delete root;
-	    return false;
-	}
+    } catch (std::bad_alloc &e) {
+	bu_log("%s", e.what());
+	return false;
     }
 
     if (!root->IsPointIn(pointA, tolerance)) {
@@ -978,37 +1001,21 @@ ON_Intersect(const ON_Curve *curveA,
 
     // Generate the roots of the two curve trees (if the trees passed in
     // are NULL)
-    Subcurve *rootA, *rootB;
-    if (treeA == NULL) {
-	rootA = new Subcurve;
+    Subcurve *rootA = treeA;
+    Subcurve *rootB = treeB;
+    try {
 	if (rootA == NULL) {
-	    return 0;
+	    rootA = get_curve_root(curveA, curveA_domain);
 	}
-	if (!build_curve_root(curveA, curveA_domain, *rootA)) {
-	    delete rootA;
-	    return 0;
-	}
-    } else {
-	rootA = treeA;
-    }
-
-    if (treeB == NULL) {
-	rootB = new Subcurve;
 	if (rootB == NULL) {
-	    if (treeA == NULL) {
-		delete rootA;
-	    }
-	    return 0;
+	    rootB = get_curve_root(curveB, curveB_domain);
 	}
-	if (!build_curve_root(curveB, curveB_domain, *rootB)) {
-	    if (treeA == NULL) {
-		delete rootA;
-	    }
-	    delete rootB;
-	    return 0;
+    } catch (std::bad_alloc &e) {
+	bu_log("%s", e.what());
+	if (treeA == NULL) {
+	    delete rootA;
 	}
-    } else {
-	rootB = treeB;
+	return 0;
     }
 
     // We adjust the tolerance from 3D scale to respective 2D scales.
@@ -1482,39 +1489,22 @@ ON_Intersect(const ON_Curve *curveA,
 
     // Generate the roots of the curve tree and the surface tree
     // (If they are not passed in...)
-    Subcurve *rootA;
-    Subsurface *rootB;
-
-    if (treeA == NULL) {
-	rootA = new Subcurve;
+    Subcurve *rootA = treeA;
+    Subsurface *rootB = treeB;
+    try {
 	if (rootA == NULL) {
-	    return 0;
+	    rootA = get_curve_root(curveA, curveA_domain);
 	}
-	if (!build_curve_root(curveA, curveA_domain, *rootA)) {
-	    delete rootA;
-	    return 0;
-	}
-    } else {
-	rootA = treeA;
-    }
-
-    if (treeB == NULL) {
-	rootB = new Subsurface;
 	if (rootB == NULL) {
-	    if (treeA == NULL) {
-		delete rootA;
-	    }
-	    return 0;
+	    rootB = get_surface_root(surfaceB, surfaceB_udomain,
+				     surfaceB_vdomain);
 	}
-	if (!build_surface_root(surfaceB, surfaceB_udomain, surfaceB_vdomain, *rootB)) {
-	    if (treeA == NULL) {
-		delete rootA;
-	    }
-	    delete rootB;
-	    return 0;
+    } catch (std::bad_alloc &e) {
+	bu_log("%s", e.what());
+	if (treeA == NULL) {
+	    delete rootA;
 	}
-    } else {
-	rootB = treeB;
+	return 0;
     }
 
     // We adjust the tolerance from 3D scale to respective 2D scales.
@@ -2538,38 +2528,27 @@ ON_Intersect(const ON_Surface *surfA,
     /* First step: Initialize the first two Subsurface.
      * It's just like getting the root of the surface tree.
      */
-    typedef std::vector<std::pair<Subsurface *, Subsurface *> > NodePairs;
-    NodePairs candidates, next_candidates;
-    Subsurface *rootA, *rootB;
-    if (treeA == NULL) {
-	rootA = new Subsurface;
+    Subsurface *rootA = treeA;
+    Subsurface *rootB = treeB;
+    try {
 	if (rootA == NULL) {
-	    return 0;
+	    rootA = get_surface_root(surfA, surfaceA_udomain,
+				     surfaceA_vdomain);
 	}
-	if (!build_surface_root(surfA, surfaceA_udomain, surfaceA_vdomain, *rootA)) {
+	if (rootB == NULL) {
+	    rootB = get_surface_root(surfB, surfaceB_udomain,
+				     surfaceB_vdomain);
+	}
+    } catch (std::bad_alloc &e) {
+	bu_log("%s", e.what());
+	if (treeA == NULL) {
 	    delete rootA;
 	}
-    } else {
-	rootA = treeA;
+	return 0;
     }
 
-    if (treeB == NULL) {
-	rootB = new Subsurface;
-	if (rootB == NULL) {
-	    if (treeA == NULL) {
-		delete rootA;
-	    }
-	    return 0;
-	}
-	if (!build_surface_root(surfB, surfaceB_udomain, surfaceB_vdomain, *rootB)) {
-	    if (treeA == NULL) {
-		delete rootA;
-	    }
-	    delete rootB;
-	}
-    } else {
-	rootB = treeB;
-    }
+    typedef std::vector<std::pair<Subsurface *, Subsurface *> > NodePairs;
+    NodePairs candidates, next_candidates;
 
     if (rootA->Intersect(*rootB, intersection_tolerance)) {
 	candidates.push_back(std::make_pair(rootA, rootB));
