@@ -33,14 +33,21 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ###
+set(STRICT_MODE @BRLCAD_ENABLE_STRICT@)
 file(GLOB invalid_files "@CMAKE_CURRENT_BINARY_DIR@/validation/*.invalid")
 if(invalid_files)
-  message("Compilation failure due to style errors:")
+  if(STRICT_MODE)
+    message("Compilation failure due to style errors:")
+  else(STRICT_MODE)
+    message("Warning - style errors in source code:")
+  endif(STRICT_MODE)
   foreach(invalid_file ${invalid_files})
     file(READ "${invalid_file}" src_file)
     message("   ${src_file}")
   endforeach(invalid_file ${invalid_files})
-  message(FATAL_ERROR "Build failed.")
+  if(STRICT_MODE)
+    message(FATAL_ERROR "Build failed.")
+  endif(STRICT_MODE)
 endif(invalid_files)
 
 # Local Variables:
