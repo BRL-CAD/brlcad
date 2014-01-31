@@ -911,6 +911,21 @@ compare_by_m_a0(const ON_X_EVENT *a, const ON_X_EVENT *b)
     return 0;
 }
 
+double
+tolerance_2d_from_3d(
+	double tolerance_3d,
+	Subcurve *root,
+	const ON_Curve *curve,
+	const ON_Interval *curve_domain)
+{
+    double tolerance_2d = tolerance_3d;
+    double bbox_diagonal_len = root->m_curve->BoundingBox().Diagonal().Length();
+    if (!ON_NearZero(bbox_diagonal_len)) {
+	const ON_Interval dom = curve_domain ? *curve_domain : curve->Domain();
+	tolerance_2d = tolerance_3d / (bbox_diagonal_len * dom.Length());
+    }
+    return tolerance_2d;
+}
 
 int
 ON_Intersect(const ON_Curve *curveA,
@@ -1019,16 +1034,10 @@ ON_Intersect(const ON_Curve *curveA,
     }
 
     // We adjust the tolerance from 3D scale to respective 2D scales.
-    double l = rootA->m_curve->BoundingBox().Diagonal().Length();
-    double dl = curveA_domain ? curveA_domain->Length() : curveA->Domain().Length();
-    if (!ON_NearZero(l)) {
-	t1_tolerance = intersection_tolerance / l * dl;
-    }
-    l = rootB->m_curve->BoundingBox().Diagonal().Length();
-    dl = curveB_domain ? curveB_domain->Length() : curveB->Domain().Length();
-    if (!ON_NearZero(l)) {
-	t2_tolerance = intersection_tolerance / l * dl;
-    }
+    t1_tolerance = tolerance_2d_from_3d(intersection_tolerance, rootA, curveA,
+					curveA_domain);
+    t2_tolerance = tolerance_2d_from_3d(intersection_tolerance, rootB, curveB,
+					curveB_domain);
 
     typedef std::vector<std::pair<Subcurve *, Subcurve *> > NodePairs;
     NodePairs candidates, next_candidates;
