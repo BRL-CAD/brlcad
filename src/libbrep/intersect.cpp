@@ -2520,94 +2520,17 @@ struct Overlapevent {
     }
 };
 
-
-int
-ON_Intersect(const ON_Surface *surfA,
-	     const ON_Surface *surfB,
-	     ON_ClassArray<ON_SSX_EVENT> &x,
-	     double intersection_tolerance,
-	     double overlap_tolerance,
-	     double fitting_tolerance,
-	     const ON_Interval *surfaceA_udomain,
-	     const ON_Interval *surfaceA_vdomain,
-	     const ON_Interval *surfaceB_udomain,
-	     const ON_Interval *surfaceB_vdomain,
-	     Subsurface *treeA,
-	     Subsurface *treeB)
+HIDDEN ON_SimpleArray<OverlapSegment *>
+get_overlapping_segments(
+	const ON_Surface *surfA,
+	const ON_Surface *surfB,
+	Subsurface *treeA,
+	Subsurface *treeB,
+	double intersection_tolerance,
+	double overlap_tolerance
+	)
 {
-    if (surfA == NULL || surfB == NULL) {
-	return 0;
-    }
-
-    int original_count = x.Count();
-
-    if (intersection_tolerance <= 0.0) {
-	intersection_tolerance = SSI_DEFAULT_TOLERANCE;
-    }
-    if (overlap_tolerance < intersection_tolerance) {
-	overlap_tolerance = 2.0 * intersection_tolerance;
-    }
-    if (fitting_tolerance < intersection_tolerance) {
-	fitting_tolerance = intersection_tolerance;
-    }
-
-    check_domain(surfaceA_udomain, surfA->Domain(0), "surfaceA_udomain");
-    check_domain(surfaceA_vdomain, surfA->Domain(1), "surfaceA_vdomain");
-    check_domain(surfaceB_udomain, surfB->Domain(0), "surfaceB_udomain");
-    check_domain(surfaceB_vdomain, surfB->Domain(1), "surfaceB_vdomain");
-
-    /* First step: Initialize the first two Subsurface.
-     * It's just like getting the root of the surface tree.
-     */
-    Subsurface *rootA = treeA;
-    Subsurface *rootB = treeB;
-    try {
-	if (rootA == NULL) {
-	    rootA = get_surface_root(surfA, surfaceA_udomain,
-				     surfaceA_vdomain);
-	}
-	if (rootB == NULL) {
-	    rootB = get_surface_root(surfB, surfaceB_udomain,
-				     surfaceB_vdomain);
-	}
-    } catch (std::bad_alloc &e) {
-	bu_log("%s", e.what());
-	if (treeA == NULL) {
-	    delete rootA;
-	}
-	return 0;
-    }
-
-    typedef std::vector<std::pair<Subsurface *, Subsurface *> > NodePairs;
-    NodePairs candidates, next_candidates;
-
-    if (rootA->Intersect(*rootB, intersection_tolerance)) {
-	candidates.push_back(std::make_pair(rootA, rootB));
-    } else {
-	if (treeA == NULL) {
-	    delete rootA;
-	}
-	if (treeB == NULL) {
-	    delete rootB;
-	}
-	return 0;
-    }
-
-    // We adjust the tolerance from 3D scale to respective 2D scales.
-    double intersection_tolerance_A =
-	tolerance_2d_from_3d(intersection_tolerance, rootA, surfA,
-		surfaceA_udomain, surfaceA_vdomain);
-
-    double fitting_tolerance_A = tolerance_2d_from_3d(fitting_tolerance,
-	    rootA, surfA, surfaceA_udomain, surfaceA_vdomain);
-
-    double intersection_tolerance_B =
-	tolerance_2d_from_3d(intersection_tolerance, rootB, surfB,
-		surfaceB_udomain, surfaceB_vdomain);
-
-    double fitting_tolerance_B = tolerance_2d_from_3d(fitting_tolerance,
-	    rootB, surfB, surfaceB_udomain, surfaceB_vdomain);
-
+    ON_SimpleArray<OverlapSegment *> overlaps;
     ON_3dPointArray curvept, tmp_curvept;
     ON_2dPointArray curveuv, curvest, tmp_curveuv, tmp_curvest;
 
@@ -2623,8 +2546,6 @@ ON_Intersect(const ON_Surface *surfA,
     // So we actually don't need to generate the Bezier patches explicitly,
     // and we can get the boundaries of them using IsoCurve() on knots.
     // Deal with boundaries with curve-surface intersections.
-
-    ON_SimpleArray<OverlapSegment *> overlaps;
     for (int i = 0; i < 4; i++) {
 	const ON_Surface *surf1 = i >= 2 ? surfB : surfA;
 	const ON_Surface *surf2 = i >= 2 ? surfA : surfB;
@@ -2740,6 +2661,101 @@ ON_Intersect(const ON_Surface *surfA,
 	}
 	delete []knots;
     }
+    return overlaps;
+}
+
+int
+ON_Intersect(const ON_Surface *surfA,
+	     const ON_Surface *surfB,
+	     ON_ClassArray<ON_SSX_EVENT> &x,
+	     double intersection_tolerance,
+	     double overlap_tolerance,
+	     double fitting_tolerance,
+	     const ON_Interval *surfaceA_udomain,
+	     const ON_Interval *surfaceA_vdomain,
+	     const ON_Interval *surfaceB_udomain,
+	     const ON_Interval *surfaceB_vdomain,
+	     Subsurface *treeA,
+	     Subsurface *treeB)
+{
+    if (surfA == NULL || surfB == NULL) {
+	return 0;
+    }
+
+    int original_count = x.Count();
+
+    if (intersection_tolerance <= 0.0) {
+	intersection_tolerance = SSI_DEFAULT_TOLERANCE;
+    }
+    if (overlap_tolerance < intersection_tolerance) {
+	overlap_tolerance = 2.0 * intersection_tolerance;
+    }
+    if (fitting_tolerance < intersection_tolerance) {
+	fitting_tolerance = intersection_tolerance;
+    }
+
+    check_domain(surfaceA_udomain, surfA->Domain(0), "surfaceA_udomain");
+    check_domain(surfaceA_vdomain, surfA->Domain(1), "surfaceA_vdomain");
+    check_domain(surfaceB_udomain, surfB->Domain(0), "surfaceB_udomain");
+    check_domain(surfaceB_vdomain, surfB->Domain(1), "surfaceB_vdomain");
+
+    /* First step: Initialize the first two Subsurface.
+     * It's just like getting the root of the surface tree.
+     */
+    Subsurface *rootA = treeA;
+    Subsurface *rootB = treeB;
+    try {
+	if (rootA == NULL) {
+	    rootA = get_surface_root(surfA, surfaceA_udomain,
+				     surfaceA_vdomain);
+	}
+	if (rootB == NULL) {
+	    rootB = get_surface_root(surfB, surfaceB_udomain,
+				     surfaceB_vdomain);
+	}
+    } catch (std::bad_alloc &e) {
+	bu_log("%s", e.what());
+	if (treeA == NULL) {
+	    delete rootA;
+	}
+	return 0;
+    }
+
+    typedef std::vector<std::pair<Subsurface *, Subsurface *> > NodePairs;
+    NodePairs candidates, next_candidates;
+
+    if (rootA->Intersect(*rootB, intersection_tolerance)) {
+	candidates.push_back(std::make_pair(rootA, rootB));
+    } else {
+	if (treeA == NULL) {
+	    delete rootA;
+	}
+	if (treeB == NULL) {
+	    delete rootB;
+	}
+	return 0;
+    }
+
+    // We adjust the tolerance from 3D scale to respective 2D scales.
+    double intersection_tolerance_A =
+	tolerance_2d_from_3d(intersection_tolerance, rootA, surfA,
+		surfaceA_udomain, surfaceA_vdomain);
+
+    double fitting_tolerance_A = tolerance_2d_from_3d(fitting_tolerance,
+	    rootA, surfA, surfaceA_udomain, surfaceA_vdomain);
+
+    double intersection_tolerance_B =
+	tolerance_2d_from_3d(intersection_tolerance, rootB, surfB,
+		surfaceB_udomain, surfaceB_vdomain);
+
+    double fitting_tolerance_B = tolerance_2d_from_3d(fitting_tolerance,
+	    rootB, surfB, surfaceB_udomain, surfaceB_vdomain);
+
+    ON_3dPointArray curvept, tmp_curvept;
+    ON_2dPointArray curveuv, curvest, tmp_curveuv, tmp_curvest;
+
+    ON_SimpleArray<OverlapSegment *> overlaps = get_overlapping_segments(surfA, surfB,
+	    treeA, treeB, intersection_tolerance, overlap_tolerance);
 
     int count_before = overlaps.Count();
     // Not points, but a bundle of params:
