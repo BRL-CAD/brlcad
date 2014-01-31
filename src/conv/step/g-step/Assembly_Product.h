@@ -24,7 +24,7 @@
 #ifndef ASSEMBLY_PRODUCT_H
 #define ASSEMBLY_PRODUCT_H
 
-#include "AP203.h"
+#include "AP_Common.h"
 
 void Add_Assembly_Product(struct directory *dp,
                                  struct db_i *dbip,

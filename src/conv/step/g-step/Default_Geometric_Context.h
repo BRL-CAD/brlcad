@@ -25,7 +25,7 @@
 #ifndef DEFAULT_GEOMETRIC_CONTEXT_H
 #define DEFAULT_GEOMETRIC_CONTEXT_H
 
-#include "AP203.h"
+#include "AP_Common.h"
 
 STEPcomplex *
 Add_Default_Geometric_Context(AP203_Contents *sc);

@@ -21,8 +21,9 @@ set(gap214_SOURCES
   ../g-step/Shape_Representation.cpp
   ../g-step/Shape_Representation_Relationship.cpp
   Shape_Definition_Representation.cpp
-  Add_Primitive.cpp
   Add_Tree.cpp
+  Comb.cpp
+  G_Objects.cpp
   g-ap214.cpp
   )
 

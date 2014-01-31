@@ -24,7 +24,7 @@
 #ifndef COMB_H
 #define COMB_H
 
-#include "AP203.h"
+#include "AP_Common.h"
 
 void
 Comb_to_STEP(struct directory *dp,

@@ -1,5 +1,4 @@
-/* S H A P E _ R E P R E S E N T A T I O N _ R E L A T I O N S H I P . H
- *
+/*                   A P _ S C H E M A . H
  * BRL-CAD
  *
  * Copyright (c) 2013-2014 United States Government as represented by
@@ -18,28 +17,41 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file Shape_Representation_Relationship.h
+/** @file step/ap_schema.h
+ *
+ * Determine which header to include
  *
  */
 
-#ifndef SHAPE_REPRESENTATION_RELATIONSHIP_H
-#define SHAPE_REPRESENTATION_RELATIONSHIP_H
+#ifndef AP_COMMON_H
+#define AP_COMMON_H
 
-#include "AP_Common.h"
+#include "common.h"
 
-/* Shape Representation Relationship
+#ifdef AP203
+#  include "AP203.h"
+#endif
+
+#ifdef AP203e2
+#  include "AP203e2.h"
+#endif
+
+#ifdef AP214e3
+#  include "AP214e3.h"
+#endif
+
+#ifdef AP242
+#  include "AP242.h"
+#endif
+
+#endif /* AP_COMMON_H */
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
  */
-STEPentity *
-Add_Shape_Representation_Relationship(AP203_Contents *sc,
-	SdaiRepresentation *shape_rep, SdaiRepresentation *manifold_shape);
-
-#endif /*SHAPE_REPRESENTATION_RELATIONSHIP_H*/
-
-// Local Variables:
-// tab-width: 8
-// mode: C++
-// c-basic-offset: 4
-// indent-tabs-mode: t
-// c-file-style: "stroustrup"
-// End:
-// ex: shiftwidth=4 tabstop=8

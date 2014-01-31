@@ -1,4 +1,4 @@
-/*                      A P 2 1 4 . h
+/*                      A P 2 1 4 E 3. h
  * BRL-CAD
  *
  * Copyright (c) 2013-2014 United States Government as represented by
@@ -25,23 +25,40 @@
 #define AP214_H
 
 #include "common.h"
-#include <map>
-#include "raytrace.h"
-#include <sdai.h>
-#include <STEPcomplex.h>
-#include <STEPattribute.h>
-#include <sdai.h>
-#include <STEPfile.h>
 
-struct AP214_primitive_result {
-    STEPentity *shape;
-    STEPentity *product;
+#include "raytrace.h"
+
+#include "BRLCADWrapper.h"
+#include "STEPWrapper.h"
+#include "STEPfile.h"
+#include "sdai.h"
+#include "STEPcomplex.h"
+#include "STEPattribute.h"
+
+#include <sstream>
+#include <map>
+#include <set>
+
+// Container structure that holds elements needed by multiple functions
+struct AP203_Contents {
+    Registry *registry;
+    InstMgr *instance_list;
+    STEPentity *default_context;
+    SdaiApplication_context *application_context;
+    std::map<struct directory *, STEPentity *> *solid_to_step;
+    std::map<struct directory *, STEPentity *> *solid_to_step_shape;
+    std::map<struct directory *, STEPentity *> *comb_to_step;
+    std::map<struct directory *, STEPentity *> *comb_to_step_shape;
+    int flip_transforms;
 };
 
 struct AP214_tree_result {
     STEPentity *shape;
     STEPentity *product;
 };
+
+void XYZ_to_Cartesian_point(double x, double y, double z, SdaiCartesian_point *step_pnt);
+void XYZ_to_Direction(double x, double y, double z, SdaiDirection *step_direction);
 
 struct AP214_tree_result *
 AP214_Add_Tree(struct directory *dp, struct rt_wdb *wdbp, Registry *registry, InstMgr *instance_list);

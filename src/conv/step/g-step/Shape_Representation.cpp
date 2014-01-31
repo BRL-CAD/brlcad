@@ -21,7 +21,7 @@
  *
  */
 
-#include "AP203.h"
+#include "AP_Common.h"
 #include "Shape_Representation.h"
 
 SdaiRepresentation *

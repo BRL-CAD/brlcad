@@ -24,7 +24,7 @@
 #ifndef SHAPE_REPRESENTATION_H
 #define SHAPE_REPRESENTATION_H
 
-#include "AP203.h"
+#include "AP_Common.h"
 
 SdaiRepresentation *
 Add_Shape_Representation(AP203_Contents *sc, SdaiRepresentation_context *context);

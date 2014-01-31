@@ -23,34 +23,21 @@
  *
  */
 
-#include "common.h"
-
-#include <iostream>
+#include "AP_Common.h"
 
 #include "bu.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
 
-//
-// step-g related headers
-//
-#include <BRLCADWrapper.h>
-#include <STEPWrapper.h>
-#include <STEPfile.h>
-#include <sdai.h>
-#include <STEPcomplex.h>
-#include <STEPattribute.h>
-#include <SdaiHeaderSchema.h>
-#include "AP214.h"
-//#include "Comb_Tree.h"
+#include <iostream>
 
-//
-// include NIST step related headers
-//
-#include <sdai.h>
-#include <STEPfile.h>
+// step-g related headers
+#include "SdaiHeaderSchema.h"
 #include "schema.h"
+
+#include "G_Objects.h"
+#include "Default_Geometric_Context.h"
 
 void
 usage()
@@ -62,7 +49,14 @@ usage()
 int
 main(int argc, char *argv[])
 {
+    STEPentity *shape;
+    STEPentity *product;
     int ret = 0;
+    int convert_tops_list = 0;
+    struct directory **paths;
+    int path_cnt = 0;
+    int flip_transforms = 0;
+    AP203_Contents *sc = new AP203_Contents;
 
     // process command line arguments
     int c;
@@ -97,7 +91,7 @@ main(int argc, char *argv[])
     }
 
     if (argc < 2) {
-	bu_exit(3, "ERROR: specify object to export");
+	convert_tops_list = 1;
     }
 
 
@@ -117,11 +111,35 @@ main(int argc, char *argv[])
     }
 
     struct db_i *dbip = dotg->GetDBIP();
-    struct directory *dp = db_lookup(dbip, argv[1], LOOKUP_QUIET);
-    if (dp == RT_DIR_NULL) {
-	std::cerr << "ERROR: cannot find " << argv[1] << "\n" << std::endl;
-	delete dotg;
-	return 1;
+    struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
+
+    if (convert_tops_list) {
+	/* Need db_update_nref for DB_LS_TOPS to work */
+	db_update_nref(dbip, &rt_uniresource);
+	path_cnt = db_ls(dbip, DB_LS_TOPS, &paths);
+	if (!path_cnt) {
+	    std::cerr << "ERROR: no objects found in .g file" << "\n" << std::endl;
+	    delete dotg;
+	    return 1;
+	}
+    } else {
+	int i = 1;
+	paths = (struct directory **)bu_malloc(sizeof(struct directory *) * argc, "dp array");
+	while (i < argc) {
+	    bu_log("%d: %s\n", i, argv[i]);
+	    struct directory *dp = db_lookup(dbip, argv[i], LOOKUP_QUIET);
+	    if (dp == RT_DIR_NULL) {
+		std::cerr << "ERROR: cannot find " << argv[i] << "\n" << std::endl;
+		delete dotg;
+		bu_free(paths, "free path memory");
+		return 1;
+	    } else {
+		paths[i-1] = dp;
+		path_cnt++;
+		i++;
+	    }
+	}
+	paths[i-1] = RT_DIR_NULL;
     }
 
     struct bu_vls scratch_string;
@@ -168,15 +186,30 @@ main(int argc, char *argv[])
     fs->schema_identifiers_(schema_tmp);
     header_instances->Append((SDAI_Application_instance *)fs, completeSE);
 
-    /* Now, add actual DATA */
-    struct rt_db_internal intern;
-    rt_db_get_internal(&intern, dp, dbip, bn_mat_identity, &rt_uniresource);
-    RT_CK_DB_INTERNAL(&intern);
-    struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
-    if (intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_COMBINATION) {
-	(void)AP214_Add_Tree(dp, wdbp, registry, &instance_list);
-    } else {
-	(void)AP214_Add_Primitive(dp, wdbp, registry, &instance_list);
+    sc->registry = registry;
+    sc->instance_list = &instance_list;
+
+    sc->default_context = Add_Default_Geometric_Context(sc);
+
+    sc->application_context = (SdaiApplication_context *)sc->registry->ObjCreate("APPLICATION_CONTEXT");
+    sc->instance_list->Append((STEPentity *)sc->application_context, completeSE);
+    sc->application_context->application_("'Core Data for Automotive Mechanical Design Process'");
+
+    sc->solid_to_step = new std::map<struct directory *, STEPentity *>;
+    sc->solid_to_step_shape = new std::map<struct directory *, STEPentity *>;
+    sc->comb_to_step = new std::map<struct directory *, STEPentity *>;
+    sc->comb_to_step_shape = new std::map<struct directory *, STEPentity *>;
+
+    sc->flip_transforms = flip_transforms;
+
+    for (int i = 0; i < path_cnt; i++) {
+	/* Now, add actual DATA */
+	struct directory *dp = paths[i];
+	struct rt_db_internal intern;
+	rt_db_get_internal(&intern, dp, dbip, bn_mat_identity, &rt_uniresource);
+	RT_CK_DB_INTERNAL(&intern);
+	Object_To_STEP(dp, &intern, wdbp, sc);
+	rt_db_free_internal(&intern);
     }
 
     /* Write STEP file */
@@ -187,11 +220,17 @@ main(int argc, char *argv[])
 
     /* Free memory */
     header_instances->DeleteInstances();
-    //instance_list.DeleteInstances();
+    instance_list.DeleteInstances();
     delete dotg;
     delete registry;
     delete sfile;
+    delete sc->solid_to_step;
+    delete sc->solid_to_step_shape;
+    delete sc->comb_to_step;
+    delete sc->comb_to_step_shape;
+    delete sc;
     bu_vls_free(&scratch_string);
+    bu_free(paths, "free dp list");
 
     return ret;
 }

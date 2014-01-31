@@ -33,7 +33,9 @@
 void
 Object_To_STEP(struct directory *dp, struct rt_db_internal *intern, struct rt_wdb *wdbp, AP203_Contents *sc)
 {
+    int type;
     struct bn_tol tol;
+    struct bn_tol arb_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
     ON_Brep **brep;
     STEPentity *brep_shape;
     STEPentity *brep_product;
@@ -41,6 +43,59 @@ Object_To_STEP(struct directory *dp, struct rt_db_internal *intern, struct rt_wd
     if (sc->solid_to_step->find(dp) != sc->solid_to_step->end()) return;
     if (sc->comb_to_step->find(dp) != sc->comb_to_step->end()) return;
     switch (intern->idb_minor_type) {
+	case DB5_MINORTYPE_BRLCAD_HALF: /* half_space_solid */
+	    bu_log("half");
+	    //break;
+	case DB5_MINORTYPE_BRLCAD_SPH: /* sphere */
+	    bu_log("sph");
+	    //break;
+	case DB5_MINORTYPE_BRLCAD_ELL:
+	    /* Check if the ELL happens to be a sphere */
+	    bu_log("sph");
+	    //break; - NOTE that we only want to break here if the ell is actually a sphere- otherwise we fall through
+	case DB5_MINORTYPE_BRLCAD_REC:
+	    /* Check if the REC happens to be an RCC - right circular cylinder */
+	    bu_log("rec");
+	    //break; - NOTE that we only want to break here if the rec is actually a rcc - otherwise we fall through
+	case DB5_MINORTYPE_BRLCAD_TGC:
+	    /* Check if the TGC happens to be an RCC - right circular cylinder,
+	       -	     * or if it can be approximated as a right circular cone */
+	    bu_log("tgc");
+	    //break; - NOTE that we only want to break here if the tgc is actually a rcc - otherwise we fall through
+	case DB5_MINORTYPE_BRLCAD_ARB8:
+	    /* In principle, some arbs will satisfy block and
+	       -	     * right_angular_wedge - not clear if it's worth
+	       -	     * testing the CSG inputs to identify them */
+	    type = rt_arb_std_type(intern, &arb_tol);
+	    switch (type) {
+		case 4:
+		    bu_log("arb4");
+		    //break;
+		case 5:
+		    bu_log("arb5");
+		    //break;
+		case 6:
+		    bu_log("arb6");
+		    //break;
+		case 7:
+		    bu_log("arb7");
+		    //break;
+		case 8:
+		    bu_log("arb8");
+		    //break;
+		default:
+		    bu_log("invalid");
+		    //break;
+	    }
+	    //break;
+	case DB5_MINORTYPE_BRLCAD_TOR:
+	    /* The torus, while expressible in AP214 as a geometric representation,
+	       -	 * do not appear to be regarded as a csg_primitive or solid.  The
+	       -	 * toroidal surface might be used to construct a solid, but it's not
+	       -	 * clear at this point that there is any advantage over just using the
+	       -	 * NURBS form. */
+	    bu_log("tor");
+	    //break;
 	case DB5_MINORTYPE_BRLCAD_BREP:
 	    RT_BREP_TEST_MAGIC((struct rt_brep_internal *)(intern->idb_ptr));
 	    (void)ON_BRep_to_STEP(dp, ((struct rt_brep_internal *)(intern->idb_ptr))->brep, sc, &brep_shape, &brep_product);
@@ -48,10 +103,10 @@ Object_To_STEP(struct directory *dp, struct rt_db_internal *intern, struct rt_wd
 	    (*sc->solid_to_step_shape)[dp] = brep_shape;
 	    break;
 	case DB5_MINORTYPE_BRLCAD_COMBINATION:
-	    (void)Comb_Tree_to_STEP(dp, wdbp, sc);
+	    //(void)Comb_Tree_to_STEP(dp, wdbp, sc);
 	    break;
 	default:
-	    /* If it isn't already a BRep and it's not a comb, try to make it
+	    /* If it isn't already a BRep, it's not a comb, and it's not a special case try to make it
 	     * into a BRep */
 	    ON_Brep *brep_obj = ON_Brep::New();
 	    if (intern->idb_meth->ft_brep != NULL) {

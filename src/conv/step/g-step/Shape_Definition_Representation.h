@@ -27,7 +27,7 @@
 #ifndef SHAPE_DEFINITION_REPRESENTATION_H
 #define SHAPE_DEFINITION_REPRESENTATION_H
 
-#include "AP203.h"
+#include "AP_Common.h"
 
 /* Shape Definition Representation
  */

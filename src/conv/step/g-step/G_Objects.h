@@ -24,7 +24,7 @@
 #ifndef G_OBJECTS_H
 #define G_OBJECTS_H
 
-#include "AP203.h"
+#include "AP_Common.h"
 void Object_To_STEP(struct directory *dp, struct rt_db_internal *intern,
 	struct rt_wdb *wdbp, AP203_Contents *sc);
 

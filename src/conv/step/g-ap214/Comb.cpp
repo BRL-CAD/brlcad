@@ -45,21 +45,11 @@ Comb_to_STEP(struct directory *dp, AP203_Contents *sc, STEPentity **shape, STEPe
 
     STEPcomplex *context = (STEPcomplex *)sc->default_context;
 
-    // MECHANICAL_CONTEXT
-    SdaiMechanical_context *mech_context = (SdaiMechanical_context *)sc->registry->ObjCreate("MECHANICAL_CONTEXT");
-    sc->instance_list->Append((STEPentity *)mech_context, completeSE);
-    mech_context->name_("''");
-    mech_context->discipline_type_("''");
-
-    // APPLICATION_CONTEXT
-    mech_context->frame_of_reference_(sc->application_context);
-
     // PRODUCT_DEFINITION
     SdaiProduct_definition *prod_def = (SdaiProduct_definition *)sc->registry->ObjCreate("PRODUCT_DEFINITION");
     sc->instance_list->Append((STEPentity *)prod_def, completeSE);
     prod_def->id_(str.c_str());
     prod_def->description_("''");
-    prod_def->frame_of_reference_(sc->design_context);
 
     // PRODUCT_DEFINITION_FORMATION
     SdaiProduct_definition_formation *prod_def_form = (SdaiProduct_definition_formation *)sc->registry->ObjCreate("PRODUCT_DEFINITION_FORMATION");
@@ -75,7 +65,6 @@ Comb_to_STEP(struct directory *dp, AP203_Contents *sc, STEPentity **shape, STEPe
     prod->id_(str.c_str());
     prod->name_(str.c_str());
     prod->description_(str.c_str());
-    prod->frame_of_reference_()->AddNode(new EntityNode((SDAI_Application_instance *)mech_context));
 
     // PRODUCT_DEFINITION_SHAPE
     SdaiProduct_definition_shape *pshape = (SdaiProduct_definition_shape *)sc->registry->ObjCreate("PRODUCT_DEFINITION_SHAPE");
@@ -88,7 +77,6 @@ Comb_to_STEP(struct directory *dp, AP203_Contents *sc, STEPentity **shape, STEPe
     // SHAPE_DEFINITION_REPRESENTATION
     SdaiShape_definition_representation *shape_def_rep = (SdaiShape_definition_representation*)sc->registry->ObjCreate("SHAPE_DEFINITION_REPRESENTATION");
     sc->instance_list->Append((STEPentity *)shape_def_rep, completeSE);
-    shape_def_rep->definition_(pshape);
 
     // SHAPE_REPRESENTATION
     SdaiShape_representation* shape_rep = (SdaiShape_representation *)Add_Shape_Representation(sc, (SdaiRepresentation_context *) context);

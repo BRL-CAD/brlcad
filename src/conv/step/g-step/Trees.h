@@ -24,7 +24,7 @@
 #ifndef TREES_H
 #define TREES_H
 
-#include "AP203.h"
+#include "AP_Common.h"
 STEPentity *Comb_Tree_to_STEP(struct directory *dp,
                               struct rt_wdb *wdbp,
                               AP203_Contents *sc);

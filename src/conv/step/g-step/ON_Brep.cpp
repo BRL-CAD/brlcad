@@ -60,7 +60,7 @@
 // Note that STEPentity is the same thing as
 // SDAI_Application_instance... see src/clstepcore/sdai.h line 220
 //
-#include "AP203.h"
+#include "AP_Common.h"
 #include "ON_Brep.h"
 #include "Shape_Definition_Representation.h"
 #include "Default_Geometric_Context.h"

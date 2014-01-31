@@ -24,7 +24,7 @@
 #ifndef ON_BREP_H
 #define ON_BREP_H
 
-#include "AP203.h"
+#include "AP_Common.h"
 
 struct ON_Brep_Info_AP203 {
     Registry *registry;

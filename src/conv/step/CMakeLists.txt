@@ -104,6 +104,7 @@ if(BRLCAD_ENABLE_AP242)
 endif(BRLCAD_ENABLE_AP242)
 
 CMAKEFILES(
+  AP_Common.h
   BRLCADWrapper.h
   STEPWrapper.h
   ap_schema.h
