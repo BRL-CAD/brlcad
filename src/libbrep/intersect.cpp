@@ -1431,6 +1431,28 @@ newton_csi(double &t, double &u, double &v, const ON_Curve *curveA, const ON_Sur
     v = std::max(v, surfB->Domain(1).Min());
 }
 
+double
+tolerance_2d_from_3d(
+	double tolerance_3d,
+	Subsurface *root,
+	const ON_Surface *surf,
+	const ON_Interval *surf_udomain,
+	const ON_Interval *surf_vdomain)
+{
+    double tolerance_2d = tolerance_3d;
+
+    const ON_Interval surf_udom = surf_udomain ? *surf_udomain : surf->Domain(0);
+    const ON_Interval surf_vdom = surf_vdomain ? *surf_vdomain : surf->Domain(1);
+    double surf_ulen = surf_udom.Length();
+    double surf_vlen = surf_vdom.Length();
+    double uv_diagonal_len = ON_2dVector(surf_ulen, surf_vlen).Length();
+
+    double bbox_diagonal_len = root->m_surf->BoundingBox().Diagonal().Length();
+    if (!ON_NearZero(bbox_diagonal_len)) {
+	tolerance_2d = tolerance_3d / (bbox_diagonal_len * uv_diagonal_len);
+    }
+    return tolerance_2d;
+}
 
 int
 ON_Intersect(const ON_Curve *curveA,
@@ -2563,25 +2585,19 @@ ON_Intersect(const ON_Surface *surfA,
     }
 
     // We adjust the tolerance from 3D scale to respective 2D scales.
-    double intersection_tolerance_A = intersection_tolerance;
-    double intersection_tolerance_B = intersection_tolerance;
-    double fitting_tolerance_A = fitting_tolerance;
-    double fitting_tolerance_B = fitting_tolerance;
-    double l = rootA->m_surf->BoundingBox().Diagonal().Length();
-    double ul = surfaceA_udomain ? surfaceA_udomain->Length() : surfA->Domain(0).Length();
-    double vl = surfaceA_vdomain ? surfaceA_vdomain->Length() : surfA->Domain(1).Length();
-    double dl = ON_2dVector(ul, vl).Length();
-    if (!ON_NearZero(l)) {
-	intersection_tolerance_A = intersection_tolerance / l * dl;
-	fitting_tolerance_A = fitting_tolerance / l * dl;
-    }
-    ul = surfaceB_udomain ? surfaceB_udomain->Length() : surfB->Domain(0).Length();
-    vl = surfaceB_vdomain ? surfaceB_vdomain->Length() : surfB->Domain(1).Length();
-    dl = ON_2dVector(ul, vl).Length();
-    if (!ON_NearZero(l)) {
-	intersection_tolerance_B = intersection_tolerance / l * dl;
-	fitting_tolerance_B = fitting_tolerance / l * dl;
-    }
+    double intersection_tolerance_A =
+	tolerance_2d_from_3d(intersection_tolerance, rootA, surfA,
+		surfaceA_udomain, surfaceA_vdomain);
+
+    double fitting_tolerance_A = tolerance_2d_from_3d(fitting_tolerance,
+	    rootA, surfA, surfaceA_udomain, surfaceA_vdomain);
+
+    double intersection_tolerance_B =
+	tolerance_2d_from_3d(intersection_tolerance, rootB, surfB,
+		surfaceB_udomain, surfaceB_vdomain);
+
+    double fitting_tolerance_B = tolerance_2d_from_3d(fitting_tolerance,
+	    rootB, surfB, surfaceB_udomain, surfaceB_vdomain);
 
     ON_3dPointArray curvept, tmp_curvept;
     ON_2dPointArray curveuv, curvest, tmp_curveuv, tmp_curvest;
