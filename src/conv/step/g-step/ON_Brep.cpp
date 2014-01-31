@@ -229,7 +229,7 @@ STEP_Empty_BRep(struct directory *dp, AP203_Contents *sc, STEPentity **brep_shap
     items->AddNode(new EntityNode((SDAI_Application_instance *)manifold_solid_brep));
     advanced_brep->context_of_items_((SdaiRepresentation_context *) context);
 
-    (*brep_product) = Add_Shape_Definition_Representation(sc, advanced_brep);
+    (*brep_product) = Add_Shape_Definition_Representation(dp, sc, advanced_brep);
     (*brep_shape) = advanced_brep;
 
     sc->instance_list->Append((STEPentity *)(advanced_brep), completeSE);
@@ -521,7 +521,7 @@ ON_BRep_to_STEP(struct directory *dp, ON_Brep *brep, AP203_Contents *sc, STEPent
     items->AddNode(new EntityNode((SDAI_Application_instance *)info->manifold_solid_brep));
     info->advanced_brep->context_of_items_((SdaiRepresentation_context *) context);
 
-    (*brep_product) = Add_Shape_Definition_Representation(sc, info->advanced_brep);
+    (*brep_product) = Add_Shape_Definition_Representation(dp, sc, info->advanced_brep);
     (*brep_shape) = info->advanced_brep;
 
     Populate_Instance_List(info);

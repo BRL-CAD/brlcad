@@ -40,8 +40,12 @@
  *
  */
 STEPentity *
-Add_Shape_Definition_Representation(AP203_Contents *sc,	SdaiRepresentation *sdairep)
+Add_Shape_Definition_Representation(struct directory *dp, AP203_Contents *sc, SdaiRepresentation *sdairep)
 {
+    std::ostringstream ss;
+    ss << "'" << dp->d_namep << "'";
+    std::string str = ss.str();
+
     // SHAPE_DEFINITION_REPRESENTATION
     STEPentity *ret_entity = sc->registry->ObjCreate("SHAPE_DEFINITION_REPRESENTATION");
     sc->instance_list->Append(ret_entity, completeSE);
@@ -75,9 +79,9 @@ Add_Shape_Definition_Representation(AP203_Contents *sc,	SdaiRepresentation *sdai
     SdaiProduct *prod = (SdaiProduct *)sc->registry->ObjCreate("PRODUCT");
     sc->instance_list->Append((STEPentity *)prod, completeSE);
     prod_def_form->of_product_(prod);
-    prod->id_("''");
-    prod->name_("''");
+    prod->name_(str.c_str());
     prod->description_("''");
+    prod->id_(str.c_str());
 
     // MECHANICAL_CONTEXT
     SdaiMechanical_context *mech_context = (SdaiMechanical_context *)sc->registry->ObjCreate("MECHANICAL_CONTEXT");
@@ -87,18 +91,10 @@ Add_Shape_Definition_Representation(AP203_Contents *sc,	SdaiRepresentation *sdai
     mech_context->discipline_type_("''");
 
     // APPLICATION_CONTEXT
-    SdaiApplication_context *app_context = (SdaiApplication_context *)sc->registry->ObjCreate("APPLICATION_CONTEXT");
-    sc->instance_list->Append((STEPentity *)app_context, completeSE);
-    mech_context->frame_of_reference_(app_context);
-    app_context->application_("''");
+    mech_context->frame_of_reference_(sc->application_context);
 
     // DESIGN_CONTEXT
-    SdaiDesign_context *design_context = (SdaiDesign_context *)sc->registry->ObjCreate("DESIGN_CONTEXT");
-    sc->instance_list->Append((STEPentity *)design_context, completeSE);
-    prod_def->frame_of_reference_(design_context);
-    design_context->name_("''");
-    design_context->life_cycle_stage_("'Design'");
-    design_context->frame_of_reference_(app_context);
+    prod_def->frame_of_reference_(sc->design_context);
 
     //return ret_entity;
     // The product definition is what is used to define assemblies, so return that
