@@ -209,18 +209,23 @@ Create_CARTESIAN_TRANSFORMATION_OPERATOR_3D(
 
 // Returns either an AXIS2_PLACEMENT_3D, a CARTESIAN_TRANSFORMATION_OPERATOR_3D, or NULL
 // If NULL, geometry is being deformed in a way not supported by AP203
+//
+// Note:  After some experimentation with CARTESIAN_TRANSFORMATINO_OPERATOR_3D did not
+// succeed in generating useful imports, it looks like the limitation expressed in the
+// STEP PDM Schema usage guide may hold in this context:
+// http://www.steptools.com/support/stdev_docs/express/pdm/pdmug_release4_3.pdf
+//
+// "With regard to the transformations in the context of assembly, a part is in
+//  principle incorporated in the assembly only by rigid motion (i.e.,
+//  translation and/or rotation) excluding mirroring and scaling."
+//
+// What this means is that any scaling operations in BRL-CAD's matricies are not
+// going to be expressible in STEP, because it is an "in-principle" conflict with
+// how STEP views assemblies.
+
 STEPentity *
 Mat_to_Rep(matp_t curr_matrix, Registry *registry, InstMgr *instance_list)
 {
-    // TODO - investigate CARTESIAN_TRANSFORMATION_OPERATOR_3D, which seems to
-    // allow uniform scaling as well and appears to be compatible with the
-    // same slot used for AXIS2_PLACEMENT_3D - may be able to use the latter
-    // for simple cases without scaling (i.e. VUNITIZE doesn't change the length
-    // of X, Y or Z unit vectors after the matrix is applied), the former when
-    // the there is uniform scaling (X, Y and Z lengths all change by the same
-    // amount) and in the worst case (non-uniform scaling) will have to create
-    // a new Brep and abandon the attempt to preserve the comb-level operation.
-
     point_t origin, outorig;
     vect_t x_axis, y_axis, z_axis;
     vect_t outx, outy, outz;
@@ -246,22 +251,7 @@ Mat_to_Rep(matp_t curr_matrix, Registry *registry, InstMgr *instance_list)
 		outz[0], outz[1], outz[2], outx[0], outx[1], outx[2], registry, instance_list);
     }
 
-    // OK, we're scaling as well - make sure we're uniformly scaling and then use cartesian_transformation_operator_3d
-    if (NEAR_ZERO(xm - ym, VUNITIZE_TOL) && NEAR_ZERO(xm - zm, VUNITIZE_TOL)) {
-	bu_log("CARTESIAN_TRANSFORMATION_OPERATOR_3D local_origin: %f, %f, %f\n", outorig[0], outorig[1], outorig[2]);
-	bu_log("CARTESIAN_TRANSFORMATION_OPERATOR_3D axis1: %0.14f, %0.14f, %0.14f\n", outx[0], outx[1], outx[2]);
-	bu_log("CARTESIAN_TRANSFORMATION_OPERATOR_3D axis2: %0.14f, %0.14f, %0.14f\n", outy[0], outy[1], outy[2]);
-	bu_log("CARTESIAN_TRANSFORMATION_OPERATOR_3D axis3: %0.14f, %0.14f, %0.14f\n", outz[0], outz[1], outz[2]);
-	bu_log("Scaling: %0.10f\n", 1/curr_matrix[15]);
-	return Create_CARTESIAN_TRANSFORMATION_OPERATOR_3D(outorig[0], outorig[1], outorig[2],
-		outx[0], outx[1], outx[2], outy[0], outy[1], outy[2], outz[0], outz[1], outz[2], 1/curr_matrix[15],
-		registry, instance_list);
-    }
-
-    // Auugh - if we've gotten here, it's something that we aren't currently set up to handle with AP203
-    bn_mat_print("Non-Uniform scaling detected", curr_matrix);
-    bu_log("          xm: %0.14f\n          ym: %0.14f\n          zm: %0.14f\n", xm, ym, zm);
-    bu_log("       xm-ym: %0.14f\n       xm-zm: %0.14f\nVUNITIZE_TOL: %0.14f\n", xm-ym, xm-zm, VUNITIZE_TOL);
+    // Have scaling, which STEP doesn't support in assemblies
     return NULL;
 }
 
@@ -361,7 +351,7 @@ Add_Assembly_Product(struct directory *dp, struct db_i *dbip, struct bu_ptbl *ch
 	    cshape->represented_product_relation_(pshape);
 	    sc->instance_list->Append((STEPentity *)cshape, completeSE);
 	} else {
-	    bu_log("non-uniform scaling detected: %s/%s\n", dp->d_namep, curr_dp->d_namep);
+	    bu_log("\nA matrix with a scaling component is present in the following comb relationship:\n  %s/%s\nScaling is not supported by STEP in assembly structures - to export this structure, consider using\npush or xpush to remove the scaling matricies from the hierarchy.\n", dp->d_namep, curr_dp->d_namep);
 	}
     }
     rt_db_free_internal(&comb_intern);
