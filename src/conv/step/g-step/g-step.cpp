@@ -122,17 +122,23 @@ main(int argc, char *argv[])
 	    return 1;
 	}
     } else {
-	struct directory *dp = db_lookup(dbip, argv[1], LOOKUP_QUIET);
-	if (dp == RT_DIR_NULL) {
-	    std::cerr << "ERROR: cannot find " << argv[1] << "\n" << std::endl;
-	    delete dotg;
-	    return 1;
-	} else {
-	    paths = (struct directory **)bu_malloc(sizeof(struct directory *) * 2, "dp array");
-	    paths[0] = dp;
-	    paths[1] = RT_DIR_NULL;
-	    path_cnt = 1;
+	int i = 1;
+	paths = (struct directory **)bu_malloc(sizeof(struct directory *) * argc, "dp array");
+	while (i < argc) {
+	    bu_log("%d: %s\n", i, argv[i]);
+	    struct directory *dp = db_lookup(dbip, argv[i], LOOKUP_QUIET);
+	    if (dp == RT_DIR_NULL) {
+		std::cerr << "ERROR: cannot find " << argv[i] << "\n" << std::endl;
+		delete dotg;
+		bu_free(paths, "free path memory");
+		return 1;
+	    } else {
+		paths[i-1] = dp;
+		path_cnt++;
+		i++;
+	    }
 	}
+	paths[i-1] = RT_DIR_NULL;
     }
 
 
