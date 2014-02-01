@@ -27,44 +27,53 @@
 #include <ctype.h>
 
 #include "bu.h"
+#include "./test_internals.h"
 
 
-int
-test_bu_bitv_vls(char *inp , char *exp)
+static int
+test_bu_bitv_vls(int argc, char **argv)
 {
+    /*         argv[1]             argv[2]
+     * inputs: <input char string> <expected hex string>
+     */
+    int test_results = FAIL;
     struct bu_vls *a;
     struct bu_bitv *res_bitv;
-    int pass;
+    const char *input, *expected;
+
+    if (argc < 3) {
+	bu_exit(1, "ERROR: input format: function_test_args [%s]\n", argv[0]);
+    }
+
+    input    = argv[1];
+    expected = argv[2];
 
     a = bu_vls_vlsinit();
-    res_bitv = bu_hex_to_bitv(inp);
+    res_bitv = bu_hex_to_bitv(input);
     bu_bitv_vls(a, res_bitv);
 
-    if (!bu_strcmp(a->vls_str, exp)) {
-	printf("\nbu_bitv_vls test PASSED Input:%s Output:%s", inp, (char *)a->vls_str);
-	pass = 1;
+    test_results = bu_strcmp(bu_vls_cstr(a), expected);
+
+    if (!test_results) {
+	printf("\nbu_bitv_vls test PASSED Input: '%s' Output: '%s' Expected: '%s'",
+	       input, bu_vls_cstr(a), expected);
     } else {
-	printf("\nbu_bitv_vls FAILED for Input:%s Expected:%s", inp, exp);
-	pass = 0;
+	printf("\nbu_bitv_vls FAILED for Input: '%s' Expected: '%s' Expected: '%s'",
+	       input, bu_vls_cstr(a), expected);
     }
 
     bu_vls_free(a);
     bu_bitv_free(res_bitv);
 
-    return pass;
+    /* a false return above is a pass, so the value is the same as ctest's PASS/FAIL */
+    return test_results;
 }
 
 
 int
-main(int argc , char *argv[])
+main(int argc , char **argv)
 {
-    int ret;
-
-    if(argc < 3)
-	return -1;
-
-    ret = test_bu_bitv_vls(argv[1], argv[2]);
-    return !ret;
+    return test_bu_bitv_vls(argc, argv);
 }
 
 
