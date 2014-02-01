@@ -31,6 +31,8 @@ const int FAIL  = 1;
 const int FALSE = 0;
 const int TRUE  = 1;
 
+const unsigned BITS_PER_BYTE = 8;
+
 extern void dump_bitv(const struct bu_bitv *);
 
 #endif /* LIBBU_TESTS_TEST_INTERNALS_H */

@@ -34,7 +34,6 @@
 #include "bu.h"
 #include "./test_internals.h"
 
-#define BITS_PER_BYTE 8
 
 void
 dump_bitv(const struct bu_bitv *b)
