@@ -65,7 +65,7 @@ test_bu_bitv_vls(int argc, char **argv)
     bu_vls_free(a);
     bu_bitv_free(res_bitv);
 
-    /* a false return above is a pass, so the value is the same as ctest's PASS/FAIL */
+    /* a false return above is a PASS, so the value is the same as ctest's PASS/FAIL */
     return test_results;
 }
 

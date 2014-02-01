@@ -27,47 +27,55 @@
 #include <ctype.h>
 
 #include "bu.h"
+#include "./test_internals.h"
 
 
-int
-test_bu_hex_to_bitv(char *inp, char *res , int errno)
+static int
+test_bu_hex_to_bitv(int argc, char **argv)
 {
+    /*         argv[1]             argv[2]
+     * inputs: <input hex string> <expected char string>
+     */
     struct bu_bitv *res_bitv ;
-    int pass;
+    int test_results = FAIL;
+    const char *input, *expected;
 
-    res_bitv = bu_hex_to_bitv(inp);
-
-    if (errno == 1 && res_bitv == NULL) {
-	printf("\nbu_hex_to_bitv PASSED Input:%s Output:%s", inp, res);
-	return 1;
+    if (argc < 3) {
+	bu_exit(1, "ERROR: input format: function_test_args [%s]\n", argv[0]);
     }
 
-    if (!bu_strcmp((char*)res_bitv->bits, res)) {
-	printf("\nbu_hex_to_bitv PASSED Input:%s Output:%s", inp, (char*)res_bitv->bits);
-	pass = 1 ;
+    input    = argv[1];
+    expected = argv[2];
+
+    res_bitv = bu_hex_to_bitv(input);
+
+    if (res_bitv == NULL) {
+	printf("\nbu_hex_to_bitv FAILED Input: '%s' Output: 'NULL' Expected: '%s'",
+	       input, expected);
+	test_results = FAIL;
     } else {
-	printf("\nbu_hex_to_bitv FAILED for Input:%s Expected:%s", inp, res);
-	pass = 0;
+	test_results = bu_strcmp((char*)res_bitv->bits, expected);
+
+	if (!test_results) {
+	    printf("\nbu_hex_to_bitv PASSED Input: '%s' Output: '%s' Expected: '%s'",
+		   input, (char *)res_bitv->bits, expected);
+	} else {
+	    printf("\nbu_hex_to_bitv FAILED Input: '%s' Output: '%s' Expected: '%s'",
+		   input, (char *)res_bitv->bits, expected);
+	}
     }
 
-    bu_bitv_free(res_bitv);
+    if (res_bitv != NULL)
+	bu_bitv_free(res_bitv);
 
-    return pass;
+    /* a false return above is a PASS, so the value is the same as ctest's PASS/FAIL */
+    return test_results;
 }
 
 int
-main(int argc , char *argv[])
+main(int argc , char **argv)
 {
-    int error_code = 0;
-    int ret;
-
-    if(argc < 4)
-      return -1;
-
-    sscanf(argv[3], "%d", &error_code);
-
-    ret = test_bu_hex_to_bitv(argv[1], argv[2], error_code);
-    return !ret;
+    return test_bu_hex_to_bitv(argc, argv);
 }
 
 

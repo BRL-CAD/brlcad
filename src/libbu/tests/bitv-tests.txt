@@ -41,9 +41,9 @@ add_test(bu_bitv_vls_test4 tester_bu_bitv_vls "01f0f0f0f0" "(4, 5, 6, 7, 12, 13,
 #      bu_hex_to_bitv testing    #
 ##################################
 BRLCAD_ADDEXEC(tester_bu_hex_to_bitv bu_hex_to_bitv.c libbu NO_INSTALL)
-add_test(bu_hex_to_bitv_test1 tester_bu_hex_to_bitv "33323130" "0123" 0)
-add_test(bu_hex_to_bitv_test2 tester_bu_hex_to_bitv "30" "0" 0)
-add_test(bu_hex_to_bitv_error tester_bu_hex_to_bitv "303" "" 1)
+add_test(bu_hex_to_bitv_test1 tester_bu_hex_to_bitv "33323130" "0123")
+add_test(bu_hex_to_bitv_test2 tester_bu_hex_to_bitv "30" "0")
+add_test(bu_hex_to_bitv_test3 tester_bu_hex_to_bitv "303" "") # XFAIL
 
 ##################################
 #      other bu_bitv_testing     #
@@ -89,10 +89,11 @@ set_tests_properties(
   bu_binary_to_bitv_07
   bu_binary_to_bitv_08
   bu_binary_to_bitv_10
+  bu_bitv_compare_equal2_03
   bu_bitv_compare_equal_02
   bu_bitv_compare_equal_03
   bu_bitv_compare_equal_04
-  bu_bitv_compare_equal2_03
+  bu_hex_to_bitv_test3
 
   PROPERTIES WILL_FAIL true
 )
