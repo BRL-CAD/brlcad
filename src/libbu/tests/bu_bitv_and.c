@@ -27,51 +27,62 @@
 #include <ctype.h>
 
 #include "bu.h"
+#include "./test_internals.h"
+
 
 int
-test_bu_bitv_and(char *inp1 , char *inp2 , char *exp)
+test_bu_bitv_and(int argc, char **argv)
 {
+    /*         argv[1]               argv[2]             argv[3]
+     * inputs: <input hex string 1> <input hex string 2> <expected hex result>
+     */
     struct bu_bitv *res_bitv , *res_bitv1 , *result;
     struct bu_vls *a , *b;
-    int pass;
+    int test_results = FAIL;
+    const char *input1, *input2, *expected;
+
+    if (argc < 4) {
+	bu_exit(1, "ERROR: input format: function_test_args [%s]\n", argv[0]);
+    }
+
+    input1   = argv[1];
+    input2   = argv[2];
+    expected = argv[3];
 
     a = bu_vls_vlsinit();
     b = bu_vls_vlsinit();
 
-    res_bitv1 = bu_hex_to_bitv(inp1);
-    res_bitv  = bu_hex_to_bitv(inp2);
-    result    = bu_hex_to_bitv(exp);
+    res_bitv1 = bu_hex_to_bitv(input1);
+    res_bitv  = bu_hex_to_bitv(input2);
+    result    = bu_hex_to_bitv(expected);
 
     bu_bitv_and(res_bitv1,res_bitv);
     bu_bitv_vls(a,res_bitv1);
     bu_bitv_vls(b,result);
 
-    if (!bu_strcmp(a->vls_str , b->vls_str)) {
-	printf("\nbu_bitv_and test PASSED Input1:%s Input2:%s Output:%s", inp1, inp2, exp);
-	pass = 1;
+    test_results = bu_strcmp(bu_vls_cstr(a), bu_vls_cstr(b));
+
+    if (!test_results) {
+	printf("\nbu_bitv_and test PASSED Input1: '%s' Input2: '%s' Output: '%s'",
+	       input1, input2, expected);
     } else {
-	printf("\nbu_bitv_and test FAILED Input1:%s Input2:%s Expected:%s", inp1, inp2, exp);
-	pass = 0;
+	printf("\nbu_bitv_and test FAILED Input1: '%s' Input2: '%s' Expected: '%s'",
+	       input1, input2, expected);
     }
 
     bu_bitv_free(res_bitv);
     bu_bitv_free(res_bitv1);
     bu_bitv_free(result);
 
-    return pass;
+    /* a false return above is a PASS, so the value is the same as ctest's PASS/FAIL */
+    return test_results;
 }
 
 
 int
-main(int argc , char *argv[])
+main(int argc , char **argv)
 {
-    int ret;
-
-    if(argc < 4)
-      return -1;
-
-    ret = test_bu_bitv_and(argv[1], argv[2], argv[3]);
-    return !ret;
+    return test_bu_bitv_and(argc, argv);
 }
 
 

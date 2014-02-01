@@ -27,39 +27,54 @@
 #include <ctype.h>
 
 #include "bu.h"
+#include "./test_internals.h"
 
-unsigned int
-power(unsigned int base , int exponent)
+
+static unsigned int
+power(const unsigned int base, const int exponent)
 {
     int i ;
     unsigned int product = 1;
 
     for (i = 0; i < exponent; i++) {
-	product = product*base;
+	product *= base;
     }
 
     return product;
 }
 
-int
-main(int UNUSED(argc), char **UNUSED(argv))
+static int
+test_bu_bitv_shift(int argc, char **argv)
 {
-    int res = 1;
-    int pass = 1;
+    int res;
+    int test_results = FAIL;
+
+    if (argc < 1) {
+	bu_exit(1, "ERROR: input format: function_test_args [%s]\n", argv[0]);
+    }
 
     printf("\nTesting bu_bitv_shift...");
 
     /*test bu_bitv_shift*/
     res = bu_bitv_shift();
 
-    if (power(2, res) <= (sizeof(bitv_t) * 8) && power(2, res + 1) > (sizeof(bitv_t) * 8)) {
+    if (power(2, res) <= (sizeof(bitv_t) * BITS_PER_BYTE)
+	&& power(2, res + 1) > (sizeof(bitv_t) * BITS_PER_BYTE)) {
+	test_results = PASS;
 	printf("\nPASSED: bu_bitv_shift working");
     } else {
 	printf("\nFAILED: bu_bitv_shift incorrect");
-	pass = 0;
+	test_results = PASS;
     }
 
-    return !pass;
+    return test_results;
+}
+
+
+int
+main(int argc, char **argv)
+{
+    return test_bu_bitv_shift(argc, argv);
 }
 
 
