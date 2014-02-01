@@ -25,8 +25,8 @@ add_test(bu_bitv_shift tester_bu_bitv_shift)
 #      bu_bitv_to_hex testing    #
 ##################################
 BRLCAD_ADDEXEC(tester_bu_bitv_to_hex bu_bitv_to_hex.c libbu NO_INSTALL)
-add_test(bu_bitv_to_hex_test1 tester_bu_bitv_to_hex "0123" "33323130" 32)
-add_test(bu_bitv_to_hex_test2 tester_bu_bitv_to_hex "12" "3231" 16)
+add_test(bu_bitv_to_hex_test1 tester_bu_bitv_to_hex "0123" "00323130" 32)
+add_test(bu_bitv_to_hex_test2 tester_bu_bitv_to_hex "12" "0031" 16)
 
 ################################
 #      bu_bitv_vls testing     #
