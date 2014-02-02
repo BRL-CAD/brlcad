@@ -30,6 +30,9 @@
 #include "bu.h"
 
 
+/* add a private literal which  is a candidate for a BU_* name */
+const unsigned BITS_PER_BYTE = 8;
+
 /**
  * Private 32-bit recursive reduction using "SIMD Within A Register"
  * (SWAR) to count the number of one bits in a given integer. The
@@ -76,7 +79,7 @@
 inline size_t
 bu_bitv_shift(void)
 {
-    size_t x = sizeof(bitv_t) * 8;
+    size_t x = sizeof(bitv_t) * BITS_PER_BYTE;
 
     FLOOR_ILOG2(x);
 
@@ -99,7 +102,7 @@ bu_bitv_new(size_t nbits)
 
     /* manually initialize */
     BU_LIST_INIT_MAGIC(&(bv->l), BU_BITV_MAGIC);
-    bv->nbits = bv_bytes * 8;
+    bv->nbits = bv_bytes * BITS_PER_BYTE;
     BU_BITV_ZEROALL(bv);
 
     return bv;
@@ -228,13 +231,13 @@ bu_bitv_to_hex(struct bu_vls *v, const struct bu_bitv *bv)
     BU_CK_VLS(v);
     BU_CK_BITV(bv);
 
-    word_count = bv->nbits / 8 / BVS;
+    word_count = bv->nbits / BITS_PER_BYTE / BVS;
     bu_vls_extend(v, word_count * BVS * 2 + 1);
 
     while (word_count--) {
 	chunksize = BVS;
 	while (chunksize--) {
-	    unsigned long val = (unsigned long)((bv->bits[word_count] & ((bitv_t)(0xff)<<(chunksize*8))) >> (chunksize*8)) & (bitv_t)0xff;
+	    unsigned long val = (unsigned long)((bv->bits[word_count] & ((bitv_t)(0xff)<<(chunksize * BITS_PER_BYTE))) >> (chunksize * BITS_PER_BYTE)) & (bitv_t)0xff;
 	    bu_vls_printf(v, "%02lx", val);
 	}
     }
@@ -316,7 +319,7 @@ bu_hex_to_bitv(const char *str)
 	    /* parsing was successful */
 
 	    /* set the appropriate bits in the bit vector */
-	    bv->bits[word_count] |= (bitv_t)ulval<<(chunksize*8);
+	    bv->bits[word_count] |= (bitv_t)ulval<<(chunksize * BITS_PER_BYTE);
 	}
 	chunksize = BVS;
     }
@@ -428,7 +431,7 @@ bu_binary_to_bitv2(const char *str, const int nbytes)
      */
     struct bu_vls *v  = bu_vls_vlsinit();
     struct bu_vls *v2 = bu_vls_vlsinit();
-    unsigned nbits = nbytes > 0 ? nbytes * 8 : 0;
+    unsigned nbits = nbytes > 0 ? nbytes * BITS_PER_BYTE : 0;
     size_t i, j, vlen, new_vlen, len = 0;
     int err = 0;
     struct bu_bitv *bv;
@@ -469,11 +472,11 @@ bu_binary_to_bitv2(const char *str, const int nbytes)
      */
     vlen = bu_vls_strlen(v2);
     new_vlen = nbits > vlen ? nbits : vlen;
-    if (new_vlen < 8) {
-	new_vlen = 8;
+    if (new_vlen < BITS_PER_BYTE) {
+	new_vlen = BITS_PER_BYTE;
     }
-    else if (new_vlen % 8) {
-	new_vlen = (new_vlen / 8) * 8 + 8;
+    else if (new_vlen % BITS_PER_BYTE) {
+	new_vlen = (new_vlen / BITS_PER_BYTE) * BITS_PER_BYTE + BITS_PER_BYTE;
     }
 
     if (new_vlen > vlen) {
@@ -491,7 +494,7 @@ bu_binary_to_bitv2(const char *str, const int nbytes)
     /* note the final length of the bitv may be greater due to word sizes, etc. */
 
     abyte[8] = '\0';
-    bytes = len / 8; /* eight digits per byte */
+    bytes = len / BITS_PER_BYTE; /* eight digits per byte */
     word_count = bytes / BVS;
     chunksize = bytes % BVS;
 
@@ -511,7 +514,7 @@ bu_binary_to_bitv2(const char *str, const int nbytes)
 	    errno = 0;
 
 	    /* get next eight binary digits from string */
-	    for (i = 0; i < 8; ++i) {
+	    for (i = 0; i < BITS_PER_BYTE; ++i) {
 		abyte[i] = bu_vls_cstr(v2)[j++];
 	    }
 
@@ -535,7 +538,7 @@ bu_binary_to_bitv2(const char *str, const int nbytes)
 	    /* parsing was successful */
 
 	    /* set the appropriate bits in the bit vector */
-	    bv->bits[word_count] |= (bitv_t)ulval  << (chunksize * 8);
+	    bv->bits[word_count] |= (bitv_t)ulval  << (chunksize * BITS_PER_BYTE);
 	}
 	chunksize = BVS;
     }
