@@ -24,8 +24,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
+#include <limits.h>
 
 #include "bu.h"
+
 
 /**
  * Private 32-bit recursive reduction using "SIMD Within A Register"
@@ -246,7 +249,6 @@ bu_hex_to_bitv(const char *str)
     unsigned int len = 0;
     int bytes;
     struct bu_bitv *bv;
-    unsigned long c;
     size_t word_count;
     size_t chunksize = 0;
     volatile size_t BVS = sizeof(bitv_t);
@@ -285,18 +287,41 @@ bu_hex_to_bitv(const char *str)
     str = str_start;
     while (word_count--) {
 	while (chunksize--) {
+	    unsigned long ulval;
+	    /* prepare for error checking the next conversion */
+	    char *endptr;
+	    errno = 0;
+
 	    /* get next two hex digits from string */
 	    abyte[0] = *str++;
 	    abyte[1] = *str++;
 
 	    /* convert into an unsigned long */
-	    c = strtoul(abyte, (char **)NULL, 16);
+	    ulval = strtoul(abyte, &endptr, 16);
+
+	    /* check for various errors (from 'man strol') */
+	    if ((errno == ERANGE && (ulval == ULONG_MAX))
+		|| (errno != 0 && ulval == 0)) {
+		bu_log("ERROR: strtoul: %s\n", strerror(errno));
+		bu_bitv_free(bv);
+		bv = (struct bu_bitv *)NULL;
+		goto ERROR_RETURN;
+	    }
+	    if (endptr == abyte) {
+		bu_log("ERROR: no digits were found in '%s'\n", abyte);
+		bu_bitv_free(bv);
+		bv = (struct bu_bitv *)NULL;
+		goto ERROR_RETURN;
+	    }
+	    /* parsing was successful */
 
 	    /* set the appropriate bits in the bit vector */
-	    bv->bits[word_count] |= (bitv_t)c<<(chunksize*8);
+	    bv->bits[word_count] |= (bitv_t)ulval<<(chunksize*8);
 	}
 	chunksize = BVS;
     }
+
+ERROR_RETURN:
 
     return bv;
 }
@@ -480,20 +505,42 @@ bu_binary_to_bitv2(const char *str, const int nbytes)
     j = 0;
     while (word_count--) {
 	while (chunksize--) {
-	    unsigned long lval;
+	    unsigned long ulval;
+	    /* prepare for error checking the next conversion */
+	    char *endptr;
+	    errno = 0;
+
 	    /* get next eight binary digits from string */
 	    for (i = 0; i < 8; ++i) {
 		abyte[i] = bu_vls_cstr(v2)[j++];
 	    }
 
 	    /* convert into an unsigned long */
-	    lval = strtoul(abyte, (char **)NULL, 2);
+	    ulval = strtoul(abyte, (char **)NULL, 2);
+
+	    /* check for various errors (from 'man strol') */
+	    if ((errno == ERANGE && (ulval == ULONG_MAX))
+		|| (errno != 0 && ulval == 0)) {
+		bu_log("ERROR: strtoul: %s\n", strerror(errno));
+		bu_bitv_free(bv);
+		bv = (struct bu_bitv *)NULL;
+		goto ERROR_RETURN;
+	    }
+	    if (endptr == abyte) {
+		bu_log("ERROR: no digits were found in '%s'\n", abyte);
+		bu_bitv_free(bv);
+		bv = (struct bu_bitv *)NULL;
+		goto ERROR_RETURN;
+	    }
+	    /* parsing was successful */
 
 	    /* set the appropriate bits in the bit vector */
-	    bv->bits[word_count] |= (bitv_t)lval << (chunksize * 8);
+	    bv->bits[word_count] |= (bitv_t)ulval  << (chunksize * 8);
 	}
 	chunksize = BVS;
     }
+
+ERROR_RETURN:
 
     bu_vls_free(v);
     bu_vls_free(v2);
