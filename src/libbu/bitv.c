@@ -27,7 +27,6 @@
 
 #include "bu.h"
 
-
 /**
  * Private 32-bit recursive reduction using "SIMD Within A Register"
  * (SWAR) to count the number of one bits in a given integer. The
@@ -217,7 +216,7 @@ void
 bu_bitv_to_hex(struct bu_vls *v, const struct bu_bitv *bv)
 {
     size_t word_count = 0;
-    size_t chunksize = 0;
+    size_t chunksize  = 0;
     /* necessarily volatile to keep the compiler from complaining
      * about unreachable code during optimization.
      */
@@ -358,8 +357,8 @@ bu_binary_to_bitv(const char *str)
      *
      * Note that only the zeroes and ones are actually tested and any
      * other character will ignored.  So one can ease producing the
-     * binary input string by using spaces or other characters the string
-     * to group the bits as shown in Examples 2, 3, and 4:
+     * binary input string by using spaces or other characters to
+     * group the bits as shown in Examples 2, 3, and 4:
      *
      *   Example 2: "  0b 0011 0100 "
      *
@@ -431,7 +430,8 @@ bu_binary_to_bitv(const char *str)
     bv = bu_bitv_new(len); /* note it is initialized to all zeroes */
     BU_CK_BITV(bv);
 
-    /* note the final length of the bitv may be greater due to word sizes, etc. */
+    /* note the final length of the bitv may be greater due to word
+     * sizes, etc. */
 
     abyte[8] = '\0';
     bytes = len / 8; /* eight digits per byte */
@@ -484,8 +484,8 @@ bu_binary_to_bitv2(const char *str, const int nbytes)
      *
      * Note that only the zeroes and ones are actually tested and any
      * other character will ignored.  So one can ease producing the
-     * binary input string by using spaces or other characters the string
-     * to group the bits as shown in Examples 2, 3, and 4:
+     * binary input string by using spaces or other characters to
+     * group the bits as shown in Examples 2, 3, and 4:
      *
      *   Example 2: "  0b 0011 0100 "
      *
