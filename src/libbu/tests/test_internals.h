@@ -25,8 +25,8 @@
 /* Define pass/fail per CMake/CTest testing convention; so any
  * individual test must return pass/fail using the same convention OR
  * invert its value. */
-const int PASS  = 0;
-const int FAIL  = 1;
+const int CTEST_PASS  = 0;
+const int CTEST_FAIL  = 1;
 
 const int FALSE = 0;
 const int TRUE  = 1;
