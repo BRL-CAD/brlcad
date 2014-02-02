@@ -58,6 +58,7 @@ add_test(bu_bitv_vls_test4 tester_bu_bitv 9 "01f0f0f0f0" "(4, 5, 6, 7, 12, 13, 1
 add_test(bu_bitv_to_hex_test1 tester_bu_bitv 10 "0123" "00323130" 32)
 add_test(bu_bitv_to_hex_test2 tester_bu_bitv 10   "12"     "0031" 16)
 
+# FIXME: these tests are shaky!!
 # args: function number, input hex string, expected char string
 add_test(bu_hex_to_bitv_test1 tester_bu_bitv 11 "00323130" "0123")
 add_test(bu_hex_to_bitv_test2 tester_bu_bitv 11       "30"    "0")
