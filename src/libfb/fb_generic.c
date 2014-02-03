@@ -32,16 +32,13 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 
 #ifdef HAVE_STRINGS_H
 # include <strings.h>
 #endif
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
+#include "bio.h"
 
 #include "fb.h"
 

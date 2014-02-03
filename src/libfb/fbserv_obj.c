@@ -32,12 +32,8 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 #include <ctype.h>
 
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 #ifdef HAVE_WINSOCK_H
 #  include <process.h>
 #  include <winsock.h>
@@ -45,8 +41,9 @@
 #  include <sys/socket.h>
 #  include <netinet/in.h>		/* For htonl(), etc. */
 #endif
+#include <tcl.h>
+#include "bio.h"
 
-#include "tcl.h"
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
