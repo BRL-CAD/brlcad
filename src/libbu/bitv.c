@@ -519,7 +519,7 @@ bu_binary_to_bitv2(const char *str, const int nbytes)
 	    }
 
 	    /* convert into an unsigned long */
-	    ulval = strtoul(abyte, (char **)NULL, 2);
+	    ulval = strtoul(abyte, (char **)&endptr, 2);
 
 	    /* check for various errors (from 'man strol') */
 	    if ((errno == ERANGE && (ulval == ULONG_MAX))
