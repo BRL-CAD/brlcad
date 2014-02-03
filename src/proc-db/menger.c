@@ -374,7 +374,7 @@ main(int ac, char *av[])
 	    case 'O':
 		bu_vls_strcpy(&filename, bu_optarg);
 		if (bu_file_exists(bu_vls_addr(&filename), NULL)) {
-		    bu_exit(4, "ERROR: Output file [%V] already exists\n", &filename);
+		    bu_exit(4, "ERROR: Output file [%s] already exists\n", bu_vls_addr(&filename));
 		}
 		break;
 	    case 'p':
@@ -433,13 +433,13 @@ main(int ac, char *av[])
 	   (xyz & YDIR) ? "y" : "",
 	   (xyz & ZDIR) ? "z" : "",
 	   (xyz == XDIR || xyz == YDIR || xyz == ZDIR) ? "i" : "e");
-    bu_log("Using subtraction pattern [%V]\n", &pattern);
+    bu_log("Using subtraction pattern [%s]\n", bu_vls_addr(&pattern));
     bu_log("Repeating the pattern %zu time%s\n", repeat, (repeat == 1) ? "" : "s");
-    bu_log("Writing geometry to [%V]\n\n", &filename);
+    bu_log("Writing geometry to [%s]\n\n", bu_vls_addr(&filename));
 
     fp = wdb_fopen(bu_vls_addr(&filename));
     if (!fp)
-	bu_exit(6, "ERROR: Unable to open %V\n", &filename);
+	bu_exit(6, "ERROR: Unable to open %s\n", bu_vls_addr(&filename));
 
     (void)mk_id_units(fp, "Menger Sponge", "m");
 

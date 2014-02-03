@@ -835,7 +835,7 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
 
     bu_vls_printf(&dmp->dm_tkName, "%s", (char *)Tk_Name(pubvars->xtkwin));
 
-    bu_vls_printf(&str, "_init_dm %V %V\n", &init_proc_vls, &dmp->dm_pathName);
+    bu_vls_printf(&str, "_init_dm %s %s\n", bu_vls_addr(&init_proc_vls), bu_vls_addr(&dmp->dm_pathName));
 
     if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
 	bu_log("qt_open: _init_dm failed\n");
@@ -1219,7 +1219,7 @@ bool QTkMainWindow::event(QEvent *ev)
 	char *tk_event = qt_bindings[index].bind_function(ev);
 	if (tk_event != NULL) {
 	    struct bu_vls str = BU_VLS_INIT_ZERO;
-	    bu_vls_printf(&str, "event generate %V %s", &dmp->dm_pathName, tk_event);
+	    bu_vls_printf(&str, "event generate %s %s", bu_vls_addr(&dmp->dm_pathName), tk_event);
 	    if (Tcl_Eval(dmp->dm_interp, bu_vls_addr(&str)) == TCL_ERROR) {
 		bu_log("error generate event %s\n", tk_event);
 	    }

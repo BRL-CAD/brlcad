@@ -252,7 +252,7 @@ retry:
      * dynamically load it.
      */
 
-    bu_log("Shader (name: \"%V\" parameters: \"%V\")... ", &name, &params);
+    bu_log("Shader (name: \"%s\" parameters: \"%s\")... ", bu_vls_addr(&name), bu_vls_addr(&params));
 
     mfp_new = load_dynamic_shader(bu_vls_addr(&name));
     if (mfp_new) {
@@ -268,8 +268,8 @@ retry:
      * table) and search again.
      */
 
-    bu_log("WARNING Unknown shader settings on %s\nDefault (plastic) material used instead of '%V'.\n\n",
-	   rp->reg_name, &name);
+    bu_log("WARNING Unknown shader settings on %s\nDefault (plastic) material used instead of '%s'.\n\n",
+	   rp->reg_name, bu_vls_addr(&name));
 
     if (material != mdefault) {
 	material = mdefault;

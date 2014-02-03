@@ -156,7 +156,7 @@ _ged_editit(char *editstring, const char *filename)
 	for (length = bu_vls_strlen(&str) - 2; length > 0; length--) {
 	    bu_vls_putc(&sep, '*');
 	}
-	bu_log("%V%V%V\n\n", &sep, &str, &sep);
+	bu_log("%s%s%s\n\n", bu_vls_addr(&sep), bu_vls_addr(&str), bu_vls_addr(&sep));
 	bu_vls_free(&str);
 	bu_vls_free(&sep);
 	bu_free(editor_basename, "editor_basename free");

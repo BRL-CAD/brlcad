@@ -120,7 +120,7 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
 		bot_intern.idb_ptr = (genptr_t)rblp->bot;
 
 		/* Save new bot name for later use */
-		bu_vls_printf(&new_bots, "%V ", gedp->ged_result_str);
+		bu_vls_printf(&new_bots, "%s ", bu_vls_addr(gedp->ged_result_str));
 
 		dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(gedp->ged_result_str), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&bot_intern.idb_type);
 		if (dp == RT_DIR_NULL) {
@@ -137,7 +137,7 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    /* Save the name of the original bot and the new bots as a sublist */
-	    bu_vls_printf(&bot_result_list, "{%s {%V}} ", obj, &new_bots);
+	    bu_vls_printf(&bot_result_list, "{%s {%s}} ", obj, bu_vls_addr(&new_bots));
 
 	    bu_vls_trunc(gedp->ged_result_str, 0);
 	    bu_vls_trunc(&new_bots, 0);
@@ -149,7 +149,7 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_vls_trunc(gedp->ged_result_str, 0);
-    bu_vls_printf(gedp->ged_result_str, "%V {%V}", &bot_result_list, &error_str);
+    bu_vls_printf(gedp->ged_result_str, "%s {%s}", bu_vls_addr(&bot_result_list), bu_vls_addr(&error_str));
 
     bu_vls_free(&bot_result_list);
     bu_vls_free(&new_bots);

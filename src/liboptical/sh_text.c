@@ -143,7 +143,7 @@ txt_load_datasource(struct txt_specific *texture, struct db_i *dbInstance, const
 	bu_bomb("ERROR: txt_load_datasource() received NULL arg (struct txt_specific *)\n");
     }
 
-    bu_log("Loading texture %s [%V]...", texture->tx_datasrc==TXT_SRC_AUTO?"from auto-determined datasource":texture->tx_datasrc==TXT_SRC_OBJECT?"from a database object":texture->tx_datasrc==TXT_SRC_FILE?"from a file":"from an unknown source (ERROR)", &texture->tx_name);
+    bu_log("Loading texture %s [%s]...", texture->tx_datasrc==TXT_SRC_AUTO?"from auto-determined datasource":texture->tx_datasrc==TXT_SRC_OBJECT?"from a database object":texture->tx_datasrc==TXT_SRC_FILE?"from a file":"from an unknown source (ERROR)", bu_vls_addr(&texture->tx_name));
 
     /* if the source is auto or object, we try to load the object */
     if ((texture->tx_datasrc==TXT_SRC_AUTO) || (texture->tx_datasrc==TXT_SRC_OBJECT)) {
@@ -182,7 +182,7 @@ txt_load_datasource(struct txt_specific *texture, struct db_i *dbInstance, const
 
 	    /* check size of object */
 	    if (texture->tx_binunifp->count < size) {
-		bu_log("\nWARNING: %V needs %d bytes, binary object only has %lu\n", texture->tx_name, size, texture->tx_binunifp->count);
+		bu_log("\nWARNING: %s needs %d bytes, binary object only has %lu\n", bu_vls_addr(&texture->tx_name), size, texture->tx_binunifp->count);
 	    } else if (texture->tx_binunifp->count > size) {
 		bu_log("\nWARNING: Binary object is larger than specified texture size\n\tBinary Object: %zu pixels\n\tSpecified Texture Size: %zu pixels\n...continuing to load using image subsection...", texture->tx_binunifp->count);
 	    }
@@ -200,7 +200,7 @@ txt_load_datasource(struct txt_specific *texture, struct db_i *dbInstance, const
 	    return -1;				/* FAIL */
 
 	if (texture->tx_mp->buflen < size) {
-	    bu_log("\nWARNING: %V needs %d bytes, file only has %lu\n", &texture->tx_name, size, texture->tx_mp->buflen);
+	    bu_log("\nWARNING: %s needs %d bytes, file only has %lu\n", bu_vls_addr(&texture->tx_name), size, texture->tx_mp->buflen);
 	} else if (texture->tx_mp->buflen > size) {
 	    bu_log("\nWARNING: Texture file size is larger than specified texture size\n\tInput File: %zu pixels\n\tSpecified Texture Size: %lu pixels\n...continuing to load using image subsection...", texture->tx_mp->buflen, size);
 	}
@@ -266,7 +266,7 @@ txt_render(struct application *ap, const struct partition *pp, struct shadework 
      */
 
     if ((bu_vls_strlen(&tp->tx_name) <= 0) || (!tp->tx_mp && !tp->tx_binunifp)) {
-	bu_log("WARNING: texture [%V] could not be read\n", &tp->tx_name);
+	bu_log("WARNING: texture [%s] could not be read\n", bu_vls_addr(&tp->tx_name));
 	VSET(swp->sw_color, uvc.uv_u, 0, uvc.uv_v);
 	if (swp->sw_reflect > 0 || swp->sw_transmit > 0)
 	    (void)rr_render(ap, pp, swp);

@@ -1274,7 +1274,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 		{
 		    struct bu_vls *vls = (struct bu_vls *)loc;
 
-		    bu_log("\t%s=\"%V\"\n", sdp->sp_name, vls);
+		    bu_log("\t%s=\"%s\"\n", sdp->sp_name, bu_vls_addr(vls));
 		    bu_log("\t\t(vls_magic)0x%lx (vls_offset)%zu (vls_len)%zu (vls_max)%zu\n",
 			   (long unsigned int)vls->vls_magic, vls->vls_offset, vls->vls_len, vls->vls_max);
 		}
@@ -1529,7 +1529,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 	    case 'V':
 		{
 		    struct bu_vls *vls_p = (struct bu_vls *)loc;
-		    bu_vls_printf(vls, "%s=\"%V\"", sdp->sp_name, vls_p);
+		    bu_vls_printf(vls, "%s=\"%s\"", sdp->sp_name, bu_vls_addr(vls_p));
 		}
 		break;
 	    case 'i':
@@ -1658,7 +1658,7 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
 		{
 		    struct bu_vls *vls = (struct bu_vls *)loc;
 
-		    bu_vls_printf(vls_out, "\t%s=\"%V\"\n", sdp->sp_name, vls);
+		    bu_vls_printf(vls_out, "\t%s=\"%s\"\n", sdp->sp_name, bu_vls_addr(vls));
 		    bu_vls_printf(vls_out, "\t\t(vls_magic)%ld (vls_offset)%zu (vls_len)%zu (vls_max)%zu\n",
 				  (long unsigned int)vls->vls_magic, vls->vls_offset, vls->vls_len, vls->vls_max);
 		}

@@ -263,7 +263,7 @@ main(int argc, char **argv)
     }
 
     if ((fp_in = fopen(bu_vls_addr(&input_file_name), "r")) == NULL) {
-	bu_log("Cannot open input file (%V)\n", &input_file_name);
+	bu_log("Cannot open input file (%s)\n", bu_vls_addr(&input_file_name));
 	bu_vls_free(&input_file_name);
 	bu_vls_free(&output_file_name);
 	return EXIT_FAILURE;
@@ -272,7 +272,7 @@ main(int argc, char **argv)
 
     if (output_file_name_defined) {
 	if ((stream = fopen(bu_vls_addr(&output_file_name), "w")) == NULL) {
-	    bu_log("Cannot create output file (%V)\n", &output_file_name);
+	    bu_log("Cannot create output file (%s)\n", bu_vls_addr(&output_file_name));
 	    if (fclose(fp_in) != 0) {
 		bu_log("Unable to close input file.\n");
 	    }

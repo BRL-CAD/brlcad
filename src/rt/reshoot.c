@@ -219,10 +219,10 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 	    status = 1;
 	}
 	if (bu_vls_strlen(&result) > 0) {
-	    bu_log("Ray Pt %g,%g,%g Dir %g,%g,%g\n%V",
+	    bu_log("Ray Pt %g,%g,%g Dir %g,%g,%g\n%s",
 		   V3ARGS(sh->pt),
 		   V3ARGS(sh->dir),
-		   &result);
+		   bu_vls_addr(&result));
 	}
 
 	rh = BU_LIST_NEXT(reg_hit, &rh->l);

@@ -256,7 +256,7 @@ get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, in
 		    snprintf(buf, CLONE_BUFSIZE, "%s%d", prefix, num);	/* save the name for the next pass */
 		    /* clear and set the name */
 		    bu_vls_trunc(newname, 0);
-		    bu_vls_printf(newname, "%V%s", obj_list.names[j].dest[iter], suffix);
+		    bu_vls_printf(newname, "%s%s", bu_vls_addr(&obj_list.names[j].dest[iter]), suffix);
 		} else
 		    bu_vls_printf(newname, "%zu%s", num+i*state->incr, suffix);
 	    else

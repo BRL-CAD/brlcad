@@ -464,12 +464,12 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 	    if (ret != 0)
 		bu_log("WARNING: sort failure detected\n");
 	}
-	bu_vls_printf(gedp->ged_result_str, "%V\n", &cmd);
+	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&cmd));
 
 	bu_vls_trunc(&cmd, 0);
 	bu_vls_strcpy(&cmd, catcmd);
 	bu_vls_strcat(&cmd, argv[1]);
-	bu_vls_printf(gedp->ged_result_str, "%V\n", &cmd);
+	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&cmd));
 	ret = system(bu_vls_addr(&cmd));
 	if (ret != 0)
 	    bu_log("WARNING: cat failure detected\n");

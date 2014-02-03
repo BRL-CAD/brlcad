@@ -2782,9 +2782,9 @@ get_rotation_vertex(void)
     }
     bu_vls_printf(&str, ") [%d]: ", arb_vertices[type][loc]);
 
-    bu_vls_printf(&cmd, "cad_input_dialog .get_vertex %V {Need vertex for solid rotate}\
- {%V} vertex_num %d 0 {{ summary \"Enter a vertex number to rotate about.\"}} OK",
-		  &dName, &str, arb_vertices[type][loc]);
+    bu_vls_printf(&cmd, "cad_input_dialog .get_vertex %s {Need vertex for solid rotate}\
+ {%s} vertex_num %d 0 {{ summary \"Enter a vertex number to rotate about.\"}} OK",
+		  bu_vls_addr(&dName), bu_vls_addr(&str), arb_vertices[type][loc]);
 
     while (!valid) {
 	if (Tcl_Eval(INTERP, bu_vls_addr(&cmd)) != TCL_OK) {

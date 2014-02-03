@@ -5681,9 +5681,9 @@ wdb_rmap_cmd(struct rt_wdb *wdbp,
 	while (BU_LIST_WHILE (inp, wdb_id_names, &itnp->headName.l)) {
 	    /* add the this name to this sublist */
 	    if (strchr(bu_vls_addr(&inp->name), ' ')) {
-		bu_vls_printf(&vls, "\"%V\" ", &inp->name);
+		bu_vls_printf(&vls, "\"%s\" ", bu_vls_addr(&inp->name));
 	    } else {
-		bu_vls_printf(&vls, "%V ", &inp->name);
+		bu_vls_printf(&vls, "%s ", bu_vls_addr(&inp->name));
 	    }
 
 	    BU_LIST_DEQUEUE(&inp->l);
@@ -9731,7 +9731,7 @@ wdb_newcmds_tcl(void *clientData,
 	bu_vls_strcat(&vls, "0 ");
 
     if (strchr(bu_vls_addr(ged.ged_result_str), ' '))
-	bu_vls_printf(&vls, "\"%V\"", ged.ged_result_str);
+	bu_vls_printf(&vls, "\"%s\"", bu_vls_addr(ged.ged_result_str));
     else
 	bu_vls_vlscat(&vls, ged.ged_result_str);
 

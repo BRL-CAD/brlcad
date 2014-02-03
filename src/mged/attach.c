@@ -808,18 +808,18 @@ mged_link_vars(struct dm_list *p)
 {
     mged_slider_init_vls(p);
 
-    bu_vls_printf(&p->dml_fps_name, "%s(%V,fps)", MGED_DISPLAY_VAR,
-		  &p->dml_dmp->dm_pathName);
-    bu_vls_printf(&p->dml_aet_name, "%s(%V,aet)", MGED_DISPLAY_VAR,
-		  &p->dml_dmp->dm_pathName);
-    bu_vls_printf(&p->dml_ang_name, "%s(%V,ang)", MGED_DISPLAY_VAR,
-		  &p->dml_dmp->dm_pathName);
-    bu_vls_printf(&p->dml_center_name, "%s(%V,center)", MGED_DISPLAY_VAR,
-		  &p->dml_dmp->dm_pathName);
-    bu_vls_printf(&p->dml_size_name, "%s(%V,size)", MGED_DISPLAY_VAR,
-		  &p->dml_dmp->dm_pathName);
-    bu_vls_printf(&p->dml_adc_name, "%s(%V,adc)", MGED_DISPLAY_VAR,
-		  &p->dml_dmp->dm_pathName);
+    bu_vls_printf(&p->dml_fps_name, "%s(%s,fps)", MGED_DISPLAY_VAR,
+		  bu_vls_addr(&p->dml_dmp->dm_pathName));
+    bu_vls_printf(&p->dml_aet_name, "%s(%s,aet)", MGED_DISPLAY_VAR,
+		  bu_vls_addr(&p->dml_dmp->dm_pathName));
+    bu_vls_printf(&p->dml_ang_name, "%s(%s,ang)", MGED_DISPLAY_VAR,
+		  bu_vls_addr(&p->dml_dmp->dm_pathName));
+    bu_vls_printf(&p->dml_center_name, "%s(%s,center)", MGED_DISPLAY_VAR,
+		  bu_vls_addr(&p->dml_dmp->dm_pathName));
+    bu_vls_printf(&p->dml_size_name, "%s(%s,size)", MGED_DISPLAY_VAR,
+		  bu_vls_addr(&p->dml_dmp->dm_pathName));
+    bu_vls_printf(&p->dml_adc_name, "%s(%s,adc)", MGED_DISPLAY_VAR,
+		  bu_vls_addr(&p->dml_dmp->dm_pathName));
 }
 
 

@@ -198,7 +198,7 @@ sendlog(ClientData data, Tcl_Interp *UNUSED(interp), int UNUSED(argc), const cha
     struct bu_vls *daBomb = (struct bu_vls *)data;
 
     bu_log("Pretending that we're sending the log file to brlcad.org\n");
-    bu_log("REPORT:\n%V\n", daBomb);
+    bu_log("REPORT:\n%s\n", bu_vls_addr(daBomb));
 
     return TCL_OK;
 }

@@ -74,7 +74,7 @@
 
 #define IMPORT_FAIL(_s) \
     if (dsp_ip) { \
-	bu_log("rt_dsp_import4(%d) '%V' %s\n", __LINE__, &dsp_ip->dsp_name, _s); \
+	bu_log("rt_dsp_import4(%d) '%s' %s\n", __LINE__, bu_vls_addr(&dsp_ip->dsp_name), _s); \
 	bu_free((char *)dsp_ip, "rt_dsp_import4: dsp_ip"); \
     } \
     ip->idb_type = ID_NULL; \

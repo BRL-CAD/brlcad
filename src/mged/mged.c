@@ -251,7 +251,7 @@ void
 pr_prompt(int show_prompt)
 {
     if (show_prompt) {
-	bu_log("%V", &mged_prompt);
+	bu_log("%s", bu_vls_addr(&mged_prompt));
     }
 }
 
@@ -502,10 +502,10 @@ mged_insert_char(char ch)
 
 	bu_vls_strcat(&temp, bu_vls_addr(&input_str)+input_str_index);
 	bu_vls_trunc(&input_str, input_str_index);
-	bu_log("%c%V", (int)ch, &temp);
+	bu_log("%c%s", (int)ch, bu_vls_addr(&temp));
 	pr_prompt(interactive);
 	bu_vls_putc(&input_str, (int)ch);
-	bu_log("%V", &input_str);
+	bu_log("%s", bu_vls_addr(&input_str));
 	bu_vls_vlscat(&input_str, &temp);
 	++input_str_index;
 	bu_vls_free(&temp);
@@ -548,7 +548,7 @@ do_tab_expansion()
 	    bu_vls_strcat(&input_str, " ");
 
 	input_str_index = bu_vls_strlen(&input_str);
-	bu_log("%V", &input_str);
+	bu_log("%s", bu_vls_addr(&input_str));
     } else {
 	bu_log("ERROR\n");
 	bu_log("%s\n", Tcl_GetStringResult(INTERP));
@@ -622,18 +622,18 @@ mged_process_char(char ch)
 
 	    /* If no input and a default is supplied then use it */
 	    if (!bu_vls_strlen(&input_str) && bu_vls_strlen(&curr_cmd_list->cl_more_default))
-		bu_vls_printf(&input_str_prefix, "%s%V\n",
+		bu_vls_printf(&input_str_prefix, "%s%s\n",
 			      bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
-			      &curr_cmd_list->cl_more_default);
+			      bu_vls_addr(&curr_cmd_list->cl_more_default));
 	    else {
 		if (curr_cmd_list->cl_quote_string)
-		    bu_vls_printf(&input_str_prefix, "%s\"%V\"\n",
+		    bu_vls_printf(&input_str_prefix, "%s\"%s\"\n",
 				  bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
-				  &input_str);
+				  bu_vls_addr(&input_str));
 		else
-		    bu_vls_printf(&input_str_prefix, "%s%V\n",
+		    bu_vls_printf(&input_str_prefix, "%s%s\n",
 				  bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
-				  &input_str);
+				  bu_vls_addr(&input_str));
 	    }
 
 	    curr_cmd_list->cl_quote_string = 0;
@@ -711,9 +711,9 @@ mged_process_char(char ch)
 	    } else {
 		bu_vls_strcat(&temp, bu_vls_addr(&input_str)+input_str_index);
 		bu_vls_trunc(&input_str, input_str_index-1);
-		bu_log("\b%V ", &temp);
+		bu_log("\b%s ", bu_vls_addr(&temp));
 		pr_prompt(interactive);
-		bu_log("%V", &input_str);
+		bu_log("%s", bu_vls_addr(&input_str));
 		bu_vls_vlscat(&input_str, &temp);
 		bu_vls_free(&temp);
 	    }
@@ -748,9 +748,9 @@ mged_process_char(char ch)
 
 	    bu_vls_strcpy(&temp, bu_vls_addr(&input_str)+input_str_index+1);
 	    bu_vls_trunc(&input_str, input_str_index);
-	    bu_log("%V ", &temp);
+	    bu_log("%s ", bu_vls_addr(&temp));
 	    pr_prompt(interactive);
-	    bu_log("%V", &input_str);
+	    bu_log("%s", bu_vls_addr(&input_str));
 	    bu_vls_vlscat(&input_str, &temp);
 	    bu_vls_free(&temp);
 	    escaped = bracketed = 0;
@@ -758,7 +758,7 @@ mged_process_char(char ch)
 	case CTRL_U:                   /* Delete whole line */
 	    pr_prompt(interactive);
 	    bu_vls_strncpy(&temp, SPACES, bu_vls_strlen(&input_str));
-	    bu_log("%V", &temp);
+	    bu_log("%s", bu_vls_addr(&temp));
 	    bu_vls_free(&temp);
 	    pr_prompt(interactive);
 	    bu_vls_trunc(&input_str, 0);
@@ -767,17 +767,17 @@ mged_process_char(char ch)
 	    break;
 	case CTRL_K:                    /* Delete to end of line */
 	    bu_vls_strncpy(&temp, SPACES, bu_vls_strlen(&input_str)-input_str_index);
-	    bu_log("%V", &temp);
+	    bu_log("%s", bu_vls_addr(&temp));
 	    bu_vls_free(&temp);
 	    bu_vls_trunc(&input_str, input_str_index);
 	    pr_prompt(interactive);
-	    bu_log("%V", &input_str);
+	    bu_log("%s", bu_vls_addr(&input_str));
 	    escaped = bracketed = 0;
 	    break;
 	case CTRL_L:                   /* Redraw line */
 	    bu_log("\n");
 	    pr_prompt(interactive);
-	    bu_log("%V", &input_str);
+	    bu_log("%s", bu_vls_addr(&input_str));
 	    if (input_str_index == bu_vls_strlen(&input_str))
 		break;
 	    pr_prompt(interactive);
@@ -857,7 +857,7 @@ mged_process_char(char ch)
 
 	    pr_prompt(interactive);
 	    bu_vls_strncpy(&temp, SPACES, bu_vls_strlen(&input_str));
-	    bu_log("%V", &temp);
+	    bu_log("%s", bu_vls_addr(&temp));
 	    bu_vls_free(&temp);
 
 	    pr_prompt(interactive);
@@ -865,7 +865,7 @@ mged_process_char(char ch)
 	    bu_vls_vlscat(&input_str, vp);
 	    if (bu_vls_addr(&input_str)[bu_vls_strlen(&input_str)-1] == '\n')
 		bu_vls_trunc(&input_str, bu_vls_strlen(&input_str)-1); /* del \n */
-	    bu_log("%V", &input_str);
+	    bu_log("%s", bu_vls_addr(&input_str));
 	    input_str_index = bu_vls_strlen(&input_str);
 	    escaped = bracketed = 0;
 	    break;
@@ -897,14 +897,14 @@ mged_process_char(char ch)
 		len = bu_vls_strlen(&input_str);
 		bu_vls_trunc(&input_str, input_str_index);
 		pr_prompt(interactive);
-		bu_log("%V%V", &input_str, &temp);
+		bu_log("%s%s", bu_vls_addr(&input_str), bu_vls_addr(&temp));
 
 		bu_vls_strncpy(&temp2, SPACES, len - input_str_index);
-		bu_log("%V", &temp2);
+		bu_log("%s", bu_vls_addr(&temp2));
 		bu_vls_free(&temp2);
 
 		pr_prompt(interactive);
-		bu_log("%V", &input_str);
+		bu_log("%s", bu_vls_addr(&input_str));
 		bu_vls_vlscat(&input_str, &temp);
 		bu_vls_free(&temp);
 	    }
@@ -934,14 +934,14 @@ mged_process_char(char ch)
 		bu_vls_strcpy(&temp, curr);
 		bu_vls_trunc(&input_str, input_str_index);
 		pr_prompt(interactive);
-		bu_log("%V%V", &input_str, &temp);
+		bu_log("%s%s", bu_vls_addr(&input_str), bu_vls_addr(&temp));
 
 		bu_vls_strncpy(&temp2, SPACES, i - input_str_index);
-		bu_log("%V", &temp2);
+		bu_log("%s", bu_vls_addr(&temp2));
 		bu_vls_free(&temp2);
 
 		pr_prompt(interactive);
-		bu_log("%V", &input_str);
+		bu_log("%s", bu_vls_addr(&input_str));
 		bu_vls_vlscat(&input_str, &temp);
 		bu_vls_free(&temp);
 	    } else
@@ -970,7 +970,7 @@ mged_process_char(char ch)
 		bu_vls_strcpy(&temp, start+input_str_index);
 		bu_vls_trunc(&input_str, input_str_index);
 		pr_prompt(interactive);
-		bu_log("%V", &input_str);
+		bu_log("%s", bu_vls_addr(&input_str));
 		bu_vls_vlscat(&input_str, &temp);
 		bu_vls_free(&temp);
 	    } else
@@ -1003,7 +1003,7 @@ mged_process_char(char ch)
 		bu_vls_strcpy(&temp, start+input_str_index);
 		bu_vls_trunc(&input_str, input_str_index);
 		pr_prompt(interactive);
-		bu_log("%V", &input_str);
+		bu_log("%s", bu_vls_addr(&input_str));
 		bu_vls_vlscat(&input_str, &temp);
 		bu_vls_free(&temp);
 	    } else
@@ -1766,13 +1766,13 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 
 	/* If no input and a default is supplied then use it */
 	if (!bu_vls_strlen(&input_str) && bu_vls_strlen(&curr_cmd_list->cl_more_default))
-	    bu_vls_printf(&input_str_prefix, "%s%V\n",
+	    bu_vls_printf(&input_str_prefix, "%s%s\n",
 			  bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
-			  &curr_cmd_list->cl_more_default);
+			  bu_vls_addr(&curr_cmd_list->cl_more_default));
 	else
-	    bu_vls_printf(&input_str_prefix, "%s%V\n",
+	    bu_vls_printf(&input_str_prefix, "%s%s\n",
 			  bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
-			  &input_str);
+			  bu_vls_addr(&input_str));
 
 	bu_vls_trunc(&curr_cmd_list->cl_more_default, 0);
 

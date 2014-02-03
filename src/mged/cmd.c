@@ -1497,22 +1497,22 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 	for (BU_LIST_FOR (clp, cmd_list, &head_cmd_list.l)) {
 	    bu_vls_trunc(&vls, 0);
 	    if (clp->cl_tie) {
-		bu_vls_printf(&vls, "%V %V", &clp->cl_name,
-			      &clp->cl_tie->dml_dmp->dm_pathName);
+		bu_vls_printf(&vls, "%s %s", bu_vls_addr(&clp->cl_name),
+			      bu_vls_addr(&clp->cl_tie->dml_dmp->dm_pathName));
 		Tcl_AppendElement(interpreter, bu_vls_addr(&vls));
 	    } else {
-		bu_vls_printf(&vls, "%V {}", &clp->cl_name);
+		bu_vls_printf(&vls, "%s {}", bu_vls_addr(&clp->cl_name));
 		Tcl_AppendElement(interpreter, bu_vls_addr(&vls));
 	    }
 	}
 
 	bu_vls_trunc(&vls, 0);
 	if (clp->cl_tie) {
-	    bu_vls_printf(&vls, "%V %V", &clp->cl_name,
-			  &clp->cl_tie->dml_dmp->dm_pathName);
+	    bu_vls_printf(&vls, "%s %s", bu_vls_addr(&clp->cl_name),
+			  bu_vls_addr(&clp->cl_tie->dml_dmp->dm_pathName));
 	    Tcl_AppendElement(interpreter, bu_vls_addr(&vls));
 	} else {
-	    bu_vls_printf(&vls, "%V {}", &clp->cl_name);
+	    bu_vls_printf(&vls, "%s {}", bu_vls_addr(&clp->cl_name));
 	    Tcl_AppendElement(interpreter, bu_vls_addr(&vls));
 	}
 

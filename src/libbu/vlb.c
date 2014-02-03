@@ -150,7 +150,7 @@ bu_pr_vlb(const char *title, const struct bu_vlb *vlb)
     }
 
     /* print as one call */
-    bu_log("%V", &v);
+    bu_log("%s", bu_vls_addr(&v));
 
     bu_vls_free(&v);
 }

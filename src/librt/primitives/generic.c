@@ -173,10 +173,10 @@ rt_generic_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const
 			       (char *)intern->idb_ptr, ' ');
 
 	    if (sp->sp_count < 2)
-		bu_vls_printf(logstr, " %V", &str);
+		bu_vls_printf(logstr, " %s", bu_vls_addr(&str));
 	    else {
 		bu_vls_printf(logstr, " {");
-		bu_vls_printf(logstr, "%V", &str);
+		bu_vls_printf(logstr, "%s", bu_vls_addr(&str));
 		bu_vls_printf(logstr, "} ");
 	    }
 

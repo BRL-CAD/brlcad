@@ -93,7 +93,7 @@ create_cyl(point_line_t **plta, int count) {
 	if (plt && plt->type)
 	    bu_vls_printf(&vls, "{ %f %f %f } ", plt->val[X], plt->val[Y], plt->val[Z]);
     }
-    bu_vls_printf(&vls2, "cylinder { %V }", &vls);
+    bu_vls_printf(&vls2, "cylinder { %s }", bu_vls_addr(&vls));
 #if PRINT_SCRIPT
     fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
 #endif
@@ -124,7 +124,7 @@ create_sphere(point_line_t **plta, int count) {
 	if (plt && plt->type)
 	    bu_vls_printf(&vls, " %f %f %f  ", plt->val[X], plt->val[Y], plt->val[Z]);
     }
-    bu_vls_printf(&vls2, "sph { %V }", &vls);
+    bu_vls_printf(&vls2, "sph { %s }", bu_vls_addr(&vls));
 #if PRINT_SCRIPT
     fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
 #endif
@@ -473,7 +473,7 @@ create_plate(point_line_t **plta, int count) {
 	    bu_vls_printf(&vls, "{ %f %f %f } ", plt->val[X], plt->val[Y], plt->val[Z]);
 	}
     }
-    bu_vls_printf(&vls2, "plate { %V }", &vls);
+    bu_vls_printf(&vls2, "plate { %s }", bu_vls_addr(&vls));
 #if PRINT_SCRIPT
     fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
 #endif
@@ -504,7 +504,7 @@ create_arb(point_line_t **plta, int count) {
 	    bu_vls_printf(&vls, "{ %f %f %f } ", plt->val[X], plt->val[Y], plt->val[Z]);
 	}
     }
-    bu_vls_printf(&vls2, "arb { %V }", &vls);
+    bu_vls_printf(&vls2, "arb { %s }", bu_vls_addr(&vls));
 #if PRINT_SCRIPT
     fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
 #endif
@@ -534,7 +534,7 @@ create_cylinder(point_line_t **plta, int count) {
 	if (plt && plt->type)
 	    bu_vls_printf(&vls, "{ %f %f %f } ", plt->val[X], plt->val[Y], plt->val[Z]);
     }
-    bu_vls_printf(&vls2, "cyls { %V }", &vls);
+    bu_vls_printf(&vls2, "cyls { %s }", bu_vls_addr(&vls));
 #if PRINT_SCRIPT
     fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
 #endif
@@ -564,7 +564,7 @@ create_pipe(point_line_t **plta, int count) {
 	if (plt && plt->type)
 	    bu_vls_printf(&vls, "{ %f %f %f } ", plt->val[X], plt->val[Y], plt->val[Z]);
     }
-    bu_vls_printf(&vls2, "pipe { %V }", &vls);
+    bu_vls_printf(&vls2, "pipe { %s }", bu_vls_addr(&vls));
 #if PRINT_SCRIPT
     fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
 #endif
@@ -594,7 +594,7 @@ create_points(point_line_t **plta, int count) {
 	if (plt && plt->type)
 	    bu_vls_printf(&vls, " %f %f %f  ", plt->val[X], plt->val[Y], plt->val[Z]);
     }
-    bu_vls_printf(&vls2, "points { %V }", &vls);
+    bu_vls_printf(&vls2, "points { %s }", bu_vls_addr(&vls));
 #if PRINT_SCRIPT
     fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
 #endif

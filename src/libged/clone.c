@@ -441,7 +441,7 @@ copy_v5_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
 	if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0)
 	    bu_vls_printf(state->gedp->ged_result_str, "ERROR: clone internal error copying %s\n", proto->d_namep);
 
-	bu_vls_printf(&state->olist, "%V ", name);
+	bu_vls_printf(&state->olist, "%s ", bu_vls_addr(name));
 	bu_vls_free(name);
     } /* end make n copies */
 
@@ -653,7 +653,7 @@ copy_v5_comb(struct db_i *dbip, struct directory *proto, struct ged_clone_state 
 		bu_vls_free(name);
 		return NULL;
 	    }
-	    bu_vls_printf(&state->olist, "%V ", name);
+	    bu_vls_printf(&state->olist, "%s ", bu_vls_addr(name));
 	    bu_vls_free(name);
 	    rt_db_free_internal(&dbintern);
 	}
@@ -984,7 +984,7 @@ ged_clone(struct ged *gedp, int argc, const char *argv[])
     if ((copy = deep_copy_object(&rt_uniresource, &state)) != (struct directory *)NULL)
 	bu_vls_printf(gedp->ged_result_str, "%s", copy->d_namep);
 
-    bu_vls_printf(gedp->ged_result_str, " {%V}", &state.olist);
+    bu_vls_printf(gedp->ged_result_str, " {%s}", bu_vls_addr(&state.olist));
     bu_vls_free(&state.olist);
 
     return GED_OK;

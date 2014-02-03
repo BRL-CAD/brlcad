@@ -2108,9 +2108,9 @@ main(int ac, char *av[])
     bu_vls_strcat(&model_output_filename, ".g");
 
     bu_log("input_filename '%s'\n", input_filename);
-    bu_log("temp_filename '%V'\n", &temp_filename);
-    bu_log("dsp_output_filename '%V'\n", &dsp_output_filename);
-    bu_log("model_output_filename '%V'\n", &model_output_filename);
+    bu_log("temp_filename '%s'\n", bu_vls_addr(&temp_filename));
+    bu_log("dsp_output_filename '%s'\n", bu_vls_addr(&dsp_output_filename));
+    bu_log("model_output_filename '%s'\n", bu_vls_addr(&model_output_filename));
 
     raw_dem_2_raw_dsp_manual_scale_factor = 0;
     manual_dem_max_raw_elevation = 0;

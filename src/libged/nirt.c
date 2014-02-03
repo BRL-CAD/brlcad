@@ -218,7 +218,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	    else {
 		struct bu_vls tmp = BU_VLS_INIT_ZERO;
 		bu_vls_strncpy(&tmp, val, count);
-		bu_vls_printf(&o_vls, " fmt r \"\\n%V\" ", &tmp);
+		bu_vls_printf(&o_vls, " fmt r \"\\n%V\" ", (&tmp));
 		bu_vls_free(&tmp);
 
 		if (count)
