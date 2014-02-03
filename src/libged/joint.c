@@ -552,7 +552,7 @@ static void
 parse_error(struct ged *gedp, struct bu_vls *str, char *error)
 {
     char *text;
-    size_t i;
+    ssize_t i;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
