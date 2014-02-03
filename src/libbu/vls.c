@@ -232,7 +232,7 @@ bu_vls_nibble(struct bu_vls *vp, int len)
 {
     BU_CK_VLS(vp);
 
-    if (len < 0 && (-len) > (ssize_t)vp->vls_offset)
+    if (len < 0 && (-len) > vp->vls_offset)
 	len = -vp->vls_offset;
     if ((size_t)len >= vp->vls_len) {
 	bu_vls_trunc(vp, 0);
