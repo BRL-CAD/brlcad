@@ -106,7 +106,7 @@ static char *output_file = "nastran.g";
 static struct rt_wdb *fpout;		/* brlcad output file */
 static FILE *fpin;			/* NASTRAN input file */
 static FILE *fptmp;			/* temporary version of NASTRAN input */
-static char *Usage="Usage:\n\t%s [-p] [-xX lvl] [-t tol.dist] [-i NASTRAN_file] -o BRL-CAD_file\n";
+static char *Usage="Usage: %s [-p] [-xX lvl] [-t tol.dist] [-i NASTRAN_file] -o BRL-CAD_file\n";
 static off_t start_off;
 static char *delims=", \t";
 static struct coord_sys coord_head;	/* head of linked list of coordinate systems */
@@ -1123,7 +1123,7 @@ main(int argc, char **argv)
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    while ((c=bu_getopt(argc, argv, "x:X:t:ni:o:m")) != -1) {
+    while ((c=bu_getopt(argc, argv, "x:X:t:ni:o:mh?")) != -1) {
 	switch (c) {
 	    case 'x':
 		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
@@ -1146,16 +1146,18 @@ main(int argc, char **argv)
 		units = MM;
 		break;
 	    case 'i':
-		nastran_file = bu_optarg;
 		fpin = fopen(bu_optarg, "rb");
 		if (fpin == (FILE *)NULL) {
 		    bu_log("Cannot open NASTRAN file (%s) for reading!\n", bu_optarg);
 		    bu_exit(1, Usage, argv[0]);
 		}
+		nastran_file = bu_optarg;
 		break;
 	    case 'o':
 		output_file = bu_optarg;
 		break;
+	    default:
+		bu_exit(1, Usage, argv[0]);
 	}
     }
 
