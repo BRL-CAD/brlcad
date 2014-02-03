@@ -150,6 +150,7 @@
 #define strdup _strdup
 #define sys_errlist _sys_errlist
 #define sys_nerr _sys_nerr
+#define getcwd _getcwd
 
 /* set up stat */
 #if defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8

@@ -27,6 +27,10 @@
 
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
+#else
+#  if defined(_WIN32)
+#    include <direct.h>
+#  endif
 #endif
 #ifdef HAVE_SYS_PARAM_H /* for MAXPATHLEN */
 #  include <sys/param.h>
