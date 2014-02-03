@@ -64,7 +64,7 @@ _exit_alarm_handler(UINT UNUSED(uTimerID), UINT UNUSED(uMsg), DWORD_PTR UNUSED(d
 int
 set_exit_alarm(unsigned seconds)
 {
-    return !!timeSetEvent(seconds*1000, 100, (LPTIMECALLBACK)_exit_alarm_handler, NULL, TIME_ONESHOT);
+    return !!timeSetEvent(seconds*1000, 100, (LPTIMECALLBACK)_exit_alarm_handler, (DWORD_PTR)NULL, TIME_ONESHOT);
 }
 
 
