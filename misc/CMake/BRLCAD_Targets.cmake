@@ -36,7 +36,6 @@
 
 # When defining targets, we need to know if we have a no-error flag
 include(CheckCCompilerFlag)
-CHECK_C_COMPILER_FLAG(-Wno-error NOERROR_FLAG)
 
 # Utility macro checking for a specific arg in un-named arguments to a
 # macro.
@@ -150,7 +149,8 @@ endmacro(FLAGS_TO_FILES)
 
 # Handle C++ NO_STRICT settings
 macro(CXX_NO_STRICT cxx_srcslist args)
-  if(NOERROR_FLAG)
+  CHECK_CXX_COMPILER_FLAG(-Wno-error NOERROR_FLAG_CXX)
+  if(NOERROR_FLAG_CXX)
     foreach(extraarg ${args})
       if(${extraarg} MATCHES "NO_STRICT_CXX" AND BRLCAD_ENABLE_STRICT)
 	foreach(srcfile ${cxx_srcslist})
@@ -162,7 +162,7 @@ macro(CXX_NO_STRICT cxx_srcslist args)
 	endforeach(srcfile ${cxx_srcslist})
       endif(${extraarg} MATCHES "NO_STRICT_CXX" AND BRLCAD_ENABLE_STRICT)
     endforeach(extraarg ${args})
-  endif(NOERROR_FLAG)
+  endif(NOERROR_FLAG_CXX)
 endmacro(CXX_NO_STRICT cxx_srcslist)
 
 # BRL-CAD style checking test
@@ -277,6 +277,7 @@ macro(BRLCAD_ADDEXEC execname srcslist libslist)
   # If this target is marked as incompatible with the strict flags, disable them
   foreach(extraarg ${ARGN})
     if(${extraarg} MATCHES "NO_STRICT$" AND BRLCAD_ENABLE_STRICT)
+      CHECK_C_COMPILER_FLAG(-Wno-error NOERROR_FLAG)
       if(NOERROR_FLAG)
 	set_property(TARGET ${execname} APPEND PROPERTY COMPILE_FLAGS "-Wno-error")
       endif(NOERROR_FLAG)
@@ -383,6 +384,7 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
 
     foreach(extraarg ${ARGN})
       if(${extraarg} MATCHES "NO_STRICT" AND BRLCAD_ENABLE_STRICT AND NOT  ${lib_type} STREQUAL "MIXED")
+        CHECK_C_COMPILER_FLAG(-Wno-error NOERROR_FLAG)
 	if(NOERROR_FLAG)
 	  set_property(TARGET ${libname} APPEND PROPERTY COMPILE_FLAGS "-Wno-error")
 	endif(NOERROR_FLAG)
@@ -436,6 +438,7 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
     # If we can't build this library strict, add the -Wno-error flag
     foreach(extraarg ${ARGN})
       if(${extraarg} MATCHES "NO_STRICT" AND BRLCAD_ENABLE_STRICT AND NOT  ${lib_type} STREQUAL "MIXED")
+        CHECK_C_COMPILER_FLAG(-Wno-error NOERROR_FLAG)
 	if(NOERROR_FLAG)
 	  set_property(TARGET ${libname}-static APPEND PROPERTY COMPILE_FLAGS "-Wno-error")
 	endif(NOERROR_FLAG)
@@ -577,6 +580,28 @@ macro(BRLCAD_MANAGE_FILES inputdata targetdir)
   # Handle both a list of one or more files and variable holding a list of files -
   # find out what we've got.
   NORMALIZE_FILE_LIST("${inputdata}" datalist fullpath_datalist targetname)
+
+  #-----------------------------------------------------------------------------
+  # Some of the more advanced build system features in BRL-CAD's CMake
+  # build need to know whether symlink support is present on the
+  # current OS - go ahead and do this test up front, caching the
+  # results.
+  if(NOT DEFINED HAVE_SYMLINK)
+    message("--- Checking operating system support for file symlinking")
+    file(WRITE ${CMAKE_BINARY_DIR}/CMakeTmp/link_test_src "testing for symlink ability")
+    execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_BINARY_DIR}/CMakeTmp/link_test_src ${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest)
+    if(EXISTS ${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest)
+      message("--- Checking operating system support for file symlinking - Supported")
+      set(HAVE_SYMLINK 1 CACHE BOOL "Platform supports creation of symlinks" FORCE)
+      mark_as_advanced(HAVE_SYMLINK)
+      file(REMOVE ${CMAKE_BINARY_DIR}/CMakeTmp/link_test_src ${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest)
+    else(EXISTS ${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest)
+      message("--- Checking operating system support for file symlinking - Unsupported")
+      set(HAVE_SYMLINK 0 CACHE BOOL "Platform does not support creation of symlinks" FORCE)
+      mark_as_advanced(HAVE_SYMLINK)
+      file(REMOVE ${CMAKE_BINARY_DIR}/CMakeTmp/link_test_src)
+    endif(EXISTS ${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest)
+  endif(NOT DEFINED HAVE_SYMLINK)
 
   # Now that the input data and target names are in order, define the custom
   # commands needed for build directory data copying on this platform (per
