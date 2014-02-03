@@ -32,10 +32,6 @@
 
 #include "bu.h"
 
-#if defined(HAVE_IO_H)
-#  include <io.h>
-#endif
-
 #ifndef FB_EXPORT
 #  if defined(FB_DLL_EXPORTS) && defined(FB_DLL_IMPORTS)
 #    error "Only FB_DLL_EXPORTS or FB_DLL_IMPORTS can be defined, not both."
