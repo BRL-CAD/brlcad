@@ -67,6 +67,7 @@
 #define HAS_OPENGL		1
 #define HAVE_FCNTL_H		1
 #define HAVE_FILENO		1
+#define HAVE_FLOAT_H		1
 #define HAVE_GETFULLPATHNAME	1
 #define HAVE_GETHOSTNAME	1
 #define HAVE_GETPROGNAME        1
