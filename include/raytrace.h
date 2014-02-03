@@ -1763,7 +1763,7 @@ struct application_bundle
 
 
 #ifdef NO_BOMBING_MACROS
-#  define RT_AP_CHECK(_ap) IGNORE((_ap))
+#  define RT_AP_CHECK(_ap) BU_IGNORE((_ap))
 #else
 #  define RT_AP_CHECK(_ap)	\
     {if ((_ap)->a_zero1||(_ap)->a_zero2) \
@@ -2462,7 +2462,7 @@ struct hitmiss {
 
 
 #ifdef NO_BOMBING_MACROS
-#  define NMG_CK_HITMISS(hm) IGNORE((hm))
+#  define NMG_CK_HITMISS(hm) BU_IGNORE((hm))
 #else
 #  define NMG_CK_HITMISS(hm) \
     {\
@@ -2490,7 +2490,7 @@ struct hitmiss {
 #endif
 
 #ifdef NO_BOMBING_MACROS
-#  define NMG_CK_HITMISS_LISTS(rd) IGNORE((rd))
+#  define NMG_CK_HITMISS_LISTS(rd) BU_IGNORE((rd))
 #else
 #  define NMG_CK_HITMISS_LISTS(rd) \
     { \
@@ -2593,7 +2593,7 @@ struct ray_data {
 
 
 #ifdef NO_BOMBING_MACROS
-#  define nmg_bu_bomb(rd, str) IGNORE((rd))
+#  define nmg_bu_bomb(rd, str) BU_IGNORE((rd))
 #else
 #  define nmg_bu_bomb(rd, str) { \
 	bu_log("%s", str); \

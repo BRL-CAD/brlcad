@@ -106,6 +106,15 @@ __BEGIN_DECLS
 #define BRLCAD_OK 0
 #define BRLCAD_ERROR 1
 
+ /**
+ * BU_IGNORE provides a common mechanism for innocuously ignoring a
+ * parameter that is sometimes used and sometimes not.  It should
+ * "practically" result in nothing of concern happening.  It's
+ * commonly used by macros that disable functionality based on
+ * compilation settings (e.g., BU_ASSERT()) and shouldn't normally
+ * need to be used directly by code.
+ */
+#define BU_IGNORE(_parm) (void)(_parm)
 
 /**
  * @def BU_DIR_SEPARATOR
@@ -308,7 +317,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
  * Example: BU_ASSERT_LONG(j+7, <, 42);
  */
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT(_equation) IGNORE((_equation))
+#  define BU_ASSERT(_equation) BU_IGNORE((_equation))
 #else
 #  define BU_ASSERT(_equation)	\
     if (UNLIKELY(!(_equation))) { \
@@ -319,7 +328,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 #endif
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_PTR(_lhs, _relation, _rhs) IGNORE((_lhs)); IGNORE((_rhs))
+#  define BU_ASSERT_PTR(_lhs, _relation, _rhs) BU_IGNORE((_lhs)); BU_IGNORE((_rhs))
 #else
 #  define BU_ASSERT_PTR(_lhs, _relation, _rhs)	\
     if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
@@ -332,7 +341,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_LONG(_lhs, _relation, _rhs) IGNORE((_lhs)); IGNORE((_rhs))
+#  define BU_ASSERT_LONG(_lhs, _relation, _rhs) BU_IGNORE((_lhs)); BU_IGNORE((_rhs))
 #else
 #  define BU_ASSERT_LONG(_lhs, _relation, _rhs)	\
     if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
@@ -345,7 +354,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_SIZE_T(_lhs, _relation, _rhs) IGNORE((_lhs)); IGNORE((_rhs))
+#  define BU_ASSERT_SIZE_T(_lhs, _relation, _rhs) BU_IGNORE((_lhs)); BU_IGNORE((_rhs))
 #else
 #  define BU_ASSERT_SIZE_T(_lhs, _relation, _rhs)	\
     if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
@@ -358,7 +367,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_SSIZE_T(_lhs, _relation, _rhs) IGNORE((_lhs)); IGNORE((_rhs))
+#  define BU_ASSERT_SSIZE_T(_lhs, _relation, _rhs) BU_IGNORE((_lhs)); BU_IGNORE((_rhs))
 #else
 #  define BU_ASSERT_SSIZE_T(_lhs, _relation, _rhs)	\
     if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
@@ -371,7 +380,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_DOUBLE(_lhs, _relation, _rhs) IGNORE((_lhs)); IGNORE((_rhs))
+#  define BU_ASSERT_DOUBLE(_lhs, _relation, _rhs) BU_IGNORE((_lhs)); BU_IGNORE((_rhs))
 #else
 #  define BU_ASSERT_DOUBLE(_lhs, _relation, _rhs)	\
     if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
@@ -800,7 +809,7 @@ BU_EXPORT extern bu_endian_t bu_byteorder(void);
  * first entry in the structure is a magic number. ((void)(1?0:((_ptr), void(), 0)))
  */
 #ifdef NO_BOMBING_MACROS
-#  define BU_CKMAG(_ptr, _magic, _str) IGNORE((_ptr))
+#  define BU_CKMAG(_ptr, _magic, _str) BU_IGNORE((_ptr))
 #else
 #  define BU_CKMAG(_ptr, _magic, _str) { \
 	const uintptr_t _ptrval = (const uintptr_t)(_ptr); \
@@ -1541,7 +1550,7 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 
 /* This is not done by default for performance reasons */
 #ifdef NO_BOMBING_MACROS
-#  define BU_BITV_BITNUM_CHECK(_bv, _bit) IGNORE((_bv))
+#  define BU_BITV_BITNUM_CHECK(_bv, _bit) BU_IGNORE((_bv))
 #else
 #  define BU_BITV_BITNUM_CHECK(_bv, _bit)	/* Validate bit number */ \
     if (UNLIKELY(((unsigned)(_bit)) >= (_bv)->nbits)) {\
@@ -1552,7 +1561,7 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 #endif
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_BITV_NBITS_CHECK(_bv, _nbits) IGNORE((_bv))
+#  define BU_BITV_NBITS_CHECK(_bv, _nbits) BU_IGNORE((_bv))
 #else
 #  define BU_BITV_NBITS_CHECK(_bv, _nbits)	/* Validate number of bits */ \
     if (UNLIKELY(((unsigned)(_nbits)) > (_bv)->nbits)) {\
