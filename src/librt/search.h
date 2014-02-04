@@ -66,6 +66,8 @@ struct db_node_t {
     int flat_search;
     int orig_len;
     int matching_len;
+    int deepest_matching_len;
+    int shallowest_matching_len;
 };
 
 /* search node type */
