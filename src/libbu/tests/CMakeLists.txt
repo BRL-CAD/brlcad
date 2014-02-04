@@ -34,7 +34,7 @@ add_test(bu_basename_sp__sp__sp_                            tester_bu_basename "
 
 #
 #  ************ bitv.c tests *************
-include(bitv-tests.txt)
+include(bitv-tests.cmake)
 
 #
 #  ************ booleanize.c tests *************
