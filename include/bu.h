@@ -5074,7 +5074,7 @@ BU_EXPORT extern void bu_vls_trunc2(struct bu_vls *vp,
  * un-nibbled.
  */
 BU_EXPORT extern void bu_vls_nibble(struct bu_vls *vp,
-				    int len);
+				    off_t len);
 
 /**
  * Releases the memory used for the string buffer.

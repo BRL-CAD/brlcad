@@ -228,19 +228,33 @@ bu_vls_trunc2(struct bu_vls *vp, int len)
 
 
 void
-bu_vls_nibble(struct bu_vls *vp, int len)
+bu_vls_nibble(struct bu_vls *vp, off_t len)
 {
     BU_CK_VLS(vp);
 
-    if (len < 0 && (-len) > (int)vp->vls_offset)
-	len = -vp->vls_offset;
-    if ((size_t)len >= vp->vls_len) {
+    /* if the caller asks to nibble everything, truncate the string */
+    if (len > 0 && (size_t)len >= vp->vls_len) {
 	bu_vls_trunc(vp, 0);
 	return;
     }
 
-    vp->vls_len -= len;
-    vp->vls_offset += len;
+    /* if the caller asks to un-nibble more than we can, we just
+     * unroll to the original beginning of the string
+     */
+    if (len < 0 && (size_t)(-len) > vp->vls_offset) {
+	vp->vls_len += vp->vls_offset;
+	vp->vls_offset = 0;
+	return;
+    }
+
+    /* could be collapsed due to prior, but appease dumb compilers */
+    if (len < 0) {
+	vp->vls_len += (size_t)(-len);
+	vp->vls_offset -= (size_t)(-len);
+    } else {
+	vp->vls_len -= (size_t)len;
+	vp->vls_offset += (size_t)len;
+    }
 }
 
 
