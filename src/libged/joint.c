@@ -549,27 +549,30 @@ static const char *lex_name;
 static double mm2base, base2mm;
 
 static void
-parse_error(struct ged *gedp, struct bu_vls *str, char *error)
+parse_error(struct ged *gedp, struct bu_vls *vlsp, char *error)
 {
     char *text;
-    ssize_t i;
+    size_t i;
+    size_t len;
+    const char *str = bu_vls_addr(vlsp);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (!str->vls_str) {
+    len = bu_vls_strlen(vlsp);
+    if (!len) {
 	bu_vls_printf(gedp->ged_result_str, "%s:%d %s\n", lex_name, lex_line, error);
 	return;
     }
-    text = (char *)bu_malloc(str->vls_offset+2, "error pointer");
-    for (i=0; i<str->vls_offset; i++) {
-	text[i]=(str->vls_str[i] == '\t')? '\t' : '-';
+    text = (char *)bu_malloc(len+2, "error pointer");
+    for (i=0; i<len; i++) {
+	text[i]=(str[i] == '\t')? '\t' : '-';
     }
-    text[str->vls_offset] = '^';
-    text[str->vls_offset+1] = '\0';
+    text[len] = '^';
+    text[len+1] = '\0';
 
     {
-	bu_vls_printf(gedp->ged_result_str, "%s:%d %s\n%s\n%s\n", lex_name, lex_line, error, str->vls_str, text);
+	bu_vls_printf(gedp->ged_result_str, "%s:%d %s\n%s\n%s\n", lex_name, lex_line, error, str, text);
     }
 
     bu_free(text, "error pointer");
