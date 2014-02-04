@@ -2064,7 +2064,7 @@ typedef struct bu_attribute_value_set bu_avs_t;
 struct bu_vls {
     uint32_t vls_magic;
     char *vls_str;	/**< Dynamic memory for buffer */
-    ssize_t vls_offset;	/**< Offset into vls_str where data is good */
+    size_t vls_offset;	/**< Positive index into vls_str where string begins */
     size_t vls_len;	/**< Length, not counting the null */
     size_t vls_max;
 };
