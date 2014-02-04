@@ -65,7 +65,7 @@
 
 #include <sys/types.h>
 
-#if !defined(_WIN32) && !defined(__APPLE__) && !defined(__HAIKU__) && !defined(__off_t_defined) && !defined(_OFF_T_DECLARED)
+#if !defined(_WIN32) && !defined(__APPLE__) && !defined(__HAIKU__) && !defined(__off_t_defined) && !defined(_OFF_T) && !defined(_OFF_T_DECLARED)
    typedef ptrdiff_t off_t;
 #  define __off_t_defined 1
 #  define _OFF_T_DECLARED 1
