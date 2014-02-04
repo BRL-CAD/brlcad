@@ -2598,6 +2598,63 @@ struct Overlapevent {
     }
 };
 
+enum {
+    INSIDE_OVERLAP,
+    ON_OVERLAP_BOUNDARY,
+    OUTSIDE_OVERLAP
+};
+
+HIDDEN int
+isocurve_surface_overlap_location(
+	const ON_Surface *surf1,
+	double iso_t,
+	int iso_dir,
+	double overlap_start,
+	double overlap_end,
+	const ON_Surface *surf2,
+	Subsurface *surf2_tree)
+{
+    double test_distance = 0.01;
+
+    // TODO: more sample points
+    double u1, v1, u2, v2;
+    double midpt = (overlap_start + overlap_end ) * 0.5;
+    if (iso_dir == 0) {
+	u1 = u2 = midpt;
+	v1 = iso_t - test_distance;
+	v2 = iso_t + test_distance;
+    } else {
+	u1 = iso_t - test_distance;
+	u2 = iso_t + test_distance;
+	v1 = v2 = midpt;
+    }
+
+    bool in1, in2, neighbor_intersects, surf_flush_at_neighbor;
+    ON_ClassArray<ON_PX_EVENT> px_event1, px_event2;
+
+    neighbor_intersects = ON_Intersect(surf1->PointAt(u1, v1), *surf2, px_event1, 1.0e-5, 0, 0, surf2_tree);
+    if (neighbor_intersects) {
+	surf_flush_at_neighbor = surf1->NormalAt(u1, v1).IsParallelTo(
+		surf2->NormalAt(px_event1[0].m_b[0], px_event1[0].m_b[1]));
+    }
+    in1 = neighbor_intersects && surf_flush_at_neighbor;
+
+    neighbor_intersects = ON_Intersect(surf1->PointAt(u2, v2), *surf2, px_event2, 1.0e-5, 0, 0, surf2_tree);
+    if (neighbor_intersects) {
+	surf_flush_at_neighbor = surf1->NormalAt(u2, v2).IsParallelTo(
+		surf2->NormalAt(px_event2[0].m_b[0], px_event2[0].m_b[1]));
+    }
+    in2 = neighbor_intersects && surf_flush_at_neighbor;
+
+    if (in1 && in2) {
+	return INSIDE_OVERLAP;
+    }
+    if (!in1 && !in2) {
+	return OUTSIDE_OVERLAP;
+    }
+    return ON_OVERLAP_BOUNDARY;
+}
+
 HIDDEN ON_SimpleArray<OverlapSegment *>
 get_overlapping_segments(
 	const ON_Surface *surfA,
@@ -2667,32 +2724,18 @@ get_overlapping_segments(
 		    ptarray2.Append(ON_2dPoint(x_event[k].m_b[2], x_event[k].m_b[3]));
 		    // Get the overlap curve
 		    if (x_event[k].m_a[0] < x_event[k].m_a[1]) {
-			// Check whether it's an inner curve segment, that is,
-			// this curve is completely inside the overlap region,
-			// not part of the boundary curve.
-			// We test whether the two sides of that curve are shared.
-			// For the boundary of whole surface, this test is not needed.
-			bool isvalid = false;
+			bool curve_on_overlap_boundary = false;
 			if (j == 0 || (j == b_knots.Count() - 1 && !surf1->IsClosed(dir))) {
-			    isvalid = true;
+			    curve_on_overlap_boundary = true;
 			} else {
-			    double test_distance = 0.01;
-			    // TODO: more sample points
-			    double U1 = i % 2 ? b_knots[j] - test_distance : (x_event[k].m_a[0] + x_event[k].m_a[1]) * 0.5;
-			    double V1 = i % 2 ? (x_event[k].m_a[0] + x_event[k].m_a[1]) * 0.5 : b_knots[j] - test_distance;
-			    double U2 = i % 2 ? b_knots[j] + test_distance : (x_event[k].m_a[0] + x_event[k].m_a[1]) * 0.5;
-			    double V2 = i % 2 ? (x_event[k].m_a[0] + x_event[k].m_a[1]) * 0.5 : b_knots[j] + test_distance;
-			    bool in1, in2;
-			    ON_ClassArray<ON_PX_EVENT> px_event1, px_event2;
-			    in1 = ON_Intersect(surf1->PointAt(U1, V1), *surf2, px_event1, 1e-5, 0, 0, tree)
-				  && surf1->NormalAt(U1, V1).IsParallelTo(surf2->NormalAt(px_event1[0].m_b[0], px_event1[0].m_b[1]));
-			    in2 = ON_Intersect(surf1->PointAt(U2, V2), *surf2, px_event2, 1e-5, 0, 0, tree)
-				  && surf1->NormalAt(U2, V2).IsParallelTo(surf2->NormalAt(px_event2[0].m_b[0], px_event2[0].m_b[1]));
-			    if ((in1 && !in2) || (!in1 && in2)) {
-				isvalid = true;
-			    }
+			    int knot_dir = i % 2;
+			    double overlap_start = x_event[k].m_a[0];
+			    double overlap_end = x_event[k].m_a[1];
+			    int location = isocurve_surface_overlap_location(
+				    surf1, b_knots[j], knot_dir, overlap_start, overlap_end, surf2, tree);
+			    curve_on_overlap_boundary = (location == ON_OVERLAP_BOUNDARY);
 			}
-			if (isvalid) {
+			if (curve_on_overlap_boundary) {
 			    // One side of it is shared and the other side is non-shared.
 			    OverlapSegment *seg = new OverlapSegment;
 			    seg->m_curve3d = sub_curve(boundary, x_event[k].m_a[0], x_event[k].m_a[1]);
