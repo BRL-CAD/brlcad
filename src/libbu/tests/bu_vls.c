@@ -250,38 +250,6 @@ test_bu_vls_trunc(int argc, char *argv[])
 
 
 static int
-test_bu_vls_trunc2(int argc, char *argv[])
-{
-    char *in_string;
-    int trunc_len;
-    char *expected_out_string;
-    char *actual_out_string;
-    struct bu_vls vls = BU_VLS_INIT_ZERO;
-
-    if (argc != 5) {
-	bu_exit(1, "ERROR: input format is string_to_test trunc_len expected_result[%s]\n", argv[0]);
-    }
-
-    in_string = argv[2];
-    sscanf(argv[3], "%d", &trunc_len);
-    expected_out_string = argv[4];
-
-    bu_vls_strcpy(&vls, in_string);
-    bu_vls_trunc2(&vls, trunc_len);
-    actual_out_string = bu_vls_strdup(&vls);
-
-    printf("Result: %s\n", actual_out_string);
-
-    bu_vls_free(&vls);
-
-    /* These functions need to return sh-style return values where
-     * non-zero is false and zero is true
-     */
-    return !(bu_strcmp(actual_out_string, expected_out_string) == 0);
-}
-
-
-static int
 test_bu_vls_nibble(int argc, char *argv[])
 {
     char *in_string;
@@ -691,7 +659,7 @@ main(int argc, char *argv[])
 	case 7:
 	    return test_bu_vls_trunc(argc, argv);
 	case 8:
-	    return test_bu_vls_trunc2(argc, argv);
+	    return test_bu_vls_trunc(argc, argv); /* deprecation removal */
 	case 9:
 	    return test_bu_vls_nibble(argc, argv);
 	case 10:

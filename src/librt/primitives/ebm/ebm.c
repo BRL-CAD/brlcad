@@ -849,11 +849,11 @@ rt_ebm_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 		  eip->file, eip->xdim, eip->ydim, INTCLAMP(eip->tallness*mm2local));
     bu_vls_vlscat(str, &substr);
     for (i = 0; i < 15; i++) {
-	bu_vls_trunc2(&substr, 0);
+	bu_vls_trunc(&substr, 0);
 	bu_vls_printf(&substr, "%g, ", INTCLAMP(eip->mat[i]));
 	bu_vls_vlscat(str, &substr);
     }
-    bu_vls_trunc2(&substr, 0);
+    bu_vls_trunc(&substr, 0);
     bu_vls_printf(&substr, "%g\n", INTCLAMP(eip->mat[15]));
     bu_vls_vlscat(str, &substr);
 

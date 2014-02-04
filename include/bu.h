@@ -5060,13 +5060,6 @@ BU_EXPORT extern void bu_vls_trunc(struct bu_vls *vp,
 				   int len);
 
 /**
- * Son of bu_vls_trunc().  Same as bu_vls_trunc() except that it
- * doesn't truncate (or do anything) if the len is negative.
- */
-BU_EXPORT extern void bu_vls_trunc2(struct bu_vls *vp,
-				    int len);
-
-/**
  * "Nibble" 'len' characters off the front of the string.  Changes the
  * length and offset; no data is copied.
  *

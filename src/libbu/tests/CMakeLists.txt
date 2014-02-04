@@ -390,16 +390,6 @@ add_test(bu_vls_strlen_1 tester_bu_vls 6 "Test 1 2 3")
 add_test(bu_vls_trunc_1 tester_bu_vls 7 "Test 1 2 3" 6 "Test 1")
 add_test(bu_vls_trunc_2 tester_bu_vls 7 "Test 1 2 3" -2 "Test 1 2")
 
-# For function #8 (bu_vls_trunc2) the <args> format is as follows:
-#
-# string_to_test trunc_len expected_result
-#
-# where string_to_test is the string which will be truncated, and
-# trunc_len is the length that will be used for truncation.
-
-add_test(bu_vls_trunc2_1 tester_bu_vls 8 "Test 1 2 3" 6 "Test 1")
-add_test(bu_vls_trunc2_2 tester_bu_vls 8 "Test 1 2 3" -2 "Test 1 2 3")
-
 # For function #9 (bu_vls_nibble) the <args> format is as follows:
 #
 # string_to_test nibble_len expected_result

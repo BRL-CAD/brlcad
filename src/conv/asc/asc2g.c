@@ -1608,7 +1608,7 @@ main(int argc, char *argv[])
 	char *str;
 	int charIndex;
 	int len;
-	bu_vls_trunc2(&line, 0);
+	bu_vls_trunc(&line, 0);
 	if (bu_vls_gets(&line, ifp) < 0) {
 	    fclose(ifp); ifp = NULL;
 	    wdb_close(ofp); ofp = NULL;

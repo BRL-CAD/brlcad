@@ -210,24 +210,6 @@ bu_vls_trunc(struct bu_vls *vp, int len)
 
 
 void
-bu_vls_trunc2(struct bu_vls *vp, int len)
-{
-    BU_CK_VLS(vp);
-
-    if (vp->vls_len <= (size_t)len)
-	return;
-
-    if (len < 0)
-	len = 0;
-    if (len == 0)
-	vp->vls_offset = 0;
-
-    vp->vls_str[len+vp->vls_offset] = '\0'; /* force null termination */
-    vp->vls_len = len;
-}
-
-
-void
 bu_vls_nibble(struct bu_vls *vp, off_t len)
 {
     BU_CK_VLS(vp);

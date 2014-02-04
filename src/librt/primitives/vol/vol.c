@@ -706,11 +706,11 @@ rt_vol_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 		  V3INTCLAMPARGS(local));
     bu_vls_vlscat(str, &substr);
     for (i = 0; i < 15; i++) {
-	bu_vls_trunc2(&substr, 0);
+	bu_vls_trunc(&substr, 0);
 	bu_vls_printf(&substr, "%g, ", INTCLAMP(vip->mat[i]));
 	bu_vls_vlscat(str, &substr);
     }
-    bu_vls_trunc2(&substr, 0);
+    bu_vls_trunc(&substr, 0);
     bu_vls_printf(&substr, "%g\n", INTCLAMP(vip->mat[i]));
     bu_vls_vlscat(str, &substr);
 
