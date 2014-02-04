@@ -149,7 +149,7 @@
 # include <sys/ndir.h>
 # define NAMLEN(dp) ((int)((dp)->d_namlen))
 
-#elif defined(HAVE_DIRECT_H)
+#elif defined(HAVE_DIRECT_H) && !defined(_MSC_VER)
 # include <direct.h>
 # define NAMLEN(dp) ((int)((dp)->d_namlen))
 
@@ -168,6 +168,9 @@
 #elif defined(MSDOS) || defined(WIN32)
 
   /* figure out type of underlying directory interface to be used */
+# if defined(HAVE_DIRECT_H)
+# include <direct.h>
+# endif
 # if defined(WIN32)
 #   define DIRENT_WIN32_INTERFACE
 # elif defined(MSDOS)
