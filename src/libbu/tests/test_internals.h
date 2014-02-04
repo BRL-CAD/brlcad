@@ -22,6 +22,20 @@
 #ifndef LIBBU_TESTS_TEST_INTERNALS_H
 #define LIBBU_TESTS_TEST_INTERNALS_H
 
+__BEGIN_DECLS
+#ifndef BU_TEST_EXPORT
+#  if defined(BU_TEST_DLL_EXPORTS) && defined(BU_TEST_DLL_IMPORTS)
+#    error "Only BU_TEST_DLL_EXPORTS or BU_TEST_DLL_IMPORTS can be defined, not both."
+#  elif defined(BU_TEST_DLL_EXPORTS)
+#    define BU_TEST_EXPORT __declspec(dllexport)
+#  elif defined(BU_TEST_DLL_IMPORTS)
+#    define BU_TEST_EXPORT __declspec(dllimport)
+#  else
+#    define BU_TEST_EXPORT
+#  endif
+#endif
+
+
 /* Define pass/fail per CMake/CTest testing convention; so any
  * individual test must return pass/fail using the same convention OR
  * invert its value. */
@@ -33,7 +47,7 @@ const int TRUE  = 1;
 
 const unsigned BITS_PER_BYTE = 8;
 
-extern void dump_bitv(const struct bu_bitv *);
+BU_TEST_EXPORT extern void dump_bitv(const struct bu_bitv *);
 
 #endif /* LIBBU_TESTS_TEST_INTERNALS_H */
 
