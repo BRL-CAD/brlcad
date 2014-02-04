@@ -49,8 +49,6 @@ usage()
 int
 main(int argc, char *argv[])
 {
-    STEPentity *shape;
-    STEPentity *product;
     int ret = 0;
     int convert_tops_list = 0;
     struct directory **paths;
