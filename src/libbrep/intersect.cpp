@@ -38,6 +38,135 @@
 // Whether to output the debug messages about b-rep intersections.
 #define DEBUG_BREP_INTERSECT 0
 
+class XEventProxy {
+public:
+    XEventProxy(ON_X_EVENT::TYPE type);
+
+    void SetAPoint(const ON_3dPoint &pt);
+    void SetAPoints(const ON_3dPoint &start, const ON_3dPoint &end);
+
+    void SetBPoint(const ON_3dPoint &pt);
+    void SetBPoints(const ON_3dPoint &start, const ON_3dPoint &end);
+
+    void SetAOverlapRange(const ON_Interval &interval);
+    void SetAOverlapRange(double start, double end);
+    void SetAOverlapRange(double t);
+    void SetACurveParameter(double t);
+
+    void SetBOverlapRange(const ON_Interval &interval);
+    void SetBOverlapRange(double start, double end);
+    void SetBOverlapRange(double t);
+    void SetBCurveParameter(double t);
+    void SetBSurfaceParameter(double u, double v);
+    void SetBSurfaceParameters(double u1, double v1, double u2, double v2);
+
+    ON_X_EVENT Event(void);
+
+private:
+    ON_X_EVENT event;
+};
+
+XEventProxy::XEventProxy(ON_X_EVENT::TYPE type)
+{
+    event.m_type = type;
+}
+
+void
+XEventProxy::SetAPoint(const ON_3dPoint &pt)
+{
+    event.m_A[0] = event.m_A[1] = pt;
+}
+
+void
+XEventProxy::SetAPoints(const ON_3dPoint &start, const ON_3dPoint &end)
+{
+    event.m_A[0] = start;
+    event.m_A[1] = end;
+}
+
+void
+XEventProxy::SetBPoint(const ON_3dPoint &pt)
+{
+    event.m_B[0] = event.m_B[1] = pt;
+}
+
+void
+XEventProxy::SetBPoints(const ON_3dPoint &start, const ON_3dPoint &end)
+{
+    event.m_B[0] = start;
+    event.m_B[1] = end;
+}
+
+void
+XEventProxy::SetAOverlapRange(const ON_Interval &interval)
+{
+    event.m_a[0] = interval.Min();
+    event.m_a[1] = interval.Max();
+}
+
+void
+XEventProxy::SetAOverlapRange(double start, double end)
+{
+    SetAOverlapRange(ON_Interval(start, end));
+}
+
+void
+XEventProxy::SetAOverlapRange(double t)
+{
+    SetAOverlapRange(t, t);
+}
+
+void
+XEventProxy::SetACurveParameter(double t)
+{
+    event.m_a[0] = event.m_a[1] = t;
+}
+
+void
+XEventProxy::SetBOverlapRange(const ON_Interval &interval)
+{
+    event.m_b[0] = event.m_b[2] = interval.Min();
+    event.m_b[1] = event.m_b[3] = interval.Max();
+}
+
+void
+XEventProxy::SetBOverlapRange(double start, double end)
+{
+    SetBOverlapRange(ON_Interval(start, end));
+}
+
+void
+XEventProxy::SetBOverlapRange(double t)
+{
+    SetBOverlapRange(t, t);
+}
+
+void
+XEventProxy::SetBCurveParameter(double t)
+{
+    event.m_b[0] = event.m_b[1] = t;
+}
+
+void
+XEventProxy::SetBSurfaceParameters(double u1, double v1, double u2, double v2)
+{
+    event.m_b[0] = u1;
+    event.m_b[1] = v1;
+    event.m_b[2] = u2;
+    event.m_b[3] = v2;
+}
+
+void
+XEventProxy::SetBSurfaceParameter(double u, double v)
+{
+    SetBSurfaceParameters(u, v, u, v);
+}
+
+ON_X_EVENT
+XEventProxy::Event(void)
+{
+    return event;
+}
 
 ON_Curve *
 sub_curve(const ON_Curve *in, double a, double b)
@@ -965,17 +1094,12 @@ ON_Intersect(const ON_Curve *curveA,
     if (ispoint_curveA && ispoint_curveB) {
 	// Both curves are degenerated (point-point intersection)
 	if (ON_Intersect(startpointA, startpointB, px_event, intersection_tolerance)) {
-	    ON_X_EVENT event;
-	    event.m_A[0] = startpointA;
-	    event.m_A[1] = curveA->PointAtEnd();
-	    event.m_B[0] = startpointB;
-	    event.m_B[1] = curveB->PointAtEnd();
-	    event.m_a[0] = curveA->Domain().Min();
-	    event.m_a[1] = curveA->Domain().Max();
-	    event.m_b[0] = curveB->Domain().Min();
-	    event.m_b[1] = curveB->Domain().Max();
-	    event.m_type = ON_X_EVENT::ccx_overlap;
-	    x.Append(event);
+	    XEventProxy event(ON_X_EVENT::ccx_overlap);
+	    event.SetAPoints(startpointA, curveA->PointAtEnd());
+	    event.SetBPoints(startpointB, curveB->PointAtEnd());
+	    event.SetAOverlapRange(curveA->Domain());
+	    event.SetBOverlapRange(curveB->Domain());
+	    x.Append(event.Event());
 	    return 1;
 	} else {
 	    return 0;
@@ -983,15 +1107,12 @@ ON_Intersect(const ON_Curve *curveA,
     } else if (ispoint_curveA) {
 	// curveA is degenerated (point-curve intersection)
 	if (ON_Intersect(startpointA, *curveB, px_event, intersection_tolerance)) {
-	    ON_X_EVENT event;
-	    event.m_A[0] = startpointA;
-	    event.m_A[1] = curveA->PointAtEnd();
-	    event.m_B[0] = event.m_B[1] = px_event[0].m_B;
-	    event.m_a[0] = curveA->Domain().Min();
-	    event.m_a[1] = curveA->Domain().Max();
-	    event.m_b[0] = event.m_b[1] = px_event[0].m_b[0];
-	    event.m_type = ON_X_EVENT::ccx_overlap;
-	    x.Append(event);
+	    XEventProxy event(ON_X_EVENT::ccx_overlap);
+	    event.SetAPoints(startpointA, curveA->PointAtEnd());
+	    event.SetBPoint(px_event[0].m_B);
+	    event.SetAOverlapRange(curveA->Domain());
+	    event.SetBOverlapRange(px_event[0].m_b[0]);
+	    x.Append(event.Event());
 	    return 1;
 	} else {
 	    return 0;
@@ -999,15 +1120,12 @@ ON_Intersect(const ON_Curve *curveA,
     } else if (ispoint_curveB) {
 	// curveB is degenerated (point-curve intersection)
 	if (ON_Intersect(startpointB, *curveA, px_event, intersection_tolerance)) {
-	    ON_X_EVENT event;
-	    event.m_A[0] = event.m_A[1] = px_event[0].m_B;
-	    event.m_B[0] = startpointB;
-	    event.m_B[1] = curveB->PointAtEnd();
-	    event.m_a[0] = event.m_a[1] = px_event[0].m_b[0];
-	    event.m_b[0] = curveB->Domain().Min();
-	    event.m_b[1] = curveB->Domain().Max();
-	    event.m_type = ON_X_EVENT::ccx_overlap;
-	    x.Append(event);
+	    XEventProxy event(ON_X_EVENT::ccx_overlap);
+	    event.SetAPoint(px_event[0].m_B);
+	    event.SetBPoints(startpointB, curveB->PointAtEnd());
+	    event.SetAOverlapRange(px_event[0].m_b[0]);
+	    event.SetBOverlapRange(curveB->Domain());
+	    x.Append(event.Event());
 	    return 1;
 	} else {
 	    return 0;
@@ -1111,17 +1229,14 @@ ON_Intersect(const ON_Curve *curveA,
 			t_a2 = 1.0, t_b2 = endA_on_B;
 		    }
 
-		    ON_X_EVENT event;
-		    event.m_A[0] = lineA.PointAt(t_a1);
-		    event.m_A[1] = lineA.PointAt(t_a2);
-		    event.m_B[0] = lineB.PointAt(t_b1);
-		    event.m_B[1] = lineB.PointAt(t_b2);
-		    event.m_a[0] = i->first->m_t.ParameterAt(t_a1);
-		    event.m_a[1] = i->first->m_t.ParameterAt(t_a2);
-		    event.m_b[0] = i->second->m_t.ParameterAt(t_b1);
-		    event.m_b[1] = i->second->m_t.ParameterAt(t_b2);
-		    event.m_type = ON_X_EVENT::ccx_overlap;
-		    tmp_x.Append(event);
+		    XEventProxy event(ON_X_EVENT::ccx_overlap);
+		    event.SetAPoints(lineA.PointAt(t_a1), lineA.PointAt(t_a2));
+		    event.SetBPoints(lineB.PointAt(t_b1), lineB.PointAt(t_b2));
+		    event.SetAOverlapRange(i->first->m_t.ParameterAt(t_a1),
+			    i->first->m_t.ParameterAt(t_a2));
+		    event.SetBOverlapRange(i->first->m_t.ParameterAt(t_b1),
+			    i->first->m_t.ParameterAt(t_b2));
+		    tmp_x.Append(event.Event());
 		}
 	    } else {
 		// They are not parallel, check intersection point
@@ -1132,13 +1247,12 @@ ON_Intersect(const ON_Curve *curveA,
 		    t_a = i->first->m_t.ParameterAt(t_lineA);
 		    t_b = i->second->m_t.ParameterAt(t_lineB);
 
-		    ON_X_EVENT event;
-		    event.m_A[0] = event.m_A[1] = lineA.PointAt(t_lineA);
-		    event.m_B[0] = event.m_B[1] = lineB.PointAt(t_lineB);
-		    event.m_a[0] = event.m_a[1] = t_a;
-		    event.m_b[0] = event.m_b[1] = t_b;
-		    event.m_type = ON_X_EVENT::ccx_point;
-		    tmp_x.Append(event);
+		    XEventProxy event(ON_X_EVENT::ccx_point);
+		    event.SetAPoint(lineA.PointAt(t_lineA));
+		    event.SetBPoint(lineB.PointAt(t_lineB));
+		    event.SetACurveParameter(t_a);
+		    event.SetBCurveParameter(t_b);
+		    tmp_x.Append(event.Event());
 		}
 	    }
 	} else {
@@ -1175,13 +1289,12 @@ ON_Intersect(const ON_Curve *curveA,
 		double distance = pointA.DistanceTo(pointB);
 		// Check the validity of the solution
 		if (distance < intersection_tolerance) {
-		    ON_X_EVENT event;
-		    event.m_A[0] = event.m_A[1] = pointA;
-		    event.m_B[0] = event.m_B[1] = pointB;
-		    event.m_a[0] = event.m_a[1] = t_a1;
-		    event.m_b[0] = event.m_b[1] = t_b1;
-		    event.m_type = ON_X_EVENT::ccx_point;
-		    tmp_x.Append(event);
+		    XEventProxy event(ON_X_EVENT::ccx_point);
+		    event.SetAPoint(pointA);
+		    event.SetBPoint(pointB);
+		    event.SetACurveParameter(t_a1);
+		    event.SetBCurveParameter(t_b1);
+		    tmp_x.Append(event.Event());
 		}
 	    } else {
 		// Check overlap
@@ -1202,51 +1315,40 @@ ON_Intersect(const ON_Curve *curveA,
 			}
 		    }
 		    if (j == CCI_OVERLAP_TEST_POINTS) {
-			ON_X_EVENT event;
+			XEventProxy event(ON_X_EVENT::ccx_overlap);
 			// We make sure that m_a[0] <= m_a[1]
 			if (t_a1 <= t_a2) {
-			    event.m_A[0] = pointA1;
-			    event.m_A[1] = pointA2;
-			    event.m_B[0] = pointB1;
-			    event.m_B[1] = pointB2;
-			    event.m_a[0] = t_a1;
-			    event.m_a[1] = t_a2;
-			    event.m_b[0] = t_b1;
-			    event.m_b[1] = t_b2;
+			    event.SetAPoints(pointA1, pointA2);
+			    event.SetBPoints(pointB1, pointB2);
+			    event.SetAOverlapRange(t_a1, t_a2);
+			    event.SetBOverlapRange(t_b1, t_b2);
 			} else {
-			    event.m_A[0] = pointA2;
-			    event.m_A[1] = pointA1;
-			    event.m_B[0] = pointB2;
-			    event.m_B[1] = pointB1;
-			    event.m_a[0] = t_a2;
-			    event.m_a[1] = t_a1;
-			    event.m_b[0] = t_b2;
-			    event.m_b[1] = t_b1;
+			    event.SetAPoints(pointA2, pointA1);
+			    event.SetBPoints(pointB2, pointB1);
+			    event.SetAOverlapRange(t_a2, t_a1);
+			    event.SetBOverlapRange(t_b2, t_b1);
 			}
-			event.m_type = ON_X_EVENT::ccx_overlap;
-			tmp_x.Append(event);
+			tmp_x.Append(event.Event());
 			continue;
 		    }
 		    // if j != CCI_OVERLAP_TEST_POINTS, two ccx_point events should
 		    // be generated. Fall through.
 		}
 		if (distance1 < intersection_tolerance) {
-		    ON_X_EVENT event;
-		    event.m_A[0] = event.m_A[1] = pointA1;
-		    event.m_B[0] = event.m_B[1] = pointB1;
-		    event.m_a[0] = event.m_a[1] = t_a1;
-		    event.m_b[0] = event.m_b[1] = t_b1;
-		    event.m_type = ON_X_EVENT::ccx_point;
-		    tmp_x.Append(event);
+		    XEventProxy event(ON_X_EVENT::ccx_point);
+		    event.SetAPoint(pointA1);
+		    event.SetBPoint(pointB1);
+		    event.SetACurveParameter(t_a1);
+		    event.SetBCurveParameter(t_b1);
+		    tmp_x.Append(event.Event());
 		}
 		if (distance2 < intersection_tolerance) {
-		    ON_X_EVENT event;
-		    event.m_A[0] = event.m_A[1] = pointA2;
-		    event.m_B[0] = event.m_B[1] = pointB2;
-		    event.m_a[0] = event.m_a[1] = t_a2;
-		    event.m_b[0] = event.m_b[1] = t_b2;
-		    event.m_type = ON_X_EVENT::ccx_point;
-		    tmp_x.Append(event);
+		    XEventProxy event(ON_X_EVENT::ccx_point);
+		    event.SetAPoint(pointA2);
+		    event.SetBPoint(pointB2);
+		    event.SetACurveParameter(t_a2);
+		    event.SetBCurveParameter(t_b2);
+		    tmp_x.Append(event.Event());
 		}
 	    }
 	}
@@ -1499,18 +1601,15 @@ ON_Intersect(const ON_Curve *curveA,
 	ON_3dPoint pointA = curveA->PointAtStart();
 	ON_ClassArray<ON_PX_EVENT> px_event;
 	if (ON_Intersect(pointA, *surfaceB, px_event, intersection_tolerance)) {
-	    ON_X_EVENT event;
-	    event.m_A[0] = pointA;
-	    event.m_A[1] = curveA->PointAtEnd();
-	    event.m_B[0] = event.m_B[1] = px_event[0].m_B;
-	    event.m_a[0] = curveA->Domain().Min();
-	    event.m_a[1] = curveA->Domain().Max();
-	    event.m_b[0] = event.m_b[2] = px_event[0].m_b[0];
-	    event.m_b[1] = event.m_b[3] = px_event[0].m_b[1];
-	    event.m_type = ON_X_EVENT::csx_overlap;
-	    x.Append(event);
+	    XEventProxy event(ON_X_EVENT::csx_overlap);
+	    event.SetAPoints(pointA, curveA->PointAtEnd());
+	    event.SetBPoint(px_event[0].m_B);
+	    event.SetAOverlapRange(curveA->Domain());
+	    event.SetBSurfaceParameter(px_event[0].m_b[0], px_event[0].m_b[1]);
+	    x.Append(event.Event());
 	    if (overlap2d) {
-		overlap2d->Append(new ON_LineCurve(event.m_B[0], event.m_B[1]));
+		ON_X_EVENT xevent = event.Event();
+		overlap2d->Append(new ON_LineCurve(xevent.m_B[0], xevent.m_B[1]));
 	    }
 	    return 1;
 	} else {
@@ -1753,14 +1852,12 @@ ON_Intersect(const ON_Curve *curveA,
 			continue;
 		    }
 
-		    ON_X_EVENT event;
-		    event.m_A[0] = event.m_A[1] = intersection;
-		    event.m_B[0] = event.m_B[1] = px_event[0].m_B;
-		    event.m_a[0] = event.m_a[1] = i->first->m_t.ParameterAt(line_t);
-		    event.m_b[0] = event.m_b[2] = px_event[0].m_b.x;
-		    event.m_b[1] = event.m_b[3] = px_event[0].m_b.y;
-		    event.m_type = ON_X_EVENT::csx_point;
-		    tmp_x.Append(event);
+		    XEventProxy event(ON_X_EVENT::csx_point);
+		    event.SetAPoint(intersection);
+		    event.SetBPoint(px_event[0].m_B);
+		    event.SetACurveParameter(i->first->m_t.ParameterAt(line_t));
+		    event.SetBSurfaceParameter(px_event[0].m_b.x, px_event[0].m_b.y);
+		    tmp_x.Append(event.Event());
 		}
 	    }
 	}
@@ -1802,14 +1899,12 @@ ON_Intersect(const ON_Curve *curveA,
 	    double distance = pointA1.DistanceTo(pointB1);
 	    // Check the validity of the solution
 	    if (distance < intersection_tolerance) {
-		ON_X_EVENT event;
-		event.m_A[0] = event.m_A[1] = pointA1;
-		event.m_B[0] = event.m_B[1] = pointB1;
-		event.m_a[0] = event.m_a[1] = t1;
-		event.m_b[0] = event.m_b[2] = u1;
-		event.m_b[1] = event.m_b[3] = v1;
-		event.m_type = ON_X_EVENT::csx_point;
-		tmp_x.Append(event);
+		XEventProxy event(ON_X_EVENT::csx_point);
+		event.SetAPoint(pointA1);
+		event.SetBPoint(pointB1);
+		event.SetACurveParameter(t1);
+		event.SetBSurfaceParameter(u1, v1);
+		tmp_x.Append(event.Event());
 	    }
 	} else {
 	    // Check overlap
@@ -1819,30 +1914,18 @@ ON_Intersect(const ON_Curve *curveA,
 
 	    // Check the validity of the solution
 	    if (distance1 < intersection_tolerance && distance2 < intersection_tolerance) {
-		ON_X_EVENT event;
+		XEventProxy event(ON_X_EVENT::csx_overlap);
 		// We make sure that m_a[0] <= m_a[1]
 		if (t1 <= t2) {
-		    event.m_A[0] = pointA1;
-		    event.m_A[1] = pointA2;
-		    event.m_B[0] = pointB1;
-		    event.m_B[1] = pointB2;
-		    event.m_a[0] = t1;
-		    event.m_a[1] = t2;
-		    event.m_b[0] = u1;
-		    event.m_b[1] = v1;
-		    event.m_b[2] = u2;
-		    event.m_b[3] = v2;
+		    event.SetAPoints(pointA1, pointA2);
+		    event.SetBPoints(pointB1, pointB2);
+		    event.SetAOverlapRange(t1, t2);
+		    event.SetBSurfaceParameters(u1, v1, u2, v2);
 		} else {
-		    event.m_A[0] = pointA2;
-		    event.m_A[1] = pointA1;
-		    event.m_B[0] = pointB2;
-		    event.m_B[1] = pointB1;
-		    event.m_a[0] = t2;
-		    event.m_a[1] = t1;
-		    event.m_b[0] = u2;
-		    event.m_b[1] = v2;
-		    event.m_b[2] = u1;
-		    event.m_b[3] = v1;
+		    event.SetAPoints(pointA2, pointA1);
+		    event.SetBPoints(pointB2, pointB1);
+		    event.SetAOverlapRange(t2, t1);
+		    event.SetBSurfaceParameters(u2, v2, u1, v1);
 		}
 		int j;
 		for (j = 1; j < CSI_OVERLAP_TEST_POINTS; j++) {
@@ -1855,32 +1938,27 @@ ON_Intersect(const ON_Curve *curveA,
 		    }
 		}
 		if (j == CSI_OVERLAP_TEST_POINTS) {
-		    event.m_type = ON_X_EVENT::csx_overlap;
-		    tmp_x.Append(event);
+		    tmp_x.Append(event.Event());
 		    continue;
 		}
 		// if j != CSI_OVERLAP_TEST_POINTS, two csx_point events may
 		// be generated. Fall through.
 	    }
 	    if (distance1 < intersection_tolerance) {
-		ON_X_EVENT event;
-		event.m_A[0] = event.m_A[1] = pointA1;
-		event.m_B[0] = event.m_B[1] = pointB1;
-		event.m_a[0] = event.m_a[1] = t1;
-		event.m_b[0] = event.m_b[2] = u1;
-		event.m_b[1] = event.m_b[3] = v1;
-		event.m_type = ON_X_EVENT::csx_point;
-		tmp_x.Append(event);
+		XEventProxy event(ON_X_EVENT::csx_point);
+		event.SetAPoint(pointA1);
+		event.SetBPoint(pointB1);
+		event.SetACurveParameter(t1);
+		event.SetBSurfaceParameter(u1, v1);
+		tmp_x.Append(event.Event());
 	    }
 	    if (distance2 < intersection_tolerance) {
-		ON_X_EVENT event;
-		event.m_A[0] = event.m_A[1] = pointA2;
-		event.m_B[0] = event.m_B[1] = pointB2;
-		event.m_a[0] = event.m_a[1] = t2;
-		event.m_b[0] = event.m_b[2] = u2;
-		event.m_b[1] = event.m_b[3] = v2;
-		event.m_type = ON_X_EVENT::csx_point;
-		tmp_x.Append(event);
+		XEventProxy event(ON_X_EVENT::csx_point);
+		event.SetAPoint(pointA2);
+		event.SetBPoint(pointB2);
+		event.SetACurveParameter(t2);
+		event.SetBSurfaceParameter(u2, v2);
+		tmp_x.Append(event.Event());
 	    }
 	}
     }
