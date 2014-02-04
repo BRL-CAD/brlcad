@@ -659,7 +659,7 @@ main(int argc, char *argv[])
 	case 7:
 	    return test_bu_vls_trunc(argc, argv);
 	case 8:
-	    return test_bu_vls_trunc(argc, argv); /* deprecation removal */
+	    return 0; /* deprecation removal */
 	case 9:
 	    return test_bu_vls_nibble(argc, argv);
 	case 10:
