@@ -23,15 +23,15 @@
 #define LIBBU_TESTS_TEST_INTERNALS_H
 
 __BEGIN_DECLS
-#ifndef BU_TEST_EXPORT
-#  if defined(BU_TEST_DLL_EXPORTS) && defined(BU_TEST_DLL_IMPORTS)
-#    error "Only BU_TEST_DLL_EXPORTS or BU_TEST_DLL_IMPORTS can be defined, not both."
-#  elif defined(BU_TEST_DLL_EXPORTS)
-#    define BU_TEST_EXPORT __declspec(dllexport)
-#  elif defined(BU_TEST_DLL_IMPORTS)
-#    define BU_TEST_EXPORT __declspec(dllimport)
+#ifndef BU_TESTS_EXPORT
+#  if defined(BU_TESTS_DLL_EXPORTS) && defined(BU_TESTS_DLL_IMPORTS)
+#    error "Only BU_TESTS_DLL_EXPORTS or BU_TESTS_DLL_IMPORTS can be defined, not both."
+#  elif defined(BU_TESTS_DLL_EXPORTS)
+#    define BU_TESTS_EXPORT __declspec(dllexport)
+#  elif defined(BU_TESTS_DLL_IMPORTS)
+#    define BU_TESTS_EXPORT __declspec(dllimport)
 #  else
-#    define BU_TEST_EXPORT
+#    define BU_TESTS_EXPORT
 #  endif
 #endif
 
@@ -47,7 +47,7 @@ const int TRUE  = 1;
 
 const unsigned BITS_PER_BYTE = 8;
 
-BU_TEST_EXPORT extern void dump_bitv(const struct bu_bitv *);
+BU_TESTS_EXPORT extern void dump_bitv(const struct bu_bitv *);
 
 #endif /* LIBBU_TESTS_TEST_INTERNALS_H */
 
