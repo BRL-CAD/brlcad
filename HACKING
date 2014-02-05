@@ -759,6 +759,20 @@ other familiar programming construct (e.g., bu_malloc()+bu_free()),
 but care should otherwise be taken to be as consistent as possible
 within a file and across a library's API.
 
+Here are some naming convention pairings commonly used:
+
+  Allocation   => alloc()
+  Deallocation => free()
+
+  Initialization      => init()
+  De/Reinitialization => clear()
+
+  Allocation + Init      => create()   (new for C++)
+  Deinitialize + Dealloc => destroy()  (delete for C++)
+
+  Resource acquire => open()
+  Resource release => close()
+
 5) Debugging
 
 Compilation preprocessor defines should never change the size of
