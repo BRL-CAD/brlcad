@@ -140,12 +140,12 @@ struct search_client_data_t {
  */
 HIDDEN void
 db_fullpath_traverse_subtree(union tree *tp,
-			     void (*traverse_func) (void (*) (struct db_i *, struct rt_wdb *, struct bu_ptbl *, struct db_node_t *, genptr_t),
-						    void (*) (struct db_i *, struct rt_wdb *, struct bu_ptbl *, struct db_node_t *, genptr_t),
+			     void (*traverse_func) (void (*) (genptr_t),
+						    void (*) (genptr_t),
 						    struct resource *,
 						    genptr_t),
-			     void (*comb_func) (struct db_i *, struct rt_wdb *, struct bu_ptbl *, struct db_node_t *, genptr_t),
-			     void (*leaf_func) (struct db_i *, struct rt_wdb *, struct bu_ptbl *, struct db_node_t *, genptr_t),
+			     void (*comb_func) (genptr_t),
+			     void (*leaf_func) (genptr_t),
 			     struct resource *resp,
 			     genptr_t client_data)
 {
@@ -213,8 +213,8 @@ db_fullpath_traverse_subtree(union tree *tp,
  * use db_full_path structures instead of directory structures.
  */
 HIDDEN void
-db_fullpath_traverse(void (*comb_func) (struct db_i *, struct rt_wdb *, struct bu_ptbl *, struct db_node_t *, genptr_t),
-		     void (*leaf_func) (struct db_i *, struct rt_wdb *, struct bu_ptbl *, struct db_node_t *, genptr_t),
+db_fullpath_traverse(void (*comb_func) (genptr_t),
+		     void (*leaf_func) (genptr_t),
 		     struct resource *resp,
 		     genptr_t client_data)
 {
@@ -232,7 +232,7 @@ db_fullpath_traverse(void (*comb_func) (struct db_i *, struct rt_wdb *, struct b
 	struct rt_comb_internal *comb;
 	/* entering region */
 	if (comb_func)
-	    comb_func(scd->dbip, scd->wdbp, scd->results, scd->db_node, client_data);
+	    comb_func(client_data);
 
 	if (rt_db_get_internal(&in, dp, scd->dbip, NULL, resp) < 0)
 	    return;
@@ -246,7 +246,7 @@ db_fullpath_traverse(void (*comb_func) (struct db_i *, struct rt_wdb *, struct b
     if (dp->d_flags & RT_DIR_SOLID || dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK) {
 	/* at leaf */
 	if (leaf_func)
-	    leaf_func(scd->dbip, scd->wdbp, scd->results, scd->db_node, client_data);
+	    leaf_func(client_data);
     }
 }
 
@@ -339,8 +339,12 @@ find_execute_nested_plans(struct db_i *dbip, struct rt_wdb *wdbp, struct bu_ptbl
 }
 
 HIDDEN int
-find_execute_nested_plans_leaf(struct db_i *dbip, struct rt_wdb *wdbp, struct bu_ptbl *results, struct db_node_t *db_node, genptr_t inputplan) {
-    struct db_plan_t *plan = ((struct search_client_data_t *)inputplan)->plan;
+find_execute_nested_plans_leaf(genptr_t client_data) {
+    struct db_i *dbip = ((struct search_client_data_t *)client_data)->dbip;
+    struct rt_wdb *wdbp = ((struct search_client_data_t *)client_data)->wdbp;
+    struct bu_ptbl *results = ((struct search_client_data_t *)client_data)->results;
+    struct db_node_t *db_node = ((struct search_client_data_t *)client_data)->db_node;
+    struct db_plan_t *plan = ((struct search_client_data_t *)client_data)->plan;
 
     return find_execute_nested_plans(dbip, wdbp, results, db_node, plan);
 }
@@ -396,12 +400,12 @@ c_above(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struc
  */
 HIDDEN int
 db_fullpath_stateful_traverse_subtree(union tree *tp,
-				      int (*traverse_func) (int (*) (struct db_i *, struct rt_wdb *, struct bu_ptbl *, struct db_node_t *, genptr_t),
-							    int (*) (struct db_i *, struct rt_wdb *, struct bu_ptbl *, struct db_node_t *, genptr_t),
+				      int (*traverse_func) (int (*) (genptr_t),
+							    int (*) (genptr_t),
 							    struct resource *,
 							    genptr_t),
-				      int (*comb_func) (struct db_i *, struct rt_wdb *, struct bu_ptbl *, struct db_node_t *, genptr_t),
-				      int (*leaf_func) (struct db_i *, struct rt_wdb *, struct bu_ptbl *, struct db_node_t *, genptr_t),
+				      int (*comb_func) (genptr_t),
+				      int (*leaf_func) (genptr_t),
 				      struct resource *resp,
 				      genptr_t client_data)
 {
@@ -512,8 +516,8 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
  * a value > 0 and return that value.
  */
 HIDDEN int
-db_fullpath_stateful_traverse(int (*comb_func) (struct db_i *, struct rt_wdb *, struct bu_ptbl *, struct db_node_t *, genptr_t),
-			      int (*leaf_func) (struct db_i *, struct rt_wdb *, struct bu_ptbl *, struct db_node_t *, genptr_t),
+db_fullpath_stateful_traverse(int (*comb_func) (genptr_t),
+			      int (*leaf_func) (genptr_t),
 			      struct resource *resp,
 			      genptr_t client_data)
 {
@@ -532,7 +536,7 @@ db_fullpath_stateful_traverse(int (*comb_func) (struct db_i *, struct rt_wdb *, 
 	struct rt_comb_internal *comb;
 	/* entering region */
 	if (comb_func)
-	    if (comb_func(scd->dbip, scd->wdbp, scd->results, scd->db_node, client_data)) return 1;
+	    if (comb_func(client_data)) return 1;
 	if (rt_db_get_internal(&in, dp, scd->dbip, NULL, resp) < 0)
 	    return 0;
 
@@ -550,7 +554,7 @@ db_fullpath_stateful_traverse(int (*comb_func) (struct db_i *, struct rt_wdb *, 
     if (dp->d_flags & RT_DIR_SOLID || dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK) {
 	/* at leaf */
 	if (leaf_func) {
-	    if (leaf_func(scd->dbip, scd->wdbp, scd->results, scd->db_node, client_data)) {
+	    if (leaf_func(client_data)) {
 		return 1;
 	    } else {
 		return 0;
@@ -593,7 +597,8 @@ f_below(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, st
 	comb = (struct rt_comb_internal *)in.idb_ptr;
 
         curr_node.path = &belowpath;
-        curr_node.matching_len = 0;
+	DB_FULL_PATH_SET_CUR_BOOL(curr_node.path, 2);
+	curr_node.matching_len = 0;
 
 	scd.dbip = dbip;
 	scd.wdbp = wdbp;
@@ -2081,7 +2086,11 @@ find_execute_plans(struct db_i *dbip, struct rt_wdb *wdbp, struct bu_ptbl *resul
 }
 
 HIDDEN void
-find_execute_plans_leaf(struct db_i *dbip, struct rt_wdb *wdbp, struct bu_ptbl *results, struct db_node_t *db_node, genptr_t client_data) {
+find_execute_plans_leaf(genptr_t client_data) {
+    struct db_i *dbip = ((struct search_client_data_t *)client_data)->dbip;
+    struct rt_wdb *wdbp = ((struct search_client_data_t *)client_data)->wdbp;
+    struct bu_ptbl *results = ((struct search_client_data_t *)client_data)->results;
+    struct db_node_t *db_node = ((struct search_client_data_t *)client_data)->db_node;
     struct db_plan_t *plan = ((struct search_client_data_t *)client_data)->plan;
     find_execute_plans(dbip, wdbp, results, db_node, plan);
 }
