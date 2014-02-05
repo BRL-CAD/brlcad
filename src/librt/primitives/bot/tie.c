@@ -310,13 +310,22 @@ void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_
 	    tri = data->tri_list[i];
 	    u0 = VDOT( tri->data[1].v,  ray->pos);
 	    v0 = VDOT( tri->data[1].v,  ray->dir);
+
+	    /* skip rays that are practically perpendicular so we
+	     * don't try to divide by zero and propagate NaN (or
+	     * crash).
+	     */
+	    if (v0 < RT_DOT_TOL)
+		continue;
+
 	    t.dist = -(tri->data[2].v[0] + u0) / v0;
 
 	    /*
-	     * Intersection point on triangle must lie within the kdtree node or it is rejected
-	     * Apply TIE_PREC to near and far such that triangles that lie on orthogonal planes
-	     * aren't in a precision fuzz boundary, thus missing something they should actually
-	     * have hit.
+	     * Intersection point on triangle must lie within the
+	     * kdtree node or it is rejected Apply TIE_PREC to near
+	     * and far such that triangles that lie on orthogonal
+	     * planes aren't in a precision fuzz boundary, thus
+	     * missing something they should actually have hit.
 	     */
 	    if (t.dist < near-TIE_PREC || t.dist > far+TIE_PREC)
 		continue;
