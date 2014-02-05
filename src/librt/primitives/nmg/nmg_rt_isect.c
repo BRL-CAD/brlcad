@@ -2790,13 +2790,10 @@ nmg_class_ray_vs_shell(struct xray *rp, const struct shell *s, const int in_or_o
 	if (RTG.NMG_debug)
 	    bu_log("hari_kari = %d, %d\n", hari_kari_minus, hari_kari_plus);
 	plus_class = NMG_CLASS_Unknown;
-	goto out;
     }
-    if (plus_class != minus_class || plus_class == NMG_CLASS_Unknown ||
-	minus_class == NMG_CLASS_Unknown) {
+    else if (plus_class != minus_class || minus_class == NMG_CLASS_Unknown) {
 	plus_class = NMG_CLASS_Unknown;
     }
- out:
 
     NMG_FREE_HITLIST(&rd.rd_hit, &ap);
 
