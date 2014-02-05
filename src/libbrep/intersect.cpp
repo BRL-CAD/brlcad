@@ -2767,13 +2767,13 @@ ON_Intersect(const ON_Surface *surfA,
 	ON_2dPointArray &ptarray2 = i >= 2 ? tmp_curveuv : tmp_curvest;
 	int knot_dir = i % 2;
 	int surf_dir = 1 - knot_dir;
-	int knot_count = surf1->SpanCount(surf_dir);
-	double *knots = new double [knot_count + 1];
+	int knot_count = surf1->SpanCount(surf_dir) + 1;
+	double *knots = new double[knot_count];
 	surf1->GetSpanVector(surf_dir, knots);
 	// knots that can be boundaries of Bezier patches
 	ON_SimpleArray<double> b_knots;
 	b_knots.Append(knots[0]);
-	for (int j = 1; j <= knot_count; j++) {
+	for (int j = 1; j < knot_count; j++) {
 	    if (knots[j] > *(b_knots.Last())) {
 		b_knots.Append(knots[j]);
 	    }
@@ -2783,41 +2783,42 @@ ON_Intersect(const ON_Surface *surfA,
 	}
 
 	for (int j = 0; j < b_knots.Count(); j++) {
-	    ON_Curve *boundary = surf1->IsoCurve(knot_dir, b_knots[j]);
+	    double knot = b_knots[j];
+	    ON_Curve *boundary = surf1->IsoCurve(knot_dir, knot);
 	    ON_SimpleArray<ON_X_EVENT> x_event;
 	    ON_CurveArray overlap2d;
 	    ON_Intersect(boundary, surf2, x_event, intersection_tolerance, overlap_tolerance, 0, 0, 0, &overlap2d);
 	    for (int k = 0; k < x_event.Count(); k++) {
-		tmp_curvept.Append(x_event[k].m_A[0]);
+		ON_X_EVENT &event = x_event[k];
+		tmp_curvept.Append(event.m_A[0]);
 		ON_2dPoint iso_pt1, iso_pt2;
-		iso_pt1.x = knot_dir ? b_knots[j] : x_event[k].m_a[0];
-		iso_pt1.y = knot_dir ? x_event[k].m_a[0] : b_knots[j];
+		iso_pt1.x = knot_dir ? knot : event.m_a[0];
+		iso_pt1.y = knot_dir ? event.m_a[0] : knot;
 		ptarray1.Append(iso_pt1);
-		ptarray2.Append(ON_2dPoint(x_event[k].m_b[0], x_event[k].m_b[1]));
-		if (x_event[k].m_type == ON_X_EVENT::csx_overlap) {
+		ptarray2.Append(ON_2dPoint(event.m_b[0], event.m_b[1]));
+		if (event.m_type == ON_X_EVENT::csx_overlap) {
 		    // Append the other end-point
-		    tmp_curvept.Append(x_event[k].m_A[1]);
-		    iso_pt2.x = knot_dir ? b_knots[j] : x_event[k].m_a[1];
-		    iso_pt2.y = knot_dir ? x_event[k].m_a[1] : b_knots[j];
+		    tmp_curvept.Append(event.m_A[1]);
+		    iso_pt2.x = knot_dir ? knot : event.m_a[1];
+		    iso_pt2.y = knot_dir ? event.m_a[1] : knot;
 		    ptarray1.Append(iso_pt2);
-		    ptarray2.Append(ON_2dPoint(x_event[k].m_b[2], x_event[k].m_b[3]));
+		    ptarray2.Append(ON_2dPoint(event.m_b[2], event.m_b[3]));
 		    // Get the overlap curve
-		    if (x_event[k].m_a[0] < x_event[k].m_a[1]) {
+		    if (event.m_a[0] < event.m_a[1]) {
 			bool curve_on_overlap_boundary = false;
 			if (j == 0 || (j == b_knots.Count() - 1 && !surf1->IsClosed(surf_dir))) {
 			    curve_on_overlap_boundary = true;
 			} else {
-			    int knot_dir = knot_dir;
-			    double overlap_start = x_event[k].m_a[0];
-			    double overlap_end = x_event[k].m_a[1];
+			    double overlap_start = event.m_a[0];
+			    double overlap_end = event.m_a[1];
 			    int location = isocurve_surface_overlap_location(
-				    surf1, b_knots[j], knot_dir, overlap_start, overlap_end, surf2, tree);
+				    surf1, knot, knot_dir, overlap_start, overlap_end, surf2, tree);
 			    curve_on_overlap_boundary = (location == ON_OVERLAP_BOUNDARY);
 			}
 			if (curve_on_overlap_boundary) {
 			    // One side of it is shared and the other side is non-shared.
 			    OverlapSegment *seg = new OverlapSegment;
-			    seg->m_curve3d = sub_curve(boundary, x_event[k].m_a[0], x_event[k].m_a[1]);
+			    seg->m_curve3d = sub_curve(boundary, event.m_a[0], event.m_a[1]);
 			    if (i < 2) {
 				seg->m_curveA = new ON_LineCurve(iso_pt1, iso_pt2);
 				seg->m_curveB = overlap2d[k];
@@ -2826,7 +2827,7 @@ ON_Intersect(const ON_Surface *surfA,
 				seg->m_curveA = overlap2d[k];
 			    }
 			    seg->m_dir = surf_dir;
-			    seg->m_fix = b_knots[j];
+			    seg->m_fix = knot;
 			    overlaps.Append(seg);
 			    if (j == 0 && surf1->IsClosed(surf_dir)) {
 				// something like close_domain().
@@ -2834,10 +2835,10 @@ ON_Intersect(const ON_Surface *surfA,
 				// first knot and the last knot is the same, so
 				// we don't need to compute the intersections twice.
 				seg = new OverlapSegment;
-				iso_pt1.x = knot_dir ? knots[knot_count] : x_event[k].m_a[0];
-				iso_pt1.y = knot_dir ? x_event[k].m_a[0] : knots[knot_count];
-				iso_pt2.x = knot_dir ? knots[knot_count] : x_event[k].m_a[1];
-				iso_pt2.y = knot_dir ? x_event[k].m_a[1] : knots[knot_count];
+				iso_pt1.x = knot_dir ? knots[knot_count - 1] : event.m_a[0];
+				iso_pt1.y = knot_dir ? event.m_a[0] : knots[knot_count - 1];
+				iso_pt2.x = knot_dir ? knots[knot_count - 1] : event.m_a[1];
+				iso_pt2.y = knot_dir ? event.m_a[1] : knots[knot_count - 1];
 				seg->m_curve3d = (*overlaps.Last())->m_curve3d->Duplicate();
 				if (i < 2) {
 				    seg->m_curveA = new ON_LineCurve(iso_pt1, iso_pt2);
@@ -2847,7 +2848,7 @@ ON_Intersect(const ON_Surface *surfA,
 				    seg->m_curveA = overlap2d[k]->Duplicate();
 				}
 				seg->m_dir = surf_dir;
-				seg->m_fix = knots[knot_count];
+				seg->m_fix = knots[knot_count - 1];
 				overlaps.Append(seg);
 			    }
 			    // We set overlap2d[k] to NULL, is case that the curve
