@@ -174,25 +174,14 @@ db_fullpath_traverse_subtree(union tree *tp,
 		break;
 	    }
 	case OP_UNION:
-            DB_FULL_PATH_SET_CUR_BOOL(scd->db_node->path, 2);
-	    db_fullpath_traverse_subtree(tp->tr_b.tb_left, traverse_func, comb_func, leaf_func, resp, client_data);
-            DB_FULL_PATH_SET_CUR_BOOL(scd->db_node->path, 2);
-	    db_fullpath_traverse_subtree(tp->tr_b.tb_right, traverse_func, comb_func, leaf_func, resp, client_data);
-	    break;
 	case OP_INTERSECT:
-            DB_FULL_PATH_SET_CUR_BOOL(scd->db_node->path, 2);
-	    db_fullpath_traverse_subtree(tp->tr_b.tb_left, traverse_func, comb_func, leaf_func, resp, client_data);
-            DB_FULL_PATH_SET_CUR_BOOL(scd->db_node->path, 3);
-	    db_fullpath_traverse_subtree(tp->tr_b.tb_right, traverse_func, comb_func, leaf_func, resp, client_data);
-	    break;
 	case OP_SUBTRACT:
-            DB_FULL_PATH_SET_CUR_BOOL(scd->db_node->path, 2);
-	    db_fullpath_traverse_subtree(tp->tr_b.tb_left, traverse_func, comb_func, leaf_func, resp, client_data);
-            DB_FULL_PATH_SET_CUR_BOOL(scd->db_node->path, 4);
-	    db_fullpath_traverse_subtree(tp->tr_b.tb_right, traverse_func, comb_func, leaf_func, resp, client_data);
-	    break;
 	case OP_XOR:
+	    DB_FULL_PATH_SET_CUR_BOOL(scd->db_node->path, 2);
 	    db_fullpath_traverse_subtree(tp->tr_b.tb_left, traverse_func, comb_func, leaf_func, resp, client_data);
+	    if (tp->tr_op == OP_UNION) DB_FULL_PATH_SET_CUR_BOOL(scd->db_node->path, 2);
+	    if (tp->tr_op == OP_INTERSECT) DB_FULL_PATH_SET_CUR_BOOL(scd->db_node->path, 3);
+	    if (tp->tr_op == OP_SUBTRACT) DB_FULL_PATH_SET_CUR_BOOL(scd->db_node->path, 4);
 	    db_fullpath_traverse_subtree(tp->tr_b.tb_right, traverse_func, comb_func, leaf_func, resp, client_data);
 	    break;
 	default:
@@ -412,6 +401,8 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
     struct directory *dp;
     struct search_client_data_t *scd = (struct search_client_data_t *)client_data;
     int state = 0;
+    int state_l = 0;
+    int state_r = 0;
     if (!tp)
 	return 0;
 
@@ -444,49 +435,16 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
 	    }
 	    break;
 	case OP_UNION:
-	    DB_FULL_PATH_SET_CUR_BOOL(scd->db_node->path, 2);
-	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_left, traverse_func, comb_func, leaf_func, resp, client_data);
-	    if (state == 1) return 1;
-	    DB_FULL_PATH_SET_CUR_BOOL(scd->db_node->path, 2);
-	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_right, traverse_func, comb_func, leaf_func, resp, client_data);
-	    if (state == 1) {
-		return 1;
-	    } else {
-		return 0;
-	    }
-	    break;
-
 	case OP_INTERSECT:
-	    DB_FULL_PATH_SET_CUR_BOOL(scd->db_node->path, 2);
-	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_left, traverse_func, comb_func, leaf_func, resp, client_data);
-	    if (state == 1) return 1;
-	    DB_FULL_PATH_SET_CUR_BOOL(scd->db_node->path, 3);
-	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_right, traverse_func, comb_func, leaf_func, resp, client_data);
-	    if (state == 1) {
-		return 1;
-	    } else {
-		return 0;
-	    }
-	    break;
-
 	case OP_SUBTRACT:
-	    DB_FULL_PATH_SET_CUR_BOOL(scd->db_node->path, 2);
-	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_left, traverse_func, comb_func, leaf_func, resp, client_data);
-	    if (state == 1) return 1;
-	    DB_FULL_PATH_SET_CUR_BOOL(scd->db_node->path, 4);
-	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_right, traverse_func, comb_func, leaf_func, resp, client_data);
-	    if (state == 1) {
-		return 1;
-	    } else {
-		return 0;
-	    }
-	    break;
-
 	case OP_XOR:
-	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_left, traverse_func, comb_func, leaf_func, resp, client_data);
-	    if (state == 1) return 1;
-	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_right, traverse_func, comb_func, leaf_func, resp, client_data);
-	    if (state == 1) {
+	    DB_FULL_PATH_SET_CUR_BOOL(scd->db_node->path, 2);
+	    state_l = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_left, traverse_func, comb_func, leaf_func, resp, client_data);
+	    if (tp->tr_op == OP_UNION) DB_FULL_PATH_SET_CUR_BOOL(scd->db_node->path, 2);
+	    if (tp->tr_op == OP_INTERSECT) DB_FULL_PATH_SET_CUR_BOOL(scd->db_node->path, 3);
+	    if (tp->tr_op == OP_SUBTRACT) DB_FULL_PATH_SET_CUR_BOOL(scd->db_node->path, 4);
+	    state_r = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_right, traverse_func, comb_func, leaf_func, resp, client_data);
+	    if (state_l == 1 || state_r == 1) {
 		return 1;
 	    } else {
 		return 0;
