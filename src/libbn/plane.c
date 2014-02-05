@@ -940,7 +940,8 @@ bn_isect_lseg2_lseg2(fastf_t *dist,
 		     const fastf_t *qdir,
 		     const struct bn_tol *tol)
 {
-    fastf_t ptol, qtol;	/* length in parameter space == tol->dist */
+    fastf_t ptol;
+    fastf_t qtol; /* length in parameter space == tol->dist */
     int status;
 
     BN_CK_TOL(tol);
@@ -1011,7 +1012,8 @@ bn_isect_lseg3_lseg3(fastf_t *dist,
 		     const fastf_t *qdir,
 		     const struct bn_tol *tol)
 {
-    fastf_t ptol, qtol;	/* length in parameter space == tol->dist */
+    fastf_t ptol;
+    fastf_t qtol; /* length in parameter space == tol->dist */
     fastf_t pmag, qmag;
     int status;
     int ret;
@@ -1026,8 +1028,8 @@ bn_isect_lseg3_lseg3(fastf_t *dist,
 
     /* It is expected that dist[0] and dist[1] returned from
      * 'bn_isect_line3_line3' are the actual distance to the
-     * intersect, i.e. not scaled. Distances in the opposite
-     * of the line direction vector result in a negative distance.
+     * intersect, i.e. not scaled. Distances in the opposite of the
+     * line direction vector result in a negative distance.
      */
 
     /* sanity check */
@@ -1094,8 +1096,8 @@ bn_isect_lseg3_lseg3(fastf_t *dist,
     if (status == 0) {  /* infinite lines are collinear */
 	/* When line segments are collinear, dist[1] has an alternate
 	 * interpretation: it's the parameter along p (not q)
-	 * therefore dist[1] must use tolerance ptol not qtol.
-	 * If 'q' within tol of either endpoint (0.0, 1.0), make exact.
+	 * therefore dist[1] must use tolerance ptol not qtol.  If 'q'
+	 * within tol of either endpoint (0.0, 1.0), make exact.
 	 */
 	if (NEAR_ZERO(dist[1], ptol)) {
 	    dist[1] = 0.0;
@@ -1129,8 +1131,9 @@ bn_isect_lseg3_lseg3(fastf_t *dist,
 	goto out;
     }
 
-    /* At this point we know the infinite lines intersect and are not collinear */
-
+    /* At this point we know the infinite lines intersect and are not
+     * collinear.
+     */
 
     if (dist[0] < -ptol || dist[0] > 1.0+ptol || dist[1] < -qtol || dist[1] > 1.0+qtol) {
 	if (UNLIKELY(bu_debug & BU_DEBUG_MATH)) {
@@ -1617,18 +1620,14 @@ bn_area_of_triangle(register const fastf_t *a, register const fastf_t *b, regist
 }
 
 
-int bn_isect_pt_lseg(fastf_t *dist,
-		     const fastf_t *a,
-		     const fastf_t *b,
-		     const fastf_t *p,
-		     const struct bn_tol *tol)
-
-/* distance along line from A to P */
-/* points for line and intersect */
-
+int
+bn_isect_pt_lseg(fastf_t *dist,
+		 const fastf_t *a,
+		 const fastf_t *b,
+		 const fastf_t *p,
+		 const struct bn_tol *tol)
 {
-    vect_t AtoP, BtoP, AtoB,
-	ABunit;	/* unit vector from A to B */
+    vect_t AtoP, BtoP, AtoB, ABunit; /* unit vector from A to B */
     fastf_t APprABunit;	/* Mag of projection of AtoP onto ABunit */
     fastf_t distsq;
 
@@ -1674,11 +1673,14 @@ int bn_isect_pt_lseg(fastf_t *dist,
 }
 
 
+/**
+ * @param dist is distance along line from A to P
+ * @param a is line start point
+ * @param b is line end point
+ * @param p is line intersect point
+ */
 int
 bn_isect_pt2_lseg2(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fastf_t *p, const struct bn_tol *tol)
-/* distance along line from A to P */
-/* points for line and intersect */
-
 {
     vect_t AtoP,
 	BtoP,
@@ -1739,12 +1741,10 @@ bn_isect_pt2_lseg2(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fast
 
 
 /**
- * A R E _ E Q U A L
- *
- * This is a support function for the test function "bn_distsq_pt3_lseg3_v2".
- *
+ * This is a support function for the test function
+ * "bn_distsq_pt3_lseg3_v2".
  */
-static int
+HIDDEN int
 are_equal(fastf_t a_in, fastf_t b_in, fastf_t t)
 {
     fastf_t ai, af, bi, bf, a, b;
@@ -2437,8 +2437,6 @@ bn_isect_planes(fastf_t *pt, const fastf_t (*planes)[4], const size_t pl_count)
 
 
 /**
- * B N _ I S E C T _ L S E G _ R P P
- *@brief
  * Intersect a line segment with a rectangular parallelepiped (RPP)
  * that has faces parallel to the coordinate planes (a clipping RPP).
  * The RPP is defined by a minimum point and a maximum point.  This is
@@ -2488,9 +2486,9 @@ bn_isect_lseg_rpp(fastf_t *a,
 	    if (mindist < ((sv = (*min - *pt) / *dir)))
 		mindist = sv;
 	} else {
-	    /* If direction component along this axis is NEAR 0, (i.e.,
-	     * this ray is aligned with this axis), merely check
-	     * against the boundaries.
+	    /* If direction component along this axis is NEAR 0,
+	     * (i.e., this ray is aligned with this axis), merely
+	     * check against the boundaries.
 	     */
 	    if ((*min > *pt) || (*max < *pt))
 		return 0;	/* MISS */;
@@ -2516,6 +2514,7 @@ bn_isect_lseg_rpp(fastf_t *a,
     VJOIN1(a, a, mindist, diff);
     return 1;		/* HIT */
 }
+
 
 int
 bn_lseg3_lseg3_parallel(const point_t sg1pt1, const point_t sg1pt2,
