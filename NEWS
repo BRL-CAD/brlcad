@@ -151,6 +151,7 @@ including the STEP, Patch, and 3DM importers.
 * improved documentation consistency and authorship info - Tom Browder
 * new mouse-input unpushed matrix edit option in archer - Bob Parker
 * fixed bug during pipe editing with working units set - Bob Parker
+* added experimental 'bot_fuse' command to heal BoTs - Richard Weiss
 
 
 ----------------------------------------------------------------------
