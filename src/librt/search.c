@@ -436,7 +436,6 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
     RT_CHECK_DBI(dbip);
     RT_CK_TREE(tp);
     RT_CK_RESOURCE(resp);
-    bu_log("check leaf: %s at depth %d\n", db_path_to_string(db_node->path), db_node->path->fp_len - db_node->orig_len);
 
     switch (tp->tr_op) {
 
@@ -449,33 +448,25 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
 		DB_FULL_PATH_SET_CUR_BOOL(db_node->path, curr_bool);
 		state = traverse_func(dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
 		if (state == 1) {
-		    bu_log("matching_leaf: %s(%d) : (%d)\n", db_path_to_string(db_node->path), db_node->matching_len, db_node->path->fp_len);
 		    if ((int)db_node->path->fp_len > db_node->matching_len) {
 			db_node->matching_len = db_node->path->fp_len;
-		    }
-		    if ((int)db_node->path->fp_len < db_node->shallowest_matching_len) {
-			db_node->shallowest_matching_len = db_node->path->fp_len;
-		    }
-		    if ((int)db_node->path->fp_len > db_node->deepest_matching_len) {
-			db_node->deepest_matching_len = db_node->path->fp_len;
+			/*bu_log("matching_leaf: %s(%d)\n", db_path_to_string(db_node->path), db_node->matching_len);*/
 		    }
 		    DB_FULL_PATH_POP(db_node->path);
 		    return 1;
 		} else {
-		    bu_log("non-matching_leaf: %s(%d)\n", db_path_to_string(db_node->path), db_node->matching_len);
 		    DB_FULL_PATH_POP(db_node->path);
 		    return 0;
 		}
 	    }
 	    break;
 	case OP_UNION:
-	    bu_log("left union %s\n", db_path_to_string(db_node->path));
 	    DB_FULL_PATH_SET_CUR_BOOL(db_node->path, 2);
-	    state += db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
-	    bu_log("right union %s\n", db_path_to_string(db_node->path));
+	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
+	    if (state == 1) return 1;
 	    DB_FULL_PATH_SET_CUR_BOOL(db_node->path, 2);
-	    state += db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
-	    if (state >= 1) {
+	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
+	    if (state == 1) {
 		return 1;
 	    } else {
 		return 0;
@@ -483,13 +474,12 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
 	    break;
 
 	case OP_INTERSECT:
-	    bu_log("left intersect %s\n", db_path_to_string(db_node->path));
 	    DB_FULL_PATH_SET_CUR_BOOL(db_node->path, 2);
-	    state += db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
-	    bu_log("right intersect %s\n", db_path_to_string(db_node->path));
+	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
+	    if (state == 1) return 1;
 	    DB_FULL_PATH_SET_CUR_BOOL(db_node->path, 3);
-	    state += db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
-	    if (state >= 1) {
+	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
+	    if (state == 1) {
 		return 1;
 	    } else {
 		return 0;
@@ -497,13 +487,12 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
 	    break;
 
 	case OP_SUBTRACT:
-	    bu_log("left subtract %s\n", db_path_to_string(db_node->path));
 	    DB_FULL_PATH_SET_CUR_BOOL(db_node->path, 2);
-	    state += db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
-	    bu_log("right subtract %s\n", db_path_to_string(db_node->path));
+	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_left, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
+	    if (state == 1) return 1;
 	    DB_FULL_PATH_SET_CUR_BOOL(db_node->path, 4);
-	    state += db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
-	    if (state >= 1) {
+	    state = db_fullpath_stateful_traverse_subtree(tp->tr_b.tb_right, traverse_func, dbip, wdbp, results, db_node, comb_func, leaf_func, resp, client_data);
+	    if (state == 1) {
 		return 1;
 	    } else {
 		return 0;
@@ -640,7 +629,6 @@ f_below(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, st
     struct rt_comb_internal *comb;
     struct directory *dp;
     int state = 0;
-    int path_offset = 0;
 
     db_full_path_init(&belowpath);
     db_dup_full_path(&belowpath, db_node->path);
@@ -657,37 +645,18 @@ f_below(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, st
 
         curr_node.path = &belowpath;
         curr_node.matching_len = 0;
-	curr_node.orig_len = db_node->orig_len;
-	curr_node.deepest_matching_len = 0;
-	curr_node.shallowest_matching_len = INT_MAX;
 	state = db_fullpath_stateful_traverse_subtree(comb->tree, db_fullpath_stateful_traverse, dbip, wdbp, results, &curr_node, find_execute_nested_plans, find_execute_nested_plans, wdbp->wdb_resp, plan->bl_data[0]);
 
 	rt_db_free_internal(&in);
     }
     db_free_full_path(&belowpath);
-    path_offset = db_node->path->fp_len - db_node->orig_len;
-    if(state >=1) {
-	bu_log("matching: %s\n", db_path_to_string(db_node->path));
-	bu_log("shallowest: %d\n", curr_node.shallowest_matching_len - path_offset);
-	bu_log("deepest: %d\n", curr_node.deepest_matching_len - path_offset);
-	bu_log("path length: %d\n", db_node->path->fp_len);
-	bu_log("original path length: %d\n", db_node->orig_len);
-	bu_log("condition 1: %d >= %d\n", (curr_node.matching_len - (db_node->path->fp_len - db_node->orig_len)) - 1, plan->min_depth);
-	bu_log("condition 2: %d <= %d\n", (curr_node.matching_len - (db_node->path->fp_len - db_node->orig_len)) - 1, plan->max_depth);
-    }
-if (state >= 1) {
-     if (((int)((curr_node.matching_len - path_offset) - 1) >= plan->min_depth) 
-	&& ((int)((curr_node.matching_len - path_offset) - 1) <= plan->max_depth)) {
+    if (state >= 1 && ((int)((curr_node.matching_len - (db_node->path->fp_len - db_node->orig_len)) - 1) >= plan->min_depth)
+	&& ((int)((curr_node.matching_len - (db_node->path->fp_len - db_node->orig_len)) - 1) <= plan->max_depth)) {
 	/*bu_log("(%d) f_below match: %s(%d): (%d) - %d; (%d, %d)\n", db_node->orig_len, db_path_to_string(db_node->path), db_node->path->fp_len, curr_node.matching_len, curr_node.matching_len - (db_node->path->fp_len - db_node->orig_len) - 1, plan->min_depth, plan->max_depth);*/
-	bu_log("\nmatch accepted: %s\n\n", db_path_to_string(db_node->path));
 	return 1;
     } else {
-	if(state >=1) bu_log("\nmatch rejected: %s\n\n", db_path_to_string(db_node->path));
 	return 0;
     }
-} else {
-	return 0;
-}
 
 }
 
