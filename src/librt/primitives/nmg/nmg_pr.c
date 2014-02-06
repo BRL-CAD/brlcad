@@ -993,7 +993,7 @@ nmg_pr_one_eu_vecs(const struct edgeuse *eu, const fastf_t *xvec, const fastf_t 
 	       (void *)f,
 	       (void *)fu, fu_orient,
 	       (void *)s,
-	       nmg_measure_fu_angle(eu, xvec, yvec, zvec) * bn_radtodeg);
+	       nmg_measure_fu_angle(eu, xvec, yvec, zvec) * RAD2DEG);
     }
 }
 

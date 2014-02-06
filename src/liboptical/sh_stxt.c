@@ -315,9 +315,9 @@ brick_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp),
     b = *cp++;
 
     VSET(swp->sw_color,
-	 (r+0.5) * bn_inv255,
-	 (g+0.5) * bn_inv255,
-	 (b+0.5) * bn_inv255);
+	 (r+0.5) * BN_INV255,
+	 (g+0.5) * BN_INV255,
+	 (b+0.5) * BN_INV255);
 
     return 1;
 }
@@ -386,9 +386,9 @@ rbound_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp)
     b = *cp++;
 
     VSET(swp->sw_color,
-	 (r+0.5) * bn_inv255,
-	 (g+0.5) * bn_inv255,
-	 (b+0.5) * bn_inv255);
+	 (r+0.5) * BN_INV255,
+	 (g+0.5) * BN_INV255,
+	 (b+0.5) * BN_INV255);
 
     return 1;
 }
@@ -446,9 +446,9 @@ mbound_render(struct application *ap, const struct partition *UNUSED(pp), struct
     b = *cp++;
 
     VSET(swp->sw_color,
-	 (r+0.5) * bn_inv255,
-	 (g+0.5) * bn_inv255,
-	 (b+0.5) * bn_inv255);
+	 (r+0.5) * BN_INV255,
+	 (g+0.5) * BN_INV255,
+	 (b+0.5) * BN_INV255);
 
     return 1;
 }

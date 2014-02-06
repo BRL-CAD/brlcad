@@ -448,13 +448,13 @@ nmg_vu_angle_measure(struct vertexuse *vu, fastf_t *x_dir, fastf_t *y_dir, int a
 	this_ass = NMG_V_ASSESSMENT_NEXT(assessment);
     if (this_ass == NMG_E_ASSESSMENT_ON_FORW) {
 	if (in) ang = 0.0;	/* zero angle */
-	else ang = bn_pi;	/* 180 degrees */
+	else ang = M_PI;	/* 180 degrees */
 	if (RTG.NMG_debug&DEBUG_VU_SORT)
 	    bu_log("nmg_vu_angle_measure:  NMG_E_ASSESSMENT_ON_FORW, ang=%g\n", ang);
 	return ang;
     }
     if (this_ass == NMG_E_ASSESSMENT_ON_REV) {
-	if (in) ang = bn_pi;	/* 180 degrees */
+	if (in) ang = M_PI;	/* 180 degrees */
 	else ang = 0.0;	/* zero angle */
 	if (RTG.NMG_debug&DEBUG_VU_SORT)
 	    bu_log("nmg_vu_angle_measure:  NMG_E_ASSESSMENT_ON_REV, ang=%g\n", ang);
@@ -485,7 +485,7 @@ nmg_vu_angle_measure(struct vertexuse *vu, fastf_t *x_dir, fastf_t *y_dir, int a
 
     ang = bn_angle_measure(vec, x_dir, y_dir);
     if (RTG.NMG_debug&DEBUG_VU_SORT)
-	bu_log("nmg_vu_angle_measure:  measured angle=%e\n", ang*bn_radtodeg);
+	bu_log("nmg_vu_angle_measure:  measured angle=%e\n", ang*RAD2DEG);
 
     /*
      * Since the entry edge is not on the ray, ensure the
@@ -497,13 +497,13 @@ nmg_vu_angle_measure(struct vertexuse *vu, fastf_t *x_dir, fastf_t *y_dir, int a
 	    ang = RADIAN_TWEEK;
 	} else {
 	    /* Assuming NMG_E_ASSESSMENT_LEFT */
-	    ang = bn_twopi - RADIAN_TWEEK;
+	    ang = M_2PI - RADIAN_TWEEK;
 	}
-    } else if (ZERO(ang - bn_pi)) {
+    } else if (ZERO(ang - M_PI)) {
 	if (this_ass == NMG_E_ASSESSMENT_RIGHT) {
-	    ang = bn_pi - RADIAN_TWEEK;
+	    ang = M_PI - RADIAN_TWEEK;
 	} else {
-	    ang = bn_pi + RADIAN_TWEEK;
+	    ang = M_PI + RADIAN_TWEEK;
 	}
     }
 
@@ -511,21 +511,21 @@ nmg_vu_angle_measure(struct vertexuse *vu, fastf_t *x_dir, fastf_t *y_dir, int a
      * Also, ensure computed angle and topological assessment agree
      * about which side of the ray this edge is on.
      */
-    if (ang > bn_pi) {
+    if (ang > M_PI) {
 	if (this_ass != NMG_E_ASSESSMENT_LEFT) {
 	    bu_log("*** ERROR topology/geometry conflict, ang=%e, ass=%s\n",
-		   ang*bn_radtodeg,
+		   ang*RAD2DEG,
 		   nmg_e_assessment_names[this_ass]);
 	}
-    } else if (ang < bn_pi) {
+    } else if (ang < M_PI) {
 	if (this_ass != NMG_E_ASSESSMENT_RIGHT) {
 	    bu_log("*** ERROR topology/geometry conflict, ang=%e, ass=%s\n",
-		   ang*bn_radtodeg,
+		   ang*RAD2DEG,
 		   nmg_e_assessment_names[this_ass]);
 	}
     }
     if (RTG.NMG_debug&DEBUG_VU_SORT)
-	bu_log("  final ang=%g (%e), vec=(%g, %g, %g)\n", ang*bn_radtodeg, ang*bn_radtodeg, V3ARGS(vec));
+	bu_log("  final ang=%g (%e), vec=(%g, %g, %g)\n", ang*RAD2DEG, ang*RAD2DEG, V3ARGS(vec));
     return ang;
 }
 
@@ -1747,9 +1747,9 @@ nmg_face_coincident_vu_sort(struct nmg_ray_state *rs, int start, int end)
 
 	/* x_dir is -dir, y_dir is -left */
 	vs[nvu].in_vu_angle = nmg_vu_angle_measure(rs->vu[i],
-						   rs->ang_x_dir, rs->ang_y_dir, ass, 1) * bn_radtodeg;
+						   rs->ang_x_dir, rs->ang_y_dir, ass, 1) * RAD2DEG;
 	vs[nvu].out_vu_angle = nmg_vu_angle_measure(rs->vu[i],
-						    rs->ang_x_dir, rs->ang_y_dir, ass, 0) * bn_radtodeg;
+						    rs->ang_x_dir, rs->ang_y_dir, ass, 0) * RAD2DEG;
 
 	/* Special case for LEFT & ON combos */
 	if (ass == NMG_V_COMB(NMG_E_ASSESSMENT_ON_FORW, NMG_E_ASSESSMENT_LEFT))
@@ -2246,7 +2246,7 @@ find_loop_to_cut(int *index1, int *index2, int prior_start, int prior_end, int n
 		bu_log("\tfind_loop_to_cut: %d VU's from lu %p\n", count, (void *)lu2);
 
 	    /* need to select correct VU */
-	    vu_angle = (-bn_pi);
+	    vu_angle = (-M_PI);
 	    vu_best = (struct vertexuse *)NULL;
 
 	    VSUB2(x_dir, vu2->v_p->vg_p->coord, vu1->v_p->vg_p->coord);
@@ -2379,7 +2379,7 @@ find_loop_to_cut(int *index1, int *index2, int prior_start, int prior_end, int n
 		bu_log("\tfind_loop_to_cut: %d VU's from lu %p\n", count, (void *)lu1);
 
 	    /* need to select correct VU */
-	    vu_angle = (-bn_pi);
+	    vu_angle = (-M_PI);
 	    vu_best = (struct vertexuse *)NULL;
 
 	    VSUB2(x_dir, vu1->v_p->vg_p->coord, vu2->v_p->vg_p->coord);

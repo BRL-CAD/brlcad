@@ -6373,14 +6373,14 @@ wdb_tol_cmd(struct rt_wdb *wdbp,
 	    double sec;
 
 	    bu_vls_init(&vls);
-	    sec = wdbp->wdb_ttol.norm * bn_radtodeg;
+	    sec = wdbp->wdb_ttol.norm * RAD2DEG;
 	    deg = (int)(sec);
 	    sec = (sec - (double)deg) * 60;
 	    min = (int)(sec);
 	    sec = (sec - (double)min) * 60;
 
 	    bu_vls_printf(&vls, "\tnorm %g degrees (%d deg %d min %g sec)\n",
-			  wdbp->wdb_ttol.norm * bn_radtodeg, deg, min, sec);
+			  wdbp->wdb_ttol.norm * RAD2DEG, deg, min, sec);
 	    Tcl_AppendResult(wdbp->wdb_interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
 	} else {
@@ -6392,7 +6392,7 @@ wdb_tol_cmd(struct rt_wdb *wdbp,
 	bu_vls_printf(&vls,
 		      "\tdistance = %g mm\n\tperpendicularity = %g (cosine of %g degrees)",
 		      wdbp->wdb_tol.dist, wdbp->wdb_tol.perp,
-		      acos(wdbp->wdb_tol.perp)*bn_radtodeg);
+		      acos(wdbp->wdb_tol.perp)*RAD2DEG);
 	Tcl_AppendResult(wdbp->wdb_interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -6494,7 +6494,7 @@ wdb_tol_cmd(struct rt_wdb *wdbp,
 		    return TCL_ERROR;
 		}
 		/* Note that a value of 0.0 or 360.0 will disable this tol */
-		wdbp->wdb_ttol.norm = f * bn_degtorad;
+		wdbp->wdb_ttol.norm = f * DEG2RAD;
 		break;
 	    case 'd':
 		/* Calculational distance tolerance */

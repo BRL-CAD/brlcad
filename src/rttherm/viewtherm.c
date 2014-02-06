@@ -445,7 +445,7 @@ hit_nothing(struct application *app)
 	VREVERSE(u.sw.sw_hit.hit_normal, app->a_ray.r_dir);
 	/* U is azimuth, atan() range: -pi to +pi */
 	u.sw.sw_uv.uv_u = bn_atan2(app->a_ray.r_dir[Y],
-				   app->a_ray.r_dir[X]) * bn_inv2pi;
+				   app->a_ray.r_dir[X]) * M_1_2PI;
 	if (u.sw.sw_uv.uv_u < 0)
 	    u.sw.sw_uv.uv_u += 1.0;
 	/*
@@ -455,7 +455,7 @@ hit_nothing(struct application *app)
 	u.sw.sw_uv.uv_v = bn_atan2(app->a_ray.r_dir[Z],
 				   sqrt(app->a_ray.r_dir[X] * app->a_ray.r_dir[X] +
 					app->a_ray.r_dir[Y] * app->a_ray.r_dir[Y])) *
-	    bn_invpi + 0.5;
+	    M_1_PI + 0.5;
 	u.sw.sw_uv.uv_du = u.sw.sw_uv.uv_dv = 0;
 
 	u.sw.msw_color = bn_tabdata_get_constval(1.0, spectrum);

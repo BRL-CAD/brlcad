@@ -8347,8 +8347,8 @@ to_mouse_poly_circ(struct ged *gedp,
 	for (n = 0; n < nsegs; ++n) {
 	    fastf_t ang = n * arc;
 
-	    curr_fx = cos(ang*bn_degtorad) * r + gdpsp->gdps_prev_point[X];
-	    curr_fy = sin(ang*bn_degtorad) * r + gdpsp->gdps_prev_point[Y];
+	    curr_fx = cos(ang*DEG2RAD) * r + gdpsp->gdps_prev_point[X];
+	    curr_fy = sin(ang*DEG2RAD) * r + gdpsp->gdps_prev_point[Y];
 	    VSET(v_pt, curr_fx, curr_fy, gdvp->gdv_view->gv_data_vZ);
 	    MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, v_pt);
 	    bu_vls_printf(&plist, " {%lf %lf %lf}", V3ARGS(m_pt));
@@ -8565,8 +8565,8 @@ to_mouse_poly_ell(struct ged *gedp,
 
 	arc = 360.0 / nsegs;
 	for (n = 0; n < nsegs; ++n) {
-	    fastf_t cosa = cos(n * arc * bn_degtorad);
-	    fastf_t sina = sin(n * arc * bn_degtorad);
+	    fastf_t cosa = cos(n * arc * DEG2RAD);
+	    fastf_t sina = sin(n * arc * DEG2RAD);
 
 	    VJOIN2(ellout, gdpsp->gdps_prev_point, cosa, A, sina, B);
 	    MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, ellout);

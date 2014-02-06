@@ -124,7 +124,7 @@ vo_mat_aet(struct view_obj *vop)
 		  0.0,
 		  270.0 - vop->vo_aet[0]);
 
-    twist = -vop->vo_aet[2] * bn_degtorad;
+    twist = -vop->vo_aet[2] * DEG2RAD;
     c_twist = cos(twist);
     s_twist = sin(twist);
     bn_mat_zrot(tmat, s_twist, c_twist);
@@ -2169,7 +2169,7 @@ vo_arot_cmd(struct view_obj *vop,
     VSETALL(pt, 0.0);
     VUNITIZE(axis);
 
-    bn_mat_arb_rot(newrot, pt, axis, angle*bn_degtorad);
+    bn_mat_arb_rot(newrot, pt, axis, angle*DEG2RAD);
 
     return vo_rot(vop, vop->vo_coord, vop->vo_rotate_about, newrot, func);
 }
@@ -2756,8 +2756,8 @@ vo_ae2dir_cmd(struct view_obj *vop, int argc, const char *argv[])
 	iflag = 0;
     }
 
-    az *= bn_degtorad;
-    el *= bn_degtorad;
+    az *= DEG2RAD;
+    el *= DEG2RAD;
     V3DIR_FROM_AZEL(dir, az, el);
 
     if (iflag)

@@ -179,7 +179,7 @@ pipe_seg_bend_angle(const struct pipe_segment *seg)
 	}
     }
 
-    supplementary_angle = bn_pi - rad_between_segments;
+    supplementary_angle = M_PI - rad_between_segments;
 
     return supplementary_angle;
 }
@@ -365,7 +365,7 @@ rt_bend_pipe_prep(
     bp->bend_angle = bend_angle;
 
     /* angle goes from 0.0 at start to some angle less than PI */
-    if (bp->bend_angle >= bn_pi) {
+    if (bp->bend_angle >= M_PI) {
 	bu_log("Error: rt_pipe_prep: Bend section bends through more than 180 degrees\n");
 	return 1;
     }
@@ -584,7 +584,7 @@ pipe_elements_calculate(struct bu_list *elements_head, struct rt_db_internal *ip
 	VCROSS(norm, n1, n2);
 	VUNITIZE(n1);
 	VUNITIZE(n2);
-	angle = bn_pi - acos(VDOT(n1, n2));
+	angle = M_PI - acos(VDOT(n1, n2));
 	dist_to_bend = pp2->pp_bendradius * tan(angle / 2.0);
 	if (isnan(dist_to_bend) || VNEAR_ZERO(norm, SQRT_SMALL_FASTF) || NEAR_ZERO(dist_to_bend, SQRT_SMALL_FASTF)) {
 	    /* points are collinear, treat as a linear segment */
@@ -1048,7 +1048,7 @@ bend_pipe_shot(
 	    VSUB2(to_hit, hit_pt, bp->bend_V);
 	    angle = atan2(VDOT(to_hit, bp->bend_rb), VDOT(to_hit, bp->bend_ra));
 	    if (angle < 0.0) {
-		angle += 2.0 * bn_pi;
+		angle += 2.0 * M_PI;
 	    }
 	    if (angle <= bp->bend_angle) {
 		hitp = &hits[*hit_count];
@@ -1140,7 +1140,7 @@ bend_pipe_shot(
 	    VSUB2(to_hit, hit_pt, bp->bend_V);
 	    angle = atan2(VDOT(to_hit, bp->bend_rb), VDOT(to_hit, bp->bend_ra));
 	    if (angle < 0.0) {
-		angle += 2.0 * bn_pi;
+		angle += 2.0 * M_PI;
 	    }
 	    if (angle <= bp->bend_angle) {
 		hitp = &hits[*hit_count];
@@ -1843,7 +1843,7 @@ pipe_circle_segments(const struct rt_view_info *info, fastf_t radius)
 {
     int num_segments;
 
-    num_segments = bn_twopi * radius / info->point_spacing;
+    num_segments = M_2PI * radius / info->point_spacing;
 
     if (num_segments < 5) {
 	num_segments = 5;
@@ -1861,7 +1861,7 @@ pipe_bend_segments(
     int num_segments;
     fastf_t arc_length;
 
-    arc_length = (bend->bend_angle / bn_twopi) * bend->bend_circle.radius;
+    arc_length = (bend->bend_angle / M_2PI) * bend->bend_circle.radius;
     num_segments = arc_length / info->point_spacing;
 
     if (num_segments < 3) {
@@ -1915,7 +1915,7 @@ pipe_connecting_arcs(
 
     BU_PUT(cur_seg, struct pipe_segment);
 
-    avg_circumference = bn_pi * avg_diameter;
+    avg_circumference = M_PI * avg_diameter;
     num_arcs = avg_circumference / info->curve_spacing;
 
     if (num_arcs < 4) {
@@ -1962,7 +1962,7 @@ draw_pipe_parallel_circle_connections(
 
     BU_CK_LIST_HEAD(vhead);
 
-    radian_step = bn_twopi / num_lines;
+    radian_step = M_2PI / num_lines;
 
     VSCALE(start_a, start->orient.v1, start->radius);
     VSCALE(start_b, start->orient.v2, start->radius);
@@ -2143,7 +2143,7 @@ draw_pipe_connect_circular_segs(
 
     arc_circle.orient = bend->bend_circle.orient;
 
-    radian_step = bn_twopi / num_arcs;
+    radian_step = M_2PI / num_arcs;
     radian = 0.0;
     for (i = 0; i < num_arcs; ++i) {
 	/* get a vector from the pipe center (bend start) to a point on the
@@ -3281,7 +3281,7 @@ tesselate_pipe_bend(
 
     bend_angle = atan2(VDOT(to_end, b2), VDOT(to_end, b1));
     if (bend_angle < 0.0) {
-	bend_angle += 2.0 * bn_pi;
+	bend_angle += 2.0 * M_PI;
     }
 
     /* calculate number of segments to use along bend */
@@ -3801,19 +3801,19 @@ rt_pipe_tess(
 
     /* calculate number of segments for circles */
     if (ttol->abs > SMALL_FASTF && ttol->abs * 2.0 < max_diam) {
-	tol_segs = ceil(bn_pi / acos(1.0 - 2.0 * ttol->abs / max_diam));
+	tol_segs = ceil(M_PI / acos(1.0 - 2.0 * ttol->abs / max_diam));
 	if (tol_segs > arc_segs) {
 	    arc_segs = tol_segs;
 	}
     }
     if (ttol->rel > SMALL_FASTF && 2.0 * ttol->rel * pipe_size < max_diam) {
-	tol_segs = ceil(bn_pi / acos(1.0 - 2.0 * ttol->rel * pipe_size / max_diam));
+	tol_segs = ceil(M_PI / acos(1.0 - 2.0 * ttol->rel * pipe_size / max_diam));
 	if (tol_segs > arc_segs) {
 	    arc_segs = tol_segs;
 	}
     }
     if (ttol->norm > SMALL_FASTF) {
-	tol_segs = ceil(bn_pi / ttol->norm);
+	tol_segs = ceil(M_PI / ttol->norm);
 	if (tol_segs > arc_segs) {
 	    arc_segs = tol_segs;
 	}
@@ -3826,7 +3826,7 @@ rt_pipe_tess(
 					     "rt_pipe_tess: outer_loop");
     inner_loop = (struct vertex **)bu_calloc(arc_segs, sizeof(struct vertex *),
 					     "rt_pipe_tess: inner_loop");
-    delta_angle = 2.0 * bn_pi / (double)arc_segs;
+    delta_angle = 2.0 * M_PI / (double)arc_segs;
     sin_del = sin(delta_angle);
     cos_del = cos(delta_angle);
 
@@ -3887,7 +3887,7 @@ rt_pipe_tess(
 	VUNITIZE(norm);
 
 	/* linear section */
-	angle = bn_pi - acos(VDOT(n1, n2));
+	angle = M_PI - acos(VDOT(n1, n2));
 	dist_to_bend = pp2->pp_bendradius * tan(angle / 2.0);
 	VJOIN1(bend_start, pp2->pp_coord, dist_to_bend, n1);
 	tesselate_pipe_linear(curr_pt, curr_od / 2.0, curr_id / 2.0,
@@ -4385,7 +4385,7 @@ rt_pipe_ck(const struct bu_list *headp)
 	 */
 	CLAMP(local_vdot, -1.0, 1.0);
 
-	angle = bn_pi - acos(local_vdot);
+	angle = M_PI - acos(local_vdot);
 	new_bend_dist = cur->pp_bendradius * tan(angle / 2.0);
 
 	if (new_bend_dist + old_bend_dist > v1_len) {
@@ -4398,7 +4398,7 @@ rt_pipe_ck(const struct bu_list *headp)
 		   V3ARGS(prev->pp_coord), V3ARGS(cur->pp_coord));
 	    bu_log("failed test: %g + %g > %g\n", new_bend_dist, old_bend_dist, v1_len);
 	    vdot = VDOT(v1, v2);
-	    bu_log("angle(%g) = bn_pi(%g) - acos(VDOT(v1, v2)(%g))(%g)\n", angle, bn_pi, vdot, acos(vdot));
+	    bu_log("angle(%g) = M_PI(%g) - acos(VDOT(v1, v2)(%g))(%g)\n", angle, M_PI, vdot, acos(vdot));
 	    bu_log("v1: (%g %g %g)\n", V3ARGS(v1));
 	    bu_log("v2: (%g %g %g)\n", V3ARGS(v2));
 	}

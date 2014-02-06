@@ -588,7 +588,7 @@ rt_ell_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
     /* Assert that pprime has unit length */
 
     /* U is azimuth, atan() range: -pi to +pi */
-    uvp->uv_u = bn_atan2(pprime[Y], pprime[X]) * bn_inv2pi;
+    uvp->uv_u = bn_atan2(pprime[Y], pprime[X]) * M_1_2PI;
     if (uvp->uv_u < 0)
 	uvp->uv_u += 1.0;
     /* V is elevation, atan() range: -pi/2 to +pi/2, because sqrt()
@@ -596,12 +596,12 @@ rt_ell_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
      */
     uvp->uv_v = bn_atan2(pprime[Z],
 			 sqrt(pprime[X] * pprime[X] + pprime[Y] * pprime[Y])) *
-	bn_invpi + 0.5;
+	M_1_PI + 0.5;
 
     /* approximation: r / (circumference, 2 * pi * aradius) */
     r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;
     uvp->uv_du = uvp->uv_dv =
-	bn_inv2pi * r / stp->st_aradius;
+	M_1_2PI * r / stp->st_aradius;
 }
 
 
@@ -763,7 +763,7 @@ ell_ellipse_points(
     ell_mag_c = MAGNITUDE(ell->c);
 
     avg_radius = (ell_mag_a + ell_mag_b + ell_mag_c) / 3.0;
-    avg_circumference = bn_twopi * avg_radius;
+    avg_circumference = M_2PI * avg_radius;
 
     return avg_circumference / info->point_spacing;
 }
@@ -1043,7 +1043,7 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     state.s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
     /* Find the number of segments to divide 90 degrees worth into */
-    nsegs = (int)(bn_halfpi / state.theta_tol + 0.999);
+    nsegs = (int)(M_PI_2 / state.theta_tol + 0.999);
     if (nsegs < 2) nsegs = 2;
 
     /* Find total number of strips of vertices that will be needed.
@@ -1171,13 +1171,13 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	point_t model_pt;
 
 	alpha = (((double)i) / (nstrips-1));
-	cos_alpha = cos(alpha*bn_pi);
-	sin_alpha = sin(alpha*bn_pi);
+	cos_alpha = cos(alpha*M_PI);
+	sin_alpha = sin(alpha*M_PI);
 	for (j = 0; j < strips[i].nverts; j++) {
 
 	    beta = ((double)j) / strips[i].nverts;
-	    cos_beta = cos(beta*bn_twopi);
-	    sin_beta = sin(beta*bn_twopi);
+	    cos_beta = cos(beta*M_2PI);
+	    sin_beta = sin(beta*M_2PI);
 	    VSET(sphere_pt,
 		 cos_beta * sin_alpha,
 		 cos_alpha,

@@ -189,9 +189,9 @@ view_2init(struct application *ap, char *UNUSED(framename))
      */
 
     if ( AmbientIntensity <= 0.5 )  {
-	maxangle = cos( 5.0 * bn_degtorad);
+	maxangle = cos( 5.0 * DEG2RAD);
     } else {
-	maxangle = cos( AmbientIntensity * bn_degtorad);
+	maxangle = cos( AmbientIntensity * DEG2RAD);
     }
 
     /* Obtain the bounding boxes for the model from the rt_i(nstance)

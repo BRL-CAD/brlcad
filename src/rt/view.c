@@ -822,7 +822,7 @@ static int hit_nothing(struct application *ap)
 	VREVERSE(u.sw.sw_hit.hit_normal, ap->a_ray.r_dir);
 	/* U is azimuth, atan() range: -pi to +pi */
 	u.sw.sw_uv.uv_u = bn_atan2(ap->a_ray.r_dir[Y],
-				   ap->a_ray.r_dir[X]) * bn_inv2pi;
+				   ap->a_ray.r_dir[X]) * M_1_2PI;
 	if (u.sw.sw_uv.uv_u < 0)
 	    u.sw.sw_uv.uv_u += 1.0;
 	/*
@@ -832,7 +832,7 @@ static int hit_nothing(struct application *ap)
 	u.sw.sw_uv.uv_v = bn_atan2(ap->a_ray.r_dir[Z],
 				   sqrt(ap->a_ray.r_dir[X] * ap->a_ray.r_dir[X] +
 					ap->a_ray.r_dir[Y] * ap->a_ray.r_dir[Y])) *
-	    bn_invpi + 0.5;
+	    M_1_PI + 0.5;
 	u.sw.sw_uv.uv_du = u.sw.sw_uv.uv_dv = 0;
 
 	VSETALL(u.sw.sw_color, 1);

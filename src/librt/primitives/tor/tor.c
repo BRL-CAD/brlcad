@@ -912,14 +912,14 @@ rt_tor_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
     /*
      * -pi/2 <= atan2(x, y) <= pi/2
      */
-    uvp->uv_u = atan2(pprime[Y], pprime[X]) * bn_inv2pi + 0.5;
+    uvp->uv_u = atan2(pprime[Y], pprime[X]) * M_1_2PI + 0.5;
 
     VSET(work, pprime[X], pprime[Y], 0.0);
     VUNITIZE(work);
     VSUB2(pprime2, pprime, work);
     VUNITIZE(pprime2);
     costheta = VDOT(pprime2, work);
-    uvp->uv_v = atan2(pprime2[Z], costheta) * bn_inv2pi + 0.5;
+    uvp->uv_v = atan2(pprime2[Z], costheta) * M_1_2PI + 0.5;
 }
 
 
@@ -989,7 +989,7 @@ rt_num_circular_segments(double maxerr, double radius)
 	 */
 	return 360*10;
     }
-    n = (bn_pi / half_theta) + 0.99;
+    n = (M_PI / half_theta) + 0.99;
 
     /* Impose the limits again */
     if (n <= 6) return 6;
@@ -1006,7 +1006,7 @@ tor_ellipse_points(
     fastf_t avg_radius, circumference;
 
     avg_radius = (MAGNITUDE(ellipse_A) + MAGNITUDE(ellipse_B)) / 2.0;
-    circumference = bn_twopi * avg_radius;
+    circumference = M_2PI * avg_radius;
 
     return circumference / info->point_spacing;
 }
@@ -1080,7 +1080,7 @@ rt_tor_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	num_ellipses = 3;
     }
 
-    radian_step = bn_twopi / num_ellipses;
+    radian_step = M_2PI / num_ellipses;
     radian = 0;
     for (i = 0; i < num_ellipses; ++i) {
 	ellipse_point_at_radian(center, tor->v, tor_a, tor_b, radian);
@@ -1169,7 +1169,7 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
      */
     if (ttol->norm > 0.0) {
 	register int nseg;
-	nseg = (bn_pi / ttol->norm) + 0.99;
+	nseg = (M_PI / ttol->norm) + 0.99;
 	if (nseg > nlen) nlen = nseg;
 	if (nseg > nw) nw = nseg;
     }
@@ -1184,7 +1184,7 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 #define TOR_NORM_A(ww, ll)	(&norms[TOR_PT(ww, ll)*3])
 
     for (len = 0; len < nlen; len++) {
-	beta = bn_twopi * len / nlen;
+	beta = M_2PI * len / nlen;
 	cos_beta = cos(beta);
 	sin_beta = sin(beta);
 	/* G always points out to rim, along radius vector */
@@ -1192,7 +1192,7 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	/* We assume that |radius| = |A|.  Circular */
 	VSCALE(G, radius, dist_to_rim);
 	for (w = 0; w < nw; w++) {
-	    alpha = bn_twopi * w / nw;
+	    alpha = M_2PI * w / nw;
 	    cos_alpha = cos(alpha);
 	    sin_alpha = sin(alpha);
 	    VCOMB2(edge, cos_alpha, G, sin_alpha*tip->r_h, tip->h);
@@ -1293,7 +1293,7 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
      */
     if (ttol->norm > 0.0) {
 	register int nseg;
-	nseg = (bn_pi / ttol->norm) + 0.99;
+	nseg = (M_PI / ttol->norm) + 0.99;
 	if (nseg > nlen) nlen = nseg;
 	if (nseg > nw) nw = nseg;
     }
@@ -1305,7 +1305,7 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     norms = (fastf_t *)bu_malloc(nw * nlen * sizeof(vect_t), "rt_tor_tess: norms[]");
 
     for (len = 0; len < nlen; len++) {
-	beta = bn_twopi * len / nlen;
+	beta = M_2PI * len / nlen;
 	cos_beta = cos(beta);
 	sin_beta = sin(beta);
 	/* G always points out to rim, along radius vector */
@@ -1313,7 +1313,7 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	/* We assume that |radius| = |A|.  Circular */
 	VSCALE(G, radius, dist_to_rim);
 	for (w = 0; w < nw; w++) {
-	    alpha = bn_twopi * w / nw;
+	    alpha = M_2PI * w / nw;
 	    cos_alpha = cos(alpha);
 	    sin_alpha = sin(alpha);
 	    VCOMB2(edge, cos_alpha, G, sin_alpha*tip->r_h, tip->h);

@@ -643,7 +643,7 @@ grid_setup(void)
     /* "Lower left" corner of viewing plane */
     if (rt_perspective > 0.0) {
 	fastf_t zoomout;
-	zoomout = 1.0 / tan(bn_degtorad * rt_perspective / 2.0);
+	zoomout = 1.0 / tan(DEG2RAD * rt_perspective / 2.0);
 	VSET(temp, -1, -1/aspect, -zoomout);	/* viewing plane */
 
 	/*
@@ -652,7 +652,7 @@ grid_setup(void)
 	 * perspective is a full angle while divergence is the tangent
 	 * (slope) of a half angle.
 	 */
-	APP.a_diverge = tan(bn_degtorad * rt_perspective * 0.5 / width);
+	APP.a_diverge = tan(DEG2RAD * rt_perspective * 0.5 / width);
 	APP.a_rbeam = 0;
     } else {
 	/* all rays go this direction */
@@ -673,7 +673,7 @@ grid_setup(void)
 	fastf_t ang;	/* radians */
 	fastf_t dx, dy;
 
-	ang = curframe * frame_delta_t * bn_twopi / 10;	/* 10 sec period */
+	ang = curframe * frame_delta_t * M_2PI / 10;	/* 10 sec period */
 	dx = cos(ang) * 0.5;	/* +/- 1/4 pixel width in amplitude */
 	dy = sin(ang) * 0.5;
 	VJOIN2(viewbase_model, viewbase_model,

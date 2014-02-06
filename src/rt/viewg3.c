@@ -549,7 +549,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	    dot_prod = (-1.0);
 
 	in_obliq = acos(-dot_prod) *
-	    bn_radtodeg;
+	    RAD2DEG;
 	RT_HIT_NORMAL(normal, pp->pt_outhit, pp->pt_outseg->seg_stp, &(ap->a_ray), pp->pt_outflip);
 	dot_prod = VDOT(ap->a_ray.r_dir, normal);
 	if (dot_prod > 1.0)
@@ -558,7 +558,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	    dot_prod = (-1.0);
 
 	out_obliq = acos(dot_prod) *
-	    bn_radtodeg;
+	    RAD2DEG;
 
 	/* Check for exit obliquities greater than 90 degrees. */
 

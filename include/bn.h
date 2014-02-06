@@ -3598,8 +3598,6 @@ BN_EXPORT extern void bn_wlt_haar_2d_long_reconstruct2(long *tbuf,
 
 /** @file libbn/globals.c
  *
- * Global variables in LIBBN.
- *
  * New global variables are discouraged and refactoring in ways that
  * eliminates existing global variables without reducing functionality
  * is always encouraged.
@@ -3607,55 +3605,9 @@ BN_EXPORT extern void bn_wlt_haar_2d_long_reconstruct2(long *tbuf,
  */
 
 /**
- * pi
- */
-BN_EXPORT extern const fastf_t bn_pi;
-
-/**
- * pi*2
- */
-BN_EXPORT extern const fastf_t bn_twopi;
-
-/**
- * pi/2
- */
-BN_EXPORT extern const fastf_t bn_halfpi;
-
-/**
- * pi/4
- */
-BN_EXPORT extern const fastf_t bn_quarterpi;
-
-/**
- * 1/pi
- */
-BN_EXPORT extern const fastf_t bn_invpi;
-
-/**
- * 1/(pi*2)
- */
-BN_EXPORT extern const fastf_t bn_inv2pi;
-
-/**
- * 1/(pi*4)
- */
-BN_EXPORT extern const fastf_t bn_inv4pi;
-
-/**
  * 1.0/255.0
  */
-BN_EXPORT extern const fastf_t bn_inv255;
-
-/**
- * (pi*2)/360
- */
-BN_EXPORT extern const fastf_t bn_degtorad;
-
-/**
- * 360/(pi*2)
- */
-BN_EXPORT extern const fastf_t bn_radtodeg;
-
+#define BN_INV255 0.003921568627450980392156862745098039
 
 /*----------------------------------------------------------------------*/
 

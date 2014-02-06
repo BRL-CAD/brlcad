@@ -58,7 +58,7 @@ noise_deg_to_rad(const struct bu_structparse *sdp,
     double *p = (double *)((char *)base + sdp->sp_offset);
 
     /* reconvert with optional units */
-    *p = *p * (bn_pi / 180.0);
+    *p = *p * (M_PI / 180.0);
 }
 
 

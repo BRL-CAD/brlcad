@@ -9031,9 +9031,9 @@ rt_arc2d_to_cnurb(fastf_t *i_center, fastf_t *i_start, fastf_t *i_end, int point
     /* calculate angle of arc */
     angle = atan2(VDOT(v2, ref2), VDOT(v2, ref1));
     if (angle <= 0.0)
-	angle += 2.0*bn_pi;
+	angle += 2.0*M_PI;
 
-    if (angle < 150.0*bn_pi/180.0) {
+    if (angle < 150.0*M_PI/180.0) {
 	/* angle is reasonable to do in one segment */
 	fastf_t dist1, dist2;
 	vect_t t1, t2;
@@ -9086,7 +9086,7 @@ rt_arc2d_to_cnurb(fastf_t *i_center, fastf_t *i_start, fastf_t *i_end, int point
      * Make up to three segments and join them.
      */
 
-    if (angle < 1.5*bn_pi) {
+    if (angle < 1.5*M_PI) {
 	/* do it in two segments */
 	nsegs = 2;
 	angles[0] = angle/2.0;
@@ -10358,7 +10358,7 @@ nmg_edge_collapse(struct model *m, const struct bn_tol *tol, const fastf_t tol_c
     NMG_CK_MODEL(m);
     BN_CK_TOL(tol);
 
-    max_dot = cos(min_angle * bn_pi / 180.0);
+    max_dot = cos(min_angle * M_PI / 180.0);
 
     /* Each triangle must be its own face */
     (void)nmg_split_loops_into_faces(&m->magic, tol);

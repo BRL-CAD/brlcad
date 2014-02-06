@@ -112,8 +112,8 @@ ged_qvrot(struct ged *gedp, int argc, const char *argv[])
 
     el = atan2(dz, sqrt(dx * dx + dy * dy));
 
-    bn_mat_angles(gedp->ged_gvp->gv_rotation, 270.0 + el * bn_radtodeg, 0.0, 270.0 - az * bn_radtodeg);
-    usejoy(gedp, 0.0, 0.0, theta*bn_degtorad);
+    bn_mat_angles(gedp->ged_gvp->gv_rotation, 270.0 + el * RAD2DEG, 0.0, 270.0 - az * RAD2DEG);
+    usejoy(gedp, 0.0, 0.0, theta*DEG2RAD);
     ged_view_update(gedp->ged_gvp);
 
     return GED_OK;

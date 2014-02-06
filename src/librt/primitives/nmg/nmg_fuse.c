@@ -2101,7 +2101,7 @@ nmg_radial_verify_pointers(const struct bu_list *hd, const struct bn_tol *tol)
 	if (rad->ang < amin) {
 	    nmg_pr_radial_list(hd, tol);
 	    bu_log(" previous angle=%g > current=%g\n",
-		   amin*bn_radtodeg, rad->ang*bn_radtodeg);
+		   amin*RAD2DEG, rad->ang*RAD2DEG);
 	    bu_bomb("nmg_radial_verify_pointers() not monotone increasing\n");
 	}
 	amin = rad->ang;
@@ -2129,7 +2129,7 @@ nmg_radial_verify_monotone(const struct bu_list *hd, const struct bn_tol *tol)
 	if (rad->ang < amin) {
 	    nmg_pr_radial_list(hd, tol);
 	    bu_log(" previous angle=%g > current=%g\n",
-		   amin*bn_radtodeg, rad->ang*bn_radtodeg);
+		   amin*RAD2DEG, rad->ang*RAD2DEG);
 	    bu_bomb("nmg_radial_verify_monotone() not monotone increasing\n");
 	}
 	amin = rad->ang;
@@ -2266,7 +2266,7 @@ nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existin
 	    if (rad->ang < -SMALL_FASTF) {
 		bu_bomb("nmg_radial_build_list(): fu_angle should not be negative\n");
 	    }
-	    if (rad->ang > (bn_twopi + SMALL_FASTF)) {
+	    if (rad->ang > (M_2PI + SMALL_FASTF)) {
 		bu_bomb("nmg_radial_build_list(): fu_angle should not be > 2pi\n");
 	    }
 
@@ -2283,7 +2283,7 @@ nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existin
 	    }
 	} else {
 	    /* Wire edge.  Set a preposterous angle */
-	    rad->ang = -bn_pi;	/* -180 */
+	    rad->ang = -M_PI;	/* -180 */
 	}
 	rad->s = nmg_find_s_of_eu(teu);
 	rad->existing_flag = existing;
@@ -2321,8 +2321,8 @@ nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existin
 	struct nmg_radial *next;
 
 	bu_log("amin=%g min_eu=%p, amax=%g max_eu=%p\n",
-	       rmin->ang * bn_radtodeg, (void *)rmin->eu,
-	       rmax->ang * bn_radtodeg, (void *)rmax->eu);
+	       rmin->ang * RAD2DEG, (void *)rmin->eu,
+	       rmax->ang * RAD2DEG, (void *)rmax->eu);
 
 	for (BU_LIST_FOR(next, nmg_radial, hd))
 	    bu_log("%p: eu=%p, fu=%p, ang=%g\n", (void *)next, (void *)next->eu, (void *)next->fu, next->ang);
@@ -2375,8 +2375,8 @@ nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existin
 	       V3ARGS(eu->vu_p->v_p->vg_p->coord),
 	       V3ARGS(eu->eumate_p->vu_p->v_p->vg_p->coord));
 	bu_log("amin=%g min_eu=%p, amax=%g max_eu=%p B\n",
-	       rmin->ang * bn_radtodeg, (void *)rmin->eu,
-	       rmax->ang * bn_radtodeg, (void *)rmax->eu);
+	       rmin->ang * RAD2DEG, (void *)rmin->eu,
+	       rmax->ang * RAD2DEG, (void *)rmax->eu);
 	nmg_pr_radial_list(hd, tol);
 	nmg_pr_fu_around_eu_vecs(eu, xvec, yvec, zvec, tol);
 	bu_bomb("nmg_radial_build_list() min and max angle not adjacent in list (or list not monotone increasing)\n");
@@ -3032,7 +3032,7 @@ nmg_pr_radial(const char *title, const struct nmg_radial *rad)
 	   rad->needs_flip ? 'F' : '/',
 	   rad->is_crack ? 'C' : '/',
 	   rad->is_outie ? 'O' : (rad->is_crack ? 'I' : '/'),
-	   rad->ang * bn_radtodeg
+	   rad->ang * RAD2DEG
 	);
 }
 

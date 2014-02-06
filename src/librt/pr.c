@@ -687,7 +687,7 @@ rt_find_fallback_angle(double *angles, const fastf_t *vec)
     } else if (vec[X] >= 1.0) {
 	angles[X] = 0.0;
     } else {
-	angles[X] = acos(vec[X]) * bn_radtodeg;
+	angles[X] = acos(vec[X]) * RAD2DEG;
     }
 
     if (vec[Y] <= -1.0) {
@@ -695,7 +695,7 @@ rt_find_fallback_angle(double *angles, const fastf_t *vec)
     } else if (vec[Y] >= 1.0) {
 	angles[Y] = 0.0;
     } else {
-	angles[Y] = acos(vec[Y]) * bn_radtodeg;
+	angles[Y] = acos(vec[Y]) * RAD2DEG;
     }
 
     if (vec[Z] <= -1.0) {
@@ -703,20 +703,20 @@ rt_find_fallback_angle(double *angles, const fastf_t *vec)
     } else if (vec[Z] >= 1.0) {
 	angles[Z] = 0.0;
     } else {
-	angles[Z] = acos(vec[Z]) * bn_radtodeg;
+	angles[Z] = acos(vec[Z]) * RAD2DEG;
     }
 
     /* fallback angle */
     if (vec[Z] <= -1.0) {
 	/* 270 degrees:  3/2 pi */
-	asinZ = bn_halfpi * 3;
+	asinZ = M_PI_2 * 3;
     } else if (vec[Z] >= 1.0) {
 	/* +90 degrees: 1/2 pi */
-	asinZ = bn_halfpi;
+	asinZ = M_PI_2;
     } else {
 	asinZ = asin(vec[Z]);
     }
-    angles[4] = asinZ * bn_radtodeg;
+    angles[4] = asinZ * RAD2DEG;
 
     /* rotation angle */
     /* For the tolerance below, on an SGI 4D/70, cos(asin(1.0)) != 0.0
@@ -730,7 +730,7 @@ rt_find_fallback_angle(double *angles, const fastf_t *vec)
 	} else if (f >= 1.0) {
 	    angles[3] = 0;
 	} else {
-	    angles[3] = bn_radtodeg * acos(f);
+	    angles[3] = RAD2DEG * acos(f);
 	}
     } else {
 	angles[3] = 0.0;

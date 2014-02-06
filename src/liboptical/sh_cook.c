@@ -135,9 +135,9 @@ cook_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
 	/ (1.0 - sqrt(rp->reg_mater.ma_color[1]*.99));
     pp->n[2] = (1.0 + sqrt(rp->reg_mater.ma_color[2]*.99))
 	/ (1.0 - sqrt(rp->reg_mater.ma_color[2]*.99));
-    pp->rd[0] = fresnel(0.0, pp->n[0]) / bn_pi;
-    pp->rd[1] = fresnel(0.0, pp->n[1]) / bn_pi;
-    pp->rd[2] = fresnel(0.0, pp->n[2]) / bn_pi;
+    pp->rd[0] = fresnel(0.0, pp->n[0]) / M_PI;
+    pp->rd[1] = fresnel(0.0, pp->n[1]) / M_PI;
+    pp->rd[2] = fresnel(0.0, pp->n[2]) / M_PI;
 
     if (bu_struct_parse(matparm, cook_parse, (char *)pp) < 0) {
 	BU_PUT(pp, struct cook_specific);
@@ -178,9 +178,9 @@ cmirror_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp,
     pp->n[0] = (1.0 + sqrt(pp->reflect*.99))
 	/ (1.0 - sqrt(pp->reflect*.99));
     pp->n[1] = pp->n[2] = pp->n[0];
-    pp->rd[0] = fresnel(0.0, pp->n[0]) / bn_pi;
-    pp->rd[1] = fresnel(0.0, pp->n[1]) / bn_pi;
-    pp->rd[2] = fresnel(0.0, pp->n[2]) / bn_pi;
+    pp->rd[0] = fresnel(0.0, pp->n[0]) / M_PI;
+    pp->rd[1] = fresnel(0.0, pp->n[1]) / M_PI;
+    pp->rd[2] = fresnel(0.0, pp->n[2]) / M_PI;
 
     if (bu_struct_parse(matparm, cook_parse, (char *)pp) < 0)
 	return -1;
@@ -219,9 +219,9 @@ cglass_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, 
 
     pp->n[0] = pp->refrac_index;
     pp->n[1] = pp->n[2] = pp->n[0];
-    pp->rd[0] = fresnel(0.0, pp->n[0]) / bn_pi;
-    pp->rd[1] = fresnel(0.0, pp->n[1]) / bn_pi;
-    pp->rd[2] = fresnel(0.0, pp->n[2]) / bn_pi;
+    pp->rd[0] = fresnel(0.0, pp->n[0]) / M_PI;
+    pp->rd[1] = fresnel(0.0, pp->n[1]) / M_PI;
+    pp->rd[2] = fresnel(0.0, pp->n[2]) / M_PI;
 
     if (bu_struct_parse(matparm, cook_parse, (char *)pp) < 0)
 	return -1;

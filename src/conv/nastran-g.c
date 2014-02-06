@@ -578,8 +578,8 @@ convert_pt(const point_t pt, struct coord_sys *cs, point_t out_pt)
 
     switch (cs->type) {
 	case CORD_CYL:
-	    c1 = pt[X] * cos(pt[Y] * bn_degtorad);
-	    c2 = pt[X] * sin(pt[Y] * bn_degtorad);
+	    c1 = pt[X] * cos(pt[Y] * DEG2RAD);
+	    c2 = pt[X] * sin(pt[Y] * DEG2RAD);
 	    VJOIN3(tmp_pt, cs->origin, c1, cs->v1, c2, cs->v2, pt[Z], cs->v3);
 	    VMOVE(out_pt, tmp_pt);
 	    break;
@@ -590,10 +590,10 @@ convert_pt(const point_t pt, struct coord_sys *cs, point_t out_pt)
 	    break;
 
 	case CORD_SPH:
-	    c4 = pt[X] * sin(pt[Y] * bn_degtorad);
-	    c1 = c4 * cos(pt[Z] * bn_degtorad);
-	    c2 = c4 * sin(pt[Z] * bn_degtorad);
-	    c3 = pt[X] * cos(pt[Y] * bn_degtorad);
+	    c4 = pt[X] * sin(pt[Y] * DEG2RAD);
+	    c1 = c4 * cos(pt[Z] * DEG2RAD);
+	    c2 = c4 * sin(pt[Z] * DEG2RAD);
+	    c3 = pt[X] * cos(pt[Y] * DEG2RAD);
 	    VJOIN3(tmp_pt, cs->origin, c1, cs->v1, c2, cs->v2, c3, cs->v3);
 	    VMOVE(out_pt, tmp_pt);
 	    break;
@@ -1087,7 +1087,7 @@ get_cbar(void)
     VSCALE(pt1, pt1, conv[units]);
     VSCALE(pt2, pt2, conv[units]);
 
-    radius = sqrt(pb->area/bn_pi);
+    radius = sqrt(pb->area/M_PI);
     radius = radius * conv[units];
 
     VSUB2(height, pt2, pt1);

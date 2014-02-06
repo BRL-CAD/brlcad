@@ -620,14 +620,14 @@ rt_ehy_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 		uvp->uv_u = 0;
 	    } else {
 		len = sqrt(pprime[X]*pprime[X] + pprime[Y]*pprime[Y]);
-		uvp->uv_u = acos(pprime[X]/len) * bn_inv2pi;
+		uvp->uv_u = acos(pprime[X]/len) * M_1_2PI;
 	    }
 	    uvp->uv_v = -pprime[Z];
 	    break;
 	case EHY_NORM_TOP:
 	    /* top plate, polar coords */
 	    len = sqrt(pprime[X]*pprime[X] + pprime[Y]*pprime[Y]);
-	    uvp->uv_u = acos(pprime[X]/len) * bn_inv2pi;
+	    uvp->uv_u = acos(pprime[X]/len) * M_1_2PI;
 	    uvp->uv_v = 1.0 - len;
 	    break;
     }
@@ -844,7 +844,7 @@ ehy_ellipse_points(
     fastf_t avg_radius, avg_circumference;
 
     avg_radius = (ehy->ehy_r1 + ehy->ehy_r2) / 2.0;
-    avg_circumference = bn_twopi * avg_radius;
+    avg_circumference = M_2PI * avg_radius;
 
     return avg_circumference / info->point_spacing;
 }
@@ -1078,7 +1078,7 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     /* make ellipses at each z level */
     i = 0;
     nseg = 0;
-    theta_prev = bn_twopi;
+    theta_prev = M_2PI;
     pos_a = pts_a->next;	/* skip over apex of ehy */
     pos_b = pts_b->next;
     while (pos_a) {
@@ -1089,7 +1089,7 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	VSET(p1, 0., pos_b->p[Y], 0.);
 	theta_new = ell_angle(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
 	if (nseg == 0) {
-	    nseg = (int)(bn_twopi / theta_new) + 1;
+	    nseg = (int)(M_2PI / theta_new) + 1;
 	    pts_dbl[i] = 0;
 	} else if (theta_new < theta_prev) {
 	    nseg *= 2;
@@ -1347,7 +1347,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* make ellipses at each z level */
     i = 0;
     nseg = 0;
-    theta_prev = bn_twopi;
+    theta_prev = M_2PI;
     pos_a = pts_a->next;	/* skip over apex of ehy */
     pos_b = pts_b->next;
     while (pos_a) {
@@ -1358,7 +1358,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	VSET(p1, 0., pos_b->p[Y], 0.);
 	theta_new = ell_angle(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
 	if (nseg == 0) {
-	    nseg = (int)(bn_twopi / theta_new) + 1;
+	    nseg = (int)(M_2PI / theta_new) + 1;
 	    pts_dbl[i] = 0;
 	    /* maximum number of faces needed for ehy */
 	    face = nseg*(1 + 3*((1 << (nell-1)) - 1));

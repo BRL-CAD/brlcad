@@ -418,8 +418,8 @@ nmg_measure_fu_angle(const struct edgeuse *eu, const fastf_t *xvec, const fastf_
 
     NMG_CK_EDGEUSE(eu);
 
-    if (*eu->up.magic_p != NMG_LOOPUSE_MAGIC) return -bn_pi;
-    if (nmg_find_eu_leftvec(left, eu) < 0) return -bn_pi;
+    if (*eu->up.magic_p != NMG_LOOPUSE_MAGIC) return -M_PI;
+    if (nmg_find_eu_leftvec(left, eu) < 0) return -M_PI;
 
     return bn_angle_measure(left, xvec, yvec);
 }

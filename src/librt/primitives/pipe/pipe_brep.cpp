@@ -248,7 +248,7 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 	    VCROSS(norm, n1, n2);
 	    VUNITIZE(n1);
 	    VUNITIZE(n2);
-	    angle = bn_pi - acos(VDOT(n1, n2));
+	    angle = M_PI - acos(VDOT(n1, n2));
 	    dist_to_bend = curp->pp_bendradius * tan(angle/2.0);
 
 	    if (isnan(dist_to_bend) || VNEAR_ZERO(norm, SQRT_SMALL_FASTF) || NEAR_ZERO(dist_to_bend, SQRT_SMALL_FASTF)) {

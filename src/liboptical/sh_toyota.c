@@ -2200,7 +2200,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
 		Sun, ts->weather, t_vl);
 	    /* XXX hack */		if (i_dot_n > 0.0) {
 		irradiance +=
-		    reflectance(lambda, acos(i_dot_n)*bn_radtodeg,
+		    reflectance(lambda, acos(i_dot_n)*RAD2DEG,
 				ts->refl, ts->refl_lines)
 		    * bg_radiance
 		    * i_dot_n
@@ -2218,7 +2218,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
 	pdv_3line(stdout, swp->sw_hit.hit_point, work);
     }
     irradiance +=
-	reflectance(lambda, acos(i_dot_n)*bn_radtodeg, ts->refl, ts->refl_lines)
+	reflectance(lambda, acos(i_dot_n)*RAD2DEG, ts->refl, ts->refl_lines)
 	* bg_radiance
 	* VDOT(Sky_elmnt, swp->sw_hit.hit_normal)
 	* del_omega;
@@ -2302,7 +2302,7 @@ toyota_render(register struct application *ap, const struct partition *UNUSED(pp
 	/* Direct sunlight contribution. */
 	direct_sunlight =
 	    M_1_PI
-	    * reflectance(ts->wavelength, acos(i_dot_n)*bn_radtodeg,
+	    * reflectance(ts->wavelength, acos(i_dot_n)*RAD2DEG,
 			  ts->refl, ts->refl_lines)
 	    * sun_radiance(ts->wavelength, ts->alpha, ts->beta,
 			   sun_alt, ts->sun_sang)

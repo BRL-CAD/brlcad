@@ -397,7 +397,7 @@ multi_words(char *words[], int	word_count)
 	/* Expects point1, point2, angle */
 	VSET(pt1, atof(words[1]), atof(words[2]), atof(words[3]));
 	VSET(pt2, atof(words[4]), atof(words[5]), atof(words[6]));
-	ang = atof(words[7]) * bn_degtorad;
+	ang = atof(words[7]) * DEG2RAD;
 	VSUB2(dir, pt2, pt2);
 	VUNITIZE(dir);
 	MAT_IDN(mat);
@@ -415,7 +415,7 @@ multi_words(char *words[], int	word_count)
 	/* Expects point1, dir, angle */
 	VSET(pt1, atof(words[1]), atof(words[2]), atof(words[3]));
 	VSET(dir, atof(words[4]), atof(words[5]), atof(words[6]));
-	ang = atof(words[7]) * bn_degtorad;
+	ang = atof(words[7]) * DEG2RAD;
 	VUNITIZE(dir);
 	MAT_IDN(mat);
 	bn_mat_arb_rot(mat, pt1, dir, ang);

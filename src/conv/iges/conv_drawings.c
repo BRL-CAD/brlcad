@@ -139,7 +139,7 @@ Note_to_vlist(int entno, struct bu_list *vhead)
 	Readcnv(&width, "");
 	Readcnv(&height, "");
 	Readint(&font_code, "");	/* not currently used */
-	slant_ang = bn_halfpi;
+	slant_ang = M_PI_2;
 	Readflt(&slant_ang, "");	/* not currently used */
 	Readflt(&rot_ang, "");
 	Readint(&mirror, "");	/* not currently used */
@@ -184,12 +184,12 @@ Note_to_vlist(int entno, struct bu_list *vhead)
 
 		bn_vlist_2string(vhead, &free_hd, one_char ,
 				 tmp_x, tmp_y, local_scale,
-				 (double)(rot_ang*180.0*bn_invpi));
+				 (double)(rot_ang*180.0*M_1_PI));
 	    }
 	} else
 	    bn_vlist_2string(vhead, &free_hd, str ,
 			     (double)loc[X], (double)loc[Y], local_scale,
-			     (double)(rot_ang*180.0*bn_invpi));
+			     (double)(rot_ang*180.0*M_1_PI));
 
 	bu_free(str, "Note_to_vlist: str");
     }
@@ -313,7 +313,7 @@ Leader_to_vlist(int entno, struct bu_list *vhead)
 	case 6: {
 	    fastf_t delta, cosdel, sindel, rx, ry;
 
-	    delta = bn_pi/10.0;
+	    delta = M_PI/10.0;
 	    cosdel = cos(delta);
 	    sindel = sin(delta);
 	    RT_ADD_VLIST(vhead, tmp2, BN_VLIST_LINE_MOVE);

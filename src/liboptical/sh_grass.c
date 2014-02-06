@@ -391,7 +391,7 @@ make_proto(struct grass_specific *grass_sp)
      * for all the other blades.  Most significantly, the others are just
      * a rotation/scale of this first one.
      */
-    bn_mat_zrot(r, sin(bn_degtorad*137.0), cos(bn_degtorad*137.0));
+    bn_mat_zrot(r, sin(DEG2RAD*137.0), cos(DEG2RAD*137.0));
     MAT_COPY(m, r);
 
     seg_delta_angle = (87.0 / (double)BLADE_SEGS_MAX);
@@ -412,7 +412,7 @@ make_proto(struct grass_specific *grass_sp)
 	    grass_sp->proto.b[blade].leaf[seg].magic = LEAF_MAGIC;
 
 	    angle = start_angle - (double)seg * seg_delta_angle;
-	    angle *= bn_degtorad;
+	    angle *= DEG2RAD;
 	    VSET(grass_sp->proto.b[blade].leaf[seg].blade,
 		 cos(angle), 0.0, sin(angle));
 

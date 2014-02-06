@@ -871,7 +871,7 @@ rt_rec_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 		ratio = 1.0;
 	    if (ratio < -1.0)
 		ratio = -1.0;
-	    uvp->uv_u = acos(ratio) * bn_inv2pi;
+	    uvp->uv_u = acos(ratio) * M_1_2PI;
 	    uvp->uv_v = pprime[Z];		/* height */
 	    break;
 	case REC_NORM_TOP:
@@ -882,7 +882,7 @@ rt_rec_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 		ratio = 1.0;
 	    if (ratio < -1.0)
 		ratio = -1.0;
-	    uvp->uv_u = acos(ratio) * bn_inv2pi;
+	    uvp->uv_u = acos(ratio) * M_1_2PI;
 	    uvp->uv_v = len;		/* rim v = 1 */
 	    break;
 	case REC_NORM_BOT:
@@ -893,7 +893,7 @@ rt_rec_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 		ratio = 1.0;
 	    if (ratio < -1.0)
 		ratio = -1.0;
-	    uvp->uv_u = acos(ratio) * bn_inv2pi;
+	    uvp->uv_u = acos(ratio) * M_1_2PI;
 	    uvp->uv_v = 1 - len;	/* rim v = 0 */
 	    break;
     }

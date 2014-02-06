@@ -1363,7 +1363,7 @@ BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width, int
 
 
 	GPM_RAYS = Rays;
-	GPM_ATOL = cos(AngularTolerance*bn_degtorad);
+	GPM_ATOL = cos(AngularTolerance*DEG2RAD);
 
 	PInit = 1;
 

@@ -872,7 +872,7 @@ rt_part_uv(struct application *ap, struct soltab *stp, register struct hit *hitp
     uvp->uv_v = (hit_unit[Z] + vrad_unit) / hsize;
 
     /* U is azimuth, atan() range: -pi to +pi */
-    uvp->uv_u = bn_atan2(hit_unit[Y], hit_unit[X]) * bn_inv2pi;
+    uvp->uv_u = bn_atan2(hit_unit[Y], hit_unit[X]) * M_1_2PI;
     if (uvp->uv_u < 0)
 	uvp->uv_u += 1.0;
 
@@ -881,7 +881,7 @@ rt_part_uv(struct application *ap, struct soltab *stp, register struct hit *hitp
     V_MIN(minrad, part->part_h_erad);
     r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;
     uvp->uv_du = uvp->uv_dv =
-	bn_inv2pi * r / minrad;
+	M_1_2PI * r / minrad;
 }
 
 
@@ -1174,7 +1174,7 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     state.s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
     /* Find the number of segments to divide 90 degrees worth into */
-    nsegs = bn_halfpi / state.theta_tol + 0.999;
+    nsegs = M_PI_2 / state.theta_tol + 0.999;
     if (nsegs < 2) nsegs = 2;
 
     /* Find total number of strips of vertices that will be needed.
@@ -1338,13 +1338,13 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	    alpha = (((double)i) / (nstrips-1-1));
 	else
 	    alpha = (((double)i-1) / (nstrips-1-1));
-	cos_alpha = cos(alpha*bn_pi);
-	sin_alpha = sin(alpha*bn_pi);
+	cos_alpha = cos(alpha*M_PI);
+	sin_alpha = sin(alpha*M_PI);
 	for (j=0; j < strips[i].nverts; j++) {
 
 	    beta = ((double)j) / strips[i].nverts;
-	    cos_beta = cos(beta*bn_twopi);
-	    sin_beta = sin(beta*bn_twopi);
+	    cos_beta = cos(beta*M_2PI);
+	    sin_beta = sin(beta*M_2PI);
 	    VSET(sphere_pt,
 		 cos_beta * sin_alpha,
 		 sin_beta * sin_alpha,

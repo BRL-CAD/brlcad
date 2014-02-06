@@ -634,7 +634,7 @@ main(int argc, char **argv)
 		eval_all = 1;
 		break;
 	    case 'n':		/* Surface normal tolerance. */
-		ttol.norm = atof(bu_optarg)*bn_pi/180.0;
+		ttol.norm = atof(bu_optarg)*M_PI/180.0;
 		ttol.rel = 0.0;
 		break;
 	    case 'o':		/* Output file name */

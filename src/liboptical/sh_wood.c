@@ -395,8 +395,8 @@ wood_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
      */
 
     for (i = 0; i < 3; i++) {
-	wd->lt_rgb[i] *= bn_inv255;
-	wd->dk_rgb[i] *= bn_inv255;
+	wd->lt_rgb[i] *= BN_INV255;
+	wd->dk_rgb[i] *= BN_INV255;
     }
 
     /*
@@ -628,14 +628,14 @@ wood_render(struct application *UNUSED(ap), const struct partition *UNUSED(partp
      * compute the sine from that product.
      */
 
-    c = fabs(sin((C / wd->spacing) * bn_pi));
+    c = fabs(sin((C / wd->spacing) * M_PI));
 
     /*
      * Dither the "q" control
      */
 
-    pq = cos(((wd->qd * wt) + wd->qp + wd->phase) * bn_degtorad);
-    pp = cos(wd->phase * bn_degtorad);
+    pq = cos(((wd->qd * wt) + wd->qp + wd->phase) * DEG2RAD);
+    pp = cos(wd->phase * DEG2RAD);
 
     /*
      * Color the hit point based on the phase of the ring

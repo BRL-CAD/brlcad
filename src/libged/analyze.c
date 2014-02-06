@@ -679,7 +679,7 @@ findang(fastf_t *angles, fastf_t *unitv)
 	else if (unitv[i] >= 1.0)
 	    angles[i] = 90.0;
 	else
-	    angles[i] = acos(unitv[i]) * bn_radtodeg;
+	    angles[i] = acos(unitv[i]) * RAD2DEG;
     }
 
     /* fallback angle */
@@ -701,14 +701,14 @@ findang(fastf_t *angles, fastf_t *unitv)
 	else if (f >= 1.0)
 	    angles[3] = 0.0;
 	else
-	    angles[3] = bn_radtodeg * acos(f);
+	    angles[3] = RAD2DEG * acos(f);
     } else
 	angles[3] = 0.0;
 
     if (unitv[Y] < 0)
 	angles[3] = 360.0 - angles[3];
 
-    angles[4] *= bn_radtodeg;
+    angles[4] *= RAD2DEG;
 }
 
 

@@ -242,7 +242,7 @@ main (int argc, char **argv)
 	/*
 	 * Determine how much of the input scanline we want
 	 */
-	theta = 2 * bn_pi * row / file_height;
+	theta = 2 * M_PI * row / file_height;
 	row_width = scale_fac * sqrt(squares - twice_r1r2 * cos(theta));
 	in = inbuf + ((file_width - row_width) / 2) * 3;
 	out = outbuf;

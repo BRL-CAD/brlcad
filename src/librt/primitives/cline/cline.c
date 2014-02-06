@@ -576,10 +576,10 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
     *r = nmg_mrsv(m);
     s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
-    ang_tol = bn_halfpi;
-    abs_tol = bn_halfpi;
-    rel_tol = bn_halfpi;
-    norm_tol = bn_halfpi;
+    ang_tol = M_PI_2;
+    abs_tol = M_PI_2;
+    rel_tol = M_PI_2;
+    norm_tol = M_PI_2;
 
     if (ttol->abs <= 0.0 && ttol->rel <= 0.0 && ttol->norm <= 0.0) {
 	/* no tolerances specified, use 10% relative tolerance */
@@ -601,11 +601,11 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 	ang_tol = norm_tol;
 
     /* get number of segments per quadrant */
-    nsegs = (int)(bn_halfpi / ang_tol + 0.9999);
+    nsegs = (int)(M_PI_2 / ang_tol + 0.9999);
     if (nsegs < 2)
 	nsegs = 2;
 
-    ang_tol = bn_halfpi / nsegs;
+    ang_tol = M_PI_2 / nsegs;
 
     /* and for complete circle */
     nsegs *= 4;

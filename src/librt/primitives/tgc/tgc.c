@@ -1547,7 +1547,7 @@ rt_tgc_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	    /* scale coords to unit circle (they are already scaled by bottom plate radii) */
 	    pprime[X] *= tgc->tgc_A / (tgc->tgc_A*(1.0 - pprime[Z]) + tgc->tgc_C*pprime[Z]);
 	    pprime[Y] *= tgc->tgc_B / (tgc->tgc_B*(1.0 - pprime[Z]) + tgc->tgc_D*pprime[Z]);
-	    uvp->uv_u = atan2(pprime[Y], pprime[X]) / bn_twopi + 0.5;
+	    uvp->uv_u = atan2(pprime[Y], pprime[X]) / M_2PI + 0.5;
 	    uvp->uv_v = pprime[Z];		/* height */
 	    break;
 	case TGC_NORM_TOP:
@@ -1555,14 +1555,14 @@ rt_tgc_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	    /* scale coords to unit circle (they are already scaled by bottom plate radii) */
 	    pprime[X] *= tgc->tgc_A / tgc->tgc_C;
 	    pprime[Y] *= tgc->tgc_B / tgc->tgc_D;
-	    uvp->uv_u = atan2(pprime[Y], pprime[X]) / bn_twopi + 0.5;
+	    uvp->uv_u = atan2(pprime[Y], pprime[X]) / M_2PI + 0.5;
 	    len = sqrt(pprime[X]*pprime[X]+pprime[Y]*pprime[Y]);
 	    uvp->uv_v = len;		/* rim v = 1 */
 	    break;
 	case TGC_NORM_BOT:
 	    /* bottom plate */
 	    len = sqrt(pprime[X]*pprime[X]+pprime[Y]*pprime[Y]);
-	    uvp->uv_u = atan2(pprime[Y], pprime[X]) / bn_twopi + 0.5;
+	    uvp->uv_u = atan2(pprime[Y], pprime[X]) / M_2PI + 0.5;
 	    uvp->uv_v = 1 - len;	/* rim v = 0 */
 	    break;
     }
@@ -1927,7 +1927,7 @@ tgc_points_per_ellipse(const struct rt_db_internal *ip, const struct rt_view_inf
     tgc_mag_d = MAGNITUDE(tgc->d);
 
     avg_radius = (tgc_mag_a + tgc_mag_b + tgc_mag_c + tgc_mag_d) / 4.0;
-    avg_circumference = bn_twopi * avg_radius;
+    avg_circumference = M_2PI * avg_radius;
 
     return avg_circumference / info->point_spacing;
 }
@@ -2008,7 +2008,7 @@ rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	pts = (point_t *)bu_malloc(sizeof(point_t) * points_per_ellipse,
 		"tgc points");
 
-	radian_step = bn_twopi / points_per_ellipse;
+	radian_step = M_2PI / points_per_ellipse;
 
 	/* calculate and plot first ellipse */
 	ellipse_point_at_radian(pts[0], tip->v, tip->a, tip->b,
@@ -2306,20 +2306,20 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	if ((radius * 0.2) < max_radius)
 	    alpha_tol = 2.0 * acos(1.0 - 2.0 * radius * 0.1 / max_radius);
 	else
-	    alpha_tol = bn_halfpi;
+	    alpha_tol = M_PI_2;
     } else {
 	if (abs_tol > 0.0)
 	    absolute = 2.0 * acos(1.0 - abs_tol/max_radius);
 	else
-	    absolute = bn_halfpi;
+	    absolute = M_PI_2;
 
 	if (ttol->rel > 0.0) {
 	    if (ttol->rel * 2.0 * radius < max_radius)
 		rel = 2.0 * acos(1.0 - ttol->rel * 2.0 * radius/max_radius);
 	    else
-		rel = bn_halfpi;
+		rel = M_PI_2;
 	} else
-	    rel = bn_halfpi;
+	    rel = M_PI_2;
 
 	if (ttol->norm > 0.0) {
 	    fastf_t norm_top, norm_bot;
@@ -2339,7 +2339,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    else
 		norm = norm_top;
 	} else
-	    norm = bn_halfpi;
+	    norm = M_PI_2;
 
 	if (absolute < rel)
 	    alpha_tol = absolute;
@@ -2350,7 +2350,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* get number of segments per quadrant */
-    nsegs = (int)(bn_halfpi / alpha_tol + 0.9999);
+    nsegs = (int)(M_PI_2 / alpha_tol + 0.9999);
     if (nsegs < 2)
 	nsegs = 2;
 
@@ -2394,7 +2394,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    VMOVE(B[top_ell], tip->c);
 	    reversed = 1;
 	}
-	ang = 2.0*bn_pi/((double)nsegs);
+	ang = 2.0*M_PI/((double)nsegs);
 	sin_ang = sin(ang);
 	cos_ang = cos(ang);
 	cos_m_1_sq = (cos_ang - 1.0)*(cos_ang - 1.0);
@@ -2547,7 +2547,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    double alpha;
 	    double sin_alpha, cos_alpha;
 
-	    alpha = bn_twopi * (double)(2*j+1)/(double)(2*nsegs);
+	    alpha = M_2PI * (double)(2*j+1)/(double)(2*nsegs);
 	    sin_alpha = sin(alpha);
 	    cos_alpha = cos(alpha);
 
@@ -2692,7 +2692,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    double alpha;
 	    double sin_alpha, cos_alpha;
 
-	    alpha = bn_twopi * (double)(2*j+1)/(double)(2*nsegs);
+	    alpha = M_2PI * (double)(2*j+1)/(double)(2*nsegs);
 	    sin_alpha = sin(alpha);
 	    cos_alpha = cos(alpha);
 

@@ -82,7 +82,7 @@ ged_arot_args(struct ged *gedp, int argc, const char *argv[], mat_t rmat)
     VSETALL(pt, 0.0);
     VUNITIZE(axis);
     VMOVE(axisv, axis);
-    bn_mat_arb_rot(rmat, pt, axisv, angle*bn_degtorad);
+    bn_mat_arb_rot(rmat, pt, axisv, angle*DEG2RAD);
 
     return GED_OK;
 }

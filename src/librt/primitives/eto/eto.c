@@ -712,13 +712,13 @@ rt_eto_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 
     /* normalize to [0, 2pi] */
     if (theta_u < 0.)
-	theta_u += bn_twopi;
+	theta_u += M_2PI;
     if (theta_v < 0.)
-	theta_v += bn_twopi;
+	theta_v += M_2PI;
 
     /* normalize to [0, 1] */
-    uvp->uv_u = theta_u/bn_twopi;
-    uvp->uv_v = theta_v/bn_twopi;
+    uvp->uv_u = theta_u/M_2PI;
+    uvp->uv_v = theta_v/M_2PI;
     uvp->uv_du = uvp->uv_dv = 0;
 }
 
@@ -875,7 +875,7 @@ eto_ellipse_points(
     fastf_t avg_radius, circumference;
 
     avg_radius = (MAGNITUDE(ellipse_A) + MAGNITUDE(ellipse_B)) / 2.0;
-    circumference = bn_twopi * avg_radius;
+    circumference = M_2PI * avg_radius;
 
     return circumference / info->point_spacing;
 }
@@ -990,7 +990,7 @@ rt_eto_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	points_per_ellipse = 6;
     }
 
-    radian_step = bn_twopi / num_cross_sections;
+    radian_step = M_2PI / num_cross_sections;
     radian = 0;
     for (i = 0; i < num_cross_sections; ++i) {
 	ellipse_point_at_radian(center, eto->eto_V, eto_A, eto_B, radian);
@@ -1055,7 +1055,7 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	ntol = ttol->norm;
     else
 	/* tolerate everything */
-	ntol = bn_pi;
+	ntol = M_PI;
 
     /* (x, y) coords for an ellipse */
     ell = make_ellipse(&npts, a, b, dtol, ntol);
@@ -1068,7 +1068,7 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
     /* number of segments required in eto circles */
     nells = rt_num_circular_segments(dtol, tip->eto_r);
-    theta = bn_twopi / nells;	/* put ellipse every theta rads */
+    theta = M_2PI / nells;	/* put ellipse every theta rads */
     /* get horizontal and vertical components of C and Rd */
     cv = VDOT(tip->eto_C, Nu);
     ch = sqrt(VDOT(tip->eto_C, tip->eto_C) - cv * cv);
@@ -1176,7 +1176,7 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	ntol = ttol->norm;
     else
 	/* tolerate everything */
-	ntol = bn_pi;
+	ntol = M_PI;
 
     /* (x, y) coords for an ellipse */
     ell = make_ellipse(&npts, a, b, dtol, ntol);
@@ -1189,7 +1189,7 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* number of segments required in eto circles */
     nells = rt_num_circular_segments(dtol, tip->eto_r);
-    theta = bn_twopi / nells;	/* put ellipse every theta rads */
+    theta = M_2PI / nells;	/* put ellipse every theta rads */
     /* get horizontal and vertical components of C and Rd */
     cv = VDOT(tip->eto_C, Nu);
     ch = sqrt(VDOT(tip->eto_C, tip->eto_C) - cv * cv);

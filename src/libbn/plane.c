@@ -2174,17 +2174,17 @@ bn_angle_measure(fastf_t *vec, const fastf_t *x_dir, const fastf_t *y_dir)
     xproj = -VDOT(vec, x_dir);
     yproj = -VDOT(vec, y_dir);
     gam = atan2(yproj, xproj);	/* -pi..+pi */
-    ang = bn_pi + gam;		/* 0..+2pi */
+    ang = M_PI + gam;		/* 0..+2pi */
     if (ang < -SMALL_FASTF) {
 	do {
-	    ang += bn_twopi;
+	    ang += M_2PI;
 	} while (ang < -SMALL_FASTF);
-    } else if (ang > bn_twopi) {
+    } else if (ang > M_2PI) {
 	do {
-	    ang -= bn_twopi;
-	} while (ang > bn_twopi);
+	    ang -= M_2PI;
+	} while (ang > M_2PI);
     }
-    if (UNLIKELY(ang < -SMALL_FASTF || ang > bn_twopi))
+    if (UNLIKELY(ang < -SMALL_FASTF || ang > M_2PI))
 	bu_bomb("bn_angle_measure() angle out of range\n");
 
     return ang;

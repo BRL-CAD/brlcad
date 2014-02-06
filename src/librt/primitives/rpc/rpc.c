@@ -614,14 +614,14 @@ rt_rpc_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 	case RPC_NORM_BODY:
 	    /* Skin.  x, y coordinates define rotation.  radius = 1 */
 	    len = sqrt(pprime[Y]*pprime[Y] + pprime[Z]*pprime[Z]);
-	    uvp->uv_u = acos(pprime[Y]/len) * bn_invpi;
+	    uvp->uv_u = acos(pprime[Y]/len) * M_1_PI;
 	    uvp->uv_v = -pprime[X];		/* height */
 	    break;
 	case RPC_NORM_FRT:
 	case RPC_NORM_BACK:
 	    /* end plates - circular mapping, not seamless w/body, top */
 	    len = sqrt(pprime[Y]*pprime[Y] + pprime[Z]*pprime[Z]);
-	    uvp->uv_u = acos(pprime[Y]/len) * bn_invpi;
+	    uvp->uv_u = acos(pprime[Y]/len) * M_1_PI;
 	    uvp->uv_v = len;	/* rim v = 1 for both plates */
 	    break;
 	case RPC_NORM_TOP:
@@ -952,7 +952,7 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	ntol = ttol->norm;
     else
 	/* tolerate everything */
-	ntol = bn_pi;
+	ntol = M_PI;
 
     /* initial parabola approximation is a single segment */
     BU_ALLOC(pts, struct rt_pt_node);
@@ -1146,7 +1146,7 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	ntol = ttol->norm;
     else
 	/* tolerate everything */
-	ntol = bn_pi;
+	ntol = M_PI;
 
     /* initial parabola approximation is a single segment */
     BU_ALLOC(pts, struct rt_pt_node);

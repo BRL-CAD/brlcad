@@ -385,9 +385,9 @@ getsolid(void)
 	phi = dd[5];
 	h2 = dd[6];		/* height in +Z */
 
-	angle1 = (phi+theta-90) * bn_degtorad;
-	angle2 = (phi+theta) * bn_degtorad;
-	a2theta = a2 * tan(theta * bn_degtorad);
+	angle1 = (phi+theta-90) * DEG2RAD;
+	angle2 = (phi+theta) * DEG2RAD;
+	a2theta = a2 * tan(theta * DEG2RAD);
 
 	VSET(a, a2theta*cos(angle1), a2theta*sin(angle1), 0);
 	VSET(b, -a2*cos(angle2), -a2*sin(angle2), 0);
@@ -710,9 +710,9 @@ getsolid(void)
 	m2 = 0.0;
 	r1 = dd[6];		/* R */
 	VMOVE(work, D(0));
-	work[0] += bn_pi;
-	work[1] += bn_pi;
-	work[2] += bn_pi;
+	work[0] += M_PI;
+	work[1] += M_PI;
+	work[2] += M_PI;
 	VCROSS(D(2), work, D(1));
 	m1 = r1/MAGNITUDE(D(2));
 	VSCALE(D(2), D(2), m1);
@@ -925,8 +925,8 @@ read_arbn(char *name)
 	    double cos_el;
 	    point_t pt;
 
-	    az = getdouble(scard, 10+j*30+0*10, 10) * bn_degtorad;
-	    el = getdouble(scard, 10+j*30+1*10, 10) * bn_degtorad;
+	    az = getdouble(scard, 10+j*30+0*10, 10) * DEG2RAD;
+	    el = getdouble(scard, 10+j*30+1*10, 10) * DEG2RAD;
 	    vert_no = getint(scard, 10+j*30+2*10, 10);
 	    if (vert_no == 0) break;
 	    cos_el = cos(el);

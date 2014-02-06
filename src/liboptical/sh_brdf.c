@@ -125,7 +125,7 @@ brdf_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t 
     }
 
     pp->rms_sq = pp->rms_slope * pp->rms_slope;
-    pp->denom = 4.0 * bn_pi * pp->rms_sq;
+    pp->denom = 4.0 * M_PI * pp->rms_sq;
 
     return 1;
 }

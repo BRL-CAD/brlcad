@@ -1359,7 +1359,7 @@ refine_edges(struct shell *s)
 	    VCROSS(v4, v3, norm2);
 	    alpha = atan2(VDOT(v4, v2), VDOT(v4, v1));
 	    if (alpha < 0.0)
-		alpha += bn_twopi;
+		alpha += M_2PI;
 	    alpha = alpha / 2.0;
 	    cosa = cos(alpha);
 	    sina = sin(alpha);
