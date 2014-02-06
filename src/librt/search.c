@@ -2378,7 +2378,7 @@ db_fullpath_list_subtree(struct db_full_path *path, int curr_bool, union tree *t
 	case OP_NOT:
 	case OP_GUARD:
 	case OP_XNOP:
-	    db_fullpath_list_subtree(path, bool_val, tp->tr_b.tb_left, traverse_func, resp, client_data);
+	    db_fullpath_list_subtree(path, OP_UNION, tp->tr_b.tb_left, traverse_func, resp, client_data);
 	    break;
 	case OP_DB_LEAF:
 	    if ((dp=db_lookup(lcd->dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
@@ -2451,6 +2451,7 @@ db_search_path(const char *plan_string,
 	       struct directory *dp,
 	       struct rt_wdb *wdbp)
 {
+    int i = 0;
     struct bu_ptbl *full_paths = NULL;
     struct bu_ptbl *search_results = NULL;
     char **plan_argv = NULL;
@@ -2458,7 +2459,7 @@ db_search_path(const char *plan_string,
     struct bu_vls plan_string_vls;
     struct db_node_t curr_node;
     struct db_full_path *start_path;
-    struct search_client_data_t scd;
+    /*struct search_client_data_t scd;*/
     struct list_client_data_t lcd;
 
     if (!dp || dp == RT_DIR_NULL) return NULL;
@@ -2486,11 +2487,24 @@ db_search_path(const char *plan_string,
     db_fullpath_list(start_path, wdbp->wdb_resp, (genptr_t *)&lcd);
 
 
-    curr_node.path = start_path;
+    /* Now, having built a list of all full paths of interest, run the
+     * plans on them to build the final results set.  In particular, rework
+     * the -below option so that another tree walk is not needed - the
+     * full path lists have enough information to make all determinations.
+     * All tree walks other than db_fullpath_list and its subtree should
+     * end up being unnecessary */
     BU_ALLOC(search_results, struct bu_ptbl);
     BU_PTBL_INIT(search_results);
+    for (i = 0; i < (int)BU_PTBL_LEN(full_paths); i++) {
+	curr_node.path = (struct db_full_path *)BU_PTBL_GET(full_paths, i);
+	curr_node.orig_len = curr_node.path->fp_len;
+	curr_node.flat_search = 0;
+	find_execute_plans(wdbp->dbip, wdbp, search_results, &curr_node, dbplan);
+    }
+    db_free_search_tbl(full_paths);
 
-
+/*
+    curr_node.path = start_path;
     curr_node.orig_len = curr_node.path->fp_len;
     curr_node.flat_search = 0;
 
@@ -2501,10 +2515,10 @@ db_search_path(const char *plan_string,
     scd.plan = dbplan;
 
     db_fullpath_traverse(find_execute_plans_leaf, find_execute_plans_leaf, wdbp->wdb_resp, (genptr_t *)&scd);
-
+*/
     /* free memory */
-    db_free_full_path(start_path);
-    bu_free((char *)start_path, "free start path");
+    /*db_free_full_path(start_path); handled by db_free_search_tbl*/
+    /*bu_free((char *)start_path, "free start path"); handled by db_free_search_tbl*/
     bu_vls_free(&plan_string_vls);
     bu_free((char *)plan_argv, "free plan argv");
     db_search_free_plan((void **)&dbplan);
