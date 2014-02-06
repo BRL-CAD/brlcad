@@ -117,7 +117,7 @@ GetFileNameFromHandle(HANDLE hFile, char filepath[])
 	CloseHandle(hFileMap);
     }
     if (sizeof(TCHAR) == sizeof(wchar_t)) {
-	wcstombs(filename, pszFilename, MAXPATHLEN);
+	wcstombs(filename, (const wchar_t *)pszFilename, MAXPATHLEN);
 	bu_strlcpy(filepath, filename, MAXPATHLEN);
     } else {
 	bu_strlcpy(filepath, pszFilename, MAXPATHLEN);
