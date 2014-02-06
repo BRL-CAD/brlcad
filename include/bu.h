@@ -1285,7 +1285,7 @@ typedef struct bu_list bu_list_t;
 /**
  * fastf_t - Intended to be the fastest floating point data type on
  * the current machine, with at least 64 bits of precision.  On 16 and
- * 32 bit machine, this is typically "double", but on 64 bit machines,
+ * 32 bit machines, this is typically "double", but on 64 bit machines,
  * it is often "float".  Virtually all floating point variables (and
  * more complicated data types, like vect_t and mat_t) are defined as
  * fastf_t.  The one exception is when a subroutine return is a
