@@ -1000,7 +1000,7 @@ public:
 /** The ON_PX_EVENT class is used to report point-point, point-curve
  * and point-surface intersection events.
  */
-class ON_CLASS BREP_EXPORT ON_PX_EVENT
+class BREP_EXPORT ON_PX_EVENT
 {
 public:
     /** Default construction sets everything to zero. */
