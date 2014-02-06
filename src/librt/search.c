@@ -368,7 +368,8 @@ find_execute_nested_plans_leaf(genptr_t client_data) {
  * Conduct the test described by expression on all levels
  * above the current level in the tree - in this case meaning
  * following the tree path back to the root, NOT testing all
- * objects at any level above the current object depth.
+ * paths at any level above the current object depth that
+ * include the current directory.
  */
 HIDDEN int
 f_above(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *wdbp, struct bu_ptbl *results)
