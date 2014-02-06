@@ -2347,7 +2347,7 @@ struct list_client_data_t {
  */
 HIDDEN void
 db_fullpath_list_subtree(struct db_full_path *path, int curr_bool, union tree *tp,
-			     void (*traverse_func) (struct db_full_path *path, int curr_bool,
+			     void (*traverse_func) (struct db_full_path *path,
 						    struct resource *,
 						    genptr_t),
 			     struct resource *resp,
@@ -2392,7 +2392,7 @@ db_fullpath_list_subtree(struct db_full_path *path, int curr_bool, union tree *t
 		db_dup_full_path(newpath, path);
 		bu_ptbl_ins(lcd->full_paths, (long *)newpath);
 		bu_log("inserting path: %s(%d)\n", db_path_to_string(newpath), bool_val);
-		traverse_func(path, OP_UNION, resp, client_data);
+		traverse_func(path, resp, client_data);
 		DB_FULL_PATH_POP(path);
 		break;
 	    }
@@ -2415,7 +2415,7 @@ db_fullpath_list_subtree(struct db_full_path *path, int curr_bool, union tree *t
  * use db_full_path structures instead of directory structures.
  */
 HIDDEN void
-db_fullpath_list(struct db_full_path *path, int bool_val,
+db_fullpath_list(struct db_full_path *path,
 		     struct resource *resp,
 		     genptr_t client_data)
 {
@@ -2437,7 +2437,7 @@ db_fullpath_list(struct db_full_path *path, int bool_val,
 
 	comb = (struct rt_comb_internal *)in.idb_ptr;
 
-	db_fullpath_list_subtree(path, bool_val, comb->tree, db_fullpath_list, resp, client_data);
+	db_fullpath_list_subtree(path, OP_UNION, comb->tree, db_fullpath_list, resp, client_data);
 
 	rt_db_free_internal(&in);
     }
@@ -2483,7 +2483,7 @@ db_search_path(const char *plan_string,
     bu_ptbl_ins(full_paths, (long *)start_path);
     lcd.dbip = wdbp->dbip;
     lcd.full_paths = full_paths;
-    db_fullpath_list(start_path, 2, wdbp->wdb_resp, (genptr_t *)&lcd);
+    db_fullpath_list(start_path, wdbp->wdb_resp, (genptr_t *)&lcd);
 
 
     curr_node.path = start_path;
