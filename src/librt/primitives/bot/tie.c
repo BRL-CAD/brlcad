@@ -329,10 +329,13 @@ TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_s *id,
 	     * don't try to divide by zero and propagate NaN (or
 	     * crash).
 	     */
-	    if (v0 < RT_DOT_TOL)
+	    if (ZERO(v0))
 		continue;
 
 	    t.dist = -(tri->data[2].v[0] + u0) / v0;
+
+	    if (isnan(t.dist))
+		continue;
 
 	    /*
 	     * Intersection point on triangle must lie within the
