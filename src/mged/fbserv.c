@@ -260,7 +260,7 @@ fbserv_set_port(void)
 	    fbserv_drop_client(i);
 
 	fd = (ClientData)netfd;
-	Tcl_DeleteChannelHandler(netchan, fbserv_new_client_handler, fd);
+	Tcl_DeleteChannelHandler(netchan, (Tcl_ChannelProc *)fbserv_new_client_handler, fd);
 
 	Tcl_Close(dmp->dm_interp, netchan);
 	netchan = NULL;

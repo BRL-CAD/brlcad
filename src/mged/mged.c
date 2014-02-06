@@ -239,7 +239,7 @@ mgedInvalidParameterHandler(const wchar_t* UNUSED(expression),
 			    const wchar_t* UNUSED(function),
 			    const wchar_t* UNUSED(file),
 			    unsigned int UNUSED(line),
-			    unsigned int *UNUSED(pReserved))
+			    uintptr_t UNUSED(pReserved))
 {
 /*
  * Windows, I think you're number one!
@@ -1045,8 +1045,10 @@ main(int argc, char *argv[])
     /* pipes used for setting up read/write channels during graphical
      * initialization.
      */
+#ifdef HAVE_PIPE
     int pipe_out[2];
     int pipe_err[2];
+#endif
 
     int rateflag = 0;
     int c;

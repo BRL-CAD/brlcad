@@ -237,7 +237,7 @@ cmd_ged_info_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
 	    av[argc] = (const char *)NULL;
 	    (void)(*ctp->ged_func)(gedp, argc, (const char **)av);
 	    Tcl_AppendResult(interpreter, bu_vls_addr(gedp->ged_result_str), NULL);
-	    bu_free(av, "cmd_ged_info_wrapper: av");
+	    bu_free((genptr_t)av, "cmd_ged_info_wrapper: av");
 	} else {
 	    (void)(*ctp->ged_func)(gedp, argc, (const char **)argv);
 	    Tcl_AppendResult(interpreter, bu_vls_addr(gedp->ged_result_str), NULL);
