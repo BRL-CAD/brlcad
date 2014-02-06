@@ -47,20 +47,24 @@ fi
 
 FAILED=0
 
-if test ! -f "${TOPSRC}/include/common.h" ; then
+# go to the source directory so we don't have to get fancy parsing the
+# file lists of directories with odd names
+cd "${TOPSRC}"
+
+if test ! -f "./include/common.h" ; then
     echo "Unable to find include/common.h, aborting"
     exit 1
 fi
 
 # get a source and header file list so we only walk the sources once
 
-SRCFILES="`find ${TOPSRC}/src -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.cc -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -not -regex '.*src/libpkg.*' -not -regex '.*/shapelib/.*'`"
+SRCFILES="`find src -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.cc -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -not -regex '.*src/libpkg.*' -not -regex '.*/shapelib/.*'`"
 
-INCFILES="`find ${TOPSRC}/include -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.cc -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -not -regex '.*pkg.h'`"
+INCFILES="`find include -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.cc -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -not -regex '.*pkg.h'`"
 
-BLDFILES="`find ${TOPSRC}/src -type f \( -name \*.cmake -o -name CMakeLists.txt \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*cache.*' -not -regex '.*\.svn.*'`
-`find ${TOPSRC}/misc -type f \( -name \*.cmake -o -name CMakeLists.txt \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*cache.*' -not -regex '.*\.svn.*'`
-${TOPSRC}/CMakeLists.txt"
+BLDFILES="`find src -type f \( -name \*.cmake -o -name CMakeLists.txt \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*cache.*' -not -regex '.*\.svn.*'`
+`find misc -type f \( -name \*.cmake -o -name CMakeLists.txt \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*cache.*' -not -regex '.*\.svn.*'`
+CMakeLists.txt"
 
 
 ###
@@ -69,7 +73,7 @@ ${TOPSRC}/CMakeLists.txt"
 echo "running public header private header checks..."
 
 for i in bio.h bin.h bselect.h ; do
-    if test ! -f "${TOPSRC}/include/$i" ; then
+    if test ! -f "include/$i" ; then
 	echo "Unable to find include/$i, aborting"
 	exit 1
     fi
@@ -91,6 +95,14 @@ echo "running common.h inclusion order check..."
 # limit our search to files containing common.h or system headers for
 # small performance savings.
 FILES="`grep -I -e '#[[:space:]]*include' $SRCFILES $INCFILES | grep -E 'common.h|<' | sed 's/:.*//g' | sort | uniq`"
+
+# This is how to do it if we needed to accommodate screwy filepaths
+#FILES="`echo \"$SRCFILES
+#$INCFILES\" | while read file ; do
+#    if test \"x\`grep -I -e '#[[:space:]]*include' $file | grep -E 'common.h|<'\`\" != \"x\" ; then
+#	echo $file
+#    fi
+#done`"
 
 LEXERS="schema.h obj_grammar.c obj_grammar.cpp obj_scanner.h points_scan.c script.c"
 EXEMPT="bin.h bio.h config_win.h pstdint.h uce-dirent.h ttcp.c $LEXERS"
