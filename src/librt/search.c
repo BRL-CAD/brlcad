@@ -134,6 +134,28 @@ struct search_client_data_t {
     struct db_plan_t *plan;
 };
 
+
+HIDDEN void
+print_path_with_bools(struct db_full_path *full_path)
+{
+    struct bu_vls vls1 = BU_VLS_INIT_ZERO;
+    struct bu_vls vls2 = BU_VLS_INIT_ZERO;
+    struct db_full_path *newpath;
+    BU_ALLOC(newpath, struct db_full_path);
+    db_full_path_init(newpath);
+    db_dup_full_path(newpath, full_path);
+    while (newpath->fp_len > 0) {
+	struct directory *dp = DB_FULL_PATH_CUR_DIR(newpath);
+	int curr_bool = DB_FULL_PATH_CUR_BOOL(newpath);
+	bu_vls_sprintf(&vls1, "/%s(%d)%s", dp->d_namep, curr_bool, bu_vls_addr(&vls2));
+	bu_vls_sprintf(&vls2, "%s", bu_vls_addr(&vls1));
+	DB_FULL_PATH_POP(newpath);
+    }
+    bu_log("%s", bu_vls_addr(&vls2));
+    db_free_full_path(newpath);
+}
+
+
 /**
  * A generic traversal function maintaining awareness of the full path
  * to a given object.
@@ -361,14 +383,18 @@ f_above(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, st
     curr_node.path = &abovepath;
     distance_above = db_node->path->fp_len - abovepath.fp_len;
     while ((abovepath.fp_len > 0) && (state == 0) && !db_node->flat_search) {
+	distance_above++;
 	if ((distance_above <= plan->max_depth) && (distance_above >= plan->min_depth)) {
-	    state = find_execute_nested_plans(dbip, wdbp, results, &curr_node, plan->ab_data[0]);
+	    bu_log("above_test on path: ");
+	    print_path_with_bools(&abovepath);
+	    bu_log("\n");
+	    state += find_execute_nested_plans(dbip, wdbp, results, &curr_node, plan->ab_data[0]);
+	    bu_log("result: %d\n", state);
 	}
 	DB_FULL_PATH_POP(&abovepath);
-	distance_above++;
     }
     db_free_full_path(&abovepath);
-    return state;
+    return (state > 0) ? 1 : 0;
 }
 
 
@@ -2317,7 +2343,6 @@ struct list_client_data_t {
     struct bu_ptbl *full_paths;
 };
 
-
 /**
  * A generic traversal function maintaining awareness of the full path
  * to a given object.
@@ -2368,7 +2393,9 @@ db_fullpath_list_subtree(struct db_full_path *path, int curr_bool, union tree *t
 		db_full_path_init(newpath);
 		db_dup_full_path(newpath, path);
 		bu_ptbl_ins(lcd->full_paths, (long *)newpath);
-		bu_log("inserting path: %s(%d)\n", db_path_to_string(newpath), bool_val);
+		bu_log("inserting path: ");
+		print_path_with_bools(newpath);
+		bu_log("\n");
 		traverse_func(path, resp, client_data);
 		DB_FULL_PATH_POP(path);
 		break;
