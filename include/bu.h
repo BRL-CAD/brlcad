@@ -523,7 +523,7 @@ typedef const void *const_genptr_t;
 BU_EXPORT extern size_t bu_cv(genptr_t out, char *outfmt, size_t size, genptr_t in, char *infmt, size_t count);
 
 /**
- * Set's a bit vector after parsing an input string.
+ * Sets a bit vector after parsing an input string.
  *
  * Set up the conversion tables/flags for vert.
  *
