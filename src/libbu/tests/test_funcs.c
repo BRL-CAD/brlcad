@@ -29,9 +29,27 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <errno.h>
 
 #include "bu.h"
+#include "bio.h"
 #include "./test_internals.h"
+
+long int
+bu_get_urandom_number()
+{
+    int rdata = open("/dev/urandom", O_RDONLY);
+    long int rnum;
+
+    ssize_t result = read(rdata, (char*)&rnum, sizeof(rnum));
+    if (result < 0) {
+	bu_log(1, "ERROR:  Unable to read '/dev/urandom'.\n");
+	bu_exit(1, NULL);
+    }
+    close(rdata);
+
+    return rnum;
+}
 
 
 void
@@ -122,6 +140,35 @@ dump_bitv(const struct bu_bitv *b)
     bu_log("\n=====================================================================");
 
     bu_vls_free(v);
+}
+
+
+void
+random_hex_or_binary_string(struct bu_vls *v, const hex_bin_enum_t typ, const int nbytes)
+{
+    const char hex_chars[] = "01234567890abcde";
+    const char bin_chars[] = "01";
+    const int nstrchars = (typ & 0x0001) ? nbytes * 2 : nbytes * 8;
+    const char *chars = (typ & 0x0001) ? hex_chars : bin_chars;
+    const int nchars = (typ & 0x0001) ? sizeof(hex_chars)/sizeof(char) : sizeof(bin_chars)/sizeof(char);
+    int i;
+
+    bu_vls_trunc(v, 0);
+    bu_vls_extend(v, nchars);
+    for (i = 0; i < nstrchars; ++i) {
+	long int r = random();
+	int n = r ? (int)(r % nchars) : 0;
+	char c = chars[n];
+	bu_vls_printf(v, "%c", c);
+    }
+    bu_vls_strcat(v, '\0');
+
+    if (typ == HEX) {
+	bu_vls_prepend(v, "0x");
+    } else if (typ == BINARY) {
+	bu_vls_prepend(v, "0b");
+    }
+
 }
 
 

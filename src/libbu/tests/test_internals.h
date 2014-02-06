@@ -22,6 +22,8 @@
 #ifndef LIBBU_TESTS_TEST_INTERNALS_H
 #define LIBBU_TESTS_TEST_INTERNALS_H
 
+#include "bu.h"
+
 __BEGIN_DECLS
 #ifndef BU_TESTS_EXPORT
 #  if defined(BU_TESTS_DLL_EXPORTS) && defined(BU_TESTS_DLL_IMPORTS)
@@ -37,17 +39,40 @@ __BEGIN_DECLS
 
 
 /* Define pass/fail per CMake/CTest testing convention; so any
- * individual test must return pass/fail using the same convention OR
- * invert its value. */
+ * individual test must return CTEST_PASS/CTEST_FAIL using the same
+ * convention OR invert its value. */
 const int CTEST_PASS  = 0;
 const int CTEST_FAIL  = 1;
 
 const int FALSE = 0;
 const int TRUE  = 1;
 
-const unsigned BITS_PER_BYTE = 8;
+typedef enum {
+    HEX         = 0x0001,
+    HEX_RAW     = 0x0011,
+    BINARY      = 0x0100,
+    BINARY_RAW  = 0x1100
+} hex_bin_enum_t;
 
+
+/**
+ * Dump a bitv into a detailed bit format for debugging.
+ */
 BU_TESTS_EXPORT extern void dump_bitv(const struct bu_bitv *);
+
+
+/**
+ * Get a random number from system entropy (typically used for seeding
+ * the 'random' function).
+ */
+BU_TESTS_EXPORT extern long int bu_get_urandom_number();
+
+
+/**
+ * Get a random string of hex or binary characters (possibly with a
+ * leading '0x' or '0b').
+ */
+BU_TESTS_EXPORT extern void random_hex_or_binary_string(struct bu_vls *v, const hex_bin_enum_t typ, const int nbytes);
 
 #endif /* LIBBU_TESTS_TEST_INTERNALS_H */
 
