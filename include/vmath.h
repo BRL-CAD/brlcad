@@ -110,6 +110,9 @@ __BEGIN_DECLS
 #  define M_		XXX /**< all with 36-digits of precision */
 #endif
 
+#ifndef M_1_2PI
+#  define M_1_2PI	0.159154943091895335768883763372514362  /**< 1/(2*pi) */
+#endif
 #ifndef M_1_PI
 #  define M_1_PI	0.318309886183790671537767526745028724  /**< 1/pi */
 #endif
@@ -142,6 +145,9 @@ __BEGIN_DECLS
 #endif
 #ifndef M_PI
 #  define M_PI		3.14159265358979323846264338327950288   /**< pi */
+#endif
+#ifndef M_2PI
+#  define M_2PI		6.28318530717958647692528676655900576   /**< 2*pi */
 #endif
 #ifndef M_PI_2
 #  define M_PI_2	1.57079632679489661923132169163975144   /**< pi/2 */
