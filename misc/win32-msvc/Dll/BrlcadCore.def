@@ -2,10 +2,7 @@ EXPORTS
 
 bn_3pts_collinear
 bn_3pts_distinct
-bn_degtorad
 bn_dist_pt3_pt3
-bn_halfpi
-bn_invpi
 bn_mat_angles
 bn_mat_det3
 bn_mat_determinant
@@ -17,7 +14,6 @@ bn_mat_mul2
 bn_mat_print
 bn_mk_plane_3pts
 bn_mkpoint_3planes
-bn_pi
 bn_pt3_pt3_equal
 bn_vec_ortho
 bn_vlist_2string
