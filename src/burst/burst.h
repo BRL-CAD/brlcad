@@ -161,8 +161,6 @@
 #define C_MAIN		0
 #define C_CRIT		1
 
-#define TWO_PI		(2.0 * M_PI)
-
 #define COS_TOL		0.01
 #define LOS_TOL		0.1
 #define VEC_TOL		0.001

@@ -412,7 +412,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     VMOVE(ur, vr);
     VUNITIZE(ur);
 
-    if (rev->ang < 2*M_PI) {
+    if (rev->ang < M_2PI) {
 	VREVERSE(normS, rev->yUnit);	/* start normal */
 	start = (VDOT(normS, rev->v3d) - VDOT(normS, rp->r_pt)) / VDOT(normS, rp->r_dir);
 
@@ -530,7 +530,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 		if (pt1[X] < 0) {
 		    angle += M_PI;
 		} else if (angle < 0) {
-		    angle += 2*M_PI;
+		    angle += M_2PI;
 		}
 		hit2d[X] = -hit2d[X];
 		if (angle > rev->ang) {
@@ -587,7 +587,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 			hit2d[X] = -aa;		/* use neg to check for overlap in contains() */
 			hit2d[Y] = hit1[Z];
 			if (angle < 0) {
-			    angle += 2*M_PI;
+			    angle += M_2PI;
 			}
 			if (angle < rev->ang &&
 			    !((angle + M_PI < rev->ang || angle - M_PI > 0)
@@ -655,7 +655,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 			    if (hit2d[X] < 0) {
 				angle += M_PI;
 			    } else if (angle < 0) {
-				angle += 2*M_PI;
+				angle += M_2PI;
 			    }
 			    hit2d[X] = -hit2d[X];
 			    if (angle < rev->ang &&
@@ -682,7 +682,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 			    if (-hit2d[X] < 0) {
 				angle += M_PI;
 			    } else if (angle < 0) {
-				angle += 2*M_PI;
+				angle += M_2PI;
 			    }
 			    if (angle < rev->ang &&
 				!((angle + M_PI < rev->ang || angle - M_PI > 0)
@@ -726,7 +726,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 				if (hit2d[X] < 0) {
 				    angle += M_PI;
 				} else if (angle < 0) {
-				    angle += 2*M_PI;
+				    angle += M_2PI;
 				}
 				hit2d[X] = -hit2d[X];
 				if (angle < rev->ang) {
@@ -758,7 +758,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 				if (hit2d[X] < 0) {
 				    angle += M_PI;
 				} else if (angle < 0) {
-				    angle += 2*M_PI;
+				    angle += M_2PI;
 				}
 				hit2d[X] = -hit2d[X];
 				if (angle < rev->ang) {
@@ -795,7 +795,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 			    if (hit2d[X] < 0) {
 				angle += M_PI;
 			    } else if (angle < 0) {
-				angle += 2*M_PI;
+				angle += M_2PI;
 			    }
 			    hit2d[X] = -hit2d[X];
 			    if (angle < rev->ang) {
@@ -1153,7 +1153,7 @@ rt_revolve_uv(struct application *ap, struct soltab *stp, struct hit *hitp, stru
 	    break;
 	default:
 	    angle = atan2(hitp->hit_vpriv[Y], hitp->hit_vpriv[X]);
-	    if (angle < 0) angle += 2*M_PI;
+	    if (angle < 0) angle += M_2PI;
 	    uvp->uv_u = angle / rev->ang;
 
 	    lng = (uint32_t *)rev->skt->curve.segment[hitp->hit_surfno];
@@ -1244,7 +1244,7 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
     verts = rip->skt->verts;
     crv = &rip->skt->curve;
 
-    if (rip->ang < 2*M_PI) {
+    if (rip->ang < M_2PI) {
 	narc = ceil(rip->ang * 8 * M_1_PI);
     } else {
 	narc = 16;

@@ -1048,7 +1048,7 @@ bend_pipe_shot(
 	    VSUB2(to_hit, hit_pt, bp->bend_V);
 	    angle = atan2(VDOT(to_hit, bp->bend_rb), VDOT(to_hit, bp->bend_ra));
 	    if (angle < 0.0) {
-		angle += 2.0 * M_PI;
+		angle += M_2PI;
 	    }
 	    if (angle <= bp->bend_angle) {
 		hitp = &hits[*hit_count];
@@ -1140,7 +1140,7 @@ bend_pipe_shot(
 	    VSUB2(to_hit, hit_pt, bp->bend_V);
 	    angle = atan2(VDOT(to_hit, bp->bend_rb), VDOT(to_hit, bp->bend_ra));
 	    if (angle < 0.0) {
-		angle += 2.0 * M_PI;
+		angle += M_2PI;
 	    }
 	    if (angle <= bp->bend_angle) {
 		hitp = &hits[*hit_count];
@@ -1861,7 +1861,7 @@ pipe_bend_segments(
     int num_segments;
     fastf_t arc_length;
 
-    arc_length = (bend->bend_angle / M_2PI) * bend->bend_circle.radius;
+    arc_length = (bend->bend_angle * M_1_2PI) * bend->bend_circle.radius;
     num_segments = arc_length / info->point_spacing;
 
     if (num_segments < 3) {
@@ -3281,7 +3281,7 @@ tesselate_pipe_bend(
 
     bend_angle = atan2(VDOT(to_end, b2), VDOT(to_end, b1));
     if (bend_angle < 0.0) {
-	bend_angle += 2.0 * M_PI;
+	bend_angle += M_2PI;
     }
 
     /* calculate number of segments to use along bend */
@@ -3826,7 +3826,7 @@ rt_pipe_tess(
 					     "rt_pipe_tess: outer_loop");
     inner_loop = (struct vertex **)bu_calloc(arc_segs, sizeof(struct vertex *),
 					     "rt_pipe_tess: inner_loop");
-    delta_angle = 2.0 * M_PI / (double)arc_segs;
+    delta_angle = M_2PI / (double)arc_segs;
     sin_del = sin(delta_angle);
     cos_del = cos(delta_angle);
 
@@ -4745,7 +4745,7 @@ rt_pipe_surf_area(fastf_t *area, struct rt_db_internal *ip)
 	     *                   = 2 * PI * bend_angle * r_bend * r_pipe
 	     * Inner + Outer Area = 2 * PI * bend_angle * r_bend * (r_outer + r_inner)
 	     */
-	    *area += 2 * M_PI * bend->bend_angle * bend->bend_radius * (bend->bend_ir + bend->bend_or);
+	    *area += M_2PI * bend->bend_angle * bend->bend_radius * (bend->bend_ir + bend->bend_or);
 	    start_or = end_or = bend->bend_or;
 	    start_ir = end_ir = bend->bend_ir;
 	}

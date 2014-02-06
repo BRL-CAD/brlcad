@@ -225,7 +225,7 @@ int main(int argc, char **argv)
 	radall = sqrt(radall) / 2.0 + .5;
 
 	/* Find surface area of bounding sphere.  */
-	areaall = 4 * M_PI * radall * radall;
+	areaall = 4.0 * M_PI * radall * radall;
 
 	/* Print info on min, max, center, radius, & surface area */
 	/* of entire model.  */
@@ -333,7 +333,7 @@ int main(int argc, char **argv)
 	    /* of the unit vector of this point will be the */
 	    /* firing direction.  */
 	    q = BN_UNIF_DOUBLE(msr) + 0.5;
-	    theta = q * 2. * M_PI;
+	    theta = q * M_2PI;
 
 	    q = BN_UNIF_DOUBLE(msr) + 0.5;
 	    phi = (q * 2.0) - 1.0;
@@ -351,7 +351,7 @@ int main(int argc, char **argv)
 
 	    /* Find vector in yz-plane.  */
 	    q = BN_UNIF_DOUBLE(msr) + 0.5;
-	    theta = q * 2. * M_PI;
+	    theta = q * M_2PI;
 
 	    q = BN_UNIF_DOUBLE(msr) + 0.5;
 	    rds = rho * sqrt(q);

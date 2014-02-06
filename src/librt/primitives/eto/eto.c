@@ -1630,7 +1630,7 @@ rt_eto_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     mag_c = MAGNITUDE(tip->eto_C);
     /* approximation */
     circum = ELL_CIRCUMFERENCE(mag_c, tip->eto_rd);
-    *area = 2.0 * M_PI * tip->eto_r * circum;
+    *area = M_2PI * tip->eto_r * circum;
 }
 
 static int

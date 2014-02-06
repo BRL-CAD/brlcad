@@ -1876,7 +1876,7 @@ draw_lines_between_rec_ellipses(
 {
     int i;
     point_t ellipse1_point, ellipse2_point;
-    fastf_t radian_step = 2.0 * M_PI / num_lines;
+    fastf_t radian_step = M_2PI / num_lines;
 
     for (i = 0; i < num_lines; ++i) {
 	ellipse_point_at_radian(ellipse1_point, ellipse1.center,
@@ -1897,7 +1897,7 @@ draw_lines_between_ellipses(
 {
     int i;
     point_t ellipse1_point, ellipse2_point;
-    fastf_t radian_step = 2.0 * M_PI / num_lines;
+    fastf_t radian_step = M_2PI / num_lines;
 
     for (i = 0; i < num_lines; ++i) {
 	ellipse_point_at_radian(ellipse1_point, ellipse1.center,
@@ -2394,7 +2394,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    VMOVE(B[top_ell], tip->c);
 	    reversed = 1;
 	}
-	ang = 2.0*M_PI/((double)nsegs);
+	ang = M_2PI/((double)nsegs);
 	sin_ang = sin(ang);
 	cos_ang = cos(ang);
 	cos_m_1_sq = (cos_ang - 1.0)*(cos_ang - 1.0);
@@ -3362,7 +3362,7 @@ rt_tgc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 
     switch (tgc_type) {
     case RCC:
-	*area = 2.0 * M_PI * mag_a * (mag_a + mag_h);
+	*area = M_2PI * mag_a * (mag_a + mag_h);
 	break;
     case TRC:
 	*area = M_PI * ((mag_a + mag_c) * sqrt((mag_a - mag_c) * (mag_a - mag_c) + magsq_h) + magsq_a + magsq_c);

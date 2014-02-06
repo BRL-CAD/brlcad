@@ -183,8 +183,8 @@ main(int argc, char **argv)
 	    sample[i][X] = i * spacing;
 	    sample[i][Y] = 0;
 	    sample[i][Z] = 4 * oradius * sin(
-		((double)i*i)/nsamples * 2 * M_PI +
-		frame * M_PI * 2 / 8);
+		((double)i*i)/nsamples * M_2PI +
+		frame * M_PI_4);
 	}
 	projectile_pos = ((double)frame)/nframes *
 	    (sample[nsamples-1][X] - sample[0][X]); /* length */

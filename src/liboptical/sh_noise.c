@@ -92,7 +92,7 @@ struct noise_specific noise_defaults = {
     1.0,		/* h_val */
     4.0,		/* octaves */
     1.0,		/* size */
-    1.57079632679489661923,		/* max_angle M_PI_2 */
+    M_PI_2,		/* max_angle */
     VINITALL(1.0),	/* vscale */
     VINITALL(1000.0),	/* delta into noise space */
     MAT_INIT_ZERO,	/* m_to_sh */

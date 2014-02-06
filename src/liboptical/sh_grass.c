@@ -641,7 +641,7 @@ make_bush(struct plant *pl, double seed, const fastf_t *cell_pos, const struct g
     VSCALE(pt, pl->root, grass_sp->size);
 
     plant_scale(pl, w);	/* must come first */
-    plant_rot(pl, BN_RANDOM(idx) * M_PI * 2.0);/* computes bounding box */
+    plant_rot(pl, BN_RANDOM(idx) * M_2PI);/* computes bounding box */
 
     /* set bounding boxes */
     for (blade=0; blade < pl->blades; blade++) {

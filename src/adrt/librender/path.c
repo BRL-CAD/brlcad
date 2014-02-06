@@ -135,7 +135,7 @@ render_path_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vec
 		sin_theta = sqrt(cos_theta);
 		cos_theta = 1-cos_theta;
 
-		cos_phi = bn_randmt() * 2 * M_PI;
+		cos_phi = bn_randmt() * M_2PI;
 		sin_phi = sin(cos_phi);
 		cos_phi = cos(cos_phi);
 

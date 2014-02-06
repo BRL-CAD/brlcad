@@ -8338,7 +8338,7 @@ to_mouse_poly_circ(struct ged *gedp,
 	 * circumference / 4 = PI * diameter / 4
 	 *
 	 */
-	nsegs = M_PI * r * 0.5 * gdvp->gdv_view->gv_scale;
+	nsegs = M_PI_2 * r * gdvp->gdv_view->gv_scale;
 
 	if (nsegs < 32)
 	    nsegs = 32;
@@ -8558,7 +8558,7 @@ to_mouse_poly_ell(struct ged *gedp,
 	 * circumference / 4 = PI * diameter / 4
 	 *
 	 */
-	nsegs = M_PI * FMAX(a, b) * 0.5 * gdvp->gdv_view->gv_scale;
+	nsegs = M_PI_2 * FMAX(a, b) * gdvp->gdv_view->gv_scale;
 
 	if (nsegs < 32)
 	    nsegs = 32;

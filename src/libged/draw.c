@@ -709,7 +709,7 @@ solid_point_spacing_for_view(
 		RT_BREP_CK_MAGIC(bi);
 
 		point_spacing = solid_point_spacing(gvp,
-			brep_est_avg_curve_len(bi) * (2.0 / M_PI) * 2.0);
+			brep_est_avg_curve_len(bi) * M_2_PI * 2.0);
 	    }
 		break;
 	    default:

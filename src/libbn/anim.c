@@ -135,9 +135,9 @@ anim_mat2zyx(const mat_t viewrot, vect_t angle)
     /* assume the smallest possible arc-length from frame to frame */
     for (i=0; i<3; i++) {
 	while ((angle[i] - previous[i]) > M_PI)
-	    angle[i] -= (2.0*M_PI);
+	    angle[i] -= M_2PI;
 	while ((previous[i] - angle[i]) > M_PI)
-	    angle[i] += (2.0*M_PI);
+	    angle[i] += M_2PI;
 	previous[i] = angle[i];
     }
 
@@ -194,9 +194,9 @@ anim_mat2ypr(mat_t viewrot, vect_t angle)
     /* assume the smallest possible arc-length from frame to frame */
     for (i=0; i<3; i++) {
 	while ((angle[i] - prev_angle[i]) > M_PI)
-	    angle[i] -= (2.0*M_PI);
+	    angle[i] -= M_2PI;
 	while ((prev_angle[i] - angle[i]) > M_PI)
-	    angle[i] += (2.0*M_PI);
+	    angle[i] += M_2PI;
 	prev_angle[i] = angle[i];
     }
 

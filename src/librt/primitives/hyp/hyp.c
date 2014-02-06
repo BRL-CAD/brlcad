@@ -553,7 +553,7 @@ rt_hyp_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
     if (ap) RT_CK_APPLICATION(ap);
 
     /* u = (angle from semi-major axis on basic hyperboloid) / (2*pi) */
-    uvp->uv_u = M_1_PI * 0.5
+    uvp->uv_u = M_1_2PI
 	* (atan2(-hitp->hit_vpriv[X] * hyp->hyp_r2, hitp->hit_vpriv[Y] * hyp->hyp_r1) + M_PI);
 
     /* v ranges (0, 1) on each plate */
@@ -1425,7 +1425,7 @@ rt_hyp_volume(fastf_t *volume, const struct rt_db_internal *ip)
 	RT_HYP_CK_MAGIC(hip);
 
 	hyp = hyp_internal_to_specific(hip);
-	*volume = M_PI * hyp->hyp_r1 * hyp->hyp_r2 * hyp->hyp_Hmag * 2 *
+	*volume = M_2PI * hyp->hyp_r1 * hyp->hyp_r2 * hyp->hyp_Hmag *
 	    (1 + hyp->hyp_Hmag * hyp->hyp_Hmag * hyp->hyp_c * hyp->hyp_c / (12 * hyp->hyp_r1 * hyp->hyp_r1));
 	bu_free(hyp, "hyp volume");
     }

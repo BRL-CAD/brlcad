@@ -9031,7 +9031,7 @@ rt_arc2d_to_cnurb(fastf_t *i_center, fastf_t *i_start, fastf_t *i_end, int point
     /* calculate angle of arc */
     angle = atan2(VDOT(v2, ref2), VDOT(v2, ref1));
     if (angle <= 0.0)
-	angle += 2.0*M_PI;
+	angle += M_2PI;
 
     if (angle < 150.0*DEG2RAD) {
 	/* angle is reasonable to do in one segment */
@@ -9086,7 +9086,7 @@ rt_arc2d_to_cnurb(fastf_t *i_center, fastf_t *i_start, fastf_t *i_end, int point
      * Make up to three segments and join them.
      */
 
-    if (angle < 1.5*M_PI) {
+    if (angle < 3.0*M_PI_2) {
 	/* do it in two segments */
 	nsegs = 2;
 	angles[0] = angle/2.0;

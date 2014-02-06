@@ -1212,7 +1212,7 @@ superell_surf_area_general(const struct rt_superell_internal *sip, vect_t mags, 
      * ranges from -pi/2 to pi/2. Using an extra index variable allows
      * the code to compute the index into the array very efficiently.
      */
-    for (v = - M_PI / 2; v < M_PI / 2; v += side_length, idx++) {
+    for (v = -M_PI_2; v < M_PI_2; v += side_length, idx++) {
 	superell_xyz_from_uv(row1[idx], -M_PI, v, mags, sip);
     }
 
@@ -1223,7 +1223,7 @@ superell_surf_area_general(const struct rt_superell_internal *sip, vect_t mags, 
      */
     for (u = -M_PI + side_length; u < M_PI; u += side_length) {
 	idx = 0;
-	for (v = - M_PI / 2; v < M_PI / 2; v += side_length, idx++) {
+	for (v = -M_PI_2; v < M_PI_2; v += side_length, idx++) {
 	    superell_xyz_from_uv(row2[idx], u + side_length, v, mags, sip);
 	}
 
@@ -1233,7 +1233,7 @@ superell_surf_area_general(const struct rt_superell_internal *sip, vect_t mags, 
 	 * going it would overflow the array, since it always looks at
 	 * the square to the right of its current index.
 	 */
-	for (v = - M_PI / 2; v < M_PI / 2 - side_length; v += side_length, idx++) {
+	for (v = - M_PI_2; v < M_PI_2 - side_length; v += side_length, idx++) {
 	    area +=
 		bn_dist_pt3_pt3(row1[idx], row1[idx + 1]) *
 		bn_dist_pt3_pt3(row1[idx], row2[idx]);

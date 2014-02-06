@@ -1462,7 +1462,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
 	    /* drand48(); */
 	    fabs(bn_rand_half(los->ap->a_resource->re_randptr)
 		 * 2.0);
-	angle =  M_PI * 2.0 *
+	angle =  M_2PI *
 	    /* drand48(); */
 	    (bn_rand_half(los->ap->a_resource->re_randptr) + 0.5);
 
@@ -1476,8 +1476,8 @@ light_vis(struct light_obs_stuff *los, char *flags)
 	 * x = radius * cos(angle);
 	 */
 	cos_angle = M_PI_2 + angle;
-	if (cos_angle > (2.0*M_PI))
-	    cos_angle -= (2.0*M_PI);
+	if (cos_angle > M_2PI)
+	    cos_angle -= M_2PI;
 
 	x = radius * bn_tab_sin(cos_angle);
 

@@ -260,7 +260,7 @@ track_prep(void)
 	costheta = (x[PREV(i)].w.rad - x[i].w.rad)/x[i].s.len;/*cosine of special angle*/
 	x[PREV(i)].w.ang1 = phi + acos(costheta);
 	while (x[PREV(i)].w.ang1 < 0.0)
-	    x[PREV(i)].w.ang1 += 2.0*M_PI;
+	    x[PREV(i)].w.ang1 += M_2PI;
 	x[i].w.ang0 = x[PREV(i)].w.ang1;
     }
 
@@ -268,7 +268,7 @@ track_prep(void)
     for (i=0;i<NW;i++) {
 	arc_angle = x[i].w.ang0 - x[i].w.ang1;
 	while (arc_angle < 0.0)
-	    arc_angle += 2.0*M_PI;
+	    arc_angle += M_2PI;
 	if (arc_angle > M_PI) {
 	    /* concave */
 	    x[i].w.ang0 = 0.5*(x[i].w.ang0 + x[i].w.ang1);

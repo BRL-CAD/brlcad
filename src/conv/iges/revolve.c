@@ -313,10 +313,10 @@ revolve(int entityno)
 	VUNITIZE(pdir);
 
 	if (fract < 0.5) {
-	    theta = 2.0*M_PI*fract;
+	    theta = M_2PI*fract;
 	    cutop = Intersect;
 	} else if (fract > 0.5) {
-	    theta = (-2.0*M_PI*(1.0-fract));
+	    theta = (-M_2PI*(1.0-fract));
 	    cutop = Subtract;
 	} else {
 	    /* FIXME: fract == 0.5, a dangerous comparison (roundoff) */

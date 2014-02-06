@@ -610,8 +610,7 @@ rt_metaball_uv(struct application *ap, struct soltab *stp, struct hit *hitp, str
      * ensures that X parameter is always >0
      */
     uvp->uv_v = bn_atan2(pprime[Z],
-			 sqrt(pprime[X] * pprime[X] + pprime[Y] * pprime[Y])) *
-	M_1_PI + 0.5;
+			 sqrt(pprime[X] * pprime[X] + pprime[Y] * pprime[Y])) * M_1_2PI;
 
     /* approximation: r / (circumference, 2 * pi * aradius) */
     r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;

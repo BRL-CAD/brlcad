@@ -970,7 +970,7 @@ MakeTreadPattern2(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
     (void)mk_addmember(bu_vls_addr(&str2), &tread.l, NULL, WMOP_UNION);
     for (i = 1; i <= number_of_patterns; i++) {
 	bu_vls_sprintf(&str, "tread_master%s.c", suffix);
-	getYRotMat(&y, i * 2 * M_PI / number_of_patterns);
+	getYRotMat(&y, i * M_2PI / number_of_patterns);
 	(void)mk_addmember(bu_vls_addr(&str), &tread.l, y, WMOP_SUBTRACT);
     }
 
@@ -1115,7 +1115,7 @@ MakeTreadPattern1(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
     (void)mk_addmember(bu_vls_addr(&str2), &tread.l, NULL, WMOP_UNION);
     for (i = 1; i <= number_of_patterns; i++) {
 	bu_vls_sprintf(&str, "tread_master%s.c", suffix);
-	getYRotMat(&y, i * 2 * M_PI / number_of_patterns);
+	getYRotMat(&y, i * M_2PI / number_of_patterns);
 	(void)mk_addmember(bu_vls_addr(&str), &tread.l, y, WMOP_SUBTRACT);
     }
 

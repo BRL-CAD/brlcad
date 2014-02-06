@@ -1835,11 +1835,11 @@ rt_part_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     mag_h = MAGNITUDE(pip->part_H);
 
     if (EQUAL(vrad, hrad)) {
-	*area = 2.0 * M_PI * vrad * (2.0 * vrad + mag_h);
+	*area = M_2PI * vrad * (2.0 * vrad + mag_h);
     } else {
 	fastf_t mid_section;
 	mid_section = M_PI * ((vrad + hrad) * sqrt((vrad - hrad) * (vrad - hrad) + mag_h * mag_h));
-	*area = 2.0 * M_PI * (vrad * vrad + hrad * hrad) + mid_section;
+	*area = M_2PI * (vrad * vrad + hrad * hrad) + mid_section;
     }
 }
 

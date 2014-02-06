@@ -1478,7 +1478,7 @@ spallInit()
     }
 
     /* Compute sampling cone of rays which are equally spaced. */
-    theta = TWO_PI * (1.0 - cos(conehfangle)); /* solid angle */
+    theta = M_2PI * (1.0 - cos(conehfangle)); /* solid angle */
     delta = sqrt(theta/nspallrays); /* angular ray delta */
     n = conehfangle / delta;
     phiinc = conehfangle / n;
@@ -1491,9 +1491,9 @@ spallInit()
 	fastf_t	gammaval, gammainc, gammalast;
 	int m;
 	sinphi = FABS(sinphi);
-	m = (TWO_PI * sinphi)/delta + 1;
-	gammainc = TWO_PI / m;
-	gammalast = TWO_PI-gammainc+EPSILON;
+	m = (M_2PI * sinphi)/delta + 1;
+	gammainc = M_2PI / m;
+	gammalast = M_2PI-gammainc+EPSILON;
 	for (gammaval = 0.0; gammaval <= gammalast; gammaval += gammainc)
 	    spallct++;
     }
@@ -1605,9 +1605,9 @@ burstRay()
 	    break;
 	sinphi = sin(phi);
 	sinphi = FABS(sinphi);
-	m = (TWO_PI * sinphi)/delta + 1;
-	gammainc = TWO_PI / m;
-	gammalast = TWO_PI - gammainc + EPSILON;
+	m = (M_2PI * sinphi)/delta + 1;
+	gammainc = M_2PI / m;
+	gammalast = M_2PI - gammainc + EPSILON;
 	for (gammaval = 0.0; gammaval <= gammalast; gammaval += gammainc) {
 	    int	ncrit;
 	    spallVec(a_burst.a_ray.r_dir, a_spall.a_ray.r_dir,

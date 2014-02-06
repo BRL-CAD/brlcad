@@ -1153,11 +1153,11 @@ analyze_superell(struct ged *gedp, const struct rt_db_internal *ip)
 	    }
     ecc = sqrt(major_mag*major_mag - minor_mag*minor_mag) / major_mag;
     if (type == PROLATE) {
-	sur_area = 2.0 * M_PI * minor_mag * minor_mag +
-	    (2.0 * M_PI * (major_mag*minor_mag/ecc) * asin(ecc));
+	sur_area = M_2PI * minor_mag * minor_mag +
+	    (M_2PI * (major_mag*minor_mag/ecc) * asin(ecc));
     } else {
 	/* type == OBLATE */
-	sur_area = 2.0 * M_PI * major_mag * major_mag +
+	sur_area = M_2PI * major_mag * major_mag +
 	    (M_PI * (minor_mag*minor_mag/ecc) * log((1.0+ecc)/(1.0-ecc)));
     }
 

@@ -1520,7 +1520,7 @@ process_ellipse_entities_code(int code)
     static point_t majorAxis={1.0, 0, 0};
     static double ratio=1.0;
     static double startAngle = 0.0;
-    static double endAngle=M_PI*2.0;
+    static double endAngle=M_2PI;
     double angle, delta;
     double majorRadius, minorRadius;
     point_t tmp_pt;
@@ -1661,7 +1661,7 @@ process_ellipse_entities_code(int code)
 	    VSET(majorAxis, 0, 0, 0);
 	    ratio = 1.0;
 	    startAngle = 0.0;
-	    endAngle = M_PI * 2.0;
+	    endAngle = M_2PI;
 
 	    curr_state->sub_state = UNKNOWN_ENTITY_STATE;
 	    process_entities_code[curr_state->sub_state](code);
@@ -3153,7 +3153,7 @@ main(int argc, char *argv[])
 
     tol_sq = tol * tol;
 
-    delta_angle = 2.0 * M_PI / (fastf_t)segs_per_circle;
+    delta_angle = M_2PI / (fastf_t)segs_per_circle;
     sin_delta = sin(delta_angle);
     cos_delta = cos(delta_angle);
 

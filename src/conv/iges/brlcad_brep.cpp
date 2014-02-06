@@ -377,7 +377,7 @@ BRLCADBrepHandler::handleCircularArc(double radius,
     debug("a = " << a);
     debug("b = " << b);
     if (b < a) {
-	b = 2*M_PI+b;
+	b = M_2PI+b;
     }
     ON_Arc arc(circle, ON_Interval(a, b));
 

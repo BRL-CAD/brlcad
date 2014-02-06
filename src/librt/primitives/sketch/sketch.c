@@ -345,8 +345,8 @@ rt_sketch_contains(struct rt_sketch_internal *sk, point2d_t pt)
 			}
 			angMax -= angMin;
 			angle -= angMin;
-			if (angMax < 0) angMax += 2*M_PI;
-			if (angle < 0) angle += 2*M_PI;
+			if (angMax < 0) angMax += M_2PI;
+			if (angle < 0) angle += M_2PI;
 			if (angle < angMax) hits++;
 		    }
 		}
@@ -572,8 +572,8 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 		}
 		if (csg->radius <= 0.0) {
 		    /* this is a full circle */
-		    nsegs = ceil(2.0 * M_PI / delta);
-		    delta = 2.0 * M_PI / (double)nsegs;
+		    nsegs = ceil(M_2PI / delta);
+		    delta = M_2PI / (double)nsegs;
 		    cosdel = cos(delta);
 		    sindel = sin(delta);
 		    oldu = 1.0;
@@ -626,11 +626,11 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 		if (csg->orientation) {
 		    /* clock-wise */
 		    while (end_ang > start_ang)
-			end_ang -= 2.0 * M_PI;
+			end_ang -= M_2PI;
 		} else {
 		    /* counter-clock-wise */
 		    while (end_ang < start_ang)
-			end_ang += 2.0 * M_PI;
+			end_ang += M_2PI;
 		}
 		tot_ang = end_ang - start_ang;
 		nsegs = ceil(tot_ang / delta);

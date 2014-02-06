@@ -154,18 +154,18 @@ toyota_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_
     tp->atmos_trans = 0.772;/* atmospheric transmittance */
     tp->weather = CLEAR_SKY;/* no clouds */
 
-    /*            / 2*M_PI  / arctan(rs/d)
+    /*            /  M_2PI  / arctan(rs/d)
      * sun_sang = |         |
      *	          |         |     sin(theta) d-theta d-phi
      *	          /         /
      *
-     *	    = 2*M_PI*(1 - cos(arctan(rs/d)))
+     *	    = M_2PI*(1 - cos(arctan(rs/d)))
      *
-     *      = 2*M_PI*(1 - cos(arctan(695300/149000000)))
+     *      = M_2PI*(1 - cos(arctan(695300/149000000)))
      *
-     *	    = 2*M_PI*(1 - cos(.00466640908179121739))
+     *	    = M_2PI*(1 - cos(.00466640908179121739))
      *
-     *	    = 2*M_PI*(1 - .99998911233289762807)
+     *	    = M_2PI*(1 - .99998911233289762807)
      *
      *	    = .00006840922996708585320208283043854326275346156491
      *
@@ -2181,7 +2181,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
 /* JUST INTEGRATE OVER HEMISPHERE - THIS IS CURRENTLY WRONG */
     for (ang = SPREAD; ang < alpha_c; ang += SPREAD) {
 	r = sin(ang);
-	for (phi = 0.0; phi < 2*M_PI; phi += SPREAD) {
+	for (phi = 0.0; phi < M_2PI; phi += SPREAD) {
 	    x = r*cos(phi);
 	    y = r*sin(phi);
 	    VJOIN2(Sky_elmnt, Ctr, x, Xaxis, y, Yaxis);

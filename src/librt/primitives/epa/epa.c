@@ -1140,7 +1140,7 @@ rt_ell_norms(fastf_t *ov, fastf_t *A, fastf_t *B, fastf_t *h_vec, fastf_t t, int
     sqrt_1mt = sqrt(1.0 - t);
     if (sqrt_1mt <= SMALL_FASTF)
 	bu_bomb("rt_epa_tess: rt_ell_norms: sqrt(1.0 -t) is zero\n");
-    theta = 2 * M_PI / sides;
+    theta = M_2PI / sides;
     ang = 0.;
 
     for (n = 1; n <= sides; n++, ang += theta) {
@@ -1166,7 +1166,7 @@ rt_ell(fastf_t *ov, const fastf_t *V, const fastf_t *A, const fastf_t *B, int si
     fastf_t ang, theta, x, y;
     int n;
 
-    theta = 2 * M_PI / sides;
+    theta = M_2PI / sides;
     ang = 0.;
     /* make ellipse regardless of whether it meets req's */
     for (n = 1; n <= sides; n++, ang += theta) {
@@ -1941,7 +1941,7 @@ rt_epa_volume(fastf_t *vol, const struct rt_db_internal *ip)
     RT_EPA_CK_MAGIC(xip);
 
     mag_h = MAGNITUDE(xip->epa_H);
-    *vol = 0.5 * M_PI * xip->epa_r1 * xip->epa_r2 * mag_h;
+    *vol = M_PI_2 * xip->epa_r1 * xip->epa_r2 * mag_h;
 }
 
 

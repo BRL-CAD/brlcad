@@ -1591,11 +1591,11 @@ get_seg_midpoint(genptr_t seg, struct rt_sketch_internal *skt, point2d_t pt)
 		if (csg->orientation) {
 		    /* clock-wise */
 		    while (end_ang > start_ang)
-			end_ang -= 2.0 * M_PI;
+			end_ang -= M_2PI;
 		} else {
 		    /* counter-clock-wise */
 		    while (end_ang < start_ang)
-			end_ang += 2.0 * M_PI;
+			end_ang += M_2PI;
 		}
 
 		/* get mid angle */

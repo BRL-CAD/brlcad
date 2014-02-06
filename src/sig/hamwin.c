@@ -69,7 +69,7 @@ init_hamwintab(int size)
      * Size is okay.  Set up tables.
      */
     for (i = 0; i < size; i++) {
-	theta = 2 * M_PI * i / (double)(size);
+	theta = M_2PI * i / (double)(size);
 	hamwintab[ i ] = 0.54 - 0.46 * cos(theta);
     }
 

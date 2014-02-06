@@ -38,9 +38,6 @@
 #include "plot3.h"
 #include "opennurbs.h"
 
-#ifndef M_PI
-#  define M_PI 3.14159265358979323846264338328
-#endif
 
 void plot_face(ON_3dPoint *pt1, ON_3dPoint *pt2, ON_3dPoint *pt3, int r, int g, int b, FILE *c_plot)
 {
@@ -87,7 +84,7 @@ void find_q_pts(struct Mesh_Info *mesh) {
 
 // Kobbelt sqrt(3)-Subdivision, eqn. 6
 fastf_t alpha_n(size_t n) {
-    return (4 - 2 * cos(2*M_PI/n))/9;
+    return (4 - 2 * cos(M_2PI/n))/9;
 }
 
 // From Kobbelt sqrt(3)-Subdivision, eqns 7 and 8, solving for pinf
