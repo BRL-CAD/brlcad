@@ -565,7 +565,7 @@ f_below(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, st
     for (i = 0; i < (int)BU_PTBL_LEN(full_paths); i++) {
 	struct db_full_path *this_path = (struct db_full_path *)BU_PTBL_GET(full_paths, i);
 	/* Check depth criteria by comparing to db_node->path - if OK execute nested plans */
-	if (this_path->fp_len > f_path_len && db_full_path_subset(this_path, db_node->path, 0)) {
+	if (this_path->fp_len > f_path_len && db_full_path_match_top(db_node->path, this_path)) {
 	    int relative_depth = this_path->fp_len - f_path_len;
 	    if (relative_depth >= plan->min_depth && relative_depth <= plan->max_depth) {
 		/*bu_log("%s: min_depth = %d, max_depth = %d\n", db_path_to_string(db_node->path), plan->min_depth, plan->max_depth);
