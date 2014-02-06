@@ -550,7 +550,13 @@ macro(BRLCAD_LIB_INCLUDE_DIRS libname DIR_LIST LOCAL_DIR_LIST)
 
   set(ALL_INCLUDES ${${DIR_LIST}} ${${LOCAL_DIR_LIST}})
   BRLCAD_SORT_INCLUDE_DIRS(ALL_INCLUDES)
-  include_directories(${ALL_INCLUDES})
+  foreach(inc_dir ${ALL_INCLUDES})
+    if("${inc_dir}" MATCHES "other")
+      include_directories(SYSTEM ${inc_dir})
+    else("${inc_dir}" MATCHES "other")
+      include_directories(${inc_dir})
+    endif("${inc_dir}" MATCHES "other")
+  endforeach(inc_dir ${ALL_INCLUDES})
 endmacro(BRLCAD_LIB_INCLUDE_DIRS)
 
 
