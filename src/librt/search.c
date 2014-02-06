@@ -2333,18 +2333,133 @@ db_search_flat(const char *plan_string,
 }
 
 
+
+/* Search client data container */
+struct list_client_data_t {
+    struct db_i *dbip;
+    struct bu_ptbl *full_paths;
+};
+
+
+/**
+ * A generic traversal function maintaining awareness of the full path
+ * to a given object.
+ */
+HIDDEN void
+db_fullpath_list_subtree(struct db_full_path *path, int curr_bool, union tree *tp,
+			     void (*traverse_func) (struct db_full_path *path, int curr_bool,
+						    struct resource *,
+						    genptr_t),
+			     struct resource *resp,
+			     genptr_t client_data)
+{
+    struct directory *dp;
+    struct list_client_data_t *lcd= (struct list_client_data_t *)client_data;
+
+    int bool_val = curr_bool;
+
+    if (!tp)
+	return;
+
+    RT_CK_FULL_PATH(path);
+    RT_CHECK_DBI(lcd->dbip);
+    RT_CK_TREE(tp);
+    RT_CK_RESOURCE(resp);
+
+    switch (tp->tr_op) {
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+	    if (tp->tr_op == OP_UNION) bool_val = 2;
+	    if (tp->tr_op == OP_INTERSECT) bool_val = 3;
+	    if (tp->tr_op == OP_SUBTRACT) bool_val = 4;
+	    db_fullpath_list_subtree(path, bool_val, tp->tr_b.tb_right, traverse_func, resp, client_data);
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+	    db_fullpath_list_subtree(path, bool_val, tp->tr_b.tb_left, traverse_func, resp, client_data);
+	    break;
+	case OP_DB_LEAF:
+	    if ((dp=db_lookup(lcd->dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
+		return;
+	    } else {
+		struct db_full_path *newpath;
+		db_add_node_to_full_path(path, dp);
+		DB_FULL_PATH_SET_CUR_BOOL(path, bool_val);
+		BU_ALLOC(newpath, struct db_full_path);
+		db_full_path_init(newpath);
+		db_dup_full_path(newpath, path);
+		bu_ptbl_ins(lcd->full_paths, (long *)newpath);
+		bu_log("inserting path: %s(%d)\n", db_path_to_string(newpath), bool_val);
+		traverse_func(path, OP_UNION, resp, client_data);
+		DB_FULL_PATH_POP(path);
+		break;
+	    }
+
+	default:
+	    bu_log("db_functree_subtree: unrecognized operator %d\n", tp->tr_op);
+	    bu_bomb("db_functree_subtree: unrecognized operator\n");
+    }
+}
+
+
+/**
+ * This subroutine is called for a no-frills tree-walk, with the
+ * provided subroutines being called when entering and exiting
+ * combinations and at leaf (solid) nodes.
+ *
+ * This routine is recursive, so no variables may be declared static.
+ *
+ * Unlike db_preorder_traverse, this routine and its subroutines
+ * use db_full_path structures instead of directory structures.
+ */
+HIDDEN void
+db_fullpath_list(struct db_full_path *path, int bool_val,
+		     struct resource *resp,
+		     genptr_t client_data)
+{
+    struct directory *dp;
+    struct list_client_data_t *lcd= (struct list_client_data_t *)client_data;
+    RT_CK_FULL_PATH(path);
+    RT_CK_DBI(lcd->dbip);
+
+    dp = DB_FULL_PATH_CUR_DIR(path);
+    if (!dp)
+	return;
+
+    if (dp->d_flags & RT_DIR_COMB) {
+	struct rt_db_internal in;
+	struct rt_comb_internal *comb;
+
+	if (rt_db_get_internal(&in, dp, lcd->dbip, NULL, resp) < 0)
+	    return;
+
+	comb = (struct rt_comb_internal *)in.idb_ptr;
+
+	db_fullpath_list_subtree(path, bool_val, comb->tree, db_fullpath_list, resp, client_data);
+
+	rt_db_free_internal(&in);
+    }
+}
+
+
+
+
 struct bu_ptbl *
 db_search_path(const char *plan_string,
 	       struct directory *dp,
 	       struct rt_wdb *wdbp)
 {
+    struct bu_ptbl *full_paths = NULL;
     struct bu_ptbl *search_results = NULL;
     char **plan_argv = NULL;
     struct db_plan_t *dbplan = NULL;
     struct bu_vls plan_string_vls;
     struct db_node_t curr_node;
-    struct db_full_path start_path;
+    struct db_full_path *start_path;
     struct search_client_data_t scd;
+    struct list_client_data_t lcd;
 
     if (!dp || dp == RT_DIR_NULL) return NULL;
 
@@ -2357,13 +2472,25 @@ db_search_path(const char *plan_string,
     if (!dbplan) return NULL;
 
     /* execute the plan */
-    db_full_path_init(&start_path);
-    db_add_node_to_full_path(&start_path, dp);
-    curr_node.path = &start_path;
+    BU_ALLOC(start_path, struct db_full_path);
+    db_full_path_init(start_path);
+    db_add_node_to_full_path(start_path, dp);
+    /* by convention, the top level node is "unioned" into the global database */
+    DB_FULL_PATH_SET_CUR_BOOL(start_path, 2);
+
+    BU_ALLOC(full_paths, struct bu_ptbl);
+    BU_PTBL_INIT(full_paths);
+    bu_ptbl_ins(full_paths, (long *)start_path);
+    lcd.dbip = wdbp->dbip;
+    lcd.full_paths = full_paths;
+    db_fullpath_list(start_path, 2, wdbp->wdb_resp, (genptr_t *)&lcd);
+
+
+    curr_node.path = start_path;
     BU_ALLOC(search_results, struct bu_ptbl);
     BU_PTBL_INIT(search_results);
-    /* by convention, the top level node is "unioned" into the global database */
-    DB_FULL_PATH_SET_CUR_BOOL(curr_node.path, 2);
+
+
     curr_node.orig_len = curr_node.path->fp_len;
     curr_node.flat_search = 0;
 
@@ -2376,7 +2503,8 @@ db_search_path(const char *plan_string,
     db_fullpath_traverse(find_execute_plans_leaf, find_execute_plans_leaf, wdbp->wdb_resp, (genptr_t *)&scd);
 
     /* free memory */
-    db_free_full_path(&start_path);
+    db_free_full_path(start_path);
+    bu_free((char *)start_path, "free start path");
     bu_vls_free(&plan_string_vls);
     bu_free((char *)plan_argv, "free plan argv");
     db_search_free_plan((void **)&dbplan);
