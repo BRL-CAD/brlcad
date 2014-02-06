@@ -3172,11 +3172,9 @@ BN_EXPORT extern float bn_rand_halftab[BN_RANDHALFTABSIZE];
 
 #define BN_SINTABSIZE 2048
 
-BN_EXPORT extern double bn_sin_scale;
-
 #define bn_tab_sin(_a)	(((_a) > 0) ? \
-			 (bn_sin_table[(int)((0.5+ (_a)*bn_sin_scale))&(BN_SINTABSIZE-1)]) :\
-			 (-bn_sin_table[(int)((0.5- (_a)*bn_sin_scale))&(BN_SINTABSIZE-1)]))
+			 (bn_sin_table[(int)((0.5+ (_a)*(BN_SINTABSIZE / M_2PI)))&(BN_SINTABSIZE-1)]) :\
+			 (-bn_sin_table[(int)((0.5- (_a)*(BN_SINTABSIZE / M_2PI)))&(BN_SINTABSIZE-1)]))
 
 /**
  * table of floating point sine values in the closed (i.e. inclusive)

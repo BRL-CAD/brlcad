@@ -721,9 +721,6 @@ const float bn_rand_table[BN_RAND_TABSIZE] = {
 };
 
 
-double bn_sin_scale = BN_SINTABSIZE / M_2PI;
-
-
 const float bn_sin_table[BN_SINTABSIZE] = {
     0.0f,		0.00306796f,	0.00613588f,	0.00920375f,
     0.0122715f,	0.0153392f,	0.0184067f,	0.0214741f,
