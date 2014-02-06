@@ -21,9 +21,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * test fbed, make sure stdout still works, displays output.  went from
   unbuffered to buffered.
 
-* check repository.sh support for pathnames with spaces and special
-  characters.  regression-full is failing.
-
 * add a proper tgamma (c99) check, see superell.c; add a lrint check
   as well.
 
