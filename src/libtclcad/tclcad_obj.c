@@ -10069,7 +10069,7 @@ to_new_view(struct ged *gedp,
     new_gdvp->gdv_fbs.fbs_listener.fbsl_fd = -1;
     new_gdvp->gdv_fbs.fbs_listener.fbsl_port = -1;
     new_gdvp->gdv_fbs.fbs_fbp = FBIO_NULL;
-    new_gdvp->gdv_fbs.fbs_callback = to_fbs_callback;
+    new_gdvp->gdv_fbs.fbs_callback = (void (*)(genptr_t clientData))to_fbs_callback;
     new_gdvp->gdv_fbs.fbs_clientData = new_gdvp;
     new_gdvp->gdv_fbs.fbs_interp = current_top->to_interp;
 
