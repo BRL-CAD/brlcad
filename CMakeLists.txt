@@ -2794,6 +2794,15 @@ else("${CMAKE_GENERATOR}" MATCHES "Make")
     )
 endif("${CMAKE_GENERATOR}" MATCHES "Make")
 
+# Have touched every file and directory that we are going to touch with the
+# build system - time to write out our lists for future processing.
+get_property(CMAKE_IGNORE_FILES GLOBAL PROPERTY CMAKE_IGNORE_FILES)
+get_property(CMAKE_IGNORE_DIRS GLOBAL PROPERTY CMAKE_IGNORE_DIRS)
+string(REPLACE ";" "\n" CMAKE_IGNORE_FILES "${CMAKE_IGNORE_FILES}")
+string(REPLACE ";" "\n" CMAKE_IGNORE_DIRS "${CMAKE_IGNORE_DIRS}")
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/cmakefiles.cmake "${CMAKE_IGNORE_FILES}")
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/cmakedirs.cmake "${CMAKE_IGNORE_DIRS}")
+
 #Done with all really time-consuming steps - do the configure time delta
 if(NOT BRLCAD_IS_SUBBUILD)
   set(DELTA_END "${CMAKE_BINARY_DIR}/CMakeTmp/DELTA_END")
@@ -2812,15 +2821,6 @@ if(NOT BRLCAD_IS_SUBBUILD)
   endwhile(${SETTINGLABELLENGTH} GREATER ${CURRENTLENGTH})
   message("${CONFIG_TIME_MSG_LABEL}..: ${CONFIG_TIME_MSG}")
 endif(NOT BRLCAD_IS_SUBBUILD)
-
-# Have touched every file and directory that we are going to touch with the
-# build system - time to write out our lists for future processing.
-get_property(CMAKE_IGNORE_FILES GLOBAL PROPERTY CMAKE_IGNORE_FILES)
-get_property(CMAKE_IGNORE_DIRS GLOBAL PROPERTY CMAKE_IGNORE_DIRS)
-string(REPLACE ";" "\n" CMAKE_IGNORE_FILES "${CMAKE_IGNORE_FILES}")
-string(REPLACE ";" "\n" CMAKE_IGNORE_DIRS "${CMAKE_IGNORE_DIRS}")
-file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/cmakefiles.cmake "${CMAKE_IGNORE_FILES}")
-file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/cmakedirs.cmake "${CMAKE_IGNORE_DIRS}")
 
 # Local Variables:
 # tab-width: 8
