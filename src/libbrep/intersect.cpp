@@ -2598,6 +2598,31 @@ struct Overlapevent {
     }
 };
 
+HIDDEN bool
+is_pt_in_surf_overlap(
+	ON_2dPoint surf1_pt,
+	const ON_Surface *surf1,
+	const ON_Surface *surf2,
+	Subsurface *surf2_tree)
+{
+    if (!surf1->Domain(0).Includes(surf1_pt.x) ||
+	!surf1->Domain(1).Includes(surf1_pt.y))
+    {
+	return false;
+    }
+    bool surf1_pt_intersects_surf2, surfs_parallel_at_pt;
+    ON_ClassArray<ON_PX_EVENT> px_event;
+
+    surf1_pt_intersects_surf2 = ON_Intersect(surf1->PointAt(surf1_pt.x, surf1_pt.y),
+	    *surf2, px_event, 1.0e-5, 0, 0, surf2_tree);
+
+    if (surf1_pt_intersects_surf2) {
+	surfs_parallel_at_pt = surf1->NormalAt(surf1_pt.x, surf1_pt.y).IsParallelTo(
+		surf2->NormalAt(px_event[0].m_b[0], px_event[0].m_b[1]));
+    }
+    return surf1_pt_intersects_surf2 && surfs_parallel_at_pt;
+}
+
 enum {
     INSIDE_OVERLAP,
     ON_OVERLAP_BOUNDARY,
@@ -2629,22 +2654,11 @@ isocurve_surface_overlap_location(
 	v1 = v2 = midpt;
     }
 
-    bool in1, in2, neighbor_intersects, surf_flush_at_neighbor;
+    bool in1, in2;
     ON_ClassArray<ON_PX_EVENT> px_event1, px_event2;
 
-    neighbor_intersects = ON_Intersect(surf1->PointAt(u1, v1), *surf2, px_event1, 1.0e-5, 0, 0, surf2_tree);
-    if (neighbor_intersects) {
-	surf_flush_at_neighbor = surf1->NormalAt(u1, v1).IsParallelTo(
-		surf2->NormalAt(px_event1[0].m_b[0], px_event1[0].m_b[1]));
-    }
-    in1 = neighbor_intersects && surf_flush_at_neighbor;
-
-    neighbor_intersects = ON_Intersect(surf1->PointAt(u2, v2), *surf2, px_event2, 1.0e-5, 0, 0, surf2_tree);
-    if (neighbor_intersects) {
-	surf_flush_at_neighbor = surf1->NormalAt(u2, v2).IsParallelTo(
-		surf2->NormalAt(px_event2[0].m_b[0], px_event2[0].m_b[1]));
-    }
-    in2 = neighbor_intersects && surf_flush_at_neighbor;
+    in1 = is_pt_in_surf_overlap(ON_2dPoint(u1, v1), surf1, surf2, surf2_tree);
+    in2 = is_pt_in_surf_overlap(ON_2dPoint(u2, v2), surf1, surf2, surf2_tree);
 
     if (in1 && in2) {
 	return INSIDE_OVERLAP;
@@ -2964,16 +2978,8 @@ ON_Intersect(const ON_Surface *surfA,
 	    normal.Unitize();
 	    uv1 -= normal * test_distance;	// left
 	    uv2 += normal * test_distance;	// right
-	    bool in1, in2;
-	    ON_ClassArray<ON_PX_EVENT> px_event1, px_event2;
-	    in1 = surfA->Domain(0).Includes(uv1.x)
-		  && surfA->Domain(1).Includes(uv1.y)
-		  && ON_Intersect(surfA->PointAt(uv1.x, uv1.y), *surfB, px_event1, 1e-5, 0, 0, treeB)
-		  && surfA->NormalAt(uv1.x, uv1.y).IsParallelTo(surfB->NormalAt(px_event1[0].m_b[0], px_event1[0].m_b[1]));
-	    in2 = surfA->Domain(0).Includes(uv2.x)
-		  && surfA->Domain(1).Includes(uv2.y)
-		  && ON_Intersect(surfA->PointAt(uv2.x, uv2.y), *surfB, px_event2, 1e-5, 0, 0, treeB)
-		  && surfA->NormalAt(uv2.x, uv2.y).IsParallelTo(surfB->NormalAt(px_event2[0].m_b[0], px_event2[0].m_b[1]));
+	    bool in1 = is_pt_in_surf_overlap(uv1, surfA, surfB, treeB);
+	    bool in2 = is_pt_in_surf_overlap(uv2, surfA, surfB, treeB);
 	    if (in1 && !in2) {
 		isvalid = true;
 	    } else if (!in1 && in2) {
