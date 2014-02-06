@@ -58,7 +58,7 @@ coplanar_2d_coord_sys(point_t *origin_pnt, vect_t *u_axis, vect_t *v_axis, const
     /* Step 3 - find normal vector of plane holding points */
     i = 0;
     dist_pt_pt = DIST_PT_PT(*origin_pnt, p_farthest);
-    while (i < n){
+    while (i < n) {
 	if (i != p_farthest_index) {
 	    vect_t temp_vect;
 	    fastf_t curr_vdot;

@@ -50,7 +50,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
      * moving it to AP214, where it will still be needed for boolean exports*/
     const char *solid_search = "! -type comb";
     struct bu_ptbl *breps = db_search_path_obj(solid_search, dp, wdbp);
-    for (int j = (int)BU_PTBL_LEN(breps) - 1; j >= 0; j--){
+    for (int j = (int)BU_PTBL_LEN(breps) - 1; j >= 0; j--) {
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(breps, j);
 	struct rt_db_internal solid_intern;
 	rt_db_get_internal(&solid_intern, curr_dp, wdbp->dbip, bn_mat_identity, &rt_uniresource);
@@ -69,7 +69,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
      * Again, some form of this logic will probably end up in AP214 */
     const char *comb_search = "-type comb";
     struct bu_ptbl *combs = db_search_path_obj(comb_search, dp, wdbp);
-    for (int j = (int)BU_PTBL_LEN(combs) - 1; j >= 0; j--){
+    for (int j = (int)BU_PTBL_LEN(combs) - 1; j >= 0; j--) {
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(combs, j);
 	int is_wrapper = !Comb_Is_Wrapper(curr_dp, wdbp);
 	if (sc->comb_to_step->find(curr_dp) == sc->comb_to_step->end()) {

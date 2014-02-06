@@ -117,28 +117,28 @@ osl_parse_edge(char *edge, ShaderEdge &sh_edge)
     ShaderParam sh_param1, sh_param2;
 
     /* Name of the first shader */
-    if((item = strtok(edge, "#")) == NULL){
+    if((item = strtok(edge, "#")) == NULL) {
 	fprintf(stderr, "[Error] Expecting the first shader name, found NULL.\n");
 	return -1;
     }
     sh_param1.layername = item;
 
     /* Parameter of the first shader */
-    if((item = strtok(NULL, "#")) == NULL){
+    if((item = strtok(NULL, "#")) == NULL) {
 	fprintf(stderr, "[Error] Expecting the parameter of the first shader, found NULL.\n");
 	return -1;
     }
     sh_param1.paramname = item;
 
     /* Name of the first shader */
-    if((item = strtok(NULL, "#")) == NULL){
+    if((item = strtok(NULL, "#")) == NULL) {
 	fprintf(stderr, "[Error] Expecting the second shader name, found NULL.\n");
 	return -1;
     }
     sh_param2.layername = item;
 
     /* Name of the first shader */
-    if((item = strtok(NULL, "#")) == NULL){
+    if((item = strtok(NULL, "#")) == NULL) {
 	fprintf(stderr, "[Error] Expecting the parameter of the second shader, found NULL.\n");
 	return -1;
     }
@@ -158,14 +158,14 @@ osl_parse_shader(char *shadername, ShaderInfo &sh_info)
     sh_info.shadername = "../shaders/" + std::string(item);
 
     /* Check for parameters */
-    while((item = strtok(NULL, "#")) != NULL){
+    while((item = strtok(NULL, "#")) != NULL) {
 
 	/* Setting layer name, in case we're doing a shader group */
 	if (BU_STR_EQUAL(item, "layername")) {
 
 	    /* Get the name of the layer being set */
 	    item = strtok(NULL, "#");
-	    if(item == NULL){
+	    if(item == NULL) {
 		fprintf(stderr, "[Error] Missing layer name\n");
 		return -1;
 	    }
@@ -177,13 +177,13 @@ osl_parse_shader(char *shadername, ShaderInfo &sh_info)
 
 	    /* Get the type of parameter being set */
 	    item = strtok(NULL, "#");
-	    if(item == NULL){
+	    if(item == NULL) {
 		fprintf(stderr, "[Error] Missing parameter type\n");
 		return -1;
 	    }
 	    else if (BU_STR_EQUAL(item, "int")) {
 		item = strtok(NULL, "#");
-		if(item == NULL){
+		if(item == NULL) {
 		    fprintf(stderr, "[Error] Missing float value\n");
 		    return -1;
 		}
@@ -192,7 +192,7 @@ osl_parse_shader(char *shadername, ShaderInfo &sh_info)
 	    }
 	    else if (BU_STR_EQUAL(item, "float")) {
 		item = strtok(NULL, "#");
-		if(item == NULL){
+		if(item == NULL) {
 		    fprintf(stderr, "[Error] Missing float value\n");
 		    return -1;
 		}
@@ -201,9 +201,9 @@ osl_parse_shader(char *shadername, ShaderInfo &sh_info)
 	    }
 	    else if (BU_STR_EQUAL(item, "color")) {
 		Color3 color_value;
-		for(int i=0; i<3; i++){
+		for(int i=0; i<3; i++) {
 		    item = strtok(NULL, "#");
-		    if(item == NULL){
+		    if(item == NULL) {
 			fprintf(stderr, "[Error] Missing %d-th component of color value\n", i);
 			return -1;
 		    }
@@ -220,9 +220,9 @@ osl_parse_shader(char *shadername, ShaderInfo &sh_info)
 		else if (BU_STR_EQUAL(item, "vector")) type = TypeDesc::TypeVector;
 
 		Vec3 vec_value;
-		for(int i=0; i<3; i++){
+		for(int i=0; i<3; i++) {
 		    item = strtok(NULL, "#");
-		    if(item == NULL){
+		    if(item == NULL) {
 			fprintf(stderr, "[Error] Missing %d-th component of %s value\n", i, type_name.c_str());
 			return -1;
 		    }
@@ -231,13 +231,13 @@ osl_parse_shader(char *shadername, ShaderInfo &sh_info)
 		ShaderInfo::TypeVec type_vec(type, vec_value);
 		sh_info.vparam.push_back(std::make_pair(param_name, type_vec));
 	    }
-	    else if (BU_STR_EQUAL(item, "matrix")){
+	    else if (BU_STR_EQUAL(item, "matrix")) {
 		fprintf(stderr, "matrix\n");
 		Matrix44 mat_value;
 		for(int i=0; i<4; i++)
-		    for(int j=0; j<4; j++){
+		    for(int j=0; j<4; j++) {
 			item = strtok(NULL, "#");
-			if(item == NULL){
+			if(item == NULL) {
 			    fprintf(stderr, "[Error] Missing %d-th component of matrix value\n", i*4 + j);
 			    return -1;
 			}
@@ -249,7 +249,7 @@ osl_parse_shader(char *shadername, ShaderInfo &sh_info)
 	    }
 	    else if (BU_STR_EQUAL(item, "string")) {
 		item = strtok(NULL, "#");
-		if(item == NULL){
+		if(item == NULL) {
 		    fprintf(stderr, "[Error] Missing string\n");
 		    return -1;
 		}
@@ -395,7 +395,7 @@ HIDDEN int osl_setup(register struct region *rp, struct bu_vls *matparm,
 
     /* Parse the user's arguments to fill osl specifics */
     ShaderGroupInfo group_info;
-    if (osl_parse(matparm, group_info) < 0){
+    if (osl_parse(matparm, group_info) < 0) {
 	return -1;
     }
 
@@ -404,7 +404,7 @@ HIDDEN int osl_setup(register struct region *rp, struct bu_vls *matparm,
      * -----------------------------------
      */
     /* If OSL system was not initialized yet, do it */
-    if (oslr == NULL){
+    if (oslr == NULL) {
 	oslr = new OSLRenderer();
     }
     /* Add this shader to OSL system */
@@ -540,21 +540,21 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 
     /* Check if it is the first time this thread is calling this function */
     bool visited = false;
-    for(size_t i = 0; i < visited_addrs.size(); i++){
-	if(ap->a_resource == visited_addrs[i]){
+    for(size_t i = 0; i < visited_addrs.size(); i++) {
+	if(ap->a_resource == visited_addrs[i]) {
 	    visited = true;
 	    thread_info = thread_infos[i];
 	    break;
 	}
     }
-    if(!visited){
+    if(!visited) {
 	visited_addrs.push_back(ap->a_resource);
 	/* Get thread specific information from OSLRender system */
 	thread_info = oslr->CreateThreadInfo();
 	thread_infos.push_back(thread_info);
     }
 
-    if(ap->a_level == 0){
+    if(ap->a_level == 0) {
 	default_a_hit = ap->a_hit; /* save the default hit callback (colorview @ rt) */
 	default_a_miss = ap->a_miss;
     }
@@ -605,7 +605,7 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
     Color3 weight = oslr->QueryColor(&info);
 
     /* Fire another ray */
-    if((info.out_ray_type & RAY_REFLECT) || (info.out_ray_type & RAY_TRANSMIT)){
+    if((info.out_ray_type & RAY_REFLECT) || (info.out_ray_type & RAY_TRANSMIT)) {
 
 	struct application new_ap;
 	RT_APPLICATION_INIT(&new_ap);
@@ -620,7 +620,7 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 	VMOVE(new_ap.a_ray.r_pt, info.out_ray.origin);
 
 	/* This next ray represents refraction */
-	if (info.out_ray_type & RAY_TRANSMIT){
+	if (info.out_ray_type & RAY_TRANSMIT) {
 
 	    /* Displace the hit point a little bit in the direction
 	       of the next ray */

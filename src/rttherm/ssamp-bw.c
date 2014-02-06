@@ -160,7 +160,7 @@ main(int argc, char **argv)
 
     /* Read spectrum definition */
     snprintf(spectrum_name, 100, "%s.spect", datafile_basename);
-    if (!bu_file_exists(spectrum_name, NULL)){
+    if (!bu_file_exists(spectrum_name, NULL)) {
 	bu_free(datafile_basename, "datafile_basename realpath");
 	bu_exit(EXIT_FAILURE, "Spectrum file [%s] does not exist\n", spectrum_name);
     }

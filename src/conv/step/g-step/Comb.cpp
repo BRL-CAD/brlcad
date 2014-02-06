@@ -130,7 +130,8 @@ _db_tree_get_child(union tree *tp) {
 /* Convenience function to get a comb child's directory pointer
  * when it the comb only has one child */
 struct directory *
-Comb_Get_Only_Child(struct directory *dp, struct rt_wdb *wdbp){
+Comb_Get_Only_Child(struct directory *dp, struct rt_wdb *wdbp)
+{
     struct rt_db_internal comb_intern;
     struct rt_comb_internal *comb;
     union tree *child;
@@ -168,7 +169,8 @@ Comb_Get_Only_Child(struct directory *dp, struct rt_wdb *wdbp){
 /* A "wrapping" combination is a combination that contains a single object
  * and does not apply a matrix to it */
 int
-Comb_Is_Wrapper(struct directory *dp, struct rt_wdb *wdbp){
+Comb_Is_Wrapper(struct directory *dp, struct rt_wdb *wdbp)
+{
     struct rt_db_internal comb_intern;
     struct rt_db_internal comb_child_intern;
     struct rt_comb_internal *comb;

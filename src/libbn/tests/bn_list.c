@@ -340,15 +340,15 @@ automatic_2d_test(double *double_x, double *double_y, int npoints)
     convert_points(double_x, int_x, npoints);
     convert_points(double_y, int_y, npoints);
 
-    if (!test_tp_i2list(int_x, int_y, npoints)){
+    if (!test_tp_i2list(int_x, int_y, npoints)) {
 	printf("tp_i2list test failed\n");
 	return 0;
     }
-    if (!test_tp_2list(double_x, double_y, npoints)){
+    if (!test_tp_2list(double_x, double_y, npoints)) {
 	printf("tp_2list test failed\n");
 	return 0;
     }
-    if (!test_tp_2mlist(double_x, double_y, npoints)){
+    if (!test_tp_2mlist(double_x, double_y, npoints)) {
 	printf("tp_2mlist test failed\n");
 	return 0;
     }
@@ -360,7 +360,7 @@ automatic_2d_test(double *double_x, double *double_y, int npoints)
 int
 automatic_3d_test(double *double_x, double *double_y, double *double_z, int npoints)
 {
-    if (!test_tp_3list(double_x, double_y, double_z, npoints)){
+    if (!test_tp_3list(double_x, double_y, double_z, npoints)) {
 	printf("tp_3list test failed\n");
 	return 0;
     }

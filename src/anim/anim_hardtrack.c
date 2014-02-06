@@ -349,12 +349,12 @@ main(int argc, char *argv[])
     MAT_IDN(m_axes);
     MAT_IDN(m_rev_axes);
 
-    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))){
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 	usage();
 	return 0;
     }
 
-    if (!get_args(argc, argv)){
+    if (!get_args(argc, argv)) {
 	usage();
 	return 0;
     }

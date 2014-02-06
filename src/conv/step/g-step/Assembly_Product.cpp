@@ -314,7 +314,7 @@ Add_Assembly_Product(struct directory *dp, struct db_i *dbip, struct bu_ptbl *ch
     rt_db_get_internal(&comb_intern, dp, dbip, bn_mat_identity, &rt_uniresource);
     RT_CK_DB_INTERNAL(&comb_intern);
     struct rt_comb_internal *comb = (struct rt_comb_internal *)(comb_intern.idb_ptr);
-    for (int j = (int)BU_PTBL_LEN(children) - 1; j >= 0; j--){
+    for (int j = (int)BU_PTBL_LEN(children) - 1; j >= 0; j--) {
 	STEPentity *orig_transform = Identity_AXIS2_PLACEMENT_3D(sc->registry, sc->instance_list);
 	STEPentity *curr_transform = NULL;
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(children, j);

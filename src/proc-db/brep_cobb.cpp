@@ -234,7 +234,8 @@ ON_CobbSphereFace(double rotation_x, double rotation_z)
 /* TODO - Need to find a more compact, efficient way to
  * do this - shouldn't need 24 3d curves... */
 ON_Brep *
-Cobb_Sphere(double UNUSED(radius), ON_3dPoint *UNUSED(origin)){
+Cobb_Sphere(double UNUSED(radius), ON_3dPoint *UNUSED(origin))
+{
     ON_Brep *b = ON_Brep::New();
 
     // Patch 1 of 6

@@ -186,11 +186,11 @@ main(int argc, char *argv[])
     int num_read;
     fastf_t temp[3], temp2[3], angle[3], quat[4], matrix[16];
 
-    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))){
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 	usage();
     }
 
-    if (!parse_args(argc, argv)){
+    if (!parse_args(argc, argv)) {
 	usage();
     }
 

@@ -138,7 +138,7 @@ int main(void)
 
     ret = test_bn_poly();
 
-    if( ret == 0){
+    if( ret == 0) {
 	bu_log("\nFunction computes correctly\n");
 
 	return ret;

@@ -887,7 +887,7 @@ NearSeam(const ON_Surface *surf,ON_2dPoint &pt, double tol = 0.0)
 {
     int rc = 0;
     int i;
-    for (i=0; i<2; i++){
+    for (i=0; i<2; i++) {
       if (!surf->IsClosed(i))
         continue;
       double p = (i) ? pt.y : pt.x;

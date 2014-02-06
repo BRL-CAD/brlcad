@@ -156,7 +156,8 @@ const struct bu_structparse rt_eto_parse[] = {
  * Calculate bounding RPP of elliptical torus
  */
 int
-rt_eto_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)){
+rt_eto_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol))
+{
     vect_t P, Nu, w1;	/* for RPP calculation */
     fastf_t f, eto_rc;
     struct rt_eto_internal *tip;

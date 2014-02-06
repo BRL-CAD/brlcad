@@ -836,10 +836,10 @@ do_frame(int framenumber)
 	    do_run(0, (1<<incr_level)*(1<<incr_level)-1);
 	}
     }
-    else if (full_incr_mode){
+    else if (full_incr_mode) {
 	/* Multiple frame buffer mode */
 	for(full_incr_sample = 1; full_incr_sample <= full_incr_nsamples;
-	    full_incr_sample++){
+	    full_incr_sample++) {
 	    if (full_incr_sample > 1) /* first sample was already initialized */
 		view_2init(&APP, framename);
 	    do_run(pix_start, pix_end);

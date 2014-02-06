@@ -80,7 +80,7 @@ main(int argc, char** argv)
 	return -1;
     }
 
-    if (db_dirbuild(dbip) < 0){
+    if (db_dirbuild(dbip) < 0) {
 	bu_log("ERROR: Unable to read from %s\n", argv[1]);
 	return -1;
     }

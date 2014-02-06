@@ -176,12 +176,12 @@ main (int argc, char *argv[])
     mat_t m_rot1, m_rot2, m_ans;
     int one_time, read_cen1, read_cen2, read_rot1, read_rot2;
 
-    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))){
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 	usage();
 	return 0;
     }
 
-    if (!get_args(argc, argv)){
+    if (!get_args(argc, argv)) {
 	usage();
 	return 0;
     }
