@@ -5609,7 +5609,7 @@ nmg_check_radial_angles(char *str, struct shell *s, const struct bn_tol *tol)
 		bu_log("start=%d, increasing = %d\n", start, increasing);
 		bu_log("\tfaces around eu %p\n", (void *)eu_start);
 		for (j=0; j<face_count; j++)
-		    bu_log("\t\tfu=%p, angle=%g\n", (void *)fus[j], angle[j]*180.0/M_PI);
+		    bu_log("\t\tfu=%p, angle=%g\n", (void *)fus[j], angle[j]*RAD2DEG);
 		bu_bomb("nmg_check_radial_angles(): angles not monotonically increasing or decreasing\n");
 	    }
 	}

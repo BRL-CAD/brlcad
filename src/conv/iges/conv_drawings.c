@@ -184,12 +184,12 @@ Note_to_vlist(int entno, struct bu_list *vhead)
 
 		bn_vlist_2string(vhead, &free_hd, one_char ,
 				 tmp_x, tmp_y, local_scale,
-				 (double)(rot_ang*180.0*M_1_PI));
+				 (double)(rot_ang*RAD2DEG));
 	    }
 	} else
 	    bn_vlist_2string(vhead, &free_hd, str ,
 			     (double)loc[X], (double)loc[Y], local_scale,
-			     (double)(rot_ang*180.0*M_1_PI));
+			     (double)(rot_ang*RAD2DEG));
 
 	bu_free(str, "Note_to_vlist: str");
     }

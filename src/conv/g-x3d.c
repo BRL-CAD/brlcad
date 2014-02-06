@@ -404,7 +404,7 @@ main(int argc, char **argv)
 		tol.dist_sq = tol.dist * tol.dist;
 		break;
 	    case 'n':		/* Surface normal tolerance. */
-		ttol.norm = atof(bu_optarg)*M_PI/180.0;
+		ttol.norm = atof(bu_optarg)*DEG2RAD;
 		ttol.rel = 0.0;
 		break;
 	    case 'o':		/* Output file name */
