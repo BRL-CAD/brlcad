@@ -1396,6 +1396,15 @@ typedef double fastf_t;
  */
 
 /**
+ * some handy literals for bit twiddling
+ */
+static const unsigned BITS_PER_BYTE     =  8;
+static const unsigned BITS_PER_HEXCHAR  =  4;
+static const unsigned HEXCHARS_PER_BYTE =  2;
+static const unsigned HEX_BASE          = 16;
+static const unsigned BINARY_BASE       =  2;
+
+/**
  * bitv_t should be a fast integer type for implementing bit vectors.
  *
  * On many machines, this is a 32-bit "long", but on some machines a
@@ -2895,6 +2904,36 @@ BU_EXPORT extern int bu_bitv_compare_equal2(const struct bu_bitv *, const struct
  * Make a copy of a bit vector
  */
 BU_EXPORT extern struct bu_bitv *bu_bitv_dup(const struct bu_bitv *bv);
+
+
+/**
+ * Convert a string of hex characters to an equivalent string of
+ * binary characters.
+ *
+ * The input hex string may have a prefix of '0x' or '0X' in which
+ * case the resulting binary string will be prefixed with '0b'.
+ *
+ * The input string is expected to represent an integral number of
+ * bytes but will have leading zeroes appended as necessary to fulfill
+ * that requirement.
+ *
+ */
+BU_EXPORT extern void bu_hexstr_to_binstr(const char *hexstr, struct bu_vls *b);
+
+
+/**
+ * Convert a string of binary characters to an equivalent string of
+ * hex characters.
+ *
+ * The input binary string may have a prefix of '0b' or '0B' in which
+ * case the resulting hex string will be prefixed with '0x'.
+ *
+ * The input string is expected to represent an integral number of
+ * bytes but will have leading zeroes appended as necessary to fulfill
+ * that requirement.
+ *
+ */
+BU_EXPORT extern void bu_binstr_to_hexstr(const char *binstr, struct bu_vls *h);
 
 
 /** @} */

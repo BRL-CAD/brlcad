@@ -30,9 +30,6 @@
 #include "bu.h"
 
 
-/* add a private literal which  is a candidate for a BU_* name */
-const unsigned BITS_PER_BYTE = 8;
-
 /**
  * Private 32-bit recursive reduction using "SIMD Within A Register"
  * (SWAR) to count the number of one bits in a given integer. The
@@ -629,6 +626,202 @@ bu_bitv_compare_equal2(const struct bu_bitv *bv1, const struct bu_bitv *bv2)
     }
 
     return 1;
+}
+
+
+void
+bu_binstr_to_hexstr(const char *bstr, struct bu_vls *h)
+{
+    struct bu_vls *b   = bu_vls_vlsinit();
+    struct bu_vls *tmp = bu_vls_vlsinit();
+    size_t len;
+    size_t i;
+    char abyte[BITS_PER_BYTE + 1];
+    int have_prefix = 0;
+
+    bu_vls_strcpy(b, bstr);
+    bu_vls_trimspace(b);
+    len = bu_vls_strlen(b);
+
+    /* check for '0b' or '0B' */
+    if (bu_vls_cstr(b)[0] == '0' && len >= 2) {
+	const char c1 = bu_vls_cstr(b)[1];
+	if (c1 == 'b' || c1 == 'B') {
+	    have_prefix = 1;
+	    bu_vls_nibble(b, 2);
+	    len = bu_vls_strlen(b);
+	}
+    }
+
+    /* eliminate non-binary characters used for user-spacing */
+    bu_vls_vlscatzap(tmp, b);
+    for (i = 0; i < len; ++i) {
+	const char c = bu_vls_cstr(tmp)[i];
+	if (c == '0' || c == '1')
+	    bu_vls_putc(b, c);
+    }
+    len = bu_vls_strlen(b);
+
+    /* check valid length, pad with leading zeroes if necessary to get
+     * an integral number of bytes */
+    if (len < BITS_PER_BYTE || len % BITS_PER_BYTE) {
+	size_t new_len, leading_zeroes;
+	bu_log("WARNING:  Incoming string length (%zu) not an integral number of bytes,\n", len);
+	bu_log("          padding with leading zeroes to ensure such.\n");
+	if (len < BITS_PER_BYTE)
+	    new_len = BITS_PER_BYTE;
+	else
+	    new_len = (len/BITS_PER_BYTE) * BITS_PER_BYTE + BITS_PER_BYTE;
+	leading_zeroes = new_len - len;
+	for (i = 0; i < leading_zeroes; ++i)
+	    bu_vls_prepend(b, "0");
+	len = bu_vls_strlen(b);
+    }
+
+    abyte[BITS_PER_BYTE] = '\0';
+
+    bu_vls_trunc(h, 0);
+    bu_vls_extend(h, len);
+    for (i = 0; i < len; /* i is incremented inside first loop below */) {
+	int j, k = BITS_PER_HEXCHAR;
+	unsigned long ulval;
+	/* prepare for error checking the next conversion */
+	char *endptr;
+	errno = 0;
+
+	/* get next eight binary digits (one byte) from string; note i
+	 * is incremented here */
+	for (j = 0; j < BITS_PER_BYTE; ++j) {
+	    abyte[j] = bu_vls_cstr(b)[i++];
+	}
+
+	/* convert into an unsigned long */
+	ulval = strtoul(abyte, (char **)&endptr, BINARY_BASE);
+	bu_log("DEBUG: abyte: '%s'; ulval: 0x%08x\n", abyte, ulval);
+
+	/* check for various errors (from 'man strol') */
+	if ((errno == ERANGE && (ulval == ULONG_MAX))
+	    || (errno != 0 && ulval == 0)) {
+	    bu_log("ERROR: strtoul: %s\n", strerror(errno));
+	    goto ERROR_RETURN;
+	}
+	if (endptr == abyte) {
+	    bu_log("ERROR: no digits were found in '%s'\n", abyte);
+	    goto ERROR_RETURN;
+	}
+	/* parsing was successful */
+
+	for (j = 0; j < HEXCHARS_PER_BYTE; ++j, k -= BITS_PER_HEXCHAR)
+	    bu_vls_printf(h, "%1lx", (ulval >> k) & 0xf);
+    }
+    bu_vls_putc(h, '\0');
+
+    if (have_prefix)
+	bu_vls_prepend(h, "0x");
+
+ERROR_RETURN:
+
+    bu_vls_free(b);
+    bu_vls_free(tmp);
+
+}
+
+
+void
+bu_hexstr_to_binstr(const char *hstr, struct bu_vls *b)
+{
+    struct bu_vls *h   = bu_vls_vlsinit();
+    struct bu_vls *tmp = bu_vls_vlsinit();
+    size_t len;
+    size_t i;
+    char abyte[HEXCHARS_PER_BYTE + 1];
+    int have_prefix = 0;
+
+    bu_vls_strcpy(h, hstr);
+    bu_vls_trimspace(h);
+    len = bu_vls_strlen(h);
+
+    /* check for '0x' or '0X' */
+    if (bu_vls_cstr(h)[0] == '0' && len >= 2) {
+	const char c1 = bu_vls_cstr(h)[1];
+	if (c1 == 'x' || c1 == 'X') {
+	    have_prefix = 1;
+	    bu_vls_nibble(h, 2);
+	    len = bu_vls_strlen(h);
+	}
+    }
+
+    /* eliminate non-hex characters used for user-spacing */
+    bu_vls_vlscatzap(tmp, h);
+    for (i = 0; i < len; ++i) {
+	const unsigned char c = bu_vls_cstr(tmp)[i];
+	if (isxdigit(c))
+	    bu_vls_putc(h, c);
+    }
+    len = bu_vls_strlen(h);
+
+    /* check valid length, pad with leading zeroes if necessary to get
+     * an integral number of bytes */
+    if (len < HEXCHARS_PER_BYTE || len % HEXCHARS_PER_BYTE) {
+	size_t new_len, leading_zeroes;
+	bu_log("WARNING:  Incoming string length (%zu) not an integral number of bytes,\n", len);
+	bu_log("          padding with leading zeroes to ensure such.\n");
+	if (len < HEXCHARS_PER_BYTE)
+	    new_len = HEXCHARS_PER_BYTE;
+	else
+	    new_len = (len/HEXCHARS_PER_BYTE) * HEXCHARS_PER_BYTE + HEXCHARS_PER_BYTE;
+	leading_zeroes = new_len - len;
+	for (i = 0; i < leading_zeroes; ++i)
+	    bu_vls_prepend(h, "0");
+	len = bu_vls_strlen(h);
+    }
+
+    abyte[HEXCHARS_PER_BYTE] = '\0';
+
+    bu_vls_trunc(b, 0);
+    bu_vls_extend(b, len * BITS_PER_HEXCHAR + (have_prefix ? 2 : 0));
+    for (i = 0; i < len; /* i is incremented inside first loop below */) {
+	size_t j, k = BITS_PER_BYTE;
+	unsigned long ulval;
+	/* prepare for error checking the next conversion */
+	char *endptr;
+	errno = 0;
+
+	/* get next two hex digits (one byte) from string; note i is
+	 * incremented here */
+	for (j = 0; j < HEXCHARS_PER_BYTE; ++j) {
+	    abyte[j] = bu_vls_cstr(h)[i++];
+	}
+
+	/* convert into an unsigned long */
+	ulval = strtoul(abyte, (char **)&endptr, HEX_BASE);
+	bu_log("DEBUG: abyte: '%s'; ulval: 0x%08x\n", abyte, ulval);
+
+	/* check for various errors (from 'man strol') */
+	if ((errno == ERANGE && (ulval == ULONG_MAX))
+	    || (errno != 0 && ulval == 0)) {
+	    bu_log("ERROR: strtoul: %s\n", strerror(errno));
+	    goto ERROR_RETURN;
+	}
+	if (endptr == abyte) {
+	    bu_log("ERROR: no digits were found in '%s'\n", abyte);
+	    goto ERROR_RETURN;
+	}
+	/* parsing was successful */
+
+	for (j = 0; j < BITS_PER_BYTE; ++j)
+	    bu_vls_printf(b, "%1lx", (ulval >> --k) & 0x00000001);
+    }
+    bu_vls_putc(b, '\0');
+
+    if (have_prefix)
+	bu_vls_prepend(b, "0b");
+
+ERROR_RETURN:
+
+    bu_vls_free(h);
+    bu_vls_free(tmp);
+
 }
 
 

@@ -64,6 +64,22 @@ add_test(bu_hex_to_bitv_test1 tester_bu_bitv 11 "00323130" "0123")
 add_test(bu_hex_to_bitv_test2 tester_bu_bitv 11       "30"    "0")
 add_test(bu_hex_to_bitv_test3 tester_bu_bitv 11      "303"     "") # XFAIL
 
+# args: function number, input hex string, expected binary string
+add_test(bu_hexstr_to_binstr_test1 tester_bu_bitv 12     "3"              "00000011")
+add_test(bu_hexstr_to_binstr_test2 tester_bu_bitv 12  "0x03"            "0b00000011")
+add_test(bu_hexstr_to_binstr_test3 tester_bu_bitv 12  "0x03|04" "0b0000001100000100")
+add_test(bu_hexstr_to_binstr_test4 tester_bu_bitv 12  "0x03_04" "0b0000001100000100")
+add_test(bu_hexstr_to_binstr_test5 tester_bu_bitv 12  "0x03 04" "0b0000001100000100")
+
+# args: function number, input binary string, expected hex string
+add_test(bu_binstr_to_hexstr_test1 tester_bu_bitv 13        " 0011"    "03")
+add_test(bu_binstr_to_hexstr_test2 tester_bu_bitv 13   "0b0000011 "  "0x03")
+add_test(bu_binstr_to_hexstr_test3 tester_bu_bitv 13   "0b000 0011"  "0x03")
+add_test(bu_binstr_to_hexstr_test4 tester_bu_bitv 13             ""    "00")
+add_test(bu_binstr_to_hexstr_test5 tester_bu_bitv 13           "0b"  "0x00")
+add_test(bu_binstr_to_hexstr_test6 tester_bu_bitv 13   "0b000_0011"  "0x03")
+add_test(bu_binstr_to_hexstr_test7 tester_bu_bitv 13   "0b000|0011"  "0x03")
+
 # some tests are expected to fail:
 set_tests_properties(
   bu_binary_to_bitv_07
@@ -77,3 +93,47 @@ set_tests_properties(
 
   PROPERTIES WILL_FAIL true
 )
+
+# # most tests (but not all) depend on the key test:
+# set_tests_properties(
+#   bu_binary_to_bitv2_01
+#   bu_binary_to_bitv2_02
+#   bu_binary_to_bitv_01
+#   bu_binary_to_bitv_02
+#   bu_binary_to_bitv_03
+#   bu_binary_to_bitv_04
+#   bu_binary_to_bitv_05
+#   bu_binary_to_bitv_06
+#   bu_binary_to_bitv_07
+#   bu_binary_to_bitv_08
+#   bu_binary_to_bitv_09
+#   bu_binary_to_bitv_10
+#   bu_bitv_and_test1
+#   bu_bitv_and_test2
+#   bu_bitv_compare_equal2_01
+#   bu_bitv_compare_equal2_02
+#   bu_bitv_compare_equal2_03
+#   bu_bitv_compare_equal2_04
+#   bu_bitv_compare_equal_01
+#   bu_bitv_compare_equal_02
+#   bu_bitv_compare_equal_03
+#   bu_bitv_compare_equal_04
+#   bu_bitv_or_test1
+#   bu_bitv_or_test2
+#   bu_bitv_shift
+#   bu_bitv_to_binary_01
+#   bu_bitv_to_binary_02
+#   bu_bitv_to_binary_03
+#   bu_bitv_to_binary_04
+#   bu_bitv_to_hex_test1
+#   bu_bitv_to_hex_test2
+#   bu_bitv_vls_test1
+#   bu_bitv_vls_test2
+#   bu_bitv_vls_test3
+#   bu_bitv_vls_test4
+#   bu_hex_to_bitv_test1
+#   bu_hex_to_bitv_test2
+#   bu_hex_to_bitv_test3
+#
+#   PROPERTIES DEPENDS <key test>
+# )
