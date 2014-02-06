@@ -422,10 +422,6 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
 		DB_FULL_PATH_SET_CUR_BOOL(scd->db_node->path, curr_bool);
 		state = traverse_func(comb_func, leaf_func, resp, client_data);
 		if (state == 1) {
-		    if ((int)scd->db_node->path->fp_len > scd->db_node->matching_len) {
-			scd->db_node->matching_len = scd->db_node->path->fp_len;
-			/*bu_log("matching_leaf: %s(%d)\n", db_path_to_string(db_node->path), db_node->matching_len);*/
-		    }
 		    DB_FULL_PATH_POP(scd->db_node->path);
 		    return 1;
 		} else {
@@ -531,52 +527,22 @@ db_fullpath_stateful_traverse(int (*comb_func) (genptr_t),
  * below the current object in the tree.
  */
 HIDDEN int
-f_below(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *wdbp, struct bu_ptbl *results)
+f_below(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct rt_wdb *wdbp, struct bu_ptbl *UNUSED(results))
 {
-    struct search_client_data_t scd;
-    struct db_node_t curr_node;
-    struct db_full_path belowpath;
-    struct rt_db_internal in;
-    struct rt_comb_internal *comb;
-    struct directory *dp;
+    int i = 0;
     int state = 0;
+    struct db_node_t curr_node;
+    struct bu_ptbl *full_paths = db_node->full_paths;
 
-    db_full_path_init(&belowpath);
-    db_dup_full_path(&belowpath, db_node->path);
-
-    dp = DB_FULL_PATH_CUR_DIR(db_node->path);
-    if (!dp)
-	return 0;
-
-    if (dp->d_flags & RT_DIR_COMB && !db_node->flat_search) {
-	if (rt_db_get_internal(&in, dp, dbip, NULL, wdbp->wdb_resp) < 0)
-	    return 0;
-
-	comb = (struct rt_comb_internal *)in.idb_ptr;
-
-        curr_node.path = &belowpath;
-	DB_FULL_PATH_SET_CUR_BOOL(curr_node.path, 2);
-	curr_node.matching_len = 0;
-
-	scd.dbip = dbip;
-	scd.wdbp = wdbp;
-	scd.results = results;
-	scd.db_node = &curr_node;
-	scd.plan = plan->bl_data[0];
-/*plan->bl_data[0];*/
-
-	state = db_fullpath_stateful_traverse_subtree(comb->tree, db_fullpath_stateful_traverse, find_execute_nested_plans_leaf, find_execute_nested_plans_leaf, wdbp->wdb_resp, (genptr_t *)&scd);
-
-	rt_db_free_internal(&in);
+    for (i = 0; i < (int)BU_PTBL_LEN(full_paths); i++) {
+	/* Check depth criteria by comparing to db_node->path - if OK, and test not already satisfied, execute plans */
+	curr_node.path = (struct db_full_path *)BU_PTBL_GET(full_paths, i);
+	curr_node.flat_search = 0;
+	curr_node.full_paths = full_paths;
+	state += find_execute_nested_plans(dbip, wdbp, NULL, &curr_node, plan->bl_data[0]);
     }
-    db_free_full_path(&belowpath);
-    if (state >= 1 && ((int)((curr_node.matching_len - (db_node->path->fp_len - db_node->orig_len)) - 1) >= plan->min_depth)
-	&& ((int)((curr_node.matching_len - (db_node->path->fp_len - db_node->orig_len)) - 1) <= plan->max_depth)) {
-	/*bu_log("(%d) f_below match: %s(%d): (%d) - %d; (%d, %d)\n", db_node->orig_len, db_path_to_string(db_node->path), db_node->path->fp_len, curr_node.matching_len, curr_node.matching_len - (db_node->path->fp_len - db_node->orig_len) - 1, plan->min_depth, plan->max_depth);*/
-	return 1;
-    } else {
-	return 0;
-    }
+
+    return 0;
 
 }
 
@@ -1449,9 +1415,11 @@ f_print(struct db_plan_t *UNUSED(plan), struct db_node_t *db_node, struct db_i *
 
     BU_ALLOC(new_entry, struct db_full_path);
 
-    db_full_path_init(new_entry);
-    db_dup_full_path(new_entry, (const struct db_full_path *)(db_node->path));
-    bu_ptbl_ins(results, (long *)new_entry);
+    if (results) {
+	db_full_path_init(new_entry);
+	db_dup_full_path(new_entry, (const struct db_full_path *)(db_node->path));
+	bu_ptbl_ins(results, (long *)new_entry);
+    }
     return 1;
 }
 
@@ -2306,7 +2274,6 @@ db_search_flat(const char *plan_string,
 		    db_add_node_to_full_path(curr_node.path, dp);
 		    /* by convention, the top level node is "unioned" into the global database */
 		    DB_FULL_PATH_SET_CUR_BOOL(curr_node.path, 2);
-		    curr_node.orig_len = curr_node.path->fp_len;
 		    curr_node.flat_search = 1;
 		    find_execute_plans(wdbp->dbip, wdbp, search_results, &curr_node, dbplan);
 		    DB_FULL_PATH_POP(curr_node.path);
@@ -2479,6 +2446,8 @@ db_search_path(const char *plan_string,
     /* by convention, the top level node is "unioned" into the global database */
     DB_FULL_PATH_SET_CUR_BOOL(start_path, 2);
 
+    /* Build a set of all full paths under the starting path, including the starting
+     * path itself */
     BU_ALLOC(full_paths, struct bu_ptbl);
     BU_PTBL_INIT(full_paths);
     bu_ptbl_ins(full_paths, (long *)start_path);
@@ -2486,8 +2455,7 @@ db_search_path(const char *plan_string,
     lcd.full_paths = full_paths;
     db_fullpath_list(start_path, wdbp->wdb_resp, (genptr_t *)&lcd);
 
-
-    /* Now, having built a list of all full paths of interest, run the
+    /* Now, having built the set of all full paths of interest, run the
      * plans on them to build the final results set.  In particular, rework
      * the -below option so that another tree walk is not needed - the
      * full path lists have enough information to make all determinations.
@@ -2497,15 +2465,14 @@ db_search_path(const char *plan_string,
     BU_PTBL_INIT(search_results);
     for (i = 0; i < (int)BU_PTBL_LEN(full_paths); i++) {
 	curr_node.path = (struct db_full_path *)BU_PTBL_GET(full_paths, i);
-	curr_node.orig_len = curr_node.path->fp_len;
 	curr_node.flat_search = 0;
+	curr_node.full_paths = full_paths;
 	find_execute_plans(wdbp->dbip, wdbp, search_results, &curr_node, dbplan);
     }
     db_free_search_tbl(full_paths);
 
 /*
     curr_node.path = start_path;
-    curr_node.orig_len = curr_node.path->fp_len;
     curr_node.flat_search = 0;
 
     scd.dbip = wdbp->dbip;

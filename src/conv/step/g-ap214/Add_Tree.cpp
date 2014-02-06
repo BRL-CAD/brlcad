@@ -167,6 +167,10 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
     //be handled the way such combs are handled in AP203, with any appropriate
     //modifications for AP214
 
+    const char *region_search = "-type region";
+    struct bu_ptbl *regions = db_search_path_obj(region_search, dp, wdbp);
+
+
     struct rt_db_internal comb_intern;
     sc->dbip = wdbp->dbip;
     rt_db_get_internal(&comb_intern, dp, sc->dbip, bn_mat_identity, &rt_uniresource);
