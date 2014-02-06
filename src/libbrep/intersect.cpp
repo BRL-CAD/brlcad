@@ -2788,21 +2788,33 @@ ON_Intersect(const ON_Surface *surfA,
 	    ON_SimpleArray<ON_X_EVENT> x_event;
 	    ON_CurveArray overlap2d;
 	    ON_Intersect(boundary, surf2, x_event, intersection_tolerance, overlap_tolerance, 0, 0, 0, &overlap2d);
+
+	    // stash surf1 points and surf2 parameters
 	    for (int k = 0; k < x_event.Count(); k++) {
 		ON_X_EVENT &event = x_event[k];
+
 		tmp_curvept.Append(event.m_A[0]);
-		ON_2dPoint iso_pt1, iso_pt2;
+		ptarray2.Append(ON_2dPoint(event.m_b[0], event.m_b[1]));
+
+		if (event.m_type == ON_X_EVENT::csx_overlap) {
+		    tmp_curvept.Append(event.m_A[1]);
+		    ptarray2.Append(ON_2dPoint(event.m_b[2], event.m_b[3]));
+		}
+	    }
+
+	    for (int k = 0; k < x_event.Count(); k++) {
+		ON_X_EVENT &event = x_event[k];
+
+		ON_2dPoint iso_pt1;
 		iso_pt1.x = knot_dir ? knot : event.m_a[0];
 		iso_pt1.y = knot_dir ? event.m_a[0] : knot;
 		ptarray1.Append(iso_pt1);
-		ptarray2.Append(ON_2dPoint(event.m_b[0], event.m_b[1]));
+
 		if (event.m_type == ON_X_EVENT::csx_overlap) {
-		    // Append the other end-point
-		    tmp_curvept.Append(event.m_A[1]);
+		    ON_2dPoint iso_pt2;
 		    iso_pt2.x = knot_dir ? knot : event.m_a[1];
 		    iso_pt2.y = knot_dir ? event.m_a[1] : knot;
 		    ptarray1.Append(iso_pt2);
-		    ptarray2.Append(ON_2dPoint(event.m_b[2], event.m_b[3]));
 		    // Get the overlap curve
 		    if (event.m_a[0] < event.m_a[1]) {
 			bool curve_on_overlap_boundary = false;
