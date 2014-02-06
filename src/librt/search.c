@@ -534,16 +534,20 @@ f_below(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, st
     struct db_node_t curr_node;
     struct bu_ptbl *full_paths = db_node->full_paths;
 
+    unsigned int f_path_len = db_node->path->fp_len;
+
     for (i = 0; i < (int)BU_PTBL_LEN(full_paths); i++) {
-	/* Check depth criteria by comparing to db_node->path - if OK, and test not already satisfied, execute plans */
-	curr_node.path = (struct db_full_path *)BU_PTBL_GET(full_paths, i);
-	curr_node.flat_search = 0;
-	curr_node.full_paths = full_paths;
-	state += find_execute_nested_plans(dbip, wdbp, NULL, &curr_node, plan->bl_data[0]);
+	struct db_full_path *this_path =  (struct db_full_path *)BU_PTBL_GET(full_paths, i);
+	/* Check depth criteria by comparing to db_node->path - if OK execute nested plans */
+	if (this_path->fp_len > f_path_len && db_full_path_subset(this_path, db_node->path, 0)) {;
+	    curr_node.path = this_path;
+	    curr_node.flat_search = 0;
+	    curr_node.full_paths = full_paths;
+	    state += find_execute_nested_plans(dbip, wdbp, NULL, &curr_node, plan->bl_data[0]);
+	}
     }
 
-    return 0;
-
+    return (state > 0) ? 1 : 0;
 }
 
 
