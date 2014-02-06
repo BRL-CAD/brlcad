@@ -2392,7 +2392,7 @@ rt_arb_find_e_nearest_pt2(int *edge,
 			  const struct rt_db_internal *ip,
 			  const point_t pt2,
 			  const mat_t mat,
-			  const fastf_t ptol)
+			  fastf_t ptol)
 {
     int i;
     fastf_t dist=MAX_FASTF, tmp_dist;
