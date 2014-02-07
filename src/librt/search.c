@@ -979,6 +979,18 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
 	    break;
     }
 
+    /* Match anything that doesn't define a 2D or 3D shape - unfortunately, this list will have to
+     * be updated manually unless/until some functionality is added to generate it */
+    if (!bu_fnmatch(plan->type_data, "shape", 0) &&
+	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_COMBINATION &&
+	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_ANNOTATION &&
+	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_CONSTRAINT &&
+	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_GRIP &&
+	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_JOINT
+       ) {
+	type_match = 1;
+    }
+
     rt_db_free_internal(&intern);
     return type_match;
 }

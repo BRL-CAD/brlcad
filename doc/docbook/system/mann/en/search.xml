@@ -390,6 +390,15 @@
 			</tgroup>
 		  </table>
 		</para>
+		<para></para>
+		<para>
+
+		  As a convenience, the <option>-type</option> option will also recognize
+		  the pattern <emphasis remap="B">shape</emphasis>, which will match any
+		  object that is <emphasis remap="I">not</emphasis> a combination, region,
+		  annotation, constraint, grip or joint.
+
+		</para>
 	  </listitem>
 	</varlistentry>
   </variablelist>
