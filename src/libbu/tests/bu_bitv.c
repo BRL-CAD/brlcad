@@ -353,6 +353,10 @@ test_bu_bitv_and(int argc, char **argv)
 	bu_exit(1, "ERROR: input format: function_num function_test_args [%s]\n", argv[0]);
     }
 
+    input1   = argv[2];
+    input2   = argv[3];
+    expected = argv[4];
+
     a = bu_vls_vlsinit();
     b = bu_vls_vlsinit();
 
