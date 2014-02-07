@@ -70,6 +70,14 @@
 		</para>
 	  </listitem>
 	</varlistentry>
+	<varlistentry>
+	  <term><emphasis remap="B" role="bold">-v</emphasis></term>
+	  <listitem>
+		<para>
+		  Prints extra information in full path results.
+		</para>
+	  </listitem>
+	</varlistentry>
   </variablelist>
 
 </refsection>

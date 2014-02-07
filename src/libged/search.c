@@ -204,10 +204,11 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     int plan_found = 0;
     int path_found = 0;
     int all_local = 1;
+    int print_verbose_info = 0;
     struct bu_vls argvls = BU_VLS_INIT_ZERO;
     struct bu_vls search_string = BU_VLS_INIT_ZERO;
     struct bu_ptbl *search_set;
-    const char *usage = "[-a] [-Q] [-h] [path] [expressions...]\n";
+    const char *usage = "[-a] [-D] [-Q] [-h] [path] [expressions...]\n";
     /* COPY argv_orig to argv; */
     char **argv = NULL;
 
@@ -227,11 +228,16 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     /* Options have to come before paths and search expressions, so don't look
      * any further than the max possible option count */
     bu_optind = 1;
-    while ((bu_optind < (optcnt + 1)) && ((c = bu_getopt(argc, (char * const *)argv_orig, "aQh?")) != -1)) {
+    while ((bu_optind < (optcnt + 1)) && ((c = bu_getopt(argc, (char * const *)argv_orig, "aQhv?")) != -1)) {
 	switch(c) {
 	    case 'a':
 		aflag = 1;
 		break;
+	    case 'v':
+		print_verbose_info |= DB_FP_PRINT_BOOL;
+		print_verbose_info |= DB_FP_PRINT_TYPE;
+		break;
+
 	    case 'Q':
 		wflag = 1;
 		break;
@@ -408,15 +414,16 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		    while (path_cnt < search->path_cnt) {
 			struct bu_ptbl *uniq_db_objs;
 			struct bu_ptbl *search_results;
+			struct bu_vls fullpath_string = BU_VLS_INIT_ZERO;
 			switch(search->search_type) {
 			    case 0:
 				search_results = db_search_path(bu_vls_addr(&search_string), curr_path, gedp->ged_wdbp);
 				if (search_results) {
 				    for (j = (int)BU_PTBL_LEN(search_results) - 1; j >= 0; j--) {
 					struct db_full_path *dfptr = (struct db_full_path *)BU_PTBL_GET(search_results, j);
-					char *full_path = db_path_to_string(dfptr);
-					bu_vls_printf(gedp->ged_result_str, "%s\n", full_path);
-					bu_free(full_path, "free string from db_path_to_string");
+					bu_vls_trunc(&fullpath_string, 0);
+					db_fullpath_to_vls(&fullpath_string, dfptr, gedp->ged_wdbp->dbip, &(gedp->ged_wdbp->wdb_tol), print_verbose_info);
+					bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&fullpath_string));
 				    }
 				    db_free_search_tbl(search_results);
 				}
@@ -434,6 +441,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 				bu_log("Warning - ignoring unknown search type %d\n", search->search_type);
 				break;
 			}
+			bu_vls_free(&fullpath_string);
 			path_cnt++;
 			curr_path = search->paths[path_cnt];
 		    }

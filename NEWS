@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2014-XX-XX  Release 7.XX.XX                                    ---
 ----------------------------------------------------------------------
 
+* added -v verbose output option to MGED 'search' command - Cliff Yapp
 * fixed crash of extrude with special case bezier curves - huskmate13
 * improved performance of 'terrain' & numerous shaders - Sean Morrison
 * new manual pages for rtexample and brep_simple - Shardul Chiplunkar
