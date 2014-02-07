@@ -187,7 +187,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
     struct bu_ptbl *assemblies = db_search_path_obj(assembly_search, dp, wdbp);
 
     /* Assembly validity check #1 - solids in assembly bools */
-    const char *valid_assembly_solid_search = "( -above ( ! -type comb ) -or ( ! -type comb ) -or ( -below=1 ! -type comb )";
+    const char *valid_assembly_solid_search = "( -above ! -type comb ) -or ( ! -type comb ) -or ( -below=1 ! -type comb )";
     struct bu_ptbl *problem_solid_assemblies= db_search_path_obj(valid_assembly_solid_search, dp, wdbp);
     if(BU_PTBL_LEN(problem_solid_assemblies) > 0) {
 	/* TODO - print problem paths */
