@@ -148,7 +148,7 @@ random_hex_or_binary_string(struct bu_vls *v, const hex_bin_enum_t typ, const in
 {
     const char hex_chars[] = "0123456789abcdef";
     const char bin_chars[] = "01";
-    const int nstrchars = (typ & HEX) ? nbytes * 2 : nbytes * 8;
+    const int nstrchars = (typ & HEX) ? nbytes * HEXCHARS_PER_BYTE : nbytes * BITS_PER_BYTE;
     const char *chars = (typ & HEX) ? hex_chars : bin_chars;
     const int nchars = (typ & HEX) ? sizeof(hex_chars)/sizeof(char) : sizeof(bin_chars)/sizeof(char);
     int i;
