@@ -43,7 +43,7 @@ bu_get_urandom_number()
 
     ssize_t result = read(rdata, (char*)&rnum, sizeof(rnum));
     if (result < 0) {
-	bu_log(1, "ERROR:  Unable to read '/dev/urandom'.\n");
+	bu_log("ERROR:  Unable to read '/dev/urandom'.\n");
 	bu_exit(1, NULL);
     }
     close(rdata);
