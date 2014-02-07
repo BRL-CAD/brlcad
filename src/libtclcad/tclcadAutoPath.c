@@ -32,24 +32,8 @@
 #include <string.h>
 
 #include "tcl.h"
-
 #ifdef HAVE_TK
 #  include "tk.h"
-#endif
-
-#ifndef ITCL_VERSION
-#  include "itcl.h"
-#endif
-
-#ifdef HAVE_TK
-# ifndef ITK_VERSION
-#  include "itk.h"
-# endif
-#endif
-
-/* incrTcl prior to 3.3 doesn't provide ITK_VERSION */
-#ifndef ITK_VERSION
-#  define ITK_VERSION ITCL_VERSION
 #endif
 
 #include "bu.h"
@@ -135,7 +119,7 @@ join_path(struct bu_vls *path_list, ...)
  * BRLCAD_ROOT/lib/tclTCL_VERSION/init.tcl
  * BRLCAD_ROOT/lib/tclTK_VERSION/tk.tcl
  * BRLCAD_ROOT/lib/itclITCL_VERSION/itcl.tcl
- * BRLCAD_ROOT/lib/itkITK_VERSION/itk.tcl
+ * BRLCAD_ROOT/lib/itkITCL_VERSION/itk.tcl
  * BRLCAD_ROOT/lib/iwidgetsIWIDGETS_VERSION/iwidgets.tcl
  * BRLCAD_DATA/tclscripts/pkgIndex.tcl and subdirs
  *
@@ -196,7 +180,7 @@ tclcad_auto_path(Tcl_Interp *interp)
     bu_vls_printf(&itcl, "itcl%s", ITCL_VERSION);
 #ifdef HAVE_TK
     bu_vls_printf(&tk, "tk%s", TK_VERSION);
-    bu_vls_printf(&itk, "itk%s", ITK_VERSION);
+    bu_vls_printf(&itk, "itk%s", ITCL_VERSION);
     bu_vls_printf(&iwidgets, "iwidgets%s", IWIDGETS_VERSION);
 #endif
 
