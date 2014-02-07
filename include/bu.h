@@ -1398,11 +1398,11 @@ typedef double fastf_t;
 /**
  * some handy literals for bit twiddling
  */
-static const unsigned BITS_PER_BYTE     =  8;
-static const unsigned BITS_PER_HEXCHAR  =  4;
-static const unsigned HEXCHARS_PER_BYTE =  2;
-static const unsigned HEX_BASE          = 16;
-static const unsigned BINARY_BASE       =  2;
+#define BITS_PER_BYTE      8
+#define BITS_PER_HEXCHAR   4
+#define HEXCHARS_PER_BYTE  2
+#define HEX_BASE          16
+#define BINARY_BASE        2
 
 /**
  * bitv_t should be a fast integer type for implementing bit vectors.
