@@ -2721,7 +2721,9 @@ nmg_fcut_face(struct nmg_ray_state *rs)
 	 */
 	VAVERAGE(mid_pt, vu1->v_p->vg_p->coord, vu2->v_p->vg_p->coord)
 	    nmg_class = nmg_class_pt_fu_except(mid_pt, rs->fu1, (struct loopuse *)NULL,
-					   (void (*)())NULL, (void (*)())NULL, (char *)NULL, 0, 1, rs->tol);
+	    				   (void (*)(struct edgeuse *, point_t, const char *))NULL,
+					   (void (*)(struct vertexuse *, point_t, const char *))NULL,
+					   (const char *)NULL, 0, 1, rs->tol);
 
 	if (RTG.NMG_debug&DEBUG_FCUT) {
 	    bu_log("vu1=%p (%g %g %g), vu2=%p (%g %g %g)\n",
@@ -2738,7 +2740,9 @@ nmg_fcut_face(struct nmg_ray_state *rs)
 	 * may be outside fu2, and we don't want to cut fu1 here.
 	 */
 	nmg_class = nmg_class_pt_fu_except(mid_pt, rs->fu2, (struct loopuse *)NULL,
-				       (void (*)())NULL, (void (*)())NULL, (char *)NULL, 0, 0, rs->tol);
+	    			       (void (*)(struct edgeuse *, point_t, const char *))NULL,
+				       (void (*)(struct vertexuse *, point_t, const char *))NULL,
+				       (char *)NULL, 0, 0, rs->tol);
 
 	if (nmg_class == NMG_CLASS_AoutB)
 	    continue;

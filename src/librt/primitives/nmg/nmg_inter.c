@@ -911,7 +911,9 @@ nmg_break_3edge_at_plane(const fastf_t *hit_pt, struct faceuse *fu2, struct nmg_
 	int nmg_class;
 	nmg_class = nmg_class_pt_fu_except(hit_pt, fu2,
 				       (struct loopuse *)NULL,
-				       (void (*)())NULL, (void (*)())NULL, (char *)NULL, 0,
+				       (void (*)(struct edgeuse *, point_t, const char *))NULL,
+				       (void (*)(struct vertexuse *, point_t, const char *))NULL,
+				       (const char *)NULL, 0,
 				       0, &is->tol);
 
 	eu1forw = nmg_ebreaker((struct vertex *)NULL, eu1, &is->tol);
@@ -3481,12 +3483,16 @@ nmg_is_vertex_on_inter(struct vertex *v, struct faceuse *fu1, struct faceuse *fu
 
     /* check if it is within fu's */
     code = nmg_class_pt_fu_except(vg->coord, fu1, (struct loopuse *)NULL,
-				  (void (*)())NULL, (void (*)())NULL, (char *)NULL, 0, 0, &is->tol);
+					(void (*)(struct edgeuse *, point_t, const char *))NULL,
+					(void (*)(struct vertexuse *, point_t, const char *))NULL, 
+					(const char *)NULL, 0, 0, &is->tol);
     if (code != NMG_CLASS_AinB)
 	return 0;
 
     code = nmg_class_pt_fu_except(vg->coord, fu2, (struct loopuse *)NULL,
-				  (void (*)())NULL, (void (*)())NULL, (char *)NULL, 0, 0, &is->tol);
+					(void (*)(struct edgeuse *, point_t, const char *))NULL,
+					(void (*)(struct vertexuse *, point_t, const char *))NULL, 
+					(const char *)NULL, 0, 0, &is->tol);
     if (code != NMG_CLASS_AinB)
 	return 0;
 
