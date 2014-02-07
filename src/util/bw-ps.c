@@ -132,7 +132,7 @@ main(int argc, char **argv)
     FILE *ofp = stdout;
     size_t num = 0;
     size_t scans_per_patch, bytes_per_patch;
-    size_t y;
+    ssize_t y;
 
     outwidth = outheight = DEFAULT_SIZE;
 
@@ -155,7 +155,7 @@ main(int argc, char **argv)
 	scans_per_patch = height;
     bytes_per_patch = scans_per_patch * width;
 
-    for (y = 0; y < height; y += scans_per_patch) {
+    for (y = 0; y < (ssize_t)height; y += scans_per_patch) {
 	/* start a patch */
 	fprintf(ofp, "save\n");
 	fprintf(ofp, "%lu %lu 8 [%lu 0 0 %lu 0 %lu] {<\n ",

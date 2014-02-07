@@ -190,7 +190,7 @@ main(int argc, char **argv)
 	else
 	    return 1;
     } else {
-	float xval, yval;
+	double xval, yval;
 	unsigned long len;
 	/* Get info */
 	printf("Scanline length in input file: ");

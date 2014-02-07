@@ -215,7 +215,7 @@ main(int argc, char **argv)
     FILE *ofp = stdout;
     size_t num = 0;
     size_t scans_per_patch, bytes_per_patch;
-    size_t y;
+    ssize_t y;
 
     if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)) )
 	printusage();
@@ -238,7 +238,7 @@ main(int argc, char **argv)
 	scans_per_patch = height;
     bytes_per_patch = scans_per_patch * (width*3);
 
-    for (y = 0; y < height; y += scans_per_patch) {
+    for (y = 0; y < (ssize_t)height; y += scans_per_patch) {
 	if (y + scans_per_patch > height) {
 	    scans_per_patch = height-y;
 	    bytes_per_patch = scans_per_patch * (width*3);
