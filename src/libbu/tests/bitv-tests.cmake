@@ -52,7 +52,7 @@ add_test(bu_bitv_or_test2 tester_bu_bitv 7     "ab00"     "1200"     "bb00")
 # args: function number
 add_test(bu_bitv_shift tester_bu_bitv 8)
 
-# args: function number, input char string, expected hex string
+# args: function number, input char string, expected bitv vls dump
 add_test(bu_bitv_vls_test1 tester_bu_bitv 9 "00000000"   "()")
 add_test(bu_bitv_vls_test2 tester_bu_bitv 9 "f0f0f0f0"   "(4, 5, 6, 7, 12, 13, 14, 15, 20, 21, 22, 23, 28, 29, 30, 31)")
 add_test(bu_bitv_vls_test3 tester_bu_bitv 9 "f0f0f0f1"   "(0, 4, 5, 6, 7, 12, 13, 14, 15, 20, 21, 22, 23, 28, 29, 30, 31)")
@@ -62,11 +62,10 @@ add_test(bu_bitv_vls_test4 tester_bu_bitv 9 "01f0f0f0f0" "(4, 5, 6, 7, 12, 13, 1
 add_test(bu_bitv_to_hex_test1 tester_bu_bitv 10 "0123" "00323130" 32)
 add_test(bu_bitv_to_hex_test2 tester_bu_bitv 10   "12"     "0031" 16)
 
-# FIXME: these tests are shaky!!
-# args: function number, input hex string, expected char string
-add_test(bu_hex_to_bitv_test1 tester_bu_bitv 11 "00323130" "0123")
-add_test(bu_hex_to_bitv_test2 tester_bu_bitv 11       "30"    "0")
-add_test(bu_hex_to_bitv_test3 tester_bu_bitv 11      "303"     "") # XFAIL
+# args: function number, input hex string, expected bitv vls dump
+add_test(bu_hex_to_bitv_test1 tester_bu_bitv 11 "00323130" "(4, 5, 8, 12, 13, 17, 20, 21)")
+add_test(bu_hex_to_bitv_test2 tester_bu_bitv 11       "30" "(4, 5)")
+add_test(bu_hex_to_bitv_test3 tester_bu_bitv 11         "" "()") # XFAIL
 
 # args: function number, input hex string, expected binary string
 add_test(bu_hexstr_to_binstr_test1 tester_bu_bitv 12     "3"              "00000011")
