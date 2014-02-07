@@ -167,6 +167,42 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
     //be handled the way such combs are handled in AP203, with any appropriate
     //modifications for AP214
 
+    /* Once we have the list of assemblies, search for a variety of db problems - be sure
+     * there are no non-union booleans above assembly comb, make sure there aren't any stray
+     * solids floating around in assembly boolean structures, and look for nested regions. 
+     * (The first two tests are the real reason
+     * we need a full list of all paths instead of just the unique set of assembly
+     * combs - we generate that *after* these results have been vetted) */
+
+    const char *no_nonsub_region_below_region_search = "-type region -above -type region ! -bool -";
+    struct bu_ptbl *problem_regions = db_search_path_obj(no_nonsub_region_below_region_search, dp, wdbp);
+
+    if(BU_PTBL_LEN(problem_regions) > 0) {
+	/* TODO - print problem paths */
+	bu_exit(1, "nested regions");
+    }
+
+    /* Get the list of assembly objects */
+    const char *assembly_search = "-below -type region ! -type region";
+    struct bu_ptbl *assemblies = db_search_path_obj(assembly_search, dp, wdbp);
+
+    /* Assembly validity check #1 - solids in assembly bools */
+    const char *valid_assembly_solid_search = "( -above ( ! -type comb ) -or ( ! -type comb ) -or ( -below=1 ! -type comb )";
+    struct bu_ptbl *problem_solid_assemblies= db_search_path_obj(valid_assembly_solid_search, dp, wdbp);
+    if(BU_PTBL_LEN(problem_solid_assemblies) > 0) {
+	/* TODO - print problem paths */
+	bu_exit(1, "assembly solid issues");
+    }
+
+    /* Assembly validity check #2 - subtractions or intersections in assembly bools */
+    const char *valid_assembly_bool_search = "( -above -bool - -or -above -bool + ) -or ( -bool - -or -bool + ) -or ( -below=1 -bool - -or -below=1 -bool + )";
+    struct bu_ptbl *problem_bool_assemblies= db_search_path_obj(valid_assembly_bool_search, dp, wdbp);
+    if(BU_PTBL_LEN(problem_bool_assemblies) > 0) {
+	/* TODO - print problem paths */
+	bu_exit(1, "assembly bool issues");
+    }
+
+
     const char *region_search = "-type region";
     struct bu_ptbl *regions = db_search_path_obj(region_search, dp, wdbp);
 
