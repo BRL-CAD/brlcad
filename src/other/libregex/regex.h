@@ -43,11 +43,7 @@
 #include <stddef.h>
 
 #if !defined(ssize_t)
-#  if defined(_WIN32)
-     typedef SSIZE_T ssize_t;
-#  else
-     typedef ptrdiff_t ssize_t;
-#  endif
+   typedef ptrdiff_t ssize_t;
 #  define HAVE_SSIZE_T 1
 #endif
 
