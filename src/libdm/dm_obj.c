@@ -2882,7 +2882,7 @@ dmo_getDrawLabelsHook_tcl(void *clientData, int argc, const char **argv)
 HIDDEN int
 dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
 {
-    void *hook;
+    int (*hook)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData);
     void *clientData;
 
     if (!dmop || !dmop->interp)
@@ -2897,7 +2897,7 @@ dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
 	return TCL_ERROR;
     }
 
-    if (sscanf(argv[1], "%p", &hook) != 1) {
+    if (sscanf(argv[1], "%p", (void **)((unsigned char *)&hook)) != 1) {
 	Tcl_DString ds;
 
 	Tcl_DStringInit(&ds);
@@ -2926,7 +2926,7 @@ dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
     /* FIXME: standard prohibits casting between function pointers and
      * void *.  find a better way.
      */
-    dmop->dmo_drawLabelsHook = (int (*)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData))hook;
+    dmop->dmo_drawLabelsHook = hook;
     dmop->dmo_drawLabelsHookClientData = clientData;
 
     return TCL_OK;
