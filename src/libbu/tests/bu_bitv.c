@@ -29,6 +29,92 @@
 
 
 static int
+test_bu_bitv_master()
+{
+    /*
+     * This tests a round trip capability to
+     *
+     * 1. a. Get a random hex nine-byte string and convert it to a bitv.
+     *    b. Convert the bitv to a hex string.
+     *    c. Compare the two hex strings successfully.
+     * 2. a. Get a random binary nine-byte string and convert it to a bitv.
+     *    b. Convert the bitv to a binary string.
+     *    c. Compare the two binary strings successfully.
+     */
+    struct bu_vls *rand_hex_str = bu_vls_vlsinit();
+    struct bu_vls *rand_bin_str = bu_vls_vlsinit();
+    struct bu_vls *bv2hex_str   = bu_vls_vlsinit();
+    struct bu_vls *bv2bin_str   = bu_vls_vlsinit();
+    struct bu_bitv *bv_rhs;
+    struct bu_bitv *bv_rbs;
+    int test_results = CTEST_FAIL;
+    int thex, tbin;
+
+    /* get the random strings */
+    random_hex_or_binary_string(rand_hex_str, HEX_RAW, 9);
+    random_hex_or_binary_string(rand_bin_str, BINARY, 9);
+
+    /* convert to bitvs */
+    bv_rhs = bu_hex_to_bitv(bu_vls_cstr(rand_hex_str));
+    bv_rbs = bu_binary_to_bitv(bu_vls_cstr(rand_bin_str));
+
+    /* check for failures */
+    if (bv_rhs == NULL) {
+	bu_log("\nERROR: NULL from bu_hex_to_bitv.");
+	test_results = CTEST_FAIL;
+	goto ERROR_RETURN;
+    }
+    if (bv_rbs == NULL) {
+	bu_log("\nERROR: NULL from bu_binary_to_bitv.");
+	test_results = CTEST_FAIL;
+	goto ERROR_RETURN;
+    }
+
+
+    /* bitvs back to strings */
+    bu_bitv_to_hex(bv2hex_str, bv_rhs);
+    bu_bitv_to_binary(bv2bin_str, bv_rbs);
+
+    /* finally, the comparisons (not case sensitive) */
+    thex = BU_STR_EQUIV(bu_vls_cstr(rand_hex_str), bu_vls_cstr(bv2hex_str));
+    tbin = BU_STR_EQUIV(bu_vls_cstr(rand_bin_str), bu_vls_cstr(bv2bin_str));
+
+    if (thex) {
+	printf("\nbu_hex_bitv_master PASSED");
+    } else {
+	printf("\nbu_hex_bitv_master FAILED");
+    }
+    printf("\n  Input: '%s' Output: '%s'", bu_vls_cstr(rand_hex_str), bu_vls_cstr(bv2hex_str));
+
+    if (tbin) {
+	printf("\nbu_bin_bitv_master PASSED");
+    } else {
+	printf("\nbu_bin_bitv_master FAILED");
+    }
+    printf("\n  Input: '%s' Output: '%s'", bu_vls_cstr(rand_bin_str), bu_vls_cstr(bv2bin_str));
+
+    /* both tests must pass for success */
+    if (thex && tbin)
+	test_results = CTEST_PASS;
+    else
+	test_results = CTEST_FAIL;
+
+ERROR_RETURN:
+
+    if (bv_rhs)
+	bu_bitv_free(bv_rhs);
+    if (bv_rbs)
+	bu_bitv_free(bv_rbs);
+    bu_vls_free(rand_hex_str);
+    bu_vls_free(rand_bin_str);
+    bu_vls_free(bv2hex_str);
+    bu_vls_free(bv2bin_str);
+
+    return test_results;
+}
+
+
+static int
 test_bu_hex_to_bitv(int argc, char **argv)
 {
     /*         argv[1]    argv[2]            argv[3]
@@ -266,10 +352,6 @@ test_bu_bitv_and(int argc, char **argv)
     if (argc < 5) {
 	bu_exit(1, "ERROR: input format: function_num function_test_args [%s]\n", argv[0]);
     }
-
-    input1   = argv[2];
-    input2   = argv[3];
-    expected = argv[4];
 
     a = bu_vls_vlsinit();
     b = bu_vls_vlsinit();
@@ -667,6 +749,9 @@ main(int argc, char **argv)
     sscanf(argv[1], "%d", &function_num);
 
     switch (function_num) {
+        case 0:
+	    return test_bu_bitv_master();
+	    break;
         case 1:
 	    return test_bu_binary_to_bitv(argc, argv);
 	    break;

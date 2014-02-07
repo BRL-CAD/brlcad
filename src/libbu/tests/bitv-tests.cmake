@@ -3,6 +3,10 @@ BRLCAD_ADDLIB(libbu_tests "test_funcs.c" libbu NO_INSTALL)
 
 BRLCAD_ADDEXEC(tester_bu_bitv bu_bitv.c "libbu;libbu_tests" NO_INSTALL)
 
+# The master to/from bitv test
+# args: function number
+add_test(bu_bitv_master tester_bu_bitv 0)
+
 # args: function number, binary string, expected bitv value in hex
 add_test(bu_binary_to_bitv_01 tester_bu_bitv  1 "0b0101"          0x5   )
 add_test(bu_binary_to_bitv_02 tester_bu_bitv  1 "0B0101"          0x5   )
@@ -93,47 +97,3 @@ set_tests_properties(
 
   PROPERTIES WILL_FAIL true
 )
-
-# # most tests (but not all) depend on the key test:
-# set_tests_properties(
-#   bu_binary_to_bitv2_01
-#   bu_binary_to_bitv2_02
-#   bu_binary_to_bitv_01
-#   bu_binary_to_bitv_02
-#   bu_binary_to_bitv_03
-#   bu_binary_to_bitv_04
-#   bu_binary_to_bitv_05
-#   bu_binary_to_bitv_06
-#   bu_binary_to_bitv_07
-#   bu_binary_to_bitv_08
-#   bu_binary_to_bitv_09
-#   bu_binary_to_bitv_10
-#   bu_bitv_and_test1
-#   bu_bitv_and_test2
-#   bu_bitv_compare_equal2_01
-#   bu_bitv_compare_equal2_02
-#   bu_bitv_compare_equal2_03
-#   bu_bitv_compare_equal2_04
-#   bu_bitv_compare_equal_01
-#   bu_bitv_compare_equal_02
-#   bu_bitv_compare_equal_03
-#   bu_bitv_compare_equal_04
-#   bu_bitv_or_test1
-#   bu_bitv_or_test2
-#   bu_bitv_shift
-#   bu_bitv_to_binary_01
-#   bu_bitv_to_binary_02
-#   bu_bitv_to_binary_03
-#   bu_bitv_to_binary_04
-#   bu_bitv_to_hex_test1
-#   bu_bitv_to_hex_test2
-#   bu_bitv_vls_test1
-#   bu_bitv_vls_test2
-#   bu_bitv_vls_test3
-#   bu_bitv_vls_test4
-#   bu_hex_to_bitv_test1
-#   bu_hex_to_bitv_test2
-#   bu_hex_to_bitv_test3
-#
-#   PROPERTIES DEPENDS <key test>
-# )

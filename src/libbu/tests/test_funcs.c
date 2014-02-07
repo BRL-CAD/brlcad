@@ -146,20 +146,25 @@ dump_bitv(const struct bu_bitv *b)
 void
 random_hex_or_binary_string(struct bu_vls *v, const hex_bin_enum_t typ, const int nbytes)
 {
-    const char hex_chars[] = "01234567890abcde";
+    const char hex_chars[] = "0123456789abcdef";
     const char bin_chars[] = "01";
-    const int nstrchars = (typ & 0x0001) ? nbytes * 2 : nbytes * 8;
-    const char *chars = (typ & 0x0001) ? hex_chars : bin_chars;
-    const int nchars = (typ & 0x0001) ? sizeof(hex_chars)/sizeof(char) : sizeof(bin_chars)/sizeof(char);
+    const int nstrchars = (typ & HEX) ? nbytes * 2 : nbytes * 8;
+    const char *chars = (typ & HEX) ? hex_chars : bin_chars;
+    const int nchars = (typ & HEX) ? sizeof(hex_chars)/sizeof(char) : sizeof(bin_chars)/sizeof(char);
     int i;
+    long int seed;
+
+    /* get a random seed from system entropy to seed "random()" */
+    seed = bu_get_urandom_number();
+    srandom(seed);
 
     bu_vls_trunc(v, 0);
     bu_vls_extend(v, nchars);
     for (i = 0; i < nstrchars; ++i) {
 	long int r = random();
-	int n = r ? (int)(r % nchars) : 0;
+	int n = r ? (int)(r % (nchars - 1)) : 0;
 	char c = chars[n];
-	bu_vls_printf(v, "%c", c);
+	bu_vls_putc(v, c);
     }
     bu_vls_strcat(v, '\0');
 
