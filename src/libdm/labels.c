@@ -547,7 +547,7 @@ dm_draw_labels(struct dm *dmp,
 	       const char *name,
 	       mat_t viewmat,
 	       int *labelsColor,
-	       int (*labelsHook)(),
+	       int (*LabelsHook)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData),
 	       ClientData labelsHookClientdata)
 {
 #define MAX_PL 8+1
@@ -558,8 +558,8 @@ dm_draw_labels(struct dm *dmp,
     struct db_tree_state ts;
     struct db_full_path path;
 
-    if (labelsHook != (int (*)())0)
-	return labelsHook(dmp, wdbp, name,
+    if (LabelsHook != (int (*)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData))0)
+	return LabelsHook(dmp, wdbp, name,
 			  viewmat, labelsColor,
 			  labelsHookClientdata);
 

@@ -90,7 +90,10 @@ struct dm_obj {
 #endif
     struct bu_observer dmo_observers;		/**< @brief fbserv observers */
     mat_t viewMat;
+    int (*dmo_drawLabelsHook)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData);
+#if 0
     int (*dmo_drawLabelsHook)();
+#endif
     void *dmo_drawLabelsHookClientData;
     Tcl_Interp *interp;
 };
@@ -2902,7 +2905,7 @@ dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
 	Tcl_DStringAppend(&ds, ": failed to set the drawLabels hook", -1);
 	Tcl_DStringResult(dmop->interp, &ds);
 
-	dmop->dmo_drawLabelsHook = (int (*)())0;
+	dmop->dmo_drawLabelsHook = (int (*)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData))0;
 
 	return TCL_ERROR;
     }
@@ -2915,7 +2918,7 @@ dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
 	Tcl_DStringAppend(&ds, ": failed to set the drawLabels hook", -1);
 	Tcl_DStringResult(dmop->interp, &ds);
 
-	dmop->dmo_drawLabelsHook = (int (*)())0;
+	dmop->dmo_drawLabelsHook = (int (*)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData))0;
 
 	return TCL_ERROR;
     }
@@ -2923,7 +2926,7 @@ dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
     /* FIXME: standard prohibits casting between function pointers and
      * void *.  find a better way.
      */
-    dmop->dmo_drawLabelsHook = (int (*)())(uintptr_t)hook;
+    dmop->dmo_drawLabelsHook = (int (*)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData))hook;
     dmop->dmo_drawLabelsHookClientData = clientData;
 
     return TCL_OK;
@@ -3164,7 +3167,7 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
     dmop->dmo_dmp = dmp;
     VSETALL(dmop->dmo_dmp->dm_clipmin, -2048.0);
     VSETALL(dmop->dmo_dmp->dm_clipmax, 2047.0);
-    dmop->dmo_drawLabelsHook = (int (*)())0;
+    dmop->dmo_drawLabelsHook = (int (*)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData))0;
 
 #ifdef USE_FBSERV
     dmop->dmo_fbs.fbs_listener.fbsl_fbsp = &dmop->dmo_fbs;
