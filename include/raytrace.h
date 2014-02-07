@@ -3748,6 +3748,21 @@ RT_EXPORT extern void db_path_to_vls(struct bu_vls *str,
 				     const struct db_full_path *pp);
 
 /**
+ * D B _ F U L L _ P A T H _ T O _ V L S
+ *
+ * Append a string representation of the path onto the vls, with
+ * options to decorate nodes with additional information.
+ */
+#define DB_FP_PRINT_BOOL         0x1    /* print boolean operations */
+#define DB_FP_PRINT_TYPE         0x2    /* print object types */
+RT_EXPORT extern void db_fullpath_to_vls(struct bu_vls *vls,
+	                                 const struct db_full_path *full_path,
+					 const struct db_i *dbip,  /* needed for type determination */
+					 const struct bn_tol *tol, /* needed for arb type determination */
+					 int fp_flags);
+
+
+/**
  * D B _ P R _ F U L L _ P A T H
  */
 RT_EXPORT extern void db_pr_full_path(const char *msg,

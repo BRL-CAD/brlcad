@@ -230,6 +230,84 @@ db_path_to_vls(struct bu_vls *str, const struct db_full_path *pp)
 }
 
 void
+db_fullpath_to_vls(struct bu_vls *vls, const struct db_full_path *full_path, const struct db_i *dbip, const struct bn_tol *tol, int fp_flags)
+{
+    size_t i;
+    int type;
+    BU_CK_VLS(vls);
+    RT_CK_FULL_PATH(full_path);
+
+    if (!full_path->fp_names[0]) {
+	bu_vls_strcat(vls, "**NULL**");
+	return;
+    }
+
+    for (i = 0; i < full_path->fp_len; i++) {
+	bu_vls_putc(vls, '/');
+	if (fp_flags & DB_FP_PRINT_BOOL) {
+	    switch (full_path->fp_bool[i]) {
+		case 2:
+		    bu_vls_strcat(vls, "u ");
+		    break;
+		case 3:
+		    bu_vls_strcat(vls, "+ ");
+		    break;
+		case 4:
+		    bu_vls_strcat(vls, "- ");
+		    break;
+	    }
+	}
+	bu_vls_strcat(vls, full_path->fp_names[i]->d_namep);
+	if (fp_flags & DB_FP_PRINT_TYPE) {
+	    struct rt_db_internal intern;
+	    if (!(rt_db_get_internal(&intern, full_path->fp_names[i], dbip, NULL, &rt_uniresource) < 0)) {
+		if (intern.idb_meth->ft_label) {
+		    bu_vls_putc(vls, '(');
+		    switch (intern.idb_minor_type) {
+			case DB5_MINORTYPE_BRLCAD_ARB8:
+			    type = rt_arb_std_type(&intern, tol);
+			    switch (type) {
+				case 4:
+				    bu_vls_strcat(vls, "arb4");
+				    break;
+				case 5:
+				    bu_vls_strcat(vls, "arb5");
+				    break;
+				case 6:
+				    bu_vls_strcat(vls, "arb6");
+				    break;
+				case 7:
+				    bu_vls_strcat(vls, "arb7");
+				    break;
+				case 8:
+				    bu_vls_strcat(vls, "arb8");
+				    break;
+				default:
+				    break;
+			    }
+			    break;
+			case DB5_MINORTYPE_BRLCAD_COMBINATION:
+			    if (full_path->fp_names[i]->d_flags & RT_DIR_REGION) {
+				bu_vls_putc(vls, 'r');
+			    } else {
+				bu_vls_putc(vls, 'c');
+			    }
+			    break;
+			default:
+			    bu_vls_strcat(vls, intern.idb_meth->ft_label);
+			    break;
+		    }
+
+		}
+		bu_vls_putc(vls, ')');
+		rt_db_free_internal(&intern);
+	    }
+	}
+
+    }
+}
+
+void
 db_pr_full_path(const char *msg, const struct db_full_path *pathp)
 {
     char *sofar = db_path_to_string(pathp);
