@@ -89,6 +89,60 @@ done
 
 
 ###
+# TEST: make sure bio.h isn't redundant with system headers
+echo "running bio.h redundancy check..."
+
+# limit our search to files containing bio.h
+FILES="`grep -I -e '#[[:space:]]*include' $SRCFILES $INCFILES | grep -E 'bio.h' | grep -v 'bio.h:' | sed 's/:.*//g' | sort | uniq`"
+FOUND=
+for file in $FILES ; do
+
+    for header in "<stdio.h>" "<windows.h>" "<io.h>" "<unistd.h>" "<fcntl.h>" ; do
+	MATCH="`grep -n -I -e '#[[:space:]]*include' $file /dev/null | grep $header`"
+	if test ! "x$MATCH" = "x" ; then
+	    echo "ERROR: #include $header is unnecessary with bio.h; remove $MATCH"
+	    FOUND=1
+	    continue
+	fi
+    done
+done
+if test "x$FOUND" = "x" ; then
+    echo "-> bio.h check succeeded"
+else
+    echo "-> bio.h check FAILED"
+# TODO: uncomment after fixing the existing cases
+#    FAILED="`expr $FAILED + 1`"
+fi
+
+
+###
+# TEST: make sure bin.h isn't redundant with system headers
+echo "running bin.h redundancy check..."
+
+# limit our search to files containing bin.h
+FILES="`grep -I -e '#[[:space:]]*include' $SRCFILES $INCFILES | grep -E 'bin.h' | grep -v 'bin.h:' | sed 's/:.*//g' | sort | uniq`"
+FOUND=
+for file in $FILES ; do
+
+    for header in "<winsock2.h>" "<netinet/in.h>" "<netinet/tcp.h>" "<arpa/inet.h>" ; do
+	MATCH="`grep -n -I -e '#[[:space:]]*include' $file /dev/null | grep $header`"
+	if test ! "x$MATCH" = "x" ; then
+	    echo "ERROR: #include $header is unnecessary with bin.h; remove $MATCH"
+	    FOUND=1
+	    continue
+	fi
+    done
+done
+if test "x$FOUND" = "x" ; then
+    echo "-> bin.h check succeeded"
+else
+    echo "-> bin.h check FAILED"
+# TODO: uncomment after fixing the existing cases
+#    FAILED="`expr $FAILED + 1`"
+fi
+
+
+###
 # TEST: make sure common.h is always included first when included
 echo "running common.h inclusion order check..."
 
