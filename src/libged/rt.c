@@ -297,7 +297,7 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
     line[count] = '\0';
 
     /* handle (i.e., probably log to stderr) the resulting line */
-    if (drcdp->gedp->ged_output_handler != (void (*)())0)
+    if (drcdp->gedp->ged_output_handler != (void (*)(struct ged *, char *))0)
 	drcdp->gedp->ged_output_handler(drcdp->gedp, line);
     else
 	bu_vls_printf(drcdp->gedp->ged_result_str, "%s", line);

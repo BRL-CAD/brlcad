@@ -257,7 +257,7 @@ rtcheck_output_handler(ClientData clientData, int mask)
     }
 
     line[count] = '\0';
-    if (rtcop->gedp->ged_output_handler != (void (*)())0)
+    if (rtcop->gedp->ged_output_handler != (void (*)(struct ged *, char *))0)
 	rtcop->gedp->ged_output_handler(rtcop->gedp, line);
     else
 	bu_vls_printf(rtcop->gedp->ged_result_str, "%s", line);

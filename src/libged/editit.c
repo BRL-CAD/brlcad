@@ -185,8 +185,6 @@ _ged_editit(char *editstring, const char *filename)
 
 	{
 
-	    char *editor_basename;
-
 #if defined(_WIN32) && !defined(__CYGWIN__)
 	    char buffer[RT_MAXLINE + 1] = {0};
 	    STARTUPINFO si = {0};
@@ -204,7 +202,7 @@ _ged_editit(char *editstring, const char *filename)
 	    WaitForSingleObject(pi.hProcess, INFINITE);
 	    return 1;
 #else
-
+	    char *editor_basename;
 	    editor_basename = (char *)bu_calloc(strlen(editor), sizeof(char), "_ged_editit editor_basename");
 	    bu_basename(editor_basename, editor);
 	    if (BU_STR_EQUAL(editor_basename, "TextEdit")) {

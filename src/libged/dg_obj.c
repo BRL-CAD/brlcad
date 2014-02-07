@@ -1743,7 +1743,7 @@ static int
 dgo_run_rt(struct dg_obj *dgop,
 	   struct view_obj *vop)
 {
-    size_t i;
+    ssize_t i;
     FILE *fp_in;
 #ifndef _WIN32
     int pipe_in[2];
@@ -2362,11 +2362,10 @@ dgo_rtcheck_command(struct dg_obj *dgop,
 		    const char **argv)
 {
     const char **vp;
-    size_t i;
+    ssize_t i;
     size_t args;
-    int ret;
-
 #ifndef _WIN32
+    int ret;
     int pid;
     int i_pipe[2];	/* object reads results for building vectors */
     int o_pipe[2];	/* object writes view parameters */
