@@ -106,7 +106,7 @@ struct dg_obj {
     struct vd_curve		*dgo_currVHead;		/**< @brief current vdraw head */
     struct solid		*dgo_freeSolids;	/**< @brief ptr to head of free solid list */
     char			**dgo_rt_cmd;
-    size_t			dgo_rt_cmd_len;
+    ssize_t			dgo_rt_cmd_len;
     struct bu_observer		dgo_observers;
     struct run_rt		dgo_headRunRt;		/**< @brief head of forked rt processes */
     struct bu_vls		dgo_qray_basename;	/**< @brief basename of query ray vlist */
