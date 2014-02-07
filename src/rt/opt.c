@@ -277,7 +277,9 @@ get_args(int argc, const char *argv[])
 		break;
 	    case 'C':
 	    {
+#if !defined(_WIN32)
 		char		buf[128];
+#endif
 		int		r, g, b;
 		register char	*cp = bu_optarg;
 
