@@ -2005,14 +2005,14 @@ _db_search_full_paths(void *searchplan,        /* search plan */
 	struct db_full_path *start_path = NULL;
 	struct db_node_t curr_node;
 	struct list_client_data_t lcd;
-	/* by convention, the top level node is "unioned" into the global database */
-	DB_FULL_PATH_SET_CUR_BOOL(curr_node.path, 2);
 
 	BU_ALLOC(full_paths, struct bu_ptbl);
 	BU_PTBL_INIT(full_paths);
 	BU_ALLOC(start_path, struct db_full_path);
 	db_dup_full_path(start_path, currentpath->path);
 	curr_node.path = start_path;
+	/* by convention, the top level node is "unioned" into the global database */
+	DB_FULL_PATH_SET_CUR_BOOL(curr_node.path, 2);
 	bu_ptbl_ins(full_paths, (long *)start_path);
 	lcd.dbip = wdbp->dbip;
 	lcd.full_paths = full_paths;
