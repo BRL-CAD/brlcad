@@ -333,6 +333,7 @@ test_bu_bitv_or(int argc , char **argv)
     a = bu_vls_vlsinit();
     b = bu_vls_vlsinit();
 
+    res_bitv1 = res_bitv = result = NULL;
     res_bitv1 = bu_hex_to_bitv(input1);
     if (res_bitv1 == NULL) {
 	bu_log("\nERROR: NULL from bu_hex_to_bitv.");
@@ -405,6 +406,7 @@ test_bu_bitv_and(int argc, char **argv)
     a = bu_vls_vlsinit();
     b = bu_vls_vlsinit();
 
+    res_bitv1 = res_bitv = result = NULL;
     res_bitv1 = bu_hex_to_bitv(input1);
     if (res_bitv1 == NULL) {
 	bu_log("\nERROR: NULL from bu_hex_to_bitv.");
