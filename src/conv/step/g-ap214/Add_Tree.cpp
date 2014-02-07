@@ -161,6 +161,7 @@ conv_tree(struct directory **d, int depth, int parent_branch, struct directory *
 void
 Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
 {
+    size_t i = 0;
     //TODO - need to build sets of regions and assemblies.  Each region tree should
     //be fed into the tree walker above and return a representation item which will
     //henceforth define the shape of that region object.  Items *above* regions will
@@ -177,7 +178,12 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
     const char *no_nonsub_region_below_region_search = "-type region -above -type region ! -bool -";
     struct bu_ptbl *problem_regions = db_search_path_obj(no_nonsub_region_below_region_search, dp, wdbp);
 
-    if(BU_PTBL_LEN(problem_regions) > 0) {
+    /* Look for any assembly objects with problems - probably should break this out for reporting purposes... */
+    const char *invalid_assembly_search = "-below -type region ! -type region ( -above -type region -or -below=1 -type shape -or -below=1 -bool - -or -below=1 -bool + -or -bool - -or -bool + -or -above -bool - -or -above -bool + )";
+    struct bu_ptbl *invalid_assemblies = db_search_path(invalid_assembly_search, dp, wdbp);
+
+
+    if(BU_PTBL_LEN(problem_regions) > 0 || BU_PTBL_LEN(invalid_assemblies) > 0) {
 	/* TODO - print problem paths */
 	bu_exit(1, "nested regions");
     }
@@ -185,23 +191,25 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
     /* Get the list of assembly objects */
     const char *assembly_search = "-below -type region ! -type region";
     struct bu_ptbl *assemblies = db_search_path_obj(assembly_search, dp, wdbp);
+#if 0
+    for (i = 0; i < BU_PTBL_LEN(assemblies); i++) {
+	/* Assembly validity check #1 - solids in assembly bools */
+	const char *valid_assembly_solid_search = "( -above ! -type comb ) -or ( ! -type comb ) -or ( -below=1 ! -type comb )";
+	struct bu_ptbl *problem_solid_assemblies= db_search_path_obj(valid_assembly_solid_search, dp, wdbp);
+	if(BU_PTBL_LEN(problem_solid_assemblies) > 0) {
+	    /* TODO - print problem paths */
+	    bu_exit(1, "assembly solid issues");
+	}
 
-    /* Assembly validity check #1 - solids in assembly bools */
-    const char *valid_assembly_solid_search = "( -above ! -type comb ) -or ( ! -type comb ) -or ( -below=1 ! -type comb )";
-    struct bu_ptbl *problem_solid_assemblies= db_search_path_obj(valid_assembly_solid_search, dp, wdbp);
-    if(BU_PTBL_LEN(problem_solid_assemblies) > 0) {
-	/* TODO - print problem paths */
-	bu_exit(1, "assembly solid issues");
+	/* Assembly validity check #2 - subtractions or intersections in assembly bools */
+	const char *valid_assembly_bool_search = "( -above -bool - -or -above -bool + ) -or ( -bool - -or -bool + ) -or ( -below=1 -bool - -or -below=1 -bool + )";
+	struct bu_ptbl *problem_bool_assemblies= db_search_path_obj(valid_assembly_bool_search, dp, wdbp);
+	if(BU_PTBL_LEN(problem_bool_assemblies) > 0) {
+	    /* TODO - print problem paths */
+	    bu_exit(1, "assembly bool issues");
+	}
     }
-
-    /* Assembly validity check #2 - subtractions or intersections in assembly bools */
-    const char *valid_assembly_bool_search = "( -above -bool - -or -above -bool + ) -or ( -bool - -or -bool + ) -or ( -below=1 -bool - -or -below=1 -bool + )";
-    struct bu_ptbl *problem_bool_assemblies= db_search_path_obj(valid_assembly_bool_search, dp, wdbp);
-    if(BU_PTBL_LEN(problem_bool_assemblies) > 0) {
-	/* TODO - print problem paths */
-	bu_exit(1, "assembly bool issues");
-    }
-
+#endif
 
     const char *region_search = "-type region";
     struct bu_ptbl *regions = db_search_path_obj(region_search, dp, wdbp);
@@ -216,7 +224,7 @@ Comb_Tree_to_STEP(struct directory *dp, struct rt_wdb *wdbp, AP203_Contents *sc)
     if (comb->tree == NULL) {
 	/* Probably should return empty object... */
     } else {
-        (void)conv_tree(&dp, 0, 0, NULL, comb->tree, sc);
+	(void)conv_tree(&dp, 0, 0, NULL, comb->tree, sc);
     }
 }
 
