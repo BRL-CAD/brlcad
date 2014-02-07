@@ -28,11 +28,16 @@
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
+
+#ifdef HAVE_DIRECT_H
+#  include <direct.h>
+#endif
+
 #ifdef HAVE_SYS_PARAM_H
 #  include <sys/param.h>
 #endif
-#include "bio.h"
 
+#include "bio.h"
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
